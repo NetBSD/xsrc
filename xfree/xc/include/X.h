@@ -1,5 +1,5 @@
 /*
- *	$TOG: X.h /main/9 1998/02/09 11:18:23 kaleb $
+ *	$Xorg: X.h,v 1.3 2000/08/18 04:05:43 coskrey Exp $
  */
 
 /* Definitions for the X window system likely to be used by applications */
@@ -49,7 +49,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/include/X.h,v 1.4 2001/01/17 17:53:09 dawes Exp $ */
 
 #define X_PROTOCOL	11		/* current protocol version */
 #define X_PROTOCOL_REVISION 0		/* current minor version */

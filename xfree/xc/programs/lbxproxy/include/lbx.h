@@ -1,4 +1,4 @@
-/* $TOG: lbx.h /main/24 1998/02/23 09:34:13 barstow $ */
+/* $Xorg: lbx.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: Toggle.c /main/30 1998/02/11 14:55:52 kaleb $ */
+/* $Xorg: Toggle.c,v 1.3 2000/08/17 19:45:42 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/Toggle.c,v 1.5 1998/10/03 08:42:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Toggle.c,v 1.7 2001/01/17 19:42:35 dawes Exp $ */
 
 /*
  * Author: Chris D. Peterson

@@ -1,4 +1,4 @@
-/* $TOG: listing.c /main/5 1998/02/09 14:04:05 kaleb $ */
+/* $Xorg: listing.c,v 1.4 2000/08/17 19:54:32 cpqbld Exp $ */
 /************************************************************
  Copyright 1996 by Silicon Graphics Computer Systems, Inc.
 
@@ -66,7 +66,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.5 1998/10/04 09:41:26 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.7 2001/01/17 23:45:44 dawes Exp $ */
 
 
 #include <stdio.h>
@@ -364,7 +364,6 @@ AddMatchingFiles(head_in)
 #endif
 {
 char 	*str,*head,*ptrn,*rest= NULL;
-int	len;
 
     if (head_in==NULL)
 	return 0;

@@ -1010,7 +1010,7 @@ The IANA RFC documents, available from a number of sites throughout the
 world, often provide interesting information about character set issues; my
 favourite is RFC 373.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.11.2.1 2001/02/28 20:06:21 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.13 2001/03/01 00:37:09 dawes Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.16.2.1 2001/06/01 18:26:45 dawes Exp $

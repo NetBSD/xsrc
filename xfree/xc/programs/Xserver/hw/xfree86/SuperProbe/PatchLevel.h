@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PatchLevel.h,v 3.26 2000/03/08 19:23:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PatchLevel.h,v 3.27 2000/11/28 20:59:16 dawes Exp $ */
 
 #define VERSION 	2
 #define PATCHLEV 	23

@@ -19,7 +19,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $TOG: Xag.h /main/3 1998/02/09 11:21:17 kaleb $ */
+/* $Xorg: Xag.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 
 #ifndef _XAG_H_
 #define _XAG_H_

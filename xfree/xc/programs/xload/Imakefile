@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/30 1996/03/09 09:37:57 kaleb $
-XCOMM $XFree86: xc/programs/xload/Imakefile,v 1.5 2000/11/14 18:20:39 dawes Exp $
+XCOMM $XFree86: xc/programs/xload/Imakefile,v 1.6 2001/01/15 20:56:18 dawes Exp $
         DEPLIBS = XawClientDepLibs
 LOCAL_LIBRARIES = XawClientLibs
 

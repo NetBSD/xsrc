@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbzerarc.c,v 3.0 1996/06/29 09:05:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbzerarc.c,v 3.2 2001/01/17 22:36:37 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: cfbzerarc.c /main/25 1998/02/09 14:08:20 kaleb $ */
+/* $Xorg: cfbzerarc.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"

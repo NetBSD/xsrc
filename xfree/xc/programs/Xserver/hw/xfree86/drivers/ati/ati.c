@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.c,v 1.13 2000/08/04 21:07:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.c,v 1.17 2001/05/09 03:12:02 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@
 /*************************************************************************/
 
 /*
- * Author:  Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Author:  Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * This is the ATI driver for XFree86.
  *
@@ -57,7 +57,7 @@
  * Henrik Harmsen, ervhch@erv.ericsson.se
  * Christian Lupien, lupien@physics.utoronto.ca
  * Precision Insight Incorporated
- * Mark Vojkovich, mvojkovich@valinux.com
+ * Mark Vojkovich, mvojkovich@nvidia.com
  * Huw D M Davies, h.davies1@physics.ox.ac.uk
  * Andrew C Aitchison, A.C.Aitchison@dpmms.cam.ac.uk
  * Ani Joshi, ajoshi@shell.unixbox.com
@@ -66,6 +66,8 @@
  * David S. Miller, davem@redhat.com
  * A E Lawrence, adrian.lawrence@computing-services.oxford.ac.uk
  * Linus Torvalds, torvalds@transmeta.com
+ * William Blew, wblew@home.com
+ * Ignacio Garcia Etxebarria, garetxe@euskalnet.net
  *
  * ... and, many, many others from around the world.
  *

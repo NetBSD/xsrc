@@ -1,55 +1,87 @@
 XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
-XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.2 2000/10/26 17:57:57 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.6 2001/04/25 19:44:02 tsi Exp $
+
 #include <Server.tmpl>
 
 #if HasShm
 SHMDEF = -DHAS_SHM
 #endif
 
-XCOMM add more architectures here as we discover them
-#if defined(HPArchitecture) || (defined(SparcArchitecture) && !defined(LynxOSArchitecture)) || SystemV4 || defined(OSF1Architecture) || defined(cygwinArchitecture) || defined(i386BsdArchitecture)
 MMAPDEF = -DHAS_MMAP
-#endif
 
-#ifdef OS2Architecture
-SRCS1 = os2_stubs.c
-OBJS1 = os2_stubs.o
-#endif
+SRCSA =	InitInput.c \
+	InitOutput.c \
+	stubs.c \
+	wingc.c \
+	winpolyline.c \
+	winfillsp.c \
+	wingetsp.c \
+	winsetsp.c \
+	winwindow.c \
+	winpntwin.c \
+	winpixmap.c \
+	winfont.c \
+	wincmap.c \
+	winclip.c \
+	winallpriv.c \
+	winscrinit.c \
+	winmisc.c \
+	winblock.c \
+	winwakeup.c \
+	wincursor.c \
+	winwndproc.c \
+	winshadgdi.c \
+	winshaddd.c \
+	winshadddnl.c \
+	winpfbdd.c \
+	winkeybd.c \
+	winmouse.c
 
-
-
-SRCSA =	InitInput.c InitOutput.c stubs.c miinitext.c directx.c
-
-OBJSA =	InitInput.o InitOutput.o stubs.o miinitext.o directx.o
+OBJSA =	InitInput.o \
+	InitOutput.o \
+	stubs.o \
+	wingc.o \
+	winpolyline.o \
+	winfillsp.o \
+	wingetsp.o \
+	winsetsp.o \
+	winwindow.o \
+	winpntwin.o \
+	winpixmap.o \
+	winfont.o \
+	wincmap.o \
+	winclip.o \
+	winallpriv.o \
+	winscrinit.o \
+	winmisc.o \
+	winblock.o \
+	winwakeup.o \
+	wincursor.o \
+	winwndproc.o \
+	winshadgdi.o \
+	winshaddd.o \
+	winshadddnl.o \
+	winpfbdd.o \
+	winkeybd.o \
+	winmouse.o
 
 INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) -I$(SERVERSRC)/render \
-	   -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi \
 	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os  \
-           -I$(EXTINCSRC) -I$(XINCLUDESRC)
+           -I$(EXTINCSRC) -I$(XINCLUDESRC) -I$(SERVERSRC)/miext/shadow
 
-DEFINES = ServerOSDefines $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
+DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
 
 #if BuildDPMS
-SRCSC =	dpmsstubs.c
-OBJSC =	dpmsstubs.o
+SRCSB =	dpmsstubs.c
+OBJSB =	dpmsstubs.o
 #endif
 
 SRCS =	$(SRCSA) $(SRCSB) $(SRCSC)
 OBJS =	$(OBJSA) $(OBJSB) $(OBJSC)
 
-NormalLibraryObjectRule()
-NormalLibraryTarget(Xwin,$(OBJS))
-
-#ifdef OS2Architecture
-LinkSourceFile(os2_stubs.c,../xfree86/os-support/os2)
-SpecialCObjectRule(os2_stubs,$(ICONFIGFILES),-DOS2NULLSELECT)
-#endif
-
-LinkSourceFile(stubs.c,../../Xi)
-SpecialCObjectRule(InitInput,$(ICONFIGFILES),$(EXT_DEFINES))
-
-LinkSourceFile(miinitext.c,../../mi)
-SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) $(PAN_DEFINES) -DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS $(EXT_MODULE_DEFINES) -UXFree86LOADER)
+LinkSourceFile(stubs.c,$(SERVERSRC)/Xi)
+SpecialCObjectRule(stubs,$(ICONFIGFILES),$(EXT_DEFINES))
 
 #if BuildDPMS
 LinkSourceFile(dpmsstubs.c,$(SERVERSRC)/Xext)

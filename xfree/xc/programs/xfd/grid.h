@@ -1,4 +1,4 @@
-/* $TOG: grid.h /main/12 1998/02/09 13:57:23 kaleb $ */
+/* $Xorg: grid.h,v 1.3 2000/08/17 19:54:18 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group

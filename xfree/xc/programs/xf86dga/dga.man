@@ -1,6 +1,6 @@
-.\" $XFree86: xc/programs/xf86dga/dga.man,v 3.3 1996/10/19 15:17:58 dawes Exp $
+.\" $XFree86: xc/programs/xf86dga/dga.man,v 3.5 2001/01/27 18:21:12 dawes Exp $
 .\"
-.TH dga 1 "4.0" "XFree86"
+.TH dga 1 __vendorversion__
 .SH NAME
 dga \- test program for the XFree86-DGA extension
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-/* $TOG: smproxy.h /main/8 1998/02/09 13:47:25 kaleb $ */
+/* $Xorg: smproxy.h,v 1.3 2000/08/17 19:54:05 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: $ */
+/* $XFree86: xc/programs/smproxy/smproxy.h,v 1.4 2001/01/17 23:45:05 dawes Exp $ */
 
 #include <X11/Xosdefs.h>
 #include <X11/Xfuncs.h>

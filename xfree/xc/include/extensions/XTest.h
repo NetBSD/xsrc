@@ -1,4 +1,4 @@
-/* $TOG: XTest.h /main/10 1998/02/09 11:21:12 kaleb $ */
+/* $Xorg: XTest.h,v 1.4 2000/08/18 04:05:45 coskrey Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/include/extensions/XTest.h,v 3.0 1996/12/12 09:12:53 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XTest.h,v 3.2 2001/01/17 17:53:19 dawes Exp $ */
 
 #ifndef _XTEST_H_
 #define _XTEST_H_

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atichip.c,v 1.14 2000/09/26 15:57:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atichip.c,v 1.19 2001/04/25 18:21:10 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -82,8 +82,11 @@ const char *ATIChipNames[] =
     "ATI Rage 128 Pro VR",
     "ATI Rage 128 Mobility M3",
     "ATI Rage 128 Mobility M4",
+    "ATI Rage 128 Ultra",
     "ATI unknown Rage 128"
     "ATI Radeon",
+    "ATI Radeon VE",
+    "ATI Radeon Mobility",
     "ATI Rage HDTV"
 };
 
@@ -327,9 +330,11 @@ ATIMach64ChipID
 
         case OldChipID('L', 'I'):
         case OldChipID('L', 'P'):
+        case OldChipID('L', 'Q'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
         case NewChipID('L', 'I'):
         case NewChipID('L', 'P'):
+        case NewChipID('L', 'Q'):
             pATI->ChipRevision =
                 GetBits(pATI->config_chip_id, CFG_CHIP_REVISION);
             pATI->Chip = ATI_CHIP_264LTPRO;
@@ -507,6 +512,7 @@ ATIChipID
         case OldChipID('L', 'D'):  case NewChipID('L', 'D'):
         case OldChipID('L', 'I'):  case NewChipID('L', 'I'):
         case OldChipID('L', 'P'):  case NewChipID('L', 'P'):
+        case OldChipID('L', 'Q'):  case NewChipID('L', 'Q'):
             return ATI_CHIP_264LTPRO;
 
         case OldChipID('G', 'L'):  case NewChipID('G', 'L'):
@@ -528,6 +534,7 @@ ATIChipID
         case OldChipID('S', 'K'):  case NewChipID('S', 'K'):
         case OldChipID('S', 'L'):  case NewChipID('S', 'L'):
         case OldChipID('S', 'M'):  case NewChipID('S', 'M'):
+        case OldChipID('S', 'N'):  case NewChipID('S', 'N'):
             return ATI_CHIP_RAGE128GL;
 
         case OldChipID('R', 'K'):  case NewChipID('R', 'K'):
@@ -575,11 +582,27 @@ ATIChipID
         case OldChipID('M', 'L'):  case NewChipID('M', 'L'):
             return ATI_CHIP_RAGE128MOBILITY4;
 
+        case OldChipID('T', 'F'):  case NewChipID('T', 'F'):
+        case OldChipID('T', 'L'):  case NewChipID('T', 'L'):
+        case OldChipID('T', 'R'):  case NewChipID('T', 'R'):
+        case OldChipID('T', 'S'):  case NewChipID('T', 'S'):
+        case OldChipID('T', 'T'):  case NewChipID('T', 'T'):
+        case OldChipID('T', 'U'):  case NewChipID('T', 'U'):
+            return ATI_CHIP_RAGE128ULTRA;
+
         case OldChipID('Q', 'D'):  case NewChipID('Q', 'D'):
         case OldChipID('Q', 'E'):  case NewChipID('Q', 'E'):
         case OldChipID('Q', 'F'):  case NewChipID('Q', 'F'):
         case OldChipID('Q', 'G'):  case NewChipID('Q', 'G'):
             return ATI_CHIP_RADEON;
+
+        case OldChipID('Q', 'Y'):  case NewChipID('Q', 'Y'):
+        case OldChipID('Q', 'Z'):  case NewChipID('Q', 'Z'):
+            return ATI_CHIP_RADEONVE;
+
+        case OldChipID('L', 'Y'):  case NewChipID('L', 'Y'):
+        case OldChipID('L', 'Z'):  case NewChipID('L', 'Z'):
+            return ATI_CHIP_RADEONMOBILITY;
 
         case OldChipID('H', 'D'):  case NewChipID('H', 'D'):
             return ATI_CHIP_HDTV;

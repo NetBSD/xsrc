@@ -1,4 +1,4 @@
-/* $TOG: Xtransam.c /main/5 1998/02/06 15:54:26 kaleb $ */
+/* $Xorg: Xtransam.c,v 1.3 2000/08/17 19:46:45 cpqbld Exp $ */
 /*
 
 Copyright 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransam.c,v 3.1 1996/05/10 06:55:45 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransam.c,v 3.3 2001/01/17 19:43:46 dawes Exp $ */
 
 /* Copyright 1994 Vrije Universiteit Amsterdam, Netherlands
  *

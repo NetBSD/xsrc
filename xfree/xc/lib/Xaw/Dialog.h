@@ -1,4 +1,4 @@
-/* $TOG: Dialog.h /main/29 1998/02/06 12:45:41 kaleb $ */
+/* $Xorg: Dialog.h,v 1.3 2000/08/17 19:45:32 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Dialog.h,v 1.3 1998/08/20 13:58:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Dialog.h,v 1.5 2001/01/17 19:42:26 dawes Exp $ */
 
 #ifndef _XawDialog_h
 #define _XawDialog_h

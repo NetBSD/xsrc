@@ -1,6 +1,6 @@
 /*
  * $XConsortium: saver.c,v 1.12 94/04/17 20:59:36 dpw Exp $
- * $XFree86: xc/programs/Xserver/Xext/saver.c,v 3.2 1996/06/10 09:11:17 dawes Exp $
+ * $XFree86: xc/programs/Xserver/Xext/saver.c,v 3.3 2000/04/05 18:13:29 dawes Exp $
  *
 Copyright (c) 1992  X Consortium
 

@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.74 2000/12/01 23:27:55 paulo Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.76 2001/04/01 14:00:16 tsi Exp $
 
 # VGA
 
@@ -1645,7 +1645,7 @@ SEE ET6000 (generic)
 NAME ATI Rage 128
 CHIPSET ati
 SERVER SVGA
-DRIVER r128
+DRIVER ati
 
 NAME ATI 8514 Ultra (no VGA)
 CHIPSET ati

@@ -1,4 +1,4 @@
-/* $TOG: Initialize.c /main/214 1998/06/19 14:27:36 kaleb $ */
+/* $Xorg: Initialize.c,v 1.7 2000/08/17 19:46:12 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Initialize.c,v 3.14 1998/06/28 09:00:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Initialize.c,v 3.16 2001/01/17 19:43:05 dawes Exp $ */
 
 /*
 
@@ -204,6 +204,7 @@ void _XtInherit()
 void XtToolkitInitialize()
 {
     extern void _XtResourceListInitialize();
+    extern Boolean XtAppPeekEvent_SkipTimer;
     static Boolean initialized = False;
 
     LOCK_PROCESS;
@@ -221,6 +222,12 @@ void XtToolkitInitialize()
     _XtConvertInitialize();
     _XtEventInitialize();
     _XtTranslateInitialize();
+
+    /* Some apps rely on old (broken) XtAppPeekEvent behavior */
+    if(getenv("XTAPPPEEKEVENT_SKIPTIMER"))
+	XtAppPeekEvent_SkipTimer = True;
+    else 
+	XtAppPeekEvent_SkipTimer = False;
 }
 
 
@@ -290,7 +297,7 @@ static String GetRootDirName(dest, len)
 	(void) strncpy (dest, ptr, len-1);
 	dest[len-1] = '\0';
     } else {
-	if (ptr = getenv("USER"))
+	if ((ptr = getenv("USER")))
 	    pw = _XGetpwnam(ptr,pwparams);
 	else
  	    pw = _XGetpwuid(getuid(),pwparams);
@@ -476,7 +483,7 @@ XrmDatabase XtScreenDatabase(screen)
 	doing_def = False;
     }
     pd = _XtGetPerDisplay(dpy);
-    if (db = pd->per_screen_db[scrno]) {
+    if ((db = pd->per_screen_db[scrno])) {
 	UNLOCK_PROCESS;
 	UNLOCK_APP(app);
 	return (doing_def ? XrmGetDatabase(dpy) : db);
@@ -529,8 +536,8 @@ XrmDatabase XtScreenDatabase(screen)
     {   /* System app-defaults */
 	char	*filename;
 
-	if (filename = XtResolvePathname(dpy, "app-defaults",
-					 NULL, NULL, NULL, NULL, 0, NULL)) {
+	if ((filename = XtResolvePathname(dpy, "app-defaults",
+					 NULL, NULL, NULL, NULL, 0, NULL))) {
 	    do_fallback = !XrmCombineFileDatabase(filename, &db, False);
 	    XtFree(filename);
 	}

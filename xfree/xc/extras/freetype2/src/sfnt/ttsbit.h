@@ -16,24 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef TTSBIT_H
-#define TTSBIT_H
+#ifndef __TTSBIT_H__
+#define __TTSBIT_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ttload.h"
 
-#else
 
-#include <sfnt/ttload.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -60,12 +51,9 @@
                                 TT_SBit_Metrics  *metrics );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* TTSBIT_H */
+#endif /* __TTSBIT_H__ */
 
 
 /* END */

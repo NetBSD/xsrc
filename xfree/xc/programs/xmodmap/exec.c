@@ -1,4 +1,4 @@
-/* $TOG: exec.c /main/14 1998/02/09 14:11:16 kaleb $ */
+/* $Xorg: exec.c,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -52,7 +52,7 @@ from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium; derived from parts of the
  * original xmodmap, written by David Rosenthal, of Sun Microsystems.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xmodmap/exec.c,v 1.4 2001/01/17 23:46:20 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>

@@ -1,4 +1,4 @@
-/* $TOG: window.h /main/9 1998/02/09 14:30:26 kaleb $ */
+/* $Xorg: window.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -157,6 +157,11 @@ extern void DestroySubwindows(
 #endif
 );
 
+/* Quartz support on Mac OS X uses the HIToolbox
+   framework whose ChangeWindowAttributes function conflicts here. */
+#ifdef __DARWIN__
+#define ChangeWindowAttributes Darwin_X_ChangeWindowAttributes
+#endif
 extern int ChangeWindowAttributes(
 #if NeedFunctionPrototypes
     WindowPtr /*pWin*/,
@@ -166,7 +171,14 @@ extern int ChangeWindowAttributes(
 #endif
 );
 
+/* Quartz support on Mac OS X uses the HIToolbox
+   framework whose GetWindowAttributes function conflicts here. */
+#ifdef __DARWIN__
+#define GetWindowAttributes(w,c,x) Darwin_X_GetWindowAttributes(w,c,x)
+extern void Darwin_X_GetWindowAttributes(
+#else
 extern void GetWindowAttributes(
+#endif
 #if NeedFunctionPrototypes
     WindowPtr /*pWin*/,
     ClientPtr /*client*/,

@@ -34,7 +34,7 @@ PLATFORM := ansi
 #   make -f $TOP/Makefile
 #
 ifndef OBJ_DIR
-  OBJ_DIR := $(TOP)$(SEP)obj
+  OBJ_DIR := $(TOP)$(SEP)objs
 endif
 
 
@@ -92,6 +92,8 @@ ANSIFLAGS :=
 
 
 ifdef BUILD_PROJECT
+
+  .PHONY: clean_project distclean_project
 
   # Now include the main sub-makefile.  It contains all the rules used to
   # build the library with the previous variables defined.

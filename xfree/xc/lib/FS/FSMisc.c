@@ -1,4 +1,4 @@
-/* $TOG: FSMisc.c /main/5 1998/02/06 13:43:27 kaleb $ */
+/* $Xorg: FSMisc.c,v 1.3 2000/08/17 19:44:03 cpqbld Exp $ */
 
 /* @(#)FSMisc.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;

@@ -1,4 +1,4 @@
-/* $XFree86$
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_state.c,v 1.1.4.1 2001/05/24 16:35:38 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller
@@ -548,6 +548,7 @@ static void ffbDDReducedPrimitiveChange(GLcontext *ctx, GLenum prim)
 		"ffbDDReducedPrimitiveChange: prim(%d) ", prim);
 #endif
 	switch(prim) {
+	case GL_POINT:
 	case GL_POINTS:
 #ifdef STATE_TRACE
 		fprintf(stderr, "GL_POINTS ");
@@ -571,6 +572,7 @@ static void ffbDDReducedPrimitiveChange(GLcontext *ctx, GLenum prim)
 		}
 		break;
 
+	case GL_LINE:
 	case GL_LINES:
 #ifdef STATE_TRACE
 		fprintf(stderr, "GL_LINES ");

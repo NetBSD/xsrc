@@ -1,4 +1,4 @@
-/* $TOG: memory.h /main/6 1998/02/10 10:27:59 kaleb $ */
+/* $Xorg: memory.h,v 1.3 2000/08/17 19:47:33 cpqbld Exp $ */
 /**** module memory.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. April 1993
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/include/memory.h,v 1.4 2001/01/17 22:12:58 dawes Exp $ */
 
 #ifndef _XIEH_MEMORY
 #define _XIEH_MEMORY

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mipolycon.c /main/8 1998/02/09 14:47:47 kaleb $ */
+/* $Xorg: mipolycon.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 #include "gcstruct.h"
 #include "pixmap.h"
 #include "miscanfill.h"

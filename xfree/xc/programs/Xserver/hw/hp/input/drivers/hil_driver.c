@@ -1,4 +1,4 @@
-/* $XConsortium: hil_driver.c,v 1.2 95/01/25 17:24:43 gildea Exp $ */
+/* $Xorg: hil_driver.c,v 1.3 2000/08/17 19:48:25 cpqbld Exp $ */
 /************************************************************
 
 Copyright (c) 1993 by Hewlett-Packard Company, Palo Alto, California

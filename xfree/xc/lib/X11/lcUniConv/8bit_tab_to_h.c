@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/lcUniConv/8bit_tab_to_h.c,v 1.3 2001/02/09 00:02:54 dawes Exp $ */
 
 /*
  * Generates an 8-bit character set table from a .TXT table as found on
@@ -19,7 +19,7 @@
  *   ./8bit_tab_to_h ISO-8859-14 iso8859_14 < tab8859_14
  *   ./8bit_tab_to_h ISO-8859-15 iso8859_15 < tab8859_15
  *   ./8bit_tab_to_h JISX0201.1976-0 jisx0201 < jis0201
- *   ./8bit_tab_to_h TIS620.2533-1 tis620 < tabtis620
+ *   ./8bit_tab_to_h TIS620-0 tis620 < tabtis620
  *   ./8bit_tab_to_h KOI8-R koi8_r < tabkoi8_r
  *   ./8bit_tab_to_h KOI8-U koi8_u < tabkoi8_u
  *   ./8bit_tab_to_h ARMSCII-8 armscii_8 < tabarmscii_8

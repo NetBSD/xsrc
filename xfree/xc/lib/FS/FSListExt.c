@@ -1,4 +1,4 @@
-/* $TOG: FSListExt.c /main/7 1998/05/01 11:34:51 kaleb $ */
+/* $Xorg: FSListExt.c,v 1.3 2000/08/17 19:44:02 cpqbld Exp $ */
 
 /* @(#)FSListExt.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;

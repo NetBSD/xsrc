@@ -1,4 +1,4 @@
-/* $TOG: AsciiSrc.h /main/17 1998/02/11 14:53:05 kaleb $ */
+/* $Xorg: AsciiSrc.h,v 1.3 2000/08/17 19:45:31 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/AsciiSrc.h,v 1.5 1998/10/03 08:42:00 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrc.h,v 1.7 2001/01/17 19:42:25 dawes Exp $ */
 
 
 /*

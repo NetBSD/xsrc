@@ -1,5 +1,5 @@
 /* 
- * $TOG: xset.c /main/76 1998/02/09 14:12:50 kaleb $ 
+ * $Xorg: xset.c,v 1.5 2000/08/17 19:55:03 cpqbld Exp $
  */
 
 /*
@@ -23,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xset/xset.c,v 3.19 2000/04/20 21:28:50 tsi Exp $ */
+/* $XFree86: xc/programs/xset/xset.c,v 3.21 2001/01/17 23:46:27 dawes Exp $ */
 /* Modified by Stephen so keyboard rate is set using XKB extensions */
 
 #include <stdio.h>

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.6 2000/12/11 22:52:07 herrb Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.10.2.1 2001/05/21 22:24:02 paulo Exp $
  */
 
 #include <stdio.h>
@@ -43,6 +43,10 @@
 
 #define XKB_RULES_DIR "/usr/X11R6/lib/X11/xkb/rules"
 
+#define CONTROL_A	1
+#define CONTROL_D	4
+#define CONTROL_E	5
+#define CONTROL_K	11
 #define TAB	9
 #define	MIN(a, b)	((a) < (b) ? (a) : (b))
 #define	MAX(a, b)	((a) > (b) ? (a) : (b))
@@ -334,6 +338,9 @@ static char *protocols[] = {
     "MouseSystems",
     "SysMouse",
     "ThinkingMouse",
+#ifdef WSCONS_SUPPORT
+    "wsmouse",
+#endif
 };
 
 static int
@@ -492,7 +499,11 @@ MouseConfig(void)
     if (option)
 	str = option->opt_val;
     if (str == NULL)
+#ifdef WSCONS_SUPPORT
+	str = "/dev/wsmouse";
+#else
 	str = "/dev/mouse";
+#endif
 
     ClearScreen();
     refresh();
@@ -794,6 +805,7 @@ MonitorConfig(void)
     int nlist, def;
     char hsync_str[256], vrefresh_str[256];
 
+    hsync_str[0] = vrefresh_str[0] = '\0';
     nlist = 0;
     while (monitor) {
 	list = (char**)XtRealloc((XtPointer)list, (nlist + 1) * sizeof(char*));
@@ -925,7 +937,7 @@ MonitorConfig(void)
 	    }
 	}
     }
-    else
+    if (hsync_str[0] == '\0')
 	strcpy(hsync_str, "31.5");
 
     ClearScreen();
@@ -983,7 +995,7 @@ MonitorConfig(void)
 	    }
 	}
     }
-    else
+    if (vrefresh_str[0] == '\0')
 	strcpy(vrefresh_str, "50 - 70");
     ClearScreen();
     refresh();
@@ -1043,31 +1055,16 @@ CardConfig(void)
     char **list = NULL, *identifier = NULL, *driver, *busid, *tmp;
     int nlist, def;
     CardsEntry *entry = NULL;
-#ifdef USE_MODULES
     static char **drivers;
     static int ndrivers;
+#ifdef USE_MODULES
     static char *path = NULL, *modules = "lib/modules";
     const char *subdirs[] = {
 	"drivers",
 	NULL
     };
-
-    if (XF86Module_path == NULL) {
-	XF86Module_path = XtMalloc(strlen(XFree86Dir) + strlen(modules) + 2);
-	sprintf(XF86Module_path, "%s/%s", XFree86Dir, modules);
-    }
-
-    if (drivers == NULL) {
-	xf86Verbose = 0;
-	LoaderInit();
-	path = XtNewString(XF86Module_path);
-	LoaderSetPath(path);
-	drivers = LoaderListDirs((char**)subdirs, NULL);
-	for (; drivers[ndrivers]; ndrivers++)
-	    ;
-    }
-#else
-    static char *drivers[] = {
+#endif
+    static char *xdrivers[] = {
 	"apm",
 	"ark",
 	"ati",
@@ -1095,8 +1092,30 @@ CardConfig(void)
 	"vga",
 	"vesa",
     };
-    static int ndrivers = sizeof(drivers) / sizeof(drivers[0]);
+
+#ifdef USE_MODULES
+    if (!nomodules) {
+	if (XF86Module_path == NULL) {
+	    XF86Module_path = XtMalloc(strlen(XFree86Dir) + strlen(modules) + 2);
+	    sprintf(XF86Module_path, "%s/%s", XFree86Dir, modules);
+	}
+
+	if (drivers == NULL) {
+	    xf86Verbose = 0;
+	    LoaderInit();
+	    path = XtNewString(XF86Module_path);
+	    LoaderSetPath(path);
+	    drivers = LoaderListDirs((char**)subdirs, NULL);
+	    for (; drivers[ndrivers]; ndrivers++)
+		;
+	}
+    }
+    else
 #endif
+    {
+	ndrivers = sizeof(xdrivers) / sizeof(xdrivers[0]);
+	drivers = xdrivers;
+    }
 
     nlist = 0;
     while (device) {
@@ -1648,7 +1667,7 @@ ScreenConfig(void)
     XtFree((XtPointer)list);
 
     if (disp_allocated) {
-	display->list.next = screen->scrn_display_lst;
+	display->list.next = NULL;
 	if (screen->scrn_display_lst == NULL)
 	    screen->scrn_display_lst = display;
 	else
@@ -1674,7 +1693,7 @@ CopyAdjacency(XF86ConfAdjacencyPtr ptr)
 
     adj->adj_scrnum = ptr->adj_scrnum;
     adj->adj_screen = ptr->adj_screen;
-    adj->adj_screen_str = XtNewString(adj->adj_screen_str);
+    adj->adj_screen_str = XtNewString(ptr->adj_screen_str);
     adj->adj_top = ptr->adj_top;
     if (ptr->adj_top_str)
 	adj->adj_top_str = XtNewString(ptr->adj_top_str);
@@ -2148,7 +2167,7 @@ LayoutConfig(void)
 	ClearScreen();
 	refresh();
 	Dialog("Layout configuration",
-	       (nmouses > 1 && nkeyboards > 1) ?
+	       (nmouses > 1 || nkeyboards > 1) ?
 	       "As you have only one screen configured, I can now finish "
 	       "creating this Layout configuration."
 		:
@@ -3117,17 +3136,19 @@ DialogInput(char *title, char *prompt, int height, int width, char *init,
 		    }
 		    continue;
 		case KEY_RIGHT:
-		    if (input_x == box_width - 1) {
-			++scroll;
-			wmove(dialog, box_y, box_x);
-			for (i = scroll; i < scroll + box_width; i++)
-			    waddch(dialog, instr[scroll + i] ? instr[scroll + i] : ' ');
-			wmove(dialog, box_y, input_x + box_x);
-			wrefresh(dialog);
-		    }
-		    else if (input_x + scroll < len) {
-			wmove(dialog, box_y, ++input_x + box_x);
-			wrefresh(dialog);
+		    if (input_x + scroll < len) {
+			if (input_x == box_width - 1) {
+			    ++scroll;
+			    wmove(dialog, box_y, box_x);
+			    for (i = scroll; i < scroll + box_width; i++)
+				waddch(dialog, instr[i] ? instr[i] : ' ');
+			    wmove(dialog, box_y, input_x + box_x);
+			    wrefresh(dialog);
+			}
+			else {
+			    wmove(dialog, box_y, ++input_x + box_x);
+			    wrefresh(dialog);
+			}
 		    }
 		    continue;
 		case KEY_BACKSPACE:
@@ -3153,12 +3174,68 @@ DialogInput(char *title, char *prompt, int height, int width, char *init,
 			    for (i = scroll + input_x; i < len &&
 				 i < scroll + box_width; i++)
 				waddch(dialog, instr[i]);
-			    waddch(dialog, ' ');
+			    if (i < scroll + box_width)
+				waddch(dialog, ' ');
 			}
 			wmove(dialog, box_y, input_x + box_x);
 			wrefresh(dialog);
 		    }
 		    continue;
+		case KEY_HOME:
+		case CONTROL_A:
+		    wmove(dialog, box_y, box_x);
+		    if (scroll != 0) {
+			scroll = 0;
+			for (i = 0; i < box_width; i++)
+			    waddch(dialog, instr[i] ? instr[i] : ' ');
+		    }
+		    input_x = 0;
+		    wmove(dialog, box_y, box_x);
+		    wrefresh(dialog);
+		    break;
+		case CONTROL_D:
+		    if (input_x + scroll < len) {
+			memmove(instr + scroll + input_x,
+				    instr + scroll + input_x + 1,
+				    len - (scroll + input_x));
+			instr[--len] = '\0';
+			for (i = scroll + input_x; i < len &&
+			     i < scroll + box_width; i++)
+			    waddch(dialog, instr[i]);
+			if (i < scroll + box_width)
+			    waddch(dialog, ' ');
+			wmove(dialog, box_y, input_x + box_x);
+			wrefresh(dialog);
+		    }
+		    break;
+		case CONTROL_E:
+		case KEY_END:
+		    if (box_width + scroll < len) {
+			input_x = box_width - 1;
+			scroll = len - box_width + 1;
+			wmove(dialog, box_y, box_x);
+			for (i = scroll; i < scroll + box_width; i++)
+			    waddch(dialog, instr[i] ? instr[i] : ' ');
+			wmove(dialog, box_y, input_x + box_x);
+			wrefresh(dialog);
+		    }
+		    else {
+			input_x = len - scroll;
+			wmove(dialog, box_y, input_x + box_x);
+			wrefresh(dialog);
+		    }
+		    break;
+		case CONTROL_K:
+		    if (len) {
+			for (i = input_x; i < box_width; i++)
+			    waddch(dialog, ' ');
+			for (i = scroll + input_x; i < len; i++)
+			    instr[i] = '\0';
+			len = scroll + input_x;
+			wmove(dialog, box_y, box_x + input_x);
+			wrefresh(dialog);
+		    }
+		    break;
 		default:
 		    if (key < 0x100 && isprint(key)) {
 			if (scroll + input_x < sizeof(instr) - 1) {
@@ -3246,7 +3323,7 @@ DialogInput(char *title, char *prompt, int height, int width, char *init,
 	    case '\r':
 	    case '\n':
 		delwin(dialog);
-		return (button == -1 ? XtNewString(instr) : NULL);
+		return (button != 1 ? XtNewString(instr) : NULL);
 	}
     }
 }

@@ -1,6 +1,6 @@
 // $XConsortium: am /main/3 1997/12/18 12:40:12 rch $
 //
-// $XFree86$
+// $XFree86: xc/programs/xkbcomp/symbols/am,v 1.2 2000/10/28 00:34:06 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {

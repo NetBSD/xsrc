@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.12 2000/07/11 01:46:37 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.14 2001/05/04 19:05:51 dawes Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc
  *
@@ -112,25 +112,25 @@ removeMapping(VidMapPtr vp, MappingPtr mp)
 }
 
 enum { OPTION_MTRR };
-static OptionInfoRec opts[] =
+static const OptionInfoRec opts[] =
 {
 	{ OPTION_MTRR, "mtrr", OPTV_BOOLEAN, {0}, FALSE },
 	{ -1, NULL, OPTV_NONE, {0}, FALSE }
 };
 
-#define nopts (sizeof(opts) / sizeof(opts[0]))
-
 static void
 checkMtrrOption(VidMapPtr vp)
 {
 	if (!vp->mtrrOptChecked && vp->pScrn && vp->pScrn->options != NULL) {
-		OptionInfoRec options[nopts];
+		OptionInfoPtr options;
 
+		options = xnfalloc(sizeof(opts));
 		(void)memcpy(options, opts, sizeof(opts));
 		xf86ProcessOptions(vp->pScrn->scrnIndex, vp->pScrn->options,
 					options);
 		if (xf86GetOptValBool(options, OPTION_MTRR, &vp->mtrrEnabled))
 			vp->mtrrFrom = X_CONFIG;
+		xfree(options);
 		vp->mtrrOptChecked = TRUE;
 	}
 }

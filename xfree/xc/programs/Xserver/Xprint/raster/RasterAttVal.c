@@ -1,4 +1,4 @@
-/* $XConsortium: RasterAttVal.c /main/1 1996/09/28 17:06:26 rws $ */
+/* $Xorg: RasterAttVal.c,v 1.3 2000/08/17 19:48:12 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.

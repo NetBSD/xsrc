@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftname.c,v 1.4 2000/12/03 00:45:44 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftname.c,v 1.10 2001/03/30 18:50:18 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -26,13 +26,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef struct _XftObjectType {
     const char	*object;
     XftType	type;
 } XftObjectType;
 
-const XftObjectType _XftObjectTypes[] = {
+static const XftObjectType _XftObjectTypes[] = {
     { XFT_FAMILY,	XftTypeString, },
     { XFT_STYLE,	XftTypeString, },
     { XFT_SLANT,	XftTypeInteger, },
@@ -53,6 +54,10 @@ const XftObjectType _XftObjectTypes[] = {
     { XFT_RGBA,		XftTypeInteger, },
     { XFT_SCALE,	XftTypeDouble, },
     { XFT_RENDER,	XftTypeBool, },
+    { XFT_MINSPACE,	XftTypeBool, },
+    { XFT_CHAR_WIDTH,	XftTypeInteger },
+    { XFT_CHAR_HEIGHT,	XftTypeInteger },
+    { XFT_MATRIX,	XftTypeMatrix },
 };
 
 #define NUM_OBJECT_TYPES    (sizeof _XftObjectTypes / sizeof _XftObjectTypes[0])
@@ -93,6 +98,8 @@ static XftConstant XftConstants[] = {
 
     { "rgb",		"rgba",	    XFT_RGBA_RGB, },
     { "bgr",		"rgba",	    XFT_RGBA_BGR, },
+    { "vrgb",		"rgba",	    XFT_RGBA_VRGB },
+    { "vbgr",		"rgba",	    XFT_RGBA_VBGR },
 };
 
 #define NUM_XFT_CONSTANTS   (sizeof XftConstants/sizeof XftConstants[0])
@@ -122,7 +129,7 @@ XftNameConstant (char *string, int *result)
 }
 
 static XftValue
-_XftNameConvert (XftType type, char *string)
+_XftNameConvert (XftType type, char *string, XftMatrix *m)
 {
     XftValue	v;
 
@@ -141,6 +148,10 @@ _XftNameConvert (XftType type, char *string)
     case XftTypeDouble:
 	v.u.d = strtod (string, 0);
 	break;
+    case XftTypeMatrix:
+	v.u.m = m;
+	sscanf (string, "%lg %lg %lg %lg", &m->xx, &m->xy, &m->yx, &m->yy);
+	break;
     default:
 	break;
     }
@@ -152,9 +163,17 @@ _XftNameFindNext (const char *cur, const char *delim, char *save, char *last)
 {
     char    c;
     
-    while (*cur && !strchr (delim, *cur))
+    while ((c = *cur))
     {
-	c = *cur++;
+	if (c == '\\')
+	{
+	    ++cur;
+	    if (!(c = *cur))
+		break;
+	}
+	else if (strchr (delim, c))
+	    break;
+	++cur;
 	*save++ = c;
     }
     *save = 0;
@@ -173,6 +192,7 @@ XftNameParse (const char *name)
     char		*e;
     char		delim;
     XftValue		v;
+    XftMatrix		m;
     const XftObjectType	*t;
     XftConstant		*c;
 
@@ -211,10 +231,10 @@ XftNameParse (const char *name)
     }
     while (delim == ':')
     {
-	name = _XftNameFindNext (name, "=-:", save, &delim);
+	name = _XftNameFindNext (name, "=_:", save, &delim);
 	if (save[0])
 	{
-	    if (delim == '=' || delim == '-')
+	    if (delim == '=' || delim == '_')
 	    {
 		t = XftNameGetType (save);
 		for (;;)
@@ -222,7 +242,7 @@ XftNameParse (const char *name)
 		    name = _XftNameFindNext (name, ":,", save, &delim);
 		    if (save[0] && t)
 		    {
-			v = _XftNameConvert (t->type, save);
+			v = _XftNameConvert (t->type, save, &m);
 			if (!XftPatternAdd (pat, t->object, v, True))
 			    goto bail2;
 		    }
@@ -250,4 +270,122 @@ bail1:
     free (save);
 bail0:
     return 0;
+}
+
+static Bool
+_XftNameUnparseString (const char *string, char *escape, char **destp, int *lenp)
+{
+    int	    len = *lenp;
+    char    *dest = *destp;
+    char    c;
+
+    while ((c = *string++))
+    {
+	if (escape && strchr (escape, c))
+	{
+	    if (len-- == 0)
+		return False;
+	    *dest++ = escape[0];
+	}
+	if (len-- == 0)
+	    return False;
+	*dest++ = c;
+    }
+    *destp = dest;
+    *lenp = len;
+    return True;
+}
+
+static Bool
+_XftNameUnparseValue (XftValue v, char *escape, char **destp, int *lenp)
+{
+    char    temp[1024];
+    
+    switch (v.type) {
+    case XftTypeVoid:
+	return True;
+    case XftTypeInteger:
+	sprintf (temp, "%d", v.u.i);
+	return _XftNameUnparseString (temp, 0, destp, lenp);
+    case XftTypeDouble:
+	sprintf (temp, "%g", v.u.d);
+	return _XftNameUnparseString (temp, 0, destp, lenp);
+    case XftTypeString:
+	return _XftNameUnparseString (v.u.s, escape, destp, lenp);
+    case XftTypeBool:
+	return _XftNameUnparseString (v.u.b ? "True" : "False", 0, destp, lenp);
+    case XftTypeMatrix:
+	sprintf (temp, "%g %g %g %g", 
+		 v.u.m->xx, v.u.m->xy, v.u.m->yx, v.u.m->yy);
+	return _XftNameUnparseString (temp, 0, destp, lenp);
+    }
+    return False;
+}
+
+static Bool
+_XftNameUnparseValueList (XftValueList *v, char *escape, char **destp, int *lenp)
+{
+    while (v)
+    {
+	if (!_XftNameUnparseValue (v->value, escape, destp, lenp))
+	    return False;
+	if ((v = v->next))
+	    if (!_XftNameUnparseString (",", 0, destp, lenp))
+		return False;
+    }
+    return True;
+}
+
+#define XFT_ESCAPE_FIXED    "\\-:,"
+#define XFT_ESCAPE_VARIABLE "\\=_:,"
+
+Bool
+XftNameUnparse (XftPattern *pat, char *dest, int len)
+{
+    int			i;
+    XftPatternElt	*e;
+    const XftObjectType *o;
+
+    e = XftPatternFind (pat, XFT_FAMILY, False);
+    if (e)
+    {
+	if (!_XftNameUnparseValueList (e->values, XFT_ESCAPE_FIXED,
+				       &dest, &len))
+	    return False;
+    }
+    e = XftPatternFind (pat, XFT_SIZE, False);
+    if (e)
+    {
+	if (!_XftNameUnparseString ("-", 0, &dest, &len))
+	    return False;
+	if (!_XftNameUnparseValueList (e->values, XFT_ESCAPE_FIXED, &dest, &len))
+	    return False;
+    }
+    for (i = 0; i < NUM_OBJECT_TYPES; i++)
+    {
+	o = &_XftObjectTypes[i];
+	if (!strcmp (o->object, XFT_FAMILY) || 
+	    !strcmp (o->object, XFT_SIZE) ||
+	    !strcmp (o->object, XFT_FILE))
+	    continue;
+	
+	e = XftPatternFind (pat, o->object, False);
+	if (e)
+	{
+	    if (!_XftNameUnparseString (":", 0, &dest, &len))
+		return False;
+	    if (!_XftNameUnparseString (o->object, XFT_ESCAPE_VARIABLE, 
+					&dest, &len))
+		return False;
+	    if (!_XftNameUnparseString ("=", 0, &dest, &len))
+		return False;
+	    if (!_XftNameUnparseValueList (e->values, XFT_ESCAPE_VARIABLE, 
+					   &dest, &len))
+		return False;
+	}
+    }
+    if (len == 0)
+	return False;
+    *dest = '\0';
+    return True;
 }

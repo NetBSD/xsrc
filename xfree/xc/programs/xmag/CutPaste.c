@@ -1,4 +1,4 @@
-/* $TOG: CutPaste.c /main/9 1998/02/09 14:10:25 kaleb $ */
+/* $Xorg: CutPaste.c,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmag/CutPaste.c,v 1.3 1999/03/07 11:41:11 dawes Exp $ */
+/* $XFree86: xc/programs/xmag/CutPaste.c,v 1.5 2001/01/17 23:46:19 dawes Exp $ */
 /*
  * Author:  Davor Matic, MIT X Consortium
  */

@@ -1,4 +1,4 @@
-/* $TOG: FS.h /main/10 1998/02/09 11:24:06 kaleb $ */
+/* $Xorg: FS.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 
 /*
  * Copyright 1990, 1991 Network Computing Devices;
@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/include/fonts/FS.h,v 1.6 2001/01/17 17:53:25 dawes Exp $ */
 
 #ifndef _FS_H_
 #define	_FS_H_

@@ -166,12 +166,13 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
             GLint j;
             GLint rowLen = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
             GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
+            GLint width = ctx->DrawBuffer->Width;
             GLubyte *aptr = buffer
                           + ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
                           + ctx->DrawBuffer->Xmin;
             for (j = 0; j < rows; j++) {
                MEMSET( aptr, aclear, rowLen );
-               aptr += rowLen;
+               aptr += width;
             }
          }
          else {

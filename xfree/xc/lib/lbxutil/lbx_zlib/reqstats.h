@@ -1,4 +1,4 @@
-/* $TOG: reqstats.h /main/2 1998/02/09 10:23:30 kaleb $ */
+/* $Xorg: reqstats.h,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $TOG: xfindproxy.c /main/10 1998/02/09 13:57:41 kaleb $ */
+/* $Xorg: xfindproxy.c,v 1.3 2000/08/17 19:54:19 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/xfindproxy/xfindproxy.c,v 1.3 1999/03/02 11:49:39 dawes Exp $ */
+/* $XFree86: xc/programs/xfindproxy/xfindproxy.c,v 1.5 2001/01/17 23:45:27 dawes Exp $ */
 
 
 #include <stdio.h>

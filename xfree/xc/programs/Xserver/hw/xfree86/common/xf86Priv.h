@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.68 2000/10/30 23:02:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.72 2001/05/15 18:22:21 paulo Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -63,7 +63,6 @@ extern const char *xf86LogFile;
 extern MessageType xf86LogFileFrom;
 extern serverLayoutRec xf86ConfigLayout;
 extern Pix24Flags xf86ConfigPix24;
-extern confDRIRec xf86ConfigDRI;
 
 extern unsigned short xf86MouseCflags[];
 extern Bool xf86SupportedMouseTypes[];
@@ -71,6 +70,8 @@ extern int xf86NumMouseTypes;
 
 #ifdef XFree86LOADER
 extern DriverPtr *xf86DriverList;
+extern ModuleInfoPtr *xf86ModuleInfoList;
+extern int xf86NumModuleInfos;
 #else
 extern DriverPtr xf86DriverList[];
 #endif
@@ -126,7 +127,7 @@ void xf86ClearEntityListForScreen(int scrnIndex);
 void xf86AddDevToEntity(int entityIndex, GDevPtr dev);
 extern void xf86PostPreInit(void);
 extern void xf86PostScreenInit(void);
-extern memType getValidBIOSBase(PCITAG tag, int *num);
+extern memType getValidBIOSBase(PCITAG tag, int num);
 extern int pciTestMultiDeviceCard(int bus, int dev, int func, PCITAG** pTag);
 
 /* xf86Config.c */

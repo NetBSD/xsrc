@@ -1,4 +1,4 @@
-/* $TOG: XnestDis.c /main/2 1998/02/10 18:40:16 kaleb $ */
+/* $Xorg: XnestDis.c,v 1.3 2000/08/17 19:55:03 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: XTest.c /main/16 1998/02/06 15:58:41 kaleb $ */
+/* $Xorg: XTest.c,v 1.4 2000/08/17 19:46:23 cpqbld Exp $ */
 /*
 Copyright 1990, 1991 by UniSoft Group Limited
 */
@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xtst/XTest.c,v 1.1.1.1.12.2 1998/10/04 15:22:55 hohndel Exp $ */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.3 2001/01/17 19:43:16 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"
@@ -471,7 +471,7 @@ XTestDiscard(dpy)
     register char *ptr;
 
     LockDisplay(dpy);
-    if (something = (dpy->bufptr != dpy->buffer)) {
+    if ((something = (dpy->bufptr != dpy->buffer))) {
 	for (ptr = dpy->buffer;
 	     ptr < dpy->bufptr;
 	     ptr += (((xReq *)ptr)->length << 2))

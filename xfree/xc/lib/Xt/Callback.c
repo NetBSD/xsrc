@@ -1,4 +1,4 @@
-/* $TOG: Callback.c /main/47 1998/02/06 13:19:54 kaleb $ */
+/* $Xorg: Callback.c,v 1.3 2000/08/17 19:46:08 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xt/Callback.c,v 1.6 2001/01/17 19:43:03 dawes Exp $ */
 
 #include "IntrinsicI.h"
 

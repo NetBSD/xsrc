@@ -1,4 +1,4 @@
-/* $TOG: PsInit.c /main/6 1998/02/09 15:42:43 kaleb $ */
+/* $Xorg: PsInit.c,v 1.3 2000/08/17 19:48:10 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 **
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsInit.c,v 1.7 1998/10/04 09:37:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsInit.c,v 1.9 2001/01/17 22:36:32 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/* $TOG: dpms.h /main/1 1997/11/12 14:36:52 kaleb $ */
+/* $Xorg: dpms.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*****************************************************************
 
 Copyright (c) 1996 Digital Equipment Corporation, Maynard, Massachusetts.
@@ -26,7 +26,7 @@ dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 
 ******************************************************************/
-/* $XFree86: xc/include/extensions/dpms.h,v 3.3 1999/03/07 11:40:23 dawes Exp $ */
+/* $XFree86: xc/include/extensions/dpms.h,v 3.5 2001/01/17 17:53:20 dawes Exp $ */
 
 /*
  * HISTORY

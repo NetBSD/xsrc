@@ -1,4 +1,4 @@
-/* $TOG: getnext.c /main/8 1998/02/09 14:00:41 kaleb $ */
+/* $Xorg: getnext.c,v 1.3 2000/08/17 19:54:26 cpqbld Exp $ */
 
 /**** module getnext.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/getnext.c,v 1.4 2001/01/17 23:45:38 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>

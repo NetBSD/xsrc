@@ -7,7 +7,7 @@
 
 
 
-		    Building and Installing X11R6.4
+		   Building and Installing X11R6.5.1
 
 
 
@@ -17,14 +17,12 @@
 
 			   Kaleb S. KEITHLEY
 
-		     The Open Group X Project Team
 
 
 
 
 
-
-			    30 January, 1998
+			    August 20, 2000
 
 
 
@@ -32,40 +30,48 @@
 
 
 
+Copyright (C) 1999,2000 Compaq Computer Corporation
+Copyright (C) 1999,2000 Hewlett-Packard Company
+Copyright (C) 1999,2000 IBM Corporation
+Copyright (C) 1999,2000 Hummingbird Communications Ltd.
+Copyright (C) 1999,2000 Silicon Graphics, Inc.
+Copyright (C) 1999,2000 Sun Microsystems, Inc.
+Copyright (C) 1999,2000 The Open Group
 Copyright (C) 1998 The Open Group
 
 Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the Software),
-to use the Software without restriction, including, without limitation,
-the rights to copy, modify, merge, publish, distribute and sublicense
-the Software, to make, have made, license and distribute derivative
-works thereof, and to permit persons to whom the Software is furnished
-to do so, subject to the following conditions:
+copy of this software and associated documentation files (the "Soft-
+ware"), to deal in the Software without restriction, including without
+limitation the rights to use, copy, modify, merge, publish, distribute,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, provided that the above copyright
+notice(s) and this permission notice appear in all copies of the Soft-
+ware and that both the above copyright notice(s) and this permission
+notice appear in supporting documentation.
 
-The above copyright notice and the following permission notice shall be
-included in all copies of the Software:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
+ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY
+RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN
+THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSE-
+QUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFOR-
+MANCE OF THIS SOFTWARE.
 
-THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE WARRANTIES OF MERCHANTABIL-
-ITY, FITNESS FOR A PARTICULAR PURPOSE AND NON- INFRINGEMENT. IN NO EVENT
-SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER USEABILI-
-TIY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF, OR IN CONNNECTION WITH THE SOFTWARE OR THE USE OF OTHER DEALINGS
-IN THE SOFTWARE.
-
-Except as contained in this notice, the name of The Open Group shall not
-be used in advertising or otherwise to promote the use or other dealings
-in this Software without prior written authorization from The Open
-Group.
+Except as contained in this notice, the name of a copyright holder shall
+not be used in advertising or otherwise to promote the sale, use or
+other dealings in this Software without prior written authorization of
+the copyright holder.
 
 X Window System is a trademark of The Open Group.
 
 
 1.  Introduction
 
-This document is the installation notes that were provided with The Open
-Group's X11R6.4 release.  If you're building XFree86, it can be used as
-a rough guide.	Be aware that most of the details are not targetted
+This document is the installation notes that were provided with X.Org's
+X11R6.5.1 release.  If you're building XFree86, it can be used as a
+rough guide.  Be aware that most of the details are not targetted
 specifically at the current XFree86 source tree.  XFree86-specific docu-
 mentation can be found in the xc/programs/Xserver/hw/xfree86/doc direc-
 tory and on-line at http://www.xfree86.org/current/.  Some of the docu-
@@ -80,16 +86,17 @@ This quick summary is no substitute for reading the full build instruc-
 tions later in this document.
 
 Edit xc/config/cf/site.def for local preferences.  If you want to
-install somewhere other than /usr/X11R6.4, change ProjectRoot. (Do not
+install somewhere other than /usr/X11R6.5.1, change ProjectRoot. (Do not
 use DESTDIR.)  If you want to build with gcc uncomment the HasGcc2 line.
 If you have gcc, but not cc, please read the full build instructions.
 
-If some time has elapsed since the initial release of R6.4, check to see
-if any public patches have been released. The source tar files may have
-been updated -- check the patch-level line in the bug-report template.
-If the source in the tar files has not been updated then get all the
-patches and apply them, following the instructions at the top of each
-patch. Ignore the rebuild steps in the patch application instructions.
+If some time has elapsed since the initial release of R6.5.1, check to
+see if any public patches have been released. The source tar files may
+have been updated -- check the patch-level line in the bug-report tem-
+plate. If the source in the tar files has not been updated then get all
+the patches and apply them, following the instructions at the top of
+each patch. Ignore the rebuild steps in the patch application instruc-
+tions.
 
 Check the appropriate vendor-specific .cf file in xc/config/cf/ to make
 sure that OSMajorVersion, OSMinorVersion, and OSTeenyVersion are set
@@ -127,7 +134,7 @@ installation instructions.
 
 
 
-3.  Building and Installing R6.4
+3.  Building and Installing R6.5.1
 
 
 Historically the MIT X Consortium and The X Consortium, Inc., sample
@@ -171,21 +178,21 @@ On non-UNIX systems you'll need a utility that can extract gzip com-
 pressed tar files to extract the sources. There are several to chose
 from, we do not make recommendations about which one you should use.
 
-Release 6.4 sources are distributed among the tar files as follows:
+Release 6.5.1 sources are distributed among the tar files as follows:
 
 
-     tog-1.tar	    contains everything in xc/ that isn't in the other tar files
-     tog-2.tar	    contains xc/fonts
-     tog-3.tar	    contains xc/doc/specs, xc/util
-     tog-4.tar	    contains xc/doc/hardcopy
+     xorg-1.tar     contains everything in xc/ that isn't in the other tar files
+     xorg-2.tar     contains xc/fonts
+     xorg-3.tar     contains xc/doc/specs, xc/util
+     xorg-4.tar     contains xc/doc/hardcopy
 
 
 If you define BuildFonts to NO in your site.def file, then you only need
-to unpack tog-1.tar to build. If you build fonts, then you will also
-need tog-2.tar to build. If you already have the fonts from prior
+to unpack xorg-1.tar to build. If you build fonts, then you will also
+need xorg-2.tar to build. If you already have the fonts from prior
 releases you can use those instead of downloading them again. We presume
 that you know how to copy or move them from your old source tree to the
-R6.4 source tree.
+R6.5.1 source tree.
 
 
 3.3.  Unpacking the Distribution
@@ -196,26 +203,27 @@ Create a directory to hold the sources and cd into it:
      % mkdir sourcedir
      % cd sourcedir
 
-Then for each tar file tog-*.tar.gz, execute this:
+Then for each tar file xorg-*.tar.gz, execute this:
 
-     % gunzip -c ftp-dir/tog-N.tar.gz | tar xf -
+     % gunzip -c ftp-dir/xorg-N.tar.gz | tar xf -
 
 
 or if you have GNU's tar (FreeBSD, NetBSD, OpenBSD, or Linux too)
 
-     % tar xzf ftp-dir/tog-N.tar.gz
+     % tar xzf ftp-dir/xorg-N.tar.gz
 
 
 
 3.4.  Applying Patches
 
 
-If some time has elapsed since the initial release of R6.4, check to see
-if any public patches have been released. The source tar files may have
-been updated -- check the patch-level line in the bug-report template.
-If the source in the tar files has not been updated then get all the
-patches and apply them, following the instructions at the top of each
-patch. Ignore the rebuild steps in the patch application instructions.
+If some time has elapsed since the initial release of R6.5.1, check to
+see if any public patches have been released. The source tar files may
+have been updated -- check the patch-level line in the bug-report tem-
+plate. If the source in the tar files has not been updated then get all
+the patches and apply them, following the instructions at the top of
+each patch. Ignore the rebuild steps in the patch application instruc-
+tions.
 
 See the section "Public Patches" later in this document.
 
@@ -344,7 +352,8 @@ bsd.cf, convex.cf, DGUX.cf, luna.cf, macII.cf, Mips.cf, moto.cf, Oki.cf,
 pegasus.cf, x386.cf.  Amoeba.cf is known to require additional patches.
 
 The file xc/lib/Xdmcp/Wraphelp.c, for XDM-AUTHORIZATION-1, is not
-included in this release. See ftp://ftp.x.org/pub/R6.4/xdm-auth/README.
+included in this release. See ftp://ftp.x.org/pub/R6.5.1/xdm-
+auth/README.
 
 
 3.6.  System Build Notes
@@ -384,19 +393,19 @@ to edit xc/config/imake/Makefile.ini to specify gcc instead of cc.
 
 Use of the GNU BinUtils assembler, as, and linker, ld, is not supported
 -- period! If you have them installed on your system you must rename or
-remove them for the duration of the R6.4 build.  (You can restore them
+remove them for the duration of the R6.5.1 build.  (You can restore them
 afterwards.)
 
-The system-supplied make works just fine for building R6.4 and that's
+The system-supplied make works just fine for building R6.5.1 and that's
 what we suggest you use. If you've replaced your system's make with GNU
 make then we recommend that you restore the system make for the duration
-of your R6.4 build. After R6.4 is done building you can revert to GNU
-make. GNU make on most systems (except Linux, where it is the default
-make) is not a supported build configuration. GNU make may work for you,
-and if it does, great; but if it doesn't we do not consider it a bug in
-R6.4. If, after this admonition, you still use GNU make and your build
-fails, reread the above, and retry the build with the system's make
-before you file a bug-report.
+of your R6.5.1 build. After R6.5.1 is done building you can revert to
+GNU make. GNU make on most systems (except Linux, where it is the
+default make) is not a supported build configuration. GNU make may work
+for you, and if it does, great; but if it doesn't we do not consider it
+a bug in R6.5.1. If, after this admonition, you still use GNU make and
+your build fails, reread the above, and retry the build with the sys-
+tem's make before you file a bug-report.
 
 
 3.6.3.	IBM AIX 4.x
@@ -545,8 +554,8 @@ You can install the manual pages by typing the following as root:
 
 The version number of some of the the shared libraries has been changed.
 On SunOS 4, which supports minor version numbers for shared libraries,
-programs linked with the R6.4 libraries will use the new libraries with
-no special action required.
+programs linked with the R6.5.1 libraries will use the new libraries
+with no special action required.
 
 On most other modern operating systems the version portion of the
 library name, i.e. "6.1" portion of "libX11.so.6.1" is a string. Even if
@@ -783,8 +792,8 @@ The Open Group X Project Team may from time to time issue public patches
 for this release to fix any serious problems that are discovered. Such
 fixes are a subset of fixes available to X Project Team members. Public
 patches are available via anonymous FTP from
-ftp://ftp.x.org/pub/R6.4/fixes, or from your local X mirror site.  Check
-the site closest to you first.
+ftp://ftp.x.org/pub/R6.5.1/fixes, or from your local X mirror site.
+Check the site closest to you first.
 
 You can determine which public patches have already been applied to your
 source tree by examining the "VERSION" line of xc/bug-report. The source

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: PclAttVal.c /main/1 1996/09/28 17:00:37 rws $
+ * $Xorg: PclAttVal.c,v 1.3 2000/08/17 19:48:07 cpqbld Exp $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company

@@ -16,15 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef TTPLOAD_H
-#define TTPLOAD_H
-
-#include <freetype/internal/tttypes.h>
+#ifndef __TTPLOAD_H__
+#define __TTPLOAD_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_INTERNAL_TRUETYPE_TYPES_H
+
+
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -40,12 +40,9 @@
                               FT_Stream  stream );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* TTPLOAD_H */
+#endif /* __TTPLOAD_H__ */
 
 
 /* END */

@@ -8,10 +8,10 @@
 <title> Information for Chips and Technologies Users
 <author> David Bateman (<email>dbateman@club-internet.fr</email>),
          Egbert Eich (<email>eich@xfree86.org</email>)
-<date> 14th June 2000
+<date> 1st January 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.32 2000/10/27 18:31:02 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.36 2001/05/19 00:35:42 dawes Exp $
 </ident>
 
 <!-- Table of contents -->
@@ -276,15 +276,6 @@ Option "HWclocks"
 	programmable clock makes this option obsolete and so it's use
 	isn't recommended. It is completely ignored for HiQV chipsets.
 <tag>
-Option "UseVclk1"
-</tag>
-	The HiQV series of chips have three programmable clocks. The
-	first two are usually loaded with 25.175 and 28.322MHz for
-	VGA backward compatibility, and the third is used as a fully
-	programmable clock. On at least one system (the Inside 686 LCD/S
-	single board computer) the third clock is unusable. This option
-	forces the use of VClk1 as the programmable clock.
-<tag>
 TextClockFreq 25.175
 </tag>
 	Except for the HiQV chipsets, it is impossible for the server to read
@@ -311,6 +302,16 @@ Option "FPClock32"  "65.0MHz"
 	less, 16, 24 or 32bpp LCD panel clocks, where the options above set
 	the clocks to 65MHz.
 <tag>
+Option "CRTClkIndx" "2"
+Option "FPClkIndx" "1"
+</tag>
+	The HiQV series of chips have three programmable clocks. The
+	first two are usually loaded with 25.175 and 28.322MHz for
+	VGA backward compatibility, and the third is used as a fully
+	programmable clock. On at least one system (the Inside 686 LCD/S
+	single board computer) the third clock is unusable. These options
+	can be used to force a particular clock index to be used
+<tag>
 Option "MMIO"
 </tag>
 	This has a different effect depending on the hardware on which it
@@ -318,12 +319,14 @@ Option "MMIO"
 	BitBLT engine and is only usable with  PCI buses. It is enabled
 	by default for 65545 machines since the blitter	can not be used
 	otherwise. The HiQV series of chipsets must use MMIO with their
-	BitBLT engines, and so this is enabled by default. However the
-	690xx chipsets can use MMIO for all communications with the video
-	processor. So using this option on a 690xx chipset forces them
-	to use MMIO for all communications. This only makes sense when
-	the 690xx is on a PCI bus so that normal PIO can be disabled.
-	(WARNING!! 690xx MMIO is untested)
+	BitBLT engines, and so this is enabled by default.
+<tag>
+Option "FullMMIO"
+</tag>
+	The 690xx chipsets can use MMIO for all communications with the
+	video processor. So using this option on a 690xx chipset forces
+	them to use MMIO for all communications. This only makes sense
+	when the 690xx is on a PCI bus so that normal PIO can be disabled.
 <tag>
 Option "SuspendHack"
 </tag>
@@ -442,6 +445,22 @@ Option "VideoKey" "255"
 	8bit depth, 0 to 32,767 for 15bit depth, etc. This option might be used
 	if the default video overlay key causes problems.
 <tag>
+Option "DualRefresh"
+</tag>
+	The 69030 chipset has independent display channels, that can be
+	configured to support independent refresh rates on the flat panel
+	and on the CRT. The default behaviour is to have both the flat panel
+	and the CRT use the same display channel and thus the same refresh
+	rate. This option forces the two display channels to be used, giving
+	independent refresh rates. 
+<tag>
+Option "Crt2Memory" "2048" 
+</tag>
+	The ct69030 supports dual-head display. By default the two display
+	share equally the available memory. This option forces the second
+	display to take a particular amount of memory. Please read the
+	section below about dual-head display.
+<tag>
 Option "XaaNoScreenToScreenCopy",
 Option "XaaNoSolidFillRect",
 Option "XaaNoSolidHorVertLine",
@@ -532,6 +551,12 @@ driver you'll needed to considered several points
 	they specified after a suspend/resume or LCD/CRT switch. For a
 	complete discussion on the dot clock limitations, see the next
 	section.
+<tag> * Dual-head display </tag>
+		Dual-head display has two effects on the modelines. Firstly,
+	the memory requirements of both heads must fit in the available
+	memory. Secondly, the memory bandwidth of the video processor is
+	shared between the two heads. Hence the maximum dot-clock might 
+	need to be limited.
 </descrip>
 
 The driver is capable of driving both a CRT and a flat panel
@@ -571,6 +596,105 @@ Test on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
 The NEC Versa 4080 just needs the "FixPanelSize" option. To the best of my
 knowledge no machine with a HiQV needs the "UseModeline" or "FixPanelSize"
 options.
+
+<sect> Dual Display Channel<p>
+
+XFree86 releases later than 4.1.0 support dual-channel display on the ct69030. 
+This support can be used to give a single display image on two screen with
+different refresh rates, or entirely different images on the two displays.
+
+Dual refresh rate display can be selected with the "<tt>DualRefresh</tt>"
+option described above. However to use the dual-head support is slightly
+more complex. Firstly, the ct69030 chipset must be installed on a PCI bus. This
+is a driver limitation that might be relaxed in the future. In addition the
+device, screen and layout sections of the "<tt>XF86Config</tt>" must be
+correctly configured. A sample of an incomplete "<tt>XF86Config</tt>" is
+given below
+
+<quote><verb>
+Section "Device"
+    Identifier  "Chips and Technologies - Pipe A"
+    Driver      "chips"
+    BusID       "PCI:0:20:0"
+    Screen      0
+EndSection
+
+Section "Device"
+    Identifier  "Chips and Technologies - Pipe B"
+    Driver      "chips"
+    BusID       "PCI:0:20:0"
+    Screen      1
+EndSection
+
+Section "Screen"
+    Identifier  "Screen 0"
+    Device      "Chips and Technologies - Pipe A"
+    Monitor     "generic LCD"
+
+    SubSection "Display"
+        Depth           16
+        Modes           "1024x768"
+    EndSubsection
+EndSection
+
+Section "Screen"
+    Identifier  "Screen 1"
+    Device      "Chips and Technologies - Pipe B"
+    Monitor     "generic CRT"
+
+    SubSection "Display"
+        Depth           16
+        Modes           "1024x768"
+    EndSubsection
+EndSection
+
+Section "ServerLayout"
+    Identifier  "Main Layout"
+    Screen      "Screen 0"
+    Screen      "Screen 1" RightOf "Screen 0"
+    InputDevice "Mouse1" "CorePointer"
+    InputDevice "Keyboard1" "CoreKeyboard"
+EndSection
+</verb></quote>
+
+The device section must include the PCI BusID. This can be found from the
+log file of a working single-head installation. For instance, the line 
+
+<quote><verb>
+(--) PCI:*(0:20:0) C&amp;T 69030 rev 97, Mem @ 0xed000000/24
+</verb></quote>
+
+appears for the case above. Additionally, the "<tt>Screen</tt>" option
+must appear in the device section. It should be noted that if a flat 
+panel is used, this it must be allocated to "<tt>Screen 0</tt>".
+
+The server can then be started with the "<tt>+xinerama</tt>" option
+as follows
+
+<quote><verb>
+startx -- +xinerama
+</verb></quote>
+
+For more information, read the Xinerama documentation.
+
+It should be noted that the dual channel display options of the 69030 
+require the use of additional memory bandwidth, as each display channel
+independently accesses the video memory. For this reason, the maximum
+colour depth and resolution that can be supported in a dual channel mode
+will be reduced compared to a single display channel mode. However, as
+the driver does not prevent you from using a mode that will exceed the
+memory bandwidth of the 69030, but a warning like
+
+<quote><verb>
+(WW) Memory bandwidth requirements exceeded by dual-channel
+(WW)    mode. Display might be corrupted!!!
+</verb></quote>
+
+If you see such display corruption, and you have this warning, your choices
+are to reduce the refresh rate, colour depth or resolution, or increase the
+speed of the memory clock with the the "<tt>SetMClk</tt>" option described
+above. Note that increasing the memory clock also has its own problems as
+described above.
 
 <sect> The Full Story on Clock Limitations <p>
 
@@ -623,19 +747,29 @@ resulting in drawing errors on the screen. The formula to determine the
 maximum usable dotclock on the HiQV series of chips is
 
 <verb>
+Max dotclock = min(MaxDClk,  0.70  * 8 * MemoryClk / (BytesPerPixel + 
+                (isDSTN == TRUE ? 1 : 0)))
+</verb>
+
+if you chips is a 69030 or 69000 or
+
+<verb>
 Max dotclock = min(MaxDClk,  0.70  * 4 * MemoryClk / (BytesPerPixel + 
                 (isDSTN == TRUE ? 1 : 0)))
 </verb>
 
-which says that there are two limits on the dotclock. One the overall
-maximum, and another due to the available memory bandwidth of the chip.
-For the memory bandwidth 4 bytes are transfered every clock cycle (Hence
-the 4), but after accounting for the RAS/CAS signaling only about 70%
-of the bandwidth is available. The whole thing is divided by the bytes
-per pixel, plus an extra byte if you are using a DSTN. The extra byte
-with DSTN screens is used for the frame buffering/acceleration in these
-screens. So for the various Chips and Technologies chips the maximum
-specifications are
+
+otherwise. This effectively means that there are two limits on the
+dotclock. One the overall maximum, and another due to the available
+memory bandwidth of the chip.  The 69030 and 69000 have a 64bit memory
+bus and thus transfer 8 bytes every clock thus (hence the 8), while
+the other HiQV chipsets are 32bit and transfer 4 bytes per clock cycle
+(hence the 4). However, after accounting for the RAS/CAS signaling
+only about 70% of the bandwidth is available. The whole thing is
+divided by the bytes per pixel, plus an extra byte if you are using a
+DSTN. The extra byte with DSTN screens is used for the frame
+buffering/acceleration in these screens. So for the various Chips and
+Technologies chips the maximum specifications are
 
 <verb>
                     Max DClk MHz      Max Mem Clk MHz
@@ -666,8 +800,8 @@ clocks for the chips are
 65554                   94.5    77      51.33   77      51.33   38.5
 65555                   110     77      51.33   77      51.33   38.5
 68554                   110     77      51.33   77      51.33   38.5
-69000                   135    116.2    77.47  116.2    77.47   58.1
-69030                   170    140      93.33  140      93.33   70
+69000                   135    135     135     135     135     116.2
+69030                   170    170     170     170     170     140
 </verb>
 
 If you exceed the maximum set by the memory clock, you'll get corruption
@@ -841,9 +975,9 @@ video processor beyond it capabilities won't cause damage.
 	However, 8 and 24 bit colour depths seem to work fine.
 <tag> My ct69030 machine locks up when starting XFree</tag>
 	The ct69030 chipset introduced a new dual channel architecture. In its
-	current form, XFree can not take advantage of this second display
+	current form, XFree86 can not take advantage of this second display
 	channel. In fact if the video BIOS on the machine sets the ct69030
-	to a dual channel mode by default, XFree will lockup hard at this
+	to a dual channel mode by default, XFree86 will lockup hard at this
 	point. The solution is to use the BIOS setup to change to a single
 	display channel mode, ensuring that both the IOSS and MSS registers
 	are set to a single channel mode. Work is underway to fix this.
@@ -885,7 +1019,8 @@ video processor beyond it capabilities won't cause damage.
   65.10MHz is not. So for unexplained problems not addressed above, please
   try to alter the clock you are using slightly, say in steps of 0.05MHz
   and see if the problem goes away. Alternatively, using the
-  "<tt>UseVClk1</tt>" option with HiQV chips might also help.
+  "<tt>CRTClkIndx</tt>" or "<tt>FPClkIndx</tt>" option with HiQV chips might
+  also help.
 
 
   For other screen drawing related problems, try the "<tt>NoAccel</tt>" or

@@ -19,13 +19,32 @@
 #ifndef __FTMM_H__
 #define __FTMM_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_TYPE1_TABLES_H
+
+#include <ft2build.h>
+#include FT_TYPE1_TABLES_H
+
 
 FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    multiple_masters                                                   */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Multiple Masters                                                   */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    How to manage Multiple Masters fonts.                              */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    The following types and functions are used to manage Multiple      */
+  /*    Master fonts, i.e. the selection of specific design instances by   */
+  /*    setting design axis coordinates.                                   */
+  /*                                                                       */
+  /*************************************************************************/
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -79,6 +98,7 @@ FT_BEGIN_HEADER
 
   } FT_Multi_Master;
 
+  /* */
 
   typedef FT_Error  (*FT_Get_MM_Func)( FT_Face           face,
                                        FT_Multi_Master*  master );
@@ -166,6 +186,9 @@ FT_BEGIN_HEADER
                            FT_Face    face,
                            FT_UInt    num_coords,
                            FT_Fixed*  coords );
+
+
+  /* */
 
 
 FT_END_HEADER

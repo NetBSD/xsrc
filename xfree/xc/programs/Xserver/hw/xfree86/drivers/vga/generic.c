@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.47 2000/11/16 19:45:02 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.54 2001/05/16 06:48:11 keithp Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -33,7 +33,7 @@
  * The port of this driver to XFree86 4.0 was done by:
  * David Dawes <dawes@xfree86.org>
  * Dirk H. Hohndel <hohndel@xfree86.org>
- * Marc Aurele La France <tsi@ualberta.ca>
+ * Marc Aurele La France <tsi@xfree86.org>
  */
 
 #define DEBUG(x) 
@@ -43,10 +43,7 @@
 #include "vgaHW.h"
 #include "xf86PciInfo.h"
 
-#undef  PSZ
-#define PSZ 8
-#include "cfb.h"
-#undef  PSZ
+#include "fb.h"
 
 #include "xf4bpp.h"
 #include "xf1bpp.h"
@@ -74,7 +71,7 @@
 
 
 /* Forward definitions */
-static OptionInfoPtr	  GenericAvailableOptions(int chipid, int busid);
+static const OptionInfoRec *	  GenericAvailableOptions(int chipid, int busid);
 static void       GenericIdentify(int);
 static Bool       GenericProbe(DriverPtr, int);
 static Bool       GenericPreInit(ScrnInfoPtr, int);
@@ -108,7 +105,7 @@ typedef enum {
     OPTION_VGA_CLOCKS
 } GenericOpts;
 
-static OptionInfoRec GenericOptions[] = {
+static const OptionInfoRec GenericOptions[] = {
     { OPTION_SHADOW_FB,         "ShadowFB",     OPTV_BOOLEAN,   {0}, FALSE },
     { OPTION_VGA_CLOCKS,        "VGAClocks",    OPTV_BOOLEAN,   {0}, FALSE },
     { -1,                       NULL,           OPTV_NONE,      {0}, FALSE }
@@ -130,8 +127,10 @@ static const char *vgahwSymbols[] = {
 static const char *fbSymbols[] = {
     "xf1bppScreenInit",
     "xf4bppScreenInit",
-    "cfbScreenInit",
-    "mfbScreenInit",
+    "fbScreenInit",
+#ifdef RENDER
+    "fbPictureInit",
+#endif
     NULL
 };
 
@@ -162,7 +161,7 @@ static XF86ModuleVersionInfo GenericVersionRec =
 
 /*
  * This data is accessed by the loader.  The name must be the module name
- * followed by "ModuleInit".
+ * followed by "ModuleData".
  */
 XF86ModuleData vgaModuleData = { &GenericVersionRec, GenericSetup, NULL };
 
@@ -218,8 +217,7 @@ GenericIdentify(int flags)
         GenericChipsets);
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 GenericAvailableOptions(int chipid, int busid)
 {
     return GenericOptions;
@@ -380,6 +378,7 @@ typedef struct _GenericRec
     CARD8 * ShadowPtr;
     CARD32 ShadowPitch;
     CloseScreenProcPtr CloseScreen;
+    OptionInfoPtr Options;
 } GenericRec, *GenericPtr;
 
 
@@ -493,13 +492,7 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
     {
         case 1:  Module = "xf1bpp"; Sym = "xf1bppScreenInit";  break;
         case 4:  Module = "xf4bpp"; Sym = "xf4bppScreenInit";  break;
-        case 8:  Module = "cfb";    Sym = "cfbScreenInit";     break;
-
-        default:
-            xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-                "Given depth (%d) is not supported by this driver.\n",
-                pScreenInfo->depth);
-            return FALSE;
+        default: Module = "fb";	    Sym = "fbScreenInit";      break;
     }
     xf86PrintDepthBpp(pScreenInfo);
 
@@ -579,6 +572,15 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
     pvgaHW->MapSize = 0x00010000;       /* Standard 64kB VGA window */
     vgaHWGetIOBase(pvgaHW);             /* Get VGA I/O base */
 
+    /* Deal with options */
+    xf86CollectOptions(pScreenInfo, NULL);
+
+    if (!(pGenericPriv->Options = xalloc(sizeof(GenericOptions))))
+	return FALSE;
+    memcpy(pGenericPriv->Options, GenericOptions, sizeof(GenericOptions));
+    xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options, 
+		       pGenericPriv->Options);
+
 #ifndef __NOT_YET__
     if (pScreenInfo->depth == 8)
     {
@@ -587,11 +589,6 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
         goto SetDefaultMode;
     }
 #endif
-
-    /* Deal with options */
-    xf86CollectOptions(pScreenInfo, NULL);
-    xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options, 
-		       GenericOptions);
 
     /*
      * Determine clocks.  Limit them to the first four because that's all that
@@ -604,7 +601,7 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
         for (i = 0;  i < pScreenInfo->numClocks;  i++)
             pScreenInfo->clock[i] = pEnt->device->clock[i];
         From = X_CONFIG;
-    } else  if (xf86ReturnOptValBool(GenericOptions,OPTION_VGA_CLOCKS,FALSE)) {
+    } else  if (xf86ReturnOptValBool(pGenericPriv->Options,OPTION_VGA_CLOCKS,FALSE)) {
         pScreenInfo->numClocks = 2;
         pScreenInfo->clock[0] = 25175;
         pScreenInfo->clock[1] = 28322;
@@ -673,17 +670,14 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
     /* Set display resolution */
     xf86SetDpi(pScreenInfo, 0, 0);
 
-    if (xf86ReturnOptValBool(GenericOptions,OPTION_SHADOW_FB,FALSE)) {
+    if (xf86ReturnOptValBool(pGenericPriv->Options,OPTION_SHADOW_FB,FALSE)) {
         pScreenInfo->bitmapBitOrder = BITMAP_BIT_ORDER;
         pScreenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
 	pGenericPriv->ShadowFB = TRUE;
         xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
 		   "Using \"Shadow Framebuffer\"\n");
-	switch (pScreenInfo->depth)
-	{
-            case 1:  Module = "mfb"; Sym = "mfbScreenInit";  break;
-            case 4:  Module = "cfb"; Sym = "cfbScreenInit";  break;
-	}
+	Module = "fb";
+	Sym = "fbScreenInit";
 	if (!xf86LoadSubModule(pScreenInfo, "shadowfb"))
 	    return FALSE;
 	xf86LoaderReqSymLists(shadowfbSymbols, NULL);
@@ -829,13 +823,11 @@ GenericCloseScreen(int scrnIndex, ScreenPtr pScreen)
 }
 
 
-#ifdef DPMSExtension
 static void
 GenericDPMSSet(ScrnInfoPtr pScreen, int mode, int flags)
 {
     vgaHWDPMSSet(pScreen, mode, flags);
 }
-#endif
 
 
 static void
@@ -1079,6 +1071,8 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScreenInfo->rgbBits, pScreenInfo->defaultVisual))
 	return FALSE;
 
+    miSetPixmapDepths ();
+
     /* Initialise the framebuffer */
     switch (pScreenInfo->depth)
     {
@@ -1090,11 +1084,15 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 						 pScreenInfo->virtualY);
 		if(pGenericPriv->ShadowPtr == NULL)
 		    return FALSE;
-		Inited = mfbScreenInit(pScreen, pGenericPriv->ShadowPtr,
-				       pScreenInfo->virtualX, 
-				       pScreenInfo->virtualY,
-				       pScreenInfo->xDpi, pScreenInfo->yDpi,
-				       pScreenInfo->displayWidth);
+		Inited = fbScreenInit(pScreen, pGenericPriv->ShadowPtr,
+				      pScreenInfo->virtualX, 
+				      pScreenInfo->virtualY,
+				      pScreenInfo->xDpi, pScreenInfo->yDpi,
+				      pScreenInfo->displayWidth,
+				      pScreenInfo->bitsPerPixel);
+#ifdef RENDER
+		fbPictureInit (pScreen, 0, 0);
+#endif
 		ShadowFBInit(pScreen, GenericRefreshArea1bpp);
 	    } else {
 		Inited = xf1bppScreenInit(pScreen, pvgaHW->Base,
@@ -1113,11 +1111,15 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 						 pScreenInfo->virtualY);
 		if(pGenericPriv->ShadowPtr == NULL)
 		    return FALSE;
-		Inited = cfbScreenInit(pScreen, pGenericPriv->ShadowPtr,
-				       pScreenInfo->virtualX, 
-				       pScreenInfo->virtualY,
-				       pScreenInfo->xDpi, pScreenInfo->yDpi,
-				       pScreenInfo->displayWidth);
+		Inited = fbScreenInit(pScreen, pGenericPriv->ShadowPtr,
+				      pScreenInfo->virtualX, 
+				      pScreenInfo->virtualY,
+				      pScreenInfo->xDpi, pScreenInfo->yDpi,
+				      pScreenInfo->displayWidth,
+				      pScreenInfo->bitsPerPixel);
+#ifdef RENDER
+		fbPictureInit (pScreen, 0, 0);
+#endif
 		ShadowFBInit(pScreen, GenericRefreshArea4bpp);
 	    } else {
 		Inited = xf4bppScreenInit(pScreen, pvgaHW->Base,
@@ -1128,10 +1130,14 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    }
             break;
         case 8:
-            Inited = cfbScreenInit(pScreen, pvgaHW->Base,
-                pScreenInfo->virtualX, pScreenInfo->virtualY,
-                pScreenInfo->xDpi, pScreenInfo->yDpi,
-                pScreenInfo->displayWidth);
+            Inited = fbScreenInit(pScreen, pvgaHW->Base,
+				  pScreenInfo->virtualX, pScreenInfo->virtualY,
+				  pScreenInfo->xDpi, pScreenInfo->yDpi,
+				  pScreenInfo->displayWidth,
+				  pScreenInfo->bitsPerPixel);
+#ifdef RENDER
+	    fbPictureInit (pScreen, 0, 0);
+#endif
             break;
     }
 
@@ -1152,9 +1158,7 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (pScreenInfo->depth > 1)
         vgaHWHandleColormaps(pScreen);
 
-#ifdef DPMSExtension
     xf86DPMSInit(pScreen, GenericDPMSSet, 0);
-#endif
 
     /* Wrap the screen's CloseScreen vector and set its SaveScreen vector */
     pGenericPriv->CloseScreen = pScreen->CloseScreen;

@@ -1,4 +1,4 @@
-/* $TOG: FSSynchro.c /main/7 1998/05/01 12:50:38 kaleb $ */
+/* $Xorg: FSSynchro.c,v 1.3 2000/08/17 19:44:05 cpqbld Exp $ */
 
 /* @(#)FSSynchro.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;
@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: $ */
+/* $XFree86: xc/lib/FS/FSSynchro.c,v 1.4 2001/01/17 19:41:28 dawes Exp $ */
 
 /*
 

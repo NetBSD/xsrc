@@ -1,4 +1,4 @@
-/* $TOG: auth.c /main/28 1998/02/09 15:11:49 kaleb $ */
+/* $Xorg: auth.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.3 1998/10/11 11:23:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.6 2001/01/17 22:37:10 dawes Exp $ */
 
 /*
  * authorization hooks for the server

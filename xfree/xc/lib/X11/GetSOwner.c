@@ -1,4 +1,4 @@
-/* $TOG: GetSOwner.c /main/5 1998/02/06 17:28:14 kaleb $ */
+/* $Xorg: GetSOwner.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

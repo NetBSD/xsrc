@@ -16,13 +16,11 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
 
 #include <string.h>         /* strcmp() */
-
-
-#ifdef FT_FLAT_COMPILE
 
 #include "t1gload.h"
 #include "t1load.h"
@@ -31,20 +29,8 @@
 #include "t1afm.h"
 #endif
 
-#else
-
-#include <type1/t1gload.h>
-#include <type1/t1load.h>
-
-#ifndef T1_CONFIG_OPTION_NO_AFM
-#include <type1/t1afm.h>
-#endif
-
-#endif
-
-
-#include <freetype/internal/psnames.h>
-#include <freetype/internal/psaux.h>
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
 
 
   /*************************************************************************/
@@ -117,6 +103,7 @@
       FREE( type1->glyph_names_block );
 
       FREE( type1->encoding.char_index );
+      FREE( type1->encoding.char_name );
       FREE( type1->font_name );
 
 #ifndef T1_CONFIG_OPTION_NO_AFM
@@ -281,16 +268,19 @@
       root->num_fixed_sizes = 0;
       root->available_sizes = 0;
 
-      root->bbox         = face->type1.font_bbox;
-      root->units_per_EM = 1000;
-      root->ascender     = (FT_Short)face->type1.font_bbox.yMax;
-      root->descender    = (FT_Short)face->type1.font_bbox.yMin;
-      root->height       = ( ( root->ascender - root->descender ) * 12 ) / 10;
+      root->bbox = face->type1.font_bbox;
+
+      /* Set units_per_EM if we didn't set it in parse_font_matrix. */
+      if ( !root->units_per_EM )
+        root->units_per_EM = 1000;
+
+      root->ascender  = (FT_Short)( face->type1.font_bbox.yMax >> 16 );
+      root->descender = (FT_Short)( face->type1.font_bbox.yMin >> 16 );
+      root->height    = ( ( root->ascender - root->descender ) * 12 ) / 10;
 
       /* now compute the maximum advance width */
-
-
-      root->max_advance_width = (FT_Short)face->type1.font_bbox.xMax;
+      root->max_advance_width =
+        (FT_Short)( face->type1.font_bbox.xMax >> 16 );
       {
         FT_Int  max_advance;
 

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/dps/publictypes.h,v 1.2 2000/06/07 22:02:58 tsi Exp $ */
 
 #ifndef	PUBLICTYPES_H
 #define	PUBLICTYPES_H

@@ -1,4 +1,4 @@
-/* $TOG: uconstrain.c /main/9 1998/02/09 14:01:53 kaleb $ */
+/* $Xorg: uconstrain.c,v 1.3 2000/08/17 19:54:28 cpqbld Exp $ */
 
 /**** module uconstrain.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/uconstrain.c,v 1.5 2001/01/17 23:45:39 dawes Exp $ */
 
 
 #include "xieperf.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyPlane.c,v 1.10 2000/06/13 02:51:24 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyPlane.c,v 1.11 2000/09/25 23:56:13 mvojkovi Exp $ */
 
 /*
    A CopyPlane function that handles bitmap->screen copies and

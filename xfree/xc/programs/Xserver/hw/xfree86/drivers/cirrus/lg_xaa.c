@@ -10,7 +10,7 @@
  * Much of this code is inspired by the XAA acceleration from XFree86
  * 3.3.3, laguna_acl.c
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_xaa.c,v 1.4 2000/12/06 15:35:17 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_xaa.c,v 1.5 2001/02/15 17:39:28 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -96,7 +96,9 @@ static void LgSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1,
 Bool
 LgXAAInit(ScreenPtr pScreen)
 {
-	XAAInfoRecPtr XAAPtr;
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    CirPtr pCir = CIRPTR(pScrn);
+    XAAInfoRecPtr XAAPtr;
 
 	XAAPtr = XAACreateInfoRec();
 	if (!XAAPtr)
@@ -122,6 +124,8 @@ LgXAAInit(ScreenPtr pScreen)
 	 * Miscellany.
 	 */
 	XAAPtr->Sync = LgSync;
+
+	pCir->AccelInfoRec = XAAPtr;
 
 	if (!XAAInit(pScreen, XAAPtr))
 		return FALSE;

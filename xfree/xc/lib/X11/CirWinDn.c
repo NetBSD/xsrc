@@ -1,4 +1,4 @@
-/* $TOG: CirWinDn.c /main/6 1998/02/06 17:08:34 kaleb $ */
+/* $Xorg: CirWinDn.c,v 1.3 2000/08/17 19:44:31 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/CirWinDn.c,v 1.3 2001/01/17 19:41:33 dawes Exp $ */
 
 #include "Xlibint.h"
 

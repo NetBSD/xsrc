@@ -1,4 +1,4 @@
-/* 
+/* Id: citron.c,v 1.8 2001/03/28 08:24:38 pk Exp $
  * Copyright (c) 1998  Metro Link Incorporated
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,13 +25,13 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.c,v 1.4 2000/11/03 13:13:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.c,v 1.6 2001/04/05 17:42:34 dawes Exp $ */
 
 /*
  * Based, in part, on code with the following copyright notice:
  *
- * Copyright 1999-2000 by Thomas Thanner, Citron GmbH, Germany. <support@citron.de>
- * Copyright 1999-2000 by Peter Kunzmann, Citron GmbH, Germany. <support@citron.de>
+ * Copyright 1999-2001 by Thomas Thanner, Citron GmbH, Germany. <support@citron.de>
+ * Copyright 1999-2001 by Peter Kunzmann, Citron GmbH, Germany. <kunzmann@citron.de>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -95,6 +95,21 @@
 					"cit_ParseCommand" to set the variables not
 					only on the touch side but also in the priv rec 	pk
  2.04	19.10.00	reconnect enhanced									pk
+ 2.05	27.02.01	QueryHardware enhanced, connection faster			pk
+ 2.06	15.03.01	cit_SetBlockDuration added, cit_Flush modified		pk
+ 2.07	16.03.01	The problem that the touch didn't connect to the 
+ 					X-server was a hardware problem
+ 					with the winbond chip (interrupt was dead after
+					receiving spurious characters when the touch screen
+					is switched on). The SIO has to be reinitialized to
+					get rid of that problem. 							pk
+ 2.08	20.03.01	if cit_GetPacket has an overrun 
+ 					cit_ReinitSerial has to be called, Vmin set to "1"	
+					cit_SuperVisionTimer, cit_SetEnterCount added
+					debuglevel, entercount(z) from external now poss.
+					enter_touched not reset by coord_exit				pk
+ 2.09	25.03.01	enter_touched also reset by press_exit, a new 
+ 					command (SetPWMFreq) for backlight dimming added	pk
  ============================================================================
 
 */
@@ -104,30 +119,31 @@
 #define PK	0
 #define INITT 0		/* Initialisation of touch in first loop */
 
-/* ODD version number enables the debug macros */
-/* EVEN version number is for release          */
-#define CITOUCH_VERSION	0x204
-char version[]="Touch Driver V2.04  (c) 1999-2000 Citron GmbH";
 
+#define CITOUCH_VERSION	0x209
+char version[]="Touch Driver V2.09  (c) 1999-2001 Citron GmbH";
+
+#define CITOUCH_VERSION_MAJOR ((CITOUCH_VERSION >> 8) & 0xf)
+#define CITOUCH_VERSION_MINOR ((CITOUCH_VERSION >> 4) & 0xf)
+#define CITOUCH_VERSION_PATCH ((CITOUCH_VERSION >> 0) & 0xf)
 
 
 /*****************************************************************************
  *	Standard Headers
  ****************************************************************************/
 
-#include <misc.h>
-#include <xf86.h>
+#include "misc.h"
+#include "xf86.h"
 #define NEED_XF86_TYPES
-/*#include <xf86Version.h>*/
-#include <xf86_ansic.h>
-#include <xf86_OSproc.h>
-#include <xf86Optrec.h>
-#include <xf86Xinput.h>
-#include <xisb.h>
-#include <exevents.h>		/* Needed for InitValuator/Proximity stuff*/
+#include "xf86_ansic.h"
+#include "xf86_OSproc.h"
+#include "xf86Optrec.h"
+#include "xf86Xinput.h"
+#include "xisb.h"
+#include "exevents.h"		/* Needed for InitValuator/Proximity stuff*/
 
 
-/* #define CI_TIM	*/	/* Enable timer */
+/* #define CIT_TIM	*/	/* Enable timer */
 #define CIT_BEEP		/* enable beep feature */
 
 /*****************************************************************************
@@ -162,9 +178,13 @@ char version[]="Touch Driver V2.04  (c) 1999-2000 Citron GmbH";
 #endif
 
 static int      debug_level = 0;
-#if CITOUCH_VERSION & 0x0001
+
+/*
+ debug is always on, because we can set the debug-level
+ in XF86Config (Option DebugLevel)
+*/
 #define DEBUG
-#endif
+
 #ifdef DEBUG
 #define DBG(lvl, f) {if ((lvl) <= debug_level) f;}
 #else
@@ -237,10 +257,10 @@ static XF86ModuleVersionInfo VersionRec =
 	MODULEVENDORSTRING,			/* vendor specific string */
 	MODINFOSTRING1,				
 	MODINFOSTRING2,
-	XF86_VERSION_CURRENT,		/* Module-specific current version */
-	0,							/* Module-specific major version */
-	1,							/* Module-specific minor version */
-	1,							/* Module-specific patch level */
+	XF86_VERSION_CURRENT,		/* Current XFree version */
+	CITOUCH_VERSION_MAJOR,		/* Module-specific major version */
+	CITOUCH_VERSION_MINOR,		/* Module-specific minor version */
+	CITOUCH_VERSION_PATCH,		/* Module-specific patch level */
 	ABI_CLASS_XINPUT,
 	ABI_XINPUT_VERSION,
 	MOD_CLASS_XINPUT,
@@ -297,7 +317,45 @@ static const char *default_options[] =
 	"StopBits", 	"1",
 	"DataBits", 	"8",
 	"Parity", 		"None",
-	"Vmin", 		"3",
+/*
+  In non-canonical input processing mode, input is not assembled into
+  lines and input processing (erase, kill, delete, etc.) does not occur.
+  Two parameters control the behavior of this mode: c_cc[VTIME] sets the
+  character timer, and c_cc[VMIN] sets the minimum number of characters
+  to receive before satisfying the read.
+ 
+  If MIN > 0 and TIME = 0, MIN sets the number of characters to receive
+  before the read is satisfied. As TIME is zero, the timer is not used.
+ 
+  If MIN = 0 and TIME > 0, TIME serves as a timeout value. The read will
+  be satisfied if a single character is read, or TIME is exceeded (t =
+  TIME *0.1 s). If TIME is exceeded, no character will be returned.
+ 
+ 
+  If MIN > 0 and TIME > 0, TIME serves as an inter-character timer. The
+  read will be satisfied if MIN characters are received, or the time
+  between two characters exceeds TIME. The timer is restarted every time
+  a character is received and only becomes active after the first
+  character has been received.
+ 
+  If MIN = 0 and TIME = 0, read will be satisfied immediately. The
+  number of characters currently available, or the number of characters
+  requested will be returned. According to Antonino (see contributions),
+  you could issue a fcntl(fd, F_SETFL, FNDELAY); before reading to get
+  the same result.
+ 
+  By modifying newtio.c_cc[VTIME] and newtio.c_cc[VMIN] all modes
+  described above can be tested.
+  (Copied from serial-programming-howto)
+*/
+
+
+/*	Vmin was set to 3 (Three characters have to arrive until Read_Input is called).
+	I set it to 1 because of the winbond SIO (maybe the interrupt disappears after 1 character
+	and X waits for another two.
+*/
+
+	"Vmin", 		"1",	/* blocking read until 1 chars received */
 	"Vtime", 		"1",
 	"FlowControl", 	"None",
 	"ClearDTR", 	""
@@ -325,7 +383,7 @@ cit_SendtoTouch(DeviceIntPtr dev)
 	unsigned char buf[MAX_BYTES_TO_TRANSFER*2+2];
 
 	DBG(DDS, ErrorF("%scit_SendtoTouch(numbytes=0x%02X, data[0]=%02x, data[1]=%02x, data[2]=%02x, data[3]=%02x, ...)\n", CI_INFO, priv->dds.numbytes,
-		priv->dds.data[0], priv->dds.data[1], priv->dds.data[2], priv->dds.data[3],));
+		priv->dds.data[0], priv->dds.data[1], priv->dds.data[2], priv->dds.data[3]));
 
 	j=0;
 	buf[j++] = CTS_STX;			/* transmit start of packet	*/
@@ -377,12 +435,17 @@ cit_ParseCommand(DeviceIntPtr dev)
 			DBG(DDS, ErrorF("%scit_ParseCommand(PWM Active:%d PWM Sleep:%d \n", CI_INFO, priv->pwm_active, priv->pwm_sleep));
 		break;
 		
+		case C_SETPWMFREQ:
+			priv->pwm_freq = (int)priv->dds.data[1] | (int)(priv->dds.data[2] << 8);
+			DBG(DDS, ErrorF("%scit_ParseCommand: PWM Freq:%d\n", CI_INFO, priv->pwm_freq));
+		break;
+		
 		case C_SETSLEEPMODE:
 			if(priv->dds.data[1] == 0)
 			{
 				priv->sleep_time_act = priv->dds.data[2] | (priv->dds.data[3] << 8);
 			}
-			DBG(DDS, ErrorF("%scit_ParseCommand(Sleep Time act:%d \n", CI_INFO, priv->sleep_time_act));
+			DBG(DDS, ErrorF("%scit_ParseCommand: Sleep Time act:%d \n", CI_INFO, priv->sleep_time_act));
 		break;
 		
 		case C_SETDOZEMODE:
@@ -390,13 +453,18 @@ cit_ParseCommand(DeviceIntPtr dev)
 			{
 				priv->doze_time_act = priv->dds.data[2] | (priv->dds.data[3] << 8);
 			}
-			DBG(DDS, ErrorF("%scit_ParseCommand(Doze Time act:%d \n", CI_INFO, priv->doze_time_act));
+			DBG(DDS, ErrorF("%scit_ParseCommand: Doze Time act:%d \n", CI_INFO, priv->doze_time_act));
 		break;
 		
 		case C_SETAREAPRESSURE:
 			priv->button_threshold = priv->dds.data[1];
-			DBG(DDS, ErrorF("%scit_ParseCommand(Button Threshold:%d \n", CI_INFO, priv->button_threshold));
+			DBG(DDS, ErrorF("%scit_ParseCommand: Button Threshold:%d \n", CI_INFO, priv->button_threshold));
 		break;
+		
+		default:
+			DBG(DDS, ErrorF("%scit_ParseCommand: Command %d not found\n", CI_INFO, priv->dds.data[0]));
+		break;
+
 	}
 }
 
@@ -418,6 +486,7 @@ cit_DriverComm(DeviceIntPtr dev)
 		case D_SETCLICKMODE:
 			priv->click_mode = priv->dds.data[i++];
 			ErrorF("%sClick Mode: %d\n", CI_INFO, priv->click_mode);
+			cit_SetEnterCount(priv);	/* set enter_count according to click_mode */
 		break;
 		
 		case D_BEEP:
@@ -444,9 +513,26 @@ cit_DriverComm(DeviceIntPtr dev)
 			ErrorF("%sBeep Release Duration: %d\n", CI_INFO, priv->rel_dur);
 		break;
 		
-		default:
-			ErrorF("%sNot known command: %d\n", CI_WARNING, priv->dds.data[1]);
+		case D_DEBUG:
+			debug_level = priv->dds.data[i++];
+			ErrorF("%sDebug level set to %d \n", CI_INFO, debug_level);
+		break;
+
+		case D_ENTERCOUNT:
+			priv->enter_count_no_Z = priv->dds.data[i++];
+			cit_SetEnterCount(priv);	/* set enter_count according click_mode */
+			ErrorF("%sEnterCount set to %d \n", CI_INFO, priv->enter_count_no_Z);
+		break;
+
+		case D_ZENTERCOUNT:
+			priv->enter_count_Z = priv->dds.data[i++];
+			cit_SetEnterCount(priv);	/* set enter_count according click_mode */
+			ErrorF("%sZEnterCount set to %d \n", CI_INFO, priv->enter_count_Z);
+		break;
 		
+		default:
+			ErrorF("%sNot known command: %d - Get a recent driver\n", CI_WARNING, priv->dds.data[1]);
+		break;		
 	}
 }
 
@@ -563,17 +649,17 @@ static void hexdump (void *ioaddr, int len)
 }
 #endif
 
-#ifdef CIT_TIM
+
 /*****************************************************************************
  *	[cit_StartTimer]
  ****************************************************************************/
 
 static void
-cit_StartTimer(cit_PrivatePtr priv)
+cit_StartTimer(cit_PrivatePtr priv, int nr)
 {
-	priv->timer_ptr = TimerSet(priv->timer_ptr, 0, priv->timer_val1,
-			 priv->timer_callback, (pointer)priv);
-	DBG(5, ErrorF ("%scit_StartTimer called PTR=%08x\n", CI_INFO, priv->timer_ptr));
+	priv->timer_ptr[nr] = TimerSet(priv->timer_ptr[nr], 0, priv->timer_val1[nr],
+			 priv->timer_callback[nr], (pointer)priv);
+	DBG(5, ErrorF ("%scit_StartTimer[%d] called PTR=%08x\n", CI_INFO, nr, priv->timer_ptr));
 }
 
 
@@ -581,20 +667,43 @@ cit_StartTimer(cit_PrivatePtr priv)
  *	[cit_CloseTimer]
  ****************************************************************************/
 static void
-cit_CloseTimer(cit_PrivatePtr priv)
+cit_CloseTimer(cit_PrivatePtr priv, int nr)
 {
 
-	DBG(5, ErrorF ("%scit_CloseTimer called PTR=%08x\n", CI_INFO, priv->timer_ptr));
-	if(priv->timer_ptr)
+	DBG(5, ErrorF ("%scit_CloseTimer[%d] called PTR=%08x\n", CI_INFO, nr, priv->timer_ptr));
+	if(priv->timer_ptr[nr])
 	{
-		TimerFree(priv->timer_ptr);
-		priv->timer_ptr = NULL;
+		TimerFree(priv->timer_ptr[nr]);
+		priv->timer_ptr[nr] = NULL;
 	}
 	else
-		DBG(5, ErrorF ("%scit_CloseTimer: Nothing to close\n", CI_WARNING));
+		DBG(5, ErrorF ("%scit_CloseTimer[%d]: Nothing to close\n", CI_WARNING, nr));
 }
 
 
+
+/*****************************************************************************
+ *	[cit_SuperVisionTimer] If called reset Serial device
+ ****************************************************************************/
+static CARD32
+cit_SuperVisionTimer(OsTimerPtr timer, CARD32 now, pointer arg)
+{
+	cit_PrivatePtr priv = (cit_PrivatePtr) arg;
+    int	sigstate;
+
+	DBG(5, ErrorF ("%scit_SuperVisionTimer called %d\n", CI_INFO, GetTimeInMillis()));
+
+    sigstate = xf86BlockSIGIO ();
+	
+	cit_ReinitSerial(priv);
+
+    xf86UnblockSIGIO (sigstate);
+
+	return (0);	/* stop timer */
+}
+
+
+#ifdef CIT_TIM
 
 /*****************************************************************************
  *	[cit_DualTouchTimer]
@@ -647,6 +756,8 @@ CitronPreInit (InputDriverPtr drv, IDevPtr dev, int flags)
 		ErrorF("%s\t- unable to allocate structures!\n", CI_ERROR);
 		goto SetupProc_fail;
 	}
+
+	priv->local = local;				/* save local device pointer */
 
 
  	/* this results in an xf86strdup that must be freed later */
@@ -762,10 +873,16 @@ CitronPreInit (InputDriverPtr drv, IDevPtr dev, int flags)
 	ErrorF("%sBeam Timeout: %d\n", CI_CONFIG, priv->beam_timeout);
 	priv->touch_time = xf86SetIntOption(local->options, "TouchTime", 0) & 0xff;
 	ErrorF("%sTouch Time: %d\n", CI_CONFIG, priv->touch_time);
-	priv->enter_count = xf86SetIntOption(local->options, "EnterCount", 3);
-	ErrorF("%sEnter Count: %d\n", CI_CONFIG, priv->enter_count);
 	priv->max_dual_count = xf86SetIntOption(local->options, "DualCount", MAX_DUAL_TOUCH_COUNT);
 	ErrorF("%sDual Count: %d\n", CI_CONFIG, priv->max_dual_count);
+	priv->enter_count_no_Z = xf86SetIntOption(priv->local->options, "EnterCount", 3);
+	ErrorF("%sEnterCount: %d\n", CI_CONFIG, priv->enter_count_no_Z);
+	priv->enter_count_Z = xf86SetIntOption(priv->local->options, "ZEnterCount", 2);
+	ErrorF("%sZEnterCount: %d\n", CI_CONFIG, priv->enter_count_Z);
+	priv->pwm_freq = xf86SetIntOption(priv->local->options, "PWMFreq", -1);
+	ErrorF("%sPWMFreq: %d\n", CI_CONFIG, priv->pwm_freq);
+
+	cit_SetEnterCount(priv);	/* set enter_count according click_mode */
 
 /* trace the min and max values */
 	priv->raw_min_x = CIT_DEF_MAX_X;
@@ -775,15 +892,18 @@ CitronPreInit (InputDriverPtr drv, IDevPtr dev, int flags)
 
 #ifdef CIT_TIM
 /* preset timer values */
-	priv->timer_ptr = NULL;
-	priv->timer_val1 = 0;
-	priv->timer_val2 = 0;
-	priv->timer_callback = NULL;
+	priv->timer_ptr[FAKE_TIMER] = NULL;
+	priv->timer_val1[FAKE_TIMER] = 0;
+	priv->timer_val2[FAKE_TIMER] = 0;
+	priv->timer_callback[FAKE_TIMER] = NULL;
 #endif
+	priv->timer_ptr[SV_TIMER] = NULL;
+	priv->timer_val1[SV_TIMER] = 0;
+	priv->timer_val2[SV_TIMER] = 0;
+	priv->timer_callback[SV_TIMER] = NULL;
 
 	priv->fake_exit = FALSE;
 	priv->enter_touched = 0;			/* preset */
-	priv->local = local;				/* save local device pointer */
 
  	DBG(6, ErrorF("%s\t+ options read\n", CI_INFO));
 	s = xf86FindOptionValue (local->options, "ReportingMode");
@@ -845,6 +965,8 @@ CitronPreInit (InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->buffer = NULL;
 		}
 		xf86CloseSerial(local->fd);
+		local->fd = 0;
+		
 #endif
 	}
 
@@ -860,7 +982,10 @@ CitronPreInit (InputDriverPtr drv, IDevPtr dev, int flags)
   SetupProc_fail:
 #if(INITT)
 	if ((local) && (local->fd))
+	{
 		xf86CloseSerial (local->fd);
+		local->fd = 0;
+	}
 #endif
 	if ((local) && (local->name))
 		xfree (local->name);
@@ -910,6 +1035,7 @@ DeviceControl (DeviceIntPtr dev, int mode)
 		ErrorF ("%sDeviceControl Mode (%d) not found\n", CI_ERROR, mode);
 		RetVal = BadValue;
 	}
+	DBG(2, ErrorF ("%sDeviceControl: RetVal = %d\n", CI_INFO, RetVal));
 	return(RetVal);
 }
 
@@ -928,7 +1054,7 @@ DeviceOn (DeviceIntPtr dev)
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd == -1)
 	{
-		xf86Msg(X_WARNING, "%s%s: cannot open input device\n", CI_ERROR, local->name);
+		DBG(5, ErrorF("%s%s: cannot open input device\n", CI_ERROR, local->name));
 		goto DeviceOn_fail;
 	}
 	priv->buffer = XisbNew (local->fd, CIT_BUFFER_SIZE);
@@ -937,22 +1063,29 @@ DeviceOn (DeviceIntPtr dev)
 
 	xf86FlushInput(local->fd);
 
+	cit_SendCommand(priv->buffer, C_SOFTRESET, 0);	/* Make a Reset in case of a connected touch */
+
 	if (QueryHardware (local, &errmaj, &errmin) != Success)
 	{
-		ErrorF ("%s\t- Unable to query/initialize Citron hardware.\n", CI_ERROR);
+		ErrorF ("%s\t- DeviceOn: Unable to query/initialize hardware.\n", CI_ERROR);
 		goto DeviceOn_fail;
 	}
 
-	AddEnabledDevice (local->fd);
+	AddEnabledDevice(local->fd);
 	dev->public.on = TRUE;
+	DBG(5, ErrorF ("%sDeviceOn Success\n", CI_INFO));
 	return (Success);
 
 	/*
 	 * If something went wrong, cleanup
 	 */
   DeviceOn_fail:
+
 	if ((local) && (local->fd))
+	{
 		xf86CloseSerial (local->fd);
+		local->fd = 0;
+	}
 
 	if ((local) && (local->name))
 		xfree (local->name);
@@ -970,9 +1103,6 @@ DeviceOn (DeviceIntPtr dev)
 	}
 	ErrorF ("%sDeviceOn failed\n", CI_ERROR);
 	return (!Success);
-
-
-
 }
 
 /*****************************************************************************
@@ -997,14 +1127,16 @@ DeviceClose (DeviceIntPtr dev)
 
 	DBG(5, ErrorF ("%sDeviceClose called\n",CI_INFO));
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 
 	cit_SendCommand(priv->buffer, C_SOFTRESET, 0);
 #ifdef CIT_TIM
-	cit_CloseTimer(priv);  		/* Close timer if started */
+	cit_CloseTimer(priv, FAKE_TIMER);  		/* Close timer if started */
 #endif
+	cit_CloseTimer(priv, SV_TIMER);			/* Do not know if it is running, close anyway */
+
 	XisbTrace(priv->buffer, 1); /* trace on */
-	XisbBlockDuration (priv->buffer, 500000);
+	cit_SetBlockDuration (priv, 500000);
  	c = XisbRead (priv->buffer);
 	if(c == CTS_NAK)
 	{
@@ -1154,8 +1286,7 @@ ReadInput (LocalDevicePtr local)
 	 */
 	if(!priv->fake_exit)
 	{
-		XisbBlockDuration (priv->buffer, -1);
-	 	DBG(RI, ErrorF("%sXisbBlockDuration = -1\n", CI_INFO));
+		cit_SetBlockDuration (priv, -1);
 	}
 	while (
 #ifdef CIT_TIM
@@ -1243,7 +1374,6 @@ ReadInput (LocalDevicePtr local)
 			xf86PostButtonEvent (local->dev, TRUE,
 					     priv->button_number, 0, 0, 2, x, y);
 			cit_Beep(priv, 0);
-			priv->enter_touched = 0;		/* reset coordinate report counter */
 			DBG(RI, ErrorF("%s\tPostButtonEvent(UP, x=%d, y=%d)\n", CI_INFO, x, y));
 			priv->button_down = FALSE;
 		}
@@ -1396,142 +1526,107 @@ QueryHardware (LocalDevicePtr local, int *errmaj, int *errmin)
 	unsigned char	x;
 	int		i, cnt;
 	int err;		/* for WAIT */
-	int init = FALSE;
+
 
 	/* Reset the IRT from any mode and wait for end of warmstart */
 	DBG(5, ErrorF("%sQueryHardware called\n", CI_INFO));
 
-/* Will not work with XFree86 4.0 */
+
+
+/* Will not work with XFree86 4.0.1 */
 /*	xf86SerialSendBreak (local->fd, 2); */
-	cit_Flush(priv->buffer); 
+	cit_Flush(priv); 
 
-/* Test if touch is already initialized */
-	cit_SendCommand(priv->buffer, C_GETORIGIN, 0);
 
-	/* wait max. 0.5 seconds for acknowledge */
-	DBG(6, ErrorF("%s\t* waiting for acknowledge\n", CI_INFO));
-/*	WAIT(50); */
-	XisbBlockDuration (priv->buffer, 500000);
-	cnt = 0;
-	err = FALSE;
-
-	while ((i=XisbRead(priv->buffer)) != -1)
-	{
-	    DBG(7, ErrorF("%s\t* 0x%02X received - cnt %d\n",CI_INFO, i, cnt));
-		{
-			switch (cnt)
-			{
-			
-			case 0:
-				if ((unsigned char)i != CTS_STX)
-					init = TRUE;
-				break;
-
-			case 1:
-				if ((unsigned char)i != (CMD_REP_CONV & C_GETORIGIN))
-					init = TRUE;
-				break;
-
-			case 2:
-				if ((unsigned char)i > 3)
-					init = TRUE;
-				break;
-
-			case 3:
-				if ((unsigned char)i != CTS_ETX)
-					init = TRUE;
-				break;
-			}	
-		}
-		cnt++;
-		if(init)	
-	    	break;
-	}
-	/* Touch is physically not connected or sio problem or break */
-	cit_Flush(priv->buffer); /* flush the buffer and wait for break */
-	if(cnt < 3)
-	{
-		WAIT(150);
-		/* if we have 0 in the buffer I assume we got a break */
-		if (XisbRead(priv->buffer) == 0)
-		{
-		
-			DBG(6, ErrorF("%s+ BREAK detected - cnt=%d\n", CI_INFO, cnt));
-			init = TRUE;
-		}
-		else	/* if nothing is in the buffer I assume the touch is not connected */
-		{
-			ErrorF("%sTouch not connected - please connect - cnt=%d\n", CI_ERROR, cnt);
-			return(Success);	/* If success is returned we can later connect */
-		}						/* the touch again when it was reconnected without */
-	}							/* restarting X */
-
-	/* if init is true, we have to (re)initialize the touch */
-	if (init)
-	{
-		ErrorF("%sTouch not initialized yet\n",CI_INFO);
 
 	/*
 	 * IRT signals end of startup by sending BREAKS with 100 ms length.
 	 * wait a maximum of 2 seconds for at least 2 consecutive breaks
 	 * to be sure the IRT is really initialized
 	*/
-		cit_Flush(priv->buffer); /* clear the buffer and wait for break */
-		DBG(6, ErrorF("%s\t* waiting for BREAKS...\n", CI_INFO));
-		for (i=0, cnt=0; (i<20) && (cnt<2); i++)
-		{
-/*			millisleep (105); */
-			WAIT(120);	/* wait a little bit longer than 100 ms */
-			DBG(7, ErrorF("%s\t (loop %d)\n", CI_INFO, i));
-			if (XisbRead(priv->buffer) == 0)
-			{
-				cnt++;
-				DBG(6, ErrorF("%s\t+ BREAK %d detected\n", CI_INFO, cnt));
-			}
-			else
-			{
-				cnt = 0;
-			}
-		}
-		if (cnt < 2)
-		{
-			ErrorF("%sCannot reset Citron Infrared Touch!\n", CI_ERROR);
-/*			*errmaj = LDR_NOHARDWARE; */
-			return (!Success);
-		}
-		/* Now initialize IRT to CTS Protocol */
-		DBG(6, ErrorF("%s\t* initializing to CTS mode\n", CI_INFO));
-		x = 0x0d;
-		for (i=0; i<2; i++)
-		{
-			XisbWrite(priv->buffer, &x, 1);
-/*			millisleep (50); */
-			WAIT(50);
-		}
-		x = MODE_D;
-		XisbWrite(priv->buffer, &x, 1);
+	cit_Flush(priv); /* clear the buffer and wait for break */
+	DBG(6, ErrorF("%s\t* waiting for BREAKS...\n", CI_INFO));
+	
+	cit_SetBlockDuration (priv, 1);
 
-		/* wait max. 0.5 seconds for acknowledge */
-		DBG(6, ErrorF("%s\t* waiting for acknowledge\n", CI_INFO));
-		XisbBlockDuration (priv->buffer, 500000);
-		cnt = 0;
-		while ((i=XisbRead(priv->buffer)) != -1)
+	for (i=0, cnt=0; (i<20) && (cnt<3); i++)
+	{
+		cit_Flush(priv); /* clear the buffer and wait for break */
+		WAIT(150);	/* wait a little bit longer than 100 ms */
+		DBG(7, ErrorF("%s\t (loop %d)\n", CI_INFO, i));
+		if (XisbRead(priv->buffer) == 0)
 		{
-		    DBG(7, ErrorF("%s\t* 0x%02X received - waiting for CTS_XON\n",CI_INFO, i));
-			if ((unsigned char)i == CTS_XON)
-		    	break;
-			if(cnt++ > 100) return (Success);	/* emergency stop */
+			cnt++;
+			DBG(6, ErrorF("%s\t+ BREAK %d detected\n", CI_INFO, cnt));
 		}
-		if ((unsigned char)i != CTS_XON)
+		else
 		{
-		    ErrorF("%sNo acknowledge from Citron Infrared Touch!\n", CI_ERROR);
-/*	    	*errmaj = LDR_NOHARDWARE; */
-	    	return (!Success);
+			cnt = 0;
 		}
+		if ( i == 12)
+		{
+			cit_SendCommand(priv->buffer, C_SOFTRESET, 0);
+			DBG(6, ErrorF("%s\t+ SOFTRESET sent\n", CI_INFO));
+		}
+#if(0)
+		/* maybe we are in Debug Mode and have to sent a soft reset */
+		if(i == 15)
+		{
+			XisbWrite(priv->buffer, (unsigned char *)"r2", 2);
+			x = 0x0d;
+			XisbWrite(priv->buffer, &x, 1);
+			DBG(6, ErrorF("%s\t+ DEBUG-MODE SOFTRESET sent\n", CI_INFO));
+		}
+#endif
 	}
+	if (cnt < 2)
+	{
+		ErrorF("%sCannot reset Citron Infrared Touch!\n", CI_ERROR);
+
+/*	Workaround - bugfix
+	Normally when the touch is connected and the driver thinks it didn't sent
+	breaks we have the problem, that spurious characters, which are sent at
+	the startup of the touch screen	make the winbond SIO chip not to sent
+	any further interrupts. To overcome	this problem we reinitialize the
+	winbond chip with a close and open of the serial line.
+	Thanks a lot winbond team. Without it I wouldn't have
+	written these wonderful lines of source code ;-).
+*/ 
+		cit_ReinitSerial(priv);
+		return (!Success);
+	}
+	/* Now initialize IRT to CTS Protocol */
+	DBG(6, ErrorF("%s\t* initializing to CTS mode\n", CI_INFO));
+	x = 0x0d;
+	for (i=0; i<2; i++)
+	{
+		XisbWrite(priv->buffer, &x, 1);
+		WAIT(50);
+	}
+	x = MODE_D;
+	XisbWrite(priv->buffer, &x, 1);
+
+	/* wait max. 0.5 seconds for acknowledge */
+	DBG(6, ErrorF("%s\t* waiting for acknowledge\n", CI_INFO));
+	cit_SetBlockDuration (priv, 500000);
+	cnt = 0;
+	while ((i=XisbRead(priv->buffer)) != -1)
+	{
+	    DBG(7, ErrorF("%s\t* 0x%02X received - waiting for CTS_XON\n",CI_INFO, i));
+		if ((unsigned char)i == CTS_XON)
+	    	break;
+		if(cnt++ > 50) return (Success);	/* emergency stop */
+	}
+	if ((unsigned char)i != CTS_XON)
+	{
+	    ErrorF("%sNo acknowledge from Citron Infrared Touch!\n", CI_ERROR);
+		cit_ReinitSerial(priv);
+    	return (!Success);
+	}
+
 	/* now we have the touch connected, do the initialization stuff */
 	DBG(6, ErrorF("%s\t+ Touch connected!\n",CI_INFO));
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 
 	DBG(6, ErrorF("%s\t+ requesting pressure sensors report\n",CI_INFO));
 	if (cit_GetPressureSensors(priv)!=Success)
@@ -1540,10 +1635,11 @@ QueryHardware (LocalDevicePtr local, int *errmaj, int *errmin)
 	}
 
 	DBG(5, ErrorF("%s ClickMode is %d\n",CI_INFO, priv->click_mode));
-	if(priv->click_mode == NO_CLICK_MODE)	/* no click mode set in XF86Config */
+	if(priv->click_mode == NO_CLICK_MODE)	/* if no click mode set in XF86Config set it automatically */
 	{
 		priv->click_mode = (priv->pressure_sensors > 0) ? CM_ZPRESS : CM_ENTER;
 		DBG(5, ErrorF("%sClickMode set to %d\n",CI_INFO, priv->click_mode));
+		cit_SetEnterCount(priv);
 	}
 
 	cit_SendCommand(priv->buffer, C_SETAREAFLAGS, 1,  AOF_ADDEXIT
@@ -1593,6 +1689,7 @@ QueryHardware (LocalDevicePtr local, int *errmaj, int *errmin)
 	cit_SendCommand(priv->buffer, C_SETTRANSMISSION, 1, TM_TRANSMIT);
 	cit_SendCommand(priv->buffer, C_SETSCANNING, 1, 1);
 
+	cit_SendPWMFreq(priv);			/* Set PWM Frequency */
 
 	if(priv->query_state == 0)		/* do error reporting only 1 time */
 	{
@@ -1665,7 +1762,7 @@ cit_GetPacket (cit_PrivatePtr priv)
 {
 	int c;
 	int errmaj, errmin;
-
+	int loop = 0;
 	DBG(GP, ErrorF("%scit_GetPacket called\n", CI_INFO));
 	DBG(GP, ErrorF("%s\t* initial lex_mode =%d (%s)\n", CI_INFO, priv->lex_mode,
 			    priv->lex_mode==cit_idle	?"idle":
@@ -1677,7 +1774,8 @@ cit_GetPacket (cit_PrivatePtr priv)
 	{
 #if(0)		
 		DBG(GP, ErrorF("%s c=%d\n",CI_INFO, c));
-#endif		
+#endif
+		loop++;
 	 	if (c == CTS_STX)
 		{
 			DBG(GP, ErrorF("%s\t+ STX detected\n", CI_INFO));
@@ -1686,6 +1784,11 @@ cit_GetPacket (cit_PrivatePtr priv)
 				DBG(7, ErrorF("%s\t- no ETX received before this STX!\n", CI_WARNING));
 			priv->lex_mode = cit_getID;
 			DBG(GP, ErrorF("%s\t+ new lex_mode == getID\n", CI_INFO));
+			/* Start supervision timer at the beginning of a command */
+			priv->timer_val1[SV_TIMER] = 2000;		/* Timer delay [ms] 2s */
+			priv->timer_callback[SV_TIMER] = (OsTimerCallback)cit_SuperVisionTimer;		/* timer callback routine	*/
+			cit_StartTimer(priv, SV_TIMER);			
+
 		}
 		else if (c == CTS_ETX)
 		{
@@ -1697,6 +1800,7 @@ cit_GetPacket (cit_PrivatePtr priv)
 			{
 			    DBG(GP, ErrorF("%s\t+ Good report received\n", CI_INFO));
 			    priv->lex_mode = cit_idle;
+				cit_CloseTimer(priv, SV_TIMER);			/* stop supervision */
 			    return (Success);
 			}
 			DBG(GP, ErrorF("%s\t- unexpected ETX received!\n", CI_WARNING));
@@ -1741,45 +1845,81 @@ cit_GetPacket (cit_PrivatePtr priv)
 				}
 				else
 				{
-					DBG(GP, ErrorF("%s\t- command buffer overrun\n", CI_ERROR));
+					DBG(GP, ErrorF("%s\t- command buffer overrun, loop[%d]\n", CI_ERROR, loop));
 					/* let's reinitialize the touch - maybe it sends breaks */
-					cit_Flush(priv->buffer);
+					/* The touch assembles breaks until the buffer has an overrun */
+					/* 100ms x 256 -> 26 seconds */
+					
+					priv->lex_mode = cit_idle;
+					cit_ReinitSerial(priv);
 
 				}
 			}
 			else
 			{
 				/* this happens e.g. when the touch sends breaks, so we try to reconnect */
-				DBG(GP, ErrorF("%s\t- unexpected non control received!\n", CI_WARNING));
+				DBG(GP, ErrorF("%s\t- unexpected non control received! [%d, 0x%02x, loop[%d]]\n", CI_WARNING, c, c, loop));
 				DBG(GP, ErrorF("%s\t- Device not connected - trying to reconnect ...\n", CI_WARNING));
 				if (QueryHardware (priv->local, &errmaj, &errmin) != Success)
 					ErrorF ("%s\t- Unable to query/initialize Citron Touch hardware.\n", CI_ERROR);
 				else
 					ErrorF ("%s\t- Citron Touch reconnected\n", CI_INFO);
 
+				return(!Success);
 			}
 		}
 		else if (c != CTS_XON && c != CTS_XOFF)
 		{
-			DBG(GP, ErrorF("%s\t- unhandled control character received!\n", CI_WARNING));
+			DBG(GP, ErrorF("%s\t- unhandled control character received! loop[%d]\n", CI_WARNING, loop));
 		}
-	}
-	DBG(GP, ErrorF("%scit_GetPacket exit !Success\n", CI_INFO));
+	} /* end while */
+	DBG(GP, ErrorF("%scit_GetPacket exit !Success - loop[%d]\n", CI_INFO, loop));
+
 	return (!Success);
 }
 
 
 /*****************************************************************************
+ *	[cit_ReinitSerial] Reinitialize serial port
+ ****************************************************************************/
+static void
+cit_ReinitSerial(cit_PrivatePtr priv)
+{
+	if(priv->local->fd)
+	{
+		xf86CloseSerial(priv->local->fd);
+		priv->local->fd = 0;
+		priv->local->fd = xf86OpenSerial (priv->local->options);
+		DBG(6, ErrorF("%s\t* cit_ReinitSerial: Serial connection reinitialized\n", CI_INFO));
+	}
+	else
+		DBG(6, ErrorF("%s\t* cit_ReinitSerial: Serial connection not opened\n", CI_ERROR));
+}
+
+/*****************************************************************************
  *	[cit_Flush]
  ****************************************************************************/
 static void
-cit_Flush (XISBuffer *b)
+cit_Flush (cit_PrivatePtr priv)
 {
+	int old_block_duration;
+	
 	DBG(7, ErrorF("%scit_Flush called\n", CI_INFO));
-	XisbBlockDuration(b, 0);
-	while (XisbRead(b) > 0);
+	old_block_duration = priv->buffer->block_duration;
+	XisbBlockDuration(priv->buffer, 1000);		/* wait for at least 10ms for the next character */
+	while (XisbRead(priv->buffer) >= 0);
+	cit_SetBlockDuration(priv, old_block_duration);			/* Restore the last set block duration (cit_SetBlockDuration) */
 }
 
+/*****************************************************************************
+ *	[cit_SetBlockDuration]
+ ****************************************************************************/
+static void
+cit_SetBlockDuration (cit_PrivatePtr priv, int block_duration)
+{
+	DBG(7, ErrorF("%scit_SetBlockDuration called [%d]\n", CI_INFO, block_duration));
+	XisbBlockDuration(priv->buffer, block_duration);
+}
 
 
 /*****************************************************************************
@@ -1852,7 +1992,7 @@ static Bool cit_GetInitialErrors(cit_PrivatePtr priv)
 	int				i;
 	Bool			res;
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 	cit_SendCommand(priv->buffer, C_GETERRORS, 1, GE_INITIAL);
 	/*
 	    touch responds within 1 millisecond,
@@ -1860,7 +2000,7 @@ static Bool cit_GetInitialErrors(cit_PrivatePtr priv)
 	*/
 	for (i=0; i<5; i++)
 	{
-		XisbBlockDuration(priv->buffer, 500000);
+		cit_SetBlockDuration(priv, 500000);
 		res = cit_GetPacket(priv);
 		if ((res == Success) || (priv->lex_mode == cit_idle));
 			break;
@@ -1979,7 +2119,7 @@ static Bool cit_GetDefectiveBeams(cit_PrivatePtr priv)
 	int			i;
 	Bool		res;
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 	cit_SendCommand(priv->buffer, C_GETERRORS, 1, GE_DEFECTBEAMS);
 	/*
 	    touch responds within 1 millisecond,
@@ -1987,7 +2127,7 @@ static Bool cit_GetDefectiveBeams(cit_PrivatePtr priv)
 	*/
 	for (i=0; i<5; i++)
 	{
-		XisbBlockDuration(priv->buffer, 500000);
+		cit_SetBlockDuration(priv, 500000);
 		res = cit_GetPacket(priv);
 		if ((res == Success) || (priv->lex_mode == cit_idle));
 			break;
@@ -2060,7 +2200,7 @@ static Bool cit_GetDesignator(cit_PrivatePtr priv)
 	int		i,n;
 	Bool	res;
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 	cit_SendCommand(priv->buffer, C_GETREVISIONS, 1, GR_DESIGNATOR);
 	/*
 	    touch responds within 1 millisecond,
@@ -2068,7 +2208,7 @@ static Bool cit_GetDesignator(cit_PrivatePtr priv)
 	*/
 	for (i=0; i<5; i++)
 	{
-		XisbBlockDuration(priv->buffer, 500000);
+		cit_SetBlockDuration(priv, 500000);
 		res = cit_GetPacket(priv);
 		if ((res == Success) || (priv->lex_mode == cit_idle));
 			break;
@@ -2126,13 +2266,13 @@ static Bool cit_GetRevision(cit_PrivatePtr priv, int selection)
 	int	i,n;
 	Bool	res;
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 	cit_SendCommand(priv->buffer, C_GETREVISIONS, 1, (unsigned char)selection);
 	/*
 	    touch responds within 1 millisecond,
 	    but it takes some time, until the command is sent and received!
 	*/
-	XisbBlockDuration(priv->buffer, 500000);
+	cit_SetBlockDuration(priv, 500000);
 	while (((res = cit_GetPacket(priv)) != Success) && (priv->lex_mode != cit_idle));
 	if (res != Success)
 	{
@@ -2192,9 +2332,9 @@ static void cit_ProcessPacket(cit_PrivatePtr priv)
 
 	priv->dual_flg = TRUE;			/* Dual Touch Error occurred */
 #ifdef CIT_TIM
-	priv->timer_val1 = 1000;		/* Timer delay [ms]*/
-	priv->timer_callback = (OsTimerCallback)cit_DualTouchTimer;		/* timer callback routine	*/
-	cit_StartTimer(priv);			
+	priv->timer_val1[FAKE_TIMER] = 1000;		/* Timer delay [ms]*/
+	priv->timer_callback[FAKE_TIMER] = (OsTimerCallback)cit_DualTouchTimer;		/* timer callback routine	*/
+	cit_StartTimer(priv, FAKE_TIMER);			
 #endif
 
 	switch (priv->packet[0])
@@ -2234,12 +2374,13 @@ static void cit_ProcessPacket(cit_PrivatePtr priv)
 
 			priv->state &= ~(CIT_TOUCHED | CIT_PRESSED);
 			priv->dual_touch_count = 0;
+			priv->enter_touched = 0;		/* reset coordinate report counter */
 			priv->raw_x = 0x0001U * priv->packet[1]
 						+ 0x0100U * priv->packet[2];
 			priv->raw_y = 0x0001U * priv->packet[3]
 						+ 0x0100U * priv->packet[4];
 #ifdef CIT_TIM
-			cit_CloseTimer(priv);	/* close timer if exit message was received */
+			cit_CloseTimer(priv, FAKE_TIMER);	/* close timer if exit message was received */
 #endif
 			DBG(PP, ErrorF("%s\t+ EXIT message (%d,%d)\n", CI_INFO, priv->raw_x, priv->raw_y));
 			break;
@@ -2261,6 +2402,7 @@ static void cit_ProcessPacket(cit_PrivatePtr priv)
 				priv->state |= CIT_PRESSED;
 			else if(priv->packet[1] == PRESS_BELOW)
 			{
+				priv->enter_touched = 0;		/* reset coordinate report counter */
 				priv->state &= ~CIT_PRESSED;
 			}
 			else
@@ -2368,7 +2510,7 @@ static Bool cit_GetPressureSensors(cit_PrivatePtr priv)
 	int		i;
 	Bool	res;
 
-	cit_Flush(priv->buffer);
+	cit_Flush(priv);
 	cit_SendCommand(priv->buffer, C_GETHARDWARE, 1, GH_SENSORCOUNT);
 	/*
 	    touch responds within 1 millisecond,
@@ -2376,7 +2518,7 @@ static Bool cit_GetPressureSensors(cit_PrivatePtr priv)
 	*/
 	for (i=0; i<5; i++)
 	{
-		XisbBlockDuration(priv->buffer, 500000);
+		cit_SetBlockDuration(priv, 500000);
 		res = cit_GetPacket(priv);
 		if ((res == Success) || (priv->lex_mode == cit_idle));
 			break;
@@ -2411,5 +2553,47 @@ static Bool cit_GetPressureSensors(cit_PrivatePtr priv)
 	priv->pressure_sensors = priv->packet[2];
 	return (Success);
 }
+
+
+/*****************************************************************************
+ *	[cit_ZPress] tell if click mode is ZPress (True if ZPress)
+ ****************************************************************************/
+static int cit_ZPress(cit_PrivatePtr priv)
+{
+	if((priv->click_mode == CM_ZPRESS) || (priv->click_mode == CM_ZPRESSEXIT))
+		return (TRUE);
+	else
+		return (FALSE);
+}
+
+
+/*****************************************************************************
+ *	[cit_SetEnterCount] set enter_count according click_mode
+ ****************************************************************************/
+static void cit_SetEnterCount(cit_PrivatePtr priv)
+{
+	if(cit_ZPress(priv))	/* Test if 3D Mode is active and set Options according */
+		priv->enter_count = priv->enter_count_Z;
+	else priv->enter_count = priv->enter_count_no_Z;
+	ErrorF("%scit_SetEnterCount: Count=%d\n", CI_CONFIG, priv->enter_count);
+}
+
+
+/*****************************************************************************
+ *	[cit_SendPWMFreq] send pwm frequency of PWM signal to the touch
+ ****************************************************************************/
+static void cit_SendPWMFreq(cit_PrivatePtr priv)
+{
+	if(priv->pwm_freq >= 0)	/* -1 is switched off (no SetPWMFreq set in XF86Config */
+	{
+		cit_SendCommand(priv->buffer, C_SETPWMFREQ, 2,
+														LOBYTE(priv->pwm_freq),
+														HIBYTE(priv->pwm_freq));
+		DBG(3,ErrorF("%scit_SendPWMFreq: Freq=%d\n", CI_CONFIG, priv->pwm_freq));
+	}
+	else
+		DBG(3,ErrorF("%scit_SendPWMFreq: Frequency not set\n", CI_CONFIG));
+}
+
 
 

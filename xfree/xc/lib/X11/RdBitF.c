@@ -1,4 +1,4 @@
-/* $TOG: RdBitF.c /main/20 1998/02/06 17:49:57 kaleb $ */
+/* $Xorg: RdBitF.c,v 1.4 2000/08/17 19:44:51 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/RdBitF.c,v 3.1 1998/10/03 08:41:22 dawes Exp $ */
+/* $XFree86: xc/lib/X11/RdBitF.c,v 3.3 2001/01/17 19:41:42 dawes Exp $ */
 
 /*
  *	Code to read bitmaps from disk files. Interprets 

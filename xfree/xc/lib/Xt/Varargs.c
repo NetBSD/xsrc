@@ -1,4 +1,4 @@
-/* $TOG: Varargs.c /main/35 1998/02/06 13:27:38 kaleb $ */
+/* $Xorg: Varargs.c,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
 
 /*
 

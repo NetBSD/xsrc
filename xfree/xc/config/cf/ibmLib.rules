@@ -1,10 +1,10 @@
-XCOMM $XConsortium: ibmLib.rules /main/15 1996/12/30 16:06:05 kaleb $
+XCOMM $Xorg: ibmLib.rules,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 /*
  * AIX shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/ibmLib.rules,v 3.4 1999/01/11 05:13:06 dawes Exp $
+XCOMM $XFree86: xc/config/cf/ibmLib.rules,v 3.6 2001/01/17 16:22:31 dawes Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES

@@ -1,7 +1,10 @@
-.\" $TOG: INSTALL.ms /main/10 1998/02/05 15:35:11 kaleb $
-.\" X11R6.4 Installation instructions. Use troff -ms macros
-.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.2 2000/12/14 21:11:46 dawes Exp $
-.ds Ts 30 January, 1998\"
+.\" $Xorg: INSTALL.ms,v 1.3 2000/08/17 19:42:05 cpqbld Exp $
+.\"
+.\" X11R6.5.1 Installation instructions. Use troff -ms macros
+.\"
+.\"
+.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.5 2001/01/22 22:26:59 dawes Exp $
+.ds Ts August 20, 2000\"
 .\"
 .ie t \{
 .nr LL 6.5i
@@ -30,13 +33,13 @@
 .ds CH \" empty center heading
 .sp 8
 .TL
-\s+2\fBBuilding and Installing X11R6.4\fP\s-2
+\s+2\fBBuilding and Installing X11R6.5.1\fP\s-2
 .AU
 .sp 6
 \fIKaleb S. KEITHLEY\fP
-.AI
-
-The Open Group X Project Team
+.\".AI
+.\"
+.\"The Open Group X Project Team
 .sp 6
 \*(Ts
 .LP
@@ -46,38 +49,49 @@ The Open Group X Project Team
 .sp 3
 .\}
 .sp 5
+.nf
+Copyright \(co 1999,2000 Compaq Computer Corporation
+Copyright \(co 1999,2000 Hewlett-Packard Company
+Copyright \(co 1999,2000 IBM Corporation
+Copyright \(co 1999,2000 Hummingbird Communications Ltd.
+Copyright \(co 1999,2000 Silicon Graphics, Inc.
+Copyright \(co 1999,2000 Sun Microsystems, Inc.
+Copyright \(co 1999,2000 The Open Group
+.fi
 Copyright \(co 1998 The Open Group
 .nr PS 9
 .nr VS 11
 .LP
-Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-software and associated documentation files (the Software), to use the Software 
-without restriction, including, without limitation, the rights to copy, modify, merge, 
-publish, distribute and sublicense the Software, to make, have made, license and 
-distribute derivative works thereof, and to permit persons to whom the Software is 
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, provided that the above
+copyright notice(s) and this permission notice appear in all copies of
+the Software and that both the above copyright notice(s) and this
+permission notice appear in supporting documentation.
 .LP
-The above copyright notice and the following permission notice shall be included in all 
-copies of the Software:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL
+INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING
+FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .LP
-THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE WARRANTIES 
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-
-INFRINGEMENT. IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY 
-CLAIM, DAMAGES OR OTHER USEABILITIY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN 
-CONNNECTION WITH THE SOFTWARE OR THE USE OF OTHER DEALINGS IN 
-THE SOFTWARE.
-.LP
-Except as contained in this notice, the name of The Open Group shall not be used in 
-advertising or otherwise to promote the use or other dealings in this Software without 
-prior written authorization from The Open Group.
+Except as contained in this notice, the name of a copyright holder
+shall not be used in advertising or otherwise to promote the sale, use
+or other dealings in this Software without prior written authorization
+of the copyright holder.
 .LP
 X Window System is a trademark of The Open Group.
 .\"
 .if t \{
-.OH 'X Version 11, Release 6.4''X Window System Installation'
-.EH 'X Window System Installation Version 11, Release 6.4'
+.OH 'X Version 11, Release 6.5.1''X Window System Installation'
+.EH 'X Window System Installation Version 11, Release 6.5.1'
 .bp 1
 .ds CF \\n(PN
 .\}
@@ -86,8 +100,8 @@ X Window System is a trademark of The Open Group.
 
 .nH 1 "Introduction"
 .\"
-This document is the installation notes that were provided with The Open
-Group's X11R6.4 release.  If you're building XFree86, it can be used as
+This document is the installation notes that were provided with X.Org's
+X11R6.5.1 release.  If you're building XFree86, it can be used as
 a rough guide.  Be aware that most of the details are not targetted
 specifically at the current XFree86 source tree.  XFree86-specific
 documentation can be found in the \fBxc/programs/Xserver/hw/xfree86/doc\fP
@@ -102,13 +116,13 @@ This quick summary is no substitute for reading the full build
 instructions later in this document.
 .LP
 Edit \fBxc/config/cf/site.def\fP for local preferences.
-If you want to install somewhere other than \fB/usr/X11R6.4\fP,
+If you want to install somewhere other than \fB/usr/X11R6.5.1\fP,
 change \fBProjectRoot\fP. (Do \fInot\fP use \fBDESTDIR\fP.)
 If you want to build with \fIgcc\fP uncomment the \fBHasGcc2\fP line.
 If you have \fIgcc\fP, but not \fIcc\fP, please read the full
 build instructions.
 .LP
-If some time has elapsed since the initial release of R6.4, check 
+If some time has elapsed since the initial release of R6.5.1, check 
 to see if any public patches have been released. The source tar
 files may have been updated \(em check the patch-level line in the
 bug-report template. If the source in the tar files has not been
@@ -155,7 +169,7 @@ You can install manual pages with:
 these installation instructions.\fP
 
 
-.nH 1 "Building and Installing R6.4"
+.nH 1 "Building and Installing R6.5.1"
 
 Historically the MIT X Consortium and The X Consortium, Inc., sample
 implementation releases have always been source-code-only releases, 
@@ -197,24 +211,24 @@ compressed tar files to extract the sources. There are several to
 chose from, we do not make recommendations about which one you should
 use.
 .LP
-Release 6.4 sources are distributed among the tar files as follows:
+Release 6.5.1 sources are distributed among the tar files as follows:
 .LP
 .KS
 .DS
 .ta 1.5i
-tog-1.tar	contains everything in xc/ that isn't in the other tar files
-tog-2.tar	contains xc/fonts
-tog-3.tar	contains xc/doc/specs, xc/util
-tog-4.tar	contains xc/doc/hardcopy
+xorg-1.tar	contains everything in xc/ that isn't in the other tar files
+xorg-2.tar	contains xc/fonts
+xorg-3.tar	contains xc/doc/specs, xc/util
+xorg-4.tar	contains xc/doc/hardcopy
 .DE
 .KE
 .LP
 If you define \fIBuildFonts\fP to NO in your \fBsite.def\fP file, then
-you only need to unpack tog-1.tar to build. If you build fonts, then you 
-will also need tog-2.tar to build. If you already have the fonts from
+you only need to unpack xorg-1.tar to build. If you build fonts, then you 
+will also need xorg-2.tar to build. If you already have the fonts from
 prior releases you can use those instead of downloading them again. We
 presume that you know how to copy or move them from your old source 
-tree to the R6.4 source tree.
+tree to the R6.5.1 source tree.
 
 .nH 2 "Unpacking the Distribution"
 
@@ -223,19 +237,19 @@ Create a directory to hold the sources and \fIcd\fP into it:
 % mkdir \fIsourcedir\fP
 % cd \fIsourcedir\fP
 .DE
-Then for each tar file \fBtog\-*.tar.gz\fP, execute this:
+Then for each tar file \fBxorg\-*.tar.gz\fP, execute this:
 .ID
-% gunzip\0\-c\0\fIftp-dir\fP/tog\-\fIN\fP.tar.gz | tar xf\0\-
+% gunzip\0\-c\0\fIftp-dir\fP/xorg\-\fIN\fP.tar.gz | tar xf\0\-
 .DE
 .LP
 or if you have GNU's tar (FreeBSD, NetBSD, OpenBSD, or Linux too)
 .ID
-% tar xzf\0\fIftp-dir\fP/tog\-\fIN\fP.tar.gz
+% tar xzf\0\fIftp-dir\fP/xorg\-\fIN\fP.tar.gz
 .DE
 
 .nH 2 "Applying Patches"
 
-If some time has elapsed since the initial release of R6.4, check 
+If some time has elapsed since the initial release of R6.5.1, check 
 to see if any public patches have been released. The source tar
 files may have been updated \(em check the patch-level line in the
 bug-report template. If the source in the tar files has not been
@@ -370,7 +384,7 @@ not been tested recently and hence probably need changes to work:
 \fBAmoeba.cf\fP is known to require additional patches.
 .LP
 The file \fBxc/lib/Xdmcp/Wraphelp.c\fP, for XDM-AUTHORIZATION-1, is not
-included in this release. See ftp://ftp.x.org/pub/R6.4/xdm-auth/README.
+included in this release. See ftp://ftp.x.org/pub/R6.5.1/xdm-auth/README.
 
 .nH 2 "System Build Notes"
 
@@ -411,17 +425,17 @@ around this is to edit \fBxc/config/imake/Makefile.ini\fP to specify
 .\"
 Use of the GNU BinUtils assembler, \fIas\fP, and linker, \fIld\fP, is 
 not supported \(em period! If you have them installed on your system 
-you must rename or remove them for the duration of the R6.4 build. 
+you must rename or remove them for the duration of the R6.5.1 build. 
 (You can restore them afterwards.)
 .LP
-The system-supplied \fImake\fP works just fine for building R6.4 and 
+The system-supplied \fImake\fP works just fine for building R6.5.1 and 
 that's what we suggest you use. If you've replaced your system's 
 \fImake\fP with GNU \fImake\fP then we recommend that you restore 
-the system \fImake\fP for the duration of your R6.4 build. After 
-R6.4 is done building you can revert to GNU make. GNU make on most 
+the system \fImake\fP for the duration of your R6.5.1 build. After 
+R6.5.1 is done building you can revert to GNU make. GNU make on most 
 systems (except Linux, where it is the default make) is not a supported 
 build configuration. GNU make may work for you, and if it does, great; 
-but if it doesn't we do not consider it a bug in R6.4. If, after this 
+but if it doesn't we do not consider it a bug in R6.5.1. If, after this 
 admonition, you still use GNU make and your build fails, reread the 
 above, and retry the build with the system's \fImake\fP before you 
 file a bug-report.
@@ -629,7 +643,7 @@ You can install the manual pages by typing the following as root:
 
 The version number of some of the the shared libraries has been changed.
 On SunOS 4, which supports minor version numbers for shared libraries,
-programs linked with the R6.4 libraries will use the new libraries with
+programs linked with the R6.5.1 libraries will use the new libraries with
 no special action required. 
 .LP
 On most other modern operating systems the version portion of the 
@@ -854,7 +868,7 @@ The Open Group X Project Team may from time to time issue public
 patches for this release to fix any serious problems that are 
 discovered. Such fixes are a subset of fixes available to X Project 
 Team members. Public patches are available via anonymous FTP from 
-ftp://ftp.x.org/pub/R6.4/fixes, or from your local X mirror site. 
+ftp://ftp.x.org/pub/R6.5.1/fixes, or from your local X mirror site. 
 Check the site closest to you first.
 .LP
 You can determine which public patches have already been applied 

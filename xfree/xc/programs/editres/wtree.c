@@ -1,5 +1,5 @@
 /*
- * $TOG: wtree.c /main/20 1998/02/09 13:43:02 kaleb $
+ * $Xorg: wtree.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/editres/wtree.c,v 1.4 2001/01/17 23:44:53 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

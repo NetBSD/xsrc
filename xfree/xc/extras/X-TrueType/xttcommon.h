@@ -31,7 +31,7 @@
 
 Notice===
 */
-/* $XFree86: xc/extras/X-TrueType/xttcommon.h,v 1.6 2000/02/14 19:20:19 dawes Exp $ */
+/* $XFree86: xc/extras/X-TrueType/xttcommon.h,v 1.7 2000/02/18 12:18:49 tsi Exp $ */
 
 #ifndef _XTTCOMMON_H_
 #define _XTTCOMMON_H_ (1)

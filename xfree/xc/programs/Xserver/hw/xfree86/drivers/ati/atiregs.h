@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.11 2000/08/04 21:07:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.17 2001/04/16 15:02:10 tsi Exp $ */
 /*
- * Copyright 1994 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1994 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,16 +53,13 @@
 #define SPARSE_IO_PORT		(SPARSE_IO_BASE | IO_BYTE_SELECT)
 #define BLOCK_IO_PORT		(BLOCK_IO_BASE | IO_BYTE_SELECT)
 
-#define IsATIBlockIOBase(_Base) \
-    (((_Base) & BLOCK_IO_BASE) && !((_Base) & BLOCK_IO_SELECT))
-
 #define IOPortTag(_SparseIOSelect, _BlockIOSelect)	\
 	(SetBits(_SparseIOSelect, SPARSE_IO_SELECT) |	\
-	 SetBits(_BlockIOSelect, BLOCK_SELECT | MM_IO_SELECT))
+	 SetBits(_BlockIOSelect, DWORD_SELECT))
 #define SparseIOTag(_IOSelect)	IOPortTag(_IOSelect, 0)
 #define BlockIOTag(_IOSelect)	IOPortTag(0, _IOSelect)
 
-/* MDA/CGA/EGA/VGA I/O ports */
+/* MDA/[M]CGA/EGA/VGA I/O ports */
 #define GENVS			0x0102u		/* Write (and Read on uC only) */
 
 #define R_GENLPS		0x03b9u		/* Read */
@@ -99,24 +96,24 @@
 #define MonochromeIOBase	0x03b0u
 #define ColourIOBase		0x03d0u
 
-/* Other EGA/CGA/VGA I/O ports */
-/*	?(_IOBase)		(_IOBase + 0x00u) */
-/*	?(_IOBase)		(_IOBase + 0x01u) */
-/*	?(_IOBase)		(_IOBase + 0x02u) */
-/*	?(_IOBase)		(_IOBase + 0x03u) */
-#define CRTX(_IOBase)		(_IOBase + 0x04u)
-#define CRTD(_IOBase)		(_IOBase + 0x05u)
-/*	?(_IOBase)		(_IOBase + 0x06u) */
-/*	?(_IOBase)		(_IOBase + 0x07u) */
-#define GENMC(_IOBase)		(_IOBase + 0x08u)
-/*	?(_IOBase)		(_IOBase + 0x09u) */	/* R_GENLPS/GENB */
-#define GENS1(_IOBase)		(_IOBase + 0x0au)	/* Read */
-#define GENFC(_IOBase)		(_IOBase + 0x0au)	/* Write */
-#define GENLPC(_IOBase)		(_IOBase + 0x0bu)
-/*	?(_IOBase)		(_IOBase + 0x0cu) */	/* /GENLPS */
-/*	?(_IOBase)		(_IOBase + 0x0du) */	/* /KCX */
-/*	?(_IOBase)		(_IOBase + 0x0eu) */	/* /KCD */
-/*	?(_IOBase)		(_IOBase + 0x0fu) */	/* GENHP/ */
+/* Other MDA/[M]CGA/EGA/VGA I/O ports */
+/*	?(_IOBase)		((_IOBase) + 0x00u) */	/* CRTX synonym */
+/*	?(_IOBase)		((_IOBase) + 0x01u) */	/* CRTD synonym */
+/*	?(_IOBase)		((_IOBase) + 0x02u) */	/* CRTX synonym */
+/*	?(_IOBase)		((_IOBase) + 0x03u) */	/* CRTD synonym */
+#define CRTX(_IOBase)		((_IOBase) + 0x04u)
+#define CRTD(_IOBase)		((_IOBase) + 0x05u)
+/*	?(_IOBase)		((_IOBase) + 0x06u) */
+/*	?(_IOBase)		((_IOBase) + 0x07u) */
+#define GENMC(_IOBase)		((_IOBase) + 0x08u)
+/*	?(_IOBase)		((_IOBase) + 0x09u) */	/* R_GENLPS/GENB */
+#define GENS1(_IOBase)		((_IOBase) + 0x0au)	/* Read */
+#define GENFC(_IOBase)		((_IOBase) + 0x0au)	/* Write */
+#define GENLPC(_IOBase)		((_IOBase) + 0x0bu)
+/*	?(_IOBase)		((_IOBase) + 0x0cu) */	/* /GENLPS */
+/*	?(_IOBase)		((_IOBase) + 0x0du) */	/* /KCX */
+/*	?(_IOBase)		((_IOBase) + 0x0eu) */	/* /KCD */
+/*	?(_IOBase)		((_IOBase) + 0x0fu) */	/* GENHP/ */
 
 /* 8514/A VESA approved register definitions */
 #define DISP_STAT		0x02e8u		/* Read */
@@ -738,9 +735,23 @@
 #define CRTC2_OFF_PITCH		BlockIOTag(0x17u)	/* LTPro */
 #define CUR_CLR0		IOPortTag(0x0bu, 0x18u)
 #define CUR_CLR1		IOPortTag(0x0cu, 0x19u)
+/* These are for both CUR_CLR0 and CUR_CLR1 */
+#define CUR_CLR_I			0x000000fful
+#define CUR_CLR_B			0x0000ff00ul
+#define CUR_CLR_G			0x00ff0000ul
+#define CUR_CLR_R			0xff000000ul
+#define CUR_CLR				(CUR_CLR_R | CUR_CLR_G | CUR_CLR_B)
 #define CUR_OFFSET		IOPortTag(0x0du, 0x1au)
 #define CUR_HORZ_VERT_POSN	IOPortTag(0x0eu, 0x1bu)
+#define CUR_HORZ_POSN			0x000007fful
+/*	?				0x0000f800ul */
+#define CUR_VERT_POSN			0x07ff0000ul
+/*	?				0xf8000000ul */
 #define CUR_HORZ_VERT_OFF	IOPortTag(0x0fu, 0x1cu)
+#define CUR_HORZ_OFF			0x0000007ful
+/*	?				0x0000ff80ul */
+#define CUR_VERT_OFF			0x007f0000ul
+/*	?				0xff800000ul */
 #define CONFIG_PANEL		BlockIOTag(0x1du)	/* LT */
 #define PANEL_FORMAT			0x00000007ul
 /*	?				0x00000008ul */
@@ -1087,7 +1098,7 @@
 #define GEN_GIO2_WRITE			0x00000020ul	/* 264xT */
 #define GEN_CUR2_ENABLE			0x00000020ul	/* XC/XL */
 #define GEN_OVR_POLARITY		0x00000040ul	/* GX/CX */
-#define GEN_GEN_ICON_ENABLE		0x00000040ul	/* XC/XL */
+#define GEN_ICON_ENABLE			0x00000040ul	/* XC/XL */
 #define GEN_CUR_EN			0x00000080ul
 #define GEN_GUI_EN			0x00000100ul	/* GX/CX */
 #define GEN_GUI_RESETB			0x00000100ul	/* 264xT */
@@ -1284,7 +1295,7 @@
 /*	DST_Y_X			BlockIOTag(0x4du) */	/* Duplicate */
 #define TRAIL_BRES_ERR		BlockIOTag(0x4eu)	/* GT */
 #define TRAIL_BRES_INC		BlockIOTag(0x4fu)	/* GT */
-#define	TRAIL_BRES_DEC		BlockIOTag(0x50u)	/* GT */
+#define TRAIL_BRES_DEC		BlockIOTag(0x50u)	/* GT */
 #define LEAD_BRES_LNTH		BlockIOTag(0x51u)	/* GT */
 #define Z_OFF_PITCH		BlockIOTag(0x52u)	/* GT */
 #define Z_CNTL			BlockIOTag(0x53u)	/* GT */

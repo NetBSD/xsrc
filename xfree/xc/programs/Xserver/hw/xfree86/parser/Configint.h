@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.15 2000/04/04 19:25:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.17 2001/02/21 23:37:04 paulo Exp $ */
 /*
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -184,6 +184,8 @@ else\
 #define GROUP_MSG \
 "The Group keyword must be followed by either a group name in quotes or\n" \
 "\ta numerical group id."
+#define MULTIPLE_MSG \
+"Multiple \"%s\" lines."
 
 /* Warning messages */
 #define OBSOLETE_MSG \

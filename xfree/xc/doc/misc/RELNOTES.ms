@@ -1,7 +1,10 @@
-.\" $TOG: RELNOTES.ms /main/20 1998/02/05 15:30:57 kaleb $
+.\" $Xorg: RELNOTES.ms,v 1.3 2000/08/17 19:42:05 cpqbld Exp $
+.\"
 .\" X11R6.4 Release Notes. Use troff -ms macros
-.\" $XFree86: xc/doc/misc/RELNOTES.ms,v 1.3 2000/12/14 21:11:46 dawes Exp $
-.ds Ts 30 January, 1998\" 
+.\"
+.\"
+.\" $XFree86: xc/doc/misc/RELNOTES.ms,v 1.6 2001/01/22 22:27:00 dawes Exp $
+.ds Ts August 20, 2000\" 
 .\"
 .ie t \{
 .nr LL 6.5i
@@ -32,12 +35,12 @@
 .TL
 \s+2\fBX Window System, Version 11
 .sp 1
-Release 6.4\fP\s-2
+Release 6.5.1\fP\s-2
 
 \s+1\fBRelease Notes\fP\s-1
 .AU
 .sp 6
-The Open Group X Project Team
+.\"The Open Group X Project Team
 .AI
 .sp 6
 \*(Ts
@@ -48,39 +51,50 @@ The Open Group X Project Team
 .sp 3
 .\}
 .sp 5
-Copyright \(co 1998   The Open Group
+.nf
+Copyright \(co 1999,2000 Compaq Computer Corporation
+Copyright \(co 1999,2000 Hewlett-Packard Company
+Copyright \(co 1999,2000 IBM Corporation
+Copyright \(co 1999,2000 Hummingbird Communications Ltd.
+Copyright \(co 1999,2000 Silicon Graphics, Inc.
+Copyright \(co 1999,2000 Sun Microsystems, Inc.
+Copyright \(co 1999,2000 The Open Group
+.fi
+.LP
+All rights reserved.
 .nr PS 9
 .nr VS 11
 .LP
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-\*QSoftware\*U), to deal in the Software without restriction, including
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
 without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+distribute, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, provided that the above
+copyright notice(s) and this permission notice appear in all copies of
+the Software and that both the above copyright notice(s) and this
+permission notice appear in supporting documentation.
 .LP
-The above copyright notice and the following permission notice shall be included in all 
-copies of the Software:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL
+INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING
+FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .LP
-THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE WARRANTIES 
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-
-INFRINGEMENT. IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY 
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN 
-CONNECTION WITH THE SOFTWARE OR THE USE OF OTHER DEALINGS IN 
-THE SOFTWARE.
-.LP
-Except as contained in this notice, the name of The Open Group shall not be used in 
-advertising or otherwise to promote the use or other dealings in this Software without 
-prior written authorization from The Open Group.
+Except as contained in this notice, the name of a copyright holder
+shall not be used in advertising or otherwise to promote the sale, use
+or other dealings in this Software without prior written authorization
+of the copyright holder.
 .LP
 \fIX Window System\fP is a trademark of The Open Group.
 .\"
 .if t \{
-.OH 'X Version 11, Release 6.4''X Window System Release Notes'
-.EH 'X Window System Release Notes''X Version 11, Release 6.4'
+.OH 'X Version 11, Release 6.5.1''X Window System Release Notes'
+.EH 'X Window System Release Notes''X Version 11, Release 6.5.1'
 .bp 1
 .ds CF \\n(PN
 .\}
@@ -89,8 +103,8 @@ prior written authorization from The Open Group.
 
 
 .nH 1 "Introductory Note"
-This document is the release notes that were provided with The Open Group's
-X11R6.4 release.  The XFree86-specific information in this document is
+This document is the release notes that were provided with X.Org's
+X11R6.5.1 release.  The XFree86-specific information in this document is
 out of date.  The XFree86-specific documentation can be found
 in the \fBxc/programs/Xserver/hw/xfree86/doc\fP directory, and on-line
 at http://www.xfree86.org/current/.
@@ -107,72 +121,54 @@ Computers. X can use your network \(em you may run CPU-intensive
 programs on high powered workstations and display the user 
 interface (the windows) on inexpensive desktop machines.
 
-.nH 1 "What is Release 6.4"
+.nH 1 "What is Release 6.5.1"
 
-Release 6.4 (R6.4) is The Open Group X Project Team's update to 
-the X Consortium's Release 6.3 (R6.3) of X11 and all prior releases. 
+Release 6.5.1 (R6.5.1) is X.Org's update to 
+the Open Group's X Project Release 6.4 patch 3 and all prior releases. 
 It is compatible with with all releases going back to R1 at both the 
-source and protocol levels.
+source and protocol levels.  Note that Release 6.5 was an internal
+X.Org release, and Release 6.5.1 supersedes it.
 .LP
-The X Consortium was an independent, not-for-profit membership 
+The X Consortium was an independent, not-for-profit membership
 corporation formed in 1993 as the successor to the MIT X Consortium.
-It was dissolved at the end of 1996 and all assets such as trademarks 
-and copyrights were transferred to The Open Group.
+It was dissolved at the end of 1996 and all assets such as trademarks
+and copyrights were transferred to The Open Group.  The Open Group's
+X Project Team was formed to continue maintenance and development of X.
+The X Project Team was disbanded after Release 6.4 patch 3.
 .LP
-The Open Group's X Project Team was formed to continue maintenance 
-and development of X. Membership in The Open Group X Project Team 
-does not require membership in The Open Group. To join the X Project 
-Team contact the sales office near you \(em you can find a list of 
-sales offices at http://www.opengroup.org/contacts/sales.htm, or
-download the membership kit from 
-http://www.opengroup.org/tech/desktop/x/projteam.htm.
+X.Org has employed the services of a third party contractor to
+establish a CVS repository of the source and a web-based interface
+for submitting/viewing bug reports. The CVS repository and
+web-based interface are available to X.Org members.  The contractor
+has been chartered to provide quarterly update releases to the
+X source.
 .LP
-Instructions for building and installing R6.4 can be found in the
-file INSTALL.PS (PostScript) or INSTALL.TXT (plain text), available
+Membership information for X.Org may be found at http://www.x.org/members.htm.
+.LP
+This X.Org release addresses a portion of the backlog of bug reports
+since Release 6.4 patch 3, along with  additional fixes from the Xfree86
+community.
+.LP
+Instructions for building and installing R6.5.1 can be found in the
+file INSTALL.TXT (INSTALL-X.org), available
 separately and also contained in the release.
 
-.nH 1 "Overview of the X Project Team Release"
+.nH 1 "Overview of the X.Org Release"
 
-Like all the releases that preceded it, R6.4 is a source code 
+Like all the releases that preceded it, R6.5.1 is a source code 
 release. In order to use the release it is necessary to first 
 unpack the distribution, compile it, and then install it. The 
 source contains the following items:
-.Ip "X Consortium Standards and X Project Team Specifications"
-The X Consortium produced standards \(em documents which define 
-network protocols, programming interfaces, and other aspects of 
-the X environment. These standards continue to exists in the X 
-Project Team release. The X Project Team produces specifications. 
-Like X Consortium Standards, these are documents which define 
-network protocols, programming interfaces, and other aspects of 
-the X environment. Under the aegis of The Open Group, X Consortium 
-standards, X Project Team specifications, and other specifications 
-are the basis for portions of The Open Group's various CAE 
-Specifications. Some of the new features in this release are not 
-\fIstandard\fP, that is, there is no accompanying specification.
-.Ip "Implementations"
-For most of X Consortium standards and X Project Team specifications, 
-a high-quality implementations is provided to demonstrate proof of 
-concept, to give vendors a base to use, and early adopters a chance
-to begin developing using the new features. These are not 
-\fIreference\fP implementations \(em the written specifications 
-are the authoritative definition.
-.Ip "Fonts"
-.br
-A collection of bitmap and outline fonts are included in the
-distribution, contributed by various individuals and companies.
-.Ip "Utility Libraries"
-A number of libraries, such as Xmu and the Athena Widget Set, are 
-included. These are not standards, but are used in building the 
-applications contained in the release and may be useful in building 
-other applications.
-.Ip "Programs"
-We also provide a number of application programs. A few of these 
-programs, such as \fIxdm\fP (or its equivalent), should be considered 
-essential in almost all environments. The rest of the applications 
-carry no special status; they are simply programs that have been 
-developed and/or maintained by X Consortium and X Project Team staff.
-In some cases, you will find better substitutes for these programs 
-contributed by others.
+.LP
+.KS
+.ID
+Documentation
+Sample implemenations
+Fonts and bitmaps
+Utility libraries
+Programs
+.DE
+.KE
 
 .nH 1 "Supported Operating Systems"
 
@@ -180,28 +176,12 @@ This release was built and tested on the following reference platforms:
 .LP
 .KS
 .ID
-Digital Unix 4.0A
-Fujitsu UXP V20L10
+Compaq Tru64 UNIX V5.0
 HPUX 10.20
-Solaris 2.5
+Solaris 7.0
 .DE
 .KE
 .LP
-This release was also built on the following systems:
-.LP
-.KS
-.ID
-AIX 4.2
-IRIX 6.2
-FreeBSD 2.2.2
-S.u.S.E. Linux 5.0.0 (kernel 2.0.30, libc 5.4.33)
-SunOS 4.1.4
-Windows NT 3.51 (NCD WinCenter)
-.DE
-.KE
-.LP
-In all cases except SunOS we have used the vendor's compiler. On SunOS 
-we build with the GNU C compiler (\fIgcc\fP).
 
 .nH 1 "Supported Graphics Devices"
 
@@ -211,7 +191,7 @@ a native X server for the following platforms:
 .KS
 .ID
 HP-UX: Xhp
-Digital Unix: Xdec on DECstation 3000/400 (Alpha) with PMAG-B
+Compaq Tru64 UNIX: Xdec on DECstation 3000/400 (Alpha) with PMAG-B
 SunOS/Solaris: Xsun \(em see the Xsun man page for supported cards
 XFree86: See the XF_* man pages for supported cards
 .DE
@@ -249,13 +229,13 @@ registry	X Registry
 
 .nH 1 "X Registry"
 
-The X Project Team maintains a registry of certain X-related items to
+A registry of certain X-related items is maintained to
 aid in avoiding conflicts and to aid in sharing of such items. The 
 registry is in the file \fBxc/registry\fP.
 
 .nH 1 "Extensions Supported"
 
-Release 6.4  includes source for the following extensions:
+Release 6.5.1  includes source for the following extensions:
 BIG-REQUESTS,
 DOUBLE-BUFFER,
 DPMS,
@@ -287,9 +267,9 @@ page. Some of these extensions may not be supported on every platform.
 .nH 1 "Implementation Dependent Parameters"
 
 Some of the specifications define some behavior as
-implementation-dependent. Implementations of the X Consortium 
-standards and X Project Team specifications must document how 
-those parameters are implemented. 
+implementation-dependent. Implementations must document how those
+parameters are implemented.
+
 .LP
 The default values in this release of the implementation dependent 
 parameters are:
@@ -304,7 +284,7 @@ ProjectRoot in \fBxc/config/cf/site.def\fP. See
 \fBxc/config/cf/X11.tmpl\fP for details of how these configuration 
 variables are used.
 .IP
-By default the imake variable ProjectRoot is \fB/usr/X11R6.4\fP 
+By default the imake variable ProjectRoot is \fB/usr/X11R6.5\fP 
 and XFILESEARCHPATH has these components:
 .ID
 \fI$ProjectRoot\fP/lib/X11/%L/%T/%N%C%S
@@ -373,157 +353,45 @@ for the supported compositions.
 The Input Method Server Development Kit (IMdkit) is at 
 ftp://ftp.x.org/pub/unsupported/lib/IMdkit/.
 
-.nH 1 "What Is New in Release 6.4"
+.nH 1 "What is Unchanged in Release 6.5.1"
 
-This section describes changes in the X Project Team distribution 
-since Release 6.3.
-.LP
-The major new functionality in R6.4 is: Display Power Management 
-Signaling (DPMS) to set "green" computer monitors into power 
-saving mode; Extended Visual Information to allow applications 
-to discover more about the graphics capabilities of the server than 
-the core protocol allows; Colormap Utilization Policy (TOG-CUP) 
-allows applications to discover desktop special colors, e.g.
-MS-Windows reserved (pre-allocated) colors on PC-Xservers, and 
-store read-only (sharable) colors in specific locations in a 
-colormap; and Xinerama, a wide screen server that combines two 
-or more screens into a single virtual screen. 
-.LP
-The X Toolkit Intrinsics library (libXt) now has IBM's Easy Resource
-Configuration support included.
-.LP
-Xlib (libX11) has two new APIs: XkbSetPerClientControls and
-XkbGetPerClientControls. These two functions were unintentionally 
-omitted from the library in previous releases.
-.LP
-The XFree86 servers are now based on XFree86 3.3.1.
+As this is an update release, there is a great deal of stability in the
+standards, libraries, and clients. No existing standards have changed
+in a material way.  All previous interfaces in these and all other
+libraries are unchanged.
 
-.nH 1 "What is Unchanged in Release 6.4"
-
-As this is an update release, there is a great deal of stability in 
-the standards, libraries, and clients. No existing standards have 
-changed in a material way; although some documents have been updated 
-with minor corrections. The extension library, \fIlibXext\fP, is 
-updated to include the DPMS, Extended-Visual-Information, TOG-CUP, 
-and XINERAMA extension interfaces. All previous interfaces in these 
-and all other libraries are unchanged.
-
-.KS
 .nH 1 "New OS Support"
 
 The following table shows the versions of the operating systems
 that were used to develop this and prior releases:
 .LP
+.KS
 .DS 0
-.ta 1.5i 2.5i 3.5i 4.5i
-System	R6	R6.1	R6.[23]	R6.4
+.ta 2.0i 3.0i 4.0i 5.0i 6.0i
+System	R6	R6.1	R6.[23]	R6.4	R6.5.1
 .sp 1
-AIX	3.2.5	4.1.4	4.2	4.2
-A/UX	3.0.1	\(en	\(en	\(en
-BSD/386	1.0	\(en	\(en	\(en
-Digital Unix (OSF/1)	1.0/1.3	3.2C	4.0A	4.0A
-FreeBSD	\(en	2.1.0	2.1.6	2.2.2
-Fujitsu UXP	\(en	\(en	\(en	V20L10
-HP-UX	9.1	10.01	10.01	10.20
-IRIX	5.2	5.3	6.2	6.2
+AIX	3.2.5	4.1.4	4.2	4.2	\(en
+A/UX	3.0.1	\(en	\(en	\(en	\(en
+BSD/386	1.0	\(en	\(en	\(en	\(en
+Compaq Tru64 UNIX	1.0/1.3	3.2C	4.0A	4.0A	5.0
+FreeBSD	\(en	2.1.0	2.1.6	2.2.2	\(en
+Fujitsu UXP	\(en	\(en	\(en	V20L10	\(en
+HP-UX	9.1	10.01	10.01	10.20	10.20
+IRIX	5.2	5.3	6.2	6.2	\(en
 Linux (kernel)
-  Slackware 2.3	\(en	1.2.11	\(en	\(en
-  Slackware 3.1	\(en	\(en	2.0	\(en
-  S.u.S.E. 5.0	\(en	\(en	\(en	2.0.30
-Mach	2.5	\(en	\(en	\(en
-NEWS-OS	6.0	\(en	\(en	\(en
-Solaris	2.3	2.4	2.5	2.5
-SunOS	4.1.3	4.1.3	4.1.4	4.1.4
-Ultrix-32	4.3	4.4	\(en	\(en
-UNICOS	8.0	\(en	\(en	\(en
-Unixware SVR4.2	1.0	2.02	2.02	\(en
-Windows NT	3.1	3.5	4.0	3.51
+  Slackware 2.3	\(en	1.2.11	\(en	\(en	\(en
+  Slackware 3.1	\(en	\(en	2.0	\(en	\(en
+  S.u.S.E. 5.0	\(en	\(en	\(en	2.0.30	\(en
+Mach	2.5	\(en	\(en	\(en	\(en
+NEWS-OS	6.0	\(en	\(en	\(en	\(en
+Solaris	2.3	2.4	2.5	2.5	7.0
+SunOS	4.1.3	4.1.3	4.1.4	4.1.4	\(en
+Ultrix-32	4.3	4.4	\(en	\(en	\(en
+UNICOS	8.0	\(en	\(en	\(en	\(en
+Unixware SVR4.2	1.0	2.02	2.02	\(en	\(en
+Windows NT	3.1	3.5	4.0	3.51	\(en
 .DE
 .KE
-
-.nH 1 "New Specifications"
-
-The following are the new X Project Team specifications in 
-Release 6.4. Each is described in its own section below.
-.ID
-Display Power Management Signalling (DPMS)
-Extended Visual Information (EVI)
-Colormap Utilization Policy (TOG-CUP)
-.DE
-
-.nH 2 "Display Power Management Signaling"
-
-This extension provides X Protocol control over the VESA Display
-Power Management Signaling (DPMS) characteristics of video boards
-under control of the X Window System.
-.LP
-Traditionally, the X Window System has provided for both blanking 
-and non-blanking screen savers.  Timeouts associated with these 
-built-in screen saver mechanisms are limited to idle (dwell) time, 
-and a change timeout that specifies the change interval for non-blanking 
-screen savers.
-.LP
-The United States' Environmental Protection Agency (EPA) Energy 
-Star program requires that monitors power down after some idle 
-time by default. While it is possible to simply overload the 
-existing screen saver timeouts, this solution leaves the 
-non-privileged user little to no control over the DPMS 
-characteristics of his or her system.  For example, disabling 
-DPMS would require some unintended side effect in the core 
-screen saver, such as disabling the changing of a non-blanking 
-screen saver.
-
-.nH 2 "Extended Visual Information"
-
-The Extended Visual Information (EVI) extension allows a client 
-to determine information about core X visuals beyond what the 
-core protocol provides.
-.LP
-As the X Window System has evolved, it has become clear that the 
-information returned by the core X protocol regarding Visuals is 
-often insufficient for a client to determine which is the most 
-appropriate visual for its needs. This extension allows clients 
-to query the X server for additional visual information, specifically 
-as regards colormaps and framebuffer levels.
-.LP
-This extension is meant to address the needs of pure X clients only. 
-It is specifically and purposefully not designed to address the 
-needs of X extensions. Extensions that have an impact on visual 
-information should provide their own mechanisms for delivering that 
-information. For example, the Double Buffering Extension (DBE) 
-provides its own mechanism for determining which visuals support 
-double-buffering.
-
-.nH 2 "Colormap Utilization Policy"
-
-This extension has three purposes: a) to provide mechanism for a 
-special application (a colormap manager) to discover any special 
-colormap requirements, e.g. the colormap entries that are nominally 
-reserved for desktop colors in the MS-Windows environment and 
-initialize the default colormap so that it can be more easily 
-shared; and b) to encourage colormap sharing and reduce colormap 
-flashing on low-end 8-bit frame buffers by providing a policy for 
-sharing; and c) when colormaps aren't shared, define a behavior 
-in the X server color allocation scheme to reduce colormap flashing.
-.LP
-To encourage colormap sharing and accommodate special colormap 
-requirements two new protocols are defined: the first provides a 
-way to query the server for a list of reserved colormap entries, 
-and the second is a way to initialize read-only (sharable) colormap 
-entries at specific locations in a colormap.
-.LP
-To minimize colormap flashing when the root window's default visual 
-is one of GrayScale, PseudoColor, or DirectColor, and a private 
-colormap for the default visual is being used, a minor (but compatible) 
-change to the server implementation of the AllocColor and AllocNamedColor 
-requests is required. Where the core protocol says nothing about 
-the pixel values returned, when this extension is in effect, the 
-AllocColor and AllocNamedColor requests will first look for a matching 
-color in the default colormap, and, if a match is found and the 
-same cell in the private colormap has not already been allocated, 
-the color will be allocated in the private colormap at the same 
-location as in the default colormap (instead of in the first available 
-location.)
 
 .nH 1 "Easy Resource Configuration"
 
@@ -548,40 +416,13 @@ Easy Resource Configuration is not a standard part of the X Toolkit
 Intrinsics (libXt). It is neither an X Consortium standard nor an
 X Project Team specification.
 
-.nH 1 "Xinerama"
-
-The Xinerama extension provides a way for a multi-headed system 
-to function as one large screen. Windows can span multiple screens 
-and can move from one screen to another.
-.LP
-Currently, the Xinerama Extension works in a homogeneous graphics 
-environment. A graphics environment is considered homogeneous if, 
-for example, all of the graphics cards have 8 planes with 6 visuals. 
-Mixing a 24-plane graphics card with a 8-plane card creates a 
-heterogeneous environment. 
-.LP
-Unlike other multiple screen implementations, Xinerama provides a 
-solution at the device-independent level. The advantage of this 
-approach is that it reduces the amount of work involved in supporting 
-and maintaining the extension. The number of graphics devices on 
-the market continues to grow; embedding the extension functionality 
-into the device dependent code for each device would be a maintenance 
-nightmare. Since the Xinerama implementation does not require any 
-low-level graphics modifications, existing device-dependent code 
-does not have to be recompiled. In the loadable server world, the 
-Xinerama Extension will work with existing device-dependent shared 
-libraries.
-.LP
-The Xinerama extension is not a standard. It is neither an X 
-Consortium standard nor an X Project Team specification.
-
 .nH 1 "ANSIfication"
 
-R6.1 was officially the last release that supported traditional K&R C. 
-Like R6.3, R6.4 assumes a Standard C compiler and environment. We have 
-not intentionally removed any K&R C support from old code, and most of 
-the release will continue to build on platforms without an ANSI C
-compiler.
+R6.1 was officially the last release that supported traditional K&R C.
+Like R6.3 and R6.4, R6.5 assumes a Standard C compiler and environment.
+We have not intentionally removed any K&R C support from old code, and
+most of the release will continue to build on platforms without an ANSI
+C compiler.
 
 .nH 1 "VSW5"
 
@@ -597,29 +438,33 @@ tests where a defect in the test has been identified and reported.
 VSW licensees may obtain a list of waivers granted from
 http://www.rdg.opengroup.org/interpretations/database/.
 
+.nH 1 "XtAppPeekEvent() behavior"
+
+XtAppPeekEvent() has been modified in R6.5.1 to behave as it is
+documented in the Xt spec.  The routine will now process timer
+events without returning to the caller.  However, there are
+applications which rely on the previous behavior of XtAppPeekEvent().
+One such application is Netscape, as of version 4.7.
+.LP
+To allow these applications to work with R6.5.1, the environment
+variable XTAPPPEEKEVENT_SKIPTIMER can be set to any value prior to
+starting the application.  If the environment variable is set,
+XtAppPeekEvent() will revert to its previous behavior.  For example,
+the following shell commands
+.ID
+export XTAPPPEEKEVENT_SKIPTIMER=1
+/opt/netscape/netscape
+.DE
+can be used to make Netscape function properly with R6.5.1.
+
 .nH 1 "Year 2000 (Y2K) Compliance"
 
 For a statement of compliance see
 http://www.camb.opengroup.org/tech/desktop/faq/y2k.htm
 
-.nH 1 "Memory Testing"
-
-Beginning circa X11R5 the MIT X Consortium staff, and later the
-X Consortium, Inc. staff, and now the X Project Team staff have 
-routinely tested this implementation for a variety of memory-type 
-errors such as leaks, array bounds writes, uninitialized memory 
-reads, and a variety of other errors; using a combination of 
-commercial and "home grown" memory testing tools. All the real 
-problems were fixed long ago; however we aren't so naive as to 
-believe that there no remaining bugs. If you find a memory problem 
-in this implementation please file a bug-report. If you find a 
-memory problem in your vendor's implementation, tell your vendor. 
-The popular commercial memory checking tools emit lots of false or 
-spurious warnings, most of which can be safely ignored.
-
 .nH 1 "Security Considerations"
 
-On UNIX and UNIX-like operating systems there are serious security 
+On UNIX and similar operating systems there are serious security 
 implications associated with running suid-root programs. 
 .LP
 By default the xterm terminal emulation program is installed suid-root 
@@ -637,7 +482,7 @@ your X server. Some people, who prefer not to use xdm, often work
 around the need for the X server to run with root privileges by 
 making their X server a suid-root program. While all the known (as 
 of this writing) exploitable security holes in the server have been 
-eliminated, the X Project Team still recommends that you \fBnot\fP 
+eliminated, it is still recommended that you \fBnot\fP 
 make your X server suid-root. There are \fIsafe\fP suid-root wrapper 
 programs available (but not in this release) that you can use to start 
 your server if you don't want to use xdm.
@@ -647,9 +492,9 @@ your server if you don't want to use xdm.
 If you find a reproducible bug in software built from the source in
 this distribution or find bugs in its documentation, please complete 
 a bug-report using the form in the file \fBxc/bug-report\fP and send it 
-to The Open Group X Project Team at
+to:
 .ID
-mailto:xbugs@opengroup.org
+mailto:xbugs@x.org
 .DE
 .LP
 Please try to provide all of the information requested on the form if 
@@ -662,42 +507,15 @@ individual software to see where (if anywhere) to report the bug.
 
 .nH 1 "Acknowledgements"
 
-Release 6.4 of X11 was brought to you by the X Project Team staff 
-at The Open Group:
-Arthur Barstow,
-Kaleb Keithley,
-Sekhar Makkapati,
-M.S. Ramesh,
-Jingping Ge,
-Ken Flowers,
-and Dave Knorr.
-.LP
-Several companies and individuals have cooperated and worked hard to
-make this release a reality, and our thanks go out to them:
-.LP
-Madeline Asmus of Digital for Xinerama.
-.LP
-Peter Daifuku of Silicon Graphics for Extended-Visual-Information.
-.LP
-Scott Revelt of Sun Microsystems for preliminary work on TOG-CUP.
-.LP
-Rob Lembree, formerly of Digital, for DPMS.
-.LP
 Jeff Walls of Hewlett Packard.
-.LP
-Wojtek Jarosz of Attachmate.
-.LP
-Bob Schulman of Seaweed.
-.LP
-Brian Bobryk of Digital.
-.LP
-Tom Brown of NetManage.
 .LP
 Garry Paxinos of Metro Link.
 .LP
-Victor Gold of Peritek.
+Irene McCartney of Compaq.
 .LP
-Jackie Drane of IBM.
+Paul Shearer of IBM.
+.LP
+Steve Swales of Sun Microsystems, Inc.
 .ie t \{
 .\"
 .\" print Table of Contents

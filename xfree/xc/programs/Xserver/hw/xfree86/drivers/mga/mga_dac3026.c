@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dac3026.c,v 1.54 2000/10/24 22:45:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dac3026.c,v 1.56 2001/04/05 21:29:14 dawes Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.org>
  *
@@ -1071,7 +1071,10 @@ MGA3026RamdacInit(ScrnInfoPtr pScrn)
     MGAdac->HideCursor		= MGA3026HideCursor;
     MGAdac->ShowCursor		= MGA3026ShowCursor;
     MGAdac->UseHWCursor		= MGA3026UseHWCursor;
-    MGAdac->CursorFlags		= HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+    MGAdac->CursorFlags		= 
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+				HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+#endif
 				HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
 				HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED;
 

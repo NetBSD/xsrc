@@ -1,4 +1,4 @@
-/* $TOG: cfbgetsp.c /main/29 1998/02/09 14:05:39 kaleb $ */
+/* $Xorg: cfbgetsp.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbgetsp.c,v 3.5 2000/01/21 01:11:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbgetsp.c,v 3.7 2001/01/17 22:36:35 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

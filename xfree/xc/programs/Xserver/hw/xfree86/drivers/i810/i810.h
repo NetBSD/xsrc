@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.18 2000/10/24 22:45:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.21 2001/05/19 00:26:44 dawes Exp $ */
 
 /*
  * Authors:
@@ -136,6 +136,8 @@ typedef struct _I810Rec {
    unsigned char *MMIOBase;
    unsigned char *FbBase;
    long FbMapSize;
+   long DepthOffset;
+   long BackOffset;
    int cpp;
    int MaxClock;
 
@@ -230,6 +232,7 @@ typedef struct _I810Rec {
    Bool agpAcquired2d;
 
    XF86VideoAdaptorPtr adaptor;
+   OptionInfoPtr Options;
 } I810Rec;
 
 #define I810PTR(p) ((I810Ptr)((p)->driverPrivate))

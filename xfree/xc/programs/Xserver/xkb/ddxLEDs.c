@@ -1,4 +1,4 @@
-/* $XConsortium: ddxLEDs.c /main/3 1996/01/14 16:45:52 kaleb $ */
+/* $Xorg: ddxLEDs.c,v 1.3 2000/08/17 19:53:46 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

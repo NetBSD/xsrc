@@ -1,4 +1,4 @@
-/* $TOG: Lookup.c /main/17 1998/02/06 15:44:26 kaleb $ */
+/* $Xorg: Lookup.c,v 1.3 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Lookup.c,v 3.5 1999/01/31 12:21:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Lookup.c,v 3.7 2001/01/17 19:42:56 dawes Exp $ */
 
 #include <X11/Xmu/Lookup.h>
 

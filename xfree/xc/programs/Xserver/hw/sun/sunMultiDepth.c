@@ -1,4 +1,4 @@
-/* $TOG: sunMultiDepth.c /main/3 1998/02/10 13:17:26 kaleb $ */
+/* $Xorg: sunMultiDepth.c,v 1.3 2000/08/17 19:48:32 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sunMultiDepth.c,v 1.3 1998/06/27 12:53:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunMultiDepth.c,v 1.5 2001/01/17 22:36:51 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

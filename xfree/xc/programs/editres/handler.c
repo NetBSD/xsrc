@@ -1,5 +1,5 @@
 /*
- * $TOG: handler.c /main/31 1998/02/09 13:42:34 kaleb $
+ * $Xorg: handler.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/programs/editres/handler.c,v 1.3 1998/10/11 11:23:45 dawes Exp $ */
+/* $XFree86: xc/programs/editres/handler.c,v 1.6 2001/04/01 14:00:17 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -33,6 +33,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xos.h>		/* for W_OK def */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "editresP.h"
 

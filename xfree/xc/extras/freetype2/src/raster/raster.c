@@ -1,6 +1,6 @@
 /***************************************************************************/
 /*                                                                         */
-/*  raster1.c                                                              */
+/*  raster.c                                                               */
 /*                                                                         */
 /*    FreeType monochrome rasterer module component (body only).           */
 /*                                                                         */
@@ -18,18 +18,9 @@
 
 #define FT_MAKE_OPTION_SINGLE_OBJECT
 
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ftraster.c"
 #include "ftrend1.c"
-
-#else
-
-#include <raster/ftraster.c>
-#include <raster/ftrend1.c>
-
-#endif
 
 
 /* END */

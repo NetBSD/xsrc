@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/ftfuncs.h,v 1.8 1999/10/13 04:20:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftfuncs.h,v 1.9 2000/11/14 16:54:43 dawes Exp $ */
 
 /* Number of buckets in the hashtable holding faces */
 #define NUMFACEBUCKETS 32

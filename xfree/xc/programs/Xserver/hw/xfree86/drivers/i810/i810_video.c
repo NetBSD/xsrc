@@ -23,18 +23,15 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.13 2000/12/06 00:08:49 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.17 2001/04/18 14:52:41 dawes Exp $ */
 
 /*
  * i810_video.c: i810 Xv driver. Based on the mga Xv driver by Mark Vojkovich.
  *
  * Authors: 
  * 	Jonathan Bian <jonathan.bian@intel.com>
- *
- * Notes:
- * 	This module currently allocates 810*2KB out of "SysMem" for the YUV 
- * 	buffers.  This may not be the best solution ...
- *
+ *      Offscreen Images:
+ *        Matt Sottek <matthew.j.sottek@intel.com>
  */
 
 #include "xf86.h"
@@ -63,6 +60,8 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CLIENT_VIDEO_ON	0x04
 
 #define TIMER_MASK      (OFF_TIMER | FREE_TIMER)
+
+static void I810InitOffscreenImages(ScreenPtr);
 
 static XF86VideoAdaptorPtr I810SetupImageVideo(ScreenPtr);
 static void I810StopVideo(ScrnInfoPtr, pointer, Bool);
@@ -133,6 +132,9 @@ static Atom xvBrightness, xvContrast, xvColorKey;
 #define	BUFFER1_FIELD0		0x00000004
 #define OVERLAY_ENABLE		0x00000001
 
+#define UV_VERT_BUF1 		0x02
+#define UV_VERT_BUF0 		0x04
+
 /*
  * DOV0STA - Display/Overlay 0 Status Register
  */
@@ -156,6 +158,7 @@ void I810InitVideo(ScreenPtr pScreen)
     if (pScrn->bitsPerPixel != 8) 
     {
 	newAdaptor = I810SetupImageVideo(pScreen);
+	I810InitOffscreenImages(pScreen);
     }
 
     num_adaptors = xf86XVListGenericAdaptors(pScrn, &adaptors);
@@ -600,6 +603,9 @@ I810QueryBestSize(
   unsigned int *p_w, unsigned int *p_h, 
   pointer data
 ){
+   if(vid_w > (drw_w << 1)) drw_w = vid_w >> 1;
+   if(vid_h > (drw_h << 1)) drw_h = vid_h >> 1;
+
   *p_w = drw_w;
   *p_h = drw_h; 
 }
@@ -856,6 +862,9 @@ I810DisplayVideo(
     switch(id) {
     case FOURCC_YV12:
     case FOURCC_I420:
+	/* set UV vertical phase to -0.25 */
+	overlay->UV_VPH = 0x30003000;
+	overlay->INIT_PH = UV_VERT_BUF0 | UV_VERT_BUF1;
 	overlay->OV0STRIDE = (dstPitch << 1) | (dstPitch << 16);
 	overlay->OV0CMD &= ~SOURCE_FORMAT;
 	overlay->OV0CMD |= YUV_420;
@@ -863,6 +872,8 @@ I810DisplayVideo(
     case FOURCC_UYVY:
     case FOURCC_YUY2:
     default:
+	overlay->UV_VPH = 0;
+	overlay->INIT_PH = 0;
 	overlay->OV0STRIDE = dstPitch;
 	overlay->OV0CMD &= ~SOURCE_FORMAT;
 	overlay->OV0CMD |= YUV_422;
@@ -1126,3 +1137,236 @@ I810BlockHandler (
         }
     }
 }
+
+
+/***************************************************************************
+ * Offscreen Images
+ ***************************************************************************/
+
+typedef struct {
+  FBLinearPtr linear;
+  Bool isOn;
+} OffscreenPrivRec, * OffscreenPrivPtr;
+
+static int 
+I810AllocateSurface(
+    ScrnInfoPtr pScrn,
+    int id,
+    unsigned short w, 	
+    unsigned short h,
+    XF86SurfacePtr surface
+){
+    FBLinearPtr linear;
+    int pitch, fbpitch, size, bpp;
+    OffscreenPrivPtr pPriv;
+    I810Ptr pI810 = I810PTR(pScrn);
+
+    if((w > 1024) || (h > 1024))
+	return BadAlloc;
+
+    w = (w + 1) & ~1;
+    pitch = ((w << 1) + 15) & ~15;
+    bpp = pScrn->bitsPerPixel >> 3;
+    fbpitch = bpp * pScrn->displayWidth;
+    size = ((pitch * h) + bpp - 1) / bpp;
+
+    if(!(linear = I810AllocateMemory(pScrn, NULL, size)))
+	return BadAlloc;
+
+    surface->width = w;
+    surface->height = h;
+
+    if(!(surface->pitches = xalloc(sizeof(int)))) {
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+    if(!(surface->offsets = xalloc(sizeof(int)))) {
+	xfree(surface->pitches);
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+    if(!(pPriv = xalloc(sizeof(OffscreenPrivRec)))) {
+	xfree(surface->pitches);
+	xfree(surface->offsets);
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+
+    pPriv->linear = linear;
+    pPriv->isOn = FALSE;
+
+    surface->pScrn = pScrn;
+    surface->id = id;   
+    surface->pitches[0] = pitch;
+    surface->offsets[0] = linear->offset * bpp;
+    surface->devPrivate.ptr = (pointer)pPriv;
+
+    memset(pI810->FbBase + surface->offsets[0],0,size);
+
+    return Success;
+}
+
+static int 
+I810StopSurface(
+    XF86SurfacePtr surface
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+
+    if(pPriv->isOn) {
+      I810Ptr pI810 = I810PTR(surface->pScrn);
+
+      I810OverlayRegPtr overlay = (I810OverlayRegPtr) (pI810->FbBase + pI810->OverlayStart); 
+
+      overlay->OV0CMD &= 0xFFFFFFFE;
+      OVERLAY_UPDATE(pI810->OverlayPhysical);
+
+      pPriv->isOn = FALSE;
+    }
+
+    return Success;
+}
+
+
+static int 
+I810FreeSurface(
+    XF86SurfacePtr surface
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+
+    if(pPriv->isOn) {
+	I810StopSurface(surface);
+    }
+    xf86FreeOffscreenLinear(pPriv->linear);
+    xfree(surface->pitches);
+    xfree(surface->offsets);
+    xfree(surface->devPrivate.ptr);
+
+    return Success;
+}
+
+static int
+I810GetSurfaceAttribute(
+    ScrnInfoPtr pScrn,
+    Atom attribute,
+    INT32 *value
+){
+    return I810GetPortAttribute(pScrn, attribute, value, 0);
+}
+
+static int
+I810SetSurfaceAttribute(
+    ScrnInfoPtr pScrn,
+    Atom attribute,
+    INT32 value
+){
+    return I810SetPortAttribute(pScrn, attribute, value, 0);
+}
+
+
+static int 
+I810DisplaySurface(
+    XF86SurfacePtr surface,
+    short src_x, short src_y, 
+    short drw_x, short drw_y,
+    short src_w, short src_h, 
+    short drw_w, short drw_h,
+    RegionPtr clipBoxes
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+    ScrnInfoPtr pScrn = surface->pScrn;
+    I810Ptr      pI810 = I810PTR(pScrn);
+    I810PortPrivPtr pI810Priv =  GET_PORT_PRIVATE(pScrn);
+
+    INT32 x1, y1, x2, y2;
+    INT32 loops = 0;
+    BoxRec dstBox;
+
+    x1 = src_x;
+    x2 = src_x + src_w;
+    y1 = src_y;
+    y2 = src_y + src_h;
+
+    dstBox.x1 = drw_x;
+    dstBox.x2 = drw_x + drw_w;
+    dstBox.y1 = drw_y;
+    dstBox.y2 = drw_y + drw_h;
+
+    I810ClipVideo(&dstBox, &x1, &x2, &y1, &y2,
+		  REGION_EXTENTS(screenInfo.screens[0], clipBoxes),
+		  surface->width, surface->height);
+
+    dstBox.x1 -= pScrn->frameX0;
+    dstBox.x2 -= pScrn->frameX0;
+    dstBox.y1 -= pScrn->frameY0;
+    dstBox.y2 -= pScrn->frameY0;
+
+    /* fixup pointers */
+    pI810Priv->YBuf0offset = surface->offsets[0];
+    pI810Priv->YBuf1offset = pI810Priv->YBuf0offset;
+
+   /* wait for the last rendered buffer to be flipped in */
+    while (((INREG(DOV0STA)&0x00100000)>>20) != pI810Priv->currentBuf) {
+      if(loops == 200000) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Overlay Lockup\n");
+	break;
+      }
+      loops++;
+    }
+
+    /* buffer swap */
+    if (pI810Priv->currentBuf == 0)
+      pI810Priv->currentBuf = 1;
+    else
+      pI810Priv->currentBuf = 0;
+
+    I810ResetVideo(pScrn);
+
+    I810DisplayVideo(pScrn, surface->id, surface->width, surface->height,
+		     surface->pitches[0], x1, y1, x2, y2, &dstBox,
+		     src_w, src_h, drw_w, drw_h);
+
+    XAAFillSolidRects(pScrn, pI810Priv->colorKey, GXcopy, ~0,
+		      REGION_NUM_RECTS(clipBoxes),
+		      REGION_RECTS(clipBoxes));
+
+    pPriv->isOn = TRUE;
+    /* we've prempted the XvImage stream so set its free timer */
+    if(pI810Priv->videoStatus & CLIENT_VIDEO_ON) {
+      REGION_EMPTY(pScrn->pScreen, & pI810Priv->clip);   
+      UpdateCurrentTime();
+      pI810Priv->videoStatus = FREE_TIMER;
+      pI810Priv->freeTime = currentTime.milliseconds + FREE_DELAY;
+      pScrn->pScreen->BlockHandler = I810BlockHandler;
+    }
+
+    return Success;
+}
+
+
+static void 
+I810InitOffscreenImages(ScreenPtr pScreen)
+{
+    XF86OffscreenImagePtr offscreenImages;
+
+    /* need to free this someplace */
+    if(!(offscreenImages = xalloc(sizeof(XF86OffscreenImageRec)))) {
+      return;
+    }
+
+    offscreenImages[0].image = &Images[0];
+    offscreenImages[0].flags = VIDEO_OVERLAID_IMAGES | 
+			       VIDEO_CLIP_TO_VIEWPORT;
+    offscreenImages[0].alloc_surface = I810AllocateSurface;
+    offscreenImages[0].free_surface = I810FreeSurface;
+    offscreenImages[0].display = I810DisplaySurface;
+    offscreenImages[0].stop = I810StopSurface;
+    offscreenImages[0].setAttribute = I810SetSurfaceAttribute;
+    offscreenImages[0].getAttribute = I810GetSurfaceAttribute;
+    offscreenImages[0].max_width = 1024;
+    offscreenImages[0].max_height = 1024;
+    offscreenImages[0].num_attributes = 1;
+    offscreenImages[0].attributes = Attributes;
+
+    xf86XVRegisterOffscreenImages(pScreen, offscreenImages, 1);
+}
+

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbseg.c,v 1.4 2000/02/14 19:20:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbseg.c,v 1.7 2001/01/17 07:40:02 keithp Exp $ */
 
 #include "fb.h"
 #include "miline.h"
@@ -134,25 +134,16 @@ fbBresDash (DrawablePtr	pDrawable,
     FbStip	bgand = (FbStip) pPriv->bgand;
     FbStip	bgxor = (FbStip) pPriv->bgxor;
     FbStip	mask, mask0;
-    unsigned char   *dash, *lastDash;
+    FbDashDeclare;
     int		dashlen;
     Bool	even;
     Bool	doOdd;
     
     fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
     doOdd = pGC->lineStyle == LineDoubleDash;
-    even = TRUE;
-    dash = pGC->dash;
-    lastDash = dash + pGC->numInDashList;
-    dashOffset %= pPriv->dashLength;
-    while (dashOffset >= *dash)
-    {
-	dashOffset -= *dash++;
-	if (dash == lastDash)
-	    dash = pGC->dash;
-	even = !even;
-    }
-    dashlen = *dash - dashOffset;
+
+    FbDashInit (pGC, pPriv, dashOffset, dashlen, even);
+    
     dst += (y1 * dstStride);
     x1 *= dstBpp;
     dst += x1 >> FB_STIP_SHIFT;
@@ -199,13 +190,7 @@ fbBresDash (DrawablePtr	pDrawable,
 		}
 	    }
 	}
-	if (!--dashlen)
-	{
-	    if (++dash == lastDash)
-		dash = pGC->dash;
-	    dashlen = *dash;
-	    even = !even;
-	}
+	FbDashStep (dashlen, even);
     }
 }
 
@@ -276,7 +261,7 @@ fbBresFillDash (DrawablePtr pDrawable,
 		int	    len)
 {
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
-    unsigned char   *dash, *lastDash;
+    FbDashDeclare;
     int		dashlen;
     Bool	even;
     Bool	doOdd;
@@ -291,19 +276,10 @@ fbBresFillDash (DrawablePtr pDrawable,
     /* whether to switch fg to bg when filling odd dashes */
     doBg = doOdd && (pGC->fillStyle == FillSolid || 
 		     pGC->fillStyle == FillStippled);
+    
     /* compute current dash position */
-    even = TRUE;
-    dash = pGC->dash;
-    lastDash = dash + pGC->numInDashList;
-    dashOffset %= pPriv->dashLength;
-    while (dashOffset >= *dash)
-    {
-	dashOffset -= *dash++;
-	if (dash == lastDash)
-	    dash = pGC->dash;
-	even = !even;
-    }
-    dashlen = *dash - dashOffset;
+    FbDashInit (pGC, pPriv, dashOffset, dashlen, even);
+    
     while (len--)
     {
 	if (even || doOdd)
@@ -337,13 +313,7 @@ fbBresFillDash (DrawablePtr pDrawable,
 		x1 += signdx;
 	    }
 	}
-	if (!--dashlen)
-	{
-	    if (++dash == lastDash)
-		dash = pGC->dash;
-	    dashlen = *dash;
-	    even = !even;
-	}
+	FbDashStep (dashlen, even);
     }
     if (doBg)
 	fbSetFg (pDrawable, pGC, fg);
@@ -451,25 +421,17 @@ fbBresDash24RRop (DrawablePtr	pDrawable,
     FbStip	*d;
     int		x;
     int		rot;
-    unsigned char   *dash, *lastDash;
+    FbDashDeclare;
     int		dashlen;
     Bool	even;
     Bool	doOdd;
     
     fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
     doOdd = pGC->lineStyle == LineDoubleDash;
-    even = TRUE;
-    dash = pGC->dash;
-    lastDash = dash + pGC->numInDashList;
-    dashOffset %= pPriv->dashLength;
-    while (dashOffset >= *dash)
-    {
-	dashOffset -= *dash++;
-	if (dash == lastDash)
-	    dash = pGC->dash;
-	even = !even;
-    }
-    dashlen = *dash - dashOffset;
+
+    /* compute current dash position */
+    FbDashInit(pGC, pPriv, dashOffset, dashlen, even);
+    
     dst += (y1 * dstStride);
     x1 *= 24;
     if (signdy < 0)
@@ -525,13 +487,7 @@ fbBresDash24RRop (DrawablePtr	pDrawable,
 		x1 += signdx;
 	    }
 	}
-	if (!--dashlen)
-	{
-	    if (++dash == lastDash)
-		dash = pGC->dash;
-	    dashlen = *dash;
-	    even = !even;
-	}
+	FbDashStep (dashlen, even);
     }
 }
 #endif

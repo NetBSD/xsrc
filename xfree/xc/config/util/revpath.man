@@ -1,5 +1,5 @@
-.\" $XFree86$
-.TH REVPATH 1 "4.0" "XFree86"
+.\" $XFree86: xc/config/util/revpath.man,v 1.2 2001/01/27 18:19:55 dawes Exp $
+.TH REVPATH 1 __vendorversion__
 .SH NAME
 revpath \- generate a relative path that can be used to undo a change-directory
 .SH SYNOPSIS

@@ -1,5 +1,5 @@
 /*
- *	$TOG: Xproto.h /main/22 1998/02/09 11:19:10 kaleb $
+ *	$Xorg: Xproto.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $
  */
 
 /* Definitions for the X window system used by server and c bindings */

@@ -1,5 +1,4 @@
-/* $XConsortium: Screen.c /main/8 1996/12/02 10:21:46 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Screen.c,v 3.6 1998/07/26 01:53:20 dawes Exp $ */
+/* $Xorg: Screen.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -13,6 +12,8 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Screen.c,v 3.9 2001/03/23 01:27:09 paulo Exp $ */
+
 #include "X.h"
 #include "Xproto.h"
 #include "scrnintstr.h"
@@ -36,6 +37,7 @@ is" without express or implied warranty.
 #include "Visual.h"
 #include "Events.h"
 #include "Init.h"
+#include "mipointer.h"
 #include "Args.h"
 
 extern Window xnestParentWindow;
@@ -98,6 +100,28 @@ static Bool xnestSaveScreen(pScreen, what)
     return True;
   }
 }
+
+static Bool
+xnestCursorOffScreen (ppScreen, x, y)
+    ScreenPtr   *ppScreen;
+    int         *x, *y;
+{
+    return FALSE;
+}
+
+static void
+xnestCrossScreen (pScreen, entering)
+    ScreenPtr   pScreen;
+    Bool        entering;
+{
+}
+
+static miPointerScreenFuncRec xnestPointerCursorFuncs =
+{
+    xnestCursorOffScreen,
+    xnestCrossScreen,
+    miPointerWarpCursor
+};
 
 Bool xnestOpenScreen(index, pScreen, argc, argv)
      int index;
@@ -182,6 +206,8 @@ Bool xnestOpenScreen(index, pScreen, argc, argv)
 	       numVisuals, visuals);
 
   miInitializeBackingStore(pScreen);
+
+  miDCInitialize(pScreen, &xnestPointerCursorFuncs);
 
   pScreen->mmWidth = xnestWidth * DisplayWidthMM(xnestDisplay, 
 		       DefaultScreen(xnestDisplay)) / 

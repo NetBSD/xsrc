@@ -1,4 +1,4 @@
-/* $TOG: initfonts.c /main/9 1998/06/16 15:20:49 msr $ */
+/* $Xorg: initfonts.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * %W%	%E%
  *
  */
-/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.3 1999/03/07 14:23:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.5 2001/01/17 23:45:29 dawes Exp $ */
 
 #include        "font.h"
 #include	"difs.h"

@@ -1,4 +1,4 @@
-/* $TOG: miclut.c /main/7 1998/02/09 16:16:31 kaleb $ */
+/* $Xorg: miclut.c,v 1.3 2000/08/17 19:47:44 cpqbld Exp $ */
 /**** module miclut.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miclut.c,v 3.3 1998/10/05 13:22:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miclut.c,v 3.5 2001/01/17 22:13:04 dawes Exp $ */
 
 #define _XIEC_MICLUT
 #define _XIEC_ICLUT

@@ -1,0 +1,346 @@
+
+Copyright (C) 1999-2001 VMware, Inc.
+All Rights Reserved
+
+The code here may be used/distributed under the terms of the standard
+XFree86 license.
+
+
+
+	VMware SVGA Device Interface and Programming Model
+	--------------------------------------------------
+
+
+Include Files
+-------------
+
+svga_reg.h
+    SVGA register definitions, SVGA capabilities, and FIFO command definitions.
+
+svga_limits.h
+    Included by svga_reg.h, defines maximum frame buffer and memory region
+    sizes.
+
+guest_os.h
+    Values for the GUEST_ID register.
+
+vm_basic_types.h
+    Common type definitions.
+
+vm_device_version.h
+    PCI vendor ID's and related information.
+
+
+Programming the VMware SVGA Device
+----------------------------------
+
+1. Reading/writing a register:
+    To read a register:
+	Set the index port to the index of the register, using a dword OUT
+	Do a dword IN from the value port
+
+    To write a register:
+	Set the index port to the index of the register, using a dword OUT
+	Do a dword OUT to the value port
+
+2. Initialization
+    Check the version number
+     loop:
+      Write into SVGA_REG_ID the maximum SVGA_ID_* the driver supports.
+      Read from SVGA_REG_ID.
+       Check if it is the value you wrote.
+	If yes, VMware SVGA device supports it
+	If no, decrement SVGA_ID_* and goto loop
+     This algorithm converges.
+
+    Map the frame buffer and the command FIFO
+	Read SVGA_REG_FB_START, SVGA_REG_FB_SIZE, SVGA_REG_MEM_START,
+	SVGA_REG_MEM_SIZE.
+	Map the frame buffer (FB) and the FIFO memory (MEM)
+
+    Get the frame buffer dimensions
+	Read SVGA_REG_MAX_WIDTH, SVGA_REG_MAX_HEIGHT, SVGA_REG_BITS_PER_PIXEL
+
+    SetMode
+	Set SVGA_REG_WIDTH, SVGA_REG_HEIGHT
+	Read SVGA_REG_FB_OFFSET
+	(SVGA_REG_FB_OFFSET is the offset from SVGA_REG_FB_START of the
+	 visible portion of the frame buffer)
+	Read SVGA_REG_BYTES_PER_LINE, SVGA_REG_PSEUDOCOLOR, SVGA_REG_GREEN_MASK,
+	SVGA_REG_RED_MASK
+
+    Enable SVGA
+	Set SVGA_REG_ENABLE to 1
+	(to disable SVGA, set SVGA_REG_ENABLE to 0)
+
+    Initialize the command FIFO
+	The FIFO is exclusively dword (32-bit) aligned.  The first four
+	dwords define the portion of the MEM area that is used for the
+	command FIFO.  These are values are all in byte offsets from the
+	start of the MEM area.
+
+	A minimum sized FIFO would have these values:
+	    mem[SVGA_FIFO_MIN] = 16;
+	    mem[SVGA_FIFO_MAX] = 16 + (10 * 1024);
+	    mem[SVGA_FIFO_NEXT_CMD] = 16;
+	    mem[SVGA_FIFO_STOP] = 16;
+
+	Write SVGA_REG_CONFIG_DONE after these values have been set.
+
+3. SVGA command FIFO protocol
+    The FIFO is empty when SVGA_FIFO_NEXT_CMD == SVGA_FIFO_STOP.  The
+    driver writes commands to the FIFO starting at the offset specified
+    by SVGA_FIFO_NEXT_CMD, and then increments SVGA_FIFO_NEXT_CMD.
+
+    The FIFO is full when SVGA_FIFO_NEXT_CMD is one word before SVGA_FIFO_STOP.
+
+    When the FIFO becomes full, the FIFO should be sync'd
+
+    To sync the FIFO
+	Write SVGA_REG_SYNC
+	Read SVGA_REG_BUSY
+	Wait for the value in SVGA_REG_BUSY to be 0
+
+    The FIFO should be sync'd before the driver touches the frame buffer, to
+    guarantee that any outstanding BLT's are completed.
+
+4. Capabilities
+    The capabilities of the SVGA device can be queried by reading
+    SVGA_REG_CAPABILITIES.
+
+
+Drawing to the Screen
+---------------------
+
+After initialization, the driver can write directly to the frame buffer.
+The updated frame buffer is not displayed immediately, but only when
+an update command is sent.  The update command (SVGA_CMD_UPDATE) defines
+the rectangle in the frame buffer that has been modified by the driver,
+and causes that rectangle to be updated on the screen.
+
+A complete driver can be developed this way.  For increased performance,
+additional commands are available to accelerate common operations.  The
+two most useful are SVGA_CMD_RECT_FILL and SVGA_CMD_RECT_COPY.
+
+After issuing an accelerated command, the FIFO should be sync'd, as
+described above, before writing to the frame buffer.
+
+
+Addendum on 7/11/2000
+---------------------
+
+SVGA_REG_FB_OFFSET and SVGA_REG_BYTES_PER_LINE may change after
+SVGA_REG_WIDTH or SVGA_REG_HEIGHT is set.  Also the VGA registers must
+be written to after setting SVGA_REG_ENABLE to 0 to change the display
+to a VGA mode.
+
+
+Capabilities
+------------
+
+The capabilities register (SVGA_REG_CAPABILITIES) is an array of
+bits that indicates the capabilities of the SVGA emulation.
+This table shows what commands are available, depending on the
+capabilities:
+
+    Command				Capability
+    -------				----------
+
+    SVGA_CMD_RECT_FILL			SVGA_CAP_RECT_FILL
+    SVGA_CMD_RECT_COPY			SVGA_CAP_RECT_COPY
+    SVGA_CMD_DEFINE_BITMAP		SVGA_CAP_OFFSCREEN
+    SVGA_CMD_DEFINE_BITMAP_SCANLINE	SVGA_CAP_OFFSCREEN
+    SVGA_CMD_DEFINE_PIXMAP		SVGA_CAP_OFFSCREEN
+    SVGA_CMD_DEFINE_PIXMAP_SCANLINE	SVGA_CAP_OFFSCREEN
+    SVGA_CMD_RECT_BITMAP_FILL		SVGA_CAP_RECT_PAT_FILL
+    SVGA_CMD_RECT_PIXMAP_FILL		SVGA_CAP_RECT_PAT_FILL
+    SVGA_CMD_RECT_BITMAP_COPY		SVGA_CAP_RECT_PAT_FILL
+    SVGA_CMD_RECT_PIXMAP_COPY		SVGA_CAP_RECT_PAT_FILL
+    SVGA_CMD_FREE_OBJECT		SVGA_CAP_OFFSCREEN
+    SVGA_CMD_RECT_ROP_FILL		SVGA_CAP_RECT_FILL +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_RECT_ROP_COPY		SVGA_CAP_RECT_COPY +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_RECT_ROP_BITMAP_FILL	SVGA_CAP_RECT_PAT_FILL +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_RECT_ROP_PIXMAP_FILL	SVGA_CAP_RECT_PAT_FILL +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_RECT_ROP_BITMAP_COPY	SVGA_CAP_RECT_PAT_FILL +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_RECT_ROP_PIXMAP_COPY	SVGA_CAP_RECT_PAT_FILL +
+					    SVGA_CAP_RASTER_OP
+    SVGA_CMD_DEFINE_CURSOR		SVGA_CAP_CURSOR
+    SVGA_CMD_DISPLAY_CURSOR		SVGA_CAP_CURSOR
+    SVGA_CMD_MOVE_CURSOR		SVGA_CAP_CURSOR
+
+The ability to program the cursor directly through the registers
+(described in the next section) is indicated by the capability
+SVGA_CAP_CURSOR_BYPASS.
+
+
+Cursor Handling
+---------------
+
+Starting with GSX Server Beta 3 (after 11/15/2000), a new cursor interface
+was added that bypasses the FIFO.  This is programmed using the
+registers SVGA_REG_CURSOR_ID, SVGA_REG_CURSOR_X, SVGA_REG_CURSOR_Y,
+and SVGA_REG_CURSOR_ON.
+
+First, the cursor must be defined using the FIFO command
+SVGA_CMD_DEFINE_CURSOR.  This command allocates a cursor ID and
+associates two pixmaps with the cursor, the AND mask and the XOR mask.
+
+To display the cursor, the ID must be written to SVGA_REG_CURSOR_ID,
+the coordinates written to SVGA_REG_CURSOR_X and SVGA_REG_CURSOR_Y,
+then the value 1 must be written to SVGA_REG_CURSOR_ON.  No display
+occurs until SVGA_REG_CURSOR_ON is written.  The same sequence is used
+to move the cursor.
+
+To turn the cursor off, the ID must be written to SVGA_REG_CURSOR_ID,
+and the value 0 must be written to SVGA_REG_CURSOR_ON.
+
+NOTE:  The cursor must be turned off before touching the frame buffer,
+because it is actually drawn into the frame buffer memory in the case
+of direct graphics mode (e.g. full screen mode on Linux).  The cursor
+does not have to be turned off before issuing an accelerated command
+via the command FIFO, this case is handled by the SVGA device.
+
+
+Driver Version Numbers
+----------------------
+
+The SVGA drivers use the following convention for their version numbers:
+
+Version 10.0 - The first version that uses the FIFO
+Version 10.1 - The version that uses the hardware cursor emulation via the FIFO
+Version 10.2 - The version that uses the cursor that bypasses the FIFO
+
+
+Frequently Asked Questions
+--------------------------
+
+1.  My driver doesn't display anything, what's going on?
+
+First check if you are issuing an SVGA_CMD_UPDATE after drawing to
+the screen.  Another check you can do is to run your driver in full
+screen mode on a Linux host.  In this case you are drawing directly
+on the frame buffer, so what you draw to the screen will be immediately
+visible.  If nothing is visible in this case, then most likely your
+driver hasn't mapped the frame buffer correctly.
+
+A discrepancy between what you get in full screen mode and what you
+get in window mode indicates that you have a missing or incorrect
+update command.
+
+
+2.  What's the difference between bitmaps and pixmaps?
+
+Pixmaps have the same depth as the screen, while bitmaps have depth one.
+When a bitmap is drawn, the command also takes two colors, foreground and
+background.  The set bits in the bitmap are replaced with the foreground
+color, and the unset bits are replaced with the background color.
+
+Pixmaps, on the other hand, can be directly copied to the screen.
+
+
+3.  What's the significance of the ROP in the commands SVGA_CMD_RECT_ROP_FILL,
+SVGA_CMD_RECT_ROP_BITMAP_COPY, etc. ?
+
+The ROP in the ...ROP... commands is a raster operation.  It has the same
+significance (and encoding) as it does in X Windows.  The ROP value
+SVGA_ROP_COPY means the source is copied to the destination, which makes
+these commands the same as their non-ROP counterparts.  The most commonly
+used raster operation other than copy is probably SVGA_ROP_XOR, which
+combines the source and destination using exclusive-or.
+
+
+4.  Tell me more about bitmaps and pixmaps.  For example, the macro
+SVGA_CMD_DEFINE_BITMAP has a field <scanlines>.  What should this be
+set to?  Likewise with SVGA_CMD_DEFINE_PIXMAP.  And when should the
+SCANLINE macros be used?
+
+OK, I'll use pixmaps as an example.  First you have to define the pixmap:
+
+#define  SVGA_CMD_DEFINE_PIXMAP		6
+	 /* FIFO layout:
+	    Pixmap ID, Width, Height, Depth, <scanlines> */
+
+The ID is something you choose, which you subsequently use to refer to
+this pixmap.  It must be an integer between 0 and SVGA_MAX_ID.
+
+The width and height and depth are the dimensions of the pixmap.  For now,
+the depth of the pixmap has to match the depth of the screen.
+
+The scanlines are the pixels that make up the pixmap, arranged one row
+at a time.  Each row is required to be 32-bit aligned.  The macros
+SVGA_PIXMAP_SCANLINE_SIZE and SVGA_PIXMAP_SIZE give the size of a
+single scanline, and the size of the entire pixmap, respectively, in
+32-bit words.
+
+The second step is to use it:
+
+#define  SVGA_CMD_RECT_PIXMAP_FILL	9
+	 /* FIFO layout:
+	    Pixmap ID, X, Y, Width, Height */
+
+The ID here is the one you chose when defining the pixmap.  X, Y,
+Width, and Height define a rectangle on the screen that is to be filled
+with the pixmap.  The pixmap is screen aligned, which means that the
+coordinates in the pixmap are defined by the screen coordinates modulo
+the pixmap dimensions.
+
+If you want a different alignment between the screen and the pixmap,
+then you can use this command, which allows the pixmap coordinates to
+be defined:
+
+#define  SVGA_CMD_RECT_PIXMAP_COPY	11
+	 /* FIFO layout:
+	    Pixmap ID, Source X, Source Y, Dest X, Dest Y, Width,
+	    Height */
+
+The Source X and Source Y are pixmap coordinates, and the Dest X and
+Dest Y are screen coordinates.
+
+
+5.  OK, now it works briefly, then stops displaying anything.  Also,
+my log file is filled with lines like:
+  Unknown Command 0xff in SVGA command FIFO
+What's happening?
+
+The most common problem at this point is that the FIFO gets out
+of sync.  This can happen if the amount of data in the FIFO doesn't
+match what the VMware SVGA device expects.  To track this down, try
+to isolate the particular command which causes the problem.
+
+Another way this can happen is if the wraparound in the FIFO isn't
+done correctly.  Here is some example code for writing to the FIFO
+(mem is an array of 32-bit integers that points to the FIFO memory
+region):
+
+while (TRUE) {
+    fifo_min = mem[SVGA_FIFO_MIN] / 4;
+    fifo_max = mem[SVGA_FIFO_MAX] / 4;
+    fifo_next = mem[SVGA_FIFO_NEXT_CMD] / 4;
+    fifo_stop = mem[SVGA_FIFO_STOP] / 4;
+
+    tmp_next = fifo_next+1;
+    if (tmp_next == fifo_max)
+	tmp_next = fifo_min;    // Wraparound
+
+    if (tmp_next == fifo_stop) {
+	sync_fifo();		// FIFO full
+	continue;		// retry
+    }
+
+    mem[fifo_next] = item;
+    mem[SVGA_FIFO_NEXT_CMD] = tmp_next * 4;
+    break;
+}
+
+This isn't the most efficient code, but it should work.  It's important
+to do the increment with wraparound before the FIFO full check, and to
+check FIFO full before updating the next command pointer.
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/README,v 1.2 2001/04/05 21:09:37 dawes Exp $

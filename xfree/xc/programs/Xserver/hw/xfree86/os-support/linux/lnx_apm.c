@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_apm.c,v 3.7 2000/11/16 19:45:04 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_apm.c,v 3.9 2000/12/08 20:13:37 eich Exp $ */
 
 #include "X.h"
 #include "os.h"

@@ -1,0 +1,43 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {showHelp = id; }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {close = id; pickFile = id; saveChanges = id; setKey = id; }; 
+            CLASS = Preferences; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                displayNumber = id; 
+                dockSwitchButton = id; 
+                fakeButton = id; 
+                keyField = id; 
+                keymapFileField = id; 
+                loadKeymapFileButton = id; 
+                pickKeymapFileButton = id; 
+                splashStartupHelpButton = id; 
+                startupHelpButton = id; 
+                systemBeepButton = id; 
+                window = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = XApplication; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {preferences = id; xserver = id; }; 
+            SUPERCLASS = NSApplication; 
+        }, 
+        {
+            ACTIONS = {applicationWillResignActive = id; closeHelpAndShow = id; showAction = id; }; 
+            CLASS = Xserver; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {helpWindow = id; startupHelpButton = id; switchWindow = id; }; 
+            SUPERCLASS = NSObject; 
+        }
+    ); 
+    IBVersion = 1; 
+}

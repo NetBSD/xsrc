@@ -7,7 +7,7 @@
 <author>Precision Insight, Inc.
 <date>3 March 2000
 <ident>
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i810.sgml,v 1.3 2001/04/04 01:34:18 dawes Exp $
 </ident>
 <toc>
 
@@ -19,6 +19,7 @@ $XFree86$
 	  <item>i810,
 	  <item>i810-dc100,
 	  <item>i810e
+	  <item>i815
 	</itemize>
 </itemize>
 
@@ -43,16 +44,17 @@ $XFree86$
 	in 32 bit per pixel format, and this mode is not supported by
 	this driver.
   <item>Interlace modes cannot be supported.
-  <item>This driver currently only works for Linux/ix86, and normal use
-	requires the agpgart.o kernel module, included in Linux kernels
-	2.3.42 and higher.
+  <item>This driver currently only works for Linux/ix86 and recent versions
+	of FreeBSD.  It requires the agpgart kernel support, which is
+	included in Linux kernels 2.3.42 and higher, and FreeBSD 4.1
+	and higher.
 </itemize>
 
 
 <sect>Reported Working Video Cards
 <p>
 <itemize>
-  <item>Intel evaluation hardware - i810, i810-dc100 and i810e.
+  <item>Intel evaluation hardware - i810, i810-dc100, i810e and i815.
   <item>Tyan Tomcat Motherboard.
   <item>HappyPC set-top box.
 </itemize>

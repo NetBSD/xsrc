@@ -1,5 +1,5 @@
 /*
-* $TOG: Vendor.h /main/9 1998/02/06 13:28:06 kaleb $
+* $Xorg: Vendor.h,v 1.4 2000/08/17 19:46:20 cpqbld Exp $
 * $oHeader: Vendor.h,v 1.2 88/08/18 15:56:44 asente Exp $
 */
 
@@ -48,6 +48,8 @@ SOFTWARE.
 
 #ifndef _XtVendor_h
 #define _XtVendor_h
+
+#include <X11/Intrinsic.h>
 
 /***********************************************************************
  *

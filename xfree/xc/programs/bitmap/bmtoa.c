@@ -1,4 +1,4 @@
-/* $TOG: bmtoa.c /main/7 1998/02/09 13:40:35 kaleb $ */
+/* $Xorg: bmtoa.c,v 1.3 2000/08/17 19:53:50 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.3 1998/10/04 09:39:59 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.5 2001/01/17 23:44:51 dawes Exp $ */
 
 /*
  * bmtoa - bitmap to ascii filter

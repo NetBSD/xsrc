@@ -1,4 +1,4 @@
-/* $TOG: mfbtegblt.c /main/19 1998/02/09 14:40:20 kaleb $ */
+/* $Xorg: mfbtegblt.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -43,7 +43,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/mfb/mfbtegblt.c,v 1.5 1999/04/11 13:11:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbtegblt.c,v 1.7 2001/01/17 22:37:03 dawes Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

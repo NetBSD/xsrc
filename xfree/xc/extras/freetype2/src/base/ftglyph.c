@@ -28,9 +28,10 @@
   /*************************************************************************/
 
 
-#include <freetype/ftglyph.h>
-#include <freetype/ftoutln.h>
-#include <freetype/internal/ftobjs.h>
+#include <ft2build.h>
+#include FT_GLYPH_H
+#include FT_OUTLINE_H
+#include FT_INTERNAL_OBJECTS_H
 
 
   /*************************************************************************/
@@ -395,6 +396,9 @@
     if ( error )
       goto Exit;
 
+    copy->advance = source->advance;
+    copy->format  = source->format;
+
     if ( clazz->glyph_copy )
       error = clazz->glyph_copy( source, copy );
 
@@ -598,6 +602,12 @@
     if ( !error )
       error = FT_Render_Glyph_Internal( glyph->library, &dummy, render_mode );
 
+    if ( error )
+    {
+      FT_Done_Glyph( FT_GLYPH( bitmap ) );
+      goto Exit;
+    }
+    
     if ( !destroy && origin )
     {
       FT_Vector  v;

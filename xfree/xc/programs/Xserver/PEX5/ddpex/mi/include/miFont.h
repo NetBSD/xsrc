@@ -1,4 +1,4 @@
-/* $TOG: miFont.h /main/5 1998/02/10 12:38:22 kaleb $ */
+/* $Xorg: miFont.h,v 1.3 2000/08/17 19:47:03 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miFont.h,v 1.0tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miFont.h,v 1.3 2001/01/17 22:12:19 dawes Exp $ */
 /* 
  * font internal format
  */

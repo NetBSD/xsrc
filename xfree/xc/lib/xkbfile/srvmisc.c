@@ -1,4 +1,4 @@
-/* $XConsortium: srvmisc.c /main/4 1996/03/01 14:30:31 kaleb $ */
+/* $Xorg: srvmisc.c,v 1.3 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

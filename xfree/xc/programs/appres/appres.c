@@ -1,5 +1,5 @@
 /*
- * $TOG: appres.c /main/13 1998/02/09 13:39:32 kaleb $
+ * $Xorg: appres.c,v 1.3 2000/08/17 19:53:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/programs/appres/appres.c,v 1.3 2001/01/17 23:44:49 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <stdio.h>

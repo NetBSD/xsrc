@@ -1,4 +1,4 @@
-/* $TOG: pexOCParse.c /main/11 1998/02/10 12:43:05 kaleb $ */
+/* $Xorg: pexOCParse.c,v 1.5 2000/08/17 19:47:08 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/pexOCParse.c,v 3.5 1998/07/26 13:13:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/pexOCParse.c,v 3.7 2001/01/17 22:12:25 dawes Exp $ */
 
 
 #include "miStruct.h"
@@ -1006,17 +1006,17 @@ OC_PARSER_FUNC_HEADER(SetMCVolume)
     PARSER_PTR(ptr);
 
     ddHalfSpace	ddHS;
-    INT16	i, count, operator;
+    INT16	i, count, op;
     int		listSize = 0;
     ddFLOAT	length;
 
-    EXTRACT_INT16(operator, ptr);
+    EXTRACT_INT16(op, ptr);
     EXTRACT_INT16(count, ptr);
     listSize = puCountList(DD_HALF_SPACE, count);
     GET_DD_STORAGE( ddMCV, miMCVolume_Struct,
 		    sizeof(miMCVolume_Struct) + listSize);
 
-    ddMCV->operator = operator;
+    ddMCV->operator = op;
     ddMCV->halfspaces = (listofObj *)(ddMCV + 1);
     puInitList(ddMCV->halfspaces, DD_HALF_SPACE, count);
 
@@ -1038,17 +1038,17 @@ OC_PARSER_FUNC_HEADER(SetMCVolume2D)
     miMCVolume_Struct	*ddMCV;
     PARSER_PTR(ptr);
     ddHalfSpace         ddHS;
-    INT16	i, count, operator;
+    INT16	i, count, op;
     int			listSize = 0;
     ddFLOAT		length;
  
-    EXTRACT_INT16(operator, ptr);
+    EXTRACT_INT16(op, ptr);
     EXTRACT_INT16(count, ptr);
     listSize = puCountList(DD_HALF_SPACE, count);
     GET_DD_STORAGE( ddMCV, miMCVolume_Struct,
 		    sizeof(miMCVolume_Struct) + listSize);
 
-    ddMCV->operator = operator;
+    ddMCV->operator = op;
     ddMCV->halfspaces = (listofObj *)(ddMCV + 1);
     puInitList(ddMCV->halfspaces, DD_HALF_SPACE, count);
  

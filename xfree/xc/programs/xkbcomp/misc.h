@@ -1,4 +1,4 @@
-/* $TOG: misc.h /main/5 1997/06/10 06:54:04 kaleb $ */
+/* $Xorg: misc.h,v 1.3 2000/08/17 19:54:33 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

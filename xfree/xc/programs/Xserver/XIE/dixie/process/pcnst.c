@@ -1,4 +1,4 @@
-/* $TOG: pcnst.c /main/6 1998/02/09 16:09:56 kaleb $ */
+/* $Xorg: pcnst.c,v 1.3 2000/08/17 19:47:26 cpqbld Exp $ */
 /**** module pcnst.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. May 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pcnst.c,v 3.3 1998/10/05 13:22:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pcnst.c,v 3.5 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PCNST
 

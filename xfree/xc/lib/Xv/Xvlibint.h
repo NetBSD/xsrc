@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xv/Xvlibint.h,v 1.4 2000/06/07 22:02:57 tsi Exp $ */
 
 #ifndef XVLIBINT_H
 #define XVLIBINT_H

@@ -1,4 +1,4 @@
-/* $TOG: mphist.c /main/5 1998/02/09 16:22:20 kaleb $ */
+/* $Xorg: mphist.c,v 1.3 2000/08/17 19:47:53 cpqbld Exp $ */
 /**** module mphist.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mphist.c,v 3.2 1998/10/04 09:36:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mphist.c,v 3.4 2001/01/17 22:13:12 dawes Exp $ */
 
 #define _XIEC_MPHIST
 #define _XIEC_PHIST

@@ -1,4 +1,4 @@
-.\" $TOG: XtAddEHand.man /main/11 1997/11/04 20:30:10 kaleb $
+.\" $Xorg: XtAddEHand.man,v 1.3 2000/08/17 19:41:57 cpqbld Exp $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -24,6 +24,9 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtAddEHand.man,v 1.3 2001/02/09 03:47:49 tsi Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -123,11 +126,11 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAddEventHandler 3Xt "Release 6.4" "X Version 11" "XT FUNCTIONS"
+.TH XtAddEventHandler 3Xt __xorgversion__ "XT FUNCTIONS"
 .SH NAME
 XtAddEventHandler, XtAddRawEventHandler, XtRemoveEventHandler, XtRemoveRawEventHandler, XtInsertEventHandler, XtInsertRawEventHandler \- add and remove event handlers
 .SH SYNTAX
-void XtAddEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtAddEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP)
 .br
       Widget \fIw\fP;
@@ -140,7 +143,7 @@ void XtAddEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
 .br
       XtPointer \fIclient_data\fP;
 .LP
-void XtAddRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtAddRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP)
 .br
       Widget \fIw\fP;
@@ -153,7 +156,7 @@ void XtAddRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
 .br
       XtPointer \fIclient_data\fP;
 .LP
-void XtRemoveEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtRemoveEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP)
 .br
       Widget \fIw\fP;
@@ -166,7 +169,7 @@ void XtRemoveEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
 .br
       XtPointer \fIclient_data\fP;
 .LP
-void XtRemoveRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtRemoveRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP)
 .br
       Widget \fIw\fP;
@@ -179,7 +182,7 @@ void XtRemoveRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
 .br
       XtPointer \fIclient_data\fP;
 .LP
-void XtInsertEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtInsertEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP, \fIposition\fP)
 .br
       Widget \fIw\fP;
@@ -194,7 +197,7 @@ void XtInsertEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
 .br
       XtListPosition \fIposition\fP;
 .LP
-void XtInsertRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP, \
+void XtInsertRawEventHandler(\fIw\fP, \fIevent_mask\fP, \fInonmaskable\fP,
 \fIproc\fP, \fIclient_data\fP, \fIposition\fP)
 .br
       Widget \fIw\fP;

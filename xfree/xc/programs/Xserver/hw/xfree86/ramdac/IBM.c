@@ -23,7 +23,7 @@
  *
  * IBM RAMDAC routines.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.9 1999/02/12 22:52:10 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.11 2001/04/09 00:04:12 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -396,8 +396,17 @@ IBMramdac640SetBpp(ScrnInfoPtr pScrn, RamDacRegRecPtr ramdacReg)
     	    ramdacReg->DacRegs[RGB640_MISC_CONF] = IBM640_PCLK_8; /* pll / 8 */
 	    bpp = 0x03;
 	    break;
+	case 15:
+	    ramdacReg->DacRegs[RGB640_SER_07_00] = 0x10;
+	    ramdacReg->DacRegs[RGB640_SER_15_08] = 0x11;
+	    ramdacReg->DacRegs[RGB640_SER_23_16] = 0x00;
+	    ramdacReg->DacRegs[RGB640_SER_31_24] = 0x00;
+    	    ramdacReg->DacRegs[RGB640_SER_MODE] = IBM640_SER_8_1; /* 8:1 Mux*/
+    	    ramdacReg->DacRegs[RGB640_MISC_CONF] = IBM640_PCLK_8; /* pll / 8 */
+	    bpp = 0x0E;
+	    break;
 	case 16:
-	    ramdacReg->DacRegs[RGB640_SER_07_00] = 0x10; 
+	    ramdacReg->DacRegs[RGB640_SER_07_00] = 0x10;
 	    ramdacReg->DacRegs[RGB640_SER_15_08] = 0x11;
 	    ramdacReg->DacRegs[RGB640_SER_23_16] = 0x00;
 	    ramdacReg->DacRegs[RGB640_SER_31_24] = 0x00;

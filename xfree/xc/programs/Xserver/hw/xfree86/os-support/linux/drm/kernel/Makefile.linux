@@ -23,7 +23,7 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-# 
+#
 #
 # ***** NOTE NOTE NOTE NOTE NOTE *****
 # To override the automatic Linux source tree determination, pass the
@@ -47,35 +47,41 @@
 
 # **** End of SMP/MODVERSIONS detection
 
-MODS=           gamma.o tdfx.o r128.o
-LIBS=           libdrm.a
+MODS =		gamma.o tdfx.o r128.o radeon.o
+LIBS =
 
-DRMOBJS=	init.o memory.o proc.o auth.o context.o drawable.o bufs.o \
-		lists.o lock.o ioctl.o fops.o vm.o dma.o ctxbitmap.o
-DRMHEADERS=	drm.h drmP.h compat-pre24.h
+DRMTEMPLATES =	drm_auth.h drm_bufs.h drm_context.h drm_dma.h drm_drawable.h \
+		drm_drv.h drm_fops.h drm_init.h drm_ioctl.h drm_lists.h \
+		drm_lock.h drm_memory.h drm_proc.h drm_stub.h drm_vm.h
+DRMHEADERS =	drm.h drmP.h compat-pre24.h
 
-GAMMAOBJS=      gamma_drv.o gamma_dma.o
-GAMMAHEADERS=   gamma_drv.h $(DRMHEADERS)
+GAMMAOBJS =	gamma_drv.o gamma_dma.o
+GAMMAHEADERS =	gamma_drv.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-TDFXOBJS=       tdfx_drv.o tdfx_context.o
-TDFXHEADERS=    tdfx_drv.h $(DRMHEADERS)
+TDFXOBJS =	tdfx_drv.o
+TDFXHEADERS =	tdfx.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-R128OBJS=	r128_drv.o r128_cce.o r128_bufs.o r128_state.o r128_context.o
-R128HEADERS=	r128_drv.h r128_drm.h $(DRMHEADERS)
+R128OBJS =	r128_drv.o r128_cce.o r128_state.o
+R128HEADERS =	r128.h r128_drv.h r128_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-INC=		/usr/include
+RADEONOBJS =	radeon_drv.o radeon_cp.o radeon_state.o
+RADEONHEADERS =	radeon.h radeon_drv.h radeon_drm.h $(DRMHEADERS) \
+		$(DRMTEMPLATES)
 
-CFLAGS=		-O2 $(WARNINGS)
-WARNINGS=	-Wall -Wwrite-strings -Wpointer-arith -Wcast-align \
+INC =		/usr/include
+
+CFLAGS =	-O2 $(WARNINGS)
+WARNINGS =	-Wall -Wwrite-strings -Wpointer-arith -Wcast-align \
 		-Wstrict-prototypes -Wnested-externs \
 		-Wpointer-arith
 # -Wshadow -Winline -- make output too noisy
-MODCFLAGS=      $(CFLAGS) -D__KERNEL__ -DMODULE -fomit-frame-pointer
-PRGCFLAGS=      $(CFLAGS) -g -ansi -pedantic -DPOSIX_C_SOURCE=199309L \
+MODCFLAGS =	$(CFLAGS) -D__KERNEL__ -DMODULE -fomit-frame-pointer
+PRGCFLAGS =	$(CFLAGS) -g -ansi -pedantic -DPOSIX_C_SOURCE=199309L \
 		-D_POSIX_SOURCE -D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE \
 		-I../../../../../../include -I../../../../../../../../include \
-		-I../../../../../../../../programs/Xserver/hw/xfree86/common
-PRGLIBS=
+		-I../../../../../../../../programs/Xserver/hw/xfree86/common \
+		-I. -I../../.. -I../../../../../../../../lib/X11
+PRGLIBS =
 
 # **** Start of SMP/MODVERSIONS detection
 
@@ -84,9 +90,10 @@ PRGLIBS=
 # This may not be correct, but it is the best assumption we can make.
 
 VERSION := $(shell uname -r)
-A := /usr/src/linux-$(VERSION)/include
-B := /usr/src/linux/include
-C := /usr/include
+A := /lib/modules/$(VERSION)/build/include
+B := /usr/src/linux-$(VERSION)/include
+C := /usr/src/linux/include
+D := /usr/include
 
 V := $(shell gcc -E -nostdinc -I$A picker.c 2>/dev/null \
       | grep -s 'RELEASE = ' | cut -d' ' -f3)
@@ -101,15 +108,21 @@ else
     V := $(shell gcc -E -nostdinc -I$C picker.c 2>/dev/null \
           | grep -s 'RELEASE = ' | cut -d' ' -f3)
 ifeq ($(V),"$(VERSION)")
-    TREE := $C
+  TREE := $C
+else
+    V := $(shell gcc -E -nostdinc -I$D picker.c 2>/dev/null \
+          | grep -s 'RELEASE = ' | cut -d' ' -f3)
+ifeq ($(V),"$(VERSION)")
+    TREE := $D
 else
     TREE := 0
 endif
 endif
 endif
+endif
 
 ifeq ($(TREE),0)
-all:; @echo Error: Could not locate kernel tree in $A $B $C
+all:; @echo Error: Could not locate kernel tree in $A $B $C $D
 else
 SMP := $(shell gcc -E -nostdinc -I$(TREE) picker.c 2>/dev/null \
 	| grep -s 'SMP = ' | cut -d' ' -f3)
@@ -131,18 +144,26 @@ endif
 
 ifeq ($(AGP),1)
 MODCFLAGS += -DCONFIG_AGP -DCONFIG_AGP_MODULE
-DRMOBJS += agpsupport.o
+DRMTEMPLATES += drm_agpsupport.h
+DRMHEADERS += agpsupport-pre24.h
 MODS += mga.o
 ifeq ($(MACHINE),i386)
 MODS += i810.o
 endif
+ifeq ($(MACHINE),i686)
+MODS += i810.o
+endif
 
+MGAOBJS =	mga_drv.o mga_dma.o mga_state.o mga_warp.o
+MGAHEADERS =	mga.h mga_drv.h mga_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-MGAOBJS=	mga_drv.o mga_dma.o mga_bufs.o mga_state.o mga_context.o
-MGAHEADERS=	mga_drv.h $(DRMHEADERS)
+I810OBJS =	i810_drv.o i810_dma.o
+I810HEADERS =	i810.h i810_drv.h i810_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-I810OBJS=	i810_drv.o i810_dma.o i810_bufs.o i810_context.o
-I810HEADERS=	i810_drv.h $(DRMHEADERS)
+endif
+
+ifeq ($(MACHINE),alpha)
+MODCFLAGS+=      -ffixed-8 -mno-fp-regs -mcpu=ev56 -Wa,-mev6 
 endif
 
 ifeq ($(SIS),1)
@@ -154,14 +175,18 @@ ifeq ($(SIS),1)
 # file to see if we can, at least, compile the driver.
 MODS += sis.o
 
-SISOBJS=	sis_drv.o sis_context.o sis_ds.o sis_mm.o
-SISHEADERS=	sis_drv.h sis_ds.h sis_drm.h $(DRMHEADERS)
+SISOBJS=	sis_drv.o sis_mm.o sis_ds.o 
+SISHEADERS=	sis_drv.h sis_drm.h $(DRMHEADERS)
+MODCFLAGS += -DCONFIG_DRM_SIS
 endif
 
 all::;@echo === KERNEL HEADERS IN $(TREE)
 all::;@echo === SMP=${SMP} MODULES=${MODULES} MODVERSIONS=${MODVERSIONS} AGP=${AGP}
 all::;@echo === kill_fasync has $(PARAMS) parameters
 all::;@echo === Compiling for machine $(MACHINE)
+all::;@echo === WARNING
+all::;@echo === WARNING 2.4.0 kernels before 2.4.0-test11 DO NOT WORK
+all::;@echo === WARNING
 
 ifeq ($(MODULES),0)
 all::;@echo
@@ -188,13 +213,15 @@ endif
 
 # **** End of configuration
 
-libdrm.a: $(DRMOBJS)
-	-$(RM) -f $@
-	$(AR) rcs $@ $(DRMOBJS)
+dristat: dristat.c
+	$(CC) $(PRGCFLAGS) $< -o $@
+
+DRIsetup: DRIsetup.c
+	$(CC) $(PRGCFLAGS) $< -o $@ -L/usr/X11R6/lib -lGL -lm ../../../../parser/libxf86config.a ../libdrm.a
 
 gamma_drv.o: gamma_drv.c
 	$(CC) $(MODCFLAGS) -DEXPORT_SYMTAB -I$(TREE) -c $< -o $@
-gamma.o: $(GAMMAOBJS) $(LIBS)
+gamma.o: $(GAMMAOBJS)
 	$(LD) -r $^ -o $@
 
 tdfx_drv.o: tdfx_drv.c
@@ -202,24 +229,30 @@ tdfx_drv.o: tdfx_drv.c
 tdfx.o: $(TDFXOBJS) $(LIBS)
 	$(LD) -r $^ -o $@
 
+sis.o: $(SISOBJS) $(LIBS)
+	$(LD) -r $^ -o $@
+
 r128_drv.o: r128_drv.c
 	$(CC) $(MODCFLAGS) -DEXPORT_SYMTAB -I$(TREE) -c $< -o $@
 r128.o: $(R128OBJS) $(LIBS)
 	$(LD) -r $^ -o $@
 
-sis.o: $(SISOBJS) $(LIBS)
+radeon_drv.o: radeon_drv.c
+	$(CC) $(MODCFLAGS) -DEXPORT_SYMTAB -I$(TREE) -c $< -o $@
+radeon.o: $(RADEONOBJS) $(LIBS)
 	$(LD) -r $^ -o $@
 
 ifeq ($(AGP),1)
 mga_drv.o: mga_drv.c
 	$(CC) $(MODCFLAGS) -DEXPORT_SYMTAB -I$(TREE) -c $< -o $@
-mga.o: $(MGAOBJS) $(LIBS)
+mga.o: $(MGAOBJS)
 	$(LD) -r $^ -o $@
 
 i810_drv.o: i810_drv.c
 	$(CC) $(MODCFLAGS) -DEXPORT_SYMTAB -I$(TREE) -c $< -o $@
 i810.o: $(I810OBJS) $(LIBS)
 	$(LD) -r $^ -o $@
+
 endif
 
 .PHONY: ChangeLog
@@ -235,14 +268,14 @@ ChangeLog:
 %.o: %.c
 	$(CC) $(MODCFLAGS) -I$(TREE) -c $< -o $@
 
-$(DRMOBJS): $(DRMHEADERS)
 $(GAMMAOBJS): $(GAMMAHEADERS)
 $(TDFXOBJS): $(TDFXHEADERS)
-$(R128OBJS): $(R128HEADERS)
 ifeq ($(AGP),1)
 $(MGAOBJS): $(MGAHEADERS)
 $(I810OBJS): $(I810HEADERS)
+$(R128OBJS): $(R128HEADERS)
+$(RADEONOBJS): $(RADEONHEADERS)
 endif
 
-clean:
+clean cleandir::
 	rm -f *.o *.a *~ core

@@ -1,4 +1,4 @@
-/* $TOG: chownxterm.c /main/4 1998/02/06 11:23:10 kaleb $ */
+/* $Xorg: chownxterm.c,v 1.3 2000/08/17 19:41:52 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group

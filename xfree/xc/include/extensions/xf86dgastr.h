@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.11 1999/07/18 08:14:22 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.13 2000/12/20 00:19:41 mvojkovi Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -308,7 +308,7 @@ typedef struct _XDGACreateColormap {
     CARD8	dgaReqType;
     CARD16	length B16;
     CARD32	screen B32;
-    Colormap	id B32;
+    CARD32	id B32;
     CARD32	mode B32;
     CARD8	alloc;
     CARD8	pad1;
@@ -326,11 +326,11 @@ typedef struct {
     } u;
     struct {
       CARD32 pad0 B32;
-      Time time B32;
+      CARD32 time B32;
       INT16 dx B16;
       INT16 dy B16;
       INT16 screen B16;
-      KeyButMask state B16;
+      CARD16 state B16;
       CARD32 pad1 B32;
       CARD32 pad2 B32;
       CARD32 pad3 B32;

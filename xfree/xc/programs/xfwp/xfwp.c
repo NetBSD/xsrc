@@ -1,4 +1,4 @@
-/* $TOG: xfwp.c /main/57 1998/02/09 13:58:44 kaleb $ */
+/* $Xorg: xfwp.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group

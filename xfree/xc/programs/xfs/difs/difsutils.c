@@ -1,4 +1,4 @@
-/* $TOG: difsutils.c /main/14 1998/02/11 10:02:24 kaleb $ */
+/* $Xorg: difsutils.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * misc utility routines
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/difsutils.c,v 1.4 1999/08/01 11:55:25 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/difsutils.c,v 1.6 2001/01/17 23:45:28 dawes Exp $ */
 
 #define	XK_LATIN1
 

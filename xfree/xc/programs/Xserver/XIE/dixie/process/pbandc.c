@@ -1,4 +1,4 @@
-/* $TOG: pbandc.c /main/5 1998/02/09 16:09:27 kaleb $ */
+/* $Xorg: pbandc.c,v 1.3 2000/08/17 19:47:26 cpqbld Exp $ */
 /**** module pbandc.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. July 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pbandc.c,v 3.2 1998/10/05 13:22:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pbandc.c,v 3.4 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PBANDC
 

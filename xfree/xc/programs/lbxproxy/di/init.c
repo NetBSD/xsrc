@@ -1,4 +1,4 @@
-/* $TOG: init.c /main/17 1998/02/11 09:48:23 kaleb $ */
+/* $Xorg: init.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

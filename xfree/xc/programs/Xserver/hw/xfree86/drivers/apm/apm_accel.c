@@ -1,6 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.13 2000/02/14 19:20:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.16.2.1 2001/05/23 20:21:52 dawes Exp $ */
 
 
+#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "miline.h"
 
@@ -158,7 +159,7 @@ ApmCopyAreaPixmap(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, GC *pGC,
     register int Scanlines;
     int is;
     int id;
-    int sx, sy, dx, dy, pitch;
+    int sx = 0, sy = 0, dx = 0, dy = 0, pitch;
     RegionPtr pReg;
 
     if (APMPTR(xf86Screens[(pGC)->pScreen->myNum])->Chipset == AT3D) {
@@ -301,10 +302,12 @@ ApmAccelInit(ScreenPtr pScreen)
     SETROP(ROP_S_xor_D);
     SETROP(ROP_S);
 
+#if 0
     if (XAAPixmapOps.CopyArea != ApmCopyAreaPixmap) {
 	SaveCopyAreaPixmap = XAAPixmapOps.CopyArea;
 	XAAPixmapOps.CopyArea = ApmCopyAreaPixmap;
     }
+#endif
 
     ApmSetupXAAInfo(pApm, pXAAinfo);
 

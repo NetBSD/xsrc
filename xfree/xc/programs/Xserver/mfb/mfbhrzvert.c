@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbhrzvert.c,v 1.4 2001/01/17 22:37:03 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbhrzvert.c /main/9 1998/02/09 14:39:14 kaleb $ */
+/* $Xorg: mfbhrzvert.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 #include "X.h"
 
 #include "gc.h"

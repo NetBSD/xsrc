@@ -1,5 +1,5 @@
 /*
-* $TOG: GripP.h /main/16 1998/02/06 12:46:03 kaleb $
+* $Xorg: GripP.h,v 1.3 2000/08/17 19:45:33 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/GripP.h,v 1.5 1999/06/06 08:47:57 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/GripP.h,v 1.7 2001/01/17 19:42:26 dawes Exp $ */
 
 #ifndef _XawGripP_h
 #define _XawGripP_h

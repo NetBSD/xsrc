@@ -1,4 +1,4 @@
-/* $TOG: FSServName.c /main/6 1998/02/06 13:44:07 kaleb $ */
+/* $Xorg: FSServName.c,v 1.3 2000/08/17 19:44:05 cpqbld Exp $ */
 
 /* @(#)FSServName.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;

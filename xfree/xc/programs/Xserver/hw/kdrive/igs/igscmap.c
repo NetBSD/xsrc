@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/programs/Xserver/hw/kdrive/igs/igscmap.c,v 1.1 2000/05/24 23:52:48 keithp Exp $
  *
  * Copyright © 2000 Keith Packard
  *

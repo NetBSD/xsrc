@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/lcUniConv/jisx0212.h,v 1.3 2000/11/29 17:40:33 dawes Exp $ */
 
 /*
  * JISX0212.1990-0

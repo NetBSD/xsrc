@@ -1,4 +1,4 @@
-/* $TOG: Converters.h /main/17 1998/02/06 15:41:45 kaleb $ */
+/* $Xorg: Converters.h,v 1.4 2000/08/17 19:45:59 cpqbld Exp $ */
 
 /*
  
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/Converters.h,v 1.3 1998/08/16 10:25:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Converters.h,v 1.5 2001/01/17 19:42:53 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities
@@ -32,6 +32,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _XMU_STRCONVERT_H_
 #define _XMU_STRCONVERT_H_
 
+#include <X11/Intrinsic.h>
 #include <X11/Xfuncproto.h>
 
 _XFUNCPROTOBEGIN

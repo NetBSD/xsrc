@@ -1,4 +1,4 @@
-/* $TOG: Xos_r.h /main/7 1998/02/09 11:18:56 kaleb $ */
+/* $Xorg: Xos_r.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /* 
 Copyright 1996, 1998  The Open Group
 
@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/include/Xos_r.h,v 1.7 2000/08/28 15:29:11 dawes Exp $ */
+/* $XFree86: xc/include/Xos_r.h,v 1.10 2001/03/03 09:53:00 herrb Exp $ */
 
 /* 
  * Various and sundry Thread-Safe functions used by X11, Motif, and CDE.
@@ -146,7 +146,7 @@ extern void (*_XUnlockMutex_fn)(
 #   endif
 #  endif
 # elif defined(XOS_USE_XT_LOCKING)
-extern void (*_XtProcessLock)();
+extern void (*_XtProcessLock)(void);
 #  ifndef _XtintrinsicP_h
 #   include <X11/Xfuncproto.h>	/* for NeedFunctionPrototypes */
 extern void XtProcessLock(
@@ -243,9 +243,12 @@ typedef struct {
   size_t len;
 } _Xgetpwparams;
 
-/* NetBSD, at least, is missing several of the unixware passwd fields. */
+/*
+ * NetBSD and FreeBSD, at least, are missing several of the unixware passwd
+ * fields.
+ */
    
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 {
    memcpy(&(p).pws, (p).pwp, sizeof(struct passwd));
@@ -412,7 +415,7 @@ typedef int _Xgetservbynameparams; /* dummy */
 /* UnixWare 2.0, or other systems with thread support but no _r API. */
 /* WARNING:  The h_addr_list and s_aliases values are *not* copied! */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/param.h>
 #endif
 

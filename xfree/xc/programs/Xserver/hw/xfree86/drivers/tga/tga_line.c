@@ -1,4 +1,4 @@
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_line.c,v 1.2 1999/12/16 02:26:30 robin Exp $ */
 
 /*
  * Copyright 1999 by Matthew Grossman, Seattle, USA.

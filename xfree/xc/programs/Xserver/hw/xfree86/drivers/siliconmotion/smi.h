@@ -26,10 +26,12 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and Silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi.h,v 1.1 2000/11/28 20:59:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi.h,v 1.6 2001/05/15 10:19:40 eich Exp $ */
 
 #ifndef _SMI_H
 #define _SMI_H
+
+#define USE_FB
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -44,11 +46,16 @@ authorization from the XFree86 Project and Silicon Motion.
 #include "mipointer.h"
 #include "micmap.h"
 
+#ifdef USE_FB
+#include "fb.h"
+#else
+
 #define PSZ 8
 #include "cfb.h"
 #undef PSZ
 #include "cfb16.h"
 #include "cfb24.h"
+#endif
 
 #include "xaa.h"
 #include "xf86cmap.h"
@@ -63,19 +70,19 @@ authorization from the XFree86 Project and Silicon Motion.
 #endif
 
 /******************************************************************************/
-/*							   D E F I N I T O N S							  */
+/*			D E F I N I T I O N S				      */
 /******************************************************************************/
 
 #ifndef SMI_DEBUG
-	#define SMI_DEBUG			0
+	#define SMI_DEBUG	0
 #endif
 
 #define SMI_USE_IMAGE_WRITES	0
-#define SMI_USE_VIDEO			1
-#define SMI_USE_CAPTURE			1
+#define SMI_USE_VIDEO		1
+#define SMI_USE_CAPTURE		1
 
 /******************************************************************************/
-/*							   S T R U C T U R E S							  */
+/*			S T R U C T U R E S				      */
 /******************************************************************************/
 
 /* Driver data structure; this should contain all needed info for a mode */
@@ -100,124 +107,153 @@ typedef struct
 typedef struct
 {
 	/* accel additions */
-	CARD32			AccelCmd;			/* Value for DPR0C					  */
-	CARD32			Stride;				/* Stride of frame buffer			  */
-	CARD32			ScissorsLeft;		/* Left/top of current scissors		  */
-	CARD32			ScissorsRight;		/* Right/bottom of current scissors	  */
-	Bool			ClipTurnedOn;		/* Clipping was turned on by the
-										   previous command					  */
-	
-	CARD8			SR18Value;			/* PDR#521: original SR18 value		  */
-	CARD8			SR21Value;			/* PDR#521: original SR21 value		  */
-	SMIRegRec		SavedReg;			/* console saved mode registers		  */
-	SMIRegRec		ModeReg;			/* XServer video state mode registers */
-	xf86CursorInfoPtr CursorInfoRec;	/* HW Cursor info					  */
+	CARD32			AccelCmd;	/* Value for DPR0C */
+	CARD32			Stride;		/* Stride of frame buffer */
+	CARD32			ScissorsLeft;	/* Left/top of current
+						   scissors */
+	CARD32			ScissorsRight;	/* Right/bottom of current
+						   scissors */
+	Bool			ClipTurnedOn;	/* Clipping was turned on by
+						   the previous command */
+	CARD8			SR18Value;	/* PDR#521: original SR18
+						   value */
+	CARD8			SR21Value;	/* PDR#521: original SR21
+						   value */
+	SMIRegRec		SavedReg;	/* console saved mode
+						   registers */
+	SMIRegRec		ModeReg;	/* XServer video state mode
+						   registers */
+	xf86CursorInfoPtr	CursorInfoRec;	/* HW Cursor info */
 
-	Bool			ModeStructInit;		/* Flag indicating ModeReg has been	  *
-										 * duped from console state			  */
-	int				vgaCRIndex, vgaCRReg;
-	int				width, height;		/* Width and height of the screen	  */
-	int				Bpp;				/* Bytes per pixel					  */
+	Bool			ModeStructInit;	/* Flag indicating ModeReg has
+						   been duped from console
+						   state */
+	int			vgaCRIndex, vgaCRReg;
+	int			width, height;	/* Width and height of the
+						   screen */
+	int			Bpp;		/* Bytes per pixel */
 
 	/* XAA */
-	int				videoRAMBytes;		/* In units as noted, set in PreInit  */
-	int				videoRAMKBytes;		/* In units as noted, set in PreInit  */
-	unsigned char *	MapBase;			/* Base of mapped memory			  */
-	int				MapSize;			/* Size of mapped memory			  */
-	CARD8 *			DPRBase;			/* Base of DPR registers			  */
-	CARD8 *			VPRBase;			/* Base of VPR registers			  */
-	CARD8 *			CPRBase;			/* Base of CPR registers			  */
-	CARD8 *			DataPortBase;		/* Base of data port				  */
-	int				DataPortSize;		/* Size of data port				  */
-	volatile CARD8 *IOBase;				/* Base of MMIO VGA ports			  */
-	unsigned char *	FBBase;				/* Base of FB						  */
-	CARD32			FBOffset;			/* Current visual FB starting		  *
-										 * location							  */
-	CARD32			FBCursorOffset;		/* Cursor storage location			  */
-	CARD32			FBReserved;			/* Reserved memory in frame buffer	  */
+	int			videoRAMBytes;	/* In units as noted, set in
+						   PreInit  */
+	int			videoRAMKBytes;	/* In units as noted, set in
+						   PreInit */
+	unsigned char *		MapBase;	/* Base of mapped memory */
+	int			MapSize;	/* Size of mapped memory */
+	CARD8 *			DPRBase;	/* Base of DPR registers */
+	CARD8 *			VPRBase;	/* Base of VPR registers */
+	CARD8 *			CPRBase;	/* Base of CPR registers */
+	CARD8 *			DataPortBase;	/* Base of data port */
+	int			DataPortSize;	/* Size of data port */
+	CARD8 *			IOBase;		/* Base of MMIO VGA ports */
+	unsigned char *		FBBase;		/* Base of FB */
+	CARD32			FBOffset;	/* Current visual FB starting
+						   location */
+	CARD32			FBCursorOffset;	/* Cursor storage location */
+	CARD32			FBReserved;	/* Reserved memory in frame
+						   buffer */
 	
-	Bool			PrimaryVidMapped;	/* Flag indicating if vgaHWMapMem was *
-										 * used successfully for this screen  */
-	int				dacSpeedBpp;		/* Clock value						  */
-	int				minClock;			/* Mimimum clock					  */
-	int				maxClock;			/* Maximum clock					  */
-	int				MCLK;				/* Memory Clock						  */
-	int				GEResetCnt;			/* Limit the number of errors printed *
-										 * using a counter					  */
+	Bool			PrimaryVidMapped;	/* Flag indicating if
+							   vgaHWMapMem was used
+							   successfully for
+							   this screen */
+	int			dacSpeedBpp;	/* Clock value */
+	int			minClock;	/* Mimimum clock */
+	int			maxClock;	/* Maximum clock */
+	int			MCLK;		/* Memory Clock  */
+	int			GEResetCnt;	/* Limit the number of errors
+						   printed using a counter */
 
-	Bool			pci_burst;			/* Enable PCI burst mode for reads?	  */
-	Bool			NoPCIRetry;			/* Diasable PCI retries				  */
-	Bool			fifo_conservative;	/* Adjust fifo for acceleration?	  */
-	Bool			fifo_moderate;		/* Adjust fifo for acceleration?	  */
-	Bool			fifo_aggressive;	/* Adjust fifo for acceleration?	  */
-	Bool			NoAccel;			/* Disable Acceleration				  */
-	Bool			hwcursor;			/* hardware cursor enabled			  */
-	Bool			ShowCache;			/* Debugging option					  */
-	Bool			useBIOS;			/* USe BIOS for mode sets			  */
+	Bool			pci_burst;	/* Enable PCI burst mode for
+						   reads? */
+	Bool			NoPCIRetry;	/* Disable PCI retries */
+	Bool			fifo_conservative;	/* Adjust fifo for
+							   acceleration? */
+	Bool			fifo_moderate;	/* Adjust fifo for
+						   acceleration? */
+	Bool			fifo_aggressive;	/* Adjust fifo for
+							   acceleration? */
+	Bool			NoAccel;	/* Disable Acceleration */
+	Bool			hwcursor;	/* hardware cursor enabled */
+	Bool			ShowCache;	/* Debugging option */
+	Bool			useBIOS;	/* Use BIOS for mode sets */
+	Bool			zoomOnLCD;	/* Zoom on LCD */
 	
-	CloseScreenProcPtr	CloseScreen;	/* Pointer used to save wrapped		  *
-										 * CloseScreen function.			  */
-	XAAInfoRecPtr	AccelInfoRec;		/* XAA info Rec						  */
-	pciVideoPtr		PciInfo;			/* PCI info vars.					  */
+	CloseScreenProcPtr	CloseScreen;	/* Pointer used to save wrapped
+						   CloseScreen function */
+	XAAInfoRecPtr		AccelInfoRec;	/* XAA info Rec */
+	pciVideoPtr		PciInfo;	/* PCI info vars */
 	PCITAG			PciTag;
-	int				Chipset;			/* Chip info, set using PCI	above.	  */
-	int				ChipRev;
+	int			Chipset;	/* Chip info, set using PCI
+						   above */
+	int			ChipRev;
 
 	/* DGA */
-	DGAModePtr		DGAModes;			/* Pointer to DGA modes				  */
-	int				numDGAModes;		/* Number of DGA modes				  */
-	Bool			DGAactive;			/* Flag if DGA is active			  */
-	int				DGAViewportStatus;	/* DGA Viewport status				  */
+	DGAModePtr		DGAModes;	/* Pointer to DGA modes */
+	int			numDGAModes;	/* Number of DGA modes */
+	Bool			DGAactive;	/* Flag if DGA is active */
+	int			DGAViewportStatus;
 
 	/* DPMS */
-	int				CurrentDPMS;		/* Current DPMS state				  */
-	unsigned char	DPMS_SR20;			/* Saved DPMS SR20 register			  */
-	unsigned char	DPMS_SR21;			/* Saved DPMS SR21 register			  */
-	unsigned char	DPMS_SR31;			/* Saved DPMS SR31 register			  */
-	unsigned char	DPMS_SR34;			/* Saved DPMS SR34 register			  */
+	int			CurrentDPMS;	/* Current DPMS state */
+	unsigned char		DPMS_SR20;	/* Saved DPMS SR20 register */
+	unsigned char		DPMS_SR21;	/* Saved DPMS SR21 register */
+	unsigned char		DPMS_SR31;	/* Saved DPMS SR31 register */
+	unsigned char		DPMS_SR34;	/* Saved DPMS SR34 register */
 
 	/* Panel information */
-	Bool			lcd;				/* LCD active, 1=DSTN, 2=TFT		  */
-	int				lcdWidth;			/* LCD width						  */
-	int				lcdHeight;			/* LCD height						  */
+	Bool			lcd;		/* LCD active, 1=DSTN, 2=TFT */
+	int			lcdWidth;	/* LCD width */
+	int			lcdHeight;	/* LCD height */
 
-	I2CBusPtr		 I2C;				/* Pointer to I2C module			  */
-	xf86Int10InfoPtr pInt;				/* Pointer to INT10 module			  */
-	vbeInfoPtr		 pVbe;				/* Pointer to VBE module			  */
+	I2CBusPtr		I2C;		/* Pointer into I2C module */
+	xf86Int10InfoPtr	pInt;		/* Pointer to INT10 module */
+	vbeInfoPtr		pVbe;		/* Pointer to VBE module */
 
 	/* Shadow frame buffer (rotation) */
-	Bool			shadowFB;			/* Flag if shadow buffer is used	  */
-	int				rotate;				/* Rotation flags					  */
-	int				ShadowPitch;		/* Pitch of shadow buffer			  */
-	int				ShadowWidthBytes;	/* Width of shadow buffer in bytes	  */
-	int				ShadowWidth;		/* Width of shadow buffer in pixels	  */
-	int				ShadowHeight;		/* Height of shadow buffer in pixels  */
-	CARD32			saveBufferSize;		/* #670 - FB save buffer size		  */
-	void *			pSaveBuffer;		/* #670 - FB save buffer			  */
-	CARD32			savedFBOffset;		/* #670 - Saved FBOffset value		  */
-	CARD32			savedFBReserved;	/* #670 - Saved FBReserved value	  */
+	Bool			shadowFB;	/* Flag if shadow buffer is
+						   used */
+	int			rotate;		/* Rotation flags */
+	int			ShadowPitch;	/* Pitch of shadow buffer */
+	int			ShadowWidthBytes;	/* Width of shadow
+							   buffer in bytes */
+	int			ShadowWidth;	/* Width of shadow buffer in
+						   pixels */
+	int			ShadowHeight;	/* Height of shadow buffer in
+						   pixels */
+	CARD32			saveBufferSize;	/* #670 - FB save buffer size */
+	void *			pSaveBuffer;	/* #670 - FB save buffer */
+	CARD32			savedFBOffset;	/* #670 - Saved FBOffset value */
+	CARD32			savedFBReserved;	/* #670 - Saved
+							   FBReserved value */
+	CARD8 *			paletteBuffer;	/* #920 - Palette save buffer */
 
 	/* Polylines - #671 */
-	ValidateGCProcPtr ValidatePolylines;/* Org. ValidatePolylines function	  */
-	Bool			  polyLines;		/* Our polylines patch is active	  */
+	ValidateGCProcPtr	ValidatePolylines;	/* Org.
+							   ValidatePolylines
+							   function */
+	Bool			polyLines;	/* Our polylines patch is
+						   active */
 
 	void (*PointerMoved)(int index, int x, int y);
 
 #ifdef XvExtension
-	int				videoKey;			/* Video chroma key					  */
-	Bool			ByteSwap;			/* Byte swap for ZV port			  */
+	int			videoKey;	/* Video chroma key */
+	Bool			ByteSwap;	/* Byte swap for ZV port */
 	/* XvExtension */
-	XF86VideoAdaptorPtr ptrAdaptor;		/* Pointer to VideoAdapter structure  */
+	XF86VideoAdaptorPtr	ptrAdaptor;	/* Pointer to VideoAdapter
+						   structure */
 	void (*BlockHandler)(int i, pointer blockData, pointer pTimeout,
 						 pointer pReadMask);
 #endif
-
+	OptionInfoPtr		Options;
+        CARD8 DACmask;
 } SMIRec, *SMIPtr;
 
 #define SMIPTR(p) ((SMIPtr)((p)->driverPrivate))
 
 /******************************************************************************/
-/*								   M A C R O S								  */
+/*			M A C R O S					      */
 /******************************************************************************/
 
 #if SMI_DEBUG
@@ -241,51 +277,54 @@ typedef struct
 #include "regsmi.h"
 
 #if !defined (MetroLink) && !defined (VertDebug)
-#define VerticalRetraceWait()												   \
-do																			   \
-{																			   \
-	if (VGAIN8_INDEX(pSmi, vgaCRIndex, vgaCRData, 0x17) & 0x80)				   \
-	{																		   \
-		while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) ;			   \
-		while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x08) ;			   \
-		while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) ;			   \
-	}																		   \
+#define VerticalRetraceWait()						\
+do									\
+{									\
+    if (VGAIN8_INDEX(pSmi, vgaCRIndex, vgaCRData, 0x17) & 0x80)		\
+    {									\
+	while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00);	\
+	while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x08);	\
+	while ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00);	\
+    }									\
 } while (0)
 #else
 #define SPIN_LIMIT 1000000
-#define VerticalRetraceWait()
-do																			   \
-{																			   \
-	if (VGAIN8_INDEX(pSmi, vgaCRIndex, vgaCRData, 0x17) & 0x80)				   \
-	{																		   \
-		volatile unsigned long _spin_me;									   \
-		for (_spin_me = SPIN_LIMIT;											   \
-			 ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me;	   \
-			 _spin_me--) ;													   \
-		if (!_spin_me)														   \
-			ErrorF("smi: warning: VerticalRetraceWait timed out.\n");		   \
-		for (_spin_me = SPIN_LIMIT;											   \
-			 ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x08) && _spin_me;	   \
-			 _spin_me--) ;													   \
-		if (!_spin_me)														   \
-			ErrorF("smi: warning: VerticalRetraceWait timed out.\n");		   \
-		for (_spin_me = SPIN_LIMIT;											   \
-			 ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me;	   \
-			 _spin_me--) ;													   \
-		if (!_spin_me)														   \
-			ErrorF("smi: warning: VerticalRetraceWait timed out.\n");		   \
-	}																		   \
+#define VerticalRetraceWait()						\
+do									\
+{									\
+    if (VGAIN8_INDEX(pSmi, vgaCRIndex, vgaCRData, 0x17) & 0x80)		\
+    {									\
+	volatile unsigned long _spin_me;				\
+	for (_spin_me = SPIN_LIMIT;					\
+	     ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) && 	\
+	     _spin_me;							\
+	     _spin_me--);						\
+	if (!_spin_me)							\
+	    ErrorF("smi: warning: VerticalRetraceWait timed out.\n");	\
+	for (_spin_me = SPIN_LIMIT;					\
+	     ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x08) && 	\
+	     _spin_me;							\
+	     _spin_me--);						\
+	if (!_spin_me)							\
+	    ErrorF("smi: warning: VerticalRetraceWait timed out.\n");	\
+	for (_spin_me = SPIN_LIMIT;					\
+	     ((VGAIN8(pSmi, vgaIOBase + 0x0A) & 0x08) == 0x00) && 	\
+	     _spin_me;							\
+	     _spin_me--);						\
+	if (!_spin_me)							\
+	    ErrorF("smi: warning: VerticalRetraceWait timed out.\n");	\
+	}								\
 } while (0)
 #endif
 
 /******************************************************************************/
-/*					  F U N C T I O N   P R O T O T Y P E S					  */
+/*			F U N C T I O N   P R O T O T Y P E S		      */
 /******************************************************************************/
 
 /* smi_dac.c */
 void SMI_CommonCalcClock(long freq, int min_m, int min_n1, int max_n1,
-						 int min_n2, int max_n2, long freq_min, long freq_max,
-						 unsigned char * mdiv, unsigned char * ndiv);
+			 int min_n2, int max_n2, long freq_min, long freq_max,
+			 unsigned char * mdiv, unsigned char * ndiv);
 
 /* smi_i2c */
 Bool SMI_I2CInit(ScrnInfoPtr pScrn);

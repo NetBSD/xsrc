@@ -1,5 +1,5 @@
 /*
- * $TOG: CmpKey.c /main/4 1998/02/06 14:39:05 kaleb $
+ * $Xorg: CmpKey.c,v 1.3 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xdmcp/CmpKey.c,v 1.3 2001/01/17 19:42:43 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>

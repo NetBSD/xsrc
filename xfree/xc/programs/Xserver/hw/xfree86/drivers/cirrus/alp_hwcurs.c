@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_hwcurs.c,v 1.2 2000/02/08 13:13:14 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_hwcurs.c,v 1.5 2001/05/07 21:59:06 tsi Exp $ */
 
 /* (c) Itai Nahshon */
 
@@ -246,7 +246,6 @@ AlpHWCursorInit(ScreenPtr pScreen, int size)
 	infoPtr->HideCursor = AlpHideCursor;
 	infoPtr->ShowCursor = AlpShowCursor;
 	infoPtr->UseHWCursor = AlpUseHWCursor;
-	infoPtr->RealizeCursor = NULL;
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpHWCursorInit before xf86InitCursor\n");

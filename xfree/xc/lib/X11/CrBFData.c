@@ -1,4 +1,4 @@
-/* $TOG: CrBFData.c /main/13 1998/02/06 17:13:46 kaleb $ */
+/* $Xorg: CrBFData.c,v 1.3 2000/08/17 19:44:32 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group

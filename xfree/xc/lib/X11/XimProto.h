@@ -1,4 +1,4 @@
-/* $XConsortium: XimProto.h,v 1.4 94/09/01 18:44:49 kaleb Exp $ */
+/* $Xorg: XimProto.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993 by FUJITSU LIMITED

@@ -1,4 +1,4 @@
-/* $TOG: ScrResStr.c /main/4 1998/02/06 17:50:58 kaleb $ */
+/* $Xorg: ScrResStr.c,v 1.3 2000/08/17 19:44:52 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XConsortium: XRGB.c,v 1.6 95/06/08 23:20:39 gildea Exp $" */
+/* $Xorg: XRGB.c,v 1.3 2000/08/17 19:45:04 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.

@@ -1,4 +1,4 @@
-/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8/sol8_iout.s,v 3.1 1996/12/23 06:51:18 dawes Exp $
+/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_iout.s,v 1.1 1999/09/25 14:38:09 dawes Exp $
 /
 /
 /

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.h,v 1.10 2000/06/10 18:10:59 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.h,v 1.11 2000/07/14 22:38:50 mvojkovi Exp $ */
 
 #ifndef _XF86FBMAN_H
 #define _XF86FBMAN_H

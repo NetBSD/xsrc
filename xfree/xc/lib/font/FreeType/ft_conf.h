@@ -1,6 +1,6 @@
 /* ft_conf.h.  Xserver-specific version. */
 
-/* $XFree86: xc/lib/font/FreeType/ft_conf.h,v 1.8 2000/11/14 16:54:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ft_conf.h,v 1.9 2000/11/28 19:09:28 dawes Exp $ */
 
 /* we need the following because there are some typedefs in this file */
 #ifndef FT_CONF_H

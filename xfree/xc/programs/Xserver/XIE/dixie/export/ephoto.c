@@ -1,4 +1,4 @@
-/* $TOG: ephoto.c /main/8 1998/02/09 16:08:20 kaleb $ */
+/* $Xorg: ephoto.c,v 1.3 2000/08/17 19:47:24 cpqbld Exp $ */
 /**** module ephoto.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley && Dean Verheiden -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/export/ephoto.c,v 3.3 1998/10/05 13:22:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/export/ephoto.c,v 3.5 2001/01/17 22:12:49 dawes Exp $ */
 
 #define _XIEC_EPHOTO
 

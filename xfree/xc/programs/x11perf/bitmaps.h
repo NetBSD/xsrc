@@ -1,4 +1,4 @@
-/* $XConsortium: bitmaps.h,v 1.2 94/02/06 20:17:23 rws Exp $ */
+/* $Xorg: bitmaps.h,v 1.3 2000/08/17 19:54:09 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/x11perf/bitmaps.h,v 1.4 2001/01/17 23:45:11 dawes Exp $ */
 
 /* Set fill style (if any) to a bitmap or tile */
 

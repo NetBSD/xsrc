@@ -1,4 +1,4 @@
-/* $TOG: vmod.c /main/7 1997/08/02 10:10:09 kaleb $ */
+/* $Xorg: vmod.c,v 1.3 2000/08/17 19:54:33 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/vmod.c,v 3.1 1996/08/26 14:44:14 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/vmod.c,v 3.3 2001/01/17 23:45:45 dawes Exp $ */
 
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags

@@ -1,4 +1,4 @@
-/* $XConsortium: nglescreen.h,v 1.2 95/01/24 02:10:27 dpw Exp $ */
+/* $Xorg: nglescreen.h,v 1.3 2000/08/17 19:48:28 cpqbld Exp $ */
 
 /*************************************************************************
  * 
@@ -24,7 +24,7 @@ performance, or use of this material.
  *
  *************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.h,v 1.0tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.h,v 1.3 2001/01/17 22:36:49 dawes Exp $ */
 
 /******************************************************************************
  *

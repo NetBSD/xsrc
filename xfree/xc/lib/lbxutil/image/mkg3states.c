@@ -1,4 +1,4 @@
-/* $XConsortium: mkg3states.c,v 1.2 95/01/17 20:29:41 mor Exp $ */
+/* $Xorg: mkg3states.c,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 /*
  * Copyright (c) 1991, 1992 Sam Leffler
  * Copyright (c) 1991, 1992 Silicon Graphics, Inc.
@@ -22,7 +22,7 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/lbxutil/image/mkg3states.c,v 1.2 1998/10/05 13:22:02 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/image/mkg3states.c,v 1.4 2001/01/17 19:43:35 dawes Exp $ */
 
 /*
  * Program to construct Group 3 & Group 4 decoding tables.

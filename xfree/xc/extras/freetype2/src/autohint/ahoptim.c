@@ -31,18 +31,9 @@
   /*************************************************************************/
 
 
-#include <freetype/internal/ftobjs.h>  /* for ALLOC_ARRAY() and FREE() */
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_OBJECTS_H        /* for ALLOC_ARRAY() and FREE() */
 #include "ahoptim.h"
-
-#else
-
-#include <autohint/ahoptim.h>
-
-#endif
 
 
   /* define this macro to use brute force optimisation -- this is slow,  */
@@ -57,7 +48,7 @@
 #undef LOG
 #ifdef AH_DEBUG_OPTIM
 
-#define LOG( x )  optim_log##x
+#define LOG( x )  optim_log ## x
 
 #else
 

@@ -1,5 +1,5 @@
 /*
- * $TOG: XMultibuf.c /main/32 1998/02/06 14:51:46 kaleb $
+ * $Xorg: XMultibuf.c,v 1.5 2000/08/17 19:45:51 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Authors:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xext/XMultibuf.c,v 1.2 1999/07/12 05:57:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XMultibuf.c,v 1.4 2001/01/17 19:42:46 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

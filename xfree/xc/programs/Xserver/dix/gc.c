@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.4 1996/12/23 06:29:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.7 2001/04/23 20:31:06 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: gc.c /main/71 1998/02/09 14:19:32 kaleb $ */
+/* $Xorg: gc.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -95,14 +95,16 @@ ValidateGC(pDraw, pGC)
  * or pUnion, but not both; one of them must be NULL.  If you don't need
  * to pass any pointers, you can use either one:
  * 
- *     /* example calling dixChangeGC using pC32 parameter
+ *     example calling dixChangeGC using pC32 parameter
+ *
  *     CARD32 v[2];
  *     v[0] = foreground;
  *     v[1] = background;
  *     dixChangeGC(client, pGC, GCForeground|GCBackground, v, NULL);
  * 
- *     /* example calling dixChangeGC using pUnion parameter;
- *     /* same effect as above
+ *     example calling dixChangeGC using pUnion parameter;
+ *     same effect as above
+ *
  *     ChangeGCVal v[2];
  *     v[0].val = foreground;
  *     v[1].val = background;
@@ -111,10 +113,12 @@ ValidateGC(pDraw, pGC)
  * However, if you need to pass a pointer to a pixmap or font, you MUST
  * use the pUnion parameter.
  * 
- *     /* example calling dixChangeGC passing pointers in the value list
+ *     example calling dixChangeGC passing pointers in the value list
+ *     v[1].ptr is a pointer to a pixmap
+ *
  *     ChangeGCVal v[2];
  *     v[0].val = FillTiled;
- *     v[1].ptr = pPixmap; /* pointer to a pixmap
+ *     v[1].ptr = pPixmap;
  *     dixChangeGC(client, pGC, GCFillStyle|GCTile, NULL, v);
  * 
  * Note: we could have gotten by with just the pUnion parameter, but on

@@ -1,4 +1,4 @@
-/* $TOG: FSFontInfo.c /main/9 1998/05/01 12:50:34 kaleb $ */
+/* $Xorg: FSFontInfo.c,v 1.3 2000/08/17 19:44:01 cpqbld Exp $ */
 /*
  * Copyright 1990 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation

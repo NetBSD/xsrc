@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v.h,v 1.25 2000/11/14 16:54:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v.h,v 1.27 2001/05/04 19:05:43 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -257,6 +257,7 @@ typedef struct tagS3VRec {
   /*************************/
   /* ViRGE options -start- */
   /*************************/  
+  OptionInfoPtr	Options;
   /* Enable PCI burst mode for reads? */
   Bool 		pci_burst;
   /* Diasable PCI retries */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaalocal.h,v 1.31 2000/10/21 22:26:20 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaalocal.h,v 1.34 2001/04/15 23:16:01 mvojkovi Exp $ */
 
 #ifndef _XAALOCAL_H
 #define _XAALOCAL_H
@@ -1542,6 +1542,22 @@ XAAComposite (CARD8      op,
 	      CARD16     width,
 	      CARD16     height);
 
+
+Bool
+XAADoComposite (CARD8      op,
+              PicturePtr pSrc,
+              PicturePtr pMask,
+              PicturePtr pDst,
+              INT16      xSrc,
+              INT16      ySrc,
+              INT16      xMask,
+              INT16      yMask,
+              INT16      xDst,
+              INT16      yDst,
+              CARD16     width,
+              CARD16     height);
+
+
 void
 XAAGlyphs (CARD8         op,
 	   PicturePtr    pSrc,
@@ -1553,20 +1569,17 @@ XAAGlyphs (CARD8         op,
 	   GlyphListPtr  list,
 	   GlyphPtr      *glyphs);
 
-
 Bool
-XAADoComposite (CARD8      op,
-	      PicturePtr pSrc,
-	      PicturePtr pMask,
-	      PicturePtr pDst,
-	      INT16      xSrc,
-	      INT16      ySrc,
-	      INT16      xMask,
-	      INT16      yMask,
-	      INT16      xDst,
-	      INT16      yDst,
-	      CARD16     width,
-	      CARD16     height);
+XAADoGlyphs (CARD8         op,
+           PicturePtr    pSrc,
+           PicturePtr    pDst,
+           PictFormatPtr maskFormat,
+           INT16         xSrc,
+           INT16         ySrc,
+           int           nlist,
+           GlyphListPtr  list,
+           GlyphPtr      *glyphs);
+
 
 
 /* helpers */
@@ -1579,6 +1592,27 @@ XAA_888_plus_PICT_a8_to_8888 (
     int    dstPitch,	/* in dwords */
     int    width,
     int    height
+);
+
+Bool
+XAAGetRGBAFromPixel(
+    CARD32 pixel,
+    CARD16 *red,
+    CARD16 *green,
+    CARD16 *blue,
+    CARD16 *alpha,
+    CARD32 format
+);
+
+
+Bool
+XAAGetPixelFromRGBA (
+    CARD32 *pixel,
+    CARD16 red,
+    CARD16 green,
+    CARD16 blue,
+    CARD16 alpha,
+    CARD32 format
 );
 
 #endif

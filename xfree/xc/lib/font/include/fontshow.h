@@ -1,4 +1,4 @@
-/* $TOG: fontshow.h /main/3 1998/02/09 10:49:22 kaleb $ */
+/* $Xorg: fontshow.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 

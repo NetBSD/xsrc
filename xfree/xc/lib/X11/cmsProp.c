@@ -1,4 +1,4 @@
-/* $XConsortium: cmsProp.c,v 1.11 93/09/22 22:30:00 rws Exp $" */
+/* $Xorg: cmsProp.c,v 1.3 2000/08/17 19:45:10 cpqbld Exp $ */
 
 /*
  *

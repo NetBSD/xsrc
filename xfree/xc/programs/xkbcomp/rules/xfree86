@@ -1,10 +1,10 @@
-// $TOG: xfree86 /main/3 1997/08/02 10:11:25 kaleb $
+// $Xorg: xfree86,v 1.3 2000/08/17 19:54:42 cpqbld Exp $
 
 //
 //  Rules for resolving XKB components for use with XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.25 2000/11/28 17:25:13 dawes Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.33 2001/04/06 02:16:25 dawes Exp $
 //
 
 ! model 	=	keycodes	geometry
@@ -16,7 +16,7 @@
   pc102		=	xfree86		pc(pc102)
   pc104		=	xfree86		pc(pc104)
   pc105		=	xfree86		pc(pc105)
-  jp106		=	xfree86(jp106)	pc(jp106)
+  jp106		=	xfree86		pc(jp106)
   everex	=	xfree86		everex(STEPnote)
   winbook	=	xfree86		winbook(XP5)
   pc98		=	xfree98(pc98)	nec(pc98)
@@ -24,10 +24,16 @@
   hp		=       xfree86         pc(pc104)
   itouch	=       xfree86         pc(pc104)
   logicordless  =	xfree86		pc(pc104)
+  logiinternet  =	xfree86		pc(pc104)
   compaq	=       xfree86         pc(pc104)
   microsoftpro	=	xfree86		microsoft(natural)
+  geniuscomfy	=       xfree86         pc(pc104)
   btc9000	=       xfree86         pc(pc104)
-  macintosh	=	macintosh	macintosh(macintosh)
+  rapidaccess	=       xfree86         pc(pc104)
+  rapidaccess2	=       xfree86         pc(pc104)
+  chicony	=       xfree86         pc(pc104)
+  macintosh	=	xfree86		macintosh(macintosh)
+  macintosh_old	=	macintosh	macintosh(macintosh)
   powerpcps2	=	powerpcps2	pc(pc104)
 
 //! model		layout	=	symbols
@@ -89,14 +95,33 @@
   logicordless	us	=	us(pc104)+inet(logicordless)
   logicordless	en_US	=	en_US(pc104)+inet(logicordless)
   logicordless	*	=	en_US(pc104)+inet(logicordless)+%l%(v)
+  logiinternet	us	=	us(pc104)+inet(logiinternet)
+  logiinternet	en_US	=	en_US(pc104)+inet(logiinternet)
+  logiinternet	*	=	en_US(pc104)+inet(logiinternet)+%l%(v)
   microsoftpro	us	=	us(pc104)+inet(microsoftpro)
   microsoftpro	en_US	=	en_US(pc104)+inet(microsoftpro)
   microsoftpro	*	=	en_US(pc104)+inet(microsoftpro)+%l%(v)
+  geniuscomfy	us	=	us(pc104)+inet(geniuscomfy)
+  geniuscomfy	en_US	=	en_US(pc104)+inet(geniuscomfy)
+  geniuscomfy	*	=	en_US(pc104)+inet(geniuscomfy)+%l%(v)
   btc9000	us	=	us(pc104)+inet(btc9000)
   btc9000	en_US	=	en_US(pc104)+inet(btc9000)
   btc9000	*	=	en_US(pc104)+inet(btc9000)+%l%(v)
+  rapidaccess	us	=	us(pc104)+inet(rapidaccess)
+  rapidaccess	en_US	=	en_US(pc104)+inet(rapidaccess)
+  rapidaccess	*	=	en_US(pc104)+inet(rapidaccess)+%l%(v)
+  rapidaccess2	us	=	us(pc104)+inet(rapidaccess2)
+  rapidaccess2	en_US	=	en_US(pc104)+inet(rapidaccess2)
+  rapidaccess2	*	=	en_US(pc104)+inet(rapidaccess2)+%l%(v)
+  chicony	us	=	us(pc104)+inet(chicony)
+  chicony	en_US	=	en_US(pc104)+inet(chicony)
+  chicony	*	=	en_US(pc104)+inet(chicony)+%l%(v)
   macintosh	us	=	macintosh/us(extended)
+  macintosh	en_US	=	macintosh/us(extended)
   macintosh	*	=	macintosh/us(extended)+macintosh/%l%(v)
+  macintosh_old	us	=	macintosh/us(extended)
+  macintosh_old	en_US	=	macintosh/us(extended)
+  macintosh_old	*	=	macintosh/us(extended)+macintosh/%l%(v)
   powerpcps2	us	=	us(pc104)
   powerpcps2	en_US	=	en_US(pc104)
   powerpcps2	*	=	en_US(pc104)+%l%(v)

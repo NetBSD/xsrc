@@ -1,4 +1,4 @@
-/* $TOG: CrCursor.c /main/5 1998/02/06 17:14:11 kaleb $ */
+/* $Xorg: CrCursor.c,v 1.3 2000/08/17 19:44:32 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

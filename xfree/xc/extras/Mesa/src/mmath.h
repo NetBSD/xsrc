@@ -22,7 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/src/mmath.h,v 1.6 2000/08/09 23:40:10 dawes Exp $ */
+
 
 /*
  * Faster arithmetic functions.  If the FAST_MATH preprocessor symbol is

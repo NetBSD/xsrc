@@ -1,5 +1,5 @@
 /*
- * $TOG: Repeater.h /main/6 1998/02/11 14:54:43 kaleb $
+ * $Xorg: Repeater.h,v 1.3 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/Repeater.h,v 1.3 1998/08/20 13:59:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Repeater.h,v 1.5 2001/01/17 19:42:29 dawes Exp $ */
 
 #ifndef _XawRepeater_h
 #define _XawRepeater_h

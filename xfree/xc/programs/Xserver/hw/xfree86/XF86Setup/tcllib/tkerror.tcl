@@ -5,7 +5,7 @@
 #
 # tkerror.tcl --
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tkerror.tcl,v 3.3 1996/08/20 13:09:37 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tkerror.tcl,v 3.4 1996/12/27 06:55:10 dawes Exp $
 #
 # This file contains a modified version of the tkError procedure.  It
 # posts a dialog box with the error message and gives the user a chance

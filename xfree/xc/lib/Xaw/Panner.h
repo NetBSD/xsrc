@@ -1,5 +1,5 @@
 /*
- * $TOG: Panner.h /main/24 1998/02/11 14:54:19 kaleb $
+ * $Xorg: Panner.h,v 1.4 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,11 +21,12 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/Panner.h,v 1.3 1998/08/20 13:59:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Panner.h,v 1.5 2001/01/17 19:42:28 dawes Exp $ */
 
 #ifndef _XawPanner_h
 #define _XawPanner_h
 
+#include <X11/Intrinsic.h>
 #include <X11/Xaw/Reports.h>
 
 /*****************************************************************************

@@ -1,4 +1,4 @@
-/* $TOG: verify.c /main/37 1998/02/11 10:00:45 kaleb $ */
+/* $Xorg: verify.c,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.9 2000/06/14 00:16:16 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.13.2.1 2001/05/25 18:50:14 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -117,7 +117,11 @@ static char *PAM_password;
 static int pam_error;
 
 static int PAM_conv (int num_msg,
+#ifdef sun
+		     struct pam_message **msg,
+#else
 		     const struct pam_message **msg,
+#endif
 		     struct pam_response **resp,
 		     void *appdata_ptr) {
 	int replies = 0;
@@ -153,7 +157,7 @@ static int PAM_conv (int num_msg,
 }
 
 static struct pam_conv PAM_conversation = {
-	&PAM_conv,
+	PAM_conv,
 	NULL
 };
 #endif /* USE_PAM */
@@ -186,12 +190,14 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 		bzero(greet->password, strlen(greet->password));
 		return 0;
 	} else {
+#ifndef USE_PAM
 #ifdef linux
 	    if (p->pw_passwd[0] == '!' || p->pw_passwd[0] == '*') {
 		Debug ("The account is locked, no login allowed.\n");
 		bzero(greet->password, strlen(greet->password));
 		return 0;
 	    }
+#endif
 #endif
 	    user_pass = p->pw_passwd;
 	}
@@ -318,6 +324,8 @@ done:
 	pam_error = pam_start("xdm", p->pw_name, &PAM_conversation, pamhp);
 	PAM_BAIL;
 	pam_error = pam_set_item(*pamhp, PAM_TTY, d->name);
+	PAM_BAIL;
+	pam_error = pam_set_item(*pamhp, PAM_RHOST, "");
 	PAM_BAIL;
 	pam_error = pam_authenticate(*pamhp, 0);
 	PAM_BAIL;

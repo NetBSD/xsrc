@@ -24,7 +24,7 @@
  * TridentOutIndReg() and TridentInIndReg() are used to access 
  * the indirect Trident RAMDAC registers only.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tridentramdac.c,v 1.3 1999/04/25 10:02:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tridentramdac.c,v 1.4 2000/12/07 16:48:06 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

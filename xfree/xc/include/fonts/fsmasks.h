@@ -1,4 +1,4 @@
-/* $TOG: fsmasks.h /main/6 1998/02/09 11:24:23 kaleb $ */
+/* $Xorg: fsmasks.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation 

@@ -1,5 +1,5 @@
 /*
- * $TOG: SmeLine.h /main/6 1998/02/11 14:55:23 kaleb $
+ * $Xorg: SmeLine.h,v 1.3 2000/08/17 19:45:38 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/lib/Xaw/SmeLine.h,v 1.3 1998/08/20 13:59:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeLine.h,v 1.5 2001/01/17 19:42:31 dawes Exp $ */
 
 /*
  * This is the public header file for the Athena SmeLine object.

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/itsy/itsy.c,v 1.2 1999/12/30 03:03:09 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/itsy/itsy.c,v 1.3 2000/02/23 20:29:58 dawes Exp $ */
 
 #include "itsy.h"
 

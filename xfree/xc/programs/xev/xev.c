@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xev/xev.c,v 1.4 2001/03/07 15:54:15 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -36,11 +36,12 @@ from the X Consortium.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <X11/Xlocale.h>
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xproto.h>
-#include <ctype.h>
 
 #define INNER_WINDOW_WIDTH 50
 #define INNER_WINDOW_HEIGHT 50
@@ -700,8 +701,14 @@ main (argc, argv)
     Bool reverse = False;
     unsigned long back, fore;
 
-    w = 0;
     ProgramName = argv[0];
+
+    if (setlocale(LC_ALL,"") == NULL) {
+	fprintf(stderr, "%s: warning: could not set default locale\n",
+		ProgramName);
+    }
+
+    w = 0;
     for (i = 1; i < argc; i++) {
 	char *arg = argv[i];
 

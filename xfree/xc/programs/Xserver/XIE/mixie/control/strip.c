@@ -1,4 +1,4 @@
-/* $TOG: strip.c /main/10 1998/02/09 16:12:32 kaleb $ */
+/* $Xorg: strip.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module strip.c ****/
 /*****************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/strip.c,v 3.4 1998/10/25 07:11:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/strip.c,v 3.6 2001/01/17 22:13:00 dawes Exp $ */
 
 /*
  *  Include files

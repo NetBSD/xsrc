@@ -1,4 +1,4 @@
-/* $TOG: miLvl2Tab.c /main/6 1998/02/10 12:41:32 kaleb $ */
+/* $Xorg: miLvl2Tab.c,v 1.3 2000/08/17 19:47:06 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

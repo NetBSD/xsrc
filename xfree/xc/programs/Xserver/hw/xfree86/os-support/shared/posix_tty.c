@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.24 1999/11/19 13:55:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.26 2001/02/15 19:46:03 eich Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc.
  *
@@ -138,6 +138,7 @@ xf86OpenSerial (pointer options)
 		xf86Msg (X_ERROR,
 			 "xf86OpenSerial: Cannot open device %s\n\t%s.\n",
 			 dev, strerror (errno));
+		xfree(dev);
 		return (-1);
 	}
 
@@ -145,6 +146,7 @@ xf86OpenSerial (pointer options)
 	{
 #if 1
 		/* Allow non-tty devices to be opened. */
+		xfree(dev);
 		return (fd);
 #else
 		xf86Msg (X_WARNING,
@@ -152,6 +154,7 @@ xf86OpenSerial (pointer options)
 			 dev);
 		SYSCALL (close (fd));
 		errno = EINVAL;
+		xfree(dev);
 		return (-1);
 #endif
 	}
@@ -181,6 +184,7 @@ xf86OpenSerial (pointer options)
 	if (xf86SetSerial (fd, options) == -1)
 	{
 		SYSCALL (close (fd));
+		xfree(dev);
 		return (-1);
 	}
 
@@ -188,6 +192,7 @@ xf86OpenSerial (pointer options)
 	if (i == -1)
 	{
 		SYSCALL (close (fd));
+		xfree(dev);
 		return (-1);
 	}
 	i &= ~O_NONBLOCK;
@@ -195,8 +200,10 @@ xf86OpenSerial (pointer options)
 	if (i == -1)
 	{
 		SYSCALL (close (fd));
+		xfree(dev);
 		return (-1);
 	}
+	xfree(dev);
 	return (fd);
 }
 

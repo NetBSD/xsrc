@@ -1,4 +1,4 @@
-/* $TOG: technq.h /main/5 1998/02/10 10:28:19 kaleb $ */
+/* $Xorg: technq.h,v 1.3 2000/08/17 19:47:33 cpqbld Exp $ */
 /**** module technq.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. April 1993
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/include/technq.h,v 1.4 2001/01/17 22:12:58 dawes Exp $ */
 
 #ifndef _XIEH_TECHNQ
 #define _XIEH_TECHNQ

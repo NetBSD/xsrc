@@ -1,4 +1,4 @@
-/* $TOG: Geometry.c /main/69 1998/02/06 13:22:07 kaleb $ CHECKEDOUT */
+/* $Xorg: Geometry.c,v 1.4 2000/08/17 19:46:11 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Geometry.c,v 1.7 2000/10/10 14:05:48 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Geometry.c,v 1.9 2001/01/17 19:43:04 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "ShellP.h"
@@ -554,7 +554,6 @@ void XtResizeWindow(w)
 
     LOCK_APP(app);
     if (XtIsRealized(w)) {
-	XWindowChanges changes;
 	req.changes.width = w->core.width;
 	req.changes.height = w->core.height;
 	req.changes.border_width = w->core.border_width;

@@ -39,7 +39,7 @@
 *				user library.
 *
 ****************************************************************************/
-/* $XFree86: xc/extras/x86emu/src/x86emu/sys.c,v 1.4 2000/04/17 16:29:46 eich Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/sys.c,v 1.5 2000/08/23 22:10:01 tsi Exp $ */
 
 #include "x86emu.h"
 #include "x86emu/regs.h"

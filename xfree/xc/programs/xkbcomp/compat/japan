@@ -1,4 +1,4 @@
-// $XConsortium: japan /main/2 1995/12/07 21:32:51 kaleb $
+// $Xorg: japan,v 1.3 2000/08/17 19:54:34 cpqbld Exp $
 
 // Japanese keyboards need Eisu and Kana shift and 
 // lock keys, which are typically bound to the

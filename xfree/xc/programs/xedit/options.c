@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/options.c,v 1.7 1999/09/27 06:30:09 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/options.c,v 1.8 2000/09/26 15:57:24 tsi Exp $ */
 
 #include <stdio.h>
 #ifndef X_NOT_STDC_ENV

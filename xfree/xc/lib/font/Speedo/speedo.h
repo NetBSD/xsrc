@@ -1,4 +1,4 @@
-/* $XConsortium: speedo.h,v 1.7 95/06/08 23:20:39 gildea Exp $ */
+/* $Xorg: speedo.h,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/speedo.h,v 3.3tsi Exp $ */
+/* $XFree86: xc/lib/font/Speedo/speedo.h,v 3.5 2001/01/17 19:43:18 dawes Exp $ */
 
 #ifndef _SPEEDO_H_
 #define _SPEEDO_H_

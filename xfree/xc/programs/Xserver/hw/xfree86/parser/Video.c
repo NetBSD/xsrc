@@ -25,7 +25,7 @@
  * in this Software without prior written authorization from Metro Link.
  * 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Video.c,v 1.4 2000/10/20 14:59:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Video.c,v 1.7 2001/02/21 23:37:04 paulo Exp $ */
 
 /* View/edit this file with tab stops set to 4 */
 
@@ -48,6 +48,7 @@ static xf86ConfigSymTabRec VideoPortTab[] =
 XF86ConfVideoPortPtr
 xf86parseVideoPortSubSection (void)
 {
+	int has_ident = FALSE;
 	parsePrologue (XF86ConfVideoPortPtr, XF86ConfVideoPortRec)
 
 	while ((token = xf86getToken (VideoPortTab)) != ENDSUBSECTION)
@@ -57,7 +58,10 @@ xf86parseVideoPortSubSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->vp_identifier = val.str;
+			has_ident = TRUE;
 			break;
 		case OPTION:
 			{
@@ -129,6 +133,8 @@ xf86parseVideoAdaptorSection (void)
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
 			ptr->va_identifier = val.str;
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			has_ident = TRUE;
 			break;
 		case VENDOR:

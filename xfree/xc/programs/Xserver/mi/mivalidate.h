@@ -1,4 +1,4 @@
-/* $TOG: mivalidate.h /main/4 1998/02/09 14:49:11 kaleb $ */
+/* $Xorg: mivalidate.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group

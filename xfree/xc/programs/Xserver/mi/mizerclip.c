@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mi/mizerclip.c,v 1.1 1999/10/13 22:33:13 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

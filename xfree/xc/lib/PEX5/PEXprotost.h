@@ -1,4 +1,4 @@
-/* $TOG: PEXprotost.h /main/8 1998/02/06 16:09:26 kaleb $ */
+/* $Xorg: PEXprotost.h,v 1.3 2000/08/17 19:44:21 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

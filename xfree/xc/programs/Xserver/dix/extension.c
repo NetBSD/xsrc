@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.7 1999/01/13 08:30:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.9 2001/01/17 22:36:43 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: extension.c /main/37 1998/02/09 14:19:21 kaleb $ */
+/* $Xorg: extension.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS

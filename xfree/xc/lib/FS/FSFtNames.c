@@ -1,4 +1,4 @@
-/* $TOG: FSFtNames.c /main/7 1998/05/01 11:34:42 kaleb $ */
+/* $Xorg: FSFtNames.c,v 1.3 2000/08/17 19:44:02 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

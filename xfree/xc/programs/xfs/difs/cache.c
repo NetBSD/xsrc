@@ -1,4 +1,4 @@
-/* $TOG: cache.c /main/8 1998/02/11 10:02:13 kaleb $ */
+/* $Xorg: cache.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)cache.c	4.2	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.3 1998/10/25 12:47:58 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.5 2001/01/17 23:45:28 dawes Exp $ */
 
 #include	"cachestr.h"
 #include	"misc.h"

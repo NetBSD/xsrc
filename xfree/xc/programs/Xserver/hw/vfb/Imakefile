@@ -1,5 +1,10 @@
-XCOMM $TOG: Imakefile /main/13 1998/03/24 13:27:03 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.23 2000/11/16 19:44:52 eich Exp $
+XCOMM $Xorg: Imakefile,v 1.5 2000/08/17 19:48:38 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.29.2.1 2001/05/31 16:14:18 dawes Exp $
+
 #include <Server.tmpl>
 
 #if HasShm
@@ -7,18 +12,19 @@ SHMDEF = -DHAS_SHM
 #endif
 
 XCOMM add more architectures here as we discover them
-#if defined(HPArchitecture) || (defined(SparcArchitecture) && !defined(LynxOSArchitecture)) || SystemV4 || defined(OSF1Architecture) || defined(i386BsdArchitecture) || defined(LinuxArchitecture)
+#if defined(HPArchitecture) || \
+    (defined(SparcArchitecture) && !defined(LynxOSArchitecture)) || \
+    SystemV4 || \
+    defined(OSF1Architecture) || \
+    defined(i386BsdArchitecture) || \
+    defined(LinuxArchitecture) || \
+    defined(DarwinArchitecture)
 MMAPDEF = -DHAS_MMAP
 #endif
 
 #ifdef OS2Architecture
 SRCS1 = os2_stubs.c
 OBJS1 = os2_stubs.o
-#endif
-
-#ifdef cygwinArchitecture
-SRCS2 = ntux_xf.c
-OBJS2 = ntux_xf.o
 #endif
 
 SRCSA =	InitInput.c InitOutput.c stubs.c $(SRCS1) miinitext.c $(SRCS2)
@@ -29,7 +35,7 @@ INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I../../fb -I../../mfb -I../../mi -I../../include -I../../os  \
            -I$(EXTINCSRC) -I$(XINCLUDESRC)  -I$(SERVERSRC)/render
 
-DEFINES = ServerOSDefines $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
+DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
 
 
 #if BuildDPMS
@@ -52,13 +58,12 @@ LinkSourceFile(stubs.c,../../Xi)
 SpecialCObjectRule(InitInput,$(ICONFIGFILES),$(EXT_DEFINES))
 
 LinkSourceFile(miinitext.c,$(SERVERSRC)/mi)
-SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) $(PAN_DEFINES) -DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS $(EXT_MODULE_DEFINES) -UXFree86LOADER)
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) $(PAN_DEFINES) -DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS $(EXT_MODULE_DEFINES) -UXFree86LOADER -UXF86DRI)
 
 #if BuildDPMS
 LinkSourceFile(dpmsstubs.c,$(SERVERSRC)/Xext)
 SpecialCObjectRule(dpmsstubs,$(ICONFIGFILES),$(EXT_DEFINES))
 #endif
 
-CppManTarget(Xvfb,)
 InstallManPage(Xvfb,$(MANDIR))
 DependTarget()

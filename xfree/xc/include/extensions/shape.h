@@ -1,3 +1,4 @@
+/* $XFree86: xc/include/extensions/shape.h,v 1.1.1.3.2.1 2001/05/25 18:50:07 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -20,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: shape.h /main/18 1998/02/09 11:23:22 kaleb $ */
+/* $Xorg: shape.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 
 #ifndef _SHAPE_H_
 #define _SHAPE_H_
@@ -52,6 +53,9 @@ in this Software without prior written authorization from The Open Group.
 #define ShapeNumberEvents		(ShapeNotify + 1)
 
 #ifndef _SHAPE_SERVER_
+
+#include <X11/Xutil.h>
+
 typedef struct {
     int	type;		    /* of event */
     unsigned long serial;   /* # of last request processed by server */

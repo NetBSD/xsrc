@@ -1,4 +1,4 @@
-/* $XConsortium: XKBBell.c /main/4 1996/01/01 11:25:48 kaleb $ */
+/* $Xorg: XKBBell.c,v 1.3 2000/08/17 19:45:00 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

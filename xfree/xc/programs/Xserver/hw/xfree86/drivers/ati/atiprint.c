@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiprint.c,v 1.17 2000/10/12 18:51:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiprint.c,v 1.20 2001/04/19 14:14:05 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -646,6 +646,12 @@ ATIPrintRegisters
     }
     else
         xf86ErrorFVerb(4, " No MMIO aperture.\n");
+
+    if (pATI->pCursorImage)
+        xf86ErrorFVerb(4, " Hardware cursor image aperture at 0x%0lX.\n",
+            pATI->pCursorImage);
+    else
+        xf86ErrorFVerb(4, " No hardware cursor image aperture.\n");
 
     xf86ErrorFVerb(4, "\n");
 }

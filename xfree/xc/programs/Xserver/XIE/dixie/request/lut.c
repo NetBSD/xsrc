@@ -1,4 +1,4 @@
-/* $TOG: lut.c /main/5 1998/02/09 16:11:28 kaleb $ */
+/* $Xorg: lut.c,v 1.3 2000/08/17 19:47:31 cpqbld Exp $ */
 /**** module lut.c ****/
 /****************************************************************************
 
@@ -60,7 +60,7 @@ terms and conditions:
      Title to this software shall at all times remain with AGE
      Logic, Inc.
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/lut.c,v 3.2 1998/10/05 13:22:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/lut.c,v 3.4 2001/01/17 22:12:55 dawes Exp $ */
 
 /*
  *  Include files

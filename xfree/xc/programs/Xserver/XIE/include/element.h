@@ -1,4 +1,4 @@
-/* $TOG: element.h /main/8 1998/02/10 10:27:27 kaleb $ */
+/* $Xorg: element.h,v 1.3 2000/08/17 19:47:32 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /* module element.h */
 /*****************************************************************************

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: ifparser.c /main/10 1996/09/28 16:15:18 rws $
+ * $Xorg: ifparser.c,v 1.3 2000/08/17 19:41:50 cpqbld Exp $
  *
  * Copyright 1992 Network Computing Devices, Inc.
  * 
@@ -58,7 +58,7 @@
  * 
  *     ParseIfExpression		parse a string for #if
  */
-/* $XFree86: xc/config/makedepend/ifparser.c,v 3.6 1996/12/30 13:57:55 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/ifparser.c,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
 
 #include "ifparser.h"
 #include <ctype.h>
@@ -93,19 +93,48 @@ parse_variable (IfParser *g, const char *cp, const char **varp)
 static const char *
 parse_number (IfParser *g, const char *cp, long *valp)
 {
+    long base = 10;
     SKIPSPACE (cp);
 
     if (!isdigit(*cp))
 	return CALLFUNC(g, handle_error) (g, cp, "number");
 
-    *valp = strtol(cp, (char **)&cp, 0);
-    /* skip trailing qualifiers */
+    *valp = 0;
+
+    if (*cp == '0') {
+	cp++;
+	if ((*cp == 'x') || (*cp == 'X')) {
+	    base = 16;
+	    cp++;
+	} else {
+	    base = 8;
+	}
+    }
+
+    /* Ignore overflows and assume ASCII, what source is usually written in */
+    while (1) {
+	int increment = -1;
+	if (base == 8) {
+	    if ((*cp >= '0') && (*cp <= '7'))
+		increment = *cp++ - '0';
+	} else if (base == 16) {
+	    if ((*cp >= '0') && (*cp <= '9'))
+		increment = *cp++ - '0';
+	    else if ((*cp >= 'A') &&  (*cp <= 'F'))
+		increment = *cp++ - ('A' - 10);
+	    else if ((*cp >= 'a') && (*cp <= 'f'))
+		increment = *cp++ - ('a' - 10);
+	} else {	/* Decimal */
+	    if ((*cp >= '0') && (*cp <= '9'))
+		increment = *cp++ - '0';
+	}
+	if (increment < 0)
+	    break;
+	*valp = (*valp * base) + increment;
+    }
+
+    /* Skip trailing qualifiers */
     while (*cp == 'U' || *cp == 'u' || *cp == 'L' || *cp == 'l') cp++;
-#if 0
-    *valp = atoi (cp);
-    /* EMPTY */
-    for (cp++; isdigit(*cp); cp++) ;
-#endif
     return cp;
 }
 

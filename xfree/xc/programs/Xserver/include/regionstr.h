@@ -1,4 +1,4 @@
-/* $TOG: regionstr.h /main/9 1998/02/09 14:29:38 kaleb $ */
+/* $Xorg: regionstr.h,v 1.3 2000/08/17 19:53:30 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/include/regionstr.h,v 1.5 2001/03/30 02:15:23 keithp Exp $ */
 
 #ifndef REGIONSTRUCT_H
 #define REGIONSTRUCT_H
@@ -391,6 +391,12 @@ extern void miRegionReset(
 #if NeedFunctionPrototypes
     RegionPtr /*pReg*/,
     BoxPtr /*pBox*/
+#endif
+);
+
+extern Bool miRegionBreak(
+#if NeedFunctionPrototypes
+    RegionPtr /*pReg*/
 #endif
 );
 

@@ -1,5 +1,5 @@
 /*
- * Id: ps2.c,v 1.1 1999/11/02 03:54:46 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ps2.c,v 1.4 2001/04/01 14:00:04 tsi Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -115,6 +115,7 @@ Ps2Init (void)
 	if (ps2Port >= 0)
 	    return ps2Port;
     }
+    return -1;
 }
 
 void

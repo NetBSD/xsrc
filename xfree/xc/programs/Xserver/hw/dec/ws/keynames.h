@@ -1,4 +1,4 @@
-/* $TOG: keynames.h /main/4 1998/02/10 12:45:11 kaleb $ */
+/* $Xorg: keynames.h,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1991, 1998  The Open Group

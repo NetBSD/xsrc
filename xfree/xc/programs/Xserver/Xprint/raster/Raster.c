@@ -1,4 +1,4 @@
-/* $TOG: Raster.c /main/4 1998/04/06 14:56:49 mgreess $ */
+/* $Xorg: Raster.c,v 1.3 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -31,7 +31,7 @@ dealings in this Software without prior written authorization from said
 copyright holders.
 */
 
-/* $XFree86: xc/programs/Xserver/Xprint/raster/Raster.c,v 1.2 1998/06/27 12:53:46 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/raster/Raster.c,v 1.4 2001/01/17 22:36:33 dawes Exp $ */
 
 /*******************************************************************
 **

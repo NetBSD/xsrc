@@ -1,4 +1,4 @@
-/* $TOG: protoflo.c /main/11 1998/02/09 16:11:44 kaleb $ */
+/* $Xorg: protoflo.c,v 1.3 2000/08/17 19:47:31 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module protoflo.c ****/
 /****************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley, Dean Verheiden -- AGE Logic, Inc., May 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/protoflo.c,v 3.2 1998/10/05 13:22:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/protoflo.c,v 3.4 2001/01/17 22:12:56 dawes Exp $ */
 
 
 #include <protoflo.h>

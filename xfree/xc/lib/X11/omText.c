@@ -1,4 +1,4 @@
-/* $TOG: omText.c /main/6 1998/03/14 06:08:58 kaleb $ */
+/* $Xorg: omText.c,v 1.3 2000/08/17 19:45:22 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omText.c,v 1.2 1999/05/09 10:50:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omText.c,v 1.4 2001/01/17 19:41:56 dawes Exp $ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint

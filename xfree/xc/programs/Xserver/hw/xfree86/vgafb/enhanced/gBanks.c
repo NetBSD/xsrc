@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/gBanks.c,v 1.1.2.1 1997/07/16 10:37:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/gBanks.c,v 1.2 1998/07/25 16:58:30 dawes Exp $ */
 /*******************************************************************************
 			Copyright 1992 by Glenn G. Lai 
 

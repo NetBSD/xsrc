@@ -1,4 +1,4 @@
-/* $TOG: infblock.h /main/4 1998/02/04 14:33:37 kaleb $ */
+/* $Xorg: infblock.h,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* infblock.h -- header to use infblock.c
  * Copyright (C) 1995-1998 Mark Adler

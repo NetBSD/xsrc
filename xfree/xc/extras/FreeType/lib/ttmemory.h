@@ -25,7 +25,7 @@
  *    'legacy' applications (all four test programs have been updated).
  *
  ******************************************************************/
-/* $XFree86: xc/extras/FreeType/lib/ttmemory.h,v 1.3 1999/01/24 03:38:35 dawes Exp $ */
+/* $XFree86: xc/extras/FreeType/lib/ttmemory.h,v 1.4 2000/02/13 05:03:53 dawes Exp $ */
 
 #ifndef TTMEMORY_H
 #define TTMEMORY_H

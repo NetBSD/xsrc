@@ -1,4 +1,4 @@
-/* $TOG: mpdither.c /main/7 1998/02/09 16:21:59 kaleb $ */
+/* $Xorg: mpdither.c,v 1.3 2000/08/17 19:47:51 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mpdither.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpdither.c,v 3.2 1998/10/04 09:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpdither.c,v 3.4 2001/01/17 22:13:11 dawes Exp $ */
 
 
 #define _XIEC_MPDITHER

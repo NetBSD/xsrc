@@ -1,4 +1,4 @@
-/* $XConsortium: t1intf.h,v 1.2 91/10/10 11:19:39 rws Exp $ */
+/* $Xorg: t1intf.h,v 1.3 2000/08/17 19:46:33 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -44,7 +44,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1intf.h,v 1.4 1999/05/15 12:10:07 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1intf.h,v 1.6 2001/01/17 19:43:23 dawes Exp $ */
 
 #ifdef BUILDCID
 #include "AFM.h"

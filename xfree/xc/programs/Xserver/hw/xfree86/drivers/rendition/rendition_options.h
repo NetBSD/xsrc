@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition_options.h,v 1.3 1999/11/02 16:16:42 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition_options.h,v 1.5 2001/05/04 19:05:42 dawes Exp $ */
 
 #ifndef __RENDITION_OPTION_H__
 #define __RENDITION_OPTION_H__
@@ -20,7 +20,7 @@ typedef enum {
 /*********************************/
       For reference only <DI>
 
-static OptionInfoRec renditionOptions[]={
+static const OptionInfoRec renditionOptions[]={
     { OPTION_FBWC,      "FramebufferWC", OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_SW_CURSOR, "SWCursor", OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_NOACCEL,   "NoAccel",  OPTV_BOOLEAN, {0}, FALSE },

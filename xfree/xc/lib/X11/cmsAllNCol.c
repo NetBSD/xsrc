@@ -1,4 +1,4 @@
-/* $XConsortium: cmsAllNCol.c,v 1.9 93/09/07 21:32:50 rws Exp $" */
+/* $Xorg: cmsAllNCol.c,v 1.3 2000/08/17 19:45:09 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -32,7 +32,7 @@
  *
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/cmsAllNCol.c,v 1.3 2001/01/17 19:41:50 dawes Exp $ */
 
 #define NEED_REPLIES
 #include <stdio.h>

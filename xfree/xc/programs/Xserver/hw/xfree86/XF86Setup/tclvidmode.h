@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.h,v 3.4 1997/03/24 13:08:22 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.h,v 3.5 1997/07/10 08:17:20 hohndel Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xmd.h>

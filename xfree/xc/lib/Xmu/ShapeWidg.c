@@ -1,4 +1,4 @@
-/* $TOG: ShapeWidg.c /main/7 1998/02/06 15:44:53 kaleb $ */
+/* $Xorg: ShapeWidg.c,v 1.3 2000/08/17 19:46:03 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/ShapeWidg.c,v 1.5 1998/09/05 06:36:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/ShapeWidg.c,v 1.7 2001/01/17 19:42:56 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/extensions/shape.h>

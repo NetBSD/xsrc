@@ -1,4 +1,4 @@
-/*	$NetBSD: usbvar.h,v 1.1.1.2 2001/03/18 17:33:11 veego Exp $	*/
+/*	$NetBSD: usbvar.h,v 1.1.1.3 2001/06/09 15:08:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/libusb/usbvar.h,v 1.1.2.2 1999/12/03 10:12:43 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/libusb/usbvar.h,v 1.1 2000/02/11 18:06:51 dawes Exp $ */
 
 struct report_desc {
 	unsigned int size;

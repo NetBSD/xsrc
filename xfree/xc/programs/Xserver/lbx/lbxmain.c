@@ -1,4 +1,4 @@
-/* $TOG: lbxmain.c /main/74 1998/02/09 14:32:18 kaleb $ */
+/* $Xorg: lbxmain.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -41,7 +41,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.7 2000/05/18 23:46:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.9 2001/01/17 22:36:59 dawes Exp $ */
  
 #include <sys/types.h>
 #define NEED_REPLIES

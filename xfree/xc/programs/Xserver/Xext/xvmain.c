@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvmain.c,v 1.10 2000/09/04 00:22:54 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvmain.c,v 1.11 2000/09/08 02:29:41 mvojkovi Exp $ */
 
 /*
 ** File: 

@@ -19,13 +19,13 @@
 #ifndef __FTDEBUG_H__
 #define __FTDEBUG_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H  <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_CONFIG_CONFIG_H
+
+#include <ft2build.h>
+#include FT_CONFIG_CONFIG_H
+
 
 FT_BEGIN_HEADER
+
 
 #ifdef FT_DEBUG_LEVEL_TRACE
 
@@ -82,11 +82,11 @@ FT_BEGIN_HEADER
     trace_psobjs,
 
     /* Type 2 driver components */
-    trace_t2driver,
-    trace_t2gload,
-    trace_t2load,
-    trace_t2objs,
-    trace_t2parse,
+    trace_cffdriver,
+    trace_cffgload,
+    trace_cffload,
+    trace_cffobjs,
+    trace_cffparse,
 
     /* CID driver components */
     trace_cidafm,
@@ -98,6 +98,10 @@ FT_BEGIN_HEADER
 
     /* Windows fonts component */
     trace_winfnt,
+
+    /* PCF fonts component */
+    trace_pcfdriver,
+    trace_pcfread,
 
     /* the last level must always be `trace_max' */
     trace_max

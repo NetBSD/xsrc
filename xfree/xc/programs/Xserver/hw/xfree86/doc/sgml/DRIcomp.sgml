@@ -3,19 +3,17 @@
 ]>
 
 <!-- Created: Sun Mar 12 13:00:00 2000 by brianp@valinux.com -->
-<!-- Revised: Fri May 19 09:36:02 2000 by martin@valinux.com -->
-<!-- Revised: Sat Aug 19 14:00:00 2000 by brianp@valinux.com -->
+<!-- Revised: Sat Jan  6 10:15:22 2001 by martin@valinux.com -->
 
   <article>
+    <title>DRI Compilation Guide
+    <author>
+        <htmlurl url="http://www.valinux.com/"
+          name="VA Linux Systems, Inc."> Professional Services - Graphics.
+    <date>21 April 2001
 
-      <title>DRI Compilation Guide
-      <author>
-          <htmlurl url="http://www.valinux.com/"
-            name="VA Linux Systems, Inc."> Professional Services - Graphics.
-      <date>29 October 2000
-        
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.8 2000/12/01 14:28:55 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.14 2001/05/02 15:06:08 dawes Exp $
     </ident>
 
     <toc>
@@ -24,7 +22,7 @@
 
       <sect1>Copyright <p>
 
-          <bf>Copyright &copy; 2000 by VA Linux Systems, Inc.
+          <bf>Copyright &copy; 2000-2001 by VA Linux Systems, Inc.
           All Rights Reserved.</bf>
         <p>
           <bf>Permission is granted to make and distribute verbatim copies 
@@ -45,7 +43,8 @@
           3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trademarks of
           3dfx Interactive, Incorporated.
 	  Matrox is a registered trademark of Matrox Electronic Systems Ltd.
-	  ATI Rage is a registered trademark of ATI Technologies, Inc.
+	  ATI Rage and Radeon is a registered trademark of ATI Technologies,
+	  Inc.
           All other trademarks mentioned are the property of their
           respective owners.
 
@@ -54,6 +53,8 @@
 
         This document describes how to download, compile and install the
         DRI project.
+        The DRI provides 3D graphics hardware acceleration for the XFree86
+        project.
         This information is intended for experienced Linux developers.
         Beginners are probably better off installing precompiled packages.
       <p>
@@ -65,10 +66,9 @@
 
         You'll need the following:
         <itemize>
-          <item>At least 400MB of free disk space.  More is needed if you want
-            to build with debugging information or keep several build trees.
-          <item>A fast system.  Using a PIII-550 it takes about 1/2 hour to
-            build everything.
+          <item>At least 200MB of free disk space.
+            If you compile for debugging (the -g option) then you'll need
+            about 600MB.
           <item>GCC compiler and related tools.
           <item>ssh (secure shell) for registered developer downloading of the
             DRI source tree
@@ -78,9 +78,14 @@
         </itemize>
 
       <p>
+        The DRI 3D drivers generally work on systems with Intel or AMD CPUs.
+        However, there is limited support for Alpha and PowerPC support is
+        underway.
+
+      <p>
         For 3dfx Voodoo3 hardware, you'll also need:
         <itemize>
-          <item>Glide3x headers and runtime library if you want to use the
+          <item>Glide3 headers and runtime library if you want to use the
             3dfx driver.
             These can be obtained from
             <htmlurl url="http://linux.3dfx.com/open_source/glide_kit.htm"
@@ -101,7 +106,7 @@
         </itemize>
 
       <p>
-        For ATI Rage hardware, you'll also need:
+        For ATI Rage 128 and Radeon hardware, you'll also need:
         <itemize>
           <item>A recent Linux 2.4.x kernel with AGP support.
         </itemize>
@@ -109,15 +114,20 @@
 
     <sect>Linux Kernel Preparation <p>
 
-        The DRI project closely tracks Linux kernel development.
-        Since the internal Linux data structures change frequently in
-        the 2.4 development branch it's important to have use the most
-        recent Linux kernel.
-        As of this writing (Nov 2000), 2.4.0-test11-pre5 is the most
-        recent version of Linux which the DRI is synchronized to.
+        The DRI project closely tracks Linux kernel development.  Since
+        the internal Linux data structures might change in the 2.4 Linux
+        kernel, it's important to use the most recent Linux kernel and
+        not an old, intermediate development release.
+        As of this writing (Jan 2001), 2.4.0 is the most recent version
+        of Linux which the DRI is synchronized to.
       <p>
         Most of the DRI drivers require AGP support and using Intel
-        Pentium III SSE optimizations also requires an up-to-date Linux kernel.
+        Pentium III SSE optimizations also requires an up-to-date Linux
+	kernel.  Configuring your kernel correctly is very important, as
+        features such as SSE optimizations will be disabled if your
+        kernel does not support them.  Thus, if you have a Pentium III
+        processor, you must configure your kernel for the Pentium III
+        processor family.
       <p>
         Building a new Linux kernel can be difficult for beginners but
         there are resources on the Internet to help.
@@ -140,7 +150,18 @@
           ln -s linux-2.4.x linux
           bzcat linux-2.4.x.tar.bz2 | tar xf -
           </verb>
-        <item>Configure your kernel.
+	  It is critical that /usr/src/linux point to your new kernel
+          sources, otherwise the kernel headers <bf>will not</bf> be
+          used when building the DRI.  This will almost certainly cause
+          compilation problems.
+	<item>Read /usr/src/linux/Documentation/Changes.
+	  This file lists the minimum requirements for all software
+	  packages required to build the kernel.  You must upgrade at
+	  least gcc, make, binutils and modutils to at least the
+	  versions specified in this file.  The other packages may not
+	  be needed.  If you are upgrading from Linux 2.2.x you must
+	  upgrade your modutils package for Linux 2.4.x.
+	<item>Configure your kernel.
           You might, for example, use <tt>make menuconfig</tt> and do the
           following:
 
@@ -149,9 +170,13 @@
 	  <item>Enable <em>Prompt for development and/or incomplete
 	    code/drivers</em>
 	  <item>hit ESC to return to the top-level menu
+	  <item>Go to <em>Processor type and features</em>
+	  <item>Select your processor type from <em>Processor Family</em>
+	  <item>hit ESC to return to the top-level menu
           <item>Go to <em>Character devices</em>
           <item>Disable <em>Direct Rendering Manager (XFree86 DRI support)</em>
-            since we'll use the DRI module from the XFree86/DRI tree.
+            since we'll use the DRI code from the XFree86/DRI tree and will
+            compile it there.
           <item>Go to <em>/dev/agpgart (AGP Support) (EXPERIMENTAL) (NEW)</em>
 	  <item>Hit SPACE twice to build AGP support into the kernel
           <item>Enable all chipsets' support for AGP
@@ -183,10 +208,59 @@
           make install
           </verb>
           Note that last make command will automatically run lilo for you.
-        <item>Upgrade your modutils package for Linux 2.4.x if you're
-          upgrading from Linux 2.2.x.
         <item>Now reboot to use the new kernel.
         </itemize>
+
+
+    <sect>CPU Architectures <p>
+
+        In general, nothing special has to be done to use the DRI on
+        different CPU architectures.  There are, however, a few
+        optimizations that are CPU-dependent.  Mesa will determine at
+        runtime which CPU-dependent optimizations should be used and
+	enable them where appropriate.
+
+        <sect1>Intel Pentium III Features <p>
+
+            The Pentium III SSE (Katmai) instructions are used in
+            optimized vertex transformation functions in the Mesa-based
+            DRI drivers.
+            On Linux, SSE requires a recent kernel (such as 2.4.0-test11
+            or later) both at compile time and runtime.
+
+        <sect1>AMD 3DNow! Features <p>
+
+            AMD's 3DNow! instructions are used in optimized vertex
+            transformation functions in the Mesa-based DRI drivers.
+            3DNow! is supported in most versions of Linux.
+
+        <sect1>Alpha Features <p>
+
+            On newer Alpha processors a significant performance increase
+            can be seen with the addition of the -mcpu= option to GCC.
+            This option is dependent on the architecture of the processor.
+            For example, -mcpu=ev6 will build specifically for the EV6 based
+            AXP's, giving both byte and word alignment access to the
+            DRI/Mesa drivers.
+
+            To enable this optimization edit your xc/config/host.def file
+            and add the line:
+
+            #define DefaultGcc2AxpOpt -O2 -mcpu=ev6 
+
+            Additional speed improvements to 3D rendering can be achieved
+            by installing Compaq's Math Libraries (CPML) which can be 
+            obtained from 
+            <htmlurl url="http://www.support.compaq.com/alpha-tools/software/index.html"
+            name="http://www.support.compaq.com/alpha-tools/software/index.html">
+
+            Once installed, you can add this line to your host.def to build
+            with the CPML libraries:
+
+            #define UseCompaqMathLibrary YES
+
+            The host.def file is explained below.
+
 
 
     <sect>Downloading the XFree86/DRI CVS Sources <p>
@@ -291,6 +365,7 @@
         The DRI developers will upgrade Mesa when appropriate.
       <p>
 
+
     <sect>Compiling the XFree86/DRI tree <p>
       <sect1>Make a build tree <p>
 
@@ -325,7 +400,7 @@
 (Alpha)     #define DefaultGcc2AxpOpt -O2 -mcpu=ev6 (or similar)
             #define LibraryCDebugFlags -O2
             #define BuildServersOnly YES
-            #define XF86CardDrivers vga tdfx mga r128 i810
+            #define XF86CardDrivers vga tdfx mga ati i810
             #define LinuxDistribution LinuxRedHat
             #define DefaultCCOptions -ansi GccWarningOptions -pipe
             #define BuildXF86DRI YES
@@ -334,6 +409,7 @@
             /* #define GlxBuiltInTdfx YES */
             /* #define GlxBuiltInMga YES */
             /* #define GlxBuiltInR128 YES */
+            /* #define GlxBuiltInRadeon YES */
             /* #define DoLoadableServer NO */
             #define SharedLibFont NO
           </verb>
@@ -351,11 +427,30 @@
         <p>
           If you have 3dfx hardware be sure that the Glide 3x headers are
           installed in <tt>/usr/include/glide3/</tt> and that the Glide 3x
-          library is installed at <tt>/usr/lib/libglide3x.so</tt>.
+          library is installed at <tt>/usr/lib/libglide3.so</tt>.
         <p>
           If you do not have 3dfx hardware comment out the <tt>HasGlide3</tt>
           line in <tt>host.def</tt>.
         <p>
+	  If you want to enable 3DNow! optimizations in Mesa and the DRI
+	  drivers, you should add the following: 
+          <verb>
+            #define MesaUse3DNow YES
+          </verb>
+        <p>
+	  If you want to enable SSE optimizations in Mesa and the DRI
+	  drivers, you <bf>must</bf> upgrade to a Linux 2.4.x kernel.
+	  Mesa will verify that SSE is supported by both your processor
+	  <em>and</em> your operating system, but to build Mesa inside
+	  the DRI you need to have the Linux 2.4.x kernel headers in
+	  /usr/src/linux.  If you enable SSE optimizations with an
+	  earlier version of the Linux kernel in /usr/src/linux, Mesa
+	  <bf>will not compile</bf>.  You have been warned.  If you do
+	  have a 2.4.x kernel, you should add the following: 
+          <verb>
+            #define MesaUseKatmai YES
+          </verb>
+	<p>
 
       <sect1>Compilation <p>
 
@@ -394,6 +489,7 @@
           For the 3dfx Voodoo, you should see <em>tdfx.o</em>.
           For the Matrox G200/G400, you should see <em>mga.o</em>.
           For the ATI Rage 128, you should see <em>r128.o</em>.
+          For the ATI Radeon, you should see <em>radeon.o</em>.
           For the Intel i810, you should see <em>i810.o</em>.
         <p>
           If the DRI kernel module(s) failed to build you should verify
@@ -408,7 +504,7 @@
           <tt>/usr/src/linux-2.4.x</tt>,
           <verb>
           cd ~/DRI-CVS/build/xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel
-          make TREE=/usr/src/linux-2.4
+          make TREE=/usr/src/linux-2.4.x/include
           </verb>
           or alternatively, edit Makefile to include this change.
         <p>
@@ -421,13 +517,16 @@
         The DRI kernel modules are in
         <tt>~/DRI-CVS/build/xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/</tt>.
         <p>
-        To load the appropriate DRI module in your running kernel you can
+        To load the appropriate DRM module in your running kernel you can
         either use ismod and restart your X server or copy the kernel module
-        to <tt>/lib/modules/2.4.x/kernel/driver/char/drm/</tt> then run
+        to <tt>/lib/modules/2.4.x/kernel/drivers/char/drm/</tt> then run
         depmod and restart your X server.
         <p>
         Make sure you first unload any older DRI kernel modules that might
         be already loaded.
+        <p>
+        Note that some DRM modules require that the <tt>agpgart</tt> module
+        be loaded first.
         <p>
 
     <sect>Normal Installation and Configuration <p>

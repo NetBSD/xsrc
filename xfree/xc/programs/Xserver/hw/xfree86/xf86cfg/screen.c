@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.3 2000/06/13 23:15:52 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.6 2001/03/24 01:17:21 paulo Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -194,9 +194,9 @@ AddScreen(xf86cfgDevice *mon, xf86cfgDevice *dev)
 	screen = (XF86ConfScreenPtr)(screen->list.next);
     }
     do {
-	++nscreens;
 	XmuSnprintf(screen_name, sizeof(screen_name), "Screen%d",
 		    nscreens);
+	++nscreens;
     } while (xf86findScreen(screen_name,
 	     XF86Config->conf_screen_lst) != NULL);
 

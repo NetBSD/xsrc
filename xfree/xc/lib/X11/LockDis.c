@@ -1,4 +1,4 @@
-/* $TOG: LockDis.c /main/11 1998/02/06 17:42:26 kaleb $ */
+/* $Xorg: LockDis.c,v 1.3 2000/08/17 19:44:40 cpqbld Exp $ */
 
 /*
  

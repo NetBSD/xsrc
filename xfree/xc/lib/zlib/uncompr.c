@@ -1,4 +1,4 @@
-/* $TOG: uncompr.c /main/1 1998/02/04 14:34:26 kaleb $ */
+/* $Xorg: uncompr.c,v 1.3 2000/08/17 19:46:48 cpqbld Exp $ */
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 

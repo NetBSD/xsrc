@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbgetsp.c /main/19 1998/02/09 14:39:09 kaleb $ */
+/* $Xorg: mfbgetsp.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 #include "X.h"
 #include "Xmd.h"
 

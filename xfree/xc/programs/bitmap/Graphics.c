@@ -1,4 +1,4 @@
-/* $TOG: Graphics.c /main/19 1998/02/09 13:41:11 kaleb $ */
+/* $Xorg: Graphics.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Graphics.c,v 1.3 1998/10/04 09:39:58 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/Graphics.c,v 1.5 2001/01/17 23:44:51 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

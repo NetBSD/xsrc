@@ -1,4 +1,4 @@
-/* $TOG: pexPc.c /main/11 1998/02/10 12:35:20 kaleb $ */
+/* $Xorg: pexPc.c,v 1.3 2000/08/17 19:47:14 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPc.c,v 3.4 1998/07/26 13:14:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPc.c,v 3.6 2001/01/17 22:12:37 dawes Exp $ */
 
 
 /*++

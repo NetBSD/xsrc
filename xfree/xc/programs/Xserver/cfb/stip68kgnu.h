@@ -1,5 +1,5 @@
 /*
- * $TOG: stip68kgnu.h /main/4 1998/02/09 14:08:34 kaleb $
+ * $Xorg: stip68kgnu.h,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.1 1997/02/25 14:19:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.3 2001/01/17 22:36:37 dawes Exp $ */
 
 /*
  * Stipple stack macro for 68k GCC

@@ -1,4 +1,4 @@
-.\" $TOG: Xau.man /main/17 1997/11/04 20:43:47 kaleb $
+.\" $Xorg: Xau.man,v 1.3 2000/08/17 19:41:54 cpqbld Exp $
 .\" Copyright (c) 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +23,10 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
-.TH Xau 3 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/doc/man/Xau/Xau.man,v 1.2 2001/01/27 18:20:19 dawes Exp $
+.\"
+.TH Xau 3 __xorgversion__
 .SH NAME
 Xau library: XauFileName, XauReadAuth, XauLockAuth, XauUnlockAuth,
 XauWriteAuth, XauDisposeAuth,

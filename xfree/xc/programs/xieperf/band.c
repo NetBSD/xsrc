@@ -1,4 +1,4 @@
-/* $TOG: band.c /main/7 1998/02/09 13:59:24 kaleb $ */
+/* $Xorg: band.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 /**** module band.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/band.c,v 1.5 2001/01/17 23:45:36 dawes Exp $ */
 
 #include "xieperf.h"
 #include <X11/Xlib.h>

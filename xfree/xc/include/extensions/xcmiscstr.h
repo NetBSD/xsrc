@@ -1,4 +1,4 @@
-/* $TOG: xcmiscstr.h /main/5 1998/02/09 11:23:44 kaleb $ */
+/* $Xorg: xcmiscstr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group

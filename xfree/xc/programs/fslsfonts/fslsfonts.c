@@ -1,4 +1,4 @@
-/* $TOG: fslsfonts.c /main/8 1998/02/09 13:43:17 kaleb $ */
+/* $Xorg: fslsfonts.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.3 1999/02/19 21:27:08 hohndel Exp $ */
+/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.5 2001/01/17 23:44:53 dawes Exp $ */
 
 #include "FSlib.h"
 #include <stdio.h>

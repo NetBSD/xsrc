@@ -1,7 +1,11 @@
+.XFree86_Version
 bin
 lib/libGL.so
 lib/libGL.so.1
 lib/libGL.so.1.2
+lib/libGLU.so
+lib/libGLU.so.1
+lib/libGLU.so.1.3
 lib/libICE.so
 lib/libICE.so.6
 lib/libICE.so.6.3
@@ -37,6 +41,9 @@ lib/libXi.so.6.0
 lib/libXmu.so
 lib/libXmu.so.6
 lib/libXmu.so.6.2
+lib/libXmuu.so
+lib/libXmuu.so.1
+lib/libXmuu.so.1.0
 lib/libXp.so
 lib/libXp.so.6
 lib/libXp.so.6.2
@@ -58,6 +65,9 @@ lib/libdps.so.1.0
 lib/libdpstk.so
 lib/libdpstk.so.1
 lib/libdpstk.so.1.0
+lib/libfreetype.so
+lib/libfreetype.so.6
+lib/libfreetype.so.6.0
 lib/liboldX.so
 lib/liboldX.so.6
 lib/liboldX.so.6.0

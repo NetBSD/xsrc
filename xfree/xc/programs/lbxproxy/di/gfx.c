@@ -1,4 +1,4 @@
-/* $TOG: gfx.c /main/30 1998/02/11 09:48:12 kaleb $ */
+/* $Xorg: gfx.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

@@ -1,5 +1,5 @@
 /*
- * $TOG: actions.c /main/17 1998/02/09 13:41:54 kaleb $
+ * $Xorg: actions.c,v 1.3 2000/08/17 19:53:51 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,9 +19,10 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/editres/actions.c,v 1.5 2001/04/01 14:00:17 tsi Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xutil.h>
 

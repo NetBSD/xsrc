@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: contrib/programs/xfontsel/xfontsel.man,v 1.3 1999/07/17 07:25:22 dawes Exp $
+.\" $XFree86: xc/programs/xfontsel/xfontsel.man,v 1.3 2001/01/27 18:21:12 dawes Exp $
 .de EX		\"Begin example
 .ne 5
 .if n .sp 1
@@ -39,7 +39,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XFONTSEL 1 "Release 6" "X Version 11"
+.TH XFONTSEL 1 __xorgversion__
 .SH NAME
 xfontsel \- point and click selection of X11 font names
 .SH SYNTAX
@@ -220,7 +220,7 @@ The average-width menu is too large to be useful.
 .SH COPYRIGHT
 Copyright 1989, 1991,  X Consortium
 .br
-See \fIX(1)\fP for a full statement of rights and permissions.
+See \fIX(__miscmansuffix__)\fP for a full statement of rights and permissions.
 .SH AUTHOR
 .PP
 Ralph R. Swick, Digital Equipment Corporation/MIT Project Athena

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.7 2000/11/02 19:58:20 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.9 2001/02/21 23:37:04 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -48,6 +48,7 @@ static xf86ConfigSymTabRec VendorSubTab[] =
 XF86ConfVendSubPtr
 xf86parseVendorSubSection (void)
 {
+	int has_ident = FALSE;
 	parsePrologue (XF86ConfVendSubPtr, XF86ConfVendSubRec)
 
 	while ((token = xf86getToken (VendorSubTab)) != ENDSUBSECTION)
@@ -57,7 +58,10 @@ xf86parseVendorSubSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->vs_identifier = val.str;
+			has_ident = TRUE;
 			break;
 		case OPTION:
 			{
@@ -129,6 +133,8 @@ xf86parseVendorSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->vnd_identifier = val.str;
 			has_ident = TRUE;
 			break;

@@ -29,9 +29,28 @@
 #define __FT_MAC_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+
+
+FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    mac_specific                                                       */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Mac-Specific Interface                                             */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    Only available on the Macintosh.                                   */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    The following definitions are only available if FreeType is        */
+  /*    compiled on a Macintosh.                                           */
+  /*                                                                       */
+  /*************************************************************************/
 
 
   /*************************************************************************/
@@ -61,8 +80,10 @@
   /*    This function can be used to create FT_Face abjects from fonts     */
   /*    that are installed in the system like so:                          */
   /*                                                                       */
+  /*    {                                                                  */
   /*      fond = GetResource( 'FOND', fontName );                          */
   /*      error = FT_New_Face_From_FOND( library, fond, 0, &face );        */
+  /*    }                                                                  */
   /*                                                                       */
   FT_EXPORT( FT_Error )  FT_New_Face_From_FOND( FT_Library  library,
                                                 Handle      fond,
@@ -70,9 +91,10 @@
                                                 FT_Face    *aface );
 
 
-#ifdef __cplusplus
-  }
-#endif
+  /* */
+
+
+FT_END_HEADER
 
 
 #endif /* __FT_MAC_H__ */

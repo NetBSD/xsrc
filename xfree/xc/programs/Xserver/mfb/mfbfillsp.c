@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbfillsp.c,v 1.6 2000/02/12 03:40:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbfillsp.c,v 1.8 2001/01/17 22:37:02 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbfillsp.c /main/26 1998/02/09 14:38:54 kaleb $ */
+/* $Xorg: mfbfillsp.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 #include "X.h"
 #include "Xmd.h"
 #include "gcstruct.h"

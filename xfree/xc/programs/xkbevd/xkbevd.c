@@ -1,5 +1,4 @@
-/* $XConsortium: xkbevd.c /main/6 1996/09/28 17:18:29 rws $ */
-/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.6 1997/12/06 09:26:16 hohndel Exp $ */
+/* $Xorg: xkbevd.c,v 1.4 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.8 2001/01/17 23:46:09 dawes Exp $ */
 
 #define	DEBUG_VAR xkbevdDebug
 #include <X11/Xosdefs.h>
@@ -537,7 +537,6 @@ Bool		ok;
     if (soundDir==NULL)	soundDir= DFLT_SOUND_DIR;
     XkbStdBellEvent(dpy,None,0,XkbBI_ImAlive);
     while (1) {
-
 	XNextEvent(dpy,&ev.core);
 	if ((!ProcessMatchingConfig(&ev))&&(ev.type==xkbEventCode)&&
 					(ev.any.xkb_type==XkbBellNotify)) {

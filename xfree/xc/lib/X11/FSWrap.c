@@ -1,4 +1,4 @@
-/* $TOG: FSWrap.c /main/16 1998/05/29 14:46:29 kaleb $ */
+/* $Xorg: FSWrap.c,v 1.4 2000/08/17 19:44:33 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by the Open Software Foundation
@@ -52,7 +52,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/FSWrap.c,v 1.3 1998/10/03 08:41:17 dawes Exp $ */
+/* $XFree86: xc/lib/X11/FSWrap.c,v 1.5 2001/01/17 19:41:35 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

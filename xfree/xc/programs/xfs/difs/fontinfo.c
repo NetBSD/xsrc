@@ -1,4 +1,4 @@
-/* $TOG: fontinfo.c /main/14 1998/02/11 10:02:45 kaleb $ */
+/* $Xorg: fontinfo.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * font data query
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.6 1999/08/22 07:19:45 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.8 2001/01/17 23:45:29 dawes Exp $ */
 
 #include        "FS.h"
 #include        "FSproto.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.5 2000/12/08 19:15:33 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.11 2001/04/10 16:07:59 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -59,7 +59,7 @@
 #define OUTREG16(addr, val) MMIO_OUT16(R128MMIO, addr, val)
 #define OUTREG(addr, val)   MMIO_OUT32(R128MMIO, addr, val)
 
-#define ADDRREG(addr)       ((volatile CARD32 *)(R128MMIO + (addr)))
+#define ADDRREG(addr)       ((volatile CARD32 *)(pointer)(R128MMIO + (addr)))
 
 
 #define OUTREGP(addr, val, mask)   \
@@ -116,12 +116,12 @@
 
 #define PAL_SELECT(idx)                                                   \
     do {                                                                  \
+	CARD32 tmp = INREG(R128_DAC_CNTL);                                \
 	if (idx) {                                                        \
-	    OUTREG(R128_DAC_CNTL, INREG(R128_DAC_CNTL) |                  \
-		   R128_DAC_PALETTE_ACC_CTL);                             \
+	    OUTREG(R128_DAC_CNTL, tmp | R128_DAC_PALETTE_ACC_CTL);        \
 	} else {                                                          \
-	    OUTREG(R128_DAC_CNTL, INREG(R128_DAC_CNTL) &                  \
-		   ~R128_DAC_PALETTE_ACC_CTL);                            \
+	    OUTREG(R128_DAC_CNTL, tmp &                                   \
+		   (CARD32)~R128_DAC_PALETTE_ACC_CTL);                    \
 	}                                                                 \
     } while (0)
 
@@ -182,8 +182,19 @@
 #define R128_BIOS_1_SCRATCH               0x0014
 #define R128_BIOS_2_SCRATCH               0x0018
 #define R128_BIOS_3_SCRATCH               0x001c
+#define R128_BIOS_4_SCRATCH               0x0020
+#define R128_BIOS_5_SCRATCH               0x0024
+#       define R128_BIOS_DISPLAY_FP       (1 << 0)
+#       define R128_BIOS_DISPLAY_CRT      (2 << 0)
+#       define R128_BIOS_DISPLAY_FP_CRT   (3 << 0)
+#define R128_BIOS_6_SCRATCH               0x0028
+#define R128_BIOS_7_SCRATCH               0x002c
 #define R128_BIOS_ROM                     0x0f30 /* PCI */
 #define R128_BIST                         0x0f0f /* PCI */
+#define R128_BM_CHUNK_0_VAL               0x0a18
+#       define R128_BM_PTR_FORCE_TO_PCI    (1 << 21)
+#       define R128_BM_PM4_RD_FORCE_TO_PCI (1 << 22)
+#       define R128_BM_GLOBAL_FORCE_TO_PCI (1 << 23)
 #define R128_BRUSH_DATA0                  0x1480
 #define R128_BRUSH_DATA1                  0x1484
 #define R128_BRUSH_DATA10                 0x14a8
@@ -1272,49 +1283,53 @@
 #       define R128_PSEUDOCOLOR_DT_ARGB1555    (1  << 24)
 #       define R128_PSEUDOCOLOR_DT_ARGB4444    (2  << 24)
 #define R128_PRIM_TEXTURE_COMBINE_CNTL_C  0x1cb4
-#       define R128_COMB_DIS                 (0  <<  0)
-#       define R128_COMB_COPY                (1  <<  0)
-#       define R128_COMB_COPY_INP            (2  <<  0)
-#       define R128_COMB_MODULATE            (3  <<  0)
-#       define R128_COMB_MODULATE2X          (4  <<  0)
-#       define R128_COMB_MODULATE4X          (5  <<  0)
-#       define R128_COMB_ADD                 (6  <<  0)
-#       define R128_COMB_ADD_SIGNED          (7  <<  0)
-#       define R128_COMB_BLEND_VERTEX        (8  <<  0)
-#       define R128_COMB_BLEND_TEXTURE       (9  <<  0)
-#       define R128_COMB_BLEND_CONST         (10 <<  0)
-#       define R128_COMB_BLEND_PREMULT       (11 <<  0)
-#       define R128_COMB_BLEND_PREV          (12 <<  0)
-#       define R128_COMB_BLEND_PREMULT_INV   (13 <<  0)
-#       define R128_COMB_ADD_SIGNED2X        (14 <<  0)
-#       define R128_COMB_BLEND_CONST_COLOR   (15 <<  0)
-#       define R128_COMB_MASK                (15 <<  0)
-#       define R128_COLOR_FACTOR_TEX         (4  <<  4)
-#       define R128_COLOR_FACTOR_NTEX        (5  <<  4)
-#       define R128_COLOR_FACTOR_ALPHA       (6  <<  4)
-#       define R128_COLOR_FACTOR_NALPHA      (7  <<  4)
-#       define R128_COLOR_FACTOR_MASK        (15 <<  4)
-#       define R128_INPUT_FACTOR_CONST_COLOR (2  << 10)
-#       define R128_INPUT_FACTOR_CONST_ALPHA (3  << 10)
-#       define R128_INPUT_FACTOR_INT_COLOR   (4  << 10)
-#       define R128_INPUT_FACTOR_INT_ALPHA   (5  << 10)
-#       define R128_INPUT_FACTOR_MASK        (15 << 10)
-#       define R128_COMB_ALPHA_DIS           (0  << 14)
-#       define R128_COMB_ALPHA_COPY          (1  << 14)
-#       define R128_COMB_ALPHA_COPY_INP      (2  << 14)
-#       define R128_COMB_ALPHA_MODULATE      (3  << 14)
-#       define R128_COMB_ALPHA_MODULATE2X    (4  << 14)
-#       define R128_COMB_ALPHA_MODULATE4X    (5  << 14)
-#       define R128_COMB_ALPHA_ADD           (6  << 14)
-#       define R128_COMB_ALPHA_ADD_SIGNED    (7  << 14)
-#       define R128_COMB_ALPHA_ADD_SIGNED2X  (14 << 14)
-#       define R128_COMB_ALPHA_MASK          (15 << 14)
-#       define R128_ALPHA_FACTOR_TEX_ALPHA   (6  << 18)
-#       define R128_ALPHA_FACTOR_NTEX_ALPHA  (7  << 18)
-#       define R128_ALPHA_FACTOR_MASK        (15 << 18)
-#       define R128_INP_FACTOR_A_CONST_ALPHA (1  << 25)
-#       define R128_INP_FACTOR_A_INT_ALPHA   (2  << 25)
-#       define R128_INP_FACTOR_A_MASK        (7  << 25)
+#       define R128_COMB_DIS                   (0  <<  0)
+#       define R128_COMB_COPY                  (1  <<  0)
+#       define R128_COMB_COPY_INP              (2  <<  0)
+#       define R128_COMB_MODULATE              (3  <<  0)
+#       define R128_COMB_MODULATE2X            (4  <<  0)
+#       define R128_COMB_MODULATE4X            (5  <<  0)
+#       define R128_COMB_ADD                   (6  <<  0)
+#       define R128_COMB_ADD_SIGNED            (7  <<  0)
+#       define R128_COMB_BLEND_VERTEX          (8  <<  0)
+#       define R128_COMB_BLEND_TEXTURE         (9  <<  0)
+#       define R128_COMB_BLEND_CONST           (10 <<  0)
+#       define R128_COMB_BLEND_PREMULT         (11 <<  0)
+#       define R128_COMB_BLEND_PREV            (12 <<  0)
+#       define R128_COMB_BLEND_PREMULT_INV     (13 <<  0)
+#       define R128_COMB_ADD_SIGNED2X          (14 <<  0)
+#       define R128_COMB_BLEND_CONST_COLOR     (15 <<  0)
+#       define R128_COMB_MASK                  (15 <<  0)
+#       define R128_COLOR_FACTOR_CONST_COLOR   (0  <<  4)
+#       define R128_COLOR_FACTOR_NCONST_COLOR  (1  <<  4)
+#       define R128_COLOR_FACTOR_TEX           (4  <<  4)
+#       define R128_COLOR_FACTOR_NTEX          (5  <<  4)
+#       define R128_COLOR_FACTOR_ALPHA         (6  <<  4)
+#       define R128_COLOR_FACTOR_NALPHA        (7  <<  4)
+#       define R128_COLOR_FACTOR_PREV_COLOR    (8  <<  4)
+#       define R128_COLOR_FACTOR_MASK          (15 <<  4)
+#       define R128_COMB_FCN_MSB               (1  <<  8)
+#       define R128_INPUT_FACTOR_CONST_COLOR   (2  << 10)
+#       define R128_INPUT_FACTOR_CONST_ALPHA   (3  << 10)
+#       define R128_INPUT_FACTOR_INT_COLOR     (4  << 10)
+#       define R128_INPUT_FACTOR_INT_ALPHA     (5  << 10)
+#       define R128_INPUT_FACTOR_MASK          (15 << 10)
+#       define R128_COMB_ALPHA_DIS             (0  << 14)
+#       define R128_COMB_ALPHA_COPY            (1  << 14)
+#       define R128_COMB_ALPHA_COPY_INP        (2  << 14)
+#       define R128_COMB_ALPHA_MODULATE        (3  << 14)
+#       define R128_COMB_ALPHA_MODULATE2X      (4  << 14)
+#       define R128_COMB_ALPHA_MODULATE4X      (5  << 14)
+#       define R128_COMB_ALPHA_ADD             (6  << 14)
+#       define R128_COMB_ALPHA_ADD_SIGNED      (7  << 14)
+#       define R128_COMB_ALPHA_ADD_SIGNED2X    (14 << 14)
+#       define R128_COMB_ALPHA_MASK            (15 << 14)
+#       define R128_ALPHA_FACTOR_TEX_ALPHA     (6  << 18)
+#       define R128_ALPHA_FACTOR_NTEX_ALPHA    (7  << 18)
+#       define R128_ALPHA_FACTOR_MASK          (15 << 18)
+#       define R128_INP_FACTOR_A_CONST_ALPHA   (1  << 25)
+#       define R128_INP_FACTOR_A_INT_ALPHA     (2  << 25)
+#       define R128_INP_FACTOR_A_MASK          (7  << 25)
 #define R128_TEX_SIZE_PITCH_C             0x1cb8
 #       define R128_TEX_PITCH_SHIFT           0
 #       define R128_TEX_SIZE_SHIFT            4

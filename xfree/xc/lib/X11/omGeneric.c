@@ -1,4 +1,4 @@
-/* $TOG: omGeneric.c /main/28 1998/06/25 16:15:55 kaleb $ */
+/* $Xorg: omGeneric.c,v 1.6 2000/08/17 19:45:21 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  * Modifier:  Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/omGeneric.c,v 3.17 2000/11/28 18:49:52 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omGeneric.c,v 3.20 2001/04/05 17:42:26 dawes Exp $ */
 
 /*
  * Fixed the algorithms in parse_fontname() and parse_fontdata()
@@ -713,20 +713,23 @@ parse_all_name(oc, font_data, pattern)
     if(is_match_charset(font_data, pattern) != True) {
 	if ((fn_list = XListFontsWithInfo(dpy, pattern,
 				      MAXFONTS,
-				      &list_num, &fs_list))
-	    && (prop_fname = get_prop_name(dpy, fs_list))
-	    && (is_match_charset(font_data, prop_fname) != True)) {
-	    if (fn_list) {
-	        XFreeFontInfo(fn_list, fs_list, list_num);
-	        fn_list = NULL;
-	    }
-	    return False;
+				      &list_num, &fs_list)) == NULL) {
+            return False;
+        } 
+        else if ((prop_fname = get_prop_name(dpy, fs_list)) == NULL) {
+            XFreeFontInfo(fn_list, fs_list, list_num);
+            return False;
         }
-	font_data->xlfd_name = prop_fname;
-        if (fn_list) {
-	    XFreeFontInfo(fn_list, fs_list, list_num);
-	}
-	return True;
+        else if ((is_match_charset(font_data, prop_fname) != True)) {
+            XFree(prop_fname);
+            XFreeFontInfo(fn_list, fs_list, list_num);
+            return False;
+        }
+        else {
+	    font_data->xlfd_name = prop_fname;
+            XFreeFontInfo(fn_list, fs_list, list_num);
+            return True;
+        }
     }
 
     font_data->xlfd_name = (char *)Xmalloc(strlen(pattern)+1);
@@ -936,6 +939,8 @@ parse_fontdata(oc, font_set, font_data, font_data_count, name_list, name_list_co
     if(font_data == NULL || font_data_count <= 0) {
 	return False;
     }
+
+    font_data_return->xlfd_name = NULL;
 
     /* Loop through each FontSet defined in the "font_data" CharSet. */
     for ( ; font_data_count-- > 0; font_data++) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.5 1998/10/03 08:42:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.7 2001/01/17 19:42:46 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $TOG: XAppgroup.c /main/6 1998/02/06 14:51:14 kaleb $ */
+/* $Xorg: XAppgroup.c,v 1.4 2000/08/17 19:45:51 cpqbld Exp $ */
 
 #ifdef WIN32
 #define BOOL wBOOL

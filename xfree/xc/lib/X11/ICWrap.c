@@ -1,5 +1,5 @@
 /*
- * $TOG: ICWrap.c /main/10 1998/02/06 17:32:58 kaleb $
+ * $Xorg: ICWrap.c,v 1.3 2000/08/17 19:44:37 cpqbld Exp $
  */
 
 /*
@@ -60,7 +60,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/ICWrap.c,v 1.4 2001/01/17 19:41:37 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"

@@ -1,4 +1,4 @@
-! $TOG: pmconfig.cpp /main/6 1997/07/21 08:35:31 barstow $
+! $Xorg: pmconfig.cpp,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 ! proxy manager config file
 !
 ! Each line has the format:

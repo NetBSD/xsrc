@@ -295,7 +295,7 @@ scheme, the VendorRelease value is MMmmPPsss.  That is, version M.m.P.s has
 VendorRelease set to M * 10000000 + m * 100000 + P * 1000 + s.  Note: 4.0.3
 and any other 4.0.x releases will continue with the Mmnn scheme.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.1.2.1 2001/03/16 14:55:41 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.1 2001/02/07 18:49:31 dawes Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Versions,v 1.1.4.1 2001/06/01 18:26:46 dawes Exp $

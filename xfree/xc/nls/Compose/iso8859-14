@@ -1,15 +1,15 @@
-# Alastair McKinstry, <amck@maths.tcd.ie>
-# Extensions to allow ISO-8859-14 (Celtic) composing
-#
-# ISO 8859-14 (Latin-8) Compose Sequence
-#
-# $XFree86: xc/nls/Compose/iso8859-14,v 1.2 2000/02/08 17:18:48 dawes Exp $
-#
-# The following is from the Latin-1 definitions
-# Sequence Definition
-#
-# <Multi_key> Means <Compose>
-# Special Character
+XCOMM Alastair McKinstry, <amck@maths.tcd.ie>
+XCOMM Extensions to allow ISO-8859-14 (Celtic) composing
+XCOMM
+XCOMM ISO 8859-14 (Latin-8) Compose Sequence
+XCOMM
+XCOMM $XFree86: xc/nls/Compose/iso8859-14,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM
+XCOMM The following is from the Latin-1 definitions
+XCOMM Sequence Definition
+XCOMM
+XCOMM <Multi_key> Means <Compose>
+XCOMM Special Character
 <Multi_key> <plus> <plus>		: "#"	numbersign
 <Multi_key> <apostrophe> <space>	: "'"	apostrophe
 <Multi_key> <space> <apostrophe>	: "'"	apostrophe
@@ -153,7 +153,7 @@
 <Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
 <Multi_key> <comma> <comma>		: "\270"	cedilla
 <Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
-# Accented Alphabet
+XCOMM Accented Alphabet
 <Multi_key> <A> <grave>			: "\300"	Agrave
 <Multi_key> <grave> <A>			: "\300"	Agrave
 <Multi_key> <A> <acute>			: "\301"	Aacute
@@ -361,9 +361,9 @@
 <Multi_key> <less> <Z>			: "\264"	Zcaron
 <Multi_key> <z> <less>			: "\270"	zcaron
 <Multi_key> <less> <z>			: "\270"	zcaron
-#
-# dead key accent keysyms
-# Special Character
+XCOMM
+XCOMM dead key accent keysyms
+XCOMM Special Character
 <dead_circumflex>  <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
@@ -383,7 +383,7 @@
 <dead_acute> <apostrophe>		: "\264"	acute
 <dead_cedilla> <comma>			: "\270"	cedilla
 <dead_diaeresis> <quotedbl>		: "\250"	diaeresis
-# Accented Alphabet
+XCOMM Accented Alphabet
 <dead_grave> <A>			: "\300"	Agrave
 <dead_acute> <A>			: "\301"	Aacute
 <dead_circumflex> <A>			: "\302"	Acircumflex
@@ -440,8 +440,8 @@
 <dead_caron> <Z>			: "\264"	Zcaron
 <dead_caron> <z>			: "\270"	zcaron
 
-# The following is Celtic character support
-#
+XCOMM The following is Celtic character support
+XCOMM
 
 <Multi_key> <period> <b>			: "¢"	bdotabove
 <Multi_key> <period> <B>			: "¡"   Bdotabove
@@ -585,4 +585,4 @@
 <dead_grave> <w>			: "¨"	Wgrave
 <dead_grave> <w>			: "¸"	wgrave
 
-# End of Sequence Definition
+XCOMM End of Sequence Definition

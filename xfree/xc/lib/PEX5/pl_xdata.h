@@ -1,4 +1,4 @@
-/* $TOG: pl_xdata.h /main/6 1998/02/06 16:12:50 kaleb $ */
+/* $Xorg: pl_xdata.h,v 1.3 2000/08/17 19:44:28 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

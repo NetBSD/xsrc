@@ -1,4 +1,4 @@
-/* $XConsortium: evargs.c /main/2 1995/12/07 21:27:46 kaleb $ */
+/* $Xorg: evargs.c,v 1.3 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbevd/evargs.c,v 1.4 2001/01/17 23:46:08 dawes Exp $ */
 
 #define	DEBUG_VAR evargsDebug
 #include "xkbevd.h"

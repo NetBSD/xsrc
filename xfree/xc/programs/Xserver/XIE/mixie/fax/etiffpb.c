@@ -1,4 +1,4 @@
-/* $TOG: etiffpb.c /main/5 1998/02/09 16:14:34 kaleb $ */
+/* $Xorg: etiffpb.c,v 1.3 2000/08/17 19:47:39 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module etiffpb.h ****/
 /******************************************************************************

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/xf86Elo.c,v 1.10 2000/06/07 22:03:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/xf86Elo.c,v 1.13 2001/04/01 14:00:13 tsi Exp $ */
 
 /*
  *******************************************************************************
@@ -46,7 +46,7 @@
  *******************************************************************************
  */
 
-#include <xf86Version.h>
+#include "xf86Version.h"
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
 #define XFREE86_V4
 #endif
@@ -58,17 +58,17 @@
 #include <errno.h>
 #endif
 
-#include <misc.h>
-#include <xf86.h>
+#include "misc.h"
+#include "xf86.h"
 #if !defined(DGUX)
-#include <xf86_ansic.h>
+#include "xf86_ansic.h"
 #endif
-#include <xf86_OSproc.h>
-#include <xf86Xinput.h>
-#include <exevents.h>
+#include "xf86_OSproc.h"
+#include "xf86Xinput.h"
+#include "exevents.h"
 
 #ifdef XFree86LOADER
-#include <xf86Module.h>
+#include "xf86Module.h"
 #endif
 
 #else /* XFREE86_V4 */
@@ -100,7 +100,6 @@
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
-#include "xf86Version.h"
 #endif /* defined(sun) && !defined(i386) */
 
 #if !defined(sun) || defined(i386)
@@ -1196,7 +1195,7 @@ xf86EloControl(DeviceIntPtr	dev,
 
   case DEVICE_INIT:
     {
-#if defined(sun) && !defined(i386)
+#if defined(sun) && !defined(i386) && !defined(XFREE86_V4)
       char      *name = (char *) getenv("ELO_DEV");
       char      *calib = (char *) getenv("ELO_CALIB");
       char	*speed = (char *) getenv("ELO_SPEED");
@@ -1205,7 +1204,7 @@ xf86EloControl(DeviceIntPtr	dev,
       
       DBG(2, ErrorF("Elographics touchscreen init...\n"));
 
-#if defined(sun) && !defined(i386)
+#if defined(sun) && !defined(i386) && !defined(XFREE86_V4)
       if (name) {
 	priv->input_dev = strdup(name);
 	ErrorF("Elographics touchscreen port changed to '%s'\n",

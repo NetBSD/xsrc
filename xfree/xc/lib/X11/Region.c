@@ -1,4 +1,4 @@
-/* $TOG: Region.c /main/31 1998/02/06 17:50:22 kaleb $ */
+/* $Xorg: Region.c,v 1.5 2000/08/17 19:44:52 cpqbld Exp $ */
 /************************************************************************
 
 Copyright 1987, 1988, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ************************************************************************/
-/* $XFree86: xc/lib/X11/Region.c,v 1.4 1998/10/03 08:41:22 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Region.c,v 1.6 2001/01/17 19:41:42 dawes Exp $ */
 /*
  * The functions in this file implement the Region abstraction, similar to one
  * used in the X11 sample server. A Region is simply an area, as the name

@@ -1,4 +1,4 @@
-/* $TOG: wsutils.h /main/4 1998/02/09 14:20:30 kaleb $ */
+/* $Xorg: wsutils.h,v 1.3 2000/08/17 19:55:13 cpqbld Exp $ */
 /** ------------------------------------------------------------------------
 	This file contains routines for manipulating generic lists.
 	Lists are implemented with a "harness".  In other words, each

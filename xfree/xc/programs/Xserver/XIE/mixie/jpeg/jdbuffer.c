@@ -1,4 +1,4 @@
-/* $TOG: jdbuffer.c /main/6 1998/02/09 16:19:23 kaleb $ */
+/* $Xorg: jdbuffer.c,v 1.3 2000/08/17 19:47:47 cpqbld Exp $ */
 /*** 	jdbuffer.c - transfer data from input strip to decode buffer */
 
 /****************************************************************************

@@ -1,4 +1,4 @@
-/* $TOG: compare.c /main/6 1998/02/09 13:59:38 kaleb $ */
+/* $Xorg: compare.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 
 /**** module compare.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/compare.c,v 1.5 2001/01/17 23:45:36 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

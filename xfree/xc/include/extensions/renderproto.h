@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/renderproto.h,v 1.4 2000/10/07 05:59:32 keithp Exp $
+ * $XFree86: xc/include/extensions/renderproto.h,v 1.6 2001/01/21 21:19:08 tsi Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -26,6 +26,7 @@
 #ifndef _XRENDERP_H_
 #define _XRENDERP_H_
 
+#include <X11/Xmd.h>
 #include "render.h"
 
 #define Window CARD32

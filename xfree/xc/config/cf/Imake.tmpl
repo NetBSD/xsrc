@@ -1,11 +1,11 @@
 XCOMM ----------------------------------------------------------------------
 XCOMM Makefile generated from IMAKE_TEMPLATE and INCLUDE_IMAKEFILE
-XCOMM $TOG: Imake.tmpl /main/249 1997/10/13 15:28:56 kaleb $
+XCOMM $Xorg: Imake.tmpl,v 1.4 2000/08/17 19:41:46 cpqbld Exp $
 XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.87 2000/12/02 19:06:57 herrb Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.102 2001/04/26 21:09:38 dawes Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -31,6 +31,10 @@ XCOMM ----------------------------------------------------------------------
 all::
 
 .SUFFIXES: .i
+
+/* Intercept clean rules for current directory */
+#undef clean
+#define clean cleandir
 
 #include <Imake.cf>
 
@@ -190,6 +194,10 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define HasPerl			YES
 #endif
 
+#ifndef HasPerl5
+#define HasPerl5		HasPerl
+#endif
+
 #ifndef PerlCmd
 #define PerlCmd			perl
 #endif
@@ -229,6 +237,18 @@ XCOMM the platform-specific parameters - edit site.def to change
 #ifdef BootStrap
 #undef BuildHtmlManPages
 #define BuildHtmlManPages NO
+#endif
+
+#ifndef DontPreprocessManPages
+#ifdef UseInstalled
+#define DontPreprocessManPages YES
+#else
+#define DontPreprocessManPages NO
+#endif
+#endif
+
+#ifndef HasGroff
+#define HasGroff NO
 #endif
 
 #ifndef HasCookieMaker
@@ -362,7 +382,7 @@ XCOMM the platform-specific parameters - edit site.def to change
 #ifndef ByteOrder
 #if defined(VaxArchitecture)
 #define ByteOrder		X_LITTLE_ENDIAN
-#elif defined(MipsArchitecture) && (defined(UltrixArchitecture) || defined(OSF1Architecture))
+#elif defined(MipsArchitecture) && defined(MipselArchitecture)
 #define ByteOrder		X_LITTLE_ENDIAN
 #elif defined(MipsArchitecture)
 #define ByteOrder		X_BIG_ENDIAN
@@ -435,6 +455,10 @@ XCOMM the platform-specific parameters - edit site.def to change
 #endif
 #ifndef GzipLibrary	/* if OS config didn't define it, assume it's -lz */
 #define GzipLibrary -lz
+#endif
+/* If the system has the Freetype2 library */
+#ifndef HasFreetype2
+#define HasFreetype2		NO
 #endif
 #if HasKrbIV
 #ifndef KrbIVIncludes
@@ -732,8 +756,17 @@ TCLIBDIR = TclLibDir
 #ifndef DriverManDefs
 #define DriverManDefs -D__drivermansuffix__=$(DRIVERMANSUFFIX)
 #endif
-#ifndef ExtraManDefs
-#define ExtraManDefs -D__projectroot__=$(PROJECTROOT)
+#ifndef ProjectManDefs
+#define ProjectManDefs -D__projectroot__=$(PROJECTROOT)
+#endif
+
+
+#ifndef CompressManPages
+#define CompressManPages NO
+#endif
+
+#ifndef CompressManCmd
+#define CompressManCmd gzip -n
 #endif
 
 #ifndef HtmlIndexCmd
@@ -781,7 +814,7 @@ TCLIBDIR = TclLibDir
 #endif
 #endif
 #ifndef UNCOMPRESSPATH
-#define UNCOMPRESSPATH /usr/ucb/uncompress
+#define UNCOMPRESSPATH /usr/ucb/uncompress /* obsolete */
 #endif
 #ifndef OptimizedCDebugFlags
 #define OptimizedCDebugFlags -O
@@ -881,6 +914,9 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef HasGcc2ForCplusplus
 #define HasGcc2ForCplusplus NO
+#endif
+#ifndef HasBrokenCCForLink
+#define HasBrokenCCForLink NO
 #endif
 #ifndef HasCenterLineC
 #define HasCenterLineC NO
@@ -1201,6 +1237,12 @@ TCLIBDIR = TclLibDir
 #else
 #define DependCmd $(DEPENDSRC)/gccmakedep
 #endif
+#elif UseCCMakeDepend
+#ifdef UseInstalled		/* assume BINDIR in path */
+#define DependCmd ccmakedep
+#else
+#define DependCmd $(DEPENDSRC)/ccmakedep
+#endif
 #else
 #ifdef UseInstalled		/* assume BINDIR in path */
 #define DependCmd makedepend
@@ -1208,6 +1250,13 @@ TCLIBDIR = TclLibDir
 #define DependCmd $(DEPENDSRC)/makedepend
 #endif
 #endif
+#endif
+#ifndef DependDefines
+# if UseCCMakedepend || UseGccMakedepend
+#  define DependDefines /**/
+# else
+#  define DependDefines -DUSE_MAKEDEPEND
+# endif
 #endif
 #ifndef DependFlags
 #define DependFlags /**/
@@ -1243,7 +1292,11 @@ TCLIBDIR = TclLibDir
 #endif
 #endif
 #ifndef TroffCmd
+#if HasGroff
 #define TroffCmd groff -Tps
+#else
+#define TroffCmd troff -Tps
+#endif
 #endif
 #ifndef NroffCmd
 #define NroffCmd nroff
@@ -1345,6 +1398,12 @@ TCLIBDIR = TclLibDir
 #define ExpandManNames YES
 #endif
 #endif
+#ifndef ManSrcSuffix
+#define ManSrcSuffix	man
+#endif
+#ifndef ManNewSuffix
+#define ManNewSuffix	_man
+#endif
 #ifndef TOPDIR
 #define TOPDIR .
 #endif
@@ -1427,7 +1486,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
    CXXSTD_DEFINES = CplusplusStandardDefines $(CXXPROJECT_DEFINES)
        CXXOPTIONS = CplusplusOptions
       CXXINCLUDES = $(INCLUDES) $(TOP_INCLUDES) $(CXXEXTRA_INCLUDES) 
-       CXXDEFINES = $(CXXINCLUDES) $(CXXSTD_DEFINES) $(THREADS_CXXDEFINES) $(CXXEXTRA_DEFINES) $(DEFINES)
+       CXXDEFINES = $(CXXINCLUDES) $(CXXSTD_DEFINES) $(THREADS_CXXDEFINES) $(DEFINES) $(CXXEXTRA_DEFINES)
          CXXFLAGS = $(CXXDEBUGFLAGS) $(CXXOPTIONS) $(THREADS_CXXFLAGS) $(CXXDEFINES)
 #endif
          COMPRESS = CompressCmd
@@ -1463,7 +1522,11 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
     FILEMANSUFFIX = FileManSuffix	/* suffix for file format man pages */
     MISCMANSUFFIX = MiscManSuffix	/* suffix for misc man pages */
   DRIVERMANSUFFIX = DriverManSuffix	/* suffix for driver man pages */
-          MANDEFS = FileManDefs MiscManDefs DriverManDefs ExtraManDefs
+     MANSRCSUFFIX = ManSrcSuffix	/* suffix for man page source */
+     MANNEWSUFFIX = ManNewSuffix	/* suffix for preprocessed man source */
+          MANDEFS = FileManDefs MiscManDefs DriverManDefs ProjectManDefs $(XORGMANDEFS) $(VENDORMANDEFS)
+
+   COMPRESSMANCMD = CompressManCmd
 
             TROFF = TroffCmd
             NROFF = NroffCmd
@@ -1618,7 +1681,7 @@ MODLDCOMBINEFLAGS = ModuleLdCombineFlags
  * LOCAL_LDFLAGS contains client-specific ld flags flags set in Imakefile
  */
       ALLINCLUDES = $(INCLUDES) $(EXTRA_INCLUDES) $(TOP_INCLUDES) $(STD_INCLUDES)
-       ALLDEFINES = $(ALLINCLUDES) $(STD_DEFINES) $(EXTRA_DEFINES) $(PROTO_DEFINES) $(THREADS_DEFINES) $(MODULE_DEFINES) $(DEFINES)
+       ALLDEFINES = $(ALLINCLUDES) $(STD_DEFINES) $(PROTO_DEFINES) $(THREADS_DEFINES) $(MODULE_DEFINES) $(DEFINES) $(EXTRA_DEFINES)
            CFLAGS = $(CDEBUGFLAGS) $(CCOPTIONS) $(THREADS_CFLAGS) $(MODULE_CFLAGS) $(ALLDEFINES)
         LINTFLAGS = $(LINTOPTS) -DLINT $(ALLDEFINES) $(DEPEND_DEFINES)
          LDPRELIB = LdPreLib
@@ -1646,6 +1709,7 @@ MODLDCOMBINEFLAGS = ModuleLdCombineFlags
      LDSTRIPFLAGS = LdStripFlags
    LDCOMBINEFLAGS = LdCombineFlags
       DEPENDFLAGS = DependFlags
+   DEPEND_DEFINES = DependDefines
 
 XCOMM Not sure this belongs here
          TKLIBDIR = TkLibDir
@@ -1767,6 +1831,13 @@ ManKeywordsTarget($(MANPATH))
 
 HtmlManIndex
 
+/* Generate the "real" clean rules */
+#undef clean
+
+clean:: cleandir
+
+distclean:: cleandir
+
 #ifdef IHaveSubdirs
 XCOMM ----------------------------------------------------------------------
 XCOMM rules for building in SUBDIRS - do not edit
@@ -1778,6 +1849,13 @@ CleanSubdirs($(SUBDIRS))
 TagSubdirs($(SUBDIRS))
 MakefileSubdirs($(SUBDIRS))
 IncludesSubdirs($(SUBDIRS))
+
+/* "distclean" subdirectories */
+#undef  BootstrapCleanSubdirs
+#define BootstrapCleanSubdirs /**/
+#define clean distclean
+CleanSubdirs($(SUBDIRS))
+#undef clean
 
 #endif
 
@@ -1811,6 +1889,12 @@ includes::
 depend::
 
 #endif /* if subdirectory rules are needed */
+
+#ifndef IHaveSpecialMakefileTarget
+/* "distclean" also removes the Makefile */
+distclean::
+	RemoveFile(Makefile)
+#endif
 
 XCOMM ----------------------------------------------------------------------
 XCOMM dependencies generated by makedepend

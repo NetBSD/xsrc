@@ -37,7 +37,7 @@
 *               instructions.
 *
 ****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/ops2.c,v 1.4 2000/11/16 19:44:50 eich Exp $ */
 
 #include "x86emu/x86emui.h"
 

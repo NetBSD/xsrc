@@ -1,4 +1,4 @@
-/* $TOG: pgeom.c /main/6 1998/02/09 16:10:24 kaleb $ */
+/* $Xorg: pgeom.c,v 1.3 2000/08/17 19:47:28 cpqbld Exp $ */
 /**** module pgeom.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pgeom.c,v 3.3 1998/10/05 13:22:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pgeom.c,v 3.5 2001/01/17 22:12:53 dawes Exp $ */
 
 #define _XIEC_PGEOM
 

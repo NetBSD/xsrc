@@ -1,6 +1,4 @@
-/* $XFree86: $ */
-
-/* $TOG: PsFonts.c /main/3 1998/02/09 15:42:34 kaleb $ */
+/* $Xorg: PsFonts.c,v 1.4 2000/08/17 19:48:09 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -55,6 +53,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsFonts.c,v 1.4 2001/01/17 22:36:32 dawes Exp $ */
 
 /*******************************************************************
 **
@@ -150,7 +149,7 @@ PsGetPSFontName(FontPtr pFont)
     if( (Atom)props[i].name == name )
       { value = props[i].value; break; }
   }
-  if( !value ) return "Times-Roman";
+  if( !value ) return (char *)0; 
   return NameForAtom(value);
 }
 

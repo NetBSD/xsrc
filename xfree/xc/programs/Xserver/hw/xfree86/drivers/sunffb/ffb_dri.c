@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dri.c,v 1.3 2000/06/23 19:29:45 dawes Exp $
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dri.c,v 1.9 2001/05/02 15:06:10 dawes Exp $
  * Acceleration for the Creator and Creator3D framebuffer - DRI/DRM support.
  *
  * Copyright (C) 2000 David S. Miller (davem@redhat.com)
@@ -80,19 +80,19 @@ FFBDRIInitVisualConfigs(ScreenPtr pScreen)
 	FFBConfigPrivPtr *pFfbConfigPtrs;
 
 	pConfigs = (__GLXvisualConfig *)
-		xnfcalloc(sizeof(__GLXvisualConfig), 1);
+		xcalloc(sizeof(__GLXvisualConfig), 1);
 	if (!pConfigs)
 		return FALSE;
 
 	pFfbConfigs = (FFBConfigPrivPtr)
-		xnfcalloc(sizeof(FFBConfigPrivRec), 1);
+		xcalloc(sizeof(FFBConfigPrivRec), 1);
 	if (!pFfbConfigs) {
 		xfree(pConfigs);
 		return FALSE;
 	}
 
 	pFfbConfigPtrs = (FFBConfigPrivPtr *)
-		xnfcalloc(sizeof(FFBConfigPrivPtr), 1);
+		xcalloc(sizeof(FFBConfigPrivPtr), 1);
 	if (!pFfbConfigPtrs) {
 		xfree(pConfigs);
 		xfree(pFfbConfigs);
@@ -215,6 +215,20 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 		return FALSE;
         }
 
+        /* Check the DRI version */
+        {
+      		int major, minor, patch;
+		DRIQueryVersion(&major, &minor, &patch);
+		if (major != 4 || minor < 0) {
+		xf86DrvMsg(pScreen->myNum, X_ERROR,
+                    "[dri] FFBDRIScreenInit failed because of a version mismatch.\n"
+		    "[dri] libDRI version is %d.%d.%d but version, 4.0.x is needed.\n"
+		    "[dri]  Disabling DRI.\n",
+                    major, minor, patch);
+		return FALSE;
+		}
+	}
+
 	pDRIInfo = DRICreateInfoRec();
 	if (pDRIInfo == NULL)
 		return FALSE;
@@ -241,7 +255,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pDRIInfo->maxDrawableTableEntry = 15;
 	pDRIInfo->SAREASize = (SAREA_MAX + (0x2000 - 1)) & ~(0x2000 - 1);
 
-	pFfbDRI = (FFBDRIPtr) xnfcalloc(sizeof(FFBDRIRec), 1);
+	pFfbDRI = (FFBDRIPtr) xcalloc(sizeof(FFBDRIRec), 1);
 	if (pFfbDRI == NULL) {
 		DRIDestroyInfoRec(pFfb->pDRIInfo);
 		return FALSE;
@@ -260,11 +274,38 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	/* Our InitBuffers depends heavily on this setting. */
 	pDRIInfo->bufferRequests	= DRI_3D_WINDOWS_ONLY;
 
+	pDRIInfo->createDummyCtx	= TRUE;
+	pDRIInfo->createDummyCtxPriv	= FALSE;
+
 	if (!DRIScreenInit(pScreen, pDRIInfo, &(pFfb->drmSubFD))) {
+                xf86DrvMsg(pScreen->myNum, X_ERROR,
+                           "[dri] DRIScreenInit failed.  Disabling DRI.\n");
 		DRIDestroyInfoRec(pFfb->pDRIInfo);
 		xfree(pFfbDRI);
 		return FALSE;
 	}
+
+#if 000 /* XXX this should be cleaned up and used */
+        /* Check the ffb DRM version */
+        version = drmGetVersion(info->drmFD);
+        if (version) {
+           if (version->version_major != 1 ||
+               version->version_minor < 0) {
+              /* incompatible drm version */
+              xf86DrvMsg(pScreen->myNum, X_ERROR,
+                         "[dri] FFBDRIScreenInit failed because of a version mismatch.\n"
+                         "[dri] ffb.o kernel module version is %d.%d.%d but version 1.0.x is needed.\n"
+                         "[dri] Disabling the DRI.\n",
+                         version->version_major,
+                         version->version_minor,
+                         version->version_patchlevel);
+              drmFreeVersion(version);
+              R128DRICloseScreen(pScreen);
+	    return FALSE;
+           }
+           drmFreeVersion(version);
+        }
+#endif
 
 	pFfb->pFfbSarea = DRIGetSAREAPrivate(pScreen);
 	init_ffb_sarea(pFfb, pFfb->pFfbSarea);

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Imakefile,v 3.8 2000/10/27 18:31:06 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Imakefile,v 3.13 2001/04/23 17:15:57 dawes Exp $
 
 
 
@@ -11,8 +11,14 @@ XCOMM $XConsortium: Imakefile /main/5 1996/02/21 18:12:46 kaleb $
  LOCAL_LIBRARIES = $(XKBFILELIB) $(XLIB)
          DEPLIBS =
       CARDDBFILE = $(LIBDIR)/Cards
+
+XCONFIGFILE = XConfigFile
+XVERS = XFree86Version
+
          DEFINES = -DCARD_DATABASE_FILE='"$(CARDDBFILE)"' \
-                   -DXKB_RULES_DIR=\"$(LIBDIR)/xkb/rules\"
+		   -DXKB_RULES_DIR=\"$(LIBDIR)/xkb/rules\" \
+		   -DXCONFIGFILE=\"$(XCONFIGFILE)\" \
+		   -DXVERSION="$(XVERS)" XFree86ConsoleDefines
 
 #if !defined(OS2Architecture)
 AllTarget(ProgramTargetName(xf86config))
@@ -28,5 +34,4 @@ DependTarget()
 
 InstallNonExecFile(Cards,$(LIBDIR))
 
-CppManTarget(xf86config,)
 InstallManPage(xf86config,$(MANDIR))

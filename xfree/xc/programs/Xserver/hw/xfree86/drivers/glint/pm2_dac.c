@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 by Alan Hourihane <alanh@fairlite.demon.co.uk>
+ * Copyright 1997-2001 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,7 +28,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_dac.c,v 1.19 2000/07/09 21:02:20 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_dac.c,v 1.23.2.1 2001/05/24 20:12:48 alanh Exp $ */
 
 #include "Xarch.h"
 #include "xf86.h"
@@ -44,40 +44,6 @@
 #define INITIALFREQERR 100000
 #define MINCLK 110000		/* VCO frequency range */
 #define MAXCLK 250000
-
-static int
-Shiftbpp(ScrnInfoPtr pScrn, int value)
-{
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-    /* shift horizontal timings for 64bit VRAM's or 32bit SGRAMs */
-    int logbytesperaccess = 2;
-	
-    switch (pScrn->bitsPerPixel) {
-    case 8:
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 16:
-	if (pGlint->DoubleBuffer) {
-	    value >>= (logbytesperaccess-2);
-	    pGlint->BppShift = logbytesperaccess-2;
-	} else {
-	    value >>= (logbytesperaccess-1);
-	    pGlint->BppShift = logbytesperaccess-1;
-	}
-	break;
-    case 24:
-	value *= 3;
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 32:
-	value >>= (logbytesperaccess-2);
-	pGlint->BppShift = logbytesperaccess-2;
-	break;
-    }
-    return (value);
-}
 
 static unsigned long
 PM2DAC_CalculateMNPCForClock
@@ -125,7 +91,7 @@ Bool
 Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
-    GLINTRegPtr pReg = &pGlint->ModeReg;
+    GLINTRegPtr pReg = &pGlint->ModeReg[0];
     CARD32 temp1, temp2, temp3, temp4;
     
     pReg->glintRegs[Aperture0 >> 3] = 0;
@@ -133,13 +99,8 @@ Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pReg->glintRegs[PMFramebufferWriteMask >> 3] = 0xFFFFFFFF;
     pReg->glintRegs[PMBypassWriteMask >> 3] = 0xFFFFFFFF;
 
-    if (pGlint->UsePCIRetry) {
-	pReg->glintRegs[DFIFODis >> 3] = 1;
-	pReg->glintRegs[FIFODis >> 3] = 3;
-    } else {
-	pReg->glintRegs[DFIFODis >> 3] = 0;
-	pReg->glintRegs[FIFODis >> 3] = 1;
-    }
+    pReg->glintRegs[DFIFODis >> 3] = 0;
+    pReg->glintRegs[FIFODis >> 3] = 1;
 
     if (pGlint->UseBlockWrite)
 	pReg->glintRegs[PMMemConfig >> 3] = GLINT_READ_REG(PMMemConfig) | 1<<21;
@@ -201,18 +162,6 @@ Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	pReg->DacRegs[PM2DACIndexClockAP] = p|0x08;
     }
 
-    if (pGlint->MemClock) {
-	/* Get the memory clock values */
-    	unsigned char m,n,p;
-    	unsigned long clockused;
-	
-    	clockused = PM2DAC_CalculateMNPCForClock(pGlint->MemClock*1000,
-						pGlint->RefClock,&m,&n,&p);
-	pReg->DacRegs[PM2DACIndexMemClockM] = m;
-	pReg->DacRegs[PM2DACIndexMemClockN] = n;
-	pReg->DacRegs[PM2DACIndexMemClockP] = p;
-    }
-
     if (pScrn->rgbBits == 8)
 	pReg->DacRegs[PM2DACIndexMCR] = 0x02; /* 8bit DAC */
     else
@@ -262,6 +211,11 @@ Permedia2Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int i;
 
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    xf86SlowBcopy((CARD8*)pGlint->FbBase, (CARD8*)pGlint->VGAdata, 65536);
+
     glintReg->glintRegs[Aperture0 >> 3] = GLINT_READ_REG(Aperture0);
     glintReg->glintRegs[Aperture1 >> 3] = GLINT_READ_REG(Aperture1);
     glintReg->glintRegs[PMFramebufferWriteMask >> 3] = 
@@ -287,7 +241,6 @@ Permedia2Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     glintReg->glintRegs[VClkCtl >> 3] = GLINT_READ_REG(VClkCtl);
     glintReg->glintRegs[ChipConfig >> 3] = GLINT_READ_REG(ChipConfig);
 
-    
     for (i=0;i<768;i++) {
     	Permedia2ReadAddress(pScrn, i);
 	glintReg->cmap[i] = Permedia2ReadData(pScrn);
@@ -310,19 +263,6 @@ Permedia2Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
 				Permedia2InIndReg(pScrn, PM2DACIndexClockAN);
     glintReg->DacRegs[PM2DACIndexClockAP] =
 				Permedia2InIndReg(pScrn, PM2DACIndexClockAP);
-
-#if 0 /* In theory we should restore the memory clock, we can't as the register
-       * is write only. This code is here for completeness and possible
-       * restoring to a default clock */
-    if (pGlint->MemClock) {
-        glintReg->DacRegs[PM2DACIndexMemClockM] = 
-				Permedia2InIndReg(pScrn, PM2DACIndexMemClockM);
-        glintReg->DacRegs[PM2DACIndexMemClockN] = 
-				Permedia2InIndReg(pScrn, PM2DACIndexMemClockN);
-        glintReg->DacRegs[PM2DACIndexMemClockP] =
-				Permedia2InIndReg(pScrn, PM2DACIndexMemClockP);
-    }
-#endif
 }
 
 void
@@ -331,12 +271,20 @@ Permedia2Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int i;
 
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    if (pGlint->STATE)
+	xf86SlowBcopy((CARD8*)pGlint->VGAdata, (CARD8*)pGlint->FbBase, 65536);
+
 #if 0
     GLINT_SLOW_WRITE_REG(0, ResetStatus);
     while(GLINT_READ_REG(ResetStatus) != 0) {
 	xf86MsgVerb(X_INFO, 2, "Resetting Engine - Please Wait.\n");
     };
 #endif
+
+    GLINT_SLOW_WRITE_REG(0xFF, PM2DACReadMask);
 
     GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture0 >> 3], Aperture0);
     GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture1 >> 3], Aperture1);
@@ -387,15 +335,6 @@ Permedia2Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     for (i=0;i<768;i++) {
     	Permedia2WriteAddress(pScrn, i);
         Permedia2WriteData(pScrn, glintReg->cmap[i]);
-    }
-
-    if (pGlint->MemClock) {
-        Permedia2OutIndReg(pScrn, PM2DACIndexMemClockM, 0x00, 
-				glintReg->DacRegs[PM2DACIndexMemClockM]);
-        Permedia2OutIndReg(pScrn, PM2DACIndexMemClockN, 0x00, 
-				glintReg->DacRegs[PM2DACIndexMemClockN]);
-        Permedia2OutIndReg(pScrn, PM2DACIndexMemClockP, 0x00, 
-				glintReg->DacRegs[PM2DACIndexMemClockP]);
     }
 }
 
@@ -488,14 +427,11 @@ Permedia2HWCursorInit(ScreenPtr pScreen)
 
     infoPtr->MaxWidth = 64;
     infoPtr->MaxHeight = 64;
+    infoPtr->Flags = HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
-    infoPtr->Flags = HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
-		HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED |
-		HARDWARE_CURSOR_BIT_ORDER_MSBFIRST;
-#else
-    infoPtr->Flags = HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
-		HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED;
+		HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
 #endif
+		HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED;
     infoPtr->SetCursorColors = Permedia2SetCursorColors;
     infoPtr->SetCursorPosition = Permedia2SetCursorPosition;
     infoPtr->LoadCursorImage = Permedia2LoadCursorImage;
@@ -513,7 +449,7 @@ Permedia2I2CUDelay(I2CBusPtr b, int usec)
 {
     GLINTPtr pGlint = (GLINTPtr) b->DriverPrivate.ptr;
     CARD32 ct1 = GLINT_READ_REG(PMCount);
-    CARD32 ct2 = usec * ((pGlint->MemClock > 0) ? pGlint->MemClock : 100);
+    CARD32 ct2 = usec * 100;
 
     if (GLINT_READ_REG(PMCount) != ct1)
 	while ((GLINT_READ_REG(PMCount) - ct1) < ct2);

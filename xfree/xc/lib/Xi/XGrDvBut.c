@@ -1,4 +1,4 @@
-/* $TOG: XGrDvBut.c /main/8 1998/02/06 15:03:55 kaleb $ */
+/* $Xorg: XGrDvBut.c,v 1.3 2000/08/17 19:45:56 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XGrDvBut.c,v 3.1 1996/08/26 10:46:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XGrDvBut.c,v 3.3 2001/01/17 19:42:50 dawes Exp $ */
 
 /***********************************************************************
  *

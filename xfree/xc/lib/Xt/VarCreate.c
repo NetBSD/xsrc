@@ -1,4 +1,4 @@
-/* $TOG: VarCreate.c /main/34 1998/02/06 13:27:44 kaleb $ */
+/* $Xorg: VarCreate.c,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
 
 /*
 

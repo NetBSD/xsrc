@@ -1,5 +1,5 @@
 /*
-* $TOG: AsciiSinkP.h /main/5 1998/02/06 12:44:02 kaleb $
+* $Xorg: AsciiSinkP.h,v 1.3 2000/08/17 19:45:30 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSinkP.h,v 1.7 1999/06/06 08:47:51 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSinkP.h,v 1.9 2001/01/17 19:42:25 dawes Exp $ */
 
 #ifndef _XawAsciiSinkP_h
 #define _XawAsciiSinkP_h

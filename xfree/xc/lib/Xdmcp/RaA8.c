@@ -1,5 +1,5 @@
 /*
- * $TOG: RaA8.c /main/4 1998/02/06 14:40:24 kaleb $
+ * $Xorg: RaA8.c,v 1.3 2000/08/17 19:45:49 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xdmcp/RaA8.c,v 1.3 2001/01/17 19:42:44 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>

@@ -1,4 +1,4 @@
-/* $TOG: Constraint.c /main/16 1998/02/06 13:20:24 kaleb $ */
+/* $Xorg: Constraint.c,v 1.3 2000/08/17 19:46:09 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts

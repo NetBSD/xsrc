@@ -15,13 +15,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+ * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810dd.c,v 1.3 2000/06/22 16:59:24 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810dd.c,v 1.5 2001/04/10 16:07:50 dawes Exp $ */
 
 #include "types.h"
 #include "vbrender.h"
@@ -56,7 +56,7 @@ static const GLubyte *i810DDGetString( GLcontext *ctx, GLenum name )
    case GL_VENDOR:
       return (GLubyte *)"Keith Whitwell, Precision Insight Inc.";
    case GL_RENDERER:
-      return (GLubyte *)"Mesa DRI I810 20000510";
+      return (GLubyte *)"Mesa DRI I810 20010321";
    default:
       return 0;
    }
@@ -65,10 +65,10 @@ static const GLubyte *i810DDGetString( GLcontext *ctx, GLenum name )
 static GLint i810GetParameteri(const GLcontext *ctx, GLint param)
 {
    switch (param) {
-   case DD_HAVE_HARDWARE_FOG:  
+   case DD_HAVE_HARDWARE_FOG:
       return 1;
    default:
-      return 0; 
+      return 0;
    }
 }
 
@@ -76,7 +76,7 @@ static GLint i810GetParameteri(const GLcontext *ctx, GLint param)
 
 static void i810BufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 {
-   i810ContextPtr imesa = I810_CONTEXT(ctx);  
+   i810ContextPtr imesa = I810_CONTEXT(ctx);
 
    /* Need to lock to make sure the driDrawable is uptodate.  This
     * information is used to resize Mesa's software buffers, so it has
@@ -104,19 +104,19 @@ void i810DDExtensionsInit( GLcontext *ctx )
    /* The imaging subset of 1.2 isn't supported by any mesa driver.
     */
    gl_extensions_disable( ctx, "ARB_imaging" );
-   gl_extensions_disable( ctx, "GL_ARB_texture_compression" );   
-   gl_extensions_disable( ctx, "GL_ARB_texture_cube_map" );   
+   gl_extensions_disable( ctx, "GL_ARB_texture_compression" );
+   gl_extensions_disable( ctx, "GL_ARB_texture_cube_map" );
    gl_extensions_disable( ctx, "GL_EXT_blend_color" );
    gl_extensions_disable( ctx, "GL_EXT_blend_logic_op" );
    gl_extensions_disable( ctx, "GL_EXT_blend_minmax" );
    gl_extensions_disable( ctx, "GL_EXT_blend_subtract" );
-   gl_extensions_disable( ctx, "GL_EXT_convolution" );   
-   gl_extensions_disable( ctx, "GL_EXT_texture_lod_bias" );   
+   gl_extensions_disable( ctx, "GL_EXT_convolution" );
+   gl_extensions_disable( ctx, "GL_EXT_texture_lod_bias" );
    gl_extensions_disable( ctx, "GL_INGR_blend_func_separate" );
-   gl_extensions_disable( ctx, "GL_MESA_resize_buffers" );   
-   gl_extensions_disable( ctx, "GL_SGIX_pixel_texture" );   
-   gl_extensions_disable( ctx, "GL_SGI_color_matrix" );   
-   gl_extensions_disable( ctx, "GL_SGI_color_table" );   
+   gl_extensions_disable( ctx, "GL_MESA_resize_buffers" );
+   gl_extensions_disable( ctx, "GL_SGIX_pixel_texture" );
+   gl_extensions_disable( ctx, "GL_SGI_color_matrix" );
+   gl_extensions_disable( ctx, "GL_SGI_color_table" );
 
    /* We do support tex_env_add, however
     */

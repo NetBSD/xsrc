@@ -1,4 +1,4 @@
-/* $TOG: Paned.c /main/29 1998/02/11 14:53:59 kaleb $ */
+/* $Xorg: Paned.c,v 1.3 2000/08/17 19:45:35 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Paned.c,v 1.8 1999/05/03 12:15:41 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Paned.c,v 1.10 2001/01/17 19:42:28 dawes Exp $ */
 
 /*
  * Updated and significantly modified from the Athena VPaned Widget.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.8 2000/02/25 21:03:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.10 2001/02/15 17:50:35 eich Exp $ */
 /*
  * file vvga.c
  *
@@ -9,6 +9,7 @@
  * includes
  */
 #include "rendition.h"
+#define VVGA_INTERNAL
 #include "vvga.h"
 #include "vtypes.h"
 #include "vos.h"
@@ -45,7 +46,7 @@ static void updattr(vu8 index, vu8 value);
  * functions
  */
 
-void
+static void
 verite_resetvga(void)
 {
     static struct VIDEO_REGS {
@@ -97,7 +98,7 @@ verite_resetvga(void)
 
 
 
-void
+static void
 verite_loadvgafont(void)
 {
     int c;
@@ -145,7 +146,6 @@ verite_loadvgafont(void)
     }
 
     xf86UnMapVidMem(0, vbase, 64*1024);
-
     /* restore the standard vga register values */
     verite_resetvga();
 }
@@ -206,7 +206,7 @@ verite_textmode(struct verite_board_t *board)
     verite_out32(iob+CRTCHORZ, 0x2b0a4f);
     verite_out32(iob+CRTCVERT, 0x9301df);
     verite_out32(iob+CRTCOFFSET, 0x40);
-
+#if 0
 #ifdef SAVEVGA
     verite_loadvgafont();
     verite_restoretextmode(board);
@@ -215,6 +215,7 @@ verite_textmode(struct verite_board_t *board)
 #ifdef XSERVER
     verite_loadvgafont();
     verite_restorepalette();
+#endif
 #endif
 #endif
 
@@ -251,7 +252,7 @@ verite_savetextmode(struct verite_board_t *board)
 
 
 
-void
+static void
 verite_restoretextmode(struct verite_board_t *board) 
 {
     vu8 *vbase;
@@ -280,7 +281,7 @@ verite_restoretextmode(struct verite_board_t *board)
 
 
 
-void
+static void
 verite_restorepalette(void)
 {
     int c;

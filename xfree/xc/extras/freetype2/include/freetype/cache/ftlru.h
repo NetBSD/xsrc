@@ -58,11 +58,10 @@
 #ifndef __FTLRU_H__
 #define __FTLRU_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
 
@@ -164,6 +163,7 @@ FT_BEGIN_HEADER
   FT_EXPORT( void )      FT_Lru_Remove_Selection( FT_Lru           lru,
                                                   FT_Lru_Selector  selector,
                                                   FT_Pointer       data );
+
 
 FT_END_HEADER
 

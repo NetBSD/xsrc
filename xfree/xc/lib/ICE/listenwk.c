@@ -1,4 +1,4 @@
-/* $TOG: listenwk.c /main/5 1998/02/09 08:30:39 barstow $ */
+/* $Xorg: listenwk.c,v 1.4 2000/08/17 19:44:15 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/ICE/listenwk.c,v 1.3 2001/01/17 19:41:29 dawes Exp $ */
 
 
 /* Author: Ralph Mor, X Consortium */

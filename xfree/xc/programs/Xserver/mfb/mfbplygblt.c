@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbplygblt.c,v 3.1 1998/03/20 21:08:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbplygblt.c,v 3.3 2001/01/17 22:37:03 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbplygblt.c /main/21 1998/02/09 14:39:46 kaleb $ */
+/* $Xorg: mfbplygblt.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: SCCDFile.h,v 1.5 94/02/07 23:20:33 rws Exp $ */
+/* $Xorg: SCCDFile.h,v 1.3 2000/08/17 19:54:13 cpqbld Exp $ */
 /*
  * (c) Copyright 1990 Tektronix Inc.
  * 	All Rights Reserved
@@ -28,7 +28,7 @@
  *		X Device Color Characterization Convention (XDCCC).
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xcmsdb/SCCDFile.h,v 1.4 2001/01/17 23:45:19 dawes Exp $ */
 #ifndef SCCDFILE_H
 #define SCCDFILE_H
 

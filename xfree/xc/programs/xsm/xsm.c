@@ -1,4 +1,4 @@
-/* $TOG: xsm.c /main/79 1998/02/09 14:15:54 kaleb $ */
+/* $Xorg: xsm.c,v 1.6 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.c,v 1.5 1999/03/07 11:41:30 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/xsm.c,v 1.7 2001/01/17 23:46:31 dawes Exp $ */
 
 /*
  * X Session Manager.

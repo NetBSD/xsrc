@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_shadow.c,v 1.3 2000/03/31 20:13:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_shadow.c,v 1.1 2000/12/02 01:16:14 dawes Exp $ */
 
 /*
    Copyright (c) 1999,2000  The XFree86 Project Inc. 

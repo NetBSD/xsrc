@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_ddc.c,v 1.6 1999/12/03 19:17:27 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_ddc.c,v 1.8 2001/05/09 19:57:04 dbateman Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -13,9 +13,6 @@
 
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
-
-/* All drivers using the vgahw module need this */
-#include "vgaHW.h"
 
 #include "ct_driver.h"
 

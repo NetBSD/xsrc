@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_mouse.c,v 1.2 1999/07/10 12:17:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_mouse.c,v 1.3 1999/09/04 13:04:49 dawes Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.

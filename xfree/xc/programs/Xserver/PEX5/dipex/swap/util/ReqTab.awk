@@ -1,4 +1,4 @@
-# $TOG: ReqTab.awk /main/3 1998/02/10 14:01:05 kaleb $
+# $Xorg: ReqTab.awk,v 1.3 2000/08/17 19:47:18 cpqbld Exp $
 ##
 ## Copyright 1996, 1998  The Open Group
 ##

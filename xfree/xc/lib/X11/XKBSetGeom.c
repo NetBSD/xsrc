@@ -1,4 +1,4 @@
-/* $TOG: XKBSetGeom.c /main/8 1997/06/10 06:53:24 kaleb $ */
+/* $Xorg: XKBSetGeom.c,v 1.3 2000/08/17 19:45:03 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

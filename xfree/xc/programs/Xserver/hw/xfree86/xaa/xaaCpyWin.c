@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyWin.c,v 1.1.2.2 1998/07/18 17:54:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyWin.c,v 1.2 1998/07/25 16:58:43 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

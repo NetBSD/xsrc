@@ -1,4 +1,4 @@
-/* $TOG: globals.h /main/4 1998/02/06 15:12:14 kaleb $ */
+/* $Xorg: globals.h,v 1.3 2000/08/17 19:45:27 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/globals.h,v 1.2 1998/12/20 11:56:59 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/globals.h,v 1.4 2001/01/17 19:42:21 dawes Exp $ */
 
 extern void _XieElemImportClientLUT		(char **, XiePhotoElement *);
 extern void _XieElemImportClientPhoto		(char **, XiePhotoElement *);

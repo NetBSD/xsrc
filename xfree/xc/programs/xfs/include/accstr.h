@@ -1,4 +1,4 @@
-/* $TOG: accstr.h /main/5 1998/02/11 10:02:44 kaleb $ */
+/* $Xorg: accstr.h,v 1.3 2000/08/17 19:54:21 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)accstr.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.3 1998/10/25 12:48:02 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.5 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef _ACCSTR_H_
 #define _ACCSTR_H_

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.c,v 1.12 2000/12/08 17:22:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.c,v 1.15.2.1 2001/05/22 21:25:45 dawes Exp $ */
 
 
 #include "xf86.h"
@@ -11,16 +11,37 @@
 /*
   Memory layout of card is as follows:
 
-  000000-003fff: Cursor 
-  001000-xxxxxx: Fifo (Min of CMDFIFO pages)
-  xxxxxx-420fff: Texture maps
-  421000- A-1  : Framebuffer
-   A    - B-1  : Offscreen pixmaps
-   B    - C-1  : Back buffer
-   C    - D-1  : Z buffer
+  000000-00ffff: VGA memory
+  010000-013fff: Cursor 
+  011000-xxxxxx: Fifo (Min of CMDFIFO pages)
+  xxxxxx- A-1  : Front Buffer (framebuffer)
+   A    - B-1  : Pixmap Cache (framebuffer)
+   B    - C-1  : Texture Memory
+   C    - D-1  : Back Buffer
+   D    - E-1  : Depth Buffer
+
+  NB: pixmap cache usually butts right up against texture memory. when
+  3d is disabled (via Transition2D) then the pixmap cache is increased
+  to overlap the texture memory. maximum pixmap cache of 4095 lines on
+  voodoo5 and 2048 on voodoo3/4 applies.
 */
 
-void TDFXSendNOPFifo3D(ScrnInfoPtr pScrn)
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+void TDFXWriteFifo_24(TDFXPtr pTDFX, int val) {
+  *pTDFX->fifoPtr++ = val;
+}
+ 
+void TDFXWriteFifo_16(TDFXPtr pTDFX, int val) {
+  *pTDFX->fifoPtr++ = BE_WSWAP32(val);
+}
+
+void TDFXWriteFifo_8(TDFXPtr pTDFX, int val) {
+  *pTDFX->fifoPtr++ = BE_BSWAP32(val);
+}
+#endif
+
+
+static void TDFXSendNOPFifo3D(ScrnInfoPtr pScrn)
 {
   TDFXPtr pTDFX;
 
@@ -50,7 +71,7 @@ void TDFXSendNOPFifo(ScrnInfoPtr pScrn)
   TDFXSendNOPFifo3D(pScrn);
 }
 
-void InstallFifo(ScrnInfoPtr pScrn)
+static void InstallFifo(ScrnInfoPtr pScrn)
 {
   TDFXPtr pTDFX;
 
@@ -78,7 +99,7 @@ void InstallFifo(ScrnInfoPtr pScrn)
   TDFXSendNOPFifo(pScrn);
 }
 
-void TDFXResetFifo(ScrnInfoPtr pScrn)
+static void TDFXResetFifo(ScrnInfoPtr pScrn)
 {
   TDFXPtr pTDFX;
   int oldValue;
@@ -117,9 +138,9 @@ void TDFXResetFifo(ScrnInfoPtr pScrn)
 static void TDFXSyncFifo(ScrnInfoPtr pScrn)
 {
   TDFXPtr pTDFX;
-  int i, cnt;
+  int i, cnt, resets=0;
   int stat;
-  long start_sec, end_sec, dummy;
+  long start_sec, end_sec, dummy, readptr;
 
   TDFXTRACEACCEL("TDFXSyncFifo start\n");
   pTDFX=TDFXPTR(pScrn);
@@ -127,7 +148,9 @@ static void TDFXSyncFifo(ScrnInfoPtr pScrn)
   i=0;
   cnt=0;
   start_sec=0;
+  readptr=TDFXReadLongMMIO(pTDFX, SST_FIFO_RDPTRL0);
   do {
+    readptr=TDFXReadLongMMIO(pTDFX, SST_FIFO_RDPTRL0);
     stat=TDFXReadLongMMIO(pTDFX, 0);
     if (stat&SST_BUSY) i=0; else i++;
     cnt++;
@@ -137,7 +160,17 @@ static void TDFXSyncFifo(ScrnInfoPtr pScrn)
       } else {
 	getsecs(&end_sec, &dummy);
 	if (end_sec-start_sec>3) {
-	  TDFXResetFifo(pScrn);
+	  dummy=TDFXReadLongMMIO(pTDFX, SST_FIFO_RDPTRL0);
+	  if (dummy==readptr) {
+	    TDFXResetFifo(pScrn);
+	    readptr=dummy;
+	    resets++;
+	    if (resets==3) {
+	      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			 "Board is not responding.\n");
+	      return;
+	    }
+	  }
 	  start_sec=0;
         }
       }
@@ -237,24 +270,6 @@ void TDFXSwapContextFifo(ScreenPtr pScreen)
     pTDFX->fifoSlots = pTDFX->fifoEnd-pTDFX->fifoPtr-8;
 }    
 
-void TDFXLostContext(ScreenPtr pScreen)
-{
-  ScrnInfoPtr pScrn;
-  TDFXPtr pTDFX;
-  TDFXSAREAPriv *sPriv;
-
-  pScrn = xf86Screens[pScreen->myNum];
-  pTDFX=TDFXPTR(pScrn);
-  sPriv=(TDFXSAREAPriv*)DRIGetSAREAPrivate(pScreen);
-  if (!sPriv) return;
-  if (sPriv->fifoPtr!=(((unsigned char*)pTDFX->fifoPtr)-pTDFX->FbBase) ||
-      sPriv->fifoRead!=(((unsigned char*)pTDFX->fifoRead)-pTDFX->FbBase)) {
-    sPriv->fifoPtr=(((unsigned char*)pTDFX->fifoPtr)-pTDFX->FbBase);
-    sPriv->fifoRead=(((unsigned char*)pTDFX->fifoRead)-pTDFX->FbBase);
-    sPriv->fifoOwner=DRIGetContext(pScreen);
-    /* ErrorF("Out FifoPtr=%d FifoRead=%d\n", sPriv->fifoPtr, sPriv->fifoRead); */
-  }
-}
 #endif
 
 static void 
@@ -285,8 +300,13 @@ TDFXMakeSpace(TDFXPtr pTDFX, uint32 slots)
     /*
     ** Put a jump command in command fifo to wrap to the beginning.
     */
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    WRITE_FIFO(pTDFX, 0, (pTDFX->fifoOffset >> 2) << SSTCP_PKT0_ADDR_SHIFT |
+      SSTCP_PKT0_JMP_LOCAL);
+#else
     *pTDFX->fifoPtr = (pTDFX->fifoOffset >> 2) << SSTCP_PKT0_ADDR_SHIFT |
       SSTCP_PKT0_JMP_LOCAL;
+#endif
     FLUSH_WCB();
 
     /*

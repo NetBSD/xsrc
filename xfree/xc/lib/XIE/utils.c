@@ -1,4 +1,4 @@
-/* $TOG: utils.c /main/4 1998/04/30 14:40:10 kaleb $ */
+/* $Xorg: utils.c,v 1.3 2000/08/17 19:45:28 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/utils.c,v 1.4 2001/01/17 19:42:22 dawes Exp $ */
 
 #include "XIElibint.h"
 

@@ -1,4 +1,4 @@
-/* $TOG: TMaction.c /main/30 1998/05/12 11:19:24 kaleb $ */
+/* $Xorg: TMaction.c,v 1.4 2000/08/17 19:46:18 cpqbld Exp $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -151,7 +151,6 @@ static void ReportUnboundActions(xlations, bindData)
     register Cardinal num_chars = 0;
     register Cardinal i, j;
     XtActionProc *procs;
-    char* msg_prefix = "Actions not found: ";
 
     for (i=0; i < xlations->numStateTrees; i++) {
 	if (bindData->simple.isComplex)

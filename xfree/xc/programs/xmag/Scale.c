@@ -1,4 +1,4 @@
-/* $TOG: Scale.c /main/21 1998/02/09 14:10:46 kaleb $ */
+/* $Xorg: Scale.c,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmag/Scale.c,v 3.5 1999/03/07 11:41:12 dawes Exp $ */
+/* $XFree86: xc/programs/xmag/Scale.c,v 3.7 2001/01/17 23:46:20 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

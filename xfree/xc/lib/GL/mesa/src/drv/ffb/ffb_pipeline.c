@@ -1,4 +1,4 @@
-/* $XFree86$
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_pipeline.c,v 1.1 2000/06/20 05:08:39 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller

@@ -1,4 +1,4 @@
-/* $TOG: FSQXExt.c /main/7 1998/02/06 13:43:56 kaleb $ */
+/* $Xorg: FSQXExt.c,v 1.3 2000/08/17 19:44:04 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: $ */
+/* $XFree86: xc/lib/FS/FSQXExt.c,v 1.4 2001/01/17 19:41:28 dawes Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $TOG: WMGeom.c /main/6 1998/02/06 17:57:27 kaleb $ */
+/* $Xorg: WMGeom.c,v 1.3 2000/08/17 19:44:58 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group

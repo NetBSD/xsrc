@@ -1,4 +1,4 @@
-.\" $TOG: xfindproxy.man /main/3 1998/02/09 13:57:50 kaleb $
+.\" $Xorg: xfindproxy.man,v 1.3 2000/08/17 19:54:19 cpqbld Exp $
 .\" Copyright 1996, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,7 +19,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.TH XFINDPROXY 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xfindproxy/xfindproxy.man,v 1.6 2001/01/27 18:21:12 dawes Exp $
+.\"
+.TH XFINDPROXY 1 __xorgversion__
 .SH NAME
 xfindproxy - locate proxy services
 .SH SYNOPSIS

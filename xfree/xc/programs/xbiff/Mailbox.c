@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xbiff/Mailbox.c,v 1.3 2001/04/19 19:54:51 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -43,8 +44,8 @@ from the X Consortium.
 #include <X11/StringDefs.h>		/* for useful atom names */
 #include <X11/cursorfont.h>		/* for cursor constants */
 #include <X11/Xosdefs.h>		/* for X_NOT_POSIX def */
-#ifdef WIN32
 #include <stdlib.h>
+#ifdef WIN32
 #include <X11/Xw32defs.h>
 #else
 #include <pwd.h>			/* for getting username */
@@ -543,6 +544,7 @@ static void GetMailFile (w)
     MailboxWidget w;
 {
     char *username;
+    char *mailpath;
 #ifdef WIN32
     if (!(username = getenv("USERNAME"))) {
 	fprintf (stderr, "%s:  unable to find a username for you.\n",
@@ -564,11 +566,16 @@ static void GetMailFile (w)
 	username = pw->pw_name;
     }
 #endif
-    w->mailbox.filename = (String) XtMalloc (strlen (MAILBOX_DIRECTORY) + 1 +
-				   	     strlen (username) + 1);
-    strcpy (w->mailbox.filename, MAILBOX_DIRECTORY);
-    strcat (w->mailbox.filename, "/");
-    strcat (w->mailbox.filename, username);
+    if (mailpath = getenv("MAIL")) {
+	w->mailbox.filename = (String) XtMalloc (strlen (mailpath) + 1);
+	strcpy (w->mailbox.filename, mailpath);
+    } else {
+	w->mailbox.filename = (String) XtMalloc (strlen (MAILBOX_DIRECTORY) + 1
+						 + strlen (username) + 1);
+	strcpy (w->mailbox.filename, MAILBOX_DIRECTORY);
+	strcat (w->mailbox.filename, "/");
+	strcat (w->mailbox.filename, username);
+    }
     return;
 }
 

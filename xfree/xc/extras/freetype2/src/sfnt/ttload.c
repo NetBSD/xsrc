@@ -17,23 +17,13 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/tterrors.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/tttags.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
+#include FT_INTERNAL_STREAM_H
+#include FT_TRUETYPE_TAGS_H
 #include "ttload.h"
 #include "ttcmap.h"
-
-#else
-
-#include <sfnt/ttload.h>
-#include <sfnt/ttcmap.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -1024,7 +1014,7 @@
           /* I know that M$ encoded strings are Unicode,            */
           /* but this works reasonable well for debugging purposes. */
           if ( cur->string )
-            for ( j = 0; j < cur->stringLength; j++ )
+            for ( j = 0; j < (FT_UInt)cur->stringLength; j++ )
             {
               FT_Char  c = *( cur->string + j );
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.9 1999/01/31 12:22:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.13 2001/02/19 22:19:49 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -64,17 +64,6 @@ XAACopyArea(
             return (XAABitBlt( pSrcDrawable, pDstDrawable,
 		pGC, srcx, srcy, width, height, dstx, dsty,
 		XAADoBitBlt, 0L));
-	}
-    } else if((pSrcDrawable->type == DRAWABLE_WINDOW) ||
-	       IS_OFFSCREEN_PIXMAP(pSrcDrawable)) {
-	if(infoRec->ReadPixmap && (pGC->alu == GXcopy) &&
-	   (pSrcDrawable->bitsPerPixel == pDstDrawable->bitsPerPixel) &&
-	  ((pGC->planemask & infoRec->FullPlanemasks[pSrcDrawable->depth - 1])
-              == infoRec->FullPlanemasks[pSrcDrawable->depth - 1]))
-	{
-            return (XAABitBlt( pSrcDrawable, pDstDrawable,
-		pGC, srcx, srcy, width, height, dstx, dsty,
-		XAADoImageRead, 0L));	
 	}
     }
 
@@ -245,10 +234,11 @@ XAADoImageRead(
     BoxPtr pbox = REGION_RECTS(prgnDst);
     int nbox = REGION_NUM_RECTS(prgnDst);
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
-    int Bpp = pSrc->bitsPerPixel >> 3; 
+    int Bpp = pSrc->bitsPerPixel >> 3;  /* wouldn't get here unless both
+                                           src and dst have same bpp */
 
     pdstBase = (unsigned char *)((PixmapPtr)pDst)->devPrivate.ptr;
-    dstwidth = (int)((PixmapPtr)pSrc)->devKind;
+    dstwidth = (int)((PixmapPtr)pDst)->devKind;
 
     for(; nbox; pbox++, pptSrc++, nbox--) {
         dstPntr = pdstBase + (pbox->y1 * dstwidth) + (pbox->x1 * Bpp);

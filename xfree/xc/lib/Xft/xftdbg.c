@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/lib/Xft/xftdbg.c,v 1.3 2001/03/31 01:57:20 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -44,6 +44,9 @@ XftValuePrint (XftValue v)
     case XftTypeBool:
 	printf (" %s", v.u.b ? "True" : "False");
 	break;
+    case XftTypeMatrix:
+	printf (" (%f %f; %f %f)", v.u.m->xx, v.u.m->xy, v.u.m->yx, v.u.m->yy);
+	break;
     }
 }
 
@@ -78,6 +81,7 @@ XftOpPrint (XftOp op)
     case XftOpInteger: printf ("Integer"); break;
     case XftOpDouble: printf ("Double"); break;
     case XftOpString: printf ("String"); break;
+    case XftOpMatrix: printf ("Matrix"); break;
     case XftOpBool: printf ("Bool"); break;
     case XftOpField: printf ("Field"); break;
     case XftOpAssign: printf ("Assign"); break;
@@ -126,6 +130,11 @@ XftExprPrint (XftExpr *expr)
     case XftOpInteger: printf ("%d", expr->u.ival); break;
     case XftOpDouble: printf ("%g", expr->u.dval); break;
     case XftOpString: printf ("\"%s\"", expr->u.sval); break;
+    case XftOpMatrix: printf ("[%g %g %g %g]",
+			      expr->u.mval->xx,
+			      expr->u.mval->xy,
+			      expr->u.mval->yx,
+			      expr->u.mval->yy);
     case XftOpBool: printf ("%s", expr->u.bval ? "true" : "false"); break;
     case XftOpField: printf ("%s", expr->u.field); break;
     case XftOpQuest:

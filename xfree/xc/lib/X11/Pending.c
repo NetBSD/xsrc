@@ -1,4 +1,4 @@
-/* $TOG: Pending.c /main/7 1998/02/06 17:46:45 kaleb $ */
+/* $Xorg: Pending.c,v 1.3 2000/08/17 19:44:48 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

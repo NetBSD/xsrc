@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.4.1
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -587,6 +587,50 @@ read_fast_rgba_pixels( GLcontext *ctx,
 }
 
 
+/*
+ * This function converts an array of GLchan colors to GLfloat colors.
+ * Most importantly, it undoes the non-uniform quantization of pixel
+ * values introduced when we convert shallow (< 8 bit) pixel values
+ * to GLubytes in the ctx->Driver.ReadRGBASpan() functions.
+ * This fixes a number of OpenGL conformance failures when running on
+ * 16bpp displays, for example.
+ */
+static void
+ubyte_to_float_span(const GLcontext *ctx, GLuint n,
+                    CONST GLubyte rgba[][4], GLfloat rgbaf[][4])
+{
+   const GLuint rShift = 8 - ctx->Visual->RedBits;
+   const GLuint gShift = 8 - ctx->Visual->GreenBits;
+   const GLuint bShift = 8 - ctx->Visual->BlueBits;
+   GLuint aShift;
+   const GLfloat rScale = 1.0 / (GLfloat) ((1 << ctx->Visual->RedBits  ) - 1);
+   const GLfloat gScale = 1.0 / (GLfloat) ((1 << ctx->Visual->GreenBits) - 1);
+   const GLfloat bScale = 1.0 / (GLfloat) ((1 << ctx->Visual->BlueBits ) - 1);
+   GLfloat aScale;
+   GLuint i;
+
+   if (ctx->Visual->AlphaBits > 0) {
+      aShift = 8 - ctx->Visual->AlphaBits;
+      aScale = 1.0 / (GLfloat) ((1 << ctx->Visual->AlphaBits) - 1);
+   }
+   else {
+      aShift = 0;
+      aScale = 1.0F / 255.0F;
+   }
+
+   for (i = 0; i < n; i++) {
+      const GLint r = rgba[i][RCOMP] >> rShift;
+      const GLint g = rgba[i][GCOMP] >> gShift;
+      const GLint b = rgba[i][BCOMP] >> bShift;
+      const GLint a = rgba[i][ACOMP] >> aShift;
+      rgbaf[i][RCOMP] = (GLfloat) r * rScale;
+      rgbaf[i][GCOMP] = (GLfloat) g * gScale;
+      rgbaf[i][BCOMP] = (GLfloat) b * bScale;
+      rgbaf[i][ACOMP] = (GLfloat) a * aScale;
+   }
+}
+
+
 
 /*
  * Read R, G, B, A, RGB, L, or LA pixels.
@@ -656,8 +700,26 @@ static void read_rgba_pixels( GLcontext *ctx,
          dest = _mesa_image_address( packing, pixels, width, height,
                                      format, type, 0, j, 0);
 
-         _mesa_pack_rgba_span( ctx, readWidth, (CONST GLubyte (*)[4]) rgba,
-                               format, type, dest, packing, GL_TRUE );
+         if (ctx->Visual->RedBits < 8 ||
+             ctx->Visual->GreenBits < 8 ||
+             ctx->Visual->BlueBits < 8) {
+            /* Requantize the color values into floating point and go from
+             * there.  This fixes conformance failures with 16-bit color
+             * buffers, for example.
+             */
+            GLfloat rgbaf[MAX_WIDTH][4];
+            ubyte_to_float_span(ctx, readWidth,
+                                (CONST GLubyte (*)[4]) rgba, rgbaf);
+            _mesa_pack_float_rgba_span(ctx, readWidth,
+                                       (CONST GLfloat (*)[4]) rgbaf,
+                                       format, type, dest, packing,
+                                       GL_TRUE);
+         }
+         else {
+            /* GLubytes are fine */
+            _mesa_pack_rgba_span(ctx, readWidth, (CONST GLchan (*)[4]) rgba,
+                                 format, type, dest, packing, GL_TRUE);
+         }
       }
    }
    else {

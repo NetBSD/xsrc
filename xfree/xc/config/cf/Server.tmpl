@@ -1,10 +1,10 @@
-XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.15 1999/10/13 04:20:41 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.18 2001/04/20 15:51:15 tsi Exp $
 /*
  * Server imakefile info  - this contains any special redefinitions, etc.
  * that Imakefiles in the server subtree will need.
  */
 
-XCOMM $TOG: Server.tmpl /main/15 1997/07/16 14:43:38 kaleb $
+XCOMM $Xorg: Server.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)" LDSTRIPFLAGS="$(LDSTRIPFLAGS)"
 
@@ -55,6 +55,7 @@ SERVER_THREAD_DEFINES = XThreadsDefines ThreadTypeDefines
 STD_DEFINES = ServerDefines $(SERVER_THREAD_DEFINES)
 CDEBUGFLAGS = ServerCDebugFlags
 EXT_DEFINES = ExtensionDefines
+OS_DEFINES  = ServerOSDefines
 
 GLX_DEFINES = GlxDefines
  

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/10 1996/09/28 17:17:07 rws $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
 LOCAL_LIBRARIES = $(FSLIB) $(XLIB)
 DEPLIBS = $(DEPFSLIB) $(DEPXLIB)
 INCLUDES = -I$(XBUILDINCDIR)/fonts -I$(FONTINCSRC)

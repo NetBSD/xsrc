@@ -1,4 +1,4 @@
-/* $TOG: lbx_zlib_io.c /main/5 1997/08/17 23:00:20 kaleb $ */
+/* $Xorg: lbx_zlib_io.c,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
  * Copyright 1993 Network Computing Devices
@@ -22,7 +22,7 @@
  *
  * Author:  Dale Tonogai, Network Computing Devices
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.9 1999/03/14 03:21:20 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.11 2001/01/17 19:43:36 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

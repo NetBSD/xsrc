@@ -1,6 +1,6 @@
 /*
 #ifndef lint
-$XConsortium: recordstr.h /main/2 1996/01/09 18:15:19 gildea $
+$Xorg: recordstr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $
 static char sccsid[ ] = "@(#) recordstr.h 1.5 6/5/95 12:37:44";
 #endif
 */

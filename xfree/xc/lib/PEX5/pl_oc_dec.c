@@ -1,4 +1,4 @@
-/* $TOG: pl_oc_dec.c /main/15 1998/02/06 16:10:54 kaleb $ */
+/* $Xorg: pl_oc_dec.c,v 1.3 2000/08/17 19:44:25 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

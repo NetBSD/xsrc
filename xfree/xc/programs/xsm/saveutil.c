@@ -1,4 +1,4 @@
-/* $TOG: saveutil.c /main/32 1998/02/09 14:15:13 kaleb $ */
+/* $Xorg: saveutil.c,v 1.4 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/saveutil.c,v 1.3 1999/03/07 14:23:44 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/saveutil.c,v 1.5 2001/01/17 23:46:31 dawes Exp $ */
 
 #include "xsm.h"
 #include "log.h"

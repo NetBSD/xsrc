@@ -1,4 +1,4 @@
-/* $TOG: windowstr.h /main/37 1998/02/09 14:30:21 kaleb $ */
+/* $Xorg: windowstr.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/include/windowstr.h,v 1.4 2001/01/17 22:36:58 dawes Exp $ */
 
 #ifndef WINDOWSTRUCT_H
 #define WINDOWSTRUCT_H

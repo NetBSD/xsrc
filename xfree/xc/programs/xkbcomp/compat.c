@@ -1,4 +1,4 @@
-/* $XConsortium: compat.c /main/8 1996/03/01 14:32:00 kaleb $ */
+/* $Xorg: compat.c,v 1.3 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbcomp/compat.c,v 3.3 2001/01/17 23:45:43 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include "xkbcomp.h"

@@ -1,6 +1,6 @@
 #ifndef HPKEYS_H
 #define HPKEYS_H
-/* $TOG: hpkeys.h /main/3 1998/02/10 13:11:15 kaleb $ */
+/* $Xorg: hpkeys.h,v 1.3 2000/08/17 19:48:23 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1987, 1998  The Open Group

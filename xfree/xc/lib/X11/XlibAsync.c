@@ -1,4 +1,4 @@
-/* $TOG: XlibAsync.c /main/10 1998/02/06 18:02:17 kaleb $ */
+/* $Xorg: XlibAsync.c,v 1.3 2000/08/17 19:45:07 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

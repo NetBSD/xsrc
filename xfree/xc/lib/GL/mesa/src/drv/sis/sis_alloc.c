@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_alloc.c,v 1.7 2001/01/08 01:07:29 martin Exp $ */
 
 /*
  * Authors:
@@ -40,7 +40,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined(XFree86Server) && !defined(XF86DRI)
 # include "xf86fbman.h"
 #else
+# define CONFIG_DRM_SIS
 # include "drm.h"
+# undef CONFIG_DRM_SIS
 # include "sis_drm.h"
 # include <sys/ioctl.h>
 #endif

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.60 2000/06/30 19:06:56 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.63 2001/04/01 14:00:08 tsi Exp $ */
 
 #include "Xfuncproto.h"
 #include "Xmd.h"
@@ -31,7 +31,6 @@
 #include "XIproto.h"
 #endif
 #include "xf86.h"
-#include "Xpoll.h"
 #include "xf86Priv.h"
 #include "xf86Xinput.h"
 #ifdef XINPUT
@@ -61,7 +60,7 @@
 #include <stdarg.h>
 
 #include "osdep.h"		/* EnabledDevices */
-
+#include "Xpoll.h"
 #include "xf86_OSproc.h"	/* sigio stuff */
 
 /******************************************************************************

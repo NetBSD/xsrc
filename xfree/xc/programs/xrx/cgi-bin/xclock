@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# $TOG: xclock /main/7 1997/06/13 14:32:02 kaleb $
+# $Xorg: xclock,v 1.3 2000/08/17 19:54:57 cpqbld Exp $
 # CGI script to launch xclock
 #
 

@@ -1,4 +1,4 @@
-/* $TOG: transport.c /main/7 1998/02/06 15:54:19 kaleb $ */
+/* $Xorg: transport.c,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/transport.c,v 3.3 1996/05/06 05:55:14 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/transport.c,v 3.5 2001/01/17 19:43:49 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

@@ -1,4 +1,4 @@
-/* $TOG: ActionHook.c /main/10 1998/02/06 13:19:33 kaleb $ */
+/* $Xorg: ActionHook.c,v 1.3 2000/08/17 19:46:08 cpqbld Exp $ */
 
 /*LINTLIBRARY*/
 

@@ -1,4 +1,4 @@
-/* $XConsortium: HVCMnV.c,v 1.7 93/09/07 21:30:53 rws Exp $" */
+/* $Xorg: HVCMnV.c,v 1.3 2000/08/17 19:44:37 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.

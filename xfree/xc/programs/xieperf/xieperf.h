@@ -1,4 +1,4 @@
-/* $TOG: xieperf.h /main/17 1998/02/09 14:02:07 kaleb $ */
+/* $Xorg: xieperf.h,v 1.3 2000/08/17 19:54:29 cpqbld Exp $ */
 
 /**** module xieperf.h ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/xieperf.h,v 1.4 2001/01/17 23:45:40 dawes Exp $ */
 
 #include <stdio.h>
 #ifndef VMS

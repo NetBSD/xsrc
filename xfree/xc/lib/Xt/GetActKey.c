@@ -1,4 +1,4 @@
-/* $TOG: GetActKey.c /main/8 1998/02/06 13:22:14 kaleb $ */
+/* $Xorg: GetActKey.c,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
 
 /*LINTLIBRARY*/
 

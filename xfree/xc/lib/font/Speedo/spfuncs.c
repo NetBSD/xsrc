@@ -1,4 +1,4 @@
-/* $TOG: spfuncs.c /main/15 1998/05/07 14:48:01 kaleb $ */
+/* $Xorg: spfuncs.c,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spfuncs.c,v 1.4 1999/02/07 06:18:20 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spfuncs.c,v 1.6 2001/01/17 19:43:20 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <X11/Xos.h>

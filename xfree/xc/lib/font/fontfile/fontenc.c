@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.9 1999/10/13 04:20:51 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.11 2001/04/18 16:13:18 dawes Exp $ */
 
 /* Backend-independent encoding code */
 
@@ -697,11 +697,12 @@ loadEncoding(const char *encoding_name, const char *filename)
     if(strcasecmp(encoding->name, encoding_name) == 0) {
       found = 1;
     } else {
-      for(alias=encoding->aliases; *alias; alias++)
-        if(!strcasecmp(*alias, encoding_name)) {
-          found = 1;
-          break;
-        }
+      if(encoding->aliases)
+        for(alias=encoding->aliases; *alias; alias++)
+          if(!strcasecmp(*alias, encoding_name)) {
+            found = 1;
+            break;
+          }
     }
 
     if(!found) {
@@ -711,21 +712,24 @@ loadEncoding(const char *encoding_name, const char *filename)
       char *new_name;
       int numaliases = 0;
 
-      new_name = xalloc(strlen(encoding_name + 1));
+      new_name = xalloc(strlen(encoding_name) + 1);
       if(new_name == NULL)
         return NULL;
       strcpy(new_name, encoding_name);
-      for(alias = encoding->aliases; *alias; alias++)
-        numaliases++;
+      if(encoding->aliases)
+        for(alias = encoding->aliases; *alias; alias++)
+          numaliases++;
       new_aliases = (char**)xalloc((numaliases+2)*sizeof(char*));
       if(new_aliases == NULL) {
         xfree(new_name);
         return NULL;
       }
-      memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
+      if(numaliases)
+        memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
       new_aliases[numaliases] = new_name;
       new_aliases[numaliases+1] = NULL;
-      xfree(encoding->aliases);
+      if(encoding->aliases)
+        xfree(encoding->aliases);
       encoding->aliases = new_aliases;
     }
           

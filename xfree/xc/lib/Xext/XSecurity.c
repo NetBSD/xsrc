@@ -1,4 +1,4 @@
-/* $TOG: XSecurity.c /main/6 1998/02/06 14:51:57 kaleb $ */
+/* $Xorg: XSecurity.c,v 1.5 2000/08/17 19:45:51 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xext/XSecurity.c,v 1.3 2001/01/17 19:42:46 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <stdio.h>

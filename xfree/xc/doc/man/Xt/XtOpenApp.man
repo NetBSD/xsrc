@@ -1,4 +1,4 @@
-.\" $TOG: XtOpenApp.man /main/4 1997/11/04 20:34:56 kaleb $
+.\" $Xorg: XtOpenApp.man,v 1.3 2000/08/17 19:42:01 cpqbld Exp $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -24,6 +24,9 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtOpenApp.man,v 1.5 2001/03/07 15:13:09 tsi Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -123,15 +126,15 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtOpenApplication 3Xt "Release 6.4" "X Version 11" "XT FUNCTIONS"
+.TH XtOpenApplication 3Xt __xorgversion__ "XT FUNCTIONS"
 .SH NAME
 XtOpenApplication, XtVaOpenApplication \- initialize, open, or close a display
 .SH SYNTAX
-Widget XtOpenApplication(\fIapp_context_return\fP, \fIapplication_class\fP, \
-\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP, \
+Widget XtOpenApplication(\fIapp_context_return\fP, \fIapplication_class\fP,
+\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP,
 \fIfallback_resources\fP, \fIwidget_class\fP, \fIargs\fP, \fInum_args\fP)
 .br
-      XtAppContext \fIapp_context_return\fP;
+      XtAppContext* \fIapp_context_return\fP;
 .br
       String \fIapplication_class\fP;
 .br
@@ -151,11 +154,11 @@ Widget XtOpenApplication(\fIapp_context_return\fP, \fIapplication_class\fP, \
 .br
       Cardinal \fInum_args\fP;
 .LP
-Widget XtVaOpenApplication(\fIapp_context_return\fP, \fIapplication_class\fP, \
-\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP, \
+Widget XtVaOpenApplication(\fIapp_context_return\fP, \fIapplication_class\fP,
+\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP,
 \fIfallback_resources\fP, \fIwidget_class\fP, ...)
 .br
-      XtAppContext \fIapp_context_return\fP;
+      XtAppContext* \fIapp_context_return\fP;
 .br
       String \fIapplication_class\fP;
 .br
@@ -213,13 +216,12 @@ then calls
 with \fIdisplay_string\fP NULL and \fIapplication_name\fP NULL, and
 finally calls
 .ZN XtAppCreateShell
-with \fIappcation_name\fP NULL, \fIwidget_class\fP
-.ZN applicationShellWidgetClass ,
+with \fIapplication_name\fP NULL, the specified \fIwidget_class\fP,
 and the specified \fIargs\fP and \fInum_args\fP and returns the
 created shell. The modified \fIargc\fP and \fIargv\fP returned by
 .ZN XtDisplayInitialize
 are returned in \fIargc_in_out\fP and \fIargv_in_out\fP. If
-\fIapp_context_return\fI is not NULL, the created application context
+\fIapp_context_return\fP is not NULL, the created application context
 is also returned. If the display specified by the command line cannot
 be opened, an error message is issued and
 .ZN XtOpenApplication
@@ -234,7 +236,7 @@ and
 .ZN XtVaOpenApplication
 respectively.
 .SH "SEE ALSO"
-XtOpenApplication(3Xt), XtVaOpenApplication(3Xt)
+XtAppInitialize(3Xt), XtVaAppInitialize(3Xt)
 .br
 \fI\*(xT\fP
 .br

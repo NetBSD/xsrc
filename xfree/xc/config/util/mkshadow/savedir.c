@@ -1,4 +1,4 @@
-/* $XConsortium: savedir.c,v 1.1 94/04/13 18:26:54 rws Exp $ */
+/* $Xorg: savedir.c,v 1.3 2000/08/17 19:41:53 cpqbld Exp $ */
 /* savedir.c -- save the list of files in a directory in a string
    Copyright 1990, 1993 Free Software Foundation, Inc.
 

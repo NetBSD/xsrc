@@ -1,4 +1,4 @@
-/* $TOG: miroi.c /main/6 1998/02/09 16:17:16 kaleb $ */
+/* $Xorg: miroi.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /**** module miroi.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miroi.c,v 3.2 1998/10/04 09:36:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miroi.c,v 3.4 2001/01/17 22:13:05 dawes Exp $ */
 
 #define _XIEC_MIROI
 #define _XIEC_IROI

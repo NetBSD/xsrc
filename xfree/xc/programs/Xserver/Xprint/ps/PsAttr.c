@@ -1,6 +1,4 @@
-/* $XFree86: $ */
-
-/* $TOG: PsAttr.c /main/3 1998/02/09 15:42:17 kaleb $ */
+/* $Xorg: PsAttr.c,v 1.3 2000/08/17 19:48:09 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -55,6 +53,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttr.c,v 1.4 2001/01/17 22:36:32 dawes Exp $ */
 
 /*******************************************************************
 **

@@ -1,4 +1,4 @@
-/* $TOG: closestr.h /main/12 1998/03/26 17:26:54 kaleb $ */
+/* $Xorg: closestr.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/include/closestr.h,v 3.1 1998/07/25 03:10:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/closestr.h,v 3.3 2001/01/17 22:36:56 dawes Exp $ */
 
 
 #ifndef CLOSESTR_H

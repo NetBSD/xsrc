@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.9 2000/09/07 14:40:26 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.11 2001/04/27 19:34:00 tsi Exp $ */
 
 
-typedef unsigned long	Elf32_Addr;
+typedef unsigned int	Elf32_Addr;
 typedef unsigned short	Elf32_Half;
-typedef unsigned long	Elf32_Off;
+typedef unsigned int	Elf32_Off;
 typedef long		Elf32_Sword;
-typedef unsigned long	Elf32_Word;
+typedef unsigned int	Elf32_Word;
 
 typedef unsigned long	Elf64_Addr;
 typedef unsigned short	Elf64_Half;
@@ -166,19 +166,39 @@ extern Elf32_Dyn _DYNAMIC [];
 #define	R_SPARC_JMP_SLOT	21
 #define	R_SPARC_RELATIVE	22
 #define	R_SPARC_UA32		23
-#define R_SPARC_PLT32		24
-#define R_SPARC_HIPLT22		25
-#define R_SPARC_LOPLT10		26
-#define R_SPARC_PCPLT32		27
-#define R_SPARC_PCPLT22		28
-#define R_SPARC_PCPLT10		29
-#define R_SPARC_10		30
-#define R_SPARC_11		31
-#define R_SPARC_WDISP16		40
-#define R_SPARC_WDISP19		41
-#define R_SPARC_7		43
-#define R_SPARC_5		44
-#define R_SPARC_6		45
+#define	R_SPARC_PLT32		24
+#define	R_SPARC_HIPLT22		25
+#define	R_SPARC_LOPLT10		26
+#define	R_SPARC_PCPLT32		27
+#define	R_SPARC_PCPLT22		28
+#define	R_SPARC_PCPLT10		29
+#define	R_SPARC_10		30
+#define	R_SPARC_11		31
+#define	R_SPARC_64		32
+#define	R_SPARC_OLO10		33
+#define	R_SPARC_HH22		34
+#define	R_SPARC_HM10		35
+#define	R_SPARC_LM22		36
+#define	R_SPARC_PC_HH22		37
+#define	R_SPARC_PC_HM10		38
+#define	R_SPARC_PC_LM22		39
+#define	R_SPARC_WDISP16		40
+#define	R_SPARC_WDISP19		41
+#define	R_SPARC_GLOB_JMP	42
+#define	R_SPARC_7		43
+#define	R_SPARC_5		44
+#define	R_SPARC_6		45
+#define	R_SPARC_DISP64		46
+#define	R_SPARC_PLT64		47
+#define	R_SPARC_HIX22		48
+#define	R_SPARC_LOX10		49
+#define	R_SPARC_H44		50
+#define	R_SPARC_M44		51
+#define	R_SPARC_L44		52
+#define	R_SPARC_REGISTER	53
+#define	R_SPARC_UA64		54
+#define	R_SPARC_UA16		55
+#define	R_SPARC_NUM		56
 
 /* m68k Relocation Types */
 #define R_68K_NONE	0		/* No reloc */

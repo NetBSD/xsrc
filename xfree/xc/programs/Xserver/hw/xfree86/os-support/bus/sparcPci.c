@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.2 2000/04/04 19:25:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.4 2001/04/20 17:02:43 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -45,25 +45,25 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include "compiler.h"
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 #include "Pci.h"
 
+#if defined(linux)
 #include <asm/unistd.h>
 #ifndef __NR_pciconfig_read
 #define __NR_pciconfig_read  148
 #define __NR_pciconfig_write 149
 #endif
+#endif
 
 /*
  * UltraSPARC platform specific PCI access functions
  */
-CARD32 sparcPciCfgRead(PCITAG tag, int off);
-void sparcPciCfgWrite(PCITAG, int off, CARD32 val);
-void sparcPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits);
+static CARD32 sparcPciCfgRead(PCITAG tag, int off);
+static void sparcPciCfgWrite(PCITAG, int off, CARD32 val);
+static void sparcPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits);
 
 pciBusInfo_t sparcPci0 = {
 /* configMech  */	  PCI_CFG_MECH_OTHER,
@@ -93,12 +93,13 @@ sparcPciInit()
 
 
 #if defined(linux)
+
 /*
  * These funtions will work for Linux, but other OS's
  * are likely have a different mechanism for getting at
  * PCI configuration space
  */
-CARD32
+static CARD32
 sparcPciCfgRead(PCITAG tag, int off)
 {
 	int bus, dfn;
@@ -111,7 +112,7 @@ sparcPciCfgRead(PCITAG tag, int off)
 	return(val);
 }
 
-void
+static void
 sparcPciCfgWrite(PCITAG tag, int off, CARD32 val)
 {
 	int bus, dfn;
@@ -122,7 +123,7 @@ sparcPciCfgWrite(PCITAG tag, int off, CARD32 val)
 	syscall(__NR_pciconfig_write, bus, dfn, off, 4, &val);
 }
 
-void
+static void
 sparcPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
 {
     int bus, dfn;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.11 2000/10/24 18:07:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.14 2001/03/07 16:21:04 paulo Exp $ */
 
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
@@ -8,6 +8,8 @@
 
 #ifndef _XF86OSMOUSE_H_
 #define _XF86OSMOUSE_H_
+
+#include "xf86Xinput.h"
 
 /* Mouse interface classes */
 #define MSE_NONE	0x00
@@ -121,7 +123,8 @@ typedef struct _MouseDevRec {
     int                 invY;
     int			mouseFlags;	/* Flags to Clear after opening
 					 * mouse dev */
-    int			truebuttons;	/* Arg to maintain before
+    int			truebuttons;	/* (not used)
+					 * Arg to maintain before
 					 * emulate3buttons timer callback */
     int			resolution;
     int			negativeZ;

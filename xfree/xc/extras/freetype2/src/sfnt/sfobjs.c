@@ -16,24 +16,14 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "sfobjs.h"
 #include "ttload.h"
-
-#else
-
-#include <sfnt/sfobjs.h>
-#include <sfnt/ttload.h>
-
-#endif
-
-
-#include <freetype/internal/sfnt.h>
-#include <freetype/internal/psnames.h>
-#include <freetype/ttnameid.h>
-#include <freetype/tttags.h>
-#include <freetype/internal/tterrors.h>
+#include FT_INTERNAL_SFNT_H
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_TRUETYPE_IDS_H
+#include FT_TRUETYPE_TAGS_H
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
 
 
   /*************************************************************************/

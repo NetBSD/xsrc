@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfxdefs.h,v 1.8 2000/12/01 14:29:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfxdefs.h,v 1.12 2001/04/05 21:29:17 dawes Exp $ */
 /*
    Voodoo Banshee driver version 1.0.1
 
@@ -47,8 +47,10 @@
 #define SST_DESKTOP_CLUT_BYPASS         BIT(10)
 #define SST_HALF_MODE                   BIT(4)
 #define SST_CURSOR_EN                   BIT(27)
+#define SST_FBI_BUSY                    BIT(7)
 #define SST_BUSY                        BIT(9)
 #define SST_RETRACE			BIT(6)
+#define SST_COMMANDEXTRA_VSYNC          BIT(2)
 
 #define MEM_TYPE_SGRAM  0
 #define MEM_TYPE_SDRAM  1
@@ -195,12 +197,15 @@
 
 /* 3D Registers */
 #define SST_3D_OFFSET           	0x200000
+#define SST_3D_LFBMODE               	SST_3D_OFFSET+0x114
 #define SST_3D_COMMAND 			SST_3D_OFFSET+0x120
 #define SST_3D_SLICTRL 			SST_3D_OFFSET+0x20C
 #define SST_3D_AACTRL			SST_3D_OFFSET+0x210
-#define SST_3D_CHIPMASK			SST_3D_OFFSET+0x214
+#define SST_3D_LEFTOVERLAYBUF		SST_3D_OFFSET+0x250
+#define SST_3D_RIGHTOVERLAYBUF		SST_3D_OFFSET+0x254
 
 /* NAPALM REGISTERS */
+#define CFG_PCI_COMMAND			4
 #define CFG_MEM0BASE			16
 #define CFG_MEM1BASE			20
 #define CFG_INIT_ENABLE        		64

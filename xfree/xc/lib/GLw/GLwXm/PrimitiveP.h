@@ -24,7 +24,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/GLw/GLwXm/PrimitiveP.h,v 1.1 2000/11/02 20:39:08 dawes Exp $ */
 
 /*
  * This file is a fake Motif(TM) header intended to allow the compilation of

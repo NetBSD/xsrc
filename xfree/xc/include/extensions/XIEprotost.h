@@ -1,4 +1,4 @@
-/* $TOG: XIEprotost.h /main/7 1998/02/09 11:20:23 kaleb $ */
+/* $Xorg: XIEprotost.h,v 1.6 2000/08/18 04:05:45 coskrey Exp $ */
 /******************************************************************************
 
 
@@ -228,7 +228,11 @@ typedef struct {
 typedef struct {
     CARD16		elemType B16;
     CARD16		elemLength B16;
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypDataClass	c_class;
+#else
     xieTypDataClass	class;
+#endif
     xieTypOrientation	bandOrder;
     CARD16		pad B16;
     CARD32		length0 B32;
@@ -243,7 +247,11 @@ typedef struct {
     CARD16			elemType B16;
     CARD16			elemLength B16;
     BOOL			notify;
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypDataClass 		c_class;
+#else
     xieTypDataClass 		class;
+#endif
     CARD16			pad B16;
     CARD32			width0 B32;
     CARD32			width1 B32;
@@ -324,7 +332,11 @@ typedef struct {
     INT32		domainOffsetX B32;
     INT32		domainOffsetY B32;
     xieTypPhototag	domainPhototag B16;		
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypArithmeticOp	c_operator;
+#else
     xieTypArithmeticOp	operator;
+#endif
     CARD8		bandMask;
     xieTypFloat		constant0 B32;
     xieTypFloat		constant1 B32;
@@ -386,7 +398,11 @@ typedef struct {
     INT32		domainOffsetX B32;
     INT32		domainOffsetY B32;
     xieTypPhototag	domainPhototag B16;		
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypCompareOp	c_operator;
+#else
     xieTypCompareOp	operator;
+#endif
     BOOL		combine;
     xieTypFloat		constant0 B32;
     xieTypFloat		constant1 B32;
@@ -412,7 +428,11 @@ typedef struct {
     CARD16		elemType B16;
     CARD16		elemLength B16;
     xieTypPhototag	src B16;
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypDataClass	c_class;
+#else
     xieTypDataClass	class;
+#endif
     CARD8		precision;
     Colormap		colormap B32;
 } xieFloConvertFromIndex;
@@ -510,7 +530,11 @@ typedef struct {
     INT32		domainOffsetX B32;
     INT32		domainOffsetY B32;
     xieTypPhototag	domainPhototag B16;		
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8		c_operator;
+#else
     CARD8		operator;
+#endif
     CARD8		bandMask;
     xieTypFloat		constant0 B32;
     xieTypFloat		constant1 B32;
@@ -539,7 +563,11 @@ typedef struct {
     INT32		domainOffsetX B32;
     INT32		domainOffsetY B32;
     xieTypPhototag	domainPhototag B16;		
+#if defined(__cplusplus) || defined(c_plusplus)
+    xieTypMathOp	c_operator;
+#else
     xieTypMathOp	operator;
+#endif
     CARD8		bandMask;
 } xieFloMath;
 

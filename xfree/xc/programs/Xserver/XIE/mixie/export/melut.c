@@ -1,4 +1,4 @@
-/* $TOG: melut.c /main/6 1998/02/09 16:13:18 kaleb $ */
+/* $Xorg: melut.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module melut.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/melut.c,v 3.3 1998/10/05 13:22:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/melut.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MELUT
 #define _XIEC_ELUT

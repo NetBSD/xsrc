@@ -1,4 +1,4 @@
-/* $TOG: XawI18n.h /main/13 1998/02/06 12:53:23 kaleb $ */
+/* $Xorg: XawI18n.h,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */
 
 /************************************************************
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.9 1999/07/19 13:36:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.11 2001/01/17 19:42:36 dawes Exp $ */
 
 #ifdef HAS_WCTYPE_H
 #include <wctype.h>

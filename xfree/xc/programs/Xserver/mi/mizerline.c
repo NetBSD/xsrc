@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mi/mizerline.c,v 3.5 2001/01/17 22:37:08 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mizerline.c /main/18 1998/02/09 14:49:45 kaleb $ */
+/* $Xorg: mizerline.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
 #include "X.h"
 
 #include "misc.h"

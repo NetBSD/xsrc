@@ -1,3 +1,4 @@
+.XFree86_Version
 bin
 lib/libICE.so.6.3
 lib/libPEX5.so.6.0
@@ -8,6 +9,7 @@ lib/libXaw.so.6.1
 lib/libXext.so.6.3
 lib/libXi.so.6.0
 lib/libXmu.so.6.0
+lib/libXmuu.so.1.0
 lib/libXp.so.6.2
 lib/libXt.so.6.0
 lib/libXtst.so.6.1

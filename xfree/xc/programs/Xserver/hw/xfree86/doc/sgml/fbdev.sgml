@@ -362,7 +362,7 @@ The frame buffer device abstraction was designed by Martin Schaller.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/fbdev.sgml,v 1.1.2.6 1998/11/08 09:06:32 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fbdev.sgml,v 1.2 1999/08/23 06:38:53 dawes Exp $
 
 </verb>
 

@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.h,v 1.29 2000/09/26 15:57:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.h,v 1.32 2001/05/15 10:19:36 eich Exp $ */
 
 
 #ifndef _CT_DRIVER_H_
@@ -35,6 +35,7 @@
 #include "xf86i2c.h"
 #include "xf86DDC.h"
 #include "xf86xv.h"
+#include "vgaHW.h"
 
 /* Supported chipsets */
 typedef enum {
@@ -106,6 +107,7 @@ typedef struct {
 #define ChipsGammaSupport	0x00000080
 #define ChipsVideoSupport	0x00000100
 #define ChipsDualChannelSupport	0x00000200
+#define ChipsDualRefresh	0x00000400
 
 /* Options flags for the C&T chipsets */
 #define ChipsHWCursor		0x00001000
@@ -152,14 +154,22 @@ typedef struct {
 #define ChipsSS		0x0800
 #define IS_STN(x)	((x) & 0xE00)
 
+/* Dual channel register enable masks */
+#define IOSS_MASK	0xE0
+#define IOSS_BOTH	0x13
+#define IOSS_PIPE_A	0x11
+#define IOSS_PIPE_B	0x1E
+#define MSS_MASK	0xF0
+#define MSS_BOTH	0x0B
+#define MSS_PIPE_A	0x02
+#define MSS_PIPE_B	0x05
+
 /* Storage for the registers of the C&T chipsets */
 typedef struct {
 	unsigned char XR[0xFF];
 	unsigned char CR[0x80];
 	unsigned char FR[0x80];
 	unsigned char MR[0x80];
-	unsigned char MSS;
-	unsigned char IOSS;
 	CHIPSClockReg Clock;
 } CHIPSRegRec, *CHIPSRegPtr;
 
@@ -238,6 +248,23 @@ typedef void (*chipsWriteIOSSPtr)(CHIPSPtr cPtr, CARD8 value);
 /* The privates of the C&T driver */
 #define CHIPSPTR(p)	((CHIPSPtr)((p)->driverPrivate))
 
+
+typedef struct {
+    int			lastInstance;
+    int			refCount;
+    CARD32		masterFbAddress;
+    long		masterFbMapSize;
+    CARD32		slaveFbAddress;
+    long		slaveFbMapSize;
+    int			mastervideoRam;
+    int			slavevideoRam;
+    Bool		masterOpen;
+    Bool		slaveOpen;
+    Bool		masterActive;
+    Bool		slaveActive;
+} CHIPSEntRec, *CHIPSEntPtr;
+
+
 typedef struct _CHIPSRec {
     pciVideoPtr		PciInfo;
     PCITAG		PciTag;
@@ -281,6 +308,8 @@ typedef struct _CHIPSRec {
     CARD32		PanelType;
     CHIPSRegRec		ModeReg;
     CHIPSRegRec		SavedReg;
+    CHIPSRegRec		SavedReg2;
+    vgaRegRec		VgaSavedReg2;
     unsigned int *	Regs32;
     unsigned int	Flags;
     CARD32		Bus;
@@ -295,12 +324,16 @@ typedef struct _CHIPSRec {
     int			DGAViewportStatus;
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
+    void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
     int			videoKey;
     XF86VideoAdaptorPtr	adaptor;
     int			OverlaySkewX;
     int			OverlaySkewY;
     int			VideoZoomMax;
-
+    Bool		SecondCrtc;
+    CHIPSEntPtr		entityPrivate;
+    unsigned char	storeMSS;
+    unsigned char	storeIOSS;
 #ifdef __arm32__
 #ifdef __NetBSD__
     int			TVMode;
@@ -320,6 +353,8 @@ typedef struct _CHIPSRec {
     chipsWriteMSSPtr	writeMSS;
     chipsReadIOSSPtr	readIOSS;
     chipsWriteIOSSPtr	writeIOSS;
+    Bool cursorDelay;
+    unsigned int viewportMask;
 } CHIPSRec;
 
 typedef struct _CHIPSi2c {
@@ -388,6 +423,112 @@ void     chipsRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void     chipsRefreshArea24(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void     chipsRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void     chipsPointerMoved(int index, int x, int y);
+
+
+/*
+ * Some macros for switching display channels. NOTE... It appears that we
+ * can't write to both display channels at the same time, and so the options
+ * MSS_BOTH and IOSS_BOTH should not be used. Need to get around this by set
+ * dual channel mode to pipe A by default and handling multiple channel writes
+ * in ModeInit..
+ */
+
+#define DUALOPEN \
+    {									      \
+        /* Set the IOSS/MSS registers to point to the right register set */   \
+	if (xf86IsEntityShared(pScrn->entityList[0])) { 		      \
+	    if (cPtr->SecondCrtc == TRUE) {				      \
+		cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
+					IOSS_PIPE_B));			      \
+		cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | 	      \
+					MSS_PIPE_B));			      \
+		cPtrEnt->slaveOpen = TRUE;				      \
+		cPtrEnt->slaveActive = TRUE;				      \
+		cPtrEnt->masterActive = FALSE;				      \
+	    } else {							      \
+		cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
+					IOSS_PIPE_A));			      \
+		cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | 	      \
+					MSS_PIPE_A));			      \
+		cPtrEnt->masterOpen = TRUE;				      \
+		cPtrEnt->masterActive = TRUE;				      \
+		cPtrEnt->slaveActive = FALSE;				      \
+	    }								      \
+	} else {							      \
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) | 	      \
+					IOSS_PIPE_A));			      \
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_A)); \
+	}								      \
+    }
+
+#define DUALREOPEN							      \
+    {									      \
+	if (xf86IsEntityShared(pScrn->entityList[0])) { 		      \
+	    if (cPtr->SecondCrtc == TRUE) {				      \
+		if (! cPtrEnt->slaveActive) {				      \
+		    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |    \
+					IOSS_PIPE_B));			      \
+		    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |	      \
+					MSS_PIPE_B));			      \
+		    cPtrEnt->slaveOpen = TRUE;				      \
+		    cPtrEnt->slaveActive = TRUE;			      \
+		    cPtrEnt->masterActive = FALSE;			      \
+		}							      \
+	    } else {							      \
+		if (! cPtrEnt->masterActive) {				      \
+		    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |    \
+					IOSS_PIPE_A));			      \
+		    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |	      \
+					MSS_PIPE_A));			      \
+		    cPtrEnt->masterOpen = TRUE;				      \
+		    cPtrEnt->masterActive = TRUE;			      \
+		    cPtrEnt->slaveActive = FALSE;			      \
+		}							      \
+	    }								      \
+	}								      \
+    }
+
+#define DUALCLOSE							      \
+    {									      \
+	if (! xf86IsEntityShared(pScrn->entityList[0])) {		      \
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
+			       IOSS_PIPE_A));				      \
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_A)); \
+	    chipsHWCursorOff(cPtr, pScrn);				      \
+	    chipsRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg,		      \
+				&cPtr->SavedReg, TRUE);			      \
+	    chipsLock(pScrn);						      \
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
+			       IOSS_PIPE_B));				      \
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_B)); \
+	    chipsHWCursorOff(cPtr, pScrn);				      \
+	    chipsRestore(pScrn, &cPtr->VgaSavedReg2, &cPtr->SavedReg2, TRUE); \
+	    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);			      \
+	    cPtr->writeMSS(cPtr, cPtr->storeMSS);			      \
+	    chipsLock(pScrn);						      \
+	} else {							      \
+	    chipsHWCursorOff(cPtr, pScrn);				      \
+	    chipsRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg, &cPtr->SavedReg,\
+					TRUE);				      \
+	    if (cPtr->SecondCrtc == TRUE) {				      \
+		cPtrEnt->slaveActive = FALSE;				      \
+		cPtrEnt->slaveOpen = FALSE;				      \
+		if (! cPtrEnt->masterActive) {				      \
+		    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);		      \
+		    cPtr->writeMSS(cPtr, cPtr->storeMSS);		      \
+		    chipsLock(pScrn);					      \
+		}							      \
+	    } else {							      \
+		cPtrEnt->masterActive = FALSE;				      \
+		cPtrEnt->masterOpen = FALSE;				      \
+		if (! cPtrEnt->slaveActive) {				      \
+		    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);		      \
+		    cPtr->writeMSS(cPtr, cPtr->storeMSS);		      \
+		    chipsLock(pScrn);					      \
+		}							      \
+	    }								      \
+	}								      \
+    }
 
 
 /* To aid debugging of 32 bit register access we make the following defines */

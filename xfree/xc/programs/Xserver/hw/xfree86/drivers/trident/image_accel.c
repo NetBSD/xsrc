@@ -23,7 +23,7 @@
  * 
  * Trident 3DImage' accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.20 2000/12/08 17:35:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.21.4.1 2001/05/24 09:37:41 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -144,11 +144,13 @@ ImageAccelInit(ScreenPtr pScreen)
 
     infoPtr->Sync = ImageSync;
 
+#if 0
     infoPtr->SetClippingRectangle = ImageSetClippingRectangle;
     infoPtr->DisableClipping = ImageDisableClipping;
     infoPtr->ClippingFlags = HARDWARE_CLIP_SOLID_FILL |
 			     HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
 			     HARDWARE_CLIP_MONO_8x8_FILL;
+#endif
 
 #if 0
     infoPtr->SolidLineFlags = NO_PLANEMASK;

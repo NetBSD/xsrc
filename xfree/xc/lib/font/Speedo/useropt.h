@@ -1,4 +1,4 @@
-/* $TOG: useropt.h /main/5 1998/02/09 10:51:35 kaleb $ */
+/* $Xorg: useropt.h,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group

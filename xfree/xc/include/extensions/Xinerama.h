@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/include/extensions/Xinerama.h,v 3.2 2000/03/01 01:04:20 dawes Exp $ */
 
 #ifndef _Xinerama_h
 #define _Xinerama_h

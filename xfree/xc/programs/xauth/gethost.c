@@ -1,5 +1,5 @@
 /*
- * $TOG: gethost.c /main/26 1998/02/09 13:52:14 kaleb $
+ * $Xorg: gethost.c,v 1.4 2000/08/17 19:54:11 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xauth/gethost.c,v 3.11 1999/02/28 11:20:04 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/gethost.c,v 3.13 2001/01/17 23:45:14 dawes Exp $ */
 
 /* sorry, streams support does not really work yet */
 #if defined(STREAMSCONN) && defined(SVR4)

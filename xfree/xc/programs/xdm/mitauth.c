@@ -1,4 +1,4 @@
-/* $TOG: mitauth.c /main/13 1998/02/09 13:55:37 kaleb $ */
+/* $Xorg: mitauth.c,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xdm/mitauth.c,v 1.3 2001/01/17 23:45:21 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

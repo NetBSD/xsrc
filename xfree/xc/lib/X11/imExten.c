@@ -1,4 +1,4 @@
-/* $XConsortium: imExten.c /main/6 1995/12/06 11:23:36 kaleb $ */
+/* $Xorg: imExten.c,v 1.3 2000/08/17 19:45:12 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED

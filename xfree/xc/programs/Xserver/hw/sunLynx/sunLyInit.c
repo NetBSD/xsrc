@@ -1,5 +1,4 @@
-/* $TOG: sunLyInit.c /main/3 1998/02/10 13:22:44 kaleb $ */
-
+/* $Xorg: sunLyInit.c,v 1.3 2000/08/17 19:48:36 cpqbld Exp $ */
 /*
  * This is sunInit.c modified for LynxOS
  * Copyright 1996 by Thomas Mueller
@@ -23,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.6 1998/10/04 09:38:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.8 2001/01/17 22:36:53 dawes Exp $ */
 
 /*
  * Copyright 1987 by the Regents of the University of California

@@ -1,4 +1,4 @@
-/* $TOG: mbWrap.c /main/7 1998/02/06 17:44:30 kaleb $ */
+/* $Xorg: mbWrap.c,v 1.3 2000/08/17 19:45:21 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -46,7 +46,7 @@ from The Open Group.
  * 
  *		 M. Collins		OSF  
  */				
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/mbWrap.c,v 1.4 2001/01/17 19:41:56 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

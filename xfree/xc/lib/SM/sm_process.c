@@ -1,4 +1,4 @@
-/* $TOG: sm_process.c /main/30 1998/02/06 14:10:24 kaleb $ */
+/* $Xorg: sm_process.c,v 1.3 2000/08/17 19:44:29 cpqbld Exp $ */
 
 /*
 

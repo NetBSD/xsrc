@@ -1,23 +1,37 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/glx/pixelstore.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
 #include "packsingle.h"
@@ -42,6 +56,14 @@ void glPixelStoref(GLenum pname, GLfloat param)
 	}
 	gc->state.storePack.rowLength = a;
 	break;
+      case GL_PACK_IMAGE_HEIGHT:
+        a = (GLuint) (param + 0.5);
+        if (((GLint) a) < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storePack.imageHeight = a;
+        break;
       case GL_PACK_SKIP_ROWS:
 	a = (GLuint) (param + 0.5);
 	if (((GLint) a) < 0) {
@@ -58,6 +80,14 @@ void glPixelStoref(GLenum pname, GLfloat param)
 	}
 	gc->state.storePack.skipPixels = a;
 	break;
+      case GL_PACK_SKIP_IMAGES:
+        a = (GLuint) (param + 0.5);
+        if (((GLint) a) < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storePack.skipImages = a;
+        break;
       case GL_PACK_ALIGNMENT:
 	a = (GLint) (param + 0.5);
 	switch (a) {
@@ -84,6 +114,14 @@ void glPixelStoref(GLenum pname, GLfloat param)
 	}
 	gc->state.storeUnpack.rowLength = a;
 	break;
+      case GL_UNPACK_IMAGE_HEIGHT:
+        a = (GLuint) (param + 0.5);
+        if (((GLint) a) < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storeUnpack.imageHeight = a;
+        break;
       case GL_UNPACK_SKIP_ROWS:
 	a = (GLuint) (param + 0.5);
 	if (((GLint) a) < 0) {
@@ -100,6 +138,14 @@ void glPixelStoref(GLenum pname, GLfloat param)
 	}
 	gc->state.storeUnpack.skipPixels = a;
 	break;
+      case GL_UNPACK_SKIP_IMAGES:
+        a = (GLuint) (param + 0.5);
+        if (((GLint) a) < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storeUnpack.skipImages = a;
+        break;
       case GL_UNPACK_ALIGNMENT:
 	a = (GLint) (param + 0.5);
 	switch (a) {
@@ -143,6 +189,13 @@ void glPixelStorei(GLenum pname, GLint param)
 	}
 	gc->state.storePack.rowLength = param;
 	break;
+      case GL_PACK_IMAGE_HEIGHT:
+        if (param < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storePack.imageHeight = param;
+        break;
       case GL_PACK_SKIP_ROWS:
 	if (param < 0) {
 	    __glXSetError(gc, GL_INVALID_VALUE);
@@ -157,6 +210,13 @@ void glPixelStorei(GLenum pname, GLint param)
 	}
 	gc->state.storePack.skipPixels = param;
 	break;
+      case GL_PACK_SKIP_IMAGES:
+        if (param < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storePack.skipImages = param;
+        break;
       case GL_PACK_ALIGNMENT:
 	switch (param) {
 	  case 1: case 2: case 4: case 8:
@@ -181,6 +241,13 @@ void glPixelStorei(GLenum pname, GLint param)
 	}
 	gc->state.storeUnpack.rowLength = param;
 	break;
+      case GL_UNPACK_IMAGE_HEIGHT:
+        if (param < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storeUnpack.imageHeight = param;
+        break;
       case GL_UNPACK_SKIP_ROWS:
 	if (param < 0) {
 	    __glXSetError(gc, GL_INVALID_VALUE);
@@ -195,6 +262,13 @@ void glPixelStorei(GLenum pname, GLint param)
 	}
 	gc->state.storeUnpack.skipPixels = param;
 	break;
+      case GL_UNPACK_SKIP_IMAGES:
+        if (param < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
+        gc->state.storeUnpack.skipImages = param;
+        break;
       case GL_UNPACK_ALIGNMENT:
 	switch (param) {
 	  case 1: case 2: case 4: case 8:

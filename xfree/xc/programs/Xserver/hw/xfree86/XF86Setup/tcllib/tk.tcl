@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tk.tcl,v 3.2 1996/12/27 06:55:09 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tk.tcl,v 3.3 1997/11/22 00:00:08 hohndel Exp $
 #
 # tk.tcl --
 #

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbAccessX.c /main/13 1996/12/02 10:24:00 lehors $ */
+/* $Xorg: xkbAccessX.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.4 1999/12/27 00:40:00 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.7 2001/02/12 18:26:00 paulo Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -609,11 +609,6 @@ KeySym *	sym = XkbKeySymsPtr(xkbi->desc,key);
 	if (XkbAX_NeedFeedback(ctrls,XkbAX_BKRejectFBMask))
 	    XkbDDXAccessXBeep(keybd,_BEEP_BOUNCE_REJECT,XkbBounceKeysMask);
 	ignoreKeyEvent = TRUE;
-    }
-
-    if ((ctrls->enabled_ctrls & XkbMouseKeysAccelMask) && 
-					(key == xkbi->mouseKey)) {
-        ignoreKeyEvent = TRUE;
     }
 
     /* Start repeating if necessary.  Stop autorepeating if the user

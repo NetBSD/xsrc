@@ -1,4 +1,4 @@
-/* $TOG: Converters.c /main/107 1998/02/06 13:20:35 kaleb $ */
+/* $Xorg: Converters.c,v 1.4 2000/08/17 19:46:09 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Converters.c,v 3.6 1998/12/20 11:57:08 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Converters.c,v 3.8 2001/01/17 19:43:04 dawes Exp $ */
 
 /*
 
@@ -281,7 +281,7 @@ static Boolean IsInteger(string, value)
 #else
     while ((ch = *string) == ' ' || ch == '\t' || ch == '\r') string++;
 #endif
-    while (ch = *string++) {
+    while ((ch = *string++)) {
 	if (ch >= '0' && ch <= '9') {
 	    val *= 10;
 	    val += ch - '0';
@@ -291,7 +291,7 @@ static Boolean IsInteger(string, value)
 	if (IsWhitespace(ch)) {
 	    if (!foundDigit) return False;
 	    /* make sure only trailing whitespace */
-	    while (ch = *string++) {
+	    while ((ch = *string++)) {
 		if (!IsWhitespace(ch))
 		    return False;
 	    }
@@ -1015,6 +1015,7 @@ Boolean XtCvtStringToFontSet(dpy, args, num_args, fromVal, toVal, closure_ret)
       if (XrmQGetResource(XtDatabase(display), xrm_name, xrm_class, 
                           &rep_type, &value)) {
           if (rep_type == _XtQString) {
+
               f = XCreateFontSet(display, (char *)value.addr,
 				 &missing_charset_list, &missing_charset_count,
 				 &def_string);
@@ -1042,6 +1043,7 @@ Boolean XtCvtStringToFontSet(dpy, args, num_args, fromVal, toVal, closure_ret)
     /* Should really do XListFonts, but most servers support this */
     f = XCreateFontSet(display, "-*-*-*-R-*-*-*-120-*-*-*-*",
           &missing_charset_list, &missing_charset_count, &def_string);
+
     /* Free any returned missing charset list */
     if (missing_charset_count) {
       XtAppWarningMsg(XtDisplayToApplicationContext(dpy),

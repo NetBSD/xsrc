@@ -1,4 +1,4 @@
-/* $TOG: genauth.c /main/24 1998/02/09 13:55:23 kaleb $ */
+/* $Xorg: genauth.c,v 1.4 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.7 1998/10/10 15:25:35 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.11 2001/01/20 14:11:55 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -66,10 +66,11 @@ longtochars (long l, unsigned char *c)
     c[3] = l & 0xff;
 }
 
+#endif
 
 # define FILE_LIMIT	1024	/* no more than this many buffers */
 
-#ifndef ARC4_RANDOM
+#if !defined(ARC4_RANDOM) && !defined(DEV_RANDOM)
 static int
 sumFile (char *name, long sum[2])
 {
@@ -107,6 +108,7 @@ sumFile (char *name, long sum[2])
 }
 #endif
 
+#ifdef HASXDMAUTH
 static void
 InitXdmcpWrapper (void)
 {
@@ -225,8 +227,31 @@ GenerateAuthData (char *auth, int len)
     	int	    seed;
     	int	    value;
     	int	    i;
+	static long localkey[2] = {0,0};
     
-    	seed = (ldata[0]) + (ldata[1] << 16);
+	if ( (localkey[0] == 0) && (localkey[1] == 0) ) {
+#ifdef ARC4_RANDOM
+	    localkey[0] = arc4random();
+	    localkey[1] = arc4random();
+#elif defined(DEV_RANDOM)
+	    int fd;
+    
+	    if ((fd = open(DEV_RANDOM, O_RDONLY)) >= 0) {
+		if (read(fd, (char *)localkey, 8) != 8) {
+		    localkey[0] = 1;
+		}
+		close(fd);
+	    } else {
+		localkey[0] = 1;
+	    }
+#else 
+    	    if (!sumFile (randomFile, localkey)) {
+		localkey[0] = 1; /* To keep from continually calling sumFile() */
+    	    }
+#endif
+	}
+
+    	seed = (ldata[0]+localkey[0]) + ((ldata[1]+localkey[1]) << 16);
     	xdm_srand (seed);
     	for (i = 0; i < len; i++)
     	{

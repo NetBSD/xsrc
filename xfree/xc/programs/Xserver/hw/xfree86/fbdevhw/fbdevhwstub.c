@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.8 2000/08/11 17:27:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.10 2001/04/06 18:16:31 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86cmap.h"
@@ -159,5 +159,10 @@ fbdevHWLeaveVT(int scrnIndex, int flags)
 
 void
 fbdevHWDPMSSet(ScrnInfoPtr pScrn, int mode, int flags)
+{
+}
+
+Bool
+fbdevHWSaveScreen(ScreenPtr pScreen, int mode)
 {
 }

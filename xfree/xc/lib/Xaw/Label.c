@@ -1,4 +1,4 @@
-/* $TOG: Label.c /main/98 1998/02/06 12:46:24 kaleb $ */
+/* $Xorg: Label.c,v 1.4 2000/08/17 19:45:33 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Label.c,v 1.10 1999/06/06 08:47:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Label.c,v 1.12 2001/01/17 19:42:27 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/* $TOG: FSlib.h /main/10 1998/02/06 13:43:12 kaleb $ */
+/* $Xorg: FSlib.h,v 1.4 2000/08/17 19:44:05 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: $ */
+/* $XFree86: xc/lib/FS/FSlib.h,v 1.5 2001/04/05 17:42:26 dawes Exp $ */
 
 /*
 
@@ -55,8 +55,8 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _FSLIB_H_
 #define _FSLIB_H_
 
-#include	<FS.h>
-#include	<FSproto.h>
+#include	<X11/fonts/FS.h>
+#include	<X11/fonts/FSproto.h>
 
 #define	Bool	int
 #define	Status	int
@@ -74,19 +74,9 @@ in this Software without prior written authorization from The Open Group.
 #define	FSAuthorizationData(svr)	((svr)->auth_data)
 #define	FSAlternateServers(svr)	((svr)->alternate_servers)
 #define	FSNumAlternateServers(svr)	((svr)->num_alternates)
-
-#ifdef QLength
-#undef QLength
-#endif
-#define	QLength(svr)		((svr)->qlen)
-#ifdef NextRequest
-#undef NextRequest
-#endif
-#define	NextRequest(svr)	((svr)->request + 1)
-#ifdef LastKnownRequestProcessed
-#undef LastKnownRequestProcessed
-#endif
-#define LastKnownRequestProcessed(svr)   ((svr)->last_request_read)
+#define	FSQLength(svr)		((svr)->qlen)
+#define	FSNextRequest(svr)	((svr)->request + 1)
+#define FSLastKnownRequestProcessed(svr)   ((svr)->last_request_read)
 
 #define	FSAllocID(svr)		((*(svr)->resource_alloc)((svr)))
 
@@ -307,7 +297,6 @@ extern int FSQueryXInfo ( FSServer *svr, Font fid, FSXFontInfoHeader *info,
 			  FSPropInfo *props, FSPropOffset **offsets,
 			  unsigned char **prop_data );
 extern int FSSetCatalogues ( FSServer *svr, int num, char **cats );
-extern int FSSync ( FSServer *svr, int discard );
 extern int FSFree ( char *data );
 extern unsigned char * FSMalloc ( unsigned size );
 

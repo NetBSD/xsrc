@@ -1,4 +1,4 @@
-/* $TOG: wire.c /main/52 1998/02/11 09:49:26 kaleb $ */
+/* $Xorg: wire.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group
@@ -41,7 +41,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.8 1999/12/27 00:40:02 robin Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.10 2001/01/17 23:44:56 dawes Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $TOG: handle.c /main/29 1998/02/09 14:11:20 kaleb $ */
+/* $Xorg: handle.c,v 1.5 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/handle.c,v 3.2 1998/12/13 05:33:07 dawes Exp $ */
+/* $XFree86: xc/programs/xmodmap/handle.c,v 3.5 2001/04/23 21:41:47 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
@@ -357,9 +357,13 @@ do_keycode(char *line, int len)
 	return;
     }
 
+    /*
+     * We need not bother to advance line/len past the
+     * number (or the string 'any') as finish_keycodes() will
+     * first advance past the '='.
+     */
     if (!strncmp("any", line, 3)) {
 	keycode = 0;
-	len += 3;
     } else {
 	if (*line == '0') line++, len--, fmt = "%o";
 	if (*line == 'x' || *line == 'X') line++, len--, fmt = "%x";

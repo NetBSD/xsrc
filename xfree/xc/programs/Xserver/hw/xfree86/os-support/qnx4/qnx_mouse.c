@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_mouse.c,v 1.2 2000/01/21 02:30:06 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_mouse.c,v 1.3 2000/02/10 22:33:45 dawes Exp $
  */
 
 /* This module contains the qnx-specific functions to access the keyboard

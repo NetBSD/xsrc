@@ -84,4 +84,4 @@ Debug:
     development debug option.  Default: off.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/README,v 1.8 2000/03/05 16:59:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/README,v 1.9 2000/06/14 21:57:54 dawes Exp $

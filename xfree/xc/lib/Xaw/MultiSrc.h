@@ -1,4 +1,4 @@
-/* $TOG: MultiSrc.h /main/3 1998/02/06 12:47:36 kaleb $ */
+/* $Xorg: MultiSrc.h,v 1.3 2000/08/17 19:45:35 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -45,7 +45,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/MultiSrc.h,v 1.4 1998/10/03 08:42:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrc.h,v 1.6 2001/01/17 19:42:28 dawes Exp $ */
 
 /*
  * This file was modified from AsciiSrc.h.

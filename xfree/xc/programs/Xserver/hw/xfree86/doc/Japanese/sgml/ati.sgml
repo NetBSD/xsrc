@@ -371,7 +371,7 @@ Linux では kbd または svgalib パッケージと一緒に解決しました。
 <bf>Marc Aurele La France</bf>, <url url="mailto:tsi@ualberta.ca"
 name="&lt;<it>tsi@ualberta.ca</it>&gt;">まで電子メールを下さい。
 <verb>
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/ati.sgml,v 3.2 1997/01/26 04:34:28 dawes Exp $
 </verb>
 <hrule>
 このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.12 1996/05/10 06:58:31   を、岡本  一幸 

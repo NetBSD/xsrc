@@ -1,4 +1,4 @@
-/* $XConsortium: imLcIc.c /main/6 1996/10/22 14:24:42 kaleb $ */
+/* $Xorg: imLcIc.c,v 1.3 2000/08/17 19:45:13 cpqbld Exp $ */
 /******************************************************************
 
                 Copyright 1992,1993, 1994 by FUJITSU LIMITED
@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcIc.c,v 1.2 2000/02/18 16:23:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcIc.c,v 1.4 2001/01/17 19:41:52 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>

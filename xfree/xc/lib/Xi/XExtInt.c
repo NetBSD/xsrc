@@ -1,4 +1,4 @@
-/* $TOG: XExtInt.c /main/34 1998/04/30 15:52:09 kaleb $ */
+/* $Xorg: XExtInt.c,v 1.3 2000/08/17 19:45:54 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.2 1997/05/03 09:15:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.4 2001/01/17 19:42:48 dawes Exp $ */
 
 /***********************************************************************
  *

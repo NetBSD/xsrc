@@ -1,4 +1,4 @@
-/* $TOG: mpcfromi.c /main/6 1998/02/09 16:21:31 kaleb $ */
+/* $Xorg: mpcfromi.c,v 1.3 2000/08/17 19:47:50 cpqbld Exp $ */
 /**** module mpcfromi.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpcfromi.c,v 3.2 1998/10/04 09:36:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpcfromi.c,v 3.4 2001/01/17 22:13:11 dawes Exp $ */
 
 #define _XIEC_MPCFROMI
 #define _XIEC_PCFROMI

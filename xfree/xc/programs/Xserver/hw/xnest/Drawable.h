@@ -1,4 +1,4 @@
-/* $XConsortium: Drawable.h /main/2 1996/12/02 10:20:59 lehors $ */
+/* $Xorg: Drawable.h,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

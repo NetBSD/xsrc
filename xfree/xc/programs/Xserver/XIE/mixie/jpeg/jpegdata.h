@@ -1,4 +1,4 @@
-/* $TOG: jpegdata.h /main/6 1998/02/09 16:20:27 kaleb $ */
+/* $Xorg: jpegdata.h,v 1.3 2000/08/17 19:47:48 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /* Module jpegdata.h */
 

@@ -19,17 +19,9 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahglobal.h"
 #include "ahglyph.h"
-
-#else
-
-#include <autohint/ahglobal.h>
-#include <autohint/ahglyph.h>
-
-#endif
 
 
 #define MAX_TEST_CHARACTERS  12
@@ -165,7 +157,7 @@
         /* segment; we first need to find in which contour the extremum */
         /* lies, then see its previous and next points                  */
         {
-          FT_Int  index = extremum - points;
+          FT_Int  index = (FT_Int)( extremum - points );
           FT_Int  n;
           FT_Int  first, last, prev, next, end;
           FT_Pos  dist;

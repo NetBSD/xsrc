@@ -1,4 +1,4 @@
-/* $TOG: ffs.c /main/2 1998/02/09 14:19:26 kaleb $ */
+/* $Xorg: ffs.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998 The Open Group

@@ -24,7 +24,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.c,v 1.9 1999/06/05 15:55:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.c,v 1.11 2001/05/15 18:22:22 paulo Exp $ */
 
 #define _SPACEORB_C_
 /*****************************************************************************
@@ -247,16 +247,19 @@ SpaceorbPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 static void
 TearDownProc( pointer p )
 {
-  InputInfoPtr pInfo = (InputInfoPtr) p;
-  SPACEORBPrivatePtr priv = (SPACEORBPrivatePtr) pInfo->private;
+  if (!xf86ServerIsOnlyDetecting()) {
+
+    InputInfoPtr pInfo = (InputInfoPtr) p;
+    SPACEORBPrivatePtr priv = (SPACEORBPrivatePtr) pInfo->private;
+
+    DeviceOff (pInfo->dev);
   
-  DeviceOff (pInfo->dev);
-  
-  xf86CloseSerial (pInfo->fd);
-  XisbFree (priv->buffer);
-  xfree (priv);
-  xfree (pInfo->name);
-  xfree (pInfo);
+    xf86CloseSerial (pInfo->fd);
+    XisbFree (priv->buffer);
+    xfree (priv);
+    xfree (pInfo->name);
+    xfree (pInfo);
+  }
 }
 
 static Bool

@@ -34,7 +34,7 @@ endif
 #   make -f %TOP%/Makefile
 #
 ifndef OBJ_DIR
-  OBJ_DIR := $(TOP)$(SEP)obj
+  OBJ_DIR := $(TOP)$(SEP)objs
 endif
 
 
@@ -57,6 +57,8 @@ NO_OUTPUT = 2> nul
 
 
 ifdef BUILD_LIBRARY
+
+  .PHONY: clean_project distclean_project
 
   # Now include the main sub-makefile.  It contains all the rules used to
   # build the library with the previous variables defined.

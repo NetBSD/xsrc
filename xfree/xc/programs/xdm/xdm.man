@@ -1,4 +1,4 @@
-.\" $TOG: xdm.man /main/46 1998/02/09 13:56:58 kaleb $
+.\" $Xorg: xdm.man,v 1.3 2000/08/17 19:54:15 cpqbld Exp $
 .\" Copyright 1988, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,9 +19,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xdm/xdm.man,v 3.13 1999/08/29 12:21:05 dawes Exp $
+.\" $XFree86: xc/programs/xdm/xdm.man,v 3.20 2001/04/23 20:31:09 dawes Exp $
 .\" 
-.TH XDM 1 "Release 6.4" "X Version 11"
+.TH XDM 1 __xorgversion__
 .SH NAME
 xdm \- X Display Manager with support for XDMCP, host chooser
 .SH SYNOPSIS
@@ -657,13 +657,13 @@ Here is an example Xaccess file:
 .LP
 .ta 2i 4i
 .nf
-#
-# Xaccess \- XDMCP access control file
-#
+XCOMM
+XCOMM Xaccess \- XDMCP access control file
+XCOMM
 
-#
-# Direct/Broadcast query entries
-#
+XCOMM
+XCOMM Direct/Broadcast query entries
+XCOMM
 
 !xtra.lcs.mit.edu	# disallow direct/broadcast service for xtra
 bambi.ogi.edu	# allow access from this particular display
@@ -672,9 +672,9 @@ bambi.ogi.edu	# allow access from this particular display
 *.deshaw.com	NOBROADCAST	# allow only direct access
 *.gw.com			# allow direct and broadcast
 
-#
-# Indirect query entries
-#
+XCOMM
+XCOMM Indirect query entries
+XCOMM
 
 %HOSTS	expo.lcs.mit.edu xenon.lcs.mit.edu \\
 	excess.lcs.mit.edu kanga.lcs.mit.edu
@@ -721,15 +721,6 @@ and sends another \fBIndirect\fP XDMCP request.
 \fIxdm\fP remembers the user's choice (for
 \fBDisplayManager.choiceTimeout\fP seconds) and forwards the request
 to the chosen host, which starts a session on that display.
-
-When the user selects a host, \fIchooser\fP prints the host chosen,
-which is read by the parent \fIxdm\fP, and exits.
-\fIxdm\fP closes its connection to the X server, and the server resets
-and sends another \fBIndirect\fP XDMCP request.
-\fIxdm\fP remembers the user's choice (for
-\fBDisplayManager.choiceTimeout\fP seconds) and forwards the request
-to the chosen host, which starts a session on that display.
-
 .\"
 .SH "LOCAL SERVER SPECIFICATION"
 .PP
@@ -802,17 +793,17 @@ parameters for that widget:
 		<Key>Return: set-session-argument() finish-field()
 	xlogin*borderWidth: 3
 	xlogin*greeting: CLIENTHOST
-	#ifdef COLOR
+\&	#ifdef COLOR
 	xlogin*greetColor: CadetBlue
 	xlogin*failColor: red
-	#endif
+\&	#endif
 
 .fi
 .PP
 Please note the translations entry; it specifies
 a few new translations for the widget which allow users to escape from the
 default session (and avoid troubles that may occur in it).  Note that if
-#override is not specified, the default translations are removed and replaced
+\&#override is not specified, the default translations are removed and replaced
 by the new value, not a very useful result as some of the default translations
 are quite useful (such as ``<Key>: insert-char ()'' which responds to normal
 typing).
@@ -850,8 +841,8 @@ can be put into the file named by
 Here is a sample \fIXsetup\fP script:
 .nf
 
-	#!/bin/sh
-	# Xsetup_0 \- setup script for one workstation
+\&	#!/bin/sh
+\&	# Xsetup_0 \- setup script for one workstation
 	xcmsdb < /usr/X11R6/lib/monitors/alex.0
 	xconsole\0\-geometry\0480x130\-0\-0\0\-notify\0\-verbose\0\-exitOnFail &
 
@@ -1039,12 +1030,12 @@ Here is a sample \fIXstartup\fP script:
 .nf
 .ta .5i 1i
 
-	#!/bin/sh
-	#
-	# Xstartup
-	#
-	# This program is run as root after the user is verified
-	#
+\&	#!/bin/sh
+\&	#
+\&	# Xstartup
+\&	#
+\&	# This program is run as root after the user is verified
+\&	#
 	if [ \-f /etc/nologin ]; then
 		xmessage\0\-file /etc/nologin\0\-timeout 30\0\-center
 		exit 1
@@ -1100,12 +1091,12 @@ be executable so we don't have to guess what shell it wants to use.
 .nf
 .ta .5i 1i 1.5i
 
-	#!/bin/sh
-	#
-	# Xsession
-	#
-	# This is the program that is run as the client
-	# for the display manager.
+\&	#!/bin/sh
+\&	#
+\&	# Xsession
+\&	#
+\&	# This is the program that is run as the client
+\&	# for the display manager.
 	
 	case $# in
 	1)
@@ -1135,8 +1126,8 @@ be executable so we don't have to guess what shell it wants to use.
 The user's \fI.xsession\fP file might look something like this
 example.  Don't forget that the file must have execute permission.
 .nf
-	#! /bin/csh
-	# no \-f in the previous line so .cshrc gets run to set $PATH
+\&	#! /bin/csh
+\&	# no \-f in the previous line so .cshrc gets run to set $PATH
 	twm &
 	xrdb \-merge "$HOME/.Xresources"
 	emacs \-geometry +0+50 &
@@ -1157,12 +1148,12 @@ passed to \fIXreset\fP.
 A sample \fIXreset\fP script:
 .nf
 .ta .5i 1i
-	#!/bin/sh
-	#
-	# Xreset
-	#
-	# This program is run as root after the session ends
-	#
+\&	#!/bin/sh
+\&	#
+\&	# Xreset
+\&	#
+\&	# This program is run as root after the session ends
+\&	#
 	sessreg\0\-d\0\-l $DISPLAY\0\-x /usr/X11R6/lib/xdm/Xservers $LOGNAME
 	/usr/X11R6/lib/xdm/TakeConsole
 	exit 0
@@ -1293,10 +1284,10 @@ Kerberos credentials cache
 .LP
 Note: <XRoot> refers to the root of the X11 install tree.
 .SH "SEE ALSO"
-.IR X (1),
+.IR X (__miscmansuffix__),
 .IR xinit (1),
 .IR xauth (1),
-.IR Xsecurity (1),
+.IR Xsecurity (__miscmansuffix__),
 .IR sessreg (1),
 .IR Xserver (1),
 .\" .IR chooser (1), \" except that there isn't a manual for it yet

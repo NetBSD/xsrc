@@ -1,93 +1,75 @@
 // $XConsortium: il /main/3 1997/12/18 12:40:12 rch $
 //
-// $XFree86$
+// $XFree86: xc/programs/xkbcomp/symbols/il,v 1.3 2001/02/12 18:25:59 paulo Exp $
+
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
-    // Describes the differences between a very simple en_US
+    // Describes the differences between a very simple us
     // keyboard and a very simple Israelian keyboard
 
-    // uses the kbd layout in use in Israel
+    // uses the kbd layout in use in Israel.
 
-    name[Group1]= "US/ASCII";
     name[Group2]= "Israelian";
 
 
-    key <TLDE> {        [     grave,   asciitilde       ],
-			[ semicolon,   asciitilde	]	};
+    key <TLDE> {[],	[ semicolon,	asciitilde	]	};
 
-    key <AD01> {        [         q,    Q               ],
-			[     slash,     Q		]	};
-    key <AD02> {        [         w,    W               ],
-			[apostrophe,     W		]	};
-    key <AD03> {        [         e,    E               ],
-			[ hebrew_qoph,  E		]       };
-    key <AD04> {        [         r,    R               ],
-			[ hebrew_resh,  R		]	};
-    key <AD05> {        [         t,    T               ],
-			[ hebrew_aleph, T		]       };
-    key <AD06> {        [         y,    Y               ],
-			[ hebrew_tet,   Y		]       };
-    key <AD07> {        [         u,    U               ],
-			[ hebrew_waw,   U		]       };
-    key <AD08> {        [         i,    I               ],
-			[ hebrew_finalnun, I		]       };
-    key <AD09> {        [         o,    O               ],
-			[ hebrew_finalmem, O		]       };
-    key <AD10> {        [         p,    P               ],
-			[ hebrew_pe,    P		]	};
+    key <AD01> {[],	[ slash,	Q		]	};
+    key <AD02> {[],	[ apostrophe,	W		]	};
+    key <AD03> {[],	[ hebrew_qoph,	E		]       };
+    key <AD04> {[],	[ hebrew_resh,	R		]	};
+    key <AD05> {[],	[ hebrew_aleph,	T		]       };
+    key <AD06> {[],	[ hebrew_tet,	Y		]       };
+    key <AD07> {[],	[ hebrew_waw,	U		]       };
+    key <AD08> {[],	[ hebrew_finalnun,	I	]       };
+    key <AD09> {[],	[ hebrew_finalmem,	O	]       };
+    key <AD10> {[],	[ hebrew_pe,	P		]	};
 
-    key <AC01> {        [         a,    A               ],
-			[ hebrew_shin,  A		]	};
-    key <AC02> {        [         s,    S               ],
-			[ hebrew_dalet, S		]       };
-    key <AC03> {        [         d,    D               ],
-			[ hebrew_gimel, D		]       };
-    key <AC04> {        [         f,    F               ],
-			[ hebrew_kaph,  F		]	};
-    key <AC05> {        [         g,    G               ],
-			[ hebrew_ayin,  G		]       };
-    key <AC06> {        [         h,    H               ],
-			[ hebrew_yod,   H		]       };
-    key <AC07> {        [         j,    J               ],
-			[ hebrew_chet,  J		]	};
-    key <AC08> {        [         k,    K               ],
-			[ hebrew_lamed, K		]	};
-    key <AC09> {        [         l,    L               ],
-			[ hebrew_finalkaph, L		]       };
-    key <AC10> {        [ semicolon,    colon           ],
-			[ hebrew_finalpe, colon		]       };
-    key <AC11> {        [ apostrophe,   quotedbl        ],
-			[     comma,    quotedbl	]	};
+    key <AC01> {[],	[ hebrew_shin,	A		]	};
+    key <AC02> {[],	[ hebrew_dalet,	S		]       };
+    key <AC03> {[],	[ hebrew_gimel,	D		]       };
+    key <AC04> {[],	[ hebrew_kaph,	F		]	};
+    key <AC05> {[],	[ hebrew_ayin,	G		]       };
+    key <AC06> {[],	[ hebrew_yod,	H		]       };
+    key <AC07> {[],	[ hebrew_chet,	J		]	};
+    key <AC08> {[],	[ hebrew_lamed,	K		]	};
+    key <AC09> {[],	[ hebrew_finalkaph,	L	]       };
+    key <AC10> {[],	[ hebrew_finalpe,	colon	]       };
+    key <AC11> {[],	[ comma,	quotedbl	]	};
 
-    key <AB01> {        [         z,    Z               ],
-			[ hebrew_zain,  Z		]       };
-    key <AB02> {        [         x,    X               ],
-			[ hebrew_samech, X		]       };
-    key <AB03> {        [         c,    C               ],
-			[ hebrew_bet,   C		]       };
-    key <AB04> {        [         v,    V               ],
-			[ hebrew_he,    V		]       };
-    key <AB05> {        [         b,    B               ],
-			[ hebrew_nun,   B		]       };
-    key <AB06> {        [         n,    N               ],
-			[ hebrew_mem,   N		]	};
-    key <AB07> {        [         m,    M               ],
-			[ hebrew_zade,  M		]	};
-    key <AB08> {        [     comma,    less            ],
-			[ hebrew_taw,   less		]	};
-    key <AB09> {        [    period,    greater         ],
-			[ hebrew_finalzade,  greater	]	};
-    key <AB10> {        [     slash,    question        ],
-			[    period,    question	]	};
-    
-    // Begin modifier mappings 
+    key <AB01> {[],	[ hebrew_zain,	Z		]       };
+    key <AB02> {[],	[ hebrew_samech,	X	]       };
+    key <AB03> {[],	[ hebrew_bet,	C		]       };
+    key <AB04> {[],	[ hebrew_he,	V		]       };
+    key <AB05> {[],	[ hebrew_nun,	B		]       };
+    key <AB06> {[],	[ hebrew_mem,	N		]	};
+    key <AB07> {[],	[ hebrew_zade,	M		]	};
+    key <AB08> {[],	[ hebrew_taw,	less		]	};
+    key <AB09> {[],	[ hebrew_finalzade,	greater	]	};
+    key <AB10> {[],	[ period,	question	]	};
 
-    modifier_map Shift  { Shift_L };
-    modifier_map Lock   { Caps_Lock, ISO_Lock };
-    modifier_map Control{ Control_L };
-    modifier_map Mod3   { Mode_switch };
+    // The following may get overriden by the iso9995-3(basic101) symbols.
+    // therefore they are included here. 
+    // Including them isn't a great idea (for instance: what if group 1 uses
+    // UK keyboard mapping, and maps shift-3 to sterling? This mapping won't
+    // preserve that, and I'm not sure that this is a good feature.
+    key <AE01> {[],	[         1,    exclam          ]       };
+    key <AE02> {[],	[         2,    at              ]       };
+    key <AE03> {[],	[         3,    numbersign      ]       };
+    key <AE04> {[],	[         4,    dollar          ]       };
+    key <AE05> {[],	[         5,    percent         ]       };
+    key <AE06> {[],	[         6,    asciicircum     ]       };
+    key <AE07> {[],	[         7,    ampersand       ]       };
+    key <AE08> {[],	[         8,    asterisk        ]       };
+    key <AE09> {[],	[         9,    parenleft       ]       };
+    key <AE10> {[],	[         0,    parenright      ]       };
+    key <AE11> {[],	[     minus,    underscore      ]       };
+    key <AE12> {[],	[     equal,    plus            ]       };
+
+    key <AD11> {[],	[ bracketleft,  braceleft       ]       };
+    key <AD12> {[],	[ bracketright, braceright      ]       };
+
+    key <BKSL> {[],	[ backslash,    bar             ]       };
 };
-
-

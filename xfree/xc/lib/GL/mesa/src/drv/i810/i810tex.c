@@ -194,10 +194,10 @@ static i810TextureObjectPtr i810CreateTexObj(i810ContextPtr imesa,
    switch( image->Format ) {
    case GL_RGB:
    case GL_LUMINANCE:
-   case GL_ALPHA:
       t->texelBytes = 2;
       textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_RGB565;
       break;
+   case GL_ALPHA:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
    case GL_RGBA:
@@ -705,44 +705,50 @@ static void i810UpdateTex0State( GLcontext *ctx )
    struct gl_texture_object	*tObj;
    i810TextureObjectPtr t;
    int ma_modulate_op;
+   int format;
 
-
-   tObj = ctx->Texture.Unit[0].Current;
-
-   if ( tObj != ctx->Texture.Unit[0].CurrentD[2] ) 
-      tObj = 0;
-
-
+   /* disable */
+   imesa->Setup[I810_CTXREG_MT] &= ~MT_TEXEL0_ENABLE;
    imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
-				     MC_STAGE_0 |
-				     MC_UPDATE_DEST |
-				     MC_DEST_CURRENT |
-				     MC_UPDATE_ARG1 |
-				     MC_ARG1_ITERATED_COLOR | 
-				     MC_UPDATE_ARG2 |
-				     MC_ARG2_ONE |
-				     MC_UPDATE_OP |
-				     MC_OP_ARG1 );
-
+                                     MC_STAGE_0 |
+                                     MC_UPDATE_DEST |
+                                     MC_DEST_CURRENT |
+                                     MC_UPDATE_ARG1 |
+                                     MC_ARG1_ITERATED_COLOR | 
+                                     MC_UPDATE_ARG2 |
+                                     MC_ARG2_ONE |
+                                     MC_UPDATE_OP |
+                                     MC_OP_ARG1 );
    imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
-				     MA_STAGE_0 |
-				     MA_UPDATE_ARG1 |
-				     MA_ARG1_ITERATED_ALPHA |
-				     MA_UPDATE_ARG2 |
-				     MA_ARG2_TEX0_ALPHA |
-				     MA_UPDATE_OP |
-				     MA_OP_ARG1 );
-    
+                                     MA_STAGE_0 |
+                                     MA_UPDATE_ARG1 |
+                                     MA_ARG1_ITERATED_ALPHA |
+                                     MA_UPDATE_ARG2 |
+                                     MA_ARG2_TEX0_ALPHA |
+                                     MA_UPDATE_OP |
+                                     MA_OP_ARG1 );
 
-   if (!(ctx->Texture.ReallyEnabled & 0xf) || !tObj || !tObj->Complete) {
+   if (ctx->Texture.Unit[0].ReallyEnabled == 0) {
       return;
    }
 
+   tObj = ctx->Texture.Unit[0].Current;
+   if (ctx->Texture.Unit[0].ReallyEnabled != TEXTURE0_2D ||
+       tObj->Image[tObj->BaseLevel]->Border > 0) {
+      /* 1D or 3D texturing enabled, or texture border - fallback */
+      imesa->Fallback |= I810_FALLBACK_TEXTURE;
+      return;
+   }
+
+   /* Do 2D texture setup */
+
+   imesa->Setup[I810_CTXREG_MT] |= MT_TEXEL0_ENABLE;
+
    t = tObj->DriverData;
-  
    if (!t) {
       t = i810CreateTexObj( imesa, tObj );
-      if (!t) return;
+      if (!t)
+         return;
    }
 
    if (t->current_unit != 0)
@@ -757,9 +763,11 @@ static void i810UpdateTex0State( GLcontext *ctx )
    if (t->MemBlock)
       i810UpdateTexLRU( imesa, t );
   
+   format = t->image[0].internalFormat;
+
    switch (ctx->Texture.Unit[0].EnvMode) {
    case GL_REPLACE:
-      if (t->image[0].internalFormat == GL_ALPHA) 
+      if (format == GL_ALPHA) 
 	 imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
 					   MC_STAGE_0 |
 					   MC_UPDATE_DEST |
@@ -782,7 +790,7 @@ static void i810UpdateTex0State( GLcontext *ctx )
 					   MC_UPDATE_OP |
 					   MC_OP_ARG1 );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 ma_modulate_op = MA_OP_ARG1;
       } else {
 	 ma_modulate_op = MA_OP_ARG2;
@@ -809,7 +817,7 @@ static void i810UpdateTex0State( GLcontext *ctx )
 					MC_UPDATE_OP |
 					MC_OP_MODULATE );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 ma_modulate_op = MA_OP_ARG1;
       } else {
 	 ma_modulate_op = MA_OP_MODULATE;
@@ -826,30 +834,74 @@ static void i810UpdateTex0State( GLcontext *ctx )
       break;
 
    case GL_ADD:
-      imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
-					MC_STAGE_0 |
-					MC_UPDATE_DEST |
-					MC_DEST_CURRENT |
-					MC_UPDATE_ARG1 |
-					MC_ARG1_TEX0_COLOR | 
-					MC_UPDATE_ARG2 |
-					MC_ARG2_ITERATED_COLOR |
-					MC_UPDATE_OP |
-					MC_OP_ADD );
+      if (format == GL_ALPHA) {
+         /* Cv = Cf */
+	 imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
+					   MC_STAGE_0 |
+					   MC_UPDATE_DEST |
+					   MC_DEST_CURRENT |
+					   MC_UPDATE_ARG1 |
+					   MC_ARG1_TEX0_COLOR | 
+					   MC_UPDATE_ARG2 |
+					   MC_ARG2_ITERATED_COLOR |
+					   MC_UPDATE_OP |
+					   MC_OP_ARG2 );
+      }
+      else {
+         /* Cv = Cf + Ct */
+         imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
+                                           MC_STAGE_0 |
+                                           MC_UPDATE_DEST |
+                                           MC_DEST_CURRENT |
+                                           MC_UPDATE_ARG1 |
+                                           MC_ARG1_TEX0_COLOR | 
+                                           MC_UPDATE_ARG2 |
+                                           MC_ARG2_ITERATED_COLOR |
+                                           MC_UPDATE_OP |
+                                           MC_OP_ADD );
+      }
 
-      imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
-					MA_STAGE_0 |
-					MA_UPDATE_ARG1 |
-					MA_ARG1_ITERATED_ALPHA |
-					MA_UPDATE_ARG2 |
-					MA_ARG2_TEX0_ALPHA |
-					MA_UPDATE_OP |
-					MA_OP_ADD );
+      /* alpha */
+      if (format == GL_ALPHA ||
+          format == GL_LUMINANCE_ALPHA ||
+          format == GL_RGBA) {
+         /* Av = Af * At */
+         imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
+                                           MA_STAGE_0 |
+                                           MA_UPDATE_ARG1 |
+                                           MA_ARG1_ITERATED_ALPHA |
+                                           MA_UPDATE_ARG2 |
+                                           MA_ARG2_TEX0_ALPHA |
+                                           MA_UPDATE_OP |
+                                           MA_OP_MODULATE );
+      }
+      else if (format == GL_LUMINANCE || format == GL_RGB) {
+         /* Av = Af */
+         imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
+                                           MA_STAGE_0 |
+                                           MA_UPDATE_ARG1 |
+                                           MA_ARG1_ITERATED_ALPHA |
+                                           MA_UPDATE_ARG2 |
+                                           MA_ARG2_ITERATED_ALPHA |
+                                           MA_UPDATE_OP |
+                                           MA_OP_ARG1 );
+      }
+      else {
+         /* Av = Af + At */
+         imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
+                                           MA_STAGE_0 |
+                                           MA_UPDATE_ARG1 |
+                                           MA_ARG1_ITERATED_ALPHA |
+                                           MA_UPDATE_ARG2 |
+                                           MA_ARG2_TEX0_ALPHA |
+                                           MA_UPDATE_OP |
+                                           MA_OP_ADD );
+      }
       break;
 
    case GL_DECAL:
-
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
+         /* C = Ct */
 	 imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
 					   MC_STAGE_0 |
 					   MC_UPDATE_DEST |
@@ -862,29 +914,32 @@ static void i810UpdateTex0State( GLcontext *ctx )
 					   MC_OP_ARG2 );
 
       } else {
+         /* RGBA or undefined result */
+         /* C = Cf*(1-At)+Ct*At */
 	 imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
 					   MC_STAGE_0 |
 					   MC_UPDATE_DEST |
 					   MC_DEST_CURRENT |
 					   MC_UPDATE_ARG1 |
-					   MC_ARG1_COLOR_FACTOR | 
+					   MC_ARG1_TEX0_COLOR |
 					   MC_UPDATE_ARG2 |
-					   MC_ARG2_TEX0_COLOR |
+					   MC_ARG2_ITERATED_COLOR | 
 					   MC_UPDATE_OP |
 					   MC_OP_LIN_BLEND_TEX0_ALPHA );
       }
 
+      /* Av = Af */
       imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
 					MA_STAGE_0 |
 					MA_UPDATE_ARG1 |
-					MA_ARG1_ALPHA_FACTOR |
+					MA_ARG1_ITERATED_ALPHA |
 					MA_UPDATE_ARG2 |
-					MA_ARG2_ALPHA_FACTOR |
+					MA_ARG2_ITERATED_ALPHA |
 					MA_UPDATE_OP |
 					MA_OP_ARG1 );
       break;
    case GL_BLEND:
-      if (t->image[0].internalFormat == GL_ALPHA) 
+      if (format == GL_ALPHA) 
 	 imesa->Setup[I810_CTXREG_MC0] = ( GFX_OP_MAP_COLOR_STAGES |
 					   MC_STAGE_0 |
 					   MC_UPDATE_DEST |
@@ -907,16 +962,20 @@ static void i810UpdateTex0State( GLcontext *ctx )
 					   MC_UPDATE_OP |
 					   MC_OP_LIN_BLEND_TEX0_COLOR );
 
-      if (t->image[0].internalFormat == GL_RGB) {
-	 imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
-					   MA_STAGE_0 |
-					   MA_UPDATE_ARG1 |
-					   MA_ARG1_ALPHA_FACTOR |
-					   MA_UPDATE_ARG2 |
-					   MA_ARG2_ITERATED_ALPHA |
-					   MA_UPDATE_OP |
-					   MA_OP_ARG1 );
-      } else {
+      /* alpha */
+      if (format == GL_LUMINANCE || format == GL_RGB) {
+         /* Av = Af */
+         imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
+                                           MA_STAGE_0 |
+                                           MA_UPDATE_ARG1 |
+                                           MA_ARG1_ITERATED_ALPHA |
+                                           MA_UPDATE_ARG2 |
+                                           MA_ARG2_ITERATED_ALPHA |
+                                           MA_UPDATE_OP |
+                                           MA_OP_ARG1 );
+      }
+      else if (format == GL_INTENSITY) {
+         /* Av = Af(1-It)+AcIt */
 	 imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
 					   MA_STAGE_0 |
 					   MA_UPDATE_ARG1 |
@@ -925,6 +984,16 @@ static void i810UpdateTex0State( GLcontext *ctx )
 					   MA_ARG2_ITERATED_ALPHA |
 					   MA_UPDATE_OP |
 					   MA_OP_LIN_BLEND_TEX0_ALPHA );
+      } else {
+         /* Av = AfAt */
+	 imesa->Setup[I810_CTXREG_MA0] = ( GFX_OP_MAP_ALPHA_STAGES |
+					   MA_STAGE_0 |
+					   MA_UPDATE_ARG1 |
+					   MA_ARG1_TEX0_ALPHA |
+					   MA_UPDATE_ARG2 |
+					   MA_ARG2_ITERATED_ALPHA |
+					   MA_UPDATE_OP |
+					   MA_OP_MODULATE );
       }
       break;
 
@@ -942,50 +1011,56 @@ static void i810UpdateTex1State( GLcontext *ctx )
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    struct gl_texture_object	*tObj;
    i810TextureObjectPtr t;
-   int ma_modulate_op;
+   int ma_modulate_op, format;
 
-
-   tObj = ctx->Texture.Unit[1].Current;
-
-   if ( tObj != ctx->Texture.Unit[1].CurrentD[2] ) 
-      tObj = 0;
-
-
+   /* disable */
+   imesa->Setup[I810_CTXREG_MT] &= ~MT_TEXEL1_ENABLE;
    imesa->Setup[I810_CTXREG_MC1] = ( GFX_OP_MAP_COLOR_STAGES |
-				     MC_STAGE_1 |
-				     MC_UPDATE_DEST |
-				     MC_DEST_CURRENT |
-				     MC_UPDATE_ARG1 |
-				     MC_ARG1_ONE | 
-				     MC_ARG1_DONT_REPLICATE_ALPHA |
-				     MC_ARG1_DONT_INVERT |
-				     MC_UPDATE_ARG2 |
-				     MC_ARG2_ONE |
-				     MC_ARG2_DONT_REPLICATE_ALPHA |
-				     MC_ARG2_DONT_INVERT |
-				     MC_UPDATE_OP |
-				     MC_OP_DISABLE );
-
+                                     MC_STAGE_1 |
+                                     MC_UPDATE_DEST |
+                                     MC_DEST_CURRENT |
+                                     MC_UPDATE_ARG1 |
+                                     MC_ARG1_ONE | 
+                                     MC_ARG1_DONT_REPLICATE_ALPHA |
+                                     MC_ARG1_DONT_INVERT |
+                                     MC_UPDATE_ARG2 |
+                                     MC_ARG2_ONE |
+                                     MC_ARG2_DONT_REPLICATE_ALPHA |
+                                     MC_ARG2_DONT_INVERT |
+                                     MC_UPDATE_OP |
+                                     MC_OP_DISABLE );
    imesa->Setup[I810_CTXREG_MA1] = ( GFX_OP_MAP_ALPHA_STAGES |
-				     MA_STAGE_1 |
-				     MA_UPDATE_ARG1 |
-				     MA_ARG1_CURRENT_ALPHA |
-				     MA_ARG1_DONT_INVERT |
-				     MA_UPDATE_ARG2 |
-				     MA_ARG2_CURRENT_ALPHA |
-				     MA_ARG2_DONT_INVERT |
-				     MA_UPDATE_OP |
-				     MA_OP_ARG1 );
+                                     MA_STAGE_1 |
+                                     MA_UPDATE_ARG1 |
+                                     MA_ARG1_CURRENT_ALPHA |
+                                     MA_ARG1_DONT_INVERT |
+                                     MA_UPDATE_ARG2 |
+                                     MA_ARG2_CURRENT_ALPHA |
+                                     MA_ARG2_DONT_INVERT |
+                                     MA_UPDATE_OP |
+                                     MA_OP_ARG1 );
 
-   if (!(ctx->Texture.ReallyEnabled & 0xf0) || !tObj || !tObj->Complete) {
+   if (ctx->Texture.Unit[1].ReallyEnabled == 0) {
       return;
    }
 
+   tObj = ctx->Texture.Unit[1].Current;
+   if (ctx->Texture.Unit[1].ReallyEnabled != TEXTURE0_2D ||
+       tObj->Image[tObj->BaseLevel]->Border > 0) {
+      /* 1D or 3D texturing enabled, or texture border - fallback */
+      imesa->Fallback |= I810_FALLBACK_TEXTURE;
+      return;
+   }
+
+   /* Do 2D texture setup */
+
+   imesa->Setup[I810_CTXREG_MT] |= MT_TEXEL1_ENABLE;
+
    t = tObj->DriverData;
-  
    if (!t) {
       t = i810CreateTexObj( imesa, tObj );
-      if (!t) return;
+      if (!t)
+         return;
    }
     
    if (t->current_unit != 1)
@@ -1000,6 +1075,8 @@ static void i810UpdateTex1State( GLcontext *ctx )
    if (t->MemBlock)
       i810UpdateTexLRU( imesa, t );
 
+   format = t->image[0].internalFormat;
+
    switch (ctx->Texture.Unit[1].EnvMode) {
    case GL_REPLACE:
       imesa->Setup[I810_CTXREG_MC1] = ( GFX_OP_MAP_COLOR_STAGES |
@@ -1013,7 +1090,7 @@ static void i810UpdateTex1State( GLcontext *ctx )
 					MC_UPDATE_OP |
 					MC_OP_ARG1 );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 ma_modulate_op = MA_OP_ARG1;
       } else {
 	 ma_modulate_op = MA_OP_ARG2;
@@ -1040,7 +1117,7 @@ static void i810UpdateTex1State( GLcontext *ctx )
 					MC_UPDATE_OP |
 					MC_OP_MODULATE );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 ma_modulate_op = MA_OP_ARG1;
       } else {
 	 ma_modulate_op = MA_OP_MODULATE;
@@ -1068,7 +1145,7 @@ static void i810UpdateTex1State( GLcontext *ctx )
 					MC_UPDATE_OP |
 					MC_OP_ADD );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 ma_modulate_op = MA_OP_ARG1;
       } else {
 	 ma_modulate_op = MA_OP_ADD;
@@ -1086,7 +1163,7 @@ static void i810UpdateTex1State( GLcontext *ctx )
 
 
    case GL_DECAL:
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 imesa->Setup[I810_CTXREG_MC1] = ( GFX_OP_MAP_COLOR_STAGES |
 					   MC_STAGE_1 |
 					   MC_UPDATE_DEST |
@@ -1133,7 +1210,7 @@ static void i810UpdateTex1State( GLcontext *ctx )
 					MC_UPDATE_OP |
 					MC_OP_LIN_BLEND_TEX1_COLOR );
 
-      if (t->image[0].internalFormat == GL_RGB) {
+      if (format == GL_RGB) {
 	 imesa->Setup[I810_CTXREG_MA1] = ( GFX_OP_MAP_ALPHA_STAGES |
 					   MA_STAGE_1 |
 					   MA_UPDATE_ARG1 |
@@ -1169,11 +1246,12 @@ void i810UpdateTextureState( GLcontext *ctx )
    if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->bound = 0;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;   
+   imesa->Fallback &= ~I810_FALLBACK_TEXTURE;
    i810UpdateTex0State( ctx );
    i810UpdateTex1State( ctx );
    I810_CONTEXT( ctx )->dirty |= (I810_UPLOAD_CTX |
-				  I810_UPLOAD_TEX0 | 
-				  I810_UPLOAD_TEX1);
+                                  I810_UPLOAD_TEX0 | 
+                                  I810_UPLOAD_TEX1);
 }
 
 
@@ -1196,13 +1274,17 @@ static void i810TexEnv( GLcontext *ctx, GLenum target,
 
       struct gl_texture_unit *texUnit = 
 	 &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      GLfloat *fc = texUnit->EnvColor;
-      GLuint col;
+      const GLfloat *fc = texUnit->EnvColor;
+      GLuint r, g, b, a, col;
+      FLOAT_COLOR_TO_UBYTE_COLOR(r, fc[0]);
+      FLOAT_COLOR_TO_UBYTE_COLOR(g, fc[1]);
+      FLOAT_COLOR_TO_UBYTE_COLOR(b, fc[2]);
+      FLOAT_COLOR_TO_UBYTE_COLOR(a, fc[3]);
 
-      col = ((((GLubyte)fc[3])<<24) | 
-	     (((GLubyte)fc[0])<<16) | 
-	     (((GLubyte)fc[1])<<8) | 
-	     (((GLubyte)fc[2])<<0));
+      col = ((a << 24) | 
+	     (r << 16) | 
+	     (g <<  8) | 
+	     (b <<  0));
     
       if (imesa->Setup[I810_CTXREG_CF1] != col) {
 	 FLUSH_BATCH(imesa);	

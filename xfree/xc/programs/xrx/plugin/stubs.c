@@ -1,4 +1,4 @@
-/* $XConsortium: stubs.c /main/1 1996/08/14 11:46:09 lehors $ */
+/* $Xorg: stubs.c,v 1.3 2000/08/17 19:54:59 cpqbld Exp $ */
 /* -*- Mode: C; tab-width: 4; -*- */
 /*******************************************************************************
  * Simple LiveConnect Sample Plugin

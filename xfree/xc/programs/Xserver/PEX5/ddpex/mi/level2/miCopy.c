@@ -1,4 +1,4 @@
-/* $TOG: miCopy.c /main/10 1998/02/10 12:41:05 kaleb $ */
+/* $Xorg: miCopy.c,v 1.3 2000/08/17 19:47:05 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miCopy.c,v 3.5 1998/07/26 13:13:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miCopy.c,v 3.7 2001/01/17 22:12:23 dawes Exp $ */
 
 
 #include "ddpex.h"

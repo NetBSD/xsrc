@@ -1,4 +1,4 @@
-/* $TOG: bitscale.c /main/36 1998/05/07 15:27:04 kaleb $ */
+/* $Xorg: bitscale.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.14 1999/08/01 07:56:54 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.19 2001/04/05 17:42:27 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -46,6 +46,8 @@ from The Open Group.
 #define   MAX(a,b)    (((a)>(b)) ? a : b)
 #endif
 
+/* Should get this from elsewhere */
+extern int serverGeneration;
 
 static void bitmapUnloadScalable (FontPtr pFont);
 static void ScaleBitmap ( FontPtr pFont, CharInfoPtr opci, 
@@ -80,6 +82,7 @@ typedef FontPtr (*ScaleFunc) ( FontPtr /* pf */,
 /* These next two arrays must be kept in step with the renderer array */
 ScaleFunc scale[] =
 {
+#ifdef	PCFFORMAT
     BitmapScaleBitmaps,
     BitmapScaleBitmaps,
 #ifdef X_GZIP_FONT_COMPRESSION
@@ -88,17 +91,24 @@ ScaleFunc scale[] =
 #ifdef __EMX__
     BitmapScaleBitmaps,
 #endif
+#endif
+#ifdef	SNFFORMAT
     BitmapScaleBitmaps,
     BitmapScaleBitmaps,
 #ifdef X_GZIP_FONT_COMPRESSION
     BitmapScaleBitmaps,
 #endif
+#endif
+#ifdef	BDFFORMAT
     BitmapScaleBitmaps,
     BitmapScaleBitmaps,
 #ifdef X_GZIP_FONT_COMPRESSION
     BitmapScaleBitmaps,
 #endif
+#endif
+#ifdef	PCFFORMAT
     PrinterScaleBitmaps,
+#endif
 };
  
 static FontEntryPtr FindBestToScale ( FontPathElementPtr fpe, 
@@ -714,7 +724,6 @@ ComputeScaledProperties(FontInfoPtr sourceFontInfo, /* the font to be scaled */
     char       *ptr3;
     FontPropPtr fp;
     fontProp   *fpt;
-    extern int  serverGeneration;
     char	*isStringProp;
     int		nProps;
 

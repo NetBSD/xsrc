@@ -1,4 +1,4 @@
-/* $TOG: netaddr.c /main/9 1998/02/09 13:55:43 kaleb $ */
+/* $Xorg: netaddr.c,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/netaddr.c,v 3.3 1998/10/04 09:40:56 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/netaddr.c,v 3.5 2001/01/17 23:45:21 dawes Exp $ */
 
 /*
  * xdm - X display manager

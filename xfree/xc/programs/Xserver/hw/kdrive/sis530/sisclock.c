@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/sis530/sisclock.c,v 1.1 1999/11/19 13:53:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/sis530/sisclock.c,v 1.2 2000/02/23 20:30:07 dawes Exp $ */
 
 #include "sis.h"
 #include <stdio.h>

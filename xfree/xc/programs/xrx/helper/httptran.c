@@ -1,4 +1,4 @@
-/* $TOG: httptran.c /main/2 1998/02/10 18:29:50 kaleb $ */
+/* $Xorg: httptran.c,v 1.3 2000/08/17 19:54:57 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -23,7 +23,7 @@ The Open Group.
 
 */
 
-/* $XFree86: xc/programs/xrx/helper/httptran.c,v 1.2 1996/12/24 02:27:54 dawes Exp $ */
+/* $XFree86: xc/programs/xrx/helper/httptran.c,v 1.4 2001/01/17 23:46:23 dawes Exp $ */
 
 #if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define TRANS(func) _HttpTrans##func

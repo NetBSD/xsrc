@@ -1,4 +1,4 @@
-/* $TOG: inflate.c /main/4 1998/02/04 14:33:57 kaleb $ */
+/* $Xorg: inflate.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-1998 Mark Adler

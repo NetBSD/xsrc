@@ -1,4 +1,4 @@
-/* $XConsortium: action.h /main/3 1996/03/01 14:31:55 kaleb $ */
+/* $Xorg: action.h,v 1.3 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,5 +1,5 @@
 /*
- * $TOG: AllWidgets.h /main/4 1998/02/06 12:43:57 kaleb $
+ * $Xorg: AllWidgets.h,v 1.4 2000/08/17 19:45:30 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,6 +22,8 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef _XawAllWidgets_h
 #define _XawAllWidgets_h
+
+#include <X11/Xmu/WidgetNode.h>
 
 /*
  * This file matches the generated AllWidgets.c

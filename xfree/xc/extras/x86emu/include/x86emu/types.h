@@ -36,7 +36,7 @@
 *
 ****************************************************************************/
 
-/* $XFree86: xc/extras/x86emu/include/x86emu/types.h,v 1.3 2000/01/26 22:05:46 tsi Exp $ */
+/* $XFree86: xc/extras/x86emu/include/x86emu/types.h,v 1.4 2000/09/26 15:56:44 tsi Exp $ */
 
 #ifndef __X86EMU_TYPES_H
 #define __X86EMU_TYPES_H

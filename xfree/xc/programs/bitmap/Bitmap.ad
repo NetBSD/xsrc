@@ -1,4 +1,4 @@
-! $XConsortium: Bitmap.ad,v 1.19 95/06/29 19:25:34 kaleb Exp $
+! $Xorg: Bitmap.ad,v 1.3 2000/08/17 19:53:49 cpqbld Exp $
 ! The App-defaults file for Bitmap.
 
 *TransientShell.allowShellResize:	True

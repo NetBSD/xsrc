@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/dummylib/xf86opt.c,v 1.2 2001/05/04 19:05:50 dawes Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -15,7 +15,7 @@ xf86ProcessOptions(int i, pointer p, OptionInfoPtr o)
 }
 
 Bool
-xf86GetOptValBool(OptionInfoPtr o, int i, Bool *b)
+xf86GetOptValBool(const OptionInfoRec *o, int i, Bool *b)
 {
     return FALSE;
 }

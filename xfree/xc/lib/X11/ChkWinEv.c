@@ -1,4 +1,4 @@
-/* $TOG: ChkWinEv.c /main/18 1998/02/06 17:07:14 kaleb $ */
+/* $Xorg: ChkWinEv.c,v 1.3 2000/08/17 19:44:31 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1987, 1998  The Open Group

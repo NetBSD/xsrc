@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/9 1996/09/28 17:12:28 rws $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:48:21 cpqbld Exp $
 #include <Server.tmpl>
 
 #define IHaveSubdirs

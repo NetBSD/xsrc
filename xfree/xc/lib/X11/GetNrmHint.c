@@ -1,4 +1,4 @@
-/* $TOG: GetNrmHint.c /main/8 1998/02/06 17:27:17 kaleb $ */
+/* $Xorg: GetNrmHint.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca,
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,

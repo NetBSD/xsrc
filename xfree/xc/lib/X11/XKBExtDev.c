@@ -1,4 +1,4 @@
-/* $XConsortium: XKBExtDev.c /main/3 1996/08/31 12:44:26 kaleb $ */
+/* $Xorg: XKBExtDev.c,v 1.3 2000/08/17 19:45:01 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/XKBExtDev.c,v 3.3 2001/01/17 19:41:48 dawes Exp $ */
 
 #include <stdio.h>
 #define NEED_REPLIES

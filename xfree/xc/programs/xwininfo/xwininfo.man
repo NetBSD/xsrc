@@ -1,4 +1,4 @@
-.\" $TOG: xwininfo.man /main/26 1998/02/09 14:21:13 kaleb $
+.\" $Xorg: xwininfo.man,v 1.3 2000/08/17 19:55:16 cpqbld Exp $
 .\" Copyright 1988, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XWININFO 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xwininfo/xwininfo.man,v 1.7 2001/01/27 18:21:25 dawes Exp $
+.\"
+.TH XWININFO 1 __xorgversion__
 .SH NAME
 xwininfo \- window information utility for X
 .SH SYNOPSIS
@@ -148,7 +151,7 @@ This option is a quick way to ask for all information possible.
 .PP
 .TP 8
 .B \-display \fIdisplay\fP
-This option allows you to specify the server to connect to; see \fIX(1)\fP.
+This option allows you to specify the server to connect to; see \fIX(__miscmansuffix__)\fP.
 .SH EXAMPLE
 .PP
 The following is a sample summary taken with no options specified:
@@ -181,7 +184,7 @@ xwininfo: Window id: 0x60000f "xterm"
 .B DISPLAY
 To get the default host and display number.
 .SH SEE ALSO
-X(1), xprop(1)
+X(__miscmansuffix__), xprop(1)
 .SH BUGS
 Using \fB\-stats \-bits\fP shows some redundant information.
 .PP

@@ -1,4 +1,4 @@
-/* $XConsortium: jritypes.h /main/2 1996/11/13 09:27:14 kaleb $ */
+/* $Xorg: jritypes.h,v 1.3 2000/08/17 19:55:01 cpqbld Exp $ */
 /* -*- Mode: C; tab-width: 4; -*- */
 /*******************************************************************************
  * Java Runtime Interface

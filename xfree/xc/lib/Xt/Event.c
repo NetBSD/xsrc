@@ -1,4 +1,4 @@
-/* $TOG: Event.c /main/153 1998/02/06 13:21:46 kaleb $ */
+/* $Xorg: Event.c,v 1.4 2000/08/17 19:46:11 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -663,7 +663,7 @@ void XtUnregisterDrawable(display, drawable)
 	return;
     }
     idx = WWHASH(tab, window);
-    if (entry = tab->entries[idx]) {
+    if ((entry = tab->entries[idx])) {
 	if (entry != widget) {
 	    rehash = WWREHASHVAL(tab, window);
 	    do {
@@ -1435,7 +1435,7 @@ Boolean _XtDefaultDispatcher(event)
 	    
 	if ((grabList == NULL ||_XtOnGrabList(dspWidget, grabList))
 	    && XtIsSensitive(dspWidget)) {
-	    if (was_filtered = XFilterEvent(event, XtWindow(dspWidget))) {
+	    if ((was_filtered = XFilterEvent(event, XtWindow(dspWidget)))) {
 		/* If this event activated a device grab, release it. */
 		_XtUngrabBadGrabs(event, widget, mask, pdi);
 		was_dispatched = True;

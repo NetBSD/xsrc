@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/fonts/fontproto.h,v 1.1 1999/08/21 13:47:34 dawes Exp $ */
+/* $XFree86: xc/include/fonts/fontproto.h,v 1.3 2001/04/05 17:42:26 dawes Exp $ */
 
 /***********************************************************
 
@@ -25,7 +25,8 @@ authorization from The XFree86 Project Inc..
 #ifndef _FONTPROTO_H
 #define _FONTPROTO_H
 
-/* Functions defined by the server and used in lib/fonts */
+/* Externally provided functions required by libXfont */
+
 extern int RegisterFPEFunctions ( NameCheckFunc name_func, 
 				  InitFpeFunc init_func, 
 				  FreeFpeFunc free_func, 
@@ -60,9 +61,15 @@ extern Bool ClientSignal ( ClientPtr client );
 extern void DeleteFontClientID ( Font id );
 extern Font GetNewFontClientID ( void );
 extern int StoreFontClientFont ( FontPtr pfont, Font id );
+extern void FontFileRegisterFpeFunctions ( void );
+extern void FontFileCheckRegisterFpeFunctions ( void );
 
 extern Bool XpClientIsBitmapClient ( ClientPtr client );
 extern Bool XpClientIsPrintClient( ClientPtr client, FontPathElementPtr fpe );
+extern void PrinterFontRegisterFpeFunctions ( void );
+
+extern void fs_register_fpe_functions ( void );
+extern void check_fs_register_fpe_functions ( void );
 
 /* util/private.c */
 extern FontPtr  CreateFontRec (void);

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mipolypnt.c /main/7 1998/02/09 14:47:55 kaleb $ */
+/* $Xorg: mipolypnt.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 #include "X.h"
 #include "Xprotostr.h"
 #include "pixmapstr.h"

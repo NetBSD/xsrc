@@ -1,4 +1,4 @@
-/* $TOG: ppaste.c /main/5 1998/02/09 16:10:44 kaleb $ */
+/* $Xorg: ppaste.c,v 1.3 2000/08/17 19:47:29 cpqbld Exp $ */
 /**** module ppaste.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/ppaste.c,v 3.2 1998/10/05 13:22:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/ppaste.c,v 3.4 2001/01/17 22:12:53 dawes Exp $ */
 
 #define _XIEC_PPASTE
 

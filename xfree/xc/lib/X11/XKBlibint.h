@@ -1,4 +1,4 @@
-/* $TOG: XKBlibint.h /main/15 1997/06/10 06:53:27 kaleb $ */
+/* $Xorg: XKBlibint.h,v 1.3 2000/08/17 19:45:04 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBlibint.h,v 3.2 1997/03/10 10:10:08 hohndel Exp $ */
+/* $XFree86: xc/lib/X11/XKBlibint.h,v 3.4 2001/01/17 19:41:49 dawes Exp $ */
 
 #ifndef _XKBLIBINT_H_
 #define	_XKBLIBINT_H_

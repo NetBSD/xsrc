@@ -1,4 +1,4 @@
-/* $TOG: infblock.c /main/4 1998/02/04 14:33:33 kaleb $ */
+/* $Xorg: infblock.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-1998 Mark Adler

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.41 2000/11/02 02:51:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.44 2001/04/12 20:10:00 torrey Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,10 +41,10 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $Xorg: servermd.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
+
 #ifndef SERVERMD_H
 #define SERVERMD_H 1
-
-/* $TOG: servermd.h /main/60 1998/02/09 14:30:08 kaleb $ */
 
 /*
  * Machine dependent values:
@@ -148,21 +148,6 @@ SOFTWARE.
 #define AVOID_MEMORY_READ
 
 #endif /* __arm32__ */
-
-#ifdef __DARWIN__
-
-#define IMAGE_BYTE_ORDER        MSBFirst
-#define BITMAP_BIT_ORDER        MSBFirst
-#define GLYPHPADBYTES           4
-#define GETLEFTBITS_ALIGNMENT   1
-
-#define LARGE_INSTRUCTION_CACHE
-#define FAST_CONSTANT_OFFSET_MODE
-#define PLENTIFUL_REGISTERS
-#define AVOID_MEMORY_READ
-#define FAST_MEMCPY
-
-#endif /* __DARWIN__ */
 
 #if defined(__powerpc__)
 

@@ -1,6 +1,6 @@
-.\" $XFree86$
+.\" $XFree86: xc/programs/xsetpointer/xsetpnt.man,v 3.1 2001/01/27 18:21:23 dawes Exp $
 .\"
-.TH xsetpointer 1 "Release 6" "X Version 11"
+.TH xsetpointer 1 __vendorversion__
 .SH NAME
 xsetpointer \- set an X Input device as the main pointer
 .SH SYNOPSIS

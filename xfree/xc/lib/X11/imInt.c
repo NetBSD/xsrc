@@ -1,4 +1,4 @@
-/* $TOG: imInt.c /main/5 1998/05/30 21:11:16 kaleb $ */
+/* $Xorg: imInt.c,v 1.8 2000/08/17 19:45:13 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imInt.c,v 3.7 2000/05/18 23:46:12 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imInt.c,v 3.9 2001/01/17 19:41:51 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -166,7 +166,7 @@ _XimStrstr(src, dest)
     int			 len;
     
     len = strlen(dest);
-    while ((src = strchr(src, *dest)) != 0) {
+    while((src = strchr(src, *dest))) {
 	if(!strncmp(src, dest, len))
 	    return src;
 	src++;
@@ -194,22 +194,18 @@ _XimMakeImName(lcd)
 	    end = begin += strlen(ximmodifier);
 	    while (*end && *end != '@')
 		end++;
-	    ret = Xmalloc(end - begin + 1);
-	    if (ret != NULL) {
-		if (begin != NULL && end != NULL) {
-		    (void)strncpy(ret, begin, end - begin);
-		    ret[end - begin] = '\0';
-		}
-	    }
-	    return ret;
+	}
+    }
+    ret = Xmalloc(end - begin + 1);
+    if (ret != NULL) {
+	if (begin != NULL && end != NULL) {
+	    (void)strncpy(ret, begin, end - begin);
+	    ret[end - begin] = '\0';
+	} else {
+	    ret[0] = '\0';
 	}
     }
 
-    /* else return an empty string */
-    ret = Xmalloc(1);
-    if (ret != NULL) {
-	ret[0] = '\0';
-    }
     return ret;
 }
 

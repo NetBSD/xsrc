@@ -1,5 +1,10 @@
-XCOMM $TOG: Imakefile /main/14 1998/06/16 15:23:15 msr $
-XCOMM $XFree86: xc/lib/font/Imakefile,v 3.28 1999/11/19 13:53:27 hohndel Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:24 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/lib/font/Imakefile,v 3.32 2001/01/17 19:43:16 dawes Exp $
+
 #include <Server.tmpl>
 
 #define	IHaveSubdirs
@@ -129,12 +134,12 @@ InstallSharedLibrary($(LIBNAME),$(SOREV),$(SHLIBDIR))
 #endif /* SharedLibFont */
 
 #if DebugLibFont
-DebuggedDepLibraryTarget(Xfont,$(SUBDIRS) $(DONES),$(DEBUG_OBJS))
+DebuggedDepLibraryTarget($(LIBNAME),$(SUBDIRS) $(DONES),$(DEBUG_OBJS))
 InstallLibrary($(LIBNAME)_d,$(USRLIBDIR))
 #endif /* DebugLibFont */
 
 #if ProfileLibFont
-ProfiledDepLibraryTarget(Xfont,$(SUBDIRS) $(DONES),$(PROFILE_OBJS))
+ProfiledDepLibraryTarget($(LIBNAME),$(SUBDIRS) $(DONES),$(PROFILE_OBJS))
 InstallLibrary($(LIBNAME)_p,$(USRLIBDIR))
 #endif /* ProfileLibFont */
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.c,v 1.5 2000/12/04 19:21:47 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.c,v 1.8 2001/03/21 16:14:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -29,6 +29,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *   Keith Whitwell <keithw@valinux.com>
  *
  */
@@ -40,6 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_vb.h"
 #include "r128_tex.h"
 
+#include "context.h"
 #include "mmath.h"
 #include "pb.h"
 #include "enums.h"
@@ -51,9 +53,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r128UpdateAlphaMode( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 a = r128ctx->setup.misc_3d_state_cntl_reg;
-   CARD32 t = r128ctx->setup.tex_cntl_c;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint a = rmesa->setup.misc_3d_state_cntl_reg;
+   GLuint t = rmesa->setup.tex_cntl_c;
 
    if ( ctx->Color.AlphaEnabled ) {
       GLubyte ref = ctx->Color.AlphaRef;
@@ -63,7 +65,6 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
       switch ( ctx->Color.AlphaFunc ) {
       case GL_NEVER:
 	 a |= R128_ALPHA_TEST_NEVER;
-	 ref = 0;
 	 break;
       case GL_LESS:
 	 a |= R128_ALPHA_TEST_LESS;
@@ -159,48 +160,54 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
       t &= ~R128_ALPHA_ENABLE;
    }
 
-   if ( r128ctx->setup.misc_3d_state_cntl_reg != a ) {
-      r128ctx->setup.misc_3d_state_cntl_reg = a;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
+   if ( rmesa->setup.misc_3d_state_cntl_reg != a ) {
+      rmesa->setup.misc_3d_state_cntl_reg = a;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
    }
-   if ( r128ctx->setup.tex_cntl_c != t ) {
-      r128ctx->setup.tex_cntl_c = t;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
+   if ( rmesa->setup.tex_cntl_c != t ) {
+      rmesa->setup.tex_cntl_c = t;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
    }
 }
 
 static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLclampf ref )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_ALPHA;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_ALPHA;
 }
 
 static void r128DDBlendEquation( GLcontext *ctx, GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_ALPHA;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_ALPHA;
+
+   if ( ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY ) {
+      rmesa->Fallback |= R128_FALLBACK_LOGICOP;
+   } else {
+      rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
+   }
 }
 
 static void r128DDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_ALPHA;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_ALPHA;
 }
 
 static void r128DDBlendFuncSeparate( GLcontext *ctx,
 				     GLenum sfactorRGB, GLenum dfactorRGB,
 				     GLenum sfactorA, GLenum dfactorA )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_ALPHA;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_ALPHA;
 }
 
 
@@ -210,9 +217,9 @@ static void r128DDBlendFuncSeparate( GLcontext *ctx,
 
 static void r128UpdateZMode( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 z = r128ctx->setup.z_sten_cntl_c;
-   CARD32 t = r128ctx->setup.tex_cntl_c;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint z = rmesa->setup.z_sten_cntl_c;
+   GLuint t = rmesa->setup.tex_cntl_c;
 
    if ( ctx->Depth.Test ) {
       z &= ~R128_Z_TEST_MASK;
@@ -255,45 +262,45 @@ static void r128UpdateZMode( GLcontext *ctx )
       t &= ~R128_Z_WRITE_ENABLE;
    }
 
-   if ( r128ctx->setup.z_sten_cntl_c != z ) {
-      r128ctx->setup.z_sten_cntl_c = z;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   if ( rmesa->setup.z_sten_cntl_c != z ) {
+      rmesa->setup.z_sten_cntl_c = z;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
-   if ( r128ctx->setup.tex_cntl_c != t ) {
-      r128ctx->setup.tex_cntl_c = t;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   if ( rmesa->setup.tex_cntl_c != t ) {
+      rmesa->setup.tex_cntl_c = t;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
 }
 
 static void r128DDDepthFunc( GLcontext *ctx, GLenum func )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_DEPTH;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_DEPTH;
 }
 
 static void r128DDDepthMask( GLcontext *ctx, GLboolean flag )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_DEPTH;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_DEPTH;
 }
 
 static void r128DDClearDepth( GLcontext *ctx, GLclampd d )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   switch ( r128ctx->DepthSize ) {
-   case 16:
-      r128ctx->ClearDepth = d * 0x0000ffff;
+   switch ( rmesa->setup.z_sten_cntl_c &  R128_Z_PIX_WIDTH_MASK ) {
+   case R128_Z_PIX_WIDTH_16:
+      rmesa->ClearDepth = d * 0x0000ffff;
       break;
-   case 24:
-      r128ctx->ClearDepth = d * 0x00ffffff;
+   case R128_Z_PIX_WIDTH_24:
+      rmesa->ClearDepth = d * 0x00ffffff;
       break;
-   case 32:
-      r128ctx->ClearDepth = d * 0xffffffff;
+   case R128_Z_PIX_WIDTH_32:
+      rmesa->ClearDepth = d * 0xffffffff;
       break;
    }
 }
@@ -305,10 +312,10 @@ static void r128DDClearDepth( GLcontext *ctx, GLclampd d )
 
 static void r128UpdateFogAttrib( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 t = r128ctx->setup.tex_cntl_c;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint t = rmesa->setup.tex_cntl_c;
    GLubyte c[4];
-   CARD32 col;
+   GLuint col;
 
    if ( ctx->FogMode == FOG_FRAGMENT ) {
       t |=  R128_FOG_ENABLE;
@@ -316,25 +323,25 @@ static void r128UpdateFogAttrib( GLcontext *ctx )
       t &= ~R128_FOG_ENABLE;
    }
 
-   FLOAT_RGBA_TO_UBYTE_RGBA( c, ctx->Fog.Color );
-   col = r128PackColor( 32, c[0], c[1], c[2], c[3] );
+   FLOAT_RGB_TO_UBYTE_RGB( c, ctx->Fog.Color );
+   col = r128PackColor( 4, c[0], c[1], c[2], 0 );
 
-   if ( r128ctx->setup.fog_color_c != col ) {
-      r128ctx->setup.fog_color_c = col;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   if ( rmesa->setup.fog_color_c != col ) {
+      rmesa->setup.fog_color_c = col;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
-   if ( r128ctx->setup.tex_cntl_c != t ) {
-      r128ctx->setup.tex_cntl_c = t;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   if ( rmesa->setup.tex_cntl_c != t ) {
+      rmesa->setup.tex_cntl_c = t;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
 }
 
 static void r128DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_FOG;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_FOG;
 }
 
 
@@ -344,14 +351,14 @@ static void r128DDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 
 static void r128UpdateClipping( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   if ( r128ctx->driDrawable ) {
-      __DRIdrawablePrivate *drawable = r128ctx->driDrawable;
+   if ( rmesa->driDrawable ) {
+      __DRIdrawablePrivate *drawable = rmesa->driDrawable;
       int x1 = 0;
       int y1 = 0;
-      int x2 = r128ctx->driDrawable->w - 1;
-      int y2 = r128ctx->driDrawable->h - 1;
+      int x2 = drawable->w - 1;
+      int y2 = drawable->h - 1;
 
       if ( ctx->Scissor.Enabled ) {
 	 if ( ctx->Scissor.X > x1 ) {
@@ -368,51 +375,25 @@ static void r128UpdateClipping( GLcontext *ctx )
 	 }
       }
 
-      x1 += r128ctx->driDrawable->x;
-      y1 += r128ctx->driDrawable->y;
-      x2 += r128ctx->driDrawable->x;
-      y2 += r128ctx->driDrawable->y;
+      x1 += drawable->x;
+      y1 += drawable->y;
+      x2 += drawable->x;
+      y2 += drawable->y;
 
-      if ( 0 ) {
-	 fprintf( stderr, "%s: drawable %3d %3d %3d %3d\n",
-		  __FUNCTION__,
-		  r128ctx->driDrawable->x,
-		  r128ctx->driDrawable->y,
-		  r128ctx->driDrawable->w,
-		  r128ctx->driDrawable->h );
-	 fprintf( stderr, "%s: draw buf %3d %3d %3d %3d\n",
-		  __FUNCTION__,
-		  ctx->DrawBuffer->Xmin,
-		  ctx->DrawBuffer->Ymin,
-		  ctx->DrawBuffer->Xmax,
-		  ctx->DrawBuffer->Ymax );
-	 fprintf( stderr, "%s:  scissor %3d %3d %3d %3d\n",
-		  __FUNCTION__,
-		  ctx->Scissor.X,
-		  ctx->Scissor.Y,
-		  ctx->Scissor.Width,
-		  ctx->Scissor.Height );
-	 fprintf( stderr, "%s:    final %3d %3d %3d %3d\n",
-		  __FUNCTION__, x1, y1, x2, y2 );
-	 fprintf( stderr, "\n" );
-      }
+      rmesa->setup.sc_top_left_c     = ((y1 << 16) | x1);
+      rmesa->setup.sc_bottom_right_c = ((y2 << 16) | x2);
 
-      r128ctx->setup.sc_top_left_c = ((x1 << 0) |
-				      (y1 << 16));
-      r128ctx->setup.sc_bottom_right_c = ((x2 << 0) |
-					  (y2 << 16));
-
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
 }
 
 static void r128DDScissor( GLcontext *ctx,
 			   GLint x, GLint y, GLsizei w, GLsizei h )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_CLIP;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_CLIP;
 }
 
 
@@ -422,8 +403,8 @@ static void r128DDScissor( GLcontext *ctx,
 
 static void r128UpdateCull( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 f = r128ctx->setup.pm4_vc_fpu_setup;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint f = rmesa->setup.pm4_vc_fpu_setup;
 
    f &= ~R128_FRONT_DIR_MASK;
 
@@ -453,26 +434,26 @@ static void r128UpdateCull( GLcontext *ctx )
       }
    }
 
-   if ( r128ctx->setup.pm4_vc_fpu_setup != f ) {
-      r128ctx->setup.pm4_vc_fpu_setup = f;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_SETUP;
+   if ( rmesa->setup.pm4_vc_fpu_setup != f ) {
+      rmesa->setup.pm4_vc_fpu_setup = f;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_SETUP;
    }
 }
 
 static void r128DDCullFace( GLcontext *ctx, GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_CULL;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_CULL;
 }
 
 static void r128DDFrontFace( GLcontext *ctx, GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_CULL;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_CULL;
 }
 
 
@@ -482,17 +463,17 @@ static void r128DDFrontFace( GLcontext *ctx, GLenum mode )
 
 static void r128UpdateMasks( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   GLuint mask = r128PackColor( r128ctx->r128Screen->bpp,
+   GLuint mask = r128PackColor( rmesa->r128Screen->cpp,
 				ctx->Color.ColorMask[RCOMP],
 				ctx->Color.ColorMask[GCOMP],
 				ctx->Color.ColorMask[BCOMP],
 				ctx->Color.ColorMask[ACOMP] );
 
-   if ( r128ctx->setup.plane_3d_mask_c != mask ) {
-      r128ctx->setup.plane_3d_mask_c = mask;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
+   if ( rmesa->setup.plane_3d_mask_c != mask ) {
+      rmesa->setup.plane_3d_mask_c = mask;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
    }
 }
 
@@ -500,12 +481,13 @@ static GLboolean r128DDColorMask( GLcontext *ctx,
 				  GLboolean r, GLboolean g,
 				  GLboolean b, GLboolean a )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   FLUSH_BATCH( r128ctx );
-   r128ctx->new_state |= R128_NEW_MASKS;
+   FLUSH_BATCH( rmesa );
+   rmesa->new_state |= R128_NEW_MASKS;
 
-   return GL_TRUE;
+   return GL_FALSE; /* This forces the software paths to do colormasking. */
+                    /* This function will return void when we use Mesa 3.5 */
 }
 
 
@@ -517,48 +499,33 @@ static GLboolean r128DDColorMask( GLcontext *ctx,
  * sense to break them out of the core texture state update routines.
  */
 
-static void r128UpdateRenderAttrib( GLcontext *ctx )
-{
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 t = r128ctx->setup.tex_cntl_c;
-   CARD32 bias = r128ctx->lod_bias & 0xff;;
-
-   t &= ~R128_LOD_BIAS_MASK;
-   t |= (bias << R128_LOD_BIAS_SHIFT);
-
-   if ( ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ) {
-      t |=  R128_SPEC_LIGHT_ENABLE;
-   } else {
-      t &= ~R128_SPEC_LIGHT_ENABLE;
-   }
-
-   if ( ctx->Color.DitherFlag ) {
-      t |=  R128_DITHER_ENABLE;
-   } else {
-      t &= ~R128_DITHER_ENABLE;
-   }
-
-   if ( r128ctx->setup.tex_cntl_c != t ) {
-      r128ctx->setup.tex_cntl_c = t;
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
-   }
-}
-
 static void r128DDLightModelfv( GLcontext *ctx, GLenum pname,
 				const GLfloat *param )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( pname == GL_LIGHT_MODEL_COLOR_CONTROL ) {
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_RENDER;
+      GLuint t = rmesa->setup.tex_cntl_c;
+
+      FLUSH_BATCH( rmesa );
+
+      if ( ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ) {
+	 t |=  R128_SPEC_LIGHT_ENABLE;
+      } else {
+	 t &= ~R128_SPEC_LIGHT_ENABLE;
+      }
+
+      if ( rmesa->setup.tex_cntl_c != t ) {
+	 rmesa->setup.tex_cntl_c = t;
+	 rmesa->dirty |= R128_UPLOAD_CONTEXT;
+      }
    }
 }
 
 static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 s = r128ctx->setup.pm4_vc_fpu_setup;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint s = rmesa->setup.pm4_vc_fpu_setup;
 
    s &= ~R128_FPU_COLOR_MASK;
 
@@ -573,12 +540,12 @@ static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
       return;
    }
 
-   if ( r128ctx->setup.pm4_vc_fpu_setup != s ) {
-      FLUSH_BATCH( r128ctx );
-      r128ctx->setup.pm4_vc_fpu_setup = s;
+   if ( rmesa->setup.pm4_vc_fpu_setup != s ) {
+      FLUSH_BATCH( rmesa );
+      rmesa->setup.pm4_vc_fpu_setup = s;
 
-      r128ctx->new_state |= R128_NEW_CONTEXT;
-      r128ctx->dirty |= R128_UPLOAD_SETUP;
+      rmesa->new_state |= R128_NEW_CONTEXT;
+      rmesa->dirty |= R128_UPLOAD_SETUP;
    }
 }
 
@@ -589,14 +556,14 @@ static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
 
 void r128UpdateWindow( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   int x = r128ctx->driDrawable->x;
-   int y = r128ctx->driDrawable->y;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   int x = rmesa->driDrawable->x;
+   int y = rmesa->driDrawable->y;
 
-   r128ctx->setup.window_xy_offset = ((y << R128_WINDOW_Y_SHIFT) |
-				      (x << R128_WINDOW_X_SHIFT));
+   rmesa->setup.window_xy_offset = ((y << R128_WINDOW_Y_SHIFT) |
+				    (x << R128_WINDOW_X_SHIFT));
 
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_WINDOW;
+   rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_WINDOW;
 }
 
 
@@ -607,73 +574,67 @@ void r128UpdateWindow( GLcontext *ctx )
 static void r128DDClearColor( GLcontext *ctx,
 			      GLubyte r, GLubyte g, GLubyte b, GLubyte a )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   r128ctx->ClearColor = r128PackColor( r128ctx->r128Screen->bpp,
-					r, g, b, a );
+   rmesa->ClearColor = r128PackColor( rmesa->r128Screen->cpp,
+				      r, g, b, a );
 }
 
 static void r128DDColor( GLcontext *ctx,
 			 GLubyte r, GLubyte g, GLubyte b, GLubyte a )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   r128ctx->Color = r128PackColor( r128ctx->r128Screen->bpp,
-				   r, g, b, a );
+   rmesa->Color = r128PackColor( rmesa->r128Screen->cpp,
+				 r, g, b, a );
 }
 
 static void r128DDLogicOpCode( GLcontext *ctx, GLenum opcode )
 {
-   if ( ctx->Color.ColorLogicOpEnabled ) {
-      r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-      FLUSH_BATCH( r128ctx );
+   if ( ctx->Color.ColorLogicOpEnabled ) {
+      FLUSH_BATCH( rmesa );
 
       if ( opcode == GL_COPY ) {
-         r128ctx->Fallback &= ~R128_FALLBACK_LOGICOP;
+         rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
       } else {
-         r128ctx->Fallback |= R128_FALLBACK_LOGICOP;
+         rmesa->Fallback |= R128_FALLBACK_LOGICOP;
       }
+   } else {
+      rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
    }
 }
 
 static GLboolean r128DDSetDrawBuffer( GLcontext *ctx, GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    int found = GL_TRUE;
 
-   FLUSH_BATCH( r128ctx );
+   FLUSH_BATCH( rmesa );
 
-   if ( r128ctx->DrawBuffer != mode ) {
-      r128ctx->DrawBuffer = mode;
-      r128ctx->Fallback &= ~R128_FALLBACK_DRAW_BUFFER;
+   if ( rmesa->DrawBuffer != mode ) {
+      rmesa->DrawBuffer = mode;
+      rmesa->Fallback &= ~R128_FALLBACK_DRAW_BUFFER;
 
       switch ( mode ) {
       case GL_FRONT_LEFT:
-	 r128ctx->drawX      = r128ctx->r128Screen->frontX;
-	 r128ctx->drawY      = r128ctx->r128Screen->frontY;
-	 r128ctx->drawOffset = r128ctx->r128Screen->frontOffset;
-	 r128ctx->drawPitch  = r128ctx->r128Screen->frontPitch;
-	 r128ctx->readX      = r128ctx->r128Screen->frontX;
-	 r128ctx->readY      = r128ctx->r128Screen->frontY;
+	 rmesa->drawOffset = rmesa->r128Screen->frontOffset;
+	 rmesa->drawPitch  = rmesa->r128Screen->frontPitch;
 	 break;
       case GL_BACK_LEFT:
-	 r128ctx->drawX      = r128ctx->r128Screen->backX;
-	 r128ctx->drawY      = r128ctx->r128Screen->backY;
-	 r128ctx->drawOffset = r128ctx->r128Screen->backOffset;
-	 r128ctx->drawPitch  = r128ctx->r128Screen->backPitch;
-	 r128ctx->readX      = r128ctx->r128Screen->backX;
-	 r128ctx->readY      = r128ctx->r128Screen->backY;
+	 rmesa->drawOffset = rmesa->r128Screen->backOffset;
+	 rmesa->drawPitch  = rmesa->r128Screen->backPitch;
 	 break;
       default:
-	 r128ctx->Fallback |= R128_FALLBACK_DRAW_BUFFER;
+	 rmesa->Fallback |= R128_FALLBACK_DRAW_BUFFER;
 	 found = GL_FALSE;
 	 break;
       }
 
-      r128ctx->setup.dst_pitch_offset_c = (((r128ctx->drawPitch/8) << 21) |
-					   (r128ctx->drawOffset >> 5));
-      r128ctx->new_state |= R128_NEW_WINDOW;
+      rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
+					 (rmesa->drawOffset >> 5));
+      rmesa->new_state |= R128_NEW_WINDOW;
    }
 
    return found;
@@ -683,25 +644,21 @@ static void r128DDSetReadBuffer( GLcontext *ctx,
 				 GLframebuffer *colorBuffer,
 				 GLenum mode )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   r128ctx->Fallback &= ~R128_FALLBACK_READ_BUFFER;
+   rmesa->Fallback &= ~R128_FALLBACK_READ_BUFFER;
 
    switch ( mode ) {
    case GL_FRONT_LEFT:
-      r128ctx->readOffset = r128ctx->r128Screen->frontOffset;
-      r128ctx->readPitch  = r128ctx->r128Screen->frontPitch;
-      r128ctx->readX      = r128ctx->r128Screen->frontX;
-      r128ctx->readY      = r128ctx->r128Screen->frontY;
+      rmesa->readOffset = rmesa->r128Screen->frontOffset;
+      rmesa->readPitch  = rmesa->r128Screen->frontPitch;
       break;
    case GL_BACK_LEFT:
-      r128ctx->readOffset = r128ctx->r128Screen->backOffset;
-      r128ctx->readPitch  = r128ctx->r128Screen->backPitch;
-      r128ctx->readX      = r128ctx->r128Screen->backX;
-      r128ctx->readY      = r128ctx->r128Screen->backY;
+      rmesa->readOffset = rmesa->r128Screen->backOffset;
+      rmesa->readPitch  = rmesa->r128Screen->backPitch;
       break;
    default:
-      r128ctx->Fallback |= R128_FALLBACK_READ_BUFFER;
+      rmesa->Fallback |= R128_FALLBACK_READ_BUFFER;
       break;
    }
 }
@@ -713,28 +670,27 @@ static void r128DDSetReadBuffer( GLcontext *ctx,
 
 static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint *stipple = (GLuint *)mask;
 
-   FLUSH_BATCH( r128ctx );
-   ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
+   FLUSH_BATCH( rmesa );
 
-   r128ctx->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
+   rmesa->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
 
    if ( ctx->Polygon.StippleFlag && ctx->PB->primitive == GL_POLYGON ) {
-      r128ctx->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_32x32_MONO_FG_LA;
+      rmesa->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_32x32_MONO_FG_LA;
    } else {
-      r128ctx->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_SOLID_COLOR;
+      rmesa->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_SOLID_COLOR;
    }
 
-   LOCK_HARDWARE( r128ctx );
+   LOCK_HARDWARE( rmesa );
 
-   drmR128PolygonStipple( r128ctx->driFd, stipple );
+   drmR128PolygonStipple( rmesa->driFd, stipple );
 
-   UNLOCK_HARDWARE( r128ctx );
+   UNLOCK_HARDWARE( rmesa );
 
-   r128ctx->new_state |= R128_NEW_CONTEXT;
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   rmesa->new_state |= R128_NEW_CONTEXT;
+   rmesa->dirty |= R128_UPLOAD_CONTEXT;
 }
 
 
@@ -744,7 +700,7 @@ static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
 static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %s = %s )\n",
@@ -754,69 +710,91 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    switch ( cap ) {
    case GL_ALPHA_TEST:
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_ALPHA;
+      break;
+
    case GL_BLEND:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_ALPHA;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_ALPHA;
+
+      if ( ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY ) {
+	 rmesa->Fallback |= R128_FALLBACK_LOGICOP;
+      } else {
+	 rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
+      }
       break;
 
    case GL_CULL_FACE:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_CULL;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_CULL;
       break;
 
    case GL_DEPTH_TEST:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_DEPTH;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_DEPTH;
       break;
 
    case GL_DITHER:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_RENDER;
+      do {
+	 GLuint t = rmesa->setup.tex_cntl_c;
+	 FLUSH_BATCH( rmesa );
+
+	 if ( ctx->Color.DitherFlag ) {
+	    t |=  R128_DITHER_ENABLE;
+	 } else {
+	    t &= ~R128_DITHER_ENABLE;
+	 }
+
+	 if ( rmesa->setup.tex_cntl_c != t ) {
+	    rmesa->setup.tex_cntl_c = t;
+	    rmesa->dirty |= R128_UPLOAD_CONTEXT;
+	 }
+      } while (0);
       break;
 
    case GL_FOG:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_FOG;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_FOG;
       break;
 
-   case GL_INDEX_LOGIC_OP:
    case GL_COLOR_LOGIC_OP:
-      FLUSH_BATCH( r128ctx );
+      FLUSH_BATCH( rmesa );
       if ( state && ctx->Color.LogicOp != GL_COPY ) {
-         r128ctx->Fallback |= R128_FALLBACK_LOGICOP;
+         rmesa->Fallback |= R128_FALLBACK_LOGICOP;
       } else {
-         r128ctx->Fallback &= ~R128_FALLBACK_LOGICOP;
+         rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
       }
       break;
 
    case GL_SCISSOR_TEST:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->scissor = state;
-      r128ctx->new_state |= R128_NEW_CLIP;
+      FLUSH_BATCH( rmesa );
+      rmesa->scissor = state;
+      rmesa->new_state |= R128_NEW_CLIP;
       break;
 
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_TEXTURE;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_TEXTURE;
       break;
 
    case GL_POLYGON_STIPPLE:
       if ( (ctx->Driver.TriangleCaps & DD_TRI_STIPPLE) &&
 	   ctx->PB->primitive == GL_POLYGON )
       {
-	 FLUSH_BATCH( r128ctx );
-	 r128ctx->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
+	 FLUSH_BATCH( rmesa );
+	 rmesa->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
 	 if ( state ) {
-	    r128ctx->setup.dp_gui_master_cntl_c |=
+	    rmesa->setup.dp_gui_master_cntl_c |=
 	       R128_GMC_BRUSH_32x32_MONO_FG_LA;
 	 } else {
-	    r128ctx->setup.dp_gui_master_cntl_c |=
+	    rmesa->setup.dp_gui_master_cntl_c |=
 	       R128_GMC_BRUSH_SOLID_COLOR;
 	 }
-	 r128ctx->new_state |= R128_NEW_CONTEXT;
-	 r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+	 rmesa->new_state |= R128_NEW_CONTEXT;
+	 rmesa->dirty |= R128_UPLOAD_CONTEXT;
       }
       break;
 
@@ -860,51 +838,65 @@ static void r128DDPrintDirty( const char *msg, GLuint state )
  * Blits of any type should always upload the context and masks after
  * they are done.
  */
-void r128EmitHwStateLocked( r128ContextPtr r128ctx )
+void r128EmitHwStateLocked( r128ContextPtr rmesa )
 {
-   R128SAREAPrivPtr sarea = r128ctx->sarea;
-   r128_context_regs_t *regs = &(r128ctx->setup);
-   r128TexObjPtr t0 = r128ctx->CurrentTexObj[0];
-   r128TexObjPtr t1 = r128ctx->CurrentTexObj[1];
+   R128SAREAPrivPtr sarea = rmesa->sarea;
+   r128_context_regs_t *regs = &(rmesa->setup);
+   r128TexObjPtr t0 = rmesa->CurrentTexObj[0];
+   r128TexObjPtr t1 = rmesa->CurrentTexObj[1];
 
    if ( R128_DEBUG & DEBUG_VERBOSE_MSG ) {
-      r128DDPrintDirty( "r128EmitHwStateLocked", r128ctx->dirty );
+      r128DDPrintDirty( "r128EmitHwStateLocked", rmesa->dirty );
    }
 
-   if ( r128ctx->dirty & R128_UPLOAD_TEX0IMAGES ) {
-      if ( t0 ) r128UploadTexImages( r128ctx, t0 );
-      r128ctx->dirty &= ~R128_UPLOAD_TEX0IMAGES;
+   if ( rmesa->dirty & R128_UPLOAD_TEX0IMAGES ) {
+      if ( t0 ) r128UploadTexImages( rmesa, t0 );
+      rmesa->dirty &= ~R128_UPLOAD_TEX0IMAGES;
    }
-   if ( r128ctx->dirty & R128_UPLOAD_TEX1IMAGES ) {
-      if ( t1 ) r128UploadTexImages( r128ctx, t1 );
-      r128ctx->dirty &= ~R128_UPLOAD_TEX1IMAGES;
+   if ( rmesa->dirty & R128_UPLOAD_TEX1IMAGES ) {
+      if ( t1 ) r128UploadTexImages( rmesa, t1 );
+      rmesa->dirty &= ~R128_UPLOAD_TEX1IMAGES;
    }
 
-   if ( r128ctx->dirty & (R128_UPLOAD_CONTEXT |
-			  R128_UPLOAD_SETUP |
-			  R128_UPLOAD_MASKS |
-			  R128_UPLOAD_WINDOW |
-			  R128_UPLOAD_CORE |
-			  R128_UPLOAD_TEX0) ) {
+   if ( rmesa->dirty & (R128_UPLOAD_CONTEXT |
+			R128_UPLOAD_SETUP |
+			R128_UPLOAD_MASKS |
+			R128_UPLOAD_WINDOW |
+			R128_UPLOAD_CORE |
+			R128_UPLOAD_TEX0) ) {
       memcpy( &sarea->ContextState, regs, sizeof(sarea->ContextState) );
    }
 
-   if ( (r128ctx->dirty & R128_UPLOAD_TEX0) && t0 ) {
-      memcpy( &sarea->TexState[0], &t0->setup, sizeof(sarea->TexState[0]) );
+   if ( (rmesa->dirty & R128_UPLOAD_TEX0) && t0 ) {
+      r128_texture_regs_t *tex = &sarea->TexState[0];
+
+      tex->tex_cntl		= t0->setup.tex_cntl;
+      tex->tex_combine_cntl	= rmesa->tex_combine[0];
+      tex->tex_size_pitch	= t0->setup.tex_size_pitch;
+      memcpy( &tex->tex_offset[0], &t0->setup.tex_offset[0],
+	      sizeof(tex->tex_offset ) );
+      tex->tex_border_color	= t0->setup.tex_border_color;
    }
 
-   if ( (r128ctx->dirty & R128_UPLOAD_TEX1) && t1 ) {
-      memcpy( &sarea->TexState[1], &t1->setup, sizeof(sarea->TexState[1]) );
+   if ( (rmesa->dirty & R128_UPLOAD_TEX1) && t1 ) {
+      r128_texture_regs_t *tex = &sarea->TexState[1];
+
+      tex->tex_cntl		= t1->setup.tex_cntl;
+      tex->tex_combine_cntl	= rmesa->tex_combine[1];
+      tex->tex_size_pitch	= t1->setup.tex_size_pitch;
+      memcpy( &tex->tex_offset[0], &t1->setup.tex_offset[0],
+	      sizeof(tex->tex_offset ) );
+      tex->tex_border_color	= t1->setup.tex_border_color;
    }
 
-   sarea->vertsize = r128ctx->vertsize;
-   sarea->vc_format = r128ctx->vc_format;
+   sarea->vertsize = rmesa->vertsize;
+   sarea->vc_format = rmesa->vc_format;
 
    /* Turn off the texture cache flushing */
-   r128ctx->setup.tex_cntl_c &= ~R128_TEX_CACHE_FLUSH;
+   rmesa->setup.tex_cntl_c &= ~R128_TEX_CACHE_FLUSH;
 
-   sarea->dirty |= r128ctx->dirty;
-   r128ctx->dirty &= R128_UPLOAD_CLIPRECTS;
+   sarea->dirty |= rmesa->dirty;
+   rmesa->dirty &= R128_UPLOAD_CLIPRECTS;
 }
 
 static void r128DDPrintState( const char *msg, GLuint flags )
@@ -924,17 +916,16 @@ static void r128DDPrintState( const char *msg, GLuint flags )
 	    (flags & R128_NEW_WINDOW)	? "window, " : "" );
 }
 
-/* Update the hardware state */
 void r128DDUpdateHWState( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   int new_state = r128ctx->new_state;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   int new_state = rmesa->new_state;
 
    if ( new_state )
    {
-      FLUSH_BATCH( r128ctx );
+      FLUSH_BATCH( rmesa );
 
-      r128ctx->new_state = 0;
+      rmesa->new_state = 0;
 
       if ( R128_DEBUG & DEBUG_VERBOSE_MSG )
 	 r128DDPrintState( "r128UpdateHwState", new_state );
@@ -959,9 +950,6 @@ void r128DDUpdateHWState( GLcontext *ctx )
       if ( new_state & R128_NEW_MASKS )
 	 r128UpdateMasks( ctx );
 
-      if ( new_state & R128_NEW_RENDER )
-	 r128UpdateRenderAttrib( ctx );
-
       if ( new_state & R128_NEW_WINDOW )
 	 r128UpdateWindow( ctx );
 
@@ -980,8 +968,8 @@ void r128DDUpdateHWState( GLcontext *ctx )
  */
 static void r128DDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   CARD32 f = r128ctx->setup.pm4_vc_fpu_setup;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint f = rmesa->setup.pm4_vc_fpu_setup;
 
    f |= R128_BACKFACE_SOLID | R128_FRONTFACE_SOLID;
 
@@ -1000,14 +988,14 @@ static void r128DDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
       }
    }
 
-   if ( r128ctx->setup.pm4_vc_fpu_setup != f ) {
-      FLUSH_BATCH( r128ctx );
-      r128ctx->setup.pm4_vc_fpu_setup = f;
+   if ( rmesa->setup.pm4_vc_fpu_setup != f ) {
+      FLUSH_BATCH( rmesa );
+      rmesa->setup.pm4_vc_fpu_setup = f;
 
       /* NOTE: Only upload the setup state, everything else has been
        * uploaded by the usual means already.
        */
-      r128ctx->dirty |= R128_UPLOAD_SETUP;
+      rmesa->dirty |= R128_UPLOAD_SETUP;
    }
 }
 
@@ -1020,7 +1008,7 @@ static void r128DDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
 
 void r128DDUpdateState( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( ctx->NewState & INTERESTED ) {
       r128DDChooseRenderState( ctx );
@@ -1030,188 +1018,184 @@ void r128DDUpdateState( GLcontext *ctx )
    /* Need to do this here to detect texture fallbacks before
     * setting triangle functions.
     */
-   if ( r128ctx->new_state & R128_NEW_TEXTURE ) {
+   if ( rmesa->new_state & R128_NEW_TEXTURE ) {
       r128DDUpdateHWState( ctx );
    }
 
-   if ( !r128ctx->Fallback ) {
+   if ( !rmesa->Fallback ) {
       ctx->IndirectTriangles &= ~DD_SW_RASTERIZE;
-      ctx->IndirectTriangles |= r128ctx->IndirectTriangles;
+      ctx->IndirectTriangles |= rmesa->IndirectTriangles;
 
-      ctx->Driver.PointsFunc     = r128ctx->PointsFunc;
-      ctx->Driver.LineFunc       = r128ctx->LineFunc;
-      ctx->Driver.TriangleFunc   = r128ctx->TriangleFunc;
-      ctx->Driver.QuadFunc       = r128ctx->QuadFunc;
+      ctx->Driver.PointsFunc	= rmesa->PointsFunc;
+      ctx->Driver.LineFunc	= rmesa->LineFunc;
+      ctx->Driver.TriangleFunc	= rmesa->TriangleFunc;
+      ctx->Driver.QuadFunc	= rmesa->QuadFunc;
    }
 }
 
 
-/* Initialize the context's hardware state */
-void r128DDInitState( r128ContextPtr r128ctx )
+/* Initialize the context's hardware state.
+ */
+void r128DDInitState( r128ContextPtr rmesa )
 {
    int dst_bpp, depth_bpp;
-   CARD32 bias;
 
-   switch ( r128ctx->r128Screen->bpp ) {
-   case 16: dst_bpp = R128_GMC_DST_16BPP;   break;
-   case 32: dst_bpp = R128_GMC_DST_32BPP;   break;
+   switch ( rmesa->r128Screen->cpp ) {
+   case 2:
+      dst_bpp = R128_GMC_DST_16BPP;
+      break;
+   case 4:
+      dst_bpp = R128_GMC_DST_32BPP;
+      break;
    default:
-      fprintf( stderr, "Error: Unsupported pixel depth %d... exiting\n",
-	       r128ctx->r128Screen->bpp );
+      fprintf( stderr, "Error: Unsupported pixel depth... exiting\n" );
       exit( -1 );
    }
 
-   switch ( r128ctx->DepthSize ) {
+   rmesa->ClearColor = 0x00000000;
+
+   switch ( rmesa->glCtx->Visual->DepthBits ) {
    case 16:
-      r128ctx->ClearDepth = 0x0000ffff;
+      rmesa->ClearDepth = 0x0000ffff;
+      rmesa->DepthMask = 0xffffffff;
       depth_bpp = R128_Z_PIX_WIDTH_16;
-      r128ctx->depth_scale = 1.0 / 65536.0;
+      rmesa->depth_scale = 1.0 / (GLfloat)0xffff;
       break;
    case 24:
-      r128ctx->ClearDepth = 0x00ffffff;
+      rmesa->ClearDepth = 0x00ffffff;
+      rmesa->DepthMask = 0x00ffffff;
       depth_bpp = R128_Z_PIX_WIDTH_24;
-      r128ctx->depth_scale = 1.0 / 16777216.0;
-      break;
-   case 32:
-      r128ctx->ClearDepth = 0xffffffff;
-      depth_bpp = R128_Z_PIX_WIDTH_32;
-      r128ctx->depth_scale = 1.0 / 4294967296.0;
+      rmesa->depth_scale = 1.0 / (GLfloat)0xffffff;
       break;
    default:
       fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
-	       r128ctx->DepthSize );
+	       rmesa->glCtx->Visual->DepthBits );
       exit( -1 );
    }
 
-   r128ctx->ClearColor = 0x00000000;
+   rmesa->RenderIndex	= R128_FALLBACK_BIT;
+   rmesa->PointsFunc	= NULL;
+   rmesa->LineFunc	= NULL;
+   rmesa->TriangleFunc	= NULL;
+   rmesa->QuadFunc	= NULL;
 
-   r128ctx->RenderIndex  = R128_FALLBACK_BIT;
-   r128ctx->PointsFunc   = NULL;
-   r128ctx->LineFunc     = NULL;
-   r128ctx->TriangleFunc = NULL;
-   r128ctx->QuadFunc     = NULL;
+   rmesa->IndirectTriangles = 0;
+   rmesa->Fallback = 0;
 
-   r128ctx->IndirectTriangles = 0;
-   r128ctx->Fallback = 0;
-
-   if ( r128ctx->glCtx->Visual->DBflag ) {
-      r128ctx->DrawBuffer = GL_BACK_LEFT;
-      r128ctx->drawOffset = r128ctx->readOffset =
-	 r128ctx->r128Screen->backOffset;
-      r128ctx->drawPitch = r128ctx->readPitch =
-	 r128ctx->r128Screen->backPitch;
+   if ( rmesa->glCtx->Visual->DBflag ) {
+      rmesa->DrawBuffer = GL_BACK_LEFT;
+      rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
+      rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
    } else {
-      r128ctx->DrawBuffer = GL_FRONT_LEFT;
-      r128ctx->drawOffset = r128ctx->readOffset =
-	 r128ctx->r128Screen->frontOffset;
-      r128ctx->drawPitch = r128ctx->readPitch =
-	 r128ctx->r128Screen->frontPitch;
+      rmesa->DrawBuffer = GL_FRONT_LEFT;
+      rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
+      rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
    }
 
    /* Harware state:
     */
-   r128ctx->setup.dst_pitch_offset_c = (((r128ctx->drawPitch/8) << 21) |
-					(r128ctx->drawOffset >> 5));
+   rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
+				      (rmesa->drawOffset >> 5));
 
-   r128ctx->setup.dp_gui_master_cntl_c = (R128_GMC_DST_PITCH_OFFSET_CNTL |
-					  R128_GMC_DST_CLIPPING |
-					  R128_GMC_BRUSH_SOLID_COLOR |
-					  dst_bpp |
-					  R128_GMC_SRC_DATATYPE_COLOR |
-					  R128_GMC_BYTE_MSB_TO_LSB |
-					  R128_GMC_CONVERSION_TEMP_6500 |
-					  R128_ROP3_S |
-					  R128_DP_SRC_SOURCE_MEMORY |
-					  R128_GMC_3D_FCN_EN |
-					  R128_GMC_CLR_CMP_CNTL_DIS |
-					  R128_GMC_AUX_CLIP_DIS |
-					  R128_GMC_WR_MSK_DIS);
+   rmesa->setup.dp_gui_master_cntl_c = (R128_GMC_DST_PITCH_OFFSET_CNTL |
+					R128_GMC_DST_CLIPPING |
+					R128_GMC_BRUSH_SOLID_COLOR |
+					dst_bpp |
+					R128_GMC_SRC_DATATYPE_COLOR |
+					R128_GMC_BYTE_MSB_TO_LSB |
+					R128_GMC_CONVERSION_TEMP_6500 |
+					R128_ROP3_S |
+					R128_DP_SRC_SOURCE_MEMORY |
+					R128_GMC_3D_FCN_EN |
+					R128_GMC_CLR_CMP_CNTL_DIS |
+					R128_GMC_AUX_CLIP_DIS |
+					R128_GMC_WR_MSK_DIS);
 
-   r128ctx->setup.sc_top_left_c     = 0x00000000;
-   r128ctx->setup.sc_bottom_right_c = 0x1fff1fff;
+   rmesa->setup.sc_top_left_c     = 0x00000000;
+   rmesa->setup.sc_bottom_right_c = 0x1fff1fff;
 
-   r128ctx->setup.z_offset_c = r128ctx->r128Screen->depthOffset;
-   r128ctx->setup.z_pitch_c = ((r128ctx->r128Screen->depthPitch >> 3) |
-			       R128_Z_TILE);
+   rmesa->setup.z_offset_c = rmesa->r128Screen->depthOffset;
+   rmesa->setup.z_pitch_c = ((rmesa->r128Screen->depthPitch >> 3) |
+			     R128_Z_TILE);
 
-   r128ctx->setup.z_sten_cntl_c = (depth_bpp |
-				   R128_Z_TEST_LESS |
-				   R128_STENCIL_TEST_ALWAYS |
-				   R128_STENCIL_S_FAIL_KEEP |
-				   R128_STENCIL_ZPASS_KEEP |
-				   R128_STENCIL_ZFAIL_KEEP);
+   rmesa->setup.z_sten_cntl_c = (depth_bpp |
+				 R128_Z_TEST_LESS |
+				 R128_STENCIL_TEST_ALWAYS |
+				 R128_STENCIL_S_FAIL_KEEP |
+				 R128_STENCIL_ZPASS_KEEP |
+				 R128_STENCIL_ZFAIL_KEEP);
 
-   bias = r128ctx->lod_bias & 0xff;
-   r128ctx->setup.tex_cntl_c = (R128_Z_WRITE_ENABLE |
-				R128_SHADE_ENABLE |
-				R128_DITHER_ENABLE |
-				R128_ALPHA_IN_TEX_COMPLETE_A |
-				R128_LIGHT_DIS |
-				R128_ALPHA_LIGHT_DIS |
-				R128_TEX_CACHE_FLUSH |
-				(bias << R128_LOD_BIAS_SHIFT));
+   rmesa->setup.tex_cntl_c = (R128_Z_WRITE_ENABLE |
+			      R128_SHADE_ENABLE |
+			      R128_DITHER_ENABLE |
+			      R128_ALPHA_IN_TEX_COMPLETE_A |
+			      R128_LIGHT_DIS |
+			      R128_ALPHA_LIGHT_DIS |
+			      R128_TEX_CACHE_FLUSH |
+			      (0x3f << R128_LOD_BIAS_SHIFT));
 
-   r128ctx->setup.misc_3d_state_cntl_reg = (R128_MISC_SCALE_3D_TEXMAP_SHADE |
-					    R128_MISC_SCALE_PIX_REPLICATE |
-					    R128_ALPHA_COMB_ADD_CLAMP |
-					    R128_FOG_VERTEX |
-					    R128_ALPHA_BLEND_SRC_ONE |
-					    R128_ALPHA_BLEND_DST_ZERO |
-					    R128_ALPHA_TEST_ALWAYS);
+   rmesa->setup.misc_3d_state_cntl_reg = (R128_MISC_SCALE_3D_TEXMAP_SHADE |
+					  R128_MISC_SCALE_PIX_REPLICATE |
+					  R128_ALPHA_COMB_ADD_CLAMP |
+					  R128_FOG_VERTEX |
+					  R128_ALPHA_BLEND_SRC_ONE |
+					  R128_ALPHA_BLEND_DST_ZERO |
+					  R128_ALPHA_TEST_ALWAYS);
 
-   r128ctx->setup.texture_clr_cmp_clr_c = 0x00000000;
-   r128ctx->setup.texture_clr_cmp_msk_c = 0xffffffff;
+   rmesa->setup.texture_clr_cmp_clr_c = 0x00000000;
+   rmesa->setup.texture_clr_cmp_msk_c = 0xffffffff;
 
-   r128ctx->setup.fog_color_c = 0x00000000;
+   rmesa->setup.fog_color_c = 0x00000000;
 
-   r128ctx->setup.pm4_vc_fpu_setup = (R128_FRONT_DIR_CCW |
-				      R128_BACKFACE_SOLID |
-				      R128_FRONTFACE_SOLID |
-				      R128_FPU_COLOR_GOURAUD |
-				      R128_FPU_SUB_PIX_4BITS |
-				      R128_FPU_MODE_3D |
-				      R128_TRAP_BITS_DISABLE |
-				      R128_XFACTOR_2 |
-				      R128_YFACTOR_2 |
-				      R128_FLAT_SHADE_VERTEX_OGL |
-				      R128_FPU_ROUND_TRUNCATE |
-				      R128_WM_SEL_8DW);
+   rmesa->setup.pm4_vc_fpu_setup = (R128_FRONT_DIR_CCW |
+				    R128_BACKFACE_SOLID |
+				    R128_FRONTFACE_SOLID |
+				    R128_FPU_COLOR_GOURAUD |
+				    R128_FPU_SUB_PIX_4BITS |
+				    R128_FPU_MODE_3D |
+				    R128_TRAP_BITS_DISABLE |
+				    R128_XFACTOR_2 |
+				    R128_YFACTOR_2 |
+				    R128_FLAT_SHADE_VERTEX_OGL |
+				    R128_FPU_ROUND_TRUNCATE |
+				    R128_WM_SEL_8DW);
 
-   r128ctx->setup.setup_cntl = (R128_COLOR_GOURAUD |
-				R128_PRIM_TYPE_TRI |
-				R128_TEXTURE_ST_MULT_W |
-				R128_STARTING_VERTEX_1 |
-				R128_ENDING_VERTEX_3 |
-				R128_SU_POLY_LINE_NOT_LAST |
-				R128_SUB_PIX_4BITS);
+   rmesa->setup.setup_cntl = (R128_COLOR_GOURAUD |
+			      R128_PRIM_TYPE_TRI |
+			      R128_TEXTURE_ST_MULT_W |
+			      R128_STARTING_VERTEX_1 |
+			      R128_ENDING_VERTEX_3 |
+			      R128_SU_POLY_LINE_NOT_LAST |
+			      R128_SUB_PIX_4BITS);
 
-   r128ctx->setup.tex_size_pitch_c = 0x00000000;
-   r128ctx->setup.constant_color_c = 0x00ffffff;
+   rmesa->setup.tex_size_pitch_c = 0x00000000;
+   rmesa->setup.constant_color_c = 0x00ffffff;
 
-   r128ctx->setup.dp_write_mask   = 0xffffffff;
-   r128ctx->setup.sten_ref_mask_c = 0xffff0000;
-   r128ctx->setup.plane_3d_mask_c = 0xffffffff;
+   rmesa->setup.dp_write_mask   = 0xffffffff;
+   rmesa->setup.sten_ref_mask_c = 0xffff0000;
+   rmesa->setup.plane_3d_mask_c = 0xffffffff;
 
-   r128ctx->setup.window_xy_offset = 0x00000000;
+   rmesa->setup.window_xy_offset = 0x00000000;
 
-   r128ctx->setup.scale_3d_cntl = (R128_SCALE_DITHER_TABLE |
-				   R128_TEX_CACHE_SIZE_FULL |
-				   R128_DITHER_INIT_RESET |
-				   R128_SCALE_3D_TEXMAP_SHADE |
-				   R128_SCALE_PIX_REPLICATE |
-				   R128_ALPHA_COMB_ADD_CLAMP |
-				   R128_FOG_VERTEX |
-				   R128_ALPHA_BLEND_SRC_ONE |
-				   R128_ALPHA_BLEND_DST_ZERO |
-				   R128_ALPHA_TEST_ALWAYS |
-				   R128_COMPOSITE_SHADOW_CMP_EQUAL |
-				   R128_TEX_MAP_ALPHA_IN_TEXTURE |
-				   R128_TEX_CACHE_LINE_SIZE_4QW);
+   rmesa->setup.scale_3d_cntl = (R128_SCALE_DITHER_TABLE |
+				 R128_TEX_CACHE_SIZE_FULL |
+				 R128_DITHER_INIT_RESET |
+				 R128_SCALE_3D_TEXMAP_SHADE |
+				 R128_SCALE_PIX_REPLICATE |
+				 R128_ALPHA_COMB_ADD_CLAMP |
+				 R128_FOG_VERTEX |
+				 R128_ALPHA_BLEND_SRC_ONE |
+				 R128_ALPHA_BLEND_DST_ZERO |
+				 R128_ALPHA_TEST_ALWAYS |
+				 R128_COMPOSITE_SHADOW_CMP_EQUAL |
+				 R128_TEX_MAP_ALPHA_IN_TEXTURE |
+				 R128_TEX_CACHE_LINE_SIZE_4QW);
 
-   r128ctx->new_state = R128_NEW_ALL;
+   rmesa->new_state = R128_NEW_ALL;
 }
 
-/* Initialize the driver's state functions */
+/* Initialize the driver's state functions.
+ */
 void r128DDInitStateFuncs( GLcontext *ctx )
 {
    ctx->Driver.UpdateState		= r128DDUpdateState;

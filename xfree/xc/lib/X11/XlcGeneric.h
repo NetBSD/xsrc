@@ -1,4 +1,4 @@
-/* $XConsortium: XlcGeneric.h /main/7 1996/12/05 10:38:44 swick $ */
+/* $Xorg: XlcGeneric.h,v 1.3 2000/08/17 19:45:06 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/XlcGeneric.h,v 1.3 2001/01/17 19:41:49 dawes Exp $ */
 
 #ifndef _XLCGENERIC_H_
 #define _XLCGENERIC_H_

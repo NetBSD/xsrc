@@ -1480,4 +1480,4 @@ xmesa_get_line_func
 xmesa_get_points_func
 xmesa_get_triangle_func
 
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/GL/mesa/src/GLcore-def.cpp,v 1.1 2000/08/10 17:40:29 dawes Exp $ */

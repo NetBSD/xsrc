@@ -1,4 +1,4 @@
-/* $TOG: globals.h /main/15 1998/02/06 13:56:12 kaleb $ */
+/* $Xorg: globals.h,v 1.3 2000/08/17 19:44:14 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/globals.h,v 1.1.1.1.12.2 1998/10/19 20:57:04 hohndel Exp $ */
+/* $XFree86: xc/lib/ICE/globals.h,v 1.3 2001/01/17 19:41:29 dawes Exp $ */
 
 extern void _IceDefaultErrorHandler ();
 extern void _IceDefaultIOErrorHandler ();

@@ -1,5 +1,8 @@
-.\" $TOG: xkbprint.man /main/7 1998/02/12 09:36:54 kaleb $
-.TH XKBPRINT 1 "Release 6.4" "X Version 11"
+.\" $Xorg: xkbprint.man,v 1.3 2000/08/17 19:54:50 cpqbld Exp $
+.\"
+.\" $XFree86: xc/programs/xkbprint/xkbprint.man,v 1.7 2001/01/27 18:21:16 dawes Exp $
+.\"
+.TH XKBPRINT 1 __xorgversion__
 .SH NAME
 xkbprint \- print an XKB keyboard description
 .SH SYNOPSIS
@@ -100,11 +103,11 @@ Forces synchronization for X requests.
 .B -w\ \fIlevel\fP
 Sets warning level (0 for no warning, 10 for all warnings).
 .SH "SEE ALSO"
-X(1),xkbcomp(1)
+X(__miscmansuffix__),xkbcomp(1)
 .SH COPYRIGHT
 Copyright 1995, Silicon Graphics Computer Systems
 Copyright 1995, 1998  The Open Group
 .br
-See \fIX(1)\fP for a full statement of rights and permissions.
+See \fIX(__miscmansuffix__)\fP for a full statement of rights and permissions.
 .SH AUTHOR
 Erik Fortune, Silicon Graphics

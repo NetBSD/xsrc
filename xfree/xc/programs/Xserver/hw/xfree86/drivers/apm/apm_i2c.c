@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_i2c.c,v 1.4 2000/02/12 02:54:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_i2c.c,v 1.6 2001/01/06 21:29:12 tsi Exp $ */
 
-
+#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "apm_regs.h"
 

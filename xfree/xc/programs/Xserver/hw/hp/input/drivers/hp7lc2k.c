@@ -1,4 +1,4 @@
-/* $XConsortium: hp7lc2k.c /main/2 1996/12/04 10:23:28 lehors $ */
+/* $Xorg: hp7lc2k.c,v 1.3 2000/08/17 19:48:26 cpqbld Exp $ */
 /************************************************************
 
 Copyright (c) 1993 by Hewlett-Packard Company, Palo Alto, California

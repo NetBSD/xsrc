@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_modeselect.tcl,v 1.1.2.3 1998/02/26 20:11:18 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_modeselect.tcl,v 1.2 1998/04/05 15:30:29 robin Exp $
 #
 set message "\n\n\
     XFree86 supports multiple modes that you can cycle\n\

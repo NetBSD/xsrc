@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_tritmp.h,v 1.1 2000/06/20 05:08:40 dawes Exp $ */
 
 static void TAG(ffb_triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2, GLuint pv)
 {

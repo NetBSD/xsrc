@@ -1,4 +1,4 @@
-/* $TOG: sm_misc.c /main/8 1998/02/06 14:10:19 kaleb $ */
+/* $Xorg: sm_misc.c,v 1.3 2000/08/17 19:44:29 cpqbld Exp $ */
 
 /*
 

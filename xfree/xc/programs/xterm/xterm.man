@@ -1,8 +1,7 @@
-.\" $XConsortium: xterm.man /main/85 1996/12/09 17:10:53 kaleb $
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.65 2000/11/01 01:12:45 dawes Exp $
+.\" $Xorg: xterm.man,v 1.3 2000/08/17 19:55:10 cpqbld Exp $
 .\"
 .\"
-.\" Copyright 1996,1997,1998,1999,2000 by Thomas E. Dickey
+.\" Copyright 1996,1997,1998,1999,2000,2001 by Thomas E. Dickey
 .\"
 .\"                         All Rights Reserved
 .\"
@@ -57,8 +56,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.73 2001/04/28 13:51:56 dickey Exp $
+.\"
 .\" updated by Thomas E. Dickey for XFree86, July 1996.
-.TH XTERM 1 "Release 6.3" "X Version 11"
+.TH XTERM 1 __vendorversion__
 .SH NAME
 xterm \- terminal emulator for X
 .SH SYNOPSIS
@@ -343,6 +344,22 @@ This font must be the same height and width as the normal font.
 If only one of the normal or bold fonts is specified, it will be used as the
 normal font and the bold font will be produced by overstriking this font.
 The default is to do overstriking of the normal font.
+See also the discussion of \fBboldFont\fP and \fBboldMode\fP resources.
+.TP 8
+.BI \-fa " pattern"
+This option sets the pattern for fonts selected from the FreeType
+library if support for that library was compiled into xterm.
+This corresponds to the \fBfaceName\fP resource.
+.TP 8
+.BI \-fi " font"
+This option sets the font for active icons if that feature was compiled
+into xterm.
+See also the discussion of the \fBiconFont\fP resource.
+.TP 8
+.BI \-fs " size"
+This option sets the pointsize for fonts selected from the FreeType
+library if support for that library was compiled into xterm.
+This corresponds to the \fBfaceSize\fP resource.
 .TP 8
 .B \-fw \fIfont\fP
 This option specifies the font to be used for displaying wide text.
@@ -359,10 +376,6 @@ it will attempt to use a font twice as wide as the font that will be used to
 draw normal text.
 If no doublewidth font is found, it will improvise, by stretching 
 the normal font.
-.TP 8
-.B \-fi
-This option sets the font for active icons if that feature was compiled
-into xterm.
 .TP 8
 .BI \-hc " color"
 This option specifies the color to use for the background of
@@ -483,6 +496,14 @@ resource).
 .TP 8
 .B \+pc
 This option disables the PC-style use of bold colors.
+.TP 8
+.B \-pob
+This option indicates that the window should be raised whenever a
+Control-G is received.
+.TP 8
+.B \+pob
+This option indicates that the window should not be raised whenever a
+Control-G is received.
 .TP 8
 .B \-rightbar
 Force scrollbar to the right side of VT100 screen.
@@ -734,7 +755,7 @@ The default is ``white.''
 This option specifies the width in pixels of the border surrounding the window.
 .TP 8
 .B \-display \fIdisplay\fP
-This option specifies the X server to contact; see \fIX(1)\fP.
+This option specifies the X server to contact; see \fIX(__miscmansuffix__)\fP.
 .TP 8
 .B \-fg \fIcolor\fP
 This option specifies the color to use for displaying text.  The default is
@@ -746,7 +767,7 @@ default is \fIfixed\fP.
 .TP 8
 .B \-geometry \fIgeometry\fP
 This option specifies the preferred size and position of the VT102 window;
-see \fIX(1)\fP.
+see \fIX(__miscmansuffix__)\fP.
 .TP 8
 .B \-iconic
 This option indicates that \fIxterm\fP should ask the window manager to
@@ -991,6 +1012,19 @@ overstruck to simulate bold fonts if the resolved bold font is the
 same as the normal font.
 It may be desirable to disable bold fonts when color is being
 used for the bold attribute.
+Note that \fIxterm\fP has one bold font which you may set explicitly.
+It attempts to match a bold font for the other font selections
+(\fBfont1\fP through \fBfont6\fP).
+If the normal and bold fonts are distinct, this resource has no effect.
+.TP 8
+.B "brokenSelections (\fPclass\fB BrokenSelections)"
+If true, \fIxterm\fP in 8-bit mode will interpret
+.B STRING
+selections as carrying text in the current locale's encoding. Normally
+.B STRING
+selections carry ISO-8859-1 encoded text. Setting this resource to
+``true'' violates the ICCCM; it may, however, be useful for interacting
+with some broken X clients.
 .TP 8
 .B "c132 (\fPclass\fB C132)"
 Specifies whether or not the VT102 DECCOLM escape sequence should be honored.
@@ -1182,6 +1216,19 @@ Specifies whether or not eight-bit characters sent from the host should be
 accepted as is or stripped when printed.  The default is ``true,''
 which means that they are accepted as is.
 .TP 8
+.B "faceName" (\fPclass\fB FaceName)"
+Specify the pattern for fonts selected from the FreeType
+library if support for that library was compiled into xterm.
+There is no default.
+If not specified,
+or if there is no match for both normal and bold fonts,
+xterm uses the \fBfont\fP and related resources.
+.TP 8
+.B "faceSize" (\fPclass\fB FaceSize)"
+Specify the pointsize for fonts selected from the FreeType
+library if support for that library was compiled into xterm.
+The default is ``14.''
+.TP 8
 .B "font (\fPclass\fB Font)"
 Specifies the name of the normal font.  The default is ``fixed.''
 .TP 8
@@ -1243,6 +1290,14 @@ which ignores termcap and always sends
 ESC F to move to the lower left corner.
 ``true'' causes \fIxterm\fP to interpret ESC F as a request to move to the
 lower left corner of the screen.  The default is ``false.''
+.TP 8
+.B "i18nSelections (\fPclass\fB I18nSelections)"
+If false, \fIxterm\fP will never request the targets
+.B COMPOUND_TEXT
+or
+.BR TEXT .
+The default is ``true.'' It may be set to false in order to work around
+ICCCM violations by other X clients.
 .TP 8
 .B "iconBorderColor (\fPclass\fB BorderColor)"
 Specifies the border color for the active icon window if this feature
@@ -1418,8 +1473,15 @@ Specifies the number of lines that the \fIscroll-back\fP and
 .TP 8
 .B "scrollTtyOutput (\fPclass\fB ScrollCond)"
 Specifies whether or not output to the terminal should automatically cause
-the scrollbar to go to the bottom of the scrolling region.  The default is
-``true.''
+the scrollbar to go to the bottom of the scrolling region.
+The default is ``true.''
+.TP 8
+.B "shiftFonts (\fPclass\fB ShiftFonts)"
+Specifies whether to enable the actions
+\fBlarger-vt-font()\fP and
+\fBsmaller-vt-font()\fP, which are normally bound to
+the shifted KP_Add and KP_Subtract.
+The default is ``true.''
 .TP 8
 .B "signalInhibit (\fPclass\fB SignalInhibit)"
 Specifies whether or not the entries in the ``Main Options'' menu for sending
@@ -1485,6 +1547,10 @@ Any other value will turn on UTF-8 mode.
 .B "visualBell (\fPclass\fB VisualBell)"
 Specifies whether or not a visible bell (i.e. flashing) should be used instead
 of an audible bell when Control-G is received.  The default is ``false.''
+.TP 8
+.B "popOnBell (\fPclass\fB PopOnBell)"
+Specifies whether the window whould be raised when Control-G is
+received. The default is ``false.''
 .TP 8
 .B "wideChars (\fPclass\fB WideChars)"
 Specifies if \fIxterm\fP should respond to control sequences that
@@ -1649,6 +1715,9 @@ This entry invokes the \fBset-cursesemul(toggle)\fP action.
 .B "visualbell (\fPclass\fB SmeBSB)"
 This entry invokes the \fBset-visualbell(toggle)\fP action.
 .TP 8
+.B "poponbell (\fPclass\fB SmeBSB)"
+This entry invokes the \fBset-poponbell(toggle)\fP action.
+.TP 8
 .B "marginbell (\fPclass\fB SmeBSB)"
 This entry invokes the \fBset-marginbell(toggle)\fP action.
 .TP 8
@@ -1658,7 +1727,7 @@ This entry invokes the \fBset-cursorblink(toggle)\fP action.
 .B "titeInhibit (\fPclass\fB SmeBSB)"
 This entry invokes the \fBset-titeInhibit(toggle)\fP action.
 .TP 8
-.B "activeicon (\fPclass\fB SMeBSB)"
+.B "activeicon (\fPclass\fB SmeBSB)"
 This entry toggles active icons on and off if this feature was
 compiled into \fIxterm\fP.  It is enabled only if \fIxterm\fP
 was started with the command line option +ai or the \fBactiveIcon\fP
@@ -2168,6 +2237,10 @@ This action dynamically defines a new translation table whose resource
 name is \fIname\fP with the suffix \fIKeymap\fP (case is significant).
 The name \fINone\fP restores the original translation table.
 .TP 8
+.B "larger-vt-font()"
+Set the font to the next larger one, based on the font dimensions.
+See also \fBset-vt-font()\fP.
+.TP 8
 .B "maximize()"
 Resizes the window to fill the screen.
 .TP 8
@@ -2324,6 +2397,10 @@ the \fBmarginbell\fP entry in \fIvtMenu\fP.
 .B "set-num-lock()"
 This action toggles the state of the \fBnumLock\fP resource.
 .TP 8
+.B "set-pop-on-bell(\fIon/off/toggle\fP)"
+This action toggles the \fBpopOnBell\fP resource and is also invoked
+by the \fBpoponbell\fP entry in \fIvtMenu\fP.
+.TP 8
 .B "set-reverse-video(\fIon/off/toggle\fP)"
 This action toggles the \fIreverseVideo\fP resource and is also invoked by
 the \fBreversevideo\fP entry in \fIvtMenu\fP.
@@ -2393,6 +2470,10 @@ indicate the normal, bold and wide fonts that have been set through escape codes
 (or specified as the second, third and fourth action arguments, respectively), and
 \fIs\fP or \fIS\fP indicate the font selection (as made by programs such as
 \fIxfontsel(1)\fP) indicated by the second action argument.
+.TP 8
+.B "smaller-vt-font()"
+Set the font to the next smaller one, based on the font dimensions.
+See also \fBset-vt-font()\fP.
 .TP 8
 .B "soft-reset()"
 This action resets the scrolling region and is also invoked from the
@@ -2467,6 +2548,8 @@ The default bindings in the VT102 window are:
          Shift <KeyPress> Select:select-cursor-start() \\
                                  select-cursor-end(PRIMARY, CUT_BUFFER0) \\n\\
          Shift <KeyPress> Insert:insert-selection(PRIMARY, CUT_BUFFER0) \\n\\
+         Shift <KeyPress> KP_Add:larger-vt-font() \\n\\
+    Shift <KeyPress> KP_Subtract:smaller-vt-font() \\n\\
                 ~Meta <KeyPress>:insert-seven-bit() \\n\\
                  Meta <KeyPress>:insert-eight-bit() \\n\\
                 !Ctrl <Btn1Down>:popup-menu(mainMenu) \\n\\
@@ -2615,7 +2698,7 @@ If your display supports color, use this
 in your .Xdefaults file to
 automatically turn on color in \fIxterm\fP and similar applications.
 .SH "SEE ALSO"
-resize(1), X(1), pty(4), tty(4)
+resize(1), X(__miscmansuffix__), pty(4), tty(4)
 .br
 \fIXterm Control Sequences\fP
 (this is the file ctlseqs.ms).

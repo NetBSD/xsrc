@@ -1,4 +1,4 @@
-/* $TOG: DisName.c /main/6 1998/02/06 17:17:50 kaleb $ */
+/* $Xorg: DisName.c,v 1.3 2000/08/17 19:44:32 cpqbld Exp $ */
 
 /*
 

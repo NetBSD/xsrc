@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.7 1998/10/04 09:39:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.9 2001/01/17 22:37:05 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mibitblt.c /main/56 1998/02/09 14:46:05 kaleb $ */
+/* $Xorg: mibitblt.c,v 1.4 2000/08/17 19:53:36 cpqbld Exp $ */
 /* Author: Todd Newman  (aided and abetted by Mr. Drewry) */
 
 #include "X.h"
@@ -669,6 +669,7 @@ miGetImage(pDraw, sx, sy, w, h, format, planeMask, pDst)
  	     */
  	    ValidateGC((DrawablePtr)pPixmap, pGC);
  	    pt.x = pt.y = 0;
+            width = w;
 	    (*pGC->ops->FillSpans)((DrawablePtr)pPixmap, pGC, 1, &pt, &width,
 				   TRUE);
  

@@ -1,4 +1,4 @@
-/* $XConsortium: get_tv.c,v 1.1 93/08/08 12:58:41 rws Exp $ */
+/* $Xorg: get_tv.c,v 1.3 2000/08/17 19:48:22 cpqbld Exp $ */
 
 /*
 

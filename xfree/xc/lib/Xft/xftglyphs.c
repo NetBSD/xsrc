@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.5 2000/12/11 21:48:40 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.13 2001/05/16 10:32:54 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,7 +22,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "xftint.h"
 #include <freetype/ftoutln.h>
 
@@ -69,17 +71,37 @@ XftGlyphLoad (Display		*dpy,
     int		    height;
     int		    i;
     int		    left, right, top, bottom;
-    int		    mul = 1;
+    int		    hmul = 1;
+    int		    vmul = 1;
     FT_Bitmap	    ftbit;
     FT_Matrix	    matrix;
+    FT_Vector	    vector;
+    Bool	    subpixel = False;
 
-    if (font->antialias && font->rgba)
+    if (!XftFreeTypeSetFace (font->face, font->size, font->charmap, &font->matrix))
+	return ;
+
+    matrix.xx = matrix.yy = 0x10000L;
+    matrix.xy = matrix.yx = 0;
+
+    if (font->antialias)
     {
-	matrix.xx = 0x30000L;
-	matrix.yy = 0x10000L;
-	matrix.xy = matrix.yx = 0;
-	mul = 3;
+	switch (font->rgba) {
+	case XFT_RGBA_RGB:
+	case XFT_RGBA_BGR:
+	    matrix.xx *= 3;
+	    subpixel = True;
+	    hmul = 3;
+	    break;
+	case XFT_RGBA_VRGB:
+	case XFT_RGBA_VBGR:
+	    matrix.yy *= 3;
+	    vmul = 3;
+	    subpixel = True;
+	    break;
+	}
     }
+
     while (nglyph--)
     {
 	charcode = (FT_ULong) *glyphs++;
@@ -87,11 +109,18 @@ XftGlyphLoad (Display		*dpy,
 	if (!gi)
 	    continue;
 	
-	if (font->encoded)
+	if (font->charmap != -1)
 	{
 	    glyphindex = FT_Get_Char_Index (font->face, charcode);
+#if 0	    
 	    if (!glyphindex)
+	    {
+		if (_XftFontDebug() & XFT_DBG_GLYPH)
+		    printf ("glyph (%c) %d missing\n",
+			    (int) charcode, (int) charcode);
 		continue;
+	    }
+#endif
 	}
 	else
 	    glyphindex = (FT_UInt) charcode;
@@ -105,14 +134,56 @@ XftGlyphLoad (Display		*dpy,
 #define ROUND(x)    (((x)+32) & -64)
 		
 	glyph = font->face->glyph;
-	
-	left  = FLOOR( glyph->metrics.horiBearingX );
-	right = CEIL( glyph->metrics.horiBearingX + glyph->metrics.width );
+
+	if(font->transform) 
+	{
+	    /*
+	     * calculate the true width by transforming all four corners.
+	     */
+	    int xc, yc;
+	    left = right = top = bottom = 0;
+	    for(xc = 0; xc <= 1; xc ++) {
+		for(yc = 0; yc <= 1; yc++) {
+		    vector.x = glyph->metrics.horiBearingX + xc * glyph->metrics.width;
+		    vector.y = glyph->metrics.horiBearingY - yc * glyph->metrics.height;
+		    FT_Vector_Transform(&vector, &font->matrix);   
+		    if (_XftFontDebug() & XFT_DBG_GLYPH)
+			printf("Trans %d %d: %d %d\n", (int) xc, (int) yc, 
+			       (int) vector.x, (int) vector.y);
+		    if(xc == 0 && yc == 0) {
+			left = right = vector.x;
+			top = bottom = vector.y;
+		    } else {
+			if(left > vector.x) left = vector.x;
+			if(right < vector.x) right = vector.x;
+			if(bottom > vector.y) bottom = vector.y;
+			if(top < vector.y) top = vector.y;
+		    }
+
+		}
+	    }
+	    left = FLOOR(left);
+	    right = CEIL(right);
+	    bottom = FLOOR(bottom);
+	    top = CEIL(top);
+
+	} else {
+	    left  = FLOOR( glyph->metrics.horiBearingX );
+	    right = CEIL( glyph->metrics.horiBearingX + glyph->metrics.width );
+
+	    top    = CEIL( glyph->metrics.horiBearingY );
+	    bottom = FLOOR( glyph->metrics.horiBearingY - glyph->metrics.height );
+	}
+
 	width = TRUNC(right - left);
+	height = TRUNC( top - bottom );
+
+
 	/*
 	 * Try to keep monospace fonts ink-inside
+	 * XXX transformed?
 	 */
-	if (font->monospace)
+	if (font->spacing != XFT_PROPORTIONAL && !font->transform)
 	{
 	    if (TRUNC(right) > font->max_advance_width)
 	    {
@@ -127,18 +198,14 @@ XftGlyphLoad (Display		*dpy,
 	    }
 	}
 
-	top    = CEIL( glyph->metrics.horiBearingY );
-	bottom = FLOOR( glyph->metrics.horiBearingY - glyph->metrics.height );
-	height = TRUNC( top - bottom );
-
 	if ( glyph->format == ft_glyph_format_outline )
 	{
 	    if (font->antialias)
-		pitch = (width * mul + 3) & ~3;
+		pitch = (width * hmul + 3) & ~3;
 	    else
 		pitch = ((width + 31) & ~31) >> 3;
 	    
-	    size = pitch * height;
+	    size = pitch * height * vmul;
 	    
 	    if (size > bufSize)
 	    {
@@ -151,8 +218,8 @@ XftGlyphLoad (Display		*dpy,
 	    }
 	    memset (bufBitmap, 0, size);
 
-	    ftbit.width      = width * mul;
-	    ftbit.rows       = height;
+	    ftbit.width      = width * hmul;
+	    ftbit.rows       = height * vmul;
 	    ftbit.pitch      = pitch;
 	    if (font->antialias)
 		ftbit.pixel_mode = ft_pixel_mode_grays;
@@ -161,10 +228,10 @@ XftGlyphLoad (Display		*dpy,
 	    
 	    ftbit.buffer     = bufBitmap;
 	    
-	    if (font->antialias && font->rgba)
+	    if (subpixel)
 		FT_Outline_Transform (&glyph->outline, &matrix);
 
-	    FT_Outline_Translate ( &glyph->outline, -left*mul, -bottom );
+	    FT_Outline_Translate ( &glyph->outline, -left*hmul, -bottom*vmul );
 
 	    FT_Outline_Get_Bitmap( _XftFTlibrary, &glyph->outline, &ftbit );
 	    i = size;
@@ -192,39 +259,49 @@ XftGlyphLoad (Display		*dpy,
 		    }
 		}
 	    }
-#if 0
+	    if (_XftFontDebug() & XFT_DBG_GLYPH)
 	    {
-		int		x, y;
-		unsigned char	*line;
-
-		line = bufBitmap;
-		printf ("\nchar 0x%x (%c):\n", (int) charcode, (char) charcode);
-		for (y = 0; y < height; y++)
+		printf ("char 0x%x (%c):\n", (int) charcode, (char) charcode);
+		printf (" xywh (%d %d %d %d), trans (%d %d %d %d) wh (%d %d)\n",
+			    (int) glyph->metrics.horiBearingX,
+			    (int) glyph->metrics.horiBearingY,
+			    (int) glyph->metrics.width,
+			    (int) glyph->metrics.height,
+			    left, right, top, bottom,
+			    width, height);
+		if (_XftFontDebug() & XFT_DBG_GLYPHV)
 		{
-		    if (font->antialias) 
+		    int		x, y;
+		    unsigned char	*line;
+
+		    line = bufBitmap;
+		    for (y = 0; y < height * vmul; y++)
 		    {
-			static char    den[] = { " .:;=+*#" };
-			for (x = 0; x < pitch; x++)
-			    printf ("%c", den[line[x] >> 5]);
-		    }
-		    else
-		    {
-			for (x = 0; x < pitch * 8; x++)
+			if (font->antialias) 
 			{
-			    printf ("%c", line[x>>3] & (1 << (x & 7)) ? '#' : ' ');
+			    static char    den[] = { " .:;=+*#" };
+			    for (x = 0; x < pitch; x++)
+				printf ("%c", den[line[x] >> 5]);
 			}
+			else
+			{
+			    for (x = 0; x < pitch * 8; x++)
+			    {
+				printf ("%c", line[x>>3] & (1 << (x & 7)) ? '#' : ' ');
+			    }
+			}
+			printf ("|\n");
+			line += pitch;
 		    }
 		    printf ("\n");
-		    line += pitch;
 		}
 	    }
-#endif
 	}
 	else
 	{
-#if 0
-	    printf ("glyph (%c) %d missing\n", (int) charcode, (int) charcode);
-#endif
+	    if (_XftFontDebug() & XFT_DBG_GLYPH)
+		printf ("glyph (%c) %d no outline\n",
+			(int) charcode, (int) charcode);
 	    continue;
 	}
 	
@@ -232,14 +309,30 @@ XftGlyphLoad (Display		*dpy,
 	gi->height = height;
 	gi->x = -TRUNC(left);
 	gi->y = TRUNC(top);
-	if (font->monospace)
-	    gi->xOff = font->max_advance_width;
+	if (font->spacing != XFT_PROPORTIONAL)
+	{
+	    if (font->transform)
+	    {
+		vector.x = font->max_advance_width;
+		vector.y = 0;
+		FT_Vector_Transform (&vector, &font->matrix);
+		gi->xOff = vector.x;
+		gi->yOff = -vector.y;
+	    }
+	    else
+	    {
+		gi->xOff = font->max_advance_width;
+		gi->yOff = 0;
+	    }
+	}
 	else
-	    gi->xOff = TRUNC(ROUND(glyph->metrics.horiAdvance));
-	gi->yOff = 0;
+	{
+	    gi->xOff = TRUNC(ROUND(glyph->advance.x));
+	    gi->yOff = -TRUNC(ROUND(glyph->advance.y));
+	}
 	g = charcode;
 
-	if (font->antialias && font->rgba != XFT_RGBA_NONE)
+	if (subpixel)
 	{
 	    int		    x, y;
 	    unsigned char   *in_line, *out_line, *in;
@@ -247,18 +340,24 @@ XftGlyphLoad (Display		*dpy,
 	    unsigned int    red, green, blue;
 	    int		    rf, gf, bf;
 	    int		    s;
+	    int		    o, os;
 	    
 	    widthrgba = width;
 	    pitchrgba = (widthrgba * 4 + 3) & ~3;
 	    sizergba = pitchrgba * height;
 
+	    os = 1;
 	    switch (font->rgba) {
+	    case XFT_RGBA_VRGB:
+		os = pitch;
 	    case XFT_RGBA_RGB:
 	    default:
 		rf = 0;
 		gf = 1;
 		bf = 2;
 		break;
+	    case XFT_RGBA_VBGR:
+		os = pitch;
 	    case XFT_RGBA_BGR:
 		bf = 0;
 		gf = 1;
@@ -281,21 +380,23 @@ XftGlyphLoad (Display		*dpy,
 	    {
 		in = in_line;
 		out = (unsigned int *) out_line;
-		in_line += pitch;
+		in_line += pitch * vmul;
 		out_line += pitchrgba;
-		for (x = 0; x < width * mul; x += 3)
+		for (x = 0; x < width * hmul; x += hmul)
 		{
 		    red = green = blue = 0;
+		    o = 0;
 		    for (s = 0; s < 3; s++)
 		    {
-			red += filters[rf][s]*in[x+s];
-			green += filters[gf][s]*in[x+s];
-			blue += filters[bf][s]*in[x+s];
+			red += filters[rf][s]*in[x+o];
+			green += filters[gf][s]*in[x+o];
+			blue += filters[bf][s]*in[x+o];
+			o += os;
 		    }
 		    red = red / 65536;
 		    green = green / 65536;
 		    blue = blue / 65536;
-		    out[x/3] = (green << 24) | (red << 16) | (green << 8) | blue;
+		    *out++ = (green << 24) | (red << 16) | (green << 8) | blue;
 		}
 	    }
 	    
@@ -316,6 +417,23 @@ XftGlyphLoad (Display		*dpy,
 
 #define STEP	    256
 
+/*
+ * Return whether the given glyph generates any image on the screen,
+ * this means it exists or a default glyph exists
+ */
+static Bool
+XftGlyphDrawable (Display	*dpy,
+		  XftFontStruct	*font,
+		  XftChar32	glyph)
+{
+    if (font->charmap != -1)
+    {
+	FT_Set_Charmap (font->face, font->face->charmaps[font->charmap]);
+	glyph = (XftChar32) FT_Get_Char_Index (font->face, (FT_ULong) glyph);
+    }
+    return glyph <= font->face->num_glyphs;
+}
+	    
 void
 XftGlyphCheck (Display		*dpy,
 	       XftFontStruct	*font,
@@ -346,7 +464,7 @@ XftGlyphCheck (Display		*dpy,
     }
     if (font->realized[glyph] == _UntestedGlyph)
     {
-	if (XftFreeTypeGlyphExists (dpy, font, glyph))
+	if (XftGlyphDrawable (dpy, font, glyph))
 	{
 	    font->realized[glyph] = (XGlyphInfo *) malloc (sizeof (XGlyphInfo));
 	    n = *nmissing;
@@ -368,7 +486,10 @@ XftFreeTypeGlyphExists (Display		*dpy,
 			XftFontStruct	*font,
 			XftChar32	glyph)
 {
-    if (font->encoded)
+    if (font->charmap != -1)
+    {
+	FT_Set_Charmap (font->face, font->face->charmaps[font->charmap]);
 	glyph = (XftChar32) FT_Get_Char_Index (font->face, (FT_ULong) glyph);
+    }
     return glyph && glyph <= font->face->num_glyphs;
 }

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.3 2000/10/21 00:26:48 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.8 2001/02/09 02:12:17 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -24,6 +24,9 @@
  */
 
 #include "fb.h"
+
+#ifdef RENDER
+
 #include "picturestr.h"
 #include "mipict.h"
 #include "fbpict.h"
@@ -67,6 +70,19 @@ fbOver (CARD32 x, CARD32 y)
     o = FbOverU(x,y,16,a,t);
     p = FbOverU(x,y,24,a,t);
     return m|n|o|p;
+}
+
+CARD32
+fbOver24 (CARD32 x, CARD32 y)
+{
+    CARD16  a = ~x >> 24;
+    CARD16  t;
+    CARD32  m,n,o;
+
+    m = FbOverU(x,y,0,a,t);
+    n = FbOverU(x,y,8,a,t);
+    o = FbOverU(x,y,16,a,t);
+    return m|n|o;
 }
 
 CARD32
@@ -123,13 +139,15 @@ fbCompositeSolidMask_nx8x8888 (CARD8      op,
 	src = *(CARD16 *) srcBits;
 	src = cvt0565to8888(src);
 	break;
+    default:
+	return;
     }
     /* manage missing src alpha */
     if (pSrc->pFormat->direct.alphaMask == 0)
 	src |= 0xff000000;
     dstMask = FbFullMask (pDst->pDrawable->depth);
     srca = src >> 24;
-    if (srca == 0)
+    if (src == 0)
 	return;
     
     fbGetDrawable(pDst->pDrawable, dstBits, dstStride, dstBpp);
@@ -211,7 +229,7 @@ fbCompositeSolidMask_nx8888x8888C (CARD8      op,
 	src |= 0xff000000;
     dstMask = FbFullMask (pDst->pDrawable->depth);
     srca = src >> 24;
-    if (srca == 0)
+    if (src == 0)
 	return;
     
     fbGetDrawable(pDst->pDrawable, dstBits, dstStride, dstBpp);
@@ -306,7 +324,7 @@ fbCompositeSolidMask_nx8x0888 (CARD8      op,
     if (pSrc->pFormat->direct.alphaMask == 0)
 	src |= 0xff000000;
     srca = src >> 24;
-    if (srca == 0)
+    if (src == 0)
 	return;
     
     fbGetDrawable(pDst->pDrawable, dstBits, dstStride, dstBpp);
@@ -337,13 +355,13 @@ fbCompositeSolidMask_nx8x0888 (CARD8      op,
 		else
 		{
 		    d = Fetch24(dst);
-		    d = fbOver (src, d);
+		    d = fbOver24 (src, d);
 		}
 		Store24(dst,d);
 	    }
 	    else if (m)
 	    {
-		d = fbOver (fbIn(src,m), Fetch24(dst));
+		d = fbOver24 (fbIn(src,m), Fetch24(dst));
 		Store24(dst,d);
 	    }
 	    dst += 3;
@@ -391,7 +409,7 @@ fbCompositeSolidMask_nx8x0565 (CARD8      op,
     if (pSrc->pFormat->direct.alphaMask == 0)
 	src |= 0xff000000;
     srca = src >> 24;
-    if (srca == 0)
+    if (src == 0)
 	return;
     
     fbGetDrawable(pDst->pDrawable, dstBits, dstStride, dstBpp);
@@ -422,14 +440,14 @@ fbCompositeSolidMask_nx8x0565 (CARD8      op,
 		else
 		{
 		    d = *dst;
-		    d = fbOver (src, cvt0565to8888(d));
+		    d = fbOver24 (src, cvt0565to8888(d));
 		}
 		*dst = cvt8888to0565(d);
 	    }
 	    else if (m)
 	    {
 		d = *dst;
-		d = fbOver (fbIn(src,m), cvt0565to8888(d));
+		d = fbOver24 (fbIn(src,m), cvt0565to8888(d));
 		*dst = cvt8888to0565(d);
 	    }
 	    dst++;
@@ -541,7 +559,7 @@ fbCompositeSrc_8888x0888 (CARD8      op,
 		if (a == 0xff)
 		    d = s;
 		else
-		    d = fbOver (s, Fetch24(dst));
+		    d = fbOver24 (s, Fetch24(dst));
 		Store24(dst,d);
 	    }
 	    dst += 3;
@@ -601,7 +619,7 @@ fbCompositeSrc_8888x0565 (CARD8      op,
 		else
 		{
 		    d = *dst;
-		    d = fbOver (s, cvt0565to8888(d));
+		    d = fbOver24 (s, cvt0565to8888(d));
 		}
 		*dst = cvt8888to0565(d);
 	    }
@@ -709,6 +727,114 @@ fbCompositeSrcAdd_8000x8000 (CARD8	op,
     }
 }
 
+void
+fbCompositeSrcAdd_1000x1000 (CARD8	op,
+			     PicturePtr pSrc,
+			     PicturePtr pMask,
+			     PicturePtr pDst,
+			     INT16      xSrc,
+			     INT16      ySrc,
+			     INT16      xMask,
+			     INT16      yMask,
+			     INT16      xDst,
+			     INT16      yDst,
+			     CARD16     width,
+			     CARD16     height)
+{
+    FbBits	*dstBits, *srcBits;
+    FbStride	dstStride, srcStride;
+    int		dstBpp, srcBpp;
+    
+    fbGetDrawable(pSrc->pDrawable, srcBits, srcStride, srcBpp);
+
+    fbGetDrawable(pDst->pDrawable, dstBits, dstStride, dstBpp);
+
+    fbBlt (srcBits + srcStride * ySrc,
+	   srcStride,
+	   xSrc,
+
+	   dstBits + dstStride * yDst,
+	   dstStride,
+	   xDst,
+
+	   width,
+	   height,
+
+	   GXor,
+	   FB_ALLONES,
+	   srcBpp,
+
+	   FALSE,
+	   FALSE);
+}
+
+void
+fbCompositeSolidMask_nx1xn (CARD8      op,
+			    PicturePtr pSrc,
+			    PicturePtr pMask,
+			    PicturePtr pDst,
+			    INT16      xSrc,
+			    INT16      ySrc,
+			    INT16      xMask,
+			    INT16      yMask,
+			    INT16      xDst,
+			    INT16      yDst,
+			    CARD16     width,
+			    CARD16     height)
+{
+    FbBits	*dstBits, *srcBits;
+    FbStip	*maskBits;
+    FbStride	dstStride, maskStride, srcStride;
+    int		dstBpp, maskBpp, srcBpp;
+    FbBits	src;
+    
+    fbGetDrawable(pSrc->pDrawable, srcBits, srcStride, srcBpp);
+    switch (srcBpp) {
+    case 32:
+	src = *(CARD32 *) srcBits;
+	break;
+    case 24:
+	src = Fetch24 ((CARD8 *) srcBits);
+	break;
+    case 16:
+	src = *(CARD16 *) srcBits;
+	src = cvt0565to8888(src);
+	break;
+    }
+
+    fbGetStipDrawable (pMask->pDrawable, maskBits, maskStride, maskBpp);
+    fbGetDrawable (pDst->pDrawable, dstBits, dstStride, dstBpp);
+
+    switch (dstBpp) {
+    case 32:
+	break;
+    case 24:
+	break;
+    case 16:
+	src = cvt8888to0565(src);
+	break;
+    }
+
+    src = fbReplicatePixel (src, dstBpp);
+
+    fbBltOne (maskBits + maskStride * yMask,
+	      maskStride,
+	      xMask,
+
+	      dstBits + dstStride * yDst,
+	      dstStride,
+	      xDst * dstBpp,
+	      dstBpp,
+
+	      width * dstBpp,
+	      height,
+
+	      0x0,
+	      src,
+	      FB_ALLONES,
+	      0x0);
+}
+
 # define mod(a,b)	((b) == 1 ? 0 : (a) >= 0 ? (a) % (b) : (b) - (-a) % (b))
 
 void
@@ -809,6 +935,19 @@ fbComposite (CARD8      op,
 			    }
 			}
 			break;
+		    case PICT_a1:
+			switch (pDst->format) {
+			case PICT_r5g6b5:
+			case PICT_b5g6r5:
+			case PICT_r8g8b8:
+			case PICT_b8g8r8:
+			case PICT_a8r8g8b8:
+			case PICT_x8r8g8b8:
+			case PICT_a8b8g8r8:
+			case PICT_x8b8g8r8:
+			    func = fbCompositeSolidMask_nx1xn;
+			    break;
+			}
 		    }
 		}
 	    }
@@ -871,6 +1010,12 @@ fbComposite (CARD8      op,
 		switch (pDst->format) {
 		case PICT_a8:
 		    func = fbCompositeSrcAdd_8000x8000;
+		    break;
+		}
+	    case PICT_a1:
+		switch (pDst->format) {
+		case PICT_a1:
+		    func = fbCompositeSrcAdd_1000x1000;
 		    break;
 		}
 	    }
@@ -937,9 +1082,14 @@ fbComposite (CARD8      op,
     REGION_UNINIT (pDst->pDrawable->pScreen, &region);
 }
 
+#endif /* RENDER */
+
 Bool
 fbPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
 {
+
+#ifdef RENDER
+
     PictureScreenPtr    ps;
 
     if (!miPictureInit (pScreen, formats, nformats))
@@ -948,5 +1098,8 @@ fbPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
     ps->Composite = fbComposite;
     ps->Glyphs = miGlyphs;
     ps->CompositeRects = miCompositeRects;
+
+#endif /* RENDER */
+
     return TRUE;
 }

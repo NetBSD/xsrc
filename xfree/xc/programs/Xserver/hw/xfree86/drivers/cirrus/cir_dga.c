@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dga.c,v 1.1 2000/12/06 15:35:24 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir_dga.c,v 1.6 2001/04/01 14:00:10 tsi Exp $ */
 /*
  * Copyright 2000 by Egbert Eich
  *
@@ -143,7 +143,7 @@ Cir_OpenFramebuffer(
     CirPtr pCir = CIRPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pCir->FbAddress;
+    *mem = (unsigned char*)(long)pCir->FbAddress;
     *size = pCir->FbMapSize;
     *offset = 0;                /* Always */
     *flags = 0;                 /* Root permissions OS-dependent */

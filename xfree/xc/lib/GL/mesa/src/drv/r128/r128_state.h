@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.h,v 1.1 2000/06/17 00:03:07 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.h,v 1.3 2001/01/08 01:07:21 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,29 +28,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_STATE_H_
-#define _R128_STATE_H_
+#ifndef __R128_STATE_H__
+#define __R128_STATE_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
 #include "r128_context.h"
 
-extern void r128DDInitState( r128ContextPtr r128ctx );
+extern void r128DDInitState( r128ContextPtr rmesa );
 extern void r128DDInitStateFuncs( GLcontext *ctx );
 
 extern void r128DDUpdateState( GLcontext *ctx );
 extern void r128DDUpdateHWState( GLcontext *ctx );
 
 extern void r128UpdateWindow( GLcontext *ctx );
-extern void r128SetClipRects( r128ContextPtr r128ctx,
-			      XF86DRIClipRectPtr pc, int nc );
 
-extern void r128EmitHwStateLocked( r128ContextPtr r128ctx );
+extern void r128EmitHwStateLocked( r128ContextPtr rmesa );
 
 #endif
-#endif /* _R128_STATE_H_ */
+#endif

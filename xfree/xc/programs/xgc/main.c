@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xgc/main.c,v 1.4 2001/04/01 14:00:21 tsi Exp $ */
 
 /* xgc
 **
@@ -44,6 +44,7 @@ from the X Consortium.
 #include <X11/Xaw/AsciiText.h>
 #include <X11/Shell.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "xgc.h"
 #include "tile"

@@ -1,7 +1,7 @@
 /*
  * O/S-dependent (mis)feature macro definitions
  *
- * $TOG: Xosdefs.h /main/17 1998/02/09 11:19:02 kaleb $
+ * $Xorg: Xosdefs.h,v 1.4 2000/08/18 04:05:44 coskrey Exp $
  *
 Copyright 1991, 1998  The Open Group
 
@@ -21,7 +21,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/include/Xosdefs.h,v 3.14 1998/12/20 11:56:46 dawes Exp $ */
+/* $XFree86: xc/include/Xosdefs.h,v 3.17 2001/03/07 15:54:11 dawes Exp $ */
 
 #ifndef _XOSDEFS_H_
 #define _XOSDEFS_H_
@@ -77,14 +77,12 @@ in this Software without prior written authorization from The Open Group.
 
 #ifdef i386
 #ifdef SYSV
-#if !(defined(ISC) && defined(_POSIX_SOURCE))
-#ifndef SCO
-#ifndef _SCO_DS /* SCO 5.0 has SVR4 header files */
+#if !defined(ISC) && !defined(SCO) && !defined(_SEQUENT_)
+#if !defined(_POSIX_SOURCE) && !defined(_SCO_DS)
 #define X_NOT_POSIX
 #endif
 #define X_NOT_STDC_ENV
 #endif
-#endif /* !(defined(ISC) && defined(_POSIX_SOURCE)) */
 #endif
 #endif
 
@@ -114,6 +112,10 @@ in this Software without prior written authorization from The Open Group.
 
 #ifdef __EMX__
 #define USGISH
+#define NULL_NOT_ZERO
+#endif
+
+#ifdef __DARWIN__
 #define NULL_NOT_ZERO
 #endif
 

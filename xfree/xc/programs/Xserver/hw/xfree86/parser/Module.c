@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Module.c,v 1.5 2000/04/04 22:36:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Module.c,v 1.6 2000/10/20 14:59:02 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

@@ -1,5 +1,5 @@
 /*
- * $TOG: showrgb.c /main/12 1998/02/09 13:46:17 kaleb $
+ * $Xorg: showrgb.c,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/rgb/showrgb.c,v 3.4 1998/10/04 09:40:33 dawes Exp $ */
+/* $XFree86: xc/programs/rgb/showrgb.c,v 3.6 2001/01/17 23:45:03 dawes Exp $ */
 
 #ifndef USE_RGB_TXT
 #ifdef NDBM

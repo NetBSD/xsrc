@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.2 1997/11/16 06:17:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.5 2001/01/17 22:36:42 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: colormap.c /main/74 1998/03/24 18:17:31 kaleb $ */
+/* $Xorg: colormap.c,v 1.3 2000/08/17 19:48:17 cpqbld Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS

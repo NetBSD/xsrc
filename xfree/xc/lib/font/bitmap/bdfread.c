@@ -1,4 +1,4 @@
-/* $TOG: bdfread.c /main/26 1998/05/01 16:46:08 kaleb $ */
+/* $Xorg: bdfread.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -46,7 +46,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.7 1999/07/17 08:55:11 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.9 2001/01/17 19:43:26 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>

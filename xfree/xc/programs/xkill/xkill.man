@@ -1,4 +1,4 @@
-.\" $TOG: xkill.man /main/19 1998/02/09 14:09:15 kaleb $
+.\" $Xorg: xkill.man,v 1.3 2000/08/17 19:54:51 cpqbld Exp $
 .\" Copyright 1988, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XKILL 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xkill/xkill.man,v 1.7 2001/01/27 18:21:17 dawes Exp $
+.\"
+.TH XKILL 1 __xorgversion__
 .SH NAME
 xkill - kill a client by its X resource
 .SH SYNOPSIS
@@ -68,7 +71,7 @@ the root.
 Specifies a specific pointer button number or the word "any" to use when 
 selecting windows.
 .SH "SEE ALSO"
-X(1), xwininfo(1), XKillClient and XGetPointerMapping in the Xlib Programmers 
+X(__miscmansuffix__), xwininfo(1), XKillClient and XGetPointerMapping in the Xlib Programmers 
 Manual, KillClient in the X Protocol Specification
 .SH AUTHOR
 Jim Fulton, MIT X Consortium

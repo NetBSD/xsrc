@@ -1,4 +1,4 @@
-/* $TOG: mivaltree.c /main/52 1998/02/09 14:49:15 kaleb $ */
+/* $Xorg: mivaltree.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 /*
  * mivaltree.c --
  *	Functions for recalculating window clip lists. Main function
@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/mi/mivaltree.c,v 1.5 1999/09/27 06:30:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mivaltree.c,v 1.7 2001/01/17 22:37:07 dawes Exp $ */
 
  /* 
   * Aug '86: Susan Angebranndt -- original code

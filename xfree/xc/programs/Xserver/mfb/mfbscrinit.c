@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbscrinit.c,v 3.5 1998/06/27 12:55:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbscrinit.c,v 3.7 2001/01/17 22:37:03 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbscrinit.c /main/28 1998/02/09 14:40:11 kaleb $ */
+/* $Xorg: mfbscrinit.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xproto.h"	/* for xColorItem */

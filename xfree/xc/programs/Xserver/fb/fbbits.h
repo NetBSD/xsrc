@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.7 2000/02/23 20:29:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.10 2001/03/18 08:35:30 keithp Exp $ */
 
 /*
  * This file defines functions for drawing some primitives using
@@ -141,27 +141,18 @@ BRESDASH (DrawablePtr	pDrawable,
     FbStride	bitsStride;
     FbStride	majorStep, minorStep;
     BITS	xorfg, xorbg;
-    unsigned char   *dash, *lastDash, *firstDash;
+    FbDashDeclare;
     int		dashlen;
     Bool	even;
     Bool	doOdd;
     
     fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
     doOdd = pGC->lineStyle == LineDoubleDash;
-    even = TRUE;
     xorfg = (BITS) pPriv->xor;
     xorbg = (BITS) pPriv->bgxor;
-    firstDash = pGC->dash;
-    lastDash = firstDash + pGC->numInDashList;
-    dash = firstDash;
-    while (dashOffset >= (dashlen = *dash++))
-    {
-	dashOffset -= dashlen;
-	if (dash == lastDash)
-	    dash = firstDash;
-	even ^= 1;
-    }
-    dashlen -= dashOffset;
+    
+    FbDashInit (pGC, pPriv, dashOffset, dashlen, even);
+    
     bits = ((UNIT *) (dst + (y1 * dstStride))) + x1 * MUL;
     bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
     if (signdy < 0)
@@ -197,9 +188,9 @@ BRESDASH (DrawablePtr	pDrawable,
 	    }
 	    if (!len)
 		break;
-	    dashlen = *dash++;
-	    if (dash == lastDash)
-		dash = firstDash;
+	    
+	    FbDashNextEven(dashlen);
+	    
 	    if (dashlen >= len)
 		dashlen = len;
 doubleOdd:
@@ -216,8 +207,9 @@ doubleOdd:
 	    }
 	    if (!len)
 		break;
-	    dashlen = *dash++;
-	    /* numInDashList is even, no need to check here */
+	    
+	    FbDashNextOdd(dashlen);
+	    
 	    if (dashlen >= len)
 		dashlen = len;
 	}
@@ -241,9 +233,9 @@ doubleOdd:
 	    }
 	    if (!len)
 		break;
-	    dashlen = *dash++;
-	    if (dash == lastDash)
-		dash = firstDash;
+
+	    FbDashNextEven (dashlen);
+	    
 	    if (dashlen >= len)
 		dashlen = len;
 onOffOdd:
@@ -259,7 +251,9 @@ onOffOdd:
 	    }
 	    if (!len)
 		break;
-	    dashlen = *dash++;
+	    
+	    FbDashNextOdd (dashlen);
+	    
 	    if (dashlen >= len)
 		dashlen = len;
 	}
@@ -777,7 +771,9 @@ POLYLINE (DrawablePtr	pDrawable,
 		{
 		    if (pGC->capStyle != CapNotLast && 
 			pt2 != *((INT32 *) ptsOrig))
-			*bits = FbDoRRop (*bits, and, xor);
+		    {
+			RROP(bits,and,xor);
+		    }
 		    return;
 		}
 		pt1 = pt2;

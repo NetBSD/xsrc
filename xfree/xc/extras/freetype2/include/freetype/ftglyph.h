@@ -32,13 +32,31 @@
 #ifndef __FTGLYPH_H__
 #define __FTGLYPH_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    glyph_management                                                   */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Glyph Management                                                   */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    Generic interface to manage individual glyph data.                 */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    This section contains definitions used to manage glyph data        */
+  /*    through generic FT_Glyph objects.  Each of them can contain a      */
+  /*    bitmap, a vector outline, or even images in other formats.         */
+  /*                                                                       */
+  /*************************************************************************/
 
 
   /* forward declaration to a private type */
@@ -219,17 +237,8 @@ FT_BEGIN_HEADER
                                              FT_Matrix*  matrix,
                                              FT_Vector*  delta );
 
-
-  enum
-  {
-    ft_glyph_bbox_unscaled  = 0, /* return unscaled font units           */
-    ft_glyph_bbox_subpixels = 0, /* return unfitted 26.6 coordinates     */
-    ft_glyph_bbox_gridfit   = 1, /* return grid-fitted 26.6 coordinates  */
-    ft_glyph_bbox_truncate  = 2, /* return coordinates in integer pixels */
-    ft_glyph_bbox_pixels    = 3  /* return grid-fitted pixel coordinates */
-  };
-
-
+  /* */
+  
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -292,6 +301,16 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    The default value for `bbox_mode' is `ft_glyph_bbox_pixels'.       */
   /*                                                                       */
+  enum
+  {
+    ft_glyph_bbox_unscaled  = 0, /* return unscaled font units           */
+    ft_glyph_bbox_subpixels = 0, /* return unfitted 26.6 coordinates     */
+    ft_glyph_bbox_gridfit   = 1, /* return grid-fitted 26.6 coordinates  */
+    ft_glyph_bbox_truncate  = 2, /* return coordinates in integer pixels */
+    ft_glyph_bbox_pixels    = 3  /* return grid-fitted pixel coordinates */
+  };
+
+
   FT_EXPORT( void )  FT_Glyph_Get_CBox( FT_Glyph  glyph,
                                         FT_UInt   bbox_mode,
                                         FT_BBox  *acbox );
@@ -390,6 +409,13 @@ FT_BEGIN_HEADER
 
   /* other helpful functions */
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    computations                                                       */
+  /*                                                                       */
+  /*************************************************************************/
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -428,6 +454,9 @@ FT_BEGIN_HEADER
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
   FT_EXPORT( FT_Error )  FT_Matrix_Invert( FT_Matrix*  matrix );
+
+
+  /* */
 
 
 FT_END_HEADER

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.20 2000/09/11 16:58:56 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.26.2.1 2001/05/24 20:12:47 alanh Exp $ */
 
 /*
  * glint register file 
@@ -19,16 +19,7 @@
 
 #include "compiler.h"
 
-/**********************************************
-*  GLINT 500TX Configuration Region Registers *
-***********************************************/
-
-/* Device Identification */
-#define CFGVendorId						0x0000
-#define PCI_VENDOR_3DLABS					0x3D3D
-#define PCI_VENDOR_TI						0x104C
-#define CFGDeviceId						0x0002
-
+/* The chips we know */
 #define PCI_CHIP_3DLABS_300SX					0x01
 #define PCI_CHIP_3DLABS_500TX					0x02
 #define PCI_CHIP_3DLABS_DELTA					0x03
@@ -39,6 +30,29 @@
 #define PCI_CHIP_3DLABS_PERMEDIA2V				0x09
 #define PCI_CHIP_3DLABS_PERMEDIA3				0x0A
 #define PCI_CHIP_TI_PERMEDIA 	  				0x3d04
+
+/* The boards we know */
+#define IS_GLORIAXXL	((pGlint->PciInfo->subsysVendor == 0x1048) && \
+			 (pGlint->PciInfo->subsysCard   == 0x0a42))
+
+#define IS_GMX2000	((pGlint->PciInfo->subsysVendor == 0x3d3d) && \
+			 (pGlint->PciInfo->subsysCard   == 0x0106))
+
+#define IS_J2000	((pGlint->PciInfo->subsysVendor == 0x1097) && \
+			 (pGlint->PciInfo->subsysCard   == 0x3d32))
+
+#define IS_JPRO		((pGlint->PciInfo->subsysVendor == 0x1097) && \
+			 (pGlint->PciInfo->subsysCard   == 0x3db3))
+
+/**********************************************
+*  GLINT 500TX Configuration Region Registers *
+***********************************************/
+
+/* Device Identification */
+#define CFGVendorId						0x0000
+#define PCI_VENDOR_3DLABS					0x3D3D
+#define PCI_VENDOR_TI						0x104C
+#define CFGDeviceId						0x0002
 
 #define CFGRevisionId						0x08
 #define CFGClassCode						0x09
@@ -323,6 +337,10 @@
 #define PM2VDACRDDClk1PreScale						0x204
 #define PM2VDACRDDClk1FeedbackScale					0x205
 #define PM2VDACRDDClk1PostScale						0x206
+#define PM2VDACRDMClkControl						0x20D
+#define PM2VDACRDMClkPreScale						0x20E
+#define PM2VDACRDMClkFeedbackScale					0x20F
+#define PM2VDACRDMClkPostScale						0x210
 #define PM2VDACRDCursorPalette						0x303
 #define PM2VDACRDCursorPattern						0x400
 #define PM2VDACIndexRegLow						0x4020
@@ -981,6 +999,8 @@
 	#define FM_PassStatisticTag					0x1000
 	#define FM_PassStatisticData					0x2000
 
+#define	Sync_tag							0x0188
+
 #define StatisticMode						GLINT_TAG_ADDR(0x18,0x01)
 #define MinRegion						GLINT_TAG_ADDR(0x18,0x02)
 #define MaxRegion						GLINT_TAG_ADDR(0x18,0x03)
@@ -1173,25 +1193,26 @@
 	GLINT_VERB_READ_REG(pGlint,r,__FILE__,__LINE__)
 #else
 
-#define GLINT_WRITE_REG(v,r) MMIO_OUT32(pGlint->IOBase,(unsigned long)r, v)
-#define GLINT_READ_REG(r) MMIO_IN32(pGlint->IOBase,(unsigned long)r)
-#define GLINT_SECONDARY_WRITE_REG(v,r) \
-			MMIO_OUT32(pGlint->IOBase,(unsigned long)r+0x10000, v)
-#define GLINT_SECONDARY_READ_REG(r) \
-			MMIO_IN32(pGlint->IOBase,(unsigned long)r+0x10000)
+#define GLINT_WRITE_REG(v,r) \
+	MMIO_OUT32(pGlint->IOBase + pGlint->IOOffset,(unsigned long)(r), (v))
+#define GLINT_READ_REG(r) \
+	MMIO_IN32(pGlint->IOBase + pGlint->IOOffset,(unsigned long)(r))
 
 #endif /* DEBUG */
 
 #define GLINT_WAIT(n)						\
 do{								\
-	if(!pGlint->UsePCIRetry)				\
-		while(GLINT_READ_REG(InFIFOSpace)<(n)){		\
-			mem_barrier();				\
-		}						\
+	if (pGlint->InFifoSpace>=(n))				\
+	    pGlint->InFifoSpace -= (n);				\
+	else {							\
+	    int tmp;						\
+	    while((tmp=GLINT_READ_REG(InFIFOSpace))<(n));	\
+	    /* Clamp value due to bugs in PM3 */		\
+	    if (tmp > pGlint->FIFOSize)				\
+		tmp = pGlint->FIFOSize;				\
+	    pGlint->InFifoSpace = tmp - (n);			\
+	}							\
 }while(0)
-
-#define GLINT_MASK_WRITE_REG(v,m,r)				\
-	GLINT_WRITE_REG((GLINT_READ_REG(r)&(m))|(v),r)
 
 #define GLINTDACDelay(x) do {                                   \
         int delay = x;                                          \
@@ -1199,18 +1220,22 @@ do{								\
 	while(delay--){tmp = GLINT_READ_REG(InFIFOSpace);};     \
 	} while(0)
         
+#define GLINT_MASK_WRITE_REG(v,m,r)				\
+	GLINT_WRITE_REG((GLINT_READ_REG(r)&(m))|(v),r)
+
 #define GLINT_SLOW_WRITE_REG(v,r)				\
 do{								\
-	GLINTDACDelay(5);					\
+	mem_barrier();						\
+	GLINT_WAIT(pGlint->FIFOSize);	     			\
+	mem_barrier();						\
         GLINT_WRITE_REG(v,r);					\
-	GLINTDACDelay(5);					\
 }while(0)
 
-#define GLINT_SECONDARY_SLOW_WRITE_REG(v,r)				\
-do{									\
-	while(GLINT_READ_REG(InFIFOSpace)<1);				\
-        GLINT_SECONDARY_WRITE_REG(v,r);					\
-}while(0)
+#define GLINT_SET_INDEX(index)					\
+do{								\
+	GLINT_SLOW_WRITE_REG(((index)>>8)&0xff,PM2VDACIndexRegHigh);	\
+	GLINT_SLOW_WRITE_REG((index)&0xff,PM2VDACIndexRegLow);	\
+} while(0)
 
 #define REPLICATE(r)						\
 {								\
@@ -1266,4 +1291,38 @@ do{									\
 		GLINT_WRITE_REG(planemask, FBHardwareWriteMask);\
 	}
 #endif
+
+/* Permedia Save/Restore functions */
+
+#define STOREREG(address,value) 				\
+    	pReg->glintRegs[address >> 3] = value;
+
+#define SAVEREG(address) 					\
+    	pReg->glintRegs[address >> 3] = GLINT_READ_REG(address);
+
+#define RESTOREREG(address) 					\
+    	GLINT_SLOW_WRITE_REG(pReg->glintRegs[address >> 3], address);
+
+#define STOREDAC(address,value)					\
+    	pReg->DacRegs[address] = value;
+
+#define P2VOUT(address)						\
+    Permedia2vOutIndReg(pScrn, address, 0x00, pReg->DacRegs[address]);
+
+#define P2VIN(address)						\
+    pReg->DacRegs[address] = Permedia2vInIndReg(pScrn, address);
+
+/* RamDac Save/Restore functions, used by external DAC's */
+
+#define STORERAMDAC(address,value)				\
+    	ramdacReg->DacRegs[address] = value;
+
+/* Multi Chip access */
+
+#define ACCESSCHIP1()						\
+    pGlint->IOOffset = 0;
+
+#define ACCESSCHIP2()						\
+    pGlint->IOOffset = 0x10000;
+
 #endif

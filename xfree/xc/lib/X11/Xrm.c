@@ -1,4 +1,4 @@
-/* $TOG: Xrm.c /main/94 1998/02/06 18:03:25 kaleb $ */
+/* $Xorg: Xrm.c,v 1.6 2000/08/17 19:45:08 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.13 1999/05/30 03:03:19 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.15 2001/01/17 19:41:50 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>

@@ -1,5 +1,5 @@
 /*
- * $TOG: Toggle.h /main/18 1998/02/11 14:55:57 kaleb $
+ * $Xorg: Toggle.h,v 1.3 2000/08/17 19:45:42 cpqbld Exp $
  *
 Copyright 1989, 1994, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/Toggle.h,v 1.3 1998/08/20 13:59:17 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Toggle.h,v 1.5 2001/01/17 19:42:35 dawes Exp $ */
 
 /*
  * ToggleP.h - Private definitions for Toggle widget

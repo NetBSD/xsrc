@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.7 2000/02/23 04:46:56 martin Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.9 2001/04/26 16:54:47 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -7,11 +7,8 @@ LinkSourceFile(xmesa1.c,$(MESASRCDIR)/src/X)
 LinkSourceFile(xmesa2.c,$(MESASRCDIR)/src/X)
 LinkSourceFile(xmesa3.c,$(MESASRCDIR)/src/X)
 LinkSourceFile(xmesa4.c,$(MESASRCDIR)/src/X)
-LinkSourceFile(xmesaP.h,$(MESASRCDIR)/src/X)
-LinkSourceFile(glxheader.h,$(MESASRCDIR)/src/X)
 
 LinkSourceFile(compsize.c,$(LIBSRC)/GL/glx)
-LinkSourceFile(size.h,$(LIBSRC)/GL/glx)
 
   DRIVER_SRCS = xmesa1.c xmesa2.c xmesa3.c xmesa4.c
   DRIVER_OBJS = xmesa1.o xmesa2.o xmesa3.o xmesa4.o
@@ -22,11 +19,12 @@ LinkSourceFile(size.h,$(LIBSRC)/GL/glx)
          SRCS = $(DRIVER_SRCS) $(GLX_SRCS)
          OBJS = $(DRIVER_OBJS) $(GLX_OBJS)
 
-     INCLUDES = -I. -I.. -I../../include \
-                -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
-                -I../../../include -I../../../glx \
-                -I$(LIBSRC)/GL/include \
-                -I$(XF86SRC) -I$(XTOP)/include
+     INCLUDES = -I. -I$(INCLUDESRC) -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+		-I$(MESASRCDIR)/src -I$(MESASRCDIR)/src/X \
+		-I$(MESASRCDIR)/include \
+		-I$(LIBSRC)/GL/glx -I$(LIBSRC)/GL/include \
+		-I$(SERVERSRC)/include -I$(SERVERSRC)/GL/include \
+		-I$(SERVERSRC)/GL/glx
 
       DEFINES = $(GLX_DEFINES) /*-DUSE_X86_ASM*/
 

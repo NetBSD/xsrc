@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/dri/xf86dristr.h,v 1.6 2000/06/17 00:02:48 martin Exp $ */
+/* $XFree86: xc/lib/GL/dri/xf86dristr.h,v 1.9 2001/03/21 16:01:08 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -42,7 +42,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define XF86DRINAME "XFree86-DRI"
 
-#define XF86DRI_MAJOR_VERSION	3	/* current version numbers */
+#define XF86DRI_MAJOR_VERSION	4	/* current version numbers */
 #define XF86DRI_MINOR_VERSION	0
 #define XF86DRI_PATCH_VERSION	0
 

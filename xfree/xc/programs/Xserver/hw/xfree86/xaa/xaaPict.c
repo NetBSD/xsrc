@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.4 2000/10/21 22:38:33 mvojkovi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.12 2001/04/21 23:32:56 mvojkovi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -40,10 +40,54 @@
 #include "xaa.h"
 #include "xaalocal.h"
 #include "xaawrap.h"
+#include "xaacexp.h"
 #include "xf86fbman.h"
 #include "servermd.h"
 
-static Bool
+Bool
+XAAGetPixelFromRGBA (
+    CARD32 *pixel,
+    CARD16 red,
+    CARD16 green,
+    CARD16 blue,
+    CARD16 alpha,
+    CARD32 format
+){
+    int rbits, bbits, gbits, abits;
+    int rshift, bshift, gshift, ashift;
+
+    *pixel = 0;
+
+    if(!PICT_FORMAT_COLOR(format))
+    	return FALSE;
+	
+    rbits = PICT_FORMAT_R(format);
+    gbits = PICT_FORMAT_G(format);
+    bbits = PICT_FORMAT_B(format);
+    abits = PICT_FORMAT_A(format);
+    
+    if(PICT_FORMAT_TYPE(format) == PICT_TYPE_ARGB) {
+        bshift = 0;
+        gshift = bbits;
+	rshift = gshift + gbits;
+	ashift = rshift + rbits;
+    } else {  /* PICT_TYPE_ABGR */
+        rshift = 0;
+	gshift = rbits;
+	bshift = gshift + gbits;
+	ashift = bshift + bbits;
+    }
+    
+    *pixel |=  ( blue >> (16 - bbits)) << bshift;
+    *pixel |=  (  red >> (16 - rbits)) << rshift;
+    *pixel |=  (green >> (16 - gbits)) << gshift;
+    *pixel |=  (alpha >> (16 - abits)) << ashift;
+
+    return TRUE;
+}
+
+
+Bool
 XAAGetRGBAFromPixel(
     CARD32 pixel,
     CARD16 *red,
@@ -52,68 +96,56 @@ XAAGetRGBAFromPixel(
     CARD16 *alpha,
     CARD32 format
 ){
-
-    *alpha = 0xffff;
-
-    switch(PICT_FORMAT_BPP(format)) {
-    case 32:
-	switch(format) {
-	case PICT_a8r8g8b8:
-	    *alpha = (pixel >> 24) & 0x000000ff;
-	    *alpha |= *alpha << 8;
-	case PICT_x8r8g8b8:
-	    *blue = pixel & 0x000000ff;
-	    *blue |= *blue << 8;
-	    *green = pixel & 0x0000ff00;
-	    *green |= *green >> 8;
-	    *red = (pixel >> 16) & 0x000000ff;
-	    *red |= *red << 8;
-	    return TRUE;
-	case PICT_a8b8g8r8:
-	    *alpha = (pixel >> 24) & 0x000000ff;
-	    *alpha |= *alpha << 8;
-	case PICT_x8b8g8r8:
-	    *red = pixel & 0x000000ff;
-	    *red |= *red << 8;
-	    *green = pixel & 0x0000ff00;
-	    *green |= *green >> 8;
-	    *blue = (pixel >> 16) & 0x000000ff;
-	    *blue |= *blue << 8;
-	    return TRUE;
-	default:
-	    break;
-	}
-	break;
-    case 24:
-	switch(format) {
-	case PICT_r8g8b8:
-	    *blue = pixel & 0x000000ff;
-	    *blue |= *blue << 8;
-	    *green = pixel & 0x0000ff00;
-	    *green |= *green >> 8;
-	    *red = (pixel >> 16) & 0x000000ff;
-	    *red |= *red << 8;
-	    return TRUE;
-	case PICT_b8g8r8:
-	    *red = pixel & 0x000000ff;
-	    *red |= *red << 8;
-	    *green = pixel & 0x0000ff00;
-	    *green |= *green >> 8;
-	    *blue = (pixel >> 16) & 0x000000ff;
-	    *blue |= *blue << 8;
-	    return TRUE;
-	default:
-	     break;
-	}
-	break;
-    case 16:
-    case 8:
-    case 4:
-    default:
-	return FALSE;
+    int rbits, bbits, gbits, abits;
+    int rshift, bshift, gshift, ashift;
+    
+    if(!PICT_FORMAT_COLOR(format))
+    	return FALSE;
+	
+    rbits = PICT_FORMAT_R(format);
+    gbits = PICT_FORMAT_G(format);
+    bbits = PICT_FORMAT_B(format);
+    abits = PICT_FORMAT_A(format);
+    
+    if(PICT_FORMAT_TYPE(format) == PICT_TYPE_ARGB) {
+        bshift = 0;
+        gshift = bbits;
+	rshift = gshift + gbits;
+	ashift = rshift + rbits;
+    } else {  /* PICT_TYPE_ABGR */
+        rshift = 0;
+	gshift = rbits;
+	bshift = gshift + gbits;
+	ashift = bshift + bbits;
     }
-
-    return FALSE;
+ 
+    *red = ((pixel >> rshift ) & ((1 << rbits) - 1)) << (16 - rbits);
+    while(rbits < 16) {
+       *red |= *red >> rbits;
+       rbits <<= 1;
+    }
+    
+    *green = ((pixel >> gshift ) & ((1 << gbits) - 1)) << (16 - gbits);
+    while(gbits < 16) {
+       *green |= *green >> gbits;
+       gbits <<= 1;
+    }
+        
+    *blue = ((pixel >> bshift ) & ((1 << bbits) - 1)) << (16 - bbits);
+    while(bbits < 16) {
+       *blue |= *blue >> bbits;
+       bbits <<= 1;
+    }  
+    
+    if(abits) {
+       *alpha = ((pixel >> ashift ) & ((1 << abits) - 1)) << (16 - abits);
+       while(abits < 16) {
+          *alpha |= *alpha >> abits;
+          abits <<= 1;
+       }     
+    } else *alpha = 0xffff;
+      
+    return TRUE;
 }
 
 /* 8:8:8 + PICT_a8 -> 8:8:8:8 texture */
@@ -140,7 +172,6 @@ XAA_888_plus_PICT_a8_to_8888 (
     } 
 }
 
-
 Bool
 XAADoComposite (
     CARD8      op,
@@ -163,11 +194,18 @@ XAADoComposite (
     BoxPtr pbox;
     int nbox;
 
+    if(!REGION_NUM_RECTS(pDst->pCompositeClip))
+        return TRUE;
+
     if(!infoRec->pScrn->vtSema || 
       ((pDst->pDrawable->type != DRAWABLE_WINDOW) &&
 	!IS_OFFSCREEN_PIXMAP(pDst->pDrawable)))
 	return FALSE;
-  
+
+    if((pSrc->pDrawable->type != DRAWABLE_PIXMAP) ||
+        IS_OFFSCREEN_PIXMAP(pSrc->pDrawable))
+	return FALSE;
+
     xDst += pDst->pDrawable->x;
     yDst += pDst->pDrawable->y;
     xSrc += pSrc->pDrawable->x;
@@ -184,21 +222,65 @@ XAADoComposite (
 	   if(!XAAGetRGBAFromPixel(pixel,&red,&green,&blue,&alpha,pSrc->format))
 		return FALSE;
 
-	   if((alpha != 0xffff) &&
+	   xMask += pMask->pDrawable->x;
+	   yMask += pMask->pDrawable->y;	
+		
+	   /* pull out color expandable operations here */
+	   if((pMask->format == PICT_a1) && (alpha == 0xffff) &&
+	       (op == PictOpOver) && infoRec->WriteBitmap &&  
+	       !(infoRec->WriteBitmapFlags & NO_TRANSPARENCY) &&
+	       (!(infoRec->WriteBitmapFlags & RGB_EQUAL) || 
+	         (red == green == blue)))
+	   {
+	        PixmapPtr pPix = (PixmapPtr)(pMask->pDrawable);
+		int skipleft;
+		        
+	  	if (!miComputeCompositeRegion (&region, pSrc, pMask, pDst,
+                                   xSrc, ySrc, xMask, yMask, xDst, yDst,
+                                   width, height))
+		      return TRUE;
+		      
+	  	nbox = REGION_NUM_RECTS(&region);
+	  	pbox = REGION_RECTS(&region);   
+		
+	        if(!nbox)
+		    return TRUE;	
+		    
+	        XAAGetPixelFromRGBA(&pixel, red, green, blue, 0, pDst->format);
+		    
+	   	xMask -= xDst;
+	   	yMask -= yDst;
+
+	   	while(nbox--) {
+		    skipleft = pbox->x1 + xMask;
+		    
+	            (*infoRec->WriteBitmap)(infoRec->pScrn,
+			        pbox->x1, pbox->y1, 
+			        pbox->x2 - pbox->x1, pbox->y2 - pbox->y1,
+			        (unsigned char*)(pPix->devPrivate.ptr) + 
+				  (pPix->devKind * (pbox->y1 + yMask)) + 
+			          ((skipleft >> 3) & ~3), pPix->devKind, 
+				skipleft & 31, pixel, -1, GXcopy, ~0);
+	            pbox++;
+	   	}
+				  
+		/* WriteBitmap sets the Sync flag */		  
+	        REGION_UNINIT(pScreen, &region);
+		return TRUE;
+	  }
+
+	  if((alpha != 0xffff) &&
               (infoRec->CPUToScreenAlphaTextureFlags & XAA_RENDER_NO_SRC_ALPHA))
 		return FALSE;
 
-	   formats = infoRec->CPUToScreenAlphaTextureFormats;
+	  formats = infoRec->CPUToScreenAlphaTextureFormats;
 
-	   while(*formats != pMask->format) {
+	  while(*formats != pMask->format) {
 		if(!(*formats)) return FALSE;
 		formats++;
-           }
+          }
 
-	   xMask += pMask->pDrawable->x;
-	   yMask += pMask->pDrawable->y;
-
-	   if (!miComputeCompositeRegion (&region, pSrc, pMask, pDst,
+	  if (!miComputeCompositeRegion (&region, pSrc, pMask, pDst,
                                    xSrc, ySrc, xMask, yMask, xDst, yDst,
                                    width, height))
 		return TRUE;
@@ -206,15 +288,20 @@ XAADoComposite (
 	  nbox = REGION_NUM_RECTS(&region);
 	  pbox = REGION_RECTS(&region);   
 	     
-	  if(!nbox)
+	  if(!nbox) {
+                REGION_UNINIT(pScreen, &region);
 		return TRUE;
+	  }
 
 	  if(!(infoRec->SetupForCPUToScreenAlphaTexture)(infoRec->pScrn,
 			op, red, green, blue, alpha, pMask->format, 
 			((PixmapPtr)(pMask->pDrawable))->devPrivate.ptr,
 			((PixmapPtr)(pMask->pDrawable))->devKind, 
 			pMask->pDrawable->width, pMask->pDrawable->height, 0))
+	  {
+                REGION_UNINIT(pScreen, &region);
 		return FALSE;
+	  }
 
 	   xMask -= xDst;
 	   yMask -= yDst;
@@ -247,15 +334,22 @@ XAADoComposite (
 	nbox = REGION_NUM_RECTS(&region);
 	pbox = REGION_RECTS(&region);   
 	     
-	if(!nbox)
-	    return TRUE;
+        if(!nbox) {
+             REGION_UNINIT(pScreen, &region);
+             return TRUE;
+        }
+
 
 	if(!(infoRec->SetupForCPUToScreenTexture)(infoRec->pScrn,
 			op, pSrc->format, 
 			((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr,
 			((PixmapPtr)(pSrc->pDrawable))->devKind, 
 			pSrc->pDrawable->width, pSrc->pDrawable->height, 0))
-		return FALSE;
+        {
+              REGION_UNINIT(pScreen, &region);
+              return FALSE;
+        }
+
 
 	xSrc -= xDst;
 	ySrc -= yDst;
@@ -322,6 +416,180 @@ XAAComposite (CARD8      op,
     XAA_RENDER_EPILOGUE(pScreen, Composite, XAAComposite);
 }
 
+Bool
+XAADoGlyphs (CARD8         op,
+	   PicturePtr    pSrc,
+	   PicturePtr    pDst,
+	   PictFormatPtr maskFormat,
+	   INT16         xSrc,
+	   INT16         ySrc,
+	   int           nlist,
+	   GlyphListPtr  list,
+	   GlyphPtr      *glyphs)
+{
+    ScreenPtr	pScreen = pDst->pDrawable->pScreen;
+    XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_SCREEN(pScreen);
+
+    if(!REGION_NUM_RECTS(pDst->pCompositeClip))
+	return TRUE;
+
+    if(!infoRec->pScrn->vtSema || 
+      ((pDst->pDrawable->type != DRAWABLE_WINDOW) &&
+	!IS_OFFSCREEN_PIXMAP(pDst->pDrawable)))
+	return FALSE;
+
+    if((pSrc->pDrawable->type != DRAWABLE_PIXMAP) ||
+        IS_OFFSCREEN_PIXMAP(pSrc->pDrawable))
+        return FALSE;
+
+    if(maskFormat && (maskFormat->depth == 1) && 
+       (pSrc->pDrawable->width == 1) && (pSrc->pDrawable->height == 1) &&
+       (op == PictOpOver) && infoRec->WriteBitmap &&
+       !(infoRec->WriteBitmapFlags & NO_TRANSPARENCY))
+    {
+	CARD16 red, green, blue, alpha;
+	CARD32 pixel =
+                *((CARD32*)(((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr));
+	CARD32 *bits, *pntr, *pnt;
+	int x, y, i, n, left, top, right, bottom, width, height, pitch;
+	int L, T, R, B, X, Y, h, w, dwords, row, column, nbox;
+	int leftEdge, rightEdge, topLine, botLine;
+	BoxPtr pbox;
+	GlyphPtr glyph;
+	
+	if(!XAAGetRGBAFromPixel(pixel,&red,&green,&blue,&alpha,pSrc->format))
+		return FALSE;
+
+	if(alpha != 0xffff) return FALSE;
+
+	XAAGetPixelFromRGBA(&pixel, red, green, blue, 0, pDst->format);
+
+	if((infoRec->WriteBitmapFlags & RGB_EQUAL) && !(red == green == blue))
+	   return FALSE;
+
+	x = pDst->pDrawable->x;
+	y = pDst->pDrawable->y;
+
+	while(nlist--) {
+	    x += list->xOff;
+	    y += list->yOff;
+	    left = right = X = x;
+	    top = bottom = Y = y;
+	    for(i = 0; i < list->len; i++) {
+		glyph = glyphs[i];
+
+		L = X - glyph->info.x;
+		if(L < left) left = L;
+		R = L + glyph->info.width;
+		if(R > right) right = R;
+
+		T = Y - glyph->info.y;
+		if(T < top) top = T;
+		B = T + glyph->info.height;
+		if(B > bottom) bottom = B;
+
+		X += glyph->info.xOff;
+		Y += glyph->info.yOff;
+	    }
+
+	    width = right - left;
+	    height = bottom - top;
+
+	    if(width && height) {
+		pitch = (((width + 31) & ~31) >> 5) + 1;
+		pntr = (CARD32*)xalloc(sizeof(CARD32) * pitch * height);
+		if(!pntr) 
+		    return TRUE;
+		bzero(pntr, sizeof(CARD32) * pitch * height);
+		n = list->len;
+
+		X = x; Y = y;
+		while(n--) {
+		    glyph = *glyphs++;
+		    h = glyph->info.height;
+		    w = glyph->info.width;
+		    if(h && w) {
+			row = y - top - glyph->info.y;
+			column = x - left - glyph->info.x;
+			pnt = pntr + (row * pitch) + (column >> 5);
+			column &= 31;
+			dwords = ((w + 31) >> 5) - 1;
+			bits = (CARD32*)(glyph + 1);
+			if(dwords) {
+			  while(h--) {
+			    for(i = 0; i <= dwords; i++) {
+				if(column) {
+				    pnt[i] |= SHIFT_L(*bits, column);
+				    pnt[i + 1] |= SHIFT_R(*bits, 32 - column);
+				} else
+				    pnt[i] |= *bits;
+
+				if(i != dwords) bits++;
+			    }
+			    bits++;
+			    pnt += pitch;
+			  } 
+			} else {
+			  if(column) {
+			     while(h--) {
+				pnt[0] |= SHIFT_L(*bits, column);
+				pnt[0 + 1] |= SHIFT_R(*bits, 32 - column);
+				bits++;
+				pnt += pitch;
+			     }
+			  } else {
+			     while(h--) {
+				*pnt |= *bits++;
+				pnt += pitch;
+			     }			  
+			  }	  
+			}
+		    }
+		    x += glyph->info.xOff;
+		    y += glyph->info.yOff;
+		}
+		
+		nbox = REGION_NUM_RECTS(pDst->pCompositeClip);
+		pbox = REGION_RECTS(pDst->pCompositeClip);
+		
+		while(nbox && (top >= pbox->y2)) {
+		    pbox++; nbox--;
+		}
+		
+		while(nbox && (bottom > pbox->y1)) {		
+		    leftEdge = max(left, pbox->x1);
+		    rightEdge = min(right, pbox->x2);
+		    
+		    if(rightEdge > leftEdge) {
+		    	column = leftEdge - left;
+			topLine = max(top, pbox->y1);
+			botLine = min(bottom, pbox->y2);
+			h = botLine - topLine;
+			
+			if(h > 0) {
+			  (*infoRec->WriteBitmap)(infoRec->pScrn, 
+			  	leftEdge, topLine, rightEdge - leftEdge, h,
+				(unsigned char*)(pntr + 
+				  ((topLine - top) * pitch) + (column >> 5)),
+				pitch << 2, column & 31, pixel, -1, GXcopy, ~0);
+			}
+		    }	
+		    nbox--; pbox++;
+	   	}
+		xfree(pntr);
+	    } else {
+		x = X; y = Y;
+	    }
+	    list++;
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
+}	   
+	 
+	
 void
 XAAGlyphs (CARD8         op,
 	   PicturePtr    pSrc,

@@ -1,5 +1,4 @@
-/* $XConsortium: ddxConfig.c /main/8 1996/09/28 17:15:56 rws $ */
-/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.2 1996/08/13 11:32:19 dawes Exp $ */
+/* $Xorg: ddxConfig.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.4 2001/01/17 22:37:14 dawes Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1

@@ -1,5 +1,5 @@
 /*
- * $TOG: parsedpy.c /main/10 1998/02/09 13:52:19 kaleb $
+ * $Xorg: parsedpy.c,v 1.3 2000/08/17 19:54:11 cpqbld Exp $
  *
  * parse_displayname - utility routine for splitting up display name strings
  *
@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xauth/parsedpy.c,v 3.2 1998/10/04 09:40:45 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/parsedpy.c,v 3.4 2001/01/17 23:45:14 dawes Exp $ */
 
 #include <stdio.h>			/* for NULL */
 #include <ctype.h>			/* for isascii() and isdigit() */

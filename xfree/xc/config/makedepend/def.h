@@ -1,4 +1,4 @@
-/* $TOG: def.h /main/32 1998/03/25 08:17:45 kaleb $ */
+/* $Xorg: def.h,v 1.3 2000/08/17 19:41:50 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group.
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/def.h,v 3.6 1999/03/21 07:34:25 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/def.h,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
 
 #include "Xos.h"
 #include "Xfuncproto.h"
@@ -65,11 +65,13 @@ in this Software without prior written authorization from The Open Group.
 #define ELIF            13
 #define EJECT           14
 #define WARNING         15
-#define IFFALSE         16     /* pseudo value --- never matched */
-#define ELIFFALSE       17     /* pseudo value --- never matched */
-#define INCLUDEDOT      18     /* pseudo value --- never matched */
-#define IFGUESSFALSE    19     /* pseudo value --- never matched */
-#define ELIFGUESSFALSE  20     /* pseudo value --- never matched */
+#define INCLUDENEXT     16
+#define IFFALSE         17     /* pseudo value --- never matched */
+#define ELIFFALSE       18     /* pseudo value --- never matched */
+#define INCLUDEDOT      19     /* pseudo value --- never matched */
+#define IFGUESSFALSE    20     /* pseudo value --- never matched */
+#define ELIFGUESSFALSE  21     /* pseudo value --- never matched */
+#define INCLUDENEXTDOT  22     /* pseudo value --- never matched */
 
 #ifdef DEBUG
 extern int	_debugmask;
@@ -147,7 +149,7 @@ void                    included_by(struct inclist *ip,
 				    struct inclist *newfile);
 struct inclist		*newinclude(char *newfile, char *incstring);
 void                    inc_clean (void);
-struct inclist		*inc_path(char *file, char *include, boolean dot);
+struct inclist		*inc_path(char *file, char *include, int type);
 
 void                    freefile(struct filepointer *fp);
 
@@ -164,7 +166,7 @@ void                    recursive_pr_include(struct inclist *head,
 void                    add_include(struct filepointer *filep, 
 				    struct inclist *file, 
 				    struct inclist *file_red, 
-				    char *include, boolean dot, 
+				    char *include, int type,
 				    boolean failOK);
 
 int                     cppsetup(char *line, struct filepointer *filep, 

@@ -1,4 +1,4 @@
-/* $TOG: imakemdep.h /main/102 1998/02/06 11:02:26 kaleb $ */
+/* $Xorg: imakemdep.h,v 1.5 2000/08/17 19:41:50 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.44 2000/11/02 02:51:08 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.50 2001/04/25 16:44:54 tsi Exp $ */
 
 
 /* 
@@ -151,12 +151,8 @@ in this Software without prior written authorization from The Open Group.
 #define imake_ccflags "-DSYSV -DUSG -DNOSTDHDRS"
 #endif
 
-#ifdef sequent
-#define imake_ccflags "-DX_NOT_STDC_ENV -DX_NOT_POSIX"
-#endif
-
 #ifdef _SEQUENT_
-#define imake_ccflags "-DSYSV -DUSG"
+#define imake_ccflags "-Xa -DSVR4"
 #endif
 
 #if defined(SX) || defined(PC_UX)
@@ -223,11 +219,6 @@ in this Software without prior written authorization from The Open Group.
 #define FIXUP_CPP_WHITESPACE
 #endif
 
-#if defined(__APPLE__)
-#define DEFAULT_CPP "/usr/bin/cpp"
-#endif
-
-
 #if defined(Lynx)
 /* On LynxOS 2.4.0 imake gets built with the old "legacy"
  * /bin/cc which has a rather pedantic builtin preprocessor.
@@ -243,6 +234,9 @@ in this Software without prior written authorization from The Open Group.
  *     If use cc -E but want a different compiler, define DEFAULT_CC.
  *     If the cpp you need is not in /lib/cpp, define DEFAULT_CPP.
  */
+#if defined(__APPLE__)
+#define DEFAULT_CPP "/usr/bin/cpp"
+#endif
 #if defined(Lynx) || defined(__Lynx__)
 #define DEFAULT_CC "gcc"
 #define USE_CC_E
@@ -654,11 +648,17 @@ char *cpp_argv[ARGUMENTS] = {
 #if defined(MIPS)
         "-DMIPS",
 #endif
-
-#if defined(__APPLE__)
-        "-D__DARWIN__",
 #endif
 
+#if defined(__APPLE__)
+        "-D__APPLE__",
+        "-D__DARWIN__",
+# ifdef __ppc__
+        "-D__ppc__",
+# endif
+# ifdef __i386__
+        "-D__i386__",
+# endif
 #endif
 
 };
@@ -805,14 +805,18 @@ char *cpp_argv[ARGUMENTS] = {
 	if ((__sp = strchr((buf), ' ')) != NULL)			\
 		*__sp = '/';						\
     } while (0)
-#else
-# if defined(__Lynx__) || defined(Lynx)
+#elif defined(__Lynx__) || defined(Lynx)
 /* Lynx 2.4.0 /bin/cc doesn't like #elif */
-#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
-#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
-#  define DEFAULT_OS_NAME        "srm %[^\n]"
-# endif
+# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
+# define DEFAULT_OS_NAME        "srm %[^\n]"
+#elif defined(_SEQUENT_)
+/* uname -v returns 'Vx.y.z', e.g. 'V4.4.2' */
+# define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
+# define DEFAULT_OS_MINOR_REV	"v V%*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV	"v V%*d.%*d.%[0-9]"
+# define DEFAULT_OS_NAME	"s %[^\n]"
 #endif
 
 #else /* else MAKEDEPEND */
@@ -908,7 +912,14 @@ struct symtab	predefs[] = {
 	{"mc68020", "1"},
 #endif
 #ifdef __GNUC__
+# if __GNUC__ == 1
 	{"__GNUC__", "1"},
+# else
+	{"__GNUC__", "2"},
+# endif
+#endif
+#ifdef __STRICT_ANSI__
+	{"__STRICT_ANSI__", "1"},
 #endif
 #if __STDC__
 	{"__STDC__", "1"},

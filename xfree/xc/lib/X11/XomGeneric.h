@@ -1,4 +1,4 @@
-/* $XConsortium: XomGeneric.h /main/4 1996/12/05 10:40:15 swick $ */
+/* $Xorg: XomGeneric.h,v 1.3 2000/08/17 19:45:08 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/XomGeneric.h,v 1.4 2001/01/17 19:41:50 dawes Exp $ */
 
 #ifndef _XOMGENERIC_H_
 #define _XOMGENERIC_H_

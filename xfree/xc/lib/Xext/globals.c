@@ -1,4 +1,4 @@
-/* $TOG: globals.c /main/6 1998/02/06 14:51:01 kaleb $ */
+/* $Xorg: globals.c,v 1.3 2000/08/17 19:45:53 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group

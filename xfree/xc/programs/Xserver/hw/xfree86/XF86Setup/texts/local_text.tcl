@@ -1,5 +1,5 @@
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/local_text.tcl,v 1.1.2.3 1998/02/26 20:11:16 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/local_text.tcl,v 1.2 1998/04/05 15:25:34 robin Exp $
 #
 proc Make_popup_help { file } {
 	global pc98 pc98_EGC messages

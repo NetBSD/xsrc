@@ -39,15 +39,12 @@
 #ifndef __FTCONFIG_H__
 #define __FTCONFIG_H__
 
-  /* Include the header file containing all developer build options */
-#ifndef   FT_BUILD_H
-#define   FT_BUILD_H   <freetype/config/ftbuild.h>
-#endif
+#include <ft2build.h>
+#include FT_CONFIG_OPTIONS_H
 
-#include  FT_BUILD_H
-#include  FT_CONFIG_OPTIONS_H
 
 FT_BEGIN_HEADER
+
 
   /*************************************************************************/
   /*                                                                       */

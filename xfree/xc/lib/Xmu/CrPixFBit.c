@@ -1,4 +1,4 @@
-/* $TOG: CrPixFBit.c /main/5 1998/02/06 15:41:55 kaleb $ */
+/* $Xorg: CrPixFBit.c,v 1.3 2000/08/17 19:45:59 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CrPixFBit.c,v 1.4 1998/09/05 06:36:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CrPixFBit.c,v 1.6 2001/01/17 19:42:53 dawes Exp $ */
 
 /*
  * This file contains miscellaneous utility routines and is not part of the

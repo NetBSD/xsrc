@@ -1,4 +1,4 @@
-/* $XConsortium: efaxg42d.c /main/6 1996/11/04 16:50:00 rws $ */
+/* $Xorg: efaxg42d.c,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992 Sam Leffler
  * Copyright (c) 1991, 1992 Silicon Graphics, Inc.
@@ -22,10 +22,11 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/lbxutil/image/efaxg42d.c,v 1.2 1998/12/20 11:57:16 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/image/efaxg42d.c,v 1.5 2001/04/23 20:31:05 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncproto.h>
+#include <stdlib.h>
 #include "lbxfax.h"
 #include "lbximage.h"
 #include "lbxbwcodes.h"

@@ -1,4 +1,4 @@
-! $XConsortium: Xfd.ad,v 1.9 94/02/09 19:44:03 gildea Exp $
+! $Xorg: Xfd.ad,v 1.3 2000/08/17 19:54:18 cpqbld Exp $
 *internalBorderWidth: 0
 *showGrip: false
 

@@ -1,4 +1,4 @@
-/* $TOG: listen.c /main/16 1998/02/06 13:57:14 kaleb $ */
+/* $Xorg: listen.c,v 1.4 2000/08/17 19:44:15 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -40,7 +40,7 @@ char		*errorStringRet;
 {
     struct _IceListenObj	*listenObjs;
     char			*networkId;
-    int				fd, transCount, partial, i, j;
+    int				transCount, partial, i, j;
     Status			status = 1;
     XtransConnInfo		*transConns = NULL;
 

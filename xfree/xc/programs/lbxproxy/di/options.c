@@ -1,4 +1,4 @@
-/* $TOG: options.c /main/15 1998/02/11 09:48:46 kaleb $ */
+/* $Xorg: options.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/options.c,v 1.4 1998/12/20 11:58:06 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/options.c,v 1.6 2001/01/17 23:44:56 dawes Exp $ */
 
 #include <stdio.h>
 #include "X.h"

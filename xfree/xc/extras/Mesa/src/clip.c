@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -300,14 +300,8 @@ GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 
 
 
-
-#if 0
-#define NEGATIVE(x) ((*(int *)&x)<0)
-#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
-#else
-#define NEGATIVE(x) (x < 0)
-#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
-#endif
+#define NEGATIVE(x) ((x) < 0.0)
+#define DIFFERENT_SIGNS(a, b) (((a) * (b)) <= 0.0 && ((a) != (b)))
 
 
 static clip_poly_func gl_poly_clip_tab[2][5];

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: swap.h /main/8 1996/11/17 22:26:32 rws $
+ * $Xorg: swap.h,v 1.3 2000/08/17 19:53:58 cpqbld Exp $
  *
  * Copyright 1994 Network Computing Devices, Inc.
  *

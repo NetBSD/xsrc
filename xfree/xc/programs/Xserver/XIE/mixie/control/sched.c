@@ -1,4 +1,4 @@
-/* $TOG: sched.c /main/5 1998/02/09 16:12:28 kaleb $ */
+/* $Xorg: sched.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module sched.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden, Robert NC Shelley -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/sched.c,v 1.3 1998/10/06 10:35:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/sched.c,v 1.5 2001/01/17 22:13:00 dawes Exp $ */
 
 /*
  *  Include files

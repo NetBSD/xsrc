@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.5 1999/09/25 14:38:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.6 2000/09/26 15:57:21 tsi Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium

@@ -19,7 +19,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $TOG: Xagsrv.h /main/8 1998/02/09 11:21:22 kaleb $ */
+/* $Xorg: Xagsrv.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 
 #ifndef _XAGSRV_H_
 #define _XAGSRV_H_

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/Imakefile,v 1.6 2000/03/03 01:05:51 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/Imakefile,v 1.8 2001/01/24 00:06:39 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -26,7 +26,6 @@ ObjectModuleTarget($(DRIVER),$(OBJS))
 InstallObjectModule($(DRIVER),$(MODULEDIR),input)
 
 #if !defined(XF86DriverSDK)
-CppManTarget($(DRIVER),)
 InstallModuleManPage($(DRIVER))
 #endif
 

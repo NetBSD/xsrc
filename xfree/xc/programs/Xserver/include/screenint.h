@@ -1,4 +1,4 @@
-/* $TOG: screenint.h /main/7 1998/02/09 14:29:55 kaleb $ */
+/* $Xorg: screenint.h,v 1.3 2000/08/17 19:53:30 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/screenint.h,v 1.2 1997/01/14 22:22:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/screenint.h,v 1.4 2001/01/17 22:36:57 dawes Exp $ */
 #ifndef SCREENINT_H
 #define SCREENINT_H
 

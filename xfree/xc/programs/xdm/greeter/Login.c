@@ -1,4 +1,4 @@
-/* $TOG: Login.c /main/43 1998/02/11 10:00:37 kaleb $ */
+/* $Xorg: Login.c,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.8 2000/06/14 00:16:15 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.13 2001/03/06 17:31:39 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -55,6 +55,10 @@ from The Open Group.
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 #endif /* XPM */
+
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
 
 static void RedrawFail (LoginWidget w);
 static void ResetLogin (LoginWidget w);
@@ -1014,6 +1018,10 @@ static void Initialize (
     XGCValues	myXGCV;
     Arg		position[2];
     Position	x, y;
+#ifdef USE_XINERAMA
+    XineramaScreenInfo *screens;
+    int                 s_num;
+#endif
 
 #ifdef XPM
     myXGCV.foreground = w->login.hipixel;
@@ -1152,10 +1160,27 @@ SkipXpmLoad:
         
 #endif /* XPM */
     }
-    if ((x = w->core.x) == -1)
-	x = (int)(XWidthOfScreen (XtScreen (w)) - w->core.width) / 2;
-    if ((y = w->core.y) == -1)
-	y = (int)(XHeightOfScreen (XtScreen (w)) - w->core.height) / 3;
+#ifdef USE_XINERAMA
+    if (
+	XineramaIsActive(XtDisplay(w)) &&
+	(screens = XineramaQueryScreens(XtDisplay(w), &s_num)) != NULL
+       )
+    {
+	if ((x = w->core.x) == -1)
+	    x = screens[0].x_org + (int)(screens[0].width - w->core.width) / 2;
+	if ((y = w->core.y) == -1)
+	    y = screens[0].y_org + (int)(screens[0].height - w->core.height) / 3;
+	
+	XFree(screens);
+    }
+    else
+#endif
+    {
+	if ((x = w->core.x) == -1)
+	    x = (int)(XWidthOfScreen (XtScreen (w)) - w->core.width) / 2;
+	if ((y = w->core.y) == -1)
+	    y = (int)(XHeightOfScreen (XtScreen (w)) - w->core.height) / 3;
+    }
     XtSetArg (position[0], XtNx, x);
     XtSetArg (position[1], XtNy, y);
     XtSetValues (XtParent (w), position, (Cardinal) 2);

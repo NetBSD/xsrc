@@ -1,4 +1,4 @@
-/* $XConsortium: xkberrs.c /main/2 1996/08/31 12:45:31 kaleb $ */
+/* $Xorg: xkberrs.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

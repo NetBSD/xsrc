@@ -1,4 +1,4 @@
-/* $TOG: connect.c /main/34 1998/05/29 14:30:51 kaleb $ */
+/* $Xorg: connect.c,v 1.3 2000/08/17 19:44:12 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/connect.c,v 3.4 1998/10/03 08:41:09 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/connect.c,v 3.6 2001/01/17 19:41:29 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"

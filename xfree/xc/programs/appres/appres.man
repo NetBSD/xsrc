@@ -1,4 +1,4 @@
-.\" $TOG: appres.man /main/16 1998/02/09 13:39:38 kaleb $
+.\" $Xorg: appres.man,v 1.3 2000/08/17 19:53:48 cpqbld Exp $
 .\" Copyright 1993, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH APPRES 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/appres/appres.man,v 1.7 2001/01/27 18:21:00 dawes Exp $
+.\"
+.TH APPRES 1 __xorgversion__
 .SH NAME
 appres \- list X application resource database
 .SH SYNOPSIS
@@ -80,6 +83,6 @@ use the \-1 option.  For example,
 will list the resources matching the \fIxterm\fP vt100 widget.
 .SH "SEE ALSO"
 .PP
-X(1), xrdb(1), listres(1)
+X(__miscmansuffix__), xrdb(1), listres(1)
 .SH AUTHOR
 Jim Fulton, MIT X Consortium

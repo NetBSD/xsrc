@@ -1,4 +1,4 @@
-/* $TOG: MultiSrcP.h /main/5 1998/06/24 11:53:25 kaleb $ */
+/* $Xorg: MultiSrcP.h,v 1.3 2000/08/17 19:45:35 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -67,7 +67,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.6 1999/06/06 08:48:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.8 2001/01/17 19:42:28 dawes Exp $ */
 
 /*
  * MultiSrcP.h - Private Header for Multi Text Source.

@@ -1,5 +1,5 @@
 LIBRARY dps 
-DESCRIPTION "@#XFREE86:4.0#@ $XFree86$"
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/dps/dpsos2.def,v 1.1 2000/04/05 18:13:21 dawes Exp $"
 CODE
 	PRELOAD
 DATA

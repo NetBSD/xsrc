@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xaa/Imakefile.EXP,v 1.6 2000/05/03 00:44:21 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xaa/Imakefile.EXP,v 1.7 2000/09/20 02:05:41 keithp Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

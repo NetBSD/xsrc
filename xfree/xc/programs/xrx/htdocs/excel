@@ -1,4 +1,4 @@
-<!-- $XConsortium: excel /main/1 1996/12/03 19:37:28 rws $ -->
+<!-- $Xorg: excel,v 1.3 2000/08/17 19:54:58 cpqbld Exp $ -->
 <PARAM Name=VERSION Value=1.0>
 <PARAM Name=REQUIRED-SERVICES Value=UI>
 <PARAM Name=UI Value=X>

@@ -1,4 +1,4 @@
-/* $TOG: EditresCom.c /main/37 1998/06/23 11:50:49 kaleb $ */
+/* $Xorg: EditresCom.c,v 1.3 2000/08/17 19:46:01 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.13 2000/09/26 15:56:57 tsi Exp $ */
+/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.15 2001/01/17 19:42:55 dawes Exp $ */
 
 /*
  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/print_edid.c,v 1.13 2000/07/11 01:46:35 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/print_edid.c,v 1.14.4.1 2001/05/22 17:02:36 tsi Exp $ */
 
 /* print_edid.c: print out all information retrieved from display device 
  * 
@@ -232,7 +232,7 @@ print_detailed_monitor_section(int scrnIndex,
 		       m[i].section.ranges.min_v, m[i].section.ranges.max_v, 
 		       m[i].section.ranges.min_h, m[i].section.ranges.max_h);
 	    if (m[i].section.ranges.max_clock != 0)
-		xf86ErrorF(" PixClock max %i kHz\n",m[i].section.ranges.max_clock);
+		xf86ErrorF(" PixClock max %i MHz\n",m[i].section.ranges.max_clock);
 	    else
 		xf86DrvMsg(scrnIndex,X_INFO,"\n");
 	    break;

@@ -1,4 +1,4 @@
-/* $TOG: ClockP.h /main/11 1998/02/09 13:44:39 kaleb $ */
+/* $Xorg: ClockP.h,v 1.3 2000/08/17 19:53:59 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/oclock/ClockP.h,v 1.4 2001/01/17 23:45:01 dawes Exp $ */
 
 
 #ifndef _ClockP_h

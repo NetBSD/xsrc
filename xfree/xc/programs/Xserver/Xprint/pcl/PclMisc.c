@@ -1,4 +1,4 @@
-/* $XConsortium: PclMisc.c /main/3 1996/12/30 14:56:58 kaleb $ */
+/* $Xorg: PclMisc.c,v 1.3 2000/08/17 19:48:08 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.6 1999/12/13 02:12:56 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.8 2001/01/17 22:36:30 dawes Exp $ */
 
 #ifdef __CYGWIN__
 #include <signal.h>

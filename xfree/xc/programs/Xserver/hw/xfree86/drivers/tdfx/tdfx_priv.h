@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.h,v 1.6 2000/12/01 14:29:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.h,v 1.9.2.1 2001/05/22 21:25:45 dawes Exp $ */
 
 
 #ifndef _TDFX_FIFO_H_
@@ -11,7 +11,7 @@ typedef int   int32;
 typedef short int16;
 typedef char  int8;
 
-#define CMDFIFO_PAGES 64
+#define CMDFIFO_PAGES 255
 
 #define PROPSAREADATA \
   volatile int fifoPtr; \
@@ -82,10 +82,29 @@ typedef volatile struct _H3CmdFifo
 Bool TDFXInitFifo(ScreenPtr pScreen);
 void TDFXShutdownFifo(ScreenPtr pScreen);
 void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
+void TDFXSendNOPFifo2D(ScrnInfoPtr pScreen);
 
 #define CHECK_FOR_ROOM(_n) \
 	if ((pTDFX->fifoSlots -= (_n)) < 0) \
 		cmdfifo_make_room(adapter, fifo_ptr, _n); \
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define BE_BSWAP32(val) ((((val) & 0x000000ff) << 24) | \
+                     (((val) & 0x0000ff00) << 8) |  \
+                     (((val) & 0x00ff0000) >> 8) |  \
+                     (((val) & 0xff000000) >> 24))
+
+#define BE_WSWAP32(val) ((((val) & 0x0000ffff) << 16) | \
+                     (((val) & 0xffff0000) >> 16))
+ void TDFXWriteFifo_24(TDFXPtr pTDFX, int val);
+ void TDFXWriteFifo_16(TDFXPtr pTDFX, int val);
+ void TDFXWriteFifo_8(TDFXPtr pTDFX, int val);
+#else
+/* Don't swap on little-endian platforms */
+#define BE_BSWAP32(val) val
+#define BE_WSWAP32(val) val
+#endif
+
 
 #ifdef DEBUG_FIFO
 #define WRITE_FIFO(ptr, loc, _val) \
@@ -94,19 +113,30 @@ void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
     *pTDFX->fifoPtr++ = _val; \
   } while(0) 
 #else
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define WRITE_FIFO(ptr, loc, _val) \
+  do { \
+    pTDFX->writeFifo(ptr, _val); \
+  } while (0)
+#else
 #define WRITE_FIFO(ptr, loc, _val) \
   do { \
     *pTDFX->fifoPtr++ = _val; \
   } while(0) 
-#endif
+#endif /* X_BYTE_ORDER == X_BIG_ENDIAN */
+#endif /* DEBUG_FIFO */
 
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define FLUSH_WCB()
+#else
 #define FLUSH_WCB() inb(0x80)
+#endif
 
 /*
 ** Send a packet header type 1 (2D) to the cmdfifo
 */
 #define SET_2DPK1_HEADER(_ndwords, _inc, _reg) \
-	WRITE_FIFO ( 0, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
+	WRITE_FIFO ( pTDFX, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
 	                ((_inc) ? SSTCP_PKT1_INC : SSTCP_PKT1_NOINC) | \
 	                SSTCP_PKT1_2D | \
 	                FIELD_OFFSET(H3_2D_REGISTERS, _reg)/4 << SSTCP_REGBASE_SHIFT | \
@@ -117,7 +147,7 @@ void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
 ** Send a packet header type 1 to begin at launchArea[0] to the cmdfifo
 */
 #define SET_PK1_HEADER_LAUNCH(_ndwords, _inc) \
-	WRITE_FIFO ( 0, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
+	WRITE_FIFO ( pTDFX, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
 	                ((_inc) ? SSTCP_PKT1_INC : SSTCP_PKT1_NOINC) | \
 	                SSTCP_PKT1_LAUNCH | SSTCP_PKT1 \
 	              )
@@ -126,7 +156,7 @@ void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
 ** Send a packet header type 1 to begin at colorPattern[0] to the cmdfifo
 */
 #define SET_PK1_HEADER_COLORPATTERN(_ndwords, _inc) \
-	WRITE_FIFO ( 0, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
+	WRITE_FIFO ( pTDFX, 0, (_ndwords) << SSTCP_PKT1_NWORDS_SHIFT | \
 	                ((_inc) ? SSTCP_PKT1_INC : SSTCP_PKT1_NOINC) | \
 	                SSTCP_PKT1_COLORPATTERN | SSTCP_PKT1 \
 	              )
@@ -135,7 +165,7 @@ void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
 ** Send a packet header type 2 to the cmdfifo
 */
 #define SET_PKT2_HEADER(_mask) \
-    WRITE_FIFO (0, 0, ((_mask) << SSTCP_PKT2_MASK_SHIFT) | SSTCP_PKT2)
+    WRITE_FIFO (pTDFX, 0, ((_mask) << SSTCP_PKT2_MASK_SHIFT) | SSTCP_PKT2)
 
 /*
 ** These are used to select a register mask for use with
@@ -159,14 +189,14 @@ void TDFXAllocateSlots(TDFXPtr pTDFX, int slots);
 #define R13 (1 << 13)
 
 #define SET_2DPK4_HEADER(_mask, _reg0) \
-	WRITE_FIFO ( 0, 0, ((_mask) << SSTCP_PKT4_MASK_SHIFT) | \
+	WRITE_FIFO ( pTDFX, 0, ((_mask) << SSTCP_PKT4_MASK_SHIFT) | \
 	                SSTCP_PKT4_2D | \
 	                (_reg0) | \
 	                SSTCP_PKT4 \
 	              )
 
 #define SET_3DPK4_HEADER(_mask, _reg0) \
-	WRITE_FIFO ( 0, 0, ((_mask) << SSTCP_PKT4_MASK_SHIFT) | \
+	WRITE_FIFO ( pTDFX, 0, ((_mask) << SSTCP_PKT4_MASK_SHIFT) | \
 	                (_reg0) | \
 	                SSTCP_PKT4 \
 	              )

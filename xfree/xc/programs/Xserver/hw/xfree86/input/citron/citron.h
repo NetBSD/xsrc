@@ -1,4 +1,4 @@
-/* 
+/* Id: citron.h,v 1.3 2001/03/28 08:24:38 pk Exp $
  * Copyright (c) 1998  Metro Link Incorporated
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,12 +25,12 @@
  *
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.h,v 1.2 2001/04/05 17:42:34 dawes Exp $ */
 
 /*
  * Based, in part, on code with the following copyright notice:
  *
- * Copyright 1999-2000 by Thomas Thanner, Citron GmbH, Germany. <support@citron.de>
+ * Copyright 1999-2001 by Thomas Thanner, Citron GmbH, Germany. <support@citron.de>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -247,7 +247,9 @@
 #define D_SETCLICKMODE		0x00
 #define D_BEEP				0x01
 #define D_SETBEEP			0x02
-
+#define D_DEBUG				0x03
+#define D_ENTERCOUNT		0x04
+#define D_ZENTERCOUNT		0x05
 
 /* Message identifiers */
 #define	R_DUALTOUCHERROR	0x18		/* Invalid multiple touches are detected */
@@ -337,6 +339,8 @@
 #define	C_SETSLEEPMODE		0xf7
 #define C_GETDOZEMODE		0xf8
 #define	C_SETDOZEMODE		0xf9
+#define C_SETPWMFREQ		0xfa
+#define C_GETPWMFREQ		0xfb
 
 /* touch states */
 #define	CIT_TOUCHED			0x01
@@ -434,6 +438,7 @@ typedef struct _cit_privateRec
 	int sleep_time_scan;			/* time interval between two scans		*/
 	int	pwm_sleep;					/* PWM duty cycle during touch saver mode */
 	int	pwm_active;					/* PWM duty cycle during regular operation */
+	int pwm_freq;					/* PWM base frequency */
 	int	state;
 /* additional parameters */
 	int last_x;						/* last cooked data */
@@ -456,6 +461,8 @@ typedef struct _cit_privateRec
 	int touch_time;					/* minimum time span for a valid interruption */
 	int	enter_touched;				/* button is down due to an enter event */
 	int enter_count;				/* number of jumed coord reports before a ButtonPress event is sent */
+	int enter_count_no_Z;			/* number of jumped over coords before ButtonPress event in not pressure sensitive mode */
+	int enter_count_Z;				/* number of jumped over coords before ButtonPress event in pressure sensitive mode */
 	int max_dual_count;				/* number of jumed dualtouch error reports before a ButtonPress event is sent */
 	int dual_flg;					/* Flag set if dualtouch error report is received , reset by counter */
 	int raw_min_x;					/* min x,y max x,y value accumulated over the whole session */
@@ -464,12 +471,17 @@ typedef struct _cit_privateRec
 	int raw_min_y;
 	int raw_max_y;
 	int	pressure_sensors;			/* number of pressure sensors */
-	OsTimerPtr timer_ptr;			/* Timer for general purposes */
-	CARD32 timer_val1;				/* Timer 1st delay */
-	CARD32 timer_val2;				/* Timer second delay */
-	OsTimerCallback timer_callback;	/* timer callback routine	*/
+
+#define MAX_TIMER	2							/* Max. concurrent timers */
+#define FAKE_TIMER	0							/* Timer for faked exit message */
+#define SV_TIMER	1							/* Supervision timer for command timeout suopervision */
+	OsTimerPtr timer_ptr[MAX_TIMER];			/* Timer for general purposes */
+	CARD32 timer_val1[MAX_TIMER];				/* Timer 1st delay */
+	CARD32 timer_val2[MAX_TIMER];				/* Timer second delay */
+	OsTimerCallback timer_callback[MAX_TIMER];	/* timer callback routine	*/
 	int fake_exit;					/* tell the ReadInput function there is a exit message (from timer) */
 /* end additional parameters */
+
 	LocalDevicePtr local;			/* Pointer to local device */
 	Bool button_down;				/* is the "button" currently down 			*/
 	Bool proximity;
@@ -499,7 +511,7 @@ static int SwitchMode (ClientPtr, DeviceIntPtr, int);
 static Bool ConvertProc (LocalDevicePtr, int, int, int, int, int, int, int, int, int *, int *);
 static Bool QueryHardware (LocalDevicePtr, int *, int *);
 static Bool cit_GetPacket (cit_PrivatePtr);
-static void cit_Flush(XISBuffer *);
+static void cit_Flush(cit_PrivatePtr);
 static void cit_SendCommand(XISBuffer *, unsigned char, int, ...);
 static Bool cit_GetInitialErrors(cit_PrivatePtr);
 static Bool cit_GetDefectiveBeams(cit_PrivatePtr);
@@ -508,9 +520,16 @@ static Bool cit_GetPressureSensors(cit_PrivatePtr);
 static Bool cit_GetRevision(cit_PrivatePtr, int);
 static void cit_ProcessPacket(cit_PrivatePtr);
 static void cit_Beep(cit_PrivatePtr priv, int press);
+static void cit_SetBlockDuration (cit_PrivatePtr priv, int block_duration);
+static void cit_ReinitSerial(cit_PrivatePtr priv);
+static int cit_ZPress(cit_PrivatePtr priv);
+static void cit_SetEnterCount(cit_PrivatePtr priv);
+static void cit_SendPWMFreq(cit_PrivatePtr priv);
+
 #ifdef CIT_TIM
-static void cit_StartTimer(cit_PrivatePtr priv);
-static void cit_CloseTimer(cit_PrivatePtr priv);
+static void cit_StartTimer(cit_PrivatePtr priv, int nr);
+static void cit_CloseTimer(cit_PrivatePtr priv, int nr);
+static CARD32 cit_SuperVisionTimer(OsTimerPtr timer, CARD32 now, pointer arg);
 static CARD32 cit_DualTouchTimer(OsTimerPtr timer, CARD32 now, pointer arg);
 #endif
 

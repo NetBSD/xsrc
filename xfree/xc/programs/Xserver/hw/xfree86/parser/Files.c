@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.7 2000/01/26 02:00:51 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.8 2000/10/20 14:59:02 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

@@ -13,6 +13,8 @@
 # fully.
 
 
+.PHONY: install uninstall
+
 # Unix installation and deinstallation targets.
 install: $(PROJECT_LIBRARY)
 	$(MKINSTALLDIRS) $(libdir)                                 \
@@ -33,6 +35,7 @@ install: $(PROJECT_LIBRARY)
 	-for P in $(CACHE_H) ; do                                      \
           $(INSTALL_DATA) $$P $(includedir)/freetype2/freetype/cache ; \
         done
+	$(INSTALL_DATA) $(BUILD)/ft2unix.h $(includedir)/ft2build.h
 	$(INSTALL_SCRIPT) -m 755 $(BUILD)/freetype-config \
           $(bindir)/freetype-config
 
@@ -48,8 +51,11 @@ uninstall:
 	-$(DELETE) $(includedir)/freetype2/freetype/*
 	-$(DELDIR) $(includedir)/freetype2/freetype
 	-$(DELDIR) $(includedir)/freetype2
+	-$(DELETE) $(includedir)/ft2build.h
 	-$(DELETE) $(bindir)/freetype-config
 
+
+.PHONY: clean_project_unix distclean_project_unix
 
 # Unix cleaning and distclean rules.
 #

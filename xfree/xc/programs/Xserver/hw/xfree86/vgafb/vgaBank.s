@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaBank.s,v 1.1.2.1 1997/07/16 10:36:47 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaBank.s,v 1.2 1998/07/25 16:58:13 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *

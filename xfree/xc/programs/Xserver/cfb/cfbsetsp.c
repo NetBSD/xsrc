@@ -1,4 +1,4 @@
-/* $TOG: cfbsetsp.c /main/21 1998/02/09 14:07:36 kaleb $ */
+/* $Xorg: cfbsetsp.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbsetsp.c,v 3.1 1998/10/04 09:37:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbsetsp.c,v 3.3 2001/01/17 22:36:37 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

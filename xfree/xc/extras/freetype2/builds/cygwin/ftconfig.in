@@ -37,13 +37,7 @@
 #ifndef __FTCONFIG_H__
 #define __FTCONFIG_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H  <freetype/config/ftbuild.h>
-#endif
-
-
-  /* Include the header file containing all developer build options */
-#include FT_BUILD_H
+#include <ft2build.h>
 #include FT_CONFIG_OPTIONS_H
 
 
@@ -125,7 +119,6 @@ FT_BEGIN_HEADER
 #define FT_INT64   long
 
 #else
-
 
   /*************************************************************************/
   /*                                                                       */
@@ -240,15 +233,15 @@ FT_BEGIN_HEADER
   /*                                                                 */
 #ifdef __cplusplus
 
-#define FT_CALLBACK_DEF             extern "C"
-#define FT_CALLBACK_TABLE           extern "C"
-#define FT_CALLBACK_TABLE_DEF       extern "C"
+#define FT_CALLBACK_DEF        extern "C"
+#define FT_CALLBACK_TABLE      extern "C"
+#define FT_CALLBACK_TABLE_DEF  extern "C"
 
 #else
 
-#define FT_CALLBACK_DEF             static
-#define FT_CALLBACK_TABLE           extern
-#define FT_CALLBACK_TABLE_DEF
+#define FT_CALLBACK_DEF        static
+#define FT_CALLBACK_TABLE      extern
+#define FT_CALLBACK_TABLE_DEF  /* nothing */
 
 #endif /* __cplusplus */
 

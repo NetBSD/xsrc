@@ -1,5 +1,5 @@
 /*
- * $TOG: cfbrrop.c /main/9 1998/02/09 14:07:18 kaleb $
+ * $Xorg: cfbrrop.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.c,v 1.4 2001/01/17 22:36:36 dawes Exp $ */
 
 /* cfb reduced rasterop computations */
 

@@ -1,4 +1,4 @@
-/* $TOG: decompress.c /main/6 1998/02/09 15:12:01 kaleb $ */
+/* $Xorg: decompress.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.0tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.4 2001/01/17 22:37:10 dawes Exp $ */
 
 /* 
  * decompress - cat a compressed file

@@ -1,4 +1,4 @@
-/* $TOG: floatconv.h /main/6 1998/02/12 14:15:06 kaleb $ */
+/* $Xorg: floatconv.h,v 1.3 2000/08/17 19:47:17 cpqbld Exp $ */
 
 /*
  * Copyright 1988-1991 by Sun Microsystems

@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.5 2000/08/28 02:43:11 tsi Exp $ */
 
 #ifndef I810CONTEXT_INC
 #define I810CONTEXT_INC

@@ -1,4 +1,4 @@
-/* $TOG: miscutil.c /main/6 1998/05/01 16:43:52 kaleb $ */
+/* $Xorg: miscutil.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/miscutil.c,v 1.4 1999/08/01 12:17:39 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/miscutil.c,v 1.6 2001/01/17 19:43:33 dawes Exp $ */
 
 #include <X11/Xosdefs.h>
 #ifndef X_NOT_STDC_ENV

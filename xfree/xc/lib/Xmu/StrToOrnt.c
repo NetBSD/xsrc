@@ -1,4 +1,4 @@
-/* $TOG: StrToOrnt.c /main/11 1998/05/14 14:56:27 kaleb $ */
+/* $Xorg: StrToOrnt.c,v 1.3 2000/08/17 19:46:04 cpqbld Exp $ */
 
 /* 
  
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/StrToOrnt.c,v 1.4 1998/08/16 10:25:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToOrnt.c,v 1.6 2001/01/17 19:42:57 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>

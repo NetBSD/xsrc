@@ -1,4 +1,4 @@
-/* $TOG: getmmap.c /main/5 1998/02/09 15:29:19 kaleb $ */
+/* $Xorg: getmmap.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/getmmap.c,v 3.0 1996/03/29 22:13:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getmmap.c,v 3.2 2001/01/17 22:13:25 dawes Exp $ */
 
 /********************************************************************
  *

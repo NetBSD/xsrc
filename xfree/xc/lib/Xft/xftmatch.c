@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftmatch.c,v 1.2 2000/12/12 00:45:18 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftmatch.c,v 1.5 2001/03/06 18:00:26 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -26,8 +26,6 @@
 #include <ctype.h>
 #include "xftint.h"
 #include <stdio.h>
-
-/* #define XFT_DEBUG_MATCH */
 
 static double
 _XftCompareInteger (char *object, XftValue value1, XftValue value2)
@@ -99,9 +97,9 @@ _XftCompareSize (char *object, XftValue value1, XftValue value2)
 static XftMatcher _XftMatchers [] = {
     { XFT_FOUNDRY,	_XftCompareString, },
     { XFT_ENCODING,	_XftCompareString, },
-    { XFT_SPACING,	_XftCompareInteger, },
     { XFT_ANTIALIAS,	_XftCompareBool, },
     { XFT_FAMILY,	_XftCompareString, },
+    { XFT_SPACING,	_XftCompareInteger, },
     { XFT_PIXEL_SIZE,	_XftCompareSize, },
     { XFT_STYLE,	_XftCompareString, },
     { XFT_SLANT,	_XftCompareInteger, },
@@ -151,9 +149,8 @@ _XftCompareValueList (const char    *object,
 		*result = XftResultTypeMismatch;
 		return False;
 	    }
-#ifdef XFT_DEBUG_MATCH
-	    printf (" v %g j %d ", v, j);
-#endif
+	    if (_XftFontDebug () & XFT_DBG_MATCHV)
+		printf (" v %g j %d ", v, j);
 	    v = v * 100 + j;
 	    if (v < best)
 	    {
@@ -164,13 +161,14 @@ _XftCompareValueList (const char    *object,
 	}
 	j++;
     }
-#ifdef XFT_DEBUG_MATCH
-    printf (" %s: %g ", object, best);
-    XftValueListPrint (v1orig);
-    printf (", ");
-    XftValueListPrint (v2orig);
-    printf ("\n");
-#endif
+    if (_XftFontDebug () & XFT_DBG_MATCHV)
+    {
+	printf (" %s: %g ", object, best);
+	XftValueListPrint (v1orig);
+	printf (", ");
+	XftValueListPrint (v2orig);
+	printf ("\n");
+    }
     value[i] += best;
     return True;
 }
@@ -181,22 +179,26 @@ _XftCompareValueList (const char    *object,
  */
 
 static Bool
-_XftCompare (XftPattern *p1, XftPattern *p2, double *value, XftResult *result)
+_XftCompare (XftPattern	*pat,
+	     XftPattern *fnt,
+	     double	*value,
+	     XftResult	*result)
 {
     int		    i, i1, i2;
     
     for (i = 0; i < NUM_MATCHER; i++)
 	value[i] = 0.0;
     
-    for (i1 = 0; i1 < p1->num; i1++)
-	for (i2 = 0; i2 < p2->num; i2++)
+    for (i1 = 0; i1 < pat->num; i1++)
+    {
+	for (i2 = 0; i2 < fnt->num; i2++)
 	{
-	    if (!_XftStrCmpIgnoreCase (p1->elts[i1].object,
-				       p2->elts[i2].object))
+	    if (!_XftStrCmpIgnoreCase (pat->elts[i1].object,
+				       fnt->elts[i2].object))
 	    {
-		if (!_XftCompareValueList (p1->elts[i1].object,
-					   p1->elts[i1].values,
-					   p2->elts[i2].values,
+		if (!_XftCompareValueList (pat->elts[i1].object,
+					   pat->elts[i1].values,
+					   fnt->elts[i2].values,
 					   0,
 					   value,
 					   result))
@@ -204,6 +206,25 @@ _XftCompare (XftPattern *p1, XftPattern *p2, double *value, XftResult *result)
 		break;
 	    }
 	}
+#if 0
+	/*
+	 * Overspecified patterns are slightly penalized in
+	 * case some other font includes the requested field
+	 */
+	if (i2 == fnt->num)
+	{
+	    for (i2 = 0; i2 < NUM_MATCHER; i2++)
+	    {
+		if (!_XftStrCmpIgnoreCase (_XftMatchers[i2].object,
+					   pat->elts[i1].object))
+		{
+		    value[i2] = 1.0;
+		    break;
+		}
+	    }
+	}
+#endif
+    }
     return True;
 }
 
@@ -226,29 +247,32 @@ XftFontSetMatch (XftFontSet	**sets,
     for (i = 0; i < NUM_MATCHER; i++)
 	bestscore[i] = 0;
     best = 0;
-#ifdef XFT_DEBUG_MATCH
-    printf ("Match ");
-    XftPatternPrint (p);
-#endif
+    if (_XftFontDebug () & XFT_DBG_MATCH)
+    {
+	printf ("Match ");
+	XftPatternPrint (p);
+    }
     for (set = 0; set < nsets; set++)
     {
 	s = sets[set];
 	for (f = 0; f < s->nfont; f++)
 	{
-#ifdef XFT_DEBUG_MATCH
-	    printf ("Font %d ", f);
-	    XftPatternPrint (s->fonts[f]);
-#endif
+	    if (_XftFontDebug () & XFT_DBG_MATCH)
+	    {
+		printf ("Font %d ", f);
+		XftPatternPrint (s->fonts[f]);
+	    }
 	    if (!_XftCompare (p, s->fonts[f], score, result))
 		return 0;
-#ifdef XFT_DEBUG_MATCH
-	    printf ("Score");
-	    for (i = 0; i < NUM_MATCHER; i++)
+	    if (_XftFontDebug () & XFT_DBG_MATCH)
 	    {
-		printf (" %g", score[i]);
+		printf ("Score");
+		for (i = 0; i < NUM_MATCHER; i++)
+		{
+		    printf (" %g", score[i]);
+		}
+		printf ("\n");
 	    }
-	    printf ("\n");
-#endif
 	    for (i = 0; i < NUM_MATCHER; i++)
 	    {
 		if (best && bestscore[i] < score[i])
@@ -263,12 +287,13 @@ XftFontSetMatch (XftFontSet	**sets,
 	    }
 	}
     }
-#ifdef XFT_DEBUG_MATCH
-    printf ("Best score");
-    for (i = 0; i < NUM_MATCHER; i++)
-	printf (" %g", bestscore[i]);
-    XftPatternPrint (best);
-#endif
+    if (_XftFontDebug () & XFT_DBG_MATCH)
+    {
+	printf ("Best score");
+	for (i = 0; i < NUM_MATCHER; i++)
+	    printf (" %g", bestscore[i]);
+	XftPatternPrint (best);
+    }
     if (!best)
     {
 	*result = XftResultNoMatch;

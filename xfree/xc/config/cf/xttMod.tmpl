@@ -1,6 +1,6 @@
 /* -*- Makefile -*- */
 XCOMM Code converter template of X-TT
-XCOMM $XFree86: xc/config/cf/xttMod.tmpl,v 1.4tsi Exp $ */
+XCOMM $XFree86: xc/config/cf/xttMod.tmpl,v 1.6 2001/04/23 21:41:43 dawes Exp $ */
 
 #ifdef IHaveModules
 /* New designed XFree86 module */
@@ -33,7 +33,7 @@ InstallDriverSDKLibraryModule($(MODULENAME),$(DRIVERSDKMODULEDIR),codeconv)
 # else
 /* dlopen based code converter */
 
-#if DoLoadableServer
+#if DoLoadableServer && BuildServer
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 SUBDIRS = module
@@ -75,7 +75,7 @@ SharedDepModuleTarget($(CCONV_MODULE_FILE),$(OBJS),$(OBJS))
 
 #endif /* 0 */
 
-#if DoLoadableServer
+#if DoLoadableServer && BuildServer
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 #endif

@@ -1,4 +1,4 @@
-/* $TOG: lbxserve.h /main/15 1998/02/09 14:32:34 kaleb $ */
+/* $Xorg: lbxserve.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -41,7 +41,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxserve.h,v 1.3 2001/01/17 22:37:00 dawes Exp $ */
 
 #ifndef _LBXSERVE_H_
 #define _LBXSERVE_H_

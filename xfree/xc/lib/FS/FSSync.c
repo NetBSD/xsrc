@@ -1,4 +1,4 @@
-/* $TOG: FSSync.c /main/7 1998/05/01 11:35:05 kaleb $ */
+/* $Xorg: FSSync.c,v 1.3 2000/08/17 19:44:05 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

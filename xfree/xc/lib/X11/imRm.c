@@ -1,4 +1,4 @@
-/* $TOG: imRm.c /main/14 1998/06/01 09:55:01 kaleb $ */
+/* $Xorg: imRm.c,v 1.4 2000/08/17 19:45:14 cpqbld Exp $ */
 /******************************************************************
 
 	  Copyright 1990, 1991, 1992,1993, 1994 by FUJITSU LIMITED
@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imRm.c,v 3.8 2000/01/29 18:58:15 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imRm.c,v 3.11 2001/01/22 21:32:32 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -38,13 +38,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "Xlcint.h"
 #include "Ximint.h"
 #include "Xresource.h"
-
-#ifndef	isalnum
-#define	isalnum(c)	\
-    (('0' <= (c) && (c) <= '9')  || \
-     ('A' <= (c) && (c) <= 'Z')  || \
-     ('a' <= (c) && (c) <= 'z'))
-#endif
 
 typedef struct _XimValueOffsetInfo {
     char		*name;
@@ -2798,17 +2791,17 @@ _XimSetICValueData(ic, top, res_list, list_num, values, mode, flag)
 	    return p->name;
 	}
 	if(res->xrm_name == pre_quark) {
-	    if((name = _XimSetICValueData(ic,
+	    if(((name = _XimSetICValueData(ic,
 			(XPointer)(&((XimDefICValues *)top)->preedit_attr),
 			res_list, list_num, (XIMArg *)p->value,
-			(mode | XIM_PREEDIT_ATTR), flag))) {
+			(mode | XIM_PREEDIT_ATTR), flag)))) {
 		return name;
 	    }
 	} else if(res->xrm_name == sts_quark) {
-	    if((name = _XimSetICValueData(ic,
+	    if(((name = _XimSetICValueData(ic,
 			(XPointer)(&((XimDefICValues *)top)->status_attr),
 			res_list, list_num, (XIMArg *)p->value,
-			(mode | XIM_STATUS_ATTR), flag))) {
+			(mode | XIM_STATUS_ATTR), flag)))) {
 		return name;
 	    }
 	} else {

@@ -1,6 +1,6 @@
-.TH Xv 3X
+.TH Xv 3X __vendorversion__
 .\"
-.\" $XFree86: xc/doc/man/Xv/Xv.man,v 1.4 1999/03/02 11:49:13 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/Xv.man,v 1.6 2001/01/27 18:20:35 dawes Exp $
 .SH Name
 Xv \- X Window System video extension
 .SH Description

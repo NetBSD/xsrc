@@ -1,4 +1,4 @@
-/* $TOG: BitEdit.c /main/29 1998/02/09 13:39:56 kaleb $ */
+/* $Xorg: BitEdit.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.2 1998/12/20 11:58:04 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.4 2001/01/17 23:44:50 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

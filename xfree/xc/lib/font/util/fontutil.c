@@ -1,4 +1,4 @@
-/* $TOG: fontutil.c /main/14 1998/05/07 14:27:41 kaleb $ */
+/* $Xorg: fontutil.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontutil.c,v 3.3 1999/04/27 07:08:59 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/fontutil.c,v 3.5 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $TOG: ICElib.h /main/42 1998/02/06 13:56:32 kaleb $ */
+/* $Xorg: ICElib.h,v 1.4 2000/08/17 19:44:10 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/ICElib.h,v 3.1 1996/12/23 05:58:57 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/ICElib.h,v 3.3 2001/01/17 19:41:29 dawes Exp $ */
 
 #ifndef _ICELIB_H_
 #define _ICELIB_H_

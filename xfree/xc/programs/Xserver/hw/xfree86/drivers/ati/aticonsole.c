@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.13 2000/08/04 21:07:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.16 2001/02/12 03:27:04 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -108,20 +108,17 @@ ATISetDPMSMode
             ATIMach64SetDPMSMode(pATI, DPMSMode);
             break;
 
+        default:
+
 #ifndef AVOID_CPIO
+
+            /* Assume EGA/VGA */
+            ATIVGASetDPMSMode(pATI, DPMSMode);
+            break;
 
         case ATI_ADAPTER_NONE:
         case ATI_ADAPTER_8514A:
         case ATI_ADAPTER_MACH8:
-            break;
-
-#endif /* AVOID_CPIO */
-
-        default:        /* Assume EGA/VGA */
-
-#ifndef AVOID_CPIO
-
-            ATIVGASetDPMSMode(pATI, DPMSMode);
 
 #endif /* AVOID_CPIO */
 

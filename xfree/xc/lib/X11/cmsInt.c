@@ -1,4 +1,4 @@
-/* $XConsortium: cmsInt.c,v 1.12 94/04/17 20:21:58 rws Exp $" */
+/* $Xorg: cmsInt.c,v 1.4 2000/08/17 19:45:09 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -34,7 +34,7 @@
  *
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/cmsInt.c,v 1.3 2001/01/17 19:41:51 dawes Exp $ */
 
 /* #define NEED_EVENTS */
 #include <stdio.h>

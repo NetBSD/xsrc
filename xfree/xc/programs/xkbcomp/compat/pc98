@@ -1,9 +1,9 @@
-// $TOG: pc98 /main/1 1997/08/02 10:10:34 kaleb $
+// $Xorg: pc98,v 1.3 2000/08/17 19:54:34 cpqbld Exp $
 
 
 
 
-// $XFree86: xc/programs/xkbcomp/compat/pc98,v 3.0 1996/02/19 12:21:03 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/compat/pc98,v 3.2 2001/01/17 23:45:47 dawes Exp $
 
 // Minimal set of symbol interpretations to provide 
 // reasonable default behavior (Num lock, shift and 

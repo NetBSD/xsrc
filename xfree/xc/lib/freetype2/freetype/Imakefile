@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/freetype/Imakefile,v 1.2 2001/02/09 00:35:03 keithp Exp $
+XCOMM $XFree86: xc/lib/freetype2/freetype/Imakefile,v 1.4 2001/05/16 03:57:27 keithp Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -20,9 +20,9 @@ HEADERS= \
         ftmac.h \
         ftmm.h \
         ftmodule.h \
-        ftnames.h \
         ftoutln.h \
         ftrender.h \
+        ftsnames.h \
         ftsynth.h \
         ftsystem.h \
         fttypes.h \
@@ -44,9 +44,9 @@ LinkSourceFile(ftlist.h,$(FREETYPEINC))
 LinkSourceFile(ftmac.h,$(FREETYPEINC))
 LinkSourceFile(ftmm.h,$(FREETYPEINC))
 LinkSourceFile(ftmodule.h,$(FREETYPEINC))
-LinkSourceFile(ftnames.h,$(FREETYPEINC))
 LinkSourceFile(ftoutln.h,$(FREETYPEINC))
 LinkSourceFile(ftrender.h,$(FREETYPEINC))
+LinkSourceFile(ftsnames.h,$(FREETYPEINC))
 LinkSourceFile(ftsynth.h,$(FREETYPEINC))
 LinkSourceFile(ftsystem.h,$(FREETYPEINC))
 LinkSourceFile(fttypes.h,$(FREETYPEINC))
@@ -54,3 +54,5 @@ LinkSourceFile(t1tables.h,$(FREETYPEINC))
 LinkSourceFile(ttnameid.h,$(FREETYPEINC))
 LinkSourceFile(tttables.h,$(FREETYPEINC))
 LinkSourceFile(tttags.h,$(FREETYPEINC))
+
+DependSubdirs($(SUBDIRS))

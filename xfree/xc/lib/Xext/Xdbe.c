@@ -1,4 +1,4 @@
-/* $XConsortium: Xdbe.c /main/3 1995/09/22 10:20:31 dpw $ */
+/* $Xorg: Xdbe.c,v 1.4 2000/08/17 19:45:53 cpqbld Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company
@@ -30,7 +30,7 @@
  *     Xlib DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.1tsi Exp $ */
+/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.4 2001/04/01 14:00:01 tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -430,7 +430,7 @@ XdbeScreenVisualInfo *XdbeGetVisualInfo (dpy, screen_specifiers, num_screens)
         int j;
         long c;
 
-        _XRead32 (dpy, (long *)&c, sizeof(CARD32));
+        _XRead32 (dpy, &c, sizeof(CARD32));
         scrVisInfo[i].count = c;
 
         nbytes = scrVisInfo[i].count * sizeof(XdbeVisualInfo);

@@ -1,4 +1,4 @@
-/* $TOG: register.c /main/6 1998/05/01 16:43:32 kaleb $ */
+/* $Xorg: register.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/register.c,v 1.12 1999/08/21 13:48:04 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/register.c,v 1.14 2001/01/17 19:43:30 dawes Exp $ */
 
 /*
  * This is in a separate source file so that small programs

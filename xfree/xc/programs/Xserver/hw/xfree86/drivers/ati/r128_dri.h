@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.3 2000/11/18 19:37:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.6 2001/03/21 17:02:21 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -45,7 +45,7 @@
 /* DRI Driver defaults */
 #define R128_DEFAULT_CCE_PIO_MODE R128_PM4_64PIO_64VCBM_64INDBM
 #define R128_DEFAULT_CCE_BM_MODE  R128_PM4_64BM_64VCBM_64INDBM
-#define R128_DEFAULT_AGP_MODE     2
+#define R128_DEFAULT_AGP_MODE     1
 #define R128_DEFAULT_AGP_SIZE     8 /* MB (must be a power of 2 and > 4MB) */
 #define R128_DEFAULT_RING_SIZE    1 /* MB (must be page aligned) */
 #define R128_DEFAULT_BUFFER_SIZE  2 /* MB (must be page aligned) */
@@ -66,36 +66,15 @@
  ((m) == R128_PM4_64BM_64VCBM_64INDBM))
 
 typedef struct {
-    /* MMIO register data */
-    drmHandle     registerHandle;
-    drmSize       registerSize;
-
-    /* CCE ring buffer data */
-    drmHandle     ringHandle;
-    drmSize       ringMapSize;
-    int           ringSize;
-
-    /* CCE ring read pointer data */
-    drmHandle     ringReadPtrHandle;
-    drmSize       ringReadMapSize;
-
-    /* CCE vertex/indirect buffer data */
-    drmHandle     bufHandle;
-    drmSize       bufMapSize;
-    int           bufOffset;
-
-    /* CCE AGP Texture data */
-    drmHandle     agpTexHandle;
-    drmSize       agpTexMapSize;
-    int           log2AGPTexGran;
-    int           agpTexOffset;
-
     /* DRI screen private data */
     int           deviceID;     /* PCI device ID */
     int           width;        /* Width in pixels of display */
     int           height;       /* Height in scanlines of display */
     int           depth;        /* Depth of display (8, 15, 16, 24) */
     int           bpp;          /* Bit depth of display (8, 16, 24, 32) */
+
+    int           IsPCI;        /* Current card is a PCI card */
+    int           AGPMode;
 
     int           frontOffset;  /* Start of front buffer */
     int           frontPitch;
@@ -108,11 +87,16 @@ typedef struct {
     int           textureSize;
     int           log2TexGran;
 
-    int           IsPCI;        /* Current card is a PCI card */
-    int           AGPMode;
+    /* MMIO register data */
+    drmHandle     registerHandle;
+    drmSize       registerSize;
 
-    int           CCEMode;      /* CCE mode that server/clients use */
-    int           CCEFifoSize;  /* Size of the CCE command FIFO */
+    /* CCE AGP Texture data */
+    drmHandle     agpTexHandle;
+    drmSize       agpTexMapSize;
+    int           log2AGPTexGran;
+    int           agpTexOffset;
+    unsigned int  sarea_priv_offset;
 } R128DRIRec, *R128DRIPtr;
 
 #endif

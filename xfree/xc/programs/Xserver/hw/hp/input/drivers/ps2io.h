@@ -1,4 +1,4 @@
-/* $TOG: ps2io.h /main/3 1997/09/08 13:19:15 kaleb $ */
+/* $Xorg: ps2io.h,v 1.3 2000/08/17 19:48:26 cpqbld Exp $ */
 
 #ifndef _SYS_PS2IO_INCLUDED /* allows multiple inclusion */
 #define _SYS_PS2IO_INCLUDED

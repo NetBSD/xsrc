@@ -1,4 +1,4 @@
-/* $TOG: VarGet.c /main/23 1998/02/06 13:27:49 kaleb $ */
+/* $Xorg: VarGet.c,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.

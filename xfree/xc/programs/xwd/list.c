@@ -1,4 +1,4 @@
-/* $TOG: list.c /main/5 1998/02/09 14:20:02 kaleb $ */
+/* $Xorg: list.c,v 1.4 2000/08/17 19:55:12 cpqbld Exp $ */
 /** ------------------------------------------------------------------------
 	This file contains routines for manipulating generic lists.
 	Lists are implemented with a "harness".  In other words, each
@@ -30,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
   ----------------------------------------------------------------------- **/
-/* $XFree86: xc/programs/xwd/list.c,v 3.2 1998/10/04 09:42:01 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/list.c,v 3.4 2001/01/17 23:46:41 dawes Exp $ */
 
 #include <stdio.h>
 

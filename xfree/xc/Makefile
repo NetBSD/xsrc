@@ -1,10 +1,13 @@
-# $TOG: Makefile /main/37 1998/02/17 14:30:04 kaleb $
-# $XFree86: xc/Makefile,v 3.15 1999/08/14 10:48:56 dawes Exp $
+# $Xorg: Makefile,v 1.5 2000/08/17 19:41:44 cpqbld Exp $
+
+
+
+# $XFree86: xc/Makefile,v 3.21 2001/03/03 22:03:43 tsi Exp $
 
 # Luna users will need to either run make as "make MAKE=make"
 # or add "MAKE = make" to this file.
 
-RELEASE = "Release 6.4"
+RELEASE = "Release 6.5"
 SHELL = /bin/sh
 RM = rm -f
 MV = mv
@@ -46,6 +49,11 @@ World:
 	;; esac;
 	@date
 	@echo ""
+	@if [ -f xmakefile ]; then \
+	    $(MAKE_CMD) -k distclean || \
+	    $(MAKE_CMD) -k clean || \
+	    $(RM) xmakefile; \
+	fi
 	@if [ ! -f $(IRULESRC)/host.def ]; then \
 	    if [ ! -f $(TOP)/lib/Xt/Imakefile ]; then \
 		echo "#define BuildServersOnly YES" > $(IRULESRC)/host.def; \
@@ -57,11 +65,15 @@ World:
 		fi; \
 	    fi; \
 	fi
+	@if [ ! -f $(IRULESRC)/version.def ]; then \
+	    echo "" > $(IRULESRC)/version.def; \
+	fi
 	cd $(IMAKESRC) && $(MAKE) $(FLAGS) clean
 	$(MAKE) $(MFLAGS) Makefile.boot
 	$(MAKE_CMD) $(MFLAGS) VerifyOS
+	$(MAKE_CMD) $(MFLAGS) version.def
 	$(MAKE_CMD) $(MFLAGS) Makefiles
-	$(MAKE_CMD) $(MFLAGS) clean BOOTSTRAPSUBDIRS=
+	$(MAKE_CMD) $(MFLAGS) BOOTSTRAPSUBDIRS= clean
 	$(MAKE_CMD) $(MFLAGS) includes
 	$(MAKE_CMD) $(MFLAGS) depend
 	$(MAKE_CMD) $(MFLAGS) $(WORLDOPTS) World
@@ -78,6 +90,7 @@ World:
 # the Makefile.proto files.
 
 Makefile.boot: imake.bootstrap
+	$(RM) $(IMAKESRC)/Makefile.proto
 
 imake.proto:
 	cd $(IMAKESRC) && $(MAKE) $(FLAGS)
@@ -106,6 +119,7 @@ Makefile::
 	$(MAKE) $(MFLAGS) xmakefile
 
 xmakefile: Imakefile
+	$(RM) xmakefile
 	$(IMAKE_CMD) -s xmakefile -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)
 
 World.Win32:
@@ -168,6 +182,9 @@ clean:
 	    $(MAKE_CMD) $@
 dangerous_strip_clean:
 	    $(MAKE_CMD) $@
+distclean:
+	    $(MAKE_CMD) $@
+	    $(RM) xmakefile $(IRULESRC)/version.def
 depend:
 	    $(MAKE_CMD) $@
 Everything:

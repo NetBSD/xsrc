@@ -4,7 +4,7 @@
 ** How to make a widget to choose the fraction of tests to be run.
 **
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xgc/testfrac.c,v 1.3 2000/02/17 14:00:37 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

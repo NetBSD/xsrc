@@ -122,21 +122,11 @@
 
 #else /* _STANDALONE_ */
 
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ftgrays.h"
-
-#else
-
-#include <smooth/ftgrays.h>
-
-#endif
-
-
-#include <freetype/internal/ftobjs.h>  /* for FT_UNUSED()               */
-#include <freetype/internal/ftdebug.h> /* for FT_TRACE() and FT_ERROR() */
-#include <freetype/ftoutln.h>          /* for FT_Outline_Decompose()    */
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_OUTLINE_H
 
 #define ErrRaster_Invalid_Mode     FT_Err_Cannot_Render_Glyph
 #define ErrRaster_Invalid_Outline  FT_Err_Invalid_Outline
@@ -262,6 +252,7 @@
 
     FT_Outline  outline;
     FT_Bitmap   target;
+    FT_BBox     clip_box;
 
     FT_Span     gray_spans[FT_MAX_GRAY_SPANS];
     int         num_gray_spans;
@@ -1046,7 +1037,7 @@
 
     for (;;)
     {
-      int    len = limit - base;
+      int    len = (int)( limit - base );
       PCell  i, j, pivot;
 
 
@@ -1368,7 +1359,9 @@
 
     FT_UNUSED( target );
 
-
+    if ( ras.num_cells == 0 )
+      return;
+      
     cur   = ras.cells;
     limit = cur + ras.num_cells;
 
@@ -1709,24 +1702,27 @@
       0
     };
 
-    TBand    bands[40], *band;
-    int      n, num_bands;
-    TPos     min, max, max_y;
+    TBand     bands[40], *band;
+    int       n, num_bands;
+    TPos      min, max, max_y;
+    FT_BBox*  clip;
 
 
     /* Set up state in the raster object */
     compute_cbox( RAS_VAR_ outline );
 
     /* clip to target bitmap, exit if nothing to do */
-    if ( ras.max_ex <= 0 || ras.min_ex >= ras.target.width ||
-         ras.max_ey <= 0 || ras.min_ey >= ras.target.rows  )
+    clip = &ras.clip_box;
+    
+    if ( ras.max_ex <= clip->xMin || ras.min_ex >= clip->xMax ||
+         ras.max_ey <= clip->yMin || ras.min_ey >= clip->yMax )
       return 0;
 
-    if ( ras.min_ex < 0 ) ras.min_ex = 0;
-    if ( ras.min_ey < 0 ) ras.min_ey = 0;
+    if ( ras.min_ex < clip->xMin ) ras.min_ex = clip->xMin;
+    if ( ras.min_ey < clip->yMin ) ras.min_ey = clip->yMin;
 
-    if ( ras.max_ex > ras.target.width ) ras.max_ex = ras.target.width;
-    if ( ras.max_ey > ras.target.rows )  ras.max_ey = ras.target.rows;
+    if ( ras.max_ex > clip->xMax ) ras.max_ex = clip->xMax;
+    if ( ras.max_ey > clip->yMax ) ras.max_ey = clip->yMax;
 
     /* simple heuristic used to speed-up the bezier decomposition -- see */
     /* the code in render_conic() and render_cubic() for more details    */
@@ -1861,6 +1857,27 @@
     /* this version does not support monochrome rendering */
     if ( !( params->flags & ft_raster_flag_aa ) )
       return ErrRaster_Invalid_Mode;
+
+    /* compute clipping box */
+    if ( ( params->flags & ft_raster_flag_direct ) == 0 )
+    {
+      /* compute clip box from target pixmap */
+      ras.clip_box.xMin = 0;
+      ras.clip_box.yMin = 0;
+      ras.clip_box.xMax = target_map->width;
+      ras.clip_box.yMax = target_map->rows;
+    }
+    else if ( params->flags & ft_raster_flag_clip )
+    {
+      ras.clip_box = params->clip_box;
+    }
+    else
+    {
+      ras.clip_box.xMin = -32768;
+      ras.clip_box.yMin = -32768;
+      ras.clip_box.xMax =  32767;
+      ras.clip_box.yMax =  32767;
+    }
 
     ras.outline   = *outline;
     ras.num_cells = 0;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.17 2000/06/21 13:51:27 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.27 2001/05/02 15:06:09 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -92,20 +92,20 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
 	   either alpha buffer or 3D rendering in Overlay */
 	numConfigs = 5;
 
-	if (!(pConfigs = (__GLXvisualConfig *)xnfcalloc(
+	if (!(pConfigs = (__GLXvisualConfig *)xcalloc(
 					    sizeof(__GLXvisualConfig),
 					    numConfigs))) {
 	    return FALSE;
 	}
 
-	if (!(pGlintConfigs = (GLINTConfigPrivPtr)xnfcalloc(
+	if (!(pGlintConfigs = (GLINTConfigPrivPtr)xcalloc(
 					    sizeof(GLINTConfigPrivRec),
 					    numConfigs))) {
 	    xfree(pConfigs);
 	    return FALSE;
 	}
 
-	if (!(pGlintConfigPtrs = (GLINTConfigPrivPtr *)xnfcalloc(
+	if (!(pGlintConfigPtrs = (GLINTConfigPrivPtr *)xcalloc(
 					    sizeof(GLINTConfigPrivPtr),
 					    numConfigs))) {
 	    xfree(pGlintConfigs);
@@ -305,8 +305,9 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
                           LBRF_FrameCountPos24 |
                           LBRF_GIDWidth4       |
                           LBRF_GIDPos32         ), LBWriteFormat);
-    if (pGlint->numMXDevices == 2) {
-    GLINT_SECONDARY_SLOW_WRITE_REG(
+    if (pGlint->numMultiDevices == 2) {
+    	ACCESSCHIP2();
+    	GLINT_SLOW_WRITE_REG(
 			 (LBRF_DepthWidth16    | 
                           LBRF_StencilWidth8   |
                           LBRF_StencilPos16    |
@@ -314,7 +315,7 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
                           LBRF_FrameCountPos24 |
                           LBRF_GIDWidth4       |
                           LBRF_GIDPos32         ), LBReadFormat);
-    GLINT_SECONDARY_SLOW_WRITE_REG(
+    	GLINT_SLOW_WRITE_REG(
 			 (LBRF_DepthWidth16    | 
                           LBRF_StencilWidth8   |
                           LBRF_StencilPos16    |
@@ -322,6 +323,7 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
                           LBRF_FrameCountPos24 |
                           LBRF_GIDWidth4       |
                           LBRF_GIDPos32         ), LBWriteFormat);
+    	ACCESSCHIP1();
     }
 
     return TRUE;
@@ -343,7 +345,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     if (!xf86LoaderCheckSymbol("drmAvailable"))        return FALSE;
     if (!xf86LoaderCheckSymbol("DRIQueryVersion")) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
-                 "GLINTDRIScreenInit failed (libdri.a too old)\n");
+                 "[dri] GLINTDRIScreenInit failed (libdri.a too old)\n");
       return FALSE;
     }
 
@@ -351,9 +353,11 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     {
        int major, minor, patch;
        DRIQueryVersion(&major, &minor, &patch);
-       if (major != 3 || minor != 0 || patch < 0) {
+       if (major != 4 || minor < 0) {
           xf86DrvMsg(pScreen->myNum, X_ERROR,
-                     "GLINTDRIScreenInit failed (DRI version = %d.%d.%d, expected 3.0.x).  Disabling DRI.\n",
+                     "[dri] GLINTDRIScreenInit failed because of a version mismatch.\n"
+                     "[dri] libDRI version is %d.%d.%d but version 4.0.x is needed.\n"
+                     "[dri] Disabling DRI.\n",
                      major, minor, patch);
           return FALSE;
        }
@@ -361,7 +365,9 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
 
     if (pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA) return FALSE;
 
-    if (pGlint->numMXDevices > 2) return FALSE;
+    if (pGlint->numMultiDevices > 2) return FALSE;
+
+    if (pGlint->MultiChip != PCI_CHIP_MX) return FALSE;
 
     pDRIInfo = DRICreateInfoRec();
     if(pDRIInfo == NULL)
@@ -408,7 +414,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->SAREASize = SAREA_MAX;
 #endif
 
-    if (!(pGlintDRI = (GLINTDRIPtr)xnfcalloc(sizeof(GLINTDRIRec),1))) {
+    if (!(pGlintDRI = (GLINTDRIPtr)xcalloc(sizeof(GLINTDRIRec),1))) {
 	DRIDestroyInfoRec(pGlint->pDRIInfo);
 	return FALSE;
     }
@@ -425,6 +431,9 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->MoveBuffers    = GLINTDRIMoveBuffers;
     pDRIInfo->bufferRequests = DRI_ALL_WINDOWS;
 
+    pDRIInfo->createDummyCtx     = TRUE;
+    pDRIInfo->createDummyCtxPriv = FALSE;
+
     if (!DRIScreenInit(pScreen, pDRIInfo, &(pGlint->drmSubFD))) {
 	DRIDestroyInfoRec(pGlint->pDRIInfo);
 	xfree(pGlintDRI);
@@ -436,14 +445,15 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
         drmVersionPtr version = drmGetVersion(pGlint->drmSubFD);
         if (version) {
             if (version->version_major != 1 ||
-                version->version_minor != 0 ||
-                version->version_patchlevel < 0) {
+                version->version_minor < 0) {
                 /* incompatible drm version */
                 xf86DrvMsg(pScreen->myNum, X_ERROR,
-                           "GLINTDRIScreenInit failed (DRM version = %d.%d.%d, expected 1.0.x).  Disabling DRI.\n",
-                           version->version_major,
-                           version->version_minor,
-                           version->version_patchlevel);
+                    "[dri] GLINTDRIScreenInit failed because of a version mismatch.\n"
+                    "[dri] gamma.o kernel module version is %d.%d.%d but version 1.0.x is needed.\n"
+                    "[dri] Disabling DRI.\n",
+                    version->version_major,
+                    version->version_minor,
+                    version->version_patchlevel);
                 GLINTDRICloseScreen(pScreen);
                 drmFreeVersion(version);
                 return FALSE;
@@ -453,7 +463,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     }
 
     /* Tell the client driver how many MX's we have */
-    pGlintDRI->numMXDevices = pGlint->numMXDevices;
+    pGlintDRI->numMultiDevices = pGlint->numMultiDevices;
     /* Tell the client about our screen size setup */
     pGlintDRI->pprod = pGlint->pprod;
    
@@ -585,6 +595,8 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[drm] %d DMA buffers mapped\n",
 	       pGlint->drmBufs->count);
 
+    xf86EnablePciBusMaster(pGlint->PciInfo, TRUE);
+
     /* tell the generic kernel driver how to handle Gamma DMA */
     if (pGlint->irq <= 0) {
 	pGlint->irq = drmGetInterruptFromBusID(pGlint->drmSubFD,
@@ -614,7 +626,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
 	DRICloseScreen(pScreen);
 	return FALSE;
     }
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "visual configs initialized\n" );
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[dri] visual configs initialized.\n" );
 
     return TRUE;
 }
@@ -827,68 +839,70 @@ GLINTDRISwapContext(
 	pRC->MX1.CFilterMode              = GLINT_READ_REG(FilterMode);
 	pRC->MX1.CStatisticMode           = GLINT_READ_REG(StatisticMode);
 
-        if (pGlint->numMXDevices == 2) {
+        if (pGlint->numMultiDevices == 2) {
 	pRC->MX1.CBroadcastMask           = GLINT_READ_REG(BroadcastMask);
 
-	pRC->MX2.CStartXDom               = GLINT_SECONDARY_READ_REG(StartXDom);
-	pRC->MX2.CdXDom                   = GLINT_SECONDARY_READ_REG(dXDom);
-	pRC->MX2.CStartXSub               = GLINT_SECONDARY_READ_REG(StartXSub);
-	pRC->MX2.CdXSub                   = GLINT_SECONDARY_READ_REG(dXSub);
-	pRC->MX2.CStartY                  = GLINT_SECONDARY_READ_REG(StartY);
-	pRC->MX2.CdY                      = GLINT_SECONDARY_READ_REG(dY);
-	pRC->MX2.CGLINTCount              = GLINT_SECONDARY_READ_REG(GLINTCount);
-	pRC->MX2.CPointTable0             = GLINT_SECONDARY_READ_REG(PointTable0);
-	pRC->MX2.CPointTable1             = GLINT_SECONDARY_READ_REG(PointTable1);
-	pRC->MX2.CPointTable2             = GLINT_SECONDARY_READ_REG(PointTable2);
-	pRC->MX2.CPointTable3             = GLINT_SECONDARY_READ_REG(PointTable3);
-	pRC->MX2.CRasterizerMode          = GLINT_SECONDARY_READ_REG(RasterizerMode);
-	pRC->MX2.CYLimits                 = GLINT_SECONDARY_READ_REG(YLimits);
-	pRC->MX2.CScanLineOwnership       = GLINT_SECONDARY_READ_REG(ScanLineOwnership);
-	pRC->MX2.CPixelSize               = GLINT_SECONDARY_READ_REG(PixelSize);
-	pRC->MX2.CScissorMode             = GLINT_SECONDARY_READ_REG(ScissorMode);
-	pRC->MX2.CScissorMinXY            = GLINT_SECONDARY_READ_REG(ScissorMinXY);
-	pRC->MX2.CScissorMaxXY            = GLINT_SECONDARY_READ_REG(ScissorMaxXY);
-	pRC->MX2.CScreenSize              = GLINT_SECONDARY_READ_REG(ScreenSize);
-	pRC->MX2.CAreaStippleMode         = GLINT_SECONDARY_READ_REG(AreaStippleMode);
-	pRC->MX2.CLineStippleMode         = GLINT_SECONDARY_READ_REG(LineStippleMode);
-	pRC->MX2.CLoadLineStippleCounters = GLINT_SECONDARY_READ_REG(LoadLineStippleCounters);
-	pRC->MX2.CWindowOrigin            = GLINT_SECONDARY_READ_REG(WindowOrigin);
-	pRC->MX2.CRouterMode              = GLINT_SECONDARY_READ_REG(RouterMode);
-	pRC->MX2.CTextureAddressMode      = GLINT_SECONDARY_READ_REG(TextureAddressMode);
-	pRC->MX2.CTextureReadMode         = GLINT_SECONDARY_READ_REG(TextureReadMode);
-	pRC->MX2.CTextureColorMode        = GLINT_SECONDARY_READ_REG(TextureColorMode);
-	pRC->MX2.CFogMode                 = GLINT_SECONDARY_READ_REG(FogMode);
-	pRC->MX2.CColorDDAMode            = GLINT_SECONDARY_READ_REG(ColorDDAMode);
-	pRC->MX2.CGLINTColor              = GLINT_SECONDARY_READ_REG(GLINTColor);
-	pRC->MX2.CAlphaTestMode           = GLINT_SECONDARY_READ_REG(AlphaTestMode);
-	pRC->MX2.CAntialiasMode           = GLINT_SECONDARY_READ_REG(AntialiasMode);
-	pRC->MX2.CAlphaBlendMode          = GLINT_SECONDARY_READ_REG(AlphaBlendMode);
-	pRC->MX2.CDitherMode              = GLINT_SECONDARY_READ_REG(DitherMode);
-	pRC->MX2.CFBSoftwareWriteMask     = GLINT_SECONDARY_READ_REG(FBSoftwareWriteMask);
-	pRC->MX2.CLogicalOpMode           = GLINT_SECONDARY_READ_REG(LogicalOpMode);
-	pRC->MX2.CFBWriteData             = GLINT_SECONDARY_READ_REG(FBWriteData);
-	pRC->MX2.CLBReadMode              = GLINT_SECONDARY_READ_REG(LBReadMode);
-	pRC->MX2.CLBSourceOffset          = GLINT_SECONDARY_READ_REG(LBSourceOffset);
-	pRC->MX2.CLBWindowBase            = GLINT_SECONDARY_READ_REG(LBWindowBase);
-	pRC->MX2.CLBWriteMode             = GLINT_SECONDARY_READ_REG(LBWriteMode);
-	pRC->MX2.CTextureDownloadOffset   = GLINT_SECONDARY_READ_REG(TextureDownloadOffset);
-	pRC->MX2.CLBWindowOffset          = GLINT_SECONDARY_READ_REG(LBWindowOffset);
-	pRC->MX2.CGLINTWindow             = GLINT_SECONDARY_READ_REG(GLINTWindow);
-	pRC->MX2.CStencilMode             = GLINT_SECONDARY_READ_REG(StencilMode);
-	pRC->MX2.CDepthMode               = GLINT_SECONDARY_READ_REG(DepthMode);
-	pRC->MX2.CGLINTDepth              = GLINT_SECONDARY_READ_REG(GLINTDepth);
-	pRC->MX2.CFBReadMode              = GLINT_SECONDARY_READ_REG(FBReadMode);
-	pRC->MX2.CFBSourceOffset          = GLINT_SECONDARY_READ_REG(FBSourceOffset);
-	pRC->MX2.CFBPixelOffset           = GLINT_SECONDARY_READ_REG(FBPixelOffset);
-	pRC->MX2.CFBWindowBase            = GLINT_SECONDARY_READ_REG(FBWindowBase);
-	pRC->MX2.CFBWriteMode             = GLINT_SECONDARY_READ_REG(FBWriteMode);
-	pRC->MX2.CFBHardwareWriteMask     = GLINT_SECONDARY_READ_REG(FBHardwareWriteMask);
-	pRC->MX2.CFBBlockColor            = GLINT_SECONDARY_READ_REG(FBBlockColor);
-	pRC->MX2.CPatternRamMode          = GLINT_SECONDARY_READ_REG(PatternRamMode);
-	pRC->MX2.CFBBlockColorU           = GLINT_SECONDARY_READ_REG(FBBlockColorU);
-	pRC->MX2.CFBBlockColorL           = GLINT_SECONDARY_READ_REG(FBBlockColorL);
-	pRC->MX2.CFilterMode              = GLINT_SECONDARY_READ_REG(FilterMode);
-	pRC->MX2.CStatisticMode           = GLINT_SECONDARY_READ_REG(StatisticMode);
+	ACCESSCHIP2();
+	pRC->MX2.CStartXDom               = GLINT_READ_REG(StartXDom);
+	pRC->MX2.CdXDom                   = GLINT_READ_REG(dXDom);
+	pRC->MX2.CStartXSub               = GLINT_READ_REG(StartXSub);
+	pRC->MX2.CdXSub                   = GLINT_READ_REG(dXSub);
+	pRC->MX2.CStartY                  = GLINT_READ_REG(StartY);
+	pRC->MX2.CdY                      = GLINT_READ_REG(dY);
+	pRC->MX2.CGLINTCount              = GLINT_READ_REG(GLINTCount);
+	pRC->MX2.CPointTable0             = GLINT_READ_REG(PointTable0);
+	pRC->MX2.CPointTable1             = GLINT_READ_REG(PointTable1);
+	pRC->MX2.CPointTable2             = GLINT_READ_REG(PointTable2);
+	pRC->MX2.CPointTable3             = GLINT_READ_REG(PointTable3);
+	pRC->MX2.CRasterizerMode          = GLINT_READ_REG(RasterizerMode);
+	pRC->MX2.CYLimits                 = GLINT_READ_REG(YLimits);
+	pRC->MX2.CScanLineOwnership       = GLINT_READ_REG(ScanLineOwnership);
+	pRC->MX2.CPixelSize               = GLINT_READ_REG(PixelSize);
+	pRC->MX2.CScissorMode             = GLINT_READ_REG(ScissorMode);
+	pRC->MX2.CScissorMinXY            = GLINT_READ_REG(ScissorMinXY);
+	pRC->MX2.CScissorMaxXY            = GLINT_READ_REG(ScissorMaxXY);
+	pRC->MX2.CScreenSize              = GLINT_READ_REG(ScreenSize);
+	pRC->MX2.CAreaStippleMode         = GLINT_READ_REG(AreaStippleMode);
+	pRC->MX2.CLineStippleMode         = GLINT_READ_REG(LineStippleMode);
+	pRC->MX2.CLoadLineStippleCounters = GLINT_READ_REG(LoadLineStippleCounters);
+	pRC->MX2.CWindowOrigin            = GLINT_READ_REG(WindowOrigin);
+	pRC->MX2.CRouterMode              = GLINT_READ_REG(RouterMode);
+	pRC->MX2.CTextureAddressMode      = GLINT_READ_REG(TextureAddressMode);
+	pRC->MX2.CTextureReadMode         = GLINT_READ_REG(TextureReadMode);
+	pRC->MX2.CTextureColorMode        = GLINT_READ_REG(TextureColorMode);
+	pRC->MX2.CFogMode                 = GLINT_READ_REG(FogMode);
+	pRC->MX2.CColorDDAMode            = GLINT_READ_REG(ColorDDAMode);
+	pRC->MX2.CGLINTColor              = GLINT_READ_REG(GLINTColor);
+	pRC->MX2.CAlphaTestMode           = GLINT_READ_REG(AlphaTestMode);
+	pRC->MX2.CAntialiasMode           = GLINT_READ_REG(AntialiasMode);
+	pRC->MX2.CAlphaBlendMode          = GLINT_READ_REG(AlphaBlendMode);
+	pRC->MX2.CDitherMode              = GLINT_READ_REG(DitherMode);
+	pRC->MX2.CFBSoftwareWriteMask     = GLINT_READ_REG(FBSoftwareWriteMask);
+	pRC->MX2.CLogicalOpMode           = GLINT_READ_REG(LogicalOpMode);
+	pRC->MX2.CFBWriteData             = GLINT_READ_REG(FBWriteData);
+	pRC->MX2.CLBReadMode              = GLINT_READ_REG(LBReadMode);
+	pRC->MX2.CLBSourceOffset          = GLINT_READ_REG(LBSourceOffset);
+	pRC->MX2.CLBWindowBase            = GLINT_READ_REG(LBWindowBase);
+	pRC->MX2.CLBWriteMode             = GLINT_READ_REG(LBWriteMode);
+	pRC->MX2.CTextureDownloadOffset   = GLINT_READ_REG(TextureDownloadOffset);
+	pRC->MX2.CLBWindowOffset          = GLINT_READ_REG(LBWindowOffset);
+	pRC->MX2.CGLINTWindow             = GLINT_READ_REG(GLINTWindow);
+	pRC->MX2.CStencilMode             = GLINT_READ_REG(StencilMode);
+	pRC->MX2.CDepthMode               = GLINT_READ_REG(DepthMode);
+	pRC->MX2.CGLINTDepth              = GLINT_READ_REG(GLINTDepth);
+	pRC->MX2.CFBReadMode              = GLINT_READ_REG(FBReadMode);
+	pRC->MX2.CFBSourceOffset          = GLINT_READ_REG(FBSourceOffset);
+	pRC->MX2.CFBPixelOffset           = GLINT_READ_REG(FBPixelOffset);
+	pRC->MX2.CFBWindowBase            = GLINT_READ_REG(FBWindowBase);
+	pRC->MX2.CFBWriteMode             = GLINT_READ_REG(FBWriteMode);
+	pRC->MX2.CFBHardwareWriteMask     = GLINT_READ_REG(FBHardwareWriteMask);
+	pRC->MX2.CFBBlockColor            = GLINT_READ_REG(FBBlockColor);
+	pRC->MX2.CPatternRamMode          = GLINT_READ_REG(PatternRamMode);
+	pRC->MX2.CFBBlockColorU           = GLINT_READ_REG(FBBlockColorU);
+	pRC->MX2.CFBBlockColorL           = GLINT_READ_REG(FBBlockColorL);
+	pRC->MX2.CFilterMode              = GLINT_READ_REG(FilterMode);
+	pRC->MX2.CStatisticMode           = GLINT_READ_REG(StatisticMode);
+	ACCESSCHIP1();
 	}
 
 	if (readContextType == DRI_3D_CONTEXT) {
@@ -1016,133 +1030,135 @@ GLINTDRISwapContext(
 	    pRC->MX1.CKdBStart                = GLINT_READ_REG(KdBStart);
 	    pRC->MX1.CdKdBdx                  = GLINT_READ_REG(dKdBdx);
 	    pRC->MX1.CdKdBdyDom               = GLINT_READ_REG(dKdBdyDom);
-            if (pGlint->numMXDevices == 2) {
-	    pRC->MX2.CSStart                  = GLINT_SECONDARY_READ_REG(SStart);
-	    pRC->MX2.CdSdx                    = GLINT_SECONDARY_READ_REG(dSdx);
-	    pRC->MX2.CdSdyDom                 = GLINT_SECONDARY_READ_REG(dSdyDom);
-	    pRC->MX2.CTStart                  = GLINT_SECONDARY_READ_REG(TStart);
-	    pRC->MX2.CdTdx                    = GLINT_SECONDARY_READ_REG(dTdx);
-	    pRC->MX2.CdTdyDom                 = GLINT_SECONDARY_READ_REG(dTdyDom);
-	    pRC->MX2.CQStart                  = GLINT_SECONDARY_READ_REG(QStart);
-	    pRC->MX2.CdQdx                    = GLINT_SECONDARY_READ_REG(dQdx);
-	    pRC->MX2.CdQdyDom                 = GLINT_SECONDARY_READ_REG(dQdyDom);
-	    pRC->MX2.CLOD                     = GLINT_SECONDARY_READ_REG(LOD);
-	    pRC->MX2.CdSdy                    = GLINT_SECONDARY_READ_REG(dSdy);
-	    pRC->MX2.CdTdy                    = GLINT_SECONDARY_READ_REG(dTdy);
-	    pRC->MX2.CdQdy                    = GLINT_SECONDARY_READ_REG(dQdy);
-	    pRC->MX2.CTextureFormat           = GLINT_SECONDARY_READ_REG(TextureFormat);
-	    pRC->MX2.CTextureCacheControl     = GLINT_SECONDARY_READ_REG(TextureCacheControl);
-	    pRC->MX2.CGLINTBorderColor        = GLINT_SECONDARY_READ_REG(GLINTBorderColor);
-	    pRC->MX2.CTexelLUTIndex           = GLINT_SECONDARY_READ_REG(TexelLUTIndex);
-	    pRC->MX2.CTexelLUTData            = GLINT_SECONDARY_READ_REG(TexelLUTData);
-	    pRC->MX2.CTexelLUTAddress         = GLINT_SECONDARY_READ_REG(TexelLUTAddress);
-	    pRC->MX2.CTexelLUTTransfer        = GLINT_SECONDARY_READ_REG(TexelLUTTransfer);
-	    pRC->MX2.CTextureFilterMode       = GLINT_SECONDARY_READ_REG(TextureFilterMode);
-	    pRC->MX2.CTextureChromaUpper      = GLINT_SECONDARY_READ_REG(TextureChromaUpper);
-	    pRC->MX2.CTextureChromaLower      = GLINT_SECONDARY_READ_REG(TextureChromaLower);
-	    pRC->MX2.CTxBaseAddr0             = GLINT_SECONDARY_READ_REG(TxBaseAddr0);
-	    pRC->MX2.CTxBaseAddr1             = GLINT_SECONDARY_READ_REG(TxBaseAddr1);
-	    pRC->MX2.CTxBaseAddr2             = GLINT_SECONDARY_READ_REG(TxBaseAddr2);
-	    pRC->MX2.CTxBaseAddr3             = GLINT_SECONDARY_READ_REG(TxBaseAddr3);
-	    pRC->MX2.CTxBaseAddr4             = GLINT_SECONDARY_READ_REG(TxBaseAddr4);
-	    pRC->MX2.CTxBaseAddr5             = GLINT_SECONDARY_READ_REG(TxBaseAddr5);
-	    pRC->MX2.CTxBaseAddr6             = GLINT_SECONDARY_READ_REG(TxBaseAddr6);
-	    pRC->MX2.CTxBaseAddr7             = GLINT_SECONDARY_READ_REG(TxBaseAddr7);
-	    pRC->MX2.CTxBaseAddr8             = GLINT_SECONDARY_READ_REG(TxBaseAddr8);
-	    pRC->MX2.CTxBaseAddr9             = GLINT_SECONDARY_READ_REG(TxBaseAddr9);
-	    pRC->MX2.CTxBaseAddr10            = GLINT_SECONDARY_READ_REG(TxBaseAddr10);
-	    pRC->MX2.CTxBaseAddr11            = GLINT_SECONDARY_READ_REG(TxBaseAddr11);
-	    pRC->MX2.CTexelLUT0               = GLINT_SECONDARY_READ_REG(TexelLUT0);
-	    pRC->MX2.CTexelLUT1               = GLINT_SECONDARY_READ_REG(TexelLUT1);
-	    pRC->MX2.CTexelLUT2               = GLINT_SECONDARY_READ_REG(TexelLUT2);
-	    pRC->MX2.CTexelLUT3               = GLINT_SECONDARY_READ_REG(TexelLUT3);
-	    pRC->MX2.CTexelLUT4               = GLINT_SECONDARY_READ_REG(TexelLUT4);
-	    pRC->MX2.CTexelLUT5               = GLINT_SECONDARY_READ_REG(TexelLUT5);
-	    pRC->MX2.CTexelLUT6               = GLINT_SECONDARY_READ_REG(TexelLUT6);
-	    pRC->MX2.CTexelLUT7               = GLINT_SECONDARY_READ_REG(TexelLUT7);
-	    pRC->MX2.CTexelLUT8               = GLINT_SECONDARY_READ_REG(TexelLUT8);
-	    pRC->MX2.CTexelLUT9               = GLINT_SECONDARY_READ_REG(TexelLUT9);
-	    pRC->MX2.CTexelLUT10              = GLINT_SECONDARY_READ_REG(TexelLUT10);
-	    pRC->MX2.CTexelLUT11              = GLINT_SECONDARY_READ_REG(TexelLUT11);
-	    pRC->MX2.CTexelLUT12              = GLINT_SECONDARY_READ_REG(TexelLUT12);
-	    pRC->MX2.CTexelLUT13              = GLINT_SECONDARY_READ_REG(TexelLUT13);
-	    pRC->MX2.CTexelLUT14              = GLINT_SECONDARY_READ_REG(TexelLUT14);
-	    pRC->MX2.CTexelLUT15              = GLINT_SECONDARY_READ_REG(TexelLUT15);
-	    pRC->MX2.CTexel0                  = GLINT_SECONDARY_READ_REG(Texel0);
-	    pRC->MX2.CTexel1                  = GLINT_SECONDARY_READ_REG(Texel1);
-	    pRC->MX2.CTexel2                  = GLINT_SECONDARY_READ_REG(Texel2);
-	    pRC->MX2.CTexel3                  = GLINT_SECONDARY_READ_REG(Texel3);
-	    pRC->MX2.CTexel4                  = GLINT_SECONDARY_READ_REG(Texel4);
-	    pRC->MX2.CTexel5                  = GLINT_SECONDARY_READ_REG(Texel5);
-	    pRC->MX2.CTexel6                  = GLINT_SECONDARY_READ_REG(Texel6);
-	    pRC->MX2.CTexel7                  = GLINT_SECONDARY_READ_REG(Texel7);
-	    pRC->MX2.CInterp0                 = GLINT_SECONDARY_READ_REG(Interp0);
-	    pRC->MX2.CInterp1                 = GLINT_SECONDARY_READ_REG(Interp1);
-	    pRC->MX2.CInterp2                 = GLINT_SECONDARY_READ_REG(Interp2);
-	    pRC->MX2.CInterp3                 = GLINT_SECONDARY_READ_REG(Interp3);
-	    pRC->MX2.CInterp4                 = GLINT_SECONDARY_READ_REG(Interp4);
-	    pRC->MX2.CTextureFilter           = GLINT_SECONDARY_READ_REG(TextureFilter);
-	    pRC->MX2.CTextureEnvColor         = GLINT_SECONDARY_READ_REG(TextureEnvColor);
-	    pRC->MX2.CFogColor                = GLINT_SECONDARY_READ_REG(FogColor);
-	    pRC->MX2.CFStart                  = GLINT_SECONDARY_READ_REG(FStart);
-	    pRC->MX2.CdFdx                    = GLINT_SECONDARY_READ_REG(dFdx);
-	    pRC->MX2.CdFdyDom                 = GLINT_SECONDARY_READ_REG(dFdyDom);
-	    pRC->MX2.CKsStart                 = GLINT_SECONDARY_READ_REG(KsStart);
-	    pRC->MX2.CdKsdx                   = GLINT_SECONDARY_READ_REG(dKsdx);
-	    pRC->MX2.CdKsdyDom                = GLINT_SECONDARY_READ_REG(dKsdyDom);
-	    pRC->MX2.CKdStart                 = GLINT_SECONDARY_READ_REG(KdStart);
-	    pRC->MX2.CdKdStart                = GLINT_SECONDARY_READ_REG(dKdStart);
-	    pRC->MX2.CdKddyDom                = GLINT_SECONDARY_READ_REG(dKddyDom);
-	    pRC->MX2.CRStart                  = GLINT_SECONDARY_READ_REG(RStart);
-	    pRC->MX2.CdRdx                    = GLINT_SECONDARY_READ_REG(dRdx);
-	    pRC->MX2.CdRdyDom                 = GLINT_SECONDARY_READ_REG(dRdyDom);
-	    pRC->MX2.CGStart                  = GLINT_SECONDARY_READ_REG(GStart);
-	    pRC->MX2.CdGdx                    = GLINT_SECONDARY_READ_REG(dGdx);
-	    pRC->MX2.CdGdyDom                 = GLINT_SECONDARY_READ_REG(dGdyDom);
-	    pRC->MX2.CBStart                  = GLINT_SECONDARY_READ_REG(BStart);
-	    pRC->MX2.CdBdx                    = GLINT_SECONDARY_READ_REG(dBdx);
-	    pRC->MX2.CdBdyDom                 = GLINT_SECONDARY_READ_REG(dBdyDom);
-	    pRC->MX2.CAStart                  = GLINT_SECONDARY_READ_REG(AStart);
-	    pRC->MX2.CdAdx                    = GLINT_SECONDARY_READ_REG(dAdx);
-	    pRC->MX2.CdAdyDom                 = GLINT_SECONDARY_READ_REG(dAdyDom);
-	    pRC->MX2.CConstantColor           = GLINT_SECONDARY_READ_REG(ConstantColor);
-	    pRC->MX2.CChromaUpper             = GLINT_SECONDARY_READ_REG(ChromaUpper);
-	    pRC->MX2.CChromaLower             = GLINT_SECONDARY_READ_REG(ChromaLower);
-	    pRC->MX2.CChromaTestMode          = GLINT_SECONDARY_READ_REG(ChromaTestMode);
-	    pRC->MX2.CStencilData             = GLINT_SECONDARY_READ_REG(StencilData);
-	    pRC->MX2.CGLINTStencil            = GLINT_SECONDARY_READ_REG(GLINTStencil);
-	    pRC->MX2.CZStartU                 = GLINT_SECONDARY_READ_REG(ZStartU);
-	    pRC->MX2.CZStartL                 = GLINT_SECONDARY_READ_REG(ZStartL);
-	    pRC->MX2.CdZdxU                   = GLINT_SECONDARY_READ_REG(dZdxU);
-	    pRC->MX2.CdZdxL                   = GLINT_SECONDARY_READ_REG(dZdxL);
-	    pRC->MX2.CdZdyDomU                = GLINT_SECONDARY_READ_REG(dZdyDomU);
-	    pRC->MX2.CdZdyDomL                = GLINT_SECONDARY_READ_REG(dZdyDomL);
-	    pRC->MX2.CFastClearDepth          = GLINT_SECONDARY_READ_REG(FastClearDepth);
-	    pRC->MX2.CMinRegion               = GLINT_SECONDARY_READ_REG(MinRegion);
-	    pRC->MX2.CMaxRegion               = GLINT_SECONDARY_READ_REG(MaxRegion);
-	    pRC->MX2.CKsRStart                = GLINT_SECONDARY_READ_REG(KsRStart);
-	    pRC->MX2.CdKsRdx                  = GLINT_SECONDARY_READ_REG(dKsRdx);
-	    pRC->MX2.CdKsRdyDom               = GLINT_SECONDARY_READ_REG(dKsRdyDom);
-	    pRC->MX2.CKsGStart                = GLINT_SECONDARY_READ_REG(KsGStart);
-	    pRC->MX2.CdKsGdx                  = GLINT_SECONDARY_READ_REG(dKsGdx);
-	    pRC->MX2.CdKsGdyDom               = GLINT_SECONDARY_READ_REG(dKsGdyDom);
-	    pRC->MX2.CKsBStart                = GLINT_SECONDARY_READ_REG(KsBStart);
-	    pRC->MX2.CdKsBdx                  = GLINT_SECONDARY_READ_REG(dKsBdx);
-	    pRC->MX2.CdKsBdyDom               = GLINT_SECONDARY_READ_REG(dKsBdyDom);
-	    pRC->MX2.CKdRStart                = GLINT_SECONDARY_READ_REG(KdRStart);
-	    pRC->MX2.CdKdRdx                  = GLINT_SECONDARY_READ_REG(dKdRdx);
-	    pRC->MX2.CdKdRdyDom               = GLINT_SECONDARY_READ_REG(dKdRdyDom);
-	    pRC->MX2.CKdGStart                = GLINT_SECONDARY_READ_REG(KdGStart);
-	    pRC->MX2.CdKdGdx                  = GLINT_SECONDARY_READ_REG(dKdGdx);
-	    pRC->MX2.CdKdGdyDom               = GLINT_SECONDARY_READ_REG(dKdGdyDom);
-	    pRC->MX2.CKdBStart                = GLINT_SECONDARY_READ_REG(KdBStart);
-	    pRC->MX2.CdKdBdx                  = GLINT_SECONDARY_READ_REG(dKdBdx);
-	    pRC->MX2.CdKdBdyDom               = GLINT_SECONDARY_READ_REG(dKdBdyDom);
+            if (pGlint->numMultiDevices == 2) {
+	    ACCESSCHIP2();
+	    pRC->MX2.CSStart                  = GLINT_READ_REG(SStart);
+	    pRC->MX2.CdSdx                    = GLINT_READ_REG(dSdx);
+	    pRC->MX2.CdSdyDom                 = GLINT_READ_REG(dSdyDom);
+	    pRC->MX2.CTStart                  = GLINT_READ_REG(TStart);
+	    pRC->MX2.CdTdx                    = GLINT_READ_REG(dTdx);
+	    pRC->MX2.CdTdyDom                 = GLINT_READ_REG(dTdyDom);
+	    pRC->MX2.CQStart                  = GLINT_READ_REG(QStart);
+	    pRC->MX2.CdQdx                    = GLINT_READ_REG(dQdx);
+	    pRC->MX2.CdQdyDom                 = GLINT_READ_REG(dQdyDom);
+	    pRC->MX2.CLOD                     = GLINT_READ_REG(LOD);
+	    pRC->MX2.CdSdy                    = GLINT_READ_REG(dSdy);
+	    pRC->MX2.CdTdy                    = GLINT_READ_REG(dTdy);
+	    pRC->MX2.CdQdy                    = GLINT_READ_REG(dQdy);
+	    pRC->MX2.CTextureFormat           = GLINT_READ_REG(TextureFormat);
+	    pRC->MX2.CTextureCacheControl     = GLINT_READ_REG(TextureCacheControl);
+	    pRC->MX2.CGLINTBorderColor        = GLINT_READ_REG(GLINTBorderColor);
+	    pRC->MX2.CTexelLUTIndex           = GLINT_READ_REG(TexelLUTIndex);
+	    pRC->MX2.CTexelLUTData            = GLINT_READ_REG(TexelLUTData);
+	    pRC->MX2.CTexelLUTAddress         = GLINT_READ_REG(TexelLUTAddress);
+	    pRC->MX2.CTexelLUTTransfer        = GLINT_READ_REG(TexelLUTTransfer);
+	    pRC->MX2.CTextureFilterMode       = GLINT_READ_REG(TextureFilterMode);
+	    pRC->MX2.CTextureChromaUpper      = GLINT_READ_REG(TextureChromaUpper);
+	    pRC->MX2.CTextureChromaLower      = GLINT_READ_REG(TextureChromaLower);
+	    pRC->MX2.CTxBaseAddr0             = GLINT_READ_REG(TxBaseAddr0);
+	    pRC->MX2.CTxBaseAddr1             = GLINT_READ_REG(TxBaseAddr1);
+	    pRC->MX2.CTxBaseAddr2             = GLINT_READ_REG(TxBaseAddr2);
+	    pRC->MX2.CTxBaseAddr3             = GLINT_READ_REG(TxBaseAddr3);
+	    pRC->MX2.CTxBaseAddr4             = GLINT_READ_REG(TxBaseAddr4);
+	    pRC->MX2.CTxBaseAddr5             = GLINT_READ_REG(TxBaseAddr5);
+	    pRC->MX2.CTxBaseAddr6             = GLINT_READ_REG(TxBaseAddr6);
+	    pRC->MX2.CTxBaseAddr7             = GLINT_READ_REG(TxBaseAddr7);
+	    pRC->MX2.CTxBaseAddr8             = GLINT_READ_REG(TxBaseAddr8);
+	    pRC->MX2.CTxBaseAddr9             = GLINT_READ_REG(TxBaseAddr9);
+	    pRC->MX2.CTxBaseAddr10            = GLINT_READ_REG(TxBaseAddr10);
+	    pRC->MX2.CTxBaseAddr11            = GLINT_READ_REG(TxBaseAddr11);
+	    pRC->MX2.CTexelLUT0               = GLINT_READ_REG(TexelLUT0);
+	    pRC->MX2.CTexelLUT1               = GLINT_READ_REG(TexelLUT1);
+	    pRC->MX2.CTexelLUT2               = GLINT_READ_REG(TexelLUT2);
+	    pRC->MX2.CTexelLUT3               = GLINT_READ_REG(TexelLUT3);
+	    pRC->MX2.CTexelLUT4               = GLINT_READ_REG(TexelLUT4);
+	    pRC->MX2.CTexelLUT5               = GLINT_READ_REG(TexelLUT5);
+	    pRC->MX2.CTexelLUT6               = GLINT_READ_REG(TexelLUT6);
+	    pRC->MX2.CTexelLUT7               = GLINT_READ_REG(TexelLUT7);
+	    pRC->MX2.CTexelLUT8               = GLINT_READ_REG(TexelLUT8);
+	    pRC->MX2.CTexelLUT9               = GLINT_READ_REG(TexelLUT9);
+	    pRC->MX2.CTexelLUT10              = GLINT_READ_REG(TexelLUT10);
+	    pRC->MX2.CTexelLUT11              = GLINT_READ_REG(TexelLUT11);
+	    pRC->MX2.CTexelLUT12              = GLINT_READ_REG(TexelLUT12);
+	    pRC->MX2.CTexelLUT13              = GLINT_READ_REG(TexelLUT13);
+	    pRC->MX2.CTexelLUT14              = GLINT_READ_REG(TexelLUT14);
+	    pRC->MX2.CTexelLUT15              = GLINT_READ_REG(TexelLUT15);
+	    pRC->MX2.CTexel0                  = GLINT_READ_REG(Texel0);
+	    pRC->MX2.CTexel1                  = GLINT_READ_REG(Texel1);
+	    pRC->MX2.CTexel2                  = GLINT_READ_REG(Texel2);
+	    pRC->MX2.CTexel3                  = GLINT_READ_REG(Texel3);
+	    pRC->MX2.CTexel4                  = GLINT_READ_REG(Texel4);
+	    pRC->MX2.CTexel5                  = GLINT_READ_REG(Texel5);
+	    pRC->MX2.CTexel6                  = GLINT_READ_REG(Texel6);
+	    pRC->MX2.CTexel7                  = GLINT_READ_REG(Texel7);
+	    pRC->MX2.CInterp0                 = GLINT_READ_REG(Interp0);
+	    pRC->MX2.CInterp1                 = GLINT_READ_REG(Interp1);
+	    pRC->MX2.CInterp2                 = GLINT_READ_REG(Interp2);
+	    pRC->MX2.CInterp3                 = GLINT_READ_REG(Interp3);
+	    pRC->MX2.CInterp4                 = GLINT_READ_REG(Interp4);
+	    pRC->MX2.CTextureFilter           = GLINT_READ_REG(TextureFilter);
+	    pRC->MX2.CTextureEnvColor         = GLINT_READ_REG(TextureEnvColor);
+	    pRC->MX2.CFogColor                = GLINT_READ_REG(FogColor);
+	    pRC->MX2.CFStart                  = GLINT_READ_REG(FStart);
+	    pRC->MX2.CdFdx                    = GLINT_READ_REG(dFdx);
+	    pRC->MX2.CdFdyDom                 = GLINT_READ_REG(dFdyDom);
+	    pRC->MX2.CKsStart                 = GLINT_READ_REG(KsStart);
+	    pRC->MX2.CdKsdx                   = GLINT_READ_REG(dKsdx);
+	    pRC->MX2.CdKsdyDom                = GLINT_READ_REG(dKsdyDom);
+	    pRC->MX2.CKdStart                 = GLINT_READ_REG(KdStart);
+	    pRC->MX2.CdKdStart                = GLINT_READ_REG(dKdStart);
+	    pRC->MX2.CdKddyDom                = GLINT_READ_REG(dKddyDom);
+	    pRC->MX2.CRStart                  = GLINT_READ_REG(RStart);
+	    pRC->MX2.CdRdx                    = GLINT_READ_REG(dRdx);
+	    pRC->MX2.CdRdyDom                 = GLINT_READ_REG(dRdyDom);
+	    pRC->MX2.CGStart                  = GLINT_READ_REG(GStart);
+	    pRC->MX2.CdGdx                    = GLINT_READ_REG(dGdx);
+	    pRC->MX2.CdGdyDom                 = GLINT_READ_REG(dGdyDom);
+	    pRC->MX2.CBStart                  = GLINT_READ_REG(BStart);
+	    pRC->MX2.CdBdx                    = GLINT_READ_REG(dBdx);
+	    pRC->MX2.CdBdyDom                 = GLINT_READ_REG(dBdyDom);
+	    pRC->MX2.CAStart                  = GLINT_READ_REG(AStart);
+	    pRC->MX2.CdAdx                    = GLINT_READ_REG(dAdx);
+	    pRC->MX2.CdAdyDom                 = GLINT_READ_REG(dAdyDom);
+	    pRC->MX2.CConstantColor           = GLINT_READ_REG(ConstantColor);
+	    pRC->MX2.CChromaUpper             = GLINT_READ_REG(ChromaUpper);
+	    pRC->MX2.CChromaLower             = GLINT_READ_REG(ChromaLower);
+	    pRC->MX2.CChromaTestMode          = GLINT_READ_REG(ChromaTestMode);
+	    pRC->MX2.CStencilData             = GLINT_READ_REG(StencilData);
+	    pRC->MX2.CGLINTStencil            = GLINT_READ_REG(GLINTStencil);
+	    pRC->MX2.CZStartU                 = GLINT_READ_REG(ZStartU);
+	    pRC->MX2.CZStartL                 = GLINT_READ_REG(ZStartL);
+	    pRC->MX2.CdZdxU                   = GLINT_READ_REG(dZdxU);
+	    pRC->MX2.CdZdxL                   = GLINT_READ_REG(dZdxL);
+	    pRC->MX2.CdZdyDomU                = GLINT_READ_REG(dZdyDomU);
+	    pRC->MX2.CdZdyDomL                = GLINT_READ_REG(dZdyDomL);
+	    pRC->MX2.CFastClearDepth          = GLINT_READ_REG(FastClearDepth);
+	    pRC->MX2.CMinRegion               = GLINT_READ_REG(MinRegion);
+	    pRC->MX2.CMaxRegion               = GLINT_READ_REG(MaxRegion);
+	    pRC->MX2.CKsRStart                = GLINT_READ_REG(KsRStart);
+	    pRC->MX2.CdKsRdx                  = GLINT_READ_REG(dKsRdx);
+	    pRC->MX2.CdKsRdyDom               = GLINT_READ_REG(dKsRdyDom);
+	    pRC->MX2.CKsGStart                = GLINT_READ_REG(KsGStart);
+	    pRC->MX2.CdKsGdx                  = GLINT_READ_REG(dKsGdx);
+	    pRC->MX2.CdKsGdyDom               = GLINT_READ_REG(dKsGdyDom);
+	    pRC->MX2.CKsBStart                = GLINT_READ_REG(KsBStart);
+	    pRC->MX2.CdKsBdx                  = GLINT_READ_REG(dKsBdx);
+	    pRC->MX2.CdKsBdyDom               = GLINT_READ_REG(dKsBdyDom);
+	    pRC->MX2.CKdRStart                = GLINT_READ_REG(KdRStart);
+	    pRC->MX2.CdKdRdx                  = GLINT_READ_REG(dKdRdx);
+	    pRC->MX2.CdKdRdyDom               = GLINT_READ_REG(dKdRdyDom);
+	    pRC->MX2.CKdGStart                = GLINT_READ_REG(KdGStart);
+	    pRC->MX2.CdKdGdx                  = GLINT_READ_REG(dKdGdx);
+	    pRC->MX2.CdKdGdyDom               = GLINT_READ_REG(dKdGdyDom);
+	    pRC->MX2.CKdBStart                = GLINT_READ_REG(KdBStart);
+	    pRC->MX2.CdKdBdx                  = GLINT_READ_REG(dKdBdx);
+	    pRC->MX2.CdKdBdyDom               = GLINT_READ_REG(dKdBdyDom);
+	    ACCESSCHIP1();
 	    }
 
 	    /* send gamma the context dump command */
 	    GLINT_WAIT(3);
-            if (pGlint->numMXDevices == 2)
+            if (pGlint->numMultiDevices == 2)
 	    	GLINT_WRITE_REG(1, BroadcastMask);
 	    GLINT_WRITE_REG(3<<14, FilterMode);  /* context bits on gamma */
 	    GLINT_WRITE_REG(GLINT_GAMMA_CONTEXT_MASK, ContextDump);
@@ -1175,7 +1191,7 @@ dumpIndex,readValue);
 	    readValue = GLINT_READ_REG(OutputFIFO);
 
 	    GLINT_SLOW_WRITE_REG(1<<10, FilterMode);
-            if (pGlint->numMXDevices == 2)
+            if (pGlint->numMultiDevices == 2)
 	    	GLINT_SLOW_WRITE_REG(3,BroadcastMask);
 	}
     }
@@ -1187,7 +1203,7 @@ dumpIndex,readValue);
 
 	    /* send context restore command */
 	    GLINT_WAIT(1);
-            if (pGlint->numMXDevices == 2)
+            if (pGlint->numMultiDevices == 2)
 	    	GLINT_WRITE_REG(1, BroadcastMask);
 
 	    GLINT_WAIT(3);
@@ -1216,7 +1232,7 @@ dumpIndex,pWC->Gamma[dumpIndex]);
 	    pGlint->AccelInfoRec->NeedToSync = TRUE;
 	    
 	    /* finally the MX portions */
-            if (pGlint->numMXDevices == 2)
+            if (pGlint->numMultiDevices == 2)
 	    	GLINT_SLOW_WRITE_REG(1, BroadcastMask);
 	    GLINT_SLOW_WRITE_REG(pWC->MX1.CSStart,                  SStart);
 	    GLINT_SLOW_WRITE_REG(pWC->MX1.CdSdx,                    dSdx);
@@ -1340,7 +1356,7 @@ dumpIndex,pWC->Gamma[dumpIndex]);
 	    GLINT_SLOW_WRITE_REG(pWC->MX1.CdKdBdx,                  dKdBdx);
 	    GLINT_SLOW_WRITE_REG(pWC->MX1.CdKdBdyDom,               dKdBdyDom);
 
-            if (pGlint->numMXDevices == 2) {
+            if (pGlint->numMultiDevices == 2) {
 	    GLINT_SLOW_WRITE_REG(2, BroadcastMask);
 	    GLINT_SLOW_WRITE_REG(pWC->MX2.CSStart,                  SStart);
 	    GLINT_SLOW_WRITE_REG(pWC->MX2.CdSdx,                    dSdx);
@@ -1469,7 +1485,7 @@ dumpIndex,pWC->Gamma[dumpIndex]);
 	/* restore the 2D portion of the new context */
 
 	/* Restore MX1's registers */
-        if (pGlint->numMXDevices == 2)
+        if (pGlint->numMultiDevices == 2)
 	    GLINT_SLOW_WRITE_REG(1, BroadcastMask);
 	GLINT_SLOW_WRITE_REG(pWC->MX1.CStartXDom,               StartXDom);
 	GLINT_SLOW_WRITE_REG(pWC->MX1.CdXDom,                   dXDom);
@@ -1532,7 +1548,7 @@ dumpIndex,pWC->Gamma[dumpIndex]);
 	GLINT_SLOW_WRITE_REG(pWC->MX1.CStatisticMode,           StatisticMode);
 
 	/* Restore MX2's registers */
-        if (pGlint->numMXDevices == 2) {
+        if (pGlint->numMultiDevices == 2) {
 	GLINT_SLOW_WRITE_REG(2, BroadcastMask);
 	GLINT_SLOW_WRITE_REG(pWC->MX2.CStartXDom,               StartXDom);
 	GLINT_SLOW_WRITE_REG(pWC->MX2.CdXDom,                   dXDom);
@@ -1625,7 +1641,7 @@ GLINTDRIInitBuffers(
     GLINT_WRITE_REG(0, FBWriteMode);
     GLINT_WRITE_REG(0, LBWindowBase);
     GLINT_WRITE_REG(1, LBWriteMode);
-    if (pGlint->numMXDevices == 2) {
+    if (pGlint->numMultiDevices == 2) {
     GLINT_WRITE_REG( pGlint->pprod     | 
 		     LBRM_ScanlineInt2   , LBReadMode);
     } else {

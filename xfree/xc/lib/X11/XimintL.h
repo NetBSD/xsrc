@@ -1,4 +1,4 @@
-/* $XConsortium: XimintL.h,v 1.6 94/07/06 14:46:45 kaleb Exp $ */
+/* $Xorg: XimintL.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
 /******************************************************************
 
           Copyright 1991, 1992, 1993, 1994 by FUJITSU LIMITED
@@ -32,7 +32,7 @@ THIS SOFTWARE.
 	                          frankyling@hgrd01.enet.dec.com
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/XimintL.h,v 1.5 2000/11/28 18:49:25 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XimintL.h,v 1.7 2001/01/17 19:41:49 dawes Exp $ */
 
 #ifndef _XIMINTL_H
 #define _XIMINTL_H

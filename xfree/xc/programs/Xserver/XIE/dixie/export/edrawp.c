@@ -1,4 +1,4 @@
-/* $TOG: edrawp.c /main/5 1998/02/09 16:08:06 kaleb $ */
+/* $Xorg: edrawp.c,v 1.3 2000/08/17 19:47:23 cpqbld Exp $ */
 /**** module edrawp.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/export/edrawp.c,v 3.2 1998/10/05 13:22:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/export/edrawp.c,v 3.4 2001/01/17 22:12:49 dawes Exp $ */
 
 #define _XIEC_EDRAWP
 

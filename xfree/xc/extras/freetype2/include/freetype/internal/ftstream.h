@@ -19,11 +19,10 @@
 #ifndef __FTSTREAM_H__
 #define __FTSTREAM_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H  <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_INTERNAL_OBJECTS_H
+
+#include <ft2build.h>
+#include FT_INTERNAL_OBJECTS_H
+
 
 FT_BEGIN_HEADER
 
@@ -64,13 +63,13 @@ FT_BEGIN_HEADER
     ft_frame_short_le  = FT_MAKE_FRAME_OP( FT_FRAME_OP_SHORT, 1, 1 ),
 
     ft_frame_ulong_be  = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 0, 0 ),
-    ft_frame_ulong_le  = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 0, 1 ),
-    ft_frame_long_be   = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 1, 0 ),
+    ft_frame_long_be   = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 0, 1 ),
+    ft_frame_ulong_le  = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 1, 0 ),
     ft_frame_long_le   = FT_MAKE_FRAME_OP( FT_FRAME_OP_LONG, 1, 1 ),
 
     ft_frame_uoff3_be  = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 0, 0 ),
-    ft_frame_uoff3_le  = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 0, 1 ),
-    ft_frame_off3_be   = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 1, 0 ),
+    ft_frame_off3_be   = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 0, 1 ),
+    ft_frame_uoff3_le  = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 1, 0 ),
     ft_frame_off3_le   = FT_MAKE_FRAME_OP( FT_FRAME_OP_OFF3, 1, 1 ),
 
     ft_frame_bytes     = FT_MAKE_FRAME_OP( FT_FRAME_OP_BYTES, 0, 0 ),
@@ -81,7 +80,7 @@ FT_BEGIN_HEADER
 
   typedef struct  FT_Frame_Field_
   {
-    FT_Frame_Op  value;
+    FT_Byte      value;
     FT_Byte      size;
     FT_UShort    offset;
 
@@ -93,8 +92,10 @@ FT_BEGIN_HEADER
   /* calling the FT_FRAME_START() macro.                                   */
 #define FT_FIELD_SIZE( f ) \
           (FT_Byte)sizeof ( ((FT_STRUCTURE*)0)->f )
+          
 #define FT_FIELD_SIZE_DELTA( f ) \
           (FT_Byte)sizeof ( ((FT_STRUCTURE*)0)->f[0] )
+          
 #define FT_FIELD_OFFSET( f ) \
           (FT_UShort)( offsetof( FT_STRUCTURE, f ) )
 
@@ -132,6 +133,7 @@ FT_BEGIN_HEADER
             count,                     \
             FT_FIELD_OFFSET( field )   \
           }
+
 #define FT_FRAME_SKIP_BYTES( count )  { ft_frame_skip, count, 0 }
 
 

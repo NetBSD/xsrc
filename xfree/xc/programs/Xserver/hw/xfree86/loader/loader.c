@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.48 2000/12/06 15:35:27 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.53 2001/04/05 15:55:28 dawes Exp $ */
 
 /*
  *
@@ -49,7 +49,6 @@
 #include "xf86.h"
 #include "xf86Priv.h"
 
-#define NO_COMPILER_H_EXTRAS
 #include "compiler.h"
 
 extern LOOKUP miLookupTab[];
@@ -366,7 +365,7 @@ _GetModuleType(int fd, long offset)
 #endif
 
     if (strncmp((char *) buf, ELFMAG, SELFMAG) == 0) {
-	if( buf[ELFDLOFF] == ELFDLMAG ) {
+	if( *((Elf32_Half *)(buf + ELFDLOFF)) == ELFDLMAG ) {
 	    return LD_ELFDLOBJECT;
 	} else {
 	    return LD_ELFOBJECT;
@@ -1098,6 +1097,7 @@ LoaderOpen(const char *module, const char *cname, int handle,
      * Check to see if the module is already loaded.
      * Only if we are loading it into an existing namespace.
      * If it is to be loaded into a new namespace, don't check.
+     * Note: We only have one namespace.
      */
     if (handle >= 0) {
 	tmp = listHead;
@@ -1196,20 +1196,20 @@ LoaderHandleOpen(int handle)
 void *
 LoaderSymbol(const char *sym)
 {
-  int i;
-  itemPtr item = NULL;
-  for (i = 0; i < numloaders; i++)
+    int i;
+    itemPtr item = NULL;
+    for (i = 0; i < numloaders; i++)
 	funcs[i].ResolveSymbols(&funcs[i]);
 
-      item = (itemPtr) LoaderHashFind(sym);
+    item = (itemPtr) LoaderHashFind(sym);
 
-  if ( item )
-    return item->address ;
-  else
+    if ( item )
+	return item->address ;
+    else
 #ifdef DLOPEN_SUPPORT
-    return(DLFindSymbol(sym));
+	return(DLFindSymbol(sym));
 #else
-    return NULL;
+	return NULL;
 #endif
 }
 
@@ -1249,8 +1249,10 @@ LoaderCheckUnresolved(int delay_flag )
   return ret;
 }
 
+void xf86LoaderTrap(void);
+
 void
-xf86LoaderTrap()
+xf86LoaderTrap(void)
 {
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: UNDEFINED.c,v 1.5 91/07/25 01:10:56 rws Exp $" */
+/* $Xorg: UNDEFINED.c,v 1.3 2000/08/17 19:44:57 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.

@@ -1,4 +1,4 @@
-/* $TOG: secauth.c /main/6 1998/02/09 15:12:57 kaleb $ */
+/* $Xorg: secauth.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 
@@ -20,7 +20,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.7 2000/06/13 23:15:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.9 2001/01/17 22:37:12 dawes Exp $ */
 
 #include "X.h"
 #include "os.h"

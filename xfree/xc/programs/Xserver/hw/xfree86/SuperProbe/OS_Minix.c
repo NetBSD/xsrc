@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Minix.c,v 3.5 1997/03/07 00:28:58 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Minix.c,v 3.6 1997/03/17 11:22:37 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Philip Homburg <philip@cs.vu.nl>
  *

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.2 2001/02/08 00:55:40 keithp Exp $
+XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.4 2001/05/16 03:57:27 keithp Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -19,14 +19,45 @@ FREETYPETOP = $(TOP)/extras/freetype2
 FREETYPESRC = $(FREETYPETOP)/src
 FREETYPEINC = $(FREETYPETOP)/include/freetype
 
-INCLUDES    = $(FREETYPE2INCLUDES) -I$(FREETYPETOP)/src
+INCLUDES = -I. $(FREETYPE2INCLUDES)\
+	-I$(FREETYPESRC)\
+	-I$(FREETYPESRC)/base\
+	-I$(FREETYPESRC)/autohint\
+	-I$(FREETYPESRC)/sfnt\
+	-I$(FREETYPESRC)/cff\
+	-I$(FREETYPESRC)/psnames\
+	-I$(FREETYPESRC)/psaux\
+	-I$(FREETYPESRC)/truetype\
+	-I$(FREETYPESRC)/type1\
+	-I$(FREETYPESRC)/cid\
+	-I$(FREETYPESRC)/raster\
+	-I$(FREETYPESRC)/smooth\
+	-I$(FREETYPESRC)/winfonts\
+	-I$(FREETYPESRC)/pcf
 
 SUBDIRS=freetype
 
+HEADERS=ft2build.h
 
+SRCS_BASE = ftbase.c \
+            ftbbox.c \
+            ftdebug.c \
+            ftextend.c \
+            ftglyph.c \
+            ftinit.c \
+            ftmm.c \
+            ftsynth.c \
+            ftsystem.c
 
-SRCS_BASE = ftsystem.c ftinit.c ftdebug.c ftbase.c ftglyph.c ftbbox.c ftmm.c
-OBJS_BASE = ftsystem.o ftinit.o ftdebug.o ftbase.o ftglyph.o ftbbox.o ftmm.o
+OBJS_BASE = ftbase.o \
+            ftbbox.o \
+            ftdebug.o \
+            ftextend.o \
+            ftglyph.o \
+            ftinit.o \
+            ftmm.o \
+            ftsynth.o \
+            ftsystem.o
 
 SRCS_AUTOHINT = autohint.c
 OBJS_AUTOHINT = autohint.o
@@ -61,14 +92,18 @@ OBJS_SMOOTH   = smooth.o
 SRCS_WINFONTS = winfnt.c
 OBJS_WINFONTS = winfnt.o
 
+SRCS_PCF = pcf.c
+OBJS_PCF = pcf.o
 
 SRCS = $(SRCS_BASE) $(SRCS_AUTOHINT) $(SRCS_SFNT) $(SRCS_CFF) \
 	$(SRCS_PSNAMES) $(SRCS_PSAUX) $(SRCS_TRUETYPE) $(SRCS_TYPE1) \
-	$(SRCS_CID) $(SRCS_RASTER) $(SRCS_SMOOTH) $(SRCS_WINFONTS) 
+	$(SRCS_CID) $(SRCS_RASTER) $(SRCS_SMOOTH) $(SRCS_WINFONTS) \
+	$(SRCS_PCF)
 
 OBJS = $(OBJS_BASE) $(OBJS_AUTOHINT) $(OBJS_SFNT) $(OBJS_CFF) \
 	$(OBJS_PSNAMES) $(OBJS_PSAUX) $(OBJS_TRUETYPE) $(OBJS_TYPE1) \
-	$(OBJS_CID) $(OBJS_RASTER) $(OBJS_SMOOTH) $(OBJS_WINFONTS)
+	$(OBJS_CID) $(OBJS_RASTER) $(OBJS_SMOOTH) $(OBJS_WINFONTS) \
+	$(OBJS_PCF)
 
 #include <Library.tmpl>
 
@@ -81,14 +116,22 @@ MANSUFFIX = $(LIBMANSUFFIX)
 InstallManPage(Freetype,$(LIBMANDIR))
 #endif
 
+BuildIncludes($(HEADERS),freetype2,..)
+InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2,$(INSTINCFLAGS))
 
-LinkSourceFile(ftsystem.c,$(FREETYPESRC)/base)
-LinkSourceFile(ftinit.c,$(FREETYPESRC)/base)
-LinkSourceFile(ftdebug.c,$(FREETYPESRC)/base)
+LinkSourceFile(ft2build.h,$(FREETYPETOP)/include)
+
 LinkSourceFile(ftbase.c,$(FREETYPESRC)/base)
-LinkSourceFile(ftglyph.c,$(FREETYPESRC)/base)
 LinkSourceFile(ftbbox.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftdebug.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftextend.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftglyph.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftinit.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftlist.c,$(FREETYPESRC)/base)
 LinkSourceFile(ftmm.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftsynth.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftsystem.c,$(FREETYPESRC)/base)
+
 LinkSourceFile(autohint.c,$(FREETYPESRC)/autohint)
 LinkSourceFile(sfnt.c,$(FREETYPESRC)/sfnt)
 LinkSourceFile(cff.c,$(FREETYPESRC)/cff)
@@ -100,6 +143,8 @@ LinkSourceFile(type1cid.c,$(FREETYPESRC)/cid)
 LinkSourceFile(raster.c,$(FREETYPESRC)/raster)
 LinkSourceFile(smooth.c,$(FREETYPESRC)/smooth)
 LinkSourceFile(winfnt.c,$(FREETYPESRC)/winfonts)
-
+LinkSourceFile(pcf.c,$(FREETYPESRC)/pcf)
 
 DependTarget()
+
+DependSubdirs($(SUBDIRS))

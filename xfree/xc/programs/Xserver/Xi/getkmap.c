@@ -1,4 +1,4 @@
-/* $TOG: getkmap.c /main/6 1998/02/09 15:29:13 kaleb $ */
+/* $Xorg: getkmap.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/getkmap.c,v 3.1 1996/04/15 11:18:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getkmap.c,v 3.3 2001/01/17 22:13:24 dawes Exp $ */
 
 /********************************************************************
  *

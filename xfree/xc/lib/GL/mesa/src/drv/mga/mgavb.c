@@ -1,30 +1,31 @@
 /*
- * GLX Hardware Device Driver for Matrox Millenium G200
- * Copyright (C) 1999 Wittawat Yamwong
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * WITTAWAT YAMWONG, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
- *
- *    Wittawat Yamwong <Wittawat.Yamwong@stud.uni-hannover.de>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.6 2000/09/24 13:51:09 alanh Exp $ */
- 
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.10 2001/04/10 16:07:51 dawes Exp $ */
+
 #include "mgacontext.h"
 #include "mgavb.h"
 #include "mga_xmesa.h"
@@ -35,49 +36,48 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TEX0 {					\
+#define TEX0 {				\
   v->v.tu0 = tc0[i][0];			\
   v->v.tv0 = tc0[i][1];			\
 }
 
-#define TEX1 {					\
+#define TEX1 {				\
   v->v.tu1 = tc1[i][0];			\
   v->v.tv1 = tc1[i][1];			\
 }
 
-#define SPC {					\
-  GLubyte *spec = &(VB->Spec[0][i][0]);		\
+#define SPC {				\
+  GLubyte *spec = &(VB->Spec[0][i][0]);	\
   v->v.specular.red = spec[0];		\
-  v->v.specular.green = spec[1];		\
+  v->v.specular.green = spec[1];	\
   v->v.specular.blue = spec[2];		\
 }
 
-#define FOG {					\
-  GLubyte *spec = &(VB->Spec[0][i][0]);		\
-  v->v.specular.alpha = spec[3];		\
+#define FOG {				\
+  GLubyte *spec = &(VB->Spec[0][i][0]);	\
+  v->v.specular.alpha = spec[3];	\
 }
 
 #define COL {					\
   GLubyte *col = &(VB->Color[0]->data[i][0]);	\
-  v->v.color.blue  = col[2];		\
-  v->v.color.green = col[1];		\
-  v->v.color.red   = col[0];		\
-  v->v.color.alpha = col[3];		\
+  v->v.color.blue  = col[2];			\
+  v->v.color.green = col[1];			\
+  v->v.color.red   = col[0];			\
+  v->v.color.alpha = col[3];			\
 }
 
 /* The v code we have doesn't seem to support projective texturing
  * in the multitexture case.  (Would require another 1/w value for the
- * second set of texcoords).  This may be a problem for the g400.  
+ * second set of texcoords).  This may be a problem for the g400.
  */
 #define TEX0_4						\
-  if (VB->TexCoordPtr[0]->size == 4)			\
-  {							\
+  if (VB->TexCoordPtr[0]->size == 4) {			\
      GLfloat (*tc)[4] = VB->TexCoordPtr[0]->data;	\
      v = &(MGA_DRIVER_DATA(VB)->verts[start]);		\
      mmesa->setupdone &= ~MGA_WIN_BIT;			\
-     for (i=start; i < end; i++, v++)	{		\
-        float oow = 1.0 / tc[i][3];			\
-	v->v.rhw *= tc[i][3];			\
+     for (i = start; i < end; i++, v++) {		\
+        GLfloat oow = 1.0 / tc[i][3];			\
+	v->v.rhw *= tc[i][3];				\
 	v->v.tu0 *= oow;				\
 	v->v.tv0 *= oow;				\
      }							\
@@ -89,7 +89,7 @@
       v->v.rhw =               win[3];			\
       v->v.z = depth_scale * win[2];			\
       v->v.x =                 win[0] + xoffset;	\
-      v->v.y =          -      win[1] + yoffset;  
+      v->v.y =          -      win[1] + yoffset;
 
 
 #define NOP
@@ -138,7 +138,7 @@ static void name(struct vertex_buffer *VB, GLuint start, GLuint end)	\
 	    spec;							\
 	    fog;							\
 	 }								\
-	    col;							\
+         col;								\
       }									\
    tex0_4;								\
 }
@@ -196,7 +196,7 @@ void mgaDDSetupInit( void )
 
    for (i = 0 ; i < 0x80 ; i++)
       setup_func[i] = rs_invalid;
-   
+
    /* Functions to build vert's from scratch */
    setup_func[MGA_WIN_BIT|MGA_TEX0_BIT] = rs_wt0;
    setup_func[MGA_WIN_BIT|MGA_TEX0_BIT|MGA_TEX1_BIT] = rs_wt0t1;
@@ -242,7 +242,7 @@ void mgaPrintSetupFlags(char *msg, GLuint flags )
    fprintf(stderr, "%s: %d %s%s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
-	   (flags & MGA_WIN_BIT)      ? " xyzw," : "", 
+	   (flags & MGA_WIN_BIT)      ? " xyzw," : "",
 	   (flags & MGA_RGBA_BIT)     ? " rgba," : "",
 	   (flags & MGA_SPEC_BIT)     ? " spec," : "",
 	   (flags & MGA_FOG_BIT)      ? " fog," : "",
@@ -274,58 +274,44 @@ void mgaChooseRasterSetupFunc(GLcontext *ctx)
 	 funcindex &= ~MGA_RGBA_BIT;
       */
       if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
-	  mmesa->envcolor) 
+	  mmesa->envcolor)
       {
 	 mmesa->multitex = 1;
 	 mmesa->vertsize = 10;
 	 mmesa->tmu_source[1] = 0;
 	 funcindex |= MGA_TEX1_BIT;
-      }	 
+      }
 
       funcindex |= MGA_TEX0_BIT;
    }
 
-   if (ctx->Texture.ReallyEnabled & 0xf0) {     
+   if (ctx->Texture.ReallyEnabled & 0xf0) {
       if (ctx->Texture.ReallyEnabled & 0xf) {
 	 mmesa->multitex = 1;
 	 mmesa->vertsize = 10;
 	 mmesa->blend_flags |= MGA_BLEND_MULTITEX;
-	 funcindex |= MGA_TEX1_BIT;	 
+	 funcindex |= MGA_TEX1_BIT;
       } else {
-	 /* Just a funny way of doing single texturing 
+	 /* Just a funny way of doing single texturing
 	  */
 	 mmesa->tmu_source[0] = 1;
 	 mmesa->tex_dest[1] = MGA_TEX0_BIT;
 
-         /* This doesn't work for non-RGBA textures
-	 if (ctx->Texture.Unit[1].EnvMode == GL_REPLACE)
-	    funcindex &= ~MGA_RGBA_BIT;
-         */
-
 	 if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
-	     mmesa->envcolor) 
+	     mmesa->envcolor)
 	 {
 	    mmesa->multitex = 1;
 	    mmesa->vertsize = 10;
 	    mmesa->tmu_source[1] = 1;
 	    funcindex |= MGA_TEX1_BIT;
-	 }	 
+	 }
 
 	 funcindex |= MGA_TEX0_BIT;
       }
    }
 
-/*       if (mmesa->multitex == 0) {  */
-/*          mmesa->tmu_source[1] = mmesa->tmu_source[0];  */
-/*          mmesa->tex_dest[1] = mmesa->tex_dest[0];  */
-/*          mmesa->vertsize = 10;  */
-/*          mmesa->multitex = 1;  */
-/*          funcindex |= MGA_TEX0_BIT|MGA_TEX1_BIT;  */
-/*       }  */
-
-/*     mmesa->vertsize = 10; */
    if (multi != mmesa->multitex)
-        mmesa->new_state |= MGA_NEW_WARP; 
+        mmesa->new_state |= MGA_NEW_WARP;
 
 
    /* Not really a good place to do this - need to make the mga state
@@ -343,7 +329,7 @@ void mgaChooseRasterSetupFunc(GLcontext *ctx)
       funcindex |= MGA_FOG_BIT;
 
    if (0)
-      mgaPrintSetupFlags("xsmesa: full setup function", funcindex); 
+      mgaPrintSetupFlags("xsmesa: full setup function", funcindex);
 
    mmesa->dirty |= MGA_UPLOAD_PIPE;
    mmesa->setupindex = funcindex;
@@ -367,7 +353,7 @@ void mgaDDCheckPartialRasterSetup( GLcontext *ctx, struct gl_pipeline_stage *d )
    if ((ctx->Array.Summary & VERT_OBJ_ANY) == 0)
       return;
 
-   if (ctx->IndirectTriangles) 
+   if (ctx->IndirectTriangles)
       return;
 
    mmesa->setupdone = tmp;
@@ -396,7 +382,7 @@ void mgaDDPartialRasterSetup( struct vertex_buffer *VB )
    if (new & VERT_RGBA)
       ind |= MGA_RGBA_BIT | MGA_SPEC_BIT;
 
-   if (new & VERT_TEX0_ANY) 
+   if (new & VERT_TEX0_ANY)
       ind |= MGA_TEX0_BIT;
 
    if (new & VERT_TEX1_ANY)
@@ -412,8 +398,8 @@ void mgaDDPartialRasterSetup( struct vertex_buffer *VB )
    if (0)
       mgaPrintSetupFlags("xsmesa: partial setup function", ind);
 
-   if (ind) 
-      setup_func[ind&~MGA_ALPHA_BIT]( VB, VB->Start, VB->Count );   
+   if (ind)
+      setup_func[ind&~MGA_ALPHA_BIT]( VB, VB->Start, VB->Count );
 }
 
 
@@ -424,9 +410,9 @@ void mgaDDDoRasterSetup( struct vertex_buffer *VB )
 
    /* Can't lock, won't lock
     */
-   REFRESH_DRAWABLE_INFO( mmesa );
+/*     REFRESH_DRAWABLE_INFO( mmesa ); */
 
-   if (VB->Type == VB_CVA_PRECALC) 
+   if (VB->Type == VB_CVA_PRECALC)
       mgaDDPartialRasterSetup( VB );
    else if (ctx->Driver.RasterSetup)
       ctx->Driver.RasterSetup( VB, VB->CopyStart, VB->Count );
@@ -448,19 +434,19 @@ void mgaDDResizeVB( struct vertex_buffer *VB, GLuint size )
 
    FREE( mvb->vert_store );
    mvb->vert_store = MALLOC( sizeof(mgaVertex) * mvb->size + 31);
-   if (!mvb->vert_store) 
+   if (!mvb->vert_store)
       FatalError("mga-glx: out of memory !\n");
 
    mvb->verts = (mgaVertexPtr)(((unsigned long)mvb->vert_store + 31) & ~31);
 
    gl_vector1ui_free( &mvb->clipped_elements );
-   gl_vector1ui_alloc( &mvb->clipped_elements, VEC_WRITABLE, mvb->size, 32 );   
-   if (!mvb->clipped_elements.start) 
+   gl_vector1ui_alloc( &mvb->clipped_elements, VEC_WRITABLE, mvb->size, 32 );
+   if (!mvb->clipped_elements.start)
       FatalError("mga-glx: out of memory !\n");
 
    ALIGN_FREE( VB->ClipMask );
    VB->ClipMask = (GLubyte *)ALIGN_MALLOC(sizeof(GLubyte) * mvb->size, 32);
-   if (!VB->ClipMask) 
+   if (!VB->ClipMask)
       FatalError("mga-glx: out of memory !\n");
 
    if (VB->Type == VB_IMMEDIATE) {
@@ -486,25 +472,25 @@ void mgaDDRegisterVB( struct vertex_buffer *VB )
     */
    mvb->size = VB->Size * 5;
    mvb->vert_store = MALLOC( sizeof(mgaVertex) * mvb->size + 31);
-   if (!mvb->vert_store) 
+   if (!mvb->vert_store)
       FatalError("mga-glx: out of memory !\n");
-   
+
    mvb->verts = (mgaVertexPtr)(((unsigned long)mvb->vert_store + 31) & ~31);
 
    gl_vector1ui_alloc( &mvb->clipped_elements, VEC_WRITABLE, mvb->size, 32 );
-   if (!mvb->clipped_elements.start) 
+   if (!mvb->clipped_elements.start)
       FatalError("mga-glx: out of memory !\n");
 
    ALIGN_FREE( VB->ClipMask );
    VB->ClipMask = (GLubyte *)ALIGN_MALLOC(sizeof(GLubyte) * mvb->size, 32);
-   if (!VB->ClipMask) 
+   if (!VB->ClipMask)
       FatalError("mga-glx: out of memory !\n");
 
    mvb->primitive = (GLuint *)MALLOC( sizeof(GLuint) * mvb->size );
    mvb->next_primitive = (GLuint *)MALLOC( sizeof(GLuint) * mvb->size );
    if (!mvb->primitive || !mvb->next_primitive)
       FatalError("mga-glx: out of memory!");
-   
+
    VB->driver_data = mvb;
 }
 
@@ -512,7 +498,7 @@ void mgaDDRegisterVB( struct vertex_buffer *VB )
 void mgaDDUnregisterVB( struct vertex_buffer *VB )
 {
    mgaVertexBufferPtr mvb = MGA_DRIVER_DATA(VB);
-   
+
    if (mvb) {
       if (mvb->vert_store) FREE(mvb->vert_store);
       if (mvb->primitive) FREE(mvb->primitive);
@@ -520,7 +506,5 @@ void mgaDDUnregisterVB( struct vertex_buffer *VB )
       gl_vector1ui_free( &mvb->clipped_elements );
       FREE(mvb);
       VB->driver_data = 0;
-   }      
+   }
 }
-
-

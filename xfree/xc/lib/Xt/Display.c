@@ -1,4 +1,4 @@
-/* $TOG: Display.c /main/116 1998/02/06 13:21:23 kaleb $ */
+/* $Xorg: Display.c,v 1.4 2000/08/17 19:46:10 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Display.c,v 3.8 1998/10/03 09:06:51 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Display.c,v 3.10 2001/01/17 19:43:04 dawes Exp $ */
 
 /*
 
@@ -694,7 +694,7 @@ static void CloseDisplay(dpy)
 		    XrmDestroyDatabase(db);
 	    }
 	    XtFree((char *)xtpd->per_screen_db);
-	    if (db = XrmGetDatabase(dpy))
+	    if ((db = XrmGetDatabase(dpy)))
 		XrmDestroyDatabase(db);
 	    if (xtpd->cmd_db)
 		XrmDestroyDatabase(xtpd->cmd_db);

@@ -1,4 +1,4 @@
-/* $TOG: events.c /main/13 1998/02/09 14:00:21 kaleb $ */
+/* $Xorg: events.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 /**** module events.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/events.c,v 3.5tsi Exp $ */
+/* $XFree86: xc/programs/xieperf/events.c,v 3.7 2001/01/17 23:45:37 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.19 2000/08/09 03:06:55 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.21 2001/03/05 04:51:56 mvojkovi Exp $
 XCOMM This directory is only entered if DoLoadableServer is set
 
 #define IHaveModules
@@ -51,11 +51,12 @@ LinkSourceFile(fontcache.c,..)
 #endif
 
 #if BuildXvExt
-          XVSRCS = xvmain.c xvdisp.c xvmod.c
-          XVOBJS = xvmain.o xvdisp.o xvmod.o
+          XVSRCS = xvmain.c xvdisp.c xvmod.c xvmc.c
+          XVOBJS = xvmain.o xvdisp.o xvmod.o xvmc.o
 LinkSourceFile(xvmain.c,..)
 LinkSourceFile(xvdisp.c,..)
 LinkSourceFile(xvmod.c,..)
+LinkSourceFile(xvmc.c,..)
 #endif
 
 #if BuildEVI

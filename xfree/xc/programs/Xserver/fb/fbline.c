@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbline.c,v 1.5 2000/03/01 00:25:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbline.c,v 1.7 2001/01/17 07:40:02 keithp Exp $ */
 
 #include "fb.h"
 
@@ -42,7 +42,7 @@ fbZeroLine (DrawablePtr	pDrawable,
     y = pDrawable->y;
     x1 = ppt->x;
     y1 = ppt->y;
-    dashOffset = 0;
+    dashOffset = pGC->dashOffset;
     totalDash = 0;
     if (pGC->lineStyle != LineSolid)
 	totalDash = pPriv->dashLength;
@@ -60,8 +60,6 @@ fbZeroLine (DrawablePtr	pDrawable,
 		   x2 + x, y2 + y, 
 		   npt == 1 && pGC->capStyle != CapNotLast,
 		   &dashOffset);
-	if (totalDash)
-	    dashOffset = dashOffset % totalDash;
 	x1 = x2;
 	y1 = y2;
     }
@@ -81,7 +79,7 @@ fbZeroSegment (DrawablePtr  pDrawable,
     y = pDrawable->y;
     while (nseg--)
     {
-	dashOffset = 0;
+	dashOffset = pGC->dashOffset;
 	fbSegment (pDrawable, pGC, 
 		   pSegs->x1 + x, pSegs->y1 + y,
 		   pSegs->x2 + x, pSegs->y2 + y,

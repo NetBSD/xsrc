@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.2 1999/03/14 05:51:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.3.6.1 2001/05/29 16:38:00 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -80,21 +80,10 @@ pciBusInfo_t linuxPci0 = {
 };
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
-#ifdef __sparc__
-#ifndef ASI_PL
-#define ASI_PL 0x88
-#endif
-#define PCI_CPU(val) ({									\
-int __ret;										\
-__asm__ __volatile__("lduwa [%1] %2, %0" : "=r" (__ret) : "r" (&val), "i" (ASI_PL));	\
-__ret;											\
-})
-#else
 #define PCI_CPU(val)	(((val >> 24) & 0x000000ff) |	\
 			 ((val >>  8) & 0x0000ff00) |	\
 			 ((val <<  8) & 0x00ff0000) |	\
 			 ((val << 24) & 0xff000000))
-#endif
 #else
 #define PCI_CPU(val)	(val)
 #endif

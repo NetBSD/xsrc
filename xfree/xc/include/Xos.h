@@ -1,5 +1,5 @@
 /*
- * $TOG: Xos.h /main/71 1998/02/09 11:18:52 kaleb $
+ * $Xorg: Xos.h,v 1.5 2000/08/18 04:05:44 coskrey Exp $
  * 
  * 
 Copyright 1987, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * The X Window System is a Trademark of The Open Group.
  *
  */
-/* $XFree86: xc/include/Xos.h,v 3.30 2000/08/10 17:40:27 dawes Exp $ */
+/* $XFree86: xc/include/Xos.h,v 3.33 2001/04/16 20:33:08 tsi Exp $ */
 
 /* This is a collection of things to try and minimize system dependencies
  * in a "signficant" number of source files.
@@ -56,6 +56,14 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif /* USG */
 
+#ifdef _SEQUENT_
+/*
+ * in_systm.h compatibility between SysV and BSD types u_char u_short u_long
+ * select.h  for typedef of args to select, fd_set, may use SVR4 later
+ */
+#include <netinet/in_systm.h>
+#include <sys/select.h>
+#endif /* _SEQUENT_ */
 
 /*
  * Just about everyone needs the strings routines.  We provide both forms here,
@@ -290,7 +298,10 @@ typedef unsigned long fd_mask;
 #define NGROUPS 16
 #endif
 
-#if defined(ISC) || (defined(__QNX__) && !defined(UNIXCONN)) || defined(__CYGWIN__)
+#if defined(ISC) || \
+    (defined(linux) && !defined(__GLIBC__)) || \
+    (defined(__QNX__) && !defined(UNIXCONN)) || \
+    defined(__CYGWIN__)
 /*
  *	Some OS's may not have this
  */

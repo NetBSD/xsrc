@@ -1,4 +1,4 @@
-/* $XConsortium: cmsAllCol.c,v 1.5 91/05/13 23:03:17 rws Exp $" */
+/* $Xorg: cmsAllCol.c,v 1.3 2000/08/17 19:45:08 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -32,7 +32,7 @@
  *
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/cmsAllCol.c,v 1.3 2001/01/17 19:41:50 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

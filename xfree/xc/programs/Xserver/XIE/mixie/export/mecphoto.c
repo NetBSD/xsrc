@@ -1,4 +1,4 @@
-/* $TOG: mecphoto.c /main/10 1998/02/09 16:12:51 kaleb $ */
+/* $Xorg: mecphoto.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module mecphoto.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley && Dean Verheiden -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecphoto.c,v 3.3 1998/10/05 13:22:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecphoto.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 #define _XIEC_MECPHOTO
 #define _XIEC_ECPHOTO
 #define _XIEC_EPHOTO

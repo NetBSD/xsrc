@@ -1,4 +1,4 @@
-/* $XConsortium: Raster.h /main/2 1996/11/16 15:26:32 rws $ */
+/* $Xorg: Raster.h,v 1.3 2000/08/17 19:48:12 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.

@@ -1,4 +1,4 @@
-/* $TOG: SetTxtProp.c /main/7 1998/02/06 17:53:43 kaleb $ */
+/* $Xorg: SetTxtProp.c,v 1.3 2000/08/17 19:44:55 cpqbld Exp $ */
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca.
 

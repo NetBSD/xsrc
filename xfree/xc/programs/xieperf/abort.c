@@ -1,4 +1,4 @@
-/* $TOG: abort.c /main/9 1998/02/09 13:59:10 kaleb $ */
+/* $Xorg: abort.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 
 /**** module abort.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/abort.c,v 1.4 1999/03/02 11:49:41 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/abort.c,v 1.6 2001/01/17 23:45:36 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

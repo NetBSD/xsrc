@@ -1,4 +1,4 @@
-/* $TOG: XKBNames.c /main/10 1997/09/08 13:56:03 kaleb $ */
+/* $Xorg: XKBNames.c,v 1.3 2000/08/17 19:45:02 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

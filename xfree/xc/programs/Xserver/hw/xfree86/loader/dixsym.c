@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.33 2000/09/20 02:05:11 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.38 2001/04/05 17:42:34 dawes Exp $ */
 
 
 /*
@@ -39,6 +39,8 @@
 #include "scrnintstr.h"
 #include "windowstr.h"
 #include "extension.h"
+#define EVENT_SWAP_PTR
+#define EXTENSION_PROC_ARGS void *
 #include "extnsionst.h"
 #include "swaprep.h"
 #include "swapreq.h"
@@ -49,11 +51,8 @@
 #ifdef XV
 #include "xvmodproc.h"
 #endif
-#ifdef XFreeXDGA
 #include "dgaproc.h"
-#endif
 #ifdef RENDER
-#include "picturestr.h"
 #include "mipict.h"
 #endif
 
@@ -158,7 +157,6 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(VerifyRectOrder)
   SYMFUNC(SetDashes)
   /* globals.c */
-#ifdef DPMSExtension
   SYMVAR(DPMSEnabled)
   SYMVAR(DPMSCapableFlag)
   SYMVAR(DPMSOffTime)
@@ -168,11 +166,11 @@ LOOKUP dixLookupTab[] = {
   SYMVAR(DPMSEnabledSwitch)
   SYMVAR(DPMSDisabledSwitch)
   SYMVAR(defaultDPMSEnabled)
-#endif
 #ifdef XV
   SYMVAR(XvScreenInitProc)
   SYMVAR(XvGetScreenIndexProc)
   SYMVAR(XvGetRTPortProc)
+  SYMVAR(XvMCScreenInitProc)
 #endif
   SYMVAR(ScreenSaverBlanking)
   SYMVAR(WindowTable)
@@ -303,10 +301,8 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(AssignTypeAndName)
 #endif
 
-#ifdef XFreeXDGA
   /* xf86DGA.c */
   SYMVAR(XDGAEventBase)
-#endif
 
   /* libfont.a */
   SYMFUNC(GetGlyphs)

@@ -338,4 +338,4 @@ EXPORTS
  XtWindow
  XtWindowOfObject
  XtWindowToWidget
-/* $TOG: Xt-def.cpp /main/1 1997/09/16 10:02:29 kaleb $ */
+/* $Xorg: Xt-def.cpp,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */

@@ -22,7 +22,7 @@
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  *           Matthew Grossman, <mattg@oz.net> - acceleration and misc fixes
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_driver.c,v 1.48 2000/12/01 17:08:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_driver.c,v 1.54 2001/05/04 19:05:47 dawes Exp $ */
 
 /* everybody includes these */
 #include "xf86.h"
@@ -50,12 +50,7 @@
 /* colormap manipulation */
 #include "micmap.h"
 
-/* TGA only does 8 and 32 bpp */
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-
-#include "cfb32.h"
+#include "fb.h"
 
 /* more RAC stuff */
 #include "xf86RAC.h"
@@ -67,23 +62,19 @@
 #include "BT.h"
 #include "tga.h"
 
-#ifdef XFreeXDGA
 #define _XF86DGA_SERVER_
 #include "extensions/xf86dgastr.h"
-#endif
 
-#ifdef DPMSExtension
 #include "globals.h"
 #define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
 
 #ifdef XvExtension
 #include "xf86xv.h"
 #include "Xv.h"
 #endif
 
-static OptionInfoPtr TGAAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * TGAAvailableOptions(int chipid, int busid);
 static void	TGAIdentify(int flags);
 static Bool	TGAProbe(DriverPtr drv, int flags);
 static Bool	TGAPreInit(ScrnInfoPtr pScrn, int flags);
@@ -113,11 +104,9 @@ static Bool	TGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 
 static void     TGARestoreHWCursor(ScrnInfoPtr pScrn);
 
-#ifdef DPMSExtension
 static void TGADisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					 int PowerManagementMode,
 					 int flags);
-#endif
 
 void TGASync(ScrnInfoPtr pScrn);
 
@@ -139,9 +128,6 @@ void TGASync(ScrnInfoPtr pScrn);
 DriverRec TGA = {
     VERSION,
     TGA_DRIVER_NAME,
-#if 0
-    "accelerated driver for Digital chipsets",
-#endif
     TGAIdentify,
     TGAProbe,
     TGAAvailableOptions,
@@ -172,7 +158,7 @@ typedef enum {
     OPTION_NOXAAPOLYSEGMENT
 } TGAOpts;
 
-static OptionInfoRec TGAOptions[] = {
+static const OptionInfoRec TGAOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_PCI_RETRY,		"PciRetry",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -287,8 +273,7 @@ TGAFreeRec(ScrnInfoPtr pScrn)
     return;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 TGAAvailableOptions(int chipid, int busid)
 {
     return TGAOptions;
@@ -549,23 +534,26 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, TGAOptions);
-    if (xf86ReturnOptValBool(TGAOptions, OPTION_PCI_RETRY, FALSE)) {
+    if (!(pTga->Options = xalloc(sizeof(TGAOptions))))
+	return FALSE;
+    memcpy(pTga->Options, TGAOptions, sizeof(TGAOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pTga->Options);
+    if (xf86ReturnOptValBool(pTga->Options, OPTION_PCI_RETRY, FALSE)) {
 	pTga->UsePCIRetry = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "PCI retry enabled\n");
     }
 
-    if(xf86ReturnOptValBool(TGAOptions, OPTION_SYNC_ON_GREEN, FALSE)) {
+    if(xf86ReturnOptValBool(pTga->Options, OPTION_SYNC_ON_GREEN, FALSE)) {
 	pTga->SyncOnGreen = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Sync-on-Green enabled\n");
     }
 
-    if(xf86ReturnOptValBool(TGAOptions, OPTION_DAC_6_BIT, FALSE)) {
+    if(xf86ReturnOptValBool(pTga->Options, OPTION_DAC_6_BIT, FALSE)) {
 	pTga->Dac6Bit = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "6 bit DAC enabled\n");
     }
     
-    if(xf86ReturnOptValBool(TGAOptions, OPTION_NOXAAPOLYSEGMENT, FALSE)) {
+    if(xf86ReturnOptValBool(pTga->Options, OPTION_NOXAAPOLYSEGMENT, FALSE)) {
 	pTga->NoXaaPolySegment = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "XAA PolySegment() disabled\n");
     }
@@ -624,9 +612,9 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
     /* determine whether we use hardware or software cursor */
     
     pTga->HWCursor = TRUE;
-    if (xf86GetOptValBool(TGAOptions, OPTION_HW_CURSOR, &pTga->HWCursor))
+    if (xf86GetOptValBool(pTga->Options, OPTION_HW_CURSOR, &pTga->HWCursor))
 	from = X_CONFIG;
-    if (xf86ReturnOptValBool(TGAOptions, OPTION_SW_CURSOR, FALSE)) {
+    if (xf86ReturnOptValBool(pTga->Options, OPTION_SW_CURSOR, FALSE)) {
 	from = X_CONFIG;
 	pTga->HWCursor = FALSE;
     }
@@ -640,7 +628,7 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pTga->HWCursor ? "HW" : "SW");
 
-    if (xf86ReturnOptValBool(TGAOptions, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(pTga->Options, OPTION_NOACCEL, FALSE)) {
 	pTga->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
@@ -770,16 +758,7 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
 
     pTga->FbMapSize = pScrn->videoRam * 1024;
 
-    /* Load bpp-specific modules */
-    switch (pScrn->bitsPerPixel) {
-    case 8:
-	mod = "cfb";
-	break;
-    case 32:
-	mod = "cfb32";
-	break;
-    }
-    if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
+    if (mod && xf86LoadSubModule(pScrn, "fb") == NULL) {
 	TGAFreeRec(pScrn);
 	return FALSE;
     }
@@ -953,6 +932,15 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Set the current mode to the first in the list */
     pScrn->currentMode = pScrn->modes;
+
+    /*
+     This is a bit of a hack; we seem to have to init
+     the TGA2 chipset knowing what the mode is, so we
+     do this now as soon as we know it...
+    */
+    if (pTga->Chipset == PCI_CHIP_TGA2) {
+      TGA2SetupMode(pScrn);
+    }
 
     /* Print the list of modes being used */
     xf86PrintModes(pScrn);
@@ -1236,7 +1224,7 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * function.  If not, the visuals will need to be setup before calling
      * a fb ScreenInit() function and fixed up after.
      *
-     * For most PC hardware at depths >= 8, the defaults that cfb uses
+     * For most PC hardware at depths >= 8, the defaults that fb uses
      * are not appropriate.  In this driver, we fixup the visuals after.
      */
 
@@ -1264,6 +1252,8 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
     }
 
+    miSetPixmapDepths ();
+
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
@@ -1271,14 +1261,12 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     switch (pScrn->bitsPerPixel) {
     case 8:
-	ret = cfbScreenInit(pScreen, pTga->FbBase, pScrn->virtualX,
-			pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-			pScrn->displayWidth);
-	break;
     case 32:
-	ret = cfb32ScreenInit(pScreen, pTga->FbBase, pScrn->virtualX,
-			      pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-			      pScrn->displayWidth);
+	ret = fbScreenInit(pScreen, pTga->FbBase, pScrn->virtualX,
+			pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
+			pScrn->displayWidth, pScrn->bitsPerPixel);
+	if (ret)
+    	    fbPictureInit (pScreen, 0, 0);
 	break;
     default:
 	xf86DrvMsg(scrnIndex, X_ERROR,
@@ -1367,10 +1355,8 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pScreen->CloseScreen = TGACloseScreen;
     pScreen->SaveScreen = TGASaveScreen;
 
-#ifdef DPMSExtension
     if(xf86DPMSInit(pScreen, TGADisplayPowerManagementSet, 0) == FALSE)
       ErrorF("DPMS initialization failed!\n");
-#endif /* DPMSExtension */
 
 #ifdef XvExtension
     {
@@ -1556,7 +1542,6 @@ TGASaveScreen(ScreenPtr pScreen, int mode)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 TGADisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -1590,8 +1575,6 @@ TGADisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
   TGA_WRITE_REG(valid_reg, TGA_VALID_REG);
   return;
 }
-
-#endif /* DPMSExtension */
 
 static void
 TGARestoreHWCursor(ScrnInfoPtr pScrn)

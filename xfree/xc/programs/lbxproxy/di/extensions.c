@@ -1,4 +1,4 @@
-/* $TOG: extensions.c /main/12 1998/02/11 09:48:08 kaleb $ */
+/* $Xorg: extensions.c,v 1.4 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group
@@ -119,7 +119,7 @@ DeleteExtensions(server)
 {
     ExtensionInfoPtr eip;
 
-    while (eip = server->extensions) {
+    while ((eip = server->extensions)) {
 	server->extensions = eip->next;
 	xfree(eip->name);
 	xfree(eip->rep_mask);

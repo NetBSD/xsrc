@@ -1,4 +1,4 @@
-.\" $TOG: xwd.man /main/23 1998/02/09 14:20:45 kaleb $
+.\" $Xorg: xwd.man,v 1.3 2000/08/17 19:55:14 cpqbld Exp $
 .\" Copyright 1988, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XWD 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xwd/xwd.man,v 1.7 2001/01/27 18:21:25 dawes Exp $
+.\"
+.TH XWD 1 __xorgversion__
 .SH NAME
 xwd - dump an image of an X window
 .SH SYNOPSIS
@@ -41,7 +44,7 @@ the dump is completed.
 .PP
 .TP 8
 .B "-display \fIdisplay\fP"
-This argument allows you to specify the server to connect to; see \fIX(1)\fP.
+This argument allows you to specify the server to connect to; see \fIX(__miscmansuffix__)\fP.
 .PP
 .TP 8
 .B "-help"
@@ -119,7 +122,7 @@ To get default host and display number.
 .B XWDFile.h
 X Window Dump File format definition file.
 .SH SEE ALSO
-xwud(1), xpr(1), X(1)
+xwud(1), xpr(1), X(__miscmansuffix__)
 .SH AUTHORS
 Tony Della Fera, Digital Equipment Corp., MIT Project Athena
 .br

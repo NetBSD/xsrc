@@ -31,16 +31,14 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/18 17:00:52 $ $Revision: 1.1.1.2 $
 */
 /* utility routines for GLX.
  * Since these routines are used both in the Motif and X versions of
  * the widget, they cannot peek directly into the structure
  *
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glw/Attic/GLwDAUtil.c,v 1.1.1.2 2001/03/18 17:00:52 veego Exp $
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glw/GLwDAUtil.c,v 1.3 2001/05/02 13:37:45 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

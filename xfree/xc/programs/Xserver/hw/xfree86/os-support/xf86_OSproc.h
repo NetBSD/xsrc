@@ -64,7 +64,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.48 2000/11/21 23:10:40 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.52 2001/05/19 00:26:45 dawes Exp $ */
 
 #ifndef _XF86_OSPROC_H
 #define _XF86_OSPROC_H
@@ -193,13 +193,7 @@ extern int xf86AllocateGARTMemory(int screenNum, unsigned long size, int type,
 extern Bool xf86BindGARTMemory(int screenNum, int key, unsigned long offset);
 extern Bool xf86UnbindGARTMemory(int screenNum, int key);
 extern Bool xf86EnableAGP(int screenNum, CARD32 mode);
-
-#if defined(__alpha__)
-extern void xf86JensenMemToBus(char *, long, long, int);
-extern void xf86JensenBusToMem(char *, char *, unsigned long, int);
-extern void xf86SlowBCopyFromBus(unsigned char *, unsigned char *, int);
-extern void xf86SlowBCopyToBus(unsigned char *, unsigned char *, int);
-#endif /* __alpha__ */
+extern Bool xf86GARTCloseScreen(int screenNum);
 
 /* These routines are in shared/sigio.c and are not loaded as part of the
    module.  These routines are small, and the code if very POSIX-signal (or
@@ -252,7 +246,7 @@ resPtr xf86IsaBusAccWindowsFromOS(void);
 resPtr xf86AccResFromOS(resPtr ret);
 #endif /* NEED_OS_RAC_PROTOS */
 
-Bool xf86GetPciSizeFromOS(PCITAG tag, int index, int* bits);
+Bool xf86GetPciSizeFromOS(PCITAG tag, int indx, int* bits);
 
 #endif /* XF86_OS_PRIVS */
 

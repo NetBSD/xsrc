@@ -1,4 +1,4 @@
-/* $TOG: dtiffpb.c /main/5 1998/02/09 16:14:09 kaleb $ */
+/* $Xorg: dtiffpb.c,v 1.3 2000/08/17 19:47:38 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module fax/tiffpb.c ****/
 /******************************************************************************

@@ -1,4 +1,4 @@
-/* $TOG: Iconify.c /main/9 1998/02/06 17:32:48 kaleb $ */
+/* $Xorg: Iconify.c,v 1.3 2000/08/17 19:44:37 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca.

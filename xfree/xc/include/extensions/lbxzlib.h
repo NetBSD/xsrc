@@ -1,4 +1,4 @@
-/* $XConsortium: lbxzlib.h /main/2 1996/10/27 15:39:45 rws $ */
+/* $Xorg: lbxzlib.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
  * Copyright 1993 Network Computing Devices
  *

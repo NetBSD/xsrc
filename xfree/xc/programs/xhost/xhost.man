@@ -1,4 +1,4 @@
-.\" $TOG: xhost.man /main/22 1998/02/09 13:59:06 kaleb $
+.\" $Xorg: xhost.man,v 1.3 2000/08/17 19:54:24 cpqbld Exp $
 .\" Copyright 1988, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XHOST 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xhost/xhost.man,v 1.7 2001/01/27 18:21:15 dawes Exp $
+.\"
+.TH XHOST 1 __xorgversion__
 .SH NAME
 xhost \- server access control program for X
 .SH SYNOPSIS
@@ -106,7 +109,7 @@ is printed.
 .SH FILES
 /etc/X*.hosts
 .SH "SEE ALSO"
-X(1), Xsecurity(1), Xserver(1), xdm(1)
+X(__miscmansuffix__), Xsecurity(__miscmansuffix__), Xserver(1), xdm(1)
 .SH ENVIRONMENT
 .TP 8
 .B DISPLAY

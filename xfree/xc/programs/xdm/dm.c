@@ -1,4 +1,4 @@
-/* $TOG: dm.c /main/73 1998/04/09 15:12:03 barstow $ */
+/* $Xorg: dm.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.c,v 3.8 1998/10/25 07:12:15 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/dm.c,v 3.11 2001/01/17 23:45:20 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -139,7 +139,7 @@ main (int argc, char **argv)
     if (debugLevel == 0 && daemonMode)
 	BecomeDaemon ();
     /* SUPPRESS 560 */
-    if ((oldpid = StorePid ()) != 0)
+    if ((oldpid = StorePid ()))
     {
 	if (oldpid == -1)
 	    LogError ("Can't create/lock pid file %s\n", pidFile);
@@ -447,7 +447,7 @@ WaitForChild (void)
 	if (autoRescan)
 	    RescanIfMod ();
 	/* SUPPRESS 560 */
-	if ((d = FindDisplayByPid (pid)) != 0) {
+	if ((d = FindDisplayByPid (pid))) {
 	    d->pid = -1;
 	    switch (waitVal (status)) {
 	    case UNMANAGE_DISPLAY:
@@ -524,7 +524,7 @@ WaitForChild (void)
 	    }
 	}
 	/* SUPPRESS 560 */
-	else if ((d = FindDisplayByServerPid (pid)) != 0)
+	else if ((d = FindDisplayByServerPid (pid)))
 	{
 	    d->serverPid = -1;
 	    switch (d->status)

@@ -1,4 +1,4 @@
-/* $TOG: miLUT.c /main/3 1998/02/10 12:44:46 kaleb $ */
+/* $Xorg: miLUT.c,v 1.3 2000/08/17 19:47:11 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miLUT.c,v 1.8 1999/01/31 12:21:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miLUT.c,v 1.10 2001/01/17 22:12:33 dawes Exp $ */
 
 #include "miLUT.h"
 #include "pexUtils.h"

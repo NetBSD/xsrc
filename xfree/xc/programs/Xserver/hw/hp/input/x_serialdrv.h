@@ -1,4 +1,4 @@
-/* $XConsortium: x_serialdrv.h,v 1.3 95/01/24 23:37:51 gildea Exp $ */
+/* $Xorg: x_serialdrv.h,v 1.3 2000/08/17 19:48:24 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1992 by Hewlett-Packard Company, Palo Alto, California.
 

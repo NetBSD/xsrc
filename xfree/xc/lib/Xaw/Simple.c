@@ -1,4 +1,4 @@
-/* $TOG: Simple.c /main/38 1998/06/24 11:53:29 kaleb $ */
+/* $Xorg: Simple.c,v 1.3 2000/08/17 19:45:37 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -43,7 +43,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xaw/Simple.c,v 1.13 1999/06/20 08:41:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Simple.c,v 1.15 2001/01/17 19:42:29 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>

@@ -16,13 +16,14 @@
 /***************************************************************************/
 
 
-#ifndef FTOPTION_H
-#define FTOPTION_H
+#ifndef __FTOPTION_H__
+#define __FTOPTION_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+
+
+FT_BEGIN_HEADER
 
 
   /*************************************************************************/
@@ -310,7 +311,7 @@
   /* By undefining this, you will only compile the code necessary to load  */
   /* TrueType glyphs without hinting.                                      */
   /*                                                                       */
-#define TT_CONFIG_OPTION_BYTECODE_INTERPRETER
+#define  TT_CONFIG_OPTION_BYTECODE_INTERPRETER
 
 
   /*************************************************************************/
@@ -389,12 +390,10 @@
 #undef T1_CONFIG_OPTION_NO_MM_SUPPORT
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
 
-#endif /* FTOPTION_H */
+#endif /* __FTOPTION_H__ */
 
 
 /* END */

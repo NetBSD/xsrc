@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tritmp.h,v 1.4 2000/08/28 02:43:11 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tritmp.h,v 1.5 2000/12/05 21:18:33 dawes Exp $ */
 
 static __inline void TAG(triangle)(GLcontext *ctx,
 				   GLuint e0, GLuint e1, GLuint e2,

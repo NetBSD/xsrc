@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Opt.h,v 1.8 1999/05/22 09:59:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Opt.h,v 1.12 2001/05/04 19:05:30 dawes Exp $ */
 
 /* Option handling things that ModuleSetup procs can use */
 
@@ -43,6 +43,7 @@ typedef struct {
 } OptionInfoRec, *OptionInfoPtr;
 
 int xf86SetIntOption(pointer optlist, const char *name, int deflt);
+double xf86SetRealOption(pointer optlist, const char *name, double deflt);
 char *xf86SetStrOption(pointer optlist, const char *name, char *deflt);
 int xf86SetBoolOption(pointer list, const char *name, int deflt );
 pointer xf86AddNewOption(pointer head, char *name, char *val );
@@ -62,17 +63,17 @@ Bool xf86CheckIfOptionUsed(pointer option);
 Bool xf86CheckIfOptionUsedByName(pointer options, const char *name);
 void xf86ShowUnusedOptions(int scrnIndex, pointer options);
 void xf86ProcessOptions(int scrnIndex, pointer options, OptionInfoPtr optinfo);
-OptionInfoPtr xf86TokenToOptinfo(OptionInfoPtr table, int token);
-const char *xf86TokenToOptName(OptionInfoPtr table, int token);
-Bool xf86IsOptionSet(OptionInfoPtr table, int token);
-char *xf86GetOptValString(OptionInfoPtr table, int token);
-Bool xf86GetOptValInteger(OptionInfoPtr table, int token, int *value);
-Bool xf86GetOptValULong(OptionInfoPtr table, int token, unsigned long *value);
-Bool xf86GetOptValReal(OptionInfoPtr table, int token, double *value);
-Bool xf86GetOptValFreq(OptionInfoPtr table, int token,
+OptionInfoPtr xf86TokenToOptinfo(const OptionInfoRec *table, int token);
+const char *xf86TokenToOptName(const OptionInfoRec *table, int token);
+Bool xf86IsOptionSet(const OptionInfoRec *table, int token);
+char *xf86GetOptValString(const OptionInfoRec *table, int token);
+Bool xf86GetOptValInteger(const OptionInfoRec *table, int token, int *value);
+Bool xf86GetOptValULong(const OptionInfoRec *table, int token, unsigned long *value);
+Bool xf86GetOptValReal(const OptionInfoRec *table, int token, double *value);
+Bool xf86GetOptValFreq(const OptionInfoRec *table, int token,
 			OptFreqUnits expectedUnits, double *value);
-Bool xf86GetOptValBool(OptionInfoPtr table, int token, Bool *value);
-Bool xf86ReturnOptValBool(OptionInfoPtr table, int token, Bool def);
+Bool xf86GetOptValBool(const OptionInfoRec *table, int token, Bool *value);
+Bool xf86ReturnOptValBool(const OptionInfoRec *table, int token, Bool def);
 int xf86NameCmp(const char *s1, const char *s2);
 char *xf86NormalizeName(const char *s);
 pointer xf86ReplaceIntOption(pointer optlist,  char *name, int val);

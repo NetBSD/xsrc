@@ -1,4 +1,4 @@
-/* $XConsortium: indicators.h /main/2 1995/11/30 19:07:24 kaleb $ */
+/* $Xorg: indicators.h,v 1.3 2000/08/17 19:54:32 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

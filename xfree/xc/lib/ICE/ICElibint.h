@@ -1,4 +1,4 @@
-/* $TOG: ICElibint.h /main/43 1998/02/06 13:56:27 kaleb $ */
+/* $Xorg: ICElibint.h,v 1.3 2000/08/17 19:44:10 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/ICE/ICElibint.h,v 1.4 2001/01/17 19:41:29 dawes Exp $ */
 
 #ifndef _ICELIBINT_H_
 #define _ICELIBINT_H_

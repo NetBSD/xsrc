@@ -1,4 +1,4 @@
-/* $TOG: Vendor.c /main/21 1998/02/06 13:28:00 kaleb $ */
+/* $Xorg: Vendor.c,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Vendor.c,v 1.3 1997/07/19 07:08:25 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Vendor.c,v 1.5 2001/01/17 19:43:13 dawes Exp $ */
 
 /* Make sure all wm properties can make it out of the resource manager */
 

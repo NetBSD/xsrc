@@ -16,16 +16,16 @@
 /***************************************************************************/
 
 
-#ifndef SFOBJS_H
-#define SFOBJS_H
-
-#include <freetype/internal/sfnt.h>
-#include <freetype/internal/ftobjs.h>
+#ifndef __SFOBJS_H__
+#define __SFOBJS_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_INTERNAL_SFNT_H
+#include FT_INTERNAL_OBJECTS_H
+
+
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -46,12 +46,9 @@
   void  SFNT_Done_Face( TT_Face  face );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* SFDRIVER_H */
+#endif /* __SFDRIVER_H__ */
 
 
 /* END */

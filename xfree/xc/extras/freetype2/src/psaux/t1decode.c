@@ -16,23 +16,12 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h> /* for FT_ERROR() */
-#include <freetype/internal/t1errors.h>
-#include <freetype/ftoutln.h>
-#include <freetype/internal/ftdebug.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_TYPE1_ERRORS_H
+#include FT_OUTLINE_H
 #include "t1decode.h"
 #include "psobjs.h"
-
-#else
-
-#include <psaux/t1decode.h>
-#include <psaux/psobjs.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -434,7 +423,8 @@
       case 12:
         if ( ip > limit )
         {
-          FT_ERROR(( "T1_Parse_CharStrings: invalid escape (12+EOF)\n" ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "invalid escape (12+EOF)\n" ));
           goto Syntax_Error;
         }
 
@@ -469,7 +459,8 @@
           break;
 
         default:
-          FT_ERROR(( "T1_Parse_CharStrings: invalid escape (12+%d)\n",
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "invalid escape (12+%d)\n",
                      ip[-1] ));
           goto Syntax_Error;
         }
@@ -478,7 +469,8 @@
       case 255:    /* four bytes integer */
         if ( ip + 4 > limit )
         {
-          FT_ERROR(( "T1_Parse_CharStrings: unexpected EOF in integer\n" ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "unexpected EOF in integer\n" ));
           goto Syntax_Error;
         }
 
@@ -498,21 +490,21 @@
           {
             if ( ++ip > limit )
             {
-              FT_ERROR(( "T1_Parse_CharStrings:" ));
-              FT_ERROR(( " unexpected EOF in integer\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: " ));
+              FT_ERROR(( "unexpected EOF in integer\n" ));
               goto Syntax_Error;
             }
 
-          if ( ip[-2] < 251 )
-            value =  ( ( (FT_Long)ip[-2] - 247 ) << 8 ) + ip[-1] + 108;
-          else
-            value = -( ( ( (FT_Long)ip[-2] - 251 ) << 8 ) + ip[-1] + 108 );
+            if ( ip[-2] < 251 )
+              value =  ( ( (FT_Long)ip[-2] - 247 ) << 8 ) + ip[-1] + 108;
+            else
+              value = -( ( ( (FT_Long)ip[-2] - 251 ) << 8 ) + ip[-1] + 108 );
           }
         }
         else
         {
-          FT_ERROR(( "T1_Parse_CharStrings: invalid byte (%d)\n",
-                     ip[-1] ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "invalid byte (%d)\n", ip[-1] ));
           goto Syntax_Error;
         }
       }
@@ -526,7 +518,7 @@
       {
         if ( top - decoder->stack >= T1_MAX_CHARSTRINGS_OPERANDS )
         {
-          FT_ERROR(( "T1_Parse_CharStrings: stack overflow!\n" ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: stack overflow!\n" ));
           goto Syntax_Error;
         }
 
@@ -582,7 +574,8 @@
           if ( decoder->flex_state       == 0 ||
                decoder->num_flex_vectors != 7 )
           {
-            FT_ERROR(( "T1_Parse_CharStrings: unexpected flex end\n" ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                       "unexpected flex end\n" ));
             goto Syntax_Error;
           }
 
@@ -592,7 +585,8 @@
                ip[2] != 12 || ip[3] != 17 || /* pop */
                ip[4] != 12 || ip[5] != 33 )  /* setcurpoint */
           {
-            FT_ERROR(( "T1_Parse_CharStrings: invalid flex charstring\n" ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                       "invalid flex charstring\n" ));
             goto Syntax_Error;
           }
 
@@ -607,16 +601,15 @@
           /* eat the following `pop' */
           if ( ip + 2 > limit )
           {
-            FT_ERROR(( "T1_Parse_CharStrings: invalid escape (12+%d)\n",
-                       ip[-1] ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                       "invalid escape (12+%d)\n", ip[-1] ));
             goto Syntax_Error;
           }
 
           if ( ip[0] != 12 || ip[1] != 17 )
           {
-            FT_ERROR(( "T1_Parse_CharStrings:" ));
-            FT_ERROR(( " `pop' expected, found (%d %d)\n",
-                       ip[0], ip[1] ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: " ));
+            FT_ERROR(( "`pop' expected, found (%d %d)\n", ip[0], ip[1] ));
             goto Syntax_Error;
           }
           ip += 2;
@@ -642,16 +635,16 @@
 
             if ( !blend )
             {
-              FT_ERROR(( "T1_Parse_CharStrings:" ));
-              FT_ERROR(( " unexpected multiple masters operator!\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: " ));
+              FT_ERROR(( "unexpected multiple masters operator!\n" ));
               goto Syntax_Error;
             }
 
             num_points = top[1] - 13 + ( top[1] == 18 );
             if ( top[0] != (FT_Int)( num_points * blend->num_designs ) )
             {
-              FT_ERROR(( "T1_Parse_CharStrings:" ));
-              FT_ERROR(( " incorrect number of mm arguments\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: " ));
+              FT_ERROR(( "incorrect number of mm arguments\n" ));
               goto Syntax_Error;
             }
 
@@ -692,8 +685,8 @@
 
         default:
         Unexpected_OtherSubr:
-          FT_ERROR(( "T1_Parse_CharStrings: invalid othersubr [%d %d]!\n",
-                     top[0], top[1] ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "invalid othersubr [%d %d]!\n", top[0], top[1] ));
           goto Syntax_Error;
         }
         decoder->top = top;
@@ -890,7 +883,7 @@
           }
           else
           {
-            FT_ERROR(( "T1_Parse_CharStrings: division by 0\n" ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: division by 0\n" ));
             goto Syntax_Error;
           }
           break;
@@ -905,31 +898,43 @@
             index = top[0];
             if ( index < 0 || index >= (FT_Int)decoder->num_subrs )
             {
-              FT_ERROR(( "T1_Parse_CharStrings: invalid subrs index\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                         "invalid subrs index\n" ));
               goto Syntax_Error;
             }
 
             if ( zone - decoder->zones >= T1_MAX_SUBRS_CALLS )
             {
-              FT_ERROR(( "T1_Parse_CharStrings: too many nested subrs\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                         "too many nested subrs\n" ));
               goto Syntax_Error;
             }
 
             zone->cursor = ip;  /* save current instruction pointer */
 
             zone++;
-            zone->base   = decoder->subrs[index] + decoder->lenIV;
 
-            if (decoder->subrs_len)
-              zone->limit  = zone->base + decoder->subrs_len[index];
+            /* The Type 1 driver stores subroutines without the seed bytes. */
+            /* The CID driver stores subroutines with seed bytes.  This     */
+            /* case is taken care of when decoder->subrs_len == 0.          */
+            zone->base = decoder->subrs[index];
+
+            if ( decoder->subrs_len )
+              zone->limit = zone->base + decoder->subrs_len[index];
             else
-              zone->limit  = decoder->subrs[index+1];
+            {
+              /* We are using subroutines from a CID font.  We must adjust */
+              /* for the seed bytes.                                       */
+              zone->base  += ( decoder->lenIV >= 0 ? decoder->lenIV : 0 ); 
+              zone->limit  = decoder->subrs[index + 1];
+            }
 
             zone->cursor = zone->base;
 
             if ( !zone->base )
             {
-              FT_ERROR(( "T1_Parse_CharStrings: invoking empty subrs!\n" ));
+              FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                         "invoking empty subrs!\n" ));
               goto Syntax_Error;
             }
 
@@ -951,7 +956,7 @@
 
           if ( zone <= decoder->zones )
           {
-            FT_ERROR(( "T1_Parse_CharStrings: unexpected return\n" ));
+            FT_ERROR(( "T1_Decoder_Parse_CharStrings: unexpected return\n" ));
             goto Syntax_Error;
           }
 
@@ -989,12 +994,13 @@
         case op_setcurrentpoint:
           FT_TRACE4(( " setcurrentpoint" ));
 
-          FT_ERROR(( "T1_Parse_CharStrings:" ));
-          FT_ERROR(( " unexpected `setcurrentpoint'\n" ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: " ));
+          FT_ERROR(( "unexpected `setcurrentpoint'\n" ));
           goto Syntax_Error;
 
         default:
-          FT_ERROR(( "T1_Parse_CharStrings: unhandled opcode %d\n", op ));
+          FT_ERROR(( "T1_Decoder_Parse_CharStrings: "
+                     "unhandled opcode %d\n", op ));
           goto Syntax_Error;
         }
 

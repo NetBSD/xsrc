@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/parse.h,v 1.6 2000/10/24 22:45:15 dawes Exp $ */
+/* $XFree86: xc/programs/twm/parse.h,v 1.8 2001/01/17 23:45:07 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -49,7 +49,7 @@ in this Software without prior written authorization from The Open Group.
 
 /**********************************************************************
  *
- * $TOG: parse.h /main/16 1998/02/09 13:49:05 kaleb $
+ * $Xorg: parse.h,v 1.3 2000/08/17 19:54:07 cpqbld Exp $
  *
  * .twmrc parsing externs
  *

@@ -1,4 +1,4 @@
-/* $TOG: Xauth.h /main/19 1998/02/06 14:15:45 kaleb $ */
+/* $Xorg: Xauth.h,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
 
 /*
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xau/Xauth.h,v 1.4 2001/01/17 19:42:24 dawes Exp $ */
 
 #ifndef _Xauth_h
 #define _Xauth_h

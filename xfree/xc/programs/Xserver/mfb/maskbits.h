@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/mfb/maskbits.h,v 3.8 2001/01/17 22:37:02 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.1, 1/24/89 */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -21,8 +22,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: maskbits.h,v 1.33 94/04/17 20:28:13 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/mfb/maskbits.h,v 3.6 2000/02/12 03:40:00 dawes Exp $ */
+/* $Xorg: maskbits.h,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
+
 #include "X.h"
 #include "Xmd.h"
 #include "servermd.h"

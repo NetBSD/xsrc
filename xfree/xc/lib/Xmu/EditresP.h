@@ -1,4 +1,4 @@
-/* $TOG: EditresP.h /main/14 1998/02/06 15:43:22 kaleb $ */
+/* $Xorg: EditresP.h,v 1.3 2000/08/17 19:46:01 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/EditresP.h,v 1.3 1998/08/20 13:59:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/EditresP.h,v 1.5 2001/01/17 19:42:55 dawes Exp $ */
 
 /*
  * Author:  Chris D. Peterson, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $TOG: mdepthinit.c /main/10 1998/03/17 16:39:08 kaleb $ */
+/* $Xorg: mdepthinit.c,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/dec/ws/mdepthinit.c,v 1.4 1998/10/04 09:38:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/dec/ws/mdepthinit.c,v 1.6 2001/01/17 22:36:46 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

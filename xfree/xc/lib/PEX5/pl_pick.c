@@ -1,4 +1,4 @@
-/* $TOG: pl_pick.c /main/14 1998/02/06 16:11:48 kaleb $ */
+/* $Xorg: pl_pick.c,v 1.3 2000/08/17 19:44:27 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

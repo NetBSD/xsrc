@@ -1,4 +1,4 @@
-/* $TOG: DelCmap.c /main/3 1998/02/06 15:42:34 kaleb $ */
+/* $Xorg: DelCmap.c,v 1.3 2000/08/17 19:46:00 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/DelCmap.c,v 1.4 1998/09/05 06:36:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/DelCmap.c,v 1.6 2001/01/17 19:42:54 dawes Exp $ */
 
 /*
  * Author:  Donna Converse, MIT X Consortium

@@ -1,8 +1,8 @@
-XCOMM platform:  $TOG: FreeBSD.cf /main/21 1997/10/05 20:42:34 kaleb $
+XCOMM platform:  $Xorg: FreeBSD.cf,v 1.3 2000/08/17 19:41:45 cpqbld Exp $
 XCOMM
 XCOMM
 XCOMM
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.101.2.2 2001/02/26 18:21:36 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.109 2001/05/03 20:12:35 alanh Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -36,7 +36,7 @@ XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.101.2.2 2001/02/26 18:21:
 #define OSRelVersion __FreeBSD_version
 #endif
 
-XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion) (OsRelVersion)
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion) (OSRelVersion)
 
 
 #define HasCplusplus		YES
@@ -64,6 +64,38 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define InstallXloadSetGID	NO
 #else
 #define InstallXloadSetGID	YES
+#endif
+
+/*
+ * Multi-thread safe libs 
+ */	
+/* 2.2.7 and later has libc_r (POSIX threads) */
+#if OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion >= 7 || \
+    OSMajorVersion >= 3
+# ifndef HasLibPthread
+#  define HasLibPthread		NO
+# endif
+# define HasPosixThreads	YES
+# define ThreadedX		YES
+/*
+ * math.h uses _REENTRANT and stdio.h uses _THREAD_SAFE, so define both.
+ */
+# define SystemMTDefines	-D_REENTRANT -D_THREAD_SAFE
+/*
+ * FreeBSD has tread-safe api but no getpwnam_r yet.
+ */
+# define HasThreadSafeAPI	YES
+# define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
+# if HasLibPthread
+#  define ThreadsLibraries	-lpthread
+# else
+#  define BuildThreadStubLibrary  YES 
+#  define NeedUIThrStubs          YES 
+#  define ThreadsCompileFlags	-pthread
+#  define ThreadsLibraries 	-pthread
+#  define SharedX11Reqs		$(LDPRELIB) $(XTHRSTUBLIB)
+#  define SharedXtReqs		$(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB) $(XTHRSTUBLIB)
+# endif
 #endif
 
 #define AvoidNullMakeCommand	YES
@@ -97,15 +129,39 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 
-#define CcCmd			cc
+/*
+ * 2.2.x has perl 4 by default, not perl 5.
+ */
+#if (OSMajorVersion <= 2)
+#ifndef HasPerl5
+#define HasPerl5		NO
+#endif
+#endif
+
+/*
+ * Add an LD_LIBRARY_PATH environment variable, defined by $(CLIENTENVSETUP),
+ * when building X to avoid that for each client ld give the message
+ *
+ *    ld: warning: libXThrStub.so.6, needed by libX11.so, not found
+ */
+#if BuildThreadStubLibrary && !UseInstalled
+# define CcCmd			$(CLIENTENVSETUP) cc
+# define CplusplusCmd		$(CLIENTENVSETUP) c++
+#else
+# define CcCmd			cc
+# define CplusplusCmd		c++
+#endif
+
 #define CppCmd			/usr/bin/cpp
 #define PreProcessCmd		CppCmd
 #define StandardCppOptions	-traditional
 #define StandardCppDefines	/**/
+#ifndef DefaultCCOptions
 #if defined(UseInstalled)
 #define DefaultCCOptions	/**/
 #else
 #define DefaultCCOptions	-ansi -pedantic -Dasm=__asm GccWarningOptions
+#endif
 #endif
 #ifndef ExtraLibraries
 /* support for multi-byte locales is in libxpg4 rather than libc */
@@ -402,7 +458,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define PreIncDir	/usr/include
 #endif
 
-#define TroffCmd	groff -Tps
+#define HasGroff	YES
 #define NroffCmd	groff -Tascii
 #define SetTtyGroup	YES
 
@@ -423,85 +479,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  */
 #ifndef CompressManPages
 # define CompressManPages	YES
-#endif
-
-#if CompressManPages
-
-#ifndef CompressManCmd
-# define CompressManCmd		gzip -n
-#endif
-   COMPRESSMANCMD = CompressManCmd
-
-#ifndef InstallManPageLong
-#define InstallManPageLong(file,destdir,dest)				@@\
-BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
-									@@\
-install.man:: file.man							@@\
-	MakeDir($(DESTDIR)destdir)					@@\
-	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*			@@\
-	$(INSTALL) -c $(INSTMANFLAGS) file.man \			@@\
-	  $(DESTDIR)destdir/dest.$(MANSUFFIX)				@@\
-	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.$(MANSUFFIX)
-#endif
-
-#ifndef InstallGenManPageLong
-#define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
-BuildInstallHtmlManPage(file,dest,suffix)				@@\
-									@@\
-install.man:: file.man							@@\
-	MakeDir($(DESTDIR)destdir)					@@\
-	$(RM) $(DESTDIR)destdir/dest.suffix*				@@\
-	$(INSTALL) -c $(INSTMANFLAGS) file.man \			@@\
-	  $(DESTDIR)destdir/dest.suffix					@@\
-	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.suffix
-#endif
-
-#ifndef InstallMultipleMan
-#define InstallMultipleMan(list,dest)					@@\
-install.man:: list							@@\
-	MakeDir($(DESTDIR)dest)						@@\
-	@case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
-	for i in list; do \						@@\
-		(MNAME=`echo $$i | cut -f1 -d.`; \			@@\
-		set -x;	\						@@\
-		$(RM) $(DESTDIR)dest/$${MNAME}*; \			@@\
-		$(INSTALL) -c $(INSTMANFLAGS) $$i \			@@\
-		  $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX); \		@@\
-		$(COMPRESSMANCMD) $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX)); \ @@\
-	done
-#endif
-
-/*
- * InstallManPageAliases - install soft links for aliases.
- */
-#ifndef InstallManPageAliasesBase
-#define InstallManPageAliasesBase(file,destdir,aliases)			@@\
-install.man::								@@\
-	@(SUFFIX=`echo $(DESTDIR)destdir/file.* | sed -e 's,.*/[^\.]*.,,'`; \ @@\
-	for i in aliases; do (set -x; \					@@\
-	$(RM) $(DESTDIR)destdir/$$i.*; \				@@\
-	(cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \			@@\
-	$$i.$${SUFFIX})); \						@@\
-	done)
-#endif
-
-#ifndef InstallManPageAliases
-#define InstallManPageAliases(file,destdir,aliases)			@@\
-InstallHtmlManPageAliases(file,aliases,$(MANSUFFIX))			@@\
-									@@\
-InstallManPageAliasesBase(file,destdir,aliases)
-#endif
-
-
-/*
- * InstallGenManPageAliases - install soft links for aliases.
- */
-#ifndef InstallGenManPageAliases
-#define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
-InstallHtmlManPageAliases(file,aliases,suffix)				@@\
-									@@\
-InstallManPageAliasesBase(file,destdir,aliases)
-#endif
 #endif
 
 #if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 1)

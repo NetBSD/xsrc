@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbmodule.c,v 1.7 1999/01/24 13:32:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmodule.c,v 1.8 1999/01/26 05:53:48 dawes Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *

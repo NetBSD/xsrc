@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.2 2000/09/26 15:57:22 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.4 2001/05/15 18:22:23 paulo Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -34,6 +34,7 @@
 #include <X11/Shell.h>
 #include <X11/Xaw/AsciiText.h>
 #include <X11/Xaw/Command.h>
+#include <X11/Xaw/Form.h>
 #include <X11/Xaw/Paned.h>
 
 #include <X11/Xaw/Text.h>
@@ -46,6 +47,7 @@
 #endif
 #include <ctype.h>
 #include "help.h"
+#include "options.h"
 
 /*
  * Prototypes
@@ -122,7 +124,7 @@ StartHelp(void)
     };
 
     if (shell == NULL) {
-	Widget pane, close;
+	Widget pane, commands, close;
 	char *props;
 	XawTextPropertyList *propl;
 
@@ -132,8 +134,10 @@ StartHelp(void)
 				     shell, NULL, 0);
 	text = XtVaCreateManagedWidget("text", asciiTextWidgetClass,
 				       pane, XtNeditType, XawtextRead, NULL, 0);
+	commands = XtCreateManagedWidget("commands", formWidgetClass, pane,
+					 NULL, 0);
 	close = XtCreateManagedWidget("close", commandWidgetClass,
-				      pane, NULL, 0);
+				      commands, NULL, 0);
 	XtAddCallback(close, XtNcallback, CloseCallback, NULL);
 	XtRealizeWidget(shell);
 	XSetWMProtocols(DPY, XtWindow(shell), &wm_delete_window, 1);

@@ -1,4 +1,4 @@
-/* $TOG: connection.c /main/32 1998/02/11 09:54:17 kaleb $ */
+/* $Xorg: connection.c,v 1.4 2000/08/17 19:53:58 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
@@ -56,7 +56,7 @@ SOFTWARE.
  *      socket ids aren't small nums (0 - 2^8)
  *
  *****************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.12 2000/05/18 23:46:26 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.14 2001/01/17 23:44:59 dawes Exp $ */
 
 #include "misc.h"
 #include <X11/Xtrans.h>
@@ -253,7 +253,6 @@ CreateServerSockets(fds)
     int			done = 0;
     int			partial;
     int			tmp_trans_count;
-    int	       	       *tmp_trans_fds;
     XtransConnInfo     *tmp_trans_conns;
 
     while (!done)
@@ -313,7 +312,7 @@ CreateServerSockets(fds)
 
 		for (i = 0, num_fds = 0; i < tmp_trans_count; i++, num_fds++)
 		{
-		    int fd, num_fds = 0;
+		    int fd;
 
                     fd = _LBXPROXYTransGetConnectionNumber (
 			    ListenTransConns[i + ListenTransCount]);

@@ -1,4 +1,4 @@
-/* $TOG: X10.h /main/6 1998/02/06 16:14:20 kaleb $ */
+/* $Xorg: X10.h,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */
 /* 
  * 
 Copyright 1985, 1986, 1987, 1998 The Open Group

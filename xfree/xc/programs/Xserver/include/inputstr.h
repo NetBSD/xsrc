@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/include/inputstr.h,v 1.4 2001/01/17 22:36:57 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $TOG: inputstr.h /main/29 1998/02/09 14:28:54 kaleb $ */
+/* $Xorg: inputstr.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 
 #ifndef INPUTSTRUCT_H
 #define INPUTSTRUCT_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.35 2000/10/22 21:12:09 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.38 2001/02/16 13:24:07 eich Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -64,9 +64,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-
-
-/* $TOG: events.c /main/188 1998/02/09 14:19:04 kaleb $ */
+/* $Xorg: events.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -4074,6 +4072,14 @@ InitEvents()
 	DontPropagateMasks[i] = 0;
 	DontPropagateRefCnts[i] = 0;
     }
+}
+
+void
+CloseDownEvents(void)
+{
+  xfree(spriteTrace);
+  spriteTrace = NULL;
+  spriteTraceSize = 0;
 }
 
 int

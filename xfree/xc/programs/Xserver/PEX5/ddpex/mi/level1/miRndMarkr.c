@@ -1,4 +1,4 @@
-/* $TOG: miRndMarkr.c /main/7 1998/02/10 12:40:10 kaleb $ */
+/* $Xorg: miRndMarkr.c,v 1.3 2000/08/17 19:47:04 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level1/miRndMarkr.c,v 3.5 1998/07/26 13:13:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level1/miRndMarkr.c,v 3.7 2001/01/17 22:12:21 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "miRender.h"

@@ -1,4 +1,4 @@
-/* $TOG: type1.c /main/9 1998/05/01 16:42:05 kaleb $ */
+/* $Xorg: type1.c,v 1.4 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/type1.c,v 1.7 1999/05/03 05:58:48 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/type1.c,v 1.9 2001/01/17 19:43:24 dawes Exp $ */
  
 /*********************************************************************/
 /*                                                                   */
@@ -1620,7 +1620,8 @@ FlxProc(double c1x2, double c1y2, double c3x0, double c3y0,
           if (erode)
             cy -= 0.5;
           ey = cy + dY;
-          ey = CEIL(ey) - ey + FLOOR(ey);
+          ey = CEIL(ey) - ey;
+          ey = ey + FLOOR(cy + dY);
           if (erode)
             ey += 0.5;
  
@@ -1670,7 +1671,8 @@ FlxProc(double c1x2, double c1y2, double c3x0, double c3y0,
           if (erode)
             cx -= 0.5;
           ex = cx + dX;
-          ex = CEIL(ex) - ex + FLOOR(ex);
+          ex = CEIL(ex) - ex;
+          ex = ex + FLOOR(cx + dX);
           if (erode)
             ex += 0.5;
  

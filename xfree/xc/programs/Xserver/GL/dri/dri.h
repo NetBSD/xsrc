@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/dri.h,v 1.14 2000/11/18 19:37:05 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/dri.h,v 1.18 2001/03/21 16:21:40 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -85,12 +85,11 @@ typedef void (*AdjustFramePtr)(int scrnIndex, int x, int y, int flags);
 typedef struct {
     ScreenWakeupHandlerProcPtr   WakeupHandler;
     ScreenBlockHandlerProcPtr    BlockHandler;
-    PaintWindowBackgroundProcPtr PaintWindowBackground;
-    PaintWindowBorderProcPtr     PaintWindowBorder;
+    WindowExposuresProcPtr       WindowExposures;
     CopyWindowProcPtr            CopyWindow;
     ValidateTreeProcPtr          ValidateTree;
     PostValidateTreeProcPtr      PostValidateTree;
-    ClipNotifyPtr                ClipNotify;
+    ClipNotifyProcPtr            ClipNotify;
     AdjustFramePtr               AdjustFrame;
 } DRIWrappedFuncsRec, *DRIWrappedFuncsPtr;
 
@@ -147,6 +146,8 @@ typedef struct {
     DRIWindowRequests	bufferRequests;
     int			devPrivateSize;
     void*		devPrivate;
+    Bool		createDummyCtx;
+    Bool		createDummyCtxPriv;
 } DRIInfoRec, *DRIInfoPtr;
 
 
@@ -251,9 +252,9 @@ extern void DRISwapContext(int drmFD,
 
 extern void *DRIGetContextStore(DRIContextPrivPtr context);
 
-extern void DRIPaintWindow(WindowPtr pWin,
-                           RegionPtr prgn,
-                           int what);
+extern void DRIWindowExposures(WindowPtr pWin,
+                              RegionPtr prgn,
+                              RegionPtr bsreg);
 
 extern void DRICopyWindow(WindowPtr pWin,
                           DDXPointRec ptOldOrg,
@@ -306,6 +307,13 @@ extern void DRIAdjustFrame(int scrnIndex, int x, int y, int flags);
 
 extern int  DRIOpenFullScreen(ScreenPtr pScreen, DrawablePtr pDrawable);
 extern int  DRICloseFullScreen(ScreenPtr pScreen, DrawablePtr pDrawable);
+
+extern void DRIMoveBuffersHelper(ScreenPtr pScreen, 
+                                 int dx,
+                                 int dy,
+                                 int *xdir, 
+                                 int *ydir, 
+                                 RegionPtr reg);
 
 #define _DRI_H_
 

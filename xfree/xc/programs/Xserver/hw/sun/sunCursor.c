@@ -1,4 +1,4 @@
-/* $TOG: sunCursor.c /main/45 1998/02/10 13:16:24 kaleb $ */
+/* $Xorg: sunCursor.c,v 1.3 2000/08/17 19:48:29 cpqbld Exp $ */
 /*
 
 Copyright 1988  Sun Microsystems, Inc.
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCursor.c,v 3.0 1996/09/29 12:47:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCursor.c,v 3.2 2001/01/17 22:36:50 dawes Exp $ */
 
 /*-
  * sunCursor.c --

@@ -1,4 +1,4 @@
-/* $TOG: session.c /main/7 1998/02/09 16:11:54 kaleb $ */
+/* $Xorg: session.c,v 1.3 2000/08/17 19:47:32 cpqbld Exp $ */
 /**** session.c ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc  March, 1993
 
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.11 1998/10/25 07:11:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.13 2001/01/17 22:12:56 dawes Exp $ */
 
 #define _XIEC_SESSION
 

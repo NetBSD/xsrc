@@ -49,6 +49,7 @@ typedef enum
 
 static CharSetRelation const charSetRelations[] = {
     { "iso8859",     NULL, "11", ISO8859_11, { 0x20, 0xff, 0, 0, 0x20 } },
+    { "tis620",      NULL,  "0", ISO8859_11, { 0x20, 0xff, 0, 0, 0x20 } },
     { "tis620",    "2529", NULL, ISO8859_11, { 0x20, 0xff, 0, 0, 0x20 } },
     { "tis620",    "2533", NULL, ISO8859_11, { 0x20, 0xff, 0, 0, 0x20 } },
     { NULL, NULL, NULL, 0, { 0, 0, 0, 0, 0 } }

@@ -1,4 +1,4 @@
-/* $TOG: acc_none.c /main/5 1998/02/10 12:44:46 kaleb $ */
+/* $Xorg: acc_none.c,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1991, 1998  The Open Group

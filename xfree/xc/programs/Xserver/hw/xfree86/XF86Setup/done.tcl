@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.8 1997/07/29 12:07:23 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.9 1998/04/05 16:15:49 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

@@ -1,5 +1,5 @@
 /*
- * $TOG: GenKey.c /main/7 1998/02/06 14:39:49 kaleb $
+ * $Xorg: GenKey.c,v 1.3 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/GenKey.c,v 3.4 1998/10/21 06:12:00 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/GenKey.c,v 3.6 2001/01/17 19:42:43 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>

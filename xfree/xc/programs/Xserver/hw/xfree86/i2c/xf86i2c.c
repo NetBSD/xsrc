@@ -6,7 +6,7 @@
  *      (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.6 1999/06/12 15:37:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.9 2001/01/22 21:09:37 dawes Exp $ */
 
 #if 1
 #include "misc.h"
@@ -444,8 +444,8 @@ xf86I2CProbeAddress(I2CBusPtr b, I2CSlaveAddr addr)
  * be executed anyway to leave the bus in clean idle state. 
  */
 
-Bool
-xf86I2CWriteRead(I2CDevPtr d,
+static Bool
+I2CWriteRead(I2CDevPtr d,
 		 I2CByte *WriteBuffer, int nWrite,
 		 I2CByte *ReadBuffer,  int nRead) 
 {
@@ -476,6 +476,17 @@ xf86I2CWriteRead(I2CDevPtr d,
     if (s) b->I2CStop(d);
 
     return r;
+}
+
+/* wrapper - for compatibility and convinience */
+
+Bool
+xf86I2CWriteRead(I2CDevPtr d,
+		 I2CByte *WriteBuffer, int nWrite,
+		 I2CByte *ReadBuffer,  int nRead) 
+{
+    I2CBusPtr b = d->pI2CBus;
+    return b->I2CWriteRead(d,WriteBuffer,nWrite,ReadBuffer,nRead);
 }
 
 /* Read a byte, the only readable register of a device.
@@ -818,21 +829,25 @@ xf86I2CBusInit(I2CBusPtr b)
      * In this case we need the low-level
      * function.
      */
-
-    if (b->I2CPutBits == NULL ||
-	b->I2CGetBits == NULL) 
+    if (b->I2CWriteRead == NULL) 
     {
-	if (b->I2CPutByte == NULL ||
-	    b->I2CGetByte == NULL ||
-	    b->I2CAddress == NULL ||
-	    b->I2CStop    == NULL)
-	    return FALSE;
-    } else {
-	b->I2CPutByte = I2CPutByte;
-	b->I2CGetByte = I2CGetByte;
-	b->I2CAddress = I2CAddress;
-	b->I2CStop    = I2CStop;
-    }
+        b->I2CWriteRead=I2CWriteRead;
+
+        if (b->I2CPutBits == NULL ||
+	    b->I2CGetBits == NULL) 
+        {
+	    if (b->I2CPutByte == NULL ||
+	        b->I2CGetByte == NULL ||
+	        b->I2CAddress == NULL ||
+	        b->I2CStop    == NULL)
+	        return FALSE;
+        } else { 
+	    b->I2CPutByte = I2CPutByte;
+	    b->I2CGetByte = I2CGetByte;
+	    b->I2CAddress = I2CAddress;
+	    b->I2CStop    = I2CStop;
+        }
+     }
 
     if (b->I2CUDelay == NULL)
 	b->I2CUDelay = I2CUDelay;

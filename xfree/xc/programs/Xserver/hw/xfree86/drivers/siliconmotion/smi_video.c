@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.1 2000/11/28 20:59:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.4 2001/03/03 22:26:13 tsi Exp $ */
 
 #include "smi.h"
 #include "smi_video.h"
@@ -36,9 +36,9 @@ authorization from the XFree86 Project and silicon Motion.
 
 #if defined(XvExtension) && SMI_USE_VIDEO
 
-#include <dixstruct.h>
-#include <xaa.h>
-#include <xaalocal.h>
+#include "dixstruct.h"
+#include "xaa.h"
+#include "xaalocal.h"
 
 static XF86VideoAdaptorPtr SMI_SetupVideo(ScreenPtr pScreen);
 static void SMI_ResetVideo(ScrnInfoPtr pScrn);
@@ -122,7 +122,6 @@ void SMI_InitVideo(ScreenPtr pScreen)
 
 	if (   (psmi->rotate == 0)
 		&& !psmi->NoAccel
-		&& (pScrn->bitsPerPixel != 8)
 	)
 	{
 		newAdaptor = SMI_SetupVideo(pScreen);
@@ -189,7 +188,6 @@ static XF86VideoEncodingRec SMI_VideoEncodings[] =
 
 static XF86VideoFormatRec SMI_VideoFormats[] =
 {
-	{ 8, PseudoColor },					/* depth, class				*/
 	{ 15, TrueColor },					/* depth, class				*/
 	{ 16, TrueColor },					/* depth, class				*/
 	{ 24, TrueColor },					/* depth, class				*/
@@ -213,6 +211,7 @@ static XF86ImageRec SMI_VideoImages[] =
 {
 	XVIMAGE_YUY2,
 	XVIMAGE_YV12,
+	XVIMAGE_I420,
 	{
 		FOURCC_RV15,					/* id						*/
 		XvRGB,							/* type						*/
@@ -912,6 +911,14 @@ SMI_PutImage(
 			dstPitch  = ((width << 1) + 15) & ~15;
 			break;
 
+		case FOURCC_I420:
+			srcPitch  = (width + 3) & ~3;
+			offset3   = srcPitch * height;
+			srcPitch2 = ((width >> 1) + 3) & ~3;
+			offset2   = offset3 + (srcPitch2 * (height >> 1));
+			dstPitch  = ((width << 1) + 15) & ~15;
+			break;
+
 		case FOURCC_RV24:
 			bpp = 3;
 			srcPitch = width * bpp;
@@ -953,6 +960,7 @@ SMI_PutImage(
 	switch (id)
 	{
 		case FOURCC_YV12:
+		case FOURCC_I420:
 			top &= ~1;
 			tmp = ((top >> 1) * srcPitch2) + (left >> 2);
 			offset2 += tmp;
@@ -1020,6 +1028,7 @@ SMI_QueryImageAttributes(
 	switch (id)
 	{
 		case FOURCC_YV12:
+		case FOURCC_I420:
 			*height = (*height + 1) & ~1;
 			size = (*width + 3) & ~3;
 			if (pitches != NULL)
@@ -1164,6 +1173,10 @@ SMI_ClipVideo(
 
 	ENTER_PROC("SMI_ClipVideo");
 
+	/* PDR#941 */
+	extents->x1 = max(extents->x1, pScrn->frameX0);
+	extents->y1 = max(extents->y1, pScrn->frameY0);
+
 	hscale = ((*x2 - *x1) << 16) / (dst->x2 - dst->x1);
 	vscale = ((*y2 - *y1) << 16) / (dst->y2 - dst->y1);
 
@@ -1278,6 +1291,7 @@ SMI_DisplayVideo(
 	switch (id)
 	{
 		case FOURCC_YV12:
+		case FOURCC_I420:
 		case FOURCC_YUY2:
 			vpr00 |= 0x6;
 			break;
@@ -1614,6 +1628,7 @@ SMI_AllocSurface(
 	switch (id)
 	{
 		case FOURCC_YV12:
+		case FOURCC_I420:
 		case FOURCC_YUY2:
 		case FOURCC_RV15:
 		case FOURCC_RV16:

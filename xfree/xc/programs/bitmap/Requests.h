@@ -1,4 +1,4 @@
-/* $TOG: Requests.h /main/8 1998/02/09 13:41:30 kaleb $ */
+/* $Xorg: Requests.h,v 1.3 2000/08/17 19:53:50 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Requests.h,v 1.2 1999/02/01 11:56:09 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/Requests.h,v 1.4 2001/01/17 23:44:51 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

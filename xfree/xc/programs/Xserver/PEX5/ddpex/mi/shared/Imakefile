@@ -1,6 +1,9 @@
 XCOMM
-XCOMM $XConsortium: Imakefile /main/12 1996/09/28 16:54:42 rws $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/Imakefile,v 3.11tsi Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:10 cpqbld Exp $
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/Imakefile,v 3.14 2001/04/23 16:17:08 tsi Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium
@@ -36,7 +39,6 @@ XCOMM	DDTEST turns on some fprintf(stderr...)s for debugging
 XCOMM	PEX_DEFAULT_FONTPATH defines the default path to PEX fonts
 
     DEFINES = PexDdpexDefines
-EXT_DEFINES = ExtensionDefines
 CDEBUGFLAGS = PexDdpexCDebugFlags
 
   PEXSERVINC = ../../../include

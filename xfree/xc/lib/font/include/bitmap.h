@@ -1,4 +1,4 @@
-/* $TOG: bitmap.h /main/6 1998/02/09 10:48:57 kaleb $ */
+/* $Xorg: bitmap.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bitmap.h,v 1.7 1999/08/01 07:56:57 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/bitmap.h,v 1.9 2001/01/17 19:43:31 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

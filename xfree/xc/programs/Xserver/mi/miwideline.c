@@ -1,4 +1,4 @@
-/* $TOG: miwideline.c /main/60 1998/03/07 17:40:23 kaleb $ */
+/* $Xorg: miwideline.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miwideline.c,v 1.6 1999/04/11 13:11:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miwideline.c,v 1.8 2001/01/17 22:37:07 dawes Exp $ */
 
 /* Author:  Keith Packard, MIT X Consortium */
 

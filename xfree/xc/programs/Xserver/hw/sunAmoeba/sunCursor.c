@@ -1,4 +1,4 @@
-/* $XConsortium: sunCursor.c,v 5.17 94/04/01 17:55:24 dpw Exp $ */
+/* $Xorg: sunCursor.c,v 1.3 2000/08/17 19:48:35 cpqbld Exp $ */
 /*-
  * sunCursor.c --
  *	Functions for maintaining the Sun software cursor...

@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 /* RANDOM CRUFT! THIS HAS NO OFFICIAL X CONSORTIUM OR X PROJECT TEAM BLESSING */
 
-/* $TOG: MITMisc.h /main/6 1998/02/09 11:19:47 kaleb $ */
+/* $Xorg: MITMisc.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 
 #ifndef _XMITMISC_H_
 #define _XMITMISC_H_

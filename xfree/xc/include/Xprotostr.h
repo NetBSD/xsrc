@@ -1,4 +1,4 @@
-/* $TOG: Xprotostr.h /main/6 1998/02/09 11:19:17 kaleb $ */
+/* $Xorg: Xprotostr.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 #ifndef XPROTOSTRUCTS_H
 #define XPROTOSTRUCTS_H
 

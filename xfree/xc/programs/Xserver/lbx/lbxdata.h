@@ -1,4 +1,4 @@
-/* $XConsortium: lbxdata.h /main/6 1996/11/15 21:15:42 rws $ */
+/* $Xorg: lbxdata.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *

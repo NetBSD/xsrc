@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/miext/shadow/Imakefile,v 1.2 2000/09/08 21:46:45 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/miext/shadow/Imakefile,v 1.4 2001/01/21 21:19:39 tsi Exp $
 XCOMM 
 XCOMM 
 
@@ -32,13 +32,9 @@ OBJS =  $(XFMODOBJ) \
 	shrot16pack.o \
 	shrot32pack.o
 
-#if BuildRender
-RENDERINCS=-I../../render -I$(EXTINCSRC)
-#endif
-
    INCLUDES = -I. -I../../mi -I../../fb -I../../include -I$(XINCLUDESRC) \
 	      -I$(FONTINCSRC) -I$(XF86SRC)/common $(EXTRAINCLUDES) \
-	      $(RENDERINCS)
+	      -I../../render -I$(EXTINCSRC)
    LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
 	     ../../mi/llib-lmi.ln
 

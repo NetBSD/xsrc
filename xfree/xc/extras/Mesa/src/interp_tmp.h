@@ -23,6 +23,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#undef INTERP_UBYTE
 #define INTERP_UBYTE( out, t, a, b ) {			\
       GLfloat fa = UBYTE_COLOR_TO_FLOAT_COLOR(a);	\
       GLfloat fb = UBYTE_COLOR_TO_FLOAT_COLOR(b);	\
@@ -32,6 +33,7 @@
 
 #if 1
 
+#undef INTERP_RGBA
 #define INTERP_RGBA(nr, t, out, a, b) {			\
    int i;						\
    for (i = 0; i < nr; i++) {				\
@@ -43,6 +45,7 @@
 }
 #else
 
+#undef INTERP_RGBA
 #define INTERP_RGBA(nr, t, out, a, b) {				\
    int n;							\
    const GLuint ti = FloatToInt(t*256.0F);			\

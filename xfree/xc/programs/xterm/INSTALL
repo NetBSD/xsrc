@@ -1,4 +1,4 @@
--- $XFree86: xc/programs/xterm/INSTALL,v 3.21 2000/06/13 02:28:37 dawes Exp $
+-- $XFree86: xc/programs/xterm/INSTALL,v 3.23 2001/03/12 00:54:16 dickey Exp $
 -- Thomas E. Dickey
 
 Xterm is normally built as part of the X Windows source tree, using
@@ -92,6 +92,11 @@ The options (in alphabetic order):
   	Modify the generated Makefile so that most compiler options are
 	not shown.  This makes it simpler to read a build log and see the
 	actual warning messages.
+
+  --disable-freetype      disable freetype library-support
+
+ 	Do not use freetype libraries if they are found.  Normally they will
+	be used automatically.
 
   --disable-highlighting  disable support for color highlighting
 

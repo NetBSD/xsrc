@@ -1,4 +1,4 @@
-/* $TOG: Xvarargs.h /main/5 1998/02/06 18:03:41 kaleb $ */
+/* $Xorg: Xvarargs.h,v 1.3 2000/08/17 19:45:08 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1986, 1987, 1988, 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/Xvarargs.h,v 1.3 2001/01/17 19:41:50 dawes Exp $ */
 
 #ifndef _XVARARGS_H_
 #define _XVARARGS_H_

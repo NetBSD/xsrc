@@ -16,23 +16,13 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/sfnt.h>
-#include <freetype/ttnameid.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_SFNT_H
+#include FT_TRUETYPE_IDS_H
 #include "ttdriver.h"
 #include "ttgload.h"
-
-#else
-
-#include <truetype/ttdriver.h>
-#include <truetype/ttgload.h>
-
-#endif
 
 
   /*************************************************************************/

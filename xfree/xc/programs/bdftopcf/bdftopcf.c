@@ -1,4 +1,4 @@
-/* $TOG: bdftopcf.c /main/10 1998/04/29 15:45:50 barstow $ */
+/* $Xorg: bdftopcf.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1993, 1998  The Open Group
@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86$ */
+/* $XFree86: xc/programs/bdftopcf/bdftopcf.c,v 1.3 2001/01/17 23:44:49 dawes Exp $ */
 
 #include <X11/X.h>
 #include <X11/Xproto.h>

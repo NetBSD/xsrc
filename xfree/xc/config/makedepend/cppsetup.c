@@ -1,4 +1,4 @@
-/* $TOG: cppsetup.c /main/18 1998/02/06 11:09:35 kaleb $ */
+/* $Xorg: cppsetup.c,v 1.3 2000/08/17 19:41:50 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.4 1998/10/05 13:21:48 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
 
 #include "def.h"
 
@@ -181,6 +181,7 @@ my_eval_defined (IfParser *ip, const char *var, int len)
 static long
 my_eval_variable (IfParser *ip, const char *var, int len)
 {
+    long val;
     struct symtab **s;
 
     s = lookup_variable (ip, var, len);
@@ -193,7 +194,9 @@ my_eval_variable (IfParser *ip, const char *var, int len)
 	s = lookup_variable (ip, var, strlen(var));
     } while (s);
 
-    return strtol(var, NULL, 0);
+    var = ParseIfExpression(ip, var, &val);
+    if (var && *var) debug(4, ("extraneous: '%s'\n", var));
+    return val;
 }
 
 int

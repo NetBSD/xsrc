@@ -1,4 +1,4 @@
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_bci.h,v 1.1 2000/12/02 01:16:11 dawes Exp $ */
 
 #ifndef _S3BCI_H_
 #define _S3BCI_H_

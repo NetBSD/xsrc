@@ -1,4 +1,4 @@
-/* $TOG: pm.c /main/8 1997/11/12 08:16:18 barstow $ */
+/* $Xorg: pm.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 /*
 
 Copyright "1986-1997 The Open Group All Rights Reserved
@@ -32,7 +32,7 @@ authorization from The Open Group.
 X Window System is a trademark of The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfwp/pm.c,v 1.6 2001/01/17 23:45:34 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-.\" $TOG: oclock.man /main/19 1998/02/09 13:45:09 kaleb $
+.\" $Xorg: oclock.man,v 1.3 2000/08/17 19:53:59 cpqbld Exp $
 .\" Copyright 1989, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH OCLOCK 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/oclock/oclock.man,v 1.7 2001/01/27 18:21:04 dawes Exp $
+.\"
+.TH OCLOCK 1 __xorgversion__
 .SH NAME
 oclock \- round X clock
 .SH SYNOPSIS
@@ -48,10 +51,10 @@ choose a different color for the hour hand of the clock.
 selects an appropriate level of backing store.
 .TP 8
 .B \-geometry \fIgeometry\fB
-define the initial window geometry; see \fIX(1)\fP.
+define the initial window geometry; see \fIX(__miscmansuffix__)\fP.
 .TP 8
 .B \-display \fIdisplay\fB
-specify the display to use; see \fIX(1)\fP.
+specify the display to use; see \fIX(__miscmansuffix__)\fP.
 .TP 8
 .B \-bd \fIcolor\fB
 choose a different color for the window border.
@@ -92,6 +95,6 @@ Clock*jewel: yellow
 .br
 Clock*minute: yellow
 .SH "SEE ALSO"
-X(1), X Toolkit documentation
+X(__miscmansuffix__), X Toolkit documentation
 .SH AUTHOR
 Keith Packard, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $TOG: bigreqstr.h /main/6 1998/02/09 11:21:51 kaleb $ */
+/* $Xorg: bigreqstr.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

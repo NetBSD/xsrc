@@ -1,4 +1,4 @@
-/* $TOG: XAuth.c /main/12 1998/03/10 10:44:20 barstow $ */
+/* $Xorg: XAuth.c,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

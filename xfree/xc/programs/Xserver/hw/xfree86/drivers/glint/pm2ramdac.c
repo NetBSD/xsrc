@@ -24,7 +24,7 @@
  * Permedia2OutIndReg() and Permedia2InIndReg() are used to access 
  * the indirect Permedia2 RAMDAC registers only.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2ramdac.c,v 1.9 1999/07/04 06:39:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2ramdac.c,v 1.11 2000/12/22 10:39:24 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -104,16 +104,21 @@ void Permedia2LoadPalette(
     VisualPtr pVisual
 ){
     GLINTPtr pGlint = GLINTPTR(pScrn);
-    int i, index, shift;
+    int i, index, shift = 0, j, repeat = 1;
 
-    shift = (pScrn->depth == 15) ? 3 : 0;
+    if (pScrn->depth == 15) {
+	repeat = 8;
+	shift = 3;
+    }
 
     for(i = 0; i < numColors; i++) {
 	index = indices[i];
-	Permedia2WriteAddress(pScrn, index << shift);
-	Permedia2WriteData(pScrn, colors[index].red);
-	Permedia2WriteData(pScrn, colors[index].green);
-	Permedia2WriteData(pScrn, colors[index].blue);
+	for (j = 0; j < repeat; j++) {
+	    Permedia2WriteAddress(pScrn, (index << shift)+j);
+	    Permedia2WriteData(pScrn, colors[index].red);
+	    Permedia2WriteData(pScrn, colors[index].green);
+	    Permedia2WriteData(pScrn, colors[index].blue);
+	}
 	/* for video i/o */
         GLINT_SLOW_WRITE_REG(index, TexelLUTIndex);
 	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
@@ -132,14 +137,16 @@ void Permedia2LoadPalette16(
     VisualPtr pVisual
 ){
     GLINTPtr pGlint = GLINTPTR(pScrn);
-    int i, index;
+    int i, index, j;
 
     for(i = 0; i < numColors; i++) {
 	index = indices[i];
-	Permedia2WriteAddress(pScrn, index << 2);
-	Permedia2WriteData(pScrn, colors[index >> 1].red);
-	Permedia2WriteData(pScrn, colors[index].green);
-	Permedia2WriteData(pScrn, colors[index >> 1].blue);
+	for (j = 0; j < 4; j++) {
+	    Permedia2WriteAddress(pScrn, (index << 2)+j);
+	    Permedia2WriteData(pScrn, colors[index >> 1].red);
+	    Permedia2WriteData(pScrn, colors[index].green);
+	    Permedia2WriteData(pScrn, colors[index >> 1].blue);
+	}
         GLINT_SLOW_WRITE_REG(index, TexelLUTIndex);
 	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
 			     ((colors[index].green & 0xFF) << 8) |
@@ -147,10 +154,12 @@ void Permedia2LoadPalette16(
 			     TexelLUTData);
 
 	if(index <= 31) {
-	    Permedia2WriteAddress(pScrn, index << 3);
-	    Permedia2WriteData(pScrn, colors[index].red);
-	    Permedia2WriteData(pScrn, colors[(index << 1) + 1].green);
-	    Permedia2WriteData(pScrn, colors[index].blue);
+	    for (j = 0; j < 4; j++) {
+	    	Permedia2WriteAddress(pScrn, (index << 3)+j);
+	    	Permedia2WriteData(pScrn, colors[index].red);
+	    	Permedia2WriteData(pScrn, colors[(index << 1) + 1].green);
+	    	Permedia2WriteData(pScrn, colors[index].blue);
+	    }
 	}
     }
 }

@@ -1,4 +1,4 @@
-/* $TOG: set_spcs.c /main/8 1998/05/07 15:14:25 kaleb $ */
+/* $Xorg: set_spcs.c,v 1.3 2000/08/17 19:46:26 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Speedo/set_spcs.c,v 1.3 2001/01/17 19:43:17 dawes Exp $ */
 
 
 /*************************** S E T _ S P C S . C *****************************

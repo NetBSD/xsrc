@@ -1,5 +1,5 @@
 /* OS/2 REXX */
-/* $XFree86: xc/programs/xinit/xinitrc.cmd,v 3.3 1996/08/20 12:33:26 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinitrc.cmd,v 3.5 1997/01/27 08:26:14 dawes Exp $ */
 '@echo off'
 env = 'OS2ENVIRONMENT'
 x11root = VALUE('X11ROOT',,env)

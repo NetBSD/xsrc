@@ -1,4 +1,4 @@
-/* $TOG: hppriv.h /main/3 1998/02/10 13:10:38 kaleb $ */
+/* $Xorg: hppriv.h,v 1.3 2000/08/17 19:48:22 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

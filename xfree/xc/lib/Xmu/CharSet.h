@@ -1,4 +1,4 @@
-/* $TOG: CharSet.h /main/6 1998/02/06 15:41:16 kaleb $ */
+/* $Xorg: CharSet.h,v 1.3 2000/08/17 19:45:59 cpqbld Exp $ */
 
 /* 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/CharSet.h,v 1.5 1998/08/16 10:25:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CharSet.h,v 1.7 2001/01/17 19:42:53 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

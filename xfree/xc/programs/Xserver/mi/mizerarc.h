@@ -20,7 +20,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: mizerarc.h /main/15 1998/02/09 14:49:41 kaleb $ */
+/* $Xorg: mizerarc.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 
 typedef struct {
     int x;

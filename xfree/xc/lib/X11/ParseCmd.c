@@ -1,4 +1,4 @@
-/* $TOG: ParseCmd.c /main/26 1998/02/06 17:46:14 kaleb $ */
+/* $Xorg: ParseCmd.c,v 1.3 2000/08/17 19:44:47 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/ParseCmd.c,v 1.3 2001/01/17 19:41:41 dawes Exp $ */
 
 /* XrmParseCommand()
 

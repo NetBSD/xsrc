@@ -1,18 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.1 2000/08/09 23:40:09 dawes Exp $
-XCOMM
-XCOMM - changes since B20 Cygwin32 release
-XCOMM	- avoided tons of "not in XXX directory" messages;
-XCOMM	- dlls are built stripped;
-XCOMM	- search for cpp in a default location;
-XCOMM	- fixed problem with missing netinet/tcp.h;
-XCOMM - Added AF_UNIX socket support;
-XCOMM	- xterm compiles and works;
-XCOMM	- more libs are built as a DLLs;
-XCOMM	- all DLLs have different base addresses;
-XCOMM - changes since B20 Cygwin32 release
-XCOMM	- dllwrap is used to build DLLs;
-XCOMM - Plan to add WATCOM TCP headers support;
-XCOMM	- gcc -E is invoked instead of cpp;
+XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.16.2.1 2001/05/30 14:29:27 alanh Exp $
 
 #ifndef OSName
 #define OSName                  Cygwin
@@ -24,13 +10,11 @@ XCOMM	- gcc -E is invoked instead of cpp;
 #define OSMajorVersion          1
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion          1
+#define OSMinorVersion          3
 #endif
-#ifndef OSTeenyVersion		2
-#define OSTeenyVersion
+#ifndef OSTeenyVersion
+#define OSTeenyVersion		1
 #endif
-
-XCOMM #define OSDefines	             -DSYSV -DSYSV386		
 
 #define ProjectRoot /usr/X11R6
 
@@ -40,26 +24,39 @@ XCOMM #define OSDefines	             -DSYSV -DSYSV386
 #define UnixCpp
 #endif
 
-#define HasGcc                  YES
-#define HasGcc2                 YES
 #define HasGcc2ForCplusplus     YES
 #define GccUsesGas              YES
 #define UseGas                  YES
 #define GnuCpp                  YES
+#define BootstrapCFlags		-L/lib/automode.o
+
 #define HasShadowPasswd         NO
 #define HasLibCrypt             YES
 #define HasPutenv               YES
 #define HasPoll			NO
-#define HasShm                  NO
+#if UseCygIPC
+# define HasShm			YES
+# define ServerExtraSysLibs	-lcygipc
+#else
+# define HasShm                 NO
+# define ServerExtraSysLibs	/**/
+#endif
+#define HasSnprintf		YES
+
+/*
+ * Cygwin has Tcl/Tk, but you need to keep the version numbers
+ * of the libs in sync.  These version numbers may change
+ * occassionally.
+ */
 #define Hastcl                  YES
 #define Hastk                   YES
 #define TclLibName              tcl80
 #define TkLibName               tk80
+
 #define HasSockets              YES
 #define GzipFontCompression	YES
-#define BuildXKB		YES
-#define BuildXF86MiscExt        YES
-#define BuildXF86VidModeExt     YES   /* need -fpcc-struct-return for gcc-2.95.2 or it will fail*/
+#define HasZlib			YES
+
 #define SharedLibFont           NO
 #define AvoidNullMakeCommand    YES
 #define StripInstalledPrograms  NO
@@ -74,21 +71,19 @@ XCOMM #define OSDefines	             -DSYSV -DSYSV386
 #define ExpandManNames          NO
 #define HasDlopen	        NO
 #define HasGnuMake		YES
-XCOMM #define ExtraLoaderDefines      DlopenHack
-#define DefaultCCOptions        -Wall
-#define DefaultGcc2i386Opt      -O2 
-#define LibraryCDebugFlags      -O2
 #define UseGccMakeDepend	YES
 
-
-
+/*
+ * This options may depend on the state of POSIX thread
+ * support in Cygwin, which is improving as of 2001-04-12.
+ */
 #define ThreadedX               NO
 #define HasThreadSafeAPI        NO
+
 #define LnCmd                   ln -s
 #define CcCmd                   gcc
 #define CpluplusCmd		c++ -fpermissive
 #define AsCmd                   as
-XCOMM #define AsCmd                	  gcc -S
 #define GccGasOption	        -DGCCUSESGAS
 #define AsmDefines	        -DUSE_GAS -DGCCUSESGAS
 #define LdCmd                   ld
@@ -98,18 +93,30 @@ XCOMM #define AsCmd                	  gcc -S
 #define LexCmd                  flex -l
 #define LexLib                  -lfl
 #define HasFlex			YES
+
 #define PreProcessCmd           CcCmd -E
-XCOMM #define StdIncDir               `CcCmd --print-libgcc-file-name | sed ':libgcc.a:../../../../i586-cygwin32/include:'|sed 's,\\\\,/,g'`
-XCOMM #define PostIncDir              `CcCmd --print-libgcc-file-name | sed ':libgcc.a:/include:'|sed 's,\\\\,/,g'`
+
 #define StdIncDir               `CcCmd --print-libgcc-file-name | sed 's,\\\\,/,g' | sed 's,libgcc.a,../../../../i686-pc-cygwin/include,'`
+
 #define PostIncDir              `CcCmd --print-libgcc-file-name | sed 's,\\\\,/,g' | sed 's,libgcc.a,include,'`
+
 #define LdCombineFlags          -r
-#define OptimizedCDebugFlags    -O2 -pedantic -fno-strength-reduce -fpcc-struct-return -fvtable-thunks -m486
-#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_MT -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DX_SOURCE
+
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags	DefaultGcc2i386Opt
+# endif
+
+#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DX_SOURCE
+
 #define XawI18nDefines          -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #define HasWChar32              YES
-#define StandardCppDefines      -traditional StandardDefines
-#define ServerOSDefines         XFree86ServerDefines -DDDXTIME -DFD_SETSIZE=256 -DDXOSINIT 
+#define StandardCppOptions	-traditional
+#if UseCygIPC
+# define StandardCppDefines      -DHAS_SHM StandardDefines
+#else
+# define StandardCppDefines      StandardDefines
+#endif
+#define ServerOSDefines         XFree86ServerDefines -DDDXTIME -DFD_SETSIZE=256 -DDXOSINIT
 #define XkbServerDefines        -DXKB_ALWAYS_USES_SOFT_REPEAT
 #define ServerExtraDefines      -DGCCUSESGAS XFree86ServerDefines
 #define ConnectionFlags         -DTCPCONN -DUNIXCONN
@@ -118,20 +125,119 @@ XCOMM #define PostIncDir              `CcCmd --print-libgcc-file-name | sed ':li
 #define UseRgbTxt                YES
 #define ExtraFilesToClean	  *.obj *.orig *.rej junk.c *.exe *.dll *.lib *~
 
-/* This a must to compile for xfddx display driver, or your server will NOT work on Win32. DO NOT change to NO */
+/*
+ * You'll probably want BuildDebug to be YES if you are debugging :)
+ */
+#define BuildDebug		NO
+#define XFree86Devel		NO
 
-#define BuildSurfLibrary	YES
+/*
+ * Xinerama is multiple monitor support and will require special code,
+ * if it even makes sense to enable such a beast in Cygwin/XFree86.
+ */
+#define BuildXinerama		NO
 
-/* The DRM module requires Linux kernel services, thus useless for CYGWIN compilers*/
+/*
+ * PEX and XIE were deprecated on 2001-05-29, as Keith Packard says,
+ * "they are so broken as to be unusable in real applications," furthermore,
+ * "neither PEX nor XIE have seen any development for almost a decade".
+ * 
+ * XIE is the X Image Extension Protocol, not to be confused with
+ * XInputExt, which is the X Input Extension.
+ */
+#define BuildPexExt		NO
+#define BuildXIE		NO
 
+/*
+ * Rush is a non standard extension for cooperation between the glide
+ * library and the X server.  Cygwin/XFree86 will never need Rush,
+ * as all graphics requests are processed through GDI or DirectDraw.
+ */
+#define BuildXF86RushExt	NO
+
+/*
+ * DPMS is the Display Power Management System.  Cygwin/XFree86 doesn't
+ * own the display hardware, Windows does, so it doesn't make sense
+ * for Cygwin/XFree86 to try to provide power management.
+ */
+#define BuildDPMS		NO
+#define BuildDPMSExt		NO
+#define DPMSDefines		/**/
+
+#define BuildGlxExt             YES
+#define BuildXInputExt		YES
+#define BuildXF86VidModeExt     YES
+#define BuildXF86DGA		NO
+#define BuildXvExt		YES
+#define BuildXF86MiscExt	YES
+#define BuildRender		YES
 #define BuildXF86DRI		NO
 #define BuildXF86DRM		NO
-#define BuildGlxExt		YES
-#define BuildXinrama		YES
+#define BuildXKB		YES
+#define BuildXCMiscExt		YES
+#define BuildTestExt		YES
+#define BuildMITMiscExt		YES
+#define BuildSyncExt		YES
+#define BuildBigReqsExt		YES
+#define BuildEVI		YES
+#define BuildXF86BigfontExt	YES
+#define BuildRECORD		YES
+#define BuildDBE		YES
+#define BuildFontCache		YES
+#define BuildLBX		YES
+#define BuildCup		YES
+#define BuildXCSecurity		YES
+#define BuildAppgroup		YES
+#define BuildShapeExt		YES
+#define BuildScanpci		NO
+
+#define BuildScreenSaverExt	NO
+
+/*
+ * What is Plugin?
+ */
 #define BuildPlugin		NO
-#define BuildDPSLibrary		YES
-XCOMM #define GlxStaticServerLib	YES
-#define DoLoadableServer   NO
+
+/*
+ * DPS is the Adobe Display Postscript (r) library.
+ * It seems that we do not yet have a postscript client library
+ * to work in conjunction with DPS; the remedy to this may be
+ * as simple as flipping a build switch or instaling Ghostscript.
+ * In any case, some work needs to be done before DPS will work. 
+ */
+#define BuildDPS		NO
+
+/*
+ * Doing a loadable server would probably take some extra work.
+ */
+#define DoLoadableServer	NO
+
+/*
+ * Don't build the XFree86 server
+ */
+#define XF86Server		NO
+
+/*
+ * Try to avoid building anything related to graphics cards
+ */
+#define XFShadowFB		NO
+#define XF24_32Bpp		NO
+#define XF8_16Bpp		NO
+#define XF8_32Bpp		NO
+#define XF4Bpp			NO
+#define XF1Bpp			NO
+#define XF86VgaHw		NO
+#define XF86FBDevHw		NO
+#define XF86XAA			NO
+#define XF86Ramdac		NO
+#define XF86I2C			NO
+#define XF86DDC			NO
+#define XF86RAC			NO
+#define XF86Int10		NO
+
+#define XF86AFB			NO
+
+#define XF86CardDrivers		/**/
 
 /* Some of these man page defaults are overriden in the above OS sections */
 #ifndef ManSuffix
@@ -153,13 +259,19 @@ XCOMM #define GlxStaticServerLib	YES
 # define FileManDir     $(MANSOURCEPATH)5
 #endif
 
+/* we don't need -lm */
+#define MathLibrary             /**/
 #define TermcapLibrary -ltermcap
-#define XnestServer	YES
-#define BuildXprint	YES
-#define XprtServer	YES
+#define XnestServer			YES
+#define BuildXprint			YES
+#define XprtServer			YES
 #define XVirtualFramebufferServer	YES
-#define XWinServer	YES
-#define UseSmartScheduler       NO
+#define XWinServer			YES
+
+/*
+ * Why we don't use the smart scheduler?
+ */
+#define UseSmartScheduler		NO
 
 /* --unix option of cygwin make fools the standard MakeFlagsToShellFlags macro */
 #define MakeFlagsToShellFlags(makeflags,shellcmd)\
@@ -168,4 +280,3 @@ XCOMM #define GlxStaticServerLib	YES
 
 #include <cygwin.rules>
 #include <xfree86.cf>
-/*#include <xttMod.tmpl>*/

@@ -1,4 +1,4 @@
-/* $TOG: xkbInit.c /main/25 1997/09/26 14:26:56 kaleb $ */
+/* $Xorg: xkbInit.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.16 2000/04/04 19:25:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.18 2001/01/17 22:37:15 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/* $TOG: pl_util.h /main/7 1998/02/06 16:12:37 kaleb $ */
+/* $Xorg: pl_util.h,v 1.3 2000/08/17 19:44:28 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: misc.c /main/30 1998/02/06 13:57:24 kaleb $ */
+/* $Xorg: misc.c,v 1.3 2000/08/17 19:44:15 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/ICE/misc.c,v 1.3 2001/01/17 19:41:29 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

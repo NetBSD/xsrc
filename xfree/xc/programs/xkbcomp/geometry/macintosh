@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/geometry/macintosh,v 1.1 1999/05/23 05:27:50 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/geometry/macintosh,v 1.2 2000/08/26 04:30:59 dawes Exp $
 default xkb_geometry "macintosh" {
 
     description= "Apple Extended Keyboard II";

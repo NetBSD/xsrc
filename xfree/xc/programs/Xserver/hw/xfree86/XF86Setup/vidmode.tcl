@@ -1,4 +1,4 @@
-# $XFree86$
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/vidmode.tcl,v 1.1 1999/04/05 07:13:02 dawes Exp $
 
 proc VidMode_describe { mode } {
 	set clock	[lindex $mode 0]

@@ -1,0 +1,29 @@
+XCOMM $XFree86: xc/lib/XvMC/Imakefile,v 1.2 2001/04/01 14:00:02 tsi Exp $
+
+#define DoNormalLib NormalLibXvMC
+#define DoSharedLib SharedLibXvMC
+#define DoDebugLib DebugLibXvMC
+#define DoProfileLib ProfileLibXvMC
+#define LibName XvMC
+#define SoRev SOXVMCREV
+#define LibHeaders NO
+
+#include <Threads.tmpl>
+
+#ifdef SharedXvMCReqs
+REQUIREDLIBS = SharedXvMCReqs
+#endif
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+      DEFINES = $(ALLOC_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
+         SRCS = XvMC.c
+         OBJS = XvMC.o
+     LINTLIBS = $(LINTXLIB)
+
+#include <Library.tmpl>
+
+DependTarget()

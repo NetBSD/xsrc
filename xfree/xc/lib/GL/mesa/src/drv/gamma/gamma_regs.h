@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_regs.h,v 1.2 2000/02/23 04:46:45 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_regs.h,v 1.4 2001/02/07 13:26:17 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -487,8 +487,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* LightingMode */
 #define LightingModeDisable           0x00000000
 #define LightingModeEnable            0x00000001
-#define LightingModeTwoSides          0x00000002
+#define LightingModeTwoSides          0x00000004
 #define LightingModeLocalViewer       0x00000008
+#define LightingModeSpecularEnable    0x00008000
 
 /* Light0Mode */
 #define Light0ModeDisable             0x00000000
@@ -552,6 +553,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define PM_AntialiasQuality_4x4       0x00000000
 #define PM_AntialiasQuality_8x8       0x00000002
 
+/* LogicalOpMode */
+#define LogicalOpModeDisable          0x00000000
+#define LogicalOpModeEnable           0x00000001
+#define LogicalOpModeMask             0x0000001e
+
 /* LineMode */
 #define LM_StippleDisable             0x00000000
 #define LM_StippleEnable              0x00000001
@@ -577,6 +583,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define XM_XformNormals               0x00000004
 #define XM_XformFaceNormals           0x00000008
 #define XM_XformTexture               0x00000010
+#define XM_XMask                      0x00000013
 #define XM_TexGenModeS_None           0x00000000
 #define XM_TexGenModeS_ObjLinear      0x00000020
 #define XM_TexGenModeS_EyeLinear      0x00000040

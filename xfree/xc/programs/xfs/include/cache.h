@@ -1,4 +1,4 @@
-/* $TOG: cache.h /main/6 1998/02/11 10:03:18 kaleb $ */
+/* $Xorg: cache.h,v 1.3 2000/08/17 19:54:21 cpqbld Exp $ */
 /* 
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)cache.h	4.1	91/05/02
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfs/include/cache.h,v 1.4 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef _CACHE_H_
 #define	_CACHE_H_

@@ -1,4 +1,4 @@
-/* $TOG: ddpex2.h /main/3 1998/02/10 12:38:12 kaleb $ */
+/* $Xorg: ddpex2.h,v 1.5 2000/08/17 19:47:02 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -186,7 +186,11 @@ typedef struct {
 } miLightStateStruct;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    ddUSHORT		c_operator;
+#else
     ddUSHORT		operator;
+#endif
     listofObj		*halfspaces;
 } miMCVolume_Struct;
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.h,v 1.5 2000/02/25 21:03:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.h,v 1.7 2001/05/16 06:48:10 keithp Exp $ */
 
 #ifndef __RENDITION_H__
 #define __RENDITION_H__
@@ -51,21 +51,9 @@
 /* Needed for replacement LoadPalette function for Gamma Correction */
 #include "xf86cmap.h"
 
-/* Needed for the 1 and 4 bpp framebuffers */
-#include "xf1bpp.h"
-#include "xf4bpp.h"
+/* Drivers using fb need this */
 
-/* Drivers using cfb need this */
-
-#undef PSZ
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-
-/* Drivers supporting bpp 16, 24 or 32 with cfb need these */
-
-#include "cfb16.h"
-#include "cfb32.h"
+#include "fb.h"
 
 /* Drivers using the XAA interface ... */
 #include "xaa.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.c,v 1.2 2000/08/25 13:42:31 dawes Exp $ */ /* -*- c-basic-offset: 3 -*- */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.c,v 1.6 2001/04/10 17:53:07 dawes Exp $ */ /* -*- c-basic-offset: 3 -*- */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,8 +28,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
+ *   Michel Dänzer <michdaen@iiic.ethz.ch>
  *
  */
 
@@ -49,25 +50,38 @@ static struct {
    quad_func		quad;
 } rast_tab[R128_MAX_TRIFUNC];
 
-#define R128_COLOR(to, from)                                                \
-do {                                                                        \
-   (to)[0] = (from)[2];                                                    \
-   (to)[1] = (from)[1];                                                    \
-   (to)[2] = (from)[0];                                                    \
-   (to)[3] = (from)[3];                                                    \
+#if X_BYTE_ORDER ==  X_LITTLE_ENDIAN
+#define R128_COLOR( to, from )						\
+do {									\
+   (to)[0] = (from)[2];							\
+   (to)[1] = (from)[1];							\
+   (to)[2] = (from)[0];							\
+   (to)[3] = (from)[3];							\
 } while (0)
+#else
+#define R128_COLOR( to, from )						\
+do {									\
+   (to)[0] = (from)[3];							\
+   (to)[1] = (from)[0];							\
+   (to)[2] = (from)[1];							\
+   (to)[3] = (from)[2];							\
+} while (0)
+#endif
 
 
 static void r128_null_quad( GLcontext *ctx, GLuint v0,
-			    GLuint v1, GLuint v2, GLuint v3, GLuint pv ) {
+			    GLuint v1, GLuint v2, GLuint v3, GLuint pv )
+{
 }
 static void r128_null_triangle( GLcontext *ctx, GLuint v0,
-				GLuint v1, GLuint v2, GLuint pv ) {
+				GLuint v1, GLuint v2, GLuint pv )
+{
 }
-static void r128_null_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv ) {
+static void r128_null_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
+{
 }
-
-static void r128_null_points( GLcontext *ctx, GLuint first, GLuint last ) {
+static void r128_null_points( GLcontext *ctx, GLuint first, GLuint last )
+{
 }
 
 static void r128PrintRenderState( const char *msg, GLuint state )
@@ -114,10 +128,9 @@ static void r128PrintRenderState( const char *msg, GLuint state )
 #include "r128_tritmp.h"
 
 
-/* Initialize the table of points, line and triangle drawing functions */
 void r128DDTriangleFuncsInit( void )
 {
-   int i;
+   GLint i;
 
    init();
    init_flat();
@@ -128,12 +141,12 @@ void r128DDTriangleFuncsInit( void )
    init_twoside_offset();
    init_twoside_offset_flat();
 
-   for ( i = 0 ; i < 0x20 ; i++ ) {
-      if ( (i & (R128_NODRAW_BIT | R128_FALLBACK_BIT)) == R128_NODRAW_BIT ) {
-	 rast_tab[i].points   = r128_null_points;
-	 rast_tab[i].line     = r128_null_line;
-	 rast_tab[i].triangle = r128_null_triangle;
-	 rast_tab[i].quad     = r128_null_quad;
+   for ( i = 0 ; i < R128_MAX_TRIFUNC ; i++ ) {
+      if ( i & R128_NODRAW_BIT ) {
+	 rast_tab[i].points	= r128_null_points;
+	 rast_tab[i].line	= r128_null_line;
+	 rast_tab[i].triangle	= r128_null_triangle;
+	 rast_tab[i].quad	= r128_null_quad;
       }
    }
 }
@@ -147,7 +160,7 @@ void r128DDTriangleFuncsInit( void )
 #define LINE_FALLBACK	(ALL_FALLBACK | DD_LINE_SMOOTH | DD_LINE_STIPPLE)
 #define TRI_FALLBACK	(ALL_FALLBACK | DD_TRI_SMOOTH | DD_TRI_STIPPLE | DD_TRI_UNFILLED)
 #define ANY_FALLBACK	(POINT_FALLBACK | LINE_FALLBACK | TRI_FALLBACK)
-#define ANY_RASTER_FLAGS (/*DD_FLATSHADE |*/ DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET | DD_Z_NEVER)
+#define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET | DD_Z_NEVER)
 
 /* Setup the Point, Line, Triangle and Quad functions based on the
  * current rendering state.  Wherever possible, use the hardware to
@@ -155,12 +168,12 @@ void r128DDTriangleFuncsInit( void )
  */
 void r128DDChooseRenderState( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint flags = ctx->TriangleCaps;
-   CARD32 index = 0;
+   GLuint index = 0;
 
-   if ( r128ctx->Fallback ) {
-      r128ctx->RenderIndex = R128_FALLBACK_BIT;
+   if ( rmesa->Fallback ) {
+      rmesa->RenderIndex = R128_FALLBACK_BIT;
       return;
    }
 
@@ -171,37 +184,38 @@ void r128DDChooseRenderState( GLcontext *ctx )
       if ( flags & DD_Z_NEVER )			index |= R128_NODRAW_BIT;
    }
 
-   r128ctx->PointsFunc = rast_tab[index].points;
-   r128ctx->LineFunc = rast_tab[index].line;
-   r128ctx->TriangleFunc = rast_tab[index].triangle;
-   r128ctx->QuadFunc = rast_tab[index].quad;
+   rmesa->PointsFunc = rast_tab[index].points;
+   rmesa->LineFunc = rast_tab[index].line;
+   rmesa->TriangleFunc = rast_tab[index].triangle;
+   rmesa->QuadFunc = rast_tab[index].quad;
 
-   r128ctx->RenderIndex = index;
-   r128ctx->IndirectTriangles = 0;
+   rmesa->RenderIndex = index;
+   rmesa->IndirectTriangles = 0;
 
    if ( flags & ANY_FALLBACK ) {
-      r128ctx->RenderIndex |= R128_FALLBACK_BIT;
-
       if ( flags & POINT_FALLBACK ) {
-	 r128ctx->PointsFunc = 0;
-	 r128ctx->IndirectTriangles |= DD_POINT_SW_RASTERIZE;
+	 rmesa->RenderIndex |= R128_FALLBACK_BIT;
+	 rmesa->PointsFunc = 0;
+	 rmesa->IndirectTriangles |= DD_POINT_SW_RASTERIZE;
       }
 
       if ( flags & LINE_FALLBACK ) {
-	 r128ctx->LineFunc = 0;
-	 r128ctx->IndirectTriangles |= DD_LINE_SW_RASTERIZE;
+	 rmesa->RenderIndex |= R128_FALLBACK_BIT;
+	 rmesa->LineFunc = 0;
+	 rmesa->IndirectTriangles |= DD_LINE_SW_RASTERIZE;
       }
 
       if ( flags & TRI_FALLBACK ) {
-	 r128ctx->TriangleFunc = 0;
-	 r128ctx->QuadFunc = 0;
-	 r128ctx->IndirectTriangles |= (DD_TRI_SW_RASTERIZE |
-					DD_QUAD_SW_RASTERIZE);
+	 rmesa->RenderIndex |= R128_FALLBACK_BIT;
+	 rmesa->TriangleFunc = 0;
+	 rmesa->QuadFunc = 0;
+	 rmesa->IndirectTriangles |= (DD_TRI_SW_RASTERIZE |
+				      DD_QUAD_SW_RASTERIZE);
       }
    }
 
    if ( 0 ) {
       gl_print_tri_caps( "tricaps", ctx->TriangleCaps );
-      r128PrintRenderState( "r128 render state", r128ctx->RenderIndex );
+      r128PrintRenderState( "r128 render state", rmesa->RenderIndex );
    }
 }

@@ -1,4 +1,7 @@
 .\"
+.\" $XFree86: xc/doc/man/Xi/XGrDvBut.man,v 1.2 2001/01/27 18:20:21 dawes Exp $
+.\"
+.\"
 .\" Copyright ([\d,\s]*) by Hewlett-Packard Company, Ardent Computer, 
 .\" 
 .\" Permission to use, copy, modify, distribute, and sell this documentation 
@@ -8,9 +11,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $TOG: XGrDvBut.man /main/9 1997/11/04 20:46:51 kaleb $
+.\" $Xorg: XGrDvBut.man,v 1.3 2000/08/17 19:41:56 cpqbld Exp $
 .ds xL Programming With Xlib
-.TH XGrabDeviceButton 3X11 "Release 6.4" "X Version 11" "X FUNCTIONS"
+.TH XGrabDeviceButton 3X11 __xorgversion__ "X FUNCTIONS"
 .SH NAME
 XGrabDeviceButton, XUngrabDeviceButton \- grab/ungrab extension input device buttons
 .SH SYNTAX

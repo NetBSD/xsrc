@@ -1,4 +1,4 @@
-/* $TOG: FSQXInfo.c /main/6 1998/02/06 13:44:01 kaleb $ */
+/* $Xorg: FSQXInfo.c,v 1.3 2000/08/17 19:44:04 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

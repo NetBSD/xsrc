@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatritmp.h,v 1.4 2000/08/28 02:43:13 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatritmp.h,v 1.6 2001/03/21 16:14:22 dawes Exp $ */
 
 static __inline void TAG(triangle)(GLcontext *ctx,
 				   GLuint e0, GLuint e1, GLuint e2,
@@ -16,6 +16,7 @@ static __inline void TAG(triangle)(GLcontext *ctx,
 
 #if (IND & (MGA_TWOSIDE_BIT | MGA_FLAT_BIT))
    GLuint c[3];
+   GLuint s[3];
 #endif
 
    v[0] = &mgaverts[e0];
@@ -26,6 +27,9 @@ static __inline void TAG(triangle)(GLcontext *ctx,
    c[0] = v[0]->ui[4];
    c[1] = v[1]->ui[4];
    c[2] = v[2]->ui[4];
+   s[0] = v[0]->ui[5];
+   s[1] = v[1]->ui[5];
+   s[2] = v[2]->ui[5];
 #endif
 
 
@@ -41,13 +45,19 @@ static __inline void TAG(triangle)(GLcontext *ctx,
       {
 	 GLuint  facing        = (cc > 0.0) ^ ctx->Polygon.FrontBit;
 	 GLubyte (*vbcolor)[4] = VB->Color[facing]->data;
+	 GLubyte (*vbspec)[4] = VB->Spec[facing];
 	 if (IND & MGA_FLAT_BIT) {
 	    MGA_COLOR((char *)&v[0]->ui[4], vbcolor[pv]);
 	    v[2]->ui[4] = v[1]->ui[4] = v[0]->ui[4];
+            MGA_COLOR3((char *)&v[0]->ui[5], vbspec[pv]);
+	    v[2]->ui[5] = v[1]->ui[5] = v[0]->ui[5];
 	 } else {
 	    MGA_COLOR((char *)&v[0]->ui[4], vbcolor[e0]);
 	    MGA_COLOR((char *)&v[1]->ui[4], vbcolor[e1]);
 	    MGA_COLOR((char *)&v[2]->ui[4], vbcolor[e2]);
+	    MGA_COLOR3((char *)&v[0]->ui[5], vbspec[e0]);
+	    MGA_COLOR3((char *)&v[1]->ui[5], vbspec[e1]);
+	    MGA_COLOR3((char *)&v[2]->ui[5], vbspec[e2]);
 	 }
       }
 #endif
@@ -79,9 +89,13 @@ static __inline void TAG(triangle)(GLcontext *ctx,
 #elif (IND & MGA_FLAT_BIT)
    {
       GLuint color = mgaverts[pv].ui[4];
+      GLuint spec = mgaverts[pv].ui[5];
       v[0]->ui[4] = color;
       v[1]->ui[4] = color;
       v[2]->ui[4] = color;
+      v[0]->ui[5] = spec;
+      v[1]->ui[5] = spec;
+      v[2]->ui[5] = spec;
    }
 #endif
 
@@ -97,6 +111,9 @@ static __inline void TAG(triangle)(GLcontext *ctx,
    v[0]->ui[4] = c[0];
    v[1]->ui[4] = c[1];
    v[2]->ui[4] = c[2];    
+   v[0]->ui[5] = s[0];
+   v[1]->ui[5] = s[1];
+   v[2]->ui[5] = s[2];    
 #endif
 
 }
@@ -120,25 +137,34 @@ static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
    float width = ctx->Line.Width;
    GLfloat z0, z1;
    GLuint c0, c1;
+   GLuint s0, s1;
    mgaVertex *vert0 = &mgaVB[v0];
    mgaVertex *vert1 = &mgaVB[v1];
 
-
    if (IND & MGA_TWOSIDE_BIT) {
       GLubyte (*vbcolor)[4] = ctx->VB->ColorPtr->data;
+      GLubyte (*vbspec)[4] = ctx->VB->Specular;
 
       if (IND & MGA_FLAT_BIT) {
 	 MGA_COLOR((char *)&vert0->v.color,vbcolor[pv]);
 	 *(int *)&vert1->v.color = *(int *)&vert0->v.color;
+         MGA_COLOR3((char *)&vert0->v.specular, vbspec[pv]);
+         *(int *)&vert1->v.specular = *(int *)&vert0->v.specular;
       } else {
 	 MGA_COLOR((char *)&vert0->v.color,vbcolor[v0]);
 	 MGA_COLOR((char *)&vert1->v.color,vbcolor[v1]);
+         MGA_COLOR3((char *)&vert0->v.specular, vbspec[v0]);
+         MGA_COLOR3((char *)&vert1->v.specular, vbspec[v1]);
       }
    } else if (IND & MGA_FLAT_BIT) {
       c0 = *(GLuint *) &(vert0->v.color);
       c1 = *(GLuint *) &(vert1->v.color);
       *(int *)&vert0->v.color = 
 	 *(int *)&vert1->v.color = *(int *)&mgaVB[pv].v.color;
+      s0 = *(GLuint *) &(vert0->v.specular);
+      s1 = *(GLuint *) &(vert1->v.specular);
+      *(int *)&vert0->v.specular = 
+         *(int *)&vert1->v.specular = *(int *)&mgaVB[pv].v.specular;
    }
 
    if (IND & MGA_OFFSET_BIT) {
@@ -159,6 +185,8 @@ static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
    if ((IND & MGA_FLAT_BIT) && !(IND & MGA_TWOSIDE_BIT)) {
       *(GLuint *) &(vert0->v.color) = c0;
       *(GLuint *) &(vert1->v.color) = c1;
+      *(GLuint *) &(vert0->v.specular) = s0;
+      *(GLuint *) &(vert1->v.specular) = s1;
    }
 }
 

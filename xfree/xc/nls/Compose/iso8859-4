@@ -1,15 +1,15 @@
-# $XFree86: xc/nls/Compose/iso8859-4,v 1.1 1998/01/11 03:48:18 dawes Exp $
-#
-# ISO 8859-4 (Latin4) Compose Sequence
-#
-# Sequence Definition
-#
-# <Multi_key> Means <Compose>
-# Special Character
-# Right-hand side (Accented Alphabet)
-# These compose sequences are pure supposition on my part.
-# It would be nice to know what the real cultural conventions
-# are for compose sequences.
+XCOMM $XFree86: xc/nls/Compose/iso8859-4,v 1.3 2001/04/26 21:09:40 dawes Exp $
+XCOMM
+XCOMM ISO 8859-4 (Latin4) Compose Sequence
+XCOMM
+XCOMM Sequence Definition
+XCOMM
+XCOMM <Multi_key> Means <Compose>
+XCOMM Special Character
+XCOMM Right-hand side (Accented Alphabet)
+XCOMM These compose sequences are pure supposition on my part.
+XCOMM It would be nice to know what the real cultural conventions
+XCOMM are for compose sequences.
 <Multi_key> <A> <comma>			: "\241"	Aogonek
 <Multi_key> <comma> <A>			: "\241"	Aogonek
 <Multi_key> <k> <k>			: "\242"	kra
@@ -353,4 +353,4 @@
 <dead_tilde> <u>			: "\375"	utilde
 <dead_tilde> <asciitilde>		: "~"		asciitilde
 <dead_tilde> <dead_tilde>		: "~"		asciitilde
-# End of Sequence Definition
+XCOMM End of Sequence Definition

@@ -1,4 +1,4 @@
-.\" $TOG: Xmbuf.man /main/8 1997/11/04 20:43:04 kaleb $
+.\" $Xorg: Xmbuf.man,v 1.3 2000/08/17 19:41:54 cpqbld Exp $
 .\" Copyright (c) 1989, 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
@@ -33,17 +33,20 @@
 .\" this document.  This documentation is provided "as is"
 .\" without express or implied warranty.
 .\" 
+.\"
+.\" $XFree86: xc/doc/man/Xext/Xmbuf.man,v 1.3 2001/02/07 22:35:21 tsi Exp $
+.\"
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XMBUF 3X11 "Release 6.4" "X Version 11" "X FUNCTIONS"
+.TH XMBUF 3X11 __xorgversion__ "X FUNCTIONS"
 .SH NAME
 XmbufQueryExtension, XmbufGetVersion, XmbufCreateBuffers, XmbufDestroyBuffers, XmbufDisplayBuffers, XmbufGetWindowAttributes, XmbufChangeWindowAttributes, XmbufGetBufferAttributes, XmbufChangeBufferAttributes, XmbufGetScreenInfo, XmbufCreateStereoWindow - X multibuffering functions
 .SH SYNTAX
 .nf
 .LP
-#include <X11/extensions/multibuf.h>
+\&#include <X11/extensions/multibuf.h>
 .LP
 Bool XmbufQueryExtension(
     Display *dpy,

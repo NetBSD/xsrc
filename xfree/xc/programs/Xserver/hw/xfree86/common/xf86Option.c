@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.20 2000/08/09 20:33:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.23 2001/05/04 19:05:30 dawes Exp $ */
 
 /*
  * Copyright (c) 1998 by The XFree86 Project, Inc.
@@ -151,6 +151,19 @@ xf86SetIntOption(pointer optlist, const char *name, int deflt)
     o.type = OPTV_INTEGER;
     if (ParseOptionValue(-1, optlist, &o))
 	deflt = o.value.num;
+    return deflt;
+}
+
+
+double
+xf86SetRealOption(pointer optlist, const char *name, double deflt)
+{
+    OptionInfoRec o;
+
+    o.name = name;
+    o.type = OPTV_REAL;
+    if (ParseOptionValue(-1, optlist, &o))
+	deflt = o.value.realnum;
     return deflt;
 }
 
@@ -560,9 +573,9 @@ xf86ProcessOptions(int scrnIndex, pointer options, OptionInfoPtr optinfo)
 
 
 OptionInfoPtr
-xf86TokenToOptinfo(OptionInfoPtr table, int token)
+xf86TokenToOptinfo(const OptionInfoRec *table, int token)
 {
-    OptionInfoPtr p;
+    const OptionInfoRec *p;
 
     for (p = table; p->token >= 0 && p->token != token; p++)
 	;
@@ -570,14 +583,14 @@ xf86TokenToOptinfo(OptionInfoPtr table, int token)
     if (p->token < 0)
 	return NULL;
     else
-	return p;
+	return (OptionInfoPtr)p;
 }
 
 
 const char *
-xf86TokenToOptName(OptionInfoPtr table, int token)
+xf86TokenToOptName(const OptionInfoRec *table, int token)
 {
-    OptionInfoPtr p;
+    const OptionInfoRec *p;
 
     p = xf86TokenToOptinfo(table, token);
     return p->name;
@@ -585,7 +598,7 @@ xf86TokenToOptName(OptionInfoPtr table, int token)
 
 
 Bool
-xf86IsOptionSet(OptionInfoPtr table, int token)
+xf86IsOptionSet(const OptionInfoRec *table, int token)
 {
     OptionInfoPtr p;
 
@@ -595,7 +608,7 @@ xf86IsOptionSet(OptionInfoPtr table, int token)
 
 
 char *
-xf86GetOptValString(OptionInfoPtr table, int token)
+xf86GetOptValString(const OptionInfoRec *table, int token)
 {
     OptionInfoPtr p;
 
@@ -608,7 +621,7 @@ xf86GetOptValString(OptionInfoPtr table, int token)
 
 
 Bool
-xf86GetOptValInteger(OptionInfoPtr table, int token, int *value)
+xf86GetOptValInteger(const OptionInfoRec *table, int token, int *value)
 {
     OptionInfoPtr p;
 
@@ -622,7 +635,7 @@ xf86GetOptValInteger(OptionInfoPtr table, int token, int *value)
 
 
 Bool
-xf86GetOptValULong(OptionInfoPtr table, int token, unsigned long *value)
+xf86GetOptValULong(const OptionInfoRec *table, int token, unsigned long *value)
 {
     OptionInfoPtr p;
 
@@ -636,7 +649,7 @@ xf86GetOptValULong(OptionInfoPtr table, int token, unsigned long *value)
 
 
 Bool
-xf86GetOptValReal(OptionInfoPtr table, int token, double *value)
+xf86GetOptValReal(const OptionInfoRec *table, int token, double *value)
 {
     OptionInfoPtr p;
 
@@ -650,8 +663,8 @@ xf86GetOptValReal(OptionInfoPtr table, int token, double *value)
 
 
 Bool
-xf86GetOptValFreq(OptionInfoPtr table, int token, OptFreqUnits expectedUnits,
-		  double *value)
+xf86GetOptValFreq(const OptionInfoRec *table, int token,
+		  OptFreqUnits expectedUnits, double *value)
 {
     OptionInfoPtr p;
 
@@ -698,7 +711,7 @@ xf86GetOptValFreq(OptionInfoPtr table, int token, OptFreqUnits expectedUnits,
 
 
 Bool
-xf86GetOptValBool(OptionInfoPtr table, int token, Bool *value)
+xf86GetOptValBool(const OptionInfoRec *table, int token, Bool *value)
 {
     OptionInfoPtr p;
 
@@ -712,7 +725,7 @@ xf86GetOptValBool(OptionInfoPtr table, int token, Bool *value)
 
 
 Bool
-xf86ReturnOptValBool(OptionInfoPtr table, int token, Bool def)
+xf86ReturnOptValBool(const OptionInfoRec *table, int token, Bool def)
 {
     OptionInfoPtr p;
 

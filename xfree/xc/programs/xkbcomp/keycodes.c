@@ -1,4 +1,4 @@
-/* $TOG: keycodes.c /main/13 1997/06/13 05:59:12 kaleb $ */
+/* $Xorg: keycodes.c,v 1.4 2000/08/17 19:54:32 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -402,7 +402,6 @@ unsigned long	lval;
 	    return True;
 	}
 	else {
-	    int old;
 	    if (reportCollisions) {
 		WARN1("Multiple names for keycode %d\n",kc);
 		ACTION2("Using <%s>, ignoring <%s>\n",name,buf);

@@ -20,20 +20,10 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahglyph.h"
 #include "ahangles.h"
 #include "ahglobal.h"
-
-#else
-
-#include <autohint/ahglyph.h>
-#include <autohint/ahangles.h>
-#include <autohint/ahglobal.h>
-
-#endif
-
 
 #include <stdio.h>
 
@@ -1119,7 +1109,7 @@
         }
       }
 
-      *p_num_edges = edge_limit - edges;
+      *p_num_edges = (FT_Int)( edge_limit - edges );
 
 
       /*********************************************************************/

@@ -1,4 +1,4 @@
-/* $TOG: PolyTxt.c /main/15 1998/02/06 17:47:21 kaleb $ */
+/* $Xorg: PolyTxt.c,v 1.3 2000/08/17 19:44:48 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/PolyTxt.c,v 3.2 1998/10/03 08:41:21 dawes Exp $ */
+/* $XFree86: xc/lib/X11/PolyTxt.c,v 3.4 2001/01/17 19:41:41 dawes Exp $ */
 
 #include "Xlibint.h"
 

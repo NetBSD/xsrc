@@ -1,4 +1,4 @@
-/* $TOG: XKB.c /main/23 1997/11/10 15:13:33 kaleb $ */
+/* $Xorg: XKB.c,v 1.3 2000/08/17 19:44:59 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/XKB.c,v 1.5 2001/02/20 16:43:14 paulo Exp $ */
 
 #include <stdio.h>
 #define NEED_REPLIES
@@ -854,9 +854,9 @@ XkbInfoPtr 			xkbi;
     UnlockDisplay(dpy);
     SyncHandle();
     if (ctrls)
-	*ctrls= ((rep.value & XkbPCF_GrabsUseXKBStateMask) |
+	*ctrls= (rep.value & (XkbPCF_GrabsUseXKBStateMask |
 		 XkbPCF_LookupStateWhenGrabbed |
-		 XkbPCF_SendEventUsesXKBState);
+		 XkbPCF_SendEventUsesXKBState));
     return (True);
 }
 

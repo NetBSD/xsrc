@@ -1,4 +1,4 @@
-/* $TOG: InitInput.c /main/12 1998/02/10 13:23:52 kaleb $ */
+/* $Xorg: InitInput.c,v 1.3 2000/08/17 19:48:38 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,10 +22,11 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitInput.c,v 3.4 1998/10/04 09:38:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitInput.c,v 3.7 2001/05/16 08:01:09 alanh Exp $ */
 
 #include "X11/X.h"
 #define NEED_EVENTS
+#include "mi.h"
 #include "X11/Xproto.h"
 #include "scrnintstr.h"
 #include "inputstr.h"
@@ -43,30 +44,6 @@ from The Open Group.
  */
 int xf86bpp = 8;
 #endif
-
-#ifdef __CYGWIN__
-extern void init_mouse( );
-extern void init_keyboard( );
-extern void term_mouse( );
-extern void term_keyboard( );
-extern void get_WinMappings( char *pKeySyms, unsigned char *p_modMap );
-
-
-CARD32 lastEventTime = 0;
-
-int TimeSinceLastInputEvent()
-{
-    if (lastEventTime == 0)
-        lastEventTime = GetTimeInMillis();
-    return GetTimeInMillis() - lastEventTime;
-}
-
-void SetTimeSinceLastInputEvent()
-{
-  lastEventTime = GetTimeInMillis();
-}
-#endif
-
  
 Bool
 LegalModifier(key, pDev)
@@ -284,74 +261,6 @@ GetLK201Mappings(pKeySyms, pModMap)
 #undef INDEX
 }
 
-#ifdef __CYGWIN__
-static int
-winKeybdProc(pDevice, onoff)
-    DeviceIntPtr pDevice;
-    int onoff;
-{
-    KeySymsRec		keySyms;
-    CARD8 		modMap[MAP_LENGTH];
-    int i;
-    DevicePtr pDev = (DevicePtr)pDevice;
-
-    switch (onoff)
-    {
-    case DEVICE_INIT: 
-	get_WinMappings(&keySyms, modMap);
-	InitKeyboardDeviceStruct(pDev, &keySyms, modMap,
-			(BellProcPtr)NoopDDA, (KbdCtrlProcPtr)NoopDDA);
-	init_keyboard();
-	break;
-    case DEVICE_ON: 
-	pDev->on = TRUE;
-	break;
-    case DEVICE_OFF: 
-	pDev->on = FALSE;
-	break;
-    case DEVICE_CLOSE:
-	term_keyboard();
-	break;
-    }
-    return Success;
-}
-
-static int
-winMouseProc(pDevice, onoff)
-    DeviceIntPtr pDevice;
-    int onoff;
-{
-    BYTE map[4];
-    DevicePtr pDev = (DevicePtr)pDevice;
-
-    switch (onoff)
-    {
-    case DEVICE_INIT:
-	    map[1] = 1;
-	    map[2] = 2;
-	    map[3] = 3;
-	    InitPointerDeviceStruct(pDev, map, 3, miPointerGetMotionEvents,
-		(PtrCtrlProcPtr)NoopDDA, miPointerGetMotionBufferSize());
-		init_mouse();
-	    break;
-
-    case DEVICE_ON:
-	pDev->on = TRUE;
-        break;
-
-    case DEVICE_OFF:
-	pDev->on = FALSE;
-	break;
-
-    case DEVICE_CLOSE:
-	term_mouse();
- 	break;
-    }
-    return Success;
-}
-#endif /* __CYGWIN__ */
-
-
 static int
 vfbKeybdProc(pDevice, onoff)
     DeviceIntPtr pDevice;
@@ -359,7 +268,6 @@ vfbKeybdProc(pDevice, onoff)
 {
     KeySymsRec		keySyms;
     CARD8 		modMap[MAP_LENGTH];
-    int i;
     DevicePtr pDev = (DevicePtr)pDevice;
 
     switch (onoff)
@@ -424,7 +332,7 @@ InitInput(argc, argv)
     RegisterPointerDevice(p);
     RegisterKeyboardDevice(k);
     miRegisterPointerDevice(screenInfo.screens[0], p);
-    (void)mieqInit (k, p);
+    (void)mieqInit ((DevicePtr) k, (DevicePtr) p);
 }
 
 #ifdef XTESTEXT1

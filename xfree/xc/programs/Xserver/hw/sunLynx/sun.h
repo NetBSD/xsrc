@@ -1,10 +1,6 @@
-/* $XConsortium: sun.h /main/1 1996/10/31 14:20:43 kaleb $ */
-
-
+/* $Xorg: sun.h,v 1.3 2000/08/17 19:48:36 cpqbld Exp $ */
 
 /* This is sun.h modified for LynxOS */
-
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.4 1997/06/03 14:11:09 hohndel Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -17,6 +13,7 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.6 2001/01/17 22:36:52 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_

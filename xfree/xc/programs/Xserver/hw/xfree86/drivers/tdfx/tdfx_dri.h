@@ -1,9 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.h,v 1.2 1999/12/14 01:33:49 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.h,v 1.5 2001/03/21 17:02:26 dawes Exp $ */
 
 #ifndef _TDFX_DRI_
 #define _TDFX_DRI_
 
-#include <xf86drm.h>
+#include "xf86drm.h"
 
 typedef struct {
   drmHandle regs;
@@ -22,6 +22,7 @@ typedef struct {
   int depthOffset;
   int textureOffset;
   int textureSize;
+  unsigned int sarea_priv_offset;
 } TDFXDRIRec, *TDFXDRIPtr;
 
 #endif

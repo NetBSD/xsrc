@@ -1,19 +1,16 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/Imakefile,v 1.11 2000/02/25 21:02:54 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/Imakefile,v 1.17 2001/04/01 20:51:25 tsi Exp $
 XCOMM
 XCOMM This is an Imakefile for the NVIDIA driver.  
 XCOMM
-
-
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/Imakefile,v 1.11 2000/02/25 21:02:54 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
 
 SRCS = nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
-       nv_shadow.c riva_hw.c 
+       nv_shadow.c riva_hw.c nv_video.c
 
 OBJS = nv_driver.o nv_dac.o nv_setup.o nv_cursor.o nv_xaa.o nv_dga.o \
-       nv_shadow.o riva_hw.o
+       nv_shadow.o riva_hw.o nv_video.o
 
 
 #if defined(XF86DriverSDK)
@@ -42,7 +39,6 @@ ObjectModuleTarget(nv,$(OBJS))
 InstallObjectModule(nv,$(MODULEDIR),drivers)
 
 #if !defined(XF86DriverSDK)
-CppManTarget(nv,)
 InstallModuleManPage(nv)
 #endif
 
@@ -58,6 +54,7 @@ InstallDriverSDKNonExecFile(nv_include.h,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_local.h,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_proto.h,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_setup.c,$(DRIVERSDKDIR)/drivers/nv)
+InstallDriverSDKNonExecFile(nv_video.c,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_shadow.c,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_type.h,$(DRIVERSDKDIR)/drivers/nv)
 InstallDriverSDKNonExecFile(nv_xaa.c,$(DRIVERSDKDIR)/drivers/nv)

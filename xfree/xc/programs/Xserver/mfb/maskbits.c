@@ -1,4 +1,4 @@
-/* $TOG: maskbits.c /main/18 1998/02/09 14:37:41 kaleb $ */
+/* $Xorg: maskbits.c,v 1.3 2000/08/17 19:53:32 cpqbld Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /*
 
@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/mfb/maskbits.c,v 1.3 1999/04/11 13:11:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/maskbits.c,v 1.5 2001/01/17 22:37:01 dawes Exp $ */
 
 #include "maskbits.h"
 #include "servermd.h"

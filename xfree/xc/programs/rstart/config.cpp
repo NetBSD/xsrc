@@ -1,4 +1,4 @@
-XCOMM $XConsortium: config.cpp,v 1.3 94/02/06 19:52:04 mor Exp $
+XCOMM $Xorg: config.cpp,v 1.3 2000/08/17 19:54:01 cpqbld Exp $
 XCOMM
 XCOMM Copyright (c) 1993 Quarterdeck Office Systems
 XCOMM

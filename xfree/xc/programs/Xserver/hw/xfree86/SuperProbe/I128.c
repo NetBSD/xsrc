@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/I128.c,v 3.8 1999/03/14 03:21:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/I128.c,v 3.9 2000/08/11 17:27:12 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Robin Cutshaw <robin@xfree86.org>
  *

@@ -1,4 +1,4 @@
-/* $TOG: xcmisc.c /main/6 1998/02/09 15:25:40 kaleb $ */
+/* $Xorg: xcmisc.c,v 1.3 2000/08/17 19:47:59 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.2 1996/12/23 06:29:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.4 2001/01/17 22:13:19 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

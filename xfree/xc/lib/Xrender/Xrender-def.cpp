@@ -15,14 +15,15 @@ EXPORTS
 	XRenderChangePicture
 	XRenderCreatePicture
 	XRenderFreePicture
-	_XRenderProcessPictureAttributes
+;	_XRenderProcessPictureAttributes
 	XRenderFindDisplay
 	XRenderFindFormat
 	XRenderFindVisualFormat
 	XRenderQueryExtension
 	XRenderQueryFormats
 	XRenderQueryVersion
-	_XRenderFindFormat
-	_XRenderFindVisual
+;	_XRenderFindFormat
+;	_XRenderFindVisual
+	XRenderSetPictureClipRegion	
 
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xrender/Xrender-def.cpp,v 1.3 2001/02/13 19:19:12 dawes Exp $ */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadmod.c,v 1.57 2000/11/13 23:09:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadmod.c,v 1.64 2001/03/27 23:42:17 dawes Exp $ */
 
 /*
  *
@@ -28,7 +28,6 @@
 #include "os.h"
 /* For stat() and related stuff */
 #define NO_OSLIB_PROTOTYPES
-#define NO_COMPILER_H_EXTRAS
 #include "xf86_OSlib.h"
 #if defined(SVR4)
 #include <sys/stat.h>
@@ -73,6 +72,7 @@ ModuleVersions LoaderVersionInfo = {
 	ABI_FONT_VERSION
 };
 
+#if 0
 void
 LoaderFixups (void)
 {
@@ -81,6 +81,7 @@ LoaderFixups (void)
 
 	LoaderResolveSymbols ();
 }
+#endif
 
 static void
 FreeStringList(char **paths)
@@ -184,6 +185,7 @@ static const char *stdSubdirs[] =
 {
 	"drivers/",
 	"input/",
+	"multimedia/",
 	"extensions/",
 	"fonts/",
 	"internal/",
@@ -542,7 +544,7 @@ static Bool
 CheckVersion (const char *module, XF86ModuleVersionInfo *data,
 				const XF86ModReqInfo *req)
 {
-	int vercode[3];
+	int vercode[4];
 	char verstr[4];
 	long ver = data->xf86version;
 	int errtype = 0;
@@ -551,21 +553,35 @@ CheckVersion (const char *module, XF86ModuleVersionInfo *data,
 			data->modname ? data->modname : "UNKNOWN!",
 			data->vendor ? data->vendor : "UNKNOWN!");
 
-	verstr[1] = verstr[3] = 0;
-	verstr[2] = (ver & 0x1f) ? (ver & 0x1f) + 'a' - 1 : 0;
-	ver >>= 5;
-	verstr[0] = (ver & 0x1f) ? (ver & 0x1f) + 'A' - 1 : 0;
-	ver >>= 5;
-	vercode[2] = ver & 0x7f;
-	ver >>= 7;
-	vercode[1] = ver & 0x7f;
-	ver >>= 7;
-	vercode[0] = ver;
-	xf86ErrorF("\tcompiled for %d.%d", vercode[0], vercode[1]);
-	if (vercode[2] != 0)
-		xf86ErrorF(".%d", vercode[2]);
-	xf86ErrorF("%s%s, module version = %d.%d.%d\n", verstr, verstr + 2,
-			data->majorversion, data->minorversion, data->patchlevel);
+	if (ver > (4 << 24)) {
+		/* 4.0.x and earlier */
+		verstr[1] = verstr[3] = 0;
+		verstr[2] = (ver & 0x1f) ? (ver & 0x1f) + 'a' - 1 : 0;
+		ver >>= 5;
+		verstr[0] = (ver & 0x1f) ? (ver & 0x1f) + 'A' - 1 : 0;
+		ver >>= 5;
+		vercode[2] = ver & 0x7f;
+		ver >>= 7;
+		vercode[1] = ver & 0x7f;
+		ver >>= 7;
+		vercode[0] = ver;
+		xf86ErrorF("\tcompiled for %d.%d", vercode[0], vercode[1]);
+		if (vercode[2] != 0)
+			xf86ErrorF(".%d", vercode[2]);
+		xf86ErrorF("%s%s, module version = %d.%d.%d\n", verstr, verstr + 2,
+				data->majorversion, data->minorversion, data->patchlevel);
+	} else {
+		vercode[0] = ver / 10000000;
+		vercode[1] = (ver / 100000) % 100;
+		vercode[2] = (ver / 1000) % 100;
+		vercode[3] = ver % 1000;
+		xf86ErrorF("\tcompiled for %d.%d.%d", vercode[0], vercode[1],
+					vercode[2]);
+		if (vercode[3] != 0)
+			xf86ErrorF(".%d", vercode[3]);
+		xf86ErrorF(", module version = %d.%d.%d\n", data->majorversion,
+					data->minorversion, data->patchlevel);
+	}
 
     if (data->moduleclass)
 		xf86ErrorFVerb(2, "\tModule class: %s\n", data->moduleclass);

@@ -1,4 +1,4 @@
-/* $TOG: Text16.c /main/13 1998/02/06 17:55:02 kaleb $ */
+/* $Xorg: Text16.c,v 1.3 2000/08/17 19:44:57 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/Text16.c,v 1.4 2001/01/21 22:58:08 keithp Exp $ */
 
 #include "Xlibint.h"
 
@@ -97,7 +97,7 @@ XDrawString16(dpy, d, gc, x, y, string, length)
 		}
 	    }
 #else
-            memcpy ((char *) (elt + 1), (char *)CharacterOffset, 254 * 2);
+            memcpy (((char *) elt) + 2, (char *)CharacterOffset, 254 * 2);
 #endif
 	    PartialNChars = PartialNChars - 254;
 	    CharacterOffset += 254;
@@ -120,7 +120,7 @@ XDrawString16(dpy, d, gc, x, y, string, length)
 		}
 	    }
 #else
-            memcpy((char *)(elt + 1), (char *)CharacterOffset, PartialNChars * 2);
+            memcpy(((char *)elt) + 2, (char *)CharacterOffset, PartialNChars * 2);
 #endif
 	 }
     }

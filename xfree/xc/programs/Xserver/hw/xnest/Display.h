@@ -1,4 +1,4 @@
-/* $XConsortium: Display.h,v 1.2 94/02/06 17:51:43 rws Exp $ */
+/* $Xorg: Display.h,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Display.h,v 1.4 2000/06/17 00:27:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Display.h,v 1.6 2001/01/17 22:36:55 dawes Exp $ */
 
 #ifndef XNESTCOMMON_H
 #define XNESTCOMMON_H

@@ -1,4 +1,4 @@
-/* $TOG: miNurbs.c /main/6 1998/02/10 12:42:00 kaleb $ */
+/* $Xorg: miNurbs.c,v 1.3 2000/08/17 19:47:07 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNurbs.c,v 3.5 1998/10/04 09:34:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNurbs.c,v 3.7 2001/01/17 22:12:24 dawes Exp $ */
 
 #include "X.h"
 #include "misc.h"

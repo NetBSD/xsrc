@@ -1,4 +1,4 @@
-/* $TOG: PProcess.c /main/6 1998/02/10 18:40:03 kaleb $ */
+/* $Xorg: PProcess.c,v 1.3 2000/08/17 19:55:03 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

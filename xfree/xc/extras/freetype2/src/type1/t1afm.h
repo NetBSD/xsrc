@@ -16,24 +16,14 @@
 /***************************************************************************/
 
 
-#ifndef T1AFM_H
-#define T1AFM_H
+#ifndef __T1AFM_H__
+#define __T1AFM_H__
 
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "t1objs.h"
 
-#else
 
-#include <type1/t1objs.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   typedef struct  T1_Kern_Pair_
@@ -68,12 +58,9 @@
                         FT_Vector*  kerning );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* T1AFM_H */
+#endif /* __T1AFM_H__ */
 
 
 /* END */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_accel.c,v 1.10 2000/03/06 22:59:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_accel.c,v 1.12 2001/03/19 11:00:54 alanh Exp $ */
 
 /*
  * Copyright 1996,1997 by Alan Hourihane, Wigan, England.
@@ -26,11 +26,7 @@
  * DEC TGA accelerated options.
  */
 
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-#include "cfb32.h"
-
+#include "fb.h"
 #include "micmap.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"

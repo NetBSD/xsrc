@@ -1,5 +1,5 @@
 /*
- * $TOG: Clock.c /main/29 1998/02/09 13:44:48 kaleb $
+ * $Xorg: Clock.c,v 1.3 2000/08/17 19:53:59 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/oclock/Clock.c,v 1.5 2001/04/01 14:00:18 tsi Exp $ */
 
 /*
  * Clock.c
@@ -33,6 +33,7 @@ in this Software without prior written authorization from The Open Group.
 #include "ClockP.h"
 #include <X11/Xos.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <X11/extensions/shape.h>
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnxResource.c,v 3.10 2000/09/19 12:46:22 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnxResource.c,v 3.15 2001/02/16 14:45:10 tsi Exp $ */
 
 /* Resource information code */
 
@@ -21,10 +21,10 @@ xf86BusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -39,76 +39,75 @@ xf86PciBusAccWindowsFromOS(void)
      * sparse address space are an image of the ISA bus range
      */
     if (_bus_base_sparse()) {
-	RANGE(range,0,0x07ffffff,ResExcMemBlock);
+	RANGE(range, 0x00000000, 0x07ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x09000000,0x0fffffff,ResExcMemBlock);
+	RANGE(range, 0x09000000, 0x0fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x11000000,0x17ffffff,ResExcMemBlock);
+	RANGE(range, 0x11000000, 0x17ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x19000000,0x1fffffff,ResExcMemBlock);
+	RANGE(range, 0x19000000, 0x1fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x21000000,0x27ffffff,ResExcMemBlock);
+	RANGE(range, 0x21000000, 0x27ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x29000000,0x2fffffff,ResExcMemBlock);
+	RANGE(range, 0x29000000, 0x2fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x31000000,0x37ffffff,ResExcMemBlock);
+	RANGE(range, 0x31000000, 0x37ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x39000000,0x3fffffff,ResExcMemBlock);
+	RANGE(range, 0x39000000, 0x3fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x41000000,0x47ffffff,ResExcMemBlock);
+	RANGE(range, 0x41000000, 0x47ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x49000000,0x4fffffff,ResExcMemBlock);
+	RANGE(range, 0x49000000, 0x4fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x51000000,0x57ffffff,ResExcMemBlock);
+	RANGE(range, 0x51000000, 0x57ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x59000000,0x5fffffff,ResExcMemBlock);
+	RANGE(range, 0x59000000, 0x5fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x61000000,0x67ffffff,ResExcMemBlock);
+	RANGE(range, 0x61000000, 0x67ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x69000000,0x6fffffff,ResExcMemBlock);
+	RANGE(range, 0x69000000, 0x6fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x71000000,0x77ffffff,ResExcMemBlock);
+	RANGE(range, 0x71000000, 0x77ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x79000000,0x7fffffff,ResExcMemBlock);
+	RANGE(range, 0x79000000, 0x7fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x81000000,0x87ffffff,ResExcMemBlock);
+	RANGE(range, 0x81000000, 0x87ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x89000000,0x8fffffff,ResExcMemBlock);
+	RANGE(range, 0x89000000, 0x8fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x91000000,0x97ffffff,ResExcMemBlock);
+	RANGE(range, 0x91000000, 0x97ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0x99000000,0x9fffffff,ResExcMemBlock);
+	RANGE(range, 0x99000000, 0x9fffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xA1000000,0xa7ffffff,ResExcMemBlock);
+	RANGE(range, 0xa1000000, 0xa7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xA9000000,0xafffffff,ResExcMemBlock);
+	RANGE(range, 0xa9000000, 0xafffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xB1000000,0xb7ffffff,ResExcMemBlock);
+	RANGE(range, 0xb1000000, 0xb7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xB9000000,0xbfffffff,ResExcMemBlock);
+	RANGE(range, 0xb9000000, 0xbfffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xC1000000,0xc7ffffff,ResExcMemBlock);
+	RANGE(range, 0xc1000000, 0xc7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xC9000000,0xcfffffff,ResExcMemBlock);
+	RANGE(range, 0xc9000000, 0xcfffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xD1000000,0xd7ffffff,ResExcMemBlock);
+	RANGE(range, 0xd1000000, 0xd7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xD9000000,0xdfffffff,ResExcMemBlock);
+	RANGE(range, 0xd9000000, 0xdfffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xE1000000,0xe7ffffff,ResExcMemBlock);
+	RANGE(range, 0xe1000000, 0xe7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xE9000000,0xefffffff,ResExcMemBlock);
+	RANGE(range, 0xe9000000, 0xefffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xF1000000,0xf7ffffff,ResExcMemBlock);
+	RANGE(range, 0xf1000000, 0xf7ffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
-	RANGE(range,0xF9000000,0xffffffff,ResExcMemBlock);
+	RANGE(range, 0xf9000000, 0xffffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
     } else {
-      /* Some drivers choke if a PCI base address is set to 0 */
-	RANGE(range,1,0xffffffff,ResExcMemBlock);
+	RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
 	ret = xf86AddResToList(ret, &range, -1);
     }
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -119,10 +118,10 @@ xf86IsaBusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -135,17 +134,33 @@ xf86AccResFromOS(resPtr ret)
     /*
      * Fallback is to claim the following areas:
      *
-     * 0x000C0000 - 0x000EFFFF  location of VGA and other extensions ROMS
+     * 0x000c0000 - 0x000effff  location of VGA and other extensions ROMS
      */
 
-    RANGE(range,0xc0000,0xeffff,ResExcMemBlock);
+    RANGE(range, 0x000c0000, 0x000effff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    /* Fallback is to claim well known ports in the 0x0 - 0x3ff range */
-    /* Possibly should claim some of them as sparse ranges */
-
-    RANGE(range,0,0x1ff,ResExcIoBlock | ResEstimated);
+    /*
+     * Fallback would be to claim well known ports in the 0x0 - 0x3ff range
+     * along with their sparse I/O aliases, but that's too imprecise.  Instead
+     * claim a bare minimum here.
+     */
+    RANGE(range, 0x00000000, 0x000000ff, ResExcIoBlock); /* For mainboard */
     ret = xf86AddResToList(ret, &range, -1);
+
+    /*
+     * At minimum, the top and bottom resources must be claimed, so that
+     * resources that are (or appear to be) unallocated can be relocated.
+     */
+    RANGE(range, 0x00000000, 0x00000000, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+/*  RANGE(range, 0x00000000, 0x00000000, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1); */
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+
     /* XXX add others */
     return ret;
 }
@@ -168,13 +183,13 @@ xf86BusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
 #ifdef __sparc__
-    RANGE(range,0,0x00ffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x00ffffff, ResExcIoBlock);
 #else
-    RANGE(range,0,0x0000ffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
 #endif
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
@@ -186,13 +201,13 @@ xf86PciBusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
 #ifdef __sparc__
-    RANGE(range,0,0x00ffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x00ffffff, ResExcIoBlock);
 #else
-    RANGE(range,0,0x0000ffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
 #endif
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
@@ -204,13 +219,13 @@ xf86IsaBusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
 #ifdef __sparc__
-    RANGE(range,0,0x00ffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x00ffffff, ResExcIoBlock);
 #else
-    RANGE(range,0,0x0000ffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
 #endif
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
@@ -219,6 +234,25 @@ xf86IsaBusAccWindowsFromOS(void)
 resPtr
 xf86AccResFromOS(resPtr ret)
 {
+    resRange range;
+
+    /*
+     * At minimum, the top and bottom resources must be claimed, so that
+     * resources that are (or appear to be) unallocated can be relocated.
+     */
+    RANGE(range, 0x00000000, 0x00000000, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0x00000000, 0x00000000, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+#ifdef __sparc__
+    RANGE(range, 0x00ffffff, 0x00ffffff, ResExcIoBlock);
+#else
+    RANGE(range, 0x0000ffff, 0x0000ffff, ResExcIoBlock);
+#endif
+    ret = xf86AddResToList(ret, &range, -1);
+
     return ret;
 }
 

@@ -1,4 +1,4 @@
-/* $TOG: lbxutil.c /main/28 1998/02/23 09:14:38 barstow $ */
+/* $Xorg: lbxutil.c,v 1.4 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *
@@ -224,7 +224,7 @@ FlushDelayedReplies(client)
 #ifdef SEQ_DEBUG
     fprintf(stderr, "flushing replies seq 0x%x:", LBXLastResponse(client));
 #endif
-    for (prev = &LBXReplyData(client); cur = *prev; ) {
+    for (prev = &LBXReplyData(client); (cur = *prev); ) {
 #ifdef SEQ_DEBUG
 	fprintf(stderr, " 0x%x", cur->delay_seq_no);
 #endif

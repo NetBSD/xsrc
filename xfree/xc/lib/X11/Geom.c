@@ -1,4 +1,4 @@
-/* $TOG: Geom.c /main/9 1998/02/06 17:24:31 kaleb $ */
+/* $Xorg: Geom.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 
 /*
 

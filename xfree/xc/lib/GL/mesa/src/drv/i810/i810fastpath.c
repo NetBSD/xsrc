@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810fastpath.c,v 1.4 2000/08/28 02:43:11 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810fastpath.c,v 1.5 2000/11/13 23:31:27 dawes Exp $ */
 
 #include <stdio.h>
 

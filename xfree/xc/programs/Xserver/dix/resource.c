@@ -41,27 +41,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* The panoramix components contained the following notice */
-/****************************************************************
-*                                                               *
-*    Copyright (c) Digital Equipment Corporation, 1991, 1997    *
-*                                                               *
-*   All Rights Reserved.  Unpublished rights  reserved  under   *
-*   the copyright laws of the United States.                    *
-*                                                               *
-*   The software contained on this media  is  proprietary  to   *
-*   and  embodies  the  confidential  technology  of  Digital   *
-*   Equipment Corporation.  Possession, use,  duplication  or   *
-*   dissemination of the software and media is authorized only  *
-*   pursuant to a valid written license from Digital Equipment  *
-*   Corporation.                                                *
-*                                                               *
-*   RESTRICTED RIGHTS LEGEND   Use, duplication, or disclosure  *
-*   by the U.S. Government is subject to restrictions  as  set  *
-*   forth in Subparagraph (c)(1)(ii)  of  DFARS  252.227-7013,  *
-*   or  in  FAR 52.227-19, as applicable.                       *
-*                                                               *
-*****************************************************************/
+/* $Xorg: resource.c,v 1.4 2000/08/17 19:48:19 cpqbld Exp $ */
 
 
 /* $TOG: resource.c /main/41 1998/02/09 14:20:31 kaleb $ */
@@ -74,8 +54,8 @@ SOFTWARE.
  */
 
 /* 
- *      A resource ID is a 32 bit quantity, the upper 3 bits of which are
- *	off-limits for client-visible resources.  The next 7 bits are
+ *      A resource ID is a 32 bit quantity, the upper 2 bits of which are
+ *	off-limits for client-visible resources.  The next 8 bits are
  *      used as client ID, and the low 22 bits come from the client.
  *	A resource ID is "hashed" by extracting and xoring subfields
  *      (varying with the size of the hash table).
@@ -83,12 +63,12 @@ SOFTWARE.
  *      It is sometimes necessary for the server to create an ID that looks
  *      like it belongs to a client.  This ID, however,  must not be one
  *      the client actually can create, or we have the potential for conflict.
- *      The 30th bit of the ID is reserved for the server's use for this
+ *      The 31st bit of the ID is reserved for the server's use for this
  *      purpose.  By setting CLIENT_ID(id) to the client, the SERVER_BIT to
  *      1, and an otherwise arbitrary ID in the low 22 bits, we can create a
  *      resource "owned" by the client.
  */
-/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.5 1999/01/26 10:40:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.8 2001/02/16 13:24:07 eich Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -753,6 +733,7 @@ FreeClientResources(client)
 	}
     }
     xfree(clientTable[client->index].resources);
+    clientTable[client->index].resources = NULL;
     clientTable[client->index].buckets = 0;
 }
 

@@ -1,4 +1,4 @@
-/* $TOG: Scrollbar.h /main/9 1998/02/06 12:49:02 kaleb $ */
+/* $Xorg: Scrollbar.h,v 1.3 2000/08/17 19:45:37 cpqbld Exp $ */
 
 
 /***********************************************************
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Scrollbar.h,v 1.4 1998/10/03 08:42:17 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Scrollbar.h,v 1.6 2001/01/17 19:42:29 dawes Exp $ */
 
 #ifndef _Scrollbar_h
 #define _Scrollbar_h

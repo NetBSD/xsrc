@@ -1,32 +1,31 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.2 2000/12/02 15:30:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.10 2001/05/18 23:35:32 dawes Exp $ */
 
 #ifndef SAVAGE_VGAHWMMIO_H
 #define SAVAGE_VGAHWMMIO_H
 
+#include "xf86_ansic.h"
+#include "compiler.h"
 #include "vgaHW.h"
 #include "xf86.h"
 #include "xf86Resources.h"
-#include "xf86_ansic.h"
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xf86_OSproc.h"
-#include "compiler.h"
 #include "xf86Cursor.h"
 #include "mipointer.h"
 #include "micmap.h"
-#include "cfb.h"
-#include "cfb16.h"
-#include "cfb32.h"
+#include "fb.h"
 #include "xf86cmap.h"
 #include "vbe.h"
 #include "xaa.h"
+#include "xf86xv.h"
 
 #include "savage_regs.h"
 
 #define VGAIN8(addr) MMIO_IN8(psav->MapBase+0x8000, addr)
 #define VGAIN16(addr) MMIO_IN16(psav->MapBase+0x8000, addr)
 #define VGAIN(addr) MMIO_IN32(psav->MapBase+0x8000, addr)
-
+ 
 #define VGAOUT8(addr,val) MMIO_OUT8(psav->MapBase+0x8000, addr, val)
 #define VGAOUT16(addr,val) MMIO_OUT16(psav->MapBase+0x8000, addr, val)
 #define VGAOUT(addr,val) MMIO_OUT32(psav->MapBase+0x8000, addr, val)
@@ -54,8 +53,8 @@ typedef struct _S3VMODETABLE {
 
 typedef struct {
     unsigned int mode, refresh;
-    unsigned char SR08, SR0A, SR0F;
-    unsigned char SR10, SR11, SR12, SR13, SR15, SR18, SR29;
+    unsigned char SR08, SR0E, SR0F;
+    unsigned char SR10, SR11, SR12, SR13, SR15, SR18, SR29, SR30;
     unsigned char SR54[8];
     unsigned char Clock;
     unsigned char CR31, CR32, CR33, CR34, CR36, CR3A, CR3B, CR3C;
@@ -64,7 +63,6 @@ typedef struct {
     unsigned char CR60, CR63, CR65, CR66, CR67, CR68, CR69, CR6D, CR6F;
     unsigned char CR86, CR88;
     unsigned char CR90, CR91, CRB0;
-    unsigned char ColorStack[8];
     unsigned int  STREAMS[22];	/* yuck, streams regs */
     unsigned int  MMPR0, MMPR1, MMPR2, MMPR3;
 } SavageRegRec, *SavageRegPtr;
@@ -79,6 +77,7 @@ typedef struct _Savage {
     Bool		STREAMSRunning;
     int			Bpp, Bpl, ScissB;
     unsigned		PlaneMask;
+    I2CBusPtr		I2C;
 
     int			videoRambytes;
     int			videoRamKbytes;
@@ -88,6 +87,7 @@ typedef struct _Savage {
     /* These are physical addresses. */
     unsigned long	FrameBufferBase;
     unsigned long	MmioBase;
+    unsigned long	ShadowPhysical;
 
     /* These are linear addresses. */
     unsigned char*	MapBase;
@@ -95,6 +95,7 @@ typedef struct _Savage {
     unsigned char*	MapBaseDense;
     unsigned char*	FBBase;
     unsigned char*	FBStart;
+    unsigned long volatile *	ShadowVirtual;
 
     Bool		PrimaryVidMapped;
     int			dacSpeedBpp;
@@ -106,22 +107,22 @@ typedef struct _Savage {
 
     /* Here are all the Options */
 
+    OptionInfoPtr	Options;
     Bool		ShowCache;
     Bool		pci_burst;
     Bool		NoPCIRetry;
     Bool		fifo_conservative;
     Bool		fifo_moderate;
     Bool		fifo_aggressive;
-    Bool		slow_edodram;
-    Bool		slow_dram;
-    Bool		fast_dram;
-    Bool		fpm_vram;
-    Bool		early_ras_precharge;
     Bool		hwcursor;
     Bool		NoAccel;
     Bool		shadowFB;
     Bool		UseBIOS;
     int			rotate;
+    double		LCDClock;
+    Bool		ShadowStatus;
+    int			PanelX;
+    int			PanelY;
 
     CloseScreenProcPtr	CloseScreen;
     pciVideoPtr		PciInfo;
@@ -131,12 +132,12 @@ typedef struct _Savage {
     int			ChipRev;
     vbeInfoPtr		pVbe;
     int			EntityIndex;
+    int			ShadowCounter;
 
     /* The various Savage wait handlers. */
-    int			(*myWaitQueue)(struct _Savage *, int);
-    int			(*myWaitIdle)(struct _Savage *);
-    int			(*myWaitIdleEmpty)(struct _Savage *);
-    int			(*myWaitCommandEmpty)(struct _Savage *);
+    int			(*WaitQueue)(struct _Savage *, int);
+    int			(*WaitIdle)(struct _Savage *);
+    int			(*WaitIdleEmpty)(struct _Savage *);
 
     /* Support for shadowFB and rotation */
     unsigned char *	ShadowPtr;
@@ -149,8 +150,6 @@ typedef struct _Savage {
     unsigned int	SavedBciCmd;
     unsigned int	SavedFgColor;
     unsigned int	SavedBgColor;
-    unsigned int	SavedGbdOffset;
-    unsigned int	SavedGbd;
     unsigned int	SavedSbdOffset;
     unsigned int	SavedSbd;
 
@@ -163,14 +162,26 @@ typedef struct _Savage {
     unsigned long	cobSize;	/* size in bytes */
     unsigned long	cobOffset;	/* offset in frame buffer */
 
+    /* Support for DGA */
+    int			numDGAModes;
+    DGAModePtr		DGAModes;
+    Bool		DGAactive;
+    int			DGAViewportStatus;
+
+    /* Support for XVideo */
+
+    unsigned int	videoFlags;
+    unsigned int	blendBase;
+    int			videoFourCC;
+    XF86VideoAdaptorPtr	adaptor;
+    int			VideoZoomMax;
+    int			dwBCIWait2DIdle;
+
 } SavageRec, *SavagePtr;
 
-/* Shortcuts.  These depend on a local symbol "psav". */
+/* Video flags. */
 
-#define WaitIdle()		psav->myWaitIdle(psav)
-#define WaitIdleEmpty()		psav->myWaitIdleEmpty(psav)
-#define	WaitQueue(k)		psav->myWaitQueue(psav,k)
-#define WaitCommandEmpty()	psav->myWaitCommandEmpty(psav)
+#define VF_STREAMS_ON	0x0001
 
 #define SAVPTR(p)	((SavagePtr)((p)->driverPrivate))
 
@@ -186,12 +197,19 @@ Bool SavageSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
 /* In savage_cursor.c. */
 
 Bool SavageHWCursorInit(ScreenPtr pScreen);
+void SavageShowCursor(ScrnInfoPtr);
+void SavageHideCursor(ScrnInfoPtr);
 
 /* In savage_accel.c. */
 
 Bool SavageInitAccel(ScreenPtr);
 void SavageInitialize2DEngine(ScrnInfoPtr);
 void SavageSetGBD(ScrnInfoPtr);
+void SavageAccelSync(ScrnInfoPtr);
+
+/* In savage_i2c.c. */
+
+Bool SavageI2CInit(ScrnInfoPtr pScrn);
 
 /* In savage_shadow.c */
 
@@ -214,6 +232,10 @@ unsigned short SavageGetBIOSModes(
     int iDepth,
     SavageModeEntryPtr s3vModeTable );
 
+
+/* In savage_video.c */
+
+void SavageInitVideo( ScreenPtr pScreen );
 
 #endif /* SAVAGE_VGAHWMMIO_H */
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/input/confdrv.sh,v 1.4 1999/05/17 13:17:16 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/input/confdrv.sh,v 1.5 1999/06/12 15:37:09 dawes Exp $
 #
 # This script generates drvConf.c
 #

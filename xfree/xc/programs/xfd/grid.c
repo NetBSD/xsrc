@@ -1,5 +1,5 @@
 /*
- * $TOG: grid.c /main/31 1998/02/09 13:57:18 kaleb $
+ * $Xorg: grid.c,v 1.3 2000/08/17 19:54:18 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfd/grid.c,v 1.4 2001/01/17 23:45:26 dawes Exp $ */
 
 
 #include <X11/IntrinsicP.h>

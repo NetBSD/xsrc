@@ -1,4 +1,4 @@
-/* $XConsortium: lcRM.c,v 1.3 94/01/20 18:07:18 rws Exp $ */
+/* $Xorg: lcRM.c,v 1.3 2000/08/17 19:45:19 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -24,7 +24,7 @@
  *			   	mopi@osa.ilab.toshiba.co.jp
  * Bug fixes: Bruno Haible	XFree86 Inc.
  */
-/* $XFree86: xc/lib/X11/lcRM.c,v 1.3 2000/02/12 05:43:16 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcRM.c,v 1.5 2001/01/17 19:41:55 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"

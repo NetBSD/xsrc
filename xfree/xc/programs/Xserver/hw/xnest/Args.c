@@ -1,4 +1,4 @@
-/* $XConsortium: Args.c /main/3 1996/08/20 11:31:52 kaleb $ */
+/* $Xorg: Args.c,v 1.3 2000/08/17 19:53:26 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

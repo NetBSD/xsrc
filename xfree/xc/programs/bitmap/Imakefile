@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/22 1996/09/28 17:16:44 rws $
-XCOMM $XFree86: xc/programs/bitmap/Imakefile,v 3.3 1997/05/12 13:28:06 hohndel Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:53:50 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/bitmap/Imakefile,v 3.5 2001/01/17 23:44:51 dawes Exp $
 
 BUTTONPICTURES = \
 	Dashes \

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.9 1998/10/10 15:25:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.11 2001/01/17 22:37:11 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: osdep.h /main/43 1998/02/09 15:12:43 kaleb $ */
+/* $Xorg: osdep.h,v 1.4 2000/08/17 19:53:41 cpqbld Exp $ */
 
 #ifndef _OSDEP_H_
 #define _OSDEP_H_ 1
@@ -94,7 +94,7 @@ SOFTWARE.
 #endif
 #ifndef OPEN_MAX
 #ifdef SVR4
-#define OPEN_MAX 128
+#define OPEN_MAX 256
 #else
 #include <sys/param.h>
 #ifndef OPEN_MAX
@@ -118,10 +118,10 @@ SOFTWARE.
  * like sysconf(_SC_OPEN_MAX) is not supported.
  */
 
-#if OPEN_MAX <= 128
+#if OPEN_MAX <= 256
 #define MAXSOCKS (OPEN_MAX - 1)
 #else
-#define MAXSOCKS 128
+#define MAXSOCKS 256
 #endif
 
 /* MAXSELECT is the number of fds that select() can handle */

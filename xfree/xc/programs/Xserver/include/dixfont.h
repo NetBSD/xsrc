@@ -1,4 +1,4 @@
-/* $XConsortium: dixfont.h /main/21 1996/09/28 17:14:16 rws $ */
+/* $Xorg: dixfont.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/dixfont.h,v 3.4 1999/06/06 08:49:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dixfont.h,v 3.8 2001/04/05 17:42:35 dawes Exp $ */
 
 #ifndef DIXFONT_H
 #define DIXFONT_H 1
@@ -118,21 +118,16 @@ extern int LoadGlyphs(ClientPtr /*client*/,
 
 extern void DeleteClientFontStuff(ClientPtr /*client*/);
 
+/* Quartz support on Mac OS X pulls in the QuickDraw
+   framework whose InitFonts function conflicts here. */
+#ifdef __DARWIN__
+#define InitFonts Darwin_X_InitFonts
+#endif
 extern void InitFonts(void);
-
-extern int GetDefaultPointSize(void);
 
 extern void FreeFonts(void);
 
 extern FontPtr find_old_font(XID /*id*/);
-
-extern Font GetNewFontClientID(void);
-
-extern int StoreFontClientFont(FontPtr /*pfont*/,
-			       Font /*id*/);
-
-extern void DeleteFontClientID(Font /*id*/);
-
 
 extern void GetGlyphs(FontPtr     /*font*/,
 		      unsigned long /*count*/,
@@ -156,8 +151,5 @@ extern Bool ParseGlyphCachingMode(char * /*str*/);
 extern void InitGlyphCaching(void);
 
 extern void SetGlyphCachingMode(int /*newmode*/);
-
-extern void
-ResetFontPrivateIndex(void);
 
 #endif				/* DIXFONT_H */

@@ -1,5 +1,5 @@
 /*
- * $TOG: mfbply1rct.c /main/11 1998/02/09 14:39:41 kaleb $
+ * $Xorg: mfbply1rct.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.3 1998/10/04 09:39:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.5 2001/01/17 22:37:03 dawes Exp $ */
 
 #include "X.h"
 

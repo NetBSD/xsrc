@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.13 2000/11/01 21:55:09 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.17 2001/04/25 14:23:00 dawes Exp $ */
 
 
 
@@ -22,7 +22,7 @@
  *			g.desbief@aix.pacwan.net
  *		MGA1064SG Mystique register file
  */
-  
+
 
 #ifndef _MGA_REG_H_
 #define _MGA_REG_H_
@@ -170,7 +170,7 @@
 /* z drawing mode. use MGADWG_NOZCMP for always */
 
 #define MGADWG_NOZCMP		( 0x00 << 8 )
-#define MGADWG_ZE		( 0x02 << 8 ) 
+#define MGADWG_ZE		( 0x02 << 8 )
 #define MGADWG_ZNE		( 0x03 << 8 )
 #define MGADWG_ZLT		( 0x04 << 8 )
 #define MGADWG_ZLTE		( 0x05 << 8 )
@@ -219,12 +219,15 @@
 #define MGAREG_MISC_CLK_SEL_MGA_MSK	(0x3 << 2)
 #define MGAREG_MISC_VIDEO_DIS	(0x1 << 4)
 #define MGAREG_MISC_HIGH_PG_SEL	(0x1 << 5)
- 
+
 /* MMIO VGA registers */
+#define MGAREG_SEQ_INDEX	0x1fc4
+#define MGAREG_SEQ_DATA		0x1fc5
 #define MGAREG_CRTC_INDEX	0x1fd4
 #define MGAREG_CRTC_DATA	0x1fd5
 #define MGAREG_CRTCEXT_INDEX	0x1fde
 #define MGAREG_CRTCEXT_DATA	0x1fdf
+
 
 
 /* MGA bits for registers PCI_OPTION_REG */
@@ -387,6 +390,44 @@
 
 #define MGA1064_PIX_PLL_STAT	0x4f
 
+/*Added for G450 dual head*/
+/* Supported PLL*/
+#define __PIXEL_PLL                 1
+#define __SYSTEM_PLL                2
+#define __VIDEO_PLL                 3
+
+#define MGA1064_VID_PLL_P       0x8D
+#define MGA1064_VID_PLL_M       0x8E
+#define MGA1064_VID_PLL_N       0x8F
+
+#define MGA1064_DISP_CTL        0x8a
+#define MGA1064_SYNC_CTL        0x8b
+#define MGA1064_PWR_CTL         0xa0
+/* Using crtc2 */
+#define MGAREG2_C2CTL            0x10
+#define MGAREG2_C2HPARAM         0x14
+#define MGAREG2_C2HSYNC          0x18
+#define MGAREG2_C2VPARAM         0x1c
+#define MGAREG2_C2VSYNC          0x20
+#define MGAREG2_C2STARTADD0      0x28
+
+#define MGAREG2_C2OFFSET         0x40
+#define MGAREG2_C2DATACTL        0x4c
+
+#define MGAREG_C2CTL            0x3c10
+#define MGAREG_C2HPARAM         0x3c14
+#define MGAREG_C2HSYNC          0x3c18
+#define MGAREG_C2VPARAM         0x3c1c
+#define MGAREG_C2VSYNC          0x3c20
+#define MGAREG_C2STARTADD0      0x3c28
+
+#define MGAREG_C2OFFSET         0x3c40
+#define MGAREG_C2DATACTL        0x3c4c
+
+#define MGA1064_DISP_CTL        0x8a
+#define MGA1064_SYNC_CTL        0x8b
+#define MGA1064_PWR_CTL         0xa0
+
 /* video register */
 
 #define MGAREG_BESA1C3ORG	0x3d60
@@ -431,9 +472,8 @@
 #define MGAREG_ALPHACTRL	0x2c7c
 #define MGAREG_DWGSYNC		0x2c4c
 
-#define MGAREG_AGP_PLL			0x1e4c
-#define AGP_PLL_agp2xpllen_enable	0x1
-#define AGP_PLL_agp2xpllen_disable	0x0
+#define MGAREG_AGP_PLL		0x1e4c
+#define MGA_AGP2XPLL_ENABLE		0x1
+#define MGA_AGP2XPLL_DISABLE		0x0
 
 #endif
-

@@ -22,7 +22,7 @@
  *
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.h,v 1.3 2000/08/28 02:43:12 tsi Exp $ */
 
 #ifndef I810VB_INC
 #define I810VB_INC

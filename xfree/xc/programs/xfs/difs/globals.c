@@ -1,4 +1,4 @@
-/* $TOG: globals.c /main/6 1998/02/11 10:03:01 kaleb $ */
+/* $Xorg: globals.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * various font server globals
  */

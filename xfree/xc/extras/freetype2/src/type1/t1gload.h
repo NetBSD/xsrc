@@ -16,24 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef T1GLOAD_H
-#define T1GLOAD_H
+#ifndef __T1GLOAD_H__
+#define __T1GLOAD_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "t1objs.h"
 
-#else
 
-#include <type1/t1objs.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -47,12 +38,9 @@
                            FT_Int        load_flags );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* T1GLOAD_H */
+#endif /* __T1GLOAD_H__ */
 
 
 /* END */

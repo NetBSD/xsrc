@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $TOG: colormapst.h /main/5 1998/02/09 14:27:59 kaleb $ */
+/* $Xorg: colormapst.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 #ifndef CMAPSTRUCT_H
 #define CMAPSTRUCT_H 1
 

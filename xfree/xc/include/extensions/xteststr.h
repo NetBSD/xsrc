@@ -1,4 +1,4 @@
-/* $TOG: xteststr.h /main/10 1998/02/09 11:24:01 kaleb $ */
+/* $Xorg: xteststr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

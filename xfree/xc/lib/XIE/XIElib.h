@@ -1,4 +1,4 @@
-/* $TOG: XIElib.h /main/13 1998/02/06 15:13:26 kaleb $ */
+/* $Xorg: XIElib.h,v 1.5 2000/08/17 19:45:25 cpqbld Exp $ */
 
 /*
 
@@ -246,7 +246,11 @@ typedef struct {
 	    XiePhototag		src2;
 	    XieProcessDomain	domain;
 	    XieConstant		constant;
+#if defined(__cplusplus) || defined(c_plusplus)
+	    XieArithmeticOp	c_operator;
+#else
 	    XieArithmeticOp	operator;
+#endif
 	    unsigned int	band_mask;
 	} Arithmetic;
 	
@@ -283,7 +287,11 @@ typedef struct {
 	    XiePhototag		src2;
 	    XieProcessDomain	domain;
 	    XieConstant		constant;
+#if defined(__cplusplus) || defined(c_plusplus)
+	    XieCompareOp	c_operator;
+#else
 	    XieCompareOp	operator;
+#endif
 	    Bool		combine;
 	    unsigned int	band_mask;
 	} Compare;
@@ -357,7 +365,11 @@ typedef struct {
 	    XiePhototag		src2;
 	    XieProcessDomain	domain;
 	    XieConstant		constant;
+#if defined(__cplusplus) || defined(c_plusplus)
+	    int			c_operator;
+#else
 	    int			operator;
+#endif
 	    unsigned int	band_mask;
 	} Logical;
 	
@@ -371,7 +383,11 @@ typedef struct {
 	struct {
 	    XiePhototag		src;
 	    XieProcessDomain	domain;
+#if defined(__cplusplus) || defined(c_plusplus)
+	    XieMathOp		c_operator;
+#else
 	    XieMathOp		operator;
+#endif
 	    unsigned int	band_mask;
 	} Math;
 	
@@ -861,7 +877,11 @@ typedef struct {
     unsigned long	name_space;
     XiePhototag		phototag;
     unsigned int	elem_type;
+#if defined(__cplusplus) || defined(c_plusplus)
+    unsigned int	c_operator;
+#else
     unsigned int	operator;
+#endif
 } XieFloOperatorError;
 
 typedef struct {

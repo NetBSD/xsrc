@@ -1,4 +1,4 @@
-/* $XConsortium: imTrans.c /main/7 1996/01/06 11:59:21 kaleb $ */
+/* $Xorg: imTrans.c,v 1.3 2000/08/17 19:45:16 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992 by Sun Microsystems, Inc.

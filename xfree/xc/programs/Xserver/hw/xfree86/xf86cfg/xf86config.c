@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86config.c,v 1.2 2000/05/18 16:30:01 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86config.c,v 1.5 2001/03/27 20:25:30 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -247,6 +247,8 @@ xf86removeScreen(XF86ConfigPtr config, XF86ConfScreenPtr screen)
 	scrn = (XF86ConfScreenPtr)(scrn->list.next);
     }
 
+    if (scrn == NULL)
+	return (False);
 
     while (lay != NULL) {
 	XF86ConfAdjacencyPtr pad, ad = NULL, adj = lay->lay_adjacency_lst;

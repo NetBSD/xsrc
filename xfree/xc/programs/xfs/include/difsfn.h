@@ -1,4 +1,4 @@
-/* $TOG: difsfn.h /main/7 1998/02/11 10:03:50 kaleb $ */
+/* $Xorg: difsfn.h,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -40,7 +40,7 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfs/include/difsfn.h,v 1.4 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef _DIFSFONT_H_
 #define _DIFSFONT_H_

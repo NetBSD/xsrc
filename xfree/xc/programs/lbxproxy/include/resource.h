@@ -1,4 +1,4 @@
-/* $TOG: resource.h /main/5 1998/02/10 18:18:14 kaleb $ */
+/* $Xorg: resource.h,v 1.3 2000/08/17 19:53:58 cpqbld Exp $ */
 
 /*
 

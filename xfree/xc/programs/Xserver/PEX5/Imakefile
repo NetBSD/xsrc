@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/11 1996/12/02 10:18:28 lehors $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/Imakefile,v 3.12 1999/01/03 03:58:17 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:02 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/PEX5/Imakefile,v 3.14 2001/01/17 22:12:19 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

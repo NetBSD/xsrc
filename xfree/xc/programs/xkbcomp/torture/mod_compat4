@@ -1,4 +1,4 @@
-// $XConsortium: mod_compat4 /main/1 1995/11/30 19:16:38 kaleb $
+// $Xorg: mod_compat4,v 1.3 2000/08/17 19:54:48 cpqbld Exp $
 xkb_compatibility "torture4" 
 
 modifier Mod4 { mods= Mod5; };

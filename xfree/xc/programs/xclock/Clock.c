@@ -1,4 +1,4 @@
-/* $TOG: Clock.c /main/76 1998/02/09 13:53:14 kaleb $ */
+/* $Xorg: Clock.c,v 1.3 2000/08/17 19:54:12 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xclock/Clock.c,v 3.7 2000/08/09 17:54:12 keithp Exp $ */
+/* $XFree86: xc/programs/xclock/Clock.c,v 3.9 2001/01/17 23:45:18 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/StringDefs.h>

@@ -1,4 +1,4 @@
-/* $TOG: XUrls.c /main/15 1998/02/10 18:37:16 kaleb $ */
+/* $Xorg: XUrls.c,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xrx/rx/XUrls.c,v 1.7 2001/01/17 23:46:25 dawes Exp $ */
 
 #include "RxI.h"
 #include <sys/utsname.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.4 2000/01/26 02:00:51 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.6 2001/02/21 23:37:04 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -66,6 +66,8 @@ xf86parseInputSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->inp_identifier = val.str;
 			has_ident = TRUE;
 			break;

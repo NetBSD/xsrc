@@ -1,4 +1,4 @@
-/* $TOG: ReconfWM.c /main/10 1998/02/06 17:50:16 kaleb $ */
+/* $Xorg: ReconfWM.c,v 1.3 2000/08/17 19:44:52 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

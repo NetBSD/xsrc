@@ -1,4 +1,4 @@
-/* $TOG: main.c /main/24 1998/02/11 09:48:42 kaleb $ */
+/* $Xorg: main.c,v 1.4 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group
@@ -41,8 +41,9 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/main.c,v 1.5 1998/10/04 09:40:15 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/main.c,v 1.8 2001/01/21 21:19:39 tsi Exp $ */
 
+#include <stdlib.h>
 #include "lbx.h"
 #include "wire.h"
 #include "atomcache.h"
@@ -101,10 +102,18 @@ main (argc, argv)
 
 	if (!proxyMngr && !ConnectToServer (display_name))
 	{
-	    char msg[100];
+	    /*
+	     * If no display name was given on the command line, the
+	     * DISPLAY variable is used.
+	     */
+	    if(!display_name)
+		display_name = getenv("DISPLAY");
 
-            (void) sprintf (msg, "could not connect to '%s'", display_name);
-	    FatalError(msg);
+	    if(display_name) {
+		FatalError("could not connect to display '%s'", display_name);
+	    } else {
+		FatalError("no display specified");
+	    }
 	}
 
         if (!InitClientResources(clients[0]))

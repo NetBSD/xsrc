@@ -1,5 +1,5 @@
 /*
- * $TOG: oclock.c /main/19 1998/02/09 13:45:04 kaleb $
+ * $Xorg: oclock.c,v 1.3 2000/08/17 19:53:59 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/oclock/oclock.c,v 1.3 1998/12/20 22:19:00 dawes Exp $ */
+/* $XFree86: xc/programs/oclock/oclock.c,v 1.6 2001/04/01 14:00:18 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xatom.h>
@@ -28,6 +28,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xmu/Editres.h>
 #include "Clock.h"
 #include <stdio.h> 
+#include <stdlib.h>
 
 #ifdef XKB
 #include <X11/extensions/XKBbells.h>

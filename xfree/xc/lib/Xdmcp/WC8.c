@@ -1,5 +1,5 @@
 /*
- * $TOG: WC8.c /main/4 1998/02/06 14:41:43 kaleb $
+ * $Xorg: WC8.c,v 1.3 2000/08/17 19:45:50 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/WC8.c,v 1.2 1998/10/10 15:25:17 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/WC8.c,v 1.4 2001/01/17 19:42:44 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.2 1999/09/27 06:29:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.4 2001/04/05 21:29:17 dawes Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -14,7 +14,6 @@
 
 #include "tdfx.h"
 
-void TDFXCursorGrabMemory(ScreenPtr pScreen);
 static void TDFXLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src);
 static void TDFXShowCursor(ScrnInfoPtr pScrn);
 static void TDFXHideCursor(ScrnInfoPtr pScrn);
@@ -37,7 +36,11 @@ TDFXCursorInit(ScreenPtr pScreen)
 
   infoPtr->MaxWidth = 64;
   infoPtr->MaxHeight = 64;
-  infoPtr->Flags = HARDWARE_CURSOR_BIT_ORDER_MSBFIRST|
+
+  infoPtr->Flags = 
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+#endif
     HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK|
     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64 |
     HARDWARE_CURSOR_TRUECOLOR_AT_8BPP;
@@ -54,6 +57,21 @@ TDFXCursorInit(ScreenPtr pScreen)
   return xf86InitCursor(pScreen, infoPtr);
 }
 
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+static unsigned int TDFXSwap(TDFXPtr pTDFX, unsigned int val) {
+  switch (pTDFX->cpp) {
+  case 1:
+    return val;
+  case 2:
+    return ((val & 0x00ff00ff) << 8) |
+	    ((val & 0xff00ff00) >> 8);
+  case 3:
+  case 4:
+    return BE_BSWAP32(val);
+  }
+}
+#endif
+
 static void 
 TDFXLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 {
@@ -61,7 +79,19 @@ TDFXLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 
   TDFXTRACECURS("TDFXLoadCursorImage start\n");
   pTDFX = TDFXPTR(pScrn);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+  {
+    int i;
+    unsigned int *ptr=(unsigned int *)(pTDFX->FbBase+pTDFX->cursorOffset);
+
+    for (i=0; i<256; i++) {
+      unsigned int val = ((unsigned int *)src)[i];
+      *ptr++ = TDFXSwap(pTDFX, val);
+    }
+  }
+#else
   memcpy(pTDFX->FbBase+pTDFX->cursorOffset, src, 1024);
+#endif
 }
 
 static void

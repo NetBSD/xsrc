@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbpolypnt.c,v 1.2 1998/03/20 21:08:16 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbpolypnt.c,v 1.4 2001/01/17 22:37:03 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbpolypnt.c /main/11 1998/02/09 14:39:59 kaleb $ */
+/* $Xorg: mfbpolypnt.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xprotostr.h"

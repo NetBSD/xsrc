@@ -1,4 +1,4 @@
-/* $TOG: Font.c /main/30 1998/02/06 17:22:37 kaleb $ */
+/* $Xorg: Font.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -28,7 +28,7 @@ sale, use or other dealings in this Software without prior written
 authorization from the X Consortium and the XFree86 Project.
 
 */
-/* $XFree86: xc/lib/X11/Font.c,v 1.10 2000/08/09 23:40:12 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Font.c,v 1.13 2001/05/01 07:53:46 alanh Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"
@@ -39,11 +39,7 @@ authorization from the X Consortium and the XFree86 Project.
 #ifdef USE_XF86BIGFONT
 #include <sys/types.h>
 #ifdef HAS_SHM
-#ifndef __CYGWIN__
 #include <sys/ipc.h>
-#else
-#include <sys/cygipc.h>
-#endif
 #include <sys/shm.h>
 #endif
 

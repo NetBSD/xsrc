@@ -24,7 +24,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * 
- * $XFree86: xc/programs/Xserver/hw/xfree86/parser/DRI.c,v 1.6 2000/05/18 00:37:30 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/parser/DRI.c,v 1.9 2001/03/08 21:32:35 anderson Exp $
  * 
  */
 
@@ -129,6 +129,7 @@ xf86printDRISection (FILE * cf, XF86ConfDRIPtr ptr)
     if (ptr == NULL)
 	return;
     
+    fprintf (cf, "Section \"DRI\"\n");
     if (ptr->dri_group_name)
 	fprintf (cf, "\tGroup        \"%s\"\n", ptr->dri_group_name);
     else if (ptr->dri_group >= 0)
@@ -141,6 +142,7 @@ xf86printDRISection (FILE * cf, XF86ConfDRIPtr ptr)
 	if (bufs->buf_flags) fprintf (cf, " \"%s\"", bufs->buf_flags);
 	fprintf (cf, "\n");
     }
+    fprintf (cf, "EndSection\n\n");
 }
 
 void

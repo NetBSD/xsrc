@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/fb/Imakefile,v 1.11 2000/09/29 08:59:43 eich Exp $
+XCOMM $XFree86: xc/programs/Xserver/fb/Imakefile,v 1.13 2001/01/21 21:19:09 tsi Exp $
 XCOMM 
 XCOMM 
 XCOMM Id: Imakefile,v 1.1 1999/11/02 03:54:44 keithp Exp $
@@ -10,15 +10,9 @@ XCOMM Id: Imakefile,v 1.1 1999/11/02 03:54:44 keithp Exp $
 DEFINES=-DFBNOPIXADDR -DFBNO24BIT
 #endif
   
-#ifdef XFree86Version
-#if DoLoadableServer
+#if defined(XFree86Version) && DoLoadableServer
 XFMODSRC = fbmodule.c
 XFMODOBJ = fbmodule.o
-#endif
-#endif
-#if BuildRender
-PICTSRCS = fbpict.c
-PICTOBJS = fbpict.o
 #endif
 
 SRCS =	$(XFMODSRC) \
@@ -51,7 +45,7 @@ SRCS =	$(XFMODSRC) \
 	fbutil.c \
 	fbwindow.c \
 	fb24_32.c \
-	$(PICTSRCS)
+	fbpict.c
 
 OBJS =	$(XFMODOBJ) \
 	fbarc.o \
@@ -84,7 +78,7 @@ OBJS =	$(XFMODOBJ) \
 	fbutil.o \
 	fbwindow.o \
 	fb24_32.o \
-	$(PICTOBJS)
+	fbpict.o
 	
    INCLUDES = -I. -I../mi -I../include -I$(XINCLUDESRC) \
 	      -I$(FONTINCSRC) -I$(XF86SRC)/common $(EXTRAINCLUDES) \

@@ -1,4 +1,4 @@
-/* $XConsortium: misc.c,v 1.2 94/11/22 22:24:46 mor Exp $ */
+/* $Xorg: misc.c,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992 Sam Leffler
  * Copyright (c) 1991, 1992 Silicon Graphics, Inc.

@@ -1,4 +1,4 @@
-/* $TOG: Xwinsock.h /main/2 1998/02/09 11:19:29 kaleb $ */
+/* $Xorg: Xwinsock.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

@@ -1,6 +1,6 @@
 #ifndef X_HILINIT_H
 #define X_HILINIT_H
-/* $TOG: x_hilinit.h /main/3 1998/02/10 13:11:34 kaleb $ */
+/* $Xorg: x_hilinit.h,v 1.3 2000/08/17 19:48:24 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1987, 1998  The Open Group

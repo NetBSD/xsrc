@@ -1,6 +1,6 @@
 /***********************************************************
 
-  $TOG: PanedP.h /main/8 1998/02/11 14:53:55 kaleb $
+  $Xorg: PanedP.h,v 1.3 2000/08/17 19:45:35 cpqbld Exp $
 
 
 Copyright 1987, 1988, 1998  The Open Group
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/PanedP.h,v 1.5 1999/06/06 08:48:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/PanedP.h,v 1.7 2001/01/17 19:42:28 dawes Exp $ */
 
 /*
  * Updated and significantly modified from the Athena VPaned Widget.

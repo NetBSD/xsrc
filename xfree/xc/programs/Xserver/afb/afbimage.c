@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbimage.c,v 3.1 1997/06/03 14:11:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbimage.c,v 3.2 1998/03/20 21:04:55 hohndel Exp $ */
 
 #include "X.h"
 #include "windowstr.h"

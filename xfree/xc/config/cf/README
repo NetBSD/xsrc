@@ -1,9 +1,9 @@
-$TOG: README /main/76 1998/05/11 14:35:10 barstow $
+$Xorg: README,v 1.4 2000/08/18 04:03:58 coskrey Exp $
 
 
 
 
-$XFree86: xc/config/cf/README,v 1.11 2000/06/14 00:16:02 dawes Exp $
+$XFree86: xc/config/cf/README,v 1.13 2001/01/17 16:22:30 dawes Exp $
 
 The easiest way to write an Imakefile is to find another one that does
 something similar and copy/modify it!
@@ -133,6 +133,8 @@ Imake.tmpl provides defaults for the following variables:
 	NoRConst		YES if const for structs of funcs is bad
 	OSMajorVersion		major version number of operating system
 	OSMinorVersion		minor version number of operating system
+	OSName			operating system name
+	OSTeenyVersion		maintenance version number of operating system
 	OptimizedCDebugFlags	C compiler flags to turn on optimization
 	XtPopdownConformance	XtPopdown conformans to the specification
 	PreProcessCmd		command to run /lib/cpp on scripts
@@ -152,7 +154,7 @@ Imake.tmpl provides defaults for the following variables:
 	TagsCmd			command to run tags
 	TblCmd			command to run tbl
 	TroffCmd		command to run troff to get PostScript
-	UNCOMPRESSPATH		command to run uncompress
+	UNCOMPRESSPATH		command to run uncompress (obsolete)
 	UnalignedReferencesAllowed	boolean for unaligned copies ok
 	UsrLibDir		directory in which to install libraries
 	YaccCmd			command to run yacc
@@ -265,7 +267,7 @@ X11.tmpl provides defaults for the following variables:
 	NormalLibXtst		build libXtst.a
 	NormalLibXag		build libXag.a
 	NormalOldX		build liboldX.a
-	OsNameDefines		beats me
+	OsNameDefines		If uname(2) unavailable, set to -DOS_NAME=OSName
 	PexApiDir		PEX include file location
 	PexCCOptions		special options for building PEX library
 	PexCDebugFlags		special flags for building PEX library
@@ -339,7 +341,7 @@ X11.tmpl provides defaults for the following variables:
 	XtErrorPrefix		leading text in XtError() msg; eg. 'X Toolkit '
 	XtWarningPrefix		leading text in XtWarning()msg, same as above
 	XtMalloc0ReturnsNullDefines -D's specifically for libXt
-	ZBDFTOSNFFILT		-D to run uncompress and bdftosnf
+	ZBDFTOSNFFILT		-D to run uncompress and bdftosnf (obsolete)
 
 
 Library.tmpl provides defaults for the following variables:

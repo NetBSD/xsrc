@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/fontutils.c,v 1.25 2000/11/01 01:12:38 dawes Exp $
+ * $XFree86: xc/programs/xterm/fontutils.c,v 1.31 2001/01/04 18:26:12 keithp Exp $
  */
 
 /************************************************************
@@ -454,13 +454,17 @@ got_bold_font(Display *dpy, XFontStruct *fs, char *requested)
 static int
 same_font_size(XFontStruct *nfs, XFontStruct *bfs)
 {
+	TRACE(("same_font_size height %d/%d, min %d/%d max %d/%d\n",
+		nfs->ascent + nfs->descent,           
+		bfs->ascent + bfs->descent,
+		nfs->min_bounds.width, bfs->min_bounds.width,
+		nfs->max_bounds.width, bfs->max_bounds.width));
 	return (
-		nfs->ascent           == bfs->ascent
-	 &&	nfs->descent          == bfs->descent
-	 &&	nfs->min_bounds.width == bfs->min_bounds.width
-	 &&	nfs->min_bounds.width == bfs->min_bounds.width
-	 &&	nfs->max_bounds.width == bfs->max_bounds.width
-	 &&	nfs->max_bounds.width == bfs->max_bounds.width);
+	 (nfs->ascent + nfs->descent) == (bfs->ascent + bfs->descent)
+	 &&  (	nfs->min_bounds.width == bfs->min_bounds.width
+	   ||	nfs->min_bounds.width == bfs->min_bounds.width + 1)
+	 &&  (	nfs->max_bounds.width == bfs->max_bounds.width
+	   ||	nfs->max_bounds.width == bfs->max_bounds.width + 1));
 }
 
 /*
@@ -469,9 +473,24 @@ same_font_size(XFontStruct *nfs, XFontStruct *bfs)
 static int
 is_fixed_font(XFontStruct *fs)
 {
-	return (fs->min_bounds.width == fs->max_bounds.width
-	   &&   fs->min_bounds.width == fs->min_bounds.width);
+	if (fs)
+		return (fs->min_bounds.width == fs->max_bounds.width);
+	return 1;
 }
+
+/*
+ * Check if the font looks like a double width font (i.e. contains
+ * characters of width X and 2X
+ */
+#if OPT_WIDE_CHARS
+static int
+is_double_width_font(XFontStruct *fs)
+{
+	return (2 * fs->min_bounds.width == fs->max_bounds.width);
+}
+#else
+#define is_double_width_font(fs) 0
+#endif
 
 #define EmptyFont(fs) (fs != 0 \
 		   && ((fs)->ascent + (fs)->descent == 0 \
@@ -555,22 +574,29 @@ xtermLoadFont (
 	 * and 12x13ja as the corresponding fonts for 9x18 and 6x13.
 	 */
 	if_OPT_WIDE_CHARS(screen, {
-		if (wfontname == 0) {
+		if (wfontname == 0 && !is_double_width_font(nfs)) {
 			fp = get_font_name_props(screen->display, nfs, normal);
 			if (fp != 0) {
 				wfontname = wide_font_name(fp);
 				TRACE(("...derived wide %s\n", wfontname));
 			}
 		}
-		if (wfontname
-		 && (wfs = XLoadQueryFont(screen->display, wfontname)) == 0) {
+
+		if (wfontname) {
+			wfs = XLoadQueryFont(screen->display, wfontname);
+		} else {
+			wfs = nfs;
 		}
+
 		if (wbfontname) {
 			wbfs = XLoadQueryFont(screen->display, wbfontname);
+		} else if (is_double_width_font(bfs)) {
+			wbfs = bfs;
 		} else {
 			wbfs = wfs;
 			TRACE(("...cannot load wide bold font %s\n", wbfontname));
 		}
+
 		if (EmptyFont(wbfs))
 			goto bad;	/* can't use a 0-sized font */
 	})
@@ -600,30 +626,32 @@ xtermLoadFont (
 		if (bfontname != 0) {
 			return xtermLoadFont (screen,
 					      VT_FONTSET(nfontname,
-					      NULL,	/* throw it away! */
-					      wfontname,
-					      wbfontname),
-					      doresize,
+						         NULL,	/* throw it away! */
+						         wfontname,
+						         wbfontname),
+						         doresize,
 					      fontnum);
 		}
 	}
 
 	if_OPT_WIDE_CHARS(screen, {
-	  if (!same_font_size(wfs, wbfs)
-	      && (is_fixed_font(wfs) && is_fixed_font(wbfs))) {
-	    XFreeFont(screen->display, wbfs);
-	    wbfs = wfs;
-	    TRACE(("...fixing mismatched normal/bold wide fonts\n"));
-	    if (bfontname != 0) {
-	      return xtermLoadFont (screen,
-				    VT_FONTSET(nfontname,
-					       bfontname,
-					       wfontname,
-					       NULL),
-				    doresize,
-				    fontnum);
-	    }
-	  }
+		if (wfs != 0
+		 && wbfs != 0
+		 && !same_font_size(wfs, wbfs)
+		 && (is_fixed_font(wfs) && is_fixed_font(wbfs))) {
+			XFreeFont(screen->display, wbfs);
+			wbfs = wfs;
+			TRACE(("...fixing mismatched normal/bold wide fonts\n"));
+			if (bfontname != 0) {
+				return xtermLoadFont (screen,
+						      VT_FONTSET(nfontname,
+								 bfontname,
+								 wfontname,
+								 NULL),
+						      doresize,
+						      fontnum);
+			}
+		}
 	})
 
 	/*
@@ -642,9 +670,11 @@ xtermLoadFont (
 	}
 
 	if_OPT_WIDE_CHARS(screen, {
-	  if (!is_fixed_font(wfs)
+	  if (wfs != 0
+	   && wbfs != 0
+	   && (!is_fixed_font(wfs)
 	      || !is_fixed_font(wbfs)
-	      || wfs->max_bounds.width != wbfs->max_bounds.width) {
+	      || wfs->max_bounds.width != wbfs->max_bounds.width)) {
 	    TRACE(("Proportional font! wide %d/%d, wide bold %d/%d\n",
 		   wfs->min_bounds.width,
 		   wfs->max_bounds.width,
@@ -768,7 +798,7 @@ xtermLoadFont (
 				fontMenuEntries[fontMenu_fontescape].widget,
 				TRUE);
 		}
-#if OPT_SHIFT_KEYS
+#if OPT_SHIFT_FONTS
 		screen->menu_font_sizes[fontnum] = FontSize(nfs);
 #endif
 	}
@@ -830,24 +860,32 @@ xtermComputeFontInfo (TScreen *screen, struct _vtwin *win, XFontStruct *font, in
     if (!screen->renderFont && term->misc.face_name &&
 	XRenderFindVisualFormat (dpy, DefaultVisual (dpy, DefaultScreen (dpy))))
     {
-	screen->renderFont = XftFontOpen (dpy, DefaultScreen (dpy),
-					  XFT_FAMILY, XftTypeString, term->misc.face_name,
-					  XFT_FAMILY, XftTypeString, "mono",
-					  XFT_SIZE, XftTypeInteger, term->misc.face_size,
-					  XFT_SPACING, XftTypeInteger, XFT_MONO,
-					  0);
+	XftPattern  *pat, *match;
+	XftResult   result;
+
+	pat = XftNameParse (term->misc.face_name);
+	XftPatternBuild (pat, 
+			 XFT_FAMILY, XftTypeString, "mono",
+			 XFT_SIZE, XftTypeInteger, term->misc.face_size,
+			 XFT_SPACING, XftTypeInteger, XFT_MONO,
+			 0);
+	match = XftFontMatch (dpy, DefaultScreen (dpy), pat, &result);
+	screen->renderFont = XftFontOpenPattern (dpy, match);
+	if (!screen->renderFont && match)
+	    XftPatternDestroy (match);
 	if (screen->renderFont)
 	{
-	    screen->renderFontBold = XftFontOpen (dpy, DefaultScreen (dpy),
-						  XFT_FAMILY, XftTypeString, term->misc.face_name,
-						  XFT_FAMILY, XftTypeString, "mono",
-						  XFT_SIZE, XftTypeInteger, term->misc.face_size,
-						  XFT_WEIGHT, XftTypeInteger, XFT_WEIGHT_BOLD,
-						  XFT_SPACING, XftTypeInteger, XFT_MONO,
-						  XFT_CHAR_WIDTH, XftTypeInteger, 
-						    screen->renderFont->max_advance_width,
-						  0);
+	    XftPatternBuild (pat,
+			     XFT_WEIGHT, XftTypeInteger, XFT_WEIGHT_BOLD,
+			     XFT_CHAR_WIDTH, XftTypeInteger, screen->renderFont->max_advance_width,
+			     0);
+	    match = XftFontMatch (dpy, DefaultScreen (dpy), pat, &result);
+	    screen->renderFontBold = XftFontOpenPattern (dpy, match);
+	    if (!screen->renderFontBold && match)
+		XftPatternDestroy (match);
 	}
+	if (pat)
+	    XftPatternDestroy (pat);
     }
     if (screen->renderFont)
     {
@@ -859,7 +897,11 @@ xtermComputeFontInfo (TScreen *screen, struct _vtwin *win, XFontStruct *font, in
     else
 #endif
     {
-	win->f_width  = (font->max_bounds.width);
+	if (is_double_width_font(font)) {
+	    win->f_width  = (font->min_bounds.width);
+	} else {
+	    win->f_width  = (font->max_bounds.width);
+	}
 	win->f_height = (font->ascent + font->descent);
 	win->f_ascent = font->ascent;
 	win->f_descent = font->descent;
@@ -1201,7 +1243,7 @@ xtermDrawBoxChar(TScreen *screen, int ch, unsigned flags, GC gc, int x, int y)
 }
 #endif
 
-#if OPT_SHIFT_KEYS
+#if OPT_SHIFT_FONTS
 static XFontStruct *
 xtermFindFont (
 	TScreen *screen,
@@ -1227,6 +1269,7 @@ static void
 lookupFontSizes(TScreen *screen)
 {
 	int n;
+
 	for (n = 0; n < NMENUFONTS; n++) {
 		if (screen->menu_font_sizes[n] == 0) {
 			XFontStruct *fs = xtermFindFont(screen, n);
@@ -1252,6 +1295,8 @@ HandleLargerFont(
 	TScreen *screen = &term->screen;
 	int n, m;
 
+	if (!term->misc.shift_fonts)
+		return;
 	lookupFontSizes(screen);
 	for (n = 0, m = -1; n < NMENUFONTS; n++) {
 		if ((screen->menu_font_sizes[n] > screen->menu_font_sizes[screen->menu_font_number])
@@ -1277,6 +1322,8 @@ HandleSmallerFont(
 	TScreen *screen = &term->screen;
 	int n, m;
 
+	if (!term->misc.shift_fonts)
+		return;
 	lookupFontSizes(screen);
 	for (n = 0, m = -1; n < NMENUFONTS; n++) {
 		if ((screen->menu_font_sizes[n] < screen->menu_font_sizes[screen->menu_font_number])

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.68 2000/12/01 14:28:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.75 2001/05/04 19:05:41 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -22,15 +22,30 @@
 #include "xf86DDC.h"
 #include "xf86xv.h"
 
+
+
 #ifdef XF86DRI
 #include "xf86drm.h"
-#include "sarea.h"
+
+
 #define _XF86DRI_SERVER_
+#include "mga_dripriv.h"
+#include "dri.h"
+#include "GL/glxint.h"
+
+
+
+
 #include "xf86dri.h"
 #include "dri.h"
+
+
+
 #include "GL/glxint.h"
 #include "mga_dri.h"
 #endif
+
+
 
 #ifdef USEMGAHAL
 #include "client.h"
@@ -59,6 +74,32 @@ void dbg_outreg32(ScrnInfoPtr,int,int);
 #define OUTREG(addr,val) dbg_outreg32(pScrn,addr,val)
 #endif /* EXTRADEBUG */
 
+/*
+ * Read/write to the DAC via MMIO 
+ */
+
+/*
+ * These were functions.  Use macros instead to avoid the need to
+ * pass pMga to them.
+ */
+
+#define inMGAdreg(reg) INREG8(RAMDAC_OFFSET + (reg))
+
+#define outMGAdreg(reg, val) OUTREG8(RAMDAC_OFFSET + (reg), val)
+
+#define inMGAdac(reg) \
+	(outMGAdreg(MGA1064_INDEX, reg), inMGAdreg(MGA1064_DATA))
+
+#define outMGAdac(reg, val) \
+	(outMGAdreg(MGA1064_INDEX, reg), outMGAdreg(MGA1064_DATA, val))
+
+#define outMGAdacmsk(reg, mask, val) \
+	do { /* note: mask and reg may get evaluated twice */ \
+	    unsigned char tmp = (mask) ? (inMGAdac(reg) & (mask)) : 0; \
+	    outMGAdreg(MGA1064_INDEX, reg); \
+	    outMGAdreg(MGA1064_DATA, tmp | (val)); \
+	} while (0)
+
 #define PORT_OFFSET 	(0x1F00 - 0x300)
 
 #define MGA_VERSION 4000
@@ -74,10 +115,29 @@ typedef struct {
     unsigned char	ExtVga[6];
     unsigned char 	DacClk[6];
     unsigned char *     DacRegs;
+    unsigned long	crtc2[0x58];
+    unsigned char	dac2[0x21];
     CARD32		Option;
     CARD32		Option2;
     CARD32		Option3;
 } MGARegRec, *MGARegPtr;
+
+/* For programming the second CRTC */
+typedef struct {
+   CARD32   ulDispWidth;        /* Display Width in pixels*/
+   CARD32   ulDispHeight;       /* Display Height in pixels*/
+   CARD32   ulBpp;              /* Bits Per Pixels / input format*/
+   CARD32   ulPixClock;         /* Pixel Clock in kHz*/
+   CARD32   ulHFPorch;          /* Horizontal front porch in pixels*/
+   CARD32   ulHSync;            /* Horizontal Sync in pixels*/
+   CARD32   ulHBPorch;          /* Horizontal back porch in pixels*/
+   CARD32   ulVFPorch;          /* Vertical front porch in lines*/
+   CARD32   ulVSync;            /* Vertical Sync in lines*/
+   CARD32   ulVBPorch;          /* Vertical back Porch in lines*/
+   CARD32   ulFBPitch;          /* Pitch*/
+   CARD32   flSignalMode;       /* Signal Mode*/
+} xMODEINFO;
+
 
 typedef struct {
    int          brightness;
@@ -135,6 +195,11 @@ typedef struct {
 } MGAPaletteInfo;
 
 #define MGAPTR(p) ((MGAPtr)((p)->driverPrivate))
+
+#define ISDIGITAL1(p) ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL)
+#define ISDIGITAL2(p) ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL)
+#define ISTV1(p) ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_TV)
+#define ISTV2(p) ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_TV)
 
 #ifdef DISABLE_VGA_IO
 typedef struct mgaSave {
@@ -261,7 +326,6 @@ typedef struct {
     int			MaxBlitDWORDS;
     Bool		TexturedVideo;
     MGAPortPrivPtr	portPrivate;
-    int 		numXAALines;
     unsigned char	*ScratchBuffer;
     unsigned char	*ColorExpandBase;
     int			expandRows;
@@ -270,18 +334,21 @@ typedef struct {
     int			expandHeight;
     int			expandY;
 #ifdef XF86DRI
-    int 		agp_mode;
-    Bool		ReallyUseIrqZero;
-    Bool		have_quiescense;
     Bool 		directRenderingEnabled;
     DRIInfoPtr 		pDRIInfo;
-    int 		drmSubFD;
+    int 		drmFD;
     int 		numVisualConfigs;
     __GLXvisualConfig*	pVisualConfigs;
     MGAConfigPrivPtr 	pVisualConfigsPriv;
+    MGADRIServerPrivatePtr DRIServerInfo;
+
     MGARegRec		DRContextRegs;
-    MGADRIServerPrivatePtr  DRIServerInfo;
+
+    Bool		haveQuiescense;
     void		(*GetQuiescence)(ScrnInfoPtr pScrn);
+
+    int 		agpMode;
+
 #endif
     XF86VideoAdaptorPtr adaptor;
     Bool		SecondCrtc;
@@ -305,13 +372,8 @@ typedef struct {
 #ifdef USEMGAHAL
     Bool                HALLoaded;
 #endif
+    OptionInfoPtr	Options;
 } MGARec, *MGAPtr;
-
-#ifdef XF86DRI
-extern void GlxSetVisualConfigs(int nconfigs, __GLXvisualConfig *configs,
-				void **configprivs);
-#endif
-
 
 extern CARD32 MGAAtype[16];
 extern CARD32 MGAAtypeNoBLK[16];
@@ -332,10 +394,6 @@ extern CARD32 MGAAtypeNoBLK[16];
 
 #define TRANSPARENCY_KEY	255
 #define KEY_COLOR		0
-
-#define MGA_FRONT	0x1
-#define MGA_BACK	0x2
-#define MGA_DEPTH	0x4
 
 
 /* Prototypes */
@@ -365,22 +423,6 @@ void MGAPolyArcThinSolid(DrawablePtr, GCPtr, int, xArc*);
 
 Bool MGADGAInit(ScreenPtr pScreen);
 
-Bool MGADRIScreenInit(ScreenPtr pScreen);
-void MGADRICloseScreen(ScreenPtr pScreen);
-Bool MGADRIFinishScreenInit(ScreenPtr pScreen);
-void MGASwapContext(ScreenPtr pScreen);
-void MGASwapContext_shared(ScreenPtr pScreen);
-Bool mgaConfigureWarp(ScrnInfoPtr pScrn);
-unsigned int mgaInstallMicrocode(ScreenPtr pScreen, int agp_offset);
-unsigned int mgaGetMicrocodeSize(ScreenPtr pScreen);
-void MGASelectBuffer(ScrnInfoPtr pScrn, int which);
-Bool MgaCleanupDma(ScrnInfoPtr pScrn);
-Bool MgaInitDma(ScrnInfoPtr pScrn, int prim_size);
-#ifdef XF86DRI
-Bool MgaLockUpdate(ScrnInfoPtr pScrn, drmLockFlags flags);
-void mgaGetQuiescence(ScrnInfoPtr pScrn);
-void mgaGetQuiescence_shared(ScrnInfoPtr pScrn);
-#endif
 void MGARefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void MGARefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void MGARefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
@@ -412,6 +454,43 @@ void Mga32SetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 void MGAPointerMoved(int index, int x, int y);
 
 void MGAInitVideo(ScreenPtr pScreen);
-void MGAResetVideo(ScrnInfoPtr pScrn); 
+void MGAResetVideo(ScrnInfoPtr pScrn);
 
+#ifdef XF86DRI
+
+#define MGA_FRONT	0x1
+#define MGA_BACK	0x2
+#define MGA_DEPTH	0x4
+
+Bool MGADRIScreenInit( ScreenPtr pScreen );
+void MGADRICloseScreen( ScreenPtr pScreen );
+Bool MGADRIFinishScreenInit( ScreenPtr pScreen );
+
+Bool MGALockUpdate( ScrnInfoPtr pScrn, drmLockFlags flags );
+
+void MGAGetQuiescence( ScrnInfoPtr pScrn );
+void MGAGetQuiescenceShared( ScrnInfoPtr pScrn );
+
+void MGASelectBuffer(ScrnInfoPtr pScrn, int which);
+Bool MgaCleanupDma(ScrnInfoPtr pScrn);
+Bool MgaInitDma(ScrnInfoPtr pScrn, int prim_size);
+
+#define MGA_AGP_1X_MODE		0x01
+#define MGA_AGP_2X_MODE		0x02
+#define MGA_AGP_4X_MODE		0x04
+#define MGA_AGP_MODE_MASK	0x07
+
+#endif
+
+void CRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void CRTC2SetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
+void CRTC2SetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
+
+void CRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void CRTC2GetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
+void CRTC2GetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
+ 
+double G450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
+void printDac(ScrnInfoPtr pScrn);
 #endif

@@ -20,7 +20,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 */
 
-/* $TOG: xpstubs.c /main/2 1998/02/09 14:21:15 kaleb $ */
+/* $Xorg: xpstubs.c,v 1.3 2000/08/17 19:48:19 cpqbld Exp $ */
 
 #include "misc.h"
 #include "font.h"

@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/ftfuncs.c,v 1.16 2000/11/14 16:54:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftfuncs.c,v 1.18 2001/05/16 08:32:33 alanh Exp $ */
 
 #ifndef FONT_MODULE
 #include <string.h>
@@ -739,7 +739,7 @@ FreeTypeAddProperties(TTFFont *font, FontScalablePtr vals, FontInfoPtr info,
                       int rawAverageWidth)
 {
   int i, j, maxprops;
-  char *sp, *ep, val[256];
+  char *sp, *ep, val[MAXFONTNAMELEN];
   TT_Instance_Metrics imetrics;
   int upm;                      /* units per em */
   TTFFace *face;

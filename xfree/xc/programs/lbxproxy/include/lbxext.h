@@ -1,4 +1,4 @@
-/* $TOG: lbxext.h /main/6 1998/02/10 18:17:27 kaleb $ */
+/* $Xorg: lbxext.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

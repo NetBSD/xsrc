@@ -1,4 +1,4 @@
-/* $TOG: XlcPubI.h /main/8 1997/06/03 15:52:40 kaleb $ */
+/* $Xorg: XlcPubI.h,v 1.3 2000/08/17 19:45:06 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.6 2000/11/28 18:49:26 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.8 2001/01/17 19:41:49 dawes Exp $ */
 
 #ifndef _XLCPUBLICI_H_
 #define _XLCPUBLICI_H_

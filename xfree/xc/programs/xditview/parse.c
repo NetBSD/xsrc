@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xditview/parse.c,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
 
 /*
  * parse.c

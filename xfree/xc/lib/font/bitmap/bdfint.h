@@ -1,4 +1,4 @@
-/* $TOG: bdfint.h /main/5 1998/05/01 16:42:08 kaleb $ */
+/* $Xorg: bdfint.h,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfint.h,v 1.2 1999/07/17 05:30:29 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfint.h,v 1.4 2001/01/17 19:43:26 dawes Exp $ */
 
 #ifndef BDFINT_H
 #define BDFINT_H

@@ -1,4 +1,4 @@
-/* $TOG: pl_oc_util.c /main/17 1998/02/06 16:11:25 kaleb $ */
+/* $Xorg: pl_oc_util.c,v 1.4 2000/08/17 19:44:26 cpqbld Exp $ */
 
 /******************************************************************************
 
@@ -1799,7 +1799,7 @@ INPUT char		*data;
      * work if numBytes % 4 != 0.
      */
 	
-    if (mod4bytes = numBytes % 4)
+    if ((mod4bytes = numBytes % 4))
     {
 	if (mod4bytes > BytesLeftInXBuffer (display))
 	    _XFlush (display);

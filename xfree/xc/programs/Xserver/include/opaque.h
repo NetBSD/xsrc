@@ -1,4 +1,4 @@
-/* $TOG: opaque.h /main/20 1998/02/09 14:29:12 kaleb $ */
+/* $Xorg: opaque.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/include/opaque.h,v 1.6 1999/01/13 08:31:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/opaque.h,v 1.9 2001/05/04 19:05:52 dawes Exp $ */
 
 #ifndef OPAQUE_H
 #define OPAQUE_H
@@ -70,9 +70,6 @@ extern int limitNoFile;
 #endif
 extern Bool permitOldBugs;
 extern Bool defeatAccessControl;
-#ifdef SERVER_LOCK
-static Bool nolock = FALSE;
-#endif
 extern char* protNoListen;
 
 

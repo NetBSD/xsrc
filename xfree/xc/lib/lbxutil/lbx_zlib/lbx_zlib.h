@@ -1,4 +1,4 @@
-/* $TOG: lbx_zlib.h /main/4 1998/02/09 10:23:18 kaleb $ */
+/* $Xorg: lbx_zlib.h,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
 
@@ -46,7 +46,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.h,v 1.6 2000/05/18 23:46:17 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.h,v 1.8 2001/01/17 19:43:36 dawes Exp $ */
 
 #include "zlib.h"
 #include "Xfuncproto.h"

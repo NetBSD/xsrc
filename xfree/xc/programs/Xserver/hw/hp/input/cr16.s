@@ -1,4 +1,4 @@
-; $XConsortium: cr16.s,v 1.2 95/06/15 15:25:19 dpw Exp $
+; $Xorg: cr16.s,v 1.3 2000/08/17 19:48:22 cpqbld Exp $
         .SPACE  $TEXT$
         .SUBSPA $CODE$
         .export cr16

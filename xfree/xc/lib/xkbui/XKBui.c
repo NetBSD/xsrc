@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbui/XKBui.c,v 3.5 1999/03/14 03:21:21 dawes Exp $ */
+/* $XFree86: xc/lib/xkbui/XKBui.c,v 3.6 1999/06/20 07:14:08 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <stdio.h>

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/igs/igs.c,v 1.2 2000/05/24 23:52:47 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/igs/igs.c,v 1.3 2000/09/03 05:11:17 keithp Exp $
  *
  * Copyright © 1999 SuSE, Inc.
  *

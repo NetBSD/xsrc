@@ -1,4 +1,4 @@
-/* $TOG: SmeBSB.c /main/23 1998/06/24 11:53:39 kaleb $ */
+/* $Xorg: SmeBSB.c,v 1.4 2000/08/17 19:45:38 cpqbld Exp $ */
 
 /*
 Copyright 1989, 1994, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.9 1999/04/25 10:01:25 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.11 2001/01/17 19:42:31 dawes Exp $ */
 
 /*
  * SmeBSB.c - Source code file for BSB Menu Entry object.

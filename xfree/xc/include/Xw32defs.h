@@ -1,4 +1,4 @@
-/* $XConsortium: Xw32defs.h /main/5 1996/11/13 14:43:44 lehors $ */
+/* $Xorg: Xw32defs.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 
 #ifndef _XW32DEFS_H
 #define  _XW32DEFS_H

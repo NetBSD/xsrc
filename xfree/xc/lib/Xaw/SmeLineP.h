@@ -1,5 +1,5 @@
 /*
- * $TOG: SmeLineP.h /main/6 1998/02/11 14:55:14 kaleb $
+ * $Xorg: SmeLineP.h,v 1.3 2000/08/17 19:45:39 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/SmeLineP.h,v 1.5 1999/06/06 08:48:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeLineP.h,v 1.7 2001/01/17 19:42:31 dawes Exp $ */
 
 #ifndef _XawSmeLineP_h
 #define _XawSmeLineP_h

@@ -13,6 +13,9 @@
 # fully.
 
 
+.PHONY: setup
+
+
 ifeq ($(PLATFORM),ansi)
 
   # Detecting Windows NT is easy, as the OS variable must be defined and
@@ -21,11 +24,7 @@ ifeq ($(PLATFORM),ansi)
   #
   ifeq ($(OS),Windows_NT)
 
-    # Check if we are running on a CygWin system by checking the OSTYPE
-    # variable.
-    ifneq ($(OSTYPE),cygwin)
-      is_windows := 1
-    endif
+    is_windows := 1
 
     # We test for the COMSPEC environment variable, then run the `ver'
     # command-line program to see if its output contains the word `Windows'.
@@ -33,79 +32,124 @@ ifeq ($(PLATFORM),ansi)
     # If this is true, we are running a win32 platform (or an emulation).
     #
   else
-    ifneq ($(OSTYPE),cygwin)
-      ifdef COMSPEC
-        is_windows := $(findstring Windows,$(strip $(shell ver)))
-      endif
-    endif  # test CygWin
+    ifdef COMSPEC
+      is_windows := $(findstring Windows,$(strip $(shell ver)))
+    endif
   endif  # test NT
 
   ifdef is_windows
 
     PLATFORM := win32
-    DELETE   := del
-    COPY     := copy
 
-    CONFIG_FILE := w32-gcc.mk  # gcc Makefile by default
-    SEP         := /
-    ifeq ($(firstword $(CC)),cc)
-      CC        := gcc
-    endif
+  endif
+endif # test PLATFORM ansi
 
-    # additionally, we provide hooks for various other compilers
-    #
-    ifneq ($(findstring visualc,$(MAKECMDGOALS)),)     # Visual C/C++
-      CONFIG_FILE := w32-vcc.mk
-      SEP         := $(BACKSLASH)
-      CC          := cl
-      visualc: setup
-    endif
+ifeq ($(PLATFORM),win32)
 
-    ifneq ($(findstring watcom,$(MAKECMDGOALS)),)      # Watcom C/C++
-      CONFIG_FILE := w32-wat.mk
-      SEP         := $(BACKSLASH)
-      CC          := wcc386
-      watcom: setup
-    endif
+  DELETE   := del
+  COPY     := copy
 
-    ifneq ($(findstring visualage,$(MAKECMDGOALS)),)   # Visual Age C++
-      CONFIG_FILE := w32-icc.mk
-      SEP         := $(BACKSLASH)
-      CC          := icc
-      visualage: setup
-    endif
+  # gcc Makefile by default
+  CONFIG_FILE := w32-gcc.mk
+  SEP         := /
+  ifeq ($(firstword $(CC)),cc)
+    CC        := gcc
+  endif
 
-    ifneq ($(findstring lcc,$(MAKECMDGOALS)),)         # LCC-Win32
-      CONFIG_FILE := w32-lcc.mk
-      SEP         := $(BACKSLASH)
-      CC          := lcc
-      lcc: setup
-    endif
+  ifneq ($(findstring list,$(MAKECMDGOALS)),)  # test for the "list" target
+    dump_target_list:
+	    @echo ÿ
+	    @echo $(PROJECT_TITLE) build system -- supported compilers
+	    @echo ÿ
+	    @echo Several command-line compilers are supported on Win32:
+	    @echo ÿ
+	    @echo ÿÿmake setupÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿgcc (with Mingw)
+	    @echo ÿÿmake setup visualcÿÿÿÿÿÿÿÿÿÿÿÿÿMicrosoft Visual C++
+	    @echo ÿÿmake setup bcc32ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿBorland C/C++
+	    @echo ÿÿmake setup lccÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿWin32-LCC
+	    @echo ÿÿmake setup intelcÿÿÿÿÿÿÿÿÿÿÿÿÿÿIntel C/C++
+	    @echo ÿ
 
-    ifneq ($(findstring mingw32,$(MAKECMDGOALS)),)     # mingw32
-      CONFIG_FILE := w32-mingw32.mk
-      SEP         := $(BACKSLASH)
-      CC          := gcc
-      mingw32: setup
-    endif
-
-    ifneq ($(findstring bcc32,$(MAKECMDGOALS)),)       # Borland C++
-      CONFIG_FILE := w32-bcc.mk
-      SEP         := $(BACKSLASH)
-      CC          := bcc32
-      bcc32: setup
-    endif
-
-    ifneq ($(findstring devel,$(MAKECMDGOALS)),)       # development target
-      CONFIG_FILE := w32-dev.mk
-      CC          := gcc
-      SEP         := /
-      devel: setup
-    endif
-
+    setup: dump_target_list
+    .PHONY: dump_target_list list
+  else
     setup: dos_setup
+  endif
 
-  endif # test is_windows
-endif   # test PLATFORM
+  # additionally, we provide hooks for various other compilers
+  #
+  ifneq ($(findstring visualc,$(MAKECMDGOALS)),)     # Visual C/C++
+    CONFIG_FILE := w32-vcc.mk
+    SEP         := $(BACKSLASH)
+    CC          := cl
+    visualc: setup
+    .PHONY: visualc
+  endif
+
+  ifneq ($(findstring intelc,$(MAKECMDGOALS)),)      # Intel C/C++
+    CONFIG_FILE := w32-intl.mk
+    SEP         := $(BACKSLASH)
+    CC          := cl
+    visualc: setup
+    .PHONY: intelc
+  endif
+
+  ifneq ($(findstring watcom,$(MAKECMDGOALS)),)      # Watcom C/C++
+    CONFIG_FILE := w32-wat.mk
+    SEP         := $(BACKSLASH)
+    CC          := wcc386
+    watcom: setup
+    .PHONY: watcom
+  endif
+
+  ifneq ($(findstring visualage,$(MAKECMDGOALS)),)   # Visual Age C++
+    CONFIG_FILE := w32-icc.mk
+    SEP         := $(BACKSLASH)
+    CC          := icc
+    visualage: setup
+    .PHONY: visualage
+  endif
+
+  ifneq ($(findstring lcc,$(MAKECMDGOALS)),)         # LCC-Win32
+    CONFIG_FILE := w32-lcc.mk
+    SEP         := $(BACKSLASH)
+    CC          := lcc
+    lcc: setup
+    .PHONY: lcc
+  endif
+
+  ifneq ($(findstring mingw32,$(MAKECMDGOALS)),)     # mingw32
+    CONFIG_FILE := w32-mingw32.mk
+    SEP         := $(BACKSLASH)
+    CC          := gcc
+    mingw32: setup
+    .PHONY: mingw32
+  endif
+
+  ifneq ($(findstring bcc32,$(MAKECMDGOALS)),)       # Borland C++
+    CONFIG_FILE := w32-bcc.mk
+    SEP         := $(BACKSLASH)
+    CC          := bcc32
+    bcc32: setup
+    .PHONY: bcc32
+  endif
+
+  ifneq ($(findstring devel-bcc,$(MAKECMDGOALS)),)   # development target
+    CONFIG_FILE := w32-bccd.mk
+    CC          := bcc32
+    SEP         := /
+    devel-bcc: setup
+    .PHONY: devel-bcc
+  endif
+
+  ifneq ($(findstring devel-gcc,$(MAKECMDGOALS)),)   # development target
+    CONFIG_FILE := w32-dev.mk
+    CC          := gcc
+    SEP         := /
+    devel-gcc: setup
+    .PHONY: devel-gcc
+  endif
+
+endif   # test PLATFORM win32
 
 # EOF

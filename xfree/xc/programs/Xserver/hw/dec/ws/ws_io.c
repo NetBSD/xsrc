@@ -41,7 +41,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: ws_io.c /main/22 1998/02/27 10:30:37 kaleb $ */
+/* $Xorg: ws_io.c,v 1.3 2000/08/17 19:48:21 cpqbld Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>

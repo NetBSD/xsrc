@@ -1,0 +1,35 @@
+XCOMM $XFree86: xc/config/cf/darwinLib.tmpl,v 1.1 2001/03/13 02:36:12 torrey Exp $
+/*
+ * Darwin/Mac OS X shared library template
+ */
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
+#ifndef XawClientLibs
+#define XawClientLibs $(XAWLIB) $(XMULIBONLY) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#endif
+
+#define CplusplusLibC
+#define FrescoSysLibs       CplusplusLibC MathLibrary
+
+/* Allow for libpthread, as overridden by OS definitions */
+#if !defined(SharedX11Reqs)
+#define SharedX11Reqs
+#endif
+#define SharedOldXReqs      $(LDPRELIB) $(XLIBONLY)
+#define SharedXtReqs        $(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
+#define SharedXawReqs       $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#define SharedXaw6Reqs      $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs       $(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs      $(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs        $(LDPRELIB) $(XLIB)
+#define SharedPexReqs       $(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs      $(LDPRELIB) $(XLIB)
+#define SharedXieReqs       $(LDPRELIB) $(XLIBONLY)
+#define SharedSMReqs        $(LDPRELIB) $(ICELIB)
+#define SharedFrescoReqs    $(LDPRELIB) $(XLIBONLY) FrescoSysLibs
+#define SharedXtfReqs       $(LDPRELIB) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mipolyutil.c,v 1.6 1998/03/28 06:55:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipolyutil.c,v 1.8 2001/01/17 22:37:07 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mipolyutil.c /main/6 1998/02/09 14:48:12 kaleb $ */
+/* $Xorg: mipolyutil.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 #include "miscstruct.h"
 #include "gc.h"
 #include "miscanfill.h"

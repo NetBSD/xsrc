@@ -2,7 +2,7 @@
  *  Copyright (C) 1998 Itai Nahshon, Michael Schimek
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.4 1999/04/11 13:11:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.7 2001/01/22 21:09:40 dawes Exp $ */
 #ifndef _XF86I2C_H
 #define _XF86I2C_H
 
@@ -44,6 +44,8 @@ typedef struct _I2CBusRec {
 
     I2CDevPtr		FirstDev;
     I2CBusPtr		NextBus;
+    Bool 		(*I2CWriteRead)(I2CDevPtr d, I2CByte *WriteBuffer, int nWrite,
+		                   I2CByte *ReadBuffer,  int nRead);
 } I2CBusRec;
 
 I2CBusPtr 	xf86CreateI2CBusRec(void);

@@ -1,4 +1,4 @@
-/* $TOG: smproxy.c /main/30 1998/02/09 13:47:20 kaleb $ */
+/* $Xorg: smproxy.c,v 1.5 2000/08/17 19:54:05 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: $ */
+/* $XFree86: xc/programs/smproxy/smproxy.c,v 3.6 2001/01/17 23:45:05 dawes Exp $ */
 
 #include "smproxy.h"
 #include <unistd.h>
@@ -572,7 +572,6 @@ WinInfo *winInfo;
 
 
 
-int
 MyErrorHandler (display, event)
 
 Display *display;

@@ -1,4 +1,4 @@
-/* $TOG: util.c /main/19 1998/02/09 13:56:40 kaleb $ */
+/* $Xorg: util.c,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/util.c,v 3.15 2000/11/14 18:20:39 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.17 2001/02/28 18:58:54 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

@@ -1,4 +1,4 @@
-/* $XConsortium: keytypes.c /main/8 1996/01/14 16:47:56 kaleb $ */
+/* $Xorg: keytypes.c,v 1.3 2000/08/17 19:54:32 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbcomp/keytypes.c,v 1.4 2001/01/17 23:45:44 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"

@@ -100,6 +100,22 @@ Flags
    they should be the pixel values from the current colormap.
 
 
+   /* Cursor data loading flags */
+
+   HARDWARE_CURSOR_SHOW_TRANSPARENT
+
+   The HideCursor entry will normally be called instead of displaying a
+   completely transparent cursor.  This flag prevents this behaviour, thus
+   causing the LoadCursorImage entry to be called with the transparent cursor
+   data.
+
+   HARDWARE_CURSOR_UPDATE_UNHIDDEN
+
+   This flag prevents the HideCursor call that would normally occur just before
+   the LoadCursorImage entry is to be called to load a new hardware cursor
+   image.
+
+
    /* Cursor data packing flags */
 
    Hardware cursor data consists of two pieces, a source and a mask.
@@ -169,4 +185,4 @@ Flags
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/ramdac/CURSOR.NOTES,v 1.2 1998/09/13 05:23:53 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/ramdac/CURSOR.NOTES,v 1.4 2001/05/09 03:12:06 tsi Exp $

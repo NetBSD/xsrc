@@ -1,4 +1,4 @@
-.\" $TOG: xinit.man /main/26 1998/02/09 14:02:37 kaleb $
+.\" $Xorg: xinit.man,v 1.3 2000/08/17 19:54:30 cpqbld Exp $
 .\" Copyright 1988, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,9 +19,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xinit/xinit.man,v 3.4 1998/04/05 02:29:11 dawes Exp $
+.\" $XFree86: xc/programs/xinit/xinit.man,v 3.9 2001/02/07 23:25:56 dawes Exp $
 .\" 
-.TH XINIT 1 "Release 6.4" "X Version 11"
+.TH XINIT 1 __xorgversion__
 .SH NAME
 xinit \- X Window System initializer
 .SH SYNOPSIS
@@ -147,7 +147,7 @@ a default \fI\.xinitrc\fP that references a site-wide startup file:
 .sp
 .in +8
 .nf
-#!/bin/sh
+\&#!/bin/sh
 \&. /usr/local/lib/site.xinitrc
 .fi
 .in -8
@@ -159,7 +159,7 @@ novice users:
 .sp
 .in +8
 .nf
-#!/bin/sh
+\&#!/bin/sh
 xinit /usr/local/lib/site.xinitrc \-\^\- /usr/X11R6/bin/X bc
 .fi
 .in -8
@@ -188,7 +188,7 @@ default server script
 .I X
 server to run if \fI.xserverrc\fP does not exist
 .SH "SEE ALSO"
-.IR X (1),
+.IR X (__miscmansuffix__),
 .IR startx (1),
 .IR Xserver (1),
 .IR xterm (1)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vtypes.h,v 1.5 2000/03/01 00:25:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vtypes.h,v 1.7 2001/05/04 19:05:42 dawes Exp $ */
 #ifndef _VTYPES_H_
 #define _VTYPES_H_
 
@@ -166,6 +166,7 @@ typedef struct _renditionRec
     CloseScreenProcPtr CloseScreen;     /* wrap CloseScreen */
     xf86CursorInfoPtr CursorInfoRec;    /* Cursor data */
     XAAInfoRecPtr AccelInfoRec;         /* Needed for XAA */
+    OptionInfoPtr Options;
 } renditionRec, *renditionPtr;
 
 #define RENDITIONPTR(p)     ((renditionPtr)((p)->driverPrivate))

@@ -1,5 +1,5 @@
 /*
- * $TOG: Repeater.c /main/13 1998/02/11 14:54:39 kaleb $
+ * $Xorg: Repeater.c,v 1.3 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1990, 1994, 1998  The Open Group
 
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * 
  * This widget is used for press-and-hold style buttons.
  */
-/* $XFree86: xc/lib/Xaw/Repeater.c,v 1.4 1998/10/03 08:42:16 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Repeater.c,v 1.6 2001/01/17 19:42:29 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

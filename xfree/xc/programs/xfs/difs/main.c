@@ -1,4 +1,4 @@
-/* $TOG: main.c /main/16 1998/02/11 10:03:13 kaleb $ */
+/* $Xorg: main.c,v 1.4 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * Font server main routine
  */
@@ -42,8 +42,9 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/main.c,v 3.4 2000/11/30 23:30:08 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/main.c,v 3.7 2001/04/01 14:00:20 tsi Exp $ */
 
+#include	<stdlib.h>
 #include	"FS.h"
 #include	"FSproto.h"
 #include	"clientstr.h"

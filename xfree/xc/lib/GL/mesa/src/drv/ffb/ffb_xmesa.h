@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.h,v 1.1 2000/06/20 05:08:40 dawes Exp $ */
 
 #ifndef _FFB_XMESA_H_
 #define _FFB_XMESA_H_

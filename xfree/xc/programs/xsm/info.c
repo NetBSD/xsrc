@@ -1,4 +1,4 @@
-/* $TOG: info.c /main/27 1998/02/09 14:13:26 kaleb $ */
+/* $Xorg: info.c,v 1.4 2000/08/17 19:55:04 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/info.c,v 1.3 1999/01/11 05:37:49 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/info.c,v 1.5 2001/01/17 23:46:28 dawes Exp $ */
 
 #include "xsm.h"
 #include "restart.h"
@@ -221,6 +221,7 @@ DisplayProps(ClientRec *client)
 
 	sprintf (buffer.bufStart,
 	    "SM Properties : %s", clientListNames[index]);
+
 	ptr = Strstr (buffer.bufStart, ")   Restart");
 	if (ptr) *(ptr + 1) = '\0';
 
@@ -423,19 +424,19 @@ UpdateClientList(void)
 	    List *vl = ListFirst (pprop->values);
 	    if (vl != NULL)
 	    {
-		PropValue *pval = (PropValue *) vl->thing;
+	    	PropValue *pval = (PropValue *) vl->thing;
 
-		if (strcmp (pprop->name, SmProgram) == 0)
-		{
-		    progName = GetProgramName ((char *) pval->value);
+	    	if (strcmp (pprop->name, SmProgram) == 0)
+	    	{
+			progName = GetProgramName ((char *) pval->value);
 
-		    if ((int) strlen (progName) > maxlen1)
-			maxlen1 = strlen (progName);
-		}
-		else if (strcmp (pprop->name, "_XC_RestartService") == 0)
-		{
-		    restart_service_prop = (char *) pval->value;
-		}
+			if ((int) strlen (progName) > maxlen1)
+			    maxlen1 = strlen (progName);
+	    	}
+	    	else if (strcmp (pprop->name, "_XC_RestartService") == 0)
+	    	{
+			restart_service_prop = (char *) pval->value;
+	    	}
 	    }
 	}
 
@@ -510,16 +511,15 @@ UpdateClientList(void)
 	    
 	    if (vl != NULL)
 	    {
-		PropValue *pval = (PropValue *) vl->thing;
-
-		if (strcmp (pprop->name, SmProgram) == 0)
-		{
-		    progName = GetProgramName ((char *) pval->value);
-		}
-		else if (strcmp (pprop->name, "_XC_RestartService") == 0)
-		{
-		    restart_service_prop = (char *) pval->value;
-		}
+	    	PropValue *pval = (PropValue *) vl->thing;
+	    	if (strcmp (pprop->name, SmProgram) == 0)
+	    	{
+			progName = GetProgramName ((char *) pval->value);
+	    	}
+	    	else if (strcmp (pprop->name, "_XC_RestartService") == 0)
+	    	{
+			restart_service_prop = (char *) pval->value;
+	    	}
 	    }
 	}
 

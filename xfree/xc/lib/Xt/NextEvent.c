@@ -1,4 +1,4 @@
-/* $TOG: NextEvent.c /main/138 1998/04/30 11:52:29 barstow $ */
+/* $Xorg: NextEvent.c,v 1.6 2000/08/17 19:46:14 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.14tsi Exp $ */
+/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.18 2001/02/11 04:41:28 keithp Exp $ */
 
 #include "IntrinsicI.h"
 #include <stdio.h>
@@ -479,8 +479,16 @@ static void FindInputs (app, wf, nfds, ignoreEvents, ignoreInputs, dpy_no, found
 	if (condition) {
 	    for (ep = app->input_list[ii]; ep; ep = ep->ie_next)
 		if (condition & ep->ie_condition) {
-		    ep->ie_oq = app->outstandingQueue;
-		    app->outstandingQueue = ep;
+		    /* make sure this input isn't already marked outstanding */
+		    InputEvent	*oq;
+		    for (oq = app->outstandingQueue; oq; oq = oq->ie_oq)
+			if (oq == ep)
+			    break;
+		    if (!oq)
+		    {
+			ep->ie_oq = app->outstandingQueue;
+			app->outstandingQueue = ep;
+		    }
 		}
 	    *found_input = True;
 	}
@@ -526,8 +534,16 @@ ENDILOOP:   ;
 		*found_input = True;
 		for (ep = app->input_list[fdlp->fd]; ep; ep = ep->ie_next)
 		    if (condition & ep->ie_condition) {
-			ep->ie_oq = app->outstandingQueue;
-			app->outstandingQueue = ep;
+			InputEvent	*oq;
+			/* make sure this input isn't already marked outstanding */
+			for (oq = app->outstandingQueue; oq; oq = oq->ie_oq)
+			    if (oq == ep)
+				break;
+			if (!oq)
+			{
+			    ep->ie_oq = app->outstandingQueue;
+			    app->outstandingQueue = ep;
+			}
 		    }
 	    }
 	}
@@ -1597,6 +1613,8 @@ Boolean XtPeekEvent(event)
 	return XtAppPeekEvent(_XtDefaultAppContext(), event);
 }
 
+Boolean XtAppPeekEvent_SkipTimer;
+
 Boolean XtAppPeekEvent(app, event)
 	XtAppContext app;
 	XEvent *event;
@@ -1624,25 +1642,80 @@ Boolean XtAppPeekEvent(app, event)
 	    UNLOCK_APP(app);
 	    return FALSE;
 	}
-	
-	d = _XtWaitForSomething (app,
-				 FALSE, FALSE, FALSE, FALSE,
-				 TRUE, 
+
+	while (1) {
+		d = _XtWaitForSomething (app,
+			FALSE, FALSE, FALSE, FALSE,
+			TRUE, 
 #ifdef XTHREADS
-				 TRUE, 
+			TRUE, 
 #endif
-				 (unsigned long *) NULL);
-	
-	if (d != -1) {
-	  GotEvent:
-	    XPeekEvent(app->list[d], event);
-	    app->last = (d == 0 ? app->count : d) - 1;
-	    UNLOCK_APP(app);
-	    return TRUE;
-	}
-	event->xany.type = 0;	/* Something else must be ready */
-	event->xany.display = NULL;
-	event->xany.window = 0;
-	UNLOCK_APP(app);
-	return FALSE;
+			(unsigned long *) NULL);
+               
+		if (d != -1) {  /* event */
+			GotEvent:
+			XPeekEvent(app->list[d], event);
+			app->last = (d == 0 ? app->count : d) - 1;
+			UNLOCK_APP(app);
+			return TRUE;
+		}
+		else {  /* input or timer or signal */
+			/*
+			 * Check to see why a -1 was returned, if a timer expired,
+			 * call it and block some more
+			 */
+			if ((app->timerQueue != NULL) && ! XtAppPeekEvent_SkipTimer) {  /* timer */
+				struct timeval cur_time;
+				Bool did_timer = False;
+
+				X_GETTIMEOFDAY (&cur_time);
+				FIXUP_TIMEVAL(cur_time);
+				while (IS_AT_OR_AFTER(app->timerQueue->te_timer_value, cur_time)) {
+					TimerEventRec *te_ptr = app->timerQueue;
+					app->timerQueue = app->timerQueue->te_next;
+					te_ptr->te_next = NULL;
+					if (te_ptr->te_proc != NULL)
+					    TeCallProc(te_ptr);
+					LOCK_PROCESS;
+					did_timer = True;
+					te_ptr->te_next = freeTimerRecs;
+					freeTimerRecs = te_ptr;
+					UNLOCK_PROCESS;
+					if (app->timerQueue == NULL) break;
+				}
+				if (did_timer)
+				{
+				    for (d = 0; d < app->count; d++)
+				    /* the timer's procedure may have caused an event */
+					    if (XEventsQueued(app->list[d], QueuedAfterFlush)) {
+						    goto GotEvent;
+					    }
+				    continue;  /* keep blocking */
+				}
+			}
+			/*
+			 * spec is vague here; we'll assume signals also return FALSE,
+			 * of course to determine whether a signal is pending requires
+			 * walking the signalQueue looking for se_notice flags which
+			 * this code doesn't do. 
+			 */
+#if 0
+			if (app->signalQueue != NULL) {  /* signal */
+				event->xany.type = 0;
+				event->xany.display = NULL;
+				event->xany.window = 0;
+				UNLOCK_APP(app);
+				return FALSE;
+			}
+			else 
+#endif
+			{  /* input */
+				event->xany.type = 0;   
+				event->xany.display = NULL;
+				event->xany.window = 0;
+				UNLOCK_APP(app);
+				return FALSE;
+			}
+		}
+	} /* end while */
 }	

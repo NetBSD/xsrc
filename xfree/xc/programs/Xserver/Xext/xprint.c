@@ -1,4 +1,4 @@
-/* $XConsortium: xprint.c /main/5 1996/12/30 18:39:20 kaleb $ */
+/* $Xorg: xprint.c,v 1.4 2000/08/17 19:47:59 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -64,7 +64,7 @@ copyright holders.
 **    *********************************************************
 **
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xprint.c,v 1.7 1999/12/13 02:12:44 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xprint.c,v 1.9 2001/01/17 22:13:19 dawes Exp $ */
 
 #include "X.h"
 #include "Xos.h"
@@ -709,10 +709,11 @@ ProcXpQueryScreens(ClientPtr client)
 	    numPrintScreens++;
 	    totalSize += sizeof(WINDOW);
 	    rep = (xPrintQueryScreensReply *)xrealloc(rep, totalSize);
+	    /* fix of bug: pWinId should be set again after reallocate rep */
+	    pWinId = (WINDOW *)(rep + 1);
 	    *pWinId = WindowTable[i]->drawable.id;
             if (client->swapped)
                 swapl((long *)pWinId, l);
-	    pWinId++;
 	}
     }
 

@@ -1,4 +1,4 @@
-/* $TOG: psout.c /main/6 1998/02/09 15:42:56 kaleb $ */
+/* $Xorg: psout.c,v 1.5 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
 /*
  * (c) Copyright 1996 Hewlett-Packard Company
  * (c) Copyright 1996 International Business Machines Corp.
- * (c) Copyright 1996 Sun Microsystems, Inc.
+ * (c) Copyright 1996, 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * (c) Copyright 1996 Novell, Inc.
  * (c) Copyright 1996 Digital Equipment Corp.
  * (c) Copyright 1996 Fujitsu Limited
@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 **
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/psout.c,v 1.5 1998/12/20 11:57:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/psout.c,v 1.7 2001/01/17 22:36:32 dawes Exp $ */
 
 /*      
  * For XFree86 3.3.3:  
@@ -320,11 +320,23 @@ static char *S_CompositeDefs = "\
   0 2 i rl dp 0 rl 0 2 i ng rl 0 3 i rl ng 0 rl cp fl p p\
   gr T}bd\
 /Im1{6 4 r tr scl t [3 i 0 0 5 i 0 0]{cf str1 rh p} im}bd\
+/Im1rev{6 4 r tr scl f [3 i 0 0 5 i 0 0]{cf str1 rh p} im}bd\
 /Im24{gs 6 4 r tr scl 8 [3 i 0 0 5 i 0 0]{cf str3 rh p} f 3 ci}bd\
 /Im1t{6 4 r tr scl t [3 i 0 0 5 i 0 0]{} im}bd\
 /Im24t{gs 6 4 r tr scl 8 [3 i 0 0 5 i 0 0]{} f 3 ci}bd\
+/ck2{/currentpagedevice wh \
+{p dp currentpagedevice dp 3 -1 r kn \
+{x get al p 3 -1 r eq 3 1 r eq and } \
+{p p p p t}ie} \
+{p p p t}ie}bd \
+/ck1{/currentpagedevice wh \
+{p dp currentpagedevice dp 3 -1 r kn \
+{x get eq} {p p p t}ie} \
+{p p t}ie}bd \
 ";
 
+int  pagenum = 0;
+char *pg_orient[] = {"Portrait","Landscape","Reverse Portrait","Reverse Landscape"};
 /*
  *  Setup definitions
  */
@@ -446,12 +458,109 @@ S_Color(PsOutPtr self, int clr)
   }
 }
 
+static void
+S_SetPageDevice(PsOutPtr self, int orient, int count, int plex, int res,
+                int wd, int ht, int isPage)
+{
+    float fwd = ((float)wd/(float)res)*72.;
+    float fht = ((float)ht/(float)res)*72.;
+
+    S_OutTok(self, "/pWd", 0);
+    S_OutNum(self, fwd);
+    S_OutTok(self, "d /pHt", 0);
+    S_OutNum(self, fht);
+    S_OutTok(self, "d", 1);
+
+  /*
+   * if these are page attributes, have PostScript check to see if they
+   * have changed.  If not, don't do setpagedevice, since it will cause
+   * a page flush and screw up duplex printing.  Having PostScript check
+   * means we don't have to keep track ourselves.
+   */
+    if(isPage) {
+      S_OutNum(self, (float) orient);
+      S_OutTok(self, "/Orientation ck1", 0);
+      S_OutTok(self, "pWd pHt /PageSize ck2 and not {", 1);
+    }
+    S_OutTok(self, "{db", 0);
+
+    S_OutTok(self, "/Orientation", 0);
+    S_OutNum(self, (float) orient);
+    S_OutTok(self, " d ", 0);
+    S_OutTok(self, "/PageSize [pWd pHt] d", 0);
+
+    S_OutTok(self, " de spd", 0);
+    /*
+   * save a flag to show if we failed to set orientation... determined
+   * by both/either Orientation and/or PageSize, use this
+   * later to set/not set orientation using Cs command.
+   */
+    S_OutTok(self,"}stp /orientationFailed x d", 1);
+    /*
+   * if these are page attributes, have PostScript check to see if they
+   * have changed.  If not, don't do setpagedevice, since it will cause
+   * a page flush and screw up duplex printing.  Having PostScript check
+   * means we don't have to keep track ourselves.
+   */
+    if(isPage)
+    {
+      S_OutTok(self,"}if",1);
+
+      S_OutTok(self, (plex==0)?"f":"t", 0);
+      S_OutTok(self, "/Duplex ck1 ", 0);
+
+      S_OutTok(self, (plex==2)?"t":"f", 0);
+      S_OutTok(self, "/Tumble ck1 and ", 0);
+
+
+      S_OutNum(self, (float)res);
+      S_OutNum(self, (float)res);
+      S_OutTok(self, " /HWResolution ck2 and", 0);
+      
+      if( count>1 )
+      {
+          S_OutNum(self, (float)count);
+          S_OutTok(self, " /NumCopies", 0);
+          S_OutTok(self, " ck1 and ", 0);
+      }
+      S_OutTok(self," not {",1);
+    }
+    S_OutTok(self, "{db", 0);
+
+    S_OutTok(self, "/Duplex ", 0);
+    S_OutTok(self, (plex==0)?"f":"t", 0);
+    S_OutTok(self, " d ", 0);
+
+    S_OutTok(self, "/Tumble ", 0);
+    S_OutTok(self, (plex==2)?"t":"f", 0);
+    S_OutTok(self, " d ", 0);
+  
+    S_OutTok(self, " /HWResolution [", 0);
+    S_OutNum(self, (float)res);
+    S_OutNum(self, (float)res);
+    S_OutTok(self, "] d ", 0);
+
+    if( count>1 )
+    {
+      S_OutTok(self, " /NumCopies", 0);
+      S_OutNum(self, (float)count);
+      S_OutTok(self, " d ", 0);
+    }
+    S_OutTok(self, " de spd}stp p", 1);
+
+    if(isPage)
+    {
+      S_OutTok(self, "}if", 1);
+    }
+}
+
 /*******************************************************************
  *                        PUBLIC FUNCTIONS                         *
  *******************************************************************/
 
 PsOutPtr
-PsOut_BeginFile(FILE *fp)
+PsOut_BeginFile(FILE *fp, int orient, int count, int plex, int res,
+                int wd, int ht)
 {
   int  i;
 /*
@@ -461,6 +570,7 @@ PsOut_BeginFile(FILE *fp)
   psout = (PsOutPtr)xalloc(sizeof(PsOutRec));
   memset(psout, 0, sizeof(PsOutRec));
   psout->Fp = fp;
+  pagenum = 0;
 
 /*
  *  Output PostScript header
@@ -476,6 +586,9 @@ PsOut_BeginFile(FILE *fp)
   S_Comment(psout, "%%EndProcSet");
   S_Comment(psout, "%%EndProlog");
   S_Comment(psout, "%%BeginSetup");
+  /* set document level page attributes */
+  S_SetPageDevice(psout, orient, count, plex, res, wd, ht, 0);
+  S_Comment(psout, "%%Pages: atend");
   S_OutDefs(psout, S_SetupDefs);
   S_Comment(psout, "%%EndSetup");
 /*
@@ -497,8 +610,12 @@ PsOut_BeginFile(FILE *fp)
 void
 PsOut_EndFile(PsOutPtr self, int closeFile)
 {
+  char coms[50];
   int  i;
 
+  S_Comment(self,"%%Trailer");
+  sprintf(coms,"%%%%Pages: %d",pagenum);
+  S_Comment(self, coms);
   S_Comment(self, "%%EOF");
   if( self->NDashes && self->Dashes ) xfree(self->Dashes);
   if( self->FontName ) xfree(self->FontName);
@@ -507,6 +624,7 @@ PsOut_EndFile(PsOutPtr self, int closeFile)
   if( closeFile ) fclose(self->Fp);
   for( i=0 ; i<self->NDownloads ; i++ ) xfree(self->Downloads[i]);
   if( self->Downloads ) xfree(self->Downloads);
+  pagenum = 0; /* reset page num back to 0 */
   xfree(self);
 }
 
@@ -514,42 +632,46 @@ void
 PsOut_BeginPage(PsOutPtr self, int orient, int count, int plex, int res,
                 int wd, int ht)
 {
-  float fwd = ((float)wd/(float)res)*72.;
-  float fht = ((float)ht/(float)res)*72.;
-  S_OutTok(self, "/pWd", 0);
-  S_OutNum(self, fwd);
-  S_OutTok(self, "d /pHt", 0);
-  S_OutNum(self, fht);
-  S_OutTok(self, "d", 1);
+  char coms[50];
 
-  S_OutTok(self, "{db", 0);
-  if( count>1 )
-  {
-    S_OutTok(self, "/NumCopies", 0);
-    S_OutNum(self, (float)count);
-    S_OutTok(self, "d", 0);
-  }
-  if( plex ) S_OutTok(self, "/Duplex t d", 0);
-  if( plex==1 ) S_OutTok(self, "/Tumble f d", 0);
-  else          S_OutTok(self, "/Tumble t d", 0);
+/*** comment for pagenumbers *****/
 
-  S_OutTok(self, "/Orientation", 0);
-  S_OutNum(self, (float) orient);
+  S_Comment(self,"%%PageHeader");
+  pagenum++;
+  sprintf(coms,"%%%%Page: %d %d",pagenum,pagenum);
+  S_Comment(self, coms);
+  sprintf(coms,"%%%%PageOrientation: %s",pg_orient[orient]);
+  S_Comment(self, coms);
+
+/*** end comment *****************/
+
+  /* set page level page attributes */
+  S_SetPageDevice(self, orient, count, plex, res, wd, ht, 1);
   
-  S_OutTok(self, "d/HWResolution [", 0);
-  S_OutNum(self, (float)res);
-  S_OutNum(self, (float)res);
-  S_OutTok(self, "] d/PageSize [pWd pHt]d de spd}stp p", 1);
-
-  S_OutTok(self, "gs", 0);
+  S_OutTok(self, "gs ", 0);
+  /*
+   * check to see if we set orientation already; if it wasn't set,
+   * use Cs to set orientation here.
+   */
   S_OutNum(self, (float)orient);
-  S_OutTok(self, "Cs 100 sml gs", 1);
+  S_OutTok(self, "orientationFailed { ", 0);
+  S_OutNum(self, (float)orient);
+  S_OutTok(self, " } { 0 }ie Cs 100 sml gs", 1);
 }
 
 void
 PsOut_EndPage(PsOutPtr self)
 {
   S_OutTok(self, "gr gr sp", 1);
+
+  /* did grestore: mark attributes 'dirty' so they will be re-sent */
+  PsOut_DirtyAttributes(self);
+
+/*** comment for pagenumbers *****/
+
+  S_Comment(self,"%%PageTrailer");
+
+/*** end comment *****************/
 }
 
 void
@@ -1075,8 +1197,69 @@ PsOut_BeginImage(PsOutPtr self, int bclr, int fclr, int x, int y,
   S_OutNum(self, (float)h);
   S_OutNum(self, (float)sw);
   S_OutNum(self, (float)sh);
-  if( format==1 ) S_OutTok(self, "Im1", 1);
+  if( format==1 ) {
+	if(self->RevImage) 
+	    S_OutTok(self, "Im1rev", 1);
+	else
+	    S_OutTok(self, "Im1", 1);
+  }
   else            S_OutTok(self, "Im24", 1);
+  self->ImageFormat = format;
+  self->CurColor    = savClr;
+}
+
+void
+PsOut_BeginImageIM(PsOutPtr self, int bclr, int fclr, int x, int y,
+                 int w, int h, int sw, int sh, int format)
+{
+  int savClr = self->CurColor;
+  int xo = self->XOff;
+  int yo = self->YOff;
+
+  if( self->InFrame || self->InTile ) xo = yo = 0;
+  x += xo; y += yo;
+  if( self->InTile )
+  {
+    if( self->InTile>=PsStip && format!=1 ) { self->ImgSkip = 1; return; }
+    self->ImgBClr = bclr; self->ImgFClr = fclr;
+    self->ImgX    = x;    self->ImgY    = y;
+    self->ImgW    = w;    self->ImgH    = h;
+    self->SclW    = sw;   self->SclH    = sh;
+    S_OutTok(self, "<", 0);
+    self->ImageFormat = format;
+    self->RevImage = 0;
+    if( self->InTile==PsTile && format==1 && fclr==0xFFFFFF )
+      self->RevImage = 1;
+    return;
+  }
+
+  self->RevImage = 0;
+  if( format==1 )
+  {
+    S_OutTok(self, "gs", 0);
+    if( fclr==0xFFFFFF )
+    {
+      PsOut_Color(self, bclr);
+      self->RevImage = 1;
+    }
+    else
+    {
+      PsOut_Color(self, fclr);
+    }
+  }
+  S_OutNum(self, (float)x);
+  S_OutNum(self, (float)y);
+  S_OutNum(self, (float)w);
+  S_OutNum(self, (float)h);
+  S_OutNum(self, (float)sw);
+  S_OutNum(self, (float)sh);
+  if( format==1 ){
+        if(self->RevImage)
+            S_OutTok(self, "Im1rev", 1);
+        else
+            S_OutTok(self, "Im1", 1);
+  }
+  else      S_OutTok(self, "Im24", 1);
   self->ImageFormat = format;
   self->CurColor    = savClr;
 }

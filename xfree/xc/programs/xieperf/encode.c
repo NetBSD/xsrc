@@ -1,4 +1,4 @@
-/* $TOG: encode.c /main/9 1998/02/09 14:00:10 kaleb $ */
+/* $Xorg: encode.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 /**** module encode.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/encode.c,v 1.5 2001/01/17 23:45:37 dawes Exp $ */
 
 #include "xieperf.h"
 #include <X11/Xlib.h>

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbmisc.c /main/7 1996/12/27 20:53:10 kaleb $ */
+/* $Xorg: xkbmisc.c,v 1.4 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -105,7 +105,7 @@ _XkbStrCaseCmp(str1,str2)
     char c, *s;
     register int n;
 
-    for (n=0, s = buf1; c = *str1++; n++) {
+    for (n=0, s = buf1; (c = *str1++); n++) {
         if (isupper(c))
             c = tolower(c);
         if (n>510)
@@ -113,7 +113,7 @@ _XkbStrCaseCmp(str1,str2)
         *s++ = c;
     }
     *s = '\0';
-    for (n=0, s = buf2; c = *str2++; n++) {
+    for (n=0, s = buf2; (c = *str2++); n++) {
         if (isupper(c))
             c = tolower(c);
         if (n>510)

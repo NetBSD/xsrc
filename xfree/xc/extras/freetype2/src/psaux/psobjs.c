@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auxiliary functions for PostScript fonts (body).                     */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,19 +16,11 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/psaux.h>
-#include <freetype/fterrors.h>
-#include <freetype/internal/ftdebug.h>
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_ERRORS_H
 #include "psobjs.h"
-
-#else
-
-#include <psaux/psobjs.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -92,17 +84,16 @@
   void  shift_elements( PS_Table*  table,
                         FT_Byte*   old_base )
   {
-    FT_Long    delta  = table->block - old_base;
+    FT_Long    delta  = (FT_Long)( table->block - old_base );
     FT_Byte**  offset = table->elements;
     FT_Byte**  limit  = offset + table->max_elems;
 
 
-    if ( delta )
-      for ( ; offset < limit; offset++ )
-      {
-        if ( offset[0] )
-          offset[0] += delta;
-      }
+    for ( ; offset < limit; offset++ )
+    {
+      if ( offset[0] )
+        offset[0] += delta;
+    }
   }
 
 
@@ -115,15 +106,19 @@
     FT_Error   error;
 
 
-    /* reallocate the base block */
-    if ( REALLOC( table->block, table->capacity, new_size ) )
+    /* allocate new base block */
+    if ( ALLOC( table->block, new_size ) )
       return error;
 
-    table->capacity = new_size;
-
-    /* shift all offsets if necessary */
-    if ( old_base )
+    /* copy elements and shift offsets */
+    if (old_base )
+    {
+      MEM_Copy( table->block, old_base, table->capacity );
       shift_elements( table, old_base );
+      FREE( old_base );
+    }
+
+    table->capacity = new_size;
 
     return FT_Err_Ok;
   }
@@ -208,20 +203,20 @@
   {
     FT_Memory  memory = table->memory;
     FT_Error   error;
-    FT_Byte*   old_base;
+    FT_Byte*   old_base = table->block;
 
 
     /* should never fail, because rec.cursor <= rec.size */
-    old_base = table->block;
     if ( !old_base )
       return;
 
-    if ( REALLOC( table->block, table->capacity, table->cursor ) )
+    if ( ALLOC( table->block, table->cursor ) )
       return;
-    table->capacity = table->cursor;
+    MEM_Copy( table->block, old_base, table->cursor );
+    shift_elements( table, old_base );
 
-    if ( old_base != table->block )
-      shift_elements( table, old_base );
+    table->capacity = table->cursor;
+    FREE( old_base );
   }
 
 
@@ -417,7 +412,7 @@
         cur++;
       }
 
-      *pnum_tokens = cur - tokens;
+      *pnum_tokens = (FT_Int)( cur - tokens );
 
       parser->cursor = old_cursor;
       parser->limit  = old_limit;
@@ -852,7 +847,7 @@
       case t1_field_string:
         {
           FT_Memory  memory = parser->memory;
-          FT_UInt    len    = limit-cur;
+          FT_UInt    len    = (FT_UInt)( limit - cur );
 
 
           if ( *(FT_String**)q )

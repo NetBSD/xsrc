@@ -1,4 +1,4 @@
-/* $TOG: jrdjfif.c /main/6 1998/02/09 16:20:33 kaleb $ */
+/* $Xorg: jrdjfif.c,v 1.3 2000/08/17 19:47:48 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /* Module jrdjfif.c */
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., October 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jrdjfif.c,v 1.2 1998/07/25 08:05:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jrdjfif.c,v 1.4 2001/01/17 22:13:09 dawes Exp $ */
 
 /*
  * jrdjfif.c

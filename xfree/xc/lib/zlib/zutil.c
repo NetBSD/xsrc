@@ -1,4 +1,4 @@
-/* $TOG: zutil.c /main/4 1998/02/04 14:34:40 kaleb $ */
+/* $Xorg: zutil.c,v 1.3 2000/08/17 19:46:48 cpqbld Exp $ */
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.

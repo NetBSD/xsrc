@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: rgb.h /main/5 1998/02/09 14:29:51 kaleb $ */
+/* $Xorg: rgb.h,v 1.3 2000/08/17 19:53:30 cpqbld Exp $ */
 
 #ifndef RGB_H
 #define RGB_H

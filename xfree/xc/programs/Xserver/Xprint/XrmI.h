@@ -1,4 +1,4 @@
-/* $XConsortium: XrmI.h /main/1 1996/09/28 16:59:28 rws $ */
+/* $Xorg: XrmI.h,v 1.3 2000/08/17 19:48:07 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.

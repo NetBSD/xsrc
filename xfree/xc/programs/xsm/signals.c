@@ -1,4 +1,4 @@
-/* $TOG: signals.c /main/5 1998/02/09 14:15:39 kaleb $ */
+/* $Xorg: signals.c,v 1.3 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/signals.c,v 3.0 1996/12/09 11:57:25 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/signals.c,v 3.2 2001/01/17 23:46:31 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>

@@ -1,4 +1,4 @@
-/* $TOG: ieee.c /main/6 1998/02/06 15:12:20 kaleb $ */
+/* $Xorg: ieee.c,v 1.3 2000/08/17 19:45:27 cpqbld Exp $ */
 
 /******************************************************************************
 				NOTICE
@@ -64,7 +64,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/ieee.c,v 1.4 2001/01/17 19:42:21 dawes Exp $ */
 
 #include "XIElibint.h"
 #include <math.h>

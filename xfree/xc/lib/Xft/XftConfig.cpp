@@ -1,28 +1,28 @@
-# $XFree86$
+XCOMM $XFree86: xc/lib/Xft/XftConfig.cpp,v 1.6 2001/04/27 14:55:22 tsi Exp $
 
 dir XFT_TYPE1_DIR
 
-#
-# alias 'fixed' for 'mono'
-#
+XCOMM
+XCOMM alias 'fixed' for 'mono'
+XCOMM
 match any family == "fixed"		edit family =+ "mono";
 
-#
-# Check users config file
-#
+XCOMM
+XCOMM Check users config file
+XCOMM
 includeif	"~/.xftconfig"
 
-#
-# Use Lucidux fonts for default faces
-#
+XCOMM
+XCOMM Use Lucidux fonts for default faces
+XCOMM
 match any family == "serif"		edit family += "LuciduxSerif";
 match any family == "sans"		edit family += "LuciduxSans";
 match any family == "mono"		edit family += "LuciduxMono";
 
-#
-# Alias between XLFD families and font file family name, prefer local
-# fonts
-#
+XCOMM
+XCOMM Alias between XLFD families and font file family name, prefer local
+XCOMM fonts
+XCOMM
 match any family == "charter"		edit family += "bitstream charter";
 match any family == "bitstream charter" edit family =+ "charter";
 

@@ -1,4 +1,4 @@
-/* $TOG: Xcupstr.h /main/3 1998/02/09 11:21:34 kaleb $ */
+/* $Xorg: Xcupstr.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 
 /*
 

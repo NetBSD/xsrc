@@ -1,4 +1,4 @@
-/* $TOG: rpcauth.c /main/10 1998/02/09 15:12:52 kaleb $ */
+/* $Xorg: rpcauth.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.1 1998/10/04 09:39:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.4 2001/01/30 22:06:21 tsi Exp $ */
 
 /*
  * SUN-DES-1 authentication mechanism
@@ -114,10 +114,11 @@ bad1:
 static XID  rpc_id = (XID) ~0L;
 
 static Bool
-CheckNetName (addr, len, closure)
-    unsigned char    *addr;
-    int		    len;
-    pointer	    closure;
+CheckNetName (
+    unsigned char    *addr,
+    short	    len,
+    pointer	    closure
+)
 {
     return (len == strlen ((char *) closure) &&
 	    strncmp ((char *) addr, (char *) closure, len) == 0);
@@ -142,14 +143,11 @@ SecureRPCCheck (data_length, data, client, reason)
 	    sprintf(rpc_error, "Unable to authenticate secure RPC client (why=%d)", why);
 	    *reason = rpc_error;
 	} else {
-	    if (ForEachHostInFamily (FamilyNetname, CheckNetName,
-				     (pointer) fullname))
+	    if (ForEachHostInFamily (FamilyNetname, CheckNetName, fullname))
 		return rpc_id;
-	    else {
-		sprintf(rpc_error, "Principal \"%s\" is not authorized to connect",
+	    sprintf(rpc_error, "Principal \"%s\" is not authorized to connect",
 			fullname);
-		*reason = rpc_error;
-	    }
+	    *reason = rpc_error;
 	}
     }
     return (XID) ~0L;

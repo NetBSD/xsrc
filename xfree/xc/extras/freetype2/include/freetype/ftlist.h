@@ -1,6 +1,6 @@
 /***************************************************************************/
 /*                                                                         */
-/*  ftlist.c                                                               */
+/*  ftlist.h                                                               */
 /*                                                                         */
 /*    Generic list support for FreeType (specification).                   */
 /*                                                                         */
@@ -27,15 +27,48 @@
 #ifndef __FTLIST_H__
 #define __FTLIST_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
 
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    list_processing                                                    */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    List Processing                                                    */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    Simple management of lists.                                        */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    This section contains various definitions related to list          */
+  /*    processing using doubly-linked nodes.                              */
+  /*                                                                       */
+  /* <Order>                                                               */
+  /*    FT_List                                                            */
+  /*    FT_ListNode                                                        */
+  /*    FT_ListRec                                                         */
+  /*    FT_ListNodeRec                                                     */
+  /*                                                                       */
+  /*    FT_List_Add                                                        */
+  /*    FT_List_Insert                                                     */
+  /*    FT_List_Find                                                       */
+  /*    FT_List_Remove                                                     */
+  /*    FT_List_Up                                                         */
+  /*    FT_List_Iterate                                                    */
+  /*    FT_List_Iterator                                                   */
+  /*    FT_List_Finalize                                                   */
+  /*    FT_List_Destructor                                                 */
+  /*                                                                       */
+  /*************************************************************************/
+
+  
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -215,8 +248,12 @@ FT_BEGIN_HEADER
                                        void*               user );
 
 
+  /* */
+
+  
 FT_END_HEADER
 
 #endif /* __FTLIST_H__ */
+
 
 /* END */

@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/etc/kbd_mode.man,v 3.3 1997/11/16 06:42:13 dawes Exp $
-.TH KBD_MODE 1 "Release 6.3 (XFree86 3.2)"  "X Version 11"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/etc/kbd_mode.man,v 3.5 2001/01/27 18:20:56 dawes Exp $
+.TH KBD_MODE 1 __vendorversion__
 .SH NAME
 kbd_mode \- recover the PC console keyboard
 .SH SYNOPSIS

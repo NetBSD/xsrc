@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.c,v 1.12 2000/10/11 22:52:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.c,v 1.18 2001/05/07 21:59:06 tsi Exp $ */
 /*
- * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,7 +30,7 @@
 /*
  * Recognised XF86Config options.
  */
-OptionInfoRec ATIPublicOptions[] =
+const OptionInfoRec ATIPublicOptions[] =
 {
     {
         ATI_OPTION_ACCEL,
@@ -54,12 +54,25 @@ OptionInfoRec ATIPublicOptions[] =
         FALSE
     },
     {
+        ATI_OPTION_HWCURSOR,
+        "hw_cursor",
+        OPTV_BOOLEAN,
+        {0, },
+        FALSE,
+    },
+
+#ifndef AVOID_CPIO
+
+    {
         ATI_OPTION_LINEAR,
         "linear",
         OPTV_BOOLEAN,
         {0, },
         FALSE
     },
+
+#endif /* AVOID_CPIO */
+
     {
         ATI_OPTION_MMIO_CACHE,
         "mmio_cache",
@@ -89,6 +102,13 @@ OptionInfoRec ATIPublicOptions[] =
         FALSE
     },
     {
+        ATI_OPTION_SWCURSOR,
+        "sw_cursor",
+        OPTV_BOOLEAN,
+        {0, },
+        FALSE,
+    },
+    {
         -1,
         NULL,
         OPTV_NONE,
@@ -104,14 +124,14 @@ const unsigned long ATIPublicOptionSize = SizeOf(ATIPublicOptions);
  *
  * Return recognised options that are intended for public consumption.
  */
-OptionInfoPtr
+const OptionInfoRec *
 ATIAvailableOptions
 (
-    int ChipId,          /* Ignored */
-    int BusId            /* Ignored */
+    int ChipId,
+    int BusId
 )
 {
-    OptionInfoPtr pOptions;
+    const OptionInfoRec *pOptions;
 
     if ((pOptions = R128AvailableOptions(ChipId, BusId)))
         return pOptions;

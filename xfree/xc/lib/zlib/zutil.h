@@ -1,4 +1,4 @@
-/* $TOG: zutil.h /main/4 1998/02/04 14:34:44 kaleb $ */
+/* $Xorg: zutil.h,v 1.4 2000/08/17 19:46:48 cpqbld Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -15,15 +15,15 @@
 
 #include "zlib.h"
 
+#if defined(MSDOS)||defined(VMS)||defined(CRAY)||defined(WIN32)||defined(RISCOS)||defined(__EMX__)||defined(STDC)
+#   include <stddef.h>
+#   include <errno.h>
+#else
+    extern int errno;
+#endif
 #ifdef STDC
-#  include <stddef.h>
 #  include <string.h>
 #  include <stdlib.h>
-#endif
-#ifdef NO_ERRNO_H
-    extern int errno;
-#else
-#   include <errno.h>
 #endif
 
 #ifndef local

@@ -1,4 +1,4 @@
-/* $TOG: colorlst.c /main/7 1998/02/09 16:11:00 kaleb $ */
+/* $Xorg: colorlst.c,v 1.3 2000/08/17 19:47:29 cpqbld Exp $ */
 /**** module colorlst.c ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. March, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/colorlst.c,v 3.2 1998/10/05 13:22:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/colorlst.c,v 3.4 2001/01/17 22:12:55 dawes Exp $ */
 
 #define _XIEC_COLORLST
 

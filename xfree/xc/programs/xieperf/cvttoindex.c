@@ -1,4 +1,4 @@
-/* $TOG: cvttoindex.c /main/11 1998/02/09 14:00:01 kaleb $ */
+/* $Xorg: cvttoindex.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 
 /**** module cvttoindex.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/cvttoindex.c,v 1.5 2001/01/17 23:45:37 dawes Exp $ */
 
 #include "xieperf.h"
 #include <X11/Xlib.h>

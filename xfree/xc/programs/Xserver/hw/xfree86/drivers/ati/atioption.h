@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.h,v 1.3 2000/08/04 21:07:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.h,v 1.8 2001/05/18 20:22:28 tsi Exp $ */
 /*
- * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,16 +36,24 @@ typedef enum
     ATI_OPTION_ACCEL,
     ATI_OPTION_CRT,
     ATI_OPTION_CSYNC,
+    ATI_OPTION_HWCURSOR,
+
+#ifndef AVOID_CPIO
+
     ATI_OPTION_LINEAR,
+
+#endif /* AVOID_CPIO */
+
     ATI_OPTION_MMIO_CACHE,
     ATI_OPTION_PROBE_CLOCKS,
     ATI_OPTION_REFERENCE_CLOCK,
-    ATI_OPTION_SHADOW_FB
+    ATI_OPTION_SHADOW_FB,
+    ATI_OPTION_SWCURSOR
 } ATIPublicOptionType;
 
-extern OptionInfoRec       ATIPublicOptions[];
-extern const unsigned long ATIPublicOptionSize;
+extern const OptionInfoRec   ATIPublicOptions[];
+extern const unsigned long   ATIPublicOptionSize;
 
-extern OptionInfoPtr       ATIAvailableOptions FunctionPrototype((int, int));
+extern const OptionInfoRec * ATIAvailableOptions FunctionPrototype((int, int));
 
 #endif /* ___ATIOPTION_H___ */

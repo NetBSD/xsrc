@@ -1,4 +1,4 @@
-/* $TOG: StripChart.h /main/7 1998/02/06 12:50:41 kaleb $ */
+/* $Xorg: StripChart.h,v 1.4 2000/08/17 19:45:39 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,12 +42,20 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/StripChart.h,v 1.3 1998/08/20 13:59:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/StripChart.h,v 1.5 2001/01/17 19:42:32 dawes Exp $ */
 
 #ifndef _XawStripChart_h
 #define _XawStripChart_h
 
-/* Resources:
+#include <X11/Intrinsic.h>
+
+/***********************************************************************
+ *
+ * StripChart Widget
+ *
+ ***********************************************************************/
+
+/* StripChart resources:
 
  Name		     Class		RepType		Default Value
  ----		     -----		-------		-------------

@@ -1,4 +1,4 @@
-/* $TOG: FSproto.h /main/12 1998/02/09 11:24:10 kaleb $ */
+/* $Xorg: FSproto.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group

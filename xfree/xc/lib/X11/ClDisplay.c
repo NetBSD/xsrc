@@ -1,4 +1,4 @@
-/* $TOG: ClDisplay.c /main/23 1998/02/06 17:09:12 kaleb $ */
+/* $Xorg: ClDisplay.c,v 1.3 2000/08/17 19:44:31 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/ClDisplay.c,v 1.3 2001/01/17 19:41:33 dawes Exp $ */
 
 #include "Xlibint.h"
 
