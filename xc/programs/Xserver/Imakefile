@@ -515,6 +515,24 @@ SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS1),$(ANBOBJS1),$(ANBLIBS1),$(SYSLIBS))
 #endif /* XalphaNetBSDServer */
 
 
+#if X68kServer
+XCOMM
+XCOMM NetBSD/x68k server
+XCOMM
+MFBDIR	= mfb
+CFB8DIR	= cfb
+CFB16DIR = cfb16
+DDXDIR1	= hw/netbsd/x68k
+X68DIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(DDXDIR1) $(DEPDIRS)
+X68OBJS = hw/netbsd/x68k/x68kInit.o
+X68LIBS = hw/netbsd/x68k/libx68k.a CFB16Libs CFB8Libs $(OTHEREXTS)	/* XXX */
+SetUIDServerTarget(X68k,$(X68DIRS),$(X68OBJS),$(X68LIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall X68k
+#endif
+#endif /* X68kServer */
+
+
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
 XF86MINIT  = $(XF86COMSRC)/xf86Init_m.o $(XF86CONFIGSRC)/xf86MIniExt.o
