@@ -5,6 +5,12 @@
  */
 
 #if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
+
+        /* Solaris requires this for 64-bit. */
+        .register %g2, #scratch
+        .register %g3, #scratch
+        .register %g7, #scratch
+
 #define LDPTR		ldx
 #define V4F_DATA	0x00
 #define V4F_START	0x08
@@ -27,12 +33,6 @@
 #define VEC_SIZE_3   	7
 #define VEC_SIZE_4   	15
 
-#ifdef SVR4
-        /* Solaris requires this for 64-bit. */
-        .register %g2, #scratch
-        .register %g3, #scratch
-        .register %g7, #scratch
-#endif
 
 	.text
 	.align		64
