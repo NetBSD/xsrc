@@ -96,7 +96,7 @@ FSOpenServer(server)
     AlternateServer *alts;
     int         altlen;
     char       *vendor_string;
-    long        setuplength;
+    unsigned long setuplength;
     extern int  _FSSendClientPrefix();
     extern XtransConnInfo _FSConnectServer();
 #ifdef X_NOT_STDC_ENV
@@ -136,7 +136,8 @@ FSOpenServer(server)
     _FSRead(svr, (char *) &prefix, (long) SIZEOF(fsConnSetup));
 
     setuplength = prefix.alternate_len << 2;
-    if ((alt_data = (char *)
+    if (setuplength > (SIZE_T_MAX>>2)
+	|| (alt_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
 	FSfree((char *) svr);
@@ -145,6 +146,10 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
+    if (prefix.num_alternates > SIZE_T_MAX / sizeof(AlternateServer)) {
+	errno = ENOMEM;
+	return (FSServer *) 0;
+    }
     alts = (AlternateServer *)
 	FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
     if (!alts) {
@@ -176,7 +181,8 @@ FSOpenServer(server)
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if ((auth_data = (char *)
+    if (prefix.auth_len > (SIZE_T_MAX>>2) 
+	|| (auth_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
 	FSfree((char *) svr);

@@ -1431,7 +1431,7 @@ fs_send_open_font(client, fpe, flags, name, namelen, format, fmask, id, ppfont)
     }
 
     conn = (FSFpePtr) fpe->private;
-    if (namelen > sizeof (buf) - 1)
+    if (namelen <= 0 || namelen > sizeof (buf) - 1)
 	return BadFontName;
     _fs_client_access (conn, client, (flags & FontOpenSync) != 0);
     _fs_client_resolution(conn);
