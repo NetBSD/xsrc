@@ -11,7 +11,7 @@ SRCS =	macppcInit.c \
 	macppcKeyMap.c \
 	macppcInEx.c \
 	stubs.c \
-	GetTime.c
+	GetTimeInMillis.c
 
 OBJS =	macppcInit.o \
 	macppcFbs.o \
@@ -22,7 +22,7 @@ OBJS =	macppcInit.o \
 	macppcKeyMap.o \
 	macppcInEx.o \
 	stubs.o \
-	GetTime.o
+	GetTimeInMillis.o
 
 INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
 	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
@@ -45,6 +45,9 @@ NormalLibraryTarget(macppc,$(OBJS))
 NormalLintTarget($(SRCS1))
 LinkFile(macppcInEx.c,../../../mi/miinitext.c)
 LinkFile(stubs.c,../../../Xi/stubs.c)
+LinkFile(GetTimeInMillis.c,../../../os/GetTimeInMillis.c)
+
+SpecialCObjectRule(GetTimeInMillis,NullParameter,-UDDXTIME)
 
 /* InstallManPage(Xmacppc,$(MANDIR)) */
 
