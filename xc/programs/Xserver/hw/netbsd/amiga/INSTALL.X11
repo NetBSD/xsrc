@@ -1,10 +1,10 @@
-This is a set of XFree86 3.3.3 binaries for NetBSD-1.4
+This is a set of XFree86 3.3.6 binaries for NetBSD-1.4
 
 It has all the clients from the NetBSD xsrc tree which is based on the
-XFree86 3.3.3 release.
+XFree86 3.3.6 release.
 
 Changes from the NetBSD-1.4 distribution:
-- updated to XFree86 3.3.3 which is based on X11R6.3pl?.
+- updated to XFree86 3.3.6 which is based on X11R6.3pl?.
 - autorepeat works now if you enable the xkb support. However,
   you have to use -ar1 <timeoutvalue> -ar2 <repeatinterval> with xkb, e.g.
   Xamiga -ar1 500 -ar2 100 <other options here>
