@@ -29,13 +29,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.9 2003/04/21 16:34:28 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.11 2004/05/26 22:24:40 dickey Exp $ */
 
 #ifndef _XtintrinsicI_h
 #define _XtintrinsicI_h
@@ -117,16 +117,18 @@ SOFTWARE.
 #ifdef UNALIGNED
 
 #define XtMemmove(dst, src, size)			    \
-    if (size == sizeof(int))				    \
-	*((int *) (dst)) = *((int *) (src));		    \
-    else if (size == sizeof(char))			    \
-	*((char *) (dst)) = *((char *) (src));		    \
-    else if (size == sizeof(short))			    \
-	*((short *) (dst)) = *((short *) (src));	    \
-    else						    \
-	(void) memcpy((char *) (dst), (char *) (src), (int) (size))
+    if ((char *)(dst) != (char *)(src)) {		    \
+	if (size == sizeof(int))			    \
+	    *((int *) (dst)) = *((int *) (src));	    \
+	else if (size == sizeof(char))			    \
+	    *((char *) (dst)) = *((char *) (src));	    \
+	else if (size == sizeof(short))			    \
+	    *((short *) (dst)) = *((short *) (src));	    \
+	else						    \
+	    (void) memcpy((char *) (dst), (char *) (src), (int) (size)); \
+    }
 
-#define XtBZero(dst, size)			    \
+#define XtBZero(dst, size)				    \
     if (size == sizeof(int))				    \
 	*((int *) (dst)) = 0;				    \
     else						    \
@@ -141,7 +143,9 @@ SOFTWARE.
 #else
 
 #define XtMemmove(dst, src, size)	\
-	(void) memcpy((char *) (dst), (char *) (src), (int) (size))
+    if ((char *)(dst) != (char *)(src)) {		    \
+	(void) memcpy((char *) (dst), (char *) (src), (int) (size)); \
+    }
 
 #define XtBZero(dst, size) 	\
 	bzero((char *) (dst), (int) (size))
@@ -164,7 +168,7 @@ SOFTWARE.
     :  XtMalloc((unsigned)(size)))
 
 #define XtStackFree(pointer, stack_cache_array) \
-    if ((pointer) != ((XtPointer)(stack_cache_array))) XtFree(pointer); else
+    { if ((pointer) != ((XtPointer)(stack_cache_array))) XtFree(pointer); }
 
 /***************************************************************
  *
@@ -225,7 +229,7 @@ extern void _XtGClistFree(Display *dpy, XtPerDisplay pd);
 
 extern void _XtGeoTab (int);
 extern void _XtGeoTrace (
-			    Widget widget, 
+			    Widget widget,
 			    ...
 );
 
@@ -233,7 +237,7 @@ extern void _XtGeoTrace (
 
 #else /* XT_GEO_TATTLER */
 
-#define CALLGEOTAT(f) 
+#define CALLGEOTAT(f)
 
 #endif /* XT_GEO_TATTLER */
 

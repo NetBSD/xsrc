@@ -21,7 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.26 2003/11/10 18:22:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.27 2004/10/23 15:29:29 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -1488,8 +1488,6 @@ StartVideoStream(PortPrivPtr pPPriv, RegionPtr pRegion)
 
 	return pPPriv->StreamOn = TRUE;
     }
-
-    return FALSE;
 }
 
 
@@ -2554,8 +2552,6 @@ xvipcHandshake(PortPrivPtr pPPriv, int op, Bool block)
 	    xvipc.block = block;
 	}
     }
-
-    return TRUE;
 }
 
 static void

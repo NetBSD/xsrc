@@ -26,7 +26,7 @@
 .\" other dealing in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtAddCbk.man,v 1.4 2003/04/28 22:18:17 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtAddCbk.man,v 1.5 2005/02/11 03:03:04 dawes Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -127,7 +127,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAddCallback 3Xt __xorgversion__ "XT FUNCTIONS"
+.TH XtAddCallback 3Xt __vendorversion__ "XT FUNCTIONS"
 .SH NAME
 XtAddCallback, XtAddCallbacks, XtRemoveCallback, XtRemoveCallbacks, XtRemoveAllCallbacks \- add and remove callback procedures
 .SH SYNTAX

@@ -23,7 +23,7 @@
  * 
  * Trident 3DImage' accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.28 2004/02/20 23:34:11 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.29 2004/03/29 16:25:22 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -38,7 +38,6 @@
 #include "trident_regs.h"
 
 #include "xaarop.h"
-#include "xaalocal.h"
 
 static void ImageSync(ScrnInfoPtr pScrn);
 static void ImageSyncClip(ScrnInfoPtr pScrn);
@@ -583,7 +582,7 @@ ImageSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     XAAInfoRecPtr infoRec;
-    infoRec = GET_XAAINFORECPTR_FROM_SCRNINFOPTR(pScrn);
+    infoRec = pTrident->AccelInfoRec;
 
     MoveDWORDS((CARD32*)infoRec->ImageWriteBase,
  	(CARD32*)pTrident->XAAScanlineColorExpandBuffers[bufno], pTrident->dwords);
@@ -626,7 +625,7 @@ ImageSubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     XAAInfoRecPtr infoRec;
-    infoRec = GET_XAAINFORECPTR_FROM_SCRNINFOPTR(pScrn);
+    infoRec = pTrident->AccelInfoRec;
 
     MoveDWORDS((CARD32*)infoRec->ImageWriteBase,
  	(CARD32*)pTrident->XAAImageScanlineBuffer[bufno], pTrident->dwords);

@@ -1,4 +1,3 @@
-/* $Xorg: XTest.c,v 1.5 2001/02/09 02:04:00 xorgcvs Exp $ */
 /*
 Copyright 1990, 1991 by UniSoft Group Limited
 */
@@ -30,7 +29,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xtst/XTest.c,v 1.6 2002/10/16 00:37:33 dawes Exp $ */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.7 2005/01/27 02:28:59 dawes Exp $ */
 
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
@@ -58,7 +57,7 @@ static /* const */ char *xtest_extension_name = XTestExtensionName;
  *                                                                           *
  *****************************************************************************/
 
-static int close_display();
+static XEXT_CLOSE_DISPLAY_PROTO(close_display);
 static /* const */ XExtensionHooks xtest_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */
@@ -74,8 +73,7 @@ static /* const */ XExtensionHooks xtest_extension_hooks = {
 };
 
 static XPointer
-get_xinput_base(dpy)
-    Display *dpy;
+get_xinput_base(Display *dpy)
 {
     int major_opcode, first_event, first_error;
     first_event = 0;
@@ -98,10 +96,8 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xtest_info)
  *****************************************************************************/
 
 Bool
-XTestQueryExtension (dpy, event_basep, error_basep, majorp, minorp)
-    Display *dpy;
-    int *event_basep, *error_basep;
-    int *majorp, *minorp;
+XTestQueryExtension(Display *dpy, int *event_basep, int *error_basep,
+		    int *majorp, int *minorp)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestGetVersionReq *req;
@@ -132,10 +128,7 @@ XTestQueryExtension (dpy, event_basep, error_basep, majorp, minorp)
 }
 
 Bool
-XTestCompareCursorWithWindow(dpy, window, cursor)
-    Display *dpy;
-    Window window;
-    Cursor cursor;
+XTestCompareCursorWithWindow(Display *dpy, Window window, Cursor cursor)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestCompareCursorReq *req;
@@ -160,19 +153,14 @@ XTestCompareCursorWithWindow(dpy, window, cursor)
 }
 
 Bool
-XTestCompareCurrentCursorWithWindow(dpy, window)
-    Display *dpy;
-    Window window;
+XTestCompareCurrentCursorWithWindow(Display *dpy, Window window)
 {
     return XTestCompareCursorWithWindow(dpy, window, XTestCurrentCursor);
 }
 
 int
-XTestFakeKeyEvent(dpy, keycode, is_press, delay)
-    Display *dpy;
-    unsigned int keycode;
-    Bool is_press;
-    unsigned long delay;
+XTestFakeKeyEvent(Display *dpy, unsigned int keycode, Bool is_press,
+		  unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -192,11 +180,8 @@ XTestFakeKeyEvent(dpy, keycode, is_press, delay)
 }
 
 int
-XTestFakeButtonEvent(dpy, button, is_press, delay)
-    Display *dpy;
-    unsigned int button;
-    Bool is_press;
-    unsigned long delay;
+XTestFakeButtonEvent(Display *dpy, unsigned int button, Bool is_press,
+		     unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -216,11 +201,8 @@ XTestFakeButtonEvent(dpy, button, is_press, delay)
 }
 
 int
-XTestFakeMotionEvent(dpy, screen, x, y, delay)
-    Display *dpy;
-    int screen;
-    int x, y;
-    unsigned long delay;
+XTestFakeMotionEvent(Display *dpy, int screen, int x, int y,
+		     unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -246,10 +228,7 @@ XTestFakeMotionEvent(dpy, screen, x, y, delay)
 }
 
 int
-XTestFakeRelativeMotionEvent(dpy, dx, dy, delay)
-    Display *dpy;
-    int dx, dy;
-    unsigned long delay;
+XTestFakeRelativeMotionEvent(Display *dpy, int dx, int dy, unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -272,14 +251,8 @@ XTestFakeRelativeMotionEvent(dpy, dx, dy, delay)
 }
 
 static void
-send_axes(dpy, info, req, dev, first_axis, axes, n_axes)
-    Display *dpy;
-    XExtDisplayInfo *info;
-    xXTestFakeInputReq *req;
-    XDevice *dev;
-    int first_axis;
-    int *axes;
-    int n_axes;
+send_axes(Display *dpy, XExtDisplayInfo *info, xXTestFakeInputReq *req,
+	  XDevice *dev, int first_axis, int *axes, int n_axes)
 {
     deviceValuator ev;
     int n;
@@ -316,14 +289,9 @@ send_axes(dpy, info, req, dev, first_axis, axes, n_axes)
 }
 
 int
-XTestFakeDeviceKeyEvent(dpy, dev, keycode, is_press, axes, n_axes, delay)
-    Display *dpy;
-    XDevice *dev;
-    unsigned int keycode;
-    Bool is_press;
-    int *axes;
-    int n_axes;
-    unsigned long delay;
+XTestFakeDeviceKeyEvent(Display *dpy, XDevice *dev, unsigned int keycode,
+			Bool is_press, int *axes, int n_axes,
+			unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -347,14 +315,9 @@ XTestFakeDeviceKeyEvent(dpy, dev, keycode, is_press, axes, n_axes, delay)
 }
 
 int
-XTestFakeDeviceButtonEvent(dpy, dev, button, is_press, axes, n_axes, delay)
-    Display *dpy;
-    XDevice *dev;
-    unsigned int button;
-    Bool is_press;
-    int *axes;
-    int n_axes;
-    unsigned long delay;
+XTestFakeDeviceButtonEvent(Display *dpy, XDevice *dev, unsigned int button,
+			   Bool is_press, int *axes, int n_axes,
+			   unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -378,13 +341,8 @@ XTestFakeDeviceButtonEvent(dpy, dev, button, is_press, axes, n_axes, delay)
 }
 
 int
-XTestFakeProximityEvent(dpy, dev, in_prox, axes, n_axes, delay)
-    Display *dpy;
-    XDevice *dev;
-    Bool in_prox;
-    int *axes;
-    int n_axes;
-    unsigned long delay;
+XTestFakeProximityEvent(Display *dpy, XDevice *dev, Bool in_prox, int *axes,
+			int n_axes, unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -407,15 +365,9 @@ XTestFakeProximityEvent(dpy, dev, in_prox, axes, n_axes, delay)
 }
 
 int
-XTestFakeDeviceMotionEvent(dpy, dev, is_relative,
-			   first_axis, axes, n_axes, delay)
-    Display *dpy;
-    XDevice *dev;
-    Bool is_relative;
-    int first_axis;
-    int *axes;
-    int n_axes;
-    unsigned long delay;
+XTestFakeDeviceMotionEvent(Display *dpy, XDevice *dev, Bool is_relative,
+			   int first_axis, int *axes, int n_axes,
+			   unsigned long delay)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestFakeInputReq *req;
@@ -437,9 +389,7 @@ XTestFakeDeviceMotionEvent(dpy, dev, is_relative,
 }
 
 int
-XTestGrabControl(dpy, impervious)
-    Display *dpy;
-    Bool impervious;
+XTestGrabControl(Display *dpy, Bool impervious)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xXTestGrabControlReq *req;
@@ -457,17 +407,13 @@ XTestGrabControl(dpy, impervious)
 }
 
 void
-XTestSetGContextOfGC(gc, gid)
-    GC gc;
-    GContext gid;
+XTestSetGContextOfGC(GC gc, GContext gid)
 {
     gc->gid = gid;
 }
 
 void
-XTestSetVisualIDOfVisual(visual, visualid)
-    Visual *visual;
-    VisualID visualid;
+XTestSetVisualIDOfVisual(Visual *visual, VisualID visualid)
 {
     visual->visualid = visualid;
 }
@@ -477,8 +423,7 @@ static xReq _dummy_request = {
 };
 
 Status
-XTestDiscard(dpy)
-    Display *dpy;
+XTestDiscard(Display *dpy)
 {
     Bool something;
     register char *ptr;

@@ -5,13 +5,13 @@
 Copyright 1988 by Hewlett-Packard Company
 Copyright 1987, 1988, 1989 by Digital Equipment Corporation, Maynard
 
-Permission to use, copy, modify, and distribute this software 
-and its documentation for any purpose and without fee is hereby 
-granted, provided that the above copyright notice appear in all 
-copies and that both that copyright notice and this permission 
-notice appear in supporting documentation, and that the names of 
-Hewlett-Packard or Digital not be used in advertising or 
-publicity pertaining to distribution of the software without specific, 
+Permission to use, copy, modify, and distribute this software
+and its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission
+notice appear in supporting documentation, and that the names of
+Hewlett-Packard or Digital not be used in advertising or
+publicity pertaining to distribution of the software without specific,
 written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
@@ -56,11 +56,11 @@ in this Software without prior written authorization from The Open Group.
 
 #define AllButtonsMask (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask)
 
-Widget _XtProcessPointerEvent(event, widget, pdi)
-    XButtonEvent  	*event;
-    Widget 		widget;
-    XtPerDisplayInput 	pdi;
-{    
+Widget _XtProcessPointerEvent(
+    XButtonEvent  	*event,
+    Widget 		widget,
+    XtPerDisplayInput 	pdi)
+{
     XtDevice		device = &pdi->pointer;
     XtServerGrabPtr	newGrab = NULL, devGrab = &device->grab;
     Widget		dspWidget = NULL;
@@ -74,10 +74,10 @@ Widget _XtProcessPointerEvent(event, widget, pdi)
 		{
 		    Cardinal		i;
 
-		    for (i = pdi->traceDepth; 
-			 i > 0 && !newGrab; 
+		    for (i = pdi->traceDepth;
+			 i > 0 && !newGrab;
 			 i--)
-		      newGrab = _XtCheckServerGrabsOnWidget((XEvent*)event, 
+		      newGrab = _XtCheckServerGrabsOnWidget((XEvent*)event,
 							    pdi->trace[i-1],
 							    POINTER);
 		}
@@ -89,22 +89,22 @@ Widget _XtProcessPointerEvent(event, widget, pdi)
 		}
 	  }
 	  break;
-	  
+
 	case ButtonRelease:
 	  {
-	      if ((device->grabType == XtPassiveServerGrab) && 
+	      if ((device->grabType == XtPassiveServerGrab) &&
 		  !(event->state & ~(Button1Mask << (event->button - 1)) &
 		    AllButtonsMask))
 		deactivateGrab = TRUE;
 	  }
 	  break;
       }
-    
+
     if (IsServerGrab(device->grabType) && !(devGrab)->ownerEvents)
       dspWidget = (devGrab)->widget;
     else
       dspWidget = widget;
-    
+
     if (deactivateGrab)
       device->grabType = XtNoServerGrab;
 

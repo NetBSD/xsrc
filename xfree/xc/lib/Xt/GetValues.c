@@ -7,13 +7,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -59,7 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/GetValues.c,v 1.3 2001/12/14 19:56:16 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/GetValues.c,v 1.4 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 #include "StringDefs.h"
@@ -72,7 +72,7 @@ static int GetValues(
   Cardinal		num_args)	/* number of items in arg list       */
 {
     register ArgList		arg;
-    register int 		i;
+    register Cardinal 		i;
     register XrmName		argName;
     register XrmResourceList*   xrmres;
     int				translation_arg_num = -1;
@@ -183,10 +183,10 @@ static void CallConstraintGetValuesHook(
 }
 
 
-void XtGetValues(w, args, num_args)
-    register Widget   w;
-    register ArgList  args;
-    register Cardinal num_args;
+void XtGetValues(
+    register Widget   w,
+    register ArgList  args,
+    register Cardinal num_args)
 {
     WidgetClass wc;
     int targ;
@@ -215,12 +215,12 @@ void XtGetValues(w, args, num_args)
 
     /* Get constraint values if necessary */
     /* constraints may be NULL if constraint_size==0 */
-    if (XtParent(w) != NULL && !XtIsShell(w) && XtIsConstraint(XtParent(w)) && 
+    if (XtParent(w) != NULL && !XtIsShell(w) && XtIsConstraint(XtParent(w)) &&
 	w->core.constraints) {
 	ConstraintWidgetClass cwc
 	    = (ConstraintWidgetClass) XtClass(XtParent(w));
 	LOCK_PROCESS;
-	GetValues((char*)w->core.constraints, 
+	GetValues((char*)w->core.constraints,
 		  (XrmResourceList *)(cwc->constraint_class.resources),
 		  cwc->constraint_class.num_resources, args, num_args);
 	UNLOCK_PROCESS;
@@ -234,12 +234,12 @@ void XtGetValues(w, args, num_args)
     UNLOCK_APP(app);
 } /* XtGetValues */
 
-void XtGetSubvalues(base, resources, num_resources, args, num_args)
-  XtPointer	    base;           /* Base address to fetch values from */
-  XtResourceList    resources;      /* The current resource values.      */
-  Cardinal	    num_resources;  /* number of items in resources      */
-  ArgList	    args;           /* The resource values requested     */
-  Cardinal	    num_args;       /* number of items in arg list       */
+void XtGetSubvalues(
+  XtPointer	    base,           /* Base address to fetch values from */
+  XtResourceList    resources,      /* The current resource values.      */
+  Cardinal	    num_resources,  /* number of items in resources      */
+  ArgList	    args,           /* The resource values requested     */
+  Cardinal	    num_args)       /* number of items in arg list       */
 {
     XrmResourceList* xrmres;
     xrmres = _XtCreateIndirectionTable(resources, num_resources);

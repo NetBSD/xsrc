@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/extras/fontconfig/src/fclang.c,v 1.2 2003/06/04 16:29:39 dawes Exp $ */
+/* $XFree86: xc/extras/fontconfig/src/fclang.c,v 1.3 2004/10/23 15:29:25 dawes Exp $ */
 
 #include "fcint.h"
 
@@ -481,7 +481,7 @@ FcNameUnparseLangSet (FcStrBuf *buf, const FcLangSet *ls)
 	    if (!first)
 		if (!FcStrBufChar (buf, '|'))
 		    return FcFalse;
-	    if (!FcStrBufString (buf, extra));
+	    if (!FcStrBufString (buf, extra))
 		return FcFalse;
 	    first = FcFalse;
 	}

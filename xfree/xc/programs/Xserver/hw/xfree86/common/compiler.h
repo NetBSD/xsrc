@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.107 2004/02/13 23:58:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.108 2004/04/03 22:26:23 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -1568,7 +1568,7 @@ extern void outl(unsigned int a, unsigned int l);
 #      endif
 #     endif
 #    endif
-#    ifndef SCO325
+#    ifndef __SCO__
 #     if defined(USL)
 #      if defined(IN_MODULE)
 #     /* avoid including <sys/types.h> for <sys/inline.h> on UnixWare */
@@ -1588,7 +1588,7 @@ extern void outl(unsigned int a, unsigned int l);
 #    else
 #     include "scoasm.h"
 #    endif
-#    if !defined(__HIGHC__) && !defined(SCO325) && !defined(sgi) && \
+#    if !defined(__HIGHC__) && !defined(__SCO__) && !defined(sgi) && \
 	!defined(__SUNPRO_C)
 #     pragma asm partial_optimization outl
 #     pragma asm partial_optimization outw

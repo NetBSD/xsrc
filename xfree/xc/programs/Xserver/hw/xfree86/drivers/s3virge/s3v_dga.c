@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dga.c,v 1.8 2004/02/13 23:58:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dga.c,v 1.10 2004/12/07 15:59:20 tsi Exp $ */
 
 /*
  * Copyright (C) 1994-2000 The XFree86 Project, Inc.
@@ -60,7 +60,6 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "s3v.h"
 #if 0
 #include "mga_bios.h"
@@ -71,8 +70,8 @@
 #include "dgaproc.h"
 
 
-static Bool S3V_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-					int *, int *, int *);
+static Bool S3V_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				unsigned int *, unsigned int *, unsigned int *);
 static Bool S3V_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  S3V_GetViewport(ScrnInfoPtr);
 static void S3V_SetViewport(ScrnInfoPtr, int, int, int);
@@ -81,7 +80,7 @@ static void S3V_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 /* dummy... */
 #if 0
 static void MGA_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
-					unsigned long);
+			      unsigned long);
 #endif
 
 static
@@ -339,18 +338,18 @@ static Bool
 S3V_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     S3VPtr ps3v = S3VPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)ps3v->PciInfo->memBase[0];
+    *mem = ps3v->PciInfo->memBase[0];
     *size = ps3v->videoRambytes;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/oem300.h,v 1.16 2004/02/25 17:45:11 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/oem300.h,v 1.18 2005/02/19 01:03:23 dawes Exp $ */
+/* $XdotOrg$ */
 /*
  * OEM Data for 300 series
  *
@@ -713,7 +714,7 @@ const UCHAR SiS300_Filter2[10][9][7] =
 };
 
 /* Custom data for Barco iQ Pro R300 */
-const UCHAR barco_p1[2][9][7][3] = {
+static const UCHAR barco_p1[2][9][7][3] = {
     {
 	{  { 0x16, 0xcf, 0x00 },
 	   { 0x18, 0x00, 0x00 },

@@ -157,12 +157,12 @@ ever a number of ioctl() calls are broken.
       that provides this functionality.  It will be detected automatically by
       the server, so you don't need to install the aperture driver.
 
-      For older Solaris x86 and for Solaris SPARC releases, the source for
-      this driver is included in xc/programs/Xserver/hw/xfree86/etc/apSo-
-      laris.shar of the source distribution.  This file can usually also be
-      found in the /usr/X11R6/lib/X11/etc directory when XFree86 is
-      installed.  Building, and installing the driver is relatively straight
-      forward. Please read its accompanying README file.
+      For older Solaris x86 and for any SPARC release, the source for this
+      driver is included in xc/programs/Xserver/hw/xfree86/etc/apSolaris.shar
+      of the source distribution.  This file can usually also be found in the
+      /usr/X11R6/lib/X11/etc directory when XFree86 is installed.  Building,
+      and installing the driver is relatively straight forward. Please read
+      its accompanying README file.
 
   2.  If you have not made the Virtual Terminal devices, you will need to
       specify the terminal device to run the Xserver on.  The correct device
@@ -210,11 +210,15 @@ ever a number of ioctl() calls are broken.
       (and reported!).  It might even have broken some aspects of the x86
       port.
 
+  3.  On SPARC, xload should be updated to deal with both 32-bit and 64-bit
+      SunOS kernels.  It currently is compiled as a 32-bit binary and cannot
+      handle a 64-bit kernel.
+
 6.  Bug Notification
 
 Bug reports should be sent to <XFree86@XFree86.org>.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.4 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.6 tsi Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Solaris,v 1.5 2003/07/15 02:28:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Solaris,v 1.7 2004/11/26 19:09:23 tsi Exp $

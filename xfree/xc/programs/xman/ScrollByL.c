@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/ScrollByL.c,v 1.7 2003/05/27 22:27:07 tsi Exp $ */
+/* $XFree86: xc/programs/xman/ScrollByL.c,v 1.8 2004/03/12 02:17:55 dickey Exp $ */
 
 #if !defined(lint) && !defined(SABER) && 0
   static char rcs_version[] = "$Athena: ScrollByL.c,v 4.5 88/12/19 13:46:04 kit Exp $";
@@ -50,7 +50,7 @@ from the X Consortium.
 
 /* Default Translation Table */
 
-static char defaultTranslations[] = 
+static char defaultTranslations[] =
   "<Key>f:      Page(Forward) \n\
    <Key>b:      Page(Back) \n\
    <Key>1:      Page(Line, 1) \n\
@@ -59,7 +59,7 @@ static char defaultTranslations[] =
    <Key>4:      Page(Line, 4) \n\
    <Key>\\ :    Page(Forward)";
 
-      
+
 /****************************************************************
  *
  * ScrollByLine Resources
@@ -79,6 +79,8 @@ static XtResource resources[] = {
        Offset(foreground), XtRString, "XtDefaultForeground"},
     {XtNforceVert, XtCBoolean, XtRBoolean, sizeof(Boolean),
        Offset(force_vert), XtRImmediate, (caddr_t) FALSE},
+    {XtNhalfLines, XtCBoolean, XtRBoolean, sizeof(Boolean),
+       Offset(half_lines), XtRImmediate, (caddr_t) FALSE},
     {XtNindent, XtCIndent, XtRDimension, sizeof(Dimension),
        Offset(indent), XtRImmediate, (caddr_t) 15},
     {XtNuseRight, XtCBoolean, XtRBoolean, sizeof(Boolean),
@@ -136,11 +138,11 @@ ScrollByLineClassRec scrollByLineClassRec = {
     /* superclass         */    (WidgetClass) superclass,
     /* class_name         */    "ScrollByLine",
     /* widget_size        */    sizeof(ScrollByLineRec),
-    /* class_initialize   */    NULL,
-    /* class_part_init    */    NULL,
+    /* class_initialize   */    (XtProc)0,
+    /* class_part_init    */    (XtWidgetClassProc)0,
     /* class_inited       */	FALSE,
     /* initialize         */    Initialize,
-    /* initialize_hook    */    NULL,
+    /* initialize_hook    */    (XtArgsProc)0,
     /* realize            */    Realize,
     /* actions            */    actions,
     /* num_actions	  */	XtNumber(actions),
@@ -154,24 +156,30 @@ ScrollByLineClassRec scrollByLineClassRec = {
     /* destroy            */    Destroy,
     /* resize             */    Layout,
     /* expose             */    Redisplay,
-    /* set_values         */    NULL,
+    /* set_values         */    (XtSetValuesFunc)0,
     /* set_values_hook    */    SetValuesHook,
     /* set_values_almost  */    XtInheritSetValuesAlmost,
-    /* get_values_hook    */    NULL,
-    /* accept_focus       */    NULL,
+    /* get_values_hook    */    (XtArgsProc)0,
+    /* accept_focus       */    (XtAcceptFocusProc)0,
     /* version            */    XtVersion,
-    /* callback_private   */    NULL,
+    /* callback_private   */    (XtPointer)0,
     /* tm_table           */    defaultTranslations,
     /* query_geometry	  */	XtInheritQueryGeometry,
     /* display_accelerator*/	XtInheritDisplayAccelerator,
-    /* extension	  */	NULL,
+    /* extension	  */	(XtPointer)0,
   },
   { /* simple fields */
     /* change_sensitive		*/	XtInheritChangeSensitive
+#ifndef OLDXAW
+    , 0
+#endif
+  },
+  {
+    0
   }
 };
 
-WidgetClass scrollByLineWidgetClass = 
+WidgetClass scrollByLineWidgetClass =
             (WidgetClass) &scrollByLineClassRec;
 
 
@@ -191,13 +199,13 @@ WidgetClass scrollByLineWidgetClass =
 
 static void
 Layout(Widget w)
-{    
+{
   ScrollByLineWidget sblw = (ScrollByLineWidget) w;
   Dimension width, height;
   Widget bar;
   Position bar_bw;
 
-/* 
+/*
  * For now always show the bar.
  */
 
@@ -225,7 +233,7 @@ Layout(Widget w)
 }
 
 /* ARGSUSED */
-static void 
+static void
 GExpose(Widget w, XtPointer junk, XEvent *event, Boolean *cont)
 {
 
@@ -248,9 +256,9 @@ Redisplay(Widget w, XEvent *event, Region region)
 {
   int top, height;		/* the locations of the top and height
 				   of the region that needs to be repainted. */
-  
+
 /*
- * This routine tells the client which sections of the window to 
+ * This routine tells the client which sections of the window to
  * repaint in his callback function which does the actual repainting.
  */
 
@@ -262,7 +270,7 @@ Redisplay(Widget w, XEvent *event, Region region)
     top = event->xgraphicsexpose.y;
     height  = event->xgraphicsexpose.height;
   }
-  
+
   PaintText(w, top, height);
 } /* redisplay (expose) */
 
@@ -283,20 +291,20 @@ PaintText(Widget w, int y_loc, int height)
 
   if (start_line >= sblw->scroll.lines)
     return;
-  
+
   num_lines = height / sblw->scroll.font_height + 1;
 
 /*
- * Only integer arithmetic makes this possible. 
+ * Only integer arithmetic makes this possible.
  */
 
   location =  y_loc / sblw->scroll.font_height * sblw->scroll.font_height;
 
   PrintText(w, start_line, num_lines, location);
-} 
+}
 
 /*	Function Name: Page
- *	Description: This function pages the widget, by the amount it recieves
+ *	Description: This function pages the widget, by the amount it receives
  *                   from the translation Manager.
  *	Arguments: w - the ScrollByLineWidget.
  *                 event - the event that caused this return.
@@ -306,7 +314,7 @@ PaintText(Widget w, int y_loc, int height)
  */
 
 /* ARGSUSED */
-static void 
+static void
 Page(Widget w, XEvent * event, String * params, Cardinal *num_params)
 {
    ScrollByLineWidget sblw = (ScrollByLineWidget) w;
@@ -316,7 +324,7 @@ Page(Widget w, XEvent * event, String * params, Cardinal *num_params)
      return;
 /*
  * If no scroll bar is visible then do not page, as the entire window is shown,
- * of scrolling has been turned off. 
+ * of scrolling has been turned off.
  */
 
    if (bar == (Widget) NULL)
@@ -336,7 +344,7 @@ Page(Widget w, XEvent * event, String * params, Cardinal *num_params)
    case 'L':
    case 'l':
      /* move one line forward */
-     VerticalScroll(bar, NULL, 
+     VerticalScroll(bar, NULL,
 		(XtPointer)((long) atoi(params[1]) * sblw->scroll.font_height));
      break;
    default:
@@ -345,7 +353,7 @@ Page(Widget w, XEvent * event, String * params, Cardinal *num_params)
 }
 
 /*	Function Name: CreateScrollbar
- *	Description: createst the scrollbar for us.
+ *	Description: creates the scrollbar for us.
  *	Arguments: w - sblw widget.
  *	Returns: none.
  */
@@ -357,22 +365,22 @@ CreateScrollbar(Widget w)
   Arg args[5];
   Cardinal num_args = 0;
 
-  if (sblw->scroll.bar != NULL) 
+  if (sblw->scroll.bar != NULL)
     return;
 
   XtSetArg(args[num_args], XtNorientation, XtorientVertical); num_args++;
-  
-  sblw->scroll.bar = XtCreateWidget("scrollbar", scrollbarWidgetClass, w, 
+
+  sblw->scroll.bar = XtCreateWidget("scrollbar", scrollbarWidgetClass, w,
 				    args, num_args);
   XtAddCallback(sblw->scroll.bar, XtNscrollProc, VerticalScroll, NULL);
-  XtAddCallback(sblw->scroll.bar, XtNjumpProc, VerticalJump, NULL); 
+  XtAddCallback(sblw->scroll.bar, XtNjumpProc, VerticalJump, NULL);
 }
 
 /*	Function Name: ScrollVerticalText
  *	Description: This accomplished the actual movement of the text.
  *	Arguments: w - the ScrollByLine Widget.
  *                 new_line - the new location for the line pointer
- *                 force_redisplay - should we force this window to get 
+ *                 force_redisplay - should we force this window to get
  *                                   redisplayed?
  *	Returns: True if the thumb needs to be moved.
  */
@@ -406,14 +414,14 @@ Boolean force_redisp)
     }
   }
 
-/* 
+/*
  * If forced to redisplay then do a full redisplay and return.
  */
 
-  old_line = sblw->scroll.line_pointer;	
+  old_line = sblw->scroll.line_pointer;
   sblw->scroll.line_pointer = new_line;	/* Set current top of page. */
 
-  if (force_redisp) 
+  if (force_redisp)
     MoveAndClearText(w, 0, /* cause a full redisplay */ 0, 0);
 
   if (new_line == old_line)
@@ -428,7 +436,7 @@ Boolean force_redisp)
     MoveAndClearText(w, 0, num_lines - lines_to_scroll, lines_to_scroll);
   }
 
-/* 
+/*
  * Scroll back.
  */
 
@@ -449,7 +457,7 @@ Boolean force_redisp)
  *                 new_y - new y position.
  *	Returns: none
  */
-	   
+
 static void
 MoveAndClearText(Widget w, int old_y, int height, int new_y)
 {
@@ -470,8 +478,8 @@ MoveAndClearText(Widget w, int old_y, int height, int new_y)
  */
 
   if (height <= sblw->scroll.font_height) { /* avoid rounding errors. */
-    XClearArea( XtDisplay(w), XtWindow(w), from_left, 0, 
-	       (unsigned int) 0, (unsigned int) 0, FALSE);    
+    XClearArea( XtDisplay(w), XtWindow(w), from_left, 0,
+	       (unsigned int) 0, (unsigned int) 0, FALSE);
     PaintText(w, 0, (int) sblw->core.height);
     return;
   }
@@ -480,14 +488,14 @@ MoveAndClearText(Widget w, int old_y, int height, int new_y)
     height = w->core.height - old_y;
 
   XCopyArea(XtDisplay(w), XtWindow(w), XtWindow(w), sblw->scroll.move_gc,
-	    from_left, old_y, 
+	    from_left, old_y,
 	    (unsigned int) w->core.width - from_left, (unsigned int) height,
 	    from_left, new_y);
 
   if (old_y > new_y)
     height -= sblw->scroll.font_height/2;  /* clear 1/2 font of extra space,
 					      to make sure we don't lose or
-					      gain decenders. */
+					      gain descenders. */
   else
     height -= sblw->scroll.font_height;  /* clear 1 font of extra space,
 					    to make sure we don't overwrite
@@ -497,7 +505,7 @@ MoveAndClearText(Widget w, int old_y, int height, int new_y)
     y_clear = height;
   else
     y_clear = 0;
-  
+
 /*
  * We cannot use generate exposures, since that may allow another move and
  * clear before the area get repainted, this would be bad.
@@ -524,7 +532,7 @@ SetThumbHeight(Widget w)
   if (sblw->scroll.bar == NULL)
     return;
 
-  if (sblw->scroll.lines == 0) 
+  if (sblw->scroll.lines == 0)
     shown = 1.0;
   else
     shown = (float) w->core.height / (float) (sblw->scroll.lines *
@@ -550,7 +558,7 @@ SetThumb(Widget w)
   if ( (sblw->scroll.lines == 0) || (sblw->scroll.bar == NULL) )
     return;
 
-  location = (float) sblw->scroll.line_pointer / (float) sblw->scroll.lines; 
+  location = (float) sblw->scroll.line_pointer / (float) sblw->scroll.lines;
   XawScrollbarSetThumb( sblw->scroll.bar, location , (float) -1 );
 }
 
@@ -601,7 +609,7 @@ VerticalScroll(Widget w, XtPointer client_data, XtPointer call_data)
 int h_width;			/* main font width */
 
 /* ARGSUSED */
-static void 
+static void
 Initialize(Widget req, Widget new, ArgList args, Cardinal *num_args)
 {
   ScrollByLineWidget sblw = (ScrollByLineWidget) new;
@@ -613,8 +621,8 @@ Initialize(Widget req, Widget new, ArgList args, Cardinal *num_args)
   LoadFile(new);
   sblw->scroll.bar = (Widget) NULL;
 
-  sblw->scroll.font_height = (sblw->scroll.normal_font->max_bounds.ascent + 
-			      sblw->scroll.normal_font->max_bounds.descent); 
+  sblw->scroll.font_height = (sblw->scroll.normal_font->max_bounds.ascent +
+			      sblw->scroll.normal_font->max_bounds.descent);
 
   atomNum = XInternAtom(XtDisplay(req), "FIGURE_WIDTH", False);
 
@@ -628,7 +636,7 @@ Initialize(Widget req, Widget new, ArgList args, Cardinal *num_args)
 } /* Initialize. */
 
 /*	Function Name: CreateGCs
- *	Description: Creates the graphics contexts that we need. 
+ *	Description: Creates the graphics contexts that we need.
  *	Arguments: w - the sblw.
  *	Returns: none
  */
@@ -646,7 +654,7 @@ CreateGCs(Widget w)
 
   mask = GCForeground | GCFont;
   values.foreground = sblw->scroll.foreground;
-  
+
   values.font = sblw->scroll.normal_font->fid;
   sblw->scroll.normal_gc = XtGetGC(w, mask, &values);
 
@@ -717,11 +725,11 @@ Destroy(Widget w)
  */
 
 /* ARGSUSED */
-static Boolean 
+static Boolean
 SetValuesHook(Widget w, ArgList args, Cardinal *num_args)
 {
   Boolean ret = TRUE;
-  int i;
+  Cardinal i;
 
   for (i = 0; i < *num_args; i++) {
     if (strcmp(XtNfile, args[i].name) == 0) {
@@ -731,7 +739,7 @@ SetValuesHook(Widget w, ArgList args, Cardinal *num_args)
   }
 
 /*
- * Changing anthing else will have strange effects, I don't need it so
+ * Changing anything else will have strange effects, I don't need it so
  * I didn't code it.
  */
 
@@ -739,27 +747,27 @@ SetValuesHook(Widget w, ArgList args, Cardinal *num_args)
 
 } /* Set Values */
 
-/* 
- * A little design philosophy is probabally wise to include at this point.
+/*
+ * A little design philosophy is probably wise to include at this point.
  *
- * One of the things that I has hoped to achieve with xman is to make the
- * viewing of manpage not only easy for the nieve user, but also fast for
+ * One of the things that I had hoped to achieve with xman was to make the
+ * viewing of manpage not only easy for the naive user, but also fast for
  * the experienced user, I wanted to be able to use it too.  To achieve this
- * I end up sacrificing a bit of start up time for the manual data structure.
- * As well as, the overhead of reading the entire file before putting it up 
+ * I ended up sacrificing a bit of startup time for the manual data structure.
+ * As well as, the overhead of reading the entire file before putting it up
  * on the display.  This is actually hardly even noticeable since most manual
  * pages are shots, one to two pages - the notable exception is of course csh,
- * but then that should be broken up anyway. 
+ * but then that should be broken up anyway.
  *
  * METHOD:
  *
  * I allocate a chunk of space that is the size of the file, plus a null for
- * debugging.  Then copiesthe file into this chunk of memory.  I then allocate
+ * debugging.  Then copies the file into this chunk of memory.  I then allocate
  * an array of char*'s that are assigned to the beginning of each line.  Yes,
- * this means that I have to read the file twice, and could probabally be more
+ * this means that I have to read the file twice, and could probably be more
  * clever about it, but once it is in memory the second read is damn fast.
- * There are a few obsucrities here about guessing the number of lines and
- * reallocing if I guess wrong, but other than that it is pretty straight 
+ * There are a few obscurities here about guessing the number of lines and
+ * realloc'ing if I guess wrong, but other than that it is pretty straight
  * forward.
  *
  *                                         Chris Peterson
@@ -782,9 +790,9 @@ LoadFile(Widget w)
   FILE * file = sblw->scroll.file;
 
   char *page;
-  char **line_pointer,**top_line; /* pointers to beginnings of the 
+  char **line_pointer,**top_line; /* pointers to beginnings of the
 				     lines of the file. */
-  int nlines;			/* the current number of allocated lines. */
+  unsigned nlines;		/* the current number of allocated lines. */
   struct stat fileinfo;		/* file information from fstat. */
 
   if ( sblw->scroll.top_line != NULL) {
@@ -797,30 +805,30 @@ LoadFile(Widget w)
     return;
 
 /*
- * Get file size and allocate a chunk of memory for the file to be 
+ * Get file size and allocate a chunk of memory for the file to be
  * copied into.
  */
 
   if (fstat(fileno(file), &fileinfo))
-    XtAppError(XtWidgetToApplicationContext(w), 
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "SBLW LoadFile: Failure in fstat.");
 
-/* 
+/*
  * Allocate a space for a list of pointer to the beginning of each line.
  */
 
   if ( (nlines = fileinfo.st_size/CHAR_PER_LINE) == 0)
     return;
 
-  page = XtMalloc(fileinfo.st_size + 1); /* leave space for the NULL */
+  page = XtMalloc((unsigned)fileinfo.st_size + 1); /* leave space for the NULL */
   top_line = line_pointer = (char**) XtMalloc( nlines * sizeof(char *) );
 
 /*
- * Copy the file into memory. 
+ * Copy the file into memory.
  */
 
   if (fread(page, sizeof(char), fileinfo.st_size, file) == 0)
-    XtAppError(XtWidgetToApplicationContext(w), 
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "SBLW LoadFile: Failure in fread.");
 
 
@@ -829,7 +837,7 @@ LoadFile(Widget w)
   *(page + fileinfo.st_size) = '\0';
 
 /*
- * Go through the file setting a line pointer to the character after each 
+ * Go through the file setting a line pointer to the character after each
  * new line.  If we run out of line pointer space then realloc that space
  * with space for more lines.
  */
@@ -849,7 +857,7 @@ LoadFile(Widget w)
     }
     page++;
   }
-   
+
 /*
  *  Realloc the line pointer space to take only the minimum amount of memory
  */
@@ -868,7 +876,7 @@ LoadFile(Widget w)
 }
 
 #define NLINES  66		/* This is the number of lines to wait until
-				   we boldify the line again, this allows 
+				   we boldify the line again, this allows
 				   me to bold the first line of each page.*/
 #define BACKSPACE 010		/* I doubt you would want to change this. */
 
@@ -882,6 +890,8 @@ LoadFile(Widget w)
 
 static int DumpText(Widget w, int x_loc, int y_loc, char * buf, int len, int format);
 static Boolean Boldify(char *);
+static int nonBlankText (char *);
+static int sameLine (char *, char *);
 
 /*	Function Name: PrintText
  *	Description: This function actually prints the text.
@@ -903,8 +913,10 @@ PrintText(Widget w, int start_line, int num_lines, int location)
   int current_line;		/* the number of the currrent line */
   char buf[BUFSIZ];		/* Misc. characters */
   Boolean italicflag = FALSE;	/* Print text in italics?? */
-  Boolean first = TRUE;	        /* First line of a manual page??? */
+  Boolean first;		/* First line of a manual page??? */
   int x_loc, y_loc;		/* x and y location of text. */
+  int left_margin = sblw->scroll.offset + sblw->scroll.indent;
+  char *refline = NULL;
 
 /*
  * For table hack
@@ -945,27 +957,44 @@ PrintText(Widget w, int start_line, int num_lines, int location)
 
 
   bufp = buf;
-  x_loc = sblw->scroll.offset + sblw->scroll.indent;
+  x_loc = left_margin;
   h_col = 0;
-  
-/*
- * A fix:
- * Assume that we are always starting to print on or before the
- * first line of a page, and then prove it if we aren't.
- */
-  for (h_fix = 1; h_fix <= (start_line % NLINES); h_fix++)
-    if (**(sblw->scroll.top_line + start_line - h_fix) != '\n')
-      {
-	first = FALSE;
-	break;
+
+  if (sblw->scroll.half_lines) {
+      /*
+       * A better fix:  determine the first nonblank line in the file, and use
+       * that as a reference for the header-line.  Note that this assumes that
+       * page numbering is in the footer, and that there aren't coincidental
+       * matches against the header-line.
+       */
+      for (h_fix = 0; (h_fix < NLINES) && (h_fix < sblw->scroll.lines); h_fix++) {
+	if (nonBlankText(sblw->scroll.top_line[h_fix])) {
+	    refline = sblw->scroll.top_line[h_fix];
+	    break;
+	}
       }
+      first = sameLine(c, refline);
+  } else {
+      /*
+       * A fix:
+       * Assume that we are always starting to print on or before the
+       * first line of a page, and then prove it if we aren't.
+       */
+      first = TRUE;
+      for (h_fix = 1; h_fix <= (start_line % NLINES); h_fix++)
+	if (**(sblw->scroll.top_line + start_line - h_fix) != '\n') {
+	    first = FALSE;
+	    break;
+	}
+  }
 
   while(TRUE) {
-    if (current_line % NLINES == 0)
+    if (!sblw->scroll.half_lines
+      && current_line % NLINES == 0)
       first = TRUE;
 
-/* 
- * Lets make sure that we do not run out of space in our buffer, making full
+/*
+ * Let's make sure that we do not run out of space in our buffer. Making full
  * use of it is not critical since no window will be wide enough to display
  * nearly BUFSIZ characters.
  */
@@ -984,32 +1013,33 @@ PrintText(Widget w, int start_line, int num_lines, int location)
       if (bufp != buf) {
 	Boolean bold;
 	*bufp = '\0';		/* for Boldify. */
-	bold = ( (first) || ((x_loc == (sblw->scroll.offset +
-			      sblw->scroll.indent)) && Boldify(buf)) );
+	bold = ( (first) || ((x_loc == left_margin) && Boldify(buf)) );
 
 	(void) DumpText(w, x_loc, y_loc, buf, bufp - buf,
 			WHICH(italicflag, bold));
-
-	if (bold)
+	if (!sblw->scroll.half_lines && bold)
 	  first = FALSE;
       }
 
-/* 
+      if (sblw->scroll.half_lines)
+	  first = sameLine(c+1, refline);
+
+/*
  * If we have painted the required number of lines then we should now return.
  */
-      if (++current_line == start_line + num_lines ) 
+      if (++current_line == start_line + num_lines )
 	return;
 
       bufp = buf;
       italicflag = FALSE;
-      x_loc = sblw->scroll.offset + sblw->scroll.indent;
+      x_loc = left_margin;
       h_col = 0;
       y_loc += sblw->scroll.font_height;
       break;
 
 /*
  * This tab handling code is not very clever it moves the cursor over
- * to the next boundry of eight (8) spaces, as calculated in width just
+ * to the next boundary of eight (8) spaces, as calculated in width just
  * before the printing loop started.
  */
 
@@ -1017,9 +1047,9 @@ PrintText(Widget w, int start_line, int num_lines, int location)
       x_loc = DumpText(w, x_loc, y_loc, buf, bufp - buf,
 		       WHICH(italicflag, first));
       h_col += bufp - buf;
-      bufp = buf; 
+      bufp = buf;
       italicflag = FALSE;
-      x_loc = sblw->scroll.offset + sblw->scroll.indent;
+      x_loc = left_margin;
       h_col = h_col + 8 - (h_col%8);
       x_loc += h_width * h_col;
       break;
@@ -1037,12 +1067,12 @@ PrintText(Widget w, int start_line, int num_lines, int location)
       x_loc = DumpText(w, x_loc, y_loc, buf, bufp - buf,
 		       WHICH(italicflag, first));
       h_col += bufp - buf;
-      bufp = buf; 
+      bufp = buf;
       italicflag = FALSE;
 
-      x_loc = sblw->scroll.offset + sblw->scroll.indent; 
+      x_loc = left_margin;
       h_col += (h_c - c);
-      x_loc += h_width * h_col; 
+      x_loc += h_width * h_col;
       c = h_c - 1;
       break;
 
@@ -1050,8 +1080,8 @@ PrintText(Widget w, int start_line, int num_lines, int location)
       c++;			/* should always be esc-x */
       break;
 
-/* 
- * Overstrike code supplied by: cs.utexas.edu!ut-emx!clyde@rutgers.edu 
+/*
+ * Overstrike code supplied by: cs.utexas.edu!ut-emx!clyde@rutgers.edu
  * Since my manual pages do not have overstrike I couldn't test this.
  */
 
@@ -1106,7 +1136,7 @@ PrintText(Widget w, int start_line, int num_lines, int location)
       break;
 
 /* End of contributed overstrike code. */
-  
+
    case '_':			/* look for underlining [italicize] */
       if(*(c + 1) == BACKSPACE) {
 	if(!italicflag) {	/* font change? */
@@ -1178,7 +1208,7 @@ DumpText(Widget w, int x_loc, int y_loc, char * buf, int len, int format)
       gc = sblw->scroll.normal_gc;
       font = sblw->scroll.normal_font;
     break;
-    }
+  }
 
   XDrawString(XtDisplay(w), XtWindow(w), gc, x_loc, y_loc, buf, len);
   return(x_loc + XTextWidth(font, buf, len));
@@ -1196,16 +1226,49 @@ Boldify(register char *sp)
   register char *sp_pointer;
   int length,count;
 
-/* 
+  if (isspace(*sp) || !*sp)	/* ignore lines that are not left-margin'd */
+    return(0);
+/*
  * If there are not lower case letters in the line the assume it is a
  * keyword and boldify it in PrintManpage.
  */
 
   length = strlen(sp);
-  for (sp_pointer = sp, count = 0; count < length; sp_pointer++,count++) 
+  for (sp_pointer = sp, count = 0; count < length; sp_pointer++,count++)
     if ( !isupper(*sp_pointer) && !isspace(*sp_pointer) )
       return(0);
   return(1);
+}
+
+/*
+ * Scans the line beginning at the given pointer, and returns its length if
+ * it contains nonblank characters.
+ */
+static int
+nonBlankText(register char *sp)
+{
+  char	*base	= sp;
+  int	any	= FALSE;
+
+  while (*sp != '\0' && *sp != '\n') {
+    if (!isspace(*sp))
+      any = TRUE;
+    sp++;
+  }
+  return any ? (sp - base) : 0;
+}
+
+static int
+sameLine(char *cmp, char *ref)
+{
+  if (ref != NULL) {
+    while (*ref != '\0' && *ref != '\n') {
+      if (*cmp++ != *ref++)
+        return FALSE;
+    }
+    return TRUE;
+  }
+  return FALSE;
 }
 
 #undef superclass

@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_dma.h,v 1.17 2005/03/03 03:35:41 dawes Exp $ */
+
 /* drm_dma.c -- DMA IOCTL and function support -*- linux-c -*-
  * Created: Fri Mar 19 14:30:16 1999 by faith@valinux.com
  *
@@ -74,7 +76,7 @@ void DRM(dma_takedown)(drm_device_t *dev)
 				  dma->bufs[i].buf_count,
 				  dma->bufs[i].seg_count);
 			for (j = 0; j < dma->bufs[i].seg_count; j++) {
-				if (dma->bufs[i].seglist[j] != NULL)
+				if (dma->bufs[i].seglist[j] != 0)
 					DRM(pci_free)(dev, dma->bufs[i].buf_size,
 					    (void *)dma->bufs[i].seglist[j],
 					    dma->bufs[i].seglist_bus[j]);

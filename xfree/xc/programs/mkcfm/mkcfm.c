@@ -1,4 +1,3 @@
-/* From: Header: xc/programs/mkcfm/RCS/mkcfm.c,v 1.3 1996/05/08 21:38:21 ib Exp $ */
 /* Copyright (c) 1994-1999 Silicon Graphics, Inc. All Rights Reserved.
  *
  * The contents of this file are subject to the CID Font Code Public Licence
@@ -16,7 +15,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.13 2003/05/27 22:26:56 tsi Exp $ */
+/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.14 2005/01/11 23:01:14 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,8 +201,22 @@ GetClientResolutions(int *resP)
 pointer 
 Xalloc(unsigned long size)
 {
+#if defined(WORD64) || defined(LONG64)
+       if (size & ~((unsigned long)(unsigned int)(-1))) return NULL;
+#endif
        return(malloc(size));
 }
+
+#if !defined(WORD64) && !defined(LONG64)
+
+void *
+Xllalloc(unsigned long long size)
+{
+    if (size & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xalloc(size);
+}
+
+#endif
  
 void 
 Xfree(pointer p)

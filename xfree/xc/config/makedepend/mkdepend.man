@@ -23,9 +23,9 @@
 .\" dealing in this Software without prior written authorization from The
 .\" Open Group.
 .\"
-.\" $XFree86: xc/config/makedepend/mkdepend.man,v 1.7 2002/12/14 02:39:45 dawes Exp $
+.\" $XFree86: xc/config/makedepend/mkdepend.man,v 1.8 2005/02/11 03:02:53 dawes Exp $
 .\"
-.TH MAKEDEPEND 1 __xorgversion__
+.TH MAKEDEPEND 1 __vendorversion__
 .UC 4
 .SH NAME
 makedepend \- create dependencies in makefiles

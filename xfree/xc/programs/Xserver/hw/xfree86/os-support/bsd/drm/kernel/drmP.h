@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drmP.h,v 1.19 2005/03/03 03:35:40 dawes Exp $ */
+
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  *
@@ -196,11 +198,6 @@ typedef struct drm_buf_entry {
 	drm_freelist_t	  freelist;
 } drm_buf_entry_t;
 
-typedef struct drm_hw_lock {
-	__volatile__ unsigned int lock;
-	char			  padding[60]; /* Pad to cache line */
-} drm_hw_lock_t;
-
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
 struct drm_file {
 	TAILQ_ENTRY(drm_file) link;
@@ -317,7 +314,7 @@ struct drm_device {
 #ifdef __FreeBSD__
 	device_t	  device;	/* Device instance from newbus     */
 #endif
-	dev_t		  devnode;	/* Device number for mknod	   */
+	DEV_T		  devnode;	/* Device number for mknod	   */
 	int		  if_version;	/* Highest interface version set */
 
 	int		  flags;	/* Flags to open(2)		   */

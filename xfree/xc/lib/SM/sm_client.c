@@ -1,3 +1,4 @@
+/* $XFree86: xc/lib/SM/sm_client.c,v 1.4 2004/12/31 02:56:03 tsi Exp $ */
 /* $Xorg: sm_client.c,v 1.4 2001/02/09 02:03:30 xorgcvs Exp $ */
 
 /*
@@ -179,6 +180,17 @@ char 		*errorStringRet;
 	SIZEOF (smRegisterClientMsg), WORD64COUNT (extra),
 	smRegisterClientMsg, pMsg, pData);
 
+    if (pData == NULL)
+    {
+	strncpy (errorStringRet, "Malformed previous session ID", errorLength);
+
+	free (smcConn->vendor);
+	free (smcConn->release);
+	free ((char *) smcConn);
+
+	return (NULL);
+    }
+
     STORE_ARRAY8 (pData, len, previousId);
 
     IceFlush (iceConn);
@@ -236,7 +248,7 @@ char 		*errorStringRet;
 		    SIZEOF (smRegisterClientMsg), WORD64COUNT (extra),
 		    smRegisterClientMsg, pMsg, pData);
 
-		STORE_ARRAY8 (pData, 0, NULL);
+		STORE_NULL (pData);
 
 		IceFlush (iceConn);
 

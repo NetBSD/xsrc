@@ -1,4 +1,3 @@
-/* $Xorg: XSync.c,v 1.5 2001/02/09 02:03:49 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1993, 1998  The Open Group
@@ -50,7 +49,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xext/XSync.c,v 1.8 2003/10/23 21:36:09 tsi Exp $ */
+/* $XFree86: xc/lib/Xext/XSync.c,v 1.9 2005/01/27 02:28:59 dawes Exp $ */
 
 #include <stdio.h>
 #define NEED_EVENTS
@@ -209,9 +208,8 @@ event_to_wire(Display *dpy, XEvent *event, xEvent *wire)
 }
 
 Status
-XSyncQueryExtension(dpy, event_base_return, error_base_return)
-    Display        *dpy;
-    int  *event_base_return, *error_base_return;
+XSyncQueryExtension(Display *dpy, int *event_base_return,
+		    int *error_base_return)
 {
     XExtDisplayInfo *info = find_display(dpy);
 
@@ -226,9 +224,8 @@ XSyncQueryExtension(dpy, event_base_return, error_base_return)
 }
 
 Status
-XSyncInitialize(dpy, major_version_return, minor_version_return)
-    Display        *dpy;
-    int *major_version_return, *minor_version_return;
+XSyncInitialize(Display *dpy, int *major_version_return,
+		int *minor_version_return)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncInitializeReply rep;
@@ -260,9 +257,7 @@ XSyncInitialize(dpy, major_version_return, minor_version_return)
 }
 
 XSyncSystemCounter *
-XSyncListSystemCounters(dpy, n_counters_return)
-    Display        *dpy;
-    int		   *n_counters_return;
+XSyncListSystemCounters(Display *dpy, int *n_counters_return)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncListSystemCountersReply rep;
@@ -336,8 +331,7 @@ bail:
 }
 
 void
-XSyncFreeSystemCounterList(list)
-    XSyncSystemCounter *list;
+XSyncFreeSystemCounterList(XSyncSystemCounter *list)
 {
     if (list)
     {
@@ -348,9 +342,7 @@ XSyncFreeSystemCounterList(list)
 
 
 XSyncCounter
-XSyncCreateCounter(dpy, initial_value)
-    Display        *dpy;
-    XSyncValue    initial_value;
+XSyncCreateCounter(Display *dpy, XSyncValue initial_value)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncCreateCounterReq *req;
@@ -372,10 +364,7 @@ XSyncCreateCounter(dpy, initial_value)
 }
 
 Status
-XSyncSetCounter(dpy, counter, value)
-    Display        *dpy;
-    XSyncCounter    counter;
-    XSyncValue    value;
+XSyncSetCounter(Display *dpy, XSyncCounter counter, XSyncValue value)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncSetCounterReq *req;
@@ -395,10 +384,7 @@ XSyncSetCounter(dpy, counter, value)
 }
 
 Status
-XSyncChangeCounter(dpy, counter, value)
-    Display        *dpy;
-    XSyncCounter    counter;
-    XSyncValue    value;
+XSyncChangeCounter(Display *dpy, XSyncCounter counter, XSyncValue value)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncChangeCounterReq *req;
@@ -418,9 +404,7 @@ XSyncChangeCounter(dpy, counter, value)
 }
 
 Status
-XSyncDestroyCounter(dpy, counter)
-    Display        *dpy;
-    XSyncCounter    counter;
+XSyncDestroyCounter(Display *dpy, XSyncCounter counter)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncDestroyCounterReq *req;
@@ -439,10 +423,7 @@ XSyncDestroyCounter(dpy, counter)
 }
 
 Status
-XSyncQueryCounter(dpy, counter, value_return)
-    Display        *dpy;
-    XSyncCounter    counter;
-    XSyncValue   *value_return;
+XSyncQueryCounter(Display *dpy, XSyncCounter counter, XSyncValue *value_return)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncQueryCounterReply rep;
@@ -470,10 +451,7 @@ XSyncQueryCounter(dpy, counter, value_return)
 
 
 Status
-XSyncAwait(dpy, wait_list, n_conditions)
-    Display        *dpy;
-    XSyncWaitCondition *wait_list;
-    int   n_conditions;
+XSyncAwait(Display *dpy, XSyncWaitCondition *wait_list, int n_conditions)
 {
     XExtDisplayInfo *info = find_display(dpy);
     XSyncWaitCondition *wait_item = wait_list;
@@ -550,10 +528,8 @@ _XProcessAlarmAttributes(Display *dpy, xSyncChangeAlarmReq *req,
 }
 
 XSyncAlarm
-XSyncCreateAlarm(dpy, values_mask, values)
-    Display        *dpy;
-    unsigned long   values_mask;
-    XSyncAlarmAttributes *values;
+XSyncCreateAlarm(Display *dpy, unsigned long values_mask,
+		 XSyncAlarmAttributes *values)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncCreateAlarmReq *req;
@@ -577,9 +553,7 @@ XSyncCreateAlarm(dpy, values_mask, values)
 }
 
 Status
-XSyncDestroyAlarm(dpy, alarm)
-    Display        *dpy;
-    XSyncAlarm      alarm;
+XSyncDestroyAlarm(Display *dpy, XSyncAlarm alarm)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncDestroyAlarmReq *req;
@@ -597,10 +571,8 @@ XSyncDestroyAlarm(dpy, alarm)
 }
 
 Status
-XSyncQueryAlarm(dpy, alarm, values_return)
-    Display        *dpy;
-    XSyncAlarm      alarm;
-    XSyncAlarmAttributes *values_return;
+XSyncQueryAlarm(Display *dpy, XSyncAlarm alarm,
+		XSyncAlarmAttributes *values_return)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncQueryAlarmReq *req;
@@ -637,11 +609,8 @@ XSyncQueryAlarm(dpy, alarm, values_return)
 }
 
 Status
-XSyncChangeAlarm(dpy, alarm, values_mask, values)
-    Display        *dpy;
-    XSyncAlarm      alarm;
-    unsigned long   values_mask;
-    XSyncAlarmAttributes *values;
+XSyncChangeAlarm(Display *dpy, XSyncAlarm alarm, unsigned long values_mask,
+		 XSyncAlarmAttributes *values)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncChangeAlarmReq *req;
@@ -663,10 +632,7 @@ XSyncChangeAlarm(dpy, alarm, values_mask, values)
 }
 
 Status
-XSyncSetPriority(dpy, client_resource_id, priority)
-    Display        *dpy;
-    XID             client_resource_id;
-    int             priority;
+XSyncSetPriority(Display *dpy, XID client_resource_id, int priority)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncSetPriorityReq *req;
@@ -685,10 +651,7 @@ XSyncSetPriority(dpy, client_resource_id, priority)
 }
 
 Status
-XSyncGetPriority(dpy, client_resource_id, return_priority)
-    Display        *dpy;
-    XID             client_resource_id;
-    int            *return_priority;
+XSyncGetPriority(Display *dpy, XID client_resource_id, int *return_priority)
 {
     XExtDisplayInfo *info = find_display(dpy);
     xSyncGetPriorityReply rep;
@@ -739,118 +702,98 @@ XSyncGetPriority(dpy, client_resource_id, return_priority)
 #undef XSyncMinValue
 
 void
-XSyncIntToValue(pv, i)
-    XSyncValue *pv;
-    int i;
+XSyncIntToValue(XSyncValue *pv, int i)
 {
     _XSyncIntToValue(pv,i);
 }
 
 void
-XSyncIntsToValue(pv, l, h)
-    XSyncValue *pv;
-    unsigned int l;
-    int h;
+XSyncIntsToValue(XSyncValue *pv, unsigned int l, int h)
 {
     _XSyncIntsToValue(pv, l, h);
 }
 
 Bool
-XSyncValueGreaterThan(a, b)
-    XSyncValue a, b;
+XSyncValueGreaterThan(XSyncValue a, XSyncValue b)
 {
     return _XSyncValueGreaterThan(a, b);
 }
 
 Bool
-XSyncValueLessThan(a, b)
-    XSyncValue a, b;
+XSyncValueLessThan(XSyncValue a, XSyncValue b)
 {
     return _XSyncValueLessThan(a, b);
 }
 
 Bool
-XSyncValueGreaterOrEqual(a, b)
-    XSyncValue a, b;
+XSyncValueGreaterOrEqual(XSyncValue a, XSyncValue b)
 {
     return _XSyncValueGreaterOrEqual(a, b);
 }
 
 Bool
-XSyncValueLessOrEqual(a, b)
-    XSyncValue a, b;
+XSyncValueLessOrEqual(XSyncValue a, XSyncValue b)
 {
     return _XSyncValueLessOrEqual(a, b);
 }
 
 Bool
-XSyncValueEqual(a, b)
-    XSyncValue a, b;
+XSyncValueEqual(XSyncValue a, XSyncValue b)
 {
     return _XSyncValueEqual(a, b);
 }
 
 Bool
-XSyncValueIsNegative(v)
-    XSyncValue v;
+XSyncValueIsNegative(XSyncValue v)
 {
     return _XSyncValueIsNegative(v);
 }
 
 Bool
-XSyncValueIsZero(a)
-    XSyncValue a;
+XSyncValueIsZero(XSyncValue a)
 {
     return _XSyncValueIsZero(a);
 }
 
 Bool
-XSyncValueIsPositive(v)
-    XSyncValue v;
+XSyncValueIsPositive(XSyncValue v)
 {
     return _XSyncValueIsPositive(v);
 }
 
 unsigned int
-XSyncValueLow32(v)
-    XSyncValue v;
+XSyncValueLow32(XSyncValue v)
 {
     return _XSyncValueLow32(v);
 }
 
 int
-XSyncValueHigh32(v)
-    XSyncValue v;
+XSyncValueHigh32(XSyncValue v)
 {
     return _XSyncValueHigh32(v);
 }
 
 void
-XSyncValueAdd(presult, a, b, poverflow)
-    XSyncValue *presult, a, b;
-    Bool *poverflow;
+XSyncValueAdd(XSyncValue *presult, XSyncValue a, XSyncValue b, Bool *poverflow)
 {
     _XSyncValueAdd(presult, a, b, poverflow);
 }
 
 void
-XSyncValueSubtract(presult, a, b, poverflow)
-    XSyncValue *presult, a, b;
-    Bool *poverflow;
+XSyncValueSubtract(XSyncValue *presult, XSyncValue a, XSyncValue b,
+		   Bool *poverflow)
 {
     _XSyncValueSubtract(presult, a, b, poverflow);
 }
 
 void
-XSyncMaxValue(pv)
-    XSyncValue *pv;
+XSyncMaxValue(XSyncValue *pv)
 {
     _XSyncMaxValue(pv);
 }
 
 void
-XSyncMinValue(pv)
-    XSyncValue *pv;
+XSyncMinValue(XSyncValue *pv)
 {
     _XSyncMinValue(pv);
 }

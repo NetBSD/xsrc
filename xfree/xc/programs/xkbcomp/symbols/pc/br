@@ -5,7 +5,7 @@
 // Adds suport for dead-keys in I18N applications
 // by Conectiva  (http://www.conectiva.com.br)"
 //
-// $XFree86: xc/programs/xkbcomp/symbols/pc/br,v 1.4 2003/12/09 13:51:34 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/pc/br,v 1.6 2004/06/19 13:53:47 pascal Exp $
 
 xkb_symbols "abnt2" {
 
@@ -31,7 +31,7 @@ xkb_symbols "abnt2" {
 
     key <TLDE>	{ [apostrophe,   quotedbl,      notsign,      notsign ]	};
 
-    key <BKSL>	{ [ backslash,        bar,    masculine,   dead_breve ]	};
+    key <AB00>	{ [ backslash,        bar,    masculine,   dead_breve ]	};
     key <AB03>	{ [         c,          C,    copyright,    copyright ]	};
     key <AB07>  { [         m,          M,           mu,           mu ] };
     key <AB10>	{ [ semicolon,    colon, dead_belowdot, dead_abovedot ]	};
@@ -41,7 +41,7 @@ xkb_symbols "abnt2" {
     key <AB11>	{ [     slash,   question,       degree, questiondown ]	};
 
     key <KPPT>	{ [KP_Decimal ]	};
-    key <KPDL>	{ [ KP_Delete,      comma ]	};
+    key <KPDL>	{ [ KP_Delete,  KP_Separator ]	};
 
     include "level3(ralt_switch_multikey)"
 };

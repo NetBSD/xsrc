@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_mouse.c,v 1.3 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_mouse.c,v 1.6 2005/02/04 02:55:49 dawes Exp $ */
 
 /*
- * Copyright 1999 by The XFree86 Project, Inc.
+ * Copyright 1999-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -71,12 +71,21 @@ DefaultProtocol(void)
 #define DEFAULT_MOUSE_DEV		"/dev/mouse"
 #define DEFAULT_PS2_DEV			"/dev/psaux"
 #define DEFAULT_GPM_DATA_DEV		"/dev/gpmdata"
-#define DEFAULT_GPM_CTL_DEV		"/dev/gpmdata"
+#define DEFAULT_GPM_CTL_DEV		"/dev/gpmctl"
+#define DEFAULT_INPUT_MICE_DEV		"/dev/input/mice"
+#ifdef __sparc__
+#define DEFAULT_SUNMOUSE_DEV		"/dev/sunmouse"
+#endif
+#define DEFAULT_INPUT_MOUSE_PREFIX	"/dev/input/mouse"
 
 static const char *mouseDevs[] = {
 	DEFAULT_MOUSE_DEV,
 	DEFAULT_PS2_DEV,
 	DEFAULT_GPM_DATA_DEV,
+	DEFAULT_INPUT_MICE_DEV,
+#ifdef __sparc__
+	DEFAULT_SUNMOUSE_DEV,
+#endif
 	NULL
 };
 
@@ -131,7 +140,7 @@ GuessProtocol(InputInfoPtr pInfo, int flags)
 {
     int fd = -1;
     const char *dev;
-    char *realdev;
+    char *realdev = NULL;
     struct stat sbuf;
     int i;
     int proto = MOUSE_PROTO_UNKNOWN;
@@ -144,7 +153,6 @@ GuessProtocol(InputInfoPtr pInfo, int flags)
 	return NULL;
     }
     /* Look at the device name to guess the protocol. */
-    realdev = NULL;
     if (strcmp(dev, DEFAULT_MOUSE_DEV) == 0) {
 	if (lstat(dev, &sbuf) != 0) {
 #ifdef DEBUG
@@ -153,7 +161,9 @@ GuessProtocol(InputInfoPtr pInfo, int flags)
 	    return NULL;
 	}
 	if (S_ISLNK(sbuf.st_mode)) {
-	    realdev = xnfalloc(PATH_MAX + 1);
+	    realdev = xalloc(PATH_MAX + 1);
+	    if (!realdev)
+		return NULL;
 	    i = readlink(dev, realdev, PATH_MAX);
 	    if (i <= 0) {
 #ifdef DEBUG
@@ -165,24 +175,37 @@ GuessProtocol(InputInfoPtr pInfo, int flags)
 	    realdev[i] = '\0';
 	}
     }
-    if (!realdev)
+    if (!realdev) {
 	realdev = xnfstrdup(dev);
-    else {
-	/* If realdev doesn't contain a '/' then prepend "/dev/" */
+	if (!realdev)
+	    return NULL;
+    } else {
+	/* If realdev doesn't contain a '/' then prepend "/dev/". */
 	if (!strchr(realdev, '/')) {
-	    char *tmp = xnfalloc(strlen(realdev) + 5 + 1);
-	    sprintf(tmp, "/dev/%s", realdev);
-	    xfree(realdev);
-	    realdev = tmp;
+	    char *tmp;
+	    xasprintf(&tmp, "/dev/%s", realdev);
+	    if (tmp) {
+		xfree(realdev);
+		realdev = tmp;
+	    }
 	}
     }
 
     if (strcmp(realdev, DEFAULT_PS2_DEV) == 0)
 	proto = MOUSE_PROTO_PS2;
+    else if (strcmp(realdev, DEFAULT_INPUT_MICE_DEV) == 0)
+	proto = MOUSE_PROTO_PS2;
     else if (strcmp(realdev, DEFAULT_GPM_DATA_DEV) == 0)
 	proto = MOUSE_PROTO_MSC;
     else if (strcmp(realdev, DEFAULT_GPM_CTL_DEV) == 0)
 	proto = MOUSE_PROTO_GPM;
+#ifdef __sparc__
+    else if (strcmp(realdev, DEFAULT_SUNMOUSE_DEV) == 0)
+	proto = MOUSE_PROTO_MSC;
+#endif
+    else if (strncmp(realdev, DEFAULT_INPUT_MOUSE_PREFIX,
+		     strlen(DEFAULT_INPUT_MOUSE_PREFIX)) == 0)
+	proto = MOUSE_PROTO_PS2;
     xfree(realdev);
     /*
      * If the protocol can't be guessed from the device name,

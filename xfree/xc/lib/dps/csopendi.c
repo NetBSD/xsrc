@@ -46,7 +46,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/csopendi.c,v 1.3 2001/10/28 03:32:43 tsi Exp $ */
+/* $XFree86: xc/lib/dps/csopendi.c,v 1.4 2004/10/23 15:29:26 dawes Exp $ */
  
 #include <stdlib.h>
 #include <stdio.h>
@@ -266,7 +266,6 @@ DPSCAPOpenAgent(Display *dpy, char *trueDisplayName)
           break;
 	case findnx_error:
           return(NULL);
-	  break;
 	default:
           DPSFatalProc(NULL, "Illegal value returned by XDPSNXFindNX");
 	  break;

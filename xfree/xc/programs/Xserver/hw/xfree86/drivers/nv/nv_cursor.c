@@ -37,7 +37,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.12 2003/07/31 20:24:29 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.13 2004/03/13 22:07:05 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -239,28 +239,37 @@ NVLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
     NVPtr pNv = NVPTR(pScrn);
     CARD32 *image = pCurs->bits->argb;
     CARD32 *dst = (CARD32*)pNv->CURSOR;
+    CARD32 alpha, tmp;
     int x, y, w, h;
 
     w = pCurs->bits->width;
     h = pCurs->bits->height;
 
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    if((pNv->Chipset & 0x0ff0) == 0x0110) {
-       CARD32 tmp;
-
+    if((pNv->Chipset & 0x0ff0) == 0x0110) {  /* premultiply */
        for(y = 0; y < h; y++) {
           for(x = 0; x < w; x++) {
-              tmp = *image++;
-              *dst++ = BYTE_SWAP_32(tmp);
-          }
-          for(; x < 64; x++)
-              *dst++ = 0;
-       }
-    } else 
+             alpha = *image >> 24;
+             if(alpha == 0xff)
+                tmp = *image;
+             else {
+                tmp = (alpha << 24) |
+                         (((*image & 0xff) * alpha) / 255) |
+                        ((((*image & 0xff00) * alpha) / 255) & 0xff00) |
+                       ((((*image & 0xff0000) * alpha) / 255) & 0xff0000); 
+             }
+             image++;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+             *dst++ = BYTE_SWAP_32(tmp);
+#else
+             *dst++ = tmp;
 #endif
-    {
+         }
+         for(; x < 64; x++)
+             *dst++ = 0;
+      }
+    } else {
        for(y = 0; y < h; y++) {
-          for(x = 0; x < w; x++) 
+          for(x = 0; x < w; x++)
               *dst++ = *image++;
           for(; x < 64; x++)
               *dst++ = 0;
@@ -299,9 +308,7 @@ NVCursorInit(ScreenPtr pScreen)
     infoPtr->UseHWCursor = NVUseHWCursor;
 
 #ifdef ARGB_CURSOR
-    if(pNv->alphaCursor &&
-       (((pNv->Chipset & 0x0ff0) != 0x0110) || !pNv->FPDither))
-    {
+    if(pNv->alphaCursor) {
        infoPtr->UseHWCursorARGB = NVUseHWCursorARGB;
        infoPtr->LoadCursorARGB = NVLoadCursorARGB;
     }

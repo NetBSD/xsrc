@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/twm/twm.man,v 1.11 2003/08/04 10:32:30 eich Exp $
+.\" $XFree86: xc/programs/twm/twm.man,v 1.13 2005/02/11 03:03:15 dawes Exp $
 .\"
 .de EX		\"Begin example
 .ne 5
@@ -41,7 +41,7 @@
 .if t .sp .5
 ..
 .ta .3i .6i .9i 1.2i 1.5i 1.8i
-.TH TWM 1 __xorgversion__
+.TH TWM 1 __vendorversion__
 .SH NAME
 twm \- Tab Window Manager for the X Window System
 .SH SYNTAX
@@ -409,6 +409,9 @@ The default is "black".
 .IP "\fBIconBorderWidth\fP \fIpixels\fP" 8
 This variable specifies the width in pixels of the border surrounding
 icon windows.  The default is 2.
+.IP "\fBIconMaxWidth\fP \fIpixels\fP" 8
+This variable specifies the maximum width in pixels of the icon window.
+The default is 1024.
 .IP "\fBIconDirectory\fP \fIstring\fP" 8
 This variable specifies the directory that should be searched if 
 if a bitmap file cannot be found in any of the directories
@@ -790,6 +793,9 @@ may only be specified inside of a
 The optional \fIwin-list\fP is a list of window names and colors so that
 per-window colors may be specified.
 The default is "black".
+.IP "\fBTitleIndent\fP \fIpixels\fP" 8
+This variable specifies the amount by which window name should be 
+indented on the left.  The default is 0.
 .IP "\fBTitlePadding\fP \fIpixels\fP" 8
 This variable specifies the distance between the various buttons, text, and
 highlight areas in the titlebar.  The default is 8 pixels.

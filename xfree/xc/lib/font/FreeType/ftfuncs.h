@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/lib/font/FreeType/ftfuncs.h,v 1.18 2004/02/24 01:13:04 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftfuncs.h,v 1.19 2004/04/14 15:32:43 dawes Exp $ */
 
 /* Number of buckets in the hashtable holding faces */
 #define NUMFACEBUCKETS 32
@@ -121,6 +121,7 @@ typedef struct _FTInstance {
     FT_Size size;
     FTNormalisedTransformationRec transformation;
     FT_Int32 load_flags;
+    FT_ULong strike_index;
     int spacing;		/* actual spacing */
     double pixel_size;          /* to calc attributes (actual height) */
     double pixel_width_unit_x;  /* to calc horiz. width (cosine) */

@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_cursor.c,v 1.1 2000/05/18 23:21:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_cursor.c,v 1.3 2004/12/05 23:06:38 tsi Exp $ */
 
 #include "leo.h"
 
@@ -59,7 +59,7 @@ LeoLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
     }
 }
 
-static void 
+static void
 LeoShowCursor(ScrnInfoPtr pScrn)
 {
     LeoPtr pLeo = GET_LEO_FROM_SCRN(pScrn);
@@ -102,7 +102,7 @@ LeoSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 	pLeo->CursorShiftY = CursorShiftY;
 	LeoLoadCursorImage(pScrn, pLeo->CursorData);
     }
-	
+
     pLeo->dac->cur_cursxy = ((y & 0x7ff) << 11) | (x & 0x7ff);
     pLeo->dac->cur_misc |= 0x30;
     pLeo->dac->cur_misc |= 0x80;
@@ -119,7 +119,7 @@ LeoSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     pLeo->dac->cur_misc |= 0x03;
 }
 
-Bool 
+Bool
 LeoHWCursorInit(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -133,9 +133,8 @@ LeoHWCursorInit(ScreenPtr pScreen)
 
     infoPtr = xf86CreateCursorInfoRec();
     if(!infoPtr) return FALSE;
-    
+
     pLeo->CursorInfoRec = infoPtr;
-    pLeo->dac = (LeoCursor *)((char *)pLeo->fb + LEO_LX0_CURSOR_VOFF);
 
     infoPtr->MaxWidth = 32;
     infoPtr->MaxHeight = 32;

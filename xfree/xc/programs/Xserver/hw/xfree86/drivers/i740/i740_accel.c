@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_accel.c,v 1.7 2002/10/21 13:32:58 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_accel.c,v 1.8 2004/10/23 15:29:29 dawes Exp $ */
 
 /*
  * Authors:
@@ -129,7 +129,7 @@ I740AccelInit(ScreenPtr pScreen) {
 
   if (pScrn->bitsPerPixel == 32) {
     infoPtr->Flags = 0; /* Disables all acceleration */
-    return TRUE;;
+    return TRUE;
   }
 
   infoPtr->Flags = PIXMAP_CACHE | OFFSCREEN_PIXMAPS | LINEAR_FRAMEBUFFER;

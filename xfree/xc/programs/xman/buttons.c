@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/buttons.c,v 1.4 2003/01/19 04:44:45 paulo Exp $ */
+/* $XFree86: xc/programs/xman/buttons.c,v 1.5 2004/03/12 02:17:55 dickey Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -75,12 +75,12 @@ MakeTopBox(void)
   static char * half_size[] = {
     HELP_BUTTON, QUIT_BUTTON, NULL
   };
-  
+
 /* create the top icon. */
 
   num_args = 0;
   XtSetArg(arglist[num_args], XtNiconPixmap,
-	   XCreateBitmapFromData( XtDisplay(initial_widget), 
+	   XCreateBitmapFromData( XtDisplay(initial_widget),
 				 XtScreen(initial_widget)->root,
 				 (char *)iconclosed_bits, iconclosed_width,
 				 iconclosed_height));
@@ -89,28 +89,28 @@ MakeTopBox(void)
   num_args++;
   XtSetArg(arglist[num_args], XtNiconic, resources.iconic);
   num_args++;
-  top = XtCreatePopupShell(TOPBOXNAME, topLevelShellWidgetClass, 
+  top = XtCreatePopupShell(TOPBOXNAME, topLevelShellWidgetClass,
 			   initial_widget, arglist, num_args);
 
-  form = XtCreateManagedWidget("form", formWidgetClass, top, 
+  form = XtCreateManagedWidget("form", formWidgetClass, top,
 			       NULL, (Cardinal) 0);
 
-  label = XtCreateManagedWidget("topLabel", labelWidgetClass, form, 
+  label = XtCreateManagedWidget("topLabel", labelWidgetClass, form,
 			       NULL, (Cardinal) 0);
 
   num_args = 0;
   XtSetArg(arglist[num_args], XtNfromVert, label); num_args++;
-  command = XtCreateManagedWidget(HELP_BUTTON, commandWidgetClass, form, 
+  command = XtCreateManagedWidget(HELP_BUTTON, commandWidgetClass, form,
 				  arglist, num_args);
 
   /* use same vertical as help widget. */
   XtSetArg(arglist[num_args], XtNfromHoriz, command); num_args++;
-  command = XtCreateManagedWidget(QUIT_BUTTON, commandWidgetClass, form, 
+  command = XtCreateManagedWidget(QUIT_BUTTON, commandWidgetClass, form,
 				  arglist, num_args);
 
   num_args = 0;
   XtSetArg(arglist[num_args], XtNfromVert, command); num_args++;
-  command = XtCreateManagedWidget(MANPAGE_BUTTON, commandWidgetClass, form, 
+  command = XtCreateManagedWidget(MANPAGE_BUTTON, commandWidgetClass, form,
 				  arglist, num_args);
 
   help_widget = NULL;		/* We have not seen the help yet. */
@@ -121,13 +121,7 @@ MakeTopBox(void)
 				/* add WM_COMMAND property */
   XSetCommand(XtDisplay(top), XtWindow(top), saved_argv, saved_argc);
 
-  man_globals = (ManpageGlobals*) XtMalloc( (Cardinal) sizeof(ManpageGlobals));
-  man_globals->label = NULL;
-  man_globals->search_widget = NULL;
-  man_globals->manpagewidgets.directory = NULL;
-  man_globals->manpagewidgets.manpage = NULL;
-  man_globals->manpagewidgets.box = NULL;
-  man_globals->current_directory = 0;
+  man_globals = (ManpageGlobals*) XtCalloc(1, (Cardinal) sizeof(ManpageGlobals));
   MakeSearchWidget(man_globals, top);
   MakeSaveWidgets(man_globals, top);
 
@@ -142,7 +136,7 @@ MakeTopBox(void)
       (top, XtParseTranslationTable ("<Message>WM_PROTOCOLS: Quit()"));
   (void) XSetWMProtocols (XtDisplay(top), XtWindow(top),
 			  &wm_delete_window, 1);
-  
+
 
 }
 
@@ -155,11 +149,11 @@ MakeTopBox(void)
 Widget
 CreateManpage(FILE * file)
 {
-  ManpageGlobals * man_globals;	/* The psuedo global structure. */
+  ManpageGlobals * man_globals;	/* The pseudo global structure. */
 
   man_globals = InitPsuedoGlobals();
   CreateManpageWidget(man_globals, MANNAME, TRUE);
-  
+
   if (file == NULL)
     StartManpage( man_globals, OpenHelpfile(man_globals), FALSE );
   else {
@@ -170,36 +164,34 @@ CreateManpage(FILE * file)
 }
 
 /*	Function Name: InitPsuedoGlobals
- *	Description: Initializes the psuedo global variables.
+ *	Description: Initializes the pseudo global variables.
  *	Arguments: none.
  *	Returns: a pointer to a new pseudo globals structure.
  */
 
-ManpageGlobals * 
+ManpageGlobals *
 InitPsuedoGlobals(void)
 {
   ManpageGlobals * man_globals;
 
   /*
-   * Allocate necessary memory. 
+   * Allocate necessary memory.
    */
 
-  man_globals = (ManpageGlobals *) 
-                XtMalloc( (Cardinal) sizeof(ManpageGlobals));
+  man_globals = (ManpageGlobals *) XtCalloc(1, sizeof(ManpageGlobals));
 
-  man_globals->search_widget = NULL;
-  man_globals->section_name = (char **) XtMalloc( (Cardinal) (sections *
+  man_globals->section_name = (char **) XtCalloc(1, (Cardinal) (sections *
 							      sizeof(char *)));
   man_globals->manpagewidgets.box = (Widget *) XtCalloc( (Cardinal) sections,
 						    (Cardinal) sizeof(Widget));
-  
+
   /* Initialize the number of screens that will be shown */
 
   man_globals->both_shown = resources.both_shown_initial;
-  
+
   return(man_globals);
 }
-  
+
 /*	Function Name: CreateManpageWidget
  *	Description: Creates a new manual page widget.
  *	Arguments: man_globals - a new man_globals structure.
@@ -225,9 +217,9 @@ Boolean full_instance)
 
   num_args = (Cardinal) 0;
   XtSetArg(arglist[num_args], XtNwidth, default_width);
-  num_args++; 
+  num_args++;
   XtSetArg(arglist[num_args], XtNheight, default_height);
-  num_args++; 
+  num_args++;
 
   mytop = XtCreatePopupShell(name, topLevelShellWidgetClass, initial_widget,
 			   arglist, num_args);
@@ -239,7 +231,7 @@ Boolean full_instance)
 	     XCreateBitmapFromData( XtDisplay(mytop), XtScreen(mytop)->root,
 				   (char *)icon_open_bits, icon_open_width,
 				   icon_open_height));
-  else 
+  else
     XtSetArg(arglist[num_args], XtNiconPixmap,
 	     XCreateBitmapFromData( XtDisplay(mytop), XtScreen(mytop)->root,
 				   (char *)icon_help_bits, icon_help_width,
@@ -247,7 +239,7 @@ Boolean full_instance)
   num_args++;
   XtSetValues(mytop, arglist, num_args);
 
-  pane = XtCreateManagedWidget("vertPane", panedWidgetClass, mytop, NULL, 
+  pane = XtCreateManagedWidget("Manpage_Vpane", panedWidgetClass, mytop, NULL,
 			       (Cardinal) 0);
 
 /* Create menu bar. */
@@ -274,7 +266,7 @@ Boolean full_instance)
     CreateSectionMenu(man_globals, mytop);
     MakeSaveWidgets(man_globals, mytop);
   } else {
-    XtSetSensitive(mysections, FALSE);       
+    XtSetSensitive(mysections, FALSE);
     XtSetArg(arglist[0], XtNsensitive, FALSE);
     XtSetValues(man_globals->dir_entry, arglist, ONE);
     XtSetValues(man_globals->manpage_entry, arglist, ONE);
@@ -292,13 +284,13 @@ Boolean full_instance)
     num_args = 0;
     XtSetArg(arglist[num_args], XtNallowVert, TRUE);
     num_args++;
-    
+
     mpw->directory = XtCreateWidget(DIRECTORY_NAME, viewportWidgetClass,
 				    pane, arglist, num_args);
-    
+
     man_globals->current_directory = INITIAL_DIR;
     MakeDirectoryBox(man_globals, mpw->directory,
-		     mpw->box + man_globals->current_directory, 
+		     mpw->box + man_globals->current_directory,
 		     man_globals->current_directory );
     XtManageChild(mpw->box[man_globals->current_directory]);
   }
@@ -312,7 +304,7 @@ Boolean full_instance)
 
 /*	Function Name: StartManpage
  *	Description: Starts up a new manpage.
- *	Arguments: man_globals - the psuedo globals variable.
+ *	Arguments: man_globals - the pseudo globals variable.
  *                 help - is this a help file?
  *                 page - Is there a page to display?
  *	Returns: none.
@@ -323,15 +315,14 @@ StartManpage(ManpageGlobals * man_globals, Boolean help, Boolean page)
 {
   Widget dir = man_globals->manpagewidgets.directory;
   Widget manpage = man_globals->manpagewidgets.manpage;
-  Widget label = man_globals->label;
   Arg arglist[1];
 
-/* 
+/*
  * If there is a helpfile then put up both screens if both_show is set.
  */
 
   if (page || help) {
-    if (help) 
+    if (help)
       strcpy(man_globals->manpage_title, "Xman Help");
 
     if (man_globals->both_shown) {
@@ -347,11 +338,10 @@ StartManpage(ManpageGlobals * man_globals, Boolean help, Boolean page)
 
       XtSetArg(arglist[0], XtNlabel, SHOW_ONE);
       XtSetValues(man_globals->both_screens_entry, arglist, ONE);
-      ChangeLabel(label,
-		  man_globals->section_name[man_globals->current_directory]);
+      ShowDirTitle(man_globals,man_globals->current_directory);
     }
     else {
-      ChangeLabel(label,man_globals->manpage_title);
+      ShowManTitle(man_globals);
     }
     XtManageChild(manpage);
     man_globals->dir_shown = FALSE;
@@ -360,7 +350,7 @@ StartManpage(ManpageGlobals * man_globals, Boolean help, Boolean page)
  * Since There is file to display, put up directory and do not allow change
  * to manpage, show both, or help.
  */
-  else {			
+  else {
     XtManageChild(dir);
     man_globals->dir_shown = TRUE;
     XtSetArg(arglist[0], XtNsensitive, FALSE);
@@ -368,8 +358,7 @@ StartManpage(ManpageGlobals * man_globals, Boolean help, Boolean page)
     XtSetValues(man_globals->help_entry,           arglist, ONE);
     XtSetValues(man_globals->both_screens_entry,   arglist, ONE);
     man_globals->both_shown = FALSE;
-    ChangeLabel(label,
-		man_globals->section_name[man_globals->current_directory]);
+    ShowDirTitle(man_globals, man_globals->current_directory);
   }
 
 /*
@@ -392,7 +381,7 @@ StartManpage(ManpageGlobals * man_globals, Boolean help, Boolean page)
  * Set up ICCCM delete window.
  */
   XtOverrideTranslations
-      (man_globals->This_Manpage, 
+      (man_globals->This_Manpage,
        XtParseTranslationTable ("<Message>WM_PROTOCOLS: RemoveThisManpage()"));
   (void) XSetWMProtocols (XtDisplay(man_globals->This_Manpage),
 			  XtWindow(man_globals->This_Manpage),
@@ -432,7 +421,7 @@ CreateOptionMenu(ManpageGlobals * man_globals, Widget parent)
     MANPAGE,
     HELP,
     SEARCH,
-    BOTH_SCREENS, 
+    BOTH_SCREENS,
     REMOVE_MANPAGE,
     OPEN_MANPAGE,
     SHOW_VERSION,
@@ -442,7 +431,7 @@ CreateOptionMenu(ManpageGlobals * man_globals, Widget parent)
   menu = XtCreatePopupShell(OPTION_MENU, simpleMenuWidgetClass, parent,
 			    NULL, (Cardinal) 0);
   man_globals->option_menu = menu;
-  
+
   for (i = 0 ; i < NUM_OPTIONS ; i++) {
     entry = XtCreateManagedWidget(option_names[i], smeBSBObjectClass,
 				  menu, NULL, ZERO);
@@ -505,10 +494,10 @@ CreateSectionMenu(ManpageGlobals * man_globals, Widget parent)
     num_args = 0;
     XtSetArg(args[num_args], XtNlabel, manual[i].blabel); num_args++;
     sprintf(entry_name, "section%d", i);
-      
+
     entry = XtCreateManagedWidget(entry_name, smeBSBObjectClass,
 				  menu, args, num_args);
-    menu_struct = (MenuStruct *) XtMalloc(sizeof(MenuStruct));
+    menu_struct = (MenuStruct *) XtCalloc(1,sizeof(MenuStruct));
     menu_struct->data = (caddr_t) man_globals;
     menu_struct->number = i;
     XtAddCallback(entry, XtNcallback, DirPopupCallback, (caddr_t) menu_struct);
@@ -529,21 +518,21 @@ CreateList(int section)
   char ** ret_list, **current;
   int count;
 
-  ret_list = (char **) XtMalloc( (manual[section].nentries + 1) * 
+  ret_list = (char **) XtMalloc( (unsigned)(manual[section].nentries + 1) *
 				   sizeof (char *));
 
   for (current = ret_list, count = 0 ; count < manual[section].nentries ;
        count++, current++)
     *current = CreateManpageName(manual[section].entries[count], section,
 				 manual[section].flags);
- 
+
   *current = NULL;		/* NULL terminate the list. */
   return(ret_list);
 }
 
 /*	Function Name: MakeDirectoryBox
  *	Description: make a directory box.
- *	Arguments: man_globals - the psuedo global structure for each manpage.
+ *	Arguments: man_globals - the pseudo global structure for each manpage.
  *                 parent - this guys parent widget.
  *                 dir_disp - the directory display widget.
  *                 section - the section number.
@@ -569,18 +558,18 @@ MakeDirectoryBox(ManpageGlobals *man_globals, Widget parent, Widget *dir_disp, i
   num_args++;
   XtSetArg(arglist[num_args], XtNfont, resources.fonts.directory);
   num_args++;
-  
+
   *dir_disp = XtCreateWidget(DIRECTORY_NAME, listWidgetClass, parent,
 			     arglist, num_args);
-  
+
   XtAddCallback(*dir_disp, XtNcallback,
 		DirectoryHandler, (caddr_t) man_globals);
 }
 
 /*	Function Name: MakeSaveWidgets.
- *	Description: This functions creates two popup widgets, the please 
+ *	Description: This functions creates two popup widgets, the please
  *                   standby widget and the would you like to save widget.
- *	Arguments: man_globals - the psuedo globals structure for each man page
+ *	Arguments: man_globals - the pseudo globals structure for each man page
  *                 parent - the realized parent for both popups.
  *	Returns: none.
  */
@@ -599,14 +588,14 @@ MakeSaveWidgets(ManpageGlobals *man_globals, Widget parent)
   shell = XtCreatePopupShell( "pleaseStandBy", transientShellWidgetClass,
 			      parent, warg, (Cardinal) n);
 
-  man_globals->standby = XtCreateManagedWidget("label", labelWidgetClass, 
+  man_globals->standby = XtCreateManagedWidget("label", labelWidgetClass,
 					       shell, NULL, (Cardinal) 0);
 
   man_globals->save = XtCreatePopupShell("likeToSave",
 					 transientShellWidgetClass,
 					 parent, warg, n);
 
-  dialog = XtCreateManagedWidget("dialog", dialogWidgetClass, 
+  dialog = XtCreateManagedWidget("dialog", dialogWidgetClass,
 				 man_globals->save, NULL, (Cardinal) 0);
 
   XawDialogAddButton(dialog, FILE_SAVE, NULL, NULL);
@@ -635,10 +624,10 @@ FormUpWidgets(Widget parent, char ** full_size, char ** half_size)
   Dimension longest, length, b_width;
   int interior_dist;
   Arg arglist[2];
-    
+
   full_widgets = ConvertNamesToWidgets(parent, full_size);
   half_widgets = ConvertNamesToWidgets(parent, half_size);
-  
+
   long_widget = NULL;
   longest = 0;
   XtSetArg(arglist[0], XtNwidth, &length);
@@ -658,7 +647,7 @@ FormUpWidgets(Widget parent, char ** full_size, char ** half_size)
   }
 
   if (long_widget == (Widget) NULL) {          /* Make sure we found one. */
-    PopupWarning(GetGlobals(parent), 
+    PopupWarning(GetGlobals(parent),
 		 "Could not find longest widget, aborting...");
     XtFree((char *)full_widgets);
     XtFree((char *)half_widgets);
@@ -675,7 +664,7 @@ FormUpWidgets(Widget parent, char ** full_size, char ** half_size)
 
       XtSetArg(arglist[0], XtNborderWidth, &border_width);
       XtGetValues(*temp, arglist, (Cardinal) 1);
-    
+
       width = longest - 2 * border_width;
       XtSetArg(arglist[0], XtNwidth, width);
       XtSetValues(*temp, arglist, (Cardinal) 1);
@@ -687,13 +676,13 @@ FormUpWidgets(Widget parent, char ** full_size, char ** half_size)
 
   XtSetArg(arglist[0], XtNdefaultDistance, &interior_dist);
   XtGetValues(parent, arglist, (Cardinal) 1);
-  
+
   for ( temp = half_widgets ; *temp != (Widget) NULL ; temp++) {
     Dimension width, border_width;
 
     XtSetArg(arglist[0], XtNborderWidth, &border_width);
     XtGetValues(*temp, arglist, (Cardinal) 1);
-    
+
     width = (int)(longest - interior_dist)/2 - 2 * border_width;
     XtSetArg(arglist[0], XtNwidth, width);
     XtSetValues(*temp, arglist, (Cardinal) 1);
@@ -702,9 +691,9 @@ FormUpWidgets(Widget parent, char ** full_size, char ** half_size)
   XtFree((char *)full_widgets);
   XtFree((char *)half_widgets);
 }
-  
+
 /*      Function Name: ConvertNamesToWidgets
- *      Description: Convers a list of names into a list of widgets.
+ *      Description: Converts a list of names into a list of widgets.
  *      Arguments: parent - the common parent of these widgets.
  *                 names - an array of widget names.
  *      Returns: an array of widget id's.
@@ -715,25 +704,25 @@ ConvertNamesToWidgets(Widget parent, char ** names)
 {
   char ** temp;
   Widget * ids, * temp_ids;
-  int count;
+  unsigned count;
 
   for (count = 0, temp = names; *temp != NULL ; count++, temp++);
 
   ids = (Widget *) XtMalloc( (count + 1) * sizeof(Widget));
 
-  
+
   for ( temp_ids = ids; *names != NULL ; names++, temp_ids++) {
     *temp_ids = XtNameToWidget(parent, *names);
     if (*temp_ids == NULL) {
       char error_buf[BUFSIZ];
-    
+
       sprintf(error_buf, "Could not find widget named '%s'", *names);
       PrintError(error_buf);
       XtFree((char *)ids);
       return(NULL);
     }
   }
-  
+
   *temp_ids = (Widget) NULL;
   return(ids);
 }

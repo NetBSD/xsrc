@@ -9,7 +9,7 @@
  *   - pdflatex
  *   - GhostScript (with pdfwrite support)
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/common/host.def,v 1.14 2003/12/05 01:03:24 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/common/host.def,v 1.15 2005/03/12 23:54:51 dawes Exp $
  */
 
 #define HasSgmlFmt		YES
@@ -25,7 +25,7 @@
 #define BuildAllSpecsDocs	YES
 
 #define InstallHardcopyDocs	YES
-#define HardcopyDocDirs		RX XKB XPRINT
+#define HardcopyDocDirs		RX XKB XPRINT Xpm
 #define InstallMiscManPages	YES
 
 #define BuildBethMarduthoFonts  YES

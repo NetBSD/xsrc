@@ -19,7 +19,7 @@ XCOMM $Xorg: Library.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.24 2003/10/21 17:41:43 tsi Exp $
+XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.25 2004/04/05 02:33:07 dawes Exp $
 
 #ifndef DoNormalLib
 #define DoNormalLib NO
@@ -179,11 +179,17 @@ LIB_MT_DEFINES = LibraryMTDefines
 # define _DebuggedObjCompile(options) DebuggedLibObjCompile(options)
 # define _DebuggedObjCplusplusCompile(options) DebuggedLibObjCplusplusCompile(options)
 # define _DebuggedCleanDir() LibCleanDir(debugger)
+# ifdef DebuggedLibObjAsm
+#  define _DebuggedObjAsm(options) DebuggedLibObjAsm(options)
+# else
+#  define _DebuggedObjAsm(options) $(_NULLCMD_)
+# endif
 #else
 # define _DebuggedLibMkdir() $(_NULLCMD_)
 # define _DebuggedObjCompile(options) $(_NULLCMD_)
 # define _DebuggedObjCplusplusCompile(options) $(_NULLCMD_)
 # define _DebuggedCleanDir() $(_NULLCMD_)
+# define _DebuggedObjAsm(options) $(_NULLCMD_)
 #endif
 
 #if DoProfileLib
@@ -191,11 +197,17 @@ LIB_MT_DEFINES = LibraryMTDefines
 # define _ProfiledObjCompile(options) ProfiledLibObjCompile(options)
 # define _ProfiledObjCplusplusCompile(options) ProfiledLibObjCplusplusCompile(options)
 # define _ProfiledCleanDir() LibCleanDir(profiled)
+# ifdef ProfiledLibObjAsm
+#  define _ProfiledObjAsm(options) ProfiledLibObjAsm(options)
+# else
+#  define _ProfiledObjAsm(options) $(_NULLCMD_)
+# endif
 #else
 # define _ProfiledLibMkdir() $(_NULLCMD_)
 # define _ProfiledObjCompile(options) $(_NULLCMD_)
 # define _ProfiledObjCplusplusCompile(options) $(_NULLCMD_)
 # define _ProfiledCleanDir() $(_NULLCMD_)
+# define _ProfiledObjAsm(options) $(_NULLCMD_)
 #endif
 
 #if !DoNormalLib
@@ -203,12 +215,18 @@ LIB_MT_DEFINES = LibraryMTDefines
 # define _NormalObjCompile(options) $(_NULLCMD_)
 # define _NormalObjCplusplusCompile(options) $(_NULLCMD_)
 # define _NormalCleanDir() $(_NULLCMD_)
+# define _NormalObjAsm(options) $(_NULLCMD_)
 #else
 # if DoSharedLib && SeparateSharedCompile
 #  define _NormalLibMkdir() _LibMkdir(unshared)
 #  define _NormalObjCompile(options) UnsharedLibObjCompile(options)
 #  define _NormalObjCplusplusCompile(options) UnsharedLibObjCplusplusCompile(options)
 #  define _NormalCleanDir() LibCleanDir(unshared)
+#  ifdef UnsharedLibObjAsm
+#   define _NormalObjAsm(options) UnsharedLibObjAsm(options)
+#  else
+#   define _NormalObjAsm(options) $(_NULLCMD_)
+#  endif
 # else
 #  define _NormalLibMkdir() $(_NULLCMD_)
 #  if !DoSharedLib &&  defined(IncludeSharedObjectInNormalLib)
@@ -218,19 +236,35 @@ LIB_MT_DEFINES = LibraryMTDefines
 #  endif
 #  define _NormalObjCplusplusCompile(options) NormalLibObjCplusplusCompile(options)
 #  define _NormalCleanDir() $(_NULLCMD_)
+#  ifdef NormalLibObjAsm
+#   define _NormalObjAsm(options) NormalLibObjAsm(options)
+#  else
+#   define _NormalObjAsm(options) $(_NULLCMD_)
+#  endif
 # endif
 #endif
 
 #if !DoSharedLib || (DoNormalLib && !SeparateSharedCompile)
 # define _SharedObjCompile(options) $(_NULLCMD_)
 # define _SharedObjCplusplusCompile(options) $(_NULLCMD_)
+# define _SharedObjAsm(options) $(_NULLCMD_)
 #else
 # if SeparateSharedCompile
 #  define _SharedObjCompile(options) NormalSharedLibObjCompile(options)
 #  define _SharedObjCplusplusCompile(options) NormalSharedLibObjCplusplusCompile(options)
+# ifdef NormalSharedLibObjAsm
+#  define _SharedObjAsm(options) NormalSharedLibObjAsm(options)
+# else
+#  define _SharedObjAsm(options) $(_NULLCMD_)
+# endif
 #else
 # define _SharedObjCompile(options) NormalLibObjCompile(options)
 # define _SharedObjCplusplusCompile(options) NormalLibObjCplusplusCompile(options)
+# ifdef NormalLibObjAsm
+#  define _SharedObjAsm(options) NormalLibObjAsm(options)
+# else
+#  define _SharedObjAsm(options) $(_NULLCMD_)
+# endif
 #endif
 #endif
 
@@ -243,11 +277,17 @@ LIB_MT_DEFINES = LibraryMTDefines
 # define _ExtraObjCompile(options) ExtraObjCompile(options)
 # define _ExtraObjCplusplusCompile(options) ExtraObjCplusplusCompile(options)
 # define _ExtraCleanDir() ExtraCleanDir()
+# ifdef ExtraObjAsm
+#  define _ExtraObjAsm(options) ExtraObjAsm(options)
+# else
+#  define _ExtraObjAsm(options) $(_NULLCMD_)
+# endif
 #else
 # define _ExtraLibMkdir() $(_NULLCMD_)
 # define _ExtraObjCompile(options) $(_NULLCMD_)
 # define _ExtraObjCplusplusCompile(options) $(_NULLCMD_)
 # define _ExtraCleanDir() $(_NULLCMD_)
+# define _ExtraObjAsm(options) $(_NULLCMD_)
 #endif
 
 #ifndef CplusplusSource
@@ -260,6 +300,14 @@ LIB_MT_DEFINES = LibraryMTDefines
 .SUFFIXES: Concat(.,CCsuf)
 # endif
 #endif
+
+#define _CompileObjAsm(target, options)					@@\
+target									@@\
+	_DebuggedObjAsm(options)					@@\
+	_ProfiledObjAsm(options)					@@\
+	_NormalObjAsm(options)						@@\
+	_ExtraObjAsm(options)						@@\
+	_SharedObjAsm(options)
 
 #define _CompileObj(target, options)					@@\
 target									@@\
@@ -309,6 +357,7 @@ includes::								@@\
 	_ExtraLibMkdir()						@@\
 									@@\
 _CompileObj(.c.Osuf:,$(_NOOP_))						@@\
+_CompileObjAsm(.S.Osuf:,$(_NOOP))					@@\
 _CompileObjCplusplus(.SRCsuf.Osuf:,$(_NOOP_))				@@\
 									@@\
 clean::									@@\
@@ -333,6 +382,14 @@ basename.Isuf: basename.SRCsuf depends					@@\
 									@@\
 CenterLoadTarget(debug_src,basename.SRCsuf,NullParameter,$(ALLDEFINES) options)
 #endif /* SpecialCLibObjectRule */
+
+#ifndef SpecialAsmLibObjectRule
+# define SpecialAsmLibObjectRule(basename,depends,options)		@@\
+_CompileObjAsm(basename.Osuf: basename.S depends,options)		@@\
+									@@\
+basename.Isuf: basename.SRCsuf depends					@@\
+	CPPOnlyAsm(basename,options)
+#endif /* SpecialAsmLibObjectRule */
 
 #ifndef SpecialCLibObjectRuleSeparateOpts
 # define SpecialCLibObjectRuleSeparateOpts(basename,depends,staticopts,shopts) @@\
@@ -514,7 +571,12 @@ InstallLibrary($(LIBNAME)_d,$(USRLIBDIR))
 #   endif
 #  endif
 #  if DoExtraLib && defined(ExtraLibRules)
-ExtraLibraryTarget($(LIBNAME),$(SoRev),$(OBJS) $(EXTRAUNSHAREDOBJS))
+#ifdef ObjectPrefix
+OBJS_EXTRA = ${OBJS:%=ObjectPrefix%}
+#else
+OBJS_EXTRA = $(OBJS)
+#endif
+ExtraLibraryTarget($(LIBNAME),$(SoRev),$(OBJS_EXTRA))
 #   if !defined(LibInstall) || LibInstall
 ExtraInstallLibrary($(LIBNAME),$(SoRev))
 #   endif

@@ -47,7 +47,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/cslibint.h,v 1.4 2001/07/25 15:04:54 dawes Exp $ */
+/* $XFree86: xc/lib/dps/cslibint.h,v 1.5 2004/04/03 22:26:21 dawes Exp $ */
  
 /*
  *	XlibInternal.h - Header definition and support file for the internal
@@ -65,7 +65,7 @@
 
 /* For SYSV, no gethostname, so fake it */
 #include <sys/param.h>
-#if defined(SCO) || defined(SCO325)
+#if defined(__SCO__)
 /* SCO systems define MAXHOSTNAMELEN here */
 #include <sys/socket.h>
 #endif

@@ -1,10 +1,12 @@
+/* $XFree86: xc/extras/freetype2/include/freetype/internal/ftcalc.h,v 1.2 2005/02/28 23:19:13 dawes Exp $ */
+
 /***************************************************************************/
 /*                                                                         */
 /*  ftcalc.h                                                               */
 /*                                                                         */
 /*    Arithmetic computations (specification).                             */
 /*                                                                         */
-/*  Copyright 1996-2001, 2002 by                                           */
+/*  Copyright 1996-2001, 2002, 2003 by                                     */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -27,7 +29,8 @@
 FT_BEGIN_HEADER
 
 
-  FT_EXPORT( FT_Int32 )  FT_SqrtFixed( FT_Int32  x );
+  FT_EXPORT( FT_Int32 )
+  FT_SqrtFixed( FT_Int32  x );
 
 
 #define SQRT_32( x )  FT_Sqrt32( x )
@@ -59,6 +62,39 @@ FT_BEGIN_HEADER
   /*************************************************************************/
 
 
+#ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    FT_MulDiv_No_Round                                                 */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    A very simple function used to perform the computation `(a*b)/c'   */
+  /*    (without rounding) with maximal accuracy (it uses a 64-bit         */
+  /*    intermediate integer whenever necessary).                          */
+  /*                                                                       */
+  /*    This function isn't necessarily as fast as some processor specific */
+  /*    operations, but is at least completely portable.                   */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    a :: The first multiplier.                                         */
+  /*    b :: The second multiplier.                                        */
+  /*    c :: The divisor.                                                  */
+  /*                                                                       */
+  /* <Return>                                                              */
+  /*    The result of `(a*b)/c'.  This function never traps when trying to */
+  /*    divide by zero; it simply returns `MaxInt' or `MinInt' depending   */
+  /*    on the signs of `a' and `b'.                                       */
+  /*                                                                       */
+  FT_BASE( FT_Long )
+  FT_MulDiv_No_Round( FT_Long  a,
+                      FT_Long  b,
+                      FT_Long  c );
+
+#endif /* TT_CONFIG_OPTION_BYTECODE_INTERPRETER */
+
+
 #define INT_TO_F26DOT6( x )    ( (FT_Long)(x) << 6  )
 #define INT_TO_F2DOT14( x )    ( (FT_Long)(x) << 14 )
 #define INT_TO_FIXED( x )      ( (FT_Long)(x) << 16 )
@@ -67,6 +103,38 @@ FT_BEGIN_HEADER
 
 #define ROUND_F26DOT6( x )     ( x >= 0 ? (    ( (x) + 32 ) & -64 )     \
                                         : ( -( ( 32 - (x) ) & -64 ) ) )
+
+#ifdef FT_LONG64
+
+  typedef FT_INT64  FT_Int64;
+
+#else
+
+  typedef struct  FT_Int64_
+  {
+    FT_UInt32  lo;
+    FT_UInt32  hi;
+
+  } FT_Int64;
+
+#endif /* FT_LONG64 */
+
+#ifndef FT_LONG64
+
+  FT_EXPORT_DEF( void )
+  FT_Add64( FT_Int64*  x,
+            FT_Int64*  y,
+            FT_Int64  *z );
+
+  FT_EXPORT_DEF( void )
+  FT_MulTo64( FT_Int32   x,
+              FT_Int32   y,
+              FT_Int64  *z );
+
+  FT_EXPORT_DEF( FT_Int32 )
+  FT_Div64by32( FT_Int64*  x,
+                FT_Int32   y );
+#endif
 
 
 FT_END_HEADER

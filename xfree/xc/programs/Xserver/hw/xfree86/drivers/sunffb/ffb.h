@@ -24,7 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.8 2002/12/06 02:44:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.11 2004/12/05 23:06:37 tsi Exp $ */
 
 #ifndef FFB_H
 #define FFB_H
@@ -80,7 +80,7 @@
 #define	FFB_DAC_VOFF		0x0bc06000
 #define	FFB_PROM_VOFF		0x0bc08000
 #define	FFB_EXP_VOFF		0x0bc18000
- 
+
 #if defined(__GNUC__) && defined(USE_VIS)
 #define FFB_ALIGN64	__attribute__((aligned(8)))
 #else
@@ -156,7 +156,7 @@ typedef struct {
 	unsigned int fbc_cache;
 	unsigned int wid_cache;
 	enum ffb_chip_type ffb_type;
-	CreatorStipplePtr laststipple;
+	CreatorStipplePtr laststipple, tmpstipple;
 	unsigned *fb;
 	unsigned *sfb32;
 	unsigned *sfb8r;
@@ -166,7 +166,7 @@ typedef struct {
 	unsigned *dfb8x;
 
 	/* Slot offset 0x0200000, used to probe board type. */
-	volatile unsigned int *strapping_bits;
+	volatile unsigned char *strapping_bits;
 
 	/* Needed for some 3DRAM revisions and ffb1 in hires */
 	unsigned char disable_pagefill;
@@ -223,7 +223,10 @@ typedef struct {
 
 /* Acceleration */
 extern Bool FFBAccelInit(ScreenPtr, FFBPtr);
-extern void CreatorVtChange (ScreenPtr pScreen, int enter);
+extern void CreatorVtChange(ScreenPtr pScreen, int enter);
+
+/* DGA */
+extern void FFB_InitDGA(ScreenPtr pScreen);
 
 /* HW cursor support */
 extern Bool FFBHWCursorInit(ScreenPtr);
@@ -260,6 +263,12 @@ extern Bool FFBDRIFinishScreenInit(ScreenPtr);
 extern void FFBDRICloseScreen(ScreenPtr);
 #endif
 
+extern void VISmoveImageLR(unsigned char *, unsigned char *,
+			   long, long, long, long);
+extern void VISmoveImageRL(unsigned char *, unsigned char *,
+			   long, long, long, long);
+
+
 /* The fastfill and pagefill buffer sizes change based upon
  * the resolution.
  */
@@ -277,23 +286,24 @@ extern struct fastfill_parms ffb_fastfill_parms[];
 
 #define FFB_FFPARMS(__fpriv)	(ffb_fastfill_parms[(__fpriv)->ffb_res])
 
-extern int  CreatorScreenPrivateIndex;
-extern int  CreatorGCPrivateIndex;
-extern int  CreatorWindowPrivateIndex;
+extern int CreatorGCPrivateIndex;
+extern int CreatorWindowPrivateIndex;
 
 #define GET_FFB_FROM_SCRN(p)	((FFBPtr)((p)->driverPrivate))
 
-#define GET_FFB_FROM_SCREEN(s)						\
-((FFBPtr)(s)->devPrivates[CreatorScreenPrivateIndex].ptr)
+#define GET_FFB_FROM_SCREEN(s)	GET_FFB_FROM_SCRN(xf86Screens[(s)->myNum])
 
 #define CreatorGetGCPrivate(g)						\
 ((CreatorPrivGCPtr) (g)->devPrivates [CreatorGCPrivateIndex].ptr)
 
 #define CreatorGetWindowPrivate(w)					\
 ((CreatorPrivWinPtr) (w)->devPrivates[CreatorWindowPrivateIndex].ptr)
-                            
-#define CreatorSetWindowPrivate(w,p) 					\
+
+#define CreatorSetWindowPrivate(w,p)					\
 ((w)->devPrivates[CreatorWindowPrivateIndex].ptr = (pointer) p)
+
+extern void CreatorGetSpans(DrawablePtr pDrawable, int wMax, DDXPointPtr ppt,
+			    int *pwidth, int nspans, char *pchardstStart);
 
 #undef DEBUG_FFB
 
@@ -306,8 +316,8 @@ static __inline__ void FFB_DEBUG_init(void)
 	FDEBUG_FD = fopen("/tmp/FFB.DEBUG", "a");
 }
 #define FDEBUG(__x)				\
-do {	fprintf __x; 				\
-	fflush(FDEBUG_FD); 			\
+do {	fprintf __x;				\
+	fflush(FDEBUG_FD);			\
 } while(0)
 #else
 #define FFB_DEBUG_init()	do { } while(0)

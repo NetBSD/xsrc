@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.243 2004/02/13 23:58:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.253 2005/02/26 18:31:48 dawes Exp $ */
 
 /*
  *
@@ -23,7 +23,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -100,6 +100,8 @@
 #include "xf86miscproc.h"
 #include "loader.h"
 #define DONT_DEFINE_WRAPPERS
+#define NEED_XF86_PROTOTYPES
+#define NEED_XF86_TYPES
 #include "xf86_ansic.h"
 #include "xisb.h"
 #include "vbe.h"
@@ -198,6 +200,35 @@ extern long __umodsi3(long, long);
 #pragma weak __udivsi3
 #pragma weak __umoddi3
 #pragma weak __umodsi3
+#endif
+
+#if defined(sun) && defined(i386)
+#if !defined(__GNUC__)
+extern long __div64(long, long);
+extern long __mul64(long, long);
+#endif
+extern long __divrem64(long, long);
+extern long __rem64(long, long);
+extern unsigned long __udiv64(unsigned long, unsigned long);
+extern unsigned long __udivrem64(unsigned long, unsigned long);
+extern unsigned long __urem64(unsigned long, unsigned long);
+extern long __xtol(long);
+extern long long __xtoll(long);
+extern unsigned long __xtoul(long);
+extern unsigned long long __xtoull(long);
+#if !defined(__GNUC__)
+#pragma weak __div64
+#pragma weak __mul64
+#endif
+#pragma weak __divrem64
+#pragma weak __rem64
+#pragma weak __udiv64
+#pragma weak __udivrem64
+#pragma weak __urem64
+#pragma weak __xtol
+#pragma weak __xtoll
+#pragma weak __xtoul
+#pragma weak __xtoull
 #endif
 
 #if defined(__arm__) && defined(__linux__)
@@ -389,6 +420,104 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86AllocateEntityPrivateIndex)
     SYMFUNC(xf86GetEntityPrivate)
 
+    /* xf86Config.c */
+    SYMFUNC(xf86ConfFreeScreenData)
+    SYMFUNC(xf86ConfFreeGraphicsDeviceData)
+    SYMFUNC(xf86ConfFreeInputDeviceData)
+    SYMFUNC(xf86ConfFreeMonitorData)
+    SYMFUNC(xf86ConfFreeModeSetData)
+    SYMFUNC(xf86ConfFreeModeData)
+    SYMFUNC(xf86ConfFreeModeList)
+    SYMFUNC(xf86ConfFreeDisplayData)
+    SYMFUNC(xf86ConfFreeXvAdaptorData)
+    SYMFUNC(xf86ConfFreeXvPortData)
+    SYMFUNC(xf86ConfFreeScreenLayoutData)
+    SYMFUNC(xf86ConfFreeServerLayoutData)
+    SYMFUNC(xf86ConfFreeFilesData)
+    SYMFUNC(xf86ConfFreeLoadModuleData)
+    SYMFUNC(xf86ConfFreeModulesData)
+    SYMFUNC(xf86ConfFreeServerFlagsData)
+    SYMFUNC(xf86ConfFreeDRIData)
+    SYMFUNC(xf86ConfFreeDRIBufferData)
+    SYMFUNC(xf86ConfFreeVendorData)
+    SYMFUNC(xf86ConfFreeVendorSubData)
+    SYMFUNC(xf86ConfAllocScreen)
+    SYMFUNC(xf86ConfAllocGraphicsDevice)
+    SYMFUNC(xf86ConfAllocInputDevice)
+    SYMFUNC(xf86ConfAllocMonitor)
+    SYMFUNC(xf86ConfAllocModeSet)
+    SYMFUNC(xf86ConfAllocMode)
+    SYMFUNC(xf86ConfAllocModeList)
+    SYMFUNC(xf86ConfAllocDisplay)
+    SYMFUNC(xf86ConfAllocXvAdaptor)
+    SYMFUNC(xf86ConfAllocXvPort)
+    SYMFUNC(xf86ConfAllocScreenLayout)
+    SYMFUNC(xf86ConfAllocServerLayout)
+    SYMFUNC(xf86ConfAllocFiles)
+    SYMFUNC(xf86ConfAllocLoadModule)
+    SYMFUNC(xf86ConfAllocModules)
+    SYMFUNC(xf86ConfAllocServerFlags)
+    SYMFUNC(xf86ConfAllocDRI)
+    SYMFUNC(xf86ConfAllocDRIBuffer)
+    SYMFUNC(xf86ConfAllocVendor)
+    SYMFUNC(xf86ConfAllocVendorSub)
+    SYMFUNC(xf86ConfDupScreen)
+    SYMFUNC(xf86ConfDupGraphicsDevice)
+    SYMFUNC(xf86ConfDupInputDevice)
+    SYMFUNC(xf86ConfDupMonitor)
+    SYMFUNC(xf86ConfDupModeSet)
+    SYMFUNC(xf86ConfDupMode)
+    SYMFUNC(xf86ConfDupModeList)
+    SYMFUNC(xf86ConfDupDisplay)
+    SYMFUNC(xf86ConfDupXvAdaptor)
+    SYMFUNC(xf86ConfDupXvPort)
+    SYMFUNC(xf86ConfDupScreenLayout)
+    SYMFUNC(xf86ConfDupServerLayout)
+    SYMFUNC(xf86ConfDupFiles)
+    SYMFUNC(xf86ConfDupLoadModule)
+    SYMFUNC(xf86ConfDupModules)
+    SYMFUNC(xf86ConfDupServerFlags)
+    SYMFUNC(xf86ConfDupDRI)
+    SYMFUNC(xf86ConfDupDRIBuffer)
+    SYMFUNC(xf86ConfDupVendor)
+    SYMFUNC(xf86ConfDupVendorSub)
+    SYMFUNC(xf86ConfGetServerLayoutByName)
+    SYMFUNC(xf86ConfGetNextServerLayout)
+    SYMFUNC(xf86ConfGetScreenByName)
+    SYMFUNC(xf86ConfGetNextScreen)
+    SYMFUNC(xf86ConfGetMonitorByName)
+    SYMFUNC(xf86ConfGetNextMonitor)
+    SYMFUNC(xf86ConfGetModeSetByName)
+    SYMFUNC(xf86ConfGetNextModeSet)
+    SYMFUNC(xf86ConfGetGraphicsDeviceByName)
+    SYMFUNC(xf86ConfGetNextGraphicsDevice)
+    SYMFUNC(xf86ConfGetInputDeviceByName)
+    SYMFUNC(xf86ConfGetNextInputDevice)
+    SYMFUNC(xf86ConfGetInputDeviceByDriver)
+    SYMFUNC(xf86ConfGetInputDeviceByOption)
+    SYMFUNC(xf86ConfGetXvAdaptorByName)
+    SYMFUNC(xf86ConfGetNextXvAdaptor)
+    SYMFUNC(xf86ConfGetFilesByName)
+    SYMFUNC(xf86ConfGetNextFiles)
+    SYMFUNC(xf86ConfCombineFilesData)
+    SYMFUNC(xf86ConfGetModulesByName)
+    SYMFUNC(xf86ConfGetNextModules)
+    SYMFUNC(xf86ConfCombineModulesData)
+    SYMFUNC(xf86ConfGetServerFlagsByName)
+    SYMFUNC(xf86ConfGetNextServerFlags)
+    SYMFUNC(xf86ConfCombineServerFlagsData)
+    SYMFUNC(xf86ConfGetDRIByName)
+    SYMFUNC(xf86ConfGetNextDRI)
+    SYMFUNC(xf86ConfGetVendorByName)
+    SYMFUNC(xf86ConfGetVendorByVendorName)
+    SYMFUNC(xf86ConfGetNextVendor)
+    SYMFUNC(xf86ConfResolveServerLayout)
+    SYMFUNC(xf86ConfResolveScreen)
+    SYMFUNC(xf86ConfResolveMonitor)
+    SYMFUNC(xf86ConfCheckResolvedServerLayout)
+    SYMFUNC(xf86ConfCheckResolvedScreen)
+    SYMFUNC(xf86ConfCheckResolvedMonitor)
+
     /* xf86Configure.c */
     SYMFUNC(xf86AddDeviceToConfigure)
 
@@ -514,6 +643,9 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86IsScreenPrimary)
     SYMFUNC(xf86RegisterRootWindowProperty)
     SYMFUNC(xf86IsUnblank)
+    SYMFUNC(xf86GetMonitorByNumber)
+    SYMFUNC(xf86GetDisplayByMonitorNum)
+    SYMFUNC(xf86GetNextMonitor)
     SYMFUNC(xf86AddModuleInfo)
     SYMFUNC(xf86DeleteModuleInfo)
 
@@ -541,16 +673,23 @@ LOOKUP xfree86LookupTab[] = {
     /* xf86Mode.c */
     SYMFUNC(xf86GetNearestClock)
     SYMFUNC(xf86ModeStatusToString)
+    SYMFUNC(xf86ModeTypeToString)
     SYMFUNC(xf86LookupMode)
     SYMFUNC(xf86CheckModeForMonitor)
     SYMFUNC(xf86InitialCheckModeForDriver)
     SYMFUNC(xf86CheckModeForDriver)
+    SYMFUNC(xf86SetMonitorParameters)
+    SYMFUNC(xf86AddEDIDModes)
     SYMFUNC(xf86ValidateModes)
     SYMFUNC(xf86DeleteMode)
     SYMFUNC(xf86PruneDriverModes)
     SYMFUNC(xf86SetCrtcForModes)
     SYMFUNC(xf86PrintModes)
     SYMFUNC(xf86ShowClockRanges)
+    SYMFUNC(xf86ModeIsPresent)
+    SYMFUNC(xf86AddModeAfter)
+    SYMFUNC(xf86AddModeBefore)
+    SYMFUNC(xf86AddModeToMonitor)
 
     /* xf86Option.c */
     SYMFUNC(xf86CollectOptions)
@@ -561,10 +700,12 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86NextOption)
     SYMFUNC(xf86OptionListCreate)
     SYMFUNC(xf86OptionListMerge)
+    SYMFUNC(xf86OptionListDup)
     SYMFUNC(xf86OptionListFree)
     SYMFUNC(xf86OptionName)
     SYMFUNC(xf86OptionValue)
     SYMFUNC(xf86OptionListReport)
+    SYMFUNC(xf86OptionListPrint)
     SYMFUNC(xf86SetIntOption)
     SYMFUNC(xf86SetRealOption)
     SYMFUNC(xf86SetStrOption)
@@ -584,6 +725,7 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86CheckIfOptionUsed)
     SYMFUNC(xf86CheckIfOptionUsedByName)
     SYMFUNC(xf86ShowUnusedOptions)
+    SYMFUNC(xf86ShowUnusedOptionsVerb)
     SYMFUNC(xf86ProcessOptions)
     SYMFUNC(xf86TokenToOptinfo)
     SYMFUNC(xf86TokenToOptName)
@@ -1085,6 +1227,21 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(__udivsi3)
     SYMFUNC(__umoddi3)
     SYMFUNC(__umodsi3)
+#endif
+#if defined(sun) && defined(i386)
+#if !defined(__GNUC__)
+    SYMFUNC(__div64)
+    SYMFUNC(__mul64)
+#endif
+    SYMFUNC(__divrem64)
+    SYMFUNC(__rem64)
+    SYMFUNC(__udiv64)
+    SYMFUNC(__udivrem64)
+    SYMFUNC(__urem64)
+    SYMFUNC(__xtol)
+    SYMFUNC(__xtoll)
+    SYMFUNC(__xtoul)
+    SYMFUNC(__xtoull)
 #endif
 #if defined(__ia64__)
     SYMFUNC(_outw)

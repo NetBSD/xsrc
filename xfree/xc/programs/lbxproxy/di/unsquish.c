@@ -46,6 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/unsquish.c,v 1.6 2004/04/03 22:38:54 tsi Exp $ */
 
 /* handles unsquishing events */
 
@@ -57,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #define	_XLBX_SERVER_
 #include "lbxstr.h"
 #include "proxyopts.h"
+#include "lbx.h"
 
 #include	<stdio.h>
 
@@ -99,9 +101,9 @@ static char lbxevsize[] = {
 };
 
 int
-EventLength(ev, squish)
-    xEvent     *ev;
-    Bool       squish;
+EventLength(
+    xEvent     *ev,
+    Bool       squish)
 {
     if (!squish || ev->u.u.type >= LASTEvent)
 	return sz_xEvent;
@@ -109,10 +111,10 @@ EventLength(ev, squish)
 }
 
 Bool
-UnsquishEvent(rep, ev, lenp)
-    xReply     *rep;
-    xEvent     *ev;
-    int        *lenp;
+UnsquishEvent(
+    xReply     *rep,
+    xEvent     *ev,
+    int        *lenp)
 {
     if (*lenp < sz_xEvent) {
 	memcpy((char *)ev, (char *)rep, *lenp);

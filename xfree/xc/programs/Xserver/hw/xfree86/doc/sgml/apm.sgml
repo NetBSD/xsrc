@@ -8,7 +8,7 @@
 	 Henrik Harmsen (<email>Henrik.Harmsen@erv.ericsson.se</email>)
 <date> 6 March 2000
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.5 2004/02/24 03:41:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.6 2005/03/04 03:23:52 dawes Exp $
 </ident>
 <toc>
 
@@ -103,7 +103,7 @@ Or turn off MMIO
 
 Do not specify either the amount of video RAM or which chipset
 in the config file.  It is better to let the driver probe for this. Also 
-don't put any "clocks" line in the device section since these chips have
+do not put any "clocks" line in the device section since these chips have
 a fully programmable clock that can almost take any modeline you throw
 at it. It might though  fail at some specific clock values but in that case 
 you should just try a slightly different clock and it should work.

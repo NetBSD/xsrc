@@ -31,7 +31,9 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/data.c,v 1.4 2002/01/07 19:40:49 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/data.c,v 1.6 2004/11/18 21:30:51 herrb Exp $ */
+
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
 #ifndef CXPMPROG
 #if 0
@@ -262,7 +264,7 @@ xpmNextWord(data, buf, buflen)
 	}
 	Ungetc(data, c, file);
     }
-    return (n);
+    return (n); /* this returns bytes read + 1 */
 }
 
 /*
@@ -375,8 +377,9 @@ xpmGetCmt(data, cmt)
 {
     if (!data->type)
 	*cmt = NULL;
-    else if (data->CommentLength) {
-	*cmt = (char *) XpmMalloc(data->CommentLength + 1);
+    else if (data->CommentLength != 0 && data->CommentLength < UINT_MAX - 1) {
+	if( (*cmt = (char *) XpmMalloc(data->CommentLength + 1)) == NULL)
+		return XpmNoMemory;
 	strncpy(*cmt, data->Comment, data->CommentLength);
 	(*cmt)[data->CommentLength] = '\0';
 	data->CommentLength = 0;
@@ -400,7 +403,7 @@ int
 xpmParseHeader(data)
     xpmData *data;
 {
-    char buf[BUFSIZ];
+    char buf[BUFSIZ+1] = {0};
     int l, n = 0;
 
     if (data->type) {

@@ -3,15 +3,13 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.29 2003/12/18 14:14:37 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.31 2004/10/27 03:12:03 dawes Exp $
 
 // "standard" XFree86 codes
 // It seems that the "default" must be the first entry in the file.
 
 default xkb_keycodes "xfree86" {
     include "xfree86(basic)"
-    <BKSL> =  51;
-    <LSGT> =  94;
 };
 
 xkb_keycodes "basic" {
@@ -63,6 +61,9 @@ xkb_keycodes "basic" {
     <AC11> =  48;
 
     <LFSH> =  50;
+    <BKSL> =  51;
+
+    <AB00> =  94;
     <AB01> =  52;
     <AB02> =  53;
     <AB03> =  54;
@@ -78,6 +79,10 @@ xkb_keycodes "basic" {
     <LALT> =  64;
     <LCTL> =  37;
     <SPCE> =  65;
+
+    alias <LSGT> =  <AB00>;
+    alias <AC12> =  <BKSL>;
+
     <RCTL> = 109;
     <RALT> = 113;
     // Microsoft keyboard extra keys
@@ -111,6 +116,7 @@ xkb_keycodes "basic" {
     <DELE> = 107;
     <END>  = 103;
     <PGDN> = 105;
+    <BEGN> = 101;
 
     <UP>   =  98;
     <LEFT> = 100;
@@ -146,6 +152,7 @@ xkb_keycodes "basic" {
     <FK16> =  121;
     <FK17> =  122;
     <KPDC> =  123;
+    <KPPT> =  134;
 
     // Keys that are generated on Japanese keyboards
 
@@ -171,7 +178,7 @@ xkb_keycodes "basic" {
     alias <I03> = <NFER>;
     <I04> =   132;
     alias <I05> = <AE13>;
-    <I06> =   134;
+    alias <I06> = <KPPT>;
     <I07> =   135;
     <I08> =   136;
     <I09> =   137;
@@ -399,16 +406,4 @@ xkb_keycodes "102" {
 //
 xkb_keycodes "jp106" {
     include "xfree86(basic)"
-    <AC12> = 51;
 };
-
-
-// For brazilian ABNT2 keyboard. by Ricardo Y. Igarashi(iga@that.com.br)
-xkb_keycodes "abnt2" {
-    include "xfree86(basic)"
-    <BKSL> = 94;
-    <AC12> = 51;
-    <KPPT> = 134;
-};
-
-

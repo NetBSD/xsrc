@@ -1,22 +1,22 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_dga.c,v 1.1 2003/07/31 20:24:29 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_dga.c,v 1.3 2004/12/07 15:59:19 tsi Exp $ */
 
 #include "riva_local.h"
 #include "riva_include.h"
 #include "riva_type.h"
 #include "riva_proto.h"
-#include "xaalocal.h"
 #include "dgaproc.h"
 
 
-static Bool Riva_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-					int *, int *, int *);
+static Bool Riva_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				 unsigned int *, unsigned int *,
+				 unsigned int *);
 static Bool Riva_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  Riva_GetViewport(ScrnInfoPtr);
 static void Riva_SetViewport(ScrnInfoPtr, int, int, int);
 static void Riva_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void Riva_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 static void Riva_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
-					unsigned long);
+			       unsigned long);
 
 static
 DGAFunctionRec Riva_DGAFuncs = {
@@ -288,18 +288,18 @@ static Bool
 Riva_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     RivaPtr pRiva = RivaPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pRiva->FbAddress;
+    *mem = pRiva->FbAddress;
     *size = pRiva->FbMapSize;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

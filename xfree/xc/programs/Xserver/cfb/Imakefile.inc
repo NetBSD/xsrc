@@ -1,8 +1,50 @@
-XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:48:12 cpqbld Exp $
-
-
-
-XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile.inc,v 1.4 2002/11/22 22:56:02 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile.inc,v 1.8 2005/02/09 19:41:59 dawes Exp $
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #if DoLoadableServer
 #if !BuildModuleInSubdir
@@ -22,14 +64,12 @@ SUBDIRS = module
 #if PixelSize == 8
 PSZSRCS = cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
 PSZOBJS = cfb8bit.o cfbteblt8.o cfbglrop8.o cfbpush8.o cfbrctstp8.o
-#ifdef MipsArchitecture
-#ifndef ArcArchitecture
-#ifndef Mips64Architecture
+#if defined(MipsArchitecture) && \
+    !defined(ArcArchitecture) && \
+    !defined(Mips64Architecture)
 STIPPLESRC = stipmips.s stipmipste.s
 STIPPLEOBJ = stipmips.o stipmipste.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
-#endif
-#endif
 #endif
 #ifdef SparcArchitecture
 STIPPLESRC = stipsparc.s stipsparcte.s
@@ -51,7 +91,7 @@ XFMODSRC = cfbmodule.c
 XFMODOBJ = cfbmodule.o
 #endif
 
-#if !(defined(IHaveModules) && defined(LinkDirectory))
+#if !(defined(IHaveModules) && PixelSize != 8)
 CFBCMAP = cfbcmap.o
 #endif
 
@@ -115,7 +155,7 @@ CFBNAME = cfb32
 
 #ifdef IHaveModules
 ModuleObjectRule()
-LibraryModuleTarget($(CFBNAME),$(OBJS))
+LibraryModuleTarget($(CFBNAME),$(OBJS),.)
 #else
 NormalLibraryObjectRule()
 NormalLibraryTarget($(CFBNAME),$(OBJS))
@@ -165,7 +205,9 @@ LinkSourceFile(cfb8bit.c,LinkDirectory)
 LinkSourceFile(cfbpush8.c,LinkDirectory)
 LinkSourceFile(cfbrctstp8.c,LinkDirectory)
 LinkSourceFile(cfbteblt8.c,LinkDirectory)
-#ifdef MipsArchitecture
+#if defined(MipsArchitecture) && \
+    !defined(ArcArchitecture) && \
+    !defined(Mips64Architecture)
 LinkSourceFile(stipmips.s,LinkDirectory)
 #endif
 #ifdef SparcArchitecture
@@ -227,7 +269,9 @@ SpecialCObjectRule(cfbcmap,$(ICONFIGFILES),$(EXT_DEFINES) $(GLX_DEFINES))
 #if PixelSize == 8
 ObjectFromSpecialSource(cfbglrop8,cfbglblt8,-DGLYPHROP)
 
-#ifdef MipsArchitecture
+#if defined(MipsArchitecture) && \
+    !defined(ArcArchitecture) && \
+    !defined(Mips64Architecture)
 stipmipste.s: stipmips.s
 	$(RM) $@
 	$(LN) stipmips.s stipmipste.s

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.12 2003/11/10 18:41:22 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.13 2004/12/07 15:59:18 tsi Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -50,8 +50,9 @@
 #include "dgaproc.h"
 
 
-static Bool RADEON_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-				   int *, int *, int *);
+static Bool RADEON_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				   unsigned int *, unsigned int *,
+				   unsigned int *);
 static Bool RADEON_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  RADEON_GetViewport(ScrnInfoPtr);
 static void RADEON_SetViewport(ScrnInfoPtr, int, int, int);
@@ -382,16 +383,17 @@ static void RADEON_BlitTransRect(ScrnInfoPtr pScrn,
 
 static Bool RADEON_OpenFramebuffer(ScrnInfoPtr pScrn,
 				   char **name,
-				   unsigned char **mem,
-				   int *size, int *offset, int *flags)
+				   unsigned int *mem,
+				   unsigned int *size, unsigned int *offset,
+				   unsigned int *flags)
 {
     RADEONInfoPtr  info = RADEONPTR(pScrn);
 
     *name   = NULL;             /* no special device */
-    *mem    = (unsigned char*)info->LinearAddr;
+    *mem    = info->LinearAddr;
     *size   = info->FbMapSize;
     *offset = 0;
-    *flags  = 0; /* DGA_NEED_ROOT; -- don't need root, just /dev/mem access */
+    *flags  = 0;
 
     return TRUE;
 }

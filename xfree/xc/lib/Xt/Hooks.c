@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Hooks.c,v 1.4 2003/04/21 16:34:27 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/Hooks.c,v 1.5 2004/05/05 00:07:03 dickey Exp $ */
 
 /*LINTLIBRARY*/
 
@@ -46,10 +46,10 @@ static void FreeBlockHookList(
 }
 
 
-XtBlockHookId XtAppAddBlockHook( app, proc, closure )
-    XtAppContext app;
-    XtBlockHookProc proc;
-    XtPointer closure;
+XtBlockHookId XtAppAddBlockHook(
+    XtAppContext app,
+    XtBlockHookProc proc,
+    XtPointer closure)
 {
     BlockHook hook = XtNew(BlockHookRec);
     LOCK_APP(app);
@@ -69,8 +69,8 @@ XtBlockHookId XtAppAddBlockHook( app, proc, closure )
 }
 
 
-void XtRemoveBlockHook( id )
-    XtBlockHookId id;
+void XtRemoveBlockHook(
+    XtBlockHookId id)
 {
     BlockHook *p, hook = (BlockHook)id;
     XtAppContext app = hook->app;
@@ -81,7 +81,7 @@ void XtRemoveBlockHook( id )
 	XtAppWarningMsg(app, "badId", "xtRemoveBlockHook", XtCXtToolkitError,
 			"XtRemoveBlockHook called with bad or old hook id",
 			(String*)NULL, (Cardinal*)NULL);
-#endif /*DEBUG*/	
+#endif /*DEBUG*/
 	UNLOCK_APP(app);
 	return;
     }
@@ -96,7 +96,7 @@ static void DeleteShellFromHookObj(
     XtPointer call_data)
 {
     /* app_con is locked when this function is called */
-    int ii, jj;
+    Cardinal ii, jj;
     HookObject ho = (HookObject) closure;
 
     for (ii = 0; ii < ho->hooks.num_shells; ii++)
@@ -121,13 +121,13 @@ void _XtAddShellToHookObj(
 
     if (ho->hooks.num_shells == ho->hooks.max_shells) {
 	ho->hooks.max_shells += SHELL_INCR;
-	ho->hooks.shells = 
-	    (WidgetList)XtRealloc((char*)ho->hooks.shells, 
+	ho->hooks.shells =
+	    (WidgetList)XtRealloc((char*)ho->hooks.shells,
 		ho->hooks.max_shells * sizeof (Widget));
     }
     ho->hooks.shells[ho->hooks.num_shells++] = shell;
 
-    XtAddCallback(shell, XtNdestroyCallback, DeleteShellFromHookObj, 
+    XtAddCallback(shell, XtNdestroyCallback, DeleteShellFromHookObj,
 		  (XtPointer)ho);
 }
 
@@ -137,8 +137,8 @@ Boolean _XtIsHookObject(
     return (widget->core.widget_class == hookObjectClass);
 }
 
-Widget XtHooksOfDisplay(dpy)
-    Display* dpy;
+Widget XtHooksOfDisplay(
+    Display* dpy)
 {
     Widget retval;
     XtPerDisplay pd;
@@ -147,7 +147,7 @@ Widget XtHooksOfDisplay(dpy)
     LOCK_APP(app);
     pd = _XtGetPerDisplay(dpy);
     if (pd->hook_object == NULL)
-	pd->hook_object = 
+	pd->hook_object =
 	    _XtCreateHookObj((Screen*)DefaultScreenOfDisplay(dpy));
     retval = pd->hook_object;
     UNLOCK_APP(app);

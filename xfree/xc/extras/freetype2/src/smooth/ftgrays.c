@@ -1,10 +1,12 @@
+/* $XFree86: xc/extras/freetype2/src/smooth/ftgrays.c,v 1.2 2005/02/28 23:19:13 dawes Exp $ */
+
 /***************************************************************************/
 /*                                                                         */
 /*  ftgrays.c                                                              */
 /*                                                                         */
 /*    A new `perfect' anti-aliasing renderer (body).                       */
 /*                                                                         */
-/*  Copyright 2000-2001, 2002 by                                           */
+/*  Copyright 2000-2001, 2002, 2003 by                                     */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -340,7 +342,7 @@
                    long            byte_size )
   {
     ras.cells     = (PCell)buffer;
-    ras.max_cells = byte_size / sizeof ( TCell );
+    ras.max_cells = (int)( byte_size / sizeof ( TCell ) );
     ras.num_cells = 0;
     ras.area      = 0;
     ras.cover     = 0;
@@ -567,16 +569,16 @@
 
     if ( ex1 != ex2 )
     {
-      p     = ONE_PIXEL * ( y2 - y1 + delta );
-      lift  = (TCoord)( p / dx );
-      rem   = (TCoord)( p % dx );
+      p    = ONE_PIXEL * ( y2 - y1 + delta );
+      lift = (TCoord)( p / dx );
+      rem  = (TCoord)( p % dx );
       if ( rem < 0 )
       {
         lift--;
         rem += (TCoord)dx;
       }
 
-      mod -= dx;
+      mod -= (int)dx;
 
       while ( ex1 != ex2 )
       {
@@ -1959,7 +1961,7 @@
   }
 
 
-  extern int
+  static int
   gray_raster_render( PRaster            raster,
                       FT_Raster_Params*  params )
   {

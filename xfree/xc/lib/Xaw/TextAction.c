@@ -1,5 +1,3 @@
-/* $Xorg: TextAction.c,v 1.4 2001/02/09 02:03:46 xorgcvs Exp $ */
-
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
@@ -25,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.47 2003/05/27 22:26:36 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.48 2005/01/27 18:09:19 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -4261,7 +4259,7 @@ CaseProc(Widget w, XEvent *event, int cmd)
     count = 0;
     if (block.format == XawFmt8Bit)
 	for (i = 0; i < block.length; i++) {
-	    if (!IsAlnum(*mb = (unsigned char)block.ptr[i]))
+	    if (!IsAlnum((*mb = (unsigned char)block.ptr[i])))
 		count = 0;
 	    else if (++count == 1 || cmd != CAPITALIZE) {
 		ch = cmd == DOWNCASE ? ToLower(*mb) : ToUpper(*mb);

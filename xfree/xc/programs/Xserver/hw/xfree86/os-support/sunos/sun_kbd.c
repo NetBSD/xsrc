@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_kbd.c,v 1.2 2003/10/09 11:44:00 pascal Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_kbd.c,v 1.4 2005/02/11 19:45:08 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@XFree86.org>
@@ -26,6 +26,7 @@
 
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
+#include "xf86.h"
 
 static int sun_otranslation = -1;
 static int sun_odirect = -1;
@@ -59,7 +60,7 @@ xf86KbdInit()
 	if (xf86Info.kbdFd < 0) {
 		xf86Info.kbdFd = open("/dev/kbd", O_RDWR|O_NONBLOCK);
 		if(xf86Info.kbdFd < 0)
-			FatalError("Unable to open keyboard: /dev/kbd\n");
+			FatalError("Unable to open keyboard: /dev/kbd.\n");
 	}
 
 	/*
@@ -68,16 +69,20 @@ xf86KbdInit()
 	 */
 
 	if (ioctl(xf86Info.kbdFd, KIOCTYPE, &sun_ktype) < 0)
-		FatalError("Unable to determine keyboard type: %d\n", errno);
+		xf86Msg(X_ERROR,
+			"Unable to determine keyboard type: %d.\n", errno);
 
 	if (ioctl(xf86Info.kbdFd, KIOCLAYOUT, &klayout) < 0)
-		FatalError("Unable to determine keyboard layout: %d\n", errno);
+		xf86Msg(X_ERROR,
+			"Unable to determine keyboard layout: %d.\n", errno);
 
 	if (ioctl(xf86Info.kbdFd, KIOCGTRANS, &sun_otranslation) < 0)
-		FatalError("Unable to determine keyboard translation mode\n");
+		xf86Msg(X_ERROR,
+			"Unable to determine keyboard translation mode.\n");
 
 	if (ioctl(xf86Info.kbdFd, KIOCGDIRECT, &sun_odirect) < 0)
-		FatalError("Unable to determine keyboard direct setting\n");
+		xf86Msg(X_ERROR,
+			"Unable to determine keyboard direct setting.\n");
 }
 
 int
@@ -86,14 +91,14 @@ xf86KbdOn(void)
 	int	tmp = 1;
 
 	if (ioctl(xf86Info.kbdFd, KIOCSDIRECT, &tmp) == -1)
-		FatalError("Setting keyboard direct mode on\n");
+		xf86Msg(X_ERROR, "Setting keyboard direct mode on.\n");
 
 	/* Setup translation */
 
 	tmp = TR_UNTRANS_EVENT;
 
 	if (ioctl(xf86Info.kbdFd, KIOCTRANS, &tmp) == -1)
-		FatalError("Setting keyboard translation\n");
+		xf86Msg(X_ERROR, "Setting keyboard translation.\n");
 
 	return xf86Info.kbdFd;
 }
@@ -103,11 +108,13 @@ xf86KbdOff()
 {
 	if ((sun_otranslation != -1) &&
 	   (ioctl(xf86Info.kbdFd, KIOCTRANS, &sun_otranslation) < 0))
-		FatalError("Unable to restore keyboard translation mode\n");
+		xf86Msg(X_ERROR,
+			"Unable to restore keyboard translation mode.\n");
 
 	if ((sun_odirect != 0) &&
 	   (ioctl(xf86Info.kbdFd, KIOCSDIRECT, &sun_odirect) < 0 ))
-		FatalError("Unable to restore keyboard direct setting\n");
+		xf86Msg(X_ERROR,
+			"Unable to restore keyboard direct setting.\n");
 
 	return xf86Info.kbdFd;
 }

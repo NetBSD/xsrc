@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_drv.h,v 1.14 2005/03/03 03:35:41 dawes Exp $ */
+
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
  *
@@ -211,6 +213,9 @@ const char *DRM(find_description)(int vendor, int device);
 
 #ifdef __FreeBSD__
 static struct cdevsw DRM(cdevsw) = {
+#if __FreeBSD_version >= 502103
+	.d_version =	D_VERSION,
+#endif
 	.d_open =	DRM( open ),
 	.d_close =	DRM( close ),
 	.d_read =	DRM( read ),
@@ -218,8 +223,12 @@ static struct cdevsw DRM(cdevsw) = {
 	.d_poll =	DRM( poll ),
 	.d_mmap =	DRM( mmap ),
 	.d_name =	DRIVER_NAME,
+#if __FreeBSD_version >= 502103
+	.d_flags =	D_TTY | D_TRACKCLOSE | D_NEEDGIANT,
+#else
 	.d_maj =	CDEV_MAJOR,
 	.d_flags =	D_TTY | D_TRACKCLOSE,
+#endif
 #if __FreeBSD_version < 500000
 	.d_bmaj =	-1
 #endif
@@ -307,7 +316,7 @@ static int DRM(lkmhandle)(struct lkm_table *lkmtp, int cmd);
 
 int DRM(modprobe)();
 int DRM(probe)(struct pci_attach_args *pa);
-void DRM(attach)(struct pci_attach_args *pa, dev_t kdev);
+void DRM(attach)(struct pci_attach_args *pa, DEV_T kdev);
 
 int DRM(lkmentry)(struct lkm_table *lkmtp, int cmd, int ver) {
 	DISPATCH(lkmtp, cmd, ver, DRM(lkmhandle), DRM(lkmhandle), DRM(lkmhandle));
@@ -367,7 +376,7 @@ int DRM(probe)(struct pci_attach_args *pa)
 	return 0;
 }
 
-void DRM(attach)(struct pci_attach_args *pa, dev_t kdev)
+void DRM(attach)(struct pci_attach_args *pa, DEV_T kdev)
 {
 	int i;
 	drm_device_t *dev;
@@ -800,7 +809,7 @@ int DRM(version)( DRM_IOCTL_ARGS )
 	return 0;
 }
 
-int DRM(open)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+int DRM(open)(DEV_T kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_device_t *dev = NULL;
 	int retcode = 0;
@@ -825,7 +834,7 @@ int DRM(open)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 	return retcode;
 }
 
-int DRM(close)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p)
+int DRM(close)(DEV_T kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 {
 	drm_file_t *priv;
 	DRM_DEVICE;
@@ -943,7 +952,7 @@ int DRM(close)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 
 /* DRM(ioctl) is called whenever a process performs an ioctl on /dev/drm.
  */
-int DRM(ioctl)(dev_t kdev, u_long cmd, caddr_t data, int flags, 
+int DRM(ioctl)(DEV_T kdev, u_long cmd, caddr_t data, int flags, 
     DRM_STRUCTPROC *p)
 {
 	DRM_DEVICE;

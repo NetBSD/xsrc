@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/fpit.man,v 1.1 2002/11/22 03:35:12 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/fpit.man,v 1.2 2005/02/02 04:34:24 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH FPIT __drivermansuffix__ __vendorversion__
@@ -33,6 +33,15 @@ Therefore the following must be added to one of your start-up scripts.
 .B setserial /dev/ttyS3 autoconfig
 .TP 4
 .B setserial /dev/ttyS3 IRQ 15 baud_base 115200 port 0xfce8
+.PP
+This driver now supports Stylistic 3400 (and possibly other passive-pen
+systems) with a special \fI"Passive"\fP paramter. Try this serial
+configuration for the 3400:
+
+.TP 4
+.B setserial /dev/ttyS3 autoconfig
+.TP 4
+.B setserial /dev/ttyS3 uart 16450 irq 5 port 0xfd68
 
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(5x) for general configuration
@@ -85,6 +94,9 @@ sets the level of debugging info reported.
 .TP 4
 .B Option \fI"BaudRate"\fP \fI"38400"\fP, \fI"19200"\fP or \fI"9600"\fP (default)
 changes the serial link speed.
+.TP 4
+.B Option \fI"Passive"\fP
+decodes the passive pen.
 .RE
 
 Example, for Stylistic LT setup is:
@@ -111,6 +123,21 @@ And for other Stylistic devices try:
 .B EndSection
 .fi
 
+For Stylistic 3400:
+.nf
+.B "Section \*qInputDevice\*q"
+.BI "  Identifier \*q" mouse0 \*q
+.B  "  Driver \*qfpit\*q"
+.BI "  Option \*qDevice\*q   \*q"/dev/ttyS3 \*q
+.BI "  Option \*qBaudRate\*q \*q"9600 \*q
+.BI "  Option \*qMaximumXPosition\*q \*q"4070 \*q
+.BI "  Option \*qMaximumYPosition\*q \*q"4020 \*q
+.BI "  Option \*qMinimumXPosition\*q \*q"0 \*q
+.BI "  Option \*qMinimumYPosition\*q \*q"0 \*q
+.BI "  Option \*qPassive\*q"
+.BI "  Option \*qSendCoreEvents\*q"
+.B EndSection
+.fi
 
 .SH "SEE ALSO"
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__).

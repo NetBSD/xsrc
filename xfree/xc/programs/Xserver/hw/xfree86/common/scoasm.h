@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/scoasm.h,v 3.2 2004/02/13 23:58:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/scoasm.h,v 3.3 2004/04/03 22:26:23 dawes Exp $ */
 
 /*
  * Copyright (c) 1996 by The XFree86 Project, Inc.
@@ -51,7 +51,7 @@
  * scoasm.h - used to define inline versions of certain functions which
  * do NOT appear in sys/inline.h.
  */
-#ifdef SCO325
+#ifdef __SCO__
 #ifndef _SCOASM_HDR_INC
 #define _SCOASM_HDR_INC
 
@@ -156,4 +156,4 @@ asm	int inb(port)
 }
 
 #endif /* _SCOASM_HDR_INC */
-#endif /* SCO325 */
+#endif /* __SCO__ */

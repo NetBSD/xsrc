@@ -1,3 +1,5 @@
+/* $XFree86: xc/extras/freetype2/src/base/ftsystem.c,v 1.2 2005/02/28 23:19:13 dawes Exp $ */
+
 /***************************************************************************/
 /*                                                                         */
 /*  ftsystem.c                                                             */
@@ -31,6 +33,7 @@
 #include FT_SYSTEM_H
 #include FT_ERRORS_H
 #include FT_TYPES_H
+#include FT_INTERNAL_STREAM_H
 
 #include <stdio.h>
 #include <stdlib.h>

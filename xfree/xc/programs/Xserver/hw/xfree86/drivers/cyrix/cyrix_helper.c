@@ -39,7 +39,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_helper.c,v 1.5 2003/09/24 02:43:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_helper.c,v 1.6 2004/11/26 13:45:00 tsi Exp $ */
 
 #include "cyrix.h"
 #include "vgaHW.h"
@@ -261,22 +261,26 @@ Bool
 CyrixInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
 	CYRIXPrvPtr	pCyrix;
+	vgaHWPtr	hwp;
 	int offset_shift = (pScrn->bitsPerPixel == 16) ? 2 :
                            (pScrn->bitsPerPixel == 8) ? 3 : 4;
 	int line_offset = pScrn->displayWidth >> offset_shift;
 
+	hwp = VGAHWPTR(pScrn);
 	pCyrix = CYRIXPTR(pScrn);
 
 	/* initialize standard VGA portion */
+	hwp->Flags |= VGA_FIX_SYNC_PULSES;
 	if (!vgaHWInit(pScrn, mode))
 		return(FALSE);
 
 	/* initialize SoftVGA extended registers */
+	/* XXX Are Sync & Blank flipped here? */
 	pCyrix->PrevExt.VerticalTimingExtension =
-		((mode->CrtcVSyncStart & 0x400) >> 4) |
-		(((mode->CrtcVDisplay - 1) & 0x400) >> 8) |
 		(((mode->CrtcVTotal - 2) & 0x400) >> 10) |
-		((mode->CrtcVSyncStart & 0x400) >> 6);
+		(((mode->CrtcVDisplay - 1) & 0x400) >> 8) |
+		(((mode->CrtcVSyncStart - 1) & 0x400) >> 6) |
+		(((mode->CrtcVBlankStart - 1) & 0x400) >> 4);
 
 	if (pScrn->bitsPerPixel < 8)
 		pCyrix->PrevExt.ExtendedAddressControl = EAC_DIRECT_FRAME_BUFFER;

@@ -18,15 +18,15 @@ copies.
 
 OpenGL is a registered trademark and SGI is a trademark of Silicon Graphics,
 Inc.  Unix is a registered trademark of The Open Group.  The `X' device and X
-Window System are trademarks of The Open Group.  XFree86 is a trademark of
-The XFree86 Project.  Linux is a registered trademark of Linus Torvalds.
-Intel is a registered trademark of Intel Corporation.  3Dlabs, GLINT, and
-Oxygen are either registered trademarks or trademarks of 3Dlabs Inc. Ltd.
-3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trademarks of 3dfx Inter-
-active, Incorporated.  Matrox is a registered trademark of Matrox Electronic
-Systems Ltd.  ATI Rage and Radeon are registered trademarks of ATI Technolo-
-gies, Inc.  All other trademarks mentioned are the property of their respec-
-tive owners.
+Window System are trademarks of The Open Group.  XFree86 is a registered
+trademark of The XFree86 Project, Inc.  Linux is a registered trademark of
+Linus Torvalds.  Intel is a registered trademark of Intel Corporation.
+3Dlabs, GLINT, and Oxygen are either registered trademarks or trademarks of
+3Dlabs Inc. Ltd.  3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trade-
+marks of 3dfx Interactive, Incorporated.  Matrox is a registered trademark of
+Matrox Electronic Systems Ltd.  ATI Rage and Radeon are registered trademarks
+of ATI Technologies, Inc.  All other trademarks mentioned are the property of
+their respective owners.
 
 2.  Introduction
 
@@ -190,8 +190,8 @@ modules.
 
 XFree86 4.0.1 added automatic kernel module loading to the X server.  On
 Linux, the X server uses modprobe to load kernel modules.  In Linux 2.4.x the
-DRM kernel modules should be kept in /lib/modules/2.4.x/ker-
-nel/drivers/char/drm/ for automatic loading to work.
+DRM kernel modules should be kept in /lib/modules/2.4.x/kernel/driv-
+ers/char/drm/ for automatic loading to work.
 
 Optionally, DRM kernel modules can be loaded manually with insmod prior to
 starting the X server.
@@ -367,7 +367,7 @@ If you see that indirect rendering is being used when direct rendering was
 expected, proceed to the troubleshooting section.
 
 glxinfo also lists all of the GLX-enhanced visuals available so you can
-determine which visuals are double-bufferd, have depth (Z) buffers, stencil
+determine which visuals are double-buffered, have depth (Z) buffers, stencil
 buffers, accumulation buffers, etc.
 
 8.6  Environment Variables
@@ -690,7 +690,7 @@ A software-based accumulation buffer is available in both 16 and 32bpp modes.
      trol this as well.
 
    o The glTexEnv mode GL_BLEND is not directly supported by the Voodoo3
-     hardware.  It can be accomplished with a multipass algorithm but it's
+     hardware.  It can be accomplished with a multi-pass algorithm but it's
      not implemented at this time.  Applications which use that mode, such as
      the Performer Town demo, may become sluggish when falling back to soft-
      ware rendering to render in that mode.
@@ -1251,7 +1251,7 @@ demo programs is available from http://dri.sourceforge.net/res.phtml
    o In the future there may be IHV and Linux vendor support resources for
      the DRI.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.29 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.31 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.22 2003/07/15 02:28:28 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.25 2005/02/06 22:45:14 dawes Exp $

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86: xc/programs/xrx/plugin/Main.c,v 1.9 2003/05/27 22:27:09 tsi Exp $ */
+/* $XFree86: xc/programs/xrx/plugin/Main.c,v 1.10 2004/04/03 22:38:55 tsi Exp $ */
 
 /*
  * RX plug-in module based on the UnixTemplate file provided by Netcape.
@@ -353,6 +353,7 @@ NPP_Write(NPP instance, NPStream *stream, int32 offset, int32 len, void *buf)
     return len;			/* The number of bytes accepted */
 }
 
+static
 void
 StartApplication(PluginInstance* This)
 {
@@ -369,6 +370,7 @@ StartApplication(PluginInstance* This)
     This->parse_reply = 1;	/* we want to print out the answer  */
 }
 
+static
 void
 StartCB(Widget widget, XtPointer client_data, XtPointer call_data)
 {

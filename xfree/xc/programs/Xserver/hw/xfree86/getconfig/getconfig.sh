@@ -3,8 +3,8 @@
 # $DHD: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.sh,v 1.2 2003/09/20 01:45:57 dawes Exp $
 
 #
-# Copyright 2003 by David H. Dawes.
-# Copyright 2003 by X-Oz Technologies.
+# Copyright 2003-2005 by David H. Dawes.
+# Copyright 2003-2005 by X-Oz Technologies.
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -49,13 +49,34 @@
 # Author: David Dawes <dawes@XFree86.Org>.
 #
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.sh,v 1.2 2003/12/12 00:39:16 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.sh,v 1.5 2005/02/09 20:55:57 dawes Exp $
 
 # A simple wrapper to execute the real getconfig program.  So long as perl
 # is in $PATH, we don't need to know where it is this way.
 
 if echo $0 | grep / >/dev/null 2>&1; then
 	DIR=`dirname $0`/
+fi
+
+# Avoid locale warnings from perl.
+LC_ALL=C
+export LC_ALL
+
+if (perl -e 'print int $];' || exit 1) >/dev/null 2>&1; then
+	: OK, we have perl
+else
+	echo "$0: perl not found." >&2 
+	exit 1
+fi
+
+perl_vers=`perl -e 'print int $];'`
+if [ $perl_vers -lt 5 ]; then
+	echo "$0: perl version is too old (need 5 or later)." >&2 
+	exit 1
+fi
+
+if [ "X$1" = "X-D" ]; then
+	echo "executing: perl ${DIR}getconfig.pl $@" >&2
 fi
 
 exec perl ${DIR}getconfig.pl "$@"

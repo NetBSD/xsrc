@@ -3,32 +3,32 @@
 ]>
 
 <article>
-<title>Building XFree86 from a Source Distribution
+<title>Building XFree86&reg; from a Source Distribution
 <author>David Dawes, Matthieu Herrb
-<Date>23 February 2004
+<Date>16 March 2005
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.14 2004/02/24 03:41:39 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.19 2005/03/16 17:12:47 dawes Exp $
 </ident>
 
 <abstract>
 This document describes how to build XFree86 from the <bf>source</bf>
-distribution and is designed to
-be used in conjunction with the operating system (OS) specific README files.
+distribution and is designed to be used in conjunction with the operating
+system (OS) specific README files.
 </abstract>
 
 <toc>
 
 <p>
 <quote>
-<bf/NOTE:/  Refer to the appropriate OS-specific README file before attempting
-       to build XFree86.  These files often contain additional information that 
-       you need to successfully build for your OS.
+<bf>NOTE:</bf> Refer to the appropriate OS-specific README file before
+       attempting to build XFree86.  These files often contain additional
+       information that you need to successfully build for your OS.
 </quote>
 
 
-We highly recommend using gcc to build XFree86, but XFree86 also
-generally builds with the native compiler for each OS platform; 
+We recommend using gcc to build XFree86, but XFree86 generally builds
+with the native compiler for each OS platform.
 
 <sect>How to get the XFree86 &relvers; source
 <p>
@@ -36,9 +36,11 @@ generally builds with the native compiler for each OS platform;
 The recommended way of getting the XFree86 &relvers; source is to
 obtain it directly from the XFree86 CVS repository.  There are several
 ways of doing that, and they are described at our <url name="CVS web page"
-url="http://www.xfree86.org/cvs/">  The CVS tag for this release is
-"<tt>&reltag;</tt>".  <![ %fullrel; [ The tag for the maintenance branch
-for this release is "<tt>&relbranchtag;</tt>".]]>
+url="http://www.xfree86.org/cvs/">.
+
+The CVS tag for this release is "<tt>&reltag;</tt>".  <![ %fullrel; [
+The tag for the maintenance branch for this release is
+"<tt>&relbranchtag;</tt>".]]>
 
 <![ %notsnapshot; [
 Another method of getting the XFree86 &relvers; source is to
@@ -65,19 +67,23 @@ site<![ %updaterel; [ and the source patch that updates &fullrelvers; to
 	<tt>XFree86-&fullrelvers;-src-4.tgz</tt> and
 	<tt>XFree86-&fullrelvers;-src-5.tgz</tt> contains the fonts.
 	<tt>XFree86-&fullrelvers;-src-6.tgz</tt> contains the documentation
-	source.  <tt>XFree86-&fullrelvers;-src-7.tgz</tt> contains the
-	hardcopy documentation.  <tt>XFree86-&fullrelvers;-src-1.tgz</tt>,
+	source.
+	<tt>XFree86-&fullrelvers;-src-7.tgz</tt> contains the
+	hardcopy documentation.
+	<tt>XFree86-&fullrelvers;-src-1.tgz</tt>,
 	<tt>XFree86-&fullrelvers;-src-2.tgz</tt> and
 	<tt>XFree86-&fullrelvers;-src-3.tgz</tt> contains everything
-	else.  If you don't need the docs or fonts you can get by with
-	only <tt>XFree86-&fullrelvers;-src-1.tgz</tt>,
+	else.
+
+	If you do not need either the documentation or the fonts, then
+	you need only <tt>XFree86-&fullrelvers;-src-1.tgz</tt>,
 	<tt>XFree86-&fullrelvers;-src-2.tgz</tt> and
 	<tt>XFree86-&fullrelvers;-src-3.tgz</tt>.
 
   <item>Extract each of these files by running the following from a directory
 	on a filesystem containing enough space (the full source requires
-	around 305MB, and a similar amount is required in addition to this
-	for the compiled binaries):
+	around 270MB, with a similar amount being required for the
+	compiled binaries):
 	<quote><tt>
 	gzip -d &lt; XFree86-&fullrelvers;-src-1.tgz | tar vxf -<newline>
 	gzip -d &lt; XFree86-&fullrelvers;-src-2.tgz | tar vxf -<newline>
@@ -95,14 +101,14 @@ site<![ %updaterel; [ and the source patch that updates &fullrelvers; to
 	url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/patches/">.
 	The patch file is <tt>&fullrelvers;-&relvers;.diff.gz</tt>.
 
-	The patch can be applied by running:
+	The patch is applied by running:
 	<quote><tt>
-	cd <em>the directory containing the</em> xc <em>directory</em><newline>
+	cd <em>the directory containing the xc directory</em><newline>
 	gzip -d &lt; &fullrelvers;-&relvers;.diff.gz | patch -s -p0 -E 
 	</tt>
 	</quote>
-	Look for special patching instructions in the "How to get XFree86"
-	section of the <htmlurl name="README" url="README.html"> for
+	Look for the patching instructions in the "How to get XFree86"
+	section of the <htmlurl name="README" url="README.html"> of 
 	this release.
 ]]>
 </itemize>
@@ -120,11 +126,11 @@ section of the <htmlurl name="README" url="README.html"> for this release.
 
 <![ %snapshot; [
 <p>
-Alternatively you can download the source for the XFree86 &relvers;
+Another method is that you download the source for the XFree86 &relvers;
 snapshot as a tarball from <htmlurl
 name="ftp://ftp.xfree86.org/pub/XFree86/develsnaps/XFree86-&relvers;.tar.bz2"
 url="ftp://ftp.xfree86.org/pub/XFree86/develsnaps/XFree86-&relvers;.tar.bz2">.
-This can be extracted by running:
+This tarball can be extracted by running:
 
 	<quote><tt>
 	bzip2 -d &lt; XFree86-&relvers;.tar.bz2 | tar vxf -<newline>
@@ -132,23 +138,27 @@ This can be extracted by running:
 
 ]]>
 
-All methods will produce one main source directory called <tt>xc</tt>. 
+Each of the methods outlined above will produce one main source directory
+called <tt>xc</tt>.
 
 
 <sect>Configuring the source before building
 <p>
-In most cases it shouldn't be necessary to configure anything before building.
+In most cases it should not be necessary to configure anything before
+building.
 
-If you do want to make configuration changes, it is recommended that
-you start by going to the <tt>xc/config/cf</tt> directory, and copying
-the file <tt>xf86site.def</tt> to <tt>host.def</tt>.  Then read through
-the <tt>host.def</tt> file (which is heavily commented), and set your 
-configuration parameters. Usually you can find
-the default settings by checking the <tt>.cf</tt> file(s) relevant to your OS.
+If you do want to make configuration changes, you should start by going
+to the <tt>xc/config/cf</tt> directory, and copying the file
+<tt>xf86site.def</tt> to <tt>host.def</tt>.  After that, read thoroughly
+the the <tt>host.def</tt> file, which is heavily commented, and set
+your configuration parameters. Usually you can find the default settings
+by checking the <tt>.cf</tt> file(s) relevant to your OS.
 
-A good rule to follow is only to change things that you understand
-as it's  easy to create build problems by changing the default configuration.  
-Check the configuration parameters specified in the <tt>xc/config/cf/README</tt>.
+A good rule of thumb is to only change that you understand, as it is
+very easy to create build problems by changing the default configuration
+unnecessarily.  Before making too many modifications, check the
+configuration parameters specified in the <tt>xc/config/cf/README</tt>
+file.
 
 <!--
 Another spot to check is a section <ref name="below" id="config_params">
@@ -164,42 +174,45 @@ will need to define <bf>BuildFonts</bf> to <bf>NO</bf>.
 
 <sect>Using a shadow directory of symbolic links for the build
 <p>
-A recommended practice is to use a shadow directory of symbolic links
-to do the build of XFree86 as this allows you to keep the source directory
-unmodified during the build.  It has the following benefits:
+We recommend that you use a shadow directory of symbolic links to do the
+build of XFree86, because it allows you to keep the source directory
+unmodified during the build process.  It has the following benefits:
+
 <itemize>
-<item>When you are using CVS to maintain your source tree, 
-the update process is not disturbed by foreign files not under
-CVS's control. 
-<item>It is possible to build XFree86 for several different Operating
-System or architectures from the same sources, shared by read-only NFS
-mounts.
-<item>It is possible to build XFree86 with different configuration
-options, by putting a real copy of the <tt>host.def</tt> file in
-each build tree and by customizing it separately in each build tree.
+<item>Foreign files not under CVS's control are not touched. 
+
+<item>Greater flexibility in building XFree86 for several different
+Operating Systems or hardware architectures from the same sources; shared
+by read-only NFS mounts.
+
+<item>Different configuration options can be created by putting a real
+copy of the <tt>host.def</tt> file in each build tree and by customizing
+it separately in each build tree, and then customizing it separately.
+
 </itemize>
+
 <p>
 To make a shadow directory of symbolic links, use the following steps:
 <itemize>
-<item>create the directory at the top of the build tree. It is often
-created at the same level that the <tt>xc</tt> directory, but this is
-not mandatory. 
+<item>create the directory at the top of the build tree. This is often
+created at the same level that the <tt>xc</tt> directory. 
 <quote><tt>
-cd <em>the directory containing the </em>xc<em>directory</em><newline>
+cd <em>the directory containing the xc directory</em><newline>
 mkdir build
 </tt></quote>
 <item>use the "<tt>lndir</tt>" command to make the shadow tree:
 <quote><tt>
+cd build<newline>
 lndir ../xc
 </tt></quote>
-Note that you can refer to the <tt>xc</tt> directory with an absolute
-path if needed. 
+Note: You can refer to the <tt>xc</tt> directory by referencing it with an absolute
+path also.
 <p>
 See the <htmlurl name="lndir(1)"
 url="http://www.xfree86.org/&relvers;/lndir.1.html"> manual page for
 details.
 </itemize>
-If <tt>lndir</tt> is not already installed on your system, you can
+If the <tt>lndir</tt> command is not already available on your system, you can
 build it manually from the XFree86 sources by running the following
 commands: 
 <quote><tt>
@@ -208,83 +221,88 @@ make -f Makefile.ini lndir<newline>
 cp lndir <em>some directory in your PATH</em>
 </tt></quote>
 
-Occasionally there may be stale links in the build tree, like 
-when files in the source tree are removed or renamed.  These can
-be cleaned up by running the "<tt>cleanlinks</tt>" script from the build
+Occasionally there may be stale links in the build tree.  This happens 
+when files in the source tree are either removed or renamed.  These stale links
+can be cleaned by running the "<tt>cleanlinks</tt>" script from the build
 directory (see the <htmlurl name="cleanlinks(1)" url="cleanlinks.1.html">
-manual page).  Rarely there will be changes that will require the build
-tree to be re-created from scratch.  A symptom of this can be mysterious
-build problems.  The best solution for this is to remove the build tree,
-and then re-create it using the steps outlined above.
+manual page for further details). 
+
+Rarely will there be changes that require the build
+tree to be re-created from scratch.  If you think that this may be the case,
+look for build problems, which could indicate that this is the problem.  The best 
+solution in this scenario is to remove the build tree,and then re-create it 
+using the steps outlined above.
 
 <sect>Building and installing the distribution
 <p>
-Before building the distribution, read through the OS-specific <tt/README/
-file in <tt>xc/programs/Xserver/hw/xfree86/doc</tt> that is relevant to
-you.  Once you have addressed the OS-specific details, go your
-build directory 
-(either the <tt/xc/ directory or the shadow tree created before) and
-run "<tt/make World/" with the <bf/BOOTSTRAPCFLAGS/ 
-set as described in the OS-specific README (if necessary, but most
-systems supported by XFree86 don't need <bf/BOOTSTRAPCFLAGS/).  It is
-advisable to redirect stdout and stderr to <tt/World.Log/ so that you
-can track down problems that might occur during the build.
+Before building the distribution, read through your  OS-specific
+documentation in <tt>README</tt> file in
+<tt>xc/programs/Xserver/hw/xfree86/doc</tt>.  After that go to your build
+directory  which will either be the <tt>xc</tt> directory or the shadow
+tree which was create previously, and run "<tt>make World"</tt>.
+
+It is also advisable to that you redirect standard output <em>stdout</em>
+and standard error output <em>stderr</em> to <tt>World.Log</tt>,  so that
+you can track down problems that  might occur during the build.
+
 <p> 
-With Bourne-like shells (Bash, the Korn shell, <tt>zsh</tt>, etc.) use
-a command like:
+With Bourne-like shells (examples include the Bash, the Korn, and
+<tt>zsh</tt> shells) use the following command:
 <quote><tt>
 make World &gt; World.log 2&gt;&amp;1
 </tt></quote>
-Witch C-shell variants (<tt>csh</tt>, <tt>tcsh</tt>, etc), use:
+for C-shell variants (<tt>csh</tt>, <tt>tcsh</tt>, etc), use:
 <quote><tt>
 make World &gt;&amp; World.log
 </tt></quote>
-You can follow the progress of the build by running:
+
+You can then follow the progress of the build by running:
 <quote><tt>
 tail -f World.log
-</tt></quote> in a terminal. 
+</tt></quote>
+in a terminal window. 
 
 <p>
-When the build is finished, you should check the <tt/World.Log/ file to
-see if there were any problems.  If there weren't any then you can
-install the binaries.  By default the "make World" process will ignore
-errors and build as much as possible.  If there were problems and they
-are not corrected at this stage, the installation process will fail.
-To restart the build process after correcting the problems, just
-run 'make'.  If Imakefiles or part of the build configuration was
-changed as part of correcting the problem, either re-run "make World",
-or run "make Everything".
+When the build is finished, you should check the <tt>World.Log</tt> file to
+see if there were any problems.  If there were not, then install the binaries.  
+By default "make World" stops when the first error is found.  To restart that 
+same build process after correcting the various problems, run just 'make'.  
 
-If you would prefer "make World" to exit at the first error, run it in the
-following way instead of the way described above:
+If Imakefiles or part of the build configuration were changed as part of 
+correcting the problem, then either re-run "make World", or run "make Everything".
+
+If instead, you want "make World" to continue past errors, then instead execute 
+it as follows:
 
 for Bourne-like shells:
 <quote><tt>
-make WORLDOPTS= World &gt; World.log 2&gt;&amp;1
+make WORLDOPTS=-k World &gt; World.log 2&gt;&amp;1
 </tt></quote>
 for C-shell variants:
 <quote><tt>
-make WORLDOPTS= World &gt;&amp; World.log
+make WORLDOPTS=-k World &gt;&amp; World.log
 </tt></quote>
 
-To do the install, run "<tt/make install/" and "<tt/make install.man/".
-Make sure you have enough space in <tt>/usr/X11R6</tt> for the install
-to succeed.  If you want to install on a filesystem other than
-<tt>/usr</tt>, make a symbolic link to <tt>/usr/X11R6</tt> before
-installing.
+For installation, run "<tt>make install</tt>" and "<tt>make install.man</tt>"
+and ensure that there is enough space in the <tt>/usr/X11R6</tt> directory.
+
+If instead you want to install XFree86 on a filesystem other than
+<tt>/usr</tt>, make a symbolic link to <tt>/usr/X11R6</tt> before running the 
+install process. 
 
 
-<sect>Reconfiguring the server (source distribution)
+<sect>Reconfiguring the server (using the source distribution)
 <p>
-To build a different set of servers or servers with a different set of
-drivers installed:
+If you would like to build several different sets of servers or server(s)
+with a various sets of drivers then you should follow this procedure:
+
 <enum>
-<item>Make sure the source for any new drivers is in the correct place (e.g.,
-driver source should be in a subdirectory of
+<item>Ensure that the source for any new drivers is in the correct place (e.g.,
+all driver source should be in a subdirectory of
 <tt>xc/programs/Xserver/hw/xfree86/drivers</tt>).
 
-<item>Change the settings of the server defines
-in <tt/host.def/ to specify which servers you
+<item>Change the settings of the server definitions 
+in <tt>host.def</tt> to specify which servers you
 wish to build.  Also, change the driver lists to suit your needs.
 
 <item>From <tt>xc/programs/Xserver</tt>, run:
@@ -300,15 +318,17 @@ wish to build.  Also, change the driver lists to suit your needs.
 <sect>Other useful make targets
 <p>There are some other useful targets defined in the top level
 <tt>Makefile</tt> of XFree86: 
-<itemize>
-<item><bf/Everything/ after a <tt>make World</tt>, <tt>make
-Everything</tt> does everything a <tt>make World</tt> does, except the
-cleaning of the tree. It is a way to quickly rebuild the tree after a
-source patch, but it is not 100% bullet proof. There are cases were it
-is better to force a full build by using <tt>make World</tt>. 
+<descrip>
+<tag>Everything</tag>
+After a <tt>make World</tt>, <tt>make Everything</tt> replicates <tt>make
+World</tt> except for the cleaning of the source tree. <tt>make
+Everything</tt> very quickly rebuilds the tree after a source patch, but
+there are times when it is better to force a full build by using <tt>make
+World</tt>.
 
 
-<item><bf/clean/ does a partial cleaning of the source tree. Removes
+<tag>clean</tag>
+This does a partial cleaning of the source tree. Removes
 object files and generated manual pages, but leaves the Makefiles and
 the generated dependencies files in place. After a <tt>make clean</tt>
 you need to re-run 
@@ -320,25 +340,29 @@ you need to re-run
 </tscreen>
 to rebuild the XFree86. 
 
-<item><bf/distclean/ does a full cleaning of the source tree,
+<tag>distclean</tag>
+This does a full cleaning of the source tree,
 removing all generated files. After a <tt>make distclean</tt>,
 <tt>make World</tt> is the only option to rebuild XFree86. 
 
-<item><bf/includes/ generates all generated header files and in-tree
+<tag>includes</tag>
+This generates all generated header files and in-tree
 symbolic links  needed by the build. These files are removed by a
 <tt>make clean</tt>. 
 
-<item><bf/depend/ recomputes the dependencies for the various targets
+<tag>depend</tag>
+This recomputes the dependencies for the various targets
 in all Makefiles. Depending on the operating system, the dependencies
 are stored in the Makefile, or as a separate file, called
 <tt>.depend</tt>. This target needs the generated include files
 produced by <tt>make includes</tt>. 
 
-<item><bf/VerifyOS/ displays the detected operating system version. If
+<tag>VerifyOS</tag>
+This displays the detected operating system version. If
 the numbers shown do not match your system, you probably need to set
 them manually in <tt>host.def</tt> and report the problem to
 <email>XFree86@XFree86.org</email>.
-</itemize>
+</descrip>
 
 <!--
 <sect>Various Configuration settings<label id="config_params">

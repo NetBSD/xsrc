@@ -22,7 +22,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: xc/programs/twm/icons.c,v 1.7 2002/12/10 22:29:54 tsi Exp $ */
+/* $XFree86: xc/programs/twm/icons.c,v 1.8 2004/06/08 01:17:02 dawes Exp $ */
 
 /**********************************************************************
  *
@@ -41,6 +41,7 @@ in this Software without prior written authorization from The Open Group.
 #include "gram.h"
 #include "parse.h"
 #include "util.h"
+#include "events.h"
 
 #define iconWidth(w)	(Scr->IconBorderWidth * 2 + w->icon_w_width)
 #define iconHeight(w)	(Scr->IconBorderWidth * 2 + w->icon_w_height)
@@ -496,22 +497,7 @@ CreateIconWindow(tmp_win, def_x, def_y)
 	attributes.background_pixmap = pm;
     }
 
-    tmp_win->icon_w_width = MyFont_TextWidth(&Scr->IconFont,
-	tmp_win->icon_name, strlen(tmp_win->icon_name));
-
-    tmp_win->icon_w_width += 6;
-    if (tmp_win->icon_w_width < tmp_win->icon_width)
-    {
-	tmp_win->icon_x = (tmp_win->icon_width - tmp_win->icon_w_width)/2;
-	tmp_win->icon_x += 3;
-	tmp_win->icon_w_width = tmp_win->icon_width;
-    }
-    else
-    {
-	tmp_win->icon_x = 3;
-    }
-    tmp_win->icon_y = tmp_win->icon_height + Scr->IconFont.height;
-    tmp_win->icon_w_height = tmp_win->icon_height + Scr->IconFont.height + 4;
+    RedoIconSize(tmp_win);
 
     event_mask = 0;
     if (tmp_win->wmhints && tmp_win->wmhints->flags & IconWindowHint)
@@ -519,7 +505,8 @@ CreateIconWindow(tmp_win, def_x, def_y)
 	tmp_win->icon_w = tmp_win->wmhints->icon_window;
 	if (tmp_win->forced ||
 	    XGetGeometry(dpy, tmp_win->icon_w, &JunkRoot, &JunkX, &JunkY,
-		     (unsigned int *)&tmp_win->icon_w_width, (unsigned int *)&tmp_win->icon_w_height,
+		     (unsigned int *)&tmp_win->icon_w_width,
+		     (unsigned int *)&tmp_win->icon_w_height,
 		     &JunkBW, &JunkDepth) == 0)
 	{
 	    tmp_win->icon_w = None;

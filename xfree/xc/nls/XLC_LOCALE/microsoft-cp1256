@@ -1,7 +1,7 @@
 XCOMM  $TOG: microsoft-cp1256 /main/1 1998/05/20 14:49:21 kaleb $
 XCOMM  XLocale Database Sample for microsoft-cp1256.
 XCOMM 
-XCOMM  $XFree86: xc/nls/XLC_LOCALE/microsoft-cp1256,v 1.2 2000/12/01 17:43:03 dawes Exp $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/microsoft-cp1256,v 1.3 2005/02/02 14:33:23 pascal Exp $
 
 XCOMM 
 XCOMM 	XLC_FONTSET category
@@ -25,6 +25,15 @@ fs1	{
 	}
 	font	{
 		primary		MICROSOFT-CP1256:GR
+	}
+}
+XCOMM 	fs2 class 
+fs2	{
+	charset	{
+		name		MICROSOFT-CP1256:GL
+	}
+	font	{
+		primary		MICROSOFT-CP1256:GL
 	}
 }
 END XLC_FONTSET

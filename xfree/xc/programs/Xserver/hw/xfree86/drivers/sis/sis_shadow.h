@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_shadow.h,v 1.8 2004/01/04 18:08:00 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_shadow.h,v 1.9 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * Copyright (C) 1999-2004 by The XFree86 Project, Inc.
  *

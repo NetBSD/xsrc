@@ -6,7 +6,7 @@
 
                                   Abstract
 
-     This is the README for the XFree86 ATI driver included in this
+      This is the README for the XFree86 ATI driver included in this
      release.
 
 1.  Statement of intent
@@ -573,8 +573,8 @@ driver.  They include:
 
    o Video memory banking does not work in monochrome and 16-colour modes on
      18800-x adapters.  This appears to be another hardware limit, but this
-     conclusion cannot be confirmed at this time.  The driver's default
-     behaviour in this case is to limit video memory to 256kB.
+     conclusion cannot be confirmed at this time.  The driver's default be-
+     haviour in this case is to limit video memory to 256kB.
 
    o Video memory corruption can still occur during mode switches on 18800-x
      adapters.  Symptoms of this problem include garbled fonts on return to
@@ -663,8 +663,8 @@ adapter under X386 1.1a.  This original driver might have actually been based
 on a non-functional ATI driver written by Thomas Roell (currently of Xi
 Graphics).
 
-Then Doug Evans added support for the ATI VGA Wonder XL, trying in the pro-
-cess to make the driver work with all other ATI adapters available at the
+Then Doug Evans added support for the ATI VGA Wonder XL, trying in the
+process to make the driver work with all other ATI adapters available at the
 time.
 
 Rik Faith obtained the X11R4 driver from Doug Evans in the summer of 1992 and
@@ -706,4 +706,4 @@ Intel architectures.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.43 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.ati,v 3.65 2003/10/19 19:57:13 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.ati,v 3.67 2005/02/15 01:47:38 dawes Exp $

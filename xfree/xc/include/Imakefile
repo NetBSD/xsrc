@@ -1,9 +1,4 @@
-XCOMM $Xorg: Imakefile,v 1.3 2000/08/18 04:05:43 coskrey Exp $
-
-
-
-
-XCOMM $XFree86: xc/include/Imakefile,v 3.29 2001/08/27 17:40:56 dawes Exp $
+XCOMM $XFree86: xc/include/Imakefile,v 3.30 2005/01/16 00:13:16 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags /**/
 
@@ -68,6 +63,7 @@ InstallDriverSDKNonExecFile(Xosdefs.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(Xproto.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(Xprotostr.h,$(DRIVERSDKINCLUDEDIR))
 
+#if BuildGlxExt || BuildGLXLibrary
 XCOMM For the Linux/OpenGL base standard
 #if LinkGLToUsrInclude && AlternateIncRoot
 install::
@@ -76,4 +72,5 @@ install::
 	@if [ ! -d $(DESTDIR)$(SYSTEMUSRINCDIR)/GL ]; then \
 		set -x; $(LN) $(INCDIR)/GL $(DESTDIR)$(SYSTEMUSRINCDIR)/GL; \
 	fi
+#endif
 #endif

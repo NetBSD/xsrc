@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/lbxutil.c,v 1.5 2001/10/28 03:34:22 tsi Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/lbxutil.c,v 1.6 2004/04/03 22:38:53 tsi Exp $ */
 
 /*
  * utility routines for LBX requests
@@ -38,14 +38,12 @@
 #include	"wire.h"
 #include	"swap.h"
 #include	"colormap.h"
+#include        "connection.h"
+#include        "utils.h"
+#include        "stream.h"
+#include        "lbxutil.h"
 
 Bool compStats = FALSE;		/* report stream compression statistics */
-
-#ifdef DEBUG
-extern int lbxDebug;
-#endif
-
-extern int lbxMaxMotionEvents;
 
 ReplyStuffPtr
 NewReply(client, major, minor, reply_func)
@@ -319,17 +317,8 @@ LbxSendTagData(client, tag, tagtype)
     SendTagData(client, tag, len, tdata);
 }
 
-extern unsigned long  stream_out_compressed;
-extern unsigned long  stream_out_uncompressed;
-extern unsigned long  stream_out_plain;
-extern unsigned long  stream_in_compressed;
-extern unsigned long  stream_in_uncompressed;
-extern unsigned long  stream_in_plain;
-extern unsigned long  raw_stream_out;
-extern unsigned long  raw_stream_in;
-
 void
-DumpCompressionStats()
+DumpCompressionStats(void)
 {
     if (raw_stream_out && stream_out_plain) {
 	fprintf(stderr, "Requests:  normal = %ld, reencoded = %ld",
@@ -356,7 +345,7 @@ DumpCompressionStats()
 }
 
 void
-ZeroCompressionStats()
+ZeroCompressionStats(void)
 {
     stream_out_compressed = 0;
     stream_out_uncompressed = 0;
@@ -403,12 +392,6 @@ int         delta_out_hits;
 int         delta_in_total;
 int         delta_in_attempts;
 int         delta_in_hits;
-
-extern int	    gfx_gc_hit;
-extern int	    gfx_gc_miss;
-extern int	    gfx_draw_hit;
-extern int	    gfx_draw_miss;
-extern int	    gfx_total;
 
 void
 DumpOtherStats()

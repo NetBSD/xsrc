@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/general/X.man,v 1.8 2002/10/12 16:06:41 herrb Exp $
+.\" $XFree86: xc/doc/man/general/X.man,v 1.10 2005/02/11 03:03:10 dawes Exp $
 .\"
 .TH X __miscmansuffix__ __vendorversion__
 .SH NAME
@@ -1030,11 +1030,11 @@ This must contain a colon separated list of path templates, where libXt
 will search for resource files. The default value consists of
 .sp
 .nf
-    __projectroot__/lib/X11/%L/%T/%N%C%S:\\
-    __projectroot__/lib/X11/%l/%T/%N%C%S:\\
-    __projectroot__/lib/X11/%T/%N%C%S:\\
-    __projectroot__/lib/X11/%L/%T/%N%S:\\
-    __projectroot__/lib/X11/%l/%T/%N%S:\\
+    __projectroot__/lib/X11/%L/%T/%N%C%S:\\\&
+    __projectroot__/lib/X11/%l/%T/%N%C%S:\\\&
+    __projectroot__/lib/X11/%T/%N%C%S:\\\&
+    __projectroot__/lib/X11/%L/%T/%N%S:\\\&
+    __projectroot__/lib/X11/%l/%T/%N%S:\\\&
     __projectroot__/lib/X11/%T/%N%S
 .fi
 .sp
@@ -1059,13 +1059,13 @@ where libXt will search for user dependent resource files. The default
 value is:
 .sp
 .nf
-    $XAPPLRESDIR/%L/%N%C:\\
-    $XAPPLRESDIR/%l/%N%C:\\
-    $XAPPLRESDIR/%N%C:\\
-    $HOME/%N%C:\\
-    $XAPPLRESDIR/%L/%N:\\
-    $XAPPLRESDIR/%l/%N:\\
-    $XAPPLRESDIR/%N:\\
+    $XAPPLRESDIR/%L/%N%C:\\\&
+    $XAPPLRESDIR/%l/%N%C:\\\&
+    $XAPPLRESDIR/%N%C:\\\&
+    $HOME/%N%C:\\\&
+    $XAPPLRESDIR/%L/%N:\\\&
+    $XAPPLRESDIR/%l/%N:\\\&
+    $XAPPLRESDIR/%N:\\\&
     $HOME/%N
 .fi
 .sp
@@ -1218,7 +1218,6 @@ the appropriate instance name can be placed before the asterisk:
 .SH "SEE ALSO"
 .PP
 .\" introductions
-.BR XProjectTeam (__miscmansuffix__),
 .BR XStandards (__miscmansuffix__),
 .BR Xsecurity (__miscmansuffix__),
 .\" clients, utilities, and demos

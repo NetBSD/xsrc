@@ -60,48 +60,42 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #undef XtIsRectObj
-Boolean XtIsRectObj(object)
-    Widget object;
+Boolean XtIsRectObj(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x02);
 }
 
 
 #undef XtIsWidget
-Boolean XtIsWidget(object)
-    Widget object;
+Boolean XtIsWidget(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x04);
 }
 
 
 #undef XtIsComposite
-Boolean XtIsComposite(object)
-    Widget object;
+Boolean XtIsComposite(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x08);
 }
 
 
 #undef XtIsConstraint
-Boolean XtIsConstraint(object)
-    Widget object;
+Boolean XtIsConstraint(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x10);
 }
 
 
 #undef XtIsShell
-Boolean XtIsShell(object)
-    Widget object;
+Boolean XtIsShell(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x20);
 }
 
 
 #undef XtIsOverrideShell
-Boolean XtIsOverrideShell(object)
-    Widget object;
+Boolean XtIsOverrideShell(Widget object)
 {
     return _XtIsSubclassOf(object, (WidgetClass)overrideShellWidgetClass,
 			   (WidgetClass)shellWidgetClass, 0x20);
@@ -109,16 +103,14 @@ Boolean XtIsOverrideShell(object)
 
 
 #undef XtIsWMShell
-Boolean XtIsWMShell(object)
-    Widget object;
+Boolean XtIsWMShell(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x40);
 }
 
 
 #undef XtIsVendorShell
-Boolean XtIsVendorShell(object)
-    Widget object;
+Boolean XtIsVendorShell(Widget object)
 {
     Boolean retval;
 
@@ -139,8 +131,7 @@ Boolean XtIsVendorShell(object)
 
 
 #undef XtIsTransientShell
-Boolean XtIsTransientShell(object)
-    Widget object;
+Boolean XtIsTransientShell(Widget object)
 {
     return _XtIsSubclassOf(object, (WidgetClass)transientShellWidgetClass,
 			   (WidgetClass)wmShellWidgetClass, 0x40);
@@ -148,32 +139,28 @@ Boolean XtIsTransientShell(object)
 
 
 #undef XtIsTopLevelShell
-Boolean XtIsTopLevelShell(object)
-    Widget object;
+Boolean XtIsTopLevelShell(Widget object)
 {
     return _XtCheckSubclassFlag(object, 0x80);
 }
 
 
 #undef XtIsApplicationShell
-Boolean XtIsApplicationShell(object)
-    Widget object;
+Boolean XtIsApplicationShell(Widget object)
 {
     return _XtIsSubclassOf(object, (WidgetClass)applicationShellWidgetClass,
 			   (WidgetClass)topLevelShellWidgetClass, 0x80);
 }
 
 #undef XtIsSessionShell
-Boolean XtIsSessionShell(object)
-    Widget object;
+Boolean XtIsSessionShell(Widget object)
 {
     return _XtIsSubclassOf(object, (WidgetClass)sessionShellWidgetClass,
 			   (WidgetClass)topLevelShellWidgetClass, 0x80);
 }
 
 #undef XtMapWidget
-void XtMapWidget(w)
-    Widget w;
+void XtMapWidget(Widget w)
 {
     Widget hookobj;
     WIDGET_TO_APPCON(w);
@@ -186,8 +173,8 @@ void XtMapWidget(w)
 
 	call_data.type = XtHmapWidget;
 	call_data.widget = w;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
@@ -195,8 +182,7 @@ void XtMapWidget(w)
 
 
 #undef XtUnmapWidget
-void XtUnmapWidget(w)
-    Widget w;
+void XtUnmapWidget(Widget w)
 {
     Widget hookobj;
     WIDGET_TO_APPCON(w);
@@ -209,8 +195,8 @@ void XtUnmapWidget(w)
 
 	call_data.type = XtHunmapWidget;
 	call_data.widget = w;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
@@ -218,8 +204,7 @@ void XtUnmapWidget(w)
 
 
 #undef XtNewString
-String XtNewString(str)
-    String str;
+String XtNewString(String str)
 {
     if (str == NULL)
 	return NULL;

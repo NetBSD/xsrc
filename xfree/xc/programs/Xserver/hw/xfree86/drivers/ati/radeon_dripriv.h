@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dripriv.h,v 1.4 2002/10/30 12:52:13 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dripriv.h,v 1.5 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -53,8 +53,8 @@ typedef struct {
 
 typedef struct {
 #ifdef PER_CONTEXT_SAREA
-    drmContext ctx_id;
-    drmHandle sarea_handle;
+    drm_context_t ctx_id;
+    drm_handle_t sarea_handle;
 #else
     /* Nothing here yet */
     int dummy;

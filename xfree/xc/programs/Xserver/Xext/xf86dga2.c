@@ -3,7 +3,7 @@
 
    Written by Mark Vojkovich
 */
-/* $XFree86: xc/programs/Xserver/Xext/xf86dga2.c,v 1.18 2003/07/16 01:38:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86dga2.c,v 1.21 2005/01/20 17:53:44 tsi Exp $ */
 
 
 #define NEED_REPLIES
@@ -160,17 +160,18 @@ ProcXDGAOpenFramebuffer(ClientPtr client)
 
     REQUEST_SIZE_MATCH(xXDGAOpenFramebufferReq);
     rep.type = X_Reply;
-    rep.length = 0;
+    rep.length = rep.mem1 = rep.mem2 = rep.size = rep.offset = rep.extra = 0;
     rep.sequenceNumber = client->sequence;
+    deviceName = NULL;
 
     if(!DGAOpenFramebuffer(stuff->screen, &deviceName, 
-			(unsigned char**)(&rep.mem1),
-			(int*)&rep.size, (int*)&rep.offset, (int*)&rep.extra)) 
-    {
+			   (unsigned int*)(&rep.mem1),
+			   (unsigned int*)&rep.size,
+			   (unsigned int*)&rep.offset,
+			   (unsigned int*)&rep.extra)) 
 	return BadAlloc;
-    }
 
-    nameSize = deviceName ? (strlen(deviceName) + 1) : 0;
+    nameSize = (deviceName && *deviceName) ? (strlen(deviceName) + 1) : 0;
     rep.length = (nameSize + 3) >> 2;
 
     WriteToClient(client, sizeof(xXDGAOpenFramebufferReply), (char *)&rep);
@@ -217,17 +218,14 @@ ProcXDGAQueryModes(ClientPtr client)
     rep.number = 0;
     rep.sequenceNumber = client->sequence;
 
-    if (!DGAAvailable(stuff->screen)) {
-	rep.number = 0;
-	rep.length = 0;
+    if (!DGAAvailable(stuff->screen) ||
+	((num = DGAGetModes(stuff->screen)) <= 0)) {
 	WriteToClient(client, sz_xXDGAQueryModesReply, (char*)&rep);
 	return (client->noClientException);
     }
 
-    if(!(num = DGAGetModes(stuff->screen))) {
-	WriteToClient(client, sz_xXDGAQueryModesReply, (char*)&rep);
-	return (client->noClientException);
-    }
+    if (num != (CARD16)num)
+	num = (CARD16)-1;
 
     if(!(mode = (XDGAModePtr)xalloc(num * sizeof(XDGAModeRec))))
 	return BadAlloc;
@@ -247,6 +245,14 @@ ProcXDGAQueryModes(ClientPtr client)
     for(i = 0; i < num; i++) {
 	size = strlen(mode[i].name) + 1;
 
+#undef  SetCARD16
+#define SetCARD16(a,b)               \
+	do {                         \
+	    info.a = mode[i].b;      \
+	    if (info.a != mode[i].b) \
+		info.a = (CARD16)-1; \
+	} while (0)
+
 	info.byte_order = mode[i].byteOrder;
 	info.depth = mode[i].depth;
 	info.num = mode[i].num;
@@ -255,24 +261,26 @@ ProcXDGAQueryModes(ClientPtr client)
 	info.vsync_num = mode[i].VSync_num;
 	info.vsync_den = mode[i].VSync_den;
 	info.flags = mode[i].flags;
-	info.image_width = mode[i].imageWidth;
-	info.image_height = mode[i].imageHeight;
-	info.pixmap_width = mode[i].pixmapWidth;
-	info.pixmap_height = mode[i].pixmapHeight;
+	SetCARD16(image_width, imageWidth);
+	SetCARD16(image_height, imageHeight);
+	SetCARD16(pixmap_width, pixmapWidth);
+	SetCARD16(pixmap_height, pixmapHeight);
 	info.bytes_per_scanline = mode[i].bytesPerScanline;
 	info.red_mask = mode[i].red_mask;
 	info.green_mask = mode[i].green_mask;
 	info.blue_mask = mode[i].blue_mask;
 	info.visual_class = mode[i].visualClass;
-	info.viewport_width = mode[i].viewportWidth;
-	info.viewport_height = mode[i].viewportHeight;
-	info.viewport_xstep = mode[i].xViewportStep;
-	info.viewport_ystep = mode[i].yViewportStep;
- 	info.viewport_xmax = mode[i].maxViewportX;
-	info.viewport_ymax = mode[i].maxViewportY;
+	SetCARD16(viewport_width, viewportWidth);
+	SetCARD16(viewport_height, viewportHeight);
+	SetCARD16(viewport_xstep, xViewportStep);
+	SetCARD16(viewport_ystep, yViewportStep);
+ 	SetCARD16(viewport_xmax, maxViewportX);
+	SetCARD16(viewport_ymax, maxViewportY);
 	info.viewport_flags = mode[i].viewportFlags;
 	info.reserved1 = mode[i].reserved1;
 	info.reserved2 = mode[i].reserved2;
+
+#undef SetCARD16
 	
 	WriteToClient(client, sz_xXDGAModeInfo, (char*)(&info));
 	WriteToClient(client, size, mode[i].name);
@@ -450,8 +458,6 @@ ProcXDGAInstallColormap(ClientPtr client)
         client->errorValue = stuff->cmap;
         return (BadColor);
     }
-
-    return (client->noClientException);
 }
 
 

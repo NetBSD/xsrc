@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapw.c,v 1.5 2004/01/05 16:42:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapw.c,v 1.8 2005/01/28 16:56:43 tsi Exp $ */
 /*
- * Copyright 2002 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2002 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,18 +49,18 @@
 # define strtoull strtouq
 #endif
 
-static unsigned char datab;
-static unsigned short dataw;
-static unsigned int datal;
-static unsigned long dataL;
-static unsigned long long dataq;
+#define datab unsigned char
+#define dataw unsigned short
+#define datal unsigned int
+#define dataL unsigned long
+#define dataq unsigned long long
 
 static void
 usage(void)
 {
     fprintf(stderr, "\n"
         "mmapw [-{bwlqL}] <file> <offset> <value>\n\n"
-        "endianness flags:\n\n"
+        "access size flags:\n\n"
         " -b   write one byte\n"
         " -w   write two aligned bytes\n"
         " -l   write four aligned bytes (default)\n"

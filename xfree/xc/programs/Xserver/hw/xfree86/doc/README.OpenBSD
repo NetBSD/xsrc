@@ -1,4 +1,4 @@
-                     README for XFree86 4.4.0 on OpenBSD
+                    README for XFree86® 4.5.0 on OpenBSD
 
                                Matthieu Herrb
 
@@ -13,13 +13,13 @@ X11R6.6.
 
 See the Copyright Notice.
 
-The sources for XFree86 4.4.0 are available by anonymous ftp from:
+The sources for XFree86 4.5.0 are available by anonymous ftp from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.4.0
+ftp://ftp.XFree86.org/pub/XFree86/4.5.0
 
 Binaries for OpenBSD/i386 3.4 and later are available from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.4.0/binaries/OpenBSD
+ftp://ftp.XFree86.org/pub/XFree86/4.5.0/binaries/OpenBSD
 
 A list of mirror sites is provided by http://www.xfree86.org/MIRRORS.shtml
 
@@ -33,7 +33,7 @@ or suggestions about this file.
 
 3.  New OS dependent features
 
-See the Release Notes for non-OS dependent new features in XFree86 4.4.0.
+See the Release Notes for non-OS dependent new features in XFree86 4.5.0.
 
 3.1  New OS related features in 4.4
 
@@ -146,7 +146,7 @@ the xvidtune utility.
 
 5.1  About mouse configuration
 
-XFree86 4.4.0 has support for the mouse driver included in the new wscons
+XFree86 4.5.0 has support for the mouse driver included in the new wscons
 console driver introduced by OpenBSD-2.9.  Specify ``wsmouse'' as the proto-
 col and ``/dev/wsmouse0'' as the  device in /etc/X11/XF86Config if you're
 using OpenBSD-2.9 or later with a PS/2 or USB mouse.
@@ -233,7 +233,7 @@ your kernel, it will support the MIT-SHM extension.
 
 You should configure the distribution by editing xc/config/cf/host.def
 before compiling.  To compile the sources, invoke ``make World'' in the xc
-directory."
+directory.
 
 Note that OpenBSD project now has its own source tree, based on the XFree86
 source tree, with some local modifications. You may want to start with this
@@ -306,7 +306,7 @@ particular: David Dawes, Todd Fries, Rod Grimes, Charles Hannum, Amancio
 Hasty, Christoph Robitschko, Matthias Scheler, Michael Smith, Ignatios Sou-
 vatzis, Jack Velte, Nate Williams and Pace Willison.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.33 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.35 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.48 2004/02/24 03:49:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.55 2005/03/17 01:11:55 dawes Exp $

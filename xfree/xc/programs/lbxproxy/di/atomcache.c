@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/programs/lbxproxy/di/atomcache.c,v 1.7 2002/10/15 02:16:26 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/atomcache.c,v 1.8 2004/04/03 22:38:53 tsi Exp $ */
 
 /*
  * atom cache for LBX
@@ -75,9 +75,9 @@ in this Software without prior written authorization from The Open Group.
 #include "atomcache.h"
 
 static int
-Hash(string, len)
-    char       *string;
-    int		len;
+Hash(
+    char       *string,
+    int		len)
 {
     int         h;
 
@@ -90,8 +90,8 @@ Hash(string, len)
 }
 
 static Bool
-ResizeHashTable(server)
-    XServerPtr	server;
+ResizeHashTable(
+    XServerPtr	server)
 {
     int         newHashSize;
     int         newHashMask;
@@ -134,9 +134,9 @@ ResizeHashTable(server)
 }
 
 static Bool
-ResizeReverseMap(server, atom)
-    XServerPtr	server;
-    Atom	atom;
+ResizeReverseMap(
+    XServerPtr	server,
+    Atom	atom)
 {
     int oldMapSize = 0;
 
@@ -167,12 +167,12 @@ ResizeReverseMap(server, atom)
 }
 
 Atom
-LbxMakeAtom(server, string, len, atom, makeit)
-    XServerPtr	server;
-    char       *string;
-    Atom        atom;
-    unsigned    len;
-    int         makeit;
+LbxMakeAtom(
+    XServerPtr	server,
+    char       *string,
+    unsigned    len,
+    Atom        atom,
+    int         makeit)
 {
     AtomListPtr a;
     int         hash;
@@ -243,9 +243,9 @@ LbxMakeAtom(server, string, len, atom, makeit)
 }
 
 char *
-NameForAtom(server, atom)
-    XServerPtr	server;
-    Atom        atom;
+NameForAtom(
+    XServerPtr	server,
+    Atom        atom)
 {
     if (atom != None && atom <= server->lastAtom && server->reverseMap[atom])
 	return server->reverseMap[atom]->name;
@@ -253,9 +253,9 @@ NameForAtom(server, atom)
 }
 
 unsigned
-FlagsForAtom(server, atom)
-    XServerPtr	server;
-    Atom        atom;
+FlagsForAtom(
+    XServerPtr	server,
+    Atom        atom)
 {
     if (atom != None && atom <= server->lastAtom && server->reverseMap[atom])
 	return server->reverseMap[atom]->flags;
@@ -263,7 +263,7 @@ FlagsForAtom(server, atom)
 }
 
 void
-FreeAtoms()
+FreeAtoms(void)
 {
     int         i;
 

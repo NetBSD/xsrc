@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/parse.c,v 1.17 2003/08/04 10:32:30 eich Exp $ */
+/* $XFree86: xc/programs/twm/parse.c,v 1.18 2004/06/08 01:17:02 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -390,6 +390,8 @@ typedef struct _TwmKeyword {
 #define kwn_TitleButtonBorderWidth	9
 #define kwn_Priority			10
 #define kwn_MenuBorderWidth		11
+#define kwn_TitleIndent			12
+#define kwn_IconMaxWidth		13
 
 #define kwcl_BorderColor		1
 #define kwcl_IconManagerHighlight	2
@@ -536,6 +538,7 @@ static TwmKeyword keytable[] = {
     { "iconmanagerhighlight",	CLKEYWORD, kwcl_IconManagerHighlight },
     { "iconmanagers",		ICONMGRS, 0 },
     { "iconmanagershow",	ICONMGR_SHOW, 0 },
+    { "iconmaxwidth",		NKEYWORD, kwn_IconMaxWidth },
     { "iconmgr",		ICONMGR, 0 },
     { "iconregion",		ICON_REGION, 0 },
     { "icons",			ICONS, 0 },
@@ -608,6 +611,7 @@ static TwmKeyword keytable[] = {
     { "titlefont",		SKEYWORD, kws_TitleFont },
     { "titleforeground",	CLKEYWORD, kwcl_TitleForeground },
     { "titlehighlight",		TITLE_HILITE, 0 },
+    { "titleindent",		NKEYWORD, kwn_TitleIndent },
     { "titlepadding",		NKEYWORD, kwn_TitlePadding },
     { "unknownicon",		SKEYWORD, kws_UnknownIcon },
     { "usepposition",		SKEYWORD, kws_UsePPosition },
@@ -724,7 +728,7 @@ int do_single_keyword (keyword)
 	return 1;
 
       case kw0_RestartPreviousState:
-	RestartPreviousState = True;
+	RestartPreviousState = TRUE;
 	return 1;
 
       case kw0_ClientBorderWidth:
@@ -857,6 +861,10 @@ int do_number_keyword (keyword, num)
 	if (Scr->FirstTime) Scr->TitlePadding = num;
 	return 1;
 
+      case kwn_TitleIndent:
+	if (Scr->FirstTime) Scr->TitleIndent = num;
+	return 1;
+
       case kwn_ButtonIndent:
 	if (Scr->FirstTime) Scr->ButtonIndent = num;
 	return 1;
@@ -871,6 +879,10 @@ int do_number_keyword (keyword, num)
 
       case kwn_MenuBorderWidth:
 	if (Scr->FirstTime) Scr->MenuBorderWidth = num;
+	return 1;
+
+      case kwn_IconMaxWidth:
+	if (Scr->FirstTime) Scr->IconMaxWidth = num;
 	return 1;
 
       case kwn_TitleButtonBorderWidth:
@@ -1000,9 +1012,9 @@ put_pixel_on_root(pixel)
   int           retFormat;
   unsigned long nPixels, retAfter;                     
   Pixel        *retProp;
-  pixelAtom = XInternAtom(dpy, "_MIT_PRIORITY_COLORS", True);        
+  pixelAtom = XInternAtom(dpy, "_MIT_PRIORITY_COLORS", TRUE);        
   XGetWindowProperty(dpy, Scr->Root, pixelAtom, 0, 8192, 
-		     False, XA_CARDINAL, &retAtom,       
+		     FALSE, XA_CARDINAL, &retAtom,       
 		     &retFormat, &nPixels, &retAfter,    
 		     (unsigned char **)&retProp);
 

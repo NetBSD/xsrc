@@ -3,13 +3,13 @@
 ]>
 
 <article>
-<title>README for XFree86 &relvers; on OpenBSD
+<title>README for XFree86&reg; &relvers; on OpenBSD
 <author>
 Matthieu Herrb
 <Date>Last modified on: 9 December 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.33 2004/02/15 02:16:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.35 2005/02/15 01:36:54 dawes Exp $
 </ident>
 
 <toc>
@@ -280,7 +280,8 @@ OpenBSD supports System V shared memory. If XFree86
 detects this support in your kernel, it will support the MIT-SHM
 extension.
 
-<sect> Rebuilding the XFree86 Distribution
+<sect>Rebuilding the XFree86 Distribution
+<p>
 
 You should configure the distribution by editing
 <tt>xc/config/cf/host.def</tt>  before compiling.  To compile the

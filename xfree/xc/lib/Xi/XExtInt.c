@@ -1,5 +1,3 @@
-/* $Xorg: XExtInt.c,v 1.4 2001/02/09 02:03:50 xorgcvs Exp $ */
-
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -45,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.8 2003/07/07 15:34:22 eich Exp $ */
+/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.10 2005/01/27 02:28:59 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -68,10 +66,9 @@ SOFTWARE.
 
 static	XExtensionInfo *xinput_info;
 static	/* const */ char *xinput_extension_name = INAME;
-static	int XInputClose();
-static	char *XInputError();
-static Bool XInputWireToEvent();
-Status	_XiEventToWire();
+static XEXT_CLOSE_DISPLAY_PROTO(XInputClose);
+static XEXT_ERROR_STRING_PROTO(XInputError);
+static Bool XInputWireToEvent(Display *, XEvent *, xEvent *);
 static	/* const */ XEvent	emptyevent;
 
 typedef struct _XInputData
@@ -83,6 +80,8 @@ typedef struct _XInputData
 #define XInputCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xinput_extension_name, val)
 
+typedef Status (*eventToWireProcPtr)(Display *, XEvent *, xEvent *);
+
 static /* const */ XExtensionHooks xinput_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */
@@ -92,7 +91,7 @@ static /* const */ XExtensionHooks xinput_extension_hooks = {
     NULL,				/* free_font */
     XInputClose,			/* close_display */
     XInputWireToEvent,			/* wire_to_event */
-    _XiEventToWire,			/* event_to_wire */
+    (eventToWireProcPtr)_XiEventToWire,	/* event_to_wire */
     NULL,				/* error */
     XInputError,			/* error_string */
 };
@@ -130,41 +129,36 @@ static XExtensionVersion versions[] = {{XI_Absent,0,0},
  *
  */
 
-void _xibaddevice (dpy, error)
-    Display *dpy;
-    int *error;
+void
+_xibaddevice(Display *dpy, int *error)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy);
     *error = info->codes->first_error + XI_BadDevice;
     }
 
-void _xibadclass (dpy, error)
-    Display *dpy;
-    int *error;
+void
+_xibadclass(Display *dpy, int *error)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy); 
     *error = info->codes->first_error + XI_BadClass;
     }
 
-void _xibadevent (dpy, error)
-    Display *dpy;
-    int *error;
+void
+_xibadevent(Display *dpy, int *error)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy);
     *error = info->codes->first_error + XI_BadEvent;
     }
 
-void _xibadmode (dpy, error)
-    Display *dpy;
-    int *error;
+void
+_xibadmode(Display *dpy, int *error)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy);
     *error = info->codes->first_error + XI_BadMode;
     }
 
-void _xidevicebusy (dpy, error)
-    Display *dpy;
-    int *error;
+void
+_xidevicebusy(Display *dpy, int *error)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy); 
     *error = info->codes->first_error + XI_DeviceBusy;
@@ -178,9 +172,7 @@ void _xidevicebusy (dpy, error)
  */
 
 int
-_XiCheckExtInit(dpy, version_index)
-    register	Display *dpy;
-    register	int	version_index;
+_XiCheckExtInit(Display *dpy, int version_index)
     {
     XExtensionVersion 	*ext;
     XExtDisplayInfo 	*info = XInput_find_display (dpy);
@@ -220,9 +212,7 @@ _XiCheckExtInit(dpy, version_index)
  */
 
 static int
-XInputClose (dpy, codes)
-    Display *dpy;
-    XExtCodes *codes;
+XInputClose(Display *dpy, XExtCodes *codes)
     {
     XExtDisplayInfo 	*info = XInput_find_display (dpy);
 
@@ -235,8 +225,7 @@ XInputClose (dpy, codes)
 
 
 static int
-Ones(mask)  
-    Mask mask;
+Ones(Mask mask)  
 {
     register Mask y;
 
@@ -253,10 +242,7 @@ Ones(mask)
  */
 
 static Bool
-XInputWireToEvent (dpy, re, event)
-    Display	*dpy;
-    XEvent	*re;
-    xEvent	*event;
+XInputWireToEvent(Display *dpy, XEvent *re, xEvent *event)
     {
     unsigned	int	type, reltype;
     unsigned	int	i,j;
@@ -301,7 +287,6 @@ XInputWireToEvent (dpy, re, event)
 	    ev->deviceid	= ev2->deviceid & DEVICE_BITS;
     	    return (DONT_ENQUEUE);
 	    }
-	    break;
 	case XI_DeviceKeyPress:
 	case XI_DeviceKeyRelease:
 	    {
@@ -328,7 +313,6 @@ XInputWireToEvent (dpy, re, event)
 		return (ENQUEUE_EVENT);
 		}
 	    }
-	    break;
 	case XI_DeviceButtonPress:
 	case XI_DeviceButtonRelease:
 	    {
@@ -355,7 +339,6 @@ XInputWireToEvent (dpy, re, event)
 		return (ENQUEUE_EVENT);
 		}
 	    }
-	    break;
 	case XI_ProximityIn:
 	case XI_ProximityOut:
 	    {
@@ -382,7 +365,6 @@ XInputWireToEvent (dpy, re, event)
 		return (ENQUEUE_EVENT);
 		}
 	    }
-	    break;
 	case XI_DeviceValuator:
 	    {
 	    deviceValuator *xev = (deviceValuator *) event;
@@ -490,7 +472,6 @@ XInputWireToEvent (dpy, re, event)
 	    *re = *save;
 	    return (ENQUEUE_EVENT);
 	    }
-	    break;
 	case XI_DeviceFocusIn:
 	case XI_DeviceFocusOut:
 	    {
@@ -506,7 +487,6 @@ XInputWireToEvent (dpy, re, event)
 	    ev->deviceid 		= fev->deviceid & DEVICE_BITS;
     	    return (ENQUEUE_EVENT);
 	    }
-	    break;
 	case XI_DeviceStateNotify:
 	    {
 	    XDeviceStateNotifyEvent *stev = 
@@ -563,7 +543,6 @@ XInputWireToEvent (dpy, re, event)
 	        return (ENQUEUE_EVENT);
 	        }
 	    }
-	    break;
 	case XI_DeviceKeystateNotify:
 	    {
 	    int i;
@@ -593,7 +572,6 @@ XInputWireToEvent (dpy, re, event)
 	        return (ENQUEUE_EVENT);
 	        }
 	    }
-	    break;
 	case XI_DeviceButtonstateNotify:
 	    {
 	    int i;
@@ -624,7 +602,6 @@ XInputWireToEvent (dpy, re, event)
 	        return (ENQUEUE_EVENT);
 	        }
 	    }
-	    break;
 	case XI_DeviceMappingNotify:
 	    {
 	    register XDeviceMappingEvent *ev = (XDeviceMappingEvent *) re;
@@ -639,7 +616,6 @@ XInputWireToEvent (dpy, re, event)
 	    ev->deviceid 		= ev2->deviceid & DEVICE_BITS;
     	    return (ENQUEUE_EVENT);
 	    }
-	    break;
 	case XI_ChangeDeviceNotify:
 	    {
 	    register XChangeDeviceNotifyEvent *ev = 
@@ -653,7 +629,6 @@ XInputWireToEvent (dpy, re, event)
 	    ev->deviceid 		= ev2->deviceid & DEVICE_BITS;
     	    return (ENQUEUE_EVENT);
 	    }
-	    break;
 	default:
 	    printf ("XInputWireToEvent: UNKNOWN WIRE EVENT! type=%d\n",type);
 	    break;

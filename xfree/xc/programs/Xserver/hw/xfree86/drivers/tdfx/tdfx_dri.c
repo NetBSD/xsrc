@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.c,v 1.26 2003/09/28 20:16:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.c,v 1.27 2004/12/10 16:07:03 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -17,9 +17,9 @@ static char TDFXKernelDriverName[] = "tdfx";
 static char TDFXClientDriverName[] = "tdfx";
 
 static Bool TDFXCreateContext(ScreenPtr pScreen, VisualPtr visual,
-			      drmContext hwContext, void *pVisualConfigPriv,
+			      drm_context_t hwContext, void *pVisualConfigPriv,
 			      DRIContextType contextStore);
-static void TDFXDestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void TDFXDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 			       DRIContextType contextStore);
 static void TDFXDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
 			       DRIContextType readContextType,
@@ -329,11 +329,15 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
 
   pDRIInfo->drmDriverName = TDFXKernelDriverName;
   pDRIInfo->clientDriverName = TDFXClientDriverName;
-  pDRIInfo->busIdString = xalloc(64);
-  sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
-	  ((pciConfigPtr)pTDFX->PciInfo->thisCard)->busnum,
-	  ((pciConfigPtr)pTDFX->PciInfo->thisCard)->devnum,
-	  ((pciConfigPtr)pTDFX->PciInfo->thisCard)->funcnum);
+  if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+    pDRIInfo->busIdString = DRICreatePCIBusID(pTDFX->PciInfo);
+  } else {
+    pDRIInfo->busIdString = xalloc(64);
+    sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
+	    ((pciConfigPtr)pTDFX->PciInfo->thisCard)->busnum,
+	    ((pciConfigPtr)pTDFX->PciInfo->thisCard)->devnum,
+	    ((pciConfigPtr)pTDFX->PciInfo->thisCard)->funcnum);
+  }
   pDRIInfo->ddxDriverMajorVersion = TDFX_MAJOR_VERSION;
   pDRIInfo->ddxDriverMinorVersion = TDFX_MINOR_VERSION;
   pDRIInfo->ddxDriverPatchVersion = TDFX_PATCHLEVEL;
@@ -429,7 +433,7 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
   }
 
   pTDFXDRI->regsSize=TDFXIOMAPSIZE;
-  if (drmAddMap(pTDFX->drmSubFD, (drmHandle)pTDFX->MMIOAddr[0],
+  if (drmAddMap(pTDFX->drmSubFD, (drm_handle_t)pTDFX->MMIOAddr[0],
 		pTDFXDRI->regsSize, DRM_REGISTERS, 0, &pTDFXDRI->regs)<0) {
     TDFXDRICloseScreen(pScreen);
     xf86DrvMsg(pScreen->myNum, X_ERROR, "drmAddMap failed, disabling DRI.\n");
@@ -470,14 +474,14 @@ TDFXDRICloseScreen(ScreenPtr pScreen)
 
 static Bool
 TDFXCreateContext(ScreenPtr pScreen, VisualPtr visual,
-		  drmContext hwContext, void *pVisualConfigPriv,
+		  drm_context_t hwContext, void *pVisualConfigPriv,
 		  DRIContextType contextStore)
 {
   return TRUE;
 }
 
 static void
-TDFXDestroyContext(ScreenPtr pScreen, drmContext hwContext,
+TDFXDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 		   DRIContextType contextStore)
 {
 }

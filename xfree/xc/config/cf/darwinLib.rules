@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/darwinLib.rules,v 1.9 2003/10/11 09:40:12 herrb Exp $
+XCOMM $XFree86: xc/config/cf/darwinLib.rules,v 1.13 2004/04/23 17:56:04 torrey Exp $
 /*
  * Darwin/Mac OS X shared library rules
  */
@@ -35,20 +35,25 @@ XCOMM $XFree86: xc/config/cf/darwinLib.rules,v 1.9 2003/10/11 09:40:12 herrb Exp
 #define ExtraLoadFlags /**/
 #endif
 
+#ifndef SetMajorRev
+#define SetMajorRev(rev) set +e; MAJREV=`expr rev : '\([0-9]*\)'`; set -e
+#endif
+
 /*
  * InstallSharedLibrary - generate rules to install the shared library.
  */
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,rev,dest)				@@\
-install:: Concat(lib,libname.rev.dylib)					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
-	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) Concat(lib,libname.rev.dylib) $(DESTDIR)dest @@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	  set -x; $(RM) Concat($(DESTDIR)dest/lib,libname.$$MAJREV.dylib) && \ @@\
-	  $(LN) Concat(lib,libname.rev.dylib) Concat($(DESTDIR)dest/lib,libname.$$MAJREV.dylib) @@\
+	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) Concat($(LIBPREFIX),libname.rev.dylib) $(DESTDIR)dest @@\
+	@SetMajorRev(rev); \						@@\
+	  if [ rev != $$MAJREV ]; then (set -x; \			@@\
+	    $(RM) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.$$MAJREV.dylib) && \ @@\
+	    $(LN) Concat($(LIBPREFIX),libname.rev.dylib) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.$$MAJREV.dylib)); fi @@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat($(DESTDIR)dest/lib,libname.dylib); \		@@\
-	  $(LN) Concat(lib,libname.rev.dylib) Concat($(DESTDIR)dest/lib,libname.dylib)); fi
+	  $(RM) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.dylib); \	@@\
+	  $(LN) Concat($(LIBPREFIX),libname.rev.dylib) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.dylib)); fi
 #endif /* InstallSharedLibrary */
 
 /*
@@ -58,27 +63,28 @@ install:: Concat(lib,libname.rev.dylib)					@@\
  */
 #ifndef SharedLibraryTarget
 # define SharedLibraryTarget(libname,rev,solist,down,up)		@@\
-AllTarget(Concat(lib,libname.rev.dylib))				@@\
+AllTarget(Concat($(LIBPREFIX),libname.rev.dylib))			@@\
 									@@\
-Concat(lib,libname.rev.dylib):  solist $(EXTRALIBRARYDEPS)		@@\
+Concat($(LIBPREFIX),libname.rev.dylib):  solist $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	  INSTALLNAME=Concat(lib,libname.$$MAJREV.dylib); \		@@\
-	  set -x; (cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
-	  $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME; \		@@\
+	@SetMajorRev(rev); \						@@\
+	  INSTALLNAME=Concat($(LIBPREFIX),libname.$$MAJREV.dylib); \	@@\
+	  (set -x; cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
+	  if [ $$INSTALLNAME != $@ ]; then (set -x; \			@@\
+	    $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME); fi; \		@@\
 	  LinkBuildSonameLibrary($$INSTALLNAME)				@@\
 	$(RM) $@							@@\
 	$(MV) $@~ $@							@@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat(lib,libname.dylib); \				@@\
-	  $(LN) $@ Concat(lib,libname.dylib)); fi			@@\
+	  $(RM) Concat($(LIBPREFIX),libname.dylib); \			@@\
+	  $(LN) $@ Concat($(LIBPREFIX),libname.dylib)); fi		@@\
 	LinkBuildLibrary($@)						@@\
-	LinkBuildLibraryMaybe(Concat(lib,libname.dylib),$(SOSYMLINK))	@@\
+	LinkBuildLibraryMaybe(Concat($(LIBPREFIX),libname.dylib),$(SOSYMLINK)) @@\
 									@@\
 clean::									@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	set -x; $(RM) Concat(lib,libname.$$MAJREV.dylib)		@@\
-	$(RM) Concat(lib,libname.rev.dylib) Concat(lib,libname.dylib)
+	@SetMajorRev(rev); \						@@\
+	set -x; $(RM) Concat($(LIBPREFIX),libname.$$MAJREV.dylib)	@@\
+	$(RM) Concat($(LIBPREFIX),libname.rev.dylib) Concat($(LIBPREFIX),libname.dylib)
 
 #endif /* SharedLibraryTarget */
 
@@ -87,27 +93,28 @@ clean::									@@\
  */
 #ifndef SharedDepLibraryTarget
 # define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
-AllTarget(Concat(lib,libname.rev.dylib))				@@\
+AllTarget(Concat($(LIBPREFIX),libname.rev.dylib))			@@\
 									@@\
-Concat(lib,libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)		@@\
+Concat($(LIBPREFIX),libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	  INSTALLNAME=Concat(lib,libname.$$MAJREV.dylib); \		@@\
-	  set -x; (cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
-	  $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME; \		@@\
+	@SetMajorRev(rev); \						@@\
+	  INSTALLNAME=Concat($(LIBPREFIX),libname.$$MAJREV.dylib); \	@@\
+	  (set -x; cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
+	  if [ $$INSTALLNAME != $@ ]; then (set -x; \			@@\
+	    $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME); fi; \		@@\
 	  LinkBuildSonameLibrary($$INSTALLNAME)				@@\
 	$(RM) $@							@@\
 	$(MV) $@~ $@							@@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat(lib,libname.dylib); \				@@\
-	  $(LN) $@ Concat(lib,libname.dylib)); fi			@@\
+	  $(RM) Concat($(LIBPREFIX),libname.dylib); \			@@\
+	  $(LN) $@ Concat($(LIBPREFIX),libname.dylib)); fi		@@\
 	LinkBuildLibrary($@)						@@\
-	LinkBuildLibraryMaybe(Concat(lib,libname.dylib),$(SOSYMLINK))	@@\
+	LinkBuildLibraryMaybe(Concat($(LIBPREFIX),libname.dylib),$(SOSYMLINK)) @@\
 									@@\
 clean::									@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	set -x; $(RM) Concat(lib,libname.$$MAJREV.dylib)		@@\
-	$(RM) Concat(lib,libname.rev.dylib) Concat(lib,libname.dylib)
+	@SetMajorRev(rev); \						@@\
+	set -x; $(RM) Concat($(LIBPREFIX),libname.$$MAJREV.dylib)	@@\
+	$(RM) Concat($(LIBPREFIX),libname.rev.dylib) Concat($(LIBPREFIX),libname.dylib)
 
 #endif /* SharedDepLibraryTarget */
 
@@ -116,27 +123,28 @@ clean::									@@\
  */
 #ifndef SharedDepCplusplusLibraryTarget
 # define SharedDepCplusplusLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
-AllTarget(Concat(lib,libname.rev.dylib))				@@\
+AllTarget(Concat($(LIBPREFIX),libname.rev.dylib))			@@\
 									@@\
-Concat(lib,libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)		@@\
+Concat($(LIBPREFIX),libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	  INSTALLNAME=Concat(lib,libname.$$MAJREV.dylib); \		@@\
-	  set -x; (cd down; $(CXX) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
-	  $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME; \		@@\
+	@SetMajorRev(rev); \						@@\
+	  INSTALLNAME=Concat($(LIBPREFIX),libname.$$MAJREV.dylib); \	@@\
+	  (set -x; cd down; $(CXX) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
+	  if [ $$INSTALLNAME != $@ ]; then (set -x; \			@@\
+	    $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME); fi; \		@@\
 	  LinkBuildSonameLibrary($$INSTALLNAME)				@@\
 	$(RM) $@							@@\
 	$(MV) $@~ $@							@@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat(lib,libname.dylib); \				@@\
-	  $(LN) $@ Concat(lib,libname.dylib)); fi			@@\
+	  $(RM) Concat($(LIBPREFIX),libname.dylib); \			@@\
+	  $(LN) $@ Concat($(LIBPREFIX),libname.dylib)); fi		@@\
 	LinkBuildLibrary($@)						@@\
-	LinkBuildLibraryMaybe(Concat(lib,libname.dylib),$(SOSYMLINK))	@@\
+	LinkBuildLibraryMaybe(Concat($(LIBPREFIX),libname.dylib),$(SOSYMLINK)) @@\
 									@@\
 clean::									@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	set -x; $(RM) Concat(lib,libname.$$MAJREV.dylib)		@@\
-	$(RM) Concat(lib,libname.rev.dylib) Concat(lib,libname.dylib)
+	@SetMajorRev(rev); \						@@\
+	set -x; $(RM) Concat($(LIBPREFIX),libname.$$MAJREV.dylib)	@@\
+	$(RM) Concat($(LIBPREFIX),libname.rev.dylib) Concat($(LIBPREFIX),libname.dylib)
 
 #endif /* SharedDepCplusplusLibraryTarget */
 

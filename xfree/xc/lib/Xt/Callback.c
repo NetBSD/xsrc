@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Callback.c,v 1.9 2003/04/21 16:34:26 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/Callback.c,v 1.10 2004/05/05 00:07:02 dickey Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -82,12 +82,12 @@ static InternalCallbackList* FetchInternalList(
 
     quark = StringToQuark(name);
     LOCK_PROCESS;
-    offsets = (CallbackTable) 
+    offsets = (CallbackTable)
 	widget->core.widget_class->core_class.callback_private;
 
     for (n = (int)(long) *(offsets++); --n >= 0; offsets++)
 	if (quark == (*offsets)->xrm_name) {
-	    retval = (InternalCallbackList *) 
+	    retval = (InternalCallbackList *)
 		((char *) widget - (*offsets)->xrm_offset - 1);
 	    break;
 	}
@@ -96,15 +96,15 @@ static InternalCallbackList* FetchInternalList(
 }
 
 
-void _XtAddCallback(callbacks, callback, closure)
-    InternalCallbackList*   callbacks;
-    XtCallbackProc	    callback;
-    XtPointer		    closure;
+void _XtAddCallback(
+    InternalCallbackList*   callbacks,
+    XtCallbackProc	    callback,
+    XtPointer		    closure)
 {
     register InternalCallbackList icl;
     register XtCallbackList cl;
     register int count;
-    
+
     icl = *callbacks;
     count = icl ? icl->count : 0;
 
@@ -129,14 +129,14 @@ void _XtAddCallback(callbacks, callback, closure)
     cl->closure = closure;
 } /* _XtAddCallback */
 
-void _XtAddCallbackOnce(callbacks, callback, closure)
-    register InternalCallbackList*callbacks;
-    XtCallbackProc	    callback;
-    XtPointer		    closure;
+void _XtAddCallbackOnce(
+    register InternalCallbackList*callbacks,
+    XtCallbackProc	    callback,
+    XtPointer		    closure)
 {
     register XtCallbackList cl = ToList(*callbacks);
     register int i;
-    
+
     for (i=(*callbacks)->count; --i >= 0; cl++)
 	if (cl->callback == callback && cl->closure == closure)
 	    return;
@@ -174,8 +174,8 @@ void XtAddCallback(
 	    call_data.type = XtHaddCallback;
 	    call_data.widget = widget;
 	    call_data.event_data = (XtPointer) name;
-	    XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	    XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
 	}
     }
@@ -199,11 +199,11 @@ static void AddCallbacks(
 	icl->call_state |= _XtCBFreeAfterCalling;
 	icl = (InternalCallbackList) __XtMalloc(sizeof(InternalCallbackRec) +
 					      sizeof(XtCallbackRec) * (i+j));
-	(void) memmove((char *)ToList(*callbacks), (char *)ToList(icl), 
+	(void) memmove((char *)ToList(*callbacks), (char *)ToList(icl),
 		       sizeof(XtCallbackRec) * i);
     } else {
 	icl = (InternalCallbackList) XtRealloc((char *) icl,
-					       sizeof(InternalCallbackRec) + 
+					       sizeof(InternalCallbackRec) +
 					       sizeof(XtCallbackRec) * (i+j));
     }
     *callbacks = icl;
@@ -242,18 +242,17 @@ void XtAddCallbacks(
 	call_data.type = XtHaddCallbacks;
 	call_data.widget = widget;
 	call_data.event_data = (XtPointer) name;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtAddCallbacks */
 
-void _XtRemoveCallback (callbacks, callback, closure)
-    InternalCallbackList   *callbacks;
-    XtCallbackProc	    callback;
-    XtPointer		    closure;
-
+void _XtRemoveCallback (
+    InternalCallbackList   *callbacks,
+    XtCallbackProc	    callback,
+    XtPointer		    closure)
 {
     register InternalCallbackList icl;
     register int i, j;
@@ -334,18 +333,18 @@ void XtRemoveCallback (
 	call_data.type = XtHremoveCallback;
 	call_data.widget = widget;
 	call_data.event_data = (XtPointer) name;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtRemoveCallback */
 
 
-void XtRemoveCallbacks (widget, name, xtcallbacks)
-    Widget	    widget;
-    _Xconst char*   name;
-    XtCallbackList  xtcallbacks;
+void XtRemoveCallbacks (
+    Widget	    widget,
+    _Xconst char*   name,
+    XtCallbackList  xtcallbacks)
 {
     InternalCallbackList *callbacks;
     Widget hookobj;
@@ -409,16 +408,16 @@ void XtRemoveCallbacks (widget, name, xtcallbacks)
 	call_data.type = XtHremoveCallbacks;
 	call_data.widget = widget;
 	call_data.event_data = (XtPointer) name;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtRemoveCallbacks */
 
 
-void _XtRemoveAllCallbacks (callbacks)
-    InternalCallbackList *callbacks;
+void _XtRemoveAllCallbacks (
+    InternalCallbackList *callbacks)
 {
     register InternalCallbackList icl = *callbacks;
 
@@ -431,9 +430,9 @@ void _XtRemoveAllCallbacks (callbacks)
     }
 } /* _XtRemoveAllCallbacks */
 
-void XtRemoveAllCallbacks(widget, name)
-    Widget widget;
-    _Xconst char* name;
+void XtRemoveAllCallbacks(
+    Widget widget,
+    _Xconst char* name)
 {
     InternalCallbackList *callbacks;
     Widget hookobj;
@@ -457,15 +456,15 @@ void XtRemoveAllCallbacks(widget, name)
 	call_data.type = XtHremoveAllCallbacks;
 	call_data.widget = widget;
 	call_data.event_data = (XtPointer) name;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtRemoveAllCallbacks */
 
-InternalCallbackList _XtCompileCallbackList(xtcallbacks)
-    XtCallbackList xtcallbacks;
+InternalCallbackList _XtCompileCallbackList(
+    XtCallbackList xtcallbacks)
 {
     register int n;
     register XtCallbackList xtcl, cl;
@@ -486,8 +485,8 @@ InternalCallbackList _XtCompileCallbackList(xtcallbacks)
 } /* _XtCompileCallbackList */
 
 
-XtCallbackList _XtGetCallbackList(callbacks)
-    InternalCallbackList *callbacks;
+XtCallbackList _XtGetCallbackList(
+    InternalCallbackList *callbacks)
 {
     register int i;
     register InternalCallbackList icl;
@@ -593,10 +592,10 @@ XtCallbackStatus XtHasCallbacks(
 } /* XtHasCallbacks */
 
 
-void XtCallCallbackList(widget, callbacks, call_data)
-    Widget widget;
-    XtCallbackList callbacks;
-    XtPointer call_data;
+void XtCallCallbackList(
+    Widget widget,
+    XtCallbackList callbacks,
+    XtPointer call_data)
 {
     register InternalCallbackList icl;
     register XtCallbackList cl;
@@ -629,11 +628,11 @@ void XtCallCallbackList(widget, callbacks, call_data)
     UNLOCK_APP(app);
 } /* XtCallCallbackList */
 
-void _XtPeekCallback(widget, callbacks, callback, closure)
-    Widget widget;
-    XtCallbackList callbacks;
-    XtCallbackProc *callback;
-    XtPointer *closure;
+void _XtPeekCallback(
+    Widget widget,
+    XtCallbackList callbacks,
+    XtCallbackProc *callback,
+    XtPointer *closure)
 {
     register InternalCallbackList icl = (InternalCallbackList) callbacks;
     register XtCallbackList cl;
@@ -648,11 +647,11 @@ void _XtPeekCallback(widget, callbacks, callback, closure)
     return;
 }
 
-void _XtCallConditionalCallbackList(widget, callbacks, call_data, cond_proc)
-    Widget widget;
-    XtCallbackList callbacks;
-    XtPointer call_data;
-    _XtConditionProc cond_proc;
+void _XtCallConditionalCallbackList(
+    Widget widget,
+    XtCallbackList callbacks,
+    XtPointer call_data,
+    _XtConditionProc cond_proc)
 {
     register InternalCallbackList icl;
     register XtCallbackList cl;

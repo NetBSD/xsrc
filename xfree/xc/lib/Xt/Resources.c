@@ -59,7 +59,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xt/Resources.c,v 1.12 2003/08/27 21:39:38 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.13 2004/05/05 00:07:03 dickey Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"
@@ -82,10 +82,10 @@ char *Cjumpp = (char *) Cjump;
 void Cjump() {}
 #endif
 
-void _XtCopyFromParent(widget, offset, value)
-    Widget      widget;
-    int		offset;
-    XrmValue    *value;
+void _XtCopyFromParent(
+    Widget      widget,
+    int		offset,
+    XrmValue    *value)
 {
     if (widget->core.parent == NULL) {
 	XtAppWarningMsg(XtWidgetToApplicationContext(widget),
@@ -104,10 +104,10 @@ void _XtCopyFromParent(widget, offset, value)
 
 #ifdef UNALIGNED
 
-void _XtCopyFromArg(src, dst, size)
-    XtArgVal src;
-    char* dst;
-    register unsigned int size;
+void _XtCopyFromArg(
+    XtArgVal src,
+    char* dst,
+    register unsigned int size)
 {
     if	    (size == sizeof(long))	*(long *)dst = (long)src;
     else if (size == sizeof(short))	*(short *)dst = (short)src;
@@ -121,10 +121,10 @@ void _XtCopyFromArg(src, dst, size)
 	(void) memmove((char *) dst, (char *) &src, (int) size);
 } /* _XtCopyFromArg */
 
-void _XtCopyToArg(src, dst, size)
-    char* src;
-    XtArgVal *dst;
-    register unsigned int size;
+void _XtCopyToArg(
+    char* src,
+    XtArgVal *dst,
+    register unsigned int size)
 {
     if (! (*dst)) {
 #ifdef GETVALUES_BUG
@@ -155,10 +155,10 @@ void _XtCopyToArg(src, dst, size)
     }
 } /* _XtCopyToArg */
 
-static void CopyToArg(src, dst, size)
-    char* src;
-    XtArgVal *dst;
-    register unsigned int size;
+static void CopyToArg(
+    char* src,
+    XtArgVal *dst,
+    register unsigned int size)
 {
     if (! (*dst)) {
 	/* old GetValues semantics (storing directly into arglists) are bad,
@@ -185,10 +185,10 @@ static void CopyToArg(src, dst, size)
 } /* CopyToArg */
 
 #else
-void _XtCopyFromArg(src, dst, size)
-    XtArgVal src;
-    char* dst;
-    register unsigned int size;
+void _XtCopyFromArg(
+    XtArgVal src,
+    char* dst,
+    register unsigned int size)
 {
     if (size > sizeof(XtArgVal))
 	(void) memmove((char *) dst, (char *)  src, (int) size);
@@ -218,10 +218,10 @@ void _XtCopyFromArg(src, dst, size)
     }
 } /* _XtCopyFromArg */
 
-void _XtCopyToArg(src, dst, size)
-    char* src;
-    XtArgVal *dst;
-    register unsigned int size;
+void _XtCopyToArg(
+    char* src,
+    XtArgVal *dst,
+    register unsigned int size)
 {
     if (!*dst) {
 #ifdef GETVALUES_BUG
@@ -263,10 +263,10 @@ void _XtCopyToArg(src, dst, size)
     }
 } /* _XtCopyToArg */
 
-static void CopyToArg(src, dst, size)
-    char* src;
-    XtArgVal *dst;
-    register unsigned int size;
+static void CopyToArg(
+    char* src,
+    XtArgVal *dst,
+    register unsigned int size)
 {
     if (!*dst) {
 	/* old GetValues semantics (storing directly into arglists) are bad,
@@ -305,8 +305,8 @@ static void CopyToArg(src, dst, size)
 
 #endif
 
-static Cardinal CountTreeDepth(w)
-    Widget w;
+static Cardinal CountTreeDepth(
+    Widget w)
 {
     Cardinal count;
 
@@ -316,10 +316,10 @@ static Cardinal CountTreeDepth(w)
     return count;
 }
 
-static void GetNamesAndClasses(w, names, classes)
-    register Widget	  w;
-    register XrmNameList  names;
-    register XrmClassList classes;
+static void GetNamesAndClasses(
+    register Widget	  w,
+    register XrmNameList  names,
+    register XrmClassList classes)
 {
     register Cardinal length, j;
     register XrmQuark t;
@@ -359,9 +359,9 @@ static void GetNamesAndClasses(w, names, classes)
 /* All atoms are replaced by quarks, and offsets are -offset-1 to	*/
 /* indicate that this list has been compiled already			*/
 
-void _XtCompileResourceList(resources, num_resources)
-    register XtResourceList resources;
-    	     Cardinal       num_resources;
+void _XtCompileResourceList(
+    register XtResourceList resources,
+    	     Cardinal       num_resources)
 {
     register Cardinal count;
 
@@ -381,9 +381,9 @@ void _XtCompileResourceList(resources, num_resources)
 } /* _XtCompileResourceList */
 
 /* Like _XtCompileResourceList, but strings are not permanent */
-static void  XrmCompileResourceListEphem(resources, num_resources)
-    register XtResourceList resources;
-    	     Cardinal       num_resources;
+static void  XrmCompileResourceListEphem(
+    register XtResourceList resources,
+    	     Cardinal       num_resources)
 {
     register Cardinal count;
 
@@ -400,9 +400,9 @@ static void  XrmCompileResourceListEphem(resources, num_resources)
 #undef xrmres
 } /* XrmCompileResourceListEphem */
 
-static void BadSize(size, name)
-    Cardinal size;
-    XrmQuark name;
+static void BadSize(
+    Cardinal size,
+    XrmQuark name)
 {
     String params[2];
     Cardinal num_params = 2;
@@ -422,13 +422,12 @@ static void BadSize(size, name)
  * At the same time, add a level of indirection to the XtResourceList to
  * create and XrmResourceList.
  */
-void _XtDependencies(class_resp, class_num_resp, super_res, super_num_res,
-		     super_widget_size)
-    XtResourceList  *class_resp;	/* VAR */
-    Cardinal	    *class_num_resp;    /* VAR */
-    XrmResourceList *super_res;
-    Cardinal	    super_num_res;
-    Cardinal	    super_widget_size;
+void _XtDependencies(
+    XtResourceList  *class_resp,	/* VAR */
+    Cardinal	    *class_num_resp,    /* VAR */
+    XrmResourceList *super_res,
+    Cardinal	    super_num_res,
+    Cardinal	    super_widget_size)
 {
     register XrmResourceList *new_res;
 	     Cardinal	     new_num_res;
@@ -453,7 +452,7 @@ void _XtDependencies(class_resp, class_num_resp, super_res, super_num_res,
     /* Put pointers to class resource entries into new_res */
     new_next = super_num_res;
     for (i = 0; i < class_num_res; i++) {
-	if (-class_res[i].xrm_offset-1 < super_widget_size) {
+	if ((Cardinal)(-class_res[i].xrm_offset-1) < super_widget_size) {
 	    /* Probably an override of superclass resources--look for overlap */
 	    for (j = 0; j < super_num_res; j++) {
 		if (class_res[i].xrm_offset == new_res[j]->xrm_offset) {
@@ -487,8 +486,8 @@ NextResource:;
 } /* _XtDependencies */
 
 
-void _XtResourceDependencies(wc)
-    WidgetClass wc;
+void _XtResourceDependencies(
+    WidgetClass wc)
 {
     WidgetClass sc;
 
@@ -506,8 +505,8 @@ void _XtResourceDependencies(wc)
     }
 } /* _XtResourceDependencies */
 
-void _XtConstraintResDependencies(wc)
-    ConstraintWidgetClass wc;
+void _XtConstraintResDependencies(
+    ConstraintWidgetClass wc)
 {
     ConstraintWidgetClass sc;
 
@@ -528,11 +527,11 @@ void _XtConstraintResDependencies(wc)
 
 
     
-XrmResourceList* _XtCreateIndirectionTable (resources, num_resources)
-    XtResourceList  resources;
-    Cardinal	    num_resources;
+XrmResourceList* _XtCreateIndirectionTable (
+    XtResourceList  resources,
+    Cardinal	    num_resources)
 {
-    register int idx;
+    register Cardinal idx;
     XrmResourceList* table;
 
     table = (XrmResourceList*)__XtMalloc(num_resources * sizeof(XrmResourceList));
@@ -541,21 +540,19 @@ XrmResourceList* _XtCreateIndirectionTable (resources, num_resources)
     return table;
 }
 
-static XtCacheRef *GetResources(widget, base, names, classes,
-	table, num_resources, quark_args, args, num_args,
-	typed_args, pNumTypedArgs, tm_hack)
-    Widget	    widget;	    /* Widget resources are associated with */
-    char*	    base;	    /* Base address of memory to write to   */
-    XrmNameList     names;	    /* Full inheritance name of widget      */
-    XrmClassList    classes;	    /* Full inheritance class of widget     */
-    XrmResourceList*  table;	    /* The list of resources required.      */
-    Cardinal	    num_resources;  /* number of items in resource list     */
-    XrmQuarkList    quark_args;     /* Arg names quarkified		    */
-    ArgList	    args;	    /* ArgList to override resources	    */
-    Cardinal	    num_args;       /* number of items in arg list	    */
-    XtTypedArgList  typed_args;	    /* Typed arg list to override resources */
-    Cardinal*	    pNumTypedArgs;  /* number of items in typed arg list    */
-    Boolean	    tm_hack;	    /* do baseTranslations		    */
+static XtCacheRef *GetResources(
+    Widget	    widget,	    /* Widget resources are associated with */
+    char*	    base,	    /* Base address of memory to write to   */
+    XrmNameList     names,	    /* Full inheritance name of widget      */
+    XrmClassList    classes,	    /* Full inheritance class of widget     */
+    XrmResourceList*  table,	    /* The list of resources required.      */
+    unsigned	    num_resources,  /* number of items in resource list     */
+    XrmQuarkList    quark_args,     /* Arg names quarkified		    */
+    ArgList	    args,	    /* ArgList to override resources	    */
+    unsigned	    num_args,       /* number of items in arg list	    */
+    XtTypedArgList  typed_args,	    /* Typed arg list to override resources */
+    Cardinal*	    pNumTypedArgs,  /* number of items in typed arg list    */
+    Boolean	    tm_hack)	    /* do baseTranslations		    */
 {
 /*
  * assert: *pNumTypedArgs == 0 if num_args > 0
@@ -612,11 +609,11 @@ static XtCacheRef *GetResources(widget, base, names, classes,
 	register ArgList	    arg;
 	register XtTypedArgList	    typed_arg;
 	register XrmName	    argName;
-	register int	    j;
+	register Cardinal	    j;
 	register int	    i;
 	register XrmResourceList rx;
 	register XrmResourceList *res;
-	for (arg = args, i = 0; i < num_args; i++, arg++) {
+	for (arg = args, i = 0; (Cardinal)i < num_args; i++, arg++) {
 	    argName = quark_args[i];
 	    if (argName == QinitialResourcesPersistent) {
 		persistent_resources = (Boolean)arg->value;
@@ -684,7 +681,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
     /* geez, this is an ugly mess */
     if (XtIsShell(widget)) {
 	register XrmResourceList  *res;
-	register int		  j;
+	register Cardinal	  j;
 	Screen *oldscreen = widget->core.screen;
 
 	/* look up screen resource first, since real rdb depends on it */
@@ -698,7 +695,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
 
 		from_type = StringToQuark(arg->type);
 		from_val.size = arg->size;
-		if ((from_type == QString) || (arg->size > sizeof(XtArgVal)))
+		if ((from_type == QString) || ((unsigned) arg->size > sizeof(XtArgVal)))
 		    from_val.addr = (XPointer)arg->value;
 		else
 		    from_val.addr = (XPointer)&arg->value;
@@ -746,7 +743,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
     {
 	register XrmResourceList  rx;
 	register XrmResourceList  *res;
-	register int		  j;
+	register Cardinal	  j;
 	register XrmRepresentation xrm_type;
 	register XrmRepresentation xrm_default_type;
 	char	char_val;
@@ -792,7 +789,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
                  
 		from_type = StringToQuark(arg->type);
     		from_val.size = arg->size;
-		if ((from_type == QString) || (arg->size > sizeof(XtArgVal)))
+		if ((from_type == QString) || ((unsigned) arg->size > sizeof(XtArgVal)))
         	    from_val.addr = (XPointer)arg->value;
 	        else
             	    from_val.addr = (XPointer)&arg->value;
@@ -965,7 +962,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
 	    }
 	}
     }
-    if (num_typed_args != *pNumTypedArgs) *pNumTypedArgs = num_typed_args;
+    if ((Cardinal)num_typed_args != *pNumTypedArgs) *pNumTypedArgs = num_typed_args;
     if (searchList != stackSearchList) XtFree((char*)searchList);
     if (!cache_ptr)
 	cache_ptr = cache_base;
@@ -982,15 +979,14 @@ static XtCacheRef *GetResources(widget, base, names, classes,
 
 
 
-static void CacheArgs(args, num_args, typed_args, num_typed_args, quark_cache, 
-	num_quarks, pQuarks)
-    ArgList	    args;
-    Cardinal	    num_args;
-    XtTypedArgList  typed_args;
-    Cardinal	    num_typed_args;
-    XrmQuarkList    quark_cache;
-    Cardinal	    num_quarks;
-    XrmQuarkList    *pQuarks;       /* RETURN */
+static void CacheArgs(
+    ArgList	    args,
+    Cardinal	    num_args,
+    XtTypedArgList  typed_args,
+    Cardinal	    num_typed_args,
+    XrmQuarkList    quark_cache,
+    Cardinal	    num_quarks,
+    XrmQuarkList    *pQuarks)       /* RETURN */
 {
     register XrmQuarkList   quarks;
     register Cardinal       i;
@@ -1019,12 +1015,12 @@ static void CacheArgs(args, num_args, typed_args, num_typed_args, quark_cache,
 	  if (cache != pointer) XtFree((char *)pointer)
 
 
-XtCacheRef *_XtGetResources(w, args, num_args, typed_args, num_typed_args)
-    register 	Widget	  	w;
-    		ArgList	  	args;
-    		Cardinal  	num_args;
-		XtTypedArgList	typed_args;
-		Cardinal*	num_typed_args;
+XtCacheRef *_XtGetResources(
+    register 	Widget	  	w,
+    		ArgList	  	args,
+    		Cardinal  	num_args,
+		XtTypedArgList	typed_args,
+		Cardinal*	num_typed_args)
 {
     XrmName	    *names, names_s[50];
     XrmClass	    *classes, classes_s[50];
@@ -1142,16 +1138,15 @@ void XtGetSubresources (
 }
 
 
-void _XtGetApplicationResources
-	(w, base, resources, num_resources, args, num_args, typed_args, num_typed_args)
-    Widget	    w;		  /* Application shell widget       */
-    XtPointer	    base;	  /* Base address to write to       */
-    XtResourceList  resources;	  /* resource list for subobject    */
-    Cardinal	    num_resources;
-    ArgList	    args;	  /* arg list to override resources */
-    Cardinal	    num_args;
-    XtTypedArgList  typed_args;
-    Cardinal	    num_typed_args;
+void _XtGetApplicationResources (
+    Widget	    w,		  /* Application shell widget       */
+    XtPointer	    base,	  /* Base address to write to       */
+    XtResourceList  resources,	  /* resource list for subobject    */
+    Cardinal	    num_resources,
+    ArgList	    args,	  /* arg list to override resources */
+    Cardinal	    num_args,
+    XtTypedArgList  typed_args,
+    Cardinal	    num_typed_args)
 {
     XrmName	    *names, names_s[50];
     XrmClass	    *classes, classes_s[50];
@@ -1220,21 +1215,20 @@ void _XtGetApplicationResources
     UNLOCK_APP(app);
 }
 
-void XtGetApplicationResources
-	(w, base, resources, num_resources, args, num_args)
-    Widget	    w;		  /* Application shell widget       */
-    XtPointer	    base;	  /* Base address to write to       */
-    XtResourceList  resources;	  /* resource list for subobject    */
-    Cardinal	    num_resources;
-    ArgList	    args;	  /* arg list to override resources */
-    Cardinal	    num_args;
+void XtGetApplicationResources (
+    Widget	    w,		  /* Application shell widget       */
+    XtPointer	    base,	  /* Base address to write to       */
+    XtResourceList  resources,	  /* resource list for subobject    */
+    Cardinal	    num_resources,
+    ArgList	    args,	  /* arg list to override resources */
+    Cardinal	    num_args)
 {
     _XtGetApplicationResources(w, base, resources, num_resources, args, num_args, NULL, 0);
 }
 
 static Boolean initialized = FALSE;
 
-void _XtResourceListInitialize()
+void _XtResourceListInitialize(void)
 {
     LOCK_PROCESS;
     if (initialized) {

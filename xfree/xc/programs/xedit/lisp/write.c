@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/write.c,v 1.32 2003/05/27 22:27:04 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/write.c,v 1.33 2004/10/23 15:29:33 dawes Exp $ */
 
 #include "lisp/write.h"
 #include "lisp/hash.h"
@@ -980,7 +980,6 @@ write_again:
 	    paren = 1;
 	    object = object->data.comma.eval;
 	    goto write_again;
-	    break;
 	case LispFunctionQuote_t:
 	    length += LispWriteStr(stream, "#'", 2);
 	    paren = 1;

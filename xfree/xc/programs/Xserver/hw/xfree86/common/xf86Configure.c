@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.81 2003/10/29 04:17:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.85 2005/01/26 05:31:48 dawes Exp $ */
 /*
  * Copyright 2000-2002 by Alan Hourihane, Flint Mountain, North Wales.
  *
@@ -23,6 +23,52 @@
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  *
  */
+/*
+ * Copyright (c) 2004-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -43,7 +89,6 @@
 #define IN_XSERVER
 #include "xf86Parser.h"
 #include "xf86tokens.h"
-#include "Configint.h"
 #include "vbe.h"
 #include "xf86DDC.h"
 #if defined(__sparc__) && !defined(__OpenBSD__)
@@ -71,7 +116,7 @@ Bool foundMouse = FALSE;
 #if defined(__UNIXOS2__)
 #define DFLT_MOUSE_DEV "mouse$"
 #define DFLT_MOUSE_PROTO "OS2Mouse"
-#elif defined(SCO)
+#elif defined(__SCO__)
 static char *DFLT_MOUSE_PROTO = "OSMouse";
 #elif defined(QNX4)
 static char *DFLT_MOUSE_PROTO = "OSMouse";
@@ -250,11 +295,16 @@ xf86AddDeviceToConfigure(const char *driver, pciVideoPtr pVideo, int chipset)
 				       pVideo, chipset);
 }
 
+#define configPrologue(type) \
+    type ptr; \
+    if (!(ptr = xf86confcalloc(1, sizeof(*ptr)))) \
+	return NULL;
+
 static XF86ConfInputPtr
 configureInputSection (void)
 {
     XF86ConfInputPtr mouse = NULL;
-    parsePrologue (XF86ConfInputPtr, XF86ConfInputRec)
+    configPrologue(XF86ConfInputPtr)
 
     ptr->inp_identifier = "Keyboard0";
     ptr->inp_driver = "keyboard";
@@ -285,7 +335,7 @@ configureInputSection (void)
 	}
 #endif
 
-#ifndef SCO
+#ifndef __SCO__
 	fd = open(DFLT_MOUSE_DEV, 0);
 	if (fd != -1) {
 	    foundMouse = TRUE;
@@ -302,7 +352,7 @@ configureInputSection (void)
     mouse->inp_driver = "mouse";
     mouse->inp_option_lst = 
 		xf86addNewOption(mouse->inp_option_lst, "Protocol", DFLT_MOUSE_PROTO);
-#ifndef SCO
+#ifndef __SCO__
     mouse->inp_option_lst = 
 		xf86addNewOption(mouse->inp_option_lst, "Device", DFLT_MOUSE_DEV);
 #endif
@@ -314,7 +364,7 @@ static XF86ConfDRIPtr
 configureDRISection (void)
 {
 #ifdef NOTYET
-    parsePrologue (XF86ConfDRIPtr, XF86ConfDRIRec)
+    configPrologue(XF86ConfDRIPtr)
 
     return ptr;
 #else
@@ -325,12 +375,7 @@ configureDRISection (void)
 static XF86ConfVendorPtr
 configureVendorSection (void)
 {
-    parsePrologue (XF86ConfVendorPtr, XF86ConfVendorRec)
-
     return NULL;
-#if 0
-    return ptr;
-#endif
 }
 
 static XF86ConfScreenPtr
@@ -338,7 +383,7 @@ configureScreenSection (int screennum)
 {
     int i;
     int depths[] = { 1, 4, 8, 15, 16, 24/*, 32*/ };
-    parsePrologue (XF86ConfScreenPtr, XF86ConfScreenRec)
+    configPrologue(XF86ConfScreenPtr)
 
     ptr->scrn_identifier = xf86confmalloc(18);
     sprintf(ptr->scrn_identifier, "Screen%d", screennum);
@@ -396,7 +441,7 @@ configureDeviceSection (int screennum)
 #ifdef DO_FBDEV_PROBE
     Bool foundFBDEV = FALSE;
 #endif
-    parsePrologue (XF86ConfDevicePtr, XF86ConfDeviceRec)
+    configPrologue(XF86ConfDevicePtr)
 
     /* Move device info to parser structure */
     sprintf(identifier, "Card%d", screennum);
@@ -497,7 +542,7 @@ static XF86ConfLayoutPtr
 configureLayoutSection (void)
 {
     int scrnum = 0;
-    parsePrologue (XF86ConfLayoutPtr, XF86ConfLayoutRec)
+    configPrologue(XF86ConfLayoutPtr)
 
     ptr->lay_identifier = "XFree86 Configured";
 
@@ -558,7 +603,7 @@ static XF86ConfModesPtr
 configureModesSection (void)
 {
 #ifdef NOTYET
-    parsePrologue (XF86ConfModesPtr, XF86ConfModesRec)
+    configPrologue(XF86ConfModesPtr)
 
     return ptr;
 #else
@@ -569,20 +614,13 @@ configureModesSection (void)
 static XF86ConfVideoAdaptorPtr
 configureVideoAdaptorSection (void)
 {
-    parsePrologue (XF86ConfVideoAdaptorPtr, XF86ConfVideoAdaptorRec)
-
     return NULL;
-#if 0
-    return ptr;
-#endif
 }
 
 static XF86ConfFlagsPtr
 configureFlagsSection (void)
 {
-    parsePrologue (XF86ConfFlagsPtr, XF86ConfFlagsRec)
-
-    return ptr;
+    return NULL;
 }
 
 static XF86ConfModulePtr
@@ -599,10 +637,8 @@ configureModuleSection (void)
 	"fonts",
 	NULL
     };
-#endif
-    parsePrologue (XF86ConfModulePtr, XF86ConfModuleRec)
+    configPrologue(XF86ConfModulePtr)
 
-#ifdef XFree86LOADER
     elist = LoaderListDirs(esubdirs, NULL);
     if (elist) {
 	for (el = elist; *el; el++) {
@@ -643,19 +679,21 @@ configureModuleSection (void)
     	}
 	xfree(elist);
     }
+    return ptr;
+#else
+    return NULL;
 #endif
 
-    return ptr;
 }
 
 static XF86ConfFilesPtr
 configureFilesSection (void)
 {
-    parsePrologue (XF86ConfFilesPtr, XF86ConfFilesRec)
+    configPrologue(XF86ConfFilesPtr)
 
 #ifdef XFree86LOADER
-   if (xf86ModulePath)
-       ptr->file_modulepath = strdup(xf86ModulePath);
+   if (xf86FilePaths->modulePath)
+       ptr->file_modulepath = strdup(xf86FilePaths->modulePath);
 #endif
    if (defaultFontPath)
        ptr->file_fontpath = strdup(defaultFontPath);
@@ -668,7 +706,7 @@ configureFilesSection (void)
 static XF86ConfMonitorPtr
 configureMonitorSection (int screennum)
 {
-    parsePrologue (XF86ConfMonitorPtr, XF86ConfMonitorRec)
+    configPrologue(XF86ConfMonitorPtr)
 
     ptr->mon_identifier = xf86confmalloc(19);
     sprintf(ptr->mon_identifier, "Monitor%d", screennum);
@@ -687,7 +725,7 @@ configureDDCMonitorSection (int screennum)
     char displaySize_string[displaySizeMaxLen];
     int displaySizeLen;
 
-    parsePrologue (XF86ConfMonitorPtr, XF86ConfMonitorRec)
+    configPrologue(XF86ConfMonitorPtr)
 
     ptr->mon_identifier = xf86confmalloc(19);
     sprintf(ptr->mon_identifier, "Monitor%d", screennum);
@@ -760,7 +798,7 @@ DoConfigure()
     char *home = NULL;
     char *filename = NULL;
     XF86ConfigPtr xf86config = NULL;
-    char **vlist, **vl;
+    const char **vlist, **vl;
     int *dev2screen;
 
     vlist = xf86DriverlistFromCompile();
@@ -826,13 +864,13 @@ DoConfigure()
 			    (glp)xf86config->conf_screen_lst, (glp)ScreenPtr);
     }
 
-    xf86config->conf_files = configureFilesSection();
-    xf86config->conf_modules = configureModuleSection();
-    xf86config->conf_flags = configureFlagsSection();
+    xf86config->conf_files_lst = configureFilesSection();
+    xf86config->conf_modules_lst = configureModuleSection();
+    xf86config->conf_flags_lst = configureFlagsSection();
     xf86config->conf_videoadaptor_lst = configureVideoAdaptorSection();
     xf86config->conf_modes_lst = configureModesSection();
     xf86config->conf_vendor_lst = configureVendorSection();
-    xf86config->conf_dri = configureDRISection();
+    xf86config->conf_dri_lst = configureDRISection();
     xf86config->conf_input_lst = configureInputSection();
     xf86config->conf_layout_lst = configureLayoutSection();
 
@@ -842,7 +880,7 @@ DoConfigure()
 #ifdef __UNIXOS2__
 #define PATH_MAX 2048
 #endif
-#if defined(SCO) || defined(SCO325)
+#if defined(__SCO__)
 #define PATH_MAX 1024
 #endif
         const char* configfile = XF86CONFIGFILE".new";
@@ -868,9 +906,10 @@ DoConfigure()
     xf86writeConfigFile(filename, xf86config);
 
     xf86DoConfigurePass1 = FALSE;
-    /* Try to get DDC information filled in */
+    /* Try to get DDC information filled in. */
     xf86ConfigFile = filename;
-    if (xf86HandleConfigFile(FALSE) != CONFIG_OK) {
+    if (xf86LoadConfigFile(NULL, FALSE) != CONFIG_OK ||
+	xf86ProcessConfiguration() != CONFIG_OK) {
 	goto bail;
     }
 
@@ -966,11 +1005,11 @@ DoConfigure()
 
     ErrorF("\n");
 
-#ifdef SCO
+#ifdef __SCO__
     ErrorF("\nXFree86 is using the kernel event driver to access the mouse.\n"
 	    "If you wish to use the internal XFree86 mouse drivers, please\n"
 	    "edit the file and correct the Device.\n");
-#else /* !SCO */
+#else /* !__SCO__ */
     if (!foundMouse) {
 	ErrorF("\nXFree86 is not able to detect your mouse.\n"
 		"Edit the file and correct the Device.\n");
@@ -982,7 +1021,7 @@ DoConfigure()
 		"the protocol.\n",DFLT_MOUSE_DEV);
 #endif
     }
-#endif /* !SCO */
+#endif /* !__SCO__ */
 
     if (xf86NumScreens > 1) {
 	ErrorF("\nXFree86 has configured a multihead system, please check your config.\n");

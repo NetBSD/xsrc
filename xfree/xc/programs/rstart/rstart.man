@@ -19,7 +19,7 @@
 .\" REGARDLESS OF WHETHER IN AN ACTION IN CONTRACT, TORT OR NEGLIGENCE, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $XFree86: xc/programs/rstart/rstart.man,v 1.7 2003/05/29 21:48:11 herrb Exp $
+.\" $XFree86: xc/programs/rstart/rstart.man,v 1.8 2005/02/11 03:03:14 dawes Exp $
 .\"
 .hy 0		\" I hate hyphenation.
 .de EX		\"Begin example
@@ -36,7 +36,7 @@
 .if t .sp .5
 ..
 .ta .3i .6i .9i 1.2i 1.5i 1.8i
-.TH RSTART 1 __xorgversion__
+.TH RSTART 1 __vendorversion__
 .SH NAME
 rstart - a sample implementation of a Remote Start client
 .SH SYNOPSIS

@@ -1,8 +1,50 @@
-XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:50 cpqbld Exp $
-
-
-
-XCOMM $XFree86: xc/doc/specs/programs/Imakefile,v 1.23 2003/11/23 05:40:35 dawes Exp $
+XCOMM $XFree86: xc/doc/specs/programs/Imakefile,v 1.27 2005/03/12 23:13:28 dawes Exp $
+/*
+ * Copyright (c) 2000-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* does not include manual pages under util (not X programs)
    or any of the library function manual pages under doc/man */
@@ -12,7 +54,6 @@ XFREE86_MANUALS = \
   $(TOP)/programs/Xserver/hw/xfree86/XF86Config.man \
   $(TOP)/programs/Xserver/hw/xfree86/xf86config/xf86config.man \
   $(TOP)/programs/Xserver/hw/xfree86/xf86cfg/xf86cfg.man \
-  $(TOP)/programs/Xserver/hw/xfree86/reconfig/reconfig.man \
   $(TOP)/programs/Xserver/hw/xfree86/getconfig/getconfig.man \
   $(TOP)/programs/Xserver/hw/xfree86/getconfig/cfg.man \
   $(TOP)/programs/Xserver/hw/xfree86/drivers/apm/apm.man \
@@ -64,6 +105,7 @@ XFREE86_MANUALS = \
   $(TOP)/programs/Xserver/hw/xfree86/input/dmc/dmc.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/dynapro/dynapro.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/elographics/elographics.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/eloinput/eloinput.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/fpit/fpit.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/jamstudio/js_x.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/keyboard/kbd.man \
@@ -80,9 +122,9 @@ XFREE86_MANUALS = \
   $(TOP)/programs/Xserver/hw/xfree86/input/wacom/wacom.man \
   $(TOP)/programs/Xserver/hw/darwin/XDarwin.man \
   $(TOP)/programs/Xserver/hw/darwin/utils/dumpkeymap.man \
-  $(TOP)/programs/Xserver/hw/kdrive/Xkdrive.man \
-  $(TOP)/programs/Xserver/hw/kdrive/vesa/Xvesa.man \
-  $(TOP)/programs/Xserver/hw/kdrive/fbdev/Xfbdev.man \
+  $(TOP)/programs/Xserver/hw/tinyx/TinyX.man \
+  $(TOP)/programs/Xserver/hw/tinyx/vesa/Xvesa.man \
+  $(TOP)/programs/Xserver/hw/tinyx/fbdev/Xfbdev.man \
   $(TOP)/lib/Xxf86dga/XDGA.man \
   $(TOP)/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man \
   $(TOP)/programs/Xserver/hw/xfree86/doc/man/XF86VM.man
@@ -94,7 +136,6 @@ MANUALS = \
   $(XFREE86_MANUALS) \
   $(TOP)/doc/man/general/X.man \
   $(TOP)/doc/man/general/Standards.man \
-  $(TOP)/doc/man/general/Consortium.man \
   $(TOP)/doc/man/general/security.man \
   $(TOP)/programs/appres/appres.man \
   $(TOP)/programs/bdftopcf/bdftopcf.man \

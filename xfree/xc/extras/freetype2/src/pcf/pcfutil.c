@@ -23,11 +23,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.5 2003/12/22 17:48:01 tsi Exp $ */
+/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.6 2004/04/26 16:15:54 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
  */
+
+/* Modified for use with FreeType */
 
 
 #include <ft2build.h>
@@ -130,91 +132,5 @@ in this Software without prior written authorization from The Open Group.
     }
   }
 
-
-# ifdef UNUSED
-  /*
-   *  Repad a bitmap.
-   */
-
-  static int
-  RepadBitmap( char*         pSrc,
-               char*         pDst,
-               unsigned int  srcPad,
-               unsigned int  dstPad,
-               int           width,
-               int           height )
-  {
-    int   srcWidthBytes, dstWidthBytes;
-    int   row, col;
-    char  *pTmpSrc, *pTmpDst;
-
-
-    switch ( srcPad )
-    {
-    case 1:
-      srcWidthBytes = ( width + 7 ) >> 3;
-      break;
-
-    case 2:
-      srcWidthBytes = ( ( width + 15 ) >> 4 ) << 1;
-      break;
-
-    case 4:
-      srcWidthBytes = ( ( width + 31 ) >> 5 ) << 2;
-      break;
-
-    case 8:
-      srcWidthBytes = ( ( width + 63 ) >> 6 ) << 3;
-      break;
-
-    default:
-      return 0;
-    }
-
-    switch ( dstPad )
-    {
-    case 1:
-      dstWidthBytes = ( width + 7 ) >> 3;
-      break;
-
-    case 2:
-      dstWidthBytes = ( ( width + 15 ) >> 4 ) << 1;
-      break;
-
-    case 4:
-      dstWidthBytes = ( ( width + 31 ) >> 5 ) << 2;
-      break;
-
-    case 8:
-      dstWidthBytes = ( ( width + 63 ) >> 6 ) << 3;
-      break;
-
-    default:
-      return 0;
-    }
-
-    width = srcWidthBytes;
-    if ( width > dstWidthBytes )
-      width = dstWidthBytes;
-
-    pTmpSrc= pSrc;
-    pTmpDst= pDst;
-
-    for ( row = 0; row < height; row++ )
-    {
-      for ( col = 0; col < width; col++ )
-        *pTmpDst++ = *pTmpSrc++;
-
-      while ( col < dstWidthBytes )
-      {
-        *pTmpDst++ = '\0';
-        col++;
-      }
-      pTmpSrc += srcWidthBytes - width;
-    }
-
-    return dstWidthBytes * height;
-  }
-# endif
 
 /* END */

@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_os_netbsd.h,v 1.12 2005/03/03 03:35:41 dawes Exp $ */
+
 /**
  * \file drm_os_netbsd.h
  * OS-specific #defines for NetBSD
@@ -110,8 +112,9 @@ extern struct cfdriver DRM(cd);
 /* Currently our DRMFILE (filp) is a void * which is actually the pid
  * of the current process.  It should be a per-open unique pointer, but
  * code for that is not yet written */
+#define DEV_T			dev_t
 #define DRMFILE			void *
-#define DRM_IOCTL_ARGS		dev_t kdev, u_long cmd, caddr_t data, int flags, DRM_STRUCTPROC *p, DRMFILE filp
+#define DRM_IOCTL_ARGS		DEV_T kdev, u_long cmd, caddr_t data, int flags, DRM_STRUCTPROC *p, DRMFILE filp
 #define DRM_LOCK()
 #define DRM_UNLOCK()
 #define DRM_SUSER(p)		suser(p->p_ucred, &p->p_acflag)
@@ -377,7 +380,7 @@ extern dev_type_close(DRM(close));
 extern dev_type_read(DRM(read));
 extern dev_type_poll(DRM(poll));
 extern dev_type_mmap(DRM(mmap));
-extern int		DRM(open_helper)(dev_t kdev, int flags, int fmt, 
+extern int		DRM(open_helper)(DEV_T kdev, int flags, int fmt, 
 					 DRM_STRUCTPROC *p, drm_device_t *dev);
 extern drm_file_t	*DRM(find_file_by_proc)(drm_device_t *dev, 
 					 DRM_STRUCTPROC *p);

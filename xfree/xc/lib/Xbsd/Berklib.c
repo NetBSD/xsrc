@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xbsd/Berklib.c,v 3.9 2001/12/14 19:54:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xbsd/Berklib.c,v 3.10 2004/04/03 22:26:21 dawes Exp $ */
 
 
 /*
@@ -52,7 +52,7 @@ from The Open Group.
 #define WANT_RANDOM
 #endif
 
-#if defined(SVR4) && !defined(SCO325)
+#if defined(SVR4) && !defined(__SCO__)
 #define WANT_BFUNCS
 #define WANT_FFS
 #define WANT_RANDOM
@@ -64,7 +64,7 @@ from The Open Group.
 
 #ifdef SYSV
 #ifdef i386
-#ifndef SCO
+#ifndef __SCO__
 #define WANT_FFS
 #define WANT_MEMMOVE
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/palmax/xf86Palmax.c,v 1.2 2003/06/23 17:35:49 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/palmax/xf86Palmax.c,v 1.3 2004/04/26 22:26:11 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -7,9 +7,7 @@
 #include "exevents.h"
 #include "os.h"
 
-#ifdef XFree86LOADER
 #include "xf86Module.h"
-#endif
 
 /*
  ***************************************************************************

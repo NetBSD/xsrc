@@ -1,6 +1,4 @@
 /*
- * $XConsortium: XScrnSaver.c,v 1.5 94/04/17 20:59:35 rws Exp $
- *
 Copyright (c) 1992  X Consortium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,7 +24,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xss/XScrnSaver.c,v 3.2 2002/10/16 00:37:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xss/XScrnSaver.c,v 3.3 2005/01/27 02:28:59 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -47,9 +45,9 @@ static /* const */ char *screen_saver_extension_name = ScreenSaverName;
 #define ScreenSaverSimpleCheckExtension(dpy,i) \
   XextSimpleCheckExtension (dpy, i, screen_saver_extension_name)
 
-static int close_display();
-static Bool wire_to_event();
-static Status event_to_wire();
+static XEXT_CLOSE_DISPLAY_PROTO(close_display);
+static Bool wire_to_event (Display *dpy, XEvent *re, xEvent *event);
+static Status event_to_wire(Display *dpy, XEvent *re, xEvent *event);
 static /* const */ XExtensionHooks screen_saver_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */
@@ -72,10 +70,8 @@ static XEXT_GENERATE_FIND_DISPLAY (find_display, screen_saver_info,
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, screen_saver_info)
 
 
-static Bool wire_to_event (dpy, re, event)
-    Display *dpy;
-    XEvent  *re;
-    xEvent  *event;
+static Bool
+wire_to_event(Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XScreenSaverNotifyEvent	*se;
@@ -104,10 +100,8 @@ static Bool wire_to_event (dpy, re, event)
     return False;
 }
 
-static Status event_to_wire (dpy, re, event)
-    Display *dpy;
-    XEvent  *re;
-    xEvent  *event;
+static Status
+event_to_wire(Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XScreenSaverNotifyEvent	*se;
@@ -140,9 +134,8 @@ static Status event_to_wire (dpy, re, event)
  *                                                                          *
  ****************************************************************************/
 
-Bool XScreenSaverQueryExtension (dpy, event_basep, error_basep)
-    Display *dpy;
-    int *event_basep, *error_basep;
+Bool
+XScreenSaverQueryExtension(Display *dpy, int *event_basep, int *error_basep)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -156,9 +149,8 @@ Bool XScreenSaverQueryExtension (dpy, event_basep, error_basep)
 }
 
 
-Status XScreenSaverQueryVersion(dpy, major_versionp, minor_versionp)
-    Display *dpy;
-    int	    *major_versionp, *minor_versionp;
+Status
+XScreenSaverQueryVersion(Display *dpy, int *major_versionp, int *minor_versionp)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xScreenSaverQueryVersionReply	    rep;
@@ -184,15 +176,15 @@ Status XScreenSaverQueryVersion(dpy, major_versionp, minor_versionp)
     return 1;
 }
 
-XScreenSaverInfo *XScreenSaverAllocInfo ()
+XScreenSaverInfo *
+XScreenSaverAllocInfo()
 {
     return (XScreenSaverInfo *) Xmalloc (sizeof (XScreenSaverInfo));
 }
 
-Status XScreenSaverQueryInfo (dpy, drawable, saver_info)
-    Display		*dpy;
-    Drawable		drawable;
-    XScreenSaverInfo	*saver_info;
+Status
+XScreenSaverQueryInfo(Display *dpy, Drawable drawable,
+		      XScreenSaverInfo *saver_info)
 {
     XExtDisplayInfo			*info = find_display (dpy);
     xScreenSaverQueryInfoReply		rep;
@@ -221,10 +213,8 @@ Status XScreenSaverQueryInfo (dpy, drawable, saver_info)
     return 1;
 }
 
-void XScreenSaverSelectInput (dpy, drawable, mask)
-    register Display	*dpy;
-    Drawable		drawable;
-    unsigned long	mask;
+void
+XScreenSaverSelectInput(Display *dpy, Drawable drawable, unsigned long mask)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xScreenSaverSelectInputReq   *req;
@@ -242,12 +232,11 @@ void XScreenSaverSelectInput (dpy, drawable, mask)
 }
 
 static void
-XScreenSaverProcessWindowAttributes (dpy, req, valuemask, attributes)
-    register Display *dpy;
-    xChangeWindowAttributesReq *req;
-    register unsigned long valuemask;
-    register XSetWindowAttributes *attributes;
-    {
+XScreenSaverProcessWindowAttributes(Display *dpy,
+				    xChangeWindowAttributesReq *req,
+				    unsigned long valuemask,
+				    XSetWindowAttributes *attributes)
+{
     unsigned long values[32];
     register unsigned long *value = values;
     unsigned int nvalues;
@@ -302,23 +291,15 @@ XScreenSaverProcessWindowAttributes (dpy, req, valuemask, attributes)
     nvalues <<= 2;			    /* watch out for macros... */
     Data32 (dpy, (long *) values, (long)nvalues);
 
-    }
+}
 
-void XScreenSaverSetAttributes (dpy, drawable, x, y, width, height,
-				border_width, depth, class, visual,
-				valuemask, attributes)
-    Display*		    dpy;
-    Drawable		    drawable;
-    int			    x;
-    int			    y;
-    unsigned int	    width;
-    unsigned int	    height;
-    unsigned int	    border_width;
-    int			    depth;
-    unsigned int	    class;
-    Visual *		    visual;
-    unsigned long	    valuemask;
-    XSetWindowAttributes    *attributes;
+void
+XScreenSaverSetAttributes(Display *dpy, Drawable drawable, int x, int y,
+			  unsigned int width, unsigned int height,
+			  unsigned int border_width, int depth,
+			  unsigned int class, Visual *visual,
+			  unsigned long valuemask,
+			  XSetWindowAttributes *attributes)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xScreenSaverSetAttributesReq   *req;
@@ -351,9 +332,8 @@ void XScreenSaverSetAttributes (dpy, drawable, x, y, width, height,
 }
 
 
-void XScreenSaverUnsetAttributes (dpy, drawable)
-    register Display	*dpy;
-    Drawable		drawable;
+void
+XScreenSaverUnsetAttributes(Display *dpy, Drawable drawable)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xScreenSaverUnsetAttributesReq   *req;
@@ -370,11 +350,8 @@ void XScreenSaverUnsetAttributes (dpy, drawable)
 }
 
 
-Status XScreenSaverRegister (dpy, screen, xid, type)
-    Display *dpy;
-    int screen;
-    XID xid;
-    Atom type;
+Status
+XScreenSaverRegister(Display *dpy, int screen, XID xid, Atom type)
 {
     Atom prop;
     unsigned long ul;
@@ -391,9 +368,8 @@ Status XScreenSaverRegister (dpy, screen, xid, type)
 
 
 
-Status XScreenSaverUnregister (dpy, screen)
-    Display *dpy;
-    int screen;
+Status
+XScreenSaverUnregister(Display *dpy, int screen)
 {
     Atom prop;
 
@@ -407,11 +383,8 @@ Status XScreenSaverUnregister (dpy, screen)
 
 
 
-Status XScreenSaverGetRegistered (dpy, screen, xid, type)
-    Display *dpy;
-    int screen;
-    XID *xid;
-    Atom *type;
+Status
+XScreenSaverGetRegistered(Display *dpy, int screen, XID *xid, Atom *type)
 {
     Atom actual_type = None;
     int actual_format;

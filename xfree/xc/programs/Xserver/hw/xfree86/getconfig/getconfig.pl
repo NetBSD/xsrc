@@ -1,10 +1,8 @@
 #!/usr/bin/perl
 
-# $DHD: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.pl,v 1.13 2003/09/23 05:12:07 dawes Exp $
-
 #
-# Copyright 2003 by David H. Dawes.
-# Copyright 2003 by X-Oz Technologies.
+# Copyright 2003-2005 by David H. Dawes.
+# Copyright 2003-2005 by X-Oz Technologies.
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -49,7 +47,7 @@
 # Author: David Dawes <dawes@XFree86.Org>.
 #
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.pl,v 1.2 2003/12/12 00:39:16 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.pl,v 1.4 2005/02/09 20:55:57 dawes Exp $
 
 #
 # This script takes PCI id information, compares it against an ordered list
@@ -61,7 +59,7 @@
 
 # Command line processing.
 
-$GetconfigVersion = v1.0;
+$GetconfigVersion = &vstr(1,0);
 
 $debug = 0;
 
@@ -82,7 +80,8 @@ while (@ARGV[0] =~ /^-[A-Za-z]$/) {
 	    last SWITCH;
 	}
 	if ($f eq "-V") {
-	    printf STDERR "$myname: Version %vd.\n", $GetconfigVersion;
+	    printf STDERR "$myname: Version %s.\n",
+		&printvstr($GetconfigVersion);
 	    exit 0;
 	}
 	if ($f eq "-X") {
@@ -140,26 +139,35 @@ while (@ARGV[0] =~ /^-[A-Za-z]$/) {
 	    }
 	    last SWITCH;
 	}
+	if ($f eq "-S") {
+	    $sbuspath = shift;
+	    if (!defined($sbuspath)) {
+		print STDERR "$myname: -S requires the SBUS path.\n";
+		exit 1;
+	    }
+	    last SWITCH;
+	}
     }
 }
 
-printf STDERR "$myname: Version %vd.\n", $GetconfigVersion;
+printf STDERR "$myname: Version %s.\n", &printvstr($GetconfigVersion);
 
 if (defined($XFree86VersionNumeric)) {
-    $XFree86VersionMajor = $XFree86VersionNumeric / 10000000;
-    $XFree86VersionMinor = ($XFree86VersionNumeric % 10000000) / 100000;
-    $XFree86VersionPatch = ($XFree86VersionNumeric % 100000) / 1000;
-    $XFree86VersionSnapshot = $XFree86VersionNumeric % 1000;
-    $XFree86Version = chr($XFree86VersionMajor) . chr($XFree86VersionMinor) .
-		chr($XFree86VersionPatch) . chr($XFree86VersionSnapshot);
+    $XFree86VersionMajor = int $XFree86VersionNumeric / 10000000;
+    $XFree86VersionMinor = int $XFree86VersionNumeric / 100000 % 100;
+    $XFree86VersionPatch = int $XFree86VersionNumeric / 1000 % 100;
+    $XFree86VersionSnapshot = int $XFree86VersionNumeric % 1000;
+    $XFree86Version = &vstr($XFree86VersionMajor, $XFree86VersionMinor,
+			    $XFree86VersionPatch, $XFree86VersionSnapshot);
 }
 
 if ($debug) {
-    printf STDERR "$myname: XFree86 Version: %d, %d.%d.%d.%d, %vd.\n",
+    printf STDERR "$myname: XFree86 Version: %d, %d.%d.%d.%d, %s.\n",
 	$XFree86VersionNumeric, $XFree86VersionMajor, $XFree86VersionMinor,
-	$XFree86VersionPatch, $XFree86VersionSnapshot, $XFree86Version;
+	$XFree86VersionPatch, $XFree86VersionSnapshot, &vstr($XFree86Version);
 } else {
-    printf STDERR "$myname: XFree86 Version: %vd.\n", $XFree86Version;
+    printf STDERR "$myname: XFree86 Version: %s.\n",
+	&printvstr($XFree86Version);
 }
   
 
@@ -282,6 +290,10 @@ if ($debug) {
 ['$vendor == 0x15ad',
 	'vmware'],
 
+# Sun ffb
+['$sbuspath =~ /,ffb\@/',
+	'sunffb'],
+
 );
 
 # Reverse the search path list, since the later rules have higher priority
@@ -368,6 +380,65 @@ for $opt (@opts) {
 exit 0;
 
 # Subroutines.
+
+sub havevstring {
+    if (v1.2 eq chr(1) . chr(2)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+sub vstr {
+    my @vlist = @_;
+    my $ret = 0;
+    my $v;
+    my $i = 0;
+
+    if (&havevstring) {
+	$ret = "";
+	for $v (@vlist) {
+	    $ret = $ret . chr($v);
+	}
+	return $ret;
+    }
+
+    for $v (@vlist) {
+	if ($i == 0) {
+	    $ret = $ret + $v * 10000000;
+	} elsif ($i == 1) {
+	    $ret = $ret + $v * 100000;
+	} elsif ($i == 2) {
+	    $ret = $ret + $v * 1000;
+	} elsif ($i == 3) {
+	    $ret = $ret + $v;
+	}
+	$i++;
+    }
+    return $ret;
+}
+
+sub printvstr {
+    my ($v) = @_;
+    my $major, $minor, $patch, $snap, 
+    my $ret = "";
+
+    if (&havevstring) {
+	return sprintf("%vd",$v);
+    }
+    $snap = $v % 1000;
+    $patch = int ($v / 1000) % 100;
+    $minor = int ($v / 100000) % 100;
+    $major = int ($v / 10000000) % 100;
+    $ret = "$major.$minor";
+    if ($snap > 0 || $patch > 0) {
+	$ret = $ret . ".$patch";
+    }
+    if ($snap > 0) {
+	$ret = $ret . ".$snap";
+    }
+    return $ret;
+}
 
 sub readRulesFile {
     my ($file) = @_;

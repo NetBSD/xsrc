@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_vm.h,v 1.10 2005/03/03 03:35:41 dawes Exp $ */
+
 /* 
  * Copyright 2003 Eric Anholt
  * All Rights Reserved.
@@ -23,12 +25,12 @@
  */
 
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-static int DRM(dma_mmap)(dev_t kdev, vm_offset_t offset, vm_paddr_t *paddr, 
+static int DRM(dma_mmap)(DEV_T kdev, vm_offset_t offset, vm_paddr_t *paddr, 
     int prot)
 #elif defined(__FreeBSD__)
-static int DRM(dma_mmap)(dev_t kdev, vm_offset_t offset, int prot)
+static int DRM(dma_mmap)(DEV_T kdev, vm_offset_t offset, int prot)
 #elif defined(__NetBSD__)
-static paddr_t DRM(dma_mmap)(dev_t kdev, vm_offset_t offset, int prot)
+static paddr_t DRM(dma_mmap)(DEV_T kdev, vm_offset_t offset, int prot)
 #endif
 {
 	DRM_DEVICE;
@@ -52,12 +54,12 @@ static paddr_t DRM(dma_mmap)(dev_t kdev, vm_offset_t offset, int prot)
 }
 
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-int DRM(mmap)(dev_t kdev, vm_offset_t offset, vm_paddr_t *paddr, 
+int DRM(mmap)(DEV_T kdev, vm_offset_t offset, vm_paddr_t *paddr, 
     int prot)
 #elif defined(__FreeBSD__)
-int DRM(mmap)(dev_t kdev, vm_offset_t offset, int prot)
+int DRM(mmap)(DEV_T kdev, vm_offset_t offset, int prot)
 #elif defined(__NetBSD__)
-paddr_t DRM(mmap)(dev_t kdev, off_t offset, int prot)
+paddr_t DRM(mmap)(DEV_T kdev, off_t offset, int prot)
 #endif
 {
 	DRM_DEVICE;

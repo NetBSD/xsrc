@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/misc.c,v 1.10 2003/08/02 17:35:48 herrb Exp $ */
+/* $XFree86: xc/programs/xman/misc.c,v 1.12 2004/04/03 22:26:26 dawes Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -61,7 +61,7 @@ static Boolean UncompressUnformatted(ManpageGlobals * man_globals,
 static Boolean ConstructCommand(char * cmdbuf, char * path, char * filename, char * tempfile);
 #endif
 
-#if defined(ISC) || defined(SCO)
+#if defined(ISC) || defined(__SCO__)
 static char *uncompress_format = NULL;
 static char *uncompress_formats[] =
       {  UNCOMPRESS_FORMAT_1,
@@ -71,7 +71,7 @@ static char *uncompress_formats[] =
 #endif
 
 /*	Function Name: PopupWarning
- *	Description: This function pops upa warning message.
+ *	Description: This function pops up a warning message.
  *	Arguments: string - the specific warning string.
  *	Returns: none
  */
@@ -88,7 +88,7 @@ PopdownWarning(Widget w, XtPointer client, XtPointer call)
 void
 PopupWarning(ManpageGlobals * man_globals, char * string)
 {
-  int n;
+  Cardinal n;
   Arg wargs[3];
   Dimension topX, topY;
   char buffer[BUFSIZ];
@@ -141,7 +141,7 @@ PrintError(char * string)
 }
 
 /*	Function Name: OpenFile
- *	Description: Assignes a file to the manpage.
+ *	Description: Assigns a file to the manpage.
  *	Arguments: man_globals - global structure.
  *                 file        - the file pointer.
  *	Returns: none
@@ -185,13 +185,15 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
   char filename[BUFSIZ];
   char * entry = manual[section_num].entries[entry_num];
   int len_cat = strlen(CAT);
-#if defined(ISC) || defined(SCO)
+#if defined(ISC) || defined(__SCO__)
   int i;
 #endif
 
-  temp = CreateManpageName(entry, 0, 0);
+  temp = CreateManpageName(entry, section_num, manual[section_num].flags);
   sprintf(man_globals->manpage_title, "The current manual page is: %s.", temp);
   XtFree(temp);
+  man_globals->manpage_file = entry;
+  man_globals->manpage_show_file = FALSE;
 
   ParseEntry(entry, path, section, page);
 
@@ -214,7 +216,7 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
  * Then for compressed files in an uncompressed directory.
  */
 
-#if !defined(ISC) && !defined(SCO)
+#if !defined(ISC) && !defined(__SCO__)
 #if defined(__OpenBSD__) || defined(__NetBSD__)
   /* look in machine subdir first */
   sprintf(filename, "%s/%s%s/%s/%s.%s", path, CAT,
@@ -276,7 +278,7 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
 /*	Function Namecompress
  *	Description: This function will attempt to find a compressed man
  *                   page and uncompress it.
- *	Arguments: man_globals - the psuedo global info.
+ *	Arguments: man_globals - the pseudo global info.
  *                 filename - name of file to uncompress.
  *	Returns:; a pointer to the file or NULL.
  */
@@ -313,7 +315,7 @@ Uncompress(ManpageGlobals * man_globals, char * filename)
 /*	Function Name: UncompressNamed
  *	Description: This function will attempt to find a compressed man
  *                   page and uncompress it.
- *	Arguments: man_globals - the psuedo global info.
+ *	Arguments: man_globals - the pseudo global info.
  *                 filename - name of file to uncompress.
  * RETURNED        output - the file name output (must be an allocated string).
  *	Returns:; TRUE if the file was found.
@@ -344,7 +346,7 @@ UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output,
   }
 
 /*
- * Using stdin is necessary to fool zcat since we cannot guarentee
+ * Using stdin is necessary to fool zcat since we cannot guarantee
  * the .Z extension.
  */
 
@@ -379,7 +381,7 @@ UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output,
 /*	Function Name: Format
  *	Description: This funtion formats the manual pages and interfaces
  *                   with the user.
- *	Arguments: man_globals - the psuedo globals
+ *	Arguments: man_globals - the pseudo globals
  *                 file - the file pointer to use and return
  *                 entry - the current entry struct.
  *                 current_box - The current directory being displayed.
@@ -467,10 +469,10 @@ Format(ManpageGlobals * man_globals, char * entry)
 #ifndef HANDLE_ROFFSEQ
 #ifndef HAS_MKSTEMP
   sprintf(cmdbuf,"cd %s ; %s %s %s > %s %s", path, TBL,
-	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
+	  filename, resources.format_cmd, man_globals->tempfile, "2> /dev/null");
 #else
   sprintf(cmdbuf,"cd %s ; %s %s %s >> %s %s", path, TBL,
-	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
+	  filename, resources.format_cmd, man_globals->tempfile, "2> /dev/null");
 #endif
 #else
   /* Handle more flexible way of specifying the formatting pipeline */
@@ -582,7 +584,7 @@ ConstructCommand(cmdbuf, path, filename, tempfile)
     * attempt to interpret things like L^HL as bold and so forth. This
     * is so obviously the Wrong Thing it's untrue.
     */
-   char *c = cmdbuf;           /* current posn in buffer */
+   char *c = cmdbuf;           /* current position in buffer */
    int left = BUFSIZ;          /* space left in buffer */
    int used;
    char *fmt;
@@ -601,7 +603,7 @@ ConstructCommand(cmdbuf, path, filename, tempfile)
    if (!fmt) {
       /* This is the tricky bit: extract a format string from the source file
        * Annoyingly, filename might be relative or absolute. We cheat and
-       * use system to get the thing to a known absoute filename.
+       * use system to get the thing to a known absolute filename.
        */
       if (filename[0] == '/') {
          fname = filename;
@@ -710,7 +712,7 @@ ConstructCommand(cmdbuf, path, filename, tempfile)
 
 /*	Function Name: UncompressUnformatted
  *	Description: Finds an uncompressed unformatted manual page.
- *	Arguments: man_globals - the psuedo global structure.
+ *	Arguments: man_globals - the pseudo global structure.
  *                 entry - the manual page entry.
  * RETURNED        filename - location to put the name of the file.
  *	Returns: TRUE if the file was found.
@@ -809,7 +811,7 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
     if ( UncompressNamed(man_globals, input, filename) ) {
 #else
     if ( UncompressNamed(man_globals, input, filename, file) ) {
-#endif	
+#endif
       man_globals->compress = TRUE;
       man_globals->gzip = TRUE;
       sprintf(man_globals->save_file, "%s/%s%s/%s.%s", path,
@@ -990,10 +992,10 @@ ParseEntry(char *entry, char *path, char *sect, char *page)
 }
 
 /*      Function Name: GetGlobals
- *      Description: Gets the psuedo globals associated with the
+ *      Description: Gets the pseudo globals associated with the
  *                   manpage associated with this widget.
  *      Arguments: w - a widget in the manpage.
- *      Returns: the psuedo globals.
+ *      Returns: the pseudo globals.
  *      Notes: initial_widget is a globals variable.
  *             manglobals_context is a global variable.
  */
@@ -1020,7 +1022,7 @@ GetGlobals(Widget w)
 }
 
 /*      Function Name: SaveGlobals
- *      Description: Saves the psuedo globals on the widget passed
+ *      Description: Saves the pseudo globals on the widget passed
  *                   to this function, although GetGlobals assumes that
  *                   the data is associated with the popup child of topBox.
  *      Arguments: w - the widget to associate the data with.
@@ -1040,7 +1042,7 @@ SaveGlobals(Widget w, ManpageGlobals * globals)
 }
 
 /*      Function Name: RemoveGlobals
- *      Description: Removes the psuedo globals from the widget passed
+ *      Description: Removes the pseudo globals from the widget passed
  *                   to this function.
  *      Arguments: w - the widget to remove the data from.
  *      Returns: none.

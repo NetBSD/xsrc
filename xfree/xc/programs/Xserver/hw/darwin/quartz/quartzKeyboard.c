@@ -1,6 +1,6 @@
 /*
    quartzKeyboard.c
-   $Id: quartzKeyboard.c,v 1.1.1.1 2004/03/05 14:28:15 tron Exp $
+   $Id: quartzKeyboard.c,v 1.1.1.2 2005/03/18 13:10:53 tron Exp $
 
    Code to build a keymap using the Carbon Keyboard Layout API,
    which is supported on Mac OS X 10.2 and newer.
@@ -32,7 +32,7 @@
    promote the sale, use or other dealings in this Software without
    prior written authorization.
 */
-/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzKeyboard.c,v 1.2 2004/01/19 01:22:47 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzKeyboard.c,v 1.3 2004/03/31 22:29:10 torrey Exp $ */
 
 #include "quartzCommon.h"
 
@@ -72,6 +72,7 @@ const static struct {
     {60,  XK_Shift_R},
     {61,  XK_Alt_R},
     {62,  XK_Control_R},
+    {63,  XK_Meta_R},
 
     {122, XK_F1},
     {120, XK_F2},

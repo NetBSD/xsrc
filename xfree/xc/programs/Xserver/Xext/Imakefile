@@ -1,16 +1,68 @@
-XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:55 cpqbld Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.48 2004/08/05 20:37:42 tsi Exp $
 
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-
-
-XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.44 2003/07/16 01:38:28 dawes Exp $
 
 #include <Server.tmpl>
 
 #if DoLoadableServer
 #define IHaveSubdirs
-SUBDIRS = extmod
+SUBDIRS1 = extmod
 #endif
+
+#if BuildSeparateTinyDIX && !BuildTinyDIX
+#ifndef IHaveSubdirs
+#define IHaveSubdirs
+#endif
+SUBDIRS2 = tiny
+#endif
+
+SUBDIRS = $(SUBDIRS1) $(SUBDIRS2)
 
 #if BuildEVI
 #ifdef SGIArchitectureNotTog
@@ -54,7 +106,7 @@ XF86BIGFOBJS = xf86bigfont.o
 #endif
 #endif
 
-#if BuildXF86DGA
+#if BuildXF86DGA && XF86Server
  XF86DGASRCS = xf86dga.c xf86dga2.c
  XF86DGAOBJS = xf86dga.o xf86dga2.o
 #endif
@@ -86,7 +138,12 @@ XF86BIGFOBJS = xf86bigfont.o
 #if BuildXinerama
         PNRXSRCS = panoramiX.c panoramiXSwap.c panoramiXprocs.c
         PNRXOBJS = panoramiX.o panoramiXSwap.o panoramiXprocs.o
-    PNRXINCLUDES = -I$(FONTINCSRC) -I../mi -I../render
+    PNRXINCLUDES = -I$(FONTINCSRC) -I$(SERVERSRC)/mi -I$(SERVERSRC)/render
+#endif
+#if !(BuildSeparateTinyDIX && BuildTinyDIX) && XdmxServer
+         DMXSRCS = dmx.c
+         DMXOBJS = dmx.o
+     DMXINCLUDES = -I$(SERVERSRC)/hw/dmx
 #endif
 #if BuildDPMS
         DPMSSRCS = dpms.c
@@ -107,14 +164,14 @@ XF86BIGFOBJS = xf86bigfont.o
 	      bigreq.c sync.c $(SCRNSAVSRC) xcmisc.c $(VIDMODESRCS) \
 	      $(XF86MISCSRCS) $(XF86BIGFSRCS) $(XF86DGASRCS) $(SECURITYSRCS) \
 	      $(APPGROUPSRCS) xprint.c $(CUPSRCS) $(PNRXSRCS) $(DPMSSRCS) \
-	      $(EVISRCS) $(XVSRCS) $(FONTCACHESRCS) $(XRESSRCS)
+	      $(EVISRCS) $(XVSRCS) $(FONTCACHESRCS) $(XRESSRCS) $(DMXSRCS)
 
        OBJS = shape.o $(SHMOBJS) $(MULTIBUFOBJ) \
               mitmisc.o xtest.o xtest1di.o xtest1dd.o sleepuntil.o \
               bigreq.o sync.o $(SCRNSAVOBJ) xcmisc.o $(VIDMODEOBJS) \
 	      $(XF86MISCOBJS) $(XF86BIGFOBJS) $(XF86DGAOBJS) $(SECURITYOBJS) \
 	      $(APPGROUPOBJS) xprint.o $(CUPOBJS) $(PNRXOBJS) $(DPMSOBJS) \
-	      $(EVIOBJS) $(XVOBJS) $(FONTCACHEOBJS) $(XRESOBJS)
+	      $(EVIOBJS) $(XVOBJS) $(FONTCACHEOBJS) $(XRESOBJS) $(DMXOBJS)
 
       SOBJS = $(SHMOBJS) $(APPGROUPOBJS) $(SECURITYOBJS) xprint.o \
 	      xtest.o xtest1di.o xtest1dd.o sleepuntil.o $(PNRXOBJS) \
@@ -124,12 +181,17 @@ XF86BIGFOBJS = xf86bigfont.o
 /* XXX Check if this can be eliminated */
 XF86INCLUDES = -I$(XF86COMSRC)
 #endif
-    INCLUDES = -I. -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+    INCLUDES = -I$(SERVERSRC)/Xext -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
+		-I$(EXTINCSRC) \
 		$(PNRXINCLUDES) $(XF86INCLUDES) -I$(FONTINCSRC) \
- 		$(FONTCACHEINCLUDES)
-    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
+		$(FONTCACHEINCLUDES) $(DMXINCLUDES)
+    LINTLIBS = $(SERVERSRC)/dix/llib-ldix.ln $(SERVERSRC)/os/llib-los.ln
 
-     DEFINES = $(EXT_DEFINES)
+#if BuildTinyDIX
+TINY_DEFINES = TinyDIXDefines
+#endif
+
+     DEFINES = $(EXT_DEFINES) $(TINY_DEFINES)
 
 NormalLibraryObjectRule()
 
@@ -155,17 +217,22 @@ SpecialCObjectRule(xf86bigfont,$(ICONFIGFILES),$(SHM_DEFINES))
 SpecialCObjectRule(security,$(ICONFIGFILES),$(POLICYFILEDEF))
 #endif
 
-LinkConfDirectory(xserver,.,xserver,.)
 
-LinkSourceFile(modinit.h,extmod)
+LinkSourceFile(modinit.h,$(SERVERSRC)/Xext/extmod)
+
+#if !defined(LinkDirectory)
+
+LinkConfDirectory(xserver,.,xserver,.)
 
 #if BuildXCSecurity && InstallSecurityConfig
 InstallNonExecFile(SecurityPolicy,$(SERVERCONFIGDIR))
 #endif
 
+#endif
+
 DependTarget()
 
-#if DoLoadableServer
+#ifdef IHaveSubdirs
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 #endif
@@ -173,3 +240,39 @@ DependSubdirs($(SUBDIRS))
 InstallDriverSDKNonExecFile(dgaproc.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xvdix.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xvmcext.h,$(DRIVERSDKINCLUDEDIR))
+
+#ifdef LinkDirectory
+LinkSourceFile(EVI.c,LinkDirectory)
+LinkSourceFile(appgroup.c,LinkDirectory)
+LinkSourceFile(bigreq.c,LinkDirectory)
+LinkSourceFile(cup.c,LinkDirectory)
+LinkSourceFile(dmx.c,LinkDirectory)
+LinkSourceFile(dpms.c,LinkDirectory)
+LinkSourceFile(dpmsstubs.c,LinkDirectory)
+LinkSourceFile(fontcache.c,LinkDirectory)
+LinkSourceFile(mbuf.c,LinkDirectory)
+LinkSourceFile(mbufbf.c,LinkDirectory)
+LinkSourceFile(mbufpx.c,LinkDirectory)
+LinkSourceFile(mitmisc.c,LinkDirectory)
+LinkSourceFile(panoramiX.c,LinkDirectory)
+LinkSourceFile(panoramiXSwap.c,LinkDirectory)
+LinkSourceFile(panoramiXprocs.c,LinkDirectory)
+LinkSourceFile(sampleEVI.c,LinkDirectory)
+LinkSourceFile(saver.c,LinkDirectory)
+LinkSourceFile(security.c,LinkDirectory)
+LinkSourceFile(shape.c,LinkDirectory)
+LinkSourceFile(shm.c,LinkDirectory)
+LinkSourceFile(sleepuntil.c,LinkDirectory)
+LinkSourceFile(sync.c,LinkDirectory)
+LinkSourceFile(xcmisc.c,LinkDirectory)
+LinkSourceFile(xf86bigfont.c,LinkDirectory)
+LinkSourceFile(xprint.c,LinkDirectory)
+LinkSourceFile(xres.c,LinkDirectory)
+LinkSourceFile(xtest.c,LinkDirectory)
+LinkSourceFile(xtest1dd.c,LinkDirectory)
+LinkSourceFile(xtest1di.c,LinkDirectory)
+LinkSourceFile(xvdisp.c,LinkDirectory)
+LinkSourceFile(xvmain.c,LinkDirectory)
+LinkSourceFile(xvmc.c,LinkDirectory)
+#endif
+

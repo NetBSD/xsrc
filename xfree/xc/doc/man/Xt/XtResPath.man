@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtResPath.man,v 1.5 2003/04/28 22:18:20 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtResPath.man,v 1.7 2005/02/11 03:03:06 dawes Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -126,7 +126,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtResolvePathname 3Xt __xorgversion__ "XT FUNCTIONS"
+.TH XtResolvePathname 3Xt __vendorversion__ "XT FUNCTIONS"
 .SH NAME
 XtResolvePathname \- search for a file using standard substitution
 .SH SYNTAX
@@ -240,9 +240,9 @@ Possible values might include ``.txt'', ``.dat'', and ``.bm''.
 .LP
 A suggested value for the default path on POSIX-based systems is
 .IP
-__projectroot__/lib/X11/%L/%T/%N%C%S:__projectroot__/lib/X11/%l/%T/%N%C%S:\\
+__projectroot__/lib/X11/%L/%T/%N%C%S:__projectroot__/lib/X11/%l/%T/%N%C%S:\\\&
 .br
-__projectroot__/lib/X11/%T/%N%C%S:__projectroot__/lib/X11/%L/%T/%N%S:\\
+__projectroot__/lib/X11/%T/%N%C%S:__projectroot__/lib/X11/%L/%T/%N%S:\\\&
 .br
 __projectroot__/lib/X11/%l/%T/%N%S:__projectroot__/lib/X11/%T/%N%S
 .LP

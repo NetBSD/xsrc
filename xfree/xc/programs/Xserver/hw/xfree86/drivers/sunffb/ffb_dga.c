@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dga.c,v 1.2 2000/10/17 16:53:17 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dga.c,v 1.4 2004/12/07 15:59:20 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -34,20 +34,24 @@
 #include "ffb_fifo.h"
 #include "ffb_stip.h"
 #include "ffb_loops.h"
+#include "ffb_gc.h"
 
-static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name, unsigned char **mem,
-				int *size, int *offset, int *extra);
-static void FFB_CloseFramebuffer(ScrnInfoPtr pScrn);
+static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
+				unsigned int *mem,
+				unsigned int *size, unsigned int *offset,
+				unsigned int *extra);
 static Bool FFB_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode);
 static void FFB_SetViewport(ScrnInfoPtr pScrn, int x, int y, int flags);
 static int FFB_GetViewport(ScrnInfoPtr pScrn);
 static void FFB_Flush(ScrnInfoPtr pScrn);
 
-/* Have to disable all this stuff for now until I figure out where
+/*
+ * Have to disable all this stuff for now until I figure out where
  * we should get the WID values from... ho hum... -DaveM
  */
 #if 0
-static void FFB_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h, unsigned long color);
+static void FFB_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h,
+			 unsigned long color);
 
 #ifdef USE_VIS
 static void FFB_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w, int h,
@@ -62,7 +66,7 @@ static void FFB_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w, int h,
 
 static DGAFunctionRec FFB_DGAFuncs = {
 	FFB_OpenFramebuffer,
-	FFB_CloseFramebuffer,
+	NULL,
 	FFB_SetMode,
 	FFB_SetViewport,
 	FFB_GetViewport,
@@ -75,11 +79,9 @@ static DGAFunctionRec FFB_DGAFuncs = {
 void FFB_InitDGA(ScreenPtr pScreen)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-	FFBPtr pFfb;
+	FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
 	DGAModePtr mode;
 	Bool result;
-
-	pFfb = GET_FFB_FROM_SCRN(pScrn);
 
 	mode = xnfcalloc(sizeof(DGAModeRec), 1);
 	if (!mode) {
@@ -88,54 +90,33 @@ void FFB_InitDGA(ScreenPtr pScreen)
 		return;
 	}
 
-	mode->num = 0;
 	mode->mode = pScrn->modes;
 
-	/* Hmmm, what does concurrent access really mean? -DaveM */
-	mode->flags = (DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE | DGA_FILL_RECT);
-
+	mode->flags = DGA_PIXMAP_AVAILABLE;
+#if 0
+	mode->flags |= DGA_FILL_RECT;
 #ifdef USE_VIS
 	mode->flags |= DGA_BLIT_RECT;
 #endif
-
-	mode->imageWidth = 2048;
-	mode->imageHeight = 2048;
-	mode->pixmapWidth = 2048;
-	mode->pixmapHeight = 2048;
-
-	/* XXX I would imagine that this value states how many bytes
-	 * XXX you add to advance exactly one full horizontal line in
-	 * XXX the framebuffer addressing, but the way we set the pScrn
-	 * XXX mode values do not match that definition.
-	 * XXX
-	 * XXX Ask Jakub what is going on here. -DaveM
-	 */
-#if 1
-	mode->bytesPerScanline = pScrn->modes->HDisplay * 4;
 #else
-	mode->bytesPerScanline = (2048 * 4);
+	mode->flags |= DGA_CONCURRENT_ACCESS;
 #endif
 
+	mode->imageWidth = mode->pixmapWidth = mode->viewportWidth =
+		pScrn->virtualX;
+	mode->imageHeight = mode->pixmapHeight = mode->viewportHeight =
+		pScrn->virtualY;
+
+	mode->bytesPerScanline = (2048 * 4);
+
 	mode->byteOrder = pScrn->imageByteOrder;
-	mode->depth = 32;
+	mode->depth = 24;
 	mode->bitsPerPixel = 32;
 	mode->red_mask = 0xff;
 	mode->green_mask = 0xff00;
 	mode->blue_mask = 0xff0000;
 	mode->visualClass = TrueColor;
-	mode->viewportWidth = pScrn->modes->HDisplay;
-	mode->viewportHeight = pScrn->modes->VDisplay;
-
-	/* Do these values even matter if we do not support
-	 * viewports? -DaveM
-	 */
-	mode->xViewportStep = 0;
-	mode->yViewportStep = 0;
-	mode->maxViewportX = 0;
-	mode->maxViewportY = 0;
-
-	mode->viewportFlags = 0;
-	mode->offset = 0;
+	mode->address = (pointer)pFfb->fb;
 
 	result = DGAInit(pScreen, &FFB_DGAFuncs, mode, 1);
 	if (result == FALSE) {
@@ -148,15 +129,17 @@ void FFB_InitDGA(ScreenPtr pScreen)
 	}
 }
 
-static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name, unsigned char **mem,
-				int *size, int *offset, int *extra)
+static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
+				unsigned int *mem,
+				unsigned int *size, unsigned int *offset,
+				unsigned int *extra)
 {
 	FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
 
 	*name = pFfb->psdp->device;
 
 	/* We give the user the dumb frame buffer. */
-	*mem = (unsigned char *)FFB_DFB24_VOFF;
+	*mem = FFB_DFB24_VOFF;
 	*size = 0x1000000;
 	*offset = 0;
 	*extra = 0;
@@ -164,13 +147,10 @@ static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name, unsigned char **
 	return TRUE;
 }
 
-static void FFB_CloseFramebuffer(ScrnInfoPtr pScrn)
-{
-}
-
 static Bool FFB_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
 {
-	/* Nothing to do, we currently only support one mode
+	/*
+	 * Nothing to do, we currently only support one mode
 	 * and we are always in it.
 	 */
 	return TRUE;
@@ -197,9 +177,6 @@ static void FFB_Flush(ScrnInfoPtr pScrn)
 
 #if 0
 
-extern void CreatorFillBoxSolid (DrawablePtr pDrawable, int nBox,
-				 BoxPtr pBox, unsigned long pixel);
-
 static void FFB_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h, unsigned long color)
 {
 	DrawableRec draw;
@@ -215,9 +192,6 @@ static void FFB_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h, unsigned
 }
 
 #ifdef USE_VIS
-extern void VISmoveImageLR(unsigned char *, unsigned char *, long, long, long, long);
-extern void VISmoveImageRL(unsigned char *, unsigned char *, long, long, long, long);
-
 static void FFB_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy,
 			 int w, int h, int dstx, int dsty)
 {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.42 2004/02/13 23:58:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.46 2004/12/15 15:03:28 twini Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -547,7 +547,8 @@ ProcXF86MiscSetClientVersion(ClientPtr client)
 	    return BadAlloc;
 	MPRIV(client) = pPriv;
     }
-    ErrorF("SetClientVersion: %i %i\n",stuff->major,stuff->minor);
+    xf86MsgVerb(X_INFO, 4, "SetClientVersion: %i %i\n",
+	stuff->major,stuff->minor);
     pPriv->major = stuff->major;
     pPriv->minor = stuff->minor;
     
@@ -625,20 +626,29 @@ ProcXF86MiscPassMessage(client)
 	strncpy(msgtype,(char*)(&stuff[1]),stuff->typelen);
     } else return BadValue;
     if (stuff->vallen) {
-	if (!(msgval = xalloc(stuff->vallen)))
+	if (!(msgval = xalloc(stuff->vallen))) {
+	    xfree(msgtype);
 	    return BadAlloc;
-	strncpy(msgval,(char*)(&stuff[1] + ((stuff->typelen + 3) & ~3)),
+	}
+	strncpy(msgval,(char*)((char*)&stuff[1] + ((stuff->typelen + 3) & ~3)),
 			stuff->vallen);
-    } else return BadValue;
+    } else {
+	xfree(msgtype);
+	return BadValue;
+    }
 
-    if ((retval= MiscExtPassMessage(stuff->screen,msgtype,msgval,&retstr)) != 0)
+    if ((retval = MiscExtPassMessage(stuff->screen,msgtype,msgval,&retstr)) != 0) {
+	xfree(msgtype);
+	xfree(msgval);
 	return retval;
+    }
 
     rep.type = X_Reply;
     rep.sequenceNumber = client->sequence;
-    rep.mesglen = (retstr? strlen(retstr): 0);
+    rep.mesglen = (retstr ? strlen(retstr) : 0);
     rep.length = (SIZEOF(xXF86MiscPassMessageReply) - SIZEOF(xGenericReply) +
 		  ((rep.mesglen + 3) & ~3)) >> 2;
+    rep.status = 0;
     
     if (client->swapped) {
     	swaps(&rep.sequenceNumber, n);
@@ -650,6 +660,8 @@ ProcXF86MiscPassMessage(client)
     if (rep.mesglen)
         WriteToClient(client, rep.mesglen, (char *)retstr);
 
+    xfree(msgtype);
+    xfree(msgval);
     return (client->noClientException);
 }
 

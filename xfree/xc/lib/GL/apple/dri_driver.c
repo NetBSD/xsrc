@@ -1,8 +1,9 @@
-/* $XFree86: xc/lib/GL/apple/dri_driver.c,v 1.3 2003/11/05 01:08:00 torrey Exp $ */
+/* $XFree86: xc/lib/GL/apple/dri_driver.c,v 1.4 2004/12/10 17:47:24 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
 Copyright (c) 2002 Apple Computer, Inc.
+Copyright (c) 2004 Torrey T. Lyons
 All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,20 +29,24 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 /*
- * Authors:
+ * Original Authors:
  *   Kevin E. Martin <kevin@precisioninsight.com>
  *   Brian E. Paul <brian@precisioninsight.com>
  */
 
 /*
- * This file gets compiled into each of the DRI 3D drivers.  The
- * functions defined here are called from the GL library via
- * function pointers in the __DRIdisplayRec, __DRIscreenRec,
- * __DRIcontextRec, __DRIdrawableRec structures defined in glxclient.h
+ * This file follows Mesa's dri_util.c closely.  The code in dri_util.c
+ * gets compiled into each of the DRI 3D drivers.  A typical DRI driver,
+ * is loaded dynamically by libGL, so libGL knows nothing about the
+ * internal functions here.  On Mac OS X the AppleDRI driver code is
+ * statically linked into libGL, but otherwise it tries to behave like
+ * a standard DRI driver.
  *
- * Those function pointers are initialized by code in this file.
- * The process starts when libGL calls the __driCreateScreen() function
- * at the end of this file.
+ * The functions defined here are called from the GL library via function
+ * pointers in the __DRIdisplayRec, __DRIscreenRec, __DRIcontextRec,
+ * __DRIdrawableRec structures defined in glxclient.h. Those function
+ * pointers are initialized by code in this file. The process starts when
+ * libGL calls the __driCreateScreen() function at the end of this file.
  *
  * The above-mentioned DRI structures have no dependencies on Mesa.
  * Each structure instead has a generic (void *) private pointer that
@@ -65,6 +70,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "x-list.h"
 #include "x-hash.h"
 
+/**
+ * This is used in a couple of places that call \c driMesaCreateNewDrawable.
+ */
+static const int empty_attribute_list[1] = { None };
+
 /* Context binding */
 static Bool driMesaBindContext(Display *dpy, int scrn,
                                GLXDrawable draw, GLXContext gc);
@@ -73,22 +83,28 @@ static Bool driMesaUnbindContext(Display *dpy, int scrn,
                                  int will_rebind);
 
 /* Drawable methods */
-static void *driMesaCreateDrawable(Display *dpy, int scrn, GLXDrawable draw,
-                                   VisualID vid, __DRIdrawable *pdraw);
-static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
+static void *driMesaCreateNewDrawable(__DRInativeDisplay *dpy,
+                                      const __GLcontextModes *modes,
+                                      __DRIid draw, __DRIdrawable *pdraw,
+                                      int renderType, const int *attrs);
+static __DRIdrawable *driMesaGetDrawable(__DRInativeDisplay *dpy,
+                                         GLXDrawable draw,
                                          void *screenPrivate);
-static void driMesaSwapBuffers(Display *dpy, void *drawPrivate);
-static void driMesaDestroyDrawable(Display *dpy, void *drawPrivate);
+static void driMesaSwapBuffers(__DRInativeDisplay *dpy, void *drawPrivate);
+static void driMesaDestroyDrawable(__DRInativeDisplay *dpy, void *drawPrivate);
 
 /* Context methods */
 static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
                                   __DRIcontext *pctx);
-static void driMesaDestroyContext(Display *dpy, int scrn, void *screenPrivate);
+static void driMesaDestroyContext(__DRInativeDisplay *dpy, int scrn,
+                                  void *screenPrivate);
 
 /* Screen methods */
-static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                                 int numConfigs, __GLXvisualConfig *config);
-static void driMesaDestroyScreen(Display *dpy, int scrn, void *screenPrivate);
+static void *driMesaCreateScreen(__DRInativeDisplay *dpy, int scrn,
+                                 __DRIscreen *psc, int numConfigs,
+                                 __GLXvisualConfig *config);
+static void driMesaDestroyScreen(__DRInativeDisplay *dpy, int scrn,
+                                 void *screenPrivate);
 
 static void driMesaCreateSurface(Display *dpy, int scrn,
                                  __DRIdrawablePrivate *pdp);
@@ -408,6 +424,7 @@ static Bool driMesaBindContext(Display *dpy, int scrn,
                                GLXDrawable draw, GLXContext gc)
 {
     __DRIscreen *pDRIScreen;
+    const __GLcontextModes *modes;
     __DRIdrawable *pdraw;
     __DRIdrawablePrivate *pdp;
     __DRIscreenPrivate *psp;
@@ -431,6 +448,13 @@ static Bool driMesaBindContext(Display *dpy, int scrn,
         return GL_FALSE;
     }
 
+    modes = gc->driContext.mode;
+
+    if ( modes == NULL ) {
+        /* ERROR!!! */
+        return GL_FALSE;
+    }
+
     xmutex_lock(psp->mutex);
 
     pdraw = __driMesaFindDrawable(psp->drawHash, draw);
@@ -444,8 +468,9 @@ static Bool driMesaBindContext(Display *dpy, int scrn,
         }
 
         /* Create a new drawable */
-        pdraw->private = driMesaCreateDrawable(dpy, scrn, draw, gc->vid,
-                                               pdraw);
+        pdraw->private = driMesaCreateNewDrawable(dpy, modes, draw, pdraw,
+                                                  GLX_WINDOW_BIT,
+                                                  empty_attribute_list);
         if (!pdraw->private) {
             /* ERROR!!! */
             Xfree(pdraw);
@@ -556,12 +581,31 @@ static void driMesaCreateSurface(Display *dpy, int scrn,
     }
 }
 
-static void *driMesaCreateDrawable(Display *dpy, int scrn, GLXDrawable draw,
-                                   VisualID vid, __DRIdrawable *pdraw)
+/**
+ * This is called via __DRIscreenRec's createNewDrawable pointer.
+ */
+static void *driMesaCreateNewDrawable(__DRInativeDisplay *dpy,
+                                      const __GLcontextModes *modes,
+                                      __DRIid draw,
+                                      __DRIdrawable *pdraw,
+                                      int renderType,
+                                      const int *attrs)
 {
-    __DRIscreen *pDRIScreen;
+    __DRIscreen * const pDRIScreen = __glXFindDRIScreen(dpy, modes->screen);
     __DRIscreenPrivate *psp;
     __DRIdrawablePrivate *pdp;
+
+
+    pdraw->private = NULL;
+
+    /* Since pbuffers are not yet supported, no drawable attributes are
+     * supported either.
+     */
+    (void) attrs;
+
+    if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
+        return NULL;
+    }
 
     pdp = (__DRIdrawablePrivate *)Xmalloc(sizeof(__DRIdrawablePrivate));
     if (!pdp) {
@@ -574,29 +618,42 @@ static void *driMesaCreateDrawable(Display *dpy, int scrn, GLXDrawable draw,
     pdp->uid = 0;
     pdp->destroyed = FALSE;
 
-    if (!(pDRIScreen = __glXFindDRIScreen(dpy, scrn))) {
-        Xfree(pdp);
-        return NULL;
-    } else if (!(psp = (__DRIscreenPrivate *)pDRIScreen->private)) {
-        Xfree(pdp);
-        return NULL;
-    }
+    psp = (__DRIscreenPrivate *)pDRIScreen->private;
     pdp->driScreenPriv = psp;
     pdp->driContextPriv = NULL;
 
-    driMesaCreateSurface(dpy, scrn, pdp);
+    driMesaCreateSurface(dpy, modes->screen, pdp);
     if (pdp->surface_id == 0) {
         Xfree(pdp);
         return NULL;
     }
 
+    pdraw->private = pdp;
     pdraw->destroyDrawable = driMesaDestroyDrawable;
-    pdraw->swapBuffers = driMesaSwapBuffers;
+    pdraw->swapBuffers = driMesaSwapBuffers;  /* called by glXSwapBuffers() */
 
-    return (void *)pdp;
+#if 0
+    /* We don't support these yet. */
+    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
+        pdraw->getSBC = driGetSBC;
+        pdraw->waitForSBC = driWaitForSBC;
+        pdraw->waitForMSC = driWaitForMSC;
+        pdraw->swapBuffersMSC = driSwapBuffersMSC;
+        pdraw->frameTracking = NULL;
+        pdraw->queryFrameTracking = driQueryFrameTracking;
+
+        /* This special default value is replaced with the configured
+         * default value when the drawable is first bound to a direct
+         * rendering context. */
+        pdraw->swap_interval = (unsigned)-1;
+    }
+#endif
+
+    return (void *) pdp;
 }
 
-static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
+static __DRIdrawable *driMesaGetDrawable(__DRInativeDisplay *dpy,
+                                         GLXDrawable draw,
                                          void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
@@ -614,7 +671,7 @@ static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
     return dri_draw;
 }
 
-static void driMesaSwapBuffers(Display *dpy, void *drawPrivate)
+static void driMesaSwapBuffers(__DRInativeDisplay *dpy, void *drawPrivate)
 {
     __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *) drawPrivate;
     __DRIcontextPrivate *pcp;
@@ -648,7 +705,7 @@ static void driMesaSwapBuffers(Display *dpy, void *drawPrivate)
 }
 
 /* pdp->mutex is held. */
-static void driMesaDestroyDrawable(Display *dpy, void *drawPrivate)
+static void driMesaDestroyDrawable(__DRInativeDisplay *dpy, void *drawPrivate)
 {
     __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)drawPrivate;
 
@@ -793,7 +850,8 @@ static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
     return pcp;
 }
 
-static void driMesaDestroyContext(Display *dpy, int scrn, void *contextPrivate)
+static void driMesaDestroyContext(__DRInativeDisplay *dpy, int scrn,
+                                  void *contextPrivate)
 {
     __DRIcontextPrivate  *pcp   = (__DRIcontextPrivate *) contextPrivate;
 
@@ -809,8 +867,9 @@ static void driMesaDestroyContext(Display *dpy, int scrn, void *contextPrivate)
 
 /*****************************************************************/
 
-static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                                 int numConfigs, __GLXvisualConfig *config)
+static void *driMesaCreateScreen(__DRInativeDisplay *dpy, int scrn,
+                                 __DRIscreen *psc, int numConfigs,
+                                 __GLXvisualConfig *config)
 {
     int directCapable, i, n;
     __DRIscreenPrivate *psp;
@@ -884,15 +943,16 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
     /* Initialize the drawHash when the first context is created */
     psp->drawHash = NULL;
 
-    psc->destroyScreen  = driMesaDestroyScreen;
-    psc->createContext  = driMesaCreateContext;
-    psc->createDrawable = driMesaCreateDrawable;
-    psc->getDrawable    = driMesaGetDrawable;
+    psc->destroyScreen     = driMesaDestroyScreen;
+    psc->createContext     = driMesaCreateContext;
+    psc->createNewDrawable = driMesaCreateNewDrawable;
+    psc->getDrawable       = driMesaGetDrawable;
 
     return (void *)psp;
 }
 
-static void driMesaDestroyScreen(Display *dpy, int scrn, void *screenPrivate)
+static void driMesaDestroyScreen(__DRInativeDisplay *dpy, int scrn,
+                                 void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
 
@@ -959,10 +1019,18 @@ static void driAppleSurfaceNotify(Display *dpy, unsigned int uid, int kind)
     }
 }
 
-/*
- * This is the entrypoint into the DRI 3D driver.
- * The driCreateScreen name is the symbol that libGL.so fetches via
- * dlsym() in order to bootstrap the driver.
+/**
+ * Entrypoint function used to create a new driver-private screen structure.
+ * 
+ * \param dpy        Display pointer.
+ * \param scrn       Index of the screen.
+ * \param psc        DRI screen data (not driver private)
+ * \param numConfigs Number of visual configs pointed to by \c configs.
+ * \param config     Array of GLXvisualConfigs exported by the 2D driver.
+ * 
+ * \deprecated
+ * In dynamically linked drivers, this function has been replaced by
+ * \c __driCreateNewScreen.
  */
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
@@ -1001,23 +1069,23 @@ __private_extern__ void XAppleDRIUseIndirectDispatch(void)
  * WARNING: This is not expected to work on future OS releases.
  */
 
-#define WRAP_CGL(context, vec, fun)			\
-    do {						\
-        (context)->disp.vec = (context)->ctx->disp.vec;	\
-        (context)->ctx->disp.vec = (fun);		\
+#define WRAP_CGL(context, vec, fun)                         \
+    do {                                                    \
+        (context)->disp.vec = (context)->ctx->disp.vec;     \
+        (context)->ctx->disp.vec = (fun);                   \
     } while (0)
 
-#define UNWRAP_CGL(context, vec)			\
-    do {						\
-        (context)->ctx->disp.vec = (context)->disp.vec;	\
+#define UNWRAP_CGL(context, vec)                            \
+    do {                                                    \
+        (context)->ctx->disp.vec = (context)->disp.vec;     \
     } while (0)
 
-#define WRAP_BOILERPLATE					\
-    GLXContext gc;						\
-    __DRIcontextPrivate *pcp;					\
-    gc = __glXGetCurrentContext();				\
-    if (gc == NULL || !gc->isDirect) return;			\
-    pcp = (__DRIcontextPrivate *) gc->driContext.private;	\
+#define WRAP_BOILERPLATE                                    \
+    GLXContext gc;                                          \
+    __DRIcontextPrivate *pcp;                               \
+    gc = __glXGetCurrentContext();                          \
+    if (gc == NULL || !gc->isDirect) return;                \
+    pcp = (__DRIcontextPrivate *) gc->driContext.private;   \
     if (pcp == NULL) return;
 
 static void viewport_callback(GLIContext ctx, GLint x, GLint y,

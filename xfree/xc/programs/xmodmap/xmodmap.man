@@ -24,7 +24,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.13 2003/06/26 10:19:49 eich Exp $
+.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.14 2005/02/11 03:03:21 dawes Exp $
 .\" 
 .de EX		\"Begin example
 .ne 5
@@ -39,7 +39,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XMODMAP 1 __xorgversion__
+.TH XMODMAP 1 __vendorversion__
 .SH NAME
 xmodmap - utility for modifying keymaps and pointer button mappings in X
 .SH SYNOPSIS

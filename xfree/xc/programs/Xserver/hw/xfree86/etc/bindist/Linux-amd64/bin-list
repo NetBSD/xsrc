@@ -94,7 +94,7 @@ lib64/libXv.so
 lib64/libXvMC.so.1.0
 lib64/libXvMC.so.1
 lib64/libXvMC.so
-lib64/libXxf86dga.so.1.0
+lib64/libXxf86dga.so.1.1
 lib64/libXxf86dga.so.1
 lib64/libXxf86dga.so
 lib64/libXxf86misc.so.1.1
@@ -106,6 +106,9 @@ lib64/libXxf86rush.so
 lib64/libXxf86vm.so.1.0
 lib64/libXxf86vm.so.1
 lib64/libXxf86vm.so
+lib64/libdmx.so.1.0
+lib64/libdmx.so.1
+lib64/libdmx.so
 lib64/libdps.so.1.0
 lib64/libdps.so.1
 lib64/libdps.so
@@ -121,7 +124,7 @@ lib64/libfontconfig.so
 lib64/libfontenc.so.1.0
 lib64/libfontenc.so.1
 lib64/libfontenc.so
-lib64/libfreetype.so.6.3.3
+lib64/libfreetype.so.6.3.6
 lib64/libfreetype.so.6
 lib64/libfreetype.so
 lib64/libpsres.so.1.0

@@ -59,7 +59,7 @@ in this Software without prior written authorization from The Open Group.
  * 27-Oct-87 Thomas E. LaStrange	File created
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/twm.c,v 3.15 2003/08/04 10:32:30 eich Exp $ */
+/* $XFree86: xc/programs/twm/twm.c,v 3.16 2004/06/08 01:17:02 dawes Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -695,12 +695,14 @@ InitVariables()
     Scr->IconManagerHighlight = black;
 
     Scr->FramePadding = 2;		/* values that look "nice" on */
+    Scr->TitleIndent = 0;
     Scr->TitlePadding = 8;		/* 75 and 100dpi displays */
     Scr->ButtonIndent = 1;
     Scr->SizeStringOffset = 0;
     Scr->BorderWidth = BW;
     Scr->IconBorderWidth = BW;
     Scr->MenuBorderWidth = BW;
+    Scr->IconMaxWidth = 1024;
     Scr->UnknownWidth = 0;
     Scr->UnknownHeight = 0;
     Scr->NumAutoRaises = 0;

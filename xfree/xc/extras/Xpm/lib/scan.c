@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.3 2002/01/07 19:40:49 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.7 2005/03/12 23:15:46 dawes Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -42,6 +42,8 @@
  * The code related to AMIGA has been added by
  * Lorens Younes (d93-hyo@nada.kth.se) 4/96
  */
+
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
 #include "XpmI.h"
 
@@ -107,7 +109,8 @@ LFUNC(MSWGetImagePixels, int, (Display *d, XImage *image, unsigned int width,
 LFUNC(ScanTransparentColor, int, (XpmColor *color, unsigned int cpp,
 				  XpmAttributes *attributes));
 
-LFUNC(ScanOtherColors, int, (Display *display, XpmColor *colors, int ncolors,
+LFUNC(ScanOtherColors, int, (Display *display, XpmColor *colors, 
+			     unsigned int ncolors, 
 			     Pixel *pixels, unsigned int mask,
 			     unsigned int cpp, XpmAttributes *attributes));
 
@@ -171,10 +174,10 @@ storeMaskPixel(pixel, pmap, index_return)
 /* function call in case of error */
 #undef RETURN
 #define RETURN(status) \
-{ \
+do { \
       ErrorStatus = status; \
       goto error; \
-}
+} while(0)
 
 /*
  * This function scans the given image and stores the found informations in
@@ -232,9 +235,15 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
     else
 	cpp = 0;
 
+    if ((height > 0 && width >= UINT_MAX / height) ||
+	width * height >= UINT_MAX / sizeof(unsigned int))
+	RETURN(XpmNoMemory);
     pmap.pixelindex =
 	(unsigned int *) XpmCalloc(width * height, sizeof(unsigned int));
     if (!pmap.pixelindex)
+	RETURN(XpmNoMemory);
+
+    if (pmap.size >= UINT_MAX / sizeof(Pixel)) 
 	RETURN(XpmNoMemory);
 
     pmap.pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * pmap.size);
@@ -270,6 +279,10 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
      */
 
     if (image) {
+	if (image->depth < 0 || image->depth > 32 ||
+	    image->bits_per_pixel < 0 || image->bits_per_pixel > 32 ||
+	    image->bitmap_unit < 0 || image->bitmap_unit > 32)
+	    return (XpmNoMemory);
 #ifndef FOR_MSW
 # ifndef AMIGA
 	if (((image->bits_per_pixel | image->depth) == 1)  &&
@@ -301,7 +314,8 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
      * get rgb values and a string of char, and possibly a name for each
      * color
      */
-
+    if (pmap.ncolors >= UINT_MAX / sizeof(XpmColor))
+	RETURN(XpmNoMemory);
     colorTable = (XpmColor *) XpmCalloc(pmap.ncolors, sizeof(XpmColor));
     if (!colorTable)
 	RETURN(XpmNoMemory);
@@ -360,6 +374,8 @@ ScanTransparentColor(color, cpp, attributes)
 
     /* first get a character string */
     a = 0;
+    if (cpp >= UINT_MAX - 1)
+	return (XpmNoMemory);
     if (!(s = color->string = (char *) XpmMalloc(cpp + 1)))
 	return (XpmNoMemory);
     *s++ = printable[c = a % MAXPRINTABLE];
@@ -407,7 +423,7 @@ static int
 ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     Display *display;
     XpmColor *colors;
-    int ncolors;
+    unsigned int ncolors;
     Pixel *pixels;
     unsigned int mask;
     unsigned int cpp;
@@ -451,6 +467,8 @@ ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     }
 
     /* first get character strings and rgb values */
+    if (ncolors >= UINT_MAX / sizeof(XColor) || cpp >= UINT_MAX - 1)
+	return (XpmNoMemory);
     xcolors = (XColor *) XpmMalloc(sizeof(XColor) * ncolors);
     if (!xcolors)
 	return (XpmNoMemory);
@@ -607,7 +625,8 @@ GetImagePixels(image, width, height, pmap)
     char *dst;
     unsigned int *iptr;
     char *data;
-    int x, y, i;
+    unsigned int x, y;
+    int i;
     int bits, depth, ibu, ibpp, offset;
     unsigned long lbt;
     Pixel pixel, px;
@@ -626,7 +645,7 @@ GetImagePixels(image, width, height, pmap)
 		src = &data[XYINDEX(x, y, image)];
 		dst = (char *) &pixel;
 		pixel = 0;
-		for (i = ibu >> 3; --i >= 0;)
+		for (i = ibu >> 3; i-- > 0;)
 		    *dst++ = *src++;
 		XYNORMALIZE(&pixel, image);
 		bits = (x + offset) % ibu;
@@ -646,7 +665,7 @@ GetImagePixels(image, width, height, pmap)
 	    for (x = 0; x < width; x++, iptr++) {
 		pixel = 0;
 		plane = 0;
-		for (i = depth; --i >= 0;) {
+		for (i = depth; i-- > 0;) {
 		    src = &data[XYINDEX(x, y, image) + plane];
 		    dst = (char *) &px;
 		    px = 0;
@@ -669,11 +688,11 @@ GetImagePixels(image, width, height, pmap)
 		src = &data[ZINDEX(x, y, image)];
 		dst = (char *) &px;
 		px = 0;
-		for (i = (ibpp + 7) >> 3; --i >= 0;)
+		for (i = (ibpp + 7) >> 3; i-- > 0;)
 		    *dst++ = *src++;
 		ZNORMALIZE(&px, image);
 		pixel = 0;
-		for (i = sizeof(unsigned long); --i >= 0;)
+		for (i = sizeof(unsigned long); i-- > 0;)
 		    pixel = (pixel << 8) | ((unsigned char *) &px)[i];
 		if (ibpp == 4) {
 		    if (x & 1)
@@ -709,7 +728,7 @@ GetImagePixels32(image, width, height, pmap)
     unsigned char *addr;
     unsigned char *data;
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -774,7 +793,7 @@ GetImagePixels16(image, width, height, pmap)
     unsigned char *addr;
     unsigned char *data;
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -819,7 +838,7 @@ GetImagePixels8(image, width, height, pmap)
 {
     unsigned int *iptr;
     unsigned char *data;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -852,7 +871,7 @@ GetImagePixels1(image, width, height, pmap, storeFunc)
     storeFuncPtr storeFunc;
 {
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     char *data;
     Pixel pixel;
     int xoff, yoff, offset, bpl;
@@ -888,11 +907,11 @@ GetImagePixels1(image, width, height, pmap, storeFunc)
 # else /* AMIGA */
 
 #define CLEAN_UP(status) \
-{\
+do {\
     if (pixels) XpmFree (pixels);\
     if (tmp_img) FreeXImage (tmp_img);\
     return (status);\
-}
+} while(0)
 
 static int
 AGetImagePixels (
@@ -913,7 +932,7 @@ AGetImagePixels (
     
     tmp_img = AllocXImage ((((width+15)>>4)<<4), 1, image->rp->BitMap->Depth);
     if (tmp_img == NULL)
-	CLEAN_UP (XpmNoMemory)
+	CLEAN_UP (XpmNoMemory);
     
     iptr = pmap->pixelindex;
     for (y = 0; y < height; ++y)
@@ -922,11 +941,11 @@ AGetImagePixels (
 	for (x = 0; x < width; ++x, ++iptr)
 	{
 	    if ((*storeFunc) (pixels[x], pmap, iptr))
-		CLEAN_UP (XpmNoMemory)
+		CLEAN_UP (XpmNoMemory);
 	}
     }
     
-    CLEAN_UP (XpmSuccess)
+    CLEAN_UP (XpmSuccess);
 }
 
 #undef CLEAN_UP

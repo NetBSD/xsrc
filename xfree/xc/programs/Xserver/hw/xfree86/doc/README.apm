@@ -1,6 +1,6 @@
                Information for Alliance Promotion chipset users
 
- Loïc Grenié (<grenie@math.jussieu.fr>),       Henrik Harmsen (<Henrik.Harm-
+    Loïc Grenié (<grenie@math.jussieu.fr>), Henrik Harmsen (<Henrik.Harm-
                             sen@erv.ericsson.se>)
 
                                  6 March 2000
@@ -93,7 +93,7 @@ Or turn off MMIO
        Option "nolinear"
 
 Do not specify either the amount of video RAM or which chipset in the config
-file.  It is better to let the driver probe for this. Also don't put any
+file.  It is better to let the driver probe for this. Also do not put any
 "clocks" line in the device section since these chips have a fully pro-
 grammable clock that can almost take any modeline you throw at it. It might
 though  fail at some specific clock values but in that case you should just
@@ -108,7 +108,7 @@ There is support for the XF86Rush extension for use with the glide2x library.
 Any questions regarding this driver should be sent to Loïc Grenié. It should
 be possible to add support for the 3210 chipset if someone needs it.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.5 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.6 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.apm,v 1.12 2004/02/24 03:49:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.apm,v 1.14 2005/03/04 03:25:45 dawes Exp $

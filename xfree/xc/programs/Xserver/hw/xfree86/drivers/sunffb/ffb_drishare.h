@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_drishare.h,v 1.2 2000/06/21 00:47:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_drishare.h,v 1.3 2004/12/10 16:07:03 alanh Exp $ */
 
 #ifndef _FFB_DRISHARE_H
 #define _FFB_DRISHARE_H
@@ -16,26 +16,26 @@ typedef struct ffb_dri_state {
 } ffb_dri_state_t;
 
 #define FFB_DRISHARE(SAREA)	\
-	((ffb_dri_state_t *) (((char *)(SAREA)) + sizeof(XF86DRISAREARec)))
+	((ffb_dri_state_t *) (((char *)(SAREA)) + sizeof(drm_sarea_t)))
 
 typedef struct {
-	drmHandle	hFbcRegs;
+	drm_handle_t	hFbcRegs;
 	drmSize		sFbcRegs;
 	drmAddress	mFbcRegs;
 
-	drmHandle	hDacRegs;
+	drm_handle_t	hDacRegs;
 	drmSize		sDacRegs;
 	drmAddress	mDacRegs;
 
-	drmHandle	hSfb8r;
+	drm_handle_t	hSfb8r;
 	drmSize		sSfb8r;
 	drmAddress	mSfb8r;
 
-	drmHandle	hSfb32;
+	drm_handle_t	hSfb32;
 	drmSize		sSfb32;
 	drmAddress	mSfb32;
 
-	drmHandle	hSfb64;
+	drm_handle_t	hSfb64;
 	drmSize		sSfb64;
 	drmAddress	mSfb64;
 

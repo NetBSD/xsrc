@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xwd/xwd.man,v 1.9 2002/04/22 20:53:10 herrb Exp $
+.\" $XFree86: xc/programs/xwd/xwd.man,v 1.10 2005/02/11 03:03:22 dawes Exp $
 .\"
-.TH XWD 1 __xorgversion__
+.TH XWD 1 __vendorversion__
 .SH NAME
 xwd - dump an image of an X window
 .SH SYNOPSIS

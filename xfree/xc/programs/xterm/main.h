@@ -1,8 +1,10 @@
+/* $XTermId: main.h,v 1.26 2004/11/23 02:11:04 tom Exp $ */
+
 /*
  *	$Xorg: main.h,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/main.h,v 3.8 2003/10/27 01:07:57 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/main.h,v 3.12 2004/12/01 01:27:47 dickey Exp $ */
 
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -39,17 +41,48 @@
 #define DEFBOLDFONT		NULL	/* no bold font uses overstriking */
 #define DEFBORDER		2
 #define DEFFACENAME		NULL
-#define DEFFACESIZE		14
+#define DEFFACESIZE		"14.0"
+
+#if OPT_BLINK_TEXT
+#define DEFBLINKASBOLD		FALSE
+#else
+#define DEFBLINKASBOLD		TRUE
+#endif
 
 #ifndef DEFDELETE_DEL
-#define DEFDELETE_DEL 2
+#define DEFDELETE_DEL		2
+#endif
+
+#ifndef DEF_BACKARO_ERASE
+#define DEF_BACKARO_ERASE	FALSE
+#endif
+
+#ifndef DEF_COLOR4
+#define DEF_COLOR4		"blue2"		/* see XTerm-col.ad */
+#endif
+
+#ifndef DEF_COLOR12
+#define DEF_COLOR12		"rgb:5c/5c/ff"	/* see XTerm-col.ad */
+#endif
+
+#ifndef DEF_INITIAL_ERASE
+#define DEF_INITIAL_ERASE	FALSE
 #endif
 
 #ifndef PROJECTROOT
 #define PROJECTROOT		"/usr/X11R6"
 #endif
 
+/*
+ * The configure script quotes PROJECTROOT's value.
+ * imake does not quote PROJECTROOT's value.
+ */
+#ifdef HAVE_CONFIG_H
+#define DEFLOCALEFILTER2(x)	x
+#else
 #define DEFLOCALEFILTER2(x)	#x
+#endif
+
 #define DEFLOCALEFILTER1(x)	DEFLOCALEFILTER2(x)
 #define DEFLOCALEFILTER		DEFLOCALEFILTER1(PROJECTROOT) "/bin/luit"
 

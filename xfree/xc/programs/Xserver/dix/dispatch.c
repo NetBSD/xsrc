@@ -68,7 +68,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.33 2003/11/17 22:20:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.34 2004/06/23 19:40:15 tsi Exp $ */
 
 #ifdef PANORAMIX_DEBUG
 #include <stdio.h>
@@ -2106,7 +2106,9 @@ DoGetImage(client, format, drawable, x, y, width, height, planemask, im_return)
     Mask		plane = 0;
     char		*pBuf;
     xGetImageReply	xgi;
+#ifdef XCSECURITY
     RegionPtr pVisibleRegion = NULL;
+#endif
 
     if ((format != XYPixmap) && (format != ZPixmap))
     {

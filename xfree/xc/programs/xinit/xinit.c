@@ -1,5 +1,3 @@
-/* $Xorg: xinit.c,v 1.5 2001/02/09 02:05:49 xorgcvs Exp $ */
-
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -25,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.33 2003/06/10 17:03:56 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.34 2005/01/29 00:22:02 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
@@ -70,7 +68,9 @@ char **envsave;	/* to circumvent an UNIXOS2 problem */
 #endif
 
 #include <stdlib.h>
+#ifndef _GNU_SOURCE
 extern char **environ;
+#endif
 char **newenviron = NULL;
 
 #ifndef SHELL

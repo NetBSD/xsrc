@@ -1,4 +1,3 @@
-/* $Xorg: imakemdep.h,v 1.6 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
@@ -24,7 +23,53 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.72 2003/12/30 01:53:52 tsi Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.80 2005/02/01 02:25:06 dawes Exp $ */
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 
 /* 
@@ -73,7 +118,7 @@ in this Software without prior written authorization from The Open Group.
 #ifdef imake_ccflags
 #undef imake_ccflags
 #endif
-#define imake_ccflags "-Dsco -DSYSV -DSCO -DSCO325"
+#define imake_ccflags "-DSYSV -DSCO325 -D__SCO__"
 #endif
 
 #ifdef sony
@@ -199,7 +244,7 @@ in this Software without prior written authorization from The Open Group.
  *     descriptor onto another, define such a mechanism here (if you don't
  *     already fall under the existing category(ies).
  */
-#if defined(SYSV) && !defined(_CRAY) && !defined(Mips) && !defined(_SEQUENT_) && !defined(sco)
+#if defined(SYSV) && !defined(_CRAY) && !defined(Mips) && !defined(_SEQUENT_) && !defined(__SCO__)
 #define	dup2(fd1,fd2)	((fd1 == fd2) ? fd1 : (close(fd2), \
 					       fcntl(fd1, F_DUPFD, fd2)))
 #endif
@@ -214,7 +259,7 @@ in this Software without prior written authorization from The Open Group.
  *     all colons).  One way to tell if you need this is to see whether or not
  *     your Makefiles have no tabs in them and lots of @@ strings.
  */
-#if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(sco) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi) || defined(__UNIXOS2__)
+#if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(__SCO__) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi) || defined(__UNIXOS2__)
 #define FIXUP_CPP_WHITESPACE
 #endif
 #ifdef WIN32
@@ -374,6 +419,9 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef __AMD64__
 	"-D__AMD64__",
 # endif
+# ifdef __amd64__
+	"-D__amd64__",
+# endif
 # ifdef __x86_64__
 	"-D__AMD64__",
 # endif
@@ -391,6 +439,9 @@ char *cpp_argv[ARGUMENTS] = {
 # endif
 # ifdef __sparc__
 	"-D__sparc__",
+# endif
+# ifdef __sparc64__
+	"-D__sparc64__",
 # endif
 # ifdef __m68k__
 	"-D__m68k__",
@@ -482,8 +533,8 @@ char *cpp_argv[ARGUMENTS] = {
 	"-DSVR4",
 # endif
 #endif /* MOTOROLA */
-#if defined(M_UNIX) || defined(sco)
-	"-Dsco",
+#if defined(M_UNIX) || defined(__SCO__) || defined(sco) || defined(_SCO_DS)
+	"-D__SCO__",
 	"-DSYSV",
 #endif
 #ifdef i386
@@ -509,11 +560,8 @@ char *cpp_argv[ARGUMENTS] = {
 #    endif
 #   endif
 #  endif
-#  ifdef SCO
-	"-DSCO",
-#   ifdef _SCO_DS
+#  ifdef _SCO_DS
     "-DSCO325",
-#   endif
 #  endif
 # endif
 # ifdef ESIX
@@ -547,11 +595,8 @@ char *cpp_argv[ARGUMENTS] = {
 #   endif
 #  endif
 # endif
-# ifdef SCO
-	"-DSCO",
-#  ifdef _SCO_DS
+# ifdef _SCO_DS
 	"-DSCO325",
-#  endif
 # endif
 # ifdef ESIX
 	"-DESIX",
@@ -837,7 +882,7 @@ char *cpp_argv[ARGUMENTS] = {
 				buf[0] = '6';				\
 			else						\
 				buf[0] = '8'; /* guess */		\
-		} else {						\
+		} else if (__osrel < 420000) {				\
 			buf[0] = ((__osrel / 1000) % 10) + '0';		\
 		}							\
 		buf[1] = 0;						\
@@ -863,16 +908,36 @@ char *cpp_argv[ARGUMENTS] = {
  */
 #  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
 #  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
+#  define DEFAULT_OS_TEENY_REV   "r %s" 
 #  define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
     do {								\
-	int	teeny = 0;						\
-	char	*ptr = (buf);						\
+	int	major, minor, teeny = 0;				\
+	char	*ptr = (buf), *endptr;					\
 									\
-	while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */		\
-	    teeny = teeny * 26 + (int)(*ptr++ - 'A');			\
+	major = (int)strtol(ptr, &endptr, 10);				\
+	if (ptr == endptr || *endptr++ != '.')				\
+	    goto error;							\
 									\
-	snprintf((buf), (size), "%d", teeny + 1);			\
+	ptr = endptr;							\
+	minor = (int)strtol(ptr, &endptr, 10);				\
+	if (ptr == endptr)						\
+	    goto error;							\
+	ptr = endptr;							\
+									\
+	if (major > 2 || (major == 2 && minor >= 99)) {			\
+		if (*ptr++ == '.') {					\
+			teeny = (int)strtol(ptr, &endptr, 10);		\
+			if (ptr == endptr)				\
+				goto error;				\
+		}							\
+	} else {							\
+		while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */	\
+		    teeny = teeny * 26 + (int)(*ptr++ - 'A');		\
+		teeny++;						\
+	}								\
+									\
+error:									\
+	snprintf((buf), (size), "%d", teeny);				\
     } while (0)
 #  define DEFAULT_OS_NAME        "smr %[^\n]"
 #  define DEFAULT_OS_NAME_FROB(buf, size)				\
@@ -1022,6 +1087,9 @@ struct symtab	predefs[] = {
 #endif
 #ifdef __sparc__
 	{"__sparc__", "1"},
+#endif
+#ifdef __sparc64__
+	{"__sparc64__", "1"},
 #endif
 #ifdef __sparcv9__
 	{"__sparcv9__", "1"},
@@ -1272,6 +1340,9 @@ struct symtab	predefs[] = {
 	{"__AMD64__", "1"},
 	{"__x86_64__", "1"},
 # endif
+# if defined (__amd64__)
+	{"__amd64__", "1"},
+# endif
 # ifdef __i386
 	{"__i386", "1"},
 # endif
@@ -1337,6 +1408,9 @@ struct symtab	predefs[] = {
 #endif
 #if defined(__LITTLE_ENDIAN__)
       {"__LITTLE_ENDIAN__", "1"},
+#endif
+#ifdef __SIZE_TYPE__
+      {"__SIZE_TYPE__", DEF_STRINGIFY(__SIZE_TYPE__)},
 #endif
 	/* add any additional symbols before this line */
 	{NULL, NULL}

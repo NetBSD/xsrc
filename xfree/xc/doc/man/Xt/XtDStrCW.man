@@ -26,7 +26,7 @@
 .\" other dealing in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtDStrCW.man,v 1.5 2003/05/29 21:48:05 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtDStrCW.man,v 1.6 2005/02/11 03:03:04 dawes Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -127,7 +127,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtDisplayStringConversionWarning 3Xt __xorgversion__ "XT FUNCTIONS"
+.TH XtDisplayStringConversionWarning 3Xt __vendorversion__ "XT FUNCTIONS"
 .SH NAME
 XtDisplayStringConversionWarning \- issue a conversion warning message
 .SH SYNTAX

@@ -1,4 +1,3 @@
-/* $Xorg: InitOutput.c,v 1.4 2001/02/09 02:04:45 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -26,7 +25,63 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.26 2003/11/16 03:16:59 dawes Exp $ */
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * The screen origin code is:
+ *
+ * Copyright (c) 2004 by The XFree86 Project, Inc
+ * Rights as per the XFree86 1.1 licence
+ * (http://www.xfree86.org/legal/licenses.html).
+ *
+ */
+
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.31 2005/01/30 17:48:44 tsi Exp $ */
 
 #if defined(WIN32)
 #include <X11/Xwinsock.h>
@@ -65,6 +120,7 @@ from The Open Group.
 #include "dix.h"
 #include "miline.h"
 #include "mfb.h"
+#include "micmap.h"
 
 #define VFB_DEFAULT_WIDTH  1280
 #define VFB_DEFAULT_HEIGHT 1024
@@ -80,7 +136,9 @@ typedef struct
     int width;
     int paddedBytesWidth;
     int paddedWidth;
+    int xOrigin;
     int height;
+    int yOrigin;
     int depth;
     int bitsPerPixel;
     int sizeInBytes;
@@ -242,6 +300,11 @@ DarwinGlxWrapInitVisuals(
 #endif
 
 void
+OsVendorPreInit()
+{
+}
+
+void
 OsVendorInit()
 {
 }
@@ -254,7 +317,7 @@ OsVendorFatalError()
 void
 ddxUseMsg()
 {
-    ErrorF("-screen scrn WxHxD     set screen's width, height, depth\n");
+    ErrorF("-screen n WxHxD[@x,y]  set screen's width, height, depth, origin\n");
     ErrorF("-pixdepths list-of-int support given pixmap depths\n");
 #ifdef RENDER
     ErrorF("+/-render		   turn on/of RENDER extension support"
@@ -288,6 +351,7 @@ ddxProcessArgument(int argc, char *argv[], int i)
     if (strcmp (argv[i], "-screen") == 0)	/* -screen n WxHxD */
     {
 	int screenNum;
+ 	char *s;
 	if (i + 2 >= argc) UseMsg();
 	screenNum = atoi(argv[i+1]);
 	if (screenNum < 0 || screenNum >= MAXSCREENS)
@@ -295,13 +359,30 @@ ddxProcessArgument(int argc, char *argv[], int i)
 	    ErrorF("Invalid screen number %d\n", screenNum);
 	    UseMsg();
 	}
-	if (3 != sscanf(argv[i+2], "%dx%dx%d",
+	s = strtok(argv[i+2], "@");
+	if (3 != sscanf(s, "%dx%dx%d",
 			&vfbScreens[screenNum].width,
 			&vfbScreens[screenNum].height,
 			&vfbScreens[screenNum].depth))
 	{
-	    ErrorF("Invalid screen configuration %s\n", argv[i+2]);
+	    ErrorF("Invalid screen configuration %s\n", s);
 	    UseMsg();
+	}
+	s = strtok(NULL, "@");
+	if (s)
+	{
+	    if (2 != sscanf(s, "%d,%d",
+			    &vfbScreens[screenNum].xOrigin,
+			    &vfbScreens[screenNum].yOrigin))
+	    {
+		ErrorF("Invalid screen position %s\n", s);
+		UseMsg();
+	    }
+	}
+	else
+	{
+	    vfbScreens[screenNum].xOrigin = -1;
+	    vfbScreens[screenNum].yOrigin = -1;
 	}
 
 	if (screenNum >= vfbNumScreens)
@@ -508,7 +589,6 @@ vfbInstallColormap(ColormapPtr pmap)
     {
 	int entries;
 	XWDFileHeader *pXWDHeader;
-	XWDColor *pXWDCmap;
 	VisualPtr pVisual;
 	Pixel *     ppix;
 	xrgb *      prgb;
@@ -523,7 +603,6 @@ vfbInstallColormap(ColormapPtr pmap)
 
 	entries = pmap->pVisual->ColormapEntries;
 	pXWDHeader = vfbScreens[pmap->pScreen->myNum].pXWDHeader;
-	pXWDCmap = vfbScreens[pmap->pScreen->myNum].pXWDCmap;
 	pVisual = pmap->pVisual;
 
 	swapcopy32(pXWDHeader->visual_class, pVisual->class);
@@ -913,6 +992,8 @@ vfbScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     if (!pbits) return FALSE;
 
     /*    miSetPixmapDepths ();*/
+    miClearVisualTypes();
+    miSetVisualTypes(pvfb->depth, miGetDefaultVisualMask(pvfb->depth), 8, -1);
 
     switch (pvfb->bitsPerPixel)
     {
@@ -1030,6 +1111,35 @@ InitOutput(ScreenInfo *screenInfo, int argc, char **argv)
 	if (-1 == AddScreen(vfbScreenInit, argc, argv))
 	{
 	    FatalError("Couldn't add screen %d", i);
+	}
+    }
+
+    /*
+     * Setup the Xinerama Layout.  If the screen origins are not specified
+     * explicitly, assume that screen n is to the right of screen n - 1.
+     * It is safe to set this up even when Xinerama is not used.
+     */
+
+    for (i = 0; i < vfbNumScreens; i++)
+    {
+	if (vfbScreens[i].xOrigin < 0 || vfbScreens[i].yOrigin < 0)
+	{
+	    if (i == 0)
+	    {
+		dixScreenOrigins[i].x = 0;
+		dixScreenOrigins[i].y = 0;
+	    }
+	    else
+	    {
+		dixScreenOrigins[i].x = dixScreenOrigins[i - 1].x +
+						vfbScreens[i - 1].width;
+		dixScreenOrigins[i].y = dixScreenOrigins[i - 1].y;
+	    }
+	}
+	else
+	{
+	    dixScreenOrigins[i].x = vfbScreens[i].xOrigin;
+	    dixScreenOrigins[i].y = vfbScreens[i].yOrigin;
 	}
     }
 

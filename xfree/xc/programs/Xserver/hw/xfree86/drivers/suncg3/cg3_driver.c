@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg3/cg3_driver.c,v 1.5 2003/10/30 17:37:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg3/cg3_driver.c,v 1.9 2005/02/18 02:55:09 dawes Exp $ */
 
 #define PSZ 8
 #include "xf86.h"
@@ -56,8 +56,6 @@ static void	CG3FreeScreen(int scrnIndex, int flags);
 static ModeStatus CG3ValidMode(int scrnIndex, DisplayModePtr mode,
 			       Bool verbose, int flags);
 
-void CG3Sync(ScrnInfoPtr pScrn);
-
 #define VERSION 4000
 #define CG3_NAME "SUNCG3"
 #define CG3_DRIVER_NAME "suncg3"
@@ -65,7 +63,7 @@ void CG3Sync(ScrnInfoPtr pScrn);
 #define CG3_MINOR_VERSION 0
 #define CG3_PATCHLEVEL 0
 
-/* 
+/*
  * This contains the functions needed by the server after loading the driver
  * module.  It must be supplied, and gets passed back by the SetupProc
  * function in the dynamic case.  In the static case, a reference to this
@@ -107,7 +105,7 @@ static XF86ModuleVersionInfo suncg3VersRec =
 
 XF86ModuleData suncg3ModuleData = { &suncg3VersRec, cg3Setup, NULL };
 
-pointer
+static pointer
 cg3Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = FALSE;
@@ -228,7 +226,7 @@ CG3Probe(DriverPtr drv, int flags)
     numUsed = xf86MatchSbusInstances(CG3_NAME, SBUS_DEVICE_CG3,
 		   devSections, numDevSections,
 		   drv, &usedChips);
-				    
+
     xfree(devSections);
     if (numUsed <= 0)
 	return FALSE;
@@ -243,7 +241,7 @@ CG3Probe(DriverPtr drv, int flags)
 	 */
 	if(pEnt->active) {
 	    ScrnInfoPtr pScrn;
-	    
+
 	    /* Allocate a ScrnInfoRec and claim the slot */
 	    pScrn = xf86AllocateScreen(drv, 0);
 
@@ -254,8 +252,8 @@ CG3Probe(DriverPtr drv, int flags)
 	    pScrn->Probe	 = CG3Probe;
 	    pScrn->PreInit	 = CG3PreInit;
 	    pScrn->ScreenInit	 = CG3ScreenInit;
-  	    pScrn->SwitchMode	 = CG3SwitchMode;
-  	    pScrn->AdjustFrame	 = CG3AdjustFrame;
+	    pScrn->SwitchMode	 = CG3SwitchMode;
+	    pScrn->AdjustFrame	 = CG3AdjustFrame;
 	    pScrn->EnterVT	 = CG3EnterVT;
 	    pScrn->LeaveVT	 = CG3LeaveVT;
 	    pScrn->FreeScreen	 = CG3FreeScreen;
@@ -285,7 +283,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
      * not at the start of each server generation.  This means that
      * only things that are persistent across server generations can
      * be initialised here.  xf86Screens[] is (pScrn is a pointer to one
-     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()  
+     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()
      * are too, and should be used for data that must persist across
      * server generations.
      *
@@ -298,7 +296,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
     pCg3 = GET_CG3_FROM_SCRN(pScrn);
-    
+
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
 
@@ -320,7 +318,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     deal with depth
     *********************/
-    
+
     if (!xf86SetDepthBpp(pScrn, 0, 0, 0, NoDepth24Support)) {
 	return FALSE;
     } else {
@@ -363,7 +361,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     set up clock and mode stuff
     *********************/
-    
+
     pScrn->progClock = TRUE;
 
     if(pScrn->display->virtualX || pScrn->display->virtualY) {
@@ -373,6 +371,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
 	pScrn->display->virtualY = 0;
     }
 
+    /* XXX Need to deal with adapters not initialised by PROM */
     xf86SbusUseBuiltinMode(pScrn, pCg3->psdp);
     pScrn->currentMode = pScrn->modes;
     pScrn->displayWidth = pScrn->virtualX;
@@ -394,7 +393,7 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     Cg3Ptr pCg3;
     int ret;
 
-    /* 
+    /*
      * First get the ScrnInfoRec
      */
     pScrn = xf86Screens[pScreen->myNum];
@@ -402,11 +401,10 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pCg3 = GET_CG3_FROM_SCRN(pScrn);
 
     /* Map the CG3 memory */
-    pCg3->fb =
-	xf86MapSbusMem (pCg3->psdp, CG3_RAM_VOFF,
-			(pCg3->psdp->width * pCg3->psdp->height));
+    pCg3->fb = xf86MapSbusMem(pCg3->psdp, CG3_RAM_VOFF,
+			      pCg3->psdp->width * pCg3->psdp->height);
 
-    if (! pCg3->fb)
+    if (!pCg3->fb)
 	return FALSE;
 
     /* Darken the screen for aesthetic reasons and set the viewport */
@@ -435,8 +433,8 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
-    miSetPixmapDepths ();
-	
+    miSetPixmapDepths();
+
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
@@ -448,9 +446,7 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
-#ifdef RENDER
-    fbPictureInit (pScreen, 0, 0);
-#endif
+    fbPictureInit(pScreen, 0, 0);
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -459,7 +455,7 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86SetBlackWhitePixels(pScreen);
 
     /* Initialise cursor functions */
-    miDCInitialize (pScreen, xf86GetPointerScreenFuncs());
+    miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
@@ -498,7 +494,7 @@ CG3SwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  * displayed location in the video memory.
  */
 /* Usually mandatory */
-static void 
+static void
 CG3AdjustFrame(int scrnIndex, int x, int y, int flags)
 {
     /* we don't support virtual desktops */
@@ -544,8 +540,8 @@ CG3CloseScreen(int scrnIndex, ScreenPtr pScreen)
 
     pScrn->vtSema = FALSE;
     xf86UnmapSbusMem(pCg3->psdp, pCg3->fb,
-		     (pCg3->psdp->width * pCg3->psdp->height));
-    
+		     pCg3->psdp->width * pCg3->psdp->height);
+
     pScreen->CloseScreen = pCg3->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
     return FALSE;
@@ -569,7 +565,7 @@ static ModeStatus
 CG3ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
-	return(MODE_BAD);
+	return(MODE_NO_INTERLACE);
 
     return(MODE_OK);
 }
@@ -584,13 +580,4 @@ CG3SaveScreen(ScreenPtr pScreen, int mode)
        used for much though */
 {
     return TRUE;
-}
-
-/*
- * This is the implementation of the Sync() function.
- */
-void
-CG3Sync(ScrnInfoPtr pScrn)
-{
-    return;
 }

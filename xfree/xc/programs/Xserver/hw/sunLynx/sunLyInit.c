@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.9 2003/11/17 22:20:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.10 2004/06/02 22:43:00 dawes Exp $ */
 
 /*
  * Copyright 1987 by the Regents of the University of California
@@ -429,6 +429,12 @@ static void getKbdType()
 #else
     sunKbdPriv.type = KB_SUN4;
 #endif
+}
+
+void OsVendorPreInit(
+    void
+)
+{
 }
 
 void OsVendorInit(

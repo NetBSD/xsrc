@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/mkfontscale/mkfontscale.man,v 1.5 2003/07/04 16:24:30 eich Exp $
+.\" $XFree86: xc/programs/mkfontscale/mkfontscale.man,v 1.6 2005/02/09 17:06:55 dawes Exp $
 .\"
 .TH MKFONTSCALE 1 __vendorversion__
 .SH NAME
@@ -145,7 +145,7 @@ is equivalent to
 .BR mkfontdir .
 .SH AUTHOR
 .B Mkfontscale
-was written by Juliusz Chroboczek <jch@xfree86.org> for the XFree86
+was written by Juliusz Chroboczek <jch@pps.jussieu.fr> for the XFree86
 project.  The functionality of this program was inspired by the
 .B ttmkfdir
 utility by Joerg Pommnitz.

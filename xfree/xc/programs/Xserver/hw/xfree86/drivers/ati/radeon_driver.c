@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.118 2004/02/26 04:25:29 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.127 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -139,6 +139,9 @@ typedef enum {
     OPTION_VIDEO_KEY,
     OPTION_DISP_PRIORITY,
     OPTION_PANEL_SIZE,
+#ifdef __powerpc__
+    OPTION_IBOOKHACKS,
+#endif
     OPTION_MIN_DOTCLOCK
 } RADEONOpts;
 
@@ -175,6 +178,9 @@ const OptionInfoRec RADEONOptions[] = {
     { OPTION_DISP_PRIORITY,  "DisplayPriority",  OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_PANEL_SIZE,     "PanelSize",        OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_MIN_DOTCLOCK,   "ForceMinDotClock", OPTV_FREQ,    {0}, FALSE },
+#ifdef __powerpc__
+    { OPTION_IBOOKHACKS,     "iBookHacks",       OPTV_BOOLEAN, {0}, FALSE },
+#endif
     { -1,                    NULL,               OPTV_NONE,    {0}, FALSE }
 };
 
@@ -227,7 +233,9 @@ static const char *ddcSymbols[] = {
 
 static const char *fbSymbols[] = {
     "fbScreenInit",
+    "fbPictureGetSubpixelOrder",
     "fbPictureInit",
+    "fbPictureSetSubpixelOrder",
     NULL
 };
 
@@ -309,6 +317,7 @@ static const char *driSymbols[] = {
     "DRIScreenInit",
     "DRIUnlock",
     "GlxSetVisualConfigs",
+    "DRICreatePCIBusID",
     NULL
 };
 
@@ -1808,6 +1817,11 @@ static Bool RADEONGetPLLParameters(ScrnInfoPtr pScrn)
 		    pll->reference_div  = 12;
 		    pll->xclk           = 23000;
 		    break;
+		case PCI_CHIP_RADEON_LW: /* Guess based on iBook OpenFirmware */
+		    pll->reference_freq = 2700;
+		    pll->reference_div  = 12;
+		    pll->xclk           = 36000;
+		    break;
 		default:
 		    pll->reference_freq = 2700;
 		    pll->reference_div  = 67;
@@ -2144,7 +2158,6 @@ static Bool RADEONPreInitConfig(ScrnInfoPtr pScrn)
 	info->ChipFamily = CHIP_FAMILY_RADEON;
 	info->HasCRTC2 = FALSE;
     }
-
 				/* Framebuffer */
 
     from               = X_PROBED;
@@ -4395,8 +4408,7 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Must be after RGB order fixed */
     fbPictureInit (pScreen, 0, 0);
 
-#ifdef RENDER
-    if (PictureGetSubpixelOrder (pScreen) == SubPixelUnknown)
+    if (fbPictureGetSubpixelOrder (pScreen) == SubPixelUnknown)
     {
 	int subPixelOrder;
 
@@ -4406,9 +4418,9 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	case MT_DFP:	subPixelOrder = SubPixelHorizontalRGB; break;
 	default:	subPixelOrder = SubPixelNone; break;
 	}
-	PictureSetSubpixelOrder (pScreen, subPixelOrder);
+	fbPictureSetSubpixelOrder (pScreen, subPixelOrder);
     }
-#endif
+
 				/* Memory manager setup */
 #ifdef XF86DRI
     if (info->directRenderingEnabled) {
@@ -5029,6 +5041,14 @@ static void RADEONRestorePLLRegisters(ScrnInfoPtr pScrn,
     unsigned char *RADEONMMIO = info->MMIO;
 
     if (info->IsMobility) {
+    /* 
+     * Never do it on Apple iBook to avoid a blank screen.
+     */
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
+        return;
+#endif
+
         /* A temporal workaround for the occational blanking on certain laptop panels.
            This appears to related to the PLL divider registers (fail to lock?).
 	   It occurs even when all dividers are the same with their old settings.
@@ -5184,9 +5204,28 @@ static void RADEONRestorePLL2Registers(ScrnInfoPtr pScrn,
 	    ~(RADEON_PIX2CLK_SRC_SEL_MASK));
 }
 
-#if 0
 /* Write palette data */
 static void RADEONRestorePalette(ScrnInfoPtr pScrn, RADEONSavePtr restore)
+{
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
+    unsigned char *RADEONMMIO = info->MMIO;
+    int            i;
+
+    if (!restore->palette_valid) return;
+
+    PAL_SELECT(0);
+    OUTPAL_START(0);
+    for (i = 0; i < 256; i++) {
+	RADEONWaitForFifo(pScrn, 32); /* delay */
+	OUTPAL_NEXT_CARD32(restore->palette[i]);
+    }
+}
+
+#if 1
+#define RADEONRestorePalette2(pScrn, restore)	/* Nullify */
+#else
+/* This causes hangs on some Radeon's.  Why? */
+static void RADEONRestorePalette2(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 {
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
@@ -5200,13 +5239,6 @@ static void RADEONRestorePalette(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	RADEONWaitForFifo(pScrn, 32); /* delay */
 	OUTPAL_NEXT_CARD32(restore->palette2[i]);
     }
-
-    PAL_SELECT(0);
-    OUTPAL_START(0);
-    for (i = 0; i < 256; i++) {
-	RADEONWaitForFifo(pScrn, 32); /* delay */
-	OUTPAL_NEXT_CARD32(restore->palette[i]);
-    }
 }
 #endif
 
@@ -5219,6 +5251,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 
     /* For Non-dual head card, we don't have private field in the Entity */
     if (!info->HasCRTC2) {
+	RADEONRestorePalette(pScrn, restore);
 	RADEONRestoreCommonRegisters(pScrn, restore);
 	RADEONRestoreCrtcRegisters(pScrn, restore);
 	RADEONRestoreFPRegisters(pScrn, restore);
@@ -5238,6 +5271,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
      * we may get a blank screen.
      */
     if (info->IsSecondary) {
+	RADEONRestorePalette2(pScrn, restore);
 	if (!pRADEONEnt->RestorePrimary  && !info->IsSwitching)
 	    RADEONRestoreCommonRegisters(pScrn, restore);
 	RADEONRestoreCrtc2Registers(pScrn, restore);
@@ -5253,6 +5287,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCrtcRegisters(pScrn, &restore0);
 	    RADEONRestoreFPRegisters(pScrn, &restore0);
 	    RADEONRestorePLLRegisters(pScrn, &restore0);
+	    RADEONRestorePalette(pScrn, restore);
 	    pRADEONEnt->IsSecondaryRestored = FALSE;
 	}
     } else {
@@ -5260,6 +5295,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCommonRegisters(pScrn, restore);
 
 	if (info->Clone) {
+	    RADEONRestorePalette2(pScrn, restore);
 	    RADEONRestoreCrtc2Registers(pScrn, restore);
 	    RADEONRestorePLL2Registers(pScrn, restore);
 	}
@@ -5271,15 +5307,12 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCrtcRegisters(pScrn, restore);
 	    RADEONRestoreFPRegisters(pScrn, restore);
 	    RADEONRestorePLLRegisters(pScrn, restore);
+	    RADEONRestorePalette(pScrn, restore);
 	} else {
 	    memcpy(&restore0, restore, sizeof(restore0));
 	    pRADEONEnt->RestorePrimary = TRUE;
 	}
     }
-
-#if 0
-    RADEONRestorePalette(pScrn, &info->SavedReg);
-#endif
 }
 
 /* Read common registers */
@@ -5469,7 +5502,7 @@ static void RADEONSaveMode(ScrnInfoPtr pScrn, RADEONSavePtr save)
 	    RADEONSaveCrtc2Registers(pScrn, save);
 	    RADEONSavePLL2Registers(pScrn, save);
 	}
-     /* RADEONSavePalette(pScrn, save); */
+	RADEONSavePalette(pScrn, save);
     }
 
     RADEONTRACE(("RADEONSaveMode returns %p\n", save));
@@ -6456,10 +6489,11 @@ static void RADEONInitFPRegisters(ScrnInfoPtr pScrn, RADEONSavePtr orig,
 }
 
 /* Define PLL registers for requested video mode */
-static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONPLLPtr pll,
+static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONInfoPtr info,
 				   double dot_clock)
 {
     unsigned long  freq = dot_clock * 100;
+    RADEONPLLPtr pll = &info->pll;
 
     struct {
 	int divider;
@@ -6509,7 +6543,17 @@ static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONPLLPtr pll,
 	       save->post_div));
 
     save->ppll_ref_div   = pll->reference_div;
-    save->ppll_div_3     = (save->feedback_div | (post_div->bitvalue << 16));
+
+    /* 
+     * on iBooks the LCD pannel needs tweaked PLL timings 
+     */
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
+        save->ppll_div_3 = 0x000600ad;
+    else
+#endif
+        save->ppll_div_3 = (save->feedback_div | (post_div->bitvalue << 16));
+
     save->htotal_cntl    = 0;
 }
 
@@ -6570,7 +6614,6 @@ static void RADEONInitPLL2Registers(RADEONSavePtr save, RADEONPLLPtr pll,
     save->htotal_cntl2     = 0;
 }
 
-#if 0
 /* Define initial palette for requested video mode.  This doesn't do
  * anything for XFree86 4.0.
  */
@@ -6578,7 +6621,6 @@ static void RADEONInitPalette(RADEONSavePtr save)
 {
     save->palette_valid = FALSE;
 }
-#endif
 
 /* Define registers for a requested video mode */
 static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
@@ -6654,7 +6696,7 @@ static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
                 save->htotal_cntl  = 0;
             }
             else
-		RADEONInitPLLRegisters(save, &info->pll, dot_clock);
+		RADEONInitPLLRegisters(save, info, dot_clock);
 	} else {
 	    save->ppll_ref_div = info->SavedReg.ppll_ref_div;
 	    save->ppll_div_3   = info->SavedReg.ppll_div_3;
@@ -6666,8 +6708,7 @@ static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
 	    dot_clock = info->CurCloneMode->Clock / 1000.0;
 	    RADEONInitPLL2Registers(save, &info->pll, dot_clock);
 	}
-	/* Not used for now: */
-     /* if (!info->PaletteSavedOnVT) RADEONInitPalette(save); */
+	if (!info->PaletteSavedOnVT) RADEONInitPalette(save);
     }
 
     RADEONInitFPRegisters(pScrn, &info->SavedReg, save, mode, info);
@@ -7031,12 +7072,79 @@ void RADEONFreeScreen(int scrnIndex, int flags)
     RADEONFreeRec(pScrn);
 }
 
+/*
+ * Powering done DAC, needed for DPMS problem with ViewSonic P817 (or its variant).
+ *
+ * Note for current DAC mapping when calling this function:
+ * For most of cards:
+ * single CRT:  Driver doesn't change the existing CRTC->DAC mapping, 
+ *              CRTC1 could be driving either DAC or both DACs.
+ * CRT+CRT:     CRTC1->TV DAC, CRTC2->Primary DAC
+ * DFP/LCD+CRT: CRTC2->TV DAC, CRTC2->Primary DAC.
+ * Some boards have two DACs reversed or don't even have a primary DAC,
+ * this is reflected in pRADEONEnt->ReversedDAC. And radeon 7200 doesn't 
+ * have a second DAC.
+ * It's kind of messy, we'll need to redo DAC mapping part some day.
+ */
+static void RADEONDacPowerSet(ScrnInfoPtr pScrn, Bool IsOn, Bool IsPrimaryDAC)
+{
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
+    unsigned char *RADEONMMIO = info->MMIO;
+
+    if (IsPrimaryDAC) {
+	CARD32 dac_cntl;
+	CARD32 dac_macro_cntl = 0;
+	dac_cntl = INREG(RADEON_DAC_CNTL);
+	if ((!info->IsMobility) || (info->ChipFamily == CHIP_FAMILY_RV350)) 
+	    dac_macro_cntl = INREG(RADEON_DAC_MACRO_CNTL);
+	if (IsOn) {
+	    dac_cntl &= ~RADEON_DAC_PDWN;
+	    dac_macro_cntl &= ~(RADEON_DAC_PDWN_R |
+				RADEON_DAC_PDWN_G |
+				RADEON_DAC_PDWN_B);
+	} else {
+	    dac_cntl |= RADEON_DAC_PDWN;
+	    dac_macro_cntl |= (RADEON_DAC_PDWN_R |
+			       RADEON_DAC_PDWN_G |
+			       RADEON_DAC_PDWN_B);
+	}
+	OUTREG(RADEON_DAC_CNTL, dac_cntl);
+	if ((!info->IsMobility) || (info->ChipFamily == CHIP_FAMILY_RV350)) 
+	    OUTREG(RADEON_DAC_MACRO_CNTL, dac_macro_cntl);
+    } else {
+	if (info->ChipFamily != CHIP_FAMILY_R200) {
+	    CARD32 tv_dac_cntl = INREG(RADEON_TV_DAC_CNTL);
+	    if (IsOn) {
+		tv_dac_cntl &= ~(RADEON_TV_DAC_RDACPD |
+				 RADEON_TV_DAC_GDACPD |
+				 RADEON_TV_DAC_BDACPD |
+				 RADEON_TV_DAC_BGSLEEP);
+	    } else {
+		tv_dac_cntl |= (RADEON_TV_DAC_RDACPD |
+				RADEON_TV_DAC_GDACPD |
+				RADEON_TV_DAC_BDACPD |
+				RADEON_TV_DAC_BGSLEEP);
+	    }
+	    OUTREG(RADEON_TV_DAC_CNTL, tv_dac_cntl);
+	} else {
+	    CARD32 fp2_gen_cntl = INREG(RADEON_FP2_GEN_CNTL);
+	    if (IsOn) {
+		fp2_gen_cntl |= RADEON_FP2_DV0_EN;
+	    } else {
+		fp2_gen_cntl &= ~RADEON_FP2_DV0_EN;
+	    }
+	    OUTREG(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
+	}
+    }
+}
+
 /* Sets VESA Display Power Management Signaling (DPMS) Mode */
 static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					    int PowerManagementMode,
 					    int flags)
 {
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
+    RADEONEntPtr pRADEONEnt   = RADEONEntPriv(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
 #ifdef XF86DRI
@@ -7054,8 +7162,6 @@ static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 	int             mask2     = (RADEON_CRTC2_DISP_DIS |
 				     RADEON_CRTC2_VSYNC_DIS |
 				     RADEON_CRTC2_HSYNC_DIS);
-
-	/* TODO: additional handling for LCD ? */
 
 	switch (PowerManagementMode) {
 	case DPMSModeOn:
@@ -7123,13 +7229,19 @@ static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 		    if (info->ChipFamily >= CHIP_FAMILY_R200) {
 			OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_DV0_EN, ~RADEON_FP2_DV0_EN);
 		    }
+		} else if (info->DisplayType == MT_CRT) {
+		    RADEONDacPowerSet(pScrn, TRUE, !pRADEONEnt->ReversedDAC);
 		}
 	    } else {
-		if ((info->Clone) && (info->CloneType == MT_DFP)) {
-		    OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_BLANK_EN);
-		    OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_ON, ~RADEON_FP2_ON);
-		    if (info->ChipFamily >= CHIP_FAMILY_R200) {
-			OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_DV0_EN, ~RADEON_FP2_DV0_EN);
+		if (info->Clone) {
+		    if (info->CloneType == MT_DFP) {
+			OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_BLANK_EN);
+			OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_ON, ~RADEON_FP2_ON);
+			if (info->ChipFamily >= CHIP_FAMILY_R200) {
+			    OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_DV0_EN, ~RADEON_FP2_DV0_EN);
+			}
+		    } else if (info->CloneType == MT_CRT) {
+			RADEONDacPowerSet(pScrn, TRUE, !pRADEONEnt->ReversedDAC);
 		    }
 		}
 		if (info->DisplayType == MT_DFP) {
@@ -7140,6 +7252,14 @@ static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 		    OUTREGP (RADEON_LVDS_GEN_CNTL, RADEON_LVDS_BLON, ~RADEON_LVDS_BLON);
 		    usleep (info->PanelPwrDly * 1000);
 		    OUTREGP (RADEON_LVDS_GEN_CNTL, RADEON_LVDS_ON, ~RADEON_LVDS_ON);
+		} else if (info->DisplayType == MT_CRT) {
+		    if ((pRADEONEnt->HasSecondary) || info->Clone) {
+			RADEONDacPowerSet(pScrn, TRUE, pRADEONEnt->ReversedDAC);
+		    } else {
+			RADEONDacPowerSet(pScrn, TRUE, TRUE);
+			if (info->HasCRTC2)
+			    RADEONDacPowerSet(pScrn, TRUE, FALSE);
+		    }
 		}
 	    }
 	} else if ((PowerManagementMode == DPMSModeOff) ||
@@ -7152,13 +7272,19 @@ static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 		    if (info->ChipFamily >= CHIP_FAMILY_R200) {
 			OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_DV0_EN);
 		    }
+		} else if (info->DisplayType == MT_CRT) {
+		    RADEONDacPowerSet(pScrn, FALSE, !pRADEONEnt->ReversedDAC);
 		}
 	    } else {
-		if ((info->Clone) && (info->CloneType == MT_DFP)) {
-		    OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_BLANK_EN, ~RADEON_FP2_BLANK_EN);
-		    OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_ON);
-		    if (info->ChipFamily >= CHIP_FAMILY_R200) {
-			OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_DV0_EN);
+		if (info->Clone) {
+		    if(info->CloneType == MT_DFP) {
+			OUTREGP (RADEON_FP2_GEN_CNTL, RADEON_FP2_BLANK_EN, ~RADEON_FP2_BLANK_EN);
+			OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_ON);
+			if (info->ChipFamily >= CHIP_FAMILY_R200) {
+			    OUTREGP (RADEON_FP2_GEN_CNTL, 0, ~RADEON_FP2_DV0_EN);
+			}
+		    } else if (info->CloneType == MT_CRT) {
+			RADEONDacPowerSet(pScrn, FALSE, !pRADEONEnt->ReversedDAC);
 		    }
 		}
 		if (info->DisplayType == MT_DFP) {
@@ -7178,6 +7304,17 @@ static void RADEONDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 
 		    if (info->IsMobility || info->IsIGP) {
 			OUTPLL(RADEON_PIXCLKS_CNTL, tmpPixclksCntl);
+		    }
+		} else if (info->DisplayType == MT_CRT) {
+		    if ((pRADEONEnt->HasSecondary) || info->Clone) {
+			RADEONDacPowerSet(pScrn, FALSE, pRADEONEnt->ReversedDAC);
+		    } else {
+			/* single CRT, turning both DACs off, we don't really know 
+			 * which DAC is actually connected.
+			 */
+			RADEONDacPowerSet(pScrn, FALSE, TRUE);
+			if (info->HasCRTC2) /* don't apply this to old radeon (singel CRTC) card */
+			    RADEONDacPowerSet(pScrn, FALSE, FALSE);
 		    }
 		}
 	    }

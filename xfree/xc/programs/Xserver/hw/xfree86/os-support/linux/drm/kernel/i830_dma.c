@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/i830_dma.c,v 1.17 2005/03/06 03:55:47 dawes Exp $ */
 /* i830_dma.c -- DMA support for the I830 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
  *
@@ -145,10 +146,17 @@ int i830_mmap_buffers(struct file *filp, struct vm_area_struct *vma)
    	buf_priv->currently_mapped = I830_BUF_MAPPED;
 	unlock_kernel();
 
+#ifdef NO_REMAP_PAGE_RANGE
+	if (remap_pfn_range(vma, vma->vm_start,
+			    VM_OFFSET(vma) >> PAGE_SHIFT,
+			    vma->vm_end - vma->vm_start,
+			    vma->vm_page_prot)) return -EAGAIN;
+#else
 	if (remap_page_range(DRM_RPR_ARG(vma) vma->vm_start,
 			     VM_OFFSET(vma),
 			     vma->vm_end - vma->vm_start,
 			     vma->vm_page_prot)) return -EAGAIN;
+#endif
 	return 0;
 }
 
@@ -167,7 +175,7 @@ static int i830_map_buffer(drm_buf_t *buf, struct file *filp)
 	old_fops = filp->f_op;
 	filp->f_op = &i830_buffer_fops;
 	dev_priv->mmap_buffer = buf;
-	buf_priv->virtual = (void *)do_mmap(filp, 0, buf->total, 
+	buf_priv->virtual = (void __user *)do_mmap(filp, 0, buf->total, 
 					    PROT_READ|PROT_WRITE,
 					    MAP_SHARED, 
 					    buf->bus_address);
@@ -477,7 +485,7 @@ int i830_dma_init(struct inode *inode, struct file *filp,
    	drm_i830_init_t init;
    	int retcode = 0;
 	
-  	if (copy_from_user(&init, (drm_i830_init_t *)arg, sizeof(init)))
+  	if (copy_from_user(&init, (void __user *)arg, sizeof(init)))
 		return -EFAULT;
 	
    	switch(init.func) {
@@ -1171,19 +1179,19 @@ static void i830_dma_dispatch_vertex(drm_device_t *dev,
    	DRM_DEBUG(  "start + used - 4 : %ld\n", start + used - 4);
 
 	if (buf_priv->currently_mapped == I830_BUF_MAPPED) {
-		u32 *vp = buf_priv->virtual;
+		u32 __user *vp = buf_priv->virtual;
 
-		vp[0] = (GFX_OP_PRIMITIVE |
+		put_user( (GFX_OP_PRIMITIVE |
 			 sarea_priv->vertex_prim |
-			 ((used/4)-2));
+			 ((used/4)-2)), &vp[0]);
 
 		if (dev_priv->use_mi_batchbuffer_start) {
-			vp[used/4] = MI_BATCH_BUFFER_END; 
+			put_user(MI_BATCH_BUFFER_END, &vp[used/4]);
 			used += 4; 
 		}
 		
 		if (used & 4) {
-			vp[used/4] = 0;
+			put_user(0, &vp[used/4]);
 			used += 4;
 		}
 
@@ -1347,7 +1355,7 @@ int i830_dma_vertex(struct inode *inode, struct file *filp,
      					dev_priv->sarea_priv; 
 	drm_i830_vertex_t vertex;
 
-	if (copy_from_user(&vertex, (drm_i830_vertex_t *)arg, sizeof(vertex)))
+	if (copy_from_user(&vertex, (drm_i830_vertex_t __user *)arg, sizeof(vertex)))
 		return -EFAULT;
 
    	if(!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1377,7 +1385,7 @@ int i830_clear_bufs(struct inode *inode, struct file *filp,
 	drm_device_t *dev = priv->dev;
 	drm_i830_clear_t clear;
 
-   	if (copy_from_user(&clear, (drm_i830_clear_t *)arg, sizeof(clear)))
+   	if (copy_from_user(&clear, (drm_i830_clear_t __user *)arg, sizeof(clear)))
 		return -EFAULT;
    
    	if(!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1488,7 +1496,7 @@ int i830_getbuf(struct inode *inode, struct file *filp, unsigned int cmd,
      					dev_priv->sarea_priv; 
 
 	DRM_DEBUG("getbuf\n");
-   	if (copy_from_user(&d, (drm_i830_dma_t *)arg, sizeof(d)))
+   	if (copy_from_user(&d, (drm_i830_dma_t __user *)arg, sizeof(d)))
 		return -EFAULT;
    
 	if(!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1503,7 +1511,7 @@ int i830_getbuf(struct inode *inode, struct file *filp, unsigned int cmd,
 	DRM_DEBUG("i830_dma: %d returning %d, granted = %d\n",
 		  current->pid, retcode, d.granted);
 
-	if (copy_to_user((drm_dma_t *)arg, &d, sizeof(d)))
+	if (copy_to_user((drm_dma_t __user *)arg, &d, sizeof(d)))
 		return -EFAULT;
    	sarea_priv->last_dispatch = (int) hw_status[5];
 
@@ -1541,7 +1549,7 @@ int i830_getparam( struct inode *inode, struct file *filp, unsigned int cmd,
 		return -EINVAL;
 	}
 
-	if (copy_from_user(&param, (drm_i830_getparam_t *)arg, sizeof(param) ))
+	if (copy_from_user(&param, (drm_i830_getparam_t __user *)arg, sizeof(param) ))
 		return -EFAULT;
 
 	switch( param.param ) {
@@ -1574,7 +1582,7 @@ int i830_setparam( struct inode *inode, struct file *filp, unsigned int cmd,
 		return -EINVAL;
 	}
 
-	if (copy_from_user(&param, (drm_i830_setparam_t *)arg, sizeof(param) ))
+	if (copy_from_user(&param, (drm_i830_setparam_t __user *)arg, sizeof(param) ))
 		return -EFAULT;
 
 	switch( param.param ) {

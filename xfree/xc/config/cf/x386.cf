@@ -1,4 +1,5 @@
 XCOMM platform:  $Xorg: x386.cf,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
+XCOMM $XFree86: xc/config/cf/x386.cf,v 3.7 2004/04/22 14:15:05 tsi Exp $
 
 /*****************************************************************************
  *			  Site-specfic parameters                            *
@@ -89,14 +90,14 @@ XCOMM platform:  $Xorg: x386.cf,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
  * imake rules.
  */
 #define InstallManPageLong(file,destdir,dest)                           @@\
-install.man:: file.man                                                  @@\
+install.man::                                                           @@\
 	$(RM) destdir/dest.$(MANSUFFIX)					@@\
 	cat file.man | $(NEQN) | $(NROFF) $(MANMACROS) >/tmp/file.man	@@\
 	$(INSTALL) -c $(INSTMANFLAGS) /tmp/file.man destdir/dest.$(MANSUFFIX) @@\
 	$(RM) /tmp/file.man
 
 #define InstallMultipleMan(list,dest)                                   @@\
-install.man:: list                                                      @@\
+install.man::                                                           @@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
 	for i in list; do \                                             @@\
 		(set -x; \						@@\

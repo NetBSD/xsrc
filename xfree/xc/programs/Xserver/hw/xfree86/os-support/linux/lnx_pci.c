@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_pci.c,v 3.9 2003/02/17 15:29:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_pci.c,v 3.10 2004/12/31 03:30:42 tsi Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -11,11 +11,9 @@
 
 #ifdef __sparc__
 #define PCIADDR_TYPE		long long
-#define PCIADDR_IGNORE_FMT	"%*x"
 #define PCIADDR_FMT		"%llx"
 #else
 #define PCIADDR_TYPE		long
-#define PCIADDR_IGNORE_FMT	"%*x"
 #define PCIADDR_FMT		"%lx"
 #endif
 
@@ -30,7 +28,7 @@ xf86GetPciSizeFromOS(PCITAG tag, int index, int* bits)
     unsigned int num;
     signed PCIADDR_TYPE Size;
 
-    if (index > 7)
+    if (index >= 7)
 	return FALSE;
     
     if (!(file = fopen("/proc/bus/pci/devices","r")))
@@ -42,13 +40,7 @@ xf86GetPciSizeFromOS(PCITAG tag, int index, int* bits)
 			 /*bus+dev vendorid deviceid irq */
 			 "%02x%02x\t%*04x%*04x\t%*x"
 			 /* 7 PCI resource base addresses */
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
-			 "\t" PCIADDR_IGNORE_FMT
+			 "\t%*x\t%*x\t%*x\t%*x\t%*x\t%*x\t%*x"
 			 /* 7 PCI resource sizes, and then optionally a driver name */
 			 "\t" PCIADDR_FMT
 			 "\t" PCIADDR_FMT

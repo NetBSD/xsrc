@@ -1,11 +1,13 @@
+/* $XTermId: data.h,v 1.82 2005/01/12 22:08:00 tom Exp $ */
+
 /*
  *	$Xorg: data.h,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/data.h,v 3.31 2003/10/13 00:58:22 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/data.h,v 3.35 2005/01/14 01:50:02 dickey Exp $ */
 
 /*
- * Copyright 2002,2003 by Thomas E. Dickey
+ * Copyright 2002-2004,2005 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -82,11 +84,9 @@ extern struct q_head read_queue;
 #if OPT_TEK4014
 extern Char *Tpushb;
 extern Char *Tpushback;
-extern PtyData *Tbuffer;
 extern TekLink *TekRefresh;
 extern TekWidget tekWidget;
 extern Widget tekshellwidget;
-extern int TEKgcFontMask;
 extern int T_lastx;
 extern int T_lasty;
 extern int Ttoggled;
@@ -116,15 +116,9 @@ extern jmp_buf VTend;
 extern int debug;
 #endif /* DEBUG */
 
-#ifdef VMS
-extern int Select_mask;
-extern int X_mask;
-extern int pty_mask;
-#else /* VMS */
-extern fd_set Select_mask;
-extern fd_set X_mask;
-extern fd_set pty_mask;
-#endif /* VMS */
+extern PtySelect Select_mask;
+extern PtySelect X_mask;
+extern PtySelect pty_mask;
 
 extern int waitingForTrackInfo;
 
@@ -147,7 +141,7 @@ extern XtermWidget term;
 
 extern char *ProgramName;
 extern Arg ourTopLevelShellArgs[];
-extern int number_ourTopLevelShellArgs;
+extern Cardinal number_ourTopLevelShellArgs;
 extern Bool waiting_for_initial_map;
 extern Atom wm_delete_window;
 
@@ -160,6 +154,7 @@ typedef struct {
     char *tty_modes;
     Boolean hold_screen;	/* true if we keep window open  */
     Boolean utmpInhibit;
+    Boolean utmpDisplayId;
     Boolean messages;
     Boolean sunFunctionKeys;	/* %%% should be widget resource? */
 #if OPT_SUNPC_KBD
@@ -167,6 +162,9 @@ typedef struct {
 #endif
 #if OPT_HP_FUNC_KEYS
     Boolean hpFunctionKeys;
+#endif
+#if OPT_SCO_FUNC_KEYS
+    Boolean scoFunctionKeys;
 #endif
 #if OPT_INITIAL_ERASE
     Boolean ptyInitialErase;	/* if true, use pty's sense of erase char */

@@ -1,8 +1,8 @@
-XCOMM $XFree86: xc/lib/dps/Imakefile,v 1.17 2003/10/21 17:41:45 tsi Exp $
+XCOMM $XFree86: xc/lib/dps/Imakefile,v 1.18 2004/04/05 02:33:13 dawes Exp $
 
 #define DoNormalLib NormalLibDps
 #define DoSharedLib SharedLibDps
-#define DoExtraLib SharedLibDps
+#define DoExtraLib ExtraLibDps
 #define DoDebugLib DebugLibDps
 #define DoProfileLib ProfileLibDps
 #define LibName dps

@@ -30,7 +30,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Copyright 2002 Shigehiro Nomura
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.75 2004/02/18 04:20:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.79 2005/02/26 01:07:13 dawes Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -760,7 +760,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
      */
     /* This driver doesn't expect more than one entity per screen */
     if (pScrn->numEntities > 1)
-	RETURN;
+	RETURN
 
     /* This is the general case */
     for (i = 0; i<pScrn->numEntities; i++) {
@@ -1250,7 +1250,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	/* XXX What about VGA resources in OPERATING mode? */
 	if (xf86RegisterResources(nPtr->pEnt->index, NULL, ResExclusive))
-	    RETURN;
+	    RETURN
 	    
     } else if (nPtr->pEnt->location.type == BUS_ISA) {
 	unsigned int addr;
@@ -1277,7 +1277,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	    nPtr->noLinear = TRUE; /* XXX */
 	}
     } else
-	RETURN;
+	RETURN
 
     if (nPtr->pEnt->device->videoRam != 0) {
 	pScrn->videoRam = nPtr->pEnt->device->videoRam;
@@ -1336,25 +1336,9 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	 * If the monitor parameters are not specified explicitly, set them
 	 * so that 60Hz modes up to the panel size are allowed.
 	 */
-	if (pScrn->monitor->nHsync == 0) {
-	    pScrn->monitor->nHsync = 1;
-	    pScrn->monitor->hsync[0].lo = 28;
-	    pScrn->monitor->hsync[0].hi =
-				60.0 * 1.07 * nPtr->NeoPanelHeight / 1000.0;
-	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-		       "Using hsync range matching panel size: %.2f-%.2f kHz\n",
-		       pScrn->monitor->hsync[0].lo,
-		       pScrn->monitor->hsync[0].hi);
-	}
-	if (pScrn->monitor->nVrefresh == 0) {
-	    pScrn->monitor->nVrefresh = 1;
-	    pScrn->monitor->vrefresh[0].lo = 55.0;
-	    pScrn->monitor->vrefresh[0].hi = 65.0;
-	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-		       "Using vsync range for panel: %.2f-%.2f kHz\n",
-		       pScrn->monitor->vrefresh[0].lo,
-		       pScrn->monitor->vrefresh[0].hi);
-	}
+	xf86SetMonitorParameters(pScrn, pScrn->monitor,
+				 nPtr->NeoPanelWidth, nPtr->NeoPanelHeight,
+				 60);
     }
 
     /*
@@ -1369,7 +1353,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 			  LOOKUP_BEST_REFRESH);
 
        if (i == -1)
-           RETURN;
+           RETURN
     }
 
     /* Prune the modes marked as invalid */
@@ -1377,7 +1361,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 
     if (i == 0 || pScrn->modes == NULL) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes found\n");
-	RETURN;
+	RETURN
     }
 
     /*
@@ -1400,27 +1384,27 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     xf86SetDpi(pScrn, 0, 0);
 
     if (xf86LoadSubModule(pScrn, "fb") == NULL) {
-	RETURN;
+	RETURN
     }
 
     xf86LoaderReqSymLists(fbSymbols, NULL);
 
     if (!nPtr->noLinear) {
 	if (!xf86LoadSubModule(pScrn, "xaa")) 
-	    RETURN;
+	    RETURN
 	xf86LoaderReqSymLists(xaaSymbols, NULL);
     }
 
     if (nPtr->shadowFB) {
 	if (!xf86LoadSubModule(pScrn, "shadow")) {
-	    RETURN;
+	    RETURN
 	}
 	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
     
     if (!nPtr->swCursor) {
 	if (!xf86LoadSubModule(pScrn, "ramdac"))
-	    RETURN;
+	    RETURN
 	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
     return TRUE;
@@ -1970,7 +1954,7 @@ NEOValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 			   mode->VDisplay,
 			   nPtr->NeoPanelWidth,
 			   nPtr->NeoPanelHeight);
-		return(MODE_BAD);
+		return(MODE_PANEL);
 	    }
 
 	    /* Is the mode one of the acceptable sizes? */
@@ -2009,7 +1993,7 @@ NEOValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 		       "display properly on LCD\n",
 		       mode->HDisplay,
 		       mode->VDisplay);
-	    return(MODE_BAD);
+	    return(MODE_PANEL_NOSCALE);
 	}
     }
     return(MODE_OK);
@@ -2354,7 +2338,6 @@ neoProgramShadowRegs(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore)
 		VGAwCR(0x58,0x2C);
 		VGAwCR(0x59,0x94);
 		break;
-		break;
 		/* Not done */
 	    }
 	    break;
@@ -2659,6 +2642,7 @@ neoModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
      * generic VGA registers.
      */
 
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode))
 	return(FALSE);
 
@@ -2702,10 +2686,11 @@ neoModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     NeoNew->ExtCRTDispAddr = 0x10;
 
     /* Vertical Extension */
-    NeoNew->VerticalExt = (((mode->CrtcVTotal -2) & 0x400) >> 10 )
-      | (((mode->CrtcVDisplay -1) & 0x400) >> 9 )
-        | (((mode->CrtcVSyncStart) & 0x400) >> 8 )
-          | (((mode->CrtcVSyncStart) & 0x400) >> 7 );
+    /* XXX Are Sync & Blank flipped here? */
+    NeoNew->VerticalExt = (((mode->CrtcVTotal - 2) & 0x400) >> 10)
+      | (((mode->CrtcVDisplay - 1) & 0x400) >> 9)
+        | (((mode->CrtcVSyncStart - 1) & 0x400) >> 8)
+          | (((mode->CrtcVBlankStart - 1) & 0x400) >> 7);
 
     /* Fast write bursts on unless disabled. */
     if (nPtr->onPciBurst) {

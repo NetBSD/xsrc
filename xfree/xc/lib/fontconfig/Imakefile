@@ -1,8 +1,8 @@
-XCOMM $XFree86: xc/lib/fontconfig/Imakefile,v 1.18 2003/12/08 17:11:21 dawes Exp $
+XCOMM $XFree86: xc/lib/fontconfig/Imakefile,v 1.19 2004/04/05 02:33:14 dawes Exp $
 
 #define DoNormalLib NormalLibFontconfig
 #define DoSharedLib SharedLibFontconfig
-#define DoExtraLib SharedLibFontconfig
+#define DoExtraLib ExtraLibFontconfig
 #define DoDebugLib DebugLibFontconfig
 #define DoProfileLib ProfileLibFontconfig
 #define HasSharedData YES

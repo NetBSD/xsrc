@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.c,v 1.81 2004/02/13 23:58:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.c,v 1.88 2005/02/18 01:52:59 dawes Exp $ */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -300,10 +300,20 @@ xf86DriverHasEntities(DriverPtr drvp)
 {
     int i;
     for (i = 0; i < xf86NumEntities; i++) {
-	if (xf86Entities[i]->driver == drvp) 
+	if (xf86Entities[i]->driver == drvp && xf86Entities[i]->inUse) 
 	    return TRUE;
     }
     return FALSE;
+}
+
+void
+xf86ClearDriverEntities(DriverPtr drvp)
+{
+    int i;
+    for (i = 0; i < xf86NumEntities; i++) {
+	if (xf86Entities[i]->driver == drvp)
+	    xf86Entities[i]->driver = NULL;
+    }
 }
 
 void
@@ -427,6 +437,7 @@ xf86ClearEntityListForScreen(int scrnIndex)
 	pScrn->CurrentAccess->pMemAccess = NULL;
     pScrn->entityList = NULL;
     pScrn->entityInstanceList = NULL;
+    pScrn->numEntities = 0;
 }
 
 void
@@ -1826,8 +1837,7 @@ busTypeSpecific(EntityPtr pEnt, xf86State state, xf86AccessPtr *acc_mem,
     switch (pEnt->bus.type) {
     case BUS_ISA:
     case BUS_SBUS:
-	    *acc_mem = *acc_io = *acc_mem_io = &AccessNULL;
-	    break;
+	*acc_mem = *acc_io = *acc_mem_io = &AccessNULL;
 	break;
     case BUS_PCI:
 	ppaccp = xf86PciAccInfo;
@@ -1876,42 +1886,27 @@ setAccess(EntityPtr pEnt, xf86State state)
 	    acc_mem_io = pEnt->rac->io_mem_new;
 	}   
     }
-    
-    if (state == OPERATING) {
-	prop = pEnt->entityProp;
-	switch(pEnt->entityProp & NEED_SHARED) {
-	case NEED_SHARED:
-	    pEnt->access->rt = MEM_IO;
-	    break;
-	case NEED_IO_SHARED:
-	    pEnt->access->rt = IO;
-	    break;
-	case NEED_MEM_SHARED:
-	    pEnt->access->rt = MEM;
-	    break;
-	default:
-	    pEnt->access->rt = NONE;
-	}
-    } else {
-	prop = NEED_SHARED | NEED_MEM | NEED_IO;
+
+    prop = pEnt->entityProp;
+    switch (prop & NEED_SHARED) {
+    case NEED_SHARED:
 	pEnt->access->rt = MEM_IO;
-    }
-    
-    switch(pEnt->access->rt) {
-    case IO:
-	pEnt->access->pAccess = acc_io;
-	break;
-    case MEM:
-	pEnt->access->pAccess = acc_mem;
-	break;
-    case MEM_IO:
 	pEnt->access->pAccess = acc_mem_io;
 	break;
+    case NEED_IO_SHARED:
+	pEnt->access->rt = IO;
+	pEnt->access->pAccess = acc_io;
+	break;
+    case NEED_MEM_SHARED:
+	pEnt->access->rt = MEM;
+	pEnt->access->pAccess = acc_mem;
+	break;
     default: /* no conflicts at all */
+	pEnt->access->rt = NONE;
 	pEnt->access->pAccess =  NULL; /* remove from RAC */
 	break;
     }
-
+    
     if (org_io) {
 	/* does the driver want the old access func? */
 	if (pEnt->rac->old) {
@@ -2773,7 +2768,6 @@ x_isSubsetOf(resRange range, resPtr list1, resPtr list2)
 	    }
 	    xf86FreeResList(tmpList);
 	    return TRUE;
-	    break;
 	case ResSparse:
 	    while (list2) {
 		tmpList = xf86JoinResLists(tmpList,decomposeSparse(list2->val));
@@ -2782,7 +2776,6 @@ x_isSubsetOf(resRange range, resPtr list1, resPtr list2)
 	    ret = x_isSubsetOf(range,tmpList,NULL);
 	    xf86FreeResList(tmpList);
 	    return ret;
-	    break;
 	}
     } else
 	return FALSE;
@@ -2968,30 +2961,29 @@ xf86FindPrimaryDevice()
         CheckGenericGA();
     if (primaryBus.type != BUS_NONE) {
 	char *bus;
-	char *loc = xnfcalloc(1,9);
-	if (loc == NULL) return;
+	char *loc = NULL;
 
 	switch (primaryBus.type) {
 	case BUS_PCI:
 	    bus = "PCI";
-	    sprintf(loc," %2.2x:%2.2x:%1.1x",primaryBus.id.pci.bus,
-	    primaryBus.id.pci.device,primaryBus.id.pci.func);
+	    xasprintf(&loc, " %2.2x:%2.2x:%1.1x", primaryBus.id.pci.bus,
+		      primaryBus.id.pci.device, primaryBus.id.pci.func);
 	    break;
 	case BUS_ISA:
 	    bus = "ISA";
-	    loc[0] = '\0';
 	    break;
 	case BUS_SBUS:
 	    bus = "SBUS";
-	    sprintf(loc," %2.2x",primaryBus.id.sbus.fbNum);
+	    xasprintf(&loc, " %2.2x", primaryBus.id.sbus.fbNum);
 	    break;
 	default:
 	    bus = "";
-	    loc[0] = '\0';
 	}
 	
-	xf86MsgVerb(X_INFO, 2, "Primary Device is: %s%s\n",bus,loc);
-	xfree(loc);
+	xf86MsgVerb(X_INFO, 2, "Primary Device is: %s%s\n",
+		    bus, loc ? loc : "");
+	if (loc)
+	    xfree(loc);
     }
     
 }
@@ -3245,3 +3237,31 @@ xf86GetEntityPrivate(int entityIndex, int privIndex)
     return &(xf86Entities[entityIndex]->entityPrivates[privIndex]);
 }
 
+
+/* Relocate, as needed, a device offset into its domain */
+Bool
+xf86LocateMemoryArea(int entityIndex, char **devName,
+		     unsigned int *devOffset, unsigned int *fbSize,
+		     unsigned int *fbOffset, unsigned int *flags)
+{
+    EntityPtr pEntity = xf86Entities[entityIndex];
+
+    switch (pEntity->busType) {
+    case BUS_PCI:
+	return xf86LocatePciMemoryArea(
+	    pciTag(pEntity->pciBusId.bus,
+		   pEntity->pciBusId.device,
+		   pEntity->pciBusId.func),
+	    devName, devOffset, fbSize, fbOffset, flags);
+
+#if defined(__sparc__) && !defined(__OpenBSD__) && defined(___NOT_YET___)
+    case BUS_SBUS:
+	return xf86LocateSbusMemoryArea(xf86GetSbusInfoForEntity(entityIndex),
+					devName, devOffset,
+					fbSize, fbOffset, flags);
+#endif
+
+    default:
+	return TRUE;
+    }
+}

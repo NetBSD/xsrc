@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect_wrap.h,v 1.5 2004/01/28 18:11:42 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect_wrap.h,v 1.6 2004/04/08 10:07:33 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

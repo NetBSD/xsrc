@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.44 2003/11/10 18:41:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.46 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -59,11 +59,6 @@
 #include "radeon_dripriv.h"
 #include "dri.h"
 #include "GL/glxint.h"
-#endif
-
-				/* Render support */
-#ifdef RENDER
-#include "picturestr.h"
 #endif
 
 #define RADEON_DEBUG            0 /* Turn off debugging output               */
@@ -412,14 +407,14 @@ typedef struct {
     __GLXvisualConfig *pVisualConfigs;
     RADEONConfigPrivPtr pVisualConfigsPriv;
 
-    drmHandle         fbHandle;
+    drm_handle_t         fbHandle;
 
     drmSize           registerSize;
-    drmHandle         registerHandle;
+    drm_handle_t         registerHandle;
 
     Bool              IsPCI;            /* Current card is a PCI card */
     drmSize           pciSize;
-    drmHandle         pciMemHandle;
+    drm_handle_t         pciMemHandle;
     unsigned char     *PCI;             /* Map */
 
     Bool              depthMoves;       /* Enable depth moves -- slow! */
@@ -428,7 +423,7 @@ typedef struct {
     int               drmMinor;
 
     drmSize           gartSize;
-    drmHandle         agpMemHandle;     /* Handle from drmAgpAlloc */
+    drm_handle_t         agpMemHandle;     /* Handle from drmAgpAlloc */
     unsigned long     gartOffset;
     unsigned char     *AGP;             /* Map */
     int               agpMode;
@@ -445,20 +440,20 @@ typedef struct {
 
 				/* CP ring buffer data */
     unsigned long     ringStart;        /* Offset into GART space */
-    drmHandle         ringHandle;       /* Handle from drmAddMap */
+    drm_handle_t         ringHandle;       /* Handle from drmAddMap */
     drmSize           ringMapSize;      /* Size of map */
     int               ringSize;         /* Size of ring (in MB) */
     unsigned char     *ring;            /* Map */
     int               ringSizeLog2QW;
 
     unsigned long     ringReadOffset;   /* Offset into GART space */
-    drmHandle         ringReadPtrHandle; /* Handle from drmAddMap */
+    drm_handle_t         ringReadPtrHandle; /* Handle from drmAddMap */
     drmSize           ringReadMapSize;  /* Size of map */
     unsigned char     *ringReadPtr;     /* Map */
 
 				/* CP vertex/indirect buffer data */
     unsigned long     bufStart;         /* Offset into GART space */
-    drmHandle         bufHandle;        /* Handle from drmAddMap */
+    drm_handle_t         bufHandle;        /* Handle from drmAddMap */
     drmSize           bufMapSize;       /* Size of map */
     int               bufSize;          /* Size of buffers (in MB) */
     unsigned char     *buf;             /* Map */
@@ -467,7 +462,7 @@ typedef struct {
 
 				/* CP GART Texture data */
     unsigned long     gartTexStart;      /* Offset into GART space */
-    drmHandle         gartTexHandle;     /* Handle from drmAddMap */
+    drm_handle_t         gartTexHandle;     /* Handle from drmAddMap */
     drmSize           gartTexMapSize;    /* Size of map */
     int               gartTexSize;       /* Size of GART tex space (in MB) */
     unsigned char     *gartTex;          /* Map */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.72 2004/02/13 23:58:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.74 2004/12/03 02:18:39 dawes Exp $ */
 
 /*
  * Copyright 1995-1998 by Metro Link, Inc.
@@ -492,6 +492,11 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
     unsigned long new_off_bias;
 # endif
 # define MMAP_PROT	(PROT_READ|PROT_WRITE|PROT_EXEC)
+# if !defined (__AMD64__) || !defined(__linux__)
+# define MMAP_FLAGS     (MAP_PRIVATE) 
+# else 
+# define MMAP_FLAGS     (MAP_PRIVATE | MAP_32BIT)
+# endif
 
 # ifdef DEBUGMEM
     ErrorF("_LoaderFileToMem(%d,%u(%u),%d,%s)", fd, offset, offsetbias, size,
@@ -506,20 +511,14 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
     new_off_bias = (offset + offsetbias) - new_off;
     if ((new_off_bias + size) > new_size)
 	new_size += pagesize;
-    ret = (unsigned long)mmap(0, new_size, MMAP_PROT, MAP_PRIVATE
-#  ifdef __AMD64__
-			      | MAP_32BIT
-#  endif
-			      , fd, new_off);
+    ret = (unsigned long)mmap(0, new_size, MMAP_PROT, MMAP_FLAGS, fd,
+			      new_off);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
     return (void *)(ret + new_off_bias);
 # else
-    ret = (unsigned long)mmap(0, size, MMAP_PROT, MAP_PRIVATE
-#  ifdef __AMD64__
-			      | MAP_32BIT
-#  endif
-			      , fd, offset + offsetbias);
+    ret = (unsigned long)mmap(0, size, MMAP_PROT, MMAP_FLAGS, fd,
+			      offset + offsetbias);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
     return (void *)ret;
@@ -792,7 +791,7 @@ static void
 AppendSymbol(symlist * list, const char *sym)
 {
     list->list = xnfrealloc(list->list, (list->num + 1) * sizeof(char **));
-    list->list[list->num] = sym;
+    list->list[list->num] = xnfstrdup(sym);
     list->num++;
 }
 

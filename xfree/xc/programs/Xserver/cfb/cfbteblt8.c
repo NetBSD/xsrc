@@ -3,7 +3,7 @@
  * 8 bit displays, in Copy mode with no clipping.
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbteblt8.c,v 1.6 2001/12/14 19:59:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbteblt8.c,v 1.7 2004/12/31 02:56:03 tsi Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -300,7 +300,7 @@ extern CfbBits endtab[];
 #define StorePixels(o,p)    dst[o] = p
 #define Loop		    dst += widthDst;
 #else
-#define StorePixels(o,p)    *dst++ = (p)
+#define StorePixels(o,p)    *dst = (p);  dst++
 #define Loop		    dst += widthLeft;
 #endif
 

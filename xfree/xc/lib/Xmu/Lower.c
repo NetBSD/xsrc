@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/Lower.c,v 1.12 2001/12/14 19:55:47 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Lower.c,v 1.13 2005/02/07 01:01:16 tsi Exp $ */
 
 #define  XK_LATIN1
 #include <X11/keysymdef.h>
@@ -36,6 +36,10 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 
 #ifndef HAS_SNPRINTF
+#define NO_SNPRINTF	/* snprintf() not needed */
+/* In case a non-standard implementation is provided */
+#undef vsnprintf
+#define vsnprintf myvsnprintf
 #undef SCOPE
 #define SCOPE static
 #include "snprintf.c"

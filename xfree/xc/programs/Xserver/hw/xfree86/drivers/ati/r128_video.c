@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.31 2003/11/10 18:41:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.32 2004/03/21 02:30:18 tsi Exp $ */
 
 #include "r128.h"
 #include "r128_reg.h"
@@ -614,13 +614,18 @@ R128DisplayVideo422(
     R128InfoPtr info = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     R128PortPrivPtr pPriv = info->adaptor->pPortPrivates[0].ptr;
-    int v_inc, h_inc, step_by, tmp;
+    int v_inc, h_inc, step_by, tmp, v_inc_shift;
     int p1_h_accum_init, p23_h_accum_init;
     int p1_v_accum_init;
 
     R128ECP(pScrn, pPriv);
 
-    v_inc = (src_h << 20) / drw_h;
+    v_inc_shift = 20;
+    if (pScrn->currentMode->Flags & V_INTERLACE)
+	v_inc_shift++;
+    if (pScrn->currentMode->Flags & V_DBLSCAN)
+	v_inc_shift--;
+    v_inc = (src_h << v_inc_shift) / drw_h;
     h_inc = (src_w << (12 + pPriv->ecp_div)) / drw_w;
     step_by = 1;
 
@@ -688,11 +693,16 @@ R128DisplayVideo420(
     R128InfoPtr info = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     R128PortPrivPtr pPriv = info->adaptor->pPortPrivates[0].ptr;
-    int v_inc, h_inc, step_by, tmp, leftUV;
+    int v_inc, h_inc, step_by, tmp, leftUV, v_inc_shift;
     int p1_h_accum_init, p23_h_accum_init;
     int p1_v_accum_init, p23_v_accum_init;
 
-    v_inc = (src_h << 20) / drw_h;
+    v_inc_shift = 20;
+    if (pScrn->currentMode->Flags & V_INTERLACE)
+	v_inc_shift++;
+    if (pScrn->currentMode->Flags & V_DBLSCAN)
+	v_inc_shift--;
+    v_inc = (src_h << v_inc_shift) / drw_h;
     h_inc = (src_w << (12 + pPriv->ecp_div)) / drw_w;
     step_by = 1;
 

@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis310_accel.h,v 1.19 2004/02/25 17:45:11 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis310_accel.h,v 1.20 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * 2D Acceleration for SiS 315 and Xabre series
  * Definitions for the SIS engine communication.
@@ -37,7 +38,7 @@
 #define BITBLT                  0x00000000  /* Blit */
 #define COLOREXP                0x00000001  /* Color expand */
 #define ENCOLOREXP              0x00000002  /* Enhanced color expand (315 only?) */
-#define MULTIPLE_SCANLINE       0x00000003  /* ? */
+#define MULTIPLE_SCANLINE       0x00000003  /* 315 only, not 330 */
 #define LINE                    0x00000004  /* Draw line */
 #define TRAPAZOID_FILL          0x00000005  /* Fill trapezoid */
 #define TRANSPARENT_BITBLT      0x00000006  /* Transparent Blit */
@@ -46,6 +47,9 @@
 #define	CLEAR_Z_BUFFER		0x00000009  /* ? */
 #define GRADIENT_FILL		0x0000000A  /* Gradient fill */
 #define STRETCH_BITBLT		0x0000000B  /* Stretched BitBlit */
+
+#define YUVRGB_BLIT_325		0x0000000C
+#define YUVRGB_BLIT_330		0x00000003
 
 /* Command bits */
 
@@ -96,6 +100,21 @@
 #define T_L_X_INC               0x00000010  /* left edge direction X */
 #define T_R_Y_INC               0x00400000  /* right edge direction Y */
 #define T_R_X_INC               0x00200000  /* right edge direction X */
+
+/* YUV to RGB blit */
+#define YUV_FORMAT_YUY2		0x00000000
+#define YUV_FORMAT_YVYU		0x00002000
+#define YUV_FORMAT_UYVY		0x00004000
+#define YUV_FORMAT_VYUY		0x00006000
+#define YUV_FORMAT_NV12		0x00008000  /* Only supported one */
+#define YUV_FORMAT_NV21		0x0000A000
+
+#define YUV_CMD_YUV		0x00800000
+
+/* Scanline trigger (315 only, not 330) */
+#define SCANLINE_TR_CRT1        0x00000000
+#define SCANLINE_TR_CRT2        0x01000000
+#define SCANLINE_TRIGGER_ENABLE 0x80000000
 
 /* Some general registers */
 #define SRC_ADDR		0x8200
@@ -166,6 +185,10 @@
 #define SIS_PACKET_HEADER1	0x62100000L
 #define SIS_NIL_CMD		0x168F0000L
 
+#define SIS_PACKET12_HEADER0   	0x968A000CL
+#define SIS_PACKET12_HEADER1 	0x62100010L
+#define SIS_PACKET12_LENGTH	80
+
 /* Macros to do useful things with the SiS315/330 BitBLT engine */
 
 /* Q_STATUS:
@@ -192,7 +215,7 @@
      while( (MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x0400) != 0x0400) {}; \
   }
 
-#define SiSResetCmd   pSiS->CommandReg = 0;
+#define SiSResetCmd   		pSiS->CommandReg = 0;
 
 #define SiSSetupCMDFlag(flags)  pSiS->CommandReg |= (flags);
 
@@ -201,11 +224,20 @@
 #define SiSGetSwWP() (CARD32)(*(pSiS->cmdQ_SharedWritePort))
 #define SiSGetHwRP() (CARD32)(MMIO_IN32(pSiS->IOBase, Q_READ_PTR))
 
-#define SiSSyncWP    MMIO_OUT32(pSiS->IOBase, Q_WRITE_PTR, (CARD32)(*(pSiS->cmdQ_SharedWritePort)));
+#define SiSFlushCmdBuf  \
+  if(pSiS->NeedFlush) { \
+     CARD32 ttt = ((SiSGetSwWP()) - 4) & pSiS->cmdQueueSizeMask; 	\
+     pointer tt = (char *)pSiS->cmdQueueBase + ttt; 			\
+     dummybuf = ((volatile CARD32 *)(tt))[0];				\
+  }  
 
+#define SiSSyncWP    \
+  SiSFlushCmdBuf;    \
+  MMIO_OUT32(pSiS->IOBase, Q_WRITE_PTR, (CARD32)(*(pSiS->cmdQ_SharedWritePort))); 
+    
 #define SiSSetHwWP(p) \
-      *(pSiS->cmdQ_SharedWritePort) = (p);   \
-      MMIO_OUT32(pSiS->IOBase, Q_WRITE_PTR, (p)); \
+  *(pSiS->cmdQ_SharedWritePort) = (p);   	\
+  MMIO_OUT32(pSiS->IOBase, Q_WRITE_PTR, (p)); 
 
 #define SiSSetSwWP(p) *(pSiS->cmdQ_SharedWritePort) = (p);
 
@@ -279,9 +311,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + SRC_Y); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((sx)<<16 | (sy));		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((sx)<<16) | (sy));		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + DST_Y); 	\
-         ((CARD32 *)(tt))[3] = (CARD32)((dx)<<16 | (dy)); 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((dx)<<16) | (dy)); 		\
 	 SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -291,9 +323,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + DST_Y); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((x)<<16 | (y));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((x)<<16) | (y));	 	\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + RECT_WIDTH); 	\
-         ((CARD32 *)(tt))[3] = (CARD32)((h)<<16 | (w));	 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((h)<<16) | (w));		\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -305,7 +337,7 @@
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + SRC_PITCH); 	\
          ((CARD32 *)(tt))[1] = (CARD32)(pitch);				\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + DST_PITCH); 	\
-         ((CARD32 *)(tt))[3] = (CARD32)((y)<<16 | (x));	 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((y)<<16) | (x));		\
 	 SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -333,7 +365,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + SRC_Y); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((x)<<16 | (y));			\
+         ((CARD32 *)(tt))[1] = (CARD32)(((x)<<16) | (y));		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -351,7 +383,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + DST_Y); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((x)<<16 | (y));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((x)<<16) | (y));	 	\
          SiSNILandUpdateSWQueue \
       }
 
@@ -360,7 +392,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + DST_PITCH); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y)<<16 | (x));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y)<<16) | (x));		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -369,7 +401,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
 	 ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + DST_PITCH); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y)<<16 | (x));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y)<<16) | (x));		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_BURST_HEADER0 + reg); 	\
 	 ((CARD32 *)(tt))[3] = (CARD32)(SIS_BURST_HEADER1 + num); 	\
          SiSUpdateQueue \
@@ -386,7 +418,7 @@
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + PAT_FGCOLOR); \
          ((CARD32 *)(tt))[1] = (CARD32)(color);	 			\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + DST_PITCH); 	\
-         ((CARD32 *)(tt))[3] = (CARD32)((y)<<16 | (x));	 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((y)<<16) | (x));		\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -398,7 +430,7 @@
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + SRC_FGCOLOR); \
          ((CARD32 *)(tt))[1] = (CARD32)(color);	 			\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + DST_PITCH); 	\
-         ((CARD32 *)(tt))[3] = (CARD32)((y)<<16 | (x));	 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((y)<<16) | (x));		\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -408,7 +440,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + RECT_WIDTH); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((h)<<16 | (w));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((h)<<16) | (w));		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + SRC_PITCH); 	\
          ((CARD32 *)(tt))[3] = (CARD32)(pitch);				\
          SiSUpdateQueue \
@@ -420,7 +452,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + RECT_WIDTH); 	\
-         ((CARD32 *)(tt))[1] = (CARD32)((h)<<16 | (w));	 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((h)<<16) | (w));		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -501,9 +533,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + LEFT_CLIP);	    \
-         ((CARD32 *)(tt))[1] = (CARD32)(((left) & 0xFFFF) | (top)<<16);	    \
+         ((CARD32 *)(tt))[1] = (CARD32)(((left) & 0xFFFF) | ((top)<<16));   \
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + RIGHT_CLIP);	    \
-         ((CARD32 *)(tt))[3] = (CARD32)(((right) & 0xFFFF) | (bottom)<<16); \
+         ((CARD32 *)(tt))[3] = (CARD32)(((right) & 0xFFFF)|((bottom)<<16)); \
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -516,6 +548,7 @@
          ((CARD32 *)(tt))[1] = (CARD32)(base);					\
          ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + COMMAND_READY);	\
          ((CARD32 *)(tt))[3] = (CARD32)(pSiS->CommandReg); 			\
+	 if(pSiS->NeedFlush) dummybuf = ((volatile CARD32 *)(tt))[3];  \
 	 SiSUpdateQueue \
 	 SiSSetHwWP(ttt); \
       }
@@ -525,11 +558,12 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
 	 ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + RECT_WIDTH); 		\
-         ((CARD32 *)(tt))[1] = (CARD32)((h)<<16 | (w));	 			\
+         ((CARD32 *)(tt))[1] = (CARD32)(((h)<<16) | (w));	 		\
          ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + COMMAND_READY);	\
          ((CARD32 *)(tt))[3] = (CARD32)(pSiS->CommandReg); 			\
-	 SiSUpdateQueue \
-	 SiSSetHwWP(ttt); \
+	 if(pSiS->NeedFlush) dummybuf = ((volatile CARD32 *)(tt))[3];  \
+	 SiSUpdateQueue 	\
+	 SiSSetHwWP(ttt); 	\
       }
 
 #define SiSSetupROP(rop) \
@@ -543,6 +577,7 @@
          ((CARD32 *)(tt))[1] = (CARD32)(pSiS->CommandReg); 			\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_NIL_CMD); 				\
          ((CARD32 *)(tt))[3] = (CARD32)(SIS_NIL_CMD); 				\
+	 if(pSiS->NeedFlush) dummybuf = ((volatile CARD32 *)(tt))[3];  \
 	 SiSUpdateQueue \
 	 SiSSetHwWP(ttt); \
       }
@@ -554,9 +589,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + LINE_X0);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y1)<<16 | (x1)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y1)<<16) | (x1)); 		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + LINE_X1);	\
-         ((CARD32 *)(tt))[3] = (CARD32)((y2)<<16 | (x2)); 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((y2)<<16) | (x2)); 		\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -566,7 +601,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + LINE_X0);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y)<<16 | (x)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y)<<16) | (x)); 		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -575,7 +610,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + LINE_X1);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y)<<16 | (x)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y)<<16) | (x)); 		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -584,7 +619,7 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + LINE_COUNT);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((p) << 16 | (c)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((p) << 16) | (c)); 		\
          SiSNILandUpdateSWQueue \
       }
 
@@ -607,9 +642,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + TRAP_YH);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((y)<<16 | (h)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((y)<<16) | (h)); 		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + TRAP_LR);	\
-         ((CARD32 *)(tt))[3] = (CARD32)((right)<<16 | (left));		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((right)<<16) | (left));	\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -620,9 +655,9 @@
          CARD32 ttt = SiSGetSwWP(); \
 	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
          ((CARD32 *)(tt))[0] = (CARD32)(SIS_SPKC_HEADER + TRAP_DL);	\
-         ((CARD32 *)(tt))[1] = (CARD32)((dyL)<<16 | (dxL)); 		\
+         ((CARD32 *)(tt))[1] = (CARD32)(((dyL)<<16) | (dxL)); 		\
 	 ((CARD32 *)(tt))[2] = (CARD32)(SIS_SPKC_HEADER + TRAP_DR);	\
-         ((CARD32 *)(tt))[3] = (CARD32)((dyR)<<16 | (dxR)); 		\
+         ((CARD32 *)(tt))[3] = (CARD32)(((dyR)<<16) | (dxR)); 		\
          SiSUpdateQueue \
 	 SiSSetSwWP(ttt); \
       }
@@ -671,6 +706,49 @@
 	 SiSSetSwWP(ttt); \
       }
 
+typedef struct _SiS_Packet12_YUV {
+      CARD32 P12_Header0;   	
+      CARD32 P12_Header1;	
+      CARD16 P12_UVPitch;	/* 8200 UV if planar, Y if packed */   
+      CARD16 P12_Unused0;	/* 8202 */
+      CARD16 P12_YPitch;	/* 8204 Y if planar */
+      CARD16 P12_AGPBase;	/* 8206 */
+      CARD16 P12_Unused1;	/* 8208 */
+      CARD16 P12_Unused2;	/* 820a */
+      CARD16 P12_DstY;		/* 820c */
+      CARD16 P12_DstX;		/* 820e */
+      CARD32 P12_DstAddr;	/* 8210 */
+      CARD16 P12_DstPitch;	/* 8214 */
+      CARD16 P12_DstHeight;	/* 8216 */
+      CARD16 P12_RectWidth;	/* 8218 */
+      CARD16 P12_RectHeight;	/* 821a */
+      CARD32 P12_Unused3;	/* 821c */
+      CARD32 P12_Unused4;	/* 8220 */
+      CARD32 P12_UVSrcAddr;	/* 8224 UV if planar, Y if packed */
+      CARD32 P12_YSrcAddr;	/* 8228 Y if planar */
+      CARD32 P12_Unused5;	/* 822c */
+      CARD32 P12_Unused6;	/* 8230 */
+      CARD16 P12_ClipLeft;	/* 8234 */
+      CARD16 P12_ClipTop;	/* 8236 */
+      CARD16 P12_ClipRight;	/* 8238 */
+      CARD16 P12_ClipBottom;	/* 823a */
+      CARD32 P12_Command;	/* 823c */
+      CARD32 P12_Null1;
+      CARD32 P12_Null2;
+} SiS_Packet12_YUV;      
+
+#define SiSWritePacketPart(part1, part2, part3, part4) \
+      { \
+         CARD32 ttt = SiSGetSwWP(); \
+	 pointer tt = (char *)pSiS->cmdQueueBase + ttt; \
+         ((CARD32 *)(tt))[0] = (CARD32)(part1);	\
+         ((CARD32 *)(tt))[1] = (CARD32)(part2);	\
+	 ((CARD32 *)(tt))[2] = (CARD32)(part3);	\
+         ((CARD32 *)(tt))[3] = (CARD32)(part4);	\
+         SiSUpdateQueue \
+	 SiSSetSwWP(ttt); \
+      }
+      
 #endif  /* VRAM mode */
 
 /* ---- MMIO mode ---- */

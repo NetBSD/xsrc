@@ -6,7 +6,7 @@
  * This file should be included before any X11 or IOKit headers
  * so that it can avoid symbol conflicts.
  *
- * Copyright (c) 2001-2003 Torrey T. Lyons and Greg Parker.
+ * Copyright (c) 2001-2004 Torrey T. Lyons and Greg Parker.
  *                 All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -31,7 +31,7 @@
  * holders shall not be used in advertising or otherwise to promote the sale,
  * use or other dealings in this Software without prior written authorization.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzCommon.h,v 1.14 2003/11/12 20:21:51 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzCommon.h,v 1.15 2004/06/08 22:58:10 torrey Exp $ */
 
 #ifndef _QUARTZCOMMON_H
 #define _QUARTZCOMMON_H
@@ -69,6 +69,7 @@ extern int              quartzStartClients;
 extern int              quartzRootless;
 extern int              quartzUseSysBeep;
 extern int              quartzUseAGL;
+extern int              quartzEnableKeyEquivalents;
 
 // Other shared data
 extern int              quartzServerVisible;
@@ -103,4 +104,4 @@ enum {
     kQuartzSetCanQuit
 };
 
-#endif	/* _QUARTZCOMMON_H */
+#endif  /* _QUARTZCOMMON_H */

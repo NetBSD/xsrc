@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.6 2002/11/25 14:05:06 eich Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.7 2004/04/03 13:43:42 pascal Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
@@ -25,7 +25,7 @@ xkb_symbols "basic" {
     key <AE06> {	[	  6,	ampersand	],
 			[   notsign			]	};
     key <AE07> {	[	  7,	slash		],
-			[ brokenbar			]	};
+			[       bar			]	};
     key <AE08> {	[	  8,	parenleft	],
 			[      cent			]	};
     key <AE09> {	[	  9,	parenright	]	};

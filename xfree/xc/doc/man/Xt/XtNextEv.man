@@ -26,7 +26,7 @@
 .\" other dealing in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtNextEv.man,v 1.5 2003/04/28 22:18:20 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtNextEv.man,v 1.7 2005/02/11 03:03:05 dawes Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -127,7 +127,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtNextEvent 3Xt __xorgversion__ "XT COMPATIBILITY FUNCTIONS"
+.TH XtNextEvent 3Xt __vendorversion__ "XT COMPATIBILITY FUNCTIONS"
 .SH NAME
 XtNextEvent, XtPending, XtPeekEvent, XtProcessEvent, XtMainLoop \- query and process events and input
 .SH SYNTAX
@@ -137,7 +137,7 @@ void XtNextEvent(XEvent *\fIevent_return\fP);
 Boolean XtPeekEvent(XEvent *\fIevent_return\fP); 
 .HP
 Boolean XtPending(void); 
-.Hp
+.HP
 void XtProcessEvent(XtInputMask \fImask\fP); 
 .HP
 void XtMainLoop(void); 

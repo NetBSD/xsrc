@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.c,v 1.45 2004/01/11 18:42:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.c,v 1.46 2004/12/07 15:59:19 tsi Exp $ */
 
 /*
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
@@ -955,19 +955,20 @@ FBDevPointerMoved(int index, int x, int y)
  * DGA stuff
  ***********************************************************************/
 static Bool FBDevDGAOpenFramebuffer(ScrnInfoPtr pScrn, char **DeviceName,
-				   unsigned char **ApertureBase,
-				   int *ApertureSize, int *ApertureOffset,
-				   int *flags);
+				    unsigned int *ApertureBase,
+				    unsigned int *ApertureSize,
+				    unsigned int *ApertureOffset,
+				    unsigned int *flags);
 static Bool FBDevDGASetMode(ScrnInfoPtr pScrn, DGAModePtr pDGAMode);
 static void FBDevDGASetViewport(ScrnInfoPtr pScrn, int x, int y, int flags);
 
 static Bool
 FBDevDGAOpenFramebuffer(ScrnInfoPtr pScrn, char **DeviceName,
-		       unsigned char **ApertureBase, int *ApertureSize,
-		       int *ApertureOffset, int *flags)
+		        unsigned int *ApertureBase, unsigned int *ApertureSize,
+		        unsigned int *ApertureOffset, unsigned int *flags)
 {
     *DeviceName = NULL;		/* No special device */
-    *ApertureBase = (unsigned char *)(pScrn->memPhysBase);
+    *ApertureBase = pScrn->memPhysBase;
     *ApertureSize = pScrn->videoRam;
     *ApertureOffset = pScrn->fbOffset;
     *flags = 0;

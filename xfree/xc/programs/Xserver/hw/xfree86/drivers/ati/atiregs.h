@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.25 2004/01/05 16:42:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.28 2005/02/10 15:26:37 tsi Exp $ */
 /*
- * Copyright 1994 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1994 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -540,6 +540,7 @@
 #define CRTC_H_SYNC_STRT_HI		0x00001000ul
 /*	?				0x0000e000ul */
 #define CRTC_H_SYNC_WID			0x001f0000ul
+#define CRTC_H_SYNC_END_VGA		0x001f0000ul
 #define CRTC_H_SYNC_POL			0x00200000ul
 /*	?				0xffc00000ul */
 #define CRTC_V_TOTAL_DISP	IOPortTag(0x02u, 0x02u)
@@ -551,6 +552,7 @@
 #define CRTC_V_SYNC_STRT		0x000007fful
 /*	?				0x0000f800ul */
 #define CRTC_V_SYNC_WID			0x001f0000ul
+#define CRTC_V_SYNC_END_VGA		0x000f0000ul
 #define CRTC_V_SYNC_POL			0x00200000ul
 /*	?				0xffc00000ul */
 #define CRTC_VLINE_CRNT_VLINE	IOPortTag(0x04u, 0x04u)

@@ -17,7 +17,7 @@ XCOMM $Xorg: Imake.cf,v 1.4 2000/08/17 19:41:45 cpqbld Exp $
  *
  *     4.  Create a .cf file with the name given by MacroFile.
  */
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.91 2004/04/03 22:26:20 dawes Exp $
 
 #if defined(__APPLE__)
 # undef __APPLE__
@@ -144,6 +144,12 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 #   define AlphaArchitecture
 #   undef __alpha__
 #   undef alpha
+# endif
+# if defined(__amd64__) || defined(__x86_64__)
+#   define AMD64Architecture
+#   undef __amd64__
+#   undef __x86_64__
+#   undef amd64
 # endif
 # if defined(__mc68020__) || defined(mc68020)
 #  define Mc68020Architecture
@@ -335,9 +341,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 # define HPArchitecture
 #endif /* hpux */
 
-#ifdef sco
+#ifdef __SCO__
 # define MacroIncludeFile <sco5.cf>
 # define MacroFile sco5.cf
+# undef __SCO__
 # undef sco
 # undef USL
 # undef SYSV
@@ -369,7 +376,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 # undef __pentium
 # undef pentiumpro
 # undef __pentiumpro
-#endif /* sco - SCO Open Server 5 */
+#endif /* __SCO__ - SCO Open Server 5 */
 
 #ifdef USL
 # define MacroIncludeFile <usl.cf>

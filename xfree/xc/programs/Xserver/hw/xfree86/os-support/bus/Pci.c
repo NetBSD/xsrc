@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.83 2004/02/13 23:58:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.91 2005/01/09 08:28:57 tsi Exp $ */
 /*
  * Pci.c - New server PCI access functions
  *
@@ -284,8 +284,7 @@ pciInit()
 
 	ARCH_PCI_INIT();
 #if defined(ARCH_PCI_OS_INIT)
-	if (pciNumBuses <= 0)
-	    ARCH_PCI_OS_INIT();
+	ARCH_PCI_OS_INIT();
 #endif
 }
 
@@ -328,8 +327,9 @@ pciReadLong(PCITAG tag, int offset)
 	pciBusInfo[bus]->funcs->pciReadLong) {
     CARD32 rv = (*pciBusInfo[bus]->funcs->pciReadLong)(tag, offset);
 
-    PCITRACE(1, ("pciReadLong: tag=0x%x [b=%d,d=%d,f=%d] returns 0x%08x\n",
-		 tag, bus, PCI_DEV_FROM_TAG(tag), PCI_FUNC_FROM_TAG(tag), rv));
+    PCITRACE(1, ("pciReadLong: tag=0x%08lx [b=%d,d=%ld,f=%ld] returns 0x%08lx\n",
+		 tag, bus, PCI_DEV_FROM_TAG(tag), PCI_FUNC_FROM_TAG(tag),
+		 (unsigned long)rv));
     return(rv);
    }
 
@@ -473,9 +473,9 @@ pciHostAddrToBusAddr(PCITAG tag, PciAddrType type, ADDRESS addr)
  * to the base address register to get an accurate result.  Otherwise it
  * makes a conservative guess based on the alignment of the already allocated
  * address.  If the result is accurate (ie, not an over-estimate), this is
- * indicated by setting *min to TRUE (when min is non-NULL).  This currently
- * only happens when the destructive flag is set, but in future it may be
- * possible to get the information from the OS when supported.
+ * indicated by setting *min to TRUE (when min is non-NULL).  This happens
+ * when either the destructive flag is set, the information is supplied by
+ * the OS if the OS supports this.
  */
 
 int
@@ -595,7 +595,7 @@ Bool
 pciMfDev(int busnum, int devnum)
 {
     PCITAG tag0, tag1;
-    unsigned long id0, id1, val;
+    CARD32 id0, id1, val;
 
     /* Detect a multi-function device that complies to the PCI 2.0 spec */
 
@@ -713,20 +713,23 @@ pciGenFindNext(void)
 		    speculativeProbe = FALSE;
 		}
 
-		if (++pciBusNum >= pciMaxBusNum) {
+		do {
+		    if (++pciBusNum >= pciMaxBusNum) {
 #ifdef DEBUGPCI
-		    ErrorF("pciGenFindNext: out of buses\n");
+			ErrorF("pciGenFindNext: out of buses\n");
 #endif
-		    /* No more buses.  All done for now */
-		    return(PCI_NOT_FOUND);
-		}
+			/* No more buses.  All done for now */
+			return(PCI_NOT_FOUND);
+		    }
+		} while (pciBusInfo[pciBusNum] &&
+			 (pciBusInfo[pciBusNum]->numDevices == 0));
 
 		pciDevNum = 0;
 	    }
 	}
 
 #ifdef DEBUGPCI
-	ErrorF("pciGenFindNext: pciBusInfo[%d] = 0x%lx\n", pciBusNum, pciBusInfo[pciBusNum]);
+	ErrorF("pciGenFindNext: pciBusInfo[%d] = 0x%p\n", pciBusNum, pciBusInfo[pciBusNum]);
 #endif
 	if (!pciBusInfo[pciBusNum]) {
 	    pciBusInfo[pciBusNum] = xnfalloc(sizeof(pciBusInfo_t));
@@ -762,9 +765,11 @@ pciGenFindNext(void)
 	    for (;;) {
 	        if (++pciDevNum >= pciBusInfo[pciBusNum]->numDevices)
 		    goto NextSpeculativeBus;
-		if (devid !=
-		    pciReadLong(PCI_MAKE_TAG(pciBusNum, pciDevNum, 0),
-			        PCI_ID_REG))
+		inProbe = TRUE;
+		tmp = pciReadLong(PCI_MAKE_TAG(pciBusNum, pciDevNum, 0),
+				  PCI_ID_REG);
+		inProbe = FALSE;
+		if (devid != tmp)
 		    break;
 	    }
 
@@ -823,8 +828,50 @@ pciGenFindNext(void)
 		pciBusInfo[sec_bus]->secondary = TRUE;
 		pciBusInfo[sec_bus]->numDevices = 32;
 
-		if (pciNumBuses <= sec_bus)
-		    pciNumBuses = sec_bus + 1;
+		/*
+		 * If bridge is in power-save, disable secondary (and all
+		 * subordinate) buses.
+		 */
+		if (pciReadLong(pciDeviceTag, PCI_CMD_STAT_REG) &
+		    PCI_STAT_CAPABILITY) {
+		    CARD8 capptr = pciReadByte(pciDeviceTag, PCI_CAP_PTR);
+
+		    while (capptr &= ~0x03) {
+			if (pciReadByte(pciDeviceTag, capptr + PCI_CAP_ID) !=
+			    PCI_CAP_PM_ID) {
+			    capptr = pciReadByte(pciDeviceTag,
+						 capptr + PCI_CAP_NEXT);
+			    continue;
+			}
+
+			if (pciReadWord(pciDeviceTag, capptr + PCI_CAP_PM_CSR) &
+			    PCI_CAP_PM_MODE_MASK)
+			    pciBusInfo[sec_bus]->numDevices = 0;
+
+			break;
+		    }
+		}
+
+		if (pciBusInfo[sec_bus]->numDevices == 0) {
+		    int sub_bus;
+
+		    sub_bus = PCI_SUBORDINATE_BUS_EXTRACT(tmp, pciDeviceTag);
+		    if (sub_bus >= pciMaxBusNum)
+			sub_bus = pciMaxBusNum - 1;
+		    if (pciNumBuses <= sub_bus)
+			pciNumBuses = sub_bus + 1;
+
+		    for (;  sub_bus > sec_bus;  sub_bus--) {
+			if (!pciBusInfo[sub_bus])
+			    pciBusInfo[sub_bus] =
+				xnfalloc(sizeof(pciBusInfo_t));
+
+			*pciBusInfo[sub_bus] = *pciBusInfo[sec_bus];
+		    }
+		} else {
+		    if (pciNumBuses <= sec_bus)
+			pciNumBuses = sec_bus + 1;
+		}
 	    }
 	}
 #endif
@@ -868,7 +915,7 @@ pciCfgMech1Read(PCITAG tag, int offset)
 {
   unsigned long rv = 0xffffffff;
 #ifdef DEBUGPCI
-  ErrorF("pciCfgMech1Read(tag=%08x,offset=%08x)\n", tag, offset);
+  ErrorF("pciCfgMech1Read(tag=%08lx,offset=%08x)\n", tag, offset);
 #endif
 
 #if defined(__powerpc__)
@@ -897,8 +944,8 @@ void
 pciCfgMech1Write(PCITAG tag, int offset, CARD32 val)
 {
 #ifdef DEBUGPCI
-  ErrorF("pciCfgMech1Write(tag=%08x,offset=%08x,val=%08x)\n",
-        tag, offset,val);
+  ErrorF("pciCfgMech1Write(tag=%08lx,offset=%08x,val=%08lx)\n",
+        tag, offset, (unsigned long)val);
 #endif
 
 #if defined(__powerpc__)
@@ -1035,7 +1082,7 @@ xf86scanpci(int flags)
 	    /* Allow master aborts to complete normally on secondary buses */
 	    if (!(devp->pci_bridge_control & PCI_PCI_BRIDGE_MASTER_ABORT_EN))
 		break;
-	    pciWriteByte(tag, PCI_PCI_BRIDGE_CONTROL_REG,
+	    pciWriteWord(tag, PCI_PCI_BRIDGE_CONTROL_REG,
 		devp->pci_bridge_control &
 		     ~(PCI_PCI_BRIDGE_MASTER_ABORT_EN |
 		       PCI_PCI_BRIDGE_SECONDARY_RESET));
@@ -1093,6 +1140,19 @@ xf86scanpci(int flags)
 		     * change.
 		     */
 		    devp->businfo = pciBusInfo[i];
+
+		    /*
+		     * If the secondary bus scan has been disabled, also set
+		     * the bridge pointer on all subordinate buses.
+		     */
+		    if (pciBusInfo[i]->numDevices == 0) {
+			int j;
+
+			j = PCI_SUBORDINATE_BUS_EXTRACT(devp->pci_pp_bus_register,
+							devp->tag);
+			for (;  j > i;  j--)
+			    pciBusInfo[j]->bridge = devp;
+		    }
 		}
 #ifdef ARCH_PCI_PCI_BRIDGE
 		ARCH_PCI_PCI_BRIDGE(devp);
@@ -1100,7 +1160,7 @@ xf86scanpci(int flags)
 	    }
 	    if (!(devp->pci_bridge_control & PCI_PCI_BRIDGE_MASTER_ABORT_EN))
 		break;
-	    pciWriteByte(devp->tag, PCI_PCI_BRIDGE_CONTROL_REG,
+	    pciWriteWord(devp->tag, PCI_PCI_BRIDGE_CONTROL_REG,
 		devp->pci_bridge_control & ~PCI_PCI_BRIDGE_SECONDARY_RESET);
 	    break;
 
@@ -1118,7 +1178,9 @@ xf86scanpci(int flags)
      * had a chance to modify these assignments.
      */
     for (idx = 0;  idx < pciNumBuses;  idx++) {
-	if (!(busp = pciBusInfo[idx]) || !(devp = busp->bridge))
+	if (!(busp = pciBusInfo[idx]) ||
+	    (busp->numDevices == 0) ||
+	    !(devp = busp->bridge))
 	    continue;
 	devp->businfo = busp;
     }
@@ -1173,6 +1235,8 @@ xf86MapPciMem(int ScreenNum, int Flags, PCITAG Tag, ADDRESS Base,
 	return((pointer)base);
 }
 
+#define TMP_SIZE 64
+
 static int
 handlePciBIOS(PCITAG Tag, int basereg,
 		int (*func)(PCITAG, CARD8*, ADDRESS, pointer),
@@ -1182,7 +1246,7 @@ handlePciBIOS(PCITAG Tag, int basereg,
     int i;
     romBaseSource b_reg;
     ADDRESS hostbase;
-    CARD8 tmp[64];
+    CARD8 tmp[TMP_SIZE];
     int ret = 0;
 
     romsave = pciReadLong(Tag, PCI_MAP_ROM_REG);
@@ -1220,8 +1284,7 @@ handlePciBIOS(PCITAG Tag, int basereg,
 
 	hostbase = pciBusAddrToHostAddr(Tag, PCI_MEM, PCIGETROM(romaddr));
 
-	if ((xf86ReadDomainMemory(Tag, hostbase, sizeof(tmp), tmp) !=
-	     sizeof(tmp)) ||
+	if ((xf86ReadDomainMemory(Tag, hostbase, TMP_SIZE, tmp) != TMP_SIZE) ||
 	    (tmp[0] != 0x55) || (tmp[1] != 0xaa) || !tmp[2] ) {
 	  /* Restore the base register if it was changed. */
 	    if (savebase) pciWriteLong(Tag, PCI_MAP_REG_START + (b_reg << 2),
@@ -1288,8 +1351,7 @@ readPciBios(PCITAG Tag, CARD8* tmp, ADDRESS hostbase, pointer args)
 	     image_length, indicator);
 #endif
       hostbase += i_length;
-      if (xf86ReadDomainMemory(Tag, hostbase, sizeof(tmp), tmp)
-	  != sizeof(tmp))
+      if (xf86ReadDomainMemory(Tag, hostbase, TMP_SIZE, tmp) != TMP_SIZE)
 	break;
       continue;
     }
@@ -1371,8 +1433,7 @@ getPciBIOSTypes(PCITAG Tag, CARD8* tmp, ADDRESS hostbase, pointer arg)
 	   image_length, indicator);
 #endif
     hostbase += i_length;
-    if (xf86ReadDomainMemory(Tag, hostbase, sizeof(tmp), tmp)
-	!= sizeof(tmp))
+    if (xf86ReadDomainMemory(Tag, hostbase, TMP_SIZE, tmp) != TMP_SIZE)
       break;
     continue;
   }   while ((tmp[0] == 0x55) && (tmp[1] == 0xAA));
@@ -1493,6 +1554,20 @@ xf86ReadDomainMemory(PCITAG Tag, ADDRESS Base, int Len, unsigned char *Buf)
     }
 
     return ret;
+}
+
+Bool
+xf86LocatePciMemoryArea(PCITAG Tag, char **devName, unsigned int *devOffset,
+			unsigned int *fbSize, unsigned int *fbOffset,
+			unsigned int *flags)
+{
+    if (devName)
+	*devName = NULL;
+
+    if (flags)
+	*flags = 0;
+
+    return TRUE;
 }
 
 #endif /* INCLUDE_XF86_NO_DOMAIN */

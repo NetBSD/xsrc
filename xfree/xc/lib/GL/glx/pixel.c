@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.9 2004/01/28 18:11:42 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.10 2004/04/08 10:07:33 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free

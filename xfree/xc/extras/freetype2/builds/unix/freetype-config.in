@@ -1,22 +1,34 @@
 #! /bin/sh
 
-# $XFree86: xc/extras/freetype2/builds/unix/freetype-config.in,v 1.5 2003/10/31 20:49:04 herrb Exp $
+# $XFree86: xc/extras/freetype2/builds/unix/freetype-config.in,v 1.6 2004/04/26 16:15:53 dawes Exp $
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-hardcode_libdir_flag_spec=@hardcode_libdir_flag_spec@
+exec_prefix_set=no
+includedir=@includedir@
+libdir=@libdir@
+enable_shared=@enable_shared@
+wl=@wl@
+hardcode_libdir_flag_spec='@hardcode_libdir_flag_spec@'
 
 usage()
 {
   cat <<EOF
-Usage: freetype-config [OPTIONS] [LIBRARIES]
+Usage: freetype-config [OPTION]...
+Get FreeType compilation and linking information.
+
 Options:
- [--prefix[=DIR]]
- [--exec-prefix[=DIR]]
- [--version]
- [--libs]
- [--libtool]
- [--cflags]
+  --prefix               display \`--prefix' value used for building the
+                         FreeType library
+  --prefix=PREFIX        override \`--prefix' value with PREFIX
+  --exec-prefix          display \`--exec-prefix' value used for building
+                         the FreeType library
+  --exec-prefix=EPREFIX  override \`--exec-prefix' value with EPREFIX
+  --version              display libtool version of the FreeType library
+  --libs                 display flags for linking with the FreeType library
+  --libtool              display library name for linking with libtool
+  --cflags               display flags for compiling with the FreeType
+                         library
 EOF
   exit $1
 }
@@ -27,8 +39,12 @@ fi
 
 while test $# -gt 0 ; do
   case "$1" in
-  -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
-  *) optarg= ;;
+  -*=*)
+    optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+    ;;
+  *)
+    optarg=
+    ;;
   esac
 
   case $1 in
@@ -68,40 +84,53 @@ while test $# -gt 0 ; do
 done
 
 if test "$local_prefix" = "yes" ; then
-    if test "$exec_prefix_set" != "yes" ; then
-      exec_prefix=$prefix
-    fi
+  if test "$exec_prefix_set" != "yes" ; then
+    exec_prefix=$prefix
+  fi
 fi
 
 if test "$echo_prefix" = "yes" ; then
- echo $prefix
+  echo $prefix
 fi
 
 if test "$echo_exec_prefix" = "yes" ; then
- echo $exec_prefix
+  echo $exec_prefix
+fi
+
+if test "$exec_prefix_set" = "yes" ; then
+  libdir=$exec_prefix/lib
+else
+  if test "$local_prefix" = "yes" ; then
+    includedir=$prefix/include
+    libdir=$prefix/lib
+  fi
 fi
 
 if test "$echo_cflags" = "yes" ; then
- cflags="-I@includedir@/freetype2"
- if test "@includedir@" != "/usr/include" ; then
-  echo -I@includedir@ $cflags
- else
-  echo $cflags
- fi
+  cflags="-I$includedir/freetype2"
+  if test "$includedir" != "/usr/include" ; then
+    echo $cflags -I$includedir
+  else
+    echo $cflags
+  fi
 fi
 
 if test "$echo_libs" = "yes" ; then
- libs="-lfreetype @LIBZ@"
- if test "@libdir@" != "/usr/lib" ; then
-  echo ${hardcode_libdir_flag_spec} -L@libdir@ $libs
- else
-  echo $libs
- fi
+  rpath=
+  if test "$enable_shared" = "yes" ; then
+    eval "rpath=\"$hardcode_libdir_flag_spec\""
+  fi
+  libs="-lfreetype @LIBZ@"
+  if test "$libdir" != "/usr/lib" ; then
+    echo -L$libdir $rpath $libs
+  else
+    echo $libs
+  fi
 fi
 
 if test "$echo_libtool" = "yes" ; then
- convlib="libfreetype.la"
- echo @libdir@/$convlib
+  convlib="libfreetype.la"
+  echo $libdir/$convlib
 fi
 
 # EOF

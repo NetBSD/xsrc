@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.40 2004/02/13 23:58:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.44 2005/03/07 16:39:18 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -139,20 +139,29 @@
 
 /* Command and status register */
 #define PCI_CMD_STAT_REG		0x04
-#define PCI_CMD_BASE_REG		0x10
-#define PCI_CMD_BIOS_REG		0x30
-#define PCI_CMD_MASK			0xffff
-#define PCI_CMD_IO_ENABLE		0x01
-#define PCI_CMD_MEM_ENABLE		0x02
-#define PCI_CMD_MASTER_ENABLE		0x04
-#define PCI_CMD_SPECIAL_ENABLE		0x08
-#define PCI_CMD_INVALIDATE_ENABLE	0x10
-#define PCI_CMD_PALETTE_ENABLE		0x20
-#define PCI_CMD_PARITY_ENABLE		0x40
-#define PCI_CMD_STEPPING_ENABLE		0x80
-#define PCI_CMD_SERR_ENABLE		0x100
-#define PCI_CMD_BACKTOBACK_ENABLE	0x200
-#define PCI_CMD_BIOS_ENABLE		0x01
+#define PCI_CMD_MASK			0x0000ffff
+#define PCI_CMD_IO_ENABLE		0x0001
+#define PCI_CMD_MEM_ENABLE		0x0002
+#define PCI_CMD_MASTER_ENABLE		0x0004
+#define PCI_CMD_SPECIAL_ENABLE		0x0008
+#define PCI_CMD_INVALIDATE_ENABLE	0x0010
+#define PCI_CMD_PALETTE_ENABLE		0x0020
+#define PCI_CMD_PARITY_ENABLE		0x0040
+#define PCI_CMD_STEPPING_ENABLE		0x0080
+#define PCI_CMD_SERR_ENABLE		0x0100
+#define PCI_CMD_BACKTOBACK_ENABLE	0x0200
+#define PCI_STAT_MASK			0xffff0000
+#define PCI_STAT_CAPABILITY		0x00100000
+#define PCI_STAT_66MHZ			0x00200000
+#define PCI_STAT_UDF			0x00400000
+#define PCI_STAT_BACKTOBACK		0x00800000
+#define PCI_STAT_PARITY			0x01000000
+#define PCI_STAT_DEVSEL			0x06000000
+#define PCI_STAT_SIG_TARGET_ABORT	0x08000000
+#define PCI_STAT_REC_TARGET_ABORT	0x10000000
+#define PCI_STAT_MASTER_ABORT		0x20000000
+#define PCI_STAT_SERR			0x40000000
+#define PCI_STAT_BAD_PARITY		0x80000000
 
 /* base class */
 #define PCI_CLASS_REG		0x08
@@ -307,23 +316,6 @@
 #define PCI_HEADER_MISC			0x0c
 #define PCI_HEADER_MULTIFUNCTION	0x00800000
 
-/* Interrupt configration register */
-#define PCI_INTERRUPT_REG		0x3c
-#define PCI_INTERRUPT_PIN_MASK		0x0000ff00
-#define PCI_INTERRUPT_PIN_EXTRACT(x)	\
-	((((x) & PCI_INTERRUPT_PIN_MASK) >> 8) & 0xff)
-#define PCI_INTERRUPT_PIN_NONE		0x00
-#define PCI_INTERRUPT_PIN_A		0x01
-#define PCI_INTERRUPT_PIN_B		0x02
-#define PCI_INTERRUPT_PIN_C		0x03
-#define PCI_INTERRUPT_PIN_D		0x04
-
-#define PCI_INTERRUPT_LINE_MASK		0x000000ff
-#define PCI_INTERRUPT_LINE_EXTRACT(x)	\
-	((((x) & PCI_INTERRUPT_LINE_MASK) >> 0) & 0xff)
-#define PCI_INTERRUPT_LINE_INSERT(x,v)	\
-	(((x) & ~PCI_INTERRUPT_LINE_MASK) | ((v) << 0))
-
 /* Base registers */
 #define PCI_MAP_REG_START		0x10
 #define PCI_MAP_REG_END			0x28
@@ -349,7 +341,7 @@
 #define PCI_MAP_IS_MEM(b)	(!PCI_MAP_IS_IO(b))
 
 #define PCI_MAP_IS64BITMEM(b)	\
-	(((b) & PCI_MAP_MEMORY_TYPE_MASK) == PCI_MAP_MEMORY_TYPE_64BIT)
+	(((b) & PCI_MAP_MEMORY_TYPE) == PCI_MAP_MEMORY_TYPE_64BIT)
 
 #define PCIGETMEMORY(b)		((b) & PCI_MAP_MEMORY_ADDRESS_MASK)
 #define PCIGETMEMORY64HIGH(b)	(*((CARD32*)&b + 1))
@@ -364,6 +356,26 @@
 #define PCI_MAP_ROM_ADDRESS_MASK	0xfffff800
 
 #define PCIGETROM(b)		((b) & PCI_MAP_ROM_ADDRESS_MASK)
+
+/* Pointer to first capability */
+#define PCI_CAP_PTR			0x34
+
+/* Interrupt configration register */
+#define PCI_INTERRUPT_REG		0x3c
+#define PCI_INTERRUPT_PIN_MASK		0x0000ff00
+#define PCI_INTERRUPT_PIN_EXTRACT(x)	\
+	((((x) & PCI_INTERRUPT_PIN_MASK) >> 8) & 0xff)
+#define PCI_INTERRUPT_PIN_NONE		0x00
+#define PCI_INTERRUPT_PIN_A		0x01
+#define PCI_INTERRUPT_PIN_B		0x02
+#define PCI_INTERRUPT_PIN_C		0x03
+#define PCI_INTERRUPT_PIN_D		0x04
+
+#define PCI_INTERRUPT_LINE_MASK		0x000000ff
+#define PCI_INTERRUPT_LINE_EXTRACT(x)	\
+	((((x) & PCI_INTERRUPT_LINE_MASK) >> 0) & 0xff)
+#define PCI_INTERRUPT_LINE_INSERT(x,v)	\
+	(((x) & ~PCI_INTERRUPT_LINE_MASK) | ((v) << 0))
 
 /* PCI-PCI bridge mapping registers */
 #define PCI_PCI_BRIDGE_BUS_REG		0x18
@@ -422,11 +434,32 @@
 #define PCI_REG_USERCONFIG		0x40
 #define PCI_OPTION_REG			0x40
 
+/* Capability IDs */
+#define PCI_CAP_PM_ID		0x01	/* Power Management */
+#define PCI_CAP_AGP_ID		0x02	/* Accelerated Graphics Port */
+#define PCI_CAP_VPD_ID		0x03	/* Vital Product Data */
+#define PCI_CAP_SLOT_ID		0x04	/* Slot identification */
+#define PCI_CAP_MSI_ID		0x05	/* Message Signaled Interrupts */
+#define PCI_CAP_CHSWP_ID	0x06	/* CompactPCI HotSwap */
+#define PCI_CAP_PCIX_ID		0x07	/* PCI-X */
+#define PCI_CAP_SHPC_ID		0x0c	/* Standard Hot-Plug Controller */
+#define PCI_CAP_EXPRESS_ID	0x10	/* PCI Express */
+#define PCI_CAP_MSIX_ID		0x11	/* MSI-X */
+
+/* Capability header */
+#define PCI_CAP_ID		0x00	/* Capability ID */
+#define PCI_CAP_NEXT		0x01	/* Next capability pointer */
+
+/* Power Management Capability (incomplete) */
+#define PCI_CAP_PM_REG		0x02	/* 16 bits of R/O Flags */
+#define PCI_CAP_PM_CSR		0x04	/* Control & Status */
+#define PCI_CAP_PM_MODE_MASK	0x03	/* Current mode (D0 to D3) */
+
 /*
  * Typedefs, etc...
  */
 
-/* Primitive Types */
+/* Basic Types */
 typedef unsigned long ADDRESS;		/* Memory/PCI address */
 typedef unsigned long IOADDRESS;	/* Must be large enough for a pointer */
 typedef unsigned long PCITAG;
@@ -790,10 +823,15 @@ ADDRESS	      pciHostAddrToBusAddr(PCITAG tag, PciAddrType type, ADDRESS addr);
 PCITAG	      pciTag(int busnum, int devnum, int funcnum);
 int	      pciGetBaseSize(PCITAG tag, int indx, Bool destructive, Bool *min);
 CARD32	      pciCheckForBrokenBase(PCITAG tag,int basereg);
+Bool          xf86LocatePciMemoryArea(PCITAG tag,
+				      char **devName, unsigned int *devOffset,
+				      unsigned int *fbSize,
+				      unsigned int *fbOffset,
+				      unsigned int *flags);
 pointer	      xf86MapPciMem(int ScreenNum, int Flags, PCITAG Tag,
-				ADDRESS Base, unsigned long Size);
+			    ADDRESS Base, unsigned long Size);
 int	      xf86ReadPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
-				unsigned char *Buf, int Len);
+			      unsigned char *Buf, int Len);
 int	      xf86ReadPciBIOSByType(unsigned long Offset, PCITAG Tag,
 				    int basereg, unsigned char *Buf,
 				    int Len, PciBiosType Type);

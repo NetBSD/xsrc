@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_bufs.h,v 1.13 2005/03/03 03:35:40 dawes Exp $ */
+
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
  *
@@ -262,7 +264,7 @@ static void DRM(cleanup_buf_error)(drm_device_t *dev, drm_buf_entry_t *entry)
 #if __HAVE_PCI_DMA
 	if (entry->seg_count) {
 		for (i = 0; i < entry->seg_count; i++) {
-			if (entry->seglist[i] != NULL)
+			if (entry->seglist[i] != 0)
 				DRM(pci_free)(dev, entry->buf_size,
 				    (void *)entry->seglist[i],
 				    entry->seglist_bus[i]);
@@ -482,7 +484,7 @@ static int DRM(addbufs_pci)(drm_device_t *dev, drm_buf_desc_t *request)
 	while ( entry->buf_count < count ) {
 		vaddr = (vm_offset_t) DRM(pci_alloc)(dev, size, alignment,
 		    0xfffffffful, &bus_addr);
-		if (vaddr == NULL) {
+		if (vaddr == 0) {
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			entry->seg_count = count;

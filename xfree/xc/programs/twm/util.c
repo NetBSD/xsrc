@@ -48,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/util.c,v 1.13 2002/09/24 21:00:28 tsi Exp $ */
+/* $XFree86: xc/programs/twm/util.c,v 1.14 2004/06/08 01:17:02 dawes Exp $ */
 
 
 /***********************************************************************
@@ -70,6 +70,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <X11/Xmu/Drawing.h>
 #include <X11/Xmu/CharSet.h>
+#include <X11/xpm.h>
 
 static Pixmap CreateXLogoPixmap ( unsigned int *widthp, 
 				  unsigned int *heightp );
@@ -396,6 +397,7 @@ FindBitmap (name, widthp, heightp)
     pm = XmuLocateBitmapFile (ScreenOfDisplay(dpy, Scr->screen), bigname, NULL,
 			      0, (int *)widthp, (int *)heightp, &HotX, &HotY);
     if (pm == None && Scr->IconDirectory && bigname[0] != '/') {
+	int ret;
 	if (bigname != name) free (bigname);
 	/*
 	 * Attempt to find icon in old IconDirectory (now obsolete)
@@ -409,9 +411,39 @@ FindBitmap (name, widthp, heightp)
 	    return None;
 	}
 	(void) sprintf (bigname, "%s/%s", Scr->IconDirectory, name);
-	if (XReadBitmapFile (dpy, Scr->Root, bigname, widthp, heightp, &pm,
-			     &HotX, &HotY) != BitmapSuccess) {
+	ret = XReadBitmapFile (dpy, Scr->Root, bigname, widthp, heightp, &pm,
+			       &HotX, &HotY);
+	if (ret != BitmapSuccess) {
 	    pm = None;
+	    if (ret == BitmapFileInvalid) {
+		/*
+		 * Try another filetype
+		 */
+		int res;
+		Pixmap picture, shape;
+
+		res = XpmReadFileToPixmap(dpy, Scr->Root, bigname, &picture, &shape, NULL);
+		switch (res) {
+		case XpmOpenFailed:
+		    fprintf (stderr, "%s:  Unable to open xpm file `%s'",
+			     ProgramName, bigname);
+		    break;
+
+		case XpmFileInvalid:
+		    fprintf (stderr, "%s:  Xpm file `%s' is invalid",
+			     ProgramName, bigname);
+		    break;
+
+		case XpmNoMemory:
+		    fprintf (stderr, "%s:  No memory for open xpm file `%s'",
+			     ProgramName, bigname);
+		    break;
+
+		default:
+		    pm = picture;
+		    break;
+		}
+	    }
 	}
     }
     if (bigname != name) free (bigname);

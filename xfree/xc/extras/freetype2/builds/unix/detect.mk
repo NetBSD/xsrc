@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2000, 2002 by
+# Copyright 1996-2000, 2002, 2003, 2004 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -18,7 +18,9 @@ ifeq ($(PLATFORM),ansi)
 
   # Note: this test is duplicated in "builds/toplevel.mk".
   #
-  is_unix := $(strip $(wildcard /sbin/init) $(wildcard /usr/sbin/init) $(wildcard /hurd/auth))
+  is_unix := $(strip $(wildcard /sbin/init) \
+                     $(wildcard /usr/sbin/init) \
+                     $(wildcard /hurd/auth))
   ifneq ($(is_unix),)
 
     PLATFORM := unix
@@ -27,8 +29,8 @@ ifeq ($(PLATFORM),ansi)
 endif # test PLATFORM ansi
 
 ifeq ($(PLATFORM),unix)
-  COPY     := cp
-  DELETE   := rm -f
+  COPY   := cp
+  DELETE := rm -f
 
   # If `devel' is the requested target, we use a special configuration
   # file named `unix-dev.mk'.  It disables optimization and libtool.
@@ -64,7 +66,7 @@ ifeq ($(PLATFORM),unix)
       # platform).
       #
       CONFIG_FILE := unix.mk
-      setup: unix-def.mk
+      setup: $(BUILD_DIR)/unix-def.mk
       unix: setup
       .PHONY: unix
     endif
@@ -75,13 +77,14 @@ ifeq ($(PLATFORM),unix)
   have_mk := $(strip $(wildcard $(OBJ_DIR)/Makefile))
   ifneq ($(have_mk),)
     # we are building FT2 not in the src tree
-    unix-def.mk: $(TOP_DIR)/builds/unix/unix-def.in
+    $(BUILD_DIR)/unix-def.mk: $(TOP_DIR)/builds/unix/unix-def.in
 	    $(TOP_DIR)/builds/unix/configure $(CFG)
   else
-    unix-def.mk: $(TOP_DIR)/builds/unix/unix-def.in
+    $(BUILD_DIR)/unix-def.mk: $(TOP_DIR)/builds/unix/unix-def.in
 	    cd builds/unix; ./configure $(CFG)
   endif
 
 endif   # test PLATFORM unix
+
 
 # EOF

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_bandwidth.c,v 1.3 2004/01/05 00:34:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_bandwidth.c,v 1.4 2004/10/23 15:29:30 dawes Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -369,7 +369,6 @@ void VIAFillExpireNumber(VIABIOSInfoPtr pBIOSInfo)
         break;
     default:
         return;
-        break;
     }
     while (TuneExpireNum->wPanelXres != 0) {
         if (TuneExpireNum->wPanelXres == pBIOSInfo->panelX &&

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.47 2003/08/24 17:36:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.50 2005/02/18 22:38:31 dawes Exp $ */
 /*
  * Copyright (c) 1998-2002 by The XFree86 Project, Inc.
  *
@@ -283,11 +283,11 @@ DGAUninstallColormap(ColormapPtr pmap)
 
 int
 xf86SetDGAMode(
-   int index,
+   int indx,
    int num,
    DGADevicePtr devRet
 ){
-   ScreenPtr pScreen = screenInfo.screens[index];
+   ScreenPtr pScreen = screenInfo.screens[indx];
    DGAScreenPtr pScreenPriv;
    ScrnInfoPtr pScrn;
    DGADevicePtr device;
@@ -320,7 +320,7 @@ xf86SetDGAMode(
 		pScreenPriv->savedColormap = NULL;
 	    }
 	    pScreenPriv->dgaColormap = NULL;
-	    (*pScrn->EnableDisableFBAccess)(index, TRUE);
+	    (*pScrn->EnableDisableFBAccess)(indx, TRUE);
 
 	    FreeMarkedVisuals(pScreen);
 	}
@@ -346,7 +346,7 @@ xf86SetDGAMode(
 	Bool oldVTSema = pScrn->vtSema;
 
 	pScrn->vtSema = FALSE;  /* kludge until we rewrite VT switching */
-	(*pScrn->EnableDisableFBAccess)(index, FALSE);
+	(*pScrn->EnableDisableFBAccess)(indx, FALSE);
 	pScrn->vtSema = oldVTSema;
    } 
 
@@ -401,9 +401,9 @@ xf86SetDGAMode(
 /*********** exported ones ***************/
 
 void
-DGASetInputMode(int index, Bool keyboard, Bool mouse)
+DGASetInputMode(int indx, Bool keyboard, Bool mouse)
 {
-   ScreenPtr pScreen = screenInfo.screens[index];
+   ScreenPtr pScreen = screenInfo.screens[indx];
    DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
 
    if (pScreenPriv)
@@ -414,7 +414,7 @@ DGASetInputMode(int index, Bool keyboard, Bool mouse)
 }
 
 Bool
-DGAChangePixmapMode(int index, int *x, int *y, int mode)
+DGAChangePixmapMode(int indx, int *x, int *y, int mode)
 {
    DGAScreenPtr pScreenPriv;
    DGADevicePtr pDev;
@@ -424,7 +424,7 @@ DGAChangePixmapMode(int index, int *x, int *y, int mode)
    if(DGAScreenIndex < 0)
 	return FALSE;
 
-   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    if(!pScreenPriv || !pScreenPriv->current || !pScreenPriv->current->pPix)
 	return FALSE;
@@ -441,7 +441,7 @@ DGAChangePixmapMode(int index, int *x, int *y, int mode)
 	if(*y > (pMode->pixmapHeight - pMode->viewportHeight))
 	    *y = pMode->pixmapHeight - pMode->viewportHeight;
 
-	switch(xf86Screens[index]->bitsPerPixel) {
+	switch(xf86Screens[indx]->bitsPerPixel) {
 	case 16: shift = 1;  break;
 	case 32: shift = 0;  break;
 	default: break;
@@ -469,30 +469,30 @@ DGAChangePixmapMode(int index, int *x, int *y, int mode)
 }
 
 Bool
-DGAAvailable(int index) 
+DGAAvailable(int indx) 
 {
    if(DGAScreenIndex < 0)
 	return FALSE;
    
-   if (!xf86NoSharedResources(((ScrnInfoPtr)screenInfo.screens[index]->
+   if (!xf86NoSharedResources(((ScrnInfoPtr)screenInfo.screens[indx]->
 			 devPrivates[xf86ScreenIndex].ptr)->scrnIndex,MEM))
        return FALSE;
    
-   if(DGA_GET_SCREEN_PRIV(screenInfo.screens[index]))
+   if(DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]))
 	return TRUE;
 
    return FALSE;
 }
 
 Bool
-DGAActive(int index) 
+DGAActive(int indx) 
 {
    DGAScreenPtr pScreenPriv;
 
    if(DGAScreenIndex < 0)
 	return FALSE;
 
-   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    if(pScreenPriv && pScreenPriv->current)
 	return TRUE;
@@ -524,18 +524,18 @@ DGAShutdown()
 
 int
 DGASetMode(
-   int index,
+   int indx,
    int num,
    XDGAModePtr mode,
    PixmapPtr *pPix
 ){
-    ScrnInfoPtr pScrn = xf86Screens[index];
+    ScrnInfoPtr pScrn = xf86Screens[indx];
     DGADeviceRec device;
     int ret;
 
     /* We rely on the extension to check that DGA is available */ 
 
-    ret = (*pScrn->SetDGAMode)(index, num, &device);
+    ret = (*pScrn->SetDGAMode)(indx, num, &device);
     if((ret == Success) && num) {
 	DGACopyModeInfo(device.mode, mode);
 	*pPix = device.pPix;
@@ -548,11 +548,11 @@ DGASetMode(
 
 void
 DGASelectInput(
-   int index,
+   int indx,
    ClientPtr client,
    long mask
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    /* We rely on the extension to check that DGA is available */
    pScreenPriv->client = client;
@@ -560,9 +560,9 @@ DGASelectInput(
 }
 
 int 
-DGAGetViewportStatus(int index) 
+DGAGetViewportStatus(int indx) 
 {
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    /* We rely on the extension to check that DGA is active */ 
 
@@ -574,11 +574,11 @@ DGAGetViewportStatus(int index)
 
 int
 DGASetViewport(
-   int index,
+   int indx,
    int x, int y,
    int mode
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    if (pScreenPriv->funcs->SetViewport)
       (*pScreenPriv->funcs->SetViewport)(pScreenPriv->pScrn, x, y, mode);
@@ -601,9 +601,9 @@ BitsClear(CARD32 data)
 }
 
 int
-DGACreateColormap(int index, ClientPtr client, int id, int mode, int alloc)
+DGACreateColormap(int indx, ClientPtr client, int id, int mode, int alloc)
 {
-   ScreenPtr pScreen = screenInfo.screens[index];
+   ScreenPtr pScreen = screenInfo.screens[indx];
    DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
    FakedVisualList *fvlp;
    VisualPtr pVisual;
@@ -686,9 +686,9 @@ DGAInstallCmap(ColormapPtr cmap)
 }
 
 int
-DGASync(int index)
+DGASync(int indx)
 {
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    
    /* We rely on the extension to check that DGA is active */
 
@@ -700,11 +700,11 @@ DGASync(int index)
 
 int
 DGAFillRect(
-   int index,
+   int indx,
    int x, int y, int w, int h,
    unsigned long color
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    
    /* We rely on the extension to check that DGA is active */
 
@@ -719,12 +719,12 @@ DGAFillRect(
 
 int
 DGABlitRect(
-   int index,
+   int indx,
    int srcx, int srcy, 
    int w, int h, 
    int dstx, int dsty
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    
    /* We rely on the extension to check that DGA is active */
 
@@ -740,13 +740,13 @@ DGABlitRect(
 
 int
 DGABlitTransRect(
-   int index,
+   int indx,
    int srcx, int srcy, 
    int w, int h, 
    int dstx, int dsty,
    unsigned long color
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    
    /* We rely on the extension to check that DGA is active */
 
@@ -762,9 +762,10 @@ DGABlitTransRect(
 
 
 int
-DGAGetModes(int index)
+DGAGetModes(int indx)
 {
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
+
    /* We rely on the extension to check that DGA is available */
 
    return pScreenPriv->numModes;
@@ -773,11 +774,11 @@ DGAGetModes(int index)
 
 int
 DGAGetModeInfo(
-  int index,
+  int indx,
   XDGAModePtr mode,
   int num
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    /* We rely on the extension to check that DGA is available */
 
    if((num <= 0) || (num > pScreenPriv->numModes))
@@ -855,7 +856,7 @@ DGAVTSwitch(void)
 /* We have the power to steal or modify events that are about to get queued */
 
 Bool
-DGAStealKeyEvent(int index, xEvent *e)
+DGAStealKeyEvent(int indx, xEvent *e)
 {
    DGAScreenPtr pScreenPriv;
     dgaEvent	de;
@@ -863,7 +864,7 @@ DGAStealKeyEvent(int index, xEvent *e)
    if(DGAScreenIndex < 0) /* no DGA */
 	return FALSE;
 
-   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    if(!pScreenPriv || !pScreenPriv->grabKeyboard) /* no direct mode */
 	return FALSE;
@@ -878,7 +879,7 @@ DGAStealKeyEvent(int index, xEvent *e)
 static int  DGAMouseX, DGAMouseY;
 
 Bool
-DGAStealMouseEvent(int index, xEvent *e, int dx, int dy)
+DGAStealMouseEvent(int indx, xEvent *e, int dx, int dy)
 {
    DGAScreenPtr pScreenPriv;
     dgaEvent	de;
@@ -886,7 +887,7 @@ DGAStealMouseEvent(int index, xEvent *e, int dx, int dy)
    if(DGAScreenIndex < 0) /* no DGA */
 	return FALSE;
 
-   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    if(!pScreenPriv || !pScreenPriv->grabMouse) /* no direct mode */
 	return FALSE;
@@ -894,13 +895,13 @@ DGAStealMouseEvent(int index, xEvent *e, int dx, int dy)
     DGAMouseX += dx;
     if (DGAMouseX < 0)
 	DGAMouseX = 0;
-    else if (DGAMouseX > screenInfo.screens[index]->width)
-	DGAMouseX = screenInfo.screens[index]->width;
+    else if (DGAMouseX > screenInfo.screens[indx]->width)
+	DGAMouseX = screenInfo.screens[indx]->width;
     DGAMouseY += dy;
     if (DGAMouseY < 0)
 	DGAMouseY = 0;
-    else if (DGAMouseY > screenInfo.screens[index]->height)
-	DGAMouseY = screenInfo.screens[index]->height;
+    else if (DGAMouseY > screenInfo.screens[indx]->height)
+	DGAMouseY = screenInfo.screens[indx]->height;
     de.u.u.type = e->u.u.type + *XDGAEventBase;
     de.u.u.detail = e->u.u.detail;
     de.u.event.time = e->u.keyButtonPointer.time;
@@ -973,7 +974,10 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
 	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
 	*kptr |= bit;
 	keyc->prev_state = keyc->state;
-	if (noXkbExtension) {
+#ifdef XKB
+	if (noXkbExtension)
+#endif
+	{
 	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
 	    {
 		if (mask & modifiers)
@@ -990,7 +994,10 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
 	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
 	*kptr &= ~bit;
 	keyc->prev_state = keyc->state;
-	if (noXkbExtension) {
+#ifdef XKB
+	if (noXkbExtension)
+#endif
+	{
 	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
 	    {
 		if (mask & modifiers) {
@@ -1146,25 +1153,33 @@ DGADeliverEvent (ScreenPtr pScreen, xEvent *e)
 
 Bool 
 DGAOpenFramebuffer(
-   int index,
+   int indx,
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
+   ScrnInfoPtr pScrn = xf86Screens[indx];
 
    /* We rely on the extension to check that DGA is available */
 
-   return (*pScreenPriv->funcs->OpenFramebuffer)(pScreenPriv->pScrn, 
-				name, mem, size, offset, flags);
+   if (!(*pScreenPriv->funcs->OpenFramebuffer)(pScrn, 
+				name, mem, size, offset, flags))
+	return FALSE;
+
+   if (pScrn->numEntities <= 0)
+	return TRUE;		/* Shouldn't happen ... */
+
+   return xf86LocateMemoryArea(pScrn->entityList[0],
+			       name, mem, size, offset, flags);
 }
 
 void
-DGACloseFramebuffer(int index)
+DGACloseFramebuffer(int indx)
 {
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
 
    /* We rely on the extension to check that DGA is available */
    if(pScreenPriv->funcs->CloseFramebuffer)
@@ -1174,9 +1189,9 @@ DGACloseFramebuffer(int index)
 /*  For DGA 1.0 backwards compatibility only */
 
 int 
-DGAGetOldDGAMode(int index)
+DGAGetOldDGAMode(int indx)
 {
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
+   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[indx]);
    ScrnInfoPtr pScrn = pScreenPriv->pScrn;
    DGAModePtr mode;
    int i, w, h, p;

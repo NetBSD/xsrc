@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbutils/xkbwatch.c,v 3.5 2001/04/01 14:00:22 tsi Exp $ */
+/* $XFree86: xc/programs/xkbutils/xkbwatch.c,v 3.6 2004/10/23 15:29:33 dawes Exp $ */
 
 #include <stdlib.h>
 #include <X11/X.h>
@@ -223,6 +223,7 @@ static char *	fallback_resources[] = {
 	}
 	else XtDispatchEvent(&ev.core);
     }
+#if 0
 /* BAIL: */
     if (inDpy) 
 	XCloseDisplay(inDpy);
@@ -230,4 +231,5 @@ static char *	fallback_resources[] = {
 	XCloseDisplay(outDpy);
     inDpy= outDpy= NULL;
     return 0;
+#endif
 }

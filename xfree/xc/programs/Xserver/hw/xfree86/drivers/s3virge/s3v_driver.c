@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.94 2004/02/13 23:58:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.96 2005/01/17 03:07:42 tsi Exp $ */
 
 /*
  * Copyright (C) 1994-1999 The XFree86 Project, Inc.
@@ -297,6 +297,7 @@ static const char *vgahwSymbols[] = {
     "vgaHWSetMmioFuncs",
     "vgaHWSetStdFuncs",
     "vgaHWUnmapMem",
+    "vgaHWHBlankKGA",
    /* not used by ViRGE (at the moment :( ) */
    /*
     "vgaHWUnlock",
@@ -2290,6 +2291,12 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    					/* Mode only for non-primary? */
    else
      vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_MODE);
+
+   /* vgaHWRestore might change IOBase between color and mono */
+   vgaIOBase = hwp->IOBase;
+   vgaCRIndex = vgaIOBase + 4;
+   vgaCRReg = vgaCRIndex + 1;
+
  		/* moved from before vgaHWRestore, to prevent segfault? */
    VGAOUT8(vgaCRIndex, 0x66);             
    VGAOUT8(vgaCRReg, cr66);
@@ -2829,10 +2836,9 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
   vgaHWPtr hwp = VGAHWPTR(pScrn);
   S3VPtr ps3v = S3VPTR(pScrn);
   int width, dclk;
-  int i, j;
   unsigned char tmp = 0;
   
-  		      		/* Store values to current mode register structs */
+  /* Store values to current mode register structs */
   S3VRegPtr new = &ps3v->ModeReg;
   vgaRegPtr vganew = &hwp->ModeReg;
   int vgaCRIndex, vgaCRReg, vgaIOBase;
@@ -2875,8 +2881,12 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
              mode->CrtcHAdjusted = TRUE;
              }
 
+   hwp->Flags |= VGA_FIX_SYNC_PULSES;
    if(!vgaHWInit (pScrn, mode))
       return FALSE;
+
+   /* We have horizontal blank end extension bits, so undo KGA workaround */
+   vgaHWHBlankKGA(mode, vganew, 0, 0);
       
    /* Now we fill in the rest of the stuff we need for the virge */
    /* Start with MMIO, linear addr. regs */
@@ -3340,47 +3350,21 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
        /* Set display fifo */
        new->CR34 = 0x10;  
      }
+
    /* Now we adjust registers for extended mode timings */
-   /* This is taken without change from the accel/s3_virge code */
+   new->CR3B = (mode->CrtcHTotal >> 3) - 10;
+   new->CR3C = ((mode->CrtcHTotal >> 3) - 5) >> 1;
+   new->CR5D = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) |
+	       ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) |
+	       ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 6) |
+	       ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x040) >> 3) |
+	       ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 4) |
+	       ((((mode->CrtcHSyncEnd >> 3) - 1) & 0x040) >> 1);
+   new->CR5E = (((mode->CrtcVTotal - 2) & 0x400) >> 10) |
+	       (((mode->CrtcVDisplay - 1) & 0x400) >> 9) |
+	       (((mode->CrtcVBlankStart - 1) & 0x400) >> 8) |
+	       (((mode->CrtcVSyncStart - 1) & 0x400) >> 6) | 0x40;
 
-   i = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) |
-       ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) |
-       ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6) |
-       ((mode->CrtcHSyncStart & 0x800) >> 7);
-
-   if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 64)
-      i |= 0x08;   /* add another 64 DCLKs to blank pulse width */
-
-   if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 32)
-      i |= 0x20;   /* add another 32 DCLKs to hsync pulse width */
-
-   /* video playback chokes if sync start and display end are equal */
-   if (mode->CrtcHSyncStart - mode->CrtcHDisplay < ps3v->HorizScaleFactor) {
-       int tmp = vganew->CRTC[4] + ((i&0x10)<<4) + ps3v->HorizScaleFactor;
-       vganew->CRTC[4] = tmp & 0xff;
-       i |= ((tmp >> 4) & 0x10);
-   }
-		      
-   j = (  vganew->CRTC[0] + ((i&0x01)<<8)
-        + vganew->CRTC[4] + ((i&0x10)<<4) + 1) / 2;
-
-   if (j-(vganew->CRTC[4] + ((i&0x10)<<4)) < 4) {
-      if (vganew->CRTC[4] + ((i&0x10)<<4) + 4 <= vganew->CRTC[0]+ ((i&0x01)<<8))
-         j = vganew->CRTC[4] + ((i&0x10)<<4) + 4;
-      else
-         j = vganew->CRTC[0]+ ((i&0x01)<<8) + 1;
-   }
-   new->CR3B = j & 0xFF;
-   i |= (j & 0x100) >> 2;
-   new->CR3C = (vganew->CRTC[0] + ((i&0x01)<<8))/2;
-   new->CR5D = i;
-
-   new->CR5E = (((mode->CrtcVTotal - 2) & 0x400) >> 10)  |
-               (((mode->CrtcVDisplay - 1) & 0x400) >> 9) |
-               (((mode->CrtcVSyncStart) & 0x400) >> 8)   |
-               (((mode->CrtcVSyncStart) & 0x400) >> 6)   | 0x40;
-
-   
    width = (pScrn->displayWidth * (pScrn->bitsPerPixel / 8))>> 3;
    vganew->CRTC[19] = 0xFF & width;
    new->CR51 = (0x300 & width) >> 4; /* Extension bits */

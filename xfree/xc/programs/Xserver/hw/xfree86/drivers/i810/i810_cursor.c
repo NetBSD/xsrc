@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_cursor.c,v 1.7 2002/10/30 12:52:17 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_cursor.c,v 1.8 2004/06/10 13:08:28 alanh Exp $ */
 
 /*
  * Reformatted with GNU indent (2.2.8), using the following options:
@@ -44,6 +44,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
  *
+ * Add ARGB HW cursor support:
+ *   Alan Hourihane <alanh@tungstengraphics.com>
+ *
  */
 
 #include "xf86.h"
@@ -55,6 +58,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "i810.h"
 
+static Bool I810UseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs);
+static void I810LoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs);
 static void I810LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src);
 static void I810ShowCursor(ScrnInfoPtr pScrn);
 static void I810HideCursor(ScrnInfoPtr pScrn);
@@ -90,9 +95,62 @@ I810CursorInit(ScreenPtr pScreen)
    infoPtr->HideCursor = I810HideCursor;
    infoPtr->ShowCursor = I810ShowCursor;
    infoPtr->UseHWCursor = I810UseHWCursor;
+#ifdef ARGB_CURSOR
+   pI810->CursorIsARGB = FALSE;
+
+   if (!pI810->CursorARGBPhysical) {
+      infoPtr->UseHWCursorARGB = I810UseHWCursorARGB;
+      infoPtr->LoadCursorARGB = I810LoadCursorARGB;
+   }
+#endif
 
    return xf86InitCursor(pScreen, infoPtr);
 }
+
+#ifdef ARGB_CURSOR
+#include "cursorstr.h"
+
+static Bool I810UseHWCursorARGB (ScreenPtr pScreen, CursorPtr pCurs)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (!pI810->CursorARGBPhysical)
+      return FALSE;
+
+   if (pCurs->bits->height <= 64 && pCurs->bits->width <= 64)
+      return TRUE;
+
+   return FALSE;
+}
+
+static void I810LoadCursorARGB (ScrnInfoPtr pScrn, CursorPtr pCurs)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   CARD32 *pcurs = (CARD32 *) (pI810->FbBase + pI810->CursorStart);
+   CARD32 *image = (CARD32 *) pCurs->bits->argb;
+   int x, y, w, h;
+
+#ifdef ARGB_CURSOR
+   pI810->CursorIsARGB = TRUE;
+#endif
+
+   w = pCurs->bits->width;
+   h = pCurs->bits->height;
+
+   for (y = 0; y < h; y++)
+   {
+      for (x = 0; x < w; x++)
+         *pcurs++ = *image++;
+         for (; x < 64; x++)
+            *pcurs++ = 0;
+   }
+
+   for (; y < 64; y++)
+      for (x = 0; x < 64; x++)
+         *pcurs++ = 0;
+}
+#endif
 
 static Bool
 I810UseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
@@ -112,6 +170,10 @@ I810LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
    I810Ptr pI810 = I810PTR(pScrn);
    CARD8 *pcurs = (CARD8 *) (pI810->FbBase + pI810->CursorStart);
    int x, y;
+
+#ifdef ARGB_CURSOR
+   pI810->CursorIsARGB = FALSE;
+#endif
 
    for (y = 0; y < 64; y++) {
       for (x = 0; x < 64 / 4; x++) {
@@ -147,7 +209,10 @@ I810SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
    OUTREG8(CURSOR_Y_LO, y & 0xFF);
    OUTREG8(CURSOR_Y_HI, (((y >> 8) & 0x07) | flag));
 
-   OUTREG(CURSOR_BASEADDR, pI810->CursorPhysical);
+   if (pI810->CursorIsARGB)
+      OUTREG(CURSOR_BASEADDR, pI810->CursorARGBPhysical);
+   else
+      OUTREG(CURSOR_BASEADDR, pI810->CursorPhysical);
 }
 
 static void
@@ -156,8 +221,13 @@ I810ShowCursor(ScrnInfoPtr pScrn)
    I810Ptr pI810 = I810PTR(pScrn);
    unsigned char tmp;
 
-   OUTREG(CURSOR_BASEADDR, pI810->CursorPhysical);
-   OUTREG8(CURSOR_CONTROL, CURSOR_ORIGIN_DISPLAY | CURSOR_MODE_64_3C);
+   if (pI810->CursorIsARGB) {
+      OUTREG(CURSOR_BASEADDR, pI810->CursorARGBPhysical);
+      OUTREG8(CURSOR_CONTROL, CURSOR_ORIGIN_DISPLAY | CURSOR_MODE_64_ARGB_AX);
+   } else {
+      OUTREG(CURSOR_BASEADDR, pI810->CursorPhysical);
+      OUTREG8(CURSOR_CONTROL, CURSOR_ORIGIN_DISPLAY | CURSOR_MODE_64_3C);
+   }
 
    tmp = INREG8(PIXPIPE_CONFIG_0);
    tmp |= HW_CURSOR_ENABLE;
@@ -180,6 +250,11 @@ I810SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
    int tmp;
    I810Ptr pI810 = I810PTR(pScrn);
+
+#ifdef ARGB_CURSOR
+   if (pI810->CursorIsARGB)
+      return;
+#endif
 
    tmp = INREG8(PIXPIPE_CONFIG_0);
    tmp |= EXTENDED_PALETTE;

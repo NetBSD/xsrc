@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.45 2003/12/31 01:18:45 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.47 2004/10/23 15:29:31 dawes Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV and Wacom V protocols.
@@ -91,9 +91,7 @@ static const char identification[] = "$Identification: 42 $";
 #include "keysym.h"
 #include "mipointer.h"
 
-#ifdef XFree86LOADER
 #include "xf86Module.h"
-#endif
 
 #define xf86WcmWaitForTablet(fd) xf86WaitForInput((fd), 1000000)
 #define xf86WcmFlushTablet(fd) xf86FlushInput((fd))
@@ -102,9 +100,6 @@ static const char identification[] = "$Identification: 42 $";
 #define xf86WcmRead(a,b,c) xf86ReadSerial((a),(b),(c))
 #define xf86WcmWrite(a,b,c) xf86WriteSerial((a),(char*)(b),(c))
 #define xf86WcmClose(a) xf86CloseSerial((a))
-#define XCONFIG_PROBED "(==)"
-#define XCONFIG_GIVEN "(**)"
-#define xf86Verbose 1
 #undef PRIVATE
 #define PRIVATE(x) XI_PRIVATE(x)
 
@@ -140,8 +135,8 @@ static LocalDevicePtr xf86WcmAllocateEraser(void);
 
 static Bool xf86WcmOpen(LocalDevicePtr local);
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
-static int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
-	int fd, const char* id, float version);
+static int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
+	const char* id, float version);
 
 static void xf86WcmDevReadInput(LocalDevicePtr local);
 static void xf86WcmReadPacket(LocalDevicePtr local);
@@ -154,7 +149,7 @@ static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* dat
 static Bool serialDetect(LocalDevicePtr pDev);
 static Bool serialInit(LocalDevicePtr pDev);
 
-static int serialInitTablet(WacomCommonPtr common, int fd);
+static int serialInitTablet(LocalDevicePtr local);
 static void serialInitIntuos(WacomCommonPtr common, int fd,
         const char* id, float version);
 static void serialInitIntuos2(WacomCommonPtr common, int fd,
@@ -910,9 +905,10 @@ static Bool usbDetect(LocalDevicePtr local)
     SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 
     if (!err) {
-	ErrorF("%s Wacom Kernel Input driver version is %d.%d.%d\n",
-                                XCONFIG_PROBED, version >> 16,
-                                (version >> 8) & 0xff, version & 0xff);
+	xf86Msg(X_PROBED,
+		"%s: Wacom Kernel Input driver version is %d.%d.%d\n",
+		local->name, version >> 16,
+		(version >> 8) & 0xff, version & 0xff);
 	return 1;
     }
 
@@ -928,8 +924,6 @@ static Bool usbInit(LocalDevicePtr local)
     short sID[4];
     char id[BUFFER_SIZE];
     WacomModelPtr model = NULL;
-    WacomDevicePtr priv = (WacomDevicePtr)local->private;
-    WacomCommonPtr common = priv->common;
 
     DBG(1, ErrorF("initializing USB tablet\n"));
 
@@ -988,7 +982,7 @@ static Bool usbInit(LocalDevicePtr local)
 
     if (!model) model = &usbUnknown;
 
-    return xf86WcmInitTablet(common,model,local->fd,id,0.0);
+    return xf86WcmInitTablet(local,model,id,0.0);
 }
 
 static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
@@ -1464,7 +1458,6 @@ static Bool serialDetect(LocalDevicePtr pDev)
 static Bool serialInit(LocalDevicePtr local)
 {
     int err;
-    WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 
     DBG(1, ErrorF("initializing serial tablet\n"));
 
@@ -1541,7 +1534,7 @@ static Bool serialInit(LocalDevicePtr local)
 
     xf86WcmFlushTablet(local->fd);
 
-    if (serialInitTablet(common,local->fd) == !Success) {
+    if (serialInitTablet(local) == !Success) {
 	SYSCALL(xf86WcmClose(local->fd));
 	local->fd = -1;
 	return !Success;
@@ -1555,7 +1548,7 @@ static Bool serialInit(LocalDevicePtr local)
  *   Initialize the tablet
  ****************************************************************************/
 
-static int serialInitTablet(WacomCommonPtr common, int fd)
+static int serialInitTablet(LocalDevicePtr local)
 {
     int			loop, idx;
     char		id[BUFFER_SIZE];
@@ -1574,11 +1567,12 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
     else
     {
 	DBG(2, ErrorF("reading model\n"));
-	if (!xf86WcmSendRequest(fd, WC_MODEL, id, sizeof(id))) return !Success;
+	if (!xf86WcmSendRequest(local->fd, WC_MODEL, id,
+				sizeof(id))) return !Success;
 
  	DBG(2, ErrorF("%s\n", id));
 
-	if (xf86Verbose) ErrorF("%s Wacom tablet model : %s\n", XCONFIG_PROBED, id+2);
+	xf86Msg(X_PROBED, "%s: Wacom tablet model : %s\n", local->name, id+2);
 
 	/* Answer is in the form ~#Tablet-Model VRom_Version
 	 * look for the first V from the end of the string
@@ -1604,7 +1598,7 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
  	else
 	   model = &serialProtocol4;
     }
-    return xf86WcmInitTablet(common,model,fd,id,version);
+    return xf86WcmInitTablet(local,model,id,version);
 }
 
 static int serialParseGraphire(WacomCommonPtr common,
@@ -2259,8 +2253,6 @@ static Bool isdv4Detect(LocalDevicePtr local)
 static Bool isdv4Init(LocalDevicePtr local)
 {
     int err;
-    WacomDevicePtr priv = (WacomDevicePtr)local->private;
-    WacomCommonPtr common = priv->common;
 
     DBG(1, ErrorF("initializing ISDV4 tablet\n"));
 
@@ -2315,7 +2307,7 @@ static Bool isdv4Init(LocalDevicePtr local)
     xf86WcmFlushTablet(local->fd);
 
     DBG(2, ErrorF("not reading model -- Wacom TabletPC ISD V4\n"));
-    return xf86WcmInitTablet(common,&isdv4General,local->fd,"unknown",0.0);
+    return xf86WcmInitTablet(local,&isdv4General,"unknown",0.0);
 }
 
 /*****************************************************************************
@@ -3855,17 +3847,18 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
  * xf86WcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
-        int fd, const char* id, float version)
+int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
+        const char* id, float version)
 {
+    WacomCommonPtr	common = ((WacomDevicePtr)(local->private))->common;
     /* Initialize the tablet */
-    model->Initialize(common,fd,id,version);
+    model->Initialize(common,local->fd,id,version);
 
     /* Get tablet resolution */
-    if (model->GetResolution) model->GetResolution(common,fd);
+    if (model->GetResolution) model->GetResolution(common,local->fd);
 
     /* Get tablet range */
-    if (model->GetRanges && (model->GetRanges(common,fd) != Success))
+    if (model->GetRanges && (model->GetRanges(common,local->fd) != Success))
 	return !Success;
 
     /* Default threshold value if not set */
@@ -3873,29 +3866,34 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
     {
 	/* Threshold for counting pressure as a button */
 	common->wcmThreshold = common->wcmMaxZ * 3 / 50;
-        ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
-                        XCONFIG_PROBED, common->wcmThreshold);
+        xf86Msg(X_PROBED,
+		"%s: Wacom using pressure threshold of %d for button 1\n",
+                local->name, common->wcmThreshold);
     }
 
     /* Reset tablet to known state */
-    if (model->Reset && (model->Reset(common,fd) != Success))
+    if (model->Reset && (model->Reset(common,local->fd) != Success))
     {
- 	ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+ 	xf86Msg(X_ERROR, "%s: Wacom xf86WcmWrite error : %s\n",
+		local->name, strerror(errno));
 	return !Success;
     }
 
     /* Enable tilt mode, if requested and available */
     if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
-	if (model->EnableTilt(common,fd) != Success) return !Success;
+	if (model->EnableTilt(common,local->fd) != Success)
+	    return !Success;
 
     /* Enable hardware suppress, if requested and available */
     if ((common->wcmSuppress != 0) && model->EnableSuppress)
-	if (model->EnableSuppress(common,fd) != Success) return !Success;
+	if (model->EnableSuppress(common,local->fd) != Success)
+	    return !Success;
 
     /* change the serial speed, if requested */
     if (common->wcmLinkSpeed != 9600) {
 	if (model->SetLinkSpeed) {
-	    if (model->SetLinkSpeed(common,fd) != Success) return !Success;
+	    if (model->SetLinkSpeed(common,local->fd) != Success)
+		return !Success;
 	    else
 		ErrorF("Tablet does not support setting link "
                                 "speed, or not yet implemented\n");
@@ -3903,10 +3901,9 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
     }
 
     /* output tablet state as probed */
-    if (xf86Verbose)
-	ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+    xf86Msg(X_PROBED, "%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
                         "resX=%d resY=%d suppress=%d tilt=%s\n",
-                        XCONFIG_PROBED,
+                        local->name,
                         model->name, common->wcmLinkSpeed,
                         common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
                         common->wcmResolX, common->wcmResolY,
@@ -3914,7 +3911,8 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
                         HANDLE_TILT(common) ? "enabled" : "disabled");
 
     /* start the tablet data */
-    if (model->Start && (model->Start(common,fd) != Success)) return !Success;
+    if (model->Start && (model->Start(common,local->fd) != Success))
+	return !Success;
 
     /*set the model */
     common->wcmModel = model;
@@ -4058,10 +4056,9 @@ xf86WcmDevOpen(DeviceIntPtr       pWcm)
                                 priv->factorX, priv->factorY));
 	}
     
-	if (xf86Verbose)
-	    ErrorF("%s Wacom tablet top X=%d top Y=%d "
+	xf86Msg(X_PROBED, "%s: Wacom tablet top X=%d top Y=%d "
 		   "bottom X=%d bottom Y=%d\n",
-		   XCONFIG_PROBED, priv->topX, priv->topY,
+		   local->name, priv->topX, priv->topY,
 		   priv->bottomX, priv->bottomY);
     }
 
@@ -4225,7 +4222,6 @@ xf86WcmDevProc(DeviceIntPtr       pWcm,
 	default:
 	    ErrorF("wacom unsupported mode=%d\n", what);
 	    return !Success;
-	    break;
 	}
     DBG(2, ErrorF("END   xf86WcmProc Success what=%d dev=%p priv=%p\n",
 		  what, (void *)pWcm, (void *)priv));
@@ -5131,9 +5127,7 @@ xf86WcmInit(InputDriverPtr	drv,
 	    xf86Msg(X_ERROR, "%s: Illegal speed value (must be 9600 or 19200 or 38400).", dev->identifier);
 	    break;
 	}
-	if (xf86Verbose)
-	    xf86Msg(X_CONFIG, "%s: serial speed %u\n", dev->identifier,
-		    val);
+	xf86Msg(X_CONFIG, "%s: serial speed %u\n", dev->identifier, val);
     }
     priv->speed = xf86SetRealOption(local->options, "Speed", DEFAULT_SPEED);
     if (priv->speed != DEFAULT_SPEED) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.20 2002/09/24 21:01:06 tsi Exp $ */
+/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.22 2004/09/15 15:02:54 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1988  X Consortium

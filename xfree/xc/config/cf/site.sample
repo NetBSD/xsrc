@@ -62,9 +62,6 @@ XCOMM site:  $Xorg: site.sample,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
 
 #define ProjectRoot /usr/X11R6.4
 
-/* Only set HasXdmAuth to YES if you have a Wraphelp.c file. */
-/* #define HasXdmAuth YES */
-
 /*
 #if defined(SunArchitecture) && defined(SparcArchitecture)
 #define HasCodeCenter	YES

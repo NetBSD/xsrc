@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/extras/fontconfig/fontconfig/fontconfig.h,v 1.1.1.1 2003/06/04 02:57:42 dawes Exp $
+ * $XFree86: xc/extras/fontconfig/fontconfig/fontconfig.h,v 1.2 2005/02/14 03:04:59 dawes Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -35,9 +35,9 @@ typedef int		FcBool;
 /*
  * Current Fontconfig version number
  */
-#define FC_MAJOR	1
-#define FC_MINOR	0
-#define FC_REVISION	2
+#define FC_MAJOR	2
+#define FC_MINOR	1
+#define FC_REVISION	0
 
 #define FC_VERSION	((FC_MAJOR * 10000) + (FC_MINOR * 100) + (FC_REVISION))
 

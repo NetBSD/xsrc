@@ -37,6 +37,10 @@
 #ifndef _DRM_H_
 #define _DRM_H_
 
+#ifndef __user
+#define __user
+#endif
+
 #if defined(__linux__)
 #include <linux/config.h>
 #include <asm/ioctl.h>		/* For _IO* macros */
@@ -135,6 +139,25 @@ typedef struct drm_tex_region {
 	unsigned int	age;
 } drm_tex_region_t;
 
+/**
+ * Hardware lock.
+ *
+ * The lock structure is a simple cache-line aligned integer.  To avoid
+ * processor bus contention on a multiprocessor system, there should not be any
+ * other data stored in the same cache line.
+ */
+typedef struct drm_hw_lock {
+	__volatile__ unsigned int lock;		/**< lock variable */
+	char			  padding[60];	/**< Pad to cache line */
+} drm_hw_lock_t;
+
+
+#ifdef __SIZE_TYPE__
+# define DRM_SIZE_T __SIZE_TYPE__
+#else
+# warning "__SIZE_TYPE__ not defined.  Assuming sizeof(size_t) == sizeof(unsigned long)!"
+# define DRM_SIZE_T unsigned long
+#endif
 
 /**
  * DRM_IOCTL_VERSION ioctl argument type.
@@ -145,12 +168,12 @@ typedef struct drm_version {
 	int    version_major;	  /**< Major version */
 	int    version_minor;	  /**< Minor version */
 	int    version_patchlevel;/**< Patch level */
-	size_t name_len;	  /**< Length of name buffer */
-	char   *name;		  /**< Name of driver */
-	size_t date_len;	  /**< Length of date buffer */
-	char   *date;		  /**< User-space buffer to hold date */
-	size_t desc_len;	  /**< Length of desc buffer */
-	char   *desc;		  /**< User-space buffer to hold desc */
+	DRM_SIZE_T name_len;	  /**< Length of name buffer */
+	char   __user *name;	  /**< Name of driver */
+	DRM_SIZE_T date_len;	  /**< Length of date buffer */
+	char   __user *date;	  /**< User-space buffer to hold date */
+	DRM_SIZE_T desc_len;	  /**< Length of desc buffer */
+	char   __user *desc;	  /**< User-space buffer to hold desc */
 } drm_version_t;
 
 
@@ -160,14 +183,14 @@ typedef struct drm_version {
  * \sa drmGetBusid() and drmSetBusId().
  */
 typedef struct drm_unique {
-	size_t unique_len;	  /**< Length of unique */
-	char   *unique;		  /**< Unique name for driver instantiation */
+	DRM_SIZE_T unique_len;	  /**< Length of unique */
+	char   __user *unique;	  /**< Unique name for driver instantiation */
 } drm_unique_t;
 
 
 typedef struct drm_list {
 	int		 count;	  /**< Length of user-space structures */
-	drm_version_t	 *version;
+	drm_version_t	 __user *version;
 } drm_list_t;
 
 
@@ -373,7 +396,7 @@ typedef struct drm_buf_desc {
  */
 typedef struct drm_buf_info {
 	int	       count;	/**< Entries in list */
-	drm_buf_desc_t *list;
+	drm_buf_desc_t __user *list;
 } drm_buf_info_t;
 
 
@@ -382,7 +405,7 @@ typedef struct drm_buf_info {
  */
 typedef struct drm_buf_free {
 	int	       count;
-	int	       *list;
+	int	       __user *list;
 } drm_buf_free_t;
 
 
@@ -395,7 +418,7 @@ typedef struct drm_buf_pub {
 	int		  idx;	       /**< Index into the master buffer list */
 	int		  total;       /**< Buffer size */
 	int		  used;	       /**< Amount of buffer in use (for DMA) */
-	void		  *address;    /**< Address of buffer */
+	void		  __user *address;    /**< Address of buffer */
 } drm_buf_pub_t;
 
 
@@ -404,8 +427,8 @@ typedef struct drm_buf_pub {
  */
 typedef struct drm_buf_map {
 	int	      count;	/**< Length of the buffer list */
-	void	      *virtual;	/**< Mmap'd area in user-virtual */
-	drm_buf_pub_t *list;	/**< Buffer information */
+	void	      __user *virtual;	/**< Mmap'd area in user-virtual */
+	drm_buf_pub_t __user *list;	/**< Buffer information */
 } drm_buf_map_t;
 
 
@@ -419,13 +442,13 @@ typedef struct drm_buf_map {
 typedef struct drm_dma {
 	int		context;	  /**< Context handle */
 	int		send_count;	  /**< Number of buffers to send */
-	int		*send_indices;	  /**< List of handles to buffers */
-	int		*send_sizes;	  /**< Lengths of data to send */
+	int		__user *send_indices;	  /**< List of handles to buffers */
+	int		__user *send_sizes;	  /**< Lengths of data to send */
 	drm_dma_flags_t flags;		  /**< Flags */
 	int		request_count;	  /**< Number of buffers requested */
 	int		request_size;	  /**< Desired size for buffers */
-	int		*request_indices; /**< Buffer information */
-	int		*request_sizes;
+	int		__user *request_indices; /**< Buffer information */
+	int		__user *request_sizes;
 	int		granted_count;	  /**< Number of buffers granted */
 } drm_dma_t;
 
@@ -452,7 +475,7 @@ typedef struct drm_ctx {
  */
 typedef struct drm_ctx_res {
 	int		count;
-	drm_ctx_t	*contexts;
+	drm_ctx_t	__user *contexts;
 } drm_ctx_res_t;
 
 

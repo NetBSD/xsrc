@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.14 2004/01/02 20:22:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.15 2004/06/10 13:08:28 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -209,6 +209,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CURSOR_SIZE_HSHIFT     0
 #define CURSOR_SIZE_VSHIFT     12
 
+#define CURSOR_B_CONTROL   0x700C0
+#define CURSOR_B_BASE      0x700C4
+#define CURSOR_B_POSITION  0x700C8
+#define CURSOR_B_PALETTE0  0x700D0
+#define CURSOR_B_PALETTE1  0x700D4
+#define CURSOR_B_PALETTE2  0x700D8
+#define CURSOR_B_PALETTE3  0x700DC
+
 
 /* Similar registers exist in Device 0 on the i810 (pp55-65), but I'm
  * not sure they refer to local (graphics) memory.
@@ -358,6 +366,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FENCE            0x2000
 #define FENCE_NR         8
 
+#define I915G_FENCE_START_MASK	0x0ff00000
+
 #define I830_FENCE_START_MASK	0x07f80000
 
 #define FENCE_START_MASK    0x03F80000
@@ -372,7 +382,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FENCE_SIZE_16M      0x00000500
 #define FENCE_SIZE_32M      0x00000600
 #define FENCE_SIZE_64M	    0x00000700
-#define FENCE_PITCH_MASK    0x00000070
+#define I915G_FENCE_SIZE_1M       0x00000000
+#define I915G_FENCE_SIZE_2M       0x00000100
+#define I915G_FENCE_SIZE_4M       0x00000200
+#define I915G_FENCE_SIZE_8M       0x00000300
+#define I915G_FENCE_SIZE_16M      0x00000400
+#define I915G_FENCE_SIZE_32M      0x00000500
+#define I915G_FENCE_SIZE_64M	0x00000600
+#define I915G_FENCE_SIZE_128M	0x00000700
 #define FENCE_PITCH_1       0x00000000
 #define FENCE_PITCH_2       0x00000010
 #define FENCE_PITCH_4       0x00000020
@@ -709,6 +726,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define PIPEBCONF 0x71008
 #define PIPEBCONF_ENABLE	(1<<31)
 #define PIPEBCONF_DISABLE	0
+#define PIPEBCONF_DOUBLE_WIDE	(1<<30)
+#define PIPEBCONF_DISABLE	0
 #define PIPEBCONF_GAMMA 	(1<<24)
 #define PIPEBCONF_PALETTE	0
 
@@ -747,6 +766,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DSPBBASE		0x71184
 #define DSPBADDR		DSPBBASE
 #define DSPBSTRIDE		0x71188
+
+#define DSPAPOS			0x7018C /* reserved */
+#define DSPASIZE		0x70190
+#define DSPBPOS			0x7118C
+#define DSPBSIZE		0x71190
 
 /* Various masks for reserved bits, etc. */
 #define I830_FWATER1_MASK        (~((1<<11)|(1<<10)|(1<<9)|      \
@@ -802,6 +826,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define I855_GMCH_GMS_STOLEN_8M			(0x3 << 4)
 #define I855_GMCH_GMS_STOLEN_16M		(0x4 << 4)
 #define I855_GMCH_GMS_STOLEN_32M		(0x5 << 4)
+#define I915G_GMCH_GMS_STOLEN_48M		(0x6 << 4)
+#define I915G_GMCH_GMS_STOLEN_64M		(0x7 << 4)
 
 #define I85X_CAPID			0x44
 #define I85X_VARIANT_MASK			0x7

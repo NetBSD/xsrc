@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.31 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.32 2004/10/23 15:29:31 dawes Exp $ */
 /*
  * Copyright 1993-2003 by The XFree86 Project, Inc.
  * All rights reserved.
@@ -268,7 +268,6 @@ xf86SetSerial (int fd, pointer options)
 			xf86Msg (X_ERROR,
 				 "Invalid Option StopBits value: %d\n", val);
 			return (-1);
-			break;
 		}
 	}
 
@@ -296,7 +295,6 @@ xf86SetSerial (int fd, pointer options)
 			xf86Msg (X_ERROR,
 				 "Invalid Option DataBits value: %d\n", val);
 			return (-1);
-			break;
 		}
 	}
 
@@ -368,12 +366,12 @@ xf86SetSerial (int fd, pointer options)
 # else
 		SYSCALL (ioctl(fd, TIOCCDTR, NULL));
 # endif
+		xf86MarkOptionUsedByName (options, "ClearDTR");
 #else
 		xf86Msg (X_WARNING,
 			 "Option ClearDTR not supported on this OS\n");
 			return (-1);
 #endif
-		xf86MarkOptionUsedByName (options, "ClearDTR");
 	}
 
 	if ((xf86SetBoolOption (options, "ClearRTS", FALSE)))
@@ -381,12 +379,12 @@ xf86SetSerial (int fd, pointer options)
 #ifdef CLEARRTS_SUPPORT
 		val = TIOCM_RTS;
 		SYSCALL (ioctl(fd, TIOCMBIC, &val));
+		xf86MarkOptionUsedByName (options, "ClearRTS");
 #else
 		xf86Msg (X_WARNING,
 			 "Option ClearRTS not supported on this OS\n");
 			return (-1);
 #endif
-		xf86MarkOptionUsedByName (options, "ClearRTS");
 	}
 
 	SYSCALL (r = tcsetattr (fd, TCSANOW, &t));
