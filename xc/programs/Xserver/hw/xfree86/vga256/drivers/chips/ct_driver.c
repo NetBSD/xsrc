@@ -1647,7 +1647,7 @@ Bool ctProbeHiQV()
 		ctAccelSupport = FALSE;
 	    }
 	  } else {
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
 	      /* Unaligned word accesses don't do the same thing on ARM */
 	      /* as on x86!  Actually, I don't understand why 32-bit accesses */
 	      /* are being done in the x86 case; byte reads ought to work */
@@ -3953,7 +3953,7 @@ CHIPSInitHiQV32(mode)
     new->Port_3D6[0x81] |= 0x2;
     new->Port_3D6[0x80] |= 0x10;       /* Enable cursor output on P0 and P1 */
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
     if (OFLG_ISSET(OPTION_FAST_DRAM, &vga256InfoRec.options)) {
 	/* set mem clk */
 	/* 5v operation limited to 40MHz; 3.3v can go to 60 -JJK */
@@ -4136,7 +4136,7 @@ CHIPSInitHiQV32(mode)
     }
     else /* XMODE_RGB */
     {
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	ErrorF("GJS: About to call xf86SetRGBOut()\n");
 	/*
 	 * Put the console into RGB Out mode.

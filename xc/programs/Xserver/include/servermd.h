@@ -140,7 +140,7 @@ SOFTWARE.
 
 #endif /* vax */
 
-#if defined(__arm32__)
+#if defined(__arm__) || defined(__arm32__)
 
 #define IMAGE_BYTE_ORDER        LSBFirst
 
@@ -159,7 +159,7 @@ SOFTWARE.
 #define LARGE_INSTRUCTION_CACHE
 #define AVOID_MEMORY_READ
 
-#endif /* __arm32__ */
+#endif /* __arm__ || __arm32__ */
 
 #if (defined(Lynx) || defined(__NetBSD__)) && defined(__powerpc__)
 

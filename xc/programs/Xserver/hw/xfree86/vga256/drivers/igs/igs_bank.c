@@ -34,7 +34,7 @@
  * implied warranty.
  */
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
 /*#include <machine/sysarch.h>*/
 #define	arm32_drain_writebuf()	sysarch(1, 0)
 
@@ -47,7 +47,7 @@ void IGSSetRead(int bank)
 {
     outw(0x3CE, (((bank & 0x3F) << 8) | 0x32));
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
     /* Must drain StrongARM write buffer on bank switch! */
     if (bank != igsReadBank) {
 	arm32_drain_writebuf();
@@ -61,7 +61,7 @@ void IGSSetWrite(int bank)
 {
     outw(0x3CE, (((bank & 0x3F) << 8) | 0x31));
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
     /* Must drain StrongARM write buffer on bank switch! */
     if (bank != igsWriteBank) {
 	arm32_drain_writebuf();
@@ -75,7 +75,7 @@ void IGSSetReadWrite(int bank)
 {
     outw(0x3CE, (((bank & 0x3F) << 8) | 0x31));
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
     /* Must drain StrongARM write buffer on bank switch! */
     if (bank != igsWriteBank) {
 	arm32_drain_writebuf();

@@ -63,7 +63,7 @@
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 #include <machine/devmap.h>
 struct memAccess
 {
@@ -86,7 +86,7 @@ struct memAccess linearMemInfo = { CONSOLE_GET_LINEAR_INFO, NULL, NULL,
 				       FALSE, FALSE };
 struct memAccess ioMemInfo = { CONSOLE_GET_IO_INFO, NULL, NULL,
 				   FALSE, FALSE };
-#endif __arm32__
+#endif /* __arm__ || __arm32__ */
 
 #if defined(__NetBSD__) && !defined(MAP_FILE)
 #define MAP_FLAGS MAP_SHARED
@@ -210,7 +210,7 @@ unsigned long Size;
 {
 	pointer base;
 
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	struct memAccess *memInfoP;
 	
 	if((memInfoP = checkMapInfo(FALSE, Region)) != NULL)
@@ -237,7 +237,7 @@ unsigned long Size;
 	    base = xf86MapInfoMap(memInfoP, Base, Size);
 	    return (base);
 	}
-#endif __arm32__
+#endif /* __arm__ || __arm32__ */
 
 	if (!devMemChecked)
 		checkDevMem(FALSE);
@@ -313,7 +313,7 @@ int Region;
 pointer Base;
 unsigned long Size;
 {
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
         struct memAccess *memInfoP;
 	
 	if((memInfoP = checkMapInfo(FALSE, Region)) != NULL)
@@ -343,7 +343,7 @@ xf86LinearVidMem()
 	return(useDevMem);
 }
 
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 
 /*
 ** Find out whether the console driver provides memory mapping information 
@@ -474,7 +474,7 @@ static void xf86MapInfoUnmap(memInfoP, Size)
 	    break;
     }
 }
-#endif __arm32__
+#endif /* __arm__ || __arm32__ */
 
 #ifdef USE_I386_IOPL
 /***************************************************************************/
@@ -560,7 +560,7 @@ void xf86DisableIOPrivs()
 
 #endif /* USE_I386_IOPL */
 
-#if defined(USE_ARC_MMAP) || defined(__arm32__)
+#if defined(USE_ARC_MMAP) || defined(__arm__) || defined(__arm32__)
 
 #ifdef USE_ARM32_MMAP
 #define	DEV_MEM_IOBASE	0x43000000
@@ -600,7 +600,7 @@ int ScreenNum;
 	int i;
 	int fd;
 	pointer base;
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	struct memAccess *memInfoP;
 	int *Size;
 #endif
@@ -629,7 +629,7 @@ int ScreenNum;
 			"/dev/ttyC0", strerror(errno));
 	}
 #endif
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	IOPortBase = (unsigned int)-1;
 
 	if((memInfoP = checkMapInfo(TRUE, MMIO_REGION)) != NULL)
@@ -684,13 +684,13 @@ xf86DisableIOPorts(ScreenNum)
 int ScreenNum;
 {
 	int i;
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
         struct memAccess *memInfoP;
 #endif
 
 	ScreenEnabled[ScreenNum] = FALSE;
 
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	if((memInfoP = checkMapInfo(FALSE, MMIO_REGION)) != NULL)
 	{
 	    xf86MapInfoUnmap(memInfoP, 0);
@@ -726,13 +726,13 @@ Bool
 xf86DisableInterrupts()
 {
 
-#if !defined(__mips__) && !defined(__arm32__)
+#if !defined(__mips__) && !defined(__arm__) && !defined(__arm32__)
 #ifdef __GNUC__
 	__asm__ __volatile__("cli");
 #else 
 	asm("cli");
 #endif /* __GNUC__ */
-#endif /* !__mips__ && !__arm32__ */
+#endif /* !__mips__ && !__arm__ && !__arm32__ */
 
 	return(TRUE);
 }
@@ -741,13 +741,13 @@ void
 xf86EnableInterrupts()
 {
 
-#if !defined(__mips__) && !defined(__arm32__)
+#if !defined(__mips__) && !defined(__arm__) && !defined(__arm32__)
 #ifdef __GNUC__
 	__asm__ __volatile__("sti");
 #else 
 	asm("sti");
 #endif /* __GNUC__ */
-#endif /* !__mips__ && !__arm32__ */
+#endif /* !__mips__ && !__arm__ && !__arm32__ */
 
 	return;
 }

@@ -143,7 +143,7 @@ void igsAccelInit()
 	    igs24SubsequentFillRectSolid;
     }
 #endif
-#ifdef __arm32__ 
+#if defined(__arm__) || defined(__arm32__)
     /*
      * Set up text acceleration.
      * So far only defined for arm32, bit order may vary for others.

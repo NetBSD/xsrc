@@ -88,15 +88,15 @@ void (*ourmfbDoBitbltCopyInverted)();
 #else
 unsigned long useSpeedUp = 0;
 #if !defined(__mc68000__)
-#if !defined(__alpha__) && !defined(__arm32__)
+#if !defined(__alpha__) && !defined(__arm__) && !defined(__arm32__)
 extern void speedupvga256TEGlyphBlt8();
 extern void speedupvga2568FillRectOpaqueStippled32();
 extern void speedupvga2568FillRectTransparentStippled32();
-#else /* !__alpha__ && !__arm32__ */
+#else /* !__alpha__ && !__arm__ && !__arm32__ */
 extern void vga256TEGlyphBlt8();
 extern void vga2568FillRectOpaqueStippled32();
 extern void vga2568FillRectTransparentStippled32();
-#endif /* !__alpha__ && !__arm32__ */
+#endif /* !__alpha__ && !__arm__ && !__arm32__ */
 extern void OneBankvgaBitBlt();
 #endif /* !__mc68000__ */
 #endif /* MONOVGA */
@@ -1066,30 +1066,30 @@ vgaProbe()
         /* We deal with the generic speedups here */
 	if (useSpeedUp & SPEEDUP_TEGBLT8)
 	{
-#if !defined(__alpha__) && !defined(__arm32__)
+#if !defined(__alpha__) && !defined(__arm__) && !defined(__arm32__)
 	  vga256LowlevFuncs.teGlyphBlt8 = speedupvga256TEGlyphBlt8;
 	  vga256TEOps1Rect.ImageGlyphBlt = speedupvga256TEGlyphBlt8;
 	  vga256TEOps.ImageGlyphBlt = speedupvga256TEGlyphBlt8;
-#else /* !__alpha__ && !__arm32__ */
+#else /* !__alpha__ && !__arm__ && !__arm32__ */
 	  vga256LowlevFuncs.teGlyphBlt8 = vga256TEGlyphBlt8;
 	  vga256TEOps1Rect.ImageGlyphBlt = vga256TEGlyphBlt8;
 	  vga256TEOps.ImageGlyphBlt = vga256TEGlyphBlt8;
-#endif /* !__alpha__ && !__arm32__ */
+#endif /* !__alpha__ && !__arm__ && !__arm32__ */
 	}
 
 	if (useSpeedUp & SPEEDUP_RECTSTIP)
 	{
-#if !defined(__alpha__) && !defined(__arm32__)
+#if !defined(__alpha__) && !defined(__arm__) && !defined(__arm32__)
 	  vga256LowlevFuncs.fillRectOpaqueStippled32 = 
 	    speedupvga2568FillRectOpaqueStippled32;
 	  vga256LowlevFuncs.fillRectTransparentStippled32 = 
 	    speedupvga2568FillRectTransparentStippled32;
-#else /* !__alpha__ && !__arm32__ */
+#else /* !__alpha__ && !__arm__ && !__arm32__ */
 	  vga256LowlevFuncs.fillRectOpaqueStippled32 = 
 	    vga2568FillRectOpaqueStippled32;
 	  vga256LowlevFuncs.fillRectTransparentStippled32 = 
 	    vga2568FillRectTransparentStippled32;
-#endif /* !__alpha__ && !__arm32__ */
+#endif /* !__alpha__ && !__arm__ && !__arm32__ */
 	}
 
 	if (!vgaUse2Banks)
