@@ -921,7 +921,7 @@ ELFCreateGOT(ELFModulePtr elffile, int maxalign)
 	    ErrorF("ELFCreateGOT() Unable to reallocate memory!!!!\n");
 	    return FALSE;
 	}
-#   if defined(linux) && defined(__ia64__) || defined(__OpenBSD__)
+#   if defined(linux) && defined(__ia64__) || defined(__OpenBSD__) || defined(__NetBSD__)
 	{
 	    unsigned long page_size = getpagesize();
 	    unsigned long round;
@@ -2772,7 +2772,7 @@ ELFCollectSections(ELFModulePtr elffile, int pass, int *totalsize,
 	elffile->lsection[j].size = SecSize(i);
 	elffile->lsection[j].flags = flags;
 	switch (SecType(i)) {
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 	case SHT_PROGBITS:
 	    mprotect(elffile->lsection[j].saddr, SecSize(i),
 		     PROT_READ | PROT_WRITE | PROT_EXEC);
@@ -2970,7 +2970,7 @@ ELFLoadModule(loaderPtr modrec, int elffd, LOOKUP **ppLookup)
 	ErrorF("Unable to allocate ELF sections\n");
 	return NULL;
     }
-#  if defined(linux) && defined(__ia64__) || defined(__OpenBSD__)
+#  if defined(linux) && defined(__ia64__) || defined(__OpenBSD__) || defined(__NetBSD__)
     {
 	unsigned long page_size = getpagesize();
 	unsigned long round;
