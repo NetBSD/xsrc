@@ -53,6 +53,9 @@ from the X Consortium.
 #undef _POSIX_SOURCE
 #endif
 #endif
+#ifdef __NetBSD__
+#include <sys/param.h>
+#endif
 
 #ifndef sigmask
 #define sigmask(m)  (1 << ((m - 1)))
@@ -412,7 +415,12 @@ WaitForChild ()
     Debug ("signals blocked\n");
 #else
     omask = sigblock (sigmask (SIGCHLD) | sigmask (SIGHUP));
+#endif
+#if !defined(__NetBSD_Version__) || __NetBSD_Version__ < 103080000
     Debug ("signals blocked, mask was 0x%x\n", omask);
+#else
+    /* sigset_t is no longer an integral type on NetBSD 1.3H */
+    Debug ("signals blocked\n");
 #endif
     if (!ChildReady && !Rescan)
 #ifndef X_NOT_POSIX
