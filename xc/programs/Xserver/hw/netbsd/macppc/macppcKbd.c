@@ -114,30 +114,6 @@ void sunKbdWait()
     lastChngKbdTransTv = tv;
 }
 
-static void SwapLKeys(keysyms)
-    KeySymsRec* keysyms;
-{
-    unsigned int i;
-    KeySym k;
-
-    for (i = 2; i < keysyms->maxKeyCode * keysyms->mapWidth; i++)
-	if (keysyms->map[i] == XK_L1 ||
-	    keysyms->map[i] == XK_L2 ||
-	    keysyms->map[i] == XK_L3 ||
-	    keysyms->map[i] == XK_L4 ||
-	    keysyms->map[i] == XK_L5 ||
-	    keysyms->map[i] == XK_L6 ||
-	    keysyms->map[i] == XK_L7 ||
-	    keysyms->map[i] == XK_L8 ||
-	    keysyms->map[i] == XK_L9 ||
-	    keysyms->map[i] == XK_L10) {
-	    /* yes, I could have done a clever two line swap! */
-	    k = keysyms->map[i - 2];
-	    keysyms->map[i - 2] = keysyms->map[i];
-	    keysyms->map[i] = k;
-	}
-}
-
 static void SetLights (ctrl, fd)
     KeybdCtrl*	ctrl;
     int fd;
@@ -456,11 +432,6 @@ fflush(stderr);
 	if (!workingKeySyms) {
 	    workingKeySyms = &macppcKeySyms[macppcKbdPriv.type];
 
-#if 0
-	    if (macppcKbdPriv.type == KB_SUN4 && macppcSwapLkeys)
-		SwapLKeys(workingKeySyms);
-#endif
-
 #if MIN_KEYCODE > 0
 	    if (workingKeySyms->minKeyCode < MIN_KEYCODE) {
 		workingKeySyms->minKeyCode += MIN_KEYCODE;
@@ -518,14 +489,6 @@ fflush(stderr);
     case DEVICE_CLOSE:
     case DEVICE_OFF:
 	pPriv = (macppcKbdPrivPtr)pKeyboard->devicePrivate;
-#if 0 /* XXX */
-	if (pPriv->type == KB_SUN4) {
-	    /* dumb bug in Sun's keyboard! Turn off LEDS before resetting */
-	    pPriv->leds = 0;
-	    ctrl->leds = 0;
-	    SetLights(ctrl, pPriv->fd);
-	}
-#endif /* 0 XXX */
 	/*
 	 * Restore original keyboard directness and translation.
 	 */
