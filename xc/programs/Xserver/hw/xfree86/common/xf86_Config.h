@@ -184,10 +184,10 @@ static SymTabRec DriverTab[] = {
 #define NETPS2		1035
 #define NETSCROLLPS2	1036
 #define SYSMOUSE	1037
-#define WSMOUSE   	1038
-#define AUTOMOUSE	1039
-#define XQUE      	1040
-#define OSMOUSE		1041
+#define AUTOMOUSE	1038
+#define XQUE      	1039
+#define OSMOUSE		1040
+#define WSMOUSE   	1041
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
