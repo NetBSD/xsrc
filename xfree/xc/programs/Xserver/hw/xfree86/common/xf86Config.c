@@ -975,6 +975,9 @@ configInputKbd(IDevPtr inputp)
   xf86Info.panix106      = FALSE;
 #endif
   xf86Info.kbdCustomKeycodes = FALSE;
+#ifdef WSCONS_SUPPORT
+  xf86Info.kbdFd 	   = -1;
+#endif
 #ifdef XKB
   if (!xf86IsPc98()) {
     xf86Info.xkbrules      = "xfree86";
