@@ -263,16 +263,8 @@ miInitIndexed (ScreenPtr	pScreen,
     pFormat->index.pValues = xalloc (num * sizeof (xIndexValue));
     if (!pFormat->index.pValues)
     {
-	if (pFormat->pVisual->vid == pScreen->rootVisual)
-	{
-	    if (num > 7)
-		num = num / 4;
-	}
-	if (!miBuildRenderColormap (pFormat->pColormap, num, &first, &last))
-	{
-	    xfree (pIndexed);
-	    return FALSE;
-	}
+	xfree (pIndexed);
+	return FALSE;
     }
     
     
