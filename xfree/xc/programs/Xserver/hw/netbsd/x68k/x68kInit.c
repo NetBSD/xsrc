@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.3 2004/01/10 16:30:22 rtr Exp $ */
+/* $NetBSD: x68kInit.c,v 1.4 2005/03/28 13:04:06 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -100,6 +100,13 @@ void OsVendorInit (
 {
 }
 
+void OsVendorPreInit(
+#if NeedFunctionPrototypes
+    void
+#endif
+)
+{
+}
 
 /*-------------------------------------------------------------------------
  * function "InitOutput"                                [ called by DIX ]
