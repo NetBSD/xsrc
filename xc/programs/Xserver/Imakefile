@@ -211,6 +211,22 @@ ServerTarget(Xmono,$(VAXDIRS),$(VAXOBJS),$(VAXLIBS),$(SYSLIBS))
 #endif
 #endif /* XvaxMonoServer */
 
+#if XpmaxServer
+XCOMM
+XCOMM NetBSD/pmax server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/netbsd/pmax
+PMAXDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+PMAXOBJS = hw/netbsd/pmax/pmax_init.o hw/netbsd/pmax/pmax_io.o hw/netbsd/pmax/lk201.o
+PMAXLIBS = CFB8Libs
+ServerTarget(Xpmax,$(PMAXDIRS),$(PMAXOBJS),$(PMAXLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xpmax
+#endif
+#endif /* XpmaxServer */
+
 #if XdecServer
 XCOMM
 XCOMM Digital MIPS based WS server (ultrix 4.2 and beyond)
