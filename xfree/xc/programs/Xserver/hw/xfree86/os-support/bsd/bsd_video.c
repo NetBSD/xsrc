@@ -78,8 +78,8 @@
 #include <machine/sysarch.h>
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
-#include "xf86Axp.h"
 #endif
+#include "xf86Axp.h"
 #endif
 
 #ifdef __arm32__
