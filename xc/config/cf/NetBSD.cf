@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.58 1999/08/11 14:03:50 veego Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.59 1999/08/11 22:00:37 veego Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -27,23 +27,24 @@ XCOMM		NetBSD/macppc	client/server
 XCOMM
 
 #ifndef OSName
-#define OSName		NetBSD 1.4
-#endif
-#ifndef OSVendor
-#define	OSVendor	The NetBSD Foundation, Inc.
+#define OSName			DefaultOSName OSBinaryType
 #endif
 #ifndef OSMajorVersion
-#define OSMajorVersion		1
+#define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion		4
+#define OSMinorVersion		DefaultOSMinorVersion
 #endif
 /* XXX this does not deal with patches, but, patches should not affect it */
 /* 1 = A, 2 = B, 3 = C, 4 = D, 5 = E, ... */
 #ifndef OSTeenyVersion
-#define OSTeenyVersion	  0
+#define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
 
+
+#ifndef OSVendor
+#define	OSVendor		The NetBSD Foundation, Inc.
+#endif
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 /*
@@ -331,12 +332,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #ifndef UseGnuMalloc
 /*
  * There is no way to map 1.4J correctly to OS*Version, so 'J' is mapped
- * to OSTeenyVersion == 9. This should be save since there will never a
- * release for 1.4.9.
+ * to OSTeenyVersion == 10. This should be save since there will never a
+ * release for 1.4.10.
  */
 # if ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 4) || \
-     (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion >= 9))
+     (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion >= 10))
 #  define UseGnuMalloc		NO
 # else
 #  define UseGnuMalloc		YES
