@@ -49,6 +49,10 @@ SOFTWARE.
 #define INPUT_ERROR 	0xb6
 #define MAXSPECIAL	0xba
 
+#ifdef XKB
+extern int noXkbExtension;
+#endif
+
 static u_char lastkey;
 
 /*
@@ -102,17 +106,22 @@ ProcessLK201Input (e, pdev)
 		e->u.u.type = KeyPress;
 	    else
 		e->u.u.type = KeyRelease;
-	    if (dev->key->modifierMap[lastkey] & LockMask)
+#ifdef XKB
+	    if (noXkbExtension)
+#endif
 	    {
-		if (e->u.u.type == KeyRelease)
-		    return;
-		if (BitIsOn (dev->key->down, lastkey))
+		if (dev->key->modifierMap[lastkey] & LockMask)
 		{
-		    e->u.u.type = KeyRelease;
-		    SetLockLED (FALSE);
+		    if (e->u.u.type == KeyRelease)
+			return;
+		    if (BitIsOn (dev->key->down, lastkey))
+		    {
+			e->u.u.type = KeyRelease;
+			SetLockLED (FALSE);
+		    }
+		    else
+			SetLockLED (TRUE);
 		}
-		else
-		    SetLockLED (TRUE);
 	    }
 	    (*pdev->processInputProc)(e, dev, 1);
 	}
@@ -149,7 +158,12 @@ ProcessLK201Input (e, pdev)
 			    if (bits & 1)
 			    {
 				e->u.u.detail = (idx << 5) | key;
+#ifdef XKB
+				if (!noXkbExtension ||
+				    !(dev->key->modifierMap[e->u.u.detail] & LockMask))
+#else
 				if (!(dev->key->modifierMap[e->u.u.detail] & LockMask))
+#endif
 				    (*pdev->processInputProc)(e, dev, 1);
 			    }
 			    key++;
