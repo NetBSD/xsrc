@@ -1,0 +1,9 @@
+XCOMM $NetBSD: Imakefile,v 1.1 2000/07/25 17:08:29 thorpej Exp $
+
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+SUBDIRS = programs
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
