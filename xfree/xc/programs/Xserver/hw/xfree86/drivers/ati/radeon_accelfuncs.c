@@ -606,12 +606,12 @@ FUNC_NAME(RADEONSetupForMono8x8PatternFill)(ScrnInfoPtr pScrn,
     OUT_ACCEL_REG(RADEON_DP_BRUSH_FRGD_CLR,  fg);
     if (bg != -1)
 	OUT_ACCEL_REG(RADEON_DP_BRUSH_BKGD_CLR, bg);
-#if X_BYTE_ORDER == X_LITTLE_ENDIAN
-    OUT_ACCEL_REG(RADEON_BRUSH_DATA0,        patternx);
-    OUT_ACCEL_REG(RADEON_BRUSH_DATA1,        patterny);
-#else
+#if X_BYTE_ORDER == X_BIG_ENDIAN
     OUT_ACCEL_REG(RADEON_BRUSH_DATA0,        *(CARD32 *)(pointer)&pattern[0]);
     OUT_ACCEL_REG(RADEON_BRUSH_DATA1,        *(CARD32 *)(pointer)&pattern[4]);
+#else
+    OUT_ACCEL_REG(RADEON_BRUSH_DATA0,        patternx);
+    OUT_ACCEL_REG(RADEON_BRUSH_DATA1,        patterny);
 #endif
 
     FINISH_ACCEL();
