@@ -9,7 +9,7 @@ SERVERSTYPE = XdmServersType
 
 all:: Xservers.ws xdm-config Xservers Xresources
 
-#if defined(i386Architecture) && (defined(KNetBSDArchitecture) || defined(KOpenBSDArchitecture))
+#if (defined(i386Architecture) || defined(AMD64Architecture)) && (defined(KNetBSDArchitecture) || defined(KOpenBSDArchitecture))
 DEFAULTVT=vt05
 #endif
 
