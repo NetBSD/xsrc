@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.94 2002/04/08 22:40:56 thorpej Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.95 2002/04/21 09:58:16 thomas Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -333,9 +333,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(atariArchitecture)
 # define BuildServer		YES
 # define ServerOSDefines	-DDDXOSINIT
-# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__atari__
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__atari__ -D__mc68000__ -Dmc68020
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
+# define XF68FBDevServer	YES
+# define XF68SVGAServer		YES
+# define XF68W32Server		YES
 #endif
 
 #if defined(VaxArchitecture)
