@@ -49,7 +49,7 @@ name.o: name.s								@@\
 #define FFBsObjectRule(name)						@@\
 name.o: name.s								@@\
 	$(RM) $@							@@\
-	$(CPP) $*.s | $(AS) $(GCCVISOPTION) -o $@ -
+	$(CPP) $*.s | $(AS) $(ASVISOPTION) -o $@ -
 #endif
 #else
 VISOBJS =
