@@ -239,6 +239,7 @@ static Choice *choiceList = NULL;
 int enabledMenuIndex;
 static Boolean patternFieldSpecified[FIELD_COUNT]; /* = 0 */
 
+#define	INT2XTP(i) ((XtPointer)(long)(i))
 
 void main(argc, argv)
     int argc;
@@ -300,7 +301,7 @@ see 'xfontsel' manual page."
 		sprintf( name, "field%d", f );
 		XtCreateManagedWidget("dash",labelWidgetClass,fieldBox,NZ);
 		field = XtCreateManagedWidget(name,menuButtonWidgetClass,fieldBox,NZ);
-		XtAddCallback(field, XtNcallback, SelectField, (XtPointer)f);
+		XtAddCallback(field, XtNcallback, SelectField, INT2XTP(f));
 		makeRec->field = f;
 		makeRec->button = field;
 		ScheduleWork(MakeFieldMenu, (XtPointer)makeRec, 2);
@@ -835,12 +836,12 @@ void MakeFieldMenu(closure)
     XtGetSubresources(menu, (XtPointer) values, "options", "Options",
 		      menuResources, XtNumber(menuResources), NZ);
     XtAddCallback(menu, XtNpopupCallback, EnableOtherValues,
-		  (XtPointer)makeRec->field );
+		  INT2XTP(makeRec->field) );
 
     if (!patternFieldSpecified[val->field]) {
 	XtSetArg( args[0], XtNlabel, "*" );
 	item = XtCreateManagedWidget("any",smeBSBObjectClass,menu,args,ONE);
-	XtAddCallback(item, XtNcallback, AnyValue, (XtPointer)val->field);
+	XtAddCallback(item, XtNcallback, AnyValue, INT2XTP(val->field));
     }
 
     for (i = values->count; i; i--, val++) {
@@ -957,7 +958,7 @@ void AnyValue(w, closure, callData)
     Widget w;
     XtPointer closure, callData;
 {
-    int field = (int)closure;
+    int field = (int)(long)closure;
     currentFont.value_index[field] = -1;
     SetCurrentFont(NULL);
     EnableAllItems(field);
@@ -1148,7 +1149,7 @@ EnableRemainingItems(current_field_action)
     {
 	int f;
 	for (f = 0; f < FIELD_COUNT; f++)
-	    ScheduleWork(EnableMenu, (XtPointer)f, BACKGROUND);
+	    ScheduleWork(EnableMenu, INT2XTP(f), BACKGROUND);
     }
 }
 
@@ -1168,7 +1169,7 @@ void SelectField(w, closure, callData)
     Widget w;
     XtPointer closure, callData;
 {
-    int field = (int)closure;
+    int field = (int)(long)closure;
     FieldValue *values = fieldValues[field]->value;
     int count = fieldValues[field]->count;
     printf( "field %d:\n", field );
@@ -1215,7 +1216,7 @@ void EnableOtherValues(w, closure, callData)
     Widget w;
     XtPointer closure, callData;
 {
-    int field = (int)closure;
+    int field = (int)(long)closure;
     Boolean *font_in_set = (Boolean*)XtMalloc(numFonts*sizeof(Boolean));
     Boolean *b;
     int f, count;
@@ -1272,14 +1273,14 @@ void EnableOtherValues(w, closure, callData)
     }
     XtFree((char *)font_in_set);
     if (enabledMenuIndex < field)
-	EnableMenu((XtPointer)field);
+	EnableMenu(INT2XTP(field));
 }
 
 
 void EnableMenu(closure)
     XtPointer closure;
 {
-    int field = (int)closure;
+    int field = (int)(long)closure;
     FieldValue *val = fieldValues[field]->value;
     int f;
     Widget *managed = NULL, *pManaged = NULL;
@@ -1403,8 +1404,8 @@ void OwnSelection(w, closure, callData)
     XtPointer closure, callData;
 {
     Time time = XtLastTimestampProcessed(XtDisplay(w));
-    Boolean primary = (Boolean) (int) closure;
-    Boolean own = (Boolean) (int) callData;
+    Boolean primary = (Boolean) (long) closure;
+    Boolean own = (Boolean) (long) callData;
 
     if (_XA_PRIMARY_FONT == NULL)
 	_XA_PRIMARY_FONT = XmuMakeAtom("PRIMARY_FONT");
