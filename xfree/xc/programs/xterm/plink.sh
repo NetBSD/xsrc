@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86: xc/programs/xterm/plink.sh,v 3.1 2001/03/13 09:48:43 dickey Exp $
+# $XFree86$
 #
 # Reduce the number of dynamic libraries used to link an executable.
 CMD=
