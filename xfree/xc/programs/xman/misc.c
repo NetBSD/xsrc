@@ -402,7 +402,7 @@ UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output,
 FILE *
 Format(ManpageGlobals * man_globals, char * entry)
 {
-  FILE * file;
+  FILE * file = NULL;
 #ifdef HAS_MKSTEMP
   int fd;
 #endif
