@@ -30,7 +30,7 @@
 
 #define VGA2_PATCHLEVEL "0"
 #define VGA16_PATCHLEVEL "0"
-#define SVGA_PATCHLEVEL "0"
+#define SVGA_PATCHLEVEL "1"
 
 #include "X.h"
 #include "misc.h"
