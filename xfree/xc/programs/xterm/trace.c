@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/trace.c,v 3.11 2000/06/13 02:28:41 dawes Exp $
+ * $XFree86: xc/programs/xterm/trace.c,v 3.14 2001/11/05 02:07:16 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2000 by Thomas E. Dickey
+Copyright 1997-2001 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -30,122 +30,356 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * debugging support via TRACE macro.
  */
-#include <stdio.h>
+
+#include <xterm.h>		/* for definition of GCC_UNUSED */
+#include <trace.h>
+
+#include <X11/StringDefs.h>
+
 #include <time.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <stdio.h>
 #include <stdarg.h>
 
-#include <trace.h>
+#ifdef HAVE_X11_TRANSLATEI_H
+#include <X11/TranslateI.h>
+#else
+extern String _XtPrintXlations(Widget w,
+			       XtTranslations xlations,
+			       Widget accelWidget,
+			       _XtBoolean includeRHS);
+#endif
 
 char *trace_who = "parent";
 
 void
-Trace(char *fmt, ...)
+Trace(char *fmt,...)
 {
-	static	FILE	*fp;
-	static	char	*trace_out;
-	va_list ap;
+    static FILE *fp;
+    static char *trace_out;
+    va_list ap;
 
-	if (fp != 0
-	 && trace_who != trace_out) {
-		fclose(fp);
-		fp = 0;
-	}
-	trace_out = trace_who;
+    if (fp != 0
+	&& trace_who != trace_out) {
+	fclose(fp);
+	fp = 0;
+    }
+    trace_out = trace_who;
 
-	if (!fp) {
-		char name[BUFSIZ];
-		sprintf(name, "Trace-%s.out", trace_who);
-		fp = fopen(name, "w");
-		if (fp != 0) {
-			time_t now = time((time_t*)0);
+    if (!fp) {
+	char name[BUFSIZ];
+	sprintf(name, "Trace-%s.out", trace_who);
+	fp = fopen(name, "w");
+	if (fp != 0) {
+	    time_t now = time((time_t *) 0);
 #ifdef HAVE_UNISTD_H
-			fprintf(fp, "process %d real (%d/%d) effective (%d/%d) -- %s",
-				getpid(),
-				getuid(), getgid(),
-				geteuid(), getegid(),
-				ctime(&now));
+	    fprintf(fp, "process %d real (%d/%d) effective (%d/%d) -- %s",
+		    getpid(),
+		    getuid(), getgid(),
+		    geteuid(), getegid(),
+		    ctime(&now));
 #else
-			fprintf(fp, "process %d -- %s",
-				getpid(),
-				ctime(&now));
+	    fprintf(fp, "process %d -- %s",
+		    getpid(),
+		    ctime(&now));
 #endif
-		}
 	}
-	if (!fp)
-		abort();
+    }
+    if (!fp)
+	abort();
 
-	va_start(ap,fmt);
-	if (fmt != 0) {
-		vfprintf(fp, fmt, ap);
-		(void)fflush(fp);
-	} else {
-		(void)fclose(fp);
-		(void)fflush(stdout);
-		(void)fflush(stderr);
-	}
-	va_end(ap);
+    va_start(ap, fmt);
+    if (fmt != 0) {
+	vfprintf(fp, fmt, ap);
+	(void) fflush(fp);
+    } else {
+	(void) fclose(fp);
+	(void) fflush(stdout);
+	(void) fflush(stderr);
+    }
+    va_end(ap);
 }
 
 char *
-visibleChars(PAIRED_CHARS(Char *buf, Char *buf2), unsigned len)
+visibleChars(PAIRED_CHARS(Char * buf, Char * buf2), unsigned len)
 {
-	static char *result;
-	static unsigned used;
-	unsigned limit = ((len + 1) * 8) + 1;
-	char *dst;
+    static char *result;
+    static unsigned used;
+    unsigned limit = ((len + 1) * 8) + 1;
+    char *dst;
 
-	if (limit > used) {
-		used = limit;
-		result = XtRealloc(result, used);
-	}
-	dst = result;
-	while (len--) {
-		unsigned value = *buf++;
+    if (limit > used) {
+	used = limit;
+	result = XtRealloc(result, used);
+    }
+    dst = result;
+    while (len--) {
+	unsigned value = *buf++;
 #if OPT_WIDE_CHARS
-		if (buf2 != 0) {
-			value |= (*buf2 << 8);
-			buf2++;
-		}
-		if (value > 255)
-			sprintf(dst, "\\u+%04X", value);
-		else
-#endif
-		if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
-			sprintf(dst, "\\%03o", value);
-		else
-			sprintf(dst, "%c", value);
-		dst += strlen(dst);
+	if (buf2 != 0) {
+	    value |= (*buf2 << 8);
+	    buf2++;
 	}
-	return result;
+	if (value > 255)
+	    sprintf(dst, "\\u+%04X", value);
+	else
+#endif
+	if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
+	    sprintf(dst, "\\%03o", value);
+	else
+	    sprintf(dst, "%c", value);
+	dst += strlen(dst);
+    }
+    return result;
 }
 
 char *
-visibleIChar(IChar *buf, unsigned len)
+visibleIChar(IChar * buf, unsigned len)
 {
-	static char *result;
-	static unsigned used;
-	unsigned limit = ((len + 1) * 6) + 1;
-	char *dst;
+    static char *result;
+    static unsigned used;
+    unsigned limit = ((len + 1) * 6) + 1;
+    char *dst;
 
-	if (limit > used) {
-		used = limit;
-		result = XtRealloc(result, used);
-	}
-	dst = result;
-	while (len--) {
-		unsigned value = *buf++;
+    if (limit > used) {
+	used = limit;
+	result = XtRealloc(result, used);
+    }
+    dst = result;
+    while (len--) {
+	unsigned value = *buf++;
 #if OPT_WIDE_CHARS
-		if (value > 255)
-			sprintf(dst, "\\u+%04X", value);
-		else
+	if (value > 255)
+	    sprintf(dst, "\\u+%04X", value);
+	else
 #endif
-		if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
-			sprintf(dst, "\\%03o", value);
-		else
-			sprintf(dst, "%c", value);
-		dst += strlen(dst);
+	if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
+	    sprintf(dst, "\\%03o", value);
+	else
+	    sprintf(dst, "%c", value);
+	dst += strlen(dst);
+    }
+    return result;
+}
+
+/*
+ * Some calls to XGetAtom() will fail, and we don't want to stop.  So we use
+ * our own error-handler.
+ */
+static int
+no_error(Display * dpy GCC_UNUSED, XErrorEvent * event GCC_UNUSED)
+{
+    return 1;
+}
+
+void
+TraceTranslations(const char *name, Widget w)
+{
+    String result;
+    XErrorHandler save = XSetErrorHandler(no_error);
+    XtTranslations xlations;
+    Widget xcelerat;
+
+    TRACE(("TraceTranslations for %s (widget %#lx)\n", name, (long) w));
+    if (w) {
+	XtVaGetValues(w,
+		      XtNtranslations, &xlations,
+		      XtNaccelerators, &xcelerat,
+		      NULL);
+	TRACE(("... xlations %#08lx\n", (long) xlations));
+	TRACE(("... xcelerat %#08lx\n", (long) xcelerat));
+	result = _XtPrintXlations(w, xlations, xcelerat, True);
+	TRACE(("%s\n", result != 0 ? result : "(null)"));
+    } else {
+	TRACE(("none (widget is null)\n"));
+    }
+    XSetErrorHandler(save);
+}
+
+void
+TraceArgv(const char *tag, char **argv)
+{
+    int n = 0;
+
+    TRACE(("%s:\n", tag));
+    while (*argv != 0) {
+	TRACE(("  %d:%s\n", n++, *argv++));
+    }
+}
+
+static int
+cmp_options(const void *a, const void *b)
+{
+    return strcmp(((const OptionHelp *) a)->opt,
+		  ((const OptionHelp *) b)->opt);
+}
+
+static int
+cmp_resources(const void *a, const void *b)
+{
+    return strcmp(((const XrmOptionDescRec *) a)->option,
+		  ((const XrmOptionDescRec *) b)->option);
+}
+
+static char *
+parse_option(char *dst, char *src, char first)
+{
+    char *s;
+
+    if (!strncmp(src, "-/+", 3)) {
+	dst[0] = first;
+	strcpy(dst + 1, src + 3);
+    } else {
+	strcpy(dst, src);
+    }
+    for (s = dst; *s != '\0'; s++) {
+	if (*s == '#' || *s == '%' || *s == 'S') {
+	    s[1] = '\0';
+	} else if (*s == ' ') {
+	    *s = '\0';
+	    break;
 	}
-	return result;
+    }
+    return dst;
+}
+
+static Boolean
+same_option(OptionHelp * opt, XrmOptionDescRec * res)
+{
+    char temp[BUFSIZ];
+    return !strcmp(parse_option(temp, opt->opt, res->option[0]), res->option);
+}
+
+static Boolean
+standard_option(char *opt)
+{
+    static char *table[] =
+    {
+	"+rv",
+	"+synchronous",
+	"-background",
+	"-bd",
+	"-bg",
+	"-bordercolor",
+	"-borderwidth",
+	"-bw",
+	"-display",
+	"-fg",
+	"-fn",
+	"-font",
+	"-foreground",
+	"-geometry",
+	"-iconic",
+	"-name",
+	"-reverse",
+	"-rv",
+	"-selectionTimeout",
+	"-synchronous",
+	"-title",
+	"-xnllanguage",
+	"-xrm",
+	"-xtsessionID",
+    };
+    Cardinal n;
+    char temp[BUFSIZ];
+
+    opt = parse_option(temp, opt, '-');
+    for (n = 0; n < XtNumber(table); n++) {
+	if (!strcmp(opt, table[n]))
+	    return True;
+    }
+    return False;
+}
+
+/*
+ * Analyse the options/help messages for inconsistencies.
+ */
+void
+TraceOptions(OptionHelp * options, XrmOptionDescRec * resources, Cardinal res_count)
+{
+    OptionHelp *opt_array;
+    size_t opt_count, j, k;
+    XrmOptionDescRec *res_array;
+    Boolean first, found;
+
+    TRACE(("Checking options-tables for inconsistencies:\n"));
+
+    /* count 'options' and make a sorted index to it */
+    for (opt_count = 0; options[opt_count].opt != 0; ++opt_count) ;
+    opt_array = (OptionHelp *) calloc(opt_count, sizeof(OptionHelp));
+    for (j = 0; j < opt_count; j++)
+	opt_array[j] = options[j];
+    qsort(opt_array, opt_count, sizeof(OptionHelp), cmp_options);
+
+    /* make a sorted index to 'resources' */
+    res_array = (XrmOptionDescRec *) calloc(res_count, sizeof(*res_array));
+    for (j = 0; j < res_count; j++)
+	res_array[j] = resources[j];
+    qsort(res_array, res_count, sizeof(*res_array), cmp_resources);
+
+#if 0
+    TRACE(("Options listed in help-message:\n"));
+    for (j = 0; j < opt_count; j++)
+	TRACE(("%5d %-28s %s\n", j, opt_array[j].opt, opt_array[j].desc));
+    TRACE(("Options listed in resource-table:\n"));
+    for (j = 0; j < res_count; j++)
+	TRACE(("%5d %-28s %s\n", j, res_array[j].option, res_array[j].specifier));
+#endif
+
+    /* list all options[] not found in resources[] */
+    for (j = 0, first = True; j < opt_count; j++) {
+	found = False;
+	for (k = 0; k < res_count; k++) {
+	    if (same_option(&opt_array[j], &res_array[k])) {
+		found = True;
+		break;
+	    }
+	}
+	if (!found) {
+	    if (first) {
+		TRACE(("Options listed in help, not found in resource list:\n"));
+		first = False;
+	    }
+	    TRACE(("  %-28s%s\n", opt_array[j].opt,
+		   standard_option(opt_array[j].opt) ? " (standard)" : ""));
+	}
+    }
+
+    /* list all resources[] not found in options[] */
+    for (j = 0, first = True; j < res_count; j++) {
+	found = False;
+	for (k = 0; k < opt_count; k++) {
+	    if (same_option(&opt_array[k], &res_array[j])) {
+		found = True;
+		break;
+	    }
+	}
+	if (!found) {
+	    if (first) {
+		TRACE(("Resource list items not found in options-help:\n"));
+		first = False;
+	    }
+	    TRACE(("  %s\n", res_array[j].option));
+	}
+    }
+
+    TRACE(("Resource list items that will be ignored by XtAppInitialize:\n"));
+    for (j = 0; j < res_count; j++) {
+	switch (res_array[j].argKind) {
+	case XrmoptionSkipArg:
+	    TRACE(("  %-28s {param}\n", res_array[j].option));
+	    break;
+	case XrmoptionSkipNArgs:
+	    TRACE(("  %-28s {%ld params}\n", res_array[j].option, (long)
+		   res_array[j].value));
+	    break;
+	case XrmoptionSkipLine:
+	    TRACE(("  %-28s {remainder of line}\n", res_array[j].option));
+	    break;
+	default:
+	    break;
+	}
+    }
 }

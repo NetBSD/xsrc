@@ -7,7 +7,7 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.35.2.1 2001/05/28 06:53:37 torrey Exp $
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.40 2001/10/10 19:46:22 dickey Exp $
 XCOMM
 
 /* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
@@ -92,8 +92,8 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 
 #ifdef UTF8support
     UTF8_OPTION = -DOPT_WIDE_CHARS
-        UTF8SRC = charclass.c keysym2ucs.c precompose.c wcwidth.c
-        UTF8OBJ = charclass.o keysym2ucs.o precompose.o wcwidth.o
+        UTF8SRC = charclass.c precompose.c wcwidth.c xutf8.c
+        UTF8OBJ = charclass.o precompose.o wcwidth.o xutf8.o
 #endif
 #if BuildXftLibrary
 #define XRenderSupport
@@ -196,6 +196,8 @@ InstallProgramWithFlags(xterm,$(BINDIR),NullParameter)
 #endif
 #endif
 
+InstallNamedProg(uxterm,uxterm,$(BINDIR))
+
 NormalProgramTarget(resize,$(OBJS2),$(DEPLIBS2),NullParameter,$(TERMCAPLIB))
 InstallProgramWithFlags(resize,$(BINDIR),NullParameter)
 
@@ -210,6 +212,7 @@ install::
 InstallNamedNonExec(terminfo,xterm.terminfo,$(LIBDIR)/etc)
 
 InstallAppDefaults(XTerm)
+InstallAppDefaults(UXTerm)
 InstallAppDefaultsLong(XTerm-col,XTerm-color)
 InstallManPage(xterm,$(MANDIR))
 InstallManPage(resize,$(MANDIR))

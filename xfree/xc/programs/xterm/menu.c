@@ -1,7 +1,7 @@
-/* $Xorg: menu.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $ */
+/* $Xorg: menu.c,v 1.4 2001/02/09 02:06:03 xorgcvs Exp $ */
 /*
 
-Copyright 1999-2000 by Thomas E. Dickey
+Copyright 1999, 2001 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -23,14 +23,13 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-Copyright (c) 1989  X Consortium
+Copyright 1989  The Open Group
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -38,16 +37,16 @@ all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
 AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Except as contained in this notice, the name of the X Consortium shall not be
+Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
-in this Software without prior written authorization from the X Consortium.
+in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.41 2001/01/17 23:46:37 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.44 2002/01/05 22:05:03 dickey Exp $ */
 
 #include <xterm.h>
 #include <data.h>
@@ -1644,7 +1643,7 @@ void HandleScrollbar(
 	String *params,
 	Cardinal *param_count)
 {
-    handle_toggle (do_scrollbar, (int) term->screen.fullVwin.scrollbar,
+    handle_toggle (do_scrollbar, (int) term->screen.fullVwin.sb_info.width,
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1999,26 +1998,6 @@ SetItemSensitivity(Widget mi, XtArgVal val)
 
 #if OPT_TOOLBAR
 /*
- * In the normal (non-toolbar) configuration, the xterm widget covers almost
- * all of the window.  With a toolbar, there's a relatively large area that
- * the user would expect to enter keystrokes since the program can get the
- * focus.
- */
-static char menu_trans[] =
-"\
-                ~Meta <KeyPress>:insert-seven-bit() \n\
-                 Meta <KeyPress>:insert-eight-bit() \n\
-";
-
-XtActionsRec menu_actions[] = {
-    { "insert",			HandleKeyPressed }, /* alias */
-    { "insert-eight-bit",	HandleEightBitKeyPressed },
-    { "insert-seven-bit",	HandleKeyPressed },
-    { "secure",			HandleSecure },
-    { "string",			HandleStringEvent },
-};
-
-/*
  * The normal style of xterm popup menu delays initialization until the menu is
  * first requested.  When using a toolbar, we can use the same initialization,
  * though on the first popup there will be a little geometry layout jitter,
@@ -2095,9 +2074,7 @@ SetupMenus(Widget shell, Widget *forms, Widget *menus)
 				"form",
 				formWidgetClass,	shell,
 				NULL);
-
-	XtAppAddActions(app_con, menu_actions, XtNumber(menu_actions));
-	XtAugmentTranslations(*forms, XtParseTranslationTable(menu_trans));
+	xtermAddInput(*forms);
 
 	/*
 	 * Set a nominal value for the preferred pane size, which lets the

@@ -2,10 +2,10 @@
  *	$Xorg: input.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/input.c,v 3.52 2001/01/17 23:46:36 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/input.c,v 3.55 2001/10/10 19:46:23 dickey Exp $ */
 
 /*
- * Copyright 1999-2000 by Thomas E. Dickey
+ * Copyright 1999-2001 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -78,9 +78,12 @@
 #include <X11/StringDefs.h>
 #include <ctype.h>
 
+#include <xutf8.h>
+
 #include <data.h>
 #include <fontutils.h>
-#include <keysym2ucs.h>
+
+#define KEYSYM_FMT "0x%04lX"	/* simplify matching <X11/keysymdef.h> */
 
 /*                       0123456789 abc def0123456789abdef0123456789abcdef0123456789abcd */
 static char *kypd_num = " XXXXXXXX\tXXX\rXXXxxxxXXXXXXXXXXXXXXXXXXXXX*+,-./0123456789XX=";
@@ -207,9 +210,9 @@ TranslateFromSUNPC(KeySym keysym)
 
 	for (n = 0; n < sizeof(table)/sizeof(table[0]); n++) {
 		if (table[n].before == keysym) {
-			TRACE(("...Input keypad before was %#04lx\n", keysym));
+			TRACE(("...Input keypad before was "KEYSYM_FMT"\n", keysym));
 			keysym = table[n].after;
-			TRACE(("...Input keypad changed to %#04lx\n", keysym));
+			TRACE(("...Input keypad changed to "KEYSYM_FMT"\n", keysym));
 			break;
 		}
 	}
@@ -315,6 +318,37 @@ xtermDeleteIsDEL(void)
 	return result;
 }
 
+/*
+ * Add input-actions for widgets that are overlooked (scrollbar and toolbar):
+ *
+ *	a) Sometimes the scrollbar passes through translations, sometimes it
+ *	   doesn't.  We add the KeyPress translations here, just to be sure.
+ *	b) In the normal (non-toolbar) configuration, the xterm widget covers
+ *	   almost all of the window.  With a toolbar, there's a relatively
+ *	   large area that the user would expect to enter keystrokes since the
+ *	   program can get the focus.
+ */
+void
+xtermAddInput(Widget w)
+{
+    static char input_trans[] = "\
+                ~Meta <KeyPress>:insert-seven-bit() \n\
+                 Meta <KeyPress>:insert-eight-bit() \n";
+
+    /* *INDENT-OFF* */
+    XtActionsRec input_actions[] = {
+	{ "insert",		HandleKeyPressed }, /* alias */
+	{ "insert-eight-bit",	HandleEightBitKeyPressed },
+	{ "insert-seven-bit",	HandleKeyPressed },
+	{ "secure",		HandleSecure },
+	{ "string",		HandleStringEvent },
+    };
+    /* *INDENT-ON* */
+
+    XtAppAddActions(app_con, input_actions, XtNumber(input_actions));
+    XtAugmentTranslations(w, XtParseTranslationTable(input_trans));
+}
+
 void
 Input (
 	register TKeyboard *keyboard,
@@ -335,9 +369,6 @@ Input (
 	int	dec_code;
 	short	modify_parm = 0;
 	int	keypad_mode = ((keyboard->flags & MODE_DECKPAM) != 0);
-#if OPT_WIDE_CHARS
-	long    ucs;
-#endif
 
 	/* Ignore characters typed at the keyboard */
 	if (keyboard->flags & MODE_KAM)
@@ -352,16 +383,19 @@ Input (
 	else
 #endif
 #if OPT_I18N_SUPPORT
-	if (screen->xic
-#if OPT_WIDE_CHARS
-	 && !screen->utf8_mode
-#endif
-	 ) {
+        if (screen->xic) {
 	    Status status_return;
-	    nbytes = XmbLookupString (screen->xic, event,
-				      strbuf, sizeof(strbuf),
-				      &keysym, &status_return);
-	}
+#if OPT_WIDE_CHARS
+            if(screen->utf8_mode)
+                nbytes = Xutf8LookupString (screen->xic, event,
+                                            strbuf, sizeof(strbuf),
+                                            &keysym, &status_return);
+            else
+#endif
+                nbytes = XmbLookupString (screen->xic, event,
+                                          strbuf, sizeof(strbuf),
+                                          &keysym, &status_return);
+        }
 	else
 #endif
 	{
@@ -370,40 +404,13 @@ Input (
 				    &keysym, &compose_status);
 	}
 
-#if OPT_WIDE_CHARS
-	/*
-	 * FIXME:  As long as Xlib does not provide proper UTF-8 conversion via
-	 * XLookupString(), we have to generate them here.  Once Xlib is fully
-	 * UTF-8 capable, this code here should be removed again.
-	 */
-	if (screen->utf8_mode) {
-		ucs = -1;
-		if (nbytes == 1 && strbuf[0]) {
-		/* Take ISO 8859-1 character delivered by XLookupString() */
-			ucs = (unsigned char) strbuf[0];
-		} else if ((!nbytes || !strbuf[0]) &&
-			   ((keysym >= 0x100 && keysym <= 0xf000) ||
-			    (keysym & 0xff000000U) == 0x01000000))
-			ucs = keysym2ucs(keysym);
-		else
-			ucs = -2;
-		if (nbytes == 1 && !strbuf[0]) {
-			nbytes = 0;
-		}
-		if (ucs == -1)
-			nbytes = 0;
-		if (ucs >= 0)
-			nbytes = convertFromUTF8(ucs, (Char *)strbuf);
-	}
-#endif
-
 	string = (Char *)&strbuf[0];
 	reply.a_pintro = 0;
 	reply.a_final = 0;
 	reply.a_nparam = 0;
 	reply.a_inters = 0;
 
-	TRACE(("Input keysym %#04lx, %d:'%.*s'%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	TRACE(("Input keysym "KEYSYM_FMT", %d:'%.*s'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 		keysym,
 		nbytes,
 		nbytes > 0 ? nbytes : 1,
@@ -417,9 +424,12 @@ Input (
 		ModifierName(event->state & Mod4Mask),
 		ModifierName(event->state & Mod5Mask),
 		eightbit ? " 8bit" : " 7bit",
-		IsFunctionKey(keysym)     ? " FKey"     : "",
-		IsMiscFunctionKey(keysym) ? " MiscFKey" : "",
-		IsEditFunctionKey(keysym) ? " EditFkey" : ""));
+		IsKeypadKey(keysym)       ? " KeypadKey" : "",
+		IsCursorKey(keysym)       ? " CursorKey" : "",
+		IsPFKey(keysym)           ? " PFKey"     : "",
+		IsFunctionKey(keysym)     ? " FKey"      : "",
+		IsMiscFunctionKey(keysym) ? " MiscFKey"  : "",
+		IsEditFunctionKey(keysym) ? " EditFkey"  : ""));
 
 #if OPT_SUNPC_KBD
 	/*
@@ -427,12 +437,17 @@ Input (
 	 * Other (Sun, PC) keyboards commonly have keypad(+), but no keypad(,)
 	 * - it's a pain for users to work around.
 	 */
-	if (term->keyboard.type != keyboardIsSun
-	 && (event->state & ShiftMask) == 0
-	 && term->keyboard.type == keyboardIsVT220
-	 && keysym == XK_KP_Add) {
-		keysym = XK_KP_Separator;
-		TRACE(("...Input keypad(+), change keysym to %#04lx\n", keysym));
+	if (term->keyboard.type == keyboardIsVT220
+	 && (event->state & ShiftMask) == 0) {
+		if (keysym == XK_KP_Add) {
+			keysym = XK_KP_Separator;
+			TRACE(("...Input keypad(+), change keysym to "KEYSYM_FMT"\n", keysym));
+		}
+		if (event->state & ControlMask
+		 && keysym == XK_KP_Separator) {
+			keysym = XK_KP_Subtract;
+			TRACE(("...Input control/keypad(,), change keysym to "KEYSYM_FMT"\n", keysym));
+		}
 	}
 #endif
 
@@ -452,8 +467,7 @@ Input (
 	if (nbytes == 1
 	 && IsKeypadKey(keysym)
 	 && term->misc.real_NumLock
-	 && ((term->misc.num_lock == 0)
-	  || (term->misc.num_lock & event->state) != 0)) {
+	 && (term->misc.num_lock & event->state) != 0) {
 		keypad_mode = 0;
 		TRACE(("...Input num_lock, force keypad_mode off\n"));
 	}
@@ -530,9 +544,9 @@ Input (
 	{
 #ifdef XK_KP_Home
 	if (keysym >= XK_KP_Home && keysym <= XK_KP_Begin) {
-		TRACE(("...Input keypad before was %#04lx\n", keysym));
+		TRACE(("...Input keypad before was "KEYSYM_FMT"\n", keysym));
 		keysym += XK_Home - XK_KP_Home;
-		TRACE(("...Input keypad changed to %#04lx\n", keysym));
+		TRACE(("...Input keypad changed to "KEYSYM_FMT"\n", keysym));
 	}
 #endif
 	}
@@ -1143,8 +1157,10 @@ xtermcapKeycode(char *params, unsigned *state)
 		DATA(	"FN",	"kf33",		XK_F33,		0),
 		DATA(	"FO",	"kf34",		XK_F34,		0),
 		DATA(	"FP",	"kf35",		XK_F35,		0),
+#ifdef SunXK_F36
 		DATA(	"FQ",	"kf36",		SunXK_F36,	0),
 		DATA(	"FR",	"kf37",		SunXK_F37,	0),
+#endif
 		DATA(	"K1",	"ka1",		XK_KP_Home,	0),
 		DATA(	"K4",	"kc1",		XK_KP_End,	0),
 		DATA(	"k1",	"kf1",		XK_F1,		0),
