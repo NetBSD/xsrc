@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_accel.c,v 1.22 2004/01/03 02:11:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_accel.c,v 1.25 2005/02/17 01:54:49 dawes Exp $ */
 
 /*
  * Reformatted with GNU indent (2.2.8), using the following options:
@@ -186,7 +186,7 @@ int
 I810WaitLpRing(ScrnInfoPtr pScrn, int n, int timeout_millis)
 {
    I810Ptr pI810 = I810PTR(pScrn);
-   I810RingBuffer *ring = &(pI810->LpRing);
+   I810RingBuffer *ring = pI810->LpRing;
    int iters = 0;
    int start = 0;
    int now = 0;
@@ -275,9 +275,9 @@ I810Sync(ScrnInfoPtr pScrn)
       ADVANCE_LP_RING();
    }
 
-   I810WaitLpRing(pScrn, pI810->LpRing.mem.Size - 8, 0);
+   I810WaitLpRing(pScrn, pI810->LpRing->mem.Size - 8, 0);
 
-   pI810->LpRing.space = pI810->LpRing.mem.Size - 8;
+   pI810->LpRing->space = pI810->LpRing->mem.Size - 8;
    pI810->nextColorExpandBuf = 0;
 }
 
@@ -588,11 +588,11 @@ I810RefreshRing(ScrnInfoPtr pScrn)
 {
    I810Ptr pI810 = I810PTR(pScrn);
 
-   pI810->LpRing.head = INREG(LP_RING + RING_HEAD) & HEAD_ADDR;
-   pI810->LpRing.tail = INREG(LP_RING + RING_TAIL);
-   pI810->LpRing.space = pI810->LpRing.head - (pI810->LpRing.tail + 8);
-   if (pI810->LpRing.space < 0)
-      pI810->LpRing.space += pI810->LpRing.mem.Size;
+   pI810->LpRing->head = INREG(LP_RING + RING_HEAD) & HEAD_ADDR;
+   pI810->LpRing->tail = INREG(LP_RING + RING_TAIL);
+   pI810->LpRing->space = pI810->LpRing->head - (pI810->LpRing->tail + 8);
+   if (pI810->LpRing->space < 0)
+      pI810->LpRing->space += pI810->LpRing->mem.Size;
 
    pI810->AccelInfoRec->NeedToSync = TRUE;
 }

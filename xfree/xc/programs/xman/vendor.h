@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/vendor.h,v 1.13 2003/07/29 21:16:56 dawes Exp $ */
+/* $XFree86: xc/programs/xman/vendor.h,v 1.14 2004/03/12 02:17:55 dickey Exp $ */
 
 /* Vendor-specific definitions */
 
@@ -166,7 +166,7 @@ from the X Consortium.
 #  define FORMAT "| eqn | tbl | nroff -mandoc"
 # elif defined(BSD) && (BSD >= 199103)
 #  define FORMAT "| eqn | tbl | nroff -man"
-# elif defined(linux)
+# elif defined(linux) || defined(__CYGWIN__)
 #  define FORMAT "| eqn | tbl | GROFF_NO_SGR= groff -Tlatin1 -mandoc"
 # else
 #  define FORMAT "| neqn | nroff -man"      /* The format command. */
@@ -186,7 +186,7 @@ from the X Consortium.
 # define REFER		"refer"
 # if defined(CSRG_BASED)
 #  define FORMAT	"nroff -mandoc"
-# elif defined(linux)
+# elif defined(linux) || defined(__CYGWIN__)
 #  define FORMAT	"GROFF_NO_SGR= groff -Tlatin1 -mandoc"
 # elif defined(__DARWIN__)
 #  define FORMAT	"nroff -man"

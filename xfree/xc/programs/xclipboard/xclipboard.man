@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xclipboard/xclipboard.man,v 1.9 2002/10/12 16:06:46 herrb Exp $
+.\" $XFree86: xc/programs/xclipboard/xclipboard.man,v 1.11 2005/02/11 03:03:17 dawes Exp $
 .\"
-.TH XCLIPBOARD 1 __xorgversion__
+.TH XCLIPBOARD 1 __vendorversion__
 .SH NAME
 xclipboard \- X clipboard client
 .SH SYNOPSIS
@@ -122,9 +122,9 @@ file to use the clipboard are:
 .nf
 .TA .5i
 .ta .5i 3.0i
-*VT100.Translations: #override \\
-	<Btn3Up>:	select-end(CLIPBOARD) \\n\\
-	<Btn2Up>:	insert-selection(PRIMARY,CLIPBOARD) \\n\\
+*VT100.Translations: #override \\\&
+	<Btn3Up>:	select-end(CLIPBOARD) \\n\\\&
+	<Btn2Up>:	insert-selection(PRIMARY,CLIPBOARD) \\n\\\&
 	<Btn2Down>:	ignore ()
 
 .fi

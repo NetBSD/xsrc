@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_gx1_dga.c,v 1.2 2003/01/14 09:34:31 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_gx1_dga.c,v 1.5 2004/12/07 15:59:19 tsi Exp $ */
 /*
  * $Workfile: nsc_gx1_dga.c $
- * $Revision: 1.1.1.1 $
+ * $Revision: 1.1.1.1.8.1 $
  * $Author: tron $
  * 
  * File contents: DGA(Direct Acess Graphics mode) is feature of
@@ -149,16 +149,14 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "nsc.h"
 #include "dgaproc.h"
 
 /* forward declarations */
-static Bool GX1_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-				int *, int *, int *);
-static void GX1_CloseFramebuffer(ScrnInfoPtr pScrn);
+static Bool GX1_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				unsigned int *, unsigned int *, unsigned int *);
 static Bool GX1_SetMode(ScrnInfoPtr, DGAModePtr);
-static int GX1_GetViewport(ScrnInfoPtr);
+static int  GX1_GetViewport(ScrnInfoPtr);
 static void GX1_SetViewport(ScrnInfoPtr, int, int, int);
 static void GX1_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void GX1_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
@@ -171,7 +169,7 @@ Bool GX1DGAInit(ScreenPtr pScreen);
 
 static DGAFunctionRec GeodeDGAFuncs = {
    GX1_OpenFramebuffer,
-   GX1_CloseFramebuffer,
+   NULL,
    GX1_SetMode,
    GX1_SetViewport,
    GX1_GetViewport,
@@ -185,7 +183,7 @@ static DGAFunctionRec GeodeDGAFuncs = {
  * GX1DGAInit.
  *
  * Description	:This function is used to intiallize the DGA modes and sets the
-			 	 viewport based on the screen mode.
+ *		 viewport based on the screen mode.
  * Parameters.
  *	pScreeen	:Pointer to screen info structure.
  *
@@ -293,7 +291,7 @@ GX1DGAInit(ScreenPtr pScreen)
  * GX1_SetMode.
  *
  * Description	:This function is sets into the DGA mode.
- *.
+ *
  * Parameters.
  *	pScreeen	:Pointer to screen info structure.
  *	pMode		:Points to the DGAmode ptr data
@@ -348,7 +346,7 @@ GX1_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
  * GX1_GetViewPort.
  *
  * Description	:This function is Gets the viewport window memory.
- *.
+ *
  * Parameters.
  *	pScrn		:Pointer to screen info structure.
  *	
@@ -374,8 +372,8 @@ GX1_GetViewport(ScrnInfoPtr pScrn)
  *
  * Parameters.
  *	pScrn		:Pointer to screen info structure.
-		x		:x-cordinate of viewport window
- *		y		:y-codinate of the viewport window.
+ *	x		:x-cordinate of viewport window
+ *	y		:y-codinate of the viewport window.
  *	flags		:indicates the viewport to be flipped or not.
  * Returns		:returns the viewport status  as zero.
  *
@@ -396,12 +394,12 @@ GX1_SetViewport(ScrnInfoPtr pScrn, int x, int y, int flags)
  * GX1_FillRect.
  *
  * Description	:This function is Gets the viewport window memory.
- *.
+ *
  * Parameters.
  *	pScrn		:Pointer to screen info structure.
- *		x		:x-cordinate of viewport window
- *		y		:y-codinate of the viewport window.
- *		w		:width of the rectangle
+ *	x		:x-cordinate of viewport window
+ *	y		:y-codinate of the viewport window.
+ *	w		:width of the rectangle
  *      h		:height of the rectangle.
  *	color		:color to be filled in rectangle.
  *
@@ -428,15 +426,15 @@ GX1_FillRect(ScrnInfoPtr pScrn, int x, int y,
  * GX1_BlitRect.
  *
  * Description	:This function implementing Blit and it moves a
- *			 	 Rectangular block of data from one location to other
- *			 	 Location.
+ *		 Rectangular block of data from one location to other
+ *		 Location.
  *
  * Parameters.
  *	pScrn		:Pointer to screen info structure.
  *	srcx		:x-cordinate of the src rectangle
  *	srcy		:y-codinate of src rectangle.
- *	  w			:width of the rectangle
- *    h			:height of the rectangle.
+ *	w		:width of the rectangle
+ *	h		:height of the rectangle.
  *	dstx		:x-cordinate of the dst rectangle.
  *	dsty		:y -coordinates of the dst rectangle.
  * Returns		:none.
@@ -473,8 +471,8 @@ GX1_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w,
  *	pScrn		:Pointer to screen info structure.
  *	srcx		:x-cordinate of the src rectangle
  *	srcy		:y-codinate of src rectangle.
- *		w		:width of the rectangle
- *    	h		:height of the rectangle.
+ *	w		:width of the rectangle
+ *	h		:height of the rectangle.
  *	dstx		:x-cordinate of the dst rectangle.
  *	dsty		:y -coordinates of the dst rectangle.
  * Returns		:none.
@@ -485,22 +483,18 @@ GX1_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w,
 */
 static Bool
 GX1_OpenFramebuffer(ScrnInfoPtr pScrn,
-		    char **name, unsigned char **mem,
-		    int *size, int *offset, int *flags)
+		    char **name, unsigned int *mem,
+		    unsigned int *size, unsigned int *offset,
+		    unsigned int *flags)
 {
    GeodePtr pGeode = GEODEPTR(pScrn);
 
    *name = NULL;			/* no special device */
-   *mem = (unsigned char *)pGeode->FBLinearAddr;
+   *mem = pGeode->FBLinearAddr;
    *size = pGeode->FBSize;
    *offset = 0;
-   *flags = DGA_NEED_ROOT;
+   *flags = 0;
    return TRUE;
-}
-
-static void
-GX1_CloseFramebuffer(ScrnInfoPtr pScrn)
-{
 }
 
 /* end of file */

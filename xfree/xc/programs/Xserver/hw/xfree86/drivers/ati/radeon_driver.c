@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.119 2004/03/03 18:11:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.127 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -139,10 +139,10 @@ typedef enum {
     OPTION_VIDEO_KEY,
     OPTION_DISP_PRIORITY,
     OPTION_PANEL_SIZE,
-    OPTION_MIN_DOTCLOCK,
 #ifdef __powerpc__
-    OPTION_IBOOKHACKS
+    OPTION_IBOOKHACKS,
 #endif
+    OPTION_MIN_DOTCLOCK
 } RADEONOpts;
 
 const OptionInfoRec RADEONOptions[] = {
@@ -233,7 +233,9 @@ static const char *ddcSymbols[] = {
 
 static const char *fbSymbols[] = {
     "fbScreenInit",
+    "fbPictureGetSubpixelOrder",
     "fbPictureInit",
+    "fbPictureSetSubpixelOrder",
     NULL
 };
 
@@ -315,6 +317,7 @@ static const char *driSymbols[] = {
     "DRIScreenInit",
     "DRIUnlock",
     "GlxSetVisualConfigs",
+    "DRICreatePCIBusID",
     NULL
 };
 
@@ -4405,8 +4408,7 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Must be after RGB order fixed */
     fbPictureInit (pScreen, 0, 0);
 
-#ifdef RENDER
-    if (PictureGetSubpixelOrder (pScreen) == SubPixelUnknown)
+    if (fbPictureGetSubpixelOrder (pScreen) == SubPixelUnknown)
     {
 	int subPixelOrder;
 
@@ -4416,9 +4418,9 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	case MT_DFP:	subPixelOrder = SubPixelHorizontalRGB; break;
 	default:	subPixelOrder = SubPixelNone; break;
 	}
-	PictureSetSubpixelOrder (pScreen, subPixelOrder);
+	fbPictureSetSubpixelOrder (pScreen, subPixelOrder);
     }
-#endif
+
 				/* Memory manager setup */
 #ifdef XF86DRI
     if (info->directRenderingEnabled) {
@@ -5047,6 +5049,14 @@ static void RADEONRestorePLLRegisters(ScrnInfoPtr pScrn,
 #endif
 
     if (info->IsMobility) {
+    /* 
+     * Never do it on Apple iBook to avoid a blank screen.
+     */
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
+        return;
+#endif
+
         /* A temporal workaround for the occational blanking on certain laptop panels.
            This appears to related to the PLL divider registers (fail to lock?).
 	   It occurs even when all dividers are the same with their old settings.
@@ -5202,9 +5212,28 @@ static void RADEONRestorePLL2Registers(ScrnInfoPtr pScrn,
 	    ~(RADEON_PIX2CLK_SRC_SEL_MASK));
 }
 
-#if 0
 /* Write palette data */
 static void RADEONRestorePalette(ScrnInfoPtr pScrn, RADEONSavePtr restore)
+{
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
+    unsigned char *RADEONMMIO = info->MMIO;
+    int            i;
+
+    if (!restore->palette_valid) return;
+
+    PAL_SELECT(0);
+    OUTPAL_START(0);
+    for (i = 0; i < 256; i++) {
+	RADEONWaitForFifo(pScrn, 32); /* delay */
+	OUTPAL_NEXT_CARD32(restore->palette[i]);
+    }
+}
+
+#if 1
+#define RADEONRestorePalette2(pScrn, restore)	/* Nullify */
+#else
+/* This causes hangs on some Radeon's.  Why? */
+static void RADEONRestorePalette2(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 {
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
@@ -5218,13 +5247,6 @@ static void RADEONRestorePalette(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	RADEONWaitForFifo(pScrn, 32); /* delay */
 	OUTPAL_NEXT_CARD32(restore->palette2[i]);
     }
-
-    PAL_SELECT(0);
-    OUTPAL_START(0);
-    for (i = 0; i < 256; i++) {
-	RADEONWaitForFifo(pScrn, 32); /* delay */
-	OUTPAL_NEXT_CARD32(restore->palette[i]);
-    }
 }
 #endif
 
@@ -5237,6 +5259,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 
     /* For Non-dual head card, we don't have private field in the Entity */
     if (!info->HasCRTC2) {
+	RADEONRestorePalette(pScrn, restore);
 	RADEONRestoreCommonRegisters(pScrn, restore);
 	RADEONRestoreCrtcRegisters(pScrn, restore);
 	RADEONRestoreFPRegisters(pScrn, restore);
@@ -5256,6 +5279,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
      * we may get a blank screen.
      */
     if (info->IsSecondary) {
+	RADEONRestorePalette2(pScrn, restore);
 	if (!pRADEONEnt->RestorePrimary  && !info->IsSwitching)
 	    RADEONRestoreCommonRegisters(pScrn, restore);
 	RADEONRestoreCrtc2Registers(pScrn, restore);
@@ -5271,6 +5295,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCrtcRegisters(pScrn, &restore0);
 	    RADEONRestoreFPRegisters(pScrn, &restore0);
 	    RADEONRestorePLLRegisters(pScrn, &restore0);
+	    RADEONRestorePalette(pScrn, restore);
 	    pRADEONEnt->IsSecondaryRestored = FALSE;
 	}
     } else {
@@ -5278,6 +5303,7 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCommonRegisters(pScrn, restore);
 
 	if (info->Clone) {
+	    RADEONRestorePalette2(pScrn, restore);
 	    RADEONRestoreCrtc2Registers(pScrn, restore);
 	    RADEONRestorePLL2Registers(pScrn, restore);
 	}
@@ -5289,15 +5315,12 @@ static void RADEONRestoreMode(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 	    RADEONRestoreCrtcRegisters(pScrn, restore);
 	    RADEONRestoreFPRegisters(pScrn, restore);
 	    RADEONRestorePLLRegisters(pScrn, restore);
+	    RADEONRestorePalette(pScrn, restore);
 	} else {
 	    memcpy(&restore0, restore, sizeof(restore0));
 	    pRADEONEnt->RestorePrimary = TRUE;
 	}
     }
-
-#if 0
-    RADEONRestorePalette(pScrn, &info->SavedReg);
-#endif
 }
 
 /* Read common registers */
@@ -5487,7 +5510,7 @@ static void RADEONSaveMode(ScrnInfoPtr pScrn, RADEONSavePtr save)
 	    RADEONSaveCrtc2Registers(pScrn, save);
 	    RADEONSavePLL2Registers(pScrn, save);
 	}
-     /* RADEONSavePalette(pScrn, save); */
+	RADEONSavePalette(pScrn, save);
     }
 
     RADEONTRACE(("RADEONSaveMode returns %p\n", save));
@@ -6599,7 +6622,6 @@ static void RADEONInitPLL2Registers(RADEONSavePtr save, RADEONPLLPtr pll,
     save->htotal_cntl2     = 0;
 }
 
-#if 0
 /* Define initial palette for requested video mode.  This doesn't do
  * anything for XFree86 4.0.
  */
@@ -6607,7 +6629,6 @@ static void RADEONInitPalette(RADEONSavePtr save)
 {
     save->palette_valid = FALSE;
 }
-#endif
 
 /* Define registers for a requested video mode */
 static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
@@ -6695,8 +6716,7 @@ static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
 	    dot_clock = info->CurCloneMode->Clock / 1000.0;
 	    RADEONInitPLL2Registers(save, &info->pll, dot_clock);
 	}
-	/* Not used for now: */
-     /* if (!info->PaletteSavedOnVT) RADEONInitPalette(save); */
+	if (!info->PaletteSavedOnVT) RADEONInitPalette(save);
     }
 
     RADEONInitFPRegisters(pScrn, &info->SavedReg, save, mode, info);

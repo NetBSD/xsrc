@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/XvMC/Imakefile,v 1.6 2004/01/04 18:46:22 dawes Exp $
+XCOMM $XFree86: xc/lib/XvMC/Imakefile,v 1.7 2005/02/05 02:01:39 dawes Exp $
 
 #define DoNormalLib NormalLibXvMC
 #define DoSharedLib SharedLibXvMC
@@ -27,7 +27,7 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 
 #define PassCDebugFlags
 
-#if defined(LinuxArchitecture) && BuildXF86DRI
+#if defined(LinuxArchitecture) && BuildXF86DRI && defined(i386Architecture)
 #define IHaveSubdirs
 SUBDIRS = hw/i810
 

@@ -192,6 +192,14 @@ static char** GetDeviceList (argc, argv)
     return deviceList;
 }
 
+void OsVendorPreInit(
+#if NeedFunctionPrototypes
+    void
+#endif
+)
+{
+}
+
 void OsVendorInit(
 #if NeedFunctionPrototypes
     void

@@ -327,7 +327,6 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define DebugLibXmu		DebugLibDefault	/* debugged Xmu library */
 #define DebugLibXp              DebugLibDefault	/* debugged Xp library */
 #define DebugLibXt		DebugLibDefault	/* debugged toolkit library */
-#define DebugLibXa		DebugLibDefault	/* debugged audio library */
 #define DebugLibXaw		DebugLibDefault	/* debugged widget library */
 #define DebugLibXi		DebugLibDefault	/* debugged Xi library */
 #define DebugLibXtst		DebugLibDefault	/* debugged Xtst library */

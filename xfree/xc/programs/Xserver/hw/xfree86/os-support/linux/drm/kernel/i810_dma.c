@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/i810_dma.c,v 1.29 2005/03/06 03:55:47 dawes Exp $ */
 /* i810_dma.c -- DMA support for the i810 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
  *
@@ -145,10 +146,17 @@ int i810_mmap_buffers(struct file *filp, struct vm_area_struct *vma)
 	buf_priv->currently_mapped = I810_BUF_MAPPED;
 	unlock_kernel();
 
+#ifdef NO_REMAP_PAGE_RANGE
+	if (remap_pfn_range(vma, vma->vm_start,
+			    VM_OFFSET(vma) >> PAGE_SHIFT,
+			    vma->vm_end - vma->vm_start,
+			    vma->vm_page_prot)) return -EAGAIN;
+#else
 	if (remap_page_range(DRM_RPR_ARG(vma) vma->vm_start,
 			     VM_OFFSET(vma),
 			     vma->vm_end - vma->vm_start,
 			     vma->vm_page_prot)) return -EAGAIN;
+#endif
 	return 0;
 }
 
@@ -168,7 +176,7 @@ static int i810_map_buffer(drm_buf_t *buf, struct file *filp)
 	old_fops = filp->f_op;
 	filp->f_op = &i810_buffer_fops;
 	dev_priv->mmap_buffer = buf;
-	buf_priv->virtual = (void *)do_mmap(filp, 0, buf->total,
+	buf_priv->virtual = (void __user *)do_mmap(filp, 0, buf->total,
 					    PROT_READ|PROT_WRITE,
 					    MAP_SHARED,
 					    buf->bus_address);
@@ -453,7 +461,7 @@ static int i810_dma_initialize(drm_device_t *dev,
 
 /* i810 DRM version 1.1 used a smaller init structure with different
  * ordering of values than is currently used (drm >= 1.2). There is
- * no defined way to detect the XFree version to correct this problem,
+ * no defined way to detect the XFree86 version to correct this problem,
  * however by checking using this procedure we can detect the correct
  * thing to do.
  *
@@ -466,7 +474,7 @@ int i810_dma_init_compat(drm_i810_init_t *init, unsigned long arg)
 {
 
 	/* Get v1.1 init data */
-	if (copy_from_user(init, (drm_i810_pre12_init_t *)arg,
+	if (copy_from_user(init, (drm_i810_pre12_init_t __user *)arg,
 			  sizeof(drm_i810_pre12_init_t))) {
 		return -EFAULT;
 	}
@@ -475,7 +483,7 @@ int i810_dma_init_compat(drm_i810_init_t *init, unsigned long arg)
 
 		/* This is a v1.2 client, just get the v1.2 init data */
 		DRM_INFO("Using POST v1.2 init.\n");
-		if (copy_from_user(init, (drm_i810_init_t *)arg,
+		if (copy_from_user(init, (drm_i810_init_t __user *)arg,
 				   sizeof(drm_i810_init_t))) {
 			return -EFAULT;
 		}
@@ -504,13 +512,13 @@ int i810_dma_init(struct inode *inode, struct file *filp,
 	int retcode = 0;
 
 	/* Get only the init func */
-	if (copy_from_user(&init, (void *)arg, sizeof(drm_i810_init_func_t))) 
+	if (copy_from_user(&init, (void __user *)arg, sizeof(drm_i810_init_func_t))) 
 		return -EFAULT;
 
 	switch(init.func) {
 		case I810_INIT_DMA:
 			/* This case is for backward compatibility. It
-			 * handles XFree 4.1.0 and 4.2.0, and has to
+			 * handles XFree86 4.1.0 and 4.2.0, and has to
 			 * do some parameter checking as described below.
 			 * It will someday go away.
 			 */
@@ -528,7 +536,7 @@ int i810_dma_init(struct inode *inode, struct file *filp,
 		default:
 		case I810_INIT_DMA_1_4:
 			DRM_INFO("Using v1.4 init.\n");
-			if (copy_from_user(&init, (drm_i810_init_t *)arg,
+			if (copy_from_user(&init, (drm_i810_init_t __user *)arg,
 					  sizeof(drm_i810_init_t))) {
 				return -EFAULT;
 			}
@@ -851,11 +859,13 @@ static void i810_dma_dispatch_vertex(drm_device_t *dev,
 	if (buf_priv->currently_mapped == I810_BUF_MAPPED) {
 		unsigned int prim = (sarea_priv->vertex_prim & PR_MASK);
 
-		*(u32 *)buf_priv->virtual = (GFX_OP_PRIMITIVE | prim | 
-					     ((used/4)-2));
+		put_user((GFX_OP_PRIMITIVE | prim |
+					     ((used/4)-2)),
+		(u32 __user *)buf_priv->virtual);
 
 		if (used & 4) {
-			*(u32 *)((u32)buf_priv->virtual + used) = 0;
+			put_user(0,
+			(u32 __user *)((u32)buf_priv->virtual + used));
 			used += 4;
 		}
 
@@ -1061,7 +1071,7 @@ int i810_dma_vertex(struct inode *inode, struct file *filp,
 					dev_priv->sarea_priv;
 	drm_i810_vertex_t vertex;
 
-	if (copy_from_user(&vertex, (drm_i810_vertex_t *)arg, sizeof(vertex)))
+	if (copy_from_user(&vertex, (drm_i810_vertex_t __user *)arg, sizeof(vertex)))
 		return -EFAULT;
 
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1096,7 +1106,7 @@ int i810_clear_bufs(struct inode *inode, struct file *filp,
 	drm_device_t *dev = priv->dev;
 	drm_i810_clear_t clear;
 
-	if (copy_from_user(&clear, (drm_i810_clear_t *)arg, sizeof(clear)))
+	if (copy_from_user(&clear, (drm_i810_clear_t __user *)arg, sizeof(clear)))
 		return -EFAULT;
 
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1158,7 +1168,7 @@ int i810_getbuf(struct inode *inode, struct file *filp, unsigned int cmd,
 	drm_i810_sarea_t *sarea_priv = (drm_i810_sarea_t *)
 					dev_priv->sarea_priv;
 
-	if (copy_from_user(&d, (drm_i810_dma_t *)arg, sizeof(d)))
+	if (copy_from_user(&d, (drm_i810_dma_t __user *)arg, sizeof(d)))
 		return -EFAULT;
 
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)) {
@@ -1173,7 +1183,7 @@ int i810_getbuf(struct inode *inode, struct file *filp, unsigned int cmd,
 	DRM_DEBUG("i810_dma: %d returning %d, granted = %d\n",
 		  current->pid, retcode, d.granted);
 
-	if (copy_to_user((drm_dma_t *)arg, &d, sizeof(d)))
+	if (copy_to_user((drm_dma_t __user *)arg, &d, sizeof(d)))
 		return -EFAULT;
 	sarea_priv->last_dispatch = (int) hw_status[5];
 
@@ -1271,7 +1281,7 @@ int i810_dma_mc(struct inode *inode, struct file *filp,
 		dev_priv->sarea_priv;
 	drm_i810_mc_t mc;
 
-	if (copy_from_user(&mc, (drm_i810_mc_t *)arg, sizeof(mc)))
+	if (copy_from_user(&mc, (drm_i810_mc_t __user *)arg, sizeof(mc)))
 		return -EFAULT;
 
 
@@ -1279,6 +1289,9 @@ int i810_dma_mc(struct inode *inode, struct file *filp,
 		DRM_ERROR("i810_dma_mc called without lock held\n");
 		return -EINVAL;
 	}
+
+	if (mc.idx >= dma->buf_count || mc.idx < 0)
+		return -EINVAL;
 
 	i810_dma_dispatch_mc(dev, dma->buflist[mc.idx], mc.used,
 		mc.last_render );
@@ -1311,7 +1324,7 @@ int i810_ov0_info(struct inode *inode, struct file *filp,
 
 	data.offset = dev_priv->overlay_offset;
 	data.physical = dev_priv->overlay_physical;
-	if (copy_to_user((drm_i810_overlay_t *)arg,&data,sizeof(data)))
+	if (copy_to_user((drm_i810_overlay_t __user *)arg,&data,sizeof(data)))
 		return -EFAULT;
 	return 0;
 }

@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_gx2_accel.c,v 1.5 2003/11/03 05:11:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_gx2_accel.c,v 1.6 2004/03/29 16:25:17 tsi Exp $ */
 /*
  * $Workfile: nsc_gx2_accel.c $
- * $Revision: 1.1.1.2 $
+ * $Revision: 1.1.1.2.6.1 $
  * $Author: tron $
  *
  * File Contents: This file is consists of main Xfree
@@ -145,7 +145,6 @@
 #include "vgaHW.h"
 #include "xf86.h"
 #include "xf86_ansic.h"
-#include "xaalocal.h"
 #include "xf86fbman.h"
 #include "miline.h"
 #include "xf86_libc.h"

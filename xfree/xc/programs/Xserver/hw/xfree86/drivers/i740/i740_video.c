@@ -44,7 +44,7 @@
  *   12 September 2002 - Better software scaling with some averaging, giving a
  *     nicer picture.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_video.c,v 1.6 2003/11/10 18:22:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_video.c,v 1.7 2004/03/29 16:25:17 tsi Exp $ */
 
 
 /*
@@ -64,7 +64,6 @@
 #include "xf86xv.h"
 #include "Xv.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "fourcc.h"
 

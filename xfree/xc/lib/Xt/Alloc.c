@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Alloc.c,v 1.10 2003/12/30 01:45:07 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Alloc.c,v 1.11 2004/05/05 00:07:02 dickey Exp $ */
 
 /*
  * X Toolkit Memory Allocation Routines
@@ -78,9 +78,9 @@ in this Software without prior written authorization from The Open Group.
 #define Xfree(ptr) free(ptr)
 
 #ifdef _XNEEDBCOPYFUNC
-void _XtBcopy(src, dst, length)
-    char *src, *dst;
-    int length;
+void _XtBcopy(
+    char *src, char *dst,
+    int length)
 {
     if (src < dst) {
 	dst += length;
@@ -94,8 +94,8 @@ void _XtBcopy(src, dst, length)
 }
 #endif
 
-void _XtAllocError(type)
-    String type;
+void _XtAllocError(
+    String type)
 {
     Cardinal num_params = 1;
     if (type == NULL) type = "local memory allocation";
@@ -103,8 +103,8 @@ void _XtAllocError(type)
 	       "Cannot perform %s", &type, &num_params);
 }
 
-void _XtHeapInit(heap)
-    Heap*	heap;
+void _XtHeapInit(
+    Heap*	heap)
 {
     heap->start = NULL;
     heap->bytes_remaining = 0;
@@ -112,8 +112,8 @@ void _XtHeapInit(heap)
 
 #ifndef XTTRACEMEMORY
 
-char *XtMalloc(size)
-    unsigned size;
+char *XtMalloc(
+    unsigned size)
 {
     char *ptr;
 
@@ -127,9 +127,9 @@ char *XtMalloc(size)
     return(ptr);
 }
 
-char *XtRealloc(ptr, size)
-    char     *ptr;
-    unsigned size;
+char *XtRealloc(
+    char     *ptr,
+    unsigned size)
 {
    if (ptr == NULL) {
 #ifdef MALLOC_0_RETURNS_NULL
@@ -146,8 +146,8 @@ char *XtRealloc(ptr, size)
    return(ptr);
 }
 
-char *XtCalloc(num, size)
-    unsigned num, size;
+char *XtCalloc(
+    unsigned num, unsigned size)
 {
     char *ptr;
 
@@ -161,14 +161,14 @@ char *XtCalloc(num, size)
     return(ptr);
 }
 
-void XtFree(ptr)
-    char *ptr;
+void XtFree(
+    char *ptr)
 {
     if (ptr != NULL) Xfree(ptr);
 }
 
-char* __XtMalloc(size)
-    unsigned size;
+char* __XtMalloc(
+    unsigned size)
 {
 #ifdef MALLOC_0_RETURNS_NULL
     if (!size) size = 1;
@@ -176,8 +176,8 @@ char* __XtMalloc(size)
     return XtMalloc (size);
 }
 
-char* __XtCalloc(num, size)
-    unsigned num, size;
+char* __XtCalloc(
+    unsigned num, unsigned size)
 {
 #ifdef MALLOC_0_RETURNS_NULL
     if (!size) num = size = 1;
@@ -189,9 +189,9 @@ char* __XtCalloc(num, size)
 #define HEAP_SEGMENT_SIZE 1492
 #endif
 
-char* _XtHeapAlloc(heap, bytes)
-    Heap*	heap;
-    Cardinal	bytes;
+char* _XtHeapAlloc(
+    Heap*	heap,
+    Cardinal	bytes)
 {
     register char* heap_loc;
     if (heap == NULL) return XtMalloc(bytes);
@@ -230,8 +230,8 @@ char* _XtHeapAlloc(heap, bytes)
     return heap_loc;
 }
 
-void _XtHeapFree(heap)
-    Heap*	heap;
+void _XtHeapFree(
+    Heap*	heap)
 {
     char* segment = heap->start;
     while (segment != NULL) {
@@ -291,16 +291,16 @@ static unsigned long XtSeqBreakpoint = ~0;
     XtSeqId++
 
 /*ARGUSED*/
-static void _XtBreakpoint(mem)
-    StatsPtr mem;
+static void _XtBreakpoint(
+    StatsPtr mem)
 {
     mem->seq = XtSeqId; /* avoid being optimized out of existence */
 }
 
-char *_XtMalloc(size, file, line)
-    unsigned size;
-    char *file;
-    int line;
+char *_XtMalloc(
+    unsigned size,
+    char *file,
+    int line)
 {
     StatsPtr ptr;
     unsigned newsize;
@@ -316,17 +316,17 @@ char *_XtMalloc(size, file, line)
     return retval;
 }
 
-char *XtMalloc(size)
-    unsigned size;
+char *XtMalloc(
+    unsigned size)
 {
     return _XtMalloc(size, (char *)NULL, 0);
 }
 
-char *_XtRealloc(ptr, size, file, line)
-    char     *ptr;
-    unsigned size;
-    char *file;
-    int line;
+char *_XtRealloc(
+    char     *ptr,
+    unsigned size,
+    char *file,
+    int line)
 {
    char *newptr;
 
@@ -342,17 +342,17 @@ char *_XtRealloc(ptr, size, file, line)
    return(newptr);
 }
 
-char *XtRealloc(ptr, size)
-    char     *ptr;
-    unsigned size;
+char *XtRealloc(
+    char     *ptr,
+    unsigned size)
 {
     return _XtRealloc(ptr, size, (char *)NULL, 0);
 }
 
-char *_XtCalloc(num, size, file, line)
-    unsigned num, size;
-    char *file;
-    int line;
+char *_XtCalloc(
+    unsigned num, unsigned size,
+    char *file,
+    int line)
 {
     StatsPtr ptr;
     unsigned total, newsize;
@@ -369,14 +369,14 @@ char *_XtCalloc(num, size, file, line)
     return retval;
 }
 
-char *XtCalloc(num, size)
-    unsigned num, size;
+char *XtCalloc(
+    unsigned num, unsigned size)
 {
     return _XtCalloc(num, size, (char *)NULL, 0);
 }
 
-Boolean _XtIsValidPointer(ptr)
-    char *ptr;
+Boolean _XtIsValidPointer(
+    char *ptr)
 {
     register StatsPtr mem;
     register StatsPtr stp = ToStats(ptr);
@@ -394,8 +394,8 @@ Boolean _XtIsValidPointer(ptr)
 
 Boolean _XtValidateMemory = False;
 
-void _XtFree(ptr)
-    char *ptr;
+void _XtFree(
+    char *ptr)
 {
    register StatsPtr stp;
 
@@ -417,17 +417,16 @@ void _XtFree(ptr)
    UNLOCK_PROCESS;
 }
 
-void XtFree(ptr)
-    char *ptr;
+void XtFree(char *ptr)
 {
    _XtFree(ptr);
 }
 
-char *_XtHeapMalloc(heap, size, file, line)
-    Heap *heap;
-    Cardinal size;
-    char *file;
-    int line;
+char *_XtHeapMalloc(
+    Heap *heap,
+    Cardinal size,
+    char *file,
+    int line)
 {
     StatsPtr ptr;
     unsigned newsize;
@@ -444,8 +443,7 @@ char *_XtHeapMalloc(heap, size, file, line)
     return retval;
 }
 
-void _XtHeapFree(heap)
-    register XtPointer heap;
+void _XtHeapFree(register XtPointer heap)
 {
     register StatsPtr mem, next;
 
@@ -469,8 +467,7 @@ void _XtHeapFree(heap)
 
 #include <stdio.h>
 
-void _XtPrintMemory(filename)
-char * filename;
+void _XtPrintMemory(char * filename)
 {
     register StatsPtr mem;
     FILE *f;

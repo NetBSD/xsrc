@@ -45,12 +45,13 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.15 2003/11/17 22:20:48 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.17 2004/04/26 00:23:37 tsi Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "wire.h"
+#include "tables.h"
 #include "tags.h"
 #include "colormap.h"
 #include "init.h"
@@ -71,6 +72,7 @@ in this Software without prior written authorization from The Open Group.
 #include "util.h"
 #include "pm.h"
 #include "misc.h"
+#include "lbxutil.h"
 
 #include <X11/ICE/ICElib.h>
 #ifdef BIGREQS
@@ -87,15 +89,6 @@ in this Software without prior written authorization from The Open Group.
 #include <unistd.h>		/* gethostname() */
 #endif
 
-#ifdef LBX_STATS
-extern int  delta_out_total;
-extern int  delta_out_attempts;
-extern int  delta_out_hits;
-extern int  delta_in_total;
-extern int  delta_in_attempts;
-extern int  delta_in_hits;
-#endif
-
 /*
  * Local constants
  */
@@ -107,23 +100,27 @@ extern int  delta_in_hits;
 /*
  * Global vars
  */
+#ifdef LBX_DEBUG
 int lbxDebug = 0;
+#endif
 
 /*
  * Local functions
  */
-static void LbxOnlyListenToOneClient();
-static void LbxListenToAllClients();
+static void LbxOnlyListenToOneClient(
+    ClientPtr   client);
+static void LbxListenToAllClients(
+    XServerPtr server);
 
 /*
  * Any request that could be delta compressed comes through here
  */
 void
-WriteReqToServer(client, len, buf, checkLargeRequest)
-    ClientPtr   client;
-    int         len;
-    char       *buf;
-    Bool	checkLargeRequest;
+WriteReqToServer(
+    ClientPtr   client,
+    int         len,
+    char       *buf,
+    Bool	checkLargeRequest)
 {
     XServerPtr  server = client->server;
     xLbxDeltaReq *p = (xLbxDeltaReq *) server->tempdeltabuf;
@@ -285,7 +282,7 @@ _write_to_server(client, compressed, len, buf, checkLarge, startOfRequest)
 	s.lbxReqType = X_LbxSwitch;
 	s.length = 2;
 	s.client = client->index;
-	WriteToClient(server->serverClient, sizeof(s), &s);
+	WriteToClient(server->serverClient, sizeof(s), (char*)&s);
 	server->send = client;
     }
     DBG(DBG_IO, (stderr, "downstream %d len %d\n", client->index, len));
@@ -672,8 +669,8 @@ SendGetImage(client, drawable, x, y, width, height, planeMask, format)
 }
 
 static Bool
-SendInternAtoms (server)
-    XServerPtr server;
+SendInternAtoms (
+    XServerPtr server)
 {
     xLbxInternAtomsReq *req;
     int reqSize, i, num;
@@ -723,9 +720,9 @@ SendInternAtoms (server)
 
 /*ARGSUSED*/
 static void
-InternAtomsReply (server, rep)
-    XServerPtr  server;
-    xLbxInternAtomsReply *rep;
+InternAtomsReply (
+    XServerPtr  server,
+    xLbxInternAtomsReply *rep)
 {
     Atom *atoms = (Atom *) ((char *) rep + sz_xLbxInternAtomsReplyHdr);
     int i;
@@ -749,12 +746,12 @@ InternAtomsReply (server, rep)
 
 
 static unsigned long pendingServerReplySequence;
-static void (*serverReplyFunc) ();
+static void (*serverReplyFunc) (XServerPtr server, void *rep);
 
 static void
-ServerReply(server, rep)
-    XServerPtr  server;
-    xReply     *rep;
+ServerReply(
+    XServerPtr  server,
+    xReply     *rep)
 {
     if (serverReplyFunc &&
 	    rep->generic.sequenceNumber == pendingServerReplySequence) {
@@ -775,22 +772,20 @@ ServerReply(server, rep)
 }
 
 static void
-ExpectServerReply(server, func)
-    XServerPtr  server;
-    void        (*func) ();
+ExpectServerReply(
+    XServerPtr  server,
+    void        (*func)(XServerPtr server, void *rep) )
 {
     pendingServerReplySequence = server->serverClient->sequence;
     serverReplyFunc = func;
 }
 
-extern int  (*ServerVector[]) ();
-
 static unsigned long
-ServerRequestLength(req, sc, gotnow, partp)
-    xReq       *req;
-    ClientPtr   sc;
-    int         gotnow;
-    Bool       *partp;
+ServerRequestLength(
+    xReq       *req,
+    ClientPtr   sc,
+    int         gotnow,
+    Bool       *partp)
 {
     XServerPtr  server = servers[sc->lbxIndex];
     ClientPtr   client = server->recv;
@@ -841,8 +836,8 @@ ServerRequestLength(req, sc, gotnow, partp)
 }
 
 int
-ServerProcStandardEvent(sc)
-    ClientPtr   sc;
+ServerProcStandardEvent(
+    ClientPtr   sc)
 {
     xReply     *rep;
     XServerPtr  server = servers[sc->lbxIndex];
@@ -854,7 +849,7 @@ ServerProcStandardEvent(sc)
     rep = (xReply *) sc->requestBuffer;
 
     /* need to calculate length up from for Delta cache */
-    len = RequestLength(rep, sc, 8, &part);
+    len = RequestLength((xReq*)rep, sc, 8, &part);
 
 #ifdef LBX_STATS
     delta_in_total++;
@@ -1062,7 +1057,7 @@ ServerProcStandardEvent(sc)
 	}
 
     } else {
-	len = RequestLength(rep, sc, 8, &part);
+	len = RequestLength((xReq*)rep, sc, 8, &part);
 	DBG(DBG_IO, (stderr, "upstream %d len %d\n", client->index, len));
 	if (client->index == 0) {
 	    ServerReply(server, rep);
@@ -1119,8 +1114,8 @@ ServerProcStandardEvent(sc)
 }
 
 static void
-LbxIgnoreAllClients(server)
-    XServerPtr  server;
+LbxIgnoreAllClients(
+    XServerPtr  server)
 {
     if (!server->lbxIgnoringAll) {
 	if (GrabInProgress) {
@@ -1134,8 +1129,8 @@ LbxIgnoreAllClients(server)
 
 /* ARGSUSED */
 static void
-LbxAttendAllClients(server)
-    XServerPtr  server;
+LbxAttendAllClients(
+    XServerPtr  server)
 {
     if (server->lbxIgnoringAll) {
 	ListenToAllClients();
@@ -1149,8 +1144,8 @@ LbxAttendAllClients(server)
 
 /* ARGSUSED */
 static void
-LbxOnlyListenToOneClient(client)
-    ClientPtr   client;
+LbxOnlyListenToOneClient(
+    ClientPtr   client)
 {
     /*
      * For a multi-display proxy, there is no need to do anything -
@@ -1162,8 +1157,8 @@ LbxOnlyListenToOneClient(client)
 
 /* ARGSUSED */
 static void
-LbxListenToAllClients(server)
-    XServerPtr server;
+LbxListenToAllClients(
+    XServerPtr server)
 {
     /*
      * For a multi-display proxy, there is no need to do anything -
@@ -1175,12 +1170,14 @@ LbxListenToAllClients(server)
 
 /* ARGSUSED */
 static Bool
-ProxyWorkProc(dummy, index)
-    pointer     dummy;
-    int         index;
+ProxyWorkProc(
+    ClientPtr   ptr1, 
+    pointer     ptr2)
 {
     XServerPtr  server;
     xLbxAllowMotionReq req;
+
+    long         index = (long)ptr2;
 
     if ((server = servers[index]) == 0)
 	return TRUE;
@@ -1195,7 +1192,7 @@ ProxyWorkProc(dummy, index)
 	req.length = 2;
 	req.num = server->motion_allowed;
 	server->motion_allowed = 0;
-	WriteToClient(server->serverClient, sizeof(req), &req);
+	WriteToClient(server->serverClient, sizeof(req), (char*)&req);
     }
     /* Need to flush the output buffers before we flush compression buffer */
     if (NewOutputPending)
@@ -1316,9 +1313,9 @@ CloseServer(client)
 
 
 static void
-StartProxyReply(server, rep)
-    XServerPtr  server;
-    xLbxStartReply *rep;
+StartProxyReply(
+    XServerPtr  server,
+    xLbxStartReply *rep)
 {
     int         replylen;
 
@@ -1383,7 +1380,7 @@ StartProxyReply(server, rep)
     MakeClientGrabImpervious(server->serverClient);
 
     if (SendInternAtoms(server))
-	ExpectServerReply (server, InternAtomsReply);
+	ExpectServerReply (server, (void(*)(XServerPtr, void *))InternAtomsReply);
     else
     {
 	SendInitLBXPackets(server);
@@ -1397,11 +1394,11 @@ StartProxyReply(server, rep)
 }
 
 static void
-StartProxy(server)
-    XServerPtr  server;
+StartProxy(
+    XServerPtr  server)
 {
-    char        buf[1024];
-    int         reqlen;
+    unsigned char buf[1024];
+    int           reqlen;
     xLbxStartProxyReq *n = (xLbxStartProxyReq *) buf;
 
     LbxOptInit(server);
@@ -1415,17 +1412,17 @@ StartProxy(server)
      */
     WriteToClient(server->serverClient, n->length << 2, (char *) n);
     server->serverClient->sequence++;
-    ExpectServerReply(server, StartProxyReply);
+    ExpectServerReply(server, (void(*)(XServerPtr, void *))StartProxyReply);
     while (NewOutputPending)
 	FlushAllOutput();
 }
 
 static Bool
-InitServer (dpy_name, i, server, sequencep)
-    char*	dpy_name;
-    int		i;
-    XServerPtr	server;
-    int*	sequencep;
+InitServer (
+    char*	dpy_name,
+    int		i,
+    XServerPtr	server,
+    int*	sequencep)
 {
     server->index = i;
 
@@ -1473,7 +1470,7 @@ InitServer (dpy_name, i, server, sequencep)
      * When a client connects, its requestVector will be set to its
      * server's requestVector.
      */
-    server->requestVector = (int (**)()) xalloc (sizeof (ProcVector));
+    server->requestVector = (int (**)(ClientPtr client)) xalloc (sizeof (ProcVector));
     if (!server->requestVector) return FALSE;
     memcpy (server->requestVector, ProcVector, sizeof (ProcVector));
 

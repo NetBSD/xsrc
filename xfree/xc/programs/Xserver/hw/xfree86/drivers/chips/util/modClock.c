@@ -1,65 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.6 2001/11/16 21:13:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.7 2004/11/28 02:13:46 tsi Exp $ */
 
-#ifdef __NetBSD__
-#  include <sys/types.h>
-#  include <machine/pio.h>
-#  include <machine/sysarch.h>
-#else
-#  if defined(SVR4) && defined(i386)
-#    include <sys/types.h>
-#    ifdef NCR
-       /* broken NCR <sys/sysi86.h> */
-#      define __STDC
-#      include <sys/sysi86.h>
-#      undef __STDC
-#    else
-#      include <sys/sysi86.h>
-#    endif
-#    ifdef SVR4
-#      if !defined(sun)
-#        include <sys/seg.h>
-#      endif
-#    endif
-#    include <sys/v86.h>
-#    if defined(sun)
-#      include <sys/psw.h>
-#    endif
-#  endif
-#  include "AsmMacros.h"
-#endif /* NetBSD */
-
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef Lynx
-#include <fnmatch.h>
-#endif
-
-#ifdef __NetBSD__
-#  define SET_IOPL() i386_iopl(3)
-#  define RESET_IOPL() i386_iopl(0)
-#else
-#  if defined(SVR4) && defined(i386)
-#    ifndef SI86IOPL
-#      define SET_IOPL() sysi86(SI86V86,V86SC_IOPL,PS_IOPL)
-#      define RESET_IOPL() sysi86(SI86V86,V86SC_IOPL,0)
-#    else
-#      define SET_IOPL() sysi86(SI86IOPL,3)
-#      define RESET_IOPL() sysi86(SI86IOPL,0)
-#    endif
-#  else
-#    ifdef linux
-#      define SET_IOPL() iopl(3)
-#      define RESET_IOPL() iopl(0)
-#    else
-#      define SET_IOPL() (void)0
-#      define RESET_IOPL() (void)0
-#    endif
-#  endif
-#endif
+#include "compiler.h"
+#include "xf86_OSproc.h"
 
 #define tolerance 0.01 /* +/- 1% */
-
 
 #define CT65520 0x1
 #define CT65525 0x2
@@ -87,16 +31,18 @@
 #define MemClk 1
 #define IS_MemClk(X) X&0x1
 
-int compute_clock (
-		   unsigned int ChipType,
-		   double target,
-		   double Fref,
-		   unsigned int ClkMaxN,
-		   unsigned int ClkMaxM,
-		   unsigned int *bestM,
-		   unsigned int *bestN,
-		   unsigned int *bestP,
-		   unsigned int *bestPSN) {
+static int
+compute_clock(
+	      unsigned int ChipType,
+	      double target,
+	      double Fref,
+	      unsigned int ClkMaxN,
+	      unsigned int ClkMaxM,
+	      unsigned int *bestM,
+	      unsigned int *bestN,
+	      unsigned int *bestP,
+	      unsigned int *bestPSN)
+{
 
   unsigned int M, N, P, PSN, PSNx;
 
@@ -131,7 +77,7 @@ int compute_clock (
      they should be set to 0 on the 65548, and left untouched on
      earlier chips.  */
 
-  for (PSNx = ((ChipType == CT69000) || (ChipType == CT69030)) ? 1 : 0; 
+  for (PSNx = ((ChipType == CT69000) || (ChipType == CT69030)) ? 1 : 0;
        PSNx <= 1; PSNx++) {
     unsigned int low_N, high_N;
     double Fref4PSN;
@@ -141,7 +87,7 @@ int compute_clock (
     low_N = 3;
     high_N = ClkMaxN;
 
-    while (Fref / (PSN * low_N) > (((ChipType == CT69000) || 
+    while (Fref / (PSN * low_N) > (((ChipType == CT69000) ||
 				    (ChipType == CT69030)) ? 5.0e6 : 2.0e6))
       low_N++;
     while (Fref / (PSN * high_N) < 150.0e3)
@@ -211,18 +157,20 @@ int compute_clock (
   return 1;
 }
 
-int set_clock(
-	      unsigned int ChipType,
-	      unsigned int ClockType,
-	      unsigned int ProgClock,
-	      unsigned int M,
-	      unsigned int N,
-	      unsigned int P,
-	      unsigned int PSN) {
+static int
+set_clock(
+	  unsigned int ChipType,
+	  unsigned int ClockType,
+	  unsigned int ProgClock,
+	  unsigned int M,
+	  unsigned int N,
+	  unsigned int P,
+	  unsigned int PSN)
+{
 
   unsigned int tmp, idx;
 
-  SET_IOPL();
+  xf86EnableIO();
 
   idx = inb(0x3D6);
   if (IS_HiQV(ChipType)) {
@@ -262,7 +210,7 @@ int set_clock(
     outb(0x3D6, 0x33);
     tmp = inb(0x3D7);
     if (IS_MemClk(ClockType)) {
-      outb(0x3D7, tmp | 0x20);     
+      outb(0x3D7, tmp | 0x20);
     } else {
       outb(0x3D7, tmp & ~0x20);
     }
@@ -276,15 +224,17 @@ int set_clock(
     outb(0x3D7, tmp);
   }
   outb(0x3D6, idx);
-  RESET_IOPL();
+  xf86DisableIO();
   return 0;
 }
 
-unsigned int probe_chip(void) {
+static unsigned int
+probe_chip(void)
+{
 
   unsigned int ChipType, temp;
 
-  SET_IOPL();
+  xf86EnableIO();
 
   outb(0x3D6, 0x00);
   temp = inb(0x3D7);
@@ -347,18 +297,19 @@ unsigned int probe_chip(void) {
       if (temp == 0x0C) ChipType = CT69030;
     }
   }
- 
-  RESET_IOPL();
+
+  xf86DisableIO();
 
   if (ChipType == 0) {      /* failure */
     fprintf(stderr, "Not a Chips and Technologies Chipset\n");
   }
-  
+
   return ChipType;
 }
 
 
-int main (int argc, char *argv[]) {
+int main (int argc, char *argv[])
+{
   double target;
   double Fref = 14318180;
   unsigned int M, N, P, PSN, ChipType, ClockType, progclock;
@@ -378,11 +329,7 @@ int main (int argc, char *argv[]) {
   }
 
   ClockType = DotClk;
-#ifndef Lynx
-  if (! fnmatch("*memClock",argv[0],FNM_PATHNAME)) {
-#else
   if (strstr("memClock",argv[0]) != NULL) {
-#endif
     ClockType = MemClk;
   }
 
@@ -395,7 +342,7 @@ int main (int argc, char *argv[]) {
     fprintf(stderr, "No programmable Clock!\n");
     return 1;
   }
-  
+
   if (IS_HiQV(ChipType)) {
     if (! compute_clock(ChipType, target, Fref, 63, 127, &M, &N, &P, &PSN)) {
       return set_clock(ChipType, ClockType, progclock, M, N, P, PSN);
@@ -410,3 +357,5 @@ int main (int argc, char *argv[]) {
     }
   }
 }
+
+#include "xf86getpagesize.c"

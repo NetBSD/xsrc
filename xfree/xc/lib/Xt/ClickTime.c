@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -59,15 +59,15 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* 
+/*
  * Contains XtSetMultiClickTime, XtGetMultiClickTime
  */
 
 #include "IntrinsicI.h"
 
-void XtSetMultiClickTime( dpy, time )
-    Display *dpy;
-    int time;
+void XtSetMultiClickTime(
+    Display *dpy,
+    int time)
 {
     DPY_TO_APPCON(dpy);
 
@@ -77,8 +77,8 @@ void XtSetMultiClickTime( dpy, time )
 }
 
 
-int XtGetMultiClickTime( dpy )
-    Display *dpy;
+int XtGetMultiClickTime(
+    Display *dpy)
 {
     int retval;
     DPY_TO_APPCON(dpy);

@@ -37,9 +37,37 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.38 2004/01/06 22:47:06 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.44 2004/12/09 00:21:04 mvojkovi Exp $ */
 
 #include "nv_include.h"
+
+static int
+NVDACPanelTweaks(NVPtr pNv, NVRegPtr state)
+{
+   int tweak = 0;
+
+   if(pNv->usePanelTweak) {
+       tweak = pNv->PanelTweak;
+   } else {
+       /* begin flat panel hacks */
+       /* This is unfortunate, but some chips need this register
+          tweaked or else you get artifacts where adjacent pixels are
+          swapped.  There are no hard rules for what to set here so all
+          we can do is experiment and apply hacks. */
+
+       if(((pNv->Chipset & 0xffff) == 0x0328) && (state->bpp == 32)) {
+          /* At least one NV34 laptop needs this workaround. */
+          tweak = -1;
+       }
+
+       if((pNv->Chipset & 0xfff0) == 0x0310) {
+          tweak = 1;
+       }
+       /* end flat panel hacks */
+   }
+
+   return tweak;
+}
 
 Bool
 NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
@@ -58,14 +86,15 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     int vertBlankStart  =  mode->CrtcVDisplay      - 1;
     int vertBlankEnd    =  mode->CrtcVTotal        - 1;
    
-
     NVPtr pNv = NVPTR(pScrn);
     NVRegPtr nvReg = &pNv->ModeReg;
     NVFBLayout *pLayout = &pNv->CurrentLayout;
     vgaRegPtr   pVga;
 
     /*
-     * This will initialize all of the generic VGA registers.
+     * Initialize all of the generic VGA registers.  Don't bother with
+     * VGA_FIX_SYNC_PULSES, given the relevant CRTC settings are overridden
+     * below.  Ditto for the KGA workaround.
      */
     if (!vgaHWInit(pScrn, mode))
         return(FALSE);
@@ -186,12 +215,17 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
        {
            nvReg->scale |= (1 << 8) ;
        }
+       nvReg->crtcSync = pNv->PRAMDAC[0x0828/4];
+       nvReg->crtcSync += NVDACPanelTweaks(pNv, nvReg);
     }
 
     nvReg->vpll = nvReg->pll;
     nvReg->vpll2 = nvReg->pll;
     nvReg->vpllB = nvReg->pllB;
     nvReg->vpll2B = nvReg->pllB;
+
+    VGA_WR08(pNv->PCIO, 0x03D4, 0x1C);
+    nvReg->fifo = VGA_RD08(pNv->PCIO, 0x03D5) & ~(1<<5);
 
     if(pNv->CRTCnumber) {
        nvReg->head  = pNv->PCRTC0[0x00000860/4] & ~0x00001000;
@@ -215,29 +249,29 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if(mode->Flags & V_DBLSCAN)
        nvReg->cursorConfig |= (1 << 4);
     if(pNv->alphaCursor) {
-        nvReg->cursorConfig |= 0x04011000;
+        if((pNv->Chipset & 0x0ff0) != 0x0110) 
+           nvReg->cursorConfig |= 0x04011000;
+        else
+           nvReg->cursorConfig |= 0x14011000;
         nvReg->general |= (1 << 29);
-
-        if((pNv->Chipset & 0x0ff0) == 0x0110) {
-            nvReg->dither = pNv->PRAMDAC[0x0528/4] & ~0x00010000;
-            if(pNv->FPDither)
-               nvReg->dither |= 0x00010000;
-            else
-               nvReg->cursorConfig |= (1 << 28);
-        } else 
-        if((pNv->Chipset & 0x0ff0) >= 0x0170) {
-           nvReg->dither = pNv->PRAMDAC[0x083C/4] & ~1;
-           nvReg->cursorConfig |= (1 << 28);
-           if(pNv->FPDither)
-              nvReg->dither |= 1;
-        } else {
-           nvReg->cursorConfig |= (1 << 28);
-        }
     } else
        nvReg->cursorConfig |= 0x02000000;
 
+    if(pNv->twoHeads) {
+        if((pNv->Chipset & 0x0ff0) == 0x0110) {
+           nvReg->dither = pNv->PRAMDAC[0x0528/4] & ~0x00010000;
+           if(pNv->FPDither)
+              nvReg->dither |= 0x00010000;
+        } else {
+           nvReg->dither = pNv->PRAMDAC[0x083C/4] & ~1;
+           if(pNv->FPDither)
+              nvReg->dither |= 1;
+        } 
+    }
+
     nvReg->timingH = 0;
     nvReg->timingV = 0;
+    nvReg->displayV = mode->CrtcVDisplay;
 
     return (TRUE);
 }
@@ -250,8 +284,6 @@ NVDACRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
     int restore = VGA_SR_MODE;
 
     if(primary) restore |= VGA_SR_CMAP | VGA_SR_FONTS;
-    else if((pNv->Chipset & 0xffff) == 0x0018) 
-	restore |= VGA_SR_CMAP;
     NVLoadStateExt(pNv, nvReg);
 #if defined(__powerpc__)
     restore &= ~VGA_SR_FONTS;
@@ -273,8 +305,6 @@ NVDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
 #if defined(__powerpc__)
     saveFonts = FALSE;
 #endif
-
-    NVLockUnlock(pNv, 0);
 
     vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | 
                              (saveFonts? VGA_SR_FONTS : 0));

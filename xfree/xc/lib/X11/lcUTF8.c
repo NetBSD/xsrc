@@ -24,7 +24,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.16 2003/11/17 22:20:12 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.17 2004/03/26 02:06:45 dawes Exp $ */
 
 /*
  * This file contains:
@@ -1750,7 +1750,11 @@ create_tofontcs_conv(
         }
 	while (count-- > 0) {
 	    XlcCharSet charset = _XlcGetCharSet(*value++);
-	    const char *name = charset->encoding_name;
+	    const char *name;
+
+	    if (!charset)
+		continue;
+	    name = charset->encoding_name;
 	    /* If it wasn't already encountered... */
 	    for (k = num - 1; k >= 0; k--)
 		if (!strcmp(preferred[k]->name, name))

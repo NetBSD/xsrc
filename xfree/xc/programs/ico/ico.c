@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/ico/ico.c,v 1.10 2003/05/27 22:26:56 tsi Exp $ */
+/* $XFree86: xc/programs/ico/ico.c,v 1.11 2004/04/03 22:38:53 tsi Exp $ */
 
 /******************************************************************************
  * Description
@@ -1141,9 +1141,9 @@ findpoly(const char *name)
 	icoFatal("can't find object %s", name);
 }
 
-int main(argc, argv)
-    int argc;
-    char **argv;
+int main(
+    int argc,
+    char **argv)
 {
 	const char *display = NULL;
 #ifdef MULTIBUFFER

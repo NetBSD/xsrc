@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xext/Xcup.c,v 1.9 2003/11/17 22:20:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/Xcup.c,v 1.10 2005/01/27 02:28:59 dawes Exp $ */
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
@@ -24,7 +24,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $Xorg: Xcup.c,v 1.5 2001/02/09 02:03:49 xorgcvs Exp $ */
 
 #ifdef WIN32
 #define BOOL wBOOL
@@ -83,10 +82,8 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xcup_info)
  *****************************************************************************/
 
 Status
-XcupQueryVersion(dpy, major_version_return, minor_version_return)
-    Display* dpy;
-    int* major_version_return; 
-    int* minor_version_return;
+XcupQueryVersion(Display *dpy, int *major_version_return,
+		 int *minor_version_return)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXcupQueryVersionReply rep;

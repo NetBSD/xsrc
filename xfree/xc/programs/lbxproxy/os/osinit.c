@@ -45,13 +45,15 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/lbxproxy/os/osinit.c,v 1.6 2004/04/03 22:38:55 tsi Exp $ */
 
 #include <stdio.h>
 #include "misc.h"
 #include "util.h"
+#include "os.h"
 
 void
-OsInit()
+OsInit(void)
 {
     static Bool been_here = FALSE;
 

@@ -30,7 +30,7 @@
  *   by Andreas Stolcke <stolcke@icsi.berkeley.edu>
  */
 
-/* $XFree86: xc/programs/xdm/sessreg.c,v 3.19 2002/12/07 20:31:04 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/sessreg.c,v 3.21 2005/01/26 04:18:53 dawes Exp $ */
 
 /*
  * sessreg
@@ -56,7 +56,7 @@
 
 #ifdef CSRG_BASED
 #include <sys/param.h>
-#if __NetBSD_Version__ >= 106030000     /* 1.6C */
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 106030000   /* 1.6C */
 #define BSD_UTMPX 1
 #endif
 #endif

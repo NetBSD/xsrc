@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/drmP.h,v 1.42 2005/03/06 03:55:47 dawes Exp $ */
 /**
  * \file drmP.h 
  * Private header for Direct Rendering Manager
@@ -81,6 +82,19 @@
 #endif
 #include <linux/poll.h>
 #include <asm/pgalloc.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,10)
+#define NO_SSCANF 1
+#else
+#define NO_SSCANF 0
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
+#define NO_REMAP_PAGE_RANGE
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,11)
+#define HAVE_PUD_OFFSET
+#endif
+
 #include "drm.h"
 
 #include "drm_os_linux.h"
@@ -199,6 +213,10 @@
             &pos->member != (head);					\
             pos = list_entry(pos->member.next, typeof(*pos), member),	\
                     prefetch(pos->member.next))
+#endif
+
+#ifndef __put_page
+#define __put_page(p)		atomic_dec(&(p)->count)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,19)
@@ -509,18 +527,6 @@ typedef struct drm_buf_entry {
 	drm_freelist_t	  freelist;
 } drm_buf_entry_t;
 
-/**
- * Hardware lock.
- *
- * The lock structure is a simple cache-line aligned integer.  To avoid
- * processor bus contention on a multiprocessor system, there should not be any
- * other data stored in the same cache line.
- */
-typedef struct drm_hw_lock {
-	__volatile__ unsigned int lock;		/**< lock variable */
-	char			  padding[60];	/**< Pad to cache line */
-} drm_hw_lock_t;
-
 /** File private data */
 typedef struct drm_file {
 	int		  authenticated;
@@ -826,7 +832,7 @@ extern int	     DRM(mmap_dma)(struct file *filp,
 				   struct vm_area_struct *vma);
 extern int	     DRM(mmap)(struct file *filp, struct vm_area_struct *vma);
 extern unsigned int  DRM(poll)(struct file *filp, struct poll_table_struct *wait);
-extern ssize_t       DRM(read)(struct file *filp, char *buf, size_t count, loff_t *off);
+extern ssize_t       DRM(read)(struct file *filp, char __user *buf, size_t count, loff_t *off);
 
 				/* Memory management support (drm_memory.h) */
 extern void	     DRM(mem_init)(void);

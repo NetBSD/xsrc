@@ -10,11 +10,11 @@ software  and  its documentation for any purpose and without
 fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
-mentation,  and  that the name Sun not be used in advertising 
-or publicity pertaining to distribution  of  the software  
-without specific prior written permission. Sun makes no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+mentation,  and  that the name Sun not be used in advertising
+or publicity pertaining to distribution  of  the software
+without specific prior written permission. Sun makes no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -53,7 +53,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Threads.c,v 3.7 2003/04/21 16:34:29 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/Threads.c,v 3.8 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -109,7 +109,7 @@ InitProcessLock(void)
     }
 }
 
-static void 
+static void
 ProcessLock(void)
 {
 #ifdef _XMUTEX_NESTS
@@ -117,31 +117,31 @@ ProcessLock(void)
     process_lock->level++;
 #else
     xthread_t this_thread = xthread_self();
-    
+
     xmutex_lock(process_lock->mutex);
-    
+
     if (!xthread_have_id(process_lock->holder)) {
 	process_lock->holder = this_thread;
 	xmutex_unlock(process_lock->mutex);
 	return;
     }
-    
+
     if (xthread_equal(process_lock->holder,this_thread)) {
 	process_lock->level++;
 	xmutex_unlock(process_lock->mutex);
 	return;
     }
-    
+
     while(xthread_have_id(process_lock->holder))
 	xcondition_wait(process_lock->cond, process_lock->mutex);
-    
+
     process_lock->holder = this_thread;
     assert(xthread_equal(process_lock->holder, this_thread));
     xmutex_unlock(process_lock->mutex);
 #endif
 }
 
-static void 
+static void
 ProcessUnlock(void)
 {
 #ifdef _XMUTEX_NESTS
@@ -155,10 +155,10 @@ ProcessUnlock(void)
 	xmutex_unlock(process_lock->mutex);
 	return;
     }
-    
+
     xthread_clear_id(process_lock->holder);
     xcondition_signal(process_lock->cond);
-    
+
     xmutex_unlock(process_lock->mutex);
 #endif
 }
@@ -236,10 +236,10 @@ YieldAppLock(
 	*push_thread = FALSE;
 	*pushed_thread = TRUE;
 
-	if(app_lock->stack.sp == app_lock->stack.size - 1) {
-	    int ii;
-	    app_lock->stack.st = (struct _Tstack *) 
-		XtRealloc ((char *)app_lock->stack.st, 
+	if(app_lock->stack.sp == (int)app_lock->stack.size - 1) {
+	    unsigned ii;
+	    app_lock->stack.st = (struct _Tstack *)
+		XtRealloc ((char *)app_lock->stack.st,
 		(app_lock->stack.size + STACK_INCR) * sizeof (struct _Tstack));
 	    ii = app_lock->stack.size;
 	    app_lock->stack.size += STACK_INCR;
@@ -265,7 +265,7 @@ YieldAppLock(
 
 static void
 RestoreAppLock(
-    XtAppContext app, 
+    XtAppContext app,
     int level,
     Boolean* pushed_thread)
 {
@@ -301,7 +301,7 @@ RestoreAppLock(
 #else
     app_lock->holder = self;
     app_lock->level = level;
-    assert(xthread_equal(app_lock->holder, self)); 
+    assert(xthread_equal(app_lock->holder, self));
 #endif
     if (*pushed_thread) {
 	*pushed_thread = FALSE;
@@ -318,7 +318,7 @@ RestoreAppLock(
 static void
 FreeAppLock(XtAppContext app)
 {
-    int ii;
+    unsigned ii;
     LockPtr app_lock = app->lock_info;
 
     if(app_lock) {
@@ -360,10 +360,10 @@ InitAppLock(XtAppContext app)
     app_lock->cond = xcondition_malloc();
     xcondition_init(app_lock->cond);
     xthread_clear_id(app_lock->holder);
-#endif   
+#endif
     app_lock->stack.size = STACK_INCR;
     app_lock->stack.sp = -1;
-    app_lock->stack.st = 
+    app_lock->stack.st =
 	(struct _Tstack *)__XtMalloc(sizeof(struct _Tstack)*STACK_INCR);
     for (ii = 0; ii < STACK_INCR; ii++) {
 	app_lock->stack.st[ii].c = xcondition_malloc();
@@ -405,7 +405,7 @@ void XtProcessUnlock(void)
 #endif
 }
 
-Boolean XtToolkitThreadInitialize()
+Boolean XtToolkitThreadInitialize(void)
 {
 #ifdef XTHREADS
     if (_XtProcessLock == NULL) {

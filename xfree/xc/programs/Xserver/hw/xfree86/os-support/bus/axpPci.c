@@ -1,48 +1,44 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/axpPci.c,v 1.15 2002/12/12 04:12:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/axpPci.c,v 1.16 2004/12/31 03:30:41 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of Concurrent Computer
- * Corporation not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Concurrent Computer Corporation makes no representations
- * about the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting documentation, and
+ * that the name of Concurrent Computer Corporation not be used in advertising
+ * or publicity pertaining to distribution of the software without specific,
+ * written prior permission.  Concurrent Computer Corporation makes no
+ * representations about the suitability of this software for any purpose.  It
+ * is provided "as is" without express or implied warranty.
  *
- * CONCURRENT COMPUTER CORPORATION DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CONCURRENT COMPUTER CORPORATION BE
- * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * CONCURRENT COMPUTER CORPORATION DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+ * IN NO EVENT SHALL CONCURRENT COMPUTER CORPORATION BE LIABLE FOR ANY SPECIAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  *
  * Copyright 1998 by Metro Link Incorporated
  *
- * Permission to use, copy, modify, distribute, and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of Metro Link
- * Incorporated not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Metro Link Incorporated makes no representations
- * about the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting documentation, and
+ * that the name of Metro Link Incorporated not be used in advertising or
+ * publicity pertaining to distribution of the software without specific,
+ * written prior permission.  Metro Link Incorporated makes no representations
+ * about the suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
  *
- * METRO LINK INCORPORATED DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL METRO LINK INCORPORATED BE
- * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * METRO LINK INCORPORATED DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+ * IN NO EVENT SHALL METRO LINK INCORPORATED BE LIABLE FOR ANY SPECIAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <stdio.h>
@@ -83,7 +79,7 @@ static axpDomainPtr xf86DomainInfo[MAX_DOMAINS] = { NULL, };
 static int	    pciNumDomains = 0;
 
 /*
- * For debug, domain assignment can start downward from a fixed base 
+ * For debug, domain assignment can start downward from a fixed base
  * (instead of up from 0) by defining FORCE_HIGH_DOMAINS. This allows
  * debug of large domain numbers and sparse domain numbering on systems
  * which don't have as many hoses.
@@ -111,7 +107,7 @@ axpSetupDomains(void)
 #ifndef INCLUDE_XF86_NO_DOMAIN
 
 #ifdef FORCE_HIGH_DOMAINS
-    xf86Msg(X_WARNING, 
+    xf86Msg(X_WARNING,
 	    "DEBUG OPTION FORCE_HIGH_DOMAINS in use - DRI will *NOT* work\n");
     numDomains = FORCE_HIGH_DOMAINS;
 #endif
@@ -137,7 +133,7 @@ axpSetupDomains(void)
 
 	axpDomain.domain = numDomains - hose - 1;
 
-	xf86Msg(X_WARNING, 
+	xf86Msg(X_WARNING,
 		"FORCE_HIGH_DOMAINS - assigned hose %d to domain %d\n",
 		axpDomain.hose, axpDomain.domain);
 
@@ -145,7 +141,7 @@ axpSetupDomains(void)
 
 	axpDomain.dense_io   = _iobase(IOBASE_DENSE_IO,   hose, -1, -1);
 	axpDomain.sparse_io  = _iobase(IOBASE_SPARSE_IO,  hose, -1, -1);
-        axpDomain.mapped_io  = 0;
+	axpDomain.mapped_io  = 0;
 	axpDomain.dense_mem  = _iobase(IOBASE_DENSE_MEM,  hose, -1, -1);
 	axpDomain.sparse_mem = _iobase(IOBASE_SPARSE_MEM, hose, -1, -1);
 
@@ -157,10 +153,10 @@ axpSetupDomains(void)
 	 *
 	 * Allowing multiple domains on sparse systems would require:
 	 *	1) either
-	 *		a) revamping the sparse video mapping code to allow 
+	 *		a) revamping the sparse video mapping code to allow
 	 *		   for multiple unrelated address regions
-	 *		  	-- OR -- 
-	 *		b) implementing sparse mapping directly in 
+	 *			-- OR --
+	 *		b) implementing sparse mapping directly in
 	 *		   xf86MapDomainMemory
 	 *	2) revaming read/write sparse routines to correctly handle
 	 *	   the solution to 1)
@@ -172,10 +168,10 @@ axpSetupDomains(void)
 	    if (_iobase(IOBASE_ROOT_BUS, hose + 1, -1, -1) >= 0) {
 		/*
 		 * It's a sparse i/o system with (at least) one more hose,
-		 * show a message indicating that video is constrained to 
+		 * show a message indicating that video is constrained to
 		 * hose 0
 		 */
-		xf86Msg(X_INFO, 
+		xf86Msg(X_INFO,
 			"Sparse I/O system - constraining video to hose 0\n");
 	    }
 	    break;
@@ -198,8 +194,8 @@ axpSetupDomains(void)
     return numDomains;
 }
 
-void  
-axpPciInit()
+void
+axpPciInit(void)
 {
     axpDomainPtr pDomain;
     int domain, bus;
@@ -210,8 +206,8 @@ axpPciInit()
 	if (!(pDomain = xf86DomainInfo[domain])) continue;
 
 	/*
-	 * Since any bridged buses will be behind a probed pci-pci bridge, 
-	 * only set up the root bus for each domain (hose) and the bridged 
+	 * Since any bridged buses will be behind a probed pci-pci bridge,
+	 * only set up the root bus for each domain (hose) and the bridged
 	 * buses will be set up as they are found.
 	 */
 	bus = PCI_MAKE_BUS(domain, 0);
@@ -233,7 +229,7 @@ axpPciInit()
 /*
  * Alpha/Linux PCI configuration space access routines
  */
-static int 
+static int
 axpPciBusFromTag(PCITAG tag)
 {
     pciBusInfo_t *pBusInfo;
@@ -241,7 +237,7 @@ axpPciBusFromTag(PCITAG tag)
     int bus, dfn;
 
     bus = PCI_BUS_FROM_TAG(tag);
-    if ((bus >= pciNumBuses) 
+    if ((bus >= pciNumBuses)
 	|| !(pBusInfo = pciBusInfo[bus])
 	|| !(pDomain = pBusInfo->pciBusPriv)
 	|| (pDomain->domain != PCI_DOM_FROM_TAG(tag))) return -1;
@@ -264,7 +260,7 @@ axpPciCfgRead(PCITAG tag, int off)
 
 	syscall(__NR_pciconfig_read, bus, dfn, off, 4, &val);
     }
-    return(val);	
+    return(val);
 }
 
 static void
@@ -313,16 +309,16 @@ xf86MapDomainMemory(int ScreenNum, int Flags, PCITAG Tag,
     int domain = PCI_DOM_FROM_TAG(Tag);
 
     if ((domain < 0) || (domain >= pciNumDomains) ||
-	!(pDomain = xf86DomainInfo[domain])) 
+	!(pDomain = xf86DomainInfo[domain]))
 	FatalError("%s called with invalid parameters\n", __FUNCTION__);
 
     /*
      * xf86MapVidMem already does what we need, but remember to subtract
-     * _bus_base() (the physical dense memory root of hose 0) since 
+     * _bus_base() (the physical dense memory root of hose 0) since
      * xf86MapVidMem is expecting an offset relative to _bus_base() rather
      * than an actual physical address.
      */
-    return xf86MapVidMem(ScreenNum, Flags, 
+    return xf86MapVidMem(ScreenNum, Flags,
 			 pDomain->dense_mem + Base - _bus_base(), Size);
 }
 
@@ -334,7 +330,7 @@ xf86MapDomainIO(int ScreenNum, int Flags, PCITAG Tag,
     int domain = PCI_DOM_FROM_TAG(Tag);
 
     if ((domain < 0) || (domain >= pciNumDomains) ||
-	!(pDomain = xf86DomainInfo[domain])) 
+	!(pDomain = xf86DomainInfo[domain]))
 	FatalError("%s called with invalid parameters\n", __FUNCTION__);
 
     /*
@@ -355,9 +351,9 @@ xf86MapDomainIO(int ScreenNum, int Flags, PCITAG Tag,
      * Map the entire I/O space (64kB) at once and only once.
      */
     if (!pDomain->mapped_io)
-        pDomain->mapped_io = (IOADDRESS)xf86MapVidMem(ScreenNum, Flags, 
-		   	            pDomain->dense_io - _bus_base(), 
-                                    0x10000);
+	pDomain->mapped_io = (IOADDRESS)xf86MapVidMem(ScreenNum, Flags,
+				    pDomain->dense_io - _bus_base(),
+				    0x10000);
 
     return pDomain->mapped_io + Base;
 }
@@ -382,15 +378,49 @@ xf86ReadDomainMemory(PCITAG Tag, ADDRESS Base, int Len, unsigned char *Buf)
      * so we can use mmio functions to read (that way we can really get byte
      * at a time reads on dense memory systems with byte/word instructions.
      */
-    MappedAddr = xf86MapDomainMemory(-1, VIDMEM_READONLY | VIDMEM_MMIO, 
-                                     Tag, MapBase, MapSize);
+    MappedAddr = xf86MapDomainMemory(-1, VIDMEM_READONLY | VIDMEM_MMIO,
+				     Tag, MapBase, MapSize);
 
     for (i = 0; i < Len; i++) {
 	*Buf++ = xf86ReadMmio8(MappedAddr, Base - MapBase + i);
     }
-    
+
     xf86UnMapVidMem(-1, MappedAddr, MapSize);
     return Len;
+}
+
+Bool
+xf86LocatePciMemoryArea(PCITAG Tag, char **devName, unsigned int *devOffset,
+			unsigned int *fbSize, unsigned int *fbOffset,
+			unsigned int *flags)
+{
+    axpDomainPtr pDomain;
+    unsigned long offset;
+    int domain;
+
+    if (!devName || !devOffset ||
+	((domain = PCI_DOM_FROM_TAG(Tag)) < 0) ||
+	(domain >= pciNumDomains) ||
+	!(pDomain = xf86DomainInfo[domain]))
+	return FALSE;
+
+    /*
+     * Relocate into /dev/mem's mmap(2) space.
+     *
+     * XXX It's unclear whether this is sufficient for DGA's client-side
+     *     library.  With my luck, it probably isn't.
+     */
+    offset = (((unsigned long)devOffset[1]) << 32) | devOffset[0];
+    offset += pDomain->dense_mem;
+    devOffset[0] = (unsigned int)offset;
+    devOffset[1] = (unsigned int)(offset >> 32);
+
+    *devName = NULL;
+
+    if (flags)
+	*flags = 0;
+
+    return TRUE;
 }
 
 resPtr
@@ -409,7 +439,7 @@ xf86PciBusAccWindowsFromOS(void)
 
 	RANGE(range, 0, 0x0000ffffUL,
 	      RANGE_TYPE(ResExcIoBlock, domain));
-	pRes = xf86AddResToList(pRes, &range, -1);		      
+	pRes = xf86AddResToList(pRes, &range, -1);
     }
 
     return pRes;
@@ -436,16 +466,16 @@ xf86AccResFromOS(resPtr pRes)
 	 * 0x000c0000 - 0x000effff  location of VGA and other extensions ROMS
 	 */
 
-	RANGE(range, 0x000c0000, 0x000effff, 
+	RANGE(range, 0x000c0000, 0x000effff,
 	      RANGE_TYPE(ResExcMemBlock, domain));
 	pRes = xf86AddResToList(pRes, &range, -1);
 
 	/*
-	 * Fallback would be to claim well known ports in the 0x0 - 0x3ff 
-	 * range along with their sparse I/O aliases, but that's too 
+	 * Fallback would be to claim well known ports in the 0x0 - 0x3ff
+	 * range along with their sparse I/O aliases, but that's too
 	 * imprecise.  Instead claim a bare minimum here.
 	 */
-	RANGE(range, 0x00000000, 0x000000ff, 
+	RANGE(range, 0x00000000, 0x000000ff,
 	      RANGE_TYPE(ResExcIoBlock, domain)); /* For mainboard */
 	pRes = xf86AddResToList(pRes, &range, -1);
 
@@ -453,16 +483,16 @@ xf86AccResFromOS(resPtr pRes)
 	 * At minimum, the top and bottom resources must be claimed, so that
 	 * resources that are (or appear to be) unallocated can be relocated.
 	 */
-	RANGE(range, 0x00000000, 0x00000000, 
+	RANGE(range, 0x00000000, 0x00000000,
 	      RANGE_TYPE(ResExcMemBlock, domain));
 	pRes = xf86AddResToList(pRes, &range, -1);
-	RANGE(range, 0xffffffff, 0xffffffff, 
+	RANGE(range, 0xffffffff, 0xffffffff,
 	      RANGE_TYPE(ResExcMemBlock, domain));
 	pRes = xf86AddResToList(pRes, &range, -1);
-/*  	RANGE(range, 0x00000000, 0x00000000, 
+     /* RANGE(range, 0x00000000, 0x00000000,
 	      RANGE_TYPE(ResExcIoBlock, domain));
-        pRes = xf86AddResToList(pRes, &range, -1); */
-	RANGE(range, 0xffffffff, 0xffffffff, 
+	pRes = xf86AddResToList(pRes, &range, -1); */
+	RANGE(range, 0xffffffff, 0xffffffff,
 	      RANGE_TYPE(ResExcIoBlock, domain));
 	pRes = xf86AddResToList(pRes, &range, -1);
     }

@@ -1,5 +1,3 @@
-/* $Xorg: XExtToWire.c,v 1.4 2001/02/09 02:03:50 xorgcvs Exp $ */
-
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -45,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtToWire.c,v 3.6 2002/10/16 12:56:28 tsi Exp $ */
+/* $XFree86: xc/lib/Xi/XExtToWire.c,v 3.7 2005/01/27 02:28:59 dawes Exp $ */
 
 /****************************************************************
  *
@@ -62,11 +60,7 @@ SOFTWARE.
 #include "XIint.h"
 
 Status
-_XiEventToWire(dpy, re, event, count)
-    register Display *dpy;	/* pointer to display structure */
-    register XEvent *re;	/* pointer to client event */
-    register xEvent **event;	/* wire protocol event */
-    register int *count;
+_XiEventToWire(Display *dpy, XEvent *re, xEvent **event, int *count)
     {
     XExtDisplayInfo *info = XInput_find_display (dpy);
     int i;

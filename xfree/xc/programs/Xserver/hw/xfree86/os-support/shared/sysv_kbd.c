@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_kbd.c,v 3.4 1999/01/14 13:05:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_kbd.c,v 3.5 2004/04/03 22:26:25 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@XFree86.org>
@@ -61,7 +61,7 @@ xf86KbdInit()
 	ioctl (xf86Info.consoleFd, KDGKBMODE, &kbdtrans);
 #endif
 	ioctl (xf86Info.consoleFd, TCGETA, &kbdtty);
-#if defined(E_TABSZ) && !defined(SCO325)
+#if defined(E_TABSZ) && !defined(__SCO__)
 	kbdemap = xalloc(E_TABSZ);
 	if (ioctl(xf86Info.consoleFd, LDGMAP, kbdemap) < 0)
 	{

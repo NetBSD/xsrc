@@ -1,4 +1,3 @@
-/* $Xorg: xkbout.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +23,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbout.c,v 3.10 2003/11/17 22:20:24 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbout.c,v 3.11 2005/02/28 23:19:13 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -54,7 +53,7 @@
 #include "XKBsrv.h"
 
 #include <X11/extensions/XKBgeom.h>
-#include "extensions/XKBfile.h"
+#include <X11/extensions/XKBfile.h>
 
 #endif
 

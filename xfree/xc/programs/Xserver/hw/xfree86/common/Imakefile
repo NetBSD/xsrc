@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.155 2004/01/27 01:29:02 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.156 2004/06/23 17:04:14 dawes Exp $
 
 
 
@@ -192,8 +192,6 @@ CUSTOMVERSION = XFree86CustomVersion
   BUILDERSTRING = BuilderString
   BUILDERMSG = -DBUILDERSTRING='$(BUILDERSTRING)'
 #endif
-       XORGREL = XOrgReleaseString
-   XORGREL_DEF = -DXORG_RELEASE='"$(XORGREL)"'
 
 CONSDEFINES = XFree86ConsoleDefines
 EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
@@ -211,7 +209,7 @@ XCONFIGUREDEFINES = -DXF86CONFIGFILE='"$(XF86CONFIGFILE)"'
 AllTarget($(OFILES))
 
 SpecialCObjectRule(xf86Bus,NullParameter,$(BUGMSG) $(VGAINCLUDES))
-SpecialCObjectRule(xf86Init,$(ICONFIGFILES),$(OSNAMEDEF) $(BUILDERMSG) $(BUGMSG) $(CUSTOMVERDEF) $(XORGREL_DEF) $(EXT_DEFINES) $(BETADEFS) $(MDEBUGDEFS))
+SpecialCObjectRule(xf86Init,$(ICONFIGFILES),$(OSNAMEDEF) $(BUILDERMSG) $(BUGMSG) $(CUSTOMVERDEF) $(EXT_DEFINES) $(BETADEFS) $(MDEBUGDEFS))
 SpecialCObjectRule(xf86Events,$(ICONFIGFILES),$(EXT_DEFINES) $(MDEBUGDEFS))
 SpecialCObjectRule(xf86Globals,$(ICONFIGFILES),$(EXT_DEFINES) $(MODPATHDEFINES) $(LOGDEFINES))
 SpecialCObjectRule(xf86AutoConfig,$(ICONFIGFILES),$(XCONFIGDEFINES))

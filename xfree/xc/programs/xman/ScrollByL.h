@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xman/ScrollByL.h,v 1.3 2004/04/22 14:15:05 tsi Exp $ */
 
 #ifndef _XtScrollByLine_h
 #define _XtScrollByLine_h
@@ -56,6 +57,7 @@ from the X Consortium.
 
 #define XtNindent           "indent"
 #define XtNforceVert        "forceVert"
+#define XtNhalfLines        "halfLines"
 #define XtNmanualFontNormal "manualFontNormal"
 #define XtNmanualFontBold   "manualFontBold"
 #define XtNmanualFontItalic "manualFontItalic"

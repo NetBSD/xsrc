@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/packvendpriv.h,v 1.6 2003/10/23 15:30:09 tsi Exp $ */
+/* $XFree86: xc/lib/GL/glx/packvendpriv.h,v 1.8 2004/04/22 13:58:39 tsi Exp $ */
 #ifndef __GLX_packvendpriv_h__
 #define __GLX_packvendpriv_h__
 

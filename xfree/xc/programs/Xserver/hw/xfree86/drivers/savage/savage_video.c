@@ -1,10 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_video.c,v 1.18 2003/11/10 18:22:26 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_video.c,v 1.20 2005/01/17 03:07:43 tsi Exp $ */
 
 #include "Xv.h"
 #include "dix.h"
 #include "dixstruct.h"
 #include "fourcc.h"
-#include "xaalocal.h"
 
 #include "savage_driver.h"
 
@@ -610,42 +609,35 @@ void SavageSetColorKeyOld(ScrnInfoPtr pScrn)
     green = (pPriv->colorKey & pScrn->mask.green) >> pScrn->offset.green;
     blue = (pPriv->colorKey & pScrn->mask.blue) >> pScrn->offset.blue;
 
-    if( !pPriv->colorKey ) {
-	OUTREG( COL_CHROMA_KEY_CONTROL_REG, 0 );
-	OUTREG( CHROMA_KEY_UPPER_BOUND_REG, 0 );
-	OUTREG( BLEND_CONTROL_REG, 0 );
+    switch (pScrn->depth) {
+    case 8:
+	OUTREG( COL_CHROMA_KEY_CONTROL_REG,
+	    0x37000000 | (pPriv->colorKey & 0xFF) );
+	OUTREG( CHROMA_KEY_UPPER_BOUND_REG,
+	    0x00000000 | (pPriv->colorKey & 0xFF) );
+	break;
+    case 15:
+	OUTREG( COL_CHROMA_KEY_CONTROL_REG,
+	    0x05000000 | (red<<19) | (green<<11) | (blue<<3) );
+	OUTREG( CHROMA_KEY_UPPER_BOUND_REG,
+	    0x00000000 | (red<<19) | (green<<11) | (blue<<3) );
+	break;
+    case 16:
+	OUTREG( COL_CHROMA_KEY_CONTROL_REG,
+	    0x16000000 | (red<<19) | (green<<10) | (blue<<3) );
+	OUTREG( CHROMA_KEY_UPPER_BOUND_REG,
+	    0x00020002 | (red<<19) | (green<<10) | (blue<<3) );
+	break;
+    case 24:
+	OUTREG( COL_CHROMA_KEY_CONTROL_REG,
+	    0x17000000 | (red<<16) | (green<<8) | (blue) );
+	OUTREG( CHROMA_KEY_UPPER_BOUND_REG,
+	    0x00000000 | (red<<16) | (green<<8) | (blue) );
+	break;
     }
-    else {
-	switch (pScrn->depth) {
-	case 8:
-	    OUTREG( COL_CHROMA_KEY_CONTROL_REG,
-		0x37000000 | (pPriv->colorKey & 0xFF) );
-	    OUTREG( CHROMA_KEY_UPPER_BOUND_REG,
-		0x00000000 | (pPriv->colorKey & 0xFF) );
-	    break;
-	case 15:
-	    OUTREG( COL_CHROMA_KEY_CONTROL_REG, 
-		0x05000000 | (red<<19) | (green<<11) | (blue<<3) );
-	    OUTREG( CHROMA_KEY_UPPER_BOUND_REG, 
-		0x00000000 | (red<<19) | (green<<11) | (blue<<3) );
-	    break;
-	case 16:
-	    OUTREG( COL_CHROMA_KEY_CONTROL_REG, 
-		0x16000000 | (red<<19) | (green<<10) | (blue<<3) );
-	    OUTREG( CHROMA_KEY_UPPER_BOUND_REG, 
-		0x00020002 | (red<<19) | (green<<10) | (blue<<3) );
-	    break;
-	case 24:
-	    OUTREG( COL_CHROMA_KEY_CONTROL_REG, 
-		0x17000000 | (red<<16) | (green<<8) | (blue) );
-	    OUTREG( CHROMA_KEY_UPPER_BOUND_REG, 
-		0x00000000 | (red<<16) | (green<<8) | (blue) );
-	    break;
-	}    
 
-	/* We use destination colorkey */
-	OUTREG( BLEND_CONTROL_REG, 0x05000000 );
-    }
+    /* We use destination colorkey */
+    OUTREG( BLEND_CONTROL_REG, 0x05000000 );
 }
 
 void SavageSetColorKeyNew(ScrnInfoPtr pScrn) 
@@ -660,42 +652,35 @@ void SavageSetColorKeyNew(ScrnInfoPtr pScrn)
     green = (pPriv->colorKey & pScrn->mask.green) >> pScrn->offset.green;
     blue = (pPriv->colorKey & pScrn->mask.blue) >> pScrn->offset.blue;
 
-    if( !pPriv->colorKey ) {
-	OUTREG( SEC_STREAM_CKEY_LOW, 0 );
-	OUTREG( SEC_STREAM_CKEY_UPPER, 0 );
-	OUTREG( BLEND_CONTROL, psav->blendBase | 0x08 );
+    switch (pScrn->depth) {
+    case 8:
+	OUTREG( SEC_STREAM_CKEY_LOW,
+	    0x47000000 | (pPriv->colorKey & 0xFF) );
+	OUTREG( SEC_STREAM_CKEY_UPPER,
+	    0x47000000 | (pPriv->colorKey & 0xFF) );
+	break;
+    case 15:
+	OUTREG( SEC_STREAM_CKEY_LOW,
+	    0x45000000 | (red<<19) | (green<<11) | (blue<<3) );
+	OUTREG( SEC_STREAM_CKEY_UPPER,
+	    0x45000000 | (red<<19) | (green<<11) | (blue<<3) );
+	break;
+    case 16:
+	OUTREG( SEC_STREAM_CKEY_LOW,
+	    0x46000000 | (red<<19) | (green<<10) | (blue<<3) );
+	OUTREG( SEC_STREAM_CKEY_UPPER,
+	    0x46020002 | (red<<19) | (green<<10) | (blue<<3) );
+	break;
+    case 24:
+	OUTREG( SEC_STREAM_CKEY_LOW,
+	    0x47000000 | (red<<16) | (green<<8) | (blue) );
+	OUTREG( SEC_STREAM_CKEY_UPPER,
+	    0x47000000 | (red<<16) | (green<<8) | (blue) );
+	break;
     }
-    else {
-	switch (pScrn->depth) {
-	case 8:
-	    OUTREG( SEC_STREAM_CKEY_LOW, 
-		0x47000000 | (pPriv->colorKey & 0xFF) );
-	    OUTREG( SEC_STREAM_CKEY_UPPER,
-		0x47000000 | (pPriv->colorKey & 0xFF) );
-	    break;
-	case 15:
-	    OUTREG( SEC_STREAM_CKEY_LOW, 
-		0x45000000 | (red<<19) | (green<<11) | (blue<<3) );
-	    OUTREG( SEC_STREAM_CKEY_UPPER, 
-		0x45000000 | (red<<19) | (green<<11) | (blue<<3) );
-	    break;
-	case 16:
-	    OUTREG( SEC_STREAM_CKEY_LOW, 
-		0x46000000 | (red<<19) | (green<<10) | (blue<<3) );
-	    OUTREG( SEC_STREAM_CKEY_UPPER, 
-		0x46020002 | (red<<19) | (green<<10) | (blue<<3) );
-	    break;
-	case 24:
-	    OUTREG( SEC_STREAM_CKEY_LOW, 
-		0x47000000 | (red<<16) | (green<<8) | (blue) );
-	    OUTREG( SEC_STREAM_CKEY_UPPER, 
-		0x47000000 | (red<<16) | (green<<8) | (blue) );
-	    break;
-	}    
 
-	/* We assume destination colorkey */
-	OUTREG( BLEND_CONTROL, psav->blendBase | 0x08 );
-    }
+    /* We assume destination colorkey */
+    OUTREG( BLEND_CONTROL, psav->blendBase | 0x08 );
 }
 
 

@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xv/Xv.c,v 1.18 2003/11/29 01:02:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xv/Xv.c,v 1.19 2005/01/27 02:28:59 dawes Exp $ */
 /*
 ** File: 
 **
@@ -54,7 +54,6 @@ SOFTWARE.
 #include "Xvlibint.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
-#include <X11/extensions/XShm.h>
 
 static XExtensionInfo _xv_info_data;
 static XExtensionInfo *xv_info = &_xv_info_data;
@@ -63,9 +62,9 @@ static char *xv_extension_name = XvName;
 #define XvCheckExtension(dpy, i, val) \
   XextCheckExtension(dpy, i, xv_extension_name, val)
 
-static char *xv_error_string();
-static int xv_close_display();
-static Bool xv_wire_to_event();
+static XEXT_ERROR_STRING_PROTO(xv_error_string);
+static XEXT_CLOSE_DISPLAY_PROTO(xv_close_display);
+static Bool xv_wire_to_event(Display *dpy, XEvent *host, xEvent *wire);
 
 static XExtensionHooks xv_extension_hooks = {
     NULL,                               /* create_gc */

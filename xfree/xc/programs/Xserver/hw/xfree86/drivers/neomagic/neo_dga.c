@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.5 2002/04/04 14:05:44 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.7 2004/12/07 15:59:19 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -29,14 +29,13 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "neo.h"
 #include "neo_reg.h"
 #include "dgaproc.h"
 #include "vgaHW.h"
 
-static Bool NEO_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-					int *, int *, int *);
+static Bool NEO_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				unsigned int *, unsigned int *, unsigned int *);
 static Bool NEO_SetMode(ScrnInfoPtr, DGAModePtr);
 static void NEO_Sync(ScrnInfoPtr);
 static int  NEO_GetViewport(ScrnInfoPtr);
@@ -45,7 +44,7 @@ static void NEO_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void NEO_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 #if 0
 static void NEO_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
-					unsigned long);
+			      unsigned long);
 #endif
 
 static
@@ -260,18 +259,18 @@ static Bool
 NEO_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     NEOPtr pNEO = NEOPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pNEO->NeoLinearAddr;
+    *mem = pNEO->NeoLinearAddr;
     *size = pNEO->NeoFbMapSize;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

@@ -23,7 +23,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_driver.c,v 1.6 2004/01/10 22:31:53 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_driver.c,v 1.7 2004/11/26 11:48:48 tsi Exp $ */
 
 #include "riva_include.h"
 
@@ -212,15 +212,6 @@ static const OptionInfoRec RivaOptions[] = {
  */
 static int pix24bpp = 0;
 
-/* 
- * ramdac info structure initialization
- */
-static RivaRamdacRec DacInit = {
-        FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL,
-        0, NULL, NULL, NULL, NULL
-}; 
-
-
 
 static Bool
 RivaGetRec(ScrnInfoPtr pScrn)
@@ -234,9 +225,7 @@ RivaGetRec(ScrnInfoPtr pScrn)
         return TRUE;
 
     pScrn->driverPrivate = xnfcalloc(sizeof(RivaRec), 1);
-    /* Initialise it */
 
-    RivaPTR(pScrn)->Dac = DacInit;
     return TRUE;
 }
 
@@ -1041,16 +1030,12 @@ RivaModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     RivaPtr pRiva = RivaPTR(pScrn);
     RivaRegPtr rivaReg;
 
-    
-    /* Initialise the ModeReg values */
-    if (!vgaHWInit(pScrn, mode))
-	return FALSE;
     pScrn->vtSema = TRUE;
 
     vgaReg = &hwp->ModeReg;
     rivaReg = &pRiva->ModeReg;
 
-    if(!(*pRiva->ModeInit)(pScrn, mode))
+    if(!RivaDACInit(pScrn, mode))
         return FALSE;
 
     pRiva->riva.LockUnlock(&pRiva->riva, 0);
@@ -1058,7 +1043,7 @@ RivaModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     /* Program the registers */
     vgaHWProtect(pScrn, TRUE);
 
-    (*pRiva->Restore)(pScrn, vgaReg, rivaReg, FALSE);
+    RivaDACRestore(pScrn, vgaReg, rivaReg, FALSE);
 
     RivaResetGraphics(pScrn);
 
@@ -1085,7 +1070,7 @@ RivaRestore(ScrnInfoPtr pScrn)
 
     /* Only restore text mode fonts/text for the primary card */
     vgaHWProtect(pScrn, TRUE);
-    (*pRiva->Restore)(pScrn, vgaReg, rivaReg, pRiva->Primary);
+    RivaDACRestore(pScrn, vgaReg, rivaReg, pRiva->Primary);
     vgaHWProtect(pScrn, FALSE);
 }
 
@@ -1131,7 +1116,6 @@ RivaScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ScrnInfoPtr pScrn;
     vgaHWPtr hwp;
     RivaPtr pRiva;
-    RivaRamdacPtr Rivadac;
     int ret;
     VisualPtr visual;
     unsigned char *FBStart;
@@ -1146,7 +1130,6 @@ RivaScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     hwp = VGAHWPTR(pScrn);
     pRiva = RivaPTR(pScrn);
-    Rivadac = &pRiva->Dac;
 
     /* Map the Riva memory and MMIO areas */
     if (pRiva->FBDev) {
@@ -1317,7 +1300,7 @@ RivaScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialize colormap layer.  
 	Must follow initialization of the default colormap */
     if(!xf86HandleColormaps(pScreen, 256, 8,
-	(pRiva->FBDev ? fbdevHWLoadPalette : Rivadac->LoadPalette), 
+	(pRiva->FBDev ? fbdevHWLoadPalette : RivaDACLoadPalette), 
 	NULL, CMAP_RELOAD_ON_MODE_SWITCH | CMAP_PALETTED_TRUECOLOR))
 	return FALSE;
 
@@ -1382,6 +1365,6 @@ RivaSave(ScrnInfoPtr pScrn)
     vgaHWPtr pVga = VGAHWPTR(pScrn);
     vgaRegPtr vgaReg = &pVga->SavedReg;
 
-    (*pRiva->Save)(pScrn, vgaReg, rivaReg, pRiva->Primary);
+    RivaDACSave(pScrn, vgaReg, rivaReg, pRiva->Primary);
 }
 

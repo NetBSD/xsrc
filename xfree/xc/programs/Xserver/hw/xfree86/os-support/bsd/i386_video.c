@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/i386_video.c,v 1.5 2003/10/07 23:14:55 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/i386_video.c,v 1.6 2004/03/21 11:27:06 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -317,11 +317,11 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 }
 
 
-#ifdef USE_I386_IOPL
 /***************************************************************************/
 /* I/O Permissions section                                                 */
 /***************************************************************************/
 
+#ifdef USE_I386_IOPL
 static Bool ExtendedEnabled = FALSE;
 
 void
@@ -359,6 +359,47 @@ xf86DisableIO()
 
 #endif /* USE_I386_IOPL */
 
+#ifdef USE_AMD64_IOPL
+static Bool ExtendedEnabled = FALSE;
+
+void
+xf86EnableIO()
+{
+       if (ExtendedEnabled)
+               return;
+
+       if (amd64_iopl(TRUE) < 0)
+       {
+#ifndef __OpenBSD__
+               FatalError("%s: Failed to set IOPL for extended I/O",
+                          "xf86EnableIO");
+#else
+               FatalError("%s: Failed to set IOPL for extended I/O\n%s",
+                          "xf86EnableIO", SYSCTL_MSG);
+#endif
+       }
+       ExtendedEnabled = TRUE;
+
+       return;
+}
+       
+void
+xf86DisableIO()
+{
+       if (!ExtendedEnabled)
+               return;
+
+       if (amd64_iopl(FALSE) == 0) {
+               ExtendedEnabled = FALSE;
+       }
+       /* Otherwise, the X server has revoqued its root uid, 
+          and thus cannot give up IO privileges any more */
+          
+       return;
+}
+#endif /* USE_AMD64_IOPL */
+
+
 #ifdef USE_DEV_IO
 static int IoFd = -1;
 
@@ -386,9 +427,7 @@ xf86DisableIO()
 	IoFd = -1;
 	return;
 }
-
-#endif
-
+#endif /* USE_DEV_IO */
 
 /***************************************************************************/
 /* Interrupt Handling section                                              */

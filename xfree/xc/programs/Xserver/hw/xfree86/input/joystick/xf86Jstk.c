@@ -22,16 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/xf86Jstk.c,v 1.6 2001/12/26 21:51:59 dawes Exp $ */
-
-#include <xf86Version.h>
-
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
-#define XFREE86_V4 1
-#endif
-
-#ifdef XFREE86_V4
-/* post 3.9 headers */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/xf86Jstk.c,v 1.7 2004/04/26 22:26:11 dawes Exp $ */
 
 #include <misc.h>
 #include <xf86.h>
@@ -42,9 +33,7 @@
 #include <exevents.h>		/* Needed for InitValuator/Proximity stuff */
 #include <keysym.h>
 
-#ifdef XFree86LOADER
 #include <xf86Module.h>
-#endif
 
 #define wait_for_fd(fd) xf86WaitForInput((fd), 1000)
 #define tcflush(fd, n) xf86FlushInput((fd))
@@ -52,33 +41,6 @@
 #define read(a,b,c) xf86ReadSerial((a),(b),(c))
 #undef write
 #define write(a,b,c) xf86WriteSerial((a),(char*)(b),(c))
-#define XCONFIG_PROBED "(==)"
-#define XCONFIG_GIVEN "(**)"
-#define xf86Verbose 1
-
-#else /* pre 3.9 headers */
-
-#define NEED_EVENTS
-#include "X.h"
-#include "Xproto.h"
-#include "misc.h"
-#include "inputstr.h"
-#include "scrnintstr.h"
-#include "XI.h"
-#include "XIproto.h"
-
-#include "compiler.h"
-
-#include "xf86.h"
-#include "xf86Priv.h"
-#include "xf86Xinput.h"
-#include "xf86_OSlib.h"
-#include "atKeynames.h"
-#include "xf86Version.h"
-
-#include "osdep.h"
-
-#endif /* pre 3.9 headers */
 
 /******************************************************************************
  * debugging macro
@@ -120,58 +82,6 @@ typedef struct
   int           jstkDelta;      /* delta cursor */
 } JoystickDevRec, *JoystickDevPtr;
 
-#ifndef XFREE86_V4
-/******************************************************************************
- * configuration stuff
- *****************************************************************************/
-#define DEVICENAME 1
-#define TIMEOUT 2
-#define MAXX 3
-#define MAXY 4
-#define MINX 5
-#define MINY 6
-#define CENTERX 7
-#define CENTERY 8
-#define DELTA 9
-#define PORT 10
-#define DEBUG_LEVEL 11
-#define HISTORY_SIZE 12
-#define ALWAYS_CORE 13
-
-static SymTabRec JstkTab[] = {
-  { ENDSUBSECTION,	"endsubsection" },
-  { DEVICENAME,		"devicename" },
-  { TIMEOUT,		"timeout" },
-  { MAXX,		"maximumxposition" },
-  { MAXY,		"maximumyposition" },
-  { MINX,		"minimumxposition" },
-  { MINY,		"minimumyposition" },
-  { CENTERX,		"centerx" },
-  { CENTERY,		"centery" },
-  { DELTA,		"delta" },
-  { PORT,		"port" },
-  { DEBUG_LEVEL,	"debuglevel" },
-  { HISTORY_SIZE,	"historysize" },
-  { ALWAYS_CORE,        "alwayscore" },
-  { -1,			"" },
-};
-
-/******************************************************************************
- * external declarations
- *****************************************************************************/
-
-extern void xf86eqEnqueue(
-    xEventPtr /*e*/
-);
-
-extern void miPointerDeltaCursor(
-    int /*dx*/,
-    int /*dy*/,
-    unsigned long /*time*/
-);
-
-#endif /* ! XFREE86_V4 */
-
 extern int xf86JoystickGetState(
     int   /*fd*/,
     int * /*x*/,
@@ -193,146 +103,6 @@ int * /*centerX*/,
 int * /*centerY*/
 );
 
-#ifndef XFREE86_V4
-/*
- * xf86JstkConfig --
- *      Configure the device.
- */
-static Bool
-xf86JstkConfig(LocalDevicePtr    *array,
-               int               index,
-               int               max,
-               LexPtr            val)
-{
-  LocalDevicePtr        dev = array[index];
-  JoystickDevPtr        priv = (JoystickDevPtr)(dev->private);
-  int token;
-  
-  DBG(1, ErrorF("xf86JstkConfig\n"));
-      
-  /* Set defaults */
-  priv->jstkOldX = -1;
-  priv->jstkOldY = -1;
-  priv->jstkOldButtons = -1;
-  priv->jstkFd = -1;
-  priv->jstkTimeout = 0;
-
-  while ((token = xf86GetToken(JstkTab)) != ENDSUBSECTION) {
-    switch(token) {
-    case DEVICENAME:
-      if (xf86GetToken(NULL) != STRING) xf86ConfigError("Option string expected");
-      dev->name = strdup(val->str);
-      break;
-      
-    case PORT:
-      if (xf86GetToken(NULL) != STRING) xf86ConfigError("Option string expected");
-      priv->jstkDevice = strdup(val->str);
-      break;
-
-    case TIMEOUT:
-      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("Joystick Timeout expected");
-      priv->jstkTimeout = val->num;
-     break;
-
-    case MAXX:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick MaximumXPosition expected");
-      priv->jstkMaxX = val->num;
-     break;
-      
-    case MAXY:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick MaximumYPosition expected");
-      priv->jstkMaxY = val->num;
-     break;
-      
-    case MINX:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick MinimumXPosition expected");
-      priv->jstkMinX = val->num;
-     break;
-      
-    case MINY:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick MinimumYPosition expected");
-      priv->jstkMinY = val->num;
-     break;
-      
-    case CENTERX:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick CenterX expected");
-      priv->jstkCenterX = val->num;
-     break;
-      
-    case CENTERY:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick CenterY expected");
-      priv->jstkCenterY = val->num;
-     break;
-      
-    case DELTA:
-      if (xf86GetToken(NULL) != NUMBER)
-        xf86ConfigError("Joystick Delta expected");
-      priv->jstkDelta = val->num;
-     break;
-      
-    case DEBUG_LEVEL:
-	if (xf86GetToken(NULL) != NUMBER)
-	    xf86ConfigError("Option number expected");
-	debug_level = val->num;
-	if (xf86Verbose) {
-#if DEBUG
-	    ErrorF("%s Joystick debug level sets to %d\n", XCONFIG_GIVEN,
-		   debug_level);      
-#else
-	    ErrorF("%s Joystick debug level not sets to %d because debugging is not compiled\n",
-		   XCONFIG_GIVEN, debug_level);
-#endif
-	}
-        break;
-
-    case HISTORY_SIZE:
-      if (xf86GetToken(NULL) != NUMBER)
-	xf86ConfigError("Option number expected");
-      dev->history_size = val->num;
-      if (xf86Verbose)
-	ErrorF("%s Joystick Motion history size is %d\n", XCONFIG_GIVEN,
-	       dev->history_size);      
-      break;
-	    
-    case ALWAYS_CORE:
-	xf86AlwaysCore(dev, TRUE);
-	if (xf86Verbose)
-	    ErrorF("%s Joystick device always stays core pointer\n",
-		   XCONFIG_GIVEN);
-	break;
-
-    case EOF:
-      FatalError("Unexpected EOF (missing EndSubSection)");
-      break; /* :-) */
-
-    default:
-      xf86ConfigError("Joystick subsection keyword expected");
-      break;
-    }
-  }
-  
-  DBG(1, ErrorF("xf86JstkConfig timeout=%d name=%s maxx=%d maxy=%d minx=%d miny=%d "
-		"centerx=%d centery=%d delta=%d\n",
-		priv->jstkTimeout, priv->jstkDevice, priv->jstkMaxX, priv->jstkMaxY,
-		priv->jstkMinX, priv->jstkMinY, priv->jstkCenterX, priv->jstkCenterY,
-		priv->jstkDelta));
-
-  if (xf86Verbose) {
-    ErrorF("%s %s: timeout=%d port=%s maxx=%d maxy=%d minx=%d miny=%d\n"
-	   "\tcenterx=%d centery=%d delta=%d\n", XCONFIG_GIVEN, dev->name,
-	   priv->jstkTimeout, priv->jstkDevice, priv->jstkMaxX, priv->jstkMaxY,
-	   priv->jstkMinX, priv->jstkMinY, priv->jstkCenterX, priv->jstkCenterY,
-	   priv->jstkDelta);
-  }
-  return Success;
-}
-#endif
 
 /*
  ***************************************************************************
@@ -510,9 +280,6 @@ xf86JstkProc(DeviceIntPtr       pJstk,
 	  xf86MotionHistoryAllocate(local);
 
           xf86JoystickInit();
-#ifndef XFREE86_V4
-          AssignTypeAndName(pJstk, local->atom, local->name);
-#endif
         }
 
       break; 
@@ -570,9 +337,6 @@ xf86JstkAllocate(void)
   
   local->name = "JOYSTICK";
   local->flags = 0;
-#ifndef XFREE86_V4
-  local->device_config = xf86JstkConfig;
-#endif
   local->device_control = xf86JstkProc;
   local->read_input = NULL;
   local->close_proc = NULL;
@@ -613,31 +377,6 @@ DeviceAssocRec joystick_assoc =
   xf86JstkAllocate              /* device_allocate */
 };
 
-#ifndef XFREE86_V4
-
-#ifdef DYNAMIC_MODULE
-/*
- * entry point of dynamic loading
- */
-int
-#ifndef DLSYM_BUG
-init_module(unsigned long	server_version)
-#else
-init_xf86Jstk(unsigned long     server_version)
-#endif
-{
-    xf86AddDeviceAssoc(&joystick_assoc);
-
-    if (server_version != XF86_VERSION_CURRENT) {
-	ErrorF("Warning: Joystick module compiled for version%s\n", XF86_VERSION);
-	return 0;
-    } else {
-	return 1;
-    }
-}
-#endif
-
-#else /* ! XFREE86_V4 */
 
 /*
  ***************************************************************************
@@ -784,7 +523,4 @@ XF86ModuleData joystickModuleData = {&xf86JstkVersionRec,
 					 xf86JstkUnplug};
 #endif /* XFree86LOADER */
 
-#endif /* ! XFREE86_V4 */
-
-	
 /* end of xf86Jstk.c */

@@ -26,7 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Copyright 2002 SuSE Linux AG, Author: Egbert Eich
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_video.c,v 1.7 2003/11/10 18:22:23 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_video.c,v 1.8 2004/03/29 16:25:17 tsi Exp $ */
 
 #include "neo.h"
 #include "neo_video.h"
@@ -36,7 +36,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "dixstruct.h"
 #include "xaa.h"
-#include "xaalocal.h"
 
 static XF86VideoAdaptorPtr NEOSetupVideo(ScreenPtr);
 

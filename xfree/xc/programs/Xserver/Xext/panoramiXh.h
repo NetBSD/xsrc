@@ -1,8 +1,15 @@
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXh.h,v 1.3 2003/11/17 22:20:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXh.h,v 1.4 2004/06/25 15:44:42 tsi Exp $ */
 
 /*
  *	Server dispatcher function replacements
  */
+
+#ifndef PANORAMIXH_H
+#define PANORAMIXH_H 1
+
+#include <X11/Xproto.h>
+#include "dixstruct.h"
+#include "scrnintstr.h"
 
 extern int PanoramiXCreateWindow(ClientPtr client);
 extern int PanoramiXChangeWindowAttributes(ClientPtr client);
@@ -76,3 +83,4 @@ extern xConnSetupPrefix connSetupPrefix;
 extern ScreenInfo *GlobalScrInfo;
 extern int (* SavedProcVector[256]) (ClientPtr client);
 
+#endif

@@ -2,16 +2,25 @@
 
                        Compiled by The XFree86 Project
 
-                              22 February 2004
+                                9 March 2005
 
 1.  Introduction
 
-XFree86[tm] code without an explicit copyright or not explicitly marked as
-being in the public domain is covered by the XFree86 1.0 copyright/license as
-shown below (section 5.11, page 1).  Portions of code are covered by other
+The information in this document is intended to be complete and accurate only
+for formal XFree86 releases.  It may not be complete or accurate for develop-
+ment code obtained directly from the CVS repository or from development,
+experimental, release candidate, or other snapshots.  For licensing informa-
+tion about development code, contact the relevant authors, contributors and
+copyright holders.
+
+XFree86® code without an explicit copyright or not explicitly marked as being
+in the public domain is covered by the XFree86 1.1 copyright/license as shown
+below (section 4., page 1).  Portions of code are covered by other
 licenses/copyrights, as shown in subsequent sections.  In all cases, see
 individual source files for specific license details, copyright owner infor-
 mation, and copyright dates.
+
+Note: XFree86 is a registered trademark of The XFree86 Project, Inc.
 
 2.  XFree86 Project Licensing Policy
 
@@ -40,41 +49,20 @@ XFree86 licensing policy, please contact us.
 
 3.1  Open Source
 
-With one possible exception, we believe that all of the code in this release
-(4.4.0) of XFree86 meet the requirements of the Open Source Definition
-<URL:http://opensource.org/docs/definition.php>, as maintained by the Open
-Source Initiative (OSI) <URL:http://opensource.org/>.
-
-The one exception is a file containing font decompression code
-(xc/lib/font/fontfile/decompress.c) which contains a licence that does not
-explicitly give permission to make modifications.  This file has been part of
-the X11 sample implementation since at least X11R5, and has been present in
-all versions of XFree86.
+We believe that all of the code in this release (4.5.0) of XFree86 meet the
+requirements of the Open Source Definition <URL:http://open-
+source.org/docs/definition.php>, as maintained by the Open Source Initiative
+(OSI) <URL:http://opensource.org/>.
 
 3.2  Free Software
 
-We believe that most of the code in this release (4.4.0) of XFree86 meets the
+We believe that most of the code in this release (4.5.0) of XFree86 meets the
 requirements of the Free Software definition <URL:http://www.fsf.org/philoso-
 phy/free-sw.html> as defined by the Free Software Foundation (FSF)
 <URL:http://www.fsf.org/>.
 
-The exceptions, aside from the font decompression code mentioned in the pre-
-vious section, are the GLX extension and CID font code that are covered by
-the SGI Free Software License B, version 1.1 (section 9., page 1).
-
-3.3  GPL-compatible
-
-The client-side X libraries distributed with this release (4.4.0), with the
-exception of the GL, GLU, and GLw libraries, carry a subset of the acceptable
-licenses that satisfy an additional condition: they are GPL-compatible.  The
-GL, GLU, and GLw libraries contain code covered by the SGI Free Software
-License B, version 1.1 (section 9., page 1), which is not GPL-compatible.
-
-Other portions of XFree86, including the X servers, may include code with
-licenses that are not GPL-compatible.  Example of such licenses include some
-of the BSD-style licenses (section 6.4, page 1), the FreeType License (sec-
-tion 12., page 1), the SGI licenses (section 9., page 1) and the XFree86
-License version 1.1 (section 4., page 1).
+Exceptions to this include the GLX extension and CID font code that are cov-
+ered by the SGI Free Software License B, version 1.1 (section 9., page 1).
 
 4.  XFree86 License (version 1.1)
 
@@ -82,7 +70,7 @@ The text of the XFree86 1.1 license is included below.  A FAQ for this
 licence can be found at the XFree86 web site
 <URL:http://www.xfree86.org/legal/licenses.html>
 
-Copyright (C) 1994-2004 The XFree86 Project, Inc.
+Copyright (C) 1994-2005 The XFree86 Project, Inc.
 
 All rights reserved.
 
@@ -198,7 +186,7 @@ Copyright (C) 2000 by Rainer Keller
 
 Copyright (C) 1999-2003 by Peter Kunzmann, Citron GmbH, Germany.
 
-Copyright (C) 1994 through 2004 by Marc Aurele La France (TSI @ UQV),
+Copyright (C) 1994 through 2005 by Marc Aurele La France (TSI @ UQV),
 tsi@xfree86.org
 
 Copyright (C) 1996 by Steven Lang
@@ -268,7 +256,7 @@ Copyright (C) 1999, 2000 SuSE, Inc.
 
 Copyright (C) 2002 by SuSE Linux AG
 
-Copyright (C) 1993-2004 by The XFree86 Project, Inc.
+Copyright (C) 1993-2005 by The XFree86 Project, Inc.
 
 Copyright (C) 1999-2001 by Thomas Thanner, Citron GmbH, Germany.
 
@@ -488,13 +476,12 @@ All Rights Reserved
 
 License to use, copy, modify, and distribute this software and its documenta-
 tion for any purpose and without fee is hereby granted, provided that
-licensee provides a license to IBM, Corp. to use, copy, modify, and dis-
-tribute derivative works and their documentation for any purpose and without
-fee, that the above copyright notice appear in all copies and that both that
-copyright notice and this permission notice appear in supporting documenta-
-tion, and that the name of IBM not be used in advertising or publicity per-
-taining to distribution of the software without specific, written prior per-
-mission.
+licensee provides a license to IBM, Corp. to use, copy, modify, and distrib-
+ute derivative works and their documentation for any purpose and without fee,
+that the above copyright notice appear in all copies and that both that copy-
+right notice and this permission notice appear in supporting documentation,
+and that the name of IBM not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior permission.
 
 IBM PROVIDES THIS SOFTWARE "AS IS", WITHOUT ANY WARRANTIES OF ANY KIND,
 EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO ANY IMPLIED WAR-
@@ -592,7 +579,7 @@ ten prior permission.
 
 5.11  XFree86 License (version 1.0)
 
-Copyright (C) 1994-2004 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-2005 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -669,8 +656,6 @@ Copyright (c) 1999 Chris Costello
 Copyright (c) 1995,1999 Theo de Raadt.
 
 Copyright (c) 2001-2002 Damien Miller.
-
-Copyright (c) 1994 Paul Vojta.
 
 All Rights Reserved.
 
@@ -817,9 +802,9 @@ AGE.
 
 6.7  X-Oz Technologies
 
-Copyright 2003 by David H. Dawes.
+Copyright 2003, 2004, 2005 by David H. Dawes.
 
-Copyright 2003 by X-Oz Technologies.
+Copyright 2003, 2004, 2005 by X-Oz Technologies.
 
 All rights reserved.
 
@@ -1651,7 +1636,7 @@ the sale, use or other dealings in this Font Software without prior written
 authorization from the Gnome Foundation or Bitstream Inc., respectively. For
 further information, contact: fonts at gnome dot org.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.32 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.41 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.33 2004/02/24 03:49:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.46 2005/03/17 01:11:54 dawes Exp $

@@ -5,6 +5,15 @@
  * This driver is a merge of the Elographics driver (from Patrick Lecoanet) and
  * the driver for Fujitsu Pen Computers from Rob Tsuk and John Apfelbaum.
  * 
+ * Modified for Stylistic 3400 passive pen support by David Clay
+ * Fixed processing of all packets
+ * Detangled and simplified if-statement logic
+ * Fixed hover-mode pointer movement
+ * Added Passive parameter for passive displays
+ * Added switch 3 for "right" mouse button
+ * I might have broken active pen support. I can't test it.
+ *   January 2005 <dave at claysrus.com>
+ *
  * Stylistic 500, 1000, 1200, 2300 Support fixed by John Apfelbaum
  *   June 2001 <johnapf@linuxlsate.com>
  *
@@ -40,7 +49,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/xf86Fpit.c,v 1.4 2003/11/03 05:11:47 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/xf86Fpit.c,v 1.7 2005/02/02 04:34:24 dawes Exp $ */
 
 #include <xf86Version.h>
 
@@ -58,10 +67,7 @@
 #  include <xf86Xinput.h>
 #  include <exevents.h>
 
-#  ifdef XFree86LOADER
-#    include <xf86Module.h>
-#  endif
-
+#  include <xf86Module.h>
 
 
 /*
@@ -80,12 +86,18 @@
 #define FPIT_MIN_Y		0
 
 #define PHASING_BIT	0x80
-#define PROXIMITY_BIT	0x40
+#define PROXIMITY_BIT	0x20 /* DMC: This was 0x40 but the chart says its bit 5 which is 0x20 */
 /*#define TABID_BIT	0x20  */
 #define XSIGN_BIT	0x10
 #define YSIGN_BIT	0x08
 #define BUTTON_BITS	0x07
 #define COORD_BITS	0x7f
+
+/* DMC: Added these */
+#define SW1	0x01
+#define SW2	0x02
+#define SW3	0x04
+
 
 /*
  ***************************************************************************
@@ -127,6 +139,7 @@ typedef struct {
 	int fpitBaud;		/* Baud rate of device */
 	unsigned char fpitData[BUFFER_SIZE];	/* data read on the device */
 	int fpitSwapXY;		/* swap X and Y values */
+	int fpitPassive;	/* translate passive buttons */
 } FpitPrivateRec, *FpitPrivatePtr;
 
 
@@ -156,12 +169,6 @@ static Bool xf86FpitConvert(LocalDevicePtr local, int first, int num, int v0, in
 		*x = xf86ScaleAxis(v0, 0, priv->screen_width, priv->fpitMinX, priv->fpitMaxX);
 		*y = xf86ScaleAxis(v1, 0, priv->screen_height, priv->fpitMinY, priv->fpitMaxY);
 	}
-	/*
-	 * Need to check if still on the correct screen.
-	 * This call is here so that this work can be done after
-	 * calib and before posting the event.
-	 */
-	xf86XInputSetScreen(local, priv->screen_no, *x, *y);
 	return TRUE;
 }
 
@@ -172,12 +179,16 @@ static Bool xf86FpitConvert(LocalDevicePtr local, int first, int num, int v0, in
 static void xf86FpitReadInput(LocalDevicePtr local)
 {
 	FpitPrivatePtr priv = (FpitPrivatePtr) local->private;
-	int len, loop, found;
+	int len, loop;
 	int is_core_pointer;
 	int x, y, buttons, prox;
 	DeviceIntPtr device;
+	int conv_x, conv_y;
+	
+  do { /* keep reading blocks until there are no more */
+
 	/* Read data into buffer */
-	len = xf86ReadSerial(local->fd, priv->fpitData, BUFFER_SIZE);
+	len = xf86ReadSerial(local->fd, priv->fpitData+priv->fpitIndex, BUFFER_SIZE-priv->fpitIndex);
 	if (len <= 0) {
 		Error("error reading FPIT device");
 		priv->fpitIndex = 0;
@@ -189,28 +200,16 @@ static void xf86FpitReadInput(LocalDevicePtr local)
 	   can look through the data backwards to find the last full and valid
 	   position. (This may make cursor movement a bit faster) */
 
+	/* DMC: We want to process ALL packets! This way, all points will come
+			through and drawing curves are smoother. Also we won't miss any
+			button events.
+	*/
+
 	priv->fpitIndex += len;
-	found = 0;
-	for (loop = priv->fpitIndex - 5; loop >= 0; loop--) {
-		if (priv->fpitData[loop] & 0x80) {
-			found = 1;
-			break;
-		}
-	}
 
-	if (!found) {
-		/* Wait for our next call when we should have some more data */
-
-		/* Check to see if the buffer is filling up - if so do something
-		   about it */
-		/* if (priv->fpitIndex > BUFFER_SIZE - 5) {
-		   memmove(priv->fpitData, priv->fpitData+priv->fpitIndex-5, 5) ;
-		   priv->fpitIndex = 5 ;
-		   }
-		 */
-		return;
-	}
-
+	/* process each packet in this block */
+	for (loop=0;loop+FPIT_PACKET_SIZE<=priv->fpitIndex;loop++) {
+		if (!(priv->fpitData[loop] & 0x80)) continue; /* we don't have a start bit yet */
 
 /* Format of 5 bytes data packet for Fpit Tablets
      Byte 1
@@ -240,52 +239,82 @@ static void xf86FpitReadInput(LocalDevicePtr local)
        bits 6-0 = Y13 - Y7
 */
 
-	x = (int) (priv->fpitData[loop + 1] & 0x7f) + ((int) (priv->fpitData[loop + 2] & 0x7f) << 7);
-	y = (int) (priv->fpitData[loop + 3] & 0x7f) + ((int) (priv->fpitData[loop + 4] & 0x7f) << 7);
-	/* Add in any offsets */
-	if (priv->fpitInvX)
-		x = priv->fpitMaxX - x + priv->fpitMinX;
-	if (priv->fpitInvY)
-		y = priv->fpitMaxY - y + priv->fpitMinY;
-	prox = (priv->fpitData[loop] & PROXIMITY_BIT) ? 0 : 1;
-	buttons = (priv->fpitData[loop] & BUTTON_BITS);
-	priv->fpitIndex = 0;
-	device = local->dev;
-	is_core_pointer = xf86IsCorePointer(device);
-	/* coordonates are ready we can send events */
-	if (prox) {
-		if (!(priv->fpitOldProximity))
-			if (!is_core_pointer)
-				xf86PostProximityEvent(device, 1, 0, 2, x, y);
-		if ((priv->fpitOldX != x) || (priv->fpitOldY != y)) {
-			if (priv->fpitOldProximity) {
-				xf86PostMotionEvent(device, 1, 0, 2, x, y);
-			}
+		x = (int) (priv->fpitData[loop + 1] & 0x7f) + ((int) (priv->fpitData[loop + 2] & 0x7f) << 7);
+		y = (int) (priv->fpitData[loop + 3] & 0x7f) + ((int) (priv->fpitData[loop + 4] & 0x7f) << 7);
+		/* Add in any offsets */
+		if (priv->fpitInvX)
+			x = priv->fpitMaxX - x + priv->fpitMinX;
+		if (priv->fpitInvY)
+			y = priv->fpitMaxY - y + priv->fpitMinY;
+		prox = (priv->fpitData[loop] & PROXIMITY_BIT) ? 0 : 1;
+		buttons = (priv->fpitData[loop] & BUTTON_BITS);
+		device = local->dev;
+		is_core_pointer = xf86IsCorePointer(device);
+
+		xf86FpitConvert(local, 0, 2, x, y, 0, 0, 0, 0, &conv_x, &conv_y);
+		xf86XInputSetScreen(local, priv->screen_no, conv_x, conv_y);
+
+		/* coordonates are ready we can send events */
+
+		if (prox!=priv->fpitOldProximity) /* proximity changed */
+			if (!is_core_pointer) xf86PostProximityEvent(device, prox, 0, 2, x, y);
+
+		if (priv->fpitOldX != x || priv->fpitOldY != y) /* position changed */
+			xf86PostMotionEvent(device, 1, 0, 2, x, y);
+
+		if (priv->fpitPassive) {
+			/*
+				For passive pen (Stylistic 3400, et al.):
+				sw1 = 1 if pen is moving
+				sw1 = 0 if pen is not moving
+				sw2 = 0 if pen is contacting the pad
+				sw2 = 1 if pen was lifted from the pad
+				sw3 = 1 if right mouse-button icon was chosen
+			*/
+			/* convert the pen button bits to actual mouse buttons */
+			if (buttons & SW2) buttons=0; /* the pen was lifted, so no buttons are pressed */
+			else if (buttons & SW3) buttons=SW3; /* the "right mouse" button was pressed, so send down event */
+			else if (prox) buttons=SW1; /* the "left mouse" button was pressed and we are not hovering, so send down event */
+			else buttons=0; /* We are in hover mode, so no buttons */
 		}
+		else { /* the active pen's buttons map directly to the mouse buttons */
+			if (!prox) buttons=0; /* We are in hover mode, so no buttons */
+		}
+	
+		/* DBG(2, ErrorF("%02d/%02d Prox=%d SW:%x Buttons:%x->%x (%d, %d)\n",
+			loop,priv->fpitIndex,prox,priv->fpitData[loop]&BUTTON_BITS,priv->fpitOldButtons,buttons,x,y));*/
 
 		if (priv->fpitOldButtons != buttons) {
 			int delta;
-			delta = buttons - priv->fpitOldButtons;
+			delta = buttons ^ priv->fpitOldButtons; /* set delta to the bits that have changed */
 			while (delta) {
 				int id;
 				id = ffs(delta);
 				delta &= ~(1 << (id - 1));
 				xf86PostButtonEvent(device, 1, id, (buttons & (1 << (id - 1))), 0, 2, x, y);
+				/* DBG(1, ErrorF("Button %d %s\n",id,(buttons & (1 << (id - 1)))?"DOWN":"UP"));*/
 			}
+			priv->fpitOldButtons = buttons;
 		}
-
-		priv->fpitOldButtons = buttons;
 		priv->fpitOldX = x;
 		priv->fpitOldY = y;
 		priv->fpitOldProximity = prox;
-	} else {		/* !PROXIMITY */
-		/* Any changes in buttons are ignored when !proximity */
-		if (!is_core_pointer)
-			if (priv->fpitOldProximity)
-				xf86PostProximityEvent(device, 0, 0, 2, x, y);
-		priv->fpitOldProximity = 0;
-	}
 
+		loop+=FPIT_PACKET_SIZE-1; /* advance to the next packet */
+	} /* for each packet */
+
+	/* remove from the data buffer all that we have processed */
+	if (loop<priv->fpitIndex) memmove(priv->fpitData, priv->fpitData+loop,priv->fpitIndex-loop);
+	priv->fpitIndex-=loop;
+
+	/* DMC: My system did not read the pen-up event until another event was
+			posted, the result was the button sticking down even though
+			I had lifted the pen. So I am checking the device for more data
+			and then retrieving it. This fixed it for me. I don't know if this is just my system. */
+
+  } while (xf86WaitForInput(local->fd,0)>0); /* go back and check for more data (we don't want to block for I/O!) */
+
+	return;
 }
 
 static void xf86FpitPtrCtrl(DeviceIntPtr device, PtrCtrl *ctrl)
@@ -309,7 +338,7 @@ static Bool xf86FpitControl(DeviceIntPtr dev, int mode)
 	LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
 	FpitPrivatePtr priv = (FpitPrivatePtr) (local->private);
 	unsigned char map[] = {
-		0, 1, 2
+		0, 1, 2, 3 /* DMC: changed this so we can use all three buttons */
 	};
 
 
@@ -446,6 +475,7 @@ static LocalDevicePtr xf86FpitAllocate(InputDriverPtr drv)
 	priv->fpitOldProximity = 0;
 	priv->fpitIndex = 0;
 	priv->fpitSwapXY = 0;
+	priv->fpitPassive = 0;
 	local->name = XI_TOUCHSCREEN;
 	local->flags = 0 /* XI86_NO_OPEN_ON_INIT */ ;
 	local->device_control = xf86FpitControl;
@@ -521,6 +551,7 @@ static InputInfoPtr xf86FpitInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->fpitInvX = xf86SetBoolOption(local->options, "InvertX", 0);
 	priv->fpitInvY = xf86SetBoolOption(local->options, "InvertY", 0);
 	priv->fpitSwapXY = xf86SetBoolOption(local->options, "SwapXY", 0);
+	priv->fpitPassive = xf86SetBoolOption(local->options, "Passive", 0);
 	str = xf86SetStrOption(local->options, "Rotate", 0);
 	if (!xf86NameCmp(str, "CW")) {
 		priv->fpitInvX = 1;
@@ -534,6 +565,7 @@ static InputInfoPtr xf86FpitInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86Msg(X_CONFIG, "FPIT invert X axis: %s\n", priv->fpitInvX ? "Yes" : "No");
 	xf86Msg(X_CONFIG, "FPIT invert Y axis: %s\n", priv->fpitInvY ? "Yes" : "No");
 	xf86Msg(X_CONFIG, "FPIT swap X and Y axis: %s\n", priv->fpitSwapXY ? "Yes" : "No");
+	xf86Msg(X_CONFIG, "FPIT Passive button mode: %s\n", priv->fpitPassive ? "Yes" : "No");
 	/* mark the device configured */
 	local->flags |= XI86_CONFIGURED;
 	return local;

@@ -1,7 +1,7 @@
 /*
  * GNU/Hurd shared library rules
  *
- * $XFree86: xc/config/cf/gnuLib.rules,v 1.10 2004/01/27 01:37:39 dawes Exp $
+ * $XFree86: xc/config/cf/gnuLib.rules,v 1.14 2004/04/08 01:40:19 dawes Exp $
  */
 
 /*
@@ -71,20 +71,26 @@ XCOMM XXX Maybe superfluous.
 #endif
 #endif
 
+#ifndef SetSonameRev
+#define SetSonameRev(rev) set +e; S=`expr rev : '\([0-9]*\)'`; set -e
+#endif
+
 /*
  * InstallSharedLibrary - generate rules to install the shared library.
  * NOTE: file must be executable, hence "INSTBINFLAGS"
  */
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,rev,dest)				@@\
-install:: Concat(lib,libname.so.rev) 					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
-	$(INSTALL) $(INSTALLFLAGS) $(INSTBINFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest @@\
-	@T=`echo Concat($(DESTDIR)dest/lib,libname.so.rev) | sed 's/\.[^\.]*$$//'`;\
-	  set -x; $(RM) $$T && $(LN) Concat(lib,libname.so.rev) $$T	@@\
-	@if $(SOSYMLINK); then (set -x; \
-	  $(RM) Concat($(DESTDIR)dest/lib,libname.so); \		@@\
-	  $(LN) Concat(lib,libname.so.rev) Concat($(DESTDIR)dest/lib,libname.so)); fi
+	$(INSTALL) $(INSTALLFLAGS) $(INSTBINFLAGS) Concat($(LIBPREFIX),libname.so.rev) $(DESTDIR)dest @@\
+	@SetSonameRev(rev); \						@@\
+	T=Concat($(DESTDIR)dest/$(LIBPREFIX),libname.so.$$S); \		@@\
+	  if [ rev != $$S ]; then (set -x; \				@@\
+		$(RM) $$T && $(LN) Concat($(LIBPREFIX),libname.so.rev) $$T); fi	@@\
+	  @if $(SOSYMLINK); then (set -x; \				@@\
+	  $(RM) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.so); \	@@\
+	  $(LN) Concat($(LIBPREFIX),libname.so.rev) Concat($(DESTDIR)dest/$(LIBPREFIX),libname.so)); fi
 #endif /* InstallSharedLibrary */
 
 /*
@@ -102,26 +108,28 @@ install:: Concat(lib,libname.so.rev) 					@@\
  */
 #ifndef SharedLibraryTarget
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
-AllTarget(Concat(lib,libname.so.rev))					@@\
+AllTarget(Concat($(LIBPREFIX),libname.so.rev))				@@\
 									@@\
-Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
+Concat($(LIBPREFIX),libname.so.rev):  solist $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	@SONAME=`echo $@ | sed 's/\.[^\.]*$$//'`; set -x; \		@@\
-		(cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
-		$(RM) $$SONAME; $(LN) $@ $$SONAME; \			@@\
+	@SetSonameRev(rev); \						@@\
+	SONAME=Concat($(LIBPREFIX),libname.so.$$S); \			@@\
+		(set -x; cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
+		if [ $$SONAME != $@ ]; then (set -x; \			@@\
+			$(RM) $$SONAME; $(LN) $@ $$SONAME); fi; \	@@\
 		LinkBuildSonameLibrary($$SONAME)			@@\
 	$(RM) $@							@@\
 	$(MV) $@~ $@							@@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat(lib,libname.so); \				@@\
-	  $(LN) $@ Concat(lib,libname.so)); fi				@@\
+	  $(RM) Concat($(LIBPREFIX),libname.so); \			@@\
+	  $(LN) $@ Concat($(LIBPREFIX),libname.so)); fi			@@\
 	LinkBuildLibrary($@)						@@\
-	LinkBuildLibraryMaybe(Concat(lib,libname.so),$(SOSYMLINK))	@@\
+	LinkBuildLibraryMaybe(Concat($(LIBPREFIX),libname.so),$(SOSYMLINK)) @@\
 									@@\
 clean::									@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	set -x; $(RM) Concat(lib,libname.so.$$MAJREV)			@@\
-	$(RM) Concat(lib,libname.so.rev) Concat(lib,libname.so)
+	@SetSonameRev(rev); \						@@\
+	set -x; $(RM) Concat($(LIBPREFIX),libname.so.$$S)		@@\
+	$(RM) Concat($(LIBPREFIX),libname.so.rev) Concat($(LIBPREFIX),libname.so)
 
 #endif /* SharedLibraryTarget */
 
@@ -130,26 +138,28 @@ clean::									@@\
  */
 #ifndef SharedDepLibraryTarget
 #define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
-AllTarget(Concat(lib,libname.so.rev))					@@\
+AllTarget(Concat($(LIBPREFIX),libname.so.rev))				@@\
 									@@\
-Concat(lib,libname.so.rev):  deplist $(EXTRALIBRARYDEPS)		@@\
+Concat($(LIBPREFIX),libname.so.rev):  deplist $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	@SONAME=`echo $@ | sed 's/\.[^\.]*$$//'`; set -x; \		@@\
-		(cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
-		$(RM) $$SONAME; $(LN) $@ $$SONAME; \			@@\
+	@SetSonameRev(rev); \						@@\
+	SONAME=Concat($(LIBPREFIX),libname.so.$$S); \			@@\
+		(set -x; cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
+		if [ $$SONAME != $@ ]; then (set -x; \			@@\
+			$(RM) $$SONAME; $(LN) $@ $$SONAME); fi; \	@@\
 		LinkBuildSonameLibrary($$SONAME)			@@\
 	$(RM) $@ 							@@\
 	$(MV) $@~ $@							@@\
 	@if $(SOSYMLINK); then (set -x; \				@@\
-	  $(RM) Concat(lib,libname.so); \				@@\
-	  $(LN) $@ Concat(lib,libname.so)); fi				@@\
+	  $(RM) Concat($(LIBPREFIX),libname.so); \			@@\
+	  $(LN) $@ Concat($(LIBPREFIX),libname.so)); fi			@@\
 	LinkBuildLibrary($@)						@@\
-	LinkBuildLibraryMaybe(Concat(lib,libname.so),$(SOSYMLINK))	@@\
+	LinkBuildLibraryMaybe(Concat($(LIBPREFIX),libname.so),$(SOSYMLINK)) @@\
 									@@\
 clean::									@@\
-	@MAJREV=`echo rev | sed 's/\.[^\.]*$$//'`; \			@@\
-	set -x; $(RM) Concat(lib,libname.so.$$MAJREV)			@@\
-	$(RM) Concat(lib,libname.so.rev) Concat(lib,libname.so)
+	@SetSonameRev(rev); \						@@\
+	set -x; $(RM) Concat($(LIBPREFIX),libname.so.$$S)		@@\
+	$(RM) Concat($(LIBPREFIX),libname.so.rev) Concat($(LIBPREFIX),libname.so)
 
 #endif /* SharedDepLibraryTarget */
 

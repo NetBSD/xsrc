@@ -1,4 +1,4 @@
-/*	$NetBSD: decPX.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decPX.c,v 1.1.6.1 2005/04/06 20:00:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ extern Bool cfbSetupScreen(
     int /*dpix*/,
     int /*dpiy*/,
     int /*width*/
-    #endif
+#endif
 );
 
 Bool	cfbCreateScreenResources(ScreenPtr);

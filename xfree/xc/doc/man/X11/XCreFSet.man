@@ -40,7 +40,7 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\" 
-.\" $XFree86: xc/doc/man/X11/XCreFSet.man,v 1.3 2003/04/28 22:17:54 herrb Exp $
+.\" $XFree86: xc/doc/man/X11/XCreFSet.man,v 1.5 2005/02/11 03:02:54 dawes Exp $
 .\"
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xW Athena X Widgets \- C Language X Toolkit Interface
@@ -140,7 +140,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XCreateFontSet 3X11 __xorgversion__ "XLIB FUNCTIONS"
+.TH XCreateFontSet 3X11 __vendorversion__ "XLIB FUNCTIONS"
 .SH NAME
 XCreateFontSet, XFreeFontSet \- create and free an international text drawing font set
 .SH SYNTAX
@@ -254,9 +254,9 @@ charsets, ensuring that specific fonts are used if they exist.
 For example:
 .LP
 .Ds 0
-"-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-240-JISX0208.1983-0,\\
--JIS-Fixed-Medium-R-Normal--26-180-100-100-C-120-JISX0201.1976-0,\\
--GB-Fixed-Medium-R-Normal--26-180-100-100-C-240-GB2312-1980.0,\\
+"-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-240-JISX0208.1983-0,\\\&
+-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-120-JISX0201.1976-0,\\\&
+-GB-Fixed-Medium-R-Normal--26-180-100-100-C-240-GB2312-1980.0,\\\&
 -Adobe-Courier-Bold-R-Normal--25-180-75-75-M-150-ISO8859-1"
 .De
 .LP
@@ -266,9 +266,9 @@ letting Xlib select font charsets required for the locale.
 For example:
 .LP
 .Ds 0
-"-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-240,\\
--JIS-Fixed-Medium-R-Normal--26-180-100-100-C-120,\\
--GB-Fixed-Medium-R-Normal--26-180-100-100-C-240,\\
+"-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-240,\\\&
+-JIS-Fixed-Medium-R-Normal--26-180-100-100-C-120,\\\&
+-GB-Fixed-Medium-R-Normal--26-180-100-100-C-240,\\\&
 -Adobe-Courier-Bold-R-Normal--25-180-100-100-M-150"
 .De
 .LP

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xft1/Imakefile,v 1.14 2003/11/17 15:18:05 tsi Exp $
+XCOMM $XFree86: xc/lib/Xft1/Imakefile,v 1.15 2004/04/05 02:33:12 dawes Exp $
 
 XCOMM Allow for builds against old installed bits
 #ifdef UseInstalled
@@ -7,8 +7,12 @@ XCOMM Allow for builds against old installed bits
 #define SharedLibXft1		YES
 #endif
 
+#ifndef ExtraLibXft1
+#define ExtraLibXft1		SharedLibXft1
+#endif
+
 #ifndef NormalLibXft1
-#define NormalLibXft1 (!SharedLibXft1 | ForceNormalLib)
+#define NormalLibXft1		NO
 #endif
 
 #ifndef DebugLibXft1
@@ -64,11 +68,11 @@ LDPRELIBS=LdPreLibs
 #endif
 
 
-#define DoNormalLib NO
+#define DoNormalLib NormalLibXft1
 #define DoSharedLib SharedLibXft1
-#define DoExtraLib NO
-#define DoDebugLib NO
-#define DoProfileLib NO
+#define DoExtraLib ExtraLibXft1
+#define DoDebugLib DebugLibXft1
+#define DoProfileLib ProfileLibXft1
 #define HasSharedData YES
 #define LibName Xft
 #define SoRev SOXFT1REV

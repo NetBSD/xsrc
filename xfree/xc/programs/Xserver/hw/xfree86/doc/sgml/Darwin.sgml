@@ -3,12 +3,12 @@
 ]>
 
 <article>
-<title>XFree86 on Darwin and Mac OS X
+<title>XFree86&reg; on Darwin and Mac OS X
 <author>Torrey T. Lyons
 <date>15 December 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.10 2003/12/15 20:47:41 torrey Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.11 2004/12/08 22:27:11 dawes Exp $
 </ident>
 
 <toc>

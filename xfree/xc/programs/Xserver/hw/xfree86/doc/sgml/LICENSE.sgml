@@ -5,20 +5,29 @@
 <article>
 <title>Licenses</title>
 <author>Compiled by The XFree86 Project</author>
-<date>22 February 2004</date>
+<date>9 March 2005</date>
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.32 2004/02/24 01:13:10 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.41 2005/03/10 02:35:07 dawes Exp $
 </ident>
 
 <sect>Introduction
 <p>
-XFree86&trade; code without an explicit copyright or not explicitly
-marked as being in the public domain is covered by the XFree86 1.0
-copyright/license as shown <ref name="below" id="xf10">.  Portions of code are
-covered by other licenses/copyrights, as shown in subsequent sections.
-In all cases, see individual source files for specific license details,
-copyright owner information, and copyright dates.
+<bf>The information in this document is intended to be complete and
+accurate only for formal XFree86 releases.  It may not be complete or
+accurate for development code obtained directly from the CVS repository
+or from development, experimental, release candidate, or other snapshots.
+For licensing information about development code, contact the relevant
+authors, contributors and copyright holders.</bf>
+
+XFree86&reg; code without an explicit copyright or not explicitly
+marked as being in the public domain is covered by the XFree86 1.1
+copyright/license as shown <ref name="below" id="xf11">.  Portions of
+code are covered by other licenses/copyrights, as shown in subsequent
+sections.  In all cases, see individual source files for specific license
+details, copyright owner information, and copyright dates.
+
+Note: XFree86 is a registered trademark of The XFree86 Project, Inc.
 
 <sect>XFree86 Project Licensing Policy
 <p>
@@ -50,17 +59,10 @@ fits in with the XFree86 licensing policy, please contact us.
 <p>
 <sect1>Open Source
 <p>
-With one possible exception, we believe that all of the code in this
-release (&relvers;) of XFree86 meet the requirements of the <url name="Open
-Source Definition" url="http://opensource.org/docs/definition.php">, as
-maintained by the <url name="Open Source Initiative (OSI)"
-url="http://opensource.org/">.
-
-The one exception is a file containing font decompression code
-(<tt>xc/lib/font/fontfile/decompress.c</tt>) which contains a licence
-that does not explicitly give permission to make modifications.  This
-file has been part of the X11 sample implementation since at least X11R5,
-and has been present in all versions of XFree86.
+We believe that all of the code in this release (&relvers;) of XFree86
+meet the requirements of the <url name="Open Source Definition"
+url="http://opensource.org/docs/definition.php">, as maintained by the
+<url name="Open Source Initiative (OSI)" url="http://opensource.org/">.
 
 <sect1>Free Software
 <p>
@@ -70,35 +72,18 @@ meets the requirements of the <url name="Free Software definition"
 url="http://www.fsf.org/philosophy/free-sw.html"> as defined by the <url
 name="Free Software Foundation (FSF)" url="http://www.fsf.org/">.
 
-The exceptions, aside from the font decompression code mentioned in the
-previous section, are the GLX extension and CID font code that are
+Exceptions to this include the GLX extension and CID font code that are
 covered by the <ref name="SGI Free Software License B, version 1.1"
 id="sgi">.
 
-<sect1>GPL-compatible
-<p>
-
-The client-side X libraries distributed with this release (&relvers;),
-with the exception of the GL, GLU, and GLw libraries, carry a subset of
-the acceptable licenses that satisfy an additional condition: they are
-GPL-compatible.  The GL, GLU, and GLw libraries contain code covered by
-the <ref name="SGI Free Software License B, version 1.1" id="sgi">,
-which is not GPL-compatible.
-
-Other portions of XFree86, including the X servers, may include code
-with licenses that are not GPL-compatible.  Example of such licenses
-include some of the <ref name="BSD-style licenses" id="bsd">, the
-<ref name="FreeType License" id="ftl">, the <ref name="SGI licenses"
-id="sgi"> and the <ref name="XFree86 License version 1.1" id="xf11">.
-
-
 <sect>XFree86 License (version 1.1)<label id="xf11">
 <p>
+
 The text of the XFree86 1.1 license is included below.  A FAQ for this
 licence can be found at the <url name="XFree86 web site"
 url="http://www.xfree86.org/legal/licenses.html">
 
-Copyright (C) 1994-2004 The XFree86 Project, Inc.<newline>
+Copyright (C) 1994-2005 The XFree86 Project, Inc.<newline>
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -190,7 +175,7 @@ Copyright (C) 2001 by J. Kean Johnston<newline>
 Copyright (C) 2000, 2001 Ani Joshi<newline>
 Copyright (C) 2000 by Rainer Keller<newline>
 Copyright (C) 1999-2003 by Peter Kunzmann, Citron GmbH, Germany.<newline>
-Copyright (C) 1994 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org<newline>
+Copyright (C) 1994 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org<newline>
 Copyright (C) 1996 by Steven Lang<newline>
 Copyright (C) 1995, 1999 by Patrick Lecoanet, France.<newline>
 Copyright (C) 2001 by Patrick LERDA<newline>
@@ -224,7 +209,7 @@ Copyright (C) 1988 SRI<newline>
 Copyright (C) 1987, 1988, 1991, 1992, 2000 by Sun Microsystems, Inc.  All Rights Reserved.<newline>
 Copyright (C) 1999, 2000 SuSE, Inc.<newline>
 Copyright (C) 2002 by SuSE Linux AG<newline>
-Copyright (C) 1993-2004 by The XFree86 Project, Inc.<newline>
+Copyright (C) 1993-2005 by The XFree86 Project, Inc.<newline>
 Copyright (C) 1999-2001 by Thomas Thanner, Citron GmbH, Germany.<newline>
 Copyright (C) 1992, 1993 by TOSHIBA Corp.<newline>
 Copyright (C) 1992 by Jim Tsillas<newline>
@@ -532,7 +517,7 @@ software without specific, written prior permission.
 <sect1>XFree86 License (version 1.0)<label id="xf10">
 <p>
 
-Copyright (C) 1994-2004 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-2005 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -607,7 +592,6 @@ Copyright (c) 1999 Lennart Augustsson &lt;augustss@netbsd.org&gt;<newline>
 Copyright (c) 1999 Chris Costello<newline>
 Copyright (c) 1995,1999 Theo de Raadt.<newline>
 Copyright (c) 2001-2002 Damien Miller.<newline>
-Copyright (c) 1994 Paul Vojta.<newline>
 
 
 All Rights Reserved.
@@ -672,7 +656,7 @@ All rights reserved.
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
 
-<sect1>UCB/LBL<label id="bsd">
+<sect1>UCB/LBL
 <p>
 In addition to the standard 4-clause BSD License, this one carries the
 following statements:
@@ -761,8 +745,8 @@ by Ben Collver &lt;collver1@attbi.com&gt;
 <sect1>X-Oz Technologies
 <p>
 
-Copyright 2003 by David H. Dawes.<newline>
-Copyright 2003 by X-Oz Technologies.<newline>
+Copyright 2003, 2004, 2005 by David H. Dawes.<newline>
+Copyright 2003, 2004, 2005 by X-Oz Technologies.<newline>
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a

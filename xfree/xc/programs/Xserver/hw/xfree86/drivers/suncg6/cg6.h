@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6.h,v 1.3 2001/05/04 19:05:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6.h,v 1.4 2004/12/05 23:06:37 tsi Exp $ */
 
 #ifndef CG6_H
 #define CG6_H
@@ -66,7 +66,6 @@ typedef struct {
 
 	sbusDevicePtr	psdp;
 	Bool		HWCursor;
-	Bool		NoAccel;
 	CloseScreenProcPtr CloseScreen;
 	xf86CursorInfoPtr CursorInfoRec;
 	unsigned int	CursorXY;
@@ -89,10 +88,11 @@ extern int  Cg6WindowPrivateIndex;
 
 #define Cg6GetWindowPrivate(w)						\
 ((Cg6StipplePtr) (w)->devPrivates[Cg6WindowPrivateIndex].ptr)
-                            
-#define Cg6SetWindowPrivate(w,p) 					\
+
+#define Cg6SetWindowPrivate(w,p)					\
 ((w)->devPrivates[Cg6WindowPrivateIndex].ptr = (pointer) p)
 
 extern int cg6RopTable[];
+extern Bool CG6HWCursorInit(ScreenPtr pScreen);
 
 #endif /* CG6_H */

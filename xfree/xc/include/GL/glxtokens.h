@@ -1,7 +1,7 @@
 #ifndef __GLX_glxtokens_h__
 #define __GLX_glxtokens_h__
 
-/* $XFree86: xc/include/GL/glxtokens.h,v 1.6 2002/02/22 21:32:50 dawes Exp $ */
+/* $XFree86: xc/include/GL/glxtokens.h,v 1.8 2004/06/30 20:21:36 martin Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -84,6 +84,10 @@ extern "C" {
 #define GLX_MAX_PBUFFER_HEIGHT		0x8017
 #define GLX_MAX_PBUFFER_PIXELS		0x8018
 #define GLX_VISUAL_ID			0x800B
+
+/* FBConfigSGIX Attributes */
+#define GLX_OPTIMAL_PBUFFER_WIDTH_SGIX	0x8019
+#define GLX_OPTIMAL_PBUFFER_HEIGHT_SGIX	0x801A
 
 /*
 ** Error return values from glXGetConfig.  Success is indicated by
@@ -203,6 +207,15 @@ extern "C" {
 #define GLX_VISUAL_CAVEAT_EXT		0x20  /* visual_rating extension type */
 #define GLX_SLOW_VISUAL_EXT		0x8001
 #define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
+
+/* Property values for swap method (GLX_OML_swap_method) */
+#define GLX_SWAP_METHOD_OML                0x8060
+#define GLX_SWAP_EXCHANGE_OML              0x8061
+#define GLX_SWAP_COPY_OML                  0x8062
+#define GLX_SWAP_UNDEFINED_OML             0x8063
+
+/* Property values for multi-sampling */
+#define GLX_VISUAL_SELECT_GROUP_SGIX	0x8028	/* visuals grouped by select priority */
 
 /*
 ** Names for attributes to glXGetClientString.

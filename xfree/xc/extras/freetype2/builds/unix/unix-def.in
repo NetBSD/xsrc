@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2000, 2002 by
+# Copyright 1996-2000, 2002, 2004 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -18,16 +18,13 @@ ifndef TOP_DIR
 endif
 TOP_DIR := $(shell cd $(TOP_DIR); pwd)
 
-DELETE   := @RMF@
-DELDIR   := @RMDIR@
-SEP      := /
-HOSTSEP  := $(SEP)
-BUILD    := $(TOP_DIR)/builds/unix
-PLATFORM := unix
+DELETE    := @RMF@
+DELDIR    := @RMDIR@
+SEP       := /
 
 # this is used for `make distclean' and `make install'
 ifndef OBJ_BUILD
-  OBJ_BUILD := $(BUILD)
+  OBJ_BUILD := $(BUILD_DIR)
 endif
 
 # don't use `:=' here since the path stuff will be included after this file
@@ -38,7 +35,7 @@ INSTALL         := @INSTALL@
 INSTALL_DATA    := @INSTALL_DATA@
 INSTALL_PROGRAM := @INSTALL_PROGRAM@
 INSTALL_SCRIPT  := @INSTALL_SCRIPT@
-MKINSTALLDIRS   := $(BUILD)/mkinstalldirs
+MKINSTALLDIRS   := $(BUILD_DIR)/mkinstalldirs
 
 DISTCLEAN += $(OBJ_BUILD)/config.cache    \
              $(OBJ_BUILD)/config.log      \
@@ -47,6 +44,7 @@ DISTCLEAN += $(OBJ_BUILD)/config.cache    \
              $(OBJ_BUILD)/unix-cc.mk      \
              $(OBJ_BUILD)/ftconfig.h      \
              $(OBJ_BUILD)/freetype-config \
+             $(OBJ_BUILD)/freetype2.pc    \
              $(LIBTOOL)                   \
              $(OBJ_BUILD)/Makefile
 
@@ -95,5 +93,6 @@ SYSTEM_ZLIB := @SYSTEM_ZLIB@
 # the output of some programs.
 #
 NO_OUTPUT := 2> /dev/null
+
 
 # EOF

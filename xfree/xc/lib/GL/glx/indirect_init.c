@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.10 2004/01/31 09:29:32 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.12 2004/12/10 16:06:56 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -539,6 +539,15 @@ __GLapi *__glXNewIndirectAPI(void)
 
     /* ARB 5. GL_ARB_multisample */
     glAPI->SampleCoverageARB = __indirect_glSampleCoverageARB;
+
+    /* ARB 12. GL_ARB_texture_compression / 1.3 */
+    glAPI->GetCompressedTexImageARB = __indirect_glGetCompressedTexImage;
+    glAPI->CompressedTexImage1DARB = __indirect_glCompressedTexImage1D;
+    glAPI->CompressedTexImage2DARB = __indirect_glCompressedTexImage2D;
+    glAPI->CompressedTexImage3DARB = __indirect_glCompressedTexImage3D;
+    glAPI->CompressedTexSubImage1DARB = __indirect_glCompressedTexSubImage1D;
+    glAPI->CompressedTexSubImage2DARB = __indirect_glCompressedTexSubImage2D;
+    glAPI->CompressedTexSubImage3DARB = __indirect_glCompressedTexSubImage3D;
 
     /* ARB 14. GL_ARB_point_parameters */
     glAPI->PointParameterfEXT = __indirect_glPointParameterfARB;

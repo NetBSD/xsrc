@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/config/pswrap/pswfile.c,v 1.6 2003/05/27 22:26:20 tsi Exp $ */
+/* $XFree86: xc/config/pswrap/pswfile.c,v 1.7 2004/04/03 22:38:51 tsi Exp $ */
 
 #include <stdio.h>
 #include "pswversion.h"
@@ -49,7 +49,7 @@ static int EmitVersion(FILE *f, char *infname, char *outfname)
 {
     fprintf(f,"/* %s generated from %s\n",outfname,infname);
     fprintf(f,"   by %s %s %s\n */\n\n",PSW_OS,prog,PSW_VERSION);
-    return 4;  /* number of output lines */
+    return 3;  /* number of output lines */
 }
 
 void InitHFile(void)
@@ -77,11 +77,15 @@ void InitOFile(void)
 #endif /* __MACH__ */
     printf("#include %s\n", FRIENDSFILE);
     printf("#include <string.h>\n");
+    if (hfile)
+	    printf("#include \"%s\"\n", hfile);
     outlineno += 3;  /* UPDATE this if you add more prolog */
     if (special_h) {
-	printf("#include \"%s\"\n\n", special_h);
-        outlineno ++;
+        printf("#include \"%s\"\n", special_h);
+        outlineno++;
     }
+    printf("\n");
+    outlineno++;
     printf("#line 1 \"%s\"\n",ifile);
     outlineno++;
 }

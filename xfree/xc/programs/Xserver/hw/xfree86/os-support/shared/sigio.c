@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.17 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.19 2005/01/24 21:27:10 tsi Exp $ */
 
 /* sigio.c -- Support for SIGIO handler installation and removal
  * Created: Thu Jun  3 15:39:18 1999 by faith@precisioninsight.com
@@ -74,13 +74,16 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This code is an expensive no-op if the platform doesn't actually generate
+ * SIGIO's, so _do_ check...
+ */
+
 #ifdef XFree86Server
 # include "X.h"
 # include "xf86.h"
-# include "xf86drm.h"
 # include "xf86Priv.h"
 # include "xf86_OSlib.h"
-# include "xf86drm.h"
 # include "inputstr.h"
 #else
 # include <unistd.h>
@@ -90,6 +93,7 @@
 # include <errno.h>
 # include <stdio.h>
 # include <string.h>
+# include <sys/ioctl.h>
 # define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 #endif
 
@@ -120,6 +124,33 @@ static Xf86SigIOFunc	xf86SigIOFuncs[MAX_FUNCS];
 static int		xf86SigIOMax;
 static int		xf86SigIOMaxFd;
 static fd_set		xf86SigIOMask;
+
+/*
+ * Turn O_ASYNC or FIOASYNC on or off.
+ */
+static int
+xf86ASYNC (int fd, int async)
+{
+    int flags;
+
+#ifdef O_ASYNC
+    flags = fcntl(fd, F_GETFL);
+
+    if (async)
+	flags |= O_ASYNC;
+    else
+	flags &= ~O_ASYNC;
+
+    return fcntl(fd, F_SETFL, flags);
+#else
+    if (async)
+	flags = 1;
+    else
+	flags = 0;
+
+    return ioctl(fd, FIOASYNC, &flags);
+#endif
+}
 
 /*
  * SIGIO gives no way of discovering which fd signalled, select
@@ -176,7 +207,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 	    if (xf86IsPipe (fd))
 		return 0;
 	    blocked = xf86BlockSIGIO();
-	    if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_ASYNC) == -1) {
+	    if (xf86ASYNC(fd, 1) == -1) {
 #ifdef XFree86Server
 		xf86Msg(X_WARNING, "fcntl(%d, O_ASYNC): %s\n", 
 			fd, strerror(errno));
@@ -260,7 +291,7 @@ xf86RemoveSIGIOHandler(int fd)
     }
     if (ret)
     {
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_ASYNC);
+	xf86ASYNC(fd, 0);
 	xf86SigIOMax = max;
 	xf86SigIOMaxFd = maxfd;
 	if (!max)
@@ -313,7 +344,7 @@ xf86AssertBlockedSIGIO (char *where)
 
 /* XXX This is a quick hack for the benefit of xf86SetSilkenMouse() */
 
-int
+Bool
 xf86SIGIOSupported (void)
 {
     return 1;

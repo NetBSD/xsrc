@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.7 2004/01/28 18:11:53 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.8 2004/12/10 16:06:59 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -558,7 +558,7 @@ int __glXDrawArraysSize( GLbyte *pc, Bool swap )
 		return -1;
 	    }
 	    break;
-	  case GL_FOG_COORDINATE_ARRAY:
+	  case GL_FOG_COORD_ARRAY:
 	  case GL_INDEX_ARRAY:
 	    if (numVals != 1) {
 		/* bad size */

@@ -29,13 +29,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/RectObj.c,v 1.3 2001/12/14 19:56:27 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/RectObj.c,v 1.4 2004/05/05 00:07:03 dickey Exp $ */
 
 #define RECTOBJ
 #include "IntrinsicI.h"
@@ -59,7 +59,7 @@ SOFTWARE.
  *
  ******************************************************************/
 
-static void XtCopyAncestorSensitive();
+static void XtCopyAncestorSensitive(Widget, int, XrmValue *);
 
 static XtResource resources[] = {
 
@@ -82,8 +82,8 @@ static XtResource resources[] = {
 	 (XtPointer)True}
     };
 
-static void RectClassPartInitialize();
-static void RectSetValuesAlmost();
+static void RectClassPartInitialize(WidgetClass);
+static void RectSetValuesAlmost(Widget, Widget, XtWidgetGeometry *, XtWidgetGeometry *);
 
 externaldef(rectobjclassrec) RectObjClassRec rectObjClassRec = {
   {
@@ -94,7 +94,7 @@ externaldef(rectobjclassrec) RectObjClassRec rectObjClassRec = {
     /* class_part_initialize*/	RectClassPartInitialize,
     /* class_inited       */	FALSE,
     /* initialize	  */	NULL,
-    /* initialize_hook    */	NULL,		
+    /* initialize_hook    */	NULL,
     /* realize		  */	NULL,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -109,9 +109,9 @@ externaldef(rectobjclassrec) RectObjClassRec rectObjClassRec = {
     /* resize		  */	NULL,
     /* expose		  */	NULL,
     /* set_values	  */	NULL,
-    /* set_values_hook    */	NULL,			
-    /* set_values_almost  */	RectSetValuesAlmost,  
-    /* get_values_hook    */	NULL,			
+    /* set_values_hook    */	NULL,
+    /* set_values_almost  */	RectSetValuesAlmost,
+    /* get_values_hook    */	NULL,
     /* accept_focus	  */	NULL,
     /* version		  */	XtVersion,
     /* callback_offsets   */    NULL,
@@ -126,10 +126,10 @@ externaldef(rectObjClass)
 WidgetClass rectObjClass = (WidgetClass)&rectObjClassRec;
 
 /*ARGSUSED*/
-static void XtCopyAncestorSensitive(widget, offset, value)
-    Widget      widget;
-    int		offset;
-    XrmValue    *value;
+static void XtCopyAncestorSensitive(
+    Widget      widget,
+    int		offset,
+    XrmValue    *value)
 {
     static Boolean  sensitive;
     Widget parent = widget->core.parent;
@@ -144,8 +144,8 @@ static void XtCopyAncestorSensitive(widget, offset, value)
  */
 
 
-static void RectClassPartInitialize(wc)
-    register WidgetClass wc;
+static void RectClassPartInitialize(
+    register WidgetClass wc)
 {
     register RectObjClass roc = (RectObjClass)wc;
     register RectObjClass super = ((RectObjClass)roc->rect_class.superclass);
@@ -172,7 +172,7 @@ static void RectClassPartInitialize(wc)
     }
 }
 
-/* 
+/*
  * Why there isn't an Initialize Method:
  *
  * Initialization of the RectObj non-Resource field is done by the
@@ -181,11 +181,11 @@ static void RectClassPartInitialize(wc)
  */
 
 /*ARGSUSED*/
-static void RectSetValuesAlmost(old, new, request, reply)
-    Widget		old;
-    Widget		new;
-    XtWidgetGeometry    *request;
-    XtWidgetGeometry    *reply;
+static void RectSetValuesAlmost(
+    Widget		old,
+    Widget		new,
+    XtWidgetGeometry    *request,
+    XtWidgetGeometry    *reply)
 {
     *request = *reply;
 }

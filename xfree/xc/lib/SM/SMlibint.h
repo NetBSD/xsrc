@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/SM/SMlibint.h,v 1.4 2001/12/14 19:53:55 dawes Exp $ */
+/* $XFree86: xc/lib/SM/SMlibint.h,v 1.5 2004/12/31 02:56:03 tsi Exp $ */
 
 /*
  * Author: Ralph Mor, X Consortium
@@ -204,13 +204,18 @@ in this Software without prior written authorization from The Open Group.
  * STORE FOO
  */
 
+#define STORE_NULL(_pBuf) \
+{ \
+    STORE_CARD32 (_pBuf, 0); \
+    _pBuf += PAD64 (4); \
+}
+
 #define STORE_ARRAY8(_pBuf, _len, _array8) \
 { \
     STORE_CARD32 (_pBuf, _len); \
     memcpy (_pBuf, _array8, _len); \
     _pBuf += _len; \
-    if (PAD64 (4 + _len)) \
-        _pBuf += PAD64 (4 + _len); \
+    _pBuf += PAD64 (4 + _len); \
 }
 
 #define STORE_LISTOF_PROPERTY(_pBuf, _count, _props) \
@@ -244,8 +249,7 @@ in this Software without prior written authorization from The Open Group.
     memcpy (_array8, _pBuf, _len); \
     _array8[_len] = '\0'; \
     _pBuf += _len; \
-    if (PAD64 (4 + _len)) \
-        _pBuf += PAD64 (4 + _len); \
+    _pBuf += PAD64 (4 + _len); \
 }
 
 #define EXTRACT_ARRAY8_AS_STRING(_pBuf, _swap, _string) \
@@ -256,8 +260,7 @@ in this Software without prior written authorization from The Open Group.
     memcpy (_string, _pBuf, _len); \
     _string[_len] = '\0'; \
     _pBuf += _len; \
-    if (PAD64 (4 + _len)) \
-        _pBuf += PAD64 (4 + _len); \
+    _pBuf += PAD64 (4 + _len); \
 }
 
 #define EXTRACT_LISTOF_PROPERTY(_pBuf, _swap, _count, _props) \
@@ -290,8 +293,7 @@ in this Software without prior written authorization from The Open Group.
     CARD32 _len; \
     EXTRACT_CARD32 (_pBuf, _swap, _len); \
     _pBuf += _len; \
-    if (PAD64 (4 + _len)) \
-        _pBuf += PAD64 (4 + _len); \
+    _pBuf += PAD64 (4 + _len); \
 }
 
 #define SKIP_LISTOF_PROPERTY(_pBuf, _swap) \

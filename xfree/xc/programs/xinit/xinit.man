@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xinit/xinit.man,v 3.10 2001/12/14 20:01:56 dawes Exp $
+.\" $XFree86: xc/programs/xinit/xinit.man,v 3.11 2005/02/11 03:03:19 dawes Exp $
 .\" 
-.TH XINIT 1 __xorgversion__
+.TH XINIT 1 __vendorversion__
 .SH NAME
 xinit \- X Window System initializer
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.c,v 1.49 2003/11/06 18:38:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.c,v 1.53 2004/11/26 13:45:03 tsi Exp $ */
 /*
  * vim: sw=4 ts=8 ai ic:
  *
@@ -193,6 +193,7 @@ typedef enum {
     ,OPTION_TV_ON
     ,OPTION_TV_PAL
     ,OPTION_FORCE_INIT
+    ,OPTION_BIOS_DPMS
 } SavageOpts;
 
 
@@ -210,6 +211,7 @@ static const OptionInfoRec SavageOptions[] =
     { OPTION_TV_ON,     "TvOn",         OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_TV_PAL,    "PAL",          OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_FORCE_INIT,"ForceInit",    OPTV_BOOLEAN, {0}, FALSE },
+    { OPTION_BIOS_DPMS, "UseBIOSForDPMS", OPTV_BOOLEAN,{0}, FALSE },
     { -1,		NULL,		OPTV_NONE,    {0}, FALSE }
 };
 
@@ -230,6 +232,7 @@ static const char *vgaHWSymbols[] = {
     "vgaHWSetStdFuncs",
     "vgaHWUnmapMem",
     "vgaHWddc1SetSpeed",
+    "vgaHWHBlankKGA",
 #if 0
     "vgaHWFreeHWRec",
     "vgaHWMapMem",
@@ -833,6 +836,7 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    /* accel is disabled below for shadowFB */
 	    psav->shadowFB = TRUE;
 	    psav->rotate = 1;
+	    xf86DisableRandR();
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
 		       "Rotating screen clockwise - acceleration disabled\n");
 	} else if(!xf86NameCmp(s, "CCW")) {
@@ -840,6 +844,7 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    psav->rotate = -1;
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,  "Rotating screen"
 		       "counter clockwise - acceleration disabled\n");
+	    xf86DisableRandR();
 	} else {
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "\"%s\" is not a valid"
 		       "value for Option \"Rotate\"\n", s);
@@ -922,6 +927,11 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     if( xf86GetOptValBool( psav->Options, OPTION_FORCE_INIT, &psav->ForceInit))
 	xf86DrvMsg( pScrn->scrnIndex, X_CONFIG,
 		    "Option: ForceInit enabled\n" );
+
+    psav->UseBIOSForDPMS = 0;
+    if( xf86GetOptValBool( psav->Options, OPTION_BIOS_DPMS, &psav->UseBIOSForDPMS))
+	xf86DrvMsg( pScrn->scrnIndex, X_CONFIG,
+		    "Option: UseBIOSForDPMS enabled\n" );
 
     /* Add more options here. */
 
@@ -1481,7 +1491,13 @@ static Bool SavageEnterVT(int scrnIndex, int flags)
     gpScrn = pScrn;
     SavageEnableMMIO(pScrn);
     SavageSave(pScrn);
-    return SavageModeInit(pScrn, pScrn->currentMode);
+    if(SavageModeInit(pScrn, pScrn->currentMode)) {
+	/* some BIOSes seem to enable HW cursor on PM resume */
+	if (!SAVPTR(pScrn)->hwc_on)
+	    SavageHideCursor( pScrn ); 
+	return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -2514,8 +2530,12 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     psav->HorizScaleFactor = 1;
 
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode))
 	return FALSE;
+
+    /* We have horizontal blank end extension bits, so undo KGA workaround */
+    vgaHWHBlankKGA(mode, vganew, 0, 0);
 
     new->mode = 0;
 
@@ -2709,33 +2729,19 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	new->CR34 = 0x10;
 
-	i = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) |
-	    ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) |
-	    ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6) |
-	    ((mode->CrtcHSyncStart & 0x800) >> 7);
-
-	if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 64)
-	    i |= 0x08;
-	if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 32)
-	    i |= 0x20;
-	j = (vganew->CRTC[0] + ((i & 0x01) << 8) +
-	     vganew->CRTC[4] + ((i & 0x10) << 4) + 1) / 2;
-	if (j - (vganew->CRTC[4] + ((i & 0x10) << 4)) < 4) {
-	    if (vganew->CRTC[4] + ((i & 0x10) << 4) + 4 <= 
-	        vganew->CRTC[0] + ((i & 0x01) << 8))
-		j = vganew->CRTC[4] + ((i & 0x10) << 4) + 4;
-	    else
-		j = vganew->CRTC[0] + ((i & 0x01) << 8) + 1;
-	}
-
-	new->CR3B = j & 0xff;
-	i |= (j & 0x100) >> 2;
-	new->CR3C = (vganew->CRTC[0] + ((i & 0x01) << 8)) / 2;
-	new->CR5D = i;
+	new->CR3B = (mode->CrtcHTotal >> 3) - 10;
+	new->CR3C = ((mode->CrtcHTotal >> 3) - 5) >> 1;
+	new->CR5D = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) |
+		    ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) |
+		    ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 6) |
+		    ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x040) >> 3) |
+		    ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 4) |
+		    ((((mode->CrtcHSyncEnd >> 3) - 1) & 0x040) >> 1);
 	new->CR5E = (((mode->CrtcVTotal - 2) & 0x400) >> 10) |
 		    (((mode->CrtcVDisplay - 1) & 0x400) >> 9) |
-		    (((mode->CrtcVSyncStart) & 0x400) >> 8) |
-		    (((mode->CrtcVSyncStart) & 0x400) >> 6) | 0x40;
+		    (((mode->CrtcVBlankStart - 1) & 0x400) >> 8) |
+		    (((mode->CrtcVSyncStart - 1) & 0x400) >> 6) | 0x40;
+
 	width = (pScrn->displayWidth * (pScrn->bitsPerPixel / 8)) >> 3;
 	new->CR91 = vganew->CRTC[19] = 0xff & width;
 	new->CR51 = (0x300 & width) >> 4;
@@ -3197,6 +3203,13 @@ static void SavageDPMS(ScrnInfoPtr pScrn, int mode, int flags)
 
     VGAOUT8(0x3c4, 0x0d);
     VGAOUT8(0x3c5, srd);
+
+    if (psav->UseBIOSForDPMS) {
+        if (mode != DPMSModeOff)
+            SavageLCDOn( psav );
+        else
+	    SavageLCDOff( psav );
+    }
 
     return;
 }

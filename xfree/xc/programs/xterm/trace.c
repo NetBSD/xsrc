@@ -1,10 +1,12 @@
+/* $XTermId: trace.c,v 1.59 2005/01/10 22:39:21 tom Exp $ */
+
 /*
- * $XFree86: xc/programs/xterm/trace.c,v 3.18 2003/09/21 17:12:48 dickey Exp $
+ * $XFree86: xc/programs/xterm/trace.c,v 3.22 2005/01/14 01:50:03 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2002,2003 by Thomas E. Dickey
+Copyright 1997-2004,2005 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -31,8 +33,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * debugging support via TRACE macro.
  */
 
-#include <version.h>
 #include <xterm.h>		/* for definition of GCC_UNUSED */
+#include <data.h>
 #include <trace.h>
 
 #include <time.h>
@@ -45,12 +47,18 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifdef HAVE_X11_TRANSLATEI_H
 #include <X11/TranslateI.h>
 #else
-extern String _XtPrintXlations(Widget w,
-			       XtTranslations xlations,
-			       Widget accelWidget,
-			       _XtBoolean includeRHS);
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+    extern String _XtPrintXlations(Widget w,
+				   XtTranslations xlations,
+				   Widget accelWidget,
+				   _XtBoolean includeRHS);
+#ifdef __cplusplus
+}
+#endif
+#endif
 char *trace_who = "parent";
 
 void
@@ -87,12 +95,12 @@ Trace(char *fmt,...)
 	fp = fopen(name, "w");
 	if (fp != 0) {
 	    time_t now = time((time_t *) 0);
-	    fprintf(fp, "%s xterm patch #%d\n", XFREE86_VERSION, XTERM_PATCH);
+	    fprintf(fp, "%s\n", xtermVersion());
 #ifdef HAVE_UNISTD_H
-	    fprintf(fp, "process %d real (%d/%d) effective (%d/%d) -- %s",
+	    fprintf(fp, "process %d real (%u/%u) effective (%u/%u) -- %s",
 		    getpid(),
-		    getuid(), getgid(),
-		    geteuid(), getegid(),
+		    (unsigned) getuid(), (unsigned) getgid(),
+		    (unsigned) geteuid(), (unsigned) getegid(),
 		    ctime(&now));
 #else
 	    fprintf(fp, "process %d -- %s",
@@ -143,7 +151,7 @@ visibleChars(PAIRED_CHARS(Char * buf, Char * buf2), unsigned len)
 	if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
 	    sprintf(dst, "\\%03o", value);
 	else
-	    sprintf(dst, "%c", value);
+	    sprintf(dst, "%c", CharOf(value));
 	dst += strlen(dst);
     }
     return result;
@@ -172,8 +180,25 @@ visibleIChar(IChar * buf, unsigned len)
 	if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
 	    sprintf(dst, "\\%03o", value);
 	else
-	    sprintf(dst, "%c", value);
+	    sprintf(dst, "%c", CharOf(value));
 	dst += strlen(dst);
+    }
+    return result;
+}
+
+#define CASETYPE(name) case name: result = #name; break;
+
+const char *
+visibleKeyboardType(xtermKeyboardType type)
+{
+    const char *result = "?";
+    switch (type) {
+	CASETYPE(keyboardIsLegacy);	/* bogus vt220 codes for F1-F4, etc. */
+	CASETYPE(keyboardIsDefault);
+	CASETYPE(keyboardIsHP);
+	CASETYPE(keyboardIsSCO);
+	CASETYPE(keyboardIsSun);
+	CASETYPE(keyboardIsVT220);
     }
     return result;
 }
@@ -230,10 +255,62 @@ TraceTranslations(const char *name, Widget w)
 	TRACE(("... xcelerat %#08lx\n", (long) xcelerat));
 	result = _XtPrintXlations(w, xlations, xcelerat, True);
 	TRACE(("%s\n", result != 0 ? result : "(null)"));
+	if (result)
+	    XFree(result);
     } else {
 	TRACE(("none (widget is null)\n"));
     }
     XSetErrorHandler(save);
+}
+
+#define XRES_S(name) Trace(#name " = %s\n", NonNull(resp->name))
+#define XRES_B(name) Trace(#name " = %s\n", BtoS(resp->name))
+#define XRES_I(name) Trace(#name " = %d\n", resp->name)
+
+void
+TraceXtermResources(void)
+{
+    XTERM_RESOURCE *resp = &resource;
+
+    Trace("XTERM_RESOURCE settings:\n");
+    XRES_S(xterm_name);
+    XRES_S(icon_geometry);
+    XRES_S(title);
+    XRES_S(icon_name);
+    XRES_S(term_name);
+    XRES_S(tty_modes);
+    XRES_B(hold_screen);
+    XRES_B(utmpInhibit);
+    XRES_B(utmpDisplayId);
+    XRES_B(messages);
+    XRES_B(sunFunctionKeys);
+#if OPT_SUNPC_KBD
+    XRES_B(sunKeyboard);
+#endif
+#if OPT_HP_FUNC_KEYS
+    XRES_B(hpFunctionKeys);
+#endif
+#if OPT_SCO_FUNC_KEYS
+    XRES_B(scoFunctionKeys);
+#endif
+#if OPT_INITIAL_ERASE
+    XRES_B(ptyInitialErase);
+    XRES_B(backarrow_is_erase);
+#endif
+    XRES_B(wait_for_map);
+    XRES_B(useInsertMode);
+#if OPT_ZICONBEEP
+    XRES_I(zIconBeep);
+#endif
+#if OPT_PTY_HANDSHAKE
+    XRES_B(ptyHandshake);
+#endif
+#if OPT_SAME_NAME
+    XRES_B(sameName);
+#endif
+#if OPT_SESSION_MGT
+    XRES_B(sessionMgt);
+#endif
 }
 
 void
@@ -248,7 +325,7 @@ TraceArgv(const char *tag, char **argv)
 }
 
 static char *
-parse_option(char *dst, char *src, char first)
+parse_option(char *dst, char *src, int first)
 {
     char *s;
 
@@ -269,17 +346,17 @@ parse_option(char *dst, char *src, char first)
     return dst;
 }
 
-static Boolean
+static Bool
 same_option(OptionHelp * opt, XrmOptionDescRec * res)
 {
     char temp[BUFSIZ];
     return !strcmp(parse_option(temp, opt->opt, res->option[0]), res->option);
 }
 
-static Boolean
+static Bool
 standard_option(char *opt)
 {
-    static char *table[] =
+    static const char *table[] =
     {
 	"+rv",
 	"+synchronous",
@@ -326,7 +403,7 @@ TraceOptions(OptionHelp * options, XrmOptionDescRec * resources, Cardinal res_co
     OptionHelp *opt_array = sortedOpts(options, resources, res_count);
     size_t j, k;
     XrmOptionDescRec *res_array = sortedOptDescs(resources, res_count);
-    Boolean first, found;
+    Bool first, found;
 
     TRACE(("Checking options-tables for inconsistencies:\n"));
 

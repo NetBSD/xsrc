@@ -1,4 +1,4 @@
-.\" $NetBSD: Xhpc.man,v 1.1 2004/01/03 01:09:19 takemura Exp $
+.\" $NetBSD: Xhpc.man,v 1.1.6.1 2005/04/06 20:00:34 tron Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ manual page.
 .Nm
 was originally written by TAKEMURA Shin <takemura@netbsd.org>
 Officially appeared in
-.Nx 1.5.
+.Nx 1.5 .
 3-button emulation code written by Matthew Orgass.
 .\"
 .Sh BUGS

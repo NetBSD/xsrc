@@ -1,7 +1,7 @@
 XCOMM  $TOG: iso8859-13 /main/1 1998/05/20 13:49:21 kaleb $
 XCOMM  XLocale Database Sample for iso8859-13.
 XCOMM 
-XCOMM  $XFree86: xc/nls/XLC_LOCALE/iso8859-13,v 1.1 2000/10/27 18:30:56 dawes Exp $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/iso8859-13,v 1.2 2005/02/02 14:33:23 pascal Exp $
 
 XCOMM 
 XCOMM 	XLC_FONTSET category
@@ -25,6 +25,15 @@ fs1	{
 	}
 	font	{
 		primary		ISO8859-13:GR
+	}
+}
+XCOMM 	fs2 class 
+fs2	{
+	charset	{
+		name		ISO8859-13:GL
+	}
+	font	{
+		primary		ISO8859-13:GL
 	}
 }
 END XLC_FONTSET

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.60 2004/02/13 23:58:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.61 2004/10/26 22:26:38 tsi Exp $ */
 
 /*
  * Loosely based on code bearing the following copyright:
@@ -1213,7 +1213,8 @@ vgaHWSave(ScrnInfoPtr scrninfp, vgaRegPtr save, int flags)
 Bool
 vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
 {
-    unsigned int       i;
+    unsigned int i;
+    int fixSync;
     vgaHWPtr hwp;
     vgaRegPtr regp;
     int depth = scrninfp->depth;
@@ -1225,6 +1226,11 @@ vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
 	return FALSE;
     hwp = VGAHWPTR(scrninfp);
     regp = &hwp->ModeReg;
+
+    if (hwp->Flags & VGA_FIX_SYNC_PULSES)
+	fixSync = 1;
+    else
+	fixSync = 0;
     
     /*
      * compute correct Hsync & Vsync polarity 
@@ -1286,18 +1292,18 @@ vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
     i = (((mode->CrtcHSkew << 2) + 0x10) & ~0x1F);
     if (i < 0x80)
 	regp->CRTC[3] |= i;
-    regp->CRTC[4]  = (mode->CrtcHSyncStart >> 3);
+    regp->CRTC[4]  = (mode->CrtcHSyncStart >> 3) - fixSync;
     regp->CRTC[5]  = ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2)
-	| (((mode->CrtcHSyncEnd >> 3)) & 0x1F);
+	| (((mode->CrtcHSyncEnd >> 3) - fixSync) & 0x1F);
     regp->CRTC[6]  = (mode->CrtcVTotal - 2) & 0xFF;
     regp->CRTC[7]  = (((mode->CrtcVTotal - 2) & 0x100) >> 8)
 	| (((mode->CrtcVDisplay - 1) & 0x100) >> 7)
-	| ((mode->CrtcVSyncStart & 0x100) >> 6)
+	| (((mode->CrtcVSyncStart - fixSync) & 0x100) >> 6)
 	| (((mode->CrtcVBlankStart - 1) & 0x100) >> 5)
 	| 0x10
 	| (((mode->CrtcVTotal - 2) & 0x200)   >> 4)
 	| (((mode->CrtcVDisplay - 1) & 0x200) >> 3)
-	| ((mode->CrtcVSyncStart & 0x200) >> 2);
+	| (((mode->CrtcVSyncStart - fixSync) & 0x200) >> 2);
     regp->CRTC[8]  = 0x00;
     regp->CRTC[9]  = (((mode->CrtcVBlankStart - 1) & 0x200) >> 4) | 0x40;
     if (mode->Flags & V_DBLSCAN)
@@ -1312,8 +1318,8 @@ vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
     regp->CRTC[13] = 0x00;
     regp->CRTC[14] = 0x00;
     regp->CRTC[15] = 0x00;
-    regp->CRTC[16] = mode->CrtcVSyncStart & 0xFF;
-    regp->CRTC[17] = (mode->CrtcVSyncEnd & 0x0F) | 0x20;
+    regp->CRTC[16] = (mode->CrtcVSyncStart - fixSync) & 0xFF;
+    regp->CRTC[17] = ((mode->CrtcVSyncEnd - fixSync) & 0x0F) | 0x20;
     regp->CRTC[18] = (mode->CrtcVDisplay - 1) & 0xFF;
     regp->CRTC[19] = scrninfp->displayWidth >> 4;  /* just a guess */
     regp->CRTC[20] = 0x00;
@@ -1400,13 +1406,14 @@ vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
     /*
      * OK, so much for theory.  Now, let's deal with the >real< world...
      *
-     * The above CRTC settings are precise in theory, except that many, if not
-     * most, VGA clones fail to reset the blanking signal when the character or
-     * line counter reaches [HV]Total.  In this case, the signal is only
-     * unblanked when the counter reaches [HV]BlankEnd (mod 64, 128 or 256 as
-     * the case may be) at the start of the >next< scanline or frame, which
-     * means only part of the screen shows.  This affects how null overscans
-     * are to be implemented on such adapters.
+     * Aside from the VGA_FIX_SYNC_PULSES glitch, the above CRTC settings are
+     * precise in theory, except that many, if not most, VGA clones fail to
+     * reset the blanking signal when the character or line counter reaches
+     * [HV]Total.  In this case, the signal is only unblanked when the counter
+     * reaches [HV]BlankEnd (mod 64, 128 or 256 as the case may be) at the
+     * start of the >next< scanline or frame, which means only part of the
+     * screen shows.  This affects how null overscans are to be implemented on
+     * such adapters.
      *
      * Henceforth, VGA cores that implement this broken, but unfortunately
      * common, behaviour are to be designated as KGA's, in honour of Koen

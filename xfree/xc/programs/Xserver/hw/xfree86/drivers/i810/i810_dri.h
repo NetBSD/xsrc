@@ -1,28 +1,29 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.h,v 1.11 2003/09/28 20:15:58 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.h,v 1.12 2004/12/10 16:07:02 alanh Exp $ */
 
 #ifndef _I810_DRI_
 #define _I810_DRI_
 
+#include "xf86dri.h"
 #include "xf86drm.h"
 #include "i810_common.h"
 
 #define I810_MAX_DRAWABLES 256
 
 typedef struct {
-   drmHandle regs;
+   drm_handle_t regs;
    drmSize regsSize;
    drmAddress regsMap;
 
    drmSize backbufferSize;
-   drmHandle backbuffer;
+   drm_handle_t backbuffer;
 
    drmSize depthbufferSize;
-   drmHandle depthbuffer;
+   drm_handle_t depthbuffer;
 
-   drmHandle textures;
+   drm_handle_t textures;
    int textureSize;
 
-   drmHandle agp_buffers;
+   drm_handle_t agp_buffers;
    drmSize agp_buf_size;
 
    int deviceID;
@@ -78,7 +79,7 @@ typedef struct {
    unsigned int dirty;
 
    unsigned int nbox;
-   XF86DRIClipRectRec boxes[I810_NR_SAREA_CLIPRECTS];
+   drm_clip_rect_t boxes[I810_NR_SAREA_CLIPRECTS];
 
    /* Maintain an LRU of contiguous regions of texture space.  If
     * you think you own a region of texture memory, and it has an

@@ -1,4 +1,4 @@
-/* $NetBSD: dreamcastInit.c,v 1.1 2004/02/07 02:39:07 rtr Exp $ */
+/* $NetBSD: dreamcastInit.c,v 1.1.6.1 2005/04/06 20:00:34 tron Exp $ */
 
 /*
  * Modified from  hpcInit.c of Xhpc 
@@ -176,6 +176,11 @@ GetDeviceList (argc, argv)
 	deviceList[MAXSCREENS] = NULL;
     }
     return deviceList;
+}
+
+void 
+OsVendorPreInit()
+{
 }
 
 void 

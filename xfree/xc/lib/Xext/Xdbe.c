@@ -1,4 +1,3 @@
-/* $Xorg: Xdbe.c,v 1.4 2000/08/17 19:45:53 cpqbld Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company
@@ -30,7 +29,7 @@
  *     Xlib DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.8 2003/11/17 22:20:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.9 2005/01/27 02:28:59 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -121,7 +120,8 @@ static XEXT_GENERATE_ERROR_STRING (error_string, dbe_extension_name,
  *	may be called before this function.   If a client violates this rule,
  *	the effects of all subsequent Xdbe calls are undefined.
  */
-Status XdbeQueryExtension (
+Status
+XdbeQueryExtension (
     Display *dpy,
     int *major_version_return,
     int *minor_version_return)
@@ -167,7 +167,8 @@ Status XdbeQueryExtension (
  *	accurate information whenever possible.
  */
 
-XdbeBackBuffer XdbeAllocateBackBufferName(
+XdbeBackBuffer
+XdbeAllocateBackBufferName(
     Display *dpy,
     Window window,
     XdbeSwapAction swap_action)
@@ -202,7 +203,8 @@ XdbeBackBuffer XdbeAllocateBackBufferName(
  *	XdbeAllocateBackBufferName.  The buffer must refer to the back buffer
  *	of the specified window, or a protocol error results.
  */
-Status XdbeDeallocateBackBufferName (
+Status
+XdbeDeallocateBackBufferName (
     Display *dpy,
     XdbeBackBuffer buffer)
 {
@@ -229,7 +231,8 @@ Status XdbeDeallocateBackBufferName (
  *	The argument swap_info specifies the information needed per window
  *	to do the swap.
  */
-Status XdbeSwapBuffers (
+Status
+XdbeSwapBuffers (
     Display *dpy,
     XdbeSwapInfo *swap_info,
     int num_windows)
@@ -270,7 +273,8 @@ Status XdbeSwapBuffers (
  * XdbeBeginIdiom -
  *	This function marks the beginning of an idiom sequence.
  */
-Status XdbeBeginIdiom (
+Status
+XdbeBeginIdiom (
     Display *dpy)
 {
     XExtDisplayInfo *info = find_display(dpy);
@@ -291,7 +295,8 @@ Status XdbeBeginIdiom (
  * XdbeEndIdiom -
  *	This function marks the end of an idiom sequence.
  */
-Status XdbeEndIdiom (
+Status
+XdbeEndIdiom (
     Display *dpy)
 {
     XExtDisplayInfo *info = find_display(dpy);
@@ -325,7 +330,8 @@ Status XdbeEndIdiom (
  *	returned list corresponds to the nth screen of the server, starting
  *	with screen zero.
  */
-XdbeScreenVisualInfo *XdbeGetVisualInfo (
+XdbeScreenVisualInfo *
+XdbeGetVisualInfo (
     Display        *dpy,
     Drawable       *screen_specifiers,
     int            *num_screens)  /* SEND and RETURN */
@@ -419,7 +425,8 @@ XdbeScreenVisualInfo *XdbeGetVisualInfo (
  *	This function frees the list of XdbeScreenVisualInfo returned by the
  *	function XdbeGetVisualInfo.
  */
-void XdbeFreeVisualInfo(
+void
+XdbeFreeVisualInfo(
     XdbeScreenVisualInfo *visual_info)
 {
     if (visual_info == NULL) {
@@ -439,7 +446,8 @@ void XdbeFreeVisualInfo(
  *	This function returns the attributes associated with the specified
  *	buffer.
  */
-XdbeBackBufferAttributes *XdbeGetBackBufferAttributes(
+XdbeBackBufferAttributes *
+XdbeGetBackBufferAttributes(
     Display *dpy,
     XdbeBackBuffer buffer)
 {

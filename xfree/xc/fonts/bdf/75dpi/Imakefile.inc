@@ -1,4 +1,50 @@
-XCOMM $XFree86: xc/fonts/bdf/75dpi/Imakefile.inc,v 1.7 2003/06/18 16:17:34 eich Exp $
+XCOMM $XFree86: xc/fonts/bdf/75dpi/Imakefile.inc,v 1.9 2004/06/01 00:16:55 dawes Exp $
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 
 #if BuildUCSFonts
@@ -83,11 +129,10 @@ MISCOBJS = \
 	FontObj(tech14) FontObj(techB14) \
 	FontObj(term14) FontObj(termB14)
 
+#if DerivedUCSFonts
+
 #if BuildISO8859_1Fonts
-/*
- * Latin1 versions are always available, either derived at build time or
- * pre-derived for systems without perl.
- */
+
 DERIVED_8859_1_OBJS1 = \
 	FontObj(courB08-ISO8859-1) FontObj(courB10-ISO8859-1) \
 	FontObj(courB12-ISO8859-1) FontObj(courB14-ISO8859-1) \
@@ -194,8 +239,6 @@ DERIVED_8859_1_OBJS2 = \
 
 DERIVED_8859_1_OBJS = $(DERIVED_8859_1_OBJS1) (DERIVED_8859_1_OBJS2)
 #endif
-
-#if DerivedUCSFonts
 
 #if BuildISO8859_2Fonts
 DERIVED_8859_2_OBJS1 = \
@@ -1077,18 +1120,6 @@ DERIVEDOBJS2 = \
 
 DERIVEDOBJS = $(DERIVEDOBJS1) $(DERIVEDOBJS2)
 
-#else  /* DerivedUCSFonts */
-/*
- * PREDERIVEDOBJS is the list of fonts referenced by fonts.alias that would
- * normally be derived from the UCS versions but are not because perl
- * isn't available for the conversion script.  This is hopefully a temporary
- * issue.
- */
-
-PREDERIVEDOBJS1 = $(DERIVED_8859_1_OBJS1)
-PREDERIVEDOBJS2 = $(DERIVED_8859_1_OBJS2)
-PREDERIVEDOBJS = $(PREDERIVEDOBJS1) $(PREDERIVEDOBJS2)
-
 #endif /* DerivedUCSFonts */
 
 /* Ignore .bdf files when running mkfontdir */
@@ -1323,11 +1354,9 @@ FontTarget(techB14)
 FontTarget(term14)
 FontTarget(termB14)
 
+#if DerivedUCSFonts
+
 #if BuildISO8859_1Fonts
-/*
- * Latin1 versions are always available, either derived at build time or
- * pre-derived for systems without perl.
- */
 FontTarget(courB08-ISO8859-1)
 FontTarget(courB10-ISO8859-1)
 FontTarget(courB12-ISO8859-1)
@@ -1517,7 +1546,6 @@ FontTarget(UTRG__24-ISO8859-1)
 #endif
 
 /* 8-bit fonts derived from UCS fonts */
-#if DerivedUCSFonts
 #if BuildISO8859_2Fonts
 FontTarget(courB08-ISO8859-2)
 FontTarget(courB10-ISO8859-2)
@@ -4732,384 +4760,5 @@ MakeBdfFontFromUCSMaster(UTRG__14,ISO8859-15)
 MakeBdfFontFromUCSMaster(UTRG__18,ISO8859-15)
 MakeBdfFontFromUCSMaster(UTRG__24,ISO8859-15)
 #endif
-
-#else /* DerivedUCSFonts */
-
-#if BuildISO8859_1Fonts
-LinkFile(courB08-ISO8859-1.bdf,courB08-L1.bdf)
-LinkFile(courB10-ISO8859-1.bdf,courB10-L1.bdf)
-LinkFile(courB12-ISO8859-1.bdf,courB12-L1.bdf)
-LinkFile(courB14-ISO8859-1.bdf,courB14-L1.bdf)
-LinkFile(courB18-ISO8859-1.bdf,courB18-L1.bdf)
-LinkFile(courB24-ISO8859-1.bdf,courB24-L1.bdf)
-LinkFile(courBO08-ISO8859-1.bdf,courBO08-L1.bdf)
-LinkFile(courBO10-ISO8859-1.bdf,courBO10-L1.bdf)
-LinkFile(courBO12-ISO8859-1.bdf,courBO12-L1.bdf)
-LinkFile(courBO14-ISO8859-1.bdf,courBO14-L1.bdf)
-LinkFile(courBO18-ISO8859-1.bdf,courBO18-L1.bdf)
-LinkFile(courBO24-ISO8859-1.bdf,courBO24-L1.bdf)
-LinkFile(courO08-ISO8859-1.bdf,courO08-L1.bdf)
-LinkFile(courO10-ISO8859-1.bdf,courO10-L1.bdf)
-LinkFile(courO12-ISO8859-1.bdf,courO12-L1.bdf)
-LinkFile(courO14-ISO8859-1.bdf,courO14-L1.bdf)
-LinkFile(courO18-ISO8859-1.bdf,courO18-L1.bdf)
-LinkFile(courO24-ISO8859-1.bdf,courO24-L1.bdf)
-LinkFile(courR08-ISO8859-1.bdf,courR08-L1.bdf)
-LinkFile(courR10-ISO8859-1.bdf,courR10-L1.bdf)
-LinkFile(courR12-ISO8859-1.bdf,courR12-L1.bdf)
-LinkFile(courR14-ISO8859-1.bdf,courR14-L1.bdf)
-LinkFile(courR18-ISO8859-1.bdf,courR18-L1.bdf)
-LinkFile(courR24-ISO8859-1.bdf,courR24-L1.bdf)
-LinkFile(helvB08-ISO8859-1.bdf,helvB08-L1.bdf)
-LinkFile(helvB10-ISO8859-1.bdf,helvB10-L1.bdf)
-LinkFile(helvB12-ISO8859-1.bdf,helvB12-L1.bdf)
-LinkFile(helvB14-ISO8859-1.bdf,helvB14-L1.bdf)
-LinkFile(helvB18-ISO8859-1.bdf,helvB18-L1.bdf)
-LinkFile(helvB24-ISO8859-1.bdf,helvB24-L1.bdf)
-LinkFile(helvBO08-ISO8859-1.bdf,helvBO08-L1.bdf)
-LinkFile(helvBO10-ISO8859-1.bdf,helvBO10-L1.bdf)
-LinkFile(helvBO12-ISO8859-1.bdf,helvBO12-L1.bdf)
-LinkFile(helvBO14-ISO8859-1.bdf,helvBO14-L1.bdf)
-LinkFile(helvBO18-ISO8859-1.bdf,helvBO18-L1.bdf)
-LinkFile(helvBO24-ISO8859-1.bdf,helvBO24-L1.bdf)
-LinkFile(helvO08-ISO8859-1.bdf,helvO08-L1.bdf)
-LinkFile(helvO10-ISO8859-1.bdf,helvO10-L1.bdf)
-LinkFile(helvO12-ISO8859-1.bdf,helvO12-L1.bdf)
-LinkFile(helvO14-ISO8859-1.bdf,helvO14-L1.bdf)
-LinkFile(helvO18-ISO8859-1.bdf,helvO18-L1.bdf)
-LinkFile(helvO24-ISO8859-1.bdf,helvO24-L1.bdf)
-LinkFile(helvR08-ISO8859-1.bdf,helvR08-L1.bdf)
-LinkFile(helvR10-ISO8859-1.bdf,helvR10-L1.bdf)
-LinkFile(helvR12-ISO8859-1.bdf,helvR12-L1.bdf)
-LinkFile(helvR14-ISO8859-1.bdf,helvR14-L1.bdf)
-LinkFile(helvR18-ISO8859-1.bdf,helvR18-L1.bdf)
-LinkFile(helvR24-ISO8859-1.bdf,helvR24-L1.bdf)
-LinkFile(ncenB08-ISO8859-1.bdf,ncenB08-L1.bdf)
-LinkFile(ncenB10-ISO8859-1.bdf,ncenB10-L1.bdf)
-LinkFile(ncenB12-ISO8859-1.bdf,ncenB12-L1.bdf)
-LinkFile(ncenB14-ISO8859-1.bdf,ncenB14-L1.bdf)
-LinkFile(ncenB18-ISO8859-1.bdf,ncenB18-L1.bdf)
-LinkFile(ncenB24-ISO8859-1.bdf,ncenB24-L1.bdf)
-LinkFile(ncenBI08-ISO8859-1.bdf,ncenBI08-L1.bdf)
-LinkFile(ncenBI10-ISO8859-1.bdf,ncenBI10-L1.bdf)
-LinkFile(ncenBI12-ISO8859-1.bdf,ncenBI12-L1.bdf)
-LinkFile(ncenBI14-ISO8859-1.bdf,ncenBI14-L1.bdf)
-LinkFile(ncenBI18-ISO8859-1.bdf,ncenBI18-L1.bdf)
-LinkFile(ncenBI24-ISO8859-1.bdf,ncenBI24-L1.bdf)
-LinkFile(ncenI08-ISO8859-1.bdf,ncenI08-L1.bdf)
-LinkFile(ncenI10-ISO8859-1.bdf,ncenI10-L1.bdf)
-LinkFile(ncenI12-ISO8859-1.bdf,ncenI12-L1.bdf)
-LinkFile(ncenI14-ISO8859-1.bdf,ncenI14-L1.bdf)
-LinkFile(ncenI18-ISO8859-1.bdf,ncenI18-L1.bdf)
-LinkFile(ncenI24-ISO8859-1.bdf,ncenI24-L1.bdf)
-LinkFile(ncenR08-ISO8859-1.bdf,ncenR08-L1.bdf)
-LinkFile(ncenR10-ISO8859-1.bdf,ncenR10-L1.bdf)
-LinkFile(ncenR12-ISO8859-1.bdf,ncenR12-L1.bdf)
-LinkFile(ncenR14-ISO8859-1.bdf,ncenR14-L1.bdf)
-LinkFile(ncenR18-ISO8859-1.bdf,ncenR18-L1.bdf)
-LinkFile(ncenR24-ISO8859-1.bdf,ncenR24-L1.bdf)
-LinkFile(timB08-ISO8859-1.bdf,timB08-L1.bdf)
-LinkFile(timB10-ISO8859-1.bdf,timB10-L1.bdf)
-LinkFile(timB12-ISO8859-1.bdf,timB12-L1.bdf)
-LinkFile(timB14-ISO8859-1.bdf,timB14-L1.bdf)
-LinkFile(timB18-ISO8859-1.bdf,timB18-L1.bdf)
-LinkFile(timB24-ISO8859-1.bdf,timB24-L1.bdf)
-LinkFile(timBI08-ISO8859-1.bdf,timBI08-L1.bdf)
-LinkFile(timBI10-ISO8859-1.bdf,timBI10-L1.bdf)
-LinkFile(timBI12-ISO8859-1.bdf,timBI12-L1.bdf)
-LinkFile(timBI14-ISO8859-1.bdf,timBI14-L1.bdf)
-LinkFile(timBI18-ISO8859-1.bdf,timBI18-L1.bdf)
-LinkFile(timBI24-ISO8859-1.bdf,timBI24-L1.bdf)
-LinkFile(timI08-ISO8859-1.bdf,timI08-L1.bdf)
-LinkFile(timI10-ISO8859-1.bdf,timI10-L1.bdf)
-LinkFile(timI12-ISO8859-1.bdf,timI12-L1.bdf)
-LinkFile(timI14-ISO8859-1.bdf,timI14-L1.bdf)
-LinkFile(timI18-ISO8859-1.bdf,timI18-L1.bdf)
-LinkFile(timI24-ISO8859-1.bdf,timI24-L1.bdf)
-LinkFile(timR08-ISO8859-1.bdf,timR08-L1.bdf)
-LinkFile(timR10-ISO8859-1.bdf,timR10-L1.bdf)
-LinkFile(timR12-ISO8859-1.bdf,timR12-L1.bdf)
-LinkFile(timR14-ISO8859-1.bdf,timR14-L1.bdf)
-LinkFile(timR18-ISO8859-1.bdf,timR18-L1.bdf)
-LinkFile(timR24-ISO8859-1.bdf,timR24-L1.bdf)
-LinkFile(luBIS08-ISO8859-1.bdf,luBIS08-L1.bdf)
-LinkFile(luBIS10-ISO8859-1.bdf,luBIS10-L1.bdf)
-LinkFile(luBIS12-ISO8859-1.bdf,luBIS12-L1.bdf)
-LinkFile(luBIS14-ISO8859-1.bdf,luBIS14-L1.bdf)
-LinkFile(luBIS18-ISO8859-1.bdf,luBIS18-L1.bdf)
-LinkFile(luBIS19-ISO8859-1.bdf,luBIS19-L1.bdf)
-LinkFile(luBIS24-ISO8859-1.bdf,luBIS24-L1.bdf)
-LinkFile(luBS08-ISO8859-1.bdf,luBS08-L1.bdf)
-LinkFile(luBS10-ISO8859-1.bdf,luBS10-L1.bdf)
-LinkFile(luBS12-ISO8859-1.bdf,luBS12-L1.bdf)
-LinkFile(luBS14-ISO8859-1.bdf,luBS14-L1.bdf)
-LinkFile(luBS18-ISO8859-1.bdf,luBS18-L1.bdf)
-LinkFile(luBS19-ISO8859-1.bdf,luBS19-L1.bdf)
-LinkFile(luBS24-ISO8859-1.bdf,luBS24-L1.bdf)
-LinkFile(luIS08-ISO8859-1.bdf,luIS08-L1.bdf)
-LinkFile(luIS10-ISO8859-1.bdf,luIS10-L1.bdf)
-LinkFile(luIS12-ISO8859-1.bdf,luIS12-L1.bdf)
-LinkFile(luIS14-ISO8859-1.bdf,luIS14-L1.bdf)
-LinkFile(luIS18-ISO8859-1.bdf,luIS18-L1.bdf)
-LinkFile(luIS19-ISO8859-1.bdf,luIS19-L1.bdf)
-LinkFile(luIS24-ISO8859-1.bdf,luIS24-L1.bdf)
-LinkFile(luRS08-ISO8859-1.bdf,luRS08-L1.bdf)
-LinkFile(luRS10-ISO8859-1.bdf,luRS10-L1.bdf)
-LinkFile(luRS12-ISO8859-1.bdf,luRS12-L1.bdf)
-LinkFile(luRS14-ISO8859-1.bdf,luRS14-L1.bdf)
-LinkFile(luRS18-ISO8859-1.bdf,luRS18-L1.bdf)
-LinkFile(luRS19-ISO8859-1.bdf,luRS19-L1.bdf)
-LinkFile(luRS24-ISO8859-1.bdf,luRS24-L1.bdf)
-LinkFile(lubB08-ISO8859-1.bdf,lubB08-L1.bdf)
-LinkFile(lubB10-ISO8859-1.bdf,lubB10-L1.bdf)
-LinkFile(lubB12-ISO8859-1.bdf,lubB12-L1.bdf)
-LinkFile(lubB14-ISO8859-1.bdf,lubB14-L1.bdf)
-LinkFile(lubB18-ISO8859-1.bdf,lubB18-L1.bdf)
-LinkFile(lubB19-ISO8859-1.bdf,lubB19-L1.bdf)
-LinkFile(lubB24-ISO8859-1.bdf,lubB24-L1.bdf)
-LinkFile(lubBI08-ISO8859-1.bdf,lubBI08-L1.bdf)
-LinkFile(lubBI10-ISO8859-1.bdf,lubBI10-L1.bdf)
-LinkFile(lubBI12-ISO8859-1.bdf,lubBI12-L1.bdf)
-LinkFile(lubBI14-ISO8859-1.bdf,lubBI14-L1.bdf)
-LinkFile(lubBI18-ISO8859-1.bdf,lubBI18-L1.bdf)
-LinkFile(lubBI19-ISO8859-1.bdf,lubBI19-L1.bdf)
-LinkFile(lubBI24-ISO8859-1.bdf,lubBI24-L1.bdf)
-LinkFile(lubI08-ISO8859-1.bdf,lubI08-L1.bdf)
-LinkFile(lubI10-ISO8859-1.bdf,lubI10-L1.bdf)
-LinkFile(lubI12-ISO8859-1.bdf,lubI12-L1.bdf)
-LinkFile(lubI14-ISO8859-1.bdf,lubI14-L1.bdf)
-LinkFile(lubI18-ISO8859-1.bdf,lubI18-L1.bdf)
-LinkFile(lubI19-ISO8859-1.bdf,lubI19-L1.bdf)
-LinkFile(lubI24-ISO8859-1.bdf,lubI24-L1.bdf)
-LinkFile(lubR08-ISO8859-1.bdf,lubR08-L1.bdf)
-LinkFile(lubR10-ISO8859-1.bdf,lubR10-L1.bdf)
-LinkFile(lubR12-ISO8859-1.bdf,lubR12-L1.bdf)
-LinkFile(lubR14-ISO8859-1.bdf,lubR14-L1.bdf)
-LinkFile(lubR18-ISO8859-1.bdf,lubR18-L1.bdf)
-LinkFile(lubR19-ISO8859-1.bdf,lubR19-L1.bdf)
-LinkFile(lubR24-ISO8859-1.bdf,lubR24-L1.bdf)
-LinkFile(lutBS08-ISO8859-1.bdf,lutBS08-L1.bdf)
-LinkFile(lutBS10-ISO8859-1.bdf,lutBS10-L1.bdf)
-LinkFile(lutBS12-ISO8859-1.bdf,lutBS12-L1.bdf)
-LinkFile(lutBS14-ISO8859-1.bdf,lutBS14-L1.bdf)
-LinkFile(lutBS18-ISO8859-1.bdf,lutBS18-L1.bdf)
-LinkFile(lutBS19-ISO8859-1.bdf,lutBS19-L1.bdf)
-LinkFile(lutBS24-ISO8859-1.bdf,lutBS24-L1.bdf)
-LinkFile(lutRS08-ISO8859-1.bdf,lutRS08-L1.bdf)
-LinkFile(lutRS10-ISO8859-1.bdf,lutRS10-L1.bdf)
-LinkFile(lutRS12-ISO8859-1.bdf,lutRS12-L1.bdf)
-LinkFile(lutRS14-ISO8859-1.bdf,lutRS14-L1.bdf)
-LinkFile(lutRS18-ISO8859-1.bdf,lutRS18-L1.bdf)
-LinkFile(lutRS19-ISO8859-1.bdf,lutRS19-L1.bdf)
-LinkFile(lutRS24-ISO8859-1.bdf,lutRS24-L1.bdf)
-LinkFile(UTBI__10-ISO8859-1.bdf,UTBI__10-L1.bdf)
-LinkFile(UTBI__12-ISO8859-1.bdf,UTBI__12-L1.bdf)
-LinkFile(UTBI__14-ISO8859-1.bdf,UTBI__14-L1.bdf)
-LinkFile(UTBI__18-ISO8859-1.bdf,UTBI__18-L1.bdf)
-LinkFile(UTBI__24-ISO8859-1.bdf,UTBI__24-L1.bdf)
-LinkFile(UTB___10-ISO8859-1.bdf,UTB___10-L1.bdf)
-LinkFile(UTB___12-ISO8859-1.bdf,UTB___12-L1.bdf)
-LinkFile(UTB___14-ISO8859-1.bdf,UTB___14-L1.bdf)
-LinkFile(UTB___18-ISO8859-1.bdf,UTB___18-L1.bdf)
-LinkFile(UTB___24-ISO8859-1.bdf,UTB___24-L1.bdf)
-LinkFile(UTI___10-ISO8859-1.bdf,UTI___10-L1.bdf)
-LinkFile(UTI___12-ISO8859-1.bdf,UTI___12-L1.bdf)
-LinkFile(UTI___14-ISO8859-1.bdf,UTI___14-L1.bdf)
-LinkFile(UTI___18-ISO8859-1.bdf,UTI___18-L1.bdf)
-LinkFile(UTI___24-ISO8859-1.bdf,UTI___24-L1.bdf)
-LinkFile(UTRG__10-ISO8859-1.bdf,UTRG__10-L1.bdf)
-LinkFile(UTRG__12-ISO8859-1.bdf,UTRG__12-L1.bdf)
-LinkFile(UTRG__14-ISO8859-1.bdf,UTRG__14-L1.bdf)
-LinkFile(UTRG__18-ISO8859-1.bdf,UTRG__18-L1.bdf)
-LinkFile(UTRG__24-ISO8859-1.bdf,UTRG__24-L1.bdf)
-#endif
-
 #endif /* DerivedUCSFonts */
-
-UpdateDerivedFont(courB08-ISO8859-1.bdf,courB08-L1.bdf)
-UpdateDerivedFont(courB10-ISO8859-1.bdf,courB10-L1.bdf)
-UpdateDerivedFont(courB12-ISO8859-1.bdf,courB12-L1.bdf)
-UpdateDerivedFont(courB14-ISO8859-1.bdf,courB14-L1.bdf)
-UpdateDerivedFont(courB18-ISO8859-1.bdf,courB18-L1.bdf)
-UpdateDerivedFont(courB24-ISO8859-1.bdf,courB24-L1.bdf)
-UpdateDerivedFont(courBO08-ISO8859-1.bdf,courBO08-L1.bdf)
-UpdateDerivedFont(courBO10-ISO8859-1.bdf,courBO10-L1.bdf)
-UpdateDerivedFont(courBO12-ISO8859-1.bdf,courBO12-L1.bdf)
-UpdateDerivedFont(courBO14-ISO8859-1.bdf,courBO14-L1.bdf)
-UpdateDerivedFont(courBO18-ISO8859-1.bdf,courBO18-L1.bdf)
-UpdateDerivedFont(courBO24-ISO8859-1.bdf,courBO24-L1.bdf)
-UpdateDerivedFont(courO08-ISO8859-1.bdf,courO08-L1.bdf)
-UpdateDerivedFont(courO10-ISO8859-1.bdf,courO10-L1.bdf)
-UpdateDerivedFont(courO12-ISO8859-1.bdf,courO12-L1.bdf)
-UpdateDerivedFont(courO14-ISO8859-1.bdf,courO14-L1.bdf)
-UpdateDerivedFont(courO18-ISO8859-1.bdf,courO18-L1.bdf)
-UpdateDerivedFont(courO24-ISO8859-1.bdf,courO24-L1.bdf)
-UpdateDerivedFont(courR08-ISO8859-1.bdf,courR08-L1.bdf)
-UpdateDerivedFont(courR10-ISO8859-1.bdf,courR10-L1.bdf)
-UpdateDerivedFont(courR12-ISO8859-1.bdf,courR12-L1.bdf)
-UpdateDerivedFont(courR14-ISO8859-1.bdf,courR14-L1.bdf)
-UpdateDerivedFont(courR18-ISO8859-1.bdf,courR18-L1.bdf)
-UpdateDerivedFont(courR24-ISO8859-1.bdf,courR24-L1.bdf)
-UpdateDerivedFont(helvB08-ISO8859-1.bdf,helvB08-L1.bdf)
-UpdateDerivedFont(helvB10-ISO8859-1.bdf,helvB10-L1.bdf)
-UpdateDerivedFont(helvB12-ISO8859-1.bdf,helvB12-L1.bdf)
-UpdateDerivedFont(helvB14-ISO8859-1.bdf,helvB14-L1.bdf)
-UpdateDerivedFont(helvB18-ISO8859-1.bdf,helvB18-L1.bdf)
-UpdateDerivedFont(helvB24-ISO8859-1.bdf,helvB24-L1.bdf)
-UpdateDerivedFont(helvBO08-ISO8859-1.bdf,helvBO08-L1.bdf)
-UpdateDerivedFont(helvBO10-ISO8859-1.bdf,helvBO10-L1.bdf)
-UpdateDerivedFont(helvBO12-ISO8859-1.bdf,helvBO12-L1.bdf)
-UpdateDerivedFont(helvBO14-ISO8859-1.bdf,helvBO14-L1.bdf)
-UpdateDerivedFont(helvBO18-ISO8859-1.bdf,helvBO18-L1.bdf)
-UpdateDerivedFont(helvBO24-ISO8859-1.bdf,helvBO24-L1.bdf)
-UpdateDerivedFont(helvO08-ISO8859-1.bdf,helvO08-L1.bdf)
-UpdateDerivedFont(helvO10-ISO8859-1.bdf,helvO10-L1.bdf)
-UpdateDerivedFont(helvO12-ISO8859-1.bdf,helvO12-L1.bdf)
-UpdateDerivedFont(helvO14-ISO8859-1.bdf,helvO14-L1.bdf)
-UpdateDerivedFont(helvO18-ISO8859-1.bdf,helvO18-L1.bdf)
-UpdateDerivedFont(helvO24-ISO8859-1.bdf,helvO24-L1.bdf)
-UpdateDerivedFont(helvR08-ISO8859-1.bdf,helvR08-L1.bdf)
-UpdateDerivedFont(helvR10-ISO8859-1.bdf,helvR10-L1.bdf)
-UpdateDerivedFont(helvR12-ISO8859-1.bdf,helvR12-L1.bdf)
-UpdateDerivedFont(helvR14-ISO8859-1.bdf,helvR14-L1.bdf)
-UpdateDerivedFont(helvR18-ISO8859-1.bdf,helvR18-L1.bdf)
-UpdateDerivedFont(helvR24-ISO8859-1.bdf,helvR24-L1.bdf)
-UpdateDerivedFont(ncenB08-ISO8859-1.bdf,ncenB08-L1.bdf)
-UpdateDerivedFont(ncenB10-ISO8859-1.bdf,ncenB10-L1.bdf)
-UpdateDerivedFont(ncenB12-ISO8859-1.bdf,ncenB12-L1.bdf)
-UpdateDerivedFont(ncenB14-ISO8859-1.bdf,ncenB14-L1.bdf)
-UpdateDerivedFont(ncenB18-ISO8859-1.bdf,ncenB18-L1.bdf)
-UpdateDerivedFont(ncenB24-ISO8859-1.bdf,ncenB24-L1.bdf)
-UpdateDerivedFont(ncenBI08-ISO8859-1.bdf,ncenBI08-L1.bdf)
-UpdateDerivedFont(ncenBI10-ISO8859-1.bdf,ncenBI10-L1.bdf)
-UpdateDerivedFont(ncenBI12-ISO8859-1.bdf,ncenBI12-L1.bdf)
-UpdateDerivedFont(ncenBI14-ISO8859-1.bdf,ncenBI14-L1.bdf)
-UpdateDerivedFont(ncenBI18-ISO8859-1.bdf,ncenBI18-L1.bdf)
-UpdateDerivedFont(ncenBI24-ISO8859-1.bdf,ncenBI24-L1.bdf)
-UpdateDerivedFont(ncenI08-ISO8859-1.bdf,ncenI08-L1.bdf)
-UpdateDerivedFont(ncenI10-ISO8859-1.bdf,ncenI10-L1.bdf)
-UpdateDerivedFont(ncenI12-ISO8859-1.bdf,ncenI12-L1.bdf)
-UpdateDerivedFont(ncenI14-ISO8859-1.bdf,ncenI14-L1.bdf)
-UpdateDerivedFont(ncenI18-ISO8859-1.bdf,ncenI18-L1.bdf)
-UpdateDerivedFont(ncenI24-ISO8859-1.bdf,ncenI24-L1.bdf)
-UpdateDerivedFont(ncenR08-ISO8859-1.bdf,ncenR08-L1.bdf)
-UpdateDerivedFont(ncenR10-ISO8859-1.bdf,ncenR10-L1.bdf)
-UpdateDerivedFont(ncenR12-ISO8859-1.bdf,ncenR12-L1.bdf)
-UpdateDerivedFont(ncenR14-ISO8859-1.bdf,ncenR14-L1.bdf)
-UpdateDerivedFont(ncenR18-ISO8859-1.bdf,ncenR18-L1.bdf)
-UpdateDerivedFont(ncenR24-ISO8859-1.bdf,ncenR24-L1.bdf)
-UpdateDerivedFont(timB08-ISO8859-1.bdf,timB08-L1.bdf)
-UpdateDerivedFont(timB10-ISO8859-1.bdf,timB10-L1.bdf)
-UpdateDerivedFont(timB12-ISO8859-1.bdf,timB12-L1.bdf)
-UpdateDerivedFont(timB14-ISO8859-1.bdf,timB14-L1.bdf)
-UpdateDerivedFont(timB18-ISO8859-1.bdf,timB18-L1.bdf)
-UpdateDerivedFont(timB24-ISO8859-1.bdf,timB24-L1.bdf)
-UpdateDerivedFont(timBI08-ISO8859-1.bdf,timBI08-L1.bdf)
-UpdateDerivedFont(timBI10-ISO8859-1.bdf,timBI10-L1.bdf)
-UpdateDerivedFont(timBI12-ISO8859-1.bdf,timBI12-L1.bdf)
-UpdateDerivedFont(timBI14-ISO8859-1.bdf,timBI14-L1.bdf)
-UpdateDerivedFont(timBI18-ISO8859-1.bdf,timBI18-L1.bdf)
-UpdateDerivedFont(timBI24-ISO8859-1.bdf,timBI24-L1.bdf)
-UpdateDerivedFont(timI08-ISO8859-1.bdf,timI08-L1.bdf)
-UpdateDerivedFont(timI10-ISO8859-1.bdf,timI10-L1.bdf)
-UpdateDerivedFont(timI12-ISO8859-1.bdf,timI12-L1.bdf)
-UpdateDerivedFont(timI14-ISO8859-1.bdf,timI14-L1.bdf)
-UpdateDerivedFont(timI18-ISO8859-1.bdf,timI18-L1.bdf)
-UpdateDerivedFont(timI24-ISO8859-1.bdf,timI24-L1.bdf)
-UpdateDerivedFont(timR08-ISO8859-1.bdf,timR08-L1.bdf)
-UpdateDerivedFont(timR10-ISO8859-1.bdf,timR10-L1.bdf)
-UpdateDerivedFont(timR12-ISO8859-1.bdf,timR12-L1.bdf)
-UpdateDerivedFont(timR14-ISO8859-1.bdf,timR14-L1.bdf)
-UpdateDerivedFont(timR18-ISO8859-1.bdf,timR18-L1.bdf)
-UpdateDerivedFont(timR24-ISO8859-1.bdf,timR24-L1.bdf)
-UpdateDerivedFont(luBIS08-ISO8859-1.bdf,luBIS08-L1.bdf)
-UpdateDerivedFont(luBIS10-ISO8859-1.bdf,luBIS10-L1.bdf)
-UpdateDerivedFont(luBIS12-ISO8859-1.bdf,luBIS12-L1.bdf)
-UpdateDerivedFont(luBIS14-ISO8859-1.bdf,luBIS14-L1.bdf)
-UpdateDerivedFont(luBIS18-ISO8859-1.bdf,luBIS18-L1.bdf)
-UpdateDerivedFont(luBIS19-ISO8859-1.bdf,luBIS19-L1.bdf)
-UpdateDerivedFont(luBIS24-ISO8859-1.bdf,luBIS24-L1.bdf)
-UpdateDerivedFont(luBS08-ISO8859-1.bdf,luBS08-L1.bdf)
-UpdateDerivedFont(luBS10-ISO8859-1.bdf,luBS10-L1.bdf)
-UpdateDerivedFont(luBS12-ISO8859-1.bdf,luBS12-L1.bdf)
-UpdateDerivedFont(luBS14-ISO8859-1.bdf,luBS14-L1.bdf)
-UpdateDerivedFont(luBS18-ISO8859-1.bdf,luBS18-L1.bdf)
-UpdateDerivedFont(luBS19-ISO8859-1.bdf,luBS19-L1.bdf)
-UpdateDerivedFont(luBS24-ISO8859-1.bdf,luBS24-L1.bdf)
-UpdateDerivedFont(luIS08-ISO8859-1.bdf,luIS08-L1.bdf)
-UpdateDerivedFont(luIS10-ISO8859-1.bdf,luIS10-L1.bdf)
-UpdateDerivedFont(luIS12-ISO8859-1.bdf,luIS12-L1.bdf)
-UpdateDerivedFont(luIS14-ISO8859-1.bdf,luIS14-L1.bdf)
-UpdateDerivedFont(luIS18-ISO8859-1.bdf,luIS18-L1.bdf)
-UpdateDerivedFont(luIS19-ISO8859-1.bdf,luIS19-L1.bdf)
-UpdateDerivedFont(luIS24-ISO8859-1.bdf,luIS24-L1.bdf)
-UpdateDerivedFont(luRS08-ISO8859-1.bdf,luRS08-L1.bdf)
-UpdateDerivedFont(luRS10-ISO8859-1.bdf,luRS10-L1.bdf)
-UpdateDerivedFont(luRS12-ISO8859-1.bdf,luRS12-L1.bdf)
-UpdateDerivedFont(luRS14-ISO8859-1.bdf,luRS14-L1.bdf)
-UpdateDerivedFont(luRS18-ISO8859-1.bdf,luRS18-L1.bdf)
-UpdateDerivedFont(luRS19-ISO8859-1.bdf,luRS19-L1.bdf)
-UpdateDerivedFont(luRS24-ISO8859-1.bdf,luRS24-L1.bdf)
-UpdateDerivedFont(lubB08-ISO8859-1.bdf,lubB08-L1.bdf)
-UpdateDerivedFont(lubB10-ISO8859-1.bdf,lubB10-L1.bdf)
-UpdateDerivedFont(lubB12-ISO8859-1.bdf,lubB12-L1.bdf)
-UpdateDerivedFont(lubB14-ISO8859-1.bdf,lubB14-L1.bdf)
-UpdateDerivedFont(lubB18-ISO8859-1.bdf,lubB18-L1.bdf)
-UpdateDerivedFont(lubB19-ISO8859-1.bdf,lubB19-L1.bdf)
-UpdateDerivedFont(lubB24-ISO8859-1.bdf,lubB24-L1.bdf)
-UpdateDerivedFont(lubBI08-ISO8859-1.bdf,lubBI08-L1.bdf)
-UpdateDerivedFont(lubBI10-ISO8859-1.bdf,lubBI10-L1.bdf)
-UpdateDerivedFont(lubBI12-ISO8859-1.bdf,lubBI12-L1.bdf)
-UpdateDerivedFont(lubBI14-ISO8859-1.bdf,lubBI14-L1.bdf)
-UpdateDerivedFont(lubBI18-ISO8859-1.bdf,lubBI18-L1.bdf)
-UpdateDerivedFont(lubBI19-ISO8859-1.bdf,lubBI19-L1.bdf)
-UpdateDerivedFont(lubBI24-ISO8859-1.bdf,lubBI24-L1.bdf)
-UpdateDerivedFont(lubI08-ISO8859-1.bdf,lubI08-L1.bdf)
-UpdateDerivedFont(lubI10-ISO8859-1.bdf,lubI10-L1.bdf)
-UpdateDerivedFont(lubI12-ISO8859-1.bdf,lubI12-L1.bdf)
-UpdateDerivedFont(lubI14-ISO8859-1.bdf,lubI14-L1.bdf)
-UpdateDerivedFont(lubI18-ISO8859-1.bdf,lubI18-L1.bdf)
-UpdateDerivedFont(lubI19-ISO8859-1.bdf,lubI19-L1.bdf)
-UpdateDerivedFont(lubI24-ISO8859-1.bdf,lubI24-L1.bdf)
-UpdateDerivedFont(lubR08-ISO8859-1.bdf,lubR08-L1.bdf)
-UpdateDerivedFont(lubR10-ISO8859-1.bdf,lubR10-L1.bdf)
-UpdateDerivedFont(lubR12-ISO8859-1.bdf,lubR12-L1.bdf)
-UpdateDerivedFont(lubR14-ISO8859-1.bdf,lubR14-L1.bdf)
-UpdateDerivedFont(lubR18-ISO8859-1.bdf,lubR18-L1.bdf)
-UpdateDerivedFont(lubR19-ISO8859-1.bdf,lubR19-L1.bdf)
-UpdateDerivedFont(lubR24-ISO8859-1.bdf,lubR24-L1.bdf)
-UpdateDerivedFont(lutBS08-ISO8859-1.bdf,lutBS08-L1.bdf)
-UpdateDerivedFont(lutBS10-ISO8859-1.bdf,lutBS10-L1.bdf)
-UpdateDerivedFont(lutBS12-ISO8859-1.bdf,lutBS12-L1.bdf)
-UpdateDerivedFont(lutBS14-ISO8859-1.bdf,lutBS14-L1.bdf)
-UpdateDerivedFont(lutBS18-ISO8859-1.bdf,lutBS18-L1.bdf)
-UpdateDerivedFont(lutBS19-ISO8859-1.bdf,lutBS19-L1.bdf)
-UpdateDerivedFont(lutBS24-ISO8859-1.bdf,lutBS24-L1.bdf)
-UpdateDerivedFont(lutRS08-ISO8859-1.bdf,lutRS08-L1.bdf)
-UpdateDerivedFont(lutRS10-ISO8859-1.bdf,lutRS10-L1.bdf)
-UpdateDerivedFont(lutRS12-ISO8859-1.bdf,lutRS12-L1.bdf)
-UpdateDerivedFont(lutRS14-ISO8859-1.bdf,lutRS14-L1.bdf)
-UpdateDerivedFont(lutRS18-ISO8859-1.bdf,lutRS18-L1.bdf)
-UpdateDerivedFont(lutRS19-ISO8859-1.bdf,lutRS19-L1.bdf)
-UpdateDerivedFont(lutRS24-ISO8859-1.bdf,lutRS24-L1.bdf)
-UpdateDerivedFont(UTBI__10-ISO8859-1.bdf,UTBI__10-L1.bdf)
-UpdateDerivedFont(UTBI__12-ISO8859-1.bdf,UTBI__12-L1.bdf)
-UpdateDerivedFont(UTBI__14-ISO8859-1.bdf,UTBI__14-L1.bdf)
-UpdateDerivedFont(UTBI__18-ISO8859-1.bdf,UTBI__18-L1.bdf)
-UpdateDerivedFont(UTBI__24-ISO8859-1.bdf,UTBI__24-L1.bdf)
-UpdateDerivedFont(UTB___10-ISO8859-1.bdf,UTB___10-L1.bdf)
-UpdateDerivedFont(UTB___12-ISO8859-1.bdf,UTB___12-L1.bdf)
-UpdateDerivedFont(UTB___14-ISO8859-1.bdf,UTB___14-L1.bdf)
-UpdateDerivedFont(UTB___18-ISO8859-1.bdf,UTB___18-L1.bdf)
-UpdateDerivedFont(UTB___24-ISO8859-1.bdf,UTB___24-L1.bdf)
-UpdateDerivedFont(UTI___10-ISO8859-1.bdf,UTI___10-L1.bdf)
-UpdateDerivedFont(UTI___12-ISO8859-1.bdf,UTI___12-L1.bdf)
-UpdateDerivedFont(UTI___14-ISO8859-1.bdf,UTI___14-L1.bdf)
-UpdateDerivedFont(UTI___18-ISO8859-1.bdf,UTI___18-L1.bdf)
-UpdateDerivedFont(UTI___24-ISO8859-1.bdf,UTI___24-L1.bdf)
-UpdateDerivedFont(UTRG__10-ISO8859-1.bdf,UTRG__10-L1.bdf)
-UpdateDerivedFont(UTRG__12-ISO8859-1.bdf,UTRG__12-L1.bdf)
-UpdateDerivedFont(UTRG__14-ISO8859-1.bdf,UTRG__14-L1.bdf)
-UpdateDerivedFont(UTRG__18-ISO8859-1.bdf,UTRG__18-L1.bdf)
-UpdateDerivedFont(UTRG__24-ISO8859-1.bdf,UTRG__24-L1.bdf)
 

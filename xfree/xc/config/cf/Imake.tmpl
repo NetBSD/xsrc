@@ -1,12 +1,53 @@
 XCOMM ----------------------------------------------------------------------
 XCOMM Makefile generated from IMAKE_TEMPLATE and INCLUDE_IMAKEFILE
-XCOMM $Xorg: Imake.tmpl,v 1.4 2000/08/17 19:41:46 cpqbld Exp $
-XCOMM
-XCOMM
-XCOMM
-XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.156 2004/01/12 21:43:18 herrb Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.169 2005/02/11 03:02:53 dawes Exp $
 XCOMM ----------------------------------------------------------------------
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * generic imake template
@@ -424,6 +465,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #endif
 #ifndef HasSnprintf
 #define HasSnprintf		NO	/* assume not */
+#endif
+#ifndef HasAsprintf
+#define HasAsprintf		NO	/* assume not */
 #endif
 #ifndef HasStrlcat
 #define HasStrlcat		NO	/* assume not */
@@ -1133,6 +1177,15 @@ TCLIBDIR = TclLibDir
 #ifndef AsmDefines
 #define AsmDefines /**/
 #endif
+#ifndef CPPAsmOptions
+# if HasGcc && \
+     ((GccMajorVersion < 3) || \
+      ((GccMajorVersion == 3) && (GccMinorVersion < 3)))
+#  define CPPAsmOptions -$$
+# else
+#  define CPPAsmOptions /**/
+# endif
+#endif
 #ifndef CompressCmd
 #define CompressCmd compress
 #endif
@@ -1339,6 +1392,9 @@ TCLIBDIR = TclLibDir
 #ifndef MathLibrary
 #define MathLibrary -lm
 #endif
+#ifndef ExpatLibrary
+#define ExpatLibrary $(EXPATLIB)
+#endif
 #ifndef DBMLibrary
 #define DBMLibrary -ldbm
 #endif
@@ -1361,6 +1417,12 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef ExtraLoadFlags
 #define ExtraLoadFlags /**/
+#endif
+#ifndef ExtraSharedLibraryLoadOptions
+#define ExtraSharedLibraryLoadOptions ExtraLoadOptions
+#endif
+#ifndef ExtraSharedLibraryLoadFlags
+#define ExtraSharedLibraryLoadFlags ExtraLoadFlags
 #endif
 #ifndef LdCombineFlags
 #if SystemV4
@@ -1410,11 +1472,7 @@ TCLIBDIR = TclLibDir
 #endif
 #endif
 #ifndef DependDefines
-# if UseCCMakeDepend || UseGccMakeDepend
-#  define DependDefines /**/
-# else
-#  define DependDefines -DUSE_MAKEDEPEND
-# endif
+# define DependDefines /**/
 #endif
 #ifndef DependFlags
 #define DependFlags /**/
@@ -1687,6 +1745,8 @@ TCLIBDIR = TclLibDir
          IMAKESRC = $(CONFIGSRC)/imake
         DEPENDSRC = DependDir
 
+        LIBPREFIX = lib
+
           INCROOT = IncRoot		/* base of where to put header files */
         USRLIBDIR = UsrLibDir		/* nonshared libraries */
            VARDIR = VarDirectory	/* usually /var */
@@ -1815,7 +1875,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
    ADMINMANSUFFIX = AdminManSuffix	/* suffix for admin command man pages */
      MANSRCSUFFIX = ManSrcSuffix	/* suffix for man page source */
      MANNEWSUFFIX = ManNewSuffix	/* suffix for preprocessed man source */
-          MANDEFS = AppLoadDefs FileManDefs LibManDefs MiscManDefs DriverManDefs AdminManDefs ProjectManDefs $(XORGMANDEFS) $(VENDORMANDEFS)
+          MANDEFS = AppLoadDefs FileManDefs LibManDefs MiscManDefs DriverManDefs AdminManDefs ProjectManDefs $(VENDORMANDEFS)
 
    COMPRESSMANCMD = CompressManCmd
 
@@ -1839,7 +1899,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
 #else
             MODCC = ModuleCcCmd
 #endif
-           MODCPP = ModuleCppCmd
+           MODCPP = ModuleCppCmd $(STD_CPP_DEFINES)
         MODCFLAGS = ModuleCFlags
             MODAS = ModuleAsCmd
        MODASFLAGS = ModuleAsFlags
@@ -1897,7 +1957,9 @@ MODLDCOMBINEFLAGS = ModuleLdCombineFlags
     SHAREDCODEDEF = SharedCodeDef
          SHLIBDEF = SharedLibraryDef
 #ifdef SharedLibraryLoadFlags
-     SHLIBLDFLAGS = SharedLibraryLoadFlags $(SHLIBGLOBALSFLAGS)
+     SHLIBLDFLAGS = SharedLibraryLoadFlags \
+                    $(SHLIBGLOBALSFLAGS) \
+                    ExtraSharedLibraryLoadFlags ExtraSharedLibraryLoadOptions
 #endif
 /*
  * Here we set up flags needed to produce position-independent code
@@ -2121,6 +2183,11 @@ XCOMM common rules for all Makefiles - do not edit
 
 .c.i:
 	CPPOnlyCompile($*.c,$(_NOOP_))
+
+.SUFFIXES: .S
+
+.S.i:
+	CPPOnlyAsm($*,$(_NOOP_))
 
 .SUFFIXES: .ii
 

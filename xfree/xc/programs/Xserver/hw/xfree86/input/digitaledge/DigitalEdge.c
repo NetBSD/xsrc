@@ -30,16 +30,7 @@
  * Probably buggy as hell, no idea what the initialisation strings are,
  * no idea how to ack it. If the tablet stops responding power cycle it.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/digitaledge/DigitalEdge.c,v 1.9 2003/11/17 22:20:38 dawes Exp $ */
-
-#include "xf86Version.h"
-
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
-#define XFREE86_V4 1
-#endif
-
-#ifdef XFREE86_V4
-/* post 3.9 headers */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/digitaledge/DigitalEdge.c,v 1.11 2004/10/23 15:29:30 dawes Exp $ */
 
 #ifndef XFree86LOADER
 #include <unistd.h>
@@ -59,9 +50,7 @@
 #include "keysym.h"
 #include "mipointer.h"
 
-#ifdef XFree86LOADER
 #include "xf86Module.h"
-#endif
 
 #define wait_for_fd(fd) xf86WaitForInput((fd), 1000)
 #define tcflush(fd, n) xf86FlushInput((fd))
@@ -71,9 +60,6 @@
 #define write(a,b,c) xf86WriteSerial((a),(char*)(b),(c))
 #undef close
 #define close(a) xf86CloseSerial((a))
-#define XCONFIG_PROBED "(==)"
-#define XCONFIG_GIVEN "(**)"
-#define xf86Verbose 1
 #undef PRIVATE
 #define PRIVATE(x) XI_PRIVATE(x)
 
@@ -95,56 +81,6 @@ static const char *default_options[] =
 };
 
 static InputDriverPtr dedgeDrv;
-
-#else  /* pre 3.9 headers */
-
-#include "Xos.h"
-#include <signal.h>
-#include <stdio.h>
-
-#define NEED_EVENTS
-#include "X.h"
-#include "Xproto.h"
-#include "misc.h"
-#include "inputstr.h"
-#include "scrnintstr.h"
-#include "XI.h"
-#include "XIproto.h"
-
-#if defined(sun) && !defined(i386)
-#define POSIX_TTY
-#include <errno.h>
-#include <termio.h>
-#include <fcntl.h>
-#include <ctype.h>
-
-#include "extio.h"
-#else
-#include "compiler.h"
-
-#ifdef XFree86LOADER
-#include "xf86_libc.h"
-#endif
-#include "xf86.h"
-#include "xf86Procs.h"
-#include "xf86_OSlib.h"
-#include "xf86_Config.h"
-#include "xf86Xinput.h"
-#include "atKeynames.h"
-#endif
-
-#if !defined(sun) || defined(i386)
-#include "osdep.h"
-#include "exevents.h"
-
-#include "extnsionst.h"
-#include "extinit.h"
-#endif
-
-#if defined(__QNX__) || defined(__QNXNTO__)
-#define POSIX_TTY
-#endif
-#endif /* pre 3.9 headers */
 
 /*
 ** Debugging macros
@@ -199,62 +135,6 @@ typedef struct {
 */
 #define DEDGE_SECTION_NAME "DigitalEdge"
 
-#ifndef XFREE86_V4
-
-#define PORT		1
-#define DEVICENAME	2
-#define THE_MODE	3
-#define CURSOR		4
-#define INCREMENT	5
-#define BORDER		6
-#define DEBUG_LEVEL     7
-#define HISTORY_SIZE	8
-#define ALWAYS_CORE	9
-#define ACTIVE_AREA	10
-#define ACTIVE_OFFSET	11
-#define COMPATIBLE	12
-#define CLICK_THRESHOLD	13
-
-#if !defined(sun) || defined(i386)
-static SymTabRec SumTab[] = {
-    {ENDSUBSECTION, "endsubsection"},
-    {PORT, "port"},
-    {DEVICENAME, "devicename"},
-    {THE_MODE, "mode"},
-    {CURSOR, "cursor"},
-    {INCREMENT, "increment"},
-    {BORDER, "border"},
-    {DEBUG_LEVEL, "debuglevel"},
-    {HISTORY_SIZE, "historysize"},
-    {ALWAYS_CORE, "alwayscore"},
-    {ACTIVE_AREA, "activearea"},
-    {ACTIVE_OFFSET, "activeoffset"},
-    {COMPATIBLE, "compatible"},
-    {CLICK_THRESHOLD, "clickthreshold"},
-    {-1, ""}
-};
-
-#define RELATIVE	1
-#define ABSOLUTE	2
-
-static SymTabRec SumModeTabRec[] = {
-    {RELATIVE, "relative"},
-    {ABSOLUTE, "absolute"},
-    {-1, ""}
-};
-
-#define PUCK		1
-#define STYLUS		2
-
-static SymTabRec SumPointTabRec[] = {
-    {PUCK, "puck"},
-    {STYLUS, "stylus"},
-    {-1, ""}
-};
-
-#endif
-#endif /* Pre 3.9 headers */
-
 /*
 ** Contants and macro
 */
@@ -290,208 +170,6 @@ static const char *ss_initstr =
 #define YSIGN_BIT	0x08
 #define BUTTON_BITS	0x02
 #define COORD_BITS	0x7f
-
-/*
-** External declarations
-*/
-
-#ifndef XFREE86_V4
-
-#if defined(sun) && !defined(i386)
-#define ENQUEUE	suneqEnqueue
-#else
-#define ENQUEUE	xf86eqEnqueue
-
-extern void xf86eqEnqueue(
-			     xEventPtr	/*e */
-    );
-#endif
-
-extern void miPointerDeltaCursor(
-				    int /*dx */ ,
-				    int /*dy */ ,
-				    unsigned long	/*time */
-    );
-
-#if !defined(sun) || defined(i386)
-/*
-** xf86SumConfig
-** Reads the DigitalEdge section from the XF86Config file
-*/
-static Bool
-xf86SumConfig(LocalDevicePtr * array, int inx, int max, LexPtr val)
-{
-    LocalDevicePtr dev = array[inx];
-    DigitalEdgeDevicePtr priv = (DigitalEdgeDevicePtr) (dev->private);
-    int token;
-    int mtoken;
-
-    DBG(1, ErrorF("xf86SumConfig\n"));
-
-    while ((token = xf86GetToken(SumTab)) != ENDSUBSECTION) {
-	switch (token) {
-	case DEVICENAME:
-	    if (xf86GetToken(NULL) != STRING)
-		xf86ConfigError("Option string expected");
-	    else {
-		dev->name = strdup(val->str);
-		if (xf86Verbose)
-		    ErrorF("%s DigitalEdge X device name is %s\n",
-			   XCONFIG_GIVEN, dev->name);
-	    }
-	    break;
-
-	case PORT:
-	    if (xf86GetToken(NULL) != STRING)
-		xf86ConfigError("Option string expected");
-	    else {
-		priv->dedgeDevice = strdup(val->str);
-		if (xf86Verbose)
-		    ErrorF("%s DigitalEdge port is %s\n", XCONFIG_GIVEN,
-			   priv->dedgeDevice);
-	    }
-	    break;
-
-	case THE_MODE:
-	    mtoken = xf86GetToken(SumModeTabRec);
-	    if ((mtoken == EOF) || (mtoken == STRING)
-		|| (mtoken ==
-		    NUMBER)) xf86ConfigError("Mode type token expected");
-	    else {
-		switch (mtoken) {
-		case ABSOLUTE:
-		    priv->flags |= ABSOLUTE_FLAG;
-		    break;
-		case RELATIVE:
-		    priv->flags &= ~ABSOLUTE_FLAG;
-		    break;
-		default:
-		    xf86ConfigError("Illegal Mode type");
-		    break;
-		}
-	    }
-	    break;
-
-	case CURSOR:
-	    mtoken = xf86GetToken(SumPointTabRec);
-	    if ((mtoken == EOF) || (mtoken == STRING)
-		|| (mtoken ==
-		    NUMBER)) xf86ConfigError("Cursor token expected");
-	    else {
-		switch (mtoken) {
-		case STYLUS:
-		    priv->flags |= STYLUS_FLAG;
-		    break;
-		case PUCK:
-		    priv->flags &= ~STYLUS_FLAG;
-		    break;
-		default:
-		    xf86ConfigError("Illegal cursor type");
-		    break;
-		}
-	    }
-	    break;
-
-	case INCREMENT:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeInc = val->num;
-	    if (xf86Verbose)
-		ErrorF("%s DigitalEdge increment value is %d\n",
-		       XCONFIG_GIVEN, priv->dedgeInc);
-	    break;
-
-	case CLICK_THRESHOLD:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeClickThresh = val->num;
-	    if (xf86Verbose)
-		ErrorF("%s DigitalEdge click threshold is %d\n",
-		       XCONFIG_GIVEN, priv->dedgeClickThresh);
-	    break;
-		
-	case DEBUG_LEVEL:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    debug_level = val->num;
-	    if (xf86Verbose) {
-#if DEBUG
-		ErrorF("%s DigitalEdge debug level sets to %d\n",
-		       XCONFIG_GIVEN, debug_level);
-#else
-		ErrorF("%s DigitalEdge debug level not sets to %d because"
-		       " debugging is not compiled\n", XCONFIG_GIVEN,
-		       debug_level);
-#endif
-	    }
-	    break;
-
-	case HISTORY_SIZE:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    dev->history_size = val->num;
-	    if (xf86Verbose)
-		ErrorF("%s DigitalEdge Motion history size is %d\n",
-		       XCONFIG_GIVEN, dev->history_size);
-	    break;
-	case COMPATIBLE:
-	    priv->flags |= COMPATIBLE_FLAG;
-	    if (xf86Verbose)
-		ErrorF
-		    ("DigitalEdge compatible - will not query firmware ID\n");
-	    break;
-
-	case ALWAYS_CORE:
-	    xf86AlwaysCore(dev, TRUE);
-	    if (xf86Verbose)
-		ErrorF("%s DigitalEdge device always stays core pointer\n",
-		       XCONFIG_GIVEN);
-	    break;
-
-	case ACTIVE_AREA:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeXSize = val->num;
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeYSize = val->num;
-		ErrorF("%s DigitalEdge active area set to %d.%1dx%d.%1d"
-		       " inches\n", XCONFIG_GIVEN, priv->dedgeXSize / 10,
-		       priv->dedgeXSize % 10, priv->dedgeYSize / 10,
-		       priv->dedgeYSize % 10);
-	    break;
-
-	case ACTIVE_OFFSET:
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeXOffset = val->num;
-	    if (xf86GetToken(NULL) != NUMBER)
-		xf86ConfigError("Option number expected");
-	    priv->dedgeYOffset = val->num;
-	    if (xf86Verbose)
-		ErrorF
-		    ("%s DigitalEdge active area offset set to %d.%1dx%d.%1d"
-		     " inches\n", XCONFIG_GIVEN, priv->dedgeXOffset / 10,
-		     priv->dedgeXOffset % 10, priv->dedgeYOffset / 10,
-		     priv->dedgeYOffset % 10);
-	    break;
-
-	case EOF:
-	    FatalError("Unexpected EOF (missing EndSubSection)");
-	    break;
-
-	default:
-	    xf86ConfigError("DigitalEdge subsection keyword expected");
-	    break;
-	}
-    }
-
-    DBG(1, ErrorF("xf86SumConfig name=%s\n", priv->dedgeDevice));
-
-    return Success;
-}
-#endif
-#endif /* pre 3.9 headers */
 
 /*
 ** xf86SumConvert
@@ -710,29 +388,14 @@ static char *xf86SumWriteAndRead(int fd, char *data, char *buffer, int len,
 				 int cr_term)
 {
     int err, numread = 0;
-#ifndef XFREE86_V4
-    fd_set readfds;
-    struct timeval timeout;
-#endif
 
     SYSCALL(err = write(fd, data, strlen(data)));
     if (err == -1) {
 	Error("DigitalEdge write");
 	return NULL;
     }
-#ifndef XFREE86_V4
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
-#endif
     while (numread < len) {
-#ifndef XFREE86_V4
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 200000;
-
-	SYSCALL(err = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout));
-#else
 	err = xf86WaitForInput(fd, 1000);
-#endif
 	if (err == -1) {
 	    Error("DigitalEdge select");
 	    return NULL;
@@ -768,78 +431,20 @@ static char *xf86SumWriteAndRead(int fd, char *data, char *buffer, int len,
 */
 static Bool xf86SumOpen(LocalDevicePtr local)
 {
-#ifndef XFREE86_V4
-    struct termios termios_tty;
-    struct timeval timeout;
-#endif
     char buffer[256];
     int err, idx;
     DigitalEdgeDevicePtr priv = (DigitalEdgeDevicePtr) local->private;
 
     DBG(1, ErrorF("opening %s\n", priv->dedgeDevice));
 
-#ifdef XFREE86_V4
     local->fd = xf86OpenSerial(local->options);
-#else
-    SYSCALL(local->fd = open(priv->dedgeDevice, O_RDWR | O_NDELAY, 0));
-#endif
     if (local->fd == -1) {
 	Error(priv->dedgeDevice);
 	return !Success;
     }
     DBG(2, ErrorF("%s opened as fd %d\n", priv->dedgeDevice, local->fd));
 
-#ifndef XFREE86_V4
-#ifdef POSIX_TTY
-    err = tcgetattr(local->fd, &termios_tty);
-    if (err == -1) {
-	Error("DigitalEdge tcgetattr");
-	return !Success;
-    }
-    termios_tty.c_iflag = IXOFF;
-    termios_tty.c_cflag =
-	B9600 | CS8 | CREAD | CLOCAL | HUPCL | PARENB | PARODD;
-    termios_tty.c_lflag = 0;
-
-/* I wonder what these all do, anyway */
-    termios_tty.c_cc[VINTR] = 0;
-    termios_tty.c_cc[VQUIT] = 0;
-    termios_tty.c_cc[VERASE] = 0;
-#ifdef VWERASE
-    termios_tty.c_cc[VWERASE] = 0;
-#endif
-#ifdef VREPRINT
-    termios_tty.c_cc[VREPRINT] = 0;
-#endif
-    termios_tty.c_cc[VKILL] = 0;
-    termios_tty.c_cc[VEOF] = 0;
-    termios_tty.c_cc[VEOL] = 0;
-#ifdef VEOL2
-    termios_tty.c_cc[VEOL2] = 0;
-#endif
-    termios_tty.c_cc[VSUSP] = 0;
-#ifdef VDISCARD
-    termios_tty.c_cc[VDISCARD] = 0;
-#endif
-#ifdef VLNEXT
-    termios_tty.c_cc[VLNEXT] = 0;
-#endif
-
-    termios_tty.c_cc[VMIN] = 1;
-    termios_tty.c_cc[VTIME] = 10;
-
-    err = tcsetattr(local->fd, TCSANOW, &termios_tty);
-    if (err == -1) {
-	Error("DigitalEdge tcsetattr TCSANOW");
-	return !Success;
-    }
-#else
-    Code for someone
-    else
-     to write to handle OSs without POSIX tty functions
-#endif
-#endif
-     DBG(1, ErrorF("initializing DigitalEdge tablet\n"));
+    DBG(1, ErrorF("initializing DigitalEdge tablet\n"));
 
 /* Send reset (NULL) to the tablet */
     SYSCALL(err = write(local->fd, "", 1));
@@ -849,13 +454,7 @@ static Bool xf86SumOpen(LocalDevicePtr local)
     }
 
 /* wait 200 mSecs, just in case */
-#ifndef XFREE86_V4
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 200000;
-    SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
-#else
     err = xf86WaitForInput(-1, 200);
-#endif
     if (err == -1) {
 	Error("DigitalEdge select");
 	return !Success;
@@ -869,11 +468,7 @@ static Bool xf86SumOpen(LocalDevicePtr local)
 	return !Success;
     }
 /* Clear any pending input */
-#ifndef XFREE86_V4
-    tcflush(local->fd, TCIFLUSH);
-#else
     xf86FlushInput(local->fd);
-#endif
 
     if (priv->dedgeXOffset > 0 && priv->dedgeYOffset > 0) {
 	if (priv->dedgeXSize * 50 < priv->dedgeMaxX - priv->dedgeXOffset &&
@@ -881,8 +476,9 @@ static Bool xf86SumOpen(LocalDevicePtr local)
 	    priv->dedgeXOffset *= 50;
 	    priv->dedgeYOffset *= 50;
 	} else {
-	    ErrorF("%s DigitalEdge offset sets active area off tablet, "
-		   "centering\n", XCONFIG_PROBED);
+	    xf86Msg(X_PROBED,
+		    "%s: DigitalEdge offset sets active area off tablet, "
+		   "centering\n", local->name);
 	    priv->dedgeXOffset = (priv->dedgeMaxX - priv->dedgeXSize) / 2;
 	    priv->dedgeYOffset = (priv->dedgeMaxY - priv->dedgeYSize) / 2;
 	}
@@ -902,8 +498,7 @@ static Bool xf86SumOpen(LocalDevicePtr local)
 	    priv->dedgeInc = priv->dedgeYSize / screenInfo.screens[0]->height;
 	if (priv->dedgeInc < 1)
 	    priv->dedgeInc = 1;
-	if (xf86Verbose)
-	    ErrorF("%s Using increment value of %d\n", XCONFIG_PROBED,
+	xf86Msg(X_PROBED, "%s: Using increment value of %d\n", local->name,
 		   priv->dedgeInc);
     }
 
@@ -1030,9 +625,6 @@ static int xf86SumProc(DeviceIntPtr pSum, int what)
 	}
 /* allocate the motion history buffer if needed */
 	xf86MotionHistoryAllocate(local);
-#ifndef XFREE86_V4
-	    AssignTypeAndName(pSum, local->atom, local->name);
-#endif
 
 /* open the device to gather informations */
 	xf86SumOpenDevice(pSum);
@@ -1045,11 +637,7 @@ static int xf86SumProc(DeviceIntPtr pSum, int what)
 	    return !Success;
 	}
 	SYSCALL(write(local->fd, SS_PROMPT, strlen(SS_PROMPT)));
-#ifdef XFREE86_V4
 	    xf86AddEnabledDevice(local);
-#else
-	    AddEnabledDevice(local->fd);
-#endif
 	pSum->public.on = TRUE;
 	break;
 
@@ -1057,11 +645,7 @@ static int xf86SumProc(DeviceIntPtr pSum, int what)
 	DBG(1, ErrorF("xf86SumProc  pSum=%p what=%s\n", (void *)pSum,
 		      (what == DEVICE_CLOSE) ? "CLOSE" : "OFF"));
 	if (local->fd >= 0)
-#ifdef XFREE86_V4
 		    xf86RemoveEnabledDevice(local);
-#else
-	            RemoveEnabledDevice(local->fd);
-#endif
 	pSum->public.on = FALSE;
 	break;
 
@@ -1075,7 +659,6 @@ static int xf86SumProc(DeviceIntPtr pSum, int what)
     default:
 	ErrorF("unsupported mode=%d\n", what);
 	return !Success;
-	break;
     }
     DBG(2, ErrorF("END   xf86SumProc Success what=%d dev=%p priv=%p\n",
 		  what, (void *)pSum, (void *)priv));
@@ -1149,11 +732,7 @@ static int xf86SumSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 */
 static LocalDevicePtr xf86SumAllocate(void)
 {
-#ifdef XFREE86_V4
     LocalDevicePtr	local = xf86AllocateInput(dedgeDrv, 0);
-#else
-    LocalDevicePtr local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
-#endif
     DigitalEdgeDevicePtr priv = (DigitalEdgeDevicePtr) xalloc(sizeof(DigitalEdgeDeviceRec));
 #if defined (sun) && !defined(i386)
     char *dev_name = getenv("DEDGESKETCH_DEV");
@@ -1162,11 +741,6 @@ static LocalDevicePtr xf86SumAllocate(void)
     local->name = XI_NAME;
     local->type_name = "DigitalEdge Tablet";
     local->flags = 0;		/*XI86_NO_OPEN_ON_INIT; */
-#ifndef XFREE86_V4
-#if !defined(sun) || defined(i386)
-    local->device_config = xf86SumConfig;
-#endif
-#endif
     local->device_control = xf86SumProc;
     local->read_input = xf86SumReadInput;
     local->control_proc = xf86SumChangeControl;
@@ -1209,43 +783,6 @@ static LocalDevicePtr xf86SumAllocate(void)
 
     return local;
 }
-
-#ifndef XFREE86_V4
-
-/*
-** DigitalEdge device association
-** Device section name and allocation function.
-*/
-DeviceAssocRec dedgemasketch_assoc = {
-    DEDGE_SECTION_NAME,		/* config_section_name */
-    xf86SumAllocate		/* device_allocate */
-};
-
-#ifdef DYNAMIC_MODULE
-/*
-** init_module
-** Entry point for dynamic module.
-*/
-int
-#ifndef DLSYM_BUG
-init_module(unsigned long server_version)
-#else
-init_xf86DigitalEdge(unsigned long server_version)
-#endif
-{
-    xf86AddDeviceAssoc(&dedgemasketch_assoc);
-
-    if (server_version != XF86_VERSION_CURRENT) {
-	ErrorF("Warning: DigitalEdgeKetch module compiled for version%s\n",
-	       XF86_VERSION);
-	return 0;
-    } else {
-	return 1;
-    }
-}
-#endif
-
-#else
 
 /*
  * xf86SumUninit --
@@ -1472,6 +1009,5 @@ XF86ModuleData digitaledgeModuleData = {&xf86SumVersionRec,
 					xf86SumUnplug};
 
 #endif /* XFree86LOADER */
-#endif /* XFREE86_V4 */
 
 /* end of xf86DigitalEdge.c */

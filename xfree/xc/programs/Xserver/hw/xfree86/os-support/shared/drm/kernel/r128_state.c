@@ -1283,7 +1283,7 @@ int r128_cce_clear( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( clear, (drm_r128_clear_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( clear, (drm_r128_clear_t __user *) data,
 			     sizeof(clear) );
 
 	RING_SPACE_TEST_WITH_RETURN( dev_priv );
@@ -1398,7 +1398,7 @@ int r128_cce_vertex( DRM_IOCTL_ARGS )
 		return DRM_ERR(EINVAL);
 	}
 
-	DRM_COPY_FROM_USER_IOCTL( vertex, (drm_r128_vertex_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( vertex, (drm_r128_vertex_t __user *) data,
 			     sizeof(vertex) );
 
 	DRM_DEBUG( "pid=%d index=%d count=%d discard=%d\n",
@@ -1459,7 +1459,7 @@ int r128_cce_indices( DRM_IOCTL_ARGS )
 		return DRM_ERR(EINVAL);
 	}
 
-	DRM_COPY_FROM_USER_IOCTL( elts, (drm_r128_indices_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( elts, (drm_r128_indices_t __user *) data,
 			     sizeof(elts) );
 
 	DRM_DEBUG( "pid=%d buf=%d s=%d e=%d d=%d\n", DRM_CURRENTPID,
@@ -1524,7 +1524,7 @@ int r128_cce_blit( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( blit, (drm_r128_blit_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( blit, (drm_r128_blit_t __user *) data,
 			     sizeof(blit) );
 
 	DRM_DEBUG( "pid=%d index=%d\n", DRM_CURRENTPID, blit.idx );
@@ -1553,7 +1553,7 @@ int r128_cce_depth( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( depth, (drm_r128_depth_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( depth, (drm_r128_depth_t __user *) data,
 			     sizeof(depth) );
 
 	RING_SPACE_TEST_WITH_RETURN( dev_priv );
@@ -1583,7 +1583,7 @@ int r128_cce_stipple( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( stipple, (drm_r128_stipple_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( stipple, (drm_r128_stipple_t __user *) data,
 			     sizeof(stipple) );
 
 	if ( DRM_COPY_FROM_USER( &mask, stipple.mask,
@@ -1617,7 +1617,7 @@ int r128_cce_indirect( DRM_IOCTL_ARGS )
 		return DRM_ERR(EINVAL);
 	}
 
-	DRM_COPY_FROM_USER_IOCTL( indirect, (drm_r128_indirect_t *) data,
+	DRM_COPY_FROM_USER_IOCTL( indirect, (drm_r128_indirect_t __user *) data,
 			     sizeof(indirect) );
 
 	DRM_DEBUG( "indirect: idx=%d s=%d e=%d d=%d\n",
@@ -1686,7 +1686,7 @@ int r128_getparam( DRM_IOCTL_ARGS )
 		return DRM_ERR(EINVAL);
 	}
 
-	DRM_COPY_FROM_USER_IOCTL( param, (drm_r128_getparam_t *)data,
+	DRM_COPY_FROM_USER_IOCTL( param, (drm_r128_getparam_t __user *)data,
 			     sizeof(param) );
 
 	DRM_DEBUG( "pid=%d\n", DRM_CURRENTPID );

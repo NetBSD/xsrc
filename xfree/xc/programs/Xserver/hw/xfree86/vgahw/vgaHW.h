@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.32 2004/02/13 23:58:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.33 2004/10/26 22:26:38 tsi Exp $ */
 
 /*
  * Loosely based on code bearing the following copyright:
@@ -202,6 +202,15 @@ typedef struct _vgaHWRec {
     vgaHWReadProcPtr		readEnable;
     vgaHWWriteProcPtr		writeEnable;
     PCITAG			Tag;
+
+    unsigned long		Flags;
+/*
+ * Historically, vgaHWInit()'s sync pulse timings have been off by 8 in the
+ * horizontal and 1 in the vertical.  This can't be fixed globally because
+ * some drivers do non-trivial things with these timings.  Instead, drivers
+ * wishing to fix these timings may set the following flag.
+ */
+#   define VGA_FIX_SYNC_PULSES  0x01UL
 } vgaHWRec;
 
 /* Some macros that VGA drivers can use in their ChipProbe() function */

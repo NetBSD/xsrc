@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis.h,v 1.111 2004/02/26 09:16:20 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis.h,v 1.118 2005/02/19 01:03:23 dawes Exp $ */
+/* $XdotOrg$ */
 /*
  * Main global data and definitions
  *
@@ -38,8 +39,8 @@
 #define UNLOCK_ALWAYS
 
 #define SISDRIVERVERSIONYEAR    4
-#define SISDRIVERVERSIONMONTH   2
-#define SISDRIVERVERSIONDAY     26
+#define SISDRIVERVERSIONMONTH   7
+#define SISDRIVERVERSIONDAY     1
 #define SISDRIVERREVISION       1
 
 #define SISDRIVERIVERSION (SISDRIVERVERSIONYEAR << 16) |  \
@@ -70,14 +71,16 @@
 #include "vgatypes.h"
 #include "vstruct.h"
 
+#ifdef XORG_VERSION_CURRENT
+#define SISMYSERVERNAME "X.org"
+#else
+#define SISMYSERVERNAME "XFree86"
+#endif
+
 #ifdef XF86DRI
 #undef SISNEWDRI
-#undef SISNEWDRI2
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,99,14,0)
 #define SISNEWDRI
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,4,99,99,0)	/* Adapt this when the time has come */
-#define SISNEWDRI2
-#endif
 #endif
 #include "xf86drm.h"
 #include "sarea.h"
@@ -104,8 +107,8 @@
 #endif
 #endif
 
-#if 1
-#define SISGAMMA		/* Include code for gamma correction */
+#if 1				/* Include code for gamma correction */
+#define SISGAMMA		
 #endif
 
 #if 1				/* Include code for color hardware cursors */
@@ -129,29 +132,40 @@
 #define SISVRAMQ		/* Use VRAM queue mode on 315 series */
 #endif
 
+/* Include support for YUV->RGB blit adaptors (VRAM queue mode only) */
+#undef INCL_YUV_BLIT_ADAPTOR
+#ifdef SISVRAMQ
+#if 1
+#define INCL_YUV_BLIT_ADAPTOR
+#endif
+#endif
+
 #undef SIS315DRI		/* define this if dri is adapted for 315/330 series */
 
 /* For SiS315/550/650/740/330/660 - these should be moved elsewhere! */
 #ifndef PCI_CHIP_SIS315H
-#define PCI_CHIP_SIS315H		0x0310
+#define PCI_CHIP_SIS315H	0x0310
 #endif
 #ifndef PCI_CHIP_SIS315
-#define PCI_CHIP_SIS315			0x0315
+#define PCI_CHIP_SIS315		0x0315
 #endif
 #ifndef PCI_CHIP_SIS315PRO
-#define PCI_CHIP_SIS315PRO		0x0325
+#define PCI_CHIP_SIS315PRO	0x0325
 #endif
 #ifndef PCI_CHIP_SIS550
-#define PCI_CHIP_SIS550			0x5315	/* 550_VGA */
+#define PCI_CHIP_SIS550		0x5315	/* 550_VGA */
 #endif
 #ifndef PCI_CHIP_SIS650
-#define PCI_CHIP_SIS650 		0x6325  /* 650_VGA and 740_VGA */
+#define PCI_CHIP_SIS650 	0x6325  /* 650_VGA and 740_VGA */
 #endif
 #ifndef PCI_CHIP_SIS330
-#define PCI_CHIP_SIS330 		0x0330
+#define PCI_CHIP_SIS330 	0x0330
 #endif
 #ifndef PCI_CHIP_SIS660
-#define PCI_CHIP_SIS660 		0x6330	/* 661_VGA, 741_VGA, 760_VGA */
+#define PCI_CHIP_SIS660 	0x6330	/* 661_VGA, 741_VGA, 760_VGA */
+#endif
+#ifndef PCI_CHIP_SIS340
+#define PCI_CHIP_SIS340 	0x0340
 #endif
 
 #define SIS_NAME                "SIS"
@@ -238,6 +252,15 @@
 #define VB_SISBRIDGE            (VB_301|VB_301B|VB_301C|VB_302B|VB_301LV|VB_302LV|VB_302ELV)
 #define VB_SISTVBRIDGE          (VB_301|VB_301B|VB_301C|VB_302B|VB_301LV|VB_302LV)
 #define VB_VIDEOBRIDGE		(VB_SISBRIDGE | VB_LVDS | VB_CHRONTEL | VB_CONEXANT)
+#define VB_SISLVDSBRIDGE        (VB_301LV|VB_302LV|VB_302ELV)
+#define VB_SISTMDSBRIDGE	(VB_301|VB_301B|VB_301C|VB_302B)
+#define VB_SISTMDSLCDABRIDGE	(VB_301C)
+#define VB_SISVGA2BRIDGE  	(VB_301|VB_301B|VB_301C|VB_302B)
+#define VB_SISLCDABRIDGE 	(VB_301C|VB_302B|VB_301LV|VB_302LV|VB_302ELV)
+#define VB_SISHIVISIONBRIDGE	(VB_301|VB_301B|VB_302B)
+#define VB_SISYPBPRBRIDGE	(VB_301C|VB_301LV|VB_302LV|VB_302ELV)
+#define VB_SISYPBPRARBRIDGE	(VB_301C)
+#define VB_SISTAP4SCALER	(VB_301C|VB_302ELV)
 
 #define DISPTYPE_DISP2		CRT2_ENABLE
 #define DISPTYPE_DISP1		DISPTYPE_CRT1
@@ -269,6 +292,8 @@
 #define VB_LCD_BARCO1366        0x20000000
 #define VB_LCD_CUSTOM  		0x40000000
 #define VB_LCD_EXPANDING	0x80000000
+
+#define VB_FORBID_CRT2LCD_OVER_1600		/* CRT2/LCD supports only up to 1600 pixels */
 
 /* PresetMode argument */
 #define SIS_MODE_SIMU 		0
@@ -347,9 +372,10 @@ typedef unsigned char UChar;
 #define SiSCF_315Core       0x00010000  /* 3D: Real 315 */
 #define SiSCF_Real256ECore  0x00020000  /* 3D: Similar to 315 core, no T&L? (65x, 661, 740, 741) */
 #define SiSCF_XabreCore     0x00040000  /* 3D: Real Xabre */
-#define SiSCF_Ultra256Core  0x00080000  /* 3D: Similar to Xabre, no T&L?, no P:Shader? (660, 760) */
+#define SiSCF_Ultra256Core  0x00080000  /* 3D: aka "Mirage 2"; similar to Xabre, no T&L?, no P:Shader? (760) */
 #define SiSCF_UseLCDA       0x01000000  
-#define SiSCF_760UMA        0x10000000  /* 760: UMA active */
+#define SiSCF_760LFB        0x08000000  /* 760: LFB active (if not set, UMA only) */
+#define SiSCF_760UMA        0x10000000  /* 760: UMA active (if not set, LFB only) */
 #define SiSCF_CRT2HWCKaputt 0x20000000  /* CRT2 Mono HWCursor engine buggy (SiS 330) */
 #define SiSCF_Glamour3      0x40000000
 #define SiSCF_Integrated    0x80000000
@@ -383,6 +409,8 @@ typedef unsigned char UChar;
 #define SiS_SD_SUPPORTYPBPRAR  0x02000000   /* YPbPr aspect ratio is supported */
 #define SiS_SD_SUPPORTSCALE    0x04000000   /* Scaling of LCD panel supported */
 #define SiS_SD_SUPPORTCENTER   0x08000000   /* If scaling supported: Centering of screen [NOT] supported (TMDS only) */
+#define SiS_SD_SUPPORTREDETECT 0x10000000   /* Support re-detection of CRT2 devices */
+#define SiS_SD_IS340SERIES     0x20000000
 
 #define SIS_DIRECTKEY         0x03145792
 
@@ -414,6 +442,29 @@ typedef unsigned char UChar;
 #define AGP_VTXBUF_PAGES 512
 #define AGP_VTXBUF_SIZE (AGP_PAGE_SIZE * AGP_VTXBUF_PAGES)
 
+/* Used for mapping a0000 and saving/restoring fonts (or not doing so) */
+/* List of architectures likely to be incomplete */
+#define SIS_PC_PLATFORM
+#if defined(__powerpc__) || defined(__mips__) || defined(__arm32__)
+#undef SIS_PC_PLATFORM
+#endif
+
+#if 0
+/* Used for mapping i/o port area to virtual memory (or not doing so) */
+/* List of architectures likely to be incomplete */
+/* BROKEN, see comment in sis_driver.c */
+#undef SIS_NEED_MAP_IOP
+#if defined(__arm32__) || defined(__mips__) 
+#define SIS_NEED_MAP_IOP
+#endif
+#endif
+
+/* Used for makeing use of the BIOS scratch area (save/restore mode number) */
+#undef SIS_USE_BIOS_SCRATCH
+#if (defined(i386) || defined(__i386) || defined(__i386__) || defined(__AMD64__))
+#define SIS_USE_BIOS_SCRATCH
+#endif
+
 /* For backup of register contents */
 typedef struct {
     unsigned char sisRegs3C4[0x50];
@@ -429,6 +480,7 @@ typedef struct {
     unsigned long sisMMIO85C0;
     unsigned char sis6326tv[0x46];
     unsigned long sisRegsPCI50, sisRegsPCIA0;
+    unsigned char BIOSModeSave;
 } SISRegRec, *SISRegPtr;
 
 typedef struct _sisModeInfoPtr {
@@ -548,7 +600,7 @@ typedef struct {
     unsigned char       scalingp1[9], scalingp4[9], scalingp2[64];
     unsigned short      cursorBufferNum;
     BOOLEAN		restorebyset;
-    BOOLEAN		CRT1gamma, CRT1gammaGiven, CRT2gamma, XvGamma, XvGammaGiven;
+    BOOLEAN		CRT1gamma, CRT1gammaGiven, CRT2gamma, XvGamma, XvGammaGiven, XvDefAdaptorBlit;
     int			XvGammaRed, XvGammaGreen, XvGammaBlue;
     int			GammaBriR, GammaBriG, GammaBriB;	/* strictly for Xinerama */
     int			GammaPBriR, GammaPBriG, GammaPBriB;	/* strictly for Xinerama */
@@ -563,6 +615,12 @@ typedef struct {
     unsigned char       OldMode;
     int			HWCursorMBufNum, HWCursorCBufNum;
     BOOLEAN		ROM661New;
+#ifdef SIS_NEED_MAP_IOP   
+    CARD32              IOPAddress;      	/* I/O port physical address */
+    unsigned char *     IOPBase;         	/* I/O port linear address */
+    unsigned short      MapCountIOPBase;	/* map/unmap queue counter */
+    Bool 		forceUnmapIOPBase;	/* ignore counter and unmap */   
+#endif    
 #ifdef SIS_CP
     SIS_CP_H_ENT
 #endif
@@ -725,6 +783,7 @@ typedef struct {
     int 		irq;
     Bool		IsAGPCard;
     unsigned long	DRIheapstart, DRIheapend;
+    Bool		NeedFlush;  /* Need to flush cmd buf mem (760) */
 
     void		(*RenderCallback)(ScrnInfoPtr);
     Time		RenderTime;
@@ -737,8 +796,8 @@ typedef struct {
     int 		ColorExpandBufferNumber;
     int 		ColorExpandBufferCountMask;
     unsigned char 	*ColorExpandBufferAddr[32];
-    int 		ColorExpandBufferScreenOffset[32];
-    long       		ColorExpandBase;
+    CARD32 		ColorExpandBufferScreenOffset[32];
+    CARD32     		ColorExpandBase;
     int 		ImageWriteBufferSize;
     unsigned char 	*ImageWriteBufferAddr;
 
@@ -763,6 +822,8 @@ typedef struct {
 #endif
 
     XF86VideoAdaptorPtr adaptor;
+    XF86VideoAdaptorPtr blitadaptor;
+    void *              blitPriv;
     ScreenBlockHandlerProcPtr BlockHandler;
     void                (*VideoTimerCallback)(ScrnInfoPtr, Time);
     void		(*ResetXv)(ScrnInfoPtr);
@@ -843,8 +904,10 @@ typedef struct {
     unsigned char       sisfblcda;
     int			sisfbscalelcd;
     unsigned long	sisfbspecialtiming;
-    BOOL		sisfb_haveemi, sisfb_haveemilcd;
+    BOOL		sisfb_haveemi, sisfb_haveemilcd, sisfb_tvposvalid, sisfb_havelock;
     unsigned char	sisfb_emi30,sisfb_emi31,sisfb_emi32,sisfb_emi33;
+    int 		sisfb_tvxpos, sisfb_tvypos;
+    char		sisfbdevname[16];
     int			EMI;
     int			NoYV12;			/* Disable Xv YV12 support (old series) */
     unsigned char       postVBCR32;
@@ -870,13 +933,13 @@ typedef struct {
     Atom                xvAutopaintColorKey, xvSetDefaults, xvSwitchCRT;
     Atom		xvDisableGfx, xvDisableGfxLR, xvTVXPosition, xvTVYPosition;
     Atom		xvDisableColorkey, xvUseChromakey, xvChromaMin, xvChromaMax;
-    Atom		xvInsideChromakey, xvYUVChromakey;
+    Atom		xvInsideChromakey, xvYUVChromakey, xvVSync;
     Atom		xvGammaRed, xvGammaGreen, xvGammaBlue;
     Atom		xv_QVF, xv_QVV, xv_USD, xv_SVF, xv_QDD, xv_TAF, xv_TSA, xv_TEE, xv_GSF;
     Atom		xv_TTE, xv_TCO, xv_TCC, xv_TCF, xv_TLF, xv_CMD, xv_CMDR, xv_CT1, xv_SGA;
     Atom		xv_GDV, xv_GHI, xv_OVR, xv_GBI, xv_TXS, xv_TYS, xv_CFI, xv_COC, xv_COF;
     Atom		xv_YFI, xv_GSS, xv_BRR, xv_BRG, xv_BRB, xv_PBR, xv_PBG, xv_PBB, xv_SHC;
-    Atom		xv_BRR2, xv_BRG2, xv_BRB2, xv_PBR2, xv_PBG2, xv_PBB2, xv_PMD;
+    Atom		xv_BRR2, xv_BRG2, xv_BRB2, xv_PBR2, xv_PBG2, xv_PBB2, xv_PMD, xv_RDT;
 #ifdef TWDEBUG
     Atom		xv_STR;
 #endif        
@@ -899,7 +962,7 @@ typedef struct {
     BOOLEAN		forcecrt2redetection;
     BOOLEAN		CRT1gamma, CRT1gammaGiven, CRT2gamma, XvGamma, XvGammaGiven;
     int			XvDefCon, XvDefBri, XvDefHue, XvDefSat;
-    BOOLEAN		XvDefDisableGfx, XvDefDisableGfxLR;
+    BOOLEAN		XvDefDisableGfx, XvDefDisableGfxLR, XvDefAdaptorBlit;
     BOOLEAN		XvUseMemcpy;
     BOOLEAN		XvUseChromaKey, XvDisableColorKey;
     BOOLEAN		XvInsideChromaKey, XvYUVChromaKey;
@@ -932,6 +995,10 @@ typedef struct {
     int			HWCursorMBufNum, HWCursorCBufNum;
     unsigned long	mmioSize;
     BOOLEAN		ROM661New;
+    BOOLEAN		NewCRLayout;
+    BOOLEAN		skipswitchcheck;
+    unsigned long	VBFlagsInit;
+    DisplayModePtr	currentModeLast;
 #ifdef SISMERGED
     Bool		MergedFB, MergedFBAuto;
     SiSScrn2Rel		CRT2Position;
@@ -952,6 +1019,12 @@ typedef struct {
     int			maxCRT2_X1, maxCRT2_X2, maxCRT2_Y1, maxCRT2_Y2;
     int			maxClone_X1, maxClone_X2, maxClone_Y1, maxClone_Y2;
     int			MergedFBXDPI, MergedFBYDPI;
+    IOADDRESS		MyPIOOffset;
+    Bool		OverruleRanges;
+#ifdef SIS_NEED_MAP_IOP   
+    CARD32              IOPAddress;      	/* I/O port physical address */
+    unsigned char *     IOPBase;         	/* I/O port linear address */   
+#endif    
 #ifdef SISXINERAMA
     Bool		UseSiSXinerama;
     Bool		CRT2IsScrn0;
@@ -1032,7 +1105,7 @@ typedef struct _customttable {
     unsigned short chipID;
     char *biosversion;
     char *biosdate;
-    unsigned long bioschksum;
+    CARD32 bioschksum;
     unsigned short biosFootprintAddr[5];
     unsigned char biosFootprintData[5];
     unsigned short pcisubsysvendor;
@@ -1078,6 +1151,8 @@ typedef struct _sisdirectcommand {
 /* more to come */
 #endif
 
+extern const customttable SiS_mycustomttable[];
+
 extern void  sisSaveUnlockExtRegisterLock(SISPtr pSiS, unsigned char *reg1, unsigned char *reg2);
 extern void  sisRestoreExtRegisterLock(SISPtr pSiS, unsigned char reg1, unsigned char reg2);
 extern void  SiSOptions(ScrnInfoPtr pScrn);
@@ -1118,6 +1193,7 @@ extern Bool  SISSwitchCRT2Type(ScrnInfoPtr pScrn, unsigned long newvbflags);
 extern int   SISCheckModeIndexForCRT2Type(ScrnInfoPtr pScrn, unsigned short cond,
 					  unsigned short index, Bool quiet);
 extern Bool  SISSwitchCRT1Status(ScrnInfoPtr pScrn, int onoff);
+extern Bool  SISRedetectCRT2Devices(ScrnInfoPtr pScrn);
 extern int   SiS_GetCHTVlumabandwidthcvbs(ScrnInfoPtr pScrn);
 extern int   SiS_GetCHTVlumabandwidthsvideo(ScrnInfoPtr pScrn);
 extern int   SiS_GetCHTVlumaflickerfilter(ScrnInfoPtr pScrn);
@@ -1140,3 +1216,6 @@ extern int   SiS_GetTVyposoffset(ScrnInfoPtr pScrn);
 extern int   SiS_GetTVxscale(ScrnInfoPtr pScrn);
 extern int   SiS_GetTVyscale(ScrnInfoPtr pScrn);
 #endif
+
+
+

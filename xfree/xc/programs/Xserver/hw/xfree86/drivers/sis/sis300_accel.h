@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.21 2004/02/25 17:45:11 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.22 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * 2D Acceleration for SiS 530, 620, 300, 540, 630, 730.
  * Definitions for the SIS engine communication
@@ -117,7 +118,7 @@
   while( (MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   CmdQueLen = (MMIO_IN16(pSiS->IOBase, 0x8240) & pSiS->CmdQueLenMask) - pSiS->CmdQueLenFix; \
   }
-/* TW: (do three times, because 2D engine seems quite unsure about whether or not it's idle) */
+/* (do three times, because 2D engine seems quite unsure about whether or not it's idle) */
 
 #define SiSSetupSRCBase(base) \
                 if (CmdQueLen <= 0)  SiSIdle;\
@@ -264,7 +265,7 @@
                 MMIO_OUT32(pSiS->IOBase, BR(12), ls);\
                 CmdQueLen--;
 
-/* TW: Trapezoid */
+/* Trapezoid */
 #define SiSSetupYH(y,h) \
                 if (CmdQueLen <= 0)  SiSIdle;\
                 MMIO_OUT32(pSiS->IOBase, 0x8208, (y)<<16 | (h) );\

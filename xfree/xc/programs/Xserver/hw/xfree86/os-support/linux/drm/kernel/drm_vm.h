@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/drm_vm.h,v 1.19 2005/03/06 03:55:47 dawes Exp $ */
 /**
  * \file drm_vm.h
  * Memory mapping for DRM
@@ -101,9 +102,11 @@ static __inline__ struct page *DRM(do_vm_nopage)(struct vm_area_struct *vma,
 		page = virt_to_page(__va(agpmem->memory->memory[offset]));
 		get_page(page);
 
+#if 0
 		DRM_DEBUG("baddr = 0x%lx page = 0x%p, offset = 0x%lx, count=%d\n",
 			  baddr, __va(agpmem->memory->memory[offset]), offset,
 			  atomic_read(&page->count));
+#endif
 
 		return page;
         }
@@ -617,10 +620,17 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 					vma->vm_end - vma->vm_start,
 					vma->vm_page_prot, 0))
 #else
+#ifdef NO_REMAP_PAGE_RANGE
+		if (remap_pfn_range(vma, vma->vm_start,
+				    (VM_OFFSET(vma) + offset) >> PAGE_SHIFT,
+				    vma->vm_end - vma->vm_start,
+				    vma->vm_page_prot))
+#else
 		if (remap_page_range(DRM_RPR_ARG(vma) vma->vm_start,
 				     VM_OFFSET(vma) + offset,
 				     vma->vm_end - vma->vm_start,
 				     vma->vm_page_prot))
+#endif
 #endif
 				return -EAGAIN;
 		DRM_DEBUG("   Type = %d; start = 0x%lx, end = 0x%lx,"

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.27 2003/07/18 15:53:24 tsi Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.28 2004/04/03 22:26:22 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -192,6 +192,13 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
     }
 #endif /* defined(UNIXCONN) || defined(LOCALCONN) || defined(OS2PIPECONN*/
 
+#if defined(__SCO__) && defined(LOCALCONN)
+    case 0:
+    {
+	*familyp=FamilyLocal;
+	break;
+    }
+#endif
 
     default:
 	PRMSG(1,"ConvertAddress: Unknown family type %d\n",

@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xinit/startx.man,v 1.8 2001/12/14 20:01:56 dawes Exp $
+.\" $XFree86: xc/programs/xinit/startx.man,v 1.9 2005/02/11 03:03:19 dawes Exp $
 .\"
-.TH STARTX 1 __xorgversion__
+.TH STARTX 1 __vendorversion__
 .SH NAME
 startx \- initialize an X session
 .SH SYNOPSIS

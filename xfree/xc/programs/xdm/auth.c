@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/auth.c,v 3.33 2004/01/16 00:03:54 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.36 2004/04/03 22:26:26 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -38,6 +38,7 @@ from The Open Group.
  */
 
 #include <X11/X.h>
+#include <X11/Xlibint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -57,8 +58,7 @@ from The Open Group.
 # include <netdnet/dnetdb.h>
 #endif
 
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4) || (defined(SYSV) && defined(i386))
-#define NEED_UTSNAME
+#if defined(hpux)
 #include <sys/utsname.h>
 #endif
 
@@ -72,9 +72,7 @@ from The Open Group.
 
 #ifdef SVR4
 # include <netdb.h>
-# ifndef SCO325
 # include <sys/sockio.h>
-# endif
 # include <sys/stropts.h>
 #endif
 #ifdef __convex__
@@ -676,16 +674,6 @@ writeAddr (
 	saveEntry (auth);
 }
 
-static void
-DefineLocal (FILE *file, Xauth *auth)
-{
-	char	displayname[100];
-	char	tmp_displayname[100];
-
-	strcpy(tmp_displayname, "");
-
-	/* stolen from xinit.c */
-
 /* Make sure this produces the same string as _XGetHostname in lib/X/XlibInt.c.
  * Otherwise, Xau will not be able to find your cookies in the Xauthority file.
  *
@@ -693,47 +681,35 @@ DefineLocal (FILE *file, Xauth *auth)
  *       to have sufficient information for interfacing to the network,
  *       and so, you may be better off using gethostname (if it exists).
  */
+static void
+DefineLocal (FILE *file, Xauth *auth)
+{
+	char	displayname[100];
+	int	len = _XGetHostname (displayname, sizeof(displayname));
 
-#ifdef NEED_UTSNAME
-
-	/* hpux:
-	 * Why not use gethostname()?  Well, at least on my system, I've had to
-	 * make an ugly kernel patch to get a name longer than 8 characters, and
-	 * uname() lets me access to the whole string (it smashes release, you
-	 * see), whereas gethostname() kindly truncates it for me.
-	 */
-	{
-	struct utsname name;
-
-	uname(&name);
-	snprintf(displayname, sizeof(displayname), "%s", name.nodename);
-	}
-	writeAddr (FamilyLocal, strlen (displayname), displayname, file, auth);
-
-	snprintf(tmp_displayname, sizeof(tmp_displayname), "%s", displayname);
-#endif
-
-#if (!defined(NEED_UTSNAME) || defined (hpux))
-        /* AIXV3:
-	 * In AIXV3, _POSIX_SOURCE is defined, but uname gives only first
-	 * field of hostname. Thus, we use gethostname instead.
-	 */
-
+#if defined(hpux)
 	/*
 	 * For HP-UX, HP's Xlib expects a fully-qualified domain name, which
 	 * is achieved by using gethostname().  For compatability, we must
-	 * also still create the entry using uname() above.
+	 * also still create the entry using uname().
 	 */
-	gethostname(displayname, sizeof(displayname));
+	char	tmp_displayname[100];
+	struct utsname name;
+
+	tmp_displayname[0] = 0;
+	uname(&name);
+	snprintf(tmp_displayname, sizeof(tmp_displayname), "%s", name.nodename);
+	writeAddr (FamilyLocal, strlen (tmp_displayname), tmp_displayname,
+       		   file, auth);
 
 	/*
-	 * If gethostname and uname both returned the same name,
-	 * do not write a duplicate entry.
+	 * If _XGetHostname() returned the same value as uname(), don't 
+	 * write a duplicate entry.
 	 */
 	if (strcmp (displayname, tmp_displayname))
-	    writeAddr (FamilyLocal, strlen (displayname), displayname, 
-		       file, auth);
 #endif
+
+	writeAddr (FamilyLocal, len, displayname, file, auth);
 }
 
 #ifdef HAS_GETIFADDRS
@@ -1182,9 +1158,9 @@ writeLocalAuth (FILE *file, Xauth *auth, char *name)
 #ifdef TCPCONN
 #if defined(IPv6) && defined(AF_INET6)
     fd = socket (AF_INET6, SOCK_STREAM, 0);
-#else
-    fd = socket (AF_INET, SOCK_STREAM, 0);
+    if (fd < 0)
 #endif
+    fd = socket (AF_INET, SOCK_STREAM, 0);
     DefineSelf (fd, file, auth);
     close (fd);
 #endif

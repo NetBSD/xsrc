@@ -1,10 +1,12 @@
+/* $XTermId: testxmc.c,v 1.27 2005/01/10 22:01:49 tom Exp $ */
+
 /*
- * $XFree86: xc/programs/xterm/testxmc.c,v 3.9 2002/03/26 01:46:40 dickey Exp $
+ * $XFree86: xc/programs/xterm/testxmc.c,v 3.12 2005/01/14 01:50:03 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2000,2002 by Thomas E. Dickey
+Copyright 1997-2004,2005 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -94,16 +96,16 @@ authorization.
 #define MARK_OFF(a) (my_attrs & a) != 0 && (term->flags & (whichone = a)) != 0
 
 void
-Mark_XMC(register TScreen * screen, int param)
+Mark_XMC(TScreen * screen, int param)
 {
     static IChar *glitch;
-    Boolean found = FALSE;
+    Bool found = False;
     Char my_attrs = (screen->xmc_attributes & XMC_FLAGS);
     Char whichone = 0;
 
     if (glitch == 0) {
 	unsigned len = screen->xmc_glitch;
-	glitch = (IChar *) malloc(len * sizeof(IChar));
+	glitch = TypeMallocN(IChar, len);
 	while (len--)
 	    glitch[len] = XMC_GLITCH;
     }
@@ -157,7 +159,7 @@ Mark_XMC(register TScreen * screen, int param)
  * end of a line.
  */
 void
-Jump_XMC(register TScreen * screen)
+Jump_XMC(TScreen * screen)
 {
     if (!screen->move_sgr_ok
 	&& screen->cur_col <= CurMaxCol(screen, screen->cur_row)) {
@@ -170,9 +172,9 @@ Jump_XMC(register TScreen * screen)
  * location and any attributes that would have been set by preceding locations.
  */
 void
-Resolve_XMC(register TScreen * screen)
+Resolve_XMC(TScreen * screen)
 {
-    Boolean changed = False;
+    Bool changed = False;
     Char start;
     Char my_attrs = (screen->xmc_attributes & XMC_FLAGS);
     int row = screen->cur_row;
@@ -212,13 +214,13 @@ Resolve_XMC(register TScreen * screen)
 
     TRACE(("XMC %s (%s:%d/%d) from %d,%d to %d,%d\n",
 	   changed ? "Ripple" : "Nochange",
-	   term->flags & my_attrs ? "on" : "off",
+	   BtoS(term->flags & my_attrs),
 	   my_attrs, start,
 	   screen->cur_row, screen->cur_col,
 	   row, col));
 
     if (changed) {
-	ScrnRefresh(screen, screen->cur_row, 0, row + 1 - screen->cur_row,
-		    screen->max_col + 1, True);
+	ScrnUpdate(screen, screen->cur_row, 0, row + 1 - screen->cur_row,
+		   screen->max_col + 1, True);
     }
 }

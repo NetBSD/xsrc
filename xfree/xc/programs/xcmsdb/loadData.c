@@ -31,7 +31,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/xcmsdb/loadData.c,v 3.4 2003/09/24 02:43:38 dawes Exp $ */
+/* $XFree86: xc/programs/xcmsdb/loadData.c,v 3.5 2004/10/23 15:29:32 dawes Exp $ */
 
 /*
  *      INCLUDES
@@ -485,7 +485,6 @@ ProcessColorimetric(FILE *stream, XDCCC_Matrix *pMatrix, int VisualFlag)
 			"Line %d: Extraneous keyword %s.\n", 
 			linenum, keyword);
 		return (0);
-/* NOTREACHED */break;	
 	      case COLORIMETRIC_END :
 		if (state != 2) {
 		    fprintf(stderr,
@@ -502,13 +501,11 @@ ProcessColorimetric(FILE *stream, XDCCC_Matrix *pMatrix, int VisualFlag)
 			"Line %d: Unexpected keyword %s\n",
 			linenum, keyword);
 		return (0);
-/* NOTREACHED */break;		
 	    }
 	} else if (ntok < 0) {
 	    /* mismatch */
 	    fprintf(stderr, "Line %d: Unrecognized keyword\n", linenum);
 	    return (0);
-/* NOTREACHED */break;		
 	}
     }
     return (0);
@@ -687,7 +684,6 @@ ProcessIProfile(FILE *stream, XDCCC_Correction *pCorrection)
 		fprintf(stderr,"Line %d: extraneous keyword %s\n", 
 			  linenum, keyword);
 		return (0);
-/* NOTREACHED */break;
 	      case IPROFILE_END :
 		if ((state != 0) || (nTbl != pCorrection->nTables)) {
 		    fprintf(stderr,
@@ -703,7 +699,6 @@ ProcessIProfile(FILE *stream, XDCCC_Correction *pCorrection)
 		fprintf(stderr,"Line %d: unexpected keyword %s\n",
 		      linenum, keyword);
 		return (0);
-/* NOTREACHED */break;
 	    }
 	} /* else its was just a blank line */
     }
@@ -1716,7 +1711,6 @@ IProfileProcessed:
 		}
 		closeS (stream, CorrectionHead);
 		return (1);
-/* NOTREACHED */    break;
 	      default :
 		fprintf(stderr,"Line %d: extraneous keyword %s\n", 
 			linenum, keyword);

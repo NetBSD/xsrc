@@ -6,13 +6,13 @@ Copyright 1988 by Hewlett-Packard Company
 Copyright 1987, 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
-Permission to use, copy, modify, and distribute this software 
-and its documentation for any purpose and without fee is hereby 
-granted, provided that the above copyright notice appear in all 
-copies and that both that copyright notice and this permission 
-notice appear in supporting documentation, and that the names of 
-Hewlett-Packard, Digital, or Sun  not be used in advertising or 
-publicity pertaining to distribution of the software without specific, 
+Permission to use, copy, modify, and distribute this software
+and its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission
+notice appear in supporting documentation, and that the names of
+Hewlett-Packard, Digital, or Sun  not be used in advertising or
+publicity pertaining to distribution of the software without specific,
 written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
@@ -59,7 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/EventUtil.c,v 1.7 2003/04/21 16:34:27 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/EventUtil.c,v 1.8 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 #include "PassivGraI.h"
@@ -68,15 +68,15 @@ in this Software without prior written authorization from The Open Group.
 
 static XContext 	perWidgetInputContext = 0;
 
-void _XtFreePerWidgetInput(w, pwi)
-    Widget 		w;
-    XtPerWidgetInput	pwi;
+void _XtFreePerWidgetInput(
+    Widget 		w,
+    XtPerWidgetInput	pwi)
 {
     LOCK_PROCESS;
-    XDeleteContext(XtDisplay(w), 
+    XDeleteContext(XtDisplay(w),
 		   (Window)w,
 		   perWidgetInputContext);
-    
+
     XtFree((char *)pwi);
     UNLOCK_PROCESS;
 }
@@ -95,16 +95,16 @@ XtPerWidgetInput _XtGetPerWidgetInput(
     LOCK_PROCESS;
     if (! perWidgetInputContext)
       perWidgetInputContext = XUniqueContext();
-    
-    if (XFindContext(dpy, 
-		     (Window)widget, 
-		     perWidgetInputContext, 
+
+    if (XFindContext(dpy,
+		     (Window)widget,
+		     perWidgetInputContext,
 		     (XPointer *)&pwi) &&
-	create) 
+	create)
       {
-	  pwi = (XtPerWidgetInput) 
+	  pwi = (XtPerWidgetInput)
 	    __XtMalloc((unsigned) sizeof(XtPerWidgetInputRec));
-	  
+
 	  pwi->focusKid = NULL;
 	  pwi->queryEventDescendant = NULL;
 	  pwi->focalPoint = XtUnrelated;
@@ -113,15 +113,15 @@ XtPerWidgetInput _XtGetPerWidgetInput(
 
 	  pwi->haveFocus =
 	      pwi->map_handler_added =
-		  pwi->realize_handler_added = 
+		  pwi->realize_handler_added =
 		      pwi->active_handler_added = FALSE;
-	  
-	  XtAddCallback(widget, XtNdestroyCallback, 
+
+	  XtAddCallback(widget, XtNdestroyCallback,
 			_XtDestroyServerGrabs, (XtPointer)pwi);
 
-	  (void) XSaveContext(dpy, 
-			      (Window)widget, 
-			      perWidgetInputContext, 
+	  (void) XSaveContext(dpy,
+			      (Window)widget,
+			      perWidgetInputContext,
 			      (char *) pwi);
       }
     UNLOCK_PROCESS;
@@ -129,10 +129,12 @@ XtPerWidgetInput _XtGetPerWidgetInput(
 }
 
 
-void _XtFillAncestorList(listPtr, maxElemsPtr, numElemsPtr, start, breakWidget)
-    Widget	**listPtr;
-    int		*maxElemsPtr, *numElemsPtr;
-    Widget	start, breakWidget;
+void _XtFillAncestorList(
+    Widget	**listPtr,
+    int		*maxElemsPtr,
+    int		*numElemsPtr,
+    Widget	start,
+    Widget	breakWidget)
 {
 #define CACHESIZE 16
     Cardinal	i;
@@ -140,19 +142,19 @@ void _XtFillAncestorList(listPtr, maxElemsPtr, numElemsPtr, start, breakWidget)
     Widget	*trace = *listPtr;
 
     /* First time in, allocate the ancestor list */
-    if (trace == NULL) 
+    if (trace == NULL)
       {
 	  trace = (Widget *) __XtMalloc(CACHESIZE * sizeof(Widget));
 	  *maxElemsPtr = CACHESIZE;
-      }	
+      }
     /* First fill in the ancestor list */
 
     trace[0] = start;
 
-    for (i = 1, w = XtParent(start); 
-	 w != NULL && !XtIsShell(trace[i-1]) && trace[i-1] != breakWidget; 
+    for (i = 1, w = XtParent(start);
+	 w != NULL && !XtIsShell(trace[i-1]) && trace[i-1] != breakWidget;
 	 w = XtParent(w), i++) {
-	if (i == *maxElemsPtr) {
+	if (i == (Cardinal) *maxElemsPtr) {
 	    /* This should rarely happen, but if it does it'll probably
 	       happen again, so grow the ancestor list */
 	    *maxElemsPtr += CACHESIZE;
@@ -164,20 +166,20 @@ void _XtFillAncestorList(listPtr, maxElemsPtr, numElemsPtr, start, breakWidget)
     *listPtr = trace;
     *numElemsPtr = i;
 #undef CACHESIZE
-}  
+}
 
 
-Widget _XtFindRemapWidget(event, widget, mask, pdi)
-    XEvent	*event;
-    Widget	widget;
-    EventMask	mask;
-    XtPerDisplayInput pdi;
+Widget _XtFindRemapWidget(
+    XEvent	*event,
+    Widget	widget,
+    EventMask	mask,
+    XtPerDisplayInput pdi)
 {
     Widget		dspWidget = widget;
-    
+
     if (!pdi->traceDepth || !(widget == pdi->trace[0]))
       {
-	  _XtFillAncestorList(&pdi->trace, &pdi->traceMax, 
+	  _XtFillAncestorList(&pdi->trace, &pdi->traceMax,
 			      &pdi->traceDepth, widget, NULL);
 	  pdi->focusWidget = NULL; /* invalidate the focus
 				      cache */
@@ -190,11 +192,11 @@ Widget _XtFindRemapWidget(event, widget, mask, pdi)
     return dspWidget;
 }
 
-void _XtUngrabBadGrabs(event, widget, mask, pdi)
-    XEvent	*event;
-    Widget	widget;
-    EventMask	mask;
-    XtPerDisplayInput pdi;
+void _XtUngrabBadGrabs(
+    XEvent	*event,
+    Widget	widget,
+    EventMask	mask,
+    XtPerDisplayInput pdi)
 {
     XKeyEvent	* ke = (XKeyEvent *) event;
 

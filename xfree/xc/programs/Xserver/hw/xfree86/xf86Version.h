@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.570 2004/02/29 00:09:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.599 2005/03/17 01:11:53 dawes Exp $ */
 
 /*
- * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -47,15 +47,15 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XF86_VERSION_CURRENT
+#ifndef XF86_VERSION_NUMERIC
 
 #define XF86_VERSION_MAJOR	4
-#define XF86_VERSION_MINOR	4
+#define XF86_VERSION_MINOR	5
 #define XF86_VERSION_PATCH	0
 #define XF86_VERSION_SNAP	0
 
 /* This has five arguments for compatibilty reasons */
-#define XF86_VERSION_NUMERIC(major,minor,patch,snap,dummy) \
+#define XF86_VERSION_NUMERIC(major, minor, patch, snap, dummy) \
 	(((major) * 10000000) + ((minor) * 100000) + ((patch) * 1000) + snap)
 
 #define XF86_GET_MAJOR_VERSION(vers)	((vers) / 10000000)
@@ -68,13 +68,14 @@
 #define XF86_VERSION_BETA	0
 #define XF86_VERSION_ALPHA	XF86_VERSION_SNAP
 
+#ifndef XF86_VERSION_CURRENT
 #define XF86_VERSION_CURRENT					\
    XF86_VERSION_NUMERIC(XF86_VERSION_MAJOR,			\
 			XF86_VERSION_MINOR,			\
 			XF86_VERSION_PATCH,			\
 			XF86_VERSION_SNAP,			\
 			0)
+#endif
 
 #endif
 
-/* $XConsortium: xf86Version.h /main/78 1996/10/28 05:42:10 kaleb $ */

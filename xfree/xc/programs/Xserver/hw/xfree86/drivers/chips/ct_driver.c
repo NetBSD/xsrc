@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.c,v 1.133 2003/11/03 05:11:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.c,v 1.135 2004/11/26 13:44:59 tsi Exp $ */
 
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
@@ -581,7 +581,7 @@ static const OptionInfoRec Chips655xxOptions[] = {
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_STN,		"STN",		OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_USE_MODELINE,	"UseModeline",	OPTV_BOOLEAN,	{0}, FALSE },
-    { OPTION_LCD_STRETCH,	"NoStretch",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_LCD_STRETCH,	"Stretch",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_LCD_CENTER,	"LcdCenter",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_MMIO,		"MMIO",		OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SUSPEND_HACK,	"SuspendHack",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -623,7 +623,7 @@ static const OptionInfoRec ChipsHiQVOptions[] = {
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_STN,		"STN",		OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_USE_MODELINE,	"UseModeline",	OPTV_BOOLEAN,	{0}, FALSE },
-    { OPTION_LCD_STRETCH,	"NoStretch",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_LCD_STRETCH,	"Stretch",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_LCD_CENTER,	"LcdCenter",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_MMIO,		"MMIO",		OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_FULL_MMIO,		"FullMMIO",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -1611,9 +1611,6 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 		pScrn->overlayFlags = OVERLAY_8_16_DUALFB;
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
 			   "PseudoColor overlay enabled.\n");
-		if (!xf86IsOptionSet(cPtr->Options, OPTION_LCD_STRETCH))
-		    xf86DrvMsg(pScrn->scrnIndex, X_WARNING, 
-			   "                             - Forcing option \"NoStretch\".\n");
 		if (!xf86IsOptionSet(cPtr->Options, OPTION_LCD_CENTER))
 		    xf86DrvMsg(pScrn->scrnIndex, X_WARNING, 
 			   "                             - Forcing option \"LcdCenter\".\n");
@@ -5377,11 +5374,16 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
     /* generic init */
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode)) {
 	ErrorF("bomb 1\n");
 	return (FALSE);
     }
     pScrn->vtSema = TRUE;
+
+    /* We need to redo the overscan voodoo from vgaHW.c */
+    vgaHWHBlankKGA(mode, ChipsStd, 0, 0);
+    vgaHWVBlankKGA(mode, ChipsStd, 0, 0);
 
     /* init clock */
     if (!chipsClockFind(pScrn, mode->ClockIndex, &ChipsNew->Clock)) {
@@ -5522,77 +5524,54 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if (xf86ReturnOptValBool(cPtr->Options, OPTION_USE_MODELINE, FALSE)) {
 	lcdHTotal = (mode->CrtcHTotal >> 3) - 5;
 	lcdHDisplay = (cPtr->PanelSize.HDisplay >> 3) - 1;
-	lcdHRetraceStart = (mode->CrtcHSyncStart >> 3);
-	lcdHRetraceEnd = (mode->CrtcHSyncEnd >> 3);
-	lcdHSyncStart = lcdHRetraceStart - 2;
+	lcdHRetraceStart = (mode->CrtcHSyncStart >> 3) - 1;
+	lcdHRetraceEnd = (mode->CrtcHSyncEnd >> 3) - 1;
+	lcdHSyncStart = lcdHRetraceStart - 2;				/* ?? */
 
 	lcdVTotal = mode->CrtcVTotal - 2;
 	lcdVDisplay = cPtr->PanelSize.VDisplay - 1;
-	lcdVRetraceStart = mode->CrtcVSyncStart;
-	lcdVRetraceEnd = mode->CrtcVSyncEnd;
+	lcdVRetraceStart = mode->CrtcVSyncStart - 1;
+	lcdVRetraceEnd = mode->CrtcVSyncEnd - 1;
 
 	ChipsNew->FR[0x20] = lcdHDisplay & 0xFF;
 	ChipsNew->FR[0x21] = lcdHRetraceStart & 0xFF;
-	ChipsNew->FR[0x25] = ((lcdHRetraceStart & 0xF00) >> 4) |
-	    ((lcdHDisplay & 0xF00) >> 8);
 	ChipsNew->FR[0x22] = lcdHRetraceEnd & 0x1F;
 	ChipsNew->FR[0x23] = lcdHTotal & 0xFF;
-	ChipsNew->FR[0x24] = (lcdHSyncStart >> 3) & 0xFF;
-	ChipsNew->FR[0x26] = (ChipsNew->FR[0x26] & ~0x1F)
-	    | ((lcdHTotal & 0xF00) >> 8)
-	    | (((lcdHSyncStart >> 3) & 0x100) >> 4);
+	ChipsNew->FR[0x24] = (lcdHSyncStart >> 3) & 0xFF;		/* ?? */
+	ChipsNew->FR[0x25] = ((lcdHRetraceStart & 0xF00) >> 4) |
+	    ((lcdHDisplay & 0xF00) >> 8);
+	ChipsNew->FR[0x26] = ((lcdHTotal & 0xF00) >> 8)
+	    | ((lcdHSyncStart & 0xF00) >> 4);				/* ?? */
 	ChipsNew->FR[0x27] &= 0x7F;
 
 	ChipsNew->FR[0x30] = lcdVDisplay & 0xFF;
 	ChipsNew->FR[0x31] = lcdVRetraceStart & 0xFF;
-	ChipsNew->FR[0x35] = ((lcdVRetraceStart & 0xF00) >> 4)
-	    | ((lcdVDisplay & 0xF00) >> 8);
 	ChipsNew->FR[0x32] = lcdVRetraceEnd & 0x0F;
 	ChipsNew->FR[0x33] = lcdVTotal & 0xFF;
-	ChipsNew->FR[0x34] = (lcdVTotal - lcdVRetraceStart) & 0xFF;
+	ChipsNew->FR[0x34] = (lcdVTotal - lcdVRetraceStart) & 0xFF;	/* ?? */
+	ChipsNew->FR[0x35] = ((lcdVRetraceStart & 0xF00) >> 4)
+	    | ((lcdVDisplay & 0xF00) >> 8);
 	ChipsNew->FR[0x36] = ((lcdVTotal & 0xF00) >> 8) |
-	    (((lcdVTotal - lcdVRetraceStart) & 0x700) >> 4);
+	    (((lcdVTotal - lcdVRetraceStart) & 0xF00) >> 4);		/* ?? */
 	ChipsNew->FR[0x37] |= 0x80;
     }
 
     /* Set up the extended CRT registers of the HiQV32 chips */
     ChipsNew->CR[0x30] = ((mode->CrtcVTotal - 2) & 0xF00) >> 8;
     ChipsNew->CR[0x31] = ((mode->CrtcVDisplay - 1) & 0xF00) >> 8;
-    ChipsNew->CR[0x32] = (mode->CrtcVSyncStart & 0xF00) >> 8;
-    ChipsNew->CR[0x33] = (mode->CrtcVBlankStart & 0xF00) >> 8;
+    ChipsNew->CR[0x32] = ((mode->CrtcVSyncStart - 1) & 0xF00) >> 8;
+    ChipsNew->CR[0x33] = ((mode->CrtcVBlankStart - 1) & 0xF00) >> 8;
     if ((cPtr->Chipset == CHIPS_CT69000) || (cPtr->Chipset == CHIPS_CT69030)) {
 	/* The 690xx has overflow bits for the horizontal values as well */
 	ChipsNew->CR[0x38] = (((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8;
-#if 0
-	/* We need to redo the overscan voodoo from vgaHW.c */
-	ChipsStd->CRTC[3]  = (ChipsStd->CRTC[3] & ~0x1F) 
-	  | (((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F);
-	ChipsStd->CRTC[5]  = (ChipsStd->CRTC[5] & ~0x80) 
-	  | ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2);
 	ChipsNew->CR[0x3C] = ((mode->CrtcHBlankEnd >> 3) - 1) & 0xC0;
-	if ((mode->CrtcHBlankEnd >> 3) == (mode->CrtcHTotal >> 3)) {
-	    int i = (ChipsStd->CRTC[3] & 0x1F) 
-	             | ((ChipsStd->CRTC[5] & 0x80) >> 2) 
-	             | (ChipsNew->CR[0x3C] & 0xC0);
-	    if ((i-- > (ChipsStd->CRTC[2])) &&
-		(mode->CrtcHBlankEnd == mode->CrtcHTotal))
-	        i = 0;
-	    ChipsStd->CRTC[3] = (ChipsStd->CRTC[3] & ~0x1F) | (i & 0x1F);
-	    ChipsStd->CRTC[5] = (ChipsStd->CRTC[5] & ~0x80) | ((i << 2) &0x80);
-	    ChipsNew->CR[0x3C] = (i & 0xC0);
-	}
-#else
-	ChipsNew->CR[0x3C] = vgaHWHBlankKGA(mode, ChipsStd, 8, 0) << 6;
-#endif
-    } else
-      vgaHWHBlankKGA(mode, ChipsStd, 6, 0);
-    vgaHWVBlankKGA(mode, ChipsStd, 8, 0);
+    }
 
     ChipsNew->CR[0x40] |= 0x80;
 
     /* centering/stretching */
     if (!xf86ReturnOptValBool(cPtr->Options, OPTION_SUSPEND_HACK, FALSE)) {
-	if (xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_STRETCH, FALSE) ||
+	if (!xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_STRETCH, FALSE) ||
 	(cPtr->Flags & ChipsOverlay8plus16)) {
 	    ChipsNew->FR[0x40] &= 0xDF;    /* Disable Horizontal stretching */
 	    ChipsNew->FR[0x48] &= 0xFB;    /* Disable vertical stretching */
@@ -5613,7 +5592,7 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
     }
 
-    if ((xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_CENTER, FALSE))
+    if ((xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_CENTER, TRUE))
 		|| (cPtr->Flags & ChipsOverlay8plus16)) {
 	ChipsNew->FR[0x40] |= 0x3;    /* Enable Horizontal centering */
 	ChipsNew->FR[0x48] |= 0x3;    /* Enable Vertical centering */
@@ -5768,12 +5747,16 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
 			    - (ChipsNew->FR[0x31] & 0xF0)
 			    - (ChipsNew->FR[0x32] & 0x0F)
 			    - ((ChipsNew->FR[0x35] & 0xF0) << 4));
-	if (cPtr->PanelSize.HDisplay > mode->CrtcHDisplay)
-	    cPtr->OverlaySkewX += (cPtr->PanelSize.HDisplay - 
-						mode->CrtcHDisplay) / 2;
-	if (cPtr->PanelSize.VDisplay > mode->CrtcVDisplay)
-	    cPtr->OverlaySkewY += (cPtr->PanelSize.VDisplay - 
-				   mode->CrtcVDisplay) / 2;
+	if (!xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_STRETCH, FALSE)
+	      && xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_CENTER, TRUE))
+	{
+	    if (cPtr->PanelSize.HDisplay > mode->CrtcHDisplay) 
+		cPtr->OverlaySkewX += (cPtr->PanelSize.HDisplay - 
+				       mode->CrtcHDisplay) / 2;
+	    if (cPtr->PanelSize.VDisplay > mode->CrtcVDisplay)
+		cPtr->OverlaySkewY += (cPtr->PanelSize.VDisplay -
+				       mode->CrtcVDisplay) / 2;
+	}
     } else {
 	cPtr->OverlaySkewX = mode->CrtcHTotal - mode->CrtcHBlankStart - 9;
 	cPtr->OverlaySkewY = mode->CrtcVTotal - mode->CrtcVSyncEnd - 1;
@@ -5982,6 +5965,7 @@ chipsModeInitWingine(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
     /* generic init */
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode)) {
 	ErrorF("bomb 3\n");
 	return (FALSE);
@@ -5993,6 +5977,9 @@ chipsModeInitWingine(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	ErrorF("bomb 4\n");
 	return (FALSE);
     }
+
+    /* We have horizontal blank end extension bits, so undo KGA workaround */
+    vgaHWHBlankKGA(mode, ChipsStd, 0, 0);
 
     /* get  C&T Specific Registers */
     for (i = 0; i < 0x7D; i++) {   /* don't touch XR7D and XR7F on WINGINE */
@@ -6056,15 +6043,17 @@ chipsModeInitWingine(ScrnInfoPtr pScrn, DisplayModePtr mode)
     ChipsNew->XR[0x17] = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8)
 	| ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7)
 	| ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6)
-	| ((((mode->CrtcHSyncEnd >> 3)) & 0x20) >> 2)
+	| ((((mode->CrtcHSyncEnd >> 3) - 1) & 0x20) >> 2)
 	| ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 4)
-	| ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x40) >> 1);
+	| ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x40) >> 1)
+	| 0x40;
 
 
-    ChipsNew->XR[0x16]  = (((mode->CrtcVTotal -2) & 0x400) >> 10 )
-	| (((mode->CrtcVDisplay -1) & 0x400) >> 9 )
-	| ((mode->CrtcVSyncStart & 0x400) >> 8 )
-	| (((mode->CrtcVBlankStart) & 0x400) >> 6 );
+    ChipsNew->XR[0x16] = (((mode->CrtcVTotal - 2) & 0x400) >> 10)
+	| (((mode->CrtcVDisplay - 1) & 0x400) >> 9)
+	| (((mode->CrtcVSyncStart - 1) & 0x400) >> 8)
+	| (((mode->CrtcVBlankStart - 1) & 0x400) >> 6)
+	| 0x40;
 
     /* set video mode */
     ChipsNew->XR[0x2B] = chipsVideoMode(pScrn->depth, mode->CrtcHDisplay, mode->CrtcVDisplay);
@@ -6224,12 +6213,16 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 					 bytesPerPixel : 1 );
     
     /* generic init */
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode)) {
 	ErrorF("bomb 5\n");
 	return (FALSE);
     }
     pScrn->vtSema = TRUE;
-    
+
+    /* We have horizontal blank end extension bits, so undo KGA workaround */
+    vgaHWHBlankKGA(mode, ChipsStd, 0, 0);
+
     /* init clock */
     if (!chipsClockFind(pScrn, mode->ClockIndex, &ChipsNew->Clock)) {
 	ErrorF("bomb 6\n");
@@ -6299,14 +6292,16 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	ChipsNew->XR[0x17] = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8)
 	    | ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7)
 	    | ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6)
-	    | ((((mode->CrtcHSyncEnd >> 3)) & 0x20) >> 2)
+	    | ((((mode->CrtcHSyncEnd >> 3) - 1) & 0x20) >> 2)
 	    | ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 4)
-	    | ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x40) >> 1);
+	    | ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x40) >> 1)
+	    | 0x40;
 
-	ChipsNew->XR[0x16]  = (((mode->CrtcVTotal -2) & 0x400) >> 10 )
-	    | (((mode->CrtcVDisplay -1) & 0x400) >> 9 )
-	    | ((mode->CrtcVSyncStart & 0x400) >> 8 )
-	    | (((mode->CrtcVBlankStart) & 0x400) >> 6 );
+	ChipsNew->XR[0x16] = (((mode->CrtcVTotal - 2) & 0x400) >> 10)
+	    | (((mode->CrtcVDisplay - 1) & 0x400) >> 9)
+	    | (((mode->CrtcVSyncStart - 1) & 0x400) >> 8)
+	    | (((mode->CrtcVBlankStart - 1) & 0x400) >> 6)
+	    | 0x40;
     } else {
 	/* horizontal timing registers */
 	/* in LCD/dual mode use saved bios values to derive timing values if
@@ -6324,8 +6319,10 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		lcdHRetraceEnd += (lcdHRetraceEnd << 1);
 		lcdHTotal += (lcdHTotal << 1);
 	    }
+#if 0	/* This should no longer be needed */
  	    lcdHRetraceStart -=8;       /* HBlank =  HRetrace - 1: for */
  	    lcdHRetraceEnd   -=8;       /* compatibility with vgaHW.c  */
+#endif
 	} else {
 	    /* use modeline values if bios values don't work */
 	    lcdHTotal = mode->CrtcHTotal;
@@ -6349,8 +6346,8 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
 	lcdHTotal = (lcdHTotal >> 3) - 5;
 	lcdHDisplay = (lcdHDisplay >> 3) - 1;
-	lcdHRetraceStart = (lcdHRetraceStart >> 3);
-	lcdHRetraceEnd = (lcdHRetraceEnd >> 3);
+	lcdHRetraceStart = (lcdHRetraceStart >> 3) - 1;
+	lcdHRetraceEnd = (lcdHRetraceEnd >> 3) - 1;
 	/* This ugly hack is needed because CR01 and XR1C share the 8th bit!*/
 	CrtcHDisplay = ((mode->CrtcHDisplay >> 3) - 1);
 	if ((lcdHDisplay & 0x100) != (CrtcHDisplay & 0x100)) {
@@ -6359,10 +6356,11 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
 
 	/* now init register values */
-	ChipsNew->XR[0x17] = (((lcdHTotal) & 0x100) >> 8)
+	/* XXX  What about Line Compare and/or HBlank pulse and/or XR16? */
+	ChipsNew->XR[0x17] = ((lcdHTotal & 0x100) >> 8)
 	    | ((lcdHDisplay & 0x100) >> 7)
 	    | ((lcdHRetraceStart & 0x100) >> 6)
-	    | (((lcdHRetraceEnd) & 0x20) >> 2);
+	    | ((lcdHRetraceEnd & 0x20) >> 2);
 
 	ChipsNew->XR[0x19] = lcdHRetraceStart & 0xFF;
 	ChipsNew->XR[0x1A] = lcdHRetraceEnd & 0x1F;
@@ -6391,13 +6389,10 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    /* vertical timing registers */
 	    lcdVTotal = mode->CrtcVTotal - 2;
 	    lcdVDisplay = cPtr->PanelSize.VDisplay - 1;
-	    lcdVRetraceStart = mode->CrtcVSyncStart;
-	    lcdVRetraceEnd = mode->CrtcVSyncEnd;
+	    lcdVRetraceStart = mode->CrtcVSyncStart - 1;
+	    lcdVRetraceEnd = mode->CrtcVSyncEnd - 1;
 
 	    ChipsNew->XR[0x64] = lcdVTotal & 0xFF;
-	    ChipsNew->XR[0x66] = lcdVRetraceStart & 0xFF;
-	    ChipsNew->XR[0x67] = lcdVRetraceEnd & 0x0F;
-	    ChipsNew->XR[0x68] = lcdVDisplay & 0xFF;
 	    ChipsNew->XR[0x65] = ((lcdVTotal & 0x100) >> 8)
 		| ((lcdVDisplay & 0x100) >> 7)
 		| ((lcdVRetraceStart & 0x100) >> 6)
@@ -6406,6 +6401,9 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		| ((lcdVTotal & 0x200) >> 4)
 		| ((lcdVDisplay & 0x200) >> 3)
 		| ((lcdVRetraceStart & 0x200) >> 2);
+	    ChipsNew->XR[0x66] = lcdVRetraceStart & 0xFF;
+	    ChipsNew->XR[0x67] = lcdVRetraceEnd & 0x0F;
+	    ChipsNew->XR[0x68] = lcdVDisplay & 0xFF;
 
 	    /* 
 	     * These are important: 0x2C specifies the numbers of lines 
@@ -6441,12 +6439,15 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    ChipsNew->XR[0x51] |= 0x40;   /* enable FP compensation          */
 	    ChipsNew->XR[0x55] |= 0x01;   /* enable horiz. compensation      */
 	    ChipsNew->XR[0x57] |= 0x01;   /* enable horiz. compensation      */
-	    if (xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_STRETCH,
+	    if (!xf86ReturnOptValBool(cPtr->Options, OPTION_LCD_STRETCH,
 				     FALSE)) {
 		if (mode->CrtcHDisplay < 1489)      /* HWBug                 */
-		    ChipsNew->XR[0x55] |= 0x02;	/* enable h-centering     */
-		else if (pScrn->bitsPerPixel == 24)
-		    ChipsNew->XR[0x56] = (lcdHDisplay - CrtcHDisplay) >> 1;
+		    ChipsNew->XR[0x55] |= 0x02;	/* enable auto h-centering   */
+		else {
+		    ChipsNew->XR[0x55] &= 0xFD;	/* disable auto h-centering  */
+		    if (pScrn->bitsPerPixel == 24) /* ? */
+			ChipsNew->XR[0x56] = (lcdHDisplay - CrtcHDisplay) >> 1;
+		}
 	    } else {
 	      ChipsNew->XR[0x55] &= 0xFD;	/* disable h-centering    */
 	      ChipsNew->XR[0x56] = 0;

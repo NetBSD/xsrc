@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.32 2003/11/06 18:38:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.34 2004/12/10 16:07:02 alanh Exp $ */
 
 /*
  * Copyright 2000 VA Linux Systems Inc., Fremont, California.
@@ -52,6 +52,7 @@
 #include "mga_macros.h"
 #include "mga_dri.h"
 #include "mga_sarea.h"
+#include "mga_common.h"
 
 #define _XF86DRI_SERVER_
 #include "GL/glxtokens.h"
@@ -321,14 +322,14 @@ static Bool MGAInitVisualConfigs( ScreenPtr pScreen )
 }
 
 static Bool MGACreateContext( ScreenPtr pScreen, VisualPtr visual,
-			      drmContext hwContext, void *pVisualConfigPriv,
+			      drm_context_t hwContext, void *pVisualConfigPriv,
 			      DRIContextType contextStore )
 {
    /* Nothing yet */
    return TRUE;
 }
 
-static void MGADestroyContext( ScreenPtr pScreen, drmContext hwContext,
+static void MGADestroyContext( ScreenPtr pScreen, drm_context_t hwContext,
 			       DRIContextType contextStore )
 {
    /* Nothing yet */
@@ -514,8 +515,10 @@ static void MGAWakeupHandler( int screenNum, pointer wakeupData,
 {
     ScreenPtr pScreen = screenInfo.screens[screenNum];
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    MGAPtr pMga = MGAPTR(pScrn);
 
-    if ( xf86IsEntityShared( pScrn->entityList[0] ) ) {
+    if ( xf86IsEntityShared( pScrn->entityList[0] ) 
+		&& pMga->DualHeadEnabled) {
         MGASwapContextShared( pScreen );
     } else {
         MGASwapContext( pScreen );
@@ -809,7 +812,7 @@ static Bool MGADRIMapInit( ScreenPtr pScreen )
    pMGADRIServer->registers.size = MGAIOMAPSIZE;
 
    if ( drmAddMap( pMga->drmFD,
-		   (drmHandle)pMga->IOAddress,
+		   (drm_handle_t)pMga->IOAddress,
 		   pMGADRIServer->registers.size,
 		   DRM_REGISTERS, DRM_READ_ONLY,
 		   &pMGADRIServer->registers.handle ) < 0 ) {
@@ -1040,11 +1043,15 @@ Bool MGADRIScreenInit( ScreenPtr pScreen )
 
    pDRIInfo->drmDriverName = MGAKernelDriverName;
    pDRIInfo->clientDriverName = MGAClientDriverName;
-   pDRIInfo->busIdString = xalloc(64);
-   sprintf( pDRIInfo->busIdString, "PCI:%d:%d:%d",
-	    ((pciConfigPtr)pMga->PciInfo->thisCard)->busnum,
-	    ((pciConfigPtr)pMga->PciInfo->thisCard)->devnum,
-	    ((pciConfigPtr)pMga->PciInfo->thisCard)->funcnum );
+   if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+      pDRIInfo->busIdString = DRICreatePCIBusID(pMga->PciInfo);
+   } else {
+      pDRIInfo->busIdString = xalloc(64);
+      sprintf( pDRIInfo->busIdString, "PCI:%d:%d:%d",
+	       ((pciConfigPtr)pMga->PciInfo->thisCard)->busnum,
+	       ((pciConfigPtr)pMga->PciInfo->thisCard)->devnum,
+	       ((pciConfigPtr)pMga->PciInfo->thisCard)->funcnum );
+   }
    pDRIInfo->ddxDriverMajorVersion = MGA_MAJOR_VERSION;
    pDRIInfo->ddxDriverMinorVersion = MGA_MINOR_VERSION;
    pDRIInfo->ddxDriverPatchVersion = MGA_PATCHLEVEL;
@@ -1110,7 +1117,8 @@ Bool MGADRIScreenInit( ScreenPtr pScreen )
 
    pDRIInfo->CreateContext = MGACreateContext;
    pDRIInfo->DestroyContext = MGADestroyContext;
-   if ( xf86IsEntityShared( pScrn->entityList[0] ) ) {
+   if ( xf86IsEntityShared( pScrn->entityList[0] )
+		&& pMga->DualHeadEnabled) {
       pDRIInfo->SwapContext = MGADRISwapContextShared;
    } else {
       pDRIInfo->SwapContext = MGADRISwapContext;

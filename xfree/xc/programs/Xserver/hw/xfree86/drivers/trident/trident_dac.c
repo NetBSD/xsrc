@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.80 2004/01/21 22:31:54 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.81 2004/11/26 13:45:05 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -243,6 +243,9 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vgaRegPtr vgaReg = &hwp->ModeReg;
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
+    /* We have vertical blank end extension bits, so undo KGA workaround */
+    vgaHWVBlankKGA(mode, vgaReg, 0, 0);
+
     /* Unprotect */
     if (pTrident->Chipset > PROVIDIA9685) {
     	OUTB(0x3C4, Protection);
@@ -263,7 +266,7 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     pReg->tridentRegs3x4[CRTHiOrd] = (((mode->CrtcVBlankEnd-1) & 0x400)>>4) |
  				     (((mode->CrtcVTotal - 2) & 0x400) >> 3) |
- 				     ((mode->CrtcVSyncStart & 0x400) >> 5) |
+ 				     (((mode->CrtcVSyncStart - 1) & 0x400) >> 5) |
  				     (((mode->CrtcVDisplay - 1) & 0x400) >> 6)|
  				     0x08;
 

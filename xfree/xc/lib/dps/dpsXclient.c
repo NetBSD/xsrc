@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsXclient.c,v 1.3 2000/09/26 15:56:59 tsi Exp $ */
+/* $XFree86: xc/lib/dps/dpsXclient.c,v 1.4 2004/10/23 15:29:26 dawes Exp $ */
 
 #include <stdlib.h>
 #include <unistd.h>	/* sleep() */
@@ -217,7 +217,7 @@ static void procAwaitReturnValues(DPSContext ctxt)
 	if (c->errorProc != NIL)
 	  (*c->errorProc) (ctxt, dps_err_deadContext, (unsigned long) c, 0);
 	XDPSLSetWrapWaitingFlag(xwh->dpy, False);
-	E_RTRN_VOID;
+	E_RTRN_VOID
 	}
       
       /* Someone could conceivably change the event delivery mode in the

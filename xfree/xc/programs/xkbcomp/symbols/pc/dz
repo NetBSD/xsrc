@@ -17,7 +17,7 @@ partial default alphanumeric_keys
 xkb_symbols "basic" {
       name[Group1]= "Dzongkha";
 
-      key <TLDE> { [      U0F09, U0F0A, U0F6C, U0F6B ]	};
+      key <TLDE> { [      U0F09, U0F0A, U0FD1, U0FD0 ]	};
       
 // numbers e.a.
       key <AE01> { [      U0F21, U0F04, 1, exclam ]	};
@@ -74,7 +74,7 @@ xkb_symbols "basic" {
       key <AB03> { [      U0F60, U0F71, U0F03, U0FB0 ]	};
       key <AB04> { [      U0F61, U0FB1, U0F12, U0FBB ]	};
       key <AB05> { [      U0F62, U0FB2, U0F6A, U0FBC ]	};
-      key <AB06> { [      U0F63, U0FB3, U0F8A, U0F88 ]	};
+      key <AB06> { [      U0F63, U0FB3, U0F8A, U0F8B ]	};
       key <AB07> { [      U0F64, U0FB4, U0F65, U0FB5 ]	};
       key <AB08> { [      U0F66, U0FB6, comma, less ]	};
       key <AB09> { [      U0F67, U0FB7, period, greater ]	};

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxserver.h,v 1.6 2004/01/28 18:11:50 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxserver.h,v 1.7 2004/12/10 16:06:59 alanh Exp $ */
 #ifndef _GLX_server_h_
 #define _GLX_server_h_
 
@@ -92,6 +92,7 @@ typedef struct __GLXclientStateRec __GLXclientState;
 
 extern __GLXscreenInfo *__glXActiveScreens;
 extern GLint __glXNumActiveScreens;
+extern __GLXscreenInfo *__glXgetActiveScreen(int num);
 
 /************************************************************************/
 

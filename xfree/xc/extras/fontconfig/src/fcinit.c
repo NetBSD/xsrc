@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/extras/fontconfig/src/fcinit.c,v 1.1.1.1 2003/06/04 02:57:52 dawes Exp $
+ * $XFree86: xc/extras/fontconfig/src/fcinit.c,v 1.2 2005/02/16 21:01:09 dawes Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -46,6 +46,15 @@ bail0:
 int
 FcGetVersion (void)
 {
+    char *ver;
+
+    ver = getenv("FC_VERSION");
+    if (ver) {
+	int numver;
+	numver = strtol(ver, NULL, 10);
+	return numver;
+    }
+
     return FC_VERSION;
 }
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_vbe.c,v 1.14 2003/06/18 16:17:40 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_vbe.c,v 1.15 2004/09/01 23:57:57 dawes Exp $ */
 
 #include "savage_driver.h"
 #include "savage_vbe.h"
@@ -136,6 +136,23 @@ static int SavageGetDevice( SavagePtr psav )
     return ((psav->pInt10->cx) & 0xf);
 }
 
+void
+SavageLCDOn( SavagePtr psav ) {
+    SavageClearVM86Regs( psav->pInt10 );
+    psav->pInt10->ax = 0x4f14;      /* S3 extensions */
+    psav->pInt10->bx = 0x0003;      /* set active devices */
+    psav->pInt10->cx = psav->iDevInfo;
+    xf86ExecX86int10( psav->pInt10 );
+}
+
+void
+SavageLCDOff( SavagePtr psav ) {
+    SavageClearVM86Regs( psav->pInt10 );
+    psav->pInt10->ax = 0x4f14;      /* S3 extensions */
+    psav->pInt10->bx = 0x0003;      /* set active devices */
+    psav->pInt10->cx = 0;
+    xf86ExecX86int10( psav->pInt10 );
+}
 
 void
 SavageFreeBIOSModeTable( SavagePtr psav, SavageModeTablePtr* ppTable )

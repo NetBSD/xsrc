@@ -24,7 +24,7 @@ extern "C" {
 ** 
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
-** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Inc. The Original Code is Copyright (c) 1991-2004 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
 ** 
@@ -33,15 +33,18 @@ extern "C" {
 ** not been independently verified as being compliant with the OpenGL(R)
 ** version 1.2.1 Specification.
 */
-/* $XFree86: xc/extras/Mesa/include/GL/glxext.h,v 1.6 2004/01/13 02:42:51 tsi Exp $ */
+/* $XFree86: xc/extras/Mesa/include/GL/glxext.h,v 1.12 2004/12/10 17:21:09 alanh Exp $ */
 
-#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #endif
 
 #ifndef APIENTRY
 #define APIENTRY
+#endif
+#ifndef APIENTRYP
+#define APIENTRYP APIENTRY *
 #endif
 #ifndef GLAPI
 #define GLAPI extern
@@ -50,9 +53,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glxext.h last updated 2002/03/22 */
+/* glxext.h last updated 2004/07/26 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GLX_GLXEXT_VERSION 5
+#define GLX_GLXEXT_VERSION 6
 
 #ifndef GLX_VERSION_1_3
 #define GLX_WINDOW_BIT                     0x00000001
@@ -261,9 +264,6 @@ extern "C" {
 #ifndef GLX_MESA_release_buffers
 #endif
 
-#ifndef GLX_MESA_agp_offset
-#endif
-
 #ifndef GLX_MESA_set_3dfx_mode
 #define GLX_3DFX_WINDOW_MODE_MESA          0x1
 #define GLX_3DFX_FULLSCREEN_MODE_MESA      0x2
@@ -281,6 +281,22 @@ extern "C" {
 #endif
 
 #ifndef GLX_OML_sync_control
+#endif
+
+#ifndef GLX_SGIX_hyperpipe_group
+#define GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX 80
+#define GLX_BAD_HYPERPIPE_CONFIG_SGIX      91
+#define GLX_BAD_HYPERPIPE_SGIX             92
+#define GLX_HYPERPIPE_DISPLAY_PIPE_SGIX    0x00000001
+#define GLX_HYPERPIPE_RENDER_PIPE_SGIX     0x00000002
+#define GLX_PIPE_RECT_SGIX                 0x00000001
+#define GLX_PIPE_RECT_LIMITS_SGIX          0x00000002
+#define GLX_HYPERPIPE_STEREO_SGIX          0x00000003
+#define GLX_HYPERPIPE_PIXEL_AVERAGE_SGIX   0x00000004
+#define GLX_HYPERPIPE_ID_SGIX              0x8030
+#endif
+
+#ifndef GLX_MESA_agp_offset
 #endif
 
 
@@ -321,7 +337,7 @@ typedef long int int32_t;
 typedef long long int int64_t;
 #endif
 
-#if defined(SCO) || defined(__USLC__)
+#if defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
 #endif
 
@@ -423,18 +439,18 @@ typedef Bool ( * PFNGLXMAKECURRENTREADSGIPROC) (Display *dpy, GLXDrawable draw, 
 typedef GLXDrawable ( * PFNGLXGETCURRENTREADDRAWABLESGIPROC) (void);
 #endif
 
-#ifdef _VL_H
 #ifndef GLX_SGIX_video_source
 #define GLX_SGIX_video_source 1
+#ifdef _VL_H
 #ifdef GLX_GLXEXT_PROTOTYPES
 extern GLXVideoSourceSGIX glXCreateGLXVideoSourceSGIX (Display *, int, VLServer, VLPath, int, VLNode);
 extern void glXDestroyGLXVideoSourceSGIX (Display *, GLXVideoSourceSGIX);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef GLXVideoSourceSGIX ( * PFNGLXCREATEGLXVIDEOSOURCESGIXPROC) (Display *display, int screen, VLServer server, VLPath path, int nodeClass, VLNode drainNode);
 typedef void ( * PFNGLXDESTROYGLXVIDEOSOURCESGIXPROC) (Display *dpy, GLXVideoSourceSGIX glxvideosource);
+#endif /* _VL_H */
 #endif
 
-#endif /* _VL_H */
 #ifndef GLX_EXT_visual_rating
 #define GLX_EXT_visual_rating 1
 #endif
@@ -513,16 +529,16 @@ typedef int ( * PFNGLXQUERYCHANNELDELTASSGIXPROC) (Display *display, int screen,
 typedef int ( * PFNGLXCHANNELRECTSYNCSGIXPROC) (Display *display, int screen, int channel, GLenum synctype);
 #endif
 
-#ifdef _DM_BUFFER_H_
 #ifndef GLX_SGIX_dmbuffer
 #define GLX_SGIX_dmbuffer 1
+#ifdef _DM_BUFFER_H_
 #ifdef GLX_GLXEXT_PROTOTYPES
 extern Bool glXAssociateDMPbufferSGIX (Display *, GLXPbufferSGIX, DMparams *, DMbuffer);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef Bool ( * PFNGLXASSOCIATEDMPBUFFERSGIXPROC) (Display *dpy, GLXPbufferSGIX pbuffer, DMparams *params, DMbuffer dmbuffer);
+#endif /* _DM_BUFFER_H_ */
 #endif
 
-#endif /* _DM_BUFFER_H_ */
 #ifndef GLX_SGIX_swap_group
 #define GLX_SGIX_swap_group 1
 #ifdef GLX_GLXEXT_PROTOTYPES
@@ -581,24 +597,6 @@ extern Bool glXSet3DfxModeMESA (int);
 typedef Bool ( * PFNGLXSET3DFXMODEMESAPROC) (int mode);
 #endif
 
-#ifndef GLX_MESA_agp_offset
-#define GLX_MESA_agp_offset 1
-#ifdef GLX_GLXEXT_PROTOTYPES
-extern GLuint glXGetAGPOffsetMESA (const GLvoid *);
-#endif /* GLX_GLXEXT_PROTOTYPES */
-typedef GLuint ( * PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *);
-#endif
-
-#ifndef GLX_MESA_swap_control
-#define GLX_MESA_swap_control 1
-#ifdef GLX_GLXEXT_PROTOTYPES
-extern GLint glXSwapIntervalMESA(unsigned interval);
-extern GLint glXGetSwapIntervalMESA( void );
-#endif /* GLX_GLXEXT_PROTOTYPES */
-typedef GLint ( * PFNGLXSWAPINTERVALMESAPROC) (unsigned interval);
-typedef GLint ( * PFNGLXGETSWAPINTERVALMESAPROC) ( void );
-#endif
-
 #ifndef GLX_SGIX_visual_select_group
 #define GLX_SGIX_visual_select_group 1
 #endif
@@ -623,18 +621,59 @@ typedef Bool ( * PFNGLXWAITFORMSCOMLPROC) (Display *dpy, GLXDrawable drawable, i
 typedef Bool ( * PFNGLXWAITFORSBCOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t target_sbc, int64_t *ust, int64_t *msc, int64_t *sbc);
 #endif
 
-#ifndef GLX_MESA_swap_frame_usage
-#define GLX_MESA_swap_frame_usage 1
+#ifndef GLX_SGIX_hyperpipe_group
+#define GLX_SGIX_hyperpipe_group 1
+
+typedef struct {
+    char    pipeName[GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX];
+    int     networkId;
+} GLXHyperpipeNetworkSGIX;
+
+typedef struct {
+    char    pipeName[GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX];
+    int     channel;
+    unsigned int
+      participationType;
+    int     timeSlice;
+} GLXHyperpipeConfigSGIX;
+
+typedef struct {
+    char pipeName[GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX];
+    int srcXOrigin, srcYOrigin, srcWidth, srcHeight;
+    int destXOrigin, destYOrigin, destWidth, destHeight;
+} GLXPipeRect;
+
+typedef struct {
+    char pipeName[GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX];
+    int XOrigin, YOrigin, maxHeight, maxWidth;
+} GLXPipeRectLimits;
+
 #ifdef GLX_GLXEXT_PROTOTYPES
-extern GLint glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable);
-extern GLint glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable);
-extern GLint glXGetFrameUsageMESA(Display *dpy, GLXDrawable drawable, GLfloat *usage);
-extern GLint glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable, int64_t *sbc, int64_t *missedFrames, GLfloat *lastMissedUsage);
+extern GLXHyperpipeNetworkSGIX * glXQueryHyperpipeNetworkSGIX (Display *, int *);
+extern int glXHyperpipeConfigSGIX (Display *, int, int, GLXHyperpipeConfigSGIX *, int *);
+extern GLXHyperpipeConfigSGIX * glXQueryHyperpipeConfigSGIX (Display *, int, int *);
+extern int glXDestroyHyperpipeConfigSGIX (Display *, int);
+extern int glXBindHyperpipeSGIX (Display *, int);
+extern int glXQueryHyperpipeBestAttribSGIX (Display *, int, int, int, void *, void *);
+extern int glXHyperpipeAttribSGIX (Display *, int, int, int, void *);
+extern int glXQueryHyperpipeAttribSGIX (Display *, int, int, int, void *);
 #endif /* GLX_GLXEXT_PROTOTYPES */
-typedef GLint ( * PFNGLXBEGINFRAMETRACKINGMESAPROC) (Display *dpy, GLXDrawable drawable);
-typedef GLint ( * PFNGLXENDFRAMETRACKINGMESAPROC) (Display *dpy, GLXDrawable drawable);
-typedef GLint ( * PFNGLXGETFRAMEUSAGEMESAPROC) (Display *dpy, GLXDrawable drawable, GLfloat *usage);
-typedef GLint ( * PFNGLXQUERYFRAMETRACKINGMESAPROC) (Display *dpy, GLXDrawable drawable, int64_t *sbc, int64_t *missedFrames, GLfloat *lastMissedUsage);
+typedef GLXHyperpipeNetworkSGIX * ( * PFNGLXQUERYHYPERPIPENETWORKSGIXPROC) (Display *dpy, int *npipes);
+typedef int ( * PFNGLXHYPERPIPECONFIGSGIXPROC) (Display *dpy, int networkId, int npipes, GLXHyperpipeConfigSGIX *cfg, int *hpId);
+typedef GLXHyperpipeConfigSGIX * ( * PFNGLXQUERYHYPERPIPECONFIGSGIXPROC) (Display *dpy, int hpId, int *npipes);
+typedef int ( * PFNGLXDESTROYHYPERPIPECONFIGSGIXPROC) (Display *dpy, int hpId);
+typedef int ( * PFNGLXBINDHYPERPIPESGIXPROC) (Display *dpy, int hpId);
+typedef int ( * PFNGLXQUERYHYPERPIPEBESTATTRIBSGIXPROC) (Display *dpy, int timeSlice, int attrib, int size, void *attribList, void *returnAttribList);
+typedef int ( * PFNGLXHYPERPIPEATTRIBSGIXPROC) (Display *dpy, int timeSlice, int attrib, int size, void *attribList);
+typedef int ( * PFNGLXQUERYHYPERPIPEATTRIBSGIXPROC) (Display *dpy, int timeSlice, int attrib, int size, void *returnAttribList);
+#endif
+
+#ifndef GLX_MESA_agp_offset
+#define GLX_MESA_agp_offset 1
+#ifdef GLX_GLXEXT_PROTOTYPES
+extern unsigned int glXGetAGPOffsetMESA (const void *);
+#endif /* GLX_GLXEXT_PROTOTYPES */
+typedef unsigned int ( * PFNGLXGETAGPOFFSETMESAPROC) (const void *pointer);
 #endif
 
 #ifdef __cplusplus

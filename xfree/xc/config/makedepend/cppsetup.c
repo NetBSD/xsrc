@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.11 2001/12/17 20:52:22 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.12 2004/03/05 16:02:58 tsi Exp $ */
 
 #include "def.h"
 
@@ -86,8 +86,8 @@ cppsetup(char *line, struct filepointer *filep, struct inclist *inc)
 	pend = p;
 
 	ptrtab = slotab+COFF;
-	*--inp = SALT; 
-	outp=inp; 
+	*--inp = SALT;
+	outp=inp;
 	value = yyparse();
 	*p = savec;
 	return(value);
@@ -181,26 +181,231 @@ my_eval_defined (IfParser *ip, const char *var, int len)
 	return 0;
 }
 
+
+int
+variable_has_args (IfParser *ip, const char *var, int len)
+{
+    struct symtab **s = lookup_variable (ip, var, len);
+
+    if (!s)
+	return 0;
+
+    if ((*s)->s_args)
+	return 1;
+    else
+	return 0;
+}
+
+/*
+ * this is tiny linked list implementation for temporarily storing
+ * and retriving pairs of macro parameter names and passed in macro arguments.
+ */
+typedef struct keyword_type_rec keyword_type;
+struct keyword_type_rec {
+    keyword_type* pnext;
+    char *name;
+    char *value;
+};
+
+
+static keyword_type*
+build_keyword_list (const char* keys, const char* values)
+{
+    keyword_type *phead = NULL, *pnew;
+    const char *ptmp;
+    int len;
+
+    while (*keys)
+    {
+	/* alloc new member */
+	pnew = malloc(sizeof(*pnew));
+	if (!pnew)
+	{
+	    fprintf(stderr, "out of memory in my_eval_variable\n");
+	    exit(1);
+	}
+
+	/* extract key */
+	ptmp = keys;
+	len = 0;
+	while (*ptmp && (*ptmp != ','))
+	    ptmp++, len++;
+	pnew->name = malloc(len+1);
+	strncpy(pnew->name, keys, len);
+	pnew->name[len] = '\0';
+	keys = ptmp;
+	if (*keys)
+	    keys++;
+
+	/* extract arg */
+	ptmp = values;
+	len = 0;
+	while (*ptmp && (*ptmp != ',') && (*ptmp != ')'))
+	    ptmp++, len++;
+	pnew->value = malloc(len+1);
+	strncpy(pnew->value, values, len);
+	pnew->value[len] = '\0';
+	values = ptmp;
+	if (*values)
+	    values++;
+
+	/* chain in this new member */
+	pnew->pnext = phead;
+	phead = pnew;
+    }
+
+    return phead;
+}
+
+
+static const keyword_type*
+get_keyword_entry (const keyword_type* phead, const char* keyname, const int keylen)
+{
+    while (phead)
+    {
+	if (keylen == strlen(phead->name))
+	    if (strncmp(keyname, phead->name, keylen) == 0)
+		return phead;
+	phead = phead->pnext;
+    }
+
+    return phead;
+}
+
+
+static void
+free_keyword_list (keyword_type* phead)
+{
+    keyword_type* pnext;
+    while (phead)
+    {
+	pnext = phead->pnext;
+	free(phead->name);
+	free(phead->value);
+	free(phead);
+	phead = pnext;
+    }
+}
+
+
 #define isvarfirstletter(ccc) (isalpha(ccc) || (ccc) == '_')
 
 static long
-my_eval_variable (IfParser *ip, const char *var, int len)
+my_eval_variable (IfParser *ip, const char *var, int len, const char *args)
 {
     long val;
+    char *newline = NULL;
+    int newline_len = 0, newline_offset = 0;
     struct symtab **s;
 
     s = lookup_variable (ip, var, len);
     if (!s)
 	return 0;
-    do {
-	var = (*s)->s_value;
-	if (!isvarfirstletter(*var) || !strcmp((*s)->s_name, var))
-	    break;
-	s = lookup_variable (ip, var, strlen(var));
-    } while (s);
+
+    if ((*s)->s_args)
+    {
+	const char *psrc, *psrc_qualifier;
+	char *pdst;
+	const keyword_type *pkeyword;
+	keyword_type *pkeylist;
+
+	newline_len = 64; /* start with some buffer, might increase later */
+	newline = malloc(newline_len);
+	if (!newline)
+	{
+	    fprintf(stderr, "out of memory in my_eval_variable\n");
+	    exit(1);
+	}
+
+	/* build up a list that pairs keywords and args */
+	pkeylist = build_keyword_list((*s)->s_args,args);
+
+	/* parse for keywords in macro content */
+	psrc = (*s)->s_value;
+	pdst = newline;
+	while (*psrc)
+	{
+	    /* parse for next qualifier */
+	    psrc_qualifier = psrc;
+	    while (isalnum(*psrc) || *psrc == '_')
+		psrc++;
+
+	    /* check if qualifier is in parameter keywords listing of macro */
+	    pkeyword = get_keyword_entry(pkeylist,psrc_qualifier,psrc - psrc_qualifier);
+	    if (pkeyword)
+	    { /* convert from parameter keyword to given argument */
+		const char *ptmp = pkeyword->value;
+		while (*ptmp)
+		{
+		    *pdst++ = *ptmp++;
+		    newline_offset++;
+		    if (newline_offset + 2 >= newline_len)
+		    {
+			newline_len *= 2;
+			newline = realloc(newline, newline_len);
+			if (!newline)
+			{
+			    fprintf(stderr, "out of memory in my_eval_variable\n");
+			    exit(1);
+			}
+			pdst = &newline[newline_offset];
+		    }
+		}
+	    }
+	    else
+	    { /* perform post copy of qualifier that is not a parameter keyword */
+		const char *ptmp = psrc_qualifier;
+		while (ptmp < psrc)
+		{
+		    *pdst++ = *ptmp++;
+		    newline_offset++;
+		    if (newline_offset + 2 >= newline_len)
+		    {
+			newline_len *= 2;
+			newline = realloc(newline, newline_len);
+			if (!newline)
+			{
+			    fprintf(stderr, "out of memory in my_eval_variable\n");
+			    exit(1);
+			}
+			pdst = &newline[newline_offset];
+		    }
+		}
+	    }
+
+	    /* duplicate chars that are not qualifier chars */
+	    while (!(isalnum(*psrc) || *psrc == '_' || *psrc == '\0'))
+	    {
+		*pdst++ = *psrc++;
+		newline_offset++;
+		if (newline_offset + 2 >= newline_len)
+		{
+		    newline_len *= 2;
+		    newline = realloc(newline, newline_len);
+		    if (!newline)
+		    {
+			fprintf(stderr, "out of memory in my_eval_variable\n");
+			exit(1);
+		    }
+		    pdst = &newline[newline_offset];
+		}
+	    }
+	}
+
+	*pdst = '\0';
+	free_keyword_list(pkeylist);
+	var = newline;
+    }
+    else
+    {
+       var = (*s)->s_value;
+    }
 
     var = ParseIfExpression(ip, var, &val);
     if (var && *var) debug(4, ("extraneous: '%s'\n", var));
+
+    if (newline) free(newline);
+
     return val;
 }
 

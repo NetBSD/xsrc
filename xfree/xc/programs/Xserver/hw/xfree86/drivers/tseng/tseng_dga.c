@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dga.c,v 1.2 2001/10/01 13:44:11 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dga.c,v 1.3 2004/12/07 15:59:20 tsi Exp $ */
 /*
  * Copyright 2000 by Rainer Keller, <Rainer.Keller@studmail.uni-stuttgart.de>.
  *
@@ -27,8 +27,9 @@
 #include "tseng.h"
 #include "dgaproc.h"
 
-static Bool Tseng_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-				  int *, int *, int *);
+static Bool Tseng_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				  unsigned int *, unsigned int *,
+				  unsigned int *);
 static Bool Tseng_SetMode(ScrnInfoPtr, DGAModePtr);
 static void Tseng_Sync(ScrnInfoPtr);
 static int  Tseng_GetViewport(ScrnInfoPtr);
@@ -128,15 +129,15 @@ static Bool
 Tseng_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     TsengPtr pTseng = TsengPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pTseng->LinFbAddress;
+    *mem = pTseng->LinFbAddress;
     *size = pTseng->FbMapSize;
     *offset = 0;                /* Always */
     *flags = 0;                 /* Root permissions OS-dependent */

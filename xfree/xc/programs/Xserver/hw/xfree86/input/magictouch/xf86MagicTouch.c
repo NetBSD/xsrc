@@ -1,13 +1,6 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/input/magictouch/xf86MagicTouch.c,v 1.3 2003/01/12 03:55:50 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/input/magictouch/xf86MagicTouch.c,v 1.6 2004/05/06 00:49:35 dawes Exp $
  */
-
-#include <xf86Version.h>
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
-#define XFREE86_V4
-#endif
-
-#ifdef XFREE86_V4
 
 #ifndef XFree86LOADER
 #include <errno.h>
@@ -24,134 +17,7 @@
 #include <xf86Xinput.h>
 #include <exevents.h>
 
-#ifdef XFree86LOADER
 #include <xf86Module.h>
-#endif
-
-#else /* XFREE86_V4 */
-
-#include "Xos.h"
-#include <signal.h>
-#include <stdio.h>
-#define	 NEED_EVENTS
-#include "X.h"
-#include "Xproto.h"
-#include "inputstr.h"
-#include "scrnintstr.h"
-
-#include "XI.h"
-#include "XIproto.h"
-
-#if defined(sun) && !defined(i386)
-#include <errno.h>
-#include <termio.h>
-#include <fcntl.h>
-#include <ctype.h>
-
-#include "extio.h"
-#else /* defined(sun) && !defined(i386) */
-#include "compiler.h"
-
-#include "xf86.h"
-#include "xf86Procs.h"
-#include "xf86_OSlib.h"
-#include "xf86_Config.h"
-#include "xf86Xinput.h"
-#include "xf86Version.h"
-#endif /* defined(sun) && !defined(i386) */
-
-#if !defined(sun) || defined(i386)
-#include "os.h"
-#include "osdep.h"
-#include "exevents.h"
-
-#include "extnsionst.h"
-#include "extinit.h"
-#endif /* !defined(sun) || defined(i386) */
-
-#endif /* XFREE86_V4 */
-
-
-#ifndef XFREE86_V4
-#if !defined(sun) || defined(i386)
-/*
- ***************************************************************************
- *
- * Configuration descriptor.
- *
- ***************************************************************************
- */
-
-#define PORT		1
-#define MAGIC_DEVICE_NAME	2
-#define SCREEN_NO	3
-#define MAXX		4
-#define MAXY		5
-#define MINX		6
-#define MINY		7
-#define DEBUG_LEVEL     8
-#define HISTORY_SIZE	9
-#define LINK_SPEED	10
-#define ALWAYS_CORE	11
-#define SWAP_AXES	12
-#define N_SAMPLE_X	13
-#define N_SAMPLE_Y	14
-
-static SymTabRec MagicTab[] = {
-  { ENDSUBSECTION,     "endsubsection" },
-  { PORT,              "port" },
-  { MAGIC_DEVICE_NAME,   "devicename" },
-  { SCREEN_NO,	       "screenno" },
-  { MAXX,              "maximumxposition" },
-  { MAXY,              "maximumyposition" },
-  { MINX,              "minimumxposition" },
-  { MINY,              "minimumyposition" },
-  { DEBUG_LEVEL,       "debuglevel" },
-  { HISTORY_SIZE,      "historysize" },
-  { LINK_SPEED,        "linkspeed" },
-  { ALWAYS_CORE,       "alwayscore" },
-  { SWAP_AXES,	       "swapxy" },
-  { N_SAMPLE_X,	       "numsamplex" },
-  { N_SAMPLE_Y,	       "numsampley" },
-  { -1,                "" },
-};
-
-
-#define LS1200		1
-#define LS2400		2
-#define LS4800		3
-#define LS9600		4
-
-static SymTabRec LinkSpeedTab[] = {
-  { LS1200,	"b1200" },
-  { LS2400,	"b2400" },
-  { LS4800,	"b4800" },
-  { LS9600,	"b9600" }
-};
-#endif /* !defined(sun) || defined(i386) */
-
-/*
- * This struct connects a line speed with
- * a compatible motion packet delay. The
- * driver will attempt to enforce a correct
- * delay (according to this table) in order to
- * avoid losing data in the touchscreen controller.
- * LinkSpeedValues should be kept in sync with
- * LinkSpeedTab.
- */
-typedef struct {
-  int	speed;
-  int	delay;
-} LinkParameterStruct;
-
-static LinkParameterStruct	LinkSpeedValues[] = {
-  { B1200, 8 },
-  { B2400, 4 },
-  { B4800, 2 },
-  { B9600, 1 }
-};
-#endif /* XFREE86_V4 */
-
 
 /*
  ***************************************************************************
@@ -202,7 +68,6 @@ static int      debug_level = 0;
 #endif
 
 
-#ifdef XFREE86_V4
 #undef SYSCALL
 #undef read
 #undef write
@@ -213,12 +78,6 @@ static int      debug_level = 0;
 #define write(fd, ptr, num) xf86WriteSerial(fd, ptr, num)
 #define close(fd) xf86CloseSerial(fd)
 #define strdup(str) xf86strdup(str)
-#endif
-
-
-					
-
-
 
 /*
  ***************************************************************************
@@ -233,9 +92,6 @@ typedef struct _MagicPrivateRec {
   int		max_x;				/* Maximum x					*/
   int		min_y;				/* Minimum y reported by calibration		*/
   int		max_y;				/* Maximum y					*/
-#ifndef XFREE86_V4
-  int		link_speed;			/* Speed of the RS232 link connecting the ts.	*/
-#endif
   int		screen_no;			/* Screen associated with the device		*/
   int		screen_width;			/* Width of the associated X screen		*/
   int		screen_height;			/* Height of the screen				*/
@@ -250,220 +106,9 @@ typedef struct _MagicPrivateRec {
   Bool		click_on;
 } MagicPrivateRec, *MagicPrivatePtr;
 
-
-#ifndef XFREE86_V4
-#if !defined(sun) || defined(i386)
-/*
- ****************************************************************************
- * xf86MagicConfig --
- * 	Configure the device driver from configuration data
- ****************************************************************************
- */
-static Bool
-xf86MagicConfig(LocalDevicePtr    *array,
-              int               inx,
-              int               max,
-	      LexPtr            val)
-{
-  LocalDevicePtr        local = array[inx];
-  MagicPrivatePtr       priv = (MagicPrivatePtr)(local->private);
-  int                   token;
-  
-  while ((token = xf86GetToken(MagicTab)) != ENDSUBSECTION) {
-    switch(token) {
-      
-    case PORT:
-      if (xf86GetToken(NULL) != STRING) {
-	xf86ConfigError("MagicTouch input port expected");
-      }
-      priv->input_dev = strdup(val->str);	
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch input port: %s\n",
-	       XCONFIG_GIVEN, priv->input_dev);
-      }
-      break;
-
-    case MAGIC_DEVICE_NAME:
-      if (xf86GetToken(NULL) != STRING) {
-	xf86ConfigError("Magictouch device name expected");
-      }
-      local->name = strdup(val->str);
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch X device name: %s\n",
-	       XCONFIG_GIVEN, local->name);
-      }
-      break;
-
-    case SCREEN_NO:
-      if (xf86GetToken(NULL) != NUMBER) {
-	xf86ConfigError("MagicTouch screen number expected");
-      }
-      priv->screen_no = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch associated screen: %d\n",
-	       XCONFIG_GIVEN, priv->screen_no);
-      }
-      break;
-
-    case LINK_SPEED:
-      {
-	int	ltoken = xf86GetToken(LinkSpeedTab);
-	if (ltoken == EOF ||
-	    ltoken == STRING ||
-	    ltoken == NUMBER) {
-	  xf86ConfigError("MagicTouch link speed expected");
-	}
-	priv->link_speed = LinkSpeedValues[ltoken-1].speed;
-	if (xf86Verbose) {
-	  ErrorF("%s MagicTouch link speed: %s bps\n",
-		 XCONFIG_GIVEN, (LinkSpeedTab[ltoken-1].name)+1);
-	}
-      }
-      break;
-      
-    case MAXX:
-      if (xf86GetToken(NULL) != NUMBER) {
-        xf86ConfigError("MagicTouch maximum x position expected");
-      }
-      priv->max_x = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch maximum x position: %d\n",
-	       XCONFIG_GIVEN, priv->max_x);
-      }
-     break;
-      
-    case MAXY:
-      if (xf86GetToken(NULL) != NUMBER) {
-        xf86ConfigError("MagicTouch maximum y position expected");
-      }
-      priv->max_y = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch maximum y position: %d\n",
-	       XCONFIG_GIVEN, priv->max_y);
-      }
-     break;
-      
-    case MINX:
-      if (xf86GetToken(NULL) != NUMBER) {
-        xf86ConfigError("MagicTouch minimum x position expected");
-      }
-      priv->min_x = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch minimum x position: %d\n",
-	       XCONFIG_GIVEN, priv->min_x);
-      }
-     break;
-      
-    case MINY:
-      if (xf86GetToken(NULL) != NUMBER) {
-        xf86ConfigError("MagicTouch minimum y position expected");
-      }
-      priv->min_y = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch minimum y position: %d\n",
-	       XCONFIG_GIVEN, priv->min_y);
-      }
-     break;
-      
-    case DEBUG_LEVEL:
-      if (xf86GetToken(NULL) != NUMBER) {
-	xf86ConfigError("MagicTouch driver debug level expected");
-      }
-      debug_level = val->num;
-      if (xf86Verbose) {
-#if DEBUG
-	ErrorF("%s MagicTouch debug level sets to %d\n", XCONFIG_GIVEN,
-	       debug_level);      
-#else
-	ErrorF("%s MagicTouch debug not available\n",
-		XCONFIG_GIVEN, debug_level);      
-#endif
-      }
-      break;
-
-    case HISTORY_SIZE:
-      if (xf86GetToken(NULL) != NUMBER) {
-	xf86ConfigError("MagicTouch motion history size expected");
-      }
-      local->history_size = val->num;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch motion history size is %d\n", XCONFIG_GIVEN,
-	       local->history_size);
-      }
-      break;
-	    
-    case ALWAYS_CORE:
-      xf86AlwaysCore(local, TRUE);
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch device will always stays core pointer\n",
-	       XCONFIG_GIVEN);
-      }
-      break;
-
-    case SWAP_AXES:
-      priv->swap_axes = 1;
-      if (xf86Verbose) {
-	ErrorF("%s MagicTouch device will work with X and Y axes swapped\n",
-	       XCONFIG_GIVEN);
-      }      
-      break;
-
-    case N_SAMPLE_X:
-      if (xf86GetToken(NULL) != NUMBER) {
-	xf86ConfigError("MagicTouch driver NumSamplesX expected");
-      }
-      priv->num_medie_x = val->num;
-      
-      
-      if (priv->num_medie_x>MEDIE_X) 
-      	  priv->num_medie_x=MEDIE_X;
-      
-      DBG(4,
-      	ErrorF("NumSampleX = %d\n", priv->num_medie_x)
-      	);
-      
-      break;
-      
-    case N_SAMPLE_Y:
-      if (xf86GetToken(NULL) != NUMBER) {
-	xf86ConfigError("MagicTouch driver NumSamplesY expected");
-      }
-      priv->num_medie_y = val->num;
-      
-      if (priv->num_medie_y>MEDIE_Y) 
-      	  priv->num_medie_y=MEDIE_Y;
-      	  
-      DBG(4,
-      	ErrorF("NumSampleY = %d\n", priv->num_medie_y)
-      	);
-      break;
-
-    case EOF:
-      FatalError("Unexpected EOF (missing EndSubSection)");
-      break;
-
-    default:
-      xf86ConfigError("MagicTouch subsection keyword expected");
-      break;
-    }
-  }
-
-  if (priv->max_x - priv->min_x <= 0) {
-    ErrorF("%s MagicTouch: reverse x mode (minimum x position >= maximum x position)\n",
-	   XCONFIG_GIVEN);
-  }  
-  if (priv->max_y - priv->min_y <= 0) {
-    ErrorF("%s MagicTouch: reverse y mode (minimum y position >= maximum y position)\n",
-	   XCONFIG_GIVEN);
-  }
-    
-  DBG(2, ErrorF("xf86MagicConfig port name=%s\n", priv->input_dev))
-
-  return Success;
-}
-
-#endif /* !defined(sun) || defined(i386) */
-#endif /* XFREE86_V4 */
+static Bool xf86MagicConvert(LocalDevicePtr local, int first, int num,
+			     int v0, int v1, int v2, int v3, int v4, int v5,
+			     int *x, int *y);
 
 /****************************************************************************
  *
@@ -548,8 +193,7 @@ xf86MagicControl(DeviceIntPtr dev,
 	LocalDevicePtr	local = (LocalDevicePtr) dev->public.devicePrivate;
 	MagicPrivatePtr	priv = (MagicPrivatePtr)(local->private);
 	unsigned char	map[] = { 0, 1 };
-	unsigned char	req[MAGIC_PACKET_SIZE], replay[MAGIC_PACKET_SIZE];
-	int            status_line;
+	unsigned char	req[MAGIC_PACKET_SIZE];
 	
 	switch (mode) {
 		case DEVICE_INIT:
@@ -601,10 +245,6 @@ xf86MagicControl(DeviceIntPtr dev,
 			 */
 			xf86MotionHistoryAllocate(local);
 			
-#ifndef XFREE86_V4
-			AssignTypeAndName(dev, local->atom, local->name);
-#endif /* XFREE86_V4 */
-			
 			DBG(2, ErrorF("MagicTouch INIT OK\n") );
 			
 			break; /* DEVICE_INIT*/
@@ -612,68 +252,14 @@ xf86MagicControl(DeviceIntPtr dev,
 		case DEVICE_ON:
 			DBG(2, ErrorF("MagicTouch ON\n") );
 			if (local->fd<0) {
-#ifndef XFREE86_V4
-			struct termios termios_tty;
-			int 		i,result;
-#endif
-			
 			DBG(2, ErrorF("Opening device...\n") );
 			
-#ifdef XFREE86_V4
 			local->fd = xf86OpenSerial(local->options);
 			if (local->fd<0) {
 				ErrorF("Impossibile aprire MagicTouch\n");
 				return !Success;
 			}
-#else
-			SYSCALL( local->fd = open(priv->input_dev, O_RDWR | O_NDELAY, 0) );
-			if (local->fd<0) {
-				Error("Impossibile aprire MagicTouch\n");
-				return !Success;
-			}
-			
-			DBG(3, ErrorF("Provo a configurare il MagicTouch\n") );
-			
-			
-			memset(&termios_tty, 0, sizeof(termios_tty) );
-			termios_tty.c_iflag = 0;
-			termios_tty.c_cflag = priv->link_speed | CS8 | CREAD | CLOCAL;
-			termios_tty.c_oflag = 0;
-			termios_tty.c_lflag = 0;
-			termios_tty.c_cc[VTIME]=0;
-			termios_tty.c_cc[VMIN]=1;
-			
-			/*
-			 * Attivo l'RTS per abilitare il touch controller
-			 */
-#if 0
-         SYSCALL( result = ioctl(local->fd, TIOCMGET, &status_line) );
-			if (result<0) 
-			{
-				Error("Impossibile leggere stato linee seriale\n");
-				close(local->fd);
-				return !Success;
-			}
-			status_line |= TIOCM_RTS;
-			SYSCALL( result = ioctl(local->fd, TIOCMSET, &status_line) );
-			if (result<0) 
-			{
-				Error("Impossibile settare stato linee seriale\n");
-				close(local->fd);
-				return !Success;
-			}
-#endif
-			
-			SYSCALL( result = tcsetattr(local->fd, TCSANOW, &termios_tty) );
-			if (result<0) 
-			{
-				Error("Impossibile configurare MagicTouch\n");
-				close(local->fd);
-				return !Success;
-			}
-#endif
-			
-								
+
 			/* Controlla se e' presente il touch controller.*/
 			req[0] = 0x00;
 			if (xf86MagicQueryOK(local->fd)!=Success) {
@@ -694,7 +280,7 @@ xf86MagicControl(DeviceIntPtr dev,
 			DBG(2, ErrorF("MagicTouch OFF\n") );
 			dev->public.on = FALSE;
 			if (local->fd>=0)
-			   emoveEnabledDevice(local->fd);
+			   RemoveEnabledDevice(local->fd);
 				
 			SYSCALL( close(local->fd) );
 			local->fd = -1;
@@ -724,7 +310,6 @@ GetPacket(LocalDevicePtr local,  unsigned char *buffer, int *n_rx, int fd)
  	int	num_bytes;
  	int  	i;
 	Bool	ok;
-	MagicPrivatePtr  priv=(MagicPrivatePtr) local->private;
 
 	DBG(6, ErrorF("Entering GetPacket with packet_pos == %d\n", *n_rx) );
 	
@@ -850,11 +435,11 @@ xf86MagicReadInput(LocalDevicePtr	local)
 	MagicPrivatePtr	priv = (MagicPrivatePtr)(local->private);
 	int		cur_x, cur_y;
 	Bool		touch_now;
-	static int	n_coms = 0;
+	int		x, y;
 
 	if (!priv->e_presente) {
 		DBG(4,
-			ErrorF("<<%s[%d]>> ReadInput: Touch Controller non inizializzato\n")
+			ErrorF("ReadInput: Touch Controller non inizializzato\n")
 		);
 		return;
 	}
@@ -874,7 +459,7 @@ xf86MagicReadInput(LocalDevicePtr	local)
   		cur_y <<= 6;
   		cur_y |= priv->packet_buf[4];
   		
-		touch_now = priv->packet_buf[0] & MGCT_TOUCH == MGCT_TOUCH;
+		touch_now = ((priv->packet_buf[0] & MGCT_TOUCH) == MGCT_TOUCH);
 		
 		/* Se c'e' pressione sul touch inizio a calcolare la posizione
 		   e a spostare il cursore grafico */
@@ -897,6 +482,11 @@ xf86MagicReadInput(LocalDevicePtr	local)
 			priv->first_x = TRUE;
 			priv->first_y = TRUE;
 		}
+
+		xf86MagicConvert(local, 0, 2, cur_x, cur_y, 0, 0, 0, 0,
+				 &x, &y);
+		xf86XInputSetScreen(local, priv->screen_no, x, y);
+
 		/* Comando lo spostamento */
 		xf86PostMotionEvent(local->dev, TRUE, 0, 2, cur_x, cur_y);		
     		/* comanda la pressione del tasto */
@@ -957,15 +547,6 @@ xf86MagicConvert(LocalDevicePtr	local,
   *x = (priv->screen_width * (input_x - priv->min_x)) / width;
   *y = (priv->screen_height - (priv->screen_height * (input_y - priv->min_y)) / height);
   
-#ifdef XFREE86_V4
-  /*
-   * Need to check if still on the correct screen.
-   * This call is here so that this work can be done after
-   * calib and before posting the event.
-   */
-  xf86XInputSetScreen(local, priv->screen_no, *x, *y);
-#endif
-  
   DBG(3, ErrorF("MagicConvert: x(%d), y(%d)\n",	*x, *y));
 
   return TRUE;
@@ -981,17 +562,9 @@ xf86MagicConvert(LocalDevicePtr	local,
  ************************************************************************
  */
 static LocalDevicePtr
-#ifndef XFREE86_V4
 xf86MagicAllocate(void)
-#else
-xf86MagicAllocate(InputDriverPtr drv)
-#endif
 {
-#ifndef XFREE86_V4
-	LocalDevicePtr	local = (LocalDevicePtr) xalloc( sizeof(LocalDeviceRec) );
-#else
-	LocalDevicePtr	local = xf86AllocateInput(drv, 0);
-#endif
+	LocalDevicePtr	local = xalloc(sizeof(LocalDeviceRec));
 
 	MagicPrivatePtr	priv = (MagicPrivatePtr) xalloc( sizeof(MagicPrivateRec) );
 
@@ -1011,13 +584,8 @@ xf86MagicAllocate(InputDriverPtr drv)
 	}
 	
 	/* I buffers sono allocati correttamente */
-#ifdef XFREE86_V4
 	priv->input_dev = strdup(MAGIC_PORT);
-#else
-	priv->input_dev = MAGIC_PORT;
-	priv->link_speed = MAGIC_LINK_SPEED;
-#endif
-	
+
 	priv->min_x = 60;
 	priv->max_x = 960;
 	priv->min_y = 60;
@@ -1041,13 +609,6 @@ xf86MagicAllocate(InputDriverPtr drv)
 	
 	local->name = XI_TOUCHSCREEN;
 	local->flags = 0;
-	
-#ifndef XFREE86_V4
-#if !defined(sun) || defined(i386)
-	local->device_config = xf86MagicConfig;	
-#endif /* !defined(sun) || defined(i386) */	
-#endif /* XFREE86_V4*/
-	
 	local->device_control = xf86MagicControl;
 	local->read_input = xf86MagicReadInput;
 	local->control_proc = NULL;
@@ -1066,42 +627,3 @@ xf86MagicAllocate(InputDriverPtr drv)
 	
 } /* xf86MagicAllocae */
 
-
-
-#ifndef XFREE86_V4
-
-/*
- * Sezione relativa a X < 4.0.0
- */
-
-DeviceAssocRec magictouch_assoc = {
-	"magictouch",
-	xf86MagicAllocate
-};
-
-#ifdef DYNAMIC_MODULE
-
-#ifndef DLSYM_BUG
-int init_module(unsigned long server_version)
-#else
-int init_xf86Magic(unsigned long server_version)
-#endif
-{
-	/* Aggiunge l'assiocazione per il touchscreen */
-	xf86AddDeviceAssoc(&magictouch_assoc);
-	
-	/* Controlla la versione */ 
-	if (server_version != XF86_VERSION_CURRENT) {
-		ErrorF("Warining: MagicTouch module compiled for version %s\n", XF86_VERSION);
-		return 0;
-	}
-	return 1;
-}
-#endif /* DYNAMIC_MODULE */
-
-#else
-/*
- * Sezione relativa a X >= 4.0.0
- */
-
-#endif /* XFREE86_V4 */

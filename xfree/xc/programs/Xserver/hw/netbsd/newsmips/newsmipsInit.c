@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmipsInit.c,v 1.1 2004/08/01 18:46:49 uch Exp $	*/
+/*	$NetBSD: newsmipsInit.c,v 1.1.2.1 2005/04/06 20:00:34 tron Exp $	*/
 
 #include "newsmips.h"
 #include "gcstruct.h"
@@ -169,6 +169,11 @@ GetDeviceList(int argc, char **argv)
 	}
 
 	return deviceList;
+}
+
+void
+OsVendorPreInit()
+{
 }
 
 void

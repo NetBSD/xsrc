@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_fops.h,v 1.10 2005/03/03 03:35:41 dawes Exp $ */
+
 /* drm_fops.h -- File operations for DRM -*- linux-c -*-
  * Created: Mon Jan  4 08:58:31 1999 by faith@valinux.com
  *
@@ -53,7 +55,7 @@ drm_file_t *DRM(find_file_by_proc)(drm_device_t *dev, DRM_STRUCTPROC *p)
 }
 
 /* DRM(open_helper) is called whenever a process opens /dev/drm. */
-int DRM(open_helper)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p,
+int DRM(open_helper)(DEV_T kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 		    drm_device_t *dev)
 {
 	int	     m = minor(kdev);
@@ -105,12 +107,12 @@ int DRM(open_helper)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 /* The DRM(read) and DRM(poll) are stubs to prevent spurious errors
  * on older X Servers (4.3.0 and earlier) */
 
-int DRM(read)(dev_t kdev, struct uio *uio, int ioflag)
+int DRM(read)(DEV_T kdev, struct uio *uio, int ioflag)
 {
 	return 0;
 }
 
-int DRM(poll)(dev_t kdev, int events, DRM_STRUCTPROC *p)
+int DRM(poll)(DEV_T kdev, int events, DRM_STRUCTPROC *p)
 {
 	return 0;
 }

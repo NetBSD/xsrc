@@ -35,7 +35,7 @@
  * TORTIOUS ACTIONS, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/aiptek/xf86Aiptek.c,v 1.2 2003/12/22 17:48:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/aiptek/xf86Aiptek.c,v 1.3 2004/04/26 22:26:10 dawes Exp $ */
 
 /*
  *
@@ -971,15 +971,16 @@ xf86AiptekHIDOpen(LocalDevicePtr local)
     }
 
     ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
-    ErrorF("%s HID Device name: \"%s\"\n", XCONFIG_PROBED, name);
+    xf86Msg(X_PROBED, "%s: HID Device name: \"%s\"\n", local->name, name);
 
     ioctl(local->fd, EVIOCGVERSION, &version);
-    ErrorF("%s HID Driver Version: %d.%d.%d\n", XCONFIG_PROBED,
+    xf86Msg(X_PROBED, "%s: HID Driver Version: %d.%d.%d\n", local->name,
             version>>16, (version>>8) & 0xff, version & 0xff);
 
-    ErrorF("%s HID Driver knows it has %d devices configured\n", XCONFIG_PROBED,
-            common->numDevices);
-    ErrorF("%s HID Driver is using %d as the fd\n", XCONFIG_PROBED, local->fd);
+    xf86Msg(X_PROBED, "%s: HID Driver knows it has %d devices configured\n",
+	    local->name, common->numDevices);
+    xf86Msg(X_PROBED, "%s: HID Driver is using %d as the fd\n",
+	    local->name, local->fd);
 
     for (i = 0; i < common->numDevices; ++i)
     {
@@ -2370,11 +2371,7 @@ xf86AiptekInit(InputDriverPtr    drv,
                         dev->identifier);
                 break;
         }
-        if (xf86Verbose)
-        {
-            xf86Msg(X_CONFIG, "%s: BaudRate %u\n", dev->identifier,
-                    val);
-        }
+        xf86Msg(X_CONFIG, "%s: BaudRate %u\n", dev->identifier, val);
     }
     xf86Msg(X_CONFIG, "%s: xf86AiptekInit() finished\n", dev->identifier);
 

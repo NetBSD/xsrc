@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/doc/man/Xi/XOpenDev.man,v 1.3 2003/04/28 22:18:15 herrb Exp $
+.\" $XFree86: xc/doc/man/Xi/XOpenDev.man,v 1.4 2005/02/11 03:03:03 dawes Exp $
 .\"
 .\"
 .\" Copyright ([\d,\s]*) by Hewlett-Packard Company, Ardent Computer, 
@@ -13,7 +13,7 @@
 .\" 
 .\" $Xorg: XOpenDev.man,v 1.3 2000/08/17 19:41:56 cpqbld Exp $
 .ds xL Programming with Xlib
-.TH XOpenDevice 3X11 __xorgversion__ "X FUNCTIONS"
+.TH XOpenDevice 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
 XOpenDevice, XCloseDevice \- open or close an extension input device
 .SH SYNTAX

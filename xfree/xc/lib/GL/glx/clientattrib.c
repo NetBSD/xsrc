@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/clientattrib.c,v 1.6 2004/01/28 18:11:38 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/clientattrib.c,v 1.7 2004/04/08 10:07:33 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -47,28 +47,28 @@ void glEnableClientState(GLenum array)
 
     switch (array) {
 	case GL_COLOR_ARRAY:
-	    state->vertArray.color.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, color);
 	    break;
 	case GL_EDGE_FLAG_ARRAY:
-	    state->vertArray.edgeFlag.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, edgeFlag);
 	    break;
 	case GL_INDEX_ARRAY:
-	    state->vertArray.index.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, index);
 	    break;
 	case GL_NORMAL_ARRAY:
-	    state->vertArray.normal.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, normal);
 	    break;
 	case GL_TEXTURE_COORD_ARRAY:
-	    state->vertArray.texCoord[state->vertArray.activeTexture].enable = GL_TRUE;
+	    ENABLE_TEXARRAY(state, state->vertArray.activeTexture);
 	    break;
 	case GL_VERTEX_ARRAY:
-	    state->vertArray.vertex.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, vertex);
 	    break;
 	case GL_SECONDARY_COLOR_ARRAY:
-	    state->vertArray.secondaryColor.enable = GL_TRUE;
+	    ENABLE_ARRAY(state, secondaryColor);
 	    break;
-	case GL_FOG_COORDINATE_ARRAY:
-	    state->vertArray.fogCoord.enable = GL_TRUE;
+	case GL_FOG_COORD_ARRAY:
+	    ENABLE_ARRAY(state, fogCoord);
 	    break;
 	default:
 	    __glXSetError(gc, GL_INVALID_ENUM);
@@ -82,28 +82,28 @@ void glDisableClientState(GLenum array)
 
     switch (array) {
 	case GL_COLOR_ARRAY:
-	    state->vertArray.color.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, color);
 	    break;
 	case GL_EDGE_FLAG_ARRAY:
-	    state->vertArray.edgeFlag.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, edgeFlag);
 	    break;
 	case GL_INDEX_ARRAY:
-	    state->vertArray.index.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, index);
 	    break;
 	case GL_NORMAL_ARRAY:
-	    state->vertArray.normal.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, normal);
 	    break;
 	case GL_TEXTURE_COORD_ARRAY:
-	    state->vertArray.texCoord[state->vertArray.activeTexture].enable = GL_FALSE;
+	    DISABLE_TEXARRAY(state, state->vertArray.activeTexture);
 	    break;
 	case GL_VERTEX_ARRAY:
-	    state->vertArray.vertex.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, vertex);
 	    break;
 	case GL_SECONDARY_COLOR_ARRAY:
-	    state->vertArray.secondaryColor.enable = GL_FALSE;
+	    DISABLE_ARRAY(state, secondaryColor);
 	    break;
-	case GL_FOG_COORDINATE_ARRAY:
-	    state->vertArray.fogCoord.enable = GL_FALSE;
+	case GL_FOG_COORD_ARRAY:
+	    DISABLE_ARRAY(state, fogCoord);
 	    break;
 	default:
 	    __glXSetError(gc, GL_INVALID_ENUM);

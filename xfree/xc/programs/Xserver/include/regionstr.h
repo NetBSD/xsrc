@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/regionstr.h,v 1.13 2003/12/03 17:11:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/regionstr.h,v 1.14 2004/09/03 18:39:12 tsi Exp $ */
 
 #ifndef REGIONSTRUCT_H
 #define REGIONSTRUCT_H
@@ -243,6 +243,10 @@ extern RegDataRec miBrokenData;
 
 #else /* inline certain simple region ops for performance */
 
+/*
+ * You deserve what you get if you set _rect to NullBox.  Instead, portable
+ * code should use REGION_NULL() to nullify a region.
+ */
 #define REGION_INIT(_pScreen, _pReg, _rect, _size) \
 { \
     REGION_SCREEN(_pScreen); \

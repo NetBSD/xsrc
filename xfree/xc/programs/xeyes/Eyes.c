@@ -1,5 +1,5 @@
 /* $XConsortium: Eyes.c,v 1.28 94/04/17 20:45:22 eswu Exp $ */
-/* $XFree86: xc/programs/xeyes/Eyes.c,v 1.4 2001/08/27 23:35:13 dawes Exp $ */
+/* $XFree86: xc/programs/xeyes/Eyes.c,v 1.5 2004/12/07 16:35:36 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -353,7 +353,7 @@ static void Resize (Widget gw)
 	    x = y = 0;
 	    for (parent = (Widget) w; XtParent (parent); parent = XtParent (parent)) {
 	    	x += parent->core.x + parent->core.border_width;
-	    	x += parent->core.y + parent->core.border_width;
+	    	y += parent->core.y + parent->core.border_width;
 	    }
     	    XShapeCombineMask (XtDisplay (parent), XtWindow (parent), ShapeBounding,
 		       	       x, y, w->eyes.shape_mask, ShapeSet);

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapr.c,v 1.7 2004/01/05 16:42:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapr.c,v 1.10 2004/12/31 16:07:09 tsi Exp $ */
 /*
- * Copyright 2002 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2002 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,6 +25,7 @@
 #define _FILE_OFFSET_BITS 64
 #undef  __STRICT_ANSI__
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,12 +56,15 @@ static unsigned int datal;
 static unsigned long dataL;
 static unsigned long long dataq;
 
+static const char hextab[] = "0123456789ABCDEF";
+
 static void
 usage(void)
 {
     fprintf(stderr, "\n"
-        "mmapr [-{bwlqL}] <file> <offset> <length>\n\n"
-        "endianness flags:\n\n"
+        "mmapr [-p] [-{bwlqL}] <file> <offset> <length>\n\n"
+        " -p   pretty-print output\n\n"
+        "access size flags:\n\n"
         " -b   output one byte at a time\n"
         " -w   output up to two aligned bytes at a time\n"
         " -l   output up to four aligned bytes at a time (default)\n"
@@ -94,58 +98,55 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    off_t Offset = 0, offset;
-    size_t Length = 0, length;
-    char *BadString;
+    off_t Offset = 0, offset, End;
+    size_t Length = 0, length, size;
+    char *BadString, *data;
     void *buffer;
-    int fd, pagesize;
-    char size = sizeof(datal);
+    int fd, pagesize, prettyprint = 0;
+    char Address[20], Hex[36], Glyph[17];
+    char Size = sizeof(datal), Format = 0;
 
-    switch (argc)
+    while (argv[1] && (argv[1][0] == '-') && argv[1][1])
     {
-        case 4:
-            break;
-
-        case 5:
-            if (argv[1][0] != '-')
-                usage();
-
+        for (;  argv[1][1];  argv[1]++)
+        {
             switch (argv[1][1])
             {
+                case 'p':
+                    prettyprint = 1;
+                    break;
+
                 case 'b':
-                    size = sizeof(datab);
+                    Size = sizeof(datab);
                     break;
 
                 case 'w':
-                    size = sizeof(dataw);
+                    Size = sizeof(dataw);
                     break;
 
                 case 'l':
-                    size = sizeof(datal);
+                    Size = sizeof(datal);
                     break;
 
                 case 'L':
-                    size = sizeof(dataL);
+                    Size = sizeof(dataL);
                     break;
 
                 case 'q':
-                    size = sizeof(dataq);
+                    Size = sizeof(dataq);
                     break;
 
                 default:
                     usage();
             }
+        }
 
-            if (argv[1][2])
-                usage();
-
-            argc--;
-            argv++;
-            break;
-
-        default:
-            usage();
+        argc--;
+        argv++;
     }
+
+    if (argc != 4)
+        usage();
 
     BadString = (char *)0;
     Offset = strtoull(argv[2], &BadString, 0);
@@ -179,54 +180,147 @@ main(int argc, char **argv)
         exit(1);
     }
 
+    if (prettyprint)
+    {
+        End = Offset + Length - 1;
+
+        if ((sizeof(Offset) > sizeof(dataL)) &&
+            ((unsigned long long)End != (unsigned long)End))
+        {
+            sprintf(Address, "0x%015llX0", (unsigned long long)Offset >> 4);
+            Format = 3;
+        }
+        else
+        if ((sizeof(Offset) > sizeof(dataw)) &&
+            ((unsigned long long)End != (unsigned short)End))
+        {
+            sprintf(Address, "0x%07lX0", (unsigned long)Offset >> 4);
+            Format = 2;
+        }
+        else
+        if ((sizeof(Offset) > sizeof(datab)) &&
+            ((unsigned long long)End != (unsigned char)End))
+        {
+            sprintf(Address, "0x%03X0", (unsigned short)Offset >> 4);
+            Format = 1;
+        }
+        else
+        {
+            sprintf(Address, "0x%01X0", (unsigned char)Offset >> 4);
+         /* Format = 0; */
+        }
+
+        memset(Hex, ' ', 35);
+        Hex[35] = 0;
+        memset(Glyph, ' ', 16);
+        Glyph[16] = 0;
+    }
+
     Offset -= offset;
     while (Length > 0)
     {
         if ((Offset & sizeof(datab)) ||
             (Length < sizeof(dataw)) ||
-            (size < sizeof(dataw)))
+            (Size < sizeof(dataw)))
         {
             datab = *(volatile unsigned char *)((char *)buffer + Offset);
-            fwrite((void *)&datab, sizeof(datab), 1, stdout);
-            Offset += sizeof(datab);
-            Length -= sizeof(datab);
+            data = (char *)&datab;
+            size = sizeof(datab);
         }
         else
         if ((Offset & sizeof(dataw)) ||
             (Length < sizeof(datal)) ||
-            (size < sizeof(datal)))
+            (Size < sizeof(datal)))
         {
             dataw = *(volatile unsigned short *)((char *)buffer + Offset);
-            fwrite((void *)&dataw, sizeof(dataw), 1, stdout);
-            Offset += sizeof(dataw);
-            Length -= sizeof(dataw);
+            data = (char *)&dataw;
+            size = sizeof(dataw);
         }
         else
         if ((Offset & sizeof(datal)) ||
             (Length < sizeof(dataL)) ||
-            (size < sizeof(dataL)))
+            (Size < sizeof(dataL)))
         {
             datal = *(volatile unsigned int *)((char *)buffer + Offset);
-            fwrite((void *)&datal, sizeof(datal), 1, stdout);
-            Offset += sizeof(datal);
-            Length -= sizeof(datal);
+            data = (char *)&datal;
+            size = sizeof(datal);
         }
         else
         if ((Offset & sizeof(dataL)) ||
             (Length < sizeof(dataq)) ||
-            (size < sizeof(dataq)))
+            (Size < sizeof(dataq)))
         {
             dataL = *(volatile unsigned long *)((char *)buffer + Offset);
-            fwrite((void *)&dataL, sizeof(dataL), 1, stdout);
-            Offset += sizeof(dataL);
-            Length -= sizeof(dataL);
+            data = (char *)&dataL;
+            size = sizeof(dataL);
         }
         else
         {
             dataq = *(volatile unsigned long long *)((char *)buffer + Offset);
-            fwrite((void *)&dataq, sizeof(dataq), 1, stdout);
-            Offset += sizeof(dataq);
-            Length -= sizeof(dataq);
+            data = (char *)&dataq;
+            size = sizeof(dataq);
+        }
+
+        if (prettyprint)
+        {
+            unsigned int i = (offset + Offset) & 15;
+
+            Offset += size;
+            Length -= size;
+
+            for (;  size > 0;  --size, ++i, ++data)
+            {
+                Hex[((i >> 2) * 9) + ((i & 3) << 1)] =
+                    hextab[(unsigned char)*data >> 4];
+                Hex[((i >> 2) * 9) + ((i & 3) << 1) + 1] =
+                    hextab[(unsigned char)*data & 15];
+
+                if (isprint(*data))
+                    Glyph[i] = *data;
+                else
+                    Glyph[i] = '.';
+            }
+
+            if (!Length || !(Offset & 15))
+            {
+                printf("%s:  %s  |%s|\n", Address, Hex, Glyph);
+
+                if (!Length)
+                    break;
+
+                switch(Format)
+                {
+                    case 0:
+                        sprintf(Address, "0x%02X",
+                                (unsigned char)(Offset + offset));
+                        break;
+
+                    case 1:
+                        sprintf(Address, "0x%04X",
+                                (unsigned short)(Offset + offset));
+                        break;
+
+                    case 2:
+                        sprintf(Address, "0x%08lX",
+                                (unsigned long)(Offset + offset));
+                        break;
+
+                    case 3:  default:
+                        sprintf(Address, "0x%016llX",
+                                (unsigned long long)(Offset + offset));
+                        break;
+                }
+
+                memset(Hex, ' ', 35);
+                memset(Glyph, ' ', 16);
+            }
+        }
+        else
+        {
+            Offset += size;
+            Length -= size;
+
+            fwrite(data, size, 1, stdout);
         }
     }
 

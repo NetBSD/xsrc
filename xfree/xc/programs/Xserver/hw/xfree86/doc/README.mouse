@@ -1,28 +1,35 @@
-                          Mouse Support in XFree86
+                          Mouse Support in XFree86®
 
                                Kazutaka Yokota
 
-                              17 December 2002
+            17 December 2002, with minor revisions 8 March 2005.
 
 1.  Introduction
 
-This document describes mouse support in XFree86 4.4.0.
+This document describes mouse support in XFree86 4.5.0.
 
-Mouse configuration has often been mysterious task for novice users.  How-
-ever, once you learn several basics, it is straightforward to write the mouse
-"InputDevice" section in the XF86Config file by hand.
+Mouse configuration has often been a mysterious task for novice users.  With
+XFree86 4.5.0 and later, mouse configuration is automatic for most common
+setups on most platforms, to the point where an explicit mouse "InputDevice"
+section is not required in the XF86Config file.
+
+However, if you have a less common setup, or wish to customize your mouse
+configuration, you should find it straightforward to write the mouse "Input-
+Device" section in the XF86Config file by hand.  The information in this doc-
+ument should help with that.  Also refer to the XFree86 mouse driver manual
+page (mouse(4)).
 
 2.  Supported Hardware
 
-The XFree86 X server supports three classes of mice: serial, bus and PS/2
-mice.
+The XFree86 X server supports four classes of mice: serial, bus, PS/2, and
+USB mice.
 
       Serial mouse
             The serial mouse has been the most popular pointing device for
             PCs.  There have been numerous serial mouse models from a number
             of manufactures.  Despite the wide range of variations, there
-            have been relatively few protocols (data format) with which the
-            serial mouse talks to the host computer.
+            have been relatively few protocols (i.e. data format) with which
+            the serial mouse talks to the host computer.
 
             The modern serial mouse conforms to the PnP COM device specifica-
             tion so that the host computer can automatically detect the mouse
@@ -37,25 +44,25 @@ mice.
             mice are known as `InPort mouse'.
 
             Note that some mouse manufactures have sold a package including a
-            serial mouse and a serial interface card.  Don't confuse this
+            serial mouse and a serial interface card.  Do not confuse this
             type of products with the genuine bus mouse.
 
       PS/2 mouse
-            They are sometimes called `Mouse-port mouse'.  The PS/2 mouse is
-            becoming increasingly common and popular.
+            They are sometimes called `Mouse-port mouse' and are becoming
+            increasingly common and popular.
 
             The PS/2 mouse is an intelligent device and may have more than
-            three buttons and a wheel or a roller.  The PS/2 mouse is usually
-            compatible with the original PS/2 mouse from IBM immediately
-            after power up.  The PS/2 mouse with additional features requires
-            a specialized initialization procedure to enable these features.
-            Without proper initialization, it behaves as though it were an
-            ordinary two or three button mouse.
+            three buttons and a wheel or a roller.  It is usually compatible
+            with the original PS/2 mouse from IBM immediately after power up,
+            but the PS/2 mouse with additional features requires a special-
+            ized initialization procedure to enable these features.  Without
+            proper initialization though, it behaves like was an ordinary two
+            or three button mouse.
 
       USB mouse
-            USB (Universal Serial Bus) ports are present on most modern com-
-            puters. Several devices can be plugged into this bus, including
-            mices and keyboards.
+            The USB (Universal Serial Bus) ports are present on most modern
+            computers and several devices can be plugged into this bus,
+            including mice and keyboards.
 
             The XFree86 server includes support for USB mices on some sys-
             tems.
@@ -125,7 +132,7 @@ server will automatically make use of the kernel-level support.
 
 In fact, "Auto" protocol support is really efficient in these versions.  You
 may always specify "Auto" to any mouse, serial, bus or PS/2, unless the mouse
-is an old serial model which doesn't support PnP.
+is an old serial model which does not support PnP.
 
 FreeBSD versions 2.2.5 or earlier do not support extended PS/2 mouse proto-
 cols ("xxxPS/2").  Always specify the "PS/2" protocol for any PS/2 mouse in
@@ -190,17 +197,22 @@ OpenBSD 2.2 and earlier does not support extended PS/2 mouse protocols
 ("xxxPS/2") .  Therefore, you should specify the "PS/2" protocol for any PS/2
 mouse regardless of the brand of the mouse.
 
-OpenBSD 2.3 and later support all extended PS/2 mouse protocols.  You can
-select the "Auto" protocol for PnP PS/2 mice or any specific extended
-("xxxPS/2") protocol for non PnP mice.
+OpenBSD 2.3 through 2.8 supports all extended PS/2 mouse protocols by select-
+ing the "Auto" protocol for PnP PS/2 mice or any specific extended
+("xxxPS/2") protocol for non PnP mice.  There is also a cooked PS/2 mouse
+device driver /dev/pms0 which emulates the bus mouse.  Specify the "BusMouse"
+protocol for any PS/2 mouse regardless of the brand of the mouse when using
+this device.
 
-There is also a cooked PS/2 mouse device driver /dev/pms0 which emulates the
-bus mouse.  Specify the "BusMouse" protocol for any PS/2 mouse regardless of
-the brand of the mouse when using this device.
+OpenBSD 2.9 and later supports the "wsmouse" protocol and /dev/wsmouse0
+device as described above for NetBSD 1.4 and later (though of course the
+remark about binaries does not apply).  Again, see the wsmouse(4) man page.
 
 XFree86 3.3.6 support USB mices on OpenBSD 2.6 and later though the generic
 Human Interface Device (hid) /dev/uhid*. Select the "usb" protocol and the
-/dev/uhid* instance corresponding to your mouse as the device name.
+/dev/uhid* instance corresponding to your mouse as the device name.  For
+OpenBSD 2.9 and later, USB mice are supported by the wsmouse driver (see
+above).
 
 3.12  OS/2
 
@@ -246,19 +258,20 @@ identify the interface type, the device name and the protocol type of your
 mouse.  Blindly trying every possible combination of mouse settings will lead
 you nowhere.
 
-The first thing you need to know is the interface type of the mouse you are
-going to use.  It can be determined by looking at the connector of the mouse.
-The serial mouse has a D-Sub female 9- or 25-pin connector.  The bus mice
-have either a D-Sub male 9-pin connector or a round DIN 9-pin connector.  The
-PS/2 mouse is equipped with a small, round DIN 6-pin connector.  Some mice
-come with adapters with which the connector can be converted to another.  If
-you are to use such an adapter, remember that the connector at the very end
-of the mouse/adapter pair is what matters.
+So, the first thing you need to know is the interface type of the mouse you
+are going to use and this can be determined by looking at the connector of
+the mouse.  The serial mouse has a D-Sub female 9- or 25-pin connector.  The
+bus mice have either a D-Sub male 9-pin connector or a round DIN 9-pin con-
+nector.  The PS/2 mouse is equipped with a small, round DIN 6-pin connector.
+Some mice come with adapters with which a connector can be converted from one
+type to another.  If you are to use such an adapter, remember that the con-
+nector at the very end of the mouse/adapter pair is what matters.
 
-The next thing to decide is a device node to use for the given interface.
-For the bus and PS/2 mice, there is little choice; your OS most possibly
-offers just one device node each for the bus mouse and PS/2 mouse.  There may
-be more than one serial port to which the serial mouse can be attached.
+The next thing to do is decide what the device node to use for the given
+interface.  For the bus and PS/2 mice, there is little choice; your OS most
+possibly offers just one device node each for the bus mouse and PS/2 mouse.
+There may be more than one serial port to which the serial mouse can be
+attached.
 
 The next step is to guess the appropriate protocol type for the mouse.  The X
 server may be able to select a protocol type for the given mouse automati-
@@ -419,7 +432,7 @@ motion.  When the wheel/roller stays still, the real X axis motion is
 reported as is.  The third example will map negative Z axis motion to the
 button N1 and positive Z axis motion to the button N2.  If this option is
 used and the buttons N1 or N2 actually exists in the mouse, their actions
-won't be detected by the X server.
+will not be detected by the X server.
 
 The last example is useful for the mouse with two wheels of which the second
 wheel is used to generate horizontal scroll action, and the mouse which has a
@@ -453,13 +466,13 @@ XF86Setup program.
 
 5.4  Drag Lock Buttons
 
-Some people find it difficult or inconvenient to hold a trackball button
-down, while at the same time moving the ball. Drag lock buttons simulate the
-holding down of another button. When a drag lock button is  first pressed,
-its target buttons is "locked" down until the second time the lock button is
-released, or until the button itself is pressed and released. This allows the
-starting of a drag, the movement of the trackball, and the ending of the drag
-to be separate operations.
+Some people find it either difficult or inconvenient to hold a trackball but-
+ton down, while at the same time moving the ball. The drag lock buttons simu-
+late the holding down of another button. When a drag lock button is  first
+pressed, its target buttons is "locked" down until the second time the lock
+button is released, or until the button itself is pressed and released. This
+allows the starting of a drag, the movement of the trackball, and the ending
+of the drag to be separate operations.
 
           Option    "DragLockButtons"   "W X Y Z"
 
@@ -688,10 +701,10 @@ detection:
 
 6.8  ASCII MieMouse (serial, PS/2)
 
-This mouse appears to be OEM from Genius.  Although its shape is quite dif-
-ferent, it works like Genius NetMouse Pro.  This mouse has a "knob" which is
-used like a wheel or a roller.  The "knob" action is recognized as the Z axis
-motion.
+This mouse appears to be an OEM from Genius.  Although its shape is quite
+different, it works exactly like Genius NetMouse Pro.  This mouse has a
+"knob" which is used like a wheel or a roller.  The "knob" action is recog-
+nized as the Z axis motion.
 
 MieMouse supports the PnP COM device specification.  When used as a serial
 mouse, it is compatible with MS IntelliMouse.
@@ -710,7 +723,7 @@ ization:
           Option    "Protocol"     "NetMousePS/2"
 
 To use this mouse as the PS/2 device but the OS does not support PS/2 mouse
-initialization (the knob and the third button won't work):
+initialization (the knob and the third button will not work):
 
           Option    "Protocol"     "PS/2"
 
@@ -985,7 +998,7 @@ time. They may prefer the following InputDevice section which defines button
           Option      "DragLockButtons" "4"
      EndSection
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.13 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.16 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.27 2004/02/24 03:49:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.34 2005/03/17 01:11:55 dawes Exp $

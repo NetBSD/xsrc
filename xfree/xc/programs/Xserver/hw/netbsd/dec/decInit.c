@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.1 2004/01/18 05:21:41 rtr Exp $ */
+/* $NetBSD: decInit.c,v 1.1.6.1 2005/04/06 20:00:34 tron Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -221,6 +221,13 @@ static char** GetDeviceList (argc, argv)
     return deviceList;
 }
 
+void OsVendorPreInit(
+#if NeedFunctionPrototypes
+    void
+#endif
+)
+{
+}
 void OsVendorInit(
 #if NeedFunctionPrototypes
     void

@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.7 2003/10/30 17:37:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.11 2005/02/18 02:55:09 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -57,8 +57,6 @@ static void	CG14FreeScreen(int scrnIndex, int flags);
 static ModeStatus CG14ValidMode(int scrnIndex, DisplayModePtr mode,
 				Bool verbose, int flags);
 
-void CG14Sync(ScrnInfoPtr pScrn);
-
 #define VERSION 4000
 #define CG14_NAME "SUNCG14"
 #define CG14_DRIVER_NAME "suncg14"
@@ -66,7 +64,7 @@ void CG14Sync(ScrnInfoPtr pScrn);
 #define CG14_MINOR_VERSION 0
 #define CG14_PATCHLEVEL 0
 
-/* 
+/*
  * This contains the functions needed by the server after loading the driver
  * module.  It must be supplied, and gets passed back by the SetupProc
  * function in the dynamic case.  In the static case, a reference to this
@@ -108,7 +106,7 @@ static XF86ModuleVersionInfo suncg14VersRec =
 
 XF86ModuleData suncg14ModuleData = { &suncg14VersRec, cg14Setup, NULL };
 
-pointer
+static pointer
 cg14Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = FALSE;
@@ -229,7 +227,7 @@ CG14Probe(DriverPtr drv, int flags)
     numUsed = xf86MatchSbusInstances(CG14_NAME, SBUS_DEVICE_CG14,
 		   devSections, numDevSections,
 		   drv, &usedChips);
-				    
+
     xfree(devSections);
     if (numUsed <= 0)
 	return FALSE;
@@ -244,7 +242,7 @@ CG14Probe(DriverPtr drv, int flags)
 	 */
 	if(pEnt->active) {
 	    ScrnInfoPtr pScrn;
-	    
+
 	    /* Allocate a ScrnInfoRec and claim the slot */
 	    pScrn = xf86AllocateScreen(drv, 0);
 
@@ -255,8 +253,8 @@ CG14Probe(DriverPtr drv, int flags)
 	    pScrn->Probe	 = CG14Probe;
 	    pScrn->PreInit	 = CG14PreInit;
 	    pScrn->ScreenInit	 = CG14ScreenInit;
-  	    pScrn->SwitchMode	 = CG14SwitchMode;
-  	    pScrn->AdjustFrame	 = CG14AdjustFrame;
+	    pScrn->SwitchMode	 = CG14SwitchMode;
+	    pScrn->AdjustFrame	 = CG14AdjustFrame;
 	    pScrn->EnterVT	 = CG14EnterVT;
 	    pScrn->LeaveVT	 = CG14LeaveVT;
 	    pScrn->FreeScreen	 = CG14FreeScreen;
@@ -285,7 +283,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
      * not at the start of each server generation.  This means that
      * only things that are persistent across server generations can
      * be initialised here.  xf86Screens[] is (pScrn is a pointer to one
-     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()  
+     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()
      * are too, and should be used for data that must persist across
      * server generations.
      *
@@ -298,7 +296,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
     pCg14 = GET_CG14_FROM_SCRN(pScrn);
-    
+
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
 
@@ -322,7 +320,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     deal with depth
     *********************/
-    
+
     if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
 	return FALSE;
     } else {
@@ -354,12 +352,12 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     if (pScrn->depth > 8) {
 	rgb weight = {10, 11, 11};
 	rgb mask = {0xff, 0xff00, 0xff0000};
-                                       
+
 	if (!xf86SetWeight(pScrn, weight, mask)) {
 	    return FALSE;
 	}
     }
-                                                                           
+
     if (!xf86SetDefaultVisual(pScrn, -1))
 	return FALSE;
     else if (pScrn->depth > 8) {
@@ -370,7 +368,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 		       xf86GetVisualName(pScrn->defaultVisual));
 	    return FALSE;
 	}
-    }                                                                                                  
+    }
 
     /*
      * The new cmap code requires this to be initialised.
@@ -392,7 +390,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     set up clock and mode stuff
     *********************/
-    
+
     pScrn->progClock = TRUE;
 
     if(pScrn->display->virtualX || pScrn->display->virtualY) {
@@ -421,25 +419,39 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn;
     Cg14Ptr pCg14;
+    sbusDevicePtr psdp;
     VisualPtr visual;
     int ret;
 
-    /* 
-     * First get the ScrnInfoRec
-     */
     pScrn = xf86Screens[pScreen->myNum];
-
     pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    psdp = pCg14->psdp;
 
-    /* Map the CG14 memory */
-    pCg14->fb = xf86MapSbusMem (pCg14->psdp, CG14_BGR_VOFF, 4 *
-				(pCg14->psdp->width * pCg14->psdp->height));
-    pCg14->x32 = xf86MapSbusMem (pCg14->psdp, CG14_X32_VOFF,
-				 (pCg14->psdp->width * pCg14->psdp->height));
-    pCg14->xlut = xf86MapSbusMem (pCg14->psdp, CG14_XLUT_VOFF, 4096);
+    /* Map CG14 memory areas */
+    pCg14->fb = xf86MapSbusMem(psdp, CG14_BGR_VOFF, 4 *
+			       (psdp->width * psdp->height));
+    pCg14->x32 = xf86MapSbusMem(psdp, CG14_X32_VOFF,
+				psdp->width * psdp->height);
+    pCg14->xlut = xf86MapSbusMem(psdp, CG14_XLUT_VOFF, 4096);
 
-    if (! pCg14->fb || !pCg14->x32 || !pCg14->xlut)
+    if (!pCg14->fb || !pCg14->x32 || !pCg14->xlut) {
+	if (pCg14->fb) {
+	    xf86UnmapSbusMem(psdp, pCg14->fb, 4 * (psdp->width * psdp->height));
+	    pCg14->fb = NULL;
+	}
+
+	if (pCg14->x32) {
+	    xf86UnmapSbusMem(psdp, pCg14->x32, psdp->width * psdp->height);
+	    pCg14->x32 = NULL;
+	}
+
+	if (pCg14->xlut) {
+	    xf86UnmapSbusMem(psdp, pCg14->xlut, 4096);
+	    pCg14->xlut = NULL;
+	}
+
 	return FALSE;
+    }
 
     /* Darken the screen for aesthetic reasons and set the viewport */
     CG14SaveScreen(pScreen, SCREEN_SAVER_ON);
@@ -464,7 +476,7 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
-    miSetPixmapDepths ();
+    miSetPixmapDepths();
 
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
@@ -500,13 +512,11 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
     }
 
-#ifdef RENDER
     /* must be after RGB ordering fixed */
-    fbPictureInit (pScreen, 0, 0);
-#endif
+    fbPictureInit(pScreen, 0, 0);
 
     /* Initialise cursor functions */
-    miDCInitialize (pScreen, xf86GetPointerScreenFuncs());
+    miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
@@ -542,7 +552,7 @@ CG14SwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  * displayed location in the video memory.
  */
 /* Usually mandatory */
-static void 
+static void
 CG14AdjustFrame(int scrnIndex, int x, int y, int flags)
 {
     /* we don't support virtual desktops */
@@ -591,14 +601,13 @@ CG14CloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    sbusDevicePtr psdp = pCg14->psdp;
 
     pScrn->vtSema = FALSE;
-    xf86UnmapSbusMem(pCg14->psdp, pCg14->fb,
-		     (pCg14->psdp->width * pCg14->psdp->height * 4));
-    xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
-		     (pCg14->psdp->width * pCg14->psdp->height));
-    xf86UnmapSbusMem(pCg14->psdp, pCg14->xlut, 4096);
-    
+    xf86UnmapSbusMem(psdp, pCg14->fb, psdp->width * psdp->height * 4);
+    xf86UnmapSbusMem(psdp, pCg14->x32, psdp->width * psdp->height);
+    xf86UnmapSbusMem(psdp, pCg14->xlut, 4096);
+
     pScreen->CloseScreen = pCg14->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
     return FALSE;
@@ -622,7 +631,7 @@ static ModeStatus
 CG14ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
-	return(MODE_BAD);
+	return(MODE_NO_INTERLACE);
 
     return(MODE_OK);
 }
@@ -640,15 +649,6 @@ CG14SaveScreen(ScreenPtr pScreen, int mode)
 }
 
 /*
- * This is the implementation of the Sync() function.
- */
-void
-CG14Sync(ScrnInfoPtr pScrn)
-{
-    return;
-}
-
-/*
  * This initializes the card for 24 bit mode.
  */
 static void
@@ -656,14 +656,14 @@ CG14InitCplane24(ScrnInfoPtr pScrn)
 {
   Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
   int size, bpp;
-              
+
   size = pScrn->virtualX * pScrn->virtualY;
   bpp = 32;
-  ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-  memset (pCg14->fb, 0, size * 4);
-  memset (pCg14->x32, 0, size);
-  memset (pCg14->xlut, 0, 0x200);
-}                                                  
+  ioctl(pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
+  memset(pCg14->fb, 0, size * 4);
+  memset(pCg14->x32, 0, size);
+  memset(pCg14->xlut, 0, 0x200);
+}
 
 /*
  * This initializes the card for 8 bit mode.
@@ -673,6 +673,6 @@ CG14ExitCplane24(ScrnInfoPtr pScrn)
 {
   Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
   int bpp = 8;
-              
-  ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-}                                                  
+
+  ioctl(pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
+}

@@ -26,7 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/oldX/XDraw.c,v 1.5 2001/12/14 19:57:02 dawes Exp $ */
+/* $XFree86: xc/lib/oldX/XDraw.c,v 1.6 2004/04/03 22:38:52 tsi Exp $ */
 
 #include "Xlibint.h"
 #include "Xlib.h"
@@ -199,11 +199,11 @@ static short segtable[] = {  10,  3, 56,	/* pl <= 10, 3 segments     */
  *
  */
 							 
-static int vertices_converter(pathaddr, pathcount, ppathaddr_new, newpathcnt)
-  Vertex  *pathaddr;	    /* address of original path list             */
-  int	  pathcount;        /* number of points in original path list    */
-  Vertex  **ppathaddr_new;  /* ptr to addr of new path list      */
-  int     *newpathcnt;	    /* ptr to new number of pts in path list */
+static int vertices_converter(
+  Vertex  *pathaddr,	    /* address of original path list             */
+  int     pathcount,       /* number of points in original path list    */
+  Vertex  **ppathaddr_new, /* ptr to addr of new path list              */
+  int     *newpathcnt)	    /* ptr to new number of pts in path list     */
 {
   int p0x, p0y;   	    /* coordinates of curve's predecessor point  */
   int p1x, p1y;   	    /* coordinates of curve's starting point     */
@@ -551,12 +551,12 @@ static int vertices_converter(pathaddr, pathcount, ppathaddr_new, newpathcnt)
 static XPoint *XDraw_points = NULL;    /* Buffer to hold list of points for */
 static int    point_count = 0;         /* use in calling XDrawLines         */
 
-Status XDraw (dpy, d, gc, vlist, vcount)
-    register Display *dpy;
-    Drawable d;
-    GC gc;
-    Vertex *vlist;
-    int vcount;
+Status XDraw (
+    register Display *dpy,
+    Drawable d,
+    GC gc,
+    Vertex *vlist,
+    int vcount)
 {
   Vertex *newvlist;
   int newvcount;
@@ -628,12 +628,12 @@ Status XDraw (dpy, d, gc, vlist, vcount)
   return(OK_RETURN);
 }
 
-Status XDrawFilled (dpy, d, gc, vlist, vcount)
-    register Display *dpy;
-    Drawable d;
-    GC gc;
-    Vertex *vlist;
-    int vcount;
+Status XDrawFilled (
+    register Display *dpy,
+    Drawable d,
+    GC gc,
+    Vertex *vlist,
+    int vcount)
 {
   Vertex *newvlist;
   int newvcount;

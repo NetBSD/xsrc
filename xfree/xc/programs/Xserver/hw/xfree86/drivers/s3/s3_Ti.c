@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_Ti.c,v 1.6 2003/07/17 08:19:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_Ti.c,v 1.7 2004/11/26 15:13:19 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -176,10 +176,18 @@ Bool S3TiDACProbe(ScrnInfoPtr pScrn)
 	outb(vgaCRReg, cr43);
 
 	if (found) {
-		RamDacInit(pScrn, pS3->RamDacRec);
-		pS3->RamDac = RamDacHelperCreateInfoRec();
-		pS3->RamDac->RamDacType = found;
-		return TRUE;
+		pS3->RamDacRec = RamDacCreateInfoRec();
+		if (!pS3->RamDacRec)
+			return FALSE;
+		if (RamDacInit(pScrn, pS3->RamDacRec)) {
+			pS3->RamDac = RamDacHelperCreateInfoRec();
+			if (pS3->RamDac) {
+				pS3->RamDac->RamDacType = found;
+				return TRUE;
+			}
+			RamDacDestroyInfoRec(pS3->RamDacRec);
+			pS3->RamDacRec = NULL;
+		}
 	}
 
 	return FALSE;

@@ -1,7 +1,7 @@
-XCOMM $XFree86: xc/lib/Xss/Imakefile,v 3.6 2003/11/06 03:02:03 dawes Exp $
+XCOMM $XFree86: xc/lib/Xss/Imakefile,v 3.7 2004/04/05 02:33:13 dawes Exp $
 #define DoNormalLib NormalLibXss
 #define DoSharedLib SharedLibXss
-#define DoExtraLib SharedLibXss
+#define DoExtraLib ExtraLibXss
 #define DoDebugLib DebugLibXss
 #define DoProfileLib ProfileLibXss
 #define LibName Xss

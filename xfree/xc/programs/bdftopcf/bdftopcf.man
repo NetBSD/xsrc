@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/bdftopcf/bdftopcf.man,v 1.8 2001/12/14 20:00:39 dawes Exp $
+.\" $XFree86: xc/programs/bdftopcf/bdftopcf.man,v 1.9 2005/02/11 03:03:11 dawes Exp $
 .\"
-.TH BDFTOPCF 1 __xorgversion__
+.TH BDFTOPCF 1 __vendorversion__
 .SH NAME
 bdftopcf \- convert X font from Bitmap Distribution Format to Portable
 Compiled Format

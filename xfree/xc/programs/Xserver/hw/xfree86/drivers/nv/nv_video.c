@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c,v 1.21 2003/11/10 18:22:24 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c,v 1.24 2004/03/29 16:25:18 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -13,7 +13,6 @@
 #include "xf86xv.h"
 #include "Xv.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "fourcc.h"
 
@@ -46,6 +45,7 @@ typedef struct _NVPortPrivRec {
    Bool		grabbedByV4L;
    Bool         iturbt_709;
    Bool         blitter;
+   Bool         SyncToVBlank;
    FBLinearPtr  linear;
    int pitch;
    int offset;
@@ -95,7 +95,7 @@ static void NVInitOffscreenImages (ScreenPtr pScreen);
 
 static Atom xvBrightness, xvContrast, xvColorKey, xvSaturation, 
             xvHue, xvAutopaintColorKey, xvSetDefaults, xvDoubleBuffer,
-            xvITURBT709;
+            xvITURBT709, xvSyncToVBlank;
 
 /* client libraries expect an encoding */
 static XF86VideoEncodingRec DummyEncoding =
@@ -114,9 +114,8 @@ XF86VideoFormatRec NVFormats[NUM_FORMATS_ALL] =
    {15, DirectColor}, {16, DirectColor}, {24, DirectColor}
 };
 
-#define NUM_ATTRIBUTES 9
-
-XF86AttributeRec NVAttributes[NUM_ATTRIBUTES] =
+#define NUM_OVERLAY_ATTRIBUTES 9
+XF86AttributeRec NVOverlayAttributes[NUM_OVERLAY_ATTRIBUTES] =
 {
    {XvSettable | XvGettable, 0, 1, "XV_DOUBLE_BUFFER"},
    {XvSettable | XvGettable, 0, (1 << 24) - 1, "XV_COLORKEY"},
@@ -128,6 +127,14 @@ XF86AttributeRec NVAttributes[NUM_ATTRIBUTES] =
    {XvSettable | XvGettable, 0, 360, "XV_HUE"},
    {XvSettable | XvGettable, 0, 1, "XV_ITURBT_709"}
 };
+
+#define NUM_BLIT_ATTRIBUTES 2
+XF86AttributeRec NVBlitAttributes[NUM_BLIT_ATTRIBUTES] =
+{
+   {XvSettable             , 0, 0, "XV_SET_DEFAULTS"},
+   {XvSettable | XvGettable, 0, 1, "XV_SYNC_TO_VBLANK"}
+};
+
 
 #define NUM_IMAGES_YUV 4
 #define NUM_IMAGES_ALL 5
@@ -285,7 +292,10 @@ void NVInitVideo (ScreenPtr pScreen)
     NVPtr         	pNv   = NVPTR(pScrn);
     int 		num_adaptors;
 
-    if((pScrn->bitsPerPixel != 8) && (pNv->Architecture >= NV_ARCH_10)) {
+    if((pScrn->bitsPerPixel != 8) && (pNv->Architecture >= NV_ARCH_10) &&
+         ((pNv->Architecture <= NV_ARCH_30) || 
+            ((pNv->Chipset & 0xfff0) == 0x0040)))
+    {
 	overlayAdaptor = NVSetupOverlayVideo(pScreen);
   
 	if(overlayAdaptor)
@@ -358,8 +368,13 @@ NVSetupBlitVideo (ScreenPtr pScreen)
     for(i = 0; i < NUM_BLIT_PORTS; i++)
        adapt->pPortPrivates[i].ptr = (pointer)(pPriv);
 
-    adapt->pAttributes          = NULL;
-    adapt->nAttributes          = 0;
+    if(pNv->WaitVSyncPossible) {
+       adapt->pAttributes          = NVBlitAttributes;
+       adapt->nAttributes          = NUM_BLIT_ATTRIBUTES;
+    } else {
+       adapt->pAttributes          = NULL;
+       adapt->nAttributes          = 0;
+    }
     adapt->pImages              = NVImages;
     adapt->nImages              = NUM_IMAGES_ALL;
     adapt->PutVideo             = NULL;
@@ -377,8 +392,11 @@ NVSetupBlitVideo (ScreenPtr pScreen)
     pPriv->grabbedByV4L         = FALSE;
     pPriv->blitter              = TRUE;
     pPriv->doubleBuffer         = FALSE;
+    pPriv->SyncToVBlank         = pNv->WaitVSyncPossible;
 
     pNv->blitAdaptor            = adapt;
+
+    xvSyncToVBlank              = MAKE_ATOM("XV_SYNC_TO_VBLANK");
 
     return adapt;
 }
@@ -409,8 +427,8 @@ NVSetupOverlayVideo (ScreenPtr pScreen)
     adapt->pPortPrivates        = (DevUnion*)(&adapt[1]);
     pPriv                       = (NVPortPrivPtr)(&adapt->pPortPrivates[1]);
     adapt->pPortPrivates[0].ptr = (pointer)(pPriv);
-    adapt->pAttributes          = NVAttributes;
-    adapt->nAttributes          = NUM_ATTRIBUTES;
+    adapt->pAttributes          = NVOverlayAttributes;
+    adapt->nAttributes          = NUM_OVERLAY_ATTRIBUTES;
     adapt->pImages              = NVImages;
     adapt->nImages              = NUM_IMAGES_YUV;
     adapt->PutVideo             = NULL;
@@ -571,8 +589,19 @@ NVPutBlitImage (
         NVDmaNext (pNv, SURFACE_FORMAT_DEPTH15);
     }
 
-    NVDmaStart(pNv, STRETCH_BLIT_FORMAT, 1);
-    NVDmaNext (pNv, format);
+    if(pPriv->SyncToVBlank) {
+       NVDmaKickoff(pNv);
+       NVWaitVSync(pNv);
+    }
+
+    if(pNv->BlendingPossible) {
+       NVDmaStart(pNv, STRETCH_BLIT_FORMAT, 2);
+       NVDmaNext (pNv, format);
+       NVDmaNext (pNv, STRETCH_BLIT_OPERATION_COPY);
+    } else {
+       NVDmaStart(pNv, STRETCH_BLIT_FORMAT, 1);
+       NVDmaNext (pNv, format);
+    }
 
     while(nbox--) {
        NVDmaStart(pNv, RECT_SOLID_COLOR, 1);
@@ -757,7 +786,20 @@ static int NVSetBlitPortAttribute
     pointer     data
 )
 {
-    return BadMatch;
+    NVPortPrivPtr pPriv = (NVPortPrivPtr)data;
+    NVPtr pNv = NVPTR(pScrnInfo);
+    
+    if ((attribute == xvSyncToVBlank) && pNv->WaitVSyncPossible) {
+        if ((value < 0) || (value > 1))
+            return BadValue;
+        pPriv->SyncToVBlank = value;
+    } else
+    if (attribute == xvSetDefaults) {
+        pPriv->SyncToVBlank = pNv->WaitVSyncPossible;
+    } else
+       return BadMatch;
+
+    return Success;
 }
 
 static int NVGetBlitPortAttribute
@@ -768,7 +810,14 @@ static int NVGetBlitPortAttribute
     pointer      data
 )
 {
-    return BadMatch;
+    NVPortPrivPtr pPriv = (NVPortPrivPtr)data;
+
+    if(attribute == xvSyncToVBlank)
+       *value = (pPriv->SyncToVBlank) ? 1 : 0;
+    else
+       return BadMatch;
+
+    return Success;
 }
 
 
@@ -1434,8 +1483,8 @@ XF86OffscreenImageRec NVOffscreenImages[2] =
    NVGetSurfaceAttribute,
    NVSetSurfaceAttribute,
    2046, 2046,
-   NUM_ATTRIBUTES - 1,
-   &NVAttributes[1]
+   NUM_OVERLAY_ATTRIBUTES - 1,
+   &NVOverlayAttributes[1]
   },
  {
    &NVImages[2],
@@ -1447,8 +1496,8 @@ XF86OffscreenImageRec NVOffscreenImages[2] =
    NVGetSurfaceAttribute,
    NVSetSurfaceAttribute,
    2046, 2046,
-   NUM_ATTRIBUTES - 1,
-   &NVAttributes[1]
+   NUM_OVERLAY_ATTRIBUTES - 1,
+   &NVOverlayAttributes[1]
   },
 };
 

@@ -8,7 +8,7 @@
 <date>14 February 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.23 2003/12/18 16:38:38 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.24 2005/02/15 01:43:14 dawes Exp $
 </ident>
 
 <!-- Table of contents -->
@@ -24,11 +24,13 @@ XFree86, the following conditions must be met:
   <item>Ensure that you are running Release 5.0.4 or later. This is required
     because OSS646 is only supported on those platforms. There are no plans
     to support XFree86 on earlier releases of OpenServer.
+    
   <item>Ensure that OSS646, the ``Execution Environment Update'' package is
     installed, if appropriate.  Check the release notes for that update
     to see whether or not your current operating system requires this
     update.  At least version OSS646B is required.  If you are running
     SCO OpenServer Release 5.0.7, you must have Maintenance Pack 1 installed.
+    
   <item>Ensure that the "Graphics, Web and X11 Libraries" package is
     installed.  At least version 1.3.2Ag is required.  You should always
     install the latest possible version of this supplement that is valid
@@ -38,8 +40,9 @@ XFree86, the following conditions must be met:
     the release notes for GWXLIBS to see if your platform requires the
     update.  The latest version can always be found at the
     <url name="SCO FTP site" url="ftp://ftp.sco.com/pub/openserver5/opensrc">.
+    
   <item>To compile XFree86, you must use the SCO-supported version of
-    the GNU C Compiler.  It is possible that Skunkware versions of the
+    the GNU C Compiler.  It is possible that the Skunkware versions of the
     compiler will work too, but this has not been tested.  The ``GNU
     Development System'' is available for all releases from (and including)
     SCO OpenServer Release 5.0.5.  It is provided with the operating system
@@ -47,6 +50,7 @@ XFree86, the following conditions must be met:
     to install it from the media.  You can always download the latest
     latest version of the GNU Development System from the
     <url name="SCO FTP site" url="ftp://ftp.sco.com/pub/openserver5/opensrc">.
+    
   <item>If you are not using OSR 5.0.7 or later, you need to get an updated
     console driver.  See <url url="http://www.sco.com"> for details on
     OpenServer supplements.  If you can't or don't want to upgrade your
@@ -93,7 +97,7 @@ To actually start the compilation, perform the following steps:
     This will do a full build, and send all of the build results to the
     file <tt>world.log</tt>.
     
-  <item>If the build succeeded, install the new server by executing the
+  <item>If the build has succeeded, install the new server by executing the
     command <tt>make install 2&gt;&amp;1 | tee install.log</tt> as root.
     This will send the install results to the file <tt>install.log</tt>.
 
@@ -118,20 +122,23 @@ work using the XFree86 mouse drivers.<p>
 <sect>Switching Consoles<p>
 
 XFree86 uses similar console switching keys as the SCO R4 and R5
-servers.  That is, <tt>Ctrl-PrntScr</tt> takes you to the next console along
+servers.
+<tt>Ctrl-PrntScr</tt> takes you to the next console along
 from the one X is running on.  If this is the last console it will take
-you to console 1. <tt>Ctrl-Alt-FXX</tt>, where <tt>XX</tt> is a function
+you to console 1. 
+<tt>Ctrl-Alt-FXX</tt>, where <tt>XX</tt> is a function
 key between <tt>F1</tt> and <tt>F12</tt> will switch you to the console
-number assigned to that function key. <tt>F1</tt> corresponds to
-<tt>tty01</tt> (or console 1), <tt>F2</tt> corresponds to <tt>tty02</tt>
-(or console 2) etc.<p>
+number assigned to that function key. 
+<tt>F1</tt> corresponds to <tt>tty01</tt> (or console 1), 
+<tt>F2</tt> corresponds to <tt>tty02</tt> (or console 2) etc.<p>
 
-Unlike the SCO X server, the "kill me now" key is <tt>Alt+Ctrl+Backspace</tt>.
+Unlike the SCO X server, the XFree86 "kill me now" key is <tt>Alt+Ctrl+Backspace</tt>.
 This does not ask for confirmation, it simply kills the X server as
-immediately as possible.  Use with extreme caution.  This may cause
-applications to terminate in an unpredictable way.  You can set the
-<tt>DontZap</tt> option in the <tt>ServerFlags</tt> section of your
-<tt>XF86Config</tt> file to disable this.
+quickly as possible and so use wisely and this may cause applications 
+to terminate in an unpredictable way. 
+
+ You can set the <tt>DontZap</tt> option in the <tt>ServerFlags</tt> 
+ section of your <tt>XF86Config</tt> file to disable this feature.
 
 <sect>Setting up Man Pages<p>
 
@@ -143,19 +150,21 @@ look similar to:
 <tscreen><verb>
     MANPATH=/usr/man:/usr/gnu/man:/usr/X11R6/man:/usr/local/man
 </verb></tscreen>
-This allows all users to view the X man pages.  You may change your own
+and allows all users to view the X man pages.  You can change the 
 <tt>MANPATH</tt> environment variable if you do not want everyone to access the
 man pages.<p>
 
 By default the man pages are compressed using ``<tt>compress</tt>'' to
-conserve space.  If you do not want to compress the man pages change
+conserve space.  If you do not want the man pages compressed change
 <tt>CompressManPages</tt> to <tt>NO</tt> in your ``<tt>host.def</tt>''
-file.  Those using the binary distribution can use ``<tt>uncompress</tt>''
-to uncompress the man pages.  Binary distributions contain pre-formatted
+file.  
+
+Those using the binary distribution can use ``<tt>uncompress</tt>''
+to uncompress the man pages.  Binary distributions also contain pre-formatted
 versions of all man pages.  If you are compiling the server yourself, you
-need to have the GNU Tools package installed to get groff, the GNU
+need the GNU Tools package installed to get groff, the GNU
 nroff replacement, to format the man pages.  Use the <tt>manroff</tt>
-script to format the manual pages yourself.
+script to format the manual pages.
 
 <sect>Using SCO binaries/servers.<p>
 

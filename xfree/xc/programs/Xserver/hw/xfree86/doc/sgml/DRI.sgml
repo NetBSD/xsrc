@@ -13,7 +13,7 @@
     <date>15 June 2001
 
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.29 2003/02/17 03:57:29 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.31 2005/02/06 22:41:40 dawes Exp $
     </ident>
 
     <toc>
@@ -35,7 +35,7 @@
           Silicon Graphics, Inc.
           Unix is a registered trademark of The Open Group.
           The `X' device and X Window System are trademarks of The Open Group.
-          XFree86 is a trademark of The XFree86 Project.
+          XFree86 is a registered trademark of The XFree86 Project, Inc.
           Linux is a registered trademark of Linus Torvalds.
           Intel is a registered trademark of Intel Corporation.
           3Dlabs, GLINT, and Oxygen are either registered trademarks or
@@ -414,7 +414,7 @@
           rendering was expected, proceed to the troubleshooting section.
         <p>
           <tt/glxinfo/ also lists all of the GLX-enhanced visuals available
-          so you can determine which visuals are double-bufferd, have depth (Z)
+          so you can determine which visuals are double-buffered, have depth (Z)
           buffers, stencil buffers, accumulation buffers, etc.
 
       <sect1>Environment Variables
@@ -820,7 +820,7 @@
             <item>
               The <tt/glTexEnv/ mode <tt/GL_BLEND/ is not directly supported
               by the Voodoo3 hardware.
-              It can be accomplished with a multipass algorithm but it's not
+              It can be accomplished with a multi-pass algorithm but it's not
               implemented at this time.
               Applications which use that mode, such as the Performer Town
               demo, may become sluggish when falling back to software

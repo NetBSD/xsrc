@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.14 2003/11/03 05:11:58 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.15 2005/02/01 02:25:08 dawes Exp $
  */
 
 #include "xf86config.h"

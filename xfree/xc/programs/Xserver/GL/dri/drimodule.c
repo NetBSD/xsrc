@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.6 2001/12/10 19:07:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.7 2005/03/01 03:48:50 dawes Exp $ */
 
 /*
  * Authors:
@@ -95,27 +95,18 @@ XF86ModuleData driModuleData = { &VersRec, driSetup, NULL };
 static pointer
 driSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
-    static Bool setupDone = FALSE;
     pointer drm = NULL;
 
-    if (!setupDone) {
-	setupDone = TRUE;
+    drm = LoadSubModule(module, "drm", NULL, NULL, NULL, NULL, errmaj, errmin);
     
-    	drm = 
-	   LoadSubModule(module, "drm", NULL, NULL, NULL, NULL, errmaj, errmin);
-    
-	if (!drm) {
-	    if (errmaj) *errmaj = LDR_NOSUBENT;
-	}
-	else {
-	    LoaderReqSymLists(drmSymbols, NULL);
-	    LoaderRefSymbols("noPanoramiXExtension", NULL);
-	    LoadExtension(&XF86DRIExt, FALSE);
-	}
+    if (!drm) {
+	if (errmaj) *errmaj = LDR_NOSUBENT;
     } else {
-	if (errmaj) *errmaj = LDR_ONCEONLY;
+	LoaderReqSymLists(drmSymbols, NULL);
+	LoaderRefSymbols("noPanoramiXExtension", NULL);
+	LoadExtension(&XF86DRIExt, FALSE);
     }
-    /* Need a non-NULL return value to indicate success */
+    /* Need a non-NULL return value to indicate success. */
     return drm;
 }
 

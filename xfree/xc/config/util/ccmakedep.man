@@ -1,4 +1,4 @@
-.TH ccmakedep 1 __xorgversion__
+.TH ccmakedep 1 __vendorversion__
 .SH NAME
 ccmakedep \- create dependencies in makefiles using a C compiler
 .SH SYNOPSIS

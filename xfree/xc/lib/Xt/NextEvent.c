@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.27 2003/04/21 16:34:28 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.29 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 #include <stdio.h>
@@ -77,7 +77,7 @@ static SignalEventRec* freeSignalRecs;
  */
 
 #ifndef NEEDS_NTPD_FIXUP
-# if defined(sun) || defined(MOTOROLA) || defined(sco324) || (defined(__osf__) && defined(__alpha))
+# if defined(sun) || defined(MOTOROLA) || (defined(__osf__) && defined(__alpha))
 #  define NEEDS_NTPD_FIXUP 1
 # else
 #  define NEEDS_NTPD_FIXUP 0
@@ -133,9 +133,9 @@ static SignalEventRec* freeSignalRecs;
 #endif
 #endif
 
-static void AdjustHowLong (howlong, start_time)
-	unsigned long *howlong;
-	struct timeval *start_time;
+static void AdjustHowLong (
+	unsigned long *howlong,
+	struct timeval *start_time)
 {
 	struct timeval new_time, time_spent, lstart_time;
 
@@ -143,7 +143,7 @@ static void AdjustHowLong (howlong, start_time)
 	X_GETTIMEOFDAY (&new_time);
 	FIXUP_TIMEVAL(new_time);
 	TIMEDELTA(time_spent, new_time, lstart_time);
-	if(*howlong <= (time_spent.tv_sec*1000+time_spent.tv_usec/1000))
+	if(*howlong <= (unsigned long)(time_spent.tv_sec*1000+time_spent.tv_usec/1000))
 	    *howlong = (unsigned long)0;  /* Timed out */
 	else
 	    *howlong -= (time_spent.tv_sec*1000+time_spent.tv_usec/1000);
@@ -171,10 +171,10 @@ static fd_set zero_fd;
 #define X_DONT_BLOCK 0
 #endif
 
-static void InitTimes (block, howlong, wt)
-    Boolean block;
-    unsigned long* howlong;
-    wait_times_ptr_t wt;
+static void InitTimes (
+    Boolean block,
+    unsigned long* howlong,
+    wait_times_ptr_t wt)
 {
     if (block) {
 	X_GETTIMEOFDAY (&wt->cur_time);
@@ -216,11 +216,11 @@ typedef struct {
 #endif
 } wait_fds_t, *wait_fds_ptr_t;
 
-static void InitFds (app, ignoreEvents, ignoreInputs, wf)
-    XtAppContext app;
-    Boolean ignoreEvents;
-    Boolean ignoreInputs;
-    wait_fds_ptr_t wf;
+static void InitFds (
+    XtAppContext app,
+    Boolean ignoreEvents,
+    Boolean ignoreInputs,
+    wait_fds_ptr_t wf)
 {
     int ii;
     app->rebuild_fdlist = FALSE;
@@ -275,7 +275,7 @@ static void InitFds (app, ignoreEvents, ignoreInputs, wf)
 	    XtStackAlloc (sizeof (struct pollfd) * wf->fdlistlen, wf->stack);
     } else {
 	wf->fdlist = (struct pollfd*)
-	    XtRealloc ((char*) wf->fdlist, 
+	    XtRealloc ((char*) wf->fdlist,
 		       sizeof (struct pollfd) * wf->fdlistlen);
     }
 
@@ -308,12 +308,12 @@ static void InitFds (app, ignoreEvents, ignoreInputs, wf)
 #endif
 }
 
-static void AdjustTimes (app, block, howlong, ignoreTimers, wt)
-    XtAppContext app;
-    Boolean block;
-    unsigned long* howlong;
-    Boolean ignoreTimers;
-    wait_times_ptr_t wt;
+static void AdjustTimes (
+    XtAppContext app,
+    Boolean block,
+    unsigned long* howlong,
+    Boolean ignoreTimers,
+    wait_times_ptr_t wt)
 {
     if (app->timerQueue != NULL && !ignoreTimers && block) {
 	if (IS_AFTER (wt->cur_time, app->timerQueue->te_timer_value)) {
@@ -323,9 +323,9 @@ static void AdjustTimes (app, block, howlong, ignoreTimers, wt)
 		wt->wait_time_ptr = &wt->wait_time;
 	    else
 		wt->wait_time_ptr = &wt->max_wait_time;
-	} else 
+	} else
 	    wt->wait_time_ptr = &zero_time;
-    } 
+    }
 #else
 		wt->poll_wait = wt->wait_time.tv_sec * 1000 + wt->wait_time.tv_usec / 1000;
 	    else
@@ -337,12 +337,12 @@ static void AdjustTimes (app, block, howlong, ignoreTimers, wt)
 }
 
 
-static int IoWait (wt, wf)
-    wait_times_ptr_t wt;
-    wait_fds_ptr_t wf;
+static int IoWait (
+    wait_times_ptr_t wt,
+    wait_fds_ptr_t wf)
 {
 #ifndef USE_POLL
-    return Select (wf->nfds, &wf->rmask, &wf->wmask, &wf->emask, 
+    return Select (wf->nfds, &wf->rmask, &wf->wmask, &wf->emask,
 		   wt->wait_time_ptr);
 #else
     return poll (wf->fdlist, wf->fdlistlen, wt->poll_wait);
@@ -350,14 +350,14 @@ static int IoWait (wt, wf)
 }
 
 
-static void FindInputs (app, wf, nfds, ignoreEvents, ignoreInputs, dpy_no, found_input)
-    XtAppContext app;
-    wait_fds_ptr_t wf;
-    int nfds;
-    Boolean ignoreEvents;
-    Boolean ignoreInputs;
-    int* dpy_no;
-    int* found_input;
+static void FindInputs (
+    XtAppContext app,
+    wait_fds_ptr_t wf,
+    int nfds,
+    Boolean ignoreEvents,
+    Boolean ignoreInputs,
+    int* dpy_no,
+    int* found_input)
 {
     XtInputMask condition;
     InputEvent *ep;
@@ -497,7 +497,7 @@ ENDILOOP:   ;
 #endif /* } */
 }
 
-/* 
+/*
  * Routine to block in the toolkit.  This should be the only call to select.
  *
  * This routine returns when there is something to be done.
@@ -507,7 +507,7 @@ ENDILOOP:   ;
  * has not already been enqueued.
  *
  *
- * _XtWaitForSomething( appContext, 
+ * _XtWaitForSomething( appContext,
  *                      ignoreEvent, ignoreTimers, ignoreInputs, ignoreSignals,
  *			block, drop_lock, howlong)
  * XtAppContext app;	     (Displays to check wait on)
@@ -586,8 +586,8 @@ WaitLoop:
 
 	if (block && app->block_hook_list) {
 	    BlockHook hook;
-	    for (hook = app->block_hook_list; 
-		 hook != NULL; 
+	    for (hook = app->block_hook_list;
+		 hook != NULL;
 		 hook = hook->next)
 		(*hook->proc) (hook->closure);
 
@@ -608,7 +608,7 @@ WaitLoop:
 #ifdef XTHREADS /* { */
 	if (drop_lock) {
 	    YIELD_APP_LOCK(app, &push_thread, &pushed_thread, &level);
-	    nfds = IoWait (&wt, &wf); 
+	    nfds = IoWait (&wt, &wf);
 	    RESTORE_APP_LOCK(app, level, &pushed_thread);
 	} else
 #endif /* } */
@@ -689,10 +689,10 @@ WaitLoop:
 	} /* timed out or input available */
 	break;
     }
-	
+
     if (nfds == 0) {
 	/* Timed out */
-	if (howlong) 
+	if (howlong)
 	    *howlong = (unsigned long)0;
 #ifdef USE_POLL
 	XtStackFree ((XtPointer) wf.fdlist, fdlist);
@@ -709,8 +709,8 @@ WaitLoop:
 #endif
 	return -1;
     } else
-	FindInputs (app, &wf, nfds, 
-		    ignoreEvents, ignoreInputs, 
+	FindInputs (app, &wf, nfds,
+		    ignoreEvents, ignoreInputs,
 		    &dpy_no, &found_input);
 
     if (dpy_no >= 0 || found_input) {
@@ -735,18 +735,18 @@ WaitLoop:
  * Public Routines
  */
 
-XtIntervalId XtAddTimeOut(interval, proc, closure)
-	unsigned long interval;
-	XtTimerCallbackProc proc;
-	XtPointer closure;
+XtIntervalId XtAddTimeOut(
+	unsigned long interval,
+	XtTimerCallbackProc proc,
+	XtPointer closure)
 {
-	return XtAppAddTimeOut(_XtDefaultAppContext(), 
-		interval, proc, closure); 
+	return XtAppAddTimeOut(_XtDefaultAppContext(),
+		interval, proc, closure);
 }
 
-static void QueueTimerEvent(app, ptr)
-    XtAppContext app;
-    TimerEventRec *ptr;
+static void QueueTimerEvent(
+    XtAppContext app,
+    TimerEventRec *ptr)
 {
         TimerEventRec *t,**tt;
         tt = &app->timerQueue;
@@ -760,11 +760,11 @@ static void QueueTimerEvent(app, ptr)
          *tt = ptr;
 }
 
-XtIntervalId XtAppAddTimeOut(app, interval, proc, closure)
-	XtAppContext app;
-	unsigned long interval;
-	XtTimerCallbackProc proc;
-	XtPointer closure;
+XtIntervalId XtAppAddTimeOut(
+	XtAppContext app,
+	unsigned long interval,
+	XtTimerCallbackProc proc,
+	XtPointer closure)
 {
 	TimerEventRec *tptr;
 	struct timeval current_time;
@@ -792,8 +792,8 @@ XtIntervalId XtAppAddTimeOut(app, interval, proc, closure)
 	return( (XtIntervalId) tptr);
 }
 
-void  XtRemoveTimeOut(id)
-	XtIntervalId id;
+void  XtRemoveTimeOut(
+	XtIntervalId id)
 {
 	TimerEventRec *t, *last, *tid = (TimerEventRec *) id;
 	XtAppContext app = tid->app;
@@ -819,17 +819,17 @@ void  XtRemoveTimeOut(id)
 	UNLOCK_APP(app);
 }
 
-XtWorkProcId XtAddWorkProc(proc, closure)
-	XtWorkProc proc;
-	XtPointer closure;
+XtWorkProcId XtAddWorkProc(
+	XtWorkProc proc,
+	XtPointer closure)
 {
 	return XtAppAddWorkProc(_XtDefaultAppContext(), proc, closure);
 }
 
-XtWorkProcId XtAppAddWorkProc(app, proc, closure)
-	XtAppContext app;
-	XtWorkProc proc;
-	XtPointer closure;
+XtWorkProcId XtAppAddWorkProc(
+	XtAppContext app,
+	XtWorkProc proc,
+	XtPointer closure)
 {
 	WorkProcRec *wptr;
 
@@ -849,15 +849,15 @@ XtWorkProcId XtAppAddWorkProc(app, proc, closure)
 	return (XtWorkProcId) wptr;
 }
 
-void  XtRemoveWorkProc(id)
-	XtWorkProcId id;
+void  XtRemoveWorkProc(
+	XtWorkProcId id)
 {
 	WorkProcRec *wid= (WorkProcRec *) id, *w, *last;
 	XtAppContext app = wid->app;
 
 	LOCK_APP(app);
 	/* find it */
-	for(w = app->workQueue, last = NULL; 
+	for(w = app->workQueue, last = NULL;
 	    w != NULL && w != wid; w = w->next) last = w;
 
 	if (w == NULL) {
@@ -874,17 +874,17 @@ void  XtRemoveWorkProc(id)
 	UNLOCK_APP(app);
 }
 
-XtSignalId XtAddSignal(proc, closure)
-	XtSignalCallbackProc proc;
-	XtPointer closure;
+XtSignalId XtAddSignal(
+	XtSignalCallbackProc proc,
+	XtPointer closure)
 {
 	return XtAppAddSignal(_XtDefaultAppContext(), proc, closure);
 }
 
-XtSignalId XtAppAddSignal(app, proc, closure)
-	XtAppContext app;
-	XtSignalCallbackProc proc;
-	XtPointer closure;
+XtSignalId XtAppAddSignal(
+	XtAppContext app,
+	XtSignalCallbackProc proc,
+	XtPointer closure)
 {
 	SignalEventRec *sptr;
 
@@ -906,8 +906,8 @@ XtSignalId XtAppAddSignal(app, proc, closure)
 	return (XtSignalId) sptr;
 }
 
-void XtRemoveSignal(id)
-	XtSignalId id;
+void XtRemoveSignal(
+	XtSignalId id)
 {
 	SignalEventRec *sid = (SignalEventRec*) id, *s, *last = NULL;
 	XtAppContext app = sid->app;
@@ -930,8 +930,8 @@ void XtRemoveSignal(id)
 	UNLOCK_APP(app);
 }
 
-void XtNoticeSignal(id)
-	XtSignalId id;
+void XtNoticeSignal(
+	XtSignalId id)
 {
 	/*
 	 * It would be overkill to lock the app to set this flag.
@@ -955,22 +955,22 @@ void XtNoticeSignal(id)
 	sid->se_notice = TRUE;
 }
 
-XtInputId XtAddInput( source, Condition, proc, closure)
-	int source;
-	XtPointer Condition;
-	XtInputCallbackProc proc;
-	XtPointer closure;
+XtInputId XtAddInput(
+	int source,
+	XtPointer Condition,
+	XtInputCallbackProc proc,
+	XtPointer closure)
 {
 	return XtAppAddInput(_XtDefaultAppContext(),
 		source, Condition, proc, closure);
 }
 
-XtInputId XtAppAddInput(app, source, Condition, proc, closure)
-	XtAppContext app;
-	int source;
-	XtPointer Condition;
-	XtInputCallbackProc proc;
-	XtPointer closure;
+XtInputId XtAppAddInput(
+	XtAppContext app,
+	int source,
+	XtPointer Condition,
+	XtInputCallbackProc proc,
+	XtPointer closure)
 {
 	InputEvent* sptr;
 	XtInputMask condition = (XtInputMask) Condition;
@@ -1017,8 +1017,8 @@ XtInputId XtAppAddInput(app, source, Condition, proc, closure)
 	return((XtInputId)sptr);
 }
 
-void XtRemoveInput( id )
-	register XtInputId  id;
+void XtRemoveInput(
+	register XtInputId  id)
 {
   	register InputEvent *sptr, *lptr;
 	XtAppContext app = ((InputEvent *)id)->app;
@@ -1065,7 +1065,7 @@ void XtRemoveInput( id )
 				found = True;
 				break;
 			}
-			lptr = sptr;	      
+			lptr = sptr;
 		}
 	}
 
@@ -1078,14 +1078,14 @@ void XtRemoveInput( id )
 	    app->rebuild_fdlist = TRUE;
 	} else
 	    XtAppWarningMsg(app, "invalidProcedure","inputHandler",
-			    XtCXtToolkitError, 
+			    XtCXtToolkitError,
 			    "XtRemoveInput: Input handler not found",
 			    (String *)NULL, (Cardinal *)NULL);
 	UNLOCK_APP(app);
 }
 
-void _XtRemoveAllInputs(app)
-    XtAppContext app;
+void _XtRemoveAllInputs(
+    XtAppContext app)
 {
     int i;
     for (i = 0; i < app->input_max; i++) {
@@ -1101,8 +1101,8 @@ void _XtRemoveAllInputs(app)
 
 /* Do alternate input and timer callbacks if there are any */
 
-static void DoOtherSources(app)
-	XtAppContext app;
+static void DoOtherSources(
+	XtAppContext app)
 {
 	TimerEventRec *te_ptr;
 	InputEvent *ie_ptr;
@@ -1120,10 +1120,10 @@ static void DoOtherSources(app)
 	if (app->input_count > 0) {
 	    /* Call _XtWaitForSomething to get input queued up */
 	    (void) _XtWaitForSomething (app,
-					TRUE, TRUE, FALSE, TRUE, 
-					FALSE, 
+					TRUE, TRUE, FALSE, TRUE,
+					FALSE,
 #ifdef XTHREADS
-					TRUE, 
+					TRUE,
 #endif
 					(unsigned long *)NULL);
 	    DrainQueue();
@@ -1160,8 +1160,8 @@ static void DoOtherSources(app)
 
 /* If there are any work procs, call them.  Return whether we did so */
 
-static Boolean CallWorkProc(app)
-	XtAppContext app;
+static Boolean CallWorkProc(
+	XtAppContext app)
 {
 	register WorkProcRec *w = app->workQueue;
 	Boolean delete;
@@ -1190,8 +1190,8 @@ static Boolean CallWorkProc(app)
  * return next event;
  */
 
-void XtNextEvent(event)
-	XEvent *event;
+void XtNextEvent(
+	XEvent *event)
 {
 	XtAppNextEvent(_XtDefaultAppContext(), event);
 }
@@ -1215,9 +1215,9 @@ void _XtRefreshMapping(
     UNLOCK_PROCESS;
 }
 
-void XtAppNextEvent(app, event)
-	XtAppContext app;
-	XEvent *event;
+void XtAppNextEvent(
+	XtAppContext app,
+	XEvent *event)
 {
     int i, d;
 
@@ -1244,9 +1244,9 @@ void XtAppNextEvent(app, event)
 
 	d = _XtWaitForSomething (app,
 				 FALSE, FALSE, FALSE, FALSE,
-				 TRUE, 
+				 TRUE,
 #ifdef XTHREADS
-				 TRUE, 
+				 TRUE,
 #endif
 				 (unsigned long *) NULL);
 
@@ -1261,20 +1261,20 @@ void XtAppNextEvent(app, event)
 		_XtRefreshMapping(event, False);
 	    UNLOCK_APP(app);
 	    return;
-	} 
+	}
 
     } /* for */
 }
-    
-void XtProcessEvent(mask)
-	XtInputMask mask;
+
+void XtProcessEvent(
+	XtInputMask mask)
 {
 	XtAppProcessEvent(_XtDefaultAppContext(), mask);
 }
 
-void XtAppProcessEvent(app, mask)
-	XtAppContext app;
-	XtInputMask mask;
+void XtAppProcessEvent(
+	XtAppContext app,
+	XtInputMask mask)
 {
 	int i, d;
 	XEvent event;
@@ -1318,15 +1318,15 @@ void XtAppProcessEvent(app, mask)
 		    return;
 		}
 	    }
-    
+
 	    if (mask & XtIMAlternateInput) {
 		if (app->input_count > 0 && app->outstandingQueue == NULL) {
 		    /* Call _XtWaitForSomething to get input queued up */
-		    (void) _XtWaitForSomething (app, 
-						TRUE, TRUE, FALSE, TRUE, 
-						FALSE, 
+		    (void) _XtWaitForSomething (app,
+						TRUE, TRUE, FALSE, TRUE,
+						FALSE,
 #ifdef XTHREADS
-						TRUE, 
+						TRUE,
 #endif
 						(unsigned long *)NULL);
 		}
@@ -1339,7 +1339,7 @@ void XtAppProcessEvent(app, mask)
 		    return;
 		}
 	    }
-    
+
 	    if (mask & XtIMXEvent) {
 		for (i = 1; i <= app->count; i++) {
 		    d = (i + app->last) % app->count;
@@ -1362,9 +1362,9 @@ void XtAppProcessEvent(app, mask)
 				    (mask & XtIMTimer ? FALSE : TRUE),
 				    (mask & XtIMAlternateInput ? FALSE : TRUE),
 				    (mask & XtIMSignal ? FALSE : TRUE),
-				    TRUE, 
+				    TRUE,
 #ifdef XTHREADS
-				    TRUE, 
+				    TRUE,
 #endif
 				    (unsigned long *) NULL);
 
@@ -1381,18 +1381,18 @@ void XtAppProcessEvent(app, mask)
 		XtDispatchEvent(&event);
 		UNLOCK_APP(app);
 		return;
-	    } 
-	
+	    }
+
 	}
 }
 
-Boolean XtPending()
+Boolean XtPending(void)
 {
 	return (XtAppPending(_XtDefaultAppContext()) != 0);
 }
 
-XtInputMask XtAppPending(app)
-	XtAppContext app;
+XtInputMask XtAppPending(
+	XtAppContext app)
 {
 	struct timeval cur_time;
 	int d;
@@ -1431,7 +1431,7 @@ XtInputMask XtAppPending(app)
 /*
  * Check for pending alternate input
  */
-	if (app->timerQueue != NULL) {	/* check timeout queue */ 
+	if (app->timerQueue != NULL) {	/* check timeout queue */
 	    X_GETTIMEOFDAY (&cur_time);
 	    FIXUP_TIMEVAL(cur_time);
 	    if ((IS_AT_OR_AFTER(app->timerQueue->te_timer_value, cur_time))  &&
@@ -1445,12 +1445,12 @@ XtInputMask XtAppPending(app)
 	    /* This won't cause a wait, but will enqueue any input */
 
 	    if(_XtWaitForSomething (app,
-				    FALSE, TRUE, FALSE, TRUE, 
-				    FALSE, 
+				    FALSE, TRUE, FALSE, TRUE,
+				    FALSE,
 #ifdef XTHREADS
-				    TRUE, 
+				    TRUE,
 #endif
-				    (unsigned long *) NULL) != -1) 
+				    (unsigned long *) NULL) != -1)
 		ret |= XtIMXEvent;
 	    if (app->outstandingQueue != NULL) ret |= XtIMAlternateInput;
 	}
@@ -1460,8 +1460,8 @@ XtInputMask XtAppPending(app)
 
 /* Peek at alternate input and timer callbacks if there are any */
 
-static Boolean PeekOtherSources(app)
-	XtAppContext app;
+static Boolean PeekOtherSources(
+	XtAppContext app)
 {
 	struct timeval  cur_time;
 
@@ -1479,10 +1479,10 @@ static Boolean PeekOtherSources(app)
 	if (app->input_count > 0) {
 	    /* Call _XtWaitForSomething to get input queued up */
 	    (void) _XtWaitForSomething (app,
-					TRUE, TRUE, FALSE, TRUE, 
-					FALSE, 
+					TRUE, TRUE, FALSE, TRUE,
+					FALSE,
 #ifdef XTHREADS
-					TRUE, 
+					TRUE,
 #endif
 					(unsigned long *)NULL);
 	    if (app->outstandingQueue != NULL) return TRUE;
@@ -1498,17 +1498,17 @@ static Boolean PeekOtherSources(app)
 	return FALSE;
 }
 
-Boolean XtPeekEvent(event)
-	XEvent *event;
+Boolean XtPeekEvent(
+	XEvent *event)
 {
 	return XtAppPeekEvent(_XtDefaultAppContext(), event);
 }
 
 Boolean XtAppPeekEvent_SkipTimer;
 
-Boolean XtAppPeekEvent(app, event)
-	XtAppContext app;
-	XEvent *event;
+Boolean XtAppPeekEvent(
+	XtAppContext app,
+	XEvent *event)
 {
 	int i, d;
 	Boolean foundCall = FALSE;
@@ -1525,7 +1525,7 @@ Boolean XtAppPeekEvent(app, event)
 	    if (XEventsQueued(app->list[d], QueuedAfterFlush))
 		goto GotEvent;
 	}
-	
+
 	if (foundCall) {
 	    event->xany.type = 0;
 	    event->xany.display = NULL;
@@ -1537,12 +1537,12 @@ Boolean XtAppPeekEvent(app, event)
 	while (1) {
 		d = _XtWaitForSomething (app,
 			FALSE, FALSE, FALSE, FALSE,
-			TRUE, 
+			TRUE,
 #ifdef XTHREADS
-			TRUE, 
+			TRUE,
 #endif
 			(unsigned long *) NULL);
-               
+
 		if (d != -1) {  /* event */
 			GotEvent:
 			XPeekEvent(app->list[d], event);
@@ -1589,7 +1589,7 @@ Boolean XtAppPeekEvent(app, event)
 			 * spec is vague here; we'll assume signals also return FALSE,
 			 * of course to determine whether a signal is pending requires
 			 * walking the signalQueue looking for se_notice flags which
-			 * this code doesn't do. 
+			 * this code doesn't do.
 			 */
 #if 0
 			if (app->signalQueue != NULL) {  /* signal */
@@ -1599,10 +1599,10 @@ Boolean XtAppPeekEvent(app, event)
 				UNLOCK_APP(app);
 				return FALSE;
 			}
-			else 
+			else
 #endif
 			{  /* input */
-				event->xany.type = 0;   
+				event->xany.type = 0;
 				event->xany.display = NULL;
 				event->xany.window = 0;
 				UNLOCK_APP(app);
@@ -1610,4 +1610,4 @@ Boolean XtAppPeekEvent(app, event)
 			}
 		}
 	} /* end while */
-}	
+}

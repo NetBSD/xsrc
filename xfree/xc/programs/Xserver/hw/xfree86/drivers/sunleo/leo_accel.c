@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_accel.c,v 1.3 2001/03/03 22:41:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_accel.c,v 1.5 2004/12/05 23:06:38 tsi Exp $ */
 
 #define	PSZ	32
 
@@ -72,7 +72,7 @@ static void
 LeoCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 {
 	ScreenPtr pScreen = pWin->drawable.pScreen;
-	LeoPtr pLeo = LeoGetScreenPrivate (pScreen);
+	LeoPtr pLeo = LeoGetScreenPrivate(pScreen);
 	DDXPointPtr pptSrc;
 	DDXPointPtr ppt;
 	RegionPtr prgnDst;
@@ -105,15 +105,15 @@ LeoCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 		ppt->y = pbox->y1 + dy;
 	}
 
-	LeoDoBitblt ((DrawablePtr)pwinRoot, (DrawablePtr)pwinRoot,
-		     GXcopy, prgnDst, pptSrc, ~0L);
+	LeoDoBitblt((DrawablePtr)pwinRoot, (DrawablePtr)pwinRoot,
+		    GXcopy, prgnDst, pptSrc, ~0L);
 	DEALLOCATE_LOCAL(pptSrc);
 	REGION_DESTROY(pWin->drawable.pScreen, prgnDst);
 }
 
-void LeoVtChange (ScreenPtr pScreen, int enter)
+void LeoVtChange(ScreenPtr pScreen, int enter)
 {
-	LeoPtr pLeo = LeoGetScreenPrivate (pScreen); 
+	LeoPtr pLeo = LeoGetScreenPrivate(pScreen);
 	LeoCommand0 *lc0 = pLeo->lc0;
 	LeoDraw *ld0 = pLeo->ld0;
 
@@ -125,41 +125,39 @@ void LeoVtChange (ScreenPtr pScreen, int enter)
 	ld0->fg = 0;
 	ld0->vclipmin = 0;
 	ld0->vclipmax = (pLeo->psdp->width - 1) | ((pLeo->psdp->height - 1) << 16);
-	
+
 	while (lc0->csr & LEO_CSR_BLT_BUSY);
-	
+
 	lc0->extent = (pLeo->psdp->width - 1) | ((pLeo->psdp->height - 1) << 11);
 	lc0->fill = 0;
-	
+
 	while (lc0->csr & LEO_CSR_BLT_BUSY);
-	
+
 	lc0->addrspace = LEO_ADDRSPC_OBGR;
 	ld0->rop = LEO_ATTR_RGBE_ENABLE|LEO_ROP_NEW;
 }
 
-extern Bool LeoCreateGC (GCPtr pGC);
-
-Bool LeoAccelInit (ScreenPtr pScreen, LeoPtr pLeo)
+Bool LeoAccelInit(ScreenPtr pScreen, LeoPtr pLeo)
 {
 	LeoCommand0 *lc0;
 	LeoDraw *ld0;
 
 	if (serverGeneration != LeoGeneration) {
-		LeoScreenPrivateIndex = AllocateScreenPrivateIndex ();
+		LeoScreenPrivateIndex = AllocateScreenPrivateIndex();
 		if (LeoScreenPrivateIndex == -1) return FALSE;
-		LeoGCPrivateIndex = AllocateGCPrivateIndex ();
-		LeoWindowPrivateIndex = AllocateWindowPrivateIndex ();
+		LeoGCPrivateIndex = AllocateGCPrivateIndex();
+		LeoWindowPrivateIndex = AllocateWindowPrivateIndex();
 		LeoGeneration = serverGeneration;
 	}
-	
+
 	/* Allocate private structures holding pointer to both videoRAM and control registers.
 	   We do not have to map these by ourselves, because the XServer did it for us; we
 	   only copy the pointers to out structures. */
 	if (!AllocateGCPrivate(pScreen, LeoGCPrivateIndex, sizeof(LeoPrivGCRec))) return FALSE;
 	if (!AllocateWindowPrivate(pScreen, LeoWindowPrivateIndex, 0)) return FALSE;
 	pScreen->devPrivates[LeoScreenPrivateIndex].ptr = pLeo;
-	pLeo->lc0 = lc0 = (LeoCommand0 *) ((char *)pLeo->fb + LEO_LC0_VOFF);
-	pLeo->ld0 = ld0 = (LeoDraw *) ((char *)pLeo->fb + LEO_LD0_VOFF);
+	lc0 = pLeo->lc0;
+	ld0 = pLeo->ld0;
 
 	if (!pLeo->NoAccel) {
 		/* Replace various screen functions. */
@@ -181,14 +179,14 @@ Bool LeoAccelInit (ScreenPtr pScreen, LeoPtr pLeo)
 	pLeo->vclipmax = (pLeo->psdp->width - 1) | ((pLeo->psdp->height - 1) << 16);
 	pLeo->width = pLeo->psdp->width;
 	pLeo->height = pLeo->psdp->height;
-	
+
 	while (lc0->csr & LEO_CSR_BLT_BUSY);
-	
+
 	lc0->extent = (pLeo->psdp->width - 1) | ((pLeo->psdp->height - 1) << 11);
 	lc0->fill = 0;
-	
+
 	while (lc0->csr & LEO_CSR_BLT_BUSY);
-	
+
 	lc0->addrspace = LEO_ADDRSPC_OBGR;
 	ld0->rop = LEO_ATTR_RGBE_ENABLE|LEO_ROP_NEW;
 

@@ -41,7 +41,7 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\" 
-.\" $XFree86: xc/doc/man/X11/XAWMHints.man,v 1.5 2003/11/23 05:40:33 dawes Exp $
+.\" $XFree86: xc/doc/man/X11/XAWMHints.man,v 1.6 2005/02/11 03:02:54 dawes Exp $
 .\"
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xW Athena X Widgets \- C Language X Toolkit Interface
@@ -143,7 +143,7 @@
 ..
 .ny0
 '\" t
-.TH XAllocWMHints 3X11 __xorgversion__ "XLIB FUNCTIONS"
+.TH XAllocWMHints 3X11 __vendorversion__ "XLIB FUNCTIONS"
 .SH NAME
 XAllocWMHints, XSetWMHints, XGetWMHints, XWMHints \- allocate window manager hints structure and set or read a window's WM_HINTS property
 .SH SYNTAX

@@ -1,10 +1,8 @@
-XCOMM $Xorg: Imakefile,v 1.4 2000/08/17 19:47:01 cpqbld Exp $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.58 2005/02/28 04:14:32 dawes Exp $
 
-
-
-XCOMM $XFree86: xc/programs/Imakefile,v 3.56 2003/06/20 15:49:50 eich Exp $
-
+#if BuildServer || BuildClients
 #define IHaveSubdirs
+#endif
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
 #if BuildServer || UseRgbTxt
@@ -31,9 +29,6 @@ SCREENSAVESRCDIR = beforelight
 #endif
 #if BuildXF86DGALibrary
    XF86DGASRCDIR = xf86dga
-#endif
-#if BuildXAServer
-       XASSRCDIR = Xaserver
 #endif
 #if BuildLBX
   LBXPROXYSRCDIR = lbxproxy
@@ -133,9 +128,11 @@ SUBDIRS = \
 	xsetroot $(XSMSRCDIR) xstdcmap $(XINPUTCLIENTDIRS) \
 	$(XTERMSRCDIR) $(XTRAPCLIENTDIRS) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
 	$(XPMCLIENTDIRS) $(XVINFOSRCDIR) \
-	$(XSSRCDIR) $(XASSRCDIR) $(LBXPROXYSRCDIR) $(SCRIPTSDIR) \
+	$(XSSRCDIR) $(LBXPROXYSRCDIR) $(SCRIPTSDIR) \
 	$(GLXCLIENTDIRS) $(XRANDRDIR) $(XCURSORGENDIR) 
 #endif
 
+#ifdef IHaveSubdirs
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
+#endif

@@ -20,56 +20,21 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/tables.c,v 1.2 2004/04/03 22:38:54 tsi Exp $ */
 
-extern int  ProcInitialConnection(), ProcEstablishConnection();
+#include "lbx.h"
+#include "gfx.h"
+#include "wire.h"
+#include "tables.h"
 
-extern int  ProcStandardRequest();
-
-extern int  ProcLBXChangeWindowAttributes(),
-	    ProcLBXGetWindowAttributes(),
-	    ProcLBXGetGeometry(),
-	    ProcLBXInternAtom(),
-            ProcLBXGetAtomName(),
-            ProcLBXCreateColormap(),
-            ProcLBXFreeColormap(),
-            ProcLBXCopyColormapAndFree(),
-            ProcLBXFreeColors(),
-            ProcLBXLookupColor(),
-            ProcLBXAllocColor(),
-            ProcLBXAllocNamedColor(),
-            ProcLBXAllocColorCells(),
-            ProcLBXAllocColorPlanes(),
-            ProcLBXGetModifierMapping(),
-            ProcLBXGetKeyboardMapping(),
-            ProcLBXQueryFont(),
-            ProcLBXChangeProperty(),
-            ProcLBXGetProperty(),
-	    ProcLBXCopyArea(),
-	    ProcLBXCopyPlane(),
-            ProcLBXPolyPoint(),
-            ProcLBXPolyLine(),
-            ProcLBXPolySegment(),
-            ProcLBXPolyRectangle(),
-            ProcLBXPolyArc(),
-            ProcLBXFillPoly(),
-            ProcLBXPolyFillRectangle(),
-            ProcLBXPolyFillArc(),
-	    ProcLBXPolyText(),
-	    ProcLBXImageText(),
-            ProcLBXQueryExtension(),
-	    ProcLBXGetImage(),
-	    ProcLBXPutImage();
-
-extern int  ProcBadRequest();
-
-int         (*InitialVector[3]) () =
+int         (*InitialVector[3]) (ClientPtr client) =
 {
     0,
     ProcInitialConnection,
     ProcEstablishConnection
 };
 
-int         (*ProcVector[256]) () =
+int         (*ProcVector[256]) (ClientPtr client) =
 {
     ProcBadRequest,
     ProcStandardRequest,
@@ -330,10 +295,7 @@ int         (*ProcVector[256]) () =
 };
 
 
-extern int  ServerProcError(), ServerProcReply(),
-            ServerProcStandardEvent();
-
-int         (*ServerVector[256]) () = {
+int         (*ServerVector[256]) (ClientPtr sc) = {
     ServerProcStandardEvent,
     ServerProcStandardEvent,
     ServerProcStandardEvent,

@@ -1,12 +1,12 @@
-XCOMM $XFree86: xc/fonts/scaled/TTF/Imakefile,v 1.5 2003/12/31 19:30:39 dawes Exp $
+XCOMM $XFree86: xc/fonts/scaled/TTF/Imakefile,v 1.6 2004/03/02 19:43:20 dawes Exp $
 
 LUXIFONTS = luximb.ttf luximbi.ttf luximr.ttf luximri.ttf \
 	luxirb.ttf luxirbi.ttf luxirr.ttf luxirri.ttf \
 	luxisb.ttf luxisbi.ttf luxisr.ttf luxisri.ttf
 
 VERASRCDIR = $(TOP)/extras/fonts/Bitstream-Vera
-VERAFONTS = Vera.ttf VeraBI.ttf VeraBd.ttf VeraMoBI.ttf VeraMoBd.ttf \
-	VeraMoIt.ttf VeraMono.ttf VeraSe.ttf VeraSeBd.ttf
+VERAFONTS = Vera.ttf VeraBI.ttf VeraBd.ttf VeraIt.ttf VeraMoBI.ttf \
+	VeraMoBd.ttf VeraMoIt.ttf VeraMono.ttf VeraSe.ttf VeraSeBd.ttf
 
 FONTS = $(LUXIFONTS) $(VERAFONTS)
 OBJS = $(FONTS)

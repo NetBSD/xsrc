@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/altwin,v 1.5 2003/12/03 14:09:08 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/altwin,v 1.7 2004/09/28 15:17:14 dawes Exp $
 
 partial modifier_keys 
 xkb_symbols "meta_alt" {

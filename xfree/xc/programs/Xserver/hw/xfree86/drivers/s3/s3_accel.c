@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_accel.c,v 1.3 2003/11/23 18:07:31 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_accel.c,v 1.4 2005/03/05 17:10:58 dawes Exp $ */
 
 
 #include "xf86.h"
@@ -567,6 +567,7 @@ Bool S3AccelInitPIO(ScreenPtr pScreen)
 
 	pXAA->SetupForScreenToScreenCopy = S3SetupForScreenToScreenCopy;
 	pXAA->SubsequentScreenToScreenCopy = S3SubsequentScreenToScreenCopy;
+	pXAA->ScreenToScreenCopyFlags = ROP_NEEDS_SOURCE;
 
 	pXAA->SetupForColor8x8PatternFill = S3SetupForColor8x8PatternFill;
 	pXAA->SubsequentColor8x8PatternFillRect = S3SubsequentColor8x8PatternFillRect;

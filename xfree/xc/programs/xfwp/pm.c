@@ -29,7 +29,7 @@ authorization from The Open Group.
 X Window System is a trademark of The Open Group.
 
 */
-/* $XFree86: xc/programs/xfwp/pm.c,v 1.9 2003/05/27 22:27:06 tsi Exp $ */
+/* $XFree86: xc/programs/xfwp/pm.c,v 1.10 2004/12/31 02:56:03 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -227,8 +227,7 @@ void FWPprocessMessages(
          * report failure back to the ProxyMgr
          * 
          */
-        pm_send_msg_len = STRING_BYTES(config_failure)
-	      		+ STRING_BYTES(NULL);
+        pm_send_msg_len = STRING_BYTES(config_failure) + STRING_NULL;
         IceGetHeaderExtra(iceConn, 
 	      	        program_data->major_opcode, 
 	      		PM_GetProxyAddrReply,
@@ -238,7 +237,7 @@ void FWPprocessMessages(
 	       		pReply,
 	       		pReplyData);
         pReply->status = PM_Failure;
-        STORE_STRING(pReplyData, NULL);
+        STORE_NULL(pReplyData);
         STORE_STRING(pReplyData, config_failure);
         IceFlush(iceConn);
 	free(tmp_str);
@@ -303,8 +302,7 @@ void FWPprocessMessages(
        * client through some other channel)
        * use IceGetHeaderExtra() and the 
        */
-      pm_send_msg_len = STRING_BYTES(listen_port_string)
-			+ STRING_BYTES(NULL);
+      pm_send_msg_len = STRING_BYTES(listen_port_string) + STRING_NULL;
       IceGetHeaderExtra(iceConn, 
 		        program_data->major_opcode, 
 			PM_GetProxyAddrReply,
@@ -315,7 +313,7 @@ void FWPprocessMessages(
 			pReplyData);
       pReply->status = PM_Success;
       STORE_STRING(pReplyData, listen_port_string);
-      STORE_STRING(pReplyData, NULL); 
+      STORE_NULL(pReplyData); 
       IceFlush(iceConn);
       /*
        * before leaving this routine, change the select() timeout

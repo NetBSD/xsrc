@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:17 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xdpyinfo/Imakefile,v 3.17 2003/05/28 16:02:36 tsi Exp $
+XCOMM $XFree86: xc/programs/xdpyinfo/Imakefile,v 3.18 2004/06/30 20:21:47 martin Exp $
 
 
 #if HasShm
@@ -57,11 +57,17 @@ XCOMM $XFree86: xc/programs/xdpyinfo/Imakefile,v 3.17 2003/05/28 16:02:36 tsi Ex
       XINERAMALIBS = $(XINERAMALIB)
 #endif
 
+#if BuildDmxLibrary
+        DMXDEFINES = -DDMX
+           DMXLIBS = $(DMXLIB)
+#endif
+
       OTHERDEFINES = $(SHMDEFINES) $(XKBDEFINES) $(XINPUTDEFINES) \
 			$(MULTIBUFDEFINES) $(XIEDEFINES) $(XRENDERDEFINES) \
-			$(XINERAMADEFINES)
+			$(XINERAMADEFINES) $(DMXDEFINES)
       OTHERDEPLIBS = $(XINPUTDEPLIBS) $(XIEDEPLIBS) $(XRENDERDEPLIBS)
-         OTHERLIBS = $(XINPUTLIBS) $(XIELIBS) $(XRENDERLIBS) $(XINERAMALIBS)
+         OTHERLIBS = $(XINPUTLIBS) $(XIELIBS) $(XRENDERLIBS) $(XINERAMALIBS) \
+		     $(DMXLIBS)
 
         DEFINES = $(OTHERDEFINES) $(XF86DEFINES)
         DEPLIBS = $(DEPXTESTLIB) XkbClientDepLibs $(OTHERDEPLIBS) \

@@ -1,6 +1,8 @@
-## $XFree86: xc/programs/xterm/Makefile.in,v 3.45 2003/12/31 17:12:25 dickey Exp $ ##
+## $XTermId: Makefile.in,v 1.114 2005/01/09 16:06:34 tom Exp $
 ##
-## Copyright 2002,2003 by Thomas E. Dickey
+## $XFree86: xc/programs/xterm/Makefile.in,v 3.50 2005/01/14 01:50:02 dickey Exp $ ##
+##
+## Copyright 2002-2003,2004 by Thomas E. Dickey
 ##
 ##                         All Rights Reserved
 ##
@@ -46,9 +48,10 @@ X_LIBS		= @X_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
 EXTRA_CFLAGS	= @EXTRA_CFLAGS@
+EXTRA_CPPFLAGS	= @EXTRA_CPPFLAGS@
 EXTRA_LOADFLAGS	= @IMAKE_LOADFLAGS@
 
-CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H @CPPFLAGS@
+CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H @CPPFLAGS@ $(EXTRA_CPPFLAGS)
 CFLAGS		= @CFLAGS@ $(EXTRA_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
@@ -65,7 +68,7 @@ appsdir		= $(libdir)/X11/app-defaults
 #### End of system configuration section. ####
 
 RM              = rm -f
-LINT		= lint
+LINT		= @LINT@
 
 DESTDIR		=
 BINDIR		= $(DESTDIR)$(bindir)
@@ -98,22 +101,23 @@ EXTRAOBJ	= @EXTRAOBJS@
                   ptyx.h version.h xstrings.h xterm.h $(EXTRAHDR)
        PROGRAMS = xterm$x resize$x
 
-all:	$(PROGRAMS)
+all :	$(PROGRAMS)
 
 .SUFFIXES : .i .def .hin
 
-.c$o:
+.c$o :
 @RULE_CC@
 	@ECHO_CC@$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$*.c
 
-.c.i:
+.c.i :
 @RULE_CC@
 	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
 
-.def.hin:
+.def.hin :
 	grep '^CASE_' $< | $(AWK) '{printf "#define %s %d\n", $$1, n++}' >$@
 
-main$o : main.h version.h
+main$o : main.h
+misc$o : version.h
 
 $(OBJS1) : xterm.h ptyx.h xtermcfg.h
 main$o resize$o screen$o : xterm_io.h
@@ -124,11 +128,11 @@ xterm$x : $(OBJS1)
 resize$x : $(OBJS2)
 	@ECHO_LD@$(SHELL) $(srcdir)/plink.sh $(LINK) $(LDFLAGS) -o $@ $(OBJS2) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS)
 
-256colres.h : $(srcdir)/256colres.pl
+256colres.h :
 	-rm -f $@
 	perl $(srcdir)/256colres.pl > $@
 
-88colres.h : $(srcdir)/88colres.pl
+88colres.h :
 	-rm -f $@
 	perl $(srcdir)/88colres.pl > $@
 
@@ -144,8 +148,9 @@ binary_uxterm = `echo uxterm|   $(TRANSFORM)`
 install \
 install-bin \
 install-full :: xterm$x resize$x $(BINDIR)
-	$(SHELL) $(srcdir)/sinstall.sh "$(INSTALL_PROGRAM)" xterm$x  @XTERM_PATH@ $(BINDIR)/$(binary_xterm)
-	$(INSTALL_PROGRAM) -s -m  755 resize$x $(BINDIR)/$(binary_resize)
+@MAY_SETUID@	$(SHELL) $(srcdir)/sinstall.sh "$(INSTALL_PROGRAM)" xterm$x  @XTERM_PATH@ $(BINDIR)/$(binary_xterm)
+@NOT_SETUID@	$(INSTALL_PROGRAM) xterm$x $(BINDIR)/$(binary_xterm)
+	$(INSTALL_PROGRAM) -m  755 resize$x $(BINDIR)/$(binary_resize)
 	$(INSTALL_SCRIPT) -m  755 $(srcdir)/uxterm $(BINDIR)/$(binary_uxterm)
 
 install \
@@ -184,9 +189,9 @@ install-full \
 install-tc ::
 	@test -f /etc/termcap && echo 'You must install the termcap entry manually by editing /etc/termcap'
 
-installdirs: $(INSTALL_DIRS)
+installdirs : $(INSTALL_DIRS)
 
-uninstall:
+uninstall :
 	-$(RM) $(BINDIR)/$(binary_xterm)
 	-$(RM) $(BINDIR)/$(binary_resize)
 	-$(RM) $(BINDIR)/$(binary_uxterm)
@@ -196,38 +201,41 @@ uninstall:
 	-$(RM) $(APPSDIR)/$(CLASS)-color
 	-$(RM) $(APPSDIR)/UXTerm
 
-mostlyclean:
+mostlyclean :
 	-$(RM) *$o *.[is] XtermLog.* .pure core *~ *.bak *.BAK *.out *.tmp
 
-clean: mostlyclean
+clean : mostlyclean
 	-$(RM) $(PROGRAMS)
 
-distclean: clean
+distclean : clean
 	-$(RM) Makefile config.status config.cache config.log xtermcfg.h
 
-realclean: distclean
+realclean : distclean
 	-$(RM) tags TAGS ctlseqs.ps ctlseqs.txt
 
+maintainer-clean : realclean
+	-$(RM) 256colres.h 88colres.h
+
 ctlseqs.txt : ctlseqs.ms
-	tbl ctlseqs.ms | nroff -ms >$@
+	GROFF_NO_SGR=stupid $(SHELL) -c "tbl ctlseqs.ms | nroff -Tascii -ms" >$@
 
 ctlseqs.ps : ctlseqs.ms
 	tbl ctlseqs.ms | groff -ms >$@
 
-lint:
+lint :
 	$(LINT) $(CPPFLAGS) $(SRCS1)
 	$(LINT) $(CPPFLAGS) $(SRCS2)
 
-tags:
+tags :
 	ctags $(SRCS) $(HDRS)
 
-TAGS:
+TAGS :
 	etags $(SRCS) $(HDRS)
 
-$(TERMINFO_DIR) $(INSTALL_DIRS):
+$(TERMINFO_DIR) $(INSTALL_DIRS) :
 	$(SHELL) ${srcdir}/mkdirs.sh $@
 
-ALWAYS:
+ALWAYS :
 
 depend : $(TABLES)
 	makedepend -- $(CPPFLAGS) -- $(SRCS)

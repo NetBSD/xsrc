@@ -19,7 +19,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
-/* $XFree86: xc/programs/mkfontscale/list.c,v 1.6 2003/07/08 15:39:49 tsi Exp $ */
+/* $XFree86: xc/programs/mkfontscale/list.c,v 1.7 2005/02/07 01:01:16 tsi Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,6 +28,10 @@
 #include "list.h"
 
 #ifdef NEED_SNPRINTF
+#define NO_SNPRINTF	/* snprintf() not needed */
+/* In case a non-standard implementation is provided */
+#undef vsnprintf
+#define vsnprintf myvsnprintf
 #undef SCOPE
 #define SCOPE static
 #include "snprintf.c"

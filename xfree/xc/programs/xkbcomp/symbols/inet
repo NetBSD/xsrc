@@ -1,4 +1,4 @@
- // $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.38 2004/01/17 14:59:37 pascal Exp $
+ // $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.41 2004/10/27 03:12:03 dawes Exp $
 
 // EAK (Easy Access, Internet, Multimedia, PDA) keyboards
 // Copyright (C) 2002 Stanislav Brabec <sbrabec@suse.cz>
@@ -672,6 +672,25 @@ xkb_symbols "geniuscomfy2" {
     key <I6B>   {       [ XF86MyComputer        ]       };
     key <I6C>   {       [ XF86Mail              ]       };
     key <I6D>   {       [ XF86AudioMedia        ]       };
+};
+
+partial alphanumeric_keys
+xkb_symbols "genius_kb12e" {
+
+    name[Group1]= "Genius KB-12e";
+
+    key <I5F>   {       [ XF86Standby           ]       };
+    key <I6A>   {       [ XF86Back              ]       };
+    key <I69>   {       [ XF86Forward           ]       };
+    key <I32>   {       [ XF86WWW               ]       };
+    key <I22>   {       [ XF86AudioPlay, XF86AudioPause ] };
+    key <I24>   {       [ XF86AudioStop         ]       };
+    key <I30>   {       [ XF86AudioRaiseVolume  ]       };
+    key <I2E>   {       [ XF86AudioLowerVolume  ]       };
+    key <I6D>   {       [ XF86AudioMedia        ]       };
+    key <I6C>   {       [ XF86Mail              ]       };
+    key <I6B>   {       [ XF86MyComputer        ]       };
+    key <I21>   {       [ XF86Calculator        ]       };
 };
 
 // Hewlett-Packard
@@ -1467,26 +1486,32 @@ xkb_symbols "microsoftprooem" {
 };
 
 partial alphanumeric_keys
-xkb_symbols "microsoftprose" {
-    name[Group1]= "Microsoft Internet Keyboard Pro, Swedish";
+xkb_symbols "microsoftprousb" {
+    name[Group1]= "Microsoft Internet Keyboard Pro USB";
 
-    key <I6A>	{	[ XF86Back		]	};
-    key <I69>	{	[ XF86Forward		]	};
-    key <I68>	{	[ XF86AudioStop		]	};
-    key <FK16>	{	[ XF86Reload		]	};
-    key <I65>	{	[ XF86Search		]	};
-    key <I66>	{	[ XF86Favorites		]	};
-    key <I02>	{	[ XF86HomePage		]	};
-    key <I6C>	{	[ XF86Mail		]	};
+//   Multimedia Section -- Right Side 
     key <I26>	{	[ XF86AudioMute		]	};
     key <I25>	{	[ XF86AudioLowerVolume	]	};
     key <I1E>	{	[ XF86AudioRaiseVolume	]	};
     key <I1F>	{	[ XF86AudioPlay, XF86AudioPause ] };
-    key <I17>	{	[ XF86AudioStop		]	};
     key <I24>	{	[ XF86AudioPrev		]	};
+    key <I17>	{	[ XF86AudioStop		]	};
     key <I22>	{	[ XF86AudioNext		]	};
     key <XFER>	{	[ XF86AudioMedia	]	};
-    key <PRSC>	{	[ XF86MyComputer	]	};
+
+//   Internet Section -- Left Side  
+    key <I02>	{	[ XF86HomePage		]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I66>	{	[ XF86Favorites		]	};
+    key <I6A>	{	[ XF86Back		]	};
+    key <I69>	{	[ XF86Forward		]	};
+    key <I68>	{	[ XF86Stop		]	};
+    key <FK16>	{	[ XF86Reload		]	};
+    key <I65>	{	[ XF86Search		]	};
+
+//   My Computer Section -- Far Right  
+//  My computer maps to printscreen, so leaving commented out for now  
+//  key <PRSC>	{	[ XF86MyComputer	]	};
     key <I21>	{	[ XF86Calculator	]	};
     key <I63>	{	[ XF86Standby		]	};
 };
@@ -1533,9 +1558,13 @@ xkb_symbols "microsoftoffice" {
 partial alphanumeric_keys 
 xkb_symbols "microsoftmult" { 
     name[Group1]= "Microsoft Wireless Multimedia Keyboard 1.0A"; 
+
+// The Natrual Multimedia is almost the same, with the XF86Documents mapping
+// a little different.
  
 //   My Computer Section -- Left Side 
     key <I80>   {       [ XF86Documents ]       }; 
+    key <BEGN>  {       [ XF86Documents ]       }; 
     key <I64>   {       [ XF86Pictures  ]       }; 
     key <I3C>   {       [ XF86Music     ]       }; 
 

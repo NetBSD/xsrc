@@ -45,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/init.c,v 1.6 2001/12/14 20:00:51 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/init.c,v 1.7 2004/04/03 22:38:53 tsi Exp $ */
 
 /*
  * This file is used for anything that needs to dip into Xlib structures
@@ -62,13 +62,16 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xutil.h>
 #include <stdio.h>
 #include "XLbx.h"
+#include "init.h"
 
 /* Hook up to an X server and set up a multiplexing LBX encoded connection */
 struct _XDisplay*
-DisplayOpen (dpy_name, requestp, eventp, errorp, sequencep)
-    char    *dpy_name;
-    int	    *requestp, *eventp, *errorp;
-    int	    *sequencep;
+DisplayOpen (
+    char    *dpy_name,
+    int	    *requestp,
+    int	    *eventp,
+    int	    *errorp,
+    int	    *sequencep)
 {
     Display *dpy;
     int	    lbxMajor, lbxMinor;
@@ -103,19 +106,19 @@ DisplayOpen (dpy_name, requestp, eventp, errorp, sequencep)
     return dpy;
 }
 
-int DisplayConnectionNumber (dpy)
-    struct _XDisplay* dpy;
+int DisplayConnectionNumber (
+    struct _XDisplay* dpy)
 {
     return ConnectionNumber (dpy);
 }
 
-void DisplayGetConnSetup (dpy, cs, cs_len, change_type, changes, change_len)
-    struct _XDisplay* dpy;
-    xConnSetup** cs;
-    int* cs_len;
-    int change_type;
-    CARD32* changes;
-    int change_len;
+void DisplayGetConnSetup (
+    struct _XDisplay* dpy,
+    xConnSetup** cs,
+    int* cs_len,
+    int change_type,
+    CARD32* changes,
+    int change_len)
 {
     char* datap;
     xConnSetup setup;

@@ -1,4 +1,3 @@
-/* $Xorg: xtestext1.h,v 1.4 2001/02/09 02:03:24 xorgcvs Exp $ */
 /*
  * xtestext1.h
  *
@@ -324,3 +323,23 @@ typedef struct {
         CARD16  pad2 B16;       /* unused padding word         */
         CARD32  delay_time B32; /* how long to delay (in ms)   */
 } XTestDelayInfo;
+
+#ifndef XTestSERVER_SIDE
+_XFUNCPROTOBEGIN
+
+int XTestFakeInput(Display *dpy, char *action_list_addr, int action_list_size,
+		   int ack_flag);
+int XTestGetInput(Display *dpy, int action_handling);
+int XTestStopInput(Display *dpy);
+int XTestReset(Display *dpy);
+int XTestQueryInputSize(Display *dpy, unsigned long *size_return);
+int XTestPressKey(Display *display, int device_id, unsigned long delay,
+		  unsigned int keycode, unsigned int key_action);
+int XTestPressButton(Display *display, int device_id, unsigned long delay,
+		     unsigned int button_number, unsigned int button_action);
+int XTestMovePointer(Display *display, int device_id, unsigned long *delay,
+		     int *x, int *y, unsigned int count);
+int XTestFlush(Display *display);
+
+_XFUNCPROTOEND
+#endif

@@ -2,7 +2,7 @@
  * MGA-1064, MGA-G100, MGA-G200, MGA-G400, MGA-G550 RAMDAC driver
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.55 2004/02/20 16:59:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.57 2004/11/26 11:48:47 tsi Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -26,6 +26,7 @@
 #include "mga_reg.h"
 #include "mga.h"
 #include "mga_macros.h"
+#include "mga_maven.h"
 
 #include "xf86DDC.h"
 
@@ -428,7 +429,9 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	);	/* MGA_NOT_HAL */
 		
 	/*
-	 * This will initialize all of the generic VGA registers.
+	 * This will initialize all of the generic VGA registers.  Don't bother
+	 * with VGA_FIX_SYNC_PULSES, given the relevant CRTC settings are
+	 * overridden below.  Ditto for the KGA workaround.
 	 */
 	if (!vgaHWInit(pScrn, mode))
 		return(FALSE);
@@ -1021,9 +1024,18 @@ MGAGUseHWCursor(ScreenPtr pScrn, CursorPtr pCurs)
  *
  * DDC1 support only requires DDC_SDA_MASK,
  * DDC2 support reuqiers DDC_SDA_MASK and DDC_SCL_MASK
+ *
+ * If we want DDC on second head (P2) then we must use DDC2 protocol (I2C)
+ *
+ * Be careful, DDC1 and DDC2 refer to protocols, DDC_P1 and DDC_P2 refer to
+ * DDC data coming in on which videoport on the card 
  */
-static const int DDC_SDA_MASK = 1 << 1;
-static const int DDC_SCL_MASK = 1 << 3;
+static const int DDC_P1_SDA_MASK = (1 << 1);
+static const int DDC_P1_SCL_MASK = (1 << 3);
+static const int DDC_P2_SDA_MASK = (1 << 0);
+static const int DDC_P2_SCL_MASK = (1 << 2);
+static const int MAVEN_SDA_MASK = (1 << 4);
+static const int MAVEN_SCL_MASK = (1 << 5);
 
 static unsigned int
 MGAG_ddc1Read(ScrnInfoPtr pScrn)
@@ -1032,29 +1044,29 @@ MGAG_ddc1Read(ScrnInfoPtr pScrn)
   unsigned char val;
   
   /* Define the SDA as an input */
-  outMGAdacmsk(MGA1064_GEN_IO_CTL, ~(DDC_SCL_MASK | DDC_SDA_MASK), 0);
+  outMGAdacmsk(MGA1064_GEN_IO_CTL, ~(DDC_P1_SCL_MASK | DDC_P1_SDA_MASK), 0);
 
   /* wait for Vsync */
   while( INREG( MGAREG_Status ) & 0x08 );
   while( ! (INREG( MGAREG_Status ) & 0x08) );
 
   /* Get the result */
-  val = (inMGAdac(MGA1064_GEN_IO_DATA) & DDC_SDA_MASK);
+  val = (inMGAdac(MGA1064_GEN_IO_DATA) & DDC_P1_SDA_MASK);
   return val;
 }
 
 static void
-MGAG_I2CGetBits(I2CBusPtr b, int *clock, int *data) 
+MGAG_I2CGetBits(I2CBusPtr b, int *clock, int *data, int my_scl_mask, int my_sda_mask) 
 {
   ScrnInfoPtr pScrn = xf86Screens[b->scrnIndex];
   MGAPtr pMga = MGAPTR(pScrn);
   unsigned char val;
-  
-   /* Get the result. */
-   val = inMGAdac(MGA1064_GEN_IO_DATA);
-   
-   *clock = (val & DDC_SCL_MASK) != 0;
-   *data  = (val & DDC_SDA_MASK) != 0;
+
+  /* Get the result. */
+  val = inMGAdac(MGA1064_GEN_IO_DATA);
+ 
+  *clock = (val & my_scl_mask) != 0;
+  *data  = (val & my_sda_mask) != 0;
 #ifdef DEBUG
   ErrorF("MGAG_I2CGetBits(%p,...) val=0x%x, returns clock %d, data %d\n", b, val, *clock, *data);
 #endif
@@ -1063,26 +1075,59 @@ MGAG_I2CGetBits(I2CBusPtr b, int *clock, int *data)
 /*
  * ATTENTION! - the DATA and CLOCK lines need to be tri-stated when
  * high. Therefore turn off output driver for the line to set line
- * to high. High signal is maintained by a 15k Ohm pll-up resistor.
+ * to high. High signal is maintained by a 15k Ohm pull-up resistor.
  */
 static void
-MGAG_I2CPutBits(I2CBusPtr b, int clock, int data)
+MGAG_I2CPutBits(I2CBusPtr b, int clock, int data, int my_scl_mask, int my_sda_mask)
 {
   ScrnInfoPtr pScrn = xf86Screens[b->scrnIndex]; 
   MGAPtr pMga = MGAPTR(pScrn);
   unsigned char drv, val;
 
-  val = (clock ? DDC_SCL_MASK : 0) | (data ? DDC_SDA_MASK : 0);
-  drv = ((!clock) ? DDC_SCL_MASK : 0) | ((!data) ? DDC_SDA_MASK : 0);
+  val = (clock ? my_scl_mask : 0) | (data ? my_sda_mask : 0);
+  drv = ((!clock) ? my_scl_mask : 0) | ((!data) ? my_sda_mask : 0);
 
   /* Write the values */
-  outMGAdacmsk(MGA1064_GEN_IO_CTL, ~(DDC_SCL_MASK | DDC_SDA_MASK) , drv);
-  outMGAdacmsk(MGA1064_GEN_IO_DATA, ~(DDC_SCL_MASK | DDC_SDA_MASK) , val);
+  outMGAdacmsk(MGA1064_GEN_IO_CTL, ~(my_scl_mask | my_sda_mask) , drv);
+  outMGAdacmsk(MGA1064_GEN_IO_DATA, ~(my_scl_mask | my_sda_mask) , val);
 #ifdef DEBUG
   ErrorF("MGAG_I2CPutBits(%p, %d, %d) val=0x%x\n", b, clock, data, val);
 #endif
 }
+  
+/* FIXME, can we use some neater way besides these silly stubs? */
 
+static void
+MGAG_DDC_P1_I2CPutBits(I2CBusPtr b, int clock, int data)
+{
+	MGAG_I2CPutBits(b, clock, data, DDC_P1_SCL_MASK, DDC_P1_SDA_MASK);
+}
+static void
+MGAG_DDC_P2_I2CPutBits(I2CBusPtr b, int clock, int data)
+{
+	MGAG_I2CPutBits(b, clock, data, DDC_P2_SCL_MASK, DDC_P2_SDA_MASK);
+}
+static void
+MGAG_MAVEN_I2CPutBits(I2CBusPtr b, int clock, int data)
+{
+	MGAG_I2CPutBits(b, clock, data, MAVEN_SCL_MASK, MAVEN_SDA_MASK);
+}
+
+static void
+MGAG_DDC_P1_I2CGetBits(I2CBusPtr b, int *clock, int *data)
+{
+	MGAG_I2CGetBits(b, clock, data, DDC_P1_SCL_MASK, DDC_P1_SDA_MASK);
+}
+static void
+MGAG_DDC_P2_I2CGetBits(I2CBusPtr b, int *clock, int *data)
+{
+	MGAG_I2CGetBits(b, clock, data, DDC_P2_SCL_MASK, DDC_P2_SDA_MASK);
+}
+static void
+MGAG_MAVEN_I2CGetBits(I2CBusPtr b, int *clock, int *data)
+{
+	MGAG_I2CGetBits(b, clock, data, MAVEN_SCL_MASK, MAVEN_SDA_MASK);
+}
 
 Bool
 MGAG_i2cInit(ScrnInfoPtr pScrn)
@@ -1090,20 +1135,113 @@ MGAG_i2cInit(ScrnInfoPtr pScrn)
     MGAPtr pMga = MGAPTR(pScrn);
     I2CBusPtr I2CPtr;
 
-    I2CPtr = xf86CreateI2CBusRec();
-    if(!I2CPtr) return FALSE;
+    if (pMga->SecondCrtc == FALSE) {
+	    I2CPtr = xf86CreateI2CBusRec();
+	    if(!I2CPtr) return FALSE;
 
-    pMga->I2C = I2CPtr;
+	    pMga->DDC_Bus1 = I2CPtr;
 
-    I2CPtr->BusName    = "DDC";
-    I2CPtr->scrnIndex  = pScrn->scrnIndex;
-    I2CPtr->I2CPutBits = MGAG_I2CPutBits;
-    I2CPtr->I2CGetBits = MGAG_I2CGetBits;
-    I2CPtr->AcknTimeout = 5;
+	    I2CPtr->BusName    = "DDC P1";
+	    I2CPtr->scrnIndex  = pScrn->scrnIndex;
+	    I2CPtr->I2CPutBits = MGAG_DDC_P1_I2CPutBits;
+	    I2CPtr->I2CGetBits = MGAG_DDC_P1_I2CGetBits;
+	    I2CPtr->AcknTimeout = 5;
 
-    if (!xf86I2CBusInit(I2CPtr)) {
-	return FALSE;
+	    if (!xf86I2CBusInit(I2CPtr)) {
+		xf86DestroyI2CBusRec(pMga->DDC_Bus1, TRUE, TRUE);
+		pMga->DDC_Bus1 = NULL;
+		return FALSE;
+	    }
     }
+    else {
+    /* We have a dual head setup on G-series, set up DDC #2. */
+	    I2CPtr = xf86CreateI2CBusRec();
+	    if(!I2CPtr) return FALSE;
+
+	    pMga->DDC_Bus2 = I2CPtr;
+
+	    I2CPtr->BusName    = "DDC P2";
+	    I2CPtr->scrnIndex  = pScrn->scrnIndex;
+	    I2CPtr->I2CPutBits = MGAG_DDC_P2_I2CPutBits;
+	    I2CPtr->I2CGetBits = MGAG_DDC_P2_I2CGetBits;
+	    I2CPtr->AcknTimeout = 5;
+
+	    if (!xf86I2CBusInit(I2CPtr)) {
+		    xf86DestroyI2CBusRec(pMga->DDC_Bus2, TRUE, TRUE);
+		    pMga->DDC_Bus2 = NULL;
+	    }
+	    else {
+		    if (!xf86I2CProbeAddress(pMga->DDC_Bus2, 0xA0)) {  /* 0xA0 is DDC EEPROM address */
+			    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "DDC #2 unavailable -> TV cable connected or no monitor connected!\n");
+			    pMga->Crtc2IsTV = TRUE;  /* assume for now.  We need to fix HAL interactions. */
+		    }
+	    }
+
+	/* Then try to set up MAVEN bus. */
+
+	    I2CPtr = xf86CreateI2CBusRec();
+	    if(!I2CPtr) return FALSE;
+
+	    pMga->Maven_Bus = I2CPtr;
+
+	    I2CPtr->BusName    = "MAVEN";
+	    I2CPtr->scrnIndex  = pScrn->scrnIndex;
+	    I2CPtr->I2CPutBits = MGAG_MAVEN_I2CPutBits;
+	    I2CPtr->I2CGetBits = MGAG_MAVEN_I2CGetBits;
+	    I2CPtr->StartTimeout = 5;
+
+	    if (!xf86I2CBusInit(I2CPtr)) {
+		    xf86DestroyI2CBusRec(pMga->Maven_Bus, TRUE, TRUE);
+		    pMga->Maven_Bus = NULL;
+		    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Failed to register MAVEN I2C bus!\n");
+	    }
+	    else {
+		    Bool failed = FALSE;
+			/* Try to detect the MAVEN. */
+		    if (xf86I2CProbeAddress(pMga->Maven_Bus, MAVEN_READ) == TRUE) {
+			I2CDevPtr dp = xf86CreateI2CDevRec();
+			if (dp) {
+				I2CByte maven_ver;
+
+				pMga->Maven = dp;
+				dp->DevName = "MGA-TVO";
+				dp->SlaveAddr = MAVEN_WRITE;
+				dp->pI2CBus = pMga->Maven_Bus;
+				if (!xf86I2CDevInit(dp)) {
+					xf86DestroyI2CDevRec(dp, TRUE);
+					pMga->Maven = NULL;
+					failed = TRUE;
+				}
+				if (MGAMavenRead(pScrn, 0xB2, &maven_ver)) {
+					if (maven_ver < 0x14) {  /* heuristic stolen from matroxfb */
+						xf86DrvMsg(pScrn->scrnIndex, X_INFO, "MAVEN revision MGA-TVO-B detected (0x%x)\n", maven_ver);
+						pMga->Maven_Version = 'B';
+					}
+					else {
+						xf86DrvMsg(pScrn->scrnIndex, X_INFO, "MAVEN revision MGA-TVO-C detected (0x%x)\n", maven_ver);
+						pMga->Maven_Version = 'C';
+					}
+				}
+				else {
+					xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Failed to determine MAVEN hardware version!\n");
+				}
+			}
+			else {
+				failed = TRUE;
+			}
+		    }
+		    else {
+			    failed = TRUE;
+		    }
+
+		    if (failed) {
+		    	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Failed to register MGA-TVO I2C device!\n");
+			pMga->Maven = NULL;
+			pMga->Maven_Version = 0;
+		   }
+	    }
+    }
+
     return TRUE;
 }
 

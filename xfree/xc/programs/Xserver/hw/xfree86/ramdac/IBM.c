@@ -23,7 +23,7 @@
  *
  * IBM RAMDAC routines.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.13 2003/09/24 02:43:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.14 2004/11/26 11:51:59 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -466,7 +466,8 @@ IBMramdac526ShowCursor(ScrnInfoPtr pScrn)
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
 
    /* Enable cursor - X11 mode */
-   (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00, 0x07);
+   (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00,
+			  CURSOR_SIZE_64 | CURSOR_MODE_2_COLOR);
 }
 
 static void 
@@ -485,7 +486,8 @@ IBMramdac526HideCursor(ScrnInfoPtr pScrn)
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
 
    /* Disable cursor - X11 mode */
-   (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00, 0x24);
+   (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00,
+			  CURSOR_SIZE_64 | PIX_ORDER_LR);
 }
 
 static void

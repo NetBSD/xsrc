@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.c,v 1.8 2003/04/09 20:31:31 herrb Exp $ */
+/* $XFree86: xc/programs/xman/man.c,v 1.11 2004/04/03 22:26:26 dawes Exp $ */
 
 
 #include "globals.h"
@@ -63,7 +63,7 @@ static void AddToCurrentSection(Manual * local_manual, char * path);
 static void InitManual(Manual * l_manual, char * label);
 static void ReadCurrentSection(Manual * local_manual, char * path);
 static void ReadMandescFile(SectionList ** section_list, char * path);
-static void SortAndRemove(Manual *man, int number);
+static void SortAndRemove(Manual *man, Cardinal number);
 static void SortList(SectionList ** list);
 
 #define SECT_ERROR -1
@@ -71,18 +71,18 @@ static void SortList(SectionList ** list);
 #ifndef       Byte
 #define       Byte    unsigned char
 #endif
- 
+
 #ifndef       reg
 #define       reg     register
 #endif
- 
+
 static void sortstrs (Byte *data[], int size, Byte *otherdata[]);
 static void sortstrs_block (Byte **, Byte **, int, Byte, Byte **, Byte **);
 static void sortstrs_block_oo (Byte **, Byte **, int, Byte, int *, int *, Byte **, Byte **);
- 
+
 /*	Function Name: Man
  *	Description: Builds a list of all manual directories and files.
- *	Arguments: none. 
+ *	Arguments: none.
  *	Returns: the number of manual sections.
  */
 
@@ -91,9 +91,10 @@ Man(void)
 {
   SectionList *list = NULL;
   char *ptr, *lang = 0, manpath[BUFSIZ], buf[BUFSIZ], *path, *current_label;
-  int sect, num_alloced;
+  Cardinal sect;
+  unsigned num_alloced;
 
-/* 
+/*
  * Get the environment variable MANPATH, and if it doesn't exist then use
  * SYSMANPATH and LOCALMANPATH.
  */
@@ -128,7 +129,11 @@ Man(void)
  * open to look for manual pages.  The ``mandesc'' file is read here.
  */
 
-  for ( path = manpath ; (ptr = index(path , ':')) != NULL ; path = ++ptr) { 
+#ifndef __UNIXOS2__
+  for ( path = manpath ; (ptr = index(path , ':')) != NULL ; path = ++ptr) {
+#else
+  for ( path = manpath ; (ptr = index(path , ';')) != NULL ; path = ++ptr) {
+#endif
     *ptr = '\0';
     if (lang != 0) {
       strcpy(buf, path);
@@ -149,7 +154,7 @@ Man(void)
   ReadMandescFile(&list, path);
 
   SortList(&list);
-  
+
   sect = 0;
   num_alloced = SECTALLOC;
   manual = (Manual *) XtMalloc( sizeof(Manual) * num_alloced );
@@ -173,7 +178,7 @@ Man(void)
 	  num_alloced += SECTALLOC;
 	  manual = (Manual *) XtRealloc ( (char *) manual,
 				        (sizeof(Manual) * num_alloced));
-	  if (manual == NULL) 
+	  if (manual == NULL)
 	    PrintError("Could not allocate memory for manual sections.");
 	}
 	InitManual( manual + sect, list->label );
@@ -182,20 +187,20 @@ Man(void)
       AddToCurrentSection( manual + sect, list->directory);
     }
     /* Save label to see if it matches next entry. */
-    current_label = list->label; 
+    current_label = list->label;
     old_list = list;
     list = list->next;
     XtFree((char *) old_list);		/* free what you allocate. */
   }
   if (manual[sect].nentries != 0)
     sect++;			/* don't forget that last section. */
-  
+
   SortAndRemove(manual, sect);
 
 #ifdef notdef			/* dump info. */
   DumpManual(sect);
 #endif
-  
+
 /*
  * realloc manual to be minimum space necessary.
  */
@@ -203,11 +208,11 @@ Man(void)
   if (sect == 0)
     PrintError("No manual pages found.");
   manual = (Manual *) XtRealloc( (char *) manual, (sizeof(Manual) * sect));
-  if (manual == NULL) 
+  if (manual == NULL)
     PrintError("Could not allocate memory for manual sections.");
 
   return(sect);		/* return the number of man sections. */
-}    
+}
 
 /*	Function Name: SortList
  *	Description: Sorts the list of sections to search.
@@ -224,13 +229,13 @@ SortList(SectionList ** list)
 {
   SectionList * local;
   SectionList *head, *last, *inner, *old;
-  
+
   if (*list == NULL)
     PrintError("No manual sections to read, exiting.");
 
-/* 
- * First step 
- * 
+/*
+ * First step
+ *
  * Look for standard list items, and more them to the top of the list.
  */
 
@@ -242,8 +247,8 @@ SortList(SectionList ** list)
       head = local;
 
       /* Find end of standard block */
-      for (old = 0 ; (local->next != NULL) && (local->flags) 
-	   ; old = local, local = local->next); 
+      for (old = 0 ; (local->next != NULL) && (local->flags)
+	   ; old = local, local = local->next);
 
       if (old != 0) {
           last->next = old->next; /* Move the block. */
@@ -285,16 +290,16 @@ SortList(SectionList ** list)
       inner = inner->next;
     }
   }
-}	
+}
 
 /*	Function Name: ReadMandescFile
- *	Description: Reads the mandesc file, and adds more sections as 
+ *	Description: Reads the mandesc file, and adds more sections as
  *                   nescessary.
  *	Arguments: path - path name if the current search directory.
  *                 section_list - pointer to the list of sections.
  *	Returns: TRUE in we should use default sections
  */
-  
+
 static void
 ReadMandescFile(SectionList ** section_list, char * path)
 {
@@ -361,7 +366,7 @@ ReadMandescFile(SectionList ** section_list, char * path)
 void
 AddNewSection(
 SectionList **list,
-char * path, char * file, char * label, 
+char * path, char * file, char * label,
 int flags)
 {
   SectionList * local_list, * end;
@@ -375,7 +380,7 @@ int flags)
     for ( end = *list ; end->next != NULL ; end = end->next );
     end->next = local_list;
   }
-  else 
+  else
     *list = local_list;
 
   local_list->next = NULL;
@@ -383,7 +388,7 @@ int flags)
   sprintf(full_path, "%s/%s", path, file);
   local_list->directory = StrAlloc(full_path);
   local_list->flags = flags;
-}  
+}
 
 /*	Function Name: AddToCurrentSection
  *	Description: This function gets the names of the manual page
@@ -414,7 +419,7 @@ AddToCurrentSection(Manual * local_manual, char * path)
 }
 
 /*	Function Name: ReadCurrentSection
- *	Description: Actually does the work of adding entries to the 
+ *	Description: Actually does the work of adding entries to the
  *                   new section
  *	Arguments:  local_manual - a pointer to a manual pages structure.
  *                  path - the path to this directory.
@@ -429,8 +434,8 @@ ReadCurrentSection(Manual * local_manual, char * path)
 
   register struct dirent *dp;
 
-  register int nentries;
-  register int nalloc;
+  register unsigned nentries;
+  register unsigned nalloc;
   char full_name[BUFSIZ], *ptr;
 
   if((dir = opendir(path)) == NULL) {
@@ -446,8 +451,8 @@ ReadCurrentSection(Manual * local_manual, char * path)
  */
 
   if ( (ptr = rindex(path, '.')) != NULL) {
-#if !defined(SCO) && !defined(ISC)
-    if (streq(ptr + 1, COMPRESSION_EXTENSION)) 
+#if !defined(__SCO__) && !defined(ISC)
+    if (streq(ptr + 1, COMPRESSION_EXTENSION))
 #else
     if (strpbrk(ptr + 1, COMPRESSION_EXTENSIONS) != NULL)
 #endif
@@ -457,7 +462,7 @@ ReadCurrentSection(Manual * local_manual, char * path)
       *ptr = '\0';
 #endif
   }
-  
+
   nentries = local_manual->nentries;
   nalloc = local_manual->nalloc;
 
@@ -484,8 +489,8 @@ ReadCurrentSection(Manual * local_manual, char * path)
  */
 
     if ( (ptr = rindex(full_name, '.')) != NULL) {
-#if !defined(SCO) && !defined(ISC)
-      if (streq(ptr + 1, COMPRESSION_EXTENSION)) 
+#if !defined(__SCO__) && !defined(ISC)
+      if (streq(ptr + 1, COMPRESSION_EXTENSION))
 #else
       if (strpbrk(ptr + 1, COMPRESSION_EXTENSIONS) != NULL)
 #endif
@@ -496,13 +501,13 @@ ReadCurrentSection(Manual * local_manual, char * path)
 #endif
     }
     local_manual->entries[nentries] = StrAlloc(full_name);
-    local_manual->entries_less_paths[nentries] = 
+    local_manual->entries_less_paths[nentries] =
       rindex(local_manual->entries[nentries], '/');
     if ( local_manual->entries_less_paths[nentries] == NULL )
       PrintError("Internal error while cataloging manual pages.");
     ++ nentries;
   }
-  
+
   local_manual->nentries = nentries;
   local_manual->nalloc = nalloc;
 
@@ -518,38 +523,38 @@ ReadCurrentSection(Manual * local_manual, char * path)
  */
 
 static void
-SortAndRemove(Manual *man, int number)
+SortAndRemove(Manual *man, Cardinal number)
 {
-  int i;
+  Cardinal i;
   char *l1, *l2, **s1;
-  
+
   for ( i = 0; i < number; man++, i++) { /* sort each section */
-    register int i2 = 0;      
-    
+    register int i2 = 0;
+
 #ifdef DEBUG
     printf("sorting section %d - %s\n", i, man->blabel);
 #endif /* DEBUG */
 
     s1 = (char **)malloc(man->nentries * sizeof(char *));
-    
+
     /* temporarily remove suffixes of entries, preventing them from */
-    /* being used in alpabetic comparison ie sccs-delta.1 vs sccs.1 */
+    /* being used in alphabetic comparison ie sccs-delta.1 vs sccs.1 */
     for (i2=0; i2<man->nentries; i2++)
       if ((s1[i2] = rindex(man->entries_less_paths[i2], '.')) != NULL)
-	*s1[i2] = '\0';  
+	*s1[i2] = '\0';
 
     sortstrs ( (Byte **)man->entries_less_paths, man->nentries, (Byte **)man->entries );
 
     /* put back suffixes */
-    for (i2=0; i2<man->nentries; i2++) 
-      if (s1[i2] != NULL) *s1[i2] = '.';      
+    for (i2=0; i2<man->nentries; i2++)
+      if (s1[i2] != NULL) *s1[i2] = '.';
 
-    free(s1); 
-    
+    free(s1);
+
 #ifdef DEBUG
     printf("removing from section %d.\n", i);
 #endif /* DEBUG */
-    
+
     {
       register int   j, k, nent, nentm1;
       int     j2;
@@ -588,37 +593,37 @@ SortAndRemove(Manual *man, int number)
  /*
        *******  Replacement for qsort to keep
        *******  identical entries in order
- 
+
        A somewhat ugly hack of something that was once simpler...
  */
  /*
        Sort an array of pointers to strings, keeping it
        in ascending order by (1) string comparison and
        (2) original entry order in the pointer array.
- 
+
        This is a modified radix exchange algorithm.
- 
+
        In case there's insufficient memory for a temporary copy
        of the pointer array, the original order of identical strings
        isn't preserved.
  */
- 
-static void 
+
+static void
 sortstrs (Byte *data[], int size, Byte *otherdata[])
 {
        Byte   **sp, **ep;
        Byte   **othersp, **otherep;
        int     *origorder;
- 
+
  origorder = (int *) calloc (size, sizeof(int));
  if ( origorder )
     {
     reg int     i;
- 
+
     for ( i=0; i < size; ++i )
        origorder[i] = i;
     }
- 
+
  sp = data;
  ep = &data[size-1];
  othersp = otherdata;
@@ -632,22 +637,22 @@ sortstrs (Byte *data[], int size, Byte *otherdata[])
  else
     sortstrs_block ( sp, ep, 0, 0x80, othersp, otherep );
 }
- 
 
- 
+
+
  /*---------------------------------*/
  /*  Sort 1 block of data on 1 bit  */
  /*---------------------------------*/
- 
+
 static void
-sortstrs_block (  
+sortstrs_block (
        Byte   **start,
        Byte   **end,
        int      offset,
        Byte     mask,
        Byte   **otherstart,
        Byte   **otherend)
- 
+
 {
  reg   Byte   **sp, **ep;
  reg   Byte     m;
@@ -656,8 +661,8 @@ sortstrs_block (
  reg   int      curstrlen;
        int      maxstrlen;
        Byte   **othersp, **otherep;
- 
- 
+
+
 #define       newstring(ptr) \
  { \
  t = *ptr; \
@@ -666,8 +671,8 @@ sortstrs_block (
  if ( curstrlen > maxstrlen ) maxstrlen = curstrlen; \
  t = *ptr; \
  }
- 
- 
+
+
  maxstrlen = 0;
  sp  = start;
  ep  = end;
@@ -675,7 +680,7 @@ sortstrs_block (
  m   = mask;
  othersp = otherstart;
  otherep = otherend;
- 
+
  while (1)
      {
      newstring(sp)
@@ -687,7 +692,7 @@ sortstrs_block (
        }
      if ( sp == ep )
        break;
- 
+
      newstring(ep);
      while (((sp != ep) && (curstrlen >= off) && ((t[off] & m) != 0)))
        {
@@ -697,16 +702,16 @@ sortstrs_block (
        }
      if ( sp == ep )
        break;
- 
+
      t = *sp;
      *sp = *ep;
      *ep = t;
- 
+
      t      = *othersp;
      *othersp = *otherep;
      *otherep = t;
      }
- 
+
  t = *sp;
  if ((curstrlen < off) || ((t[off] & m) == 0))
     {
@@ -724,7 +729,7 @@ sortstrs_block (
        -- othersp;
        }
     }
- 
+
  m >>= 1;
  if ( m == 0 )
     {
@@ -732,20 +737,20 @@ sortstrs_block (
     if ( ++off >= maxstrlen )
        return;
     }
- 
- 
+
+
  if ( sp != start )
     sortstrs_block ( start, sp, off, m, otherstart, othersp );
  if ( ep != end )
     sortstrs_block ( ep, end, off, m, otherep, otherend );
 }
- 
 
- 
+
+
  /*-----------------------------------------------------------------*/
  /*  Sort 1 block of data on 1 bit; check for out-of-order entries  */
  /*-----------------------------------------------------------------*/
- 
+
 static void
  sortstrs_block_oo (
        Byte   **start,
@@ -756,7 +761,7 @@ static void
        int     *oend,
        Byte   **otherstart,
        Byte   **otherend)
- 
+
 {
  reg   Byte   **sp, **ep;
  reg   int     *osp, *oep;
@@ -767,8 +772,8 @@ static void
  reg   int      curstrlen;
        int      maxstrlen;
        Byte   **othersp, **otherep;
- 
- 
+
+
 #define       newstring(ptr) \
  { \
  t = *ptr; \
@@ -777,8 +782,8 @@ static void
  if ( curstrlen > maxstrlen ) maxstrlen = curstrlen; \
  t = *ptr; \
  }
- 
- 
+
+
  maxstrlen = 0;
  sp  = start;
  ep  = end;
@@ -788,7 +793,7 @@ static void
  m   = mask;
  othersp = otherstart;
  otherep = otherend;
- 
+
  while (1)
      {
      newstring(sp)
@@ -801,7 +806,7 @@ static void
        }
      if ( sp == ep )
        break;
- 
+
      newstring(ep);
      while (((sp != ep) && (curstrlen >= off) && ((t[off] & m) != 0)))
        {
@@ -812,20 +817,20 @@ static void
        }
      if ( sp == ep )
        break;
- 
+
      t   = *sp;
      *sp = *ep;
      *ep = t;
- 
+
      t      = *othersp;
      *othersp = *otherep;
      *otherep = t;
- 
+
      u    = *osp;
      *osp = *oep;
      *oep = u;
      }
- 
+
  t = *sp;
  if ((curstrlen < off) || ((t[off] & m) == 0))
     {
@@ -845,19 +850,18 @@ static void
        -- othersp;
        }
     }
- 
+
  m >>= 1;
  if ( m == 0 )
     {
     m = 0x80;
     if ( ++off >= maxstrlen )  /*  Finished sorting block of strings:    */
-       {                               /*  Restore duplicates to
-riginal order  */
+       {                       /*  Restore duplicates to original order  */
        reg Byte **cp;
        reg int *ocp;
          Byte **othercp;
- 
- 
+
+
        if ( sp != start )
         {
         cp  = start;
@@ -870,15 +874,15 @@ riginal order  */
                t       = *(cp+1);
                *(cp+1) = *cp;
                *cp     = t;
- 
+
                t               = *(othercp+1);
                *(othercp+1)    = *othercp;
                *othercp        = t;
- 
+
                u        = *(ocp+1);
                *(ocp+1) = *ocp;
                *ocp     = u;
- 
+
                if ( cp != start )
                   {
                   -- cp;
@@ -904,15 +908,15 @@ riginal order  */
                t       = *(cp+1);
                *(cp+1) = *cp;
                *cp     = t;
- 
+
                t               = *(othercp+1);
                *(othercp+1)    = *othercp;
                *othercp        = t;
- 
+
                u        = *(ocp+1);
                *(ocp+1) = *ocp;
                *ocp     = u;
- 
+
                if ( cp != ep )
                   {
                   -- cp;
@@ -929,8 +933,8 @@ riginal order  */
        return;
        }
     }
- 
- 
+
+
  if ( sp != start )
     sortstrs_block_oo ( start, sp, off, m, ostart, osp, otherstart, othersp );
  if ( ep != end )
@@ -951,7 +955,7 @@ InitManual(Manual * l_manual, char * label)
   bzero( l_manual, sizeof(Manual) );	        /* clear it. */
   l_manual->blabel = label;	                /* set label. */
 }
-  
+
 #if defined(DEBUG)
 
 /*	Function Name: DumpManual
@@ -965,10 +969,10 @@ void
 DumpManual(int number)
 {
   register int i,j;
-  
+
   for ( i = 0; i < number; i++) {
     printf("label: %s\n", manual[i].blabel);
-    for (j = 0; j < manual[i].nentries; j++) 
+    for (j = 0; j < manual[i].nentries; j++)
       printf("%s\n", manual[i].entries[j]);
   }
 }
@@ -1071,7 +1075,7 @@ ReadManConfig(char manpath[])
  *      Argument: manpath - char array to return path in.
  *    Returns: TRUE if read was successful.
  *
- *     This version expands the glob pattern that can be found 
+ *     This version expands the glob pattern that can be found
  *     in man.conf
  */
 #include <glob.h>
@@ -1085,10 +1089,10 @@ ReadManConfig(char manpath[])
     Bool        firstpath = TRUE;
     glob_t      gs;
     int         i;
-    
+
     if (!(fp = fopen(MANCONF, "r")))
 	return(FALSE);
-    
+
     while (fgets(line, sizeof(line), fp)) {
 	path = strtok(line, " \t\n");
 	if (!path || *path == '#')
@@ -1105,7 +1109,7 @@ ReadManConfig(char manpath[])
 	    }
 	} /* while */
 	for (i = 0; i < gs.gl_pathc; i++) {
-	    
+
 	    if (firstpath) {
 		strcpy(manpath, gs.gl_pathv[i]);
 		firstpath = FALSE;

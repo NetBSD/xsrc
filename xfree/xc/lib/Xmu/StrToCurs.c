@@ -50,7 +50,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.12 2002/09/24 18:55:21 alanh Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.13 2004/10/23 15:29:26 dawes Exp $ */
 
 #include	<X11/Intrinsic.h>
 #include	<X11/StringDefs.h>
@@ -334,14 +334,14 @@ XmuCvtStringToColorCursor(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 
     if (cursor == None || (fg == BlackPixelOfScreen(screen)
 			   && bg == WhitePixelOfScreen(screen)))
-	new_done(Cursor, cursor);
+	new_done(Cursor, cursor)
 
     colors[0].pixel = fg;
     colors[1].pixel = bg;
 
     XQueryColors (dpy, c_map, colors, 2);
     XRecolorCursor(dpy, cursor, colors, colors + 1);
-    new_done(Cursor, cursor);
+    new_done(Cursor, cursor)
 }
 
     

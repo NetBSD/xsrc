@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_dga.c,v 1.4 2003/08/27 15:16:08 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_dga.c,v 1.6 2004/12/07 15:59:21 tsi Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -24,13 +24,18 @@
  */
 
 
-#include "xaalocal.h"
 #include "via_driver.h"
 #include "dgaproc.h"
 
 
+#ifndef NEW_DGAOPENFRAMEBUFFER
 static Bool VIADGAOpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
                                   int *, int *, int *);
+#else
+static Bool VIADGAOpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+                                  unsigned int *, unsigned int *,
+				  unsigned int *);
+#endif
 static Bool VIADGASetMode(ScrnInfoPtr, DGAModePtr);
 static int  VIADGAGetViewport(ScrnInfoPtr);
 static void VIADGASetViewport(ScrnInfoPtr, int, int, int);
@@ -338,18 +343,29 @@ static Bool
 VIADGAOpenFramebuffer(
     ScrnInfoPtr pScrn,
     char **name,
+#ifndef NEW_DGAOPENFRAMEBUFFER
     unsigned char **mem,
     int *size,
     int *offset,
     int *flags)
+#else
+    unsigned int *mem,
+    unsigned int *size,
+    unsigned int *offset,
+    unsigned int *flags)
+#endif
 {
     VIAPtr pVia = VIAPTR(pScrn);
 
     *name = NULL;    /* no special device */
-    *mem = (unsigned char*)pVia->FrameBufferBase;
+#ifndef NEW_DGAOPENFRAMEBUFFER
+    *mem = (unsigned char *)pVia->FrameBufferBase;
+#else
+    *mem = pVia->FrameBufferBase;
+#endif
     *size = pVia->videoRambytes;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

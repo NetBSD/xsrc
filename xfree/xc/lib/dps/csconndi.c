@@ -47,7 +47,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/csconndi.c,v 1.12 2003/05/27 22:26:43 tsi Exp $ */
+/* $XFree86: xc/lib/dps/csconndi.c,v 1.13 2004/07/25 20:17:02 dawes Exp $ */
 
 #if defined(sun) && !defined(SVR4)
 #define memmove(t,f,c) bcopy(f,t,c)
@@ -743,8 +743,8 @@ void N_XWaitForWritable(Display *dpy)
 
 	if (_XANYSET(r_mask)) {
 	    char buf[BUFSIZE];
-	    BytesReadable_t pend_not_register;
-	    register long pend;
+	    int pend_not_register;
+	    register int pend;
 	    register xEvent *ev;
 
 	    /* find out how much data can be read */

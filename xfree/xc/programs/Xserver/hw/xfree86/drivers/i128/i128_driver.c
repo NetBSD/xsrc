@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.35 2003/11/06 18:38:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.36 2005/02/18 02:55:07 dawes Exp $ */
 
 
 /* All drivers should typically include these */
@@ -1745,17 +1745,18 @@ I128ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 
     lace = 1 + ((mode->Flags & V_INTERLACE) != 0);
 
-    if ((mode->CrtcHDisplay <= 2048) &&
-	(mode->CrtcHSyncStart <= 4096) && 
-	(mode->CrtcHSyncEnd <= 4096) && 
-	(mode->CrtcHTotal <= 4096) &&
-	(mode->CrtcVDisplay <= 2048 * lace) &&
-	(mode->CrtcVSyncStart <= 4096 * lace) &&
-	(mode->CrtcVSyncEnd <= 4096 * lace) &&
-	(mode->CrtcVTotal <= 4096 * lace)) {
-	return(MODE_OK);
+    if ((mode->CrtcHDisplay > 2048) ||
+	(mode->CrtcHSyncStart > 4096) ||
+	(mode->CrtcHSyncEnd > 4096) ||
+	(mode->CrtcHTotal > 4096)) {
+	return(MODE_BAD_HVALUE);
+    } else if ((mode->CrtcVDisplay > 2048 * lace) ||
+	(mode->CrtcVSyncStart > 4096 * lace) ||
+	(mode->CrtcVSyncEnd > 4096 * lace) ||
+	(mode->CrtcVTotal > 4096 * lace)) {
+	return(MODE_BAD_VVALUE);
     } else {
-	return(MODE_BAD);
+	return(MODE_OK);
     }
 }
 

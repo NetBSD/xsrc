@@ -1,11 +1,13 @@
+/* $XTermId: input.c,v 1.169 2005/01/10 00:36:38 tom Exp $ */
+
 /*
  *	$Xorg: input.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/input.c,v 3.69 2003/12/31 17:12:28 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/input.c,v 3.72 2005/01/14 01:50:03 dickey Exp $ */
 
 /*
- * Copyright 1999-2002,2003 by Thomas E. Dickey
+ * Copyright 1999-2004,2005 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -66,11 +68,11 @@
 #include <X11/keysymdef.h>
 #endif
 
-#ifdef HAVE_X11_DECKEYSYM_H
+#if HAVE_X11_DECKEYSYM_H
 #include <X11/DECkeysym.h>
 #endif
 
-#ifdef HAVE_X11_SUNKEYSYM_H
+#if HAVE_X11_SUNKEYSYM_H
 #include <X11/Sunkeysym.h>
 #endif
 
@@ -150,7 +152,7 @@ AdjustAfterInput(TScreen * screen)
 }
 
 /* returns true if the key is on the editing keypad */
-static Boolean
+static Bool
 IsEditFunctionKey(KeySym keysym)
 {
     switch (keysym) {
@@ -255,47 +257,6 @@ TranslateFromSUNPC(KeySym keysym)
 #define MODIFIER_PARM		/*nothing */
 #endif
 
-#if OPT_WIDE_CHARS
-/* Convert a Unicode value c into a UTF-8 sequence in strbuf */
-int
-convertFromUTF8(unsigned long c, Char * strbuf)
-{
-    int nbytes = 0;
-
-    if (c < 0x80) {
-	strbuf[nbytes++] = c;
-    } else if (c < 0x800) {
-	strbuf[nbytes++] = 0xc0 | (c >> 6);
-	strbuf[nbytes++] = 0x80 | (c & 0x3f);
-    } else if (c < 0x10000) {
-	strbuf[nbytes++] = 0xe0 | (c >> 12);
-	strbuf[nbytes++] = 0x80 | ((c >> 6) & 0x3f);
-	strbuf[nbytes++] = 0x80 | (c & 0x3f);
-    } else if (c < 0x200000) {
-	strbuf[nbytes++] = 0xf0 | (c >> 18);
-	strbuf[nbytes++] = 0x80 | ((c >> 12) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 6) & 0x3f);
-	strbuf[nbytes++] = 0x80 | (c & 0x3f);
-    } else if (c < 0x4000000) {
-	strbuf[nbytes++] = 0xf8 | (c >> 24);
-	strbuf[nbytes++] = 0x80 | ((c >> 18) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 12) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 6) & 0x3f);
-	strbuf[nbytes++] = 0x80 | (c & 0x3f);
-    } else if (c < UCS_LIMIT) {
-	strbuf[nbytes++] = 0xfe | (c >> 30);
-	strbuf[nbytes++] = 0x80 | ((c >> 24) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 18) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 12) & 0x3f);
-	strbuf[nbytes++] = 0x80 | ((c >> 6) & 0x3f);
-	strbuf[nbytes++] = 0x80 | (c & 0x3f);
-    } else
-	return convertFromUTF8(UCS_REPL, strbuf);
-
-    return nbytes;
-}
-#endif /* OPT_WIDE_CHARS */
-
 /*
  * Determine if we use the \E[3~ sequence for Delete, or the legacy ^?.  We
  * maintain the delete_is_del value as 3 states:  unspecified(2), true and
@@ -306,11 +267,11 @@ convertFromUTF8(unsigned long c, Char * strbuf)
  * setting, popup menu or escape sequence, it overrides the keyboard type
  * rather than the reverse.
  */
-Boolean
+Bool
 xtermDeleteIsDEL(void)
 {
     TScreen *screen = &term->screen;
-    Boolean result = True;
+    Bool result = True;
 
     if (term->keyboard.type == keyboardIsDefault
 	|| term->keyboard.type == keyboardIsVT220)
@@ -338,7 +299,7 @@ Input(TKeyboard * keyboard,
 
     char strbuf[STRBUFSIZE];
     Char *string;
-    int key = FALSE;
+    int key = False;
     int pty = screen->respond;
     int nbytes;
     KeySym keysym = 0;
@@ -354,8 +315,13 @@ Input(TKeyboard * keyboard,
 #if OPT_TCAP_QUERY
     if (screen->tc_query >= 0) {
 	keysym = screen->tc_query;
-	nbytes = 0;
-	strbuf[0] = 0;
+	if (keysym != XK_BackSpace) {
+	    nbytes = 0;
+	    strbuf[0] = 0;
+	} else {
+	    nbytes = 1;
+	    strbuf[0] = 8;
+	}
     } else
 #endif
 #if OPT_I18N_SUPPORT
@@ -566,12 +532,12 @@ Input(TKeyboard * keyboard,
 	VT52_CURSOR_KEYS;
 	MODIFIER_PARM;
 	unparseseq(&reply, pty);
-	key = TRUE;
+	key = True;
 #if 0				/* OPT_SUNPC_KBD should suppress - but only for vt220 compatibility */
     } else if (keyboard->type == keyboardIsVT220
 	       && screen->vtXX_level <= 1
 	       && IsEditFunctionKey(keysym)) {
-	key = FALSE;		/* ignore editing-keypad in vt100 mode */
+	key = False;		/* ignore editing-keypad in vt100 mode */
 #endif
     } else if (IsCursorKey(keysym) &&
 	       keysym != XK_Prior && keysym != XK_Next) {
@@ -594,7 +560,7 @@ Input(TKeyboard * keyboard,
 	VT52_CURSOR_KEYS;
 	MODIFIER_PARM;
 	unparseseq(&reply, pty);
-	key = TRUE;
+	key = True;
     } else if (IsFunctionKey(keysym)
 	       || IsMiscFunctionKey(keysym)
 	       || IsEditFunctionKey(keysym)
@@ -657,7 +623,7 @@ Input(TKeyboard * keyboard,
 		&& (reply.a_nparam == 0 || reply.a_param[0] >= 0))
 		unparseseq(&reply, pty);
 	}
-	key = TRUE;
+	key = True;
     } else if (IsKeypadKey(keysym)) {
 	if (keypad_mode) {
 	    reply.a_type = SS3;
@@ -668,7 +634,7 @@ Input(TKeyboard * keyboard,
 	} else {
 	    unparseputc(kypd_num[keysym - XK_KP_Space], pty);
 	}
-	key = TRUE;
+	key = True;
     } else if (nbytes > 0) {
 #if OPT_TEK4014
 	if (screen->TekGIN) {
@@ -737,7 +703,7 @@ Input(TKeyboard * keyboard,
 	}
 	while (nbytes-- > 0)
 	    unparseputc(*string++, pty);
-	key = TRUE;
+	key = True;
     }
     if (key && !TEK4014_ACTIVE(screen))
 	AdjustAfterInput(screen);
@@ -1023,7 +989,7 @@ TranslationsUseKeyword(Widget w, const char *keyword)
     Bool result = False;
 
     XtGetSubresources(w,
-		      (XtPointer) & data,
+		      (XtPointer) &data,
 		      "vt100",
 		      "VT100",
 		      key_resources,
@@ -1087,37 +1053,43 @@ VTInitModifiers(void)
     int min_keycode, max_keycode, keysyms_per_keycode = 0;
 
     if (keymap != 0) {
+	KeySym *theMap;
 
 	TRACE(("VTInitModifiers\n"));
 
 	XDisplayKeycodes(dpy, &min_keycode, &max_keycode);
-	XGetKeyboardMapping(dpy, min_keycode, (max_keycode - min_keycode + 1),
-			    &keysyms_per_keycode);
+	theMap = XGetKeyboardMapping(dpy,
+				     min_keycode,
+				     (max_keycode - min_keycode + 1),
+				     &keysyms_per_keycode);
 
-	for (i = k = 0, mask = 1; i < 8; i++, mask <<= 1) {
-	    for (j = 0; j < keymap->max_keypermod; j++) {
-		KeyCode code = keymap->modifiermap[k];
-		if (code != 0) {
-		    KeySym keysym;
-		    int l = 0;
-		    do {
-			keysym = XKeycodeToKeysym(dpy, code, l);
-			l++;
-		    } while (!keysym && l < keysyms_per_keycode);
-		    if (keysym == XK_Num_Lock) {
-			SaveMask(num_lock);
-		    } else if (keysym == XK_Alt_L) {
-			SaveMask(alt_left);
-		    } else if (keysym == XK_Alt_R) {
-			SaveMask(alt_right);
-		    } else if (keysym == XK_Meta_L) {
-			SaveMask(meta_left);
-		    } else if (keysym == XK_Meta_R) {
-			SaveMask(meta_right);
+	if (theMap != 0) {
+	    for (i = k = 0, mask = 1; i < 8; i++, mask <<= 1) {
+		for (j = 0; j < keymap->max_keypermod; j++) {
+		    KeyCode code = keymap->modifiermap[k];
+		    if (code != 0) {
+			KeySym keysym;
+			int l = 0;
+			do {
+			    keysym = XKeycodeToKeysym(dpy, code, l);
+			    l++;
+			} while (!keysym && l < keysyms_per_keycode);
+			if (keysym == XK_Num_Lock) {
+			    SaveMask(num_lock);
+			} else if (keysym == XK_Alt_L) {
+			    SaveMask(alt_left);
+			} else if (keysym == XK_Alt_R) {
+			    SaveMask(alt_right);
+			} else if (keysym == XK_Meta_L) {
+			    SaveMask(meta_left);
+			} else if (keysym == XK_Meta_R) {
+			    SaveMask(meta_right);
+			}
 		    }
+		    k++;
 		}
-		k++;
 	    }
+	    XFree(theMap);
 	}
 
 	/* Don't disable any mods if "alwaysUseMods" is true. */

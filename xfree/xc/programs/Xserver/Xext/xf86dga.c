@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.22 2003/07/16 01:38:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.24 2004/12/09 19:33:00 tsi Exp $ */
 
 /*
 
@@ -44,7 +44,8 @@ ProcXF86DGAGetVideoLL(ClientPtr client)
     REQUEST(xXF86DGAGetVideoLLReq);
     xXF86DGAGetVideoLLReply rep;
     XDGAModeRec mode;
-    int num, offset, flags;
+    int num;
+    unsigned int addr[2], offset, flags;
     char *name;
 
     if (stuff->screen > screenInfo.numScreens)
@@ -64,12 +65,20 @@ ProcXF86DGAGetVideoLL(ClientPtr client)
     /* get the parameters for the mode that best matches */
     DGAGetModeInfo(stuff->screen, &mode, num);
 
-    if(!DGAOpenFramebuffer(stuff->screen, &name, 
-			(unsigned char**)(&rep.offset), 	
-			(int*)(&rep.bank_size), &offset, &flags))
+    addr[0] = addr[1] = rep.bank_size = offset = flags = 0;
+    name = NULL;
+
+    if(!DGAOpenFramebuffer(stuff->screen, &name, addr,
+			(unsigned int*)(&rep.bank_size), &offset, &flags))
 	return BadAlloc;
 
-    rep.offset += mode.offset;
+    /* There's room only for the bottom 32 bits of the address */
+    if ((name && *name) || (addr[1] != 0) || (rep.bank_size == 0) ||
+	(((rep.offset = addr[0]) ^ (unsigned int)(-1L)) < offset) ||
+	(((rep.offset += offset) ^ (unsigned int)(-1L)) < mode.offset) ||
+	(((rep.offset += mode.offset) ^ (unsigned int)(-1L)) < rep.bank_size))
+	return (DGAErrorBase + XF86DGAOperationNotSupported); /* BadAlloc? */
+
     rep.width = mode.bytesPerScanline / (mode.bitsPerPixel >> 3);
     rep.ram_size = rep.bank_size >> 10;
 

@@ -27,6 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/programs/lbxproxy/di/zeropad.c,v 1.3 2004/04/03 22:38:54 tsi Exp $ */
 
 /*
  * This module handles zeroing out unused pad bytes in X requests.
@@ -35,10 +36,11 @@ from The Open Group.
  */
 
 #include <X11/Xproto.h>
+#include "zeropad.h"
 
 static void
-ZeroEmptyReq (req)
-    xReq *req;
+ZeroEmptyReq (
+    xReq *req)
 {
     req->data = 0;
 }
@@ -58,8 +60,8 @@ ZeroEmptyReq (req)
 
 
 static void
-ZeroResourceReq (req)
-    xResourceReq *req;
+ZeroResourceReq (
+    xResourceReq *req)
 {
     req->pad = 0;
 }
@@ -92,37 +94,37 @@ ZeroResourceReq (req)
 
 
 static void
-ZeroChangeWindowAttributesReq (req)
-    xChangeWindowAttributesReq *req;
+ZeroChangeWindowAttributesReq (
+    xChangeWindowAttributesReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroReparentWindowReq (req)
-    xReparentWindowReq *req;
+ZeroReparentWindowReq (
+    xReparentWindowReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroConfigureWindowReq (req)
-    xConfigureWindowReq *req;
+ZeroConfigureWindowReq (
+    xConfigureWindowReq *req)
 {
     req->pad = 0;
     req->pad2 = 0;
 }
 
 static void
-ZeroInternAtomReq (req)
-    xInternAtomReq *req;
+ZeroInternAtomReq (
+    xInternAtomReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroChangePropertyReq (req)
-    xChangePropertyReq *req;
+ZeroChangePropertyReq (
+    xChangePropertyReq *req)
 {
     req->pad[0] = 0;
     req->pad[1] = 0;
@@ -130,58 +132,58 @@ ZeroChangePropertyReq (req)
 }
 
 static void
-ZeroDeletePropertyReq (req)
-    xDeletePropertyReq *req;
+ZeroDeletePropertyReq (
+    xDeletePropertyReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroSetSelectionOwnerReq (req)
-    xSetSelectionOwnerReq *req;
+ZeroSetSelectionOwnerReq (
+    xSetSelectionOwnerReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroConvertSelectionReq (req)
-    xConvertSelectionReq *req;
+ZeroConvertSelectionReq (
+    xConvertSelectionReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroGrabButtonReq (req)
-    xGrabButtonReq *req;
+ZeroGrabButtonReq (
+    xGrabButtonReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroUngrabButtonReq (req)
-    xUngrabButtonReq *req;
+ZeroUngrabButtonReq (
+    xUngrabButtonReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroChangeActivePointerGrabReq (req)
-    xChangeActivePointerGrabReq *req;
+ZeroChangeActivePointerGrabReq (
+    xChangeActivePointerGrabReq *req)
 {
     req->pad = 0;
     req->pad2 = 0;
 }
 
 static void
-ZeroGrabKeyboardReq (req)
-    xGrabKeyboardReq *req;
+ZeroGrabKeyboardReq (
+    xGrabKeyboardReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroGrabKeyReq (req)
-    xGrabKeyReq *req;
+ZeroGrabKeyReq (
+    xGrabKeyReq *req)
 {
     req->pad1 = 0;
     req->pad2 = 0;
@@ -189,36 +191,36 @@ ZeroGrabKeyReq (req)
 }
 
 static void
-ZeroUngrabKeyReq (req)
-    xUngrabKeyReq *req;
+ZeroUngrabKeyReq (
+    xUngrabKeyReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroGetMotionEventsReq (req)
-    xGetMotionEventsReq *req;
+ZeroGetMotionEventsReq (
+    xGetMotionEventsReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroTranslateCoordsReq (req)
-    xTranslateCoordsReq *req;
+ZeroTranslateCoordsReq (
+    xTranslateCoordsReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroWarpPointerReq (req)
-    xWarpPointerReq *req;
+ZeroWarpPointerReq (
+    xWarpPointerReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroOpenFontReq (req)
-    xOpenFontReq *req;
+ZeroOpenFontReq (
+    xOpenFontReq *req)
 {
     req->pad = 0;
     req->pad1 = 0;
@@ -226,8 +228,8 @@ ZeroOpenFontReq (req)
 }
 
 static void
-ZeroListFontsReq (req)
-    xListFontsReq *req;
+ZeroListFontsReq (
+    xListFontsReq *req)
 {
     req->pad = 0;
 }
@@ -235,8 +237,8 @@ ZeroListFontsReq (req)
 #define ZeroListFontsWithInfoReq ZeroListFontsReq
 
 static void
-ZeroSetFontPathReq (req)
-    xSetFontPathReq *req;
+ZeroSetFontPathReq (
+    xSetFontPathReq *req)
 {
     req->pad = 0;
     req->pad1 = 0;
@@ -244,50 +246,50 @@ ZeroSetFontPathReq (req)
 }
 
 static void
-ZeroCreateGCReq (req)
-    xCreateGCReq *req;
+ZeroCreateGCReq (
+    xCreateGCReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroChangeGCReq (req)
-    xChangeGCReq *req;
+ZeroChangeGCReq (
+    xChangeGCReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroCopyGCReq (req)
-    xCopyGCReq *req;
+ZeroCopyGCReq (
+    xCopyGCReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroSetDashesReq (req)
-    xSetDashesReq *req;
+ZeroSetDashesReq (
+    xSetDashesReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroCopyAreaReq (req)
-    xCopyAreaReq *req;
+ZeroCopyAreaReq (
+    xCopyAreaReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroCopyPlaneReq (req)
-    xCopyPlaneReq *req;
+ZeroCopyPlaneReq (
+    xCopyPlaneReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroPolySegmentReq (req)
-    xPolySegmentReq *req;
+ZeroPolySegmentReq (
+    xPolySegmentReq *req)
 {
     req->pad = 0;
 }    
@@ -298,23 +300,23 @@ ZeroPolySegmentReq (req)
 #define ZeroPolyFillArcReq ZeroPolySegmentReq
 
 static void
-ZeroFillPolyReq (req)
-    xFillPolyReq *req;
+ZeroFillPolyReq (
+    xFillPolyReq *req)
 {
     req->pad = 0;
     req->pad1 = 0;
 }    
 
 static void
-ZeroPutImageReq (req)
-    xPutImageReq *req;
+ZeroPutImageReq (
+    xPutImageReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroPolyTextReq (req)
-    xPolyTextReq *req;
+ZeroPolyTextReq (
+    xPolyTextReq *req)
 {
     req->pad = 0;
 }    
@@ -323,23 +325,23 @@ ZeroPolyTextReq (req)
 #define ZeroPolyText16Req ZeroPolyTextReq
 
 static void
-ZeroCopyColormapAndFreeReq (req)
-    xCopyColormapAndFreeReq *req;
+ZeroCopyColormapAndFreeReq (
+    xCopyColormapAndFreeReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroAllocColorReq (req)
-    xAllocColorReq *req;
+ZeroAllocColorReq (
+    xAllocColorReq *req)
 {
     req->pad = 0;
     req->pad2 = 0;
 }    
 
 static void
-ZeroAllocNamedColorReq (req)
-    xAllocNamedColorReq *req;
+ZeroAllocNamedColorReq (
+    xAllocNamedColorReq *req)
 {
     req->pad = 0;
     req->pad1 = 0;
@@ -347,259 +349,259 @@ ZeroAllocNamedColorReq (req)
 }    
 
 static void
-ZeroFreeColorsReq (req)
-    xFreeColorsReq *req;
+ZeroFreeColorsReq (
+    xFreeColorsReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroStoreColorsReq (req)
-    xStoreColorsReq *req;
+ZeroStoreColorsReq (
+    xStoreColorsReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroStoreNamedColorReq (req)
-    xStoreNamedColorReq *req;
+ZeroStoreNamedColorReq (
+    xStoreNamedColorReq *req)
 {
-    req->pad1 = 0;
-    req->pad2 = 0;
-}
-
-static void
-ZeroQueryColorsReq (req)
-    xQueryColorsReq *req;
-{
-    req->pad = 0;
-}    
-
-static void
-ZeroLookupColorReq (req)
-    xLookupColorReq *req;
-{
-    req->pad = 0;
-    req->pad1 = 0;
-    req->pad2 = 0;
-}    
-
-static void
-ZeroCreateCursorReq (req)
-    xCreateCursorReq *req;
-{
-    req->pad = 0;
-}    
-
-static void
-ZeroCreateGlyphCursorReq (req)
-    xCreateGlyphCursorReq *req;
-{
-    req->pad = 0;
-}    
-
-static void
-ZeroRecolorCursorReq (req)
-    xRecolorCursorReq *req;
-{
-    req->pad = 0;
-}    
-
-static void
-ZeroQueryExtensionReq (req)
-    xQueryExtensionReq *req;
-{
-    req->pad = 0;
     req->pad1 = 0;
     req->pad2 = 0;
 }
 
 static void
-ZeroGetKeyboardMappingReq (req)
-    xGetKeyboardMappingReq *req;
+ZeroQueryColorsReq (
+    xQueryColorsReq *req)
+{
+    req->pad = 0;
+}    
+
+static void
+ZeroLookupColorReq (
+    xLookupColorReq *req)
+{
+    req->pad = 0;
+    req->pad1 = 0;
+    req->pad2 = 0;
+}    
+
+static void
+ZeroCreateCursorReq (
+    xCreateCursorReq *req)
+{
+    req->pad = 0;
+}    
+
+static void
+ZeroCreateGlyphCursorReq (
+    xCreateGlyphCursorReq *req)
+{
+    req->pad = 0;
+}    
+
+static void
+ZeroRecolorCursorReq (
+    xRecolorCursorReq *req)
+{
+    req->pad = 0;
+}    
+
+static void
+ZeroQueryExtensionReq (
+    xQueryExtensionReq *req)
+{
+    req->pad = 0;
+    req->pad1 = 0;
+    req->pad2 = 0;
+}
+
+static void
+ZeroGetKeyboardMappingReq (
+    xGetKeyboardMappingReq *req)
 {
     req->pad = 0;
     req->pad1 = 0;
 }    
 
 static void
-ZeroChangeKeyboardMappingReq (req)
-    xChangeKeyboardMappingReq *req;
+ZeroChangeKeyboardMappingReq (
+    xChangeKeyboardMappingReq *req)
 {
     req->pad1 = 0;
 }
 
 static void
-ZeroChangeKeyboardControlReq (req)
-    xChangeKeyboardControlReq *req;
+ZeroChangeKeyboardControlReq (
+    xChangeKeyboardControlReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroChangePointerControlReq (req)
-    xChangePointerControlReq *req;
+ZeroChangePointerControlReq (
+    xChangePointerControlReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroSetScreenSaverReq (req)
-    xSetScreenSaverReq *req;
+ZeroSetScreenSaverReq (
+    xSetScreenSaverReq *req)
 {
     req->pad = 0;
     req->pad2 = 0;
 }    
 
 static void
-ZeroChangeHostsReq (req)
-    xChangeHostsReq *req;
+ZeroChangeHostsReq (
+    xChangeHostsReq *req)
 {
     req->pad = 0;
 }    
 
 static void
-ZeroListHostsReq (req)
-    xListHostsReq *req;
+ZeroListHostsReq (
+    xListHostsReq *req)
 {
     req->pad = 0;
 }
 
 static void
-ZeroRotatePropertiesReq (req)
-    xRotatePropertiesReq *req;
+ZeroRotatePropertiesReq (
+    xRotatePropertiesReq *req)
 {
     req->pad = 0;
 }
 
-void (*ZeroPadReqVector[128]) () =
+ZPREQ_T ZeroPadReqVector[128] =
 {
-    0,
-    0, /* CreateWindowReq */
-    ZeroChangeWindowAttributesReq,
-    ZeroGetWindowAttributesReq,
-    ZeroDestroyWindowReq,
-    ZeroDestroySubwindowsReq,		/* 5 */
-    0, /* ChangeSaveSetReq */
-    ZeroReparentWindowReq,
-    ZeroMapWindowReq,
-    ZeroMapSubwindowsReq,
-    ZeroUnmapWindowReq,			/* 10 */
-    ZeroUnmapSubwindowsReq,
-    ZeroConfigureWindowReq,
-    0, /* CirculateWindowReq */
-    ZeroGetGeometryReq,
-    ZeroQueryTreeReq,			/* 15 */
-    ZeroInternAtomReq,
-    ZeroGetAtomNameReq,
-    ZeroChangePropertyReq,
-    ZeroDeletePropertyReq,
-    0, /* GetPropertyReq */		/* 20 */
-    ZeroListPropertiesReq,
-    ZeroSetSelectionOwnerReq,
-    ZeroGetSelectionOwnerReq,
-    ZeroConvertSelectionReq,
-    0, /* SendEventReq */		/* 25 */
-    0, /* GrabPointerReq */
-    ZeroUngrabPointerReq,
-    ZeroGrabButtonReq,
-    ZeroUngrabButtonReq,
-    ZeroChangeActivePointerGrabReq,	/* 30 */
-    ZeroGrabKeyboardReq,
-    ZeroUngrabKeyboardReq,
-    ZeroGrabKeyReq,
-    ZeroUngrabKeyReq,
-    0, /* AllowEventsReq */		/* 35 */
-    ZeroGrabServerReq,
-    ZeroUngrabServerReq,
-    ZeroQueryPointerReq,
-    ZeroGetMotionEventsReq,
-    ZeroTranslateCoordsReq,		/* 40 */
-    ZeroWarpPointerReq,
-    0, /* SetInputFocusReq */
-    ZeroGetInputFocusReq,
-    ZeroQueryKeymapReq,
-    ZeroOpenFontReq,			/* 45 */
-    ZeroCloseFontReq,
-    ZeroQueryFontReq,
-    0, /* QueryTextExtentsReq */
-    ZeroListFontsReq,
-    ZeroListFontsWithInfoReq,		/* 50 */
-    ZeroSetFontPathReq,
-    ZeroGetFontPathReq,
-    0, /* CreatePixmapReq */
-    ZeroFreePixmapReq,
-    ZeroCreateGCReq,			/* 55 */
-    ZeroChangeGCReq,
-    ZeroCopyGCReq,
-    ZeroSetDashesReq,
-    0, /* SetClipRectanglesReq */
-    ZeroFreeGCReq,			/* 60 */
-    0, /* ClearToBackgroundReq */
-    ZeroCopyAreaReq,
-    ZeroCopyPlaneReq,
-    0, /* PolyPointReq */
-    0, /* PolyLineReq */		/* 65 */
-    ZeroPolySegmentReq,
-    ZeroPolyRectangleReq,
-    ZeroPolyArcReq,
-    ZeroFillPolyReq,
-    ZeroPolyFillRectangleReq,		/* 70 */
-    ZeroPolyFillArcReq,
-    ZeroPutImageReq,
-    0, /* GetImageReq */
-    ZeroPolyText8Req,
-    ZeroPolyText16Req,			/* 75 */
-    0, /* ImageText8Req */
-    0, /* ImageText16Req */
-    0, /* CreateColormapReq */
-    ZeroFreeColormapReq,
-    ZeroCopyColormapAndFreeReq,		/* 80 */
-    ZeroInstallColormapReq,
-    ZeroUninstallColormapReq,
-    ZeroListInstalledColormapsReq,
-    ZeroAllocColorReq,
-    ZeroAllocNamedColorReq,		/* 85 */
-    0, /* AllocColorCellsReq */
-    0, /* AllocColorPlanesReq */
-    ZeroFreeColorsReq,
-    ZeroStoreColorsReq,
-    ZeroStoreNamedColorReq,		/* 90 */
-    ZeroQueryColorsReq,
-    ZeroLookupColorReq,
-    ZeroCreateCursorReq,
-    ZeroCreateGlyphCursorReq,
-    ZeroFreeCursorReq,			/* 95 */
-    ZeroRecolorCursorReq,
-    0, /* QueryBestSizeReq */
-    ZeroQueryExtensionReq,
-    ZeroListExtensionsReq,
-    ZeroChangeKeyboardMappingReq,	/* 100 */
-    ZeroGetKeyboardMappingReq,
-    ZeroChangeKeyboardControlReq,
-    ZeroGetKeyboardControlReq,
-    0, /* BellReq */
-    ZeroChangePointerControlReq,	/* 105 */
-    ZeroGetPointerControlReq,
-    ZeroSetScreenSaverReq,
-    ZeroGetScreenSaverReq,
-    ZeroChangeHostsReq,
-    ZeroListHostsReq,			/* 110 */
-    0, /* ChangeAccessControlReq */
-    0, /* ChangeCloseDownModeReq */
-    ZeroKillClientReq,
-    ZeroRotatePropertiesReq,
-    0, /* ForceScreenSaverReq */	/* 115 */
-    0, /* SetPointerMappingReq */
-    ZeroGetPointerMappingReq,
-    0, /* SetModifierMappingReq */
-    ZeroGetModifierMappingReq,
-    0,					/* 120 */
-    0,
-    0,
-    0,
-    0,
-    0,					/* 125 */
-    0,
-    ZeroNoOperationReq
+    (ZPREQ_T)0,
+    (ZPREQ_T)0, /* CreateWindowReq */
+    (ZPREQ_T)ZeroChangeWindowAttributesReq,
+    (ZPREQ_T)ZeroGetWindowAttributesReq,
+    (ZPREQ_T)ZeroDestroyWindowReq,
+    (ZPREQ_T)ZeroDestroySubwindowsReq,		/* 5 */
+    (ZPREQ_T)0, /* ChangeSaveSetReq */
+    (ZPREQ_T)ZeroReparentWindowReq,
+    (ZPREQ_T)ZeroMapWindowReq,
+    (ZPREQ_T)ZeroMapSubwindowsReq,
+    (ZPREQ_T)ZeroUnmapWindowReq,		/* 10 */
+    (ZPREQ_T)ZeroUnmapSubwindowsReq,
+    (ZPREQ_T)ZeroConfigureWindowReq,
+    (ZPREQ_T)0, /* CirculateWindowReq */
+    (ZPREQ_T)ZeroGetGeometryReq,
+    (ZPREQ_T)ZeroQueryTreeReq,			/* 15 */
+    (ZPREQ_T)ZeroInternAtomReq,
+    (ZPREQ_T)ZeroGetAtomNameReq,
+    (ZPREQ_T)ZeroChangePropertyReq,
+    (ZPREQ_T)ZeroDeletePropertyReq,
+    (ZPREQ_T)0, /* GetPropertyReq */		/* 20 */
+    (ZPREQ_T)ZeroListPropertiesReq,
+    (ZPREQ_T)ZeroSetSelectionOwnerReq,
+    (ZPREQ_T)ZeroGetSelectionOwnerReq,
+    (ZPREQ_T)ZeroConvertSelectionReq,
+    (ZPREQ_T)0, /* SendEventReq */		/* 25 */
+    (ZPREQ_T)0, /* GrabPointerReq */
+    (ZPREQ_T)ZeroUngrabPointerReq,
+    (ZPREQ_T)ZeroGrabButtonReq,
+    (ZPREQ_T)ZeroUngrabButtonReq,
+    (ZPREQ_T)ZeroChangeActivePointerGrabReq,	/* 30 */
+    (ZPREQ_T)ZeroGrabKeyboardReq,
+    (ZPREQ_T)ZeroUngrabKeyboardReq,
+    (ZPREQ_T)ZeroGrabKeyReq,
+    (ZPREQ_T)ZeroUngrabKeyReq,
+    (ZPREQ_T)0, /* AllowEventsReq */		/* 35 */
+    (ZPREQ_T)ZeroGrabServerReq,
+    (ZPREQ_T)ZeroUngrabServerReq,
+    (ZPREQ_T)ZeroQueryPointerReq,
+    (ZPREQ_T)ZeroGetMotionEventsReq,
+    (ZPREQ_T)ZeroTranslateCoordsReq,		/* 40 */
+    (ZPREQ_T)ZeroWarpPointerReq,
+    (ZPREQ_T)0, /* SetInputFocusReq */
+    (ZPREQ_T)ZeroGetInputFocusReq,
+    (ZPREQ_T)ZeroQueryKeymapReq,
+    (ZPREQ_T)ZeroOpenFontReq,			/* 45 */
+    (ZPREQ_T)ZeroCloseFontReq,
+    (ZPREQ_T)ZeroQueryFontReq,
+    (ZPREQ_T)0, /* QueryTextExtentsReq */
+    (ZPREQ_T)ZeroListFontsReq,
+    (ZPREQ_T)ZeroListFontsWithInfoReq,		/* 50 */
+    (ZPREQ_T)ZeroSetFontPathReq,
+    (ZPREQ_T)ZeroGetFontPathReq,
+    (ZPREQ_T)0, /* CreatePixmapReq */
+    (ZPREQ_T)ZeroFreePixmapReq,
+    (ZPREQ_T)ZeroCreateGCReq,			/* 55 */
+    (ZPREQ_T)ZeroChangeGCReq,
+    (ZPREQ_T)ZeroCopyGCReq,
+    (ZPREQ_T)ZeroSetDashesReq,
+    (ZPREQ_T)0, /* SetClipRectanglesReq */
+    (ZPREQ_T)ZeroFreeGCReq,			/* 60 */
+    (ZPREQ_T)0, /* ClearToBackgroundReq */
+    (ZPREQ_T)ZeroCopyAreaReq,
+    (ZPREQ_T)ZeroCopyPlaneReq,
+    (ZPREQ_T)0, /* PolyPointReq */
+    (ZPREQ_T)0, /* PolyLineReq */		/* 65 */
+    (ZPREQ_T)ZeroPolySegmentReq,
+    (ZPREQ_T)ZeroPolyRectangleReq,
+    (ZPREQ_T)ZeroPolyArcReq,
+    (ZPREQ_T)ZeroFillPolyReq,
+    (ZPREQ_T)ZeroPolyFillRectangleReq,		/* 70 */
+    (ZPREQ_T)ZeroPolyFillArcReq,
+    (ZPREQ_T)ZeroPutImageReq,
+    (ZPREQ_T)0, /* GetImageReq */
+    (ZPREQ_T)ZeroPolyText8Req,
+    (ZPREQ_T)ZeroPolyText16Req,			/* 75 */
+    (ZPREQ_T)0, /* ImageText8Req */
+    (ZPREQ_T)0, /* ImageText16Req */
+    (ZPREQ_T)0, /* CreateColormapReq */
+    (ZPREQ_T)ZeroFreeColormapReq,
+    (ZPREQ_T)ZeroCopyColormapAndFreeReq,	/* 80 */
+    (ZPREQ_T)ZeroInstallColormapReq,
+    (ZPREQ_T)ZeroUninstallColormapReq,
+    (ZPREQ_T)ZeroListInstalledColormapsReq,
+    (ZPREQ_T)ZeroAllocColorReq,
+    (ZPREQ_T)ZeroAllocNamedColorReq,		/* 85 */
+    (ZPREQ_T)0, /* AllocColorCellsReq */
+    (ZPREQ_T)0, /* AllocColorPlanesReq */
+    (ZPREQ_T)ZeroFreeColorsReq,
+    (ZPREQ_T)ZeroStoreColorsReq,
+    (ZPREQ_T)ZeroStoreNamedColorReq,		/* 90 */
+    (ZPREQ_T)ZeroQueryColorsReq,
+    (ZPREQ_T)ZeroLookupColorReq,
+    (ZPREQ_T)ZeroCreateCursorReq,
+    (ZPREQ_T)ZeroCreateGlyphCursorReq,
+    (ZPREQ_T)ZeroFreeCursorReq,			/* 95 */
+    (ZPREQ_T)ZeroRecolorCursorReq,
+    (ZPREQ_T)0, /* QueryBestSizeReq */
+    (ZPREQ_T)ZeroQueryExtensionReq,
+    (ZPREQ_T)ZeroListExtensionsReq,
+    (ZPREQ_T)ZeroChangeKeyboardMappingReq,	/* 100 */
+    (ZPREQ_T)ZeroGetKeyboardMappingReq,
+    (ZPREQ_T)ZeroChangeKeyboardControlReq,
+    (ZPREQ_T)ZeroGetKeyboardControlReq,
+    (ZPREQ_T)0, /* BellReq */
+    (ZPREQ_T)ZeroChangePointerControlReq,	/* 105 */
+    (ZPREQ_T)ZeroGetPointerControlReq,
+    (ZPREQ_T)ZeroSetScreenSaverReq,
+    (ZPREQ_T)ZeroGetScreenSaverReq,
+    (ZPREQ_T)ZeroChangeHostsReq,
+    (ZPREQ_T)ZeroListHostsReq,			/* 110 */
+    (ZPREQ_T)0, /* ChangeAccessControlReq */
+    (ZPREQ_T)0, /* ChangeCloseDownModeReq */
+    (ZPREQ_T)ZeroKillClientReq,
+    (ZPREQ_T)ZeroRotatePropertiesReq,
+    (ZPREQ_T)0, /* ForceScreenSaverReq */	/* 115 */
+    (ZPREQ_T)0, /* SetPointerMappingReq */
+    (ZPREQ_T)ZeroGetPointerMappingReq,
+    (ZPREQ_T)0, /* SetModifierMappingReq */
+    (ZPREQ_T)ZeroGetModifierMappingReq,
+    (ZPREQ_T)0,					/* 120 */
+    (ZPREQ_T)0,
+    (ZPREQ_T)0,
+    (ZPREQ_T)0,
+    (ZPREQ_T)0,
+    (ZPREQ_T)0,					/* 125 */
+    (ZPREQ_T)0,
+    (ZPREQ_T)ZeroNoOperationReq
 };

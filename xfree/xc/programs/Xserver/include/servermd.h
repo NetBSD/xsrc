@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.57 2003/11/03 05:11:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.58 2004/03/21 11:27:06 herrb Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -126,8 +126,8 @@ SOFTWARE.
 
 #define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the VAX only */
 #define BITMAP_BIT_ORDER	LSBFirst
-#define	GLYPHPADBYTES		1
-#define GETLEFTBITS_ALIGNMENT	4
+#define	GLYPHPADBYTES		4
+#define GETLEFTBITS_ALIGNMENT	1
 #define FAST_UNALIGNED_READS
 
 #endif /* vax */

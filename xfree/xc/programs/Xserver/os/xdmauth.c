@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/xdmauth.c,v 1.9 2003/06/24 15:44:48 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmauth.c,v 1.11 2004/06/24 02:21:16 tsi Exp $ */
 
 /*
  * XDM-AUTHENTICATION-1 (XDMCP authentication) and
@@ -64,11 +64,10 @@ XdmAuthenticationValidator (ARRAY8Ptr privateData, ARRAY8Ptr incomingData,
 {
     XdmAuthKeyPtr	incoming;
 
-    XdmcpUnwrap (incomingData->data, &privateKey,
+    XdmcpUnwrap (incomingData->data, (unsigned char *)&privateKey,
 			      incomingData->data,incomingData->length);
-    switch (packet_type)
+    if (packet_type == ACCEPT)
     {
-    case ACCEPT:
     	if (incomingData->length != 8)
 	    return FALSE;
     	incoming = (XdmAuthKeyPtr) incomingData->data;
@@ -84,21 +83,22 @@ XdmAuthenticationGenerator (ARRAY8Ptr privateData, ARRAY8Ptr outgoingData,
 {
     outgoingData->length = 0;
     outgoingData->data = 0;
-    switch (packet_type)
+    if (packet_type == REQUEST)
     {
-    case REQUEST:
 	if (XdmcpAllocARRAY8 (outgoingData, 8))
-	    XdmcpWrap (&rho, &privateKey, outgoingData->data, 8);
+	    XdmcpWrap ((unsigned char *)&rho, (unsigned char *)&privateKey,
+		       outgoingData->data, 8);
     }
     return TRUE;
 }
 
 static Bool
-XdmAuthenticationAddAuth (int name_len, char *name, 
-    int data_len, char *data)
+XdmAuthenticationAddAuth (unsigned int name_len, char *name, 
+			  unsigned int data_len, char *data)
 {
     Bool    ret;
-    XdmcpUnwrap (data, (unsigned char *)&privateKey, data, data_len);
+    XdmcpUnwrap ((unsigned char *)data, (unsigned char *)&privateKey,
+		 (unsigned char *)data, data_len);
     authFromXDMCP = TRUE;
     ret = AddAuthorization (name_len, name, data_len, data);
     authFromXDMCP = FALSE;
@@ -151,8 +151,7 @@ XdmAuthenticationInit (char *cookie, int cookie_len)
     }
     XdmcpGenerateKey (&rho);
     XdmcpRegisterAuthentication (XdmAuthenticationName, XdmAuthenticationNameLen,
-				 (unsigned char *)&rho,
-				 sizeof (rho),
+				 (void *)&rho, sizeof (rho),
 				 XdmAuthenticationValidator,
 				 XdmAuthenticationGenerator,
 				 XdmAuthenticationAddAuth);
@@ -386,8 +385,11 @@ XdmCheckCookie (unsigned short cookie_length, char *cookie,
     if (!plain)
 	return (XID) -1;
     for (auth = xdmAuth; auth; auth=auth->next) {
-	XdmcpUnwrap (cookie, (unsigned char *)&auth->key, plain, cookie_length);
-	if ((client = XdmAuthorizationValidate (plain, cookie_length, &auth->rho, xclient, reason)) != NULL)
+	XdmcpUnwrap ((unsigned char *)cookie, (unsigned char *)&auth->key,
+		     plain, cookie_length);
+	client = XdmAuthorizationValidate (plain, cookie_length, &auth->rho,
+					   xclient, reason);
+	if (client != NULL)
 	{
 	    client->next = xdmClients;
 	    xdmClients = client;
@@ -431,8 +433,11 @@ XdmToID (unsigned short cookie_length, char *cookie)
     if (!plain)
 	return (XID) -1;
     for (auth = xdmAuth; auth; auth=auth->next) {
-	XdmcpUnwrap (cookie, (unsigned char *)&auth->key, plain, cookie_length);
-	if ((client = XdmAuthorizationValidate (plain, cookie_length, &auth->rho, NULL, NULL)) != NULL)
+	XdmcpUnwrap ((unsigned char *)cookie, (unsigned char *)&auth->key,
+		     plain, cookie_length);
+	client = XdmAuthorizationValidate (plain, cookie_length, &auth->rho,
+					   NULL, NULL);
+	if (client != NULL)
 	{
 	    xfree (client);
 	    xfree (cookie);

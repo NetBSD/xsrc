@@ -1,8 +1,8 @@
-XCOMM $XFree86: xc/lib/expat/Imakefile,v 1.9 2003/05/27 16:34:35 tsi Exp $
+XCOMM $XFree86: xc/lib/expat/Imakefile,v 1.10 2004/04/05 02:33:13 dawes Exp $
 
 #define DoNormalLib NormalLibExpat
 #define DoSharedLib SharedLibExpat
-#define DoExtraLib SharedLibExpat
+#define DoExtraLib ExtraLibExpat
 #define DoDebugLib DebugLibExpat
 #define DoProfileLib ProfileLibExpat
 #define HasSharedData YES

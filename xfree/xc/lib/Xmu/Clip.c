@@ -24,7 +24,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/Xmu/Clip.c,v 1.2 1999/08/15 13:00:44 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Clip.c,v 1.3 2004/10/23 15:29:26 dawes Exp $ */
 
 #include <stdlib.h>
 
@@ -145,8 +145,6 @@ XmuAreaCopy(XmuArea *dst, XmuArea *src)
       z = z->next;
       Z = Z->next;
     }
-
-  return (dst);
 }
 
 /*

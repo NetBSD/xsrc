@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimode.c,v 1.19 2004/02/11 17:20:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimode.c,v 1.22 2005/02/10 15:26:37 tsi Exp $ */
 /*
- * Copyright 2000 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -637,7 +637,7 @@ ATIModeCalculate
                             SetBits(pMode->CrtcHSkew, CRTC_H_SYNC_DLY) | /* ? */
                             SetBits(GetBits(pMode->CrtcHSyncStart, 0x0100U),
                                 CRTC_H_SYNC_STRT_HI) |
-                            SetBits(pMode->CrtcHSyncEnd, CRTC_H_SYNC_WID);
+                            SetBits(pMode->CrtcHSyncEnd, CRTC_H_SYNC_END_VGA);
                     if (pMode->Flags & V_NHSYNC)
                         pATIHW->crtc_h_sync_strt_wid |= CRTC_H_SYNC_POL;
 
@@ -646,7 +646,7 @@ ATIModeCalculate
                             SetBits(pMode->CrtcVDisplay, CRTC_V_DISP);
                     pATIHW->crtc_v_sync_strt_wid =
                         SetBits(pMode->CrtcVSyncStart, CRTC_V_SYNC_STRT) |
-                            SetBits(pMode->CrtcVSyncEnd, CRTC_V_SYNC_WID);
+                            SetBits(pMode->CrtcVSyncEnd, CRTC_V_SYNC_END_VGA);
                     if (pMode->Flags & V_NVSYNC)
                         pATIHW->crtc_v_sync_strt_wid |= CRTC_V_SYNC_POL;
                 }

@@ -49,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.23 2003/11/17 22:20:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.24 2004/03/30 10:34:05 eich Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -348,6 +348,11 @@ void XrmSetDatabase(
     XrmDatabase database)
 {
     LockDisplay(display);
+    /* destroy database if set up imlicitely by XGetDefault() */
+    if (display->db && (display->flags & XlibDisplayDfltRMDB)) {
+	XrmDestroyDatabase(display->db);
+	display->flags &= ~XlibDisplayDfltRMDB;
+    }
     display->db = database;
     UnlockDisplay(display);
 }

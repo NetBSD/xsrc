@@ -22,7 +22,7 @@
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  *           Matthew Grossman, <mattg@oz.net> - acceleration and misc fixes
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_driver.c,v 1.61 2003/11/03 05:11:41 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_driver.c,v 1.62 2005/02/18 02:55:10 dawes Exp $ */
 
 /* everybody includes these */
 #include "xf86.h"
@@ -1553,7 +1553,7 @@ static ModeStatus
 TGAValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
-	return(MODE_BAD);
+	return(MODE_NO_INTERLACE);
 
     return(MODE_OK);
 }

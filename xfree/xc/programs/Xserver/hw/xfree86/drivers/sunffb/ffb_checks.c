@@ -23,7 +23,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_checks.c,v 1.2 2000/05/23 04:47:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_checks.c,v 1.3 2004/12/05 23:06:37 tsi Exp $ */
 
 #include "ffb.h"
 #include "ffb_regs.h"
@@ -39,7 +39,7 @@
 #include "cfb32.h"
 
 int
-CreatorCheckTile (PixmapPtr pPixmap, CreatorStipplePtr stipple, int ox, int oy, int ph)
+CreatorCheckTile(PixmapPtr pPixmap, CreatorStipplePtr stipple, int ox, int oy, int ph)
 {
 	unsigned int *sbits;
 	unsigned int fg = 0, bg = 0;
@@ -107,7 +107,7 @@ CreatorCheckTile (PixmapPtr pPixmap, CreatorStipplePtr stipple, int ox, int oy, 
 }
 
 int
-CreatorCheckStipple (PixmapPtr pPixmap, CreatorStipplePtr stipple, int ox, int oy, int ph)
+CreatorCheckStipple(PixmapPtr pPixmap, CreatorStipplePtr stipple, int ox, int oy, int ph)
 {
 	unsigned int *sbits;
 	unsigned int *stippleBits;
@@ -227,12 +227,10 @@ CreatorCheckLinePattern(GCPtr pGC, CreatorPrivGCPtr gcPriv)
  * can't be used this time
  */
 
-CreatorStipplePtr FFB_tmpStipple;
-
 int
-CreatorCheckFill (GCPtr pGC, DrawablePtr pDrawable)
+CreatorCheckFill(GCPtr pGC, DrawablePtr pDrawable)
 {
-	CreatorPrivGCPtr gcPriv = CreatorGetGCPrivate (pGC);
+	CreatorPrivGCPtr gcPriv = CreatorGetGCPrivate(pGC);
 	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pDrawable->pScreen);
 	CreatorStipplePtr stipple;
 	unsigned int alu;
@@ -240,27 +238,27 @@ CreatorCheckFill (GCPtr pGC, DrawablePtr pDrawable)
 
 	if (pGC->fillStyle == FillSolid) {
 		if (gcPriv->stipple) {
-			xfree (gcPriv->stipple);
+			xfree(gcPriv->stipple);
 			gcPriv->stipple = 0;
 		}
 		return TRUE;
 	}
 	if (!(stipple = gcPriv->stipple)) {
-		if (!FFB_tmpStipple) {
-			FFB_tmpStipple = (CreatorStipplePtr) xalloc (sizeof *FFB_tmpStipple);
-			if (!FFB_tmpStipple)
+		if (!pFfb->tmpstipple) {
+			pFfb->tmpstipple = (CreatorStipplePtr)xalloc(sizeof *pFfb->tmpstipple);
+			if (!pFfb->tmpstipple)
 				return FALSE;
 		}
-		stipple = FFB_tmpStipple;
+		stipple = pFfb->tmpstipple;
 	}
 	xrot = (pGC->patOrg.x + pDrawable->x) & 31;
 	yrot = (pGC->patOrg.y + pDrawable->y) & 31;
 	alu = pGC->alu;
 	switch (pGC->fillStyle) {
 	case FillTiled:
-		if (!CreatorCheckTile (pGC->tile.pixmap, stipple, xrot, yrot, ph)) {
+		if (!CreatorCheckTile(pGC->tile.pixmap, stipple, xrot, yrot, ph)) {
 			if (gcPriv->stipple) {
-				xfree (gcPriv->stipple);
+				xfree(gcPriv->stipple);
 				gcPriv->stipple = 0;
 			}
 			return FALSE;
@@ -269,9 +267,9 @@ CreatorCheckFill (GCPtr pGC, DrawablePtr pDrawable)
 	case FillStippled:
 		alu |= FFB_ROP_EDIT_BIT;
 	case FillOpaqueStippled:
-		if (!CreatorCheckStipple (pGC->stipple, stipple, xrot, yrot, ph)) {
+		if (!CreatorCheckStipple(pGC->stipple, stipple, xrot, yrot, ph)) {
 			if (gcPriv->stipple) {
-				xfree (gcPriv->stipple);
+				xfree(gcPriv->stipple);
 				gcPriv->stipple = 0;
 			}
 			return FALSE;
@@ -282,7 +280,7 @@ CreatorCheckFill (GCPtr pGC, DrawablePtr pDrawable)
 	}
 	stipple->alu = alu;
 	gcPriv->stipple = stipple;
-	if (stipple == FFB_tmpStipple)
-		FFB_tmpStipple = 0;
+	if (stipple == pFfb->tmpstipple)
+		pFfb->tmpstipple = 0;
 	return TRUE;
 }

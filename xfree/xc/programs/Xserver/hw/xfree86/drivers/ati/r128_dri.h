@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.7 2002/10/30 12:52:12 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.8 2004/12/10 16:07:00 alanh Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -40,7 +40,6 @@
 #define _R128_DRI_
 
 #include "xf86drm.h"
-#include "r128_common.h"
 
 /* DRI Driver defaults */
 #define R128_DEFAULT_CCE_PIO_MODE R128_PM4_64PIO_64VCBM_64INDBM
@@ -88,11 +87,11 @@ typedef struct {
     int           log2TexGran;
 
     /* MMIO register data */
-    drmHandle     registerHandle;
+    drm_handle_t     registerHandle;
     drmSize       registerSize;
 
     /* CCE AGP Texture data */
-    drmHandle     agpTexHandle;
+    drm_handle_t     agpTexHandle;
     drmSize       agpTexMapSize;
     int           log2AGPTexGran;
     int           agpTexOffset;

@@ -21,7 +21,7 @@
  * TORTIOUS ACTIONS, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/tek4957/xf86Tek4957.c,v 1.1 2002/11/11 01:18:08 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/tek4957/xf86Tek4957.c,v 1.3 2004/10/23 15:29:31 dawes Exp $ */
 
 #ifndef XFree86LOADER
 #include <unistd.h>
@@ -41,9 +41,7 @@
 #include "keysym.h"
 #include "mipointer.h"
 
-#ifdef XFree86LOADER
 #include "xf86Module.h"
-#endif
 
 /*
  * Debug Macros
@@ -485,7 +483,6 @@ TekProc(DeviceIntPtr pDev, int what)
 	default:
 	    DBG(2,xf86Msg(X_INFO,"Tek4957:TekProc Unsupported mode=%d\n",what));
 	    return !Success;
-	    break;
     }
     return Success;
 }

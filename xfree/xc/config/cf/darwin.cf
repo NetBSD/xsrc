@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.51 2004/02/11 00:30:27 torrey Exp $
+XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.53 2005/02/15 00:57:23 dawes Exp $
 
 /* Darwin / Mac OS X configuration by John Carmack <johnc@idsoftware.com> */
 
@@ -155,14 +155,16 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /*
  * Our cpp isn't in /lib/cpp and early versions don't like -undef.
- * The default cpp-3.3 that ships with Panther inserts spurious #pragmas,
- * so we use the 3.1-based version.
+ * The gcc 3.3 cpp that Apple ships inserts spurious #pragmas,
+ * so we use the 3.1-based version in this case.
  */
-#if OSMajorVersion >= 7
+#if (GccMajorVersion == 3) && (GccMinorVersion == 3)
 # define CppCmd                 /usr/bin/cpp3
-# define StandardCppOptions     -traditional -D__GNUC__
 #else
 # define CppCmd                 /usr/bin/cpp
+#endif
+#if (GccMajorVersion == 3) && (GccMinorVersion == 3) || (GccMajorVersion > 3)
+# define StandardCppOptions	-traditional -D__GNUC__
 #endif
 #if HasGcc3
 # define RawCppCmd              CppCmd -undef
@@ -256,8 +258,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /* no direct graphics extension */
 #define BuildXF86DGA            NO
 
-/* no server support for extra tablets and weird input devices */
-#define BuildXInputExt          NO
+/* Support for tablets and other non-standard input devices */
+#ifndef BuildXInputExt
+# define BuildXInputExt         YES
+#endif
 #define BuildXInputLib          YES
 
 /* no Display Power Management extension */

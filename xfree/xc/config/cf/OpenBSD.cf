@@ -1,5 +1,51 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.101 2004/01/09 00:35:00 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.112 2005/02/04 02:58:27 dawes Exp $
 XCOMM
+/*
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef OSName
 #define OSName			DefaultOSName OSBinaryType
@@ -44,6 +90,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasNdbm         	YES
 #define HasPutenv       	YES
 #define HasSnprintf		YES
+#define HasAsprintf		YES
 #if OSMajorVersion == 2 && OSMinorVersion >= 4 || OSMajorVersion >= 3
 # define HasStrlcat		YES
 #endif
@@ -187,9 +234,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 
-#define GccGasOption 		-DGCCUSESGAS
-#define AsmDefines 		-DUSE_GAS
-
 /* UseElfFormat defaults to YES if __ELF__ set */
 #ifndef UseElfFormat
 # ifdef __ELF__
@@ -198,6 +242,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # else
 #  define UseElfFormat NO
 # endif
+#endif
+
+#define GccGasOption 		-DGCCUSESGAS
+#if UseElfFormat
+#define AsmDefines 		-DUSE_GAS
+#else
+#define AsmDefines 		-DUSE_GAS -D__AOUT__
 #endif
 
 /*
@@ -353,7 +404,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
  */
 #ifndef InstallFontAliasesNoComment
 #define InstallFontAliasesNoComment(dest)				@@\
-install:: fonts.alias							@@\
+install::								@@\
 	$(RM) _fonts.alias 						@@\
 	sed -e '/^!/d' -e '/^$$/d' < fonts.alias > _fonts.alias		@@\
 	MakeDir($(DESTDIR)dest)						@@\
@@ -414,8 +465,7 @@ install:: fonts.alias							@@\
 #   ifndef HasNetBSDApertureDriver
 #     define HasNetBSDApertureDriver	YES
 #   endif
-#   define ServerOSDefines	XFree86ServerOSDefines \
-				-DDDXTIME -DDDXOSINIT
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXOSINIT
 #   define ServerExtraDefines	GccGasOption -D_XSERVER64 XFree86ServerDefines
 #   define ServerExtraSysLibs	-lalpha
 #   ifndef DoLoadableServer
@@ -432,6 +482,44 @@ install:: fonts.alias							@@\
 
 #endif /* AlphaArchitecture */
 
+/*
+ * Definitions for the AMD64 architecture
+ */
+#ifdef AMD64Architecture
+
+# define HasWeakSymbols		YES
+# define HasSharedLibraries	YES
+# define HasDlopen		YES
+
+# define XF86Server		YES
+
+# ifndef DoLoadableServer
+#  define DoLoadableServer	NO
+# endif
+
+# ifndef HasNetBSDApertureDriver
+#  define HasNetBSDApertureDriver	YES
+# endif
+
+# define HasAgpGart		YES
+
+# define ServerExtraSysLibs	-lamd64
+# define ServerExtraDefines	GccGasOption -D_XSERVER64 XFree86ServerDefines
+
+# ifndef XFree86ConsoleDefines
+#  define XFree86ConsoleDefines	-DWSCONS_SUPPORT -DPCVT_SUPPORT
+# endif
+
+# ifndef HasMMXSupport
+#   define HasMMXSupport	YES
+# endif
+
+# ifndef HasX86Support
+#  define HasX86Support		YES
+# endif
+# include <xfree86.cf>
+
+#endif /* AMD64Architecture */
 
 /*
  * Definitions for the i386 architecture
@@ -447,12 +535,6 @@ install:: fonts.alias							@@\
 #  ifndef BuildXF86DRI
 #   define BuildXF86DRI			NO
 #  endif 
-#  ifndef BuildXF86DRM
-#   define BuildXF86DRM			NO
-#  endif 
-#  ifndef BuildXF86OldDRMCompat
-#   define BuildXF86OldDRMCompat	NO
-#  endif
 # endif 
 
 #define HasWeakSymbols		YES
@@ -488,7 +570,7 @@ install:: fonts.alias							@@\
 #   endif
 # endif
 # define OptimizedCDebugFlags	DefaultGcc2i386Opt
-# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerOSDefines	XFree86ServerOSDefines
 # define ServerExtraSysLibs	-li386
 # define LdPostLib		/**/
 # define ServerExtraDefines GccGasOption XFree86ServerDefines
@@ -721,8 +803,7 @@ install:: fonts.alias							@@\
 
 /* Definitions for building the X server */
 # if XF86Server
-#   define ServerOSDefines	XFree86ServerOSDefines \
-				-DDDXTIME -DDDXOSINIT
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXOSINIT
 #   define ServerExtraDefines	GccGasOption XFree86ServerDefines
 #   ifndef DoLoadableServer
 #     define DoLoadableServer	YES
@@ -745,6 +826,10 @@ install:: fonts.alias							@@\
 # endif /* XF86Server */
 
 # include <xfree86.cf>
+
+# ifdef DefaultGcc2PpcOpt
+#  define OptimizedCDebugFlags	DefaultGcc2PpcOpt
+# endif
 
 #endif /* PpcArchitecture */
 
@@ -793,6 +878,10 @@ install:: fonts.alias							@@\
 # define BuildXInputExt		NO
 # include <xfree86.cf>
 
+# ifdef DefaultGcc2SparcOpt
+#  define OptimizedCDebugFlags	DefaultGcc2SparcOpt
+# endif
+
 #endif /* SparcArchitecture */
 
 /*
@@ -812,8 +901,7 @@ install:: fonts.alias							@@\
 # endif
 
 # define ServerExtraDefines	GccGasOption -D_XSERVER64 XFree86ServerDefines
-# define ServerOSDefines	XFree86ServerOSDefines \
-				-DDDXTIME -DDDXOSINIT
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXOSINIT
 # define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 
 # if XF86Server
@@ -824,6 +912,10 @@ install:: fonts.alias							@@\
 # endif
 
 # include <xfree86.cf>
+
+# if defined(DefaultGcc2SparcOpt) && !defined(OptimizedCDebugFlags)
+#  define OptimizedCDebugFlags	DefaultGcc2SparcOpt
+# endif
 
 #endif /* Sparc64Architecture */
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_dri.c,v 1.9 2004/02/08 17:57:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_dri.c,v 1.10 2004/12/10 16:07:03 alanh Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -35,8 +35,8 @@
 #include "sarea.h"
 
 #include "via_driver.h"
-#include "via_dri.h"
 #include "via_common.h"
+#include "via_dri.h"
 #include "xf86drm.h"
 
 extern void GlxSetVisualConfigs(
@@ -50,11 +50,11 @@ extern void GlxSetVisualConfigs(
 #define AGP_PAGE_SIZE 4096
 #define AGP_PAGES 8192
 #define AGP_SIZE (AGP_PAGE_SIZE * AGP_PAGES)
-#define AGP_CMDBUF_PAGES 256
+#define AGP_CMDBUF_PAGES 512
 #define AGP_CMDBUF_SIZE (AGP_PAGE_SIZE * AGP_CMDBUF_PAGES)
 
 static char VIAKernelDriverName[] = "via";
-static char VIAClientDriverName[] = "via";
+static char VIAClientDriverName[] = "unichrome";
 int test_alloc_FB(ScreenPtr pScreen, VIAPtr pVia, int Size);
 int test_alloc_AGP(ScreenPtr pScreen, VIAPtr pVia, int Size);
 static Bool VIAInitVisualConfigs(ScreenPtr pScreen);
@@ -65,9 +65,9 @@ static Bool VIADRIKernelInit(ScreenPtr pScreen, VIAPtr pVia);
 static Bool VIADRIMapInit(ScreenPtr pScreen, VIAPtr pVia);
 
 static Bool VIACreateContext(ScreenPtr pScreen, VisualPtr visual, 
-                   drmContext hwContext, void *pVisualConfigPriv,
+                   drm_context_t hwContext, void *pVisualConfigPriv,
                    DRIContextType contextStore);
-static void VIADestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void VIADestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
                    DRIContextType contextStore);
 static void VIADRISwapContext(ScreenPtr pScreen, DRISyncType syncType, 
                    DRIContextType readContextType, 
@@ -79,6 +79,113 @@ static void VIADRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
                    RegionPtr prgnSrc, CARD32 index);
 
 
+static void VIADRIIrqInit( ScrnInfoPtr pScrn , VIADRIPtr pVIADRI)
+{
+    VIAPtr pVia = VIAPTR(pScrn);   
+ 
+    pVIADRI->irqEnabled = drmGetInterruptFromBusID
+	(pVia->drmFD,
+	 ((pciConfigPtr)pVia->PciInfo->thisCard)->busnum,
+	 ((pciConfigPtr)pVia->PciInfo->thisCard)->devnum,
+	 ((pciConfigPtr)pVia->PciInfo->thisCard)->funcnum);
+    if ((drmCtlInstHandler(pVia->drmFD, pVIADRI->irqEnabled))) {
+	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		   "[drm] Failure adding irq handler. "
+		   "Falling back to irq-free operation.\n");
+	pVIADRI->irqEnabled = 0;
+    }
+
+    if (pVIADRI->irqEnabled)
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "[drm] Irq handler installed, using IRQ %d.\n",
+		   pVIADRI->irqEnabled);
+}
+
+static void VIADRIIrqExit( ScrnInfoPtr pScrn , VIADRIPtr pVIADRI) {
+
+    VIAPtr pVia = VIAPTR(pScrn);   
+
+    if (pVIADRI->irqEnabled) {
+	if (drmCtlUninstHandler(pVia->drmFD)) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,"[drm] Irq handler uninstalled.\n");
+	} else {
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		       "[drm] Could not uninstall irq handler.\n");
+	}
+    }
+}
+	    
+#ifdef ENABLE_AGP_RINGBUF
+
+static void VIADRIRingBufferCleanup(ScreenPtr pScreen, VIAPtr pVia)
+{
+    DRIInfoPtr pDRIInfo = pVia->pDRIInfo;
+    VIADRIPtr pVIADRI = pDRIInfo->devPrivate;
+    drmViaDmaInit ringBufInit;
+
+    if (pVIADRI->ringBufActive) {
+	xf86DrvMsg(pScreen->myNum, X_INFO, 
+		   "[drm] Cleaning up DMA ring-buffer.\n");
+	ringBufInit.func = VIA_CLEANUP_DMA;
+	if (drmCommandWrite(pVia->drmFD, DRM_VIA_DMA_INIT, &ringBufInit,
+			    sizeof(ringBufInit))) {
+	    xf86DrvMsg(pScreen->myNum, X_WARNING, 
+		       "[drm] Failed to clean up DMA ring-buffer: %d\n", errno);
+	}
+	pVIADRI->ringBufActive = 0;
+    }
+}
+
+static Bool VIADRIRingBufferInit(ScreenPtr pScreen, VIAPtr pVia) 
+{
+    DRIInfoPtr pDRIInfo = pVia->pDRIInfo;
+    VIADRIPtr pVIADRI = pDRIInfo->devPrivate;
+    drmViaDmaInit ringBufInit;
+    drmVersionPtr drmVer;
+
+    pVIADRI->ringBufActive = 0;
+
+    if (NULL == (drmVer = drmGetVersion(pVia->drmFD))) {
+	return FALSE;
+    }
+
+    if (((drmVer->version_major <= 1) && (drmVer->version_minor <= 3))) {
+	return FALSE;
+    } 
+
+    /*
+     * Info frome code-snippet on DRI-DEVEL list; Erdi Chen.
+     */
+
+    switch (pVia->ChipId) {
+    case PCI_CHIP_VT3259:
+	pVIADRI->reg_pause_addr = 0x40c;
+	break;
+    default:
+	pVIADRI->reg_pause_addr = 0x418;
+	break;
+    }
+   
+    ringBufInit.offset = pVia->agpSize;
+    ringBufInit.size = AGP_CMDBUF_SIZE;
+    ringBufInit.reg_pause_addr = pVIADRI->reg_pause_addr;
+    ringBufInit.func = VIA_INIT_DMA;
+    if (drmCommandWrite(pVia->drmFD, DRM_VIA_DMA_INIT, &ringBufInit,
+			sizeof(ringBufInit))) {
+	xf86DrvMsg(pScreen->myNum, X_ERROR, 
+		   "[drm] Failed to initialize DMA ring-buffer: %d\n", errno);
+	return FALSE;
+    }
+    xf86DrvMsg(pScreen->myNum, X_INFO, 
+	       "[drm] Initialized AGP ring-buffer, size 0x%lx at AGP offset 0x%lx.\n",
+	       ringBufInit.size, ringBufInit.offset);
+   
+    pVIADRI->ringBufActive = 1;
+    return TRUE;
+}	    
+
+#endif
+	
 static Bool VIADRIAgpInit(ScreenPtr pScreen, VIAPtr pVia)
 {
     unsigned long  agp_phys;
@@ -117,13 +224,18 @@ static Bool VIADRIAgpInit(ScreenPtr pScreen, VIAPtr pVia)
         return FALSE;
     }
 
-    pVia->agpSize = AGP_SIZE;
+    /*
+     * Place the ring-buffer last in the AGP region, and restrict the
+     * public map not to include the buffer for security reasons.
+     */
+
+    pVia->agpSize = AGP_SIZE - AGP_CMDBUF_SIZE;
     pVia->agpAddr = drmAgpBase(pVia->drmFD);
     xf86DrvMsg(pScreen->myNum, X_INFO,
                  "[drm] agpAddr = 0x%08lx\n",pVia->agpAddr);
 		 
     pVIADRI->agp.size = pVia->agpSize;
-    if (drmAddMap(pVia->drmFD, (drmHandle)0,
+    if (drmAddMap(pVia->drmFD, (drm_handle_t)0,
                  pVIADRI->agp.size, DRM_AGP, 0, 
                  &pVIADRI->agp.handle) < 0) {
 	xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -150,7 +262,7 @@ static Bool VIADRIAgpInit(ScreenPtr pScreen, VIAPtr pVia)
     {
 	drmViaAgp agp;
 	agp.offset = 0;
-	agp.size = AGP_SIZE;
+	agp.size = AGP_SIZE-AGP_CMDBUF_SIZE;
 	if (drmCommandWrite(pVia->drmFD, DRM_VIA_AGP_INIT, &agp,
 			    sizeof(drmViaAgp)) < 0) {
 	    drmUnmap(agpaddr,pVia->agpSize);
@@ -161,7 +273,7 @@ static Bool VIADRIAgpInit(ScreenPtr pScreen, VIAPtr pVia)
 	    return FALSE;
 	}
     }
-	
+    
     return TRUE;
   
 }
@@ -362,8 +474,8 @@ Bool VIADRIScreenInit(ScreenPtr pScreen)
         ((pciConfigPtr)pVia->PciInfo->thisCard)->busnum,
         ((pciConfigPtr)pVia->PciInfo->thisCard)->devnum,
         ((pciConfigPtr)pVia->PciInfo->thisCard)->funcnum);
-    pDRIInfo->ddxDriverMajorVersion = VIA_VERSION_MAJOR;
-    pDRIInfo->ddxDriverMinorVersion = VIA_VERSION_MINOR;
+    pDRIInfo->ddxDriverMajorVersion = VIA_DRI_VERSION_MAJOR;
+    pDRIInfo->ddxDriverMinorVersion = VIA_DRI_VERSION_MINOR;
     pDRIInfo->ddxDriverPatchVersion = PATCHLEVEL;
     pDRIInfo->frameBufferPhysicalAddress = pVia->FrameBufferBase;
     pDRIInfo->frameBufferSize = pVia->videoRambytes;  
@@ -470,6 +582,11 @@ VIADRICloseScreen(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     VIAPtr pVia = VIAPTR(pScrn);
+    VIADRIPtr pVIADRI;
+
+#ifdef ENABLE_AGP_RINGBUF
+    VIADRIRingBufferCleanup(pScreen, pVia); 
+#endif
 
     if (pVia->agpSize) {
 	drmUnmap(pVia->agpMappedAddr,pVia->agpSize);
@@ -481,11 +598,13 @@ VIADRICloseScreen(ScreenPtr pScreen)
 	drmAgpRelease(pVia->drmFD);
     }
 
+    
     DRICloseScreen(pScreen);
     
     if (pVia->pDRIInfo) {
-	if (pVia->pDRIInfo->devPrivate) {
-    	    xfree(pVia->pDRIInfo->devPrivate);
+	if ((pVIADRI = (VIADRIPtr) pVia->pDRIInfo->devPrivate)) {
+	    VIADRIIrqExit(pScrn, pVIADRI);
+    	    xfree(pVIADRI);
     	    pVia->pDRIInfo->devPrivate=0;
 	}
 	DRIDestroyInfoRec(pVia->pDRIInfo);
@@ -507,14 +626,14 @@ VIADRICloseScreen(ScreenPtr pScreen)
  */
 static Bool
 VIACreateContext(ScreenPtr pScreen, VisualPtr visual,
-          drmContext hwContext, void *pVisualConfigPriv,
+          drm_context_t hwContext, void *pVisualConfigPriv,
           DRIContextType contextStore)
 {
     return TRUE;
 }
 
 static void
-VIADestroyContext(ScreenPtr pScreen, drmContext hwContext, 
+VIADestroyContext(ScreenPtr pScreen, drm_context_t hwContext, 
            DRIContextType contextStore)
 {
 }
@@ -543,7 +662,7 @@ VIADRIFinishScreenInit(ScreenPtr pScreen)
 	saPriv=(VIASAREAPriv*)DRIGetSAREAPrivate(pScreen);
 	assert(saPriv);
 	memset(saPriv, 0, sizeof(*saPriv));
-	saPriv->CtxOwner = -1;
+	saPriv->ctxOwner = -1;
     }
     pVIADRI=(VIADRIPtr)pVia->pDRIInfo->devPrivate;
     pVIADRI->deviceID=pVia->Chipset;  
@@ -556,6 +675,14 @@ VIADRIFinishScreenInit(ScreenPtr pScreen)
     pVIADRI->scrnX=pVIADRI->width;
     pVIADRI->scrnY=pVIADRI->height;
 
+    /* Initialize IRQ */
+    if (pVia->DRIIrqEnable) 
+	VIADRIIrqInit(pScrn, pVIADRI);
+    
+    pVIADRI->ringBufActive = 0;
+#ifdef ENABLE_AGP_RINGBUF
+    VIADRIRingBufferInit(pScreen,pVia);
+#endif     
     return TRUE;
 }
 
@@ -615,7 +742,7 @@ static Bool VIADRIKernelInit(ScreenPtr pScreen, VIAPtr pVia)
 /* Add a map for the MMIO registers */
 static Bool VIADRIMapInit(ScreenPtr pScreen, VIAPtr pVia)
 {
-    int flags = 0;
+    int flags = DRM_READ_ONLY;
 
     if (drmAddMap(pVia->drmFD, pVia->MmioBase, VIA_MMIO_REGSIZE,
 		  DRM_REGISTERS, flags, &pVia->registerHandle) < 0) {
@@ -627,3 +754,37 @@ static Bool VIADRIMapInit(ScreenPtr pScreen, VIAPtr pVia)
 
     return TRUE;
 }
+
+
+void viaDRIEnterVT(int scrnIndex) 
+{
+  ScreenPtr pScreen = screenInfo.screens[scrnIndex];
+#ifdef ENABLE_AGP_RINGBUF
+  ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+  VIAPtr pVia = VIAPTR(pScrn);
+  DRIInfoPtr pDRIInfo = pVia->pDRIInfo;
+  VIADRIPtr pVIADRI = pDRIInfo->devPrivate;
+
+  if (!pVIADRI->ringBufActive)
+    VIADRIRingBufferInit(pScreen, pVia);
+#endif 
+
+  DRIUnlock( pScreen );
+}  
+
+void viaDRILeaveVT(int scrnIndex) 
+{
+  ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+  ScreenPtr pScreen = screenInfo.screens[scrnIndex];
+
+  DRILock(pScreen,0);
+  VIAAccelSync(pScrn);
+
+#ifdef ENABLE_AGP_RINGBUF
+  {
+    VIAPtr pVia = VIAPTR(pScrn);
+    VIADRIRingBufferCleanup(pScreen, pVia); 
+  }
+#endif 
+
+}  

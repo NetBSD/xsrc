@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/rgb/rgb.c,v 3.9 2002/10/09 16:56:47 tsi Exp $ */
+/* $XFree86: xc/programs/rgb/rgb.c,v 3.10 2004/04/03 22:26:25 dawes Exp $ */
 
 
 /* reads from standard input lines of the form:
@@ -37,7 +37,7 @@ from The Open Group.
 #ifdef NDBM
 #include <ndbm.h>
 #else
-#if defined(SVR4) && !defined(SCO325)
+#if defined(SVR4) && !defined(__SCO__)
 #include <rpcsvc/dbm.h>
 #else
 #include <dbm.h>

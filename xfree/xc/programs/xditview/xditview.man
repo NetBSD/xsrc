@@ -1,8 +1,8 @@
 .\" $XConsortium: xditview.man,v 1.10 94/04/17 20:43:37 gildea Exp $
 .\"
-.\" $XFree86: xc/programs/xditview/xditview.man,v 1.5 2003/05/29 21:48:11 herrb Exp $
+.\" $XFree86: xc/programs/xditview/xditview.man,v 1.6 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH XDITVIEW 1 __xorgversion__
+.TH XDITVIEW 1 __vendorversion__
 .SH NAME
 xditview \- display ditroff output
 .SH SYNOPSIS

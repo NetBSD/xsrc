@@ -34,7 +34,7 @@
  * with <TAB> characters expanded at 8-column intervals.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dga.c,v 1.6 2003/02/26 04:19:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dga.c,v 1.8 2004/12/07 15:59:19 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -42,14 +42,14 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "i810.h"
 #include "i810_reg.h"
 #include "dgaproc.h"
 #include "vgaHW.h"
 
-static Bool I810_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-				 int *, int *, int *);
+static Bool I810_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				 unsigned int *, unsigned int *,
+				 unsigned int *);
 static Bool I810_SetMode(ScrnInfoPtr, DGAModePtr);
 static void I810_Sync(ScrnInfoPtr);
 static int I810_GetViewport(ScrnInfoPtr);
@@ -273,17 +273,20 @@ I810_BlitTransRect(ScrnInfoPtr pScrn,
 static Bool
 I810_OpenFramebuffer(ScrnInfoPtr pScrn,
 		     char **name,
-		     unsigned char **mem, int *size, int *offset, int *flags)
+		     unsigned int *mem,
+		     unsigned int *size,
+		     unsigned int *offset,
+		     unsigned int *flags)
 {
    I810Ptr pI810 = I810PTR(pScrn);
 
    MARKER();
 
    *name = NULL;			/* no special device */
-   *mem = (unsigned char *)pI810->LinearAddr;
+   *mem = pI810->LinearAddr;
    *size = pI810->FbMapSize;
    *offset = 0;
-   *flags = DGA_NEED_ROOT;
+   *flags = 0;
 
    DPRINTF(PFX,
 	   " mem == 0x%.8x (pI810->LinearAddr)\n"

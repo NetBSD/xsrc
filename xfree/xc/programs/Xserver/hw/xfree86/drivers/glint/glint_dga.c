@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.4 2001/12/16 21:36:50 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.6 2004/12/07 15:59:19 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -29,13 +29,13 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "glint.h"
 #include "glint_regs.h"
 #include "dgaproc.h"
 
-static Bool GLINT_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-					int *, int *, int *);
+static Bool GLINT_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				  unsigned int *, unsigned int *,
+				  unsigned int *);
 static Bool GLINT_SetMode(ScrnInfoPtr, DGAModePtr);
 static void GLINT_Sync(ScrnInfoPtr);
 static int  GLINT_GetViewport(ScrnInfoPtr);
@@ -256,18 +256,18 @@ static Bool
 GLINT_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pGlint->FbAddress;
+    *mem = pGlint->FbAddress;
     *size = pGlint->FbMapSize;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

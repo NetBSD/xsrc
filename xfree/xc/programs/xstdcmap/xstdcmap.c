@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Donna Converse, MIT X Consortium
  */
-/* $XFree86: xc/programs/xstdcmap/xstdcmap.c,v 1.9 2003/03/26 20:44:00 tsi Exp $ */
+/* $XFree86: xc/programs/xstdcmap/xstdcmap.c,v 1.10 2004/03/31 16:37:10 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -370,4 +370,7 @@ main(int argc, char *argv[])
 		    "Not all new colormap definitions will be retained.\n");
     }
     Exit((status == 0) ? 1 : 0);
+
+    /* Muffle gcc */
+    return 0;
 }
