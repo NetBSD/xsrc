@@ -1,5 +1,5 @@
 # $XConsortium: terminfo,v 1.11 94/10/13 21:24:31 gildea Exp $
-# $XFree86: xc/programs/xterm/terminfo,v 3.13.2.6 1998/10/20 20:51:54 hohndel Exp $
+# $XFree86: xc/programs/xterm/terminfo,v 3.13.2.7 1999/05/10 13:10:05 hohndel Exp $
 #
 # XFree86 updates/notes/new entries (including xterm-8bit, xterm-16color)
 # - Thomas E. Dickey <dickey@clark.net>
@@ -66,6 +66,20 @@
 # vt220 does this only when in vt220 mode; when emulating a vt100 the editing
 # keypad is inactive.
 #
+# Alternative keycodes: 
+# -------------------- 
+# Several of the function keys have alternative names, depending on the type of 
+# host which your xterm is connected to.  DEC (i.e., the VMS system) uses F15 
+# as the HELP key, F16 as the DO key.  Unix applications generally do not do 
+# this.  Curses applications in particular, assign a unique keycode to each 
+# capability string.  These terminal descriptions do not have conflicting 
+# definitions, to ensure that Unix curses applications use a consistent set of 
+# keycodes.  To get a VMS-bias, make these substitutions: 
+#	1. change khome to kfnd 
+#	2. change kend to kslt 
+# Some legacy applications using the termcap emulation may expect kll where 
+# we have specified kend. 
+# 
 xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	am,
 	bce,
@@ -130,7 +144,7 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\E[3~,
+	kdch1=\177, 
 	kend=\E[4~,
 	kent=\EOM,
 	kf1=\EOP,
@@ -153,14 +167,11 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	kf7=\E[18~,
 	kf8=\E[19~,
 	kf9=\E[20~,
-	kfnd=\E[1~,
 	khome=\E[1~,
 	kich1=\E[2~,
-	kll=\E[4~,
 	kmous=\E[M,
 	knp=\E[6~,
 	kpp=\E[5~,
-	kslt=\E[4~,
 	mc0=\E[i,
 	mc4=\E[4i,
 	mc5=\E[5i,
@@ -211,9 +222,7 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 xterm-vt220|XFree86 xterm emulating vt220,
 	kdch1=\E[3~,
 	kend=\E[4~,
-	kfnd=\E[1~,
 	khome=\E[1~,
-	kslt=\E[4~,
 	use=xterm-xfree86,
 
 # Other variants:
@@ -294,7 +303,7 @@ xterm-nrc|xterm with VT220 national replacement character sets,
 # Originally I suppressed setaf/setab, since ANSI specifies only 8 colors, but
 # Stephen Marley persuaded me to allow the "ANSI" color controls to extend to
 # 16 colors.  (Note that ncurses 4.2 uses setf/setb from this description;
-# however 4.3 will select either according to their availability).  - T.Dickey
+# however 5.0 selects either according to their availability).  - T.Dickey 
 #
 # SVr4 curses does not use more than 8 colors anyway, so using 16 colors is
 # either for terminfo-level applications or via ncurses.
@@ -307,6 +316,7 @@ xterm-16color|xterm with 16 colors,
 	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
 	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
 	use=xterm-xfree86,
+# 
 # This is an 8-bit version of xterm, which emulates DEC vt220 with ANSI color.
 # To use it, your decTerminalID resource must be set to 200 or above.
 #
@@ -402,13 +412,11 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	kf7=\23318~,
 	kf8=\23319~,
 	kf9=\23320~,
-	kfnd=\2331~,
 	khome=\2331~,
 	kich1=\2332~,
 	kmous=\233M,
 	knp=\2336~,
 	kpp=\2335~,
-	kslt=\2334~,
 	mc0=\233i,
 	mc4=\2334i,
 	mc5=\2335i,
@@ -497,7 +505,7 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\E[3~,
+	kdch1=\177, 
 	kend=\E[4~,
 	kf1=\EOP,
 	kf10=\E[21~,
@@ -519,13 +527,11 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kf7=\E[18~,
 	kf8=\E[19~,
 	kf9=\E[20~,
-	kfnd=\E[1~,
 	khome=\E[1~,
 	kich1=\E[2~,
 	kmous=\E[M,
 	knp=\E[6~,
 	kpp=\E[5~,
-	kslt=\E[4~,
 	meml=\El,
 	memu=\Em,
 	rc=\E8,
@@ -604,7 +610,7 @@ xterm-r5|xterm R5 version,
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\E[3~,
+	kdch1=\177, 
 	kdl1=\E[31~,
 	kel=\E[8~,
 	kend=\E[4~,
@@ -646,6 +652,6 @@ xterm-r5|xterm R5 version,
 # This is the only entry which you should have to customize, since "xterm"
 # is widely used for a variety of incompatible terminal emulations including
 # color_xterm and rxvt.
-xterm|X Windows terminal emulator,
+xterm|X11 terminal emulator, 
 	use=xterm-xfree86,
 #	use=xterm-r6,
