@@ -33,6 +33,14 @@ in this Software without prior written authorization from the X Consortium.
  *  SERIOUS_UNROLLING.  Not used--GGL.
  */
 
+#if defined(__mc68000__) && !defined(mc68000)
+#define mc68000
+#endif
+
+#if defined(__mc68020__) && !defined(mc68020)
+#define mc68020
+#endif
+
 #include "X.h"
 
 #include "gcstruct.h"

@@ -103,7 +103,7 @@ pointer sunMemoryMap (len, off, fd)
     mapsize = ((int) len + pagemask) & ~pagemask;
     addr = 0;
 
-#if !defined(__bsdi__) && !defined(_MAP_NEW)
+#if !defined(__bsdi__) && !defined(__NetBSD__) && !defined(_MAP_NEW)
     if ((addr = (caddr_t) valloc (mapsize)) == NULL) {
 	Error ("Couldn't allocate frame buffer memory");
 	(void) close (fd);
