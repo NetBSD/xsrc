@@ -1,5 +1,5 @@
-/* $XConsortium: atKeynames.h,v 1.6 95/01/13 19:19:20 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.5 1995/06/24 10:28:16 dawes Exp $ */
+/* $NetBSD: atKeynames.h,v 1.2 2004/07/22 18:08:59 uch Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.22 2004/02/13 23:58:35 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -22,19 +22,67 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/*
+ * Copyright (c) 1994-2003 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* $XConsortium: atKeynames.h /main/11 1996/03/09 11:17:41 kaleb $ */
 
 #ifndef _ATKEYNAMES_H
 #define _ATKEYNAMES_H
 
 #define XK_TECHNICAL
+#define	XK_KATAKANA
 #include "keysym.h"
+#include "XF86keysym.h"
 
 #define GLYPHS_PER_KEY	4
-#define NUM_KEYCODES	150
-#define NUM_STD_KEYCODES 127
+#define NUM_KEYCODES	(255 - MIN_KEYCODE)
 #define MIN_KEYCODE     8
 #define MAX_KEYCODE     (NUM_KEYCODES + MIN_KEYCODE - 1)
-#define MAX_STD_KEYCODE (NUM_STD_KEYCODES + MIN_KEYCODE - 1)
 
 #define AltMask		Mod1Mask
 #define NumLockMask	Mod2Mask
@@ -44,8 +92,6 @@
 
 #define KeyPressed(k) (keyc->down[k >> 3] & (1 << (k & 7)))
 #define ModifierDown(k) ((keyc->state & (k)) == (k))
-
-#define XF86XK_ModeLock	0x1008FF01                 /* Mode Switch Lock */
 
 /*
  * NOTE: The AT/MF keyboards can generate (via the 8042) two (MF: three)
@@ -70,6 +116,7 @@
  *      Key Name            Main       Also       (hex)    (dec)
  *      ----------------   ---------- -------    ------    ------
  */
+
 #define KEY_Escape       /* Escape                0x01  */    1  
 #define KEY_1            /* 1           !         0x02  */    2 
 #define KEY_2            /* 2           @         0x03  */    3 
@@ -181,7 +228,7 @@
 #define KEY_RCtrl        /* Ctrl(right)           0x65  */  101
 #define KEY_Pause        /* Pause                 0x66  */  102
 #define KEY_Print        /* Print                 0x67  */  103
-#define KEY_KP_Divide    /* Didive                0x68  */  104
+#define KEY_KP_Divide    /* Divide                0x68  */  104
 #define KEY_AltLang      /* AtlLang(right)        0x69  */  105
 #define KEY_Break        /* Break                 0x6a  */  106
 #define KEY_LMeta        /* Left Meta             0x6b  */  107
@@ -190,30 +237,83 @@
 #define KEY_F13          /* F13                   0x6e  */  110
 #define KEY_F14          /* F14                   0x6f  */  111
 #define KEY_F15          /* F15                   0x70  */  112
+#define KEY_HKTG         /* Hirugana/Katakana tog 0x70  */  112
 #define KEY_F16          /* F16                   0x71  */  113
 #define KEY_F17          /* F17                   0x72  */  114
 #define KEY_KP_DEC       /* KP_DEC                0x73  */  115
-#define KEY_SN_KP_7      /* ServerNumLock 7       0x80  */  128
-#define KEY_SN_KP_8      /* ServerNumLock 8       0x81  */  129
-#define KEY_SN_KP_9      /* ServerNumLock 9       0x82  */  130
-#define KEY_SN_KP_4      /* ServerNumLock 4       0x83  */  131
-#define KEY_SN_KP_5      /* ServerNumLock 5       0x84  */  132
-#define KEY_SN_KP_6      /* ServerNumLock 6       0x85  */  133
-#define KEY_SN_KP_1      /* ServerNumLock 1       0x86  */  134
-#define KEY_SN_KP_2      /* ServerNumLock 2       0x87  */  135
-#define KEY_SN_KP_3      /* ServerNumLock 4       0x88  */  136
-#define KEY_SN_KP_0      /* ServerNumLock 0       0x89  */  137
-#define KEY_SN_KP_Dec    /* ServerNumLock Decimal 0x8a  */  138
-#define KEY_SN_KP_Home   /* ServerNumLock Home    0x8b  */  139
-#define KEY_SN_KP_Up     /* ServerNumLock Up      0x8c  */  140
-#define KEY_SN_KP_Prior  /* ServerNumLock Prior   0x8d  */  141
-#define KEY_SN_KP_Left   /* ServerNumLock Left    0x8e  */  142
-#define KEY_SN_KP_Begin  /* ServerNumLock Begin   0x8f  */  143
-#define KEY_SN_KP_Right  /* ServerNumLock Right   0x90  */  144
-#define KEY_SN_KP_End    /* ServerNumLock End     0x91  */  145
-#define KEY_SN_KP_Down   /* ServerNumLock Down    0x92  */  146
-#define KEY_SN_KP_Next   /* ServerNumLock Next    0x93  */  147
-#define KEY_SN_KP_Ins    /* ServerNumLock Ins     0x94  */  148
-#define KEY_SN_KP_Del    /* ServerNumLock Del     0x95  */  149
+#define KEY_BSlash2      /* \           _         0x73  */  115
+#define KEY_KP_Equal	 /* Equal (Keypad)        0x76  */  118
+#define KEY_XFER         /* Kanji Transfer        0x79  */  121
+#define KEY_NFER         /* No Kanji Transfer     0x7b  */  123
+#define KEY_Yen          /* Yen                   0x7d  */  125
+
+#define KEY_Power        /* Power Key             0x84  */  132
+#define KEY_Mute         /* Audio Mute            0x85  */  133
+#define KEY_AudioLower   /* Audio Lower           0x86  */  134
+#define KEY_AudioRaise   /* Audio Raise           0x87  */  135
+#define KEY_Help         /* Help                  0x88  */  136
+#define KEY_L1           /* Stop                  0x89  */  137
+#define KEY_L2           /* Again                 0x8a  */  138
+#define KEY_L3           /* Props                 0x8b  */  139
+#define KEY_L4           /* Undo                  0x8c  */  140
+#define KEY_L5           /* Front                 0x8d  */  141
+#define KEY_L6           /* Copy                  0x8e  */  142
+#define KEY_L7           /* Open                  0x8f  */  143
+#define KEY_L8           /* Paste                 0x90  */  144
+#define KEY_L9           /* Find                  0x91  */  145
+#define KEY_L10          /* Cut                   0x92  */  146
+
+/*
+ * Fake 'scancodes' in the following ranges are generated for 2-byte
+ * codes not handled elsewhere.  These correspond to most extended keys
+ * on so-called "Internet" keyboards:
+ *
+ *	0x79-0x93
+ *	0x96-0xa1
+ *	0xa3-0xac
+ *	0xb1-0xb4
+ *	0xba-0xbd
+ *	0xc2
+ *	0xcc-0xd2
+ *	0xd6-0xf7
+ */
+
+/*
+ * Remapped 'scancodes' are generated for single-byte codes in the range
+ * 0x59-0x5f,0x62-0x76.  These are used for some extra keys on some keyboards.
+ */
+
+#define KEY_0x59		0x95
+#define KEY_0x5A		0xA2
+#define KEY_0x5B		0xAD
+#define KEY_0x5C		KEY_KP_EQUAL
+#define KEY_0x5D		0xAE
+#define KEY_0x5E		0xAF
+#define KEY_0x5F		0xB0
+#define KEY_0x62		0xB5
+#define KEY_0x63		0xB6
+#define KEY_0x64		0xB7
+#define KEY_0x65		0xB8
+#define KEY_0x66		0xB9
+#define KEY_0x67		0xBE
+#define KEY_0x68		0xBF
+#define KEY_0x69		0xC0
+#define KEY_0x6A		0xC1
+#define KEY_0x6B		0xC3
+#define KEY_0x6C		0xC4
+#define KEY_0x6D		0xC5
+#define KEY_0x6E		0xC6
+#define KEY_0x6F		0xC7
+#define KEY_0x70		0xC8
+#define KEY_0x71		0xC9
+#define KEY_0x72		0xCA
+#define KEY_0x73		0xCB
+#define KEY_0x74		0xD3
+#define KEY_0x75		0xD4
+#define KEY_0x76		0xD5
+
+/* These are for "notused" and "unknown" entries in translation maps. */
+#define KEY_NOTUSED	  0
+#define KEY_UNKNOWN	255
 
 #endif /* _ATKEYNAMES_H */
