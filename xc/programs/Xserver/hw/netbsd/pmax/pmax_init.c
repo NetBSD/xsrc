@@ -57,6 +57,31 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+
+/* Um, we don't need all these... */
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/tty.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/proc.h>
+
+#include <machine/tc_machdep.h>
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#include <machine/pmioctl.h>
+#include <dev/dec/lk201.h>
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 #include "X.h"
 #include "Xproto.h"
 
@@ -70,7 +95,6 @@ extern int	pmaxKeybdProc();
 
 int pmaxScreenPrivateIndex;
 
-#define NUMFORMATS 2
 static	PixmapFormatRec formats[] = {
 	{1, 1, BITMAP_SCANLINE_PAD},     /* 1 bit deep */
 	{8, 8, BITMAP_SCANLINE_PAD},     /* 8-bit deep */
@@ -82,22 +106,29 @@ InitOutput(screenInfo, argc, argv)
     int argc;
     char **argv;
 {
-    int i;
-
-    int		imageByteOrder;
-    int		bitmapScanlineUnit;
-    int		bitmapScanlinePad;
-    int		bitmapBitOrder;
-    int		numPixmapFormats;
+    int i, fd, imageByteOrder, bitmapScanlineUnit, bitmapScanlinePad;
+    int bitmapBitOrder, numPixmapFormats;
+    struct fbinfo fb;
 
     screenInfo->imageByteOrder = IMAGE_BYTE_ORDER;
     screenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
     screenInfo->bitmapScanlinePad = BITMAP_SCANLINE_PAD;
     screenInfo->bitmapBitOrder = BITMAP_BIT_ORDER;
-    screenInfo->numPixmapFormats = NUMFORMATS;
 
-    for (i=0; i< NUMFORMATS; i++)
-    {
+    if ((fd = open("/dev/fb0", O_RDWR | O_NDELAY, 0)) < 0)
+	ErrorF("couldn't open /dev/fb0\n");
+
+    /* Damn DEC ioctls() aren't enough. Using the Sun ones too... */
+    if (ioctl(fd, FBIOGTYPE, &fb) < 0) {
+	ErrorF("FBIOGTYPE ioctl failed: %s\n", strerror(errno));
+	exit(1);
+    }
+    
+    /* XXX horrible... */
+    close(fd);
+    screenInfo->numPixmapFormats = (fb.fb_depth == 8 ? 2 : 1);
+
+    for (i = 0; i < screenInfo->numPixmapFormats; i++) {
 	screenInfo->formats[i].depth = formats[i].depth;
 	screenInfo->formats[i].bitsPerPixel = formats[i].bitsPerPixel;
 	screenInfo->formats[i].scanlinePad = formats[i].scanlinePad;
