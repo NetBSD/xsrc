@@ -26,6 +26,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Copyright 2002 SuSE Linux AG, Author: Egbert Eich
  */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_video.c,v 1.4 2002/11/25 14:05:00 eich Exp $ */
 
 #include "neo.h"
 #include "neo_video.h"
