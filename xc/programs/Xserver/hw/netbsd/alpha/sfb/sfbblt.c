@@ -1,7 +1,7 @@
-/* $NetBSD: tgablt.c,v 1.3 2000/12/19 01:34:06 perseant Exp $ */
+/* $NetBSD: sfbblt.c,v 1.1 2000/12/19 01:33:57 perseant Exp $ */
 
 /*
- * tga copy area
+ * sfb copy area
  */
 
 /*
@@ -62,11 +62,11 @@ Author: Keith Packard
 /*static unsigned char *clregs,*clfb;*/
 
 #include "alpha.h"
-#include "tgamap.h"
-#include <dev/pci/tgareg.h>
+#include "sfbmap.h"
+#include <dev/tc/sfbreg.h>
 
 void
-MROP_NAME(alphaTgaDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
+MROP_NAME(alphaSfbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
     DrawablePtr	    pSrc, pDst;
     int		    alu;
     RegionPtr	    prgnDst;
@@ -113,7 +113,7 @@ MROP_NAME(alphaTgaDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 
     fbFd *inf = &alphaFbs[pSrc->pScreen->myNum];
     unsigned char *fb = inf->fb;
-    tga_reg_t **regs = inf->regs.tgaregs;
+    sfb_reg_t **regs = inf->regs.sfbregs;
     int creg = 0;
 
     if (pSrc != pDst)
@@ -233,7 +233,7 @@ MROP_NAME(alphaTgaDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
     }
 
     while (nbox--) {
-	alphaTgaDoBitbltSimple(
+	alphaSfbDoBitbltSimple(
 		psrcBase,
 		pdstBase,
 		widthSrc,
