@@ -64,7 +64,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.109 2000/03/03 20:02:32 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.110 2000/03/31 20:13:44 dawes Exp $ */
 
 
 /* main.c */
@@ -121,7 +121,11 @@ SOFTWARE.
 #define BSDLY	0
 #define VTDLY	0
 #define FFDLY	0
+#else /* MINIX */
+#ifdef DEBUG
+#include <time.h>
 #endif
+#endif /* MINIX */
 
 #ifdef att
 #define ATT
@@ -129,6 +133,7 @@ SOFTWARE.
 
 #ifdef __osf__
 #define USE_SYSV_SIGNALS
+#define WTMP
 #endif
 
 #ifdef SVR4
@@ -175,6 +180,7 @@ static Bool IsPts = False;
 #ifdef __GLIBC__
 #if (__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
 #include <pty.h>
+#include <stdlib.h> /* getpt() */
 #endif
 #endif
 #endif
@@ -218,6 +224,10 @@ static Bool IsPts = False;
 
 #ifdef USE_TTY_GROUP
 #include <grp.h>
+#endif
+
+#ifndef TTY_GROUP_NAME
+#define TTY_GROUP_NAME "tty"
 #endif
 
 #ifndef __CYGWIN__
@@ -565,6 +575,11 @@ static char **command_to_exec = NULL;
 
 #define TERMCAP_ERASE "kb"
 #define VAL_INITIAL_ERASE A2E(127)
+
+/* choose a nice default value for speed - if we make it too low, users who
+ * mistakenly use $TERM set to vt100 will get padding delays
+ */
+#define VAL_LINE_SPEED B38400
 
 /* allow use of system default characters if defined and reasonable */
 #ifndef CBRK
@@ -1343,7 +1358,7 @@ main (int argc, char *argv[])
 #endif
 #endif
 #if defined(macII) || defined(ATT) || defined(CRAY) /* { */
-	d_tio.c_cflag = B9600|CS8|CREAD|PARENB|HUPCL;
+	d_tio.c_cflag = VAL_LINE_SPEED|CS8|CREAD|PARENB|HUPCL;
 	d_tio.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 #ifdef ECHOKE
 	d_tio.c_lflag |= ECHOKE|IEXTEN;
@@ -1395,12 +1410,12 @@ main (int argc, char *argv[])
 #ifdef BAUD_0 /* { */
 	d_tio.c_cflag = CS8|CREAD|PARENB|HUPCL;
 #else	/* }{ !BAUD_0 */
-	d_tio.c_cflag = B9600|CS8|CREAD|PARENB|HUPCL;
+	d_tio.c_cflag = VAL_LINE_SPEED|CS8|CREAD|PARENB|HUPCL;
 #endif	/* } !BAUD_0 */
 #else /* USE_POSIX_TERMIOS */
 	d_tio.c_cflag = CS8|CREAD|PARENB|HUPCL;
-	cfsetispeed(&d_tio, B9600);
-	cfsetospeed(&d_tio, B9600);
+	cfsetispeed(&d_tio, VAL_LINE_SPEED);
+	cfsetospeed(&d_tio, VAL_LINE_SPEED);
 #endif
 	d_tio.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 #ifdef ECHOKE
@@ -1801,10 +1816,13 @@ main (int argc, char *argv[])
 	/* Set up stderr properly.  Opening this log file cannot be
 	 done securely by a privileged xterm process (although we try),
 	 so the debug feature is disabled by default. */
+	char dbglogfile[45];
 	int i = -1;
 	if(debug) {
-		creat_as (getuid(), getgid(), "xterm.debug.log", 0666);
-		i = open ("xterm.debug.log", O_WRONLY | O_TRUNC, 0666);
+		timestamp_filename(dbglogfile, "xterm.debug.log.");
+		if(creat_as (getuid(), getgid(), False, dbglogfile, 0666)) {
+			i = open (dbglogfile, O_WRONLY | O_TRUNC, 0666);
+		}
 	}
 	if(i >= 0) {
 #if defined(USE_SYSV_TERMIO) && !defined(SVR4) && !defined(linux)
@@ -1822,11 +1840,7 @@ main (int argc, char *argv[])
 #endif
 		_bufend(stderr) = old_bufend;
 #else	/* USE_SYSV_TERMIO */
-#ifndef linux
-		stderr->_file = i;
-#else
-		setfileno(stderr, i);
-#endif
+		freopen(dbglogfile, "w", stderr);
 #endif	/* USE_SYSV_TERMIO */
 
 		/* mark this file as close on exec */
@@ -2871,7 +2885,7 @@ spawn (void)
 #ifdef USE_TTY_GROUP
 	{
 		struct group *ttygrp;
-		if ((ttygrp = getgrnam("tty")) != 0) {
+		if ((ttygrp = getgrnam(TTY_GROUP_NAME)) != 0) {
 			/* change ownership of tty to real uid, "tty" gid */
 			set_owner (ttydev, screen->uid, ttygrp->gr_gid,
 				   (resource.messages? 0620 : 0600));
@@ -2921,21 +2935,21 @@ spawn (void)
 		    tio.c_oflag |= OPOST;
 #endif /* OPOST */
 #ifdef MINIX	/* should be ifdef _POSIX_SOURCE */
-		    cfsetispeed(&tio, B9600);
-		    cfsetospeed(&tio, B9600);
+		    cfsetispeed(&tio, VAL_LINE_SPEED);
+		    cfsetospeed(&tio, VAL_LINE_SPEED);
 #else /* !MINIX */
 #ifndef USE_POSIX_TERMIOS
+		    tio.c_cflag &= ~(CBAUD);
 #ifdef BAUD_0
 		    /* baud rate is 0 (don't care) */
-		    tio.c_cflag &= ~(CBAUD);
+#elif defined(HAVE_TERMIO_C_ISPEED)
+		    tio.c_ispeed = tio.c_ospeed = VAL_LINE_SPEED;
 #else	/* !BAUD_0 */
-		    /* baud rate is 9600 (nice default) */
-		    tio.c_cflag &= ~(CBAUD);
-		    tio.c_cflag |= B9600;
+		    tio.c_cflag |= VAL_LINE_SPEED;
 #endif	/* !BAUD_0 */
 #else /* USE_POSIX_TERMIOS */
-		    cfsetispeed(&tio, B9600);
-		    cfsetospeed(&tio, B9600);
+		    cfsetispeed(&tio, VAL_LINE_SPEED);
+		    cfsetospeed(&tio, VAL_LINE_SPEED);
 #ifdef __MVS__
 		    /* turn off bits that can't be set from the slave side */
 		    tio.c_cflag &= ~(PACKET|PKT3270|PTU3270|PKTXTND);
@@ -3079,8 +3093,8 @@ spawn (void)
 		    sg.sg_flags &= ~(ALLDELAY | XTABS | CBREAK | RAW);
 		    sg.sg_flags |= ECHO | CRMOD;
 		    /* make sure speed is set on pty so that editors work right*/
-		    sg.sg_ispeed = B9600;
-		    sg.sg_ospeed = B9600;
+		    sg.sg_ispeed = VAL_LINE_SPEED;
+		    sg.sg_ospeed = VAL_LINE_SPEED;
 		    /* reset t_brkc to default value */
 		    tc.t_brkc = -1;
 #ifdef LPASS8
@@ -3323,7 +3337,7 @@ spawn (void)
 		(void) setutent ();
 		/* set up entry to search for */
 		ptyname = ttydev;
-		bzero(&utmp, sizeof(utmp));
+		bzero((char *)&utmp, sizeof(utmp));
 #ifndef __sgi
 		if (PTYCHARLEN >= (int)strlen(ptyname))
 		    ptynameptr = ptyname;
@@ -3337,7 +3351,13 @@ spawn (void)
 		utmp.ut_type = DEAD_PROCESS;
 
 		/* position to entry in utmp file */
-		(void) getutid(&utmp);
+		/* Test return value: beware of entries left behind: PSz 9 Mar 00 */
+		if (! getutid(&utmp)) {
+		    utmp.ut_type = USER_PROCESS;
+		    if (! getutid(&utmp)) {
+			(void) setutent();
+		    }
+		}
 
 		/* set up the new entry */
 		utmp.ut_type = USER_PROCESS;
@@ -3392,7 +3412,7 @@ spawn (void)
 #else
 		if (term->misc.login_shell &&
 		     (i = open(etc_wtmp, O_WRONLY|O_APPEND)) >= 0) {
-		    write(i, (char *)&utmp, sizeof(struct utmp));
+		    write(i, (char *)&utmp, sizeof(utmp));
 		    close(i);
 		}
 #endif
@@ -3409,7 +3429,7 @@ spawn (void)
 		{
 			if (pw && !resource.utmpInhibit &&
 			    (i = open(etc_utmp, O_WRONLY)) >= 0) {
-				bzero((char *)&utmp, sizeof(struct utmp));
+				bzero((char *)&utmp, sizeof(utmp));
 				(void) strncpy(utmp.ut_line,
 					       ttydev + strlen("/dev/"),
 					       sizeof(utmp.ut_line));
@@ -3426,8 +3446,8 @@ spawn (void)
 #endif
 				/* cast needed on Ultrix 4.4 */
 				time((time_t*)&utmp.ut_time);
-				lseek(i, (long)(tslot * sizeof(struct utmp)), 0);
-				write(i, (char *)&utmp, sizeof(struct utmp));
+				lseek(i, (long)(tslot * sizeof(utmp)), 0);
+				write(i, (char *)&utmp, sizeof(utmp));
 				close(i);
 				added_utmp_entry = True;
 #if defined(WTMP)
@@ -3435,16 +3455,15 @@ spawn (void)
 				(i = open(etc_wtmp, O_WRONLY|O_APPEND)) >= 0) {
 				    int status;
 				    status = write(i, (char *)&utmp,
-						   sizeof(struct utmp));
+						   sizeof(utmp));
 				    status = close(i);
 				}
 #elif defined(MNX_LASTLOG)
 				if (term->misc.login_shell &&
 				(i = open(_U_LASTLOG, O_WRONLY)) >= 0) {
 				    lseek(i, (long)(screen->uid *
-					sizeof (struct utmp)), 0);
-				    write(i, (char *)&utmp,
-					sizeof (struct utmp));
+					sizeof (utmp)), 0);
+				    write(i, (char *)&utmp, sizeof (utmp));
 				    close(i);
 				}
 #endif /* WTMP or MNX_LASTLOG */
@@ -3461,23 +3480,22 @@ spawn (void)
 #endif /* USE_SYSV_UTMP */
 
 #ifdef USE_LASTLOG
-				if (term->misc.login_shell &&
-				(i = open(etc_lastlog, O_WRONLY)) >= 0) {
-				    bzero((char *)&lastlog,
-					sizeof (struct lastlog));
-				    (void) strncpy(lastlog.ll_line, ttydev +
-					sizeof("/dev"),
-					sizeof (lastlog.ll_line));
-				    (void) strncpy(lastlog.ll_host,
-					  XDisplayString (screen->display),
-					  sizeof (lastlog.ll_host));
-				    time(&lastlog.ll_time);
-				    lseek(i, (long)(screen->uid *
-					sizeof (struct lastlog)), 0);
-				    write(i, (char *)&lastlog,
-					sizeof (struct lastlog));
-				    close(i);
-				}
+		if (term->misc.login_shell &&
+		(i = open(etc_lastlog, O_WRONLY)) >= 0) {
+		    bzero((char *)&lastlog, sizeof (struct lastlog));
+		    (void) strncpy(lastlog.ll_line, ttydev +
+			sizeof("/dev"),
+			sizeof (lastlog.ll_line));
+		    (void) strncpy(lastlog.ll_host,
+			  XDisplayString (screen->display),
+			  sizeof (lastlog.ll_host));
+		    time(&lastlog.ll_time);
+		    lseek(i, (long)(screen->uid *
+			sizeof (struct lastlog)), 0);
+		    write(i, (char *)&lastlog,
+			sizeof (struct lastlog));
+		    close(i);
+		}
 #endif /* USE_LASTLOG */
 
 #ifdef USE_HANDSHAKE
@@ -3493,10 +3511,17 @@ spawn (void)
 
 		(void) setgid (screen->gid);
 #ifdef HAS_BSD_GROUPS
-		if (geteuid() == 0 && pw)
-		  initgroups (pw->pw_name, pw->pw_gid);
+		if (geteuid() == 0 && pw) {
+		    if (initgroups (pw->pw_name, pw->pw_gid)) {
+			perror( "initgroups failed" );
+			exit (errno);
+		    }
+		}
 #endif
-		(void) setuid (screen->uid);
+		if (setuid (screen->uid)) {
+			perror( "setuid failed" );
+			exit (errno);
+		}
 
 #ifdef USE_HANDSHAKE
 		/* mark the pipes as close on exec */
@@ -4220,9 +4245,9 @@ Exit(int n)
 
 	if (!resource.utmpInhibit && added_utmp_entry &&
 	    (!am_slave && tslot > 0 && (wfd = open(etc_utmp, O_WRONLY)) >= 0)){
-		bzero((char *)&utmp, sizeof(struct utmp));
-		lseek(wfd, (long)(tslot * sizeof(struct utmp)), 0);
-		write(wfd, (char *)&utmp, sizeof(struct utmp));
+		bzero((char *)&utmp, sizeof(utmp));
+		lseek(wfd, (long)(tslot * sizeof(utmp)), 0);
+		write(wfd, (char *)&utmp, sizeof(utmp));
 		close(wfd);
 #ifdef WTMP
 		if (term->misc.login_shell &&
@@ -4231,7 +4256,7 @@ Exit(int n)
 			(void) strncpy(utmp.ut_line, ttydev +
 			    sizeof("/dev"), sizeof (utmp.ut_line));
 			time(&utmp.ut_time);
-			i = write(wfd, (char *)&utmp, sizeof(struct utmp));
+			i = write(wfd, (char *)&utmp, sizeof(utmp));
 			i = close(wfd);
 		}
 #endif /* WTMP */
