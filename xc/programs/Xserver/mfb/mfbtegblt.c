@@ -119,7 +119,7 @@ two times:
 			SCRRIGHT (*char3++ << ShiftAmnt, xoff3) | \
 			SCRRIGHT (*char4++ << ShiftAmnt, xoff4);
 #else /* PPW */
-#define GetBits4    c = ((unsigned long)(*char1++ << ShiftAmnt) << 32 )  | \
+#define GetBits4    c = ((unsigned long)((unsigned long)*char1++ << ShiftAmnt) << 32 )  | \
 			(SCRRIGHT (*char2++ << ShiftAmnt, xoff2) << 32 ) | \
 			(SCRRIGHT (*char3++ << ShiftAmnt, xoff3) << 32 ) | \
 			(SCRRIGHT (*char4++ << ShiftAmnt, xoff4) << 32 ) | \
@@ -136,7 +136,7 @@ two times:
 			SCRRIGHT (*char4 << ShiftAmnt, xoff4); \
 			char2++; char3++; char4++;
 #else /* PPW == 64 */
-#define GetBits4    c = ((unsigned long)(*char1++ << ShiftAmnt) << 32 )  | \
+#define GetBits4    c = ((unsigned long)((unsigned long)*char1++ << ShiftAmnt) << 32 )  | \
 			(SCRRIGHT (*char2 << ShiftAmnt, xoff2) << 32 ) | \
 			(SCRRIGHT (*char3 << ShiftAmnt, xoff3) << 32 ) | \
 			(SCRRIGHT (*char4 << ShiftAmnt, xoff4) << 32 ) | \
@@ -157,10 +157,10 @@ two times:
 			SCRRIGHT (*char3++, xoff3) | \
 			SCRRIGHT (*char4++, xoff4);
 #else /* PPW == 64 */
-#define GetBits4    c = (unsigned long)(((*char1++) << 64 ) | \
-                        (SCRRIGHT (*char2++, xoff2) << 64 ) | \
-                        (SCRRIGHT (*char3++, xoff3) << 64 ) | \
-                        (SCRRIGHT (*char4++, xoff4) << 64 ) | \
+#define GetBits4    c = (unsigned long)(((unsigned long)(*char1++) << 32 ) | \
+                        (SCRRIGHT (*char2++, xoff2) << 32 ) | \
+                        (SCRRIGHT (*char3++, xoff3) << 32 ) | \
+                        (SCRRIGHT (*char4++, xoff4) << 32 ) | \
                         SCRRIGHT (*char5++, xoff5)          | \
                         SCRRIGHT (*char6++, xoff6)          | \
                         SCRRIGHT (*char7++, xoff7)          | \
@@ -174,10 +174,10 @@ two times:
 			SCRRIGHT (*char4, xoff4); \
 			char2++; char3++; char4++;
 #else /* PPW == 64 */
-#define GetBits4    c = (unsigned long)(((*char1++) << 64 ) | \
-                        (SCRRIGHT (*char2, xoff2) << 64 ) | \
-                        (SCRRIGHT (*char3, xoff3) << 64 ) | \
-                        (SCRRIGHT (*char4, xoff4) << 64 ) | \
+#define GetBits4    c = (unsigned long)(((unsigned long)(*char1++) << 32 ) | \
+                        (SCRRIGHT (*char2, xoff2) << 32 ) | \
+                        (SCRRIGHT (*char3, xoff3) << 32 ) | \
+                        (SCRRIGHT (*char4, xoff4) << 32 ) | \
                         SCRRIGHT (*char5, xoff5)          | \
                         SCRRIGHT (*char6, xoff6)          | \
                         SCRRIGHT (*char7, xoff7)          | \
@@ -202,6 +202,9 @@ typedef unsigned short	*glyphPointer;
 
 #if GLYPHPADBYTES == 4
 typedef unsigned int	*glyphPointer;
+#if (BITMAP_BIT_ORDER == MSBFirst) && (PGSZ == 64)
+#define USE_LEFTBITS
+#endif
 #endif
 
 #ifdef USE_LEFTBITS

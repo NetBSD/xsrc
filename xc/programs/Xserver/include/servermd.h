@@ -197,7 +197,12 @@ SOFTWARE.
 # define AVOID_MEMORY_READ
 # define LARGE_INSTRUCTION_CACHE
 # define FAST_CONSTANT_OFFSET_MODE
-# define SHARED_IDCACHE
+# if !defined(__sparc_v9__) && !defined(__arch64__)
+#  define SHARED_IDCACHE
+# else
+#  define LARGE_INSTRUCTION_CACHE
+#  define PLENTIFUL_REGISTERS
+# endif
 #endif
 
 #if defined(__sparc_v9__) || ((defined(__sparc__) || defined(sparc)) && defined(__arch64__))

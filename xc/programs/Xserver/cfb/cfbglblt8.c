@@ -67,7 +67,9 @@ in this Software without prior written authorization from the X Consortium.
 
 #if defined(FOUR_BIT_CODE) || defined(WriteBitGroup) && !defined(GLYPHROP)
 
-#if GLYPHPADBYTES != 4
+#if (GLYPHPADBYTES != 4)
+#define USE_LEFTBITS
+#elif (BITMAP_BIT_ORDER == MSBFirst) && (PGSZ == 64)
 #define USE_LEFTBITS
 #endif
 
