@@ -15,7 +15,7 @@ XCOMM 		NetBSD/sun3	client/server
 XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
 XCOMM		NetBSD/amiga	client/server
-XCOMM		NetBSD/alpha	client
+XCOMM		NetBSD/alpha	client/server
 XCOMM
 
 #ifndef OSName
@@ -216,9 +216,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(AlphaArchitecture)
-# define BuildServer		NO		/* XXX */
-# define ServerExtraDefines	GccGasOption -D_XSERVER64
 # define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D_XSERVER64
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 # undef OptimizedCDebugFlags			/* XXX ??? */
@@ -494,6 +493,13 @@ install.man:: 								@@\
 #  undef XamigaCCmono
 #  define XamigaCCmono		NO
 # endif
+#endif
+
+/*
+ * Definitions for the NetBSD/alpha X server.
+ */
+#if defined(AlphaArchitecture)
+# define XalphaNetBSDServer	YES
 #endif
 
 #ifndef BuildScreenSaverLibrary
