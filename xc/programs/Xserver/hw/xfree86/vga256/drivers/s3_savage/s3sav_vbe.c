@@ -46,6 +46,15 @@
 
 #ifdef USEBIOS
 
+#if defined(__NetBSD__)
+/*
+ * On NetBSD, the IO perms are set to TRUE for the entire range
+ * pretty early on (in bsd_video.c).  We therefore do not need
+ * to frob IO perms in this file at all.
+ */
+#define	ioperm(x, y, z)		/* nothing */
+#endif /* __NetBSD__ */
+
 struct
 {
     unsigned char initialized;
