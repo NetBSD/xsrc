@@ -31,8 +31,10 @@
 #ifndef X_NOT_STDC_ENV
 #define HAVE_STDLIB_H 1
 #define DECL_ERRNO 1
+#ifndef __NetBSD__ /* XXX wrong on NetBSD, and probably other systems */
 #define size_t int
 #define time_t long
+#endif
 #endif
 
 #endif /* HAVE_CONFIG_H */
