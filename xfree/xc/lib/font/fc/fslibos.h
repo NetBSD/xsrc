@@ -57,7 +57,11 @@ from The Open Group.
 # endif
 #endif
 #ifndef SIZE_T_MAX
-# define SIZE_T_MAX UINT_MAX
+# ifdef ULONG_MAX
+#  define SIZE_T_MAX ULONG_MAX
+# else
+#  define SIZE_T_MAX UINT_MAX
+# endif
 #endif
 #ifndef OPEN_MAX
 #if defined(SVR4) || defined(__UNIXOS2__)
