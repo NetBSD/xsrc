@@ -650,7 +650,6 @@ int
 xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	     int Len)
 {
-#if 0
 	int rv;
 	int kmem;
 
@@ -674,9 +673,6 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	close(kmem);
 
 	return rv;
-#else
-	return -1;
-#endif
 }
 
 
@@ -1499,16 +1495,12 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
     xf86ReadMmio16 = readSparse16;
     xf86ReadMmio32 = readSparse32;
 	
-xf86Msg(X_INFO, "Base = %lx, Size = %lx, flags = %x\n", Base, Size, flags);
-
     if (((flags & VIDMEM_MMIO) && !(flags & VIDMEM_MMIO_32BIT)) ||
         ((flags & VIDMEM_FRAMEBUFFER) && (flags & VIDMEM_SPARSE)))
 	mapflags = 0;
     else
 	mapflags = BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE;
     mem = alpha_pci_mem_map(Base, Size, mapflags, &abst[0]);
-
-xf86Msg(X_INFO, "mem = %p\n", mem);
 
     if (mem == MAP_FAILED)
 	FatalError("xf86MapVidMem: Could not mmap video memory (%s)\n",
@@ -1528,8 +1520,6 @@ readSparse8(pointer Base, register unsigned long Offset)
 
     shift = (Offset & 0x3) << 3;
 
-xf86Msg(X_INFO, "rs8: Base = %lx, Offset = %lx, shift = %d\n",
-  (unsigned long)Base, Offset, shift);
     mem_barrier();
     result = *(vuip)((unsigned long)Base + (Offset << 5));
     result >>= shift;
@@ -1543,8 +1533,6 @@ readSparse16(pointer Base, register unsigned long Offset)
 
     shift = (Offset & 0x2) << 3;
 
-xf86Msg(X_INFO, "rs16: Base = %lx, Offset = %lx, shift = %d\n",
-  (unsigned long)Base, Offset, shift);
     mem_barrier();
     result = *(vuip)((unsigned long)Base + (Offset << 5) + (1<<(5-2)));
     result >>= shift;
@@ -1554,8 +1542,6 @@ xf86Msg(X_INFO, "rs16: Base = %lx, Offset = %lx, shift = %d\n",
 static int
 readSparse32(pointer Base, register unsigned long Offset)
 {
-xf86Msg(X_INFO, "rs32: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     mem_barrier();
     return *(vuip)((unsigned long)Base + Offset);
 }
@@ -1565,8 +1551,6 @@ writeSparse8(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int b = Value & 0xffU;
 
-xf86Msg(X_INFO, "ws8: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     write_mem_barrier();
     *(vuip)((unsigned long)Base + (Offset << 5)) = b * 0x01010101;
 }
@@ -1576,8 +1560,6 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int w = Value & 0xffffU;
 
-xf86Msg(X_INFO, "ws16: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     write_mem_barrier();
     *(vuip)((unsigned long)Base + (Offset << 5) + (1<<(5-2))) = w * 0x00010001;
 
@@ -1586,8 +1568,6 @@ xf86Msg(X_INFO, "ws16: Base = %lx, Offset = %lx\n",
 static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset)
 {
-xf86Msg(X_INFO, "ws32: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     write_mem_barrier();
     *(vuip)((unsigned long)Base + (Offset)) = Value;
 }
@@ -1597,8 +1577,6 @@ writeSparseNB8(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int b = Value & 0xffU;
 
-xf86Msg(X_INFO, "wn8: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     *(vuip)((unsigned long)Base + (Offset << 5)) = b * 0x01010101;
 }
 
@@ -1607,16 +1585,12 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int w = Value & 0xffffU;
 
-xf86Msg(X_INFO, "wn16: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     *(vuip)((unsigned long)Base + (Offset << 5) + (1<<(5-2))) = w * 0x00010001;
 }
 
 static void
 writeSparseNB32(int Value, pointer Base, register unsigned long Offset)
 {
-xf86Msg(X_INFO, "wn32: Base = %lx, Offset = %lx\n",
-  (unsigned long)Base, Offset);
     *(vuip)((unsigned long)Base + (Offset)) = Value;
 }
 
