@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3setup.c,v 1.1.2.4 1998/01/24 11:55:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3setup.c,v 1.1.2.5 1998/07/15 11:52:37 hohndel Exp $ */
 
 #include <stdlib.h>
 
@@ -569,8 +569,6 @@ static void ClearAndEnableInterrupts(void)
 
   /* Switch on all the user devices in the master control */
   PMC_Write(ENABLE,0xffffffff);
-
-  PMC_Write(INTR_EN_0,PMC_Def(INTR_EN_0_INTA,HARDWARE));
 }
 
 static void ResetEngine(void)

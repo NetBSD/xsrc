@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.17 1998/02/22 12:49:14 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.18 1998/07/16 06:55:06 hohndel Exp $ */
 
 /*
  *
@@ -154,6 +154,7 @@ SymTabRec s3vChipTable[] = {
    { S3_ViRGE_DXGX,"ViRGE/DXGX"},
    { S3_ViRGE_GX2, "ViRGE/GX2"},
    { S3_ViRGE_MX,  "ViRGE/MX"},
+   { S3_ViRGE_MXP, "ViRGE/MX+"},
    { -1,           ""},
    };
 
@@ -322,7 +323,7 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(0x3c5, restore->SR12);
    outb(0x3c4, 0x13);
    outb(0x3c5, restore->SR13);
-   if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+   if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
      outb(0x3c4, 0x29);
      outb(0x3c5, restore->SR29);
      outb(0x3c4, 0x54);
@@ -396,7 +397,8 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
       outb(vgaCRIndex, 0x86);
       outb(vgaCRReg, restore->CR86);
    }
-   if (s3vPriv.chip == S3_ViRGE_DXGX || s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+   if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
+       S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
       outb(vgaCRIndex, 0x90);
       outb(vgaCRReg, restore->CR90);
    }
@@ -422,7 +424,7 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(0x3c5, restore->SR12);
    outb(0x3c4, 0x13);
    outb(0x3c5, restore->SR13);
-   if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+   if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
      outb(0x3c4, 0x29);
      outb(0x3c5, restore->SR29);
      outb(0x3c4, 0x54);
@@ -605,7 +607,8 @@ unsigned char cr3a, cr53, cr66;
       outb(vgaCRIndex, 0x86);
       save->CR86 = inb(vgaCRReg);
    }
-   if (s3vPriv.chip == S3_ViRGE_DXGX || s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+   if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
+       S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
       outb(vgaCRIndex, 0x90);
       save->CR90 = inb(vgaCRReg);
    }
@@ -639,7 +642,7 @@ unsigned char cr3a, cr53, cr66;
    save->SR12 = inb(0x3c5);
    outb(0x3c4, 0x13);
    save->SR13 = inb(0x3c5);
-   if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+   if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
      outb(0x3c4, 0x29);
      save->SR29 = inb(0x3c5);
      outb(0x3c4, 0x54);
@@ -776,7 +779,8 @@ DisplayModePtr pMode, pEnd;
          pciInfo->ChipType != S3_ViRGE_VX &&
 	 pciInfo->ChipType != S3_ViRGE_DXGX &&
 	 pciInfo->ChipType != S3_ViRGE_GX2 &&
-	 pciInfo->ChipType != S3_ViRGE_MX){
+	 pciInfo->ChipType != S3_ViRGE_MX &&
+	 pciInfo->ChipType != S3_ViRGE_MXP){
           if (xf86Verbose > 1)
              ErrorF("%s %s: Unsupported (non-ViRGE) S3 chipset detected!\n", 
                 XCONFIG_PROBED, vga256InfoRec.name);
@@ -846,7 +850,7 @@ DisplayModePtr pMode, pEnd;
          }
          vga256InfoRec.videoRam -= s3vPriv.MemOffScreen;
       }
-      else if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+      else if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
          switch((config1 & 0xC0) >> 6) {
          case 1:
             vga256InfoRec.videoRam = 4 * 1024;
@@ -924,13 +928,13 @@ DisplayModePtr pMode, pEnd;
       if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 135000;
       if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 135000;
    }
-   else if (s3vPriv.chip == S3_ViRGE_DXGX || s3vPriv.chip == S3_ViRGE_GX2) {
+   else if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip)) {
       if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 170000;
       if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 170000;
       if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 135000;
       if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 135000;
    }
-   else if (s3vPriv.chip == S3_ViRGE_MX) {
+   else if (S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
       if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 135000;
       if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 135000;
       if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 100000;
@@ -1000,7 +1004,7 @@ DisplayModePtr pMode, pEnd;
    else s3vPriv.MCLK = 0;
 
 
-   if (s3vPriv.chip == S3_ViRGE_MX && xf86Verbose) {
+   if (S3_ViRGE_MX_SERIES(s3vPriv.chip) && xf86Verbose) {
        int lcdclk, h_lcd, v_lcd;
        if (OFLG_ISSET(XCONFIG_LCDCLOCK, &vga256InfoRec.xconfigFlag)) {
 	  lcdclk = vga256InfoRec.LCDClk;
@@ -1035,7 +1039,8 @@ DisplayModePtr pMode, pEnd;
 
    /* Set scale factors for mode timings */
 
-   if (s3vPriv.chip == S3_ViRGE_VX || s3vPriv.chip == S3_ViRGE_MX){
+   if (s3vPriv.chip == S3_ViRGE_VX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
+       S3_ViRGE_MX_SERIES(s3vPriv.chip)){
       s3vPriv.HorizScaleFactor = 1;
       }
    else if (vgaBitsPerPixel == 8){
@@ -1130,7 +1135,7 @@ DisplayModePtr pMode, pEnd;
    OFLG_SET(OPTION_HW_CURSOR, &S3V.ChipOptionFlags);
    OFLG_SET(OPTION_EARLY_RAS_PRECHARGE, &S3V.ChipOptionFlags);
    OFLG_SET(OPTION_LATE_RAS_PRECHARGE, &S3V.ChipOptionFlags);
-   if (s3vPriv.chip == S3_ViRGE_MX)
+   if (S3_ViRGE_MX_SERIES(s3vPriv.chip))
      OFLG_SET(OPTION_LCD_CENTER, &S3V.ChipOptionFlags);
 
    s3vPriv.NoPCIRetry = 1;
@@ -1220,7 +1225,7 @@ int Base, hwidth;
 unsigned char tmp;
 
    if(s3vPriv.STREAMSRunning == FALSE ||
-      s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
+      S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
       Base = ((y * vga256InfoRec.displayWidth + x)
 		* (vgaBitsPerPixel / 8)) >> 2;
       if (vgaBitsPerPixel == 24) 
@@ -1396,11 +1401,9 @@ int i, j;
 	   220000, 440000, &new->SR13, &new->SR12);
 
       }
-   else if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) {
-       if (vgaBitsPerPixel == 8) {
-          if (dclk <= 85000) new->CR67 = 0x00;  /* 8bpp,  85MHz */
-          else new->CR67 = 0x10;                /* 8bpp, 170MHz */
-          }
+   else if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
+       if (vgaBitsPerPixel == 8)
+	  new->CR67 = 0x00;
        else if (vgaBitsPerPixel == 16) {
 	  if (vga256InfoRec.weight.green == 5)
 	     new->CR67 = 0x30;                  /* 15bpp */
@@ -1418,7 +1421,7 @@ int i, j;
           }
        {
          unsigned char ndiv;
-	 if (s3vPriv.chip == S3_ViRGE_MX) {
+	 if (S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
 	   int lcd_freq;
 	   outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
 	   outb(0x3c5, 0x06);
@@ -1568,7 +1571,7 @@ int i, j;
    if (s3vPriv.chip == S3_ViRGE_DXGX) {
       new->CR86 = 0x80;  /* disable DAC power saving to avoid bright left edge */
    }
-   if (s3vPriv.chip == S3_ViRGE_DXGX || s3vPriv.chip == S3_ViRGE_GX2) {
+   if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip)) {
       new->CR90 = 0x00;  /* disable the stream display fetch length control */
    }
 	 
@@ -1626,7 +1629,7 @@ int i, j;
    new->CR68 = inb(vgaCRReg);
    new->CR69 = 0;
 
-   if (s3vPriv.chip == S3_ViRGE_MX && 
+   if (S3_ViRGE_MX_SERIES(s3vPriv.chip) && 
        OFLG_ISSET(OPTION_LCD_CENTER, &vga256InfoRec.options)) {
      new->SR54 = 0x10 ;
      new->SR55 = 0x80 ;

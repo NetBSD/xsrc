@@ -22,7 +22,7 @@ SOFTWARE.
 ************************************************************************/
 
 /* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.2 1998/05/18 13:51:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.5 1998/07/15 23:48:57 robin Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -379,7 +379,7 @@ OpenFont(client, fid, flags, lenfname, pfontname)
     ErrorF("OpenFont: fontname is \"%s\"\n", f);
     xfree(f);
 #endif
-    if (!lenfname)
+    if (!lenfname || lenfname > XLFDMAXFONTNAMELEN)
 	return BadName;
     if (patternCache)
     {
@@ -693,7 +693,7 @@ doListFontsAndAliases(client, c)
 	     * old state
 	     */
 	    else if (err == FontNameAlias) {
-		char	tmp_pattern[256];
+		char	tmp_pattern[XLFDMAXFONTNAMELEN];
 		/*
 		 * when an alias recurses, we need to give
 		 * the last FPE a chance to clean up; so we call
@@ -834,7 +834,7 @@ ListFonts(client, pattern, length, max_names)
     int         i;
     LFclosurePtr c;
 
-    if (length > sizeof(c->current.pattern))
+    if (length > XLFDMAXFONTNAMELEN)
 	return BadAlloc;
     if (!(c = (LFclosurePtr) xalloc(sizeof *c)))
 	return BadAlloc;
@@ -1099,7 +1099,7 @@ StartListFontsWithInfo(client, length, pattern, max_names)
     int		    i;
     LFWIclosurePtr  c;
 
-    if (length > sizeof(c->current.pattern))
+    if (length > XLFDMAXFONTNAMELEN)
 	goto badAlloc;
     if (!(c = (LFWIclosurePtr) xalloc(sizeof *c)))
 	goto badAlloc;

@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.11 1998/05/22 13:20:58 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.12 1998/07/16 06:55:03 hohndel Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -1113,8 +1113,8 @@ struct pci_vendor_device {
                             { 0x8A01, "ViRGE/DX or /GX", NF },
                             { 0x8A10, "ViRGE/GX2", NF },
                             { 0x8C01, "ViRGE/MX", NF },
-                            { 0x8C02, "ViRGE/MX+", NF },
-                            { 0x8C03, "ViRGE/MX+MV", NF },
+                            { 0x8C02, "ViRGE/MX?", NF },
+                            { 0x8C03, "ViRGE/MX+", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x8086, "Intel", {
                             { 0x0482, "82375EB pci-eisa bridge", NF },

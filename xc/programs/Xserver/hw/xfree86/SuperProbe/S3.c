@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.3 1998/02/15 23:31:56 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.4 1998/07/16 06:54:55 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -142,6 +142,10 @@ int *Chipset;
 			case PCI_CHIP_ViRGE_MX:
 			        PCIProbed = TRUE;
 				*Chipset = CHIP_S3_ViRGE_MX;
+				break;
+			case PCI_CHIP_ViRGE_MXP:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_ViRGE_MXP;
 				break;
 			case PCI_CHIP_ViRGE_VX:
 			        PCIProbed = TRUE;
@@ -359,6 +363,7 @@ int *Chipset;
 			   case PCI_CHIP_PLATO_PX: 
 			   case PCI_CHIP_ViRGE_GX2:
 			   case PCI_CHIP_ViRGE_MX:
+			   case PCI_CHIP_ViRGE_MXP:
 			      *Chipset = chip_id;
 			      break;
 			   default:
@@ -423,7 +428,8 @@ int Chipset;
 			   }
 			}
 			else if (Chipset == CHIP_S3_ViRGE_GX2 ||
-				 Chipset == CHIP_S3_ViRGE_MX)
+				 Chipset == CHIP_S3_ViRGE_MX  ||
+				 Chipset == CHIP_S3_ViRGE_MXP)
 			{
 			   switch((config & 0xC0) >> 6)
 			   {

@@ -1,5 +1,5 @@
 /* $XConsortium: osPexFont.c /main/10 1996/12/06 11:02:43 lehors $ */
-/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.4 1996/12/23 06:26:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.4.2.4 1998/07/12 18:45:53 robin Exp $ */
 
 /*
 
@@ -69,6 +69,30 @@ extern char *getenv();
 #ifndef PEX_DEFAULT_FONTPATH
 #define PEX_DEFAULT_FONTPATH "/usr/lib/X11/fonts/PEX"
 #endif
+
+#ifndef X_NOT_POSIX
+#ifdef _POSIX_SOURCE
+#include <limits.h>
+#else
+#define _POSIX_SOURCE
+#include <limits.h>
+#undef _POSIX_SOURCE
+#endif
+#endif /* X_NOT_POSIX */
+#ifndef PATH_MAX
+#ifdef WIN32
+#define PATH_MAX 512
+#else
+#include <sys/param.h>
+#endif
+#ifndef PATH_MAX
+#ifdef MAXPATHLEN
+#define PATH_MAX MAXPATHLEN
+#else
+#define PATH_MAX 1024
+#endif
+#endif
+#endif /* PATH_MAX */
 
 #ifndef WIN32
 
@@ -287,10 +311,13 @@ char    ***names;		/* out - pointer to list of strings */
     DIR		    *fontdir;
     ENTRY           *dir_entry;
 #endif
-    char	     pattern[100];
-    char	     entry[100];
+    char	     *pattern;
+    char	     entry[PATH_MAX+1];
     int		     i, head, tail, len, total = 0;
     
+    if (!(pattern = (char *)xalloc((unsigned long)(1 + patLen))))
+	return 0;
+
     CopyISOLatin1Lowered((unsigned char*)pattern, pPattern, patLen);
     
     if (!(*names = (char **)xalloc((unsigned long)(ABSOLUTE_MAX_NAMES * sizeof(char *)))))
@@ -298,11 +325,17 @@ char    ***names;		/* out - pointer to list of strings */
     
 #ifdef WIN32
     sprintf(path, "%s/*.*", pex_get_font_directory_path());
-    if ((fontdirh = FindFirstFile(path, &dir_entry)) == INVALID_HANDLE_VALUE)
+    if ((fontdirh = FindFirstFile(path, &dir_entry)) == INVALID_HANDLE_VALUE) {
+	xfree(*names);
+	xfree(pattern);
 	return 0;
+    }
 #else
-    if (!(fontdir = opendir(pex_get_font_directory_path())))
+    if (!(fontdir = opendir(pex_get_font_directory_path()))) {
+	xfree(*names);
+	xfree(pattern);
 	return 0;
+    }
 #endif
 
     pex_setup_wild_match(pattern, &head, &tail, &len);
@@ -323,6 +356,7 @@ char    ***names;		/* out - pointer to list of strings */
 		    for (i = 0; i < total; i++)
 			xfree((*names)[i]);
 		    xfree(*names);
+		    xfree(pattern);
 		    return 0;
 		}
 		
@@ -411,15 +445,15 @@ LoadPEXFontFile(length, fontname, pFont)
     char *	    fontname;
     diFontHandle    pFont;
 {
-    char                fname[100];
+    char                fname[FILENAME_MAX+1];
     FILE               *fp;
     Font_file_header    header;
     Property           *properties = 0;
     Dispatch           *table = 0;
     miFontHeader       *font = (miFontHeader *)(pFont->deviceData);
     int                 found_first, found_it = 0, err = Success, numChars, np;
-    char		name_to_match[100];
-    char		lowered_entry[100];
+    char		*name_to_match;
+    char		lowered_entry[PATH_MAX+1];
 #ifdef WIN32
     HANDLE		fontdirh;
     WIN32_FIND_DATA	dir_entry;
@@ -433,6 +467,9 @@ LoadPEXFontFile(length, fontname, pFont)
     register Dispatch  *tblptr = 0;
     register Property  *propptr = 0;
     register pexFontProp *fpptr = 0;
+
+    if (!(name_to_match = (char *)xalloc((unsigned int)(1 + length))))
+	return (PEXERR(PEXFontError));
 
     CopyISOLatin1Lowered((unsigned char *)name_to_match,
 			 (unsigned char *)fontname, length);
@@ -461,6 +498,7 @@ LoadPEXFontFile(length, fontname, pFont)
 	    if (strcmp(lowered_entry, name_to_match) == 0)
 		found_it = 1;
 	}
+    xfree(name_to_match);
 #ifdef WIN32
     while (!found_it && FindNextFile(fontdirh, &dir_entry) && !found_it);
 #endif

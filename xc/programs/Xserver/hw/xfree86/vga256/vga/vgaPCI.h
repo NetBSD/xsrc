@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.11 1998/02/20 14:28:02 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.12 1998/07/16 06:55:08 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -161,6 +161,7 @@
 #define PCI_CHIP_VIRGE_DXGX	0x8A01
 #define PCI_CHIP_VIRGE_GX2	0x8A10
 #define PCI_CHIP_VIRGE_MX	0x8C01
+#define PCI_CHIP_VIRGE_MXP	0x8C03
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -346,6 +347,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_VIRGE_DXGX,	"ViRGE/DX or /GX"},
 				{PCI_CHIP_VIRGE_GX2,	"ViRGE/GX2"},
 				{PCI_CHIP_VIRGE_MX,	"ViRGE/MX"},
+				{PCI_CHIP_VIRGE_MXP,	"ViRGE/MX+"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},

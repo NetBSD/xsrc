@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.9 1998/02/15 23:31:55 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.11 1998/07/18 08:19:44 dawes Exp $ */
 
 /*
  * Includes
@@ -416,7 +416,7 @@ extern struct RamDac_Name RamDac_Names[];
 #define V_IG		27
 
 #define NUM_VENDORS	27
-#define CHPS_PER_VENDOR	35
+#define CHPS_PER_VENDOR	36
 
 #define CHIP_AHEAD_UNK	SVGA_TYPE(V_AHEAD,0)	/* Ahead unknown	*/
 #define CHIP_AHEAD_A	SVGA_TYPE(V_AHEAD,1)	/* Ahead V5000 Version A*/
@@ -576,6 +576,7 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_S3_PLATO_PX SVGA_TYPE(V_S3,32)	/* S3 PLATO/PX		*/
 #define CHIP_S3_ViRGE_GX2 SVGA_TYPE(V_S3,33)	/* S3 ViRGE/GX2		*/
 #define CHIP_S3_ViRGE_MX SVGA_TYPE(V_S3,34)	/* S3 ViRGE/MX		*/
+#define CHIP_S3_ViRGE_MXP SVGA_TYPE(V_S3,35)	/* S3 ViRGE/MX+		*/
 #define CHIP_TVGA_UNK	SVGA_TYPE(V_TRIDENT,0)	/* Trident unknown	*/
 #define CHIP_TVGA8200	SVGA_TYPE(V_TRIDENT,1)	/* Trident LX8200	*/
 #define CHIP_TVGA8800BR	SVGA_TYPE(V_TRIDENT,2)	/* Trident 8800BR	*/
