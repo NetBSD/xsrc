@@ -170,7 +170,7 @@ multiple of 90 degrees.
     }
   else                             /* error */
     {
-    abort("ComputeHint: invalid orientation");
+    Xabort("ComputeHint: invalid orientation");
     }
  
   IfTrace4((HintDebug > 1),
@@ -204,7 +204,7 @@ multiple of 90 degrees.
     }
   else                           /* error */
     {
-    abort("ComputeHint: invalid hinttype");
+    Xabort("ComputeHint: invalid hinttype");
     }
  
   IfTrace1((HintDebug > 1),"  hintValue=%p", hintValue);
@@ -221,7 +221,7 @@ multiple of 90 degrees.
     }
   else                             /* error */
     {
-    abort("ComputeHint: invalid orientation");
+    Xabort("ComputeHint: invalid orientation");
     }
 }
  
@@ -270,7 +270,7 @@ ProcessHint(struct hintsegment *hP,
       }
     else                             /* error */
       {
-      abort("ProcessHint: invalid label");
+      Xabort("ProcessHint: invalid label");
       }
     }
   else if (hP->adjusttype == 'r')  /* Reverse */
@@ -286,18 +286,18 @@ ProcessHint(struct hintsegment *hP,
         }
       else                           /* error */
         {
-        abort("ProcessHint: label is not in use");
+        Xabort("ProcessHint: label is not in use");
         }
       }
     else                           /* error */
       {
-      abort("ProcessHint: invalid label");
+      Xabort("ProcessHint: invalid label");
       }
  
     }
   else                           /* error */
     {
-    abort("ProcessHint: invalid adjusttype");
+    Xabort("ProcessHint: invalid adjusttype");
     }
   IfTrace3((HintDebug > 1),"  label=%d, thisHint=(%p,%p)\n",
     hP->label, thisHint.x, thisHint.y);
@@ -389,7 +389,7 @@ SearchXofY(register struct edgelist *edge,   /* represents edge              */
        else
                return(XofY(edge, y));
  
-       abort("bad subpath chain");
+       Xabort("bad subpath chain");
        /*NOTREACHED*/
 }
 /*
@@ -471,7 +471,7 @@ Now we have everything to return the answer:
        else if (ISBOTTOM(e1->flag) && y == e1->ymax)
                return(!ISDOWN(e2->flag));
        else
-               abort("ImpliedHorizontalLine:  why ask?");
+               Xabort("ImpliedHorizontalLine:  why ask?");
        /*NOTREACHED*/
 }
  
@@ -510,7 +510,7 @@ FixSubPaths(struct region *R)           /* anchor of region                  */
                if (!ISBREAK(edge, next))
                        continue;
                if (edge->ymax < next->ymin)
-                       abort("disjoint subpath?");
+                       Xabort("disjoint subpath?");
 /*
 'edge' now contains an edgelist at the bottom of an edge, and 'next'
 contains the next subsequent edgelist in the subpath, which must be at
@@ -571,7 +571,7 @@ as 'next':
  
                break1->subpath = break2->subpath;
                if (ISBREAK(break1, break1->subpath))
-                       abort("unable to fix subpath break?");
+                       Xabort("unable to fix subpath break?");
  
                break2->subpath = next;
  

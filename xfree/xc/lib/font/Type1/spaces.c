@@ -215,7 +215,7 @@ FindDeviceContext(pointer device) /* device token                            */
        int rc = -1;          /* return code for QueryDeviceState             */
  
        if (rc != 0)          /* we only bother with this check once          */
-               abort("Context:  QueryDeviceState didn't work");
+               Xabort("Context:  QueryDeviceState didn't work");
  
        M[0][0] = M[1][0] = M[0][1] = M[1][1] = 0.0;
  
@@ -233,7 +233,7 @@ FindDeviceContext(pointer device) /* device token                            */
                M[1][0] = -Yres;  M[0][1] = -Xres;
                break;
            default:
-               abort("QueryDeviceState returned invalid orientation");
+               Xabort("QueryDeviceState returned invalid orientation");
        }
        return(FindContext(M));
 }
@@ -257,7 +257,7 @@ FindContext(double M[2][2])  /* array to search for                          */
  
        if (i >= nextcontext) {
                if (i >= MAXCONTEXTS)
-                       abort("Context:  out of them");
+                       Xabort("Context:  out of them");
                LONGCOPY(contexts[i].normal, M, sizeof(contexts[i].normal));
                MatrixInvert(M, contexts[i].inverse);
                nextcontext++;
@@ -896,7 +896,7 @@ MatrixInvert(double M[2][2],      /* input matrix                            */
  
        D = M[1][1] * M[0][0] - M[1][0] * M[0][1];
        if (D == 0.0)
-               abort("MatrixInvert:  can't");
+               Xabort("MatrixInvert:  can't");
  
        Mprime[0][0] = tyy / D;
        Mprime[1][0] = -txy / D;
