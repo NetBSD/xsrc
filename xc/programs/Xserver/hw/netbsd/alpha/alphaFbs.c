@@ -109,11 +109,7 @@ pointer alphaMemoryMap (len, off, fd)
     if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1)
 	Error("WSDISPLAYIO_SMODE");
     /* 
-     * try and make it private first, that way once we get it, an
-     * interloper, e.g. another server, can't get this frame buffer,
-     * and if another server already has it, this one won't.
-     * ross@netbsd.org .. hehe, that was not what MAP_PRIVATE meant ..
-     * MAP_PRIVATE makes no sense for a frame buffer...
+     * ross@netbsd.org -- MAP_PRIVATE makes no sense for a frame buffer
      */
     mapaddr = (pointer) mmap (addr, mapsize,
 		    PROT_READ | PROT_WRITE, MAP_SHARED,
