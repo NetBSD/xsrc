@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/06/25 12:26:17 tron Exp $
+#	$NetBSD: Makefile,v 1.40 2003/07/21 11:09:45 lukem Exp $
 #
 # Targets & Variables
 #
@@ -31,14 +31,15 @@
 # doesn't get defined by  "bsd.own.mk".
 NETBSDSRCDIR?=	${BSDSRCDIR}
 
-.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+.if ${USE_XF86_4:Uno} != "no"
 XCDIR=	xfree/xc
 .else
 XCDIR=	xc
 .endif
 
+
 .MAIN: all
-.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+.if ${USE_XF86_4:Uno} != "no"
 all: all-xc all-local
 .else
 all: all-xc all-contrib all-local
@@ -68,7 +69,7 @@ all-local:
 	fi
 	@cd local && ${MAKE}
 
-.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+.if ${USE_XF86_4:Uno} != "no"
 install: install-xc install-local
 .else
 install: install-xc install-contrib install-local
@@ -90,7 +91,7 @@ install-local:
 	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 clean:
-.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+.if ${USE_XF86_4:Uno} != "no"
 	@-cd ${XCDIR} && ${MAKE} clean
 	@-cd local && ${MAKE} clean
 .else
@@ -136,7 +137,7 @@ release snapshot: build
 .endif # INSTALL_DONE or BUILD_DONE
 #
 	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/${MACHINE}/binary/sets
-.if (${MACHINE} == "amiga") && !(defined(USE_XF86_4) && (${USE_XF86_4} != no))
+.if (${MACHINE} == "amiga") && ${USE_XF86_4:Uno} == "no"
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}/${MACHINE}
 .endif
