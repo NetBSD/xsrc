@@ -3,7 +3,7 @@
  */
 
 
-/* $XFree86: xc/programs/xterm/error.h,v 1.3 1997/12/06 08:53:04 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/error.h,v 1.4 1998/06/04 16:43:57 hohndel Exp $ */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
@@ -70,6 +70,7 @@
 #define	ERROR_VINIT	54	/* VTInit: can't initialize window */
 #define	ERROR_CNMALLOC1	55	/* Changename: malloc failed */
 #define	ERROR_CNMALLOC2	56	/* Changename: malloc failed */
+#define	ERROR_KMMALLOC1	57	/* HandleKeymapChange: malloc failed */
 /* Tekproc.c */
 #define	ERROR_TSELECT	60	/* Tinput: select() failed */
 #define	ERROR_TINIT	64	/* TekInit: can't initialize window */

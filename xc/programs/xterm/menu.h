@@ -1,5 +1,5 @@
 /* $XConsortium: menu.h /main/27 1996/12/01 23:47:03 swick $ */
-/* $XFree86: xc/programs/xterm/menu.h,v 3.8 1997/12/28 21:28:43 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/menu.h,v 3.10 1998/06/04 16:43:59 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -86,7 +86,7 @@ extern void HandleTekPage          PROTO_XT_ACTIONS_ARGS;
 extern void HandleTekReset         PROTO_XT_ACTIONS_ARGS;
 extern void HandleVisibility       PROTO_XT_ACTIONS_ARGS;
 
-extern void DoSecureKeyboard PROTO((Time tp));
+extern void DoSecureKeyboard (Time tp);
 
 /*
  * The following definitions MUST match the order of entries given in 
