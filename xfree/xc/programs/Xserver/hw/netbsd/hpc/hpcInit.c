@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.4 2004/07/22 18:08:59 uch Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.5 2005/03/28 10:11:21 tron Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -167,6 +167,11 @@ GetDeviceList (argc, argv)
     }
 
     return deviceList;
+}
+
+void 
+OsVendorPreInit()
+{
 }
 
 void 
