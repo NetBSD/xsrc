@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_io.c,v 1.6 2001/09/18 16:19:28 ad Exp $	*/
+/*	$NetBSD: pmax_io.c,v 1.7 2001/09/19 20:52:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ SOFTWARE.
 #include <sys/proc.h>
 
 #include <machine/tc_machdep.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
 #include <dev/dec/lk201.h>
@@ -365,7 +365,7 @@ pmaxScreenInit(index, pScreen, argc, argv)
 	pScreen->UninstallColormap = pmaxUninstallColormap;
 	pScreen->ListInstalledColormaps = pmaxListInstalledColormaps;
 
-	switch (fb.fb_boardtype) {
+	switch (fb.fb_type) {
 	case PMAX_FBTYPE_PM_MONO:
 		if (!mfbScreenInit(pScreen, scrInfo->bitmap, 1024, 864, dpix, 
 		    dpiy, 2048)) {
@@ -409,7 +409,7 @@ pmaxScreenInit(index, pScreen, argc, argv)
 		break;
 
 	default:
-		ErrorF("pmaxScreenInit: unknown fbtype %d\n", fb.fb_boardtype);
+		ErrorF("pmaxScreenInit: unknown fbtype %d\n", fb.fb_type);
 		close(fdPM);
 		return (FALSE);
 	}
