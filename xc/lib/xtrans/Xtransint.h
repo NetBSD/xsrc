@@ -455,6 +455,12 @@ static int is_numeric (
 #endif
 );
 
+static int trans_mkdir (
+#if NeedFunctionPrototypes
+    char *,		/* path */
+    int			/* mode */
+#endif
+);
 
 /*
  * Some XTRANSDEBUG stuff
