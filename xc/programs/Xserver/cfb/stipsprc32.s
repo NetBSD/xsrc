@@ -81,7 +81,7 @@ in this Software without prior written authorization from the X Consortium.
 #define ForEachBits	LY4
 #define NextBits	LY5
 
-#ifdef SVR4
+#if defined(SVR4) || defined(__ELF__)
 #ifdef TETEXT
 #define	_cfb32StippleStack	cfb32StippleStackTE
 #else
