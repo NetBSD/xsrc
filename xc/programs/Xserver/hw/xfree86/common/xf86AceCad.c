@@ -2,6 +2,8 @@
  * Copyright 1996 by Steven Lang <tiger@tyger.org>
  *       Modified for the AceCad Tablet,
  *                by Shane Watts <shane@bofh.asn.au>
+ *       Modified for the AceCad Flair Tablet,
+ *                by Fredrik Chabot <fhc@f6.nl>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.2 1998/12/22 11:23:19 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.4 1999/06/02 07:50:34 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -99,18 +101,21 @@ typedef struct
     int		acecadButTrans;		/* button translation flags */
     int		acecadOldX;		/* previous X position */
     int		acecadOldY;		/* previous Y position */
+    int		acecadOldZ;		/* previous Z position */
     int		acecadOldProximity;	/* previous proximity */
     int		acecadOldButtons;	/* previous buttons state */
     int		acecadMaxX;		/* max X value */
     int		acecadMaxY;		/* max Y value */
+    int		acecadMaxZ;		/* max Z value */
     int		acecadXLeft;		/* screen left */
     int		acecadXRight;		/* screen right */
     int		acecadYtop;		/* screen top */
     int		acecadYbot;		/* screen bottom */
     int		acecadRes;		/* resolution in lines per inch */
     int		flags;			/* various flags */
+    int         acecadProtocol;          /* Protocol level */
     int		acecadIndex;		/* number of bytes read */
-    unsigned char acecadData[5];	/* data read on the device */
+    unsigned char acecadData[7];	/* data read on the device */
 } AceCadDeviceRec, *AceCadDevicePtr;
 
 /*
@@ -126,6 +131,7 @@ typedef struct
 #define DEBUG_LEVEL     7
 #define HISTORY_SIZE	8
 #define ALWAYS_CORE	9
+#define DEV_MODEL	10
 
 #if !defined(sun) || defined(i386)
 static SymTabRec AceCadTab[] = {
@@ -138,7 +144,8 @@ static SymTabRec AceCadTab[] = {
 	{BORDER,		"border"},
 	{DEBUG_LEVEL,		"debuglevel"},
 	{HISTORY_SIZE,		"historysize"},
-	{ ALWAYS_CORE,		"alwayscore" },
+	{ALWAYS_CORE,		"alwayscore" },
+	{DEV_MODEL,		"model" },
 	{-1,			""}
 };
 
@@ -159,7 +166,20 @@ static SymTabRec AceCadPointTabRec[] = {
 	{STYLUS,	"stylus"},
 	{-1,		""}
 };
-  
+
+#define A_SERIES	1
+#define FLAIR		2
+
+static SymTabRec AceCadModelTabRec[] = {
+	{A_SERIES,	"a-series"},
+	{A_SERIES,	"d-series"},
+	{A_SERIES,	"acecadI"},
+	{A_SERIES,	"acecadII"},
+	{A_SERIES,	"acecadIII"},
+	{FLAIR,		"flair"},
+	{-1,		""}
+};
+
 #endif
 
 /*
@@ -335,6 +355,27 @@ xf86AceCadConfig(LocalDevicePtr *array, int inx, int max, LexPtr val)
 		       XCONFIG_GIVEN);
 	    break;
 
+	case DEV_MODEL:
+	    mtoken = xf86GetToken(AceCadModelTabRec);
+	    if ((mtoken == EOF) || (mtoken == STRING) || (mtoken == NUMBER)) 
+		xf86ConfigError("Model token expected");
+	    else {
+		switch (mtoken) {
+		case A_SERIES:
+		    priv->acecadProtocol = 5;
+		    break;
+		case FLAIR:
+		    priv->acecadProtocol = 7;
+		    break;
+		default:
+		    xf86ConfigError("Illegal model");
+		    break;
+		}
+		ErrorF("%s AceCad protocol level sets to %d\n", XCONFIG_GIVEN,
+		       priv->acecadProtocol);
+	    }
+	    break;
+
 	case EOF:
 	    FatalError("Unexpected EOF (missing EndSubSection)");
 	    break;
@@ -361,7 +402,7 @@ xf86AceCadReadInput(LocalDevicePtr local)
     AceCadDevicePtr	priv = (AceCadDevicePtr) local->private;
     int			len, loop;
     int			is_core_pointer, is_absolute;
-    int			x, y, buttons, prox;
+    int			x, y, z, buttons, prox;
     DeviceIntPtr	device;
     unsigned char	buffer[BUFFER_SIZE];
   
@@ -401,6 +442,24 @@ xf86AceCadReadInput(LocalDevicePtr local)
        Byte 5 (Absolute mode only)
        bit 7  Always 0
        bits 6-0 = Y13 - Y7
+   ---------------------------------
+     Flair extends this with
+   ---------------------------------
+       Byte 6
+       bit 7  Always 0
+       bits 6-0 = Z8-2
+
+       Byte 7
+       bit 7-5  Always 0
+       bit 4 = Z0
+       bit 3-2 = Cr1-0
+         Controler 00 =  4 button puck
+                   01 =  3 button stylus (default)
+                   10 = 16 button puck (how? only 4bits)
+                   11 = reserved
+       bit 1 = Button status  
+       bit 0 = Z1
+
 */
   
 	if ((priv->acecadIndex == 0) && !(buffer[loop] & PHASING_BIT)) { /* magic bit is not OK */
@@ -410,17 +469,37 @@ xf86AceCadReadInput(LocalDevicePtr local)
 
 	priv->acecadData[priv->acecadIndex++] = buffer[loop];
 
-	if (priv->acecadIndex == (priv->flags & ABSOLUTE_FLAG? 5: 3)) {
+	if (priv->acecadIndex == (priv->flags & ABSOLUTE_FLAG ? priv->acecadProtocol : 3)) {
 /* the packet is OK */
 /* reset char count for next read */
 	    priv->acecadIndex = 0;
 
 	    if (priv->flags & ABSOLUTE_FLAG) {
-		x = (int)priv->acecadData[1] + ((int)priv->acecadData[2] << 7);
-		y = (int)priv->acecadData[3] + ((int)priv->acecadData[4] << 7);
+	        switch (priv->acecadProtocol){
+		case 7:
+		    DBG(9, ErrorF("aceprocotol %02x %02x %02x %02x %02x %02x %02x\n",
+			  priv->acecadData[0], priv->acecadData[1], priv->acecadData[2],
+			  priv->acecadData[3], priv->acecadData[4], priv->acecadData[5],
+			  priv->acecadData[6]) );
+		    x = (int)priv->acecadData[1] | ((int)priv->acecadData[2] << 7);
+		    y = (int)priv->acecadData[3] | ((int)priv->acecadData[4] << 7);
+	            z = ((int)priv->acecadData[5] << 2) |
+			  ((int)priv->acecadData[6] & 0x01 << 1) |
+			  ((int)priv->acecadData[6] & 0x10);
+		    buttons = ((int)priv->acecadData[0] & 0x07) |
+			  ((int)priv->acecadData[6] & 0x02 << 2);
+		    break;
+		case 5:
+		    x = (int)priv->acecadData[1] + ((int)priv->acecadData[2] << 7);
+		    y = (int)priv->acecadData[3] + ((int)priv->acecadData[4] << 7);
+		    buttons = (priv->acecadData[0] & BUTTON_BITS);
+		    break;
+		}
 	    } else {
 		x = priv->acecadData[0] & XSIGN_BIT? priv->acecadData[1]: -priv->acecadData[1];
 		y = priv->acecadData[0] & YSIGN_BIT? priv->acecadData[2]: -priv->acecadData[2];
+		z = 0;
+		buttons = (priv->acecadData[0] & BUTTON_BITS);
 	    }
 
 /*	    x = priv->acecadMaxX - x;	/**/
@@ -428,12 +507,11 @@ xf86AceCadReadInput(LocalDevicePtr local)
 
 	    prox = (priv->acecadData[0] & PROXIMITY_BIT)? 0: 1;
 
-	    buttons = (priv->acecadData[0] & BUTTON_BITS);
 
 	    device = local->dev;
 
-	    DBG(6, ErrorF("prox=%s\tx=%d\ty=%d\tbuttons=%d\n",
-		   prox ? "true" : "false", x, y, buttons));
+	    DBG(6, ErrorF("prox=%s\tx=%d\ty=%d\tz=%d\tbuttons=%d\n",
+		   prox ? "true" : "false", x, y, z, buttons));
 
 	    is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	    is_core_pointer = xf86IsCorePointer(device);
@@ -442,12 +520,14 @@ xf86AceCadReadInput(LocalDevicePtr local)
 	    if (prox) {
 		if (!(priv->acecadOldProximity))
 		    if (!is_core_pointer)
-			xf86PostProximityEvent(device, 1, 0, 2, x, y);
+			xf86PostProximityEvent(device, 1, 0, 3 , x, y, z);
 
-		if ((is_absolute && ((priv->acecadOldX != x) || (priv->acecadOldY != y)))
+		if ( (is_absolute && ((priv->acecadOldX != x) ||
+		                      (priv->acecadOldY != y) ||
+		                      (priv->acecadOldZ != z)))
 		       || (!is_absolute && (x || y))) {
 		    if (is_absolute || priv->acecadOldProximity) {
-			xf86PostMotionEvent(device, is_absolute, 0, 2, x, y);
+			xf86PostMotionEvent(device, is_absolute, 0, 3, x, y, z);
 		    }
 		}
 
@@ -455,28 +535,27 @@ xf86AceCadReadInput(LocalDevicePtr local)
 		int	delta;
 		int	button;
 
-		    delta = buttons - priv->acecadOldButtons;
-		    button = (delta > 0)? delta: ((delta == 0)?
-			   priv->acecadOldButtons : -delta);
+		    delta = buttons ^ priv->acecadOldButtons;
+		    while(delta){
+		    int id;
 
-		    if (priv->acecadOldButtons != buttons) {
-			DBG(6, ErrorF("xf86AceCadReadInput button=%d\n", button));
+			id=ffs(delta);
+			delta &= ~(1 << (id-1));
 
-			xf86PostButtonEvent(device, is_absolute, button,
-			       (delta >0), 0, 2, x, y);
+			xf86PostButtonEvent(device, is_absolute, id, (buttons&(1<<(id-1))), 0, 0);
 		    }
-
 		}
 
 		priv->acecadOldButtons = buttons;
 		priv->acecadOldX = x;
 		priv->acecadOldY = y;
+		priv->acecadOldZ = z;
 		priv->acecadOldProximity = prox;
 	    } else { /* !PROXIMITY */
 /* Any changes in buttons are ignored when !proximity */
 		if (!is_core_pointer)
 		    if (priv->acecadOldProximity)
-			xf86PostProximityEvent(device, 0, 0, 2, x, y);
+			xf86PostProximityEvent(device, 0, 0, 3, x, y, z);
 		priv->acecadOldProximity = 0;
 	    }
 	}
@@ -732,6 +811,13 @@ xf86AceCadOpenDevice(DeviceIntPtr pAceCad)
 			   500000,		/* resolution */
 			   0,			/* min_res */
 			   500000);		/* max_res */
+    InitValuatorAxisStruct(pAceCad,
+			   2,
+			   0,			/* min val */
+			   512,			/* max val */
+			   500000,		/* resolution */
+			   0,			/* min_res */
+			   500000);		/* max_res */
     return (local->fd != -1);
 }
 
@@ -755,8 +841,8 @@ xf86AceCadProc(DeviceIntPtr pAceCad, int what)
 	case DEVICE_INIT:
 	    DBG(1, ErrorF("xf86AceCadProc pAceCad=0x%x what=INIT\n", pAceCad));
 
-	    nbaxes = 2;			/* X, Y */
-	    nbbuttons = (priv->flags & STYLUS_FLAG)? 2: 4;
+	    nbaxes = 3;			/* X, Y, Z */
+	    nbbuttons = (priv->flags & STYLUS_FLAG) ? 3 : 4;
 
 	    for(loop=1; loop<=nbbuttons; loop++) map[loop] = loop;
 
@@ -995,12 +1081,15 @@ xf86AceCadAllocate()
     priv->acecadInc = -1;            /* re-transmit position on increment */
     priv->acecadOldX = -1;           /* previous X position */
     priv->acecadOldY = -1;           /* previous Y position */
+    priv->acecadOldZ = -1;           /* previous Z position */
     priv->acecadOldProximity = 0;    /* previous proximity */
     priv->acecadOldButtons = 0;      /* previous buttons state */
     priv->acecadMaxX = -1;           /* max X value */
     priv->acecadMaxY = -1;           /* max Y value */
+    priv->acecadMaxZ = -1;           /* max Z value */
     priv->flags = 0;                 /* various flags */
     priv->acecadIndex = 0;           /* number of bytes read */
+    priv->acecadProtocol = 5;         /* Protocol level */
 
     return local;
 }

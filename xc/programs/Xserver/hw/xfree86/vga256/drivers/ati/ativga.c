@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativga.c,v 1.1.2.1 1998/02/01 16:42:07 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativga.c,v 1.1.2.2 1999/07/05 09:07:37 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -150,10 +150,10 @@ ATIVGAInit(DisplayModePtr mode)
         if (!mode->CrtcHAdjusted)
         {
             mode->CrtcHAdjusted = TRUE;
-            mode->CrtcHDisplay = (mode->CrtcHDisplay >> 3) - 1;
-            mode->CrtcHSyncStart >>= 3;
-            mode->CrtcHSyncEnd >>= 3;
-            mode->CrtcHTotal = (mode->CrtcHTotal >> 3) - 5;
+            mode->CrtcHDisplay = (mode->HDisplay >> 3) - 1;
+            mode->CrtcHSyncStart = mode->HSyncStart >> 3;
+            mode->CrtcHSyncEnd = mode->HSyncEnd >> 3;
+            mode->CrtcHTotal = (mode->HTotal >> 3) - 5;
         }
         if (!ATIUsingPlanarModes && (ATIAdapter == ATI_ADAPTER_VGA))
             ATINewHWPtr->std.CRTC[23] = 0xC3U;
@@ -216,10 +216,15 @@ ATIVGAInit(DisplayModePtr mode)
         }
         else
         {
-            VDisplay = mode->VDisplay;
-            if (mode->Flags & V_DBLSCAN)
-                VDisplay *= 2;
-    
+            if (ATILCDPanelID >= 0)
+                VDisplay = ATILCDVertical;
+            else
+            {
+                VDisplay = mode->VDisplay;
+                if (mode->Flags & V_DBLSCAN)
+                    VDisplay *= 2;
+            }
+
             if (VDisplay < 400)
                 ATINewHWPtr->std.MiscOutReg |= 0x80U;       /* +hsync -vsync */
             else if (VDisplay < 480)
@@ -227,35 +232,66 @@ ATIVGAInit(DisplayModePtr mode)
             else if (VDisplay < 768)
                 ATINewHWPtr->std.MiscOutReg |= 0xC0U;       /* -hsync -vsync */
         }
-    
+
         /* Setup sequencer register values */
         if (mode->Flags & V_CLKDIV2)
             ATINewHWPtr->std.Sequencer[1] = 0x09U;
         else
             ATINewHWPtr->std.Sequencer[1] = 0x01U;
-    
+
         /* Setup CRTC register values */
         ATINewHWPtr->std.CRTC[0] = mode->CrtcHTotal;
         ATINewHWPtr->std.CRTC[1] = mode->CrtcHDisplay;
-        ATINewHWPtr->std.CRTC[2] = mode->CrtcHSyncStart - 1;
-        ATINewHWPtr->std.CRTC[3] = (mode->CrtcHSyncEnd & 0x1FU) | 0x80U;
+        if (ATILCDPanelID >= 0)
+        {
+            ATINewHWPtr->std.CRTC[2] = mode->CrtcHDisplay;
+            ATINewHWPtr->std.CRTC[3] =
+                ((mode->CrtcHTotal + 4) & 0x1FU) | 0x80U;
+        }
+        else
+        {
+            ATINewHWPtr->std.CRTC[2] = mode->CrtcHSyncStart - 1;
+            ATINewHWPtr->std.CRTC[3] = (mode->CrtcHSyncEnd & 0x1FU) | 0x80U;
+        }
         Index = ((mode->CrtcHSkew << 2) + 0x10U) & ~0x1FU;
         if (Index < 0x0080)
             ATINewHWPtr->std.CRTC[3] |= Index;
         ATINewHWPtr->std.CRTC[4] = mode->CrtcHSyncStart;
-        ATINewHWPtr->std.CRTC[5] = ((mode->CrtcHSyncEnd & 0x20U) << 2) |
-                                   ((mode->CrtcHSyncEnd & 0x1FU)     );
+        if (ATILCDPanelID >= 0)
+            ATINewHWPtr->std.CRTC[5] =
+                (((mode->CrtcHTotal + 4) & 0x20U) << 2) |
+                 ((mode->CrtcHSyncEnd & 0x1FU)     );
+        else
+            ATINewHWPtr->std.CRTC[5] =
+                ((mode->CrtcHSyncEnd & 0x20U) << 2) |
+                 ((mode->CrtcHSyncEnd & 0x1FU)     );
         ATINewHWPtr->std.CRTC[6] = mode->CrtcVTotal & 0xFFU;
-        ATINewHWPtr->std.CRTC[7] = ((mode->CrtcVTotal & 0x0100U) >> 8) |
-                                   ((mode->CrtcVDisplay & 0x0100U) >> 7) |
-                                   ((mode->CrtcVSyncStart & 0x0100U) >> 6) |
-                                   ((mode->CrtcVSyncStart & 0x0100U) >> 5) |
-                                   0x10U |
-                                   ((mode->CrtcVTotal & 0x0200U) >> 4) |
-                                   ((mode->CrtcVDisplay & 0x0200U) >> 3) |
-                                   ((mode->CrtcVSyncStart & 0x0200U) >> 2);
-        ATINewHWPtr->std.CRTC[9] = ((mode->CrtcVSyncStart & 0x0200U) >> 4) |
-                                   0x40U;
+        if (ATILCDPanelID >= 0)
+        {
+            ATINewHWPtr->std.CRTC[7] = ((mode->CrtcVTotal & 0x0100U) >> 8) |
+                                       ((mode->CrtcVDisplay & 0x0100U) >> 7) |
+                                       ((mode->CrtcVSyncStart & 0x0100U) >> 6) |
+                                       ((mode->CrtcVDisplay & 0x0100U) >> 5) |
+                                       0x10U |
+                                       ((mode->CrtcVTotal & 0x0200U) >> 4) |
+                                       ((mode->CrtcVDisplay & 0x0200U) >> 3) |
+                                       ((mode->CrtcVSyncStart & 0x0200U) >> 2);
+            ATINewHWPtr->std.CRTC[9] = ((mode->CrtcVDisplay & 0x0200U) >> 4) |
+                                       0x40U;
+        }
+        else
+        {
+            ATINewHWPtr->std.CRTC[7] = ((mode->CrtcVTotal & 0x0100U) >> 8) |
+                                       ((mode->CrtcVDisplay & 0x0100U) >> 7) |
+                                       ((mode->CrtcVSyncStart & 0x0100U) >> 6) |
+                                       ((mode->CrtcVSyncStart & 0x0100U) >> 5) |
+                                       0x10U |
+                                       ((mode->CrtcVTotal & 0x0200U) >> 4) |
+                                       ((mode->CrtcVDisplay & 0x0200U) >> 3) |
+                                       ((mode->CrtcVSyncStart & 0x0200U) >> 2);
+            ATINewHWPtr->std.CRTC[9] = ((mode->CrtcVSyncStart & 0x0200U) >> 4) |
+                                       0x40U;
+        }
         /*
          * For doublescanned modes, setting bits 0-4 to 1 (which amounts to
          * oring in 1) appears to produce more consistent results than simply
@@ -266,8 +302,16 @@ ATIVGAInit(DisplayModePtr mode)
         ATINewHWPtr->std.CRTC[16] = mode->CrtcVSyncStart & 0xFFU;
         ATINewHWPtr->std.CRTC[17] = (mode->CrtcVSyncEnd & 0x0FU) | 0x20U;
         ATINewHWPtr->std.CRTC[18] = mode->CrtcVDisplay & 0xFFU;
-        ATINewHWPtr->std.CRTC[21] = (mode->CrtcVSyncStart & 0xFFU);
-        ATINewHWPtr->std.CRTC[22] = (mode->CrtcVSyncEnd + 1) & 0xFFU;
+        if (ATILCDPanelID >= 0)
+        {
+            ATINewHWPtr->std.CRTC[21] = (mode->CrtcVDisplay & 0xFFU);
+            ATINewHWPtr->std.CRTC[22] = (mode->CrtcVTotal + 1) & 0xFFU;
+        }
+        else
+        {
+            ATINewHWPtr->std.CRTC[21] = (mode->CrtcVSyncStart & 0xFFU);
+            ATINewHWPtr->std.CRTC[22] = (mode->CrtcVSyncEnd + 1) & 0xFFU;
+        }
     }
 }
 
@@ -293,9 +337,9 @@ ATIVGARestore(ATIHWPtr restore)
         PutReg(CRTX(vgaIOBase), Index, restore->std.CRTC[Index]);
 
     /* Load attribute controller */
-    (void) inb(GENS1(vgaIOBase));       /* Reset flip-flop */
     for (Index = 0;  Index < NumberOf(restore->std.Attribute);  Index++)
     {
+        (void) inb(GENS1(vgaIOBase));   /* Reset flip-flop & add delay */
         outb(ATTRX, Index);
         outb(ATTRX, restore->std.Attribute[Index]);
     }

@@ -2,21 +2,23 @@
 
 <article>
 <title> Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, 
-ViRGE/MX and ViRGE/VX Users
+ViRGE/MX, ViRGE/VX and Trio3D Users
 <author>The XFree86 Project Inc.
-<date>1 March 1998
+<date>23 June 1998
 <toc>
 
 <sect> Supported hardware
 <p>
-With release 3.3.2 of XFree86, there are now two servers which support
+Since release 3.3.2 of XFree86, there are now two servers which support
 the ViRGE family of chips. The XF86_S3V server 
 is a dedicated server which supports the S3 ViRGE (86C325), the ViRGE/DX 
-(86C375), ViRGE/GX (86C385) and the ViRGE/VX (86C988) chips. New with 
-this release, the above ViRGE chipsets are also supported in the 
+(86C375), ViRGE/GX (86C385) and the ViRGE/VX (86C988) chips. Use of that
+server is no longer recommended. It is not actively being supported anymore.
+
+The above ViRGE chipsets are supported in the 
 XF86_SVGA server, which includes a new ViRGE driver making use 
 of the XAA acceleration architecture and also supports 
-ViRGE/GX2 (86C357) and ViRGE/MX (86C260) chips now.
+ViRGE/GX2 (86C357), ViRGE/MX (86C260) and Trio3D (86C365) chips as of 3.3.4.
 <p>
 The following sections describe details of ViRGE support.  Be aware that
 there are two servers described.  XF86_S3V is the ViRGE specific server
@@ -98,21 +100,22 @@ The "nolinear" option is unsupported.
 <sect> XF86_SVGA server
 <p>
 The XF86_SVGA ViRGE driver supports all current flavors of the S3 ViRGE
-chipset. 
+chipset including Trio3D.
 It uses the XAA acceleration architecture for acceleration, and allows
 color depths of 8, 15, 16, 24 and 32 bpp. It has been tested on several 2MB
-and 4MB ViRGE cards, a 4MB ViRGE/DX card and a ViRGE/VX card. Resolutions 
-of up to 1600x1200 have been achieved. This is an early release of this
-driver, and not everything may work as expected. Please report any problems 
-to <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
+and 4MB ViRGE cards, a 4MB ViRGE/DX card, a ViRGE/VX card and a 4MB Trio3D
+card. Resolutions of up to 1600x1200 have been achieved. This is an early
+release of this driver, and not everything may work as expected. Please note
+that Trio3D support is an initial release and not very well tested. Please
+report any problems to <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
 using the appropriate bug report sheet. 
 
 <sect1>Features
 <p>
 
 <itemize>
-<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX 
-and ViRGE/VX.
+<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX, 
+ViRGE/VX and Trio3D.
 <item>Supports 8bpp, 15/16bpp, 24bpp and 32bpp.
 <item>VT switching seems to work well, no corruption reported 
 at all color depths. 
@@ -136,6 +139,20 @@ acceleration, so the graphics engine is used in 16bpp mode.
 <item>The driver only works with linear addressing.
 <item>Lines and polygons are not accelerated yet (but XAA still provides some
 acceleration in this respect).
+<item>Burst Command Interface (BCI) support and 32bpp support not implemented
+for the Trio3D.
+<item>Trio3D support only works for some modelines. Many of the standard
+modelines do not work (often slightly modifying the dot clock works, though).
+The following two modelines seem to work reliably at 8bpp and 24bpp:
+<verb>
+Modeline "1024x768"  75  1024 1048 1184 1328  768  771  777  806 -hsync -vsync
+Modeline "1280x1024" 135 1280 1312 1416 1664  1024 1027 1030 1064
+</verb>
+The following two modelines seem to work reliably at 16bpp:
+<verb>
+Modeline "640x480"  45.80 640 672 768 864 480 488 494 530 -hsync -vsync 
+Modeline "800x600"  36      800  824  896 1024    600  601  603  625
+</verb>
 </itemize>
 
 <sect1>Configuration
@@ -278,10 +295,13 @@ and:
 <itemize>
 <item>Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
 <item>Kevin Brosius <it>Cobra@compuserve.com</it>
+<item>Sebastian Kloska <it>kloska@mpimp-golm.mpg.de</it>
+<item>Alok Ladsariya <it>alok@XFree86.Org</it>
+<item>Dirk Hohndel <it>hohndel@XFree86.Org</it>
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.9 1998/12/04 01:36:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.11 1999/06/24 05:56:29 hohndel Exp $
 </verb>
 
 </article>

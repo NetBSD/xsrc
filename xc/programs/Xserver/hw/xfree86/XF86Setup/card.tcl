@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.5 1998/11/12 10:34:55 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.6 1999/04/26 07:23:32 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -184,20 +184,31 @@ proc Card_create_widgets { win } {
 	radiobutton $extr.videoram.m8m \
 		-variable cardRamSize -value 8192 -text $messages(card.21) \
 		-highlightthickness 0
-	radiobutton $extr.videoram.m12m \
+	if !$pc98_EGC {
+	    radiobutton $extr.videoram.m12m \
 		-variable cardRamSize -value 12288 -text $messages(card.35) \
 		-highlightthickness 0
-	radiobutton $extr.videoram.m16m \
+	    radiobutton $extr.videoram.m16m \
 		-variable cardRamSize -value 16384 -text $messages(card.36) \
 		-highlightthickness 0
-	pack  $extr.videoram.m256k $extr.videoram.m512k \
-	      $extr.videoram.m1m $extr.videoram.m2m $extr.videoram.m3m \
-		-side top -fill x -expand yes \
-		-in $extr.videoram.col1
-	pack  $extr.videoram.m4m $extr.videoram.m6m \
-	      $extr.videoram.m8m $extr.videoram.m12m $extr.videoram.m16m \
-		-side top -fill x -expand yes \
-		-in $extr.videoram.col2
+	    pack  $extr.videoram.m256k $extr.videoram.m512k \
+	          $extr.videoram.m1m $extr.videoram.m2m $extr.videoram.m3m \
+		    -side top -fill x -expand yes \
+		    -in $extr.videoram.col1
+	    pack  $extr.videoram.m4m $extr.videoram.m6m \
+	          $extr.videoram.m8m $extr.videoram.m12m $extr.videoram.m16m \
+		    -side top -fill x -expand yes \
+		    -in $extr.videoram.col2
+	} else {
+	    pack  $extr.videoram.m256k $extr.videoram.m512k \
+	          $extr.videoram.m1m \
+		    -side top -fill x -expand yes \
+		    -in $extr.videoram.col1
+	    pack  $extr.videoram.m2m $extr.videoram.m4m \
+		  $extr.videoram.m8m \
+		    -side top -fill x -expand yes \
+		    -in $extr.videoram.col2
+	}
 
 	frame $w.card.options
 	pack  $w.card.options -side bottom -fill x -in $w.card.detail \

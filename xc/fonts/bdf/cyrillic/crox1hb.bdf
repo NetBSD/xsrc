@@ -8,7 +8,7 @@ COMMENT in both source and binary form provided that the copyright
 COMMENT and these terms are retained. Under no circumstances is the author
 COMMENT responsible for the proper functioning of this software, nor does
 COMMENT the author assume any responsibility for damages incurred with its use.
-COMMENT $XFree86: xc/fonts/bdf/cyrillic/crox1hb.bdf,v 3.2.4.1 1998/02/01 16:03:26 robin Exp $
+COMMENT $XFree86: xc/fonts/bdf/cyrillic/crox1hb.bdf,v 3.2.4.2 1999/06/13 09:34:40 dawes Exp $
 FONT -Cronyx-Helvetica-Bold-R-Normal--11-80-100-100-P-46-KOI8-R
 SIZE 8 96 96
 FONTBOUNDINGBOX 12 13 0 -2
@@ -1692,13 +1692,12 @@ STARTCHAR cyr-em
 ENCODING 205
 SWIDTH 1286 0
 DWIDTH 9 0
-BBX 8 7 1 -1
+BBX 8 6 1 0
 BITMAP
 C3
 E7
 FF
 DB
-C3
 C3
 C3
 ENDCHAR

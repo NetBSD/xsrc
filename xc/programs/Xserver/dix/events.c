@@ -48,7 +48,7 @@ SOFTWARE.
 
 
 /* $XConsortium: events.c /main/187 1996/09/25 00:47:41 dpw $ */
-/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.11.2.1 1998/10/04 13:36:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.11.2.2 1999/06/02 07:50:07 hohndel Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -2177,7 +2177,9 @@ ProcessPointerEvent (xE, mouse, count)
 	    butc->buttonsDown++;
 	    butc->motionMask = ButtonMotionMask;
 	    *kptr |= bit;
+#ifndef XINPUT
 	    xE->u.u.detail = butc->map[key];
+#endif
 	    if (xE->u.u.detail == 0)
 		return;
 	    if (xE->u.u.detail <= 5)
@@ -2192,7 +2194,9 @@ ProcessPointerEvent (xE, mouse, count)
 	    if (!--butc->buttonsDown)
 		butc->motionMask = 0;
 	    *kptr &= ~bit;
+#ifndef XINPUT
 	    xE->u.u.detail = butc->map[key];
+#endif
 	    if (xE->u.u.detail == 0)
 		return;
 	    if (xE->u.u.detail <= 5)

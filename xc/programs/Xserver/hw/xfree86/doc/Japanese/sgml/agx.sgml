@@ -1,0 +1,1200 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!-- Title information -->
+
+<!--
+<title>Notes on the AGX Server
+-->
+<title>AGX サーバに関する注意書き
+<author>Henry Worth
+<date>24 June 1995
+<trans>The X Japanese Documentation Project
+<tdate>30 January 1999
+
+<!-- Table of contents -->
+<toc>
+
+<!-- Begin the document -->
+
+
+<!--
+<sect>General Notes<p>
+-->
+<sect>一般的なことがら<p>
+
+<!--
+     This server currently supports the IIT AGX-016, AGX-015, AGX-014
+     and XGA-2 chipsets. The AGX chipset is based on XGA architecture, 
+     but is missing several features and differs on others. There's 
+     also untested support for the XGA-1 and AGX-010 chipsets.    
+     Pixel depths of 8bpp, 15bpp, 16bpp are generally supported.
+     Unpacked 24bpp (RGBX 32bpp) is not yet stable enough to release.
+-->
+このサーバは現在、IIT AGX-016, AGX-015, AGX-014, XGA-2 チップセットを
+サポートしています。AGX チップセットは XGA アーキテクチャに基づくもの
+ですが、足りない機能がいくつかありますし、他のカードと違う点もあります。
+XGA-1, AGX-010 チップセットのサポートについてもテストされていない部分
+があります。ピクセルの色の深さは一般的に 8bpp, 15bpp, 16bpp がサポート
+されます。unpacked 形式の 24bpp (RGBX 32bpp) は、まだリリースできるほ
+ど安定していません。
+<p>
+<!--
+     RAMDACs currently supported are the Brooktree (BT481, BT482,
+     and BT485) and AT&amp;T (20C505) RAMDACs used by the Hercules 
+     Graphite series, and Sierra RAMDACs (15025 and 15021), and
+     Generic VGA RAMDAC. Untested support has been added for the
+     AT&amp;T 20C490 series.
+-->
+現在サポートしている RAMDAC は、Hercules Graphite シリーズで使われてい
+る Brooktree (BT481, BT482, BT485) と AT&amp;T (20C505) RAMDAC,
+Sierra RAMDAC (15025, 15021), 汎用 VGA RAMDAC です。テストはされていま
+せんが、AT&amp;T 20C490 シリーズにも対応しました。
+<p>
+<!--  
+     The current driver has a number of acceleration routines:
+     solid and dashed zero-width lines (except AGX-014), bitblt
+     fills, tiles, and stipples, solid arc and polygon fills, 
+     character glyphs and font cache for 8-bit characters.
+-->
+現在のドライバにはアクセラレーションのルーチンがたくさんあります: 幅が 
+0 の実線と点線(AGX-014 を除く)。bitbit を使った塗りつぶし、タイリング、
+スティプル。円弧と多角形の塗りつぶし。8ビット文字の文字グリフとフォン
+トキャッシュ。
+<p>
+<!--
+     Boards that have had some testing include ISA and VLB 
+     versions of most of the Hercules Graphite series, Spider 
+     Black Widow VLB and Black Widow Plus VLB, Boca Vortek VL,
+     CatsEye/X XGA-2, and the PS/2-57 planar XGA-2. The Orchid
+     Celsius is very similar to the Spider and Boca boards, except 
+     some batches may use one of the AT&amp;T 20C490 series RAMDACs, 
+     instead of the Sierra 15025. There has also been a report of
+     a generic board that uses a UMC RAMDAC that may be an AT&amp;T 
+     20C490 Clone. 
+-->
+テストを行ったボードを以下に示します: Hercules Graphite シリーズの大部
+分(ISA, VLB 版)、Spider 製の Black Widow VLB と Black Widow Plus VLB,
+Boca 製の Vortek VL, CatsEye/X XGA-2, PS/2-57 planar XGA-2。Orchid 製
+の Celsius は Spider と Boca のボードによく似ていますが、AT&amp;T
+20C490 シリーズの RAMDAC を使っているカードが一部にあるかもしれない点
+が異なります。AT&amp;T 20C490 の互換品と思われる UMC RAMDAC を使ってい
+る汎用ボードについての報告もありました。
+
+<!--
+<sect> Acknowledgments
+-->
+<sect> 謝辞
+<p>
+<!--
+     First, to Hercules Customer Support for providing a loaner 
+     board to get things started.
+-->
+まず、Hercules 社のカスタマサポート部に感謝します。こちらにはボードを
+提供していただき、おかげで作業を始めることができました。
+<p>
+<!--
+     Second, to the XFree86 team, and those who who have contributed
+     to their efforts to the project, for the foundation of work that 
+     provided a basis for bootstrapping this server.
+-->
+次に XFree86 チームとプロジェクトのために尽力している方々に感謝します。
+このサーバを作り始めるに当たっての作業の基礎となる部分を与えていただき
+ました。
+
+<!--
+<sect> Known Problems
+-->
+<sect> 既知の問題
+<p>
+<itemize>
+<!--
+<item>The accelerated line routines don't match lines written
+        by the mi/cfb routines. This is noticeable when switching 
+        between virtual consoles while running routines that draw 
+        and erase lines. Seems to have been reduced/fixed in previous
+        releases but need more testing.<p>
+-->
+<item>アクセラレーション付きの線描画ルーチンで描画した線は、mi/cfb ルー
+チンで描画した線と一致しません。線の描画と消去を行うルーチンの実行中に
+仮想コンソール間の切り替えを行った時に、この不一致が目立ちます。前のリ
+リースで改善/修正されたようなのですが、もう少しテストする必要がありま
+す。<p>
+<!--
+<item>Some special-case speedup added to cached font rendering
+        in 3.1.1 has been disabled as is over-aggressive in some
+        cases. This cuts the performance on terminal-fonts in half,
+        and font performance is already low for the AGX chips compared
+        to their contemporaries.<p>
+-->
+<item>
+3.1.1 でキャッシュ付きフォント描画に追加された特殊なケースでの高速化の
+一部は、やりすぎになる場合があるので無効にされました。これは端末のフォ
+ントの性能を半分に落としますが、AGX チップの場合、フォントの性能は同じ
+時期の他のカードと比べても既に低いです。<p>
+<!--
+<item>As in all software, needs more testing.<p>
+-->
+<item>全てのプログラムと同様に、さらにテストを行う必要があります。<p>
+</itemize>
+<!--
+<sect> ToDo
+-->
+<sect> 残っている作業
+<p>
+ <itemize>
+<!--
+<item>Address the above known problems.<p>
+-->
+<item>上記の既知の問題への対応。<p>
+
+<!--
+<item>Additional acceleration routines and general performance 
+        improvements. Many existing acceleration routines are Q&amp;D 
+        adaptations of existing routines from other servers that support
+        graphics chips that differ significantly, architecturally, from
+        that XGA and are undoubtedly less than optimal. In particular
+        some of the general per-operation overhead to set-up the
+        graphics context should be moved to the ValidateGC() routines.<p>
+-->
+<!-- Q&amp;D って quick and dirty のことっすよね? -->
+<item>アクセラレーションルーチンの追加と一般的な性能の向上。既存のアク
+セラレーションルーチンの多くは、アーキテクチャ的に XGA とは全く異なる
+グラフィックスチップをサポートしている他のサーバの既存のルーチンをいい
+加減に書き直したものであり、明らかに最適とは程遠いものです。特に、クラ
+フィックスコンテクストを設定するための操作ごとの一般的なオーバーヘッド
+の中には、ValidateGC() ルーチンに移動させるべきものもあります。<p>
+
+<!--
+<item>Complete HW cursor support, most of the code is done (or
+        borrowed from other servers). There just remains a little
+        setup code and then finding a lot of time to debug and test
+        the numerous permutations.<p>
+-->
+<item>ハードウェアカーソルの完全なサポート。コードの大部分はできていま
+す(あるいは他のサーバからもらってきています)。残っているのは、設定コー
+ドを少し書くことと、デバッグや色々な組合せを試すための時間を見つけるこ
+とだけです。<p>
+
+<!--
+<item>Complete support for the Graphite Pro's 84-pin RAMDAC.
+        (the 2MB version of the Graphite Pro has both RAMDACs, 
+        the 1Mb only the 44-pin RAMDAC). Currently, the 84-pin RAMDAC 
+        is only supported in clock-doubled pixmux mode, the server
+        will switch between RAMDACs as required by the video mode
+        In >8bpp modes this switching does not occur. <p>
+-->
+<item>Graphite Pro の 84 ピン RAMDAC のサポート(2MB 版の Graphite Pro 
+には両方の RAMDAC があり、1MB には 44 ピンの RAMDAC しかありません)。
+現在は 84 ピンの RAMDAC は倍速クロックの pixmux モードでしかサポートさ
+れておらず、サーバはビデオモードで必要とされるように RAMDAC の切り替え
+を行います。8bpp より大きいモードではこの切り替えは起こりません。<p>
+
+<!--
+<item>Implement more HW probing, this will be difficult as it
+        appears some (all?) AGX-based vendors don't implement 
+        the VESA VXE POS registers, although the AGX chip does 
+        support it (and some vendors claim VXE compliance&hellip;). 
+        There are a few rev/vendor registers in the AGX chip but 
+        they are not documented. Note: SuperProbe also does not 
+        support probing for AGX/XGA chips. ISA POS probing is
+        supported for the XGA chips and some code for EISA POS 
+        is also included but not tested.<p>
+-->
+<item>ハードウェア検出の実装を増やす。この作業は困難かもしれません。
+というのも、AGX チップは VESA の VXE POS レジスタをサポートしているに
+もかかわらず、AGX ベースのベンダの一部(全て?)はこれを実装していないよ
+うだからです(VXE 準拠だと言っているベンダはありますが…)。AGX チップに
+はリビジョンやベンダを表すレジスタがいくつかありますが、これはドキュメ
+ントには載っていません。注意: SuperProbe も AGX/XGA の検出はサポートし
+ていません。XGA チップに対しては ISA の POS 検出がサポートされており、
+EISA の POS の検出のコードも入っていますが、テストは行われていません。<p>
+
+<!--
+<item>Micro-optimizations, in particularly reducing processing overhead 
+        for common special cases that don't require full generality. <p>
+-->
+<item>細かい最適化。特に、完全に一般化する必要が無い特殊な場合のうち、
+よく現われるものに対する処理のオーバーヘッドの削減<p>
+</itemize>
+<!--
+<sect> XF86Config
+-->
+<sect> XF86Config
+<p>    
+<!--
+Device Section Entries and Options Currently Supported:
+-->
+Device セクションの項目と、現在サポートされているオプションを以下に示
+します:
+
+<p>
+<!--
+    The minimum that must be specified in the XF86Config device
+    section for the AGX-014, AGX-015, AGX-016, and ISA-based XGA-1 
+    and XGA-2 is the Chipset. However to get full capability out
+    of the AGX-01&lsqb;456&rsqb; chips, the RAMDAC should be specified.
+    Other parms may select additional capabilities, or may used to
+    override the defaults or reduce start-up time be suppressing
+    probing. XGA specific configuration is covered at the end of
+    this document. The XGA entries can generally be used to override
+    defaults for the AGX-01&lsqb;456&rsqb; as well.
+-->
+AGX-014, AGX-015, AGX-016 と ISA ベースの XGA-1, XGA-2 を使う場合、
+XF86Config ファイルの Device セクションで最低限指定しなければならない
+のは Chipset です。しかし、AGX-01&lsqb;456&rsqb; チップの機能を最大限
+に利用するためには、RAMDAC も指定すべきです。他のパラメータを使って追
+加の機能を選択したり、デフォルト値を上書きしたり、検出を止めて起動時間
+を短くすることもできます。XGA 固有の設定は本ドキュメントの最後で説明し
+ます。一般には XGA の項目を使って AGX-01&lsqb;456&rsqb; のデフォルト値
+も上書きすることができます。
+
+<descrip>
+<tag/Ramdac/
+
+<!--
+           Be sure to check the clock rating of the RAMDAC(s) on
+           your video board and don't exceed that rating even
+           if the server allows it, overclocking RAMDACs will
+           damage them.
+-->
+ビデオボードに載っている RAMDAC のクロックのレートを必ず確かめ、サーバ
+に指定可能な場合であっても、このレートを越えないようにしましょう。
+RAMDAC をオーバークロックさせると、これを壊してしまいます。
+<p>
+<!--
+           The clock rating generally appears as a suffix to the part 
+           number, may only have the most significant digit(s),
+           and may be mixed with other codes (e.g. package
+           type). For example, an 85MHz Bt481 in a plastic J-lead
+           package has a part number of Bt481KPJ85 and a 135MHz 
+           AT&amp;T20C505 has a part number of ATT20C505-13. Sierra
+           stamps the rated speed below the part numbers in a
+           dark ink.
+-->
+一般的にはクロックレートは部品番号に添字として付けられています。ただし、
+最上位の桁だけが付いていることや、他のコード(例えばパッケージのタイプ)
+と混じっていることもあります。例えば、プラスチックの J-lead パッケージ
+に入っている 85MHz の Bt481 の部品番号は Bt481KPJ85 であり、135MHz の 
+AT&amp;T20C505 の部品番号は ATT20C505-13 です。Sierra のチップの場合に
+は、クロックレートは部品番号の下に濃いインクで刻印されています。
+
+<descrip>
+<!--
+<tag/"normal"/
+				 normal VGA style RAMDAC (6-bit DAC),
+                                 default if none specified. Most
+                                 boards should work with this parm,
+                                 but some capabilities will be 
+                                 unavailable. Only 8bpp is available.
+-->
+<tag/&dquot;normal&dquot;/
+通常の VGA スタイルの RAMDAC(6 ビット DAC)であり、指定が無い場合にはこ
+れがデフォルト値です。ほとんどのカードはこのパラメータで動作するはずで
+すが、一部の機能は使えないでしょう。8bpp だけを使用できます。
+
+<!--
+<tag/"bt481"/
+				 bt481 RAMDAC (supports 8-bit DAC)
+-->
+<tag/&dquot;bt481&dquot;/
+bt481 RAMDAC (8 ビット DAC をサポートしています)
+<!--
+<tag/"bt482"/
+				 bt482 RAMDAC (supports 8-bit DAC)
+                                 The Hercules Graphite HG210 uses 
+                                 the BT481 or BT482, the only 
+                                 difference between these two is the
+                                 BT482's HW cursor (not yet supported).
+                                 The BT481/2 are limited to 85Mhz.
+                                 8bpp, 15bpp, 16bpp are supported. 
+-->
+<tag/&dquot;bt482&dquot;/
+bt482 RAMDAC(8 ビット DAC をサポートしています)。Hercules Graphite
+HG210 は BT481 または BT482 を使っています。両者の違いは、BT482 にはハー
+ドウェアカーソルがあることだけです(まだサポートしていませんが)。
+BT481/2 のドットクロック値の制限は  85MHz です。8bpp, 15bpp, 16bpp が
+サポートされています。
+
+<!--
+<tag/"ATT20c490"/
+                                 AT&amp;T490 RAMDAC (includes
+                                 49&lsqb;123&rsqb;  
+                                 - supports 8-bit DAC). Limited
+                                 to 110Mhz at 8bpp. 8bpp, 15bpp, 
+                                 and 16bpp are supported.
+-->
+<tag/&dquot;ATT20c490&dquot;/
+AT&amp;T490 RAMDAC (49&lsqb;123&rsqb; を含み、- 8 ビット DAC をサポー
+トしています)。8bpp 時のドットクロック値の制限は 110MHz です。8bpp,
+15bpp, 16bpp がサポートされています。
+
+<!--
+<tag/"SC15025"/
+				 Sierra SC15025 and SC15021 RAMDAC
+                                 (support 8-bit DAC). The SC15025 is
+                                 limited to 125Mhz, and the SC15021
+                                 135Mhz. Check the RAMDAC's actual rating,
+                                 some SC15025's used in AGX based boards
+                                 are only rated to 110Mhz. 8bpp, 15bpp,
+                                 and 16bpp are supported. 
+-->
+<tag/&dquot;SC15025&dquot;/
+Sierra SC15025 および SC15021 RAMDAC(8 ビット DAC をサポートしています)。
+SC15025 の制限は 125MHz で、SC15021 の制限は 135MHz です。RAMDAC の実
+際のレートを調べましょう。AGX ベースのボードで使われている一部の 
+SC15025 はレートが 110MHz しか出せません。8bpp, 15bpp, 16bpp がサポー
+トされています。
+
+<!--
+<tag/"herc_dual_dac"/
+				 Hercules Graphite Pro RAMDAC probe.
+                                 If the 84-pin Big-RAMDAC is installed
+                                 (2MB models), will use the Big RAMDAC,
+                                 but only clocks-doubled, pixel-
+                                 multiplexed modes (higher clock values
+                                 only!). Lower clocks and resolutions 
+                                 in 8bpp mode are supported by switching 
+                                 to the Small 44-pin RAMDAC. 15bpp and
+                                 16bpp are supported.
+-->
+<tag/&dquot;herc_dual_dac&dquot;/
+Hercules Graphite Pro の RAMDAC を調べます。80 ピンの Big-RAMDAC が
+付いている(2MB モデル)場合には Big-RAMDAC を使いますが、倍速クロックの
+ピクセル多重化モードしか使いません(高いクロック値だけになります!)。
+8bpp モードの低いクロック値や解像度は 44 ピンの Small-RAMDAC に切り替
+えることでサポートします。15bpp と 16bpp がサポートされています。
+<p>
+<!--
+                                 There has been one report of the 
+                                 "dac-8-bit" option not working with a
+                                 Graphite Pro equipped with a BT485 RAMDAC, 
+                                 puzzling since it should be identical to the
+                                 AT&amp;T20C505 in this regard. No startup 
+                                 messages or XF86Config were submitted to
+                                 aid problem isolation.
+-->
+"dac-8-bit" オプションが BT485 RAMDAC を載せた Graphite Pro で動作しな
+いという報告が以前にありましたが、この点では AT&amp;T20C505 と全く同じ
+はずなので困ってしまいました。問題の切り分けを行うための起動メッセージ
+や XF86Config ファイルは送られてきませんでした。
+<p>
+<!--
+                                 Not supported by the HG210 Graphite.
+-->
+HG210 Graphite ではサポートされていません。
+
+<!--
+<tag/"herc_small_dac"/
+				 Hercules Graphite Pro RAMDAC probe.
+                                 Forces use of only the BT481/482
+                                 RAMDAC. 8bpp, 15bpp, 16bpp, and unpacked
+                                 24/32bpp are supported.
+-->
+<tag/&dquot;herc_small_dac&dquot;/
+Hercules Graphite Pro の RAMDAC を調べます。必ず BT481/482 RAMDAC だけ
+を使うようにします。8bpp, 15bpp, 16bpp と unpacked 形式の 24/32bpp が
+サポートされています。
+<p>
+<!--
+                                 Not supported by the HG210 Graphite.
+-->
+HG210 Graphite ではサポートされていません。
+
+<!--
+<tag/"xga"/
+                                 To allow overriding the default
+                                 VGA style RAMDAC control for the AGX-010. 
+-->
+<tag/&dquot;xga&dquot;/
+AGX-010 に対し、デフォルトの VGA 形式の RAMDAC 制御を上書き指定できる
+ようにします。
+</descrip> 
+
+<!--
+<tag/Ramdac related Option Flags:/
+-->
+<tag/Ramdac 関連のオプション:/
+
+<descrip>
+<!--
+<tag/"dac_6_bit"/
+				 Sets RAMDAC to VGA default 6-bit DAC mode
+                                 (default for "normal").
+-->
+<tag/&dquot;dac_6_bit&dquot;/
+RAMDAC を VGA デフォルトの 6 ビット DAC モードに設定します("normal" の
+場合のデフォルト値です)。
+
+<!--
+<tag/&dquot;dac_8_bit&dquot;/
+				 Sets supported RAMDAC's to 8-bit DAC mode
+                                 (default for all but "normal").
+-->
+サポートしている RAMDAC を 8 ビット DAC に設定します("normal" を除く全
+ての場合のデフォルト値です)。
+
+<!--
+<tag/"sync_on_green"/
+				 Composite sync on green for RAMDAC's that 
+                                 support this feature (BT481/481 and 
+                                 AT&amp;T20c490). However, whether any 
+                                 boards have necessary traces and glue 
+                                 logic is doubtful. 
+-->
+<tag/&dquot;sync_on_green&dquot;/
+同期信号をG(緑)信号に乗せる合成する機能を持った RAMDAC (BT481/481,
+AT&amp;T20c490)の場合、この機能を使います。しかし、ボードに必要な装備
+があっても、合成のロジックの方が怪しいです。
+<!-- BT481/481 でいいのだろうか…? -->
+</descrip> 
+      
+<tag/Chipset:/
+
+<!--
+           Must be specified, possible values: "AGX-016", "AGX-015",
+           "AGX-014", "AGX-010", "XGA-2", or "XGA-1". Some AGX
+           vendors place stickers over the chip, in general, if it's 
+           a VLB board it's probably an AGX-015 and if it's an ISA 
+           board it may be an AGX-014. The Hercules Graphite Power Pro 
+           and Spider Black Widow Plus use the AGX-016 chipset. In general, 
+           specifying a lower revision in the AGX-0{14,15,16} series
+           does not seem to causes problems (except lower performance
+           from the AGX-014's non-accelerated line drawing). 
+-->
+必ず指定しなければなりません。指定できる値は "AGX-016", "AGX-015",
+"AGX-014", "AGX-010", "XGA-2", "XGA-1" のいずれかです。AGX ベンダの一
+部はチップの上にステッカーを貼っていますが、一般的には、VLB ボードの場
+合にはこれは多分 AGX-015 で、ISA ボードの場合には多分 AGX-014 でしょう。
+Hercules Graphite Power Pro と Spider Black Widow Plus は  AGX-016 チッ
+プセットを使っています。一般的には、AGX-0{14,15,16} シリーズの古いリビ
+ジョンのものは問題を起こさないようです(AGX-014 のアクセラレーション無
+しの線描画の性能が低いことは除きます)。
+<p>
+<!--
+           <bf>Note:</bf> Only the AGX-016, AGX-015, AGX-014 and XGA-2
+           have had any testing. Most of the development has been with
+           an AGX-015 based 2MB Hercules Graphite VL PRO (HG720) and
+           most of testers for previous releases had AGX-014 based 1MB 
+           Hercules Graphite (HG210).
+-->
+<bf>注意:</bf>何らかのテストを行っているのは AGX-016, AGX-015,
+AGX-014, XGA-2 だけです。開発の大部分は AGX-015 ベースでメモリ 2MB の 
+Hercules Graphite VL PRO (HG720) で行い、以前のリリースの場合にはテス
+タのほとんどは AGX-014 ベースのメモリ 1MB の Hercules Graphite (HG210) 
+を使っていました。
+<p>
+<!--
+           The limited documentation I have for the AGX-010 is that 
+           is is a clone of the XGA architecture with a few additional 
+           configuration registers. What is not clear is whether to 
+           use XGA or extended-VGA RAMDAC control registers. 
+           The post-3.1.1 default is now VGA control registers, but 
+           XGA control registers can be forced with the XGA RAMDAC parm. 
+           Likewise the configuration parms described in the XGA 
+           section can be used to override the AGX defaults for I/O 
+           and memory addresses. 
+-->
+筆者が持っている AGX-010 に関するわずかなドキュメントは、XGA アーキテ
+クチャのクローンに追加の設定用レジスタをいくつか追加したチップについて
+のドキュメントです。XGA RAMDAC 制御レジスタと拡張 VGA RAMDAC 制御レジ
+スタのどちらを使うかは決まっていません。3.1.1 より後はデフォルトで VGA 
+制御レジスタを使うようになりましたが、XGA RAMDAC パラメータを使えば 
+XGA 制御レジスタを強制的に使うこともできます。XGA セクションで説明され
+ている設定パラメータと同様のパラメータを使って、I/O やメモリアドレスに
+関する AGX のデフォルト値を上書きすることができます。
+
+<tag/VideoRam:/
+
+<!--
+           Will be probed if not specified. The startup will be a 
+           little faster if specified. 
+-->
+指定しなければ検出が行われます。このオプションを指定すると、サーバの起
+動が少し速くなります。
+
+<!--
+<tag/Tuning Option flags:/
+-->
+<tag/チューニング用オプション:/
+
+<descrip>
+<!--
+<tag>Bus I/O interface:</tag>
+-->
+<tag>バス I/O インタフェース:</tag>
+
+<descrip>
+<!--
+<tag/"8_bit_bus"/      Force 8-bit I/O bus.
+-->
+<tag/&dquot;8_bit_bus&dquot;/      強制的に 8 ビット I/O バスにします。
+<!--
+<tag/"wait_state", "no_wait_state"/     
+Set or clear CPU access wait state, default is the POST setting.
+-->
+<tag/&dquot;wait_state&dquot;, &dquot;no_wait_state&dquot;/
+CPU のアクセス待ち状態の設定とクリアを行います。デフォルト値は POST 設
+定です。
+<!--
+<tag/"fifo_conserv"/    Disable Memory I/O Buffer, AGX-015 and AGX-016. 
+                               MS-Windows driver default. Required by some
+                               VLB systems with `aggressive timing'. 
+			       The default for this server is to disable 
+                               the buffer.
+-->
+<tag/&dquot;fifo_conserv&dquot;/ AGX-015 と AGX-016 において、メモリ 
+I/O バッファを無効にします。これは MS-Windows のドライバのデフォルトの
+動作です。「タイミングがきわどい」一部の VLB システムでは、このオプショ
+ンが必要です。このサーバに対するデフォルトの動作では、バッファを無効に
+します。
+
+<!--
+<tag/"fifo_moderate"/   Enable the AGX-015/016's Memory I/O buffer.
+-->
+<tag/&dquot;fifo_moderate&dquot;/   AGX-015/016 のメモリ I/O バッファを有効にしま
+す。
+<!--
+<tag/"fifo_aggressive"/ Enable the AGX-016's extra-large buffer.
+                               Either option may result in garbage being left 
+                               about the screen, disabled by default. 
+                               A good test is the xbench or x11perf dashed 
+                               lines tests, if random dots are drawn, 
+                               fifo_conserv is required. So far, no boards 
+                               have been reported that worked correctly 
+                               with the buffers enabled.
+-->
+<tag/&dquot;fifo_aggressive&dquot;/ AGX-016 の特大バッファを有効にしま
+す。どちらのオプションを使った場合も、画面にゴミが残ってしまうことがあ
+ります。デフォルトでは無効になっています。良いテスト方法は、xbench や 
+x11perf の点線のテストであり、ランダムな点が描画される用であれば 
+fifo_conserv の設定が必要です。今のところ、バッファを有効にして正しく
+動作したボードは報告されていません。
+<!-- 「extra-large=特大」でいいかなあ(^_^; -->
+</descrip>
+<!--
+<tag/Memory Timing:/
+-->
+<tag/メモリのタイミング:/
+
+<!--
+           POST defaults should be ok.
+-->
+           デフォルト値の POST 設定で良いはずです。
+
+<descrip>
+<!--
+<tag/"vram_delay_latch", 
+     "vram delay_ras", 
+     "vram_extend_ras"/  Vram timing options.
+-->
+<tag/&dquot;vram_delay_latch&dquot;, 
+     &dquot;vram delay_ras&dquot;, 
+     &dquot;vram_extend_ras&dquot;/  VRAM のタイミングに関するオプション
+<!--
+<tag/"slow_vram", 
+     "slow_dram"/       Set all of the vram timing options.
+-->
+<tag/&dquot;slow_vram&dquot;, 
+     &dquot;slow_dram&dquot;/       VRAM のタイミングに関するオプショ
+ンを全てセットします。
+<!--
+<tag/"med_dram"/        Set vram latch delay, clear others.
+-->
+<tag/&dquot;med_dram&dquot;/        VRAM のラッチ遅延操作をセットし、
+他のオプションをクリアします。
+<!--
+<tag/"fast_vram",
+     "fast_dram"/       All of the vram timing options are cleared.  
+                               Should be specified if directly specifying
+                               VRAM options in order to clear POST settings. 
+-->
+<tag/&dquot;fast_vram&dquot;,
+     &dquot;fast_dram&dquot;/       VRAM のタイミングに関するオプショ
+ンを全てクリアします。POST 設定をクリアするために VRAM のオプションを
+直接指定するならば、このオプションを指定しなければなりません。
+</descrip>
+
+<!--
+<tag/Debugging:/
+-->
+<tag/デバッグ用:/
+
+<!--
+           These shouldn't generally be required:
+-->
+           一般的には必要無いはずです:
+
+<descrip>
+<!--
+<tag/"noaccel"/    (AGX,XGA) Disable Font Cache.          
+-->
+<tag/&dquot;noaccel&dquot;/    (AGX,XGA) フォントキャッシュを無効にします。
+
+<!--
+<tag/"crtc_delay"/    (AGX) Force XGA mode CRTC delay.
+-->
+<tag/&dquot;crtc_delay&dquot;/    (AGX) XGA モードを強制的に CRTC 遅延にします。
+
+<!--
+<tag/"engine_delay"/    AGX-015 only? adds additional VLB wait state.
+-->
+<tag/&dquot;engine_delay&dquot;/    AGX-015 専用? 追加の VLB 待ち状態を加えます。
+<!--
+<tag/"vram_128", "vram_256"/        Sets VRAM shift frequency, vram_128 is for
+                     128Kx8 VRAM. Default is to leave this bit
+                               unchanged from POST setting.
+-->
+<tag/&dquot;vram_128&dquot;, &dquot;vram_256&dquot;/        VRAM 遷移
+周波数を設定します。128Kx8 の VRAM の場合は vram_128 です。デフォルト
+では、このビットは POST 設定からずっと変化しません。
+<!--
+<tag/"refresh_20", "refresh_25"/     Number of clock cycles between screen 
+                 refreshes. Default is to leave this bit
+                               unchanged from POST setting.
+-->
+<tag/&dquot;refresh_20&dquot;, &dquot;refresh_25&dquot;/     スクリー
+ンのリフレッシュ動作の間のクロックのサイクル数です。デフォルトでは、こ
+のビットは POST 設定からずっと変化しません。
+<!--
+<tag/"screen_refresh"/  Disable screen refresh during non-blanked
+                               intervals, AGX-016. Default is leave them
+                               enabled.
+-->
+<tag/&dquot;screen_refresh&dquot;/  AGX-016 において、ブランク無しのイ
+ンターバル間の画面リフレッシュを無効にします。デフォルトでは、これらは
+ずっと有効になったままです。
+<!--
+<tag/"vlb_a", "vlb_b"/         VLB transaction type, default is to leave
+                        this bit unchanged from POST value.
+-->
+<tag/&dquot;vlb_a&dquot;, &dquot;vlb_b&dquot;/         VLB トランザク
+ションのタイプです。デフォルトでは、このビットは POST 値からずっと変化
+しません。
+</descrip>
+</descrip>
+</descrip>
+<descrip>
+<!--
+<tag/Virtual resolution:/
+-->
+<tag/仮想解像度:/
+
+<!--
+           The server now accepts any virtual width, however the
+           actual usable CRTC line width is restricted when using the
+           graphics engine and depends upon the chip revision. The
+           CRTC line width and not the virtual width determine the 
+           amount of memory used. The server currently does not make
+           use of any of the unused CRTC line's memory. CRTC line 
+           width is restricted by the following rules:
+-->
+現在のサーバは仮想的な画面幅にどんな値でも指定できるようになりました。
+しかし実際に使える CTRC のライン幅は、グラフィックスエンジンの使用中に
+は制限されますし、チップのリビジョンにも依存します。使用するメモリの量
+を決めるのは仮想画面の幅ではなく、CRTC のライン幅です。現在のサーバは
+未使用の CTRC のラインのメモリは全く利用しません。CTRC のライン幅は以
+下の規則によって決まります:
+
+<p><quote>
+<!--
+               <bf>AGX-014 :</bf> 512, 1024 and 2048. (also AGX-010)
+-->
+               <bf>AGX-014 :</bf> 512, 1024, 2048 (AGX-010 も同じ)
+</quote><quote>
+<!--
+               <bf>AGX-015 :</bf> 512, 1024, 1280, and 2048. 
+-->
+               <bf>AGX-015 :</bf> 512, 1024, 1280, 2048
+</quote><quote>
+<!--
+               <bf>AGX-016 :</bf> 512, 640, 800, 1024, 1280, and 2048.
+-->
+               <bf>AGX-016 :</bf> 512, 640, 800, 1024, 1280, 2048
+</quote><quote>
+<!--
+               <bf>XGA,AGX-010 :</bf> 512, 640, 800, 1024, 1280, 1152, and 2048.
+-->
+               <bf>XGA,AGX-010 :</bf> 512, 640, 800, 1024, 1280, 1152, 2048
+</quote>
+
+<p>
+<!--
+           When panning I occasionally get streaks if the virtual 
+           resolution is much greater than the physical resolution. 
+           Moving the mouse a little makes it disappear. The Hercules 
+           manual indicates this also happens with the MS-Windows drivers.
+-->
+仮想解像度が物理解像度よりずっと大きい場合に、画面をパンすると縞が出る
+ことを筆者は経験しました。マウスを少し動かすと縞は無くなります。
+Hercules のマニュアルによると、この現象は MS-Windows 用のドライバでも
+起こるそうです。
+<p>
+<!--
+           The server requires at least a 64KB scratchpad (16KB for XGA's).
+           Additional memory is useful for font cache and a larger scratchpad.
+-->
+このサーバは少なくとも 64KB の作業領域を必要とします。フォントキャッシュ
+や大きな作業領域が必要ならばメモリを追加すると良いでしょう。
+
+<!--
+<tag/AGX Clocks:/
+-->
+<tag/AGX の Clocks 値:/
+
+<!--
+          Probing is supported, but of course the usual warnings and
+          disclaimers apply. Probing may momentarily subject your
+          monitor to sweep frequencies in excess of its rating.
+          The cautious may wish to turn off the monitor while the 
+          probe is running.
+-->
+クロック値の自動検出がサポートされていますが、当然ながらいつもの警告と
+免責事項は当てはまります。検出を行うと、モニタの許容範囲を越える周波数
+がモニタにかかることがあります。したがって、万全を期すならば、検出を行
+う間にはモニタの電源を切っておくとよいでしょう。
+<p>
+<!--
+          Once clocks are known, they can be entered into XF86Config,
+          then subsequent runs won't probe clocks and will be quicker
+          to startup. For the clock probe it is recommended that the 
+          X server be run with the -probeonly option. The values 
+          in the clocks statement are the hardware input clocks and
+          correspond to the pixel clock only at 8bpp in direct-clocking 
+          RAMDAC modes. The server will divide/multiply those values 
+          as appropriate for the RAMDAC modes available at the current 
+          pixel depth. The available pixel clocks will be displayed
+          in the startup messages.
+-->
+一度クロック値を調べると、その値を XF86Config に書き込むことができます。
+こうすると、それ以降のサーバ実行時にはクロック値の検出は不要になり、起
+動が速くなります。クロックの検出を行うには、-probeonly オプションを付
+けて X サーバを実行する必要があります。表示されるクロック値はハードウェ
+アの入力クロック値であり、8bpp の直接クロッキング RAMDAC モードにおけ
+るピクセルクロック値に一致します。サーバは、現在の色の深さで利用できる 
+RAMDAC のモードに合わせて適切な掛け算や割り算を行います。利用可能なピ
+クセルクロック値は起動メッセージ中に表示されるでしょう。
+<p>
+<!--
+          For the 2MB Hercules Graphites, with the "herc-dual-dac"
+          RAMDAC specified, earlier versions of the server generated
+          an additional 16 clocks with values doubled and some zeroed.
+          Those are no longer needed and you should re-probe and re-enter 
+          the clock values to ensure all clocks are available to you.
+-->
+メモリ 2MB の Hercules Graphites で "herc-dual-dac" という RAMDAC 指定
+を行った場合、古いバージョンのサーバは倍にした値やゼロにした値を含む追
+加のクロックを 16 個生成しました。これらの値は現在は必要ないので、全て
+のクロック値が利用可能であることを確認するためにクロック値の再検出や再
+入力を行うべきです。
+
+<!--
+            The AGX-015 2MB Hercules Graphite VL Pro with an 
+            ICS1494M 9251-516 clock chip has probed clock values of:
+-->
+チップセットが AGX-015 であり、ICS1494M 9251-516 クロックチップを積ん
+だ 2MB の Hercules Graphite VL Pro では以下のクロック値が検出されまし
+た:
+<verb>
+               25.18  28.80  32.70  36.00  40.00  45.00  50.40  64.70
+               70.10  76.10  80.60  86.30  90.40  95.90 100.70 109.40
+</verb>
+<!--
+            Actual values according to Hercules are:
+-->
+Hercules によると実際の値は以下のようになります:
+<verb>
+               25.175 28.322 32.512 36.000 40.00 44.90 50.35 65.00
+               70.00  75.00  80.00  85.00  90.00 95.00 100.0 108.0
+</verb>
+<!--
+            These are the values to be used in the clock statement
+            if specifying the "normal", "bt481", or "herc_small_dac"
+            RAMDAC in your XF86Config and your clockchip matches
+            that above.
+-->
+XF86Config で "normal", "bt481", "herc_small_dac" のいずれかを RAMDAC 
+に指定し、お使いのクロックチップがこれに一致する場合、これらの値がクロッ
+ク表示で使われます。
+<p>
+<!--
+          Clock probing assumes that the first clock is 25.175Mhz and
+          uses that to derive the rest. A warning is displayed if the
+          second is not near 28.322Mhz. If this warning appears, you
+          should not use the probed clock values without additional
+          verification from other sources.
+-->
+クロックの検出では、最初のクロック値が 25.175MHz であることを想定し、
+残りの値を求める際にはこの値を使います。2 番目の値が 28.322MHz でない
+場合、ウォーニングが出力されます。ウォーニングが出力された場合には、他
+の方法で検証を加えることなしに検出されたクロック値を使ってはいけません。
+<p>
+<!--
+          In the case of the AGX-014 and later AGX's, only the external 
+          clock select lines are used, this means the clock values
+          correspond to the values of the video board's clock chip.
+-->
+AGX-014 やそれ以降の AGX の場合、外部クロック選択の行だけが使われます。
+これはビデオボードのクロックチップの値に対応するクロック値を示します。
+<p>
+<!--
+          For the AGX-010, the first 8 clocks use the standard XGA 
+          internal clock selects and the second 8 are based on  
+          AGX extensions. For the XGA-1 only 8 clocks are available.
+          The XGA-2 uses a programmable clock and no clocks or 
+          clockchip line is required.
+-->
+AGX-010 の場合、最初の 8 つのクロック値には標準の XGA 内部クロック選択
+が使われ、次の 8 つのクロック値は AGX 独自の拡張に基づいて決められます。
+XGA-1 の場合にはクロック値は 8 つだけしか使用できません。XGA-2 はプロ
+グラマブルクロックを使うので、クロック値やクロックチップ行は必要ありま
+せん。
+<p>
+<!--
+          The maximum pixel clock generally allowed is 85MHz, but
+          some RAMDACs support higher values. In any case you, should
+          check your RAMDAC, some RAMDACs used on AGX based boards are 
+          produced in versions rated to lesser values than the server
+          assumes. You should check the rating and limit yourself to 
+          that value. 
+-->
+許される最大のピクセルクロック値は一般的には 85MHz ですが、一部の 
+RAMDAC はもっと高い値をサポートしています。いずれにしても、RAMDAC につ
+いては調べておくべきです。AGX ベースのボードで使われている RAMDAC の一
+部は、バージョンによってはサーバが想定しているよりも低い値しか出せませ
+ん。ですから、レートを調べてその値を越えないようにしなければなりません。
+
+<!--
+<tag/Modes:/
+-->
+<tag/モード:/
+
+<!--
+          One difference I've noted from the Mach8, is that the AGX's
+          CRTC doesn't like the start of the horizontal sync to be 
+          equal to horiz blank start (vert sync may have the same problem, 
+          I need to test some more). Interlaced and +/-sync flags are
+          supported but have had very little testing. For interlaced
+          modes make sure the number of lines is an odd number.
+-->
+Mach8 と違う点を 1 つ指摘しておくと、AGX の CTRC は水平同期の開始が水
+平ブランクの開始と一致するのを好みません(垂直同期も同じ問題を持ってい
+るかもしれないので、もう少しテストする必要があります)。インタレースモー
+ドと +/-sync フラグがサポートされていますが、テストはほとんど行われて
+いません。インタレースモードの場合、行数が必ず奇数になるようにしてくだ
+さい。
+<p>
+<!--
+          The doublescan flag is now supported, however the minimum
+          clock supported is generally 25MHz, so resolutions of less
+          than 400x300 are not likely to be supported by most monitors.
+          In creating doublescan mode timings, the vertical timings
+          will match the apparent resolutions, e.g. for 400x300
+          the timings should describe 300 lines, not 600.
+-->
+現在はダブルスキャンモードがサポートされていますが、サポートされている
+最小のクロック値は一般に 25MHz です。したがって、400x300 より小さい解
+像度はほとんどのモニタでサポートされていないことが多いでしょう。ダブル
+スキャンモードのタイミングを作る際には、垂直のタイミングは見かけの解像
+度にします。例えば、400x300 の場合タイミングは 600 行でなく300 行を記
+述します。
+
+<!--
+<tag/Examples:/
+-->
+<tag/例:/
+
+<!--
+<p>          For the Hercules HG720 (2MB VLB AGX-015, with BT481 and 
+          AT&amp;T20C5050 RAMDACs), I use the following XF86Config 
+          "Device" section:
+-->
+<p>Hercules HG720(メモリ 2MB の VLB AGX-015 で BT481 と 
+AT&amp;T20C5050 RAMDAC を積んでいます)用に、筆者は XF86Config の 
+"Device" セクションを以下のような設定にしています:
+<verb>
+             Section "Device"
+                 Identifier "HG720"
+                 VendorName "Hercules"
+                 BoardName  "Graphite VL Pro"
+                 Chipset    "AGX-015"
+                 Clocks     25.2  28.3  32.5  36.0  40.0  45.0  50.4  65.0
+                            70.00  75.00  80.00  85.00  90.00 95.00 100.0 108.0
+                 Videoram   2048
+                 RamDac     "herc_dual_dac"
+                 Option     "dac_8_bit"
+                 Option     "no_wait_state"
+             EndSection
+</verb>
+<!--
+          For the Spider Black Widow Plus (2MB VLB AGX-016, with
+          Sierra SC15021 RAMDAC):
+-->
+Spider Black Widow Plus (メモリ 2MB の VLB AGX-016 で Sierra SC15021
+RAMDAC を積んでいます)用の設定は以下です:
+<verb>
+             Section "Device"
+                 Identifier "SBWP"
+                 VendorName "Spider"
+                 BoardName  "Black Widow Plus"
+                 Chipset    "AGX-016"
+                 Clocks      25.2  28.3  39.9  72.2  50.0  76.9  36.1  44.8
+                             89.0  119.8 79.9  31.5 110.0  64.9  74.9  94.9
+                 Videoram   2048
+                 RamDac     "SC15025"
+                 Option     "dac_8_bit"
+                 Option     "no_wait_state"
+             EndSection
+</verb>
+</descrip>
+<!--
+<sect> Xga configuration<p>
+-->
+<sect> XGA の設定<p>
+
+<!--
+<p>          This server now has tested support for XGA-2 compatible 
+          boards (aka. XGA-NI). The main issue for XGA-1 support is 
+          whether clock probing works. At this time probing for board 
+          configuration is limited and detailed configuration may need to be 
+          done manually. 
+-->
+<p>このサーバでは XGA-2 互換のボード(別名 XGA-NI)のサポートに関するテ
+ストも行われています。XGA-1 のサポートにおける主要な問題はクロック値の
+検出が動作するかどうかです。現時点ではボードの構成の検出は制限されてい
+て、詳細な設定は手動で行う必要があります。
+<!--
+<p>       By default the ISA POS register will be performed. If the
+          XGA Instance number is specified the scope of probing will
+          be narrowed a bit. To override or disable probing, a minimum
+          of the Instance, COPbase, and MEMbase must be specified
+          in the XF86Config device section for the XGA card. MCA 
+          probing is not supported.
+-->
+<p>デフォルトでは、ISA バスの POS 登録が実行されます。XGA の Instance 
+番号が指定された場合、検出の範囲は少し狭まります。上書きを行ったり検出
+を無効にするためには、XF86Config ファイルの Device セクションで 
+Instance 番号の最小値、COPbase 値、MEMbase 値を XGA カードに対して指定
+しなければなりません。MCA の検出はサポートされていません。
+<p>
+<descrip>
+<!--
+<tag/Instance       nn/       XGA instance number (0-7).
+-->
+<tag/Instance       nn/       XGA のインスタンス番号(0-7)。
+
+<!--
+<tag/IObase        nnnn/      The I/O address of the the XGA
+                                      general control registers. The
+                                      standard, and default, is 0x21i0,
+                                      where i is the instance number.
+-->
+<tag/IObase        nnnn/      XGA の汎用制御レジスタの I/O アドレス。
+標準値とデフォルト値は 0x21i0 です(i はインスタンス番号です)。
+
+<!--
+<tag/MEMbase        nnnn/      The XGA display memory address (the
+                                      address the XGA coprocessor uses
+                                      for video memory). This is also  
+                                      the system memory address of the
+                                      linear aperture on boards that
+                                      support it.
+-->
+<tag/MEMbase        nnnn/      XGA の表示メモリアドレス(XGA のコプロセッ
+サがビデオメモリに対して使うアドレスです)。リニアメモリマッピングをサ
+ポートしているボードでは、これはシステムメモリにおけるリニアアパーチャ
+のアドレスにもなります。
+
+<!--
+                                      POS register 4 bits 7-1 contains
+                                      bits 31-25 of the XGA's display
+                                      memory address. Bits 24-22 of
+                                      of the display memory address
+                                      contains the XGA instance number.
+                                      Bit 0 of POS register 4 is not
+                                      used by this server as the XGA's
+                                      linear aperture is not used.
+                                      However, the coprocessor must 
+                                      still be configured with this.
+-->
+POS レジスタ 4 のビット 7-1 はXGA の表示メモリアドレスの ビット 31-25 
+の内容です。表示メモリアドレスのビット 24-22 は XGA のインスタンス番号
+です。このサーバは XGA のリニアアパーチャを使わないので、 POS レジスタ 
+4 の ビット 0 は使われません。しかし、コプロセッサにはこれに関する設定
+を行わなければなりません。
+
+<!--
+                                      The AGX-01&lsqb;456&rsqb;
+                                      chips have a fixed 
+                                      display memory address.
+-->
+AGX-01&lsqb;456&rsqb; の表示メモリアドレスは固定されています。
+
+<!--
+<tag/COPbase     nnnnnn/      Address of the graphics engine's
+                                      memory mapped control registers.
+-->
+<tag/COPbase     nnnnnn/      グラフィックスエンジンのメモリマップト制
+御レジスタです。
+
+<!--
+                                      Typically: 
+-->
+                                      通常は次のようになります:
+
+                                      0xC1C00 + (ext_mem_addr * 0x2000)
+                                        + (instance * 0x80)
+
+<!--
+                                      where ext_mem_addr is the high
+                                      order 4-bits of POS register 2
+                                      (0-16 the server assumes zero).
+-->
+ここで、ext_mem_addr は POS レジスタ 2 の上位 4 ビット(サーバは 0-16 
+は 0 であるものとします)です。
+
+<!--
+                                      The AGX-01&lsqb;456&rsqb; chips support 
+                                      0xB1F00 (default) and 0xD1F00.
+-->
+AGX-01&lsqb;456&rsqb; チップは 0xB1F00(デフォルト値)と 0xD1F00 をサポー
+トしています。
+
+<!--
+<tag/BIOSbase     nnnnnn/      Address of the XGA BIOS (not VGA BIOS).
+                                     Can be specified as an alternate to COPbase.
+-->
+<tag/BIOSbase     nnnnnn/      XGA BIOS のアドレス(VGA BIOS のアドレス
+ではありません)。COPbase の代わりとして指定することができます。
+
+<!--
+                                      Typically: 
+-->
+                                      通常は次のようになります:
+
+                                      0xC0000 + (ext_mem_addr * 0x2000)
+
+<!--
+                                      where ext_mem_addr is the high
+                                      order 4-bits of POS register 2
+                                      (0-16 &ndash; the server assumes zero).
+-->
+ここで、ext_mem_addr は POS レジスタ 2 の上位 4 ビット(サーバは 0-16 
+は 0 であるものとします)です。
+
+<!--
+<tag/VGAbase        nnnn/      Can be used to override the default 0xA0000 
+                                      address for the 64KB video memory
+                                      address used by the server. The
+                                      only values acceptable are 0xA0000
+                                      and 0xB0000. VGA text mode restore
+                                      does not work under Linux if 0xB0000
+                                      is specified. 
+-->
+<tag/VGAbase        nnnn/      サーバ使う 64KB のビデオメモリアドレス
+のデフォルト値である 0xA0000 を上書きするために使うことができます。指
+定することができる値は 0xA0000 と 0xB0000 だけです。Linux を使っている
+場合、0xB0000 を指定すると、VGA のテキストモードが復元できなくなります。
+
+<!--
+                                      AGX-01&lsqb;456&rsqb;
+                                      also default to 0xA0000.
+-->
+AGX-01&lsqb;456&rsqb; もデフォルト値は 0xA0000 です。
+
+<!--
+<tag/POSbase       nnnn/      Can be used to specify an alternate POS register
+                                      probe address base from the ISA  
+                                      default of 0x100. The VESA VXE
+                                      standard for EISA is 0xzC80, where 
+                                      z is the slot number).
+-->
+<tag/POSbase       nnnn/      別の POS レジスタ検出アドレスのベース値
+を、ISA のデフォルト値である 0x100 から変えるために使うことができます。
+EISA の場合、VESA VXE の標準値は 0xzC80 です(z はスロット番号です)。
+
+<!--
+                                      A value of zero will disable POS 
+                                      register probing (required for MCA). 
+-->
+値をゼロにすると POS レジスタの検出が行われなくなります(MCA の場合には
+この指定が必要です)。
+
+<!--
+<tag/DACspeed      nnnn/      Can be used to override the servers default
+                                      maximum Pixel Clock for XGA-2 of 80Mhz. 
+                                      The limit can be raised as high as 90Mhz,
+                                      or set to lower values.
+-->
+<tag/DACspeed      nnnn/      XGA-2 のピクセルクロック値に関するサーバ
+のデフォルトの最大値である 80MHz を上書きするために使うことができます。
+この最大値は 90MHz まで上げることができますし、低い値にすることもでき
+ます。
+
+</descrip>
+<!--
+<p>        An alternate way to determine the POS register values is
+           with the setup/diag programs that should have been included
+           with your video board, or possibly from jumper values.
+-->
+<p>POS レジスタの値を決める別の方法としては、ビデオボードに付属してい
+るはずの設定/診断プログラムを使う方法がありますし、ジャンパの値から決
+めることもたぶんできます。
+<p>          
+<!--
+           The XGA-2 has programmable clocks up to 90MHz, however
+           at 1024x768, 72MHz is generally the max that will produce
+           a stable display with the CatsEye/XGA-2 used for testing
+           (IBM coprocessor and INMOS RAMDAC/serializer). Higher clocks 
+           will often generate artifacts at the top and left edges of 
+           the screen. Such artifacts can sometimes be tuned out by
+           increasing the vertical and horizontal blanking intervals
+           or slightly changing the clock. At pixel clock rates above 
+           80Mhz I have seen the chip lose sync after running for several
+           minutes, so 80Mhz has been set as the default limit for XGA-2
+           pixel clocks. I don't have specs on actual limits, and as 
+           there are a number of different XGA chipsets, you should use 
+           the modes documented in your owner's manual as a guide to 
+           max refresh rates. No clocks or clockchip parm are required 
+           to specify use of programmable clocks for the XGA-2. 
+-->
+XGA-2 には 90MHz まで使えるプログラマブルクロックがありますが、
+1024x768 の解像度では、テストに使った CatsEye/XGA-2 (IBM のコプロセッ
+サと INMOS RAMDAC/シリアライザが載っています)で安定な表示が行える最大
+値は一般的に 72MHz です。クロック値を高くすると画面の上辺と左辺の表示
+がおかしくなることがあります。このような影響は、垂直・水平のブランク間
+隔を増やしたり、クロック値を少し変えることで無くせる場合もあります。
+80MHz を越えるクロック値では、数分動作した後にチップが同期を無くすこと
+を筆者は確認しました。したがって、XGA-2 のピクセルクロックとしては、
+80MHz がデフォルトの制限値になっています。実際の制限値に関する仕様書は
+筆者は持っていませんし、XGA チップセットはたくさんあるので、リフレッシュ
+レートの最大値を決める際にはボードのマニュアルに書かれているモードを参
+考にすべきです。XGA-2 でプログラマブルクロックを使うように指定した場合
+には、クロック値やクロックチップのパラメータは必要ありません。
+<p>
+<!--
+           8bpp and 16bpp are supported for the XGA-2.
+-->
+XGA-2 に対しては 8bpp と 16bpp がサポートされています。
+<p>
+<!--
+           For XGA-1 cards the clocks must be specified as for
+           the AGX chips, it is not known whether the clockprobing
+           will work. Some XGA-1 chips may support 16bpp. 
+-->
+XGA-1 カードの場合、クロック値は AGX チップと同様に指定しなければなり
+ません。クロックの検出がうまく動作するかどうかは分かりません。XGA-1 チッ
+プには 16bpp をサポートしているものもあるかもしれません。
+<p>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/agx.sgml,v 1.1.2.1 1999/05/25 06:39:27 hohndel Exp $
+
+
+
+
+
+$XConsortium: agx.sgml /main/9 1996/10/19 18:03:50 kaleb $
+</verb>
+
+</article>

@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.8 1998/12/18 11:56:11 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.9 1999/03/29 03:16:55 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -444,9 +444,11 @@ char		*port;
 #else
     mode = 0777;
 #endif
-
-    mkdir(X_STREAMS_DIR, mode);
-    chmod(X_STREAMS_DIR, mode);
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+	PRMSG (1, "PTSOpenServer: mkdir(%s) failed, errno = %d\n",
+	       X_STREAMS_DIR, errno, 0);
+	return(-1);
+    }
 
     if( (fd=open(server_path, O_RDWR)) >= 0 ) {
 #if 0
@@ -724,9 +726,11 @@ char		*port;
 #else
     mode = 0777;
 #endif
-
-    mkdir(X_STREAMS_DIR, mode);
-    chmod(X_STREAMS_DIR, mode);
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+	PRMSG (1, "NAMEDOpenServer: mkdir(%s) failed, errno = %d\n",
+	       X_STREAMS_DIR, errno, 0);
+	return(-1);
+    }
 
     if(stat(server_path, &sbuf) != 0) {
 	if (errno == ENOENT) {
@@ -1044,10 +1048,18 @@ char		*port;
     mode = 0777;
 #endif
 
-    mkdir(X_STREAMS_DIR, mode); /* "/dev/X" */
-    chmod(X_STREAMS_DIR, mode);
-    mkdir(X_ISC_DIR, mode); /* "/dev/X/ISCCONN" */
-    chmod(X_ISC_DIR, mode);
+    /* "/dev/X" */
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+	PRMSG (1, "ISCOpenServer: mkdir(%s) failed, errno = %d\n",
+	       X_STREAMS_DIR, errno, 0);
+	return(-1);
+    }
+    /* "/dev/X/ISCCONN" */
+    if (trans_mkdir(X_ISC_DIR, mode) == -1) {
+	PRMSG (1, "ISCOpenServer: mkdir(%s) failed, errno = %d\n",
+	       X_ISC_DIR, errno, 0);
+	return(-1);
+    }
     
     unlink(server_path);
     
@@ -1072,8 +1084,11 @@ char		*port;
      */
 #define X_UNIX_DIR	"/tmp/.X11-unix"
     
-    mkdir(X_UNIX_DIR, mode);
-    chmod(X_UNIX_DIR, mode);
+    if (trans_mkdir(X_UNIX_DIR, mode) == -1) {
+	PRMSG (1, "ISCOpenServer: mkdir(%s) failed, errno = %d\n",
+	       X_UNIX_DIR, errno, 0);
+	return(-1);
+    }
     
     unlink(server_unix_path);
     

@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: osdep.h /main/42 1996/12/15 21:27:39 rws $ */
-/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.4.2.2 1998/09/27 12:59:25 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.4.2.3 1999/06/17 16:24:21 hohndel Exp $ */
 
 #ifdef AMOEBA
 #include <stddef.h>
@@ -110,8 +110,8 @@ SOFTWARE.
 #endif
 #endif
 
-/* ignore OPEN_MAX on FreeBSD, it's bogusly low */
-#if OPEN_MAX <= 128 && !defined(__FreeBSD__)
+/* ignore OPEN_MAX on {Free,Net,Open}BSD, it's bogusly low */
+#if OPEN_MAX <= 128 && !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
 #define MAXSOCKS (OPEN_MAX - 1)
 #else
 #define MAXSOCKS 128

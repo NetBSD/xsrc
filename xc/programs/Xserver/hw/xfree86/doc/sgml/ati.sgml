@@ -5,7 +5,7 @@
 
 <title>ATI Adapters README file
 <author>Marc Aurele La France
-<date>1998 January 28
+<date>1999 June 23
 <abstract>
 This is the README for the XFree86 ATI driver included in this release.
 </abstract>
@@ -69,36 +69,39 @@ VGAWonder series:  18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6
    Mach32 series:  68800-3, 68800-6, 68800AX, 68800LX
    Mach64 series:  88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX,
                    264CT, 264ET, 264VT, 264GT (3D Rage), 264VT-B, 264VT3,
-                   264VT4, 264GT-B (3D Rage II), 264GTIIc (3D Rage IIc),
-                   264GT3 (3D Rage Pro), 264LT (3D Rage LT), 264LTPro
-                   (3D Rage LT Pro)</verb>
-The driver also supports 32K, 64K and 16M-colour modes on the 264xT series of
-adapters using the accelerator CRTC (but not the VGA CRTC).
+                   264VT4, 264GT-B (3D Rage II), 3D Rage IIc, 3D Rage Pro,
+                   3D Rage LT, 3D Rage LT Pro, 3D Rage XL, 3D Rage XC</verb>
+The driver also supports 32K, 64K and 16M-colour modes on the 264xT and 3D Rage
+series of adapters using the accelerator CRTC (but not the VGA CRTC).
 This support is as yet unaccelerated.<p>
+The newer Rage 128 chips are not yet supported.<p>
 Adapters based on the above chips have been marketed under a rather large
-number of names over the years.  Among them are:
+number of names over the years.
+Among them are:
 <verb>
 VGAWonder series:  VGAWonder V3, VGAWonder V4, VGAWonder V5, VGAWonder+,
-                   VGAWonder XL, VGAWonder XL24, VGA Basic 16, VGA Edge,
-                   VGA Edge 16, VGA Integra, VGA Charger, VGAStereo F/X,
-                   VGA 640, VGA 800, VGA 1024, VGA 1024D, VGA 1024 XL,
-                   VGA 1024 DXL, VGA 1024 VLB
+                   VGAWonder XL, VGAWonder XL24, VGAWonder VLB, VGA Basic,
+                   VGA Basic 16, VGA Edge, VGA Edge 16, VGA Integra,
+                   VGA Charger, VGAStereo F/X, VGA 640, VGA 800, VGA 1024,
+                   VGA 1024D, VGA 1024 XL, VGA 1024 DXL, VGA 1024 VLB
     Mach8 series:  Graphics Ultra, Graphics Vantage, VGAWonder GT
                    (None of the 8514/Ultra and 8514 Vantage series is
                     supported at this time)
    Mach32 series:  Graphics Ultra+, Graphics Ultra Pro, Graphics Wonder,
                    Graphics Ultra XLR, Graphics Ultra AXO, VLB mach32-D,
                    PCI mach32-D, ISA mach32
-   Mach64 series:  Graphics Xpression, Graphics Pro Turbo, Win Boost,
-                   Win Turbo, Graphics Pro Turbo 1600, Video Xpression,
+   Mach64 series:  Graphics Xpression, Graphics Pro Turbo, WinBoost,
+                   WinTurbo, Graphics Pro Turbo 1600, Video Xpression,
                    3D Xpression, Video Xpression+, 3D Xpression+,
-                   All-In-Wonder, All-In-Wonder PRO, 3D Pro Turbo, ATI-TV,
-                   XPERT@Play, XPERT@Work, XPERT XL</verb>
+                   3D Charger, Video Charger, WinCharger, All-In-Wonder,
+                   All-In-Wonder PRO, 3D Pro Turbo, XPERT@Play,
+                   XPERT@Play 98, XPERT@Work, XPERT 98, XPERT LCD,
+                   XPERT XL</verb>
 VGAWonder, Mach8 and Mach32 ISA adapters are available with or without a
 mouse.<p>
 These adapters are available with a variety of clock generators and RAMDACs.
-The 264xT series of chips are integrated controllers, meaning that they include
-a programmable clock generator and a RAMDAC.
+The 264xT and 3D Rage series of chips are integrated controllers, meaning that
+they include a programmable clock generator and a RAMDAC.
 See the "XF86Config specifications" section below for details.<p>
 This driver still does not provide support for accelerated drawing to the
 screen.
@@ -115,8 +118,8 @@ For 256-colour, and higher depth modes, this support will be used by default,
 although an XF86Config option can be specified to use the SuperVGA CRTC
 instead.
 A linear video memory aperture is also available in 256-colour and higher depth
-modes and enabled by default if a 264xT controller is detected or, on 88800
-controllers, if the accelerator CRTC is used.
+modes and enabled by default if a 264xT or 3D Rage controller is detected or,
+on 88800 controllers, if the accelerator CRTC is used.
 XF86Config options are available to disable this aperture, or (on non-PCI
 adapters) enable it or move it to some other address.<p>
 <sect>Current implementation of generic VGA support for non-ATI adapters<p>
@@ -265,7 +268,8 @@ ATI 18811-1 and ATI 18811-2 clock generators:
           13.303  14.967  25.000  21.667  16.783  18.880   0.000  14.967
           33.750   8.000  27.500  20.000  25.000  31.500  23.100   9.000
            9.978  11.225  18.750  16.250  12.588  14.160   0.000  11.225</verb>
-Mach32 and Mach64 owners should only specify up to the first 32 frequencies.<p>
+VGAWonder VLB, VGA 1024 VLB, Mach32 and Mach64 owners should only specify up to
+the first 32 frequencies.<p>
 Other clock generators that have been used on ATI adapters (which can all be
 said to be clones of one of the above) might generate non-zero frequencies for
 those that are zero above, or vice-versa.<p>
@@ -372,7 +376,7 @@ On Linux, this can be accomplished with the kbd or svgalib packages.
 In the second case, xrefresh(1) will usually clean up the image.
 No solution to this problem is currently known.
 <item>There is some controversy over what the maximum allowed clock frequency
-should be on 264xT adapters.
+should be on 264xT and 3D Rage adapters.
 For now, clocks will, by default, be limited to 135MHz, 170MHz, 200MHz or
 230MHz, depending on the specific controller.
 This limit can only be increased (up to a driver-calculated absolute maximum)
@@ -394,7 +398,7 @@ Mach8's, 8514/A's and other clones.
 Support, through this driver, for 3D acceleration, "TV in a window" and video
 capture, as implemented in some ATI adapters, is still in exploratory stages.
 There is currently no framework within an XFree86 server for these functions,
-although one is in the final stages of development.
+although one is in development.
 Also, ATI has not yet released a register-level specification for these, except
 under non-disclosure agreements.<p>
 <sect>Reporting problems<p>
@@ -408,7 +412,7 @@ Secondly, please check XFree86's doc directory for additional information.<p>
 Thirdly, do not forget to read <htmlurl name="http://www.xfree86.org/FAQ"
 url="http://www.xfree86.org/FAQ">.<p>
 Fourth, a scan through the comp.windows.x.i386unix and comp.os.linux.x
-newsgroups using your favorite archiving service can also prove useful in
+newsgroups using your favourite archiving service can also prove useful in
 resolving problems.<p>
 If you are still experiencing problems, you can send me e-mail at
 <it>tsi@ualberta.ca</it>.
@@ -450,9 +454,10 @@ Version 4 is a rather major restructuring of version 3, which became larger
 than I could comfortably handle in one source file.
 This version will make it quite a bit easier to introduce new function such as
 acceleration, additional colour depths, and so on.
-This is the version found in XFree86 3.3.2.<p>
+This is the version found in XFree86 3.3.2, 3.3.3, 3.3.3.1, 3.3.3.2 and
+3.3.4.<p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.3 1998/10/20 20:51:14 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.4 1999/07/05 09:07:28 hohndel Exp $
 
 
 

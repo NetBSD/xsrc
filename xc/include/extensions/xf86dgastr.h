@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.3 1996/10/18 14:57:25 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.3.4.3 1999/06/02 07:50:02 hohndel Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -14,7 +14,7 @@ Copyright (c) 1995  XFree86 Inc.
 #define XF86DGANAME "XFree86-DGA"
 
 #define XF86DGA_MAJOR_VERSION	1	/* current version numbers */
-#define XF86DGA_MINOR_VERSION	0
+#define XF86DGA_MINOR_VERSION	1
 
 typedef struct _XF86DGAQueryVersion {
     CARD8	reqType;		/* always DGAReqCode */
@@ -196,6 +196,41 @@ typedef struct {
     CARD32	pad5 B32;
 } xXF86DGAViewPortChangedReply;
 #define sz_xXF86DGAViewPortChangedReply 32
+
+
+typedef struct _XF86DGACopyArea {
+    CARD8	reqType;		/* always DGAReqCode */
+    CARD8	dgaReqType;		/* always X_DGACopyArea */
+    CARD16	length B16;
+    CARD16	screen B16;
+    CARD16	pad B16;
+    Drawable	drawable B32;
+    CARD32	gc B32;
+    CARD16      srcX B16;
+    CARD16	srcY B16;
+    CARD16      dstX B16;
+    CARD16	dstY B16;
+    CARD16      width B16;
+    CARD16	height B16;
+} xXF86DGACopyAreaReq;
+#define sz_xXF86DGACopyAreaReq		28
+
+
+typedef struct _XF86DGAFillRectangle {
+    CARD8	reqType;		/* always DGAReqCode */
+    CARD8	dgaReqType;		/* always X_DGAFillRectangle */
+    CARD16	length B16;
+    CARD16	screen B16;
+    CARD16	pad B16;
+    Drawable	drawable B32;
+    CARD32	gc B32;
+    CARD16      x B16;
+    CARD16	y B16;
+    CARD16      width B16;
+    CARD16	height B16;
+} xXF86DGAFillRectangleReq;
+#define sz_xXF86DGAFillRectangleReq	24
+
 
 #endif /* _XF86DGASTR_H_ */
 

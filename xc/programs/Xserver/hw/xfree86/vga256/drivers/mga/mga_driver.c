@@ -40,7 +40,7 @@
  *		Fixed 32bpp hires 8MB horizontal line glitch at middle right
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.38 1998/12/27 13:10:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.41 1999/06/21 09:45:15 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -311,6 +311,7 @@ MGAReadBios()
 		{
 			ErrorF( "%s %s: Video BIOS info block not detected!\n",
 		                XCONFIG_PROBED, vga256InfoRec.name);
+		        MGABios2.PinID = 0;
 			return;
 		}
 		/* check that the chksum is correct */
@@ -462,7 +463,8 @@ MGAIdent(n)
 int n;
 {
 	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w",
-	                           "mga2164w AGP", "mgag200", "mgag100" };
+	                           "mga2164w AGP", "mgag200", "mgag100",
+				   "mgag400" };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
 		return(NULL);
@@ -503,7 +505,13 @@ MGAProbe()
 	i = 0;
 	if (vgaPCIInfo && vgaPCIInfo->AllCards) {
 	  while (pcr = vgaPCIInfo->AllCards[i++]) {
+#ifndef PC98_MGA
+		if ((pcr->_vendor == PCI_VENDOR_MATROX) &&
+		    (pcr->_command & PCI_CMD_IO_ENABLE) &&
+		    (pcr->_command & PCI_CMD_MEM_ENABLE)) {
+#else
 		if (pcr->_vendor == PCI_VENDOR_MATROX) {
+#endif
 			int id = pcr->_device;
 
 			if (vga256InfoRec.chipID) {
@@ -534,6 +542,9 @@ MGAProbe()
 				case PCI_CHIP_MGAG100:
 				case PCI_CHIP_MGAG100_PCI:
 					vga256InfoRec.chipset = MGAIdent(5);
+				break;
+                                case PCI_CHIP_MGAG400:
+					vga256InfoRec.chipset = MGAIdent(6);
 				break;
 				default:
 					MGAchipset = 0;
@@ -738,7 +749,7 @@ MGAProbe()
 			"Assuming 4 Meg.\tPlease specify the correct amount "
 			"in the XF86Config file.\tSee the file README.MGA "
 			"for details.\n", vga256InfoRec.name);
-	   } else if (MGA_IS_G200(MGAchipset)) {
+	   } else if (MGA_IS_G200(MGAchipset) || MGA_IS_G400(MGAchipset)) {
 		vga256InfoRec.videoRam = 8192;
 		ErrorF("(!!) %s: Unable to probe for video memory size.  "
 			"Assuming 8 Meg.\tPlease specify the correct amount "
@@ -789,6 +800,7 @@ MGAProbe()
 		break;
 	case PCI_CHIP_MGAG100:
 	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG100_PCI:
 	case PCI_CHIP_MGAG200_PCI:
 		MGAG200RamdacInit();
@@ -873,6 +885,7 @@ TestAndSetRounding(pitch)
 	/* we can't use interleave on Mystique and G100/G200 */
 	if (MGAchipset == PCI_CHIP_MGA1064
 		|| MGA_IS_G100(MGAchipset)
+		|| MGA_IS_G400(MGAchipset)
 		|| MGA_IS_G200(MGAchipset))
 	{
 		MGAinterleave = 0;
@@ -920,6 +933,7 @@ TestAndSetRounding(pitch)
 
 	if (MGAchipset == PCI_CHIP_MGA1064
 		|| MGA_IS_G100(MGAchipset)
+		|| MGA_IS_G400(MGAchipset)
 		|| MGA_IS_G200(MGAchipset))
 	{
 		MGABppShft--;
@@ -961,6 +975,7 @@ MGAPitchAdjust()
 		case PCI_CHIP_MGA1064:
 		case PCI_CHIP_MGAG100:
 		case PCI_CHIP_MGAG200:
+		case PCI_CHIP_MGAG400:
 		case PCI_CHIP_MGAG100_PCI:
 		case PCI_CHIP_MGAG200_PCI:
 			pWidth = &width2[0];
@@ -1056,6 +1071,9 @@ MGALinearOffset()
 	MGAydstorg = 0;
 	if (vga256InfoRec.virtualX * vga256InfoRec.virtualY * BytesPerPixel
 		<= 4*1024*1024)
+	    return 0;
+
+        if (MGA_IS_G400(MGAchipset))
 	    return 0;
 
 	offset = (4*1024*1024) % (vga256InfoRec.displayWidth * BytesPerPixel);
@@ -1168,8 +1186,7 @@ MGAFbInit()
 		 * now call the new acc interface
 		 */
 		if (MGAchipset == PCI_CHIP_MGA1064 ||
-		    MGA_IS_G100(MGAchipset) ||
-		    MGA_IS_G200(MGAchipset))
+		    MGA_IS_GCLASS(MGAchipset))
 		{
 			MGAusefbitblt = 0;
 			} else {
@@ -1201,6 +1218,7 @@ DisplayModePtr mode;
 		return MGA1064Init(mode);
 	case PCI_CHIP_MGAG100:
 	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG100_PCI:
 	case PCI_CHIP_MGAG200_PCI:
 		return MGAG200Init(mode);
@@ -1234,6 +1252,7 @@ vgaHWPtr restore;
 		break;
 	case PCI_CHIP_MGAG100:
 	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG100_PCI:
 	case PCI_CHIP_MGAG200_PCI:
 		MGAG200Restore(restore);
@@ -1266,6 +1285,7 @@ vgaHWPtr save;
 		return (void *)MGA1064Save(save);
 	case PCI_CHIP_MGAG100:
 	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG100_PCI:
 	case PCI_CHIP_MGAG200_PCI:
 		return (void *)MGAG200Save(save);
@@ -1366,8 +1386,11 @@ int x, y;
 	int tmp;
 	CARD32 count;
 
-	if (vgaBitsPerPixel == 24)
-		Base *= 3;
+	if (vgaBitsPerPixel == 24) {
+	    if (MGA_IS_G400(MGAchipset))
+		Base &= ~1;
+	    Base *= 3;
+	}
 
 	/* find start of retrace */
         while (inb(vgaIOBase + 0x0A) & 0x08);

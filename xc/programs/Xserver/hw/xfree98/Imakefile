@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:39:23 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14.2.3 1998/11/04 14:38:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14.2.4 1999/01/09 14:19:03 dawes Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -26,7 +26,7 @@ ACCELDIRS = accel
 SUPERPROBE = SuperProbe
 #endif
 
-#if BuildXF86Setup
+#if BuildJpXF86Setup
 XF86SETUPDIR = XF86Setup
 #endif
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.12 1998/12/18 11:56:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.16 1999/07/13 07:09:52 hohndel Exp $ */
 /*
  * Millennium G200 RAMDAC driver
  */
@@ -118,6 +118,7 @@ unsigned char reg;
 #define MGA_MAX_PCLK_FREQ   250000
 #define MGA_MAX_MCLK_FREQ   100000
 #define MGA_REF_FREQ        27050.0
+#define MGA_ALT_REF_FREQ    14318.0
 #define MGA_FEED_DIV_MIN    8
 #define MGA_FEED_DIV_MAX    127
 #define MGA_IN_DIV_MIN      1
@@ -138,7 +139,17 @@ MGACalcClock ( f_out, f_max, m, n, p, s )
 	int best_m, best_n;
 	double f_pll, f_vco;
 	double m_err, inc_m, calc_f, f_out_f,base_freq;
+	static double ref = 0.0;
 
+	if (ref < 1.0) 
+	{
+		if (MGABios2.PinID && (MGABios2.VidCtrl & 0x20))
+			ref = MGA_ALT_REF_FREQ;
+		else
+			ref = MGA_REF_FREQ;
+		ErrorF("%s %s: PLL reference freq: %.3f MHz\n",
+		       XCONFIG_PROBED, vga256InfoRec.name, ref / 1000.0);
+	}
 	/* Make sure that f_min <= f_out <= f_max */
 
 	if ( f_out < ( MGA_MIN_VCO_FREQ / 8))
@@ -160,7 +171,7 @@ MGACalcClock ( f_out, f_max, m, n, p, s )
 	/* Initial value of calc_f for the loop */
 	calc_f = 0;
 
-	base_freq = MGA_REF_FREQ / ( 1 << *p );
+	base_freq = ref / ( 1 << *p );
 
 	/* Initial amount of error for frequency maximum */
 	m_err = f_out;
@@ -187,7 +198,7 @@ MGACalcClock ( f_out, f_max, m, n, p, s )
 	}
 	
 	/* Now all the calculations can be completed */
-	f_vco = MGA_REF_FREQ * best_n / best_m;
+	f_vco = ref * best_n / best_m;
 
 	/* Adjustments for filtering pll feed back */
 	if ( (50000.0 <= f_vco)
@@ -402,7 +413,7 @@ DisplayModePtr mode;
 	newVS->std.MiscOutReg |= 0x0C;
 
 	orig = pciReadLong(MGAPciTag, PCI_OPTION_REG) & (0x17 << 10);
-	if (MGA_IS_G200(MGAchipset)) {
+	if (MGA_IS_G200(MGAchipset) || MGA_IS_G400(MGAchipset)) {
 	    /* we want to leave the hardpwmsk 
 	       and memconfig bits alone, in case this is an SDRAM card */
 	    newVS->DAClong = 0x40078121 | orig; 
@@ -584,5 +595,8 @@ MGAG200RamdacInit()
 				   HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK |
 	                           HARDWARE_CURSOR_PROGRAMMED_BITS;
 
-	MGAdac.maxPixelClock = 250000;
+        if(MGA_IS_G400(MGAchipset))
+	    MGAdac.maxPixelClock = 300000;
+	else
+	    MGAdac.maxPixelClock = 250000;
 }

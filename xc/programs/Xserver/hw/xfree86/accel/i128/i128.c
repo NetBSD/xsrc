@@ -23,7 +23,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.13 1998/12/19 15:40:50 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.14 1999/06/18 13:08:13 hohndel Exp $ */
 
 #include "i128.h"
 #include "i128reg.h"
@@ -210,10 +210,12 @@ i128Probe()
 
    i = 0;
    while ((pcrp = pcrpp[i]) != (pciConfigPtr)NULL) {
-      if ((pcrp->_device_vendor == I128_DEVICE_ID1) ||
-          (pcrp->_device_vendor == I128_DEVICE_ID2) ||
-          (pcrp->_device_vendor == I128_DEVICE_ID3) ||
-          (pcrp->_device_vendor == I128_DEVICE_ID4))
+      if (((pcrp->_device_vendor == I128_DEVICE_ID1) ||
+           (pcrp->_device_vendor == I128_DEVICE_ID2) ||
+           (pcrp->_device_vendor == I128_DEVICE_ID3) ||
+           (pcrp->_device_vendor == I128_DEVICE_ID4)) &&
+	  (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	  (pcrp->_command & PCI_CMD_MEM_ENABLE)    )
         break;
       i++;
    }

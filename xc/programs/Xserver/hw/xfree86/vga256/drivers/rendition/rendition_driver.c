@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/rendition_driver.c,v 1.1.2.4 1998/11/04 08:02:03 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/rendition_driver.c,v 1.1.2.8 1999/06/23 12:37:23 hohndel Exp $ */
 /*
  * Rendition driver v0.2
  *   implements support for Rendition Verite 1000/2x00 
@@ -245,7 +245,11 @@ RENDITIONProbe()
             ErrorF( "RENDITION: vendor 0x%x chip 0x%x\n", 
                 pcr->_vendor, pcr->_device);
 #endif
-            if (pcr->_vendor == PCI_VENDOR_RENDITION) {
+            if ((pcr->_vendor == PCI_VENDOR_RENDITION) &&
+                /* Extra checks to find active card */
+                (pcr->_command & PCI_CMD_IO_ENABLE) &&
+                (pcr->_command & PCI_CMD_MEM_ENABLE)){
+
                 switch(pcr->_device) {
                     case PCI_CHIP_V1000:
                         BOARD.chip=V1000_DEVICE;
@@ -265,9 +269,11 @@ RENDITIONProbe()
         return FALSE;
 
     if (BOARD.chip == NOVERITE) {
+#if 0
         if (vga256InfoRec.chipset)
             ErrorF("%s %s: RENDITION: unknown chipset\n",
                 XCONFIG_PROBED, vga256InfoRec.name);
+#endif
         return FALSE;
     }
 
@@ -335,8 +341,12 @@ RENDITIONProbe()
 
     if(vga256InfoRec.dacSpeeds[0])
         vga256InfoRec.maxClock=vga256InfoRec.dacSpeeds[0];
-    else
+    else {
+      if (BOARD.chip==V1000_DEVICE){
         vga256InfoRec.maxClock=135000;
+      }
+      else vga256InfoRec.maxClock=170000;
+    }
 
     vga256InfoRec.bankedMono=FALSE;
 
@@ -346,7 +356,6 @@ RENDITIONProbe()
     OFLG_SET(OPTION_OVERCLOCK_MEM, &RENDITION.ChipOptionFlags);
 
     OFLG_SET(OPTION_SW_CURSOR, &RENDITION.ChipOptionFlags);
-    OFLG_SET(OPTION_HW_CURSOR, &RENDITION.ChipOptionFlags);
     OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 
   /*vgaSetLinearOffsetHook(RENDITIONLinearOffset);
@@ -389,16 +398,23 @@ RENDITIONFbInit()
     ErrorF( "RENDITION: RENDITIONFbInit() called\n");
 #endif
 
-/* For now, the HW cursor is disabled <ml>
     if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
+      if (BOARD.chip==V1000_DEVICE){
         RENDITIONHwCursorInit();
         ErrorF("%s %s: Using hardware cursor\n",
+	       XCONFIG_PROBED, vga256InfoRec.name);
+      }
+      else{
+	/* Disabled for the moment due to bugs in software */
+	ErrorF("%s %s: Hardware cursor on v2x00 not implemented in this release\n",
+	       XCONFIG_PROBED, vga256InfoRec.name);
+        ErrorF("%s %s: Disabling hardware cursor\n",
             XCONFIG_PROBED, vga256InfoRec.name);
+      }
     }
     else
         ErrorF("%s %s: Disabling hardware cursor\n",
             XCONFIG_GIVEN, vga256InfoRec.name);
-*/
 }
 
 

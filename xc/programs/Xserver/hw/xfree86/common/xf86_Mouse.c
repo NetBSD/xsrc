@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.17 1998/12/20 01:54:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.20 1999/05/07 00:52:04 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@xfree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -45,6 +45,14 @@
 #include "xf86Procs.h"
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
+
+#if defined(__NetBSD__)
+#undef MAXHOSTNAMELEN		/* avoid duplication from param.h */
+#include <sys/param.h>		/* pull in __NetBSD_Version__ */
+#if __NetBSD_Version__ >= 103060000
+#include <dev/wscons/wsconsio.h>
+#endif
+#endif
 
 #ifdef XINPUT
 #include "xf86Xinput.h"
@@ -123,6 +131,11 @@ Bool xf86SupportedMouseTypes[] =
 	FALSE,	/* auto */
 #endif
 	TRUE,	/* ACECAD */
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
+	TRUE,	/* wsmouse */
+#else
+	FALSE,	/* wsmouse */
+#endif
 };
 
 int xf86NumMouseTypes = sizeof(xf86SupportedMouseTypes) /
@@ -211,6 +224,12 @@ static unsigned char proto[][7] = {
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* sysmouse */
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* dummy entry for auto - used only to fill space */
   {  0x80,   0x80, 0x80,   0x00, 3,    0x00,   0xff },  /* ACECAD */
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
+  {  0x00,   0x00, 0x00,   0x00, sizeof(struct wscons_event),
+     				       0x00,   0x00 },  /* wsmouse */
+#else
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* wsmouse */
+#endif
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -551,6 +570,11 @@ MouseDevPtr mouse;
 	}
 	break;
 
+#if defined(__NetBSD__)
+      case P_WSMOUSE:
+	break;
+#endif
+
       default:
 	xf86SetMouseSpeed(mouse, mouse->baudRate, mouse->baudRate,
                           xf86MouseCflags[mouse->mseType]);
@@ -667,6 +691,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
     if (mouse->pBufP != 0 &&
 #if !defined(__NetBSD__)
 	mouse->mseType != P_PS2 &&
+#endif
+#if defined(__NetBSD__)
+	mouse->mseType != P_WSMOUSE &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
@@ -892,7 +919,8 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
 		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
 		((mouse->pBuf[0] & 0x08) ? 0x08 : 0);/* fourth button */
-      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dx = (mouse->pBuf[0] & 0x10) ?   (mouse->pBuf[1]&0x7f)-128 :
+						mouse->pBuf[1];
       dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 
@@ -909,6 +937,48 @@ xf86MouseProtocol(device, rBuf, nBytes)
           buttons |= (int)(~mouse->pBuf[7] & 0x07) << 3;
 	}
       break;
+
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
+    case P_WSMOUSE: {
+      struct wscons_event ev;
+
+      /* copy to guarantee alignment */
+      memcpy(&ev, mouse->pBuf, sizeof ev);
+      switch (ev.type) {
+      case WSCONS_EVENT_MOUSE_UP:
+	dx = dy = 0;
+#define BUTBIT (1 << (ev.value <= 2 ? 2 - ev.value : ev.value))
+	buttons = mouse->lastButtons & ~BUTBIT;
+	break;
+      case WSCONS_EVENT_MOUSE_DOWN:
+	dx = dy = 0;
+	buttons = mouse->lastButtons | BUTBIT;
+#undef BUTBIT
+	break;
+      case WSCONS_EVENT_MOUSE_DELTA_X:
+	dx = ev.value;
+	dy = 0;
+	buttons = mouse->lastButtons;
+	break;
+      case WSCONS_EVENT_MOUSE_DELTA_Y:
+	dx = 0;
+	dy = -ev.value;
+	buttons = mouse->lastButtons;
+	break;
+#ifdef WSCONS_EVENT_MOUSE_DELTA_Z
+      case WSCONS_EVENT_MOUSE_DELTA_Z:
+	dx = dy = 0;
+	dz = ev.value;
+	buttons = mouse->lastButtons;
+	break;
+#endif
+      default:
+	ErrorF("wsmouse: bad event type=%d\n", ev.type);
+	return;
+      }
+      break;
+      }
+#endif /* defined(__NetBSD__) && __NetBSD_Version__ >= 103060000 */
 
     default: /* There's a table error */
       continue;
@@ -1118,6 +1188,8 @@ xf86MouseAllocate()
 {
     LocalDevicePtr	local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
     MouseDevPtr		mouse = (MouseDevPtr) xalloc(sizeof(MouseDevRec));
+
+    memset(mouse, 0, sizeof(MouseDevRec));
     
     local->name = "MOUSE";
     local->type_name = "Mouse";

@@ -1,29 +1,48 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
+<!-- <title>Copyright</title>
+<Author>The XFree86 Project, Inc.  -->
 <title> XFree86 プロジェクト社 著作権表示</title>
 <Author> XFree86 プロジェクト社
 <trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
 <p>
+<!-- <sect>XFree86 Copyright -->
 <sect>XFree86 著作権表示
 <p>
+<!-- XFree86 code without an explicit copyright is covered by the following
+copyright: -->
 著作権が明示されているプログラムを除いて XFree86 のプログラムは次の著作権を
 有する:
 
 <p>
-Copyright (C) 1994, 1995, 1996 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
 
-無料で、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
+<!-- Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions: -->
+自由に、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
 ``そふとうぇあ'' と呼ぶ）を入手する事、使用権、複写権、
 変更権、併合権、出版権、配付権、再実施許諾権 かつ/または ``そふとうぇあ''
 の販売権を含んで制約無しで取り扱う事、``そふとうぇあ'' を制限無しで
 供給する人を許可する事、を以下の条件付きで、ここに承認する。
 
+<!-- The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.  -->
 上記の著作権告示とこの認可告示を ``そふとうぇあ'' の全て
 または、重要な部分と共に置く事。
 
-
-如何なる種類、形容、意味でも、商品化の可能性及び、特定の目的かどうか、
+<!-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE XFREE86 PROJECT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.  -->
+如何なる種類、形容、意味でも、商品性及び、特定の目的かどうか、
 非侵害か否かの保証無しに、``そふとうぇあ'' を ``あるがまま'' 
 の形で供給します。要求、損害やその他の責任及び如何なる契約の実行や不正行為、
 ``そふとうぇあ'' に関連が有っても無くても生じた現象、又は 
@@ -31,44 +50,68 @@ Copyright (C) 1994, 1995, 1996 The XFree86 Project, Inc.  All Rights Reserved.
 ことでも XFree86 プロジェクトには責任がありません。
 
 
+<!-- Except as contained in this notice, the name of the XFree86 Project shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in this Software without prior written authorization from the
+XFree86 Project.  -->
 この告示に含まれている事を除いて、 ``そふとうぇあ'' を XFree86 
 プロジェクトの名の下に広告したり、 XFree86 プロジェクト社から以前に発行した
 許可書無しに他者が ``そふとうぇあ'' を販売、使用、取り扱いを勧誘する
 ことはありません。
 
+<!-- <sect>Other Copyrights -->
 <sect>その他の著作権表示<p>
-<!--Portions of code are covered by the following copyrights:-->
+<!-- Portions of code are covered by the following copyrights: -->
 一部のプログラムは次の著作権を有する:
 
+<!-- <sect1>X Consortium -->
 <sect1>X コンソーシアム
 <p>
 Copyright (C) 1996 X Consortium
 
-
-無料で、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
+<!-- Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without
+limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to
+whom the Software is furnished to do so, subject to the following conditions: -->
+自由に、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
 ``そふとうぇあ'' と呼ぶ）を入手する事、使用権、複写権、
 変更権、併合権、出版権、配付権、再実施許諾権 かつ/または ``そふとうぇあ''
  の販売権を含んで制約無しで取り扱う事、``そふとうぇあ'' を制限無しで
 供給する人を許可する事、を次の条件付きで、ここに承認する。
 
+<!-- The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.  -->
 上記の著作権告示とこの認可告示を ``そふとうぇあ'' の全て
 または、重要な部分と共に置く事。
 
-
-如何なる種類、形容、意味でも、商品化の可能性及び、特定の目的かどうか、
+<!-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.  -->
+如何なる種類、形容、意味でも、商品性及び、特定の目的かどうか、
 非侵害か否かの保証無しに、``そふとうぇあ'' を ``あるがまま'' 
 の形で供給します。要求、損害やその他の責任及び如何なる契約の実行や不正行為、
 ``そふとうぇあ'' に関連が有っても無くても生じた現象、又は 
 ``そふとうぇあ'' の使用結果や他の取り扱い結果について、どんな些細な
 ことでも  X コンソーシアム社には責任がありません。
 
-
+<!-- Except as contained in this notice, the name of the X Consortium shall
+not be used in advertising or otherwise to promote the sale, use or
+other dealings in this Software without prior written authorization from
+the X Consortium.  -->
 この告示に含まれている事を除いて、 ``そふとうぇあ'' を  X コンソーシアム社
 の名の下に広告したり、  X コンソーシアム社から以前に発行した
 許可書無しに他者が ``そふとうぇあ'' を販売、使用、取り扱いを勧誘する
 ことはありません。
 
-X ウィンドウシステム は X コンソーシアム社の商標です。
+X Window System is a trademark of X Consortium, Inc.
+
+X Window System は X コンソーシアム社の商標です。
 
 <!--<sect1>Berkeley-based copyrights:-->
 <sect1>Berkeley に基づく著作権:
@@ -95,7 +138,7 @@ are met:-->
 ない。
 <!--<item>The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.-->
-<item>著作者の名前は明確に以前に発行した許可書無しにこのそふとうぇあから
+<item>著作者の名前は明確に以前に発行した許可書無しにこの``そふとうぇあ''から
 派生したものを裏書きしたり促進するものではありません。
 </enum>
 
@@ -109,14 +152,14 @@ are met:-->
  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.-->
-如何なる形容、意味でも、商品化の可能性を制限せず及び、特定の目的に適合するか
-どうか
-の保証を放棄して、``そふとうぇあ'' を ``あるがまま'' の形で著作者が供給します。
+如何なる形容、意味でも、商品性を制限せず及び、特定の目的に適合する
+かどうかの保証を放棄して、``そふとうぇあ'' を ``あるがまま'' の形で著作者が
+供給します。
 直接的、間接的、故意、特別、模範的、必然的損害（制限のない代替物やサービス、
 可用性の低下やデータや利益の損失または営業妨害を含む）が生じても、
 その他の責任及び如何なる契約の実行、完全な債務や不正行為（不注意による事故等
 を含む）、
-仮に損害の可能性があっても``そふとうぇあ'' の使用結果について、著作者には責任が
+仮に損害の可能性があっても``そふとうぇあ''の使用結果について、著作者には責任が
 ありません。
 
 <sect2>UCB/LBL
@@ -135,9 +178,9 @@ are met:-->
  must display the following acknowledgement:
       This product includes software developed by the University of
       California, Lawrence Berkeley Laboratory.-->
-特徴を述べている全ての宣伝材料とこのソフトウェアを使うと必ず次の謝意のメッセ
-ージを
-表示します。
+特徴を述べている全ての宣伝材料とこのソフトウェアを使うと必ず次の謝意の
+メッセージを表示します。
+
       This product includes software developed by the University of
       California, Lawrence Berkeley Laboratory.
 
@@ -150,25 +193,20 @@ are met:-->
 <enum>
 <!--<item>Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.-->
-<item>ソースプログラムの再配布は上記の著作権表示とこの条件一覧と次の放棄宣言を
-必ず保持すること。
+<item>ソースプログラムの再配布は上記の著作権表示とこの条件一覧と次の放棄宣言を必ず保持すること。
 <!--<item>Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.-->
-<item>バイナリ形式の再配布は上記の著作権表示とこの条件一覧と
-次の放棄宣言を必ず文書として保持するか又は配布物に含めて提供すること。
+<item>バイナリ形式の再配布は上記の著作権表示とこの条件一覧と次の放棄宣言を必ず文書として保持するか又は配布物に含めて提供すること。
 <!--<item>All advertising materials mentioning features or use of this software
     must display the following acknowledgement:-->
-<item>特徴を述べている全ての宣伝材料とこのソフトウェアを使うと必ず次の
-謝意のメッセージを表示します。
+<item>特徴を述べている全ての宣伝材料とこのソフトウェアを使うと必ず次の謝意のメッセージを表示します。
       This product includes software developed by the University of
       California, Berkeley and its contributors.
 <!--<item>Neither the name of the University nor the names of its contributors
     may be used to endorse or promote products derived from this software
     without specific prior written permission.-->
-<item>大学の名前や寄付者の名前のどちらもこのソフトウェアから
-明確な以前に発行した許可書無しに派生したものを裏書きしたり促進するものではあ
-りません。
+<item>大学の名前や寄付者の名前のどちらもこのソフトウェアから明確な以前に発行した許可書無しに派生したものを裏書きしたり促進するものではありません。
 </enum>
 
 <!-- THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
@@ -182,20 +220,19 @@ are met:-->
  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.-->
-如何なる形容、意味でも、商品化の可能性を制限せず及び、特定の目的に適合するか
-どうか
-の保証を放棄して、``そふとうぇあ'' を ``あるがまま'' の形で著作者が供給します。
+如何なる形容、意味でも、商品性を制限せず及び、特定の目的に適合する
+かどうかの保証を放棄して、``そふとうぇあ'' を ``あるがまま'' の形で著作者が
+供給します。
 直接的、間接的、故意、特別、模範的、必然的損害（制限のない代替物やサービス、
 可用性の低下やデータや利益の損失または営業妨害を含む）が生じても、
 その他の責任及び如何なる契約の実行、完全な債務や不正行為（不注意による事故等
-を含む）、
-仮に損害の可能性があっても``そふとうぇあ'' の使用結果について、著作者には責任が
-ありません。
+を含む）、仮に損害の可能性があっても``そふとうぇあ'' の使用結果について、
+著作者には責任がありません。
 
-<sect1>NVidia Corp
+<!-- <sect1>NVidia Corp -->
 <sect1>NVidia 社
 <p>
-         Copyright (c) 1996 NVIDIA, Corp.  All rights reserved.        
+         Copyright (c) 1996-1998 NVIDIA, Corp.  All rights reserved.        
                                                                       
 <!--    NOTICE TO USER: The source code is copyrighted under U.S. and
     international laws.  NVIDIA, Corp. of Sunnyvale, California owns
@@ -216,7 +253,7 @@ are met:-->
     このソースプログラムを如何なる形態で使うとしてもユーザ用文書とプログラム
      内部のコメントとエンドユーザ用文書に次の文が含まれている必要があります。
 
-    Copyright (c) 1996 NVIDIA, Corp.  NVIDIA design patents pending
+    Copyright (c) 1996-1998 NVIDIA, Corp.  NVIDIA design patents pending
     in the U.S. and foreign countries.
 
 <!--    NVIDIA, CORP.  MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF
@@ -230,37 +267,42 @@ are met:-->
     PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOURCE CODE.-->
-    NVIDIA 社 は如何なる目的に適合するかについて責任がありません。如何なる形容や
-    意味でも保証なしに ``あるがまま'' 供給します。NVIDIA 社 は全ての商品化の
-可能性
+    NVIDIA 社 は如何なる目的に適合するかについて責任がありません。
+    如何なる形容や意味でも保証なしに ``あるがまま'' 供給します。
+    NVIDIA 社 は全ての商品性
     及び、特定の目的に適合するかどうかの保証を放棄します。NVIDIA 社 は特別、
-    間接的、偶発的、必然的損害、たとえどのような可用性の低下やデータや利益の損失
-    があっても、また営業活動や不注意による事故または不正行為、このソースプロ
-グラム
-    の利用や性能について直接関係あってもなくても生じた事象について責任はあり
-ません。
+    間接的、偶発的、必然的損害、たとえどのような可用性の低下やデータや利益の
+    損失があっても、また営業活動や不注意による事故または不正行為、この
+    ソースプログラムの利用や性能について直接関係あってもなくても生じた事象
+    について責任はありません。
     
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2 1997/01/26 04:34:15 dawes Exp $
-</verb>
-<hrule>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.2 1999/06/02 07:51:41 hohndel Exp $
 
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.6 1
-996/10/10 14:03:59 を、岡本  一幸 
+
+$XConsortium: CPYRIGHT.sgml /main/5 1996/10/25 16:24:53 kaleb $
+
+</verb>
+<code></code>
+
+このファイルは
+xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.2 1998/01/24 11:55:06
+を、岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
-XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
-電子メールで送って下さい。
+XFree86 プロジェクト社と X Japanese Documentation Project にありますが、
+この和訳の不具合は私に、電子メールで送って下さい。
 <verb>
-Copyright (C) 1995, Kazuyuki (ikko-) Okamoto. All Rights Reserved.
+Copyright (C) 1995-1998 The X Japanese Documentation Project
 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.2 1999/06/02 07:51:41 hohndel Exp $
 </verb>
-<hrule>
+<code></code>
 &lsqb;EOF&rsqb;
 
 </article>

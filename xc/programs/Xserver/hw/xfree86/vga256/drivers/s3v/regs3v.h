@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.6 1998/11/08 10:03:45 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.7 1999/05/10 13:09:53 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -61,10 +61,13 @@
 #define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
 #define S3_ViRGE_MXP_SERIES(chip) (chip == S3_ViRGE_MXP)
 #define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
+#define S3_TRIO_3D_SERIES(chip)   (chip == S3_TRIO_3D)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip))
+				    || S3_ViRGE_VX_SERIES(chip)		\
+				    || S3_TRIO_3D_SERIES(chip))
 #define S3_ANY_SERIES(chip)       (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip))
+				    || S3_ViRGE_VX_SERIES(chip)		\
+				    || S3_TRIO_3D(chip))
 
 /* PCI data */
 #define PCI_S3_VENDOR_ID	0x5333
@@ -74,6 +77,7 @@
 #define PCI_ViRGE_GX2 		0x8A10
 #define PCI_ViRGE_MX 		0x8C01
 #define PCI_ViRGE_MXP 		0x8C03
+#define PCI_TRIO_3D		0x8904
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
@@ -83,7 +87,7 @@
 #define S3_ViRGE_GX2		 4
 #define S3_ViRGE_MX		 5
 #define S3_ViRGE_MXP		 6
-
+#define S3_TRIO_3D		 7
 
 /* VESA Approved Register Definitions */
 #define	DAC_MASK	0x03c6
@@ -386,6 +390,10 @@ void S3VGEReset(int from_timeout, int line, char *file);
 /* Wait until GP is idle and queue is empty */
 #define	WaitIdleEmpty()  \
   do { int loop=0; mem_barrier(); \
+    if(S3_TRIO_3D_SERIES(s3vPriv.chip)) \
+       while (((IN_SUBSYS_STAT() & 0x3f802000) != 0x20002000) && \
+             (loop++<MAXLOOP)); \
+    else \
        while (((IN_SUBSYS_STAT() & 0x3f00) != 0x3000) && (loop++<MAXLOOP)); \
        if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
   } while (0)
@@ -401,6 +409,8 @@ void S3VGEReset(int from_timeout, int line, char *file);
 #define WaitCommandEmpty()       do { int loop=0; mem_barrier(); 			\
 	if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX || s3vPriv.chip == S3_ViRGE_MXP) 		\
 	     while ((!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x400)) && (loop++<MAXLOOP));	\
+	else if (S3_TRIO_3D_SERIES(s3vPriv.chip)) \
+	     while (((IN_SUBSYS_STAT() & 0x5f00) != 0x5f00) && (loop++<MAXLOOP)); \
 	  else 										\
 	     while ((!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x200)) && (loop++<MAXLOOP));	\
           if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \

@@ -1,0 +1,31 @@
+XCOMM $XConsortium: Imakefile,v 5.25 94/02/21 10:20:10 kaleb Exp $
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/imstt/Imakefile,v 1.1.2.2 1999/05/25 12:00:30 hohndel Exp $
+XCOMM
+#include <Server.tmpl>
+
+SRCS = imstt.c
+
+OBJS = imstt.o
+
+INCLUDES = -I. -I../common -I../os-support -I$(XF86COMSRC) -I$(XF86OSSRC) \
+	   -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+
+#if XF68FBDevCFB24
+DEFINES := $(DEFINES) -DCONFIG_CFB24
+#endif
+
+DEFINES := $(DEFINES) -DFBDEV_SERVER
+
+NormalLibraryObjectRule()
+
+all:: $(OFILES)
+
+NormalLibraryTarget(imstt,$(OBJS))
+LintLibraryTarget(imstt,$(SRCS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

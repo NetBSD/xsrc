@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/spc8110/spc_driver.c,v 1.1.2.2 1998/10/31 14:41:05 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/spc8110/spc_driver.c,v 1.1.2.3 1999/06/18 13:08:28 hohndel Exp $ */
 
 /*
  * EPSON SPC8110 vga256 driver
@@ -317,8 +317,10 @@ SPC8110Probe()
 	/* is this still the right way to do things ? */
 	if (vgaPCIInfo && vgaPCIInfo->AllCards) {
 	  while (pcr = vgaPCIInfo->AllCards[i++]) {
-	      if (   pcr->_vendor == PCI_VENDOR_EPSON
-		  && pcr->_device == PCI_CHIP_SPC8110)
+	      if (  (pcr->_vendor == PCI_VENDOR_EPSON) &&
+		    (pcr->_command & PCI_CMD_IO_ENABLE) &&
+		    (pcr->_command & PCI_CMD_MEM_ENABLE) &&
+		    (pcr->_device == PCI_CHIP_SPC8110) )
 		      break;
 	  }
 	  if (pcr) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.c,v 1.1.2.2 1998/10/20 20:51:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.c,v 1.1.2.3 1999/07/05 09:07:31 hohndel Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -66,6 +66,7 @@ const char *ATIChipNames[] =
     "ATI 3D Rage IIc",
     "ATI 3D Rage Pro",
     "ATI 3D Rage LT Pro",
+    "ATI 3D Rage XL or XC",
     "ATI unknown Mach64",
 };
 
@@ -75,6 +76,9 @@ CARD8 ATIChipHasSUBSYS_CNTL = FALSE;
 CARD8 ATIChipHasVGAWonder   = FALSE;
 const char *ATIFoundryNames[] =
     { "SGS", "NEC", "KCS", "UMC", "4", "5", "6", "UMC" };
+
+int ATILCDPanelID = -1, ATILCDClock = 0,
+    ATILCDHorizontal = 0, ATILCDVertical = 0;
 
 /*
  * ATIMach32ChipID --
@@ -235,7 +239,7 @@ ATIMach64ChipID(const CARD16 ExpectedChipType)
             ATIBusType = ATI_BUS_PCI;
             break;
 
-        case 0x0315U:
+        case 0x02B5U:
             ATIChipType = 0x5656U;
         case 0x5656U:
             ATIChipRevision = GetBits(IO_Value, CFG_CHIP_REVISION);
@@ -261,7 +265,7 @@ ATIMach64ChipID(const CARD16 ExpectedChipType)
             ATIBusType = ATI_BUS_AGP;
             break;
 
-        case 0x00CEU:
+        case 0x00C8U:
         case 0x00CFU:
         case 0x00D0U:
             ATIChipType = 0x4750U;
@@ -273,8 +277,8 @@ ATIMach64ChipID(const CARD16 ExpectedChipType)
             ATIBusType = ATI_BUS_PCI;
             break;
 
-        case 0x00C7U:
-        case 0x00C9U:
+        case 0x00C1U:
+        case 0x00C3U:
             ATIChipType = 0x4742U;
         case 0x4742U:
         case 0x4744U:
@@ -300,6 +304,28 @@ ATIMach64ChipID(const CARD16 ExpectedChipType)
         case 0x4C44U:
             ATIChipRevision = GetBits(IO_Value, CFG_CHIP_REVISION);
             ATIChip = ATI_CHIP_264LTPRO;
+            ATIBusType = ATI_BUS_AGP;
+            break;
+
+        case 0x00CEU:
+        case 0x00D1U:
+        case 0x00D2U:
+            ATIChipType = 0x474FU;
+        case 0x474FU:
+        case 0x4752U:
+        case 0x4753U:
+            ATIChipRevision = GetBits(IO_Value, CFG_CHIP_REVISION);
+            ATIChip = ATI_CHIP_264XL;
+            ATIBusType = ATI_BUS_PCI;
+            break;
+
+        case 0x00CCU:
+        case 0x00CDU:
+            ATIChipType = 0x474DU;
+        case 0x474DU:
+        case 0x474EU:
+            ATIChipRevision = GetBits(IO_Value, CFG_CHIP_REVISION);
+            ATIChip = ATI_CHIP_264XL;
             ATIBusType = ATI_BUS_AGP;
             break;
 

@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransint.h /main/25 1995/12/05 16:51:28 mor $ */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.3 1998/09/05 03:31:59 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.5 1999/07/17 01:32:46 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -104,6 +104,9 @@ extern int  errno;		/* Internal system error number. */
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#if defined(__FreeBSD__) && defined(AOUT_COMPAT_LIB)
+#include "inetfixup.h"
+#endif
 #endif
 #ifdef __EMX__
 #include <sys/ioctl.h>
@@ -455,6 +458,12 @@ static int is_numeric (
 #endif
 );
 
+static int trans_mkdir (
+#if NeedFunctionPrototypes
+    char *,		/* path */
+    int			/* mode */
+#endif
+);
 
 /*
  * Some XTRANSDEBUG stuff

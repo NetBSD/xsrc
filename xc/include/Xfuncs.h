@@ -1,6 +1,5 @@
 /*
  * $XConsortium: Xfuncs.h,v 1.16 94/12/01 16:25:53 kaleb Exp $
- * $XFree86: xc/include/Xfuncs.h,v 3.2 1995/01/28 15:42:03 dawes Exp $
  * 
  * 
 Copyright (c) 1990  X Consortium
@@ -27,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  *
  */
+/* $XFree86: xc/include/Xfuncs.h,v 3.2.8.1 1999/02/08 11:36:25 dawes Exp $ */
 
 #ifndef _XFUNCS_H_
 #define _XFUNCS_H_
@@ -94,5 +94,9 @@ int bcmp();
 #define memcmp(b1,b2,len) bcmp((char *)(b1),(char *)(b2),(int)(len))
 #endif /* SYSV else */
 #endif /* ! X_NOT_STDC_ENV else */
+
+#if defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4))
+#define atexit(f) on_exit(f, 0)
+#endif
 
 #endif /* _XFUNCS_H_ */

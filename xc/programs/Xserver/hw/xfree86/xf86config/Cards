@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.29 1998/12/13 14:12:19 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.34 1999/06/23 12:37:25 hohndel Exp $
 
 # VGA
 
@@ -1120,8 +1120,16 @@ LINE      #Option "pci_retry"
 NAME S3 ViRGE/MX+ (generic)
 SEE S3 ViRGE/MX (generic)
 
+NAME S3 Trio3D
+CHIPSET S3 Trio3D
+SERVER SVGA
+NOCLOCKPROBE
 
+NAME Elsa Winner T3D
+SEE S3 Trio3D
 
+NAME Hercules Terminator 128/3D
+SEE S3 Trio3D
 
 NAME S3 86C325 (generic)
 SEE S3 ViRGE (generic)
@@ -1253,6 +1261,9 @@ SEE S3 ViRGE/VX (generic)
 NAME MELCO WGP-VX8
 SEE S3 ViRGE/VX (generic)
 
+NAME Number Nine FX Reality 772
+SEE S3 ViRGE/VX (generic)
+
 NAME Diamond Stealth 3D 4000
 SEE S3 ViRGE/GX2 (generic)
 
@@ -1271,12 +1282,9 @@ SEE S3 ViRGE/MX (generic)
 # currently unsupported S3
 
 NAME S3 86C365 (Trio3D)
-SEE Unsupported VGA compatible
+SEE S3 Trio3D
 
 NAME S3 86C391 (Savage3D)
-SEE Unsupported VGA compatible
-
-NAME S3 Trio3D
 SEE Unsupported VGA compatible
 
 NAME S3 Savage3D
@@ -2197,6 +2205,21 @@ CHIPSET Cyber9397
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME Trident Cyber 9397 DVD (generic)
+CHIPSET Cyber9397DVD
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9320 (generic)
+CHIPSET Cyber9320
+SERVER SVGA
+NOCLOCKPROBE
+             
+NAME Trident Cyber 9325 (generic)
+CHIPSET Cyber9325
+SERVER SVGA
+NOCLOCKPROBE
+
 NAME Trident 3DImage975 (generic)
 CHIPSET 3dimage975
 SERVER SVGA
@@ -2209,6 +2232,16 @@ NOCLOCKPROBE
 
 NAME Trident 3DImage985 (generic)
 CHIPSET 3dimage985
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Blade3D (generic)
+CHIPSET Blade3D
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident CyberBlade (generic)
+CHIPSET CyberBlade
 SERVER SVGA
 NOCLOCKPROBE
 
@@ -2293,6 +2326,16 @@ LINE     # Option "pci_burst_on"
 LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
 LINE     # Option "ext_eng_queue" # Turbo-queue. This can cause drawing 
 LINE                              # errors, but gives some accel
+NOCLOCKPROBE
+
+NAME SiS 530
+CHIPSET SiS530
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SiS 620
+CHIPSET SiS620
+SERVER SVGA
 NOCLOCKPROBE
 
 NAME MSI MS-4417
@@ -2422,6 +2465,18 @@ LINE VideoRam 16384
 LINE # Option "mga_sdram"
 NOCLOCKPROBE
 
+NAME Matrox Millennium G400 16MB
+CHIPSET mgag400
+SERVER SVGA
+LINE VideoRam 16384
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 32MB
+CHIPSET mgag400
+SERVER SVGA
+LINE VideoRam 32768
+NOCLOCKPROBE
+
 NAME Matrox Mystique
 CHIPSET mga1064sg
 SERVER SVGA
@@ -2474,7 +2529,15 @@ CHIPSET RIVATNT
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME RIVA TNT2
+CHIPSET RIVATNT2
+SERVER SVGA
+NOCLOCKPROBE
+
 NAME ELSA VICTORY ERAZOR
+SEE RIVA128
+
+NAME ELSA VICTORY ERAZOR LT
 SEE RIVA128
 
 NAME ELSA Winner 1000 R3D
@@ -2483,11 +2546,29 @@ SEE RIVA128
 NAME ELSA ERAZOR II
 SEE RIVA TNT
 
+NAME ELSA ERAZOR III
+SEE RIVA TNT2
+
+NAME ELSA Synergy II
+SEE RIVA TNT2
+
+NAME Leadtek WinFast 3D S320II
+SEE RIVA TNT2
+
+NAME Leadtek WinFast 3D S320
+SEE RIVA TNT
+
+NAME Leadtek WinFast 3D S3500
+SEE RIVA128
+
 NAME Diamond Viper 330
 SEE RIVA128
 
 NAME Diamond Viper 550
 SEE RIVA TNT
+
+NAME Diamond Viper 770
+SEE RIVA TNT2
 
 NAME STB Velocity 128
 SEE RIVA128
@@ -2498,7 +2579,16 @@ SEE RIVA128
 NAME ASUS 3Dexplorer
 SEE RIVA128
 
+NAME Hercules Dynamite TNT
+SEE RIVA TNT
+
 # 3DLabs
+
+NAME 3Dlabs Permedia2 (generic)
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
 
 NAME ELSA GLoria-L/MX
 CHIPSET GLINT MX
@@ -2512,6 +2602,11 @@ SERVER 3DLabs
 NOCLOCKPROBE
 
 NAME ELSA GLoria-XL
+CHIPSET GLINT MX
+SERVER 3DLabs
+NOCLOCKPROBE
+
+NAME ELSA GLoria-XXL
 CHIPSET GLINT MX
 SERVER 3DLabs
 NOCLOCKPROBE
@@ -2537,45 +2632,29 @@ LINE #VideoRam 8192
 NOCLOCKPROBE
 
 NAME ELSA GLoria Synergy
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
 
 NAME ELSA Winner 2000/Office
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
 
 NAME Diamond Fire GL 1000 PRO
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
 
 NAME Creative Blaster Exxtreme
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
 
 NAME AccelStar Permedia II AGP
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
 
 NAME Leadtek WinFast 2300
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
+
+NAME Hercules Dynamite 3D/GL
+SEE 3Dlabs Permedia2 (generic)
 
 NAME 3DLabs Oxygen GMX
-CHIPSET PERMEDIA 2
-SERVER 3DLabs
-LINE #Option "no_accel"
-NOCLOCKPROBE
+SEE 3Dlabs Permedia2 (generic)
+
 
 # Alliance Semiconductor
 
@@ -2601,6 +2680,7 @@ SEE AT3D
 NAME NeoMagic (laptop/notebook)
 CHIPSET MagicGraph 128 series
 SERVER SVGA
+NOCLOCKPROBE
 LINE #    Chipset    "NM2160"
 LINE #    IOBase     0xfea00000
 LINE #    MemBase    0xfd000000
@@ -2692,6 +2772,147 @@ NAME EPSON CardPC (onboard)
 CHIPSET SPC8110
 SERVER SVGA
 
+# Intel
+
+NAME Intel 740 (generic)
+CHIPSET Intel 740
+SERVER SVGA
+NOCLOCKPROBE
+LINE     #Option     "no_accel"
+LINE     #Option     "sw_cursor"
+LINE     #Option     "hw_cursor"
+LINE     #Option     "sgram"
+LINE     #Option     "sdram"
+
+NAME Real3D Starfighter AGP
+SEE Intel 740 (generic)
+
+NAME Real3D Starfighter PCI
+SEE Intel 740 (generic)
+
+NAME Diamond Stealth II/G460 AGP
+SEE Intel 740 (generic)
+
+NAME 3DVision-i740 AGP
+SEE Intel 740 (generic)
+
+NAME ABIT G740 8MB SDRAM
+SEE Intel 740 (generic)
+
+NAME Acorp AGP i740
+SEE Intel 740 (generic)
+
+NAME AGP 2D/3D V. 1N, AGP-740D
+SEE Intel 740 (generic)
+
+NAME AOpen AGP 2X 3D Navigator PA740
+SEE Intel 740 (generic)
+
+NAME ARISTO i740 AGP (ART-i740-G)
+SEE Intel 740 (generic)
+
+NAME ASUS AGP-V2740
+SEE Intel 740 (generic)
+
+NAME Atrend (Speedy) 3DIO740 AGP (ATC-2740)
+SEE Intel 740 (generic)
+
+NAME Chaintech AGP-740D
+SEE Intel 740 (generic)
+
+NAME EliteGroup(ECS) 3DVision-i740 AGP
+SEE Intel 740 (generic)
+
+NAME EONtronics Picasso 740
+SEE Intel 740 (generic)
+
+NAME EONtronics Van Gogh
+SEE Intel 740 (generic)
+
+NAME Everex MVGA i740/AG
+SEE Intel 740 (generic)
+
+NAME Flagpoint Shocker i740 8MB
+SEE Intel 740 (generic)
+
+NAME Gainward CardExpert 740 8MB
+SEE Intel 740 (generic)
+
+NAME Genoa Systems Phantom 740
+SEE Intel 740 (generic)
+
+NAME Gigabyte Predator i740 8MB AGP
+SEE Intel 740 (generic)
+
+NAME Hercules Terminator 128 2X/i AGP
+SEE Intel 740 (generic)
+
+NAME HOT-158 (Shuttle)
+SEE Intel 740 (generic)
+
+NAME Intel Express 3D AGP
+SEE Intel 740 (generic)
+
+NAME Jaton Video-740 AGP 3D
+SEE Intel 740 (generic)
+
+NAME Jetway J-740-3D 8MB AGP, i740 AGP 3D
+SEE Intel 740 (generic)
+
+NAME Joymedia Apollo 7400
+SEE Intel 740 (generic)
+
+NAME Leadtek Winfast S900
+SEE Intel 740 (generic)
+
+NAME Machspeed Raptor i740 AGP 4600
+SEE Intel 740 (generic)
+
+NAME Magic-Pro MP-740DVD
+SEE Intel 740 (generic)
+
+NAME MAXI Gamer AGP 8 MB
+SEE Intel 740 (generic)
+
+NAME Palit Daytona AGP740
+SEE Intel 740 (generic)
+
+NAME PowerColor C740 (SG/SD) AGP
+SEE Intel 740 (generic)
+
+NAME QDI Amazing I
+SEE Intel 740 (generic)
+
+NAME Soyo AGP (SY-740 AGP)
+SEE Intel 740 (generic)
+
+NAME Spacewalker Hot-158 
+SEE Intel 740 (generic)
+
+NAME VideoExcel AGP 740
+SEE Intel 740 (generic)
+
+NAME ViewTop ZeusL 8MB 
+SEE Intel 740 (generic)
+
+NAME Winfast S900 i740 AGP 8MB
+SEE Intel 740 (generic)
+
+NAME Voodoo Banshee (generic)
+CHIPSET Voodoo Banshee
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Voodoo3 (generic)
+CHIPSET Voodoo3 
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Elsa Victory II
+SEE Voodoo Banshee (generic)
+
+NAME Diamond Monster Fusion
+SEE Voodoo Banshee (generic)
 # Misc
 
 END

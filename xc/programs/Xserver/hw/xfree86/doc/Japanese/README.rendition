@@ -1,0 +1,66 @@
+  Rendition ユーザ向けの情報
+  The XFree86 Project Inc.
+  23 October 1998
+  The X Japanese Documentation Project
+  12 January 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. サポートしているハードウェア
+  2. 機能
+  3. XF86Config のオプション
+  4. 日本語訳について
+
+
+  ______________________________________________________________________
+
+  1.  サポートしているハードウェア
+
+  V1000, V2x00 ベースのカードは全てサポートされているはずです。サーバの
+  テストは miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100),
+  Hercules Thriller3D (V2200) で行いました。
+
+
+  2.  機能
+
+
+  o  アクセラレーション無し
+
+  o  ハードウェアカーソル
+
+  o  サポートされている色の深さ
+
+  o  8 bpp (256 pseudo colour)
+
+  o  16 bpp (high color)
+
+  o  32 bpp (true colour)
+
+
+  3.  XF86Config のオプション
+
+
+     Option "sw_cursor"
+        ハードウェアカーソルを無効にします。
+
+     Option "overclock_mem"
+        メモリを高いクロックで動作させます。高解像度のときに表示が乱れる
+        カードで有効なことがあります。ただし、ハードウェアを壊してしまう
+        リスクを負うことになります。使うときには注意しましょう。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.rendition,v 1.1.2.1 1999/06/02 07:51:02 hohndel Exp $
+
+
+
+
+  4.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩
+  司 <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。問
+  題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プ
+  ロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+  Project にあります。

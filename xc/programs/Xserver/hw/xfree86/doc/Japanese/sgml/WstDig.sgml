@@ -1,0 +1,411 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!-- 
+<title> Information for Western Digital Chipset Users
+-->
+<title> Western Digital 製チップセットのユーザ向けの情報
+<author> The XFree86 Project, Inc.
+<date> 14 July 1995
+<trans> The X Japanese Documentation Project
+<tdate> 29 January 1999
+<toc>
+
+<!--
+<sect> Supported chipsets <p>
+-->
+<sect> サポートしているチップセット <p>
+<!--
+XFree86 supports the following Western Digital SVGA chipsets: PVGA1,
+WD90C00, WD90C10, WD90C11, WD90C24, WD90C30, WD90C31, WD90C33.  Note that
+the rest of the WD90C2x series of LCD-controller chipsets are still not
+supported.  The WD90C24 family is now supported including acceleration,
+adjustable clocks and a full 1MB video ram even on dual scan systems (in
+CRT mode).  If you have trouble with the new WD90C24 support (not that we
+expect you will), try specifying "wd90c30" or "wd90c31" on the `Chipset'
+line in your <tt>XF86Config</tt> file.  The WD90C24, WD90C31 and WD90C33
+are supported as an accelerated chipset in the SVGA server; the
+accelerated features are automatically activated when a WD90C24, WD90C31
+or WD90C33 is detected, or specified in the <tt>XF86Config</tt> file.
+-->
+XFree86 は次の Western Digital 製 SVGA チップセットをサポートしていま
+す: PVGA1, WD90C00, WD90C10, WD90C11, WD90C24, WD90C30, WD90C31, WD90C33.
+WD90C2x の残りで LCD 制御チップセットであるものは、まだサポートされて
+いません。WD90C24 系のチップセットは現在サポートされており、このサポー
+トにはアクセラレーションや調整可能なクロック、(CRT モードで)デュアルス
+キャンのシステム上でも 1MB のビデオRAM を全て使用できることも含まれま
+す。新しく加わった WD90C24 のサポートで(作者らが予期していない)問題に
+出会った場合、<tt>XF86Config</tt> ファイルの `Chipset' 行に "wd90c30"
+または "wd90c31" を設定してみてください。WD90C24, WD90C31, WD90C33 は、
+SVGA サーバにおいてアクセラレーション可能なチップセットとしてサポート
+されています。WD90C24, WD90C31, WD90C33 のいずれかが検出された場合か、
+<tt>XF86Config</tt> で指定を行った場合、アクセラレーションが効く機能は
+自動的に有効になります。
+
+<!-- 
+<sect> Special considerations <p>
+-->
+<sect> 特に考慮すべき点 <p>
+<!--
+All of the Western Digital chipsets after the PVGA1 support the ability
+to use the memory-refresh clock as an alternate dot-clock for video
+timing.  Hence for all of these chipsets, the server will detect one more
+clocks than ``normal''.  What this means is that if you have an old
+`<tt>Clocks</tt>'
+line in your <tt>XF86Config</tt> file, you should comment it out, and rerun
+the server with the `<tt>-probeonly</tt>' option to find all of the clock
+values.  All but the
+last should be the same as what you had before; the last will be new.
+-->
+PVGA1 以降の全ての Western Digital 製チップセットは、メモリリフレッシュ
+クロック値をビデオタイミング用の別のドットクロック値として使う機能をサ
+ポートしています。したがって、これらのチップセット全てにおいてサーバは
+「通常」以外に 1 つのクロック値を検出します。つまり、
+<tt>XF86Config</tt> ファイルに古い `<tt>Clocks</tt>' 行がある場合、こ
+の部分をコメントアウトし、`<tt>-probeonly</tt>' オプションを付けてサー
+バを再実行してクロック値を全て見つけなければならないということです。最
+後の値以外は今までと同じ値のはずですが、最後の値は新しい値になっている
+でしょう。
+
+<!--
+For the WD90C00 chipset, the chipset will only support 640x480 in 256-color
+mode.  Even though 512k of memory should allow better than 800x600, the
+chipset itself cannot do this.  This is stated in the databook (which lists
+1024x768x16 and 640x480x256 for specifications).  We have also witnessed
+this behavior.
+-->
+WD90C00 チップセットの場合は 640x480 256色モードしかサポートしていませ
+ん。メモリが 512k あれば 800x600 以上も使えるはずなのですが、チップセッ
+トそのものに機能が無いのです。これはデータシートに記述されています
+(仕様としては1024x768x16, 640x480x256 が書かれています)。作者らもこの
+動作を確認しています。
+
+<!--
+The server will detect 17 clocks for the WD90C24, WD90C30 and WD90C31
+chipsets.  If you have one of these chipsets, you should let the server
+re-probe the clocks and update your <tt>XF86Config</tt>.
+-->
+WD90C24, WD90C30, WD90C31 の場合、サーバは 17 個のクロックを検出します。
+この 3 つのチップセットのうちのいずれかをお持ちであれば、サーバにクロッ
+ク値を再検出させて <tt>XF86Config</tt> を更新しなければなりません。
+
+<!--
+There is an `<tt>Option</tt>' flag available for the <tt>XF86Config</tt>
+file that is specific to the Western Digital chipsets (except the
+WD90C24).  This option is <tt>"swap_hibit"</tt>.  We have determined via
+experimentation that the WD90C1x and WD90C3x chipsets need the high-order
+clock-select bit inverted, and the PVGA1 and WD90C00 need it
+non-inverted.  This is hardcoded into the driver.  Since our sample-set
+was rather small, we have provided the <tt>"swap_hibit"</tt> option to
+invert this behavior.  If the clocks detected by the server show a very
+low last clock (under 28Mhz), then this option is likely needed.
+-->
+<tt>XF86Config</tt> には、Western Digital 製チップセット(WD90C24 を除
+く)だけで使用できる `<tt>Option</tt>' フラグがあります。このオプション
+は <tt>"swap_hibit"</tt> です。実験で調べたところ、WD90C1x,  WD90C3x
+チップセットでは高次のドット選択ビットを反転させる必要があり、PVGA1,
+WD90C00 ではこれを反転させない必要があります。これはドライバにハードコー
+ディングされています。ですが、実験のサンプル集合が比較的小さいので、こ
+の動作を逆にするための <tt>"swap_hibit"</tt> オプションを用意していま
+す。サーバが検出したクロック値の最後の値が非常に低い(28MHz 以下)場合、
+このオプションが必要だと思われます。
+
+<!--
+<sect> WD90C24 features <p>
+-->
+<sect> WD90C24 の機能 <p>
+<!--
+These next three sections apply only if you have a WD90C24, WD90C24a,
+or WD90C24a2 and don't specify some other chipset in your XF86Config
+file.  The SVGA pvga1 driver now recognizes the wd90c24 family as
+different from the WD90C30 and seems to resolve most of the problems
+people encountered when these chips were treated as WD90C3X.  The
+new code has the following features:
+-->
+これから先の 3 つのセクションの内容は、WD90C24, WD90C24a, WD90C24a2 を
+使っている場合で、かつ XF86Config ファイルで他のチップセットを指定して
+いない場合に限って適用されます。SVGA サーバの pvga1 ドライバは
+wd90c24 系のチップを WD90C30 とは別のチップとして識別するので、このチッ
+プを WD90C3X として扱ったときに起こる問題のほとんどは解決するようです。
+pvga1 ドライバの新しいコードは以下の機能を持っています:
+<p>
+<itemize>
+<!--
+<item>Locks the shadow registers at appropriate times; This should
+  prevent scrambled displays after exiting X with dual scan screens
+  when simultaneous or LCD display mode is selected.  The code does
+  depend somewhat on the behavior of the BIOS regarding when it
+  locks the shadow registers, etc.
+-->
+<item>シャドウレジスタを適切な時にロックします。これは LCD 表示モード
+や LCD/CRT 同時表示モードが選択時に、デュアルスキャンスクリーンを使っ
+ている X が終了した後に画面がおかしくなるのを防ぐはずです。このコード
+は、シャドウレジスタをいつロックするか等に関して、BIOS の動作にいくら
+か依存しています。
+<!--
+<item>Allows (forces) the use of a full 1 Meg VRAM for dual scan systems
+  when the server is started while external CRT only display is in
+  operation.  This allows 1024x768x8 resolution.
+-->
+<item>デュアルスキャンのシステムで外部 CRT のみのディスプレイが使われ
+ているとき、サーバ起動時に 1M VRAM 全てを使えます(強制的に使います)。
+解像度 1024x768x8 が使えます。
+<!--
+<item>If the <tt/XF86Config/ file specifies a virtual screen size which
+  requires more than 512 K VRAM when the server is started on a Dual
+  Scan LCD, the driver will force the virtual size to 640x480.  This
+  eliminates the need to edit the <tt/XF86Config/ file when you switch
+  from 1024x resolution on the CRT, to or from the LCD screen.  If
+  no virtual size is specified, the result will be 800x600 virtual
+  in LCD modes and 1024x768 in CRT only mode (so you have a choice).
+-->
+<item><tt/XF86Config/ ファイルで 512K 以上の VRAM が必要な仮想スクリー
+ンのサイズを指定した場合、サーバがデュアルスキャンの LCD で起動したと
+きにドライバは仮想スクリーンのサイズを強制的に 640x480 にします。これ
+により、1024x の解像度の CRT と  LCD を切替える時に <tt/XF86Config/ を
+編集する必要はなくなります。仮想スクリーンのサイズが指定されていない場
+合の仮想スクリーンのサイズは、LCD モードで 800x600, CRT 専用モードで 
+1024x768になります(したがって、選ぶことができます)。
+<!--
+<item>Note that on dual scan systems, you must still exit X, switch
+  displays, and restart X to change to/from CRT only with 1 Meg  
+  videoram.  This is because once the server starts, you can't change
+  the virtual screen size.  There is no way around this with the
+  current server and the WD90C24 with dual scan displays.  The
+  WD90C24 requires half the videoram be used for a ``Frame buffer'' when 
+  the dual scan LCD is in use.
+-->
+<item>ビデオメモリが 1M のデュアルスキャンのシステムでは、現在も X を
+終了し、ディスプレイを切替え、 X を再起動して LCD と CRT 専用モードを
+変更しなければならない点に注意してください。この理由は、一度サーバを起
+動すると仮想スクリーンのサイズは変更できないからです。現在のサーバとデュ
+アルスキャンディスプレイを使う WD90C24 の組合せでは、この問題を回避す
+る方法はありません。デュアルスキャン LCD を使用中の場合は、「フレーム
+バッファ」に使うために WD90C24 が必要とするビデオメモリは半分です。
+<!--
+<item>The new server uses the accelerated features of the WD90C24a.  It
+  is not clear from the data book if the WD90C24 also supports ALL
+  the required features.  Several people have stated that the
+  WD90C24 is not accelerated, but the differences section of the  
+  WD90c24a data book implies that they ARE all three accelerated.
+  The differences documented with regard to acceleration are with
+  the type of line drawing the hardware does; Only the newer chips
+  support the type of line drawing that MS windows wants.  This may 
+  be what has caused the confusion since the accelerated windows
+  drivers may only support the WD90c24a chips.  If this turns out to be
+  a problem with the WD90C24, acceleration can be disabled by adding
+  the line:
+  <verb>
+      Option "noaccel"
+  </verb>
+  to the Device section of the <tt/XF86Config/ file.
+-->
+<item>新しいサーバは WD90C24a のアクセラレーション付き機能を使っていま
+す。WD90C24 も必要な機能を「全て」もっているかどうかは、データシートか
+らはわかりません。WD90C24 ではアクセラレーションは効かないと言う人もい
+ますが、WD90c24a のデータシートの相違点に関するセクションを見ると、3
+つのチップ全てでアクセラレーションが効くように読めます。アクセラレーショ
+ンについて書かれている相違点は、ハードウェアが行う線の描画の方式です。
+新しいチップだけが MS Windows が要求する線の描画の方式に対応しています。
+たぶん、これが混乱を招いた原因かもしれません。というのも、アクセラレー
+ション付きの Windows 用ドライバは WD90c24a チップしかサポートしていな
+いからです。WD90C24 で問題が起こった場合には、<tt/XF86Config/ ファイル
+の Device セクションに
+  <verb>
+      Option "noaccel"
+  </verb>
+という行を追加してアクセラレーションを無効にすることができます。
+<!--
+<item>Although the new server does not support programmable clocks in the
+  same way as some of the other servers, 8 of the 17 clocks may be  
+  set to (almost) any value via the Clocks line. It also supports
+  options for adjusting the VRAM clock.
+-->
+<item>新しいサーバは、他の一部のサーバと同じようにはプログラマブルクロッ
+クをサポートしていませんが、17 個のクロックのうち 8 個は Clocks 行を使っ
+て(ほとんど)任意の値に設定することができます。新しいサーバには VRAM の
+クロック値を調整するためのオプションもあります。
+</itemize>
+
+<!--
+<sect>WD90C24 clocks <p>
+-->
+<sect>WD90C24 のクロック値 <p>
+<!--
+Here are some more details on the adjustable clocks:
+-->
+調整可能なクロック値についてもう少し詳しく説明します:
+
+<!--
+The VRAM clock (Mclk) is adjusted by adding ONE of the following
+option lines to the Device section of the <tt/XF86Config/:
+-->
+VRAM のクロック値(Mclk 値)は、<tt/XF86Config/ の Device セクションに以
+下のオプション行の「いずれか」を追加することで調整できます:
+<tscreen><verb>
+   Option      "slow_dram"     # Set Mclk to 47.429 MHz 
+   Option      "med_dram"      # Set Mclk to 49.219 MHz
+   Option      "fast_dram"     # Set Mclk to 55.035 MHz 
+</verb></tscreen>
+<!--
+The default is to leave Mclk as the BIOS sets it.  This is 44.297 on
+many systems.  Some systems may not work properly with any of these 
+options.  If you experience ``bit errors'' on your display, reduce the
+Mclk speed, or don't use any of these options.  The Mclk is not reset
+on server exit.
+-->
+デフォルトでは BIOS が設定した Mclk 値のままになります。多くのシステム
+では、この値は 44.297 です。これらのオプションのどれかは一部のシステム
+でうまく動作しないかもしれません。ディスプレイに「ビットエラー」が現わ
+れたなら、Mlck のスピードを下げるか、これらのオプションの使用をやめて
+ください。Mlck 値はサーバの終了時にもリセットされません。
+
+<!--
+The data book says that the maximum pixel clock is 1.6 times Mclk so
+you may want to experiment with higher Mclk rates if you have a fast
+monitor.  It also says a 44.297MHz Mclk and 65MHz pixel clock is the
+fastest the WD90C24A2 is designed to go.  However, some success has
+been reported with faster clocks.  Don't expect all the clocks the
+chip can provide to work properly.
+-->
+データシートによると、最大ピクセルクロック値は Mclk の 1.6 倍なので、
+高速なモニタを使う場合には、高い Mclk レートを試したくなるかもしれませ
+ん。また、データシートによると 44.297MHz の Mclk 値と 65MHz のピクセル
+クロック値が WD90C24A2 の設計による最高の動作速度ということです。ただ
+し、もっと速いクロック値での成功例もいくつか報告されています。チップに
+用意されている全てのクロック値がうまく動作することは期待できません。
+
+<!--
+The second and fourth group of 4 clocks are adjustable.  That is,
+clocks 5, 6, 7, 8 and 13, 14, 15, 16 (counting from 1).  These clocks are
+set by the Clocks line.  Be sure to adjust the 17th (last) clock to
+match your Mclk.  Here is a sample set of clocks lines with some
+clocks defined which are not directly provided by the chip.  The
+NON-programmable clocks (1-4 and 9-12) MUST be set as indicated
+here.
+-->
+4つのクロック値のうち、2 番目と 4 番目のものが調整可能です。つまり、(1
+から数えて)クロック 5, 6, 7, 8 と 13, 14, 15, 16 です。これらのクロッ
+ク値は、これらのクロック値は Clocks 行で設定します。17番目(最後)のクロッ
+ク値は必ず Mclk 値に一致させてください。以下に、チップが直接用意してい
+ないクロック値をいくつか定義する Clocks 行の例を示します。プログラマブ
+ルで「ない」クロック値は以下に示すように「設定しなければいけません」。
+<verb>
+   Clocks     25.175 28.322 65     36     # These are *not* programmable
+
+   Clocks     29.979 77.408 62.195 59.957 # these are programmable
+   Clocks     31.5   35.501 75.166 50.114 # these are *not* programmable
+   Clocks     39.822 72.038 44.744 80.092 # these are programmable 
+   Clocks     44.297                      # Change this if you change
+                                          #   Mclk above.
+</verb>
+
+<!--
+You can program the clocks in increments of .447443 MHz.  The server
+will warn you and adjust to the nearest increment if you specify a  
+clock which does not fit this formula.  Clocks 1-4 and 9-12 (the
+fixed clocks) are not constrained to this multiple, but instead are
+used to provide standard clocks which are not a multiple by .447443 MHz.
+-->
+クロック値は .447443 MHz ずつ増やしてプログラムすることができます。こ
+の規則に合わないクロック値を指定した場合、サーバは警告を出してから増分
+が規則に最も近くなるように調整します。Clocks 値 1-4 と 9-12 (固定のク
+ロック値)はこの倍数という制約は受けませんが、その代わりに .447443 MHz 
+の倍数でない標準のクロック値を与えるために使われます。
+
+<!--
+If you probe for clocks (for example to find your Mclk), do it in
+CRT only mode and then add clocks lines in your <tt/XF86Config/ file.
+Clocks will not probe correctly in LCD mode on most systems.
+-->
+クロックを検出する場合(例えば、Mclk 値を見つける場合)には、検出は CRT 
+専用モードで行い、それから Clocks 行を <tt/XF86Config/ ファイルに追加
+します。大部分のシステムでは、LCD モードでは Clocks 値が正しく検出され
+ません。
+
+<!--
+The BIOS on some systems may not allow switching from CRT to LCD
+unless the correct clock and/or mode is used.  Try the following
+mode line for 640x480 LCD displays.
+-->
+一部のシステムでは、正しいクロック値やモードを使わない限り CRT から 
+LCD への切り替えを BIOS が許さないかもしれません。640x480 の LCD ディ
+スプレイでは以下のモード行を試してください。
+<verb>
+   ModeLine "640x480"  25.175   640 664 760 800     480 491 493 525 #CRT/LCD
+</verb>
+
+<!--
+The following modelines have been tested with the above Clocks lines
+on some systems, and are provided here as examples. Some testers
+have experienced minor problems (snow) with the fixed 65 and 75.166
+MHz dot clocks.  The modelines below have been reported to circumvent  
+these problems.  Do not assume your monitor will not be damaged by
+any of these.
+-->
+以下のモード行はいくつかのシステム上で 上記の Clocks 行を使ってテスト
+を行ったもので、ここで例として示します。テスタによっては、固定のドッ
+トクロック値 65MHz, 75.166MHz でちょっとした問題(雪のようなノイズが乗
+る)に出会っています。以下のモード行を使うとこの問題を避けられると報告
+されています。これらの値を使うとモニタは壊れないものと想定してはいけま
+せん。
+<verb>
+ # VESA 800x600@72Hz Non-Interlaced mode
+   ModeLine  "800x600.50"  50  800  856  976 1040 600 637 643 666  +hsync +vsync
+   
+
+ # 1024x768  Interlaced mode
+   ModeLine  "1024x768i"   45  1024 1048 1208 1264 768 776 784 817 +hsync +vsync Interlace
+   
+ # 1024x768@60Hz Non-interlaced Mode
+ # One of the dram options may be necessary
+   ModeLine  "1024x768.65" 65  1024 1032 1176 1344 768 771 777 806 -hsync -vsync
+   
+   
+ # 1024x768@60Hz Non-Interlaced mode (non-standard dot-clock)
+ # Seems to work without dram options
+   ModeLine  "1024x768.62" 62  1024 1064 1240 1280 768 774 776 808
+   
+ # 1024x768@70Hz Non-Interlaced mode (non-standard dot-clock)
+ # May need fast_dram option
+   ModeLine  "1024x768.72" 72  1024 1056 1192 1280 768 770 776 806 -hsync -vsync
+
+</verb>
+
+<!--
+<sect> Additional WD90C24 information <p>
+-->
+<sect> WD90C24 に関する追加の情報 <p>
+<!--
+Standard disclaimers apply.  Use this driver at your own risk.  If you
+need additional information on using XFree86 with the WD90C24 family
+however, you might try <url url="http://www.castle.net/&tilde;darin"
+name="Darin Ernst's home page">.  Darin maintains a mini-HOWTO on ``X and
+the WD90C24''. He was the first tester of the WD90C24 code and provided
+many good ideas and encouragement.  You can reach Darin at
+<it>darin@castle.net</it> or <it>dernst@pppl.gov</it>.  I only provided
+the WD90C24 specific code.  You can reach me (Brad Bosch) at
+<it>brad@Lachman.com</it>.
+-->
+通常の免責事項が適用されます。このドライバは読者の皆さん自身の責任でお
+使いください。ですが、XFree86 で WD90C24 系のチップを使う上で追加の情
+報が必要であれば、<url url="http://www.castle.net/&tilde;darin"
+name="Darin Ernst さんのホームページ"> を御覧ください。Darin さんは 
+「X と WD90C24」に関する mini-HOWTO 文書を管理しています。この方は
+WD90C24 のコードの最初のテスタであり、良いアイディアを提供したり励まし
+たりしてくださいました。Darin さんの連絡先は <it>darin@castle.net</it> 
+または <it>dernst@pppl.gov</it> です。筆者は WD90C24 専用のコードしか
+提供していません。筆者(Brad Bosch)の連絡先は <it>brad@Lachman.com</it> 
+です。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/WstDig.sgml,v 1.1.2.1 1999/05/25 06:39:26 hohndel Exp $
+
+
+
+
+
+$XConsortium: WstDig.sgml /main/5 1996/02/21 17:46:29 kaleb $
+</verb>
+
+</article>

@@ -3,7 +3,7 @@ XCOMM platform:  $TOG: sun.cf /main/163 1997/06/08 20:08:23 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.31.2.8 1998/06/28 05:58:42 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.31.2.9 1999/03/27 12:28:47 dawes Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName
@@ -265,7 +265,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #   if UseInstalled
 #    define DefaultCCOptions -DNO_ASM
 #   else
-#    if OSMinorVersion > 3
+#    if (OSMinorVersion > 3) && (OSMinorVersion < 7)
 #     define DefaultCCOptions -ansi -pedantic -DNO_ASM
 #    else
 #     define DefaultCCOptions -DNO_ASM

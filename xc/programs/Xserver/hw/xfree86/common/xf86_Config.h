@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.9 1998/10/18 20:42:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.11 1999/05/07 00:52:03 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@xfree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -186,8 +186,9 @@ static SymTabRec DriverTab[] = {
 #define SYSMOUSE	1037
 #define AUTOMOUSE	1038
 #define ACECAD		1039
-#define XQUE      	1040
-#define OSMOUSE   	1041
+#define WSMOUSE   	1040
+#define XQUE      	1041
+#define OSMOUSE   	1042
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
@@ -211,6 +212,7 @@ static SymTabRec MouseTab[] = {
   { SYSMOUSE,	"sysmouse" },
   { AUTOMOUSE,	"auto" },
   { ACECAD,	"acecad" },
+  { WSMOUSE,	"wsmouse" },
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
   { -1,		"" },
@@ -554,6 +556,7 @@ static SymTabRec KeyboardTab[] = {
 #define P_SYSMOUSE	17		/* SysMouse */
 #define P_AUTO		18		/* automatic */
 #define P_ACECAD	19		/* ACECAD protocol */
+#define P_WSMOUSE	20		/* NetBSD wsmouse */
 
 #define EMULATE3	50
 #define BAUDRATE	51

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.6 1998/12/26 00:12:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.7 1999/06/17 16:24:15 hohndel Exp $ */
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
  *
@@ -39,12 +39,16 @@ extern volatile unsigned char *tguiMMIOBase;
 #ifdef TRIDENT_MMIO
 #define IMAGEBUSY(b) \
 		b = (*(unsigned long *)(tguiMMIOBase + IMAGE_GE_STATUS)) & 0xF8000000;
+#define BLADEBUSY(b) \
+		b = (*(unsigned long *)(tguiMMIOBase + BLADE_GE_STATUS)) & 0xFE800000;
 #define BLTBUSY(b) \
 		b = (*(unsigned char *)(tguiMMIOBase + GER_STATUS)) & GE_BUSY;
 #define OLDBLTBUSY(b) \
 		b = (*(unsigned char *)(tguiMMIOBase + OLDGER_STATUS))&GE_BUSY;
 #define IMAGE_STATUS(c) \
 		*(unsigned long *)(tguiMMIOBase + IMAGE_GE_STATUS) = c;
+#define BLADE_STATUS(c) \
+		*(unsigned long *)(tguiMMIOBase + BLADE_GE_STATUS) = c;
 #define TGUI_STATUS(c) \
 		*(unsigned char *)(tguiMMIOBase + GER_STATUS) = c;
 #define OLDTGUI_STATUS(c) \
@@ -119,6 +123,8 @@ extern volatile unsigned char *tguiMMIOBase;
 		*(unsigned long *)(tguiMMIOBase + addr) = c;
 #define IMAGE_OUT(addr,c) \
 		*(unsigned long *)(tguiMMIOBase + addr) = c;
+#define BLADE_OUT(addr,c) \
+		*(unsigned long *)(tguiMMIOBase + addr) = c;
 #define TGUI_COMMAND(c) \
 		{ \
 		TGUI_OPERMODE(GE_OP); \
@@ -141,6 +147,8 @@ extern volatile unsigned char *tguiMMIOBase;
 		b = inb(GER_BASE+GER_STATUS) & GE_BUSY;
 #define IMAGEBUSY(b) \
 		b = inl(GER_BASE+IMAGE_GE_STATUS) & 0xF8000000;
+#define BLADEBUSY(b) \
+		b = inl(GER_BASE+BLADE_GE_STATUS) & 0xFE800000;
 #define OLDBLTBUSY(b) \
 		{	\
 			outb(GER_INDEX, OLDGER_STATUS); \
@@ -150,6 +158,8 @@ extern volatile unsigned char *tguiMMIOBase;
 		outb(GER_BASE+GER_STATUS, c);
 #define IMAGE_STATUS(c) \
 		outl(GER_BASE+IMAGE_GE_STATUS, c);
+#define BLADE_STATUS(c) \
+		outl(GER_BASE+BLADE_GE_STATUS, c);
 #define OLDTGUI_STATUS(c) \
 		{	\
 			outb(GER_INDEX, OLDGER_STATUS); \
@@ -244,6 +254,8 @@ extern volatile unsigned char *tguiMMIOBase;
 		outl(GER_BASE+GER_DSTCLIP_XY, XY_MERGE(x,y));
 #define TGUI_PATLOC(addr) \
 		outw(GER_BASE+GER_PATLOC, addr);
+#define BLADE_OUT(addr,c) \
+		outl(GER_BASE+addr, c);
 #define IMAGE_OUT(addr,c) \
 		outl(GER_BASE+addr, c);
 #define TGUI_PLANEMASK(c) \

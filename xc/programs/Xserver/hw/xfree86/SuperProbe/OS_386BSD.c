@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.2 1997/05/06 13:24:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.3 1999/06/17 16:23:59 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Dawes <dawes@xfree86.org>
  *
@@ -23,6 +23,34 @@
  * Except as contained in this notice, the name of David Dawes shall not be
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from David Dawes.
+ *
+ */
+
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these conditions, 
+ * you may download, copy, install, use, modify and distribute this software in 
+ * source and/or binary form. No title or ownership is transferred hereby.
+ *
+ * 1) Any source code used, modified or distributed must reproduce and retain this 
+ *    copyright notice and list of conditions as they appear in the source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name nor 
+ *    any trademark or logo of Digital Equipment Corporation may be used to endorse or 
+ *    promote products derived from this software without the prior written permission 
+ *    of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties, including 
+ *    but not limited to, any implied warranties of merchantability, fitness for a 
+ *    particular purpose, or non-infringement are disclaimed. In no event shall DIGITAL 
+ *    be liable for any damages whatsoever, and in particular, DIGITAL shall not be 
+ *    liable for special, indirect, consequential, or incidental damages or damages for 
+ *    lost profits, loss of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if advised of 
+ *    the possibility of such damage. 
  *
  */
 
@@ -82,6 +110,12 @@
 #  define CONSOLE_DEVICE "/dev/ttyv0"
 #else
 #  define CONSOLE_DEVICE "/dev/ttyC0"
+#endif
+
+#ifdef USE_ARM32_MMAP
+#define	DEV_MEM_IOBASE	0x43000000
+extern unsigned int IOPortBase;
+static int DEVMEM_fd = -1;
 #endif
 
 static int CONS_fd = -1;
@@ -326,6 +360,10 @@ int Len;
 	Byte *Base = Bios_Base + Offset;
 	unsigned long bs = (unsigned long) Base;
 
+#ifdef	__arm32__
+	return(-1);
+#endif
+
 	if (BIOS_fd == -1)
 	{
 		if ((BIOS_fd = open("/dev/mem", O_RDONLY, 0)) < 0)
@@ -379,6 +417,26 @@ CONST Word *Ports;
 	i386_iopl(TRUE);
     }
 #endif
+#ifdef USE_ARM32_MMAP
+    if (IOEnabled++ == 0) {
+	if (DEVMEM_fd == -1 && (DEVMEM_fd = open("/dev/mem", O_RDWR, 0)) < 0)
+	{
+	    fprintf(stderr,
+		    "%s: Cannot open /dev/mem to map IO ports\n", MyName);
+	    exit(1);
+	}
+
+	IOPortBase = (unsigned int)mmap((caddr_t)0, 0x400, PROT_READ|PROT_WRITE,
+					MAP_FILE, DEVMEM_fd, (off_t)DEV_MEM_IOBASE);
+
+        if (IOPortBase == (unsigned int)-1)
+	{	
+	    fprintf(stderr,
+		    "%s: Cannot mmap IO ports\n", MyName);
+	    exit(1);
+	}
+    }
+#endif
 	return(0);
 }
 
@@ -397,6 +455,11 @@ CONST Word *Port;
 #ifdef USE_I386_IOPL
     if (--IOEnabled == 0) {
 	i386_iopl(FALSE);
+    }
+#endif
+#ifdef USE_ARM32_MMAP
+    if (--IOEnabled == 0) {
+	munmap((caddr_t)IOPortBase, 0x400);
     }
 #endif
 	return(0);

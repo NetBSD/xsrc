@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3misc.c,v 3.68.2.3 1998/02/07 10:05:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3misc.c,v 3.68.2.4 1999/06/30 13:00:23 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -988,6 +988,7 @@ s3SaveScreen(pScreen, on)
 {
    unsigned char scrn;
    static unsigned char saved_sr31=0x10;
+   static int first_run=1;
 
    if (on)
       SetTimeSinceLastInputEvent();
@@ -1013,6 +1014,10 @@ s3SaveScreen(pScreen, on)
          outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
          outb(0x3c5, 0x06);
          outb(0x3c4, 0x31);
+	 if (first_run) {
+	   saved_sr31 = inb(0x3c5);
+	   first_run = 0;
+	 }
          if (on)
             outb(0x3c5, saved_sr31);           /* LCD on */
          else {  

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.16 1998/12/23 13:36:25 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.19 1999/06/02 07:50:33 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -79,6 +79,8 @@ set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b \
 
 set CardChipSets(SVGA-video7)	video7
 set CardChipSets(SVGA-neo)	{ NM2070 NM2090 NM2093 NM2097 NM2160 NM2200 }
+set CardChipSets(SVGA-i740)	{ i740 i740_pci }
+set CardChipSets(SVGA-tdfx)	{ Banshee Voodoo3 }
 set chiplist ""
 foreach idx [array names CardChipSets SVGA-*] {
 	eval lappend chiplist $CardChipSets($idx)
@@ -228,6 +230,7 @@ set CardRamDacs(SVGA-ati)	   [lrmdups [concat \
 set CardRamDacs(SVGA-et4000)	   $CardRamDacs(W32)
 set CardRamDacs(SVGA-mga)	   ti3026
 set CardRamDacs(SVGA-neo)	   {}
+set CardRamDacs(SVGA-i740)	   {}
 set daclist ""
 foreach idx [array names CardRamDacs SVGA-*] {
 	eval lappend daclist $CardRamDacs($idx)
@@ -290,6 +293,7 @@ set CardClockChips(SVGA-mga)		ti3026
 set CardClockChips(SVGA-pvga1)          icd2061A
 set CardClockChips(SVGA-tvga8900)	tgui
 set CardClockChips(SVGA-neo)		{}
+set CardClockChips(SVGA-i740)		{}
 set clklist ""
 foreach idx [array names CardClockChips SVGA-*] {
 	eval lappend clklist $CardClockChips($idx)
@@ -492,6 +496,7 @@ set CardReadmes(SVGA-sis)	README.SiS
 set CardReadmes(SVGA-tvga8900)	README.trident
 set CardReadmes(SVGA-video7)	README.Video7
 set CardReadmes(SVGA-neo)	README.neo
+set CardReadmes(SVGA-i740)	README.i740
 set CardReadmes(SVGA-NONE)	{}
 set rdmelist ""
 foreach idx [array names CardReadmes SVGA-*] {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2,v 1.1.2.1 1998/11/05 06:20:21 hohndel Exp $
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2,v 1.1.2.2 1999/07/13 07:09:50 hohndel Exp $
  * hv's own host.def file for building XFree86/OS2
  */
 
@@ -25,7 +25,7 @@
 #define XF86S3VServer           YES
 #define XF86I8514Server         YES
 #define XF86Mach8Server         YES
-#define XF86Mach32Server        NO
+#define XF86Mach32Server        YES
 #ifndef XF86Mach64Server
 #define XF86Mach64Server        YES
 #endif
@@ -36,19 +36,15 @@
 #define XF86AGXServer		YES
 #define XF86W32Server		YES
 #define XF86I128Server		YES
-
-/* don't build these: not functional */
-#define XVirtualFramebufferServer	NO
-#define XnestServer             NO
-#define XprtServer		NO
+#define XF86SVGAServer		YES
 
 /* don't build XF86Setup */
 #define BuildXF86Setup          NO
 
 /* The following are the difference between big and small servers */
-#define BuildXIE		YES	
-#define BuildXIElib		YES
-#define BuildPexExt		YES
+#define BuildXIE		NO
+#define BuildXIElib		NO
+#define BuildPexExt		NO
 
 /* Stuff from SuSE for the special servers now in 3.3.3
  * LEAVE DISABLED!
@@ -139,11 +135,15 @@
 #define SummaSketchSupport	NO
 #define AceCadSupport		NO
 #define DialBoxSupport		NO
+#define DynaproSupport		NO
+#define CalcompSupport		NO
 
 /* switch this off to save time after first run */
 #define BuildFonts		YES
-
+#define MakeLocalFontDir	NO
 /* not operable */
 #define XVirtualFramebufferServer	NO
 #define XnestServer		NO
 #define XprtServer		NO
+
+#define BuildXF86RushLibrary	NO

@@ -1,0 +1,167 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!-- <title>Information for 3DLabs Chipset Users -->
+<title>3DLabs 製チップセットユーザ向けの情報
+<author>The XFree86 Project Inc.
+<date>5 November 1998
+<trans>The X Japanese Documentation Project
+<tdate>12 January 1999
+<toc>
+
+<!-- <sect>Supported hardware <p> -->
+<sect>サポートしているハードウェア <p>
+
+<!-- This server supports the following 3DLabs chipsets: -->
+このサーバは 3DLabs 製の以下のチップセットをサポートしています。
+<!--
+<itemize>
+<item>GLINT 500TX with IBM RGB526 RAMDAC
+<item>GLINT MX with IBM RGB526 and IBM RGB640 RAMDAC
+<item>Permedia with IBM RGB526 RAMDAC
+<item>Permedia 2 (classic, 2a, 2v)
+</itemize>
+-->
+<itemize>
+<item>IBM RGB526 RAMDAC を載せた GLINT 500TX
+<item>IBM RGB526 または IBM RGB640 RAMDAC を載せた GLINT MX
+<item>IBM RGB526 RAMDAC を載せた Permedia
+<item>Permedia 2 (classic, 2a, 2v)
+</itemize>
+
+<!-- <sect>Features <p> -->
+<sect>機能 <p>
+<!-- 
+<itemize>
+<item>accelerated
+<item>hardware cursor
+<item>DPMS support
+<item>supported color depths
+<itemize>
+<item>GLINT MX/500TX: 8/16/32 bpp
+<item>Permedia: 8/16/32 bpp
+<item>Permedia 2: 8/16/24/32 bpp
+</itemize>
+</itemize>
+-->
+<itemize>
+<item>アクセラレーション付き
+<item>ハードウェアカーソル
+<item>DPMS サポート
+<item>サポートしている色の深さ
+<itemize>
+<item>GLINT MX/500TX: 8/16/32 bpp
+<item>Permedia: 8/16/32 bpp
+<item>Permedia 2: 8/16/24/32 bpp
+</itemize>
+</itemize>
+
+<!-- <sect>XF86Config Option <p> -->
+<sect>XF86Config のオプション <p>
+<!--
+<descrip>
+<tag>Option "sw_cursor"</tag>
+disable the hardware cursor.
+<tag>Option "no_pixmap_cache"</tag>
+disables use of the pixmap cache. Might be useful if drawing errors occur.
+<tag>Option "no_accel"</tag>
+completely disables acceleration. Usually not recommended.
+<tag>Option "pci_retry"</tag>
+stall the PCI bus while the graphics engine is busy. While this might 
+give slightly higher performance, you run the risk of disturbing other
+devices that are waiting to be serviced by the processor. This option may
+cause problems with SCSI cards, serial connections, sound cards, etc.
+<tag>Option "firegl_3000"</tag>
+needed for the Diamond Fire GL 3000 in order to use the primary output
+on that card. The second screen is currently not supported.
+<tag>Option "overclock_mem"</tag>
+Run the memory at a higher clock. Useful on some cards with display glitches
+at higher resolutions. But adds the risk to damage the hardware. Use with
+caution.
+</descrip>
+-->
+<descrip>
+<tag>Option &dquot;sw_cursor&dquot;</tag>
+ハードウェアカーソルを無効にします。
+<tag>Option &dquot;no_pixmap_cache&dquot;</tag>
+ピックスマップキャッシュの使用を無効にします。描画エラーが起こる場合に
+有効かもしれません。
+<tag>Option &dquot;no_accel&dquot;</tag>
+アクセラレーションを完全に無効にします。普通はお勧めしません。
+<tag>Option &dquot;pci_retry&dquot;</tag>
+グラフィックスエンジンがビジー状態のときに PCI バスを停止させます。こ
+のオプションを使うと性能は少し向上しますが、プロセッサのサービスを受け
+ようとしている他のデバイスの妨害をするリスクを負うことになります。この
+オプションを使うと、SCSI カードやシリアル接続、サウンドカード等で問題
+を起こすことがあります。
+<tag>Option &dquot;firegl_3000&dquot;</tag>
+Diamond Fire GL 3000 で主スクリーンを使うために必要です。現在副スクリー
+ンはサポートされていません。
+<tag>Option &dquot;overclock_mem&dquot;</tag>
+メモリの動作クロックを上げます。高解像度時で表示が乱れるカードで役に立
+ちます。ただし、ハードウェアを壊してしまうリスクを負うことになります。
+注意してください。
+</descrip>
+
+<!-- <sect>Bugs and Limitations<p> -->
+<sect>バグと機能制限<p>
+<!--
+<itemize>
+<item>The 500TX and MX chipsets cannot switch modes, therefore only the first
+mode on the modes line is available.
+<item>In some color depths without acceleration there are color problems.
+<item>While the server is accelerated, there is room for improvement. As our
+development is focusing on XFree86-4.0 we are not planning to change that in
+the 3.3.x branch. XFree86-4.0 will include a significantly faster server.
+</itemize>
+-->
+<itemize>
+<item>500TX チップセットと MX チップセットではモード切替えができません。
+したがって、モード行に現われる最初のモードしか使用できません。
+<item>色の深さによっては、アクセラレーション無しだと色の問題が起こりま
+す。
+<item>サーバはアクセラレーション付きですが、改善の余地があります。現在
+は XFree86-4.0 の開発に集中しているので、3.3.3 ブランチの改善を行う予
+定はありません。XFree86-4.0 に含まれるサーバは、現在のものよりずっと高
+速になるでしょう。
+</itemize>
+
+<!-- <sect>Authors<p> -->
+<sect>作者<p>
+<itemize>
+<item>Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
+<item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+<item>Stefan Dirsch <it>&lt;sndirsch@suse.de&gt;</it>
+<item>Helmut Fahrion <it>&lt;hf@suse.de&gt;</it>
+<!--
+<item>Special thanks to Elsa AG, Aachen for making it possible for us to
+develop this server and furnishing us with plenty of boards and information
+to help us on the way
+-->
+<item>Elsa の AG である Aachen 氏に感謝します。氏には、このサーバを開
+発できるようにしていただき、開発中には多くのボードや情報を提供していた
+だきました。
+<!--
+<item>Very special thanks to SuSE GmbH, Nuernberg for allowing some of us to
+work on this server on paid time, thereby financing development of this
+server.
+-->
+<item>SuSE 有限責任会社の Nuernberg 氏に深く感謝します。サーバ開発メン
+バーの何人かに給料を出していただき、このサーバ開発の資金面を支えていた
+だきました。
+</itemize>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/3DLabs.sgml,v 1.1.2.1 1999/05/25 06:39:08 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+Project にあります。
+</article>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86local.h,v 3.6.2.1 1998/02/01 16:05:24 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86local.h,v 3.6.2.2 1999/05/10 13:09:57 hohndel Exp $ */
 
 
 /* Functions that are only referenced from within this directory. */
@@ -260,6 +260,16 @@ xf86ScreenToScreenBitBlt(
     int		ydir,
     int		rop,
     unsigned	planemask
+#endif
+);
+
+void
+xf86FillRectTileCached(
+#if NeedFunctionPrototypes
+    DrawablePtr pDrawable,
+    register GCPtr pGC,
+    int		nBox,
+    BoxPtr	pBoxInit
 #endif
 );
 

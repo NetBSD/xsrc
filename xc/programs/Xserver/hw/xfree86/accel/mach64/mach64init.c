@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.8 1998/12/22 07:49:52 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.9 1999/07/05 09:07:26 hohndel Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -24,6 +24,8 @@
  */
 /* $XConsortium: mach64init.c /main/18 1996/10/27 18:06:34 kaleb $ */
 
+#include <math.h>
+
 #include "X.h"
 #include "input.h"
 
@@ -40,8 +42,6 @@
 #ifdef CSRG_BASED
 #include <machine/param.h>
 #endif
-
-#include <math.h>
 
 /* Defaults for i386 */
 #ifndef PAGE_SIZE
@@ -94,13 +94,22 @@ static unsigned long old_CRTC_OFF_PITCH;
 static unsigned long old_DST_OFF_PITCH;
 static unsigned long old_SRC_OFF_PITCH;
 
-static unsigned long old_CRTC_H_SYNC_STRT_WID;
-static unsigned long old_CRTC_H_TOTAL_DISP;
-static unsigned long old_CRTC_V_SYNC_STRT_WID;
-static unsigned long old_CRTC_V_TOTAL_DISP;
+/* Two each of these: non-shadow and shadow */
+static unsigned long old_CRTC_H_SYNC_STRT_WID[2];
+static unsigned long old_CRTC_H_TOTAL_DISP[2];
+static unsigned long old_CRTC_V_SYNC_STRT_WID[2];
+static unsigned long old_CRTC_V_TOTAL_DISP[2];
 
 static unsigned long old_DSP_CONFIG;
 static unsigned long old_DSP_ON_OFF;
+
+static unsigned long old_LCD_INDEX;
+static unsigned long old_CONFIG_PANEL;
+static unsigned long old_LCD_GEN_CTRL;
+static unsigned long old_HORZ_STRETCHING;
+static unsigned long old_VERT_STRETCHING;
+static unsigned long old_EXT_VERT_STRETCH;
+static unsigned long old_POWER_MANAGEMENT;
 
 static int oldClockFreq;
 static unsigned char old_PLL[16];
@@ -113,6 +122,7 @@ static unsigned char old_ATT20C408;
 static unsigned char old_IBMRGB514[0x100];
 
 static double current_dot_clock = -1; /* Only used by SetDSPRegs */
+static int current_hdisplay;
 
 /*
  * mach64CalcCRTCRegs --
@@ -124,6 +134,8 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 {
     int i;
     int pixel_delay;
+
+    current_hdisplay = mode->HDisplay;
 
     if ((mode->CrtcHTotal > 2048) && (mach64RamdacSubType != DAC_INTERNAL)) {
 	isMuxMode = TRUE;
@@ -140,8 +152,9 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 		   XCONFIG_PROBED, mach64InfoRec.name,
 		   crtcRegs->h_sync_strt_wid >> 16,
 		   mode->name);
-	    ErrorF("\tshortened to 248 pixels\n");
+	    ErrorF("\tshortened to 496 pixels\n");
 	    crtcRegs->h_sync_strt_wid &= 0x001fffff;
+	    crtcRegs->h_sync_strt_wid |= 0x001f0000;
 	}
     } else {
 	isMuxMode = FALSE;
@@ -160,6 +173,7 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 		   mode->name);
 	    ErrorF("\tshortened to 248 pixels\n");
 	    crtcRegs->h_sync_strt_wid &= 0x001fffff;
+	    crtcRegs->h_sync_strt_wid |= 0x001f0000;
 	}
     }
 
@@ -180,6 +194,7 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 	       mode->name);
 	ErrorF("\tshortened to 31 lines\n");
 	crtcRegs->v_sync_strt_wid &= 0x001fffff;
+	crtcRegs->v_sync_strt_wid |= 0x001f0000;
     }
 
     if (mode->Flags & V_NVSYNC)
@@ -331,6 +346,45 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 
     crtcRegs->fifo_v1 =	mach64FIFOdepth(crtcRegs->color_depth,
 					crtcRegs->dot_clock, mode->HDisplay);
+
+    if (mach64LCDPanelID < 0)
+	return;
+
+    /* Panel setup */
+    if (mach64ChipType == MACH64_LG_ID) {
+	crtcRegs->horz_stretching = regr(HORZ_STRETCHING);
+	crtcRegs->vert_stretching = regr(VERT_STRETCHING);
+    } else {
+	outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+	crtcRegs->horz_stretching = inl(ioLCD_DATA);
+	outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+	crtcRegs->vert_stretching = inl(ioLCD_DATA);
+	outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
+	crtcRegs->ext_vert_stretch = inl(ioLCD_DATA) &
+	    ~(AUTO_VERT_RATIO | VERT_STRETCH_MODE);
+
+	/*
+	 * FIXME:  On a 1024x768 panel, vertical blending does not work when
+	 *         HDIsplay is greater than 896.
+	 */
+	if ((mode->HDisplay < mach64LCDHorizontal) &&
+	    (mode->VDisplay < mach64LCDVertical))
+	    crtcRegs->ext_vert_stretch |= VERT_STRETCH_MODE;
+    }
+
+    crtcRegs->horz_stretching &= ~(HORZ_STRETCH_RATIO | HORZ_STRETCH_LOOP |
+	HORZ_STRETCH_MODE | HORZ_STRETCH_EN);
+    if (mode->HDisplay < mach64LCDHorizontal)
+	crtcRegs->horz_stretching |= HORZ_STRETCH_MODE | HORZ_STRETCH_EN |
+	    (((mode->HDisplay & ~7) << 12) / mach64LCDHorizontal);
+
+    if (mode->VDisplay >= mach64LCDVertical)
+	crtcRegs->vert_stretching &= ~VERT_STRETCH_EN;
+    else {
+	crtcRegs->vert_stretching &= ~VERT_STRETCH_RATIO0;
+	crtcRegs->vert_stretching |= VERT_STRETCH_USE0 | VERT_STRETCH_EN |
+	    ((mode->VDisplay << 10) / mach64LCDVertical);
+    }
 }
 
 /*
@@ -918,7 +972,6 @@ void mach64P_RGB514Index(index, data)
 {
     int temp;
 
-    WaitQueue(7);
     temp = inb(ioDAC_CNTL);
     outb(ioDAC_CNTL, (temp & ~DAC_EXT_SEL_RS3) | DAC_EXT_SEL_RS2);
 
@@ -940,7 +993,6 @@ unsigned char mach64R_RGB514Index(index)
     int temp;
     unsigned char retval;
 
-    WaitQueue(7);
     temp = inb(ioDAC_CNTL);
     outb(ioDAC_CNTL, (temp & ~DAC_EXT_SEL_RS3) | DAC_EXT_SEL_RS2);
 
@@ -1073,6 +1125,8 @@ void mach64SetDSPRegs(depth)
     }
 
     x = ((double)mach64VRAMMemClk * 64.0) / (current_dot_clock * (double)bpp);
+    if (mach64LCDPanelID >= 0)	/* Compensate for horizontal stretching */
+	x *= (double)mach64LCDHorizontal / (double)current_hdisplay;
     bx = ceil(log(floor(x))/log(2));
 
     if (mach64ChipType == MACH64_GT_ID ||
@@ -1148,7 +1202,7 @@ void mach64SetDSPRegs(depth)
     rcc = (trp+tras > pfc+n) ? trp+tras : pfc+n;
 
     ron = (rcc > floor(x)) ? rcc : floor(x);
-    ron += rcc - 1 + pfc + n;
+    ron += (3 * rcc) - 1 + pfc + n;
 
 #if 1
     /*
@@ -1253,6 +1307,7 @@ void mach64SetCRTCRegs(crtcRegs)
 {
     int crtcGenCntl;
     unsigned long depth = crtcRegs->color_depth;
+    unsigned long lcd_gen_ctrl;
     unsigned char CTD_sharedCntl;
 
     /* Now initialize the display controller part of the Mach64.
@@ -1270,7 +1325,9 @@ void mach64SetCRTCRegs(crtcRegs)
 	 (crtcRegs->clock_cntl == mach64CXClk) ||
 	 (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &mach64InfoRec.clockOptions) &&
 	  !OFLG_ISSET(OPTION_NO_PROGRAM_CLOCKS, &mach64InfoRec.options)))) {
-	if (crtcRegs->clock_cntl & CLOCK_DIV2)
+	if (mach64LCDPanelID >= 0)
+	    mach64ProgramClk(mach64CXClk, mach64LCDClock);
+	else if (crtcRegs->clock_cntl & CLOCK_DIV2)
 	    mach64ProgramClk(mach64CXClk, crtcRegs->dot_clock >> 1);
 	else
 	    mach64ProgramClk(mach64CXClk, crtcRegs->dot_clock);
@@ -1295,7 +1352,37 @@ void mach64SetCRTCRegs(crtcRegs)
     if (mach64HasDSP)
 	mach64SetDSPRegs(crtcRegs->color_depth);
 
-    WaitQueue(12);
+    if (mach64LCDPanelID >= 0) {
+	if (mach64ChipType == MACH64_LG_ID) {
+	    /* Update non-shadow registers first */
+	    lcd_gen_ctrl = regr(LCD_GEN_CTRL);
+	    regw(LCD_GEN_CTRL, lcd_gen_ctrl &
+		~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+	    /* Temporarily disable stretching */
+	    regw(HORZ_STRETCHING, crtcRegs->horz_stretching &
+		~(HORZ_STRETCH_MODE | HORZ_STRETCH_EN));
+	    regw(VERT_STRETCHING, crtcRegs->vert_stretching &
+		~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+		  VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+	} else {
+	    /* Update non-shadow registers first */
+	    outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	    lcd_gen_ctrl = inl(ioLCD_DATA);
+	    outl(ioLCD_DATA, lcd_gen_ctrl &
+		~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+	    /* Temporarily disable stretching */
+	    outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+	    outl(ioLCD_DATA, crtcRegs->horz_stretching &
+		~(HORZ_STRETCH_MODE | HORZ_STRETCH_EN));
+	    outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+	    outl(ioLCD_DATA, crtcRegs->vert_stretching &
+		~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+		  VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+	}
+    }
+
     /* Horizontal CRTC registers */
     regw(CRTC_H_TOTAL_DISP,    crtcRegs->h_total_disp);
     regw(CRTC_H_SYNC_STRT_WID, crtcRegs->h_sync_strt_wid);
@@ -1303,6 +1390,40 @@ void mach64SetCRTCRegs(crtcRegs)
     /* Vertical CRTC registers */
     regw(CRTC_V_TOTAL_DISP,    crtcRegs->v_total_disp);
     regw(CRTC_V_SYNC_STRT_WID, crtcRegs->v_sync_strt_wid);
+
+    if (mach64LCDPanelID >= 0) {
+	/* Switch to shadow registers */
+	if (mach64ChipType == MACH64_LG_ID) {
+	    regw(LCD_GEN_CTRL, (lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+		(SHADOW_EN | SHADOW_RW_EN));
+	} else {
+	    outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	    outl(ioLCD_DATA, (lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+		(SHADOW_EN | SHADOW_RW_EN));
+	}
+
+	/* Set shadow registers */
+	regw(CRTC_H_TOTAL_DISP,    crtcRegs->h_total_disp);
+	regw(CRTC_H_SYNC_STRT_WID, crtcRegs->h_sync_strt_wid);
+	regw(CRTC_V_TOTAL_DISP,    crtcRegs->v_total_disp);
+	regw(CRTC_V_SYNC_STRT_WID, crtcRegs->v_sync_strt_wid);
+
+	/* Restore CRTC selection, shadow state and stretching */
+	if (mach64ChipType == MACH64_LG_ID) {
+	    regw(LCD_GEN_CTRL, lcd_gen_ctrl);
+	    regw(HORZ_STRETCHING, crtcRegs->horz_stretching);
+	    regw(VERT_STRETCHING, crtcRegs->vert_stretching);
+	} else {
+	    outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	    outl(ioLCD_DATA, lcd_gen_ctrl);
+	    outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+	    outl(ioLCD_DATA, crtcRegs->horz_stretching);
+	    outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+	    outl(ioLCD_DATA, crtcRegs->vert_stretching);
+	    outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
+	    outl(ioLCD_DATA, crtcRegs->ext_vert_stretch);
+	}
+    }
 
     /* Clock select register */
     regw(CLOCK_CNTL, crtcRegs->clock_cntl | CLOCK_STROBE);
@@ -1359,11 +1480,9 @@ void mach64SaveLUT(lut)
     int i;
 
     /* set DAC read index */
-    WaitQueue(1);
     outb(ioDAC_REGS+3, 0);
 
     for (i = 0; i < 256; i++) {
-        WaitQueue(3);
         lut[i].r = inb(ioDAC_REGS+1);
         lut[i].g = inb(ioDAC_REGS+1);
         lut[i].b = inb(ioDAC_REGS+1);
@@ -1380,11 +1499,9 @@ void mach64RestoreLUT(lut)
     int i;
 
     /* set DAC write index */
-    WaitQueue(1);
     outb(ioDAC_REGS, 0);
 
     for (i = 0; i < 256; i++) {
-        WaitQueue(3);
         outb(ioDAC_REGS+1, lut[i].r);
         outb(ioDAC_REGS+1, lut[i].g);
         outb(ioDAC_REGS+1, lut[i].b);
@@ -1404,12 +1521,10 @@ void mach64InitLUT()
     LUTInited = TRUE;
 
     /* set DAC write index */
-    WaitQueue(1);
     outb(ioDAC_REGS, 0);
 
     /* Load the LUT entries */
     for (i = 0; i < 256; i++) {
-        WaitQueue(3);
         outb(ioDAC_REGS+1, 0);
         outb(ioDAC_REGS+1, 0);
         outb(ioDAC_REGS+1, 0);
@@ -2303,10 +2418,80 @@ void mach64InitDisplay(screen_idx)
 	outb(VGASEQ, SEQ02);    old_SEQ02 = inb(VGASEQ+1);
 	outb(VGASEQ, SEQ04);    old_SEQ04 = inb(VGASEQ+1);
     } else {
-	old_CRTC_H_SYNC_STRT_WID = regr(CRTC_H_SYNC_STRT_WID);
-	old_CRTC_H_TOTAL_DISP = regr(CRTC_H_TOTAL_DISP);
-	old_CRTC_V_SYNC_STRT_WID = regr(CRTC_V_SYNC_STRT_WID);
-	old_CRTC_V_TOTAL_DISP = regr(CRTC_V_TOTAL_DISP);
+	if (mach64LCDPanelID >= 0) {
+	    if (mach64ChipType == MACH64_LG_ID) {
+		/* 3D Rage LT (not Pro) */
+		old_LCD_GEN_CTRL = regr(LCD_GEN_CTRL);
+		/* Use primary non-shadowed CTRC, disable CRT */
+		temp = (old_LCD_GEN_CTRL | DONT_SHADOW_VPAR) &
+		    ~(CRT_ON | CRTC_RW_SELECT | LOCK_8DOT | HORZ_DIVBY2_EN |
+		      DIS_HOR_CRT_DIVBY2 | USE_SHADOWED_VEND |
+		      USE_SHADOWED_ROWCUR | SHADOW_EN | SHADOW_RW_EN);
+		regw(LCD_GEN_CTRL, temp);
+		old_HORZ_STRETCHING = regr(HORZ_STRETCHING);
+		old_VERT_STRETCHING = regr(VERT_STRETCHING);
+		old_POWER_MANAGEMENT = regr(POWER_MANAGEMENT);
+		/* Disable panel's APM */
+		regw(POWER_MANAGEMENT, old_POWER_MANAGEMENT & ~PWR_MGT_ON);
+	    } else {
+		/* All others */
+		old_LCD_INDEX = inl(ioLCD_INDEX);
+		/* Use primary non-shadowed CTRC, disable CRT */
+		outl(ioLCD_INDEX, (old_LCD_INDEX &
+		    ~(LCD_REG_INDEX | LCD_DISPLAY_DIS | LCD_SRC_SEL)) |
+		      (LCD_SRC_SEL_CRTC1 | LCD_CRTC2_DISPLAY_DIS |
+		       LCD_CONFIG_PANEL));
+		old_CONFIG_PANEL = inl(ioLCD_DATA);
+		outl(ioLCD_DATA, old_CONFIG_PANEL | DONT_SHADOW_HEND);
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		old_LCD_GEN_CTRL = inl(ioLCD_DATA);
+		temp = (old_LCD_GEN_CTRL | DONT_SHADOW_VPAR) &
+		    ~(CRT_ON | CRTC_RW_SELECT | LOCK_8DOT | HORZ_DIVBY2_EN |
+		      DIS_HOR_CRT_DIVBY2 | USE_SHADOWED_VEND |
+		      USE_SHADOWED_ROWCUR | SHADOW_EN | SHADOW_RW_EN);
+		outl(ioLCD_DATA, temp);
+		outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+		old_HORZ_STRETCHING = inl(ioLCD_DATA);
+		outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+		old_VERT_STRETCHING = inl(ioLCD_DATA);
+		outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
+		old_EXT_VERT_STRETCH = inl(ioLCD_DATA);
+		outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT);
+		old_POWER_MANAGEMENT = inl(ioLCD_DATA);
+		/* Disable panel's APM */
+		outl(ioLCD_DATA, old_POWER_MANAGEMENT & ~PWR_MGT_ON);
+	    }
+	}
+
+	old_CRTC_H_SYNC_STRT_WID[0] = regr(CRTC_H_SYNC_STRT_WID);
+	old_CRTC_H_TOTAL_DISP[0] = regr(CRTC_H_TOTAL_DISP);
+	old_CRTC_V_SYNC_STRT_WID[0] = regr(CRTC_V_SYNC_STRT_WID);
+	old_CRTC_V_TOTAL_DISP[0] = regr(CRTC_V_TOTAL_DISP);
+
+	if (mach64LCDPanelID >= 0) {
+	    /* Set to save shadow registers */
+	    if (mach64ChipType == MACH64_LG_ID) {
+		regw(LCD_GEN_CTRL, (temp & ~CRTC_RW_SELECT) |
+		    (SHADOW_EN | SHADOW_RW_EN));
+	    } else {
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		outl(ioLCD_DATA, (temp & ~CRTC_RW_SELECT) |
+		    (SHADOW_EN | SHADOW_RW_EN));
+	    }
+
+	    old_CRTC_H_SYNC_STRT_WID[1] = regr(CRTC_H_SYNC_STRT_WID);
+	    old_CRTC_H_TOTAL_DISP[1] = regr(CRTC_H_TOTAL_DISP);
+	    old_CRTC_V_SYNC_STRT_WID[1] = regr(CRTC_V_SYNC_STRT_WID);
+	    old_CRTC_V_TOTAL_DISP[1] = regr(CRTC_V_TOTAL_DISP);
+
+	    /* Set to non-shadow */
+	    if (mach64ChipType == MACH64_LG_ID) {
+		regw(LCD_GEN_CTRL, temp);
+	    } else {
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		outl(ioLCD_DATA, temp);
+	    }
+	}
     }
 
     WaitIdleEmpty();
@@ -2431,8 +2616,6 @@ void mach64InitDisplay(screen_idx)
     if (!mach64IntegratedController)
 	regw(MEM_CNTL, old_MEM_CNTL & ~(MEM_BNDRY | MEM_BNDRY_EN));
 
-    WaitQueue(2);
-
     /* Turn off the memory mapped registers in the frame buffer */
     /* (only when there is an auxilliary register aperture) */
     if (mach64RegisterAddr)
@@ -2463,7 +2646,6 @@ void mach64InitDisplay(screen_idx)
     if (mach64InfoRec.bitsPerPixel == 8)
         mach64InitLUT();
 
-    WaitQueue(2);
     old_DAC_CNTL = inl(ioDAC_CNTL);
     if (mach64DAC8Bit)
 	outl(ioDAC_CNTL, old_DAC_CNTL | DAC_8BIT_EN);
@@ -2608,9 +2790,6 @@ void mach64CleanUp()
     if (mach64IntegratedController && mach64HasBlockWrite)
 	regw(HW_DEBUG, old_HW_DEBUG);
 
-    /* Was getting set to 0x00020200 */
-    regw(CRTC_GEN_CNTL, old_CRTC_GEN_CNTL);
-
     mach64CursorOff();
 
     WaitIdleEmpty();
@@ -2623,11 +2802,86 @@ void mach64CleanUp()
 	outw(VGASEQ, SEQ02 | old_SEQ02 << 8);
 	outw(VGASEQ, SEQ04 | old_SEQ04 << 8);
     } else {
-	regw(CRTC_H_SYNC_STRT_WID, old_CRTC_H_SYNC_STRT_WID);
-	regw(CRTC_H_TOTAL_DISP, old_CRTC_H_TOTAL_DISP);
-	regw(CRTC_V_SYNC_STRT_WID, old_CRTC_V_SYNC_STRT_WID);
-	regw(CRTC_V_TOTAL_DISP, old_CRTC_V_TOTAL_DISP);
+	if (mach64LCDPanelID >= 0) {
+	    /* Stop CRTC */
+	    regw(CRTC_GEN_CNTL, old_CRTC_GEN_CNTL &
+		 ~(CRTC_EXT_EN | CRTC_EXT_DISP_EN));
+
+	    if (mach64ChipType == MACH64_LG_ID) {
+		/* Update non-shadow registers first */
+		regw(LCD_GEN_CTRL, old_LCD_GEN_CTRL &
+		    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+		/* Temporarily disable stretching */
+		regw(HORZ_STRETCHING, old_HORZ_STRETCHING &
+		    ~(HORZ_STRETCH_EN | HORZ_STRETCH_MODE));
+		regw(VERT_STRETCHING, old_VERT_STRETCHING &
+		    ~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+		      VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+	    } else {
+		outb(ioLCD_INDEX, LCD_CONFIG_PANEL);
+		outl(ioLCD_DATA, old_CONFIG_PANEL);
+
+		/* Update non-shadow registers first */
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		outl(ioLCD_DATA, old_LCD_GEN_CTRL &
+		    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+		/* Temporarily disable stretching */
+		outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+		outl(ioLCD_DATA, old_HORZ_STRETCHING &
+		    ~(HORZ_STRETCH_EN | HORZ_STRETCH_MODE));
+		outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+		outl(ioLCD_DATA, old_VERT_STRETCHING &
+		    ~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+		      VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+	    }
+	}
+
+	regw(CRTC_H_SYNC_STRT_WID, old_CRTC_H_SYNC_STRT_WID[0]);
+	regw(CRTC_H_TOTAL_DISP, old_CRTC_H_TOTAL_DISP[0]);
+	regw(CRTC_V_SYNC_STRT_WID, old_CRTC_V_SYNC_STRT_WID[0]);
+	regw(CRTC_V_TOTAL_DISP, old_CRTC_V_TOTAL_DISP[0]);
+
+	if (mach64LCDPanelID >= 0) {
+	    /* Switch to shadow registers */
+	    if (mach64ChipType == MACH64_LG_ID) {
+		regw(LCD_GEN_CTRL, (old_LCD_GEN_CTRL & ~CRTC_RW_SELECT) |
+		    (SHADOW_EN | SHADOW_RW_EN));
+	    } else {
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		outl(ioLCD_DATA, (old_LCD_GEN_CTRL & ~CRTC_RW_SELECT) |
+		    (SHADOW_EN | SHADOW_RW_EN));
+	    }
+
+	    regw(CRTC_H_SYNC_STRT_WID, old_CRTC_H_SYNC_STRT_WID[1]);
+	    regw(CRTC_H_TOTAL_DISP, old_CRTC_H_TOTAL_DISP[1]);
+	    regw(CRTC_V_SYNC_STRT_WID, old_CRTC_V_SYNC_STRT_WID[1]);
+	    regw(CRTC_V_TOTAL_DISP, old_CRTC_V_TOTAL_DISP[1]);
+
+	    /* Restore CRTC selection and shadow state & enable stretching */
+	    if (mach64ChipType == MACH64_LG_ID) {
+		regw(LCD_GEN_CTRL, old_LCD_GEN_CTRL);
+		regw(HORZ_STRETCHING, old_HORZ_STRETCHING);
+		regw(VERT_STRETCHING, old_VERT_STRETCHING);
+		regw(POWER_MANAGEMENT, old_POWER_MANAGEMENT);
+	    } else {
+		outb(ioLCD_INDEX, LCD_GEN_CNTL);
+		outl(ioLCD_DATA, old_LCD_GEN_CTRL);
+		outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+		outl(ioLCD_DATA, old_HORZ_STRETCHING);
+		outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+		outl(ioLCD_DATA, old_VERT_STRETCHING);
+		outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
+		outl(ioLCD_DATA, old_EXT_VERT_STRETCH);
+		outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT);
+		outl(ioLCD_DATA, old_POWER_MANAGEMENT);
+		outl(ioLCD_INDEX, old_LCD_INDEX);
+	    }
+	}
     }
+
+    regw(CRTC_GEN_CNTL, old_CRTC_GEN_CNTL);
 
     mach64RestoreVGAInfo();
 

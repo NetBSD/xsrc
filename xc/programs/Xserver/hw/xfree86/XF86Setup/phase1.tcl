@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13.2.4 1998/02/26 13:58:59 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13.2.5 1999/01/09 14:19:00 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -23,7 +23,11 @@ source $tcl_library/init.tcl
 source $XF86Setup_library/texts/local_text.tcl
 # load in our library
 source $XF86Setup_library/setuplib.tcl
-source $XF86Setup_library/filelist.tcl
+if !$pc98 {
+	source $XF86Setup_library/filelist.tcl
+} else {
+	source $XF86Setup_library/filelist98.tcl
+}
 source $XF86Setup_library/carddata.tcl
 source $XF86Setup_library/mondata.tcl
 

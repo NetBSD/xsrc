@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/hwcursor.c,v 1.1.2.3 1998/10/20 20:51:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/hwcursor.c,v 1.1.2.4 1999/06/21 09:45:15 hohndel Exp $ */
 /*
  * includes
  */
@@ -39,8 +39,6 @@
 /* use a 64x64 cursor, 32x32 otherwise */
 #define BIGCURSOR 1
 
-
-
 /*
  * extern functions
  */
@@ -65,11 +63,11 @@ extern struct v_board_t BOARD;
  * local function prototypes
  */
 
-void SetCursorColors(int bg, int fg);
-void SetCursorPosition(int x, int y, int xorigin, int yorigin);
-void HideCursor(void);
-void ShowCursor(void);
-void LoadCursorImage(register unsigned char *src, int xorigin, int yorigin);
+void RENDITIONSetCursorColors(int bg, int fg);
+void RENDITIONSetCursorPosition(int x, int y, int xorigin, int yorigin);
+void RENDITIONHideCursor(void);
+void RENDITIONShowCursor(void);
+void RENDITIONLoadCursorImage(register unsigned char *src, int xorigin, int yorigin);
 
 
 
@@ -96,11 +94,11 @@ void RENDITIONHwCursorInit(void)
                           |HARDWARE_CURSOR_AND_SOURCE_WITH_MASK
                           |HARDWARE_CURSOR_CHAR_BIT_FORMAT
                           |HARDWARE_CURSOR_PROGRAMMED_BITS;
-    XAACursorInfoRec.SetCursorColors=SetCursorColors;
-    XAACursorInfoRec.SetCursorPosition=SetCursorPosition;
-    XAACursorInfoRec.LoadCursorImage=LoadCursorImage;
-    XAACursorInfoRec.HideCursor=HideCursor;
-    XAACursorInfoRec.ShowCursor=ShowCursor;
+    XAACursorInfoRec.SetCursorColors=RENDITIONSetCursorColors;
+    XAACursorInfoRec.SetCursorPosition=RENDITIONSetCursorPosition;
+    XAACursorInfoRec.LoadCursorImage=RENDITIONLoadCursorImage;
+    XAACursorInfoRec.HideCursor=RENDITIONHideCursor;
+    XAACursorInfoRec.ShowCursor=RENDITIONShowCursor;
 
     vgaHWCursor.Init=XAACursorInit;
     vgaHWCursor.Initialized=TRUE;
@@ -116,7 +114,7 @@ void RENDITIONHwCursorInit(void)
  */
 
 
-void ShowCursor(void)
+void RENDITIONShowCursor(void)
 {
 #ifdef DEBUG
     ErrorF( "RENDITION: ShowCursor called\n");
@@ -134,7 +132,7 @@ void ShowCursor(void)
 
 
 
-void HideCursor(void)
+void RENDITIONHideCursor(void)
 {
 #ifdef DEBUG
     ErrorF( "RENDITION: HideCursor called\n");
@@ -146,10 +144,10 @@ void HideCursor(void)
 
 
 
-void SetCursorPosition(int x, int y, int xorigin, int yorigin)
+void RENDITIONSetCursorPosition(int x, int y, int xorigin, int yorigin)
 {
 #ifdef DEBUG
-    ErrorF( "RENDITION: SetCursorPosition(%x, %x, %x, %x) called\n", 
+    ErrorF( "RENDITION: SetCursorPosition(%d, %d, %d, %d) called\n", 
         x, y, xorigin, yorigin);
 #endif
 
@@ -158,7 +156,7 @@ void SetCursorPosition(int x, int y, int xorigin, int yorigin)
 
 
 
-void SetCursorColors(int bg, int fg)
+void RENDITIONSetCursorColors(int bg, int fg)
 {
 #ifdef DEBUG
     ErrorF( "RENDITION: SetCursorColors(%x, %x) called\n", fg, bg);
@@ -169,7 +167,7 @@ void SetCursorColors(int bg, int fg)
 
 
 
-void LoadCursorImage(register unsigned char *src, int xorigin, int yorigin)
+void RENDITIONLoadCursorImage(register unsigned char *src, int xorigin, int yorigin)
 {
 #ifdef DEBUG
     ErrorF( "RENDITION: loadcursor called\n");

@@ -1,0 +1,726 @@
+  ISC ユーザ向けの情報
+  Michael Rohleder
+  11 January 1998
+  The X Japanese Documentation Project
+  2 February 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. Interactive Unix 上での X11R6/XFree86(TM)
+  2. ソースをコンパイルするために必要なもの
+  3. システムのヘッダファイルの修正
+     3.1 /usr/include/sys/limits.h
+     3.2 /usr/include/sys/ioctl.h
+     3.3 /usr/include/errno.h
+     3.4 /usr/include/rpc/types.h
+     3.5 /usr/include/sys/un.h
+     3.6 /usr/include/math.h
+
+  4. make World
+  5. リニアアドレッシング
+  6. XKeyboard 機能拡張
+  7. マルチバッファ機能拡張
+  8. 定義ファイルのサンプル
+  9. インストール
+  10. 使い方 ...
+  11. 謝辞
+
+
+  ______________________________________________________________________
+
+  1.  Interactive Unix 上での X11R6/XFree86(TM)
+
+
+  本ドキュメントには、 Interactive Unix(ISC とも呼ばれます)上で X11R6 と
+  XFree86 をコンパイル・使用するための追加情報が書かれています。
+
+  Interactive Unix 上での X11R6/XFree86 に関する提案・コメント・修正・ア
+  イディアがあれば michael.rohleder@stadt-frankfurt.de までメールを送っ
+  てください。
+
+  バグ報告は必ず XFree86@XFree86.Org 当てに送ってください。
+
+  質問等はニュースグループ comp.windows.x.i386unix に投稿してください。
+
+
+  現在は共有ライブラリがサポートされていないので、X11R6 で X11 クライア
+  ントを作ろうとするとファイル空間を大量に使ってしまいます。一番良い方法
+  は、X11R6 のサーバを X11R5 や X11R4 のクライアントと組み合わせて使うこ
+  とです。そして、X11R6 のライブラリで新しく用意された機能が必要なクライ
+  アントだけをコンパイルすると良いでしょう。
+
+
+  2.  ソースをコンパイルするために必要なもの
+
+
+
+      gcc
+        x の数字ができるだけ大きいものを使いましょう。Fresco は 2.6.3 以
+        降でしか構築できません。筆者は gcc のバージョン 2.5.8, 2.6.0,
+        2.6.2, 2.6.3, 2.7.2 を試しました。最新バージョンは 2.7.2.3 で
+        す。
+
+        2.6.3 以降では、少しオプティマイズを増やすだけでカレントソースツ
+        リーをコンパイルできるはずです: xf86site.def 内で
+         #define DefaultCDebugFlags -O3 -fomit-frame-pointer を指定し
+        て、デフォルトの -O2 を上書きしてください。 2.7.x の場
+        合、xf86site.def 内で #define UsePosix               YES を指定
+        しなければなりません。これはソースをうまく構築するために必要で
+        す。 2.7.0 より前のバージョンでもこれを定義してかまいませんが、
+        警告を出さずに構築するためには必要ありません。
+
+      libg++-2.x.x
+        g++ 2.x.x で使うための g++ ライブラリが必要です。これは Fresco
+        のために必要なだけなので、X11R6.1 以降では不要です。
+
+      binutils
+        アセンブラとリンカを使うことがあるかもしれません。アセンブラはで
+        きるだけあったほうが望ましく、プログラムに libFresco.a をリンク
+        したければ、少なくともリンカは必要になります。strip を ar や
+        ranlib と組み合わせて使ってはいけません。strip と ar を組み合わ
+        せると(少なくとも筆者のマシンでは) strip を行ったときにバグっぽ
+        いバイナリができます。また、ar と組み合わせて使うとアーカイブを
+        作った後に ranlib を使わなければならないのですが、その設定はされ
+        ていません。現在のバージョンは 2.8.1.0.15 です (as, ld, ar,
+        strip を使います)。
+
+      gnu-malloc
+        メモリをうまく利用するために、GNU の malloc ライブラリが使えるシ
+        ステムではこれを使うべきです。 xf86site.def 内または Linkkit の
+        site.def 内で #define UseGnuMalloc YES を有効にしてください。
+
+        GNU malloc ライブラリがデフォルトの -L/usr/local/lib -lgmalloc
+        でないようであれば、必要に応じて #define GnuMallocLibrary を有効
+        にし、値を設定してください。
+
+
+      inline-math (省略可能)
+        これは、お近くの Linux のミラーサイトで入手できる「オリジナル」
+        の inline-math パッケージです。
+
+        host.def 内で #define UseInlineMath YES を使い、これを有効にして
+        ください。このパッケージを使うためには他にも作業が必要なので、次
+        の修正に関するセクションを参照してください。
+
+
+
+
+  3.  システムのヘッダファイルの修正
+
+
+  Interactive Unix 付属の標準ヘッダファイルを少し修正しなければなりませ
+  ん。また、gcc-lib/include ディレクトリのヘッダファイルも少し修正する必
+  要があります。
+
+  次のディレクトリを gcc 関連ファイルのディレクトリとし、これを "gcc-
+  lib" と呼ぶことにします:
+
+  /usr/local/lib/gcc-lib/i[345]86-isc[34].[0-9]/2.6.x
+
+
+
+  3.1.  /usr/include/sys/limits.h
+
+  および gcc-lib/include/sys/limits.h
+
+
+
+
+
+
+            #ifndef OPEN_MAX
+            #ifdef ISC
+            #define OPEN_MAX        256
+            #else
+            #define OPEN_MAX        20
+            #endif
+            #endif
+
+
+
+  Xlib でエラー(クライアント数が最大値になってしまう)が起こらないように
+  するため OPEN_MAX を
+
+
+  3.2.  /usr/include/sys/ioctl.h
+
+  多重インクルードを避けるため、ファイルの中身全体を次の #ifdef で囲みま
+  す。
+
+          #ifndef _IOCTL_H
+          #define _IOCTL_H
+          ...
+          #endif
+
+
+
+
+
+  3.3.  /usr/include/errno.h
+
+  (および、 gcc の対応するインクルードファイル)
+
+          #include <net/errno.h>
+
+
+
+  EWOULDBLOCK  が未定義になるためです。 /usr/include/net/errno.h を
+
+
+          #ifndef _NET_ERRNO_H
+          #define _NET_ERRNO_H
+          ...
+          #endif
+
+
+
+
+  で囲みます。これは、<net/errno.h> がソースから明示的にインクルードされ
+  ると多重インクルードが起こるのを避けるためです。
+
+
+  3.4.  /usr/include/rpc/types.h
+
+  このファイルを gcc-lib/include/rpc/types.h にコピーし、 malloc() の定
+  義を
+
+
+           #if !defined(__cplusplus)
+           extern char *malloc();
+           #endif
+
+
+
+
+  のように変更します。
+
+  この作業は Fresco を構築する場合だけに必要な点に注意してください。
+
+
+  3.5.  /usr/include/sys/un.h
+
+  このファイルは Interactive Unix には存在しません。depend からのウォー
+  ニングが嫌ならば、このファイルを作っても構いません。これはソースを正常
+  にコンパイルするためには必要ありません。
+
+  un.h を作るには以下の内容が使えるでしょう:
+
+           #ifndef X_NO_SYS_UN
+           struct  sockaddr_un {
+                   short   sun_family;             /* AF_UNIX */
+                   char    sun_path[108];          /* path name (gag) */
+           };
+           #endif
+
+
+
+
+
+  3.6.  /usr/include/math.h
+
+  inline-math パッケージを使うには、既存の math.h を変更しなければなりま
+  せん。筆者がヘッダファイルを組み込んだ方法は、inline-math パッケージの
+  README に書かれている方法と異なる点に注意してください。
+
+  以下の内容を、 math.h の終わりの部分の最後の #endif の前に追加してくだ
+  さい:
+
+  #if defined(UseInlineMath)
+
+  /* Needed on ISC __CONCAT, PI */
+  #ifndef __CONCAT
+  /*
+   * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
+   * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
+   * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
+   * in between its arguments.  __CONCAT can also concatenate double-quoted
+   * strings produced by the __STRING macro, but this only works with ANSI C.
+   */
+  #if defined(__STDC__) || defined(__cplusplus)
+  #define __CONCAT(x,y)   x ## y
+  #define __STRING(x)     #x
+  #else   /* !(__STDC__ || __cplusplus) */
+  #define __CONCAT(x,y)   x/**/y
+  #define __STRING(x)     "x"
+  #endif  /* !(__STDC__ || __cplusplus) */
+  #endif
+
+  #ifndef PI
+  #define PI M_PI
+  #endif
+
+  #include "/usr/local/include/i386/__math.h"
+  #endif
+
+
+
+
+
+
+
+
+
+  4.  make World
+
+
+  ______________________________________________________________________
+  BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
+  ______________________________________________________________________
+
+
+
+
+     -DISC -DISC30
+        この 2 つのオプションはバージョン 3.x の ISC で構築を行うために
+        必要です。筆者は、3.x より前の ISC でうまく構築できるどうかは知
+        りません。
+
+
+     -DISC40
+        これは ISC バージョン 4.x 専用のオプションで、したがって
+        HasSymLinks を YES に設定します(なぜなら、シンボリックリンクは
+        S5L ファイルシステムを採用しているバージョン 4.x 以降でないとサ
+        ポートされていないからです)。
+
+        ロングファイルネームが使えるならば、xf86site.def に
+         #define ExpandManNames      YES  を含めることで拡張マニュアルペ
+        ージをインストールすることができます。
+
+        ISC 4.x で構築を行う場合には、BOOTSTRAPCFLAGS で -DISC40 だけを
+        定義すれば大丈夫です(-DISC30 は自動的にインクルードされます)。
+
+        注意: ISC 4.0 と 4.1 には互換でない部分が少しあるため、ISC 4.1
+        で構築を行った場合でもデフォルトでは ISC 4.0 用の構築を行いま
+        す。4.1 専用の構築がしたければ、host.def で
+         #define IscCompileVersion       410 を設定してください。
+
+        (fchmod 関数は 4.0 では利用できないので、この関数があるとコンパ
+        イルができませんし、4.1 から持ってきたバイナリはサポートされてい
+        ないシステムコールがあるため動作しません。4.1 用に構築したライブ
+        ラリは、4.0 では利用できない関数を含むので、4.0 のシステムでは動
+        作しません。
+
+
+     -DSYSV [-Di386]
+        x86 プラットフォームにおける SystemV リリース 3 用の標準の定義で
+        す。 -Di386  は /lib/cpp で予め定義されているので、明示的に定義
+        する必要はありません。
+
+
+
+  5.  リニアアドレッシング
+
+
+
+  o  コンパイル
+
+     サーバのバイナリにリニアアドレッシングのサポートを入れたければ、
+     xf86site.def ファイルに
+
+     #define HasSVR3mmapDrv          YES
+
+
+  という行を定義しなければなりません。システムには mmap-2.2.3 ドライバが
+  インストールされている必要があります。 mmap-2.2.3 がインストールされて
+  いなければ、
+
+  xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar
+
+  または
+
+  /usr/X11R6/lib/X11/etc/mmapSVR3.shar
+
+
+  ファイル内にあるドライバのソースを利用できます。ドライバの構築とインス
+  トールは説明されている手順通りに行ってください。リニアアドレッシングを
+  有効にして X11R6/XFree86 ソースツリーの構築を行うには、
+  /usr/include/sys/mmap.h ファイルが必要です。
+
+
+  o  使用
+
+
+     フレームバッファのリニアアドレスマッピングを使うためには、 Thomas
+     Wolfram さんが作成した mmap ドライバ(バージョン 2.2.3)をカーネルに
+     インストールする必要があります。このドライバを既にインストールして
+     いる場合には、ほとんどのサーバはデフォルトでリニアアドレッシングを
+     使うでしょう。そうでないサーバの場合には、XF86Config ファイルで
+
+     Option "linear"
+
+
+  を指定する必要があるかもしれません。詳しくは適切なオンラインマニュアル
+  を参照してください。また、XF86Config で MemBase を指定する必要もあるか
+  もしれません。使い方については、カードやサーバに関する適切な README
+  ファイルを参照してください。リニアアドレスが有効でなければ、P9000 サー
+  バは全く動作しないだろうという点に注意してください。
+
+  筆者がリニアアドレッシングに関するテストを行ったのは以下のカードだけで
+  す。
+
+  o  Spea/V7 Vega - clgd5428 - VLB
+
+     メインメモリを 32MB 積んだマシンでは使うことができませんでした。ア
+     ドレス空間に対して色々なマッピングを行うテストでは、グラフィックス
+     が全く表示されなかったり、マシンがいきなりリブートするという結果に
+     なりました。
+
+
+  o  ATI GUP      - mach32   - VLB
+
+     32MB のメインメモリを積んだマシンで、カードのメモリを MemBase
+     0x07c00000 にマップすることができました。ほとんどのクライアントが動
+     作しましたが、それは Motif 1.1.1 の InputField ウィジェッ
+     ト(Mosaic-2.4 や xplan のような Motif 1.1.1 クライアントで使われて
+     います)をアクティブにしようとするまででした。これにより、X サーバが
+     クラッシュしてしまいました。
+
+
+                !!! しかし、この問題は回避することができます。!!!
+
+
+
+  .Xdefaults ファイルに
+
+             *blinkRate:                  0
+             *cursorPositionVisible:      false
+
+
+
+  という記述を加えてください。このバグは 3.1.2 以降では修正されているよ
+  うなので、この回避方法はもはや必要でなくなりました。
+
+  o  ELSA Winner 2000PRO/X Revision G
+
+     このカードで問題が起こった場合は、"newmmio" ではなく古いチップセッ
+     トのドライバを試すと良いでしょう。
+
+     XF86Config ファイルに
+
+                Chipset "mmio_928"
+
+
+
+  という宣言があれば、重ねて安心でしょう。
+
+  筆者は、最新の XF86_S3 を使っていて問題に出会ったことはありません。
+
+
+
+  6.  XKeyboard 機能拡張
+
+
+
+  o  設定例
+
+     XF86Config ファイルの Keyboard セクションに書けるような XKeyboard
+     の定義例を以下に示します。
+
+         Xkbkeycodes "xfree86"
+     /*    XkbSymbols  "us(pc101)+de_nodead"  */
+     /*    This has changed between 3.1.2E and 3.1.2F */
+     /*    it is now:                                 */
+         XkbSymbols  "us(pc102)+de(nodeadkeys)"
+         XkbTypes    "default"
+         XkbCompat   "default"
+         XkbGeometry "pc"
+
+
+
+  あるいは、新しいオプションを使って以下のように指定することもできます。
+
+     XkbRules        "xfree86"
+     XkbModel        "pc102"
+     XkbLayout       "de"
+     XkbVariant      "nodeadkeys"
+
+
+
+
+
+  7.  マルチバッファ機能拡張
+
+
+  この機能拡張は古くて使われないものになってしまいました。それでも、構築
+  時にこの機能拡張を組み込みたいならば、xf86site.def に #define
+  BuildMultibuffer        YES を追加してください。ローダサーバを構築する
+  ときには、この機能拡張は無効にしておくべきである点に注意してください。
+
+
+  8.  定義ファイルのサンプル
+
+
+  筆者が現在ソースからの構築を行う際に使っている host.def を以下に示しま
+  す。(したがって、xf86site.def をこれ以上変更する必要はありませんし、中
+  身を読むのも悪くない考えです ;-)
+
+
+
+
+
+  #ifdef BeforeVendorCF
+
+  /* ISC 4.1Mu - build only for 4.1
+  #define IscCompileVersion       410
+  */
+
+  /* Use inline Math from linux ;-) package inline-math-2.6.tar.gz */
+  /* should be available on your favorite linux ftp                */
+  # define UseInlineMath          YES
+
+  /* Use cbrt from liboptm.a (Interactive icc Compiler) */
+  /*
+  */
+  # define HasCbrt                YES
+
+  /* Use GNUs MallocLibrary (and the Location for the Lib)             */
+  # define UseGnuMalloc           YES
+  # define GnuMallocLibrary       -L/usr/local/lib -lgnumalloc
+
+  /* Build Xvfb                                                        */
+  # define XVirtualFramebufferServer      YES
+
+  /* Use mmap Driver                                                   */
+  # define HasSVR3mmapDrv         YES
+
+  /* Expand Manual Pages (needs S5L)                                   */
+  # define ExpandManNames         YES
+
+  /* Has LinuxDoc (and the Location for LinuxDoc / only HTML and Text) */
+  # define HasLinuxDoc            YES
+  # define BuildLinuxDocHtml      YES
+  # define BuildAllDocs           YES
+  # define LinuxDocDir            /usr/local/lib/linuxdoc-sgml
+
+  /* Install Config's for xdm, xfs, and xinit */
+  # define InstallXinitConfig    YES
+  # define InstallXdmConfig      YES
+  # define InstallFSConfig               YES
+
+  #define BuildChooser            YES
+
+  /* for the new XF86Setup Util */
+  #define HasTk                   YES
+  #define HasTcl                  YES
+
+  #endif /* BeforeVendorCF */
+
+
+
+  9.  インストール
+
+
+  make World BOOTSTRAPCFLAGS="... が正常終了したら、
+
+  make install
+
+
+  を実行して /usr/X11R6 にインストールしてください。十分なディスク容量が
+  あることと、/usr/X11R6 がディレクトリや(たぶん)他のファイルシステムの
+  他のディレクトリへのシンボリックリンクとして存在することを確かめてくだ
+  さい。次に
+
+  make install.man
+
+
+
+  を実行して、圧縮した nroff 形式のオンラインマニュアルを /usr/X11R6/man
+  にインストールしてください。このディレクトリが存在しなければ、自動的に
+  作成されます。それから
+
+  make install.linkkit
+
+
+  を実行して、サーバのバイナリリンクキットを /usr/X11R6/lib/Server にイ
+  ンストールしてください。
+
+
+  ______________________________________________________________________
+         コマンドファイルである
+
+         /usr/X11R6/lib/X11/etc/xf86install
+
+         を用いてカーネルをチューンすることができます。このファイルは利
+         用できる仮想デバイスを増やし、パラメータをいくつか調整し、
+         sysadm 内部で使われるファイルをいくつかインストールします。追加
+         のフォントと端末設定ファイルをインストールすることもできます。
+  ______________________________________________________________________
+
+
+
+  また、MAXUMEM は最大値まで増やすべきです。さもないと、プログラムは次の
+  ようなメッセージを出力して止まってしまうかもしれません:
+
+  ______________________________________________________________________
+  X Error of failed request:  BadAlloc (insufficient resources for operation)
+    Major opcode of failed request:  53 (X_CreatePixmap)
+    Serial number of failed request:  37791
+    Current serial number in output stream:  37822
+    Widget hierarchy of resource: unknown
+  ______________________________________________________________________
+
+
+
+
+  10.  使い方 ...
+
+
+
+  o  Xprt:
+
+     新しい Xprint サーバは lpr を印刷用の補助プログラムとして使うように
+     設定されます。したがって、Xprt を使うためには lpr のインストール・
+     設定を行う必要があります。
+
+
+  o  Keyboard:
+
+     iso-8859-1 フォントをキーボードで入力で入力するために modmap ファイ
+     ルは必要ありません。単に、XF86Config ファイルの Keyboard セクション
+     で以下の指定を行ってください:
+
+
+  o  LeftAlt  Meta
+
+  o  RightAlt ModeShift
+
+  o  RightCtl Compose
+
+
+
+  o  xpcterm:
+
+     ISC 付属の X11R4 クライアントである xpcterm で EGA/VGA フォントを
+     使っているときに、ドイツ語の「ウムラウト」を入力したい場合の設定で
+     す。ユーザの .Xdefaults ファイルに以下の内容を設定してください:
+
+              XEga*AT386.Translations: #override \
+                        Shift<Key>odiaeresis: string(0x99) \n\
+                             <Key>odiaeresis: string(0x94) \n\
+                        Shift<Key>adiaeresis: string(0x8e) \n\
+                             <Key>adiaeresis: string(0x84) \n\
+                        Shift<Key>udiaeresis: string(0x9a) \n\
+                             <Key>udiaeresis: string(0x81) \n\
+                        Shift<Key>ssharp: string(0x3f) \n\
+                         Meta<Key>ssharp: string(0x5c)  \n\
+                             <Key>ssharp: string(0xe1)
+
+
+
+
+  この設定の唯一の短所は、(ドイツ語キーボードで) \ Backslash を入力する
+  際に AltGr でなく Alt を使わなければならないことです。
+
+  xpcterm を起動するときには、オプション -name XEga -fn ega が必要です。
+
+
+  o  X11R5 と X11R6 の間の設定切替え
+
+     X11 のクライアントを R6 または R5 のクライアントとしてコンパイルす
+     ることは簡単なはずです。/usr/X11R6/bin/xmkmf と /usr/X386/bin/xmkmf
+     のうち使いたいほうが新しい Makefile を生成するように、単に PATH 環
+     境変数を切替えるだけです。
+
+
+  o  ISC のストリームパイプ
+
+     ISC における X11R4 のパイプへの古いパスであった /tmp/.X11-unix は
+     /dev/X/ISCCONN に変更されました。 ISC における互換性の理由により、
+     新しいディレクトリ内のパイプは古いディレクトリ内のファイルへのリン
+     クになっています。これは通常はハードリンクなので、ファイルシステム
+     間にまたがることはできません。ISC バージョン 4.x では、これは許され
+     るようになりました。ただし、両方のファイルシステムが新しい S5L ファ
+     イルシステムでなければなりません。ISC30 システムでは 2 つのディレク
+     トリが同じファイルシステム上になるよう注意しなければなりません。そ
+     うでない場合、ISC40 でコンパイルしたバイナリを使うと、サーバが
+     SIGSYS を受けて異常終了するかもしれません。筆者らはこのシグナルを捕
+     捉しようと試みているので、サーバがコアダンプしたらお知らせくださ
+     い。
+
+
+  o  出会うかもしれないウォーニング:
+
+
+  o  XFree86 3.2A 以降では、X11R6.3 以前のクライアントを使うと
+
+
+                Warning: Unable to load any usable fontset
+
+
+
+  というウォーニングが出るかもしれません。これはフォントが新たに gzip さ
+  れるようになったためですが、ウォーニングは深刻なものではありません。
+
+
+  o  サーバを起動しようとすると、次のメッセージが表示されるかもしれませ
+     ん:
+
+
+             _XSERVTransOpen: transport open failed for named/enigma:0
+             _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
+
+
+
+  このメッセージはいずれも致命的なものではありません。Interactive Unix
+  はこの種類の接続をサポートしていません。
+
+
+
+
+  11.  謝辞
+
+
+  素晴らしい仕事をした XFree86 チームと X11R6 のパブリックリリースを出し
+  た X コンソーシアム、この素晴らしいフリーソフトウェアに貢献した全ての
+  方々に深く感謝します。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.isc,v 1.1.2.1 1999/06/02 07:51:00 hohndel Exp $
+
+
+
+
+
+  $XConsortium: isc.sgml /main/8 1996/10/23 11:45:58 kaleb $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

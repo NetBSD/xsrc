@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/Imakefile,v 1.1.2.8 1998/10/22 04:31:05 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/Imakefile,v 1.1.2.9 1999/06/23 12:37:21 hohndel Exp $
 XCOMM
 XCOMM This is an Imakefile for the cyrix driver.  
 XCOMM 
@@ -6,10 +6,10 @@ XCOMM $XConsortium: Imakefile.cyrix /main/4 1996/02/21 17:13:36 kaleb $
 #include <Server.tmpl>
 
 SRCS = cyrix_driver.c cyrix_accel.c cyrix_cursor.c cyrix_cmap.c cyrix_bank.s \
-       cyrix_asm.s
+       cyrix_asm.s gxrender.c
 
 OBJS = cyrix_driver.o cyrix_accel.o cyrix_cursor.o cyrix_cmap.o cyrix_bank.o \
-       cyrix_asm.o
+       cyrix_asm.o gxrender.o
 
 DEFINES = -DPSZ=8
 
@@ -61,6 +61,7 @@ InstallLinkKitNonExecFile(cyrix_cursor.c,$(LINKKITDIR)/drivers/vga256/cyrix)
 InstallLinkKitNonExecFile(cyrix_driver.c,$(LINKKITDIR)/drivers/vga256/cyrix)
 InstallLinkKitNonExecFile(cyrix_bank.s,$(LINKKITDIR)/drivers/vga256/cyrix)
 InstallLinkKitNonExecFile(cyrix_asm.s,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(gxrender.c,$(LINKKITDIR)/drivers/vga256/cyrix)
 InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/cyrix)
 
 XCOMM
@@ -81,3 +82,4 @@ XCOMM
 XCOMM Install Link Kit Non Exec File(Imakefile,$(LINKKITDIR)/drivers/vga16/cyrix)
 
 DependTarget()
+

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.13.2.7 1998/11/01 11:19:28 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.13.2.8 1999/01/10 01:44:15 dawes Exp $
 #
-# postinst.sh (for XFree86 3.3.3)
+# postinst.sh (for XFree86 3.3.3.1+)
 #
 # This script should be run after installing a new version of XFree86.
 #
@@ -103,21 +103,21 @@ if [ -d $TINFODIR ]; then
 		echo "On some systems you may get warnings from tic about 'meml'"
 		echo "and 'memu'.  These warnings can safely be ignored."
 		echo ""
-		tic /usr/X11R6/lib/X11/etc/xterm.terminfo
+		tic $RUNDIR/lib/X11/etc/xterm.terminfo
 		;;
 	*)
 		echo ""
 		echo "Not installing new terminfo entries for xterm."
 		echo "They can be installed later by running:"
 		echo ""
-		echo "  tic /usr/X11R6/lib/X11/etc/xterm.terminfo"
+		echo "  tic $RUNDIR/lib/X11/etc/xterm.terminfo"
 		;;
 	esac
 fi
 
-if [ -f /usr/X11R6/bin/rstartd ]; then
+if [ -f $RUNDIR/bin/rstartd ]; then
 	echo ""
-	echo "If you are going to use rstart and /usr/X11R6/bin isn't in the"
+	echo "If you are going to use rstart and $RUNDIR/bin isn't in the"
 	echo "default path for commands run remotely via rsh, you will need"
 	echo "a link to rstartd installed in /usr/bin."
 	echo ""
@@ -125,23 +125,45 @@ if [ -f /usr/X11R6/bin/rstartd ]; then
 	read Resp
 	case "$Resp" in
 	[yY]*)
-		echo "Creating link from /usr/X11R6/bin/rstartd to /usr/bin/rstartd"
+		echo "Creating link from $RUNDIR/bin/rstartd to /usr/bin/rstartd"
 		rm -f /usr/bin/rstartd
-		ln -s /usr/X11R6/bin/rstartd /usr/bin/rstartd
+		ln -s $RUNDIR/bin/rstartd /usr/bin/rstartd
 		;;
 	esac
+fi
+
+# Check for the Japanese version of XF86Config.  If only the Japanese version
+# exists, rename it.  If both exist, ask the user.
+
+if [ -x $RUNDIR/XF86Setup_jp ]; then
+	if [ -x $RUNDIR/XF86Setup ]; then
+		echo ""
+		echo "Do you want to use the Japanese version of XF86Setup (y/n)?"
+		read Resp
+		case "$Resp" in
+		[yY]*)
+			echo "Renaming $RUNDIR/XF86Setup_jp to $RUNDIR/XF86Setup"
+			rm -f $RUNDIR/XF86Setup
+			mv $RUNDIR/XF86Setup_jp $RUNDIR/XF86Setup
+			;;
+		esac
+	else
+		echo "Renaming $RUNDIR/XF86Setup_jp to $RUNDIR/XF86Setup"
+		rm -f $RUNDIR/XF86Setup
+		mv $RUNDIR/XF86Setup_jp $RUNDIR/XF86Setup
+	fi
 fi
 
 case `uname` in
 	FreeBSD|NetBSD|OpenBSD)
 		echo ""
 		echo "Running ldconfig"
-		/sbin/ldconfig -m /usr/X11R6/lib
+		/sbin/ldconfig -m $RUNDIR/lib
 		;;
 	Linux)
 		echo ""
 		echo "Running ldconfig"
-		/sbin/ldconfig /usr/X11R6/lib
+		/sbin/ldconfig $RUNDIR/lib
 		;;
 esac
 

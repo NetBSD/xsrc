@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Xinput.c /main/14 1996/10/27 11:05:25 kaleb $ */
 /*
- * Copyright 1995-1998 by Frederic Lepied, France. <Frederic.Lepied@sugix.frmug.org>
+ * Copyright 1995-1999 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.13 1998/12/20 01:54:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.15 1999/06/21 09:45:11 hohndel Exp $ */
 
 #include "Xmd.h"
 #include "XI.h"
@@ -52,6 +52,7 @@
 #include "windowstr.h"	/* screenIsSaved */
 
 #include <stdarg.h>
+#include <math.h>
 
 /******************************************************************************
  * debugging macro
@@ -395,6 +396,9 @@ void
 xf86XinputFinalizeInit(DeviceIntPtr	dev)
 {
     LocalDevicePtr        local = (LocalDevicePtr)dev->public.devicePrivate;
+
+    local->dxremaind = 0.0;
+    local->dyremaind = 0.0;
     
     if (InitIntegerFeedbackClassDeviceStruct(dev, xf86AlwaysCoreControl) == FALSE) {
 	ErrorF("Unable to init integer feedback for always core feature\n");
@@ -1015,6 +1019,8 @@ xf86PostMotionEvent(DeviceIntPtr	device,
     ValuatorClassPtr		val = device->valuator;
     int				*axisvals;
     AxisInfoPtr			axes;
+    int				dx, dy;
+    float			mult;
 
     DBG(5, ErrorF("xf86PostMotionEvent BEGIN 0x%x(%s) switch=0x%x is_core=%s is_shared=%s is_absolute=%s\n",
 		  device, device->name, switch_device,
@@ -1059,14 +1065,37 @@ xf86PostMotionEvent(DeviceIntPtr	device,
 	    
 	    if (loop == 1 && !is_absolute && device->ptrfeed && device->ptrfeed->ctrl.num) {
 		/* modeled from xf86Events.c */
-		if ((abs(xv->valuator0) + abs(xv->valuator1)) >= device->ptrfeed->ctrl.threshold) {
-		    xv->valuator0 = (xv->valuator0 * device->ptrfeed->ctrl.num) /
-			device->ptrfeed->ctrl.den;
-		    xv->valuator1 = (xv->valuator1 * device->ptrfeed->ctrl.num) /
-			device->ptrfeed->ctrl.den;
-		    DBG(6, ErrorF("xf86PostMotionEvent acceleration v0=%d v1=%d\n", xv->valuator0, xv->valuator1));
+		if (device->ptrfeed->ctrl.threshold) {
+		    if ((abs(xv->valuator0) + abs(xv->valuator1)) >= device->ptrfeed->ctrl.threshold) {
+			xv->valuator0 = (xv->valuator0 * device->ptrfeed->ctrl.num) /
+			    device->ptrfeed->ctrl.den;
+			xv->valuator1 = (xv->valuator1 * device->ptrfeed->ctrl.num) /
+			    device->ptrfeed->ctrl.den;
+		    }
 		}
+		else if (xv->valuator0 || xv->valuator1) {
+		    dx = xv->valuator0;
+		    dy = xv->valuator1;
+		    mult = pow((float)(dx*dx+dy*dy),
+			       ((float)(device->ptrfeed->ctrl.num) /
+				(float)(device->ptrfeed->ctrl.den) - 1.0) / 
+			       2.0) / 2.0;
+		    DBG(6, ErrorF("mult=%f dxremaind=%f dyremaind=%f\n",
+				  mult, local->dxremaind, local->dyremaind));
+		    if (dx) {
+			local->dxremaind = mult * (float)dx + local->dxremaind;
+			xv->valuator0 = dx = (int)local->dxremaind;
+			local->dxremaind = local->dxremaind - (float)dx;
+		    }
+		    if (dy) {
+			local->dyremaind = mult * (float)dy + local->dyremaind;
+			xv->valuator1 = dy = (int)local->dyremaind;
+			local->dyremaind = local->dyremaind - (float)dy;
+		    }
+		}
+		DBG(6, ErrorF("xf86PostMotionEvent acceleration v0=%d v1=%d\n", xv->valuator0, xv->valuator1));
 	    }
+
             /* mr Sat Jul  5 13:46:55 MET 1997
              * fix to recognize XWarpCursor requests
 	     * FL Thu Nov 12 07:42:03 1998
@@ -1369,7 +1398,7 @@ xf86PostButtonEvent(DeviceIntPtr	device,
 	GetSpritePosition(&cx, &cy);
       
 	xE->u.u.type = is_down ? ButtonPress : ButtonRelease;
-	xE->u.u.detail =  button;
+	xE->u.u.detail =  device->button->map[button];
 	xE->u.keyButtonPointer.rootY = cx;
 	xE->u.keyButtonPointer.rootX = cy;
 	xf86Info.lastEventTime = xE->u.keyButtonPointer.time = GetTimeInMillis();

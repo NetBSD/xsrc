@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.13.2.3 1998/12/22 07:50:03 hohndel Exp $
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.13.2.5 1999/05/10 13:10:05 hohndel Exp $
 .\"
 .\" updated by Thomas Dickey <dickey@clark.net> for XFree86, July 1996.
 .TH XTERM 1 "Release 6.3" "X Version 11"
@@ -291,6 +291,15 @@ into xterm.
 This option specifies the color to use for the background of
 selected or otherwise highlighted text.  If not specified,
 reverse video is used.
+.TP 8
+.B \-ie
+Turn on the \fBptyInitialErase\fP resource, i.e., 
+use the pseudo-terminal's sense of the stty erase value. 
+.TP 8
+.B +ie
+Turn off the \fBptyInitialErase\fP resource, i.e., 
+set the stty erase value using the \fBkD\fP string from the termcap entry as 
+a reference, if available. 
 .TP 8
 .B \-im
 Turn on the \fBuseInsertMode\fP resource.
@@ -605,12 +614,28 @@ The program understands all of the core X Toolkit resource names and
 classes as well as:
 .\".in +1in
 .TP 8
+.B "backarrowKeyIsErase (\fPclass\fB BackarrowKeyIsErase)" 
+Tie the VTxxx \fBbackarrowKey\fP and \fBptyInitialErase\fP resources 
+together by setting the DECBKM state according to whether the initial value of 
+stty erase is a backspace or delete character. 
+The default is ``false'', which disables this feature. 
+.TP 8 
 .B "iconGeometry (\fPclass\fB IconGeometry)"
 Specifies the preferred size and position of the application when iconified.
 It is not necessarily obeyed by all window managers.
 .TP 8
 .B "iconName (\fPclass\fB IconName)"
 Specifies the icon name.  The default is the application name.
+.TP 8
+.B "ptyInitialErase (\fPclass\fB PtyInitialErase)"
+If ``true'', \fIxterm\fP will use the pseudo-terminal's sense of the stty erase
+value. 
+If ``false'', \fIxterm\fP will set the stty erase value to match its own
+configuration, using the \fBkD\fP string from the termcap entry as
+a reference, if available.
+In either case, the result is applied to the TERMCAP variable
+which \fIxterm\fP sets.
+The default is ``false''.
 .TP 8
 .B "sameName (\fPclass\fB SameName)"
 If the value of this resource is "true", xterm doesn't send
@@ -718,7 +743,9 @@ The default is ``false.''
 Specifies whether the backarrow key transmits
 a backspace
 or delete character.
+This corresponds to the DECBKM control sequence. 
 The default (backspace) is ``true.''
+Pressing the control key toggles this behavior. 
 .TP 8
 .B "background (\fPclass\fB Background)"
 Specifies the color to use for the background of the window.  The default is

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.21 1998/12/26 00:12:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.24 1999/06/23 12:37:24 hohndel Exp $ */
 
 /*
  *
@@ -155,6 +155,7 @@ SymTabRec s3vChipTable[] = {
    { S3_ViRGE_GX2, "ViRGE/GX2"},
    { S3_ViRGE_MX,  "ViRGE/MX"},
    { S3_ViRGE_MXP, "ViRGE/MX+"},
+   { S3_TRIO_3D,   "Trio 3D"},
    { -1,           ""},
    };
 
@@ -184,6 +185,40 @@ int n;
 
 }
 
+/* SetMMIO() - FALSE: restore MMIO settings
+               TRUE : enable  MMIO
+*/
+static void
+S3VSetMMIO(mmio_enable)
+Bool mmio_enable;
+{
+   static unsigned char cr40, cr53;
+   static Bool in_mmio=FALSE;
+
+   if(mmio_enable) { /* Enable MMIO */
+      if(!in_mmio) {
+        outb(vgaCRIndex, 0x53);
+        cr53 = inb(vgaCRReg);
+        outb(vgaCRReg, (cr53 & 0xef) | 0x08);
+        outb(vgaCRIndex, 0x40);
+        cr40 = inb(vgaCRReg);
+        if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+           outb(vgaCRReg, cr40 | 0x01);
+        } else {
+           outb(vgaCRReg, cr40 & ~0x01);
+        }
+        in_mmio=TRUE;
+      }
+   } else {          /* Restore MMIO settings */
+      if(in_mmio) {
+        outb(vgaCRIndex, 0x40);
+        outb(vgaCRReg, cr40);
+        outb(vgaCRIndex, 0x53);
+        outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+        in_mmio=FALSE;
+      }
+   }
+}
 
 /* The EnterLeave function which en/dis access to IO ports and ext. regs */
 
@@ -222,18 +257,25 @@ Bool enter;
       outb(vgaCRReg, 0x48);        /* unlock S3 register set for read/write */
       outb(vgaCRIndex, 0x39);    
       outb(vgaCRReg, 0xa5);
-      outb(vgaCRIndex, 0x40);
-      tmp = inb(vgaCRReg);
-      outb(vgaCRReg, tmp & ~0x01);   /* avoid lockups when reading I/O port 0x92e8 */
+
+      if (S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+        S3VSetMMIO(TRUE); /* Enable MMIO all the time we're in graphics */
+      } else {
+        outb(vgaCRIndex, 0x40);
+        tmp = inb(vgaCRReg);
+        outb(vgaCRReg, tmp & ~0x01);   /* avoid lockups when reading I/O port 0x92e8 */
+      }
       enterCalled = TRUE;
       }
 
    else {
       if (s3vMmioMem) {
 	 unsigned char cr3a, cr53, cr66;
-	 outb(vgaCRIndex, 0x53);
-	 cr53 = inb(vgaCRReg);
-	 outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO temporarily */
+	 if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+	   outb(vgaCRIndex, 0x53);
+	   cr53 = inb(vgaCRReg);
+	   outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO temporarily */
+	 }
 
 	 outb(vgaCRIndex, 0x66);
 	 cr66 = inb(vgaCRReg);
@@ -245,8 +287,12 @@ Bool enter;
          WaitIdle();           /* DOn't know if these map properly ? */
          WaitCommandEmpty();   /* We should probably do a DMAEmpty() as well */
 
-	 outb(vgaCRIndex, 0x53);
-	 outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+	 if (S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+	   S3VSetMMIO(FALSE);
+	 } else {
+	   outb(vgaCRIndex, 0x53);
+	   outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+	 }
 
 	 outb(vgaCRIndex, 0x66);
 	 outb(vgaCRReg, cr66);
@@ -309,8 +355,12 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
       }
 
    /* Restore S3 extended regs */
-   outb(vgaCRIndex, 0x63);             
-   outb(vgaCRReg, restore->CR63);
+   if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     VerticalRetraceWait();        /* As suggested by [trio3d] page 73  */
+   } else {
+     outb(vgaCRIndex, 0x63);             
+     outb(vgaCRReg, restore->CR63);
+   }
    outb(vgaCRIndex, 0x66);             
    outb(vgaCRReg, restore->CR66);
    outb(vgaCRIndex, 0x3a);             
@@ -319,6 +369,8 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(vgaCRReg, restore->CR31);
    outb(vgaCRIndex, 0x58);             
    outb(vgaCRReg, restore->CR58);
+   outb(vgaCRIndex, 0x55);
+   outb(vgaCRReg, restore->CR55);
 
    outb(0x3c4, 0x08);
    outb(0x3c5, 0x06); 
@@ -340,13 +392,19 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    }
    outb(0x3c4, 0x15);
    outb(0x3c5, restore->SR15); 
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(0x3c4, 0x0A);
+     outb(0x3c5, restore->SR0A); 
+   }
 
    /* Restore the standard VGA registers */
    vgaHWRestore((vgaHWPtr)restore);
 
    /* Extended mode timings registers */  
-   outb(vgaCRIndex, 0x53);             
-   outb(vgaCRReg, restore->CR53); 
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x53);             
+     outb(vgaCRReg, restore->CR53); 
+   }
    outb(vgaCRIndex, 0x5d);     
    outb(vgaCRReg, restore->CR5D);
    outb(vgaCRIndex, 0x5e);             
@@ -375,8 +433,10 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    /* Other mode timing and extended regs */
    outb(vgaCRIndex, 0x34);             
    outb(vgaCRReg, restore->CR34);
-   outb(vgaCRIndex, 0x40);             
-   outb(vgaCRReg, restore->CR40);
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x40);             
+     outb(vgaCRReg, restore->CR40);
+   }
    outb(vgaCRIndex, 0x42);             
    outb(vgaCRReg, restore->CR42);
    outb(vgaCRIndex, 0x45);
@@ -401,7 +461,7 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
       outb(vgaCRReg, restore->CR86);
    }
    if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
-       S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
+       S3_ViRGE_MX_SERIES(s3vPriv.chip) || S3_TRIO_3D_SERIES(s3vPriv.chip)) {
       outb(vgaCRIndex, 0x90);
       outb(vgaCRReg, restore->CR90);
    }
@@ -448,9 +508,13 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    tmp = inb(0x3c5) & ~0x21;
 
    outb(0x3c5, tmp | 0x03);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) usleep(10000);
    outb(0x3c5, tmp | 0x23);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) usleep(10000);
    outb(0x3c5, tmp | 0x03);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) usleep(10000);
    outb(0x3c5, restore->SR15);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) usleep(10000);
 
    outb(0x3c4, 0x08);
    outb(0x3c5, restore->SR8); 
@@ -470,13 +534,16 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
     * We also restore FIFO and TIMEOUT memory controller registers.
     */
 
-      outb(vgaCRIndex, 0x53);
-   cr53 = inb(vgaCRReg);
-   outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO temporarily */
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x53);
+     cr53 = inb(vgaCRReg);
+     outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO temporarily */
+   }
 
    outb(vgaCRIndex, 0x66);
    cr66 = inb(vgaCRReg);
    outb(vgaCRReg, cr66 | 0x80);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) usleep(10000);
    outb(vgaCRIndex, 0x3a);
    cr3a = inb(vgaCRReg);
    outb(vgaCRReg, cr3a | 0x80);
@@ -500,16 +567,19 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
       }
 
    VerticalRetraceWait();
-   ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control = restore->MMPR0;
-   WaitIdle();                  /* Don't ask... */
-   ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control = restore->MMPR1;
-   WaitIdle();                  
-   ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout = restore->MMPR2;
-   WaitIdle();
-   ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout = restore->MMPR3;
 
-   outb(vgaCRIndex, 0x53);
-   outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control = restore->MMPR0;
+     WaitIdle();                  /* Don't ask... */
+     ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control = restore->MMPR1;
+     WaitIdle();                  
+     ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout = restore->MMPR2;
+     WaitIdle();
+     ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout = restore->MMPR3;
+
+     outb(vgaCRIndex, 0x53);
+     outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+   }
 
    outb(vgaCRIndex, 0x66);             
    outb(vgaCRReg, cr66);
@@ -583,18 +653,24 @@ unsigned char cr3a, cr53, cr66;
    save->CR36 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x3a);             
    save->CR3A = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x40);
-   save->CR40 = inb(vgaCRReg);
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) { 
+     outb(vgaCRIndex, 0x40);
+     save->CR40 = inb(vgaCRReg);
+   }
    outb(vgaCRIndex, 0x42);
    save->CR42 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x45);
    save->CR45 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x51);             
    save->CR51 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x53);             
-   save->CR53 = inb(vgaCRReg);
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x53);             
+     save->CR53 = inb(vgaCRReg);
+   }
    outb(vgaCRIndex, 0x54);             
    save->CR54 = inb(vgaCRReg);
+   outb(vgaCRIndex, 0x55);
+   save->CR55 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x58);             
    save->CR58 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x63);
@@ -615,7 +691,7 @@ unsigned char cr3a, cr53, cr66;
       save->CR86 = inb(vgaCRReg);
    }
    if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
-       S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
+       S3_ViRGE_MX_SERIES(s3vPriv.chip) || S3_TRIO_3D_SERIES(s3vPriv.chip)) {
       outb(vgaCRIndex, 0x90);
       save->CR90 = inb(vgaCRReg);
    }
@@ -664,16 +740,20 @@ unsigned char cr3a, cr53, cr66;
 
    outb(0x3c4, 0x15);
    save->SR15 = inb(0x3c5);
+   if (S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(0x3c4, 0x0A);
+     save->SR0A = inb(0x3c5);
+   }
    outb(0x3c4, 0x18);
    save->SR18 = inb(0x3c5);
 
 
    /* And if streams is to be used, save that as well */
-
-      outb(vgaCRIndex, 0x53);
-   cr53 = inb(vgaCRReg);
-   outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO to save MIU context */
-
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) { 
+     outb(vgaCRIndex, 0x53);
+     cr53 = inb(vgaCRReg);
+     outb(vgaCRReg, cr53 | 0x08);  /* Enable NEWMMIO to save MIU context */
+   }
    outb(vgaCRIndex, 0x66);
    cr66 = inb(vgaCRReg);
    outb(vgaCRReg, cr66 | 0x80);
@@ -685,24 +765,29 @@ unsigned char cr3a, cr53, cr66;
       S3VSaveSTREAMS(save->STREAMS);
       }
 
-   /* Now save Memory Interface Unit registers, enable MMIO for this */
-   save->MMPR0 = ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control;
-   save->MMPR1 = ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control;
-   save->MMPR2 = ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout;
-   save->MMPR3 = ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout;
+   if(!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     /* Now save Memory Interface Unit registers, enable MMIO for this */
+     save->MMPR0 = ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control;
+     save->MMPR1 = ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control;
+     save->MMPR2 = ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout;
+     save->MMPR3 = ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout;
 
-   if (xf86Verbose > 1) {
-      /* Debug */
-      ErrorF("MMPR regs: %08x %08x %08x %08x\n",
-         ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control,
-         ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control,
-         ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout,
-         ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout );
+     if (xf86Verbose > 1) {
+        /* Debug */
+        ErrorF("MMPR regs: %08x %08x %08x %08x\n",
+           ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control,
+           ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control,
+           ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout,
+           ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout );
 
       ErrorF("\n\nViRGE driver: saved current video mode. Register dump:\n\n");
+     }
    }
-   outb(vgaCRIndex, 0x53);
-   outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+
+   if(!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x53);
+     outb(vgaCRReg, cr53);   /* Restore CR53 to original for MMIO */
+   }
 
    outb(vgaCRIndex, 0x3a);
    outb(vgaCRReg, cr3a);
@@ -787,7 +872,8 @@ DisplayModePtr pMode, pEnd;
 	 pciInfo->ChipType != S3_ViRGE_DXGX &&
 	 pciInfo->ChipType != S3_ViRGE_GX2 &&
 	 pciInfo->ChipType != S3_ViRGE_MX &&
-	 pciInfo->ChipType != S3_ViRGE_MXP){
+	 pciInfo->ChipType != S3_ViRGE_MXP &&
+	 pciInfo->ChipType != S3_TRIO_3D){
           if (xf86Verbose > 1)
              ErrorF("%s %s: Unsupported (non-ViRGE) S3 chipset detected!\n", 
                 XCONFIG_PROBED, vga256InfoRec.name);
@@ -866,6 +952,17 @@ DisplayModePtr pMode, pEnd;
             vga256InfoRec.videoRam = 2 * 1024;
             break;
          }
+      }
+      else if (S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+        switch((config1 & 0xE0) >> 5) {
+        case 0:
+        case 2:
+           vga256InfoRec.videoRam = 4 * 1024;
+           break;
+        case 4:
+           vga256InfoRec.videoRam = 2 * 1024;
+           break;
+        }
       }
       else {
          switch((config1 & 0xE0) >> 5) {
@@ -946,6 +1043,12 @@ DisplayModePtr pMode, pEnd;
       if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 135000;
       if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 100000;
       if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 100000;
+   }
+   else if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+      if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 230000;
+      if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 230000;
+      if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 135000;
+      if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 135000;
    }
    else {
       if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 135000;
@@ -1279,6 +1382,9 @@ unsigned char tmp;
 int width,dclk;
 int i, j;
 
+   if (xf86Verbose > 1) {
+	ErrorF("switching to Mode %s\n",mode->name);
+   }
    /* First we adjust the horizontal timings if needed */
 
    if(s3vPriv.HorizScaleFactor != 1)
@@ -1306,15 +1412,21 @@ int i, j;
    else 
       new->CR3A = (tmp & 0x7f) | 0x15; /* ENH 256, PCI burst */
 
-   new->CR53 = 0x08;     /* Enables MMIO */
-   new->CR31 = 0x8c;     /* Dis. 64k window, en. ENH maps */    
+   if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     new->CR31 = 0x0c;               /* [trio3d] page 54 */
+   } else {
+     new->CR53 = 0x08;     /* Enables MMIO */
+     new->CR31 = 0x8c;     /* Dis. 64k window, en. ENH maps */    
+   }
 
    /* Enables S3D graphic engine and PCI disconnects */
    if(s3vPriv.chip == S3_ViRGE_VX){
       new->CR66 = 0x90;  
       new->CR63 = 0x09;
       }
-   else {
+   else if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     new->CR66 = 0x89;
+   } else {
       new->CR66 = 0x89; 
       new->CR63 = 0;
       }    
@@ -1344,15 +1456,24 @@ int i, j;
 
    dclk = vga256InfoRec.clock[mode->Clock];
    new->CR67 = 0x00;             /* Defaults */
-   new->SR15 = 0x03 | 0x80; 
+
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) 
+     new->SR15 = 0x03 | 0x80; 
+   else {
+     new->SR15 = 0x03; /* not clear if we may use 2 CYC MWR */
+     new->SR0A &= 0x7F;
+   }
    new->SR18 = 0x00;
    new->CR43 = 0x00;
    new->CR45 = 0x00;
    new->CR65 = 0x00;
    new->CR54 = 0x00;
+   new->CR55 = 0x00;
 
-   outb(vgaCRIndex, 0x40);
-   new->CR40 = inb(vgaCRReg) & ~0x01;
+   if (!S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+     outb(vgaCRIndex, 0x40);
+     new->CR40 = inb(vgaCRReg) & ~0x01;
+   }
    
    /* Memory controller registers. Optimize for better graphics engine 
     * performance. These settings are adjusted/overridden below for other bpp/
@@ -1484,6 +1605,45 @@ int i, j;
          new->SR12 = (ndiv & 0x1f) | ((ndiv & 0x60) << 1);
        }
    }
+   else if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+      if (vgaBitsPerPixel == 8) {
+         if(dclk > 115000) {                     /* We need pixmux */
+            new->CR67 = 0x10;
+            new->SR15 |= 0x10;                   /* Set DCLK/2 bit */
+            new->SR18 = 0x80;                   /* Enable pixmux */
+        }
+      }
+      else if ((vgaBitsPerPixel == 16) && (vga256InfoRec.weight.green == 5)) {
+        if(dclk > 115000) {
+           new->CR67 = 0x20;
+           new->SR15 |= 0x10;
+           new->SR18 = 0x80;
+        } else {
+           new->CR67 = 0x30;                       /* 15bpp */
+        }
+      }
+      else if (vgaBitsPerPixel == 16) {
+        if(dclk > 115000) {
+            new->CR67 = 0x40;
+            new->SR15 |= 0x10;
+            new->SR18 = 0x80;
+        } else {
+           new->CR67 = 0x50;
+        }
+      }
+      else if (vgaBitsPerPixel == 24) {
+         new->CR67 = 0xd0 | 0x0c;
+         S3VInitSTREAMS(new->STREAMS, mode);
+         new->MMPR0 = 0xc000;            /* Adjust FIFO slots */
+      }
+      else if (vgaBitsPerPixel == 32) {
+         new->CR67 = 0xd0 | 0x0c;
+         S3VInitSTREAMS(new->STREAMS, mode);
+         new->MMPR0 = 0x10000;            /* Still more FIFO slots */
+      }
+      commonCalcClock(dclk, 1, 1, 31, 0, 3,
+                     135000, 270000, &new->SR13, &new->SR12);
+   }
    else {           /* Is this correct for DX/GX as well? */
       if (vgaBitsPerPixel == 8) {
          if(dclk > 80000) {                     /* We need pixmux */
@@ -1582,10 +1742,10 @@ int i, j;
 
 
    new->CR33 = 0x20;
-   if (s3vPriv.chip == S3_ViRGE_DXGX) {
+   if ((s3vPriv.chip == S3_ViRGE_DXGX) || (S3_TRIO_3D_SERIES(s3vPriv.chip))) {
       new->CR86 = 0x80;  /* disable DAC power saving to avoid bright left edge */
    }
-   if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip)) {
+   if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_TRIO_3D_SERIES(s3vPriv.chip)) {
       new->CR90 = 0x00;  /* disable the stream display fetch length control */
    }
 	 
@@ -1649,6 +1809,8 @@ int i, j;
      new->SR55 = 0x80 ;
      new->SR56 = 0x10 ;
      new->SR57 = 0x80 ;
+   } else if(S3_TRIO_3D_SERIES(s3vPriv.chip)) {
+      /* not documented in [trio3d] */
    } else {
      new->SR54 = 0x1f ;
      new->SR55 = 0x9f ;
@@ -1872,65 +2034,51 @@ unsigned char tmp;
 void
 S3VPrintRegs(void)
 {
-unsigned char tmp1, tmp2;
+unsigned char tmp1, tmp2, lock;
+
+   /* First unlock extended sequencer regs */
+   outb(0x3c4, 0x08);
+   lock = inb(0x3c5);
+   outb(0x3c5, 0x06); 
 
    outb(0x3c4, 0x10);
    tmp1 = inb(0x3c5);
    outb(0x3c4, 0x11);
    tmp2 = inb(0x3c5);
-   ErrorF("SR10: %d SR11: %d\n", tmp1, tmp2);
+   ErrorF("SR10: %02x SR11: %02x\n", tmp1, tmp2);
 
    outb(0x3c4, 0x12);
    tmp1 = inb(0x3c5);
    outb(0x3c4, 0x13);
    tmp2 = inb(0x3c5);
-   ErrorF("SR12: %d SR13: %d\n", tmp1, tmp2);
+   ErrorF("SR12: %02x SR13: %02x\n", tmp1, tmp2);
 
    outb(0x3c4, 0x0a);
    tmp1 = inb(0x3c5);
    outb(0x3c4, 0x15);
    tmp2 = inb(0x3c5);
-   ErrorF("SR0A: %d SR15: %d\n", tmp1, tmp2);
+   ErrorF("SR0A: %02x SR15: %02x\n", tmp1, tmp2);
+
+   /* lock them again */
+   outb(0x3c4, 0x08);
+   outb(0x3c5, lock);
+
+  /* now unlock the crtc regs */
+   outb(0x3c4, 0x39);
+   lock = inb(0x3c5);
+   outb(0x3c5, 0xa0); 
+
 
    /* Now load and print a whole rnage of other regs */
-for(tmp1=0x0;tmp1<=0x0f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
+   for(tmp1=0x0;tmp1<=0x6f;tmp1++){
+      outb(vgaCRIndex, tmp1);
+      ErrorF("CR%02x:%02x ",tmp1,inb(vgaCRReg));
+      if(!(tmp1 & 7))
+	ErrorF("\n");
    }
-   ErrorF("\n");
-for(tmp1=0x10;tmp1<=0x1f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x20;tmp1<=0x2f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x30;tmp1<=0x3f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x40;tmp1<=0x4f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x50;tmp1<=0x59;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x5d;tmp1<=0x67;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
-   ErrorF("\n");
-for(tmp1=0x68;tmp1<=0x6f;tmp1++){
-   outb(vgaCRIndex, tmp1);
-   ErrorF("CR%02x:%d ",tmp1,inb(vgaCRReg));
-   }
+   /* lock them again */
+   outb(0x3c4, 0x39);
+   outb(0x3c5, lock);
+
    ErrorF("\n\n");
 }

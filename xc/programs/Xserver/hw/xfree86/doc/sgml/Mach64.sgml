@@ -5,7 +5,7 @@
 
 <title>Mach64 X Server Release Notes
 <author>Kevin E. Martin (martin@cs.unc.edu)
-<date>27 October 1998
+<date>1999 June 28
 
 <!-- Table of contents -->
 <toc>
@@ -340,9 +340,6 @@ ATI WinTurbo            2MB  Mach64 GX       (rev 1) with 68860-C RAMDAC
 There are several known problems with the current version of the
 Mach64 X server.  They include:
 <itemize>
-<item>The ATI Rage LT Pro chips found in many laptop computers are not
-       currently supported.  This chip will be supported in a future
-       release.
 <item>Gamma correction is not currently supported.  It will be
        supported in a future release.
 <item>Screen blanking in 16bpp and 32bpp modes on certain Mach64 CT
@@ -384,7 +381,7 @@ enhancements to the X server.  Thanks!
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach64.sgml,v 3.15.2.6 1998/11/13 05:15:00 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach64.sgml,v 3.15.2.7 1999/07/05 09:07:28 hohndel Exp $
 
 
 

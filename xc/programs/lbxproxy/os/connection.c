@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.4 1998/11/05 14:03:12 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.5 1999/06/30 13:00:41 hohndel Exp $ */
 /*
  *
  * The connection code/ideas for SVR4/Intel environments was contributed by
@@ -297,6 +297,34 @@ int retry;  /* boolean - retry if addr busy */
 }
 #endif /* TCPCONN */
 
+static int
+trans_mkdir(char *path, int mode)
+{
+    struct stat buf;
+
+    unlink(path);
+    if (mkdir(path, mode) == 0) {
+	/* I don't know why this is done, but  it was in the original
+	   xtrans code */
+	chmod(path, mode);
+	return 0;
+    }
+    /* If mkdir failed with EEXIST, test if it is a directory with
+       the right modes, else fail */
+    if (errno == EEXIST) {
+	if (lstat(path, &buf) != 0) {
+	    return -1;
+	}
+	if (S_ISDIR(buf.st_mode) && (buf.st_uid == 0 ) &&
+	    ((buf.st_mode & ~S_IFMT) == mode)) {
+	    return 0;
+	}
+    }
+    /* In all other cases, fail */
+    return -1;
+}
+
+
 #if defined(UNIXCONN) && !defined(LOCALCONN)
 
 static struct sockaddr_un unsock;
@@ -318,8 +346,11 @@ open_unix_socket ()
 #else
     mode = 0777;
 #endif
-    mkdir (X_UNIX_DIR, mode);
-    chmod (X_UNIX_DIR, mode);
+    if (trans_mkdir(X_UNIX_DIR, mode) == -1) {
+       Error ("open_unix_socket() mkdir error");
+       (void)umask (oldUmask);
+       return -1;
+    }
 #endif
     strcpy (unsock.sun_path, X_UNIX_PATH);
     strcat (unsock.sun_path, display);
@@ -351,6 +382,7 @@ open_unix_socket ()
     if ((request = socket (AF_UNIX, SOCK_STREAM, 0)) < 0) 
     {
 	Error ("Creating Unix socket");
+        (void)umask (oldUmask);
 	return -1;
     } 
 #ifdef BSD44SOCKETS
@@ -361,12 +393,14 @@ open_unix_socket ()
     {
 	Error ("Binding Unix socket");
 	close (request);
+        (void)umask (oldUmask);
 	return -1;
     }
     if (listen (request, 5))
     {
 	Error ("Unix Listening");
 	close (request);
+        (void)umask (oldUmask);
 	return -1;
     }
     (void)umask(oldUmask);
@@ -562,10 +596,16 @@ open_unix_local()
 #else
     mode = 0777;
 #endif
-    mkdir(X_STREAMS_DIR, mode); /* "/dev/X" */
-    chmod(X_STREAMS_DIR, mode);
-    mkdir(X_UNIX_DEVDIR, mode);
-    chmod(X_UNIX_DEVDIR, mode);
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+       Error ("open_unix_local() mkdir error");
+       (void)umask(oldUmask);
+       return -1;
+    }
+    if (trans_mkdir(X_UNIX_DEVDIR, mode) == -1) {
+       Error ("open_unix_local() mkdir error");
+       (void)umask(oldUmask);
+       return -1;
+    }
     strcpy(unsock.sun_path, X_UNIX_DEVPATH);
     strcat(unsock.sun_path, display);
     xlocal_unlink(unsock.sun_path);
@@ -587,8 +627,11 @@ open_unix_local()
 
     if (useSlashTmpForUNIX) {
 	char tmpPath[64];
-	mkdir(X_UNIX_DIR, mode);
-	chmod(X_UNIX_DIR, mode);
+        if (trans_mkdir(X_UNIX_DIR, mode) == -1) {
+          Error ("open_unix_local() mkdir error");
+          (void)umask(oldUmask);
+          return -1;
+        }
 	strcpy(tmpPath, X_UNIX_PATH);
 	strcat(tmpPath, display);
 	xlocal_unlink(tmpPath);
@@ -726,10 +769,14 @@ open_isc_local()
     char pathISC[64],pathX11[64];
     unsigned int mode;
 
-    mkdir(X_STREAMS_DIR, 0777); /* "/dev/X" */
-    chmod(X_STREAMS_DIR, 0777);
-    mkdir(X_ISC_DIR, 0777); /* "/dev/X/ISCCONN" */
-    chmod(X_ISC_DIR, 0777);
+   if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+          Error ("open_isc_local() mkdir error");
+          return -1;
+    }
+   if (trans_mkdir(X_ISC_DIR, mode) == -1) {
+          Error ("open_isc_local() mkdir error");
+          return -1;
+    }
 
     strcpy(pathISC, X_ISC_PATH);
     strcat(pathISC, display);
@@ -753,8 +800,10 @@ open_isc_local()
 #else
 		mode = 0777;
 #endif
-		mkdir(X_UNIX_DIR, mode);
-		chmod(X_UNIX_DIR, mode);
+                if (trans_mkdir(X_UNIX_DIR, mode) == -1) {
+                     Error ("open_isc_local() mkdir error");
+                     return -1;
+                }
 		strcpy(pathX11, X_UNIX_PATH);
 		strcat(pathX11, display);
 		if (xlocal_unlink(pathX11) < 0) {
@@ -950,8 +999,10 @@ open_pts_local()
 #else
     mode = 0777;
 #endif
-    mkdir(X_STREAMS_DIR, mode);
-    chmod(X_STREAMS_DIR, mode);
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+        Error ("open_isc_local() mkdir error");
+        return -1;
+    }
   
     strcpy(path, X_PTS_PATH);
     strcat(path, display);
@@ -1052,8 +1103,10 @@ open_named_local()
 #else
     mode = 0777;
 #endif
-    mkdir(X_STREAMS_DIR, mode);
-    chmod(X_STREAMS_DIR, mode);
+    if (trans_mkdir(X_STREAMS_DIR, mode) == -1) {
+        Error ("open_named_local() mkdir error");
+        return -1;
+    }
   
     strcpy(path, X_NAMED_PATH);
     strcat(path, display);

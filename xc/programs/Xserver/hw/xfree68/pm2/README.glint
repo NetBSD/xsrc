@@ -1,0 +1,65 @@
+$XFree86: xc/programs/Xserver/hw/xfree68/pm2/README.glint,v 1.1.2.1 1999/06/02 07:50:13 hohndel Exp $
+
+Dirk told me to create a README file for the glint driver, so I will
+do this now. :-)
+
+I suggest to add all the things that should be important to know for
+developping the driver (TODO, fixed BUGS, other important things).
+
+Here I just begin:
+
+TODO mentioned by Alan:
+-----------------------
+1. fix 16bpp/32bpp colour mapping. (32bpp fixed, see Done; Hack for
+   16bpp, see Hacks)
+
+2. update VT switching code to map/unmap the screen rather than using this
+horrible 8mb save/restore buffer. This would be a nice addition for all cards,
+not just the glint.
+
+3. Run xtest on what we've got and fix any subsequent problems. Try and
+get rid of GXCOPY_ONLY etc.
+
+TODO mentioned additionaly by Dirk (as far as I know):
+------------------------------------------------------
+- create this README
+- get as soon as possible a stable and fast Xserver :-)
+
+TODO mentioned additionaly by me (Stefan):
+------------------------------------------
+- get the driver also work this my mainboard at home (I don't get any  
+  fonts or icons at all, redraw doesn't work at all)
+- find out what's going wrong with xbench in 16bpp mode
+- fix redrawing bug, so you can't see any more on your clock when
+  you've started the server
+
+DONE:
+-----
+- 32bpp colour mapping fixed (Alan)
+- double effect with higher resolutions (> 4MB) in 32 bpp mode fixed (Alan)
+
+Hacks:
+------
+- when we disable line drawing acceleration, we get no 16bpp color
+  mapping bug or line drawing bug any more
+
+Bugs fixed:
+-----------
+- memory leak bug: we forgot to unmap framebuffer (fixed by Stefan)
+
+Other things to mention:
+------------------------
+- "hsyncstart" must be larger than "hdisp" (front black shoulder > 0),
+  otherwise your monitor gets no signal or an undefined flicker will
+  appear on your monitor. At least these are my experiences.
+
+- the glint developper group has a new member
+  Bart van den Broek <bartvdb@win.tue.nl> has joint this team to port
+  our work on the Elsa cards to the Diamond Fire series.
+
+Stefan
+
+email: sndirsch@suse.de
+
+
+

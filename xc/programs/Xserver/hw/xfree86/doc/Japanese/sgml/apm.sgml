@@ -1,0 +1,146 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!--
+<title> Information for Alliance Promotion chipset users
+-->
+<title> Alliance Promotion チップセットユーザ向けの情報
+<author> Henrik Harmsen (Henrik.Harmsen@erv.ericsson.se)
+<date> 23 February 1998
+<trans>The X Japanese Documentation Project
+<tdate>13 January 1999
+<toc>
+
+<!-- <sect> Support chipsets -->
+<sect> サポートしているチップセット
+<p>
+<!--
+The apm driver in the SVGA server is for Alliance Promotion
+(www.alsc.com) graphics chipsets. The following chipsets are supported:
+-->
+SVGA サーバの apm ドライバは Alliance Promotion(www.alsc.com)グラフィッ
+クスチップセット用です。以下に挙げるチップセットがサポートされています:
+
+<itemize>
+<item> 6422
+
+<!--
+	Old chipset without color expansion hardware (text accel).
+-->
+	色展開ハードウェア機能がない古いチップセット(テキストアクセラ
+	レーション)
+
+<item> AT24
+
+<!--
+	As found in Diamond Stealth Video 2500. Quite similar to AT3D.
+-->
+	Diamond Stealth Video 2500 で使われています。AT3D に非常に似て
+	います。
+
+<item> AT25, AT3D
+
+<!--
+  	AT3D is found in Hercules Stingray 128/3D. Most other Voodoo
+  	Rush based cards use the AT25 which is identical except it
+  	doesn't have the 3D stuff in it.
+-->
+  	AT3D は Hercules Stingray 128/3D で使われています。Voodoo
+  	Rush ベースの他のカードのほとんどが AT25 を使っています。
+  	これは、3D のサポートが無い以外は全く同じものです。
+</itemize>
+
+<!-- <sect> Acceleration -->
+<sect> アクセラレーション
+<p>
+<!--
+The apm driver uses the XAA (XFree86 Acceleration Architecture) in the 
+SVGA server. It has support for the following acceleration:
+-->
+apm ドライバは SVGA ドライバで XAA(XFree86 Acceleration Architecture) 
+を使っています。このドライバは以下のアクセラレーションをサポートしてい
+ます:
+
+<!--
+<itemize>
+<item> Bitblts (rectangle copy operation)
+<item> Lines (solid, single pixel)
+<item> Filled rectangles
+<item> CPU->Screen colour expansion (text accel). Not for 6422.
+<item> Hardware cursor
+</itemize>
+-->
+<itemize>
+<item> bitblt (長方形領域のコピー操作)
+<item> 線 (実線、単独のピクセル)
+<item> 塗りつぶした長方形
+<item> CPU->スクリーンの色展開(テキストアクセラレーション)。6422 では
+使えません。
+<item> ハードウェアカーソル
+</itemize>
+
+<!--
+All in 8, 16 and 32 bpp modes. No 24bpp mode is supported.
+Also VESA DPMS power save mode is fully supported with "standby",
+"suspend" and "off" modes (set with with the "xset dpms" command).
+-->
+8, 16, 32 bpp モードは全て使えます。24bpp モードはサポートされていませ
+ん。VESA DPMS 省電力モードは完全にサポートされており、"standby",
+"suspend", "off" モードが使えます(設定は "xset dpms" コマンドで行いま
+す)。
+
+<!-- <sect> Configuration -->
+<sect> 設定
+<p>
+<!--
+First: Please run the XF86Setup program to create a correct
+configuration.
+-->
+最初に: XF86Setup を実行して、正しい設定を行ってください。
+
+<!--
+You can turn off hardware cursor by inserting the following line in the
+Device section of the XF86Config file:
+-->
+ハードウェアカーソルを無効にするには、以下の行を XF86Config ファイルの 
+Device セクションに挿入します:
+
+  Option "sw_cursor"
+
+<!--
+Or turn off hardware acceleration:
+-->
+ハードウェアアクセラレーションを無効にするには、以下の行を挿入します:
+
+  Option "noaccel"
+
+<!--
+Please don't specify the amount of video RAM you have or which chipset
+you have in the config file, let the driver probe for this. Also please
+don't put any "clocks" line in the device section since these chips have
+a fully programmable clock that can take (almost) any modeline you throw
+at it. It might fail at some specific clock values but you should just
+try a slightly different clock and it should work.
+-->
+搭載しているビデオ RAM の量や使っているチップセットを設定ファイル
+で指定せず、ドライバに検出させるようにしてください。また、Device セク
+ションには "clocks" 行を書かないでください。なぜなら、これらのチップは
+完全にプログラマブルなクロックを持っており、ユーザが指定する(ほとんど)
+全てのモード行を受け入れることができるからです。特定のクロック値で設定
+に失敗することもありますが、その場合には少しだけクロック値を変えればう
+まく動作するはずです。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/apm.sgml,v 1.1.2.1 1999/05/25 06:39:27 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+Project にあります。
+</article>

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.c,v 1.1.2.1 1998/02/01 16:41:48 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.c,v 1.1.2.2 1999/07/05 09:07:32 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,6 +43,10 @@ CARD8 ATICRTC = ATI_CRTC_VGA;
 
 /* The current video mode */
 ATIHWPtr ATICurrentHWPtr;
+
+/* LCD porch data */
+static int ATILCDHSyncStart, ATILCDHSyncWidth, ATILCDHBlankWidth,
+           ATILCDVSyncStart, ATILCDVSyncWidth, ATILCDVBlankWidth;
 
 /*
  * ATICopyVGAMemory --
@@ -237,6 +241,7 @@ void *
 ATISave(void *data)
 {
     ATIHWPtr save = data;
+    int      Index;
 
     /* If need be, allocate the data structure */
     if (!save)
@@ -267,6 +272,39 @@ ATISave(void *data)
 
     /* Save clock data */
     ATIClockSave(save);
+    if (ATIChip >= ATI_CHIP_264LT)
+        save->pll_ext_vpll_cntl = ATIGetMach64PLLReg(PLL_EXT_VPLL_CNTL);
+
+    /* Save LCD registers */
+    if (ATILCDPanelID >= 0)
+    {
+        if (ATIChip == ATI_CHIP_264LT)
+        {
+            save->horz_stretching = inl(ATIIOPortHORZ_STRETCHING);
+            save->vert_stretching = inl(ATIIOPortVERT_STRETCHING);
+            save->lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
+            save->power_management = inl(ATIIOPortPOWER_MANAGEMENT);
+
+            /* Setup to save non-shadow registers */
+            outl(ATIIOPortLCD_GEN_CTRL, save->lcd_gen_ctrl &
+                ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+        }
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+        {
+            save->lcd_index = inl(ATIIOPortLCD_INDEX);
+            save->config_panel = ATIGetLTProLCDReg(LCD_CONFIG_PANEL);
+            save->lcd_gen_ctrl = ATIGetLTProLCDReg(LCD_GEN_CNTL);
+            save->horz_stretching = ATIGetLTProLCDReg(LCD_HORZ_STRETCHING);
+            save->vert_stretching = ATIGetLTProLCDReg(LCD_VERT_STRETCHING);
+            save->ext_vert_stretch = ATIGetLTProLCDReg(LCD_EXT_VERT_STRETCH);
+            save->power_management = ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT);
+
+            /* Setup to save non-shadow registers */
+            ATIPutLTProLCDReg(LCD_GEN_CNTL, save->lcd_gen_ctrl &
+                ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+        }
+    }
 
     switch (save->crtc)
     {
@@ -308,6 +346,40 @@ ATISave(void *data)
     if ((ATIChip >= ATI_CHIP_264VTB) && (ATIIODecoding == BLOCK_IO))
         ATIDSPSave(save);
 
+    if (ATILCDPanelID >= 0)
+    {
+        /* Switch to shadow registers */
+        if (ATIChip == ATI_CHIP_264LT)
+            outl(ATIIOPortLCD_GEN_CTRL,
+                (save->lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+                (SHADOW_EN | SHADOW_RW_EN));
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+            ATIPutLTProLCDReg(LCD_GEN_CNTL,
+                (save->lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+                (SHADOW_EN | SHADOW_RW_EN));
+
+        /* Save shadow VGA CRTC registers */
+        for (Index = 0;  Index < NumberOf(save->shadow_vga);  Index++)
+            save->shadow_vga[Index] = GetReg(CRTX(vgaIOBase), Index);
+
+        /* Save shadow Mach64 CRTC registers */
+        save->shadow_h_total_disp = inl(ATIIOPortCRTC_H_TOTAL_DISP);
+        save->shadow_h_sync_strt_wid = inl(ATIIOPortCRTC_H_SYNC_STRT_WID);
+        save->shadow_v_total_disp = inl(ATIIOPortCRTC_V_TOTAL_DISP);
+        save->shadow_v_sync_strt_wid = inl(ATIIOPortCRTC_V_SYNC_STRT_WID);
+
+        /* Restore CRTC selection and shadow state */
+        if (ATIChip == ATI_CHIP_264LT)
+            outl(ATIIOPortLCD_GEN_CTRL, save->lcd_gen_ctrl);
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+        {
+            ATIPutLTProLCDReg(LCD_GEN_CNTL, save->lcd_gen_ctrl);
+            outl(ATIIOPortLCD_INDEX, save->lcd_index);
+        }
+    }
+
     /* Save RAMDAC state */
     ATIDACSave(save);
 
@@ -342,6 +414,9 @@ ATISave(void *data)
 Bool
 ATIInit(DisplayModePtr mode)
 {
+    CARD32 lcd_index;
+    int    Index;
+
     /* Unlock registers */
     ATIEnterLeave(ENTER);
 
@@ -499,11 +574,152 @@ ATIInit(DisplayModePtr mode)
                 break;
         }
 
+        /* For now disable extended reference and feedback dividers */
+        if (ATIChip >= ATI_CHIP_264LT)
+            ATINewHWPtr->pll_ext_vpll_cntl =
+                ATIGetMach64PLLReg(PLL_EXT_VPLL_CNTL) &
+                    ~(PLL_EXT_VPLL_EN | PLL_EXT_VPLL_VGA_EN |
+                      PLL_EXT_VPLL_INSYNC);
+
+        if (ATILCDPanelID >= 0)
+        {
+            int HDisplay, VDisplay;
+
+            if (ATIChip == ATI_CHIP_264LT)
+            {
+                ATINewHWPtr->lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
+                ATINewHWPtr->power_management = inl(ATIIOPortPOWER_MANAGEMENT);
+            }
+            else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                        (ATIChip == ATI_CHIP_264XL)) */
+            {
+                lcd_index = inl(ATIIOPortLCD_INDEX);
+                ATINewHWPtr->lcd_index = (lcd_index &
+                    ~(LCD_REG_INDEX | LCD_DISPLAY_DIS | LCD_SRC_SEL)) |
+                    (LCD_SRC_SEL_CRTC1 | LCD_CRTC2_DISPLAY_DIS);
+                ATINewHWPtr->config_panel =
+                    ATIGetLTProLCDReg(LCD_CONFIG_PANEL) | DONT_SHADOW_HEND;
+                ATINewHWPtr->lcd_gen_ctrl = ATIGetLTProLCDReg(LCD_GEN_CNTL);
+                ATINewHWPtr->power_management =
+                    ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT);
+                outl(ATIIOPortLCD_INDEX, lcd_index);
+            }
+
+            /*
+             * Use primary CRTC to drive the panel.  Turn off CRT interface.
+             */
+            ATINewHWPtr->lcd_gen_ctrl = (ATINewHWPtr->lcd_gen_ctrl &
+                ~(CRT_ON | CRTC_RW_SELECT | LOCK_8DOT |
+                  HORZ_DIVBY2_EN | DIS_HOR_CRT_DIVBY2 |
+                  USE_SHADOWED_VEND | USE_SHADOWED_ROWCUR |
+                  SHADOW_EN | SHADOW_RW_EN)) | DONT_SHADOW_VPAR;
+
+            /* Disable power-management */
+            ATINewHWPtr->power_management &= ~PWR_MGT_ON;
+
+            /*
+             * Determine porch data.  The intent here is to produce stretched
+             * modes that approximate the horizontal sync and vertical refresh
+             * rates of the mode on server entry (which, BTW, might not have
+             * been saved yet).  Use the newly allocated ATIHWRec for temporary
+             * register storage.
+             */
+            if (inl(ATIIOPortCRTC_GEN_CNTL) & CRTC_EXT_DISP_EN)
+            {
+                ATINewHWPtr->crtc_h_total_disp =
+                    inl(ATIIOPortCRTC_H_TOTAL_DISP);
+                ATINewHWPtr->crtc_h_sync_strt_wid =
+                    inl(ATIIOPortCRTC_H_SYNC_STRT_WID);
+                ATINewHWPtr->crtc_v_total_disp =
+                    inl(ATIIOPortCRTC_V_TOTAL_DISP);
+                ATINewHWPtr->crtc_v_sync_strt_wid =
+                    inl(ATIIOPortCRTC_V_SYNC_STRT_WID);
+
+                HDisplay =
+                    GetBits(ATINewHWPtr->crtc_h_total_disp, CRTC_H_DISP);
+                VDisplay =
+                    GetBits(ATINewHWPtr->crtc_v_total_disp, CRTC_V_DISP);
+
+                ATILCDHSyncStart =
+                    (GetBits(ATINewHWPtr->crtc_h_sync_strt_wid,
+                        CRTC_H_SYNC_STRT_HI) * (MaxBits(CRTC_H_SYNC_STRT) + 1))
+                    +
+                    GetBits(ATINewHWPtr->crtc_h_sync_strt_wid,
+                        CRTC_H_SYNC_STRT) - HDisplay;
+                ATILCDHSyncWidth =
+                    GetBits(ATINewHWPtr->crtc_h_sync_strt_wid,
+                        CRTC_H_SYNC_WID);
+                ATILCDHBlankWidth =
+                    GetBits(ATINewHWPtr->crtc_h_total_disp, CRTC_H_TOTAL) -
+                    HDisplay;
+                ATILCDVSyncStart =
+                    GetBits(ATINewHWPtr->crtc_v_sync_strt_wid,
+                        CRTC_V_SYNC_STRT) - VDisplay;
+                ATILCDVSyncWidth =
+                    GetBits(ATINewHWPtr->crtc_v_sync_strt_wid,
+                        CRTC_V_SYNC_WID);
+                ATILCDVBlankWidth =
+                    GetBits(ATINewHWPtr->crtc_v_total_disp, CRTC_V_TOTAL) -
+                    VDisplay;
+            }
+            else
+            {
+                ATINewHWPtr->std.CRTC[0] = GetReg(CRTX(vgaIOBase), 0x00U);
+                ATINewHWPtr->std.CRTC[1] = GetReg(CRTX(vgaIOBase), 0x01U);
+                ATINewHWPtr->std.CRTC[4] = GetReg(CRTX(vgaIOBase), 0x04U);
+                ATINewHWPtr->std.CRTC[5] = GetReg(CRTX(vgaIOBase), 0x05U);
+                ATINewHWPtr->std.CRTC[6] = GetReg(CRTX(vgaIOBase), 0x06U);
+                ATINewHWPtr->std.CRTC[7] = GetReg(CRTX(vgaIOBase), 0x07U);
+                ATINewHWPtr->std.CRTC[16] = GetReg(CRTX(vgaIOBase), 0x10U);
+                ATINewHWPtr->std.CRTC[17] = GetReg(CRTX(vgaIOBase), 0x11U);
+                ATINewHWPtr->std.CRTC[18] = GetReg(CRTX(vgaIOBase), 0x12U);
+
+                HDisplay = ATINewHWPtr->std.CRTC[1] + 1;
+                VDisplay = (((ATINewHWPtr->std.CRTC[7] << 3) & 0x0200U) |
+                            ((ATINewHWPtr->std.CRTC[7] << 7) & 0x0100U) |
+                            ATINewHWPtr->std.CRTC[18]) + 1;
+
+                ATILCDHSyncStart = ATINewHWPtr->std.CRTC[4] - HDisplay;
+                ATILCDHSyncWidth = 0x1FU &
+                    (ATINewHWPtr->std.CRTC[5] - ATINewHWPtr->std.CRTC[4]);
+                ATILCDHBlankWidth = ATINewHWPtr->std.CRTC[0] + 5 - HDisplay;
+                ATILCDVSyncStart =
+                    (((ATINewHWPtr->std.CRTC[7] << 2) & 0x0200U) |
+                     ((ATINewHWPtr->std.CRTC[7] << 6) & 0x0100U) |
+                     ATINewHWPtr->std.CRTC[16]) - VDisplay;
+                ATILCDVSyncWidth = 0x0FU &
+                    (ATINewHWPtr->std.CRTC[17] - ATINewHWPtr->std.CRTC[16]);
+                ATILCDVBlankWidth =
+                    (((ATINewHWPtr->std.CRTC[7] << 4) & 0x0200U) |
+                     ((ATINewHWPtr->std.CRTC[7] << 8) & 0x0100U) |
+                     ATINewHWPtr->std.CRTC[6]) + 2 - VDisplay;
+            }
+
+            ATILCDHSyncStart <<= 3;
+            ATILCDHSyncWidth <<= 3;
+            ATILCDHBlankWidth <<= 3;
+        }
+
         /* Set RAMDAC data */
         ATIDACInit(NULL);
     }
 
     ATINewHWPtr->mode = mode;           /* Link with mode line */
+
+    if (!(mode->CrtcHAdjusted) && /* !(mode->CrtcVAdjusted) && */
+        (ATILCDPanelID >= 0))
+    {
+        /* Clobber mode timings */
+        mode->Flags &= ~(V_DBLSCAN | V_INTERLACE | V_CLKDIV2);
+
+        mode->HSyncStart = mode->HDisplay + ATILCDHSyncStart;
+        mode->HSyncEnd = mode->HSyncStart + ATILCDHSyncWidth;
+        mode->HTotal = mode->HDisplay + ATILCDHBlankWidth;
+
+        mode->VSyncStart = mode->VDisplay + ATILCDVSyncStart;
+        mode->VSyncEnd = mode->VSyncStart + ATILCDVSyncWidth;
+        mode->VTotal = mode->VDisplay + ATILCDVBlankWidth;
+    }
 
     switch (ATINewHWPtr->crtc)
     {
@@ -561,6 +777,71 @@ ATIInit(DisplayModePtr mode)
             break;
     }
 
+    /* Set LCD register values */
+    if (ATILCDPanelID >= 0)
+    {
+        if (ATIChip == ATI_CHIP_264LT)
+        {
+            ATINewHWPtr->horz_stretching = inl(ATIIOPortHORZ_STRETCHING);
+            ATINewHWPtr->vert_stretching = inl(ATIIOPortVERT_STRETCHING);
+        }
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+        {
+            lcd_index = inl(ATIIOPortLCD_INDEX);
+            ATINewHWPtr->horz_stretching =
+                ATIGetLTProLCDReg(LCD_HORZ_STRETCHING);
+            ATINewHWPtr->vert_stretching =
+                ATIGetLTProLCDReg(LCD_VERT_STRETCHING);
+            ATINewHWPtr->ext_vert_stretch =
+                ATIGetLTProLCDReg(LCD_EXT_VERT_STRETCH) &
+                  ~(AUTO_VERT_RATIO | VERT_STRETCH_MODE);
+
+            /*
+             * FIXME:  On a 1024x768 panel, vertical blending does not work
+             *         when HDisplay is greater than 896.
+             */
+            if ((mode->HDisplay < ATILCDHorizontal) &&
+                (mode->VDisplay < ATILCDVertical))
+                ATINewHWPtr->ext_vert_stretch |= VERT_STRETCH_MODE;
+
+            outl(ATIIOPortLCD_INDEX, lcd_index);
+        }
+
+        ATINewHWPtr->horz_stretching &=
+            ~(HORZ_STRETCH_RATIO | HORZ_STRETCH_LOOP | HORZ_STRETCH_MODE |
+              HORZ_STRETCH_EN);
+        if (mode->HDisplay < ATILCDHorizontal)
+            ATINewHWPtr->horz_stretching |=
+                SetBits(((mode->HDisplay & ~7) *
+                    (MaxBits(HORZ_STRETCH_BLEND) + 1)) /
+                    ATILCDHorizontal, HORZ_STRETCH_BLEND) |
+                (HORZ_STRETCH_MODE | HORZ_STRETCH_EN);
+
+        if (mode->VDisplay >= ATILCDVertical)
+            ATINewHWPtr->vert_stretching &= ~VERT_STRETCH_EN;
+        else
+        {
+            ATINewHWPtr->vert_stretching &= ~VERT_STRETCH_RATIO0;
+            ATINewHWPtr->vert_stretching |=
+                SetBits((mode->VDisplay * (MaxBits(VERT_STRETCH_RATIO0) + 1)) /
+                    ATILCDVertical, VERT_STRETCH_RATIO0);
+            ATINewHWPtr->vert_stretching |=
+                VERT_STRETCH_USE0 | VERT_STRETCH_EN;
+        }
+
+        /* Copy non-shadow CRTC register values to the shadow set */
+        for (Index = 0;  Index < NumberOf(ATINewHWPtr->std.CRTC);  Index++)
+            ATINewHWPtr->shadow_vga[Index] = ATINewHWPtr->std.CRTC[Index];
+
+        ATINewHWPtr->shadow_h_total_disp = ATINewHWPtr->crtc_h_total_disp;
+        ATINewHWPtr->shadow_h_sync_strt_wid =
+            ATINewHWPtr->crtc_h_sync_strt_wid;
+        ATINewHWPtr->shadow_v_total_disp = ATINewHWPtr->crtc_v_total_disp;
+        ATINewHWPtr->shadow_v_sync_strt_wid =
+            ATINewHWPtr->crtc_v_sync_strt_wid;
+    }
+
     /* Fill in RAMDAC data */
     ATIDACInit(mode);
 
@@ -582,6 +863,7 @@ void
 ATIRestore(void *data)
 {
     ATIHWPtr restore = data;
+    int      Index;
 
     /* Unlock registers */
     ATIEnterLeave(ENTER);
@@ -603,6 +885,46 @@ ATIRestore(void *data)
     ATISelectBankFunction = restore->bank_function;
     ATICurrentBanks = restore->banks;
     ATICurrentPlanes = restore->planes;
+
+    if (ATIChip >= ATI_CHIP_264LT)
+        ATIPutMach64PLLReg(PLL_EXT_VPLL_CNTL, restore->pll_ext_vpll_cntl);
+
+    /* Load LCD registers */
+    if (ATILCDPanelID >= 0)
+    {
+        /* Stop CRTC */
+        outl(ATIIOPortCRTC_GEN_CNTL, restore->crtc_gen_cntl &
+            ~(CRTC_EXT_DISP_EN | CRTC_EN));
+
+        if (ATIChip == ATI_CHIP_264LT)
+        {
+            /* Update non-shadow registers first */
+            outl(ATIIOPortLCD_GEN_CTRL, restore->lcd_gen_ctrl &
+                ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+            /* Temporarily disable stretching */
+            outl(ATIIOPortHORZ_STRETCHING, restore->horz_stretching &
+                ~(HORZ_STRETCH_MODE | HORZ_STRETCH_EN));
+            outl(ATIIOPortVERT_STRETCHING, restore->vert_stretching &
+                ~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+                  VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+        }
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+        {
+            /* Update non-shadow registers first */
+            ATIPutLTProLCDReg(LCD_CONFIG_PANEL, restore->config_panel);
+            ATIPutLTProLCDReg(LCD_GEN_CNTL, restore->lcd_gen_ctrl &
+                ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+
+            /* Temporarily disable stretching */
+            ATIPutLTProLCDReg(LCD_HORZ_STRETCHING, restore->horz_stretching &
+                ~(HORZ_STRETCH_MODE | HORZ_STRETCH_EN));
+            ATIPutLTProLCDReg(LCD_VERT_STRETCHING, restore->vert_stretching &
+                ~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
+                  VERT_STRETCH_USE0 | VERT_STRETCH_EN));
+        }
+    }
 
     switch (restore->crtc)
     {
@@ -673,6 +995,63 @@ ATIRestore(void *data)
 
         default:
             break;
+    }
+
+    if (ATILCDPanelID >= 0)
+    {
+        /* Switch to shadow registers */
+        if (ATIChip == ATI_CHIP_264LT)
+            outl(ATIIOPortLCD_GEN_CTRL,
+                (restore->lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+                (SHADOW_EN | SHADOW_RW_EN));
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+            ATIPutLTProLCDReg(LCD_GEN_CNTL,
+                (restore->lcd_gen_ctrl & ~CRTC_RW_SELECT) |
+                (SHADOW_EN | SHADOW_RW_EN));
+
+        switch (restore->crtc)
+        {
+            case ATI_CRTC_VGA:
+                /* Restore shadow VGA CRTC registers */
+                for (Index = 0;
+                     Index < NumberOf(restore->shadow_vga);
+                     Index++)
+                    PutReg(CRTX(vgaIOBase), Index, restore->shadow_vga[Index]);
+                break;
+
+            case ATI_CRTC_MACH64:
+                /* Restore shadow Mach64 CRTC registers */
+                outl(ATIIOPortCRTC_H_TOTAL_DISP, restore->shadow_h_total_disp);
+                outl(ATIIOPortCRTC_H_SYNC_STRT_WID,
+                    restore->shadow_h_sync_strt_wid);
+                outl(ATIIOPortCRTC_V_TOTAL_DISP, restore->shadow_v_total_disp);
+                outl(ATIIOPortCRTC_V_SYNC_STRT_WID,
+                    restore->shadow_v_sync_strt_wid);
+                break;
+
+            default:
+                break;
+        }
+
+        /* Restore CRTC selection and shadow state & enable stretching */
+        if (ATIChip == ATI_CHIP_264LT)
+        {
+            outl(ATIIOPortLCD_GEN_CTRL, restore->lcd_gen_ctrl);
+            outl(ATIIOPortHORZ_STRETCHING, restore->horz_stretching);
+            outl(ATIIOPortVERT_STRETCHING, restore->vert_stretching);
+            outl(ATIIOPortPOWER_MANAGEMENT, restore->power_management);
+        }
+        else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                    (ATIChip == ATI_CHIP_264XL)) */
+        {
+            ATIPutLTProLCDReg(LCD_GEN_CNTL, restore->lcd_gen_ctrl);
+            ATIPutLTProLCDReg(LCD_HORZ_STRETCHING, restore->horz_stretching);
+            ATIPutLTProLCDReg(LCD_VERT_STRETCHING, restore->vert_stretching);
+            ATIPutLTProLCDReg(LCD_EXT_VERT_STRETCH, restore->ext_vert_stretch);
+            ATIPutLTProLCDReg(LCD_POWER_MANAGEMENT, restore->power_management);
+            outl(ATIIOPortLCD_INDEX, restore->lcd_index);
+        }
     }
 
     /*

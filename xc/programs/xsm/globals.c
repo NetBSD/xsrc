@@ -24,6 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 ******************************************************************************/
+/* $XFree86: xc/programs/xsm/globals.c,v 1.1.1.1.4.2 1999/04/17 16:01:27 hohndel Exp $ */
 
 #include <X11/ICE/ICEutil.h>
 
@@ -36,6 +37,7 @@ List		*RestartAnywayList;
 List		*RestartImmedList;
 
 List		*WaitForSaveDoneList;
+List		*InitialSaveList;
 List		*FailedSaveList;
 List		*WaitForInteractList;
 List		*WaitForPhase2List;

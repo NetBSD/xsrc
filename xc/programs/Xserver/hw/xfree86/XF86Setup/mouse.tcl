@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mouse.tcl,v 3.19.2.9 1998/02/28 04:47:06 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mouse.tcl,v 3.19.2.10 1999/04/21 07:21:06 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -40,7 +40,7 @@ proc Mouse_proto_select { win } {
 	$canv itemconfigure coord -fill black
 	if {[lsearch -exact {BusMouse Xqueue OSMouse PS/2 IMPS/2
 			     ThinkingMousePS/2 MouseManPlusPS/2 GlidePointPS/2 
-			     NetMousePS/2 NetScrollPS/2 SysMouse} \
+			     NetMousePS/2 NetScrollPS/2 SysMouse wsmouse} \
 			     $mseType] == -1} {
 		foreach rate {1200 2400 4800 9600} {
 			$w.mouse.brate.$rate configure -state normal
@@ -667,6 +667,8 @@ proc Mouse_defaultdevice { mousetype } {
 					/dev/.*bm|/dev/mse.* ] }
 		SysMouse { set idx [lsearch -regexp $mseDevices \
 					/dev/sysmouse.* ] }
+		wsmouse { set idx [lsearch -regexp $mseDevices \
+					/dev/wsmouse.* ] }
 		OsMouse  -
 		Xqueue	 { return "" }
 		default	 { set idx [lsearch -regexp $mseDevices \

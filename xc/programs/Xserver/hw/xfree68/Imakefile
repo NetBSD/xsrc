@@ -3,14 +3,15 @@ XCOMM $XConsortium: Imakefile /main/2 1996/10/25 11:32:34 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/Imakefile,v 3.3 1996/12/27 06:51:49 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/Imakefile,v 3.3.2.2 1999/06/02 07:50:08 hohndel Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
 
 SCREENS = fbdev
 
-SUBDIRS = os-support common $(SCREENS) doc $(XF86SETUPDIR) etc LinkKit
+SUBDIRS = os-support common $(SCREENS) doc $(XF86SETUPDIR) etc LinkKit \
+	  77c32blt mach64 imstt pm2
 
 XF86CONFIG = XF86Config
 

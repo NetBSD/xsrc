@@ -4,16 +4,14 @@
  
 <title>Information for Linux Users
 <author>Orest Zborowski, Dirk Hohndel
-<date>December 23, 1998
+<date>June 25, 1999
 <toc>
 
 <sect>Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.36 and several 2.1.x kernels.
-It works just fine with all 2.1.x kernels tested (including
-2.1.131). It should work with any version since 1.0 without change. The 
-binaries and libraries are based on the 5.3.12 Elf C libraries, and the 
-1.7.14 dynamic linker <tt>ld.so</tt>. You will at least need the 5.2.x Elf 
-C libraries to successfully use the servers.
+XFree86 has been tested with Linux version 2.0.36, 2.2.7 and several 
+2.3.x kernels.
+It should work with any version since 1.0 without change. 
+Binaries both against libc5 and libc6 are available.
 
 <sect>Backwards Compatibility <p>
 X11R6 is considered a major update from X11R5, so the shared
@@ -43,7 +41,7 @@ url="RELNOTES.html">.
 
 <sect>Running XFree86 <p>
 XFree86 requires about 4mb of virtual memory to run, although
-having 8mb of RAM is probably the minimum comfortable configuration. A 387
+having 16mb of RAM is probably the minimum comfortable configuration. A 387
 coprocessor is helpful for 386 machines, although greater gains in
 interactive performance are obtained with an increase in physical memory.
 Also, a faster graphics card, bus or RAM, will improve server performance.
@@ -139,7 +137,7 @@ The xdm binary provided should run with both shadow- and non-shadow password
 systems.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.7 1998/12/23 13:36:26 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.8 1999/06/25 08:57:14 hohndel Exp $
 
 
 

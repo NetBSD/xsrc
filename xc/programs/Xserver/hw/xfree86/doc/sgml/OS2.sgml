@@ -3,11 +3,11 @@
 <article>
 <title>README for XFree86 on OS/2
 <author>Holger Veit
-<Date>Last modified on: December 29, 1998
+<Date>Last modified on: July 6th, 1999
 
 <toc>
 
-<sect>Introductory Note about the release 3.3.3
+<sect>Introductory Note about the release 3.3.4
 <p>
 Before looking into this file, please check for any LATEST.OS2 files
 that may come with the binary distribution. Please also check out the
@@ -19,22 +19,22 @@ following XFree86/OS2 WWW pages:
 </itemize>
 before you claim to have found any problems.
 
-This version of the code is called XFree86/OS2 3.3.3. This is a
-bugfix release for 3.3 and later which also adds hardware support for
-some newer cards (including AGP boards). XFree86-3.3.3 contains all
+This version of the code is called XFree86/OS2 3.3.4. This is a
+bugfix release for 3.3.3 and later which also adds hardware support for
+some newer cards (including AGP boards). XFree86-3.3.4 contains all
 security fixes that were released for earlier versions. See the
 RELNOTES document for details. 
 
-XFree86/OS2-3.3.3 is a full, unrestricted version which does not
+XFree86/OS2-3.3.4 is a full, unrestricted version which does not
 expire, and for which the complete  source code is available. In
 contrast to beta versions, we consider this  code as sufficiently
 stable for use by an end user. Since there  have been numerous
-bugfixes, we recommend this version, even if you had  XFree86/OS2 3.3
+bugfixes, we recommend this version, even if you had  XFree86/OS2 3.3.x
 before and it worked satisfyingly with your hardware. By the time
-3.3.3 is released, the older version 3.3 will be withdrawn, and
+3.3.4 is released, the older version 3.3 will be withdrawn, and
 archives will be updated to this version. There may still be
-references  to 3.3 still in documents; these apply to 3.3.3 as well,
-unless otherwise noted.
+references  to 3.3 or 3.3.x still in documents; these apply 
+to 3.3.4 as well, unless otherwise noted.
 
 Previous versions have been tested in a large number of configurations
 and have been found to be working, with some bugs left, rather flawlessly.
@@ -85,13 +85,13 @@ See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 <!--
 The sources for XFree86/OS2 are available by anonymous ftp from:
 
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.3/source"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.3/source">
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.4/source"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.4/source">
 -->
 
 Binaries for OS/2 Warp and Merlin are available from:
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.3/OS2"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.3/OS2">
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.4/OS2"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.4/OS2">
 <p>
 The WWW page
 <htmlurl name="http://borneo.gmd.de/~veit/os2/xf86os2.html"
@@ -159,7 +159,7 @@ this file and we'll revise it.
 <p>
 <itemize>
 <item>Any version of Warp 3 with at least fixpack 17, or Warp 4 is required
-<item>XFree86/OS2-3.3.3 may use a local named-pipe connection or a TCP/IP 
+<item>XFree86/OS2-3.3.4 may use a local named-pipe connection or a TCP/IP 
        based network connection.
        <enum>
        <item>Warp comes with the Internet Access Kit (IAK), which is
@@ -210,44 +210,44 @@ were ported to XFree86.
 <descrip>
 <tag/REQUIRED:/
     <descrip>
-    <tag/X333base/	A special device driver and the SuperProbe program
-    <tag/X333doc/	READMEs and XFree86 specific man pages.
-    <tag/X333bin/	all of the executable X client applications and shared libs
-    <tag/X333fnts/	the misc and 75dpi fonts
+    <tag/Xbase/	A special device driver and the SuperProbe program
+    <tag/Xdoc/	READMEs and XFree86 specific man pages.
+    <tag/Xbin/	all of the executable X client applications and shared libs
+    <tag/Xfnts/	the misc and 75dpi fonts
     <tag/emxrt/         Runtime libraries of EMX
     </descrip>
 
     Choose at least one of the following to match your hardware:
 
     <descrip>
-    <tag/X3338514/	the X server for IBM 8514/A and compatible boards
-    <tag/X333AGX/	the X server for AGX boards
-    <tag/X333Glnt/	the X server for Permedia / GLINT boards
-    <tag/X333I128/	the X server for &num;9 Imagination 128 boards
-    <tag/X333Ma32/	the X server for ATI Mach32 graphics boards
-    <tag/X333Ma64/	the X server for ATI Mach64 graphics boards
-    <tag/X333Ma8/	the X server for ATI Mach8 graphics boards
-    <tag/X333Mono/	the Monochrome X Server
-    <tag/X333P9K/	the X server for P9000 based boards
-    <tag/X333S3/ 	the X server for S3 based boards (excluding S3 ViRGE)
-    <tag/X333S3V/ 	the X server for S3 ViRGE based boards
-    <tag/X333SVGA/	the 8-bit pseudo-color X server for Super VGA cards
-    <tag/X333VG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
-    <tag/X333W32/	the X server for et4000w32 based boards
+    <tag/X8514/	the X server for IBM 8514/A and compatible boards
+    <tag/XAGX/	the X server for AGX boards
+    <tag/XGlnt/	the X server for Permedia / GLINT boards
+    <tag/XI128/	the X server for &num;9 Imagination 128 boards
+    <tag/XMa32/	the X server for ATI Mach32 graphics boards
+    <tag/XMa64/	the X server for ATI Mach64 graphics boards
+    <tag/XMa8/	the X server for ATI Mach8 graphics boards
+    <tag/XMono/	the Monochrome X Server
+    <tag/XP9K/	the X server for P9000 based boards
+    <tag/XS3/ 	the X server for S3 based boards (excluding S3 ViRGE)
+    <tag/XS3V/ 	the X server for S3 ViRGE based boards
+    <tag/XSVGA/	the 8-bit pseudo-color X server for Super VGA cards
+    <tag/XVG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
+    <tag/XW32/	the X server for et4000w32 based boards
     </descrip>
 
 <tag/OPTIONAL:/
 
     <descrip>
-    <tag/X333man/ 	pre-formatted man pages for the X11 interface and clients
-    <tag/X333f100/	100dpi fonts
-    <tag/X333fscl/	Speedo and Type1 fonts
-    <tag/X333fnon/ 	Japanese, Chinese and other fonts
-    <tag/X333fcyr/	Cyrillic fonts
-    <tag/X333fsrv/	the font server with man pages.
-    <tag/X333prog/	the X11 header files and programmer's utilities
-			for compiling other X applications
-    <tag/X333pex/	PEX fonts and libraries required for PEX applications
+    <tag/Xman/ 	pre-formatted man pages for the X11 interface and clients
+    <tag/Xf100/	100dpi fonts
+    <tag/Xfscl/	Speedo and Type1 fonts
+    <tag/Xfnon/ Japanese, Chinese and other fonts
+    <tag/Xfcyr/	Cyrillic fonts
+    <tag/Xfsrv/	the font server with man pages.
+    <tag/Xprog/	the X11 header files and programmer's utilities
+		for compiling other X applications
+    <tag/Xpex/	PEX fonts and libraries required for PEX applications
     </descrip>
 </descrip>
 
@@ -256,7 +256,7 @@ software to obtain carefully. Each X server is an archive of about 1.2MB
 and occupies 3.0MB on the disk. You won't normally need more than the
 single Xserver tailored to your video card.
 
-If it is your first time install, get the <tt/X333base/ archive before any
+If it is your first time install, get the <tt/Xbase/ archive before any
 of the other packages. This package contains a driver and a test program,
 which analyzes your video hardware. If this program fails or reports an
 incompatible hardware, it makes no sense to obtain the other packages in
@@ -301,12 +301,12 @@ drive with the letter Y: (which you probably don't have). Change the letter
 in all commands accordingly.
 
 <enum>
-<item>Obtain the package <tt/X333base/ and install it from the root directory
+<item>Obtain the package <tt/Xbase/ and install it from the root directory
        of the Y: drive, by entering the following commands:
 <tscreen><verb>
 [C:\] Y:
 [Y:\] cd \
-[Y:\] unzip \path_of_package\X333base.zip
+[Y:\] unzip \path_of_package\Xbase.zip
 </verb></tscreen>
 
 <item>Edit your CONFIG.SYS file to contain the following line somewhere:
@@ -365,11 +365,11 @@ This can be changed, but is strictly discouraged.
        drive, and type:
 <tscreen><verb>
 drive:> cd \
-drive:> unzip \path_of_packages\X333xxxx.zip
+drive:> unzip \path_of_packages\Xxxxx.zip
 </verb></tscreen>
 <item>You might encounter that some packages report duplicate files, e.g.
 the X server packages install corresponding README files, which are also
-in the X333doc package. This is okay, the files are the same. Let unzip
+in the Xdoc package. This is okay, the files are the same. Let unzip
 replace the files.
 <item>No special sequence to unpack the files is required.
 </enum>
@@ -643,7 +643,7 @@ port heavily relies on
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.8 1998/12/29 07:54:29 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.9 1999/07/13 07:09:49 hohndel Exp $
 
 
 

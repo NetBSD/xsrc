@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.c,v 3.8.2.1 1998/02/15 16:09:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.c,v 3.8.2.2 1999/05/25 06:55:51 hohndel Exp $ */
 
 
 
@@ -754,6 +754,7 @@ Bool necboardinit()
 	_outb(necData , 0x00);
 	_outb(necIndex, 3);
 	if(pc98BoardType == NECWAB864_I){
+		vgareg_data[ 0x35 ] = 0x00;     /* For Vision864 */
 		_outb(necData , 0x03); /* chip enable & relay on? */
 	}else{
 		_outb(necData , 0x01); /* chip enable */

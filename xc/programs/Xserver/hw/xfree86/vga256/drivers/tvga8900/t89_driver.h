@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.9.2.7 1998/10/31 14:41:08 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.9.2.11 1999/06/21 09:45:19 hohndel Exp $ */
 
 extern int TVGAchipset;
 extern Bool IsCyber;
@@ -56,8 +56,12 @@ extern Bool IsCyber;
 #define CYBER9388	22
 #define CYBER9397	23
 #define CYBER9520	24
-#define IMAGE975	25
-#define IMAGE985	26
+#define CYBER9525 	25
+#define IMAGE975	26
+#define IMAGE985	27
+#define CYBER939A	28
+#define BLADE3D		29
+#define CYBERBLADE	30
 
 #define IsTGUI9440	(TVGAchipset == TGUI9440AGi)
 #define IsTGUI9660	(TVGAchipset == TGUI9660)
@@ -68,12 +72,18 @@ extern Bool IsCyber;
 			 (TVGAchipset == CYBER9385) || \
 			 (TVGAchipset == CYBER9388) || \
 			 (TVGAchipset == CYBER9520) || \
+			 (TVGAchipset == CYBER9525) || \
+			 (TVGAchipset == CYBER939A) || \
 			 (TVGAchipset == CYBER9397))
 #define Is3Dchip	((TVGAchipset == CYBER9397) || \
+			 (TVGAchipset == CYBER939A) || \
 			 (TVGAchipset == CYBER9388) || \
 			 (TVGAchipset == CYBER9520) || \
+			 (TVGAchipset == CYBER9525) || \
 			 (TVGAchipset == IMAGE975) || \
-			 (TVGAchipset == IMAGE985))
+			 (TVGAchipset == IMAGE985) || \
+			 (TVGAchipset == BLADE3D) || \
+			 (TVGAchipset == CYBERBLADE))
 
 #ifdef INITIALIZE_LIMITS
 /* Clock Limits */
@@ -87,7 +97,7 @@ int tridentClockLimit[] = {
 	80000,
 	80000,
 	80000,
-	80000,
+	80000,	
 	80000,
 	80000,
 	80000,
@@ -102,6 +112,11 @@ int tridentClockLimit[] = {
 	135000,
 	170000,
 	170000,
+	230000,
+	230000,
+	230000,
+	230000,
+	230000,
 	230000,
 	230000,
 	230000,
@@ -135,6 +150,11 @@ int tridentClockLimit16bpp[] = {
 	230000,
 	230000,
 	230000,
+	230000,
+	230000,
+	230000,
+	230000,
+	230000,
 }; 
 
 int tridentClockLimit24bpp[] = {
@@ -165,6 +185,11 @@ int tridentClockLimit24bpp[] = {
 	115000,
 	115000,
 	115000,
+	115000,
+	115000,
+	115000,
+	115000,
+	115000,
 };
 
 int tridentClockLimit32bpp[] = {
@@ -192,6 +217,11 @@ int tridentClockLimit32bpp[] = {
 	70000,
 	85000,
 	85000,
+	115000,
+	115000,
+	115000,
+	115000,
+	115000,
 	115000,
 	115000,
 	115000,

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/IBMRGB.c,v 1.9.2.2 1998/08/25 10:54:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/IBMRGB.c,v 1.9.2.5 1999/06/17 16:24:08 hohndel Exp $ */
 /*
  * Copyright 1995 The XFree86 Project, Inc
  *
@@ -21,6 +21,7 @@
 extern Bool     glintDoubleBufferMode;
 extern int      coprotype;
 extern Bool	UsePCIRetry;
+extern Bool	gamma;
 
 int             ActualDacId;
 
@@ -496,7 +497,7 @@ IBMRGB52x_Init_Stdmode (int clock)
     glintOutIBMRGBIndReg (RGB640_VRAM_MASK1, 0, 0xff);
     glintOutIBMRGBIndReg (RGB640_VRAM_MASK2, 0, 0x0f);
     /* next we set up the serializer; this depends on the color depth */
-    switch (glintInfoRec.depth) {
+    switch (glintInfoRec.bitsPerPixel) {
     case 8:  
       glintOutIBMRGBIndReg (RGB640_SER_07_00, 0, 0x00);
       glintOutIBMRGBIndReg (RGB640_SER_15_08, 0, 0x00);
@@ -540,9 +541,15 @@ IBMRGB52x_Init_Stdmode (int clock)
         }
     }
     M = N = P = C = 0;
-    PixelClock =
-      RGB640_CalculateMNPCForClock (40000, clock, 1, 65000, 220000,
+    if (gamma) {
+      PixelClock =
+          RGB640_CalculateMNPCForClock (28322, clock, 1, 65000, 220000,
 				      &M, &N, &P, &C);
+    } else {
+      PixelClock =
+          RGB640_CalculateMNPCForClock (40000, clock, 1, 65000, 220000,
+				      &M, &N, &P, &C);
+    }
     glintOutIBMRGBIndReg (RGB640_AUX_PLL_CTL, 0, 0x00);
     glintOutIBMRGBIndReg (RGB640_MISC_CONF, 0, IBM640_PCLK_8);
     glintOutIBMRGBIndReg (RGB640_PLL_M,   0, M);
@@ -570,7 +577,7 @@ IBMRGB52x_Init_Stdmode (int clock)
     else if (IS_3DLABS_PERMEDIA_CLASS (coprotype))
     {
       glintOutIBMRGBIndReg (IBMRGB_misc1, 0, SENS_DSAB_DISABLE | VRAM_SIZE_32);
-      if (glintInfoRec.depth == 32)
+      if (glintInfoRec.bitsPerPixel == 32)
 	glintOutIBMRGBIndReg (IBMRGB_misc2, 0, COL_RES_8BIT | PORT_SEL_VRAM | PCLK_SEL_LCLK);
       else
 	glintOutIBMRGBIndReg (IBMRGB_misc2, 0, COL_RES_8BIT | PORT_SEL_VRAM | PCLK_SEL_PLL);
@@ -581,11 +588,9 @@ IBMRGB52x_Init_Stdmode (int clock)
 
     /* Swap RB for no_accel */
     if (glintDoubleBufferMode)
-      glintOutIBMRGBIndReg (IBMRGB_misc3, 0,
-			    OFLG_ISSET (OPTION_NOACCEL, &glintInfoRec.options) ? 0x81 : 0x01);
+      glintOutIBMRGBIndReg (IBMRGB_misc3, 0, 0x01);
     else
-      glintOutIBMRGBIndReg (IBMRGB_misc3, 0,
-			    OFLG_ISSET (OPTION_NOACCEL, &glintInfoRec.options) ? 0x80 : 0x00);
+      glintOutIBMRGBIndReg (IBMRGB_misc3, 0, 0x00);
 
     if (IS_3DLABS_TX_MX_CLASS (coprotype))
     {
@@ -607,7 +612,7 @@ IBMRGB52x_Init_Stdmode (int clock)
     glintOutIBMRGBIndReg (IBMRGB_pal_ctrl, 0, 0);
     glintOutIBMRGBIndReg (IBMRGB_curs, 0, 0x20);
 
-    switch (glintInfoRec.depth)
+    switch (glintInfoRec.bitsPerPixel)
     {
     case 32:
       glintOutIBMRGBIndReg (IBMRGB_pix_fmt, 0xf8, 6);

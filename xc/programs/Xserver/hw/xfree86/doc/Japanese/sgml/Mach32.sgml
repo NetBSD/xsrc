@@ -1,0 +1,274 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!-- Title information -->
+
+<!--
+<title>Notes for Mach32 X Server
+-->
+<title>Mach32 用 X サーバについての注意書き
+<author>Bryan Feir (jenora@istar.ca)
+<date>2 July 1997
+<trans>The X Japanese Documentation Project
+<tdate>14 January 1999
+
+<!-- Table of contents -->
+<toc>
+
+<!-- Begin the document -->
+
+<!--
+<sect>Supported Cards, RAMDACs, and Bits Per Pixel<p>
+-->
+<sect>サポートしているカード、RAMDAC, BPP<p>
+<!--
+The base support in the Mach32 X server is for 8 bpp, with a dot clock
+of up to 80 MHz.  At present 15/16 bpp is supported on only three of the
+many RAMDACs; however those three cover the most commonly sold cards.
+-->
+Mach32 用 X サーバが基本的にサポートしているのは、8bpp, 80MHz までのドッ
+トクロックです。現在 15/16bpp をサポートしているのは、たくさん RAMDAC 
+の内 3 つだけです。ただし、一般に普及しているカードはだいたいこの3つに
+含まれています。
+<p>
+<!--
+<verb>
+ RAMDAC      Max Dot Clock   BPP   Max Resolution   Video RAM Required
+-->
+<verb>
+ RAMDAC   最大ドットクロック BPP   最大解像度       必要なビデオ RAM
+--------     -------------   ---   --------------   ------------------
+Default           80MHz       8      1280x1024i            2Mb
+Default           80MHz       8      1024x768              1Mb
+
+ATI68875         135MHz       8      1280x1024             2Mb
+ATI68875          80MHz      16      1024x768              2Mb
+
+AT&amp;T20C49x        80MHz       8      1024x768              1Mb
+AT&amp;T20C49x        40MHz      16       800x600              2Mb
+
+BT481             80MHz       8      1024x768              1Mb
+BT481             40MHz      16       800x600              2Mb
+
+</verb>
+
+<!--
+The RAMDAC is reported when you run the Mach32 X server with the
+"<tt>-probeonly</tt>" command line option, or can be specified in the
+XF86Config file.
+-->
+RAMDAC は Mach32 用 X サーバにコマンドラインオプション
+"<tt>-probeonly</tt>" を付けて実行すると報告されます。また、RAMDAC を
+XF86Config ファイル中で指定することもできます。
+
+<!--
+The ATI68875 (or the TLC34075) is used on the Graphics Ultra + and
+the Graphics Ultra Pro.  The Brooktree 481 is used on most Graphics
+Wonder cards.  The AT&amp;T20C491 is used on many of the OEM cards
+that are built into component systems.
+-->
+ATI68875 (または TLC34075)は、Graphics Ultra + と Graphics Ultra Pro
+で使われています。Brooktree 481 は Graphics Wonder 系のカードの大部分
+で使われています。AT&amp;T20C491 は組み立てシステムに組み込まれている
+OEM カードの多くで使われています。
+
+<!--
+The BIOS detection unfortunately lumps the BT481 and the AT&amp;T20C49x
+together, while they require different configuration controls in 16 bit
+mode.  SuperProbe can tell the difference, and will report which it finds.
+In the server itself, the BT481 is considered the default value.  If you
+have an AT&amp;TC49x RAMDAC on your card you will have to include the Ramdac
+entry in the XF86Config file as below.
+-->
+BT481 と AT&amp;T20C49x は 16bpp モードでは異なる設定が必要なのですが、
+困ったことに BIOS による検出では、両者は同じものとして扱われてしまいま
+す。SuperProbe は両者を区別することができ、どちらを検出したかレポート
+します。サーバ内部では、BT481 がデフォルト値として扱われます。カードに
+AT&amp;TC49x RAMDAC が載っている場合は、XF86Config ファイルに後述の
+Ramdac エントリを記述する必要があります。
+
+<!-- <sect>XF86Config options<p> -->
+<sect>XF86Config のオプション<p>
+<!--
+Several options are supported in the "Device" section for the Mach32 X
+server.  Most of them should be auto-detected if needed, but a few may
+need to be deliberately set.  For example, the "Clocks" entry should
+almost certainly be set after first running the server with the
+<tt>-probeonly</tt> option, so as to avoid the probe in later runs.
+-->
+Mach32 用 X サーバでは "Device" セクションで指定するオプションがいくつ
+かサポートされています。ほとんどのオプションは必要に応じて自動検出され
+ますが、慎重に設定してやらなければならないオプションもあります。例えば、
+"Clocks" エントリは最初に <tt>-probeonly</tt> オプションをつけてサーバ
+を起動した後に必ず設定しなければなりません。これは、それ以降の X サー
+バ実行時に検出をしなくてすむようにするためです。
+
+<descrip>
+<tag>Option &dquot;composite&dquot;</tag>
+<!--
+		This option will set the composite sync for
+		monitors that require this.
+-->
+このオプションはコンポジット同期信号を必要とするモニタのために、コンポ
+ジット同期信号の設定を行います。
+<tag>Option &dquot;dac_8_bit&dquot;</tag>
+<!--
+		This option enables 8 bits per RGB value.  Note
+		this option does not work with all RAMDACs, and
+                is not considered supported by the Mach32 itself.
+-->
+このオプションは RGB 値ごとに8ビットを使えるようにします。このオプショ
+ンは全ての RAMDAC で動作するわけではない点と、Mach32 そのものではサポー
+トしていない機能だとされている点に注意してください。
+<tag>Option &dquot;ast_mach32&dquot;</tag>
+<!--
+		This option sets some special handling for the AST
+		version of the Mach32 card that comes soldered in to
+		some of their motherboards.  This card will lock up
+		without this option.
+-->
+このオプションは AST 版の Mach32 カード(AST のマザーボードのオンボード
+で搭載されているもの)を扱うための特殊な設定を行います。このカードでは
+このオプションを使わないとシステムが固まってしまいます。
+<tag>Option &dquot;intel_gx&dquot;</tag>
+<!--
+                This option sets the memory aperture address to
+                the hardwired value for the Intel GX Pro.  It is
+                equivalent to setting Membase to 0x78000000.
+-->
+このオプションは、メモリアパーチャアドレスに Intel GX Pro がハード的に
+持っている値を設定します。これは Membase の値に 0x78000000 を設定する
+ことと同じです。
+<tag>Option &dquot;no_linear&dquot;</tag>
+<!--
+                This option disables the use of the linear mapped
+                framebuffer.  This should be auto-detected.
+-->
+このオプションはリニアマップフレームバッファの使用を無効にします。これ
+は自動検出させるべきです。
+<tag>Option &dquot;sw_cursor&dquot;</tag>
+<!--
+		This option allows you to use the software cursor
+                instead of the hardware cursor.
+-->
+このオプションを使うと、ハードウェアカーソルではなくソフトウェアカーソ
+ルを使うことができます。
+<tag>MemBase baseaddress</tag>
+<!--
+		This entry specifies the video memory aperture
+		address.  Normally the aperture address is
+		automatically determined, but on some VESA Local
+		Bus systems the address chosen will not work.  If
+		the Mach32 X server is dying with a seg. fault,
+		then try setting the aperture address to another
+		location.
+-->
+このオプションはメモリアパーチャアドレスを指定します。通常、メモリアパー
+チャアドレスは自動的に決められますが、一部の VESA ローカルバスでは、こ
+のアドレス選択はうまく動作しません。Mach32 用 X サーバが
+Segmentation fault で落ちる場合には、アパーチャアドレスを他の位置に変
+更してみましょう。
+<tag>Clocks <it>clock</it> ...</tag>
+<!--
+                This entry gives the clock rates for the server to use.
+-->
+このオプションはサーバが使うクロックレートを指定します。
+<tag>Ramdac &dquot;<it>type</it>&dquot;</tag>
+<!--
+		This entry specifies the RAMDAC type.  The following
+		values are valid for <it>type</it>:
+-->
+このオプションは RAMDAC の型式を指定します。<it>type</it> としては以下
+の値が有効です:
+		<itemize>
+		<item>ati68830
+		<item>sc11483
+		<item>sc11486
+		<item>sc11488
+		<item>ims_g173
+		<item>mu9c4870
+		<item>ati68875*
+		<item>bt885
+		<item>tlc34075*
+		<item>bt476
+		<item>bt478
+		<item>inmos176
+		<item>inmos178
+		<item>bt481*
+		<item>bt482
+		<item>ims_g174
+		<item>mu9c1880
+		<item>mu9c4910
+		<item>sc15025
+		<item>sc15026
+		<item>att20c490*
+		<item>ati68860
+		<item>stg1700
+		<item>sc15021
+		<item>stg1702
+		<item>att21c498
+		</itemize>
+<!--
+                Only the ones marked with &lsqb*&rsqb have an effect yet.
+-->
+現時点では、実際に効果があるのは &lsqb;*&rsqb; 印が付けられているもの
+だけです。
+</descrip>
+
+<!-- <sect>Known Problems and Bug Reports<p> -->
+<sect>既知の問題とバグ報告について<p>
+<!--
+There are several known problems with the current version of the
+Mach32 X server.  They include:
+-->
+現在のバージョンの Mach32 用 X サーバには既知の問題がいくつかあります。
+これを以下に示します:
+<itemize>
+<!--
+<item>Not all RAMDACs are supported at higher colour ranges, and not all
+       that are can be detected properly.  In fact most of the RAMDAC values
+       above have no effect except to block higher bit modes.
+-->
+<item>全ての RAMDAC でハイカラー範囲(16bpp と 16bpp)がサポートされてい
+るわけではありません。また、全ての RAMDAC がうまく検出できるわけではあ
+りません。実際、先に挙げた RAMDAC の選択肢のうちほとんどのものは、高す
+ぎるハイカラーモード(16bpp と 24bpp)を制限する以外には役に立ちません。
+<!--
+<item>Sixteen bit character support (e.g., Chinese and Japanese character
+       sets) has been known to lose parts of characters.  While this should
+       be fixed, if it occurs try running the server with Option
+       "no_linear".
+-->
+<item>16ビット文字(例: 中国語や日本語の文字集合)のサポートに関しては、
+文字の一部が欠けてしまうことが知られています。この問題が修正されたとし
+ても、もし発生するなら Option "no_linear" 付きでサーバを実行してみてく
+ださい。
+</itemize>
+
+<!--
+Bug reports should be sent to XFree86@XFree86.org or posted to the
+comp.windows.x.i386unix newsgroup.
+-->
+<p>
+バグ報告は XFree86@XFree86.org に送るか、ニュースグループ
+comp.windows.x.i386unix に投稿してください。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Mach32.sgml,v 1.1.2.1 1999/05/25 06:39:15 hohndel Exp $
+
+
+
+
+$XConsortium: Mach32.sgml /main/4 1996/10/28 04:47:43 kaleb $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 山下純司  <url url="mailto:ys_jyunji@teleweb.or.jp"
+name="&lt;ys_jyunji@teleweb.or.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+Project にあります。
+</article>

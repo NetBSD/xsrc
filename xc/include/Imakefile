@@ -3,7 +3,7 @@ XCOMM $TOG: Imakefile /main/93 1997/06/13 15:34:58 kaleb $
 
 
 
-XCOMM $XFree86: xc/include/Imakefile,v 3.9.2.1 1997/06/15 07:25:25 dawes Exp $
+XCOMM $XFree86: xc/include/Imakefile,v 3.9.2.2 1999/07/17 01:32:45 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags /**/
 
@@ -38,6 +38,10 @@ HEADERS = DECkeysym.h \
 all::
 
 BuildIncludes($(HEADERS),X11,..)
+
+#ifdef FreeBSDArchitecture
+BuildIncludes(inetfixup.h,.,.)
+#endif
 
 InstallMultipleFlags($(HEADERS),$(INCDIR)/X11,$(INSTINCFLAGS))
 MakeSubdirs($(SUBDIRS))

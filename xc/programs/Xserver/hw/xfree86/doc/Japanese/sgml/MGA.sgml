@@ -1,0 +1,371 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!--
+<title>Information for Matrox Users
+-->
+<title>Matrox ユーザ向けの情報
+<author>The XFree86 Project Inc.
+<date>30 December 1998
+<trans>The X Japanese Documentation Project
+<tdate>16 January 1999
+<toc>
+
+<!-- <sect>Supported hardware -->
+<sect>サポートしているハードウェア
+<p>
+<!--
+The current MGA driver in the SVGA server supports 
+-->
+SVGA サーバの MGA ドライバが現在サポートしているハードウェアを以下に示
+します:
+<p>
+<itemize>
+<!--
+<item>Matrox Millennium 
+(MGA2064W with Texas Instruments TVP3026 RAMDAC). It has been tested with 
+175, 220MHz, and 250MHz cards with 2MB, 4MB and 8MB WRAM. 
+-->
+<item>Matrox Millennium 
+(Texas Instruments TVP3026 RAMDAC を載せた MGA2064W)。2MB, 4MB, 8MB の 
+WRAM を載せた 175MHz, 220MHz, 250MHz のカードを使ってテストを行いまし
+た。
+<!--
+<item>Millennium II both PCI and AGP (MGA2164W with Texas Instruments
+TVP3026 RAMDAC). It has been tested with 4 MB, 8 MB and 16 MB WRAM.
+-->
+<item>Millennium II (PCI 版と AGP版) (Texas Instruments TVP3026 RAMDAC 
+を積んだ MGA2164W)。テストは 4MB, 8MB, 16MB の WRAM を載せたカードで行
+いました。
+<!--
+<item>Matrox Mystique (Both MGA1064SG and MGA1164SG with integrated RAMDACs)
+170 MHz and 220 MHz (Mystique 220) versions should work.
+-->
+<item>Matrox Mystique (RAMDAC 組み込みの MGA1064SG と MGA1164SG)
+170 MHz バージョンと 220 MHzバージョン(Mystique 220)が動作するはずで
+す。
+<!--
+<item>Millennium G200 with SGRAM and SDRAM (Millennium G200-SD), with 8MB RAM.
+-->
+<item>Millennium G200(SGRAM 版) と Millennium G200-SD(SDRAM 版)。
+8MB の RAM を載せたカードでテストを行いました。
+<!--
+<item>Mystique G200 (but no TVout support)
+-->
+<item>Mystique G200 (ただし、TV 出力はサポートしていません)
+<!--
+<item>Productiva G100 with SGRAM and SDRAM.  4MB and 8MB versions have been
+tested.
+-->
+<item>SGRAM 版と SDRAM 版の Productiva G100。テストは 4MB 版と 8MB 版
+で行いました。
+</itemize>
+
+<!-- <sect1>What's not supported -->
+<sect1>サポートされていないハードウェア
+<p>
+<itemize>
+<!--
+<item> Chipsets other than those listed above.  We are still interested in 
+providing support for the other Matrox chipsets including the Impression,
+Atlas, Genesis etc... but at this time have not been able to obtain 
+documentation for them.
+-->
+<item>上記のリストに載っていないチップセット。Impression, Atlas,
+Genesis 等を含む Matrox の他のチップセットのサポートに関心はあるのです
+が、現時点では関係する資料が入手できていません。
+<!--
+<item> MGA2064W and MGA2164W based cards with ramdacs other than the TVP3026
+RAMDAC (like the Matrox Corona) are not supported.
+-->
+<item> MGA2064W, MGA2164W ベースのカードで、RAMDAC が TVP3026 RAMDAC 
+でないもの(Matrox Corona 等)はサポートされていません。
+</itemize>
+
+<!--  <sect>Features: -->
+<sect>機能:
+<p>
+<itemize>
+<!--
+<item>uses linear frame buffer
+<item>Resolutions up to the maximum supported by the card should be possible.
+<item>8 bpp, 16 bpp (depth 15 and 16), 24 bpp (depth 24, packed) and 32 bpp
+(depth 24, sparse) are all supported.
+<item>supports VESA Display Power Management Signaling (DPMS)
+<item>supports RGB Sync-on-Green 
+<item>supports the XF86_DGA extension
+<item>Makes extensive use of the graphics accelerator.  This server is very 
+well accelerated, and is one of the fastest XFree86 X servers.
+-->
+<item>リニアフレームバッファの使用
+<item>各カードで使用可能な最大解像度までの解像度がサポートされています。
+<item>8 bpp, 16 bpp (色の深さは 15 と 16), 24 bpp (色の深さは 24,
+packed), 32 bpp (色の深さは 24, sparse) が全てサポートされています。
+<item>VESA Display Power Management Signaling (DPMS) のサポート
+<item>RGB Sync-on-Green のサポート
+<item>XF86_DGA 機能拡張のサポート
+<item>グラフィックスアクセラレータの最大限に利用できます。このサーバの
+アクセラレーションはよくできており、XFree86 の X サーバの中でも
+最も速い部類に入ります。
+</itemize>
+
+<!-- <sect>Configuration: -->
+<sect>設定:
+<p>
+<!--
+The MGA driver should auto-detect all supported hardware so you needn't 
+have anything other than the Identifier in the Section "Device" of the
+XF86Config file.  When running the XF86Setup or xf86config programs one    
+merely needs to select a Matrox card so that the correct server will be  
+used.  One need not and should not specify a RAMDAC, clockchip or allow 
+the setup program to probe for clocks. The driver will auto-detect the   
+amount of video ram present, however, due to some hardware problems
+this is not detected for the MGA2164W (Millennium II) or G100/G200.
+In this case users should specify the amount of video ram in the Section
+"Device" of the XF86Config file. eg:
+-->
+MGA ドライバはサポートしているハードウェアは全て自動検出するはずなので、
+XF86Config ファイルの "Device" セクションに Identifier を記述する以外
+に必要なものはありません。XF86Setup や xf86config プログラムを実行した
+時は、正しいサーバが使われるように、ただ Matrox カードを選択する必要し
+かありません。RAMDAC やクロックチップを指定する必要はありませんし、指
+定してはいけません。つまりセットアッププログラムにクロックを自動検出さ
+せてください。ドライバは積んでいるビデオ RAM の量を自動検出しますが、
+ハードウェアの問題のため、MGA2164W (Millennium II) や G100/G200 では検
+出がうまくいきません。このような場合、ユーザはビデオ RAM の量を 
+XF86Config ファイルの "Device" セクションで指定しなければなりません。
+例を以下に示します:
+<!--
+<verb>
+        VideoRam 4096
+            or
+        VideoRam 8192
+            or
+        VideoRam 16384
+</verb>
+-->
+<verb>
+        VideoRam 4096
+           または
+        VideoRam 8192
+           または
+        VideoRam 16384
+</verb>
+
+<!--
+as appropriate so that the server doesn't have to probe for it.
+-->
+サーバが自動検出を行う必要がないように、指定は適切に行ってください。
+
+<!--
+The following Section "Device" options are supported by the MGA driver:
+-->
+MGA ドライバがサポートしている、"Device" セクションのオプションを以下
+に示します:
+<itemize>
+<item>Option "sw_cursor"
+<p>
+<!--
+Will disable the hardware cursor on the Millennium and Millennium II.
+-->
+Millennium と Millennium II のハードウェアカーソルを無効にします。
+<item>Option "no_accel"
+<p>
+<!--
+Will disable all hardware acceleration (oh my!).
+-->
+ハードウェアアクセラレーションを全て無効にします(ああっ!)。
+<item>Option "no_pixmap_cache" 
+<p>
+<!--
+Will disable caching of pixmaps in offscreen video memory.
+-->
+表示に使わないビデオメモリを使ったピックスマップのキャッシングを無効に
+します。
+<item>Option "sync_on_green"
+<p>
+<!--
+Will enable syncing on green for sync-on-green monitors (these are typically
+fixed frequency workstation monitors).
+-->
+同期信号をグリーン信号に乗せるモニタ用のビデオ出力を行うようにします
+(このようなモニタは普通、周波数が固定のワークステーション用モニタです)。
+<item>Option "pci_retry"
+<p>
+<!--
+This will allow the MGA hardware to generate a pci_disconnect based on 
+accelerator FIFO status. This can yield large performance boosts for
+some graphics operations but has a tendency to hog the PCI bus so 
+it is turned off by default.
+-->
+このオプションを指定すると、MGA のハードウェアはアクセラレータの FIFO 
+の状態に基づいて pci_disconnect を生成するようになります。これにより、
+一部のグラフィックス操作は格段に性能が向上します。しかし、PCI バスを占
+有しがちになるので、このオプションはデフォルトで無効にされています。
+<item>Option "mga_sdram"
+<p>
+<!--
+This will force the server to disable sgram features such as block
+mode fills and hardware planemasks.
+-->
+このオプションを指定すると、サーバはブロックモードの塗りつぶしやハード
+ウェアプレーンマスク等の SGRAM の機能を無効にします。
+</itemize>
+
+<!-- <sect>Known solutions for some problems: -->
+<sect>解決方法がわかっている問題:
+<p>
+
+<itemize>
+<!--
+<item>Temporary loss of monitor sync when the cursor shape changes on 
+Millennium and Millennium II.  The hardware cursor has been enabled by 
+default in 3.3.3.1. This seems to cause some problems on a minority of
+systems.  If you experience problems with this on your system, 
+please put:
+<verb>
+	Option "sw_cursor"
+</verb>
+in the Section "Device" of the XF86Config file to disable the hardware
+cursor. This should be fixed in XFree86 3.3.3.1 as in cases like this the
+software cursor should be used automatically.
+-->
+<item>Millennium と Millennium II でカーソル形状を変更すると一時的にモ
+ニタの同期が取れなくなる問題。3.3.3.1 ではハードウェアカーソルがデフォル
+トで有効になっています。ごく小数のシステムでは、この変更が問題を起こし
+ているようです。このような問題が起きたら、XF86Config ファイルの 
+"Device" セクションに
+<verb>
+	Option "sw_cursor"
+</verb>
+を設定して、ハードウェアカーソルを無効にしましょう。これは XFree86
+3.3.3.1 ではされており、このようなケースではソフトウェアカーソルが自動
+的に使われるはずです。
+<!--
+<item>Garbage in the cursor instead of the normal cursor image.  A bug
+in the driver will cause this when less than 1K of video memory is left
+unused and the hardware cursor is enabled for some cards.
+If you experience this problem, please put:
+<verb>
+	Option "sw_cursor"
+</verb>
+in the Section "Device" of the XF86Config file to disable the hardware
+cursor.
+-->
+<item>通常のカーソルイメージでなくゴミが表示される問題。ドライバのバグ
+が原因で、未使用のビデオメモリが 1K 以下で、かつハードウェアカーソルが
+有効になっていると一部のカードで問題が起きます。このような問題が起きた
+ら、XF86Config ファイルの "Device" セクションに
+<verb>
+	Option "sw_cursor"
+</verb>
+を設定して、ハードウェアカーソルを無効にしましょう。
+<!--
+<item>the driver doesn't support some values of HTotal parameter in
+Modelines in the XF86Config file. If you get flickering vertical stripes on
+the screen, try to change this parameter +/- 8.
+-->
+<item>このドライバは XF86Config ファイルの Modelines の HTotal パラメータ
+でサポートしていない値がいくつかあります。スクリーンにちらつく縦縞が現
+われたなら、このパラメータを +/- 8 増減させてみてください。
+<!--
+<item>On some Millennium II cards the driver shows severe distortions with 
+24bpp in modes above about 1024x768. We hope to have automated the detection
+and fix of this problem. If it still occurs, putting
+<verb>
+	Option "mga_24bpp_fix"
+</verb>
+in the Device Section may fix the problem.
+-->
+<item>Millennium II カードの一部では、24bpp で解像度が 1024x768 より大
+きいモードの時に画面がひどく歪みます。この問題は、自動検出されるように
+なったので、解決していると思います。それでも問題が起こる場合には、
+Device セクションに
+<verb>
+	Option "mga_24bpp_fix"
+</verb>
+を設定すれば、問題が解決するかもしれません。
+<!--
+<item>On some MGA cards the amount of memory is mis-detected, on others
+probing for the amount of memory can cause a lockup in the system so memory
+probing is not done on those hardware (Millennium II, G100/G200).
+If the default of 4MB RAM (Millennium II) or 8MB RAM (G100/G200) is not 
+correct, specify the amount of video ram in
+the Section "Device" of the XF86Config file as described in section 3 above.
+-->
+<item>間違ったメモリサイズが検出されるカードや、メモリサイズを検出しよ
+うとするとシステムが止まってしまうカードがあります。したがって、このよ
+うなハードウェア(Millennium II, G100/G200)ではメモリの検出は行いません。
+デフォルトのメモリサイズである 4M(Millennium II)や 8M(G100/G200)が実際
+のメモリサイズと異なる場合には、XF86Config ファイルの "Device" セクショ
+ンでビデオ RAM のサイズを指定しましょう。設定方法は既に セクション 3 
+で説明しています。
+<!--
+<item>If you Millennium II card that worked fine with XFree86-3.3.2.3 and 
+earlier now shows pixel errors and strange effects when returning to the 
+text console, make sure that the amount of memory that the server reports 
+is correct.
+See item above for details.
+-->
+<item>Millennium II が XFree86 3.3.2.3 以前は動いていたのに、このバー
+ジョンではピクセルやおかしくなったり、テキストモードに戻った時に画面が
+変になったりする場合には、サーバが報告するメモリサイズが正しいかどうか
+確認してください。詳しくは前の項目を参照してください。
+<!--
+<item>With virtual screens that use 8MB of memory or more (e.g.,
+2048x2048 at 16bpp) there can be cursor distortions when panning the screen
+vertically. If that occurs, please put
+<verb>
+        Option "sw_cursor"
+</verb>
+in the Section "Device" of the XF86Config file to disable the hardware
+cursor.
+-->
+<item>8MB 以上のメモリを使う仮想スクリーン(2048x2048 16bpp 等)を使って
+いる時、スクリーンを垂直方向にパンさせるとカーソルが歪むことがあります。
+この現象が起こったら、
+<verb>
+        Option "sw_cursor"
+</verb>
+という行を XF86Config ファイルの "Device" セクションに入れて、ハードウェ
+アカーソルを無効にしましょう。
+</itemize>
+
+<!-- <sect>Authors -->
+<sect>作者
+<p>
+
+Radoslaw Kapitan, <it>kapitan@student.uci.agh.edu.pl</it>
+
+Mark Vojkovich, <it>mvojkovi@sdcc10.ucsd.edu</it>
+
+<!-- and: -->
+そして以下のメンバー:
+
+<itemize>
+<item>Andrew Vanderstock, <it>vanderaj@mail2.svhm.org.au</it>
+<item>Angsar Hockmann, <it>Ansgar.Hockmann@hrz.uni-dortmund.de</it>
+<item>Michael Will, <it>Michael.Will@student.uni-tuebingen.de</it>
+<item>Andrew Mileski, <it>aem@ott.hookup.net</it>
+<item>Stephen Pitts, <it>pitts2@memphisonline.com</it>
+<item>Dirk Hohndel, <it>hohndel@XFree86.Org</it>
+<item>Leonard N. Zubkoff, <it>lnz@dandelion.com</it>
+<item>Harm Hanemaayer, <it>H.Hanemaayer@inter.nl.net</it>
+<item>Guy Desbief, <it>g.desbief@aix.pacwan.net</it>
+<item>Takaaki Nomura, <it>tnomura@sfc.keio.ac.jp</it>
+<item>Doug Merritt, <it>doug@netcom.com</it>
+</itemize>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/MGA.sgml,v 1.1.2.1 1999/05/25 06:39:14 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 山下純司 <url url="mailto:ys_jyunji@teleweb.or.jp"
+name="&lt;ys_jyunji@teleweb.or.jp&gt;">)。問題点の指摘やご意見は藤原ま
+で御連絡ください。原文の著作権は XFree86 プロジェクト社にあり、日本語
+訳の著作権は X Japanese Documentation Project にあります。
+</article>

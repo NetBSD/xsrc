@@ -1,0 +1,1940 @@
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.1 1999/05/25 06:10:59 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.1 1999/05/25 06:10:59 hohndel Exp $
+.\" $xjman: XF86Config.5x v1.1 1998/11/29 11:56:00 take_s Exp $
+.\" 
+.\" Copyright (c) 1998 The X Japanese Documentation Project.
+.\" 
+.\" Permission is hereby granted, free of charge, to any person obtaining a
+.\" copy of this software and associated documentation files (the
+.\" "Software"), to deal in the Software without restriction, including
+.\" without limitation the rights to use, copy, modify, merge, publish, dis-
+.\" tribute, sublicense, and/or sell copies of the Software, and to permit
+.\" persons to whom the Software is furnished to do so, subject to the fol-
+.\" lowing conditions:
+.\" 
+.\" The above copyright notice and this permission notice shall be included
+.\" in all copies or substantial portions of the Software.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
+.\" ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+.\" SHALL  THE X JAPANESE DOCUMENTATION PROJECT  BE  LIABLE  FOR  ANY CLAIM,
+.\" DAMAGES OR OTHER LIABILITY,  WHETHER IN AN ACTION OF CONTRACT,  TORT OR
+.\" OTHERWISE,  ARISING FROM,  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+.\" 
+.\" Except as contained in this notice, the name of The X Japanese
+.\" Documentation Project shall not be used in advertising or otherwise to
+.\" promote the sale, use or other dealings in this Software without prior
+.\" written authorization from The X Japanese Documentation Project.
+.\" 
+.\" X Window System is a trademark of The Open Group.
+.\"
+.\" Translated by Kazuyuki Okamoto <ikko-@pacific.rim.or.jp>
+.\" Updated for XFree86 3.3.3 by Taketoshi Sano <xlj06203@nifty.ne.jp>
+.\"
+.TH XF86Config 4/5 "Version 3.3.3"  "XFree86"
+.SH 名前
+.\"0 XF86Config - Configuration File for XFree86
+XF86Config - XFree86 用構成情報ファイル
+.SH 説明
+.I XFree86
+.\"0 uses a configuration file called \fBXF86Config\fP for its initial
+.\"0 setup.  This configuration file is searched for in the following
+.\"0 places:
+は初期設定のための \fBXF86Config\fP という構成情報ファイルを使用する。
+この構成情報ファイルは次の場所から探すことになっている。
+.sp
+.in 8
+.nf
+/etc/XF86Config
+<XRoot>/lib/X11/XF86Config.\fIhostname\fP
+<XRoot>/lib/X11/XF86Config
+.fi
+.in -8
+.LP
+.\"0 where <XRoot> refers to the root of the X11 install tree.
+.\"0 When an X server is started by a `root' user, it will first search for
+.\"0 an \fBXF86Config\fP file in that user's home directory.
+ここで <XRoot> は X11 を導入したディレクトリである。
+特別な場合として、 Xserver が `root' ユーザーによって起動された場合には、
+最初に \fBXF86Config\fP ファイルをそのユーザーのホームディレクトリの中から
+探そうとする。
+.PP
+.\"0 This file is composed of a number of sections.  Each section has
+.\"0 the form:
+このファイルはいくつかの節で構成されている。それぞれの節は
+以下に示す書式に従って記述される:
+.sp
+.in 8
+.nf
+Section "\fISectionName\fP"
+   \fISectionEntry\fP
+   ...
+EndSection
+.fi
+.in -8
+.PP
+.\"0 The section names are:
+節名称は次のとおり:
+.sp
+.in 8
+.nf
+.\"0 \fBFiles\fP (File pathnames)
+.\"0 \fBServerFlags\fP (Server flags)
+.\"0 \fBKeyboard\fP (Keyboard configuration)
+.\"0 \fBPointer\fP (Pointer configuration)
+.\"0 \fBMonitor\fP (Monitor description)
+.\"0 \fBDevice\fP (Graphics device description)
+.\"0 \fBScreen\fP (Screen configuration)
+.\"0 \fBXInput\fP (Extended Input devices configuration)
+\fBFiles\fP (ファイルのパス名)
+\fBServerFlags\fP (サーバーフラグ)
+\fBKeyboard\fP (キーボード構成情報)
+\fBPointer\fP (マウス等の構成情報)
+\fBMonitor\fP (モニターの種類)
+\fBDevice\fP (ビデオカード等の種類)
+\fBScreen\fP (画面構成情報)
+\fBXInput\fP (タブレット、ジョイスティック等拡張入力装置の構成情報)
+.fi
+.PP
+.\"0 The \fBFiles\fP section is used to specify the default font path
+.\"0 and the path to the RGB database.  These paths can also be set from
+.\"0 the command line (see \fIXserver(1)\fP).  The entries available
+.\"0 for this section are:
+\fBFiles\fP 節は標準のフォントのパスと RGB データベースへのパスを
+指定する。これらのパスはコマンドラインからも設定出来る。この節に
+記述する内容は次のように書く:
+.TP 8
+.B FontPath \fI"path"\fP
+.\"0 sets the search path for fonts.  This path is a comma separated
+.\"0 list of directories which the X server searches for font databases.
+.\"0 Multiple \fBFontPath\fP entries may be specified, and they will be
+.\"0 concatenated to build up the fontpath used by the server.
+フォントの検索経路を設定する。この経路は X サーバーがフォント
+データベースを検索するディレクトリ群をカンマで区切ったリストである。
+複数の \fBFontPath\fP が記載されている場合には、これらを結合して
+サーバーが使用するフォントパスを作成する。
+.sp
+.\"0 X11R6 allows the X server to request fonts from a font server.  A
+.\"0 font server is specified by placing a "<trans>/<hostname>:<port_number>"
+.\"0 entry into the fontpath.  For example, the fontpath
+.\"0 "/usr/X11R6/lib/X11/fonts/misc/,tcp/zok:7100" tells the X server
+.\"0 to first try to locate the font in the local directory
+.\"0 /usr/X11R6/lib/X11/fonts/misc.  If that fails, then request the
+.\"0 font from the \fIfont server\fP running on machine zok listening
+.\"0 for connections on TCP port number 7100.
+X11R6 では X サーバーがフォントサーバーにフォントを要求できる。
+フォントサーバーは場所を "<trans>/<hostname>:<port_number>"
+とフォントパスに指定する。例えば、フォントパス
+"/usr/X11R6/lib/X11/fonts/misc/,tcp/zok:7100" はまず最初にローカル
+ディレクトリ /usr/X11R6/lib/X11/fonts/misc を使い、これが失敗した場合
+には TCP ポート番号 7100 への接続要求を使って zok というホストで
+動作している \fIフォントサーバー\fP にフォントを要求するよう X サーバーに
+指定する。
+.TP 8
+.B RGBPath \fI"path"\fP
+.\"0 sets the path name for the RGB color database.
+RGB カラーデータベース用のパス名称を設定する。
+.TP 8
+.B ModulePath \fI"path"\fP
+.\"0 sets the search path for dynamic modules.  This path is a comma separated
+.\"0 list fo directories which the X server searches for dynamic module loading
+.\"0 in the order specified.
+.\"0 Multiple \fBModulePath\fP entries may be specified, and they will be
+.\"0 concatenated to build the modulepath used by the server.
+ダイナミックモジュール用のパス名称を設定する。このパスは X サーバーが
+指定された順序に従ってロードするダイナミックモジュールを検索するための
+ディレクトリーをカンマで区切って並べたリストである。
+複数の \fBModulePath\fP エントリーが記載されている場合には、これらを
+結合してサーバーが使用するモジュールパスを作成する。
+.PP
+.\"0 The
+.\"0 .B Module
+.\"0 section is used to specify which dynamic modules should be loaded.
+.\"0 At present dynamic modules are only used for XInput devices, and are
+.\"0 only supported on some systems (currently Linux ELF, FreeBSD 2.x and
+.\"0 NetBSD 1.x).  The entry available for this section is:
+.B Module
+節はロードするダイナミックモジュールを指定するために使用する。このバージョン
+ではダイナミックモジュールは XInput デバイス (拡張入力装置) についてのみ
+使用可能であり、またサポートされるシステムも
+(現時点では Linux ELF、 FreeBSD 2.x および NetBSD 1.x に) 限定される。
+この節で使用できるエントリーには以下のものがある：
+.TP 8
+.B Load \fI"module"\fP
+.\"0 This instructs the server to load \fI"module"\fP.  If the module
+.\"0 is not specified with a full pathname, the directories specified in
+.\"0 the \fBModulePath\fP are searched.
+このエントリーは X サーバーに \fI"module"\fP のロードを指示する。
+モジュールがフルパス名で指定されていない場合には、 \fBModulePath\fP 
+で指定されたディレクトリーから検索される。
+.\"0 Modules are currently available to support extended input devices.  The
+.\"0 names of these are:
+現在拡張入力装置をサポートするためのモジュールが利用可能である。
+モジュールの名前を以下に示す：
+.sp
+.in 20
+.nf
+.B xf86Elo.so
+.B xf86MuTouch.so
+.B xf86Jstk.so
+.B xf86Wacom.so
+.B xf86Summa.so
+.B xf86AceCad.so
+.B xf86Dial.so
+.fi
+
+.in -20
+.\"0 The PEX and XIE extension are also be available as modules on some
+.\"0 systems. The names for these are:
+また、いくつかのシステム上では PEX および XIE 拡張をモジュールとして
+利用することが可能である。モジュール名を以下に示す：
+.sp
+.in 20
+.nf
+.B pex5.so
+.B xie.so
+.fi
+.in -20
+.RS 8
+
+.\"0 For an up-to-date listing, check in <XRoot>/lib/modules.
+最新のモジュール名を調べるには、 <XRoot>/lib/modules をチェックすること。
+.RE
+.PP
+.\"0 The \fBServerFlags\fP section is used to specify some miscellaneous
+.\"0 X server options.  The entries available for this section are:
+\fBServerFlags\fP 節は種々の X サーバーのオプションを指定する為に
+使われる。この節で指定可能な内容は以下のとおり:
+.TP 8
+.B NoTrapSignals
+.\"0 This prevents the X server from trapping a range of unexpected
+.\"0 fatal signals and exiting cleanly.  Instead, the X server will die
+.\"0 and drop core where the fault occurred.  The default behaviour is
+.\"0 for the X server exit cleanly, but still drop a core file.  In
+.\"0 general you never want to use this option unless you are debugging
+.\"0 an X server problem.
+これは予期せぬ不当なシグナルを捕捉し正常終了するのを抑止する。
+この場合、X サーバーは誤りが生じた場合にコアダンプを出力して異常
+終了する。誤りがあったとき、通常は X サーバーは正常終了するが、
+この場合でもコアダンプは出力する。一般的には、X サーバーをデバッグ
+する時以外にこのオプションを必要とすることは無い。
+.TP 8
+.B DontZap
+.\"0 This disallows the use of the \fBCtrl+Alt+Backspace\fP sequence.
+.\"0 This sequence allows you to terminate the X server.
+.\"0 Setting \fBDontZap\fP allows this key sequence to be passed to clients.
+キー入力 \fBCtrl+Alt+Backspace\fP の使用を禁止する。
+このキー入力は X サーバーを終了させるものである。 
+\fBDontZap\fP を設定すると、このキー入力はクライアントにそのまま渡される。
+.TP 8
+.B DontZoom
+.\"0 This disallows the use of the \fBCtrl+Alt+Keypad-Plus\fP and
+.\"0 \fBCtrl+Alt+Keypad-Minus\fP sequences.  These sequences allows you to
+.\"0 switch between video modes.
+.\"0 Setting \fBDontZoom\fP allows these key sequences to be passed to clients.
+キー入力 \fBCtrl+Alt+Keypad-Plus\fP および \fBCtrl+Alt+Keypad-Minus\fP の
+使用を禁止する。このキー入力はビデオモードを切り替えるものである。
+\fBDontZoom\fP を設定すると、このキー入力はクライアントにそのまま渡される。
+.TP 8
+.B AllowNonLocalXvidtune
+.\"0 This allows the xvidtune client to connect from another host.  By default
+.\"0 non-local connections are not allowed.
+他のホストから xvidtune クライアントが接続できるようにする。
+デフォルトではローカルホスト以外からの接続は禁止されている。
+.TP 8
+.B DisableVidMode
+.\"0 This disables the parts of the VidMode extension used by the xvidtune client
+.\"0 that can be used to change the video modes.
+VidMode 拡張機能のうち、 xvidtune クライアントによって
+ビデオモードを変更するために使われる部分を無効にする。
+.TP 8
+.B AllowNonLocalModInDev
+.\"0 This allows a client to connect from another host and change keyboard
+.\"0 and mouse settings in the running server.  By default
+.\"0 non-local connections are not allowed.
+他のホストから接続してきたクライアントが動作中のサーバーのキーボードおよび
+マウスに関する設定を変更できるようにする。デフォルトではローカルホスト以外
+からの接続は禁止されている。
+.TP 8
+.B DisableModInDev
+.\"0 This disables the parts of the Misc extension that can be used to
+.\"0 modify the input device settings dynamically.
+Misc 拡張機能のうち、入力機器の設定を動的に変更するために使用される
+部分を無効にする。
+.TP 8
+.B AllowMouseOpenFail
+.\"0 This allows the server to start up even if the mouse device can't be
+.\"0 opened/initialised.
+マウス用のデバイスファイルをオープンできない、または初期化できない場合で
+あってもサーバーを起動できるようにする。
+.\"0 ひょっとして TurboLinux の gpm -R 問題ってこれと関係があるのか ? 
+.PP
+.\"0 The \fBKeyboard\fP section is used to specify the keyboard input
+.\"0 device, parameters and some default keyboard mapping options.  The
+.\"0 entries available for this section are:
+\fBKeyboard\fP 節はキーボード入力機器、パラメータと標準のキー割り当て
+を指定するものである。この節に記入出来る内容は次のとおり:
+.TP 8
+.B Protocol \fI"kbd-protocol"\fP
+.\"0 \fIkbd-protocol\fP may be either \fBStandard\fP or \fBXqueue\fP.
+.\"0 \fBXqueue\fP is specified when using the event queue driver on SVR3
+.\"0 or SVR4.
+\fIkbd-protocol\fP は \fBStandard\fP か \fBXqueue\fP のどちらかである。
+\fBXqueue\fP は SVR3 か SVR4 のイベントキュードライバを使う場合に指定する。
+.TP
+.B AutoRepeat \fIdelay rate\fP
+.\"0 changes the behavior of the autorepeat of the keyboard.  This does
+.\"0 not work on all platforms.
+キーボードのオートリピートの設定を変更する。このオプションは
+全ての機器で動作するものではない。
+.TP 8
+.B ServerNumLock
+.\"0 forces the X server to handle the numlock key internally.  The X
+.\"0 server sends a different set of keycodes for the numpad when the
+.\"0 numlock key is active.  This enables applications to make use of
+.\"0 the numpad.
+X サーバーの内部でナムロックキーを扱えるようにする。 X サーバーは
+ナムロックキーがオンになっているときには異なるコードの組み合わせを送出する。
+このオプションを有効にすると、アプリケーションでテンキーが使えるようになる。
+.PP
+.nf
+.B LeftAlt \fImapping\fP
+.B RightAlt \fImapping\fP
+.B AltGr \fImapping\fP
+.B ScrollLock \fImapping\fP
+.B RightCtl \fImapping\fP
+.fi
+
+.RS 8
+.\"0 Allows a default mapping to be set for the above keys (note that
+.\"0 \fBAltGr\fP is a synonym for \fBRightAlt\fP).  The values that may
+.\"0 be specified for \fImapping\fP are:
+上記のキーに対する標準のキー割り当てを指定する。
+( \fBAltGr\fP は \fBRightAlt\fP と同意語である)。
+\fImapping\fP に指定できるキーコード割り当ては次のとおり:
+.sp
+.in 20
+.nf
+Meta
+Compose
+ModeShift
+ModeLock
+ScrollLock
+Control
+.fi
+.PP
+.\"0 The default mapping when none of these options are specified is:
+どのオプションも指定されなかった場合の標準値は次のとおり:
+.sp
+.in 20
+.nf
+LeftAlt     Meta
+RightAlt    Meta
+ScrollLock  Compose
+RightCtl    Control
+.fi
+.RE
+.TP 8
+.B XLeds \fIled\fP ...
+.\"0 makes \fIled\fP available for clients instead of using the traditional
+.\"0 function (Scroll Lock, Caps Lock & Num Lock).  \fIled\fP is a list
+.\"0 of numbers in the range 1 to 3.
+クライアントが旧式の機能 (スクロールロック、キャップスロックおよびナムロック)
+の代わりとして \fIled\fP を使えるようにする。 \fIled\fP は 1 から 3 までの範囲
+の数値のリストである。
+.TP 8
+.B VTSysReq
+.\"0 enables the SYSV-style VT switch sequence for non-SYSV systems
+.\"0 which support VT switching.  This sequence is Alt-SysRq followed
+.\"0 by a function key (Fn).  This prevents the X server trapping the
+.\"0 keys used for the default VT switch sequence.
+VT 切り替えを持つ非 SYSV システム上で SYSV 仕様の VT 切り替え手順を
+可能にする。この手順ではファンクションキー (Fn) の後に Alt-SysRq
+が送出される。このオプションによって X サーバーが標準の VT 切り替え手順
+に使用されるキーをトラップしないようにできる。
+.TP 8
+.B VTInit \fI"command"\fP
+.\"0 Runs \fIcommand\fP after the VT used by the server has been opened.
+.\"0 The command string is passed to "/bin/sh -c", and is run with the
+.\"0 real user's id with stdin and stdout set to the VT.  The purpose
+.\"0 of this option is to allow system dependent VT initialisation
+.\"0 commands to be run.  One example is a command to disable the 2-key
+.\"0 VT switching sequence which is the default on some systems.
+\fIcommand\fP をサーバーが使っている VT を開いた後で実行する。
+コマンド文字列は "/bin/sh -c" に渡され、実 (real) ユーザーID で
+実行され標準入出力は 当該 VT に割り当てられる。このオプションの目的は
+システムに依存した VT の初期化コマンドの実行を可能にすることである。
+ある種のシステムで標準とされている 2 つのキー入力での VT 切り替えを
+無効にするためのコマンドがその例である。
+.TP 8
+.B XkbDisable
+.\"0 Turns the XKEYBOARD extension off, equivalent to using the -kb
+.\"0 command line option.
+XKEYBOARD 拡張機能を無効にする。
+コマンドラインオプションでの -kb 指定に相当する。
+.PP
+.nf
+.B XkbRules \fI"rulesfile"\fP
+.B XkbModel \fI"model"\fP
+.B XkbLayout \fI"layout"\fP
+.B XkbVariant \fI"variant"\fP
+.B XkbOptions \fI"optionlist"\fP
+.fi
+
+.RS 8
+.\"0 These specify the definitions which are used to determine which
+.\"0 XKEYBOARD components to use.  The optionlist, should be a comma
+.\"0 separated list of options.
+使用する XKEYBOARD コンポーネントを決める定義指定である。
+オプションリストはカンマで区切られたオプションのリストである。
+.\"0 The default mappings for each these are:
+上記のそれぞれに対するデフォルトの割り当ては以下のとおり：
+.sp
+.in 20
+.nf
+XkbRules     "xfree86"
+XkbModel     "pc101"
+XkbLayout    "us"
+XkbVariant   ""
+XkbOptions   ""
+.fi
+
+[訳注：日本語 106 キーボードの場合は、上の XkbModel を "jp106" に
+しておくと良いんでしたっけ ? 誰か教えて下さい。 ]
+
+.RE
+.PP
+.\"0 This is the preferred method of specifying the keyboard configuration,
+.\"0 however, you can also specify the components directly with:
+これはキーボードの構成を指定する際に推奨される方法である。
+しかし、これ以外に各コンポーネントを直接指定する方法も使用可能である：
+.sp
+.nf
+.B XkbKeymap \fI"keymap"\fP
+.B XkbKeycodes \fI"keycodes"\fP
+.B XkbTypes \fI"types"\fP
+.B XkbCompat \fI"compat"\fP
+.B XkbSymbols \fI"symbols"\fP
+.B XkbGeometry \fI"geometry"\fP
+.fi
+
+.RS 8
+.\"0 If you specify only some of the components, the remaining components
+.\"0 will use these default values:
+特定のコンポーネントのみ指定した場合に、指定されなかったコンポーネント
+に対して使用されるデフォルトの設定は以下のとおり：
+.sp
+.in 20
+.nf
+XkbKeymap    none
+XkbKeycodes  "xfree86"
+XkbTypes     "default"
+XkbCompat    "default"
+XkbSymbols   "us(pc101)"
+XkbGeometry  "pc"
+.fi
+.RE
+.PP
+.\"0 The \fBPointer\fP section is used to specify the pointer device
+.\"0 and parameters.  The entries available for this section are:
+\fBPointer\fP 節はマウス等とそのパラメタを指定する。
+この節の内容は次のとおり:
+.TP 8
+.B Protocol \fI"protocol-type\fP"
+.\"0 specifies the pointer device protocol type.  The protocol types
+.\"0 available are:
+マウス等のプロトコルの種類を指定する。プロトコルの種類は次のとおり:
+.sp
+.in 20
+.nf
+.B Auto
+.B BusMouse
+.B GlidePoint
+.B GlidePointPS/2
+.B IntelliMouse
+.B IMPS/2
+.B Logitech
+.B Microsoft
+.B MMHitTab
+.B MMSeries
+.B Mouseman
+.B MouseManPlusPS/2
+.B MouseSystems
+.B NetMousePS/2
+.B NetScrollPS/2
+.B OSMouse
+.B PS/2
+.B SysMouse
+.B ThinkingMouse
+.B ThinkingMousePS/2
+.B Xqueue
+.fi
+.in -20
+.RS 8
+.PP
+.\"0 One should specify \fBBusMouse\fP for the Logitech bus mouse and
+.\"0 bus or InPort mice from Microsoft and ATI.
+.\"0 The \fBLogitech\fP protocol is for old serial mouse models from Logitech.
+.\"0 Many newer Logitech serial mice use either the \fBMicrosoft\fP
+.\"0 or \fBMouseMan\fP protocol.  \fBXqueue\fP should be specified here
+.\"0 if it was used in the \fBKeyboard\fP section.  \fBOSMouse\fP refers
+.\"0 to the event-driver mouse interface available on SCO's SVR3, and the
+.\"0 mouse interface provided for OS/2.  This
+.\"0 may optionally be followed by a number specifying the number of
+.\"0 buttons the mouse has.
+.\"0 \fBSysMouse\fP refers to the system mouse device, /dev/sysmouse, in
+.\"0 FreeBSD.
+Logitech のバスマウス、 Microsoft と ATI のバスまたは InPort マウスの
+場合には \fBBusMouse\fP を指定すること。\fBLogitech\fP プロトコルは
+Logitech の古いシリアルマウス製品のために用意されているものである。
+Logitech から出ている多くの新しいシリアルマウスの場合は
+\fBMicrosoft\fP または \fBMouseMan\fP プロトコルのどちらかを使う。
+\fBKeyboard\fP 節で \fBXqueue\fP を使用した場合には、ここで
+\fBXqueue\fP を指定すること。 \fBOSMouse\fP は SCO の SVR3 で
+利用可能なイベントドライバーマウスインターフェース、および OS/2 が
+提供しているマウスインターフェースに該当する。
+この \fBOSMouse\fP を使用する場合は、マウスにあるボタンの数をその後
+に指定することができる。
+\fBSysMouse\fP は FreeBSD におけるシステムマウスデバイス /dev/sysmouse
+に該当する。
+.PP
+.\"0 The \fBPS/2\fP and other \fBXXXXPS/2\fP protocol types are for PS/2 mice.
+.\"0 \fBPS/2\fP should always work with any PS/2 mouse
+.\"0 regardless of the model of the PS/2 mouse.
+.\"0 The other \fBXXXXPS/2\fP protocol types may or may not be supported by
+.\"0 your OS.
+\fBPS/2\fP およびその他の \fBXXXXPS/2\fP プロトコルは PS/2 マウスのための
+ものである。 \fBPS/2\fP プロトコルは PS/2 マウスの製品種別によらず、すべて
+の PS/2 マウスに使用可能なものである。
+その他の \fBXXXXPS/2\fP プロトコル群には OS によりサポートされているものと
+サポートされていないものが存在する。
+.PP
+.\"0 The rest of the protocol types are for serial mice.
+.\"0 If your serial mouse is of a relatively new model, you may specify
+.\"0 \fBAuto\fP, then the X server will try to select an appropriate
+.\"0 protocol type automatically.  The \fBAuto\fP protocol type may
+.\"0 also work for the PS/2 and bus mice on some OSs.
+残りのプロトコルはシリアルマウスのためのものである。
+使用するシリアルマウスが比較的最近の製品なら、 \fBAuto\fP を指定すると
+良いだろう。この場合、 X サーバーは適切な種類のプロトコルを自動的に
+選択しようとする。また OS によっては \fBAuto\fP プロトコルを PS/2 および
+バスマウスに対して指定できる場合もある。
+.RE
+.TP 8
+.B Device \fI"pointer-dev"\fP
+.\"0 specifies the device the server should open for pointer input (eg,
+.\"0 \fB/dev/tty00\fP or \fB/dev/mouse\fP).  A device should not be
+.\"0 specified when using the \fBXqueue\fP or \fBOSMouse\fP protocols.
+サーバーが使用するマウスなどの入力装置 (例えば \fB/dev/tty00\fP 
+又は \fB/dev/mouse\fP) を指定する。\fBXqueue\fP 又は \fBOSMouse\fP 
+プロトコルを使用するときは入力装置を指定しないこと。
+.TP 8
+.B Port \fI"pointer-dev"\fP
+.\"0 is an alternate form of the \fBDevice\fP entry.
+\fBDevice\fP エントリーと同じ意味を持つ。
+.TP 8
+.B BaudRate \fIrate\fP
+.\"0 sets the baudrate of the serial mouse to \fIrate\fP. For mice that
+.\"0 allow dynamic speed adjustments (like older Logitechs) the baudrate is
+.\"0 changed in the mouse.  Otherwise the rate is simply set on the
+.\"0 computer's side to allow mice with non-standard rates (the standard
+.\"0 rate is 1200). For 99% of mice you should not set this to anything
+.\"0 other than the default (1200).
+シリアルマウスのボーレイト(通信速度)を \fIrate\fP に設定する。
+(古い Logitech 製のマウスのように) 動的に通信速度を調節できるマウスでは
+ボーレイトをマウス側で変更する。そうでない場合は、単純にマウスが対応している
+標準以外の通信速度にコンピュータ側の設定を合わせる (標準の通信速度は 1200 )。
+世の中にあるマウスの 99% については、標準設定 (1200) 以外の通信速度を使う
+ような設定にするべきでない。
+.TP 8
+.B Buttons \fIN\fP
+.\"0 This option tells the X server the number of buttons on the mouse.
+.\"0 Currently there is no reliable way to automatically detect the correct 
+.\"0 number. 
+.\"0 This option is the only means for the X server to obtain it.
+.\"0 The default value is three.
+.\"0 Note that if you intend to assign Z axis movement to button events
+.\"0 using the \fBZAxisMapping\fP option below, you need to take account
+.\"0 of those buttons into \fIN\fP too.
+X サーバーにマウスボタンの数を指定する。
+現在、マウスボタンの数を自動的に正しく検出できる確実な方法は存在しない。
+このオプションは X サーバーにマウスボタンの数を指定する唯一の手段である。
+デフォルトのマウスボタン数は 3 である。
+もし、後述する \fBZAxisMapping\fP オプションによってボタンイベントに
+Z 軸方向の動きを割り当てようとするなら、 \fIN\fP を指定する際にそれらの
+ボタンの数を考慮するよう注意すること。
+.TP 8
+.B Emulate3Buttons
+.\"0 enables the emulation of the third mouse button for mice which only
+.\"0 have two physical buttons.  The third button is emulated by pressing
+.\"0 both buttons simultaneously.
+物理的に 2 つしかボタンが無いマウスで 3 番目のボタンのエミュレーションを
+可能にする。 3 番目のボタンは同時に両方のボタンを押すことによって
+エミュレートされる。
+.TP 8
+.B Emulate3Timeout \fItimeout\fP
+.\"0 sets the time (in milliseconds) that the server waits before deciding if
+.\"0 two buttons were pressed ``simultaneously'' when 3 button emulation is
+.\"0 enabled.  The default timeout is 50ms.
+3 ボタンエミュレーションが有効になっているとき、``同時''に 2 つの
+ボタンが押されたかどうか決定する前の待ち時間を (ミリ秒単位で) 設定する。
+標準の待ち時間 (タイムアウト) は 50ms。
+.TP 8
+.B ChordMiddle
+.\"0 handles mice which send left+right events when the middle button
+.\"0 is used (like some Logitech Mouseman mice).
+(いくつかの Logitech Mouseman マウスのように) 中央のボタンが
+押されたとき、右と左のボタンが押されたような信号を送信するように
+マウスを取り扱う。
+.TP 8
+.B SampleRate \fIrate\fP
+.\"0 sets the number of motion/button-events the mouse sends per second.
+.\"0 This is currently only supported for some Logitech mice.
+毎秒のマウス移動量/ボタンイベントの発生量を設定する。
+このオプションはいくつかの Logitech マウスのみで利用可能である。
+.TP 8
+.B Resolution \fIcount\fP
+.\"0 sets the resolution of the device in counts per inch.
+.\"0 This is not always supported by all the mice.
+カウント/インチ単位でマウスの解像度を指定する。
+このオプションをサポートしていないマウスもある。
+.TP 8
+.B ClearDTR
+.\"0 This option clears the DTR line on the serial port used by the
+.\"0 mouse.  This option is only valid for a mouse using the \fBMouseSystems\fP
+.\"0 protocol.  Some dual-protocol mice require DTR to be cleared to
+.\"0 operate in MouseSystems mode.  Note, in versions of XFree86 prior
+.\"0 to 2.1, this option also cleared the RTS line.  A separate
+.\"0 \fBClearRTS\fP option has since been added for mice which require
+.\"0 this.
+マウスで使用するシリアルポートの DTR 信号をリセットする。
+このオプションは \fBMouseSystems\fP プロトコルを使用するマウスの場合に有効。
+2 つのプロトコルが使えるマウスで MouseSystems モードを使うときは DTR 信号を
+リセットする必要がある。 2.1 より前のバージョンの XFree86 ではこのオプション
+によって RTS 信号もリセットされることに注意。 RTS のリセットが必要なマウス
+には、 \fBClearRTS\fP オプションが別に用意されている。
+.TP 8
+.B ClearRTS
+.\"0 This option clears the RTS line on the serial port used by the
+.\"0 mouse.  This option is only valid for a mouse using the \fBMouseSystems\fP
+.\"0 protocol.  Some dual-protocol mice require both DTR and RTS to be
+.\"0 cleared to operate in MouseSystems mode.  Both the \fBClearDTR\fP
+.\"0 and \fBClearRTS\fP options should be used for such mice.
+マウスが使用するシリアルポートの RTS 信号をリセットする。
+このオプションは \fBMouseSystems\fP プロトコルを使用するマウスに有効である。
+2 つのプロトコルが使えるマウスの中には MouseSystems モードを使うときに
+DTR 信号と RTS 信号を両方ともリセットしなければならないものがある。
+そのようなマウスに対しては \fBClearDTR\fP と \fBClearRTS\fP の両方とも
+オプションとして指定するべきである。
+.TP 8
+.B ZAxisMapping X
+.TP 8
+.B ZAxisMapping Y
+.TP 8
+.B ZAxisMapping \fIN M\fP
+
+.\"0 Some mouse devices have a wheel or a roller. Its action is
+.\"0 reported as the Z (third) axis movement in the X server. 
+.\"0 The Z axis movement can be assigned to another axis (\fIX\fP or \fIY\fP)
+.\"0 or a pair of buttons (the button \fIN\fP for negative movement
+.\"0 and \fIM\fP for positive movement) with this option.
+ホイールまたはローラーを持つマウスについて、その動作を X サーバーの
+Z (第 3 ) 軸方向の動きとして扱う。
+このオプションにより、 Z 軸方向の動きを別の軸 (\fIX\fP または \fIY\fP) 
+あるいは複数のボタンの組み合わせ (負の動きに対するボタン \fIN\fP および
+正の動きに対するボタン \fIM\fP ) として割り当てることが可能である。
+.PP
+.\"0 The \fBMonitor\fP sections are used to define the specifications
+.\"0 of a monitor and a list of video modes suitable for use with a
+.\"0 monitor.  More than one \fBMonitor\fP section may be present in an
+.\"0 XF86Config file.  The entries available for this section are:
+\fBMonitor\fP 節はモニターの仕様とモニターで使用するのに合致する
+ビデオモードの一覧を定義する。XF86Config ファイル中に複数の \fBMonitor\fP 
+節が存在していることも多い。この節の内容は次のとおり:
+.TP 8
+.B Identifier \fI"ID string"\fP
+.\"0 This specifies a string by which the monitor can be referred to in
+.\"0 a later \fBScreen\fP section.  Each \fBMonitor\fP section should
+.\"0 have a unique ID string.
+後述の \fBScreen\fP 節から参照するためのモニター名を文字列として指定する。
+それぞれの \fBMonitor\fP 節の名称は重ならない様に、それぞれ固有の ID を
+持つように文字列を設定すること。
+.TP 8
+.B VendorName \fI"vendor"\fP
+.\"0 This optional entry specifies the monitor's manufacturer.
+この追加項目にはモニターの製造会社を指定する。
+.TP 8
+.B ModelName \fI"model"\fP
+.\"0 This optional entry specifies the monitor's model.
+この追加項目にはモニターのモデル名称 (型名) を指定する。
+.TP 8
+.B HorizSync \fIhorizsync-range\fP
+.\"0 gives the range(s) of horizontal sync frequencies supported by the
+.\"0 monitor.  \fIhorizsync-range\fP may be a comma separated list of
+.\"0 either discrete values or ranges of values.  A range of values is
+.\"0 two values separated by a dash.  By default the values are in units
+.\"0 of kHz.  They may be specified in MHz or Hz if \fBMHz\fP or \fBHz\fP
+.\"0 is added to the end of the line.  The data given here is used by the X
+.\"0 server to determine if video modes are within the specifications
+.\"0 of the monitor.  This information should be available in the
+.\"0 monitor's handbook.
+モニターの仕様に従って、水平同期周波数の帯域幅を設定する。
+\fIhorizsync-range\fP はカンマで区切られたとびとびの数値か、あるいは
+幅のある数値範囲のリストである。幅のある数値範囲とは 2 つの数値を
+ハイフンで区切ったもの。標準ではこれらの数値の単位は kHz である。
+\fBMHz\fP や \fBHz\fP を行の後ろに付けることによって MHz や Hz で
+指定できる。ここで与える数値は、ビデオモード (Modeline) がモニターの
+仕様に収まっているかどうか X サーバーが判定する際に使用される。
+この仕様に関する情報は通常モニターの取扱説明書に記載されている。
+.TP 8
+.B VertRefresh \fIvertrefresh-range\fP
+.\"0 gives the range(s) of vertical refresh frequencies supported by
+.\"0 the monitor.  \fIvertrefresh-range\fP may be a comma separated list
+.\"0 of either discrete values or ranges of values.  A range of values
+.\"0 is two values separated by a dash.  By default the values are in
+.\"0 units of Hz.  They may be specified in MHz or kHz if \fBMHz\fP or
+.\"0 \fBkHz\fP is added to the end of the line.  The data given here is used
+.\"0 by the X server to determine if video modes are within the
+.\"0 specifications of the monitor.  This information should be available
+.\"0 in the monitor's handbook.
+モニターの仕様に従って、垂直同期周波数の帯域幅を設定する。
+\fIvertrefresh-range\fP はカンマで区切られたとびとびの数値か、あるいは
+幅のある数値の範囲のリストである。幅のある数値範囲とは 2 つの数値を
+ハイフンで区切ったもの。標準ではこれらの数値の単位は Hz である。
+\fBMHz\fP や \fBkHz\fP を行の後ろに付けることによって MHz や kHz で
+指定できる。ここで与える数値は、ビデオモード (Modeline) がモニターの
+仕様に収まっているかどうか X サーバーが判定する際に使用される。
+この使用に関する情報は通常モニターの取扱説明書に記載されている。
+.TP 8
+.B Gamma \fIgamma-value(s)\fP
+.\"0 This is an optional entry that can be used to specify the gamma
+.\"0 correction for the monitor.  It may be specified as either a single
+.\"0 value or as three separate RGB values.  Not all X servers are capable
+.\"0 of using this information.
+モニターのガンマ補正の設定を行うための追加項目である。1 つの数値か
+RGB それぞれに対応する 3 つの数値を設定する。ここでの指定に対応して
+いない X サーバーもある。
+.TP 8
+.B Mode \fI"name"\fP
+.\"0 indicates the start of a multi-line video mode description.  The
+.\"0 mode description is terminated with an \fBEndMode\fP line.  The
+.\"0 mode description consists of the following entries:
+複数行で指定するビデオモードの記述の始まりを表わす。
+ビデオモードの記述の終わりは \fBEndMode\fP 行である。
+ビデオモードの記述の内容は次のとおり:
+.sp
+.RS 8
+.TP 4
+.B DotClock \fIclock\fP
+.\"0 is the dot clock rate to be used for the mode.
+そのモードで使用するドットクロックの周波数。
+.TP 4
+.B HTimings \fIhdisp hsyncstart hsyncend htotal\fP
+.\"0 specifies the horizontal timings for the mode.
+水平同期の調整値を指定する。
+.TP 4
+.B VTimings \fIvdisp vsyncstart vsyncend vtotal\fP
+.\"0 specifies the vertical timings for the mode.
+垂直同期の調整値を指定する。
+.TP 4
+.B Flags \fI"flag" ...\fP
+.\"0 specifies an optional set of mode flags.  \fB"Interlace"\fP indicates
+.\"0 that the mode is interlaced.  \fB"DoubleScan"\fP indicates a mode where
+.\"0 each scanline is doubled.  \fB"+HSync"\fP and \fB"-HSync"\fP can
+.\"0 be used to select the polarity of the HSync signal.  \fB"+VSync"\fP
+.\"0 and \fB"-VSync"\fP can be used to select the polarity of the VSync
+.\"0 signal.  \fB"Composite"\fP, can be used to specify composite sync on
+.\"0 hardware where this is supported.  Additionally, on some hardware,
+.\"0 \fB"+CSync"\fP and \fB"-CSync"\fP may be used to select the composite
+.\"0 sync polarity.
+モードフラグの追加設定を指定する。 \fB"Interlace"\fP は
+インターレースモードであることを示す。 \fB"DoubleScan"\fP は
+それぞれの走査線を二重にするモードである。 
+\fB"+HSync"\fP と \fB"-HSync"\fP は水平同期信号の極性を選択する。
+\fB"+VSync"\fP と \fB"-VSync"\fP は垂直同期信号の極性を選択する。
+\fB"Composite"\fP はグラフィックボードが対応していれば、
+コンポジット同期を指定する。いくつかのグラフィックボードでは
+これに加えて \fB"+CSync"\fP と \fB"-CSync"\fP でコンポジット同期の
+極性を選択できる。
+.TP
+.B HSkew \fIhskew\fP
+.\"0 specifies the number of pixels (towards the right edge of the screen) by which
+.\"0 the display enable signal is to be skewed.  Not all servers use this
+.\"0 information.  This option might become necessary to override the default
+.\"0 value supplied by the server (if any).  "Roving" horizontal lines indicate this
+.\"0 value needs to be increased.  If the last few pixels on a scan line appear on
+.\"0 the left of the screen, this value should be decreased.
+ディスプレイ・イネーブル信号をスキューする画素数を (画面の右端に向かって)
+指定する。すべてのサーバーがこの情報に対応しているわけではない。
+このオプションはサーバーが提供するデフォルトの値 (もしあれば、だが) を
+置き換えるために必要となる。水平方向の表示が "Roving" (移動) する場合には、
+ここで指定する数値を増やしてみると良いかもしれない。また走査線の最後の数画素が
+画面の左端に表示されてしまう場合には、ここで指定する数値を減らしてみると良い。
+.RE
+.TP 8
+.B Modeline \fI"name" mode-description\fP
+.\"0 is a single line format for specifying video modes.  The
+.\"0 \fImode-description\fP is in four sections, the first three of
+.\"0 which are mandatory.  The first is the pixel clock.  This is a
+.\"0 single number specifying the pixel clock rate for the mode.  The
+.\"0 second section is a list of four numbers specifying the horizontal
+.\"0 timings.  These numbers are the \fIhdisp\fP, \fIhsyncstart\fP,
+.\"0 \fIhsyncend\fP, \fIhtotal\fP.  The third section is a list of four
+.\"0 numbers specifying the vertical timings.  These numbers are
+.\"0 \fIvdisp\fP, \fIvsyncstart\fP, \fIvsyncend\fP, \fIvtotal\fP.  The
+.\"0 final section is a list of flags specifying other characteristics
+.\"0 of the mode.  \fBInterlace\fP indicates that the mode is interlaced.
+.\"0 \fB"DoubleScan"\fP indicates a mode where each scanline is doubled.  
+.\"0 \fB+HSync\fP and \fB\-HSync\fP can be used to select the polarity
+.\"0 of the HSync signal.  \fB+VSync\fP and \fB\-VSync\fP can be used
+.\"0 to select the polarity of the VSync signal.  \fBComposite\fP can be
+.\"0 used to specify composite sync on hardware where this is supported.
+.\"0 Additionally, on some hardware,
+.\"0 \fB"+CSync"\fP and \fB"-CSync"\fP may be used to select the composite
+.\"0 sync polarity.
+ビデオモードを 1 行で指定する。 \fImode-description\fP は
+4 つの部分に分かれており、最初の 3 つは必須。最初はピクセルクロック
+である。対応するモードのピクセルクロック周波数を 1 つの数値で
+指定する。次の部分は水平方向の調整値で、4 つの数値をリストで指定する。
+それぞれの数値は \fIhdisp\fP, \fIhsyncstart\fP, \fIhsyncend\fP, 
+\fIhtotal\fP である。 3 番目の部分は垂直方向の調整値で、4 つの数値を
+リストで指定する。それぞれの数値は \fIvdisp\fP, \fIvsyncstart\fP, 
+\fIvsyncend\fP, \fIvtotal\fP である。最後の部分はその他モードの
+特徴を指定するフラグのリスト。 \fBInterlace\fP はインターレースモード
+を指定する。 \fB"DoubleScan"\fP は走査線を二重にするモードである。
+\fB"+HSync"\fP と \fB"-HSync"\fP は水平同期信号の極性を選択する。
+\fB"+VSync"\fP と \fB"-VSync"\fP は垂直同期信号の極性を選択する。
+\fB"Composite"\fP はグラフィックボードが対応していれば、
+コンポジット同期を指定する。いくつかのグラフィックボードでは
+これに加えて \fB"+CSync"\fP と \fB"-CSync"\fP でコンポジット同期の
+極性を選択できる。
+.PP
+.\"0 The \fBDevice\fP sections are used to define a graphics device
+.\"0 (video board).  More than one \fBDevice\fP section may be present
+.\"0 in an XF86Config file.  The entries available for this section are:
+\fBDevice\fP 節は画像機器（ビデオボード）の定義である。１つ以上の
+\fBDevice\fP 節が XF86Config ファイルに存在することも多い。
+この節の内容は次のとおり:
+.TP 8
+.B Identifier \fI"ID string"\fP
+.\"0 This specifies a string by which the graphics device can be referred
+.\"0 to in a later \fBScreen\fP section.  Each \fBDevice\fP section
+.\"0 should have a unique ID string.
+後述の \fBScreen\fP 節から参照するためのビデオカード名を文字列として
+指定する。それぞれの \fBDevice\fP 節の名称は重複しないように、それぞれ
+固有の ID を持つように文字列を設定すること。
+.TP 8
+.B VendorName \fI"vendor"\fP
+.\"0 This optional entry specifies the graphics device's manufacturer.
+この追加項目には画像機器の製造会社を指定する。
+.TP 8
+.B BoardName \fI"model"\fP
+.\"0 This optional entry specifies the name of the graphics device.
+この追加項目には画像機器の名前を指定する。
+.TP 8
+.B Chipset \fI"chipset-type"\fP
+.\"0 This optional entry specifies the chipset used on the graphics
+.\"0 board.  In most cases this entry is not required because the X
+.\"0 servers will probe the hardware to determine the chipset type.
+この追加項目にはビデオボードに使われているチップセットを指定する。
+X サーバーはチップセットの型を認識するために自分でビデオボードを
+探査するため、殆どの場合これは必須ではない。
+.TP 8
+.B Ramdac \fI"ramdac-type"\fP
+.\"0 This optional entry specifies the type of RAMDAC used on the graphics
+.\"0 board.  This is only used by a few of the X servers, and in most
+.\"0 cases it is not required because the X servers will probe the
+.\"0 hardware to determine the RAMDAC type where possible.
+この追加項目にはビデオボードに使われている RAMDAC の型を指定する。
+少数の X サーバーでのみ使用されている。 X サーバーが RAMDAC の型を
+認識するために自分でビデオボードを探査するため、殆どの場合これは
+必須ではない。
+.TP 8
+.B DacSpeed \fIspeed\fP
+.\"0 This optional entry specifies the RAMDAC speed rating (which is
+.\"0 usually printed on the RAMDAC chip).  The speed is in MHz.  This
+.\"0 is only used by a few of the X servers, and only needs to be
+.\"0 specified when the speed rating of the RAMDAC is different from
+.\"0 the default built in to the X server.
+この追加項目には RAMDAC の周波数 (普通 RAMDAC チップの上に印刷されて
+いる) を指定する。周波数の単位は MHz 。少数の X サーバーでのみ使用
+されている。 RAMDAC の周波数が X サーバーに組み込まれている標準の
+周波数設定と異なっている場合にのみ必要である。
+.TP 8
+.B Clocks \fIclock ...\fP
+.\"0 specifies the dotclocks that are on your graphics board.  The clocks
+.\"0 are in MHz, and may be specified as a floating point number.  The
+.\"0 value is stored internally to the nearest kHz.  The ordering of
+.\"0 the clocks is important.  It must match the order in which they
+.\"0 are selected on the graphics board.  Multiple \fBClocks\fP lines
+.\"0 may be specified.  For boards with programmable clock chips, the
+.\"0 \fBClockChip\fP entry should be used instead of this.  A \fBClocks\fP
+.\"0 entry is not mandatory for boards with non-programmable clock chips,
+.\"0 but is highly recommended because it prevents the clock probing
+.\"0 phase during server startup.  This clock probing phase can cause
+.\"0 problems for some monitors.
+ビデオボードのドットクロックを指定する。ドットクロックの周波数は
+MHz 単位であり、浮動小数点数値での指定も可能。指定された数値は
+内部的に kHz 単位の周波数に換算されて使用される。クロックを指定する
+順序は重要である。使用するビデオボード上でクロックが選択される順序
+に合わせなければならない。複数の \fBClocks\fP 行を指定することも
+可能である。プログラマブルクロックチップを搭載したビデオボードでは
+\fBClockChip\fP の項目をこの項目の代りに使うべきである。
+プログラマブルクロックチップを塔載していないボードでは \fBClocks\fP 
+の項目は必須ではないが、これを指定するとサーバー起動時にクロックの
+探査を実行しなくなるので、指定することを強く勧める。サーバー起動時
+にクロックの探査を実行することによって問題を生じるモニターもある。
+.TP 8
+.B ClockChip \fI"clockchip-type"\fP
+.\"0 This optional entry is used to specify the clock chip type on
+.\"0 graphics boards which have a programmable clock generator.  Only
+.\"0 a few X servers support programmable clock chips.  For details,
+.\"0 see the appropriate X server manual page.
+この追加項目にはプログラマブルクロックジェネレータを搭載したビデオ
+カード上のクロックチップの型を指定する。少数のプログラマブル
+クロックチップ対応の X サーバーのみこの項目をサポートしている。
+詳細は、該当する X サーバーのオンラインマニュアルを参照のこと。
+.TP 8
+.B ClockProg \fI"command"\fP [\fItextclock\fP]
+.\"0 This optional entry runs \fIcommand\fP to set the clock on the
+.\"0 graphics board instead of using the internal code.  The command
+.\"0 string must consist of the full pathname (and no flags).  When
+.\"0 using this option, and no \fBClocks\fP entry is specified,
+.\"0 it is assumed that the card has a fully programmable clock 
+.\"0 generator; for a card with a set of preset clocks a \fBClocks\fP 
+.\"0 entry is required to specify which clock values are to be made 
+.\"0 available to the server (up to 128 clocks may be specified).  
+.\"0 The optional \fItextclock\fP value is used to tell the server that
+.\"0 \fIcommand\fP must be run to restore the textmode clock at server 
+.\"0 exit (or when VT switching).  \fItextclock\fP must match one of the 
+.\"0 values in the \fBClocks\fP entry.  This parameter is required when 
+.\"0 the clock used for text mode is a programmable clock.
+この追加項目にはビデオボードのクロックを設定するためにサーバーに内蔵
+されたコードの代わりに使用するコマンドの名称を \fIcommand\fP として
+指定する。コマンドの名称はフルパスで与える必要がある (コマンドの
+オプションは指定できない) 。
+この項目を使用し、かつ \fBClocks\fP 行の項目を指定しない場合、
+X サーバーはビデオカードが完全にプログラム可能なクロック
+ジェネレータを持つものとして動作する。プリセットされたクロック
+の組み合わせを持つカードの場合、 \fBClocks\fP の項目にサーバー
+が利用できるクロックの数値をすべて記述する必要がある (指定できる
+クロックの総数は 128 まで) 。
+\fItextclock\fP という追加項目は、サーバーが終了したとき (又は
+VT 切り替え時) に元のテキストモードクロックを復元するために
+\fIcommand\fP を実行しなければならないことをサーバーに指示する。
+\fItextclock\fP で指定する数値は \fBClocks\fP 項目のどれかに一致
+しなければならない。このパラメータはテキストモードで使用される
+クロックがプログラマブルクロックの場合に必要となる。
+
+.\"0 The command is run with the real user's id with stdin and stdout
+.\"0 set to the graphics console device.  Two arguments are passed to
+.\"0 the command.  The first is the clock frequency in MHz as a floating
+.\"0 point number and the second is the index of the clock in the
+.\"0 \fBClocks\fP entry.  The command should return an exit status of
+.\"0 0 when successful, and something in the range 1\-254 otherwise.
+コマンドは標準入出力をグラフィックコンソールに割り当てられた状態で
+実 (real) ユーザ ID により実行される。コマンドには 2 つの引き数が
+渡される。最初の引き数は MHz 単位の浮動小数値として与えられるクロック
+周波数であり、 2 つ目の引き数は使用するクロックに対する \fBClocks\fP 
+項目中でのインデックスである。コマンドの終了状態が 0 の場合は
+正常終了であり、そうでない場合は 1\-254 の間の数値が表示される。
+
+.\"0 The command is run when the initial graphics mode is set and when
+.\"0 changing screen resolution with the hot-key sequences.  If the
+.\"0 program fails at initialisation the server exits.  If it fails
+.\"0 during a mode switch, the mode switch is aborted but the server
+.\"0 keeps running.  It is assumed that if the command fails the clock
+.\"0 has not been changed.
+コマンドはグラフィックモードを初期状態に設定する時、および
+ホットキーにより画面の解像度を変更する時に実行される。
+コマンドが初期化に失敗するとサーバーは終了する。
+コマンドがモード切り替えに失敗した場合、モード切り替えは中断し
+サーバーは動作を続行する。コマンドが失敗した場合、クロックは
+変更されていないものと見なされる。
+.TP 8
+.B Option \fI"optionstring"\fP
+.\"0 This optional entry allows the user to select certain options
+.\"0 provided by the drivers.  Multiple \fBOption\fP entries may be
+.\"0 given.  The supported values for \fIoptionstring\fP  are given in
+.\"0 the appropriate X server manual pages and/or the chipset-specific
+.\"0 README files.
+この追加項目には使用するサーバーのドライバーが提供するオプションの中から
+適切なものをユーザが選択して指定する。複数の \fBOption\fP 項目を指定可能
+である。 \fIoptionstring\fP で指定できるオプションについては、該当する
+X サーバーのオンラインマニュアル、および/または使用するチップセットに
+特有の情報を記述した README ファイルを参照のこと。
+.TP 8
+.B VideoRam \fImem\fP
+.\"0 This optional entry specifies the amount of videoram that is
+.\"0 installed on the graphics board. This is measured in kBytes.  In
+.\"0 most cases this is not required because the X server probes the
+.\"0 graphics board to determine this quantity.
+この追加項目にはグラフィックボードに搭載されているビデオメモリの
+容量を指定する。これは キロバイト 単位で指定すること。
+ほとんどの場合 X サーバーが自分でグラフィックボードを調べてメモリ量を
+認識するので、この指定は不要である。
+.TP 8
+.B BIOSBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the base address of the video BIOS
+.\"0 for the VGA board.  This address is normally 0xC0000, which is the
+.\"0 default the X servers will use.  Some systems, particularly those
+.\"0 with on-board VGA hardware, have the BIOS located at an alternate
+.\"0 address, usually 0xE0000.  If your video BIOS is at an address
+.\"0 other than 0xC0000, you must specify the base address in the
+.\"0 XF86Config file.  Note that some X servers don't access the BIOS
+.\"0 at all, and those which do only use the BIOS when searching for
+.\"0 information during the hardware probe phase.
+この追加項目には VGA ボードのビデオ BIOS の基底アドレスを指定する。
+このアドレスは通常 0xC0000 であり、標準設定では X サーバーもこの
+アドレスを使用する。特にマザーボード内蔵の VGA ビデオ装置を持つ
+いくつかのシステムでは、 0xE0000 という異なるアドレスに BIOS が
+搭載されている場合がある。ビデオ BIOS が 0xC0000 以外にある場合は、
+XF86Config ファイルにこの基底アドレスを指定する必要がある。
+X サーバーの中にはまったく BIOS にアクセスしないものもあること、
+機器情報の探査段階でのみ BIOS を使うものがあることに注意。
+.TP 8
+.B MemBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the memory base address of a graphics
+.\"0 board's linear frame buffer.  This entry is only used by a few
+.\"0 X servers, and the interpretation of this base address may be different
+.\"0 for different X servers.  Refer to the appropriate X server manual
+.\"0 page for details.
+この追加項目にはビデオボードのリニアフレームバッファメモリの基底
+アドレスを指定する。この項目を使用する X サーバーはあまり多くなく、
+またこの基底アドレスの解釈はそれぞれの X サーバーによって異なる。
+詳細は、該当する X サーバーのオンラインマニュアルを参照のこと。
+.TP 8
+.B IOBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the IO base address.  This entry is only
+.\"0 used for a few X servers.  Refer to the appropriate X server manual page
+.\"0 for details.
+この追加項目には入出力の基底アドレスを指定する。この項目を使用する
+X サーバーはあまり多くない。詳細は該当する X サーバーのオンライン
+マニュアルを参照のこと。
+.TP 8
+.B DACBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the DAC base address.  This entry is only
+.\"0 used for a few X servers.  Refer to the appropriate X server manual page
+.\"0 for details.
+この追加項目には DAC の基底アドレスを指定する。この項目を使用する
+X サーバーはあまり多くない。詳細は該当する X サーバーのオンライン
+マニュアルを参照のこと。
+.TP 8
+.B POSBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the POS base address.  This entry is only
+.\"0 used for a few X servers.  Refer to the appropriate X server manual page
+.\"0 for details.
+この追加項目には POS の基底アドレスを指定する。この項目を使用する
+X サーバーはあまり多くない。詳細は該当する X サーバーのオンライン
+マニュアルを参照のこと。
+.TP 8
+.B COPBase \fIbaseaddress\fP
+.\"0 This optional entry specifies the coprocessor base address.  This entry
+.\"0 is only used for a few X servers.  Refer to the appropriate X server
+.\"0 manual page for details.
+この追加項目には 数値演算コプロセッサ の基底アドレスを指定する。
+この項目を使用する X サーバーはあまり多くない。詳細は該当する X サーバーの
+オンラインマニュアルを参照のこと。
+.TP 8
+.B VGABase \fIbaseaddress\fP
+.\"0 This optional entry specifies the VGA memory base address.  This entry
+.\"0 is only used for a few X servers.  Refer to the appropriate X server
+.\"0 manual page for details.
+この追加項目には VGA メモリ の基底アドレスを指定する。この項目を
+使用する X サーバーはあまり多くない。詳細は該当する X サーバーの
+オンラインマニュアルを参照のこと。
+.TP 8
+.B Instance \fInumber\fP
+.\"0 This optional entry specifies the instance (which indicates if the
+.\"0 chip is integrated on the motherboard or on an expansion card).
+.\"0 This entry is only used for a few X servers.  Refer to the appropriate
+.\"0 X server manual page for details.
+この追加項目には 実体 (チップがマザーボードに組み込まれているか、
+または拡張カードに搭載されているかということ) を指定する。この項目を
+使用する X サーバーはあまり多くない。詳細は該当する X サーバーの
+オンラインマニュアルを参照のこと。
+.TP 8
+.B Speedup \fI"selection"\fP
+.\"0 This optional entry specifies the selection of speedups to be
+.\"0 enabled.  This entry is only used for a few X servers.  Refer to
+.\"0 the appropriate X server manual page for details.
+この追加項目には高速化のためにどの選択肢を有効にするか指定する。
+この項目を使用する X サーバーはあまり多くない。
+詳細は該当する X サーバーのオンラインマニュアルを参照のこと。
+.TP 8
+.B S3MNAdjust \fIM N\fP
+.\"0 This optional entry is specific to the S3 X server.  For details, refer
+.\"0 to the \fIXF86_S3(1)\fP manual page.
+この追加項目は S3 X サーバーに特有である。詳細は \fIXF86_S3(1)\fP の
+オンラインマニュアルを参照のこと。
+.TP 8
+.B S3MClk \fIclock\fP
+.\"0 This optional entry is specific to the S3 X server.  For details, refer
+.\"0 to the \fIXF86_S3(1)\fP manual page.
+この追加項目は S3 X サーバーに特有である。詳細は \fIXF86_S3(1)\fP の
+オンラインマニュアルを参照のこと。
+.TP 8
+.B S3RefClock \fIclock\fP
+.\"0 This optional entry is specific to the S3 X server.  For details, refer
+.\"0 to the \fIXF86_S3(1)\fP manual page.
+この追加項目は S3 X サーバーに特有である。詳細は \fIXF86_S3(1)\fP の
+オンラインマニュアルを参照のこと。
+.PP
+.\"0 The \fBScreen\fP sections are used to specify which graphics boards
+.\"0 and monitors will be used with a particular X server, and the
+.\"0 configuration in which they are to be used.  The entries available
+.\"0 for this section are:
+\fBScreen\fP 節では特定の X サーバーで用いられるビデオボードとモニター、
+およびそこで使用する構成情報を指定する。この節で有効な項目は
+次のとおり:
+.TP 8
+.B Driver \fI"driver-name"\fP
+.\"0 Each \fBScreen\fP section must begin with a \fBDriver\fP entry,
+.\"0 and the \fIdriver-name\fP given in each \fBScreen\fP section must
+.\"0 be unique.  The driver name determines which X server (or driver
+.\"0 type within an X server when an X server supports more than one
+.\"0 head) reads and uses a particular \fBScreen\fP section.  The driver
+.\"0 names available are:
+それぞれの \fBScreen\fP 節は \fBDriver\fP 項目で始まっていなければ
+ならない。またそれぞれの \fBScreen\fP 節で指定する \fIdriver-name\fP 
+が重複していてはならない。ドライバの名称によってそれぞれの \fBScreen\fP 節
+で使用される X サーバーの種類 (または該当する X サーバーが複数の画面を
+サポートしている場合には使用されるドライバの種類) が決まる。
+使用可能なドライバ名称は次のとおり:
+.sp
+.in 20
+.nf
+.B Accel
+.B Mono
+.B SVGA
+.B VGA2
+.B VGA16
+.fi
+.in -20
+.RS 8
+.PP
+.\"0 \fBAccel\fP is used by all the accelerated X servers (see
+.\"0 \fIXF86_Accel(1)\fP).  \fBMono\fP is used by the non-VGA mono
+.\"0 drivers in the 2-bit and 4-bit X servers (see \fIXF86_Mono(1)\fP
+.\"0 and \fIXF86_VGA16(1)\fP).  \fBVGA2\fP and \fBVGA16\fP are used by
+.\"0 the VGA drivers in the 2-bit and 4-bit X servers respectively.
+.\"0 \fBSVGA\fP is used by the XF86_SVGA X server.
+\fBAccel\fP は全てのアクセラレータ X サーバーに対して使用される
+(\fIXF86_Accel(1)\fP を参照)。 \fBMono\fP は 2 ビットおよび
+4 ビットの X サーバーに内蔵された非 VGA モノクロドライバーに対して
+使用される (\fIXF86_Mono(1)\fP および \fIXF86_VGA16(1)\fP を参照)。
+\fBVGA2\fP および \fBVGA16\fP はそれぞれ 2 ビット および 4 ビットの
+X サーバーに内蔵された VGA ドライバーに対して使用される。
+\fBSVGA\fP は XF86_SVGA X サーバーに対して使用される。
+.RE
+.TP 8
+.B Device \fI"device-id"\fP
+.\"0 specifies which graphics device description is to be used.
+設定したいビデオドライバ記述子を指定する。
+.TP 8
+.B Monitor \fI"monitor-id"\fP
+.\"0 specifies which monitor description is to be used.
+設定したいモニター記述子を指定する。
+.TP 8
+.B DefaultColorDepth \fIbpp-number\fP
+.\"0 specifies which color depth the server should use, when no -bpp command
+.\"0 line parameter was given.
+コマンドラインオプション "-bpp" が指定されなかった場合に
+デフォルトとして使用する色深度 (color depth) を指定する。
+.TP 8
+.B ScreenNo \fIscrnum\fP
+.\"0 This optional entry overrides the default screen numbering in a
+.\"0 multi-headed configuration.  The default numbering is determined by
+.\"0 the ordering of the \fBScreen\fP sections in the \fIXF86Config\fP
+.\"0 file.  To override this, all relevant \fBScreen\fP sections must have
+.\"0 this entry specified.
+この追加項目によって複数画面構成の場合に標準のスクリーン番号付けを
+置き換える指定が可能である。標準の番号付けは \fIXF86Config\fP ファイル中の
+\fBScreen\fP 節の順番で決定される。これを置き換えるためには全ての関連する
+\fBScreen\fP 節にこの項目を指定する必要がある。
+.TP 8
+.B BlankTime \fItime\fP
+.\"0 sets the inactivity timeout for the blanking phase of the screensaver.
+.\"0 \fItime\fP is in minutes, and the default is 10.
+.\"0 This is equivalent to the Xserver's `-s' flag, and the value can be
+.\"0 changed at run-time with \fIxset(1)\fP.
+スクリーンセーバーによって画面が暗くなるまでの時間を設定する。
+\fItime\fP は分単位で指定し、標準値は 10 分である。
+これは X サーバーで '-s' オプションを指定したのと等価であり、
+また \fIxset(1)\fP で実行時に数値を変更できる。
+.TP 8
+.B StandbyTime \fItime\fP
+.\"0 sets the inactivity timeout for the ``standby'' phase of DPMS mode.
+.\"0 \fItime\fP is in minutes, the default is 20, and it can be changed
+.\"0 at run-time with \fIxset(1)\fP.
+.\"0 This is only suitable for VESA DPMS compatible monitors, and is only
+.\"0 supported currently by some Xservers.  The "power_saver"
+.\"0 Option must be set for this to be enabled.
+DPMS モードの ``standby'' 状態に移行するまでの時間を設定する。
+\fItime\fP は分単位で指定し、標準値は 20 分である。
+また \fIxset(1)\fP で実行時に数値を変更できる。
+この項目は VESA DPMS 互換モニターにのみ有効であり、かつ現時点では
+特定の X サーバーでしかサポートされていない。この設定を有効にするには、
+"power_saver" オプションを指定しておく必要がある。
+.TP 8
+.B SuspendTime \fItime\fP
+.\"0 sets the inactivity timeout for the ``suspend'' phase of the DPMS mode.
+.\"0 \fItime\fP is in minutes, the default is 30, and it can be changed
+.\"0 at run-time with \fIxset(1)\fP.
+.\"0 This is only suitable for VESA DPMS compatible monitors, and is only
+.\"0 supported currently by some Xservers.  The "power_saver"
+.\"0 Option must be set for this to be enabled.
+DPMS モードの ``suspend'' 状態に移行するまでの時間を設定する。
+\fItime\fP は分単位で指定し、標準値は 30分である。また実行時に
+\fIxset(1)\fP で数値を変更できる。 VESA DPMS 互換モニターにのみ有効であり、
+かつ現時点では特定の X サーバーでしかサポートされていない。この設定を
+有効にするには、 "power_saver" オプションを指定しておく必要がある。
+.TP 8
+.B OffTime \fItime\fP
+.\"0 sets the inactivity timeout for the ``off'' phase of DPMS mode.
+.\"0 \fItime\fP is in minutes, the default is 40, and it can be changed
+.\"0 at run-time with \fIxset(1)\fP.
+.\"0 This is only suitable for VESA DPMS compatible monitors, and is only
+.\"0 supported currently by some Xservers.  The "power_saver"
+.\"0 Option must be set for this to be enabled.
+DPMS モードの ``off'' 状態に移行するまでの時間を設定する。
+\fItime\fP は分単位で指定し、標準値は 40分である。また実行時に
+\fIxset(1)\fP で数値を変更できる。 VESA DPMS 互換モニターにのみ有効であり、
+かつ現時点では特定の X サーバーでしかサポートされていない。この設定を
+有効にするには、 "power_saver" オプションを指定しておく必要がある。
+.TP
+.B SubSection \fB"Display"\fP
+.\"0 This entry is a subsection which is used to specify some display
+.\"0 specific parameters.  This subsection is terminated by an
+.\"0 \fBEndSubSection\fP entry.  For some X servers and drivers (those
+.\"0 requiring a list of video modes) this subsection is mandatory.
+.\"0 For X servers which support multiple display depths, more than one
+.\"0 \fBDisplay\fP subsection may be present.  When multiple \fBDisplay\fP
+.\"0 subsections are present, each must have a unique \fBDepth\fP entry.
+.\"0 The entries available for the \fBDisplay\fP subsection are:
+この項目はディスプレイの特性値を指定する副節 (サブセクション) である。
+この副節は \fBEndSubSection\fP 項目で終了する。(ビデオモードのリストを
+必要とするような) 特定の X サーバーとドライバについては、この項目は
+必須である。複数の表示深度 (display depth) を扱える X サーバーでは
+複数の \fBDisplay\fP 副節を定義できる。 複数の \fBDisplay\fP 副節
+が定義されている場合、それぞれの \fBDepth\fP 項目が重複しないように
+することが必要となる。 \fBDisplay\fP 副節で指定できる項目は次のとおり:
+.RS 8
+.TP 4
+.B Depth \fIbpp\fP
+.\"0 This entry is mandatory when more than one \fBDisplay\fP subsection
+.\"0 is present in a \fBScreen\fP section.  When only one \fBDisplay\fP
+.\"0 subsection is present, it specifies the default depth that the X
+.\"0 server will run at.  When more than one \fBDisplay\fP subsection
+.\"0 is present, the depth determines which gets used by the X server.
+.\"0 The subsection used is the one matching the depth at which the X
+.\"0 server is run at.  Not all X servers (or drivers) support more than
+.\"0 one depth.  Permitted values for \fIbpp\fP are 8, 15, 16, 24 and 32.
+.\"0 Not all X servers (or drivers) support all of these values.
+.\"0 \fIbpp\fP values of 24 and 32 are treated equivalently by those X
+.\"0 servers which support them.
+この項目は複数の \fBDisplay\fP 副節が \fBScreen\fP 節に定義されている
+場合には必須である。 \fBDisplay\fP 副節が 1 つだけの場合は、 X サーバー
+実行時の標準の表示深度を指定する。
+複数の \fBDisplay\fP 副節が定義されている場合には、この項目に指定された深度に
+よって X サーバーがどれを使用するか決まる。使用される副節は X サーバーが実行
+時に要求する深度と同じ深度をこの項目によって指定されているものである。
+すべての X サーバー (またはドライバ) が複数の表示深度をサポートしているわけ
+ではない。 \fIbpp\fP で指定できる数値は 8, 15, 16, 24 と 32 である。
+すべてのサーバー (またはドライバ) が全ての深度をサポートしているわけではない。
+\fIbpp\fP の数値が 24 と 32 の場合、これらをサポートしている X サーバーは
+この 2 つを同等に取り扱う。
+[訳注：この部分は厳密には正しくない。ドライバーによっては 24bpp と 32bpp を
+区別して扱うものがある。 SVGA サーバーの C&T ドライバーでは区別している。]
+.TP 4
+.B Weight \fIRGB\fP
+.\"0 This optional entry specifies the relative RGB weighting to be used
+.\"0 for an X server running at 16bpp.  This may also be specified from
+.\"0 the command line (see \fIXFree86(1)\fP).  Values supported by most
+.\"0 16bpp X servers are \fB555\fP and \fB565\fP.  For further details,
+.\"0 refer to the appropriate X server manual page.
+この追加項目には X サーバーが 16bpp で実行している場合の相対的な RGB 
+の重み付けを指定する。この重み付けはコマンド行からも指定できる 
+(\fIXFree86(1)\fP を参照のこと)。ほとんどの 16bpp X サーバーは \fB555\fP
+および \fB565\fP をサポートしてる。詳細は、該当する X サーバーのオンライン
+マニュアルを参照すること。
+.TP 4
+.B Virtual \fIxdim ydim\fP
+.\"0 This optional entry specifies the virtual screen resolution to be
+.\"0 used.  \fIxdim\fP must be a multiple of either 8 or 16 for most
+.\"0 colour X servers, and a multiple of 32 for the monochrome X server.
+.\"0 The given value will be rounded down if this is not the case.  For
+.\"0 most X servers, video modes which are too large for the specified
+.\"0 virtual size will be rejected.  If this entry is not present, the
+.\"0 virtual screen resolution will be set to accommodate all the valid
+.\"0 video modes given in the \fBModes\fP entry.  Some X servers do not
+.\"0 support this entry.  Refer to the appropriate X server manual pages
+.\"0 for details.
+この追加項目には使用する仮想画面の解像度を指定する。ほとんどのカラー
+X サーバーでは \fIxdim\fP は 8 か 16 の倍数、モノクロ X サーバーでは
+32 の倍数でなければならない。これと異なる場合には、与えられた数値を
+より小さい数値に丸めて使用する。ほとんどの X サーバーでは、指定された
+仮想画面の大きさに比べて大きすぎるビデオモードを指定しても拒否される。
+仮想画面の設定がない場合、仮想画面の解像度は \fBModes\fP 項目で与えられた
+適正な全てのビデオモードから調整して設定される。この項目をサポートして
+いない X サーバーもある。
+詳細については、該当する X サーバーのオンラインマニュアルを参照すること。
+.TP 4
+.B ViewPort \fIx0 y0\fP
+.\"0 This optional entry sets the upper left corner of the initial
+.\"0 display.  This is only relevant when the virtual screen resolution
+.\"0 is different from the resolution of the initial video mode.  If
+.\"0 this entry is not given, then the initial display will be centered
+.\"0 in the virtual display area.
+この追加項目には初期画面の左上隅を設定する。仮想画面の解像度が最初の
+ビデオモードの解像度と異なる場合だけ関連がある。この項目がない場合、
+初期画面は仮想画面領域の中央になる。
+.TP 4
+.B Modes \fI"modename" ...\fP
+.\"0 This entry is mandatory for most X servers, and it specifies the
+.\"0 list of video modes to use.  The video mode names must correspond
+.\"0 to those specified in the appropriate \fBMonitor\fP section.  Most
+.\"0 X servers will delete modes from this list which don't satisfy
+.\"0 various requirements.  The first valid mode in this list will be
+.\"0 the default display mode for startup.  The list of valid modes is
+.\"0 converted internally into a circular list.  It is possible to switch
+.\"0 to the next mode with \fBCtrl+Alt+Keypad-Plus\fP and to the previous
+.\"0 mode with \fBCtrl+Alt+Keypad-Minus\fP.
+この項目はほとんどの X サーバーに必須であり、使用するビデオモードのリスト
+を指定する。ビデオモード名称は適切な \fBMonitor\fP 節内で指定した名称と
+一致しなければならない。ほとんど X サーバーでは種々の要求を満たすことが
+出来ないようなモードはこのリストから消去する。
+このリストのなかで最初に有効となるモードは起動時の標準の表示モード
+となる。有効なモードのリストは内部的に循環リストに変換される。
+循環リスト内のモードは \fBCtrl+Alt+Keypad-Plus\fP で次のモード、
+\fBCtrl+Alt+Keypad-Minus\fP で前のモードに切り替えることが可能である。
+[訳注：Keypad-Plus はテンキーの ``＋'' キー、
+Keypad-Minus はテンキーの ``−'' キーを意味する。]
+.TP 4
+.B InvertVCLK \fI"modename"\fP \fR0|1\fP
+.\"0 This optional entry is specific to the S3 server only.  It may be used
+.\"0 to change the default VCLK invert/non-invert state for individual modes.
+.\"0 If \fI"modename"\fP is "\(**" the setting applies to all modes unless
+.\"0 unless overridden by later entries.
+この追加項目は S3 サーバーに特有である。この項目は個々のモード毎に VCLK の
+反転／非反転状態についての標準設定を変更する。
+\fI"modename"\fP が "\(**" ではじまる場合は、この後に指定する設定項目で
+上書きされない限り、全てのモードにそのモードの設定値が適応される。
+.TP 4
+.B EarlySC \fI"modename"\fP \fR0|1\fP
+.\"0 This optional entry is specific to the S3 server only.  It may be used
+.\"0 to change the default EarlySC setting for individual modes.  This
+.\"0 setting can affect screen wrapping.
+.\"0 If \fI"modename"\fP is "\(**" the setting applies to all modes unless 
+.\"0 unless overridden by later entries.
+この追加項目は S3 サーバーに特有である。この項目はそれぞれのモード毎の
+EarlySC の標準設定を変更する。
+\fI"modename"\fP が "\(**" ではじまる場合は、この後に指定する設定項目で
+上書きされない限り、全てのモードにそのモードの設定値が適応される。
+.TP 4
+.B BlankDelay \fI"modename" value1 value2\fP
+.\"0 This optional entry is specific to the S3 server only.  It may be used
+.\"0 to change the default blank delay settings for individual modes.  This
+.\"0 can affect screen wrapping.  \fIvalue1\fP and \fIvalue2\fP must be
+.\"0 integers in the range 0\-7.
+.\"0 If \fI"modename"\fP is "\(**" the setting applies to all modes unless
+.\"0 unless overridden by later entries.
+この追加項目は S3 サーバーに特有である。この項目はそれぞれのモード毎の空白
+遅延時間の標準設定を変更する。この設定は画面の廻り込み現象に作用する。
+\fIvalue1\fP と \fIvalue2\fP の数値は 0\-7 の範囲の整数で与える必要がある。
+\fI"modename"\fP が "\(**" ではじまる場合は、この後に指定する設定項目で
+上書きされない限り、全てのモードにそのモードの設定値が適応される。
+.TP 4
+.B Visual \fI"visual-name"\fP
+.\"0 This optional entry sets the default root visual type.  This may
+.\"0 also be specified from the command line (see \fIXserver(1)\fP).
+.\"0 The visual types available for 8bpp X servers are (default is
+.\"0 \fBPseudoColor\fP):
+この追加項目には標準のルートウィンドウの表示形式を設定する。この項目は
+コマンドラインからも指定できる ( \fIXserver(1)\fP を参照)。
+8bpp の X サーバーで使用可能な表示形式は次のとおり
+(標準は \fBPseudoColor\fP である) :
+.RE
+.sp
+.in 20
+.nf
+.B StaticGray
+.B GrayScale
+.B StaticColor
+.B PseudoColor
+.B TrueColor
+.B DirectColor
+.fi
+.in -20
+.RS 12
+.PP
+.\"0 The visual type available for the 16bpp and 32bpp X servers is 
+.\"0 \fBTrueColor\fP.
+16bpp と 32bpp の X サーバーで使用可能な表示形式は \fBTrueColor\fP である。
+.PP
+.\"0 The visual type available for the 1bpp X server is \fBStaticGray\fP.
+1bpp の X サーバーで使用可能な表示形式は \fBStaticGray\fP である。
+.PP
+.\"0 The visual types available for the 4bpp X server are (default is
+.\"0 \fBStaticColor\fP):
+4bpp の X サーバーで使用可能な表示形式は次のとおり
+(標準では \fBStaticColor\fP である):
+.RE
+.sp
+.in 20
+.nf
+.B StaticGray
+.B GrayScale
+.B StaticColor
+.B PseudoColor
+.fi
+.in -20
+.RS 8
+.TP 4
+.B Option \fI"optionstring"\fP
+.\"0 This optional entry allows the user to select certain options
+.\"0 provided by the drivers.  Multiple \fBOption\fP entries may be
+.\"0 given.  The supported values for \fIoptionstring\fP  are given in
+.\"0 the appropriate X server manual pages and/or the chipset-specific
+.\"0 README files.
+この追加項目にはドライバが提供する特定の選択項目を指定する。
+複数の \fBOption\fP 項目が指定可能である。 \fIoptionstring\fP で
+使用できる文字列については該当する X サーバーのオンラインマニュアル、
+および/またはチップセット別の README ファイルを参照すること。
+.TP 4
+.B Black \fIred green blue\fP
+.\"0 This optional entry allows the ``black'' colour to be specified.  This
+.\"0 is only supported with the VGA2 driver in the XF86_Mono server (for
+.\"0 details see \fIXF86_Mono(1)\fP).
+この追加項目では ``黒'' 色を定義できる。この定義は XF86_Mono サーバー
+の VGA2 ドライバのみで指定可能 (詳細は \fIXF86_Mono(1)\fP を参照のこと)。
+.TP 4
+.B White \fIred green blue\fP
+.\"0 This optional entry allows the ``white'' colour to be specified.  This
+.\"0 is only supported with the VGA2 driver in the XF86_Mono server (for
+.\"0 details see \fIXF86_Mono(1)\fP).
+この追加項目では ``白'' 色を定義できる。この定義は XF86_Mono サーバー
+の VGA2 ドライバのみで指定可能 (詳細は \fIXF86_Mono(1)\fP を参照のこと)。
+.RE
+.PP
+.\"0 The optional \fBXInput\fP section is used to specify configuration options
+.\"0 for the extended input devices.  For some OSs, the extended device support is
+.\"0 dynamically loaded, and in this case you need to specify which Modules to
+.\"0 load in the \fBModule\fP section (this is documented above).
+.\"0 Each extended device has its own
+.\"0 subsection. To enable an extended device the corresponding subsection
+.\"0 must appear. The subsections names are:
+拡張入力装置の構成を設定するために、 \fBXInput\fP 節を追加することができる。
+拡張装置に対するサポートを動的にロードするような OS もある。このような場合、
+ロードするモジュールを \fBModule\fP 節 (この説明は上記を参照) の中で指定する
+必要がある。
+各拡張装置にはそれぞれ固有の副節が対応する。特定の拡張装置を有効にするためには
+対応する副節が必要である。それぞれの副節の名前を以下に示す：
+.sp
+.in 8
+.nf
+.\"0 \fBJoystick\fP (only on supported systems ie. Linux, FreeBSD and NetBSD)
+\fBJoystick\fP (サポートされているシステム:
+ Linux, FreeBSD および NetBSD 上のみ)
+.\"0 \fBWacomStylus\fP (stylus of a Wacom tablet)
+\fBWacomStylus\fP (Wacom タブレットのペン)
+.\"0 \fBWacomEraser\fP (eraser of a Wacom tablet)
+\fBWacomEraser\fP (Wacom タブレットの消しゴム)
+.\"0 \fBWacomCursor\fP (cursor of a Wacom tablet)
+\fBWacomCursor\fP (Wacom タブレットのカーソル)
+.\"0 \fBElographics\fP (Elographics touchscreen)
+\fBElographics\fP (Elographics タッチスクリーン)
+.\"0 \fBMicrotouchFinger\fP (Microtouch touchscreen operated with finger)
+\fBMicrotouchFinger\fP (指で操作する Microtouch タッチスクリーン)
+.\"0 \fBMicrotouchStylus\fP (Microtouch touchscreen operated with stylus)
+\fBMicrotouchStylus\fP (ペンで操作する Microtouch タッチスクリーン)
+.\"0 \fBSummaSketch\fP (SummaSketch tablet)
+\fBSummaSketch\fP (SummaSketch タブレット)
+.\"0 \fBMouse\fP (Mouse)
+\fBMouse\fP (マウス)
+.\"0 \fBDialBox\fP (SGI Button Box)
+\fBDialBox\fP (SGI ボタンボックス)
+.\"0 \fBAceCad\fP (an AceCad tablet)
+\fBAceCad\fP (AceCad タブレット)
+.fi
+
+.\"0 The \fBJoystick\fP subsection supports the following entries:
+\fBJoystick\fP 副節は以下の項目をサポートしている：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents the device driver.
+デバイスドライバーを表現するスペシャルファイルへのパスを指定する。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B TimeOut \fItimeout\fP
+.\"0 sets the time (in milliseconds) between two polls of the device driver.
+.\"0 The value given here may be overriden by the Operating System's joystick
+.\"0 driver.
+デバイスドライバーのポーリング間隔を (ミリ秒単位で) 指定する。
+ここで指定された数値はオペレーティングシステムのジョイスティックドライバー
+によって置き換えられる場合がある。
+.TP 4
+.B MaximumXPosition \fIvalue\fP
+.\"0 sets the maximum X value reported by the device driver.
+デバイスドライバーから渡される X 座標の最大値を指定する。
+.TP 4
+.B MininimumXPosition \fIvalue\fP
+.\"0 sets the minimum X value reported by the device driver.
+デバイスドライバーから渡される X 座標の最小値を指定する。
+.TP 4
+.B MaximumYPosition \fIvalue\fP
+.\"0 sets the maximum Y value reported by the device driver.
+デバイスドライバーから渡される Y 座標の最大値を指定する。
+.TP 4
+.B MinimumYPosition \fIvalue\fP
+.\"0 sets the minimum Y value reported by the device driver.
+デバイスドライバーから渡される Y 座標の最小値を指定する。
+.TP 4
+.B CenterX \fIvalue\fP
+.\"0 sets the X center reported by the device driver when the joystick
+.\"0 is idle.  If this value is omitted, it is assumed that the joystick
+.\"0 is centered when it is first enabled.
+ジョイスティックが中立状態にある時に デバイスドライバーから渡される
+X 座標の中央値を指定する。 この指定が省略された場合、 ジョイスティック
+が初期化された時点での座標が 中央値として使用される。
+.TP 4
+.B CenterY \fIvalue\fP
+.\"0 sets the Y center reported by the device driver when the joystick
+.\"0 is idle.  If this value is omitted, it is assumed that the joystick
+.\"0 is centered when it is first enabled.
+ジョイスティックが中立状態にある時に デバイスドライバーから渡される
+Y 座標の中央値を指定する。 この指定が省略された場合、 ジョイスティック
+が初期化された時点での座標が 中央値として使用される。
+.TP 4
+.B Delta \fIvalue\fP
+.\"0 sets the maximum value reported to the X server. i.e. coordinates will
+.\"0 be incremented of \fI(+/\-)value/2\fP at maximum deflection.  This determines
+.\"0 the sensitivity.
+X サーバーに渡される最大値を指定する。つまり、最大変位時の座標変化量は
+\fI(+/\-)value/2\fP で与えられる。この指定によって感度が決まる。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.RE
+
+.\"0 Multiple instances of the Wacom devices can  cohabit. It can be useful
+.\"0 to define multiple devices with different active zones. The \fBWacomStylus\fP,
+.\"0 \fBWacomEraser\fP and \fBWacomCursor\fP subsections support the following
+.\"0 entries:
+Wacom タブレットは複数同時に使用することができる。複数の装置をそれぞれ別の
+作業領域 (アクティブゾーン) に割り振る機能は使い方によっては便利なものである。
+\fBWacomStylus\fP, \fBWacomEraser\fP および \fBWacomCursor\fP 副節では
+以下の項目をサポートしている：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents serial line where
+.\"0 the tablet is plugged.  You have to specify it for each subsection with
+.\"0 the same value if you want to have multiple devices with the same tablet.
+.\"0 This must be the first entry of the subsection.
+タブレットが接続されているシリアルラインを表現するスペシャルファイルへの
+パスを指定する。同じタブレットを複数の装置として定義する場合にはそれぞれの
+副節について同じ値を指定すること。この項目は各副節中の最初の項目でなければ
+ならない。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B Suppress \fInumber\fP
+.\"0 sets the position increment under which not to transmit coordinates.
+.\"0 This entry must be specified only in the first Wacom subsection if you have
+.\"0 multiple devices for one tablet. If you don't specify this entry, the default value
+.\"0 is computed to
+座標値の移動を生じる位置変化量の下限 (閾値) を指定する。
+ひとつのタブレットを複数の装置として定義した場合、
+この項目は最初の Wacom 副節中でのみ指定しなければならない。
+この項目を指定しない場合、タブレットの出力する座標の最大値と画面の大きさから
+適切に計算された標準の値が使用される。
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+.\"0 sets the mode of the device.
+装置のモードを指定する。
+.TP 4
+.B TiltMode
+.\"0 enables tilt report if your tablet supports it (ROM version 1.4 and above).
+.\"0 If this is enabled, multiple devices at the same time will not be reported.
+タブレットがティルト出力をサポートしている (ROM バージョンが 1.4 以降の) 場合に 
+その機能を有効にする。これを有効にすると、複数の装置の出力が同時に発生すること
+を抑止できる。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.TP 4
+.B TopX \fInumber\fP
+.\"0 X coordinate of the top corner of the active zone.
+作業領域 (アクティブゾーン) の左上角を表す X 座標。
+.TP 4
+.B TopY \fInumber\fP
+.\"0 Y coordinate of the top corner of the active zone.
+作業領域 (アクティブゾーン) の左上角を表す Y 座標。
+.TP 4
+.B BottomX \fInumber\fP
+.\"0 X coordinate of the bottom corner of the active zone.
+作業領域 (アクティブゾーン) の右下角を表す X 座標。
+.TP 4
+.B BottomY \fInumber\fP
+.\"0 Y coordinate of the bottom corner of the active zone.
+作業領域 (アクティブゾーン) の右下角を表す Y 座標。
+.TP 4
+.B KeepShape
+.\"0 When this option is enabled, the active zone  begins according to TopX
+.\"0 and TopY.  The bottom corner is ajusted to keep the ratio width/heigth
+.\"0 of the active zone the same as the screen while maximizing the area
+.\"0 described by TopX, TopY, BottomX, BottomY.
+この追加項目を有効にすると、作業領域 (アクティブゾーン) は
+上記の TopX および TopY を基準にして定義される。
+右下角の位置は TopX, TopY, BottomX, BottomY によって表現される作業領域
+(アクティブゾーン) が、縦横比を実際の画面と一致させることの可能な最大面積を
+占めるように調整される。
+.RE
+
+.\"0 The \fBElographics\fP subsection support the following entries:
+\fBElographics\fP 副節は以下の項目をサポートしている：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which controls the serial port.
+.\"0 The default is /dev/ttyS1.
+シリアルポートを制御するスペシャルファイルのパスを指定する。
+標準値は /dev/ttyS1 である。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device. The default is TOUCHSCREEN.
+拡張装置 (X device) の名称を指定する。標準値は TOUCHSCREEN である。
+.TP 4
+.B LinkSpeed \fI \fP
+.\"0 sets the speed of the serial link connecting the touchscreen. Legal
+.\"0 values are: B300, B1200, B2400, B9600, B19200. The controller must
+.\"0 be configured to the corresponding speed before launching X. The
+.\"0 driver will not attempt to detect and change the speed. The default
+.\"0 is B9600
+タッチスクリーンを接続しているシリアル回線の通信速度を指定する。
+設定可能な速度： B300, B1200, B2400, B9600, B19200。 X を起動する前に
+シリアルポートのコントローラーを対応する通信速度に設定しておかなければ
+ならない。このドライバーは通信速度を検出も変更もしない。標準値は B9600。
+.TP 4
+.B MaximumXPosition \fIposition\fP
+.\"0 sets the maximum X position reported by the touchscreen.
+タッチスクリーンから渡される X 座標の最大値を指定する。
+.TP 4
+.B MinimumXPosition \fIposition\fP
+.\"0 sets the minimum X position reported by the touchscreen.
+タッチスクリーンから渡される X 座標の最小値を指定する。
+.TP 4
+.B MaximumYPosition \fIposition\fP
+.\"0 sets the maximum Y position reported by the touchscreen.
+タッチスクリーンから渡される Y 座標の最大値を指定する。
+.TP 4
+.B MinimumYPosition \fIposition\fP
+.\"0 sets the minimum Y position reported by the touchscreen.
+タッチスクリーンから渡される Y 座標の最小値を指定する。
+.TP 4
+.B ScreenNo \fInumber\fP
+.\"0 sets the screen number where the touchscreen is mounted.
+タッチスクリーンが割り当てられる画面の番号を指定する。
+.TP 4
+.B UntouchDelay \fIvalue\fP
+.\"0 sets the delay (in hundredth of seconds) after which the device
+.\"0 considers that an untouch occurs. The possible range is 0 to 15
+.\"0 (0 ms to 150 ms) and the default value is set to 10 (100 ms).
+.\"0 Increasing this value decrease the probability of accidental
+.\"0 untouches due to defective contact between the finger and the
+.\"0 touchscreen.
+装置がアンタッチ (手を離すこと) を検出するまでの遅れ時間を
+(百分の 1 秒単位で) 指定する。指定可能な範囲は 0 から 15 まで
+( 0 ミリ秒から 150 ミリ秒に対応) であり、標準値は 10 (100ミリ秒) である。
+この数値を増やすことにより、タッチスクリーンに指がちゃんと接触していない
+場合に意図に反するタイミングでアンタッチが検出されてしまう可能性を減らす
+ことができる。
+.TP 4
+.B ReportDelay \fIvalue\fP
+.\"0 sets the delay (in hundredth of seconds) between two reports
+.\"0 of position. The possible range is 0 to 255 (0 ms to 2550 ms)
+.\"0 and the default value is 4 (40 ms). Increasing this number
+.\"0 decrease the number of positions reported while touching the
+.\"0 screen. This can be useful to cure any lag occuring in position
+.\"0 reporting due to load problems.
+位置情報を出力する時間間隔を (百分の 1 秒単位で) 指定する。指定可能な
+範囲は 0 から 255 まで ( 0 ミリ秒から 2550 ミリ秒に対応) であり、
+標準値は 4 (40ミリ秒) である。
+この数値を増やすことにより、スクリーンに触れている間に位置情報が出力される
+回数を減らすことができる。これは作業負荷の問題によって出力された位置情報の
+処理が遅れることに対して有効である。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B DebugLevel \fInumber \fP
+.\"0 sets the level of debugging info reported. Valid values range from 0 to 5.
+.\"0 A value of zero suppress all debugging reports and a value of 5 ask for the
+.\"0 maximum verbosity.
+出力されるデバッグ情報のレベルを指定する。有効な数値の範囲は 0 から 5 まで
+である。ゼロはまったく出力されないという指定であり、 5 はすべてのデバッグ
+情報を出力する指定である。
+.RE
+
+.\"0 The \fBMicrotouchFinger\fP and \fBMicrotouchStylus\fP subsections support
+.\"0 the following entries:
+\fBMicrotouchFinger\fP および \fBMicrotouchStylus\fP 副節は以下の項目を
+サポートする：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which controls the serial port. The
+.\"0 driver supports two X input devices, the finger and the stylus, that share
+.\"0 the same port. This entry declare the port to be used and it should be
+.\"0 given identically for both X devices. Doing this, the driver knows that it
+.\"0 should bind both X devices to the same touchscreen. This must be the
+.\"0 first entry of the subsection. The default is /dev/ttyS1.
+シリアルポートを制御するスペシャルファイルのパスを指定する。ドライバーは
+同じポートを共有する 2 種類の拡張入力装置 (X input devices)、つまり指とペンとを
+サポートする。この項目は特定のポートが使用されることと、そのポートが 2 つの
+拡張装置から同じように利用されることを示す。これによって、ドライバーは 2 つの
+拡張装置が同じタッチスクリーンに対応していると判断する。この項目は副節の最初の
+項目でなければならない。標準値は /dev/ttyS1 である。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device. It defaults to FINGER for the MicrotouchFinger
+.\"0 subsection and to STYLUS for the MicrotouchStylus subsection.
+拡張装置 (X device) の名称を指定する。標準値は MicrotouchFinger 副節では
+FINGER であり、 MicrotouchStylus 副節では SYLUS である。
+.TP 4
+.B LinkSpeed \fI \fP
+.\"0 sets the speed of the serial link connecting the touchscreen. Legal
+.\"0 values are: B300, B1200, B2400, B9600, B19200. The controller must
+.\"0 be configured to the corresponding speed before launching X. The
+.\"0 driver will not attempt to detect and change the speed. The default is
+.\"0 B9600.
+タッチスクリーンを接続しているシリアル回線の通信速度を指定する。
+設定可能な速度： B300, B1200, B2400, B9600, B19200。 X を起動する前に
+シリアルポートのコントローラーを対応する通信速度に設定しておかなければ
+ならない。このドライバーは通信速度を検出も変更もしない。標準値は B9600。
+.TP 4
+.B MaximumXPosition \fIposition\fP
+.\"0 sets the maximum X position reported by the touchscreen.
+タッチスクリーンから渡される X 座標の最大値を指定する。
+.TP 4
+.B MinimumXPosition \fIposition\fP
+.\"0 sets the minimum X position reported by the touchscreen.
+タッチスクリーンから渡される X 座標の最小値を指定する。
+.TP 4
+.B MaximumYPosition \fIposition\fP
+.\"0 sets the maximum Y position reported by the touchscreen.
+タッチスクリーンから渡される Y 座標の最大値を指定する。
+.TP 4
+.B MinimumYPosition \fIposition\fP
+.\"0 sets the minimum Y position reported by the touchscreen.
+タッチスクリーンから渡される Y 座標の最小値を指定する。
+.TP 4
+.B ScreenNo \fInumber\fP
+.\"0 sets the screen number where the touchscreen is mounted.
+タッチスクリーンが割り当てられる画面の番号を指定する。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B DebugLevel \fInumber \fP
+.\"0 sets the level of debugging info reported. Valid values range from 0 to 5.
+.\"0 A value of zero suppress all debugging reports and a value of 5 ask for the
+.\"0 maximum verbosity.
+出力されるデバッグ情報のレベルを指定する。有効な数値の範囲は 0 から 5 まで
+である。ゼロはまったく出力されないという指定であり、 5 はすべてのデバッグ
+情報を出力する指定である。
+
+.RE
+.\"0 The \fBSummaSketch\fP subsection support the following entries:
+\fBSummaSketch\fP 副節は以下の項目をサポートしている：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents the device driver.
+デバイスドライバーを表現するスペシャルファイルへのパスを指定する。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+.\"0 sets the mode of the device.
+装置のモードを指定する。
+.TP 4
+.B Cursor \fIStylus|Puck\fP
+.\"0 sets the cursor type, stylus or 4 button puck.
+カーソル種類 (ペンまたは 4 ボタンパック) を指定する。
+.TP 4
+.B Increment \fIvalue\fP
+.\"0 sets the maximum change in coordinates before new report.
+位置情報を出力する座標変化量の下限 (閾値) を指定する。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+
+.RE
+.\"0 The \fBDialBox\fP subsection support the following entries:
+\fBDialBox\fP 副節は以下の項目をサポートする：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents the device driver.
+デバイスドライバーを表現するスペシャルファイルへのパスを指定する。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+.\"0 sets the mode of the device.
+装置のモードを指定する。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+
+.RE
+.\"0 The \fBMouse\fP subsection support the same entries as the
+.\"0 standard \fBPointer\fP section, plus the following:
+\fBMouse\fP 副節は標準の \fBPointer\fP 節と同じ項目に加えて、
+以下の項目をサポートする。
+.RS 8
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+
+.RE
+.PP
+.\"0 For an example of an XF86Config file, see the file installed as
+.\"0 <XRoot>/lib/X11/XF86Config.eg.
+XF86Config ファイルの実例は <XRoot>/lib/X11/XF86Config.eg にある。
+.SH ファイル
+.PP
+.nf
+/etc/XF86Config
+<XRoot>/lib/X11/XF86Config.\fIhostname\fP
+<XRoot>/lib/X11/XF86Config
+.sp 1
+.\"0 Note: <XRoot> refers to the root of the X11 install tree.
+注意: <XRoot> は X11 を導入したディレクトリツリーのルートを示す。
+.fi
+.SH 関連項目
+X(1), Xserver(1), XFree86(1), XF86_SVGA(1), XF86_VGA16(1),
+XF86_Mono(1), XF86_S3(1), XF86_8514(1), XF86_Mach8(1), XF86_Mach32(1),
+XF86_P9000(1), XF86_AGX(1), XF86_W32(1).
+.SH 著者
+.PP
+.\"0 Refer to the
+.I XFree86(1)
+.\"0 manual page.
+のオンラインマニュアルを参照。
+.\"0 $XConsortium: XF86Conf.man /main/27 1996/12/09 17:33:00 kaleb $

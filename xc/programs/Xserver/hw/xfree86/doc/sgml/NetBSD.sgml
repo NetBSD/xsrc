@@ -7,7 +7,7 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 29 December 1998
+<Date>Last modified on: 25 June 1999
 
 <toc>
 
@@ -33,9 +33,9 @@ Binaries for NetBSD 1.2 are available from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2">
 
-Binaries for NetBSD 1.3 and later are available from:
-<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.3"
-url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.3">
+Binaries for NetBSD 1.4 and later are available from:
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4"
+url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4">
 
 A list of mirror sites is provided by
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/MIRRORS"
@@ -71,8 +71,16 @@ this file and we'll revise it.
 <sect>New features in this release
 
 <p>
+<itemize>
+<item>The maximum number of open connections in the server has been
+raised to 128,
+<item>support for the <bf/wsmouse/ mouse protocol included in  NetBSD 1.4 has
+been added. 
+</itemize>
+
+<p>
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-non-OS dependent new features in XFree86 3.3.3.1.
+non-OS dependent new features in XFree86 3.3.4.
 
 <sect>Installing the Binaries
 
@@ -127,6 +135,12 @@ section of your
 Only standard PS/2 mice are supported by this driver. Newest PS/2
 mice that send more than three bytes at a time (especially
 Intellimouse, or MouseMan+ with a ``3D'' roller) are not supported yet. 
+<p>
+XFree86 3.3.4 also has support for the mouse driver included in
+the new <bf/wscons/ console driver introduced by NetBSD 1.4. Specify
+``<tt/wsmouse/'' as the protocol and ``<tt>/dev/wsmouse0</tt>'' as the 
+device in <tt>/etc/XF86Config</tt> if you're using NetBSD 1.4 with
+wscons. 
 <p>
 See <htmlurl url="mouse.html" name="README.mouse">  for general
 instruction on mouse configuration in XFree86.
@@ -216,6 +230,29 @@ the console entry in <tt>/etc/ttys</tt>:
 </verb></tscreen>
 
 <p>
+Under NetBSD 1.4 with the wscons console driver, you must enable a
+virtual console for the X server first. To do this follow these steps:
+<itemize>
+<item>Make sure the device file exists. If not, ``<tt>cd /dev ;
+./MAKEDEV wscons</tt>''. 
+<item>Next, make sure your kernel wants to do wscons. (see <ref
+id="wscons" name="below">).
+<item>Next, make sure ``<tt>wscons=YES</tt>'' in
+<tt>/etc/rc.conf</tt>.
+<item>Next, make sure <tt>/etc/wscons.conf</tt> exists. The relevant
+bits:
+<tscreen><verb>
+#screen	0	-	vt100
+screen	1	-	vt100
+screen	2	-	vt100
+screen	3	-	vt100
+screen	4	-	-
+screen	5	-	vt100
+</verb></tscreen>
+</itemize>
+(Thanks to Mason Loring Bliss <tt>&lt;mason@acheron.middleboro.ma.us&gt;</tt> for
+this explanation)
+<p>
 Note that the binary distributions of XFree86 for NetBSD don't include
 support for the XDM-AUTHORIZATION-1 protocol. 
 
@@ -232,8 +269,9 @@ line must be in your config file in <tt>/sys/arch/i386/conf</tt>:
 <sect1>Console drivers
 
 <p>
-The server supports the two standard NetBSD/i386
-console drivers: pccons and pcvt. They are detected at runtime and no
+The server supports the standard NetBSD/i386
+console drivers: pccons, pcvt and wscons (in pcvt compatibility
+mode). They are detected at runtime and no 
 configuration of the server itself is required.
 
 <p>
@@ -259,13 +297,19 @@ to
 in your kernel config file, and rebuild and install your kernel.
 
 <p>
+<label id="wscons">
 XFree86 will also run with the wscons console driver in
-NetBSD-current. For now, it uses the pcvt compatibility mode, so be
-sure to have the line:
-<tscreen>
+NetBSD 1.4. For now, it uses the pcvt compatibility mode, so be
+sure to have the lines:
+<tscreen><verb>
 options         WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
-</tscreen>
-in your kernel configuration file if you're using wscons. 
+options         WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
+options         WSDISPLAY_COMPAT_USL		# VT handling
+options         WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
+</verb></tscreen>
+in your kernel configuration file if you're using wscons. Refer to the 
+<em>wscons(4)</em> and <em>wsmouse(4)</em> manual pages for
+informations on how to configure wscons into the kernel.
 
 <sect1>Aperture Driver
 <p>
@@ -544,7 +588,7 @@ and many others.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.10 1998/12/29 07:54:28 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.12 1999/06/30 13:00:27 hohndel Exp $
 
 
 

@@ -1,4 +1,4 @@
-DATE:980213
+DATE:990211
                        XFree86 PC98 Server
                         Video System List
 
@@ -29,9 +29,11 @@ NEC
 |WAB-B3   (PC-9801-96)   |CLGD5428       | B/I   |  B/I   |1|   X   |X|
 |FC-WAB-A (PC-9821A-E09) |S3-928         |Bt485  |ICS2494 |2|   o   | |
 |FC-WAB-B (PC-9801-91)   |S3-928         |Bt485  |ICS2494 |2|  o?   | |
-|FC-WAB-X (PC-9821X-B01) |MGA II         |       |        |2|   X   | |
+|FC-WAB-X (PC-9821X-B01) |MGA II         |Ti3020 |Ti3020  |2|   X   | |
 |FC-WAB-X2(PC-9821X-B03) |MGA2064W       |Ti3026 |Ti3026  |2|  o?   |O|
 |MSWIN KIT(PC-9801B3-E02)|CLGD5428       | B/I   |  B/I   |1|   X   |X|
+|PK-UG-X003              |PERMEDIA2      | B/I   |  B/I   |8|   X   | |
+|PK-UG-X003E             |PERMEDIA2      | B/I   |  B/I   |8|   X   | |
 +------------------------+---------------+-------+--------+-+-------+-+
 |PC9821As2/U7W/U8W       |S3-928E        |       |        |1|  o?   | |
 |PC9821As3               |S3-864         |S3-SDAC|S3-SDAC |2|   o   |O|
@@ -118,6 +120,8 @@ NEC
 |PC9821Ra18/N            |TGUI9682       | B/I   |  B/I   |2|  o?   |O|
 |PC9821Ra20/N            |TGUI9682       | B/I   |  B/I   |2|   o   |O|
 |PC9821Ra266/D,N,W       |TGUI9682       | B/I   |  B/I   |2|   o   |O|
+|PC9821Ra300/D,W,M       |TGUI9682       | B/I   |  B/I   |2|  o?   |O|
+|PC9821Ra333/D,W,M       |TGUI9682       | B/I   |  B/I   |2|  o?   |O|
 |PC9821Rv20/N20          |MGA2064W       |Ti3026 |Ti3026  |4|  o?   |O|
 +------------------------+---------------+-------+--------+-+-------+-+
 |PC9821RaII23/N,W        |TGUI9682       | B/I   |  B/I   |2|  o?   |O|
@@ -158,6 +162,7 @@ NEC
 |PC9821Nr150             |Cyber9385      | B/I   |  B/I   |2|   X   | |
 |PC9821Nr150/S20         |Cyber9385-1    | B/I   |  B/I   |2|   X   | |
 |PC9821Nr166             |Cyber9385      | B/I   |  B/I   |2|   X   | |
+|PC9821Nr233/S32T,S32A   |Cyber9385-1    | B/I   |  B/I   |2|   X   | |
 |PC9821Nw133             |Cyber9385-1    | B/I   |  B/I   |2|   X   | |
 |PC9821Nw150             |Cyber9385-1    | B/I   |  B/I   |2|   X   | |
 +------------------------+---------------+-------+--------+-+-------+-+
@@ -260,70 +265,73 @@ Canopus
 
 							    
 MELCO							    
-+------------------------+---------------+-------+--------+-+-------+-+
-|WAB-S                   |CLGD5426       | B/I   |  B/I   |1|   O   |X|
-|WAB-S                   |CLGD5428       | B/I   |  B/I   |1|   O   |X|
-|WAB-1000                |CLGD5428       | B/I   |  B/I   |1|   O   |X|
-|WAB-2000                |CLGD5428       | B/I   |  B/I   |2|   O   |X|
-|WAB-EP                  |CLGD5428       | B/I   |  B/I   |1|   O   |X|
-|WSR-E                   |CLGD5428       | B/I   |  B/I   |1|   O   |X|
-|WSR-G                   |CLGD5428       | B/I   |  B/I   |1|   O   |X|
-|NMB-S                   |CLGD5428       | B/I   |  B/I   |1|  o?   |X|
-|NMG-G  (note)           |CLGD5428       | B/I   |  B/I   |1|  o?   |X|
-|NMG-S4F(note)           |CLGD5428       | B/I   |  B/I   |1|  o?   |X|
-|WSP-L                   |Power9000      |       |        | |   X   | |
-|WAP-2000                |CLGD5434       | B/I   |  B/I   |2|   O   |X|
-|WAP-4000                |CLGD5434       | B/I   |  B/I   |4|   O   |X|
-|WSN-A2F                 |CLGD5434       | B/I   |  B/I   |2|   O   |X|
-|WSN-V2                  |S3-Trio64V+    | B/I   |  B/I   |2|   X   | |
-|WSN-DX2                 |S3-Trio64V2/DX | B/I   |  B/I   |2|   X   | |
-|WSN-DX4                 |S3-Trio64V2/DX | B/I   |  B/I   |4|   X   | |
-|WGN-A2                  |CLGD5434       | B/I   |  B/I   |2|   O   |X|
-|WGN-A4                  |CLGD5434       | B/I   |  B/I   |4|  o?   |X|
-|WGN-V2                  |S3-Trio64V+    | B/I   |  B/I   |2|   X   | |
-|WGN-DX2                 |S3-Trio64V2/DX | B/I   |  B/I   |2|   X   | |
-|WGN-DX4                 |S3-Trio64V2/DX | B/I   |  B/I   |4|   X   | |
-|WAP-2EP                 |CLGD5434       | B/I   |  B/I   |2|  x?   |X|
-|WAP-4EP                 |CLGD5434       | B/I   |  B/I   |4|  x?   |X|
-|WGP-VG2                 |S3-ViRGE       | B/I   |  B/I   |2|   X   | |
-|WGP-VG4                 |S3-ViRGE       | B/I   |  B/I   |4|   X   | |
-|WGP-VG2DX               |S3-ViRGE/DX    | B/I   |  B/I   |2|   X   | |
-|WGP-VG4DX               |S3-ViRGE/DX    | B/I   |  B/I   |4|   X   | |
-|WGP-VX8                 |S3-ViRGE/VX    | B/I   |  B/I   |8|   X   | |
-|WHP-PS8                 |PERMEDIA2      |       |        |8|   X   | |
-|WHP-PS4                 |PERMEDIA2      |       |        |4|   X   | |
-+------------------------+---------------+-------+--------+-+-------+-+
++------------------------+---------------+-------+--------+--+-------+-+
+|WAB-S                   |CLGD5426       | B/I   |  B/I   | 1|   O   |X|
+|WAB-S                   |CLGD5428       | B/I   |  B/I   | 1|   O   |X|
+|WAB-1000                |CLGD5428       | B/I   |  B/I   | 1|   O   |X|
+|WAB-2000                |CLGD5428       | B/I   |  B/I   | 2|   O   |X|
+|WAB-EP                  |CLGD5428       | B/I   |  B/I   | 1|   O   |X|
+|WSR-E                   |CLGD5428       | B/I   |  B/I   | 1|   O   |X|
+|WSR-G                   |CLGD5428       | B/I   |  B/I   | 1|   O   |X|
+|NMB-S                   |CLGD5428       | B/I   |  B/I   | 1|  o?   |X|
+|NMG-G  (note)           |CLGD5428       | B/I   |  B/I   | 1|  o?   |X|
+|NMG-S4F(note)           |CLGD5428       | B/I   |  B/I   | 1|  o?   |X|
+|WSP-L                   |Power9000      |       |        |  |   X   | |
+|WAP-2000                |CLGD5434       | B/I   |  B/I   | 2|   O   |X|
+|WAP-4000                |CLGD5434       | B/I   |  B/I   | 4|   O   |X|
+|WSN-A2F                 |CLGD5434       | B/I   |  B/I   | 2|   O   |X|
+|WSN-V2                  |S3-Trio64V+    | B/I   |  B/I   | 2|   X   | |
+|WSN-DX2                 |S3-Trio64V2/DX | B/I   |  B/I   | 2|   X   | |
+|WSN-DX4                 |S3-Trio64V2/DX | B/I   |  B/I   | 4|   X   | |
+|WGN-A2                  |CLGD5434       | B/I   |  B/I   | 2|   O   |X|
+|WGN-A4                  |CLGD5434       | B/I   |  B/I   | 4|  o?   |X|
+|WGN-V2                  |S3-Trio64V+    | B/I   |  B/I   | 2|   X   | |
+|WGN-DX2                 |S3-Trio64V2/DX | B/I   |  B/I   | 2|   X   | |
+|WGN-DX4                 |S3-Trio64V2/DX | B/I   |  B/I   | 4|   X   | |
+|WAP-2EP                 |CLGD5434       | B/I   |  B/I   | 2|  x?   |X|
+|WAP-4EP                 |CLGD5434       | B/I   |  B/I   | 4|  x?   |X|
+|WGP-VG2                 |S3-ViRGE       | B/I   |  B/I   | 2|   X   | |
+|WGP-VG4                 |S3-ViRGE       | B/I   |  B/I   | 4|   X   | |
+|WGP-VG2DX               |S3-ViRGE/DX    | B/I   |  B/I   | 2|   X   | |
+|WGP-VG4DX               |S3-ViRGE/DX    | B/I   |  B/I   | 4|   X   | |
+|WGP-VX8                 |S3-ViRGE/VX    | B/I   |  B/I   | 8|   X   | |
+|WGP-FX8N                |Voodoo Banshee |       |        | 8|   X   | |
+|WGP-FX16N               |Voodoo Banshee |       |        |16|   X   | |
+|WHP-PS8S                |PERMEDIA2      | B/I   |  B/I   | 8|   X   | |
+|WHP-PS4S                |PERMEDIA2      | B/I   |  B/I   | 4|   X   | |
++------------------------+---------------+-------+--------+--+-------+-+
 
 							    
 IO DATA							    
-+------------------------+---------------+-------+--------+-+-------+-+
-|GA-1024/A/AL/NL         |ORIGINAL       |       |        |1|   X   | |
-|GA-1280/AL              |ORIGINAL       |       |        |2|   X   | |
-|GA-98NBI/C,SB16-GA98    |CLGD5434       | B/I   |  B/I   |1|   O   |X|
-|GA-98NB II              |CLGD5434       | B/I   |  B/I   |2|   O   |X|
-|GA-98NB IV              |CLGD5434       | B/I   |  B/I   |4|   O   |X|
-|GA-DR2/98               |TGUI9660       | B/I   |  B/I   |2|  X?   |X|
-|GA-DR4/98               |TGUI9660       | B/I   |  B/I   |4|  X?   |X|
-|GA-DR2/PCI              |TGUI9660       | B/I   |  B/I   |2|   X   | |
-|GA-DR4/PCI              |TGUI9660       | B/I   |  B/I   |4|   X   | |
-|GA-DRV2/98              |TGUI9680       | B/I   |  B/I   |2|  X?   |X|
-|GA-DRV4/98              |TGUI9680       | B/I   |  B/I   |4|   X   |X|
-|GA-DRV2/PCI             |TGUI9680       | B/I   |  B/I   |2|   X   | |
-|GA-DRV4/PCI             |TGUI9680       | B/I   |  B/I   |4|   X   | |
-|GA-DRTV2/98PCI          |TGUI9682       | B/I   |  B/I   |2|   X   | |
-|GA-DRTV4/98PCI          |TGUI9682       | B/I   |  B/I   |4|   X   | |
-|GA-968V2/98PCI          |S3-968         |RGB524 | RGB524 |2|  o?   |O|
-|GA-968V4/98PCI          |S3-968         |RGB524 | RGB524 |4|   O   |O|
-|GA-PGDX2/98PCI          |S3-ViRGE/DX    | B/I   |  B/I   |2|   X   | |
-|GA-PGDX4/98PCI          |S3-ViRGE/DX    | B/I   |  B/I   |4|   X   | |
-|GA-PG3D2/98PCI          |S3-ViRGE       | B/I   |  B/I   |2|   X   | |
-|GA-PG3D4/98PCI          |S3-ViRGE       | B/I   |  B/I   |4|   X   | |
-|GA-PG3DVX4/98PCI        |S3-ViRGE/VX    | B/I   |  B/I   |4|   X   | |
-|GA-PG3DVX8/98PCI        |S3-ViRGE/VX    | B/I   |  B/I   |8|   X   | |
-|GA-PII8/PCI             |PERMEDIA2      |       |        |8|   X   | |
-|GA-RUSH6/PCI            |Promotion AT25 |       |        |4|   X   | |
-|                        |Voodoo RUSH    |       |        |2|       | |
-+------------------------+---------------+-------+--------+-+-------+-+
++------------------------+---------------+-------+--------+--+-------+-+
+|GA-1024/A/AL/NL         |ORIGINAL       |       |        | 1|   X   | |
+|GA-1280/AL              |ORIGINAL       |       |        | 2|   X   | |
+|GA-98NBI/C,SB16-GA98    |CLGD5434       | B/I   |  B/I   | 1|   O   |X|
+|GA-98NB II              |CLGD5434       | B/I   |  B/I   | 2|   O   |X|
+|GA-98NB IV              |CLGD5434       | B/I   |  B/I   | 4|   O   |X|
+|GA-DR2/98               |TGUI9660       | B/I   |  B/I   | 2|  X?   |X|
+|GA-DR4/98               |TGUI9660       | B/I   |  B/I   | 4|  X?   |X|
+|GA-DR2/PCI              |TGUI9660       | B/I   |  B/I   | 2|   X   | |
+|GA-DR4/PCI              |TGUI9660       | B/I   |  B/I   | 4|   X   | |
+|GA-DRV2/98              |TGUI9680       | B/I   |  B/I   | 2|  X?   |X|
+|GA-DRV4/98              |TGUI9680       | B/I   |  B/I   | 4|   X   |X|
+|GA-DRV2/PCI             |TGUI9680       | B/I   |  B/I   | 2|   X   | |
+|GA-DRV4/PCI             |TGUI9680       | B/I   |  B/I   | 4|   X   | |
+|GA-DRTV2/98PCI          |TGUI9682       | B/I   |  B/I   | 2|   X   | |
+|GA-DRTV4/98PCI          |TGUI9682       | B/I   |  B/I   | 4|   X   | |
+|GA-968V2/98PCI          |S3-968         |RGB524 | RGB524 | 2|  o?   |O|
+|GA-968V4/98PCI          |S3-968         |RGB524 | RGB524 | 4|   O   |O|
+|GA-PGDX2/98PCI          |S3-ViRGE/DX    | B/I   |  B/I   | 2|   X   | |
+|GA-PGDX4/98PCI          |S3-ViRGE/DX    | B/I   |  B/I   | 4|   X   | |
+|GA-PG3D2/98PCI          |S3-ViRGE       | B/I   |  B/I   | 2|   X   | |
+|GA-PG3D4/98PCI          |S3-ViRGE       | B/I   |  B/I   | 4|   X   | |
+|GA-PG3DVX4/98PCI        |S3-ViRGE/VX    | B/I   |  B/I   | 4|   X   | |
+|GA-PG3DVX8/98PCI        |S3-ViRGE/VX    | B/I   |  B/I   | 8|   X   | |
+|GA-PII8/PCI             |PERMEDIA2      | B/I   |  B/I   | 8|   X   | |
+|GA-RUSH6/PCI            |Promotion AT25 |       |        | 4|   X   | |
+|                        |Voodoo Rush    |       |        | 2|       | |
+|GA-VDB16/PCI            |Voodoo Banshee |       |        |16|   X   | |
++------------------------+---------------+-------+--------+--+-------+-+
 
 
 ICM							    
@@ -376,4 +384,4 @@ Force
 |WinFrame928             |S3-928         |       |        |2|   ?   | |
 +------------------------+---------------+-------+--------+-+-------+-+
 
-/* $XFree86: xc/programs/Xserver/hw/xfree98/doc/VideoBoard98,v 3.3.4.7 1998/12/13 14:12:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/doc/VideoBoard98,v 3.3.4.8 1999/04/26 07:23:38 hohndel Exp $ */

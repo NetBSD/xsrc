@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.c,v 1.1.1.2.2.1 1998/11/05 15:08:48 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/xsm.c,v 1.1.1.2.2.2 1999/02/13 02:37:30 dawes Exp $ */
 
 /*
  * X Session Manager.
@@ -236,6 +236,9 @@ char **argv;
 
     WaitForSaveDoneList = ListInit();
     if (!WaitForSaveDoneList) nomem();
+
+    InitialSaveList = ListInit();
+    if (!InitialSaveList) nomem();
 
     FailedSaveList = ListInit();
     if (!FailedSaveList) nomem();
@@ -787,6 +790,8 @@ char 		*previousId;
     {
 	SmsSaveYourself (smsConn, SmSaveLocal,
 	    False, SmInteractStyleNone, False);
+
+	ListAddLast (InitialSaveList, (char *) client);
     }
     else if (client_info_visible)
     {
@@ -1000,7 +1005,11 @@ SaveYourselfDoneProc (smsConn, managerData, success)
     }
 
     if (!ListSearchAndFreeOne (WaitForSaveDoneList, (char *) client))
+    {
+	if (ListSearchAndFreeOne (InitialSaveList, (char *) client))
+	    SmsSaveComplete (client->smsConn);
 	return;
+    }
 
     if (!success)
     {

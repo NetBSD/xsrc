@@ -10,9 +10,9 @@
 <sect> Available Documentation <p>
 
 <itemize>
-<item><htmlurl name="Release Notes for XFree86&trade; 3.3.3.1"
+<item><htmlurl name="Release Notes for XFree86&trade; 3.3.4"
 	url="RELNOTES.html">
-<item><htmlurl name="README for XFree86&trade; 3.3.3.1"
+<item><htmlurl name="README for XFree86&trade; 3.3.4"
 	url="README.html">
 <item><htmlurl name="Copyright"
 	url="COPYRIGHT.html">
@@ -76,8 +76,14 @@
 	url="chips.html">
 <item><htmlurl name="Information for Cirrus Chipset Users"
 	url="cirrus.html">
+<item><htmlurl name="Information for Cyrix Chipset Users"
+	url="cyrix.html">
 <item><htmlurl name="Information for DEC 21030 Users (aka TGA)"
 	url="DECtga.html">
+<item><htmlurl name="Information for EPSON SPC8110 Chipset Users"
+	url="epson.html">
+<item><htmlurl name="The Linux/m68k Frame Buffer Device"
+	url="fbdev.html">
 <item><htmlurl name="Notes for Mach32 X Server"
 	url="Mach32.html">
 <item><htmlurl name="Notes for Mach64 X Server"
@@ -86,18 +92,26 @@
 	url="MGA.html">
 <item><htmlurl name="Information for Number Nine I128 Users"
 	url="I128.html">
+<item><htmlurl name="Information for i740 Users"
+	url="i740.html">
+<item><htmlurl name="Information for NeoMagic Chipset Users"
+	url="neo.html">
 <item><htmlurl name="Information for NVidia / SGS-Thomson NV1, Riva 128 and Riva TNT Users"
 	url="NVIDIA.html">
 <item><htmlurl name="Information for Oak Technologies Inc. Chipset Users"
 	url="Oak.html">
 <item><htmlurl name="XFree86 P9000 Server Release Notes"
 	url="P9000.html">
+<item><htmlurl name="Information for Rendition Chipset Users"
+	url="rendition.html">
 <item><htmlurl name="Information for S3 Chipset Users"
 	url="S3.html">
 <item><htmlurl name="Information for S3 ViRGE and ViRGE/VX Users"
 	url="S3V.html">
 <item><htmlurl name="Information for SiS Users"
 	url="SiS.html">
+<item><htmlurl name="Information for 3DLabs Chipset Users"
+	url="3DLabs.html">
 <item><htmlurl name="Information for Trident Chipset Users"
 	url="trident.html">
 <item><htmlurl name="Information for Tseng Chipset Users"
@@ -106,24 +120,12 @@
 	url="Video7.html">
 <item><htmlurl name="Information for ET4000/W32 and ET6000 Chipset Users"
 	url="W32.html">
-<item><htmlurl name="Information for Cyrix Chipset Users"
-	url="cyrix.html">
-<item><htmlurl name="Information for 3DLabs Chipset Users"
-	url="3DLabs.html">
-<item><htmlurl name="Information for NeoMagic Chipset Users"
-	url="neo.html">
-<item><htmlurl name="Information for Rendition Chipset Users"
-	url="rendition.html">
 <item><htmlurl name="Information for Western Digital Chipset Users"
 	url="WstDig.html">
-<item><htmlurl name="Information for EPSON SPC8110 Chipset Users"
-	url="epson.html">
-<item><htmlurl name="The Linux/m68k Frame Buffer Device"
-	url="fbdev.html">
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.17 1998/12/23 13:36:26 hohndel Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.18 1999/05/29 09:39:05 dawes Exp $ 
 
 
 

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiutil.h,v 1.1.2.1 1998/02/01 16:42:05 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiutil.h,v 1.1.2.2 1999/07/05 09:07:36 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,9 +47,11 @@
  * Macros to get/set a contiguous bit field.  '_Mask' should not be
  * self-modifying.
  */
-#define _UnitOf(___Value)	((((___Value) ^ ((___Value) - 1)) + 1) >> 1)
-#define GetBits(__Value, _Mask)	(((__Value) & (_Mask)) / _UnitOf(_Mask))
-#define SetBits(__Value, _Mask)	(((__Value) * _UnitOf(_Mask)) & (_Mask))
+#define UnitOf(___Value)	((((___Value) ^ ((___Value) - 1)) + 1) >> 1)
+#define GetBits(__Value, _Mask)	(((__Value) & (_Mask)) / UnitOf(_Mask))
+#define SetBits(__Value, _Mask)	(((__Value) * UnitOf(_Mask)) & (_Mask))
+
+#define MaxBits(___Value)       GetBits(___Value, ___Value)
 
 #define _ByteMask(__Byte)	((CARD8)(-1) << (8 * (__Byte)))
 #define GetByte(_Value, _Byte)	GetBits(_Value, _ByteMask(_Byte))

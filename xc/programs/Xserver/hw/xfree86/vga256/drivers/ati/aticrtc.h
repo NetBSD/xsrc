@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.h,v 1.1.2.1 1998/02/01 16:41:48 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.h,v 1.1.2.2 1999/07/05 09:07:32 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -50,6 +50,9 @@ typedef struct
         CARD8             a3,         a6, a7,             ab, ac, ad, ae,
               b0, b1, b2, b3,     b5, b6,     b8, b9, ba,         bd, be, bf;
 
+        /* Mach64 PLL register */
+        CARD8 pll_ext_vpll_cntl;
+
         /* Mach64 registers */
         CARD32 crtc_h_total_disp, crtc_h_sync_strt_wid,
                crtc_v_total_disp, crtc_v_sync_strt_wid,
@@ -57,6 +60,17 @@ typedef struct
                ovr_clr, ovr_wid_left_right, ovr_wid_top_bottom,
                clock_cntl, bus_cntl, mem_vga_wp_sel, mem_vga_rp_sel,
                dac_cntl, config_cntl;
+
+        /* LCD registers */
+        CARD32 lcd_index, config_panel, lcd_gen_ctrl, power_management,
+               horz_stretching, vert_stretching, ext_vert_stretch;
+
+        /* Shadow VGA CRTC registers */
+        CARD8 shadow_vga[25];
+
+        /* Shadow Mach64 CRTC registers */
+        CARD32 shadow_h_total_disp, shadow_h_sync_strt_wid,
+               shadow_v_total_disp, shadow_v_sync_strt_wid;
 
         /*
          * Various things needed by ATISwap:  the function to be called by

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiregs.h,v 1.1.2.1 1998/02/01 16:42:01 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiregs.h,v 1.1.2.2 1999/07/05 09:07:35 hohndel Exp $ */
 /*
- * Copyright 1994 through 1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1994 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,7 +29,7 @@
  *
  * The intent here is to list all I/O ports for VGA (and its predecessors),
  * ATI VGA Wonder, 8514/A, ATI Mach8, ATI Mach32 and ATI Mach64 video adapters,
- * not just the ones in use by the VGA Wonder driver.
+ * not just the ones in use by the ATI driver.
  */
 
 #ifndef ___ATIREGS_H___
@@ -46,8 +46,11 @@
 
 #define IO_BYTE_SELECT		0x0003u
 
+#define SPARSE_IO_PORT		(SPARSE_IO_BASE | IO_BYTE_SELECT)
+#define BLOCK_IO_PORT		(BLOCK_IO_BASE | IO_BYTE_SELECT)
+
 #define IOPortTag(_SparseIOSelect, _BlockIOSelect)	\
-	(SetBits(_SparseIOSelect, SPARSE_IO_SELECT) | \
+	(SetBits(_SparseIOSelect, SPARSE_IO_SELECT) |	\
 	 SetBits(_BlockIOSelect, BLOCK_IO_SELECT))
 #define SparseIOTag(_IOSelect)	IOPortTag(_IOSelect, (unsigned)(-1))
 #define BlockIOTag(_IOSelect)	IOPortTag((unsigned)(-1), _IOSelect)
@@ -99,14 +102,14 @@
 /*	?(_IOBase)		(_IOBase + 0x06u) */
 /*	?(_IOBase)		(_IOBase + 0x07u) */
 #define GENMC(_IOBase)		(_IOBase + 0x08u)
-/*	?(_IOBase)		(_IOBase + 0x09u) */
+/*	?(_IOBase)		(_IOBase + 0x09u) */	/* R_GENLPS/GENB */
 #define GENS1(_IOBase)		(_IOBase + 0x0au)	/* Read */
 #define GENFC(_IOBase)		(_IOBase + 0x0au)	/* Write */
 #define GENLPC(_IOBase)		(_IOBase + 0x0bu)
-/*	?(_IOBase)		(_IOBase + 0x0cu) */
-/*	?(_IOBase)		(_IOBase + 0x0du) */
-/*	?(_IOBase)		(_IOBase + 0x0eu) */
-/*	?(_IOBase)		(_IOBase + 0x0fu) */
+/*	?(_IOBase)		(_IOBase + 0x0cu) */	/* /GENLPS */
+/*	?(_IOBase)		(_IOBase + 0x0du) */	/* /KCX */
+/*	?(_IOBase)		(_IOBase + 0x0eu) */	/* /KCD */
+/*	?(_IOBase)		(_IOBase + 0x0fu) */	/* GENHP/ */
 
 /* 8514/A VESA approved register definitions */
 #define DISP_STAT		0x02e8u		/* Read */
@@ -240,18 +243,18 @@
 #define VECDIR_225			0x00a0u
 #define VECDIR_270			0x00c0u
 #define VECDIR_315			0x00e0u
-#define BKGD_COLOR		0xa2e8u			/* Write */
-#define FRGD_COLOR		0xa6e8u			/* Write */
-#define WRT_MASK		0xaae8u			/* Write */
-#define RD_MASK			0xaee8u			/* Write */
-#define COLOR_CMP		0xb2e8u			/* Write */
-#define BKGD_MIX		0xb6e8u			/* Write */
+#define BKGD_COLOR		0xa2e8u		/* Write */
+#define FRGD_COLOR		0xa6e8u		/* Write */
+#define WRT_MASK		0xaae8u		/* Write */
+#define RD_MASK			0xaee8u		/* Write */
+#define COLOR_CMP		0xb2e8u		/* Write */
+#define BKGD_MIX		0xb6e8u		/* Write */
 /*					0x001fu	See MIX_* definitions below */
 #define BSS_BKGDCOL			0x0000u
 #define BSS_FRGDCOL			0x0020u
 #define BSS_PCDATA			0x0040u
 #define BSS_BITBLT			0x0060u
-#define FRGD_MIX		0xbae8u			/* Write */
+#define FRGD_MIX		0xbae8u		/* Write */
 /*					0x001fu	See MIX_* definitions below */
 #define FSS_BKGDCOL			0x0000u
 #define FSS_FRGDCOL			0x0020u
@@ -548,6 +551,10 @@
 #define CRTC_V_SYNC_POL			0x00200000ul
 /*	?				0xffc00000ul */
 #define CRTC_VLINE_CRNT_VLINE	IOPortTag(0x04u, 0x04u)
+#define CRTC_VLINE			0x000007fful
+/*	?				0x0000f800ul */
+#define CRTC_CRNT_VLINE			0x07ff0000ul
+/*	?				0xf8000000ul */
 #define CRTC_OFF_PITCH		IOPortTag(0x05u, 0x05u)
 #define CRTC_OFFSET			0x000ffffful
 #define CRTC_OFFSET_VGA			0x0003fffful
@@ -561,11 +568,15 @@
 #define CRTC_VLINE_INT			0x00000010ul
 #define CRTC_VLINE_SYNC			0x00000020ul
 #define CRTC_FRAME			0x00000040ul
-/*	?				0x0000ff80ul */
 #define CRTC_SNAPSHOT_INT_EN		0x00000080ul	/* GT3 */
 #define CRTC_SNAPSHOT_INT		0x00000100ul	/* GT3 */
 #define CRTC_I2C_INT_EN			0x00000200ul	/* GT3 */
 #define CRTC_I2C_INT			0x00000400ul	/* GT3 */
+#define CRTC2_VBLANK			0x00000800ul	/* LTPro */
+#define CRTC2_VBLANK_INT_EN		0x00001000ul	/* LTPro */
+#define CRTC2_VBLANK_INT		0x00002000ul	/* LTPro */
+#define CRTC2_VLINE_INT_EN		0x00004000ul	/* LTPro */
+#define CRTC2_VLINE_INT			0x00008000ul	/* LTPro */
 #define CRTC_CAPBUF0_INT_EN		0x00010000ul	/* VT/GT */
 #define CRTC_CAPBUF0_INT		0x00020000ul	/* VT/GT */
 #define CRTC_CAPBUF1_INT_EN		0x00040000ul	/* VT/GT */
@@ -578,20 +589,25 @@
 #define CRTC_BUSMASTER_EOL_INT		0x02000000ul	/* VTB/GTB/LT */
 #define CRTC_GP_INT_EN			0x04000000ul	/* VTB/GTB/LT */
 #define CRTC_GP_INT			0x08000000ul	/* VTB/GTB/LT */
-/*	?				0xf0000000ul */
-#define CRTC_VBLANK_BIT2		0x80000000ul	/* GT3 */
+#define CRTC2_VLINE_SYNC		0x10000000ul	/* LTPro */
+#define CRTC_SNAPSHOT2_INT_EN		0x20000000ul	/* LTPro */
+#define CRTC_SNAPSHOT2_INT		0x40000000ul	/* LTPro */
+#define CRTC_VBLANK_BIT2_INT		0x80000000ul	/* GT3/LTPro */
 #define CRTC_INT_ENS	/* *** UPDATE ME *** */		\
 		(					\
 			CRTC_VBLANK_INT_EN |		\
 			CRTC_VLINE_INT_EN |		\
 			CRTC_SNAPSHOT_INT_EN |		\
 			CRTC_I2C_INT_EN |		\
+			CRTC2_VBLANK_INT_EN |		\
+			CRTC2_VLINE_INT_EN |		\
 			CRTC_CAPBUF0_INT_EN |		\
 			CRTC_CAPBUF1_INT_EN |		\
 			CRTC_OVERLAY_EOF_INT_EN |	\
 			CRTC_ONESHOT_CAP_INT_EN |	\
 			CRTC_BUSMASTER_EOL_INT_EN |	\
 			CRTC_GP_INT_EN |		\
+			CRTC_SNAPSHOT2_INT_EN |		\
 			0				\
 		)
 #define CRTC_INT_ACKS	/* *** UPDATE ME *** */		\
@@ -600,12 +616,16 @@
 			CRTC_VLINE_INT |		\
 			CRTC_SNAPSHOT_INT |		\
 			CRTC_I2C_INT |			\
+			CRTC2_VBLANK_INT |		\
+			CRTC2_VLINE_INT |		\
 			CRTC_CAPBUF0_INT |		\
 			CRTC_CAPBUF1_INT |		\
 			CRTC_OVERLAY_EOF_INT |		\
 			CRTC_ONESHOT_CAP_INT |		\
 			CRTC_BUSMASTER_EOL_INT |	\
 			CRTC_GP_INT |			\
+			CRTC_SNAPSHOT2_INT |		\
+			CRTC_VBLANK_BIT2_INT |		\
 			0				\
 		)
 #define CRTC_GEN_CNTL		IOPortTag(0x07u, 0x07u)
@@ -615,6 +635,7 @@
 #define CRTC_VSYNC_DIS			0x00000008ul
 #define CRTC_CSYNC_EN			0x00000010ul
 #define CRTC_PIX_BY_2_EN		0x00000020ul
+#define CRTC2_DBL_SCAN_EN		0x00000020ul	/* LTPro */
 #define CRTC_DISPLAY_DIS		0x00000040ul
 #define CRTC_VGA_XOVERSCAN		0x00000080ul
 #define CRTC_PIX_WIDTH			0x00000700ul
@@ -630,9 +651,20 @@
 /*	?				0x00003000ul */
 #define CRTC_FIFO_OVERFILL		0x0000c000ul	/* VT/GT */
 #define CRTC_FIFO_LWM			0x000f0000ul
+/*	?				0x00010000ul */	/* LTPro */
+#define CRTC2_PIX_WIDTH			0x000e0000ul	/* LTPro */
+#define CRTC2_PIX_WIDTH_NONE			0x00000000ul
+#define CRTC2_PIX_WIDTH_8BPP			0x00020000ul
+/*	?					0x00040000ul */
+#define CRTC2_PIX_WIDTH_15BPP			0x00060000ul
+#define CRTC2_PIX_WIDTH_16BPP			0x00080000ul
+#define CRTC2_PIX_WIDTH_24BPP			0x000a0000ul
+#define CRTC2_PIX_WIDTH_32BPP			0x000c0000ul
+#define CRTC2_PIX_WIDTH_YUV422			0x000e0000ul
 #define CRTC_VGA_128KAP_PAGING		0x00100000ul	/* VT/GT */
 #define CRTC_DISPREQ_ONLY		0x00200000ul	/* VT/GT */
 #define CRTC_VFC_SYNC_TRISTATE		0x00200000ul	/* VTB/GTB/LT */
+#define CRTC2_EN			0x00200000ul	/* LTPro */
 #define CRTC_LOCK_REGS			0x00400000ul	/* VT/GT */
 #define CRTC_SYNC_TRISTATE		0x00800000ul	/* VT/GT */
 #define CRTC_EXT_DISP_EN		0x01000000ul
@@ -659,28 +691,28 @@
 #define MEM_BUF_CNTL		BlockIOTag(0x0bu)	/* VTB/GTB/LT */
 #define SHARED_CNTL		BlockIOTag(0x0cu)	/* VTB/GTB/LT */
 #define SHARED_MEM_CONFIG	BlockIOTag(0x0du)	/* VTB/GTB/LT */
-#define MEM_ADDR_CONFIG		BlockIOTag(0x0du)	/* GT3 */
+#define MEM_ADDR_CONFIG		BlockIOTag(0x0du)	/* GT3/LTPro */
 #define SHARED_CNTL_CTD		BlockIOTag(0x0eu)	/* CTD */
 /*	?				0x00fffffful */
 #define CTD_FIFO5			0x01000000ul
 /*	?				0xfe000000ul */
 #define CRT_TRAP		BlockIOTag(0x0eu)	/* VTB/GTB/LT */
 #define DSTN_CONTROL		BlockIOTag(0x0fu)	/* LT */
-#define I2C_CNTL_0		BlockIOTag(0x0fu)	/* GT3 */
+#define I2C_CNTL_0		BlockIOTag(0x0fu)	/* GT3/LTPro */
 #define OVR_CLR			IOPortTag(0x08u, 0x10u)
 #define OVR_CLR_8			0x000000fful
 #define OVR_CLR_B			0x0000ff00ul
 #define OVR_CLR_G			0x00ff0000ul
 #define OVR_CLR_R			0xff000000ul
 #define OVR_WID_LEFT_RIGHT	IOPortTag(0x09u, 0x11u)
-#define OVR_WID_LEFT			0x0000003ful	/* 0x0f on ! LT */
+#define OVR_WID_LEFT			0x0000003ful	/* 0x0f on <LT */
 /*	?				0x0000ffc0ul */
-#define OVR_WID_RIGHT			0x003f0000ul	/* 0x0f0000 on ! LT */
+#define OVR_WID_RIGHT			0x003f0000ul	/* 0x0f0000 on <LT */
 /*	?				0xffc00000ul */
 #define OVR_WID_TOP_BOTTOM	IOPortTag(0x0au, 0x12u)
-#define OVR_WID_TOP			0x000001fful	/* 0x00ff on ! LT */
+#define OVR_WID_TOP			0x000001fful	/* 0x00ff on <LT */
 /*	?				0x0000fe00ul */
-#define OVR_WID_BOTTOM			0x01ff0000ul	/* 0x00ff0000 on ! LT */
+#define OVR_WID_BOTTOM			0x01ff0000ul	/* 0x00ff0000 on <LT */
 /*	?				0xfe000000ul */
 #define VGA_DSP_CONFIG		BlockIOTag(0x13u)	/* VTB/GTB/LT */
 #define VGA_DSP_XCLKS_PER_QW		DSP_XCLKS_PER_QW
@@ -694,18 +726,45 @@
 /*	?				0x0000f800ul */
 #define VGA_DSP_ON			DSP_ON
 /*	?				0xf8000000ul */
-/*	?			BlockIOTag(0x15u) */
-/*	?			BlockIOTag(0x16u) */
+#define DSP2_CONFIG		BlockIOTag(0x15u)	/* LTPro */
+#define DSP2_ON_OFF		BlockIOTag(0x16u)	/* LTPro */
 #define EXT_CRTC_GEN_CNTL	BlockIOTag(0x17u)	/* VT-A4 */
+#define CRTC2_OFF_PITCH		BlockIOTag(0x17u)	/* LTPro */
 #define CUR_CLR0		IOPortTag(0x0bu, 0x18u)
 #define CUR_CLR1		IOPortTag(0x0cu, 0x19u)
 #define CUR_OFFSET		IOPortTag(0x0du, 0x1au)
 #define CUR_HORZ_VERT_POSN	IOPortTag(0x0eu, 0x1bu)
 #define CUR_HORZ_VERT_OFF	IOPortTag(0x0fu, 0x1cu)
 #define CONFIG_PANEL		BlockIOTag(0x1du)	/* LT */
+#define PANEL_FORMAT			0x00000007ul
+/*	?				0x00000008ul */
+#define PANEL_TYPE			0x000000f0ul
+#define NO_OF_GREY			0x00000700ul
+#define MOD_GEN				0x00001800ul
+#define EXT_LVDS_CLK			0x00001800ul	/* LTPro */
+#define BLINK_RATE			0x00006000ul
+#define BLINK_RATE_PRO			0x00002000ul	/* LTPro */
+#define DONT_SHADOW_HEND		0x00004000ul	/* LTPro */
+#define DONT_USE_F32KHZ			0x00008000ul
+#define FP_POL				0x00010000ul
+#define LP_POL				0x00020000ul
+#define DTMG_POL			0x00040000ul
+#define SCK_POL				0x00080000ul
+#define DITHER_SEL			0x00300000ul
+#define INVERSE_VIDEO_EN		0x00400000ul
+#define BL_CLK_SEL			0x01800000ul
+#define BL_LEVEL			0x0e000000ul
+#define BL_CLK_SEL_PRO			0x00800000ul	/* LTPro */
+#define BL_LEVEL_PRO			0x03000000ul	/* LTPro */
+#define BIAS_LEVEL_PRO			0x0c000000ul	/* LTPro */
+#define HSYNC_DELAY			0xf0000000ul
+#define TV_OUT_INDEX		BlockIOTag(0x1du)	/* LTPro */
+#define TV_REG_INDEX			0x000000fful
+#define TV_ON				0x00000100ul
+/*	?				0xfffffe00ul */
 #define GP_IO			IOPortTag(0x1eu, 0x1eu)	/* VT/GT */
 #define GP_IO_CNTL		BlockIOTag(0x1fu)	/* VT/GT */
-#define HW_DEBUG		GP_IO_CNTL		/* VTB/GTB/LT */
+#define HW_DEBUG		BlockIOTag(0x1fu)	/* VTB/GTB/LT */
 #define SCRATCH_REG0		IOPortTag(0x10u, 0x20u)
 #define SCRATCH_REG1		IOPortTag(0x11u, 0x21u)
 /*	BIOS_BASE_SEGMENT		0x0000007ful */	/* As above */
@@ -713,7 +772,7 @@
 #define BIOS_INIT_DAC_SUBTYPE		0x0000f000ul
 /*	?				0xffff0000ul */
 #define SCRATCH_REG2		BlockIOTag(0x22u)	/* LT */
-/*	?			BlockIOTag(0x23u) */
+#define SCRATCH_REG3		BlockIOTag(0x23u)	/* GT3/LTPro */
 #define CLOCK_CNTL		IOPortTag(0x12u, 0x24u)
 #define CLOCK_BIT			0x00000004ul	/* For ICS2595 */
 #define CLOCK_PULSE			0x00000008ul	/* For ICS2595 */
@@ -723,13 +782,36 @@
 #define CLOCK_DATA			0x00000080ul
 /*	?				0x00000100ul */
 #define PLL_WR_EN			0x00000200ul	/* For internal PLL */
-#define PLL_ADDR			0x00007c00ul	/* For internal PLL */
-/*	?				0x00008000ul */
+#define PLL_ADDR			0x0000fc00ul	/* For internal PLL */
 #define PLL_DATA			0x00ff0000ul	/* For internal PLL */
 /*	?				0xff000000ul */
-#define CONFIG_STAT64_1		BlockIOTag(0x25u)	/* GT3 */
-#define CONFIG_STAT64_2		BlockIOTag(0x26u)	/* GT3 */
-/*	?			BlockIOTag(0x27u) */
+#define CONFIG_STAT64_1		BlockIOTag(0x25u)	/* GT3/LTPro */
+#define CFG_SUBSYS_DEV_ID		0x000000fful
+#define CFG_SUBSYS_VEN_ID		0x00ffff00ul
+/*	?				0x1f000000ul */
+#define CFG_DIMM_TYPE			0xe0000000ul
+#define CONFIG_STAT64_2		BlockIOTag(0x26u)	/* GT3/LTPro */
+#define CFG_DIMM_TYPE_3			0x00000001ul
+/*	?				0x0000001eul */
+#define CFG_ROMWRTEN			0x00000020ul
+#define CFG_AGPVCOGAIN			0x000000c0ul
+#define CFG_PCI_TYPE			0x00000100ul
+#define CFG_AGPSKEW			0x00000e00ul
+#define CFG_X1CLKSKEW			0x00007000ul
+#define CFG_PANEL_ID_P			0x000f8000ul	/* LTPro */
+/*	?				0x00100000ul */
+#define CFG_PREFETCH_EN			0x00200000ul
+#define CFG_ID_DISABLE			0x00400000ul
+#define CFG_PRE_TESTEN			0x00800000ul
+/*	?				0x01000000ul */
+#define CFG_PCI5VEN			0x02000000ul	/* LTPro */
+#define CFG_VGA_DISABLE			0x04000000ul
+#define CFG_ENINTB			0x08000000ul
+/*	?				0x10000000ul */
+#define CFG_ROM_REMAP_2			0x20000000ul
+#define CFG_IDSEL			0x40000000ul
+/*	?				0x80000000ul */
+#define TV_OUT_DATA		BlockIOTag(0x27u)	/* LTPro */
 #define BUS_CNTL		IOPortTag(0x13u, 0x28u)
 #define BUS_WS				0x0000000ful
 #define BUS_DBL_RESYNC			0x00000001ul	/* VTB/GTB/LT */
@@ -740,8 +822,15 @@
 #define BUS_APER_REG_DIS		0x00000010ul	/* VTB/GTB/LT */
 #define BUS_EXTRA_PIPE_DIS		0x00000020ul	/* VTB/GTB/LT */
 #define BUS_MASTER_DIS			0x00000040ul	/* VTB/GTB/LT */
-#define BUS_ROM_WRT_EN			0x00000080ul	/* GT3 */
+#define BUS_ROM_WRT_EN			0x00000080ul	/* GT3/LTPro */
 #define BUS_ROM_PAGE			0x00000f00ul
+#define BUS_MINOR_REV_ID		0x00000700ul	/* LTPro */
+/*		First silicom - Prototype (A11)	0x00000000ul */
+/*		Metal mask spin (A12 & A13)	0x00000100ul */
+/*		All layer spin (A21)		0x00000200ul */
+/*		Fast metal spin (A22) - Prod.	0x00000300ul */
+/*		All layer spin (A31)		0x00000700ul */
+/*	?				0x00000800ul */	/* LTPro */
 #define BUS_ROM_DIS			0x00001000ul
 #define BUS_IO_16_EN			0x00002000ul	/* GX */
 #define BUS_PCI_READ_RETRY_EN		0x00002000ul	/* VTB/GTB/LT */
@@ -755,9 +844,9 @@
 #define BUS_FIFO_ERR_INT		0x00200000ul
 #define BUS_MSTR_RD_LINE		0x00200000ul	/* VTB/GTB/LT */
 #define BUS_HOST_ERR_INT_EN		0x00400000ul
-#define BUS_SUSPEND			0x00400000ul	/* GT3 */
+#define BUS_SUSPEND			0x00400000ul	/* GT3/LTPro */
 #define BUS_HOST_ERR_INT		0x00800000ul
-#define BUS_LAT16X			0x00800000ul	/* GT3 */
+#define BUS_LAT16X			0x00800000ul	/* GT3/LTPro */
 #define BUS_PCI_DAC_WS			0x07000000ul
 #define BUS_RD_DISCARD_EN		0x01000000ul	/* VTB/GTB/LT */
 #define BUS_RD_ABORT_EN			0x02000000ul	/* VTB/GTB/LT */
@@ -772,10 +861,19 @@
 #define BUS_RDY_READ_DLY		0xc0000000ul
 #define BUS_READ_BURST			0x40000000ul	/* VTB/GTB/LT */
 #define BUS_RDY_READ_DLY_B		0x80000000ul	/* VTB/GTB/LT */
-/*	?			BlockIOTag(0x29u) */
+#define LCD_INDEX		BlockIOTag(0x29u)	/* LTPro */
+#define LCD_REG_INDEX			0x0000000ful
+/*	?				0x000000f0ul */
+#define LCD_DISPLAY_DIS			0x00000100ul
+#define LCD_SRC_SEL			0x00000200ul
+#define LCD_SRC_SEL_CRTC1			0x00000000ul
+#define LCD_SRC_SEL_CRTC2			0x00000200ul
+#define LCD_CRTC2_DISPLAY_DIS		0x00000400ul
+/*	?				0xfffff800ul */
 #define HFB_PITCH_ADDR		BlockIOTag(0x2au)	/* LT */
+#define LCD_DATA		BlockIOTag(0x2au)	/* LTPro */
 #define EXT_MEM_CNTL		BlockIOTag(0x2bu)	/* VTB/GTB/LT */
-#define MEM_INFO		IOPortTag(0x14u, 0x2cu) /* Renamed MEM_CNTL */
+#define MEM_INFO		IOPortTag(0x14u, 0x2cu)	/* Renamed MEM_CNTL */
 #define CTL_MEM_SIZE			0x00000007ul
 /*	?				0x00000008ul */
 #define CTL_MEM_REFRESH			0x00000078ul	/* VT/GT */
@@ -796,10 +894,10 @@
 #define CTL_MEM_EXT_RMW_CYC_EN		0x00001000ul	/* GX/CX */
 #define CTL_MEM_TCRD			0x00001000ul	/* VTB/GTB/LT */
 #define CTL_MEM_DLL_RESET		0x00002000ul	/* VT/GT */
-#define CTL_MEM_TR2W			0x00002000ul	/* GT3 */
+#define CTL_MEM_TR2W			0x00002000ul	/* GT3/LTPro */
 #define CTL_MEM_ACTV_PRE		0x0000c000ul	/* VT/GT */
-#define CTL_MEM_CAS_PHASE		0x00004000ul	/* GT3 */
-#define CTL_MEM_OE_PULLBACK		0x00008000ul	/* GT3 */
+#define CTL_MEM_CAS_PHASE		0x00004000ul	/* GT3/LTPro */
+#define CTL_MEM_OE_PULLBACK		0x00008000ul	/* GT3/LTPro */
 #define CTL_MEM_BNDRY			0x00030000ul
 #define CTL_MEM_BNDRY_0K			0x00000000ul
 #define CTL_MEM_BNDRY_256K			0x00010000ul
@@ -828,7 +926,7 @@
 #define MEM_VGA_RPS0			0x0000fffful
 #define MEM_VGA_RPS1			0xffff0000ul
 #define LT_GIO			BlockIOTag(0x2fu)	/* LT */
-#define I2C_CNTL_1		BlockIOTag(0x2fu)	/* GT3 */
+#define I2C_CNTL_1		BlockIOTag(0x2fu)	/* GT3/LTPro */
 #define DAC_REGS		IOPortTag(0x17u, 0x30u)	/* 4 separate bytes */
 #define DAC_CNTL		IOPortTag(0x18u, 0x31u)
 #define DAC_EXT_SEL			0x00000003ul
@@ -837,7 +935,9 @@
 #define DAC_RANGE_CTL			0x00000003ul	/* VTB/GTB/LT */
 #define DAC_BLANKING			0x00000004ul	/* 264xT */
 #define DAC_CMP_DIS			0x00000008ul	/* 264xT */
-/*	?				0x00000070ul */
+#define DAC1_CLK_SEL			0x00000010ul	/* LTPro */
+#define DAC_PALETTE_ACCESS_CNTL		0x00000020ul	/* LTPro */
+#define DAC_PALETTE2_SNOOP_EN		0x00000040ul	/* LTPro */
 #define DAC_CMP_OUTPUT			0x00000080ul	/* 264xT */
 #define DAC_8BIT_EN			0x00000100ul
 #define DAC_PIX_DLY			0x00000600ul
@@ -864,8 +964,27 @@
 #define DAC_MAN_CMP_STATE		0x40000000ul	/* GX-E+ */
 #define DAC_RW_WS			0x80000000ul	/* VT/GT */
 #define HORZ_STRETCHING		BlockIOTag(0x32u)	/* LT */
+#define HORZ_STRETCH_BLEND		0x00000ffful
+#define HORZ_STRETCH_RATIO		0x0000fffful
+#define HORZ_STRETCH_LOOP		0x00070000ul
+#define HORZ_STRETCH_LOOP09			0x00000000ul
+#define HORZ_STRETCH_LOOP11			0x00010000ul
+#define HORZ_STRETCH_LOOP12			0x00020000ul
+#define HORZ_STRETCH_LOOP14			0x00030000ul
+#define HORZ_STRETCH_LOOP15			0x00040000ul
+/*	?					0x00050000ul */
+/*	?					0x00060000ul */
+/*	?					0x00070000ul */
+/*	?				0x3ff80000ul */
+#define HORZ_STRETCH_MODE		0x40000000ul
+#define HORZ_STRETCH_EN			0x80000000ul
 #define EXT_DAC_REGS		BlockIOTag(0x32u)	/* GT3 */
 #define VERT_STRETCHING		BlockIOTag(0x33u)	/* LT */
+#define VERT_STRETCH_RATIO0		0x000003fful
+#define VERT_STRETCH_RATIO1		0x000ffc00ul
+#define VERT_STRETCH_RATIO2		0x3ff00000ul
+#define VERT_STRETCH_USE0		0x40000000ul
+#define VERT_STRETCH_EN			0x80000000ul
 #define GEN_TEST_CNTL		IOPortTag(0x19u, 0x34u)
 #define GEN_EE_DATA_OUT			0x00000001ul	/* GX/CX */
 #define GEN_GIO2_DATA_OUT		0x00000001ul	/* 264xT */
@@ -887,7 +1006,8 @@
 #define GEN_BLOCK_WR_EN			0x00000200ul	/* GX */
 /*	?				0x00000200ul */	/* CX/264xT */
 #define GEN_SOFT_RESET			0x00000200ul	/* VTB/GTB/LT */
-/*	?				0x00000c00ul */
+#define GEN_MEM_TRISTATE		0x00000400ul	/* GT3/LTPro */
+/*	?				0x00000800ul */
 #define GEN_TEST_VECT_MODE		0x00003000ul	/* VT/GT */
 /*	?				0x0000c000ul */
 #define GEN_TEST_FIFO_EN		0x00010000ul	/* GX/CX */
@@ -913,8 +1033,56 @@
 /*	?				0xc0000000ul */	/* 264xT */
 #define GEN_DEBUG_MODE			0xff000000ul	/* VTB/GTB/LT */
 #define LCD_GEN_CTRL		BlockIOTag(0x35u)	/* LT */
-#define CUSTOM_MACRO_CNTL	BlockIOTag(0x35u)	/* GT3 */
+#define CRT_ON				0x00000001ul
+#define LCD_ON				0x00000002ul
+#define HORZ_DIVBY2_EN			0x00000004ul
+#define DONT_DS_ICON			0x00000008ul
+#define LOCK_8DOT			0x00000010ul
+#define ICON_ENABLE			0x00000020ul
+#define DONT_SHADOW_VPAR		0x00000040ul
+#define V2CLK_ALWAYS_ONb		0x00000080ul
+#define RST_FM				0x00000100ul
+/*	?				0x00000200ul */
+#define DIS_HOR_CRT_DIVBY2		0x00000400ul
+#define SCLK_SEL			0x00000800ul
+#define SCLK_DELAY			0x0000f000ul
+#define TVCLK_ALWAYS_ONb		0x00010000ul
+#define VCLK_DAC_ALWAYS_ONb		0x00020000ul
+#define VCLK_LCD_OFF			0x00040000ul
+#define SELECT_WAIT_4MS			0x00080000ul
+#define V2CLK_DAC_ALWAYS_ONb		0x00100000ul
+#define LVDS_EN				0x00200000ul
+#define LVDS_PLL_EN			0x00400000ul
+#define LVDS_PLL_RESET			0x00800000ul
+#define LVDS_RESERVED_BITS		0x07000000ul
+#define CRTC_RW_SELECT			0x08000000ul	/* LTPro */
+#define USE_SHADOWED_VEND		0x10000000ul
+#define USE_SHADOWED_ROWCUR		0x20000000ul
+#define SHADOW_EN			0x40000000ul
+#define SHADOW_RW_EN			0x80000000ul
+#define CUSTOM_MACRO_CNTL	BlockIOTag(0x35u)	/* GT3/LTPro */
 #define POWER_MANAGEMENT	BlockIOTag(0x36u)	/* LT */
+#define PWR_MGT_ON			0x00000001ul
+#define PWR_MGT_MODE			0x00000006ul
+#define AUTO_PWRUP_EN			0x00000008ul
+#define ACTIVITY_PIN_ON			0x00000010ul
+#define STANDBY_POL			0x00000020ul
+#define SUSPEND_POL			0x00000040ul
+#define SELF_REFRESH			0x00000080ul
+#define ACTIVITY_PIN_EN			0x00000100ul
+#define KEYBD_SNOOP			0x00000200ul
+#define USE_F32KHZ			0x00000400ul	/* LTPro */
+#define TRISTATE_MEM_EN			0x00000800ul	/* LTPro */
+#define LCDENG_TEST_MODE		0x0000f000ul
+#define STANDBY_COUNT			0x000f0000ul
+#define SUSPEND_COUNT			0x00f00000ul
+#define BAISON				0x01000000ul
+#define BLON				0x02000000ul
+#define DIGON				0x04000000ul
+/*	?				0x08000000ul */
+#define STANDBY_NOW			0x10000000ul
+#define SUSPEND_NOW			0x20000000ul
+#define PWR_MGT_STATUS			0xc0000000ul
 #define CONFIG_CNTL		IOPortTag(0x1au, 0x37u)
 #define CFG_MEM_AP_SIZE			0x00000003ul
 #define CFG_MEM_VGA_AP_EN		0x00000004ul
@@ -926,7 +1094,7 @@
 /*	?				0x00f00000ul */
 #define CFG_CDE_WINDOW			0x3f000000ul	/* VT/GT */
 /*	?				0xc0000000ul */
-#define CONFIG_CHIP_ID		IOPortTag(0x1bu, 0x38u) /* Read */
+#define CONFIG_CHIP_ID		IOPortTag(0x1bu, 0x38u)	/* Read */
 #define CFG_CHIP_TYPE0			0x000000fful
 #define CFG_CHIP_TYPE1			0x0000ff00ul
 #define CFG_CHIP_TYPE			0x0000fffful
@@ -935,13 +1103,13 @@
 #define CFG_CHIP_VERSION		0x07000000ul	/* 264xT */
 #define CFG_CHIP_FOUNDRY		0x38000000ul	/* 264xT */
 #define CFG_CHIP_REVISION		0xc0000000ul	/* 264xT */
-#define CONFIG_STATUS64_0	IOPortTag(0x1cu, 0x39u) /* Read (R/W (264xT)) */
+#define CONFIG_STATUS64_0	IOPortTag(0x1cu, 0x39u)	/* Read (R/W (264xT)) */
 #define CFG_BUS_TYPE			0x00000007ul	/* GX/CX */
 #define CFG_MEM_TYPE_T			0x00000007ul	/* 264xT */
 #define CFG_MEM_TYPE			0x00000038ul	/* GX/CX */
 #define CFG_DUAL_CAS_EN_T		0x00000008ul	/* 264xT */
 #define CFG_ROM_128K_EN			0x00000008ul	/* VTB/GTB/LT */
-#define CFG_RAM_REMAP			0x00000008ul	/* GT3 */
+#define CFG_ROM_REMAP			0x00000008ul	/* GT3/LTPro */
 #define CFG_VGA_EN_T			0x00000010ul	/* VT/GT */
 #define CFG_CLOCK_EN			0x00000020ul	/* 264xT */
 #define CFG_DUAL_CAS_EN			0x00000040ul	/* GX/CX */
@@ -959,10 +1127,11 @@
 #define CFG_BOARD_ID			0x0000ff00ul	/* VT/GT */
 #define CFG_EXT_RAM_ADDR		0x003f0000ul	/* GX/CX */
 #define CFG_PANEL_ID			0x001f0000ul	/* LT */
+#define CFG_MACROVISION_EN		0x00200000ul	/* GT3/LTPro */
 #define CFG_ROM_DIS			0x00400000ul	/* GX/CX */
-#define CFG_PCI33EN			0x00400000ul	/* GT3 */
+#define CFG_PCI33EN			0x00400000ul	/* GT3/LTPro */
 #define CFG_VGA_EN			0x00800000ul	/* GX/CX */
-#define CFG_FULLAGP			0x00800000ul	/* GT3 */
+#define CFG_FULLAGP			0x00800000ul	/* GT3/LTPro */
 #define CFG_LOCAL_BUS_CFG		0x01000000ul	/* GX/CX */
 #define CFG_CHIP_EN			0x02000000ul	/* GX/CX */
 #define CFG_LOCAL_READ_DLY_DIS		0x04000000ul	/* GX/CX */
@@ -971,7 +1140,7 @@
 #define CFG_LOCAL_DAC_WR_EN		0x20000000ul	/* GX/CX */
 #define CFG_VLB_RDY_DIS			0x40000000ul	/* GX/CX */
 #define CFG_AP_4GBYTE_DIS		0x80000000ul	/* GX/CX */
-#define CONFIG_STATUS64_1	IOPortTag(0x1du, 0x3au) /* Read */
+#define CONFIG_STATUS64_1	IOPortTag(0x1du, 0x3au)	/* Read */
 #define CFG_PCI_DAC_CFG			0x00000001ul	/* GX/CX */
 /*	?				0x0000001eul */	/* GX/CX */
 #define CFG_1C8_IO_SEL			0x00000020ul	/* GX/CX */
@@ -1006,11 +1175,11 @@
 #define PLL_REF_DIV		0x02u
 #define PLL_GEN_CNTL		0x03u
 #define PLL_OVERRIDE			0x01u
+#define PLL_SLEEP			0x01u	/* GT3/LTPro */
 #define PLL_MCLK_RESET			0x02u
 #define PLL_OSC_EN			0x04u
 #define PLL_EXT_CLK_EN			0x08u
-#define PLL_MCLK_POST_DIV		0x30u
-#define PLL_MCLK_SRC_SEL		0x40u
+#define PLL_MCLK_SRC_SEL		0x70u
 #define PLL_EXT_CLK_CNTL		0x80u	/* CT/ET */
 #define PLL_DLL_PWDN			0x80u	/* VTB/GTB/LT */
 #define PLL_MCLK_FB_DIV		0x04u
@@ -1054,37 +1223,360 @@
 #define PLL_VFC_2PHASE			0x04u
 #define PLL_VFC_DELAY			0x18u
 #define PLL_VFC_DCLKBY2_SHIFT		0x20u
-/*	?				0xc0u */
+/*	?				0x40u */
+#define PLL_TST_SRC_SEL_BIT5		0x80u	/* VTB/GTB/LT */
 #define PLL_TEST_CNTL		0x0eu
 #define PLL_TST_SRC_SEL			0x1fu
 #define PLL_TST_DIVIDERS		0x20u
 #define PLL_TST_MASK_READ		0x40u
 #define PLL_TST_ANALOG_MON_EN		0x80u
 #define PLL_TEST_COUNT		0x0fu
-/* The following are 32-bit wide! */
 #define PLL_LVDSPLL_CNTL0	0x10u		/* LT */
-#define PLL_FPDI_NS_TIMING		0x0000000ful
-#define PLL_CURR_LEVEL			0x0000fff0ul
-#define PLL_LVDS_TEST_MODE		0xffff0000ul
+#define PLL_FPDI_NS_TIMING		0x01u
+#define PLL_CURR_LEVEL			0x0eu
+#define PLL_LVDS_TEST_MODE		0xf0u
 #define PLL_LVDSPLL_CNTL1	0x11u		/* LT */
-#define PLL_LPPL_RANGE			0x0000000ful
-#define PLL_LPLL_DUTY			0x00000ff0ul
-#define PLL_LPLL_VC_GAIN		0x000ff000ul
-#define PLL_LPLL_CP_GAIN		0xfff00000ul
-/* Back to 8-bit values */
-#define PLL_AGP1_CNTL		0x12u		/* GT3 */
-#define PLL_AGP2_CNTL		0x13u		/* GT3 */
-#define PLL_DLL2_CNTL		0x14u		/* GT3 */
-#define PLL_SCLK_FB_DIV		0x15u		/* GT3 */
-#define PLL_SPLL_CNTL1		0x16u		/* GT3 */
-#define PLL_SPLL_CNTL2		0x17u		/* GT3 */
-#define PLL_APLL_STRAPS		0x18u		/* GT3 */
-#define PLL_EXT_VPLL_CNTL	0x19u		/* GT3 */
-#define PLL_EXT_VPLL_REF_DIV	0x1au		/* GT3 */
-#define PLL_EXT_VPLL_FB_DIV	0x1bu		/* GT3 */
-#define PLL_EXT_VPLL_MSB	0x1cu		/* GT3 */
-#define PLL_HTOTAL_CNTL		0x1du		/* GT3 */
-#define PLL_BYTE_CLK_CNTL	0x1eu		/* GT3 */
+#define PLL_LPPL_RANGE			0x01u
+#define PLL_LPLL_DUTY			0x06u
+#define PLL_LPLL_VC_GAIN		0x18u
+#define PLL_LPLL_CP_GAIN		0xe0u
+#define PLL_AGP1_CNTL		0x12u		/* GT3/LTPro */
+#define PLL_AGP2_CNTL		0x13u		/* GT3/LTPro */
+#define PLL_DLL2_CNTL		0x14u		/* GT3/LTPro */
+#define PLL_SCLK_FB_DIV		0x15u		/* GT3/LTPro */
+#define PLL_SPLL_CNTL1		0x16u		/* GT3/LTPro */
+#define PLL_SPLL_CNTL2		0x17u		/* GT3/LTPro */
+#define PLL_APLL_STRAPS		0x18u		/* GT3/LTPro */
+#define PLL_EXT_VPLL_CNTL	0x19u		/* GT3/LTPro */
+#define PLL_EXT_VPLL_REF_SRC		0x03u
+#define PLL_EXT_VPLL_EN			0x04u
+#define PLL_EXT_VPLL_VGA_EN		0x08u
+#define PLL_EXT_VPLL_INSYNC		0x10u
+/*	?				0x60u */
+#define PLL_EXT_V2PLL_EN		0x80u
+#define PLL_EXT_VPLL_REF_DIV	0x1au		/* GT3/LTPro */
+#define PLL_EXT_VPLL_FB_DIV	0x1bu		/* GT3/LTPro */
+#define PLL_EXT_VPLL_MSB	0x1cu		/* GT3/LTPro */
+#define PLL_HTOTAL_CNTL		0x1du		/* GT3/LTPro */
+#define PLL_BYTE_CLK_CNTL	0x1eu		/* GT3/LTPro */
+#define PLL_TV_REF_DIV		0x1fu		/* LTPro */
+#define PLL_TV_FB_DIV		0x20u		/* LTPro */
+#define PLL_TV_CNTL		0x21u		/* LTPro */
+#define PLL_TV_GEN_CNTL		0x22u		/* LTPro */
+#define PLL_V2_CNTL		0x23u		/* LTPro */
+#define PLL_V2_GEN_CNTL		0x24u		/* LTPro */
+#define PLL_V2_REF_DIV		0x25u		/* LTPro */
+#define PLL_V2_FB_DIV		0x26u		/* LTPro */
+#define PLL_V2_MSB		0x27u		/* LTPro */
+#define PLL_HTOTAL2_CNTL	0x28u		/* LTPro */
+/*	?			0x29u */
+/*	?			0x2au */
+/*	?			0x2bu */
+/*	?			0x2cu */
+/*	?			0x2du */
+/*	?			0x2eu */
+/*	?			0x2fu */
+/*	?			0x30u */
+/*	?			0x31u */
+/*	?			0x32u */
+/*	?			0x33u */
+/*	?			0x34u */
+/*	?			0x35u */
+/*	?			0x36u */
+/*	?			0x37u */
+/*	?			0x38u */
+/*	?			0x39u */
+/*	?			0x3au */
+/*	?			0x3bu */
+/*	?			0x3cu */
+/*	?			0x3du */
+/*	?			0x3eu */
+/*	?			0x3fu */
+
+/* Definitions for an LTPro's 32-bit LCD registers */
+#define LCD_CONFIG_PANEL	0x00u	/* See LT's CONFIG_PANEL (0x1d) */
+#define LCD_GEN_CNTL		0x01u	/* See LT's LCD_GEN_CTRL (0x35) */
+#define LCD_DSTN_CONTROL	0x02u	/* See LT's DSTN_CONTROL (0x1f) */
+#define LCD_HFB_PITCH_ADDR	0x03u	/* See LT's HFB_PITCH_ADDR (0x2a) */
+#define LCD_HORZ_STRETCHING	0x04u	/* See LT's HORZ_STRETCHING (0x32) */
+#define LCD_VERT_STRETCHING	0x05u	/* See LT's VERT_STRETCHING (0x33) */
+#define LCD_EXT_VERT_STRETCH	0x06u
+#define VERT_STRETCH_RATIO3		0x000003fful
+#define FORCE_DAC_DATA			0x000000fful
+#define FORCE_DAC_DATA_SEL		0x00000300ul
+#define VERT_STRETCH_MODE		0x00000400ul
+#define VERT_PANEL_SIZE			0x003ff800ul
+#define AUTO_VERT_RATIO			0x00400000ul
+#define USE_AUTO_FP_POS			0x00800000ul
+#define USE_AUTO_LCD_VSYNC		0x01000000ul
+/*	?				0xfe000000ul */
+#define LCD_LT_GIO		0x07u	/* See LT's LT_GIO (0x2f) */
+#define LCD_POWER_MANAGEMENT	0x08u	/* See LT's POWER_MANAGEMENT (0x36) */
+#define LCD_ZVGPIO		0x09u
+/*	?			0x0au */
+/*	?			0x0bu */
+/*	?			0x0cu */
+/*	?			0x0du */
+/*	?			0x0eu */
+/*	?			0x0fu */
+
+/* Definitions for an LTPro's TV registers */
+/*	?			0x00u */
+/*	?			0x01u */
+/*	?			0x02u */
+/*	?			0x03u */
+/*	?			0x04u */
+/*	?			0x05u */
+/*	?			0x06u */
+/*	?			0x07u */
+/*	?			0x08u */
+/*	?			0x09u */
+/*	?			0x0au */
+/*	?			0x0bu */
+/*	?			0x0cu */
+/*	?			0x0du */
+/*	?			0x0eu */
+/*	?			0x0fu */
+#define TV_MASTER_CNTL		0x10u
+/*	?			0x11u */
+#define TV_RGB_CNTL		0x12u
+/*	?			0x13u */
+#define TV_SYNC_CNTL		0x14u
+/*	?			0x15u */
+/*	?			0x16u */
+/*	?			0x17u */
+/*	?			0x18u */
+/*	?			0x19u */
+/*	?			0x1au */
+/*	?			0x1bu */
+/*	?			0x1cu */
+/*	?			0x1du */
+/*	?			0x1eu */
+/*	?			0x1fu */
+#define TV_HTOTAL		0x20u
+#define TV_HDISP		0x21u
+#define TV_HSIZE		0x22u
+#define TV_HSTART		0x23u
+#define TV_HCOUNT		0x24u
+#define TV_VTOTAL		0x25u
+#define TV_VDISP		0x26u
+#define TV_VCOUNT		0x27u
+#define TV_FTOTAL		0x28u
+#define TV_FCOUNT		0x29u
+#define TV_FRESTART		0x2au
+#define TV_HRESTART		0x2bu
+#define TV_VRESTART		0x2cu
+/*	?			0x2du */
+/*	?			0x2eu */
+/*	?			0x2fu */
+/*	?			0x30u */
+/*	?			0x31u */
+/*	?			0x32u */
+/*	?			0x33u */
+/*	?			0x34u */
+/*	?			0x35u */
+/*	?			0x36u */
+/*	?			0x37u */
+/*	?			0x38u */
+/*	?			0x39u */
+/*	?			0x3au */
+/*	?			0x3bu */
+/*	?			0x3cu */
+/*	?			0x3du */
+/*	?			0x3eu */
+/*	?			0x3fu */
+/*	?			0x40u */
+/*	?			0x41u */
+/*	?			0x42u */
+/*	?			0x43u */
+/*	?			0x44u */
+/*	?			0x45u */
+/*	?			0x46u */
+/*	?			0x47u */
+/*	?			0x48u */
+/*	?			0x49u */
+/*	?			0x4au */
+/*	?			0x4bu */
+/*	?			0x4cu */
+/*	?			0x4du */
+/*	?			0x4eu */
+/*	?			0x4fu */
+/*	?			0x50u */
+/*	?			0x51u */
+/*	?			0x52u */
+/*	?			0x53u */
+/*	?			0x54u */
+/*	?			0x55u */
+/*	?			0x56u */
+/*	?			0x57u */
+/*	?			0x58u */
+/*	?			0x59u */
+/*	?			0x5au */
+/*	?			0x5bu */
+/*	?			0x5cu */
+/*	?			0x5du */
+/*	?			0x5eu */
+/*	?			0x5fu */
+#define TV_HOST_READ_DATA	0x60u
+#define TV_HOST_WRITE_DATA	0x61u
+#define TV_HOST_RD_WT_CNTL	0x62u
+/*	?			0x63u */
+/*	?			0x64u */
+/*	?			0x65u */
+/*	?			0x66u */
+/*	?			0x67u */
+/*	?			0x68u */
+/*	?			0x69u */
+/*	?			0x6au */
+/*	?			0x6bu */
+/*	?			0x6cu */
+/*	?			0x6du */
+/*	?			0x6eu */
+/*	?			0x6fu */
+#define TV_VSCALER_CNTL		0x70u
+#define TV_TIMING_CNTL		0x71u
+#define TV_GAMMA_CNTL		0x72u
+#define TV_Y_FALL_CNTL		0x73u
+#define TV_Y_RISE_CNTL		0x74u
+#define TV_Y_SAW_TOOTH_CNTL	0x75u
+/*	?			0x76u */
+/*	?			0x77u */
+/*	?			0x78u */
+/*	?			0x79u */
+/*	?			0x7au */
+/*	?			0x7bu */
+/*	?			0x7cu */
+/*	?			0x7du */
+/*	?			0x7eu */
+/*	?			0x7fu */
+#define TV_MODULATOR_CNTL1	0x80u
+#define TV_MODULATOR_CNTL2	0x81u
+/*	?			0x82u */
+/*	?			0x83u */
+/*	?			0x84u */
+/*	?			0x85u */
+/*	?			0x86u */
+/*	?			0x87u */
+/*	?			0x88u */
+/*	?			0x89u */
+/*	?			0x8au */
+/*	?			0x8bu */
+/*	?			0x8cu */
+/*	?			0x8du */
+/*	?			0x8eu */
+/*	?			0x8fu */
+#define TV_PRE_DAC_MUX_CNTL	0x90u
+/*	?			0x91u */
+/*	?			0x92u */
+/*	?			0x93u */
+/*	?			0x94u */
+/*	?			0x95u */
+/*	?			0x96u */
+/*	?			0x97u */
+/*	?			0x98u */
+/*	?			0x99u */
+/*	?			0x9au */
+/*	?			0x9bu */
+/*	?			0x9cu */
+/*	?			0x9du */
+/*	?			0x9eu */
+/*	?			0x9fu */
+#define TV_DAC_CNTL		0xa0u
+/*	?			0xa1u */
+/*	?			0xa2u */
+/*	?			0xa3u */
+/*	?			0xa4u */
+/*	?			0xa5u */
+/*	?			0xa6u */
+/*	?			0xa7u */
+/*	?			0xa8u */
+/*	?			0xa9u */
+/*	?			0xaau */
+/*	?			0xabu */
+/*	?			0xacu */
+/*	?			0xadu */
+/*	?			0xaeu */
+/*	?			0xafu */
+#define TV_CRC_CNTL		0xb0u
+#define TV_VIDEO_PORT_SIG	0xb1u
+/*	?			0xb2u */
+/*	?			0xb3u */
+/*	?			0xb4u */
+/*	?			0xb5u */
+/*	?			0xb6u */
+/*	?			0xb7u */
+#define TV_VBI_CC_CNTL		0xb8u
+#define TV_VBI_EDS_CNTL		0xb9u
+#define TV_VBI_20BIT_CNTL	0xbau
+/*	?			0xbbu */
+/*	?			0xbcu */
+#define TV_VBI_DTO_CNTL		0xbdu
+#define TV_VBI_LEVEL_CNTL	0xbeu
+/*	?			0xbfu */
+#define TV_UV_ADR		0xc0u
+#define TV_FIFO_TEST_CNTL	0xc1u
+/*	?			0xc2u */
+/*	?			0xc3u */
+/*	?			0xc4u */
+/*	?			0xc5u */
+/*	?			0xc6u */
+/*	?			0xc7u */
+/*	?			0xc8u */
+/*	?			0xc9u */
+/*	?			0xcau */
+/*	?			0xcbu */
+/*	?			0xccu */
+/*	?			0xcdu */
+/*	?			0xceu */
+/*	?			0xcfu */
+/*	?			0xd0u */
+/*	?			0xd1u */
+/*	?			0xd2u */
+/*	?			0xd3u */
+/*	?			0xd4u */
+/*	?			0xd5u */
+/*	?			0xd6u */
+/*	?			0xd7u */
+/*	?			0xd8u */
+/*	?			0xd9u */
+/*	?			0xdau */
+/*	?			0xdbu */
+/*	?			0xdcu */
+/*	?			0xddu */
+/*	?			0xdeu */
+/*	?			0xdfu */
+/*	?			0xe0u */
+/*	?			0xe1u */
+/*	?			0xe2u */
+/*	?			0xe3u */
+/*	?			0xe4u */
+/*	?			0xe5u */
+/*	?			0xe6u */
+/*	?			0xe7u */
+/*	?			0xe8u */
+/*	?			0xe9u */
+/*	?			0xeau */
+/*	?			0xebu */
+/*	?			0xecu */
+/*	?			0xedu */
+/*	?			0xeeu */
+/*	?			0xefu */
+/*	?			0xf0u */
+/*	?			0xf1u */
+/*	?			0xf2u */
+/*	?			0xf3u */
+/*	?			0xf4u */
+/*	?			0xf5u */
+/*	?			0xf6u */
+/*	?			0xf7u */
+/*	?			0xf8u */
+/*	?			0xf9u */
+/*	?			0xfau */
+/*	?			0xfbu */
+/*	?			0xfcu */
+/*	?			0xfdu */
+/*	?			0xfeu */
+/*	?			0xffu */
 
 /* Miscellaneous */
 

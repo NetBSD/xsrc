@@ -10,10 +10,11 @@
  <author> Joe Moss
 
 <!--
- <date>	26 August 1996
+ <date>	27 February 1998
 -->
- 1996 年 8 月 26 日
+ <date> 1998 年 2 月 27 日
  <trans> 岡本 一幸 Kazuyuki Okamoto (ikko-@pacific.rim.or.jp)
+ <tdate> 1998 年 3 月 28 日
 
 <abstract>
 <!--
@@ -44,35 +45,37 @@ This guide is for them.
 <sect>	はじめる前に
 <p>
 <!--
-	There are a	few	bits of	information	that you will need to have
+	There are a few	bits of	information that you will need to have
 	before you can setup the server:
 	<descrip>
-	 <tag> The model name of your video	card </tag>	
-	  Make sure	you	know the exact model name of the card.	It
-	  may help to also know	the	graphics chipset, RAMDAC, and
+	 <tag> The model name of your video card </tag>	
+	  Make sure you know the exact model name of the card.	It
+	  may help to also know	the graphics chipset, RAMDAC, and
 	  clock	chip used on your card.
-	 <tag> The amount of memory	on your	video card </tag>
-	  Find out how many	megabytes of RAM are on	your video card.
+	 <tag> The amount of memory on your video card </tag>
+	  Find out how many megabytes of RAM are on your video card.
 	 <tag> Whether or not your card	is VGA compatible </tag>
-	  Most cards these days	are	VGA	compatible,	but	for	example,
-	  if you have and older	monochrome card, it	might not be.
-	 <tag> Your	monitor's specifications </tag>	
-	  Specifically,	you	need to	know the horizontal	sync rate(s),
+	  Most cards these days	are VGA compatible, but	for example,
+	  if you have and older	monochrome card, it might not be.
+	 <tag> Your monitor's specifications </tag>	
+	  Specifically,	you need to know the horizontal	sync rate(s),
 	  and vertical refresh rate(s).	 These are <bf>important</bf>!
 	  Consult your monitor's manual.
-	 <tag> The protocol	used by	your mouse </tag>
-	  It will help speed up	the	process, if	you	know which protocol
+	 <tag> The protocol used by your mouse </tag>
+	  It will help speed up	the process, if	you know which protocol
 	  is used by your mouse	to communicate.	Some mice are capable
-	  of using two different protocols,	although the method	of
-	  switching	between	them varies.
+	  of using two different protocols, although the method	of
+	  switching between them varies.  In some cases, with new
+	  Plug-n-Play mice, the protocol can be determined
+	  automatically.
 	</descrip>
 -->
 	サーバの設定を行う前に知っておく必要のある項目が少しあります。
 	<descrip>
-	  <tag>	ビデオカードのモデル名称</tag>
+	  <tag>	ビデオカードのモデル名称 </tag>
 	  ビデオカードの正確なモデル名称を確認してください。また、
 	  ビデオカードに搭載されているグラフィックチップセット,	
-	  RAMDAC と	クロックチップを知っておくと助かります。
+	  RAMDAC と クロックチップを知っておくと助かります。
 	  <tag>	ビデオカードに搭載しているメモリの量 </tag>
 	  ビデオカードに搭載しているメモリが何 MB バイトあるか調べて
 	  ください。
@@ -86,7 +89,9 @@ This guide is for them.
 	  <tag>	マウスの使用しているプロトコル</tag>
 	  マウスと接続するのに使用しているプロトコルを知っておくと、
 	  設定作業の速度向上に役に立ちます。いくつかのマウスは異なる
-	  ２つのプロトコルを使用していますから、切り替え方は様々です。
+	  2 つのプロトコルを使用していますから、切り替え方は様々です。
+	  いくつかの場合に、新しいプラグアンドプレイのマウスでは、
+	  プロトコルを自動認識するでしょう。
 	</descrip>
 <!--
 <sect>	What to	Do - An	Overview
@@ -101,7 +106,7 @@ This guide is for them.
 	 <item>xvidtune
 	</itemize>
 -->
-	XFree86	の設定に有用な３つのツールがあります。:
+	XFree86	の設定に有用な 3 つのツールがあります。:
 	<itemize>
 	 <item>XF86Setup
 	 <item>xf86config
@@ -171,7 +176,7 @@ This guide is for them.
 	primarily for those	initially setting up XFree86 on	their
 	system.
 -->
-	X 内部から XF86Setup を実行し，現在利用している設定を変更することも
+	X 内部から XF86Setup を実行し、現在利用している設定を変更することも
 	できますが、ここではそのような使用法については特に説明しません。
 	ここで説明している操作手順は、主にXFree86 を一から設定する場合に
 	ついて述べています。
@@ -191,6 +196,22 @@ This guide is for them.
 	ルートになって実行しましょう。問題が発生したら、メッセージを
 	表示して終了します。問題を修正 (例えば、無いファイルを導入
 	する等) してもう一度実行しましょう。
+
+<!--
+	XF86Setup is internationalized. If you are Japanese and set
+	the LANG environment variable to ja, japan, japanese, etc.,
+	XF86Setup's screen can be Japanized. But it is necessary that
+	XF86Setup is built with Japanized Tcl/Tk. Other language can
+	be added, if you prepare its own directory under the directory
+	XF86Setup/texts. Please see under the directory
+	XF86Setup/texts/generic.
+-->
+	XF86Setup は国際化されました。日本人で LANG 環境変数を ja,
+	japan, japanese, 等に設定すると XF86Setup の画面が日本語
+	を表示します。しかし、日本語化した Tcl/Tk と共に構築した
+	XF86Setup が必要です。XF86Setup/tests ディレクトリに自分用
+	のディレクトリを作成すれば、その他の言語の追加は可能です。
+	XF86Setup/texts/generic ディレクトリをご覧ください。 
 
 <!--
 <sect1>	Initial	questions
@@ -240,7 +261,7 @@ This guide is for them.
 <p>
 <!--
 	Once the VGA16 server is started, and once the program has
-	finished loading, you will see a screen	with five
+	finished loading, you will see a screen	with six
 	buttons	along the top and three	along the bottom.
 	The buttons along the top correspond to the general categories
 	of configuration settings. They can be done in	any order.
@@ -249,7 +270,7 @@ This guide is for them.
 	<bf/Done/, and <bf/Help/ buttons.
 -->
 	一旦、VGA16 のサーバが起動して、プログラムのローディング
-	が完了すれば、画面の上に５つのボタンと下に３つのボタンが
+	が完了すれば、画面の上に 6 つのボタンと下に 3 つのボタンが
 	表示されます。
 	構成情報の内、一般的な分類に対応するボタンが上にあります。
 	実行する順番は問いません。以降でそれぞれの項目の詳細について
@@ -264,7 +285,7 @@ This guide is for them.
 	change to that is made as soon as <bf/Apply/ is	selected.
 -->
 	<bf/Abort/ は名前どおりの意味 (中止) です。設定した全ての
-	変更を格納しないで終了します。(中止出来ない)１つありそうな
+	変更を格納しないで終了します。(中止出来ない) 1 つありそうな
 	例外はマウスのデバイスドライバへのリンクです。行った変更を
 	すぐに設定したいときは <bf/Apply/ を選択してください。
 <p>
@@ -301,7 +322,7 @@ This guide is for them.
 -->
 	マウスの設定画面は、マウスを正しく動作させるために使用します。
 	まだマウスが動作していない場合でも、マウスの設定を容易にす
-	るため，マウスの全機能に対応するキーが割り当てられています。
+	るため、マウスの全機能に対応するキーが割り当てられています。
 <p>
 <!--
 	The	screen includes	a representation of	a white	mouse with
@@ -311,7 +332,7 @@ This guide is for them.
 	If that	is not happening, then your	mouse is not correctly
 	configured.
 -->
-	３ボタンの白いマウスの模式図を画面に表示します。
+	3 ボタンの白いマウスの模式図を画面に表示します。
 	マウスを動かすと、画面にマウスカーソルの座標値が表示され、
 	マウスのボタンを押すと対応する模式図のボタンが黒く色が変わ
 	ります。
@@ -319,24 +340,24 @@ This guide is for them.
 <p>
 <!--
 	Along the top is a row of buttons corresponding	to
-	the	various	possible protocols.	There will also	be
-	several	buttons	and	a couple of	sliders
-	for	other settings,	a visual representation	of the mouse,
-	and	a button to	apply any changes.
+	the various possible protocols.	There will also	be
+	several	buttons	and a couple of	sliders
+	for other settings, a visual representation of the mouse,
+	and a button to	apply any changes.
 	There may also be an entry box in which	the
-	device can be set along	with a list	of possible	devices.
+	device can be set along	with a list of possible	devices.
 -->
-	画面の上に並んでいるボタンの列は該当する色々な使用可能な
-	プロトコルに対応しています。他の設定を行うためのボタンや
+	画面の上に並んでいるいくつかのボタンの列は該当する色々な使用
+	可能なプロトコルに対応しています。他の設定を行うためのボタンや
 	スライダもいくつかありますし、マウスの模式図、および
 	設定変更を反映させるためのボタンもあります。
 	使用可能なデバイスの一覧の中からデバイスを設定するエントリ
 	ボックスもあります。
 <p>
 <!--
-	First try moving your mouse	around and see if the pointer moves
-	correctly.	If so, try testing that	the	buttons	are	working
-	properly.  If those	are	working	as desired,	go ahead and go	on
+	First try moving your mouse around and see if the pointer moves
+	correctly. If so, try testing that the buttons are working
+	properly.  If those are working	as desired, go ahead and go on
 	to another configuration area.
 -->
 	まず最初にマウスを移動させて、マウスカーソルが正しく移動
@@ -349,18 +370,22 @@ This guide is for them.
 	either the mouse device	or the protocol	(or	both).
 	You	can	press 'n' followed by a	Tab, to	move to	the	list
 	of mouse devices and select	a different	one.
-	Pressing 'p' will pick the next	available protocol on the list.
+	Pressing 'p' will pick the next available protocol on the list
+	(protocols that are not available on your OS will be
+	greyed-out).  If you have a PnP mouse, it may be easiest to
+	just select "Auto" as the protocol.
 	After changing these, press	'a'	to apply the changes and try
 	again.	Repeat the process until you are getting some response
 	from your mouse.
 -->
 	マウスカーソルが全く移動出来ない場合、マウスデバイスドライバか
 	マウスのプロトコルのどちらか (若くは両方) を修正する必要が
-	あります。 'n' に続いてタブキーを押すと次に使用可能なデバイス
+	あります。 `n' に続いてタブキーを押すと次に使用可能なデバイス
 	ドライバの一覧が表示されますので異なったプロトコルを選択して
 	ください。'p' を押せば次に使用可能なプロトコルの一覧が表示さ
-	れます。
-	デバイスドライバやプロトコルを変更した後は 'a' を押せば変更が
+	れます。(お手元の OS で使用できないプロトコルは灰色になってい
+	ます)
+	デバイスドライバやプロトコルを変更した後は `a' を押せば変更が
 	反映されますのでもう一度試してみましょう。マウスからの応答が
 	返ってくるまでこの操作を繰り返しましょう。
 <p>
@@ -394,15 +419,15 @@ This guide is for them.
 	次に殆どのマウスは <bf/MouseSystems/ プロトコルを使っていま
 	す。いくつかのマウスは両方もっています。
 	この様な <it/二重プロトコル/ ( <it/dual-protocol/ )	のマウ
-	スは様々な方法で２つのプロトコルを切り替えます。
+	スは様々な方法で 2 つのプロトコルを切り替えます。
 	マウス本体に切替えスイッチがついているものもあります。
 	いくつかのマウスの場合は、マウスとの接続を始めた時に一定の信号を
-	マウスに送信して切り替えます。その信号は 'ClearDTR'	と 
-	'ClearRTS' の様々な組み合わせで制御しています。
+	マウスに送信して切り替えます。その信号は `ClearDTR' と `ClearRTS'
+	の様々な組み合わせで制御しています。
 	その他のマウスではマウスとの接続時 (マウスドライバが最初に
 	通信しようとします)	にボタンが押されているか調査するものも
 	あります。使用したいマウスがこの種のものならば適切なボタン
-	を押さえながら選択時に ('a' を押して) 適用してください。
+	を押さえながら選択時に (`a' を押して) 適用してください。
 <p>
 <!--
 	Once the mouse pointer is moving correctly,	test that all
@@ -414,11 +439,11 @@ This guide is for them.
 	protocol that is similar to	that of	your mouse,
 	but	not	quite right.
 -->
-	マウスのカーソルが正しく移動したら、３つのボタンが適切に働く
-	かテストしてください。２ボタンマウスの場合は 'Emulate3Buttons'
-	を選択して２ボタンマウスに無い真ん中のボタンの代わりに２つの
-	ボタンを同時に押してください。全てのボタンが動作しない場合は、
-	 'ChordMiddle' の設定を変更してみるかマウスが使っている
+	マウスのカーソルが正しく移動したら、 3 つのボタンが適切に働く
+	かテストしてください。 2 ボタンマウスの場合は `Emulate3Buttons'
+	を選択して 2 ボタンマウスに無い真ん中のボタンの代わりに 2 つの
+	ボタンを同時に押してください。全てのボタンが動作しない場合は
+	、`ChordMiddle' の設定を変更してみるかマウスが使っている
 	プロトコルとそっくりの似ているプロトコルの設定をしてみましょう。
 <!--
 <sect2>	keyboard
@@ -441,7 +466,7 @@ This guide is for them.
 	<tt/nodeadkeys/>).
 -->
 	アメリカ以外のキーボードの場合、一覧の選択肢 (現在の選択肢は
-	<tt/nodeadkeys/>の１つしかありません) から設定したいものを
+	<tt/nodeadkeys/ の 1 つしかありません) から設定したいものを
 	選んでください。
 <p>
 <!--
@@ -465,7 +490,7 @@ This guide is for them.
 	greyed out).
 	Please read	them.
 -->
-	ビデオカードに付属する README ファイルがあれば 'Read README file' 
+	ビデオカードに付属する README ファイルがあれば `Read README file' 
 	のボタンを押せば (ただし灰色になっていなければ) 読むことができます。
 <p>
 <!--
@@ -476,8 +501,8 @@ This guide is for them.
 	Otherwise, you're finished with	configuring	your card.
 -->
 	ビデオカードが一覧になければ、または README ファイルの中に
-	ビデオカードに関して特別な設定が必要であると書かれている場合、
-	'Detailed Setup' のボタンを押して必要な設定が選択されている
+	ビデオカードに関して特別な設定が必要であると書かれている場合
+	、`Detailed Setup' のボタンを押して必要な設定が選択されている
 	ことを確認してください。もしそうでなかったら、ビデオカードの
 	設定は終了です。
 <p>
@@ -488,9 +513,9 @@ This guide is for them.
 	server by pressing the 'Read README	file' button
 	(it	won't do anything, if there	is no README).
 -->
-	'Detailed Setup'の使用法:
+	`Detailed Setup'の使用法:
 	先ず最初にビデオカードに対応したサーバを選択します。
-	それから選択したサーバに対応する README ファイルを 'Read README	file'
+	それから選択したサーバに対応する README ファイルを `Read README	file'
 	ボタンを押して読んでください。(README ファイルが無い場合は何も
 	することはありません。)
 <p>
@@ -500,7 +525,7 @@ This guide is for them.
 	In most	cases, you don't need to select	these,
 	as the server will detect (probe) them automatically.
 -->
-	続いて、README ファイルに指示されている場合は，チップセットと
+	続いて、README ファイルに指示されている場合は、チップセットと
 	Ramdac を指定します。
 	殆どの場合、自動的に探知 (検出) されるのでこれらを選択する必要は
 	ありません。
@@ -541,6 +566,36 @@ This guide is for them.
 	さらに、サーバが通常メモリ容量を探知出来るにもかかわらず、
 	ビデオカードに搭載しているメモリの容量もまた指定出来ます。
 	
+<!--
+<sect2>       Modeselect
+-->
+<sect2>		モード選択
+<p>
+<!--
+      Use this one to pick which depth you prefer to use (this
+      determines how many colors can be displayed at a time)
+      and to select all of the modes you are interested in
+      possibly using.
+-->
+	使用したい深度(depth) をピックしてください。
+	これはどれくらいの色数を表示したいかという事を表します。
+	そして興味のある使用するかもしれない全てのモードを選択して
+	ください。
+<p>
+<!--
+      Your hardware may not be able to support all
+      of depth and mode combinations that can be selected.
+      Any unsupported combinations will automatically be
+      rejected by the server when it tries to startup.
+      Note also that if you select multiple modes, you will
+      get a virtual screen as large as the largest of the
+      usable modes.
+-->
+	お手元の機材は選択した全ての深度とモードの組合せをサポート
+	している可能性は無いでしょう。
+	サポートしていない組合せはサーバによって開始時に自動的に
+	捨てられます。モードを複数選択している場合に、使用可能な
+	モードのうち最大のモードを仮想スクリーンにします。
 
 <!--
 <sect2>	Monitor
@@ -548,13 +603,13 @@ This guide is for them.
 <sect2>	モニタ
 <p>
 <!--
-	Enter the horizontal and vertical frequency	ranges that	your
-	monitor	supports in	the	corresponding entry	boxes near the
-	top	of the screen.
-	You	can	enter specific frequencies or ranges of	frequencies
+	Enter the horizontal and vertical frequency ranges that	your
+	monitor	supports in the corresponding entry boxes near the
+	top of the screen.
+	You can enter specific frequencies or ranges of	frequencies
 	(separated by hyphens).
 	If the monitor supports	several	different frequencies or
-	ranges,	list them all, separated by	commas.
+	ranges,	list them all, separated by commas.
 -->
 	モニターがサポートする水平と垂直の同期周波数帯域を画面の上の
 	対応する入力領域に入力してください。
@@ -563,11 +618,11 @@ This guide is for them.
 	並べてカンマで区切ってください。
 <p>
 <!--
-	If you can not find	this information in	you	monitor's manual,
-	pick one of	the	choices	from the list of common	monitor
-	capabilities.  The program will	use	conservative values
-	for	each of	these, so you'll get better	performance	if you
-	type in	the	correct	values from	your monitor manual.
+	If you can not find this information in you monitor's manual,
+	pick one of the choices from the list of common	monitor
+	capabilities.  The program will	use conservative values
+	for each of these, so you'll get better performance if you
+	type in	the correct values from	your monitor manual.
 -->
 	モニターのマニュアルに同期周波数に関する情報が見つけられない
 	場合は、一般的なモニターの特性値の一覧から一つ選択してくださ
@@ -594,7 +649,7 @@ This guide is for them.
 	and	then the 'Okay'	button which will appear. You will then
 	be switched	back to	text mode.
 -->
-	上記を全部終了したら、'Done' ボタンを押して 'Okay' ボタンが
+	上記を全部終了したら、`Done' ボタンを押して `Okay' ボタンが
 	出たら押してください。テキストモードに戻るでしょう。
 
 <!--
@@ -619,7 +674,7 @@ This guide is for them.
 <!--
 <sect1>	The	second server
 -->
-<sect1>	第２サーバ
+<sect1>	第 2 サーバ
 <p>
 <!--
 	This is	unlikely to	happen,	but
@@ -634,7 +689,7 @@ This guide is for them.
 <!--
 	The	display	will show an entry box and three buttons.
 -->
-	入力領域と３つのボタンが画面に表示されます。
+	入力領域と 3 つのボタンが画面に表示されます。
 <p>
 <!--
 	The	first button allows	you	to run xvidtune	to adjust your
@@ -651,8 +706,7 @@ This guide is for them.
 	最初のボタンはビデオモードを調整する xvidtune を起動します。
 	xvidtune を使うときに覚えておくべき重要な事は xvidtune
 	の実行中は Ctrl-Alt-+ でビデオモードを切り替えることが出来
-	ない事です。
-	'Next' と 'Prev' ボタンを使ってモードを切り替えてください。
+	ない事です。`Next' と `Prev' ボタンを使ってモードを切り替えてください。
 	よって、マウスをこれらのボタンを押しているときに移動しない
 	ように注意してください。偶然に、モニターに見やすい画面を
 	表示しないようなビデオモードに切り替えたときは、もう一度
@@ -666,16 +720,16 @@ This guide is for them.
 	that it	has	finished. Just press the 'Okay'	button and
 	you're done.
 -->
-	２番目のボタンで入力領域に設定情報を書き込むファイル名を入力
+	 2 番目のボタンで入力領域に設定情報を書き込むファイル名を入力
 	することができます。
 	設定情報を格納したというメッセージが表示されたら作業の終了の
-	合図です。'Okay' ボタンを押したらおしまいです。
+	合図です。`Okay' ボタンを押したらおしまいです。
 <p>
 <!--
 	And	the	third button causes	the	program	to exit	without
 	saving any of the configuration	settings.
 -->
-	そして３番目のボタンは設定情報を格納しないでプログラムを
+	そして 3 番目のボタンは設定情報を格納しないでプログラムを
 	終了します。
 <!--
 <sect1>	Ending text
@@ -691,7 +745,7 @@ This guide is for them.
 -->
 	テキストモードに戻ったら `Configuration complete.' という
 	メッセージを表示します。さて、使える構成情報を手にし, X
-	サーバを思い通りの方法 ('startx' コマンドとか 'xdm' 経由
+	サーバを思い通りの方法 (`startx' コマンドとか `xdm' 経由
 	) で起動出来ます。
 <!--
 <sect>	Running	<tt>xf86config</tt>
@@ -780,18 +834,18 @@ This guide is for them.
 <sect1>	マウスの設定
 <p>
 <!--	
-	Pick the mouse type	from the menu and enter	the	name of	the
-	device to which	mouse is connected,	as directed.
+	Pick the mouse type from the menu and enter the name of the
+	device to which	mouse is connected, as directed.
 
-	If you are using an	OS (e.g. SVR4, SCO)	that has a built in
-	mouse driver that the Xserver could	use, you'll	need to	edit
-	the	XF86Config file	to setup your mouse, so	just pick any
-	mouse from the list	and	press enter	when asked for the device.
+	If you are using an OS (e.g. SVR4, SCO)	that has a built in
+	mouse driver that the Xserver could use, you'll	need to	edit
+	the XF86Config file to setup your mouse, so just pick any
+	mouse from the list and press enter when asked for the device.
 
-	If you don't know which	protocol your mouse	uses, you'll just
-	have to	guess (the xf86config program will give	you	some hints
-	as to which	might be most likely) and then see the
-	troubleshooting	section	if it doesn't work when	you	run	the
+	If you don't know which	protocol your mouse uses, you'll just
+	have to	guess (the xf86config program will give	you some hints
+	as to which might be most likely) and then see the
+	troubleshooting	section	if it doesn't work when	you run the
 	server.
 -->
 	メニューからマウスのタイプを選んで接続しているマウスのデバイス
@@ -807,6 +861,15 @@ This guide is for them.
 	(xf86config は大体似たもののいくつかヒントを出します)下さい。
 	それからサーバを起動した時マウスが動かない場合、
 	トラブルシューティングの章を見てください。
+
+<!--	
+	The xf86config program has not been updated to allow you to
+	select the latest mouse protocols, so you may have to edit
+	the config file by hand after xf86config has finished.
+-->
+	xf86config は最新のプロトコルをサポートするように更新はされ
+	ていないので、xf86config が終った後で設定ファイルを手で修正する
+	必要があります。
 
 <!--	
 <sect1>	Keyboard setup
@@ -884,7 +947,7 @@ This guide is for them.
 	answer the questions yourself.
 -->
 	次にビデオカードのデータベースを見たいか聞いてきます。
-	一覧からビデオカードを選ぶと次の２つの章の質問に答えて
+	一覧からビデオカードを選ぶと次の 2 つの章の質問に答えて
 	記入することで時間が少し節約できます。
 
 	一覧にビデオカードが見当たらない場合は <tt/q/ 押してエンター
@@ -898,12 +961,12 @@ This guide is for them.
 <p>
 <!--
 	If you selected	your card in the previous step,	then server
-	selection is easy -	just use the recommendation	from the
+	selection is easy - just use the recommendation	from the
 	database.
 
-	If you have	a card which uses one of the chipsets for which	a
+	If you have a card which uses one of the chipsets for which a
 	specific server	exists (Mach8, Mach32, Mach64, AGX/XGA,
-	8514/A,	S3, ET4000/W32,	I128, P9000) you'll want to pick the
+	8514/A,	S3, I128, P9000) you'll want to pick the
 	<tt/accel/ option.
 
 	Otherwise you'll probably want to use the SVGA server.
@@ -917,7 +980,7 @@ This guide is for them.
 	データベースからの推薦されたものを使ってください。
 
 	特定のサーバのチップセット(Mach8, Mach32, Mach64, AGX/XGA,
-	8514/A, S3, ET4000/W32, I128, P9000)の内、ビデオカードが
+	8514/A, S3, I128, P9000)の内、ビデオカードが
 	どれかならば <tt/accel/ オプションを選択してください。
 
 	もしそうでなかったら多分 SVGA サーバを使用したいでしょう。
@@ -1093,7 +1156,7 @@ This guide is for them.
 -->
 
 	一旦、構成情報が正しいと満足したら、XF86Config ファイルを
-	<tt>/usr/X11R6/lib/X11</tt> にコピーして 'startx' コマンド
+	<tt>/usr/X11R6/lib/X11</tt> にコピーして `startx' コマンド
 	を実行しましょう。
 
 	さて X サーバが稼働しました。X サーバが稼働したけれど思った
@@ -1272,8 +1335,8 @@ This guide is for them.
 	この現象は簡単な解決策はありません。たくさん試行錯誤が必要
 	です。マウスのプロトコルが正しいか確認してください。
 
-	多くの３ボタンマウスは２ボタンモードと３ボタンモードの 
-	"両方のプロトコル" を持っています。３ボタンモードへの
+	多くの 3 ボタンマウスは 2 ボタンモードと 3 ボタンモードの 
+	"両方のプロトコル" を持っています。 3 ボタンモードへの
 	切り替え方法 (通常 MouseSystems プロトコルを用います) は
 	マウスの種類によって色々です。
 
@@ -1300,13 +1363,8 @@ This guide is for them.
 <sect1>	xf86config または xvidtune がシステムの中に見つけられない。
 <p>
 <!--
-	Hmmm. Three possibilities:
+	Hmmm. A couple of possibilities:
 	<enum>
-	 <item>You have	a version of XFree86 that is older than	3.1.2.
-		   If this is the case then	you	probably aren't	reading
-		   this	document either, because it	wasn't included	in
-		   3.1.2 and earlier releases.	Please upgrade to the
-		   latest version.
 	 <item>Your	<tt/PATH/ is not set correctly.	Make sure it includes
 		   the bin directory for the XFree86 binaries (usually,
 		   <tt>/usr/X11R6/bin</tt>
@@ -1315,12 +1373,8 @@ This guide is for them.
 		   pieces.
 	</enum>
 -->
-	うーん。３つの可能性があります。
+	うーん。2 つの可能性があります。
 	<enum>
-	 <item>3.1.2 より古いバージョンの XFree86 を使っている。
-		   多分、この文書以外を読んでいない場合は 3.1.2 とそれより前の
-		   バージョンには xf86config または xvidtune は含まれていない
-		   からです。最新バージョンに更新してください。
 	 <item><tt/PATH/ が正しく設定されていない。XFree86 のバイナリの
 		   bin ディレクトリを含んでいるか確認してください。(通常は
 		   <tt>/usr/X11R6/bin</tt>です)
@@ -1328,24 +1382,26 @@ This guide is for them.
 		   XFree86 を入手したところへ戻って、残らず入手してください。
 	</enum>
 
-<!-- Lots of things	still need to be added -->
+<!-- Lots of things still need to be added -->
 <!--  ここに何か追加すべきことはありますか？ -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/QStart.sgml,v 3.1 1997/01/26 04:34:22 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/QStart.sgml,v 3.1.2.2 1999/06/02 07:51:42 hohndel Exp $
 </verb>
-<hrule>
+<code></code>
 
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.2 1996/08/27 03:21:12   を、岡本  一幸 
+このファイルは
+xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.2 1998/02/28 04:47:08
+を、岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3.2 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
-XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
-電子メールで送って下さい。
-<hrule>
+XFree86 プロジェクト社と X Japanese Documentation Project にありますが、
+この和訳の不具合は私に、電子メールで送って下さい。
+<code></code>
 &lsqb;EOF&rsqb;
 </article>
 

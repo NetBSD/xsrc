@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.1.2.1 1998/12/18 11:56:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.1.2.2 1999/07/17 05:00:54 dawes Exp $ */
 /*
- * INTEL DG/UX RELEASE 4.20 MU03
+ * INTEL DG/UX RELEASE 4.20 MU04
  * Copyright Takis Psarogiannakopoulos
  * e-mail <takis@pmms.cam.ac.uk>
  *
@@ -27,6 +27,15 @@
 #include <sys/kd.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+
+/* Definition of SI86IOPL for DG/ux 
+ * According to sysi86 of DG/ux 
+ * Unixware
+ */
+
+#include <sys/sysi86.h>
+#define SI86IOPL 112
+
 #define DEV_MEM	"/dev/mem"
 
 int Takis_fd;
@@ -62,13 +71,9 @@ int OpenVideo()
                         MyName);
                 return(-1);
         }
-
-        if (ioctl(Takis_fd, KDENABIO, 0) < 0)
+        if (sysi86(SI86IOPL, 3)< 0)
         {
-                 perror("ioctl()");
-                 close(Takis_fd);
-                 Takis_fd = -1;
-                 return(-1);
+            return(-1);
         }
 
     return(Takis_fd);
@@ -85,12 +90,9 @@ void CloseVideo()
 {
     if (Takis_fd>0)
     {
-      ioctl(Takis_fd,KDDISABIO,0); /* Call RESET_IOPL for disable I/O to ports */
-      close(Takis_fd);
-      Takis_fd= -1;
-
+       sysi86(SI86IOPL, 0);    /* Disable I/O ports */
+       close(Takis_fd);
     }
-
 }
 
 
@@ -240,4 +242,18 @@ int Delay;
 {
         usleep(Delay * 1000);
 }
+
+/* Added to allow lightweight processes to access I/O directly  */
+#if defined(DGUX)
+      asm("sysi86:_sysi86:pushl %ebp");
+      asm("movl %esp,%ebp");
+      asm("pushl 12(%ebp)");
+      asm("pushl 8(%ebp)");
+      asm("pushl 4(%ebp)");
+      asm("movl $50,%eax");
+      asm("lcall $7,$0");
+      asm("addl $12,%esp");
+      asm("leave");
+      asm("ret");
+#endif
 

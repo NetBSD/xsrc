@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.21.2.4 1998/02/25 14:26:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.21.2.6 1999/06/23 12:37:10 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -305,6 +305,8 @@ ProcXF86MiscSetMouseSettings(client)
     if (stuff->mousetype == MTYPE_LOGIMAN
             && !(stuff->baudrate == 1200 || stuff->baudrate == 9600) )
 	return miscErrorBase + XF86MiscBadMouseBaudRate;
+    if (stuff->mousetype == MTYPE_ACECAD && stuff->baudrate != 9600)
+	return miscErrorBase + XF86MiscBadMouseBaudRate;
     if (stuff->mousetype == MTYPE_LOGIMAN && stuff->samplerate)
 	return miscErrorBase + XF86MiscBadMouseCombo;
 
@@ -349,7 +351,8 @@ ProcXF86MiscSetMouseSettings(client)
 	    && stuff->mousetype != MTYPE_GLIDEPOINTPS2
 	    && stuff->mousetype != MTYPE_NETPS2
 	    && stuff->mousetype != MTYPE_NETSCROLLPS2
-	    && stuff->mousetype != MTYPE_SYSMOUSE)
+	    && stuff->mousetype != MTYPE_SYSMOUSE
+	    && stuff->mousetype != MTYPE_WSMOUSE)
     {
         if (stuff->baudrate < 1200)
 	    return miscErrorBase + XF86MiscBadMouseBaudRate;

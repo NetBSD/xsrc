@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransutil.c /main/32 1996/12/04 10:22:57 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.9 1996/12/23 06:04:18 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.9.2.3 1999/06/13 09:34:44 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -464,4 +464,44 @@ char *str;
 	    return (0);
 
     return (1);
+}
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+
+#if !defined(S_IFLNK) && !defined(S_ISLNK)
+#define lstat(a,b) stat(a,b)
+#endif
+
+static int 
+trans_mkdir(char *path, int mode)
+{
+    struct stat buf;
+
+    if (mkdir(path, mode) == 0) {
+	chmod(path, mode);
+	return 0;
+    }
+    /* If mkdir failed with EEXIST, test if it is a directory with 
+       the right modes, else fail */
+    if (errno == EEXIST) {
+	if (lstat(path, &buf) != 0) {
+	    return -1;
+	}
+	/* the mode check seems to be too paranoid and makes things
+	   fail on some Linux version where the directory exists and
+	   has the wrong mode
+	 */
+	if (S_ISDIR(buf.st_mode)
+#if 0
+	    && ((buf.st_mode & ~S_IFMT) == mode)
+#endif
+	   ) 
+	{
+	    return 0;
+	}
+    }
+    /* In all other cases, fail */
+    return -1;
 }

@@ -1,0 +1,488 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+ 
+<article>
+
+<!-- Title information -->
+<!--
+<title> Information for ARK Logic Chipset Users
+-->
+<title> ARK Logic チップセットユーザ向けの情報
+<author> Harm Hanemaayer (<it>H.Hanemaayer@inter.nl.net</it>)
+<date> 17 January 1997
+<trans>The X Japanese Documentaion Project
+<tdate> 1 Feburary 1999
+
+<!-- Table of contents -->
+<toc>
+
+<!--
+<sect> Supported chipsets <p>
+-->
+<sect> サポートしているチップセット <p>
+
+<!--
+The "ark" driver in the SVGA server is for ARK Logic graphics chipsets.
+The following chipsets are supported:
+-->
+SVGA サーバに含まれる "ark" ドライバは ARK Logic グラフィックスチップ
+セット用のものです。このドライバは以下のチップセットをサポートしていま
+す:
+<descrip>
+<tag>ARK1000PV (ark1000pv)</tag>
+<!--
+	Chipset with 32-bit DRAM interface, supports fast DRAM timing,
+	for VESA and PCI bus. Has powerful "coprocessor" for graphics
+	acceleration.
+	The max supported resolution/refresh depends on the RAMDAC
+	used on the card; expect 256 colors up to 80 or 110 MHz dot clock;
+	16bpp is also supported, as is 24bpp (packed).
+-->
+32 ビット DRAM インタフェースを持つチップセットで、高速な DRAM タイミ
+ングをサポートし、VESA と PCI バスに対応しています。このチップセットに
+は、グラフィックスアクセラレーション用の「コプロセッサ」があります。サ
+ポートできる解像度やリフレッシュレートの最大値は、カードが使用している
+RAMDAC に依存します。80 や 110 MHz までのドットクロック値では 256 色が
+使えるはずです。16bpp や 24bpp (packed 形式)もサポートされています。
+<tag>ARK1000VL (ark1000vl)</tag>
+<!--
+	Older chip, VLB only. More or less compatible with ARK1000PV.
+        It has is not been tested. You may have to disable acceleration
+        and linear addressing.
+-->
+古いチップであり、VLB 版しかありませんが、ほぼ ARK1000PV と互換です。
+テストは行っていません。アクセラレーションやリニアアドレッシングを無効
+にしなければならないかもしれません。
+<tag>ARK2000PV (ark2000pv)</tag>
+<!--
+	64-bit version of the ARK1000PV. Note that an ARK2000PV equipped
+	with 1Mb of DRAM is about equivalent to the same card with an
+	ARK1000PV chip; 2Mb is required for 64-bit operation. Again
+	the RAMDAC used on the card determines the max supported dot
+	clocks. At 8bpp, multiplexing over a 16-bit RAMDAC path is not
+	yet supported so expect dot clocks up to 110 MHz; 16bpp and 32bpp
+	are supported, as well as experimental packed 24bpp, depending
+	on the RAMDAC.
+-->
+ARK1000PV の 64 ビット版です。DRAM を 1MB 積んだ ARK2000PV は、
+ARK1000PV チップを積んだ同型のカードとほぼ同じものになります。64 ビッ
+ト操作を行うためにはメモリが 2MB 必要です。繰り返しになりますが、カー
+ドに載っている RAMDAC が、サポートされるドットクロックの最大値を決めま
+す。8bpp では 16 ビット RAMDAC パス上での多重化がまだサポートされてい
+ないので、使えるドットクロック値は 110MHz となります。16bpp と 32bpp
+や実験的な packed 形式の 24bpp もサポートされていますが、使えるかどう
+かは RAMDAC に依存します。
+<tag>ARK2000MT (ark2000mt)</tag>
+<!--
+	This is a newer chip, compatible with the AR2000PV.
+-->
+これは新しいチップであり、AR2000PV と互換です。
+	
+</descrip>
+
+<!--
+The ARK2000MI is not yet supported.
+-->
+ARK2000MI は、まだサポートされていません。
+
+<!--
+The chipset may not be detected automatically. In this case use a line
+like <tt>Chipset "ark1000pv"</tt> in the <tt>Device</tt> section of
+the XF86Config file. Any options must also be specified in this section.
+-->
+チップセットを自動的には検出されないことがあります。この場合には、
+XF86Config ファイルの <tt>Device</tt> セクションで
+<tt>Chipset "ark1000pv"</tt> のような行を指定します。全てのオプション
+も、このセクションで指定しなければなりません。
+
+<!--
+<sect> Supported RAMDACs <p>
+-->
+<sect> サポートしている RAMDAC <p>
+
+<!--
+If no RAMDAC is specified, a standard RAMDAC supporting 256 colors up
+to 80 MHz dot clock frequency is assumed. The following RAMDAC types
+can be specified in the Device section of the XF86Config file (e.g.
+<tt>Ramdac "att20c490"</tt>):
+-->
+RAMDAC の指定がない場合、256 色と 80MHz までのドットクロック周波数をサ
+ポートする標準の RAMDAC を指定したものとみなされます。以下のタイプの
+RAMDAC を XF86Config ファイルの Device セクションで指定することができ
+ます(例: <tt>Ramdac "att20c490"</tt>):
+<descrip>
+<tag>att20c490</tag>
+<!--
+	Industry-standard 8-bit RAMDAC. The RAMDAC used
+	on the basic Hercules Stingray Pro is compatible. 16bpp color
+	depth is supported up to 40 or 55 MHz, depending on the DAC
+	speed rating. Packed 24bpp is supported up to about 36 MHz.
+-->
+業界標準の 8 ビット RAMDAC です。基本モデルの Hercules Stingray Pro で
+使われている RAMDAC は、これと互換です。40 または 55 MHz までのドット
+クロック値で 16bpp の色の深さがサポートされますが、これは DAC の速度レー
+トに依存します。約 36MHz までのドットクロック値で packed 形式がサポー
+トされます。
+<tag>att20c498</tag>
+<!--
+	Industry-standard 16-bit RAMDAC. The RAMDAC used
+	on the Hercules Stingray Pro/V and the Stingray 64/V is
+	compatible. 16bpp is supported up to 80 MHz or 110 MHz dot clock
+	frequency, 32bpp is supported up to 40 or 55 MHz.
+-->
+業界標準の 16 ビット RAMDAC です。Hercules Stingray Pro/V と Stingray
+64/V で使われている RAMDAC は、これと互換です。80MHz あるいは 110MHz
+までのドットクロック周波数で 16bpp がサポートされ、40 または 55MHz ま
+でで 32 bpp がサポートされます。
+<tag>zoomdac</tag>
+<!--
+	This is the actual DAC used by the Hercules Stingray Pro/V and 64/V.
+	It is treated mostly as an ATT20C498, but with dot clock limits
+	set correctly (16bpp up to 55 MHz with ARK1000PV, up to at least
+	110 MHz with ARK2000PV). In addition, packed 24bpp is supported
+	(up to 36 MHz with ARK1000PV, not yet on the ARK2000PV),
+	and 32bpp is also supported on the ARK2000PV (up to 55 MHz)
+	This RAMDAC should be auto-detected.
+-->
+これは Hercules Stingray Pro/V と 64/V で実際に使われている RAMDAC で
+す。これはほとんど ATT20C498 と同様に扱われますが、ドットクロック値の
+制限が正しく設定されます(16bpp の場合、ARK1000PV では 55MHz ですし、
+ARK2000PV では少なくとも110MHz です)。加えて、packed 形式の 24bpp がサ
+ポートされ(ARK1000PV では 36MHz までで、まだ ARK2000PV ではサポートさ
+れていません)、ARK2000PV では 32 bpp もサポートされています(55MHz まで)。
+この RAMDAC は自動的に検出されるはずです。
+<tag>stg1700</tag>
+<!--
+	Completely untested.
+-->
+全くテストされていません。
+<tag>ics5342</tag>
+<!-
+	This is a clockchip/RAMDAC combination and is used on the Diamond
+	Stealth 64 Graphics 2001 and newer Hercules cards that use the
+	ARK2000MT. It is supported at 16bpp and 32bpp in addition to 256
+	color mode. 32bpp mode may not work.
+-->
+これはクロックチップと RAMDAC を組み合わせたものであり、Diamond
+Stealth 64 Graphics 2001 と ARK2000MT を使っている新しめの Hercules カー
+ドで使われています。256 色モードに加え、16bpp と 32bpp をサポートして
+います。32bpp モードは動作しないかもしれません。
+</descrip>
+<!--
+The Dacspeed keyword can be used to indicate the speed rating of the RAMDAC,
+but it must be used with care. The raw clock frequency may exceed 80 MHz.
+Both the ARK chips and some of the RAMDACs are specified for raw speeds up
+to 120 MHz, but this might violate FCC regulations or otherwise be unstable.
+High dot clock 8bpp modes (e.g. 135 MHz) are normally achieved by
+sending 2 pixels at at time over a 16-bit DAC path (the raw clock would be
+67.5 MHz for 135 MHz dot clock), a mode of operation that is not yet
+supported by this driver. No high-dot clock configurations
+have been tested.
+-->
+キーワード Dacspeed を使うと RAMDAC のスピードレートを指定することがで
+きますが、指定の際には特に注意が必要です。素のクロック周波数は 80MHz
+を越えるかもしれません。ARK チップと一部の RAMDAC に対して 120MHz まで
+の素のスピードが指定されますが、これは FCC の既定を破るかもしれません
+し、そうでなくても動作が不安定になるかもしれません。ドットクロックが高
+い 8bpp モード(135MHz 等)は通常、16 ビット DAC パス上で同時に 2 ピクセ
+ルを送ることによって実現されますが(ドットクロック値 135 MHz に対する素
+のクロック値は 67.5MHz です)、これはまだドライバがサポートしていない操
+作モードです。ドットクロックが高い設定は全くテストされていません。
+<!-- 「a mode of operation 〜」とその前の部分の繋がりがよくわからん -->
+
+<!--
+The driver now limits the maximum dot clocks according to the DRAM speed
+(bandwidth). Because it is not possible to determine the memory clock
+speed (except on the ICS5342), the driver assumes a default of 60 MHz.
+On an ARK1000PV, that allows 8bpp up to 109 MHz, 16bpp up to 55 MHz,
+24bpp up to 36 MHz, and 32bpp up to 27 MHz. On an ARK2000PV with 2MB
+memory, it allows 16bpp up to 110 MHz, 24bpp up to 72 MHz, and 32bpp up
+to 55 MHz. If you know what your real memory clock is, you can specify
+it with the <tt>MCLK</tt> keyword, for example <tt>MCLK 70</tt>.
+-->
+現在のドライバは、DRAM のスピード(バンド幅)に従ってドットクロックの最
+大値を制限するようになりました。(ICS5342 の場合を除くと)メモリのクロッ
+クのスピードを知ることはできないので、ドライバはデフォルト値として
+60MHz を想定します。ARK1000PV の場合には、109MHz までで 8bpp, 55MHz ま
+でで16bpp, 36MHz までで 24bpp, 27MHz までで 32bpp が使用できます。メモ
+リを 2MB 積んだ ARK2000PV の場合には、100MHz までで 16bpp, 72MHz まで
+で 24bpp, 55MHz までで 32bpp が使用できます。実際のメモリのクロック値
+が分かっているならば、キーワード <tt>MCLK</tt> を使って指定することが
+できます(例: <tt>MCLK 70</tt>)。
+
+<!--
+To run <tt>XF86_SVGA</tt> at 16 bpp, pass options to the X server as
+follows:
+-->
+16bpp で <tt>XF86_SVGA</tt> を実行するには、X サーバに次のようなオプショ
+ンを指定します:
+<!--
+<verb>
+startx &ndash; -bpp 16               5-6-5 RGB ('64K color', XGA)
+startx &ndash; -bpp 16 -weight 555   5-5-5 RGB ('Hicolor')
+startx &ndash; -bpp 24		8-8-8 RGB (packed 24-bit truecolor)
+startx &ndash; -bpp 32		8-8-8 RGB (32-bit pixel truecolor)
+</verb>
+-->
+<!-- &ndash; に変えているのは sgmltools のバグ回避のため(^_^; -->
+<verb>
+startx -- -bpp 16               5-6-5 RGB ('6万4千色', XGA)
+startx -- -bpp 16 -weight 555   5-5-5 RGB ('ハイカラー')
+startx -- -bpp 24		8-8-8 RGB (packed 形式の 24 ビットトゥルーカラー)
+startx -- -bpp 32		8-8-8 RGB (32bpp のトゥルーカラー)
+</verb>
+
+<!--
+<sect> Acceleration <p>
+-->
+<sect> アクセラレーション <p>
+
+<!--
+The driver takes full advantage of the new XAA (XFree86 Acceleration
+Architecture) in the SVGA server. In fact the ARK driver was the
+initial XAA development platform. Most common graphics operations are
+accelerated, including most types of rectangular and non-rectangular
+filling, screen-to-screen BitBLTs, line drawing, and text and bitmap
+expansion. Expect over 300k xstones on a 2MB ARK2000PV/MT.
+-->
+このドライバは、SVGA サーバに新しく導入された XAA(XFree86 Acceleration
+Architecture)の利点を十分に生かしています。実際、ARK ドライバは XAA 開
+発の初期プラットフォームでした。一般的なグラフィックス操作のほとんどで
+アクセラレーションが効きます。これには、ほとのどのタイプの矩形と非矩形
+の塗り潰し、スクリーン-スクリーンの BitBLT 操作、線の描画、テキストと
+ビットマップの展開が含まれます。2MB の ARK2000PV/MT では xstone 値が
+300k を越えると思います。
+
+<!--
+At 24bpp, acceleration is less complete, but curiously, greyscale colors
+permit faster drawing. If you suspect a problem with acceleration, use
+the "noaccel" option. If text or bitmaps do not seem to be rendered
+correctly, you could try the "xaa_no_col_exp" option. To disable the
+pixmap cache, use "no_pixmap_cache".
+-->
+24bpp だとアクセラレーションは駄目なのですが、おかしなことにグレースケー
+ルでは描画が速くなります。アクセラレーションを使うと動作がおかしくなる
+疑いがある場合には、"noaccel" オプションを使ってください。テキストやビッ
+トマップが正しくレンダリングされないようであれば、"xaa_no_col_exp" オ
+プションを試すこともできます。ピックスマップのキャッシュを無効にするに
+は、"no_pixmap_cache" オプションを使います。
+
+<!--
+The hardware cursor is disabled by default. With unmodified mode timings,
+there used to be two horizontal lines and a band following the mouse
+pointer over the screen. The driver now automatically modifies the
+mode timing to eliminate this effect; this has not been tested on
+all possible configurations. Use the "hw_cursor" option to enable the
+hardware cursor.
+-->
+ハードウェアカーソルはデフォルトで無効になっています。以前は、モード行
+を修正しないと、画面上でのマウスポインタの動いた跡に水平方向の線 2 本
+と縞 1 本が現われていました。現在のドライバは、モードのタイミングを自
+動的に修正し、このような影響が出ないようにします。これは考えられる全て
+の機器構成でテストしたわけではありません。ハードウェアカーソルを有効に
+するには、"hw_cursor" オプションを使います。
+
+<!--
+Linear addressing is the default mode of operation. If the server
+does not start correctly, you may want to try the "no_linear" option.
+-->
+リニアアドレッシングはデフォルトの操作モードです。サーバが正しく起動し
+ない場合には、"no_linear" オプションを試すと良いでしょう。
+
+<!--
+The older ARK1000VL is probably not compatible with acceleration. Use
+the "noaccel" and "no_linear" options.
+-->
+古い ARK1000VL はおそらくアクセラレーションに関して互換ではありません。
+"noaccel" オプションと "no_linear" オプションを使ってください。
+
+<!--
+<sect> Basic configuration <p>
+-->
+<sect> 基本的な設定 <p>
+
+<!--
+It is recommended that you generate an XF86Config file using the
+`<tt>XF86Setup</tt>' or `<tt>xf86config</tt>' programs, which should
+produce a working
+high-resolution 8bpp configuration, although the modelines might need
+reshuffling for optimal screen refresh. You may want to include mode
+timings in the <tt>Monitor</tt> section that better fit your monitor
+(e.g. 1152x864 modes).
+-->
+XF86Config ファイルの作成は `<tt>XF86Setup</tt>' プログラムか
+`<tt>xf86config</tt>' プログラムを用いて行うことをお勧めします。これら
+のプログラムを使えば、スクリーンのリフレッシュレートを最適にするために
+モード行を並べ直す必要があるかもしれませんが、8bpp ・高解像度でちゃん
+と動作する設定ができるでしょう。使っているモニタにうまく合うようなモー
+ドタイミングを <tt>Monitor</tt> セクションに入れても良いでしょう。
+
+<!--
+In order to prevent stress on your monitor, it is recommended that you
+turn off your monitor during clock probing (X -probeonly), which also
+happens if you start the server with no Clocks line present in the
+Device section of the XF86Config. The following Clocks line can be used
+for the Hercules Stingray Pro, Pro/V and older 64/V using an ARK Logic
+clock generator (so there's no need to probe clocks for this card, just
+insert the following line in the Device section of the XF86Config
+file):
+-->
+モニタに負荷をかけないために、クロックの検出(X -probeonly)の間にはモニ
+タの電源を切っておくことをお勧めします。XF86Config の Device セクショ
+ンに Clocks 行が無い場合にも検出の動作が起こります。以下の Clocks 行は
+ARK Logic のクロックジェネレータを使っている Hercules Stingray Pro,
+Pro/V や古い 64/V に対して使うことができます(したがって、これらのカー
+ドを使う場合にはクロック値を検出する必要は無く、単に以下の行を
+XF86Config ファイルの Device セクションに追加してください)。
+
+<verb>
+    Clocks 25.175 28.3 40 72 50 77 36 44.9
+    Clocks 128.43 118.8 80 31.5 110 63.96 74.19 95
+</verb>
+<!--
+    The higher frequencies have not been tested, there might be a
+    mismatch in the 60-80 MHz range.
+-->
+高い周波数ではテストは行われていません。また、60-80MHz の範囲では周波
+数の不一致が起こるかもしれません。
+
+<!--
+<sect> Features that may be expected in upcoming beta releases <p>
+-->
+<sect> リリース予定のβ版で追加予定の機能 <p>
+
+<itemize>
+<item>
+<!--
+	Support for high dot clocks (>80 MHz, up to 135 MHz) at 8bpp by
+	sending two pixels at a time over a 16-bit RAMDAC path on an
+	ARK2000PV/MT with supported RAMDAC.
+-->
+<item>サポートされている RAMDAC を載せた ARK2000PV/MT において、16 ビッ
+トの RAMDAC パス上で同時に 2 つのピクセルを送ることによる、8bpp 時にお
+ける高クロック値(80MHz から 135MHz)のサポート。
+<!--
+	Support for packed-24bpp mode up to 72 MHz on an ARK2000PV
+	with ZoomDAC.
+-->
+<item>ZoomDAC を載せた ARK2000PV における、72MHz までの packed 形式の
+24bpp のサポート。
+<!--
+	The acceleration may be further optimized and stabilized.
+-->
+<item>アクセラレーションのさらなる最適化と安定化。
+<!--
+	Existing problems may be fixed.
+-->
+<item>現在ある問題の修正。
+<!--
+	Support for the ARK2000MI, if it materializes.
+-->
+<!-- ここって <item> いりますよね? -->
+<item>ARK2000MI が出てきたら、そのサポート。
+</itemize>
+
+<!--
+<sect> Tested configurations. <p>
+-->
+<sect> テストを行った機器構成 <p>
+
+<descrip>
+<!--
+<tag>Hercules Stringray Pro (ARK1000PV + ATT20C490-compatible RAMDAC)</tag>
+	Supported at 8bpp, 16bpp and 24bpp. Fixed set of clocks.
+	There seems to be a restriction to the mode timings at 24bpp;
+	the last horizontal number (HTotal) must be divisible by 4 but
+	not by 8. If the modeline is wrong, the colors would
+	be incorrect. The driver automatically corrects the mode timing.
+-->
+<tag>Hercules Stringray Pro (ARK1000PV + ATT20C490 互換の RAMDAC)</tag>
+8bpp, 16bpp, 24bpp がサポートされています。クロック値の集合は固定です。
+24bpp ではモードタイミングの制限があるようです。水平方向幅(HTotal)のう
+ち最後の数は 4 で割り切れて、8 で割り切れない数でなければなりません。
+モード行が間違っている場合、色がおかしくなるでしょう。このドライバはモー
+ドタイミングを自動的に補正します。
+
+<!--
+<tag>Hercules Stingray Pro/V (ARK1000PV + IC Works ZoomDAC)</tag>
+	Supported at 8bpp, 16bpp and 24bpp. Fixed set of clocks.
+	The same restrictions above exist for the 24bpp mode. Problems
+	with textmode restoration have been reported on some OS's.
+-->
+<tag>Hercules Stingray Pro/V (ARK1000PV + IC Works ZoomDAC)</tag>
+8bpp, 16bpp, 24bpp がサポートされています。クロック値の集合は固定です。
+24bpp モードでは、前の項目と同じ制限があります。一部の OS では、テキス
+トモードの復元に関する問題が起こることが報告されています。
+
+<!--
+<tag>Hercules Stingray 64/V (ARK2000PV + IC Works ZoomDAC)</tag>
+	Supported at 8bpp, 16bpp and 32bpp. Fixed set of clocks.
+	Problems with textmode restoration have been reported on
+        some OS's.
+-->
+<tag>Hercules Stingray 64/V (ARK2000PV + IC Works ZoomDAC)</tag>
+8bpp, 16bpp, 32bpp がサポートされています。クロック値の集合は固定です。
+一部の OS では、テキストモードの復元に関する問題が起こることが報告され
+ています。
+
+<!--
+<tag>Hercules Stingray 64 with ARK2000MT + ICS5342 Clockchip/RAMDAC</tag>
+	This may also apply to other cards with the ICS5342, such as
+	the Diamond Stealth 64 Graphics 2001. Use RAMDAC "ics5342".
+	Programmable clockchip (don't specify any Clocks lines).
+	Supported at 8bpp, 16bpp and 32bpp. 32bpp has been reported not
+	to work. This configuration has not been tested with a post-3.2
+        server.
+-->
+<tag>ARK2000MT + ICS5342 クロックチップ/RAMDAC を載せた Hercules Stingray 64 </tag>
+この項目は ICS5342 を積んだ他のカード(Diamond Stealth 64 Graphics 2001
+等)にも当てはまります。RAMDAC "ics5342" を指定してください。プログラマ
+ブルクロックチップが使えます(Clocks 行を設定してはいけません)。8bpp,
+16bpp, 32bpp がサポートされていますが、32bpp は動作しないことが報告さ
+れています。この機器構成は 3.2 より後のサーバではテストが行われていま
+せん。
+
+</descrip>
+
+<!--
+If are having driver-related problems that are not addressed by this document,
+you can try contacting the XFree86 team (the current driver maintainer
+can be reached at <htmlurl name="H.Hanemaayer@inter.nl.net"
+url="mailto:H.Hanemaayer@inter.nl.net">), or post in the Usenet
+newsgroup <htmlurl name="comp.windows.x.i386unix"
+url="news:comp.windows.x.i386unix">.
+-->
+ドライバ関連の問題で、本ドキュメントに載っていないことがあれば、
+XFree86 チームに連絡するか(ドライバの現在のメンテナには
+<htmlurl name="H.Hanemaayer@inter.nl.net"
+url="mailto:H.Hanemaayer@inter.nl.net"> で連絡できます)、Usenet のニュー
+スグループ <htmlurl name="comp.windows.x.i386unix"
+url="news:comp.windows.x.i386unix"> に投稿してください。
+
+<!--
+In fact, reports (success or failure) are very welcome, especially
+on configurations that have not been tested. You can do this via the
+<url name="bug report form" url="http://www.xfree86.org/cgi-bin/bugform.cgi">
+(or send mail to <htmlurl name="XFree86@XFree86.org"
+url="mailto:XFree86@XFree86.org">). You may want to
+keep an eye on forthcoming beta releases at the <url name="XFree86 web site"
+url="http://www.xfree86.org">.
+-->
+実際のところ、報告(成功・失敗に関わらず)は大歓迎です。特にまだテストが
+行われていない機器構成の場合は特にそうです。報告は
+<url name="バグ報告フォーム" url="http://www.xfree86.org/cgi-bin/bugform.cgi">
+(あるいは <htmlurl name="XFree86@XFree86.org"
+url="mailto:XFree86@XFree86.org"> へのメール)を使って行うことができます。
+<url name="XFree86 のウェブサイト" url="http://www.xfree86.org/"> に登
+場するベータリリースを待つのも良いでしょう。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/ark.sgml,v 1.1.2.1 1999/05/25 06:39:28 hohndel Exp $
+
+
+
+
+
+$XConsortium: ark.sgml /main/6 1996/10/28 05:24:04 kaleb $
+</verb>
+
+</article>

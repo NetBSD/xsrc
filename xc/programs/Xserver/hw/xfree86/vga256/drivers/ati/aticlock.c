@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.c,v 1.1.2.1 1998/02/01 16:41:44 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.c,v 1.1.2.2 1999/07/05 09:07:32 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -635,11 +635,15 @@ ATIClockProbe(void)
             {
                 ErrorF("%s programmable clock generator detected.\n",
                     ATIClockDescriptor->ClockName);
-                ErrorF("Reference clock %.6g/%d (%.3f) MHz.\n",
-                    ((double)ATIReferenceNumerator) / 1000.0,
-                    ATIReferenceDenominator,
-                    ((double)ATIReferenceNumerator) /
-                        ((double)ATIReferenceDenominator * 1000.0));
+                if (ATIReferenceDenominator == 1)
+                    ErrorF("Reference clock %.3f MHz.\n",
+                        ((double)ATIReferenceNumerator) / 1000.0);
+                else
+                    ErrorF("Reference clock %.6g/%d (%.3f) MHz.\n",
+                        ((double)ATIReferenceNumerator) / 1000.0,
+                        ATIReferenceDenominator,
+                        ((double)ATIReferenceNumerator) /
+                            ((double)ATIReferenceDenominator * 1000.0));
             }
 
             /* Clobber XF86Config clock line */
@@ -1005,7 +1009,9 @@ ATIClockInit(DisplayModePtr mode)
     else
     {
         /* Generate clock programme word, using units of kHz */
-        if (mode == ATI.ChipBuiltinModes)
+        if (ATILCDPanelID >= 0)
+            TargetClock = ATILCDClock;
+        else if (mode == ATI.ChipBuiltinModes)
             TargetClock = mode->SynthClock;
         else
             TargetClock = vga256InfoRec.clock[mode->Clock];
@@ -1083,7 +1089,7 @@ ATIClockInit(DisplayModePtr mode)
         }
 
         if ((ATIChip >= ATI_CHIP_264VTB) && (ATIIODecoding == BLOCK_IO))
-            ATIDSPInit();               /* Setup DSP registers */
+            ATIDSPInit(mode);           /* Setup DSP registers */
 
     }
 
@@ -1209,7 +1215,8 @@ ATIClockRestore(ATIHWPtr restore)
 
         case ATI_CLOCK_INTERNAL:
             /* Reset VCLK generator */
-            tmp3 = ATIGetMach64PLLReg(PLL_VCLK_CNTL) | PLL_VCLK_RESET;
+            tmp3 = ATIGetMach64PLLReg(PLL_VCLK_CNTL) |
+                (/* PLL_VCLK_SRC_SEL | */ PLL_VCLK_RESET);
             ATIPutMach64PLLReg(PLL_VCLK_CNTL, tmp3);
 
             /* Set post-divider */
@@ -1277,5 +1284,5 @@ ATIClockRestore(ATIHWPtr restore)
     (void) inb(ATIIOPortDAC_WRITE);     /* Clear DAC counter */
 
     /* Restore register */
-    outl(ATIIOPortCRTC_GEN_CNTL + 3, saved_crtc_gen_cntl3);
+    outb(ATIIOPortCRTC_GEN_CNTL + 3, saved_crtc_gen_cntl3);
 }

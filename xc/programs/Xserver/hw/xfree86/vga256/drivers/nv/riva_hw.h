@@ -1,6 +1,6 @@
 /***************************************************************************\
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
 |*     international laws.  Users and possessors of this source code are     *|
@@ -11,7 +11,7 @@
 |*     tion and  internal comments to the code,  notices to the end user     *|
 |*     as follows:                                                           *|
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
 |*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
 \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.h,v 1.1.2.2 1998/12/22 16:33:19 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.h,v 1.1.2.4 1999/04/21 07:21:17 hohndel Exp $ */
 #ifndef __RIVA_HW_H__
 #define __RIVA_HW_H__
 #define RIVA_SW_VERSION 0x00010000
@@ -202,6 +202,10 @@ typedef volatile struct
     unsigned TextureFormat;
     unsigned TextureFilter;
     unsigned FogColor;
+/* This is a problem on LynxOS */
+#ifdef Control
+#undef Control
+#endif
     unsigned Control;
     unsigned AlphaTest;
     unsigned reserved02[0x339];

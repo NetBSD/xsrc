@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.4 1998/07/28 13:57:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.5 1999/04/23 17:42:03 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -38,7 +38,9 @@ vgaGetPCIInfo()
 	if ((pcrp->_base_class == PCI_CLASS_PREHISTORIC &&
 	     pcrp->_sub_class == PCI_SUBCLASS_PREHISTORIC_VGA) ||
 	    (pcrp->_base_class == PCI_CLASS_DISPLAY &&
-	     pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA)) {
+	     pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA &&
+	     pcrp->_command & (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE)
+	     	== (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE))) {
 #else /* PC98 */
 #ifdef PC98_TGUI
 	if  (pcrp->_base_class == PCI_CLASS_DISPLAY &&
