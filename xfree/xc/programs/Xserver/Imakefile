@@ -648,6 +648,24 @@ SetUIDServerTarget(Xdreamcast,$(DREAMCASTDIRS),$(DREAMCASTOBJS), \
 #endif
 #endif /* XdreamcastServer */
 
+#if defined(XhpcServer) && XhpcServer
+XCOMM
+XCOMM NetBSD/hpcmips server
+XCOMM
+MFBSUBDIR  = mfb
+CFB8SUBDIR = cfb
+CFB16SUBDIR = cfb16
+HPCDDXDIR = hw/netbsd/hpc
+HPCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(HPCDDXDIR) $(DEPDIRS)
+HPCLIBS = hw/netbsd/hpc/libhpc.a CFB8Libs CFB16Libs
+SetUIDServerTarget(Xhpc,$(HPCDIRS),$(HPCOBJS), \
+	$(HPCLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER), \
+	$(HPCLIBS) $(LOADABLEEXTS) $(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xhpc
+#endif
+#endif /* XhpcServer */
+
 #if defined(XmacppcServer) && XmacppcServer
 XCOMM
 XCOMM NetBSD/macppc server
@@ -1433,6 +1451,7 @@ MIEXTDIRS = $(SHADOWDIR) $(LAYERDIR) $(ROOTLESSDIR)
 IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
 DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
 	  $(DREAMCASTDDXDIR) \
+	  $(HPCDDXDIR) \
 	  $(MACPPCDDXDIR) $(MAC68KDDXDIR) \
 	  $(HPDDXDIR) $(XFREE86DDXDIR) $(XWINDDXDIR) $(DARWINDDXDIR) \
 	  $(XVFBDDXDIR) $(XNESTDDXDIR)
