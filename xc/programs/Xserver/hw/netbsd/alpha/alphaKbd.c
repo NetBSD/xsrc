@@ -137,33 +137,47 @@ static void SwapLKeys(keysyms)
 	    keysyms->map[i] = k;
 	}
 }
+#endif /* 0 XXX */
 
 static void SetLights (ctrl, fd)
     KeybdCtrl*	ctrl;
     int fd;
 {
-#ifdef KIOCSLED
+#if 0 /* XXX */
     static unsigned char led_tab[16] = {
 	0,
-	LED_NUM_LOCK,
-	LED_SCROLL_LOCK,
-	LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_COMPOSE,
-	LED_COMPOSE | LED_NUM_LOCK,
-	LED_COMPOSE | LED_SCROLL_LOCK,
-	LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK,
-	LED_CAPS_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_SCROLL_LOCK,
-	LED_CAPS_LOCK | LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK
+	WSKBD_LED_NUM,
+	WSKBD_LED_SCROLL,
+	WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_COMPOSE,
+	WSKBD_LED_COMPOSE | WSKBD_LED_NUM,
+	WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL,
+	WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS,
+	WSKBD_LED_CAPS | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_SCROLL,
+	WSKBD_LED_CAPS | WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL | WSKBD_LED_NUM
     };
-    if (ioctl (fd, KIOCSLED, (caddr_t)&led_tab[ctrl->leds & 0x0f]) == -1)
+    if (ioctl (fd, WSKBDIO_SETLEDS, (caddr_t)&led_tab[ctrl->leds & 0x0f]) == -1)
 	Error("Failed to set keyboard lights");
-#endif
+#else  /* ! 0 XXX */
+    /*
+     * XXX The above ought to work, except that we don't initialize
+     * XXX properly for XKBD, so we don't have an info structure which
+     * XXX decodes into useful values.  Since this code is only ever
+     * XXX being called for LK401 keyboards, which don't have num
+     * XXX lock, I interpret all leds as being caps lock. --KS
+     */
+    int lockled;
+
+    lockled = (ctrl->leds != 0) * WSKBD_LED_CAPS;
+    if (ioctl (fd, WSKBDIO_SETLEDS, (caddr_t)&lockled) == -1)
+	Error("Failed to set keyboard lights");
+#endif /* ! 0 XXX */
 }
 
 
@@ -173,7 +187,7 @@ static void ModLight (device, on, led)
     int		led;
 {
     KeybdCtrl*	ctrl = &device->kbdfeed->ctrl;
-    sunKbdPrivPtr pPriv = (sunKbdPrivPtr) device->public.devicePrivate;
+    alphaKbdPrivPtr pPriv = (alphaKbdPrivPtr) device->public.devicePrivate;
 
     if(on) {
 	ctrl->leds |= led;
@@ -184,7 +198,6 @@ static void ModLight (device, on, led)
     }
     SetLights (ctrl, pPriv->fd);
 }
-#endif /* 0 XXX */
 
 /*-
  *-----------------------------------------------------------------------
@@ -260,7 +273,6 @@ static void localEnqueueEvent (xEp, dip, count)
 }
 #endif
 
-#if 0 /* XXX */
 #define XLED_NUM_LOCK    0x1
 #define XLED_COMPOSE     0x4
 #define XLED_SCROLL_LOCK 0x2
@@ -324,11 +336,11 @@ static void pseudoKey(device, down, keycode)
 static void DoLEDs(device, ctrl, pPriv)
     DeviceIntPtr    device;	    /* Keyboard to alter */
     KeybdCtrl* ctrl;
-    sunKbdPrivPtr pPriv; 
+    alphaKbdPrivPtr pPriv; 
 {
 #ifdef XKB
     if (noXkbExtension) {
-#endif
+#endif /* XKB */
     if ((ctrl->leds & XLED_CAPS_LOCK) && !(pPriv->leds & XLED_CAPS_LOCK))
 	    pseudoKey(device, TRUE,
 		LookupKeyCode(XK_Caps_Lock, &device->key->curKeySyms));
@@ -352,7 +364,7 @@ static void DoLEDs(device, ctrl, pPriv)
     if (!(ctrl->leds & XLED_SCROLL_LOCK) && (pPriv->leds & XLED_SCROLL_LOCK))
 	    pseudoKey(device, FALSE,
 		LookupKeyCode(XK_Scroll_Lock, &device->key->curKeySyms));
-
+#if 0
     if ((ctrl->leds & XLED_COMPOSE) && !(pPriv->leds & XLED_COMPOSE))
 	    pseudoKey(device, TRUE,
 		LookupKeyCode(SunXK_Compose, &device->key->curKeySyms));
@@ -360,13 +372,13 @@ static void DoLEDs(device, ctrl, pPriv)
     if (!(ctrl->leds & XLED_COMPOSE) && (pPriv->leds & XLED_COMPOSE))
 	    pseudoKey(device, FALSE,
 		LookupKeyCode(SunXK_Compose, &device->key->curKeySyms));
+#endif /* 0 */
 #ifdef XKB
     }
-#endif
+#endif /* XKB */
     pPriv->leds = ctrl->leds & 0x0f;
     SetLights (ctrl, pPriv->fd);
 }
-#endif /* 0 XXX */
 
 /*-
  *-----------------------------------------------------------------------
@@ -405,9 +417,9 @@ static void alphaKbdCtrl (device, ctrl)
     	if (ioctl (pPriv->fd, KIOCCMD, &kbdClickCmd) == -1)
  	    Error("Failed to set keyclick");
     }
-    if (pPriv->type == KB_SUN4 && pPriv->leds != ctrl->leds & 0x0f)
-	DoLEDs(device, ctrl, pPriv);
 #endif /* 0 XXX */
+    if (pPriv->type <= WSKBD_TYPE_LK401 && pPriv->leds != ctrl->leds & 0x0f)
+        DoLEDs(device, ctrl, pPriv);
 
     /* Bell info change needs nothing done here. */
 }
@@ -610,7 +622,6 @@ Firm_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
  *
  *-----------------------------------------------------------------------
  */
-#if 0 /* XXX */
 static xEvent	autoRepeatEvent;
 static int	composeCount;
 
@@ -697,7 +708,6 @@ static Bool DoSpecialKeys(device, xE, fe)
 #endif /* XXX */
     return FALSE;
 }
-#endif /* 0 XXX */
 
 #if NeedFunctionPrototypes
 void alphaKbdEnqueueEvent (
@@ -723,12 +733,12 @@ void alphaKbdEnqueueEvent (device, fe)
     int			i;
 
 #ifdef USE_WSCONS
-    if (alphaKbdPriv.type < 3) /* XXX magic 3: lk201, lk401 are 1, 2 respectively */
+    if (alphaKbdPriv.type <= WSKBD_TYPE_LK401)
 	    keycode = (fe->value) + MIN_KEYCODE;
     else
 	    keycode = (fe->value & 0x7f) + MIN_KEYCODE;
 #else
-    if (alphaKbdPriv.type < 3) /* XXX magic 3: lk201, lk401 are 1, 2 respectively */
+    if (alphaKbdPriv.type <= WSKBD_TYPE_LK401)
 	    keycode = (fe->id) + MIN_KEYCODE;
     else
 	    keycode = (fe->id & 0x7f) + MIN_KEYCODE;
@@ -759,7 +769,7 @@ void alphaKbdEnqueueEvent (device, fe)
      * For lk201, we need to keep track of which keys are down so we can
      * process "all keys up" events.
      */
-    if (alphaKbdPriv.type < 3) {
+    if (alphaKbdPriv.type <= WSKBD_TYPE_LK401) {
 	    if (fe->type == WSCONS_EVENT_KEY_DOWN) {
 		    for (i = 0; i < LK_KLL; i++)
 			    if (alphaKbdPriv.keys_down[i] == (KeyCode)-1) {
@@ -801,6 +811,7 @@ void alphaKbdEnqueueEvent (device, fe)
 #ifdef XKB
     }
 #endif /* ! XKB */
+#else /* ! 0 XXX */
 #endif /* 0 XXX */
     mieqEnqueue (&xE);
 }
