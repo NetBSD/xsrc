@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.3 2004/03/13 19:43:33 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -353,6 +353,9 @@ static int vidc_kbd(DevicePtr dev, int what)
 						vidc_modmap[cnt].modifiers;
 			}
 			InitKeyboardDeviceStruct(dev, &keysims, modmap,
+#ifdef HAVE_BEEP
+			    private.wskbd_fd == -1 ? vidc_bell :
+#endif /* HAVE_BEEP */
 			    wscons_bell, vidc_kbdctrl);
 			break;
 		case DEVICE_ON:
@@ -395,6 +398,10 @@ int mouse_accel(DeviceIntPtr device, int delta)
  */
 static void sigio_handler(int flags)
 {
+#ifdef HAVE_BUSMOUSE
+	if (private.mouse_fd >= 0)
+		rpc_mouse_io();
+#endif /* HAVE_BUSMOUSE */
 	if (private.wsmouse_fd >= 0)
 		wsmouse_io();
 	if (private.kbd_fd >= 0)
@@ -411,14 +418,29 @@ void InitInput(int argc, char *argv[])
 
 	DPRINTF(("InitInput\n"));
 
+#ifdef HAVE_BUSMOUSE
+	private.mouse_fd = -1;
+#endif /* HAVE_BUSMOUSE */
 	private.wsmouse_fd = -1;
 	private.kbd_fd = -1;
 	private.wskbd_fd = -1;
+#ifdef HAVE_BUSMOUSE
+	private.beep_fd = -1;
+#endif /* HAVE_BUSMOUSE */
 
 	/* Try to init the wsmouse device */
 	private.wsmouse_fd = wsmouse_init();
+#ifndef HAVE_BUSMOUSE
 	if (private.wsmouse_fd == -1)
 		FatalError("Cannot open mouse device\n");
+#else /* HAVE_BUSMOUSE */
+	if (private.wsmouse_fd == -1) {
+		/* Try and init the old rpc mouse device */
+		private.mouse_fd = rpc_init_mouse();
+		if (private.mouse_fd == -1)
+			FatalError("Cannot open mouse device\n");
+	}
+#endif /* HAVE_BUSMOUSE */
 	
 	/* ... and wskbd */
 	private.wskbd_fd = wskbd_init();
@@ -427,6 +449,12 @@ void InitInput(int argc, char *argv[])
 		private.kbd_fd = rpc_init_kbd();
 		if (private.kbd_fd == -1)
 			FatalError("Cannot open kbd device\n");
+#ifdef HAVE_BEEP
+		/* Try and init the old rpc beep device */
+		private.beep_fd = rpc_init_bell();
+		if (private.beep_fd == -1)
+			ErrorF("Cannot open beep device\n");
+#endif /* HAVE_BEEP */
 	}
 
 	/* Add the input devices */
@@ -445,6 +473,10 @@ void InitInput(int argc, char *argv[])
 		FatalError("mieqInit failed!!\n");
 
 	/* Start taking some SIGIOs on input device file descriptors. */
+#ifdef HAVE_BUSMOUSE
+	if (private.mouse_fd >= 0)
+		fcntl(private.mouse_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
+#endif /* HAVE_BUSMOUSE */
 	if (private.wsmouse_fd >= 0)
 		fcntl(private.wsmouse_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
        	if (private.kbd_fd >= 0)
@@ -598,6 +630,9 @@ void AbortDDX(void)
 
 	if (private.vram_fd != 0)
 		close(private.vram_fd);
+#ifdef HAVE_BUSMOUSE
+	close(private.mouse_fd);
+#endif /* HAVE_BUSMOUSE */
 	close(private.wsmouse_fd);
 	close(private.con_fd);
 	close(private.wsdisplay_fd);

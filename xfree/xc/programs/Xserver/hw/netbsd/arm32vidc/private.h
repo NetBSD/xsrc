@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.3 2004/03/13 19:43:33 bjh21 Exp $	*/
+/*	$NetBSD: private.h,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -30,6 +30,18 @@
  */
 
 /*
+ * Use __NetBSD_Version__ to work out which of the old console devices
+ * still exist.
+ */
+#include <sys/param.h>
+#if __NetBSD_Version__ < 106370000 /* <machine/mouse.h> removed in 1.6ZK */
+#define HAVE_BUSMOUSE
+#endif
+#if __NetBSD_Version__ < 106350000 /* <machine/beep.h> removed in 1.6ZI */
+#define HAVE_BEEP
+#endif
+
+/*
  * For each screen, we should allocate the following and store it in the
  * private area. To get something working, however, we don't :-(
  */
@@ -41,12 +53,18 @@ struct _private
 	int width;		/* width of frame buffer */
 
 	int vram_fd;		/* Screen file descriptor for frame buffer */
+#ifdef HAVE_BUSMOUSE
+	int mouse_fd;		/* File descriptor for pms/qms */
+#endif
 	int wsmouse_fd;		/* File descriptor for wsmouse */
 	int kbd_fd;		/* File descriptor for kbd */
 	int wskbd_fd;		/* File descriptor for wskbd */
 	u_int wskbd_type;	/* Keyboard type from WSKBDIO_GTYPE */
 	int con_fd;		/* File descriptor for the console */
 	int wsdisplay_fd;	/* File descriptor for wsdisplay */
+#ifdef HAVE_BEEP
+	int beep_fd;		/* File descriptor for beep */
+#endif
 	char *vram_base;	/* Where the screen has been mapped to */
 	DevicePtr mouse_dev;	/* X device for mouse */
 	DevicePtr kbd_dev;	/* X device for keyboard */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpccons.c,v 1.3 2004/03/13 19:43:33 bjh21 Exp $	*/
+/*	$NetBSD: rpccons.c,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -67,7 +67,13 @@
 /* NetBSD headers RiscPC specific */
 #include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
+#ifdef HAVE_BUSMOUSE
+#include <machine/mouse.h>
+#endif /* HAVE_BUSMOUSE */
 #include <machine/kbd.h>
+#ifdef HAVE_BEEP
+#include <machine/beep.h>
+#endif /* HAVE_BEEP */
 
 /* Keymap, from XFree86*/
 #include "atKeynames.h"
@@ -87,8 +93,15 @@
 #endif
 
 /* Path to various devices */
+#ifdef HAVE_BUSMOUSE
+#define QMOUSE_PATH	"/dev/qms0"		/* Mouse pointer (rpc format) */
+#define PMOUSE_PATH	"/dev/pms0"		/* Mouse pointer (rpc format) */
+#endif /* HAVE_BUSMOUSE */
 #define CON_PATH	"/dev/vidcvideo0"	/* Console */
 #define KBD_PATH	"/dev/kbd"		/* Keyboard (rpc format) */
+#ifdef HAVE_BEEP
+#define BEEP_PATH	"/dev/beep"		/* Beep device */
+#endif /* HAVE_BEEP */
 
 extern struct _private private;
 
@@ -118,9 +131,93 @@ void vidc_kbdctrl(DeviceIntPtr device, KeybdCtrl *ctrl)
 	DPRINTF(("kbdmousectrl\n"));
 }
 
+#ifdef HAVE_BEEP
+void vidc_bell(int percent, DeviceIntPtr device, pointer ctrl, int unused)
+{
+	KeybdCtrl *kctrl = (KeybdCtrl *)ctrl;
+	DPRINTF(("Bell\n"));
+
+	if (percent == 0 || kctrl->bell == 0)
+		return;
+
+	if (private.beep_fd >= 0)
+		ioctl(private.beep_fd, BEEP_GENERATE);
+}
+#endif /* HAVE_BEEP */
+
+#ifdef HAVE_BUSMOUSE
+/* Map wsmouse button codes to X button codes
+ */
+#define LEFTB(b)	(b & BUT1STAT)
+#define MIDDLEB(b)	(b & BUT2STAT)
+#define RIGHTB(b)	(b & BUT3STAT)
+#endif /* HAVE_BUSMOUSE */
+
 /* Handle IO signals for all input devices present
  */
 #define TVTOMILLI(tv)   ((tv).tv_usec / 1000 + (tv).tv_sec * 1000)
+
+#ifdef HAVE_BUSMOUSE
+void rpc_mouse_io(void)
+{
+	int dy = 0, dx = 0;
+	struct mousebufrec mb;
+	static int buttons = BUTSTATMASK;
+	int was_mouse = 0;
+	xEvent x_event;
+
+	/* Try the mouse */
+	while (read(private.mouse_fd, &mb, sizeof(mb)) > 0)
+	{
+		/* Was it an ioctl acknowledge ? */
+		if (mb.status & IOC_ACK)
+			continue;
+		/* It was the mouse */
+		was_mouse = 1;
+
+		/* Get the time of the event as near as possible */
+		x_event.u.keyButtonPointer.time = TVTOMILLI(mb.event_time);;
+
+		/* Process the mouse event */
+		dx += mb.x;
+		dy -= mb.y;
+
+		/* Have the buttons changed ? */
+		if (buttons != (mb.status & BUTSTATMASK)) {
+			if(LEFTB(buttons) != LEFTB(mb.status)){
+				x_event.u.u.detail = 1;	/* leftmost */
+				x_event.u.u.type = LEFTB(mb.status) ?
+				    ButtonRelease : ButtonPress;
+				mieqEnqueue(&x_event);
+			}
+			if(MIDDLEB(buttons) != MIDDLEB(mb.status)){
+				x_event.u.u.detail = 2;	/* middle */
+				x_event.u.u.type = MIDDLEB(mb.status) ?
+				    ButtonRelease : ButtonPress;
+				mieqEnqueue(&x_event);
+			}
+			if(RIGHTB(buttons) != RIGHTB(mb.status)){
+				x_event.u.u.detail = 3;	/* right */
+				x_event.u.u.type = RIGHTB(mb.status) ?
+				    ButtonRelease : ButtonPress;
+				mieqEnqueue(&x_event);
+			}
+			buttons = mb.status & BUTSTATMASK;
+		}
+	}
+
+	/* Once we have processed all the pending mouse events ... */
+	if (was_mouse) {
+		DeviceIntPtr device = (DeviceIntPtr)LookupPointerDevice();
+		dx = mouse_accel(device, dx);
+		dy = mouse_accel(device, dy);
+		if (dy || dx)
+			miPointerDeltaCursor(dx, dy,
+			    x_event.u.keyButtonPointer.time);
+	}
+
+}
+#endif /* HAVE_BUSMOUSE */
 
 void rpc_kbd_io(void)
 {
@@ -204,6 +301,36 @@ void rpc_kbd_io(void)
 	}
 }
 
+#ifdef HAVE_BUSMOUSE
+int rpc_init_mouse(void)
+{
+	int fd;
+	int len;
+	struct mousebufrec mb;
+
+	if (((fd = open(QMOUSE_PATH, O_RDONLY | O_NONBLOCK)) < 0) &&
+	    ((fd = open(PMOUSE_PATH, O_RDONLY | O_NONBLOCK)) < 0))
+		return -1;
+
+	/* Drain the mouse buffer */
+	do {
+		len = read(fd, &mb, sizeof(mb));
+	} while (len > 0);
+
+	/* Switch to relative mode */
+	if (ioctl(fd, MOUSEIOC_SETMODE, MOUSEMODE_REL) != 0)
+		ErrorF("Failed to set mouse relative mode\n");
+
+	/* Zero the position */
+	if (ioctl(fd, MOUSEIOC_WRITEX, 0) != 0)
+		ErrorF("Failed to set mouse X position\n");
+	if (ioctl(fd, MOUSEIOC_WRITEY, 0) != 0)
+		ErrorF("Failed to set mouse X position\n");
+
+	return fd;
+}
+#endif /* HAVE_BUSMOUSE */
+
 int rpc_init_kbd(void)
 {
 	int fd;
@@ -220,6 +347,13 @@ int rpc_init_kbd(void)
 
 	return fd;
 }
+
+#ifdef HAVE_BEEP
+int rpc_init_bell(void)
+{
+	return open(BEEP_PATH, O_RDONLY);
+}
+#endif /* HAVE_BEEP */
 
 int rpc_init_screen(ScreenPtr screen, int argc, char **argv)
 {
