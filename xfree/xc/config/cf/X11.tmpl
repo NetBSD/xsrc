@@ -167,7 +167,7 @@ VENDORMANVERSION = XVendorManVersionString
 #define MaxUCSChar		0x3200
 #endif
 #ifndef DerivedUCSFonts
-#define DerivedUCSFonts		HasPerl5
+#define DerivedUCSFonts		YES
 #endif
 /* These primarily control generation of derived 8-bit fonts. */
 #ifndef BuildUCSFonts
@@ -1591,7 +1591,7 @@ XCOMM X Window System make variables; these need to be coordinated with rules
 # else
       MKHTMLINDEX = $(SHELL) $(CONFIGSRC)/util/mkhtmlindex.sh
 # endif
-          UCS2ANY = $(FONTSRC)/util/ucs2any.pl
+          UCS2ANY = $(FONTSRC)/util/ucs2any
       BDFTRUNCATE = $(FONTSRC)/util/bdftruncate.pl
      UCSMAPPREFIX = $(FONTSRC)/util/map-
 #endif
@@ -3797,17 +3797,15 @@ InstallNamedTarget(install,edir/encodings.dir,$(INSTDATFLAGS),fdir,encodings.dir
 
 
 #ifndef MakeBdfFontFromUCSMaster
-#if HasPerl5
 #define MakeBdfFontFromUCSMaster(font,enc)				@@\
 includes:: font-enc.bdf							@@\
 									@@\
 font-enc.bdf: font.bdf $(UCS2ANY)					@@\
 	RemoveFile($@)							@@\
-	RunPerlScript($(UCS2ANY),font.bdf $(UCSMAPPREFIX)enc enc)	@@\
+	$(UCS2ANY) font.bdf $(UCSMAPPREFIX)enc enc			@@\
 									@@\
 clean::									@@\
 	RemoveFile(font-enc.bdf)
-#endif
 #endif
 
 #ifndef MakeTruncatedUCSBdfFont

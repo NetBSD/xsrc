@@ -18,7 +18,7 @@ FONTDIRS = bdf $(SCALEDDIR)
 PEXDIR = PEX
 #endif
 
-SUBDIRS = $(ENCODINGDIR) util bdf $(SCALEDDIR) $(PEXDIR)
+SUBDIRS = util $(ENCODINGDIR) bdf $(SCALEDDIR) $(PEXDIR)
 
 #if MakeLocalFontDir
 MakeDirectories(install,$(FONTDIR)/local)
