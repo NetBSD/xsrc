@@ -32,13 +32,15 @@
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
 
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
+
 #include "XpmI.h"
 
 /* 3.2 backward compatibility code */
 LFUNC(CreateOldColorTable, int, (XpmColor *ct, unsigned int ncolors,
 				 XpmColor ***oldct));
 
-LFUNC(FreeOldColorTable, void, (XpmColor **colorTable, int ncolors));
+LFUNC(FreeOldColorTable, void, (XpmColor **colorTable, unsigned int ncolors));
 
 /*
  * Create a colortable compatible with the old style colortable
@@ -50,7 +52,7 @@ CreateOldColorTable(ct, ncolors, oldct)
     XpmColor ***oldct;
 {
     XpmColor **colorTable, **color;
-    int a;
+    unsigned int a;
 
     if (ncolors >= UINT_MAX / sizeof(XpmColor *)) 
 	return XpmNoMemory;
@@ -69,9 +71,9 @@ CreateOldColorTable(ct, ncolors, oldct)
 static void
 FreeOldColorTable(colorTable, ncolors)
     XpmColor **colorTable;
-    int ncolors;
+    unsigned int ncolors;
 {
-    int a, b;
+    unsigned int a, b;
     XpmColor **color;
     char **sptr;
 
@@ -122,7 +124,7 @@ XpmFreeExtensions(extensions, nextensions)
     XpmExtension *ext;
     char **sptr;
 
-    if (extensions) {
+    if (extensions  && nextensions > 0) {
 	for (i = 0, ext = extensions; i < nextensions; i++, ext++) {
 	    if (ext->name)
 		XpmFree(ext->name);
