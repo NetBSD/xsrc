@@ -1,4 +1,4 @@
-/*	$NetBSD: pxfillsp.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
+/*	$NetBSD: pxfillsp.c,v 1.4 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ pxDoFillSpans(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 {
 	pxScreenPrivPtr sp;
 	DDXPointPtr pptmax;
-	int psy, x, y, w;
+	int psy, x, y, w, h;
 	u_int32_t *pb;
 	pxPacket pxp;
 
@@ -114,18 +114,17 @@ pxDoFillSpans(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 
 	sp = gcPriv->sp;
 
-	pb = pxPacketStart(sp, &pxp, 6, 2);
-	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
+	pb = pxPacketStart(sp, &pxp, 5, 3);
+	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPRIMATIVE;
 	pb[1] = gcPriv->pmask;
 	pb[2] = 0;
 	pb[3] = gcPriv->umet;
-	pb[4] = (1 << 2) - 1;
-	pb[5] = gcPriv->fgFill;
+	pb[4] = gcPriv->fgFill;
 
-	for (pptmax = ppt + n; ppt < pptmax; ppt++) {
-		w = *pwidth++;
-		x = ppt->x;
-		y = ppt->y;
+	for (pptmax = ppt + n; ppt < pptmax; ppt++, pwidth++) {
+		w = pwidth[0];
+		x = ppt[0].x;
+		y = ppt[0].y;
 
 		if (pOneBox != NULL) {
 			if (y < pOneBox->y1 || y >= pOneBox->y2)
@@ -143,11 +142,21 @@ pxDoFillSpans(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 			}
 		}
 
-		psy = (y << 3) + (1 << 2) - 1;
+		for (h = 1; h < 17; h++, ppt++, pwidth++) {
+			if (ppt + 1 == pptmax)
+				break;
+			if (ppt[1].x != x || pwidth[1] != w ||
+			    ppt[1].y != y + 1)
+				break;
+		}
+
+		h = (h << 2) - 1;
+		psy = (y << 3) + h;
 
 		pb = pxPacketAddPrim(sp, &pxp);
 		pb[0] = (x << 19) | psy;
 		pb[1] = ((x + w) << 19) | psy;
+		pb[2] = h;
 	}
 
 	pxPacketFlush(sp, &pxp);
@@ -157,30 +166,30 @@ void
 pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 	       BoxPtr pOneBox, int n, DDXPointPtr ppt, int *pwidth)
 {
-	int v1, v2, psy, x, y, w, xya, stampw, stamphm, xorg, yorg;
+	int v1, v2, psy, x, y, w, xya, stampw, stamphm, xorg, yorg, h;
 	DDXPointPtr pptmax;
 	pxScreenPrivPtr sp;
-	u_int32_t *pb, std;
+	u_int32_t *pb, *mask;
 	pxPacket pxp;
 
 	PX_TRACE("pxDoFillSpansS");
 
+	mask = (u_int32_t *)gcPriv->mask.data;
 	sp = gcPriv->sp;
 	stampw = sp->stampw;
 	stamphm = sp->stamphm;
 
-	pb = pxPacketStart(sp, &pxp, 5, 12);
-	pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT | STAMP_LW_PERPACKET |
+	pb = pxPacketStart(sp, &pxp, 4, 13);
+	pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT | STAMP_LW_PERPRIMATIVE |
 	    STAMP_XY_PERPRIMATIVE;
 	pb[1] = gcPriv->pmask;
 	pb[2] = 0;
 	pb[3] = gcPriv->umet | STAMP_WE_XYMASK;
-	pb[4] = (1 << 2) - 1;
 
-	for (pptmax = ppt + n; ppt < pptmax; ppt++) {
-		w = *pwidth++;
-		x = ppt->x;
-		y = ppt->y;
+	for (pptmax = ppt + n; ppt < pptmax; ppt++, pwidth++) {
+		w = pwidth[0];
+		x = ppt[0].x;
+		y = ppt[0].y;
 
 		if (pOneBox != NULL) {
 			if (y < pOneBox->y1 || y >= pOneBox->y2)
@@ -198,30 +207,54 @@ pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 			}
 		}
 
+		for (h = 1; h < 17; h++, ppt++, pwidth++) {
+			if (ppt + 1 == pptmax)
+				break;
+			if (ppt[1].x != x || pwidth[1] != w ||
+			    ppt[1].y != y + 1)
+				break;
+		}
+
 		xorg = (x - pGC->patOrg.x - pDrawable->x) & 15;
 		yorg = (y - pGC->patOrg.y - pDrawable->y) & 15;
 
-		xya = XYMASKADDR(stampw, stamphm, x, y, xorg, 0);
-		psy = (y << 3) + (1 << 2) - 1;
+		xya = XYMASKADDR(stampw, stamphm, x, y, xorg, yorg);
+		h = (h << 2) - 1;
+		psy = (y << 3) + h;
 		v1 = (x << 19) | psy;
 		v2 = ((x + w) << 19) | psy;
-		std = gcPriv->mask.data[yorg & 15];
 
 		if (gcPriv->fillStyle != FillStippled) {
 			pb = pxPacketAddPrim(sp, &pxp);
-			pb[0] = ~std;
+			pb[0] = ~mask[0];
+			pb[1] = ~mask[1];
+			pb[2] = ~mask[2];
+			pb[3] = ~mask[3];
+			pb[4] = ~mask[4];
+			pb[5] = ~mask[5];
+			pb[6] = ~mask[6];
+			pb[7] = ~mask[7];
 			pb[8] = xya;
 			pb[9] = v1;
 			pb[10] = v2;
-			pb[11] = gcPriv->bgPixel;
+			pb[11] = h;
+			pb[12] = gcPriv->bgPixel;
 		}
 
 		pb = pxPacketAddPrim(sp, &pxp);
-		pb[0] = std;
+		pb[0] = mask[0];
+		pb[1] = mask[1];
+		pb[2] = mask[2];
+		pb[3] = mask[3];
+		pb[4] = mask[4];
+		pb[5] = mask[5];
+		pb[6] = mask[6];
+		pb[7] = mask[7];
 		pb[8] = xya;
 		pb[9] = v1;
 		pb[10] = v2;
-		pb[11] = gcPriv->fgFill;
+		pb[11] = h;
+		pb[12] = gcPriv->fgFill;
 	}
 
 	pxPacketFlush(sp, &pxp);

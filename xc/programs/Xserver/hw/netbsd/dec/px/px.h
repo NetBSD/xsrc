@@ -1,7 +1,7 @@
-/*	$NetBSD: px.h,v 1.4 2002/07/24 14:16:39 ad Exp $	*/
+/*	$NetBSD: px.h,v 1.5 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,8 +41,6 @@
 #include <sys/time.h>
 
 #include <dev/wscons/wsconsio.h>
-
-#include <machine/vmparam.h>
 
 #include <dev/tc/sticreg.h>
 #include <dev/tc/sticio.h>
@@ -195,24 +193,23 @@ static __inline__ pxImgBufPtr
 pxAllocImgBuf(pxScreenPrivPtr sp)
 {
 	pxImgBufPtr ib;
+	volatile struct stic_xcomm *sxc;
 
-#ifdef notyet
 	if (!sp->queueing)
-#endif
 		return (&sp->ib[sp->ibsel ^= 1]);
 
-#ifdef notyet
+	sxc = sp->sxc;
 	for (;;) {
+		/* XXX Potential for stall? */
 		ib = &sp->ib[0];
-		if (sp->sxc->sxc_done[ib->bufnum] != ib->ident)
+		if (sxc->sxc_done[ib->bufnum] != ib->ident)
 			break;
 
 		ib = &sp->ib[1];
-		if (sp->sxc->sxc_done[ib->bufnum] != ib->ident)
+		if (sxc->sxc_done[ib->bufnum] != ib->ident)
 			break;
 	}
 	return (ib);
-#endif
 }
 
 static __inline__ void
@@ -335,10 +332,10 @@ void	pxPolyPoint(DrawablePtr, GCPtr, int, int, xPoint *);
  * pxpushpxl.c
  */
 void	pxSolidPP(GCPtr, PixmapPtr, DrawablePtr, int, int, int, int);
-void	pxSqueege(pxScreenPrivPtr, PixmapPtr, DrawablePtr, pxPacketPtr,
-		  int, int, int, int, int, int);
-void	pxSqueege16(pxScreenPrivPtr, PixmapPtr, DrawablePtr, pxPacketPtr,
-		    int, int, int, int, int, int);
+void	pxSqueege(pxScreenPrivPtr, pxPacketPtr, u_int8_t *, int,
+		  int, int, int, int, int, int, int);
+void	pxSqueege16(pxScreenPrivPtr, pxPacketPtr, u_int8_t *, int,
+		    int, int, int, int, int, int, int);
 
 /*
  * pxsetsp.c
@@ -377,9 +374,15 @@ void	pxPolyTEGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 			 CharInfoPtr *, pointer);
 void	pxImageTEGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 			  CharInfoPtr *, pointer);
+
 void	pxPolyGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 		       CharInfoPtr *, pointer);
 void	pxImageGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
+			CharInfoPtr *, pointer);
+
+void	pxSlowPolyGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
+		       CharInfoPtr *, pointer);
+void	pxSlowImageGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 			CharInfoPtr *, pointer);
 
 /*
@@ -387,3 +390,13 @@ void	pxImageGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
  */
 void	pxGetImage(DrawablePtr, int, int, int, int, unsigned int,
 		   unsigned long, char *);
+
+/*
+ * pxzerarc.c
+ */
+void	pxZeroPolyArc(DrawablePtr, GCPtr, int, xArc *);
+
+/*
+ * pxfillarc.c
+ */
+void	pxPolyFillArc(DrawablePtr, GCPtr, int, xArc *);

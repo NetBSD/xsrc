@@ -1,7 +1,7 @@
-/*	$NetBSD: pxgc.c,v 1.3 2002/07/24 14:16:39 ad Exp $	*/
+/*	$NetBSD: pxgc.c,v 1.4 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -289,7 +289,9 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 	}
 
 	/*
-	 * Solid tiles become solid fills.
+	 * Solid tiles become solid fills.  (This isn't an assumption that
+	 * we should be making, but since the speed difference is so great,
+	 * we do.)
 	 */
 	if (new_fill) {
 		if (pGC->fillStyle == FillTiled && pGC->tileIsPixel) {
@@ -308,7 +310,6 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 	 * Deal with the changes we've collected.
 	 */
 	if (new_line) {
-		pGC->ops->PolySegment = miPolySegment;
 
 		switch (pGC->lineStyle) {
 		case LineSolid:
@@ -316,20 +317,34 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 				if (gcPriv->fillStyle == FillSolid) {
 					pGC->ops->Polylines = pxPolylines;
 					pGC->ops->PolySegment = pxPolySegment;
-				} else
+					pGC->ops->PolyArc = pxZeroPolyArc;
+				} else {
 					pGC->ops->Polylines = miZeroLine;
-			} else
+					pGC->ops->PolySegment = miPolySegment;
+					pGC->ops->PolyArc = miZeroPolyArc;
+				}
+			} else {
 				pGC->ops->Polylines = miWideLine;
+				pGC->ops->PolySegment = miPolySegment;
+				pGC->ops->PolyArc = miPolyArc;
+			}
 			break;
 
 		case LineOnOffDash:
 		case LineDoubleDash:
-			if (pGC->lineWidth == 0 &&
-			    gcPriv->fillStyle == FillSolid) {
-				pGC->ops->Polylines = pxPolylinesD;
-				pGC->ops->PolySegment = pxPolySegmentD;
-			} else
+			if (pGC->lineWidth == 0) { 
+				if (gcPriv->fillStyle == FillSolid) {
+					pGC->ops->Polylines = pxPolylinesD;
+					pGC->ops->PolySegment = pxPolySegmentD;
+				} else {
+					pGC->ops->Polylines = miZeroDashLine;
+					pGC->ops->PolySegment = miPolySegment;
+				}
+			} else {
 				pGC->ops->Polylines = miWideDash;
+				pGC->ops->PolySegment = miPolySegment;
+			}
+			pGC->ops->PolyArc = miPolyArc;
 			break;
 		}
 	}
@@ -341,21 +356,31 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 		    FONTMINBOUNDS(pGC->font, leftSideBearing);
 		maxh = FONTASCENT(pGC->font) + FONTDESCENT(pGC->font);
 
-		if (maxw <= 16 && maxh <= 16 &&
-		    FONTMINBOUNDS(pGC->font, characterWidth) >= 0) {
-			if (TERMINALFONT(pGC->font)) {
-				if (gcPriv->fillStyle == FillSolid)
-					pGC->ops->PolyGlyphBlt =
-					    pxPolyTEGlyphBlt;
-				pGC->ops->ImageGlyphBlt =
-				    pxImageTEGlyphBlt;
-			} else {
-				if (gcPriv->fillStyle == FillSolid)
-					pGC->ops->PolyGlyphBlt =
-					    pxPolyGlyphBlt;
-				pGC->ops->ImageGlyphBlt =
-				    pxImageGlyphBlt;
+		if (FONTMINBOUNDS(pGC->font, characterWidth) >= 0) {
+			if (maxw <= 16 && maxh <= 16) {
+				if (TERMINALFONT(pGC->font)) {
+					if (gcPriv->fillStyle == FillSolid)
+						pGC->ops->PolyGlyphBlt =
+						    pxPolyTEGlyphBlt;
+					pGC->ops->ImageGlyphBlt =
+					    pxImageTEGlyphBlt;
+				} else {
+					if (gcPriv->fillStyle == FillSolid)
+						pGC->ops->PolyGlyphBlt =
+						    pxPolyGlyphBlt;
+					pGC->ops->ImageGlyphBlt =
+					    pxImageGlyphBlt;
+				}
 			}
+#ifdef notyet
+			else {
+				if (gcPriv->fillStyle == FillSolid)
+					pGC->ops->PolyGlyphBlt =
+					    pxSlowPolyGlyphBlt;
+				pGC->ops->ImageGlyphBlt =
+				    pxSlowImageGlyphBlt;
+			}
+#endif
 		}
 	}
 
@@ -365,6 +390,7 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 			gcPriv->doFillSpans = pxDoFillSpans;
  			pGC->ops->PolyFillRect = pxPolyFillRect;
 			pGC->ops->PushPixels = pxSolidPP;
+			pGC->ops->PolyFillArc = pxPolyFillArc;
 			break;
 
 		case FillTiled:
@@ -376,6 +402,7 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 				gcPriv->doFillSpans = pxDoFillSpansT;
 			}
 			pGC->ops->PushPixels = miPushPixels;
+			pGC->ops->PolyFillArc = miPolyFillArc;
 			break;
 
 		case FillStippled:
@@ -383,11 +410,20 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 			    pGC->fgPixel, pGC->bgPixel)) {
 				pGC->ops->PolyFillRect = pxPolyFillRectS;
 				gcPriv->doFillSpans = pxDoFillSpansS;
+#ifdef notyet
+				pGC->ops->PushPixels = pxPushPixelsS;
+#endif
 			} else {
 				pGC->ops->PolyFillRect = miPolyFillRect;
 				gcPriv->doFillSpans = pxDoFillSpansUS;
+#ifdef notyet
+				pGC->ops->PushPixels = miPushPixels;
+#endif
 			}
+#ifndef notyet
 			pGC->ops->PushPixels = miPushPixels;
+#endif
+			pGC->ops->PolyFillArc = miPolyFillArc;
 			break;
 
 		case FillOpaqueStippled:
@@ -400,6 +436,7 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 				gcPriv->doFillSpans = pxDoFillSpansUS;
 			}
 			pGC->ops->PushPixels = miPushPixels;
+			pGC->ops->PolyFillArc = miPolyFillArc;
 			break;
 
 		default:

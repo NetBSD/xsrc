@@ -1,7 +1,7 @@
-/*	$NetBSD: pxpushpxl.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
+/*	$NetBSD: pxpushpxl.c,v 1.4 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,27 +70,36 @@ pxSolidPP(GCPtr pGC, PixmapPtr pBitMap, DrawablePtr pDrawable, int dx, int dy,
 		gcPriv = pxGetGCPrivate(pGC);
 		sp = gcPriv->sp;
 
-		pb = pxPacketStart(sp, &pxp, 5, 12);
-		pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST |
+		pb = pxPacketStart(sp, &pxp, 4, 13);
+		pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT |
 		    STAMP_LW_PERPRIMATIVE | STAMP_XY_PERPRIMATIVE;
 		pb[1] = gcPriv->pmask;
 		pb[2] = 0;
 		pb[3] = gcPriv->umet | STAMP_WE_XYMASK;
-		pb[4] = gcPriv->fgFill;
 
 		pBox = REGION_RECTS(&rgnDst);
 		pMaxBox = pBox + REGION_NUM_RECTS(&rgnDst);
 
 		if (pBox->y2 - pBox->y1 <= 16) {
 			for (; pBox < pMaxBox; pBox++)
-				pxSqueege16(sp, pBitMap, pDrawable, &pxp,
-				    pBox->x1, pBox->y1, pBox->x2, pBox->y2,
-				    pBox->x1 - xOrg, pBox->y1 - yOrg);
+				pxSqueege(sp, &pxp,
+				    (u_int8_t *)pBitMap->devPrivate.ptr,
+				    pBitMap->devKind,
+				    pBox->x1, pBox->y1,
+				    pBox->x2, pBox->y2,
+				    pBox->x1 - xOrg + pBitMap->drawable.x,
+				    pBox->y1 - yOrg + pBitMap->drawable.y,
+				    gcPriv->fgFill);
 		} else {
 			for (; pBox < pMaxBox; pBox++)
-				pxSqueege(sp, pBitMap, pDrawable, &pxp,
-				    pBox->x1, pBox->y1, pBox->x2, pBox->y2,
-				    pBox->x1 - xOrg, pBox->y1 - yOrg);
+				pxSqueege(sp, &pxp,
+				    (u_int8_t *)pBitMap->devPrivate.ptr,
+				    pBitMap->devKind,
+				    pBox->x1, pBox->y1,
+				    pBox->x2, pBox->y2,
+				    pBox->x1 - xOrg + pBitMap->drawable.x,
+				    pBox->y1 - yOrg + pBitMap->drawable.y,
+				    gcPriv->fgFill);
 		}
 
 		pxPacketFlush(sp, &pxp);
@@ -100,34 +109,19 @@ pxSolidPP(GCPtr pGC, PixmapPtr pBitMap, DrawablePtr pDrawable, int dx, int dy,
 }
 
 void
-pxSqueege(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
-	  pxPacketPtr pxp, int fx1, int fy1, int fx2, int fy2,
-	  int sx, int sy)
+pxSqueege(pxScreenPrivPtr sp, pxPacketPtr pxp, u_int8_t *bits, int stride,
+	  int fx1, int fy1, int fx2, int fy2,
+	  int sx, int sy, int fgFill)
 {
-	int stride, xrot, x1, x2, y, th, rh, psy, lw, tw, stampw, stamphm, xa;
-	u_int16_t *base, *p, *pbs;
-	u_int32_t *pb;
+	int xrot, x1, x2, y, th, rh, psy, lw, tw, stampw, stamphm, xa, latch;
+	u_int16_t *pbs, *p, *base;
+	u_int32_t *pb, tbuf[8];
 
 	PX_TRACE("pxSqueege");
 
 	stampw = sp->stampw;
 	stamphm = sp->stamphm;
-
-	sx += pix->drawable.x;
-	sy += pix->drawable.y;
-
-#ifdef PX_DEBUG
-	if (sx < 0 || sy < 0)
-		FatalError("pxSqueege: bad co-ords (sx/sy)\n");
-	if (sx + (fx2 - fx1) > pix->drawable.width)
-		FatalError("pxSqueege: bad co-ords (width)\n");
-	if (sy + (fy2 - fy1) > pix->drawable.height)
-		FatalError("pxSqueege: bad co-ords (height)\n");
-#endif
-
-	stride = pix->devKind;
-	base = (u_int16_t *)((u_int8_t *)pix->devPrivate.ptr +
-	    ((sx >> 3) & ~1) + (sy * stride));
+	base = (u_int16_t *)(bits + ((sx >> 3) & ~1) + (sy * stride));
 
 	for (xrot = sx & 15; fx1 < fx2; xrot = 0) {
 		tw = min(16 - xrot, fx2 - fx1);
@@ -150,47 +144,46 @@ pxSqueege(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 			pb[9] = (x1 << 19) | psy;
 			pb[10] = (x2 << 19) | psy;
 			pb[11] = lw;
+			pb[12] = fgFill;
 
 			y += th;
 			rh -= th;
 
-			for (pbs = (u_int16_t *)pb; th-- != 0; pbs++) {
+			for (pbs = (u_int16_t *)tbuf; th-- != 0; pbs++) {
 				*pbs = *p;
 				p = (u_int16_t *)((u_int8_t *)p + stride);
 			}
+
+			/*
+			 * Avoid non-32-bit writes across the TURBOchannel
+			 * bus.  They're slow, and cause corruption on mips.
+			 */
+			pb[0] = tbuf[0];
+			pb[1] = tbuf[1];
+			pb[2] = tbuf[2];
+			pb[3] = tbuf[3];
+			pb[4] = tbuf[4];
+			pb[5] = tbuf[5];
+			pb[6] = tbuf[6];
+			pb[7] = tbuf[7];
 		}
 	}
 }
 
 void
-pxSqueege16(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
-	    pxPacketPtr pxp, int fx1, int fy1, int fx2, int fy2,
-	    int sx, int sy)
+pxSqueege16(pxScreenPrivPtr sp, pxPacketPtr pxp, u_int8_t *bits, int stride,
+	  int fx1, int fy1, int fx2, int fy2,
+	  int sx, int sy, int fgFill)
 {
-	int stride, xrot, rh, psy, lw, tw, stampw, stamphm, ya;
+	int xrot, rh, psy, lw, tw, stampw, stamphm, ya;
 	u_int16_t *p, *pbs, *pbsmax, *base;
-	u_int32_t *pb;
+	u_int32_t *pb, tbuf[8];
 
 	PX_TRACE("pxSqueege16");
 
 	stampw = sp->stampw;
 	stamphm = sp->stamphm;
-
-	sx += pix->drawable.x;
-	sy += pix->drawable.y;
-
-#ifdef PX_DEBUG
-	if (sx < 0 || sy < 0)
-		FatalError("pxSqueege16: bad co-ords (sx/sy)\n");
-	if (sx + (fx2 - fx1) > pix->drawable.width)
-		FatalError("pxSqueege16: bad co-ords (width)\n");
-	if (sy + (fy2 - fy1) > pix->drawable.height)
-		FatalError("pxSqueege16: bad co-ords (height)\n");
-#endif
-
-	stride = pix->devKind;
-	base = (u_int16_t *)((u_int8_t *)pix->devPrivate.ptr +
-	    ((sx >> 3) & ~1) + (sy * stride));
+	base = (u_int16_t *)(bits + ((sx >> 3) & ~1) + (sy * stride));
 
 	rh = fy2 - fy1;
 	lw = (rh << 2) - 1;
@@ -199,7 +192,7 @@ pxSqueege16(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 
 	for (xrot = sx & 15; fx1 < fx2; xrot = 0, fx1 += tw) {
 		pb = pxPacketAddPrim(sp, pxp);
-		pbs = (u_int16_t *)pb;
+		pbs = (u_int16_t *)tbuf;
 		pbsmax = pbs + rh;
 
 		for (p = base++; pbs < pbsmax; pbs++) {
@@ -207,10 +200,24 @@ pxSqueege16(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 			p = (u_int16_t *)((u_int8_t *)p + stride);
 		}
 
+		/*
+		 * Avoid non-32-bit writes across the TURBOchannel bus. 
+		 * They're slow, and cause corruption on mips.
+		 */
+		pb[0] = tbuf[0];
+		pb[1] = tbuf[1];
+		pb[2] = tbuf[2];
+		pb[3] = tbuf[3];
+		pb[4] = tbuf[4];
+		pb[5] = tbuf[5];
+		pb[6] = tbuf[6];
+		pb[7] = tbuf[7];
+
 		tw = min(16 - xrot, fx2 - fx1);
 		pb[8] = ya | (XMASKADDR(stampw, fx1, xrot) << 16);
 		pb[9] = (fx1 << 19) | psy;
 		pb[10] = ((fx1 + tw) << 19) | psy;
 		pb[11] = lw;
+		pb[12] = fgFill;
 	}
 }

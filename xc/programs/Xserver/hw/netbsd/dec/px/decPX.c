@@ -1,7 +1,7 @@
-/*	$NetBSD: decPX.c,v 1.4 2002/02/25 11:39:39 ad Exp $	*/
+/*	$NetBSD: decPX.c,v 1.5 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
