@@ -87,7 +87,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "alpha.h"
 #include "cfb.h"
-#include "machine/tgareg.h"
+#include <dev/pci/tgareg.h>
 
 /* XXX */
 #include <stdio.h>
