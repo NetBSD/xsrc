@@ -85,7 +85,7 @@ FSQueryXBitmaps8(svr, fid, format, range_type, str, str_len, offsets, glyphdata)
      (SIZEOF(fsQueryXBitmaps8Reply) - SIZEOF(fsGenericReply)) >> 2, fsFalse))
 	return FSBadAlloc;
 
-    if (reply.num_chars > SIZE_T_MAX / sizeof(FSOffset)) 
+    if (reply.num_chars > SIZE_MAX / sizeof(FSOffset)) 
 	return FSBadAlloc;
 
     offs = (FSOffset *) FSmalloc(sizeof(FSOffset) * reply.num_chars);
@@ -95,7 +95,7 @@ FSQueryXBitmaps8(svr, fid, format, range_type, str, str_len, offsets, glyphdata)
     left = (reply.length << 2) - SIZEOF(fsQueryXBitmaps8Reply)
 	- (SIZEOF(fsOffset32) * reply.num_chars);
     /* XXX This thest is incomplete */
-    if (reply.length > (SIZE_T_MAX >> 2)) {
+    if (reply.length > (SIZE_MAX >> 2)) {
 	FSfree((char *) offs);
 	return FSBadAlloc;
     }
@@ -149,7 +149,7 @@ FSQueryXBitmaps16(svr, fid, format, range_type, str, str_len,
 	int i;
 	fsChar2b_version1 *swapped_str;
 
-	if (str_len > SIZE_T_MAX/SIZEOF(fsChar2b_version1)) 
+	if (str_len > SIZE_MAX/SIZEOF(fsChar2b_version1)) 
 	    return FSBadAlloc;
 	swapped_str = (fsChar2b_version1 *)
 	    FSmalloc(SIZEOF(fsChar2b_version1) * str_len);
@@ -170,7 +170,7 @@ FSQueryXBitmaps16(svr, fid, format, range_type, str, str_len,
 		  fsFalse))
 	return FSBadAlloc;
 
-    if(reply.num_chars > SIZE_T_MAX/sizeof(FSOffset))
+    if(reply.num_chars > SIZE_MAX/sizeof(FSOffset))
        return FSBadAlloc;
     offs = (FSOffset *) FSmalloc(sizeof(FSOffset) * reply.num_chars);
     *offsets = offs;
@@ -179,7 +179,7 @@ FSQueryXBitmaps16(svr, fid, format, range_type, str, str_len,
     left = (reply.length << 2) - SIZEOF(fsQueryXBitmaps16Reply)
 	- (SIZEOF(fsOffset32) * reply.num_chars);
     /* XXX - this test is incomplete */
-    if (reply.length > (SIZE_T_MAX>>2)) {
+    if (reply.length > (SIZE_MAX>>2)) {
 	FSfree((char *) offs);
 	return FSBadAlloc;
     }

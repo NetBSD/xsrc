@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6 2001/12/14 19:53:33 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6.4.2 2003/09/01 21:05:36 herrb Exp $ */
 
 /*
 
@@ -153,7 +153,7 @@ FSOpenServer(server)
     _FSRead(svr, (char *) &prefix, (long) SIZEOF(fsConnSetup));
 
     setuplength = prefix.alternate_len << 2;
-    if (setuplength > (SIZE_T_MAX>>2)
+    if (setuplength > (SIZE_MAX>>2)
 	|| (alt_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
@@ -163,7 +163,7 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
-    if (prefix.num_alternates > SIZE_T_MAX / sizeof(AlternateServer)) {
+    if (prefix.num_alternates > SIZE_MAX / sizeof(AlternateServer)) {
 	errno = ENOMEM;
 	return (FSServer *) 0;
     }
@@ -198,7 +198,7 @@ FSOpenServer(server)
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if (prefix.auth_len > (SIZE_T_MAX>>2) 
+    if (prefix.auth_len > (SIZE_MAX>>2) 
 	|| (auth_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
