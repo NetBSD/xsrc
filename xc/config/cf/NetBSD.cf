@@ -384,16 +384,6 @@ install.man:: 								@@\
 #define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
 
-
-/*
- * XXX We have to work around a strange dynamic linker bug.
- * XXX Note this ends up causing a pretty large dependency graph!
- */
-#if defined(m68kArchitecture)
-# define SharedXtReqs	$(LDPRELIB) $(SMLIB) $(ICELIB)
-# define SharedXmuReqs	$(LDPRELIB) $(EXTENSIONLIB) $(XTOOLONLYLIB) $(XONLYLIB)
-#endif
-
 /*
  * Definition for compiling on MIPS machines
  */
