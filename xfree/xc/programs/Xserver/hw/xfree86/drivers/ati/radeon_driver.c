@@ -139,7 +139,10 @@ typedef enum {
     OPTION_VIDEO_KEY,
     OPTION_DISP_PRIORITY,
     OPTION_PANEL_SIZE,
-    OPTION_MIN_DOTCLOCK
+    OPTION_MIN_DOTCLOCK,
+#ifdef __powerpc__
+    OPTION_IBOOKHACKS
+#endif
 } RADEONOpts;
 
 const OptionInfoRec RADEONOptions[] = {
@@ -175,6 +178,9 @@ const OptionInfoRec RADEONOptions[] = {
     { OPTION_DISP_PRIORITY,  "DisplayPriority",  OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_PANEL_SIZE,     "PanelSize",        OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_MIN_DOTCLOCK,   "ForceMinDotClock", OPTV_FREQ,    {0}, FALSE },
+#ifdef __powerpc__
+    { OPTION_IBOOKHACKS,     "iBookHacks",       OPTV_BOOLEAN, {0}, FALSE },
+#endif
     { -1,                    NULL,               OPTV_NONE,    {0}, FALSE }
 };
 
@@ -1808,6 +1814,11 @@ static Bool RADEONGetPLLParameters(ScrnInfoPtr pScrn)
 		    pll->reference_div  = 12;
 		    pll->xclk           = 23000;
 		    break;
+		case PCI_CHIP_RADEON_LW: /* Guess based on iBook OpenFirmware */
+		    pll->reference_freq = 2700;
+		    pll->reference_div  = 12;
+		    pll->xclk           = 36000;
+		    break;
 		default:
 		    pll->reference_freq = 2700;
 		    pll->reference_div  = 67;
@@ -2144,7 +2155,6 @@ static Bool RADEONPreInitConfig(ScrnInfoPtr pScrn)
 	info->ChipFamily = CHIP_FAMILY_RADEON;
 	info->HasCRTC2 = FALSE;
     }
-
 				/* Framebuffer */
 
     from               = X_PROBED;
@@ -5028,6 +5038,14 @@ static void RADEONRestorePLLRegisters(ScrnInfoPtr pScrn,
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
+    /* 
+     * Never do it on Apple iBook to avoid a blank screen.
+     */
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
+        return;
+#endif
+
     if (info->IsMobility) {
         /* A temporal workaround for the occational blanking on certain laptop panels.
            This appears to related to the PLL divider registers (fail to lock?).
@@ -6456,10 +6474,11 @@ static void RADEONInitFPRegisters(ScrnInfoPtr pScrn, RADEONSavePtr orig,
 }
 
 /* Define PLL registers for requested video mode */
-static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONPLLPtr pll,
+static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONInfoPtr info,
 				   double dot_clock)
 {
     unsigned long  freq = dot_clock * 100;
+    RADEONPLLPtr pll = &info->pll;
 
     struct {
 	int divider;
@@ -6509,7 +6528,17 @@ static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONPLLPtr pll,
 	       save->post_div));
 
     save->ppll_ref_div   = pll->reference_div;
-    save->ppll_div_3     = (save->feedback_div | (post_div->bitvalue << 16));
+
+    /* 
+     * on iBooks the LCD pannel needs tweaked PLL timings 
+     */
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
+        save->ppll_div_3 = 0x000600ad;
+    else
+#endif
+        save->ppll_div_3 = (save->feedback_div | (post_div->bitvalue << 16));
+
     save->htotal_cntl    = 0;
 }
 
@@ -6654,7 +6683,7 @@ static Bool RADEONInit(ScrnInfoPtr pScrn, DisplayModePtr mode,
                 save->htotal_cntl  = 0;
             }
             else
-		RADEONInitPLLRegisters(save, &info->pll, dot_clock);
+		RADEONInitPLLRegisters(save, info, dot_clock);
 	} else {
 	    save->ppll_ref_div = info->SavedReg.ppll_ref_div;
 	    save->ppll_div_3   = info->SavedReg.ppll_div_3;
