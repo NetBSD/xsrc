@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.32 2003/05/27 22:26:59 tsi Exp $ */
+/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.33 2004/04/03 22:26:26 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -895,7 +895,7 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
  * sends the output to xconsole.
  */
 
-#ifdef SCO
+#ifdef __SCO__
 #define	OSM_DEVICE	"/dev/error"
 #else
 #ifdef USL

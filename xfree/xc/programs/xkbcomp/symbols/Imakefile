@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:42 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.62 2003/09/08 14:25:32 eich Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.65 2005/02/25 18:25:36 dawes Exp $
 
 #define IHaveSubdirs
 
@@ -15,13 +15,13 @@ XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.62 2003/09/08 14:25:32
 		 czsk cz cz_qwerty \
 		 de de_CH dev dk dvorak \
 		 ee el en_US es \
-		 fi fr fr_CH \
+		 fi fo fr fr_CH \
 		 gb ge_la ge_ru group guj gur \
 		 hr hr_US hu hu_US hu_qwerty \
 		 ie il il_phonetic iso9995-3 inet ir is it iu \
 		 jp \
-		 kan keypad \
-		 la level3 lo lock lt lt_std lv \
+		 kan keypad ky \
+		 la level3 lo lock lt lt_std lv lat \
 		 ml mk mm mt mt_us \
 		 nl no \
 		 ogham ori \

@@ -1,9 +1,9 @@
 /*
  * $Xorg: constype.c,v 1.3 2000/08/17 19:48:29 cpqbld Exp $
- * 
+ *
  * consoletype - utility to print out string identifying Sun console type
  *
- * Copyright 1988 SRI 
+ * Copyright 1988 SRI
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
  *
  * Author:  Doug Moran, SRI
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.9 2003/11/21 05:17:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.10 2004/03/08 15:37:04 tsi Exp $ */
 
 /*
 SUN-SPOTS DIGEST         Thursday, 17 March 1988       Volume 6 : Issue 31
@@ -46,13 +46,35 @@ style.
 #include <strings.h>
 #endif
 #include <unistd.h>
+#include <errno.h>
 
-int wu_fbid(char *devname, char **fbname, int *fbtype);
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#if defined(SVR4) || defined(__bsdi__)
+# include <fcntl.h>
+# include <sys/fbio.h>
+# ifdef sun
+/* VIS_GETIDENTIFIER ioctl added in Solaris 2.3 */
+/* Don't actually #include the header, so this can be built on older SunOS's */
+/* #include <sys/visual_io.h> */
+#  define VIS_GETIDENTIFIER	(('V' << 8) | 0)
+#  define VIS_MAXNAMELEN	128
+struct vis_identifier {
+	char name[VIS_MAXNAMELEN];
+};
+# endif
+#else
+# ifndef CSRG_BASED
+#  include <sun/fbio.h>
+# else
+#  include <machine/fbio.h>
+# endif
+#endif
+
+static int wu_fbid(char *devname, char **fbname, int *fbtype);
 
 int
-main (argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     int fbtype = -1;
     char *fbname, *dev;
@@ -62,14 +84,15 @@ main (argc, argv)
     if (argc > 1 && argv[1][0] == '/') {
 	dev = argv[1];
 	argc--; argv++;
-    } else
+    } else {
 	dev = "/dev/fb";
+    }
     error = wu_fbid(dev, &fbname, &fbtype );
-    if (argc > 1 && strncmp (argv[1], "-num", strlen(argv[1])) == 0)
+    if (argc > 1 && strncmp(argv[1], "-num", strlen(argv[1])) == 0)
 	print_num = 1;
 
     printf ("%s", fbname ? fbname : "tty");
-    if (print_num) {
+    if (print_num && (fbtype >= 0)) {
 	printf (" %d", fbtype);
     }
     putchar ('\n');
@@ -96,130 +119,78 @@ main (argc, argv)
 #endif
 #endif
 
-/* Sun doesn't see fit to update <sys/fbio.h> to reflect the addition
- * of the TCX 
- */
-#define XFBTYPE_TCX		21
-#define XFBTYPE_LASTPLUSONE	22
-
-/* decoding as of Release 3.4 : fbio.h 1.3 87/01/09 SMI */
-	/* the convention for entries in this table is to translate the
-	 * macros for frame buffer codes (in <sun/fbio.h>) to short names
-	 * thus:
-	 *	FBTYPE_SUNxBW		becomes bwx
-	 *	FBTYPE_SUNxCOLOR	becomes cgx
-	 *	FBTYPE_SUNxGP		becomes gpx
-	 *	FBTYPE_NOTSUN[1-9]	becomes ns[A-J]
-	 */
 static char *decode_fb[] = {
-	"bw1", "cg1",
-	"bw2", "cg2",
-	"gp2",
-	"bw3", "cg3",
-	"cg8", "cg4",
-	"nsA", "nsB", "nsC", 
-#ifdef FBTYPE_SUNFAST_COLOR
-	"gx/cg6", 
-#endif
-#ifdef FBTYPE_SUNROP_COLOR
-	"rop", 
-#endif
-#ifdef FBTYPE_SUNFB_VIDEO
-	"vid", 
-#endif
-#ifdef FBTYPE_SUNGIFB
-	"gifb", 
-#endif
-#ifdef FBTYPE_SUNGPLAS
-	"plas", 
-#endif
-#ifdef FBTYPE_SUNGP3
-	"gp3/cg12", 
-#endif
-#ifdef FBTYPE_SUNGT
-	"gt", 
-#endif
-#ifdef FBTYPE_SUNLEO
-	"leo/zx", 
-#endif
-#ifdef FBTYPE_MDICOLOR
-	"mdi/cg14",
-#endif
-	};
+    "bw1",	/* FBTYPE_SUN1BW */
+    "cg1",	/* FBTYPE_SUN1COLOR */
+    "bw2",	/* FBTYPE_SUN2BW */
+    "cg2",	/* FBTYPE_SUN2COLOR */
+    "gp2",	/* FBTYPE_SUN2GP */
+    "bw3",	/* FBTYPE_SUN5COLOR */
+    "cg3",	/* FBTYPE_SUN3COLOR */
+    "cg8",	/* FBTYPE_MEMCOLOR */
+    "cg4",	/* FBTYPE_SUN4COLOR */
+    "nsA",	/* FBTYPE_NOTSUN1 */
+    "nsB",	/* FBTYPE_NOTSUN2 */
+    "nsC",	/* FBTYPE_NOTSUN3 */
+    "cg6",	/* FBTYPE_SUNFAST_COLOR */
+    "rop",	/* FBTYPE_SUNROP_COLOR */
+    "vid",	/* FBTYPE_SUNFB_VIDEO */
+    "gifb",	/* FBTYPE_SUNGIFB */
+    "plas",	/* FBTYPE_SUNGPLAS */
+    "cg12",	/* FBTYPE_SUNGP3 */
+    "gt",	/* FBTYPE_SUNGT */
+    "leo",	/* FBTYPE_SUNLEO */
+    "cg14",	/* FBTYPE_MDICOLOR */
+    "tcx",	/* FBTYPE_TCXCOLOR */		/* not in fbio.h */
+    "creator",	/* FBTYPE_CREATOR */		/* not in fbio.h */
+    "iga",	/* FBTYPE_PCI_IGA1682 */	/* not in fbio.h */
+    "p9",	/* FBTYPE_P9100COLOR */		/* not in fbio.h */
+    NULL
+};
 
-int wu_fbid(devname, fbname, fbtype)
-	char* devname;
-	char** fbname;
-	int* fbtype;
+#define NUM_FBS ((int)(sizeof(decode_fb) / sizeof(decode_fb[0])))
+
+static int wu_fbid(char* devname, char** fbname, int* fbtype)
 {
-	struct fbgattr fbattr;
-	int fd, ioctl_ret;
-#ifdef VIS_GETIDENTIFIER
-	int vistype;
-	char *visname = NULL;
-	struct vis_identifier fbid;
+    struct fbgattr fbattr;
+    int fd;
+#ifdef sun
+    struct vis_identifier fbid;
 #endif
 
-	if ( (fd = open(devname, O_RDWR, 0)) == -1 ) {
-	    *fbname = "unable to open fb";
-	    return 2;
-	}
+    if ( (fd = open(devname, O_RDWR, 0)) == -1 ) {
+	*fbname = "unable to open fb";
+	*fbtype = -1;
+	return 2;
+    }
 
-#ifdef VIS_GETIDENTIFIER
-	if ((vistype = ioctl(fd, VIS_GETIDENTIFIER, &fbid)) >= 0) {
-	    visname = fbid.name;
-	}
-#endif
-
-	/* FBIOGATTR fails for early frame buffer types */
-	if ((ioctl_ret = ioctl(fd,FBIOGATTR,&fbattr))<0) /*success=>0(false)*/
-	    ioctl_ret = ioctl(fd, FBIOGTYPE, &fbattr.fbtype);
+#ifdef sun
+    if (ioctl(fd, VIS_GETIDENTIFIER, &fbid) >= 0) {
+	*fbname = fbid.name;
+	*fbtype = -1;
 	close(fd);
-	if ( ioctl_ret == -1 ) {
-#ifdef VIS_GETIDENTIFIER
-	    if (visname != NULL) {
-		*fbname = visname;
-		*fbtype = vistype;
-		return 0;
-	    } 
-#endif
-	    *fbname = "ioctl on fb failed";
-	    return 2;
-	}
-	*fbtype = fbattr.fbtype.fb_type;
-	/* The binary is obsolete and needs to be re-compiled:
-	 * the ioctl returned a value beyond what was possible
-	 * when the program was compiled */
-	if (fbattr.fbtype.fb_type>=FBTYPE_LASTPLUSONE) {
-	    if (fbattr.fbtype.fb_type == XFBTYPE_TCX) {
-		*fbname = "tcx";
-		return 0;
-	    } else {
-#ifdef VIS_GETIDENTIFIER
-		if (visname != NULL) {
-		    *fbname = visname;
-		    *fbtype = vistype;
-		    return 0;
-		} 
-#endif
-		*fbname = "unk";
-		return 1;
-	    }
-	}
-	/* The source is obsolete.  The table "decode_fb" does not
-	 * have entries for some of the values returned by the ioctl.
-	 * Compare <sun/fbio.h> to the entries in "decode_fb" */
-	if ( decode_fb[fbattr.fbtype.fb_type] == NULL ) {
-#ifdef VIS_GETIDENTIFIER
-	    if (visname != NULL) {
-		*fbname = visname;
-		*fbtype = vistype;
-		return 0;
-	    } 
-#endif
-            *fbname = "unk";
-	    return 1;
-	}
-	*fbname = decode_fb[fbattr.fbtype.fb_type];
 	return 0;
+    }
+#endif
+
+    /* FBIOGATTR fails for early frame buffer types */
+    if ((*fbtype = ioctl(fd, FBIOGATTR, &fbattr)) < 0)
+	*fbtype = ioctl(fd, FBIOGTYPE, &fbattr.fbtype);
+
+    close(fd);
+
+    if (*fbtype < 0) {
+	*fbname = "ioctl on fb failed";
+	*fbtype = errno;
+	return 2;
+    }
+
+    *fbtype = fbattr.fbtype.fb_type;
+    if ((*fbtype >= 0) && (*fbtype < NUM_FBS)) {
+	*fbname = decode_fb[*fbtype];
+	return 0;
+    }
+
+    *fbname = "unknown";
+    return 1;
 }

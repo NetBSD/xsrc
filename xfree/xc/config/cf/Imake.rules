@@ -1,11 +1,52 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
-XCOMM rules:  $Xorg: Imake.rules,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
-XCOMM
-XCOMM
-XCOMM
-XCOMM
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.129 2004/02/16 18:14:33 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.142 2005/01/23 17:05:23 tsi Exp $
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -1157,7 +1198,7 @@ ServerTargetWithFlags(server,subdirs,objects,libs,syslibs,$(_NOOP_))
 
 #ifndef InstallNamedTarget
 #define InstallNamedTarget(step,srcname,flags,dest,dstname)		@@\
-step:: srcname								@@\
+step::									@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	InstallNamedInline(srcname,flags,dest,dstname)
 #endif /* InstallNamedTarget */
@@ -1170,7 +1211,7 @@ step:: srcname								@@\
  */
 #ifndef InstallNamedTargetNoClobber
 #define InstallNamedTargetNoClobber(step,srcname,flags,dest,dstname)	@@\
-step:: srcname								@@\
+step::									@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	@if [ -f $(DESTDIR)dest/dstname ]; then \			@@\
 	 echo "Not overwriting existing" $(DESTDIR)dest/dstname; \	@@\
@@ -1192,7 +1233,7 @@ InstallNamedTarget(step,file,flags,dest,file)
  */
 #ifndef InstallLibrary
 #define	InstallLibrary(libname,dest)					@@\
-install:: LibraryTargetName(libname)					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) LibraryTargetName(libname) $(DESTDIR)dest @@\
 	RanLibrary($(RANLIBINSTFLAGS) $(DESTDIR)dest/LibraryTargetName(libname))
@@ -1237,7 +1278,7 @@ install:: LibraryTargetName(libname)					@@\
  */
 #ifndef MergeIntoInstalledLibrary
 #define MergeIntoInstalledLibrary(tolib,fromlib)			@@\
-install::  fromlib							@@\
+install::								@@\
 	$(SCRIPTSRC)/mergelib $(DESTDIR)tolib fromlib
 #endif /* MergeIntoInstalledLibrary */
 
@@ -1309,7 +1350,7 @@ BuildInstallHtmlManPage(file,dest,suffix)				@@\
 									@@\
 CppManTarget(file, $(EXTRAMANDEFS))					@@\
 									@@\
-install.man:: file.$(MANNEWSUFFIX)					@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)destdir)					@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
 		$(DESTDIR)destdir/dest.suffix
@@ -1341,7 +1382,7 @@ BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
 									@@\
 CppManTarget(file, $(EXTRAMANDEFS))					@@\
 									@@\
-install.man:: file.$(MANNEWSUFFIX)					@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)destdir)					@@\
 	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*			@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
@@ -1355,7 +1396,7 @@ BuildInstallHtmlManPage(file,dest,suffix)				@@\
 									@@\
 CppManTarget(file, $(EXTRAMANDEFS))					@@\
 									@@\
-install.man:: file.$(MANNEWSUFFIX)					@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)destdir)					@@\
 	$(RM) $(DESTDIR)destdir/dest.suffix*				@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
@@ -1365,7 +1406,7 @@ install.man:: file.$(MANNEWSUFFIX)					@@\
 
 #ifndef InstallMultipleMan
 #define InstallMultipleMan(list,dest)					@@\
-install.man:: list							@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	@case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
 	for i in list; do \						@@\
@@ -1468,7 +1509,7 @@ dest.suffix.html: file.$(MANNEWSUFFIX) RmanCmdDependency		@@\
 	RunProgram(RMAN,$(RMANOPTIONS) < file.$(MANNEWSUFFIX) \		@@\
 	  > dest.suffix-html) && $(MV) dest.suffix-html $@		@@\
 									@@\
-install.man:: dest.suffix.html						@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)$(DOCHTMLDIR))				@@\
 	@(SUF=`expr suffix \: '\(.\)'`; \				@@\
 	 set -x; \							@@\
@@ -1484,7 +1525,7 @@ clean::									@@\
 #ifndef InstallHtmlManPageAliases
 #if BuildHtmlManPages
 #define InstallHtmlManPageAliases(file,aliases,suffix)			@@\
-install.man:: file.suffix.html						@@\
+install.man::								@@\
 	@SUF=`expr suffix \: '\(.\)'`; \				@@\
 	for i in aliases; do (set -x; \					@@\
 	  RemoveFile($(DESTDIR)$(DOCHTMLDIR)/$$i.$$SUF.html); \		@@\
@@ -1575,7 +1616,7 @@ InstallNamedTargetNoClobber(install,file,$(INSTDATFLAGS),dest,file)
  */
 #ifndef InstallNonExec
 #define	InstallNonExec(file,dest)					@@\
-install:: file								@@\
+install::								@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) file $(DESTDIR)dest
 #endif /* InstallNonExec */
 
@@ -2186,6 +2227,16 @@ LintLibReferences(varname,libname,libsource)
 	$(CC) -S $(CFLAGS) options $*.c
 #endif
 
+/*
+ * ObjectAsm - assemble fragment for a normal object file
+ */
+#ifndef ObjectAsm
+#define ObjectAsm(options) RemoveFiles($@ $*.i)				@@\
+	$(CPP) CPPAsmOptions AsmDefines $(DEFINES) $(INCLUDES) options $*.S | \	@@\
+		grep -v '^\#' > $*.i					@@\
+	$(AS) $(ASMOPTS) -o $*.o $*.i					@@\
+	RemoveFile($*.i)
+#endif
 
 /*
  * CompileCplusplusToAsm - compile C++ file to assembler
@@ -2218,6 +2269,10 @@ LintLibReferences(varname,libname,libsource)
 # endif
 #endif
 
+#ifndef NormalLibObjAsm
+#define NormalLibObjAsm(options) ObjectAsm(options)
+#endif
+
 #ifndef NormalLibObjCplusplusCompile
 #define NormalLibObjCplusplusCompile(options) ObjectCplusplusCompile(options)
 #endif
@@ -2227,6 +2282,10 @@ LintLibReferences(varname,libname,libsource)
  */
 #ifndef NormalSharedLibObjCompile
 #define NormalSharedLibObjCompile(options) NormalLibObjCompile(options $(SHLIBDEF) $(SHAREDCODEDEF) $(PICFLAGS))
+#endif
+
+#ifndef NormalSharedLibObjAsm
+#define NormalSharedLibObjAsm(options) NormalLibObjAsm(options)
 #endif
 
 #ifndef NormalSharedLibObjCplusplusCompile
@@ -2249,6 +2308,17 @@ LintLibReferences(varname,libname,libsource)
 	options $*.c							@@\
 	$(MV) $@ dir/$@
 #endif
+#endif
+
+/*
+ * LibObjAsm - assemble fragment for unshared/profiled/debugged objects
+ */
+#ifndef LibObjAsm
+#define LibObjAsm(dir,options,asmopt) RemoveFiles($@ dir/$@ $*.i)	@@\
+	$(CPP) CPPAsmOptions AsmDefines $(DEFINES) $(INCLUDES) options $*.S | \	@@\
+		grep -v '^\#' > $*.i					@@\
+	$(AS) asmopt -o dir/$@ $*.i					@@\
+	RemoveFile($*.i)
 #endif
 
 #ifndef LibObjCplusplusCompile
@@ -2293,6 +2363,12 @@ LintLibReferences(varname,libname,libsource)
  */
 #ifndef UnsharedLibObjCompile
 #define UnsharedLibObjCompile(options) LibObjCompile(unshared,$(CDEBUGFLAGS) $(CLIBDEBUGFLAGS) options)
+#endif
+
+#if 0
+#ifndef UnsharedLibObjAsm
+#define UnsharedLibObjAsm(options) LibObjAsm(unshared,$(CDEBUGFLAGS) $(CLIBDEBUGFLAGS) options,NullParameter)
+#endif
 #endif
 
 #ifndef UnsharedLibObjCplusplusCompile
@@ -2382,24 +2458,21 @@ clean::									@@\
 
 #ifndef CPPOnlyAsm
 #define CPPOnlyAsm(basename,options) RemoveFile(basename.i)		@@\
-	$(CPP) AsmDefines $(DEFINES) $(INCLUDES) options basename.S | \	@@\
+	$(CPP) CPPAsmOptions AsmDefines $(DEFINES) $(INCLUDES) options basename.S | \	@@\
 		grep -v '^\#' > basename.i
 #endif
 
 #ifndef AssembleObject
 #define AssembleObject(flags) CPPOnlyAsm($*,flags)			@@\
 	RemoveFile($*.o)						@@\
-	$(AS) -o $*.o $*.i						@@\
+	$(AS) $(ASMOPTS) -o $*.o $*.i					@@\
 	RemoveFile($*.i)
 #endif
 
 #ifndef NormalAsmObjectRule
 #define NormalAsmObjectRule()						@@\
 .S.o:									@@\
-	AssembleObject($(_NOOP_))					@@\
-									@@\
-.S.i:									@@\
-	CPPOnlyAsm($*,$(_NOOP_))
+	AssembleObject($(_NOOP_))
 #endif
 
 #ifndef ObjectFromSpecialAsmSource
@@ -2448,19 +2521,15 @@ depend:: file.c								@@\
 									@@\
 clean::									@@\
 	RemoveFiles(lex.yy.c file.c)
-#endif
+#endif /* LexFilePrefix */
 
 #ifndef LexFileExplicit
-#if HasClearmake		/* provide a place to hang ClearmakeOSName */
 #define LexFileExplicit(file)						@@\
 file.c: file.l								@@\
 	ClearmakeOSName \
 	$(LEX) $(LFLAGS) file.l						@@\
 	$(MV) lex.yy.c file.c
-#else
-#define LexFileExplicit(file) /* the default rule is fine */
-#endif
-#endif
+#endif /* LexFileExplicit */
 
 #ifndef LexFile
 #define LexFile(file)							@@\
@@ -2515,7 +2584,7 @@ file.h file.c: file.y							@@\
 clean::									@@\
 	RemoveFiles(y.tab.c y.tab.h file.h file.c)
 #endif
-#endif /* YaccFile */
+#endif /* YaccFilePrefix */
 
 #ifndef YaccFile
 #if HasGnuMake
@@ -2567,26 +2636,34 @@ clean::									@@\
 #define MakeLibrary(libname,objlist) $(AR) libname objlist
 #endif
 
-#ifndef LinkBuildLibrary
+#ifndef LinkBuildLibrarySubdir
 #ifdef UseInstalled
-#define LinkBuildLibrary(lib) $(_NULLCMD_)
+#define LinkBuildLibrarySubdir(lib,down,up) $(_NULLCMD_)
 #else
-#define LinkBuildLibrary(lib) MakeDir($(BUILDLIBDIR))			@@\
+#define LinkBuildLibrarySubdir(lib,down,up) MakeDir($(BUILDLIBDIR)/down) @@\
 	RemoveFile($(BUILDLIBDIR)/lib)					@@\
-	cd $(BUILDLIBDIR) && $(LN) $(BUILDLIBTOP)/$(CURRENT_DIR)/lib .
+	cd $(BUILDLIBDIR)/down && $(LN) $(BUILDLIBTOP)/up/$(CURRENT_DIR)/lib .
 #endif
+#endif /* LinkBuildLibrarySubdir */
+
+#ifndef LinkBuildLibrary
+#define LinkBuildLibrary(lib) LinkBuildLibrarySubdir(lib,.,.)
 #endif /* LinkBuildLibrary */
 
-#ifndef LinkBuildLibraryMaybe
+#ifndef LinkBuildLibrarySubdirMaybe
 #ifdef UseInstalled
-#define LinkBuildLibraryMaybe(lib,doit) $(_NULLCMD_)
+#define LinkBuildLibrarySubdirMaybe(lib,down,up,doit) $(_NULLCMD_)
 #else
-#define LinkBuildLibraryMaybe(lib,doit) MakeDir($(BUILDLIBDIR))		@@\
+#define LinkBuildLibrarySubdirMaybe(lib,down,up,doit) MakeDir($(BUILDLIBDIR)/down) @@\
 	@if doit; then (set -x; \					@@\
 	  RemoveFile($(BUILDLIBDIR)/lib); \				@@\
-	  cd $(BUILDLIBDIR) && $(LN) $(BUILDLIBTOP)/$(CURRENT_DIR)/lib .); fi
+	  cd $(BUILDLIBDIR)/down && $(LN) $(BUILDLIBTOP)/up/$(CURRENT_DIR)/lib .); fi
 #endif
 #endif /* LinkBuildLibraryMaybe */
+
+#ifndef LinkBuildLibraryMaybe
+#define LinkBuildLibraryMaybe(lib,doit) LinkBuildLibrarySubdirMaybe(lib,.,.,doit)
+#endif
 
 #ifndef _LinkBuildLibrary /* will get redefined elsewhere */
 #define _LinkBuildLibrary(lib) $(_NULLCMD_)
@@ -3214,7 +3291,7 @@ target::								@@\
 		   imakeprefix=$$newtop/ ;; \				@@\
 		esac; \							@@\
 		RemoveFile($$i/Makefile.bak); \				@@\
-		if [ -f $$i/Makefile ]; then \				@@\
+		if [ -f $$i/Makefile -o -h $$i/Makefile ]; then \	@@\
 			echo "	$(MV) Makefile Makefile.bak"; \		@@\
 			if [ "$$executeit" != "no" ]; then \		@@\
 				$(MV) $$i/Makefile $$i/Makefile.bak; \	@@\
@@ -3335,7 +3412,7 @@ dst::  src deplist							@@\
 									@@\
 clean::									@@\
 	RemoveFiles(dst)
-#endif /* CppFileTarget */
+#endif /* CppRawFileTarget */
 
 /*
  * CppManTarget - preprocess man pages.  OS-specific man sections are replaced.
@@ -3399,15 +3476,14 @@ MutexDirective:	targets
 #endif /* MakeMutex */
 
 /*
- * Rules for dynamic modules.  These are primarily used by XFree86
+ * Rules for dynamic modules.  These are primarily used by XFree86.
  */
 
 #ifndef LinkBuildModule
 #ifdef UseInstalled
 #define LinkBuildModule(module,subdir) $(_NULLCMD_)
 #else
-#define LinkBuildModule(module,subdir)\
-	MakeDir($(BUILDMODULEDIR)/subdir)				@@\
+#define LinkBuildModule(module,subdir) MakeDir($(BUILDMODULEDIR)/subdir) @@\
 	RemoveFile($(BUILDMODULEDIR)/subdir/module)			@@\
 	@(UP="`$(REVPATH) subdir`"; set -x; \				@@\
 	  cd $(BUILDMODULEDIR)/subdir && \				@@\
@@ -3419,8 +3495,7 @@ MutexDirective:	targets
 #ifdef UseInstalled
 #define LinkBuildNamedModule(module,name,subdir) $(_NULLCMD_)
 #else
-#define LinkBuildNamedModule(module,name,subdir)\
-	MakeDir($(BUILDMODULEDIR)/subdir)				@@\
+#define LinkBuildNamedModule(module,name,subdir) MakeDir($(BUILDMODULEDIR)/subdir) @@\
 	RemoveFile($(BUILDMODULEDIR)/subdir/name)			@@\
 	@(UP="`$(REVPATH) subdir`"; set -x; \				@@\
 	  cd $(BUILDMODULEDIR)/subdir && \				@@\
@@ -3440,11 +3515,28 @@ MutexDirective:	targets
  */
 #ifndef ObjectModuleTarget
 #if MakeDllModules && DoLoadableServer
-#define ObjectModuleTarget(module,objects)				@@\
-DynamicModuleTarget(Concat(module,_drv.so), objects)
+#define ObjectModuleTarget(module,objects,subdir)			@@\
+DynamicModuleTarget(Concat(module,_drv.so), objects)			@@\
+	LinkBuildModule($@,subdir)
 #else
-#define ObjectModuleTarget(module,objects)				@@\
-NormalRelocatableTarget(Concat(module,_drv), objects)
+#define ObjectModuleTarget(module,objects,subdir)			@@\
+NormalRelocatableTarget(Concat(module,_drv), objects)			@@\
+	LinkBuildModule($@,subdir)
+#endif
+#endif
+
+/*
+ * NamedObjectModuleTarget - build a module as a single object file
+ */
+#ifndef PlainObjectModuleTarget
+#if MakeDllModules && DoLoadableServer
+#define PlainObjectModuleTarget(module,objects,subdir)			@@\
+DynamicModuleTarget(name.so, objects)					@@\
+	LinkBuildModule($@,subdir)
+#else
+#define PlainObjectModuleTarget(module,objects,subdir)			@@\
+NormalRelocatableTarget(module,objects)					@@\
+	LinkBuildModule($@,subdir)
 #endif
 #endif
 
@@ -3453,12 +3545,14 @@ NormalRelocatableTarget(Concat(module,_drv), objects)
  */
 #ifndef LibraryModuleTarget
 #if MakeDllModules && DoLoadableServer
-#define LibraryModuleTarget(module,objects)				@@\
+#define LibraryModuleTarget(module,objects,subdir)			@@\
 NormalLibraryTarget(module, objects)					@@\
-DynamicModuleTarget(Concat3(lib,module,.so), objects)
+DynamicModuleTarget(Concat3(lib,module,.so), objects)			@@\
+	LinkBuildModule($@,subdir)
 #else
-#define LibraryModuleTarget(module, objects)				@@\
-NormalLibraryTarget(module, objects)
+#define LibraryModuleTarget(module, objects,subdir)			@@\
+NormalLibraryTarget(module, objects)					@@\
+	LinkBuildModule($@,subdir)
 #endif
 #endif
 
@@ -3467,12 +3561,14 @@ NormalLibraryTarget(module, objects)
  */
 #ifndef DepLibraryModuleTarget
 #if MakeDllModules && DoLoadableServer
-#define DepLibraryModuleTarget(module,deplist,objects)			@@\
+#define DepLibraryModuleTarget(module,deplist,objects,subdir)		@@\
 NormalDepLibraryTarget(module, deplist, objects)			@@\
-DepDynamicModuleTarget(Concat3(lib,module,.so), deplist, objects)
+DepDynamicModuleTarget(Concat3(lib,module,.so), deplist, objects)	@@\
+	LinkBuildModule($@,subdir)
 #else
-#define DepLibraryModuleTarget(module,deplist,objects)			@@\
-NormalDepLibraryTarget(module, deplist, objects)
+#define DepLibraryModuleTarget(module,deplist,objects,subdir)		@@\
+NormalDepLibraryTarget(module, deplist, objects)			@@\
+	LinkBuildModule($@,subdir)
 #endif
 #endif
 
@@ -3511,20 +3607,14 @@ clean::									@@\
  */
 #ifndef InstallDynamicModule
 #define InstallDynamicModule(module,dest,subdir)			@@\
-AllTarget(module)							@@\
-	LinkBuildModule(module,subdir)					@@\
-									@@\
-install:: module							@@\
+install:: 								@@\
 	MakeDir($(DESTDIR)dest/subdir)					@@\
 	$(INSTALL) -c $(INSTDATFLAGS) module $(DESTDIR)dest/subdir
 #endif
 
 #ifndef InstallDynamicNamedModule
 #define InstallDynamicNamedModule(module,instname,dest,subdir)		@@\
-AllTarget(module)							@@\
-	LinkBuildNamedModule(module,instname,subdir)			@@\
-									@@\
-install:: module							@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest/subdir)					@@\
 	$(INSTALL) -c $(INSTDATFLAGS) module $(DESTDIR)dest/subdir/instname
 #endif
@@ -3539,6 +3629,20 @@ InstallDynamicModule(Concat(module,_drv.so),dest,subdir)
 #else
 #define InstallObjectModule(module,dest,subdir)				@@\
 InstallDynamicModule(Concat(module,_drv.o),dest,subdir)
+#endif
+#endif
+#endif
+
+#ifndef InstallPlainObjectModule
+#if !DoLoadableServer
+#define InstallPlainObjectModule(module,dest,subdir)	/**/
+#else
+#if MakeDllModules
+#define InstallPlainObjectModule(module,dest,subdir)			@@\
+InstallDynamicModule(module.so,dest,subdir)
+#else
+#define InstallPlainObjectModule(module,dest,subdir)			@@\
+InstallDynamicModule(module.o,dest,subdir)
 #endif
 #endif
 #endif

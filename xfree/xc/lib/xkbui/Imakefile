@@ -1,13 +1,13 @@
 XCOMM $XConsortium: Imakefile /main/1 1995/11/30 19:00:42 kaleb $
-XCOMM $XFree86: xc/lib/xkbui/Imakefile,v 3.5 2003/10/15 22:47:48 herrb Exp $
+XCOMM $XFree86: xc/lib/xkbui/Imakefile,v 3.7 2004/06/29 22:55:33 herrb Exp $
 #define DoNormalLib NormalLibxkbui
 #define DoSharedLib SharedLibxkbui
-#define DoExtraLib SharedLibxkbui
+#define DoExtraLib ExtraLibxkbui
 #define DoDebugLib DebugLibxkbui
 #define DoProfileLib ProfileLibxkbui
 #define HasSharedData NO
 #define LibName xkbui
-#define SoRev SOXKBFILEREV
+#define SoRev SOXKBUIREV
 #define	IncSubdir X11
 #define	IncSubSubdir extensions
 

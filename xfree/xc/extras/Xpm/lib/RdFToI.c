@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/extras/Xpm/lib/RdFToI.c,v 1.3 2004/11/18 21:30:51 herrb Exp $ */
 
 /* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
@@ -197,32 +197,58 @@ OpenReadFile(filename, mdata)
 	mdata->stream.file = (stdin);
 	mdata->type = XPMFILE;
     } else {
-	int fd = open(filename, O_RDONLY);
-#if defined(NO_ZPIPE)
-	if ( fd < 0 )
-	    return XpmOpenFailed;
-#else
-	const char* ext = NULL;
-	if ( fd >= 0 )
-	    ext = strrchr(filename, '.');
-#ifdef STAT_ZFILE /* searching for z-files if the given name not found */
-	else
-	{
-	    size_t len = strlen(filename);
-	    char *compressfile = (char *) XpmMalloc(len + 4);
-	    if ( !compressfile )
+#ifndef NO_ZPIPE
+	size_t len = strlen(filename);
+
+	if(len == 0                        ||
+	   filename[len-1] == '/')
+		return(XpmOpenFailed);
+	if ((len > 2) && !strcmp(".Z", filename + (len - 2))) {
+	    mdata->type = XPMPIPE;
+	    snprintf(buf, sizeof(buf), "uncompress -c \"%s\"", filename);
+	    if (!(mdata->stream.file = s_popen(buf, "r")))
+		return (XpmOpenFailed);
+
+	} else if ((len > 3) && !strcmp(".gz", filename + (len - 3))) {
+	    mdata->type = XPMPIPE;
+	    snprintf(buf, sizeof(buf), "gunzip -qc \"%s\"", filename);
+	    if (!(mdata->stream.file = s_popen(buf, "r")))
+		return (XpmOpenFailed);
+
+	} else {
+# ifdef STAT_ZFILE
+	    if (!(compressfile = (char *) XpmMalloc(len + 4)))
 		return (XpmNoMemory);
-	    strcpy(compressfile, filename);
-	    strcpy(compressfile + len, ext = ".Z");
-	    fd = open(compressfile, O_RDONLY);
-	    if ( fd < 0 )
-	    {
-		strcpy(compressfile + len, ext = ".gz");
-		fd = open(compressfile, O_RDONLY);
-		if ( fd < 0 )
-		{
+
+	    snprintf(compressfile, len+4, "%s.Z", filename);
+	    if (!stat(compressfile, &status)) {
+		snprintf(buf, sizeof(buf), "uncompress -c \"%s\"", compressfile);
+		if (!(mdata->stream.file = s_popen(buf, "r"))) {
 		    XpmFree(compressfile);
-		    return XpmOpenFailed;
+		    return (XpmOpenFailed);
+		}
+		mdata->type = XPMPIPE;
+	    } else {
+		snprintf(compressfile, len+4, "%s.gz", filename);
+		if (!stat(compressfile, &status)) {
+		    snprintf(buf, sizeof(buf), "gunzip -c \"%s\"", compressfile);
+		    if (!(mdata->stream.file = s_popen(buf, "r"))) {
+			XpmFree(compressfile);
+			return (XpmOpenFailed);
+		    }
+		    mdata->type = XPMPIPE;
+		} else {
+# endif
+#endif
+		    if (!(mdata->stream.file = fopen(filename, "r"))) {
+#if !defined(NO_ZPIPE) && defined(STAT_ZFILE)
+			XpmFree(compressfile);
+#endif
+			return (XpmOpenFailed);
+		    }
+		    mdata->type = XPMFILE;
+#ifndef NO_ZPIPE
+# ifdef STAT_ZFILE
 		}
 	    }
 	    XpmFree(compressfile);
@@ -265,6 +291,15 @@ static void
 xpmDataClose(mdata)
     xpmData *mdata;
 {
-    if (mdata->stream.file != (stdin))
+    switch (mdata->type) {
+    case XPMFILE:
+	if (mdata->stream.file != (stdin))
+	    fclose(mdata->stream.file);
+	break;
+#ifndef NO_ZPIPE
+    case XPMPIPE:
 	fclose(mdata->stream.file);
+	break;
+#endif
+    }
 }

@@ -1,10 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c,v 1.80 2003/12/08 23:49:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c,v 1.84 2005/01/27 22:24:08 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
  * Copyright 2002 by SuSE Linux AG, Author: Egbert Eich
- * Copyright 1994-2002 by The XFree86 Project, Inc.
  * Copyright 2002 by Paul Elliott
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,6 +25,52 @@
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
+ */
+/*
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /* Patch for PS/2 Intellimouse - Tim Goodwin 1997-11-06. */
 
@@ -189,6 +234,8 @@ typedef enum {
     OPTION_X_AXIS_MAPPING,
     OPTION_Y_AXIS_MAPPING,
     OPTION_AUTO_SOFT,
+    OPTION_DRAGLOCKBUTTONS,
+    OPTION_PNP,
     OPTION_CLEAR_DTR,
     OPTION_CLEAR_RTS,
     OPTION_BAUD_RATE,
@@ -197,8 +244,7 @@ typedef enum {
     OPTION_PARITY,
     OPTION_FLOW_CONTROL,
     OPTION_VTIME,
-    OPTION_VMIN,
-    OPTION_DRAGLOCKBUTTONS
+    OPTION_VMIN
 } MouseOpts;
 
 #ifdef XFree86LOADER
@@ -227,6 +273,8 @@ static const OptionInfoRec mouseOptions[] = {
     { OPTION_X_AXIS_MAPPING,	"XAxisMapping",	  OPTV_STRING,	{0}, FALSE },
     { OPTION_Y_AXIS_MAPPING,	"YAxisMapping",	  OPTV_STRING,	{0}, FALSE },
     { OPTION_AUTO_SOFT,		"AutoSoft",	  OPTV_BOOLEAN, {0}, FALSE },
+    { OPTION_PNP,		"PnP",		  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_DRAGLOCKBUTTONS,	"DragLockButtons",OPTV_STRING,	{0}, FALSE },
     /* serial options */
     { OPTION_CLEAR_DTR,		"ClearDTR",	  OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_CLEAR_RTS,		"ClearRTS",	  OPTV_BOOLEAN,	{0}, FALSE },
@@ -237,7 +285,6 @@ static const OptionInfoRec mouseOptions[] = {
     { OPTION_FLOW_CONTROL,	"FlowControl",	  OPTV_STRING,	{0}, FALSE },
     { OPTION_VTIME,		"VTime",	  OPTV_INTEGER,	{0}, FALSE },
     { OPTION_VMIN,		"VMin",		  OPTV_INTEGER,	{0}, FALSE },
-    { OPTION_DRAGLOCKBUTTONS,	"DragLockButtons",OPTV_STRING,	{0}, FALSE },
     /* end serial options */
     { -1,			NULL,		  OPTV_NONE,	{0}, FALSE }
 };
@@ -372,17 +419,16 @@ static void
 MouseCommonOptions(InputInfoPtr pInfo)
 {
     MouseDevPtr pMse;
-    MessageType from = X_DEFAULT;
+    MessageType buttons_from = X_CONFIG;
     char *s;
     int origButtons;
 
     pMse = pInfo->private;
 
     pMse->buttons = xf86SetIntOption(pInfo->options, "Buttons", 0);
-    from = X_CONFIG;
     if (!pMse->buttons) {
 	pMse->buttons = MSE_DFLTBUTTONS;
-	from = X_DEFAULT;
+	buttons_from = X_DEFAULT;
     }
     origButtons = pMse->buttons;
 
@@ -394,7 +440,10 @@ MouseCommonOptions(InputInfoPtr pInfo)
     pMse->emulate3Timeout = xf86SetIntOption(pInfo->options,
 					     "Emulate3Timeout", 50);
     if (pMse->emulate3Buttons || pMse->emulate3ButtonsSoft) {
-	xf86Msg(X_CONFIG, "%s: Emulate3Buttons, Emulate3Timeout: %d\n",
+	MessageType from = X_CONFIG;
+	if (pMse->emulate3ButtonsSoft)
+	    from = X_DEFAULT;
+	xf86Msg(from, "%s: Emulate3Buttons, Emulate3Timeout: %d\n",
 		pInfo->name, pMse->emulate3Timeout);
     }
 
@@ -659,8 +708,8 @@ MouseCommonOptions(InputInfoPtr pInfo)
 		pInfo->name, wheelButton, pMse->wheelInertia);
     }
     if (origButtons != pMse->buttons)
-	from = X_CONFIG;
-    xf86Msg(from, "%s: Buttons: %d\n", pInfo->name, pMse->buttons);
+	buttons_from = X_CONFIG;
+    xf86Msg(buttons_from, "%s: Buttons: %d\n", pInfo->name, pMse->buttons);
     
 }
 /*
@@ -704,6 +753,10 @@ MouseHWOptions(InputInfoPtr pInfo)
     if ((mPriv->soft
 	 = xf86SetBoolOption(pInfo->options, "AutoSoft", FALSE))) {
 	xf86Msg(X_CONFIG, "Don't initialize mouse when auto-probing\n");
+    }
+    if ((mPriv->noPnP
+	 = !xf86SetBoolOption(pInfo->options, "PnP", TRUE))) {
+	xf86Msg(X_CONFIG, "Don't do PnP probing.\n");
     }
     pMse->sampleRate = xf86SetIntOption(pInfo->options, "SampleRate", 0);
     if (pMse->sampleRate) {
@@ -770,10 +823,8 @@ ProtocolIDToName(MouseProtocolID id)
     switch (id) {
     case PROT_UNKNOWN:
 	return "Unknown";
-	break;
     case PROT_UNSUP:
 	return "Unsupported";
-	break;
     default:
 	for (i = 0; mouseProtocols[i].name; i++)
 	    if (id == mouseProtocols[i].id)
@@ -803,7 +854,6 @@ ProtocolIDToClass(MouseProtocolID id)
     case PROT_UNKNOWN:
     case PROT_UNSUP:
 	return MSE_NONE;
-	break;
     default:
 	for (i = 0; mouseProtocols[i].name; i++)
 	    if (id == mouseProtocols[i].id)
@@ -820,7 +870,6 @@ GetProtocol(MouseProtocolID id) {
     case PROT_UNKNOWN:
     case PROT_UNSUP:
 	return NULL;
-	break;
     default:
 	for (i = 0; mouseProtocols[i].name; i++)
 	    if (id == mouseProtocols[i].id) {
@@ -980,13 +1029,11 @@ MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	    xf86Msg(X_ERROR, "%s: Unknown protocol \"%s\"\n",
 		    pInfo->name, protocol);
 	    return pInfo;
-	    break;
 	case PROT_UNSUP:
 	    xf86Msg(X_ERROR,
 		    "%s: Protocol \"%s\" is not supported on this "
 		    "platform\n", pInfo->name, protocol);
 	    return pInfo;
-	    break;
 	default:
 	    break;
 	    
@@ -2942,6 +2989,7 @@ static const char *
 autoOSProtocol(InputInfoPtr pInfo, int *protoPara)
 {
     MouseDevPtr pMse = pInfo->private;
+    mousePrivPtr mPriv = (mousePrivPtr)pMse->mousePriv;
     const char *name = NULL;
     MouseProtocolID protocolID = PROT_UNKNOWN;
 
@@ -2971,7 +3019,7 @@ autoOSProtocol(InputInfoPtr pInfo, int *protoPara)
 	}
     }
 #ifdef PNP_MOUSE
-    if (!name) {
+    if (!name && !mPriv->noPnP) {
 	/* A PnP serial mouse? */
 	protocolID = MouseGetPnpProtocol(pInfo);
 	if (protocolID >= 0 && protocolID < PROT_NUMPROTOS) {

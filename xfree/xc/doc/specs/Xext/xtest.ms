@@ -149,7 +149,7 @@ FAKE_EVENT_TYPE
 .R
 FAKE_EVENT	[type: FAKE_EVENT_TYPE,
 		detail: BYTE,
-		time: TIME,
+		time: TIMESTAMP,
 		root: WINDOW,
 		rootX, rootY: INT16]
 .De
@@ -451,7 +451,7 @@ Requests
 	1	FAKE_EVENT_TYPE		fake device event type
 	1	BYTE		detail: button or keycode
 	2			unused
-	4	TIME		delay (milliseconds)
+	4	TIMESTAMP		delay (milliseconds)
 		0	CurrentTime
 	4	WINDOW		root window for MotionNotify
 		0	None

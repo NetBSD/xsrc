@@ -1,4 +1,3 @@
-/* $Xorg: utils.c,v 1.5 2001/02/09 02:05:24 xorgcvs Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -49,7 +48,53 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.97 2004/01/09 00:35:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.102 2005/02/03 02:01:14 dawes Exp $ */
+/*
+ * Copyright (c) 1996-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifdef __CYGWIN__
 #include <stdlib.h>
@@ -128,8 +173,8 @@ OR PERFORMANCE OF THIS SOFTWARE.
 Bool CoreDump;
 Bool noTestExtensions;
 
-#ifdef PANORAMIX
 Bool noPanoramiXExtension = TRUE;
+#ifdef PANORAMIX
 Bool PanoramiXVisibilityNotifySent = FALSE;
 Bool PanoramiXMapped = FALSE;
 Bool PanoramiXWindowExposureSent = FALSE;
@@ -167,7 +212,7 @@ int userdefinedfontpath = 0;
 
 char *dev_tty_from_init = NULL;		/* since we need to parse it anyway */
 
-extern int dispatchExceptionAtReset;
+extern char dispatchExceptionAtReset;
 
 OsSigHandlerPtr
 OsSignal(sig, handler)
@@ -1177,22 +1222,22 @@ Xalloc(unsigned long amount)
 {
     register pointer  ptr;
 	
-    if ((long)amount <= 0) {
-	return (unsigned long *)NULL;
-    }
+    if ((long)amount <= 0)
+	return NULL;
+
     /* aligned extra on long word boundary */
     amount = (amount + (sizeof(long) - 1)) & ~(sizeof(long) - 1);
 #ifdef MEMBUG
     if (!Must_have_memory && Memory_fail &&
 	((random() % MEM_FAIL_SCALE) < Memory_fail))
-	return (unsigned long *)NULL;
+	return NULL;
 #endif
     if ((ptr = (pointer)malloc(amount))) {
-	return (unsigned long *)ptr;
+	return ptr;
     }
     if (Must_have_memory)
 	FatalError("Out of memory");
-    return (unsigned long *)NULL;
+    return NULL;
 }
 
 /*****************
@@ -1206,17 +1251,15 @@ XNFalloc(unsigned long amount)
     register pointer ptr;
 
     if ((long)amount <= 0)
-    {
-        return (unsigned long *)NULL;
-    }
+        return NULL;
+
     /* aligned extra on long word boundary */
     amount = (amount + (sizeof(long) - 1)) & ~(sizeof(long) - 1);
     ptr = (pointer)malloc(amount);
     if (!ptr)
-    {
         FatalError("Out of memory");
-    }
-    return ((unsigned long *)ptr);
+
+    return ptr;
 }
 
 /*****************
@@ -1230,7 +1273,7 @@ Xcalloc(unsigned long amount)
 
     ret = Xalloc (amount);
     if (ret)
-	bzero ((char *) ret, (int) amount);
+	bzero ((void *) ret, (int) amount);
     return ret;
 }
 
@@ -1261,13 +1304,13 @@ Xrealloc(pointer ptr, unsigned long amount)
 #ifdef MEMBUG
     if (!Must_have_memory && Memory_fail &&
 	((random() % MEM_FAIL_SCALE) < Memory_fail))
-	return (unsigned long *)NULL;
+	return NULL;
 #endif
     if ((long)amount <= 0)
     {
 	if (ptr && !amount)
 	    free(ptr);
-	return (unsigned long *)NULL;
+	return NULL;
     }
     amount = (amount + (sizeof(long) - 1)) & ~(sizeof(long) - 1);
     if (ptr)
@@ -1275,10 +1318,10 @@ Xrealloc(pointer ptr, unsigned long amount)
     else
 	ptr = (pointer)malloc(amount);
     if (ptr)
-        return (unsigned long *)ptr;
+        return ptr;
     if (Must_have_memory)
 	FatalError("Out of memory");
-    return (unsigned long *)NULL;
+    return NULL;
 }
                     
 /*****************
@@ -1324,6 +1367,31 @@ OsInitAllocator (void)
 }
 #endif /* !INTERNAL_MALLOC */
 
+#if !defined(WORD64) && !defined(LONG64)
+
+void *
+Xllalloc(unsigned long long amount)
+{
+    if (amount & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xalloc(amount);
+}
+
+void *
+Xllrealloc(void *ptr, unsigned long long amount)
+{
+    if (amount & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xrealloc(ptr, amount);
+}
+
+void *
+Xllcalloc(unsigned long long amount)
+{
+    if (amount & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xcalloc(amount);
+}
+
+
+#endif
 
 char *
 Xstrdup(const char *s)
@@ -1351,6 +1419,52 @@ XNFstrdup(const char *s)
     sd = (char *)XNFalloc(strlen(s) + 1);
     strcpy(sd, s);
     return sd;
+}
+
+int
+Xasprintf(char **ret, const char *format, ...)
+{
+    char *s;
+    va_list args;
+    int status;
+
+    if (!ret || !format)
+	return -1;
+
+#ifdef HAS_ASPRINTF
+    va_start(args, format);
+    status = vasprintf(&s, format, args);
+    va_end(args);
+    if (status != -1 && s) {
+	*ret = Xstrdup(s);
+	free(s);
+	if (!*ret)
+	    status = -1;
+    } else
+	*ret = NULL;
+    return status;
+#else
+#define TMP_SIZE 4000
+    s = xcalloc(1, TMP_SIZE);
+    if (!s) {
+	*ret = NULL;
+	return -1;
+    }
+    va_start(args, format);
+    status = vsnprintf(s, TMP_SIZE, format, args);
+    va_end(args);
+    if (status > TMP_SIZE - 1)
+	status = TMP_SIZE - 1;
+    if (status < TMP_SIZE - 1) {
+	*ret = xrealloc(s, status + 1);
+	if (!*ret) {
+	    xfree(s);
+	    status = -1;
+	}
+    } else
+	*ret = s;
+    return status;
+#endif
 }
 
 #ifdef SMART_SCHEDULE
@@ -1395,8 +1509,9 @@ SmartScheduleStartTimer (void)
     timer.it_value.tv_sec = 0;
     timer.it_value.tv_usec = SmartScheduleInterval * 1000;
     return setitimer (ITIMER_REAL, &timer, 0) >= 0;
-#endif
+#else
     return FALSE;
+#endif
 }
 
 #ifdef SMART_SCHEDULE_POSSIBLE

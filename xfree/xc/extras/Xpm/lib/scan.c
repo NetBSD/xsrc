@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.2 2001/10/28 03:32:11 tsi Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.7 2005/03/12 23:15:46 dawes Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -279,6 +279,10 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
      */
 
     if (image) {
+	if (image->depth < 0 || image->depth > 32 ||
+	    image->bits_per_pixel < 0 || image->bits_per_pixel > 32 ||
+	    image->bitmap_unit < 0 || image->bitmap_unit > 32)
+	    return (XpmNoMemory);
 #ifndef FOR_MSW
 # ifndef AMIGA
 	if (((image->bits_per_pixel | image->depth) == 1)  &&
@@ -622,7 +626,8 @@ GetImagePixels(image, width, height, pmap)
     unsigned int *iptr;
     char *data;
     unsigned int x, y;
-    int bits, depth, ibu, ibpp, offset, i;
+    int i;
+    int bits, depth, ibu, ibpp, offset;
     unsigned long lbt;
     Pixel pixel, px;
 
@@ -643,7 +648,7 @@ GetImagePixels(image, width, height, pmap)
 		src = &data[XYINDEX(x, y, image)];
 		dst = (char *) &pixel;
 		pixel = 0;
-		for (i = ibu >> 3; --i >= 0;)
+		for (i = ibu >> 3; i-- > 0;)
 		    *dst++ = *src++;
 		XYNORMALIZE(&pixel, image);
 		bits = (x + offset) % ibu;
@@ -663,7 +668,7 @@ GetImagePixels(image, width, height, pmap)
 	    for (x = 0; x < width; x++, iptr++) {
 		pixel = 0;
 		plane = 0;
-		for (i = depth; --i >= 0;) {
+		for (i = depth; i-- > 0;) {
 		    src = &data[XYINDEX(x, y, image) + plane];
 		    dst = (char *) &px;
 		    px = 0;
@@ -686,11 +691,11 @@ GetImagePixels(image, width, height, pmap)
 		src = &data[ZINDEX(x, y, image)];
 		dst = (char *) &px;
 		px = 0;
-		for (i = (ibpp + 7) >> 3; --i >= 0;)
+		for (i = (ibpp + 7) >> 3; i-- > 0;)
 		    *dst++ = *src++;
 		ZNORMALIZE(&px, image);
 		pixel = 0;
-		for (i = sizeof(unsigned long); --i >= 0;)
+		for (i = sizeof(unsigned long); i-- > 0;)
 		    pixel = (pixel << 8) | ((unsigned char *) &px)[i];
 		if (ibpp == 4) {
 		    if (x & 1)

@@ -1,11 +1,13 @@
+/* $XTermId: data.c,v 1.70 2005/01/09 23:59:24 tom Exp $ */
+
 /*
  *	$Xorg: data.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/data.c,v 3.28 2003/10/27 01:07:57 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/data.c,v 3.30 2005/01/14 01:50:02 dickey Exp $ */
 
 /*
- * Copyright 2002,2003 by Thomas E. Dickey
+ * Copyright 2002-2004,2005 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -60,13 +62,11 @@
 Widget toplevel;		/* top-most widget in xterm */
 
 #if OPT_TEK4014
-PtyData *Tbuffer;
 Char *Tpushb;
 Char *Tpushback;
 TekLink *TekRefresh;
 TekWidget tekWidget;
 Widget tekshellwidget;
-int TEKgcFontMask = GCFont;
 int T_lastx = -1;
 int T_lasty = -1;
 int Ttoggled = 0;
@@ -80,7 +80,7 @@ Arg ourTopLevelShellArgs[] =
     {XtNallowShellResize, (XtArgVal) TRUE},
     {XtNinput, (XtArgVal) TRUE},
 };
-int number_ourTopLevelShellArgs = 2;
+Cardinal number_ourTopLevelShellArgs = 2;
 
 Bool waiting_for_initial_map;
 
@@ -115,15 +115,9 @@ Boolean sameName;		/* Don't change the title or icon name if it
 
 int am_slave = -1;		/* set to file-descriptor if we're a slave process */
 int max_plus1;
-#ifdef VMS
-int Select_mask;
-int X_mask;
-int pty_mask;
-#else /* VMS */
-fd_set Select_mask;
-fd_set X_mask;
-fd_set pty_mask;
-#endif /* VMS */
+PtySelect Select_mask;
+PtySelect X_mask;
+PtySelect pty_mask;
 char *ptydev;
 char *ttydev;
 

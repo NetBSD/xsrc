@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.160 2004/02/13 23:58:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.166 2005/02/18 22:38:31 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -111,7 +111,7 @@
 #endif
 
 #ifdef XKB
-extern Bool noXkbExtension;
+#include "XKBsrv.h"
 #endif
 
 #define XE_POINTER  1
@@ -371,7 +371,7 @@ xf86ProcessActionEvent(ActionEvent action, void *arg)
     case ACTION_SWITCHSCREEN:
 	if (VTSwitchEnabled && !xf86Info.dontVTSwitch && arg) {
 	    int vtno = *((int *) arg);
-#ifdef SCO
+#ifdef __SCO__
 	    vtno--;
 #endif
 #if defined(QNX4)
@@ -384,12 +384,12 @@ xf86ProcessActionEvent(ActionEvent action, void *arg)
 	break;
     case ACTION_SWITCHSCREEN_NEXT:
 	if (VTSwitchEnabled && !xf86Info.dontVTSwitch) {
-#if defined(SCO) /* Shouldn't this be true for (sun) && (i386) && (SVR4) ? */
+#if defined(__SCO__) /* Shouldn't this be true for (sun) && (i386) && (SVR4) ? */
 	    if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno) < 0)
 #else
 	    if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno + 1) < 0)
 #endif
-#if defined (SCO) || (defined(sun) && defined (i386) && defined (SVR4))
+#if defined (__SCO__) || (defined(sun) && defined (i386) && defined (SVR4))
 		if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 0) < 0)
 #else
 		if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 1) < 0)
@@ -467,7 +467,7 @@ xf86PostKbdEvent(unsigned key)
 #if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
   static Bool first_time = TRUE;
 #endif
-#if defined(__sparc__) && defined(__linux__)
+#if defined(__sparc__) && (defined(__linux__) || defined(__FreeBSD__))
   static int  kbdSun = -1;
 #endif
   /* Disable any keyboard processing while in suspend */
@@ -483,7 +483,7 @@ xf86PostKbdEvent(unsigned key)
   }
 #endif
 
-#if defined (__sparc__) && defined(__linux__)
+#if defined(__sparc__) && (defined(__linux__) || defined(__FreeBSD__))
   if (kbdSun == -1) {
     if ((xf86Info.xkbmodel && !strcmp(xf86Info.xkbmodel, "sun"))
 	|| (xf86Info.xkbrules && !strcmp(xf86Info.xkbrules, "sun")))
@@ -493,7 +493,7 @@ xf86PostKbdEvent(unsigned key)
   }
   if (kbdSun)
     goto special;
-#endif /* __sparc__ && __linux__ */
+#endif /* __sparc__ && (__linux__ || __FreeBSD__) */
 
 #ifdef __linux__
   if (xf86Info.kbdCustomKeycodes) {
@@ -543,7 +543,7 @@ xf86PostKbdEvent(unsigned key)
       }
     } else
 #endif /* i386 && SVR4 */
-    {
+    if (!xf86IsPc98()) {
       switch (scanCode) {
       case 0x59:        scanCode = KEY_0x59; break;
       case 0x5a:        scanCode = KEY_0x5A; break;
@@ -648,18 +648,18 @@ xf86PostKbdEvent(unsigned key)
       scanCode = KEY_Pause;       /* pause */
     }
 
-#ifndef __sparc64__
   /*
    * PC keyboards generate separate key codes for
    * Alt+Print and Control+Pause but in the X keyboard model
    * they need to get the same key code as the base key on the same
    * physical keyboard key.
    */
-  if (scanCode == KEY_SysReqest)
-    scanCode = KEY_Print;
-  else if (scanCode == KEY_Break)
-    scanCode = KEY_Pause;
-#endif
+  if (!xf86IsPc98()) {
+    if (scanCode == KEY_SysReqest)
+      scanCode = KEY_Print;
+    else if (scanCode == KEY_Break)
+      scanCode = KEY_Pause;
+  }
   
   /*
    * and now get some special keysequences
@@ -695,7 +695,7 @@ customkeycodes:
     }
   }
 #endif
-#if defined (__sparc__) && defined(__linux__)
+#if defined(__sparc__) && (defined(__linux__) || defined(__FreeBSD__))
 special:
   if (kbdSun) {
     switch (scanCode) {
@@ -729,7 +729,7 @@ special:
      */
     scanCode--;
   }
-#endif /* defined (__sparc__) && defined(__linux__) */
+#endif /* __sparc__ && (__linux__ || __FreeBSD__) */
 
 #ifdef XKB
   if ((xf86Info.ddxSpecialKeys == SKWhenNeeded &&
@@ -793,7 +793,7 @@ special:
 	break;
 #endif
 
-#if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT))) || defined(SCO)
+#if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT))) || defined(__SCO__)
 	/*
 	 * Under Linux, the raw keycodes are consumed before the kernel
 	 * does any processing on them, so we must emulate the vt switching
@@ -932,7 +932,7 @@ special:
 
 #endif /* USE_VT_SYSREQ */
 
-#ifdef SCO
+#ifdef __SCO__
     /*
      *	With the console in raw mode, SCO will not switch consoles,
      *	you get around this by activating the next console along, if
@@ -947,7 +947,7 @@ special:
 	xf86ProcessActionEvent(ACTION_SWITCHSCREEN_NEXT, NULL);
       return;
     }
-#endif /* SCO */
+#endif /* __SCO__ */
 #ifdef XKB
     }
 #endif
@@ -1113,8 +1113,9 @@ special:
 Bool
 xf86CommonSpecialKey(int key, Bool down, int modifiers)
 {
-  if ((ModifierIsSet(ControlMask | AltMask)) ||
-      (ModifierIsSet(ControlMask | AltLangMask))) {
+  if (!(ModifierIsSet(ShiftMask)) &&
+      ((ModifierIsSet(ControlMask | AltMask)) ||
+       (ModifierIsSet(ControlMask | AltLangMask)))) {
       switch (key) {
 	
       case KEY_BackSpace:

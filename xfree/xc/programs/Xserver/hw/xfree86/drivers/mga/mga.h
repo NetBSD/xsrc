@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.88 2004/02/20 16:59:48 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.89 2004/09/11 01:33:06 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -374,7 +374,13 @@ typedef struct {
     unsigned int	(*ddc1Read)(ScrnInfoPtr);
     void (*DDC1SetSpeed)(ScrnInfoPtr, xf86ddcSpeed);
     Bool		(*i2cInit)(ScrnInfoPtr);
-    I2CBusPtr		I2C;
+    I2CBusPtr		DDC_Bus1;
+    I2CBusPtr		DDC_Bus2;
+    I2CBusPtr		Maven_Bus;
+    I2CDevPtr		Maven;
+    char		Maven_Version;
+    Bool		UseMaven;
+    Bool		UseMavenPM;
     Bool		FBDev;
     int			colorKey;
     int			videoKey;
@@ -414,8 +420,10 @@ typedef struct {
 #endif
     XF86VideoAdaptorPtr adaptor;
     Bool		DualHeadEnabled;
+    Bool		Crtc2IsTV;
     Bool		SecondCrtc;
     Bool                SecondOutput;
+
     GDevPtr		device;
     /* The hardware's real SrcOrg */
     int			realSrcOrg;
@@ -574,6 +582,8 @@ Bool MgaInitDma(ScrnInfoPtr pScrn, int prim_size);
 #define MGA_AGP_MODE_MASK	0x07
 
 #endif
+
+Bool MGAMavenRead(ScrnInfoPtr pScrn, I2CByte reg, I2CByte *val);
 
 void MGACRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
 void MGAEnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);

@@ -1,8 +1,52 @@
-XCOMM platform:  $Xorg: FreeBSD.cf,v 1.3 2000/08/17 19:41:45 cpqbld Exp $
-XCOMM
-XCOMM
-XCOMM
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.148 2004/02/07 04:30:15 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.155 2005/03/03 03:32:17 dawes Exp $
+
+/*
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -46,6 +90,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasNdbm			YES
 #define HasPutenv		YES
 #define HasSnprintf		YES
+#define HasAsprintf		YES
 #if OSMajorVersion == 3 && OSMinorVersion >= 3 || OSMajorVersion > 3
 # define HasStrlcat		YES
 #endif
@@ -117,12 +162,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # if HasLibPthread
 #  define ThreadsLibraries	-lpthread
 # else
+#  define BuildThreadStubLibrary  YES
 #  if OSRelVersion >= 500043
-#   define BuildThreadStubLibrary  NO
-#   define NeedUIThrStubs          NO
+#   define NeedUIThrStubs	NO
+#   define ThrStubsForCompat	YES
 #  else
-#   define BuildThreadStubLibrary  YES
-#   define NeedUIThrStubs          YES
+#   define NeedUIThrStubs	YES
 #  endif
 #  if (OSRelVersion >= 500016)
 #   define ThreadsLibraries	-lc_r
@@ -130,8 +175,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  else
 #   define ThreadsLibraries	-pthread
 #  endif
-#  define SharedX11Reqs		$(LDPRELIB) $(XTHRSTUBLIB)
-#  define SharedXtReqs		$(LDPRELIB) $(XONLYLIB) $(SMLIB) $(ICELIB) $(XTHRSTUBLIB)
+#  if NeedUIThrStubs
+#   define SharedX11Reqs	$(LDPRELIB) $(XTHRSTUBLIB)
+#   define SharedXtReqs		$(LDPRELIB) $(XONLYLIB) $(SMLIB) $(ICELIB) $(XTHRSTUBLIB)
+#  endif
 # endif
 #endif
 
@@ -207,7 +254,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #else
 #define NoSystemWarn
 #endif
-#define DefaultCCOptions	-ansi -pedantic NoSystemWarn -Dasm=__asm \
+#define DefaultCCOptions	-ansi NoSystemWarn -Dasm=__asm \
 	GccWarningOptions
 #endif
 #endif
@@ -349,6 +396,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  endif
 # endif
 
+# ifndef ExtraSharedLibraryLoadFlags
+#  if !UseElfFormat
+#   define ExtraSharedLibraryLoadFlags /**/
+#  endif
+# endif
 #endif
 
 #ifndef LibraryRpathLoadFlags
@@ -396,7 +448,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if UseElfFormat
 # define AsmElfDefines		-D__ELF__
 #else
-# define AsmElfDefines /**/
+# define AsmElfDefines		-D__AOUT__
 #endif
 
 #if GccUsesGas
@@ -414,7 +466,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 	defined(ia64Architecture) || defined(AMD64Architecture)
 #define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
 #endif
-#ifdef Sparc64Architecture
+#if defined(Sparc64Architecture) && UseElfFormat
 #define AsVISOption		-Av9a
 #define AsOutputArchSize	64
 #endif
@@ -422,7 +474,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define StandardDefines	-DCSRG_BASED
 
 #if OSMajorVersion > 1
-#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME
+#define ServerOSDefines		XFree86ServerOSDefines
 #define XawI18nDefines		-DUSE_XWCHAR_STRING
 #define HasMakefileSafeInclude	YES
 #define IncludeMakefile(file) @@# dependencies are in .depend
@@ -435,7 +487,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #define HasMkstemp		YES
 #else
-#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DXNO_SYSCONF
+#define ServerOSDefines		XFree86ServerOSDefines -DXNO_SYSCONF
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #endif
 

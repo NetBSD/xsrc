@@ -60,7 +60,7 @@ in this Software without prior written authorization from The Open Group.
  *
  ***********************************************************************/
 
-/* $XFree86: xc/programs/twm/resize.c,v 1.8 2001/12/14 20:01:09 dawes Exp $ */
+/* $XFree86: xc/programs/twm/resize.c,v 1.9 2004/06/08 01:17:02 dawes Exp $ */
 
 #include <stdio.h>
 #include "twm.h"
@@ -1205,7 +1205,7 @@ SetFrameShape (tmp)
  * 
  * Dimensions and Positions:
  * 
- *     frame orgin                 (0, 0)
+ *     frame origin                (0, 0)
  *     frame upper left border     (-tmp->frame_bw, -tmp->frame_bw)
  *     frame size w/o border       tmp->frame_width , tmp->frame_height
  *     frame/title border width    tmp->frame_bw

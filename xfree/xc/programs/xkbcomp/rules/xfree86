@@ -5,16 +5,16 @@
 //  Copyright 1996 by Joseph Moss
 //
 //  2002 Modifier: Ivan Pascal      The XFree86 Project
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.80 2004/01/17 14:59:36 pascal Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.85 2004/11/18 21:26:18 dawes Exp $
 //
 
 // Layouts that still need be composed by old rules
-! $oldlayouts = az bs ca ca_enhanced de_CH fr_CH hu hu_qwerty lt_std mn vn hr_US
+! $oldlayouts = bs ca_enhanced de_CH fr_CH lt_std hr_US
 
 // If you want non-latin layouts implicitly include the en_US layout
 // uncomment lines below
 //! $nonlatin = am ar ben bg by dev el ge_la ge_ru guj gur il il_phonetic\
-//              ir iu kan lo mk mm ml ori ru sr syr syr_phonetic tel th\
+//              ir iu kan lo mk mm ml ori ru sin sr syr syr_phonetic tel th\
 //              tj tml ua
 
 ! $pcmodels = pc101 pc102 pc104 pc105
@@ -25,12 +25,11 @@
   macintosh_old	=	macintosh
   powerpcps2	=	powerpcps2
   pc98		=	xfree98(pc98)
-  abnt2		=	xfree86(abnt2)
   jp106		=	xfree86(jp106)
   *		=	xfree86
 
 ! $azerty = be fr fr-latin9
-! $qwertz = al cz de hr pl2 ro si sk 
+! $qwertz = al cz de hr hu pl2 ro si sk 
 
 ! layout[1]	=	keycodes
   $azerty       =       +aliases(azerty)
@@ -56,7 +55,9 @@
   everex	=	everex(STEPnote)
   winbook	=	winbook(XP5)
   pc98		=	nec(pc98)
-  abnt2		=	pc(abnt2)
+  abnt2_104	=	pc(abnt2_104)
+  abnt2_107	=	pc(abnt2_107)
+  abnt2		=	pc(abnt2_104)
  $mac		=	macintosh(macintosh)
   *		=       pc(pc104)
 
@@ -68,7 +69,6 @@
 
 ! model		layout	=	symbols
   pc98		nec/jp	=	nec/jp(pc98)
-  abnt2		br	=	pc/pc(pc104)+pc/br
  $maclaptop	us	=	macintosh/us(extended)+apple(laptop_bad_switch)
  $maclaptop	en_US	=	macintosh/us(extended)+apple(laptop_bad_switch)
  $maclaptop	*	=	macintosh/us(extended)+apple(laptop_bad_switch)+macintosh/%l%(v)
@@ -78,6 +78,8 @@
  $pcmodels      intl    =       us(%mcompose)
   *		intl	=	us(pc104compose) 
   *		jp	=	jp
+ $pcmodels      ca      =       pc/pc(%m)+pc/ca(multi)+pc/ca(multi-2gr):2+group(rctrl_switch)
+  *             ca      =       pc/pc(pc105)+pc/ca(multi)+pc/ca(multi-2gr):2+group(rctrl_switch)
  $pcmodels $oldlayouts  =       en_US(%m)+%l%(v)
  $pcmodels $nonlatin	=	pc/pc(%m)+pc/us+pc/%l%(v):2
  $pcmodels	*	=	pc/pc(%m)+pc/%l%(v)
@@ -105,7 +107,7 @@
               chicony chicony9885 \
               compaqeak8 compaqik7 compaqik13 compaqik18 armada presario ipaq \
               dell inspiron dtk2000 \
-              dexxa diamond genius geniuscomfy2 \
+              dexxa diamond genius geniuscomfy2 genius_kb12e \
               ennyah_dkb1008 \
               hpi6 hp2501 hp2505 hp5181 hpxe3gc hpxe3gf hpxe4xxx hpzt11xx \
               hp500fa hp5xx hp5185 \
@@ -114,7 +116,7 @@
               ltcd logiaccess logicdp logicdpa logicink logiciink \
               logiinkse logiinkseusb logiik itouch \
               mx1998 mx2500 mx2750 \
-              microsoftinet microsoftpro microsoftprooem microsoftprose \
+              microsoftinet microsoftpro microsoftprooem microsoftprousb \
               microsoftoffice microsoftmult \
               oretec \
               propeller \
