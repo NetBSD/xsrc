@@ -183,11 +183,33 @@ SOFTWARE.
 # define BITMAP_BIT_ORDER	MSBFirst
 #endif
 
-#ifdef sparc
+#if defined(sparc) || defined(__sparc__) || defined(__sparc_v9__)
 # define AVOID_MEMORY_READ
 # define LARGE_INSTRUCTION_CACHE
 # define FAST_CONSTANT_OFFSET_MODE
-# define SHARED_IDCACHE
+# if !defined(__sparc_v9__) && !defined(__arch64__)
+#  define SHARED_IDCACHE
+# else
+#  define LARGE_INSTRUCTION_CACHE   
+#  define PLENTIFUL_REGISTERS
+# endif
+#endif
+
+#if defined(__sparc_v9__) || ((defined(__sparc__) || defined(sparc)) && defined(__arch64__))
+/* pad scanline to a longword */
+#define BITMAP_SCANLINE_UNIT                   64
+
+#define BITMAP_SCANLINE_PAD                    64
+#define LOG2_BITMAP_PAD                                6
+#define LOG2_BYTES_PER_SCANLINE_PAD            3
+
+/* Add for handling protocol XPutImage and XGetImage; see comment below */
+#define INTERNAL_VS_EXTERNAL_PADDING
+#define BITMAP_SCANLINE_UNIT_PROTO             32
+
+#define BITMAP_SCANLINE_PAD_PROTO              32
+#define LOG2_BITMAP_PAD_PROTO                  5
+#define LOG2_BYTES_PER_SCANLINE_PAD_PROTO      2
 #endif
 
 #ifdef mc68020

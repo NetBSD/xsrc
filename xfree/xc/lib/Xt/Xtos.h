@@ -58,7 +58,8 @@ SOFTWARE.
 #endif
 
 #if defined(__alpha) || defined(__alpha__) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) || \
+    defined(__sparc64__)
 #define LONG64
 #endif
 
