@@ -232,7 +232,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT
 #  endif
 # elif defined(PpcArchitecture)
-#   define ServerExtraDefines   GccGasOption XFree86ServerDefines -D__macppc__
+#   define ServerExtraDefines   GccGasOption XFree86ServerDefines
 #   define XkbServerDefines     -DXKB_ALWAYS_USES_SOFT_REPEAT
 #   ifndef XFree86ConsoleDefines
 #    defined XFree86ConsoleDefines	-DWSCONS_SUPPORT
