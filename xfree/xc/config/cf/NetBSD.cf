@@ -232,7 +232,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #define StandardDefines	-DCSRG_BASED
+/* Citrus mb locale were added in 1.5P */
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 5) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 5 && OSTeenyVersion >= 15))
+#define XawI18nDefines	-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
+#else
 #define XawI18nDefines	-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#endif
 
 #ifndef ExtraLibraries
 #define ExtraLibraries		/**/
