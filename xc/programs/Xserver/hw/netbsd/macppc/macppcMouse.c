@@ -327,6 +327,9 @@ void macppcMouseEnqueueEvent (device, fe)
     case WSCONS_EVENT_MOUSE_DELTA_Y:
 	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
 	break;
+    case WSCONS_EVENT_MOUSE_DELTA_Z:
+	/* Ignore for now. */
+	break;
     case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (fe->value, y, time);
@@ -334,6 +337,8 @@ void macppcMouseEnqueueEvent (device, fe)
     case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (x, fe->value, time);
+	break;
+    case WSCONS_EVENT_MOUSE_ABSOLUTE_Z:
 	break;
     default:
 	FatalError ("macppcMouseEnqueueEvent: unrecognized id\n");
