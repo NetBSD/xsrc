@@ -203,6 +203,8 @@ sunFbDataRec sunFbData[XFBTYPE_LASTPLUSONE] = {
   { BW2I, "SUN2BW        (bw2)" },	
 #ifdef INCLUDE_CG2_HEADER
   { CG2I, "SUN2COLOR     (cg2)" },
+#else
+  { NULL, "SUN2COLOR     (cg2)" },
 #endif /* INCLUDE_CG2_HEADER */
   { NULL, "SUN2GP        (gp1/gp2)" },
   { NULL, "SUN5COLOR     (cg5/386i accel)" },
@@ -974,3 +976,9 @@ Bool DPMSSupported ()
     return FALSE;
 }
 #endif
+
+/* XF86 compatibility */
+void OsVendorFatalError ()
+{
+	return;
+}
