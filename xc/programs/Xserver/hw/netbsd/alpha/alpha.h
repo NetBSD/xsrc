@@ -158,6 +158,7 @@ typedef struct {
     unsigned char*  fb;		/* Frame buffer itself */
     int		    fd;		/* frame buffer for ioctl()s, */
     struct fbtype   info;	/* Frame buffer characteristics */
+    int		    offset;	/* offset into the fb */
     tga_reg_t       *tgaregs0;  /* Registers, and... */
     tga_reg_t       *tgaregs1;  /* their aliases */
     tga_reg_t       *tgaregs2;
@@ -202,6 +203,8 @@ extern int		alphaScreenIndex;
 #if 0
 extern int*		sunProtected;
 #endif
+
+extern Bool		alphaTgaAccelerate;
 
 extern Bool alphaCursorInitialize(
 #if NeedFunctionPrototypes
@@ -474,6 +477,18 @@ alphaTgaCopyArea(
     int /* height */,
     int /* dstx */,
     int /* dsty */
+#endif
+);
+
+void
+alphaTgaFillSpans(
+#if NeedFunctionPrototypes
+    DrawablePtr /* pDrawable */,
+    GCPtr	/* pGC */,
+    int		/* nInit */,
+    DDXPointPtr /* pptInit */,
+    int*	/* pwidthInit */,
+    int 	/* fSorted */
 #endif
 );
 

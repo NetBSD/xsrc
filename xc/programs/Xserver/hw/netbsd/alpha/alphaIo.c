@@ -201,6 +201,10 @@ ddxProcessArgument (argc, argv, i)
 {
     extern void UseMsg();
 
+    if (!strcmp(argv[i], "-noaccel")) {
+	alphaTgaAccelerate = 0;
+	return 1;
+    }
 #if 0 /* XXX */
 #ifndef XKB
     if (strcmp (argv[i], "-ar1") == 0) {	/* -ar1 int */
