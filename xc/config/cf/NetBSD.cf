@@ -122,13 +122,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
   
-/*
- * Make sure the binaries know where to look for the shared libaries.
- */
-#if (OSMajorVersion == 1 && OSMinorVersion >= 2) || OSMajorVersion > 1
-#define ExtraLoadFlags		-R$(USRLIBDIR)
-#endif
-
 /* UseElfFormat defaults to YES if __ELF__ set */
 #ifndef UseElfFormat
 # ifdef __ELF__
@@ -136,6 +129,16 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define UseElfFormat YES
 # else
 #  define UseElfFormat NO
+# endif
+#endif
+
+/*
+ * Make sure the binaries know where to look for the shared libaries.
+ * NOTE: This is done in bsdLib.rules for ELF libraries!
+ */
+#if (OSMajorVersion == 1 && OSMinorVersion >= 2) || OSMajorVersion > 1
+# ifndef UseElfFormat
+#  define ExtraLoadFlags	-R$(USRLIBDIR)
 # endif
 #endif
 
@@ -158,9 +161,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if UseElfFormat
-#define DlLibrary		-rdynamic /* no -ldl yet */
+# define DlLibrary		-rdynamic /* no -ldl yet */
 #else
-#define DlLibrary		/**/
+# define DlLibrary		/**/
 #endif
 
 #ifdef i386Architecture
