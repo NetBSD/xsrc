@@ -314,7 +314,184 @@ I128IBMUseHWCursor(ScreenPtr pScrn, CursorPtr pCurs)
 
 
 Bool I128TIHWCursorInit(ScrnInfoPtr pScrn) { return FALSE; }
-Bool I128ProgramTi3025(ScrnInfoPtr pScrn, DisplayModePtr mode) { return FALSE; }
+
+Bool
+I128ProgramTi3025(ScrnInfoPtr pScrn, DisplayModePtr mode)
+{
+   I128Ptr pI128 = I128PTR(pScrn);
+   unsigned char tmp, misc_ctrl, aux_ctrl, oclk, col_key, mux1_ctrl, mux2_ctrl;
+   unsigned char n, m, p;
+   double ffreq, diff, mindiff;
+   int ni, mi, pi;
+   int best_n=32, best_m=32;
+   int   freq = mode->SynthClock;
+
+   oclk = 0;
+   aux_ctrl = 0;
+   misc_ctrl = 0;
+   col_key = 0;
+   mux1_ctrl = 0;
+   mux2_ctrl = 0;
+
+   if (freq < 20000) {
+      xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+	 "Specified dot clock (%.3f) too low for TI 3025",
+	 X_PROBED, freq / 1000.0);
+       return(FALSE);
+   }
+
+   
+#define FREQ_MIN   12000
+#define FREQ_MAX  220000
+
+   if (freq < FREQ_MIN)
+      ffreq = FREQ_MIN / 1000.0;
+   else if (freq > FREQ_MAX)
+      ffreq = FREQ_MAX / 1000.0;
+   else
+      ffreq = freq / 1000.0;
+   
+   for(pi=0; (pi<4) && (ffreq<110.0); pi++)
+      ffreq *= 2;
+
+   if (pi==4) {
+      ffreq /= 2;
+      pi--;
+   }
+   
+   /* now 110.0 <= ffreq <= 220.0 */   
+   
+   ffreq /= TI_REF_FREQ;
+   
+   /* now 7.6825 <= ffreq <= 15.3650 */
+   /* the remaining formula is  ffreq = (m+2)*8 / (n+2) */
+   
+   mindiff = ffreq;
+   
+   for (ni = 1; ni <= (int)(TI_REF_FREQ/0.5 - 2); ni++) {
+      mi = (int)(ffreq * (ni+2) / 8.0 + 0.5) - 2;
+      if (mi < 1)
+	 mi = 1;
+      else if (mi > 127) 
+	 mi = 127;
+      
+      diff = ((mi+2) * 8) / (ni+2.0) - ffreq;
+      if (diff<0)
+	 diff = -diff;
+      
+      if (diff < mindiff) {
+	 mindiff = diff;
+	 best_n = ni;
+	 best_m = mi;
+      }
+   }
+
+   n = (unsigned char )best_n;
+   m = (unsigned char )best_m;
+   p = (unsigned char )pi;
+
+   tmp = pI128->mem.rbase_g[INDEX_TI] & 0xFF;
+
+   /*
+    * Reset the clock data index
+    */
+   pI128->mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = 0x00;					MB;
+
+   /*
+    * Now output the clock frequency
+    */
+   pI128->mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;		MB;
+   pI128->mem.rbase_g[DATA_TI] = n;					MB;
+   pI128->mem.rbase_g[DATA_TI] = m;					MB;
+   pI128->mem.rbase_g[DATA_TI] = p | TI_PLL_ENABLE;			MB;
+
+#ifdef NOTYET
+   /*
+    * Program the MCLK to 57MHz
+    */
+   pI128->mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;
+   pI128->mem.rbase_g[DATA_TI] = 0x05;
+   pI128->mem.rbase_g[DATA_TI] = 0x05;
+   pI128->mem.rbase_g[DATA_TI] = 0x05;
+#endif
+
+   switch (pI128->bitsPerPixel) {
+	case 8:
+		misc_ctrl = /* (i128DAC8Bit ? TI_MC_8_BPP : 0) | */
+			    TI_MC_INT_6_8_CONTROL;
+		aux_ctrl  = TI_AUX_SELF_CLOCK | TI_AUX_W_CMPL;
+   		oclk      = TI_OCLK_S | TI_OCLK_V4 | TI_OCLK_R8;
+		col_key   = TI_COLOR_KEY_CMPL;
+		break;
+	case 16:
+		misc_ctrl = 0x00;
+		aux_ctrl  = 0x00;
+   		oclk      = TI_OCLK_S | TI_OCLK_V4 | TI_OCLK_R4;
+		col_key   = 0x00;
+		break;
+	case 32:
+		misc_ctrl = 0x00;
+		aux_ctrl  = 0x00;
+   		oclk      = TI_OCLK_S | TI_OCLK_V4 | TI_OCLK_R2;
+		col_key   = 0x00;
+		break;
+   }
+   switch (pI128->depth) {
+	case 8:
+		mux1_ctrl = TI_MUX1_PSEUDO_COLOR;
+		mux2_ctrl = TI_MUX2_BUS_PC_D8P64;
+		break;
+	case 15:
+		mux1_ctrl = TI_MUX1_3025D_555;
+		mux2_ctrl = TI_MUX2_BUS_DC_D15P64;
+		break;
+	case 16:
+		mux1_ctrl = TI_MUX1_3025D_565;
+		mux2_ctrl = TI_MUX2_BUS_DC_D16P64;
+		break;
+	case 24:
+		mux1_ctrl = TI_MUX1_3025D_888;
+		mux2_ctrl = TI_MUX2_BUS_DC_D24P64;
+		break;
+   }
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = TI_CURS_SPRITE_ENABLE | TI_CURS_X_WINDOW_MODE;MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_TRUE_COLOR_CONTROL;		MB;
+   pI128->mem.rbase_g[DATA_TI] = 0x00;  /* 3025 mode, vga, 8/4bit */	MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_VGA_SWITCH_CONTROL;		MB;
+   pI128->mem.rbase_g[DATA_TI] = 0x00;					MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_GENERAL_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = 0x00;					MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_MISC_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = misc_ctrl;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_AUXILIARY_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = aux_ctrl;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_COLOR_KEY_CONTROL;			MB;
+   pI128->mem.rbase_g[DATA_TI] = col_key;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_1;			MB;
+   pI128->mem.rbase_g[DATA_TI] = mux1_ctrl;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_2;			MB;
+   pI128->mem.rbase_g[DATA_TI] = mux2_ctrl;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_INPUT_CLOCK_SELECT;		MB;
+   pI128->mem.rbase_g[DATA_TI] = TI_ICLK_PLL;				MB;
+
+   pI128->mem.rbase_g[INDEX_TI] = TI_OUTPUT_CLOCK_SELECT;		MB;
+   pI128->mem.rbase_g[DATA_TI] = oclk;					MB;
+
+   usleep(150000);
+   return(TRUE);
+}
 
 Bool
 I128ProgramIBMRGB(ScrnInfoPtr pScrn, DisplayModePtr mode)
