@@ -80,7 +80,7 @@ default xkb_symbols "usa1" {
     key <LAMI> {	[	 Meta_L		]	};
     key <SPCE> {	[	 space		]	};
     key <RAMI> {	[	 Meta_R		]	};
-    key <RALT> {	[	 Alt_R		]	};
+    key <RALT> {	[ Mode_switch,	Multi_key	]	};
     // End alphanumeric section
 
     // Begin "Editing" section
@@ -124,7 +124,7 @@ default xkb_symbols "usa1" {
     modifier_map Shift  { Shift_L, Shift_R };
     modifier_map Lock   { Caps_Lock };
     modifier_map Control{ Control_L };
-    modifier_map Mod1	{ Alt_L, Alt_R };
+    modifier_map Mod1	{ Alt_L };
     modifier_map Mod2	{ Mode_switch };
     modifier_map Mod3	{ Meta_L, Meta_R };
 };
@@ -246,7 +246,7 @@ xkb_symbols "de" {
     key <LAMI> {	[	 Meta_L		]	};
     key <SPCE> {	[	 space		]	};
     key <RAMI> {	[	 Meta_R		]	};
-    key <RALT> {	[	 Alt_R		]	};
+    key <RALT> {	[ Mode_switch,	Multi_key	]	};
     // End alphanumeric section
 
     // Begin "Editing" section
@@ -290,7 +290,7 @@ xkb_symbols "de" {
     modifier_map Shift  { Shift_L, Shift_R };
     modifier_map Lock   { Caps_Lock };
     modifier_map Control{ Control_L };
-    modifier_map Mod1	{ Alt_L, Alt_R };
+    modifier_map Mod1	{ Alt_L };
     modifier_map Mod2	{ Mode_switch };
     modifier_map Mod3	{ Meta_L, Meta_R };
 };
