@@ -340,12 +340,12 @@ regardless of the model of the PS/2 mouse.
 The other \fBXXXXPS/2\fP protocol types may or may not be supported by
 your OS.
 .PP
-The \fBwsouse\fP protocol is for mices handled by the wscons console
+The \fBwsouse\fP protocol is for mice handled by the wscons console
 driver in NetBSD 1.4 and later. It should be used with the
 /dev/wsmouse0 device. Refer to the wsmouse(4) manual page for
 details. 
 .PP
-The \fBUsb\fP protocol is for USB mices on OpenBSD 2.6 and later. It
+The \fBUsb\fP protocol is for USB mice on OpenBSD 2.6 and later. It
 should be used with the /dev/uhid0 
 device. Refer to the uhid(4) and usb(4) manual pages for details. 
 .PP
