@@ -262,6 +262,23 @@ ServerTarget(Xhpc,$(HPCDIRS),$(HPCOBJS),$(HPCLIBS),$(SYSLIBS))
 #endif
 #endif /* XhpcServer */
 
+#if XdreamcastServer
+XCOMM
+XCOMM NetBSD/dreamcast server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+DDXDIR1 = hw/netbsd/dreamcast
+DREAMCASTDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(DDXDIR1) $(DEPDIRS)
+DREAMCASTOBJS = hw/netbsd/dreamcast/dreamcastInit.o
+DREAMCASTLIBS = hw/netbsd/dreamcast/libdreamcast.a CFB8Libs CFB16Libs
+ServerTarget(Xdreamcast,$(DREAMCASTDIRS),$(DREAMCASTOBJS),$(DREAMCASTLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xdreamcast
+#endif
+#endif /* XdreamcastServer */
+
 #if XdecServer
 XCOMM
 XCOMM Digital MIPS based WS server (ultrix 4.2 and beyond)
