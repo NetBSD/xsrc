@@ -39,9 +39,9 @@ from the X Consortium.
 #define NEED_EVENTS
 #include    "alpha.h"
 
-#undef FBIOGCURMAX	/* XXX cgd */
+#undef WSDISPLAYIO_GCURMAX	/* XXX cgd */
 
-#ifdef FBIOGCURMAX  /* has hardware cursor kernel support */
+#ifdef WSDISPLAYIO_GCURMAX  /* has hardware cursor kernel support */
 
 #define GetCursorPrivate(s) (&(GetScreenPrivate(s)->hardwareCursor))
 #define SetupCursor(s)	    alphaCursorPtr pCurPriv = GetCursorPrivate(s)
@@ -115,13 +115,13 @@ alphaLoadCursor (pScreen, pCursor, x, y)
     int		x, y;
 {
     SetupCursor(pScreen);
-    struct fbcursor fbcursor;
+    struct wsdisplay_cursor fbcursor;
     int	w, h;
     unsigned char   r[2], g[2], b[2];
     DDXPointRec	ptSrc;
     unsigned char   source_temp[1024], mask_temp[1024];
 
-    fbcursor.set = FB_CUR_SETALL;
+    fbcursor.set = WSDISPLAY_CURSOR_DOALL;
     fbcursor.enable = 1;
     fbcursor.pos.x = x;
     fbcursor.pos.y = y;
@@ -138,8 +138,8 @@ alphaLoadCursor (pScreen, pCursor, x, y)
     fbcursor.cmap.red = r;
     fbcursor.cmap.green = g;
     fbcursor.cmap.blue = b;
-    fbcursor.image = (char *) pCursor->bits->source;
-    fbcursor.mask = (char *) pCursor->bits->mask;
+    fbcursor.image = (u_char *) pCursor->bits->source;
+    fbcursor.mask = (u_char *) pCursor->bits->mask;
     w = pCursor->bits->width;
     h = pCursor->bits->height;
     if (w > pCurPriv->width || h > pCurPriv->height) {
@@ -153,12 +153,12 @@ alphaLoadCursor (pScreen, pCursor, x, y)
 			source_temp, &ptSrc, w, h);
 	alphaCursorRepad (pScreen, pCursor->bits, pCursor->bits->mask,
 			mask_temp, &ptSrc, w, h);
-	fbcursor.image = (char *) source_temp;
-	fbcursor.mask = (char *) mask_temp;
+	fbcursor.image = (u_char *) source_temp;
+	fbcursor.mask = (u_char *) mask_temp;
     }
     fbcursor.size.x = w;
     fbcursor.size.y = h;
-    (void) ioctl (alphaFbs[pScreen->myNum].fd, FBIOSCURSOR, &fbcursor);
+    (void) ioctl (alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SCURSOR, &fbcursor);
 }
 
 static void
@@ -182,11 +182,11 @@ alphaMoveCursor (pScreen, x, y)
     int		x, y;
 {
     SetupCursor(pScreen);
-    struct fbcurpos pos;
+    struct wsdisplay_curpos pos;
 
     pos.x = x;
     pos.y = y;
-    ioctl (alphaFbs[pScreen->myNum].fd, FBIOSCURPOS, &pos);
+    ioctl (alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SCURPOS, &pos);
 }
 
 miPointerSpriteFuncRec alphaPointerSpriteFuncs = {
@@ -234,12 +234,13 @@ Bool alphaCursorInitialize (pScreen)
     ScreenPtr	pScreen;
 #endif
 {
-#ifdef FBIOGCURMAX
+#ifdef WSDISPLAYIO_GCURMAX
     SetupCursor (pScreen);
-    struct fbcurpos maxsize;
+    struct wsdisplay_curpos maxsize;
 
     pCurPriv->has_cursor = FALSE;
-    if (ioctl (alphaFbs[pScreen->myNum].fd, FBIOGCURMAX, &maxsize) == -1)
+    if (ioctl (alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_GCURMAX,
+      &maxsize) == -1)
 	return FALSE;
     pCurPriv->width = maxsize.x;
     pCurPriv->height= maxsize.y;
@@ -264,15 +265,16 @@ void alphaDisableCursor (pScreen)
     ScreenPtr	pScreen;
 #endif
 {
-#ifdef FBIOGCURMAX
+#ifdef WSDISPLAYIO_GCURMAX
     SetupCursor (pScreen);
-    struct fbcursor fbcursor;
+    struct wsdisplay_cursor fbcursor;
 
     if (pCurPriv->has_cursor)
     {
-    	fbcursor.set = FB_CUR_SETCUR;
+    	fbcursor.set = WSDISPLAY_CURSOR_DOCUR;
     	fbcursor.enable = 0;
-    	(void) ioctl (alphaFbs[pScreen->myNum].fd, FBIOSCURSOR, &fbcursor);
+    	(void) ioctl (alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SCURSOR,
+    	  &fbcursor);
 	pCurPriv->pCursor = NULL;
     }
 #endif

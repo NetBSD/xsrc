@@ -142,26 +142,26 @@ static void SetLights (ctrl, fd)
     KeybdCtrl*	ctrl;
     int fd;
 {
-#ifdef KIOCSLED
-    static unsigned char led_tab[16] = {
+#ifdef WSKBDIO_SETLEDS
+    static int led_tab[16] = {
 	0,
-	LED_NUM_LOCK,
-	LED_SCROLL_LOCK,
-	LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_COMPOSE,
-	LED_COMPOSE | LED_NUM_LOCK,
-	LED_COMPOSE | LED_SCROLL_LOCK,
-	LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK,
-	LED_CAPS_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_SCROLL_LOCK,
-	LED_CAPS_LOCK | LED_SCROLL_LOCK | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_NUM_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK,
-	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK
+	WSKBD_LED_NUM,
+	WSKBD_LED_SCROLL,
+	WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_COMPOSE,
+	WSKBD_LED_COMPOSE | WSKBD_LED_NUM,
+	WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL,
+	WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS,
+	WSKBD_LED_CAPS | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_SCROLL,
+	WSKBD_LED_CAPS | WSKBD_LED_SCROLL | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_NUM,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL,
+	WSKBD_LED_CAPS | WSKBD_LED_COMPOSE | WSKBD_LED_SCROLL | WSKBD_LED_NUM
     };
-    if (ioctl (fd, KIOCSLED, (caddr_t)&led_tab[ctrl->leds & 0x0f]) == -1)
+    if (ioctl (fd, WSKBDIO_SETLEDS, &led_tab[ctrl->leds & 0x0f]) == -1)
 	Error("Failed to set keyboard lights");
 #endif
 }
@@ -217,18 +217,17 @@ static void alphaBell (percent, device, ctrl, unused)
 {
     KeybdCtrl*      kctrl = (KeybdCtrl*) ctrl;
     alphaKbdPrivPtr   pPriv = (alphaKbdPrivPtr) device->public.devicePrivate;
-    struct wsconsio_bell_data wbd;
+    struct wskbd_bell_data wbd;
  
     if (percent == 0 || kctrl->bell == 0)
  	return;
 
-    wbd.wbd_flags = WSCONSIO_BELLDATA_VOLUME | WSCONSIO_BELLDATA_PITCH |
-	WSCONSIO_BELLDATA_PERIOD;
-    wbd.wbd_volume = percent;
-    wbd.wbd_pitch = kctrl->bell_pitch;
-    wbd.wbd_period = kctrl->bell_duration;
+    wbd.which = WSKBD_BELL_DOALL;
+    wbd.volume = percent;
+    wbd.pitch = kctrl->bell_pitch;
+    wbd.period = kctrl->bell_duration;
 
-    if (ioctl (pPriv->fd, WSCONSIO_COMPLEXBELL, &wbd) == -1) {
+    if (ioctl (pPriv->fd, WSKBDIO_COMPLEXBELL, &wbd) == -1) {
  	Error("Failed to activate bell");
 	return;
     }
@@ -556,19 +555,19 @@ fflush(stderr);
  */
 
 #if NeedFunctionPrototypes
-Firm_event* alphaKbdGetEvents (
+struct wscons_event *alphaKbdGetEvents (
     int		fd,
     int*	pNumEvents,
     Bool*	pAgain)
 #else
-Firm_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
+struct wscons_event *alphaKbdGetEvents (fd, pNumEvents, pAgain)
     int		fd;
     int*	pNumEvents;
     Bool*	pAgain;
 #endif
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
-    static Firm_event	evBuf[MAXEVENTS];   /* Buffer for Firm_events */
+    static struct wscons_event evBuf[MAXEVENTS];   /* Buffer for events */
 
     if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
@@ -579,7 +578,7 @@ Firm_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
 	    FatalError ("Could not read the keyboard");
 	}
     } else {
-	*pNumEvents = nBytes / sizeof (Firm_event);
+	*pNumEvents = nBytes / sizeof (struct wscons_event);
 	*pAgain = (nBytes == sizeof (evBuf));
     }
     return evBuf;
@@ -598,7 +597,7 @@ static int	composeCount;
 static Bool DoSpecialKeys(device, xE, fe)
     DeviceIntPtr  device;
     xEvent*       xE;
-    Firm_event* fe;
+    struct wscons_event *fe;
 {
     int	shift_index, map_index, bit;
     KeySym ksym;
@@ -679,18 +678,18 @@ static Bool DoSpecialKeys(device, xE, fe)
 #if NeedFunctionPrototypes
 void alphaKbdEnqueueEvent (
     DeviceIntPtr  device,
-    Firm_event	  *fe)
+    struct wscons_event *fe)
 #else
 void alphaKbdEnqueueEvent (device, fe)
     DeviceIntPtr  device;
-    Firm_event	  *fe;
+    struct wscons_event *fe;
 #endif
 {
     xEvent		xE;
     BYTE		keycode;
     CARD8		keyModifiers;
 
-    keycode = (fe->id & 0x7f) + MIN_KEYCODE;
+    keycode = (fe->type & 0x7f) + MIN_KEYCODE;
 
     keyModifiers = device->key->modifierMap[keycode];
 #if 0 /* XXX */
@@ -698,7 +697,8 @@ void alphaKbdEnqueueEvent (device, fe)
     if (noXkbExtension) {
 #endif
     if (autoRepeatKeyDown && (keyModifiers == 0) &&
-	((fe->value == VKEY_DOWN) || (keycode == autoRepeatEvent.u.u.detail))) {
+	((fe->value == WSCONS_EVENT_KEY_DOWN) ||
+	(keycode == autoRepeatEvent.u.u.detail))) {
 	/*
 	 * Kill AutoRepeater on any real non-modifier key down, or auto key up
 	 */
@@ -709,7 +709,7 @@ void alphaKbdEnqueueEvent (device, fe)
 #endif
 #endif /* 0 XXX */
     xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
-    xE.u.u.type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
+    xE.u.u.type = ((fe->type == WSCONS_EVENT_KEY_UP) ? KeyRelease : KeyPress);
     xE.u.u.detail = keycode;
 #if 0 /* XXX */
 #ifdef XKB
@@ -796,20 +796,12 @@ int sunChangeKbdTranslation(fd, makeTranslated)
 #endif
 {   
     int 	tmp;
-#ifndef i386 /* { */
     sigset_t	hold_mask, old_mask;
-#else /* }{ */
-    int		old_mask;
-#endif /* } */
     int		toread;
     char	junk[8192];
 
-#ifndef i386 /* { */
     (void) sigfillset(&hold_mask);
     (void) sigprocmask(SIG_BLOCK, &hold_mask, &old_mask);
-#else /* }{ */
-    old_mask = sigblock (~0);
-#endif /* } */
     sunKbdWait();
     if (makeTranslated) {
         /*
@@ -847,11 +839,7 @@ int sunChangeKbdTranslation(fd, makeTranslated)
 	    toread -= tmp;
 	}
     }
-#ifndef i386 /* { */
     (void) sigprocmask(SIG_SETMASK, &old_mask, (sigset_t *)NULL);
-#else /* }{ */
-    sigsetmask (old_mask);
-#endif /* } */
     return 0;
 }
 #endif /* 0 XXX */
