@@ -713,7 +713,7 @@ XkbRF_VarDefsRec	defs;
     if (names->types) names->types = _XkbDupString(names->types);
     if (names->compat) names->compat = _XkbDupString(names->compat);
     if (names->geometry) names->geometry = _XkbDupString(names->geometry);
-    if (names->symbols) names->geometry = _XkbDupString(names->symbols);
+    if (names->symbols) names->symbols = _XkbDupString(names->symbols);
 
     if (defs.model && defs.layout && rules) {
 	XkbComponentNamesRec	rNames;
