@@ -559,6 +559,8 @@ SetOpts(argc, argv)
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'I') {
 		    AddCppArg(argv[0]);
+		} else if (argv[0][1] == 'U') {
+		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'f') {
 		    if (argv[0][2])
 			Imakefile = argv[0]+2;
