@@ -22,7 +22,7 @@
  * Authors: Alan Hourihane, alanh@fairlite.demon.co.uk
  *          Sven Luther <luther@dpt-info.u-strasbg.fr>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.11 2002/05/22 08:12:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.11.2.1 2003/05/09 02:10:18 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -745,6 +745,10 @@ Permedia3DisplayVideo(
 	x2 = drw_w - (dstBox->x2 - dstBox->x1);
 	drw_w = (dstBox->x2 - dstBox->x1);
     }
+
+    /* Avoid divide by zero in compute_scale_factor. */
+    if (drw_w < 8)
+	return;
 
     /* Let's adjust the width of source and dest to be compliant with 
      * the Permedia3 overlay unit requirement, and compute the X deltas. */

@@ -41,7 +41,7 @@ interest in or to any trademark, service mark, logo or trade name of
 Sun Microsystems, Inc. or its licensors is granted.
 
 */
-/* $XFree86: xc/lib/X11/XlcDL.c,v 1.9 2002/11/25 14:04:53 eich Exp $ */
+/* $XFree86: xc/lib/X11/XlcDL.c,v 1.9.2.1 2003/03/11 23:18:49 herrb Exp $ */
 
 #include <stdio.h>
 #if defined(hpux)
@@ -406,7 +406,7 @@ _XlcDynamicLoad(lc_name)
 
     if (lc_name == NULL) return (XLCd)NULL;
 
-    if (_XlcLocaleDirName(lc_dir, (char *)lc_name) == (char*)NULL)
+    if (_XlcLocaleDirName(lc_dir, BUFSIZE, (char *)lc_name) == (char*)NULL)
 	return (XLCd)NULL;
 
     resolve_object(lc_dir, lc_name);
@@ -452,7 +452,7 @@ char *res_name, *res_class;
 
   lc_name = lcd->core->name;
 
-  if (_XlcLocaleDirName(lc_dir, lc_name) == NULL) return (XIM)0;
+  if (_XlcLocaleDirName(lc_dir, BUFSIZE, lc_name) == NULL) return (XIM)0;
 
   count = lc_count;
   for (; count-- > 0; objects_list++) {
@@ -498,7 +498,7 @@ XPointer	*client_data;
 
   lc_name = lcd->core->name;
 
-  if (_XlcLocaleDirName(lc_dir, lc_name) == NULL) return False;
+  if (_XlcLocaleDirName(lc_dir, BUFSIZE, lc_name) == NULL) return False;
 
   count = lc_count;
   for (; count-- > 0; objects_list++) {
@@ -543,7 +543,7 @@ XPointer	*client_data;
 #endif
 
   lc_name = lcd->core->name;
-  if (_XlcLocaleDirName(lc_dir, lc_name) == NULL) return False;
+  if (_XlcLocaleDirName(lc_dir, BUFSIZE, lc_name) == NULL) return False;
 
   count = lc_count;
   for (; count-- > 0; objects_list++) {
@@ -610,7 +610,7 @@ char *res_class;
 
   lc_name = lcd->core->name;
 
-  if (_XlcLocaleDirName(lc_dir, lc_name) == NULL) return (XOM)0;
+  if (_XlcLocaleDirName(lc_dir, BUFSIZE, lc_name) == NULL) return (XOM)0;
 
   count = lc_count;
   for (; count-- > 0; objects_list++) {

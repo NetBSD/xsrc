@@ -1,3 +1,106 @@
+XFree86 4.3.0.2 (xx September 2003)
+1010. Include backwards compatibility API for renamed stream functions in
+      Freetype2 library (Torrey T. Lyons).
+1009. Fix DRM_CAS on ia64 as used by the DRI (Bugzilla #778, John Dennis).
+1008. Fix some i830+ VT switch/exit crashes (David Dawes, Egbert Eich).
+1007. Fixed definititon of UseInstalledOnCrossCompile so that it never is
+      undefined (Harlod L. Hunt II).
+1006. Fixing crash on ia64 because of wrong setjmp buffer alignment (Bugzilla
+      #596, John Dennis).
+1005. Close freetype fontfile filehandle in mkfontscale, this prevents problems
+      from limitation of simultaniously open files (Bugzilla #676, 
+      Jun-ichiro itojun Hagino).
+1004. Fixed erronous freeing of DisplayModeRec in xf86DeleteMode() when
+      deleting the modePool in xf86PruneDriverModes() the 'prev' member has
+      a different meaning for modePool modes than for ScrnInfoPtr->modes modes
+      where it creates a doubly linked list (Bugzilla #678, Juergen Keil).
+1003. Backport xdm code from -current, including following changes:
+      - use better pseudo-random generators to generate magic cookies,
+        including EGD-like prng daemons support.
+      - add support for LISTEN keyworkd in Xaccess
+      - deal with small memory leaks
+      - use SIOCGLIFCONF to query network interfaces where available
+      - fix XDMCP bug that could cause localhost entries in /etc/X0.hosts 
+        to be lost
+      - add xdm /dev/random handling for Solaris
+      - fix XDMCP queries on systems using getifaddrs().
+      (Alan Coopersmith, Marc La France, Oswald Buddenhagen, Matthieu Herrb,
+      Nicolas JOLY, Jason L. Wright, Joel Ray Holveck).
+1002. Fixes for potential integer overflows in font libraries. (blexim, 
+      Matthieu Herrb).
+1001. Don't call FBIOPAN_DISPLAY ioctl with arguments that will cause a
+      confusing if harmless error (Michel Dänzer)
+1000. Fixed a crash when _XIMProtoOpenIM(), hich is called through XOpenIM()
+      API when protocol IM is being set up,  fails (Bugzilla #618,
+      Hisashi MIYASHITA).
+ 999. Fix an XAA pixmap cache server crash that can happen in some cases
+      when the off-screen memory is heavily fragmented (David Dawes, based
+      on #5752, Koike Kazuhiko, Chisato Yamauchi).
+ 998. Fixed XDarwin fullscreen crash in some screen sizes (Torrey T. Lyons).
+ 997. Fix calculation of CRTC2 frame offset with page flipping in radeon driver
+      (Michel Daenzer)
+ 996. Pull twm fixes (signal handler, empty windows menu) from -current.
+ 995. Fix for a crash if a scalable font has a bitmap entry in 
+      fonts.dir (#5687, Bugzilla #332, Juliusz Chroboczek).
+ 994. Fix for xfs crashes in Freetype backend (Bugzilla #242, 
+      Juliusz Chroboczek). 
+ 993. Fix repeated image problem when using a vesa video mode before starting
+      the Xserver on the S3 Trio3D cards (Alan Hourihane).
+ 992. Fix XDMCP queries in xdm on systems using getifaddrs().
+      (Bugzilla #277, Joel Ray Holveck).
+ 991. Fixed Imakefiles so the driver SDK builds again (Sven Luther).
+ 990. i810/815 depth buffer needs to be a multiple of the tile size.  This
+      fixes 3D corruption near the bottom of the screen at 800x600@16bpp
+      (Bugzilla #283, Dave Airlie).
+ 989. Typo fix in radeon driver cursor code, fixes the primary head switching
+      off when the cursor moves to the secondary head on dualhead cards
+      (Michel Dänzer)
+ 988. Fix a problem with savage driver when UseBIOS is off, such that the
+      performance drops dramatically. Now the performance matches or
+      exceeds that of the option UseBIOS (Alan Hourihane).
+
+XFree86 4.3.0.1 (9 May 2003)
+ 987. Fix a FreeBSD/alpha build problem (#5679, Fred Clift).
+ 986. Fix SiliconMotion driver for mode switching and SEGV problem when
+      initializing Xv functionality (Bugzilla #50, Alan Hourihane).
+ 985. Fix a SEGV that can happen with Riva128 cards (Mark Vojkovich).
+ 984. Prevent a SIGFPE with the glint/pm3 driver when attempting to display
+      an XVideo image less than 8 pixels wide (Måns Rullgård).
+ 983. Fix double free bug when a Mac-specific font fails to load with
+      Freetype (Torrey T. Lyons).
+ 982. Check for NULL tObj in the i830 3D driver's TexEnv function.  This
+      fixes a FlightGear crash (Keith Whitwell).
+ 981. Fix lockup on server reset in radeon driver
+      (Michel Dänzer, Keith Whitwell).
+ 980. Set Mesa hooks to flush vertices on state changes in Radeon 3D drivers
+      (Keith Whitwell).
+ 979. Fix to prevent PCI and CardBus resets when switching out of the server's
+      virtual console (Marc La France).
+ 978. Fix infinite loop that occurs on systems whose PCI configuration space
+      doesn't advertise a host bridge (Marc La France).
+ 977. Workaround for broken devices that don't implement the header type field
+      in their PCI configuration space (Marc La France).
+ 976. Fix programming error in ix86 motherboard chipset determination
+      (Marc La France).
+ 975. Fix bug in mode validation that occurs when the XF86Config doesn't
+      specify any mode or virtual resolution information (Marc La France).
+ 974. Another int10 fix.  This time for adapters found at PCI:0:0:0.  This
+      fix is particularly important for ZX1-based systems (Marc La France).
+ 973. int10 fix for all ix86 non-Linux systems (Marc La France).
+ 972. Fix compatibility problem between modules generated without the recent
+      setjmp/longjmp work and a server generated using glibc <= 2.2.*
+      (Marc La France).
+ 971. setjmp/longjmp related fixes for Linux/libc5 systems (Marc La France).
+ 970. Make setjmp/longjmp emulation save/restore blocked signal masks on all
+      libc5 & glibc systems (Marc La France).
+ 969. Fix setjmp/longjmp emulation for glibc 2.2.[01] systems and remove
+      HasGlibc21Sigsetjmp override (Marc La France).
+ 968. setjmp/longjmp-related compilation fixes for libc5 systems
+      (Marc La France).
+ 967. Fix possible overflow in _XlcLocaleDirName. (Matthieu Herrb).
+ 966. Fix XDarwin build broken by #960 (Shantonu Sen).
+ 965. Fix StaticColor colormap on Darwin/x86 6.x (Rob Braun).
+
 XFree86 4.3.0 (27 February 2003)
  964. Add an imake option to allow the glibc21-style setjmp() behaviour
       to be forced when auto-detecting it fails (this is needed for RH 7.0).
@@ -16536,4 +16639,9 @@ XFree86 3.0a (28 April 1994)
 XFree86 3.0 (26 April 1994)
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2588 2003/02/27 04:56:44 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2588.2.33 2003/11/06 01:32:59 torrey Exp $
+
+
+
+
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.c,v 1.12 2003/02/08 21:26:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.c,v 1.12.2.1 2003/10/21 02:22:38 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2001 VA Linux Systems Inc., Fremont, California.
@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors: Jeff Hartmann <jhartmann@valinux.com>
- *          David Dawes <dawes@tungstengraphics.com>
+ *          David Dawes <dawes@xfree86.org>
  *          Keith Whitwell <keith@tungstengraphics.com>
  */
 
@@ -822,6 +822,9 @@ I830DRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
 {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    I830Ptr pI830 = I830PTR(pScrn);
+
+   if (!pScrn->vtSema)
+      return;
 
    if (syncType == DRI_3D_SYNC &&
        oldContextType == DRI_2D_CONTEXT && newContextType == DRI_2D_CONTEXT) {

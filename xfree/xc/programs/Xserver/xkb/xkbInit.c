@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.26 2003/02/09 06:29:20 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.26.2.1 2003/03/17 23:53:14 paulo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -713,7 +713,7 @@ XkbRF_VarDefsRec	defs;
     if (names->types) names->types = _XkbDupString(names->types);
     if (names->compat) names->compat = _XkbDupString(names->compat);
     if (names->geometry) names->geometry = _XkbDupString(names->geometry);
-    if (names->symbols) names->geometry = _XkbDupString(names->symbols);
+    if (names->symbols) names->symbols = _XkbDupString(names->symbols);
 
     if (defs.model && defs.layout && rules) {
 	XkbComponentNamesRec	rNames;

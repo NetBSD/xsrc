@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_vtxfmt.c,v 1.5 2002/12/16 16:18:59 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_vtxfmt.c,v 1.5.2.1 2003/05/06 23:21:44 daenzer Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_tex.h"
 #include "radeon_tcl.h"
+#include "radeon_swtcl.h"
 #include "radeon_vtxfmt.h"
 
 #include "api_noop.h"
@@ -59,7 +60,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 struct radeon_vb vb;
 
-static void radeonFlushVertices( GLcontext *, GLuint );
+static void radeonVtxfmtFlushVertices( GLcontext *, GLuint );
 
 static void count_func( const char *name,  struct dynfn *l )
 {
@@ -336,12 +337,13 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
       fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
 
    if (ctx->Driver.NeedFlush) 
-      radeonFlushVertices( ctx, ctx->Driver.NeedFlush );
+      radeonVtxfmtFlushVertices( ctx, ctx->Driver.NeedFlush );
 
    if (ctx->NewState)
       _mesa_update_state( ctx ); /* clear state so fell_back sticks */
 
    _tnl_wakeup_exec( ctx );
+   ctx->Driver.FlushVertices = radeonFlushVertices;
 
    assert( rmesa->dma.flush == 0 );
    rmesa->vb.fell_back = GL_TRUE;
@@ -382,6 +384,7 @@ static void VFMT_FALLBACK( const char *caller )
    prim = rmesa->vb.prim[0];
    ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
    _tnl_wakeup_exec( ctx );
+   ctx->Driver.FlushVertices = radeonFlushVertices;
 
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
@@ -731,7 +734,7 @@ static void radeonVtxfmtValidate( GLcontext *ctx )
 	    fprintf(stderr, "reinstall (new install)\n");
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
-	 ctx->Driver.FlushVertices = radeonFlushVertices;
+	 ctx->Driver.FlushVertices = radeonVtxfmtFlushVertices;
 	 ctx->Driver.NewList = radeonNewList;
 	 rmesa->vb.installed = GL_TRUE;
 	 vb.context = ctx;
@@ -747,6 +750,7 @@ static void radeonVtxfmtValidate( GLcontext *ctx )
 	 if (rmesa->dma.flush)
 	    rmesa->dma.flush( rmesa );
 	 _tnl_wakeup_exec( ctx );
+	 ctx->Driver.FlushVertices = radeonFlushVertices;
 	 rmesa->vb.installed = GL_FALSE;
 	 vb.context = 0;
       }
@@ -905,7 +909,7 @@ static GLboolean radeonNotifyBegin( GLcontext *ctx, GLenum p )
    return GL_TRUE;
 }
 
-static void radeonFlushVertices( GLcontext *ctx, GLuint flags )
+static void radeonVtxfmtFlushVertices( GLcontext *ctx, GLuint flags )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
 

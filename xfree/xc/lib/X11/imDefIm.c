@@ -31,7 +31,7 @@ OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIm.c,v 1.11 2002/12/14 01:53:56 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefIm.c,v 1.11.2.2 2003/10/08 17:56:31 eich Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS
@@ -2081,6 +2081,7 @@ _XimProtoOpenIM(im)
 	    _XimRegisterServerFilter(im);
 	    return True;
 	}
+	_XimShutdown(im);
 #ifdef XIM_CONNECTABLE
     } else if (IS_DELAYBINDABLE(im)) {
 	if (_XimDelayModeSetAttr(im))

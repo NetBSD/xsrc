@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_swtcl.c,v 1.3 2002/12/23 15:29:26 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_swtcl.c,v 1.3.2.1 2003/05/06 23:21:44 daenzer Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "tnl/t_imm_exec.h"
 #include "tnl/t_pipeline.h"
 
 #include "r200_context.h"
@@ -1222,6 +1223,14 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
       r200ChooseVertexState( ctx );
 }
 
+
+void r200FlushVertices( GLcontext *ctx, GLuint flags )
+{
+   _tnl_flush_vertices( ctx, flags );
+
+   if (flags & FLUSH_STORED_VERTICES) 
+      R200_FIREVERTICES( R200_CONTEXT( ctx ) );
+}
 
 /**********************************************************************/
 /*                            Initialization.                         */

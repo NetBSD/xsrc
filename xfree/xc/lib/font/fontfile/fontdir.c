@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fontdir.c,v 3.19 2002/05/31 18:45:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontdir.c,v 3.19.2.1 2003/06/08 18:38:55 herrb Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -728,10 +728,13 @@ FontFileAddFontFile (FontDirectoryPtr dir, char *fontName, char *fileName)
 		    if (!(existing->u.scalable.fileName = FontFileSaveString (fileName)))
 			return FALSE;
 		}
-		FontFileCompleteXLFD(&vals, &vals);
-		FontFileAddScaledInstance (existing, &vals, NullFont,
-					   bitmap->name.name);
-		return TRUE;
+                if(bitmap)
+                {
+                    FontFileCompleteXLFD(&vals, &vals);
+                    FontFileAddScaledInstance (existing, &vals, NullFont,
+                                               bitmap->name.name);
+                    return TRUE;
+                }
 	    }
 	}
 	if (!(entry.u.scalable.fileName = FontFileSaveString (fileName)))
@@ -795,9 +798,12 @@ FontFileAddFontFile (FontDirectoryPtr dir, char *fontName, char *fileName)
 	}
 	if (vals.values_supplied & SIZE_SPECIFY_MASK)
 	{
-	    FontFileCompleteXLFD(&vals, &vals);
-	    FontFileAddScaledInstance (scalable, &vals, NullFont,
-				       bitmap->name.name);
+            if(bitmap)
+            {
+                FontFileCompleteXLFD(&vals, &vals);
+                FontFileAddScaledInstance (scalable, &vals, NullFont,
+                                           bitmap->name.name);
+            }
 	}
       }
     }

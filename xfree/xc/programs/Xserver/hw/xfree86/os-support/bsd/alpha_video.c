@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/alpha_video.c,v 1.2 2002/10/29 23:19:13 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/alpha_video.c,v 1.2.2.1 2003/05/09 02:30:43 dawes Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -33,9 +33,13 @@
 #include <sys/param.h>
 #ifndef __NetBSD__
 #  include <sys/sysctl.h>
+#  ifdef __FreeBSD__
+#      include <machine/sysarch.h>
+#   endif
 # else
 #  include <machine/sysarch.h>
 #endif
+
 #include "xf86Axp.h"
 
 #include "xf86_OSlib.h"
@@ -50,6 +54,8 @@
 #ifndef MAP_FAILED
 #define MAP_FAILED ((caddr_t)-1)
 #endif
+
+axpDevice bsdGetAXP(void);
 
 #ifndef __NetBSD__
 extern unsigned long dense_base(void);
@@ -248,7 +254,6 @@ checkDevMem(Bool warn)
 #ifndef HAS_APERTURE_DRV
            xf86Msg(X_WARNING, "checkDevMem: failed to open/mmap %s (%s)\n",
                    DEV_MEM, strerror(errno));
-           xf86ErrorF("\tlinear framebuffer access unavailable\n");
 #else
 #ifndef __OpenBSD__
            xf86Msg(X_WARNING, "checkDevMem: failed to open %s and %s\n"
@@ -258,12 +263,11 @@ checkDevMem(Bool warn)
                    "\t(%s)\n%s", DEV_APERTURE, DEV_MEM, strerror(errno),
                    SYSCTL_MSG);
 #endif /* __OpenBSD__ */
-	   
+#endif
            xf86ErrorF("\tlinear framebuffer access unavailable\n");
 	}
 	useDevMem = FALSE;
 	return;
-#endif
 }
 
 void
@@ -486,6 +490,9 @@ static int
 sethae(u_int64_t hae)
 {
 #ifdef __FreeBSD__
+#ifndef ALPHA_SETHAE
+#define ALPHA_SETHAE 0
+#endif
 	struct parms p;
 	p.hae = hae;
 	return (sysarch(ALPHA_SETHAE, (char *)&p));

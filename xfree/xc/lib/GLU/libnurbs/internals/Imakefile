@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GLU/libnurbs/internals/Imakefile,v 1.9 2002/12/14 04:41:12 dawes Exp $
+XCOMM $XFree86: xc/lib/GLU/libnurbs/internals/Imakefile,v 1.9.2.1 2003/03/13 04:10:41 tsi Exp $
 
 XCOMM License Applicability. Except to the extent portions of this file are
 XCOMM made subject to an alternative license as permitted in the SGI Free
@@ -149,6 +149,8 @@ OSDEFINES = -DNEEDCEILF
 # if OSMajorVersion <= 5
 OSDEFINES = -DNEEDCEILF
 # endif
+#elif defined(LinuxArchitecture) && (LinuxCLibMajorVersion < 6)
+OSDEFINES = -DNEEDCEILF
 #else
 OSDEFINES = -D_EXTENSIONS_
 #endif

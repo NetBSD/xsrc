@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/auth.c,v 3.27 2002/12/10 22:37:17 tsi Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.27.2.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -88,7 +88,21 @@ from The Open Group.
 #include <net/if.h>
 #endif /* __GNU__ */
 
-#if ((defined(SVR4) && !defined(sun)) || defined(ISC)) && defined(SIOCGIFCONF)
+/* Solaris provides an extended interface SIOCGLIFCONF.  Other systems
+ * may have this as well, but the code has only been tested on Solaris
+ * so far, so we only enable it there.  Other platforms may be added as
+ * needed.
+ *
+ * Test for Solaris commented out  --  TSI @ UQV 2003.06.13
+ */
+#ifdef SIOCGLIFCONF
+/* #if defined(sun) */
+#define USE_SIOCGLIFCONF
+/* #endif */
+#endif
+
+#if ((defined(SVR4) && !defined(sun)) || defined(ISC)) && \
+    defined(SIOCGIFCONF) && !defined(USE_SIOCGLIFCONF)
 #define SYSV_SIOCGIFCONF
 #endif
 
@@ -270,7 +284,7 @@ static int
 MakeServerAuthFile (struct display *d)
 {
     int len;
-#ifdef SYSV
+#if defined(SYSV) && !defined(SVR4)
 #define NAMELEN	14
 #else
 #define NAMELEN	255
@@ -851,7 +865,13 @@ DefineSelf (int fd, FILE *file, Xauth *auth)
 
 #else /* WINTCP */
 
-#ifdef SIOCGIFCONF
+#if defined(SIOCGIFCONF) || defined (USE_SIOCGLIFCONF)
+
+#ifdef USE_SIOCGLIFCONF
+#define ifr_type    struct lifreq
+#else
+#define ifr_type    struct ifreq
+#endif
 
 /* Handle variable length ifreq in BNR2 and later */
 #ifdef VARIABLE_IFREQ
@@ -859,7 +879,7 @@ DefineSelf (int fd, FILE *file, Xauth *auth)
 		     (p->ifr_addr.sa_len > sizeof (p->ifr_addr) ? \
 		      p->ifr_addr.sa_len - sizeof (p->ifr_addr) : 0))
 #else
-#define ifr_size(p) (sizeof (struct ifreq))
+#define ifr_size(p) (sizeof (ifr_type))
 #endif
 
 /* Define this host for access control.  Find all the hosts the OS knows about 
@@ -869,42 +889,92 @@ static void
 DefineSelf (int fd, FILE *file, Xauth *auth)
 {
     char		buf[2048], *cp, *cplim;
-    struct ifconf	ifc;
     int 		len;
     char 		*addr;
     int 		family;
-    register struct ifreq *ifr;
+    register ifr_type  *ifr;
+#ifdef USE_SIOCGLIFCONF
+    int			n;
+    void *		bufptr = buf;
+    size_t		buflen = sizeof(buf);
+    struct lifconf	ifc;
+#ifdef SIOCGLIFNUM
+    struct lifnum	ifn;
+#endif
+#else
+    struct ifconf	ifc;
+#endif
     
+#if defined(SIOCGLIFNUM) && defined(SIOCGLIFCONF)
+    ifn.lifn_family = AF_UNSPEC;
+    ifn.lifn_flags = 0;
+    if (ioctl (fd, (int) SIOCGLIFNUM, (char *) &ifn) < 0)
+	LogError ("Failed getting interface count");
+    if (buflen < (ifn.lifn_count * sizeof(struct lifreq))) {
+	buflen = ifn.lifn_count * sizeof(struct lifreq);
+	bufptr = malloc(buflen);
+    }
+#endif
+
+#ifdef USE_SIOCGLIFCONF
+    ifc.lifc_family = AF_UNSPEC;
+    ifc.lifc_flags = 0;
+    ifc.lifc_len = buflen;
+    ifc.lifc_buf = bufptr;
+
+#define IFC_IOCTL_REQ SIOCGLIFCONF
+#define IFC_IFC_REQ ifc.lifc_req
+#define IFC_IFC_LEN ifc.lifc_len
+#define IFR_IFR_ADDR ifr->lifr_addr
+#define IFR_IFR_NAME ifr->lifr_name
+
+#else    
     ifc.ifc_len = sizeof (buf);
     ifc.ifc_buf = buf;
-    if (ifioctl (fd, SIOCGIFCONF, (char *) &ifc) < 0)
-        LogError ("Trouble getting network interface configuration");
 
+#define IFC_IOCTL_REQ SIOCGIFCONF
 #ifdef ISC
 #define IFC_IFC_REQ (struct ifreq *) ifc.ifc_buf
 #else
 #define IFC_IFC_REQ ifc.ifc_req
 #endif
+#define IFC_IFC_LEN ifc.ifc_len
+#define IFR_IFR_ADDR ifr->ifr_addr
+#define IFR_IFR_NAME ifr->ifr_name
+#endif
 
-    cplim = (char *) IFC_IFC_REQ + ifc.ifc_len;
+    if (ifioctl (fd, IFC_IOCTL_REQ, (char *) &ifc) < 0) {
+        LogError ("Trouble getting network interface configuration");
+
+#ifdef USE_SIOCGLIFCONF
+	if (bufptr != buf) {
+	    free(bufptr);
+	}
+#endif
+	return;
+    }
+
+    cplim = (char *) IFC_IFC_REQ + IFC_IFC_LEN;
 
     for (cp = (char *) IFC_IFC_REQ; cp < cplim; cp += ifr_size (ifr))
     {
-	ifr = (struct ifreq *) cp;
+	ifr = (ifr_type *) cp;
 #ifdef DNETCONN
 	/*
 	 * this is ugly but SIOCGIFCONF returns decnet addresses in
 	 * a different form from other decnet calls
 	 */
-	if (ifr->ifr_addr.sa_family == AF_DECnet) {
+	if (IFR_IFR_ADDR.sa_family == AF_DECnet) {
 		len = sizeof (struct dn_naddr);
 		addr = (char *)ifr->ifr_addr.sa_data;
 		family = FamilyDECnet;
 	} else
 #endif
 	{
-	    if (ConvertAddr ((XdmcpNetaddr) &ifr->ifr_addr, &len, &addr) < 0)
+	    family = ConvertAddr ((XdmcpNetaddr) &IFR_IFR_ADDR, &len, &addr);
+	    if (family < 0)
 		continue;
+
 	    if (len == 0)
  	    {
 		Debug ("Skipping zero length address\n");
@@ -917,14 +987,13 @@ DefineSelf (int fd, FILE *file, Xauth *auth)
 	     * the local entry anyway, so this one can
 	     * be tossed.
 	     */
-	    if (len == 4 &&
+	    if (family == FamilyInternet && len == 4 &&
 		addr[0] == 127 && addr[1] == 0 &&
 		addr[2] == 0 && addr[3] == 1)
 	    {
 		    Debug ("Skipping localhost address\n");
 		    continue;
 	    }
-	    family = FamilyInternet;
 	}
 	Debug ("DefineSelf: write network address, length %d\n", len);
 	writeAddr (family, len, addr, file, auth);

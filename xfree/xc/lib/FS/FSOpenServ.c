@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6 2001/12/14 19:53:33 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6.4.2 2003/09/01 21:05:36 herrb Exp $ */
 
 /*
 
@@ -118,7 +118,7 @@ FSOpenServer(server)
     AlternateServer *alts;
     int         altlen;
     char       *vendor_string;
-    long        setuplength;
+    unsigned long        setuplength;
 
     if (server == NULL || *server == '\0') {
 	if ((server = getenv("FONTSERVER")) == NULL) {
@@ -153,7 +153,8 @@ FSOpenServer(server)
     _FSRead(svr, (char *) &prefix, (long) SIZEOF(fsConnSetup));
 
     setuplength = prefix.alternate_len << 2;
-    if ((alt_data = (char *)
+    if (setuplength > (SIZE_MAX>>2)
+	|| (alt_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
 	FSfree((char *) svr);
@@ -162,6 +163,10 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
+    if (prefix.num_alternates > SIZE_MAX / sizeof(AlternateServer)) {
+	errno = ENOMEM;
+	return (FSServer *) 0;
+    }
     alts = (AlternateServer *)
 	FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
     if (!alts) {
@@ -193,7 +198,8 @@ FSOpenServer(server)
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if ((auth_data = (char *)
+    if (prefix.auth_len > (SIZE_MAX>>2) 
+	|| (auth_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
 	FSfree((char *) svr);

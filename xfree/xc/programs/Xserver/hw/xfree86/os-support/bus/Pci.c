@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.71 2003/01/23 16:22:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.71.2.2 2003/05/06 17:00:45 tsi Exp $ */
 /*
  * Pci.c - New server PCI access functions
  *
@@ -573,7 +573,7 @@ Bool
 pciMfDev(int busnum, int devnum)
 {
     PCITAG tag0, tag1;
-    unsigned long id0, id1;
+    unsigned long id0, id1, val;
 
     /* Detect a multi-function device that complies to the PCI 2.0 spec */
 
@@ -582,7 +582,8 @@ pciMfDev(int busnum, int devnum)
     if (id0 == 0xffffffff)
 	return FALSE;
 
-    if (pciReadLong(tag0, PCI_HEADER_MISC) & PCI_HEADER_MULTIFUNCTION)
+    val = pciReadLong(tag0, PCI_HEADER_MISC) & 0x00ff0000;
+    if ((val != 0x00ff0000) && (val & PCI_HEADER_MULTIFUNCTION))
 	return TRUE;
 
     /*
@@ -969,6 +970,16 @@ xf86scanpci(int flags)
 	for (i = 0; i < 17; i++)  /* PCI hdr plus 1st dev spec dword */
 	    devp->cfgspc.dwords[i] = pciReadLong(tag, i * sizeof(CARD32));
 
+#ifdef ARCH_PCI_HOST_BRIDGE
+	if ((devp->pci_base_class == PCI_CLASS_BRIDGE) &&
+	    (devp->pci_sub_class == PCI_SUBCLASS_BRIDGE_HOST))
+	    ARCH_PCI_HOST_BRIDGE(devp);
+#endif
+
+	/* Some broken devices don't implement this field... */
+	if (devp->pci_header_type == 0xff)
+	    devp->pci_header_type = 0;
+
 	switch (devp->pci_header_type & 0x7f) {
 	case 0:
 	    /* Get base address sizes for type 0 headers */
@@ -1025,9 +1036,6 @@ xf86scanpci(int flags)
 		break;
 	    pciBusInfo[devp->busnum]->bridge = devp;
 	    pciBusInfo[devp->busnum]->primary_bus = devp->busnum;
-#ifdef ARCH_PCI_HOST_BRIDGE
-	    ARCH_PCI_HOST_BRIDGE(devp);
-#endif
 	    break;
 
 	case 1:

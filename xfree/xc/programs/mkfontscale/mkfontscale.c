@@ -19,7 +19,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
-/* $XFree86: xc/programs/mkfontscale/mkfontscale.c,v 1.4 2003/02/13 03:04:07 dawes Exp $ */
+/* $XFree86: xc/programs/mkfontscale/mkfontscale.c,v 1.4.2.1 2003/10/08 17:56:35 eich Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -390,8 +390,10 @@ doDirectory(char *dirname_given)
         if(ftrc)
             continue;
 
-        if((face->face_flags & FT_FACE_FLAG_SCALABLE) == 0)
+        if((face->face_flags & FT_FACE_FLAG_SCALABLE) == 0) {
+	    FT_Done_Face(face);
             continue;
+	}
 
         found = 0;
 
@@ -549,6 +551,7 @@ doDirectory(char *dirname_given)
                                     encoding->value);
             }
         free(filename);
+	FT_Done_Face(face);
     }
     entries = reverseList(entries);
     fprintf(fontscale, "%d\n", listLength(entries));

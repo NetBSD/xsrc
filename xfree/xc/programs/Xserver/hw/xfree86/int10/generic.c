@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.25 2002/04/04 14:05:51 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.25.2.1 2003/03/20 15:14:25 tsi Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -108,7 +108,7 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     MapVRam(pInt);
 #ifdef _PC
     if (!sysMem)
-	sysMem = xf86MapVidMem(screen, VIDMEM_FRAMEBUFFER, V_BIOS,
+	sysMem = xf86MapVidMem(screen, VIDMEM_MMIO, V_BIOS,
 			       BIOS_SIZE + SYS_BIOS - V_BIOS);
     INTPriv(pInt)->sysMem = sysMem;
 
@@ -446,12 +446,14 @@ xf86Int10FreePages(xf86Int10InfoPtr pInt, void *pbase, int num)
 #define OFF(addr) ((addr) & 0xffff)
 #if defined _PC
 # define HIGH_OFFSET (INTPriv(pInt)->highMemory)
+# define HIGH_BASE   V_BIOS
 #else
 # define HIGH_OFFSET SYS_BIOS
+# define HIGH_BASE   SYS_BIOS
 #endif
 # define SYS(addr) ((addr) >= HIGH_OFFSET)
 #define V_ADDR(addr) \
-	  (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - HIGH_OFFSET) \
+	  (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - HIGH_BASE) \
 	   : (((char*)(INTPriv(pInt)->base) + addr)))
 #define VRAM_ADDR(addr) (addr - V_RAM)
 #define VRAM_BASE (INTPriv(pInt)->vRam)

@@ -1,6 +1,6 @@
 #define VIDEO_DEBUG 0
 /***************************************************************************
- 
+
 Copyright 2000 Intel Corporation.  All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person obtaining a 
@@ -24,7 +24,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_video.c,v 1.6 2003/02/06 04:18:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_video.c,v 1.6.2.1 2003/10/21 02:22:39 dawes Exp $ */
 
 /*
  * Reformatted with GNU indent (2.2.8), using the following options:
@@ -46,7 +46,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors: 
  *	Alan Hourihane <alanh@tungstengraphics.com>
- *	David Dawes <dawes@tungstengraphics.com>
+ *	David Dawes <dawes@xfree86.org>
  *
  * Derived from i810 Xv driver:
  *
@@ -1013,7 +1013,7 @@ UpdateCoeff(int taps, double fCutoff, Bool isHoriz, Bool isY, coeffPtr pCoeff)
 	       SetCoeffRegs(&coeffs[i][tap2Fix], mantSize + 2, pCoeff, pos);
 	    else
 	       SetCoeffRegs(&coeffs[i][tap2Fix], mantSize, pCoeff, pos);
-	 
+
 	    sum = 0.0;
 	    for (j = 0; j < taps; j++)
 	       sum += coeffs[i][j];
@@ -1175,7 +1175,7 @@ I830DisplayVideo(ScrnInfoPtr pScrn, int id, short width, short height,
 	 scaleChanged = TRUE;
 	 overlay->YRGBSCALE = newval;
       }
-		
+
       newval = (xscaleIntUV << 16) | ((xscaleFractUV & 0xFFF) << 3) |
 	    ((yscaleFractUV & 0xFFF) << 20);
       if (newval != overlay->UVSCALE) {
@@ -1190,14 +1190,14 @@ I830DisplayVideo(ScrnInfoPtr pScrn, int id, short width, short height,
       }
 
       /* Recalculate coefficients if the scaling changed. */
-	
+
       /*
        * Only Horizontal coefficients so far.
        */
       if (scaleChanged) {
 	 double fCutoffY;
 	 double fCutoffUV;
-	 
+
 	 fCutoffY = xscaleFract / 4096.0;
 	 fCutoffUV = xscaleFractUV / 4096.0;
 

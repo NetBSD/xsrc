@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_context.c,v 1.2 2002/12/16 16:18:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_context.c,v 1.2.2.1 2003/05/06 23:21:44 daenzer Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -391,6 +391,7 @@ GLboolean r200CreateContext( Display *dpy, const __GLcontextModes *glVisual,
     */
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, r200_pipeline );
+   ctx->Driver.FlushVertices = r200FlushVertices;
 
    /* Try and keep materials and vertices separate:
     */

@@ -1,6 +1,6 @@
 /* $Xorg: button.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $ */
 /*
- * Copyright 1999-2002,2003 by Thomas E. Dickey
+ * Copyright 1999-2001,2002 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -50,7 +50,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/xterm/button.c,v 3.73 2003/03/23 02:01:38 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/button.c,v 3.71 2002/10/05 17:57:11 dickey Exp $ */
 
 /*
 button.c	Handles button events in the terminal emulator.
@@ -2333,7 +2333,7 @@ SaltTextAway(int crow, int ccol, int row, int col,
     TScreen *screen = &term->screen;
     int i, j = 0;
     int eol;
-    Char *line;
+    char *line;
     Char *lp;
 
     if (crow == row && ccol > col) {
@@ -2363,9 +2363,9 @@ SaltTextAway(int crow, int ccol, int row, int col,
     /* now get some memory to save it in */
 
     if (screen->selection_size <= j) {
-	if ((line = (Char *) malloc((unsigned) j + 1)) == 0)
+	if ((line = (char *) malloc((unsigned) j + 1)) == 0)
 	    SysError(ERROR_BMALLOC2);
-	XtFree((char *) screen->selection_data);
+	XtFree(screen->selection_data);
 	screen->selection_data = line;
 	screen->selection_size = j + 1;
     } else {
@@ -2377,7 +2377,7 @@ SaltTextAway(int crow, int ccol, int row, int col,
 	return;
 
     line[j] = '\0';		/* make sure it is null terminated */
-    lp = line;			/* lp points to where to save the text */
+    lp = (Char *) line;		/* lp points to where to save the text */
     if (row == crow) {
 	lp = SaveText(screen, row, ccol, col, lp, &eol);
     } else {
@@ -2394,8 +2394,8 @@ SaltTextAway(int crow, int ccol, int row, int col,
     }
     *lp = '\0';			/* make sure we have end marked */
 
-    TRACE(("Salted TEXT:%.*s\n", lp - line, line));
-    screen->selection_length = (lp - line);
+    TRACE(("Salted TEXT:%.*s\n", (char *) lp - line, line));
+    screen->selection_length = ((char *) lp - line);
     _OwnSelection(term, params, num_params);
 }
 
@@ -2418,7 +2418,7 @@ _ConvertSelectionHelper(Widget w,
 
     screen = &((XtermWidget) w)->screen;
 
-    if (conversion_function(d, (char **) &screen->selection_data, 1,
+    if (conversion_function(d, &screen->selection_data, 1,
 			    conversion_style,
 			    &textprop) < Success)
 	return False;
@@ -2440,7 +2440,6 @@ ConvertSelection(Widget w,
 {
     Display *d = XtDisplay(w);
     TScreen *screen;
-    Boolean result = False;
 
     if (!IsXtermWidget(w))
 	return False;
@@ -2478,29 +2477,32 @@ ConvertSelection(Widget w,
 	XtFree((char *) std_targets);
 	*type = XA_ATOM;
 	*format = 32;
-	result = True;
+	return True;
     }
 #if OPT_WIDE_CHARS
-    else if (screen->wide_chars && *target == XA_STRING) {
-	result =
+    if (screen->wide_chars && *target == XA_STRING) {
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    Xutf8TextListToTextProperty,
 				    XStringStyle);
-    } else if (screen->wide_chars && *target == XA_UTF8_STRING(d)) {
-	result =
+    }
+    if (screen->wide_chars && *target == XA_UTF8_STRING(d)) {
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    Xutf8TextListToTextProperty,
 				    XUTF8StringStyle);
-    } else if (screen->wide_chars && *target == XA_TEXT(d)) {
-	result =
+    }
+    if (screen->wide_chars && *target == XA_TEXT(d)) {
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    Xutf8TextListToTextProperty,
 				    XStdICCTextStyle);
-    } else if (screen->wide_chars && *target == XA_COMPOUND_TEXT(d)) {
-	result =
+    }
+    if (screen->wide_chars && *target == XA_COMPOUND_TEXT(d)) {
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    Xutf8TextListToTextProperty,
@@ -2508,7 +2510,7 @@ ConvertSelection(Widget w,
     }
 #endif
 
-    else if (*target == XA_STRING) {	/* not wide_chars */
+    if (*target == XA_STRING) {	/* not wide_chars */
 	/* We can only reach this point if the selection requestor
 	   requested STRING before any of TEXT, COMPOUND_TEXT or
 	   UTF8_STRING.  We therefore assume that the requestor is not
@@ -2519,30 +2521,35 @@ ConvertSelection(Widget w,
 	*value = screen->selection_data;
 	*length = screen->selection_length;
 	*format = 8;
-	result = True;
-    } else if (*target == XA_TEXT(d)) {		/* not wide_chars */
-	result =
+	return True;
+    }
+
+    if (*target == XA_TEXT(d)) {	/* not wide_chars */
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    XmbTextListToTextProperty,
 				    XStdICCTextStyle);
-    } else if (*target == XA_COMPOUND_TEXT(d)) {	/* not wide_chars */
-	result =
+    }
+
+    if (*target == XA_COMPOUND_TEXT(d)) {	/* not wide_chars */
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    XmbTextListToTextProperty,
 				    XCompoundTextStyle);
     }
 #ifdef X_HAVE_UTF8_STRING
-    else if (*target == XA_UTF8_STRING(d)) {	/* not wide_chars */
-	result =
+    if (*target == XA_UTF8_STRING(d)) {		/* not wide_chars */
+	return
 	    _ConvertSelectionHelper(w,
 				    type, value, length, format,
 				    XmbTextListToTextProperty,
 				    XUTF8StringStyle);
     }
 #endif
-    else if (*target == XA_LIST_LENGTH(d)) {
+
+    if (*target == XA_LIST_LENGTH(d)) {
 	*value = XtMalloc(4);
 	if (sizeof(long) == 4)
 	     *(long *) *value = 1;
@@ -2553,8 +2560,10 @@ ConvertSelection(Widget w,
 	*type = XA_INTEGER;
 	*length = 1;
 	*format = 32;
-	result = True;
-    } else if (*target == XA_LENGTH(d)) {
+	return True;
+    }
+
+    if (*target == XA_LENGTH(d)) {
 	/* This value is wrong if we have UTF-8 text */
 	*value = XtMalloc(4);
 	if (sizeof(long) == 4)
@@ -2566,16 +2575,16 @@ ConvertSelection(Widget w,
 	*type = XA_INTEGER;
 	*length = 1;
 	*format = 32;
-	result = True;
-    } else if (XmuConvertStandardSelection(w,
-					   screen->selection_time, selection,
-					   target, type, (XPointer *) value,
-					   length, format)) {
-	result = True;
+	return True;
     }
 
+    if (XmuConvertStandardSelection(w, screen->selection_time, selection,
+				    target, type, (XPointer *) value,
+				    length, format))
+	return True;
+
     /* else */
-    return result;
+    return False;
 }
 
 static void
@@ -2694,11 +2703,10 @@ _OwnSelection(XtermWidget termw,
 		 *   Robert Brady, 2000-09-05
 		 */
 		unsigned long length = termw->screen.selection_length;
-		Char *data = termw->screen.selection_data;
+		Char *data = (Char *) termw->screen.selection_data;
 		if_OPT_WIDE_CHARS((&(termw->screen)), {
 		    data = UTF8toLatin1(data, length, &length);
 		});
-		TRACE(("XStoreBuffer(%d)\n", cutbuffer));
 		XStoreBuffer(XtDisplay((Widget) termw),
 			     (char *) data, length, cutbuffer);
 	    }

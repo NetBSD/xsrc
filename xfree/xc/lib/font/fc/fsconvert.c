@@ -22,7 +22,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.11 2002/09/10 16:14:35 tsi Exp $ */
+/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.11.2.3 2003/09/01 21:05:37 herrb Exp $ */
 /*
  * FS data conversion
  */
@@ -36,6 +36,7 @@
 #include	"fontstruct.h"
 #include	"fservestr.h"
 #include	"fontutil.h"
+#include	"fslibos.h"
 
 extern char _fs_glyph_undefined;
 extern char _fs_glyph_requested;
@@ -102,6 +103,10 @@ _fs_convert_props(fsPropInfo *pi, fsPropOffset *po, pointer pd,
 
     nprops = pfi->nprops = pi->num_offsets;
 
+    if (nprops < 0 
+	|| nprops > SIZE_MAX/(sizeof(FontPropRec) + sizeof(char))) 
+	return -1;
+	   
     dprop = (FontPropPtr) xalloc(sizeof(FontPropRec) * nprops +
 				 sizeof (char) * nprops);
     if (!dprop)

@@ -72,9 +72,10 @@ FSGetCatalogues(svr, num)
 	SyncHandle();
 	return (char **) NULL;
     }
-    if (rep.num_catalogues) {
+    if (rep.num_catalogues && rep.num_catalogues <= SIZE_MAX/sizeof(char *)
+	&& rep.length <= (SIZE_MAX >> 2)) {
 	list = (char **)
-	    FSmalloc((unsigned) (rep.num_catalogues * sizeof(char *)));
+	       FSmalloc((unsigned) (rep.num_catalogues * sizeof(char *)));
 	rlen = (rep.length << 2) - SIZEOF(fsGetCataloguesReply);
 	c = (char *) FSmalloc((unsigned) rlen + 1);
 	if ((!list) || (!c)) {

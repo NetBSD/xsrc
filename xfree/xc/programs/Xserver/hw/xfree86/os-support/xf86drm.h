@@ -26,7 +26,7 @@
  *
  * Author: Rickard E. (Rik) Faith <faith@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drm.h,v 1.21 2002/12/24 17:42:59 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drm.h,v 1.21.2.1 2003/10/29 11:01:59 alanh Exp $
  *
  */
 
@@ -346,7 +346,7 @@ do {	register unsigned int __old __asm("o0");		\
 			";;\n"						  \
 			"cmpxchg4.acq %0=%1,%3,ar.ccv"			  \
 			: "=r" (__result), "=m" (__drm_dummy_lock(lock))  \
-			: "r" (__old), "r" (new)			  \
+			: "r" ((unsigned long)__old), "r" (new)			  \
 			: "memory");					  \
 		__ret = (__result) != (__old);				  \
 	} while (0)

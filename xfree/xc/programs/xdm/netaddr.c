@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/netaddr.c,v 3.6 2001/12/14 20:01:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/netaddr.c,v 3.6.4.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * xdm - X display manager
@@ -231,8 +231,8 @@ PrintSockAddr (struct sockaddr *a, int len)
 	Debug ("port %d, host %d.%d.%d.%d\n",
 		(p[0] << 8) + p[1], t[0], t[1], t[2], t[3]);
 	break;
-    }
 #endif
+    }
 }
 #endif
 

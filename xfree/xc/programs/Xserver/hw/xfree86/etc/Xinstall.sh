@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.48 2003/02/24 04:24:17 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.48.2.3 2003/03/08 13:46:26 dawes Exp $
 #
 # Copyright © 2000 by Precision Insight, Inc.
 # Copyright © 2000, 2001 by VA Linux Systems, Inc.
@@ -561,8 +561,11 @@ FindDistName()
 				2)
 					DistName="Linux-ix86-glibc22"
 					;;
+				3)
+					DistName="Linux-ix86-glibc23"
+					;;
 				*)
-					Message="No dist available for glibc 2.$OsLibcMinor.  Try Linux-ix86-glibc22"
+					Message="No dist available for glibc 2.$OsLibcMinor.  Try Linux-ix86-glibc23"
 					;;
 				esac
 				;;
@@ -596,8 +599,11 @@ FindDistName()
 			6.1)
 				DistName="Linux-alpha-glibc21"
 				;;
+			6.2)
+				DistName="Linux-alpha-glibc22"
+				;;
 			6.*)
-				Message="No Linux/alpha binaries for glibc 2.$OsLibcMinor.  Try Linux-alpha-glibc21"
+				Message="No Linux/alpha binaries for glibc 2.$OsLibcMinor.  Try Linux-alpha-glibc22"
 				;;
 			*)
 				Message="No Linux/alpha binaries for this libc version"
@@ -632,7 +638,7 @@ FindDistName()
 					DistName="NetBSD-1.4.x"
 					;;
 				*)
-					DistName="NetBSD-1.5"
+					DistName="NetBSD-1.6"
 					;;
 				esac
 				;;
@@ -650,8 +656,8 @@ FindDistName()
 		case "$OsArch" in
 		i386)
 			case "$OsVersion" in
-			3.0*)	# Check this
-				DistName="OpenBSD-3.0"
+			3.2*)	# Check this
+				DistName="OpenBSD-3.2"
 				;;
 			*)
 				Message="No OpenBSD/i386 binaries available for this version"
@@ -947,7 +953,7 @@ Darwin)
             SERVDIST="Xxserv.tgz"
         fi
 	;;
-FreeBSD|NetBSD|OpenBSD)
+FreeBSD|OpenBSD)
 	VARDIST="Xvar.tgz"
 	XKBDBDIR="$VARDIR/db/xkb"
 	;;
