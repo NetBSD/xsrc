@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.14 1999/12/01 12:49:09 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.16 2001/02/26 18:28:18 dawes Exp $
 XCOMM
 XCOMM $OpenBSD: OpenBSD.cf,v 1.33 1998/09/27 04:52:48 rahnds Exp $
 XCOMM
@@ -37,6 +37,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasWChar32		YES
 #define HasMkstemp		YES
 #define HasZlib			YES
+
+#ifndef HasMktemp
+# if (OSMajorVersion > 2) || (OSMajorVersion == 2 && OSMinorVersion >= 1)
+#  define HasMktemp		YES
+# else
+#  define HasMktemp		NO
+# endif
+#endif
 
 /*
  * Compiler Features
@@ -101,7 +109,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  if defined(ArcArchitecture)
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT
 #  else
-#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#   if OSMajorVersion == 2 && OSMinorVersion <= 8
+#    define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#   else
+#    define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
+#   endif
 #  endif
 # endif
 #else
@@ -180,9 +192,10 @@ all:: file.0								@@\
 file.0:: file.man							@@\
 	@if [ -f file.man ]; \						@@\
 	then \								@@\
-	cat file.man | $(NEQN) | $(TBL) | $(NROFF) $(MANMACROS) | $(COL) >/tmp/$$$$.man; \	@@\
-	cp /tmp/$$$$.man file.0; \					@@\
-	$(RM) /tmp/$$$$.man; \						@@\
+	tmpdir=`mktemp -d /tmp/man.XXXXXXXX` || exit 2 ; \		@@\
+	cat file.man | $(NEQN) | $(TBL) | $(NROFF) $(MANMACROS) | $(COL) > $$tmpdir/file.man; \	@@\
+	cp $$tmpdir/file.man file.0; \					@@\
+	$(RM) -r $$tmpdir; \						@@\
 	fi 								@@\
 									@@\
 install.man::                                                           @@\
