@@ -1,4 +1,4 @@
-/* $NetBSD: hpcMouse.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcMouse.c,v 1.2 2000/07/29 14:23:58 takemura Exp $	*/
 /* $XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -123,7 +123,7 @@ hpcMouseProc(device, what)
 	    map[2] = 2;
 	    map[3] = 3;
 	    InitPointerDeviceStruct(
-		pMouse, map, 3, miPointerGetMotionEvents,
+		pMouse, map, 5, miPointerGetMotionEvents,
  		hpcMouseCtrl, miPointerGetMotionBufferSize());
 	    break;
 
@@ -139,7 +139,18 @@ hpcMouseProc(device, what)
 		return !Success;
 	    }
 #endif
-	    hpcPtrPriv.bmask = 0;
+
+	    if (!hpcPtrPriv.bedev) {
+		hpcPtrPriv.bedev = (hpcKbdPrivPtr)(((DeviceIntPtr)
+		 LookupKeyboardDevice())->public.devicePrivate);
+		if (hpcPtrPriv.bedev)
+		    hpcPtrPriv.bedev->bedev = &hpcPtrPriv;
+	    }
+
+	    hpcPtrPriv.bemask = 0;
+	    hpcPtrPriv.brmask = 0;
+	    hpcPtrPriv.ebdown = 0;
+
 	    AddEnabledDevice (hpcPtrPriv.fd);
 	    pMouse->on = TRUE;
 	    break;
@@ -248,42 +259,107 @@ hpcMouseEnqueueEvent (device, fe)
 {
     xEvent		xE;
     hpcPtrPrivPtr	pPriv;	/* Private data for pointer */
-    int			bmask;	/* Temporary button mask */
+    hpcKbdPrivPtr	keyPriv;/* Private keyboard data for button emul */
     unsigned long	time;
-    int			x, y;
+    int			x, y, bmask;
 
     pPriv = (hpcPtrPrivPtr)device->public.devicePrivate;
 
     time = xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
 
+    /*
+     * Mouse buttons start at 1.
+     *
+     * Sometimes we will get two events for a single button state change. 
+     * Should we get a button even which reflects the current state of
+     * affairs, that event is discarded.  In the button emulation case, we
+     * may need to generate several events from one real event.
+     *
+     * The button emulation allows WIN-1 through WIN-5 to be used as
+     * buttons one to five when the first real button is down.  If other
+     * real buttons are present, they are accounted for separately so that
+     * lifting an emulated button will not cause a button up event if the
+     * real button is down.  If the WIN button is not down, a button down
+     * event will be sent for the first button.  If the first button is
+     * pressed when just the WIN key is down, the button events will not
+     * be sent.  The allows you to move just the cursor on a touch screen.
+     * Emulated buttons are only released when the keys are released.
+     */
+
     switch (fe->type) {
     case WSCONS_EVENT_MOUSE_UP:
-    case WSCONS_EVENT_MOUSE_DOWN:
-	/*
-	 * A button changed state. Sometimes we will get two events
-	 * for a single state change. Should we get a button event which
-	 * reflects the current state of affairs, that event is discarded.
-	 *
-	 * Mouse buttons start at 1.
-	 */
-	xE.u.u.detail = fe->value + 1;
-	bmask = 1 << xE.u.u.detail;
-	if (fe->type == WSCONS_EVENT_MOUSE_UP) {
-	    if (pPriv->bmask & bmask) {
-		xE.u.u.type = ButtonRelease;
-		pPriv->bmask &= ~bmask;
-	    } else {
-		return;
+	xE.u.u.type = ButtonRelease;
+	if (fe->value > 0 || pPriv->bedev == NULL) { /* real button */
+	    xE.u.u.detail = fe->value + 1;
+	    bmask = 1 << xE.u.u.detail;
+	    if (pPriv->brmask & bmask || pPriv->bemask & bmask) {
+		pPriv->brmask &= ~bmask;
+		pPriv->bemask &= ~bmask;
+		mieqEnqueue (&xE);
 	    }
-	} else {
-	    if ((pPriv->bmask & bmask) == 0) {
-		xE.u.u.type = ButtonPress;
-		pPriv->bmask |= bmask;
+	} else { /* first button, do emulation if needed */
+	    keyPriv = pPriv->bedev;
+	    pPriv->ebdown = 0;
+	    if (keyPriv->bkeydown) {
+		if (keyPriv->bkeymask) {
+		    int button;
+
+		    while ((button = ffs(pPriv->bemask &
+		     ~keyPriv->bkeymask) - 1) > 0) {
+			bmask = 1 << button;
+			pPriv->bemask &= ~bmask;
+			if (!(pPriv->brmask & bmask)) {
+			    xE.u.u.detail = button;
+			    mieqEnqueue (&xE);
+			}
+		    }
+		}
 	    } else {
-		return;
+		while (pPriv->bemask) {
+		    xE.u.u.detail = ffs(pPriv->bemask) - 1;
+		    bmask = 1 << xE.u.u.detail;
+		    pPriv->bemask &= ~bmask;
+	 	    if (!(pPriv->brmask & bmask))
+			mieqEnqueue (&xE);
+		}
 	    }
 	}
-	mieqEnqueue (&xE);
+	break;
+    case WSCONS_EVENT_MOUSE_DOWN:
+	xE.u.u.type = ButtonPress;
+	if (fe->value > 0 || pPriv->bedev == NULL) { /* real button */
+	    xE.u.u.detail = fe->value + 1;
+	    bmask = 1 << xE.u.u.detail;
+	    if (!(pPriv->brmask & bmask)) {
+		pPriv->brmask |= bmask;
+		mieqEnqueue (&xE);
+	    } else if (pPriv->bemask & bmask)
+		pPriv->brmask |= bmask;
+	} else { /* first button, do emulation if needed */
+	    keyPriv = pPriv->bedev;
+	    pPriv->ebdown = 1;
+	    if (keyPriv->bkeydown) {
+		if (keyPriv->bkeymask) {
+		    int button;
+		    while ((button = ffs(keyPriv->bkeymask &
+		     ~pPriv->bemask) - 1) > 0) {
+			bmask = 1 << button;
+			pPriv->bemask |= bmask;
+			if (!(pPriv->brmask & bmask)) {
+			    xE.u.u.detail = button;
+			    mieqEnqueue (&xE);
+			}
+		    }
+		}
+	    } else {
+		xE.u.u.detail = 1;
+		bmask = 1<<1;
+		if (!(pPriv->bemask & bmask)) {
+		    pPriv->bemask |= bmask;
+		    mieqEnqueue (&xE);
+		}
+	    }
+	}
 	break;
     case WSCONS_EVENT_MOUSE_DELTA_X:
 	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);

@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.2 2000/05/28 11:15:46 takemura Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.3 2000/07/29 14:23:58 takemura Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -11,6 +11,10 @@
 static Bool hpcDevsInited = FALSE;
 
 hpcKbdPrivRec hpcKbdPriv = {
+    NULL,	/* button emulation device */
+    0,		/* button key mask */
+    0,		/* button key no release mask */
+    0,		/* button trigger key down */
     -1,		/* fd */
     -1,		/* device type */
     -1,		/* type */
@@ -19,8 +23,11 @@ hpcKbdPrivRec hpcKbdPriv = {
 };
 
 hpcPtrPrivRec hpcPtrPriv = {
+    NULL,	/* button emulation device */
+    0,		/* real button state */
+    0,		/* emulated button state */
+    0,		/* emulation button down */
     -1,		/* fd */
-    0		/* Current button state */
 };
 
 /*
