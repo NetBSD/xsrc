@@ -395,15 +395,8 @@ pmaxScreenInit(index, pScreen, argc, argv)
     		break;
 		
 	case PMAX_FBTYPE_MFB:
-		/*
-		 * XXX mfb is mono, but has 1 byte per pixel (only bit 0
-		 * is significant). Am I doing this right?
-		 */
-		defaultColorVisualClass = StaticGray;
-		cfbSetVisualTypes(1, StaticGray, 8);
-	
 		if (!cfbScreenInit(pScreen, scrInfo->bitmap, fb.fb_width, 
-		    fb.fb_height, dpix, dpiy, fb.fb_width)) {
+		    fb.fb_height, dpix, dpiy, 2048)) {
 		    	close(fdPM);
 		    	return (FALSE);
 		}
