@@ -370,7 +370,9 @@ pmaxScreenInit(index, pScreen, argc, argv)
 		    	close(fdPM);
 		    	return (FALSE);
 		}
-
+		
+		pScreen->blackPixel = 0;
+		pScreen->whitePixel = 1;
 		mfbCreateDefColormap(pScreen);
 		break;
 
