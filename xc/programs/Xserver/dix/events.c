@@ -2864,7 +2864,7 @@ SetInputFocus(client, dev, focusID, revertTo, ctime, followOK)
     }
     time = ClientTimeToServerTime(ctime);
     if ((focusID == None) || (focusID == PointerRoot))
-	focusWin = (WindowPtr)focusID;
+	focusWin = (WindowPtr)(long)focusID;
     else if ((focusID == FollowKeyboard) && followOK)
 	focusWin = inputInfo.keyboard->focus->win;
     else if (!(focusWin = SecurityLookupWindow(focusID, client,
