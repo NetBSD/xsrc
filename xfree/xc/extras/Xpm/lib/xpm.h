@@ -284,9 +284,7 @@ typedef struct {
  * functions declarations
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+_XFUNCPROTOBEGIN
 
 /* FOR_MSW, all ..Pixmap.. are excluded, only the ..XImage.. are used */
 /* Same for Amiga! */
@@ -440,10 +438,7 @@ extern "C" {
 
     FUNC(XpmFree, void, (void *ptr));
 
-#ifdef __cplusplus
-} /* for C++ V2.0 */
-#endif
-
+_XFUNCPROTOEND
 
 /* backward compatibility */
 
