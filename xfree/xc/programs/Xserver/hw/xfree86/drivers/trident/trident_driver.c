@@ -1956,18 +1956,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    pTrident->NewClockCode = TRUE;
 	    pTrident->frequency = NTSC;
 	    break;
-	case CYBERBLADEXPm8:
-	    pTrident->ddc1Read = Tridentddc1Read;
-	    ramtype = "SGRAM";
-	    pTrident->HasSGRAM = TRUE;
-	    pTrident->NoAccel = TRUE; /* Disable acceleration */
-	    pTrident->HWCursor = FALSE;
-	    pTrident->IsCyber = TRUE;
-	    Support24bpp = TRUE;
-	    chipset = "CyberBladeXPm/8";
-	    pTrident->NewClockCode = TRUE;
-	    pTrident->frequency = NTSC;
-	    break;
 	case BLADEXP: /* 0x9910 */
 	    pTrident->ddc1Read = Tridentddc1Read;
 	    ramtype = "SGRAM";

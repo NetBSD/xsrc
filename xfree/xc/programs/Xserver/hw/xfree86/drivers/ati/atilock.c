@@ -116,7 +116,6 @@ ATIUnlock
         if (pATI->Chip >= ATI_CHIP_264VT)
             tmp |= BUS_EXT_REG_EN;              /* Enable Block 1 */
         outr(BUS_CNTL, tmp);
-        outr(HW_DEBUG, CMDFIFO_SIZE_DIS_P);
         pATI->LockData.crtc_int_cntl = inr(CRTC_INT_CNTL);
         outr(CRTC_INT_CNTL, (pATI->LockData.crtc_int_cntl & ~CRTC_INT_ENS) |
             CRTC_INT_ACKS);
