@@ -682,7 +682,7 @@ char *msetable[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		     "GlidePoint", "IntelliMouse", "ThinkingMouse",
 		     "IMPS/2", "ThinkingMousePS/2", "MouseManPlusPS/2",
 		     "GlidePointPS/2", "NetMousePS/2", "NetScrollPS/2",
-		     "SysMouse", "Auto", "AceCad", "wsmouse" };
+		     "SysMouse", "Auto", "AceCad", "wsmouse", "sun" };
 
 char *flgtable[] = { "None", "ClearDTR", "ClearRTS",
 		     "ClearDTR and ClearRTS" };
@@ -714,7 +714,7 @@ print_XF86Misc_info(dpy, extname)
 	printf("Xqueue\n");
       else if (mouseinfo.type == MTYPE_OSMOUSE)
 	printf("OSMouse\n");
-      else if (mouseinfo.type <= MTYPE_WSMOUSE)
+      else if (mouseinfo.type <= MTYPE_SUN)
 	printf("%s\n", msetable[mouseinfo.type+1]);
       else
 	  printf("Unknown\n");
