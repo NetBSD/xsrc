@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2003/04/11 16:18:52 fredb Exp $
+#	$NetBSD: Makefile,v 1.38 2003/05/30 13:05:58 tron Exp $
 #
 # Targets & Variables
 #
@@ -10,7 +10,8 @@
 #	only the targets that are out of date.
 #
 # release snapshot: Same as build, plus tar up the X sets and install
-#	them under the ${RELEASEDIR}/binary/sets directory.
+#	them under the ${RELEASEDIR}/binary/sets directory (NetBSD <=1.6)
+#	or the ${RELEASEDIR}/${MACHINE}/binary/sets directory (NetBSD >1.6).
 #
 #  DESTDIR -- Same as for build. Mandatory for building a release.
 #  RELEASEDIR -- As explained above.
