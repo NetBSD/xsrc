@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.20.2.1 2002/01/27 19:05:19 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.24 2003/02/15 05:37:59 paulo Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.
@@ -20,6 +20,11 @@
 #include <usbhid.h>
 #else
 #include "usb.h"
+#endif
+
+#include <dev/usb/usb.h>
+#ifdef USB_GET_REPORT_ID
+#define USB_NEW_HID
 #endif
 
 #define HUP_GENERIC_DESKTOP     0x0001
@@ -174,7 +179,8 @@ SetSysMouseRes(InputInfoPtr pInfo, const char *protocol, int rate, int res)
     mode.resolution = res > 0 ? res : -1;
     mode.accelfactor = -1;
 #if defined(__FreeBSD__)
-    if (xf86NameCmp(pMse->origProtocol, "Auto") == 0) {
+    if (pMse->autoProbe ||
+	(protocol && xf86NameCmp(protocol, "SysMouse") == 0)) {
 	/*
 	 * As the FreeBSD sysmouse driver defaults to protocol level 0
 	 * everytime it is opened we enforce protocol level 1 again at
@@ -468,8 +474,18 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     /* Get USB informations */
     reportDesc = hid_get_report_desc(pInfo->fd);
     /* Get packet size & iid */
+#ifdef USB_NEW_HID
+    if (ioctl(pInfo->fd, USB_GET_REPORT_ID, &pUsbMse->iid) == -1) {
+	    xf86Msg(X_ERROR, "Error ioctl USB_GET_REPORT_ID on %s : %s\n",
+		    pInfo->name, strerror(errno));
+	    return FALSE;
+    }
+    pUsbMse->packetSize = hid_report_size(reportDesc, hid_input,
+					      pUsbMse->iid);
+#else
     pUsbMse->packetSize = hid_report_size(reportDesc, hid_input,
 					      &pUsbMse->iid);
+#endif
     /* Allocate buffer */
     if (pUsbMse->packetSize <= 8) {
 	pUsbMse->buffer = pMse->protoBuf;
@@ -483,6 +499,19 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 	xf86CloseSerial(pInfo->fd);
 	return FALSE;
     }
+#ifdef USB_NEW_HID
+    if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
+		   hid_input, &pUsbMse->loc_x, pUsbMse->iid) < 0) {
+	xf86Msg(X_WARNING, "%s: no x locator\n");
+    }
+    if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
+		   hid_input, &pUsbMse->loc_y, pUsbMse->iid) < 0) {
+	xf86Msg(X_WARNING, "%s: no y locator\n");
+    }
+    if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+		   hid_input, &pUsbMse->loc_z, pUsbMse->iid) < 0) {
+    }
+#else
     if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 		   hid_input, &pUsbMse->loc_x) < 0) {
 	xf86Msg(X_WARNING, "%s: no x locator\n");
@@ -494,10 +523,15 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
 		   hid_input, &pUsbMse->loc_z) < 0) {
     }
+#endif
     /* Probe for number of buttons */
     for (i = 1; i <= MSE_MAXBUTTONS; i++) {
 	if (!hid_locate(reportDesc, HID_USAGE2(HUP_BUTTON, i),
-			hid_input, &pUsbMse->loc_btn[i-1])) 
+			hid_input, &pUsbMse->loc_btn[i-1]
+#ifdef USB_NEW_HID
+			, pUsbMse->iid
+#endif
+			))
 	    break;
     }
     pMse->buttons = i-1;

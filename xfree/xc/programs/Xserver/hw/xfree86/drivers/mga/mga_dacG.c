@@ -2,7 +2,7 @@
  * MGA-1064, MGA-G100, MGA-G200, MGA-G400, MGA-G550 RAMDAC driver
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.50 2002/04/04 14:05:43 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.51 2002/09/16 18:05:55 eich Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -667,6 +667,7 @@ MGAGRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 	     * To test this we check for Clock == 0.
 	     */
 	    MGAG450SetPLLFreq(pScrn, mgaReg->Clock);
+	    mgaReg->PIXPLLCSaved = FALSE;
 	}
 
         if(!pMga->SecondCrtc) {
@@ -688,7 +689,7 @@ MGA_NOT_HAL(
 		  (i == 0x1c) ||
 		  ((i >= 0x1f) && (i <= 0x29)) ||
 		  ((i >= 0x30) && (i <= 0x37)) ||
-		  (MGAISGx50(pMga) &&
+                  (MGAISGx50(pMga) && !mgaReg->PIXPLLCSaved &&
 		   ((i == 0x2c) || (i == 0x2d) || (i == 0x2e) ||
 		    (i == 0x4c) || (i == 0x4d) || (i == 0x4e))))
 		 continue; 
@@ -859,6 +860,8 @@ MGAGSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 	for (i = 0; i < DACREGSIZE; i++)
 		mgaReg->DacRegs[i] = inMGAdac(i);
 
+        mgaReg->PIXPLLCSaved = TRUE;
+
 	mgaReg->Option = pciReadLong(pMga->PciTag, PCI_OPTION_REG);
 
 	mgaReg->Option2 = pciReadLong(pMga->PciTag, PCI_MGA_OPTION2);
@@ -937,7 +940,12 @@ MGAGSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     MGAPtr pMga = MGAPTR(pScrn);
     x += 64;
     y += 64;
-
+#ifdef USEMGAHAL
+    MGA_HAL(
+	    x += pMga->HALGranularityOffX;
+	    y += pMga->HALGranularityOffY;
+    );
+#endif
     /* cursor update must never occurs during a retrace period (pp 4-160) */
     while( INREG( MGAREG_Status ) & 0x08 );
     

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.13 2001/12/14 20:01:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.15 2002/10/06 18:12:29 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -187,7 +187,7 @@ GenerateAuthData (char *auth, int len)
     }
 #else
     {
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	long    time ();
 #endif
 

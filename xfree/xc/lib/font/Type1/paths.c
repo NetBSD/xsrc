@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/paths.c,v 1.6 2001/08/27 19:49:53 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/paths.c,v 1.7 2002/02/18 20:51:57 herrb Exp $ */
 
  /* PATHS    CWEB         V0021 ********                             */
 /*
@@ -792,7 +792,7 @@ So, we add "dest" instead of subtracting it:
                        break;
  
                    default:
-                       Xabort("Reverse: bad path segment");
+                       Abort("Reverse: bad path segment");
                }
 /*
 We need to reverse the order of segments too, so we break this segment
@@ -860,7 +860,7 @@ UnClose(struct segment *p0)
        for (p=p0; p->link->link != NULL; p=p->link) { ; }
  
        if (!LASTCLOSED(p->link->flag))
-               Xabort("UnClose:  no LASTCLOSED");
+               Abort("UnClose:  no LASTCLOSED");
  
        Free(SplitPath(p0, p));
        p0->flag &= ~ISCLOSED(ON);
@@ -1025,7 +1025,7 @@ PathTransform(struct segment *p0,      /* path to transform                  */
  
                    default:
                        IfTrace1(TRUE,"path = %z\n", p);
-                       Xabort("PathTransform:  invalid segment");
+                       Abort("PathTransform:  invalid segment");
                }
                oldx += savex;
                oldy += savey;
@@ -1177,7 +1177,7 @@ QueryPath(struct segment *path, /* path to check                             */
                break;
  
            default:
-               Xabort("QueryPath: unknown segment");
+               Abort("QueryPath: unknown segment");
        }
        if (coerced)
                KillPath(path);
@@ -1319,7 +1319,7 @@ QueryBounds(struct segment *p0, /* object to check for bound                 */
                    case HINTTYPE:
                        break;
                    default:
-                       Xabort("QueryBounds: unknown type");
+                       Abort("QueryBounds: unknown type");
                }
  
                if (x < min.x) min.x = x;

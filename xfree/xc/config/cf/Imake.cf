@@ -17,7 +17,7 @@ XCOMM $Xorg: Imake.cf,v 1.4 2000/08/17 19:41:45 cpqbld Exp $
  *
  *     4.  Create a .cf file with the name given by MacroFile.
  */
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.81 2003/02/18 16:51:45 tsi Exp $
 
 #if defined(__APPLE__)
 # undef __APPLE__
@@ -47,6 +47,9 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
 #define cygwinArchitecture
 #define i386Architecture
 #undef i386
+#undef i486
+#undef i586
+#undef i686
 #undef __i386__
 #undef _X86_
 #undef __CYGWIN__
@@ -126,9 +129,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
 #   endif
 #   undef mips
 # endif
-# ifdef __alpha__
+# if defined(__alpha__) || defined(alpha)
 #   define AlphaArchitecture
 #   undef __alpha__
+#   undef alpha
 # endif
 # ifdef mc68020
 #  define Mc68020Architecture
@@ -157,6 +161,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
 # ifdef __powerpc__
 #  define PpcArchitecture
 #  undef __powerpc__
+#  undef __macppc__
+#  undef macppc
 # endif
 #endif /* OpenBSD */
 
@@ -225,6 +231,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
 #  define AlphaBsdArchitecture
 #  define AlphaArchitecture
 #  undef __alpha__
+# endif
+# ifdef __sparc64__
+#  define Sparc64Architecture
+#  undef __sparc64__
 # endif
 #endif /* __FreeBSD__ */
 
@@ -711,6 +721,12 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #  endif
 #  undef __k6
 # endif /* __k6 */
+/* Keep this order! s390x has also __s390__ defined */
+# if defined(__s390x__)
+#  define s390xArchitecture
+#  undef __s390x__
+#  undef __s390__
+# endif
 # ifdef __s390__
 #   define s390Architecture
 #  undef __s390__
@@ -812,13 +828,23 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #  endif
 #  undef __SH4__
 # endif /* __SH4__ */
-XCOMM  for compatibility with 3.3.x 
+/* for compatibility with 3.3.x */
 # ifdef PpcArchitecture
 #  define PowerPCArchitecture
 # endif
 # if defined(__s390x__)
 #  define s390xArchitecture
 #  undef __s390x__
+# endif
+# if defined(__x86_64__)
+#  undef __x86_64__
+#  define x86_64Architecture
+# endif
+# if defined(x86_64__)
+#  undef x86_64__
+#  ifndef x86_64Architecture
+#   define x86_64Architecture
+#  endif
 # endif
 #endif /* linux */
 

@@ -41,7 +41,7 @@ interest in or to any trademark, service mark, logo or trade name of
 Sun Microsystems, Inc. or its licensors is granted.
 
 */
-/* $XFree86: xc/lib/X11/XlcDL.c,v 1.7 2002/09/04 03:09:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlcDL.c,v 1.9 2002/11/25 14:04:53 eich Exp $ */
 
 #include <stdio.h>
 #if defined(hpux)
@@ -56,12 +56,16 @@ Sun Microsystems, Inc. or its licensors is granted.
 #include "XlcPubI.h"
 
 #if defined(_LP64) && !defined(__NetBSD__)
-#if defined(__sparcv9)
-#define	_MACH64_NAME		"sparcv9"
-#define	_MACH64_NAME_LEN	(sizeof (_MACH64_NAME) - 1)
-#else  /* !defined(__sparcv9) */
-#error "Unknown architecture"
-#endif /* defined(__sparcv9) */
+# if defined(__sparcv9)
+#  define	_MACH64_NAME		"sparcv9"
+# elif defined(__ia64__) 
+#  undef MACH64_NAME
+# else
+#  error "Unknown architecture"
+# endif /* defined(__sparcv9) */
+# ifdef _MACH64_NAME
+#  define	_MACH64_NAME_LEN	(sizeof (_MACH64_NAME) - 1)
+# endif
 #endif /* _LP64 */
 
 #define XI18N_DLREL		2
@@ -244,7 +248,7 @@ const char *lc_dir;
     if (strstr (dl_name, "../"))
 	return NULL;
 
-#if defined(_LP64) && !defined(__NetBSD__)
+#if defined (_LP64) && defined (_MACH64_NAME) && !defined(__NetBSD__)
     len = (lc_dir ? strlen(lc_dir) : 0 ) +
 	(dl_name ? strlen(dl_name) : 0) + _MACH64_NAME_LEN + 10;
     path = Xmalloc(len + 1);
@@ -275,6 +279,9 @@ const char *lc_dir;
 #else
     len = (lc_dir ? strlen(lc_dir) : 0 ) +
 	(dl_name ? strlen(dl_name) : 0) + 10;
+#if defined POSTLOCALELIBDIR
+    len += (strlen(POSTLOCALELIBDIR) + 1);
+#endif
     path = Xmalloc(len + 1);
 
     if (strchr(dl_name, '/') != NULL) {
@@ -282,10 +289,16 @@ const char *lc_dir;
 	slash_p = strrchr(lc_dir, '/');
 	*slash_p = '\0';
 	strcpy(path, lc_dir); strcat(path, "/");
+#if defined POSTLOCALELIBDIR
+	strcat(path, POSTLOCALELIBDIR); strcat(path, "/");
+#endif
 	strcat(path, dl_name); strcat(path, ".so.2");
 	*slash_p = '/';
     } else {
 	strcpy(path, lc_dir); strcat(path, "/");
+#if defined POSTLOCALELIBDIR
+	strcat(path, POSTLOCALELIBDIR); strcat(path, "/");
+#endif
 	strcat(path, dl_name); strcat(path, ".so.2");
     }
 #endif
@@ -336,6 +349,9 @@ fetch_symbol (object, symbol)
     struct shl_symbol *symbols;
 #endif
 
+    if (symbol == NULL)
+    	return NULL;
+
 #if defined(hpux)
     getsyms_cnt = shl_getsymbols(object->dl_module, TYPE_PROCEDURE,
 				 EXPORT_SYMBOLS, malloc, &symbols);
@@ -372,6 +388,7 @@ close_object (object)
         object->dl_module = NULL;
     }
 }
+
 
 XLCd
 #if NeedFunctionPrototypes

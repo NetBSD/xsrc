@@ -31,7 +31,7 @@ OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIm.c,v 1.9 2001/10/28 03:32:34 tsi Exp $ */
+/* $XFree86: xc/lib/X11/imDefIm.c,v 1.11 2002/12/14 01:53:56 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS
@@ -165,7 +165,7 @@ _XimCheckLocaleName(im, address, address_len, locale_name, len)
 	*p = '\0';
 
 	for( n = 0; n < len; n++ )
-	    if( locale_name[n] && !strcasecmp( pp, locale_name[n] ) )
+	    if( locale_name[n] && !_XlcCompareISOLatin1( pp, locale_name[n] ) )
 		return locale_name[n];
 	if (finish)
 	    break;
@@ -1136,6 +1136,13 @@ _XimProtoCloseIM(xim)
 #endif /* XIM_CONNECTABLE */
 	ic = next;
     }
+#ifdef XIM_CONNECTABLE
+    if (!(!IS_SERVER_CONNECTED(im) && IS_RECONNECTABLE(im)))
+	im->core.ic_chain = NULL;
+#else
+    im->core.ic_chain = NULL;
+#endif
+
     _XimUnregisterServerFilter(im);
     _XimResetIMInstantiateCallback(im);
     status = (Status)_XimClose(im);

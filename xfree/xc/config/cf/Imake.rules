@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.102 2001/12/17 20:00:37 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.113 2002/12/09 23:00:42 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -44,6 +44,7 @@ XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.102 2001/12/17 20:00:37 daw
  * ProofCleanTarget		()
  * RemoveTargetProgram		(program)
  * MakeDir			(dir)
+ * InstallDirectory		(dir)
  * BuildIncludesTop		(srclist)
  * BuildIncludes		(srclist,dstsubdir,dstupdir)
  * LinkRule			(program,options,objects,libraries)
@@ -118,6 +119,7 @@ XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.102 2001/12/17 20:00:37 daw
  * ObjectCompile		(options)
  * NormalLibObjCompile		(options)
  * NormalSharedLibObjCompile	(options)
+ * NormalRelocLibObjCompile	(options)
  * LibObjCompile		(dir,options)
  * DebuggedLibObjCompile	(options)
  * ProfiledLibObjCompile	(options)
@@ -233,7 +235,7 @@ XCOMM special target for clearmake					@@\
  * Concat - concatenates two strings.
  */
 #ifndef Concat
-#if (__STDC__ && !defined(UnixCpp)) || defined(AnsiCpp)
+#if (defined(__STDC__) && !defined(UnixCpp)) || defined(AnsiCpp)
 #define Concat(a,b)a##b
 #else
 #define Concat(a,b)a/**/b
@@ -244,7 +246,7 @@ XCOMM special target for clearmake					@@\
  * Concat3 - concatenates three strings.
  */
 #ifndef Concat3
-#if (__STDC__ && !defined(UnixCpp)) || defined(AnsiCpp)
+#if (defined(__STDC__) && !defined(UnixCpp)) || defined(AnsiCpp)
 #define Concat3(a,b,c)a##b##c
 #else
 #define Concat3(a,b,c)a/**/b/**/c
@@ -255,7 +257,7 @@ XCOMM special target for clearmake					@@\
  * Concat4 - concatenates four strings.
  */
 #ifndef Concat4
-#if (__STDC__ && !defined(UnixCpp)) || defined(AnsiCpp)
+#if (defined(__STDC__) && !defined(UnixCpp)) || defined(AnsiCpp)
 #define Concat4(a,b,c,d)a##b##c##d
 #else
 #define Concat4(a,b,c,d)a/**/b/**/c/**/d
@@ -285,7 +287,7 @@ XCOMM special target for clearmake					@@\
  *           exists to avoid problems with some preprocessors
  */
 #ifndef _XUseCat
-# if (__STDC__ && !defined(UnixCpp)) || defined(AnsiCpp)
+# if (defined(__STDC__) && !defined(UnixCpp)) || defined(AnsiCpp)
 #  if defined(UseInstalled) || UseInstalledX11
 #   define _XUseCat(a,b,c) a##c
 #  else
@@ -524,6 +526,12 @@ clean cleantc::								@@\
 		(set -x; $(MKDIRHIER) dir); \				@@\
 	fi
 #endif /* MakeDir */
+
+#ifndef InstallDirectory
+#define InstallDirectory(dir)						@@\
+install::								@@\
+	MakeDir(dir)
+#endif /* InstallDirectory */
 
 #ifndef BuildIncludesTop
 #define BuildIncludesTop(srclist)					@@\
@@ -778,6 +786,20 @@ InstallProgram(program,$(BINDIR))					@@\
 InstallManPage(program,$(MANDIR))
 #endif /* CplusplusProgramTargetHelper */
 
+#ifndef CplusplusProgramTargetHelperNoMan
+#define	CplusplusProgramTargetHelperNoMan(program,srcs,objs,deplib,locallib,syslib) @@\
+ProgramTargetName(program): $(objs) $(deplib)				@@\
+	RemoveTargetProgram($@)						@@\
+	CplusplusLinkRule($@,$(CXXLDOPTIONS),$(objs),locallib $(LDLIBS) syslib) @@\
+									@@\
+CenterProgramTarget(program,$(srcs),$(objs),locallib,syslib)		@@\
+SentinelCplusplusProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
+PurifyCplusplusProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
+ProofCplusplusProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
+									@@\
+InstallProgram(program,$(BINDIR))					@@
+#endif /* CplusplusProgramTargetHelperNoMan */
+
 /*
  * ComplexProgramTarget - generate rules for compiling and linking the 
  * program specified by $(OBJS) and $(SRCS), installing the program and its
@@ -786,9 +808,9 @@ InstallManPage(program,$(MANDIR))
  */
 #ifndef ComplexProgramTarget
 #define	ComplexProgramTarget(program)					@@\
-        PROGRAM = program						@@\
+        PROGRAM = ProgramTargetName(program)				@@\
 									@@\
-AllTarget(program)							@@\
+AllTarget(ProgramTargetName(program))					@@\
 									@@\
 ProgramTargetHelper(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
 									@@\
@@ -801,9 +823,9 @@ clean::									@@\
 
 #ifndef ComplexCplusplusProgramTarget
 #define	ComplexCplusplusProgramTarget(program)				@@\
-        PROGRAM = program						@@\
+        PROGRAM = ProgramTargetName(program)				@@\
 									@@\
-AllTarget(program)							@@\
+AllTarget(ProgramTargetName(program))					@@\
 									@@\
 CplusplusProgramTargetHelper(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
 									@@\
@@ -818,13 +840,13 @@ clean::									@@\
  * ComplexProgramTargetNoMan - generate rules for compiling and linking
  * the program specified by $(OBJS) and $(SRCS), installing the program 
  * and generating dependencies.  It should only be used in Imakefiles
- * that describe a single program.
+ * that describe a single program, and have no manual page.
  */
 #ifndef ComplexProgramTargetNoMan
 #define ComplexProgramTargetNoMan(program)				@@\
-        PROGRAM = program						@@\
+        PROGRAM = ProgramTargetName(program)				@@\
 									@@\
-AllTarget(program)							@@\
+AllTarget(ProgramTargetName(program))					@@\
 									@@\
 ProgramTargetHelperNoMan(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
 									@@\
@@ -834,6 +856,21 @@ LintTarget()								@@\
 clean::									@@\
 	RemoveFile(ProgramTargetName(program))
 #endif /* ComplexProgramTargetNoMan */
+
+#ifndef ComplexCplusplusProgramTarget
+#define	ComplexCplusplusProgramTarget(program)				@@\
+        PROGRAM = program						@@\
+									@@\
+AllTarget(program)							@@\
+									@@\
+CplusplusProgramTargetHelperNoMan(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
+									@@\
+DependTarget()								@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
+#endif /* ComplexCplusplusProgramTarget */
 
 /*
  * ComplexProgramTarget_1 - generate rules for compiling and linking the
@@ -1376,8 +1413,8 @@ InstallGenManPageLong(file,destdir,file,suffix)
 NoCmpScript(ProgramTargetName($(RMAN)))					@@\
 									@@\
 ProgramTargetName($(RMAN)):						@@\
-	@echo "checking $@ over in $(TOP)/config/util first..."; \	@@\
-	cd $(TOP)/config/util && $(MAKE) rman; \			@@\
+	@echo "checking $(RMANBASENAME) over in $(TOP)/config/util first..."; \	@@\
+	cd $(TOP)/config/util && $(MAKE) $(RMANBASENAME); \		@@\
 	echo "okay, continuing in $(CURRENT_DIR)"
 
 #endif /* UseInstalled */
@@ -1588,7 +1625,7 @@ InstallNamedTargetNoClobber(install,srcname,$(INSTBINFLAGS),dest,dstname)
 #ifndef MakeFlagsToShellFlags
 #define MakeFlagsToShellFlags(makeflags,shellcmd)\
 	for flag in ${MAKEFLAGS} ''; do \				@@\
-	  case "$$flag" in *=*) ;; *[makeflags]*) shellcmd;; esac; done
+	  case "$$flag" in *=*) ;; --*) ;; *[makeflags]*) shellcmd;; esac; done
 #endif
 
 /*
@@ -1640,6 +1677,10 @@ step:: 								@@\
 #if UseSeparateConfDir && HasSymLinks
 #define LinkConfDirectoryLong(mdir,cdir,rdir,ldir,opath,npath)		@@\
 install::								@@\
+	@MakeFlagsToShellFlags(i,set +e); \				@@\
+	if [ -h Concat($(DESTDIR),npath/mdir) ]; then \			@@\
+	  $(RM) Concat($(DESTDIR),npath/mdir); \			@@\
+	fi								@@\
 	MakeDir(Concat($(DESTDIR),opath/cdir))				@@\
 	MakeDir(Concat($(DESTDIR),npath/mdir))				@@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
@@ -2127,6 +2168,14 @@ LintLibReferences(varname,libname,libsource)
  */
 #ifndef NormalLibObjCompile
 #define NormalLibObjCompile(options) ObjectCompile(options)
+#endif
+
+#ifndef NormalRelocLibObjCompile
+# if !StaticNeedsPicForShared
+#  define NormalRelocLibObjCompile(options) NormalLibObjCompile(options)
+# else 
+#  define NormalRelocLibObjCompile(options) NormalLibObjCompile(options $(PICFLAGS))
+# endif
 #endif
 
 #ifndef NormalLibObjCplusplusCompile
@@ -3078,7 +3127,8 @@ target::								@@\
 #ifdef UseInstalled
 #define ImakeSubCmdHelper $(IMAKE_CMD)
 #else
-#define ImakeSubCmdHelper $(IMAKEPREFIX)$(IMAKE) -I$(IMAKEPREFIX)$(IRULESRC) $(IMAKE_DEFINES)
+#define ImakeSubCmdHelper $(IMAKEPREFIX)$(IMAKE) -I$(IMAKEPREFIX)$(IRULESRC) \
+			  $(IMAKE_DEFINES) $(IMAKE_WARNINGS)
 #endif
 
 #endif /* MakeMakeSubdirs */
@@ -3352,7 +3402,7 @@ AllTarget(module)							@@\
 									@@\
 install:: module							@@\
 	MakeDir($(DESTDIR)dest/subdir)					@@\
-	$(INSTALL) -c module $(DESTDIR)dest/subdir
+	$(INSTALL) -c $(INSTDATFLAGS) module $(DESTDIR)dest/subdir
 #endif
 
 #ifndef InstallDynamicNamedModule
@@ -3362,7 +3412,7 @@ AllTarget(module)							@@\
 									@@\
 install:: module							@@\
 	MakeDir($(DESTDIR)dest/subdir)					@@\
-	$(INSTALL) -c module $(DESTDIR)dest/subdir/instname
+	$(INSTALL) -c $(INSTDATFLAGS) module $(DESTDIR)dest/subdir/instname
 #endif
 
 #ifndef InstallObjectModule

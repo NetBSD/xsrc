@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.19 2001/08/18 02:41:30 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.22 2002/12/14 04:41:12 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -8,7 +8,7 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
-#ifdef __EMX__ /* needed here to override certain constants in X headers */
+#ifdef __UNIXOS2__ /* needed here to override certain constants in X headers */
 #define INCL_DOS
 #define INCL_DOSIOCTL
 #include <os2.h>
@@ -59,11 +59,11 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "xf86dga.h"
-#include "xf86dgastr.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/xf86dga.h>
+#include <X11/extensions/xf86dgastr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 
 extern XExtDisplayInfo* xdga_find_display(Display*);
 extern char *xdga_extension_name;
@@ -358,14 +358,14 @@ Bool XF86DGAViewPortChanged(
 
 # include <sys/mmap.h>
 #else
-# if !defined(Lynx)
-#  if !defined(__EMX__)
-#   include <sys/mman.h>
-#  endif
-# else
+# if defined(Lynx) && defined(NO_MMAP)
 #  include <sys/types.h>
 #  include <errno.h>
 #  include <smem.h>
+# else
+#  if !defined(__UNIXOS2__)
+#   include <sys/mman.h>
+#  endif
 # endif
 #endif
 #include <sys/wait.h>
@@ -469,7 +469,7 @@ MapPhysAddress(unsigned long address, unsigned long size)
     MapPtr mp;
 #if defined(ISC) && defined(HAS_SVR3_MMAP)
     struct kd_memloc mloc;
-#elif defined(__EMX__)
+#elif defined(__UNIXOS2__)
     APIRET rc;
     ULONG action;
     HFILE hfd;
@@ -513,7 +513,7 @@ MapPhysAddress(unsigned long address, unsigned long size)
 
     if ((vaddr = (void *)ioctl(mapFd, MAP, &mloc)) == (void *)-1)
 	return NULL;
-#elif defined (__EMX__)
+#elif defined (__UNIXOS2__)
     /*
      * Dragon warning here! /dev/pmap$ is never closed, except on progam exit.
      * Consecutive calling of this routine will make PMAP$ driver run out
@@ -547,7 +547,7 @@ MapPhysAddress(unsigned long address, unsigned long size)
    }
    if (rc != 0)
 	return NULL;
-#elif defined (Lynx)
+#elif defined(Lynx) && defined(NO_MMAP)
     vaddr = (void *)smem_create("XF86DGA", (char *)offset, 
 				size + delta, SM_READ|SM_WRITE);
 #else
@@ -622,17 +622,19 @@ XF86DGADirectVideo(
 	mp = sp->map;
 
     if (enable & XF86DGADirectGraphics) {
-#if !defined(ISC) && !defined(HAS_SVR3_MMAP) && !defined(Lynx) \
-	&& !defined(__EMX__)
+#if !defined(ISC) && !defined(HAS_SVR3_MMAP) \
+	&& !(defined(Lynx) && defined(NO_MMAP)) \
+	&& !defined(__UNIXOS2__)
 	if (mp && mp->vaddr)
 	    mprotect(mp->vaddr, mp->size + mp->delta, PROT_READ | PROT_WRITE);
 #endif
     } else {
-#if !defined(ISC) && !defined(HAS_SVR3_MMAP) && !defined(Lynx) \
-	&& !defined(__EMX__)
+#if !defined(ISC) && !defined(HAS_SVR3_MMAP) \
+	&& !(defined(Lynx) && defined(NO_MMAP)) \
+	&& !defined(__UNIXOS2__)
 	if (mp && mp->vaddr)
 	    mprotect(mp->vaddr, mp->size + mp->delta, PROT_READ);
-#elif defined(Lynx)
+#elif defined(Lynx) && defined(NO_MMAP)
 	/* XXX this doesn't allow enable after disable */
 	smem_create(NULL, mp->vaddr, mp->size + mp->delta, SM_DETACH);
 	smem_remove("XF86DGA");

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/arith.c,v 1.5 2001/01/17 19:43:21 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/arith.c,v 1.6 2002/02/18 20:51:57 herrb Exp $ */
 
  /* ARITH    CWEB         V0006 ********                             */
 /*
@@ -215,7 +215,7 @@ DLdiv(doublelong *quotient,  /* also where dividend is, originally     */
        divisor >>= 1;
  
        if ((u1u2 >> (LONGSIZE - shift)) != 0 && shift != 0)
-               Xabort("DLdiv:  dividend too large");
+               Abort("DLdiv:  dividend too large");
        u1u2 = (u1u2 << shift) + ((shift == 0) ? 0 : u3u4 >> (LONGSIZE - shift));
        u3u4 <<= shift;
  
@@ -278,7 +278,7 @@ DLdiv(doublelong *quotient,  /* also where dividend is, originally     */
                */
                u1u2 = t;
                if (HIGHDIGIT(u1u2) != 0)
-                       Xabort("divide algorithm error");
+                       Abort("divide algorithm error");
                u1u2 = ASSEMBLE(u1u2, LOWDIGIT(u3));
                u3 = LOWDIGIT(u3u4);
                q3q4 = ASSEMBLE(q3q4, qhat);

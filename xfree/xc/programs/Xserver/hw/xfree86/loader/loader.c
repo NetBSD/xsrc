@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.55 2001/10/28 03:33:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.c,v 1.63 2002/11/25 14:05:03 eich Exp $ */
 
 /*
  *
@@ -34,7 +34,8 @@
 #include <fcntl.h>
 #include <string.h>
 #if defined(linux) && \
-    (defined(__alpha__) || defined(__powerpc__) || defined(__ia64__))
+    (defined(__alpha__) || defined(__powerpc__) || defined(__ia64__) \
+    || defined(__x86_64__))
 #include <malloc.h>
 #endif
 #include <stdarg.h>
@@ -71,7 +72,7 @@ int check_unresolved_sema = 0;
 #define strerror(err) "strerror unsupported"
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 void * os2ldcalloc(size_t,size_t);
 #endif
 
@@ -89,10 +90,16 @@ static int refCount[MAX_HANDLE] ;
 
 #if defined(__sparc__) && defined(__GNUC__)
 # define SYMFUNCDOT(func) { "." #func, (funcptr)&__sparc_dot_ ## func },
+# if !defined(__OpenBSD__)
 # define SYMFUNCDOT89(func) { "." #func, (funcptr)&func ## _sparcv89 },
 # define DEFFUNCDOT(func) 					\
 extern void __sparc_dot_ ## func (void) __asm__ ("." #func);	\
 extern void func ## _sparcv89 (void);
+# else
+# define SYMFUNCDOT(func) { "." #func, (funcptr)&__sparc_dot_ ## func },
+# define DEFFUNCDOT(func) 					\
+extern void __sparc_dot_ ## func (void) __asm__ ("." #func);
+#endif
 DEFFUNCDOT(rem)
 DEFFUNCDOT(urem)
 DEFFUNCDOT(mul)
@@ -322,7 +329,8 @@ LoaderInit(void)
 	xf86MsgVerb(X_INFO, 2, "Loader running on %s\n", osname);
 
 #if defined(linux) && \
-    (defined(__alpha__) || defined(__powerpc__) || defined(__ia64__))
+    (defined(__alpha__) || defined(__powerpc__) || defined(__ia64__) \
+     || ( defined __x86_64__ && ! defined UseMMAP && ! defined DoMMAPedMerge))
     /*
      * The glibc malloc uses mmap for large allocations anyway. This breaks
      * some relocation types because the offset overflow. See loader.h for more
@@ -420,41 +428,67 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
 {
 #ifdef UseMMAP
     unsigned long ret;	
-#define MMAP_PROT	(PROT_READ|PROT_WRITE|PROT_EXEC)
+# ifdef MmapPageAlign
+    unsigned long pagesize;
+    unsigned long new_size;
+    unsigned long new_off;
+    unsigned long new_off_bias;
+# endif
+# define MMAP_PROT	(PROT_READ|PROT_WRITE|PROT_EXEC)
 
-#ifdef DEBUGMEM
+# ifdef DEBUGMEM
     ErrorF("_LoaderFileToMem(%d,%u(%u),%d,%s)",fd,offset,offsetbias,size,label);
-#endif
-
-    ret = (unsigned long) mmap(0,size,MMAP_PROT,MAP_PRIVATE,
-			       fd,offset+offsetbias);
-
+# endif
+# ifdef MmapPageAlign
+    pagesize = getpagesize();
+    new_size = (size + pagesize - 1) / pagesize;
+    new_size *= pagesize;
+    new_off = (offset + offsetbias) / pagesize;
+    new_off *= pagesize;
+    new_off_bias = (offset + offsetbias) - new_off;
+    if ((new_off_bias + size) > new_size) new_size += pagesize;
+    ret = (unsigned long) mmap(0,new_size,MMAP_PROT,MAP_PRIVATE
+#  ifdef __x86_64__
+			       | MAP_32BIT
+#  endif
+			       ,
+			       fd,new_off);
     if(ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno) );
-
+    return (void *)(ret + new_off_bias);
+# else
+    ret = (unsigned long) mmap(0,size,MMAP_PROT,MAP_PRIVATE
+#  ifdef __x86_64__
+			       | MAP_32BIT
+#  endif
+			       ,
+			       fd,offset + offsetbias);
+    if(ret == -1)
+	FatalError("mmap() failed: %s\n", strerror(errno) );
     return (void *)ret;
+# endif
 #else
     char *ptr;
 
-#ifdef DEBUGMEM
+# ifdef DEBUGMEM
     ErrorF("_LoaderFileToMem(%d,%u(%u),%d,%s)",fd,offset,offsetbias,size,label);
-#endif
+# endif
 
     if(size == 0){
-#ifdef DEBUGMEM
+# ifdef DEBUGMEM
 	ErrorF("=NULL\n",ptr);
-#endif
+# endif
 	return NULL;
     }
 
-#ifndef __EMX__
+# ifndef __UNIXOS2__
     if( (ptr=xf86loadercalloc(size,1)) == NULL )
 	FatalError("_LoaderFileToMem() malloc failed\n" );
-#else
+# else
     if( (ptr=os2ldcalloc(size,1)) == NULL )
 	FatalError("_LoaderFileToMem() malloc failed\n" );
-#endif
-#if defined(linux) && defined(__ia64__)
+# endif
+# if defined(linux) && defined(__ia64__)
     {
 	unsigned long page_size = getpagesize();
 	unsigned long round;
@@ -463,7 +497,7 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
 	mprotect(ptr - round, (size+round+page_size-1) & ~(page_size-1),
 		 PROT_READ|PROT_WRITE|PROT_EXEC);
     }
-#endif
+# endif
 
     if(lseek(fd,offset+offsetbias,SEEK_SET)<0)
 	FatalError("\n_LoaderFileToMem() lseek() failed: %s\n",strerror(errno));
@@ -471,7 +505,8 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
     if(read(fd,ptr,size)!=size)
 	FatalError("\n_LoaderFileToMem() read() failed: %s\n",strerror(errno));
 
-#if defined(linux) && defined(__powerpc__) 
+# if (defined(linux) || defined(__NetBSD__) || defined(__OpenBSD__)) \
+    && defined(__powerpc__) 
     /*
      * Keep the instruction cache in sync with changes in the
      * main memory.
@@ -482,14 +517,14 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
 	    ppc_flush_icache(ptr+i); 
 	ppc_flush_icache(ptr+size-1); 
     } 
-#endif
+# endif
 #if defined(__NetBSD__) && defined(__powerpc__)
     __syncicache(ptr,size);
 #endif
 
-#ifdef DEBUGMEM
+# ifdef DEBUGMEM
     ErrorF("=%lx\n",ptr);
-#endif
+# endif
 
     return (void *)ptr;
 #endif
@@ -501,11 +536,25 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
 void
 _LoaderFreeFileMem(void *addr, int size)
 {
+#if defined (UseMMAP) && defined (MmapPageAlign)
+    unsigned long pagesize = getpagesize();
+    memType i_addr = (memType)addr;
+    unsigned long new_size;
+#endif
 #ifdef DEBUGMEM
     ErrorF("_LoaderFreeFileMem(%x,%d)\n",addr,size);
 #endif
 #ifdef UseMMAP
-    munmap(addr,size);
+# if defined (MmapPageAlign)
+    i_addr /=  pagesize;
+    i_addr *=  pagesize;
+    new_size = (size + pagesize - 1) / pagesize;
+    new_size *= pagesize;
+    if (((memType)addr - i_addr + size) > new_size) new_size += pagesize;
+    munmap((void *)i_addr,new_size);
+# else
+    munmap((void *)addr,size);
+# endif
 #else
     if(size == 0)
 	return;
@@ -841,6 +890,7 @@ void *
 ARCHIVELoadModule(loaderPtr modrec, int arfd, LOOKUP **ppLookup)
 {
     loaderPtr tmp = NULL;
+    void *ret = NULL;
     unsigned char	magic[SARMAG];
     struct ar_hdr	hdr;
 #if defined(__powerpc__) && defined(Lynx)
@@ -1050,6 +1100,13 @@ ARCHIVELoadModule(loaderPtr modrec, int arfd, LOOKUP **ppLookup)
 	if( offset&0x1 ) /* odd value */
 		lseek(arfd,1,SEEK_CUR); /* make it an even boundary */
 
+	if (tmp->private == (void *) -1L) {
+	    ErrorF("Skipping \"%s\":  No symbols found\n", tmp->name);
+	    continue;
+	}
+	else
+	    ret = tmp->private;
+
 	/* Add the lookup table returned from funcs.LoadModule to the
 	 * one we're going to return.
 	 */
@@ -1074,10 +1131,7 @@ ARCHIVELoadModule(loaderPtr modrec, int arfd, LOOKUP **ppLookup)
     if (nametable)
 	xf86loaderfree(nametable);
 
-    if (tmp)
-	return tmp->private;
-    else
-	return 0;
+    return ret;
 }
 
 /*
@@ -1153,6 +1207,7 @@ LoaderOpen(const char *module, const char *cname, int handle,
     if ( new_handle == MAX_HANDLE ) {
 	xf86Msg(X_ERROR, "Out of loader space\n" ) ; /* XXX */
 	if(errmaj) *errmaj = LDR_NOSPACE;
+	if(errmin) *errmin = LDR_NOSPACE;
 	return -1 ;
     }
 
@@ -1171,6 +1226,7 @@ LoaderOpen(const char *module, const char *cname, int handle,
 	xf86Msg(X_ERROR, "%s is an unrecognized module type\n", module ) ;
         freeHandles[new_handle] = HANDLE_FREE ;
 	if(errmaj) *errmaj = LDR_UNKTYPE;
+	if(errmin) *errmin = LDR_UNKTYPE;
 	return -1;
     }
 
@@ -1188,11 +1244,14 @@ LoaderOpen(const char *module, const char *cname, int handle,
 	_LoaderListPop(new_handle);
         freeHandles[new_handle] = HANDLE_FREE ;
 	if(errmaj) *errmaj = LDR_NOLOAD;
+	if(errmin) *errmin = LDR_NOLOAD;
 	return -1;
     }
 
-    LoaderAddSymbols(new_handle, tmp->module, pLookup);
-    xf86loaderfree(pLookup);
+    if (tmp->private != (void *) -1L) {
+	LoaderAddSymbols(new_handle, tmp->module, pLookup);
+	xf86loaderfree(pLookup);
+    }
 
     close(fd);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.46 2001/11/08 21:49:43 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.53 2003/01/15 03:29:05 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -72,37 +72,57 @@ xf86KbdBell(percent, pKeyboard, ctrl, unused)
 }
 
 void
-xf86KbdLeds ()
+xf86UpdateKbdLeds()
 {
   int leds = 0;
-#ifdef XKB
-  if (!noXkbExtension) {
-    XkbEventCauseRec cause;
-   XkbSetCauseUnknown(&cause);
-    XkbUpdateIndicators((DeviceIntPtr)xf86Info.pKeyboard,
-			XkbAllIndicatorsMask, False, NULL, &cause);
-    return;
+  if (xf86Info.capsLock) leds |= XLED1;
+  if (xf86Info.numLock)  leds |= XLED2;
+  if (xf86Info.scrollLock || xf86Info.modeSwitchLock) leds |= XLED3;
+  if (xf86Info.composeLock) leds |= XLED4;
+  xf86Info.leds = (xf86Info.leds & xf86Info.xleds) | (leds & ~xf86Info.xleds);
+  xf86KbdLeds();
+}
+
+void
+xf86KbdLeds ()
+{
+  int leds, real_leds = 0;
+
+#if defined (__sparc__)
+  static int kbdSun = -1;
+  if (kbdSun == -1) {
+  if ((xf86Info.xkbmodel && !strcmp(xf86Info.xkbmodel, "sun")) ||
+      (xf86Info.xkbrules && !strcmp(xf86Info.xkbrules, "sun")))
+      kbdSun = 1;
+  else
+      kbdSun = 0;
   }
-#endif
+  if (kbdSun) {
+     if (xf86Info.leds & 0x08) real_leds |= XLED1;
+     if (xf86Info.leds & 0x04) real_leds |= XLED3;
+     if (xf86Info.leds & 0x02) real_leds |= XLED4;
+     if (xf86Info.leds & 0x01) real_leds |= XLED2;
+     leds = real_leds;
+     real_leds = 0;
+  } else {
+     leds = xf86Info.leds;
+  }
+#else
+  leds = xf86Info.leds;
+#endif /* defined (__sparc__) */
+
 #ifdef LED_CAP
-  if (xf86Info.capsLock && !(xf86Info.xleds & XLED1))
-    leds |= LED_CAP;
-
-  if (xf86Info.numLock && !(xf86Info.xleds & XLED2))
-    leds |= LED_NUM;
-
-  if ((xf86Info.scrollLock || 
-       xf86Info.modeSwitchLock || 
-       xf86Info.composeLock) && 
-      !(xf86Info.xleds & XLED3))
-    leds |= LED_SCR;
-
-  if ((xf86Info.leds & xf86Info.xleds) & XLED1) leds |= LED_CAP;
-  if ((xf86Info.leds & xf86Info.xleds) & XLED2) leds |= LED_NUM;
-  if ((xf86Info.leds & xf86Info.xleds) & XLED3) leds |= LED_SCR;
-
-  xf86SetKbdLeds(leds);
-#endif /* LED_CAP */
+  if (leds & XLED1)  real_leds |= LED_CAP;
+  if (leds & XLED2)  real_leds |= LED_NUM;
+  if (leds & XLED3)  real_leds |= LED_SCR;
+#ifdef LED_COMP
+  if (leds & XLED4)  real_leds |= LED_COMP;
+#else
+  if (leds & XLED4)  real_leds |= LED_SCR;
+#endif
+#endif
+  xf86SetKbdLeds(real_leds);
+  return;
 }
 
 /*
@@ -116,19 +136,30 @@ xf86KbdCtrl (pKeyboard, ctrl)
      DevicePtr     pKeyboard;        /* Keyboard to alter */
      KeybdCtrl     *ctrl;
 {
+  int leds;
   xf86Info.bell_pitch    = ctrl->bell_pitch;
   xf86Info.bell_duration = ctrl->bell_duration;
   xf86Info.autoRepeat    = ctrl->autoRepeat;
-  xf86Info.leds          = (ctrl->leds & ~(XCAPS | XNUM | XSCR));
 
   xf86Info.composeLock   = (ctrl->leds & XCOMP) ? TRUE : FALSE;
+
+  leds = (ctrl->leds & ~(XCAPS | XNUM | XSCR));
+#ifdef XKB
+  if (noXkbExtension) {
+#endif
+      xf86Info.leds = (leds & xf86Info.xleds)|(xf86Info.leds & ~xf86Info.xleds);
+#ifdef XKB
+  } else {
+      xf86Info.leds = leds;
+  }
+#endif
 
   xf86KbdLeds();
 }
 
 /*
  * xf86InitKBD --
- *      Reinitialize the keyboard. Only set Lockkeys accrding to ours leds.
+ *      Reinitialize the keyboard. Only set Lockkeys according to ours leds.
  *      Depress all other keys.
  */
 
@@ -297,7 +328,10 @@ xf86KbdProc (pKeyboard, what)
 			     (KbdCtrlProcPtr)xf86KbdCtrl);
 #ifdef XKB
     } else {
- 	XkbComponentNamesRec names;
+ 	XkbComponentNamesRec	names;
+	XkbDescPtr		desc;
+	Bool			foundTerminate = FALSE;
+	int			keyc;
 	if (XkbInitialMap) {
 	    if ((xf86Info.xkbkeymap = strchr(XkbInitialMap, '/')) != NULL)
 		xf86Info.xkbkeymap++;
@@ -326,12 +360,30 @@ xf86KbdProc (pKeyboard, what)
 	XkbSetRulesDflts(xf86Info.xkbrules, xf86Info.xkbmodel,
 			 xf86Info.xkblayout, xf86Info.xkbvariant,
 			 xf86Info.xkboptions);
+	
 	XkbInitKeyboardDeviceStruct(pKeyboard, 
 				    &names,
 				    &keySyms, 
 				    modMap, 
 				    xf86KbdBell,
 				    (KbdCtrlProcPtr)xf86KbdCtrl);
+
+	/* Search keymap for Terminate action */
+	desc  = pKeyboard->key->xkbInfo->desc;
+	for (keyc = desc->min_key_code; keyc <= desc->max_key_code; keyc++) {
+	    int i;
+	    for (i = 1; i <= XkbKeyNumActions(desc, keyc); i++) {
+		if (XkbKeyAction(desc, keyc, i)
+		  && XkbKeyAction(desc, keyc, i)->type == XkbSA_Terminate) {
+		    foundTerminate = TRUE;
+		    goto searchdone;
+		}
+	    }
+  	}
+searchdone:
+	xf86Info.ActionKeyBindingsSet = foundTerminate;
+	if (!foundTerminate)
+	    xf86Msg(X_INFO, "Server_Terminate keybinding not found\n");
     }
 #endif
     
@@ -354,18 +406,17 @@ xf86KbdProc (pKeyboard, what)
     if (xf86Info.consType != WSCONS) {
 #endif
 	if (kbdFd != -1) {
-	    char buf[16];
-
-	    read(kbdFd, buf, 16);
-	}
+		char buf[16];
+		read(kbdFd, buf, 16);
+    	}
 #if defined(WSCONS_SUPPORT)
     }
 #endif
 
-#if !defined(__EMX__) /* Under EMX, keyboard cannot be select()'ed */
+#if !defined(__UNIXOS2__) /* Under EMX, keyboard cannot be select()'ed */
     if (kbdFd != -1)
       AddEnabledDevice(kbdFd);
-#endif  /* __EMX__ */
+#endif  /* __UNIXOS2__ */
 
     pKeyboard->public.on = TRUE;
     xf86InitKBD(FALSE);
@@ -400,25 +451,20 @@ GetTimeInMillis()
 {
     struct timeval  tp;
     register CARD32 val;
+    register INT32 diff;
     static CARD32 oldval = 0;
-    static CARD32 skew = 0;
+    static CARD32 time = 0;
 
     gettimeofday(&tp, 0);
-    val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
-    /* On some systems the clock is not monothonic */
-    if ((val < oldval) && ((oldval - val) < HALFMONTH)) {
-      /* if clock is not monothonic find out clock skew skew */
-        xf86MsgVerb(X_WARNING,4,"System time not monotonic!\n");
-	skew += oldval - val;
-	val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
-    } else if (skew && ((val - oldval) < HALFMONTH)) {
-      /* try to reduce skew */
-        INT32 diff = skew - (val - oldval);
-	skew = diff < 0 ? 0 : diff;
-	val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
+    val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+    if (oldval) {
+	diff = val - oldval;
+	if (diff > 0)
+	    time += diff;
     }
     oldval = val;
-    return val;
+
+    return time;
 }
 #endif /* DDXTIME && !QNX4 */
 

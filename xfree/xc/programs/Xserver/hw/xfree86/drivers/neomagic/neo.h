@@ -22,14 +22,14 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.21 2002/04/04 14:05:44 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.23 2002/10/30 12:52:21 alanh Exp $ */
 
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
  *
  * Authors:
- *   Jens Owen (jens@precisioninsight.com)
+ *   Jens Owen (jens@tungstengraphics.com)
  *   Kevin E. Martin (kevin@precisioninsight.com)
  *
  * Port to Xfree86 v.4.0
@@ -163,6 +163,7 @@ typedef struct {
     unsigned char PanelHorizCenterReg3;
     unsigned char PanelHorizCenterReg4;
     unsigned char PanelHorizCenterReg5;
+    unsigned char Sequencer1;
     Bool ProgramVCLK;
     unsigned char VCLK3NumeratorLow;
     unsigned char VCLK3NumeratorHigh;
@@ -235,6 +236,7 @@ typedef struct neoRec
     OptionInfoPtr Options;
     Bool noLinear;
     Bool noAccel;
+    Bool noAccelSet;
     Bool swCursor;
     Bool noMMIO;
     Bool internDisp;

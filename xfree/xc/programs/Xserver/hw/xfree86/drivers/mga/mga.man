@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.man,v 1.5 2002/02/20 17:17:50 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.man,v 1.6 2003/01/26 02:17:28 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH MGA __drivermansuffix__ __vendorversion__
@@ -26,7 +26,10 @@ either
 or video overlay.  The second head of dual-head cards is supported for
 the G450 and G550.  Support for the second head on G400 cards requires
 a binary-only "mga_hal" module that is available from Matrox
-<http://www.matrox.com>.  That module also provides various other enhancements.
+<http://www.matrox.com>, and may be on the CD supplied with the card. 
+That module also provides various other enhancements,
+and may be necessary to use the DVI (digital) output on the G550
+(and other cards).
 .SH SUPPORTED HARDWARE
 The
 .B mga
@@ -150,4 +153,4 @@ XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscma
 .SH AUTHORS
 Authors include: Radoslaw Kapitan, Mark Vojkovich, and also David Dawes, Guy
 Desbief, Dirk Hohndel, Doug Merritt, Andrew E. Mileski, Andrew van der Stock,
-Leonard N. Zubkoff.
+Leonard N. Zubkoff, Andrew C. Aitchison.
