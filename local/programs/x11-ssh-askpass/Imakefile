@@ -1,7 +1,5 @@
-NAME		= x11-ssh-askpass
+NAME		= ssh-askpass
 CLASS		= SshAskpass
-
-BINDIR		= /usr/local/libexec/ssh
 
 CAT		= cat
 CHMOD		= chmod -c
@@ -64,14 +62,6 @@ LOCAL_LIBRARIES	= -lXt -lX11 -lSM -lICE
 
 ComplexProgramTargetNoMan($(NAME))
 InstallAppDefaults($(CLASS))
-
-install::
-	@set -x; \
-	if [ -f $(DESTDIR)$(BINDIR)/ssh-askpass ]; then \
-	  $(MV) $(DESTDIR)$(BINDIR)/ssh-askpass \
-	    $(DESTDIR)$(BINDIR)/ssh-askpass.old; \
-	fi
-	$(LN) $(NAME) $(DESTDIR)$(BINDIR)/ssh-askpass
 
 .PHONY: depends changelog realclean spotless tar
 
