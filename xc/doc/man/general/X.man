@@ -1038,9 +1038,9 @@ the appropriate instance name can be placed before the asterisk:
 .SH "SEE ALSO"
 .PP
 .\" introductions
-XConsortium(1),
-XStandards(1),
-Xsecurity(1),
+XConsortium(7),
+XStandards(7),
+Xsecurity(7),
 .\" clients, utilities, and demos
 
 appres(1), bdftopcf(1), bitmap(1), editres(1), fsinfo(1),

@@ -230,4 +230,4 @@ this form is \fInot\fP used by clients.
 .SH FILES
 \&.Xauthority
 .SH "SEE ALSO"
-X(1), xdm(1), xauth(1), xhost(1), xinit(1), Xserver(1)
+X(7), xdm(1), xauth(1), xhost(1), xinit(1), Xserver(1)
