@@ -1,4 +1,4 @@
-/*	$NetBSD: pxgc.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
+/*	$NetBSD: pxgc.c,v 1.3 2002/07/24 14:16:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -339,39 +339,22 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 		pGC->ops->ImageGlyphBlt = miImageGlyphBlt;
 		maxw = FONTMAXBOUNDS(pGC->font, rightSideBearing) -
 		    FONTMINBOUNDS(pGC->font, leftSideBearing);
+		maxh = FONTASCENT(pGC->font) + FONTDESCENT(pGC->font);
 
-		if (maxw <= 16 &&
+		if (maxw <= 16 && maxh <= 16 &&
 		    FONTMINBOUNDS(pGC->font, characterWidth) >= 0) {
-			maxh = FONTASCENT(pGC->font) + FONTDESCENT(pGC->font);
-
 			if (TERMINALFONT(pGC->font)) {
-				if (maxh <= 16) {
-					if (gcPriv->fillStyle == FillSolid)
-						pGC->ops->PolyGlyphBlt =
-						    pxPolyTEGlyphBlt16;
-					pGC->ops->ImageGlyphBlt =
-					    pxImageTEGlyphBlt16;
-				} else {
-					if (gcPriv->fillStyle == FillSolid)
-						pGC->ops->PolyGlyphBlt =
-						    pxPolyTEGlyphBltN;
-					pGC->ops->ImageGlyphBlt =
-					    pxImageTEGlyphBltN;
-				}
+				if (gcPriv->fillStyle == FillSolid)
+					pGC->ops->PolyGlyphBlt =
+					    pxPolyTEGlyphBlt;
+				pGC->ops->ImageGlyphBlt =
+				    pxImageTEGlyphBlt;
 			} else {
-				if (maxh <= 16) {
-					if (gcPriv->fillStyle == FillSolid)
-						pGC->ops->PolyGlyphBlt =
-						    pxPolyGlyphBlt16;
-					pGC->ops->ImageGlyphBlt =
-					    pxImageGlyphBlt16;
-				} else {
-					if (gcPriv->fillStyle == FillSolid)
-						pGC->ops->PolyGlyphBlt =
-						    pxPolyGlyphBltN;
-					pGC->ops->ImageGlyphBlt =
-					    pxImageGlyphBltN;
-				}
+				if (gcPriv->fillStyle == FillSolid)
+					pGC->ops->PolyGlyphBlt =
+					    pxPolyGlyphBlt;
+				pGC->ops->ImageGlyphBlt =
+				    pxImageGlyphBlt;
 			}
 		}
 	}
