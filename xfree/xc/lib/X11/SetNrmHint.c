@@ -1,4 +1,4 @@
-/* $TOG: SetNrmHint.c /main/5 1998/02/06 17:52:40 kaleb $ */
+/* $Xorg: SetNrmHint.c,v 1.3 2000/08/17 19:44:54 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca,

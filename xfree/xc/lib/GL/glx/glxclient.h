@@ -1,24 +1,37 @@
-
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
-**
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
-/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.10 2000/11/13 23:31:22 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.13 2001/04/10 16:07:49 dawes Exp $ */
 
 /*
  * Direct rendering support added by Precision Insight, Inc.
@@ -32,12 +45,11 @@
 #define _GLX_client_h_
 #define NEED_REPLIES
 #define NEED_EVENTS
-#include <string.h>
-#include <stdlib.h>
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
-#include <GL/gl.h>
 #include <GL/glx.h>
+#include <string.h>
+#include <stdlib.h>
 #include "glxint.h"
 #include "glxproto.h"
 #include "glapitable.h"
@@ -53,6 +65,8 @@
 #define GLX_MINOR_VERSION	2
 
 #define __GL_BOOLEAN_ARRAY	(GL_BYTE - 1)
+
+#define __GLX_MAX_TEXTURE_UNITS 32
 
 typedef struct __GLXcontextRec __GLXcontext;
 typedef struct __GLXdisplayPrivateRec __GLXdisplayPrivate;
@@ -211,55 +225,34 @@ typedef struct __GLXpixelStoreModeRec {
     GLboolean swapEndian;
     GLboolean lsbFirst;
     GLuint rowLength;
+    GLuint imageHeight;
+    GLuint imageDepth;
     GLuint skipRows;
     GLuint skipPixels;
+    GLuint skipImages;
     GLuint alignment;
 } __GLXpixelStoreMode;
 
+typedef struct __GLXvertexArrayPointerStateRec {
+    GLboolean enable;
+    void (*proc)(const void *);
+    const GLubyte *ptr;
+    GLsizei skip;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+} __GLXvertexArrayPointerState;
+
 typedef struct __GLXvertArrayStateRec {
-    GLboolean vertexEnable;
-    void (*vertexCall)(const char *);
-    const char *vertexPtr;
-    GLsizei vertexSkip;
-    GLint vertexSize;
-    GLenum vertexType;
-    GLsizei vertexStride;
-
-    GLboolean normalEnable;
-    void (*normalCall)(const char *);
-    const char *normalPtr;
-    GLsizei normalSkip;
-    GLenum normalType;
-    GLsizei normalStride;
-
-    GLboolean colorEnable;
-    void (*colorCall)(const char *);
-    const char *colorPtr;
-    GLsizei colorSkip;
-    GLint colorSize;
-    GLenum colorType;
-    GLsizei colorStride;
-
-    GLboolean indexEnable;
-    void (*indexCall)(const char *);
-    const char *indexPtr;
-    GLsizei indexSkip;
-    GLenum indexType;
-    GLsizei indexStride;
-
-    GLboolean texCoordEnable;
-    void (*texCoordCall)(const char *);
-    const char *texCoordPtr;
-    GLsizei texCoordSkip;
-    GLint texCoordSize;
-    GLenum texCoordType;
-    GLsizei texCoordStride;
-
-    GLboolean edgeFlagEnable;
-    void (*edgeFlagCall)(const GLboolean *);
-    GLsizei edgeFlagSkip;
-    const GLboolean *edgeFlagPtr;
-    GLsizei edgeFlagStride;
+    __GLXvertexArrayPointerState vertex;
+    __GLXvertexArrayPointerState normal;
+    __GLXvertexArrayPointerState color;
+    __GLXvertexArrayPointerState index;
+    __GLXvertexArrayPointerState texCoord[__GLX_MAX_TEXTURE_UNITS];
+    __GLXvertexArrayPointerState edgeFlag;
+    GLint maxElementsVertices;
+    GLint maxElementsIndices;
+    GLint activeTexture;
 } __GLXvertArrayState;
 
 typedef struct __GLXattributeRec {
@@ -370,8 +363,8 @@ struct __GLXcontextRec {
     ** Fill newImage with the unpacked form of oldImage getting it
     ** ready for transport to the server.
     */
-    void (*fillImage)(__GLXcontext*, GLint, GLint, GLenum, GLenum,
-		      const GLvoid*, GLubyte*, GLubyte*);
+    void (*fillImage)(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
+		      GLenum, const GLvoid*, GLubyte*, GLubyte*);
 
     /*
     ** Client side attribs.
@@ -587,7 +580,7 @@ extern CARD8 __glXSetupForCommand(Display *dpy);
 */
 
 /* Return the size, in bytes, of some pixel data */
-extern GLint __glImageSize(GLint, GLint, GLenum, GLenum);
+extern GLint __glImageSize(GLint, GLint, GLint, GLenum, GLenum);
 
 /* Return the k value for a given map target */
 extern GLint __glEvalComputeK(GLenum);
@@ -599,10 +592,8 @@ extern GLint __glEvalComputeK(GLenum);
 ** updated to contain the modes needed by the server to decode the
 ** sent data.
 */
-extern void __glFillImage(__GLXcontext*, GLint, GLint,
-			  GLenum, GLenum,
-			  const GLvoid*, GLubyte*,
-			  GLubyte*);
+extern void __glFillImage(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
+			  GLenum, const GLvoid*, GLubyte*, GLubyte*);
 
 /* Copy map data with a stride into a packed buffer */
 extern void __glFillMap1f(GLint, GLint, GLint, const GLfloat *, GLubyte *);
@@ -616,8 +607,8 @@ extern void __glFillMap2d(GLint, GLint, GLint, GLint, GLint,
 ** Empty an image out of the reply buffer into the clients memory applying
 ** the pack modes to pack back into the clients requested format.
 */
-extern void __glEmptyImage(__GLXcontext*, GLint, GLint, GLenum,
-		    GLenum, const GLubyte *, GLvoid *);
+extern void __glEmptyImage(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
+		           GLenum, const GLubyte *, GLvoid *);
 
 
 /*
@@ -637,6 +628,10 @@ extern void __glXClientInfo (  Display *dpy, int opcode );
 ** is illegal these procedures return 0.
 */
 extern GLint __glCallLists_size(GLint, GLenum);
+extern GLint __glColorTableParameterfv_size(GLenum);
+extern GLint __glColorTableParameteriv_size(GLenum);
+extern GLint __glConvolutionParameterfv_size(GLenum);
+extern GLint __glConvolutionParameteriv_size(GLenum);
 extern GLint __glDrawPixels_size(GLenum, GLenum, GLint, GLint);
 extern GLint __glReadPixels_size(GLenum, GLenum, GLint, GLint);
 extern GLint __glLightModelfv_size(GLenum);
@@ -649,6 +644,7 @@ extern GLint __glFogfv_size(GLenum);
 extern GLint __glFogiv_size(GLenum);
 extern GLint __glTexImage1D_size(GLenum, GLenum, GLint);
 extern GLint __glTexImage2D_size(GLenum, GLenum, GLint, GLint);
+extern GLint __glTexImage3D_size(GLenum, GLenum, GLint, GLint, GLint);
 extern GLint __glTexEnvfv_size(GLenum);
 extern GLint __glTexEnviv_size(GLenum);
 extern GLint __glTexGenfv_size(GLenum);

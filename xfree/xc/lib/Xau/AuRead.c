@@ -1,4 +1,4 @@
-/* $TOG: AuRead.c /main/8 1998/02/06 14:14:57 kaleb $ */
+/* $Xorg: AuRead.c,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuRead.c,v 1.2 1999/03/14 03:21:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuRead.c,v 1.4 2001/01/17 19:42:24 dawes Exp $ */
 
 #include <X11/Xauth.h>
 

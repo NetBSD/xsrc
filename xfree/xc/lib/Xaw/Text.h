@@ -1,4 +1,4 @@
-/* $TOG: Text.h /main/46 1998/02/06 12:52:13 kaleb $ */
+/* $Xorg: Text.h,v 1.3 2000/08/17 19:45:40 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Text.h,v 1.12 1999/06/06 08:48:14 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.h,v 1.14 2001/01/17 19:42:34 dawes Exp $ */
 
 #ifndef _XawText_h
 #define _XawText_h

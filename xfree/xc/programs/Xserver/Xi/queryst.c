@@ -1,4 +1,4 @@
-/* $TOG: queryst.c /main/12 1998/02/09 15:30:05 kaleb $ */
+/* $Xorg: queryst.c,v 1.3 2000/08/17 19:48:02 cpqbld Exp $ */
 /*
 
 Copyright 1998, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xi/queryst.c,v 3.2 1996/04/15 11:18:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/queryst.c,v 3.4 2001/01/17 22:13:26 dawes Exp $ */
 
 /***********************************************************************
  *

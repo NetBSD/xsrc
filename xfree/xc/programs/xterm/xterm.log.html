@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.60 2000/11/01 01:12:44 dawes Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.69 2001/04/28 13:51:56 dickey Exp $
   -->
 <HTML>
 <HEAD>
@@ -42,6 +42,13 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_156">Patch #156 - 2001/4/28 - XFree86 4.0.3</A>
+<LI><A HREF="#xterm_155">Patch #155 - 2001/4/20 - XFree86 4.0.3</A>
+<LI><A HREF="#xterm_154">Patch #154 - 2001/4/11 - XFree86 4.0.3</A>
+<LI><A HREF="#xterm_153">Patch #153 - 2001/3/29 - XFree86 4.0.3</A>
+<LI><A HREF="#xterm_152">Patch #152 - 2001/3/13 - XFree86 4.0.2</A>
+<LI><A HREF="#xterm_151">Patch #151 - 2001/3/10 - XFree86 4.0.2</A>
+<LI><A HREF="#xterm_150">Patch #150 - 2000/12/29 - XFree86 4.0.2</A>
 <LI><A HREF="#xterm_149">Patch #149 - 2000/12/6 - XFree86 4.0.1h</A>
 <LI><A HREF="#xterm_148">Patch #148 - 2000/10/31 - XFree86 4.0.1d</A>
 <LI><A HREF="#xterm_147">Patch #147 - 2000/10/26 - XFree86 4.0.1c</A>
@@ -194,8 +201,275 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
 
+<H1><A NAME="xterm_156">Patch #156 - 2001/4/28 - XFree86 4.0.3</A></H1>
+<ul>
+	<li>change order of selection-target types to make 8-bit xterm prefer
+	  UTF8_STRING to COMPOUND_TEXT (patch by Juliusz Chroboczek).
+
+	<li>document <code>-fa</code>, <code>-fs</code> command-line options
+	  and <code>faceName</code>, <code>faceSize</code>
+	  resources which are used by the freetype library support.
+
+	<li>if configure script finds freetype libraries, but imake definitions
+	  do not have the XRENDERFONT definition, define it anyway.
+
+	<li>modify configure script check for freetype libraries to include
+	  <code>&lt;Xlib.h&gt;</code>, since an older version of the related
+	  headers relies on this (patch by Adam &lt;adam@cfar.umd.edu&gt;).
+</ul>
+
+<H1><A NAME="xterm_155">Patch #155 - 2001/4/20 - XFree86 4.0.3</A></H1>
+<ul>
+	<li>correct return type of in_put() from patch #153 changes, which
+	  left it not wide enough for UTF-8 (patch by Bruno Haible).
+</ul>
+
+<H1><A NAME="xterm_154">Patch #154 - 2001/4/11 - XFree86 4.0.3</A></H1>
+<ul>
+	<li>undo check for return value from <code>pututline</code> (used for
+	  debugging) since that function does not return a value on Slackware
+	  3.6.
+
+	<li>correct length in ScreenWrite, when rendering invisible text
+	  (patch by Sven Verdoolaege &lt;skimo@kotnet.org&gt;).
+
+	<li>fixes/improvements for the <code>i18nSelection</code> resource
+	  from patch #153, by Bruno Haible:
+
+	<ul>
+	  <li>add missing initialization for <code>i18nSelection</code>
+	    resource.
+
+	  <li>split-out the non-ICCM aspect of the
+	    <code>i18nSelection</code> resource as a new resource,
+	    <code>brokenSelections</code>.
+	</ul>
+
+	<li>add configure check for <code>&lt;time.h&gt;</code> and
+	  <code>&lt;sys/time.h&gt;</code>, to allow for Unixware&nbsp;7,
+	  which requires both.  If the configure script is not used, only
+	  <code>&lt;time.h&gt;</code> will be included as before (report
+	  by Thanh Ma).
+
+	<li>fix redefinition of <code>dup2</code>, <code>getutent</code>,
+	  <code>getutid</code>, <code>getutline</code> and <code>sleep</code>
+	  functions on Unixware&nbsp;7 (report by Thanh Ma
+	  &lt;Thanh.Ma@casi-rusco.com&gt;)
+
+	<li>add a fall-back definition for <code>__hpux</code>, which is
+	  apparently not defined in some compilers on HPUX 11.0 (reported
+	  by Clint Olsen).
+
+	<li>change VAL_INITIAL_ERASE, which is used as a fallback for the
+	  <code>"kb"</code> termcap string to 8, since that matches the
+	  xterm terminal description (request by Alexander V Lukyanov).
+
+	<li>correct an off-by-one in <code>ClearInLine</code>, which caused
+	  the erase-characters (ECH) control to display incorrectly
+	  (patch by Alexander V Lukyanov).
+
+	<li>correct escape sequences shown in terminfo for shifted editing
+	  keys.  The modifier code was for the control key rather than
+	  the shift key.
+</ul>
+
+<H1><A NAME="xterm_153">Patch #153 - 2001/3/29 - XFree86 4.0.3</A></H1>
+<ul>
+	<li>increase PTYCHARLEN to 8 for os390, add some debugging traces
+	  for UTMP functions (patch by Paul Gilmartin).
+
+	<li>correct an misplaced brace in <code>SelectionReceived()</code>
+	  (patch by Bruno Haible).
+
+	<li>correct an assignment dropped in <code>SelectionReceived()</code>
+	  which made it not compile for wide-characters combined with debug
+	  traces.
+
+	<li>correct typo, clarify description of 88- and 256-color controls
+	  (report by Bram Moolenaar).
+
+	<li>correct a typo in ctlseqs.ms which caused DEC Locator control
+	  sequences using single quote "'" display grave "`" instead (reported
+	  by Paul Williams, apparently in patch #114).
+</ul>
+
+<H1><A NAME="xterm_152">Patch #152 - 2001/3/13 - XFree86 4.0.2</A></H1>
+<ul>
+	<li>correct index in inner loop in <code>VTInitI18N()</code> from
+	  patch #151 changes, which resulted in infinite loop under some
+	  conditions (report/analysis by Paul Gilmartin).
+
+	<li>remove spurious "%|" from terminfo sgr capabilities
+	  (report/analysis by Adam M Costello, Debian bug #89222).
+
+	<li>add shell script to adjust list of dynamic libraries linked by
+	  <code>resize</code> when building with the standalone configure
+	  script.  Otherwise it uses the same list as for xterm, which is
+	  excessive.
+
+	<li>fix a few compiler warnings reported by the 20010305 gcc snapshot.
+</ul>
+
+<H1><A NAME="xterm_151">Patch #151 - 2001/3/10 - XFree86 4.0.2</A></H1>
+<ul>
+	<li>patch from Juliusz Chroboczek &lt;jch@pps.jussieu.fr&gt; which
+	  alters the behaviour of selections in XTerm.
+	  It is believed to follow the ICCCM + UTF8_STRING to the letter, both
+	  in UTF-8 and in eight-bit mode.  From his description:
+	  <ul>
+	  <li>When compiled against XFree86 4.0.2, the patched XTerm will make
+	    the selection available as COMPOUND_TEXT, STRING or UTF8_STRING in
+	    both modes.  It will request selections in the following order:
+	    <p>
+	      UTF-8 mode: UTF8_STRING, TEXT, COMPOUND_TEXT, STRING.<br>
+	      eight-bit mode: TEXT, COMPOUND_TEXT, UTF8_STRING, STRING.
+
+	  <li>When compiled against an earlier version of XFree86 (or compiled with
+	    OPT_UTF8_API=0), it will still obey the ICCCM, but will neither
+	    request nor provide UTF8_STRING in eight-bit mode, and neither TEXT
+	    nor COMPOUND_TEXT in UTF-8 mode.
+	  <li>For compatibility with previous versions of XTerm, a resource
+	    <code>i18nSelections</code> is provided, please see the manpage for
+	    details.  However, due to an unexpected combination of ICCCM
+	    extensions by various bits and pieces of the libraries, interacting
+	    with previous versions of XTerm will work in many locales even
+	    without this flag.  (Please do not set this resource to true by
+	    default, as this would violate the ICCCM.)
+	  </ul>
+
+	<li>improved error checking/reporting in VTInitI18N(), ensuring that
+	  lack of input method styles is treated distinctly from a mismatch.
+
+	<li>remove an incorrect ifdef from patch #141 which suppressed
+	  overstriking to simulate bold font when xterm was compiled to support
+	  wide characters (report/analysis by Adam M Costello
+	  &lt;amc@cs.berkeley.edu&gt;, fixes Debian bugs #76404, #77575).
+
+	<li>modify <code>RequestResize()</code> function to save/restore window
+	  manager hints.  Its call to <code>XtMakeResizeRequest()</code> had
+	  the undesirable side-effect of clearing window manager hints, e.g.,
+	  when switching to 132-columns via DECCOLM escape sequence.  Window
+	  manager hints make it simple to resize xterm in terms of character
+	  cells rather than pixels (reported by Christian Weisgerber as well
+	  as Debian bug #79939).
+	  <p>
+	  This applies to the normal configuration.  When built with toolbar
+	  support, the hints are applied to a different widget level (more
+	  work will be needed to make hints work with the toolbar).
+
+	<li>fix a redefinition warning for resize.c on OpenBSD (patch by
+	  Christian Weisgerber).
+
+	<li>change resource corresponding to <code>-T</code> option to match
+	  Xt library's <code>-title</code>, i.e.,  <code>.title</code>
+	  rather than <code>*title</code> so the command-line options are
+	  interchangeable as documented (Debian bug report #68843).
+
+	<li>add script used from autoconf'd makefile for installing manpages,
+	  since recent XFree86 changing the way section numbers are represented
+	  makes the install dependent on extra scripts.
+
+	<li>add configure check for freetype libraries and configure option
+	  --disable-freetype to override this feature.
+
+	<li>modify some configure script macros to avoid using changequote(),
+	  which has been rendered useless in the latest autoconf alpha 2.49c
+
+	<li>update config.guess, config.sub to 2001-2-13
+
+	<li>remove redundant/contradictory __CYGWIN__ definitions from resize.c
+
+	<li>correct manpage typo introduced by X11R6.5 resync.
+</ul>
+	Changes from XFree86 4.0.2:
+<ul>
+	<li>add definition of <code>_POSIX_C_SOURCE</code> for Solaris to
+	  make this compile with <code>gcc -ansi -pedantic</code> (report
+	  by &lt;mark@zang.com&gt;.
+</ul>
+
+<H1><A NAME="xterm_150">Patch #150 - 2000/12/29 - XFree86 4.0.2</A></H1>
+<ul>
+	<li>move the binding for shifted keypad plus/minus, which invokes the
+	  <code>larger-vt-font()</code> and <code>smaller-vt-font()</code>
+	  actions, respectively, into the translations resource (suggested by
+	  Marius Gedminas &lt;mgedmin@puni.osf.lt&gt;).
+
+	<li>modify configure script to support the
+	  <code>--program-prefix</code>, <code>--program-suffix</code> and
+	  <code>--program-transform-name</code> options (request by Alison
+	  Winters &lt;alison@mirrabooka.com&gt;).
+
+	<li>patch from Robert Brady
+	<ul>
+	   <li>fix a scrolling / combining characters display anomaly
+
+	   <li>fix a problem with double-width characters where if the primary
+	       font had no box-drawing characters, the right hand half of
+	       double-width characters was erased (reported by Yao Zhang
+	       &lt;yzhang@sharemedia.com&gt;).
+
+	   <li>fix special case of null byte for key handling in UTF-8 locales.
+	</ul>
+
+	<li>modify logic that compares sizes of normal and bold fonts to be
+	  more forgiving of the font server's choice of bold font which must
+	  match the normal font's size.  Now <code>same_font_size()</code>
+	  compares the height of the fonts rather than individually ascent and
+	  descent, and allows the bold font to be one pixel smaller than the
+	  normal font (addresses a report by Alan Citterman
+	  &lt;alan@mticket.com&gt;, who says that something in patches #146 to
+	  #148 made xterm more likely to overstrike bold fonts, and indirectly
+	  Debian bug report #76404, which reports the opposite).
+
+	<li>make configure script use $CFLAGS and $CPPFLAGS consistently,
+	  including removing a chunk from configure.in which attempted to
+	  save/restore $CPPFLAGS while processing value set by the --x-includes
+	  option, but lost values set in an intervening AC_CHECK_HEADERS.  This
+	  change modifies macros CF_ADD_CFLAGS, CF_ANSI_CC_CHECK and
+	  CF_X_TOOLKIT, as well as removing variables IMAKE_CFLAGS and X_CFLAGS
+	  from the generated makefile (the AC_CHECK_HEADERS problem was
+	  reported by Albert Chin-A-Young &lt;china@thewrittenword.com&lt;).
+
+	<li>correct a comparison in SELECTWORD case of ComputeSelect(), which
+	  resulted in a word-selection wrapping past the first column without
+	  checking the first column's character class (reported by Christian
+	  Lacunza &lt;celacunza@netscape.net&gt;
+
+	<li>correct a logic in UTF-8 mode for selecting double-width characters;
+	  a combining character was omitted (patch by Markus Kuhn).
+
+	<li>add feature to pop (raise) window when a bell is received
+	  (patch by Gael Roualland &lt;gael.roualland@dial.oleane.com&gt;).
+
+	<li>add __NetBSD__ and __OpenBSD__ to special-case in xterm_io.h
+	  for USE_POSIX_TERMIOS definition (patch by Christian Weisgerber).
+
+	<li>move special-case HPUX include for &lt;sys/bsdtty.h&gt; to
+	  xterm_io.h to define TIOCSLTC, making HAS_LTCHARS defined for HPUX
+	  10.20 (report by Bruno Betro).
+</ul>
+
 <H1><A NAME="xterm_149">Patch #149 - 2000/12/6 - XFree86 4.0.1h</A></H1>
 <ul>
+	<li>restructured includes for <code>termios.h</code>,
+	  <code>termio.h</code> and related definitions for main.c, os2main.c,
+	  screen.c and resize.c so they will share equivalent definitions in a
+	  new header <code>xterm_io.h</code>.  This is intended to solve some
+	  problems mainly for HPUX which appear to arise from inconsistent
+	  definitions for SIGWINCH- and HAS_LTCHARS-related symbols (reports
+	  by Bruno Betro, Jeremie Petit and Clint Olsen).
+
+	<li>improve usability of double-width fonts by allowing normal fonts
+	  to be given as double-width (from a patch by Fabrice Bellard
+	  &lt;bellard@email.enst.fr&gt;).
+
+	<li>correct a few compiler warnings in TRACE() macros for
+	  signed/unsigned variable differences (reported by Clint Olsen).
+
+	<li>make configure script use $CFLAGS and $CPPFLAGS more consistently,
+	  i.e., by using CF_ADD_CFLAGS in CF_ANSI_CC macro.
+
 	<li>expanded description of environment variables in manual-page.
 
 	<li>modify OPT_TCAP_QUERY feature to always return the termcap or
@@ -369,7 +643,7 @@ xc/programs/Xserver/hw/xfree86).
 <H1><A NAME="xterm_144">Patch #144 - 2000/8/23 - XFree86 4.0.1b</A></H1>
 <ul>
 	<li>remove a spurious assignment in ScreenWrite() from Robert Brady's
-	  patch which set a null at the "end" of the buffer to be written. 
+	  patch which set a null at the "end" of the buffer to be written.
 	  That made the autowrap feature write a blank in the first column for
 	  the non-UTF-8 configuration, rather than the actual character
 	  (reported by Alan Citterman &lt;alan@mticket.com&gt;).
@@ -451,7 +725,7 @@ xc/programs/Xserver/hw/xfree86).
 
 <H1><A NAME="xterm_138">Patch #138 - 2000/6/15 - XFree86 4.0c</A></H1>
 <ul>
-	<li>workaround for fixed fonts which are generated from Unicode fonts: 
+	<li>workaround for fixed fonts which are generated from Unicode fonts:
 	  they omit glyphs for some xterm's less-used line-drawing characters,
 	  which caused xterm to set a flag telling it to use only its internal
 	  line-drawing characters.  Do not set the flag (it can be set from the
@@ -670,7 +944,7 @@ xc/programs/Xserver/hw/xfree86).
 	  <li>include &lt;term.h&gt; in resize.c, to fix a missing-prototype
 	    warning.
 	  </ul>
-	    
+
 	<li>modified <code>creat_as()</code> a little more, retaining the
 	  ability to append to a logfile If the user specifies the name.
 	  Also, check if the opened file (which patch #130 ensures is
@@ -679,7 +953,7 @@ xc/programs/Xserver/hw/xfree86).
 	<li>use <code>creat_as()</code> logic to make tek4014 screen-copy
 	  more secure (noted by Branden Robinson).
 
-	<li>ifdef'd some of Branden's changes to build/work on older machines. 
+	<li>ifdef'd some of Branden's changes to build/work on older machines.
 
 	<li>correct missing initialization of the <code>.mode</code> flag in
 	  <code>ColorRes</code> struct, from patch #129.  This worked on Linux
@@ -697,7 +971,7 @@ xc/programs/Xserver/hw/xfree86).
 
 <H1><A NAME="xterm_130">Patch #130 - 2000/3/1 - XFree86 3.9.18a</A></H1>
 <ul>
-	<li>modify <code>scroll-forw()</code> and <code>scroll-back()</code> 
+	<li>modify <code>scroll-forw()</code> and <code>scroll-back()</code>
 	  actions, adding a third parameter which will direct xterm to ignore
 	  the action when mouse reporting is enabled.  This is needed for
 	  the wheel mouse to be used to report to the application rather than
@@ -831,7 +1105,7 @@ xc/programs/Xserver/hw/xfree86).
 	  even if it happens to be the stty erase character.
 
 	<li>add encoding for control/?, to work around xmodmap or key
-	  translations which may confuse backspace and delete.  A control/? 
+	  translations which may confuse backspace and delete.  A control/?
 	  will send DEL (127), and a control/H will of course send backspace
 	  (8).
 
@@ -900,7 +1174,7 @@ xc/programs/Xserver/hw/xfree86).
 	<ul>
 	  <li>use clipping to avoid leaving trash at end of the text, and
 	  <li>add brackets so wide-character logic does not fall-through
-	    into the overstriking logic (reported by 
+	    into the overstriking logic (reported by
 	    Marc Feeley &lt;feeley@IRO.UMontreal.CA&gt;)
 	</ul>
 

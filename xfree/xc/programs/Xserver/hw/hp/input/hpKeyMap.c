@@ -1,4 +1,4 @@
-/* $TOG: hpKeyMap.c /main/5 1998/02/10 13:11:10 kaleb $ */
+/* $Xorg: hpKeyMap.c,v 1.3 2000/08/17 19:48:22 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1987, 1998  The Open Group

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/vendor.h,v 1.6 2001/01/27 17:24:27 herrb Exp $ */
+/* $XFree86: xc/programs/xman/vendor.h,v 1.7 2001/04/19 19:54:51 dawes Exp $ */
 
 /* Vendor-specific definitions */
 
@@ -61,10 +61,8 @@ from the X Consortium.
 
 #if defined(__FreeBSD__)
 # define MANCONF "/etc/manpath.config"
-#else
-# if (defined(BSD) && (BSD >= 199103)) || defined(linux)
-#  define MANCONF "/etc/man.conf"
-# endif
+#elif (defined(BSD) && (BSD >= 199103)) || defined(linux)
+# define MANCONF "/etc/man.conf"
 #endif
 
 /*
@@ -75,30 +73,21 @@ from the X Consortium.
 
 #ifndef SYSMANPATH
 
-#ifdef macII
+#if defined(macII)
 #  define SYSMANPATH "/usr/catman/u_man:/usr/catman/a_man"
-#endif /* macII */
-#if defined(SVR4) || defined(__osf__) || (defined(BSD) && (BSD >= 199103))
-#  define SYSMANPATH "/usr/share/man"
-#endif /* SVR4 || __osf__ || (BSD >= 199103) */
-#ifdef hcx
-#  define SYSMANPATH "/usr/catman/local_man:/usr/catman/u_man:/usr/catman/a_man:/usr/catman/p_man:/usr/catman/ada_man"
-#endif /* hcx */
-#if defined(SYSV) && defined(i386) && !defined(SCO)
-#  define SYSMANPATH "/usr/catman/u_man:/usr/catman/p_man"
-#endif /* SYSV386 */
-#ifdef sgi
-#  define SYSMANPATH "/usr/catman/a_man:/usr/catman/g_man:/usr/catman/p_man:/usr/catman/u_man:/usr/man/p_man:/usr/man/u_man:/usr/man"
-#endif /* sgi */
-#ifdef __bsdi__
+#elif defined(__bsdi__)
 #  define SYSMANPATH "/usr/share/man:/usr/contrib/man:/usr/contrib/isode/man:/usr/local/man"
-#endif /* __bsdi__ */
-#ifdef __OpenBSD__
-# ifdef SYSMANPATH
-#  undef SYSMANPATH
-# endif
+#elif defined(__OpenBSD__)
 #  define SYSMANPATH "/usr/share/man:/usr/local/man:/usr/X11R6/man"
-#endif /* __OpenBSD__ */
+#elif defined(SVR4) || defined(__osf__) || (defined(BSD) && (BSD >= 199103))
+#  define SYSMANPATH "/usr/share/man"
+#elif defined(hcx)
+#  define SYSMANPATH "/usr/catman/local_man:/usr/catman/u_man:/usr/catman/a_man:/usr/catman/p_man:/usr/catman/ada_man"
+#elif defined(SYSV) && defined(i386) && !defined(SCO)
+#  define SYSMANPATH "/usr/catman/u_man:/usr/catman/p_man"
+#elif defined(sgi)
+#  define SYSMANPATH "/usr/catman/a_man:/usr/catman/g_man:/usr/catman/p_man:/usr/catman/u_man:/usr/man/p_man:/usr/man/u_man:/usr/man"
+#endif
 
 #ifndef SYSMANPATH
 #  define SYSMANPATH "/usr/man"
@@ -110,47 +99,45 @@ from the X Consortium.
  * Compression Definitions.
  */
 
-#if defined( macII ) || defined( hcx ) || (defined(SYSV) && defined(i386) && !defined(ISC) && !defined(SCO)) || defined(sgi)
+#if defined( macII ) || defined( hcx ) || \
+	(defined(SYSV) && defined(i386) && !defined(ISC) && !defined(SCO)) || \
+	defined(sgi)
 #  define COMPRESSION_EXTENSION   "z"
 #  define UNCOMPRESS_FORMAT       "pcat %s > %s"
 #  define NO_COMPRESS		/* mac can't handle using pack as a filter and
 				   xman needs it to be done that way. */
-#else
-#  ifdef UTEK
-#    define COMPRESSION_EXTENSION "C"
-#    define UNCOMPRESS_FORMAT     "ccat < %s > %s"
-#    define COMPRESS              "compact"
+#elif defined(UTEK)
+#  define COMPRESSION_EXTENSION "C"
+#  define UNCOMPRESS_FORMAT     "ccat < %s > %s"
+#  define COMPRESS              "compact"
+#elif defined (ISC) || defined(SCO)
+#  define COMPRESSION_EXTENSION   "Z"     /* dummy */
+#  ifndef SCO
+#    define COMPRESSION_EXTENSIONS  "zZF" /* pack, compress, freeze */
 #  else
-#    if defined (ISC) || defined(SCO)
-#      define COMPRESSION_EXTENSION   "Z"     /* dummy */
-#      ifndef SCO
-#        define COMPRESSION_EXTENSIONS  "zZF" /* pack, compress, freeze */
-#      else
-#        define COMPRESSION_EXTENSIONS  "zZ"  /* pack, compress */
-#      endif
-#      define UNCOMPRESS_FORMAT       uncompress_format
-#      define UNCOMPRESS_FORMAT_1     "pcat %s > %s"
-#      define UNCOMPRESS_FORMAT_2     "zcat < %s > %s"
-#      define UNCOMPRESS_FORMAT_3     "fcat < %s > %s"
-#      define NO_COMPRESS
-#    else
-#      define COMPRESSION_EXTENSION "Z"
-#      ifndef HAS_MKSTEMP
-#        define UNCOMPRESS_FORMAT     "zcat < %s > %s"
-#      else
-#        define UNCOMPRESS_FORMAT     "zcat < %s >> %s"
-#      endif
-#      define COMPRESS              "compress"
-#      define GZIP_EXTENSION "gz"
-#      ifndef HAS_MKSTEMP
-#        define GUNZIP_FORMAT "gzip -c -d < %s > %s"
-#      else
-#        define GUNZIP_FORMAT "gzip -c -d < %s >> %s"
-#      endif
-#      define GZIP_COMPRESS "gzip"
-#    endif /* ISC */
-#  endif /* UTEK */
-#endif /* macII, hcx, SYSV386, sgi */
+#    define COMPRESSION_EXTENSIONS  "zZ"  /* pack, compress */
+#  endif
+#  define UNCOMPRESS_FORMAT       uncompress_format
+#  define UNCOMPRESS_FORMAT_1     "pcat %s > %s"
+#  define UNCOMPRESS_FORMAT_2     "zcat < %s > %s"
+#  define UNCOMPRESS_FORMAT_3     "fcat < %s > %s"
+#  define NO_COMPRESS
+#else
+#  define COMPRESSION_EXTENSION "Z"
+#  ifndef HAS_MKSTEMP
+#    define UNCOMPRESS_FORMAT     "zcat < %s > %s"
+#  else
+#    define UNCOMPRESS_FORMAT     "zcat < %s >> %s"
+#  endif
+#  define COMPRESS              "compress"
+#  define GZIP_EXTENSION "gz"
+#  ifndef HAS_MKSTEMP
+#    define GUNZIP_FORMAT "gzip -c -d < %s > %s"
+#  else
+#    define GUNZIP_FORMAT "gzip -c -d < %s >> %s"
+#  endif
+#  define GZIP_COMPRESS "gzip"
+#endif
 
 
 
@@ -158,7 +145,8 @@ from the X Consortium.
  * The command filters for the manual and apropos searches.
  */
 
-#if ( defined(hpux) || defined(macII) || defined(CRAY) || defined(ultrix) || defined(hcx) )
+#if (defined(hpux) || defined(macII) || defined(CRAY) || defined(ultrix) || \
+	defined(hcx) )
 #  define NO_MANPATH_SUPPORT
 #endif
 
@@ -177,22 +165,46 @@ from the X Consortium.
 #  endif
 #endif
 
-#ifdef ultrix
+#ifndef HANDLE_ROFFSEQ
+# if defined(ultrix)
 #  define FORMAT "| nroff -man"             /* The format command. */
-#else
-#  if defined(BSD) && (BSD >= 199103)
-#    define FORMAT "| eqn | tbl | nroff -man"
-#  else
-#    ifdef linux
-#      define linux_GROFF             /* undef this to use nroff instead */
-#    endif /* linux */
-#    ifdef linux_GROFF
-#      define FORMAT "| geqn | gtbl | groff -Tlatin1 -mandoc"
-#    else
-#      define FORMAT "| neqn | nroff -man"      /* The format command. */
-#    endif /* linux_GROFF */
-#  endif
+# elif defined(CSRG_BASED)
+#  define FORMAT "| eqn | tbl | nroff -mandoc"
+# elif defined(BSD) && (BSD >= 199103)
+#  define FORMAT "| eqn | tbl | nroff -man"
+# elif defined(linux)
+#  define FORMAT "| geqn | gtbl | groff -Tlatin1 -mandoc"
+# else
+#  define FORMAT "| neqn | nroff -man"      /* The format command. */
+# endif
+# if defined(linux)
+#  define TBL "gtbl"
+# else
+#  define TBL "tbl"
+# endif
+#else /* HANDLE_ROFFSEQ */
+# if defined(linux)
+#  define ZSOELIM	"zsoelim"
+#  define EQN		"geqn"
+#  define TBL		"gtbl"
+# else
+#  define ZSOELIM	"soelim"
+#  define EQN		"eqn"
+#  define TBL		"tbl"
 #endif
+# define GRAP		"grap"
+# define PIC		"pic"
+# define VGRIND		"vgrind"
+# define REFER		"refer"
+# if defined(CSRG_BASED)
+#  define FORMAT	"nroff -mandoc"
+# elif defined(linux)
+#  define FORMAT	"groff -Tlatin1 -mandoc"
+# else
+#  define FORMAT	"groff -man"
+# endif
+# define DEFAULT_MANROFFSEQ "et"
+#endif /*HANDLE_ROFFSEQ */
 
 /*
  * Names of the man and cat dirs.
@@ -204,16 +216,15 @@ from the X Consortium.
 #define MAN "man"
 #endif
 
-#if ( defined(macII) || defined(CRAY) || defined(hcx) || (defined(SYSV) && defined(i386)) )
 /*
  * The Apple, Cray,, SYSV386, and HCX folks put the preformatted pages in the
  * "man" directories.
  */
-#  ifdef SCO
-#    define CAT "cat."
-#  else
-#    define CAT MAN
-#  endif
+#if (defined(macII) || defined(CRAY) || defined(hcx) || \
+	(defined(SYSV) && defined(i386))) && !defined(SCO)
+#  define CAT MAN
+#elif defined(SCO)
+#  define CAT "cat."
 #else
 #  define CAT "cat"
 #endif

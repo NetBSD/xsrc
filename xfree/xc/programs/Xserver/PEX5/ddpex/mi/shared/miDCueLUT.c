@@ -1,4 +1,4 @@
-/* $TOG: miDCueLUT.c /main/3 1998/02/10 12:44:18 kaleb $ */
+/* $Xorg: miDCueLUT.c,v 1.3 2000/08/17 19:47:11 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miDCueLUT.c,v 1.6 1998/07/26 13:14:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miDCueLUT.c,v 1.8 2001/01/17 22:12:32 dawes Exp $ */
 
 #include "miLUT.h"
 #include "miWks.h"

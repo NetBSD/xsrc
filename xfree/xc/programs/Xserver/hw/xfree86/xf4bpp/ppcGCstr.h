@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGCstr.h,v 1.1.2.2 1998/07/18 17:54:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGCstr.h,v 1.2 1998/07/25 16:59:34 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *

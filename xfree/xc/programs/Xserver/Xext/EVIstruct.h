@@ -1,4 +1,4 @@
-/* $TOG: EVIstruct.h /main/1 1997/11/24 16:48:35 kaleb $ */
+/* $Xorg: EVIstruct.h,v 1.3 2000/08/17 19:47:55 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1997 by Silicon Graphics Computer Systems, Inc.
 Permission to use, copy, modify, and distribute this

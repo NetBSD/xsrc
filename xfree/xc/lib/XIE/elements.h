@@ -1,4 +1,4 @@
-/* $TOG: elements.h /main/6 1998/02/06 15:11:55 kaleb $ */
+/* $Xorg: elements.h,v 1.3 2000/08/17 19:45:26 cpqbld Exp $ */
 
 /*
 

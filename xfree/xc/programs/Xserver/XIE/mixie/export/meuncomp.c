@@ -1,4 +1,4 @@
-/* $TOG: meuncomp.c /main/5 1998/02/09 16:13:32 kaleb $ */
+/* $Xorg: meuncomp.c,v 1.3 2000/08/17 19:47:36 cpqbld Exp $ */
 /**** module meuncomp.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. October 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meuncomp.c,v 1.3 1998/10/06 10:35:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meuncomp.c,v 1.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MEUNCOMP
 

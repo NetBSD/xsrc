@@ -1,4 +1,4 @@
-/* $TOG: mifax.c /main/10 1998/02/09 16:16:51 kaleb $ */
+/* $Xorg: mifax.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mifax.c ****/
 /******************************************************************************
@@ -69,7 +69,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/mifax.c,v 3.2 1998/10/04 09:36:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/mifax.c,v 3.4 2001/01/17 22:13:05 dawes Exp $ */
 
 #define _XIEC_MICPHOTO
 #define _XIEC_ICPHOTO

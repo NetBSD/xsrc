@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/mitmisc.c,v 3.1 1996/05/06 05:55:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/mitmisc.c,v 3.3 2001/01/17 22:13:15 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
 
 /* RANDOM CRUFT! THIS HAS NO OFFICIAL X CONSORTIUM OR X PROJECT TEAM  BLESSING */
 
-/* $TOG: mitmisc.c /main/6 1998/02/09 15:24:34 kaleb $ */
+/* $Xorg: mitmisc.c,v 1.3 2000/08/17 19:47:57 cpqbld Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $TOG: LogoP.h /main/12 1998/02/09 14:09:19 kaleb $ */
+/* $Xorg: LogoP.h,v 1.3 2000/08/17 19:54:52 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1993, 1998  The Open Group

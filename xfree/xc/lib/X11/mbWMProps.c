@@ -1,4 +1,4 @@
-/* $TOG: mbWMProps.c /main/6 1998/02/06 17:44:24 kaleb $ */
+/* $Xorg: mbWMProps.c,v 1.3 2000/08/17 19:45:21 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/mbWMProps.c,v 1.4 2001/01/17 19:41:56 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>

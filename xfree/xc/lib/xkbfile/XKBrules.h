@@ -1,7 +1,7 @@
 #ifndef _XKBRULES_H_
 #define	_XKBRULES_H_ 1
 
-/* $XConsortium: XKBrules.h /main/1 1996/08/31 12:45:06 kaleb $ */
+/* $Xorg: XKBrules.h,v 1.3 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1996 by Silicon Graphics Computer Systems, Inc.
 

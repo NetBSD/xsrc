@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.10 2000/06/30 17:15:07 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.14 2001/04/03 02:29:32 dawes Exp $
 XCOMM The contents of this file are subject to the GLX Public License Version 1.0
 XCOMM (the "License"). You may not use this file except in compliance with the
 XCOMM License. You may obtain a copy of the License at Silicon Graphics, Inc.,
@@ -18,8 +18,8 @@ XCOMM are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
 
 #include <Threads.tmpl>
 
-#define DoNormalLib NormalLibGlx
-#define DoSharedLib SharedLibGlx
+#define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
+#define DoSharedLib (SharedLibGlx && !SharedLibGlxWithoutPIC)
 #define DoExtraLib SharedLibGlx
 #define DoDebugLib DebugLibGlx
 #define DoProfileLib ProfileLibGlx
@@ -31,18 +31,15 @@ XCOMM SUBDIRS = \
 XCOMM 	glu \
 XCOMM 	glw
 
+# Files from Mesa
+
 LinkSourceFile(glapi.c, $(MESASRCDIR)/src)
-LinkSourceFile(glapi.h, $(MESASRCDIR)/src)
 LinkSourceFile(glapinoop.c, $(MESASRCDIR)/src)
-LinkSourceFile(glapinoop.h, $(MESASRCDIR)/src)
-LinkSourceFile(glapioffsets.h, $(MESASRCDIR)/src)
-LinkSourceFile(glapitable.h, $(MESASRCDIR)/src)
-LinkSourceFile(glapitemp.h, $(MESASRCDIR)/src)
-LinkSourceFile(glheader.h, $(MESASRCDIR)/src)
 LinkSourceFile(glthread.c, $(MESASRCDIR)/src)
-LinkSourceFile(glthread.h, $(MESASRCDIR)/src)
 LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(assyntax.h, $(MESASRCDIR)/src/X86)
+
+# Maybe some of these could come from
+# xc/extras/ogl-sample/main/glx/lib at some point.
 
      GLX_SRCS = \
 		clientattrib.c \
@@ -93,7 +90,7 @@ LinkSourceFile(assyntax.h, $(MESASRCDIR)/src/X86)
      GLX_DEFS = GlxDefines
 
 #if BuildXF86DRI
-     DRI_INCS = -I../dri
+     DRI_INCS = -I$(GLXLIBSRC)/dri
 #if defined(i386Architecture)
      ASM_SRCS = glapi_x86.S
      ASM_OBJS = glapi_x86.o
@@ -105,11 +102,14 @@ LinkSourceFile(assyntax.h, $(MESASRCDIR)/src/X86)
          OBJS = $(GLX_OBJS) $(ASM_OBJS)
       DEFINES = $(GLX_DEFS) $(ASM_DEFS)
 
-     INCLUDES = -I$(TOP)/include \
-		-I$(TOP)/include/extensions \
-		-I$(TOP)/include/GL \
-		-I$(INCLUDESRC) \
-		-I../mesa/src \
+     INCLUDES = -I$(INCLUDESRC) \
+		-I$(XINCLUDESRC) \
+		-I$(EXTINCSRC) \
+		-I$(INCLUDESRC)/GL \
+		-I$(GLXLIBSRC)/glx \
+		-I$(MESASRCDIR)/src \
+		-I$(MESASRCDIR)/src/X86 \
+		-I$(MESASRCDIR)/include \
 		$(DRI_INCS)
 
 #include <Library.tmpl>
@@ -122,10 +122,5 @@ ObjectFromAsmSource(glapi_x86, NullParameter)
 
 SubdirLibraryRule($(OBJS))
 NormalLintTarget($(SRCS))
-
-#if 0
-XCOMM MakeSubdirs($(SUBDIRS))
-XCOMM DependSubdirs($(SUBDIRS))
-#endif
 
 DependTarget()

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: XLbx.c /main/4 1996/12/15 21:24:20 rws $
+ * $Xorg: XLbx.c,v 1.3 2000/08/17 19:45:51 cpqbld Exp $
  *
  * Copyright 1992 Network Computing Devices
  *
@@ -22,7 +22,7 @@
  *
  * Author:  Keith Packard, Network Computing Devices
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xext/XLbx.c,v 1.3 2001/01/17 19:42:46 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.2 2000/11/28 20:59:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.3 2001/02/09 03:23:30 dawes Exp $ */
 /*
 Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
 

@@ -1,4 +1,4 @@
-/* $TOG: IntrinsicI.h /main/48 1998/02/06 13:23:00 kaleb $ */
+/* $Xorg: IntrinsicI.h,v 1.3 2000/08/17 19:46:13 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.3 1997/05/17 12:52:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.5 2001/01/17 19:43:05 dawes Exp $ */
 
 #ifndef _XtintrinsicI_h
 #define _XtintrinsicI_h

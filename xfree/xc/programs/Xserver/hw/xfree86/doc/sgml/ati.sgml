@@ -8,14 +8,14 @@
 
 <title>ATI Adapters README file
 <author>Marc Aurele La France
-<date>2000 December 6
+<date>2001 April 10
 
 
 
 
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.33 2000/08/09 02:19:23 tsi Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.37 2001/04/16 15:02:08 tsi Exp $
 </ident>
 
 <abstract>
@@ -208,7 +208,7 @@ operate as if ``<it>ativga</it>'' had been specified instead.<p>
 A ChipSet name of ``<it>vgawonder</it>'' is equivalent to ``<it>ativga</it>'',
 except that only VGAWonder-capable adapters can be assigned to the ``Device''
 section.
-This specifically excludes newer Mach64's with integrated controllers.<p>
+This specifically excludes the newer integrated Mach64 controllers.<p>
 In some PCI or AGP systems, the driver will not, by default, probe for non-PCI
 Mach32's or Mach64's.
 This is because, before doing any such probe, the driver attempts to determine
@@ -394,7 +394,24 @@ By default, the driver will enable a linear video memory aperture for
 or an integrated Mach64 graphics chip.
 This option disables this linear aperture.<p>
 On non-Intel platforms, the driver requires a linear aperture and, so, this
-option should not be specified.<p>
+option is ignored.<p>
+<sect1>Option <it>``HWCursor''</it> and Option <it>``SWCursor''</it><p>
+Option <it>``HWCursor''</it>, which is the default, specifies that hardware
+facilities are to be used to paint the mouse pointer on the screen.
+Option <it>``SWCursor''</it> specifies that the mouse pointer is to by drawn by
+software, which is much slower.
+If both options are specified, option <it>``SWCursor''</it> prevails.
+Currently, these options are only acted upon for 256-colour or higher depth
+modes, if a Mach64 accelerator CRTC, or a Mach64 integrated controller is being
+used.
+In all other situations, a software cursor will be used.<p>
+<sect1>Option <it>``SilkenMouse''</it><p>
+This option is only acted upon when a hardware cursor is being used.
+It specifies that the cursor's position on the screen is to be updated as
+quickly as possible when the mouse is moved.
+This is the default behaviour.
+If this option is negated, the cursor may lag the mouse when the X server is
+very busy.<p>
 <sect1>Option <it>``shadowfb''</it><p>
 If this option is enabled, the driver will cause the CPU to do each drawing
 operation first into a shadow frame buffer in system virtual memory and then
@@ -562,7 +579,7 @@ Fourth, a scan through the comp.windows.x.i386unix and comp.os.linux.x
 newsgroups using your favourite archiving service can also prove useful in
 resolving problems.<p>
 If you are still experiencing problems, you can send me <it>non-HTMLised</it>
-e-mail at <email>tsi@ualberta.ca</email>.
+e-mail at <email>tsi@xfree86.org</email>.
 Please be as specific as possible when describing the problem(s), and include
 an <it>unedited</it> copy of the server's log and the XF86Config file used.<p>
 <sect>Driver history<p>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbgc.c,v 1.3 1998/10/04 09:37:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbgc.c,v 1.5 2001/01/17 22:36:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: cfbgc.c /main/92 1998/02/09 14:05:32 kaleb $ */
+/* $Xorg: cfbgc.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

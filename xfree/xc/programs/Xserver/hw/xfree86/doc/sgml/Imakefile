@@ -3,16 +3,25 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.69 2000/12/18 02:43:50 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.71.2.1 2001/06/01 18:09:48 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
 
+/* Set this to YES if the RELNOTES file is up to date */
+#ifndef BuildRelnotes
+#define BuildRelnotes NO
+#endif
+
+#if BuildRelnotes
+RELNOTES=RELNOTES.sgml
+#endif
+
 SGMLDEPENDS = defs.ent
 MANSGMLDEPENDS = mdefs.ent
-  INDEXLIST = README.sgml RELNOTES.sgml Status.sgml LICENSE.sgml Install.sgml \
+  INDEXLIST = README.sgml $(RELNOTES) Status.sgml LICENSE.sgml Install.sgml \
 	      DESIGN.sgml Versions.sgml \
-	      mouse.sgml fonts.sgml DRI.sgml DRIcomp.sgml \
+	      mouse.sgml fonts.sgml DRI.sgml DRIcomp.sgml dps.sgml \
 	      Darwin.sgml isc.sgml LynxOS.sgml NetBSD.sgml OpenBSD.sgml \
 	      OS2note.sgml \
               apm.sgml ati.sgml chips.sgml cyrix.sgml DECtga.sgml \
@@ -105,7 +114,9 @@ LinuxDocTarget(LICENSE)
 LinuxDocTargetLong(QStart.sgml,QuickStart.doc,QuickStart)
 #endif
 LinuxDocTarget(README)
+#if BuildRelnotes
 LinuxDocTarget(RELNOTES)
+#endif
 LinuxDocTarget(Status)
 
 /* Other docs */
@@ -118,6 +129,7 @@ LinuxDocTarget(xinput)
 #endif
 LinuxDocReadmeTarget(DRI)
 LinuxDocReadmeTarget(DRIcomp)
+LinuxDocReadmeTarget(dps)
 
 SGMLMANDEFS=-D__drivermansuffix__='"$(DRIVERMANSUFFIX)"' \
 	    -D__filemansuffix__='"$(FILEMANSUFFIX)"' \
@@ -148,6 +160,8 @@ clean::
 
 FORMATTEDDIR = ..
 
+#if BuildRelnotes
 /* Update RELNOTES at top level */
 UpdateFormattedDoc(RELNOTES,$(TOP))
+#endif
 

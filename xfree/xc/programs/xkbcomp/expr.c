@@ -1,4 +1,4 @@
-/* $TOG: expr.c /main/11 1997/08/03 11:49:52 kaleb $ */
+/* $Xorg: expr.c,v 1.5 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/expr.c,v 3.3 1997/10/26 13:25:28 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/expr.c,v 3.5 2001/01/17 23:45:43 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"

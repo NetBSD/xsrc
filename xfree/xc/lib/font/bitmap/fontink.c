@@ -1,4 +1,4 @@
-/* $TOG: fontink.c /main/6 1998/05/01 16:42:21 kaleb $ */
+/* $Xorg: fontink.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/fontink.c,v 1.3 1998/10/03 09:07:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/fontink.c,v 1.6 2001/01/17 19:43:27 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -1,5 +1,5 @@
-.TH XvQueryEncodings 3X
-.\" $XFree86: xc/doc/man/Xv/XvQueryEncodings.man,v 1.4 1999/03/02 11:49:17 dawes Exp $
+.TH XvQueryEncodings 3X __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvQueryEncodings.man,v 1.6 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvQueryEncodings \- return list of encodings for an adaptor
 .\"

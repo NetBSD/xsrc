@@ -1,4 +1,4 @@
-/* $TOG: props.c /main/5 1998/02/09 13:43:57 kaleb $ */
+/* $Xorg: props.c,v 1.3 2000/08/17 19:53:53 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/fstobdf/props.c,v 1.3 1999/02/20 15:07:15 hohndel Exp $ */
+/* $XFree86: xc/programs/fstobdf/props.c,v 1.5 2001/01/17 23:44:54 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<string.h>

@@ -1,4 +1,4 @@
-/* $TOG: Dialog.c /main/12 1998/02/09 13:40:47 kaleb $ */
+/* $Xorg: Dialog.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/bitmap/Dialog.c,v 1.3 2001/01/17 23:44:51 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $TOG: cmap.c /main/22 1998/02/11 09:47:55 kaleb $ */
+/* $Xorg: cmap.c,v 1.4 2000/08/17 19:53:54 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -379,7 +379,7 @@ DecodeChannel(pmap, pent, flags, channels, data)
 	    pent[i].status = PIXEL_FREE;
     }
 
-    while (code = *data++)
+    while ((code = *data++))
     {
 	if (code == LBX_PIXEL_PRIVATE)
 	{

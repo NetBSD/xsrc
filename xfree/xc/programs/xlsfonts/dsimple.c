@@ -1,4 +1,4 @@
-/* $TOG: dsimple.c /main/17 1998/02/09 14:10:07 kaleb $ */
+/* $Xorg: dsimple.c,v 1.3 2000/08/17 19:54:53 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xlsfonts/dsimple.c,v 3.2 1998/10/04 09:41:39 dawes Exp $ */
+/* $XFree86: xc/programs/xlsfonts/dsimple.c,v 3.4 2001/01/17 23:46:19 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>

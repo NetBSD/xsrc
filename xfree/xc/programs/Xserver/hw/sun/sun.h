@@ -1,5 +1,5 @@
 
-/* $TOG: sun.h /main/61 1997/10/16 16:27:01 kaleb $ */
+/* $Xorg: sun.h,v 1.3 2000/08/17 19:48:29 cpqbld Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.9 2000/05/17 19:52:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.11 2001/01/17 22:36:49 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_

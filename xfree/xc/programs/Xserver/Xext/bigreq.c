@@ -1,4 +1,4 @@
-/* $TOG: bigreq.c /main/6 1998/02/09 15:23:47 kaleb $ */
+/* $Xorg: bigreq.c,v 1.3 2000/08/17 19:47:56 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.2 1996/12/23 06:28:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.4 2001/01/17 22:13:14 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

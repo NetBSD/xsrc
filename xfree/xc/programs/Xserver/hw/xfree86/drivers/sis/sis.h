@@ -25,15 +25,15 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis.h,v 1.18 2000/09/26 15:57:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis.h,v 1.22 2001/05/16 13:43:17 alanh Exp $ */
 
 #ifndef _SIS_H
 #define _SIS_H_
 
-
 #include "xf86Pci.h"
 #include "xf86Cursor.h"
 #include "xf86_ansic.h"
+#include "xf86xv.h"
 #include "compiler.h"
 #include "xaa.h"
 #include "vgaHW.h"
@@ -48,7 +48,6 @@
 #include "sis_dri.h"
 #endif
 
-#include "xf86xv.h"
 
 #define SIS_NAME                "SIS"
 #define SIS_DRIVER_NAME         "sis"
@@ -85,14 +84,13 @@
 #define TV_INTERFACE            0x00070000
 #define VB_301                  0x00100000
 #define VB_302                  0x00200000
-#define VB_303			0x00400000
+#define VB_303                  0x00400000
 #define VB_LVDS                 0x01000000
 #define VB_CHRONTEL             0x02000000
 #define SINGLE_MODE             0x00000000
 #define SIMU_MODE               0x10000000
 #define MM_MODE                 0x20000000
 #define DISPLAY_MODE            0x30000000
-
 #define MASK_DISPTYPE_CRT2     0x04         /* Connect LCD */
 #define MASK_DISPTYPE_LCD      0x02         /* Connect LCD */
 #define MASK_DISPTYPE_TV       0x01         /* Connect TV */
@@ -112,7 +110,7 @@ typedef struct {
         unsigned char VBPart2[0x46];
         unsigned char VBPart3[0x3F];
         unsigned char VBPart4[0x1C];
-	unsigned short ch7005[0x11];
+        unsigned short ch7005[0x11];
 } SISRegRec, *SISRegPtr;
 
 #define SISPTR(p)       ((SISPtr)((p)->driverPrivate))
@@ -125,30 +123,32 @@ typedef struct {
     EntityInfoPtr       pEnt;
     int                 Chipset;
     int                 ChipRev;
-    unsigned long       FbAddress;              /* VRAM physical address */
-    unsigned char *     FbBase;                 /* VRAM linear address */
-    CARD32              IOAddress;              /* MMIO physical address */
-    unsigned char *     IOBase;                 /* MMIO linear address */
+    unsigned long   FbAddress;          /* VRAM physical address */
+
+    unsigned char *     FbBase;         /* VRAM linear address */
+    CARD32              IOAddress;      /* MMIO physical address */
+    unsigned char *     IOBase;         /* MMIO linear address */
 #ifdef __alpha__
-    unsigned char *     IOBaseDense;            /* MMIO for Alpha platform */
+    unsigned char *     IOBaseDense;    /* MMIO for Alpha platform */
 #endif
-    CARD16              RelIO;                  /* Relocate IO Base */
+    CARD16              RelIO;          /* Relocate IO Base */
     unsigned char *     BIOS;
     int                 MemClock;
     int                 BusWidth;
     int                 MinClock;
     int                 MaxClock;
-    int                 Flags;                  /* HW config flags */
+    int                 Flags;          /* HW config flags */
     long                FbMapSize;
     DGAModePtr          DGAModes;
     int                 numDGAModes;
     Bool                DGAactive;
     int                 DGAViewportStatus;
     Bool                NoAccel;
+    Bool                NoXvideo;
     Bool                HWCursor;
     Bool                UsePCIRetry;
     Bool                TurboQueue;
-    int			ForceCRT2Type;	
+    int                 ForceCRT2Type;
     Bool                ValidWidth;
     Bool                FastVram;
     int                 VBFlags;
@@ -174,96 +174,64 @@ typedef struct {
     XAAInfoRecPtr       AccelInfoPtr;
     CloseScreenProcPtr  CloseScreen;
     unsigned int        (*ddc1Read)(ScrnInfoPtr);
-    Bool                (*ModeInit)(ScrnInfoPtr pScrn, DisplayModePtr mode);
-    void                (*SiSSave)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSSave2)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSSaveLVDS)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSSaveChrontel)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSRestore)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSRestore2)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSRestoreLVDS)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SiSRestoreChrontel)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
-    void                (*SetThreshold)(ScrnInfoPtr pScrn, DisplayModePtr mode,
+    Bool        (*ModeInit)(ScrnInfoPtr pScrn, DisplayModePtr mode);
+    void        (*SiSSave)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSSave2)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSSaveLVDS)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSSaveChrontel)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSRestore)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSRestore2)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSRestoreLVDS)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SiSRestoreChrontel)(ScrnInfoPtr pScrn, SISRegPtr sisreg);
+    void        (*SetThreshold)(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                 unsigned short *Low, unsigned short *High);
-    void                (*LoadCRT2Palette)(ScrnInfoPtr pScrn, int numColors,
-                                int *indicies, LOCO *colors, VisualPtr pVisual);
+    void        (*LoadCRT2Palette)(ScrnInfoPtr pScrn, int numColors,
+                int *indicies, LOCO *colors, VisualPtr pVisual);
+        
+    int *cmdQueueLenPtr;
+    unsigned long agpHandle;
+    CARD32 agpAddr;
+    unsigned char *agpBase;
+    unsigned int agpSize;
+    CARD32 agpCmdBufAddr;
+    unsigned char *agpCmdBufBase;
+    unsigned int agpCmdBufSize;
+    unsigned int agpCmdBufFree;
+    Bool irqEnabled;
+    int irq;
+    int ColorExpandRingHead;
+    int ColorExpandRingTail;
+    int PerColorExpandBufferSize;
+    int ColorExpandBufferNumber;
+    int ColorExpandBufferCountMask;
+    unsigned char *ColorExpandBufferAddr[32];
+    int ColorExpandBufferScreenOffset[32];
+    int ImageWriteBufferSize;
+    unsigned char *ImageWriteBufferAddr;
 
-  int *cmdQueueLenPtr;
-  unsigned long agpHandle;
-  CARD32 agpAddr;
-  unsigned char *agpBase;
-  unsigned int agpSize;
-  CARD32 agpCmdBufAddr;
-  unsigned char *agpCmdBufBase;
-  unsigned int agpCmdBufSize;
-  unsigned int agpCmdBufFree;
-  Bool irqEnabled;
-  int irq;
-  int ColorExpandRingHead;
-  int ColorExpandRingTail;      
-  int PerColorExpandBufferSize; 
-  int ColorExpandBufferNumber;
-  int ColorExpandBufferCountMask;
-  unsigned char *ColorExpandBufferAddr[32];     
-  int ColorExpandBufferScreenOffset[32];
-  int ImageWriteBufferSize;
-  unsigned char *ImageWriteBufferAddr;
-  
+	int Rotate;
+	void        (*PointerMoved)(int index, int x, int y);
+	
+	/* ShadowFB support */
+	Bool 		ShadowFB;
+	unsigned char *ShadowPtr;
+	int  		ShadowPitch;
+
+
 #ifdef XF86DRI
-  Bool directRenderingEnabled;
-  DRIInfoPtr pDRIInfo;
-  int drmSubFD;
-  int numVisualConfigs;
-  __GLXvisualConfig* pVisualConfigs;
-  SISConfigPrivPtr pVisualConfigsPriv;
-  SISRegRec DRContextRegs;
+        Bool directRenderingEnabled;
+        DRIInfoPtr pDRIInfo;
+        int drmSubFD;
+        int numVisualConfigs;
+        __GLXvisualConfig* pVisualConfigs;
+        SISConfigPrivPtr pVisualConfigsPriv;
+        SISRegRec DRContextRegs;
 #endif
+        XF86VideoAdaptorPtr adaptor;
+        ScreenBlockHandlerProcPtr BlockHandler;
 
-  XF86VideoAdaptorPtr adaptor;
-  ScreenBlockHandlerProcPtr BlockHandler;
+    OptionInfoPtr Options;
+
 } SISRec, *SISPtr;
-
-/* Prototypes */
-
-void    SiSOptions(ScrnInfoPtr pScrn);
-void    SISVGAPreInit(ScrnInfoPtr pScrn);
-void    SISLCDPreInit(ScrnInfoPtr pScrn);
-void    SISTVPreInit(ScrnInfoPtr pScrn);
-void    SISCRT2PreInit(ScrnInfoPtr pScrn);
-OptionInfoPtr SISAvailableOptions(int chipid, int busid);
-
-void    SISDACPreInit(ScrnInfoPtr pScrn);
-void    SISLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
-                                        LOCO *colors, VisualPtr pVisual);
-
-int compute_vclk(int Clock, int *out_n, int *out_dn, int *out_div,
-                                        int *out_sbit, int *out_scale);
-void SiSCalcClock(ScrnInfoPtr pScrn, int clock, int max_VLD,
-                                        unsigned int *vclk);
-unsigned int SiSddc1Read(ScrnInfoPtr pScrn);
-Bool SiSAccelInit(ScreenPtr pScreen);
-Bool SiS530AccelInit(ScreenPtr pScreen);
-Bool SiS300AccelInit(ScreenPtr pScreen);
-int  SiSMclk(SISPtr pSIS);
-int sisMemBandWidth(ScrnInfoPtr pScrn);
-int sis300MemBandWidth(ScrnInfoPtr pScrn);
-Bool SiSHWCursorInit(ScreenPtr pScreen);
-void SiSIODump(ScrnInfoPtr pScreen);
-void SiSInitializeAccelerator(ScrnInfoPtr pScrn);
-void SiSSetup(ScrnInfoPtr pScrn);
-void SiSPreSetMode(ScrnInfoPtr pScrn);
-
-extern void     SetReg1(unsigned short, unsigned short, unsigned short);
-extern unsigned short GetReg1(unsigned short, unsigned short);
-
-extern Bool     SISSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
-extern void     SISAdjustFrame(int scrnIndex, int x, int y, int flags);
-
-#ifdef XF86DRI
-extern void FillPrivateDRI(SISPtr pSIS, SISDRIPtr pSISDRI);
-extern Bool SISDRIScreenInit(ScreenPtr pScreen);
-extern void SISDRICloseScreen(ScreenPtr pScreen);
-Bool SISDRIFinishScreenInit(ScreenPtr pScreen);
-#endif
 
 #endif

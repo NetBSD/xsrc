@@ -1,5 +1,5 @@
 
-/* $TOG: sunCfb24.c /main/4 1998/02/10 13:16:15 kaleb $ */
+/* $Xorg: sunCfb24.c,v 1.3 2000/08/17 19:48:29 cpqbld Exp $ */
 
 /*
 

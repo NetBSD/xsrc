@@ -1,4 +1,4 @@
-/* $TOG: StName.c /main/10 1998/02/06 17:54:29 kaleb $ */
+/* $Xorg: StName.c,v 1.3 2000/08/17 19:44:56 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/StName.c,v 1.3 2001/01/17 19:41:44 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xatom.h>

@@ -1,4 +1,4 @@
-/* $TOG: parse.c /main/35 1998/03/25 08:17:55 kaleb $ */
+/* $Xorg: parse.c,v 1.4 2000/08/17 19:41:51 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
@@ -20,12 +20,16 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/parse.c,v 1.5 1998/10/05 13:21:49 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/parse.c,v 1.9 2001/05/18 16:03:05 tsi Exp $ */
 
 #include "def.h"
 
 extern char	*directives[];
-extern struct inclist	maininclist;
+extern struct inclist	inclist[ MAXFILES ],
+			*inclistnext,
+			maininclist;
+extern char	*includedirs[ ],
+		**includedirsnext;
 
 static int deftype (char *line, struct filepointer *filep,
 		    struct inclist *file_red, struct inclist *file,
@@ -71,6 +75,8 @@ gobble(struct filepointer *filep, struct inclist *file,
 		case SCCS:
 		case EJECT:
 		case WARNING:
+		case INCLUDENEXT:
+		case INCLUDENEXTDOT:
 			break;
 		case ELIF:
 		case ELIFFALSE:
@@ -93,7 +99,7 @@ deftype (char *line, struct filepointer *filep,
 	     struct inclist *file_red, struct inclist *file, int parse_it)
 {
 	register char	*p;
-	char	*directive, savechar;
+	char	*directive, savechar, *q;
 	register int	ret;
 
 	/*
@@ -104,7 +110,7 @@ deftype (char *line, struct filepointer *filep,
 		directive++;
 
 	p = directive;
-	while (*p >= 'a' && *p <= 'z')
+	while ((*p == '_') || (*p >= 'a' && *p <= 'z'))
 		p++;
 	savechar = *p;
 	*p = '\0';
@@ -150,6 +156,11 @@ deftype (char *line, struct filepointer *filep,
 	 */
 	while (*p == ' ' || *p == '\t')
 		p++;
+	q = p + strlen(p);
+	do {
+		q--;
+	} while (*q == ' ' || *q == '\t');
+	q[1] = '\0';
 	switch (ret) {
 	case IF:
 		/*
@@ -172,8 +183,10 @@ deftype (char *line, struct filepointer *filep,
 		*line = '\0';
 		break;
 	case INCLUDE:
-		debug(2,("%s, line %d: #include %s\n",
-			file->i_file, filep->f_line, p));
+	case INCLUDENEXT:
+		debug(2,("%s, line %d: #include%s %s\n",
+			file->i_file, filep->f_line,
+			(ret == INCLUDE) ? "" : "_next", p));
 
 		/* Support ANSI macro substitution */
 		{
@@ -198,7 +211,10 @@ deftype (char *line, struct filepointer *filep,
 		if (! *p)
 			return(-2);
 		if (*p++ == '"') {
-			ret = INCLUDEDOT;
+			if (ret == INCLUDE)
+				ret = INCLUDEDOT;
+			else
+				ret = INCLUDENEXTDOT;
 			while (*p && *p != '"')
 				*line++ = *p++;
 		} else
@@ -506,6 +522,8 @@ int
 find_includes(struct filepointer *filep, struct inclist *file, 
 	      struct inclist *file_red, int recursion, boolean failOK)
 {
+	struct inclist	*inclistp;
+	char		**includedirsp;
 	register char	*line;
 	register int	type;
 	boolean recfailOK;
@@ -591,10 +609,14 @@ find_includes(struct filepointer *filep, struct inclist *file,
 			undefine(line, file_red);
 			break;
 		case INCLUDE:
-			add_include(filep, file, file_red, line, FALSE, failOK);
-			break;
 		case INCLUDEDOT:
-			add_include(filep, file, file_red, line, TRUE, failOK);
+		case INCLUDENEXT:
+		case INCLUDENEXTDOT:
+			inclistp = inclistnext;
+			includedirsp = includedirsnext;
+			add_include(filep, file, file_red, line, type, failOK);
+			inclistnext = inclistp;
+			includedirsnext = includedirsp;
 			break;
 		case ERROR:
 		case WARNING:

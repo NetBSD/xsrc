@@ -1,4 +1,4 @@
-/* $TOG: Alloc.c /main/48 1998/02/06 13:19:39 kaleb $ */
+/* $Xorg: Alloc.c,v 1.3 2000/08/17 19:46:08 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,

@@ -70,7 +70,7 @@
 *
 ****************************************************************************/
 
-/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.2 2000/01/23 04:32:42 dawes Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.6 2001/01/06 20:19:03 tsi Exp $ */
 
 #include "x86emu/x86emui.h"
 
@@ -8814,15 +8814,11 @@ Handles opcode 0xcc
 ****************************************************************************/
 void x86emuOp_int3(u8 X86EMU_UNUSED(op1))
 {
-    u16 tmp;
-
     START_OF_INSTR();
     DECODE_PRINTF("INT 3\n");
-    tmp = (u16) mem_access_word(3 * 4 + 2);
-    /* access the segment register */
     TRACE_AND_STEP();
-	if (_X86EMU_intrTab[3]) {
-		(*_X86EMU_intrTab[3])(3);
+    if (_X86EMU_intrTab[3]) {
+	(*_X86EMU_intrTab[3])(3);
     } else {
         push_word((u16)M.x86.R_FLG);
         CLEAR_FLAG(F_IF);
@@ -8842,17 +8838,15 @@ Handles opcode 0xcd
 ****************************************************************************/
 void x86emuOp_int_IMM(u8 X86EMU_UNUSED(op1))
 {
-    u16 tmp;
     u8 intnum;
 
     START_OF_INSTR();
     DECODE_PRINTF("INT\t");
     intnum = fetch_byte_imm();
     DECODE_PRINTF2("%x\n", intnum);
-    tmp = mem_access_word(intnum * 4 + 2);
     TRACE_AND_STEP();
-	if (_X86EMU_intrTab[intnum]) {
-		(*_X86EMU_intrTab[intnum])(intnum);
+    if (_X86EMU_intrTab[intnum]) {
+	(*_X86EMU_intrTab[intnum])(intnum);
     } else {
         push_word((u16)M.x86.R_FLG);
         CLEAR_FLAG(F_IF);
@@ -8872,15 +8866,12 @@ Handles opcode 0xce
 ****************************************************************************/
 void x86emuOp_into(u8 X86EMU_UNUSED(op1))
 {
-    u16 tmp;
-
     START_OF_INSTR();
     DECODE_PRINTF("INTO\n");
     TRACE_AND_STEP();
     if (ACCESS_FLAG(F_OF)) {
-        tmp = mem_access_word(4 * 4 + 2);
-		if (_X86EMU_intrTab[4]) {
-			(*_X86EMU_intrTab[4])(4);
+	if (_X86EMU_intrTab[4]) {
+	    (*_X86EMU_intrTab[4])(4);
         } else {
             push_word((u16)M.x86.R_FLG);
             CLEAR_FLAG(F_IF);
@@ -9643,7 +9634,7 @@ void x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
 	DECODE_PRINTF("CALL\t");
 	ip = (s16) fetch_word_imm();
 	ip += (s16) M.x86.R_IP;    /* CHECK SIGN */
-	DECODE_PRINTF2("%04x\n", ip);
+	DECODE_PRINTF2("%04x\n", (u16)ip);
 	CALL_TRACE(M.x86.saved_cs, M.x86.saved_ip, M.x86.R_CS, ip, "");
     TRACE_AND_STEP();
     push_word(M.x86.R_IP);
@@ -9664,7 +9655,7 @@ void x86emuOp_jump_near_IMM(u8 X86EMU_UNUSED(op1))
     DECODE_PRINTF("JMP\t");
     ip = (s16)fetch_word_imm();
     ip += (s16)M.x86.R_IP;
-    DECODE_PRINTF2("%04x\n", ip);
+    DECODE_PRINTF2("%04x\n", (u16)ip);
     TRACE_AND_STEP();
     M.x86.R_IP = (u16)ip;
     DECODE_CLEAR_SEGOVR();
@@ -11039,7 +11030,7 @@ void x86emuOp_opcFF_word_RM(u8 X86EMU_UNUSED(op1))
             }
             break;
         case 2:
-            DECODE_PRINTF("CALL\t ");
+            DECODE_PRINTF("CALL\t");
             break;
         case 3:
             DECODE_PRINTF("CALL\tFAR ");

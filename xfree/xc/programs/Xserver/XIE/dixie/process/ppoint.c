@@ -1,4 +1,4 @@
-/* $TOG: ppoint.c /main/5 1998/02/09 16:10:51 kaleb $ */
+/* $Xorg: ppoint.c,v 1.3 2000/08/17 19:47:29 cpqbld Exp $ */
 /**** module ppoint.c ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. May 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/ppoint.c,v 3.2 1998/10/05 13:22:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/ppoint.c,v 3.4 2001/01/17 22:12:53 dawes Exp $ */
 
 #define _XIEC_PPOINT
 #define _XIEC_POINT

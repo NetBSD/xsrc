@@ -1,4 +1,4 @@
-/* $TOG: colormap.h /main/13 1998/02/10 18:17:14 kaleb $ */
+/* $Xorg: colormap.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

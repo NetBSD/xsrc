@@ -1,4 +1,4 @@
-/* $TOG: hpCursorUtils.c /main/4 1998/02/10 13:10:25 kaleb $ */
+/* $Xorg: hpCursorUtils.c,v 1.3 2000/08/17 19:48:21 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

@@ -1,6 +1,6 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiload.c,v 1.6 2001/03/25 05:32:07 tsi Exp $ */
 /*
- * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 2000 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,6 +24,7 @@
 #ifdef XFree86LOADER
 
 #include "ati.h"
+#include "aticursor.h"
 #include "atiload.h"
 #include "atistruct.h"
 
@@ -73,14 +74,15 @@ ATILoadModules
 
 #endif /* AVOID_CPIO */
 
-        "cfbScreenInit",
-        "cfb16ScreenInit",
-        "cfb24ScreenInit",
-        "cfb32ScreenInit",
+        "fbScreenInit",
+        "fbPictureInit",
         "ShadowFBInit",
         "XAACreateInfoRec",
         "XAADestroyInfoRec",
         "XAAInit",
+        "xf86InitCursor",
+        "xf86CreateCursorInfoRec",
+        "xf86DestroyCursorInfoRec",
         NULL);
 
     /* Load shadow frame buffer code if needed */
@@ -98,6 +100,19 @@ ATILoadModules
         xf86LoaderReqSymbols("XAACreateInfoRec", "XAADestroyInfoRec", NULL);
     }
 
+    /* Load ramdac module if needed */
+    if (pATI->Cursor > ATI_CURSOR_SOFTWARE)
+    {
+        if (!ATILoadModule(pScreenInfo, "ramdac", "xf86InitCursor"))
+            return FALSE;
+
+        /* Require more ramdac symbols */
+        xf86LoaderReqSymbols(
+            "xf86CreateCursorInfoRec",
+            "xf86DestroyCursorInfoRec",
+            NULL);
+    }
+
     /* Load depth-specific entry points */
     switch (pATI->bitsPerPixel)
     {
@@ -113,16 +128,15 @@ ATILoadModules
 #endif /* AVOID_CPIO */
 
         case 8:
-            return ATILoadModule(pScreenInfo, "cfb", "cfbScreenInit");
-
         case 16:
-            return ATILoadModule(pScreenInfo, "cfb16", "cfb16ScreenInit");
-
         case 24:
-            return ATILoadModule(pScreenInfo, "cfb24", "cfb24ScreenInit");
-
         case 32:
-            return ATILoadModule(pScreenInfo, "cfb32", "cfb32ScreenInit");
+            if (!ATILoadModule(pScreenInfo, "fb", "fbScreenInit"))
+                return FALSE;
+
+            /* Require more fb symbols */
+            xf86LoaderReqSymbols("fbPictureInit", FALSE);
+            return TRUE;
 
         default:
             return FALSE;

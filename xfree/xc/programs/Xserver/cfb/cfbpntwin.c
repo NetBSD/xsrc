@@ -1,4 +1,4 @@
-/* $TOG: cfbpntwin.c /main/26 1998/02/09 14:06:51 kaleb $ */
+/* $Xorg: cfbpntwin.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.2 1999/05/15 06:24:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.4 2001/01/17 22:36:36 dawes Exp $ */
 
 #include "X.h"
 

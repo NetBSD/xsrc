@@ -1,76 +1,15 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/Imakefile,v 1.15 2000/08/24 22:20:06 tsi Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/Imakefile,v 1.19 2001/03/23 20:56:33 dawes Exp $
 
-#define DoNormalLib NormalLibGlx
-#define DoSharedLib SharedLibGlx
-#define DoExtraLib SharedLibGlx
-#define DoDebugLib DebugLibGlx
-#define DoProfileLib ProfileLibGlx
+#ifdef DriDrivers
 
 #define IHaveSubdirs
 #define PassCDebugFlags
 
-#if GlxUseBuiltInDRIDriver
-#if GlxBuiltInGamma
-DRIVER += gamma
-#endif
-#if GlxBuiltInTdfx
-DRIVER += tdfx
-#endif
-#if GlxBuiltInMga
-DRIVER += common mga
-#endif
-#if GlxBuiltInI810
-DRIVER += common i810
-#endif
-#if GlxBuiltInR128
-DRIVER += r128
-#endif
-#if GlxBuiltInFfb
-DRIVER += ffb
-#endif
-#if GlxBuiltInSIS
-DRIVER += sis
-#endif
-
-SUBDIRS = $(DRIVER)
-
-#else /* GlxUseBuiltInDRIDriver */
-
-#if defined(i386Architecture) || defined(ia64Architecture)
-
-SUBDIRS += common
-SUBDIRS += gamma
-SUBDIRS += mga
-SUBDIRS += i810
-SUBDIRS += r128
-SUBDIRS += sis
-#if HasGlide3
-SUBDIRS += tdfx
-#endif
-
-#elif defined(AlphaArchitecture) 
-
-SUBDIRS += common
-SUBDIRS += gamma
-SUBDIRS += mga
-SUBDIRS += r128
-#if HasGlide3
-SUBDIRS += tdfx
-#endif
-
-#elif defined(SparcArchitecture)
-
-SUBDIRS += ffb
-
-#else
-
-SUBDIRS = 
-
-#endif /* architecture */
-
-#endif /* GlxUseBuiltInDRIDriver */
+SUBDIRS = common DriDrivers
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 
 DependTarget()
+
+#endif

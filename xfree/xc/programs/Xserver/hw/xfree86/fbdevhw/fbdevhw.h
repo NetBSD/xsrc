@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.h,v 1.8 2000/10/20 14:59:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.h,v 1.10 2001/04/06 18:16:31 dawes Exp $ */
 
 #ifndef _FBDEVHW_H_
 #define _FBDEVHW_H_
@@ -46,5 +46,7 @@ void  fbdevHWAdjustFrame(int scrnIndex, int x, int y, int flags);
 Bool  fbdevHWEnterVT(int scrnIndex, int flags);
 void  fbdevHWLeaveVT(int scrnIndex, int flags);
 void  fbdevHWDPMSSet(ScrnInfoPtr pScrn, int mode, int flags);
+
+Bool  fbdevHWSaveScreen(ScreenPtr pScreen, int mode);
 
 #endif

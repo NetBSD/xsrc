@@ -1,4 +1,4 @@
-/* $TOG: lbxfuncs.c /main/49 1998/02/23 09:14:27 barstow $ */
+/* $Xorg: lbxfuncs.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  * Copyright 1996 X Consortium, Inc.

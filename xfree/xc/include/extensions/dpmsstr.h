@@ -1,4 +1,4 @@
-/* $TOG: dpmsstr.h /main/1 1997/11/12 14:36:58 kaleb $ */
+/* $Xorg: dpmsstr.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*****************************************************************
 
 Copyright (c) 1996 Digital Equipment Corporation, Maynard, Massachusetts.

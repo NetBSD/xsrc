@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mifillrct.c /main/6 1998/02/09 14:47:01 kaleb $ */
+/* $Xorg: mifillrct.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xprotostr.h"

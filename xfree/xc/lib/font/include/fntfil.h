@@ -1,4 +1,4 @@
-/* $TOG: fntfil.h /main/6 1998/02/09 10:49:13 kaleb $ */
+/* $Xorg: fntfil.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfil.h,v 1.4 1999/07/17 05:30:47 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fntfil.h,v 1.7 2001/04/05 17:42:28 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -165,11 +165,5 @@ extern int FontFileMatchBitmapSource ( FontPathElementPtr fpe,
 
 extern int FontFileReadDirectory ( char *directory, FontDirectoryPtr *pdir );
 extern Bool FontFileDirectoryChanged ( FontDirectoryPtr dir );
-
-extern void FontFileCheckRegisterFpeFunctions ( void );
-
-extern void PrinterFontRegisterFpeFunctions ( void );
-
-extern void FontFileRegisterFpeFunctions ( void );
 
 #endif /* _FONTFILE_H_ */

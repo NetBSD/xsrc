@@ -1,9 +1,4 @@
-/* $XConsortium: sunLyUtil.c /main/1 1996/10/31 14:21:00 kaleb $ */
-
-
-
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyUtil.c,v 3.0 1996/09/29 12:47:29 dawes Exp $ */
-
+/* $Xorg: sunLyUtil.c,v 1.3 2000/08/17 19:48:37 cpqbld Exp $ */
 /*
  * CG3 and CG6 utility functions for LynxOS, derived from NetBSD
  * Copyright 1996 by Thomas Mueller
@@ -27,8 +22,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyUtil.c,v 3.2 2001/01/17 22:36:53 dawes Exp $ */
 
-/*      $NetBSD: sunLyUtil.c,v 1.1.1.2 2001/03/18 17:23:10 veego Exp $ */
+/*      $NetBSD: sunLyUtil.c,v 1.1.1.3 2001/06/09 15:03:12 tron Exp $ */
 
 /*
  * Copyright (c) 1993

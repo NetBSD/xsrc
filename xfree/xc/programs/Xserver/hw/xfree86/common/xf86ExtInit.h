@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86ExtInit.h,v 3.5 1996/02/18 03:42:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86ExtInit.h,v 3.6 1996/12/23 06:43:25 dawes Exp $ */
 
 
 

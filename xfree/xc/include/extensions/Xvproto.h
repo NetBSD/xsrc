@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/include/extensions/Xvproto.h,v 1.6 2001/05/07 21:37:12 tsi Exp $ */
 
 #ifndef XVPROTO_H
 #define XVPROTO_H
@@ -49,6 +49,7 @@ SOFTWARE.
 **
 */
 
+#include <X11/Xmd.h>
 
 /* Symbols: These are undefined at the end of this file to restore the
    values they have in Xv.h */

@@ -16,24 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef TTINTERP_H
-#define TTINTERP_H
+#ifndef __TTINTERP_H__
+#define __TTINTERP_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ttobjs.h"
 
-#else
 
-#include <truetype/ttobjs.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
 #ifndef TT_CONFIG_OPTION_STATIC_INTEPRETER  /* indirect implementation */
@@ -311,11 +302,9 @@
   FT_EXPORT( FT_Error )  TT_RunIns( TT_ExecContext  exec );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-#endif /* TTINTERP_H */
+#endif /* __TTINTERP_H__ */
 
 
 /* END */

@@ -1,4 +1,4 @@
-/* $TOG: SMproto.h /main/10 1998/02/06 14:09:35 kaleb $ */
+/* $Xorg: SMproto.h,v 1.4 2000/08/17 19:44:28 cpqbld Exp $ */
 
 /*
 
@@ -28,6 +28,8 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef _SMPROTO_H_
 #define _SMPROTO_H_
+
+#include <X11/Xmd.h>
 
 typedef struct {
     CARD8	majorOpcode;

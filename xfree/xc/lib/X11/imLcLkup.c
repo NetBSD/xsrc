@@ -1,4 +1,4 @@
-/* $TOG: imLcLkup.c /main/9 1998/04/28 17:34:55 kaleb $ */
+/* $Xorg: imLcLkup.c,v 1.3 2000/08/17 19:45:14 cpqbld Exp $ */
 /******************************************************************
 
               Copyright 1992 by Fuji Xerox Co., Ltd.
@@ -29,7 +29,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcLkup.c,v 3.3 2000/11/28 18:49:37 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcLkup.c,v 3.5 2001/01/17 19:41:52 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xatom.h>

@@ -1,4 +1,4 @@
-/* $TOG: mecroi.c /main/6 1998/02/09 16:12:56 kaleb $ */
+/* $Xorg: mecroi.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module mecroi.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare && Dean Verheiden -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecroi.c,v 3.3 1998/10/05 13:22:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecroi.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MECROI
 #define _XIEC_ECROI

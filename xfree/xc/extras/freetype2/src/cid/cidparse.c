@@ -16,23 +16,13 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftcalc.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/t1errors.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_TYPE1_ERRORS_H
 #include "cidparse.h"
-
-#else
-
-#include <cid/cidparse.h>
-
-#endif
-
 
 #include <string.h>     /* for strncmp() */
 
@@ -119,7 +109,7 @@
         if ( p[0] == 'S' && strncmp( (char*)p, "StartData", 9 ) == 0 )
         {
           /* save offset of binary data after `StartData' */
-          offset = top_position - ( limit - p ) + 10;
+          offset = (FT_ULong)( top_position - ( limit - p ) + 10 );
           goto Found;
         }
       }

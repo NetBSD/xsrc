@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.h,v 1.3 2000/02/23 04:46:43 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.h,v 1.5 2001/02/07 13:26:16 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -37,6 +37,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/gl.h"
 #include "glapi.h"
+
+extern void gamma_error(GLenum error, const char *s);
 
 extern void _gamma_Accum(GLenum op, GLfloat value);
 extern void _gamma_AlphaFunc(GLenum func, GLclampf ref);
@@ -376,6 +378,7 @@ extern void _gamma_VertexPointer(GLint size, GLenum type, GLsizei stride, const 
 extern void _gamma_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 
-extern void _gamma_init_dispatch(struct _glapi_table *dispatch);
+extern void _gamma_init_exec(struct _glapi_table *dispatch);
+extern void _gamma_init_save(struct _glapi_table *dispatch);
 
 #endif /* _GAMMA_GL_H_ */

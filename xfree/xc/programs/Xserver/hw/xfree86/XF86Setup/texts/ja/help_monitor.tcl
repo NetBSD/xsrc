@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_monitor.tcl,v 1.1.2.2 1998/02/26 20:11:22 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_monitor.tcl,v 1.2 1998/04/05 15:30:32 robin Exp $
 #
 set message "\n\n\n\
 	使用しているディスプレイの水平／垂直周波数を入力\n\

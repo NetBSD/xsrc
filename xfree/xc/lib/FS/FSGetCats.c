@@ -1,4 +1,4 @@
-/* $TOG: FSGetCats.c /main/4 1998/02/06 13:42:48 kaleb $ */
+/* $Xorg: FSGetCats.c,v 1.3 2000/08/17 19:44:02 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

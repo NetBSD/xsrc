@@ -1,4 +1,4 @@
-/* $TOG: FSQuExt.c /main/5 1998/02/06 13:43:52 kaleb $ */
+/* $Xorg: FSQuExt.c,v 1.3 2000/08/17 19:44:05 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

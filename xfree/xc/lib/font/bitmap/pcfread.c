@@ -1,4 +1,4 @@
-/* $TOG: pcfread.c /main/21 1998/05/07 15:20:43 kaleb $ */
+/* $Xorg: pcfread.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcfread.c,v 1.10 1999/08/01 07:56:55 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/pcfread.c,v 1.16 2001/04/04 00:34:28 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -863,7 +863,7 @@ pmfReadFont(FontPtr pFont, FontFilePtr file,
 	if (encodingOffset == 0xFFFF) {
 	    pFont->info.allExist = FALSE;
 	    encoding[i] = 0;
-	} else
+	} else {
             if(!encoding[SEGMENT_MAJOR(i)]) {
                 encoding[SEGMENT_MAJOR(i)]=
                     (CharInfoPtr*)xcalloc(BITMAP_FONT_SEGMENT_SIZE,
@@ -872,6 +872,7 @@ pmfReadFont(FontPtr pFont, FontFilePtr file,
                     goto Bail;
             }
 	    ACCESSENCODINGL(encoding, i) = metrics + encodingOffset;
+	}
     }
     if (IS_EOF(file)) goto Bail;
 

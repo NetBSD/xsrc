@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.10 1998/10/04 09:39:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.12 2001/01/17 22:37:10 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: lbxio.c /main/11 1998/02/09 15:12:30 kaleb $ */
+/* $Xorg: lbxio.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 
 #include <stdio.h>
 #include <X11/Xtrans.h>

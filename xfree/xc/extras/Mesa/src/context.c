@@ -1890,7 +1890,11 @@ _mesa_get_dispatch(GLcontext *ctx)
 void gl_problem( const GLcontext *ctx, const char *s )
 {
    fprintf( stderr, "Mesa implementation error: %s\n", s );
-   fprintf( stderr, "Report to Mesa bug database at www.mesa3d.org\n" );
+#ifdef XF86DRI
+   fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
+#else
+   fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
+#endif
    (void) ctx;
 }
 

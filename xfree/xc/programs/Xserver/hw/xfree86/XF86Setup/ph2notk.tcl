@@ -1,4 +1,4 @@
-# $XFree86$
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/ph2notk.tcl,v 1.1 1999/04/05 07:13:00 dawes Exp $
 #
 # Copyright 1997 by Joseph V. Moss <joe@XFree86.Org>
 #

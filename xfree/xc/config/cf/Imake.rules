@@ -1,11 +1,11 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
-XCOMM rules:  $TOG: Imake.rules /main/227 1998/02/02 12:07:57 kaleb $
+XCOMM rules:  $Xorg: Imake.rules,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.86 2000/12/12 17:05:30 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.94 2001/04/26 21:27:48 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -466,7 +466,7 @@ ProgramTargetName(program.tc): deplist					@@\
 	RemoveTargetProgram($@)						@@\
 	$(CCENVSETUP) $(PROOF) $(PROOFOPTIONS) $(CC) -o $@ $(LDOPTIONS) linklist $(EXTRA_LOAD_FLAGS) @@\
 									@@\
-clean clean.tc::							@@\
+clean cleantc::								@@\
 	RemoveFiles(program.tc program.tc.*.*)
 #else
 #define	ProofProgramTarget(program,deplist,linklist) /**/
@@ -483,7 +483,7 @@ ProgramTargetName(program.tc): deplist					@@\
 	RemoveTargetProgram($@)						@@\
 	$(CXXENVSETUP) $(PROOF) $(PROOFOPTIONS) $(CXX) -o $@ $(CXXLDOPTIONS) linklist $(EXTRA_LOAD_FLAGS) @@\
 									@@\
-clean clean.tc::							@@\
+clean cleantc::								@@\
 	RemoveFiles(program.tc program.tc.*.*)
 #else
 #define	ProofCplusplusProgramTarget(program,deplist,linklist) /**/
@@ -493,7 +493,7 @@ clean clean.tc::							@@\
 #ifndef ProofCleanTarget
 #if HasTestCenter
 #define ProofCleanTarget()						@@\
-clean clean.tc::							@@\
+clean cleantc::								@@\
 	$(RM) -r TC.Cache
 #else
 #define ProofCleanTarget() /**/
@@ -1185,6 +1185,7 @@ InstallTarget(install.ln,Concat(llib-l,libname.ln),$(INSTLIBFLAGS),dest)
 #endif /* InstallLintLibrary */
 
 
+#if !CompressManPages
 /*
  * InstallManPageLong - generate rules to install the indicated manual page,
  * giving it an alternate name.  This is used for installing man pages whose
@@ -1196,17 +1197,10 @@ InstallTarget(install.ln,Concat(llib-l,libname.ln),$(INSTLIBFLAGS),dest)
 #define	InstallManPageLong(file,destdir,dest)				@@\
 BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
 									@@\
-InstallNamedTarget(install.man,file.man,$(INSTMANFLAGS),destdir,dest.$(MANSUFFIX))
+CppManTarget(file,$(EXTRAMANDEFS))					@@\
+									@@\
+InstallNamedTarget(install.man,file.$(MANNEWSUFFIX),$(INSTMANFLAGS),destdir,dest.$(MANSUFFIX))
 #endif /* InstallManPageLong */
-
-
-/*
- * InstallManPage - generate rules to install the indicated manual page.
- */
-#ifndef InstallManPage
-#define	InstallManPage(file,destdir)					@@\
-InstallManPageLong(file,destdir,file)
-#endif /* InstallManPage */
 
 
 /*
@@ -1235,19 +1229,13 @@ install.man::								@@\
 #define	InstallGenManPageLong(file,destdir,dest,suffix)			@@\
 BuildInstallHtmlManPage(file,dest,suffix)				@@\
 									@@\
-install.man:: file.man							@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
+install.man:: file.$(MANNEWSUFFIX)					@@\
 	MakeDir($(DESTDIR)destdir)					@@\
-	$(INSTALL) -c $(INSTMANFLAGS) file.man $(DESTDIR)destdir/dest.suffix
+	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
+		$(DESTDIR)destdir/dest.suffix
 #endif /* InstallGenManPageLong */
-
-
-/*
- * InstallGenManPage - general equivalent of InstallManPage
- */
-#ifndef InstallGenManPage
-#define	InstallGenManPage(file,destdir,suffix)				@@\
-InstallGenManPageLong(file,destdir,file,suffix)
-#endif /* InstallGenManPage */
 
 
 /*
@@ -1266,6 +1254,103 @@ install.man::								@@\
 	done; \								@@\
 	RemoveFile($${TMP}))
 #endif /* InstallGenManPageAliases */
+
+#else /* CompressManPages */
+
+#ifndef InstallManPageLong
+#define InstallManPageLong(file,destdir,dest)				@@\
+BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
+									@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
+install.man:: file.$(MANNEWSUFFIX)					@@\
+	MakeDir($(DESTDIR)destdir)					@@\
+	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*			@@\
+	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
+	  $(DESTDIR)destdir/dest.$(MANSUFFIX)				@@\
+	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.$(MANSUFFIX)
+#endif
+
+#ifndef InstallGenManPageLong
+#define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
+BuildInstallHtmlManPage(file,dest,suffix)				@@\
+									@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
+install.man:: file.$(MANNEWSUFFIX)					@@\
+	MakeDir($(DESTDIR)destdir)					@@\
+	$(RM) $(DESTDIR)destdir/dest.suffix*				@@\
+	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANNEWSUFFIX) \		@@\
+	  $(DESTDIR)destdir/dest.suffix					@@\
+	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.suffix
+#endif
+
+#ifndef InstallMultipleMan
+#define InstallMultipleMan(list,dest)					@@\
+install.man:: list							@@\
+	MakeDir($(DESTDIR)dest)						@@\
+	@case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
+	for i in list; do \						@@\
+		(MNAME=`echo $$i | cut -f1 -d.`; \			@@\
+		set -x;	\						@@\
+		$(RM) $(DESTDIR)dest/$${MNAME}*; \			@@\
+		$(INSTALL) -c $(INSTMANFLAGS) $$i \			@@\
+		  $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX); \		@@\
+		$(COMPRESSMANCMD) $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX)); \ @@\
+	done
+#endif
+
+/*
+ * InstallManPageAliases - install soft links for aliases.
+ */
+#ifndef InstallManPageAliasesBase
+#define InstallManPageAliasesBase(file,destdir,aliases)			@@\
+install.man::								@@\
+	@(SUFFIX=`echo $(DESTDIR)destdir/file.* | sed -e 's,.*/[^\.]*.,,'`; \ @@\
+	for i in aliases; do (set -x; \					@@\
+	$(RM) $(DESTDIR)destdir/$$i.*; \				@@\
+	(cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \			@@\
+	$$i.$${SUFFIX})); \						@@\
+	done)
+#endif
+
+#ifndef InstallManPageAliases
+#define InstallManPageAliases(file,destdir,aliases)			@@\
+InstallHtmlManPageAliases(file,aliases,$(MANSUFFIX))			@@\
+									@@\
+InstallManPageAliasesBase(file,destdir,aliases)
+#endif
+
+
+/*
+ * InstallGenManPageAliases - install soft links for aliases.
+ */
+#ifndef InstallGenManPageAliases
+#define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
+InstallHtmlManPageAliases(file,aliases,suffix)				@@\
+									@@\
+InstallManPageAliasesBase(file,destdir,aliases)
+#endif
+
+#endif /* CompressManPages */
+
+
+/*
+ * InstallManPage - generate rules to install the indicated manual page.
+ */
+#ifndef InstallManPage
+#define	InstallManPage(file,destdir)					@@\
+InstallManPageLong(file,destdir,file)
+#endif /* InstallManPage */
+
+
+/*
+ * InstallGenManPage - general equivalent of InstallManPage
+ */
+#ifndef InstallGenManPage
+#define	InstallGenManPage(file,destdir,suffix)				@@\
+InstallGenManPageLong(file,destdir,file,suffix)
+#endif /* InstallGenManPage */
 
 
 /*
@@ -1300,10 +1385,10 @@ ProgramTargetName($(RMAN)):						@@\
 #define BuildInstallHtmlManPage(file,dest,suffix)			@@\
 AllTarget(dest.suffix.html)						@@\
 									@@\
-dest.suffix.html: file.man RmanCmdDependency				@@\
+dest.suffix.html: file.$(MANNEWSUFFIX) RmanCmdDependency		@@\
 	RemoveFiles(dest.suffix.html dest.suffix-html)			@@\
-	RunProgram(RMAN,$(RMANOPTIONS) < file.man > dest.suffix-html) && \ @@\
-	  $(MV) dest.suffix-html $@					@@\
+	RunProgram(RMAN,$(RMANOPTIONS) < file.$(MANNEWSUFFIX) \		@@\
+	  > dest.suffix-html) && $(MV) dest.suffix-html $@		@@\
 									@@\
 install.man:: dest.suffix.html						@@\
 	MakeDir($(DESTDIR)$(DOCHTMLDIR))				@@\
@@ -2188,7 +2273,7 @@ clean::									@@\
 
 #ifndef SwitchYYPrefix
 #define SwitchYYPrefix(in,out,prefix) \
-	sed 's/yy/prefix/g' in > out && RemoveFile(in)
+	sed 's/yy/prefix/g' in | sed 's/__REALLY_YY__/yy/' > out && RemoveFile(in)
 #endif
 	
 #ifndef LexFilePrefix
@@ -3069,13 +3154,24 @@ clean::									@@\
 #endif /* CppFileTarget */
 
 /*
- * CppManTarget - generates rules to create man source from a file with a .cpp
- * suffix.  OS-specific man sections are replaced.
+ * CppManTarget - preprocess man pages.  OS-specific man sections are replaced.
  */
 #ifndef CppManTarget
+#if !DontPreprocessManPages || defined(PreprocessManPages)
 #define CppManTarget(name,defs)						@@\
-AllTarget(name.man)							@@\
-CppRawFileTarget(name.man,name.cpp,$(MANDEFS) defs,NullParameter)
+AllTarget(name.$(MANNEWSUFFIX))						@@\
+CppRawFileTarget(name.$(MANNEWSUFFIX),name.$(MANSRCSUFFIX),$(MANDEFS) defs,NullParameter)
+#else
+#define CppManTarget(name,defs)						@@\
+AllTarget(name.$(MANNEWSUFFIX))						@@\
+									@@\
+name.$(MANNEWSUFFIX): name.$(MANSRCSUFFIX)				@@\
+	RemoveFile($@)							@@\
+	$(LN) name.$(MANSRCSUFFIX) $@					@@\
+									@@\
+clean::									@@\
+	RemoveFile(name.$(MANNEWSUFFIX))
+#endif
 #endif /* CppManTarget */
 
 /*
@@ -3158,7 +3254,7 @@ MutexDirective:	targets
  * ObjectModuleTarget - build a module as a single object file
  */
 #ifndef ObjectModuleTarget
-#if MakeDllModules
+#if MakeDllModules && DoLoadableServer
 #define ObjectModuleTarget(module,objects)				@@\
 DynamicModuleTarget(Concat(module,_drv.so), objects)
 #else
@@ -3171,7 +3267,7 @@ NormalRelocatableTarget(Concat(module,_drv), objects)
  * LibraryModuleTarget
  */
 #ifndef LibraryModuleTarget
-#if MakeDllModules
+#if MakeDllModules && DoLoadableServer
 #define LibraryModuleTarget(module,objects)				@@\
 NormalLibraryTarget(module, objects)					@@\
 DynamicModuleTarget(Concat3(lib,module,.so), objects)
@@ -3185,7 +3281,7 @@ NormalLibraryTarget(module, objects)
  * DepLibraryModuleTarget
  */
 #ifndef DepLibraryModuleTarget
-#if MakeDllModules
+#if MakeDllModules && DoLoadableServer
 #define DepLibraryModuleTarget(module,deplist,objects)			@@\
 NormalDepLibraryTarget(module, deplist, objects)			@@\
 DepDynamicModuleTarget(Concat3(lib,module,.so), deplist, objects)

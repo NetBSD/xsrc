@@ -1,4 +1,4 @@
-/* $TOG: mephoto.c /main/8 1998/02/09 16:13:22 kaleb $ */
+/* $Xorg: mephoto.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module mephoto.c ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 	Dean && Ben - various additions to handle different techniques
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mephoto.c,v 3.3 1998/10/05 13:22:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mephoto.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MEPHOTO
 #define _XIEC_EPHOTO

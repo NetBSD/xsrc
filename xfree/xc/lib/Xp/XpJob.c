@@ -1,4 +1,4 @@
-/* $XConsortium: XpJob.c /main/4 1996/12/04 10:24:31 lehors $ */
+/* $Xorg: XpJob.c,v 1.4 2000/08/17 19:46:07 cpqbld Exp $ */
 /******************************************************************************
  ******************************************************************************
  **
@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpJob.c,v 1.2 1997/01/12 10:39:56 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpJob.c,v 1.4 2001/01/17 19:43:02 dawes Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -110,7 +110,7 @@ XpStartJob (
 	if ((PwName = getenv("USERNAME"))) {
 #endif
 	    joa = (char *) Xmalloc( strlen( PwName ) + 20 );
-	    sprintf( joa, "job-owner: %s", PwName );
+	    sprintf( joa, "*job-owner: %s", PwName );
             context = XpGetContext( dpy );
 	    XpSetAttributes( dpy, context, XPJobAttr, joa, XPAttrMerge );
 

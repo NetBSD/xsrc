@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/Xext/appgroup.c,v 1.4 2001/01/17 22:13:14 dawes Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 
@@ -20,7 +20,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $TOG: appgroup.c /main/21 1998/02/09 15:23:40 kaleb $ */
+/* $Xorg: appgroup.c,v 1.3 2000/08/17 19:47:56 cpqbld Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

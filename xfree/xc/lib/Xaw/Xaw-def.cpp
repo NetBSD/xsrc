@@ -131,4 +131,4 @@ EXPORTS
  XawViewportSetLocation
  XawWidgetArray
  XawWidgetCount
-/* $TOG: Xaw-def.cpp /main/1 1997/09/16 10:04:41 kaleb $ */
+/* $Xorg: Xaw-def.cpp,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */

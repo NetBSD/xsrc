@@ -1,5 +1,5 @@
 /*
- * $TOG: WA8.c /main/5 1998/02/06 14:41:21 kaleb $
+ * $Xorg: WA8.c,v 1.3 2000/08/17 19:45:49 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group

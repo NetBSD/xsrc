@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.23 2000/02/15 18:01:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.28 2001/05/10 22:18:58 dbateman Exp $ */
 
 
 /*
@@ -24,11 +24,9 @@
 
 #include "xf86DDC.h"
 
-#ifdef DPMSExtension
 #include "globals.h"
 #define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
 
 extern int vgaHWGetIndex(void);
 
@@ -154,6 +152,10 @@ typedef struct _vgaHWRec {
     vgaHWWriteProcPtr		writeDacData;
     vgaHWReadProcPtr		readDacData;
     pointer                     ddc;
+    int				PIOOffset;	/* offset + vgareg
+						   = pioreg */
+    vgaHWReadProcPtr		readEnable;
+    vgaHWWriteProcPtr		writeEnable;
 } vgaHWRec;
 
 /* Some macros that VGA drivers can use in their ChipProbe() function */
@@ -176,6 +178,11 @@ typedef struct _vgaHWRec {
 				} while (0)
 
 #define OVERSCAN 0x11		/* Index of OverScan register */
+
+/* Flags that define how overscan correction should take place */
+#define KGA_FIX_OVERSCAN  1   /* overcan correction required */
+#define KGA_ENABLE_ON_ZERO 2  /* if possible enable display at beginning */
+                              /* of next scanline/frame                  */
 
 #define BIT_PLANE 3		/* Which plane we write to in mono mode */
 #define BITS_PER_GUN 6
@@ -216,8 +223,14 @@ void vgaHWUnmapMem(ScrnInfoPtr scrp);
 void vgaHWGetIOBase(vgaHWPtr hwp);
 void vgaHWLock(vgaHWPtr hwp);
 void vgaHWUnlock(vgaHWPtr hwp);
+void vgaHWEnable(vgaHWPtr hwp);
+void vgaHWDisable(vgaHWPtr hwp);
 void vgaHWDPMSSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags);
 Bool vgaHWHandleColormaps(ScreenPtr pScreen);
 void vgaHWddc1SetSpeed(ScrnInfoPtr pScrn, xf86ddcSpeed speed);
-
+CARD32 vgaHWHBlankKGA(DisplayModePtr mode, vgaRegPtr regp, int nBits, 
+	       unsigned int Flags);
+CARD32 vgaHWVBlankKGA(DisplayModePtr mode, vgaRegPtr regp, int nBits, 
+	       unsigned int Flags);
+Bool vgaHWAllocDefaultRegs(vgaRegPtr regp);
 #endif /* _VGAHW_H */

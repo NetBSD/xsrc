@@ -16,25 +16,16 @@
 /***************************************************************************/
 
 
-#ifndef CIDLOAD_H
-#define CIDLOAD_H
+#ifndef __CIDLOAD_H__
+#define __CIDLOAD_H__
 
-#include <freetype/internal/ftstream.h>
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_STREAM_H
 #include "cidparse.h"
 
-#else
 
-#include <cid/cidparse.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   typedef struct  CID_Loader_
@@ -58,12 +49,9 @@
   FT_Error  CID_Open_Face( CID_Face  face );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* CIDLOAD_H */
+#endif /* __CIDLOAD_H__ */
 
 
 /* END */

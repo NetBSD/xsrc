@@ -61,24 +61,14 @@
   /*************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/config/ftconfig.h>
-#include <freetype/ftmm.h>
-
-#include <freetype/internal/t1types.h>
-#include <freetype/internal/t1errors.h>
-
-
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_CONFIG_CONFIG_H
+#include FT_MULTIPLE_MASTERS_H
+#include FT_INTERNAL_TYPE1_TYPES_H
+#include FT_INTERNAL_TYPE1_ERRORS_H
 
 #include "t1load.h"
-
-#else
-
-#include <type1/t1load.h>
-
-#endif
-
 
 #include <string.h>     /* for strncmp(), strcmp() */
 #include <ctype.h>      /* for isalnum()           */
@@ -430,7 +420,7 @@
       if (token->start[0] == '/')
         token->start++;
 
-      len = token->limit - token->start;
+      len = (FT_Int)( token->limit - token->start );
       if ( len <= 0 )
       {
         error = T1_Err_Invalid_File_Format;
@@ -775,7 +765,7 @@
   static
   int  is_alpha( FT_Byte  c )
   {
-    return ( isalnum( c ) || c == '.' || c == '_' );
+    return ( isalnum( c ) || c == '.' || c == '_' || c == '-' );
   }
 
 
@@ -848,7 +838,7 @@
     while ( cur2 < limit && is_alpha( *cur2 ) )
       cur2++;
 
-    len = cur2 - cur;
+    len = (FT_Int)( cur2 - cur );
     if ( len > 0 )
     {
       if ( ALLOC( face->type1.font_name, len + 1 ) )
@@ -869,15 +859,15 @@
                          T1_Loader*  loader )
   {
     T1_ParserRec*  parser = &loader->parser;
-    FT_Short       temp[4];
+    FT_Fixed       temp[4];
     FT_BBox*       bbox   = &face->type1.font_bbox;
 
 
-    (void)T1_ToCoordArray( parser, 4, temp );
-    bbox->xMin = temp[0];
-    bbox->yMin = temp[1];
-    bbox->xMax = temp[2];
-    bbox->yMax = temp[3];
+    (void)T1_ToFixedArray( parser, 4, temp, 0 );
+    bbox->xMin = FT_RoundFix( temp[0] );
+    bbox->yMin = FT_RoundFix( temp[1] );
+    bbox->xMax = FT_RoundFix( temp[2] );
+    bbox->yMax = FT_RoundFix( temp[3] );
   }
 
 
@@ -888,7 +878,9 @@
     T1_ParserRec*  parser = &loader->parser;
     FT_Matrix*     matrix = &face->type1.font_matrix;
     FT_Vector*     offset = &face->type1.font_offset;
+    FT_Face        root   = (FT_Face)&face->root;
     FT_Fixed       temp[6];
+    FT_Fixed       temp_scale;
 
 
     if ( matrix->xx || matrix->yx )
@@ -897,14 +889,23 @@
 
     (void)T1_ToFixedArray( parser, 6, temp, 3 );
 
-    /* we need to scale the values by 1.0/temp[3] */
-    if ( temp[3] != 0x10000L )
+    temp_scale = ABS( temp[3] );
+
+    /* Set Units per EM based on FontMatrix values. We set the value to */
+    /* 1000 / temp_scale, because temp_scale was already multiplied by  */
+    /* 1000 (in t1_tofixed, from psobjs.c).                             */
+
+    root->units_per_EM = (FT_UShort)( FT_DivFix( 0x10000L,
+                                      FT_DivFix( temp_scale, 1000 ) ) >> 16 );
+
+    /* we need to scale the values by 1.0/temp_scale */
+    if ( temp_scale != 0x10000L )
     {
-      temp[0] = FT_DivFix( temp[0], temp[3] );
-      temp[1] = FT_DivFix( temp[1], temp[3] );
-      temp[2] = FT_DivFix( temp[2], temp[3] );
-      temp[4] = FT_DivFix( temp[4], temp[3] );
-      temp[5] = FT_DivFix( temp[5], temp[3] );
+      temp[0] = FT_DivFix( temp[0], temp_scale );
+      temp[1] = FT_DivFix( temp[1], temp_scale );
+      temp[2] = FT_DivFix( temp[2], temp_scale );
+      temp[4] = FT_DivFix( temp[4], temp_scale );
+      temp[5] = FT_DivFix( temp[5], temp_scale );
       temp[3] = 0x10000L;
     }
 
@@ -1040,7 +1041,7 @@
             while ( cur2 < limit && is_alpha( *cur2 ) )
               cur2++;
 
-            len = cur2 - cur - 1;
+            len = (FT_Int)( cur2 - cur - 1 );
 
             parser->root.error = T1_Add_Table( char_table, charcode,
                                           cur + 1, len + 1 );
@@ -1245,7 +1246,7 @@
 
         while ( cur2 < limit && is_alpha( *cur2 ) )
           cur2++;
-        len = cur2 - cur - 1;
+        len = (FT_Int)( cur2 - cur - 1 );
 
         error = T1_Add_Table( name_table, n, cur + 1, len + 1 );
         if ( error )
@@ -1382,15 +1383,7 @@
   const T1_Field  t1_keywords[] =
   {
 
-#ifdef FT_FLAT_COMPILE
-
 #include "t1tokens.h"
-
-#else
-
-#include <type1/t1tokens.h>
-
-#endif
 
     /* now add the special functions... */
     T1_FIELD_CALLBACK( "FontName", parse_font_name )
@@ -1476,15 +1469,9 @@
           while ( cur2 < limit && is_alpha( *cur2 ) )
             cur2++;
 
-          len  = cur2 - cur;
+          len  = (FT_Int)( cur2 - cur );
           if ( len > 0 && len < 22 )
           {
-            if ( !loader->fontdata )
-            {
-              if ( strncmp( (char*)cur, "FontInfo", 8 ) == 0 )
-                loader->fontdata = 1;
-            }
-            else
             {
               /* now, compare the immediate name to the keyword table */
               T1_Field*  keyword = (T1_Field*)t1_keywords;
@@ -1612,10 +1599,13 @@
     /* to the Type1 data                                            */
     type1->num_glyphs = loader.num_glyphs;
 
-    if ( !loader.subrs.init )
+    if ( loader.subrs.init )
     {
-      FT_ERROR(( "T1_Open_Face: no subrs array in face!\n" ));
-      error = T1_Err_Invalid_File_Format;
+      loader.subrs.init  = 0;
+      type1->num_subrs   = loader.num_subrs;
+      type1->subrs_block = loader.subrs.block;
+      type1->subrs       = loader.subrs.elements;
+      type1->subrs_len   = loader.subrs.lengths;
     }
 
     if ( !loader.charstrings.init )
@@ -1623,12 +1613,6 @@
       FT_ERROR(( "T1_Open_Face: no charstrings array in face!\n" ));
       error = T1_Err_Invalid_File_Format;
     }
-
-    loader.subrs.init  = 0;
-    type1->num_subrs   = loader.num_subrs;
-    type1->subrs_block = loader.subrs.block;
-    type1->subrs       = loader.subrs.elements;
-    type1->subrs_len   = loader.subrs.lengths;
 
     loader.charstrings.init  = 0;
     type1->charstrings_block = loader.charstrings.block;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.h,v 1.2 2000/08/25 13:42:31 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.h,v 1.6 2001/04/10 16:07:53 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,22 +28,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_TRIS_H_
-#define _R128_TRIS_H_
+#ifndef __R128_TRIS_H__
+#define __R128_TRIS_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
 #include "r128_vb.h"
 
-extern void r128DDChooseRenderState(GLcontext *ctx);
-extern void r128DDTriangleFuncsInit(void);
+extern void r128DDChooseRenderState( GLcontext *ctx );
+extern void r128DDTriangleFuncsInit( void );
 
-#define R128_ANTIALIAS_BIT	0x00	/* Ignored for now */
 #define R128_FLAT_BIT		0x01
 #define R128_OFFSET_BIT		0x02
 #define R128_TWOSIDE_BIT	0x04
@@ -51,18 +50,18 @@ extern void r128DDTriangleFuncsInit(void);
 #define R128_FALLBACK_BIT	0x10
 #define R128_MAX_TRIFUNC	0x20
 
-/* Draw a triangle from the vertices in the vertex buffer */
-static __inline void r128_draw_triangle( r128ContextPtr r128ctx,
-					 r128Vertex *v0,
-					 r128Vertex *v1,
-					 r128Vertex *v2 )
+
+static __inline void r128_draw_triangle( r128ContextPtr rmesa,
+					 r128VertexPtr v0,
+					 r128VertexPtr v1,
+					 r128VertexPtr v2 )
 {
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 3 );
+   GLuint vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 3 );
    int j;
 
 #if defined (USE_X86_ASM)
-   /* GTH: We can safely assume the vertex stride is some number of
+   /* GH: We can safely assume the vertex stride is some number of
     * dwords, and thus a "rep movsd" is okay.  The vb pointer is
     * automagically updated with this instruction, so we don't have
     * to manually take care of incrementing it.
@@ -81,31 +80,30 @@ static __inline void r128_draw_triangle( r128ContextPtr r128ctx,
 			 : "memory" );
 #else
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v0->ui[j];
+      LE32_OUT( vb[j], v0->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v1->ui[j];
+      LE32_OUT( vb[j], v1->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v2->ui[j];
+      LE32_OUT( vb[j], v2->ui[j] );
 #endif
 }
 
-/* Draw a quad from the vertices in the vertex buffer */
-static __inline void r128_draw_quad( r128ContextPtr r128ctx,
-				     r128Vertex *v0,
-				     r128Vertex *v1,
-				     r128Vertex *v2,
-				     r128Vertex *v3 )
+static __inline void r128_draw_quad( r128ContextPtr rmesa,
+				     r128VertexPtr v0,
+				     r128VertexPtr v1,
+				     r128VertexPtr v2,
+				     r128VertexPtr v3 )
 {
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 6 );
+   GLuint vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 6 );
    int j;
 
 #if defined (USE_X86_ASM)
-   /* GTH: We can safely assume the vertex stride is some number of
+   /* GH: We can safely assume the vertex stride is some number of
     * dwords, and thus a "rep movsd" is okay.  The vb pointer is
     * automagically updated with this instruction, so we don't have
     * to manually take care of incrementing it.
@@ -136,97 +134,119 @@ static __inline void r128_draw_quad( r128ContextPtr r128ctx,
 			 : "memory" );
 #else
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v0->ui[j];
+      LE32_OUT( vb[j], v0->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v1->ui[j];
+      LE32_OUT( vb[j], v1->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v3->ui[j];
+      LE32_OUT( vb[j], v3->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v1->ui[j];
+      LE32_OUT( vb[j], v1->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v2->ui[j];
+      LE32_OUT( vb[j], v2->ui[j] );
 
    vb += vertsize;
    for ( j = 0 ; j < vertsize ; j++ )
-      vb[j] = v3->ui[j];
+      LE32_OUT( vb[j], v3->ui[j] );
 #endif
 }
 
-/* Draw a line from the vertices in the vertex buffer */
-static __inline void r128_draw_line( r128ContextPtr r128ctx,
-				     r128Vertex *tmp0,
-				     r128Vertex *tmp1,
-				     float width )
+static __inline void r128_draw_line( r128ContextPtr rmesa,
+				     r128VertexPtr tmp0,
+				     r128VertexPtr tmp1,
+				     GLfloat width )
 {
 #if 1
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 6 );
-   float dx, dy, ix, iy;
-   int j;
+   GLuint vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 6 );
+   GLfloat hw, dx, dy, ix, iy;
+   GLuint j;
+   GLfloat x0 = tmp0->v.x;
+   GLfloat y0 = tmp0->v.y;
+   GLfloat x1 = tmp1->v.x;
+   GLfloat y1 = tmp1->v.y;
 
-   dx = tmp0->v.x - tmp1->v.x;
-   dy = tmp0->v.y - tmp1->v.y;
-
-   ix = width * .5; iy = 0;
-
-   if ((ix<.5) && (ix>0.1)) ix = .5; /* I want to see lines with width
-					0.5 also */
-
-   if (dx * dx > dy * dy) {
-      iy = ix; ix = 0;
+   hw = 0.5F * width;
+   if (hw > 0.1F && hw < 0.5F) {
+      hw = 0.5F;
    }
 
-   *(float *)&vb[0] = tmp0->v.x - ix;
-   *(float *)&vb[1] = tmp0->v.y - iy;
+   /* adjust vertices depending on line direction */
+   dx = tmp0->v.x - tmp1->v.x;
+   dy = tmp0->v.y - tmp1->v.y;
+   if (dx * dx > dy * dy) {
+      /* X-major line */
+      ix = 0.0F;
+      iy = hw;
+      if (x1 < x0) {
+         x0 += 0.5F;
+         x1 += 0.5F;
+      }
+      y0 -= 0.5F;
+      y1 -= 0.5F;
+   }
+   else {
+      /* Y-major line */
+      ix = hw;
+      iy = 0.0F;
+      if (y1 > y0) {
+         y0 -= 0.5F;
+         y1 -= 0.5F;
+      }
+      x0 += 0.5F;
+      x1 += 0.5F;
+   }
+
+   LE32_OUT_FLOAT( vb[0], x0 - ix );
+   LE32_OUT_FLOAT( vb[1], y0 - iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp0->ui[j];
+      LE32_OUT( vb[j], tmp0->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp1->v.x + ix;
-   *(float *)&vb[1] = tmp1->v.y + iy;
+   LE32_OUT_FLOAT( vb[0], x1 + ix );
+   LE32_OUT_FLOAT( vb[1], y1 + iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp1->ui[j];
+      LE32_OUT( vb[j], tmp1->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp0->v.x + ix;
-   *(float *)&vb[1] = tmp0->v.y + iy;
+   LE32_OUT_FLOAT( vb[0], x0 + ix );
+   LE32_OUT_FLOAT( vb[1], y0 + iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp0->ui[j];
+      LE32_OUT( vb[j], tmp0->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp0->v.x - ix;
-   *(float *)&vb[1] = tmp0->v.y - iy;
+   LE32_OUT_FLOAT( vb[0], x0 - ix );
+   LE32_OUT_FLOAT( vb[1], y0 - iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp0->ui[j];
+      LE32_OUT( vb[j], tmp0->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp1->v.x - ix;
-   *(float *)&vb[1] = tmp1->v.y - iy;
+   LE32_OUT_FLOAT( vb[0], x1 - ix );
+   LE32_OUT_FLOAT( vb[1], y1 - iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp1->ui[j];
+      LE32_OUT( vb[j], tmp1->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp1->v.x + ix;
-   *(float *)&vb[1] = tmp1->v.y + iy;
+   LE32_OUT_FLOAT( vb[0], x1 + ix );
+   LE32_OUT_FLOAT( vb[1], y1 + iy );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp1->ui[j];
+      LE32_OUT( vb[j], tmp1->ui[j] );
 
 #else
 
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 2 );
+   int vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 2 );
    int j;
 
 #if defined (USE_X86_ASM)
-   /* GTH: We can safely assume the vertex stride is some number of
+   /* GH: We can safely assume the vertex stride is some number of
     * dwords, and thus a "rep movsd" is okay.  The vb pointer is
     * automagically updated with this instruction, so we don't have
     * to manually take care of incrementing it.
@@ -250,57 +270,59 @@ static __inline void r128_draw_line( r128ContextPtr r128ctx,
 #endif
 }
 
-/* Draw a point from the vertices in the vertex buffer */
-static __inline void r128_draw_point( r128ContextPtr r128ctx,
-				      r128Vertex *tmp, float sz )
+static __inline void r128_draw_point( r128ContextPtr rmesa,
+				      r128VertexPtr tmp, GLfloat sz )
 {
 #if 1
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 6 );
+   GLuint vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 6 );
    int j;
+   const float x = tmp->v.x + PNT_X_OFFSET;
+   const float y = tmp->v.y + PNT_Y_OFFSET;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   LE32_OUT_FLOAT( vb[0], x - sz );
+   LE32_OUT_FLOAT( vb[1], y - sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   LE32_OUT_FLOAT( vb[0], x + sz );
+   LE32_OUT_FLOAT( vb[1], y - sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   LE32_OUT_FLOAT( vb[0], x + sz );
+   LE32_OUT_FLOAT( vb[1], y + sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   LE32_OUT_FLOAT( vb[0], x + sz );
+   LE32_OUT_FLOAT( vb[1], y + sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   LE32_OUT_FLOAT( vb[0], x - sz );
+   LE32_OUT_FLOAT( vb[1], y + sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   LE32_OUT_FLOAT( vb[0], x - sz );
+   LE32_OUT_FLOAT( vb[1], y - sz );
    for (j = 2 ; j < vertsize ; j++)
-      vb[j] = tmp->ui[j];
+      LE32_OUT( vb[j], tmp->ui[j] );
+
 #else
 
-   int vertsize = r128ctx->vertsize;
-   CARD32 *vb = r128AllocVerticesInline( r128ctx, 1 );
+   int vertsize = rmesa->vertsize;
+   CARD32 *vb = r128AllocVerticesInline( rmesa, 1 );
    int j;
 
 #if defined (USE_X86_ASM)
-   /* GTH: We can safely assume the vertex stride is some number of
+   /* GH: We can safely assume the vertex stride is some number of
     * dwords, and thus a "rep movsd" is okay.  The vb pointer is
     * automagically updated with this instruction, so we don't have
     * to manually take care of incrementing it.
@@ -317,4 +339,4 @@ static __inline void r128_draw_point( r128ContextPtr r128ctx,
 }
 
 #endif
-#endif /* _R128_TRIS_H_ */
+#endif /* __R128_TRIS_H__ */

@@ -1,4 +1,4 @@
-/* $TOG: unsquish.c /main/5 1998/02/11 09:49:17 kaleb $ */
+/* $Xorg: unsquish.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.7 2000/02/25 21:02:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.10 2001/03/28 01:17:43 mvojkovi Exp $ */
 
 #ifndef __NV_INCLUDE_H__
 #define __NV_INCLUDE_H__
@@ -31,6 +31,10 @@
 #include "xf86RAC.h"
 
 #include "nv_const.h"
+
+#include "dixstruct.h"
+#include "scrnintstr.h"
+
 #ifndef NV_USE_FB
 /*
  * If using cfb, cfb.h is required.  Select the others for the bpp values

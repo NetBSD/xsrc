@@ -26,14 +26,14 @@
 .\"
 .\" Author: Paulo César Pereira de Andrade
 .\"
-.\" $XFree86: xc/lib/Xaw/Xaw.man,v 1.3 1999/06/20 08:41:13 dawes Exp $
+.\" $XFree86: xc/lib/Xaw/Xaw.man,v 1.5 2001/01/27 18:20:39 dawes Exp $
 .\"
 .de TQ
 .br
 .ns
 .TP \\$1
 ..
-.TH XAW 3 "Version 3.9" "XFree86"
+.TH XAW 3 __vendorversion__
 
 .SH NAME
  XAW \- X Athena Widgets

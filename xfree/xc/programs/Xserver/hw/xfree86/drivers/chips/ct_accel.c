@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.34 2000/09/19 12:46:14 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.36 2001/05/09 19:57:04 dbateman Exp $ */
 /*
  * Copyright 1996, 1997, 1998 by David Bateman <dbateman@ee.uts.edu.au>
  *   Modified 1997, 1998 by Nozomi Ytow
@@ -49,9 +49,6 @@
 
 /* Drivers that use XAA need this */
 #include "xf86fbman.h"
-
-/* The vga HW register stuff. Do we need this? */
-#include "vgaHW.h"
 
 /* Our driver specific include file */
 #include "ct_driver.h"

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: Xlcint.h /main/1 1996/09/28 16:59:05 rws $
+ * $Xorg: Xlcint.h,v 1.3 2000/08/17 19:48:06 cpqbld Exp $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company

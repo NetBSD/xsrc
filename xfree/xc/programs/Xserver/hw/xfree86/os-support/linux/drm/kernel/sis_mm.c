@@ -29,10 +29,12 @@
  */
 
 #define __NO_VERSION__
+#include "sis.h"
+#include <linux/sisfb.h>
 #include "drmP.h"
 #include "sis_drm.h"
-#include "sis_ds.h"
 #include "sis_drv.h"
+#include "sis_ds.h"
 
 #define MAX_CONTEXT 100
 #define VIDEO_TYPE 0 
@@ -149,7 +151,7 @@ int sis_fb_free(struct inode *inode, struct file *filp, unsigned int cmd,
 
 static memHeap_t *AgpHeap = NULL;
 
-int sis_agp_init(struct inode *inode, struct file *filp, unsigned int cmd,
+int sisp_agp_init(struct inode *inode, struct file *filp, unsigned int cmd,
 		  unsigned long arg)
 {
   drm_sis_agp_t agp;
@@ -164,7 +166,7 @@ int sis_agp_init(struct inode *inode, struct file *filp, unsigned int cmd,
   return 0;
 }
 
-int sis_agp_alloc(struct inode *inode, struct file *filp, unsigned int cmd,
+int sisp_agp_alloc(struct inode *inode, struct file *filp, unsigned int cmd,
 		  unsigned long arg)
 {
   drm_sis_mem_t agp;
@@ -201,7 +203,7 @@ int sis_agp_alloc(struct inode *inode, struct file *filp, unsigned int cmd,
   return retval;
 }
 
-int sis_agp_free(struct inode *inode, struct file *filp, unsigned int cmd,
+int sisp_agp_free(struct inode *inode, struct file *filp, unsigned int cmd,
 		  unsigned long arg)
 {
   drm_sis_mem_t agp;
@@ -277,7 +279,9 @@ int sis_final_context(int context)
 	  retval = setFirst(set, &item);
 	  while(retval){
    	    DRM_DEBUG("free video memory 0x%x\n", item);
+#if 0
             sis_free(item);
+#endif
 	    retval = setNext(set, &item);
 	  }
 	  setDestroy(set);

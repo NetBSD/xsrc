@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_3d_reg.h,v 1.6 2001/03/21 16:14:21 dawes Exp $ */
 
 #ifndef I810_3D_REG_H
 #define I810_3D_REG_H
@@ -113,8 +113,8 @@
 #define LCS_LINEWIDTH_2_0       (0x4<<12)
 #define LCS_LINEWIDTH_3_0       (0x6<<12)
 #define LCS_UPDATE_ALPHA_INTERP (0x1<<11)
-#define LCS_ALPHA_FLAT          (0x0<<10)
-#define LCS_ALPHA_INTERP        (0x1<<10)
+#define LCS_ALPHA_FLAT          (0x1<<10)
+#define LCS_ALPHA_INTERP        (0x0<<10)
 #define LCS_UPDATE_FOG_INTERP   (0x1<<9)
 #define LCS_FOG_INTERP          (0x0<<8)
 #define LCS_FOG_FLAT            (0x1<<8)

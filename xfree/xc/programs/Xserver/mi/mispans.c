@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mispans.c,v 3.0 1995/07/07 15:45:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mispans.c,v 3.2 2001/01/17 22:37:07 dawes Exp $ */
 /***********************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: mispans.c /main/7 1998/02/09 14:48:44 kaleb $ */
+/* $Xorg: mispans.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 
 #include "misc.h"
 #include "pixmapstr.h"

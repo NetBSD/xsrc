@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.c,v 1.16 1999/08/01 07:57:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.c,v 1.22 2001/05/06 21:59:07 mvojkovi Exp $ */
 
 #ifdef _XOPEN_SOURCE
 #include <math.h>
@@ -465,7 +465,8 @@ CMapSetDGAMode(int index, int num, DGADevicePtr dev)
 
     pScreenPriv->isDGAmode = DGAActive(index);
 
-    if(!pScreenPriv->isDGAmode && miInstalledMaps[index])
+    if(!pScreenPriv->isDGAmode && miInstalledMaps[index] 
+         && xf86Screens[pScreen->myNum]->vtSema)
 	CMapReinstallMap(miInstalledMaps[index]);
 
     return ret;
@@ -923,6 +924,148 @@ CMapChangeGamma(
     return Success;
 }
 
+
+static void
+ComputeGammaRamp (
+    CMapScreenPtr priv,
+    unsigned short *red,
+    unsigned short *green,
+    unsigned short *blue
+){
+    int elements = priv->gammaElements;
+    LOCO *entry = priv->gamma;
+    int shift = 16 - priv->sigRGBbits;
+
+    while(elements--) {
+	entry->red = *(red++) >> shift;
+	entry->green = *(green++) >> shift;
+	entry->blue = *(blue++) >> shift;
+	entry++;
+    }
+}
+
+int
+xf86ChangeGammaRamp(
+   ScreenPtr pScreen,
+   int size,
+   unsigned short *red, 
+   unsigned short *green,
+   unsigned short *blue
+){
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    CMapColormapPtr pColPriv;
+    CMapScreenPtr pScreenPriv;
+    CMapLinkPtr pLink;
+
+    if(CMapScreenIndex == -1)
+        return BadImplementation;
+
+    pScreenPriv = (CMapScreenPtr)pScreen->devPrivates[CMapScreenIndex].ptr;
+    if(!pScreenPriv)
+        return BadImplementation;
+
+    if(pScreenPriv->gammaElements != size)
+	return BadValue;
+
+    ComputeGammaRamp(pScreenPriv, red, green, blue);
+
+    /* mark all colormaps on this screen */
+    pLink = pScreenPriv->maps;
+    while(pLink) {
+        pColPriv =
+         (CMapColormapPtr) pLink->cmap->devPrivates[CMapColormapIndex].ptr;
+        pColPriv->recalculate = TRUE;
+        pLink = pLink->next;
+    }
+
+    if(miInstalledMaps[pScreen->myNum] &&
+       ((pScreenPriv->flags & CMAP_LOAD_EVEN_IF_OFFSCREEN) ||
+        pScrn->vtSema || pScreenPriv->isDGAmode)) {
+        ColormapPtr pMap = miInstalledMaps[pScreen->myNum];
+
+        if(!(pScreenPriv->flags & CMAP_PALETTED_TRUECOLOR) &&
+            (pMap->pVisual->class == TrueColor) &&
+            ((1 << pMap->pVisual->nplanes) > pScreenPriv->maxColors)) {
+
+            /* if the current map doesn't have a palette look
+                for another map to change the gamma on. */
+
+            pLink = pScreenPriv->maps;
+            while(pLink) {
+                if(pLink->cmap->pVisual->class == PseudoColor)
+                    break;
+                pLink = pLink->next;
+            }
+
+            if(pLink) {
+                /* need to trick CMapRefreshColors() into thinking
+                   this is the currently installed map */
+                miInstalledMaps[pScreen->myNum] = pLink->cmap;
+                CMapReinstallMap(pLink->cmap);
+                miInstalledMaps[pScreen->myNum] = pMap;
+            }
+        } else
+            CMapReinstallMap(pMap);
+    }
+
+    return Success;
+}
+
+int
+xf86GetGammaRampSize(ScreenPtr pScreen)
+{
+    CMapScreenPtr pScreenPriv;
+
+    if(CMapScreenIndex == -1) return 0;
+
+    pScreenPriv = (CMapScreenPtr)pScreen->devPrivates[CMapScreenIndex].ptr;
+    if(!pScreenPriv) return 0;
+
+    return pScreenPriv->gammaElements;
+}
+
+int
+xf86GetGammaRamp(
+   ScreenPtr pScreen,
+   int size,
+   unsigned short *red,
+   unsigned short *green,
+   unsigned short *blue
+){
+    CMapScreenPtr pScreenPriv;
+    LOCO *entry;
+    int shift, sigbits;
+
+    if(CMapScreenIndex == -1) 
+	return BadImplementation;
+
+    pScreenPriv = (CMapScreenPtr)pScreen->devPrivates[CMapScreenIndex].ptr;
+    if(!pScreenPriv) 
+	return BadImplementation;
+
+    if(size > pScreenPriv->gammaElements)
+	return BadValue;
+
+    entry = pScreenPriv->gamma;
+    sigbits = pScreenPriv->sigRGBbits;
+
+    while(size--) {
+	*red = entry->red << (16 - sigbits);
+	*green = entry->green << (16 - sigbits);
+	*blue = entry->blue << (16 - sigbits);
+	shift = sigbits;
+	while(shift < 16) {
+	    *red |= *red >> shift;
+	    *green |= *green >> shift;
+	    *blue |= *blue >> shift;
+	    shift += sigbits;
+	}
+	red++; green++; blue++;
+        entry++;
+    }
+
+    return Success;
+}
 
 int
 xf86ChangeGamma(

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86isaBus.c,v 3.3 2000/02/08 13:13:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86isaBus.c,v 3.5 2000/12/06 15:35:11 eich Exp $ */
 
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.

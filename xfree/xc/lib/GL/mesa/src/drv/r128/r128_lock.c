@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_lock.c,v 1.3 2001/03/21 16:14:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -38,7 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
-int   prevLockLine = 0;
+int prevLockLine = 0;
 #endif
 
 
@@ -50,15 +50,14 @@ int   prevLockLine = 0;
  * the hardware lock when it changes the window state, this routine will
  * automatically be called after such a change.
  */
-void r128GetLock( r128ContextPtr r128ctx, GLuint flags )
+void r128GetLock( r128ContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = r128ctx->driDrawable;
-   __DRIscreenPrivate *sPriv = r128ctx->driScreen;
-   R128SAREAPriv *sarea = r128ctx->sarea;
-   int stamp = dPriv->lastStamp;
+   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
+   __DRIscreenPrivate *sPriv = rmesa->driScreen;
+   R128SAREAPrivPtr sarea = rmesa->sarea;
    int i;
 
-   drmGetLock( r128ctx->driFd, r128ctx->hHWContext, flags );
+   drmGetLock( rmesa->driFd, rmesa->hHWContext, flags );
 
    /* The window might have moved, so we might need to get new clip
     * rects.
@@ -68,26 +67,27 @@ void r128GetLock( r128ContextPtr r128ctx, GLuint flags )
     * Since the hardware state depends on having the latest drawable
     * clip rects, all state checking must be done _after_ this call.
     */
-   XMESA_VALIDATE_DRAWABLE_INFO( r128ctx->display, sPriv, dPriv );
+   XMESA_VALIDATE_DRAWABLE_INFO( rmesa->display, sPriv, dPriv );
 
-   if ( stamp != dPriv->lastStamp ) {
-      r128ctx->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
-      r128ctx->SetupDone = 0;
+   if ( rmesa->lastStamp != dPriv->lastStamp ) {
+      rmesa->lastStamp = dPriv->lastStamp;
+      rmesa->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
+      rmesa->SetupDone = 0;
    }
 
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_CLIPRECTS;
 
-   r128ctx->numClipRects = dPriv->numClipRects;
-   r128ctx->pClipRects = dPriv->pClipRects;
+   rmesa->numClipRects = dPriv->numClipRects;
+   rmesa->pClipRects = dPriv->pClipRects;
 
-   if ( sarea->ctxOwner != r128ctx->hHWContext ) {
-      sarea->ctxOwner = r128ctx->hHWContext;
-      r128ctx->dirty = R128_UPLOAD_ALL;
+   if ( sarea->ctxOwner != rmesa->hHWContext ) {
+      sarea->ctxOwner = rmesa->hHWContext;
+      rmesa->dirty = R128_UPLOAD_ALL;
    }
 
-   for ( i = 0 ; i < r128ctx->lastTexHeap ; i++ ) {
-      if ( sarea->texAge[i] != r128ctx->lastTexAge[i] ) {
-	 r128AgeTextures( r128ctx, i );
+   for ( i = 0 ; i < rmesa->lastTexHeap ; i++ ) {
+      if ( sarea->texAge[i] != rmesa->lastTexAge[i] ) {
+	 r128AgeTextures( rmesa, i );
       }
    }
 }

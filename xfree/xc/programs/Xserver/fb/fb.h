@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.21 2000/10/23 21:16:45 tsi Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.26 2001/03/30 02:15:19 keithp Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -40,6 +40,8 @@
 #include "mibstore.h"
 #ifdef RENDER
 #include "picturestr.h"
+#else
+#include "picture.h"
 #endif
 
 /*
@@ -110,6 +112,10 @@ typedef unsigned long long  FbBits;
 
 #if FB_SHIFT == 5
 typedef CARD32		    FbBits;
+#endif
+
+#if FB_SHIFT == 4
+typedef CARD16		    FbBits;
 #endif
 
 #if LOG2_BITMAP_PAD == FB_SHIFT
@@ -508,6 +514,49 @@ extern void fbSetBits (FbStip *bits, int stride, FbStip data);
 
 /* Whether 24-bit specific code is needed for this filled pixel value */
 #define FbCheck24Pix(p)	((p) == FbNext24Pix(p))
+
+/* Macros for dealing with dashing */
+
+#define FbDashDeclare	\
+    unsigned char	*__dash, *__firstDash, *__lastDash
+    
+#define FbDashInit(pGC,pPriv,dashOffset,dashlen,even) {	    \
+    (even) = TRUE;					    \
+    __firstDash = (pGC)->dash;				    \
+    __lastDash = __firstDash + (pGC)->numInDashList;	    \
+    (dashOffset) %= (pPriv)->dashLength;		    \
+							    \
+    __dash = __firstDash;				    \
+    while ((dashOffset) >= ((dashlen) = *__dash))	    \
+    {							    \
+	(dashOffset) -= (dashlen);			    \
+	(even) = 1-(even);				    \
+	if (++__dash == __lastDash)			    \
+	    __dash = __firstDash;			    \
+    }							    \
+    (dashlen) -= (dashOffset);				    \
+}
+
+#define FbDashNext(dashlen) {				    \
+    if (++__dash == __lastDash)				    \
+	__dash = __firstDash;				    \
+    (dashlen) = *__dash;				    \
+}
+
+/* as numInDashList is always even, this case can skip a test */
+
+#define FbDashNextEven(dashlen) {			    \
+    (dashlen) = *++__dash;				    \
+}
+
+#define FbDashNextOdd(dashlen)	FbDashNext(dashlen)
+
+#define FbDashStep(dashlen,even) {			    \
+    if (!--(dashlen)) {					    \
+	FbDashNext(dashlen);				    \
+	(even) = 1-(even);				    \
+    }							    \
+}
 
 extern int	fbGCPrivateIndex;
 #ifndef FB_NO_WINDOW_PIXMAPS
@@ -1184,6 +1233,10 @@ Bool
 fbSetVisualTypes (int depth, int visuals, int bitsPerRGB);
 
 Bool
+fbSetVisualTypesAndMasks (int depth, int visuals, int bitsPerRGB,
+			  Pixel redMask, Pixel greenMask, Pixel blueMask);
+
+Bool
 fbInitVisuals (VisualPtr    *visualp, 
 	       DepthPtr	    *depthp,
 	       int	    *nvisualp,
@@ -1505,9 +1558,12 @@ fbComposite (CARD8      op,
 	     CARD16     width,
 	     CARD16     height);
 
-Bool
-fbPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
 #endif
+
+Bool
+fbPictureInit (ScreenPtr pScreen,
+	       PictFormatPtr formats,
+	       int nformats);
 
 /*
  * fbpixmap.c

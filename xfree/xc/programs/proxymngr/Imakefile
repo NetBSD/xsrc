@@ -1,5 +1,9 @@
-XCOMM $TOG: Imakefile /main/12 1997/08/05 09:00:09 kaleb $
-XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.6 2000/01/31 19:33:41 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:53:59 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.8 2001/01/17 23:45:02 dawes Exp $
 
          DEFINES = StrcasecmpDefines
 

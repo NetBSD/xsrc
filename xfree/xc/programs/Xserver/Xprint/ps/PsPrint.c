@@ -1,4 +1,4 @@
-/* $TOG: PsPrint.c /main/5 1998/02/09 15:43:18 kaleb $ */
+/* $Xorg: PsPrint.c,v 1.4 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
 /*
  * (c) Copyright 1996 Hewlett-Packard Company
  * (c) Copyright 1996 International Business Machines Corp.
- * (c) Copyright 1996 Sun Microsystems, Inc.
+ * (c) Copyright 1996, 2000 Sun Microsystems, Inc.  All rights reserved.
  * (c) Copyright 1996 Novell, Inc.
  * (c) Copyright 1996 Digital Equipment Corp.
  * (c) Copyright 1996 Fujitsu Limited
@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.5 1998/10/04 09:37:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.7 2001/01/17 22:36:32 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -89,17 +89,79 @@ in this Software without prior written authorization from The Open Group.
 #include "windowstr.h"
 #include "Oid.h"
 
+/* static utility function to get document/page attributes */
+static void
+S_GetPageAttributes(XpContextPtr pCon,int *iorient,int *icount, int *iplex,
+                  int *ires, unsigned short *iwd, unsigned short *iht)
+{
+    char               *count;
+    XpOid              orient, plex;
+    /*
+     *  Get the orientation
+     */
+    orient = XpGetContentOrientation(pCon);
+    switch (orient) {
+    case xpoid_val_content_orientation_landscape:
+      *iorient = 1;
+      break;
+    case xpoid_val_content_orientation_reverse_portrait:
+      *iorient = 2;
+      break;
+    case xpoid_val_content_orientation_reverse_landscape:
+      *iorient = 3;
+      break;
+    case xpoid_val_content_orientation_portrait:
+    default:
+      *iorient = 0;
+      break;
+    }
+
+    /*
+     *  Get the count
+     */
+    count = XpGetOneAttribute(pCon, XPDocAttr, "copy-count");
+    if( count )
+    {
+      int ii = sscanf(count, "%d", icount);
+      if( ii!=1 ) *icount = 1;
+    }
+    else *icount = 1;
+
+    /*
+     * Get the plex
+     */
+    plex = XpGetPlex(pCon);
+    switch(plex)
+    {
+    case xpoid_val_plex_duplex:
+      *iplex = 1;
+      break;
+    case xpoid_val_plex_tumble:
+      *iplex = 2;
+      break;
+    default:
+      *iplex = 0;
+      break;
+    }
+
+  /*
+   *  Get the resolution and media size
+   */
+    *ires = XpGetResolution(pCon);
+    XpGetMediumDimensions(pCon, iwd, iht);
+}
+
+
 int
 PsStartJob(
   XpContextPtr pCon,
   Bool         sendClientData,
   ClientPtr    client)
 {
+  int                iorient, iplex, icount, ires;
+  unsigned short     iwd, iht;
   PsContextPrivPtr  pConPriv = 
       (PsContextPrivPtr)pCon->devPrivates[PsContextPrivateIndex].ptr;
-  char             *jobHeader;
-  CARD16            width, height;
-  char              s[20];
 
   /* 
    * Create a temporary file to store the printer output.
@@ -111,7 +173,12 @@ PsStartJob(
  * Write the job header to the job file.
  */
 
-  pConPriv->pPsOut = PsOut_BeginFile(pConPriv->pJobFile);
+  /* get document level attributes */
+  S_GetPageAttributes(pCon,&iorient,&icount,&iplex,&ires,&iwd,&iht);
+
+  pConPriv->pPsOut = PsOut_BeginFile(pConPriv->pJobFile,
+                                   iorient, icount, iplex, ires,
+                                   (int)iwd, (int)iht);
 
   return Success;
 }
@@ -219,7 +286,6 @@ PsStartPage(
 {
   int                iorient, iplex, icount, ires;
   unsigned short     iwd, iht;
-  char               *count;
   register WindowPtr pChild;
   PsContextPrivPtr   pConPriv =
      (PsContextPrivPtr)pCon->devPrivates[PsContextPrivateIndex].ptr;
@@ -227,7 +293,6 @@ PsStartPage(
      (PsWindowPrivPtr)pWin->devPrivates[PsWindowPrivateIndex].ptr;
   char               s[80];
   xEvent event;
-  XpOid              orient, plex;
 
 /*
  * Put a pointer to the context in the window private structure
@@ -235,51 +300,8 @@ PsStartPage(
   pWinPriv->validContext = 1;
   pWinPriv->context      = pCon;
 
- /*
-  *  Get the orientation
-  */
-  orient = XpGetContentOrientation(pCon);
-  switch (orient) {
-  case xpoid_val_content_orientation_landscape:
-      iorient = 1;
-      break;
-  case xpoid_val_content_orientation_reverse_portrait:
-      iorient = 2;
-      break;
-  case xpoid_val_content_orientation_reverse_landscape:
-      iorient = 3;
-      break;
-  case xpoid_val_content_orientation_portrait:
-  default:
-      iorient = 0;
-      break;
-  }
-
-  /*
-   *  Get the count
-   */
-  count = XpGetOneAttribute(pCon, XPDocAttr, "copy-count");
-  if( count )
-  {
-      int ii = sscanf(count, "%d", &icount);
-      if( ii!=1 ) icount = 1;
-  }
-  else icount = 1;
-
-  /*
-   *  Get the plex
-   */
-  plex = XpGetPlex(pCon);
-  if (plex == xpoid_val_plex_duplex) iplex = 1;
-  else if (plex == xpoid_val_plex_tumble) iplex = 2;
-  else                                 iplex = 0;
-
-  /*
-   *  Get the resolution and media size
-   */
-  ires = XpGetResolution(pCon);
-  XpGetMediumDimensions(pCon, &iwd, &iht);
-
+  /* get page level attributes */
+  S_GetPageAttributes(pCon,&iorient,&icount,&iplex,&ires,&iwd,&iht);
   /*
    *  Start the page
    */

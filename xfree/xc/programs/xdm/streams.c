@@ -1,4 +1,4 @@
-/* $TOG: streams.c /main/6 1998/02/09 13:56:36 kaleb $ */
+/* $Xorg: streams.c,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/streams.c,v 3.3 1998/10/10 15:25:39 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/streams.c,v 3.5 2001/01/17 23:45:22 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

@@ -1,4 +1,4 @@
-/* $TOG: Xlib.h /main/122 1998/03/22 18:22:09 barstow $ */
+/* $Xorg: Xlib.h,v 1.5 2000/08/17 19:45:06 cpqbld Exp $ */
 /* 
 
 Copyright 1985, 1986, 1987, 1991, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.17 2000/11/28 18:49:27 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.19 2001/01/17 19:41:50 dawes Exp $ */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $TOG: PEXlibint.h /main/19 1998/02/06 16:09:05 kaleb $ */
+/* $Xorg: PEXlibint.h,v 1.4 2000/08/17 19:44:20 cpqbld Exp $ */
 
 /******************************************************************************
 
@@ -133,7 +133,7 @@ typedef struct PEXDisplayInfo
 #define PEXGetDisplayInfo(_display, _info) \
 \
 { \
-    if (_info = PEXDisplayInfoHeader) \
+    if ((_info = PEXDisplayInfoHeader)) \
     { \
         if (PEXDisplayInfoHeader->display != _display) \
         { \

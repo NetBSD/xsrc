@@ -1,4 +1,4 @@
-/* $XConsortium: npunix.c /main/2 1996/11/13 09:28:37 kaleb $ */
+/* $Xorg: npunix.c,v 1.3 2000/08/17 19:54:59 cpqbld Exp $ */
 /*
  * npunix.c
  *

@@ -70,7 +70,7 @@ SOFTWARE.
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Text.c,v 3.42 2001/01/30 21:54:33 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.42.2.1 2001/05/25 21:44:59 paulo Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -2498,12 +2498,14 @@ _XawTextSourceChanged(Widget w, XawTextPosition left, XawTextPosition right,
     int delta, line, line_from;
 
     if (left < ctx->text.old_insert) {
-	if (right < ctx->text.old_insert)
-	    ctx->text.old_insert -= right - left;
-	else
-	    ctx->text.old_insert = left;
+	XawTextPosition old_insert = ctx->text.old_insert;
 
-	ctx->text.insertPos = ctx->text.old_insert + block->length;
+	if (right < ctx->text.old_insert)
+	    old_insert -= right - left;
+	else
+	    old_insert = left;
+
+	ctx->text.insertPos = old_insert + block->length;
     }
 #ifndef OLDXAW
     if (left <= ctx->text.lt.top) {

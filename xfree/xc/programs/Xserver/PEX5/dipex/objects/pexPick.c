@@ -1,4 +1,4 @@
-/* $TOG: pexPick.c /main/4 1998/02/10 12:35:32 kaleb $ */
+/* $Xorg: pexPick.c,v 1.3 2000/08/17 19:47:14 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPick.c,v 3.7 2001/01/17 22:12:38 dawes Exp $ */
 
 
 /*++

@@ -1,5 +1,5 @@
 /*
- * $TOG: SmeP.h /main/8 1998/02/11 14:55:27 kaleb $
+ * $Xorg: SmeP.h,v 1.3 2000/08/17 19:45:39 cpqbld Exp $
  *
 Copyright 1989, 1994, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/SmeP.h,v 1.5 1999/06/06 08:48:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeP.h,v 1.7 2001/01/17 19:42:32 dawes Exp $ */
 
 /*
  * This is the private header file for the Athena Sme object.

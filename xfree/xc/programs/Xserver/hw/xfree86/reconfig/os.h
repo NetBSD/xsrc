@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/os.h,v 3.5 1996/08/11 13:02:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/os.h,v 3.6 1996/12/23 06:51:43 dawes Exp $ */
 
 
 

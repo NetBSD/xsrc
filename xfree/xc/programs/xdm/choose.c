@@ -1,5 +1,5 @@
 /*
- * $TOG: choose.c /main/18 1998/02/09 13:54:39 kaleb $
+ * $Xorg: choose.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/choose.c,v 3.9 2000/05/31 07:15:11 eich Exp $ */
+/* $XFree86: xc/programs/xdm/choose.c,v 3.11 2001/01/17 23:45:20 dawes Exp $ */
 
 /*
  * choose.c

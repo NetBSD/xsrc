@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_intro.tcl,v 1.1.2.2 1998/02/26 20:11:18 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_intro.tcl,v 1.2 1998/04/05 15:30:28 robin Exp $
 #
 set message "\n\
 	You need to fill in the requested information on each\

@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.17 2000/12/07 16:48:05 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.19 2001/05/15 11:08:40 alanh Exp $ */
 
 #define DEBUG 1
 
@@ -44,6 +44,9 @@
 #define MCLKHigh 0x17
 #define ClockLow 0x18
 #define ClockHigh 0x19
+#define SSetup 0x20
+#define SKey 0x37
+#define SPKey 0x57
 
 /* 3x4 */
 #define Offset 0x13

@@ -1,4 +1,4 @@
-/* $TOG: pexFont.c /main/9 1998/02/10 12:35:03 kaleb $ */
+/* $Xorg: pexFont.c,v 1.3 2000/08/17 19:47:13 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.6 1998/07/26 13:14:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.8 2001/01/17 22:12:37 dawes Exp $ */
 
 
 /*++    pexFont.c

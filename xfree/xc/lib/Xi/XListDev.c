@@ -1,4 +1,4 @@
-/* $TOG: XListDev.c /main/22 1998/04/30 15:52:28 kaleb $ */
+/* $Xorg: XListDev.c,v 1.4 2000/08/17 19:45:56 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XListDev.c,v 3.0 1996/08/25 13:52:56 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XListDev.c,v 3.2 2001/01/17 19:42:50 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -92,7 +92,7 @@ XDeviceInfo
 	return (XDeviceInfo *) NULL;
 	}
 
-    if (*ndevices = rep.ndevices) /* at least 1 input device */
+    if ((*ndevices = rep.ndevices)) /* at least 1 input device */
 	{
 	size = *ndevices * sizeof (XDeviceInfo);
 	rlen = rep.length << 2;   /* multiply length by 4    */

@@ -1,4 +1,4 @@
-/* $XConsortium: lbxdeltastr.h /main/7 1996/12/15 21:24:04 rws $ */
+/* $Xorg: lbxdeltastr.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
  * Copyright 1993 Network Computing Devices
  *

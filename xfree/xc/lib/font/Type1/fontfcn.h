@@ -1,4 +1,4 @@
-/* $XConsortium: fontfcn.h,v 1.3 92/03/26 16:42:23 eswu Exp $ */
+/* $Xorg: fontfcn.h,v 1.3 2000/08/17 19:46:30 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -44,7 +44,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Type1/fontfcn.h,v 1.5 2001/01/17 19:43:22 dawes Exp $ */
 
 
 #ifdef BUILDCID

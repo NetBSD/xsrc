@@ -1,4 +1,4 @@
-/* $TOG: snfread.c /main/19 1998/05/01 16:42:29 kaleb $ */
+/* $Xorg: snfread.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/snfread.c,v 1.6 1999/07/17 05:30:33 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/snfread.c,v 1.8 2001/01/17 19:43:27 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>

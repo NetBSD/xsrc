@@ -2,7 +2,7 @@
 
                             Marc Aurele La France
 
-                               2000 December 6
+                                2001 April 10
 
                                   Abstract
 
@@ -216,7 +216,7 @@ been specified instead.
 
 A ChipSet name of ``vgawonder'' is equivalent to ``ativga'', except that only
 VGAWonder-capable adapters can be assigned to the ``Device'' section.  This
-specifically excludes newer Mach64's with integrated controllers.
+specifically excludes the newer integrated Mach64 controllers.
 
 In some PCI or AGP systems, the driver will not, by default, probe for non-
 PCI Mach32's or Mach64's.  This is because, before doing any such probe, the
@@ -426,9 +426,27 @@ CRTC or an integrated Mach64 graphics chip.  This option disables this linear
 aperture.
 
 On non-Intel platforms, the driver requires a linear aperture and, so, this
-option should not be specified.
+option is ignored.
 
-5.10  Option ``shadowfb''
+5.10  Option ``HWCursor'' and Option ``SWCursor''
+
+Option ``HWCursor'', which is the default, specifies that hardware facilities
+are to be used to paint the mouse pointer on the screen.  Option ``SWCursor''
+specifies that the mouse pointer is to by drawn by software, which is much
+slower.  If both options are specified, option ``SWCursor'' prevails.  Cur-
+rently, these options are only acted upon for 256-colour or higher depth
+modes, if a Mach64 accelerator CRTC, or a Mach64 integrated controller is
+being used.  In all other situations, a software cursor will be used.
+
+5.11  Option ``SilkenMouse''
+
+This option is only acted upon when a hardware cursor is being used.  It
+specifies that the cursor's position on the screen is to be updated as
+quickly as possible when the mouse is moved.  This is the default behaviour.
+If this option is negated, the cursor may lag the mouse when the X server is
+very busy.
+
+5.12  Option ``shadowfb''
 
 If this option is enabled, the driver will cause the CPU to do each drawing
 operation first into a shadow frame buffer in system virtual memory and then
@@ -444,19 +462,19 @@ Note that, due to various limitations, this option is forcibly disabled when
 a linear video memory aperture is not enabled, when the frame buffer depth is
 less than 8, or when acceleration is used.
 
-5.11  Option ``dpms''
+5.13  Option ``dpms''
 
 This option enables the driver's support for VESA's Display Power Management
 Specification.
 
-5.12  Option ``backingstore''
+5.14  Option ``backingstore''
 
 This is not specifically a driver option.  It is used to enable the server's
 support for backing store, a mechanism by which pixel data for occluded win-
 dow regions is remembered by the server thereby alleviating the need to send
 expose events to X clients when the data needs to be redisplayed.
 
-5.13  MemBase address
+5.15  MemBase address
 
 This specification is only effective for non-PCI Mach64 adapters, and is used
 to override the CPU address at which the adapter will map its video memory.
@@ -470,14 +488,14 @@ ing to the PCI Plug'n'Play specification which arbitrates the resource
 requirements of most devices in the system.  This means the driver can not
 easily change the linear aperture address.
 
-5.14  Option ``ReferenceClock'' ``frequency''
+5.16  Option ``ReferenceClock'' ``frequency''
 
 This option is only applicable to non-Intel platforms, where an adapter BIOS
 is not available to the driver.  The option specifies the reference frequency
 used by the adapter's clock generator.  The default is 14.318 MHz, and other
 typical values are 28.636, or 29.5 MHz.
 
-5.15  ClockChip ``name''
+5.17  ClockChip ``name''
 
 This option is only applicable to non-Intel platforms, where an adapter BIOS
 is not available to the driver, and the driver cannot reliably determine
@@ -619,7 +637,7 @@ groups using your favourite archiving service can also prove useful in
 resolving problems.
 
 If you are still experiencing problems, you can send me non-HTMLised e-mail
-at <tsi@ualberta.ca>.  Please be as specific as possible when describing the
+at <tsi@xfree86.org>.  Please be as specific as possible when describing the
 problem(s), and include an unedited copy of the server's log and the XF86Con-
 fig file used.
 
@@ -673,7 +691,7 @@ newer driver API of XFree86 4.0 and later.
 The introduction of version 6 is a first swipe at porting the driver to non-
 Intel architectures.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.34 2000/12/07 15:43:41 tsi Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.37 2001/04/16 15:02:08 tsi Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.ati,v 3.56.2.1 2001/06/01 18:26:44 dawes Exp $

@@ -1,4 +1,4 @@
-/* $TOG: omDefault.c /main/6 1997/06/22 15:53:43 kaleb $ */
+/* $Xorg: omDefault.c,v 1.3 2000/08/17 19:45:21 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/omDefault.c,v 1.5 2001/01/17 19:41:56 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: LED.c /main/2 1995/12/07 21:31:02 kaleb $ */
+/* $Xorg: LED.c,v 1.3 2000/08/17 19:54:51 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbutils/LED.c,v 1.4 2001/01/17 23:46:13 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

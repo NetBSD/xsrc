@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaCmap.c,v 1.4 1998/09/20 06:01:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaCmap.c,v 1.7 2001/02/15 18:31:22 eich Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -35,11 +35,9 @@
 #include "vgaHW.h"
 #include "xf86_ansic.h"
 
-#ifdef XFreeXDGA
 #define _XF86DGA_SERVER_
 #include "extensions/xf86dgastr.h"
 #include "dgaproc.h"
-#endif
 
 
 #define NOMAPYET        (ColormapPtr) 0
@@ -105,7 +103,6 @@ vgaStoreColors(pmap, ndef, pdefs)
     }
     
     writeColormap = scrninfp->vtSema;
-#ifdef XFreeXDGA
     if (DGAAvailable(scrnIndex))
     {
 	writeColormap = writeColormap ||
@@ -113,7 +110,6 @@ vgaStoreColors(pmap, ndef, pdefs)
 			 !(DGAGetFlags(scrnIndex) & XF86DGADirectColormap)) ||
 			(DGAGetFlags(scrnIndex) & XF86DGAHasColormap);
     }
-#endif
 
     if (writeColormap)
 	hwp->enablePalette(hwp);
@@ -260,7 +256,6 @@ vgaInstallColormap(pmap)
       defs[i].blue = prgb[i].blue;
       defs[i].flags =  DoRed|DoGreen|DoBlue;
     }
-
   pmap->pScreen->StoreColors(pmap, entries, defs);
 
   WalkTree(pmap->pScreen, TellGainedMap, &pmap->mid);

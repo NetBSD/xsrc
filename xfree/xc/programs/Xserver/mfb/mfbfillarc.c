@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbfillarc.c,v 1.2 1998/03/20 21:08:12 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbfillarc.c,v 1.4 2001/01/17 22:37:02 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: mfbfillarc.c /main/17 1998/02/09 14:38:46 kaleb $ */
+/* $Xorg: mfbfillarc.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xprotostr.h"

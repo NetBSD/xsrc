@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.6 1999/02/19 21:27:23 hohndel Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.8 2001/01/17 23:45:05 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -49,7 +49,7 @@ in this Software without prior written authorization from The Open Group.
 
 /**********************************************************************
  *
- * $TOG: add_window.c /main/133 1998/02/09 13:47:33 kaleb $
+ * $Xorg: add_window.c,v 1.4 2000/08/17 19:54:05 cpqbld Exp $
  *
  * Add a new window, put the titlbar and other stuff around
  * the window

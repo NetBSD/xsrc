@@ -1,4 +1,4 @@
-/* $TOG: Xtransutil.c /main/33 1998/02/06 15:55:10 kaleb $ */
+/* $Xorg: Xtransutil.c,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.15 2000/04/05 18:13:27 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.17 2001/01/17 19:43:49 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

@@ -1,4 +1,4 @@
-/* $TOG: Convert.c /main/77 1998/02/06 13:20:48 kaleb $ */
+/* $Xorg: Convert.c,v 1.4 2000/08/17 19:46:09 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Convert.c,v 3.3 1998/10/03 09:06:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Convert.c,v 3.5 2001/01/17 19:43:03 dawes Exp $ */
 
 /*
 
@@ -499,7 +499,7 @@ static void FreeCacheRec(app, p, prev)
 	register int i;
 	if (!p->from_is_value)
 	    XtFree(p->from.addr);
-	if (i = p->num_args) {
+	if ((i = p->num_args)) {
 	    XrmValue *pargs = CARGS(p);
 	    while (i--)
 		XtFree(pargs[i].addr);
@@ -524,7 +524,7 @@ void _XtCacheFlushTag(app, tag)
     LOCK_PROCESS;
     for (i = CACHEHASHSIZE; --i >= 0;) {
 	prev = &cacheHashTable[i];
-	while (rec = *prev) {
+	while ((rec = *prev)) {
 	    if (rec->tag == tag)
 		FreeCacheRec(app, rec, prev);
 	    else
@@ -703,7 +703,7 @@ void XtDirectConvert(converter, args, num_args, from, to)
 	      XtMemcmp(&p->from.addr, from->addr, from->size) :
 	      memcmp((char *)p->from.addr, (char *)from->addr, from->size))
          && (p->num_args == num_args)) {
-	    if (i = num_args) {
+	    if ((i = num_args)) {
 		XrmValue *pargs = CARGS(p);
 		/* Are all args the same data ? */
 		while (i) {
@@ -802,7 +802,7 @@ CallConverter(dpy, converter,
 		  XtMemcmp(&p->from.addr, from->addr, from->size) :
 		  memcmp((char *)p->from.addr, (char *)from->addr, from->size))
 	     && (p->num_args == num_args)) {
-		if (i = num_args) {
+		if ((i = num_args)) {
 		    XrmValue *pargs = CARGS(p);
 		    /* Are all args the same data ? */
 		    while (i) {
@@ -1133,7 +1133,7 @@ void XtAppReleaseCacheRefs(app, refs)
 
     LOCK_APP(app);
     LOCK_PROCESS;
-    for (r = (CachePtr*)refs; p = *r; r++) {
+    for (r = (CachePtr*)refs; (p = *r); r++) {
 	if (p->is_refcounted && --(CEXT(p)->ref_count) == 0) {
 	    FreeCacheRec(app, p, NULL);
 	}

@@ -1,5 +1,5 @@
 /*
- * $TOG: xauth.c /main/19 1998/02/09 13:52:29 kaleb $
+ * $Xorg: xauth.c,v 1.3 2000/08/17 19:54:12 cpqbld Exp $
  *
  * xauth - manipulate authorization file
  *
@@ -24,7 +24,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xauth/xauth.c,v 1.4 2001/01/17 23:45:16 dawes Exp $ */
 
 #include "xauth.h"
 

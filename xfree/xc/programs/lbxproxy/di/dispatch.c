@@ -1,4 +1,4 @@
-/* $TOG: dispatch.c /main/42 1998/02/23 09:14:20 barstow $ */
+/* $Xorg: dispatch.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
 /*
  * Copyright 1992 Network Computing Devices
  * Copyright 1996 X Consortium, Inc.

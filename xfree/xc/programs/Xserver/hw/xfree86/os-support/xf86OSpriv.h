@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSpriv.h,v 1.4 2000/02/15 02:00:14 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSpriv.h,v 1.5 2000/10/28 01:42:24 mvojkovi Exp $ */
 
 #ifndef _XF86OSPRIV_H
 #define _XF86OSPRIV_H

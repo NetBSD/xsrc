@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbcompose.c,v 1.4 2000/10/13 02:37:47 tsi Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbcompose.c,v 1.5 2000/11/20 07:13:07 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

@@ -1,4 +1,4 @@
-/* $TOG: XStFocus.c /main/4 1998/02/06 15:05:09 kaleb $ */
+/* $Xorg: XStFocus.c,v 1.3 2000/08/17 19:45:57 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XStFocus.c,v 3.0 1996/08/25 13:53:08 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XStFocus.c,v 3.2 2001/01/17 19:42:51 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -1,4 +1,4 @@
-/* $XConsortium: t1snap.c,v 1.3 91/10/10 11:19:47 rws Exp $ */
+/* $Xorg: t1snap.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Type1/t1snap.c,v 1.4 2001/01/17 19:43:24 dawes Exp $ */
 
  
 #include "objects.h"

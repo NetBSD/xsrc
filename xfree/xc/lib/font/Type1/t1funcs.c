@@ -1,4 +1,4 @@
-/* $TOG: t1funcs.c /main/25 1998/05/01 16:42:00 kaleb $ */
+/* $Xorg: t1funcs.c,v 1.4 2000/08/17 19:46:33 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -71,7 +71,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.21 1999/09/25 14:36:39 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.23 2001/01/17 19:43:23 dawes Exp $ */
 
 /*
 

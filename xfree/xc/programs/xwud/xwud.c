@@ -1,4 +1,4 @@
-/* $TOG: xwud.c /main/61 1998/02/09 14:21:20 kaleb $ */
+/* $Xorg: xwud.c,v 1.4 2000/08/17 19:55:17 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1986, 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwud/xwud.c,v 3.3 1998/10/04 09:42:05 dawes Exp $ */
+/* $XFree86: xc/programs/xwud/xwud.c,v 3.5 2001/01/17 23:46:43 dawes Exp $ */
 
 /* xwud - marginally useful raster image undumper */
 

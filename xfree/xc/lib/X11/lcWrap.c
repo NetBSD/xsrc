@@ -1,4 +1,4 @@
-/* $TOG: lcWrap.c /main/28 1998/06/01 16:15:36 kaleb $ */
+/* $Xorg: lcWrap.c,v 1.4 2000/08/17 19:45:20 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -49,7 +49,7 @@ from The Open Group.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
-/* $XFree86: xc/lib/X11/lcWrap.c,v 3.8 2000/09/26 15:56:52 tsi Exp $ */
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.10 2001/01/17 19:41:55 dawes Exp $ */
 
 #include <stdlib.h>
 #include "Xlibint.h"

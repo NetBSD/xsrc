@@ -2,7 +2,7 @@
  * Fill 32 bit tiled rectangles.  Used by both PolyFillRect and PaintWindow.
  * no depth dependencies.
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbtile32.c,v 3.2 1998/10/04 09:37:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbtile32.c,v 3.4 2001/01/17 22:36:37 dawes Exp $ */
 
 /*
 
@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
 
-/* $TOG: cfbtile32.c /main/9 1998/02/09 14:08:01 kaleb $ */
+/* $Xorg: cfbtile32.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

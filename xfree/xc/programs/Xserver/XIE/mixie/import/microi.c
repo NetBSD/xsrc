@@ -1,4 +1,4 @@
-/* $TOG: microi.c /main/8 1998/02/09 16:16:40 kaleb $ */
+/* $Xorg: microi.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module microi.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden  -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/microi.c,v 3.2 1998/10/04 09:36:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/microi.c,v 3.4 2001/01/17 22:13:04 dawes Exp $ */
 
 #define _XIEC_MICROI
 

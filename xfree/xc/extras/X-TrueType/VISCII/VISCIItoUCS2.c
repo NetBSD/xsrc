@@ -39,7 +39,7 @@ Notice===
     positions (first char is at 0x02) so the table goes from 0x00 to 0xff.
 
  */
-/* $XFree86$ */
+/* $XFree86: xc/extras/X-TrueType/VISCII/VISCIItoUCS2.c,v 1.2 2000/06/27 21:26:33 tsi Exp $ */
 
 #include "xttversion.h"
 

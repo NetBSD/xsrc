@@ -1,4 +1,4 @@
-/* $TOG: XKBBind.c /main/28 1998/02/06 17:59:23 kaleb $ */
+/* $Xorg: XKBBind.c,v 1.3 2000/08/17 19:45:00 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1987, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XKBBind.c,v 3.11 2000/01/21 18:41:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBBind.c,v 3.13 2001/01/17 19:41:48 dawes Exp $ */
 
 	/* the new monsters ate the old ones */
 

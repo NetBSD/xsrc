@@ -1,4 +1,4 @@
-/* $XConsortium: dpackbits.c /main/2 1995/10/18 16:45:17 mor $ */
+/* $Xorg: dpackbits.c,v 1.4 2000/08/17 19:46:40 cpqbld Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992 Sam Leffler
  * Copyright (c) 1991, 1992 Silicon Graphics, Inc.
@@ -22,7 +22,7 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/lbxutil/image/dpackbits.c,v 1.2 1998/12/20 11:57:16 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/image/dpackbits.c,v 1.4 2001/01/17 19:43:35 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncproto.h>

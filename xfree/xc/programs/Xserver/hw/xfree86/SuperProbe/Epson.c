@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Epson.c,v 1.2tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Epson.c,v 1.2 1999/03/14 01:21:14 dawes Exp $ */
 /*
  * (c) Copyright 1998 by Thomas Mueller <tmueller@sysgo.de>
  *

@@ -19,25 +19,24 @@
 /***************************************************************************/
 
 
-#ifndef AHMODULE_H
-#define AHMODULE_H
-
-#include <freetype/ftmodule.h>
+#ifndef __AHMODULE_H__
+#define __AHMODULE_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_MODULE_H
+
+
+FT_BEGIN_HEADER
+
 
   FT_CALLBACK_TABLE
   const FT_Module_Class  autohint_module_class;
 
-#ifdef __cplusplus
-  }
-#endif
 
+FT_END_HEADER
 
-#endif /* AHMODULE_H */
+#endif /* __AHMODULE_H__ */
 
 
 /* END */

@@ -1,4 +1,4 @@
-/* $TOG: extensions.c /main/8 1998/02/11 10:02:40 kaleb $ */
+/* $Xorg: extensions.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * font server extensions
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/extensions.c,v 1.3 1998/10/25 12:47:59 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/extensions.c,v 1.5 2001/01/17 23:45:29 dawes Exp $ */
 
 #include	"FSproto.h"
 #include	"misc.h"

@@ -26,7 +26,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.h,v 1.2 1999/02/01 12:13:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.h,v 1.3 2000/08/11 19:10:47 dawes Exp $ */
 
 #ifndef	_SPACEORB_H_
 #define _SPACEORB_H_

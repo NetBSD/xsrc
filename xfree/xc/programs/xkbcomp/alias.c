@@ -1,4 +1,4 @@
-/* $TOG: alias.c /main/8 1997/06/10 06:53:55 kaleb $ */
+/* $Xorg: alias.c,v 1.3 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

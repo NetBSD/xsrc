@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/misc.tcl,v 3.3 1996/08/24 12:51:38 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/misc.tcl,v 3.4 1996/12/27 06:55:01 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

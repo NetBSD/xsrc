@@ -1,4 +1,4 @@
-/* $TOG: pm.c /main/25 1998/02/11 09:48:51 kaleb $ */
+/* $Xorg: pm.c,v 1.4 2000/08/17 19:53:56 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -270,7 +270,7 @@ casecmp (str1, str2)
     char c, *s;
     register int n;
 
-    for (n=0, s = buf1; c = *str1++; n++) {
+    for (n=0, s = buf1; (c = *str1++); n++) {
 	if (isupper(c))
 	    c = tolower(c);
 	if (n>510)
@@ -278,7 +278,7 @@ casecmp (str1, str2)
 	*s++ = c;
     }
     *s = '\0';
-    for (n=0, s = buf2; c = *str2++; n++) {
+    for (n=0, s = buf2; (c = *str2++); n++) {
 	if (isupper(c))
 	    c = tolower(c);
 	if (n>510)

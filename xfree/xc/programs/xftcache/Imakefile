@@ -1,0 +1,15 @@
+XCOMM $XFree86: xc/programs/xftcache/Imakefile,v 1.3 2001/04/01 14:00:21 tsi Exp $
+
+
+
+INCLUDES=$(FREETYPE2INCLUDES)
+DEFINES=$(FREETYPE2DEFINES) $(RENDERDEFINES)
+DEPLIBS=$(DEPXFTLIB) $(DEPXRENDERLIB) $(DEPXLIB)
+LOCAL_LIBRARIES=$(XFTLIB) $(XRENDERLIB) $(XLIB) $(FREETYPE2LIB)
+
+SRCS=xftcache.c
+OBJS=xftcache.o
+
+ComplexProgramTarget(xftcache)
+LinkBuildBinary(ProgramTargetName(xftcache))
+

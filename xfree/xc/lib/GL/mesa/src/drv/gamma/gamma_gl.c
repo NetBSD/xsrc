@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.6 2000/06/17 00:02:55 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.9 2001/02/07 13:26:16 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -39,14 +39,89 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <math.h>
 #include "gamma_gl.h"
 #include "gamma_init.h"
+#include "gamma_dlist.h"
 #include "glint_dri.h"
-#ifdef RANDOMIZE_COLORS
-#include <stdlib.h>
+
+/* Here for now, will change get.c to move them into macros.h later */
+
+#define FLOAT_TO_BOOL(X)        ( (X)==0.0F ? GL_FALSE : GL_TRUE )
+#define INT_TO_BOOL(I)          ( (I)==0 ? GL_FALSE : GL_TRUE )
+#define ENUM_TO_BOOL(E)         ( (E)==0 ? GL_FALSE : GL_TRUE )
+
+void gamma_error( GLenum error, const char *s )
+{
+   GLboolean debug;
+
+#ifdef DEBUG
+   debug = GL_TRUE;
+#else
+   if (getenv("MESA_DEBUG")) {
+      debug = GL_TRUE;
+   }
+   else {
+      debug = GL_FALSE;
+   }
 #endif
+
+   if (debug) {
+      char errstr[1000];
+
+      switch (error) {
+	 case GL_NO_ERROR:
+	    strcpy( errstr, "GL_NO_ERROR" );
+	    break;
+	 case GL_INVALID_VALUE:
+	    strcpy( errstr, "GL_INVALID_VALUE" );
+	    break;
+	 case GL_INVALID_ENUM:
+	    strcpy( errstr, "GL_INVALID_ENUM" );
+	    break;
+	 case GL_INVALID_OPERATION:
+	    strcpy( errstr, "GL_INVALID_OPERATION" );
+	    break;
+	 case GL_STACK_OVERFLOW:
+	    strcpy( errstr, "GL_STACK_OVERFLOW" );
+	    break;
+	 case GL_STACK_UNDERFLOW:
+	    strcpy( errstr, "GL_STACK_UNDERFLOW" );
+	    break;
+	 case GL_OUT_OF_MEMORY:
+	    strcpy( errstr, "GL_OUT_OF_MEMORY" );
+	    break;
+	 default:
+	    strcpy( errstr, "unknown" );
+	    break;
+      }
+      fprintf( stderr, "Mesa user error: %s in %s\n", errstr, s );
+   }
+
+   if (gCCPriv->ErrorValue==GL_NO_ERROR) {
+      gCCPriv->ErrorValue = error;
+   }
+
+   /* _gamma_Error( );  use hwLog or something later */
+}
+
 
 void _gamma_Accum(GLenum op, GLfloat value)
 {
     DEBUG_GLCMDS(("Accum: %d %f\n", (int)op, value));
+
+    switch (op) {
+    case GL_ACCUM:
+	break;
+    case GL_LOAD:
+	break;
+    case GL_ADD:
+	break;
+    case GL_MULT:
+	break;
+    case GL_RETURN:
+	break;
+    default:
+	gCCPriv->ErrorValue = GL_INVALID_ENUM;
+	return;
+    }
 }
 
 void _gamma_AlphaFunc(GLenum func, GLclampf ref)
@@ -350,6 +425,7 @@ void _gamma_BlendFunc(GLenum sfactor, GLenum dfactor)
     }
 }
 
+#if 0 /* Now in dlist.c */
 void _gamma_CallList(GLuint list)
 {
     DEBUG_GLCMDS(("CallList: %d\n", (unsigned int)list));
@@ -359,6 +435,7 @@ void _gamma_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
     DEBUG_GLCMDS(("CallLists: %d %04x\n", (int)n, (int)type));
 }
+#endif
 
 void _gamma_Clear(GLbitfield mask)
 {
@@ -445,7 +522,7 @@ void _gamma_Clear(GLbitfield mask)
 
 	temp = (gCCPriv->LBReadMode & LBPartialProdMask) | LBWindowOriginBot;
 	/* UGH - move this later ! */
-	if (gDRIPriv->numMXDevices == 2) temp |= LBScanLineInt2;
+	if (gDRIPriv->numMultiDevices == 2) temp |= LBScanLineInt2;
 
 	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	WRITE(gCCPriv->buf, LBReadMode, temp);
@@ -634,28 +711,16 @@ void _gamma_ClipPlane(GLenum plane, const GLdouble *equation)
 
 void _gamma_Color3b(GLbyte red, GLbyte green, GLbyte blue)
 {
-    GLfloat r,g,b;
-
     DEBUG_GLCMDS(("Color3b: %d %d %d\n", red, green, blue));
   
-    r = BYTE_TO_FLOAT(red);
-    g = BYTE_TO_FLOAT(green);
-    b = BYTE_TO_FLOAT(blue);
-
-    _gamma_Color3f(r,g,b);
+    _gamma_Color3f((GLfloat)red,(GLfloat)green,(GLfloat)blue);
 }
 
 void _gamma_Color3bv(const GLbyte *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Color3bv: %d %d %d\n", v[0], v[1], v[2]));
 
-    p[0] = BYTE_TO_FLOAT(v[0]);
-    p[1] = BYTE_TO_FLOAT(v[1]);
-    p[2] = BYTE_TO_FLOAT(v[2]);
-
-    _gamma_Color3f(p[0],p[1],p[2]);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color3d(GLdouble red, GLdouble green, GLdouble blue)
@@ -669,12 +734,17 @@ void _gamma_Color3dv(const GLdouble *v)
 {
     DEBUG_GLCMDS(("Color3dv: %f %f %f\n", v[0], v[1], v[2]));
 
-    _gamma_Color3fv((GLfloat*)v);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color3f(GLfloat red, GLfloat green, GLfloat blue)
 {
     DEBUG_GLCMDS(("Color3f: %f %f %f\n", red, green, blue));
+
+    gCCPriv->Current.Color[0] = red;
+    gCCPriv->Current.Color[1] = green;
+    gCCPriv->Current.Color[2] = blue;
+    gCCPriv->Current.Color[3] = 1.0f;
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
     WRITEF(gCCPriv->buf, Cb,  blue);
@@ -686,62 +756,35 @@ void _gamma_Color3fv(const GLfloat *v)
 {
     DEBUG_GLCMDS(("Color3fv: %f %f %f\n", v[0], v[1], v[2]));
 
-    CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
-    WRITEF(gCCPriv->buf, Cb,  v[2]);
-    WRITEF(gCCPriv->buf, Cg,  v[1]);
-    WRITEF(gCCPriv->buf, Cr3, v[0]);
+    _gamma_Color3f(v[0],v[1],v[2]);
 }
 
 void _gamma_Color3i(GLint red, GLint green, GLint blue)
 {
-    GLfloat r,g,b;
-
     DEBUG_GLCMDS(("Color3i: %d %d %d\n", (int)red, (int)green, (int)blue));
 
-    r = INT_TO_FLOAT(red);
-    g = INT_TO_FLOAT(green);
-    b = INT_TO_FLOAT(blue);
-
-    _gamma_Color3f(r,g,b);
+    _gamma_Color3f((GLfloat)red,(GLfloat)green,(GLfloat)blue);
 }
 
 void _gamma_Color3iv(const GLint *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Color3iv: %d %d %d\n", (int)v[0], (int)v[1], (int)v[2]));
 
-    p[0] = INT_TO_FLOAT(v[0]);
-    p[1] = INT_TO_FLOAT(v[1]);
-    p[2] = INT_TO_FLOAT(v[2]);
-
-    _gamma_Color3f(p[0],p[1],p[2]);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color3s(GLshort red, GLshort green, GLshort blue)
 {
-    GLfloat r,g,b;
-
     DEBUG_GLCMDS(("Color3s: %d %d %d\n", red, green, blue));
 
-    r = SHORT_TO_FLOAT(red);
-    g = SHORT_TO_FLOAT(green);
-    b = SHORT_TO_FLOAT(blue);
-
-    _gamma_Color3f(r,g,b);
+    _gamma_Color3f((GLfloat)red,(GLfloat)green,(GLfloat)blue);
 }
 
 void _gamma_Color3sv(const GLshort *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Color3sv: %d %d %d\n", v[0], v[1], v[2]));
 
-    p[0] = SHORT_TO_FLOAT(v[0]);
-    p[1] = SHORT_TO_FLOAT(v[1]);
-    p[2] = SHORT_TO_FLOAT(v[2]);
-
-    _gamma_Color3f(p[0],p[1],p[2]);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color3ub(GLubyte red, GLubyte green, GLubyte blue)
@@ -770,56 +813,32 @@ void _gamma_Color3ubv(const GLubyte *v)
 
 void _gamma_Color3ui(GLuint red, GLuint green, GLuint blue)
 {
-    GLfloat r,g,b;
-
     DEBUG_GLCMDS(("Color3ui: %d %d %d\n",
 		  (unsigned int)red, (unsigned int)green, (unsigned int)blue));
 
-    r = UINT_TO_FLOAT(red);
-    g = UINT_TO_FLOAT(green);
-    b = UINT_TO_FLOAT(blue);
-
-    _gamma_Color3f(r,g,b);
+    _gamma_Color3f((GLfloat)red,(GLfloat)green,(GLfloat)blue);
 }
 
 void _gamma_Color3uiv(const GLuint *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Color3uiv: %d %d %d\n",
 		  (unsigned int)v[0], (unsigned int)v[1], (unsigned int)v[2]));
 
-    p[0] = UINT_TO_FLOAT(v[0]);
-    p[1] = UINT_TO_FLOAT(v[1]);
-    p[2] = UINT_TO_FLOAT(v[2]);
-
-    _gamma_Color3f(p[0],p[1],p[2]);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color3us(GLushort red, GLushort green, GLushort blue)
 {
-    GLfloat r,g,b;
-
     DEBUG_GLCMDS(("Color3us: %d %d %d\n", red, green, blue));
 
-    r = USHORT_TO_FLOAT(red);
-    g = USHORT_TO_FLOAT(green);
-    b = USHORT_TO_FLOAT(blue);
-
-    _gamma_Color3f(r,g,b);
+    _gamma_Color3f((GLfloat)red,(GLfloat)green,(GLfloat)blue);
 }
 
 void _gamma_Color3usv(const GLushort *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Color3usv: %d %d %d\n", v[0], v[1], v[2]));
 
-    p[0] = USHORT_TO_FLOAT(v[0]);
-    p[1] = USHORT_TO_FLOAT(v[1]);
-    p[2] = USHORT_TO_FLOAT(v[2]);
-
-    _gamma_Color3f(p[0],p[1],p[2]);
+    _gamma_Color3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
 }
 
 void _gamma_Color4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)
@@ -847,7 +866,7 @@ void _gamma_Color4bv(const GLbyte *v)
     p[2] = BYTE_TO_FLOAT(v[2]);
     p[3] = BYTE_TO_FLOAT(v[3]);
 
-    _gamma_Color4f(p[0],p[1],p[2],p[3]);
+    _gamma_Color4fv(p);
 }
 
 void _gamma_Color4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha)
@@ -861,12 +880,17 @@ void _gamma_Color4dv(const GLdouble *v)
 {
     DEBUG_GLCMDS(("Color4dv: %f %f %f %f\n", v[0], v[1], v[2], v[3]));
 
-    _gamma_Color4fv((GLfloat*)v);
+    _gamma_Color4f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2],(GLfloat)v[3]);
 }
 
 void _gamma_Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
     DEBUG_GLCMDS(("Color4f: %f %f %f %f\n", red, green, blue, alpha));
+
+    gCCPriv->Current.Color[0] = red;
+    gCCPriv->Current.Color[1] = green;
+    gCCPriv->Current.Color[2] = blue;
+    gCCPriv->Current.Color[3] = alpha;
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
     WRITEF(gCCPriv->buf, Ca,  alpha);
@@ -878,6 +902,11 @@ void _gamma_Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 void _gamma_Color4fv(const GLfloat *v)
 {
     DEBUG_GLCMDS(("Color4fv: %f %f %f %f\n", v[0], v[1], v[2], v[3]));
+
+    gCCPriv->Current.Color[0] = v[0];
+    gCCPriv->Current.Color[1] = v[1];
+    gCCPriv->Current.Color[2] = v[2];
+    gCCPriv->Current.Color[3] = v[3];
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
     WRITEF(gCCPriv->buf, Ca,  v[3]);
@@ -913,7 +942,7 @@ void _gamma_Color4iv(const GLint *v)
     p[2] = INT_TO_FLOAT(v[2]);
     p[3] = INT_TO_FLOAT(v[3]);
 
-    _gamma_Color4f(p[0],p[1],p[2],p[3]);
+    _gamma_Color4fv(p);
 }
 
 void _gamma_Color4s(GLshort red, GLshort green, GLshort blue, GLshort alpha)
@@ -941,7 +970,7 @@ void _gamma_Color4sv(const GLshort *v)
     p[2] = SHORT_TO_FLOAT(v[2]);
     p[3] = SHORT_TO_FLOAT(v[3]);
 
-    _gamma_Color4f(p[0],p[1],p[2],p[3]);
+    _gamma_Color4fv(p);
 }
 
 void _gamma_Color4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
@@ -997,7 +1026,7 @@ void _gamma_Color4uiv(const GLuint *v)
     p[2] = UINT_TO_FLOAT(v[2]);
     p[3] = UINT_TO_FLOAT(v[3]);
 
-    _gamma_Color4f(p[0],p[1],p[2],p[3]);
+    _gamma_Color4fv(p);
 }
 
 void _gamma_Color4us(GLushort red, GLushort green, GLushort blue, GLushort alpha)
@@ -1025,7 +1054,7 @@ void _gamma_Color4usv(const GLushort *v)
     p[2] = USHORT_TO_FLOAT(v[2]);
     p[3] = USHORT_TO_FLOAT(v[3]);
 
-    _gamma_Color4f(p[0],p[1],p[2],p[3]);
+    _gamma_Color4fv(p);
 }
 
 void _gamma_ColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
@@ -1037,8 +1066,7 @@ void _gamma_ColorMaterial(GLenum face, GLenum mode)
 {
     DEBUG_GLCMDS(("ColorMaterial: %04x %04x\n", (int)face, (int)mode));
 
-    gCCPriv->MaterialMode &= ~MaterialModeEnable;
-    gCCPriv->ColorMaterialMode = ColorMaterialModeDisable;
+    gCCPriv->ColorMaterialMode &= ~ColorMaterialModeMask;
 
     switch (face) {
     case GL_FRONT:
@@ -1070,15 +1098,56 @@ void _gamma_ColorMaterial(GLenum face, GLenum mode)
 	break;
     }
 
-    CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
+    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
     WRITE(gCCPriv->buf, ColorMaterialMode, gCCPriv->ColorMaterialMode);
-    WRITE(gCCPriv->buf, MaterialMode, gCCPriv->MaterialMode);
 }
 
 void _gamma_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     DEBUG_GLCMDS(("ColorPointer: %d %04x %d\n",
 		  (int)size, (int)type, (int)stride));
+
+   if (size<3 || size>4) {
+      gamma_error( GL_INVALID_VALUE, "glColorPointer(size)" );
+      return;
+   }
+   if (stride<0) {
+      gamma_error( GL_INVALID_VALUE, "glColorPointer(stride)" );
+      return;
+   }
+   switch (type) {
+      case GL_BYTE:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLbyte);
+         break;
+      case GL_UNSIGNED_BYTE:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLubyte);
+         break;
+      case GL_SHORT:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLshort);
+         break;
+      case GL_UNSIGNED_SHORT:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLushort);
+         break;
+      case GL_INT:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLint);
+         break;
+      case GL_UNSIGNED_INT:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLuint);
+         break;
+      case GL_FLOAT:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         gCCPriv->Array.ColorStrideB = stride ? stride : size*sizeof(GLdouble);
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glColorPointer(type)" );
+         return;
+   }
+   gCCPriv->Array.ColorSize = size;
+   gCCPriv->Array.ColorType = type;
+   gCCPriv->Array.ColorStride = stride;
+   gCCPriv->Array.ColorPtr = (void *) pointer;
 }
 
 void _gamma_CopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
@@ -1140,10 +1209,12 @@ void _gamma_CullFace(GLenum mode)
     WRITE(gCCPriv->buf, GeometryMode, gCCPriv->GeometryMode);
 }
 
+#if 0 /* Now in dlist.c */
 void _gamma_DeleteLists(GLuint list, GLsizei range)
 {
     DEBUG_GLCMDS(("DeleteLists: %d %d\n", (unsigned int)list, (int)range));
 }
+#endif
 
 void _gamma_DeleteTextures(GLsizei n, const GLuint *textures)
 {
@@ -1262,7 +1333,7 @@ void _gamma_Disable(GLenum cap)
 	    gCCPriv->Window &= ~W_DepthFCP;
 
 	    /* Turn depth mode off */
-	    CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
+	    CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
 	    WRITE(gCCPriv->buf, DepthMode,      gCCPriv->DepthMode);
 	    WRITE(gCCPriv->buf, DeltaMode,      gCCPriv->DeltaMode);
 	    WRITE(gCCPriv->buf, LBReadModeAnd, ~LBReadDstEnable);
@@ -1314,6 +1385,22 @@ void _gamma_Disable(GLenum cap)
 	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	WRITE(gCCPriv->buf, Light1Mode, gCCPriv->Light1Mode);
 	break;
+    case GL_LOGIC_OP:
+	gCCPriv->LogicalOpMode &= ~LogicalOpModeEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
+	WRITE(gCCPriv->buf, LogicalOpMode, gCCPriv->LogicalOpMode);
+	break;
+    case GL_NORMALIZE:
+	gCCPriv->NormalizeMode &= ~NormalizeModeEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
+	WRITE(gCCPriv->buf, NormalizeMode, gCCPriv->NormalizeMode);
+	WRITE(gCCPriv->buf, TransformModeOr, 0xc);
+	break;
+    case GL_SCISSOR_TEST:
+	gCCPriv->ScissorMode &= ~UserScissorEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
+	WRITE(gCCPriv->buf, ScissorMode, gCCPriv->ScissorMode);
+	break;
     case GL_TEXTURE_2D:
 	gCCPriv->Texture2DEnabled = GL_FALSE;
 	gCCPriv->Begin                         &= ~B_TextureEnable;
@@ -1344,6 +1431,29 @@ void _gamma_Disable(GLenum cap)
 void _gamma_DisableClientState(GLenum array)
 {
     DEBUG_GLCMDS(("DisableClientState: %04x\n", (int)array));
+
+    switch (array) {
+      case GL_VERTEX_ARRAY:
+         gCCPriv->Array.VertexEnabled = GL_FALSE;
+         break;
+      case GL_NORMAL_ARRAY:
+         gCCPriv->Array.NormalEnabled = GL_FALSE;
+         break;
+      case GL_COLOR_ARRAY:
+         gCCPriv->Array.ColorEnabled = GL_FALSE;
+         break;
+      case GL_INDEX_ARRAY:
+         gCCPriv->Array.IndexEnabled = GL_FALSE;
+         break;
+      case GL_TEXTURE_COORD_ARRAY:
+         gCCPriv->Array.TexCoordEnabled = GL_FALSE;
+         break;
+      case GL_EDGE_FLAG_ARRAY:
+         gCCPriv->Array.EdgeFlagEnabled = GL_FALSE;
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glEnable/DisableClientState" );
+   }
 }
 
 void _gamma_DrawArrays(GLenum mode, GLint first, GLsizei count)
@@ -1406,7 +1516,7 @@ void _gamma_Enable(GLenum cap)
 #endif
 
 	    /* Turn depth mode on */
-	    CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
+	    CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
 	    WRITE(gCCPriv->buf, DepthMode,     gCCPriv->DepthMode);
 	    WRITE(gCCPriv->buf, DeltaMode,     gCCPriv->DeltaMode);
 	    WRITE(gCCPriv->buf, LBReadModeOr,  LBReadDstEnable);
@@ -1464,6 +1574,22 @@ void _gamma_Enable(GLenum cap)
 	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	WRITE(gCCPriv->buf, Light1Mode, gCCPriv->Light1Mode);
 	break;
+    case GL_LOGIC_OP:
+	gCCPriv->LogicalOpMode |= LogicalOpModeEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
+	WRITE(gCCPriv->buf, LogicalOpMode, gCCPriv->LogicalOpMode);
+	break;
+    case GL_NORMALIZE:
+	gCCPriv->NormalizeMode |= NormalizeModeEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
+	WRITE(gCCPriv->buf, NormalizeMode, gCCPriv->NormalizeMode);
+	WRITE(gCCPriv->buf, TransformModeAnd, 0xffffff3f);
+	break;
+    case GL_SCISSOR_TEST:
+	gCCPriv->ScissorMode |= UserScissorEnable;
+	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
+	WRITE(gCCPriv->buf, ScissorMode, gCCPriv->ScissorMode);
+	break;
     case GL_TEXTURE_2D:
 	gCCPriv->Texture2DEnabled = GL_TRUE;
 #ifndef TURN_OFF_TEXTURES
@@ -1496,6 +1622,29 @@ void _gamma_Enable(GLenum cap)
 void _gamma_EnableClientState(GLenum array)
 {
     DEBUG_GLCMDS(("EnableClientState: %04x\n", (int)array));
+
+    switch (array) {
+      case GL_VERTEX_ARRAY:
+         gCCPriv->Array.VertexEnabled = GL_TRUE;
+         break;
+      case GL_NORMAL_ARRAY:
+         gCCPriv->Array.NormalEnabled = GL_TRUE;
+         break;
+      case GL_COLOR_ARRAY:
+         gCCPriv->Array.ColorEnabled = GL_TRUE;
+         break;
+      case GL_INDEX_ARRAY:
+         gCCPriv->Array.IndexEnabled = GL_TRUE;
+         break;
+      case GL_TEXTURE_COORD_ARRAY:
+         gCCPriv->Array.TexCoordEnabled = GL_TRUE;
+         break;
+      case GL_EDGE_FLAG_ARRAY:
+         gCCPriv->Array.EdgeFlagEnabled = GL_TRUE;
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glEnable/DisableClientState" );
+   }
 }
 
 void _gamma_End(void)
@@ -1519,10 +1668,12 @@ void _gamma_End(void)
 #endif
 }
 
+#if 0 /* Now in dlist.c */
 void _gamma_EndList(void)
 {
     DEBUG_GLCMDS(("EndList\n"));
 }
+#endif
 
 void _gamma_EvalCoord1d(GLdouble u)
 {
@@ -1620,8 +1771,10 @@ void _gamma_Fogfv(GLenum pname, const GLfloat *params)
 
     switch (pname) {
     case GL_FOG_COLOR:
-	color = ((int)params[3]<<24) | ((int)params[2]<<16) |
-	 	((int)params[1]<<8)  | ((int)params[0]);
+	color = (FLOAT_TO_UBYTE(params[3])<<24) |
+		(FLOAT_TO_UBYTE(params[2])<<16) |
+		(FLOAT_TO_UBYTE(params[1])<<8) |
+		(FLOAT_TO_UBYTE(params[0]));
     	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	WRITE(gCCPriv->buf, FogColor, color);
 	break;
@@ -1704,12 +1857,14 @@ void _gamma_Frustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top
     gammaLoadHWMatrix();
 }
 
+#if 0 /* Now in dlist.c */
 GLuint _gamma_GenLists(GLsizei range)
 {
     DEBUG_GLCMDS(("GenLists: %d\n", (int)range));
 
     return GL_TRUE;
 }
+#endif
 
 void _gamma_GenTextures(GLsizei n, GLuint *textures)
 {
@@ -1718,7 +1873,36 @@ void _gamma_GenTextures(GLsizei n, GLuint *textures)
 
 void _gamma_GetBooleanv(GLenum val, GLboolean *b)
 {
+    int loop;
+
     DEBUG_GLCMDS(("GetBooleanv: %04x\n", (int)val));
+
+    switch (val) {
+    case GL_CURRENT_COLOR:
+	b[0] = FLOAT_TO_BOOL(gCCPriv->Current.Color[0]);
+	b[1] = FLOAT_TO_BOOL(gCCPriv->Current.Color[1]);
+	b[2] = FLOAT_TO_BOOL(gCCPriv->Current.Color[2]);
+	b[3] = FLOAT_TO_BOOL(gCCPriv->Current.Color[3]);
+	break;
+    case GL_CURRENT_NORMAL:
+	b[0] = FLOAT_TO_BOOL(gCCPriv->Current.Normal[0]);
+	b[1] = FLOAT_TO_BOOL(gCCPriv->Current.Normal[1]);
+	b[2] = FLOAT_TO_BOOL(gCCPriv->Current.Normal[2]);
+	break;
+    case GL_MAX_TEXTURE_SIZE:
+	*b = FLOAT_TO_BOOL(GAMMA_MAX_TEXTURE_SIZE);
+	break;
+    case GL_MODELVIEW_MATRIX:
+	for (loop = 0; loop < 16; loop++)
+	    b[loop] = FLOAT_TO_BOOL(gCCPriv->ModelView[loop]);
+	break;
+    case GL_CURRENT_TEXTURE_COORDS:
+	b[0] = FLOAT_TO_BOOL(gCCPriv->Current.TexCoord[0]);
+	b[1] = FLOAT_TO_BOOL(gCCPriv->Current.TexCoord[1]);
+	b[2] = FLOAT_TO_BOOL(gCCPriv->Current.TexCoord[2]);
+	b[3] = FLOAT_TO_BOOL(gCCPriv->Current.TexCoord[3]);
+	break;
+    }
 }
 
 void _gamma_GetClipPlane(GLenum plane, GLdouble *equation)
@@ -1729,25 +1913,75 @@ void _gamma_GetClipPlane(GLenum plane, GLdouble *equation)
 
 void _gamma_GetDoublev(GLenum val, GLdouble *d)
 {
+    int loop;
+
     DEBUG_GLCMDS(("GetDoublev: %04x\n", (int)val));
+
+    switch (val) {
+    case GL_CURRENT_COLOR:
+	d[0] = (GLdouble)gCCPriv->Current.Color[0];
+	d[1] = (GLdouble)gCCPriv->Current.Color[1];
+	d[2] = (GLdouble)gCCPriv->Current.Color[2];
+	d[3] = (GLdouble)gCCPriv->Current.Color[3];
+	break;
+    case GL_CURRENT_NORMAL:
+	d[0] = (GLdouble)gCCPriv->Current.Normal[0];
+	d[1] = (GLdouble)gCCPriv->Current.Normal[1];
+	d[2] = (GLdouble)gCCPriv->Current.Normal[2];
+	break;
+    case GL_MAX_TEXTURE_SIZE:
+	*d = (GLdouble)INT_TO_FLOAT(GAMMA_MAX_TEXTURE_SIZE);
+	break;
+    case GL_MODELVIEW_MATRIX:
+	for (loop = 0; loop < 16; loop++)
+	    d[loop] = (GLdouble)gCCPriv->ModelView[loop];
+	break;
+    case GL_CURRENT_TEXTURE_COORDS:
+	d[0] = (GLdouble)gCCPriv->Current.TexCoord[0];
+	d[1] = (GLdouble)gCCPriv->Current.TexCoord[1];
+	d[2] = (GLdouble)gCCPriv->Current.TexCoord[2];
+	d[3] = (GLdouble)gCCPriv->Current.TexCoord[3];
+	break;
+    }
 }
 
 GLenum _gamma_GetError(void)
 {
     DEBUG_GLCMDS(("GetError\n"));
-    return 0;
+
+    return gCCPriv->ErrorValue;
 }
 
 void _gamma_GetFloatv(GLenum val, GLfloat *f)
 {
-    int i;
+    int loop;
 
     DEBUG_GLCMDS(("GetFloatv: %04x\n", (int)val));
 
     switch (val) {
+    case GL_CURRENT_COLOR:
+	f[0] = gCCPriv->Current.Color[0];
+	f[1] = gCCPriv->Current.Color[1];
+	f[2] = gCCPriv->Current.Color[2];
+	f[3] = gCCPriv->Current.Color[3];
+	break;
+    case GL_CURRENT_NORMAL:
+	f[0] = gCCPriv->Current.Normal[0];
+	f[1] = gCCPriv->Current.Normal[1];
+	f[2] = gCCPriv->Current.Normal[2];
+	break;
+    case GL_MAX_TEXTURE_SIZE:
+	*f = INT_TO_FLOAT(GAMMA_MAX_TEXTURE_SIZE);
+	break;
     case GL_MODELVIEW_MATRIX:
-	for (i = 0; i < 16; i++)
-	    f[i] = gCCPriv->ModelView[i];
+	for (loop = 0; loop < 16; loop++)
+	    f[loop] = gCCPriv->ModelView[loop];
+	break;
+    case GL_CURRENT_TEXTURE_COORDS:
+	f[0] = gCCPriv->Current.TexCoord[0];
+	f[1] = gCCPriv->Current.TexCoord[1];
+	f[2] = gCCPriv->Current.TexCoord[2];
+	f[3] = gCCPriv->Current.TexCoord[3];
 	break;
     default:
 	break;
@@ -1756,11 +1990,34 @@ void _gamma_GetFloatv(GLenum val, GLfloat *f)
 
 void _gamma_GetIntegerv(GLenum val, GLint *i)
 {
+    int loop;
+
     DEBUG_GLCMDS(("GetIntegerv: %04x\n", (int)val));
 
     switch (val) {
+    case GL_CURRENT_COLOR:
+	i[0] = FLOAT_TO_INT(gCCPriv->Current.Color[0]);
+	i[1] = FLOAT_TO_INT(gCCPriv->Current.Color[1]);
+	i[2] = FLOAT_TO_INT(gCCPriv->Current.Color[2]);
+	i[3] = FLOAT_TO_INT(gCCPriv->Current.Color[3]);
+	break;
+    case GL_CURRENT_NORMAL:
+	i[0] = FLOAT_TO_INT(gCCPriv->Current.Normal[0]);
+	i[1] = FLOAT_TO_INT(gCCPriv->Current.Normal[1]);
+	i[2] = FLOAT_TO_INT(gCCPriv->Current.Normal[2]);
+	break;
     case GL_MAX_TEXTURE_SIZE:
-	*i = 2048;
+	*i = GAMMA_MAX_TEXTURE_SIZE;
+	break;
+    case GL_MODELVIEW_MATRIX:
+	for (loop = 0; loop < 16; loop++)
+	    i[loop] = FLOAT_TO_INT(gCCPriv->ModelView[loop]);
+	break;
+    case GL_CURRENT_TEXTURE_COORDS:
+	i[0] = FLOAT_TO_INT(gCCPriv->Current.TexCoord[0]);
+	i[1] = FLOAT_TO_INT(gCCPriv->Current.TexCoord[1]);
+	i[2] = FLOAT_TO_INT(gCCPriv->Current.TexCoord[2]);
+	i[3] = FLOAT_TO_INT(gCCPriv->Current.TexCoord[3]);
 	break;
     }
 }
@@ -1967,12 +2224,14 @@ GLboolean _gamma_IsEnabled(GLenum cap)
     return GL_TRUE;
 }
 
+#if 0 /* Now in dlist.c */
 GLboolean _gamma_IsList(GLuint list)
 {
     DEBUG_GLCMDS(("IsList: %04x\n", (unsigned int)list));
 
     return GL_TRUE;
 }
+#endif
 
 GLboolean _gamma_IsTexture(GLuint texture)
 {
@@ -2001,7 +2260,7 @@ void _gamma_LightModelfv(GLenum pname, const GLfloat *params)
 	WRITEF(gCCPriv->buf, SceneAmbientColorRed, params[0]);
 	break;
     case GL_LIGHT_MODEL_LOCAL_VIEWER:
-	if ((int)params[0] != 0)
+	if (params[0] != 0.0)
 	    gCCPriv->LightingMode |= LightingModeLocalViewer;
 	else
 	    gCCPriv->LightingMode &= ~LightingModeLocalViewer;
@@ -2009,7 +2268,7 @@ void _gamma_LightModelfv(GLenum pname, const GLfloat *params)
 	WRITE(gCCPriv->buf, LightingMode, gCCPriv->LightingMode);
 	break;
     case GL_LIGHT_MODEL_TWO_SIDE:
-	if ((int)params[0] != 0) {
+	if (params[0] == 1.0f) {
 	    gCCPriv->LightingMode |= LightingModeTwoSides;
 	    gCCPriv->MaterialMode |= MaterialModeTwoSides;
 	} else {
@@ -2039,7 +2298,7 @@ void _gamma_Lightf(GLenum light, GLenum pname, GLfloat param)
 
 void _gamma_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 {
-    GLfloat l,x,y,z;
+    GLfloat l,x,y,z,w;
     DEBUG_GLCMDS(("Lightfv: %04x %04x %f\n",
 		  (int)light, (int)pname, *params));
 
@@ -2069,12 +2328,13 @@ void _gamma_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 	    break;
 	case GL_POSITION:
     	    /* Normalize <x,y,z> */
-	    x = params[0]; y = params[1]; z = params[2];
-	    l = sqrt(x*x + y*y + z*z);
+	    x = params[0]; y = params[1]; z = params[2]; w = params[3];
+	    l = sqrt(x*x + y*y + z*z + w*w);
+	    w /= l;
 	    x /= l;
 	    y /= l;
 	    z /= l;
-	    if ((int)params[3] != 0) {
+	    if (params[3] != 0.0) {
 		gCCPriv->Light0Mode |= Light0ModeAttenuation;
 		gCCPriv->Light0Mode |= Light0ModeLocal;
 	    } else {
@@ -2083,30 +2343,30 @@ void _gamma_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 	    }
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 5);
 	    WRITE(gCCPriv->buf, Light0Mode, gCCPriv->Light0Mode);
-	    WRITEF(gCCPriv->buf, Light0PositionW, params[3]);
+	    WRITEF(gCCPriv->buf, Light0PositionW, w);
 	    WRITEF(gCCPriv->buf, Light0PositionZ, z);
 	    WRITEF(gCCPriv->buf, Light0PositionY, y);
 	    WRITEF(gCCPriv->buf, Light0PositionX, x);
 	    break;
 	case GL_SPOT_DIRECTION:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
-	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionZ, params[3]);
-	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionY, params[2]);
-	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionX, params[1]);
-	    /* WRITEF(gCCPriv->buf, Light0SpotlightDirectionW, params[0]); */
+	    /* WRITEF(gCCPriv->buf, Light0SpotlightDirectionW, params[3]); */
+	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionZ, params[2]);
+	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionY, params[1]);
+	    WRITEF(gCCPriv->buf, Light0SpotlightDirectionX, params[0]);
 	    break;
 	case GL_SPOT_EXPONENT:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	    WRITEF(gCCPriv->buf, Light0SpotlightExponent, params[0]);
 	    break;
 	case GL_SPOT_CUTOFF:
-	    if ((int)params[0] != -1) 
+	    if (params[0] != 180.0) 
 		gCCPriv->Light0Mode |= Light0ModeSpotLight;
 	    else
 		gCCPriv->Light0Mode &= ~Light0ModeSpotLight;
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
 	    WRITE(gCCPriv->buf, Light0Mode, gCCPriv->Light0Mode);
-	    WRITEF(gCCPriv->buf, Light0CosSpotlightCutoffAngle, params[0]);
+	    WRITEF(gCCPriv->buf, Light0CosSpotlightCutoffAngle, cos(params[0]*DEG2RAD));
 	    break;
 	case GL_CONSTANT_ATTENUATION:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
@@ -2152,7 +2412,7 @@ void _gamma_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 	    x /= l;
 	    y /= l;
 	    z /= l;
-	    if ((int)params[3] != 0) {
+	    if (params[3] != 0.0) {
 		gCCPriv->Light1Mode |= Light1ModeAttenuation;
 		gCCPriv->Light1Mode |= Light1ModeLocal;
 	    } else {
@@ -2168,23 +2428,23 @@ void _gamma_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 	    break;
 	case GL_SPOT_DIRECTION:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
-	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionZ, params[3]);
-	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionY, params[2]);
-	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionX, params[1]);
-	    /* WRITEF(gCCPriv->buf, Light1SpotlightDirectionW, params[0]); */
+	    /* WRITEF(gCCPriv->buf, Light1SpotlightDirectionW, params[3]); */
+	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionZ, params[2]);
+	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionY, params[1]);
+	    WRITEF(gCCPriv->buf, Light1SpotlightDirectionX, params[0]);
 	    break;
 	case GL_SPOT_EXPONENT:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	    WRITEF(gCCPriv->buf, Light1SpotlightExponent, params[0]);
 	    break;
 	case GL_SPOT_CUTOFF:
-	    if ((int)params[0] != -1) 
+	    if (params[0] != 180.0) 
 		gCCPriv->Light1Mode |= Light1ModeSpotLight;
 	    else
 		gCCPriv->Light1Mode &= ~Light1ModeSpotLight;
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
 	    WRITE(gCCPriv->buf, Light1Mode, gCCPriv->Light1Mode);
-	    WRITEF(gCCPriv->buf, Light1CosSpotlightCutoffAngle, params[0]);
+	    WRITEF(gCCPriv->buf, Light1CosSpotlightCutoffAngle, cos(params[0]*DEG2RAD));
 	    break;
 	case GL_CONSTANT_ATTENUATION:
 	    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
@@ -2220,10 +2480,12 @@ void _gamma_LineWidth(GLfloat width)
     DEBUG_GLCMDS(("LineWidth: %f\n", width));
 }
 
+#if 0 /* Now in dlist.c */
 void _gamma_ListBase(GLuint base)
 {
     DEBUG_GLCMDS(("ListBase: %d\n", (unsigned int)base));
 }
+#endif
 
 void _gamma_LoadIdentity(void)
 {
@@ -2261,6 +2523,13 @@ void _gamma_LoadName(GLuint name)
 void _gamma_LogicOp(GLenum opcode)
 {
     DEBUG_GLCMDS(("LogicOp: %04x\n", (int)opcode));
+
+    gCCPriv->LogicalOpMode &= ~LogicalOpModeMask;
+
+    gCCPriv->LogicalOpMode |= (opcode & 0x0f) << 1;
+
+    CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
+    WRITE(gCCPriv->buf, LogicalOpMode, gCCPriv->LogicalOpMode);
 }
 
 void _gamma_Map1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *pnts)
@@ -2318,6 +2587,8 @@ void _gamma_MapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GL
 void _gamma_Materialf(GLenum face, GLenum pname, GLfloat param)
 {
     DEBUG_GLCMDS(("Materialf: %04x %04x %f\n", (int)face, (int)pname, param));
+
+    _gamma_Materialfv(face, pname, &param);
 }
 
 void _gamma_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
@@ -2453,7 +2724,6 @@ void _gamma_MatrixMode(GLenum mode)
 	/* ERROR!!! */
 	break;
     }
-
 }
 
 void _gamma_MultMatrixd(const GLdouble *m)
@@ -2476,15 +2746,15 @@ void _gamma_MultMatrixf(const GLfloat *m)
     gammaLoadHWMatrix();
 }
 
+#if 0 /* Now in dlist.c */
 void _gamma_NewList(GLuint list, GLenum mode)
 {
     DEBUG_GLCMDS(("NewList: %d %04x\n", (unsigned int)list, (int)mode));
 }
+#endif
 
 void _gamma_Normal3b(GLbyte nx, GLbyte ny, GLbyte nz)
 {
-    GLfloat x,y,z;
-
     DEBUG_GLCMDS(("Normal3b: %d %d %d\n", nx, ny, nz));
 
     _gamma_Normal3f((GLfloat)nx,(GLfloat)ny,(GLfloat)nz);
@@ -2492,8 +2762,6 @@ void _gamma_Normal3b(GLbyte nx, GLbyte ny, GLbyte nz)
 
 void _gamma_Normal3bv(const GLbyte *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Normal3bv: %d %d %d\n", v[0], v[1], v[2]));
 
     _gamma_Normal3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
@@ -2517,6 +2785,10 @@ void _gamma_Normal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
     DEBUG_GLCMDS(("Normal3f: %f %f %f\n", nx, ny, nz));
 
+    gCCPriv->Current.Normal[0] = nx;
+    gCCPriv->Current.Normal[1] = ny;
+    gCCPriv->Current.Normal[2] = nz;
+
     CHECK_DMA_BUFFER(gCC, gCCPriv, 3);
     WRITEF(gCCPriv->buf, Nz, nz);
     WRITEF(gCCPriv->buf, Ny, ny);
@@ -2532,8 +2804,6 @@ void _gamma_Normal3fv(const GLfloat *v)
 
 void _gamma_Normal3i(GLint nx, GLint ny, GLint nz)
 {
-    GLfloat x,y,z;
-
     DEBUG_GLCMDS(("Normal3i: %d %d %d\n", (int)nx, (int)ny, (int)nz));
 
     _gamma_Normal3f((GLfloat)nx,(GLfloat)ny,(GLfloat)nz);
@@ -2541,8 +2811,6 @@ void _gamma_Normal3i(GLint nx, GLint ny, GLint nz)
 
 void _gamma_Normal3iv(const GLint *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Normal3iv: %d %d %d\n", (int)v[0], (int)v[1], (int)v[2]));
 
     _gamma_Normal3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
@@ -2550,8 +2818,6 @@ void _gamma_Normal3iv(const GLint *v)
 
 void _gamma_Normal3s(GLshort nx, GLshort ny, GLshort nz)
 {
-    GLfloat x,y,z;
-
     DEBUG_GLCMDS(("Normal3s: %d %d %d\n", nx, ny, nz));
 
     _gamma_Normal3f((GLfloat)nx,(GLfloat)ny,(GLfloat)nz);
@@ -2559,8 +2825,6 @@ void _gamma_Normal3s(GLshort nx, GLshort ny, GLshort nz)
 
 void _gamma_Normal3sv(const GLshort *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Normal3sv: %d %d %d\n", v[0], v[1], v[2]));
 
     _gamma_Normal3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
@@ -2569,6 +2833,34 @@ void _gamma_Normal3sv(const GLshort *v)
 void _gamma_NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     DEBUG_GLCMDS(("NormalPointer: %04x %d\n", (int)type, (int)stride));
+
+   if (stride<0) {
+      gamma_error( GL_INVALID_VALUE, "glNormalPointer(stride)" );
+      return;
+   }
+   switch (type) {
+      case GL_BYTE:
+         gCCPriv->Array.NormalStrideB = stride ? stride : 3*sizeof(GLbyte);
+         break;
+      case GL_SHORT:
+         gCCPriv->Array.NormalStrideB = stride ? stride : 3*sizeof(GLshort);
+         break;
+      case GL_INT:
+         gCCPriv->Array.NormalStrideB = stride ? stride : 3*sizeof(GLint);
+         break;
+      case GL_FLOAT:
+         gCCPriv->Array.NormalStrideB = stride ? stride : 3*sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         gCCPriv->Array.NormalStrideB = stride ? stride : 3*sizeof(GLdouble);
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glNormalPointer(type)" );
+         return;
+   }
+   gCCPriv->Array.NormalType = type;
+   gCCPriv->Array.NormalStride = stride;
+   gCCPriv->Array.NormalPtr = (void *) pointer;
 }
 
 void _gamma_Ortho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar)
@@ -2844,22 +3136,38 @@ void _gamma_PushName(GLuint name)
 
 void _gamma_RasterPos2d(GLdouble x, GLdouble y)
 {
+    DEBUG_GLCMDS(("RasterPos2d: %f %f\n", x, y));
+
+    _gamma_RasterPos2f((GLfloat)x,(GLfloat)y);
 }
 
 void _gamma_RasterPos2dv(const GLdouble *v)
 {
+    _gamma_RasterPos2f((GLfloat)v[0],(GLfloat)v[1]);
 }
 
 void _gamma_RasterPos2f(GLfloat x, GLfloat y)
 {
+    DEBUG_GLCMDS(("RasterPos2f: %f %f\n", x, y));
+
+    gCCPriv->Current.RasterPos[0] = x;
+    gCCPriv->Current.RasterPos[1] = y;
+    gCCPriv->Current.RasterPos[2] = 0.0f;
+    gCCPriv->Current.RasterPos[3] = 1.0f;
+
+    CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
+    WRITEF(gCCPriv->buf, RPy,  y);
+    WRITEF(gCCPriv->buf, RPx2, x);
 }
 
 void _gamma_RasterPos2fv(const GLfloat *v)
 {
+    _gamma_RasterPos2f(v[0],v[1]);
 }
 
 void _gamma_RasterPos2i(GLint x, GLint y)
 {
+    _gamma_RasterPos2f((GLfloat)x,(GLfloat)y);
 }
 
 void _gamma_RasterPos2iv(const GLint *v)
@@ -3118,8 +3426,21 @@ void _gamma_Scalef(GLfloat x, GLfloat y, GLfloat z)
 
 void _gamma_Scissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+    GLint x1, y1, x2, y2;
+
     DEBUG_GLCMDS(("Scissor: %d %d %d %d\n",
 		  (int)x, (int)y, (int)width, (int)height));
+
+    x1 = gCC->driDrawablePriv->x + x;
+    y1 = gCC->driScreenPriv->fbHeight -
+	(gCC->driDrawablePriv->y +
+	 gCC->driDrawablePriv->h) + y;
+    x2 = x1 + width;
+    y2 = y1 + height;
+
+    CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
+    WRITE(gCCPriv->buf, ScissorMinXY,  (y1&0xffff)<<16 | (x1&0xffff));
+    WRITE(gCCPriv->buf, ScissorMaxXY,  (y2&0xffff)<<16 | (x2&0xffff));
 }
 
 void _gamma_SelectBuffer(GLsizei numnames, GLuint *buffer)
@@ -3188,12 +3509,22 @@ void _gamma_TexCoord1f(GLfloat s)
 {
     DEBUG_GLCMDS(("TexCoord1f: %f\n", s));
 
+    gCCPriv->Current.TexCoord[0] = s;
+    gCCPriv->Current.TexCoord[1] = 0.0f;
+    gCCPriv->Current.TexCoord[2] = 0.0f;
+    gCCPriv->Current.TexCoord[3] = 1.0f;
+
     WRITEF(gCCPriv->buf, Ts1, s);
 }
 
 void _gamma_TexCoord1fv(const GLfloat *v)
 {
     DEBUG_GLCMDS(("TexCoord1fv: %f\n", *v));
+
+    gCCPriv->Current.TexCoord[0] = v[0];
+    gCCPriv->Current.TexCoord[1] = 0.0f;
+    gCCPriv->Current.TexCoord[2] = 0.0f;
+    gCCPriv->Current.TexCoord[3] = 1.0f;
 
     WRITEF(gCCPriv->buf, Ts1, v[0]);
 }
@@ -3260,6 +3591,11 @@ void _gamma_TexCoord2f(GLfloat s, GLfloat t)
 {
     DEBUG_GLCMDS(("TexCoord2f: %f %f\n", s, t));
 
+    gCCPriv->Current.TexCoord[0] = s;
+    gCCPriv->Current.TexCoord[1] = t;
+    gCCPriv->Current.TexCoord[2] = 0.0f;
+    gCCPriv->Current.TexCoord[3] = 1.0f;
+
     CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
     WRITEF(gCCPriv->buf, Tt2, t);
     WRITEF(gCCPriv->buf, Ts2, s);
@@ -3268,6 +3604,11 @@ void _gamma_TexCoord2f(GLfloat s, GLfloat t)
 void _gamma_TexCoord2fv(const GLfloat *v)
 {
     DEBUG_GLCMDS(("TexCoord2fv: %f %f\n", v[0], v[1]));
+
+    gCCPriv->Current.TexCoord[0] = v[0];
+    gCCPriv->Current.TexCoord[1] = v[1];
+    gCCPriv->Current.TexCoord[2] = 0.0f;
+    gCCPriv->Current.TexCoord[3] = 1.0f;
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 2);
     WRITEF(gCCPriv->buf, Tt2, v[1]);
@@ -3429,6 +3770,11 @@ void _gamma_TexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
     DEBUG_GLCMDS(("TexCoord4f: %f %f %f %f\n", s, t, r, q));
 
+    gCCPriv->Current.TexCoord[0] = s;
+    gCCPriv->Current.TexCoord[1] = t;
+    gCCPriv->Current.TexCoord[2] = t;
+    gCCPriv->Current.TexCoord[3] = q;
+
     CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
     WRITEF(gCCPriv->buf, Tq4, q);
     WRITEF(gCCPriv->buf, Tr4, r);
@@ -3439,6 +3785,11 @@ void _gamma_TexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 void _gamma_TexCoord4fv(const GLfloat *v)
 {
     DEBUG_GLCMDS(("TexCoord4fv: %f %f %f %f\n", v[0], v[1], v[2], v[3]));
+
+    gCCPriv->Current.TexCoord[0] = v[0];
+    gCCPriv->Current.TexCoord[1] = v[1];
+    gCCPriv->Current.TexCoord[2] = v[2];
+    gCCPriv->Current.TexCoord[3] = v[3];
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
     WRITEF(gCCPriv->buf, Tq4, v[3]);
@@ -3508,6 +3859,36 @@ void _gamma_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoi
 {
     DEBUG_GLCMDS(("TexCoordPointer: %d %04x %d\n",
 		  (int)size, (int)type, (int)stride));
+
+   if (size<1 || size>4) {
+      gamma_error( GL_INVALID_VALUE, "glTexCoordPointer(size)" );
+      return;
+   }
+   if (stride<0) {
+      gamma_error( GL_INVALID_VALUE, "glTexCoordPointer(stride)" );
+      return;
+   }
+   switch (type) {
+      case GL_SHORT:
+         gCCPriv->Array.TexCoordStrideB = stride ? stride : size*sizeof(GLshort);
+         break;
+      case GL_INT:
+         gCCPriv->Array.TexCoordStrideB = stride ? stride : size*sizeof(GLint);
+         break;
+      case GL_FLOAT:
+         gCCPriv->Array.TexCoordStrideB = stride ? stride : size*sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         gCCPriv->Array.TexCoordStrideB = stride ? stride : size*sizeof(GLdouble);
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glTexCoordPointer(type)" );
+         return;
+   }
+   gCCPriv->Array.TexCoordSize = size;
+   gCCPriv->Array.TexCoordType = type;
+   gCCPriv->Array.TexCoordStride = stride;
+   gCCPriv->Array.TexCoordPtr = (void *) pointer;
 }
 
 void _gamma_TexEnvf(GLenum target, GLenum pname, GLfloat param)
@@ -4158,8 +4539,6 @@ void _gamma_Vertex2fv(const GLfloat *v)
 
 void _gamma_Vertex2i(GLint x, GLint y)
 {
-    GLfloat a,b;
-
     DEBUG_GLCMDS(("Vertex2i: %d %d\n", (int)x, (int)y));
 
     _gamma_Vertex2f((GLfloat)x,(GLfloat)y);
@@ -4167,8 +4546,6 @@ void _gamma_Vertex2i(GLint x, GLint y)
 
 void _gamma_Vertex2iv(const GLint *v)
 {
-    GLfloat p[2];
-
     DEBUG_GLCMDS(("Vertex2iv: %d %d\n", (int)v[0], (int)v[1]));
 
     _gamma_Vertex2f((GLfloat)v[0],(GLfloat)v[1]);
@@ -4176,8 +4553,6 @@ void _gamma_Vertex2iv(const GLint *v)
 
 void _gamma_Vertex2s(GLshort x, GLshort y)
 {
-    GLfloat a,b;
-
     DEBUG_GLCMDS(("Vertex2s: %d %d\n", x, y));
 
     _gamma_Vertex2f((GLfloat)x,(GLfloat)y);
@@ -4185,8 +4560,6 @@ void _gamma_Vertex2s(GLshort x, GLshort y)
 
 void _gamma_Vertex2sv(const GLshort *v)
 {
-    GLfloat p[2];
-
     DEBUG_GLCMDS(("Vertex2sv: %d %d\n", v[0], v[1]));
 
     _gamma_Vertex2f((GLfloat)v[0],(GLfloat)v[1]);
@@ -4225,8 +4598,6 @@ void _gamma_Vertex3fv(const GLfloat *v)
 
 void _gamma_Vertex3i(GLint x, GLint y, GLint z)
 {
-    GLfloat a,b,c;
-
     DEBUG_GLCMDS(("Vertex3i: %d %d %d\n", (int)x, (int)y, (int)z));
 
     _gamma_Vertex3f((GLfloat)x,(GLfloat)y,(GLfloat)z);
@@ -4234,8 +4605,6 @@ void _gamma_Vertex3i(GLint x, GLint y, GLint z)
 
 void _gamma_Vertex3iv(const GLint *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Vertex3iv: %d %d %d\n", (int)v[0], (int)v[1], (int)v[2]));
 
     _gamma_Vertex3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
@@ -4243,8 +4612,6 @@ void _gamma_Vertex3iv(const GLint *v)
 
 void _gamma_Vertex3s(GLshort x, GLshort y, GLshort z)
 {
-    GLfloat a,b,c;
-
     DEBUG_GLCMDS(("Vertex3s: %d %d %d\n", x, y, z));
 
     _gamma_Vertex3f((GLfloat)x,(GLfloat)y,(GLfloat)z);
@@ -4252,8 +4619,6 @@ void _gamma_Vertex3s(GLshort x, GLshort y, GLshort z)
 
 void _gamma_Vertex3sv(const GLshort *v)
 {
-    GLfloat p[3];
-
     DEBUG_GLCMDS(("Vertex3sv: %d %d %d\n", v[0], v[1], v[2]));
 
     _gamma_Vertex3f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2]);
@@ -4293,8 +4658,6 @@ void _gamma_Vertex4fv(const GLfloat *v)
 
 void _gamma_Vertex4i(GLint x, GLint y, GLint z, GLint w)
 {
-    GLfloat a,b,c,d;
-
     DEBUG_GLCMDS(("Vertex4i: %d %d %d %d\n", (int)x, (int)y, (int)z, (int)w));
 
     _gamma_Vertex4f((GLfloat)x,(GLfloat)y,(GLfloat)z,(GLfloat)w);
@@ -4302,8 +4665,6 @@ void _gamma_Vertex4i(GLint x, GLint y, GLint z, GLint w)
 
 void _gamma_Vertex4iv(const GLint *v)
 {
-    GLfloat p[4];
-
     DEBUG_GLCMDS(("Vertex4iv: %d %d %d %d\n",
 		  (int)v[0], (int)v[1], (int)v[2], (int)v[3]));
 
@@ -4312,8 +4673,6 @@ void _gamma_Vertex4iv(const GLint *v)
 
 void _gamma_Vertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-    GLfloat a,b,c,d;
-
     DEBUG_GLCMDS(("Vertex4s: %d %d %d %d\n", x, y, z, w));
 
     _gamma_Vertex4f((GLfloat)x,(GLfloat)y,(GLfloat)z,(GLfloat)w);
@@ -4321,8 +4680,6 @@ void _gamma_Vertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
 
 void _gamma_Vertex4sv(const GLshort *v)
 {
-    GLfloat p[4];
-
     DEBUG_GLCMDS(("Vertex4sv: %d %d %d %d\n", v[0], v[1], v[2], v[3]));
 
     _gamma_Vertex4f((GLfloat)v[0],(GLfloat)v[1],(GLfloat)v[2],(GLfloat)v[3]);
@@ -4332,6 +4689,36 @@ void _gamma_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid 
 {
     DEBUG_GLCMDS(("VertexPointer: %d %04x %d\n",
 		  (int)size, (int)type, (int)stride));
+
+   if (size<2 || size>4) {
+      gamma_error( GL_INVALID_VALUE, "glVertexPointer(size)" );
+      return;
+   }
+   if (stride<0) {
+      gamma_error( GL_INVALID_VALUE, "glVertexPointer(stride)" );
+      return;
+   }
+   switch (type) {
+      case GL_SHORT:
+         gCCPriv->Array.VertexStrideB = stride ? stride : size*sizeof(GLshort);
+         break;
+      case GL_INT:
+         gCCPriv->Array.VertexStrideB = stride ? stride : size*sizeof(GLint);
+         break;
+      case GL_FLOAT:
+         gCCPriv->Array.VertexStrideB = stride ? stride : size*sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         gCCPriv->Array.VertexStrideB = stride ? stride : size*sizeof(GLdouble);
+         break;
+      default:
+         gamma_error( GL_INVALID_ENUM, "glVertexPointer(type)" );
+         return;
+   }
+   gCCPriv->Array.VertexSize = size;
+   gCCPriv->Array.VertexType = type;
+   gCCPriv->Array.VertexStride = stride;
+   gCCPriv->Array.VertexPtr = (void *) pointer;
 }
 
 void _gamma_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -4357,10 +4744,10 @@ void _gamma_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
     oy = y + sy;
 
     CHECK_DMA_BUFFER(gCC, gCCPriv, 4);
-    WRITEF(gCCPriv->buf, ViewPortScaleX,  sx);
-    WRITEF(gCCPriv->buf, ViewPortScaleY,  sy);
     WRITEF(gCCPriv->buf, ViewPortOffsetX, ox);
     WRITEF(gCCPriv->buf, ViewPortOffsetY, oy);
+    WRITEF(gCCPriv->buf, ViewPortScaleX,  sx);
+    WRITEF(gCCPriv->buf, ViewPortScaleY,  sy);
 #if 1 /* Err - this shouldn't be needed, but something isn't flushing */
     FLUSH_DMA_BUFFER(gCC,gCCPriv);
 #endif
@@ -4395,7 +4782,7 @@ init_no_op_table(struct _glapi_table *table)
 
 
 void
-_gamma_init_dispatch(struct _glapi_table *dispatch)
+_gamma_init_exec(struct _glapi_table *dispatch)
 {
    init_no_op_table(dispatch);
 
@@ -4710,7 +5097,7 @@ _gamma_init_dispatch(struct _glapi_table *dispatch)
 
    /* 1.1 */
    dispatch->AreTexturesResident = _gamma_AreTexturesResident;
-   dispatch->ArrayElement = _gamma_ArrayElement;
+   dispatch->ArrayElement = gl_save_ArrayElement; /*_gamma_ArrayElement;*/
    dispatch->BindTexture = _gamma_BindTexture;
    dispatch->ColorPointer = _gamma_ColorPointer;
    dispatch->CopyTexImage1D = _gamma_CopyTexImage1D;
@@ -4740,5 +5127,186 @@ _gamma_init_dispatch(struct _glapi_table *dispatch)
    dispatch->VertexPointer = _gamma_VertexPointer;
 }
 
+void
+_gamma_init_save(struct _glapi_table *table)
+{
+   init_no_op_table(table);
 
+   table->Accum = gl_save_Accum;
+   table->AlphaFunc = gl_save_AlphaFunc;
+   table->AreTexturesResident = _gamma_AreTexturesResident; /* NOT SAVED */
+   table->ArrayElement = gl_save_ArrayElement;
+   table->Begin = gl_save_Begin;
+   table->BindTexture = gl_save_BindTexture;
+   table->Bitmap = gl_save_Bitmap;
+   table->BlendFunc = gl_save_BlendFunc;
+   table->CallList = gl_save_CallList;
+   table->CallLists = gl_save_CallLists;
+   table->Clear = gl_save_Clear;
+   table->ClearAccum = gl_save_ClearAccum;
+   table->ClearColor = gl_save_ClearColor;
+   table->ClearDepth = gl_save_ClearDepth;
+   table->ClearIndex = gl_save_ClearIndex;
+   table->ClearStencil = gl_save_ClearStencil;
+   table->ClipPlane = gl_save_ClipPlane;
+   table->Color3f = gl_save_Color3f;
+   table->Color3fv = gl_save_Color3fv;
+   table->Color4f = gl_save_Color4f;
+   table->Color4fv = gl_save_Color4fv;
+   table->Color4ub = gl_save_Color4ub;
+   table->Color4ubv = gl_save_Color4ubv;
+   table->ColorMask = gl_save_ColorMask;
+   table->ColorMaterial = gl_save_ColorMaterial;
+   table->ColorPointer = _gamma_ColorPointer; /* NOT SAVED */
+   table->CopyPixels = gl_save_CopyPixels;
+   table->CopyTexImage1D = gl_save_CopyTexImage1D;
+   table->CopyTexImage2D = gl_save_CopyTexImage2D;
+   table->CopyTexSubImage1D = gl_save_CopyTexSubImage1D;
+   table->CopyTexSubImage2D = gl_save_CopyTexSubImage2D;
+   table->CullFace = gl_save_CullFace;
+   table->DeleteLists = _gamma_DeleteLists;   /* NOT SAVED */
+   table->DeleteTextures = _gamma_DeleteTextures;  /* NOT SAVED */
+   table->DepthFunc = gl_save_DepthFunc;
+   table->DepthMask = gl_save_DepthMask;
+   table->DepthRange = gl_save_DepthRange;
+   table->Disable = gl_save_Disable;
+   table->DisableClientState = _gamma_DisableClientState;  /* NOT SAVED */
+   table->DrawArrays = gl_save_DrawArrays;
+   table->DrawBuffer = gl_save_DrawBuffer;
+   table->DrawElements = gl_save_DrawElements;
+   table->DrawPixels = gl_save_DrawPixels;
+   table->EdgeFlag = gl_save_EdgeFlag;
+   table->EdgeFlagPointer = _gamma_EdgeFlagPointer; /* NOT SAVED */
+   table->Enable = gl_save_Enable;
+   table->EnableClientState = _gamma_EnableClientState;   /* NOT SAVED */
+   table->End = gl_save_End;
+   table->EndList = _gamma_EndList;   /* NOT SAVED */
+   table->EvalCoord1f = gl_save_EvalCoord1f;
+   table->EvalCoord2f = gl_save_EvalCoord2f;
+   table->EvalMesh1 = gl_save_EvalMesh1;
+   table->EvalMesh2 = gl_save_EvalMesh2;
+   table->EvalPoint1 = gl_save_EvalPoint1;
+   table->EvalPoint2 = gl_save_EvalPoint2;
+   table->FeedbackBuffer = _gamma_FeedbackBuffer;   /* NOT SAVED */
+   table->Finish = _gamma_Finish;   /* NOT SAVED */
+   table->Flush = _gamma_Flush;   /* NOT SAVED */
+   table->Fogfv = gl_save_Fogfv;
+   table->FrontFace = gl_save_FrontFace;
+   table->Frustum = gl_save_Frustum;
+   table->GenLists = _gamma_GenLists;   /* NOT SAVED */
+   table->GenTextures = _gamma_GenTextures;   /* NOT SAVED */
+
+   /* NONE OF THESE COMMANDS ARE COMPILED INTO DISPLAY LISTS */
+   table->GetBooleanv = _gamma_GetBooleanv;
+   table->GetClipPlane = _gamma_GetClipPlane;
+   table->GetDoublev = _gamma_GetDoublev;
+   table->GetError = _gamma_GetError;
+   table->GetFloatv = _gamma_GetFloatv;
+   table->GetIntegerv = _gamma_GetIntegerv;
+   table->GetString = _gamma_GetString;
+   table->GetLightfv = _gamma_GetLightfv;
+   table->GetLightiv = _gamma_GetLightiv;
+   table->GetMapdv = _gamma_GetMapdv;
+   table->GetMapfv = _gamma_GetMapfv;
+   table->GetMapiv = _gamma_GetMapiv;
+   table->GetMaterialfv = _gamma_GetMaterialfv;
+   table->GetMaterialiv = _gamma_GetMaterialiv;
+   table->GetPixelMapfv = _gamma_GetPixelMapfv;
+   table->GetPixelMapuiv = _gamma_GetPixelMapuiv;
+   table->GetPixelMapusv = _gamma_GetPixelMapusv;
+   table->GetPointerv = _gamma_GetPointerv;
+   table->GetPolygonStipple = _gamma_GetPolygonStipple;
+   table->GetTexEnvfv = _gamma_GetTexEnvfv;
+   table->GetTexEnviv = _gamma_GetTexEnviv;
+   table->GetTexGendv = _gamma_GetTexGendv;
+   table->GetTexGenfv = _gamma_GetTexGenfv;
+   table->GetTexGeniv = _gamma_GetTexGeniv;
+   table->GetTexImage = _gamma_GetTexImage;
+   table->GetTexLevelParameterfv = _gamma_GetTexLevelParameterfv;
+   table->GetTexLevelParameteriv = _gamma_GetTexLevelParameteriv;
+   table->GetTexParameterfv = _gamma_GetTexParameterfv;
+   table->GetTexParameteriv = _gamma_GetTexParameteriv;
+
+   table->Hint = gl_save_Hint;
+   table->IndexMask = gl_save_IndexMask;
+   table->Indexf = gl_save_Indexf;
+   table->Indexi = gl_save_Indexi;
+   table->IndexPointer = _gamma_IndexPointer; /* NOT SAVED */
+   table->InitNames = gl_save_InitNames;
+   table->InterleavedArrays = _gamma_InterleavedArrays; /* NOT SAVED */
+   table->IsEnabled = _gamma_IsEnabled;   /* NOT SAVED */
+   table->IsTexture = _gamma_IsTexture;   /* NOT SAVED */
+   table->IsList = _gamma_IsList;   /* NOT SAVED */
+   table->LightModelfv = gl_save_LightModelfv;
+   table->Lightfv = gl_save_Lightfv;
+   table->LineStipple = gl_save_LineStipple;
+   table->LineWidth = gl_save_LineWidth;
+   table->ListBase = gl_save_ListBase;
+   table->LoadIdentity = gl_save_LoadIdentity;
+   table->LoadMatrixf = gl_save_LoadMatrixf;
+   table->LoadName = gl_save_LoadName;
+   table->LogicOp = gl_save_LogicOp;
+   table->Map1f = gl_save_Map1f;
+   table->Map2f = gl_save_Map2f;
+   table->MapGrid1f = gl_save_MapGrid1f;
+   table->MapGrid2f = gl_save_MapGrid2f;
+   table->Materialfv = gl_save_Materialfv;
+   table->MatrixMode = gl_save_MatrixMode;
+   table->MultMatrixf = gl_save_MultMatrixf;
+   table->NewList = gl_save_NewList;
+   table->Normal3f = gl_save_Normal3f;
+   table->Normal3fv = gl_save_Normal3fv;
+   table->NormalPointer = _gamma_NormalPointer;  /* NOT SAVED */
+   table->Ortho = gl_save_Ortho;
+   table->PassThrough = gl_save_PassThrough;
+   table->PixelMapfv = gl_save_PixelMapfv;
+   table->PixelStorei = _gamma_PixelStorei;   /* NOT SAVED */
+   table->PixelTransferf = gl_save_PixelTransferf;
+   table->PixelZoom = gl_save_PixelZoom;
+   table->PointSize = gl_save_PointSize;
+   table->PolygonMode = gl_save_PolygonMode;
+   table->PolygonOffset = gl_save_PolygonOffset;
+   table->PolygonStipple = gl_save_PolygonStipple;
+   table->PopAttrib = gl_save_PopAttrib;
+   table->PopClientAttrib = _gamma_PopClientAttrib;  /* NOT SAVED */
+   table->PopMatrix = gl_save_PopMatrix;
+   table->PopName = gl_save_PopName;
+   table->PrioritizeTextures = gl_save_PrioritizeTextures;
+   table->PushAttrib = gl_save_PushAttrib;
+   table->PushClientAttrib = _gamma_PushClientAttrib;  /* NOT SAVED */
+   table->PushMatrix = gl_save_PushMatrix;
+   table->PushName = gl_save_PushName;
+   table->RasterPos4f = gl_save_RasterPos4f;
+   table->ReadBuffer = gl_save_ReadBuffer;
+   table->ReadPixels = _gamma_ReadPixels;   /* NOT SAVED */
+   table->Rectf = gl_save_Rectf;
+   table->RenderMode = _gamma_RenderMode;   /* NOT SAVED */
+   table->Rotatef = gl_save_Rotatef;
+   table->Scalef = gl_save_Scalef;
+   table->Scissor = gl_save_Scissor;
+   table->SelectBuffer = _gamma_SelectBuffer;   /* NOT SAVED */
+   table->ShadeModel = gl_save_ShadeModel;
+   table->StencilFunc = gl_save_StencilFunc;
+   table->StencilMask = gl_save_StencilMask;
+   table->StencilOp = gl_save_StencilOp;
+   table->TexCoord2f = gl_save_TexCoord2f;
+   table->TexCoord2fv = gl_save_TexCoord2fv;
+   table->TexCoord3fv = gl_save_TexCoord3fv;
+   table->TexCoord4f = gl_save_TexCoord4f;
+   table->TexCoordPointer = _gamma_TexCoordPointer;  /* NOT SAVED */
+   table->TexEnvfv = gl_save_TexEnvfv;
+   table->TexGenfv = gl_save_TexGenfv;
+   table->TexImage1D = gl_save_TexImage1D;
+   table->TexImage2D = gl_save_TexImage2D;
+   table->TexSubImage1D = gl_save_TexSubImage1D;
+   table->TexSubImage2D = gl_save_TexSubImage2D;
+   table->TexParameterfv = gl_save_TexParameterfv;
+   table->Translatef = gl_save_Translatef;
+   table->Vertex2f = gl_save_Vertex2f;
+   table->Vertex3f = gl_save_Vertex3f;
+   table->Vertex4f = gl_save_Vertex4f;
+   table->Vertex3fv = gl_save_Vertex3fv;
+   table->VertexPointer = _gamma_VertexPointer;  /* NOT SAVED */
+   table->Viewport = gl_save_Viewport;
+}
 #endif

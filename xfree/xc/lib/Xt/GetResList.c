@@ -1,4 +1,4 @@
-/* $TOG: GetResList.c /main/9 1998/02/06 13:22:18 kaleb $ */
+/* $Xorg: GetResList.c,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/GetResList.c,v 3.2 1998/10/03 09:06:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/GetResList.c,v 3.4 2001/01/17 19:43:05 dawes Exp $ */
 
 /*
 

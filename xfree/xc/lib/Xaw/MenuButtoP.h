@@ -1,4 +1,4 @@
-/* $TOG: MenuButtoP.h /main/10 1998/02/11 14:53:41 kaleb $
+/* $Xorg: MenuButtoP.h,v 1.3 2000/08/17 19:45:34 cpqbld Exp $ 
  *
 Copyright 1989,1998  The Open Group
 
@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/MenuButtoP.h,v 1.5 1999/06/06 08:47:59 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MenuButtoP.h,v 1.7 2001/01/17 19:42:27 dawes Exp $ */
 
 /*
  * MenuButtonP.h - Private Header file for MenuButton widget.

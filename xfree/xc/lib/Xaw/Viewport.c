@@ -1,4 +1,4 @@
-/* $TOG: Viewport.c /main/72 1998/02/06 12:53:07 kaleb $ */
+/* $Xorg: Viewport.c,v 1.3 2000/08/17 19:45:43 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Viewport.c,v 1.7 1999/06/06 08:48:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Viewport.c,v 1.9 2001/01/17 19:42:36 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

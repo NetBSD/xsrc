@@ -1,4 +1,4 @@
-/* $XConsortium: ValTree.c /main/1 1996/09/28 16:58:58 rws $ */
+/* $Xorg: ValTree.c,v 1.3 2000/08/17 19:48:06 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.

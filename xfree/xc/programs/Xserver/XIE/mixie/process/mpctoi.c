@@ -1,4 +1,4 @@
-/* $TOG: mpctoi.c /main/9 1998/02/09 16:21:54 kaleb $ */
+/* $Xorg: mpctoi.c,v 1.3 2000/08/17 19:47:51 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mpctoi.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpctoi.c,v 3.3 1998/10/05 13:22:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpctoi.c,v 3.5 2001/01/17 22:13:11 dawes Exp $ */
 
 #define _XIEC_MPCTOI
 #define _XIEC_PCTOI

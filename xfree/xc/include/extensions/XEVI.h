@@ -1,4 +1,4 @@
-/* $TOG: XEVI.h /main/1 1997/11/24 16:48:01 kaleb $ */
+/* $Xorg: XEVI.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /************************************************************
 Copyright (c) 1997 by Silicon Graphics Computer Systems, Inc.
 Permission to use, copy, modify, and distribute this

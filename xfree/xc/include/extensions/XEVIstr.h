@@ -1,4 +1,4 @@
-/* $TOG: XEVIstr.h /main/2 1997/12/11 18:46:06 kaleb $ */
+/* $Xorg: XEVIstr.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /************************************************************
 Copyright (c) 1997 by Silicon Graphics Computer Systems, Inc.
 Permission to use, copy, modify, and distribute this

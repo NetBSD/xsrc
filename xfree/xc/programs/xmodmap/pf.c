@@ -1,4 +1,4 @@
-/* $TOG: pf.c /main/6 1998/02/09 14:11:26 kaleb $ */
+/* $Xorg: pf.c,v 1.3 2000/08/17 19:54:55 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group

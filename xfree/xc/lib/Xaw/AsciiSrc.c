@@ -1,4 +1,4 @@
-/* $TOG: AsciiSrc.c /main/69 1998/05/14 14:55:34 kaleb $ */
+/* $Xorg: AsciiSrc.c,v 1.3 2000/08/17 19:45:30 cpqbld Exp $ */
 
 /*
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.25 2000/11/28 17:25:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.27 2001/01/26 22:35:23 herrb Exp $ */
 
 /*
  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).

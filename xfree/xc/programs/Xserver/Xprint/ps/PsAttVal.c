@@ -1,5 +1,5 @@
 /*
- * $XConsortium: PsAttVal.c /main/1 1996/11/16 15:24:44 rws $
+ * $Xorg: PsAttVal.c,v 1.3 2000/08/17 19:48:09 cpqbld Exp $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
@@ -32,7 +32,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttVal.c,v 1.4 2001/01/17 22:36:31 dawes Exp $ */
 
 #include "Ps.h"
 #include "AttrValid.h"

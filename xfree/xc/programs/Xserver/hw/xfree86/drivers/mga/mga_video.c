@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.20 2000/11/08 00:51:10 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.24.2.1 2001/06/01 02:24:18 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -163,10 +163,6 @@ static XF86ImageRec Images[NUM_IMAGES] =
 	XVIMAGE_I420,
 	XVIMAGE_UYVY
 };
-
-#define outMGAdreg(reg, val) OUTREG8(RAMDAC_OFFSET + (reg), val)
-#define outMGAdac(reg, val) \
-        (outMGAdreg(MGA1064_INDEX, reg), outMGAdreg(MGA1064_DATA, val))
 
 static void 
 MGAResetVideoOverlay(ScrnInfoPtr pScrn) 
@@ -681,7 +677,7 @@ MGADisplayVideoOverlay(
     short drw_w, short drw_h
 ){
     MGAPtr pMga = MGAPTR(pScrn);
-    int tmp;
+    int tmp, hzoom, intrep;
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
 
@@ -690,22 +686,25 @@ MGADisplayVideoOverlay(
     if(tmp > pScrn->currentMode->VDisplay)
 	tmp -= pScrn->currentMode->VDisplay;
 
+    /* enable accelerated 2x horizontal zoom when pixelclock >135MHz */
+    hzoom = (pScrn->currentMode->Clock > 135000) ? 1 : 0;
+
     switch(id) {
     case FOURCC_UYVY:
-	OUTREG(MGAREG_BESGLOBCTL, 0x000000c3 | (tmp << 16));
+	OUTREG(MGAREG_BESGLOBCTL, 0x000000c0 | (3 * hzoom) | (tmp << 16));
 	break;
     case FOURCC_YUY2:
     default:
-	OUTREG(MGAREG_BESGLOBCTL, 0x00000083 | (tmp << 16));
+	OUTREG(MGAREG_BESGLOBCTL, 0x00000080 | (3 * hzoom) | (tmp << 16));
 	break;
     }
 
     OUTREG(MGAREG_BESA1ORG, offset);
 
     if(y1 & 0x00010000)
-	OUTREG(MGAREG_BESCTL, 0x00050c41);
+	OUTREG(MGAREG_BESCTL, 0x00040c41);
     else 
-	OUTREG(MGAREG_BESCTL, 0x00050c01);
+	OUTREG(MGAREG_BESCTL, 0x00040c01);
  
     OUTREG(MGAREG_BESHCOORD, (dstBox->x1 << 16) | (dstBox->x2 - 1));
     OUTREG(MGAREG_BESVCOORD, (dstBox->y1 << 16) | (dstBox->y2 - 1));
@@ -719,12 +718,14 @@ MGADisplayVideoOverlay(
     OUTREG(MGAREG_BESV1WGHT, y1 & 0x0000fffc);
     OUTREG(MGAREG_BESV1SRCLST, height - 1 - (y1 >> 16));
 
-    tmp = ((src_h - 1) << 16)/drw_h;
+    intrep = ((drw_h == src_h) || (drw_h < 2)) ? 0 : 1;
+    tmp = ((src_h - intrep) << 16)/(drw_h - intrep);
     if(tmp >= (32 << 16))
 	tmp = (32 << 16) - 1;
     OUTREG(MGAREG_BESVISCAL, tmp & 0x001ffffc);
 
-    tmp = (((src_w - 1) << 16)/drw_w) << 1;
+    intrep = ((drw_w == src_w) || (drw_w < 2)) ? 0 : 1;
+    tmp = (((src_w - intrep) << 16)/(drw_w - intrep)) << hzoom;
     if(tmp >= (32 << 16))
 	tmp = (32 << 16) - 1;
     OUTREG(MGAREG_BESHISCAL, tmp & 0x001ffffc);

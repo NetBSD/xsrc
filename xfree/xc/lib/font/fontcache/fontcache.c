@@ -26,7 +26,7 @@
  *
  *	Id: fontcache.c,v 1.19 1999/01/31 13:06:00 akiyama Exp $
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/fontcache/fontcache.c,v 1.4 2001/04/05 17:42:28 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,14 +61,21 @@ static FontCacheSize_t AllocSize;
 static int NeedPurgeCache;
 static FontCacheStatistics CacheStatistics;
 
-static void fc_assign_cache();
-static int fc_assign_entry();
-static void fc_flush_cache();
+static void fc_assign_cache(void);
+static int fc_assign_entry(void);
+static void fc_flush_cache(void);
 static int fc_get_bitmap_area(FontCacheEntryPtr, int);
 static void fc_free_bitmap_area(FontCacheBitmapPtr);
 static int fc_check_size(int);
-static void fc_purge_cache();
-static void fc_purge_bitmap();
+static void fc_purge_cache(void);
+static void fc_purge_bitmap(void);
+static void fc_flush_cache_bitmap(void);
+static void fc_flush_cache_inuse(void);
+static void fc_flush_cache_free(void);
+static void fc_purge_cache_entry(void);
+static void fc_purge_cache_entry_pool(void);
+static void fc_purge_bitmap_pool(void);
+
 
 /*
  *  FontCacheInitialize()
@@ -87,7 +94,7 @@ FontCacheInitialize()
 	 *  first time initialization
 	 */
 #if defined(HASH_DEBUG) || defined(DEBUG)
-fprintf(stderr, "FontCacheInitialize: initializing cache\n");
+	fprintf(stderr, "FontCacheInitialize: initializing cache\n");
 #endif
 	InUseQueue = &InUseQueueHead;
 	TAILQ_INIT(InUseQueue);
@@ -111,8 +118,10 @@ fprintf(stderr, "FontCacheInitialize: initializing cache\n");
 	AllocSize.allocated = AllocSize.used = 0;
 	fc_assign_cache();
 	fc_assign_entry();
-fprintf(stderr, "FontCacheInitialize: hi=%d, lo=%d, bal=%d\n",
-        CacheHiMark, CacheLowMark, CacheBalance);
+#if defined(DEBUG)
+	fprintf(stderr, "FontCacheInitialize: hi=%ld, lo=%ld, bal=%d\n",
+        	CacheHiMark, CacheLowMark, CacheBalance);
+#endif
 
 	CacheInitialized = 1;
     } else {
@@ -121,7 +130,7 @@ fprintf(stderr, "FontCacheInitialize: hi=%d, lo=%d, bal=%d\n",
 	 *  flush and reassign cache.
 	 */
 #if defined(HASH_DEBUG) || defined(DEBUG)
-fprintf(stderr, "FontCacheInitialize: initializing cache, again\n");
+	fprintf(stderr, "FontCacheInitialize: initializing cache, again\n");
 #endif
     }
 
@@ -228,7 +237,7 @@ FontCacheOpenCache(void *arg)
     int size, mask;
     int i;
 
-    static sizes[] = { 16, 32, 64, 128, 0 };
+    static int sizes[] = { 16, 32, 64, 128, 0 };
 
     if (!CacheInitialized) {
         FontCacheInitialize();

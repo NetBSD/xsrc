@@ -1,4 +1,4 @@
-/* $TOG: CrCmap.c /main/7 1998/02/06 15:41:49 kaleb $ */
+/* $Xorg: CrCmap.c,v 1.3 2000/08/17 19:45:59 cpqbld Exp $ */
 
 /* 
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CrCmap.c,v 3.4 1998/10/03 09:06:23 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CrCmap.c,v 3.6 2001/01/17 19:42:53 dawes Exp $ */
 
 /*
  * Author:  Donna Converse, MIT X Consortium

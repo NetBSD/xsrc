@@ -37,13 +37,13 @@
 #ifndef __FTSYNTH_H__
 #define __FTSYNTH_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
+
 
   /* This code is completely experimental -- use with care! */
   /* It will probably be completely rewritten in the future */
@@ -56,8 +56,8 @@ FT_BEGIN_HEADER
                                              FT_Outline*   outline,
                                              FT_Pos*       advance );
 
-FT_END_HEADER
 
+FT_END_HEADER
 
 #endif /* __FTSYNTH_H__ */
 

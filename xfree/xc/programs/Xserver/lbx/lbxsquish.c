@@ -1,4 +1,4 @@
-/* $TOG: lbxsquish.c /main/6 1998/02/09 14:32:39 kaleb $ */
+/* $Xorg: lbxsquish.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxsquish.c,v 1.3 2001/01/17 22:37:00 dawes Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"

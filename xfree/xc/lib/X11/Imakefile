@@ -1,9 +1,10 @@
-XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:38 cpqbld Exp $
 
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.33 2000/11/28 17:25:07 dawes Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.38 2001/05/01 10:35:05 alanh Exp $
+
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
 #define DoExtraLib SharedLibX11
@@ -92,7 +93,7 @@ EXTRA_LIBRARIES = /**/
 #endif
         DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES) $(MISC_DEFINES)
    OPEN_DEFINES = -I$(EXTINCSRC) $(K5INCL) $(K5DEFS)
- DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES)
+ DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES) DependDefines
        AUTHOBJS = AuDispose.o AuGetBest.o AuFileName.o AuRead.o
        AUTHSRCS = AuDispose.c AuGetBest.c AuFileName.c AuRead.c
            SRCS = $(SRCS1) $(SRCS2) $(SRCS3) /* try *.c if you have trouble */
@@ -900,7 +901,11 @@ MISCOBJS = os2Stubs.o
 
 OBJS = $(OBJS1) $(OBJS2) $(OBJS3)
 
-#if !BuildServersOnly || XnestServer || BuildGLXLibrary
+#if UseCygIPC
+REQUIREDLIBS = -lcygipc
+#endif
+
+#if !BuildServersOnly || XnestServer || BuildGLXLibrary || BuildClients
 #include <Library.tmpl>
 
 SpecialCLibObjectRule(ErrDes,$(ICONFIGFILES),$(EDB_DEFINES))

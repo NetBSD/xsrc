@@ -1,4 +1,4 @@
-/* $TOG: inffast.h /main/4 1998/02/04 14:33:53 kaleb $ */
+/* $Xorg: inffast.h,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* inffast.h -- header to use inffast.c
  * Copyright (C) 1995-1998 Mark Adler

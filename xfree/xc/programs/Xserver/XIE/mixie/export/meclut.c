@@ -1,4 +1,4 @@
-/* $TOG: meclut.c /main/7 1998/02/09 16:12:47 kaleb $ */
+/* $Xorg: meclut.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module meclut.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meclut.c,v 3.3 1998/10/05 13:22:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meclut.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MECLUT
 #define _XIEC_ECLUT

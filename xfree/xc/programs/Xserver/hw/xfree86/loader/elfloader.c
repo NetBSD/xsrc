@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elfloader.c,v 1.30 2000/12/06 15:35:27 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elfloader.c,v 1.37 2001/04/27 19:34:00 tsi Exp $ */
 
 /*
  *
@@ -46,7 +46,6 @@
 #include "sym.h"
 #include "loader.h"
 
-#define NO_COMPILER_H_EXTRAS
 #include "compiler.h"
 
 /*
@@ -61,13 +60,21 @@
 #endif
 #endif
 
-#if defined (__alpha__) || defined (__ia64__) || (defined (__sparc__) && (defined (__arch64__) || defined (__sparcv9)))
+#if defined (__alpha__) || \
+    defined (__ia64__) || \
+    (defined (__sparc__) && \
+     (defined (__arch64__) || \
+      defined (__sparcv9)))
 typedef Elf64_Ehdr Elf_Ehdr;
 typedef Elf64_Shdr Elf_Shdr;
 typedef Elf64_Sym Elf_Sym;
 typedef Elf64_Rel Elf_Rel;
 typedef Elf64_Rela Elf_Rela;
 typedef Elf64_Addr Elf_Addr;
+typedef Elf64_Half Elf_Half;
+typedef Elf64_Off Elf_Off;
+typedef Elf64_Sword Elf_Sword;
+typedef Elf64_Word Elf_Word;
 #define ELF_ST_BIND ELF64_ST_BIND
 #define ELF_ST_TYPE ELF64_ST_TYPE
 #define ELF_R_SYM ELF64_R_SYM
@@ -129,10 +136,24 @@ typedef Elf32_Sym Elf_Sym;
 typedef Elf32_Rel Elf_Rel;
 typedef Elf32_Rela Elf_Rela;
 typedef Elf32_Addr Elf_Addr;
+typedef Elf32_Half Elf_Half;
+typedef Elf32_Off Elf_Off;
+typedef Elf32_Sword Elf_Sword;
+typedef Elf32_Word Elf_Word;
 #define ELF_ST_BIND ELF32_ST_BIND
 #define ELF_ST_TYPE ELF32_ST_TYPE
 #define ELF_R_SYM ELF32_R_SYM
 #define ELF_R_TYPE ELF32_R_TYPE
+#endif
+
+#if defined(__powerpc__) || \
+    defined(__mc68000__) || \
+    defined(__alpha__) || \
+    defined(__sparc__) || \
+    defined(__ia64__)
+typedef Elf_Rela Elf_Rel_t;
+#else
+typedef Elf_Rel  Elf_Rel_t;
 #endif
 
 /*
@@ -222,14 +243,9 @@ typedef	struct {
  * to try later after more modules have been loaded.
  */
 typedef struct _elf_reloc {
-#if defined(i386)
-	Elf_Rel	*rel;
-#endif
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-	Elf_Rela	*rel;
-#endif
+	Elf_Rel_t	*rel;
 	ELFModulePtr	file;
-	unsigned char	*secp;
+	Elf_Word	secn;
 	struct _elf_reloc	*next;
 } ELFRelocRec;
 
@@ -251,33 +267,25 @@ static int ELFhashCleanOut(void *, itemPtr);
 static char *ElfGetStringIndex(ELFModulePtr, int, int);
 static char *ElfGetString(ELFModulePtr, int);
 static char *ElfGetSectionName(ELFModulePtr, int);
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-static ELFRelocPtr ElfDelayRelocation(ELFModulePtr, unsigned char *, Elf_Rela *);
-#else
-static ELFRelocPtr ElfDelayRelocation(ELFModulePtr, unsigned char *, Elf_Rel *);
-#endif
+static ELFRelocPtr ElfDelayRelocation(ELFModulePtr, Elf_Word, Elf_Rel_t *);
 static ELFCommonPtr ElfAddCOMMON(Elf_Sym *);
 static int ElfCOMMONSize(void);
 static int ElfCreateCOMMON(ELFModulePtr,LOOKUP *);
 static char *ElfGetSymbolNameIndex(ELFModulePtr, int, int);
 static char *ElfGetSymbolName(ELFModulePtr, int);
 static Elf_Addr ElfGetSymbolValue(ELFModulePtr, int);
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-static ELFRelocPtr Elf_RelocateEntry(ELFModulePtr, unsigned char *, Elf_Rela *, int);
-#else
-static ELFRelocPtr Elf_RelocateEntry(ELFModulePtr, unsigned char *, Elf_Rel *, int);
-#endif
+static ELFRelocPtr Elf_RelocateEntry(ELFModulePtr, Elf_Word, Elf_Rel_t *, int);
 static ELFRelocPtr ELFCollectRelocations(ELFModulePtr, int);
 static LOOKUP *ELF_GetSymbols(ELFModulePtr, unsigned short **);
 static void ELFCollectSections(ELFModulePtr, int, int *, int *);
 #if defined(__alpha__) || defined(__ia64__)
-static void ElfAddGOT(ELFModulePtr, Elf_Rela *);
+static void ElfAddGOT(ELFModulePtr, Elf_Rel_t *);
 static int ELFCreateGOT(ELFModulePtr, int);
 #endif
 #if defined(__ia64__)
 static void ElfAddOPD(ELFModulePtr, int, LOOKUP *);
 static void ELFCreateOPD(ELFModulePtr);
-static void ElfAddPLT(ELFModulePtr, Elf_Rela *);
+static void ElfAddPLT(ELFModulePtr, Elf_Rel_t *);
 static void ELFCreatePLT(ELFModulePtr);
 enum ia64_operand {
     IA64_OPND_IMM22,
@@ -340,15 +348,10 @@ itemPtr item ;
  * Manage listResolv
  */
 static ELFRelocPtr
-ElfDelayRelocation(elffile,secp,rel)
+ElfDelayRelocation(elffile, secn, rel)
 ELFModulePtr	elffile;
-unsigned char	*secp;
-#if defined(i386)
-Elf_Rel	*rel;
-#endif
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-Elf_Rela	*rel;
-#endif
+Elf_Word	secn;
+Elf_Rel_t	*rel;
 {
     ELFRelocPtr	reloc;
 
@@ -357,15 +360,21 @@ Elf_Rela	*rel;
 	return 0;
     }
     reloc->file=elffile;
-    reloc->secp=secp;
+    reloc->secn=secn;
     reloc->rel=rel;
     reloc->next=0;
 #ifdef ELFDEBUG
-    ELFDEBUG("ElfDelayRelocation %lx: file %lx, sec %lx, r_offset 0x%x, r_info 0x%x", reloc, elffile, secp, rel->r_offset, rel->r_info);
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-    ELFDEBUG(", r_addend 0x%x", rel->r_addend);
+    ELFDEBUG("ElfDelayRelocation %lx: file %lx, sec %d,"
+	     " r_offset 0x%lx, r_info 0x%x",
+	     reloc, elffile, secn, rel->r_offset, rel->r_info);
+#if defined(__powerpc__) || \
+    defined(__mc68000__) || \
+    defined(__alpha__) || \
+    defined(__sparc__) || \
+    defined(__ia64__)
+    ELFDEBUG(", r_addend 0x%lx", rel->r_addend);
 #endif
-    ELFDEBUG("\n" );
+    ELFDEBUG("\n");
 #endif
     return reloc;
 }
@@ -396,7 +405,11 @@ ElfCOMMONSize(void)
 
     for (common = listCOMMON; common; common = common->next) {
 	size+=common->sym->st_size;
-#if defined(__alpha__) || defined(__ia64__) || (defined(__sparc__) && (defined(__arch64__) || defined(__sparcv9)))
+#if defined(__alpha__) || \
+    defined(__ia64__) || \
+    (defined(__sparc__) && \
+     (defined(__arch64__) || \
+      defined(__sparcv9)))
 	size = (size+7)&~0x7;
 #endif
     }
@@ -417,7 +430,11 @@ LOOKUP		*pLookup;
 
     for (common = listCOMMON; common; common = common->next) {
 	size+=common->sym->st_size;
-#if defined(__alpha__) || defined(__ia64__) || (defined(__sparc__) && (defined(__arch64__) || defined(__sparcv9)))
+#if defined(__alpha__) || \
+    defined(__ia64__) || \
+    (defined(__sparc__) && \
+     (defined(__arch64__) || \
+      defined(__sparcv9)))
 	size = (size+7)&~0x7;
 #endif
 	numsyms++;
@@ -453,10 +470,12 @@ LOOKUP		*pLookup;
 	/* this is xstrdup because is should be more efficient. it is freed
 	 * with xf86loaderfree
 	 */
-	pLookup[l].symName = xf86loaderstrdup(ElfGetString(elffile,common->sym->st_name));
+	pLookup[l].symName =
+	    xf86loaderstrdup(ElfGetString(elffile,common->sym->st_name));
 	pLookup[l].offset = (funcptr)(elffile->common + offset);
 #ifdef ELFDEBUG
-	ELFDEBUG("Adding common %lx %s\n", pLookup[l].offset, pLookup[l].symName );
+	ELFDEBUG("Adding common %lx %s\n",
+		 pLookup[l].offset, pLookup[l].symName);
 #endif
 	
 	/* Record the symbol address for gdb */
@@ -468,7 +487,11 @@ LOOKUP		*pLookup;
 	}
 	listCOMMON=common->next;
 	offset+=common->sym->st_size;
-#if defined(__alpha__) || defined(__ia64__) || (defined(__sparc__) && (defined(__arch64__) || defined(__sparcv9)))
+#if defined(__alpha__) || \
+    defined(__ia64__) || \
+    (defined(__sparc__) && \
+     (defined(__arch64__) || \
+      defined(__sparcv9)))
 	offset = (offset+7)&~0x7;  
 #endif
 	xf86loaderfree(common);
@@ -549,18 +572,7 @@ ElfGetSymbolName(elffile, index)
 ELFModulePtr	elffile;
 int index;
 {
-    char	*name,*symname;
-    symname=ElfGetSymbolNameIndex( elffile, index, elffile->symndx );
-    if( symname == NULL )
-	return NULL;
-   
-    name=xf86loadermalloc(strlen(symname)+1);
-    if (!name)
-	FatalError("ELFGetSymbolName: Out of memory\n");
-
-    strcpy(name,symname);
-
-    return name;
+    return ElfGetSymbolNameIndex(elffile, index, elffile->symndx);
 }
 
 static Elf_Addr
@@ -619,7 +631,7 @@ int index;
 		    break;
 		}
 #ifdef ELFDEBUG
-	    ELFDEBUG( "%x\t", symbol );
+	    ELFDEBUG( "%lx\t", symbol );
 	    ELFDEBUG( "%lx\t", symval );
 	    ELFDEBUG( "%s\n", symname ? symname : "NULL");
 #endif
@@ -711,8 +723,8 @@ int index;
 		    break;
 		}
 #ifdef ELFDEBUG
-	    ELFDEBUG( "ElfGetPlt: symbol=%x\t", symbol );
-	    ELFDEBUG( "newval=%x\t", symval );
+	    ELFDEBUG( "ElfGetPlt: symbol=%lx\t", symbol );
+	    ELFDEBUG( "newval=%lx\t", symval );
 	    ELFDEBUG( "name=\"%s\"\n", symname ? symname : "NULL");
 #endif
 	    break;
@@ -738,20 +750,18 @@ int index;
 static void
 ElfAddGOT(elffile,rel)
 ELFModulePtr	elffile;
-Elf_Rela	*rel;
+Elf_Rel_t	*rel;
 {
     ELFGotEntryPtr gotent;
 
 #ifdef ELFDEBUG
     {
     Elf_Sym *sym;
-    char *namestr;
 
     sym=(Elf_Sym *)&(elffile->symtab[ELF_R_SYM(rel->r_info)]);
     if( sym->st_name) {
 	ELFDEBUG("ElfAddGOT: Adding GOT entry for %s\n", 
-	    namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	xf86loaderfree(namestr);
+	    ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	}
     else
 	ELFDEBUG("ElfAddGOT: Adding GOT entry for %s\n", 
@@ -797,11 +807,13 @@ int		maxalign;
     ELFGotPtr gots;
 #endif
     int gotsize;
+
+    /*
+     * XXX:  Is it REALLY needed to ensure GOT's are non-null?
+     */
 #ifdef ELFDEBUG
     ELFDEBUG( "ELFCreateGOT: %x entries in the GOT\n", elffile->gotsize/8 );
-#endif
 
-#ifdef ELFDEBUG
     /*
      * Hmmm. Someone is getting here without any got entries, but they
      * may still have R_ALPHA_GPDISP relocations against the got.
@@ -836,7 +848,8 @@ int		maxalign;
 	gots->freeptr = gots->freeptr + elffile->gotsize;
 	gots->nuses++;
 #ifdef ELFDEBUG
-	ELFDEBUG( "ELFCreateGOT: GOT address %lx in shared GOT, nuses %d\n", elffile->got, gots->nuses );
+	ELFDEBUG( "ELFCreateGOT: GOT address %lx in shared GOT, nuses %d\n",
+		  elffile->got, gots->nuses );
 #endif
 	return TRUE;
     }
@@ -930,22 +943,18 @@ static void
 ELFCreateOPD(elffile)
 ELFModulePtr	elffile;
 {
-    ELFOpdPtr opdent, last = NULL;
+    ELFOpdPtr opdent;
 
     if (elffile->got == NULL)
 	ErrorF( "ELFCreateOPD() Unallocated GOT!!!!\n" );
 
-    for (opdent = elffile->opd_entries; opdent; last = opdent, opdent = opdent->next) {
-	if (last && last->index == -1)
-	    xf86loaderfree(last);
+    for (opdent = elffile->opd_entries; opdent; opdent = opdent->next) {
 	if (opdent->index != -1)
 	    continue;
 	((unsigned long *)(elffile->got+opdent->offset))[0] = (long)opdent->l->offset;
 	((unsigned long *)(elffile->got+opdent->offset))[1] = (long)elffile->got;
 	opdent->l->offset = (funcptr)(elffile->got+opdent->offset);
     }
-    if (last && last->index == -1)
-	xf86loaderfree(last);
 }
 
 /*
@@ -954,20 +963,18 @@ ELFModulePtr	elffile;
 static void
 ElfAddPLT(elffile,rel)
 ELFModulePtr	elffile;
-Elf_Rela	*rel;
+Elf_Rel_t	*rel;
 {
     ELFPltEntryPtr pltent;
 
 #ifdef ELFDEBUG
     {
     Elf_Sym *sym;
-    char *namestr;
 
     sym=(Elf_Sym *)&(elffile->symtab[ELF_R_SYM(rel->r_info)]);
     if( sym->st_name) {
 	ELFDEBUG("ElfAddPLT: Adding PLT entry for %s\n", 
-	    namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	xf86loaderfree(namestr);
+	    ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	}
     else
 	ErrorF("ElfAddPLT: Add PLT entry for section??\n");
@@ -1046,7 +1053,7 @@ long			value;
     case 0: data = *data128; break;
     case 1: memcpy(&data, (char *)data128 + 5, 8); break;
     case 2: memcpy(&data, (char *)data128 + 10, 6); break;
-    default: FatalError("Unexpected slot in nIA64InstallReloc()\n");
+    default: FatalError("Unexpected slot in IA64InstallReloc()\n");
     }
     switch (opnd) {
     case IA64_OPND_IMM22:
@@ -1072,8 +1079,9 @@ long			value;
     case 0: *data128 = data; break;
     case 1: memcpy((char *)data128 + 5, &data, 8); break;
     case 2: memcpy((char *)data128 + 10, &data, 6); break;
-    default: FatalError("Unexpected slot in nIA64InstallReloc()\n");
+    default: FatalError("Unexpected slot in IA64InstallReloc()\n");
     }
+    ia64_flush_cache(data128);
 #ifdef ELFDEBUG
     ELFDEBUG( "After  [%016lx%016lx]\n", data128[1], data128[0]);
 #endif
@@ -1088,17 +1096,13 @@ long			value;
  * LoaderDefaultFunc) otherwise, the relocation will be deferred.
  */
 static ELFRelocPtr
-Elf_RelocateEntry(elffile, secp, rel, force)
+Elf_RelocateEntry(elffile, secn, rel, force)
 ELFModulePtr	elffile;
-unsigned char *secp;	/* Begining of the target section */
-#if defined(i386)
-Elf_Rel	*rel;
-#endif
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-Elf_Rela	*rel;
-#endif
+Elf_Word	secn;
+Elf_Rel_t	*rel;
 int		force;
 {
+    unsigned char *secp = elffile->saddr[secn];
     unsigned int *dest32;	/* address of the 32 bit place being modified */
 #if defined(__powerpc__) || defined(__mc68000__) || defined(__sparc__)
     unsigned short *dest16;	/* address of the 16 bit place being modified */
@@ -1109,10 +1113,6 @@ int		force;
 #if defined(__alpha__)
     unsigned int *dest32h;	/* address of the high 32 bit place being modified */
     unsigned long *dest64;
-#if 0				/* XXX unused */
-    unsigned long *gp=(unsigned long *)elffile->got+0x8000;	/*
-								 * location of the got table */
-#endif
 #endif
 #if defined(__ia64__)
     unsigned long *dest64;
@@ -1121,15 +1121,16 @@ int		force;
     Elf_Addr symval = 0;	/* value of the indicated symbol */
 
 #ifdef ELFDEBUG
-#if defined(i386)
     ELFDEBUG( "%lx %d %d\n", rel->r_offset,
-	      ELF_R_SYM(rel->r_info),ELF_R_TYPE(rel->r_info) );
+	      ELF_R_SYM(rel->r_info), ELF_R_TYPE(rel->r_info) );
+#if defined(__powerpc__) || \
+    defined(__mc68000__) || \
+    defined(__alpha__) || \
+    defined(__sparc__) || \
+    defined(__ia64__)
+    ELFDEBUG( "%lx", rel->r_addend );
 #endif
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__ia64__)
-    ELFDEBUG( "%x %d %d %x\n", rel->r_offset,
-	      ELF_R_SYM(rel->r_info),ELF_R_TYPE(rel->r_info),
-	      rel->r_addend );
-#endif
+    ELFDEBUG("\n");
 #endif
 #if defined(__alpha__)
     if (ELF_R_SYM(rel->r_info) && ELF_R_TYPE(rel->r_info) != R_ALPHA_GPDISP) {
@@ -1142,12 +1143,10 @@ int		force;
 		symval = (Elf_Addr) &LoaderDefaultFunc;
 	    } else {
 #ifdef ELFDEBUG
-		char *namestr;
-		namestr = ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info));
-		ELFDEBUG("***Unable to resolve symbol %s\n", namestr);
-		xf86loaderfree(namestr);
+		ELFDEBUG("***Unable to resolve symbol %s\n",
+			 ElfGetSymbolName(elffile, ELF_R_SYM(rel->r_info)));
 #endif
-		return ElfDelayRelocation(elffile,secp,rel);
+		return ElfDelayRelocation(elffile, secn, rel);
 	    }
 	}
     }
@@ -1170,16 +1169,12 @@ int		force;
 	case R_386_PC32:
 	    dest32=(unsigned int *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_386_PC32 %s\t",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%x\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest32=%x\t", dest32 );
 	    ELFDEBUG( "*dest32=%8.8lx\t", *dest32 );
-	    }
 #endif
 
 	    *dest32=symval+(*dest32)-(Elf_Addr)dest32; /* S + A - P */
@@ -1188,7 +1183,7 @@ int		force;
 	    ELFDEBUG( "*dest32=%8.8lx\n", *dest32 );
 #endif
 
-		break;
+	    break;
 #endif /* i386 */
 #if defined(__alpha__)
 	case R_ALPHA_NONE:
@@ -1216,16 +1211,12 @@ int		force;
 	    dest32=(unsigned int *)dest64;
 
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_ALPHA_GPREL32 %s\t", 
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest32=%lx\t", dest32 );
 	    ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
-	    }
 #endif
 	    symval += rel->r_addend;
 	    symval = ((unsigned char *)symval)-((unsigned char *)elffile->got);
@@ -1249,16 +1240,12 @@ int		force;
 	    ELFGotEntryPtr gotent;
 	    dest32=(unsigned int *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_ALPHA_LITERAL %s\t", 
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest32=%lx\t", dest32 );
 	    ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
-	    }
 #endif
 
 	    for (gotent=elffile->got_entries;gotent;gotent=gotent->next) {
@@ -1311,11 +1298,8 @@ int		force;
 	    dest32=(unsigned int *)((secp+rel->r_offset)+rel->r_addend);
 
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_ALPHA_GPDISP %s\t", 
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "got=%lx\t", elffile->got );
 	    ELFDEBUG( "gp=%lx\t", gp );
@@ -1323,13 +1307,10 @@ int		force;
 	    ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
 	    ELFDEBUG( "dest32h=%lx\t", dest32h );
 	    ELFDEBUG( "*dest32h=%8.8x\t", *dest32h );
-	    }
 #endif
 	    if ((*dest32h >> 26) != 9 || (*dest32 >> 26) != 8) {
-	        char *namestr;
 	        ErrorF( "***Bad instructions in relocating %s\n",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	        xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    }
 
 	    symval = (*dest32h & 0xffff) << 16 | (*dest32 & 0xffff);
@@ -1362,16 +1343,12 @@ int		force;
 	case R_ALPHA_HINT:
 	    dest32=(unsigned int *)((secp+rel->r_offset)+rel->r_addend);
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_ALPHA_HINT %s\t", 
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest32=%lx\t", dest32 );
 	    ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
-	    }
 #endif
 
 #ifdef ELFDEBUG
@@ -1405,32 +1382,30 @@ int		force;
 	case R_68K_32:
 		dest32=(unsigned long *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-ELFDEBUG( "R_68K_32\t", dest32 );
-ELFDEBUG( "dest32=%x\t", dest32 );
-ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
+		ELFDEBUG( "R_68K_32\t", dest32 );
+		ELFDEBUG( "dest32=%x\t", dest32 );
+		ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
 #endif
 		*dest32=symval+(*dest32); /* S + A */
 #ifdef ELFDEBUG
-ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+		ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 #endif
 		break;
 	case R_68K_PC32:
 		dest32=(unsigned long *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-char *namestr;
-ELFDEBUG( "R_68K_PC32 %s\t",
-		  namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-xf86loaderfree(namestr);
-ELFDEBUG( "secp=%x\t", secp );
-ELFDEBUG( "symval=%x\t", symval );
-ELFDEBUG( "dest32=%x\t", dest32 );
-ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
+		ELFDEBUG( "R_68K_PC32 %s\t",
+		  ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
+		ELFDEBUG( "secp=%x\t", secp );
+		ELFDEBUG( "symval=%x\t", symval );
+		ELFDEBUG( "dest32=%x\t", dest32 );
+		ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
 #endif
 
 		*dest32=symval+(*dest32)-(Elf_Addr)dest32; /* S + A - P */
 
 #ifdef ELFDEBUG
-ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+		ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 #endif
 
 		break;
@@ -1799,19 +1774,79 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 #endif /* PowerMAX_OS */
 #endif /* __powerpc__ */
 #ifdef __sparc__
-	case R_SPARC_RELATIVE:
-		dest32 = (unsigned int *)(secp + rel->r_offset);
-		*dest32 += (unsigned int)secp + rel->r_addend;
+	case R_SPARC_NONE:	/*  0 */
 		break;
 
-	case R_SPARC_GLOB_DAT:
-	case R_SPARC_32:
+	case R_SPARC_8:		/*  1 */
+		dest8 = (unsigned char *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest8 = symval;
+		break;
+
+	case R_SPARC_16:	/*  2 */
+		dest16 = (unsigned short *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest16 = symval;
+		break;
+
+	case R_SPARC_32:	/*  3 */
+	case R_SPARC_GLOB_DAT:	/* 20 */
+	case R_SPARC_UA32:	/* 23 */
 		dest32 = (unsigned int *)(secp + rel->r_offset);
 		symval += rel->r_addend;
-		*dest32 = symval;
+		((unsigned char *)dest32)[0] = (unsigned char)(symval >> 24);
+		((unsigned char *)dest32)[1] = (unsigned char)(symval >> 16);
+		((unsigned char *)dest32)[2] = (unsigned char)(symval >>  8);
+		((unsigned char *)dest32)[3] = (unsigned char)(symval      );
 		break;
 
-	case R_SPARC_JMP_SLOT:
+	case R_SPARC_DISP8:	/*  4 */
+		dest8 = (unsigned char *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest8 = (symval - (Elf32_Addr) dest8);
+		break;
+
+	case R_SPARC_DISP16:	/*  5 */
+		dest16 = (unsigned short *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest16 = (symval - (Elf32_Addr) dest16);
+		break;
+
+	case R_SPARC_DISP32:	/*  6 */
+		dest32 = (unsigned int *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest32 = (symval - (Elf32_Addr) dest32);
+		break;
+
+	case R_SPARC_WDISP30:	/*  7 */
+		dest32 = (unsigned int *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest32 = ((*dest32 & 0xc0000000) |
+			   ((symval - (Elf32_Addr) dest32) >> 2));
+		break;
+
+	case R_SPARC_HI22:	/*  9 */
+		dest32 = (unsigned int *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest32 = (*dest32 & 0xffc00000) | (symval >> 10);
+		break;
+
+	case R_SPARC_LO10:	/* 12 */
+		dest32 = (unsigned int *)(secp + rel->r_offset);
+		symval += rel->r_addend;
+		*dest32 = (*dest32 & ~0x3ff) | (symval & 0x3ff);
+		break;
+
+	case R_SPARC_COPY:	/* 19 */
+		/* Fix your code...  I'd rather dish out an error here
+		 * so people will not link together PIC and non-PIC
+		 * code into a final driver object file.
+		 */
+		ErrorF("Elf_RelocateEntry():"
+		       "  Copy relocs not supported on Sparc.\n");
+		break;
+
+	case R_SPARC_JMP_SLOT:	/* 21 */
 		dest32 = (unsigned int *)(secp + rel->r_offset);
 		/* Before we change it the PLT entry looks like:
 		 *
@@ -1832,64 +1867,9 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 		__asm __volatile("flush %0 + 0x4" : : "r" (dest32));
 		break;
 
-	case R_SPARC_8:
-		dest8 = (unsigned char *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest8 = symval;
-		break;
-
-	case R_SPARC_16:
-		dest16 = (unsigned short *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest16 = symval;
-		break;
-
-	case R_SPARC_DISP8:
-		dest8 = (unsigned char *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest8 = (symval - (Elf32_Addr) dest8);
-		break;
-
-	case R_SPARC_DISP16:
-		dest16 = (unsigned short *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest16 = (symval - (Elf32_Addr) dest16);
-		break;
-
-	case R_SPARC_DISP32:
+	case R_SPARC_RELATIVE:	/* 22 */
 		dest32 = (unsigned int *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest32 = (symval - (Elf32_Addr) dest32);
-		break;
-
-	case R_SPARC_LO10:
-		dest32 = (unsigned int *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest32 = (*dest32 & ~0x3ff) | (symval & 0x3ff);
-		break;
-
-	case R_SPARC_WDISP30:
-		dest32 = (unsigned int *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest32 = ((*dest32 & 0xc0000000) |
-			   ((symval - (Elf32_Addr) dest32) >> 2));
-		break;
-
-	case R_SPARC_HI22:
-		dest32 = (unsigned int *)(secp + rel->r_offset);
-		symval += rel->r_addend;
-		*dest32 = (*dest32 & 0xffc00000) | (symval >> 10);
-		break;
-
-	case R_SPARC_NONE:
-		break;
-
-	case R_SPARC_COPY:
-		/* Fix your code...  I'd rather dish out an error here
-		 * so people will not link together PIC and non-PIC
-		 * code into a final driver object file.
-		 */
-		ErrorF("Elf_RelocateEntry()  Copy relocs not supported on Sparc.\n");
+		*dest32 += (unsigned int)secp + rel->r_addend;
 		break;
 #endif
 #ifdef __ia64__
@@ -1900,7 +1880,8 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 	    if (rel->r_addend)
 		FatalError("\nAddend for R_IA64_LTOFF_FPTR22 not supported\n");
 #ifdef ELFDEBUG
-	    ELFDEBUG( "opd=%016lx.%016lx\n", ((long *)symval)[0], ((long *)symval)[1] );
+	    ELFDEBUG( "opd=%016lx.%016lx\n",
+		((long *)symval)[0], ((long *)symval)[1] );
 #endif
 	    /* FALLTHROUGH */
 	case R_IA64_LTOFF22:
@@ -1908,18 +1889,14 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 	    ELFGotEntryPtr gotent;
 	    dest128=(unsigned long *)(secp+(rel->r_offset&~3));
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "%s %s\t", ELF_R_TYPE(rel->r_info) == R_IA64_LTOFF22 ?
 			"R_IA64_LTOFF22" : "R_IA64_LTOFF_FPTR22",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest128=%lx\t", dest128 );
-	    ELFDEBUG( "slot=%ld\t", rel->r_offset & 3);
-	    ELFDEBUG( "*dest128=[%016lx%016lx]\t", dest128[1], dest128[0]);
-	    }
+	    ELFDEBUG( "slot=%d\n", rel->r_offset & 3);
+	    ELFDEBUG( "*dest128=[%016lx%016lx]\n", dest128[1], dest128[0]);
 #endif
 
 	    for (gotent=elffile->got_entries;gotent;gotent=gotent->next) {
@@ -1933,7 +1910,7 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 		*(unsigned long *)(elffile->got+gotent->offset) =
 							symval+rel->r_addend;
 #ifdef ELFDEBUG
-		ELFDEBUG("Setting gotent[%x]=%lx\t",
+		ELFDEBUG("Setting gotent[%x]=%lx\n",
 				gotent->offset, symval+rel->r_addend);
 #endif
 		if ((gotent->offset & 0xffe00000) != 0)
@@ -1951,18 +1928,14 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 	    ELFPltEntryPtr pltent;
 	    dest128=(unsigned long *)(secp+(rel->r_offset&~3));
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_IA64_PCREL21B %s\t",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "opd=%lx.%lx\t", ((long *)symval)[0], ((long *)symval)[1]);
 	    ELFDEBUG( "dest128=%lx\t", dest128 );
-	    ELFDEBUG( "slot=%ld\t", rel->r_offset & 3);
-	    ELFDEBUG( "*dest128=[%016lx%016lx]\t", dest128[1], dest128[0]);
-	    }
+	    ELFDEBUG( "slot=%d\n", rel->r_offset & 3);
+	    ELFDEBUG( "*dest128=[%016lx%016lx]\n", dest128[1], dest128[0]);
 #endif
 	    if (rel->r_addend)
 		FatalError("\nAddend for PCREL21B not supported\n");
@@ -2010,62 +1983,52 @@ ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 	case R_IA64_FPTR64LSB:
 	    dest64=(unsigned long *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_IA64_FPTR64LSB %s\t",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest64=%lx\t", dest64 );
 	    ELFDEBUG( "opd=%016lx.%016lx\n", ((long *)symval)[0], ((long *)symval)[1] );
-	    }
 #endif
 
 	    if (rel->r_addend)
 		FatalError("\nAddend not supported for R_IA64_FPTR64LSB\n");
 	    *dest64 = symval;
+	    ia64_flush_cache(dest64);
 	    break;
 
 	case R_IA64_DIR64LSB:
 	    dest64=(unsigned long *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_IA64_DIR64LSB %s\t",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
-	    ELFDEBUG( "dest64=%lx\t", dest64 );
-	    }
+	    ELFDEBUG( "dest64=%lx\n", dest64 );
 #endif
 	    *dest64 = symval + rel->r_addend;
+	    ia64_flush_cache(dest64);
 	    break;
 
 	case R_IA64_GPREL22:
 	    dest128=(unsigned long *)(secp+(rel->r_offset&~3));
 #ifdef ELFDEBUG
-	    {
-	    char *namestr;
 	    ELFDEBUG( "R_IA64_GPREL22 %s\t",
-			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-	    xf86loaderfree(namestr);
+			ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
 	    ELFDEBUG( "secp=%lx\t", secp );
 	    ELFDEBUG( "symval=%lx\t", symval );
 	    ELFDEBUG( "dest128=%lx\t", dest128 );
-	    ELFDEBUG( "slot=%ld\t", rel->r_offset & 3);
-	    ELFDEBUG( "*dest128=[%016lx%016lx]\t", dest128[1], dest128[0]);
-	    }
+	    ELFDEBUG( "slot=%d\n", rel->r_offset & 3);
+	    ELFDEBUG( "*dest128=[%016lx%016lx]\n", dest128[1], dest128[0]);
 #endif
-	    IA64InstallReloc(dest128, rel->r_offset & 3, IA64_OPND_IMM22, symval + rel->r_addend - (long)elffile->got);
+	    IA64InstallReloc(dest128, rel->r_offset & 3, IA64_OPND_IMM22,
+		symval + rel->r_addend - (long)elffile->got);
 	    break;
 
 #endif
 	default:
-	    ErrorF(
-		   "Elf_RelocateEntry() Unsupported relocation type %d\n",
-		   ELF_R_TYPE(rel->r_info) );
+	    ErrorF("Elf_RelocateEntry() Unsupported relocation type %d\n",
+		   ELF_R_TYPE(rel->r_info));
 	    break;
 	    }
     return 0;
@@ -2078,21 +2041,11 @@ int	index; /* The section to use as relocation data */
 {
     int	i, numrel;
     Elf_Shdr	*sect=&(elffile->sections[index]);
-#if defined(i386)
-    Elf_Rel	*rel=(Elf_Rel *)elffile->saddr[index];
-#endif
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__alpha__) || defined(__sparc__) || defined(__sparc__) || defined(__ia64__)
-    Elf_Rela	*rel=(Elf_Rela *)elffile->saddr[index];
-#endif
+    Elf_Rel_t	*rel=(Elf_Rel_t *)elffile->saddr[index];
     Elf_Sym	*syms;
-    unsigned char *secp;	/* Begining of the target section */
     ELFRelocPtr reloc_head = NULL;
     ELFRelocPtr tmp;
 
-    secp=(unsigned char *)elffile->saddr[sect->sh_info];
-    if (secp == NULL) {
-	secp=(unsigned char *)(long)sect->sh_info;
-    }
     syms = (Elf_Sym *) elffile->saddr[elffile->symndx];
 
     numrel=sect->sh_size/sect->sh_entsize;
@@ -2101,7 +2054,7 @@ int	index; /* The section to use as relocation data */
 #if defined(__alpha__)
 	if( ELF_R_TYPE(rel[i].r_info) == R_ALPHA_LITERAL) {
 	    ElfAddGOT(elffile,&rel[i]);
-	    }   
+	}   
 #endif
 #if defined(__ia64__)
 	if (ELF_R_TYPE(rel[i].r_info) == R_IA64_LTOFF22
@@ -2118,7 +2071,7 @@ int	index; /* The section to use as relocation data */
 	    }
 	}
 #endif
-	tmp = ElfDelayRelocation(elffile,secp,&(rel[i]));
+	tmp = ElfDelayRelocation(elffile, sect->sh_info, &(rel[i]));
 	tmp->next = reloc_head;
 	reloc_head = tmp;
     }
@@ -2500,7 +2453,7 @@ int		*maxalign;
 	    elffile->reltxtndx=i;
 	    elffile->reltxtsize=SecSize(i);
 #ifdef ELFDEBUG
-	    ELFDEBUG(".rela.text starts at %x\n", elffile->reltext );
+	    ELFDEBUG(".rela.text starts at %lx\n", elffile->reltext );
 #endif
 	    continue;
 	}
@@ -2514,7 +2467,7 @@ int		*maxalign;
 	    elffile->reldatndx=i;
 	    elffile->reldatsize=SecSize(i);
 #ifdef ELFDEBUG
-	    ELFDEBUG(".rela.data starts at %x\n", elffile->reldata );
+	    ELFDEBUG(".rela.data starts at %lx\n", elffile->reldata );
 #endif
 	    continue;
 	}
@@ -2528,7 +2481,7 @@ int		*maxalign;
 	    elffile->relsdatndx=i;
 	    elffile->relsdatsize=SecSize(i);
 #ifdef ELFDEBUG
-	    ELFDEBUG(".rela.sdata starts at %x\n", elffile->relsdata );
+	    ELFDEBUG(".rela.sdata starts at %lx\n", elffile->relsdata );
 #endif
 	    continue;
 	}
@@ -2542,7 +2495,7 @@ int		*maxalign;
 	    elffile->relrodatndx=i;
 	    elffile->relrodatsize=SecSize(i);
 #ifdef ELFDEBUG
-	    ELFDEBUG(".rela.rodata starts at %x\n", elffile->relrodata );
+	    ELFDEBUG(".rela.rodata starts at %lx\n", elffile->relrodata );
 #endif
 	    continue;
 	}
@@ -2724,7 +2677,8 @@ LOOKUP **ppLookup;
 /*
  *  Get the ELF header
  */
-    elffile->header=(Elf_Ehdr*)_LoaderFileToMem(elffd,0,sizeof(Elf_Ehdr),"header");
+    elffile->header=
+	(Elf_Ehdr*)_LoaderFileToMem(elffd, 0, sizeof(Elf_Ehdr), "header");
     header=(Elf_Ehdr *)elffile->header;
 
 /*
@@ -2732,8 +2686,9 @@ LOOKUP **ppLookup;
  */
     elffile->numsh=header->e_shnum;
     elffile->secsize=(header->e_shentsize*header->e_shnum);
-    elffile->sections=(Elf_Shdr *)_LoaderFileToMem(elffd,header->e_shoff,
-						     elffile->secsize, "sections");
+    elffile->sections=
+	(Elf_Shdr *)_LoaderFileToMem(elffd, header->e_shoff, elffile->secsize,
+				     "sections");
 #if defined(__alpha__) || defined(__ia64__)
     /*
      * Need to allocate space for the .got section which will be
@@ -2782,8 +2737,9 @@ LOOKUP **ppLookup;
  * Get the section header string table
  */
     elffile->shstrsize = SecSize(header->e_shstrndx);
-    elffile->shstraddr = _LoaderFileToMem(elffd,SecOffset(header->e_shstrndx),
-					  SecSize(header->e_shstrndx),".shstrtab");
+    elffile->shstraddr =
+	_LoaderFileToMem(elffd, SecOffset(header->e_shstrndx),
+			 SecSize(header->e_shstrndx), ".shstrtab");
     elffile->shstrndx = header->e_shstrndx;
 #if defined(__alpha__) || defined(__ia64__)
     /*
@@ -2900,11 +2856,6 @@ LOOKUP **ppLookup;
 	}
     xf86loaderfree(secttable);
 
-    for (elf_reloc = _LoaderGetRelocations(v)->elf_reloc;
-	 elf_reloc; elf_reloc = elf_reloc->next)
-	if ((unsigned long)elf_reloc->secp < elffile->numsh)
-	    elf_reloc->secp = (unsigned char *)elffile->saddr[(unsigned long)elf_reloc->secp];
-
 #if defined(__ia64__)
     ELFCreateOPD(elffile);
 #endif
@@ -2946,10 +2897,10 @@ void *mod;
     newlist = 0;
     for (p = _LoaderGetRelocations(mod)->elf_reloc; p; ) {
 #ifdef ELFDEBUG
-	ErrorF("ResolveSymbols: file %lx, sec %lx, r_offset 0x%x, r_info 0x%lx\n",
-	       p->file, p->secp, p->rel->r_offset, p->rel->r_info);
+	ErrorF("ResolveSymbols: file %lx, sec %d, r_offset 0x%x, r_info 0x%lx\n",
+	       p->file, p->secn, p->rel->r_offset, p->rel->r_info);
 #endif
-	tmp = Elf_RelocateEntry(p->file, p->secp, p->rel, FALSE);
+	tmp = Elf_RelocateEntry(p->file, p->secn, p->rel, FALSE);
 	if (tmp) {
 	    /* Failed to relocate.  Keep it in the list. */
 	    tmp->next = newlist;
@@ -2974,12 +2925,11 @@ void	*mod;
 	return 0;
 
     while( erel ) {
-	Elf_RelocateEntry(erel->file, erel->secp, erel->rel, TRUE);
+	Elf_RelocateEntry(erel->file, erel->secn, erel->rel, TRUE);
 	name = ElfGetSymbolName(erel->file, ELF_R_SYM(erel->rel->r_info));
 	flag = _LoaderHandleUnresolved(
 	    name, _LoaderHandleToName(erel->file->handle));
 	if(flag) fatalsym = 1;
-	xf86loaderfree(name);
 	erel=erel->next;
     }
     return fatalsym;
@@ -3031,8 +2981,14 @@ void *modptr;
 #if defined(__alpha__) || defined(__ia64__)
     if (elffile->shared_got) {
 	elffile->shared_got->nuses--;
-	if (!elffile->shared_got->nuses)
+	if (!elffile->shared_got->nuses) {
+	    ELFGotPtr *pgot = &ELFSharedGOTs;
+	    while (*pgot && *pgot != elffile->shared_got)
+		pgot = &(*pgot)->next;
+	    if (*pgot)
+		*pgot = elffile->shared_got->next;
 	    xf86loaderfree(elffile->shared_got);
+	}
     }
 #endif
 #else
@@ -3045,12 +3001,37 @@ void *modptr;
     CheckandFreeFile(elffile->rodata,elffile->rodatsize);
     CheckandFreeFile(elffile->rodata1,elffile->rodat1size);
     CheckandFree(elffile->common,elffile->comsize);
-#if defined(__ia64__)
-    CheckandFree(elffile->plt,elffile->pltsize);
-#endif
 #if defined(__alpha__) || defined(__ia64__)
     CheckandFree(elffile->got,elffile->gotsize);
 #endif
+#if defined(__ia64__)
+    CheckandFree(elffile->plt,elffile->pltsize);
+#endif
+#endif
+#if defined(__alpha__) || defined(__ia64__)
+    {
+	ELFGotEntryPtr gotent;
+	while((gotent = elffile->got_entries)) {
+	    elffile->got_entries = gotent->next;
+	    xf86loaderfree(gotent);
+	}
+    }
+#endif
+#if defined(__ia64__)
+    {
+	ELFPltEntryPtr pltent;
+	while ((pltent = elffile->plt_entries)) {
+	    elffile->plt_entries = pltent->next;
+	    xf86loaderfree(pltent);
+	}
+    }
+    {
+	ELFOpdPtr opdent;
+	while ((opdent = elffile->opd_entries)) {
+	    elffile->opd_entries = opdent->next;
+	    xf86loaderfree(opdent);
+	}
+    }
 #endif
     CheckandFreeFile(elffile->reltext,elffile->reltxtsize);
     CheckandFreeFile(elffile->reldata,elffile->reldatsize);
@@ -3086,4 +3067,3 @@ ELFAddressToSection(void *modptr, unsigned long address)
 	}
     return NULL;
 }
-

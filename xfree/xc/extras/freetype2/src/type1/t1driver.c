@@ -16,8 +16,7 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "t1driver.h"
 #include "t1gload.h"
 #include "t1load.h"
@@ -26,22 +25,9 @@
 #include "t1afm.h"
 #endif
 
-#else
-
-#include <type1/t1driver.h>
-#include <type1/t1gload.h>
-#include <type1/t1load.h>
-
-#ifndef T1_CONFIG_OPTION_NO_AFM
-#include <type1/t1afm.h>
-#endif
-
-#endif
-
-
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/psnames.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
 
 #include <string.h>     /* for strcmp() */
 
@@ -69,7 +55,7 @@
 
     if ( buffer_max > 0 )
     {
-      FT_UInt  len = strlen( gname );
+      FT_UInt  len = (FT_UInt)( strlen( gname ) );
 
 
       if (len >= buffer_max)

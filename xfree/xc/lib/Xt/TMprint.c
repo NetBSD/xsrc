@@ -1,4 +1,4 @@
-/* $TOG: TMprint.c /main/16 1998/02/06 13:27:12 kaleb $ */
+/* $Xorg: TMprint.c,v 1.3 2000/08/17 19:46:19 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts

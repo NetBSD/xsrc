@@ -1048,6 +1048,8 @@
     #define TMC_tformat_tw16 		0x3 		/* val 3, shift 0 */
     #define TMC_tformat_tw12 		0x4 		/* val 4, shift 0 */
     #define TMC_tformat_tw32 		0x6 		/* val 6, shift 0 */
+    #define TMC_tformat_tw8a 		0x7 		/* val 7, shift 0 */
+    #define TMC_tformat_tw8al 		0x8 		/* val 8, shift 0 */
     #define TMC_tformat_tw422 		0xa 		/* val 10, shift 0 */
     #define TMC_tpitchlin_MASK 		0xfffffeff 	/* bit 8 */
     #define TMC_tpitchlin_disable 	0x0 		
@@ -1162,6 +1164,7 @@
     #define TO_texorgacc_MASK 		0xfffffffd 	/* bit 1 */
     #define TO_texorgacc_pci 		0x0 		
     #define TO_texorgacc_agp 		0x2 		
+    #define TO_texorgoffsetsel 		0x4 		
     #define TO_texorg_MASK 		0x1f 		/* bits 5-31 */
     #define TO_texorg_SHIFT 		5 		
 

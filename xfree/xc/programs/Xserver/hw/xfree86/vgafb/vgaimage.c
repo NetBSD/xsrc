@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaimage.c,v 1.1.2.1 1997/07/16 10:36:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaimage.c,v 1.2 1998/07/25 16:58:20 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

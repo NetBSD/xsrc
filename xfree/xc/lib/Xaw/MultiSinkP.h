@@ -1,4 +1,4 @@
-/* $TOG: MultiSinkP.h /main/3 1998/02/06 12:47:08 kaleb $ */
+/* $Xorg: MultiSinkP.h,v 1.3 2000/08/17 19:45:35 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -67,7 +67,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/MultiSinkP.h,v 1.6 1999/06/06 08:48:00 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSinkP.h,v 1.8 2001/01/17 19:42:28 dawes Exp $ */
 
 #ifndef _XawMultiSinkP_h
 #define _XawMultiSinkP_h

@@ -1,13 +1,13 @@
 #!/bin/sh
 
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.18.2.3 2001/03/13 15:23:11 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.20.2.4 2001/06/01 17:16:57 dawes Exp $
 #
 # Copyright © 2000 by Precision Insight, Inc.
-# Copyright © 2000,2001 by VA Linux Systems, Inc.
+# Copyright © 2000, 2001 by VA Linux Systems, Inc.
 # Portions Copyright © 1996-2000 by The XFree86 Project, Inc.
 #
-# This script should be used to install XFree86 4.0.2.
+# This script should be used to install XFree86 4.1.0.
 #
 # Parts of this script are based on the old preinst.sh and postinst.sh
 # scripts.
@@ -17,23 +17,46 @@
 # Authors:	David Dawes <dawes@xfree86.org>
 #
 
-VERSION=4.0.3
-FULLVERSION=4.0.2
+# Fallbacks for when the bindist version can't be auto-detected.
+# These should be updated for each release.
 
-RUNDIR=/usr/X11R6
-ETCDIR=/etc/X11
-VARDIR=/var
+FULLPREFIX=4.1
+PATCHLEVEL=0
+VERSION=$FULLPREFIX.$PATCHLEVEL
+FULLVERSION=$FULLPREFIX.0
+SCRIPTVERSION=$VERSION
+
+BINDISTFULLPREFIX=
+BINDISTPATCHLEVEL=
+BINDISTVERSION=
+BINDISTFULLVERSION=
+
+ROOTDIR=
+
+TESTROOT=/home1/test
 
 if [ X"$1" = "X-test" -o X"$XINST_TEST" != X ]; then
-	RUNDIR=/home1/test/X11R6
-	ETCDIR=/home1/test/etcX11
-	VARDIR=/home1/test/var
+	ROOTDIR=$TESTROOT
 	if [ X"$1" = "X-test" ]; then
 		shift
 	fi
+	if [ ! -d $TESTROOT ]; then
+		echo "$TESTROOT doesn't exist (for test mode)"
+		exit 1
+	fi
+	for i in usr etc var; do
+		if [ ! -d $TESTROOT/$i ]; then
+			echo "$TESTROOT/$i doesn't exist, creating it"
+			mkdir $TESTROOT/$i
+		fi
+	done
 	echo ""
 	echo "Running in test mode"
 fi
+
+RUNDIR=$ROOTDIR/usr/X11R6
+ETCDIR=$ROOTDIR/etc/X11
+VARDIR=$ROOTDIR/var
 
 OLDFILES=""
 
@@ -86,7 +109,7 @@ OPTDIST=" \
 	Xps.tgz \
 	"
 
-ETCLINKS=" \
+ETCDLINKS=" \
 	app-defaults \
 	fs \
 	lbxproxy \
@@ -99,7 +122,13 @@ ETCLINKS=" \
 	xserver \
 	"
 
-XKBDIR="/etc/X11/xkb"
+ETCFLINKS=" \
+	XftConfig \
+	"
+
+
+XKBDIR="$ETCDIR/xkb"
+XKBDBDIR=
 
 FONTDIRS=" \
 	local \
@@ -107,6 +136,8 @@ FONTDIRS=" \
 	"
 
 XSERVERCMD="$RUNDIR/bin/XFree86"
+
+VERSIONFILE=".XFree86_Version"
 
 WDIR=`pwd`
 
@@ -194,6 +225,10 @@ Description()
 		echo "Docs in Japanese";;
 	Xps*)
 		echo "Docs in PostScript";;
+	Xaout*)
+		echo "a.out compatibility libraries";;
+	Xquartz*)
+		echo "Mac OS X Quartz compatible X server";;
 	*)
 		echo "unknown";;
 	esac
@@ -363,16 +398,26 @@ FindDistName()
 		case "$OsArch" in
 		Power*)
 			case "$OsVersion" in
-			1.[2-9])
-				DistName="Darwin"
+			1.[2-9]*)
+				DistName="Darwin-ppc"
 				;;
 			*)
-				Message="No Darwin binaries available for this OS version"
+				Message="No Darwin/ppc binaries available for this OS version"
+				;;
+			esac
+			;;
+		x86*)
+			case "$OsVersion" in
+			1.[3-9]*)
+				DistName="Darwin-ix86"
+				;;
+			*)
+				Message="No Darwin/ix86 binaries available for this OS version"
 				;;
 			esac
 			;;
 		*)
-			Message="Darwin binaries are only available for Power Mac platforms"
+			Message="Darwin binaries are not available for this architecture"
 			;;
 		esac
 		;;
@@ -594,6 +639,36 @@ FindDistName()
 	fi
 }
 
+GetBindistVersion()
+{
+	VERSTARBALL=
+	if [ X$DOBASE = XYES ]; then
+		if [ -f Xbin.tgz ]; then
+			VERSTARBALL=Xbin.tgz
+		fi
+	else
+		if [ X$DOUPDATE = XYES ]; then
+			if [ -f Xupdate.tgz ]; then
+				VERSTARBALL=Xupdate.tgz
+			fi
+		fi
+	fi
+	rm -f $VERSIONFILE
+	if [ X$VERSTARBALL != X ]; then
+		$TAR xzf $VERSTARBALL $VERSIONFILE
+	fi
+	if [ -f $VERSIONFILE ]; then
+		BINDISTVERSION=`cat $VERSIONFILE`
+		echo "Bindist version is $BINDISTVERSION"
+		BINDISTFULLPREFIX=`expr $BINDISTVERSION : '\([0-9]*\.[0-9]*\)\.'`
+		BINDISTPATCHLEVEL=`expr $BINDISTVERSION : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+		BINDISTFULLVERSION=$BINDISTFULLPREFIX.0
+	else
+		echo "Warning: can't detect the bindist version"
+	fi
+
+}
+
 CheckInstallType()
 {
 	# Check for explicit options
@@ -643,6 +718,7 @@ CheckInstallType()
 			exit 1
 		fi
 	fi
+	GetBindistVersion
 }
 
 InstallUpdate()
@@ -670,7 +746,7 @@ InstallUpdate()
 		existingVer=`$XSERVERCMD -version 2>&1 | grep "XFree86 Version" | \
 						awk '{print $3}'`
 		case $existingVer in
-		${FULLVERSION}*)
+		${FULLPREFIX}.*)
 			;;
 		*)
 			echo ""
@@ -689,6 +765,9 @@ InstallUpdate()
 	for i in $UPDATEDIST $EXTRAUPDATE; do
 		(cd $RUNDIR; $EXTRACT $WDIR/$i)
 	done
+
+	# Make sure that $RUNDIR/lib isn't group/other writable
+	chmod og-w $RUNDIR/lib
 
 	# Need to run ldconfig on some OSs
 	case "$OsName" in
@@ -727,13 +806,16 @@ if [ X"$1" = "X-check" ]; then
 fi
 
 echo ""
-echo "		Welcome to the XFree86 $VERSION installer"
+echo "		Welcome to the XFree86 $SCRIPTVERSION installer"
 echo ""
 echo "You are strongly advised to backup your existing XFree86 installation"
-echo "before proceeding.  This includes the /usr/X11R6 and /etc/X11"
+echo "before proceeding.  This includes the $ROOTDIR/usr/X11R6 and $ROOTDIR/etc/X11"
 echo "directories.  The installation process will overwrite existing files"
 echo "in those directories, and this may include some configuration files"
 echo "that may have been customised."
+echo ""
+echo "If you are installing a version different from $SCRIPTVERSION, you"
+echo "may need an updated version of this installer script."
 echo ""
 ContinueNo
 
@@ -758,11 +840,12 @@ GetOsInfo
 case "$OsName" in
 Darwin)
 	SERVDIST="Xxserv.tgz"
+	EXTRAOPTDIST="Xquartz.tgz"
 	UPDATEDIST="Xupdate.tgz Xdocupd.tgz"
 	;;
 FreeBSD|NetBSD|OpenBSD)
 	VARDIST="Xvar.tgz"
-	XKBDIR="/var/db/xkb"
+	XKBDBDIR="$VARDIR/db/xkb"
 	;;
 Interactive)	# Need the correct name for this
 	EXTRADIST="Xbin1.tgz"
@@ -770,31 +853,9 @@ Interactive)	# Need the correct name for this
 	;;
 Linux)
 	VARDIST="Xvar.tgz"
-	XKBDIR="/var/lib/xkb"
+	XKBDBDIR="$VARDIR/lib/xkb"
 	;;
 esac
-
-CheckInstallType "$@"
-
-if [ X"$DOUPDATE" = XYES ]; then
-	REQUIREDFILES=" \
-		extract \
-		$UPDATEDIST \
-		$EXTRAUPDATE
-		"
-else
-	REQUIREDFILES=" \
-		extract \
-		$BASEDIST \
-		$ETCDIST \
-		$VARDIST \
-		$SERVDIST \
-		$EXTRADIST \
-		"
-fi
-
-echo "Checking for required files ..."
-Needed=""
 
 # Check for extract and extract.exe, and check that they are usable.
 #
@@ -861,6 +922,35 @@ if [ X"$ExtractOK" != XYES ]; then
 	exit 1
 fi
 
+# Link extract to gnu-tar so it can also be used as a regular tar
+rm -f gnu-tar
+ln extract gnu-tar
+
+EXTRACT=$WDIR/extract
+TAR=$WDIR/gnu-tar
+
+CheckInstallType "$@"
+
+if [ X"$DOUPDATE" = XYES ]; then
+	REQUIREDFILES=" \
+		extract \
+		$UPDATEDIST \
+		$EXTRAUPDATE
+		"
+else
+	REQUIREDFILES=" \
+		extract \
+		$BASEDIST \
+		$ETCDIST \
+		$VARDIST \
+		$SERVDIST \
+		$EXTRADIST \
+		"
+fi
+
+echo "Checking for required files ..."
+Needed=""
+
 for i in $REQUIREDFILES; do
 	if [ ! -f $i ]; then
 		Needed="$Needed $i"
@@ -893,12 +983,20 @@ fi
 
 echo ""
 
-# Link extract to gnu-tar so it can also be used as a regular tar
-rm -f gnu-tar
-ln extract gnu-tar
+# Set version variables if the bindist version was successfully auto-detected.
 
-EXTRACT=$WDIR/extract
-TAR=$WDIR/gnu-tar
+if [ X$BINDISTVERSION != X ]; then
+	VERSION=$BINDISTVERSION
+fi
+if [ X$BINDISTFULLVERSION != X ]; then
+	FULLVERSION=$BINDISTFULLVERSION
+fi
+if [ X$BINDISTPATCHLEVEL != X ]; then
+	PATCHLEVEL=$BINDISTPATCHLEVEL
+fi
+if [ X$BINDISTFULLPREFIX != X ]; then
+	FULLPREFIX=$BINDISTFULLPREFIX
+fi
 
 if [ X"$DOUPDATE" = XYES ]; then
 	InstallUpdate
@@ -964,22 +1062,28 @@ if [ ! -d $RUNDIR/lib/X11/xkb ]; then
 fi
 # Check for config file directories that may need to be moved.
 
-EtcToMove=
+EtcDirToMove=
+EtcFileToMove=
 if [ X"$NoSymLinks" != XYES ]; then
-	for i in $ETCLINKS; do
+	for i in $ETCDLINKS; do
 		if [ -d $RUNDIR/lib/X11/$i -a ! $L $RUNDIR/lib/X11/$i ]; then
-			EtcToMove="$EtcToMove $i"
+			EtcDirToMove="$EtcDirToMove $i"
+		fi
+	done
+	for i in $ETCFLINKS; do
+		if [ -f $RUNDIR/lib/X11/$i -a ! $L $RUNDIR/lib/X11/$i ]; then
+			EtcFileToMove="$EtcFileToMove $i"
 		fi
 	done
 fi
 
-if [ X"$EtcToMove" != X ]; then
+if [ X"$EtcDirToMove" != X -o X"$EtcFileToMove" != X ]; then
 	echo "XFree86 now installs most customisable configuration files under"
 	echo "$ETCDIR instead of under $RUNDIR/lib/X11, and has symbolic links"
 	echo "under $RUNDIR/lib/X11 that point to $ETCDIR.  You currently have"
 	echo "files under the following subdirectories of $RUNDIR/lib/X11:"
 	echo ""
-	echo "$EtcToMove"
+	echo "$EtcDirToMove $EtcFileToMove"
 	echo ""
 	echo "Do you want to move them to $ETCDIR and create the necessary"
 	Echo "links? (y/n) [y] "
@@ -994,13 +1098,19 @@ if [ X"$EtcToMove" != X ]; then
 	esac
 	echo ""
 	if [ X"$NoSymLinks" != XYES ]; then
-		for i in $EtcToMove; do
+		for i in $EtcDirToMove; do
 			echo "Moving $RUNDIR/lib/X11/$i to $ETCDIR/$i ..."
 			if [ ! -d $ETCDIR/$i ]; then
 				mkdir $ETCDIR/$i
 			fi
 			$TAR -C $RUNDIR/lib/X11/$i -c -f - . | \
 				$TAR -C $ETCDIR/$i -v -x -p -U -f - && \
+				rm -fr $RUNDIR/lib/X11/$i && \
+				ln -s $ETCDIR/$i $RUNDIR/lib/X11/$i
+		done
+		for i in $EtcFileToMove; do
+			echo "Moving $RUNDIR/lib/X11/$i to $ETCDIR/$i ..."
+			cp -p $RUNDIR/lib/X11/$i $ETCDIR/$i && \
 				rm -fr $RUNDIR/lib/X11/$i && \
 				ln -s $ETCDIR/$i $RUNDIR/lib/X11/$i
 		done
@@ -1016,7 +1126,7 @@ echo "Extracting $ETCDIST into a temporary location ..."
 rm -fr .etctmp
 mkdir .etctmp
 (cd .etctmp; $EXTRACT $WDIR/$ETCDIST)
-for i in $ETCLINKS; do
+for i in $ETCDLINKS; do
 	DoCopy=YES
 	if [ -d $RUNDIR/lib/X11/$i ]; then
 		Echo "Do you want to overwrite the $i config files? (y/n) [n] "
@@ -1048,13 +1158,38 @@ for i in $ETCLINKS; do
 			$TAR -C $RUNDIR/lib/X11/$i -v -x -p -U -f -
 	fi
 done
+for i in $ETCFLINKS; do
+	DoCopy=YES
+	if [ -f $RUNDIR/lib/X11/$i ]; then
+		Echo "Do you want to overwrite the $i config file? (y/n) [n] "
+		read response
+		case "$response" in
+		[yY]*)
+			: OK
+			;;
+		*)
+			DoCopy=NO
+			;;
+		esac
+	fi
+	if [ $DoCopy = YES ]; then
+		echo "Installing the $i config file ..."
+		if [ X"$NoSymLinks" != XYES ]; then
+			if [ ! -f $RUNDIR/lib/X11/$i ]; then
+				ln -s $ETCDIR/$i $RUNDIR/lib/X11/$i
+			fi
+		fi
+		(set -x; cp -p .etctmp/$i $RUNDIR/lib/X11/$i)
+	fi
+done
 if [ X"$XKBDIR" != X ]; then
-	rm -fr $RUNDIR/lib/X11/xkb/compiled
 	if [ X"$NoSymLinks" = XYES ]; then
 		XKBDIR=$RUNDIR/lib/X11/xkb/compiled
 	fi
 	if [ -d .etctmp/xkb ]; then
-		mkdir $XKBDIR
+		if [ ! -d $XKBDIR ]; then
+			mkdir $XKBDIR
+		fi
 		$TAR -C .etctmp/xkb -c -f - . | \
 			$TAR -C $XKBDIR -v -x -p -U -f -
 	fi
@@ -1071,9 +1206,10 @@ if [ X"$VARDIST" != X ]; then
 	(cd $VARDIR; $EXTRACT $WDIR/$VARDIST)
 fi
 
-if [ X"$XKBDIR" != X -a X"$XKBDIR" != X"$RUNDIR/lib/X11/xkb/compiled" ]; then
+if [ X"$XKBDIR" != X -a X"$XKBDIR" != X"$RUNDIR/lib/X11/xkb/compiled" -a \
+	 X"$XKBDBDIR" != X ]; then
 	rm -fr $RUNDIR/lib/X11/xkb/compiled
-	ln -s $XKBDIR $RUNDIR/lib/X11/xkb/compiled
+	ln -s $XKBDBDIR $RUNDIR/lib/X11/xkb/compiled
 fi
 
 echo "Checking for optional components to install ..."
@@ -1118,8 +1254,8 @@ for i in $FONTDIRS $EXTRAFONTDIRS; do
 done
 		
 # Check if the system has a termcap file
-TERMCAP1DIR=/usr/share
-TERMCAP2=/etc/termcap
+TERMCAP1DIR=$ROOTDIR/usr/share
+TERMCAP2=$ROOTDIR/etc/termcap
 if [ -d $TERMCAP1DIR ]; then
 	TERMCAP1=`find $TERMCAP1DIR -type f -name termcap -print 2> /dev/null`
 	if [ x"$TERMCAP1" != x ]; then
@@ -1153,7 +1289,7 @@ if [ X"$TERMCAPFILE" != X ]; then
 fi
 
 # Check for terminfo, and update the xterm entry
-TINFODIR=/usr/lib/terminfo
+TINFODIR=$ROOTDIR/usr/lib/terminfo
 # Does this list need to be updated?
 OLDTINFO=" \
 	x/xterm \
@@ -1213,20 +1349,20 @@ fi
 
 if [ -f $RUNDIR/lib/libGL.so ]; then
 	existing=""
-	if [ -f /usr/lib/libGL.so ]; then
+	if [ -f $ROOTDIR/usr/lib/libGL.so ]; then
 		existing="$existing /usr/lib/libGL.so"
 	fi
-	if [ -f /usr/lib/libGL.so.1 ]; then
+	if [ -f $ROOTDIR/usr/lib/libGL.so.1 ]; then
 		existing="$existing /usr/lib/libGL.so.1"
 	fi
-	if [ -d /usr/include/GL ]; then
+	if [ -d $ROOTDIR/usr/include/GL ]; then
 		existing="$existing /usr/include/GL"
 	fi
 	echo ""
 	echo "On some platforms (e.g., Linux), the OpenGL standard requires"
 	echo "that the GL shared library and header files be visible from the"
-	echo "standard system lib and include directories (/usr/lib and"
-	echo "/usr/include).  This can be done by installing links in those"
+	echo "standard system lib and include directories ($ROOTDIR/usr/lib and"
+	echo "$ROOTDIR/usr/include).  This can be done by installing links in those"
 	echo "directories to the files that have been installed under $RUNDIR."
 	echo ""
 	echo "NOTE: installing these links will overwrite existing files or"
@@ -1242,29 +1378,37 @@ if [ -f $RUNDIR/lib/libGL.so ]; then
 	read response
 	case "$response" in
 	[yY]*)
-		rm -f /usr/lib/libGL.so
-		if [ ! -f /usr/lib/libGL.so ]; then
-			echo "Creating link from $RUNDIR/lib/libGL.so to /usr/lib/libGL.so"
-			ln -s $RUNDIR/lib/libGL.so /usr/lib/libGL.so
+		if [ ! -d $ROOTDIR/usr/lib ]; then
+			echo "Creating $ROOTDIR/usr/lib"
+			mkdir $ROOTDIR/usr/lib
+		fi
+		if [ ! -d $ROOTDIR/usr/include ]; then
+			echo "Creating $ROOTDIR/usr/include"
+			mkdir $ROOTDIR/usr/include
+		fi
+		rm -f $ROOTDIR/usr/lib/libGL.so
+		if [ ! -f $ROOTDIR/usr/lib/libGL.so ]; then
+			echo "Creating link from $RUNDIR/lib/libGL.so to $ROOTDIR/usr/lib/libGL.so"
+			ln -s $RUNDIR/lib/libGL.so $ROOTDIR/usr/lib/libGL.so
 		else
-			echo "Could not remove existing /usr/lib/libGL.so, so the new"
+			echo "Could not remove existing $ROOTDIR/usr/lib/libGL.so, so the new"
 			echo "link has not been created."
 		fi
-		rm -f /usr/lib/libGL.so.1
-		if [ ! -f /usr/lib/libGL.so.1 ]; then
-			echo "Creating link from $RUNDIR/lib/libGL.so.1 to /usr/lib/libGL.so.1"
-			ln -s $RUNDIR/lib/libGL.so.1 /usr/lib/libGL.so.1
+		rm -f $ROOTDIR/usr/lib/libGL.so.1
+		if [ ! -f $ROOTDIR/usr/lib/libGL.so.1 ]; then
+			echo "Creating link from $RUNDIR/lib/libGL.so.1 to $ROOTDIR/usr/lib/libGL.so.1"
+			ln -s $RUNDIR/lib/libGL.so.1 $ROOTDIR/usr/lib/libGL.so.1
 		else
-			echo "Could not remove existing /usr/lib/libGL.so.1, so the new"
+			echo "Could not remove existing $ROOTDIR/usr/lib/libGL.so.1, so the new"
 			echo "link has not been created."
 		fi
 		if [ -d $RUNDIR/include/GL ]; then
-			rm -f /usr/include/GL
-			if [ ! -d /usr/include/GL ]; then
-				echo "Creating link from $RUNDIR/include/GL to /usr/include/GL"
-				ln -s $RUNDIR/include/GL /usr/include/GL
+			rm -f $ROOTDIR/usr/include/GL
+			if [ ! -d $ROOTDIR/usr/include/GL ]; then
+				echo "Creating link from $RUNDIR/include/GL to $ROOTDIR/usr/include/GL"
+				ln -s $RUNDIR/include/GL $ROOTDIR/usr/include/GL
 			else
-				echo "Could not remove existing /usr/include/GL, so the new"
+				echo "Could not remove existing $ROOTDIR/usr/include/GL, so the new"
 				echo "link has not been created."
 			fi
 		fi
@@ -1276,15 +1420,19 @@ if [ -f $RUNDIR/bin/rstartd ]; then
 	echo ""
 	echo "If you are going to use rstart and $RUNDIR/bin isn't in the"
 	echo "default path for commands run remotely via rsh, you will need"
-	echo "a link to rstartd installed in /usr/bin."
+	echo "a link to rstartd installed in $ROOTDIR/usr/bin."
 	echo ""
 	Echo "Do you wish to have this link installed (y/n)? [n] "
 	read response
 	case "$response" in
 	[yY]*)
-		echo "Creating link from $RUNDIR/bin/rstartd to /usr/bin/rstartd"
-		rm -f /usr/bin/rstartd
-		ln -s $RUNDIR/bin/rstartd /usr/bin/rstartd
+		if [ ! -d $ROOTDIR/usr/bin ]; then
+			echo "Creating $ROOTDIR/usr/bin"
+			mkdir $ROOTDIR/usr/bin
+		fi
+		echo "Creating link from $RUNDIR/bin/rstartd to $ROOTDIR/usr/bin/rstartd"
+		rm -f $ROOTDIR/usr/bin/rstartd
+		ln -s $RUNDIR/bin/rstartd $ROOTDIR/usr/bin/rstartd
 		;;
 	esac
 fi

@@ -1,4 +1,4 @@
-/* $TOG: wire.h /main/19 1998/02/10 18:18:36 kaleb $ */
+/* $Xorg: wire.h,v 1.3 2000/08/17 19:53:58 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

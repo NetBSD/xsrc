@@ -1,4 +1,4 @@
-/* $TOG: osdep.h /main/11 1998/02/11 10:06:49 kaleb $ */
+/* $Xorg: osdep.h,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)osdep.h	4.1	5/2/91
  *
  */
-/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.6 1999/03/07 11:41:07 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.8 2001/01/17 23:45:32 dawes Exp $ */
 
 #ifndef _OSDEP_H_
 #define	_OSDEP_H_

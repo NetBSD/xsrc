@@ -1,4 +1,4 @@
-/* $TOG: sunKbd.c /main/78 1998/02/10 13:16:57 kaleb $ */
+/* $Xorg: sunKbd.c,v 1.3 2000/08/17 19:48:30 cpqbld Exp $ */
 /*-
  * Copyright 1987 by the Regents of the University of California
  *
@@ -39,7 +39,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.1.1.10.2.3 1998/10/04 15:22:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.5 2001/01/17 22:36:50 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "sun.h"

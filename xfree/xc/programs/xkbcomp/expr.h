@@ -1,4 +1,4 @@
-/* $XConsortium: expr.h /main/6 1996/03/01 14:32:09 kaleb $ */
+/* $Xorg: expr.h,v 1.3 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

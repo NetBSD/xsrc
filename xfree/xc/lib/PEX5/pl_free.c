@@ -1,4 +1,4 @@
-/* $TOG: pl_free.c /main/11 1998/02/06 16:10:16 kaleb $ */
+/* $Xorg: pl_free.c,v 1.3 2000/08/17 19:44:23 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

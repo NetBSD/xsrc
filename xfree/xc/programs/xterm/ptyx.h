@@ -1,7 +1,8 @@
 /*
- *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.80 2000/11/01 01:12:41 dawes Exp $
+ *	$Xorg: ptyx.h,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
+
+/* $XFree86: xc/programs/xterm/ptyx.h,v 3.86 2001/04/12 01:02:50 dickey Exp $ */
 
 /*
  * Copyright 1999-2000 by Thomas E. Dickey
@@ -111,7 +112,7 @@
 
 #ifdef SYSV
 #ifdef X_NOT_POSIX
-#ifndef CRAY
+#if !defined(CRAY) && !defined(SVR4)
 #define	dup2(fd1,fd2)	((fd1 == fd2) ? fd1 : \
 				(close(fd2), fcntl(fd1, F_DUPFD, fd2)))
 #endif
@@ -220,7 +221,7 @@
 #ifdef CRAY
 #define PTYCHARLEN 3
 #elif defined(__MVS__)
-#define PTYCHARLEN 4
+#define PTYCHARLEN 8     /* OS/390 stores, e.g. ut_id="ttyp1234"  */
 #else
 #define PTYCHARLEN 2
 #endif
@@ -510,8 +511,8 @@ typedef struct {
 #define OPT_SCO_FUNC_KEYS 0 /* true if xterm supports SCO-style function keys */
 #endif
 
-#ifndef OPT_SHIFT_KEYS
-#define OPT_SHIFT_KEYS  1 /* true if xterm interprets shifted special-keys */
+#ifndef OPT_SHIFT_FONTS
+#define OPT_SHIFT_FONTS 1 /* true if xterm interprets fontsize-shifting */
 #endif
 
 #ifndef OPT_SUNPC_KBD
@@ -548,6 +549,14 @@ typedef struct {
 
 #ifndef OPT_ZICONBEEP
 #define OPT_ZICONBEEP   1 /* true if xterm supports "-ziconbeep" option */
+#endif
+
+#ifndef OPT_USE_UTF8_API
+#define OPT_USE_UTF8_API 1
+#endif
+#ifndef X_HAVE_UTF8_STRING
+#undef OPT_USE_UTF8_API
+#define OPT_USE_UTF8_API 0
 #endif
 
 /***====================================================================***/
@@ -797,8 +806,12 @@ typedef struct {
 #if OPT_TRACE
 #include <trace.h>
 #else
+#ifndef TRACE
 #define TRACE(p) /*nothing*/
+#endif
+#ifndef TRACE_CHILD
 #define TRACE_CHILD /*nothing*/
+#endif
 #endif
 
 /***====================================================================***/
@@ -1038,6 +1051,7 @@ typedef struct {
 	int		mouse_col;	/* ...and its column		*/
 	int		select;		/* xterm selected		*/
 	Boolean		visualbell;	/* visual bell mode		*/
+	Boolean		poponbell;	/* pop on bell mode		*/
 	Boolean		allowSendEvents;/* SendEvent mode		*/
 	Boolean		awaitInput;	/* select-timeout mode		*/
 	Boolean		grabbedKbd;	/* keyboard is grabbed		*/
@@ -1214,6 +1228,8 @@ typedef struct {
 	Boolean		cutToBeginningOfLine;  /* line cuts to BOL? */
 	Boolean		highlight_selection; /* controls appearance of selection */
 	Boolean		trim_selection; /* controls trimming of selection */
+	Boolean		i18nSelections;
+	Boolean		brokenSelections;
 	char		*selection_data; /* the current selection */
 	int		selection_size; /* size of allocated buffer */
 	int		selection_length; /* number of significant bytes */
@@ -1322,8 +1338,8 @@ typedef struct _Misc {
 #if OPT_DEC_SOFTFONT
     Boolean font_loadable;
 #endif
-#if OPT_SHIFT_KEYS
-    Boolean shift_keys;		/* true if we interpret shifted special-keys */
+#if OPT_SHIFT_FONTS
+    Boolean shift_fonts;	/* true if we interpret fontsize-shifting */
 #endif
 #if OPT_SUNPC_KBD
     int ctrl_fkeys;		/* amount to add to XK_F1 for ctrl modifier */

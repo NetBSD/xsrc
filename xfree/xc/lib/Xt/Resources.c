@@ -1,4 +1,4 @@
-/* $TOG: Resources.c /main/115 1998/06/19 11:08:11 kaleb $ */
+/* $Xorg: Resources.c,v 1.3 2000/08/17 19:46:16 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -55,7 +55,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xt/Resources.c,v 1.5 1998/10/03 09:06:57 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.7 2001/01/17 19:43:07 dawes Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"

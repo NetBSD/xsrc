@@ -1,4 +1,4 @@
-/* $TOG: PsArea.c /main/3 1998/02/09 15:42:11 kaleb $ */
+/* $Xorg: PsArea.c,v 1.4 2000/08/17 19:48:09 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
 /*
  * (c) Copyright 1996 Hewlett-Packard Company
  * (c) Copyright 1996 International Business Machines Corp.
- * (c) Copyright 1996 Sun Microsystems, Inc.
+ * (c) Copyright 1996, 2000 Sun Microsystems, Inc.
  * (c) Copyright 1996 Novell, Inc.
  * (c) Copyright 1996 Digital Equipment Corp.
  * (c) Copyright 1996 Fujitsu Limited
@@ -225,6 +225,155 @@ error:
 }
 
 void
+PsPutScaledImageIM(DrawablePtr pDrawable, GCPtr pGC, int depth, int x, int y,
+           int w, int h, int leftPad, int format, int imageRes, char *pImage)
+{
+  if( pDrawable->type==DRAWABLE_PIXMAP )
+  {
+    int             size = PixmapBytePad(w, depth)*h;
+    DisplayElmPtr   elm;
+    PixmapPtr       pix  = (PixmapPtr)pDrawable;
+    PsPixmapPrivPtr priv = (PsPixmapPrivPtr)pix->devPrivate.ptr;
+    DisplayListPtr  disp;
+    GCPtr           gc;
+
+    if ((gc = PsCreateAndCopyGC(pDrawable, pGC)) == NULL) return;
+
+    disp = PsGetFreeDisplayBlock(priv);
+    elm  = &disp->elms[disp->nelms];
+    elm->type = PutImageCmd;
+    elm->gc = gc;
+    elm->c.image.depth   = depth;
+    elm->c.image.x       = x;
+    elm->c.image.y       = y;
+    elm->c.image.w       = w;
+    elm->c.image.h       = h;
+    elm->c.image.leftPad = leftPad;
+    elm->c.image.format  = format;
+    elm->c.image.res     = imageRes;
+    elm->c.image.pData   = (char *)xalloc(size);
+    memcpy(elm->c.image.pData, pImage, size);
+    disp->nelms += 1;
+  }
+  else
+  {
+    int          i, j;
+    int          r, c;
+    int          swap;
+    char        *pt;
+    PsOutPtr     psOut;
+    ColormapPtr  cMap;
+    int          pageRes, sw, sh;
+
+    if( PsUpdateDrawableGC(pGC, pDrawable, &psOut, &cMap)==FALSE ) return;
+    if (!imageRes) {
+        sw = w;
+        sh = h;
+    } else {
+        pageRes = XpGetResolution(XpGetPrintContext(requestingClient));
+        sw = (float)w * (float)pageRes / (float)imageRes + 0.5;
+        sh = (float)h * (float)pageRes / (float)imageRes + 0.5;
+    }
+    PsOut_Offset(psOut, pDrawable->x, pDrawable->y);
+    pt = (char *)(&i); i = 1; if( pt[0]=='\001' ) swap = 1; else swap = 0;
+
+    if( depth==24 )
+    {
+      PsOut_BeginImageIM(psOut, 0, 0, x, y, w, h, sw, sh, 3);
+      if( format==XYPixmap )
+      {
+        int   rowsiz = PixmapBytePad(w, depth);
+        char *planes[3];
+        planes[0] = pImage;
+        planes[1] = &pImage[rowsiz*h];
+        planes[2] = &pImage[rowsiz*h*2];
+        for( r=0 ; r<h ; r++ )
+        {
+          char *pt[3];
+          for( i=0 ; i<3 ;  i++ ) pt[i] = &planes[i][rowsiz*r];
+          for( c=0 ; c<w ; c++ )
+          {
+            for( i=0 ; i<3 ; i++ )
+              { PsOut_OutImageBytes(psOut, 1, &pt[i][c]); pt[i]++; }
+          }
+        }
+      }
+      else if( format==ZPixmap )
+      {
+        int  rowsiz = PixmapBytePad(w, depth);
+        for( r=0 ; r<h ; r++ )
+        {
+          char *pt = &pImage[rowsiz*r];
+          for( c=0 ; c<w ; c++,pt+=4 )
+          {
+            if( swap )
+            {
+              char tmp[4];
+              tmp[0] = pt[3]; tmp[1] = pt[2]; tmp[2] = pt[1]; tmp[3] = pt[0];
+              PsOut_OutImageBytes(psOut, 3, &tmp[1]);
+            }
+            else
+              PsOut_OutImageBytes(psOut, 3, &pt[1]);
+          }
+        }
+      }
+      else goto error;
+      PsOut_EndImage(psOut);
+    }
+    else if( depth==8 )
+    {
+      int  rowsiz = PixmapBytePad(w, depth);
+      PsOut_BeginImageIM(psOut, 0, 0, x, y, w, h, sw, sh, 3);
+      for( r=0 ; r<h ; r++ )
+      {
+        char *pt = &pImage[rowsiz*r];
+        for( c=0 ; c<w ; c++,pt++ )
+        {
+          int   val = PsGetPixelColor(cMap, (int)(*pt)&0xFF);
+          char *ipt = (char *)&val;
+          if( swap )
+          {
+            char tmp[4];
+            tmp[0] = ipt[3]; tmp[1] = ipt[2]; tmp[2] = ipt[1]; tmp[3] = ipt[0];
+            PsOut_OutImageBytes(psOut, 3, &tmp[1]);
+          }
+          else
+            PsOut_OutImageBytes(psOut, 3, &ipt[1]);
+        }
+      }
+      PsOut_EndImage(psOut);
+    }
+    else if( depth==1 )
+    {
+      {
+        int  rowsiz = BitmapBytePad(w);
+        int  psrsiz = (w+7)/8;
+        PsOut_BeginImageIM(psOut, PsGetPixelColor(cMap, pGC->bgPixel),
+                         PsGetPixelColor(cMap, pGC->fgPixel),
+                         x, y, w, h, sw, sh, 1);
+        for( r=0 ; r<h ; r++ )
+        {
+          char *pt = &pImage[rowsiz*r];
+          for( i=0 ; i<psrsiz ; i++ )
+          {
+            int  iv_, iv = (int)pt[i]&0xFF;
+            char c;
+            if( swap )
+              { for( j=0,iv_=0 ; j<8 ; j++ ) iv_ |= (((iv>>j)&1)<<(7-j)); }
+            else
+              iv_ = iv;
+            c = iv_;
+            PsOut_OutImageBytes(psOut, 1, &c);
+          }
+        }
+        PsOut_EndImage(psOut);
+      }
+    }
+  }
+error:
+  return;
+}
+void
 PsPutImage(DrawablePtr pDrawable, GCPtr pGC, int depth, int x, int y,
            int w, int h, int leftPad, int format, char *pImage)
 {
@@ -232,6 +381,15 @@ PsPutImage(DrawablePtr pDrawable, GCPtr pGC, int depth, int x, int y,
     if (requestingClient && (pcon = XpGetPrintContext(requestingClient)))
 	PsPutScaledImage(pDrawable, pGC, depth, x, y, w, h, leftPad, format,
 			 pcon->imageRes, pImage);
+}
+void
+PsPutImageMask(DrawablePtr pDrawable, GCPtr pGC, int depth, int x, int y,
+           int w, int h, int leftPad, int format, char *pImage)
+{
+    XpContextPtr pcon;
+    if (requestingClient && (pcon = XpGetPrintContext(requestingClient)))
+        PsPutScaledImageIM(pDrawable, pGC, depth, x, y, w, h, leftPad, format,
+                         pcon->imageRes, pImage);
 }
 
 RegionPtr

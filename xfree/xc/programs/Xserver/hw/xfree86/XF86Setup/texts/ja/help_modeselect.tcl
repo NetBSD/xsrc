@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_modeselect.tcl,v 1.1.2.3 1998/02/26 20:11:22 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_modeselect.tcl,v 1.2 1998/04/05 15:30:32 robin Exp $
 #
 set message "\n\n\n\
 	使いたい解像度をすべて選択し、通常使用する色数を一つ選択\n\

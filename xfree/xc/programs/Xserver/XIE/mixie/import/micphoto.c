@@ -1,4 +1,4 @@
-/* $TOG: micphoto.c /main/9 1998/02/09 16:16:35 kaleb $ */
+/* $Xorg: micphoto.c,v 1.3 2000/08/17 19:47:44 cpqbld Exp $ */
 /**** module micphoto.c ****/
 /******************************************************************************
 
@@ -68,7 +68,7 @@ terms and conditions:
 	Fax stuff added by Ben Fahy
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/micphoto.c,v 3.2 1998/10/04 09:36:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/micphoto.c,v 3.4 2001/01/17 22:13:04 dawes Exp $ */
 
 #define _XIEC_MICPHOTO
 #define _XIEC_ICPHOTO

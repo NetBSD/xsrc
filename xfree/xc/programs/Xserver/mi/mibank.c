@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -44,7 +44,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/mi/mibank.c,v 1.7 1999/11/02 16:16:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibank.c,v 1.9 2001/01/06 20:58:12 tsi Exp $ */
 
 /*
  * This thing originated from an idea of Edwin Goei and his bank switching
@@ -53,7 +53,7 @@
 
 /*
  * Heavily modified for the XFree86 Project to turn this into an mi wrapper.
- * ---  Marc Aurele La France (tsi@ualberta.ca)
+ * ---  Marc Aurele La France (tsi@xfree86.org)
  */
 
 /*

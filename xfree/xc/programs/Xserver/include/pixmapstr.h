@@ -1,4 +1,4 @@
-/* $TOG: pixmapstr.h /main/11 1998/02/09 14:29:22 kaleb $ */
+/* $Xorg: pixmapstr.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

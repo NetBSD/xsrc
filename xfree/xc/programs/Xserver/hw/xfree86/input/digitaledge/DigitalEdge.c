@@ -30,9 +30,9 @@
  * Probably buggy as hell, no idea what the initialisation strings are,
  * no idea how to ack it. If the tablet stops responding power cycle it.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/digitaledge/DigitalEdge.c,v 1.4 2001/05/15 18:22:22 paulo Exp $ */
 
-#include <xf86Version.h>
+#include "xf86Version.h"
 
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
 #define XFREE86_V4 1
@@ -46,25 +46,23 @@
 #include <errno.h>
 #endif
 
-#include <misc.h>
-#include <xf86.h>
+#include "misc.h"
+#include "xf86.h"
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
-#include <xf86_ansic.h>
-#include <xisb.h>
+#include "xf86_ansic.h"
+#include "xisb.h"
 #endif
-#include <xf86_OSproc.h>
-#include <xf86Xinput.h>
-#include <exevents.h>		/* Needed for InitValuator/Proximity stuff */
-#include <keysym.h>
-#include <mipointer.h>
+#include "xf86_OSproc.h"
+#include "xf86Xinput.h"
+#include "exevents.h"		/* Needed for InitValuator/Proximity stuff */
+#include "keysym.h"
+#include "mipointer.h"
 
 #ifdef XFree86LOADER
-#include <xf86Module.h>
+#include "xf86Module.h"
 #endif
 
-#undef memset
-#define memset xf86memset
 #undef sleep
 #define sleep(t) xf86WaitForInput(-1, 1000 * (t))
 #define wait_for_fd(fd) xf86WaitForInput((fd), 1000)
@@ -135,7 +133,6 @@ static InputDriverPtr dedgeDrv;
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
 #include "atKeynames.h"
-#include "xf86Version.h"
 #endif
 
 #if !defined(sun) || defined(i386)
@@ -1191,9 +1188,9 @@ static LocalDevicePtr xf86SumAllocate()
     local->history_size = 0;
 
 #if defined(sun) && !defined(i386)
-    if (def_name) {
+    if (dev_name) {
 	priv->dedgeDevice = (char *) xalloc(strlen(dev_name) + 1);
-	strcpy(priv->dedgeDevice, device_name);
+	strcpy(priv->dedgeDevice, dev_name);
 	ErrorF("xf86SumOpen port changed to '%s'\n", priv->dedgeDevice);
     } else {
 	priv->dedgeDevice = "";
@@ -1443,7 +1440,6 @@ InputDriverRec DIGITALEDGE = {
 static void
 xf86SumUnplug(pointer	p)
 {
-    DBG(1, ErrorF("xf86SumUnplug\n"));
 }
 
 /*
@@ -1457,8 +1453,6 @@ xf86SumPlug(pointer	module,
 	    int		*errmaj,
 	    int		*errmin)
 {
-    DBG(1, ErrorF("xf86SumPlug\n"));
-	
     xf86AddInputDriver(&DIGITALEDGE, module, 0);
 
     return module;

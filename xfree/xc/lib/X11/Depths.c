@@ -1,4 +1,4 @@
-/* $TOG: Depths.c /main/8 1998/02/06 17:17:12 kaleb $ */
+/* $Xorg: Depths.c,v 1.3 2000/08/17 19:44:32 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group

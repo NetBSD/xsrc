@@ -1,4 +1,4 @@
-/* $XConsortium: hpext.h /main/4 1996/01/22 18:29:38 gildea $ */
+/* $Xorg: hpext.h,v 1.3 2000/08/17 19:48:22 cpqbld Exp $ */
 
 /*
 

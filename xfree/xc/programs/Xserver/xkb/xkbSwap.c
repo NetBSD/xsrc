@@ -1,5 +1,4 @@
-/* $XConsortium: xkbSwap.c /main/9 1996/02/02 14:39:39 kaleb $ */
-/* $XFree86$ */
+/* $Xorg: xkbSwap.c,v 1.3 2000/08/17 19:53:48 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/xkbSwap.c,v 3.1 2001/01/17 22:37:15 dawes Exp $ */
 
 #include "stdio.h"
 #include "X.h"

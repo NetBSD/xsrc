@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.17 93/08/17 20:49:32 rws Exp $
-XCOMM $XFree86: xc/programs/xedit/Imakefile,v 1.12 1999/09/27 06:30:08 dawes Exp $
+XCOMM $XFree86: xc/programs/xedit/Imakefile,v 1.13 2000/02/12 02:54:46 dawes Exp $
         DEPLIBS = XawClientDepLibs
 LOCAL_LIBRARIES = XawClientLibs
   SYS_LIBRARIES = MathLibrary

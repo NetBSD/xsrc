@@ -1,4 +1,4 @@
-/* $TOG: StrToShap.c /main/6 1998/02/06 15:46:01 kaleb $ */
+/* $Xorg: StrToShap.c,v 1.4 2000/08/17 19:46:04 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/StrToShap.c,v 1.4 1998/08/20 13:59:41 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToShap.c,v 1.6 2001/01/17 19:42:57 dawes Exp $ */
 
 #include <string.h>
 #include <X11/Intrinsic.h>

@@ -1,4 +1,4 @@
-/* $TOG: cbrt.c /main/4 1998/02/09 14:45:52 kaleb $ */
+/* $Xorg: cbrt.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/cbrt.c,v 3.0 1994/04/29 14:11:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/cbrt.c,v 3.2 2001/01/17 22:37:05 dawes Exp $ */
 
 /* simple cbrt, in case your math library doesn't have a good one */
 

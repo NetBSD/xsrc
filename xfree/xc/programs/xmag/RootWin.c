@@ -1,4 +1,4 @@
-/* $TOG: RootWin.c /main/4 1998/02/09 14:10:34 kaleb $ */
+/* $Xorg: RootWin.c,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xmag/RootWin.c,v 1.4 2001/01/17 23:46:20 dawes Exp $ */
 
 
 #include <X11/IntrinsicP.h>

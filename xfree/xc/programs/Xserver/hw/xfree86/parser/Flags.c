@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.13 2000/08/08 08:58:08 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.14 2000/10/20 14:59:02 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

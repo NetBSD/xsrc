@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xp/XpExtUtil.h,v 1.1 2000/09/26 15:56:57 tsi Exp $ */
 /*
  * Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
  *

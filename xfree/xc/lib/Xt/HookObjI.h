@@ -1,4 +1,4 @@
-/* $TOG: HookObjI.h /main/3 1998/02/06 13:22:28 kaleb $ */
+/* $Xorg: HookObjI.h,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
 
 /*
 

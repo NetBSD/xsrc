@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c,v 1.38 2000/12/18 15:52:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c,v 1.43 2001/05/18 20:22:30 tsi Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -63,6 +63,7 @@
 #include "mousePriv.h"
 #include "mipointer.h"
 
+static const OptionInfoRec *MouseAvailableOptions(void *unused);
 static InputInfoPtr MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags);
 #if 0
 static void MouseUnInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
@@ -87,6 +88,65 @@ InputDriverRec MOUSE = {
 	/*MouseUnInit,*/NULL,
 	NULL,
 	0
+};
+
+typedef enum {
+    OPTION_ALWAYS_CORE,
+    OPTION_SEND_CORE_EVENTS,
+    OPTION_CORE_POINTER,
+    OPTION_SEND_DRAG_EVENTS,
+    OPTION_HISTORY_SIZE,
+    OPTION_DEVICE,
+    OPTION_PROTOCOL,
+    OPTION_BUTTONS,
+    OPTION_EMULATE_3_BUTTONS,
+    OPTION_EMULATE_3_TIMEOUT,
+    OPTION_CHORD_MIDDLE,
+    OPTION_FLIP_XY,
+    OPTION_INV_X,
+    OPTION_INV_Y,
+    OPTION_Z_AXIS_MAPPING,
+    OPTION_SAMPLE_RATE,
+    OPTION_RESOLUTION,
+    OPTION_CLEAR_DTR,
+    OPTION_CLEAR_RTS,
+    OPTION_BAUD_RATE,
+    OPTION_DATA_BITS,
+    OPTION_STOP_BITS,
+    OPTION_PARITY,
+    OPTION_FLOW_CONTROL,
+    OPTION_VTIME,
+    OPTION_VMIN
+} MouseOpts;
+
+static const OptionInfoRec MouseOptions[] = {
+    { OPTION_ALWAYS_CORE,	"AlwaysCore",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_SEND_CORE_EVENTS,	"SendCoreEvents", OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_CORE_POINTER,	"CorePointer",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_SEND_DRAG_EVENTS,	"SendDragEvents", OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_HISTORY_SIZE,	"HistorySize",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_DEVICE,		"Device",	  OPTV_STRING,	{0}, FALSE },
+    { OPTION_PROTOCOL,		"Protocol",	  OPTV_STRING,	{0}, FALSE },
+    { OPTION_BUTTONS,		"Buttons",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_EMULATE_3_BUTTONS,	"Emulate3Buttons",OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_EMULATE_3_TIMEOUT,	"Emulate3Timeout",OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_CHORD_MIDDLE,	"ChordMiddle",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_FLIP_XY,		"FlipXY",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_INV_X,		"InvX",		  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_INV_Y,		"InvY",		  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_Z_AXIS_MAPPING,	"ZAxisMapping",	  OPTV_STRING,	{0}, FALSE },
+    { OPTION_SAMPLE_RATE,	"SampleRate",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_RESOLUTION,	"Resolution",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_CLEAR_DTR,		"ClearDTR",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_CLEAR_RTS,		"ClearRTS",	  OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_BAUD_RATE,		"BaudRate",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_DATA_BITS,		"DataBits",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_STOP_BITS,		"StopBits",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_PARITY,		"Parity",	  OPTV_STRING,	{0}, FALSE },
+    { OPTION_FLOW_CONTROL,	"FlowControl",	  OPTV_STRING,	{0}, FALSE },
+    { OPTION_VTIME,		"VTime",	  OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_VMIN,		"VMin",		  OPTV_INTEGER,	{0}, FALSE },
+    { -1,			NULL,		  OPTV_NONE,	{0}, FALSE }
 };
 
 /*
@@ -197,6 +257,13 @@ static MouseProtocolRec mouseProtocols[] = {
     /* end of list */
     { NULL,			MSE_NONE,	NULL,		PROT_UNKNOWN }
 };
+
+/*ARGSUSED*/
+static const OptionInfoRec *
+MouseAvailableOptions(void *unused)
+{
+    return (MouseOptions);
+}
 
 static MouseProtocolID
 ProtocolNameToID(const char *name)
@@ -898,7 +965,7 @@ SetupMouse(InputInfoPtr pInfo)
 
     case PROT_IMPS2:		/* IntelliMouse */
 	{
-	    static unsigned char s[] = { 243, 200, 243, 100, 243, 80, };
+	    static unsigned char s[] = { 243, 200, 243, 100, 243, 80, 242 };
 
 	    param = s;
 	    paramlen = sizeof(s);
@@ -907,7 +974,7 @@ SetupMouse(InputInfoPtr pInfo)
 
     case PROT_EXPPS2:		/* IntelliMouse Explorer */
 	{
-	    static unsigned char s[] = { 243, 200, 243, 200, 243, 80, };
+	    static unsigned char s[] = { 243, 200, 243, 200, 243, 80, 242 };
 
 	    param = s;
 	    paramlen = sizeof(s);
@@ -1594,100 +1661,139 @@ MouseConvert(InputInfoPtr pInfo, int first, int num, int v0, int v1, int v2,
     return TRUE;
 }
 
-static CARD32
-buttonTimer(OsTimerPtr timer, CARD32 now, pointer arg)
-{
-    InputInfoPtr pInfo;
-    MouseDevPtr pMse;
-    int	sigstate;
-
-    pInfo = arg;
-    pMse = pInfo->private;
-
-    sigstate = xf86BlockSIGIO ();
-    pMse->PostEvent(pInfo, pMse->truebuttons, 0, 0, 0, 0);
-    xf86UnblockSIGIO (sigstate);
-    return 0;
-}
-
 /*
- * Lets create a simple finite-state machine:
+ * Lets create a simple finite-state machine for 3 button emulation:
  *
- *   state[?][0]: action1
- *   state[?][1]: action2
- *   state[?][2]: next state
+ * We track buttons 1 and 3 (left and right).  There are 11 states:
+ *   0 ground           - initial state
+ *   1 delayed left     - left pressed, waiting for right
+ *   2 delayed right    - right pressed, waiting for left
+ *   3 pressed middle   - right and left pressed, emulated middle sent
+ *   4 pressed left     - left pressed and sent
+ *   5 pressed right    - right pressed and sent
+ *   6 released left    - left released after emulated middle
+ *   7 released right   - right released after emulated middle
+ *   8 repressed left   - left pressed after released left
+ *   9 repressed right  - right pressed after released right
+ *  10 pressed both     - both pressed, not emulating middle
  *
- *   action > 0: ButtonPress
- *   action = 0: nothing
- *   action < 0: ButtonRelease
+ * At each state, we need handlers for the following events
+ *   0: no buttons down
+ *   1: left button down
+ *   2: right button down
+ *   3: both buttons down
+ *   4: emulate3Timeout passed without a button change
+ * Note that button events are not deltas, they are the set of buttons being
+ * pressed now.  It's possible (ie, mouse hardware does it) to go from (eg)
+ * left down to right down without anything in between, so all cases must be
+ * handled.
  *
- * Why this stuff ??? Normally you cannot press both mousebuttons together, so
- * the mouse reports both pressed at the same time ...
+ * a handler consists of three values:
+ *   0: action1
+ *   1: action2
+ *   2: new emulation state
+ *
+ * action > 0: ButtonPress
+ * action = 0: nothing
+ * action < 0: ButtonRelease
+ *
+ * The comment preceeding each section is the current emulation state.
+ * The comments to the right are of the form
+ *      <button state> (<events>) -> <new emulation state>
+ * which should be read as
+ *      If the buttons are in <button state>, generate <events> then go to
+ *      <new emulation state>.
  */
-
-static signed char stateTab[48][3] = {
-
-/* nothing pressed */
-  {  0,  0,  0 },	
-  {  0,  0,  8 },	/* 1 right -> delayed right */
-  {  0,  0,  0 },       /* 2 nothing */
-  {  0,  0,  8 },	/* 3 right -> delayed right */
-  {  0,  0, 16 },	/* 4 left -> delayed left */
-  {  2,  0, 24 },       /* 5 left & right (middle press) -> middle pressed */
-  {  0,  0, 16 },	/* 6 left -> delayed left */
-  {  2,  0, 24 },       /* 7 left & right (middle press) -> middle pressed */
-
-/* delayed right */
-  {  1, -1,  0 },	/* 8 nothing (right event) -> init */
-  {  1,  0, 32 },       /* 9 right (right press) -> right pressed */
-  {  1, -1,  0 },	/* 10 nothing (right event) -> init */
-  {  1,  0, 32 },       /* 11 right (right press) -> right pressed */
-  {  1, -1, 16 },       /* 12 left (right event) -> delayed left */
-  {  2,  0, 24 },       /* 13 left & right (middle press) -> middle pressed */
-  {  1, -1, 16 },       /* 14 left (right event) -> delayed left */
-  {  2,  0, 24 },       /* 15 left & right (middle press) -> middle pressed */
-
-/* delayed left */
-  {  3, -3,  0 },	/* 16 nothing (left event) -> init */
-  {  3, -3,  8 },       /* 17 right (left event) -> delayed right */
-  {  3, -3,  0 },	/* 18 nothing (left event) -> init */
-  {  3, -3,  8 },       /* 19 right (left event) -> delayed right */
-  {  3,  0, 40 },	/* 20 left (left press) -> pressed left */
-  {  2,  0, 24 },	/* 21 left & right (middle press) -> pressed middle */
-  {  3,  0, 40 },	/* 22 left (left press) -> pressed left */
-  {  2,  0, 24 },	/* 23 left & right (middle press) -> pressed middle */
-
-/* pressed middle */
-  { -2,  0,  0 },	/* 24 nothing (middle release) -> init */
-  { -2,  0,  0 },	/* 25 right (middle release) -> init */
-  { -2,  0,  0 },	/* 26 nothing (middle release) -> init */
-  { -2,  0,  0 },	/* 27 right (middle release) -> init */
-  { -2,  0,  0 },	/* 28 left (middle release) -> init */
-  {  0,  0, 24 },	/* 29 left & right -> pressed middle */
-  { -2,  0,  0 },	/* 30 left (middle release) -> init */
-  {  0,  0, 24 },	/* 31 left & right -> pressed middle */
-
-/* pressed right */
-  { -1,  0,  0 },	/* 32 nothing (right release) -> init */
-  {  0,  0, 32 },	/* 33 right -> pressed right */
-  { -1,  0,  0 },	/* 34 nothing (right release) -> init */
-  {  0,  0, 32 },	/* 35 right -> pressed right */
-  { -1,  0, 16 },	/* 36 left (right release) -> delayed left */
-  { -1,  2, 24 },	/* 37 left & right (r rel, m prs) -> middle pressed */
-  { -1,  0, 16 },	/* 38 left (right release) -> delayed left */
-  { -1,  2, 24 },	/* 39 left & right (r rel, m prs) -> middle pressed */
-
-/* pressed left */
-  { -3,  0,  0 },	/* 40 nothing (left release) -> init */
-  { -3,  0,  8 },	/* 41 right (left release) -> delayed right */
-  { -3,  0,  0 },	/* 42 nothing (left release) -> init */
-  { -3,  0,  8 },	/* 43 right (left release) -> delayed right */
-  {  0,  0, 40 },	/* 44 left -> left pressed */
-  { -3,  2, 24 },	/* 45 left & right (l rel, mprs) -> middle pressed */
-  {  0,  0, 40 },	/* 46 left -> left pressed */
-  { -3,  2, 24 },	/* 47 left & right (l rel, mprs) -> middle pressed */
+static signed char stateTab[11][5][3] = {
+/* 0 ground */
+  {
+    {  0,  0,  0 },   /* nothing -> ground (no change) */
+    {  0,  0,  1 },   /* left -> delayed left */
+    {  0,  0,  2 },   /* right -> delayed right */
+    {  2,  0,  3 },   /* left & right (middle press) -> pressed middle */
+    {  0,  0, -1 }    /* timeout N/A */
+  },
+/* 1 delayed left */
+  {
+    {  1, -1,  0 },   /* nothing (left event) -> ground */
+    {  0,  0,  1 },   /* left -> delayed left (no change) */
+    {  1, -1,  2 },   /* right (left event) -> delayed right */
+    {  2,  0,  3 },   /* left & right (middle press) -> pressed middle */
+    {  1,  0,  4 },   /* timeout (left press) -> pressed left */
+  },
+/* 2 delayed right */
+  {
+    {  3, -3,  0 },   /* nothing (right event) -> ground */
+    {  3, -3,  1 },   /* left (right event) -> delayed left (no change) */
+    {  0,  0,  2 },   /* right -> delayed right (no change) */
+    {  2,  0,  3 },   /* left & right (middle press) -> pressed middle */
+    {  3,  0,  5 },   /* timeout (right press) -> pressed right */
+  },
+/* 3 pressed middle */
+  {
+    { -2,  0,  0 },   /* nothing (middle release) -> ground */
+    {  0,  0,  7 },   /* left -> released right */
+    {  0,  0,  6 },   /* right -> released left */
+    {  0,  0,  3 },   /* left & right -> pressed middle (no change) */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 4 pressed left */
+  {
+    { -1,  0,  0 },   /* nothing (left release) -> ground */
+    {  0,  0,  4 },   /* left -> pressed left (no change) */
+    { -1,  0,  2 },   /* right (left release) -> delayed right */
+    {  3,  0, 10 },   /* left & right (right press) -> pressed both */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 5 pressed right */
+  {
+    { -3,  0,  0 },   /* nothing (right release) -> ground */
+    { -3,  0,  1 },   /* left (right release) -> delayed left */
+    {  0,  0,  5 },   /* right -> pressed right (no change) */
+    {  1,  0, 10 },   /* left & right (left press) -> pressed both */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 6 released left */
+  {
+    { -2,  0,  0 },   /* nothing (middle release) -> ground */
+    { -2,  0,  1 },   /* left (middle release) -> delayed left */
+    {  0,  0,  6 },   /* right -> released left (no change) */
+    {  1,  0,  8 },   /* left & right (left press) -> repressed left */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 7 released right */
+  {
+    { -2,  0,  0 },   /* nothing (middle release) -> ground */
+    {  0,  0,  7 },   /* left -> released right (no change) */
+    { -2,  0,  2 },   /* right (middle release) -> delayed right */
+    {  3,  0,  9 },   /* left & right (right press) -> repressed right */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 8 repressed left */
+  {
+    { -2, -1,  0 },   /* nothing (middle release, left release) -> ground */
+    { -2,  0,  4 },   /* left (middle release) -> pressed left */
+    { -1,  0,  6 },   /* right (left release) -> released left */
+    {  0,  0,  8 },   /* left & right -> repressed left (no change) */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 9 repressed right */
+  {
+    { -2, -3,  0 },   /* nothing (middle release, right release) -> ground */
+    { -3,  0,  7 },   /* left (right release) -> released right */
+    { -2,  0,  5 },   /* right (middle release) -> pressed right */
+    {  0,  0,  9 },   /* left & right -> repressed right (no change) */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
+/* 10 pressed both */
+  {
+    { -1, -3,  0 },   /* nothing (left release, right release) -> ground */
+    { -3,  0,  4 },   /* left (right release) -> pressed left */
+    { -1,  0,  5 },   /* right (left release) -> pressed right */
+    {  0,  0, 10 },   /* left & right -> pressed both (no change) */
+    {  0,  0, -1 },   /* timeout N/A */
+  },
 };
-
 
 /*
  * Table to allow quick reversal of natural button mapping to correct mapping
@@ -1715,12 +1821,36 @@ static char hitachMap[16] = {  0,  2,  1,  3,
 
 #define reverseBits(map, b)	(((b) & ~0x0f) | map[(b) & 0x0f])
 
+static CARD32
+buttonTimer(OsTimerPtr timer, CARD32 now, pointer arg)
+{
+    InputInfoPtr pInfo;
+    MouseDevPtr pMse;
+    int	sigstate;
+    int id;
+
+    pInfo = arg;
+    pMse = pInfo->private;
+
+    sigstate = xf86BlockSIGIO ();
+
+    if ((id = stateTab[pMse->emulateState][4][0]) != 0) {
+        xf86PostButtonEvent(pInfo->dev, 0, abs(id), (id >= 0), 0, 0);
+        pMse->emulateState = stateTab[pMse->emulateState][4][2];
+    } else {
+        ErrorF("Got unexpected buttonTimer in state %d\n", pMse->emulateState);
+    }
+
+    xf86UnblockSIGIO (sigstate);
+    return 0;
+}
+
 static void
 MouseDoPostEvent(InputInfoPtr pInfo, int buttons, int dx, int dy)
 {
     static OsTimerPtr timer = NULL;
     MouseDevPtr pMse;
-    int truebuttons;
+    int truebuttons, emulateButtons;
     int id, change;
 
     pMse = pInfo->private;
@@ -1734,69 +1864,51 @@ MouseDoPostEvent(InputInfoPtr pInfo, int buttons, int dx, int dy)
     if (dx || dy)
 	xf86PostMotionEvent(pInfo->dev, 0, 0, 2, dx, dy);
 
-    if (pMse->emulate3Buttons) {
-	/*
-	 * Hack to operate the middle button even with Emulate3Buttons set.
-	 * Modifying the state table to keep track of the middle button state
-	 * would nearly double its size, so I'll stick with this fix.  - TJW
-	 */
+    if (truebuttons != pMse->lastButtons) {
+
 	if (pMse->protocolID == PROT_MMHIT)
 	    change = buttons ^ reverseBits(hitachMap, pMse->lastButtons);
 	else
 	    change = buttons ^ reverseBits(reverseMap, pMse->lastButtons);
 
-	/*
-	 * process button 2, 4 and above
-	 */
-	change &= ~0x05;
-	while (change) {
-	    id = ffs(change);
-	    change &= ~(1 << (id - 1));
-	    xf86PostButtonEvent(pInfo->dev, 0, id,
-				(buttons & (1 << (id - 1))), 0, 0);
-	}
+        if (pMse->emulate3Buttons) {
 
-	/*
-	 * emulate the third button by the other two
-	 */
-	buttons &= 0x07;
-	if ((id = stateTab[buttons + pMse->emulateState][0]) != 0)
-	    xf86PostButtonEvent(pInfo->dev, 0, abs(id), (id >= 0), 0, 0);
+            /* handle all but buttons 1 & 3 normally */
 
-	if ((id = stateTab[buttons + pMse->emulateState][1]) != 0)
-	    xf86PostButtonEvent(pInfo->dev, 0, abs(id), (id >= 0), 0, 0);
+            change &= ~05;
 
-	pMse->emulateState = stateTab[buttons + pMse->emulateState][2];
-	if (stateTab[buttons + pMse->emulateState][0] ||
-	    stateTab[buttons + pMse->emulateState][1]) {
-	    pMse->truebuttons = truebuttons;
-	    timer = TimerSet(timer, 0, pMse->emulate3Timeout, buttonTimer,
+            /* emulate the third button by the other two */
+
+            emulateButtons = (buttons & 01) | ((buttons &04) >> 1);
+
+            if ((id = stateTab[pMse->emulateState][emulateButtons][0]) != 0)
+                xf86PostButtonEvent(pInfo->dev, 0, abs(id), (id >= 0), 0, 0);
+            if ((id = stateTab[pMse->emulateState][emulateButtons][1]) != 0)
+                xf86PostButtonEvent(pInfo->dev, 0, abs(id), (id >= 0), 0, 0);
+
+            pMse->emulateState =
+                stateTab[pMse->emulateState][emulateButtons][2];
+
+            if (stateTab[pMse->emulateState][4][0] != 0) {
+                timer = TimerSet(timer, 0, pMse->emulate3Timeout, buttonTimer,
 			     pInfo);
-	} else {
-	    if (timer) {
-		TimerFree(timer);
-		timer = NULL;
-	    }
-	}
-    } else {
-	/*
-	 * real three button event
-	 * Note that pMse.lastButtons has the hardware button mapping which
-	 * is the reverse of the button mapping reported to the server.
-	 */
-	if (pMse->protocolID == PROT_MMHIT)
-	    change = buttons ^ reverseBits(hitachMap, pMse->lastButtons);
-	else
-	    change = buttons ^ reverseBits(reverseMap, pMse->lastButtons);
+            } else {
+                if (timer) {
+                    TimerFree(timer);
+                    timer = NULL;
+                }
+            }
+        }
+
 	while (change) {
 	    id = ffs(change);
 	    change &= ~(1 << (id - 1));
 	    xf86PostButtonEvent(pInfo->dev, 0, id,
 				(buttons & (1 << (id - 1))), 0, 0);
 	}
-    }
-    pMse->lastButtons = truebuttons;
 
+        pMse->lastButtons = truebuttons;
+    }
 }
 
 static void
@@ -1860,6 +1972,14 @@ MousePostEvent(InputInfoPtr pInfo, int buttons, int dx, int dy, int dz, int dw)
 }
 
 #ifdef XFree86LOADER
+ModuleInfoRec MouseInfo = {
+    1,
+    "MOUSE",
+    NULL,
+    0,
+    MouseAvailableOptions,
+};
+
 static void
 xf86MouseUnplug(pointer	p)
 {
@@ -1870,6 +1990,16 @@ xf86MousePlug(pointer	module,
 	    int		*errmaj,
 	    int		*errmin)
 {
+    static Bool Initialised = FALSE;
+
+    if (!Initialised) {
+	Initialised = TRUE;
+#ifndef REMOVE_LOADER_CHECK_MODULE_INFO
+	if (xf86LoaderCheckSymbol("xf86AddModuleInfo"))
+#endif
+	xf86AddModuleInfo(&MouseInfo, module);
+    }
+
     xf86AddInputDriver(&MOUSE, module, 0);
 
     return module;

@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/lib/Xrender/Xrender.c,v 1.4 2001/05/16 10:33:16 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -160,6 +160,7 @@ XRenderQueryFormats (Display *dpy)
     xPictScreen			*xScreen;
     xPictDepth			*xDepth;
     xPictVisual			*xVisual;
+    void			*xData;
     int				nf, ns, nd, nv;
     int				rlength;
     
@@ -190,19 +191,20 @@ XRenderQueryFormats (Display *dpy)
 	       rep.numScreens * sizeof (xPictScreen) +
 	       rep.numDepths * sizeof (xPictDepth) +
 	       rep.numVisuals * sizeof (xPictVisual));
-    xFormat = (xPictFormInfo *) Xmalloc (rlength);
+    xData = (void *) Xmalloc (rlength);
     
     if (!xri || !xFormat)
     {
 	if (xri) Xfree (xri);
-	if (xFormat) Xfree (xFormat);
+	if (xData) Xfree (xData);
 	_XEatData (dpy, rlength);
 	UnlockDisplay (dpy);
 	SyncHandle ();
 	return 0;
     }
-    _XRead (dpy, (char *) xFormat, rlength);
+    _XRead (dpy, (char *) xData, rlength);
     format = xri->format;
+    xFormat = (xPictFormInfo *) xData;
     for (nf = 0; nf < rep.numFormats; nf++)
     {
 	format->id = xFormat->id;
@@ -248,6 +250,7 @@ XRenderQueryFormats (Display *dpy)
 	}
 	xScreen = (xPictScreen *) xDepth;	    
     }
+    Xfree (xData);
     info->data = (XPointer) xri;
     return 1;
 }

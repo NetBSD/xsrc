@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.8 2001/01/26 21:17:40 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.9 2001/03/02 22:39:27 paulo Exp $
  */
 
 #include "config.h"
@@ -109,7 +109,7 @@ startaccessx(void)
     xkb_info->xkb->ctrls->mk_max_speed = 500;
     xkb_info->xkb->ctrls->mk_curve = 0;
     XkbSetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
-    UpdateKeyboard(True);
+    (void)UpdateKeyboard(True);
     CreateAccessXHelpDialog();
 }
 
@@ -676,5 +676,5 @@ ApplyCallback(Widget w, XtPointer user_data, XtPointer call_data)
 
     XkbSetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
     XSync(DPY, False);
-    UpdateKeyboard(True);
+    (void)UpdateKeyboard(True);
 }

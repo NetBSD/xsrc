@@ -34,21 +34,30 @@
 #ifndef __FTCACHE_H__
 #define __FTCACHE_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_GLYPH_H
+
+#include <ft2build.h>
+#include FT_GLYPH_H
+
 
 FT_BEGIN_HEADER
 
-#define  FT_CACHE_MANAGER_H               FT_PUBLIC_FILE(cache/ftcmanag.h)
-#define  FT_CACHE_IMAGE_H                 FT_PUBLIC_FILE(cache/ftcimage.h)
-#define  FT_CACHE_SMALL_BITMAPS_H         FT_PUBLIC_FILE(cache/ftcsbits.h)
 
-#define  FT_CACHE_INTERNAL_LRU_H          FT_PUBLIC_FILE(cache/ftlru.h)
-#define  FT_CACHE_INTERNAL_GLYPH_H        FT_PUBLIC_FILE(cache/ftcglyph.h)
-#define  FT_CACHE_INTERNAL_CHUNK_H        FT_PUBLIC_FILE(cache/ftcchunk.h)
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    cache_subsystem                                                    */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Cache Sub-System                                                   */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    How to cache face, size, and glyph data with FreeType 2.           */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*   This section describes the FreeType 2 cache sub-system which is     */
+  /*   stile in beta.                                                      */
+  /*                                                                       */
+  /*************************************************************************/
 
 
   /*************************************************************************/
@@ -330,6 +339,9 @@ FT_BEGIN_HEADER
                            FTC_Manager       manager,
                            FTC_Cache_Class*  clazz,
                            FTC_Cache        *acache );
+
+
+  /* */
 
 
 FT_END_HEADER

@@ -1,6 +1,6 @@
 /* (c) Itai Nahshon */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.5 2000/12/06 15:35:15 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.6 2001/02/15 17:39:27 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -565,120 +565,120 @@ AlpSubsequentColorExpandScanline(
 }
 #endif
 
+static void
+AlpAccelEngineInit(ScrnInfoPtr pScrn)
+{
+    CirPtr pCir = CIRPTR(pScrn);
+
+    outw(0x3CE, 0x200E); /* enable writes to gr33 */
+    /* Setup things for autostart */
+    if (pCir->properties & ACCEL_AUTOSTART) {
+        outw(0x3CE, 0x8031); /* enable autostart */
+	pCir->chip.alp->waitMsk = 0x10;
+	pCir->chip.alp->autoStart = TRUE;
+    } else {
+        pCir->chip.alp->waitMsk = 0x1;
+	pCir->chip.alp->autoStart = FALSE;
+    }
+}
+
 Bool
 AlpXAAInit(ScreenPtr pScreen)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-	CirPtr pCir = CIRPTR(pScrn);
-	AlpPtr pAlp = ALPPTR(pCir);
-	XAAInfoRecPtr XAAPtr;
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    CirPtr pCir = CIRPTR(pScrn);
+    AlpPtr pAlp = ALPPTR(pCir);
+    XAAInfoRecPtr XAAPtr;
 
+    pCir->InitAccel =  AlpAccelEngineInit;
 #ifdef ALP_DEBUG
-	ErrorF("AlpXAAInit\n");
+    ErrorF("AlpXAAInit\n");
 #endif
 
-	XAAPtr = XAACreateInfoRec();
-	if (!XAAPtr) return FALSE;
+    XAAPtr = XAACreateInfoRec();
+    if (!XAAPtr) return FALSE;
 
-	XAAPtr->SetupForScreenToScreenCopy = AlpSetupForScreenToScreenCopy;
-	XAAPtr->SubsequentScreenToScreenCopy = AlpSubsequentScreenToScreenCopy;
-	XAAPtr->ScreenToScreenCopyFlags =
-	  NO_TRANSPARENCY | NO_PLANEMASK;
+    /* Pixmap cache */
+    XAAPtr->Flags |= LINEAR_FRAMEBUFFER;
+    XAAPtr->Sync = AlpSync;
+    
+    XAAPtr->SetupForScreenToScreenCopy = AlpSetupForScreenToScreenCopy;
+    XAAPtr->SubsequentScreenToScreenCopy = AlpSubsequentScreenToScreenCopy;
+    XAAPtr->ScreenToScreenCopyFlags =
+        NO_TRANSPARENCY | NO_PLANEMASK;
 
-        switch (pCir->Chipset)
-	{
-	case PCI_CHIP_GD7548:
-	  if (!pAlp->monoPattern8x8) break;
-	  XAAPtr->SetupForSolidFill = AlpSetupForSolidFill;
-	  XAAPtr->SubsequentSolidFillRect = AlpSubsequentSolidFillRect;
-	  XAAPtr->SubsequentSolidFillTrap = NULL;
-	  XAAPtr->SolidFillFlags = NO_PLANEMASK;
+    XAAPtr->SetupForSolidFill = AlpSetupForSolidFill;
+    XAAPtr->SubsequentSolidFillRect = AlpSubsequentSolidFillRect;
+    XAAPtr->SubsequentSolidFillTrap = NULL;
+    XAAPtr->SolidFillFlags = NO_PLANEMASK;
 
-	  XAAPtr->SetupForMono8x8PatternFill = AlpSetupForMono8x8PatternFill;
-	  XAAPtr->SubsequentMono8x8PatternFillRect =
-	    AlpSubsequentMono8x8PatternFillRect;
-	  XAAPtr->SubsequentMono8x8PatternFillTrap = NULL;
-	  XAAPtr->Mono8x8PatternFillFlags =
-	    NO_PLANEMASK |
-	    HARDWARE_PATTERN_PROGRAMMED_BITS | BIT_ORDER_IN_BYTE_MSBFIRST;
-
-#if 0
-	  /* Currently disabled: XF86 sends DWORD-padded data,
-	     not byte-padded */
-	  XAAPtr->SetupForCPUToScreenColorExpandFill =
-	    AlpSetupForCPUToScreenColorExpandFill;
-	  XAAPtr->SubsequentCPUToScreenColorExpandFill =
-	    AlpSubsequentCPUToScreenColorExpandFill;
-	  XAAPtr->ColorExpandBase = pCir->FbBase + 4;
-	  XAAPtr->CPUToScreenColorExpandFillFlags =
-	    NO_PLANEMASK | BIT_ORDER_IN_BYTE_MSBFIRST |
-	    SCANLINE_PAD_DWORD | ROP_NEEDS_SOURCE |
-	    CPU_TRANSFER_PAD_DWORD | CPU_TRANSFER_BASE_FIXED;
-#endif
+    if (pCir->Chipset == PCI_CHIP_GD7548) {
+        if (pAlp->monoPattern8x8) {
+	    XAAPtr->SetupForMono8x8PatternFill 
+	        = AlpSetupForMono8x8PatternFill;
+	    XAAPtr->SubsequentMono8x8PatternFillRect 
+	        = AlpSubsequentMono8x8PatternFillRect;
+	    XAAPtr->SubsequentMono8x8PatternFillTrap = NULL;
+	    XAAPtr->Mono8x8PatternFillFlags =
+	        NO_PLANEMASK |
+		HARDWARE_PATTERN_PROGRAMMED_BITS | BIT_ORDER_IN_BYTE_MSBFIRST;
+	}
 #if 1
-	  /* kludge: since XF86 does not support byte-padded
-	     mono bitmaps (only dword-padded), use the
-	     scanline version */
-	  XAAPtr->SetupForScanlineCPUToScreenColorExpandFill =
+	/* kludge: since XF86 does not support byte-padded
+	   mono bitmaps (only dword-padded), use the
+	   scanline version */
+	XAAPtr->SetupForScanlineCPUToScreenColorExpandFill =
 	    AlpSetupForScanlineCPUToScreenColorExpandFill;
-	  XAAPtr->SubsequentScanlineCPUToScreenColorExpandFill =
+	XAAPtr->SubsequentScanlineCPUToScreenColorExpandFill =
 	    AlpSubsequentScanlineCPUToScreenColorExpandFill;
-	  XAAPtr->SubsequentColorExpandScanline =
+	XAAPtr->SubsequentColorExpandScanline =
 	    AlpSubsequentColorExpandScanline;
-	  {
-	    const int NumScanlineColorExpandBuffers = 2;
-	    int i;
-	    int buffer_size = (pCir->pScrn->virtualX + 31) & ~31;
+	{
+	  const int NumScanlineColorExpandBuffers = 2;
+	  int i;
+	  int buffer_size = (pCir->pScrn->virtualX + 31) & ~31;
 #ifdef ALP_DEBUG
-	    ErrorF("Computing buffers for %d pixel lines\n",
-		   pCir->pScrn->virtualX);
+	  ErrorF("Computing buffers for %d pixel lines\n",
+		 pCir->pScrn->virtualX);
 #endif
-	    XAAPtr->NumScanlineColorExpandBuffers =
+	  XAAPtr->NumScanlineColorExpandBuffers =
 	      NumScanlineColorExpandBuffers;
-	    XAAPtr->ScanlineColorExpandBuffers =
+	  XAAPtr->ScanlineColorExpandBuffers =
 	      pCir->ScanlineColorExpandBuffers = (unsigned char **)
 	      (malloc(sizeof(unsigned char *) *
 		      NumScanlineColorExpandBuffers));
 	    /* TODO: are those mallocs to be freed ? */
 
-	    for(i=0; i<NumScanlineColorExpandBuffers; i++)
+	  for(i=0; i<NumScanlineColorExpandBuffers; i++)
 	      pCir->ScanlineColorExpandBuffers[i] = (unsigned char *)
 		malloc(buffer_size);
-	  }
-	  XAAPtr->ScanlineCPUToScreenColorExpandFillFlags =
+	}
+	XAAPtr->ScanlineCPUToScreenColorExpandFillFlags =
 	    NO_PLANEMASK | BIT_ORDER_IN_BYTE_MSBFIRST |
 	    SCANLINE_PAD_DWORD | ROP_NEEDS_SOURCE;
 #endif
-	  break;
-  
-	case PCI_CHIP_GD5446:
-	case PCI_CHIP_GD5480:
-	  XAAPtr->SetupForSolidFill = AlpSetupForSolidFill;
-	  XAAPtr->SubsequentSolidFillRect = AlpSubsequentSolidFillRect;
-	  XAAPtr->SubsequentSolidFillTrap = NULL;
-	  XAAPtr->SolidFillFlags = NO_TRANSPARENCY|NO_PLANEMASK;
-	  outw(0x3CE, 0x200E); /* enable writes to gr33 */
-	  break;
-	}
+#if 0
+	/* Currently disabled: XF86 sends DWORD-padded data,
+	   not byte-padded */
+	XAAPtr->SetupForCPUToScreenColorExpandFill =
+	  AlpSetupForCPUToScreenColorExpandFill;
+	XAAPtr->SubsequentCPUToScreenColorExpandFill =
+	  AlpSubsequentCPUToScreenColorExpandFill;
+	XAAPtr->ColorExpandBase = pCir->FbBase + 4;
+	XAAPtr->CPUToScreenColorExpandFillFlags =
+	  NO_PLANEMASK | BIT_ORDER_IN_BYTE_MSBFIRST |
+	  SCANLINE_PAD_DWORD | ROP_NEEDS_SOURCE |
+	  CPU_TRANSFER_PAD_DWORD | CPU_TRANSFER_BASE_FIXED;
+#endif
+    }
 
-	/* TODO: probably too limited */
+    AlpAccelEngineInit(pScrn);
 
-	XAAPtr->Sync = AlpSync;
+    pCir->AccelInfoRec = XAAPtr;
 
-	/* Pixmap cache */
-	XAAPtr -> Flags |= LINEAR_FRAMEBUFFER;
+    if (!XAAInit(pScreen, XAAPtr))
+        return FALSE;
 
-	/* Setup things for autostart */
-	if (pCir->properties & ACCEL_AUTOSTART) {
-	  outw(0x3CE, 0x8031); /* enable autostart */
-	  pCir->chip.alp->waitMsk = 0x10;
-	  pCir->chip.alp->autoStart = TRUE;
-	} else {
-	  pCir->chip.alp->waitMsk = 0x1;
-	  pCir->chip.alp->autoStart = FALSE;
-	}
-	if (!XAAInit(pScreen, XAAPtr))
-		return FALSE;
-
-	return TRUE;
+    return TRUE;
 }
+

@@ -3,7 +3,7 @@
  *
  */
 
-/* $TOG: mipointrst.h /main/10 1998/02/09 14:47:42 kaleb $ */
+/* $Xorg: mipointrst.h,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 /*
 
@@ -25,9 +25,10 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
+/* $XFree86: xc/programs/Xserver/mi/mipointrst.h,v 1.3 2001/04/19 14:14:07 tsi Exp $ */
 
-# include   <mipointer.h>
-# include   <input.h>
+#include "mipointer.h"
+#include "scrnintstr.h"
 
 #define MOTION_SIZE	256
 
@@ -55,4 +56,5 @@ typedef struct {
     miPointerScreenFuncPtr  screenFuncs;	/* screen-specific methods */
     CloseScreenProcPtr	    CloseScreen;
     Bool		    waitForUpdate;	/* don't move cursor in SIGIO */
+    Bool		    showTransparent;	/* show empty cursors */
 } miPointerScreenRec, *miPointerScreenPtr;

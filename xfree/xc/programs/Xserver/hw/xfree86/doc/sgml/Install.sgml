@@ -6,10 +6,10 @@
 
 <title>Installation Details for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>2 March 2001
+<date>1 June 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.10.2.1 2001/03/02 17:40:20 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.11.2.2 2001/06/01 18:09:48 dawes Exp $
 </ident>
 
 <abstract>
@@ -80,46 +80,62 @@ for you to download.  If you are careful with this step you will save
 yourself a lot time and trouble from NOT downloading an incompatible
 distribution.
 
-<bf>NOTE</bf>: the Xinstall.sh script must be downloaded in binary mode,
-otherwise it won't run correctly.  If you get lots of "command not found"
-messages when you try to run it, then it is most likely because the
-script wasn't downloaded in binary mode.  Some web browsers won't do
-this for files of that name, so we also have a copy of it called
-"<tt>Xinstall.bin</tt>", and most browsers should download that correctly.
-When downloading it under this name, select "save as" on your browser,
-and save the file under the name "<tt>Xinstall.sh</tt>".
+<bf>NOTES</bf>:
+
+<itemize>
+  <item>The Xinstall.sh script must be downloaded in binary mode,
+	otherwise it won't run correctly.  If you get lots of "command
+	not found" messages when you try to run it, then it is most
+	likely because the script wasn't downloaded in binary mode.
+	Some web browsers won't do this for files of that name, so we
+	also have a copy of it called "<tt>Xinstall.bin</tt>", and most
+	browsers should download that correctly.  When downloading it
+	under this name, select "save as" on your browser, and save the
+	file under the name "<tt>Xinstall.sh</tt>".
+
+  <item>The Xinstall.sh script requires some system commands and
+	utilities to function correctly.  While most systems will have
+	these, some Linux installations may not.  If you find that the
+	script is failing because of some missing system command, you
+	will need to install it before you can continue.  If you don't
+	know how to do this, then we recommend that you obtain this
+	version of XFree86 from your Operating System distributor.
+
+  <item>Always use the version of the Xinstall.sh script that's provided
+	with the release you're installing.  Older versions of the script
+	may not install newer releases correctly.
+</itemize>
 
 Once you're run the <tt>Xinstall.sh</tt> script and found which binary
 <![ %updaterel; [update ]]>distribution is suitable for your system,
 download the necessary files.  The <![ %fullrel [twelve (12)]]><![
-%updaterel [five (5)]]> mandatory files for all installations are listed
+%updaterel [four (4)]]> mandatory files for all installations are listed
 below.  If you have not downloaded all of the files, the installer script
 will complain.
 
 <![ %fullrel [
 <quote><verb>
-1.   Xinstall.sh      The installer script
-2.   extract          The utility for extracting tarballs
-3.   Xbin.tgz         X clients/utilities and run-time libraries
-4.   Xlib.tgz         Some data files required at run-time
-5.   Xman.tgz         Manual pages
-6.   Xdoc.tgz         XFree86 documentation
-7.   Xfnts.tgz        Base set of fonts
-8.   Xfenc.tgz        Base set of font encoding data
-9.   Xetc.tgz         Run-time configuration files
-10.  Xvar.tgz         Run-time data
-11.  Xxserv.tgz       XFree86 X server
-12.  Xmod.tgz         XFree86 X server modules
+1.   Xinstall.sh    The installer script
+2.   extract        The utility for extracting tarballs
+3.   Xbin.tgz       X clients/utilities and run-time libraries
+4.   Xlib.tgz       Some data files required at run-time
+5.   Xman.tgz       Manual pages
+6.   Xdoc.tgz       XFree86 documentation
+7.   Xfnts.tgz      Base set of fonts
+8.   Xfenc.tgz      Base set of font encoding data
+9.   Xetc.tgz       Run-time configuration files
+10.  Xvar.tgz       Run-time data
+11.  Xxserv.tgz     XFree86 X server
+12.  Xmod.tgz       XFree86 X server modules
 </verb></quote>
 ]]>
 
 <![ %updaterel [
 <quote><verb>
-1.   Xinstall.sh      The installer script
-2.   extract          The utility for extracting tarballs
-3.   Xupdate.tgz      Updated files except X server drivers/modules
-4.   Xdocupd.tgz      Updated documentation
-5.   Xdrivers.tgz     Updated X server drivers
+1.   Xinstall.sh    The installer script
+2.   extract        The utility for extracting tarballs
+3.   Xupdate.tgz    Updated files except X server drivers
+4.   Xdrivers.tgz   Updated X server drivers
 </verb></quote>
 ]]>
 
@@ -146,23 +162,21 @@ NOTES:
 </itemize>
 
 <![ %fullrel [
-The following thirteen (13) tarballs are optional.  You should download
+The following eleven (11) tarballs are optional.  You should download
 the ones you want to install.
 
 <quote><verb>
-1.   Xfsrv.tgz        Font server
-2.   Xnest.tgz        Nested X server
-3.   Xprog.tgz        X header files, config files and compile-time libs
-4.   Xprt.tgz         X Print server
-5.   Xvfb.tgz         Virtual framebuffer X server
-6.   Xf100.tgz        100dpi fonts
-7.   Xfcyr.tgz        Cyrillic fonts
-8.   Xflat2.tgz       Latin-2 fonts
-9.   Xfnon.tgz        Some large bitmap fonts
-10.  Xfscl.tgz        Scalable fonts (Speedo and Type1)
-11.  Xhtml.tgz        HTML version of the documentation
-12.  Xps.tgz          PostScript version of the documentation
-13.  Xjdoc.tgz        Documentation in Japanese
+1.   Xfsrv.tgz      Font server
+2.   Xnest.tgz      Nested X server
+3.   Xprog.tgz      X header files, config files and compile-time libs
+4.   Xprt.tgz       X Print server
+5.   Xvfb.tgz       Virtual framebuffer X server
+6.   Xf100.tgz      100dpi fonts
+7.   Xfcyr.tgz      Cyrillic fonts
+8.   Xfscl.tgz      Scalable fonts (Speedo and Type1)
+9.   Xhtml.tgz      HTML version of the documentation
+10.  Xps.tgz        PostScript version of the documentation
+11.  Xjdoc.tgz      Documentation in Japanese
 </verb></quote>
 
 NOTES:
@@ -384,6 +398,7 @@ ln -s /etc/X11/xdm /usr/X11R6/lib/X11
 ln -s /etc/X11/xinit /usr/X11R6/lib/X11
 ln -s /etc/X11/xsm /usr/X11R6/lib/X11
 ln -s /etc/X11/xserver /usr/X11R6/lib/X11
+chmod ug-w /usr/X11R6/lib           # Make sure the permissions are OK
 /sbin/ldconfig /usr/X11R6/lib       # For Linux
 /sbin/ldconfig -m /usr/X11R6/lib    # For FreeBSD, NetBSD, OpenBSD
 /usr/X11R6/bin/mkfontdir /usr/X11R6/lib/X11/fonts/misc
@@ -462,6 +477,7 @@ Once that's done, the main part of the installation can be done:
 ./extract -C /usr/X11R6 `pwd`/X[a-df-uw-z]*.tgz
 ./extract -C /usr/X11R6 Xvfb.tgz    # If you are installing Xvfb
 ./extract -C /var Xvar.tgz
+chmod ug-w /usr/X11R6/lib           # Make sure the permissions are OK
 /sbin/ldconfig /usr/X11R6/lib       # For Linux
 /sbin/ldconfig -m /usr/X11R6/lib    # For FreeBSD, NetBSD, OpenBSD
 /usr/X11R6/bin/mkfontdir /usr/X11R6/lib/X11/fonts/misc

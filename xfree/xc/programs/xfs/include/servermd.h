@@ -1,4 +1,4 @@
-/* $TOG: servermd.h /main/12 1998/02/11 10:04:24 kaleb $ */
+/* $Xorg: servermd.h,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
 /* 
 Copyright 1987, 1998  The Open Group
 
@@ -44,11 +44,11 @@ in this Software without prior written authorization from The Open Group.
 #define _SERVERMD_H_
 
 #ifndef VENDOR_RELEASE
-#define VENDOR_RELEASE 6300
+#define VENDOR_RELEASE 6510
 #endif
 
 #ifndef VENDOR_STRING
-#define VENDOR_STRING "The Open Group"
+#define VENDOR_STRING "The X.Org Group"
 #endif
 
 #ifndef DEFAULT_FS_PORT

@@ -1,4 +1,4 @@
-/* $TOG: Prefs.h /main/3 1998/02/10 18:36:36 kaleb $ */
+/* $Xorg: Prefs.h,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

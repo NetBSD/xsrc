@@ -138,4 +138,9 @@ extern void gl_exec_array_elements( GLcontext *ctx,
 extern void gl_update_client_state( GLcontext *ctx );
 
 
+#ifdef VAO
+struct gl_array_object *
+_mesa_alloc_vertex_array_object(GLcontext *ctx, GLuint name);
+#endif
+
 #endif

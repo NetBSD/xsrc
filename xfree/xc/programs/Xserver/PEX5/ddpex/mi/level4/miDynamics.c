@@ -1,4 +1,4 @@
-/* $TOG: miDynamics.c /main/4 1998/02/10 12:43:38 kaleb $ */
+/* $Xorg: miDynamics.c,v 1.3 2000/08/17 19:47:10 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

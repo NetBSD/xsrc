@@ -1,9 +1,4 @@
-/* $TOG: sunLyIo.c /main/2 1998/02/10 13:22:50 kaleb $ */
-
-
-
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.2 1996/12/27 06:51:39 dawes Exp $ */
-
+/* $Xorg: sunLyIo.c,v 1.3 2000/08/17 19:48:37 cpqbld Exp $ */
 /*-
  * This is sunIo.c modified for LynxOS
  * Copyright 1996 by Thomas Mueller
@@ -27,6 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.4.2.1 2001/05/25 18:50:08 dawes Exp $ */
 
  /*
  *
@@ -94,7 +90,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 void
 ProcessInputEvents ()
 {
-    (void) mieqProcessInputEvents ();
+    mieqProcessInputEvents ();
     miPointerUpdate ();
 }
 

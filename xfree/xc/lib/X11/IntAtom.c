@@ -1,4 +1,4 @@
-/* $TOG: IntAtom.c /main/20 1998/02/06 17:38:11 kaleb $ */
+/* $Xorg: IntAtom.c,v 1.4 2000/08/17 19:44:38 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1990, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/IntAtom.c,v 1.3 2001/01/17 19:41:38 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

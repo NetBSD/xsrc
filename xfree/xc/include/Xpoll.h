@@ -1,4 +1,4 @@
-/* $TOG: Xpoll.h /main/8 1998/02/09 11:19:06 kaleb $ */
+/* $Xorg: Xpoll.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/include/Xpoll.h,v 3.5 1998/12/13 12:23:40 dawes Exp $ */
+/* $XFree86: xc/include/Xpoll.h,v 3.8 2001/01/17 17:53:11 dawes Exp $ */
 
 #ifndef _XPOLL_H_
 #define _XPOLL_H_

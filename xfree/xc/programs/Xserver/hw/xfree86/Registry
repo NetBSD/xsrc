@@ -29,6 +29,7 @@ tseng
 type1
 vga
 vgahw
+vmware
 xaa
 xf1bpp
 xf4bpp
@@ -52,6 +53,7 @@ permedia
 tseng
 vga
 vgahw
+vmware
 xaa
 xf1bpp
 xf4bpp
@@ -318,4 +320,4 @@ and underscores removed.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/Registry,v 1.15 1999/08/22 05:57:28 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/Registry,v 1.17 2001/04/05 19:29:41 dawes Exp $

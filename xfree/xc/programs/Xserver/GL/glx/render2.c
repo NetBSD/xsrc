@@ -1,29 +1,44 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/render2.c,v 1.3 1999/06/14 07:31:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/render2.c,v 1.5 2001/03/21 16:29:37 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
 /* #define NEED_REPLIES */
-#include "glxserver.h"
+#include <glxserver.h>
 #include "unpack.h"
 #include "g_disptab.h"
+#include "g_disptab_EXT.h"
 
 extern GLint __glEvalComputeK(GLenum target);
 
@@ -33,7 +48,7 @@ void __glXDisp_Map1f(GLbyte *pc)
     GLfloat u1, u2, *points;
     GLenum target;
 
-    target = *(GLenum *)(pc + 0); 
+    target = *(GLenum *)(pc + 0);
     order = *(GLint *)(pc + 12);
     u1 = *(GLfloat *)(pc + 4);
     u2 = *(GLfloat *)(pc + 8);
@@ -48,8 +63,8 @@ void __glXDisp_Map2f(GLbyte *pc)
     GLint uorder, vorder, ustride, vstride, k;
     GLfloat u1, u2, v1, v2, *points;
     GLenum target;
-    
-    target = *(GLenum *)(pc + 0); 
+
+    target = *(GLenum *)(pc + 0);
     uorder = *(GLint *)(pc + 12);
     vorder = *(GLint *)(pc + 24);
     u1 = *(GLfloat *)(pc + 4);
@@ -169,7 +184,7 @@ void __glXDisp_DrawArrays(GLbyte *pc)
 	GLenum datatype = compHeader[i].datatype;
 	GLint numVals = compHeader[i].numVals;
 
-        stride += __GLX_PAD(numVals * __glXTypeSize(datatype));
+	stride += __GLX_PAD(numVals * __glXTypeSize(datatype));
     }
 
     pc += numComponents * sizeof(__GLXdispatchDrawArraysComponentHeader);
@@ -180,36 +195,36 @@ void __glXDisp_DrawArrays(GLbyte *pc)
 	GLint numVals = compHeader[i].numVals;
 	GLenum component = compHeader[i].component;
 
-        switch (component) {
-          case GL_VERTEX_ARRAY:
+	switch (component) {
+	  case GL_VERTEX_ARRAY:
 	    glEnableClientState(GL_VERTEX_ARRAY);
 	    glVertexPointer(numVals, datatype, stride, pc);
-            break;
-          case GL_NORMAL_ARRAY:
+	    break;
+	  case GL_NORMAL_ARRAY:
 	    glEnableClientState(GL_NORMAL_ARRAY);
 	    glNormalPointer(datatype, stride, pc);
-            break;
-          case GL_COLOR_ARRAY:
+	    break;
+	  case GL_COLOR_ARRAY:
 	    glEnableClientState(GL_COLOR_ARRAY);
 	    glColorPointer(numVals, datatype, stride, pc);
-            break;
-          case GL_INDEX_ARRAY:
+	    break;
+	  case GL_INDEX_ARRAY:
 	    glEnableClientState(GL_INDEX_ARRAY);
 	    glIndexPointer(datatype, stride, pc);
-            break;
-          case GL_TEXTURE_COORD_ARRAY:
+	    break;
+	  case GL_TEXTURE_COORD_ARRAY:
 	    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	    glTexCoordPointer(numVals, datatype, stride, pc);
-            break;
-          case GL_EDGE_FLAG_ARRAY:
+	    break;
+	  case GL_EDGE_FLAG_ARRAY:
 	    glEnableClientState(GL_EDGE_FLAG_ARRAY);
 	    glEdgeFlagPointer(stride, (const GLboolean *)pc);
-            break;
-          default:
-            break;
+	    break;
+	  default:
+	    break;
 	}
 
-        pc += __GLX_PAD(numVals * __glXTypeSize(datatype));
+	pc += __GLX_PAD(numVals * __glXTypeSize(datatype));
     }
 
     glDrawArrays(primType, 0, numVertexes);
@@ -221,4 +236,10 @@ void __glXDisp_DrawArrays(GLbyte *pc)
     glDisableClientState(GL_INDEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_EDGE_FLAG_ARRAY);
+}
+
+void __glXDisp_DrawArraysEXT(GLbyte *pc)
+{
+#ifdef XXX_STUB
+#endif /*XXX_STUB*/
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.3 1998/10/04 09:37:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.5 2001/01/17 22:36:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987,1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: cfbhrzvert.c /main/9 1998/02/09 14:05:53 kaleb $ */
+/* $Xorg: cfbhrzvert.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 #include "X.h"
 
 #include "gc.h"

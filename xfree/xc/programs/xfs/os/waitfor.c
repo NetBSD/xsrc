@@ -1,4 +1,4 @@
-/* $TOG: waitfor.c /main/16 1998/02/11 10:07:12 kaleb $ */
+/* $Xorg: waitfor.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
 /*
  * waits for input
  */
@@ -43,10 +43,10 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $NCDId: @(#)waitfor.c,v 4.5 1991/06/24 11:59:20 lemke Exp $
+ * $NCDXorg: @(#)waitfor.c,v 4.5 1991/06/24 11:59:20 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.10 1999/08/21 13:48:52 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.12 2001/01/17 23:45:33 dawes Exp $ */
 
 #include	<X11/Xos.h>	/* strings, time, etc */
 

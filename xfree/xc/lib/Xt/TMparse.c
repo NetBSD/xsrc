@@ -1,4 +1,4 @@
-/* $TOG: TMparse.c /main/123 1998/05/12 11:19:31 kaleb $ */
+/* $Xorg: TMparse.c,v 1.5 2000/08/17 19:46:18 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TMparse.c,v 3.3 1998/06/28 09:00:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/TMparse.c,v 3.5 2001/01/17 19:43:10 dawes Exp $ */
 
 /*
 
@@ -474,7 +474,6 @@ static String PanicModeRecovery(str)
 static void Syntax(str0,str1)
     String str0,str1;
 {
-    Cardinal numChars;
     Cardinal num_params = 2;
     String params[2];
 
@@ -781,7 +780,7 @@ static unsigned long StrToHex(str)
     register char   c;
     register unsigned long    val = 0;
 
-    while (c = *str) {
+    while ((c = *str)) {
 	if ('0' <= c && c <= '9') val = val*16+c-'0';
 	else if ('a' <= c && c <= 'z') val = val*16+c-'a'+10;
 	else if ('A' <= c && c <= 'Z') val = val*16+c-'A'+10;
@@ -798,7 +797,7 @@ static unsigned long StrToOct(str)
     register char c;
     register unsigned long  val = 0;
 
-    while (c = *str) {
+    while ((c = *str)) {
         if ('0' <= c && c <= '7') val = val*8+c-'0'; else return 0;
 	str++;
     }
@@ -818,7 +817,7 @@ static unsigned long StrToNum(str)
 	else return StrToOct(str);
     }
 
-    while (c = *str) {
+    while ((c = *str)) {
 	if ('0' <= c && c <= '9') val = val*10+c-'0';
 	else return 0;
 	str++;

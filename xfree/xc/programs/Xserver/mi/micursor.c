@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: micursor.c /main/5 1998/02/09 14:46:31 kaleb $ */
+/* $Xorg: micursor.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 #include "scrnintstr.h"
 #include "cursor.h"
 #include "misc.h"

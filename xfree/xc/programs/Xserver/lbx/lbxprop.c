@@ -1,4 +1,4 @@
-/* $TOG: lbxprop.c /main/24 1998/02/09 14:32:29 kaleb $ */
+/* $Xorg: lbxprop.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxprop.c,v 1.4 2001/05/15 10:19:43 eich Exp $ */
 
 /* various bits of DIX-level mangling */
 
@@ -69,8 +69,7 @@ in this Software without prior written authorization from The Open Group.
 #define _SECURITY_SERVER
 #include "extensions/security.h"
 #endif
-
-extern ReplySwapPtr CopySwap16Write, CopySwap32Write, Swap32Write;
+#include "swaprep.h"
 
 void
 LbxStallPropRequest(ClientPtr   client,
@@ -515,10 +514,10 @@ LbxGetProperty(ClientPtr client)
     if (len) {
 	switch (reply.format) {
 	case 32:
-	    client->pSwapReplyFunc = CopySwap32Write;
+	    client->pSwapReplyFunc = (ReplySwapPtr)CopySwap32Write;
 	    break;
 	case 16:
-	    client->pSwapReplyFunc = CopySwap16Write;
+	    client->pSwapReplyFunc = (ReplySwapPtr)CopySwap16Write;
 	    break;
 	default:
 	    client->pSwapReplyFunc = (ReplySwapPtr) WriteToClient;

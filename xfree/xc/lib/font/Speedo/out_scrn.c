@@ -1,4 +1,4 @@
-/* $TOG: out_scrn.c /main/7 1998/05/07 14:40:50 kaleb $ */
+/* $Xorg: out_scrn.c,v 1.3 2000/08/17 19:46:26 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/out_scrn.c,v 1.3 1999/03/14 03:21:17 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/out_scrn.c,v 1.5 2001/01/17 19:43:17 dawes Exp $ */
 
 
 /*************************** O U T _ S C R N . C *****************************

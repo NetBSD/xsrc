@@ -1,4 +1,4 @@
-/* $TOG: adler32.c /main/4 1998/02/04 14:33:06 kaleb $ */
+/* $Xorg: adler32.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-1996 Mark Adler

@@ -1,4 +1,4 @@
-/* $XConsortium: XKBGetByName.c /main/4 1996/01/01 11:26:52 kaleb $ */
+/* $Xorg: XKBGetByName.c,v 1.3 2000/08/17 19:45:02 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

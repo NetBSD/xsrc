@@ -1,4 +1,4 @@
-/* $TOG: scrnintstr.h /main/33 1998/02/09 14:29:59 kaleb $ */
+/* $Xorg: scrnintstr.h,v 1.3 2000/08/17 19:53:30 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/scrnintstr.h,v 1.5 1999/09/25 14:38:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/scrnintstr.h,v 1.9 2001/01/17 22:36:58 dawes Exp $ */
 
 #ifndef SCREENINTSTRUCT_H
 #define SCREENINTSTRUCT_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.2 1998/09/13 05:45:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.4 2001/01/17 22:36:42 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -43,7 +43,7 @@ SOFTWARE.
 ******************************************************************/
 
 
-/* $TOG: cursor.c /main/20 1998/02/09 14:18:18 kaleb $ */
+/* $Xorg: cursor.c,v 1.3 2000/08/17 19:48:17 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

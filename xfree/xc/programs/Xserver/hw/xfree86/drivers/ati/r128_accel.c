@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.3 2000/11/18 19:37:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.9 2001/04/10 16:07:58 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -77,7 +77,6 @@
  *
  */
 
-#define R128_IMAGEWRITE 0       /* Disable ImageWrites - faster in software */
 #define R128_TRAPEZOIDS 0       /* Trapezoids don't work               */
 
 				/* Driver data structures */
@@ -149,7 +148,8 @@ void R128EngineReset(ScrnInfoPtr pScrn)
 
     OUTREG(R128_GEN_RESET_CNTL, gen_reset_cntl | R128_SOFT_RESET_GUI);
     INREG(R128_GEN_RESET_CNTL);
-    OUTREG(R128_GEN_RESET_CNTL, gen_reset_cntl & ~R128_SOFT_RESET_GUI);
+    OUTREG(R128_GEN_RESET_CNTL,
+	gen_reset_cntl & (CARD32)(~R128_SOFT_RESET_GUI));
     INREG(R128_GEN_RESET_CNTL);
 
     OUTPLL(R128_MCLK_CNTL,        mclk_cntl);
@@ -402,7 +402,7 @@ static void R128SetupForDashedLine(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-    CARD32        pat       = *(CARD32 *)pattern;
+    CARD32        pat       = *(CARD32 *)(pointer)pattern;
 
 #ifdef XF86DRI
     R128CCE_TO_MMIO(pScrn, info);
@@ -820,13 +820,13 @@ static void R128SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     OUTREG(R128_DST_HEIGHT_WIDTH, (h << 16)      | ((w + 31) & ~31));
 }
 
-/* Subsequent XAA indirect CPU-to-screen color expandion.  This is called
+/* Subsequent XAA indirect CPU-to-screen color expansion.  This is called
    once for each scanline. */
 static void R128SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 {
     R128InfoPtr     info      = R128PTR(pScrn);
     unsigned char   *R128MMIO = info->MMIO;
-    CARD32          *p        = (CARD32 *)info->scratch_buffer[bufno];
+    CARD32          *p        = (pointer)info->scratch_buffer[bufno];
     int             i;
     int             left      = info->scanline_words;
     volatile CARD32 *d;
@@ -838,6 +838,7 @@ static void R128SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
     if (info->scanline_direct) return;
     --info->scanline_h;
     while (left) {
+        write_mem_barrier();
 	if (left <= 8) {
 	  /* Last scanline - finish write to DATA_LAST */
 	  if (info->scanline_h == 0) {
@@ -870,7 +871,6 @@ static void R128SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
    x11perf -putimage100   2150.0/sec       1170.0/sec
    x11perf -putimage500    108.0/sec         49.8/sec
  */
-#if R128_IMAGEWRITE
 static void R128SetupForScanlineImageWrite(ScrnInfoPtr pScrn,
 					   int rop,
 					   unsigned int planemask,
@@ -968,7 +968,7 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 {
     R128InfoPtr     info      = R128PTR(pScrn);
     unsigned char   *R128MMIO = info->MMIO;
-    CARD32          *p        = (CARD32 *)info->scratch_buffer[bufno];
+    CARD32          *p        = (pointer)info->scratch_buffer[bufno];
     int             i;
     int             left      = info->scanline_words;
     volatile CARD32 *d;
@@ -980,6 +980,7 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
     if (info->scanline_direct) return;
     --info->scanline_h;
     while (left) {
+        write_mem_barrier();
 	if (left <= 8) {
 	  /* Last scanline - finish write to DATA_LAST */
 	  if (info->scanline_h == 0) {
@@ -1003,7 +1004,6 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 	}
     }
 }
-#endif
 
 /* Initialize the acceleration hardware. */
 void R128EngineInit(ScrnInfoPtr pScrn)
@@ -1155,7 +1155,6 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					  | LINE_PATTERN_POWER_OF_2_ONLY);
 
 				/* ImageWrite */
-#if R128_IMAGEWRITE
     a->NumScanlineImageWriteBuffers    = 1;
     a->ScanlineImageWriteBuffers       = info->scratch_buffer;
     info->scratch_buffer[0]            = info->scratch_save;
@@ -1169,7 +1168,6 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					  | LEFT_EDGE_CLIPPING
 					  | LEFT_EDGE_CLIPPING_NEGATIVE_X
 					  | SCANLINE_PAD_DWORD;
-#endif
 }
 
 /* Initialize XAA for supported acceleration and also initialize the

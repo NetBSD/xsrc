@@ -3,7 +3,7 @@ XCOMM!/bin/sh
 XCOMM
 XCOMM makedepend which uses 'gcc -M'
 XCOMM
-XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.5.2.2 2001/02/26 16:49:45 dawes Exp $
+XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.8.2.1 2001/05/22 21:25:40 dawes Exp $
 XCOMM
 XCOMM Based on mdepend.cpp and code supplied by Hongjiu Lu <hjl@nynexst.com>
 XCOMM
@@ -23,7 +23,6 @@ endmarker=
 magic_string='# DO NOT DELETE'
 append=n
 args=
-asmfiles=
 
 while [ $# != 0 ]; do
     if [ "$endmarker"x != x -a "$endmarker" = "$1" ]; then
@@ -110,20 +109,7 @@ if [ X"$makefile" != X- ]; then
     fi
 fi
 
-XCOMM need to link .s files to .S
-for i in $files; do
-    case $i in
-	*.s)
-	    dir=`dirname $i`
-	    base=`basename $i .s`
-	    (cd $dir; $RM ${base}.S; $LN ${base}.s ${base}.S)
-	    asmfiles="$asmfiles ${base}.S"
-	    ;;
-    esac
-done
-
-CMD="$CC -M $args `echo $files | sed -e 's,\.s$,\.S,g' -e 's,\.s ,\.S ,g'` | \
-	sed -e 's,\.S$,\.s,g' -e 's,\.S ,\.s ,g'"
+CMD="$CC -M $args $files"
 if [ X"$makefile" != X- ]; then
     CMD="$CMD >> $TMP"
 fi
@@ -134,8 +120,5 @@ if [ X"$makefile" != X- ]; then
     $MV $TMP $makefile
 fi
 
-if [ x"$asmfiles" != x ]; then
-    $RM $asmfiles
-fi
 $RM ${TMP}*
 exit 0

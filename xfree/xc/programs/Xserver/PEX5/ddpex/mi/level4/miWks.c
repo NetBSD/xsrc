@@ -1,4 +1,4 @@
-/* $TOG: miWks.c /main/17 1998/02/10 12:44:02 kaleb $ */
+/* $Xorg: miWks.c,v 1.3 2000/08/17 19:47:10 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level4/miWks.c,v 1.7 1998/10/04 09:34:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level4/miWks.c,v 1.9 2001/01/17 22:12:30 dawes Exp $ */
 
 
 #include "miWks.h"

@@ -1,4 +1,4 @@
-/* $TOG: LookupCmap.c /main/11 1998/02/06 15:44:20 kaleb $ */
+/* $Xorg: LookupCmap.c,v 1.3 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/LookupCmap.c,v 1.4 1998/08/20 13:59:37 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/LookupCmap.c,v 1.6 2001/01/17 19:42:56 dawes Exp $ */
 
 /*
  * Author:  Donna Converse, MIT X Consortium

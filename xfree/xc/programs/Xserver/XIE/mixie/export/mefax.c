@@ -1,4 +1,4 @@
-/* $TOG: mefax.c /main/8 1998/02/09 16:13:09 kaleb $ */
+/* $Xorg: mefax.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module mefax.c ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. Oct, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mefax.c,v 3.3 1998/10/05 13:22:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mefax.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MEPHOTO
 #define _XIEC_EPHOTO

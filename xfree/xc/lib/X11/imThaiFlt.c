@@ -1,4 +1,4 @@
-/* $TOG: imThaiFlt.c /main/10 1998/02/06 17:36:48 kaleb $ */
+/* $Xorg: imThaiFlt.c,v 1.4 2000/08/17 19:45:15 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imThaiFlt.c,v 3.6 2000/12/02 15:30:22 tsi Exp $ */
+/* $XFree86: xc/lib/X11/imThaiFlt.c,v 3.8 2001/03/01 00:56:52 dawes Exp $ */
 
 /*
 **++ 

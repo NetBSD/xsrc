@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/message_proc.tcl,v 1.1.2.2 1998/02/26 20:11:19 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/message_proc.tcl,v 1.2 1998/04/05 15:30:30 robin Exp $
 #
 # These procedures generate local messages with arguments
 

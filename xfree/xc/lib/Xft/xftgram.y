@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftgram.y,v 1.1 2000/11/29 08:39:23 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftgram.y,v 1.5 2001/05/16 10:32:54 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include "xftint.h"
 
+static XftMatrix   matrix;
+    
 %}
 
 %union {
@@ -47,8 +49,9 @@
 %token <dval>	DOUBLE
 %token <sval>	STRING NAME
 %token <ival>	ANY ALL
-%token <ival>	DIR INCLUDE INCLUDEIF MATCH EDIT TOK_TRUE TOK_FALSE TOK_NIL
-%token <ival>	EQUAL SEMI
+%token <ival>	DIR CACHE INCLUDE INCLUDEIF MATCH EDIT
+%token <ival>	TOK_TRUE TOK_FALSE TOK_NIL
+%token <ival>	EQUAL SEMI OS CS
 
 %type  <eval>	expr
 %type  <vval>	value
@@ -59,6 +62,7 @@
 %type  <qval>	qual
 %type  <oval>	compare
 %type  <tval>	tests test
+%type  <dval>	number
 
 %right <ival>	QUEST COLON
 %left <ival>	OROR
@@ -75,6 +79,8 @@ configs	:   configs config
 	;
 config	:   DIR STRING
 		{ XftConfigAddDir ($2); }
+	|   CACHE STRING
+		{ XftConfigSetCache ($2); }
 	|   INCLUDE STRING
 		{ XftConfigPushInput ($2, True); }
 	|   INCLUDEIF STRING
@@ -146,6 +152,22 @@ value	:   INTEGER
 		{
 		    $$.type = XftTypeVoid;
 		}
+	|   matrix
+		{
+		    $$.type = XftTypeMatrix;
+		    $$.u.m = &matrix;
+		}
+	;
+matrix	:   OS number number number number CS
+		{
+		    matrix.xx = $2;
+		    matrix.xy = $3;
+		    matrix.yx = $4;
+		    matrix.__REALLY_YY__ = $5;
+		}
+number	:   INTEGER
+		{ $$ = (double) $1; }
+	|   DOUBLE
 	;
 edits	:   edit edits
 	    { $1->next = $2; $$ = $1; }
@@ -174,6 +196,8 @@ expr	:   INTEGER
 	    { $$ = XftExprCreateBool (False); }
 	|   TOK_NIL
 	    { $$ = XftExprCreateNil (); }
+	|   matrix
+	    { $$ = XftExprCreateMatrix (&matrix); }
 	|   NAME
 	    { $$ = XftExprCreateField ($1); }
 	|   expr OROR expr
@@ -234,10 +258,12 @@ XftTestCreate (XftQual qual, const char *field, XftOp compare, XftValue value)
     {
 	test->next = 0;
 	test->qual = qual;
-	test->field = _XftSaveString (field);
+	test->field = field;	/* already saved in grammar */
 	test->op = compare;
 	if (value.type == XftTypeString)
 	    value.u.s = _XftSaveString (value.u.s);
+	else if (value.type == XftTypeMatrix)
+	    value.u.m = _XftSaveMatrix (value.u.m);
 	test->value = value;
     }
     return test;
@@ -278,6 +304,19 @@ XftExprCreateString (const char *s)
     {
 	e->op = XftOpString;
 	e->u.sval = _XftSaveString (s);
+    }
+    return e;
+}
+
+XftExpr *
+XftExprCreateMatrix (const XftMatrix *m)
+{
+    XftExpr *e = (XftExpr *) malloc (sizeof (XftExpr));
+
+    if (e)
+    {
+	e->op = XftOpMatrix;
+	e->u.mval = _XftSaveMatrix (m);
     }
     return e;
 }
@@ -345,6 +384,9 @@ XftExprDestroy (XftExpr *e)
     case XftOpString:
 	free (e->u.sval);
 	break;
+    case XftOpMatrix:
+	free (e->u.mval);
+	break;
     case XftOpBool:
 	break;
     case XftOpField:
@@ -386,7 +428,7 @@ XftEditCreate (const char *field, XftOp op, XftExpr *expr)
     if (e)
     {
 	e->next = 0;
-	e->field = _XftSaveString (field);
+	e->field = field;   /* already saved in grammar */
 	e->op = op;
 	e->expr = expr;
     }

@@ -1,4 +1,4 @@
-/* $TOG: Object.c /main/27 1998/02/06 13:24:22 kaleb $ */
+/* $Xorg: Object.c,v 1.3 2000/08/17 19:46:15 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Object.c,v 1.1.1.1.12.3 1998/10/04 15:22:54 hohndel Exp $ */
+/* $XFree86: xc/lib/Xt/Object.c,v 1.5 2001/01/17 19:43:06 dawes Exp $ */
 
 #define OBJECT
 #include "IntrinsicI.h"

@@ -1,4 +1,4 @@
-.\" $TOG: xrefresh.man /main/19 1998/02/09 14:12:27 kaleb $
+.\" $Xorg: xrefresh.man,v 1.3 2000/08/17 19:54:56 cpqbld Exp $
 .\" Copyright 1988, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XREFRESH 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xrefresh/xrefresh.man,v 1.7 2001/01/27 18:21:22 dawes Exp $
+.\"
+.TH XREFRESH 1 __xorgversion__
 .SH NAME
 xrefresh - refresh all or part of an X screen
 .SH SYNOPSIS
@@ -64,12 +67,12 @@ This is the default.  All of the windows simply repaint.
 .PP
 .TP 10
 .B \-geometry \fIWxH+X+Y\fP
-Specifies the portion of the screen to be repainted; see \fIX(1)\fP.
+Specifies the portion of the screen to be repainted; see \fIX(__miscmansuffix__)\fP.
 .PP
 .TP 10
 .B \-display \fIdisplay\fP
 This  argument  allows  you  to  specify the server and screen to
-refresh; see \fIX(1)\fP.
+refresh; see \fIX(__miscmansuffix__)\fP.
 .SH X DEFAULTS
 The
 .I xrefresh
@@ -89,7 +92,7 @@ Determines the area to refresh.  Not very useful.
 .TP 8
 DISPLAY - To get default host and display number.
 .SH SEE ALSO
-X(1)
+X(__miscmansuffix__)
 .SH BUGS
 .PP
 It should have just one default type for the background.

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftint.h,v 1.14 2000/12/14 23:03:55 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftint.h,v 1.25 2001/05/18 16:03:06 tsi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -42,6 +42,11 @@ typedef struct _XftSymbolic {
     int		value;
 } XftSymbolic;
 
+#define XFT_DRAW_N_SRC	    2
+
+#define XFT_DRAW_SRC_TEXT   0
+#define XFT_DRAW_SRC_RECT   1
+
 struct _XftDraw {
     Display	    *dpy;
     Drawable	    drawable;
@@ -53,9 +58,10 @@ struct _XftDraw {
     Bool	    render_able;
     struct {
 	Picture		pict;
-	Pixmap		fg_pix;
-	Picture		fg_pict;
-	XRenderColor	fg_color;
+	struct {
+	    Picture	    pict;
+	    XRenderColor    color;
+	} src[XFT_DRAW_N_SRC];
     } render;
     struct {
 	GC		draw_gc;
@@ -84,8 +90,20 @@ extern XftFontSet	*_XftFontSet;
 #define XFT_DEFAULT_PATH "/usr/X11R6/lib/X11/XftConfig"
 #endif
 
+#define XFT_DBG_OPEN	1
+#define XFT_DBG_OPENV	2
+#define XFT_DBG_RENDER	4
+#define XFT_DBG_DRAW	8
+#define XFT_DBG_REF	16
+#define XFT_DBG_GLYPH	32
+#define XFT_DBG_GLYPHV	64
+#define XFT_DBG_CACHE	128
+#define XFT_DBG_CACHEV	256
+#define XFT_DBG_MATCH	512
+#define XFT_DBG_MATCHV	1024
+
 typedef enum _XftOp {
-    XftOpInteger, XftOpDouble, XftOpString, XftOpBool, XftOpNil,
+    XftOpInteger, XftOpDouble, XftOpString, XftOpMatrix, XftOpBool, XftOpNil,
     XftOpField,
     XftOpAssign, XftOpPrepend, XftOpAppend,
     XftOpQuest,
@@ -98,11 +116,12 @@ typedef enum _XftOp {
 typedef struct _XftExpr {
     XftOp   op;
     union {
-	int	ival;
-	double	dval;
-	char	*sval;
-	Bool	bval;
-	char	*field;
+	int	    ival;
+	double	    dval;
+	char	    *sval;
+	XftMatrix   *mval;
+	Bool	    bval;
+	char	    *field;
 	struct {
 	    struct _XftExpr *left, *right;
 	} tree;
@@ -116,7 +135,7 @@ typedef enum _XftQual {
 typedef struct _XftTest {
     struct _XftTest	*next;
     XftQual		qual;
-    char		*field;
+    const char		*field;
     XftOp		op;
     XftValue		value;
 } XftTest;
@@ -173,6 +192,9 @@ typedef struct _XftSubst {
 	case XftTypeBool:					    \
 	    __v__.u.b = va_arg (va, Bool);			    \
 	    break;						    \
+	case XftTypeMatrix:					    \
+	    __v__.u.m = va_arg (va, XftMatrix *);		    \
+	    break;						    \
 	}							    \
 	if (!XftPatternAdd (__p__, __o__, __v__, True))		    \
 	    goto _XftPatternVapBuild_bail1;			    \
@@ -191,9 +213,38 @@ _XftPatternVapBuild_return:					    \
 }
 
 
+/* xftcache.c */
+
+char *
+XftFileCacheFind (char *file, int id, int *count);
+
+void
+XftFileCacheDispose (void);
+
+void
+XftFileCacheLoad (char *cache);
+
+Bool
+XftFileCacheUpdate (char *file, int id, char *name);
+
+Bool
+XftFileCacheSave (char *cache);
+
+Bool
+XftFileCacheReadDir (XftFontSet *set, const char *cache_file);
+
+Bool
+XftFileCacheWriteDir (XftFontSet *set, const char *cache_file);
+    
 /* xftcfg.c */
 Bool
 XftConfigAddDir (char *d);
+
+Bool
+XftConfigSetCache (char *c);
+
+char *
+XftConfigGetCache (void);
 
 Bool
 XftConfigAddEdit (XftTest *test, XftEdit *edit);
@@ -217,6 +268,12 @@ XftCoreConvert32 (unsigned int	    *string,
 		  int		    len,
 		  XChar2b	    xcloc[XFT_CORE_N16LOCAL]);
 
+XChar2b *
+XftCoreConvertUtf8 (XftChar8	*string,
+		    int		len,
+		    XChar2b	xcloc[XFT_CORE_N16LOCAL],
+		    int		*nchar);
+
 void
 XftCoreExtents8 (Display	*dpy,
 		 XFontStruct	*fs,
@@ -237,6 +294,13 @@ XftCoreExtents32 (Display	    *dpy,
 		  unsigned int	    *string, 
 		  int		    len,
 		  XGlyphInfo	    *extents);
+
+void
+XftCoreExtentsUtf8 (Display	    *dpy,
+		    XFontStruct	    *fs,
+		    XftChar8	    *string, 
+		    int		    len,
+		    XGlyphInfo	    *extents);
 
 Bool
 XftCoreGlyphExists (Display	    *dpy,
@@ -259,10 +323,6 @@ XftEditPrint (XftEdit *edit);
 void
 XftSubstPrint (XftSubst *subst);
 
-/* xftdir.c */
-Bool
-XftDirScan (XftFontSet *set, const char *dir);
-
 /* xftdpy.c */
 int
 XftDefaultParseBool (char *v);
@@ -283,7 +343,8 @@ XftDisplayGetFontSet (Display *dpy);
 Bool
 XftDrawRenderPrepare (XftDraw	*draw,
 		      XftColor	*color,
-		      XftFont	*font);
+		      XftFont	*font,
+		      int	src);
 
 Bool
 XftDrawCorePrepare (XftDraw	*draw,
@@ -295,12 +356,7 @@ XftDrawCorePrepare (XftDraw	*draw,
 int
 _XftFontDebug (void);
     
-/* xftfreetype.c */
-XftPattern *
-XftFreeTypeQuery (const char *file, int id, int *count);
-
 /* xftfs.c */
-/* xftglyphs.c */
 /* xftgram.y */
 int
 XftConfigparse (void);
@@ -327,6 +383,9 @@ XftExpr *
 XftExprCreateString (const char *s);
 
 XftExpr *
+XftExprCreateMatrix (const XftMatrix *m);
+
+XftExpr *
 XftExprCreateBool (Bool b);
 
 XftExpr *
@@ -348,8 +407,6 @@ void
 XftEditDestroy (XftEdit *e);
 
 /* xftinit.c */
-Bool
-XftInitFtLibrary (void);
 
 /* xftlex.l */
 extern int	XftConfigLineno;
@@ -365,9 +422,6 @@ Bool
 XftConfigPushInput (char *s, Bool complain);
 
 /* xftlist.c */
-XftObjectSet *
-_XftObjectSetVapBuild (const char *first, va_list *vap);
-
 Bool
 XftListValueCompare (XftValue	v1,
 		     XftValue	v2);
@@ -397,6 +451,10 @@ XftNameConstant (char *string, int *result);
 /* xftpat.c */
 
 /* xftrender.c */
+
+/* xftmatrix.c */
+XftMatrix *
+_XftSaveMatrix (const XftMatrix *mat);
 
 /* xftstr.c */
 char *

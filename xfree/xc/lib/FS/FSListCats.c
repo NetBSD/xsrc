@@ -1,4 +1,4 @@
-/* $TOG: FSListCats.c /main/6 1998/05/01 12:58:31 kaleb $ */
+/* $Xorg: FSListCats.c,v 1.3 2000/08/17 19:44:02 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

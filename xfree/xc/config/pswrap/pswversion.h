@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/config/pswrap/pswversion.h,v 1.3 2001/03/02 02:45:34 dawes Exp $ */
 
 #define PSW_VERSION "V1.009 XFree86"
 

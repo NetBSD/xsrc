@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.72 2000/12/11 16:06:49 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.76.2.1 2001/06/01 18:09:46 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -76,20 +76,24 @@ HWREADME = \
 	/*ReadmeFile(WstDig)*/	\
 	$(_NULLENTRY_)
 
-MAINDOCS = LICENSE README /*ReadmeFile(Config)*/ /*BUILD*/ RELNOTES \
+MAINDOCS = LICENSE README /*ReadmeFile(Config)*/ /*BUILD*/ /*RELNOTES*/ \
 	   Install Status DESIGN Versions
 
 OTHERDOCS = /*VideoModes.doc*/ /*QuickStart.doc*/ /*xinput*/ \
 	    ReadmeFile(fonts) ReadmeFile(mouse) ReadmeFile(DRI) \
-	    ReadmeFile(DRIcomp)
+	    ReadmeFile(DRIcomp) ReadmeFile(dps)
 #endif
 
 MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) ReadmeFile(DGA) \
-	   VideoBoard98
+	   VideoBoard98 ReadmeFile(rapidaccess)
 
 DATABASE = /* modeDB.txt */ /* AccelCards Monitors Devices */
 
 FILES = $(MAINDOCS) $(OSREADME) $(HWREADME) $(OTHERDOCS) $(MISCDOCS) $(DATABASE)
+
+VERS = XFree86VersionString
+
+CppFileTarget(BugReport, BugReport.cpp, -DXF86_VERSION=$(VERS), $(ICONFIGFILES))
 
 InstallMultipleDest(install,$(FILES),$(XFREE86DOCDIR))
 

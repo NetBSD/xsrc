@@ -1,4 +1,4 @@
-/* $TOG: access.c /main/12 1998/02/11 10:06:16 kaleb $ */
+/* $Xorg: access.c,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/access.c,v 3.2 1998/10/04 09:41:12 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/access.c,v 3.4 2001/01/17 23:45:32 dawes Exp $ */
 
 #include	<X11/Xos.h>
 #ifndef MINIX

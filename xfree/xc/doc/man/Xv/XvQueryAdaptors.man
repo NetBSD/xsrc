@@ -1,5 +1,5 @@
-.TH XvQueryAdaptors 3X 
-.\" $XFree86$
+.TH XvQueryAdaptors 3X  __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvQueryAdaptors.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvQueryAdaptors \- return adaptor information for a screen
 .\"

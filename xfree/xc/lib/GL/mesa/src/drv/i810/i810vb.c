@@ -22,7 +22,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.c,v 1.6 2000/09/24 13:51:04 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.c,v 1.8 2001/03/21 16:14:21 dawes Exp $ */
  
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,14 +87,17 @@
 
 #define COORD					\
       GLfloat *win = VB->Win.data[i];		\
-      v->v.x =                 win[0];	\
-      v->v.y =    i810height - win[1];	\
-      v->v.z = (1.0/0x10000) * win[2];	\
+      v->v.x =       xoffset + win[0];		\
+      v->v.y =       yoffset - win[1];		\
+      v->v.z = (1.0/0x10000) * win[2];		\
       v->v.oow =               win[3]; 
 
 
 
 #define NOP
+
+#define SUBPIXEL_X -0.5
+#define SUBPIXEL_Y -0.375
 
 
 #define SETUPFUNC(name,win,col,tex0,tex1,tex0_4,spec,fog)		\
@@ -105,9 +108,12 @@ static void name(struct vertex_buffer *VB, GLuint start, GLuint end)	\
    i810VertexPtr v;							\
    GLfloat (*tc0)[4];							\
    GLfloat (*tc1)[4];							\
-   GLfloat i810height = dPriv->h;					\
+   const GLfloat xoffset = SUBPIXEL_X;					\
+   const GLfloat yoffset = dPriv->h + SUBPIXEL_Y;			\
    int i;								\
-   (void) i810height; (void) imesa;					\
+   (void) xoffset;							\
+   (void) yoffset;							\
+   (void) imesa;							\
 									\
 									\
    gl_import_client_data( VB, VB->ctx->RenderFlags,			\
@@ -269,7 +275,7 @@ void i810ChooseRasterSetupFunc(GLcontext *ctx)
      funcindex |= I810_TEX0_BIT;
   
   if (ctx->Texture.ReallyEnabled & 0xf0) {
-     funcindex |= I810_TEX1_BIT;
+     funcindex |= (I810_TEX0_BIT | I810_TEX1_BIT);
      imesa->vertsize = 10;
      imesa->Setup[I810_CTXREG_VF] = I810_VFMT_T0T1;
   }

@@ -1,4 +1,4 @@
-/* $TOG: TextPop.c /main/34 1998/06/24 11:53:54 kaleb $ */
+/* $Xorg: TextPop.c,v 1.3 2000/08/17 19:45:41 cpqbld Exp $ */
 
 /*
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.16 2000/05/18 16:29:52 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.18 2001/02/05 22:38:05 paulo Exp $ */
 
 /*
  * This file is broken up into three sections one dealing with

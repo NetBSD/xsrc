@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/XftFreetype.h,v 1.6 2000/12/08 07:51:27 keithp Exp $
+ * $XFree86: xc/lib/Xft/XftFreetype.h,v 1.15 2001/03/31 23:07:29 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -38,28 +38,49 @@ struct _XftFontStruct {
     GlyphSet		glyphset;
     int			min_char;
     int			max_char;
-    int			size;
+    FT_F26Dot6		size;
     int			ascent;
     int			descent;
     int			height;
     int			max_advance_width;
-    Bool		monospace;
+    int			spacing;
     int			rgba;
     Bool		antialias;
-    Bool		encoded;    /* use charmap */
+    int			charmap;    /* -1 for unencoded */
     XRenderPictFormat	*format;
     XGlyphInfo		**realized;
     int			nrealized;
+    Bool		transform;
+    FT_Matrix		matrix;
 };
 
 _XFUNCPROTOBEGIN
 
+/* xftdir.c */
+Bool
+XftDirScan (XftFontSet *set, const char *dir, Bool force);
+
+Bool
+XftDirSave (XftFontSet *set, const char *dir);
+
 /* xftfreetype.c */
+XftPattern *
+XftFreeTypeQuery (const char *file, int id, int *count);
+
+Bool
+XftFreeTypeSetFace (FT_Face face, FT_F26Dot6 size, int charmap, FT_Matrix *matrix);
+
 XftFontStruct *
 XftFreeTypeOpen (Display *dpy, XftPattern *pattern);
 
 void
 XftFreeTypeClose (Display *dpy, XftFontStruct *font);
+
+XftFontStruct *
+XftFreeTypeGet (XftFont *font);
+
+Bool
+XftInitFtLibrary(void);
 
 /* xftglyphs.c */
 void
@@ -104,6 +125,13 @@ XftRenderString32 (Display *dpy, Picture src,
 		   XftChar32 *string, int len);
 
 void
+XftRenderStringUtf8 (Display *dpy, Picture src, 
+		     XftFontStruct *font, Picture dst,
+		     int srcx, int srcy,
+		     int x, int y,
+		     XftChar8 *string, int len);
+
+void
 XftRenderExtents8 (Display	    *dpy,
 		   XftFontStruct    *font,
 		   XftChar8	    *string, 
@@ -124,8 +152,12 @@ XftRenderExtents32 (Display	    *dpy,
 		    int		    len,
 		    XGlyphInfo	    *extents);
 
-XftFontStruct *
-XftFreeTypeGet (XftFont *font);
+void
+XftRenderExtentsUtf8 (Display	    *dpy,
+		      XftFontStruct *font,
+		      XftChar8	    *string, 
+		      int	    len,
+		      XGlyphInfo    *extents);
 
 _XFUNCPROTOEND
 

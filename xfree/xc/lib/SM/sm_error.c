@@ -1,4 +1,4 @@
-/* $TOG: sm_error.c /main/12 1998/02/06 14:10:01 kaleb $ */
+/* $Xorg: sm_error.c,v 1.3 2000/08/17 19:44:29 cpqbld Exp $ */
 
 /*
 

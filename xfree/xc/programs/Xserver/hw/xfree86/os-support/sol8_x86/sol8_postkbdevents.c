@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_postkbdevents.c,v 1.2 1999/10/13 04:21:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_postkbdevents.c,v 1.4 2001/01/21 21:19:38 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -173,9 +173,7 @@ void sol8PostKbdEvent(Firm_event	*event)
 	
       case KEY_BackSpace:
 	if (!xf86Info.dontZap) {
-#ifdef XFreeXDGA
 	 DGAShutdown();
-#endif
 	 GiveUp(0);
         }
 	break;

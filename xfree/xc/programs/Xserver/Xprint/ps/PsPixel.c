@@ -1,4 +1,4 @@
-/* $TOG: PsPixel.c /main/4 1998/02/09 15:43:05 kaleb $ */
+/* $Xorg: PsPixel.c,v 1.3 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixel.c,v 1.3 1996/12/31 07:06:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixel.c,v 1.5 2001/01/17 22:36:32 dawes Exp $ */
 
 #include <stdio.h>
 

@@ -1,6 +1,6 @@
 /***************************************************************************/
 /*                                                                         */
-/*  ttpload.h                                                              */
+/*  ttpload.c                                                              */
 /*                                                                         */
 /*    TrueType glyph data/program tables loader (body).                    */
 /*                                                                         */
@@ -16,18 +16,13 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/tttags.h>
-
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_STREAM_H
+#include FT_TRUETYPE_TAGS_H
 #include "ttpload.h"
-#else
-#include <truetype/ttpload.h>
-#endif
-
-#include <freetype/internal/tterrors.h>
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
 
 
   /*************************************************************************/

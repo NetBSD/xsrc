@@ -1,4 +1,4 @@
-/* $TOG: wq.h /main/6 1998/02/09 14:11:33 kaleb $ */
+/* $Xorg: wq.h,v 1.3 2000/08/17 19:54:55 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xmodmap/wq.h,v 1.4 2001/01/17 23:46:21 dawes Exp $ */
 
 #ifndef _WQ_H
 #define _WQ_H

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbmisc.c /main/8 1998/02/09 14:39:32 kaleb $ */
+/* $Xorg: mfbmisc.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 #include "X.h"
 #include "misc.h"
 #include "cursor.h"

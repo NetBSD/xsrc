@@ -1,11 +1,12 @@
 /*
- * $XConsortium: charproc.c /main/196 1996/12/03 16:52:46 swick $
- * $XFree86: xc/programs/xterm/charproc.c,v 3.111 2000/11/01 01:12:37 dawes Exp $
+ * $Xorg: charproc.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
+
+/* $XFree86: xc/programs/xterm/charproc.c,v 3.120 2001/04/20 09:30:38 dickey Exp $ */
 
 /*
 
-Copyright 1999-2000 by Thomas E. Dickey
+Copyright 1999-2001 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -86,11 +87,11 @@ in this Software without prior written authorization from the X Consortium.
 #include <version.h>
 #include <xterm.h>
 
-#include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/StringDefs.h>
+#include <X11/Shell.h>
 #include <X11/Xmu/Atoms.h>
 #include <X11/Xmu/CharSet.h>
 #include <X11/Xmu/Converters.h>
@@ -127,13 +128,9 @@ in this Software without prior written authorization from the X Consortium.
 #define HANDLE_STRUCT_NOTIFY 1
 #endif
 
-#if !defined(NO_ACTIVE_ICON) || defined(HANDLE_STRUCT_NOTIFY)
-#include <X11/Shell.h>
-#endif /* NO_ACTIVE_ICON */
-
 extern char *ProgramName;
 
-static int in_put (void);
+static IChar in_put (void);
 static int set_character_class (char *s);
 static void FromAlternate (TScreen *screen);
 static void RequestResize (XtermWidget termw, int rows, int cols, int text);
@@ -212,6 +209,14 @@ static char defaultTranslations[] =
            Shift <KeyPress> Next:scroll-forw(1,halfpage) \n\
          Shift <KeyPress> Select:select-cursor-start() select-cursor-end(PRIMARY, CUT_BUFFER0) \n\
          Shift <KeyPress> Insert:insert-selection(PRIMARY, CUT_BUFFER0) \n\
+"
+#if OPT_SHIFT_FONTS
+"\
+         Shift <KeyPress> KP_Add:larger-vt-font() \n\
+    Shift <KeyPress> KP_Subtract:smaller-vt-font() \n\
+"
+#endif
+"\
                 ~Meta <KeyPress>:insert-seven-bit() \n\
                  Meta <KeyPress>:insert-eight-bit() \n\
                 !Ctrl <Btn1Down>:popup-menu(mainMenu) \n\
@@ -297,6 +302,7 @@ static XtActionsRec actionsList[] = {
     { "set-sun-keyboard",	HandleSunKeyboard },
     { "set-titeInhibit",	HandleTiteInhibit },
     { "set-visual-bell",	HandleSetVisualBell },
+    { "set-pop-on-bell",	HandleSetPopOnBell },
     { "set-vt-font",		HandleSetFont },
     { "soft-reset",		HandleSoftReset },
     { "start-cursor-extend",	HandleKeyboardStartExtend },
@@ -335,7 +341,7 @@ static XtActionsRec actionsList[] = {
 #if OPT_SCO_FUNC_KEYS
     { "set-sco-function-keys",	HandleScoFunctionKeys },
 #endif
-#if OPT_SHIFT_KEYS
+#if OPT_SHIFT_FONTS
     { "larger-vt-font",		HandleLargerFont },
     { "smaller-vt-font",	HandleSmallerFont },
 #endif
@@ -364,6 +370,7 @@ Bres(XtNautoWrap,	XtCAutoWrap,	misc.autoWrap,		TRUE),
 Bres(XtNawaitInput,	XtCAwaitInput,	screen.awaitInput,	FALSE),
 Bres(XtNbackarrowKey,	XtCBackarrowKey, screen.backarrow_key, TRUE),
 Bres(XtNboldMode,	XtCBoldMode, screen.bold_mode,		TRUE),
+Bres(XtNbrokenSelections, XtCBrokenSelections, screen.brokenSelections, FALSE),
 Bres(XtNc132,		XtCC132,	screen.c132,		FALSE),
 Bres(XtNcurses,		XtCCurses,	screen.curses,		FALSE),
 Bres(XtNcutNewline,	XtCCutNewline,	screen.cutNewline,	TRUE),
@@ -375,12 +382,14 @@ Bres(XtNeightBitInput,	XtCEightBitInput, screen.input_eight_bits, TRUE),
 Bres(XtNeightBitOutput, XtCEightBitOutput, screen.output_eight_bits, TRUE),
 Bres(XtNhighlightSelection, XtCHighlightSelection, screen.highlight_selection, FALSE),
 Bres(XtNhpLowerleftBugCompat, XtCHpLowerleftBugCompat, screen.hp_ll_bc, FALSE),
+Bres(XtNi18nSelections,	XtCI18nSelections, screen.i18nSelections, TRUE),
 Bres(XtNjumpScroll,	XtCJumpScroll, screen.jumpscroll,	TRUE),
 Bres(XtNloginShell,	XtCLoginShell, misc.login_shell,	FALSE),
 Bres(XtNmarginBell,	XtCMarginBell, screen.marginbell,	FALSE),
 Bres(XtNmetaSendsEscape, XtCMetaSendsEscape, screen.meta_sends_esc, FALSE),
 Bres(XtNmultiScroll,	XtCMultiScroll, screen.multiscroll, FALSE),
 Bres(XtNoldXtermFKeys,	XtCOldXtermFKeys, screen.old_fkeys,	FALSE),
+Bres(XtNpopOnBell,	XtCPopOnBell,	screen.poponbell,	FALSE),
 Bres(XtNprinterAutoClose, XtCPrinterAutoClose, screen.printer_autoclose, FALSE),
 Bres(XtNprinterExtent,	XtCPrinterExtent, screen.printer_extent, FALSE),
 Bres(XtNprinterFormFeed, XtCPrinterFormFeed, screen.printer_formfeed, FALSE),
@@ -519,8 +528,8 @@ Bres(XtNnumLock,	XtCNumLock,	misc.real_NumLock,	TRUE),
 Ires(XtNprintAttributes, XtCPrintAttributes, screen.print_attributes, 1),
 #endif
 
-#if OPT_SHIFT_KEYS
-Bres(XtNshiftKeys,	XtCShiftKeys,	misc.shift_keys,	TRUE),
+#if OPT_SHIFT_FONTS
+Bres(XtNshiftFonts,	XtCShiftFonts,	misc.shift_fonts,	TRUE),
 #endif
 
 #if OPT_SUNPC_KBD
@@ -823,7 +832,9 @@ static void VTparse(void)
 	int lastchar;		/* positive iff we had a graphic character */
 	int nextstate;
 	int laststate;
+#if OPT_WIDE_CHARS
 	int last_was_wide;
+#endif
 
 	/* We longjmp back to this point in VTReset() */
 	(void)setjmp(vtjmpbuf);
@@ -838,7 +849,9 @@ static void VTparse(void)
 	string_mode = 0;
 	lastchar = -1;		/* not a legal IChar */
 	nextstate = -1;		/* not a legal state */
+#if OPT_WIDE_CHARS
 	last_was_wide = 0;
+#endif
 
 	for( ; ; ) {
 	    int thischar = -1;
@@ -869,15 +882,12 @@ static void VTparse(void)
 
 		if (precomposed != -1) {
 		    putXtermCell(screen, last_written_row, last_written_col, precomposed);
-		    ScrnRefresh(screen, last_written_row, last_written_col, 1, 1, 1);
-		    continue;
 		} else {
 		    addXtermCombining(screen, last_written_row, last_written_col, c);
-		    if (!screen->scroll_amt)
-			ScrnRefresh(screen, last_written_row, last_written_col, 1, 1, 1);
-			/* does this suffice? */
-		    continue;
 		}
+		if (!screen->scroll_amt)
+		    ScrnRefresh(screen, last_written_row, last_written_col, 1, 1, 1);
+		continue;
 	    }
 #endif
 
@@ -2444,7 +2454,7 @@ static int pty_read_bytes;
 
 #define	ptymask()	(v_bufptr > v_bufstr ? pty_mask : 0)
 
-static int
+static IChar
 in_put(void)
 {
     int status;
@@ -2559,7 +2569,7 @@ static fd_set select_mask;
 static fd_set write_mask;
 static int pty_read_bytes;
 
-static int
+static IChar
 in_put(void)
 {
     register TScreen *screen = &term->screen;
@@ -3143,9 +3153,9 @@ dpmodes(
 			if (screen->fullVwin.scrollbar != ((func == bitset) ? ON : OFF))
 				ToggleScrollBar(termw);
 			break;
-#if OPT_SHIFT_KEYS
+#if OPT_SHIFT_FONTS
 		case 35:		/* rxvt */
-			term->misc.shift_keys = (func == bitset) ? ON : OFF;
+			term->misc.shift_fonts = (func == bitset) ? ON : OFF;
 			break;
 #endif
 		case 38:		/* DECTEK			*/
@@ -4022,6 +4032,10 @@ static void RequestResize(
 	int cols,
 	int text)
 {
+#ifndef nothack
+	XSizeHints sizehints;
+	long supp;
+#endif
 	TScreen	*screen	= &termw->screen;
 	unsigned long value;
 	Dimension replyWidth, replyHeight;
@@ -4086,6 +4100,12 @@ static void RequestResize(
 			askedWidth = wide;
 	}
 
+#ifndef nothack
+	if (! XGetWMNormalHints(screen->display, VShellWindow,
+				&sizehints, &supp))
+	    bzero(&sizehints, sizeof(sizehints));
+#endif
+
 	status = XtMakeResizeRequest (
 	    (Widget) termw,
 	     askedWidth,  askedHeight,
@@ -4101,10 +4121,26 @@ static void RequestResize(
 			  replyWidth,
 			  replyHeight,
 			  &termw->flags);
-	    XSync(screen->display, FALSE);	/* synchronize */
-	    if(XtAppPending(app_con))
-		xevents();
 	}
+
+#ifndef nothack
+	/*
+	 * XtMakeResizeRequest() has the undesirable side-effect of clearing
+	 * the window manager's hints, even on a failed request.  This would
+	 * presumably be fixed if the shell did its own work.
+	 */
+	if (sizehints.flags
+	 && replyHeight
+	 && replyWidth) {
+		sizehints.height = replyHeight;
+		sizehints.width = replyWidth;
+		XSetWMNormalHints(screen->display, VShellWindow, &sizehints);
+	}
+#endif
+
+	XSync(screen->display, FALSE);	/* synchronize */
+	if(XtAppPending(app_con))
+	    xevents();
 }
 
 extern Atom wm_delete_window;	/* for ICCCM delete window */
@@ -4263,6 +4299,7 @@ static void VTInitialize (
 
    wnew->screen.ansi_level = (wnew->screen.terminal_id / 100);
    wnew->screen.visualbell = request->screen.visualbell;
+   wnew->screen.poponbell = request->screen.poponbell;
    wnew->misc.limit_resize = request->misc.limit_resize;
 #if OPT_NUM_LOCK
    wnew->misc.real_NumLock = request->misc.real_NumLock;
@@ -4274,8 +4311,8 @@ static void VTInitialize (
    wnew->misc.meta_left = 0;
    wnew->misc.meta_right = 0;
 #endif
-#if OPT_SHIFT_KEYS
-   wnew->misc.shift_keys = request->misc.shift_keys;
+#if OPT_SHIFT_FONTS
+   wnew->misc.shift_fonts = request->misc.shift_fonts;
 #endif
 #if OPT_SUNPC_KBD
    wnew->misc.ctrl_fkeys = request->misc.ctrl_fkeys;
@@ -4297,6 +4334,8 @@ static void VTInitialize (
    wnew->screen.cutToBeginningOfLine = request->screen.cutToBeginningOfLine;
    wnew->screen.highlight_selection = request->screen.highlight_selection;
    wnew->screen.trim_selection = request->screen.trim_selection;
+   wnew->screen.i18nSelections = request->screen.i18nSelections;
+   wnew->screen.brokenSelections = request->screen.brokenSelections;
    wnew->screen.always_highlight = request->screen.always_highlight;
    wnew->screen.pointer_cursor = request->screen.pointer_cursor;
 
@@ -4586,6 +4625,7 @@ static void VTRealize (
 			- height - (XtParent(term)->core.border_width * 2);
 
 	/* set up size hints for window manager; min 1 char by 1 char */
+	bzero(&sizehints, sizeof(sizehints));
 	sizehints.base_width = 2 * screen->border + scrollbar_width;
 	sizehints.base_height = 2 * screen->border;
 	sizehints.width_inc = FontWidth(screen);
@@ -4757,7 +4797,7 @@ static void VTRealize (
 #if OPT_I18N_SUPPORT && OPT_INPUT_METHOD
 static void VTInitI18N(void)
 {
-    unsigned	i;
+    unsigned	i, j;
     char       *p,
 	       *s,
 	       *t,
@@ -4768,6 +4808,14 @@ static void VTInitI18N(void)
     XIMStyles  *xim_styles;
     XIMStyle	input_style = 0;
     Boolean	found;
+    static struct {
+	char *name;
+	unsigned long code;
+    } known_style[] = {
+	{ "OverTheSpot",	(XIMPreeditPosition | XIMStatusArea) },
+	{ "OffTheSpot",		(XIMPreeditArea     | XIMStatusArea) },
+	{ "Root",		(XIMPreeditNothing  | XIMStatusNothing) },
+    };
 
     term->screen.xic = NULL;
 
@@ -4811,9 +4859,11 @@ static void VTInitI18N(void)
 	fprintf(stderr, "Failed to open input method\n");
 	return;
     }
+    TRACE(("VTInitI18N opened input method\n"));
 
     if (XGetIMValues(xim, XNQueryInputStyle, &xim_styles, NULL)
-	|| !xim_styles) {
+	|| !xim_styles
+	|| !xim_styles->count_styles) {
 	fprintf(stderr, "input method doesn't support any style\n");
 	XCloseIM(xim);
 	return;
@@ -4830,17 +4880,19 @@ static void VTInitI18N(void)
 	while ((end != s) && isspace(CharOf(end[-1]))) end--;
 
 	if (end != s) {	/* just in case we have a spurious comma */
-	    if (!strncmp(s, "OverTheSpot", end - s)) {
-		input_style = (XIMPreeditPosition | XIMStatusArea);
-	    } else if (!strncmp(s, "OffTheSpot", end - s)) {
-		input_style = (XIMPreeditArea | XIMStatusArea);
-	    } else if (!strncmp(s, "Root", end - s)) {
-		input_style = (XIMPreeditNothing | XIMStatusNothing);
-	    }
-	    for (i = 0; (unsigned short)i < xim_styles->count_styles; i++) {
-		if (input_style == xim_styles->supported_styles[i]) {
-		    found = True;
-		    break;
+	    TRACE(("looking for style '%.*s'\n", end - s, s));
+	    for (i = 0; i < sizeof(known_style)/sizeof(known_style[0]); i++) {
+		if ((int)strlen(known_style[i].name) == (end - s)
+		 && !strncmp(s, known_style[i].name, end - s)) {
+		    input_style = known_style[i].code;
+		    for (j = 0; j < xim_styles->count_styles; j++) {
+			if (input_style == xim_styles->supported_styles[j]) {
+			    found = True;
+			    break;
+			}
+		    }
+		    if (found)
+			break;
 		}
 	    }
 	}
@@ -4850,7 +4902,8 @@ static void VTInitI18N(void)
     XFree(xim_styles);
 
     if (!found) {
-	fprintf(stderr, "input method doesn't support my preedit type\n");
+	fprintf(stderr, "input method doesn't support my preedit type (%s)\n",
+		term->misc.preedit_type);
 	XCloseIM(xim);
 	return;
     }
@@ -5569,7 +5622,6 @@ static void HandleVisualBell(
 {
     VisualBell();
 }
-
 
 /* ARGSUSED */
 static void HandleIgnore(

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/FreeType/ftenc.c,v 1.15 2000/04/05 18:13:23 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftenc.c,v 1.16 2000/04/06 15:27:23 dawes Exp $ */
 
 /* 
 Copyright (c) 1998 by Juliusz Chroboczek

@@ -1,5 +1,5 @@
 /*
- * $TOG: xdpyinfo.c /main/35 1998/02/09 13:57:05 kaleb $
+ * $Xorg: xdpyinfo.c,v 1.4 2000/08/17 19:54:18 cpqbld Exp $
  * 
  * xdpyinfo - print information about X display connecton
  *
@@ -25,14 +25,16 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.16 1999/02/28 11:20:14 dawes Exp $ */
+/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.23 2001/04/03 22:37:02 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #ifdef MULTIBUFFER
 #include <X11/extensions/multibuf.h>
 #endif
+#ifdef XIE
 #include <X11/extensions/XIElib.h>
+#endif
 #include <X11/extensions/XTest.h>
 #include <X11/extensions/sync.h>
 #include <X11/Xproto.h>
@@ -123,6 +125,48 @@ print_display_info(Display *dpy)
 	    ProtocolVersion (dpy), ProtocolRevision (dpy));
     printf ("vendor string:    %s\n", ServerVendor (dpy));
     printf ("vendor release number:    %d\n", VendorRelease (dpy));
+
+    if (strstr(ServerVendor (dpy), "XFree86")) {
+	int vendrel = VendorRelease(dpy);
+
+	printf("XFree86 version: ");
+	if (vendrel < 336) {
+	    /*
+	     * vendrel was set incorrectly for 3.3.4 and 3.3.5, so handle
+	     * those cases here.
+	     */
+	    printf("%d.%d.%d", vendrel / 100,
+			      (vendrel / 10) % 10,
+			       vendrel       % 10);
+	} else if (vendrel < 3900) {
+	    /* 3.3.x versions, other than the exceptions handled above */
+	    printf("%d.%d", vendrel / 1000,
+			   (vendrel /  100) % 10);
+	    if (((vendrel / 10) % 10) || (vendrel % 10)) {
+		printf(".%d", (vendrel / 10) % 10);
+		if (vendrel % 10) {
+		    printf(".%d", vendrel % 10);
+		}
+	    }
+	} else if (vendrel < 40000000) {
+	    /* 4.0.x versions */
+	    printf("%d.%d", vendrel / 1000,
+			   (vendrel /   10) % 10);
+	    if (vendrel % 10) {
+		printf(".%d", vendrel % 10);
+	    }
+	} else {
+	    /* post-4.0.2 */
+	    printf("%d.%d.%d", vendrel / 10000000,
+			      (vendrel /   100000) % 100,
+			      (vendrel /     1000) % 100);
+	    if (vendrel % 1000) {
+		printf(".%d", vendrel % 1000);
+	    }
+	}
+	printf("\n");
+    }
+
     req_size = XExtendedMaxRequestSize (dpy);
     if (!req_size) req_size = XMaxRequestSize (dpy);
     printf ("maximum request size:  %ld bytes\n", req_size * 4);
@@ -458,6 +502,7 @@ print_multibuf_info(Display *dpy, char *extname)
 #endif
 
 
+#ifdef XIE
 /* XIE stuff */
 
 char *subset_names[] = { NULL, "FULL", "DIS" };
@@ -521,6 +566,7 @@ print_xie_info(Display *dpy, char *extname)
     }
     return 1;
 } /* end print_xie_info */
+#endif
 
 static int
 print_xtest_info(Display *dpy, char *extname)
@@ -912,7 +958,9 @@ ExtensionPrintInfo known_extensions[] =
 #ifdef XF86MISC
     {XF86MISCNAME, print_XF86Misc_info, False},
 #endif /* XF86MISC */
+#ifdef XIE
     {xieExtName, print_xie_info, False},
+#endif
     {XTestExtensionName, print_xtest_info, False},
     {"DOUBLE-BUFFER", print_dbe_info, False},
     {"RECORD", print_record_info, False},

@@ -1,4 +1,4 @@
-/* $XConsortium: keymap.c /main/6 1996/01/14 16:47:51 kaleb $ */
+/* $Xorg: keymap.c,v 1.3 2000/08/17 19:54:32 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

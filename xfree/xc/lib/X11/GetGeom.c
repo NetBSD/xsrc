@@ -1,4 +1,4 @@
-/* $TOG: GetGeom.c /main/7 1998/02/06 17:25:56 kaleb $ */
+/* $Xorg: GetGeom.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

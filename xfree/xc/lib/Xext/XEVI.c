@@ -1,4 +1,4 @@
-/* $TOG: XEVI.c /main/2 1998/01/11 08:40:32 kaleb $ */
+/* $Xorg: XEVI.c,v 1.3 2000/08/17 19:45:51 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1997 by Silicon Graphics Computer Systems, Inc.
 Permission to use, copy, modify, and distribute this

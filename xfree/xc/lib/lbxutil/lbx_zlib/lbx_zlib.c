@@ -1,4 +1,4 @@
-/* $TOG: lbx_zlib.c /main/9 1998/02/09 10:23:12 kaleb $ */
+/* $Xorg: lbx_zlib.c,v 1.5 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
 
@@ -46,7 +46,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.5 1998/12/20 11:57:19 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.7 2001/01/17 19:43:36 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

@@ -1,4 +1,4 @@
-/* $TOG: objects.c /main/14 1998/06/16 13:50:14 barstow $ */
+/* $Xorg: objects.c,v 1.3 2000/08/17 19:46:30 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/objects.c,v 1.7 1999/08/22 05:35:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/objects.c,v 1.9 2001/01/17 19:43:22 dawes Exp $ */
  /* OBJECTS  CWEB         V0025 ********                             */
 /*
 :h1.OBJECTS Module - TYPE1IMAGER Objects Common Routines

@@ -1,4 +1,4 @@
-/* $XConsortium: XKBCompat.c /main/8 1996/03/01 14:29:32 kaleb $ */
+/* $Xorg: XKBCompat.c,v 1.3 2000/08/17 19:45:00 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

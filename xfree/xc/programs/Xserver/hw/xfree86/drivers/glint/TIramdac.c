@@ -1,5 +1,5 @@
 /*
- * Copyright 1998 by Alan Hourihane, Wigan, England.
+ * Copyright 1998-2001 by Alan Hourihane, Wigan, England.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@
  * glintOutTIIndReg() and glintInTIIndReg() are used to access 
  * the indirect TI RAMDAC registers only.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/TIramdac.c,v 1.1 1999/06/14 07:31:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/TIramdac.c,v 1.4 2001/01/31 16:14:52 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -147,4 +147,86 @@ glintTIHWCursorInit(ScreenPtr pScreen)
     (*pGlint->RamDac->HWCursorInit)(infoPtr);
 
     return(xf86InitCursor(pScreen, infoPtr));
+}
+
+/* Special cases */
+
+/* GMX2000 */
+void
+GMX2000OutIndReg(ScrnInfoPtr pScrn,
+		     CARD32 reg, unsigned char mask, unsigned char data)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+
+    ACCESSCHIP2();
+
+    glintOutTIIndReg(pScrn, reg, mask, data);
+
+    ACCESSCHIP1();
+}
+
+unsigned char
+GMX2000InIndReg (ScrnInfoPtr pScrn, CARD32 reg)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    unsigned char ret;
+
+    ACCESSCHIP2();
+
+    ret = glintInTIIndReg(pScrn, reg);
+
+    ACCESSCHIP1();
+
+    return (ret);
+}
+
+void
+GMX2000WriteAddress (ScrnInfoPtr pScrn, CARD32 index)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+
+    ACCESSCHIP2();
+    
+    glintTIWriteAddress(pScrn, index);
+
+    ACCESSCHIP1();
+}
+
+void
+GMX2000WriteData (ScrnInfoPtr pScrn, unsigned char data)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    
+    ACCESSCHIP2();
+
+    glintTIWriteData(pScrn, data);
+
+    ACCESSCHIP1();
+}
+
+void
+GMX2000ReadAddress (ScrnInfoPtr pScrn, CARD32 index)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    
+    ACCESSCHIP2();
+
+    glintTIReadAddress(pScrn, index);
+
+    ACCESSCHIP1();
+}
+
+unsigned char
+GMX2000ReadData (ScrnInfoPtr pScrn)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    unsigned char ret;
+    
+    ACCESSCHIP2();
+
+    ret = glintTIReadData(pScrn);
+
+    ACCESSCHIP1();
+
+    return (ret);
 }

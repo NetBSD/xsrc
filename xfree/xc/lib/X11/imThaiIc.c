@@ -1,4 +1,4 @@
-/* $XConsortium: imThaiIc.c /main/5 1996/10/22 14:24:50 kaleb $ */
+/* $Xorg: imThaiIc.c,v 1.3 2000/08/17 19:45:15 cpqbld Exp $ */
 /******************************************************************
 
           Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -32,7 +32,7 @@ THIS SOFTWARE.
 	                          frankyling@hgrd01.enet.dec.com
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/imThaiIc.c,v 1.4 2001/01/17 19:41:52 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>

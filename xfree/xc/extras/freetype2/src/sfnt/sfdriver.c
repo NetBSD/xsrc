@@ -16,11 +16,9 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/sfnt.h>
-#include <freetype/internal/ftobjs.h>
-
-
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_SFNT_H
+#include FT_INTERNAL_OBJECTS_H
 
 #include "sfdriver.h"
 #include "ttload.h"
@@ -34,24 +32,6 @@
 #ifdef TT_CONFIG_OPTION_POSTSCRIPT_NAMES
 #include "ttpost.h"
 #endif
-
-#else
-
-#include <sfnt/sfdriver.h>
-#include <sfnt/ttload.h>
-#include <sfnt/ttcmap.h>
-#include <sfnt/sfobjs.h>
-
-#ifdef TT_CONFIG_OPTION_EMBEDDED_BITMAPS
-#include <sfnt/ttsbit.h>
-#endif
-
-#ifdef TT_CONFIG_OPTION_POSTSCRIPT_NAMES
-#include <sfnt/ttpost.h>
-#endif
-
-#endif
-
 
 #include <string.h>     /* for strcmp() */
 
@@ -117,7 +97,7 @@
     error = TT_Get_PS_Name( face, glyph_index, &gname );
     if ( !error && buffer_max > 0 )
     {
-      FT_UInt  len = strlen( gname );
+      FT_UInt  len = (FT_UInt)( strlen( gname ) );
 
 
       if ( len >= buffer_max )

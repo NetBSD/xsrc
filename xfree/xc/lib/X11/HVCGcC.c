@@ -1,4 +1,4 @@
-/* $XConsortium: HVCGcC.c,v 1.8 93/07/05 11:43:37 rws Exp $" */
+/* $Xorg: HVCGcC.c,v 1.3 2000/08/17 19:44:36 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -43,7 +43,7 @@
  *		Source for XcmsTekHVCClipC() gamut compression routine.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/HVCGcC.c,v 1.3 2001/01/17 19:41:37 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/fstobdf/fstobdf.h,v 1.1 1999/02/20 14:55:51 hohndel Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *

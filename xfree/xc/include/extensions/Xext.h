@@ -1,5 +1,5 @@
 /*
- * $TOG: Xext.h /main/5 1998/02/09 11:21:47 kaleb $
+ * $Xorg: Xext.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,6 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
+/* $XFree86: xc/include/extensions/Xext.h,v 1.3 2001/04/01 13:59:59 tsi Exp $ */
 
 #ifndef _XEXT_H_
 #define _XEXT_H_
@@ -37,7 +38,13 @@ extern int (*XSetExtensionErrorHandler(
 #endif
 		   )
 #endif
-))();
+))(
+#if NeedNestedPrototypes
+		   Display *,
+		   char *,
+		   char *
+#endif
+);
 
 extern int XMissingExtension(
 #if NeedFunctionPrototypes

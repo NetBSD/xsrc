@@ -1,4 +1,4 @@
-/* $TOG: xwininfo.c /main/56 1998/02/09 14:21:06 kaleb $ */
+/* $Xorg: xwininfo.c,v 1.3 2000/08/17 19:55:16 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xwininfo/xwininfo.c,v 1.7 2001/04/01 14:00:25 tsi Exp $ */
 
 
 /*
@@ -44,6 +44,7 @@ from The Open Group.
 #include <X11/extensions/shape.h>
 #include <X11/Xmu/WinUtil.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Include routines to handle parsing defaults */
 #include "dsimple.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.47 2000/02/08 17:19:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.50 2001/04/10 16:08:03 dawes Exp $ */
 
 
 
@@ -64,7 +64,7 @@ typedef unsigned int xf86uid_t;
 typedef unsigned int xf86gid_t;
 
 struct xf86stat {
-    xf86dev_t st_rdev;	/* This is incomplete */
+    xf86dev_t st_rdev;	/* This is incomplete, and makes assumptions */
 };
 
 /* sysv IPC */
@@ -499,6 +499,7 @@ typedef int xf86jmp_buf[20];
 #define gid_t                   xf86gid_t
 #undef jmp_buf
 #define jmp_buf                 xf86jmp_buf
+#define stat_t			struct xf86stat
 
 /*
  * There should be no need to #undef any of these.  If they are already

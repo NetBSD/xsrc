@@ -1,6 +1,6 @@
 /***********************************************************
 
- $TOG: SimpleP.h /main/13 1998/02/06 12:49:30 kaleb $ 
+ $Xorg: SimpleP.h,v 1.3 2000/08/17 19:45:38 cpqbld Exp $
 
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/SimpleP.h,v 1.9 1999/06/20 08:41:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SimpleP.h,v 1.11 2001/01/17 19:42:30 dawes Exp $ */
 
 #ifndef _SimpleP_h
 #define _SimpleP_h

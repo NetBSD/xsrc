@@ -1,4 +1,4 @@
-/* $TOG: os.h /main/12 1998/02/11 10:04:16 kaleb $ */
+/* $Xorg: os.h,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -40,10 +40,10 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $NCDId: @(#)os.h,v 4.2 1991/05/10 07:59:16 lemke Exp $
+ * $NCDXorg: @(#)os.h,v 4.2 1991/05/10 07:59:16 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/include/os.h,v 3.8 2000/02/13 06:15:45 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/os.h,v 3.10 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef	_OS_H_
 #define	_OS_H_

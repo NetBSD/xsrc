@@ -1,4 +1,4 @@
-.\" $TOG: DBE.man /main/4 1997/11/04 20:41:34 kaleb $
+.\" $Xorg: DBE.man,v 1.3 2000/08/17 19:41:55 cpqbld Exp $
 .\"
 .\" Copyright (c) 1995  Hewlett-Packard Company
 .\" 
@@ -24,7 +24,10 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" Hewlett-Packard Company.
-.TH DBE 3X11 "Release 6.4" "X Version 11" "X FUNCTIONS"
+.\"
+.\" $XFree86: xc/doc/man/Xext/dbe/DBE.man,v 3.4 2001/01/27 18:20:19 dawes Exp $
+.\"
+.TH DBE 3X11 __xorgversion__ "X FUNCTIONS"
 .SH NAME
 DBE - Double Buffer Extension
 .SH SYNOPSIS

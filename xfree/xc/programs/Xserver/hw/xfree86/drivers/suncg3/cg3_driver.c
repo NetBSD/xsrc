@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg3/cg3_driver.c,v 1.1 2000/06/30 17:15:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg3/cg3_driver.c,v 1.4 2001/05/16 06:48:10 keithp Exp $ */
 
 #define PSZ 8
 #include "xf86.h"
@@ -31,11 +31,11 @@
 #include "mibstore.h"
 #include "micmap.h"
 
-#include "cfb.h"
+#include "fb.h"
 #include "xf86cmap.h"
 #include "cg3.h"
 
-static OptionInfoPtr CG3AvailableOptions(int chipid, int busid);
+static const OptionInfoRec * CG3AvailableOptions(int chipid, int busid);
 static void	CG3Identify(int flags);
 static Bool	CG3Probe(DriverPtr drv, int flags);
 static Bool	CG3PreInit(ScrnInfoPtr pScrn, int flags);
@@ -83,7 +83,7 @@ DriverRec SUNCG3 = {
     0
 };
 
-static OptionInfoRec CG3Options[] = {
+static const OptionInfoRec CG3Options[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -165,8 +165,7 @@ CG3FreeRec(ScrnInfoPtr pScrn)
     return;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 CG3AvailableOptions(int chipid, int busid)
 {
     return CG3Options;
@@ -356,7 +355,7 @@ CG3PreInit(ScrnInfoPtr pScrn, int flags)
     /* Set the bits per RGB for 8bpp mode */
     from = X_DEFAULT;
 
-    if (xf86LoadSubModule(pScrn, "cfb") == NULL) {
+    if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	CG3FreeRec(pScrn);
 	return FALSE;
     }
@@ -436,16 +435,22 @@ CG3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
+    miSetPixmapDepths ();
+	
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
      */
 
-    ret = cfbScreenInit(pScreen, pCg3->fb, pScrn->virtualX,
-			pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-			pScrn->virtualX);
+    ret = fbScreenInit(pScreen, pCg3->fb, pScrn->virtualX,
+		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
+		       pScrn->virtualX, 8);
     if (!ret)
 	return FALSE;
+
+#ifdef RENDER
+    fbPictureInit (pScreen, 0, 0);
+#endif
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);

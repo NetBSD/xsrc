@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/fLineH.s,v 1.2 1998/07/25 16:58:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/fLineH.s,v 1.3 1999/12/27 00:39:49 robin Exp $ */
 /* Copyright 1992 by James Tsillas, Arlington, Massachusetts.
 
 		All Rights Reserved

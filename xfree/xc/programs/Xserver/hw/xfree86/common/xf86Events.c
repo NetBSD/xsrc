@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.103 2000/12/07 20:26:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.109 2001/05/18 16:03:10 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -295,11 +295,14 @@ ProcessInputEvents ()
  *  ifdefs further (hv).
  */
 
-#ifdef ASSUME_CUSTOM_KEYCODES
+#ifdef __linux__
 extern u_char SpecialServerMap[];
-#endif /* ASSUME_CUSTOM_KEYCODES */
+#endif
 
-#if !defined(__EMX__) && !defined(__SOL8__) && !defined(__CYGWIN__)
+#if !defined(__EMX__) && \
+    !defined(__SOL8__) && \
+    (!defined(sun) || defined(i386)) && \
+    !defined(__CYGWIN__)
 void
 xf86PostKbdEvent(unsigned key)
 {
@@ -347,30 +350,27 @@ xf86PostKbdEvent(unsigned key)
      * PANIX returns DICOP standards based keycodes in using 106jp 
      * keyboard. We need to remap some keys. 
      */
-#define KEY_P_UP	0x5A
-#define KEY_P_PGUP	0x5B
-#define KEY_P_LEFT	0x5C
-#define KEY_P_BKSL	0x73
-#define KEY_P_YEN	0x7D
-#define KEY_P_NFER	0x7B
-#define KEY_P_XFER	0x79
-
   if(xf86Info.panix106 == TRUE){
     switch (scanCode) {
-    /* case 0x78:        scanCode = KEY_P_UP;     break;   not needed*/
-    case 0x56:        scanCode = KEY_P_BKSL;   break;  /* Backslash */
-    case 0x5A:        scanCode = KEY_P_NFER;   break;  /* No Kanji Transfer*/
-    case 0x5B:        scanCode = KEY_P_XFER;   break;  /* Kanji Tranfer */
-    case 0x5C:        scanCode = KEY_P_YEN;    break;  /* Yen curs pgup */
-    case 0x6B:        scanCode = KEY_P_LEFT;   break;  /* Cur Left */
-    case 0x6F:        scanCode = KEY_P_PGUP;   break;  /* Cur PageUp */
+    case 0x56:        scanCode = KEY_BSlash2;	break;  /* Backslash */
+    case 0x5A:        scanCode = KEY_NFER;	break;  /* No Kanji Transfer*/
+    case 0x5B:        scanCode = KEY_XFER;	break;  /* Kanji Tranfer */
+    case 0x5C:        scanCode = KEY_Yen;	break;  /* Yen curs pgup */
+    case 0x6B:        scanCode = KEY_Left;	break;  /* Cur Left */
+    case 0x6F:        scanCode = KEY_PgUp;	break;  /* Cur PageUp */
     case 0x72:        scanCode = KEY_AltLang;  break;  /* AltLang(right) */
     case 0x73:        scanCode = KEY_RCtrl;    break;  /* not needed */
     }
   }
 #endif  /* i386 && SVR4 */
 
-#ifndef ASSUME_CUSTOM_KEYCODES
+#ifdef __linux__
+  if (xf86Info.kbdCustomKeycodes) {
+    specialkey = SpecialServerMap[scanCode];
+    goto customkeycodes;
+  }
+#endif
+
   /*
    * First do some special scancode remapping ...
    */
@@ -457,18 +457,14 @@ xf86PostKbdEvent(unsigned key)
       if (scanCode != KEY_NumLock) return;
       scanCode = KEY_Pause;       /* pause */
     }
-#endif /* !ASSUME_CUSTOM_KEYCODES */
 
   /*
    * and now get some special keysequences
    */
 
-#ifdef ASSUME_CUSTOM_KEYCODES
-  specialkey = SpecialServerMap[scanCode];
-#else /* ASSUME_CUSTOM_KEYCODES */
   specialkey = scanCode;
-#endif /* ASSUME_CUSTOM_KEYCODES */
 
+customkeycodes:
   if (xf86IsPc98()) {
     switch (scanCode) {
       case 0x0e: specialkey = 0x0e; break; /* KEY_BackSpace */
@@ -859,25 +855,31 @@ special:
       updateLeds = TRUE;
     }
 
-#ifndef ASSUME_CUSTOM_KEYCODES
-  /*
-   * normal, non-keypad keys
-   */
-  if (scanCode < KEY_KP_7 || scanCode > KEY_KP_Decimal) {
-#if !defined(CSRG_BASED) && !defined(MACH386) && !defined(MINIX) && !defined(__OSF__) && !defined(__GNU__) && !defined(__CYGWIN__)
+  if (!xf86Info.kbdCustomKeycodes) {
     /*
-     * magic ALT_L key on AT84 keyboards for multilingual support
+     * normal, non-keypad keys
      */
-    if (xf86Info.kbdType == KB_84 &&
-	ModifierDown(AltMask) &&
-	keysym[2] != NoSymbol)
-      {
-	UsePrefix = TRUE;
-	Direction = TRUE;
-      }
+    if (scanCode < KEY_KP_7 || scanCode > KEY_KP_Decimal) {
+#if !defined(CSRG_BASED) && \
+    !defined(MACH386) && \
+    !defined(MINIX) && \
+    !defined(__OSF__) && \
+    !defined(__GNU__) && \
+    !defined(__CYGWIN__) && \
+     defined(KB_84)
+      /*
+       * magic ALT_L key on AT84 keyboards for multilingual support
+       */
+      if (xf86Info.kbdType == KB_84 &&
+	  ModifierDown(AltMask) &&
+	  keysym[2] != NoSymbol)
+	{
+	  UsePrefix = TRUE;
+	  Direction = TRUE;
+	}
 #endif /* !CSRG_BASED && !MACH386 && !MINIX && !__OSF__ */
+    }
   }
-#endif /* !ASSUME_CUSTOM_KEYCODES */
   if (updateLeds) xf86KbdLeds();
 #ifdef XKB
   }

@@ -1,4 +1,4 @@
-/* $TOG: XKBAlloc.c /main/7 1997/08/17 20:47:47 kaleb $ */
+/* $Xorg: XKBAlloc.c,v 1.4 2000/08/17 19:44:59 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.3 1997/10/26 13:24:43 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.5 2001/01/17 19:41:48 dawes Exp $ */
 
 #ifndef XKB_IN_SERVER
 

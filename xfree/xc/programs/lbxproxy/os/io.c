@@ -1,4 +1,4 @@
-/* $TOG: io.c /main/17 1998/02/11 09:54:23 kaleb $ */
+/* $Xorg: io.c,v 1.5 2000/08/17 19:53:58 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/io.c,v 1.5 1998/08/20 13:59:50 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/io.c,v 1.7 2001/01/17 23:44:59 dawes Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -255,7 +255,7 @@ StandardReadRequestFromClient(client)
 
     if (!oci)
     {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	{
 	    FreeInputs = oci->next;
 	}
@@ -570,7 +570,7 @@ InsertFakeRequest(client, data, count)
     }
     if (!oci)
     {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	    FreeInputs = oci->next;
 	else if (!(oci = AllocateInputBuffer()))
 	    return FALSE;
@@ -861,11 +861,10 @@ LbxFlushClient(who, oc, extraBuf, extraCount)
     int extraCount; /* do not modify... returned below */
 {
     ConnectionOutputPtr obuf;
-    XtransConnInfo trans_conn = oc->trans_conn;
     register ConnectionOutputPtr oco;
     int retval;
 
-    if (oco = oc->ofirst) {
+    if ((oco = oc->ofirst)) {
 	obuf = oc->output;
 	do {
 	    Bool nocomp = oco->nocompress;
@@ -902,7 +901,7 @@ LbxFlushClient(who, oc, extraBuf, extraCount)
 		oc->output = obuf;
 		return extraCount;
 	    }
-	} while (oc->ofirst = oco);
+	} while ((oc->ofirst = oco));
 	oc->output = obuf;
     }
     retval = StandardFlushClient(who, oc, extraBuf, extraCount);
@@ -995,7 +994,7 @@ StandardWriteToClient (who, count, buf)
 
     if (!oco)
     {
-	if (oco = FreeOutputs)
+	if ((oco = FreeOutputs))
 	{
 	    FreeOutputs = oco->next;
 	}
@@ -1042,14 +1041,13 @@ UncompressWriteToClient (who, count, buf)
     int count;
 {
     OsCommPtr oc = (OsCommPtr)who->osPrivate;
-    XtransConnInfo trans_conn = oc->trans_conn;
     register ConnectionOutputPtr oco;
     int paddedLen = count + padlength[count & 3];
 
     if (!count)
 	return(0);
 
-    if (oco = oc->output) {
+    if ((oco = oc->output)) {
 	/*
 	 * we're currently filling a buffer, and it must be compressible,
 	 * so put it on the queue
@@ -1193,7 +1191,7 @@ FreeOsBuffers(oc)
 
     if (AvailableInput == oc)
 	AvailableInput = (OsCommPtr)NULL;
-    if (oci = oc->input)
+    if ((oci = oc->input))
     {
 	if (FreeInputs)
 	{
@@ -1209,7 +1207,7 @@ FreeOsBuffers(oc)
 	    oci->lenLastReq = 0;
 	}
     }
-    if (oco = oc->output)
+    if ((oco = oc->output))
     {
 	if (FreeOutputs)
 	{
@@ -1223,7 +1221,7 @@ FreeOsBuffers(oc)
 	    oco->count = 0;
 	}
     }
-    if (oco = oc->ofirst) {
+    if ((oco = oc->ofirst)) {
 	ConnectionOutputPtr nextoco;
 	do {
 	    nextoco = oco->next;

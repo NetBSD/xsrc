@@ -1,5 +1,5 @@
 /*
-* $TOG: Box.h /main/23 1998/02/06 12:45:05 kaleb $
+* $Xorg: Box.h,v 1.3 2000/08/17 19:45:31 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Box.h,v 1.5 1998/10/03 08:42:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Box.h,v 1.7 2001/01/17 19:42:25 dawes Exp $ */
 
 #ifndef _XawBox_h
 #define _XawBox_h

@@ -1,5 +1,5 @@
 /*
- * $TOG: iceauth.c /main/3 1998/02/09 13:44:01 kaleb $
+ * $Xorg: iceauth.c,v 1.3 2000/08/17 19:53:53 cpqbld Exp $
  *
  * xauth - manipulate authorization file
  *
@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  * Original Author of "xauth" : Jim Fulton, MIT X Consortium
  * Modified into "iceauth"    : Ralph Mor, X Consortium
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/iceauth/iceauth.c,v 1.4 2001/01/17 23:44:54 dawes Exp $ */
 
 #include "iceauth.h"
 

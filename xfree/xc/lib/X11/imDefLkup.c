@@ -1,4 +1,4 @@
-/* $TOG: imDefLkup.c /main/18 1998/04/28 17:33:12 kaleb $ */
+/* $Xorg: imDefLkup.c,v 1.3 2000/08/17 19:45:12 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.6 1999/05/09 10:50:32 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.8 2001/01/17 19:41:51 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define  NEED_EVENTS

@@ -47,7 +47,7 @@ in this Software without prior written authorization from The Open Group.
 
 /**********************************************************************
  *
- * $TOG: version.h /main/8 1998/02/09 13:50:08 kaleb $
+ * $Xorg: version.h,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
  *
  * TWM version externs
  *

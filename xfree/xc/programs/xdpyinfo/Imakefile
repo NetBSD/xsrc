@@ -1,37 +1,40 @@
-XCOMM $XConsortium: Imakefile /main/7 1995/12/04 15:10:00 dpw $
-XCOMM $XFree86: xc/programs/xdpyinfo/Imakefile,v 3.9 1996/02/12 11:15:20 dawes Exp $
-        DEPLIBS = $(DEPXTESTLIB) $(DEPXIELIB) $(DEPXLIB) $(DEPXKBFILELIB) $(DEPXF86LIBS) $(DEPXILIB)
-#ifndef OS2Architecture
-LOCAL_LIBRARIES = $(XTESTLIB) $(XIELIB) $(XKBFILELIB) $(XF86LIBS) $(XILIB) $(XLIB) 
-#else
-LOCAL_LIBRARIES = $(XTESTLIB) $(XIELIB) $(XKBFILELIB) $(XF86LIBS) $(XILIB) $(XLIB)
-#endif
-  SYS_LIBRARIES = MathLibrary
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:17 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/xdpyinfo/Imakefile,v 3.13 2001/04/03 22:37:02 dawes Exp $
 
 
 #if HasShm
         SHMDEFINES = -DMITSHM
 #endif
 
-#if BuildXF86VidModeExt
+#if BuildXIElib
+        XIEDEFINES = -DXIE
+        XIEDEPLIBS = $(DEPXIELIB)
+           XIELIBS = $(XIELIB)
+#endif
+
+#if BuildXF86VidModeLibrary
     VIDMODEDEFINES = -DXF86VIDMODE
     VIDMODEDEPLIBS = $(DEPXXF86VMLIB)
        VIDMODELIBS = $(XXF86VMLIB)
 #endif
 
-#if BuildXF86DGA
+#if BuildXF86DGALibrary
         DGADEFINES = -DXFreeXDGA
         DGADEPLIBS = $(DEPXXF86DGALIB)
            DGALIBS = $(XXF86DGALIB)
 #endif
 
-#if BuildXF86MiscExt
+#if BuildXF86MiscLibrary
    XF86MISCDEFINES = -DXF86MISC
    XF86MISCDEPLIBS = $(DEPXXF86MISCLIB)
       XF86MISCLIBS = $(XXF86MISCLIB)
 #endif
 
-#if BuildXInputExt
+#if BuildXInputLib
      XINPUTDEFINES = -DXINPUT
      XINPUTDEPLIBS = $(DEPXILIB)
         XINPUTLIBS = $(XILIB)
@@ -49,9 +52,17 @@ LOCAL_LIBRARIES = $(XTESTLIB) $(XIELIB) $(XKBFILELIB) $(XF86LIBS) $(XILIB) $(XLI
         XKBDEFINES = -DXKB
 #endif
 
-   OTHERDEFINES = $(SHMDEFINES) $(XKBDEFINES) $(XINPUTDEFINES) \
-			$(MULTIBUFDEFINES)
+      OTHERDEFINES = $(SHMDEFINES) $(XKBDEFINES) $(XINPUTDEFINES) \
+			$(MULTIBUFDEFINES) $(XIEDEFINES)
+      OTHERDEPLIBS = $(XINPUTDEPLIBS) $(XIEDEPLIBS)
+         OTHERLIBS = $(XINPUTLIBS) $(XIELIBS)
 
         DEFINES = $(OTHERDEFINES) $(XF86DEFINES)
+        DEPLIBS = $(DEPXTESTLIB) XkbClientDepLibs $(OTHERDEPLIBS) \
+		  $(DEPXF86LIBS) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XTESTLIB) XkbClientLibs $(OTHERLIBS) \
+		  $(XF86LIBS) $(XLIB)
+  SYS_LIBRARIES = MathLibrary
+
 
 SimpleProgramTarget(xdpyinfo)

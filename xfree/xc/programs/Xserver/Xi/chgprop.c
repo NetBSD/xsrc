@@ -1,4 +1,4 @@
-/* $TOG: chgprop.c /main/10 1998/02/09 15:28:20 kaleb $ */
+/* $Xorg: chgprop.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/chgprop.c,v 3.0 1996/03/29 22:13:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/chgprop.c,v 3.2 2001/01/17 22:13:24 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -2,7 +2,7 @@
  * mipointer.c
  */
 
-/* $TOG: mipointer.c /main/26 1998/02/09 14:47:34 kaleb $ */
+/* $Xorg: mipointer.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 /*
 
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.4 1998/10/04 09:39:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.7 2001/04/19 14:14:07 tsi Exp $ */
 
 # define NEED_EVENTS
 # include   "X.h"
@@ -90,6 +90,7 @@ miPointerInitialize (pScreen, spriteFuncs, screenFuncs, waitForUpdate)
     if (!screenFuncs->NewEventScreen)
 	screenFuncs->NewEventScreen = mieqSwitchScreen;
     pScreenPriv->waitForUpdate = waitForUpdate;
+    pScreenPriv->showTransparent = FALSE;
     pScreenPriv->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = miPointerCloseScreen;
     pScreen->devPrivates[miPointerScreenIndex].ptr = (pointer) pScreenPriv;
@@ -303,6 +304,7 @@ miPointerUpdate ()
 {
     ScreenPtr		pScreen;
     miPointerScreenPtr	pScreenPriv;
+    CursorPtr		pCursor;
     int			x, y, devx, devy;
 
     pScreen = miPointer.pScreen;
@@ -344,9 +346,10 @@ miPointerUpdate ()
      */
     else if (miPointer.pCursor != miPointer.pSpriteCursor)
     {
-	(*pScreenPriv->spriteFuncs->SetCursor) (pScreen, 
-	    	miPointer.pCursor->bits->emptyMask ?
-		NullCursor : miPointer.pCursor, x, y);
+	pCursor = miPointer.pCursor;
+	if (pCursor->bits->emptyMask && !pScreenPriv->showTransparent)
+	    pCursor = NullCursor;
+	(*pScreenPriv->spriteFuncs->SetCursor) (pScreen, pCursor, x, y);
 
 	miPointer.devx = x;
 	miPointer.devy = y;

@@ -1,4 +1,4 @@
-/* $TOG: conven.c /main/10 1998/02/06 15:11:41 kaleb $ */
+/* $Xorg: conven.c,v 1.5 2000/08/17 19:45:25 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/conven.c,v 1.4 2001/01/17 19:42:21 dawes Exp $ */
 
 #include "XIElibint.h"
 
@@ -168,7 +168,7 @@ XieFloArithmetic (
 	XiePhototag		src2,
 	XieProcessDomain	*domain,
 	XieConstant		constant,
-	XieArithmeticOp		operator,
+	XieArithmeticOp		op,
 	unsigned int		band_mask)
 {
     element->elemType			     = xieElemArithmetic;
@@ -180,7 +180,7 @@ XieFloArithmetic (
     element->data.Arithmetic.constant[0]     = constant[0];
     element->data.Arithmetic.constant[1]     = constant[1];
     element->data.Arithmetic.constant[2]     = constant[2];
-    element->data.Arithmetic.operator        = operator;
+    element->data.Arithmetic.operator        = op;
     element->data.Arithmetic.band_mask       = band_mask;
 }
 
@@ -262,7 +262,7 @@ XieFloCompare (
 	XiePhototag		src2,
 	XieProcessDomain	*domain,
 	XieConstant		constant,
-	XieCompareOp		operator,
+	XieCompareOp		op,
 	Bool			combine,
 	unsigned int		band_mask)
 {
@@ -275,7 +275,7 @@ XieFloCompare (
     element->data.Compare.constant[0]     = constant[0];
     element->data.Compare.constant[1]     = constant[1];
     element->data.Compare.constant[2]     = constant[2];
-    element->data.Compare.operator        = operator;
+    element->data.Compare.operator        = op;
     element->data.Compare.combine         = combine;
     element->data.Compare.band_mask       = band_mask;
 }
@@ -450,7 +450,7 @@ XieFloLogical (
 	XiePhototag		src2,
 	XieProcessDomain	*domain,
 	XieConstant		constant,
-	unsigned long		operator,
+	unsigned long		op,
 	unsigned int		band_mask)
 {
     element->elemType			  = xieElemLogical;
@@ -462,7 +462,7 @@ XieFloLogical (
     element->data.Logical.constant[0]     = constant[0];
     element->data.Logical.constant[1]     = constant[1];
     element->data.Logical.constant[2]     = constant[2];
-    element->data.Logical.operator        = operator;
+    element->data.Logical.operator        = op;
     element->data.Logical.band_mask       = band_mask;
 }
 
@@ -490,7 +490,7 @@ XieFloMath (
 	XiePhotoElement		*element,
 	XiePhototag		src,
 	XieProcessDomain	*domain,
-	XieMathOp		operator,
+	XieMathOp		op,
 	unsigned int		band_mask)
 {
     element->elemType		       = xieElemMath;
@@ -498,7 +498,7 @@ XieFloMath (
     element->data.Math.domain.offset_x = domain->offset_x;
     element->data.Math.domain.offset_y = domain->offset_y;
     element->data.Math.domain.phototag = domain->phototag;
-    element->data.Math.operator        = operator;
+    element->data.Math.operator        = op;
     element->data.Math.band_mask       = band_mask;
 }
 

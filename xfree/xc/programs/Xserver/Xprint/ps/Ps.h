@@ -1,4 +1,4 @@
-/* $TOG: Ps.h /main/4 1998/02/09 15:43:35 kaleb $ */
+/* $Xorg: Ps.h,v 1.3 2000/08/17 19:48:09 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -70,7 +70,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/Ps.h,v 1.4 1998/10/04 09:37:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/Ps.h,v 1.6 2001/01/17 22:36:31 dawes Exp $ */
 
 #ifndef _PS_H_
 #define _PS_H_

@@ -1,4 +1,4 @@
-/* $TOG: atomcache.h /main/10 1998/02/10 18:17:02 kaleb $ */
+/* $Xorg: atomcache.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

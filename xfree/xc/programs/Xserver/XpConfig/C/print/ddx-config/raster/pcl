@@ -1,4 +1,4 @@
-# $XConsortium: pcl /main/2 1996/12/04 10:45:32 rws $
+# $Xorg: pcl,v 1.3 2000/08/17 19:48:03 cpqbld Exp $
 # This is the file which you should customize to include the printers that
 # will print through the raster driver.  The early part of this file 
 # specifies some commn useful defaults.  You can override them when

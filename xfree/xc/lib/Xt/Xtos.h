@@ -1,5 +1,5 @@
 /*
-* $TOG: Xtos.h /main/20 1998/02/06 13:28:11 kaleb $
+* $Xorg: Xtos.h,v 1.3 2000/08/17 19:46:20 cpqbld Exp $
 */
 
 /***********************************************************
@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Xtos.h,v 3.3 1998/10/03 09:07:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Xtos.h,v 3.5 2001/01/17 19:43:13 dawes Exp $ */
 
 #ifndef _Xtos_h
 #define _Xtos_h

@@ -1,4 +1,4 @@
-.\" $TOG: Xsun.man /main/29 1998/02/10 13:17:41 kaleb $
+.\" $Xorg: Xsun.man,v 1.3 2000/08/17 19:48:29 cpqbld Exp $
 .\" Copyright 1988 Sun Microsystems, Inc.
 .\" Copyright 1993, 1994, 1998  The Open Group
 .\" 
@@ -19,7 +19,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XSUN 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/Xserver/hw/sun/Xsun.man,v 1.7 2001/01/27 18:20:40 dawes Exp $
+.\"
+.TH XSUN 1 __xorgversion__
 .SH NAME
 Xsun, XsunMono, Xsun24 \- Sun server for X Version 11
 .SH SYNOPSIS
@@ -132,7 +135,7 @@ If present,  and if no explicit \fB-dev\fP options are given, specifies
 the (colon separated) list of display devices to use.
 .SH "SEE ALSO"
 .PP
-X(1), Xserver(1), xdm(1), xinit(1)
+X(__miscmansuffix__), Xserver(1), xdm(1), xinit(1)
 .SH BUGS
 The auto-configuration depends on there being appropriate special files 
 in the

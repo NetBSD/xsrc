@@ -1,4 +1,7 @@
 XCOMM! /bin/sh
+XCOMM
+XCOMM $XFree86: xc/programs/x11perf/x11pcomp.cpp,v 1.4 2001/05/18 23:35:33 dawes Exp $
+XCOMM
 XCOMM Collects multiple outputs of x11perf.  Just feed it a list of files, each
 XCOMM containing the output from an x11perf run, and this shell will extract the
 XCOMM object/second information and show it in tabular form.  An 80-column line
@@ -16,13 +19,13 @@ XCOMM
 XCOMM Mark Moraes, University of Toronto <moraes@csri.toronto.edu>
 XCOMM Joel McCormack, DEC Western Research Lab <joel@decwrl.dec.com>
 XCOMM
-XCOMM $TOG: x11pcomp.cpp /main/7 1997/04/14 09:15:45 barstow $
+XCOMM $Xorg: x11pcomp.cpp,v 1.3 2000/08/17 19:54:10 cpqbld Exp $
 
 PATH=LIBPATH:.:$PATH
 export PATH
 
 set -e
-tmp=/tmp/rates.$$
+tmp=`pwd`/_rates.$$
 trap "rm -rf $tmp" 0 1 2 15
 mkdir $tmp $tmp/rates
 ratio=

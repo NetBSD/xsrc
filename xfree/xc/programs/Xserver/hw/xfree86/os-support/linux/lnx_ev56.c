@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_ev56.c,v 3.4 2000/02/15 02:00:14 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_ev56.c,v 3.6 2001/02/15 11:03:56 alanh Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -29,18 +29,21 @@ writeDense32(int Value, pointer Base, register unsigned long Offset);
 int
 readDense8(pointer Base, register unsigned long Offset)
 {
+    mem_barrier();
     return *(volatile CARD8*) ((unsigned long)Base+(Offset));
 }
 
 int
 readDense16(pointer Base, register unsigned long Offset)
 {
+    mem_barrier();
     return *(volatile CARD16*) ((unsigned long)Base+(Offset));
 }
 
 int
 readDense32(pointer Base, register unsigned long Offset)
 {
+    mem_barrier();
     return *(volatile CARD32*)((unsigned long)Base+(Offset));
 }
 
@@ -65,20 +68,20 @@ writeDenseNB32(int Value, pointer Base, register unsigned long Offset)
 void
 writeDense8(int Value, pointer Base, register unsigned long Offset)
 {
+    write_mem_barrier();
     *(volatile CARD8 *)((unsigned long)Base+(Offset)) = Value;
-    mem_barrier();
 }
 
 void
 writeDense16(int Value, pointer Base, register unsigned long Offset)
 {
+    write_mem_barrier();
     *(volatile CARD16 *)((unsigned long)Base+(Offset)) = Value;
-    mem_barrier();
 }
 
 void
 writeDense32(int Value, pointer Base, register unsigned long Offset)
 {
+    write_mem_barrier();
     *(volatile CARD32 *)((unsigned long)Base+(Offset)) = Value;
-    mem_barrier();
 }

@@ -1,4 +1,4 @@
-/* $TOG: lcGenConv.c /main/17 1997/11/13 18:54:29 kaleb $ */
+/* $Xorg: lcGenConv.c,v 1.5 2000/08/17 19:45:17 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -35,7 +35,7 @@
  *  2000  
  *  Modifier: Ivan Pascal      The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.16 2000/11/28 18:49:44 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.18 2001/01/17 19:41:54 dawes Exp $ */
 
 /*
  * A generic locale loader for all kinds of ISO-2022 based codesets.
@@ -3076,6 +3076,7 @@ _XlcGenericLoader(
     XLCdGenericPart *gen;
 
     lcd = _XlcCreateLC(name, _XlcGenericMethods);
+
     if (lcd == NULL)
 	return lcd;
 

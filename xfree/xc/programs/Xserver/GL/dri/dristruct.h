@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/dristruct.h,v 1.8 2000/06/17 00:03:12 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/dristruct.h,v 1.10 2001/03/21 16:21:40 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -93,6 +93,9 @@ typedef struct _DRIScreenPrivRec
     XF86DRIClipRectRec  fullscreen_rect; /* fake rect for fullscreen mode */
     DRIWrappedFuncsRec	wrap;
     DrawablePtr		DRIDrawables[SAREA_MAX_DRAWABLES];
+    DRIContextPrivPtr   dummyCtxPriv; /* Pointer to dummy context */
+    Bool		createDummyCtx;
+    Bool		createDummyCtxPriv;
 } DRIScreenPrivRec, *DRIScreenPrivPtr;
 
 #endif /* DRI_STRUCT_H */

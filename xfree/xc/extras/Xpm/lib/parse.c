@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86$ */
+/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.2 2000/09/26 15:56:43 tsi Exp $ */
 
 /*****************************************************************************\
 * parse.c:                                                                    *

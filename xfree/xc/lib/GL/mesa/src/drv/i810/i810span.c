@@ -30,26 +30,28 @@
 			dPriv->x * 2 +			\
 			dPriv->y * pitch)
 
-#define INIT_MONO_PIXEL(p) 
+#define INIT_MONO_PIXEL(p)
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
 
 
-#define CLIPSPAN(_x,_y,_n,_x1,_n1,_i)				\
-	 if (_y < miny || _y >= maxy) _n1 = 0, _x1 = x;		\
-         else {							\
-            _n1 = _n;						\
-	    _x1 = _x;						\
-	    if (_x1 < minx) _i += (minx - _x1), _x1 = minx;	\
-	    if (_x1 + _n1 >= maxx) n1 -= (_x1 + n1 - maxx) + 1;	\
-         }
+#define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
+   if ( _y < miny || _y >= maxy ) {					\
+      _n1 = 0, _x1 = x;							\
+   } else {								\
+      _n1 = _n;								\
+      _x1 = _x;								\
+      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
+      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
+   }
 
 #define Y_FLIP(_y) (height - _y - 1)
 
-
 #define HW_LOCK()				\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	\
+   FLUSH_BATCH(imesa);				\
+   i810DmaFinish(imesa);			\
    LOCK_HARDWARE_QUIESCENT(imesa);
 
 #define HW_CLIPLOOP()						\
@@ -85,9 +87,9 @@
 #define READ_RGBA( rgba, _x, _y )				\
 do {								\
    GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
-   rgba[0] = (p >> 8) & 0xf8;					\
-   rgba[1] = (p >> 3) & 0xfc;					\
-   rgba[2] = (p << 3) & 0xf8;					\
+   rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
+   rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
+   rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
    rgba[3] = 255;						\
 } while(0)
 
@@ -128,7 +130,7 @@ do {								\
    *(GLushort *)(buf + _x*2 + _y*pitch)  = d;
 
 #define READ_DEPTH( d, _x, _y )	\
-   d = *(GLushort *)(buf + _x*2 + _y*pitch);	 
+   d = *(GLushort *)(buf + _x*2 + _y*pitch);
 
 /*     d = 0xffff; */
 
@@ -144,7 +146,7 @@ void i810DDInitSpanFuncs( GLcontext *ctx )
       ctx->Driver.WriteRGBSpan = i810WriteRGBSpan_565;
       ctx->Driver.WriteMonoRGBASpan = i810WriteMonoRGBASpan_565;
       ctx->Driver.WriteRGBAPixels = i810WriteRGBAPixels_565;
-      ctx->Driver.WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565; 
+      ctx->Driver.WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565;
       ctx->Driver.ReadRGBASpan = i810ReadRGBASpan_565;
       ctx->Driver.ReadRGBAPixels = i810ReadRGBAPixels_565;
    } else {

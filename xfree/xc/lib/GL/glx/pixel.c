@@ -1,23 +1,37 @@
-/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.2 1999/06/14 07:23:38 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.4 2001/03/21 16:04:39 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
 #include "packrender.h"
@@ -68,14 +82,38 @@ static GLubyte HighBitsMask[9] = {
 /*
 ** Return the number of elements per group of a specified format
 */
-static GLint ElementsPerGroup(GLenum format) 
+static GLint ElementsPerGroup(GLenum format, GLenum type) 
 {
+    /*
+    ** To make row length computation valid for image extraction,
+    ** packed pixel types assume elements per group equals one.
+    */
+    switch(type) {
+    case GL_UNSIGNED_BYTE_3_3_2:
+    case GL_UNSIGNED_BYTE_2_3_3_REV:
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_5_6_5_REV:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+    case GL_UNSIGNED_INT_8_8_8_8:
+    case GL_UNSIGNED_INT_8_8_8_8_REV:
+    case GL_UNSIGNED_INT_10_10_10_2:
+    case GL_UNSIGNED_INT_2_10_10_10_REV:
+      return 1;
+    default:
+      break;
+    }
+
     switch(format) {
       case GL_RGB:
+      case GL_BGR:
 	return 3;
       case GL_LUMINANCE_ALPHA:
 	return 2;
       case GL_RGBA:
+      case GL_BGRA:
       case GL_ABGR_EXT:
 	return 4;
       case GL_COLOR_INDEX:
@@ -101,13 +139,25 @@ static GLint BytesPerElement(GLenum type)
     switch(type) {
       case GL_UNSIGNED_SHORT:
       case GL_SHORT:
+      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
 	return 2;
       case GL_UNSIGNED_BYTE:
       case GL_BYTE:
+      case GL_UNSIGNED_BYTE_3_3_2:
+      case GL_UNSIGNED_BYTE_2_3_3_REV:
 	return 1;
       case GL_INT:
       case GL_UNSIGNED_INT:
       case GL_FLOAT:
+      case GL_UNSIGNED_INT_8_8_8_8:
+      case GL_UNSIGNED_INT_8_8_8_8_REV:
+      case GL_UNSIGNED_INT_10_10_10_2:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
 	return 4;
       default:
 	return 0;
@@ -118,24 +168,25 @@ static GLint BytesPerElement(GLenum type)
 ** Compute memory required for internal packed array of data of given type
 ** and format.
 */
-GLint __glImageSize(GLsizei width, GLsizei height, GLenum format, GLenum type) 
+GLint __glImageSize(GLsizei width, GLsizei height, GLsizei depth,
+		    GLenum format, GLenum type) 
 {
     int bytes_per_row;
     int components;
 
-    if (width < 0 || height < 0) {
+    if (width < 0 || height < 0 || depth < 0) {
 	return 0;
     }
     /*
     ** Zero is returned if either format or type are invalid.
     */
-    components = ElementsPerGroup(format);
+    components = ElementsPerGroup(format,type);
     if (type == GL_BITMAP) {
 	bytes_per_row = (width + 7) >> 3;
     } else {
 	bytes_per_row = BytesPerElement(type) * width;
     }
-    return bytes_per_row * height * components;
+    return bytes_per_row * height * depth * components;
 }
 
 /*
@@ -148,6 +199,7 @@ static void FillBitmap(__GLXcontext *gc, GLint width, GLint height,
 		       GLubyte *destImage)
 {
     GLint rowLength = gc->state.storeUnpack.rowLength;
+    GLint imageHeight = gc->state.storeUnpack.imageHeight;
     GLint alignment = gc->state.storeUnpack.alignment;
     GLint skipPixels = gc->state.storeUnpack.skipPixels;
     GLint skipRows = gc->state.storeUnpack.skipRows;
@@ -162,7 +214,7 @@ static void FillBitmap(__GLXcontext *gc, GLint width, GLint height,
     } else {
 	groupsPerRow = width;
     }
-    components = ElementsPerGroup(format);
+    components = ElementsPerGroup(format,GL_BITMAP);
     rowSize = (groupsPerRow * components + 7) >> 3;
     padding = (rowSize % alignment);
     if (padding) {
@@ -213,34 +265,42 @@ static void FillBitmap(__GLXcontext *gc, GLint width, GLint height,
 	start += rowSize;
     }
 }
+
 /*
 ** Extract array from user's data applying all pixel store modes.
 ** The internal packed array format used has LSB_FIRST = FALSE and 
 ** ALIGNMENT = 1.
 */
-void __glFillImage(__GLXcontext *gc, GLint width, GLint height, GLenum format,
-		   GLenum type, const GLvoid *userdata, GLubyte *newimage,
-		   GLubyte *modes)
+void __glFillImage(__GLXcontext *gc, GLint dim, GLint width, GLint height,
+		   GLint depth, GLenum format, GLenum type,
+		   const GLvoid *userdata, GLubyte *newimage, GLubyte *modes)
 {
     GLint rowLength = gc->state.storeUnpack.rowLength;
+    GLint imageHeight = gc->state.storeUnpack.imageHeight;
+    GLint imageDepth = gc->state.storeUnpack.imageDepth;
     GLint alignment = gc->state.storeUnpack.alignment;
     GLint skipPixels = gc->state.storeUnpack.skipPixels;
     GLint skipRows = gc->state.storeUnpack.skipRows;
+    GLint skipImages = gc->state.storeUnpack.skipImages;
     GLint swapBytes = gc->state.storeUnpack.swapEndian;
     GLint components, elementSize, rowSize, padding, groupsPerRow, groupSize;
-    GLint elementsPerRow, i, j, k;
-    const GLubyte *start, *iter;
+    GLint elementsPerRow, imageSize, rowsPerImage, h, i, j, k;
+    const GLubyte *start, *iter, *itera, *iterb, *iterc;
     GLubyte *iter2;
 
     if (type == GL_BITMAP) {
-	/* All formats except GL_BITMAP fall out trivially */
 	FillBitmap(gc, width, height, format, userdata, newimage);
     } else {
-	components = ElementsPerGroup(format);
+	components = ElementsPerGroup(format,type);
 	if (rowLength > 0) {
 	    groupsPerRow = rowLength;
 	} else {
 	    groupsPerRow = width;
+	}
+	if (imageHeight > 0) {
+	    rowsPerImage = imageHeight;
+	} else {
+	    rowsPerImage = height;
 	}
 
 	elementSize = BytesPerElement(type);
@@ -252,50 +312,77 @@ void __glFillImage(__GLXcontext *gc, GLint width, GLint height, GLenum format,
 	if (padding) {
 	    rowSize += alignment - padding;
 	}
-	start = ((const GLubyte*) userdata) + skipRows * rowSize
-	    + skipPixels * groupSize;
+	imageSize = rowSize * rowsPerImage;
+	start = ((const GLubyte*) userdata) + skipImages * imageSize +
+		skipRows * rowSize + skipPixels * groupSize;
 	iter2 = newimage;
 	elementsPerRow = width * components;
 
 	if (swapBytes) {
-	    for (i = 0; i < height; i++) {
-		iter = start;
-		for (j = 0; j < elementsPerRow; j++) {
-		    for (k = 1; k <= elementSize; k++) {
-			iter2[k-1] = iter[elementSize - k];
+	    itera = start;
+	    for (h = 0; h < depth; h++) {
+		iterb = itera;
+		for (i = 0; i < height; i++) {
+		    iterc = iterb;
+		    for (j = 0; j < elementsPerRow; j++) {
+			for (k = 1; k <= elementSize; k++) {
+			    iter2[k-1] = iterc[elementSize - k];
+			}
+			iter2 += elementSize;
+			iterc += elementSize;
 		    }
-		    iter2 += elementSize;
-		    iter += elementSize;
+		    iterb += rowSize;
 		}
-		start += rowSize;
+		itera += imageSize;
 	    }
 	} else {
-	    if (rowSize == elementsPerRow * elementSize) {
-		/* Ha!  This is mondo easy! */
-		__GLX_MEM_COPY(iter2, start,
-			       elementsPerRow * elementSize * height);
-	    } else {
-		iter = start;
-		for (i = 0; i < height; i++) {
-		    __GLX_MEM_COPY(iter2, iter, elementsPerRow * elementSize);
-		    iter2 += elementsPerRow * elementSize;
-		    iter += rowSize;
+	    itera = start;
+	    for (h = 0; h < depth; h++) {
+		if (rowSize == elementsPerRow * elementSize) {
+		    /* Ha!  This is mondo easy! */
+		    __GLX_MEM_COPY(iter2, itera,
+				   elementsPerRow * elementSize * height);
+		    iter2 += elementsPerRow * elementSize * height;
+		} else {
+		    iter = itera;
+		    for (i = 0; i < height; i++) {
+			__GLX_MEM_COPY(iter2, iter, elementsPerRow*elementSize);
+			iter2 += elementsPerRow * elementSize;
+			iter += rowSize;
+		    }
 		}
-	    }
+		itera += imageSize;
+	    }    
 	}
     }
 
     /* Setup store modes that describe what we just did */
     if (modes) {
-	GLubyte *pc = modes;
-	__GLX_PUT_CHAR(0,GL_FALSE);
-	__GLX_PUT_CHAR(1,GL_FALSE);
-	__GLX_PUT_CHAR(2,0);
-	__GLX_PUT_CHAR(3,0);
-	__GLX_PUT_LONG(4,0);
-	__GLX_PUT_LONG(8,0);
-	__GLX_PUT_LONG(12,0);
-	__GLX_PUT_LONG(16,1);
+	if (dim == 3) {
+	    GLubyte *pc = modes;
+	    __GLX_PUT_CHAR(0,GL_FALSE);
+	    __GLX_PUT_CHAR(1,GL_FALSE);
+	    __GLX_PUT_CHAR(2,0);
+	    __GLX_PUT_CHAR(3,0);
+	    __GLX_PUT_LONG(4,0);
+	    __GLX_PUT_LONG(8,0);
+	    __GLX_PUT_LONG(12,0);
+	    __GLX_PUT_LONG(16,0);
+	    __GLX_PUT_LONG(20,0);
+	    __GLX_PUT_LONG(24,0);
+	    __GLX_PUT_LONG(28,0);
+	    __GLX_PUT_LONG(32,1);
+	} else {
+	    GLubyte *pc = modes;
+	    __GLX_PUT_CHAR(0,GL_FALSE);
+	    __GLX_PUT_CHAR(1,GL_FALSE);
+	    __GLX_PUT_CHAR(2,0);
+	    __GLX_PUT_CHAR(3,0);
+	    __GLX_PUT_LONG(4,0);
+	    __GLX_PUT_LONG(8,0);
+	    __GLX_PUT_LONG(12,0);
+	    __GLX_PUT_LONG(16,1);
+	}
     }
 }
 
@@ -319,7 +406,7 @@ static void EmptyBitmap(__GLXcontext *gc, GLint width, GLint height,
     GLint writeMask, i;
     GLubyte writeByte;
 
-    components = ElementsPerGroup(format);
+    components = ElementsPerGroup(format,GL_BITMAP);
     if (rowLength > 0) {
 	groupsPerRow = rowLength;
     } else {
@@ -413,25 +500,36 @@ static void EmptyBitmap(__GLXcontext *gc, GLint width, GLint height,
 ** SWAP_BYTES = the current pixel storage pack mode, and ALIGNMENT = 4.
 ** Named __glEmptyImage() because it is the opposite of __glFillImage().
 */
-void __glEmptyImage(__GLXcontext *gc, GLint width, GLint height, GLenum format,
-		    GLenum type, const GLubyte *sourceImage, GLvoid *userdata)
+/* ARGSUSED */
+void __glEmptyImage(__GLXcontext *gc, GLint dim, GLint width, GLint height, 
+		    GLint depth, GLenum format, GLenum type,
+		    const GLubyte *sourceImage, GLvoid *userdata)
 {
     GLint rowLength = gc->state.storePack.rowLength;
+    GLint imageHeight = gc->state.storePack.imageHeight;
+    GLint imageDepth = gc->state.storePack.imageDepth;
     GLint alignment = gc->state.storePack.alignment;
     GLint skipPixels = gc->state.storePack.skipPixels;
     GLint skipRows = gc->state.storePack.skipRows;
+    GLint skipImages = gc->state.storePack.skipImages;
     GLint components, elementSize, rowSize, padding, groupsPerRow, groupSize;
-    GLint elementsPerRow, sourceRowSize, sourcePadding, i;
-    GLubyte *start, *iter;
+    GLint elementsPerRow, sourceRowSize, sourcePadding, g, h, i;
+    GLint imageSize, rowsPerImage;
+    GLubyte *start, *iter, *itera;
 
     if (type == GL_BITMAP) {
 	EmptyBitmap(gc, width, height, format, sourceImage, userdata);
     } else {
-	components = ElementsPerGroup(format);
+	components = ElementsPerGroup(format,type);
 	if (rowLength > 0) {
 	    groupsPerRow = rowLength;
 	} else {
 	    groupsPerRow = width;
+	}
+	if (imageHeight > 0) {
+	    rowsPerImage = imageHeight;
+	} else {
+	    rowsPerImage = height;
 	}
 	elementSize = BytesPerElement(type);
 	groupSize = elementSize * components;
@@ -445,22 +543,28 @@ void __glEmptyImage(__GLXcontext *gc, GLint width, GLint height, GLenum format,
 	if (sourcePadding) {
 	    sourceRowSize += 4 - sourcePadding;
 	}
-	start = ((GLubyte*) userdata) + skipRows * rowSize
-	  + skipPixels * groupSize;
+	imageSize = sourceRowSize * rowsPerImage;
+	start = ((GLubyte*) userdata) + skipImages * imageSize +
+		skipRows * rowSize + skipPixels * groupSize;
 	elementsPerRow = width * components;
 
-	if ((rowSize == sourceRowSize) && (sourcePadding == 0)) {
-	    /* Ha!  This is mondo easy! */
-	    __GLX_MEM_COPY(start, sourceImage,
-			   elementsPerRow * elementSize * height);
-	} else {
-	    iter = start;
-	    for (i = 0; i < height; i++) {
-		__GLX_MEM_COPY(iter, sourceImage,
-			       elementsPerRow * elementSize);
-		sourceImage += sourceRowSize;
-		iter += rowSize;
+	itera = start;
+	for (h = 0; h < depth; h++) {
+	    if ((rowSize == sourceRowSize) && (sourcePadding == 0)) {
+		/* Ha!  This is mondo easy! */
+		__GLX_MEM_COPY(itera, sourceImage,
+			       elementsPerRow * elementSize * height);
+		sourceImage += elementsPerRow * elementSize * height;
+	    } else {
+		iter = itera;
+		for (i = 0; i < height; i++) {
+		    __GLX_MEM_COPY(iter, sourceImage,
+				   elementsPerRow * elementSize);
+		    sourceImage += sourceRowSize;
+		    iter += rowSize;
+		}
 	    }
+	    itera += imageSize;
 	}
     }
 }

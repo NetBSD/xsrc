@@ -1,4 +1,4 @@
-/* $TOG: AuWrite.c /main/7 1998/02/06 14:15:18 kaleb $ */
+/* $Xorg: AuWrite.c,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xau/AuWrite.c,v 1.3 2001/01/17 19:42:24 dawes Exp $ */
 
 #include <X11/Xauth.h>
 

@@ -1,4 +1,4 @@
-.\" $TOG: XtClickT.man /main/7 1997/11/04 20:31:59 kaleb $
+.\" $Xorg: XtClickT.man,v 1.3 2000/08/17 19:41:59 cpqbld Exp $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -24,6 +24,9 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtClickT.man,v 1.2 2001/01/27 18:20:25 dawes Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -123,7 +126,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtSetMultiClickTime 3Xt "Release 6.4" "X Version 11" "XT FUNCTIONS"
+.TH XtSetMultiClickTime 3Xt __xorgversion__ "XT FUNCTIONS"
 .SH NAME
 XtSetMultiClickTime, XtGetMultiClickTime \- set and get multi-click times
 .SH SYNTAX

@@ -1,4 +1,4 @@
-/* $TOG: filewr.c /main/5 1998/02/09 10:48:21 kaleb $ */
+/* $Xorg: filewr.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/filewr.c,v 3.3 1999/08/21 13:48:03 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/filewr.c,v 3.5 2001/01/17 19:43:30 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

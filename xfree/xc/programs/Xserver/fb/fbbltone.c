@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbbltone.c,v 1.9 2000/05/06 21:09:32 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbbltone.c,v 1.10 2000/09/22 05:58:01 keithp Exp $ */
 
 #include "fb.h"
 

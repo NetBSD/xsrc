@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/trq,v 1.1 2000/12/06 15:35:37 eich Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/tr,v 1.1 2000/12/06 20:18:08 eich Exp $
 default partial alphanumeric_keys 
 xkb_symbols "basic" {
 

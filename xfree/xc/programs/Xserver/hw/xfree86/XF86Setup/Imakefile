@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/4 1996/10/24 10:16:33 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.30 1999/07/12 08:14:25 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.31 1999/09/04 13:04:28 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 

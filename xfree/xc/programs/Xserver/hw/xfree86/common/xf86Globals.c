@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.27 2000/01/25 00:18:28 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.32 2001/05/18 16:03:11 tsi Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -138,7 +138,8 @@ xf86InfoRec xf86Info = {
 	FALSE,		/* pc98 */
 #endif
 	TRUE,		/* pmFlag */
-	0		/* estimateSizesAggressively */
+	0,		/* estimateSizesAggressively */
+	FALSE           /* kbdCustomKeycodes */
 };
 const char *xf86ConfigFile = NULL;
 const char *xf86ModulePath = DEFAULT_MODULE_PATH;
@@ -158,6 +159,8 @@ DriverPtr *xf86DriverList = NULL;
 int xf86NumDrivers = 0;
 InputDriverPtr *xf86InputDriverList = NULL;
 int xf86NumInputDrivers = 0;
+ModuleInfoPtr *xf86ModuleInfoList = NULL;
+int xf86NumModuleInfos = 0;
 #endif
 int xf86NumScreens = 0;
 

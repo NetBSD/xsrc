@@ -1,4 +1,4 @@
-/* $TOG: event.c /main/6 1998/02/09 16:11:14 kaleb $ */
+/* $Xorg: event.c,v 1.3 2000/08/17 19:47:30 cpqbld Exp $ */
 /**** module event.c ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. April 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/event.c,v 3.2 1998/10/05 13:22:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/event.c,v 3.4 2001/01/17 22:12:55 dawes Exp $ */
 
 #define _XIEC_EVENT
 

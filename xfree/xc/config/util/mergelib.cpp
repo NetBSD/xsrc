@@ -1,6 +1,6 @@
 XCOMM!/bin/sh
 XCOMM
-XCOMM $TOG: mergelib.cpp /main/5 1998/02/06 11:24:31 kaleb $
+XCOMM $Xorg: mergelib.cpp,v 1.3 2000/08/17 19:41:52 cpqbld Exp $
 XCOMM 
 XCOMM Copyright (c) 1989, 1998 The Open Group
 XCOMM 

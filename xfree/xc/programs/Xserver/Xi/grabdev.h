@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xi/grabdev.h,v 3.0 1996/03/29 22:13:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/grabdev.h,v 3.1 1996/04/15 11:18:51 dawes Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: ws_color.c /main/9 1998/03/17 16:39:12 kaleb $ */
+/* $Xorg: ws_color.c,v 1.3 2000/08/17 19:48:21 cpqbld Exp $ */
 
 /* 
  * ws_color.c - device specific color routines, stored in screen

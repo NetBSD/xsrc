@@ -1,4 +1,4 @@
-/* $TOG: sm_client.c /main/31 1998/02/06 14:09:55 kaleb $ */
+/* $Xorg: sm_client.c,v 1.3 2000/08/17 19:44:29 cpqbld Exp $ */
 
 /*
 

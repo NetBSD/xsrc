@@ -1,4 +1,4 @@
-/* $TOG: Handlers.c /main/15 1998/02/09 13:41:17 kaleb $ */
+/* $Xorg: Handlers.c,v 1.3 2000/08/17 19:53:50 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/bitmap/Handlers.c,v 1.3 2001/01/17 23:44:51 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

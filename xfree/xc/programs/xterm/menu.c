@@ -1,5 +1,4 @@
-/* $XConsortium: menu.c /main/66 1996/12/01 23:46:59 swick $ */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.37 2000/09/22 10:42:07 alanh Exp $ */
+/* $Xorg: menu.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $ */
 /*
 
 Copyright 1999-2000 by Thomas E. Dickey
@@ -48,8 +47,9 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.41 2001/01/17 23:46:37 dawes Exp $ */
 
-#include <ptyx.h>
+#include <xterm.h>
 #include <data.h>
 #include <menu.h>
 #include <fontutils.h>
@@ -70,12 +70,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <stdio.h>
 #include <signal.h>
-
-#ifdef MINIX
-#include <X11/Xos.h>
-#endif
-
-#include <xterm.h>
 
 static void do_8bit_control    PROTO_XT_CALLBACK_ARGS;
 static void do_allow132        PROTO_XT_CALLBACK_ARGS;
@@ -111,6 +105,7 @@ static void do_suspend         PROTO_XT_CALLBACK_ARGS;
 static void do_terminate       PROTO_XT_CALLBACK_ARGS;
 static void do_titeInhibit     PROTO_XT_CALLBACK_ARGS;
 static void do_visualbell      PROTO_XT_CALLBACK_ARGS;
+static void do_poponbell       PROTO_XT_CALLBACK_ARGS;
 static void do_vtfont          PROTO_XT_CALLBACK_ARGS;
 
 #ifdef ALLOWLOGGING
@@ -228,6 +223,7 @@ MenuEntry vtMenuEntries[] = {
     { "allow132",	do_allow132,	NULL },
     { "cursesemul",	do_cursesemul,	NULL },
     { "visualbell",	do_visualbell,	NULL },
+    { "poponbell",	do_poponbell,	NULL },
     { "marginbell",	do_marginbell,	NULL },
 #if OPT_BLINK_CURS
     { "cursorblink",	do_cursorblink,	NULL },
@@ -467,7 +463,7 @@ static Bool domenu (
 	return False;
     }
 
-    if ((mw = obtain_menu(w, me)) == 0
+    if ((mw = obtain_menu(w, (MenuIndex) me)) == 0
      || sizeof_menu(w, me) == 0) {
 	mw = create_menu (w, term, (MenuIndex) me);
 	created = (mw != 0);
@@ -518,6 +514,7 @@ static Bool domenu (
 	    update_allow132();
 	    update_cursesemul();
 	    update_visualbell();
+	    update_poponbell();
 	    update_marginbell();
 	    update_cursorblink();
 	    update_altscreen();
@@ -678,6 +675,17 @@ static void do_visualbell (
 
     screen->visualbell = !screen->visualbell;
     update_visualbell();
+}
+
+static void do_poponbell (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    register TScreen *screen = &term->screen;
+
+    screen->poponbell = !screen->poponbell;
+    update_poponbell();
 }
 
 #ifdef ALLOWLOGGING
@@ -1424,6 +1432,16 @@ void HandleSetVisualBell(
 	Cardinal *param_count)
 {
     handle_toggle (do_visualbell, (int) term->screen.visualbell,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+
+void HandleSetPopOnBell(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_poponbell, (int) term->screen.poponbell,
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 

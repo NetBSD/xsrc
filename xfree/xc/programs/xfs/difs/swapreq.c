@@ -1,4 +1,4 @@
-/* $TOG: swapreq.c /main/9 1998/02/11 10:03:30 kaleb $ */
+/* $Xorg: swapreq.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * swapped requests
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/swapreq.c,v 1.3 1998/10/25 12:48:00 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/swapreq.c,v 1.5 2001/01/17 23:45:29 dawes Exp $ */
 
 #include	<swapreq.h>
 

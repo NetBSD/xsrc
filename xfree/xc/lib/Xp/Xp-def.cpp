@@ -38,5 +38,5 @@ EXPORTS
  XpStartDoc
  XpStartJob
  XpStartPage
-/* $XConsortium: Xp-def.cpp /main/1 1996/11/13 14:44:46 lehors $ */
-/* $XFree86$ */
+/* $Xorg: Xp-def.cpp,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
+/* $XFree86: xc/lib/Xp/Xp-def.cpp,v 1.3 2001/01/17 19:43:01 dawes Exp $ */

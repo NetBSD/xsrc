@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mipoly.c /main/5 1998/02/09 14:48:16 kaleb $ */
+/* $Xorg: mipoly.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 /*
  *  mipoly.c
  *

@@ -1,4 +1,4 @@
-/* $TOG: XMakeAssoc.c /main/9 1998/02/06 16:14:52 kaleb $ */
+/* $Xorg: XMakeAssoc.c,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1998 The Open Group.
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/oldX/XMakeAssoc.c,v 1.3 2001/01/17 19:43:38 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "X10.h"

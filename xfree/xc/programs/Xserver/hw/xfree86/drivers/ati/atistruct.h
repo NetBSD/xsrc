@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atistruct.h,v 1.20 2000/08/04 21:07:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atistruct.h,v 1.25 2001/03/25 05:32:09 tsi Exp $ */
 /*
- * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,6 +28,7 @@
 #include "aticlock.h"
 #include "atiregs.h"
 
+#include "xf86Cursor.h"
 #include "xf86Resources.h"
 #include "xaa.h"
 
@@ -83,8 +84,10 @@ typedef struct _ATIHWRec
            crtc_v_total_disp, crtc_v_sync_strt_wid,
            crtc_off_pitch, crtc_gen_cntl, dsp_config, dsp_on_off,
            ovr_clr, ovr_wid_left_right, ovr_wid_top_bottom,
-           clock_cntl, bus_cntl, mem_vga_wp_sel, mem_vga_rp_sel,
-           dac_cntl, config_cntl;
+           cur_clr0, cur_clr1, cur_offset,
+           cur_horz_vert_posn, cur_horz_vert_off,
+           clock_cntl, bus_cntl, mem_cntl, mem_vga_wp_sel, mem_vga_rp_sel,
+           dac_cntl, gen_test_cntl, config_cntl;
 
     /* LCD registers */
     CARD32 lcd_index, config_panel, lcd_gen_ctrl,
@@ -234,6 +237,10 @@ typedef struct _ATIRec
 
 #ifndef AVOID_CPIO
 
+    /*
+     * Banking interface.
+     */
+    miBankInfoRec BankInfo;
     pointer pBank;
     CARD8 UseSmallApertures;
 
@@ -244,15 +251,6 @@ typedef struct _ATIRec
      */
     pointer pMMIO, pBlock[2];
     unsigned long Block0Base, Block1Base;
-
-#ifndef AVOID_CPIO
-
-    /*
-     * Banking interface.
-     */
-    miBankInfoRec BankInfo;
-
-#endif /* AVOID_CPIO */
 
     /*
      * XAA interface.
@@ -266,6 +264,16 @@ typedef struct _ATIRec
     pointer pHOST_DATA; /* Current HOST_DATA_* transfer window address */
     CARD32 *ExpansionBitmapScanlinePtr[2];
     int ExpansionBitmapWidth;
+
+    /*
+     * Cursor-related definitions.
+     */
+    xf86CursorInfoPtr pCursorInfo;
+    pointer pCursorPage, pCursorImage;
+    unsigned long CursorBase;
+    CARD32 CursorOffset;
+    CARD16 CursorXOffset, CursorYOffset;
+    CARD8 Cursor;
 
     /*
      * MMIO cache.
@@ -364,7 +372,13 @@ typedef struct _ATIRec
     CARD8 OptionCRT;            /* Prefer CRT over digital panel */
     CARD8 OptionCSync;          /* Use composite sync */
     CARD8 OptionDevel;          /* Intentionally undocumented */
+
+#ifndef AVOID_CPIO
+
     CARD8 OptionLinear;         /* Use linear fb aperture when available */
+
+#endif /* AVOID_CPIO */
+
     CARD8 OptionMMIOCache;      /* Cache MMIO writes */
     CARD8 OptionProbeClocks;    /* Force probe for fixed clocks */
     CARD8 OptionShadowFB;       /* Use shadow frame buffer */
@@ -374,6 +388,7 @@ typedef struct _ATIRec
      * State flags.
      */
     CARD8 Unlocked, Mapped, Closeable;
+    CARD8 MMIOInLinear;
 
     /*
      * Wrapped functions.

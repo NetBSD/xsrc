@@ -1,4 +1,4 @@
-/* $TOG: parith.c /main/5 1998/02/09 16:09:23 kaleb $ */
+/* $Xorg: parith.c,v 1.5 2000/08/17 19:47:26 cpqbld Exp $ */
 /**** module parith.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/parith.c,v 3.2 1998/10/05 13:22:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/parith.c,v 3.4 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PARITH
 

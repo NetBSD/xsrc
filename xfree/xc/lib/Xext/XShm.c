@@ -1,5 +1,5 @@
 /*
- * $TOG: XShm.c /main/19 1998/02/11 15:41:35 kaleb $
+ * $Xorg: XShm.c,v 1.3 2000/08/17 19:45:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Bob Scheifler and Keith Packard, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xext/XShm.c,v 1.3 2001/01/17 19:42:46 dawes Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 

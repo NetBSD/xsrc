@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.2 2000/01/25 18:37:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.4 2001/04/10 16:07:55 dawes Exp $ */
 
 /*
  * Authors:
@@ -64,19 +64,34 @@ ExtensionModule XF86DRIExt =
     NULL
 };
 
+static const char *glxSymbols[] = {
+    "__glXActiveScreens",
+    NULL
+};
+
 XF86ModuleData driModuleData = { &VersRec, driSetup, NULL };
 
 static pointer
 driSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
+    static Bool setupDone = FALSE;
     pointer drm = NULL;
 
-    LoadExtension(&XF86DRIExt, FALSE);
+    if (!setupDone) {
+	setupDone = TRUE;
     
-    drm = LoadSubModule(module, "drm", NULL, NULL, NULL, NULL, errmaj, errmin);
-    if (!drm)
-	ErrorF("Cannot load the drm library\n");
+	LoaderRefSymLists(glxSymbols, NULL);
+    
+    	drm = 
+	   LoadSubModule(module, "drm", NULL, NULL, NULL, NULL, errmaj, errmin);
+    
+	if (!drm) 
+	    ErrorF("Cannot load the drm library\n");
+	else
+	    LoadExtension(&XF86DRIExt, FALSE);
+    }
 
+    if (errmaj) *errmaj = LDR_ONCEONLY;
     /* Need a non-NULL return value to indicate success */
     return drm;
 }

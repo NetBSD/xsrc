@@ -1,13 +1,13 @@
-# $TOG: fcd8859-15 /main/2 1998/06/17 15:53:45 kaleb $
-#
-# ISO 8859-15 (Latin1) Compose Sequence
-#
-# $XFree86: xc/nls/Compose/iso8859-15,v 1.2 1999/08/28 09:00:35 dawes Exp $
-#
-# Sequence Definition
-#
-# <Multi_key> Means <Compose>
-# Special Character
+XCOMM $TOG: fcd8859-15 /main/2 1998/06/17 15:53:45 kaleb $
+XCOMM
+XCOMM ISO 8859-15 (Latin1) Compose Sequence
+XCOMM
+XCOMM $XFree86: xc/nls/Compose/iso8859-15,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM
+XCOMM Sequence Definition
+XCOMM
+XCOMM <Multi_key> Means <Compose>
+XCOMM Special Character
 <Multi_key> <plus> <plus>		: "#"	numbersign
 <Multi_key> <apostrophe> <space>	: "'"	apostrophe
 <Multi_key> <space> <apostrophe>	: "'"	apostrophe
@@ -156,7 +156,7 @@
 <Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
 <Multi_key> <comma> <comma>		: "\270"	cedilla
 <Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
-# Accented Alphabet
+XCOMM Accented Alphabet
 <Multi_key> <A> <grave>			: "\300"	Agrave
 <Multi_key> <grave> <A>			: "\300"	Agrave
 <Multi_key> <A> <acute>			: "\301"	Aacute
@@ -374,9 +374,9 @@
 <Multi_key> <less> <Z>			: "\264"	Zcaron
 <Multi_key> <z> <less>			: "\270"	zcaron
 <Multi_key> <less> <z>			: "\270"	zcaron
-#
-# dead key accent keysyms
-# Special Character
+XCOMM
+XCOMM dead key accent keysyms
+XCOMM Special Character
 <dead_circumflex>  <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
@@ -396,7 +396,7 @@
 <dead_acute> <apostrophe>		: "\264"	acute
 <dead_cedilla> <comma>			: "\270"	cedilla
 <dead_diaeresis> <quotedbl>		: "\250"	diaeresis
-# Accented Alphabet
+XCOMM Accented Alphabet
 <dead_abovering> <A>			: "\305"	Aring
 <dead_grave> <A>			: "\300"	Agrave
 <dead_acute> <A>			: "\301"	Aacute
@@ -459,9 +459,9 @@
 <dead_caron> <z>			: "\270"	zcaron
 <dead_circumflex> <Z>			: "\264"	Zcaron
 <dead_circumflex> <z>			: "\270"	zcaron
-# Useful for portuguese language
+XCOMM Useful for portuguese language
 <dead_acute> <C>			: "\307"	Ccedilla
 <dead_acute> <c>			: "\347"	ccedilla
 <dead_acute> <dead_acute>		: "'"		apostrophe
 <dead_grave> <dead_grave>		: "`"		grave
-# End of Sequence Definition
+XCOMM End of Sequence Definition

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.14 2000/05/23 04:47:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.17 2001/01/13 00:04:18 mvojkovi Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -864,6 +864,8 @@ DGAMapPhysical(
     ULONG action;
     HFILE hfd;
 #endif
+  
+    base += offset;
 
     pMap->screen = screen;
     pMap->physical = base;

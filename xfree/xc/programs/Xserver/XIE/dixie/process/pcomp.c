@@ -1,4 +1,4 @@
-/* $TOG: pcomp.c /main/4 1998/02/09 16:10:00 kaleb $ */
+/* $Xorg: pcomp.c,v 1.5 2000/08/17 19:47:27 cpqbld Exp $ */
 /**** module pcomp.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. July 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pcomp.c,v 3.2 1998/10/05 13:22:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pcomp.c,v 3.4 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PCOMP
 

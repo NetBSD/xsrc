@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.6 2000/02/29 03:09:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.8 2001/04/25 17:46:42 alanh Exp $ */
 
 #if PSZ != 24
 #include "dixstruct.h"
@@ -548,7 +548,6 @@ static int
 A(ReputImage)(ScrnInfoPtr pScrn, short drw_x, short drw_y,
 		RegionPtr clipBoxes, pointer data)
 {
-    ScreenPtr	pScreen = pScrn->pScreen;
     APMDECL(pScrn);
     ApmPortPrivPtr	pPriv = data, pPriv0, pPriv1;
     register int	fx, fy;
@@ -703,10 +702,10 @@ A(PutImage)(ScrnInfoPtr pScrn, short src_x, short src_y,
     APMDECL(pScrn);
     INT32	x1, x2, y1, y2;
     unsigned char	*dst_start;
-    int		pitch, Bpp, new_h, offset, offset2, offset3;
+    int		pitch, Bpp, new_h, offset = 0, offset2 = 0, offset3 = 0;
     CARD32	mask;
     FBAreaPtr	area;
-    int		srcPitch, dstPitch, srcPitch2;
+    int		srcPitch, dstPitch, srcPitch2 = 0;
     int		top, left, npixels, nlines;
     BoxRec	dstBox;
     CARD32	scalex, scaley, scale;

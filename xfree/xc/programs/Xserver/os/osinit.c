@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.19 1999/12/27 00:39:58 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.22 2001/05/11 08:16:55 alanh Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: osinit.c /main/47 1998/02/09 15:12:48 kaleb $ */
+/* $Xorg: osinit.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -59,6 +59,10 @@ SOFTWARE.
 #else
 #define PATH_MAX 1024
 #endif
+#endif
+
+#if defined(Lynx)
+#include <sys/wait.h>
 #endif
 
 #if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)

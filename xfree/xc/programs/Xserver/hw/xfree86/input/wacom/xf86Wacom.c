@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
- * Copyright 1995-2000 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2001 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.23 2000/12/06 20:39:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.27 2001/05/18 23:35:33 dawes Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV and Wacom V protocols.
@@ -33,32 +33,18 @@
  * Many thanks to Dave Fleck from Wacom for the help provided to
  * build this driver.
  *
- * Modified for Linux USB by MATSUMURA Namihiko.
+ * Modified for Linux USB by MATSUMURA Namihiko,
  * Daniel Egger, Germany. <egger@suse.de>,
- * Frederic Lepied <lepied@xfree86.org>.
+ * Frederic Lepied <lepied@xfree86.org>,
  * Brion Vibber <brion@pobox.com>,
- * Aaron Optimizer Digulla <digulla@hepe.com> 
+ * Aaron Optimizer Digulla <digulla@hepe.com>,
+ * Jonathan Layes <jonathan@layes.com>.
  *
  */
 
-/*
- * Bugs fixed by Steve Day (Updated: Apr 5 1999)
- *
- * MaxX and MaxY values that the Wacom returns are now converted from
- * 1270lpi to the actual X and Y resolutions that the tablet is using.
- *
- * Buffer bug fixed when reading X and Y resolutions from config
- * string, now receives the true X and Y resolutions. This has the
- * side effect of being more compatible with other models of Wacom
- * that have varying lengths of headers.
- *
- * <steve@lineardesigns.co.uk>
- *
- */
+static const char identification[] = "$Identification: 23 $";
 
-static const char identification[] = "$Identification: 20 $";
-
-#include <xf86Version.h>
+#include "xf86Version.h"
 
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
 #define XFREE86_V4 1
@@ -67,6 +53,9 @@ static const char identification[] = "$Identification: 20 $";
 #ifdef LINUX_INPUT
 #include <asm/types.h>
 #include <linux/input.h>
+
+/* max number of input events to read in one read call */
+#define MAX_EVENTS 50
 
 /* keithp - a hack to avoid redefinitions of these in xf86str.h */
 #ifdef BUS_PCI
@@ -85,21 +74,21 @@ static const char identification[] = "$Identification: 20 $";
 #include <errno.h>
 #endif
 
-#include <misc.h>
-#include <xf86.h>
+#include "misc.h"
+#include "xf86.h"
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
-#include <xf86_ansic.h>
-#include <xisb.h>
+#include "xf86_ansic.h"
+#include "xisb.h"
 #endif
-#include <xf86_OSproc.h>
-#include <xf86Xinput.h>
-#include <exevents.h>		/* Needed for InitValuator/Proximity stuff */
-#include <keysym.h>
-#include <mipointer.h>
+#include "xf86_OSproc.h"
+#include "xf86Xinput.h"
+#include "exevents.h"		/* Needed for InitValuator/Proximity stuff */
+#include "keysym.h"
+#include "mipointer.h"
 
 #ifdef XFree86LOADER
-#include <xf86Module.h>
+#include "xf86Module.h"
 #endif
 
 #undef sleep
@@ -271,7 +260,8 @@ typedef struct
     double		factorY;	/* Y factor */
     unsigned int	serial;	        /* device serial number */
     int			initNumber;     /* magic number for the init phasis */
-
+    int			screen_no;	/* associated screen */
+    
     struct _WacomCommonRec *common;	/* common info pointer */
     
     /* state fields */
@@ -345,6 +335,7 @@ typedef struct _WacomCommonRec
 #define RESOLUTION_Y	21
 #define RESOLUTION_Z	22
 #define USB		23
+#define SCREEN_NO	24
 
 #if !defined(sun) || defined(i386)
 static SymTabRec WcmTab[] = {
@@ -372,6 +363,7 @@ static SymTabRec WcmTab[] = {
   { RESOLUTION_Y,	"resolutiony" },
   { RESOLUTION_Z,	"resolutionz" },
   { USB,		"usb" },
+  { SCREEN_NO,		"screenno" },
   { -1,			"" }
 };
 
@@ -524,6 +516,13 @@ static KeySymsRec wacom_keysyms = {
 /******************************************************************************
  * external declarations
  *****************************************************************************/
+
+#ifdef LINUX_INPUT
+static void xf86WcmReadUSBInput(LocalDevicePtr);
+static Bool xf86WcmUSBOpen(LocalDevicePtr);
+#endif
+
+
 #ifndef XFREE86_V4
 
 #if defined(sun) && !defined(i386)
@@ -820,7 +819,7 @@ xf86WcmConfig(LocalDevicePtr    *array,
 
 	case USB:
 #ifdef LINUX_INPUT
-	    local->read_input=xf86WcmReadUSBInput;
+	    dev->read_input=xf86WcmReadUSBInput;
 	    common->wcmOpen=xf86WcmUSBOpen;
 	    ErrorF("%s Wacom reading USB link\n", XCONFIG_GIVEN);
 #else
@@ -828,6 +827,15 @@ xf86WcmConfig(LocalDevicePtr    *array,
 #endif
 	    break;
 	    
+	case SCREEN_NO:
+	    if (xf86GetToken(NULL) != NUMBER)
+		xf86ConfigError("Option number expected");
+	    priv->screen_no = val->num;
+	    if (xf86Verbose)
+		ErrorF("%s Wacom attached screen = %d\n", XCONFIG_GIVEN,
+		       priv->screen_no);
+	    break;
+
 	case EOF:
 	    FatalError("Unexpected EOF (missing EndSubSection)");
 	    break;
@@ -1164,25 +1172,38 @@ xf86WcmConvert(LocalDevicePtr	local,
 	       int*		y)
 {
     WacomDevicePtr	priv = (WacomDevicePtr) local->private;
-
+    int			width, height;
+    
     DBG(6, ErrorF("xf86WcmConvert\n"));
 
     if (first != 0 || num == 1)
       return FALSE;
 
 #ifdef XFREE86_V4
-    priv->factorX = ((double) miPointerCurrentScreen()->width)
+    if (priv->screen_no != -1) {
+	width = screenInfo.screens[priv->screen_no]->width;
+	height = screenInfo.screens[priv->screen_no]->height;
+    } else {
+	width = miPointerCurrentScreen()->width;
+	height = miPointerCurrentScreen()->height;
+    }
+    
+    priv->factorX = ((double) width)
 	/ (priv->bottomX - priv->topX);
-    priv->factorY = ((double) miPointerCurrentScreen()->height)
+    priv->factorY = ((double) height)
 	/ (priv->bottomY - priv->topY);
 #endif
     
-    *x = v0 * priv->factorX;
-    *y = v1 * priv->factorY;
+    *x = v0 * priv->factorX + 0.5;
+    *y = v1 * priv->factorY + 0.5;
 
     DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
 		  v0, v1, *x, *y));
-
+#ifdef XFREE86_V4
+    if (priv->screen_no != -1) {
+	xf86XInputSetScreen(local, priv->screen_no, *x, *y);
+    }
+#endif
     return TRUE;
 }
 
@@ -1209,8 +1230,8 @@ xf86WcmReverseConvert(LocalDevicePtr	local,
 	/ (priv->bottomY - priv->topY);
 #endif
     
-    valuators[0] = x / priv->factorX;
-    valuators[1] = y / priv->factorY;
+    valuators[0] = x / priv->factorX + 0.5;
+    valuators[1] = y / priv->factorY + 0.5;
 
     DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		  valuators[0], valuators[1]));
@@ -2084,6 +2105,31 @@ xf86WcmReadInput(LocalDevicePtr         local)
 /*
  ***************************************************************************
  *
+ * xf86WcmIsUSBLine --
+ *	Test if the attached device is a USB one.
+ *
+ ***************************************************************************
+ */
+static int
+xf86WcmIsUSBLine(int	fd)
+{
+    int version;
+    int err;
+
+    SYSCALL(err = ioctl(fd, EVIOCGVERSION, &version));
+    
+    if (!err) {
+	ErrorF("%s Wacom Kernel Input driver version is %d.%d.%d\n", XCONFIG_PROBED,
+	       version >> 16, (version >> 8) & 0xff, version & 0xff);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/*
+ ***************************************************************************
+ *
  * xf86WcmReadUSBInput --
  *	Read the new events from the device, and enqueue them.
  *
@@ -2107,11 +2153,11 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
     ssize_t              len;
     int                  idx;
     struct input_event * event;
-    char                 eventbuf[BUFFER_SIZE];
+    char                 eventbuf[sizeof(struct input_event) * MAX_EVENTS];
 #define MOD_BUTTONS(bit, value) \
     { int _b=bit, _v=value; buttons = (((_v) != 0) ? (buttons | _b) : (buttons & ~ _b)); }
 
-    SYSCALL(len = read(local->fd, eventbuf, BUFFER_SIZE));
+    SYSCALL(len = read(local->fd, eventbuf, sizeof(eventbuf)));
 
     if (len <= 0) {
 	ErrorF("Error reading wacom device : %s\n", strerror(errno));
@@ -2120,11 +2166,11 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
     
     for (event=(struct input_event *)eventbuf;
 	 event<(struct input_event *)(eventbuf+len); event++) {
-	DBG(10, ErrorF("event->type=%d\n", event->type));
+	DBG(10, ErrorF("xf86WcmReadUSBInput event->type=%d\n", event->type));
 	
 	switch (event->type) {
 	case EV_ABS:
-	    DBG(10, ErrorF("event->code=%d\n", event->code));
+	    DBG(10, ErrorF("xf86WcmReadUSBInput event->code=%d\n", event->code));
 	    switch (event->code) {
 	    case ABS_X:
 		x = event->value;
@@ -2135,6 +2181,7 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 		break;
 
 	    case ABS_TILT_X:
+	    case ABS_RZ:
 		tilt_x = event->value;
 		break;
 
@@ -2144,11 +2191,23 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 
 	    case ABS_PRESSURE:
 		pressure = event->value;
+ 		MOD_BUTTONS (1, event->value > common->wcmThreshold ? 1 : 0);
 		break;
 
 	    case ABS_DISTANCE:
 		/* This is not sent by the driver */
 		break;
+
+	    case ABS_MISC:
+		serial = event->value;
+		DBG(10, ErrorF("wacom tool serial id=%d\n", serial));
+		break;
+
+	    case ABS_WHEEL:
+	    case ABS_THROTTLE:
+		wheel = event->value;
+		break;
+
 	    }
 	    break; /* EV_ABS */
 
@@ -2166,22 +2225,29 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 	case EV_KEY:
 	    switch (event->code) {
 	    case BTN_TOOL_PEN:
+	    case BTN_TOOL_PENCIL:
+	    case BTN_TOOL_BRUSH:
+	    case BTN_TOOL_AIRBRUSH:
+		DBG(10, ErrorF("USB Stylus detected %x\n", event->code));
 		common->wcmIndex = STYLUS_ID;
 		is_proximity = (event->value != 0);
 		break;
 
 	    case BTN_TOOL_RUBBER:
+		DBG(10, ErrorF("USB eraser detected %x\n", event->code));
 		common->wcmIndex = ERASER_ID;
 		is_proximity = (event->value != 0);
 		break;
 
 	    case BTN_TOOL_MOUSE:
+	    case BTN_TOOL_LENS:
+		DBG(10, ErrorF("USB mouse detected %x\n", event->code));
 		common->wcmIndex = CURSOR_ID;
 		is_proximity = (event->value != 0);
 		break;
 
 	    case BTN_TOUCH:
-		MOD_BUTTONS (1, event->value);
+		/* we use the pressure to determine the button 1 */
 		break;
 
 	    case BTN_STYLUS:
@@ -2196,17 +2262,30 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 		MOD_BUTTONS (1, event->value);
 		break;
 
-	    case BTN_RIGHT:
+	    case BTN_MIDDLE:
 		MOD_BUTTONS (2, event->value);
 		break;
 
-	    case BTN_MIDDLE:
+	    case BTN_RIGHT:
 		MOD_BUTTONS (4, event->value);
+		break;
+
+	    case BTN_SIDE:
+		MOD_BUTTONS (8, event->value);
+		break;
+
+	    case BTN_EXTRA:
+		MOD_BUTTONS (16, event->value);
 		break;
 	    }
 	    break; /* EV_KEY */
-	} 
+	} /* switch event->type */
 
+	/* ABS_MISC is the event terminator */
+	if (event->type != EV_ABS || event->code != ABS_MISC) {
+	    continue;
+	}
+	
 	if ((is_proximity == priv->oldProximity) &&
 	    (buttons == priv->oldButtons) &&
 	    (ABS(x - priv->oldX) <= common->wcmSuppress) &&
@@ -2256,12 +2335,23 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
  *
  ***************************************************************************
  */
+
+#define BITS_PER_LONG (sizeof(long) * 8)
+#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+#define test_bit(bit, array)	((array[LONG(bit)] >> OFF(bit)) & 1)
+#define OFF(x)  ((x)%BITS_PER_LONG)
+#define LONG(x) ((x)/BITS_PER_LONG)
+
 static Bool
 xf86WcmUSBOpen(LocalDevicePtr	local)
 {
     int			err = 0;
     WacomDevicePtr	priv = (WacomDevicePtr)local->private;
     WacomCommonPtr	common = priv->common;
+    char		name[256] = "Unknown";
+    int			abs[5];
+    unsigned long	bit[EV_MAX][NBITS(KEY_MAX)];
+    int			i, j;
     
 #ifdef XFREE86_V4
     local->fd = xf86OpenSerial(local->options);
@@ -2273,6 +2363,42 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
 	return !Success;
     }
 
+    ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
+    ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED, name);
+
+    memset(bit, 0, sizeof(bit));
+    ioctl(local->fd, EVIOCGBIT(0, EV_MAX), bit[0]);
+
+    for (i = 0; i < EV_MAX; i++)
+	if (test_bit(i, bit[0])) {
+	    ioctl(local->fd, EVIOCGBIT(i, KEY_MAX), bit[i]);
+	    for (j = 0; j < KEY_MAX; j++) 
+		if (test_bit(j, bit[i])) {
+		    if (i == EV_ABS) {
+			ioctl(local->fd, EVIOCGABS(j), abs);
+			switch (j) {
+			case ABS_X:
+			    if (common->wcmMaxX == 0) {
+				common->wcmMaxX = abs[2];
+			    }
+			    break;
+			    
+			case ABS_Y:
+			    if (common->wcmMaxY == 0) {
+				common->wcmMaxY = abs[2];
+			    }
+			    break;
+			    
+			case ABS_Z:
+			    if (common->wcmMaxZ == DEFAULT_MAXZ) {
+				common->wcmMaxZ = abs[2];
+			    }
+			    break;
+			}
+		    }
+		}
+	}
+    
     DBG(2, ErrorF("setup is max X=%d max Y=%d resol X=%d resol Y=%d\n",
 		  common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
 		  common->wcmResolY));
@@ -2315,6 +2441,9 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
 	return !Success;
     }
 
+    /* to have the button field handled as a bit field */
+    common->wcmProtocolLevel = 5;
+    
     return Success;
 }
 
@@ -2387,6 +2516,23 @@ xf86WcmOpen(LocalDevicePtr	local)
 	return !Success;
     }
 
+#ifdef LINUX_INPUT
+    DBG(1, ErrorF("testing USB\n"));
+    
+    if (xf86WcmIsUSBLine(local->fd)) {
+	int	loop;
+	
+	SYSCALL(close(local->fd));
+
+	for(loop=0; loop<common->wcmNumDevices; loop++) {
+	    common->wcmDevices[loop]->read_input=xf86WcmReadUSBInput;
+	}
+	common->wcmOpen=xf86WcmUSBOpen;
+	
+	return xf86WcmUSBOpen(local);
+    }
+#endif
+    
     DBG(1, ErrorF("initializing tablet\n"));    
 
     /* Set the speed of the serial link to 38400 */
@@ -2783,6 +2929,7 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
     double		screenRatio, tabletRatio;
     int			gap;
     int			loop;
+    int			screen_idx = 0;
     
     if (local->fd < 0) {
         if (common->wcmInitNumber > 2 ||
@@ -2841,12 +2988,24 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
 		   priv->bottomY, common->wcmMaxY);
 	    priv->bottomY = common->wcmMaxY;
 	}
-    
+
+	if (priv->screen_no != -1 &&
+	    (priv->screen_no >= screenInfo.numScreens ||
+	     priv->screen_no < 0)) {
+	    ErrorF("%s: invalid screen number %d, resetting to 0\n",
+		   local->name, priv->screen_no);
+	    priv->screen_no = 0;
+	}
+
 	/* Calculate the ratio according to KeepShape, TopX and TopY */
 
+	if (priv->screen_no != -1) {
+	    screen_idx = priv->screen_no;
+	}
+	
 	if (priv->flags & KEEP_SHAPE_FLAG) {
-	    screenRatio = ((double) screenInfo.screens[0]->width)
-		/ screenInfo.screens[0]->height;
+	    screenRatio = ((double) screenInfo.screens[screen_idx]->width)
+		/ screenInfo.screens[screen_idx]->height;
 
 	    tabletRatio = ((double) (common->wcmMaxX - priv->topX))
 		/ (common->wcmMaxY - priv->topY);
@@ -3214,6 +3373,9 @@ xf86WcmAllocate(char *  name,
 
     local->name = name;
     local->flags = 0;
+#ifndef XFREE86_V4
+    local->device_config = xf86WcmConfig;
+#endif 
     local->device_control = xf86WcmProc;
     local->read_input = xf86WcmReadInput;
     local->control_proc = xf86WcmChangeControl;
@@ -3248,6 +3410,7 @@ xf86WcmAllocate(char *  name,
     priv->oldProximity = 0;		/* previous proximity */
     priv->serial = 0;		        /* serial number */
     priv->initNumber = 0;	        /* magic number for the init phasis */
+    priv->screen_no = -1;		/* associated screen */
     
     common->wcmDevice = "";		/* device file name */
     common->wcmSuppress = -1;		/* transmit position if increment is superior */
@@ -3493,7 +3656,7 @@ xf86WcmInit(InputDriverPtr	drv,
     
     while(localDevices) {
 	if ((local != localDevices) &&
-	    (localDevices->read_input == xf86WcmReadInput) &&
+	    (localDevices->device_control == xf86WcmProc) &&
 	    (strcmp(((WacomDevicePtr)localDevices->private)->common->wcmDevice,
 		    common->wcmDevice) == 0)) {
 		DBG(2, ErrorF("xf86WcmConfig wacom port share between"
@@ -3508,7 +3671,7 @@ xf86WcmInit(InputDriverPtr	drv,
 								 sizeof(LocalDevicePtr) * common->wcmNumDevices);
 		common->wcmDevices[common->wcmNumDevices - 1] = local;
 		break;
-	    }
+	}
 	localDevices = localDevices->next;
     }
 
@@ -3520,7 +3683,7 @@ xf86WcmInit(InputDriverPtr	drv,
     xf86Msg(X_CONFIG, "%s serial device is %s\n", dev->identifier,
 	    common->wcmDevice);
 
-    debug_level = xf86SetIntOption(local->options, "DebugLevel", 0);
+    debug_level = xf86SetIntOption(local->options, "DebugLevel", debug_level);
     if (debug_level > 0) {
 	xf86Msg(X_CONFIG, "WACOM: debug level set to %d\n", debug_level);
     }
@@ -3540,26 +3703,33 @@ xf86WcmInit(InputDriverPtr	drv,
     xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 	    (priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");	    
 
-    common->wcmSuppress = xf86SetIntOption(local->options, "Suppress", -1);
+    common->wcmSuppress = xf86SetIntOption(local->options, "Suppress", common->wcmSuppress);
     if (common->wcmSuppress != -1) {
 	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", XCONFIG_GIVEN,
 		common->wcmSuppress);      
     }
     
-    if (xf86SetBoolOption(local->options, "Tilt", 0)) {
+    if (xf86SetBoolOption(local->options, "Tilt", (common->wcmFlags & TILT_FLAG))) {
 	common->wcmFlags |= TILT_FLAG;
     }
 
-    if (xf86SetBoolOption(local->options, "USB", 0)) {
 #ifdef LINUX_INPUT
+    if (xf86SetBoolOption(local->options, "USB", (common->wcmOpen == xf86WcmUSBOpen))) {
 	local->read_input=xf86WcmReadUSBInput;
 	common->wcmOpen=xf86WcmUSBOpen;
 	xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);
 #else
+    if (xf86SetBoolOption(local->options, "USB", 0)) {
 	ErrorF("The USB version of the driver isn't available for your platform\n");
 #endif
     }
 
+    priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", -1);
+    if (priv->screen_no != -1) {
+	xf86Msg(X_CONFIG, "%s: attached screen number %d\n", dev->identifier,
+		priv->screen_no);
+    }
+	
     if (xf86SetBoolOption(local->options, "KeepShape", 0)) {
 	priv->flags |= KEEP_SHAPE_FLAG;
 	xf86Msg(X_CONFIG, "%s: keeps shape\n", dev->identifier);
@@ -3588,37 +3758,37 @@ xf86WcmInit(InputDriverPtr	drv,
 	xf86Msg(X_CONFIG, "%s: serial number = %u\n", dev->identifier,
 		priv->serial);
     }
-    common->wcmThreshold = xf86SetIntOption(local->options, "Threshold", INVALID_THRESHOLD);
+    common->wcmThreshold = xf86SetIntOption(local->options, "Threshold", common->wcmThreshold);
     if (common->wcmThreshold != INVALID_THRESHOLD) {
 	xf86Msg(X_CONFIG, "%s: threshold = %d\n", dev->identifier,
 		common->wcmThreshold);
     }
-    common->wcmMaxX = xf86SetIntOption(local->options, "MaxX", 0);
+    common->wcmMaxX = xf86SetIntOption(local->options, "MaxX", common->wcmMaxX);
     if (common->wcmMaxX != 0) {
 	xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
 		common->wcmMaxX);
     }
-    common->wcmMaxY = xf86SetIntOption(local->options, "MaxY", 0);
+    common->wcmMaxY = xf86SetIntOption(local->options, "MaxY", common->wcmMaxY);
     if (common->wcmMaxY != 0) {
 	xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
 		common->wcmMaxY);
     }
-    common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ", DEFAULT_MAXZ);
+    common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ", common->wcmMaxZ);
     if (common->wcmMaxZ != DEFAULT_MAXZ) {
 	xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
 		common->wcmMaxZ);
     }
-    common->wcmResolX = xf86SetIntOption(local->options, "ResolutionX", 0);
+    common->wcmResolX = xf86SetIntOption(local->options, "ResolutionX", common->wcmResolX);
     if (common->wcmResolX != 0) {
 	xf86Msg(X_CONFIG, "%s: resol x = %d\n", dev->identifier,
 		common->wcmResolX);
     }
-    common->wcmResolY = xf86SetIntOption(local->options, "ResolutionY", 0);
+    common->wcmResolY = xf86SetIntOption(local->options, "ResolutionY", common->wcmResolY);
     if (common->wcmResolY != 0) {
 	xf86Msg(X_CONFIG, "%s: resol x = %d\n", dev->identifier,
 		common->wcmResolY);
     }
-    common->wcmResolZ = xf86SetIntOption(local->options, "ResolutionZ", 0);
+    common->wcmResolZ = xf86SetIntOption(local->options, "ResolutionZ", common->wcmResolZ);
     if (common->wcmResolZ != 0) {
 	xf86Msg(X_CONFIG, "%s: resol x = %d\n", dev->identifier,
 		common->wcmResolZ);
@@ -3705,8 +3875,8 @@ xf86WcmPlug(pointer	module,
 	    int		*errmaj,
 	    int		*errmin)
 {
-    DBG(1, ErrorF("xf86WcmPlug\n"));
-	
+    xf86Msg(X_INFO, "Wacom driver level: %s\n", identification+strlen("$Identification: "));
+	    
     xf86AddInputDriver(&WACOM, module, 0);
 
     return module;

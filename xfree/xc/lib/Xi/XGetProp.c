@@ -1,4 +1,4 @@
-/* $TOG: XGetProp.c /main/9 1998/02/06 15:03:26 kaleb $ */
+/* $Xorg: XGetProp.c,v 1.3 2000/08/17 19:45:56 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XGetProp.c,v 3.0 1996/08/25 13:52:46 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XGetProp.c,v 3.2 2001/01/17 19:42:50 dawes Exp $ */
 
 /***********************************************************************
  *

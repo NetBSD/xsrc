@@ -19,8 +19,9 @@
 /***************************************************************************/
 
 
-#include <freetype/ftnames.h>
-#include <freetype/internal/tttypes.h>
+#include <ft2build.h>
+#include FT_SFNT_NAMES_H
+#include FT_INTERNAL_TRUETYPE_TYPES_H
 
 
 #ifdef TT_CONFIG_OPTION_SFNT_NAMES
@@ -48,7 +49,7 @@
       TT_Face  ttface = (TT_Face)face;
 
 
-      if ( index < ttface->num_names )
+      if ( index < (FT_UInt)ttface->num_names )
       {
         TT_NameRec*  name = ttface->name_table.names + index;
 

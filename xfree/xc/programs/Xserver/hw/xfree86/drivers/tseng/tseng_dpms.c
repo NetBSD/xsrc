@@ -1,11 +1,10 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dpms.c,v 1.7 1998/08/13 14:46:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dpms.c,v 1.10 2001/01/21 21:19:35 tsi Exp $ */
 
 
 
 
 
-#ifdef DPMSExtension
 
 #include "tseng.h"
 
@@ -248,4 +247,3 @@ TsengHVSyncDPMSSet(ScrnInfoPtr pScrn,
 	outb(iobase + 5, tmpb);
     }
 }
-#endif

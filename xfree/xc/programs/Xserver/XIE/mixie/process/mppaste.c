@@ -1,4 +1,4 @@
-/* $TOG: mppaste.c /main/7 1998/02/09 16:22:30 kaleb $ */
+/* $Xorg: mppaste.c,v 1.3 2000/08/17 19:47:53 cpqbld Exp $ */
 /**** module mppaste.c ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 							   July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mppaste.c,v 3.2 1998/10/04 09:36:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mppaste.c,v 3.4 2001/01/17 22:13:12 dawes Exp $ */
 
 #define _XIEC_MPPASTE
 #define _XIEC_PPASTE

@@ -1,7 +1,7 @@
-/* $Id: glxinfo.c,v 1.1.1.2 2001/03/18 17:38:16 veego Exp $ */
+/* Id: glxinfo.c,v 1.12 2001/03/23 21:41:44 brianp Exp $ */
 
 /*
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.6 2001/04/02 22:13:18 dawes Exp $ */
 
 /*
  * This program is a work-alike of the IRIX glxinfo program.
@@ -28,24 +28,28 @@
  *  -t                     print wide table
  *  -v                     print verbose information
  *  -display DisplayName   specify the X display to interogate
+ *  -b                     only print ID of "best" visual on screen 0
  *
  * Brian Paul  26 January 2000
- * Mark Paton  09 September 2000 - Minor mods for XFree86
  */
 
+#define DO_GLU
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/gl.h>
-
-/* This is commented out because at this time the GLU library
- * is not part of XFree86.
- * #include <GL/glu.h>
- * */
-
+#ifdef DO_GLU
+#include <GL/glu.h>
+#endif
 #include <GL/glx.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
+
+#ifndef GLX_NONE_EXT
+#define GLX_NONE_EXT  0x8000
+#endif
 
 
 typedef enum
@@ -137,6 +141,13 @@ print_extension_list(const char *ext)
 
 
 static void
+print_display_info(Display *dpy)
+{
+   printf("name of display: %s\n", DisplayString(dpy));
+}
+
+
+static void
 print_screen_info(Display *dpy, int scrnum)
 {
    Window win;
@@ -200,11 +211,26 @@ print_screen_info(Display *dpy, int scrnum)
       const char *glRenderer = (const char *) glGetString(GL_RENDERER);
       const char *glVersion = (const char *) glGetString(GL_VERSION);
       const char *glExtensions = (const char *) glGetString(GL_EXTENSIONS);
-/*MP - Commented out glu stuff as the library is not currently part of XF86
+      char *displayName = NULL;
+      char *colon = NULL, *period = NULL;
+#ifdef DO_GLU
       const char *gluVersion = (const char *) gluGetString(GLU_VERSION);
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
-*/
-      printf("display: %s  screen:%d\n", DisplayString(dpy), scrnum);
+#endif
+      /* Strip the screen number from the display name, if present. */
+      if (!(displayName = malloc(strlen(DisplayString(dpy)) + 1))) {
+         fprintf(stderr, "Error: malloc() failed\n");
+         exit(1);
+      }
+      strcpy(displayName, DisplayString(dpy));
+      colon = strrchr(displayName, ':');
+      if (colon) {
+         period = strchr(colon, '.');
+         if (period)
+            *period = '\0';
+      }
+      printf("display: %s  screen: %d\n", displayName, scrnum);
+      free(displayName);
       printf("direct rendering: %s\n", glXIsDirect(dpy, ctx) ? "Yes" : "No");
       printf("server glx vendor string: %s\n", serverVendor);
       printf("server glx version string: %s\n", serverVersion);
@@ -221,11 +247,11 @@ print_screen_info(Display *dpy, int scrnum)
       printf("OpenGL version string: %s\n", glVersion);
       printf("OpenGL extensions:\n");
       print_extension_list(glExtensions);
-/*
+#ifdef DO_GLU
       printf("glu version: %s\n", gluVersion);
       printf("glu extensions:\n");
       print_extension_list(gluExtensions);
-*/
+#endif
    }
    else {
       fprintf(stderr, "Error: glXMakeCurrent failed\n");
@@ -390,6 +416,8 @@ print_visual_attribs_short(const struct visual_attribs *attribs)
       caveat = "Slow";
    else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
       caveat = "Ncon";
+   else
+      caveat = "None";
 #else
    caveat = "None";
 #endif 
@@ -499,13 +527,106 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 }
 
 
+/*
+ * Stand-alone Mesa doesn't really implement the GLX protocol so it
+ * doesn't really know the GLX attributes associated with an X visual.
+ * The first time a visual is presented to Mesa's pseudo-GLX it
+ * attaches ancilliary buffers to it (like depth and stencil).
+ * But that usually only works if glXChooseVisual is used.
+ * This function calls glXChooseVisual() to sort of "prime the pump"
+ * for Mesa's GLX so that the visuals that get reported actually
+ * reflect what applications will see.
+ * This has no effect when using true GLX.
+ */
+static void
+mesa_hack(Display *dpy, int scrnum)
+{
+   static int attribs[] = {
+      GLX_RGBA,
+      GLX_RED_SIZE, 1,
+      GLX_GREEN_SIZE, 1,
+      GLX_BLUE_SIZE, 1,
+      GLX_DEPTH_SIZE, 1,
+      GLX_STENCIL_SIZE, 1,
+      GLX_ACCUM_RED_SIZE, 1,
+      GLX_ACCUM_GREEN_SIZE, 1,
+      GLX_ACCUM_BLUE_SIZE, 1,
+      GLX_ACCUM_ALPHA_SIZE, 1,
+      GLX_DOUBLEBUFFER,
+      None
+   };
+   XVisualInfo *visinfo;
+
+   visinfo = glXChooseVisual(dpy, scrnum, attribs);
+   if (visinfo)
+      XFree(visinfo);
+}
+
+
+/*
+ * Examine all visuals to find the so-called best one.
+ * We prefer deepest RGBA buffer with depth, stencil and accum
+ * that has no caveats.
+ */
+static int
+find_best_visual(Display *dpy, int scrnum)
+{
+   XVisualInfo template;
+   XVisualInfo *visuals;
+   int numVisuals;
+   long mask;
+   int i;
+   struct visual_attribs bestVis;
+
+   /* get list of all visuals on this screen */
+   template.screen = scrnum;
+   mask = VisualScreenMask;
+   visuals = XGetVisualInfo(dpy, mask, &template, &numVisuals);
+
+   /* init bestVis with first visual info */
+   get_visual_attribs(dpy, &visuals[0], &bestVis);
+
+   /* try to find a "better" visual */
+   for (i = 1; i < numVisuals; i++) {
+      struct visual_attribs vis;
+
+      get_visual_attribs(dpy, &visuals[i], &vis);
+
+      /* always skip visuals with caveats */
+      if (vis.visualCaveat != GLX_NONE_EXT)
+         continue;
+
+      /* see if this vis is better than bestVis */
+      if ((!bestVis.supportsGL && vis.supportsGL) ||
+          (bestVis.visualCaveat != GLX_NONE_EXT) ||
+          (!bestVis.rgba && vis.rgba) ||
+          (!bestVis.doubleBuffer && vis.doubleBuffer) ||
+          (bestVis.redSize < vis.redSize) ||
+          (bestVis.greenSize < vis.greenSize) ||
+          (bestVis.blueSize < vis.blueSize) ||
+          (bestVis.alphaSize < vis.alphaSize) ||
+          (bestVis.depthSize < vis.depthSize) ||
+          (bestVis.stencilSize < vis.stencilSize) ||
+          (bestVis.accumRedSize < vis.accumRedSize)) {
+         /* found a better visual */
+         bestVis = vis;
+      }
+   }
+
+   XFree(visuals);
+
+   return bestVis.id;
+}
+
+
 int
 main(int argc, char *argv[])
 {
-   char *displayName = ":0";
+   char *displayName = NULL;
    Display *dpy;
    int numScreens, scrnum;
    InfoMode mode = Normal;
+   GLboolean findBest = GL_FALSE;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -519,6 +640,9 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-v") == 0) {
          mode = Verbose;
       }
+      else if (strcmp(argv[i], "-b") == 0) {
+         findBest = GL_TRUE;
+      }
    }
 
    dpy = XOpenDisplay(displayName);
@@ -527,13 +651,23 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   numScreens = ScreenCount(dpy);
-   for (scrnum = 0; scrnum < numScreens; scrnum++) {
-      print_screen_info(dpy, scrnum);
-      printf("\n");
-      print_visual_info(dpy, scrnum, mode);
-      if (scrnum + 1 < numScreens)
-         printf("\n\n");
+   if (findBest) {
+      int b;
+      mesa_hack(dpy, 0);
+      b = find_best_visual(dpy, 0);
+      printf("%d\n", b);
+   }
+   else {
+      numScreens = ScreenCount(dpy);
+      print_display_info(dpy);
+      for (scrnum = 0; scrnum < numScreens; scrnum++) {
+         mesa_hack(dpy, scrnum);
+         print_screen_info(dpy, scrnum);
+         printf("\n");
+         print_visual_info(dpy, scrnum, mode);
+         if (scrnum + 1 < numScreens)
+            printf("\n\n");
+      }
    }
 
    XCloseDisplay(dpy);

@@ -42,7 +42,7 @@ Notice===
 				Pablo Saratxaga <srtxg@chanae.alphanet.ch>
 
  */
-/* $XFree86$ */
+/* $XFree86: xc/extras/X-TrueType/ARABIC/XATERMtoUCS2.c,v 1.2 2000/06/27 21:26:32 tsi Exp $ */
 
 #include "xttversion.h"
 

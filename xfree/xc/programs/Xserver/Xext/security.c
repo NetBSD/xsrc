@@ -1,4 +1,4 @@
-/* $TOG: security.c /main/15 1998/02/09 15:25:09 kaleb $ */
+/* $Xorg: security.c,v 1.3 2000/08/17 19:47:58 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/security.c,v 1.4 1998/10/04 09:36:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/security.c,v 1.6 2001/01/17 22:13:16 dawes Exp $ */
 
 #include "dixstruct.h"
 #include "extnsionst.h"

@@ -1,4 +1,4 @@
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128dga.c,v 1.2 2001/04/01 14:00:11 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -260,7 +260,7 @@ I128_OpenFramebuffer(
    int *flags
 ){
     I128Ptr pI128 = I128PTR(pScrn);
-    CARD32 FbAddress = pI128->PciInfo->memBase[0] & 0xFFC00000;
+    unsigned long FbAddress = pI128->PciInfo->memBase[0] & 0xFFC00000;
 
     *name = NULL; 		/* no special device */
     *mem = (unsigned char*)FbAddress;

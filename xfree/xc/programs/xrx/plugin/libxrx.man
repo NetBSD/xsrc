@@ -1,4 +1,4 @@
-.\" $TOG: libxrx.man /main/7 1998/02/10 18:32:45 kaleb $
+.\" $Xorg: libxrx.man,v 1.3 2000/08/17 19:54:59 cpqbld Exp $
 .\" Copyright 1996, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,7 +19,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.TH LIBXRX 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xrx/plugin/libxrx.man,v 1.7 2001/01/27 18:21:22 dawes Exp $
+.\"
+.TH LIBXRX 1 __xorgversion__
 .SH NAME
 libxrx - RX Netscape Navigator Plug-in
 .SH DESCRIPTION

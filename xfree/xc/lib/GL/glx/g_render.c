@@ -1,21 +1,31 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/glx/g_render.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
 ** 
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
+** http://oss.sgi.com/projects/FreeB
 ** 
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: This software was created using the
+** OpenGL(R) version 1.2.1 Sample Implementation published by SGI, but has
+** not been independently verified as being compliant with the OpenGL(R)
+** version 1.2.1 Specification.
 */
 
 #include "packrender.h"
@@ -2801,5 +2811,588 @@ void glIndexubv(const GLubyte *c)
 	__GLX_BEGIN(X_GLrop_Indexubv,8);
 	__GLX_PUT_CHAR(4,c[0]);
 	__GLX_END(8);
+}
+
+void glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_BlendColor,20);
+	__GLX_PUT_FLOAT(4,red);
+	__GLX_PUT_FLOAT(8,green);
+	__GLX_PUT_FLOAT(12,blue);
+	__GLX_PUT_FLOAT(16,alpha);
+	__GLX_END(20);
+}
+
+void glBlendEquation(GLenum mode)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_BlendEquation,8);
+	__GLX_PUT_LONG(4,mode);
+	__GLX_END(8);
+}
+
+void glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+	__GLX_DECLARE_VARIABLES();
+	compsize = __glColorTableParameterfv_size(pname);
+	__GLX_LOAD_VARIABLES();
+	cmdlen = 12+compsize*4;
+	__GLX_BEGIN(X_GLrop_ColorTableParameterfv,cmdlen);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_FLOAT_ARRAY(12,params,compsize);
+	__GLX_END(cmdlen);
+}
+
+void glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+	__GLX_DECLARE_VARIABLES();
+	compsize = __glColorTableParameteriv_size(pname);
+	__GLX_LOAD_VARIABLES();
+	cmdlen = 12+compsize*4;
+	__GLX_BEGIN(X_GLrop_ColorTableParameteriv,cmdlen);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_LONG_ARRAY(12,params,compsize);
+	__GLX_END(cmdlen);
+}
+
+void glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_CopyColorTable,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,internalformat);
+	__GLX_PUT_LONG(12,x);
+	__GLX_PUT_LONG(16,y);
+	__GLX_PUT_LONG(20,width);
+	__GLX_END(24);
+}
+
+void glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_CopyColorSubTable,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,start);
+	__GLX_PUT_LONG(12,x);
+	__GLX_PUT_LONG(16,y);
+	__GLX_PUT_LONG(20,width);
+	__GLX_END(24);
+}
+
+void glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_ConvolutionParameterf,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_FLOAT(12,params);
+	__GLX_END(16);
+}
+
+void glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+	__GLX_DECLARE_VARIABLES();
+	compsize = __glConvolutionParameterfv_size(pname);
+	__GLX_LOAD_VARIABLES();
+	cmdlen = 12+compsize*4;
+	__GLX_BEGIN(X_GLrop_ConvolutionParameterfv,cmdlen);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_FLOAT_ARRAY(12,params,compsize);
+	__GLX_END(cmdlen);
+}
+
+void glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_ConvolutionParameteri,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_LONG(12,params);
+	__GLX_END(16);
+}
+
+void glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+	__GLX_DECLARE_VARIABLES();
+	compsize = __glConvolutionParameteriv_size(pname);
+	__GLX_LOAD_VARIABLES();
+	cmdlen = 12+compsize*4;
+	__GLX_BEGIN(X_GLrop_ConvolutionParameteriv,cmdlen);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,pname);
+	__GLX_PUT_LONG_ARRAY(12,params,compsize);
+	__GLX_END(cmdlen);
+}
+
+void glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_CopyConvolutionFilter1D,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,internalformat);
+	__GLX_PUT_LONG(12,x);
+	__GLX_PUT_LONG(16,y);
+	__GLX_PUT_LONG(20,width);
+	__GLX_END(24);
+}
+
+void glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_CopyConvolutionFilter2D,28);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,internalformat);
+	__GLX_PUT_LONG(12,x);
+	__GLX_PUT_LONG(16,y);
+	__GLX_PUT_LONG(20,width);
+	__GLX_PUT_LONG(24,height);
+	__GLX_END(28);
+}
+
+void glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_Histogram,20);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,width);
+	__GLX_PUT_LONG(12,internalformat);
+	__GLX_PUT_CHAR(16,sink);
+	__GLX_END(20);
+}
+
+void glMinmax(GLenum target, GLenum internalformat, GLboolean sink)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_Minmax,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,internalformat);
+	__GLX_PUT_CHAR(12,sink);
+	__GLX_END(16);
+}
+
+void glResetHistogram(GLenum target)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_ResetHistogram,8);
+	__GLX_PUT_LONG(4,target);
+	__GLX_END(8);
+}
+
+void glResetMinmax(GLenum target)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_ResetMinmax,8);
+	__GLX_PUT_LONG(4,target);
+	__GLX_END(8);
+}
+
+void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_CopyTexSubImage3D,40);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,level);
+	__GLX_PUT_LONG(12,xoffset);
+	__GLX_PUT_LONG(16,yoffset);
+	__GLX_PUT_LONG(20,zoffset);
+	__GLX_PUT_LONG(24,x);
+	__GLX_PUT_LONG(28,y);
+	__GLX_PUT_LONG(32,width);
+	__GLX_PUT_LONG(36,height);
+	__GLX_END(40);
+}
+
+void glActiveTextureARB(GLenum texture)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_ActiveTextureARB,8);
+	__GLX_PUT_LONG(4,texture);
+	__GLX_END(8);
+}
+
+void glMultiTexCoord1dARB(GLenum target, GLdouble s)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1dvARB,16);
+	__GLX_PUT_DOUBLE(4,s);
+	__GLX_PUT_LONG(12,target);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord1dvARB(GLenum target, const GLdouble *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1dvARB,16);
+	__GLX_PUT_DOUBLE(4,v[0]);
+	__GLX_PUT_LONG(12,target);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord1fARB(GLenum target, GLfloat s)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1fvARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,s);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord1fvARB(GLenum target, const GLfloat *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1fvARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,v[0]);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord1iARB(GLenum target, GLint s)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1ivARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,s);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord1ivARB(GLenum target, const GLint *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1ivARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,v[0]);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord1sARB(GLenum target, GLshort s)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1svARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,s);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord1svARB(GLenum target, const GLshort *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord1svARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,v[0]);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2dvARB,24);
+	__GLX_PUT_DOUBLE(4,s);
+	__GLX_PUT_DOUBLE(12,t);
+	__GLX_PUT_LONG(20,target);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord2dvARB(GLenum target, const GLdouble *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2dvARB,24);
+	__GLX_PUT_DOUBLE(4,v[0]);
+	__GLX_PUT_DOUBLE(12,v[1]);
+	__GLX_PUT_LONG(20,target);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2fvARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,s);
+	__GLX_PUT_FLOAT(12,t);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord2fvARB(GLenum target, const GLfloat *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2fvARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,v[0]);
+	__GLX_PUT_FLOAT(12,v[1]);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2ivARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,s);
+	__GLX_PUT_LONG(12,t);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord2ivARB(GLenum target, const GLint *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2ivARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,v[0]);
+	__GLX_PUT_LONG(12,v[1]);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2svARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,s);
+	__GLX_PUT_SHORT(10,t);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord2svARB(GLenum target, const GLshort *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord2svARB,12);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,v[0]);
+	__GLX_PUT_SHORT(10,v[1]);
+	__GLX_END(12);
+}
+
+void glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3dvARB,32);
+	__GLX_PUT_DOUBLE(4,s);
+	__GLX_PUT_DOUBLE(12,t);
+	__GLX_PUT_DOUBLE(20,r);
+	__GLX_PUT_LONG(28,target);
+	__GLX_END(32);
+}
+
+void glMultiTexCoord3dvARB(GLenum target, const GLdouble *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3dvARB,32);
+	__GLX_PUT_DOUBLE(4,v[0]);
+	__GLX_PUT_DOUBLE(12,v[1]);
+	__GLX_PUT_DOUBLE(20,v[2]);
+	__GLX_PUT_LONG(28,target);
+	__GLX_END(32);
+}
+
+void glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3fvARB,20);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,s);
+	__GLX_PUT_FLOAT(12,t);
+	__GLX_PUT_FLOAT(16,r);
+	__GLX_END(20);
+}
+
+void glMultiTexCoord3fvARB(GLenum target, const GLfloat *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3fvARB,20);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,v[0]);
+	__GLX_PUT_FLOAT(12,v[1]);
+	__GLX_PUT_FLOAT(16,v[2]);
+	__GLX_END(20);
+}
+
+void glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3ivARB,20);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,s);
+	__GLX_PUT_LONG(12,t);
+	__GLX_PUT_LONG(16,r);
+	__GLX_END(20);
+}
+
+void glMultiTexCoord3ivARB(GLenum target, const GLint *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3ivARB,20);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,v[0]);
+	__GLX_PUT_LONG(12,v[1]);
+	__GLX_PUT_LONG(16,v[2]);
+	__GLX_END(20);
+}
+
+void glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3svARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,s);
+	__GLX_PUT_SHORT(10,t);
+	__GLX_PUT_SHORT(12,r);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord3svARB(GLenum target, const GLshort *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord3svARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,v[0]);
+	__GLX_PUT_SHORT(10,v[1]);
+	__GLX_PUT_SHORT(12,v[2]);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4dvARB,40);
+	__GLX_PUT_DOUBLE(4,s);
+	__GLX_PUT_DOUBLE(12,t);
+	__GLX_PUT_DOUBLE(20,r);
+	__GLX_PUT_DOUBLE(28,q);
+	__GLX_PUT_LONG(36,target);
+	__GLX_END(40);
+}
+
+void glMultiTexCoord4dvARB(GLenum target, const GLdouble *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4dvARB,40);
+	__GLX_PUT_DOUBLE(4,v[0]);
+	__GLX_PUT_DOUBLE(12,v[1]);
+	__GLX_PUT_DOUBLE(20,v[2]);
+	__GLX_PUT_DOUBLE(28,v[3]);
+	__GLX_PUT_LONG(36,target);
+	__GLX_END(40);
+}
+
+void glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4fvARB,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,s);
+	__GLX_PUT_FLOAT(12,t);
+	__GLX_PUT_FLOAT(16,r);
+	__GLX_PUT_FLOAT(20,q);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord4fvARB(GLenum target, const GLfloat *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4fvARB,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_FLOAT(8,v[0]);
+	__GLX_PUT_FLOAT(12,v[1]);
+	__GLX_PUT_FLOAT(16,v[2]);
+	__GLX_PUT_FLOAT(20,v[3]);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4ivARB,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,s);
+	__GLX_PUT_LONG(12,t);
+	__GLX_PUT_LONG(16,r);
+	__GLX_PUT_LONG(20,q);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord4ivARB(GLenum target, const GLint *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4ivARB,24);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_LONG(8,v[0]);
+	__GLX_PUT_LONG(12,v[1]);
+	__GLX_PUT_LONG(16,v[2]);
+	__GLX_PUT_LONG(20,v[3]);
+	__GLX_END(24);
+}
+
+void glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4svARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,s);
+	__GLX_PUT_SHORT(10,t);
+	__GLX_PUT_SHORT(12,r);
+	__GLX_PUT_SHORT(14,q);
+	__GLX_END(16);
+}
+
+void glMultiTexCoord4svARB(GLenum target, const GLshort *v)
+{
+	__GLX_DECLARE_VARIABLES();
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultiTexCoord4svARB,16);
+	__GLX_PUT_LONG(4,target);
+	__GLX_PUT_SHORT(8,v[0]);
+	__GLX_PUT_SHORT(10,v[1]);
+	__GLX_PUT_SHORT(12,v[2]);
+	__GLX_PUT_SHORT(14,v[3]);
+	__GLX_END(16);
 }
 

@@ -1,4 +1,4 @@
-/* $TOG: xkbparse.y /main/11 1997/06/13 05:59:27 kaleb $ */
+/* $Xorg: xkbparse.y,v 1.3 2000/08/17 19:54:34 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbcomp/xkbparse.y,v 3.9 2001/01/17 23:45:45 dawes Exp $ */
 
 %token
 	END_OF_FILE	0

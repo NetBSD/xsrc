@@ -33,7 +33,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ******************************************************************/
 /* 2000 Modifier: Ivan Pascal	The XFree86 Project.
  */
-/* $XFree86: xc/lib/X11/imConv.c,v 1.29 2000/12/02 01:16:03 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imConv.c,v 1.31 2001/02/09 00:02:53 dawes Exp $ */
 
 #define NEED_EVENTS
 #include <stdio.h>
@@ -76,7 +76,7 @@ struct SubstRec {
 
 static struct SubstRec SubstTable[] = {
     {"STRING", "ISO8859-1"},
-    {"TACTIS", "TIS620.2533-1"},
+    {"TIS620", "TIS620-0"},
     {"UTF-8",  "ISO10646-1"}
 };
 #define num_substitute (sizeof SubstTable / sizeof SubstTable[0])

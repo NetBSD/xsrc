@@ -1,4 +1,4 @@
-/* $TOG: dsimple.h /main/5 1998/02/09 14:10:11 kaleb $ */
+/* $Xorg: dsimple.h,v 1.3 2000/08/17 19:54:53 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group

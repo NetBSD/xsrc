@@ -1,5 +1,5 @@
 /*
- * $TOG: SimpleMenu.h /main/24 1998/02/11 14:54:57 kaleb $
+ * $Xorg: SimpleMenu.h,v 1.3 2000/08/17 19:45:37 cpqbld Exp $
  *
 Copyright 1989, 1994, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/SimpleMenu.h,v 1.5 1998/10/03 08:42:19 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SimpleMenu.h,v 1.7 2001/01/17 19:42:30 dawes Exp $ */
 
 /*
  * SimpleMenu.h - Public Header file for SimpleMenu widget.

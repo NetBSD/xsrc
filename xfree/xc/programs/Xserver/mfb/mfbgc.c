@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.4 1998/10/04 13:12:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.6 2001/01/17 22:37:03 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbgc.c /main/56 1998/02/09 14:39:04 kaleb $ */
+/* $Xorg: mfbgc.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 #include "X.h"
 #include "Xmd.h"
 #include "Xproto.h"

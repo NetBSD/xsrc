@@ -1,4 +1,4 @@
-/* Header:   //Mercury/Projects/archives/XFree86/4.0/smi_accel.c-arc   1.15   29 Nov 2000 12:12:04   Frido  $ */
+/* Header:   //Mercury/Projects/archives/XFree86/4.0/smi_accel.c-arc   1.16   03 Jan 2001 13:29:06   Frido  $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_accel.c,v 1.1 2000/11/28 20:59:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_accel.c,v 1.4 2001/02/15 18:20:33 dawes Exp $ */
 
 #include "smi.h"
 
@@ -404,7 +404,7 @@ SMI_SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 	if (pScrn->bitsPerPixel == 24)
 	{
 		x1 *= 3;
-		x2 *= 2;
+		x2 *= 3;
 		w  *= 3;
 
 		if (pSmi->Chipset == SMI_LYNX)
@@ -714,10 +714,11 @@ SMI_SetupForColor8x8PatternFill(ScrnInfoPtr pScrn, int patx, int paty, int rop,
 
 	if (pScrn->bitsPerPixel <= 16)
 	{
-		unsigned char * pattern = pSmi->FBBase + patx * pSmi->Bpp
-								+ paty * pSmi->Stride;
+		/* PDR#950 */
+		CARD8* pattern = pSmi->FBBase
+					   + (patx + paty * pSmi->Stride) * pSmi->Bpp;
 
-		WaitQueue(1);
+		WaitIdleEmpty();
 		WRITE_DPR(pSmi, 0x0C, SMI_BITBLT | SMI_COLOR_PATTERN);
 		memcpy(pSmi->DataPortBase, pattern, 8 * pSmi->Bpp * 8);
 	}
@@ -777,7 +778,7 @@ SMI_SubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
 
 	WaitQueue(3);
 	WRITE_DPR(pSmi, 0x04, (x << 16) | (y & 0xFFFF));
-	WRITE_DPR(pSmi, 0x08, (w << 16) | (y & 0xFFFF));
+	WRITE_DPR(pSmi, 0x08, (w << 16) | (h & 0xFFFF));	/* PDR#950 */
 	WRITE_DPR(pSmi, 0x0C, pSmi->AccelCmd);
 
 	LEAVE_PROC("SMI_SubsequentColor8x8PatternFillRect");

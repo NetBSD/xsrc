@@ -1,4 +1,4 @@
-/* $XConsortium: nglenoop.h,v 1.1 93/08/08 12:57:46 rws Exp $ */
+/* $Xorg: nglenoop.h,v 1.3 2000/08/17 19:48:28 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

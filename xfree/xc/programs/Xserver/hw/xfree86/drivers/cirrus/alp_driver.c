@@ -11,7 +11,7 @@
  *    Guy DESBIEF
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_driver.c,v 1.17 2000/12/07 15:43:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_driver.c,v 1.20 2001/05/04 19:05:35 dawes Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -57,13 +57,6 @@
 #include "xf1bpp.h"
 #include "fb.h"
 
-/* These need to be checked */
-#if 0
-#ifdef XFreeXDGA
-#define _XF86DGA_SERVER_
-#include "extensions/xf86dgastr.h"
-#endif
-#endif
 
 #include "xf86DDC.h"
 #include "xf86int10.h"
@@ -112,10 +105,10 @@ static void AlpProbeLCD(ScrnInfoPtr pScrn);
 
 static void AlpSetClock(CirPtr pCir, vgaHWPtr hwp, int freq);
 
-#ifdef DPMSExtension
+static void AlpOffscreenAccelInit(ScrnInfoPtr pScrn);
+
 static void	AlpDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 											int PowerManagementMode, int flags);
-#endif
 
 /*
  * This is intentionally screen-independent.  It indicates the binding
@@ -134,7 +127,7 @@ typedef enum {
 	OPTION_MEMCFG2
 } CirOpts;
 
-static OptionInfoRec CirOptions[] = {
+static const OptionInfoRec CirOptions[] = {
 	{ OPTION_HW_CURSOR,	"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
 	{ OPTION_NOACCEL,	"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
 	{ OPTION_MMIO,		"MMIO",		OPTV_BOOLEAN,	{0}, FALSE },
@@ -176,12 +169,17 @@ static const char *vgahwSymbols[] = {
 	NULL
 };
 
+#ifdef XFree86LOADER
+
 static const char *fbSymbols[] = {
     "xf1bppScreenInit",
     "xf4bppScreenInit",
     "fbScreenInit",
+    "fbPictureInit",
     NULL
 };
+
+#endif
 
 static const char *xaaSymbols[] = {
 	"XAADestroyInfoRec",
@@ -272,7 +270,7 @@ alpSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 #endif /* XFree86LOADER */
 
-OptionInfoPtr
+const OptionInfoRec *
 AlpAvailableOptions(int chipid)
 {
     return CirOptions;
@@ -510,10 +508,11 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	CirPtr pCir;
 	vgaHWPtr hwp;
-	MessageType from;
+	MessageType from, from1;
 	int i;
 	ClockRangePtr clockRanges;
 	char *s;
+ 	xf86Int10InfoPtr pInt = NULL;
 
 	if (flags & PROBE_DETECT)  {
 	  cirProbeDDC( pScrn, xf86GetEntityInfo(pScrn->entityList[0])->index );
@@ -560,11 +559,8 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 									pCir->PciInfo->device,
 									pCir->PciInfo->func);
 
-#if 1
     if (xf86LoadSubModule(pScrn, "int10")) {
- 	xf86Int10InfoPtr pInt;
 	xf86LoaderReqSymLists(int10Symbols,NULL);
-#if 1
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(pCir->pEnt->index);
 	xf86FreeInt10(pInt);
@@ -575,9 +571,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	pciWriteLong(pCir->PciTag,0x10,pCir->PciInfo->memBase[0]);
 	pciWriteLong(pCir->PciTag,0x14,pCir->PciInfo->memBase[1]);
 	
-#endif
     }
-#endif
 
     /* Set pScrn->monitor */
 	pScrn->monitor = pScrn->confScreen->monitor;
@@ -637,19 +631,27 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86CollectOptions(pScrn, NULL);
 
 	/* Process the options */
-	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, CirOptions);
+	if (!(pCir->Options = xalloc(sizeof(CirOptions))))
+		return FALSE;
+	memcpy(pCir->Options, CirOptions, sizeof(CirOptions));
+	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCir->Options);
 
+	if (!xf86IsPrimaryPci(pCir->PciInfo) 
+	    && !(pInt || (xf86IsOptionSet(pCir->Options,OPTION_MEMCFG1)
+			   && xf86IsOptionSet(pCir->Options,OPTION_MEMCFG2))))
+	    return FALSE;
+					   
 	if (pScrn->depth == 8) 
 	    pScrn->rgbBits = 6;
 
 	from = X_DEFAULT;
 	pCir->HWCursor = FALSE;
-	if (xf86GetOptValBool(CirOptions, OPTION_HW_CURSOR, &pCir->HWCursor))
+	if (xf86GetOptValBool(pCir->Options, OPTION_HW_CURSOR, &pCir->HWCursor))
 		from = X_CONFIG;
 
 	xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pCir->HWCursor ? "HW" : "SW");
-	if (xf86ReturnOptValBool(CirOptions, OPTION_NOACCEL, FALSE)) {
+	if (xf86ReturnOptValBool(pCir->Options, OPTION_NOACCEL, FALSE)) {
 		pCir->NoAccel = TRUE;
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
 	}
@@ -718,29 +720,39 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			/* We do not really need that YET. */
 		}
 	}
-	if(pCir->IOAddress != 0) {
-		xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
-			(unsigned long)pCir->IOAddress);
-		/* Default to MMIO if we have a separate IOAddress and
-		   not in monochrome mode (IO 0x3Bx is not relocated!) */
-		if (pScrn->bitsPerPixel != 1)
-			pCir->UseMMIO = TRUE;
-	}
 
 	/* User options can override the MMIO default */
 #if 0
 	/* Will we ever support MMIO on 5446A or older? */
-	if (xf86ReturnOptValBool(CirOptions, OPTION_MMIO, FALSE)) {
+	if (xf86ReturnOptValBool(pCir->Options, OPTION_MMIO, FALSE)) {
 		pCir->UseMMIO = TRUE;
 		from = X_CONFIG;
 	}
 #endif
-	if (!xf86ReturnOptValBool(CirOptions, OPTION_MMIO, TRUE)) {
+	if (!xf86ReturnOptValBool(pCir->Options, OPTION_MMIO, TRUE)) {
 		pCir->UseMMIO = FALSE;
-		from = X_CONFIG;
-	}
-	if (pCir->UseMMIO)
-		xf86DrvMsg(pScrn->scrnIndex, from, "Using MMIO\n");
+		from1 = X_CONFIG;
+ 	} else if (pCir->IOAddress) {
+ 	  /* Default to MMIO if we have a separate IOAddress and
+ 	       not in monochrome mode (IO 0x3Bx is not relocated!) */
+ 	    if (pScrn->bitsPerPixel != 1) {
+ 	        pCir->UseMMIO = TRUE;
+ 		from1 = X_PROBED;
+ 	    } else {
+ 	        pCir->UseMMIO = FALSE;
+ 	        from1 = X_PROBED;
+ 	    }	      
+ 	} else {	        
+ 	    pCir->UseMMIO = FALSE;
+ 	    from1 = X_PROBED;
+ 	}	      
+ 
+ 	if (pCir->UseMMIO) {
+ 		xf86DrvMsg(pScrn->scrnIndex, from1, "Using MMIO\n");
+ 		xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
+ 			(unsigned long)pCir->IOAddress);
+ 	} else 
+ 	    xf86DrvMsg(pScrn->scrnIndex, from1, "Not Using MMIO\n");
      
      /*
       * XXX Check if this is correct
@@ -797,12 +809,12 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	/* XXX If UseMMIO == TRUE and for any reason we cannot do MMIO,
 	   abort here */
 
-	if (xf86GetOptValBool(CirOptions,
+	if (xf86GetOptValBool(pCir->Options,
 			      OPTION_SHADOW_FB,&pCir->shadowFB))
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ShadowFB %s.\n",
 		       pCir->shadowFB ? "enabled" : "disabled");
 	    
-	if ((s = xf86GetOptValString(CirOptions, OPTION_ROTATE))) {
+	if ((s = xf86GetOptValString(pCir->Options, OPTION_ROTATE))) {
 	    if(!xf86NameCmp(s, "CW")) {
 		/* accel is disabled below for shadowFB */
 		pCir->shadowFB = TRUE;
@@ -847,8 +859,8 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	pCir->chip.alp->sr0f = (CARD32)-1;
 	pCir->chip.alp->sr17 = (CARD32)-1;
 
-	(void) xf86GetOptValULong(CirOptions, OPTION_MEMCFG1, (unsigned long *)&pCir->chip.alp->sr0f);
-	(void) xf86GetOptValULong(CirOptions, OPTION_MEMCFG2, (unsigned long *)&pCir->chip.alp->sr17);
+	(void) xf86GetOptValULong(pCir->Options, OPTION_MEMCFG1, (unsigned long *)&pCir->chip.alp->sr0f);
+	(void) xf86GetOptValULong(pCir->Options, OPTION_MEMCFG2, (unsigned long *)&pCir->chip.alp->sr17);
 	/*
 	 * If the user has specified the amount of memory in the XF86Config
 	 * file, we respect that setting.
@@ -1078,10 +1090,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("fbScreenInit",NULL);
-#ifdef RENDER
-	    xf86LoaderReqSymbols("fbPictureInit", NULL);
-#endif
+	    xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
 	    break;
 	}
 
@@ -1458,6 +1467,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	VisualPtr visual;
 	int displayWidth,width,height;
 	unsigned char * FbBase = NULL;
+	int cursor_size = 0;
 	
 #ifdef ALP_DEBUG
 	ErrorF("AlpScreenInit\n");
@@ -1582,9 +1592,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 	if (!ret)
 		return FALSE;
-#ifdef RENDER
 	fbPictureInit (pScreen, 0, 0);
-#endif
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpScreenInit after depth dependent init\n");
@@ -1612,83 +1620,64 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	 */
 	xf86SetBlackWhitePixels(pScreen);
 
+	/* 
+	   Allocation of off-screen memory to various stuff
+	   (hardware cursor, 8x8 mono pattern...)
+	   Allocation goes top-down in memory, since the cursor
+	   *must* be in the last videoram locations 
+	*/
+	pCir->offscreen_offset = pScrn->videoRam*1024;
+	pCir->offscreen_size = pScrn->videoRam * 1024 - pScrn->virtualY *
+	    (BitmapBytePad(pScrn->displayWidth * pScrn->bitsPerPixel));
+
+#ifdef ALP_DEBUG
+	ErrorF("offscreen_offset=%d, offscreen_size=%d\n",
+	       pCir->offscreen_offset, pCir->offscreen_size);
+#endif
+	    
+	/* Initialise cursor functions */
+	if (pCir->HWCursor) { /* Initialize HW cursor layer */
+	
+	    if ((pCir->properties & HWCUR64) 
+		&& (pCir->offscreen_size >= 64*8*2)) {
+	        cursor_size = 64;
+	        pCir->offscreen_size -= 64*8*2;
+	        pCir->offscreen_offset -= 64*8*2;
+	    } else if (pCir->offscreen_size >= 32*4*2) {
+	        cursor_size = 32;
+		pCir->offscreen_size -= 32*8*2;
+		pCir->offscreen_offset -= 32*8*2;
+	    }
+	}
+
+	if (!pCir->NoAccel) { /* Initialize XAA functions */
+	    AlpOffscreenAccelInit(pScrn);
+	    if (!(pCir->UseMMIO ? AlpXAAInitMMIO(pScreen) :
+		  AlpXAAInit(pScreen)))
+	      xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+			 "Could not initialize XAA\n");
+	}
+
+#if 1
+	pCir->DGAModeInit = AlpModeInit;
+	if (!CirDGAInit(pScreen))
+	  xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+		     "DGA initialization failed\n");
+#endif
         xf86SetSilkenMouse(pScreen);
 
 	/* Initialise cursor functions */
 	miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
-	/* Allocation of off-screen memory to various stuff
-	   (hardware cursor, 8x8 mono pattern...)
-	   Allocation goes top-down in memory, since the cursor
-	   *must* be in the last videoram locations */
-	{
-	    int offscreen_offset = pScrn->videoRam*1024,
-	      offscreen_size = pScrn->videoRam * 1024 - pScrn->virtualY *
-	      (BitmapBytePad(pScrn->displayWidth * pScrn->bitsPerPixel));
-	    int cursor_size = 0;
-
+	if (pCir->HWCursor) {
+	    if (!AlpHWCursorInit(pScreen, cursor_size))
+	        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "Hardware cursor initialization failed\n"); 
 #ifdef ALP_DEBUG
-	    ErrorF("offscreen_offset=%d, offscreen_size=%d\n",
-		   offscreen_offset, offscreen_size);
+	    ErrorF("AlpHWCursorInit() complete\n");
 #endif
-	    
-	/* Initialise cursor functions */
-	    if (pCir->HWCursor) { /* Initialize HW cursor layer */
-	      if ((pCir->properties & HWCUR64) 
-		  && (offscreen_size >= 64*8*2))
-		{
-	          cursor_size = 64;
-		  offscreen_size -= 64*8*2;
-		  offscreen_offset -= 64*8*2;
-		}
-	      else if (offscreen_size >= 32*4*2)
-		{
-		  cursor_size = 32;
-		  offscreen_size -= 32*8*2;
-		  offscreen_offset -= 32*8*2;
-		}
-	      if (!AlpHWCursorInit(pScreen, cursor_size))
-			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-				"Hardware cursor initialization failed\n"); 
-	    }
-#ifdef ALP_DEBUG
-	    ErrorF("AlpHWCursorInit complete.\n");
-#endif
-	    if (offscreen_size >= 8 && !pCir->NoAccel &&
-		pCir->Chipset == PCI_CHIP_GD7548)
-	      {
-		offscreen_offset -= 8;
-		offscreen_size -= 8;
-		pAlp->monoPattern8x8 = offscreen_offset;
-#ifdef ALP_DEBUG
-	        ErrorF("monoPattern8x8=%d\n", pAlp->monoPattern8x8);
-#endif
-	      }
-	    else pAlp->monoPattern8x8 = 0;
-	  {
-	    /* TODO: probably not correct if rotated */
-	    BoxRec box;
-	    box.x1=0;
-	    box.y1=0;
-	    box.x2=pScrn->virtualX;
-	    box.y2=offscreen_offset / pCir->pitch;
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	      "Using %d lines for offscreen memory\n",
-		       box.y2 - pScrn->virtualY);
-	  }
-
 	}
 
-	if (!pCir->NoAccel) { /* Initialize XAA functions */
-		if (!(pCir->UseMMIO ? AlpXAAInitMMIO(pScreen) :
-		      AlpXAAInit(pScreen)))
-		  xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not initialize XAA\n");
-	}
-
-#if 0
-	if (!AlpDGAInit(pScreen))
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "DGA initialization failed\n");
-#endif
 	if (pCir->shadowFB) {
 	    RefreshAreaFuncPtr refreshArea = cirRefreshArea;
 	    
@@ -1716,9 +1705,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (pScrn->bitsPerPixel > 1 && pScrn->bitsPerPixel <= 8)
 		vgaHWHandleColormaps(pScreen);
 
-#ifdef DPMSExtension
 	xf86DPMSInit(pScreen, AlpDisplayPowerManagementSet, 0);
-#endif
 
 	pScrn->memPhysBase = pCir->FbAddress;
 	pScrn->fbOffset = 0;
@@ -1811,12 +1798,20 @@ Bool
 AlpEnterVT(int scrnIndex, int flags)
 {
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	CirPtr pCir = CIRPTR(pScrn);
+	Bool ret;
+
 #ifdef ALP_DEBUG
 	ErrorF("AlpEnterVT\n");
 #endif
 
 	/* Should we re-save the text mode on each VT enter? */
-	return AlpModeInit(pScrn, pScrn->currentMode);
+	if (!(ret = AlpModeInit(pScrn, pScrn->currentMode)))
+	  return FALSE;
+	
+	pCir->InitAccel(pScrn);
+
+	return ret;
 }
 
 
@@ -1869,11 +1864,10 @@ AlpCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	if (pCir->CursorInfoRec)
 		xf86DestroyCursorInfoRec(pCir->CursorInfoRec);
 	pCir->CursorInfoRec = NULL;
-#if 0
-	if (pCir->DGAInfo)
-		DGADestroyInfoRec(pCir->DGAInfo);
-	pCir->DGAInfo = NULL;
-#endif
+	if (pCir->DGAModes)
+		xfree(pCir->DGAModes);
+	pCir->DGAnumModes = 0;
+	pCir->DGAModes = NULL;
 
 	pScrn->vtSema = FALSE;
 
@@ -1983,7 +1977,6 @@ AlpSetClock(CirPtr pCir, vgaHWPtr hwp, int freq)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 AlpDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -2031,7 +2024,6 @@ AlpDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 	gr0e |= hwp->readGr(hwp, 0x0E) & ~0x06;
 	hwp->writeGr(hwp, 0x0E, gr0e);
 }
-#endif
 
 #ifdef ALPPROBEI2C
 static void AlpProbeI2C(int scrnIndex)
@@ -2061,69 +2053,96 @@ static void AlpProbeI2C(int scrnIndex)
 static void
 AlpProbeLCD(ScrnInfoPtr pScrn)
 {
-        CirPtr pCir = CIRPTR(pScrn); 
-        vgaHWPtr hwp = VGAHWPTR(pScrn);
-	static const char* lcd_type_names[] =
-	{
-	  "none",
-	  "dual-scan monochrome",
-	  "unknown",
-	  "DSTN (dual scan color)",
-	  "TFT (active matrix)"
-        };
+    CirPtr pCir = CIRPTR(pScrn); 
+    AlpPtr pAlp = ALPPTR(pCir);
+
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+    CARD8 lcdCrtl;
+
+    static const char* lcd_type_names[] =
+    {
+        "none",
+	"dual-scan monochrome",
+	"unknown",
+	"DSTN (dual scan color)",
+	"TFT (active matrix)"
+    };
 
 
-	pCir -> lcdType = LCD_NONE;
+    pAlp->lcdType = LCD_NONE;
 
-	switch (pCir -> Chipset)
-	{
-	case PCI_CHIP_GD7548:
-	  switch (hwp->readCrtc(hwp, 0x2C) >> 6)
-	  {
-	    case 0: pCir->lcdType = LCD_DUAL_MONO; break;
-	    case 1: pCir->lcdType = LCD_UNKNOWN; break;
-	    case 2: pCir->lcdType = LCD_DSTN; break;
-	    case 3: pCir->lcdType = LCD_TFT; break;
-	  }
+    switch (pCir->Chipset)  {
+    case PCI_CHIP_GD7548:
+        switch (hwp->readCrtc(hwp, 0x2C) >> 6) {
+	case 0: pAlp->lcdType = LCD_DUAL_MONO; break;
+	case 1: pAlp->lcdType = LCD_UNKNOWN; break;
+	case 2: pAlp->lcdType = LCD_DSTN; break;
+	case 3: pAlp->lcdType = LCD_TFT; break;
+	}
 
-	  /* Enable LCD control registers instead of normal CRTC registers */
-          hwp->writeCrtc(hwp, 0x2D, hwp->readCrtc(hwp, 0x2D) | 0x80);
+	/* Enable LCD control registers instead of normal CRTC registers */
+	lcdCrtl = hwp->readCrtc(hwp, 0x2D);
+	hwp->writeCrtc(hwp, 0x2D, lcdCrtl | 0x80);
 
-	  switch ((hwp->readCrtc(hwp, 0x9) >> 2) & 3)
-	  {
+	switch ((hwp->readCrtc(hwp, 0x9) >> 2) & 3)  {
 	  case 0:
-	    pCir->lcdWidth = 640;
-	    pCir->lcdHeight = 480;
-	    break;
+	      pAlp->lcdWidth = 640;
+	      pAlp->lcdHeight = 480;
+	      break;
 
-	  case 1:
-	    pCir->lcdWidth = 800;
-	    pCir->lcdHeight = 600;
-	    break;
+	 case 1:
+	      pAlp->lcdWidth = 800;
+	      pAlp->lcdHeight = 600;
+	      break;
 
 	  case 2:
-	    pCir->lcdWidth = 1024;
-	    pCir->lcdHeight = 768;
-	    break;
+	      pAlp->lcdWidth = 1024;
+	      pAlp->lcdHeight = 768;
+	      break;
 
 	  case 3:
-	    pCir->lcdWidth = 0;
-	    pCir->lcdHeight = 0;
-	    break;
-	  }
-	
-	  /* Disable LCD control registers */
-          hwp->writeCrtc(hwp, 0x2D, hwp->readCrtc(hwp, 0x2D) & ~0x80);
-	  break;
-        }
-
-	if (pCir -> lcdType != LCD_NONE)
-	{
-	  xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-		     "LCD display: %dx%d %s\n",
-		     pCir->lcdWidth, pCir->lcdHeight,
-		     lcd_type_names[pCir->lcdType]);
+	      pAlp->lcdWidth = 0;
+	      pAlp->lcdHeight = 0;
+	      break;
 	}
+	
+	/* Disable LCD control registers */
+	hwp->writeCrtc(hwp, 0x2D, lcdCrtl);
+	break;
+    }
+
+    if (pAlp->lcdType != LCD_NONE) {
+      xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		 "LCD display: %dx%d %s\n",
+		 pAlp->lcdWidth, pAlp->lcdHeight,
+		 lcd_type_names[pAlp->lcdType]);
+    }
 }
 
+static void
+AlpOffscreenAccelInit(ScrnInfoPtr pScrn)
+{
+    CirPtr pCir = CIRPTR(pScrn);
+    AlpPtr pAlp = ALPPTR(pCir);
 
+    if (pCir->offscreen_size >= 8  && pCir->Chipset == PCI_CHIP_GD7548) {
+        pCir->offscreen_offset -= 8;
+	pCir->offscreen_size -= 8;
+	pAlp->monoPattern8x8 = pCir->offscreen_offset;
+#ifdef ALP_DEBUG
+	ErrorF("monoPattern8x8=%d\n", pAlp->monoPattern8x8);
+#endif
+    }  else pAlp->monoPattern8x8 = 0;
+
+    {
+    /* TODO: probably not correct if rotated */
+        BoxRec box;
+	box.x1=0;
+	box.y1=0;
+	box.x2=pScrn->virtualX;
+	box.y2= pCir->offscreen_offset / pCir->pitch;
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "Using %d lines for offscreen memory\n",
+		   box.y2 - pScrn->virtualY);
+    }
+}

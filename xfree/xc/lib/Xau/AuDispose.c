@@ -1,4 +1,4 @@
-/* $TOG: AuDispose.c /main/6 1998/02/06 14:14:30 kaleb $ */
+/* $Xorg: AuDispose.c,v 1.3 2000/08/17 19:45:28 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuDispose.c,v 1.0tsi Exp $ */
+/* $XFree86: xc/lib/Xau/AuDispose.c,v 1.3 2001/01/17 19:42:23 dawes Exp $ */
 
 #include <X11/Xauth.h>
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbscrinit.c,v 1.17 1998/12/20 11:57:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbscrinit.c,v 1.19 2001/01/17 22:36:36 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $TOG: cfbscrinit.c /main/60 1998/02/09 14:07:30 kaleb $ */
+/* $Xorg: cfbscrinit.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -6,7 +6,7 @@
  * mi versions of these routines exist.
  */
 
-/* $TOG: misprite.h /main/8 1998/02/09 14:49:03 kaleb $ */
+/* $Xorg: misprite.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 
 /*
 

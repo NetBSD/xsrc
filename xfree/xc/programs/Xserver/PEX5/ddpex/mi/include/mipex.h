@@ -1,4 +1,4 @@
-/* $TOG: mipex.h /main/6 1998/02/10 12:39:29 kaleb $ */
+/* $Xorg: mipex.h,v 1.3 2000/08/17 19:47:03 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/mipex.h,v 3.0 1995/07/07 15:34:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/mipex.h,v 3.2 2001/01/17 22:12:20 dawes Exp $ */
 
 #ifndef MI_H
 #define MI_H

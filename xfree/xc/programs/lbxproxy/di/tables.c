@@ -1,4 +1,4 @@
-/* $XConsortium: tables.c /main/12 1996/11/18 20:20:06 rws $ */
+/* $Xorg: tables.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
  * Copyright 1992 Network Computing Devices
  *

@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.12 2001/01/17 23:45:00 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1988  X Consortium
@@ -46,8 +47,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XConsortium: mkfontdir.c /main/13 1996/09/28 17:17:17 rws $ */
-/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.10 1999/08/21 13:48:46 dawes Exp $ */
+/* $Xorg: mkfontdir.c,v 1.5 2000/08/17 19:53:59 cpqbld Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_
@@ -324,7 +324,7 @@ ProcessFile (
 
     CopyISOLatin1Lowered (font_name, font_name, strlen(font_name));
 
-    if ((existing = FontNameExists (table, font_name)) != 0)
+    if ((existing = FontNameExists (table, font_name)))
     {
 	fprintf (stderr, "%s: Duplicate font names %s\n", progName, font_name);
 	fprintf (stderr, "\t%s %s\n", existing, fileName);
@@ -362,7 +362,7 @@ Hash(char *name)
     char    c;
 
     i = 0;
-    while ((c = *name++) != 0)
+    while ((c = *name++))
 	i = (i << 1) ^ c;
     return i & (HASH_SIZE - 1);
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbActions.c /main/3 1996/03/01 14:31:12 kaleb $ */
+/* $Xorg: xkbActions.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.3 2000/04/04 19:25:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.6 2001/02/12 18:26:00 paulo Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -621,14 +621,12 @@ Bool	accel;
 	AccessXCancelRepeatKey(xkbi,keycode);
 	xkbi->mouseKeysAccel= accel&&
 		(xkbi->desc->ctrls->enabled_ctrls&XkbMouseKeysAccelMask);
-	if (xkbi->mouseKeysAccel) {
-	    xkbi->mouseKeysFlags= pAction->ptr.flags;
-	    xkbi->mouseKeysDX= XkbPtrActionX(&pAction->ptr);
-	    xkbi->mouseKeysDY= XkbPtrActionY(&pAction->ptr);
-	    xkbi->mouseKeyTimer= TimerSet(xkbi->mouseKeyTimer, 0,
+	xkbi->mouseKeysFlags= pAction->ptr.flags;
+	xkbi->mouseKeysDX= XkbPtrActionX(&pAction->ptr);
+	xkbi->mouseKeysDY= XkbPtrActionY(&pAction->ptr);
+	xkbi->mouseKeyTimer= TimerSet(xkbi->mouseKeyTimer, 0,
 				xkbi->desc->ctrls->mk_delay,
 				_XkbPtrAccelExpire,(pointer)xkbi);
-	}
     }
     else if (filter->keycode==keycode) {
 	filter->active = 0;

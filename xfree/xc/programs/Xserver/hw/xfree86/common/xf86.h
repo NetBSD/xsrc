@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.146 2000/12/06 20:22:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.152 2001/05/16 20:08:35 paulo Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -42,6 +42,8 @@ extern Bool fbSlotClaimed;
 #ifdef __sparc__
 extern Bool sbusSlotClaimed;
 #endif
+extern confDRIRec xf86ConfigDRI;
+
 #define XF86SCRNINFO(p) ((ScrnInfoPtr)((p)->devPrivates[xf86ScreenIndex].ptr))
 
 #define XF86FLIP_PIXELS() \
@@ -134,6 +136,7 @@ pciVideoPtr xf86FindPciDeviceVendor(CARD16 vendorID, CARD16 deviceID,
 				    char n, pciVideoPtr pvp_exclude);
 pciVideoPtr xf86FindPciClass(CARD8 intf, CARD8 subClass, CARD16 class,
 			     char n, pciVideoPtr pvp_exclude);
+void xf86EnablePciBusMaster(pciVideoPtr pPci, Bool enable);
 void xf86RegisterStateChangeNotificationCallback(xf86StateChangeNotificationCallbackFunc func, pointer arg);
 Bool xf86DeregisterStateChangeNotificationCallback(xf86StateChangeNotificationCallbackFunc func);
 #ifdef async
@@ -308,6 +311,11 @@ int  xf86RegisterRootWindowProperty(int ScrnIndex, Atom	property, Atom type,
 				    int format, unsigned long len,
 				    pointer value);
 Bool xf86IsUnblank(int mode);
+
+#ifdef XFree86LOADER
+void xf86AddModuleInfo(ModuleInfoPtr info, pointer module);
+void xf86DeleteModuleInfo(int idx);
+#endif
 
 /* xf86Debug.c */
 #ifdef BUILDDEBUG

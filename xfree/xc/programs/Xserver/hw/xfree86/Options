@@ -1,0 +1,208 @@
+!!
+!! Copyright (c) 2001 by The XFree86 Project, Inc.
+!!
+!! Permission is hereby granted, free of charge, to any person obtaining a
+!! copy of this software and associated documentation files (the "Software"),
+!! to deal in the Software without restriction, including without limitation
+!! the rights to use, copy, modify, merge, publish, distribute, sublicense,
+!! and/or sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following conditions:
+!!
+!! The above copyright notice and this permission notice shall be included in
+!! all copies or substantial portions of the Software.
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+!! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+!! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+!! THE XFREE86 PROJECT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+!! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+!! OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+!! SOFTWARE.
+!!
+!! Except as contained in this notice, the name of the XFree86 Project shall
+!! not be used in advertising or otherwise to promote the sale, use or other
+!! dealings in this Software without prior written authorization from the
+!! XFree86 Project.
+!!
+!! $XFree86: xc/programs/Xserver/hw/xfree86/Options,v 1.1.2.2 2001/06/01 02:24:16 dawes Exp $
+
+!! XAA options
+xaa.XaaNoCPUToScreenColorExpandFill:\
+Disables accelerated rectangular expansion blits from source patterns \
+stored in system memory (using a memory-mapped aperture).
+
+xaa.XaaNoColor8x8PatternFillRect:\
+Disables accelerated fills of a rectangular region with a full-color pattern.
+
+xaa.XaaNoColor8x8PatternFillTrap:\
+Disables accelerated fills of a trapezoidal region with a full-color pattern.
+
+xaa.XaaNoDashedBresenhamLine:\
+Disables accelerated dashed Bresenham line draws.
+
+xaa.XaaNoDashedTwoPointLine:\
+Disables accelerated dashed line draws between two arbitrary points.
+
+xaa.XaaNoImageWriteRect:\
+Disables acclerated transfers of full-color rectangular patterns from  \
+system memory to video memory (using a memory-mapped aperture).
+
+xaa.XaaNoMono8x8PatternFillRect:\
+Disables accelerated fills of a rectangular region with a monochrome pattern.
+
+xaa.XaaNoMono8x8PatternFillTrap:\
+Disables accelerated fills of a trapezoidal region with a monochrome pattern.
+
+xaa.XaaNoOffscreenPixmaps:\
+Disables accelerated draws into pixmaps stored in offscreen video memory.
+
+xaa.XaaNoPixmapCache:\
+Disables caching of patterns in offscreen video memory.
+
+xaa.XaaNoScanlineCPUToScreenColorExpandFill:\
+Disables accelerated rectangular expansion blits from source patterns \
+stored in system memory (one scan line at a time).
+
+xaa.XaaNoScanlineImageWriteRect:\
+Disables acclerated transfers of full-color rectangular patterns from \
+system memory to video memory (one scan line at a time).
+
+xaa.XaaNoScreenToScreenColorExpandFill:\
+Disables accelerated rectangular expansion blits from source patterns \
+stored in offscreen video memory.
+
+xaa.XaaNoScreenToScreenCopy:\
+Disables accelerated copies of rectangular regions from one part of video \
+memory to another part of video memory.
+
+xaa.XaaNoSolidBresenhamLine:\
+Disables accelerated solid Bresenham line draws.
+
+xaa.XaaNoSolidFillRect:\
+Disables accelerated solid-color fills of rectangles.
+
+xaa.XaaNoSolidFillTrap:\
+Disables accelerated solid-color fills of Bresenham trapezoids.
+
+xaa.XaaNoSolidHorVertLine:\
+Disables accelerated solid horizontal and vertical line draws.
+
+xaa.XaaNoSolidTwoPointLine:\
+Disables accelerated solid line draws between two arbitrary points.
+
+
+!! FBDev options
+fbdev.fbdev:\
+The framebuffer device to use. \
+Default: /dev/fb0.
+
+fbdev.ShadowFB:\
+Enable or disable use of the shadow framebuffer layer. \
+Default: on.
+
+
+!! MGA options
+mga.ColorKey:\
+Set the colormap index used for the transparency key for the depth 8 plane \
+when operating in 8+24 overlay mode. The value must be in the range 2-255. \
+Default: 255.
+
+mga.HWcursor:\
+Enable or disable the HW cursor. Default: on.
+
+mga.MGASDRAM:\
+Specify whether G100, G200 or G400 cards have SDRAM. The driver attempts to \
+auto-detect this based on the card's PCI subsystem ID. This option may be \
+used to override that auto-detection. The mga driver is not able to \
+auto-detect the presence of of SDRAM on secondary heads in multihead \
+configurations so this option will often need to be specified in multihead \
+configurations. Default: autodetected.
+
+mga.NoAccel:\
+Disable or enable acceleration. Default: acceleration is enabled.
+
+mga.OverclockMem:\
+Set clocks to values used by some commercial X-Servers (G100, G200 and \
+G400 only). Default: off.
+
+mga.Overlay:\
+Enable 8+24 overlay mode. Only appropriate for depth 24. (Note: the G100 is \
+unaccelerated in the 8+24 overlay mode due to a missing hardware feature). \
+Default: off.
+
+mga.PciRetry:\
+Enable or disable PCI retries. Default: off.
+
+mga.Rotate:\
+Rotate the display clockwise or counterclockwise. This mode is unaccelerated. \
+Default: no rotation.
+
+mga.ShadowFB:\
+Enable or disable use of the shadow framebuffer layer. See shadowfb(4) for \
+further information. Default: off.
+
+mga.SyncOnGreen:\
+Enable or disable combining the sync signals with the green signal. \
+Default: off.
+
+mga.UseFBDev:\
+Enable or disable use of on OS-specific fb interface (and is not supported \
+on all OSs). See fbdevhw(4) for further information. Default: off.
+
+mga.VideoKey:\
+This sets the default pixel value for the YUV video overlay key. \
+Default: undefined.
+
+mga.TexturedVideo:\
+This has XvImage support use the texture engine rather than the video \
+overlay. This option is only supported by the G200 and G400, and only in \
+16 and 32 bits per pixel. Default: off.
+
+
+!! R128 options
+
+r128.SWcursor: \
+Selects software cursor. \
+Default: off.
+
+r128.NoAccel:\
+Enables or disables all hardware acceleration. \
+Default: on.
+
+r128.Dac6Bit:\
+Enables or disables the use of 6 bits per color component when in 8 bpp \
+mode (emulates VGA mode). \
+Default: off.
+
+r128.VideoKey:\
+This overrides the default pixel value for the YUV video overlay key. \
+Default: undefined.
+
+r128.Display:\
+Select display mode for devices which support flat panels. Supported\
+modes are "FP", "CRT", "Mirror", "BIOS". \
+Default: "FP".
+
+r128.ProgramFPRegs:\
+Enable or disable programming of the flat panel registers.\
+Beware that this may damage your panel, so use at your own risk. \
+Default: device dependant.
+
+r128.PanelWidth:\
+Override flat panel width in pixels. \
+Default: determined using BIOS.
+
+r128.PanelHeight:\
+Override flat panel height in pixels. \
+Default: determined using BIOS.
+
+r128.UseFBDev:\
+Enable or disable use of on OS-specific fb interface (and is not supported \
+on all OSs). See fbdevhw(4) for further information. Default: off.
+
+
+!! Vesa options
+vesa.ShadowFB:\
+Enable or disable use of the shadow framebuffer layer. See shadowfb(4)\
+for further information. Default: on.
+

@@ -6,13 +6,14 @@
  *   - XFree86 doctools package (requires groff)
  *   - nroff/troff or groff
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/common/host.def,v 1.8 2000/12/15 21:54:37 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/common/host.def,v 1.9 2001/04/23 15:54:04 dawes Exp $
  */
 
 #define HasSgmlFmt		YES
 #define BuildAllDocs		YES
 #define InstallJapaneseDocs	YES
 
+#define HasLatex		YES
 #define BuildSpecsDocs		YES
 #define SpecsDocDirs		BDF CTEXT FSProtocol GL ICCCM ICE \
 				/*PEX5*/ PM Render SM X11 XDMCP XIM XLFD \
@@ -21,5 +22,5 @@
 
 #define InstallHardcopyDocs	YES
 #define HardcopyDocDirs		RX XIE XKB XPRINT
-#define InstallMiscManPages	YES
+
 

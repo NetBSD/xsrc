@@ -1,4 +1,4 @@
-/* $TOG: FSQGlyphs.c /main/7 1998/02/06 13:43:46 kaleb $ */
+/* $Xorg: FSQGlyphs.c,v 1.3 2000/08/17 19:44:04 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

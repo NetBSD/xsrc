@@ -1,4 +1,4 @@
-/* $TOG: infcodes.h /main/4 1998/02/04 14:33:46 kaleb $ */
+/* $Xorg: infcodes.h,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-1998 Mark Adler

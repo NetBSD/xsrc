@@ -1,6 +1,4 @@
-/* $XFree86: $ */
-
-/* $XConsortium: OidStrs.h /main/1 1996/09/28 16:58:35 rws $ */
+/* $Xorg: OidStrs.h,v 1.3 2000/08/17 19:48:06 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -32,6 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
+/* $XFree86: xc/programs/Xserver/Xprint/OidStrs.h,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
 
 static int XpOidStringMapCount = 117;
 

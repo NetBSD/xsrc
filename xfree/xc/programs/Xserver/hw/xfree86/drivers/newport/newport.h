@@ -1,7 +1,7 @@
 /* 
  * Id: newport.h,v 1.4 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport.h,v 1.1 2000/12/01 19:47:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport.h,v 1.3 2001/05/04 19:05:42 dawes Exp $ */
 
 #ifndef __NEWPORT_H__
 #define __NEWPORT_H__
@@ -50,6 +50,7 @@ typedef struct {
 	CARD8 txt_xmap9_cfg1;		/* 1. Xmap9's control register */
 	CARD8 txt_xmap9_mi;		/* Xmap9's mode index register */
 	LOCO txt_colormap[256];
+	OptionInfoPtr Options;
 } NewportRec, *NewportPtr;
 
 #define NEWPORTPTR(p) ((NewportPtr)((p)->driverPrivate))

@@ -1,30 +1,33 @@
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaelttmp.h,v 1.4 2001/04/10 16:07:50 dawes Exp $ */
 /*
- * DRI Hardware Device Driver for G200/G400
- * Copyright (C) 1999 Keith Whitwell
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86$ */
 
 /* Buffers fill from high addresses down with vertices and from low
- * addresses up with elements.  
+ * addresses up with elements.
  */
 
 
@@ -55,14 +58,14 @@ static void TAG(emit_unclipped_verts)( struct vertex_buffer *VB )
    mmesa->retained_buf = mmesa->elt_buf;
    mmesa->first_vert_phys = mmesa->next_vert_phys;
 
-   for (i = 0 ; i < count ; f -= BUFFER_STRIDE, i++) 
+   for (i = 0 ; i < count ; f -= BUFFER_STRIDE, i++)
    {
-      if (!clipmask[i]) 
+      if (!clipmask[i])
       {
 	 f[0] = sx * dev[0] + tx;
 	 f[1] = sy * dev[1] + ty;
 	 f[2] = sz * dev[2] + tz;
-	 f[3] = dev[3]; 
+	 f[3] = dev[3];
 
 	 if (TYPE & MGA_RGBA_BIT) {
 #if defined(USE_X86_ASM)
@@ -107,12 +110,12 @@ static void TAG(emit_unclipped_verts)( struct vertex_buffer *VB )
 
 /* Build three temporary clipspace vertex for clipping a triangle.
  * Recreate from the VB data rather than trying to read back from
- * uncached memory.  
+ * uncached memory.
  */
 static void TAG(build_tri_verts)( mgaContextPtr mmesa,
-				  struct vertex_buffer *VB, 
-				  GLfloat *O, 
-				  GLuint *elt ) 
+				  struct vertex_buffer *VB,
+				  GLfloat *O,
+				  GLuint *elt )
 {
    int i;
 
@@ -121,7 +124,7 @@ static void TAG(build_tri_verts)( mgaContextPtr mmesa,
 
       O[0] = clip[0];
       O[1] = clip[1];
-      O[2] = clip[2]; 
+      O[2] = clip[2];
       O[3] = clip[3];
 
       if (TYPE & MGA_RGBA_BIT) {
@@ -163,7 +166,7 @@ static void TAG(build_tri_verts)( mgaContextPtr mmesa,
 
 /* Interpolate between two of the vertices constructed above.
  */
-static void TAG(interp)( GLfloat t, 
+static void TAG(interp)( GLfloat t,
 			 GLfloat *O,
 			 const GLfloat *I,
 			 const GLfloat *J )
@@ -181,7 +184,7 @@ static void TAG(interp)( GLfloat t,
    }
 
    *(GLuint *)&O[5] = ~0;	/* note that this is a new vertex */
- 
+
    if (TYPE & MGA_TEX0_BIT) {
       O[6] = LINTERP(t, I[6], J[6]);
       O[7] = LINTERP(t, I[7], J[7]);
@@ -204,7 +207,7 @@ static void TAG(project_and_emit_verts)( mgaContextPtr mmesa,
 					 GLuint *elt,
 					 int nr)
 {
-   
+
    GLfloat *O = mmesa->next_vert;
    GLuint phys = mmesa->next_vert_phys;
 
@@ -212,27 +215,27 @@ static void TAG(project_and_emit_verts)( mgaContextPtr mmesa,
    const GLfloat sx = m[0], sy = m[5], sz = m[10];
    const GLfloat tx = m[12], ty = m[13], tz = m[14];
    GLuint i;
-   
+
    for (i = 0 ; i < nr ; i++) {
       const GLfloat *I = &verts[elt[i] * CLIP_STRIDE];
       GLuint tmp = *(GLuint *)&I[5];
 
-      if ((elt[i] = tmp) == ~0) 
-      {      
+      if ((elt[i] = tmp) == ~0)
+      {
 	 GLfloat oow = 1.0/I[3];
 
 	 elt[i] = phys;
 	 phys -= BUFFER_STRIDE * sizeof(GLuint);
-	 
+
 	 O[0] = sx * I[0] * oow + tx;
 	 O[1] = sy * I[1] * oow + ty;
 	 O[2] = sz * I[2] * oow + tz;
-	 O[3] = oow; 
+	 O[3] = oow;
 
 	 if (TYPE & MGA_RGBA_BIT) {
 	    *(int*)&O[4] = *(int*)&I[4];
 	 }
- 
+
 	 if (TYPE & MGA_TEX0_BIT) {
 	    *(int*)&O[6] = *(int*)&I[6];
 	    *(int*)&O[7] = *(int*)&I[7];

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.53 2000/10/24 22:45:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.57 2001/05/10 10:17:39 alanh Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: miinitext.c /main/47 1998/02/09 14:47:26 kaleb $ */
+/* $Xorg: miinitext.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 #include "misc.h"
 #include "extension.h"
@@ -153,6 +153,7 @@ extern void ScreenSaverExtensionInit (INITARGS);
 #endif
 #ifdef XV
 extern void XvExtensionInit(INITARGS);
+extern void XvMCExtensionInit(INITARGS);
 #endif
 #ifdef XIE
 extern void XieInit(INITARGS);
@@ -276,6 +277,7 @@ InitExtensions(argc, argv)
 #endif
 #ifdef XV
     XvExtensionInit();
+    XvMCExtensionInit();
 #endif
 #ifdef XIE
     XieInit();
@@ -474,8 +476,8 @@ InitExtensions(argc, argv)
     int		argc;
     char	*argv[];
 {
-    int i, j, k, numExts, ii;
-    ExtensionModule *ext, *newList;
+    int i;
+    ExtensionModule *ext;
     static Bool listInitialised = FALSE;
 
     if (!listInitialised) {

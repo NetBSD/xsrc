@@ -1,4 +1,4 @@
-XCOMM $XFree86$
+XCOMM $XFree86: xc/lib/font/X-TrueType/KSCJOHAB/Imakefile.inc,v 1.1 1999/03/28 15:32:02 dawes Exp $
 
 #define ModuleName KSCJOHAB
 MODULENAME = ModuleName

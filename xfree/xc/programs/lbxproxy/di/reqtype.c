@@ -1,4 +1,4 @@
-/* $XConsortium: reqtype.c /main/10 1996/12/19 19:16:03 rws $ */
+/* $Xorg: reqtype.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *

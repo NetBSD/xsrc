@@ -1,4 +1,4 @@
-/* $TOG: ddxBeep.c /main/5 1997/06/10 06:53:42 kaleb $ */
+/* $Xorg: ddxBeep.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,7 +1,7 @@
 #ifndef _ISOKEYS_H_ 
 #define _ISOKEYS_H_ 1
 
-/* $XConsortium: isokeys.h /main/1 1995/11/30 19:19:18 kaleb $ */
+/* $Xorg: isokeys.h,v 1.3 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

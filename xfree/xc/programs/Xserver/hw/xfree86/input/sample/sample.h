@@ -24,7 +24,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/sample.h,v 1.1 1998/12/05 14:40:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/sample.h,v 1.2 1999/02/01 12:13:00 dawes Exp $ */
 
 #ifndef	_SAMPLE_H_
 #define _SAMPLE_H_

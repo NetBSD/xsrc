@@ -1,4 +1,4 @@
-.\" $XConsortium: macros.t /main/10 1996/01/16 18:25:11 gildea $
+.\" $Xorg: macros.t,v 1.3 2000/08/17 19:42:51 cpqbld Exp $
 .\" macros.t -- macros for X Consortium documents
 .\" Revised and commented by smarks 93.12.20.
 .\"

@@ -258,7 +258,7 @@ void gl_init_all_x86_transform_asm( void )
 #endif
 
 #ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm  && getenv( "MESA_FORCE_KATMAI" ) == 0 ) {
+   if ( cpu_has_xmm && getenv( "MESA_FORCE_KATMAI" ) == 0 ) {
       check_os_katmai_support();
    }
    if ( cpu_has_xmm ) {

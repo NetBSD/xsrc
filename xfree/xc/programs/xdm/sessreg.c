@@ -1,5 +1,5 @@
 /*
- * $TOG: sessreg.c /main/19 1998/02/09 13:56:23 kaleb $
+ * $Xorg: sessreg.c,v 1.5 2000/08/17 19:54:15 cpqbld Exp $
  *
  * Copyright 1990, 1998  The Open Group
  *
@@ -26,7 +26,7 @@
  *   by Andreas Stolcke <stolcke@icsi.berkeley.edu>
  */
 
-/* $XFree86: xc/programs/xdm/sessreg.c,v 3.14 2000/11/06 19:24:10 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/sessreg.c,v 3.16 2001/01/17 23:45:22 dawes Exp $ */
 
 /*
  * sessreg
@@ -51,7 +51,7 @@
 # include	<stdio.h>
 # include	<utmp.h>
 
-#if defined(SYSV) || defined(SVR4) || defined(Lynx) || defined(__QNX__) || defined(__DARWIN__)
+#if defined(SYSV) || defined(SVR4) || defined(Lynx) || defined(__QNX__) || defined(__DARWIN__) || defined(_SEQUENT_)
 #define NO_LASTLOG
 #endif
 

@@ -1,8 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/1 1996/10/31 14:20:29 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:48:36 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/sunLynx/Imakefile,v 3.0 1996/09/29 12:47:15 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/sunLynx/Imakefile,v 3.2 2001/01/17 22:36:52 dawes Exp $
+
 #include <Server.tmpl>
 
 SRCS1 =	sunLyInit.c \

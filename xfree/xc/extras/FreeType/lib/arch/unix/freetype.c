@@ -1,6 +1,6 @@
 /* This file is an Xserver-specific version */
 
-/* $XFree86: xc/extras/FreeType/lib/arch/unix/freetype.c,v 1.2 1998/09/06 04:29:55 dawes Exp $ */
+/* $XFree86: xc/extras/FreeType/lib/arch/unix/freetype.c,v 1.3 2000/02/13 05:03:56 dawes Exp $ */
 
 /* Single object library component for Unix */
 

@@ -1,10 +1,10 @@
-/* $XConsortium: jri_md.h /main/2 1996/11/13 09:27:11 kaleb $ */
+/* $Xorg: jri_md.h,v 1.3 2000/08/17 19:55:01 cpqbld Exp $ */
 /* -*- Mode: C; tab-width: 4; -*- */
 /*******************************************************************************
  * Java Runtime Interface - Machine Dependent Types
  * Copyright (c) 1996 Netscape Communications Corporation. All rights reserved.
  ******************************************************************************/
-/* $XFree86: xc/programs/xrx/plugin/jri_md.h,v 1.0tsi Exp $ */
+/* $XFree86: xc/programs/xrx/plugin/include/jri_md.h,v 1.3 2001/01/17 23:46:25 dawes Exp $ */
  
 #ifndef JRI_MD_H
 #define JRI_MD_H

@@ -1,4 +1,4 @@
-/* $TOG: ExtAgent.h /main/2 1998/02/06 15:43:44 kaleb $ */
+/* $Xorg: ExtAgent.h,v 1.4 2000/08/17 19:46:01 cpqbld Exp $ */
 
 /*
 
@@ -21,8 +21,9 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/ExtAgent.h,v 1.3 1998/08/20 13:59:36 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/ExtAgent.h,v 1.5 2001/01/17 19:42:55 dawes Exp $ */
 
+#include <X11/Intrinsic.h>
 #include <X11/Xfuncproto.h>
 
 _XFUNCPROTOBEGIN

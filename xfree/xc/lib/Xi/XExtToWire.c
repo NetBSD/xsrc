@@ -1,4 +1,4 @@
-/* $TOG: XExtToWire.c /main/17 1998/02/06 15:02:48 kaleb $ */
+/* $Xorg: XExtToWire.c,v 1.3 2000/08/17 19:45:54 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtToWire.c,v 3.0 1996/08/25 13:52:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XExtToWire.c,v 3.2 2001/01/17 19:42:49 dawes Exp $ */
 
 /****************************************************************
  *

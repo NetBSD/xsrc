@@ -1,5 +1,9 @@
-// $TOG: sgi.lst /main/3 1997/06/13 06:28:54 kaleb $
-// $XFree86$
+// $Xorg: sgi.lst,v 1.3 2000/08/17 19:54:41 cpqbld Exp $
+
+
+
+
+// $XFree86: xc/programs/xkbcomp/rules/sgi.lst,v 3.6.2.1 2001/05/23 18:32:19 dawes Exp $
 
 ! model
   indy			SGI O2, Indigo^2 or Indy
@@ -22,7 +26,8 @@
   be			Belgian
   bg			Bulgarian
   ca			Canadian
-  cs			Czechoslovakian
+  cz			Czech
+  cz_qwerty		Czech (qwerty)
   de 			German
   de_CH			Swiss German
   dvorak		Dvorak (US)
@@ -39,9 +44,11 @@
   jp			Japanese
   no			Norwegian
   pl			Polish
-  pt			Portugese
+  pt			Portuguese
   ru			Russian
   se			Swedish
+  sk			Slovak
+  sk_qwerty		Slovak (qwerty)
   th			Thai
   us			US/ASCII
   tr			Turkish

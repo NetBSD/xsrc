@@ -1,4 +1,4 @@
-/* $TOG: medrawp.c /main/8 1998/02/09 16:13:00 kaleb $ */
+/* $Xorg: medrawp.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module medrawp.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley && Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medrawp.c,v 3.3 1998/10/05 13:22:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medrawp.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MEDRAWP
 #define _XIEC_EDRAWP

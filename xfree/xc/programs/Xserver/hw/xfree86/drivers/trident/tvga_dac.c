@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tvga_dac.c,v 1.3 1999/10/26 22:46:59 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

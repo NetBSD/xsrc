@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $XFree86: xc/config/util/mkhtmlindex.pl,v 1.2 2001/03/15 19:02:31 dawes Exp $
+# $XFree86: xc/config/util/mkhtmlindex.pl,v 1.3 2001/03/18 14:49:01 dawes Exp $
 #
 # Copyright © 2000,2001 by VA Linux Systems, Inc.
 #
@@ -52,7 +52,7 @@ foreach $vol (@vollist) {
 <UL>
 EOF
 
-	foreach $file (readdir dir) {
+	foreach $file (sort readdir dir) {
 		if ($file =~ "\.$vol\.html") {
 			open(file, "<$dir/$file") || die "Can't open $dir/$file";
 			while (<file>) {

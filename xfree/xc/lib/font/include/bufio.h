@@ -1,4 +1,4 @@
-/* $TOG: bufio.h /main/8 1998/05/07 13:44:07 kaleb $ */
+/* $Xorg: bufio.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bufio.h,v 1.2 1999/03/14 03:21:19 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/bufio.h,v 1.5 2001/01/17 19:43:31 dawes Exp $ */
 
 #ifndef ___BUFIO_H___
 #define ___BUFIO_H___ 1

@@ -1,4 +1,4 @@
-/* $TOG: analyze.c /main/5 1998/02/09 16:12:09 kaleb $ */
+/* $Xorg: analyze.c,v 1.3 2000/08/17 19:47:34 cpqbld Exp $ */
 /**** module analyze.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/analyze.c,v 1.4 2001/01/17 22:13:00 dawes Exp $ */
 
 #define _XIEC_ANALYZE
 

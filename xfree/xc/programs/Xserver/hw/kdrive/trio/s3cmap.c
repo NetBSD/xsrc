@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/trio/s3cmap.c,v 1.1 1999/11/19 13:54:05 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/trio/s3cmap.c,v 1.3 2000/05/06 22:17:53 keithp Exp $ */
 
 #include "s3.h"
 

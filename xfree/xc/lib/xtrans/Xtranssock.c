@@ -1,4 +1,4 @@
-/* $TOG: Xtranssock.c /main/61 1998/02/06 15:54:53 kaleb $ */
+/* $Xorg: Xtranssock.c,v 1.8 2000/08/17 19:46:46 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.46 2000/04/05 18:13:26 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.49 2001/01/19 06:41:02 keithp Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -51,6 +51,7 @@ from The Open Group.
 #ifdef XTHREADS
 #include <X11/Xthreads.h>
 #endif
+
 #ifndef WIN32
 
 #if defined(TCPCONN) || defined(UNIXCONN)
@@ -60,6 +61,7 @@ from The Open Group.
 #include <lan/in.h>
 #endif
 #endif
+
 #if defined(TCPCONN) || defined(UNIXCONN)
 #define X_INCLUDE_NETDB_H
 #define XOS_USE_NO_LOCKING
@@ -77,14 +79,10 @@ from The Open Group.
 #include <sys/stat.h>
 #endif
 
-#if defined(hpux) || defined(__EMX__)
+#if defined(hpux) || defined(__EMX__) || (defined(MOTOROLA) && defined(SYSV))
 #define NO_TCP_H
-#endif /* hpux */
-#ifdef MOTOROLA
-#ifdef SYSV
-#define NO_TCP_H
-#endif /* SYSV */
-#endif /* MOTOROLA */
+#endif 
+
 #ifndef NO_TCP_H
 #ifdef __osf__
 #include <sys/param.h>
@@ -94,18 +92,19 @@ from The Open Group.
 #endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
 #include <netinet/tcp.h>
 #endif /* !NO_TCP_H */
+
 #include <sys/ioctl.h>
-#if defined(SVR4) && !defined(SCO325) && !defined(DGUX)
+#if defined(SVR4) && !defined(SCO325) && !defined(DGUX) && !defined(_SEQUENT_)
 #include <sys/filio.h>
 #endif
-#if (defined(i386) && defined(SYSV)) || defined(_SEQUENT_)
-#if !defined(_SEQUENT_) && !defined(ESIX) && !defined(sco)
+
+#if (defined(i386) && defined(SYSV)) && !defined(ESIX) && !defined(sco)
 #include <net/errno.h>
-#endif /* _SEQUENT_  || ESIX  || SCO */
-#if !defined(ISC) || !defined(I_NREAD) || defined(SCO325)
+#endif 
+
+#if (defined(i386) && defined(SYSV)) && (!defined(ISC) || !defined(I_NREAD) || defined(SCO325)) || defined(_SEQUENT_)
 #include <sys/stropts.h>
-#endif
-#endif /* i386 && SYSV || _SEQUENT_ */
+#endif 
 
 #else /* !WIN32 */
 
@@ -1374,6 +1373,23 @@ else
 	  ntohs(sockname.sin_port), 0, 0);
 
     /*
+     * Turn on socket keepalive so the client process will eventually
+     * be notified with a SIGPIPE signal if the display server fails
+     * to respond to a periodic transmission of messages
+     * on the connected socket.
+     * This is useful to avoid hung application processes when the
+     * processes are not spawned from the xdm session and
+     * the display server terminates abnormally.
+     * (Someone turned off the power switch.)
+     */
+
+    {
+	int tmp = 1;
+	setsockopt (ciptr->fd, SOL_SOCKET, SO_KEEPALIVE,
+		(char *) &tmp, sizeof (int));
+    }
+
+    /*
      * Do the connect()
      */
 
@@ -1695,7 +1711,7 @@ TRANS(SocketBytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
 #ifdef WIN32
     return ioctlsocket ((SOCKET) ciptr->fd, FIONREAD, (u_long *) pend);
 #else
-#if (defined(i386) && defined(SYSV)) || defined(_SEQUENT_)
+#if (defined(i386) && defined(SYSV) && !defined(sco)) || (defined(_SEQUENT_) && _SOCKET_VERSION == 1)
     return ioctl (ciptr->fd, I_NREAD, (char *) pend);
 #else
 #if defined(__EMX__)
@@ -1703,7 +1719,7 @@ TRANS(SocketBytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
 #else
     return ioctl (ciptr->fd, FIONREAD, (char *) pend);
 #endif /* __EMX__ */
-#endif /* i386 && SYSV && !SCO || _SEQUENT_ */
+#endif /* i386 && SYSV || _SEQUENT_ && _SOCKET_VERSION == 1 */
 #endif /* WIN32 */
 }
 

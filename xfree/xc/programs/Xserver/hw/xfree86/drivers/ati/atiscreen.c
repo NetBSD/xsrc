@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.c,v 1.11 2000/08/04 21:07:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.c,v 1.21 2001/05/09 03:12:03 tsi Exp $ */
 /*
- * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,25 +22,22 @@
  */
 
 #include "ati.h"
+#include "atiaccel.h"
 #include "aticonsole.h"
+#include "aticursor.h"
 #include "atidac.h"
 #include "atidga.h"
-#include "atimode.h"
 #include "atiscreen.h"
 #include "atistruct.h"
+#include "atixv.h"
 
 #include "shadowfb.h"
 #include "xf86cmap.h"
 
 #include "xf1bpp.h"
 #include "xf4bpp.h"
-#undef PSZ
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-#include "cfb16.h"
-#include "cfb24.h"
-#include "cfb32.h"
+
+#include "fb.h"
 
 #include "mibank.h"
 #include "micmap.h"
@@ -119,6 +116,9 @@ ATIScreenInit
                           pScreenInfo->defaultVisual))
         return FALSE;
 
+    if (!miSetPixmapDepths())
+        return FALSE;
+
     pFB = pATI->pMemory;
     if (pATI->OptionShadowFB)
     {
@@ -155,27 +155,35 @@ ATIScreenInit
 #endif /* AVOID_CPIO */
 
         case 8:
-            pATI->Closeable = cfbScreenInit(pScreen, pFB,
-                pScreenInfo->virtualX, pScreenInfo->virtualY,
-                pScreenInfo->xDpi, pScreenInfo->yDpi, pATI->displayWidth);
-            break;
-
         case 16:
-            pATI->Closeable = cfb16ScreenInit(pScreen, pFB,
-                pScreenInfo->virtualX, pScreenInfo->virtualY,
-                pScreenInfo->xDpi, pScreenInfo->yDpi, pATI->displayWidth);
-            break;
-
         case 24:
-            pATI->Closeable = cfb24ScreenInit(pScreen, pFB,
-                pScreenInfo->virtualX, pScreenInfo->virtualY,
-                pScreenInfo->xDpi, pScreenInfo->yDpi, pATI->displayWidth);
-            break;
-
         case 32:
-            pATI->Closeable = cfb32ScreenInit(pScreen, pFB,
+            pATI->Closeable = fbScreenInit(pScreen, pFB,
                 pScreenInfo->virtualX, pScreenInfo->virtualY,
-                pScreenInfo->xDpi, pScreenInfo->yDpi, pATI->displayWidth);
+                pScreenInfo->xDpi, pScreenInfo->yDpi, pATI->displayWidth,
+                pATI->bitsPerPixel);
+
+            if (!pATI->Closeable)
+                return FALSE;
+
+            if (pATI->OptionShadowFB)
+                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    "RENDER extension not supported with a shadowed"
+                    " framebuffer.\n");
+
+#ifndef AVOID_CPIO
+
+            else if (pATI->BankInfo.BankSize)
+                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    "RENDER extension not supported with a banked"
+                    " framebuffer.\n");
+
+#endif /* AVOID_CPIO */
+
+            else if (!fbPictureInit(pScreen, NULL, 0))
+                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    "RENDER extension initialisation failed.\n");
+
             break;
 
         default:
@@ -221,15 +229,16 @@ ATIScreenInit
     (void)ATIDGAInit(pScreenInfo, pScreen, pATI);
 
     /* Setup acceleration */
-    if (!ATIModeAccelInit(pScreenInfo, pScreen, pATI))
+    if (!ATIInitializeAcceleration(pScreen, pScreenInfo, pATI))
         return FALSE;
 
     /* Initialise backing store */
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
-    /* Initialise software cursor */
-    miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
+    /* Initialise cursor */
+    if (!ATIInitializeCursor(pScreen, pATI))
+        return FALSE;
 
     /* Create default colourmap */
     if (!miCreateDefColormap(pScreen))
@@ -261,6 +270,9 @@ ATIScreenInit
 
     /* Initialise DPMS support */
     (void)xf86DPMSInit(pScreen, ATISetDPMSMode, 0);
+
+    /* Initialise XVideo support */
+    (void)ATIInitializeXVideo(pScreen, pScreenInfo, pATI);
 
     /* Set pScreen->SaveScreen and wrap CloseScreen vector */
     pScreen->SaveScreen = ATISaveScreen;
@@ -303,6 +315,12 @@ ATICloseScreen
 
     pATI->Closeable = FALSE;
 
+    if (pATI->pCursorInfo)
+    {
+        xf86DestroyCursorInfoRec(pATI->pCursorInfo);
+        pATI->pCursorInfo = NULL;
+    }
+
     ATILeaveGraphics(pScreenInfo, pATI);
 
     xfree(pATI->ExpansionBitmapScanlinePtr[1]);
@@ -311,6 +329,7 @@ ATICloseScreen
 
     xfree(pATI->pShadow);
     pATI->pShadow = NULL;
+    pScreenInfo->pScreen = NULL;
 
     return Closed;
 }

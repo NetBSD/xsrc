@@ -1,8 +1,8 @@
-XCOMM $TOG: Imakefile /main/17 1998/05/21 07:51:40 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:59 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.14 2000/10/24 18:07:39 dawes Exp $
+XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.19 2001/03/06 18:54:45 dawes Exp $
 
   WCHAR32 = HasWChar32
 
@@ -85,9 +85,11 @@ LTarget(tscii-0)
 LTarget(vi_VN.tcvn)
 LTarget(vi_VN.viscii)
 LTarget(zh)
+LTarget(zh_CN.gbk)
+LTarget(zh_HK.big5hkscs)
 LTarget(zh_TW)
 LTarget(zh_TW.big5)
-LTarget(th_TH.TACTIS)
+LTarget(th_TH)
 LTarget(en_US.UTF-8)
 #ifdef UXPArchitecture
 LTarget(ja.U90)

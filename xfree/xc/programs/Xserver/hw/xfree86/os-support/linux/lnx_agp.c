@@ -6,7 +6,7 @@
  * Copyright © 2000 VA Linux Systems, Inc.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.3 2000/08/23 20:05:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.5 2001/05/19 00:26:45 dawes Exp $ */
 
 #include "X.h"
 #include "xf86.h"
@@ -34,15 +34,29 @@
 
 static int gartFd = -1;
 static int acquiredScreen = -1;
+static Bool initDone = FALSE;
+/*
+ * Close /dev/agpgart.  This frees all associated memory allocated during
+ * this server generation.
+ */
+Bool
+xf86GARTCloseScreen(int screenNum)
+{
+	if(gartFd != -1) {
+		close(gartFd);
+		acquiredScreen = -1;
+		gartFd = -1;
+		initDone = FALSE;
+	}
+	return TRUE;
+}
 
 /*
- * Open /dev/agpgart.  Keep it open until server exit.
+ * Open /dev/agpgart.  Keep it open until xf86GARTCloseScreen is called.
  */
-
 static Bool
 GARTInit()
 {
-	static Bool initDone = FALSE;
 	struct _agp_info agpinf;
 
 	if (initDone)

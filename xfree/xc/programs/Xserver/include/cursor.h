@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: cursor.h /main/8 1998/02/09 14:28:12 kaleb $ */
+/* $Xorg: cursor.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 #ifndef CURSOR_H
 #define CURSOR_H 
 
@@ -62,6 +62,11 @@ extern int FreeCursor(
 #endif
 );
 
+/* Quartz support on Mac OS X pulls in the QuickDraw
+   framework whose AllocCursor function conflicts here. */ 
+#ifdef __DARWIN__
+#define AllocCursor Darwin_X_AllocCursor
+#endif
 extern CursorPtr AllocCursor(
 #if NeedFunctionPrototypes
     unsigned char* /*psrcbits*/,

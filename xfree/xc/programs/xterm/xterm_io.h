@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/programs/xterm/xterm_io.h,v 1.3 2001/02/13 19:19:19 dawes Exp $
  */
 
 /*
@@ -63,7 +63,7 @@
 #define USE_SYSV_TERMIO
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define USE_POSIX_TERMIOS
 #endif
 
@@ -132,12 +132,14 @@
 /* this hacked termios support only works on SYSV */
 #define USE_ANY_SYSV_TERMIO
 #define termio termios
+#ifndef __CYGWIN__
 #undef  TCGETA
 #define TCGETA TCGETS
 #undef  TCSETA
 #define TCSETA TCSETS
 #undef  TCSETAW
 #define TCSETAW TCSETSW
+#endif
 #elif defined(USE_SYSV_TERMIO)
 # define USE_ANY_SYSV_TERMIO
 # ifdef Lynx
@@ -219,6 +221,10 @@ extern int ptioctl(int fd, int func, void* data);
 #define ioctl ptioctl
 
 #endif /* __EMX__ */
+
+#ifdef __hpux
+#include <sys/bsdtty.h>		/* defines TIOCSLTC */
+#endif
 
 #ifdef ISC
 #define TIOCGPGRP TCGETPGRP

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.234 2000/11/06 19:24:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.242 2001/05/16 20:08:35 paulo Exp $ */
 
 
 /*
@@ -23,7 +23,6 @@
 #include "xf86Parser.h"
 #include "xf86tokens.h"
 #include "xf86Config.h"
-#define NO_COMPILER_H_EXTRAS
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
@@ -455,6 +454,7 @@ GenerateDriverlist(char * dirname, char * drivernames)
         const char *subdirs[] = {NULL, NULL};
         static const char *patlist[] = {"(.*)_drv\\.so", "(.*)_drv\\.o", NULL};
         char **dlist, **clist, **dcp, **ccp;
+	int size;
 
         subdirs[0] = dirname;
 
@@ -469,13 +469,16 @@ GenerateDriverlist(char * dirname, char * drivernames)
 
         /* The resulting list cannot be longer than the module list */
         for (dcp = dlist, count = 0;  *dcp++;  count++);
-        driverlist = (char **)xnfalloc((count + 1) * sizeof(char *));
+        driverlist = (char **)xnfalloc((size = count + 1) * sizeof(char *));
 
         /* First, add modules not in compiled-in list */
         for (count = 0, dcp = dlist;  *dcp;  dcp++) {
             for (ccp = clist;  ;  ccp++) {
                 if (!*ccp) {
                     driverlist[count++] = *dcp;
+		    if (count >= size)
+			driverlist = (char**)
+			    xnfrealloc(driverlist, ++size * sizeof(char*));
                     break;
                 }
                 if (!strcmp(*ccp, *dcp))
@@ -488,6 +491,9 @@ GenerateDriverlist(char * dirname, char * drivernames)
             for (dcp = dlist;  *dcp;  dcp++) {
                 if (!strcmp(*ccp, *dcp)) {
                     driverlist[count++] = *ccp;
+		    if (count >= size)
+			driverlist = (char**)
+			    xnfrealloc(driverlist, ++size * sizeof(char*));
                     break;
                 }
             }
@@ -775,14 +781,12 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
     Bool value;
     MessageType from;
 
-    if(flagsconf == NULL)
-	return TRUE;
     /*
      * Merge the ServerLayout and ServerFlags options.  The former have
      * precedence over the latter.
      */
     optp = NULL;
-    if (flagsconf->flg_option_lst)
+    if (flagsconf && flagsconf->flg_option_lst)
 	optp = xf86optionListDup(flagsconf->flg_option_lst);
     if (layoutopts) {
 	tmp = xf86optionListDup(layoutopts);
@@ -939,9 +943,9 @@ static Bool
 configInputKbd(IDevPtr inputp)
 {
   char *s;
-#ifdef XKB
   MessageType from = X_DEFAULT;
-#endif
+  Bool customKeycodesDefault = FALSE;
+  int verb = 0;
 
   /* Initialize defaults */
   xf86Info.xleds         = 0L;
@@ -954,6 +958,7 @@ configInputKbd(IDevPtr inputp)
 #if defined(SVR4) && defined(i386)
   xf86Info.panix106      = FALSE;
 #endif
+  xf86Info.kbdCustomKeycodes = FALSE;
 #ifdef XKB
   if (!xf86IsPc98()) {
     xf86Info.xkbrules      = "xfree86";
@@ -986,28 +991,34 @@ configInputKbd(IDevPtr inputp)
 #else
      xf86Info.kbdEvents  = xf86KbdEvents;
 #endif
+     xfree(s);
   } else if (xf86NameCmp(s, "xqueue") == 0) {
 #ifdef XQUEUE
     xf86Info.kbdProc = xf86XqueKbdProc;
     xf86Info.kbdEvents = xf86XqueEvents;
     xf86Msg(X_CONFIG, "Xqueue selected for keyboard input\n");
 #endif
+    xfree(s);
 #ifdef WSCONS_SUPPORT
   } else if (xf86NameCmp(s, "wskbd") == 0) {
      int xf86WSKbdProc(DeviceIntPtr, int);
 
      xf86Info.kbdProc    = xf86WSKbdProc;
      xf86Info.kbdEvents  = xf86KbdEvents;
+     xfree(s);
      s = xf86SetStrOption(inputp->commonOptions, "Device", NULL);
      xf86Msg(X_CONFIG, "Keyboard: Protocol: wskbd\n");
      xf86Info.kbdFd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
      if (xf86Info.kbdFd == -1) {
        xf86ConfigError("cannot open \"%s\"", s);
+       xfree(s);
        return FALSE;
      }
+     xfree(s);
 #endif
   } else {
     xf86ConfigError("\"%s\" is not a valid keyboard protocol name", s);
+    xfree(s);
     return FALSE;
   }
 
@@ -1015,9 +1026,12 @@ configInputKbd(IDevPtr inputp)
   if (s) {
     if (sscanf(s, "%d %d", &xf86Info.kbdDelay, &xf86Info.kbdRate) != 2) {
       xf86ConfigError("\"%s\" is not a valid AutoRepeat value", s);
+      xfree(s);
       return FALSE;
     }
+  xfree(s);
   }
+
   s = xf86SetStrOption(inputp->commonOptions, "XLeds", NULL);
   if (s) {
     char *l, *end;
@@ -1029,10 +1043,12 @@ configInputKbd(IDevPtr inputp)
 	xf86Info.xleds |= 1L << (i - 1);
       else {
 	xf86ConfigError("\"%s\" is not a valid XLeds value", l);
+	xfree(s);
 	return FALSE;
       }
       l = strtok(NULL, " \t\n");
     }
+    xfree(s);
   }
 
 #ifdef XKB
@@ -1047,7 +1063,7 @@ configInputKbd(IDevPtr inputp)
   if (noXkbExtension)
     xf86Msg(from, "XKB: disabled\n");
 
-#define NULL_IF_EMPTY(s) (s[0] ? s : NULL)
+#define NULL_IF_EMPTY(s) (s[0] ? s : (xfree(s), NULL))
 
   if (!noXkbExtension && !XkbInitialMap) {
     if ((s = xf86SetStrOption(inputp->commonOptions, "XkbKeymap", NULL))) {
@@ -1124,6 +1140,39 @@ configInputKbd(IDevPtr inputp)
     xf86Msg(X_CONFIG, "PANIX106: enabled\n");
   }
 #endif
+
+  /*
+   * This was once a compile time option (ASSUME_CUSTOM_KEYCODES)
+   * defaulting to 1 on Linux/PPC. It is no longer necessary, but for
+   * backwards compatibility we provide 'Option "CustomKeycodes"'
+   * and try to autoprobe on Linux/PPC.
+   */
+  from = X_DEFAULT;
+  verb = 2;
+#if defined(__linux__) && defined(__powerpc__)
+  {
+    FILE *f;
+
+    f = fopen("/proc/sys/dev/mac_hid/keyboard_sends_linux_keycodes","r");
+    if (f) {
+      if (fgetc(f) == '0') {
+	customKeycodesDefault = TRUE;
+	from = X_PROBED;
+	verb = 1;
+      }
+      fclose(f);
+    }
+  }
+#endif
+  if (xf86FindOption(inputp->commonOptions, "CustomKeycodes")) {
+    from = X_CONFIG;
+    verb = 1;
+  }
+  xf86Info.kbdCustomKeycodes =
+	xf86SetBoolOption(inputp->commonOptions, "CustomKeycodes",
+			  customKeycodesDefault);
+  xf86MsgVerb(from, verb, "Keyboard: CustomKeycode %s\n",
+		xf86Info.kbdCustomKeycodes ? "enabled" : "disabled");
 
   return TRUE;
 }
@@ -2060,6 +2109,7 @@ xf86HandleConfigFile(void)
 			   X_INFO_STRING " informational,\n"
 	       "         " X_WARNING_STRING " warning, "
 			   X_ERROR_STRING " error, "
+			   X_NOT_IMPLEMENTED_STRING " not implemented, "
 			   X_UNKNOWN_STRING " unknown.\n");
 
     /*

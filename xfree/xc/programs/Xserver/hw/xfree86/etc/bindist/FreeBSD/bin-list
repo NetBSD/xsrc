@@ -1,7 +1,10 @@
+.XFree86_Version
 bin
 lib/aout
 lib/libGL.so.1
 lib/libGL.so
+lib/libGLU.so.1
+lib/libGLU.so
 lib/libICE.so.6
 lib/libICE.so
 lib/libOSMesa.so.3
@@ -29,6 +32,8 @@ lib/libXi.so.6
 lib/libXi.so
 lib/libXmu.so.6
 lib/libXmu.so
+lib/libXmuu.so.1
+lib/libXmuu.so
 lib/libXp.so.6
 lib/libXp.so
 lib/libXpm.so.4
@@ -43,6 +48,8 @@ lib/libdps.so.1
 lib/libdps.so
 lib/libdpstk.so.1
 lib/libdpstk.so
+lib/libfreetype.so.6
+lib/libfreetype.so
 lib/liboldX.so.6
 lib/liboldX.so
 lib/libpsres.so.1

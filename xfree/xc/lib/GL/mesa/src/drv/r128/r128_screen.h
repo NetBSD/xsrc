@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_screen.h,v 1.2 2000/08/25 13:42:30 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_screen.h,v 1.5 2001/03/21 16:14:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,98 +28,59 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_SCREEN_H_
-#define _R128_SCREEN_H_
+#ifndef __R128_SCREEN_H__
+#define __R128_SCREEN_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
 #include "r128_sarea.h"
 
 typedef struct {
-    drmHandle  handle;			/* Handle to the DRM region */
-    drmSize    size;			/* Size of the DRM region */
+   drmHandle handle;			/* Handle to the DRM region */
+   drmSize size;			/* Size of the DRM region */
+   unsigned char *map;			/* Mapping of the DRM region */
 } r128RegionRec, *r128RegionPtr;
 
 typedef struct {
-    /* MMIO register data */
-    r128RegionRec       mmioRgn;
-    unsigned char      *mmio;
 
-    /* CCE ring buffer data */
-    r128RegionRec       ringRgn;
-    unsigned char      *ring;
+   GLint chipset;
+   GLint cpp;
+   GLint IsPCI;				/* Current card is a PCI card */
+   GLint AGPMode;
 
-    /* CCE ring read pointer data */
-    r128RegionRec       ringReadRgn;
+   GLuint frontOffset;
+   GLuint frontPitch;
+   GLuint backOffset;
+   GLuint backPitch;
 
-    /* CCE vertex/indirect buffer data */
-    r128RegionRec       bufRgn;
-    unsigned char      *buf;
-    int                 bufOffset;
-    int                 bufMapSize;
-    drmBufMapPtr        buffers;
-
-    /* CCE AGP Texture data */
-    r128RegionRec       agpTexRgn;
-    unsigned char      *agpTex;
-    int                 agpTexOffset;
-
-    /* Frame buffer data */
-    unsigned char      *fb;
-    unsigned long       fbOffset;
-    int                 fbStride;
-    int                 fbSize;
-
-    unsigned int	frontX, frontY;	/* Start of front buffer */
-    unsigned int	frontOffset, frontPitch;
-    unsigned int	backX, backY;	/* Start of shared back buffer */
-    unsigned int	backOffset, backPitch;
-    unsigned int	depthX, depthY;	/* Start of shared depth buffer */
-    unsigned int	depthOffset, depthPitch;
-    unsigned int	spanOffset;
-
-    int			chipset;
-    int                 IsPCI;		/* Current card is a PCI card */
-    int                 AGPMode;
-
-    int                 CCEMode;	/* CCE mode that server/clients use */
-    int                 CCEFifoSize;	/* Size of the CCE command FIFO */
-
-    /* CCE ring buffer data */
-    int                 ringEntries;
-
-    volatile int       *ringReadPtr;	/* Pointer to current read addr */
-    int                *ringStartPtr;   /* Pointer to end of ring buffer */
-    int                *ringEndPtr;     /* Pointer to end of ring buffer */
-
-    /* DRI screen private data */
-    int                 deviceID;	/* PCI device ID */
-    int                 depth;		/* Depth of display (8, 15, 16, 24) */
-    int                 bpp;		/* Bit depth of disp (8, 16, 24, 32) */
-    int                 pixel_code;	/* 8, 15, 16, 24, 32 */
+   GLuint depthOffset;
+   GLuint depthPitch;
+   GLuint spanOffset;
 
     /* Shared texture data */
-    int                 NRTexHeaps;
-    int                 texOffset[R128_NR_TEX_HEAPS];
-    int                 texSize[R128_NR_TEX_HEAPS];
-    int                 log2TexGran[R128_NR_TEX_HEAPS];
+   GLint numTexHeaps;
+   GLint texOffset[R128_NR_TEX_HEAPS];
+   GLint texSize[R128_NR_TEX_HEAPS];
+   GLint logTexGranularity[R128_NR_TEX_HEAPS];
 
-    int                 MMIOFifoSlots;	/* Free slots in the FIFO (64 max) */
-    int                 CCEFifoSlots;	/* Free slots in the CCE FIFO */
+   r128RegionRec mmio;
+   r128RegionRec agpTextures;
 
-    int                 CCEFifoAddr;    /* MMIO offset to write next CCE
-					   value (only used when CCE is
-					   in PIO mode). */
-    __DRIscreenPrivate *driScreen;
+   drmBufMapPtr buffers;
+
+   __DRIscreenPrivate *driScreen;
+   unsigned int sarea_priv_offset;
+
 } r128ScreenRec, *r128ScreenPtr;
 
-r128ScreenPtr r128CreateScreen(__DRIscreenPrivate *sPriv);
-void          r128DestroyScreen(__DRIscreenPrivate *sPriv);
+
+extern r128ScreenPtr r128CreateScreen( __DRIscreenPrivate *sPriv );
+extern void r128DestroyScreen( __DRIscreenPrivate *sPriv );
 
 #endif
-#endif /* _R128_SCREEN_H_ */
+#endif /* __R128_SCREEN_H__ */

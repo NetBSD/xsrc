@@ -1,4 +1,4 @@
-/* $TOG: fontaccel.c /main/6 1998/05/07 13:57:34 kaleb $ */
+/* $Xorg: fontaccel.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/util/fontaccel.c,v 1.6 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $TOG: client.h /main/6 1998/02/11 10:03:30 kaleb $ */
+/* $Xorg: client.h,v 1.3 2000/08/17 19:54:21 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/include/client.h,v 1.4 1999/03/07 11:40:59 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/client.h,v 1.6 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef	_CLIENT_H_
 #define	_CLIENT_H_

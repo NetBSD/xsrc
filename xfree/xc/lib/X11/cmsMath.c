@@ -1,4 +1,4 @@
-/* $TOG: cmsMath.c /main/12 1998/02/06 17:11:19 kaleb $ */
+/* $Xorg: cmsMath.c,v 1.3 2000/08/17 19:45:09 cpqbld Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $TOG: XimThai.h /main/5 1998/02/06 17:58:47 kaleb $ */
+/* $Xorg: XimThai.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -41,6 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/XimThai.h,v 1.2 2001/02/09 00:02:53 dawes Exp $ */
 
 /*
 **++ 
@@ -61,7 +62,7 @@ SOFTWARE.
 
 #include <X11/Xlib.h>
 
-/* Classification of characters in TACTIS according to WTT */
+/* Classification of characters in TIS620 according to WTT */
 
 #define CTRL    0   /* control chars */
 #define NON     1   /* non composibles */

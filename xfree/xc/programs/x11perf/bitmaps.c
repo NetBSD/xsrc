@@ -1,4 +1,4 @@
-/* $XConsortium: bitmaps.c,v 1.6 92/11/11 17:02:11 rws Exp $ */
+/* $Xorg: bitmaps.c,v 1.3 2000/08/17 19:54:08 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 

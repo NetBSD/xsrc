@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 by Sven Luther <luther@dpt-info.u-strasbg.fr>.
+ * Copyright 2000,2001 by Sven Luther <luther@dpt-info.u-strasbg.fr>.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,11 +21,12 @@
  *
  * Authors: Sven Luther, <luther@dpt-info.u-strasbg.fr>
  *          Thomas Witzel, <twitzel@nmr.mgh.harvard.edu>
+ *          Alan Hourihane, <alanh@fairlite.demon.co.uk>
  *
  * this work is sponsored by Appian Graphics.
  * 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_dac.c,v 1.8 2000/10/26 13:41:32 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_dac.c,v 1.24 2001/05/16 07:56:07 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -50,104 +51,78 @@
 # define TRACE(str)
 #endif
 
-int PM3QuickFillMemory(ScrnInfoPtr pScrn,int size);
-
-int
-PM3QuickFillMemory(ScrnInfoPtr pScrn,int size)
-{
-    GLINTPtr pGlint = GLINTPTR (pScrn);
-    unsigned int * p;
-    unsigned int p_content;
-    unsigned int i, j;
-    long savemapsize;
-
-    savemapsize = pGlint->FbMapSize;
-    pGlint->FbMapSize = size*1024*1024;
-
-    pGlint->FbBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
-	pGlint->PciTag, pGlint->FbAddress, pGlint->FbMapSize);
-    if (pGlint->FbBase == NULL) {
-	pGlint->FbMapSize = savemapsize;
-	return FALSE;
-    }
-
-    /* Set pointer to Aperture1 */
-    p = (unsigned int *) pGlint->FbBase;
-    /* Fill in megs number of megabytes */
-    for(i=0;i<size;i++)
-	for(j=0;j<1024*256;j+=1024)
-	    p[j+(i*1024*256)] = j + (i * 1024*256);
-
-    /* Set pointer to Aperture1 */
-    p = (unsigned int *) pGlint->FbBase;
-
-    /* If original ptr is 0x0 then no rollover occured */
-    p_content = p[0];
-    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pGlint->FbBase,
-	pGlint->FbMapSize);
-    pGlint->FbBase = NULL;
-    pGlint->FbMapSize = savemapsize;
-    if (p_content == 0x0)
-	return TRUE;
-    else return FALSE;
-}
 int
 Permedia3MemorySizeDetect(ScrnInfoPtr pScrn)
 {
-    GLINTPtr pGlint;
-    int size = 1;
-    pGlint = GLINTPTR (pScrn);
-    /* Fill memory until get a rollover of dram to 0
-     * fill in powers of 2, 1,2,4,8,16,32
-     */
-    while(PM3QuickFillMemory(pScrn,size))
-    {
-	size = size*2;
-	if(size == 64) break;
-    }
-    /* Correct memory amount since fail */
-    if (size != 1)
-	size = size / 2;
-    else
-	return 1*1024;
-    /* Just to make sure */
-    if (PM3QuickFillMemory(pScrn,size))
-	return size*1024;
-    return 16*1024;
-}
+    GLINTPtr pGlint = GLINTPTR (pScrn);
+    CARD32 size = 0, temp, temp1, temp2, i;
 
-static int
-Shiftbpp(ScrnInfoPtr pScrn, int value)
-{
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-    /* shift horizontal timings for 128bit SGRAMs or SDRAMs */
-    int logbytesperaccess = 4;
-	
-    switch (pScrn->bitsPerPixel) {
-    case 8:
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 16:
-	if (pGlint->DoubleBuffer) {
-	    value >>= (logbytesperaccess-2);
-	    pGlint->BppShift = logbytesperaccess-2;
-	} else {
-	    value >>= (logbytesperaccess-1);
-	    pGlint->BppShift = logbytesperaccess-1;
-	}
-	break;
-    case 24:
-	value *= 3;
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 32:
-	value >>= (logbytesperaccess-2);
-	pGlint->BppShift = logbytesperaccess-2;
-	break;
+    /* We can map 64MB, as that's the size of the Permedia3 aperture 
+     * regardless of memory configuration */
+    pGlint->FbMapSize = 64*1024*1024;
+
+    /* Mark as VIDMEM_MMIO to avoid write-combining while detecting memory */
+    pGlint->FbBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
+			pGlint->PciTag, pGlint->FbAddress, pGlint->FbMapSize);
+
+    if (pGlint->FbBase == NULL) 
+	return 0;
+
+    temp = GLINT_READ_REG(PM3MemBypassWriteMask);
+    GLINT_SLOW_WRITE_REG(0xffffffff, PM3MemBypassWriteMask);
+
+    /* The Permedia3 splits up memory, and even replicates it. Grrr.
+     * So that each 32MB appears at offset 0, and offset 32, unless
+     * there's really 64MB attached to the chip.
+     * So, 16MB appears at offset 0, nothing between 16-32, then it re-appears
+     * at offset 32.
+     * This below is to detect the cases of memory combinations
+     * It may also need closer examination for boards other than 16 or 32MB
+     */
+
+    /* Test first 32MB */
+    for(i=0;i<32;i++) {
+    	/* write test pattern */
+	MMIO_OUT32(pGlint->FbBase, i*1024*1024, i*0x00345678);
+	mem_barrier();
+	temp1 = MMIO_IN32(pGlint->FbBase, i*1024*1024);
+    	/* Let's check for wrapover, write will fail at 16MB boundary */
+	if (temp1 == (i*0x00345678)) 
+	    size = i;
+	else 
+	    break;
     }
-    return (value);
+
+    /* Ok, we're satisfied we've got 32MB, let's test the second lot */
+    if (size == i) {
+	for(i=0;i<32;i++) {
+	    /* Clear first 32MB */
+	    MMIO_OUT32(pGlint->FbBase, i*1024*1024, 0);
+	    mem_barrier();
+	}
+        for(i=32;i<64;i++) {
+    	    /* write test pattern */
+	    MMIO_OUT32(pGlint->FbBase, i*1024*1024, i*0x00345678);
+	    mem_barrier();
+	    temp1 = MMIO_IN32(pGlint->FbBase, i*1024*1024);
+	    temp2 = MMIO_IN32(pGlint->FbBase, (i-32)*1024*1024);
+    	    /* Let's check for wrapover */
+	    if ( (temp1 == (i*0x00345678)) && (temp2 == 0) )
+	        size = i;
+	    else 
+	        break;
+	}
+    }
+
+    GLINT_SLOW_WRITE_REG(temp, PM3MemBypassWriteMask);
+
+    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pGlint->FbBase, 
+							pGlint->FbMapSize);
+
+    pGlint->FbBase = NULL;
+    pGlint->FbMapSize = 0;
+
+    return ( (size+1) * 1024 );
 }
 
 static unsigned long
@@ -188,18 +163,17 @@ void
 Permedia3PreInit(ScrnInfoPtr pScrn)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
+
     TRACE_ENTER("Permedia3PreInit");
-    if ((pGlint->PciInfo->subsysVendor == 0x1097) &&
-	(pGlint->PciInfo->subsysCard == 0x3d32)) {
+    if (IS_J2000) {
     	unsigned char m,n,p;
     	unsigned long clockused;
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	    "Appian Jeronimo 2000 board detected and initialized.\n\t"
-	    "subsysVendor = 0x%04x, subsysCard = 0x%04x.\n",
-	    pGlint->PciInfo->subsysVendor, pGlint->PciInfo->subsysCard);
+
+	if (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)
+	    GLINT_SLOW_WRITE_REG(GCSRSecondaryGLINTMapEn, GCSRAperture);
 
 	/* Memory timings for the Appian J2000 board.
-	 * This is needed for the second head which is left unitilialized
+	 * This is needed for the second head which is left un-initialized
 	 * by the bios, thus freezing the machine. */
 	GLINT_SLOW_WRITE_REG(0x02e311B8, PM3LocalMemCaps);
 	GLINT_SLOW_WRITE_REG(0x07424905, PM3LocalMemTimings);
@@ -231,98 +205,91 @@ Permedia3PreInit(ScrnInfoPtr pScrn)
 	    PM3RD_SClkControl_SOURCE_PCLK |
 	    PM3RD_SClkControl_ENABLE);
     }
-    else xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	"Unknown Glint Permedia3 board detected.\n\t"
-	"subsysVendor = 0x%04x, subsysCard = 0x%04x.\n\t"
-	"Let's hope that it is correctly initialized by the bios.\n",
-	pGlint->PciInfo->subsysVendor, pGlint->PciInfo->subsysCard);
+
     TRACE_EXIT("Permedia3PreInit");
 }
 
 Bool
-Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
+Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode, GLINTRegPtr pReg)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
-    GLINTRegPtr pReg = &pGlint->ModeReg;
     CARD32 temp1, temp2, temp3, temp4;
 
-    pReg->glintRegs[PM3MemBypassWriteMask >> 3] = 0xffffffff;
-    pReg->glintRegs[PM3ByAperture1Mode >> 3] = 0x00000000;
-    pReg->glintRegs[PM3ByAperture2Mode >> 3] = 0x00000000;
-
-    pReg->glintRegs[Aperture0 >> 3] = 0;
-    pReg->glintRegs[Aperture1 >> 3] = 0;
-
-    if (pGlint->UsePCIRetry) {
-	pReg->glintRegs[DFIFODis >> 3] = 1;
-	pReg->glintRegs[FIFODis >> 3] = 3;
-    } else {
-	pReg->glintRegs[DFIFODis >> 3] = 0;
-	pReg->glintRegs[FIFODis >> 3] = 1;
+    if ((pGlint->numMultiDevices == 2) || (IS_J2000)) {
+	STOREREG(GCSRAperture, GCSRSecondaryGLINTMapEn);
     }
+
+    if (pGlint->MultiAperture) {
+	STOREREG(GMultGLINTAperture, pGlint->realWidth);
+	STOREREG(GMultGLINT1, 
+			pGlint->MultiPciInfo[0]->memBase[2] & 0xFF800000);
+	STOREREG(GMultGLINT2,
+			pGlint->MultiPciInfo[1]->memBase[2] & 0xFF800000);
+    }
+
+    STOREREG(PM3MemBypassWriteMask, 	0xffffffff);
+    STOREREG(Aperture0,		 	0x00000000);
+    STOREREG(Aperture1,		 	0x00000000);
+
+    if (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)
+    	STOREREG(DFIFODis,			0x00000001);
+
+    STOREREG(FIFODis,			0x00000007);
 
     temp1 = mode->CrtcHSyncStart - mode->CrtcHDisplay;
     temp2 = mode->CrtcVSyncStart - mode->CrtcVDisplay;
     temp3 = mode->CrtcHSyncEnd - mode->CrtcHSyncStart;
     temp4 = mode->CrtcVSyncEnd - mode->CrtcVSyncStart;
 
-    pReg->glintRegs[PMHTotal >> 3] = Shiftbpp(pScrn,mode->CrtcHTotal);
-    pReg->glintRegs[PMHsEnd >> 3] = Shiftbpp(pScrn, temp1 + temp3);
-    pReg->glintRegs[PMHsStart >> 3] = Shiftbpp(pScrn, temp1);
-    pReg->glintRegs[PMHbEnd >> 3] = 
-		Shiftbpp(pScrn,mode->CrtcHTotal-mode->CrtcHDisplay);
-    pReg->glintRegs[PMHgEnd >> 3] = pReg->glintRegs[PMHbEnd >> 3];
-    pReg->glintRegs[PMScreenStride >> 3] = 
-		Shiftbpp(pScrn,pScrn->displayWidth);
+    STOREREG(PMHTotal,	Shiftbpp(pScrn, mode->CrtcHTotal - 1));
+    STOREREG(PMHsEnd,	Shiftbpp(pScrn, temp1 + temp3));
+    STOREREG(PMHsStart,	Shiftbpp(pScrn, temp1));
+    STOREREG(PMHbEnd,	Shiftbpp(pScrn, mode->CrtcHTotal - mode->CrtcHDisplay));
+    STOREREG(PMHgEnd,	Shiftbpp(pScrn, mode->CrtcHTotal - mode->CrtcHDisplay));
+    STOREREG(PMScreenStride, Shiftbpp(pScrn, pScrn->displayWidth));
 
-    pReg->glintRegs[PMVTotal >> 3] = mode->CrtcVTotal;
-    pReg->glintRegs[PMVsEnd >> 3] = temp2 + temp4;
-    pReg->glintRegs[PMVsStart >> 3] = temp2;
-    pReg->glintRegs[PMVbEnd >> 3] = mode->CrtcVTotal - mode->CrtcVDisplay;
+    STOREREG(PMVTotal,	mode->CrtcVTotal - 1);
+    STOREREG(PMVsEnd,	temp2 + temp4 - 1);
+    STOREREG(PMVsStart,	temp2 - 1);
+    STOREREG(PMVbEnd,	mode->CrtcVTotal - mode->CrtcVDisplay);
 
-    pReg->glintRegs[PMHTotal >> 3] -= 1; 
-    pReg->glintRegs[PMVTotal >> 3] -= 1;
-    pReg->glintRegs[PMVsStart >> 3] -= 1;
-    pReg->glintRegs[PMVsEnd >> 3] -= 1;
-
-    /* The hw cursor needs /VSYNC to recognize vert retrace. We'll stick
-       both sync lines to active high here and if needed invert them
-       using the RAMDAC's RDSyncControl below. */
-    /* We need to set the pixelsize (bit 19 & 20) also ... */
     switch (pScrn->bitsPerPixel)
     {
 	case 8:
-	    pReg->glintRegs[PM3ByAperture1Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_8BIT;
-	    pReg->glintRegs[PM3ByAperture2Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_8BIT;
-    	    pReg->glintRegs[PMVideoControl >> 3] =
-		1 | (1 << 3) | (1 << 5) | (0 << 19);
+	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_8BIT);
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_8BIT);
+	    STOREREG(PMVideoControl,	 1 | (1 << 3) | (1 << 5) | (0 << 19));
 	    break;
 	case 16:
-	    pReg->glintRegs[PM3ByAperture1Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_16BIT;
-	    pReg->glintRegs[PM3ByAperture2Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_16BIT;
-    	    pReg->glintRegs[PMVideoControl >> 3] =
-		1 | (1 << 3) | (1 << 5) | (1 << 19);
+#if X_BYTE_ORDER != X_BIG_ENDIAN
+	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_16BIT);
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_16BIT);
+#else
+	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_16BIT |
+					 PM3ByApertureMode_BYTESWAP_BADC);
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_16BIT |
+					 PM3ByApertureMode_BYTESWAP_BADC);
+#endif
+	    STOREREG(PMVideoControl,	 1 | (1 << 3) | (1 << 5) | (1 << 19));
 	    break;
 	case 32:
-	    pReg->glintRegs[PM3ByAperture1Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_32BIT;
-	    pReg->glintRegs[PM3ByAperture2Mode >> 3] =
-		PM3ByApertureMode_PIXELSIZE_32BIT;
-    	    pReg->glintRegs[PMVideoControl >> 3] =
-		1 | (1 << 3) | (1 << 5) | (2 << 19);
+#if X_BYTE_ORDER != X_BIG_ENDIAN
+	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_32BIT);
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT);
+#else
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT |
+					 PM3ByApertureMode_BYTESWAP_DCBA);
+	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT |
+					 PM3ByApertureMode_BYTESWAP_DCBA);
+#endif
+	    STOREREG(PMVideoControl,	 1 | (1 << 3) | (1 << 5) | (2 << 19));
 	    break;
     }
 
-    pReg->glintRegs[VClkCtl >> 3] = (GLINT_READ_REG(VClkCtl) & 0xFFFFFFFC);
-    pReg->glintRegs[PMScreenBase >> 3] = 0; 
+    STOREREG(VClkCtl, GLINT_READ_REG(VClkCtl) & 0xFFFFFFFC);
+    STOREREG(PMScreenBase, 0x00000000);
+    STOREREG(ChipConfig, GLINT_READ_REG(ChipConfig) & 0xFFFFFFFD);
 
-    pReg->glintRegs[ChipConfig >> 3] = GLINT_READ_REG(ChipConfig) & 0xFFFFFFDD;
-    pReg->DacRegs[PM2VDACRDDACControl] = 0x00;
-  
     {
 	/* Get the programmable clock values */
     	unsigned char m,n,p;
@@ -331,197 +298,282 @@ Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	/* Let's program the dot clock */
     	clockused = PM3DAC_CalculateClock(mode->Clock,
 	    pGlint->RefClock, &m,&n,&p);
-	pReg->DacRegs[PM3RD_DClk0PreScale] = m;
-	pReg->DacRegs[PM3RD_DClk0FeedbackScale] = n;
-	pReg->DacRegs[PM3RD_DClk0PostScale] = p;
+	STOREDAC(PM3RD_DClk0PreScale, m);
+	STOREDAC(PM3RD_DClk0FeedbackScale, n);
+	STOREDAC(PM3RD_DClk0PostScale, p);
     }
 
-    pReg->glintRegs[PM2VDACRDIndexControl >> 3] = 0x00;
+    temp1 = 0;
+    temp2 = 0;
+    temp3 = 0;
+
+    if (pGlint->UseFlatPanel) {
+    	temp2 |= PM3RD_DACControl_BLANK_PEDESTAL_ENABLE;
+    	temp3 |= PM3RD_MiscControl_VSB_OUTPUT_ENABLE;
+    	STOREREG(VSConfiguration, 0x06); 
+    	STOREREG(VSBBase, 1<<14);
+    }
+
+    if (mode->Flags & V_PHSYNC) temp1 |= PM3RD_SyncControl_HSYNC_ACTIVE_HIGH;
+    if (mode->Flags & V_PVSYNC) temp1 |= PM3RD_SyncControl_VSYNC_ACTIVE_HIGH;
+
+    STOREREG(PM2VDACRDIndexControl, 0x00);
+    STOREDAC(PM2VDACRDSyncControl, temp1);
+    STOREDAC(PM2VDACRDDACControl, temp2);
 
     if (pScrn->rgbBits == 8)
-        pReg->DacRegs[PM2VDACRDMiscControl] = 0x01; /* 8bit DAC */
-    else
-	pReg->DacRegs[PM2VDACRDMiscControl] = 0x00; /* 6bit DAC */
-
-    pReg->DacRegs[PM2VDACRDSyncControl] = 0x00;
-    if (!(mode->Flags & V_PHSYNC))
-        pReg->DacRegs[PM2VDACRDSyncControl] |= 0x01; /* invert hsync */
-    if (!(mode->Flags & V_PVSYNC))
-        pReg->DacRegs[PM2VDACRDSyncControl] |= 0x08; /* invert vsync */
-
-#if 0 /* Currently commented out while testing Flat Panel support */
-    pReg->DacRegs[PM2VDACRDDACControl] = 0x01;
-    pReg->DacRegs[PM2VDACRDSyncControl] |= 0x40;
-    pReg->glintRegs[VSConfiguration >> 3] = (GLINT_READ_REG(VSConfiguration) & 0xFFFFFFF8) | 0x06;
-    pReg->glintRegs[VSBBase >> 3] = 1<<14;
-#endif
+	temp3 |= 0x01; /* 8bit DAC */
 
     switch (pScrn->bitsPerPixel)
     {
     case 8:
-	pReg->DacRegs[PM2VDACRDPixelSize] = 0x00;
-	pReg->DacRegs[PM2VDACRDColorFormat] = 0x2E;
+	STOREDAC(PM2VDACRDPixelSize, 0x00);
+	STOREDAC(PM2VDACRDColorFormat, 0x2E);
     	break;
     case 16:
-	pReg->DacRegs[PM2VDACRDPixelSize] = 0x01;
-	if (pScrn->depth == 15) 
-	    pReg->DacRegs[PM2VDACRDColorFormat] = 0x61;
-	else
-	    pReg->DacRegs[PM2VDACRDColorFormat] = 0x70;
-    	break;
-    case 24:
-	pReg->DacRegs[PM2VDACRDPixelSize] = 0x04;
-	pReg->DacRegs[PM2VDACRDColorFormat] = 0x60;
-    	break;
-    case 32:
-	pReg->DacRegs[PM2VDACRDPixelSize] = 0x02;
-	pReg->DacRegs[PM2VDACRDColorFormat] = 0x20;
-	if (pScrn->overlayFlags & OVERLAY_8_32_PLANAR) {
-	    pReg->DacRegs[PM2VDACRDMiscControl] |= 0x10;
-	    pReg->DacRegs[PM2VDACRDOverlayKey] = pScrn->colorKey;
+    	temp3 |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE;
+	STOREDAC(PM2VDACRDPixelSize, 0x01);
+	if (pScrn->depth == 15) {
+	    STOREDAC(PM2VDACRDColorFormat, 0x61);
+	} else {
+	    STOREDAC(PM2VDACRDColorFormat, 0x70);
 	}
     	break;
+    case 24:
+    	temp3 |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE;
+	STOREDAC(PM2VDACRDPixelSize, 0x04);
+	STOREDAC(PM2VDACRDColorFormat, 0x60);
+    	break;
+    case 32:
+    	temp3 |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE;
+	if (pScrn->overlayFlags & OVERLAY_8_32_PLANAR) {
+	    temp3 |= 0x18;
+	    STOREDAC(PM2VDACRDOverlayKey, pScrn->colorKey);
+	}
+	STOREDAC(PM2VDACRDPixelSize, 0x02);
+	STOREDAC(PM2VDACRDColorFormat, 0x20);
+    	break;
     }
+    STOREDAC(PM2VDACRDMiscControl, temp3);
+
+    STOREREG(PM3FifoControl, 0x905); /* Lower the default fifo threshold */
 
     return(TRUE);
 }
 
 void
-Permedia3Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
+Permedia3Save(ScrnInfoPtr pScrn, GLINTRegPtr pReg)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int i;
 
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    xf86SlowBcopy((CARD8*)pGlint->FbBase, (CARD8*)pGlint->VGAdata, 65536);
+
+    if ((pGlint->numMultiDevices == 2) || (IS_J2000)) {
+	SAVEREG(GCSRAperture);
+    }
+
+    if (pGlint->MultiAperture) {
+	SAVEREG(GMultGLINTAperture);
+	SAVEREG(GMultGLINT1);
+	SAVEREG(GMultGLINT2);
+    }
+
     /* Permedia 3 memory Timings */
-    glintReg->glintRegs[PM3MemBypassWriteMask >> 3] =
-	    				GLINT_READ_REG(PM3MemBypassWriteMask);
-    glintReg->glintRegs[PM3ByAperture1Mode >> 3] = 
-	    				GLINT_READ_REG(PM3ByAperture1Mode);
-    glintReg->glintRegs[PM3ByAperture2Mode >> 3] = 
-	    				GLINT_READ_REG(PM3ByAperture2Mode);
+    SAVEREG(PM3MemBypassWriteMask);
+    SAVEREG(PM3ByAperture1Mode);
+    SAVEREG(PM3ByAperture2Mode);
+    SAVEREG(ChipConfig);
+    SAVEREG(Aperture0);
+    SAVEREG(Aperture1);
+    SAVEREG(PM3FifoControl);
 
-    glintReg->glintRegs[ChipConfig >> 3] = GLINT_READ_REG(ChipConfig);
-    glintReg->glintRegs[Aperture0 >> 3]  = GLINT_READ_REG(Aperture0);
-    glintReg->glintRegs[Aperture1 >> 3]  = GLINT_READ_REG(Aperture1);
-
-    glintReg->glintRegs[DFIFODis >> 3]  = GLINT_READ_REG(DFIFODis);
-    glintReg->glintRegs[FIFODis >> 3]  = GLINT_READ_REG(FIFODis);
-    glintReg->glintRegs[PMHTotal >> 3] = GLINT_READ_REG(PMHTotal);
-    glintReg->glintRegs[PMHbEnd >> 3] = GLINT_READ_REG(PMHbEnd);
-    glintReg->glintRegs[PMHbEnd >> 3] = GLINT_READ_REG(PMHgEnd);
-    glintReg->glintRegs[PMScreenStride >> 3] = GLINT_READ_REG(PMScreenStride);
-    glintReg->glintRegs[PMHsStart >> 3] = GLINT_READ_REG(PMHsStart);
-    glintReg->glintRegs[PMHsEnd >> 3] = GLINT_READ_REG(PMHsEnd);
-    glintReg->glintRegs[PMVTotal >> 3] = GLINT_READ_REG(PMVTotal);
-    glintReg->glintRegs[PMVbEnd >> 3] = GLINT_READ_REG(PMVbEnd);
-    glintReg->glintRegs[PMVsStart >> 3] = GLINT_READ_REG(PMVsStart);
-    glintReg->glintRegs[PMVsEnd >> 3] = GLINT_READ_REG(PMVsEnd);
-    glintReg->glintRegs[PMScreenBase >> 3] = GLINT_READ_REG(PMScreenBase);
-    glintReg->glintRegs[PMVideoControl >> 3] = GLINT_READ_REG(PMVideoControl);
-    glintReg->glintRegs[VClkCtl >> 3] = GLINT_READ_REG(VClkCtl);
-#if 0 /* Currently commented out while testing Flat Panel support */
-    glintReg->glintRegs[VSConfiguration >> 3] = GLINT_READ_REG(VSConfiguration);
-    glintReg->glintRegs[VSBBase >> 3] = GLINT_READ_REG(VSBBase);
-#endif
+    if (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)
+   	SAVEREG(DFIFODis);
+    SAVEREG(FIFODis);
+    SAVEREG(PMHTotal);
+    SAVEREG(PMHbEnd);
+    SAVEREG(PMHgEnd);
+    SAVEREG(PMScreenStride);
+    SAVEREG(PMHsStart);
+    SAVEREG(PMHsEnd);
+    SAVEREG(PMVTotal);
+    SAVEREG(PMVbEnd);
+    SAVEREG(PMVsStart);
+    SAVEREG(PMVsEnd);
+    SAVEREG(PMScreenBase);
+    SAVEREG(PMVideoControl);
+    SAVEREG(VClkCtl);
+    if (pGlint->UseFlatPanel) {
+    	SAVEREG(VSConfiguration);
+    	SAVEREG(VSBBase);
+    }
 
     for (i=0;i<768;i++) {
     	Permedia2ReadAddress(pScrn, i);
-	glintReg->cmap[i] = Permedia2ReadData(pScrn);
+	pReg->cmap[i] = Permedia2ReadData(pScrn);
     }
 
-    glintReg->glintRegs[PM2VDACRDIndexControl >> 3] = 
-				GLINT_READ_REG(PM2VDACRDIndexControl);
-    glintReg->DacRegs[PM2VDACRDOverlayKey] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDOverlayKey);
-    glintReg->DacRegs[PM2VDACRDSyncControl] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDSyncControl);
-    glintReg->DacRegs[PM2VDACRDMiscControl] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDMiscControl);
-    glintReg->DacRegs[PM2VDACRDDACControl] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDDACControl);
-    glintReg->DacRegs[PM2VDACRDPixelSize] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDPixelSize);
-    glintReg->DacRegs[PM2VDACRDColorFormat] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDColorFormat);
-
-    glintReg->DacRegs[PM2VDACRDDClk0PreScale] = Permedia2vInIndReg(pScrn, PM2VDACRDDClk0PreScale);
-    glintReg->DacRegs[PM2VDACRDDClk0FeedbackScale] = Permedia2vInIndReg(pScrn, PM2VDACRDDClk0FeedbackScale);
-    glintReg->DacRegs[PM2VDACRDDClk0PostScale] = Permedia2vInIndReg(pScrn, PM2VDACRDDClk0PostScale);
+    SAVEREG(PM2VDACRDIndexControl);
+    P2VIN(PM2VDACRDOverlayKey);
+    P2VIN(PM2VDACRDSyncControl);
+    P2VIN(PM2VDACRDMiscControl);
+    P2VIN(PM2VDACRDDACControl);
+    P2VIN(PM2VDACRDPixelSize);
+    P2VIN(PM2VDACRDColorFormat);
+    P2VIN(PM2VDACRDDClk0PreScale);
+    P2VIN(PM2VDACRDDClk0FeedbackScale);
+    P2VIN(PM2VDACRDDClk0PostScale);
 }
 
 void
-Permedia3Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
+Permedia3Restore(ScrnInfoPtr pScrn, GLINTRegPtr pReg)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
     CARD32 temp;
     int i;
 
-#if 0
-    GLINT_SLOW_WRITE_REG(0, ResetStatus);
-    while(GLINT_READ_REG(ResetStatus) != 0) {
-	xf86MsgVerb(X_INFO, 2, "Resetting Engine - Please Wait.\n");
-    };
-#endif
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    if (pGlint->STATE)
+	xf86SlowBcopy((CARD8*)pGlint->VGAdata, (CARD8*)pGlint->FbBase, 65536);
+
+    if ((pGlint->numMultiDevices == 2) || (IS_J2000)) {
+	RESTOREREG(GCSRAperture);
+    }
+
+    if (pGlint->MultiAperture) {
+	RESTOREREG(GMultGLINTAperture);
+	RESTOREREG(GMultGLINT1);
+	RESTOREREG(GMultGLINT2);
+    }
 
     /* Permedia 3 memory Timings */
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PM3MemBypassWriteMask >> 3],
-		    					PM3MemBypassWriteMask);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PM3ByAperture1Mode >> 3],
-	    						PM3ByAperture1Mode);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PM3ByAperture2Mode >> 3],
-	    						PM3ByAperture2Mode);
+    RESTOREREG(PM3MemBypassWriteMask);
+    RESTOREREG(PM3ByAperture1Mode);
+    RESTOREREG(PM3ByAperture2Mode);
+    RESTOREREG(ChipConfig);
+    RESTOREREG(Aperture0);
+    RESTOREREG(Aperture1);
+    RESTOREREG(PM3FifoControl);
+    if (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)
+    	RESTOREREG(DFIFODis);
+    RESTOREREG(FIFODis);
+    RESTOREREG(PMVideoControl);
+    RESTOREREG(PMHbEnd);
+    RESTOREREG(PMHgEnd);
+    RESTOREREG(PMScreenBase);
+    RESTOREREG(VClkCtl);
+    RESTOREREG(PMScreenStride);
+    RESTOREREG(PMHTotal);
+    RESTOREREG(PMHsStart);
+    RESTOREREG(PMHsEnd);
+    RESTOREREG(PMVTotal);
+    RESTOREREG(PMVbEnd);
+    RESTOREREG(PMVsStart);
+    RESTOREREG(PMVsEnd);
 
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[ChipConfig >> 3], ChipConfig);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture0 >> 3], Aperture0);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture1 >> 3], Aperture1);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[DFIFODis >> 3], DFIFODis);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[FIFODis >> 3], FIFODis);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVideoControl >> 3], 
-								PMVideoControl);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHbEnd >> 3], PMHgEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMScreenBase >> 3], PMScreenBase);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[VClkCtl >> 3], VClkCtl);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMScreenStride >> 3], 
-								PMScreenStride);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHTotal >> 3], PMHTotal);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHbEnd >> 3], PMHbEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHsStart >> 3], PMHsStart);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHsEnd >> 3], PMHsEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVTotal >> 3], PMVTotal);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVbEnd >> 3], PMVbEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVsStart >> 3], PMVsStart);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVsEnd >> 3], PMVsEnd);
-#if 0 /* Currently commented out while testing Flat Panel support */
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[VSConfiguration >> 3], VSConfiguration);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[VSBBase >> 3], VSBBase);
-#endif
+    if (pGlint->UseFlatPanel) {
+    	RESTOREREG(VSConfiguration);
+    	RESTOREREG(VSBBase);
+    }
 
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PM2VDACRDIndexControl >> 3], PM2VDACRDIndexControl);
-
-    Permedia2vOutIndReg(pScrn, PM2VDACRDOverlayKey, 0x00, 
-				glintReg->DacRegs[PM2VDACRDOverlayKey]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDSyncControl, 0x00, 
-				glintReg->DacRegs[PM2VDACRDSyncControl]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDMiscControl, 0x00, 
-				glintReg->DacRegs[PM2VDACRDMiscControl]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDDACControl, 0x00, 
-				glintReg->DacRegs[PM2VDACRDDACControl]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDPixelSize, 0x00, 
-				glintReg->DacRegs[PM2VDACRDPixelSize]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDColorFormat, 0x00, 
-				glintReg->DacRegs[PM2VDACRDColorFormat]);
+    RESTOREREG(PM2VDACRDIndexControl);
+    P2VOUT(PM2VDACRDOverlayKey);
+    P2VOUT(PM2VDACRDSyncControl);
+    P2VOUT(PM2VDACRDMiscControl);
+    P2VOUT(PM2VDACRDDACControl);
+    P2VOUT(PM2VDACRDPixelSize);
+    P2VOUT(PM2VDACRDColorFormat);
 
     for (i=0;i<768;i++) {
     	Permedia2WriteAddress(pScrn, i);
-	Permedia2WriteData(pScrn, glintReg->cmap[i]);
+	Permedia2WriteData(pScrn, pReg->cmap[i]);
     }
 
     temp = Permedia2vInIndReg(pScrn, PM2VDACIndexClockControl) & 0xFC;
-    Permedia2vOutIndReg(pScrn, PM2VDACRDDClk0PreScale, 0x00, 
-	glintReg->DacRegs[PM2VDACRDDClk0PreScale]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDDClk0FeedbackScale, 0x00, 
-	glintReg->DacRegs[PM2VDACRDDClk0FeedbackScale]);
-    Permedia2vOutIndReg(pScrn, PM2VDACRDDClk0PostScale, 0x00, 
-	glintReg->DacRegs[PM2VDACRDDClk0PostScale]);
+    P2VOUT(PM2VDACRDDClk0PreScale);
+    P2VOUT(PM2VDACRDDClk0FeedbackScale);
+    P2VOUT(PM2VDACRDDClk0PostScale);
     Permedia2vOutIndReg(pScrn, PM2VDACIndexClockControl, 0x00, temp|0x03);
+}
+
+void Permedia3LoadPalette(
+    ScrnInfoPtr pScrn, 
+    int numColors, 
+    int *indices,
+    LOCO *colors,
+    VisualPtr pVisual
+){
+#if 0 /* NOT YET */
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+#endif
+    int i, index, shift = 0, j, repeat = 1;
+
+    if (pScrn->depth == 15) {
+	repeat = 8;
+	shift = 3;
+    }
+
+    for(i = 0; i < numColors; i++) {
+	index = indices[i];
+	for (j = 0; j < repeat; j++) {
+	    Permedia2WriteAddress(pScrn, (index << shift)+j);
+	    Permedia2WriteData(pScrn, colors[index].red);
+	    Permedia2WriteData(pScrn, colors[index].green);
+	    Permedia2WriteData(pScrn, colors[index].blue);
+	}
+	/* for video i/o */
+#if 0 /* NOT YET */
+        GLINT_SLOW_WRITE_REG(index, PM3LUTIndex);
+	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
+			     ((colors[index].green & 0xFF) << 8) |
+			     ((colors[index].blue & 0xFF) << 16),
+			     PM3LUTData);
+#endif
+    }
+}
+
+/* special one for 565 mode */
+void Permedia3LoadPalette16(
+    ScrnInfoPtr pScrn, 
+    int numColors, 
+    int *indices,
+    LOCO *colors,
+    VisualPtr pVisual
+){
+#if 0 /* NOT YET */
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+#endif
+    int i, index, j;
+
+    for(i = 0; i < numColors; i++) {
+	index = indices[i];
+	for (j = 0; j < 4; j++) {
+	    Permedia2WriteAddress(pScrn, (index << 2)+j);
+	    Permedia2WriteData(pScrn, colors[index >> 1].red);
+	    Permedia2WriteData(pScrn, colors[index].green);
+	    Permedia2WriteData(pScrn, colors[index >> 1].blue);
+	}
+#if 0 /* NOT YET */
+        GLINT_SLOW_WRITE_REG(index, PM3LUTIndex);
+	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
+			     ((colors[index].green & 0xFF) << 8) |
+			     ((colors[index].blue & 0xFF) << 16),
+			     PM3LUTData);
+#endif
+
+	if(index <= 31) {
+	    for (j = 0; j < 4; j++) {
+	    	Permedia2WriteAddress(pScrn, (index << 3)+j);
+	    	Permedia2WriteData(pScrn, colors[index].red);
+	    	Permedia2WriteData(pScrn, colors[(index << 1) + 1].green);
+	    	Permedia2WriteData(pScrn, colors[index].blue);
+	    }
+	}
+    }
 }

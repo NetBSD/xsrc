@@ -1,4 +1,4 @@
-/* $TOG: miNCurve.c /main/4 1998/02/10 12:41:43 kaleb $ */
+/* $Xorg: miNCurve.c,v 1.3 2000/08/17 19:47:06 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNCurve.c,v 3.5 1998/07/26 13:13:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNCurve.c,v 3.7 2001/01/17 22:12:23 dawes Exp $ */
 
 #include "mipex.h"
 #include "misc.h"

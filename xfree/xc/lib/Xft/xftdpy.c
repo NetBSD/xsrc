@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftdpy.c,v 1.3 2000/12/14 23:03:54 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftdpy.c,v 1.7 2001/04/29 03:21:17 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,6 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <X11/Xlibint.h>
@@ -81,6 +82,34 @@ _XftDisplayInfoGet (Display *dpy)
     info->defaults = 0;
     info->coreFonts = 0;
     info->hasRender = XRenderFindVisualFormat (dpy, DefaultVisual (dpy, DefaultScreen (dpy))) != 0;
+    if (_XftFontDebug () & XFT_DBG_RENDER)
+    {
+	Visual		    *visual = DefaultVisual (dpy, DefaultScreen (dpy));
+	XRenderPictFormat   *format = XRenderFindVisualFormat (dpy, visual);
+	
+	printf ("XftDisplayInfoGet Default visual 0x%x ", 
+		(int) visual->visualid);
+	if (format)
+	{
+	    if (format->type == PictTypeDirect)
+	    {
+		printf ("format %d,%d,%d,%d\n",
+			format->direct.alpha,
+			format->direct.red,
+			format->direct.green,
+			format->direct.blue);
+	    }
+	    else
+	    {
+		printf ("format indexed\n");
+	    }
+	}
+	else
+	    printf ("No Render format for default visual\n");
+	
+	printf ("XftDisplayInfoGet initialized, hasRender set to \"%s\"\n",
+		info->hasRender ? "True" : "False");
+    }
     
     info->next = _XftDisplayInfo;
     _XftDisplayInfo = info;
@@ -89,6 +118,10 @@ _XftDisplayInfoGet (Display *dpy)
 bail1:
     free (info);
 bail0:
+    if (_XftFontDebug () & XFT_DBG_RENDER)
+    {
+	printf ("XftDisplayInfoGet failed to initialize, Xft unhappy\n");
+    }
     return 0;
 }
 
@@ -203,11 +236,15 @@ _XftDefaultInit (Display *dpy)
 	goto bail1;
     if (!_XftDefaultInitDouble (dpy, pat, XFT_SCALE))
 	goto bail1;
+    if (!_XftDefaultInitDouble (dpy, pat, XFT_DPI))
+	goto bail1;
     if (!_XftDefaultInitBool (dpy, pat, XFT_RENDER))
 	goto bail1;
     if (!_XftDefaultInitInteger (dpy, pat, XFT_RGBA))
 	goto bail1;
     if (!_XftDefaultInitBool (dpy, pat, XFT_ANTIALIAS))
+	goto bail1;
+    if (!_XftDefaultInitBool (dpy, pat, XFT_MINSPACE))
 	goto bail1;
     
     return pat;
@@ -344,9 +381,16 @@ XftDefaultSubstitute (Display *dpy, int screen, XftPattern *pattern)
 			      XftDefaultGetInteger (dpy, XFT_RGBA, screen, 
 						    XFT_RGBA_NONE));
     }
+    if (XftPatternGet (pattern, XFT_MINSPACE, 0, &v) == XftResultNoMatch)
+    {
+	XftPatternAddBool (pattern, XFT_MINSPACE,
+			   XftDefaultGetBool (dpy, XFT_MINSPACE, screen,
+					      False));
+    }
     if (XftPatternGet (pattern, XFT_PIXEL_SIZE, 0, &v) == XftResultNoMatch)
     {
 	int	pixels, mm;
+	double	dpi;
 
 	if (XftPatternGet (pattern, XFT_SIZE, 0, &v) != XftResultMatch)
 	{
@@ -369,11 +413,12 @@ XftDefaultSubstitute (Display *dpy, int screen, XftPattern *pattern)
 	}
 	scale = XftDefaultGetDouble (dpy, XFT_SCALE, screen, 1.0);
 	size *= scale;
-	pixels = DisplayHeight (dpy, DefaultScreen (dpy));
-	mm = DisplayHeightMM (dpy, DefaultScreen (dpy));
-	size = size / 72.0;
-	size = size * 25.4;
-	size = size * pixels / mm;
+	pixels = DisplayHeight (dpy, screen);
+	mm = DisplayHeightMM (dpy, screen);
+	dpi = (((double) DisplayHeight (dpy, screen) * 25.4) / 
+	       (double) DisplayHeightMM (dpy, screen));
+	dpi = XftDefaultGetDouble (dpy, XFT_DPI, screen, dpi);
+	size = size * dpi / 72.0;
 	XftPatternAddDouble (pattern, XFT_PIXEL_SIZE, size);
     }
 }

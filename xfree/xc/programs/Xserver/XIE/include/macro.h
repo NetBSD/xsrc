@@ -1,4 +1,4 @@
-/* $TOG: macro.h /main/8 1998/02/10 10:27:54 kaleb $ */
+/* $Xorg: macro.h,v 1.3 2000/08/17 19:47:33 cpqbld Exp $ */
 /**** module macro.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc.  March 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/include/macro.h,v 1.7 1998/10/05 13:22:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/include/macro.h,v 1.9 2001/01/17 22:12:58 dawes Exp $ */
 
 #ifndef _XIEH_MACRO
 #define _XIEH_MACRO

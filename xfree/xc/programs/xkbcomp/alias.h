@@ -1,4 +1,4 @@
-/* $XConsortium: alias.h /main/3 1996/12/27 21:16:25 kaleb $ */
+/* $Xorg: alias.h,v 1.3 2000/08/17 19:54:30 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

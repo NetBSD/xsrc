@@ -1,16 +1,15 @@
 [PLEASE make your Subject: line as descriptive as possible.
 Subjects like "xterm bug" or "bug report" are not helpful!]
 [Remove all the explanatory text in brackets before mailing.]
-[Send to xbugs@opengroup.org, as shown in the sample message 
+[Send to xbugs@x.org, as shown in the sample message 
 header below]
 
-To: xbugs@opengroup.org
+To: xbugs@x.org
 Subject: [area]: [synopsis]   [replace with actual area and short description]
 
      VERSION:
 
-R6.4, public-patch-3
-[X Project Team public patches edit this line to indicate the patch level]
+R6.5.1, public-patch-1
 
      CLIENT MACHINE and OPERATING SYSTEM:
 

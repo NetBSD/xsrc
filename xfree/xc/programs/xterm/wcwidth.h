@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/xterm/wcwidth.h,v 1.1 2000/08/26 04:33:55 dawes Exp $ */
 
 #ifndef	included_wcwidth_h
 #define	included_wcwidth_h 1

@@ -1,4 +1,4 @@
-/* $TOG: io.c /main/19 1998/02/11 10:06:43 kaleb $ */
+/* $Xorg: io.c,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
  * i/o functions
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/io.c,v 3.10 2000/02/13 06:15:46 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/io.c,v 3.12 2001/01/17 23:45:32 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdio.h>

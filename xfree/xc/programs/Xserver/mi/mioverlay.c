@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mioverlay.c,v 3.7 2000/05/20 18:04:28 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mioverlay.c,v 3.10 2001/04/14 21:15:26 mvojkovi Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"
@@ -45,7 +45,7 @@ typedef struct {
    UnrealizeWindowProcPtr	UnrealizeWindow;
    RealizeWindowProcPtr		RealizeWindow;
    miOverlayTransFunc		MakeTransparent;
-   int				overlayDepth;
+   miOverlayInOverlayFunc	InOverlay;
    Bool				underlayMarked;
    Bool				copyUnderlay;
 } miOverlayScreenRec, *miOverlayScreenPtr;
@@ -90,9 +90,6 @@ static void miOverlayChangeBorderWidth(WindowPtr, unsigned int);
 #define IN_UNDERLAY(w) MIOVERLAY_GET_WINDOW_TREE(w)
 #define IN_OVERLAY(w) !MIOVERLAY_GET_WINDOW_TREE(w)
 
-#define OVERLAY_DEPTH(s) \
-	(MIOVERLAY_GET_SCREEN_PRIVATE(s)->overlayDepth)
-
 #define MARK_OVERLAY(w) miMarkWindow(w)
 #define MARK_UNDERLAY(w) MarkUnderlayWindow(w)
 
@@ -103,12 +100,12 @@ static void miOverlayChangeBorderWidth(WindowPtr, unsigned int);
 Bool
 miInitOverlay(
     ScreenPtr pScreen, 
-    int overlayDepth, 
+    miOverlayInOverlayFunc inOverlayFunc,
     miOverlayTransFunc transFunc
 ){
     miOverlayScreenPtr	pScreenPriv;
 
-    if(!overlayDepth || !transFunc) return FALSE;
+    if(!inOverlayFunc || !transFunc) return FALSE;
 
     if(miOverlayGeneration != serverGeneration) {
 	if(((miOverlayScreenIndex = AllocateScreenPrivateIndex()) < 0) ||
@@ -127,7 +124,7 @@ miInitOverlay(
 
     pScreen->devPrivates[miOverlayScreenIndex].ptr = (pointer)pScreenPriv;
 
-    pScreenPriv->overlayDepth = overlayDepth;
+    pScreenPriv->InOverlay = inOverlayFunc;
     pScreenPriv->MakeTransparent = transFunc;
     pScreenPriv->underlayMarked = FALSE;
 
@@ -169,10 +166,10 @@ miOverlayCloseScreen(int i, ScreenPtr pScreen)
    miOverlayScreenPtr pScreenPriv = MIOVERLAY_GET_SCREEN_PRIVATE(pScreen);
 
    pScreen->CloseScreen = pScreenPriv->CloseScreen; 
-   pScreen->CreateWindow = pScreen->CreateWindow;
-   pScreen->DestroyWindow = pScreen->DestroyWindow;
-   pScreen->UnrealizeWindow = pScreen->UnrealizeWindow;
-   pScreen->RealizeWindow = pScreen->RealizeWindow;
+   pScreen->CreateWindow = pScreenPriv->CreateWindow;
+   pScreen->DestroyWindow = pScreenPriv->DestroyWindow;
+   pScreen->UnrealizeWindow = pScreenPriv->UnrealizeWindow;
+   pScreen->RealizeWindow = pScreenPriv->RealizeWindow;
 
    xfree(pScreenPriv);
 
@@ -191,7 +188,7 @@ miOverlayCreateWindow(WindowPtr pWin)
 
     pWinPriv->tree = NULL;
 
-    if(!pWin->parent || (pWin->drawable.depth != OVERLAY_DEPTH(pScreen))) {
+    if(!pWin->parent || !((*pScreenPriv->InOverlay)(pWin))) {
 	if(!(pTree = (miOverlayTreePtr)xcalloc(1, sizeof(miOverlayTreeRec))))
 	   return FALSE;
     }
@@ -293,10 +290,9 @@ miOverlayRealizeWindow(WindowPtr pWin)
 	pScreen->RealizeWindow = miOverlayRealizeWindow;
     }
 
-    /* we only need to cache the root window realization */
+    /* we only need to catch the root window realization */
 
-    if(result && !pWin->parent && 
-       (pWin->drawable.depth != pScreenPriv->overlayDepth)) 
+    if(result && !pWin->parent && !((*pScreenPriv->InOverlay)(pWin)))
     {
 	BoxRec box;
 	box.x1 = box.y1 = 0;
@@ -806,7 +802,7 @@ miOverlayValidateTree(
 
     REGION_UNINIT(pScreen, &childClip);
 
-    if(newParent->drawable.depth != pPriv->overlayDepth) {
+    if(!((*pPriv->InOverlay)(newParent))) {
 	REGION_INIT(pScreen, &tParent->valdata->exposed, NullBox, 0);
 	REGION_INIT(pScreen, &tParent->valdata->borderExposed, NullBox, 0);
     }
@@ -815,13 +811,13 @@ miOverlayValidateTree(
     case VTStack:
 	break;
     default:
-	if(newParent->drawable.depth != pPriv->overlayDepth)
+    	if(!((*pPriv->InOverlay)(newParent))) 
 	    REGION_SUBTRACT(pScreen, &tParent->valdata->exposed, &totalClip, 
 						&tParent->clipList);
 	/* fall through */
     case VTMap:
 	REGION_COPY( pScreen, &tParent->clipList, &totalClip);
-	if(newParent->drawable.depth != pPriv->overlayDepth)
+    	if(!((*pPriv->InOverlay)(newParent))) 
 	    newParent->drawable.serialNumber = NEXT_SERIAL_NUMBER;
 	break;
     }
@@ -859,7 +855,7 @@ miOverlayHandleExposures(WindowPtr pWin)
 
 	while (1) {
 	    if((mival = pTree->valdata)) {
-		if(pTree->pWin->drawable.depth != pPriv->overlayDepth) {
+		if(!((*pPriv->InOverlay)(pTree->pWin))) {
 		    if (REGION_NOTEMPTY(pScreen, &mival->borderExposed))
 			(*pWin->drawable.pScreen->PaintWindowBorder)(
 				pTree->pWin, &mival->borderExposed, PW_BORDER);
@@ -887,7 +883,7 @@ miOverlayHandleExposures(WindowPtr pWin)
     pChild = pWin;
     while (1) {
 	if ( (val = pChild->valdata) ) {
-	    if(pChild->drawable.depth != pPriv->overlayDepth) {
+	    if(!((*pPriv->InOverlay)(pChild))) {
 		REGION_UNION(pScreen, &val->after.exposed, &val->after.exposed,
 			&val->after.borderExposed);
 
@@ -1041,6 +1037,7 @@ miOverlayWindowExposures(
 	if (clientInterested && exposures && 
 	   (REGION_NUM_RECTS(exposures) > RECTLIMIT))
 	{
+            miOverlayScreenPtr pPriv = MIOVERLAY_GET_SCREEN_PRIVATE(pScreen);
 	    BoxRec box;
 
 	    box = *REGION_EXTENTS(pScreen, exposures);
@@ -1055,7 +1052,7 @@ miOverlayWindowExposures(
 	    /* This is the only reason why we are replacing mi's version
                of this file */
 	    
-	    if(pWin->drawable.depth != OVERLAY_DEPTH(pScreen)) {
+	    if(!((*pPriv->InOverlay)(pWin))) {
 		miOverlayTreePtr pTree = MIOVERLAY_GET_WINDOW_TREE(pWin);
 		REGION_INTERSECT(pScreen, prgn, prgn, &pTree->clipList);
 	    } else

@@ -1,4 +1,4 @@
-/* $XConsortium: PclSFonts.c /main/2 1996/12/30 14:57:11 kaleb $ */
+/* $Xorg: PclSFonts.c,v 1.3 2000/08/17 19:48:08 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -45,7 +45,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclSFonts.c,v 1.3 1996/12/31 07:06:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclSFonts.c,v 1.5 2001/01/17 22:36:30 dawes Exp $ */
 
 
 #include <stdio.h>

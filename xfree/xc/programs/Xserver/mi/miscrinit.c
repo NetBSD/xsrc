@@ -1,4 +1,4 @@
-/* $TOG: miscrinit.c /main/14 1998/02/09 14:48:39 kaleb $ */
+/* $Xorg: miscrinit.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.10 1999/10/13 22:33:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.13 2001/01/17 22:37:07 dawes Exp $ */
 
 #include "X.h"
 #include "servermd.h"

@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $XFree86: xc/programs/xedit/realpath.c,v 1.3 1999/06/14 02:38:07 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/realpath.c,v 1.4 2000/02/12 20:45:45 dawes Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)realpath.c	8.1 (Berkeley) 2/16/94";

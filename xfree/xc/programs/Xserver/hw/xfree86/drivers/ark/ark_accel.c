@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_accel.c,v 1.3 2000/11/14 17:28:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_accel.c,v 1.5 2001/01/29 15:15:44 keithp Exp $ */
 /*
  *      Copyright 2000  Ani Joshi <ajoshi@unixbox.com>
  *
@@ -187,7 +187,6 @@ Bool ARKAccelInit(ScreenPtr pScreen)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	ARKPtr pARK = ARKPTR(pScrn);
-	vgaHWPtr hwp = VGAHWPTR(pScrn);
 	XAAInfoRecPtr pXAA;
 
 	if (!(pXAA = XAACreateInfoRec()))

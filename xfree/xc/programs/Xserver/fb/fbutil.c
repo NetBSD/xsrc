@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbutil.c,v 1.3 2000/02/14 19:20:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbutil.c,v 1.5 2001/03/28 14:37:03 alanh Exp $ */
 
 #include "fb.h"
 
@@ -176,6 +176,20 @@ const FbMergeRopRec FbMergeRopBits[16] = {
      SelMask(b,6,w) | \
      SelMask(b,7,w))
 
+#if FB_UNIT == 16
+#define fbStipple16Bits 0
+#define fbStipple8Bits 0
+const FbBits fbStipple4Bits[16] = {
+    C4(  0,4), C4(  1,4), C4(  2,4), C4(  3,4), C4(  4,4), C4(  5,4),
+    C4(  6,4), C4(  7,4), C4(  8,4), C4(  9,4), C4( 10,4), C4( 11,4),
+    C4( 12,4), C4( 13,4), C4( 14,4), C4( 15,4),};
+const FbBits fbStipple2Bits[4] = {
+    C2(  0,8), C2(  1,8), C2(  2,8), C2(  3,8),
+};
+const FbBits fbStipple1Bits[2] = {
+    C1(  0,16), C1(  1,16),
+};
+#endif
 #if FB_UNIT == 32
 #define fbStipple16Bits 0
 const FbBits fbStipple8Bits[256] = {

@@ -1,9 +1,9 @@
 dnl
-dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.36 2000/11/01 01:12:36 dawes Exp $
+dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.40 2001/04/28 13:51:55 dickey Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
-dnl Copyright 1997-2000 by Thomas E. Dickey
+dnl Copyright 1997-2001 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -32,8 +32,14 @@ AC_DEFUN([CF_ADD_CFLAGS],
 for cf_add_cflags in $1
 do
 	case $cf_add_cflags in #(vi
-	-I*|-D*|-U*|-E|-P|-C) #(vi
-		CPPFLAGS="$CPPFLAGS $cf_add_cflags"
+	-undef|-nostdinc*|-I*|-D*|-U*|-E|-P|-C) #(vi
+		case "$CPPFLAGS" in
+		*$cf_add_cflags)
+			;;
+		*)
+			CPPFLAGS="$CPPFLAGS $cf_add_cflags"
+			;;
+		esac
 		;;
 	*)
 		CFLAGS="$CFLAGS $cf_add_cflags"
@@ -87,7 +93,7 @@ AC_MSG_RESULT($cf_cv_ansi_cc)
 
 if test "$cf_cv_ansi_cc" != "no"; then
 if test ".$cf_cv_ansi_cc" != ".-DCC_HAS_PROTOS"; then
-	CFLAGS="$CFLAGS $cf_cv_ansi_cc"
+	CF_ADD_CFLAGS($cf_cv_ansi_cc)
 else
 	AC_DEFINE(CC_HAS_PROTOS)
 fi
@@ -385,7 +391,6 @@ EOF
 if test "$GCC" = yes
 then
 	AC_CHECKING([for $CC __attribute__ directives])
-	changequote(,)dnl
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "configure"
 #include "confdefs.h"
@@ -404,9 +409,8 @@ cat > conftest.$ac_ext <<EOF
 extern void wow(char *,...) GCC_SCANFLIKE(1,2);
 extern void oops(char *,...) GCC_PRINTFLIKE(1,2) GCC_NORETURN;
 extern void foo(void) GCC_NORETURN;
-int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED) { return 0; }
+int main(int argc GCC_UNUSED, char *argv[[]] GCC_UNUSED) { return 0; }
 EOF
-	changequote([,])dnl
 	for cf_attribute in scanf printf unused noreturn
 	do
 		CF_UPPER(CF_ATTRIBUTE,$cf_attribute)
@@ -451,12 +455,10 @@ AC_DEFUN([CF_GCC_WARNINGS],
 [
 if test "$GCC" = yes
 then
-	changequote(,)dnl
 	cat > conftest.$ac_ext <<EOF
 #line __oline__ "configure"
-int main(int argc, char *argv[]) { return (argv[argc-1] == 0) ; }
+int main(int argc, char *argv[[]]) { return (argv[[argc-1]] == 0) ; }
 EOF
-	changequote([,])dnl
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
 	EXTRA_CFLAGS="-W -Wall"
@@ -539,6 +541,7 @@ esac
 # config directory.
 if mkdir conftestdir; then
 	cf_makefile=`cd $srcdir;pwd`/Imakefile
+	CDPATH=; export CDPATH
 	cd conftestdir
 	echo >./Imakefile
 	test -f $cf_makefile && cat $cf_makefile >>./Imakefile
@@ -931,9 +934,7 @@ dnl Make an uppercase version of a variable
 dnl $1=uppercase($2)
 AC_DEFUN([CF_UPPER],
 [
-changequote(,)dnl
 $1=`echo "$2" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%`
-changequote([,])dnl
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl Try to link with utempter library
@@ -1206,6 +1207,31 @@ CF_UPPER(CF_X_ATHENA_LIBS,HAVE_LIB_$cf_x_athena)
 AC_DEFINE_UNQUOTED($CF_X_ATHENA_LIBS)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl Check for X freetype libraries (XFree86 4.x)
+AC_DEFUN([CF_X_FREETYPE],
+[
+cf_freetype_libs="-lXft -lfreetype -lXrender -lXrender"
+AC_CACHE_CHECK(for X FreeType libraries,cf_cv_x_freetype,[
+
+cf_save_LIBS="$LIBS"
+LIBS="$cf_freetype_libs $LIBS"
+
+AC_TRY_LINK([
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrender.h>
+#include <X11/Xft/Xft.h>],[
+	XftPattern  *pat = XftNameParse ("name");
+	],[cf_cv_x_freetype=yes],[cf_cv_x_freetype=no])
+	LIBS="$cf_save_LIBS"
+])
+if test "$cf_cv_x_freetype" = yes ; then
+	LIBS="$cf_freetype_libs $LIBS"
+	AC_DEFINE(XRENDERFONT)
+else
+	CPPFLAGS=`echo "$CPPFLAGS" | sed -e s/-DXRENDERFONT//`
+fi
+])
+dnl ---------------------------------------------------------------------------
 dnl Check for X Toolkit libraries
 dnl
 AC_DEFUN([CF_X_TOOLKIT],
@@ -1218,9 +1244,7 @@ AC_REQUIRE([CF_CHECK_CACHE])
 SYSTEM_NAME=`echo "$cf_cv_system_name"|tr ' ' -`
 cf_have_X_LIBS=no
 case $SYSTEM_NAME in
-changequote(,)dnl
-irix[56]*) ;;
-changequote([,])dnl
+irix[[56]]*) ;;
 clix*)
 	# FIXME: modify the library lookup in autoconf to
 	# allow _s.a suffix ahead of .a
@@ -1246,7 +1270,7 @@ esac
 if test $cf_have_X_LIBS = no ; then
 	AC_PATH_XTRA
 	LDFLAGS="$LDFLAGS $X_LIBS"
-	CFLAGS="$CFLAGS $X_CFLAGS"
+	CF_ADD_CFLAGS($X_CFLAGS)
 	AC_CHECK_LIB(X11,XOpenDisplay,
 		[LIBS="-lX11 $LIBS"],,
 		[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])
@@ -1257,7 +1281,7 @@ if test $cf_have_X_LIBS = no ; then
 		[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])
 else
 	LDFLAGS="$LDFLAGS $X_LIBS"
-	CFLAGS="$CFLAGS $X_CFLAGS"
+	CF_ADD_CFLAGS($X_CFLAGS)
 fi
 
 if test $cf_have_X_LIBS = no ; then

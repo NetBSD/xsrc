@@ -1,4 +1,4 @@
-/* $TOG: XI.h /main/17 1998/02/09 11:20:09 kaleb $ */
+/* $Xorg: XI.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/include/extensions/XI.h,v 1.4 2001/01/17 17:53:16 dawes Exp $ */
 
 /* Definitions used by the server, library and client */
 

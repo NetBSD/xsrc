@@ -1,4 +1,4 @@
-/* $TOG: selection.h /main/4 1998/02/09 14:30:04 kaleb $ */
+/* $Xorg: selection.h,v 1.3 2000/08/17 19:53:30 cpqbld Exp $ */
 #ifndef SELECTION_H
 #define SELECTION_H 1
 

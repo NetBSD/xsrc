@@ -1,5 +1,5 @@
 LIBRARY DPSTK
-DESCRIPTION "@#XFREE86:4.0#@ $XFree86$"
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/dpstk/dpstkos2.def,v 1.1 2000/04/05 18:13:23 dawes Exp $"
 CODE
 	PRELOAD
 DATA

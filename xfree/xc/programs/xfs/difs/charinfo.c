@@ -1,4 +1,4 @@
-/* $TOG: charinfo.c /main/18 1998/04/15 09:41:34 msr $ */
+/* $Xorg: charinfo.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
@@ -45,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * This file was once on the other side of
  * the font library interface as util/fsfuncs.c.
  */
-/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.7 1999/08/22 07:19:44 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.9 2001/01/17 23:45:28 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include "misc.h"

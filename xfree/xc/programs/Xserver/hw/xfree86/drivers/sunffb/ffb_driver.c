@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c,v 1.6 2000/12/01 00:24:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c,v 1.9 2001/05/04 19:05:46 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -40,7 +40,7 @@
 
 #include "ffb.h"
 
-static OptionInfoPtr FFBAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * FFBAvailableOptions(int chipid, int busid);
 static void	FFBIdentify(int flags);
 static Bool	FFBProbe(DriverPtr drv, int flags);
 static Bool	FFBPreInit(ScrnInfoPtr pScrn, int flags);
@@ -97,7 +97,7 @@ typedef enum {
     OPTION_NOACCEL
 } FFBOpts;
 
-static OptionInfoRec FFBOptions[] = {
+static const OptionInfoRec FFBOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -182,8 +182,7 @@ FFBFreeRec(ScrnInfoPtr pScrn)
     return;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 FFBAvailableOptions(int chipid, int busid)
 {
     return FFBOptions;
@@ -358,7 +357,10 @@ FFBPreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, FFBOptions);
+    if (!(pFfb->Options = xalloc(sizeof(FFBOptions))))
+	return FALSE;
+    memcpy(pFfb->Options, FFBOptions, sizeof(FFBOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pFfb->Options);
     
     /*
      * This must happen after pScrn->display has been set because
@@ -394,9 +396,9 @@ FFBPreInit(ScrnInfoPtr pScrn, int flags)
     /* determine whether we use hardware or software cursor */
     
     pFfb->HWCursor = TRUE;
-    if (xf86GetOptValBool(FFBOptions, OPTION_HW_CURSOR, &pFfb->HWCursor))
+    if (xf86GetOptValBool(pFfb->Options, OPTION_HW_CURSOR, &pFfb->HWCursor))
 	from = X_CONFIG;
-    if (xf86ReturnOptValBool(FFBOptions, OPTION_SW_CURSOR, FALSE)) {
+    if (xf86ReturnOptValBool(pFfb->Options, OPTION_SW_CURSOR, FALSE)) {
 	from = X_CONFIG;
 	pFfb->HWCursor = FALSE;
     }
@@ -404,7 +406,7 @@ FFBPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pFfb->HWCursor ? "HW" : "SW");
 
-    if (xf86ReturnOptValBool(FFBOptions, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(pFfb->Options, OPTION_NOACCEL, FALSE)) {
 	pFfb->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
@@ -818,7 +820,8 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
 
 #ifdef XF86DRI
-    if (pFfb->ffb_type != afb_m3 && pFfb->ffb_type != afb_m6) {
+    if (pFfb->ffb_type != afb_m3 && pFfb->ffb_type != afb_m6 &&
+	pFfb->NoAccel == FALSE) {
 	    pFfb->dri_enabled = FFBDRIScreenInit(pScreen);
 	    if (pFfb->dri_enabled == TRUE)
 		    xf86Msg(X_INFO, "%s: DRM initialized\n",
@@ -912,7 +915,8 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     /* Setup DGA support. */
-    FFB_InitDGA(pScreen);
+    if (!pFfb->NoAccel)
+	    FFB_InitDGA(pScreen);
 
 #ifdef XF86DRI
     if (pFfb->dri_enabled) {

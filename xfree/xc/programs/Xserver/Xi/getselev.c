@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.2 1996/04/15 11:18:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.4 2001/01/17 22:13:25 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -41,7 +41,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $TOG: getselev.c /main/9 1998/02/09 15:29:30 kaleb $ */
+/* $Xorg: getselev.c,v 1.3 2000/08/17 19:48:01 cpqbld Exp $ */
 
 /***********************************************************************
  *

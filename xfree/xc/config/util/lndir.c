@@ -1,4 +1,4 @@
-/* $TOG: lndir.c /main/17 1998/02/06 11:23:50 kaleb $ */
+/* $Xorg: lndir.c,v 1.4 2000/08/17 19:41:52 cpqbld Exp $ */
 /* Create shadow link tree (after X11R4 script of the same name)
    Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 */
 
@@ -22,7 +22,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/util/lndir.c,v 3.8 1998/10/05 13:21:51 dawes Exp $ */
+/* $XFree86: xc/config/util/lndir.c,v 3.13 2001/04/01 13:59:57 tsi Exp $ */
 
 /* From the original /bin/sh script:
 
@@ -42,6 +42,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xos.h>
 #include <X11/Xfuncproto.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #if !defined(MINIX) && !defined(Lynx)
 #include <sys/param.h>
@@ -205,6 +206,12 @@ dodir (char *fn,		/* name of "from" directory, either absolute or
     while ((dp = readdir (df))) {
 	if (dp->d_name[strlen(dp->d_name) - 1] == '~')
 	    continue;
+#ifdef __DARWIN__
+	/* Ignore these Mac OS X Finder data files */
+	if (!strcmp(dp->d_name, ".DS_Store") || 
+	    !strcmp(dp->d_name, "._.DS_Store")) 
+	    continue;
+#endif
 	strcpy (p, dp->d_name);
 
 	if (n_dirs > 0) {

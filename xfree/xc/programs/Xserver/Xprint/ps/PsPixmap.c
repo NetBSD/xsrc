@@ -1,4 +1,4 @@
-/* $TOG: PsPixmap.c /main/3 1998/02/09 15:43:09 kaleb $ */
+/* $Xorg: PsPixmap.c,v 1.3 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -53,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixmap.c,v 1.2 1999/01/31 12:21:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixmap.c,v 1.4 2001/01/17 22:36:32 dawes Exp $ */
 /*******************************************************************
 **
 **    *********************************************************

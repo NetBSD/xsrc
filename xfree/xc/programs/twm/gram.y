@@ -48,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $TOG: gram.y /main/67 1998/02/09 13:48:09 kaleb $
+ * $Xorg: gram.y,v 1.3 2000/08/17 19:54:06 cpqbld Exp $
  *
  * .twmrc command grammer
  *
@@ -56,7 +56,7 @@ in this Software without prior written authorization from The Open Group.
  * 11-Nov-90 Dave Sternlicht            Adding SaveColors
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
  *
- * $XFree86: xc/programs/twm/gram.y,v 3.3 1998/10/04 09:40:38 dawes Exp $
+ * $XFree86: xc/programs/twm/gram.y,v 3.5 2001/01/17 23:45:06 dawes Exp $
  *
  ***********************************************************************/
 

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiadjust.c,v 1.8 2000/08/04 21:07:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiadjust.c,v 1.12 2001/05/09 03:12:02 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -133,7 +133,7 @@ ATIAdjustFrame
 {
     ScrnInfoPtr pScreenInfo = xf86Screens[scrnIndex];
     ATIPtr      pATI = ATIPTR(pScreenInfo);
-    int         Base;
+    int         Base, xy;
 
     /*
      * Assume the caller has already done its homework in ensuring the physical
@@ -148,6 +148,21 @@ ATIAdjustFrame
 
     Base = ((((y * pATI->displayWidth) + x) & pATI->AdjustMask) *
             pATI->AdjustDepth) >> 3;
+
+    if (!pATI->currentMode)
+    {
+        /*
+         * Not in DGA.  This reverse-calculates pScreenInfo->frame[XY][01] so
+         * that the cursor does not move on mode switches.
+         */
+        xy = (Base << 3) / pATI->AdjustDepth;
+        pScreenInfo->frameX0 = xy % pATI->displayWidth;
+        pScreenInfo->frameY0 = xy / pATI->displayWidth;
+        pScreenInfo->frameX1 =
+            pScreenInfo->frameX0 + pScreenInfo->currentMode->HDisplay - 1;
+        pScreenInfo->frameY1 =
+            pScreenInfo->frameY0 + pScreenInfo->currentMode->VDisplay - 1;
+    }
 
     /* Unlock registers */
     ATIUnlock(pATI);
@@ -178,40 +193,32 @@ ATIAdjustFrame
         }
     }
     else
+    /*
+     * On integrated controllers, there is only one set of CRTC control bits,
+     * many of which are simultaneously accessible through both VGA and
+     * accelerator I/O ports.  Given VGA's architectural limitations, setting
+     * the CRTC's offset register to more than 256k needs to be done through
+     * the accelerator port.
+     */
+    if (pATI->depth <= 4)
+    {
+        outr(CRTC_OFF_PITCH, SetBits(pATI->displayWidth >> 4, CRTC_PITCH) |
+            SetBits(Base, CRTC_OFFSET));
+    }
+    else
 
 #endif /* AVOID_CPIO */
 
     {
-        /*
-         * On integrated controllers, there is only one set of CRTC control
-         * bits, many of which are simultaneously accessible through both VGA
-         * and accelerator I/O ports.  Given VGA's architectural limitations,
-         * setting the CRTC's offset register to more than 256k needs to be
-         * done through the accelerator port.
-         */
 
 #ifndef AVOID_CPIO
 
-        if (pATI->depth <= 4)
-        {
-            outr(CRTC_OFF_PITCH, SetBits(pATI->displayWidth >> 4, CRTC_PITCH) |
-                SetBits(Base, CRTC_OFFSET));
-        }
-        else
+        if (pATI->NewHW.crtc == ATI_CRTC_VGA)
+            Base <<= 1;                 /* LSBit must be zero */
 
 #endif /* AVOID_CPIO */
 
-        {
-
-#ifndef AVOID_CPIO
-
-            if (pATI->NewHW.crtc == ATI_CRTC_VGA)
-                Base <<= 1;                     /* LSBit must be zero */
-
-#endif /* AVOID_CPIO */
-
-            outr(CRTC_OFF_PITCH, SetBits(pATI->displayWidth >> 3, CRTC_PITCH) |
-                SetBits(Base, CRTC_OFFSET));
-        }
+        outr(CRTC_OFF_PITCH, SetBits(pATI->displayWidth >> 3, CRTC_PITCH) |
+            SetBits(Base, CRTC_OFFSET));
     }
 }

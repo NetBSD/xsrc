@@ -1,4 +1,4 @@
-/* $TOG: FSFlush.c /main/6 1998/05/01 11:34:38 kaleb $ */
+/* $Xorg: FSFlush.c,v 1.3 2000/08/17 19:44:01 cpqbld Exp $ */
 
 /* @(#)FSFlush.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;

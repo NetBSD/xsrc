@@ -1,4 +1,4 @@
-/* $TOG: t1io.c /main/12 1998/05/08 08:45:53 kaleb $ */
+/* $Xorg: t1io.c,v 1.3 2000/08/17 19:46:33 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1io.c,v 3.6 1999/05/23 06:33:33 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1io.c,v 3.8 2001/01/17 19:43:23 dawes Exp $ */
 /*******************************************************************
 *  I/O package for Type 1 font reading
 ********************************************************************/

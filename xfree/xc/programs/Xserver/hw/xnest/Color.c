@@ -1,4 +1,4 @@
-/* $XConsortium: Color.c /main/8 1996/12/02 10:20:51 lehors $ */
+/* $Xorg: Color.c,v 1.3 2000/08/17 19:53:27 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

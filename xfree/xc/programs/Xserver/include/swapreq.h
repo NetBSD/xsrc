@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/swapreq.h,v 3.0 1996/04/15 11:20:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/swapreq.h,v 1.2 2001/04/05 17:42:35 dawes Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -27,6 +27,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef SWAPREQ_H
 #define SWAPREQ_H 1
 
+/* The first two are in misc.h */
+#if 0
 void
 SwapLongs (
 #if NeedFunctionPrototypes
@@ -42,6 +44,7 @@ SwapShorts (
     unsigned long  /* count */
 #endif
 );
+#endif
 
 void
 SwapColorItem(

@@ -1,5 +1,5 @@
 /*
- * $TOG: RHead.c /main/4 1998/02/06 14:40:55 kaleb $
+ * $Xorg: RHead.c,v 1.3 2000/08/17 19:45:49 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group

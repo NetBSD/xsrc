@@ -16,14 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef TTCMAP_H
-#define TTCMAP_H
+#ifndef __TTCMAP_H__
+#define __TTCMAP_H__
 
-#include <freetype/internal/tttypes.h>
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_INTERNAL_TRUETYPE_TYPES_H
+
+
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -35,11 +36,10 @@
   FT_Error  TT_CharMap_Free( TT_Face        face,
                              TT_CMapTable*  cmap );
 
-#ifdef __cplusplus
-  }
-#endif
 
-#endif /* TTCMAP_H */
+FT_END_HEADER
+
+#endif /* __TTCMAP_H__ */
 
 
 /* END */

@@ -1,4 +1,4 @@
-/* $XConsortium: QuCol.c,v 1.4 91/05/13 23:27:56 rws Exp $" */
+/* $Xorg: QuCol.c,v 1.3 2000/08/17 19:44:50 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -32,7 +32,7 @@
  *
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/QuCol.c,v 1.3 2001/01/17 19:41:42 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

@@ -1,4 +1,4 @@
-/* $TOG: SetHints.c /main/25 1998/02/06 17:52:15 kaleb $ */
+/* $Xorg: SetHints.c,v 1.4 2000/08/17 19:44:54 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/SetHints.c,v 1.3 2001/01/17 19:41:43 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>

@@ -1,4 +1,4 @@
-/* $TOG: WaitFor.c /main/15 1998/02/11 09:54:39 kaleb $ */
+/* $Xorg: WaitFor.c,v 1.3 2000/08/17 19:53:58 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.4 1998/08/20 13:59:49 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.6 2001/01/17 23:44:59 dawes Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/include/DPS/FontSB.h,v 1.2 2000/06/07 22:02:54 tsi Exp $ */
 
 #ifndef _FontSelectionBox_h
 #define _FontSelectionBox_h

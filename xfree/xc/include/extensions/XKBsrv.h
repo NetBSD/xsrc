@@ -1,4 +1,4 @@
-/* $XConsortium: XKBsrv.h /main/25 1996/09/28 16:32:19 rws $ */
+/* $Xorg: XKBsrv.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.16 1999/01/31 12:21:16 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.19 2001/03/25 05:31:59 tsi Exp $ */
 
 #ifndef _XKBSRV_H_
 #define	_XKBSRV_H_
@@ -291,6 +291,7 @@ extern	int	DeviceButtonPress,DeviceButtonRelease;
 				 (c)->curKeySyms.minKeyCode+1)
 
 #define	XConvertCase(s,l,u)	XkbConvertCase(s,l,u)
+#undef	IsKeypadKey
 #define	IsKeypadKey(s)		XkbKSIsKeypad(s)
 
 #define	Status		int

@@ -1,4 +1,4 @@
-/* $TOG: LiHosts.c /main/15 1998/02/06 17:41:59 kaleb $ */
+/* $Xorg: LiHosts.c,v 1.3 2000/08/17 19:44:40 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

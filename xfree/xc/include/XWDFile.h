@@ -1,4 +1,4 @@
-/* $TOG: XWDFile.h /main/19 1998/02/09 11:18:28 kaleb $ */
+/* $Xorg: XWDFile.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
 /*
 
 Copyright 1985, 1986, 1998  The Open Group

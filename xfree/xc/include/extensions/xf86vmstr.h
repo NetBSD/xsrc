@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.22 1999/03/07 08:29:28 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.26 2001/05/06 21:59:47 mvojkovi Exp $ */
 /*
 
 Copyright 1995  Kaleb S. KEITHLEY
@@ -28,7 +28,7 @@ or other dealings in this Software without prior written authorization
 from Kaleb S. KEITHLEY
 
 */
-/* $TOG: xf86vmstr.h /main/11 1998/02/09 11:23:53 kaleb $ */
+/* $Xorg: xf86vmstr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 
@@ -40,7 +40,7 @@ from Kaleb S. KEITHLEY
 #define XF86VIDMODENAME "XFree86-VidModeExtension"
 
 #define XF86VIDMODE_MAJOR_VERSION	2	/* current version numbers */
-#define XF86VIDMODE_MINOR_VERSION	0
+#define XF86VIDMODE_MINOR_VERSION	1
 /*
  * major version 0 == uses parameter-to-wire functions in XFree86 libXxf86vm.
  * major version 1 == uses parameter-to-wire functions hard-coded in xvidtune
@@ -482,6 +482,65 @@ typedef struct _XF86VidModeSetGamma {
     CARD32	pad3 B32;
 } xXF86VidModeSetGammaReq;
 #define sz_xXF86VidModeSetGammaReq		32
+
+
+typedef struct _XF86VidModeSetGammaRamp {
+    CARD8       reqType;                /* always XF86VidModeReqCode */
+    CARD8       xf86vidmodeReqType;
+    CARD16      length B16;
+    CARD16      screen B16;
+    CARD16      size B16;
+} xXF86VidModeSetGammaRampReq;
+#define sz_xXF86VidModeSetGammaRampReq             8 
+
+typedef struct _XF86VidModeGetGammaRamp {
+    CARD8       reqType;                /* always XF86VidModeReqCode */
+    CARD8       xf86vidmodeReqType;
+    CARD16      length B16;
+    CARD16      screen B16;
+    CARD16      size B16;
+} xXF86VidModeGetGammaRampReq;
+#define sz_xXF86VidModeGetGammaRampReq             8
+
+typedef struct {
+    BYTE        type;
+    BOOL        pad;
+    CARD16      sequenceNumber B16;
+    CARD32      length B32;
+    CARD16      size B16;
+    CARD16      pad0 B16;
+    CARD32      pad1 B32;
+    CARD32      pad2 B32;
+    CARD32      pad3 B32;
+    CARD32      pad4 B32;
+    CARD32      pad5 B32;
+} xXF86VidModeGetGammaRampReply;
+#define sz_xXF86VidModeGetGammaRampReply            32
+
+typedef struct _XF86VidModeGetGammaRampSize {
+    CARD8       reqType;                /* always XF86VidModeReqCode */
+    CARD8       xf86vidmodeReqType;
+    CARD16      length B16;
+    CARD16      screen B16;
+    CARD16      pad B16;
+} xXF86VidModeGetGammaRampSizeReq;
+#define sz_xXF86VidModeGetGammaRampSizeReq             8
+
+typedef struct {
+    BYTE        type;
+    BOOL        pad;
+    CARD16      sequenceNumber B16;
+    CARD32      length B32;
+    CARD16      size B16;
+    CARD16      pad0 B16;
+    CARD32      pad1 B32;
+    CARD32      pad2 B32;
+    CARD32      pad3 B32;
+    CARD32      pad4 B32;
+    CARD32      pad5 B32;
+} xXF86VidModeGetGammaRampSizeReply;
+#define sz_xXF86VidModeGetGammaRampSizeReply            32
+
 
 #endif /* _XF86VIDMODESTR_H_ */
 

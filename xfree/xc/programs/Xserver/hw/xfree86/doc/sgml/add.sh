@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $XFree86$
+# $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/add.sh,v 1.1 1999/08/23 09:06:04 dawes Exp $
 #
 name=`basename $1 .sgml`
 sgmlfmt -f index $name.sgml | \

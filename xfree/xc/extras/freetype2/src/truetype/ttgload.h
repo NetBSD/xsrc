@@ -16,32 +16,19 @@
 /***************************************************************************/
 
 
-#ifndef TTGLOAD_H
-#define TTGLOAD_H
+#ifndef __TTGLOAD_H__
+#define __TTGLOAD_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ttobjs.h"
 
 #ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
 #include "ttinterp.h"
 #endif
 
-#else /* FT_FLAT_COMPILE */
 
-#include <truetype/ttobjs.h>
-
-#ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
-#include <truetype/ttinterp.h>
-#endif
-
-#endif /* FT_FLAT_COMPILE */
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -59,11 +46,10 @@
                            FT_UShort     glyph_index,
                            FT_UInt       load_flags );
 
-#ifdef __cplusplus
-  }
-#endif
 
-#endif /* TTGLOAD_H */
+FT_END_HEADER
+
+#endif /* __TTGLOAD_H__ */
 
 
 /* END */

@@ -1,8 +1,9 @@
-// $TOG: ataritt /main/1 1997/08/02 10:11:01 kaleb $
+// $Xorg: ataritt,v 1.3 2000/08/17 19:54:37 cpqbld Exp $
 
 
 
-// $XFree86: xc/programs/xkbcomp/keycodes/ataritt,v 3.0 1996/08/18 01:55:38 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/ataritt,v 3.2 2001/01/17 23:45:51 dawes Exp $
+
 default xkb_keycodes "us" {
 
     minimum= 8;

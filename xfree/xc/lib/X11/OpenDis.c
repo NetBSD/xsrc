@@ -1,4 +1,4 @@
-/* $TOG: OpenDis.c /main/111 1998/02/06 17:46:07 kaleb $ */
+/* $Xorg: OpenDis.c,v 1.3 2000/08/17 19:44:47 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/OpenDis.c,v 3.7 2000/06/16 01:50:18 dawes Exp $ */
+/* $XFree86: xc/lib/X11/OpenDis.c,v 3.9 2001/01/17 19:41:41 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_pointtmp.h,v 1.1 2000/06/20 05:08:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_pointtmp.h,v 1.2 2000/12/05 21:18:33 dawes Exp $ */
 
 static void TAG(ffb_points)(GLcontext *ctx, GLuint first, GLuint last)
 {

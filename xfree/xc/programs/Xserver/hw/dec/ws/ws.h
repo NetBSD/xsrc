@@ -39,7 +39,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: ws.h /main/6 1998/02/10 12:45:22 kaleb $ */
+/* $Xorg: ws.h,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 
 #ifndef NO_DEC_VALUE_ADDED
 #define SCREENW6        640

@@ -45,7 +45,7 @@
    * Support static loading.  
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide_driver.c,v 1.18 2000/11/28 17:25:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide_driver.c,v 1.24 2001/05/16 06:48:08 keithp Exp $ */
 
 #include "xaa.h"
 #include "xf86Cursor.h"
@@ -57,16 +57,10 @@
 #include "mibstore.h"
 #include "micmap.h"
 #include "xf86DDC.h"
-#ifdef DPMSExtension
 #include "globals.h"
 #define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
-#define PSZ 8	/* needed for cfb.h */
-#include "cfb.h"
-#undef PSZ
-#include "cfb16.h"
-#include "cfb32.h"
+#include "fb.h"
 #include "xf86cmap.h"
 #include "shadowfb.h"
 
@@ -128,6 +122,7 @@ typedef struct {
   Bool                OnAtExit;
   Bool                GlideInitiated;
   EntityInfoPtr       pEnt;
+  OptionInfoPtr       Options;
 } GLIDERec, *GLIDEPtr;
 
 static pgrSstQueryBoards_t pgrSstQueryBoards;
@@ -142,7 +137,7 @@ static pgrLfbUnlock_t      pgrLfbUnlock;
 static pgrGlideShutdown_t  pgrGlideShutdown;
 static pgrLfbWriteRegion_t pgrLfbWriteRegion;
 
-static OptionInfoPtr GLIDEAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * GLIDEAvailableOptions(int chipid, int busid);
 static void	GLIDEIdentify(int flags);
 static Bool	GLIDEProbe(DriverPtr drv, int flags);
 static Bool	GLIDEPreInit(ScrnInfoPtr pScrn, int flags);
@@ -157,11 +152,9 @@ static Bool     GLIDEModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static void     GLIDERestore(ScrnInfoPtr pScrn, Bool Closing);
 static void     GLIDERefreshAll(ScrnInfoPtr pScrn);
 
-#ifdef DPMSExtension
 static void	GLIDEDisplayPowerManagementSet(ScrnInfoPtr pScrn,
                                                int PowerManagementMode,
                                                int flags);
-#endif
 
 
 static int LoadGlide(void);
@@ -184,9 +177,6 @@ static int LoadGlide(void);
 DriverRec GLIDE = {
   VERSION,
   GLIDE_DRIVER_NAME,
-#if 0
-  "driver for Glide devices (Voodoo cards)",
-#endif
   GLIDEIdentify,
   GLIDEProbe,
   GLIDEAvailableOptions,
@@ -199,7 +189,7 @@ typedef enum {
   OPTION_GLIDEDEVICE
 } GLIDEOpts;
 
-static OptionInfoRec GLIDEOptions[] = {
+static const OptionInfoRec GLIDEOptions[] = {
   { OPTION_ON_AT_EXIT, "OnAtExit",       OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_GLIDEDEVICE, "GlideDevice",   OPTV_INTEGER, {0}, FALSE },
   { -1,	               NULL,             OPTV_NONE,    {0}, FALSE }
@@ -221,10 +211,11 @@ static SymTabRec GLIDEChipsets[] = {
  * unresolved symbols that are not required.
  */
 
-static const char *cfbSymbols[] = {
-  "cfbScreenInit",
-  "cfb16ScreenInit",
-  "cfb32ScreenInit",
+static const char *fbSymbols[] = {
+  "fbScreenInit",
+#ifdef RENDER
+  "fbPictureInit",
+#endif
   NULL
 };
 
@@ -262,6 +253,12 @@ glideSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
   /* This module should be loaded only once, but check to be sure. */
 
+  if (xf86ServerIsOnlyDetecting())
+  {
+    xf86AddDriver(&GLIDE, module, 0);
+    return (pointer)1;
+  }
+    
   if (!setupDone) 
   {
     /*
@@ -308,7 +305,7 @@ glideSetup(pointer module, pointer opts, int *errmaj, int *errmin)
      * Tell the loader about symbols from other modules that this module
      * might refer to.
      */
-    LoaderRefSymLists(cfbSymbols, shadowSymbols, NULL);
+    LoaderRefSymLists(fbSymbols, shadowSymbols, NULL);
 
     /*
      * The return value must be non-NULL on success even though there
@@ -353,8 +350,7 @@ GLIDEFreeRec(ScrnInfoPtr pScrn)
 }
 
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 GLIDEAvailableOptions(int chipid, int busid)
 {
    return GLIDEOptions;
@@ -457,8 +453,6 @@ GLIDEPreInit(ScrnInfoPtr pScrn, int flags)
   MessageType from;
   int i;
   ClockRangePtr clockRanges;
-  char *mod = NULL;
-  const char *reqSym = NULL;
   int sst;
 
   if (flags & PROBE_DETECT) return FALSE;
@@ -545,11 +539,14 @@ GLIDEPreInit(ScrnInfoPtr pScrn, int flags)
   xf86CollectOptions(pScrn, NULL);
 
   /* Process the options */
-  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, GLIDEOptions);
+  if (!(pGlide->Options = xalloc(sizeof(GLIDEOptions))))
+    return FALSE;
+  memcpy(pGlide->Options, GLIDEOptions, sizeof(GLIDEOptions));
+  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pGlide->Options);
 
   pGlide->OnAtExit = FALSE;
   from = X_DEFAULT;
-  if (xf86GetOptValBool(GLIDEOptions, OPTION_ON_AT_EXIT, &(pGlide->OnAtExit)))
+  if (xf86GetOptValBool(pGlide->Options, OPTION_ON_AT_EXIT, &(pGlide->OnAtExit)))
     from = X_CONFIG;
 
   xf86DrvMsg(pScrn->scrnIndex, from, 
@@ -637,24 +634,14 @@ GLIDEPreInit(ScrnInfoPtr pScrn, int flags)
 
   /* Set display resolution */
   xf86SetDpi(pScrn, 0, 0);
-
-  /* Load bpp-specific modules */
-  switch (pScrn->bitsPerPixel) {
-  case 16:
-    mod = "cfb16";
-    reqSym = "cfb16ScreenInit";
-    break;
-  case 32:
-    mod = "cfb32";
-    reqSym = "cfb32ScreenInit";
-    break;
-  }
-  if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
+    
+  /* Load fb */
+  if (xf86LoadSubModule(pScrn, "fb") == NULL) {
     GLIDEFreeRec(pScrn);
     return FALSE;
   }
 
-  xf86LoaderReqSymbols(reqSym, NULL);
+  xf86LoaderReqSymLists(fbSymbols, NULL);
 
   /* Load the shadow framebuffer */
   if (!xf86LoadSubModule(pScrn, "shadowfb")) {
@@ -695,7 +682,7 @@ GLIDEScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
    * function.  If not, the visuals will need to be setup before calling
    * a fb ScreenInit() function and fixed up after.
    *
-   * For most PC hardware at depths >= 8, the defaults that cfb uses
+   * For most PC hardware at depths >= 8, the defaults that fb uses
    * are not appropriate.  In this driver, we fixup the visuals after.
    */
 
@@ -708,35 +695,28 @@ GLIDEScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
   if (!miSetVisualTypes(pScrn->depth, miGetDefaultVisualMask(pScrn->depth), pScrn->rgbBits, pScrn->defaultVisual))
     return FALSE;
 
+  miSetPixmapDepths ();
+
   pGlide->ShadowPitch = ((pScrn->virtualX * pScrn->bitsPerPixel >> 3) + 3) & ~3L;
   pGlide->ShadowPtr = xnfalloc(pGlide->ShadowPitch * pScrn->virtualY);
 
+  
   /*
    * Call the framebuffer layer's ScreenInit function, and fill in other
    * pScreen fields.
    */
-  switch (pScrn->bitsPerPixel) {
-  case 16:
-    ret = cfb16ScreenInit(pScreen, pGlide->ShadowPtr,
-                          pScrn->virtualX, pScrn->virtualY,
-                          pScrn->xDpi, pScrn->yDpi,
-                          pScrn->displayWidth);
-    break;
-  case 32:
-    ret = cfb32ScreenInit(pScreen, pGlide->ShadowPtr,
-                          pScrn->virtualX, pScrn->virtualY,
-                          pScrn->xDpi, pScrn->yDpi,
-                          pScrn->displayWidth);
-    break;
-  default:
-    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-               "Internal error: invalid bpp (%d) in GLIDEScreenInit\n",
-               pScrn->bitsPerPixel);
-    ret = FALSE;
-    break;
-  }
+  ret = fbScreenInit(pScreen, pGlide->ShadowPtr,
+		     pScrn->virtualX, pScrn->virtualY,
+		     pScrn->xDpi, pScrn->yDpi,
+		     pScrn->displayWidth,
+		     pScrn->bitsPerPixel);
+
   if (!ret)
     return FALSE;
+
+#ifdef RENDER
+  fbPictureInit (pScreen, 0, 0);
+#endif
 
   /* Fixup RGB ordering */
   visual = pScreen->visuals + pScreen->numVisuals;
@@ -765,9 +745,7 @@ GLIDEScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
   ShadowFBInit(pScreen, GLIDERefreshArea);
 
-#ifdef DPMSExtension
   xf86DPMSInit(pScreen, GLIDEDisplayPowerManagementSet, 0);
-#endif
 
   pScreen->SaveScreen = GLIDESaveScreen;
 
@@ -1098,7 +1076,6 @@ GLIDERefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 GLIDEDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
                                int flags)
@@ -1133,7 +1110,6 @@ GLIDEDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
   }
   oldmode = PowerManagementMode;
 }
-#endif
 
 
 static void

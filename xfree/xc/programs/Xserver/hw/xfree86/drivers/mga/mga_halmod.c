@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_halmod.c,v 1.1 2000/12/06 15:35:21 eich Exp $ */
 #include "xf86Module.h"
 
 #ifdef XFree86LOADER

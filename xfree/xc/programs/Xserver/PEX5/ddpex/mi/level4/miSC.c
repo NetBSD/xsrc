@@ -1,4 +1,4 @@
-/* $TOG: miSC.c /main/5 1998/02/10 12:43:47 kaleb $ */
+/* $Xorg: miSC.c,v 1.3 2000/08/17 19:47:10 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level4/miSC.c,v 1.9 2001/01/17 22:12:29 dawes Exp $ */
 
 
 #include "ddpex4.h"

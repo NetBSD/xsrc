@@ -1,5 +1,4 @@
-/* $XConsortium: xkbwatch.c /main/5 1996/01/14 18:53:12 kaleb $ */
-/* $XFree86: xc/programs/xkbutils/xkbwatch.c,v 3.2 1997/12/06 09:26:18 hohndel Exp $ */
+/* $Xorg: xkbwatch.c,v 1.4 2000/08/17 19:54:51 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,7 +24,9 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbutils/xkbwatch.c,v 3.5 2001/04/01 14:00:22 tsi Exp $ */
 
+#include <stdlib.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>

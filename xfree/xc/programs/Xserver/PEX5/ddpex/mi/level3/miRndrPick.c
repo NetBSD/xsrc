@@ -1,4 +1,4 @@
-/* $TOG: miRndrPick.c /main/12 1998/02/10 12:43:20 kaleb $ */
+/* $Xorg: miRndrPick.c,v 1.3 2000/08/17 19:47:09 cpqbld Exp $ */
 
 /************************************************************
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRndrPick.c,v 1.7 1998/10/04 09:34:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRndrPick.c,v 1.9 2001/01/17 22:12:28 dawes Exp $ */
 
 #include "miLUT.h"
 #include "ddpex3.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbscrinit.c,v 1.4 1999/10/13 04:21:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbscrinit.c,v 1.11 2001/04/14 21:17:49 mvojkovi Exp $ */
 
 
 #include "X.h"
@@ -152,23 +152,29 @@ static Bool
 cfb8_32CloseScreen (int i, ScreenPtr pScreen)
 {
     cfb8_32ScreenPtr pScreenPriv = CFB8_32_GET_SCREEN_PRIVATE(pScreen);
-
     if(pScreenPriv->visualData)
 	xfree(pScreenPriv->visualData);
 
     xfree((pointer) pScreenPriv);
+    pScreen->devPrivates[cfb8_32ScreenPrivateIndex].ptr = NULL;
 
     return(cfb32CloseScreen(i, pScreen));
 }
 
 static void
-cfb8_32TransFunction(
+cfb8_32TransFunc(
     ScreenPtr pScreen,
     int nbox,
     BoxPtr pbox
 ){
     cfb8_32FillBoxSolid8(&(WindowTable[pScreen->myNum]->drawable), 
 			nbox, pbox, xf86Screens[pScreen->myNum]->colorKey);
+}
+
+static Bool
+cfb8_32InOverlayFunc(WindowPtr pWin)
+{
+   return (pWin->drawable.depth == 8);
 }
 
 static Bool
@@ -201,7 +207,7 @@ cfb8_32FinishScreenInit(
     pScreen->GetScreenPixmap = cfb32GetScreenPixmap; 	/* OK */
     pScreen->SetScreenPixmap = cfb32SetScreenPixmap;	/* OK */
 
-    if (! miInitOverlay(pScreen, 8, cfb8_32TransFunction))
+    if (! miInitOverlay(pScreen, cfb8_32InOverlayFunc, cfb8_32TransFunc))
 	return FALSE;
 
     return TRUE;
@@ -266,10 +272,8 @@ cfb8_32SetupVisuals (ScreenPtr pScreen)
     }    
 
     overlayVisualsAtom = MakeAtom(atomString, sizeof(atomString) - 1, TRUE);
-
     xf86RegisterRootWindowProperty(pScreen->myNum, overlayVisualsAtom,
 			overlayVisualsAtom, 32, numVisuals * 4, overlayVisuals);
-
     pScreenPriv->visualData = (pointer)overlayVisuals;
 }
 

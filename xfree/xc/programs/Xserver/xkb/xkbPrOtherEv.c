@@ -1,4 +1,4 @@
-/* $XConsortium: xkbPrOtherEv.c /main/1 1996/01/14 16:46:43 kaleb $ */
+/* $Xorg: xkbPrOtherEv.c,v 1.3 2000/08/17 19:53:48 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

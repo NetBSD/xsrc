@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Debug.c,v 1.3 2000/09/26 15:57:08 tsi Exp $ */
 
 #include <sys/time.h>
 #include <unistd.h> 

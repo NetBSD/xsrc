@@ -20,9 +20,10 @@
 #define __TTNAMEID_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+
+
+FT_BEGIN_HEADER
 
 
   /*************************************************************************/
@@ -309,7 +310,14 @@
 #define TT_MS_LANGID_CHINESE_PRC                       0x0804
 #define TT_MS_LANGID_CHINESE_HONG_KONG                 0x0c04
 #define TT_MS_LANGID_CHINESE_SINGAPORE                 0x1004
+
+#if 1  /* this used to be this value (and it still is in many places) */
 #define TT_MS_LANGID_CHINESE_MACAU                     0x1404
+#else  /* but beware, Microsoft may change its mind...
+          the most recent Word reference has the following:  :-( */
+#define TT_MS_LANGID_CHINESE_MACAU          TT_MS_LANGID_CHINESE_HONG_KONG
+#endif
+
 #define TT_MS_LANGID_CZECH_CZECH_REPUBLIC              0x0405
 #define TT_MS_LANGID_DANISH_DENMARK                    0x0406
 #define TT_MS_LANGID_GERMAN_GERMANY                    0x0407
@@ -396,7 +404,11 @@
 #define TT_MS_LANGID_LATVIAN_LATVIA                    0x0426
 #define TT_MS_LANGID_LITHUANIAN_LITHUANIA              0x0427
 #define TT_MS_LANGID_CLASSIC_LITHUANIAN_LITHUANIA      0x0827
+
+#if 0  /* this seems to be an error that have been dropped */
 #define TT_MS_LANGID_MAORI_NEW_ZEALAND                 0x0428
+#endif
+
 #define TT_MS_LANGID_FARSI_IRAN                        0x0429
 #define TT_MS_LANGID_VIETNAMESE_VIET_NAM               0x042a
 #define TT_MS_LANGID_ARMENIAN_ARMENIA                  0x042b
@@ -417,8 +429,15 @@
 #define TT_MS_LANGID_HINDI_INDIA                       0x0439
 #define TT_MS_LANGID_MALTESE_MALTA                     0x043a
 #define TT_MS_LANGID_SAAMI_LAPONIA                     0x043b
+
+#if 0  /* this seems to be a previous invertion */
 #define TT_MS_LANGID_IRISH_GAELIC_IRELAND              0x043c
 #define TT_MS_LANGID_SCOTTISH_GAELIC_UNITED_KINGDOM    0x083c
+#else
+#define TT_MS_LANGID_SCOTTISH_GAELIC_UNITED_KINGDOM    0x083c
+#define TT_MS_LANGID_IRISH_GAELIC_IRELAND              0x043c
+#endif
+
 #define TT_MS_LANGID_MALAY_MALAYSIA                    0x043e
 #define TT_MS_LANGID_MALAY_BRUNEI_DARUSSALAM           0x083e
 #define TT_MS_LANGID_KAZAK_KAZAKSTAN                   0x043f
@@ -438,6 +457,68 @@
 #define TT_MS_LANGID_MARATHI_INDIA                     0x044e
 #define TT_MS_LANGID_SANSKRIT_INDIA                    0x044f
 #define TT_MS_LANGID_KONKANI_INDIA                     0x0457
+
+/* new as of 2001-01-01 */
+#define TT_MS_LANGID_ARABIC_GENERAL                    0x0001
+#define TT_MS_LANGID_CHINESE_GENERAL                   0x0004
+#define TT_MS_LANGID_ENGLISH_GENERAL                   0x0009
+#define TT_MS_LANGID_FRENCH_WEST_INDIES                0x1c0c
+#define TT_MS_LANGID_FRENCH_REUNION                    0x200c
+#define TT_MS_LANGID_FRENCH_CONGO                      0x240c
+ /* which was formerly: */
+#define TT_MS_LANGID_FRENCH_ZAIRE           TT_MS_LANGID_FRENCH_CONGO
+
+#define TT_MS_LANGID_FRENCH_SENEGAL                    0x280c
+#define TT_MS_LANGID_FRENCH_CAMEROON                   0x2c0c
+#define TT_MS_LANGID_FRENCH_COTE_D_IVOIRE              0x300c
+#define TT_MS_LANGID_FRENCH_MALI                       0x340c
+#define TT_MS_LANGID_BOSNIAN_BOSNIA_HERZEGOVINA        0x101a
+#define TT_MS_LANGID_URDU_INDIA                        0x0820
+#define TT_MS_LANGID_TAJIK_TAJIKISTAN                  0x0428
+#define TT_MS_LANGID_YIDDISH_GERMANY                   0x043d
+#define TT_MS_LANGID_KIRGHIZ_KIRGHIZSTAN               0x0440
+ /* alias declared in Windows 2000 */
+#define TT_MS_LANGID_KIRGHIZ_KIRGHIZ_REPUBLIC \
+                                          TT_MS_LANGID_KIRGHIZ_KIRGHIZSTAN
+
+#define TT_MS_LANGID_TURKMEN_TURKMENISTAN              0x0442
+#define TT_MS_LANGID_MONGOLIAN_MONGOLIA                0x0450
+#define TT_MS_LANGID_TIBETAN_BHUTAN                    0x0451
+#define TT_MS_LANGID_WELSH_WALES                       0x0452
+#define TT_MS_LANGID_KHMER_CAMBODIA                    0x0453
+#define TT_MS_LANGID_LAO_LAOS                          0x0454
+#define TT_MS_LANGID_BURMESE_MYANMAR                   0x0455
+#define TT_MS_LANGID_GALICIAN_SPAIN                    0x0456
+#define TT_MS_LANGID_MANIPURI_INDIA                    0x0458
+#define TT_MS_LANGID_SINDHI_INDIA                      0x0459
+#define TT_MS_LANGID_KASHMIRI_PAKISTAN                 0x0460
+#define TT_MS_LANGID_KASHMIRI_INDIA                    0x0860
+#define TT_MS_LANGID_NEPALI_NEPAL                      0x0461
+#define TT_MS_LANGID_NEPALI_INDIA                      0x0861
+#define TT_MS_LANGID_FRISIAN_NETHERLANDS               0x0462
+
+/* new as of 2001-03-01 (from Office Xp) */
+#define TT_MS_LANGID_SYRIAC_SYRIA                      0x045a
+#define TT_MS_LANGID_SINHALESE_SRI_LANKA               0x045b
+#define TT_MS_LANGID_PASHTO_AFGHANISTAN                0x0463
+#define TT_MS_LANGID_ENGLISH_HONG_KONG                 0x3c09
+#define TT_MS_LANGID_ENGLISH_INDIA                     0x4009
+#define TT_MS_LANGID_ENGLISH_MALAYSIA                  0x4409
+#define TT_MS_LANGID_ENGLISH_SINGAPORE                 0x4809
+#define TT_MS_LANGID_CHEROKEE_UNITED_STATES            0x045c
+#define TT_MS_LANGID_INUKTITUT_CANADA                  0x045d
+#define TT_MS_LANGID_AMHARIC_ETHIOPIA                  0x045e
+#define TT_MS_LANGID_TAMAZIGHT_MOROCCO                 0x045f
+#define TT_MS_LANGID_TAMAZIGHT_MOROCCO_LATIN           0x085f
+#define TT_MS_LANGID_FILIPINO_PHILIPPINES              0x0464
+#define TT_MS_LANGID_DHIVEHI_MALDIVES                  0x0465
+ /* alias declared in Windows 2000 */
+#define TT_MS_LANGID_DIVEHI_MALDIVES      TT_MS_LANGID_DHIVEHI_MALDIVES
+ /* language codes from 0x0466 to 0x0471 are unknown. */
+#define TT_MS_LANGID_OROMO_ETHIOPIA                    0x0472
+#define TT_MS_LANGID_TIGRIGNA_ETHIOPIA                 0x0473
+#define TT_MS_LANGID_TIGRIGNA_ERYTHREA                 0x0873
+
 
 
   /*************************************************************************/
@@ -480,10 +561,10 @@
 
   /* General Scripts Area */
 
-  /* Bit  0   C0 Controls and Basic Latin */
+  /* Bit  0   Basic Latin */
 #define TT_UCR_BASIC_LATIN                     (1L <<  0) /* U+0020-U+007E */
   /* Bit  1   C1 Controls and Latin-1 Supplement */
-#define TT_UCR_LATIN1_SUPPLEMENT               (1L <<  1) /* U+00A0-U+00FF */
+#define TT_UCR_LATIN1_SUPPLEMENT               (1L <<  1) /* U+0080-U+00FF */
   /* Bit  2   Latin Extended-A */
 #define TT_UCR_LATIN_EXTENDED_A                (1L <<  2) /* U+0100-U+017F */
   /* Bit  3   Latin Extended-B */
@@ -494,7 +575,7 @@
 #define TT_UCR_SPACING_MODIFIER                (1L <<  5) /* U+02B0-U+02FF */
   /* Bit  6   Combining Diacritical Marks */
 #define TT_UCR_COMBINING_DIACRITICS            (1L <<  6) /* U+0300-U+036F */
-  /* Bit  7   Greek */
+  /* Bit  7   Greek and Coptic */
 #define TT_UCR_GREEK                           (1L <<  7) /* U+0370-U+03FF */
   /* Bit  8 is reserved (was: Greek Symbols and Coptic) */
   /* Bit  9   Cyrillic */
@@ -578,20 +659,22 @@
 
   /* CJK Phonetics and Symbols Area */
 
-  /* Bit 48   CJK Symbols And Punctuation */
+  /* Bit 48   CJK Symbols and Punctuation */
 #define TT_UCR_CJK_SYMBOLS                     (1L << 16) /* U+3000-U+303F */
   /* Bit 49   Hiragana */
 #define TT_UCR_HIRAGANA                        (1L << 17) /* U+3040-U+309F */
   /* Bit 50   Katakana */
 #define TT_UCR_KATAKANA                        (1L << 18) /* U+30A0-U+30FF */
-  /* Bit 51   Bopomofo + Extended Bopomofo */
+  /* Bit 51   Bopomofo          + */
+  /*          Bopomofo Extended   */
 #define TT_UCR_BOPOMOFO                        (1L << 19) /* U+3100-U+312F */
                                                           /* U+31A0-U+31BF */
   /* Bit 52   Hangul Compatibility Jamo */
 #define TT_UCR_HANGUL_COMPATIBILITY_JAMO       (1L << 20) /* U+3130-U+318F */
-  /* Bit 53   CJK Miscellaneous */
+  /* Bit 53   Kanbun */
 #define TT_UCR_CJK_MISC                        (1L << 21) /* U+3190-U+319F */
-  /* Bit 54   Enclosed CJK Letters And Months */
+#define TT_UCR_KANBUN  TT_UCR_CJK_MISC
+  /* Bit 54   Enclosed CJK Letters and Months */
 #define TT_UCR_ENCLOSED_CJK_LETTERS_MONTHS     (1L << 22) /* U+3200-U+32FF */
   /* Bit 55   CJK Compatibility */
 #define TT_UCR_CJK_COMPATIBILITY               (1L << 23) /* U+3300-U+33FF */
@@ -603,22 +686,26 @@
 
   /* Surrogates Area */
 
-  /* Bit 57   Surrogates */
-#define TT_UCR_SURROGATES                      (1L << 25) /* U+D800-U+DFFF */
+  /* Bit 57   High Surrogates             + */
+  /*          High Private Use Surrogates + */
+  /*          Low Surrogates                */
+#define TT_UCR_SURROGATES                      (1L << 25) /* U+D800-U+DB7F */
+                                                          /* U+DB80-U+DBFF */
+                                                          /* U+DC00-U+DFFF */
   /* Bit 58 is reserved for Unicode SubRanges */
 
   /* CJK Ideographs Area */
 
   /* Bit 59   CJK Unified Ideographs             + */
-  /*          CJK Radical Supplement             + */
+  /*          CJK Radicals Supplement            + */
   /*          Kangxi Radicals                    + */
-  /*          Ideographic Description            + */
+  /*          Ideographic Description Characters + */
   /*          CJK Unified Ideographs Extension A   */
 #define TT_UCR_CJK_UNIFIED_IDEOGRAPHS          (1L << 27) /* U+4E00-U+9FFF */
                                                           /* U+2E80-U+2EFF */
                                                           /* U+2F00-U+2FDF */
                                                           /* U+2FF0-U+2FFF */
-                                                          /* U+34E0-U+4DB5 */
+                                                          /* U+3400-U+4DB5 */
 
   /* Private Use Area */
 
@@ -641,12 +728,12 @@
 #define TT_UCR_SMALL_FORM_VARIANTS             (1L <<  2) /* U+FE50-U+FE6F */
   /* Bit 67   Arabic Presentation Forms-B */
 #define TT_UCR_ARABIC_PRESENTATIONS_B          (1L <<  3) /* U+FE70-U+FEFE */
-  /* Bit 68   Halfwidth And Fullwidth Forms */
+  /* Bit 68   Halfwidth and Fullwidth Forms */
 #define TT_UCR_HALFWIDTH_FULLWIDTH_FORMS       (1L <<  4) /* U+FF00-U+FFEF */
   /* Bit 69   Specials */
 #define TT_UCR_SPECIALS                        (1L <<  5) /* U+FFF0-U+FFFD */
   /* Bit 70   Tibetan */
-#define TT_UCR_TIBETAN                         (1L <<  6) /* U+0F00-U+0FCF */
+#define TT_UCR_TIBETAN                         (1L <<  6) /* U+0F00-U+0FFF */
   /* Bit 71   Syriac */
 #define TT_UCR_SYRIAC                          (1L <<  7) /* U+0700-U+074F */
   /* Bit 72   Thaana */
@@ -656,11 +743,11 @@
   /* Bit 74   Myanmar */
 #define TT_UCR_MYANMAR                         (1L << 10) /* U+1000-U+109F */
   /* Bit 75   Ethiopic */
-#define TT_UCR_ETHIOPIC                        (1L << 11) /* U+1200-U+12BF */
+#define TT_UCR_ETHIOPIC                        (1L << 11) /* U+1200-U+137F */
   /* Bit 76   Cherokee */
 #define TT_UCR_CHEROKEE                        (1L << 12) /* U+13A0-U+13FF */
-  /* Bit 77   Canadian Aboriginal Syllabics */
-#define TT_UCR_CANADIAN_ABORIGINAL_SYLLABICS   (1L << 13) /* U+1400-U+14DF */
+  /* Bit 77   Unified Canadian Aboriginal Syllabics */
+#define TT_UCR_CANADIAN_ABORIGINAL_SYLLABICS   (1L << 13) /* U+1400-U+167F */
   /* Bit 78   Ogham */
 #define TT_UCR_OGHAM                           (1L << 14) /* U+1680-U+169F */
   /* Bit 79   Runic */
@@ -669,10 +756,11 @@
 #define TT_UCR_KHMER                           (1L << 16) /* U+1780-U+17FF */
   /* Bit 81   Mongolian */
 #define TT_UCR_MONGOLIAN                       (1L << 17) /* U+1800-U+18AF */
-  /* Bit 82   Braille */
+  /* Bit 82   Braille Patterns */
 #define TT_UCR_BRAILLE                         (1L << 18) /* U+2800-U+28FF */
-  /* Bit 83   Yi + Yi Radicals */
-#define TT_UCR_YI                              (1L << 19) /* U+A000-U+A48C */
+  /* Bit 83   Yi Syllables + */
+  /*          Yi Radicals    */
+#define TT_UCR_YI                              (1L << 19) /* U+A000-U+A48F */
                                                           /* U+A490-U+A4CF */
 
 
@@ -713,10 +801,7 @@
 #endif /* !HAVE_LIMIT_ON_IDENTS */
 
 
-#ifdef __cplusplus
-  }
-#endif
-
+FT_END_HEADER
 
 #endif /* __TTNAMEID_H__ */
 

@@ -1,4 +1,4 @@
-/* $TOG: Keyboard.c /main/5 1998/04/21 09:19:15 msr $ */
+/* $Xorg: Keyboard.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Keyboard.c,v 1.6 2001/03/25 05:32:15 tsi Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -31,6 +31,55 @@ is" without express or implied warranty.
 #include "Keyboard.h"
 #include "Args.h"
 
+#ifdef XKB
+#include <X11/extensions/XKB.h>
+#include <X11/extensions/XKBsrv.h>
+#include <X11/extensions/XKBconfig.h>
+
+extern	Bool	XkbQueryExtension(
+#if NeedFunctionPrototypes
+	Display *		/* dpy */,
+	int *			/* opcodeReturn */,
+	int *			/* eventBaseReturn */,
+	int *			/* errorBaseReturn */,
+	int *			/* majorRtrn */,
+	int *			/* minorRtrn */
+#endif
+);
+
+extern	XkbDescPtr XkbGetKeyboard(
+#if NeedFunctionPrototypes
+	Display *		/* dpy */,
+	unsigned int		/* which */,
+	unsigned int		/* deviceSpec */
+#endif
+);
+
+#ifndef XKB_BASE_DIRECTORY
+#define	XKB_BASE_DIRECTORY	"/usr/X11R6/lib/X11/xkb/"
+#endif
+#ifndef XKB_CONFIG_FILE
+#define	XKB_CONFIG_FILE		"X0-config.keyboard"
+#endif
+#ifndef XKB_DFLT_RULES_FILE
+#define	XKB_DFLT_RULES_FILE	"xfree86"
+#endif
+#ifndef XKB_DFLT_KB_LAYOUT
+#define	XKB_DFLT_KB_LAYOUT	"us"
+#endif
+#ifndef XKB_DFLT_KB_MODEL
+#define	XKB_DFLT_KB_MODEL	"pc101"
+#endif
+#ifndef XKB_DFLT_KB_VARIANT
+#define	XKB_DFLT_KB_VARIANT	NULL
+#endif
+#ifndef XKB_DFLT_KB_OPTIONS
+#define	XKB_DFLT_KB_OPTIONS	NULL
+#endif
+
+extern Bool noXkbExtension;
+#endif
+
 void xnestBell(volume, pDev, ctrl, cls)
      int volume;
      DeviceIntPtr pDev;
@@ -44,6 +93,7 @@ void xnestChangeKeyboardControl(pDev, ctrl)
      DeviceIntPtr pDev;
      KeybdCtrl *ctrl;
 {
+#if 0
   unsigned long value_mask;
   XKeyboardControl values;
   int i;
@@ -75,6 +125,7 @@ void xnestChangeKeyboardControl(pDev, ctrl)
     values.led_mode = (ctrl->leds & (1 << (i - 1))) ? LedModeOn : LedModeOff;
     XChangeKeyboardControl(xnestDisplay, value_mask, &values);
   }
+#endif
 }
 
 int xnestKeyboardProc(pDev, onoff, argc, argv)
@@ -134,6 +185,10 @@ int xnestKeyboardProc(pDev, onoff, argc, argv)
       keySyms.mapWidth = mapWidth;
       keySyms.map = keymap;
 
+#ifdef XKB
+      if (noXkbExtension) {
+XkbError:
+#endif
       XGetKeyboardControl(xnestDisplay, &values);
 
       memmove((char *) defaultKeyboardControl.autoRepeats,
@@ -141,6 +196,68 @@ int xnestKeyboardProc(pDev, onoff, argc, argv)
 
       InitKeyboardDeviceStruct(pDev, &keySyms, modmap,
 			       xnestBell, xnestChangeKeyboardControl);
+#ifdef XKB
+      } else {
+	FILE *file;
+	XkbConfigRtrnRec config;
+
+	XkbComponentNamesRec names;
+	char *rules, *model, *layout, *variants, *options;
+
+	XkbDescPtr xkb;
+	int op, event, error, major, minor;
+
+	if (XkbQueryExtension(xnestDisplay, &op, &event, &error, &major, &minor) == 0) {
+	  ErrorF("Unable to initialize XKEYBOARD extension.\n");
+	  goto XkbError;
+        }
+	xkb = XkbGetKeyboard(xnestDisplay, XkbGBN_AllComponentsMask, XkbUseCoreKbd);
+	if (xkb == NULL || xkb->geom == NULL) {
+	  ErrorF("Couldn't get keyboard.\n");
+	  goto XkbError;
+	}
+	XkbGetControls(xnestDisplay, XkbAllControlsMask, xkb);
+
+	memset(&names, 0, sizeof(XkbComponentNamesRec));
+	rules = XKB_DFLT_RULES_FILE;
+	model = XKB_DFLT_KB_MODEL;
+	layout = XKB_DFLT_KB_LAYOUT;
+	variants = XKB_DFLT_KB_VARIANT;
+	options = XKB_DFLT_KB_OPTIONS;
+	if (XkbInitialMap) {
+	  if ((names.keymap = strchr(XkbInitialMap, '/')) != NULL)
+	    ++names.keymap;
+	  else
+	    names.keymap = XkbInitialMap;
+	}
+
+	if ((file = fopen(XKB_BASE_DIRECTORY XKB_CONFIG_FILE, "r")) != NULL) {
+	  if (XkbCFParse(file, XkbCFDflts, xkb, &config) == 0) {
+	    ErrorF("Error parsing config file.\n");
+	    fclose(file);
+	    goto XkbError;
+	  }
+	  if (config.rules_file)
+	    rules = config.rules_file;
+	  if (config.model)
+	    model = config.model;
+	  if (config.layout)
+	    layout = config.layout;
+	  if (config.variant)
+	    variants = config.variant;
+	  if (config.options)
+	    options = config.options;
+
+	  fclose(file);
+	}
+
+	XkbSetRulesDflts(rules, model, layout, variants, options);
+	XkbInitKeyboardDeviceStruct((pointer)pDev, &names, &keySyms, modmap,
+				    xnestBell, xnestChangeKeyboardControl);
+	XkbDDXChangeControls((pointer)pDev, xkb->ctrls, xkb->ctrls);
+	XkbFreeKeyboard(xkb, 0, False);
+      }
+#endif
 #ifdef _XSERVER64
       xfree(keymap);
 #else

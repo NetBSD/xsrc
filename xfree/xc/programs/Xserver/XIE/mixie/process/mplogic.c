@@ -1,4 +1,4 @@
-/* $TOG: mplogic.c /main/9 1998/02/09 16:22:25 kaleb $ */
+/* $Xorg: mplogic.c,v 1.5 2000/08/17 19:47:53 cpqbld Exp $ */
 /**** module mplogic.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mplogic.c,v 3.2 1998/10/04 09:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mplogic.c,v 3.4 2001/01/17 22:13:12 dawes Exp $ */
 
 
 #define _XIEC_MPLOGIC

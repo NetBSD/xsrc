@@ -1,4 +1,4 @@
-/* $TOG: Misc.h /main/3 1998/02/06 15:44:36 kaleb $ */
+/* $Xorg: Misc.h,v 1.3 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /*
 

@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_io.c,v 1.5 2000/06/17 00:03:25 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_io.c,v 1.7 2001/04/05 21:29:17 dawes Exp $ */
 
 /*
  * Authors:
@@ -54,11 +54,11 @@ static char TDFXReadControlPIO(TDFXPtr pTDFX, int addr, char index) {
   return inb(pTDFX->PIOBase[0]+addr+1);
 }
 
-void TDFXWriteChipLongPIO(TDFXPtr pTDFX, int chip, int addr, int val) {
+static void TDFXWriteChipLongPIO(TDFXPtr pTDFX, int chip, int addr, int val) {
   outl(pTDFX->PIOBase[chip]+addr, val);
 }
 
-int TDFXReadChipLongPIO(TDFXPtr pTDFX, int chip, int addr) {
+static int TDFXReadChipLongPIO(TDFXPtr pTDFX, int chip, int addr) {
   return inl(pTDFX->PIOBase[chip]+addr);
 }
 

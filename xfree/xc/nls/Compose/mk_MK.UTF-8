@@ -1,4 +1,4 @@
-# $XFree86$
+XCOMM $XFree86: xc/nls/Compose/mk_MK.UTF-8,v 1.2 2001/04/26 21:09:40 dawes Exp $
 <Multi_key> <Cyrillic_ie> <grave> : 'ѐ' 0x01000450  # Cyrillic_ie_grave 
 <Multi_key> <Cyrillic_IE> <grave> : 'Ѐ' 0x01000400  # Cyrillic_IE_grave 
 <Multi_key> <Cyrillic_i> <grave> : 'ѝ' 0x0100045D   # Cyrillic_i_grave  

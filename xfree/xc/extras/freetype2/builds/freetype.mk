@@ -70,7 +70,7 @@
 # The targets `objects' and `library' are defined at the end of this
 # Makefile after all other rules have been included.
 #
-.PHONY: single objects library
+.PHONY: single multi objects library
 
 # default target -- build single objects and library
 #
@@ -91,6 +91,15 @@ SRC := $(TOP)$(SEP)src
 #
 BASE_DIR := $(SRC)$(SEP)base
 
+# The build header file used to define all public header file names
+# as macro.
+#
+ifndef FT_BUILD_H
+  FT_BUILD_H  := $(TOP)$(SEP)include$(SEP)ft2build.h
+  FTBUILD_CMD :=
+else
+  FTBUILD_CMD = $(D)FT_BUILD_H=$(FT_BUILD_H)
+endif
 
 # A few short-cuts in order to avoid typing $(SEP) all the time for the
 # directory separator.
@@ -121,7 +130,7 @@ PROJECT_LIBRARY := $(LIB_)$(LIBRARY).$A
 #                 in the `freetype/builds/<system>' directory, as these
 #                 files will override the default sources.
 #
-INCLUDES := $(BUILD) $(TOP)$(SEP)include $(SRC)
+INCLUDES := $(BUILD) $(TOP)$(SEP)include
 
 INCLUDE_FLAGS = $(INCLUDES:%=$I%)
 
@@ -246,6 +255,8 @@ library: $(PROJECT_LIBRARY)
 	$(FT_COMPILE) $T$@ $<
 
 
+.PHONY: clean_project_std distclean_project_std
+
 # Standard cleaning and distclean rules.  These are not accepted
 # on all systems though.
 #
@@ -255,6 +266,9 @@ clean_project_std:
 distclean_project_std: clean_project_std
 	-$(DELETE) $(PROJECT_LIBRARY)
 	-$(DELETE) *.orig *~ core *.core $(DISTCLEAN)
+
+
+.PHONY: clean_project_dos distclean_project_dos
 
 # The Dos command shell does not support very long list of arguments, so
 # we are stuck with wildcards.
@@ -267,11 +281,16 @@ distclean_project_dos: clean_project_dos
 	-$(DELETE) $(subst $(SEP),$(HOSTSEP),$(PROJECT_LIBRARY)) \
                    $(DISTCLEAN) $(NO_OUTPUT)
 
+
+.PHONY: remove_config_mk
+
 # Remove configuration file (used for distclean).
 #
 remove_config_mk:
 	-$(DELETE) $(subst $(SEP),$(HOSTSEP),$(CONFIG_MK)) $(NO_OUTPUT)
 
+
+.PHONY: clean distclean
 
 # The `config.mk' file must define `clean_freetype' and
 # `distclean_freetype'.  Implementations may use to relay these to either

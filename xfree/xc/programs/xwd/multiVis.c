@@ -1,4 +1,4 @@
-/* $TOG: multiVis.c /main/5 1998/02/09 14:20:15 kaleb $ */
+/* $Xorg: multiVis.c,v 1.4 2000/08/17 19:55:12 cpqbld Exp $ */
 /** ------------------------------------------------------------------------
 	This file contains functions to create a list of regions which
 	tile a specified window.  Each region contains all visible 
@@ -30,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
     ------------------------------------------------------------------------ **/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xwd/multiVis.c,v 1.6 2001/01/17 23:46:42 dawes Exp $ */
 
 #include <stdlib.h>
 #include <X11/Xlib.h>

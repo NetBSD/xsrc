@@ -23,7 +23,7 @@
  * 
  * Trident Blade3D accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.13 2000/12/04 08:46:17 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.15 2001/02/15 17:59:07 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -574,6 +574,7 @@ BladeSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
 
+    BladeSync(pScrn);
     BLADE_OUT(0x2148, XAAPatternROP[rop]);
 
     if (bg == -1) {

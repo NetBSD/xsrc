@@ -1,5 +1,5 @@
 /*
-* $TOG: CoreP.h /main/18 1998/02/06 13:20:55 kaleb $
+* $Xorg: CoreP.h,v 1.3 2000/08/17 19:46:10 cpqbld Exp $
 * $oHeader: CoreP.h,v 1.2 88/08/18 15:54:37 asente Exp $
 */
 

@@ -1,5 +1,5 @@
 /*
- * $TOG: cfb8line.c /main/34 1998/02/09 14:04:19 kaleb $
+ * $Xorg: cfb8line.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  *
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.12 2000/09/26 15:57:03 tsi Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.15 2001/01/30 22:06:15 tsi Exp $
  * Jeff Anton'x fixes: cfb8line.c   97/02/07
  */
 
@@ -890,17 +890,13 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 	    }
 #else /* PSZ == 24 */
 	    if (y1_or_e1 + x1_or_len <= PPW)
-	      {
+	    {
 		if (x1_or_len)
-		  {
+		{
 		    maskpartialbits(y1_or_e1, x1_or_len, e)
-#ifdef __sparc__
-		      RROP_SOLID_MASK_lu((CfbBits *) addrp, e);
-#else
-		      RROP_SOLID_MASK((CfbBits *) addrp, e);
-#endif
-		  }
-	      }
+		    RROP_SOLID_MASK((CfbBits *) addrp, e);
+		}
+	    }
 	    else
 	    {
 	    	maskbits(y1_or_e1, x1_or_len, e, e3, x1_or_len)
@@ -909,17 +905,9 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		    RROP_SOLID_MASK((CfbBits *) addrp, e);
 		    addrp += PPW;
 	    	}
-#ifdef __sparc__
-		RROP_SPAN_lu(addrp, x1_or_len)
-#else
 		RROP_SPAN(addrp, x1_or_len)
-#endif
 	    	if (e3)
-#ifdef __sparc__
-		    RROP_SOLID_MASK_lu((CfbBits *) addrp, e3);
-#else
 		    RROP_SOLID_MASK((CfbBits *) addrp, e3);
-#endif
 	    }
 #endif /* PSZ == 24 */
 	}

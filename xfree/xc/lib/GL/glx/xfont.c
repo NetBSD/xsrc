@@ -1,3 +1,4 @@
+/* $XFree86: xc/lib/GL/glx/xfont.c,v 1.6 2001/05/02 15:06:02 dawes Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
@@ -248,7 +249,7 @@ void DRI_glXUseXFont( Font font, int first, int count, int listbase )
   bm = (GLubyte *) Xmalloc((max_bm_width * max_bm_height) * sizeof 
 (GLubyte));
   if (!bm) {
-      XFreeFontInfo( NULL, fs, 0 );
+      XFreeFontInfo( NULL, fs, 1 );
       __glXSetError(CC, GL_OUT_OF_MEMORY);
       return;
     }
@@ -361,7 +362,7 @@ bm_height);
     }
 
   Xfree(bm);
-  XFreeFontInfo( NULL, fs, 0 );
+  XFreeFontInfo( NULL, fs, 1 );
   XFreeGC (dpy, gc);
 
   /* Restore saved packing modes.  */

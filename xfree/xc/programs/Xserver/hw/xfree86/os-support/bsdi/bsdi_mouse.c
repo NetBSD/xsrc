@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_mouse.c,v 1.1 1999/05/22 08:40:10 dawes Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.

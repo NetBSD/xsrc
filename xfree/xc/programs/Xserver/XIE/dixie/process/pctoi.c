@@ -1,4 +1,4 @@
-/* $TOG: pctoi.c /main/8 1998/02/09 16:10:09 kaleb $ */
+/* $Xorg: pctoi.c,v 1.3 2000/08/17 19:47:27 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module pctoi.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden && Robert NC Shelley -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.3 1998/10/05 13:22:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.5 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PCTOI
 #define _XIEC_PCI

@@ -1,4 +1,4 @@
-/* $XConsortium: lbxfax.h /main/3 1996/11/04 16:49:07 rws $ */
+/* $Xorg: lbxfax.h,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992 Sam Leffler
  * Copyright (c) 1991, 1992 Silicon Graphics, Inc.
@@ -22,6 +22,7 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
+/* $XFree86: xc/lib/lbxutil/image/lbxfax.h,v 1.5 2001/03/05 01:05:12 tsi Exp $ */
 
 /*
  * This header file contains various constants and tables needed
@@ -45,6 +46,12 @@ typedef struct tableentry {
 
 #define ROUNDUP8(x) ((x + 7) >> 3)
 
+#ifdef __DARWIN__
+#ifndef TIFFaxWhiteCodes
+#define TIFFFaxWhiteCodes Darwin_X_TIFFFaxWhiteCodes
+#define TIFFFaxBlackCodes Darwin_X_TIFFFaxBlackCodes
+#endif
+#endif
 extern tableentry TIFFFaxWhiteCodes[];
 extern tableentry TIFFFaxBlackCodes[];
 

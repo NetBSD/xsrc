@@ -4,7 +4,7 @@
  * mi sprite structures
  */
 
-/* $TOG: mispritest.h /main/17 1998/02/09 14:48:52 kaleb $ */
+/* $Xorg: mispritest.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 
 /*
 
@@ -26,7 +26,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mi/mispritest.h,v 1.4 2001/01/17 22:37:07 dawes Exp $ */
 
 # include   "misprite.h"
 #ifdef RENDER

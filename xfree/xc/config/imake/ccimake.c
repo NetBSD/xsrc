@@ -1,4 +1,4 @@
-/* $TOG: ccimake.c /main/16 1998/02/06 11:02:20 kaleb $ */
+/* $Xorg: ccimake.c,v 1.3 2000/08/17 19:41:50 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
@@ -20,6 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group .
 
 */
+/* $XFree86: xc/config/imake/ccimake.c,v 1.2 2001/04/01 13:59:56 tsi Exp $ */
 
 /* 
  * Warning:  This file must be kept as simple as posible so that it can 
@@ -34,9 +35,10 @@ in this Software without prior written authorization from The Open Group .
 #define imake_ccflags "-O"
 #endif
 
+int
 main()
 {
 	write(1, imake_ccflags, sizeof(imake_ccflags) - 1);
-	exit(0);
+	return 0;
 }
 

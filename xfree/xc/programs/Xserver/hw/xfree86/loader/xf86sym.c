@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.178 2000/12/08 22:31:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.193 2001/05/19 00:26:45 dawes Exp $ */
 
 /*
  *
@@ -22,6 +22,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+#define COMPILER_H_EXTRAS
 #include <fcntl.h>
 #include "sym.h"
 #include "misc.h"
@@ -42,6 +43,7 @@
 #endif
 #include "xf86OSmouse.h"
 #include "xf86xv.h"
+#include "xf86xvmc.h"
 #include "xf86cmap.h"
 #include "xf86fbman.h"
 #include "dgaproc.h"
@@ -51,35 +53,14 @@
 #define DONT_DEFINE_WRAPPERS
 #include "xf86_ansic.h"
 #include "xisb.h"
-#include "xf86Priv.h"
 #include "vbe.h"
 #include "xf86sbusBus.h"
-#ifdef __alpha__
-/* MMIO function prototypes */
 #include "compiler.h"
-#endif
 
 #ifdef __FreeBSD__
 /* XXX used in drmOpen(). This should change to use a less os-specific
  * method. */
 int sysctlbyname(const char*, void *, size_t *, void *, size_t);
-#endif
-
-/* XXX Should get all of these from elsewhere */
-#if defined(PowerMAX_OS) || (defined(sun) && defined(SVR4))
-# undef inb
-# undef inw
-# undef inl
-# undef outb
-# undef outw
-# undef outl
-
-extern void outb(unsigned int a, unsigned char b);
-extern void outw(unsigned int a, unsigned short w);
-extern void outl(unsigned int a, unsigned long l);
-extern unsigned char  inb(unsigned int a);
-extern unsigned short inw(unsigned int a);
-extern unsigned long  inl(unsigned int a);
 #endif
 
 #if defined(__alpha__)
@@ -120,16 +101,9 @@ extern long __divsf3(long, long);
 extern long __moddi3(long, long);
 extern long __udivdi3(long, long);
 extern long __umoddi3(long, long);
-extern void _outb(char val, unsigned short port);
-extern void _outw(short val, unsigned short port);
-extern void _outl(int val, unsigned short port);
-extern unsigned int _inb(unsigned short port);
-extern unsigned int _inw(unsigned short port);
-extern unsigned int _inl(unsigned short port);
 #endif
 
 #if defined(__powerpc__) && (defined(Lynx) || defined(linux))
-void eieio();
 void _restf14();
 void _restf17();
 void _restf18();
@@ -171,14 +145,6 @@ extern void outl(unsigned short, unsigned int);
 extern unsigned int inb(unsigned short);
 extern unsigned int inw(unsigned short);
 extern unsigned int inl(unsigned short);
-extern unsigned long ldq_u(void *);
-extern unsigned long ldl_u(void *);
-extern unsigned short ldw_u(void *);
-extern void stl_u(unsigned long, void *);
-extern void stq_u(unsigned long, void *);
-extern void stw_u(unsigned short, void *);
-extern void mem_barrier(void);
-extern void write_mem_barrier(void);
 extern void stl_brx(unsigned long, volatile unsigned char *, int);
 extern void stw_brx(unsigned short, volatile unsigned char *, int);
 extern unsigned long ldl_brx(volatile unsigned char *, int);
@@ -191,11 +157,7 @@ extern int testinx2(unsigned short, unsigned char, unsigned char);
 extern int testinx(unsigned short, unsigned char);
 #endif
 
-/* XXX This needs to be cleaned up for the new design */
-
-#ifdef DPMSExtension
 extern void DPMSSet(CARD16);
-#endif
 
 /* XFree86 things */
 
@@ -246,7 +208,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86UnbindGARTMemory)
    SYMFUNC(xf86EnableAGP)
    SYMFUNC(xf86SoundKbdBell)
-   
+   SYMFUNC(xf86GARTCloseScreen)
 #ifdef XINPUT
 /* XISB routines  (Merged from Metrolink tree) */
    SYMFUNC(XisbNew)
@@ -304,6 +266,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86FindScreenForEntity)
    SYMFUNC(xf86FindPciDeviceVendor)
    SYMFUNC(xf86FindPciClass)
+   SYMFUNC(xf86EnablePciBusMaster)
    SYMFUNC(xf86RegisterStateChangeNotificationCallback)
    SYMFUNC(xf86DeregisterStateChangeNotificationCallback)
    SYMFUNC(xf86NoSharedResources)
@@ -446,6 +409,8 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86IsScreenPrimary)
    SYMFUNC(xf86RegisterRootWindowProperty)
    SYMFUNC(xf86IsUnblank)
+   SYMFUNC(xf86AddModuleInfo)
+   SYMFUNC(xf86DeleteModuleInfo)
 
 #ifdef __sparc__
    /* xf86sbusBus.c */
@@ -497,6 +462,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86OptionValue)
    SYMFUNC(xf86OptionListReport)
    SYMFUNC(xf86SetIntOption)
+   SYMFUNC(xf86SetRealOption)
    SYMFUNC(xf86SetStrOption)
    SYMFUNC(xf86ReplaceIntOption)
    SYMFUNC(xf86ReplaceStrOption)
@@ -554,6 +520,9 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86XVAllocateVideoAdaptorRec)
    SYMFUNC(xf86XVFreeVideoAdaptorRec)
 
+   /* xf86xvmc.c */
+   SYMFUNC(xf86XvMCScreenInit)
+
    /* xf86VidMode.c */
    SYMFUNC(VidModeExtensionInit)
 #ifdef XF86VIDMODE
@@ -582,6 +551,9 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(VidModeGetModeValue)
    SYMFUNC(VidModeSetModeValue)
    SYMFUNC(VidModeGetMonitorValue)
+   SYMFUNC(VidModeSetGammaRamp)
+   SYMFUNC(VidModeGetGammaRamp)
+   SYMFUNC(VidModeGetGammaRampSize)
 #endif
 
    /* xf86MiscExt.c */
@@ -601,8 +573,8 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(GetTimeInMillis)
 
    /* xf86Xinput.c */
-   SYMFUNC(xf86ProcessCommonOptions)
 #ifdef XINPUT
+   SYMFUNC(xf86ProcessCommonOptions)
    SYMFUNC(xf86IsCorePointer)
    SYMFUNC(xf86PostMotionEvent)
    SYMFUNC(xf86PostProximityEvent)
@@ -617,9 +589,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86XInputSetSendCoreEvents)
 /* End merged segment */
 #endif
-#ifdef DPMSExtension
    SYMFUNC(DPMSSet)
-#endif
 /* xf86Debug.c */
 #ifdef BUILDDEBUG
    SYMFUNC(xf86Break1)

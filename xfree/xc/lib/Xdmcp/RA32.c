@@ -1,5 +1,5 @@
 /*
- * $TOG: RA32.c /main/7 1998/06/25 16:26:21 kaleb $
+ * $Xorg: RA32.c,v 1.4 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -35,8 +35,14 @@ XdmcpReadARRAY32 (buffer, array)
 {
     int	    i;
 
-    if (!XdmcpReadCARD8 (buffer, &array->length))
+    if (!XdmcpReadCARD8 (buffer, &array->length)) {
+
+	/* Must set array->data to NULL to guarantee safe call of
+ 	 * XdmcpDisposeARRAY*(array) (which calls Xfree(array->data));
+         * see defect 7329 */
+	array->data = 0;
 	return FALSE;
+    }
     if (!array->length)
     {
 	array->data = NULL;

@@ -1,4 +1,4 @@
-/* $XConsortium: arith.c,v 1.4 94/03/22 19:08:54 gildea Exp $ */
+/* $Xorg: arith.c,v 1.3 2000/08/17 19:46:29 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Type1/arith.c,v 1.5 2001/01/17 19:43:21 dawes Exp $ */
 
  /* ARITH    CWEB         V0006 ********                             */
 /*

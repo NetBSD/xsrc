@@ -1,4 +1,4 @@
-/* $TOG: cmsColNm.c /main/32 1998/03/13 14:14:50 barstow $" */
+/* $Xorg: cmsColNm.c,v 1.3 2000/08/17 19:45:09 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -31,7 +31,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/cmsColNm.c,v 3.5 1999/05/09 10:50:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/cmsColNm.c,v 3.7 2001/01/17 19:41:51 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

@@ -1,4 +1,4 @@
-/* $TOG: xtest.c /main/23 1998/02/09 15:26:12 kaleb $ */
+/* $Xorg: xtest.c,v 1.3 2000/08/17 19:47:59 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/xtest.c,v 3.2 1998/10/04 09:36:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xtest.c,v 3.4 2001/01/17 22:13:19 dawes Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS

@@ -1,4 +1,4 @@
-/* $XConsortium: Xcms.h,v 1.15 92/11/19 16:43:04 rws Exp $ */
+/* $Xorg: Xcms.h,v 1.6 2000/08/17 19:45:04 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -27,9 +27,11 @@
  *	DESCRIPTION
  *		Public include file for X Color Management System
  */
-/* $XFree86: xc/lib/X11/Xcms.h,v 1.3tsi Exp $ */
+/* $XFree86: xc/lib/X11/Xcms.h,v 1.5 2001/01/17 19:41:49 dawes Exp $ */
 #ifndef _XCMS_H_
 #define _XCMS_H_
+
+#include <X11/Xlib.h>
 
     /*
      * XCMS Status Values

@@ -1,5 +1,5 @@
 /*
- * $TOG: stipmips.s /main/11 1998/02/09 14:08:40 kaleb $
+ * $Xorg: stipmips.s,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 

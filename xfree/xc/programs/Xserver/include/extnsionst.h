@@ -1,4 +1,4 @@
-/* $TOG: extnsionst.h /main/16 1998/02/09 14:28:41 kaleb $ */
+/* $Xorg: extnsionst.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.3 1998/10/04 09:38:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.5 2001/01/17 22:36:57 dawes Exp $ */
 
 #ifndef EXTENSIONSTRUCT_H
 #define EXTENSIONSTRUCT_H 

@@ -1,4 +1,4 @@
-/* $TOG: crc32.c /main/3 1998/02/04 14:33:14 kaleb $ */
+/* $Xorg: crc32.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-1996 Mark Adler

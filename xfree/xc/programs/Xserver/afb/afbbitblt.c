@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbbitblt.c,v 3.1 1997/01/25 04:13:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbbitblt.c,v 3.2 1998/03/20 21:04:53 hohndel Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

@@ -1,4 +1,4 @@
-/* $XConsortium: t1stub.c,v 1.3 92/03/20 15:58:40 eswu Exp $ */
+/* $Xorg: t1stub.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1stub.c,v 1.6 1999/08/22 05:35:45 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1stub.c,v 1.8 2001/01/17 19:43:24 dawes Exp $ */
 
 #ifdef FONTMODULE
 #include "Xdefs.h"	/* Bool declaration */

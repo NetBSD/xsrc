@@ -1,4 +1,4 @@
-/* $TOG: XDraw.c /main/13 1998/02/06 16:14:41 kaleb $ */
+/* $Xorg: XDraw.c,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */
 
 /*
 
@@ -26,7 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/oldX/XDraw.c,v 1.3 2001/01/17 19:43:38 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlib.h"

@@ -2,19 +2,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -33,6 +33,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "span.h"
+#include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "types.h"
@@ -300,115 +301,6 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 
 
 
-/*
- * Examine the texImage->Format field and set the Red, Green, Blue, etc
- * texel component sizes to default values.
- * These fields are set only here by core Mesa but device drivers may
- * overwritting these fields to indicate true texel resolution.
- */
-static void
-set_teximage_component_sizes( struct gl_texture_image *texImage )
-{
-   switch (texImage->Format) {
-      case GL_ALPHA:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 8;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_LUMINANCE:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 8;
-         texImage->IndexBits = 0;
-         break;
-      case GL_LUMINANCE_ALPHA:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 8;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 8;
-         texImage->IndexBits = 0;
-         break;
-      case GL_INTENSITY:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 8;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_RED:
-         texImage->RedBits = 8;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_GREEN:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 8;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_BLUE:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 8;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_RGB:
-      case GL_BGR:
-         texImage->RedBits = 8;
-         texImage->GreenBits = 8;
-         texImage->BlueBits = 8;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_RGBA:
-      case GL_BGRA:
-      case GL_ABGR_EXT:
-         texImage->RedBits = 8;
-         texImage->GreenBits = 8;
-         texImage->BlueBits = 8;
-         texImage->AlphaBits = 8;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 0;
-         break;
-      case GL_COLOR_INDEX:
-         texImage->RedBits = 0;
-         texImage->GreenBits = 0;
-         texImage->BlueBits = 0;
-         texImage->AlphaBits = 0;
-         texImage->IntensityBits = 0;
-         texImage->LuminanceBits = 0;
-         texImage->IndexBits = 8;
-         break;
-      default:
-         gl_problem(NULL, "unexpected format in set_teximage_component_sizes");
-   }
-}
-
-
 static void
 set_tex_image(struct gl_texture_object *tObj,
               GLenum target, GLint level,
@@ -467,9 +359,7 @@ init_texture_image( GLcontext *ctx,
 {
    ASSERT(img);
    ASSERT(!img->Data);
-   img->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   set_teximage_component_sizes( img );
-   img->IntFormat = (GLenum) internalFormat;
+   _mesa_init_texture_format( ctx, img, internalFormat );
    img->Border = border;
    img->Width = width;
    img->Height = height;
@@ -557,6 +447,7 @@ _mesa_select_tex_object(GLcontext *ctx, struct gl_texture_unit *texUnit,
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+      case GL_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.HaveTextureCubeMap
                 ? texUnit->CurrentCubeMap : NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
@@ -745,7 +636,7 @@ make_texture_image( GLcontext *ctx,
          }
          return;  /* all done */
       }
-   }      
+   }
 
 
    /*
@@ -851,13 +742,6 @@ clear_proxy_teximage(struct gl_texture_image *img)
    ASSERT(img);
    img->Format = 0;
    img->IntFormat = 0;
-   img->RedBits = 0;
-   img->GreenBits = 0;
-   img->BlueBits = 0;
-   img->AlphaBits = 0;
-   img->IntensityBits = 0;
-   img->LuminanceBits = 0;
-   img->IndexBits = 0;
    img->Border = 0;
    img->Width = 0;
    img->Height = 0;
@@ -871,6 +755,7 @@ clear_proxy_teximage(struct gl_texture_image *img)
    img->Data = NULL;
    img->IsCompressed = 0;
    img->CompressedSize = 0;
+   img->TexFormat = &_mesa_null_texformat;
 }
 
 
@@ -1088,9 +973,9 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   destTex = texUnit->CurrentD[2]->Image[level];
+   destTex = texUnit->CurrentD[dimensions]->Image[level];
    if (!destTex) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glTexSubImage2D");
+      gl_error(ctx, GL_INVALID_OPERATION, "glTexSubImage1/2/3D");
       return GL_TRUE;
    }
 
@@ -1994,11 +1879,10 @@ void
 _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean discardImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexImage");
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
@@ -2174,11 +2058,12 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexSubImage1D");
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
                               width, 1, 1, format, type)) {
@@ -2257,11 +2142,12 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexSubImage2D");
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                               width, height, 1, format, type)) {
@@ -2370,11 +2256,12 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexSubImage3D");
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
                               width, height, depth, format, type)) {
@@ -2521,7 +2408,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       return;
 
    if (ctx->Pixel.MapColorFlag || ctx->Pixel.ScaleOrBiasRGBA
-       || !ctx->Driver.CopyTexImage1D 
+       || !ctx->Driver.CopyTexImage1D
        || !(*ctx->Driver.CopyTexImage1D)(ctx, target, level,
                          internalFormat, x, y, width, border))
    {
@@ -2616,7 +2503,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
          return;
       }
-      
+
       /* now call glTexSubImage1D to do the real work */
       unpackSave = ctx->Unpack;
       ctx->Unpack = _mesa_native_packing;
@@ -2668,7 +2555,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       _mesa_TexSubImage2D(target, level, xoffset, yoffset, width, height,
                           GL_RGBA, GL_UNSIGNED_BYTE, image);
       ctx->Unpack = unpackSave;
-      
+
       FREE(image);
    }
 }
@@ -2713,7 +2600,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       _mesa_TexSubImage3D(target, level, xoffset, yoffset, zoffset,
                           width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
       ctx->Unpack = unpackSave;
-      
+
       FREE(image);
    }
 }
@@ -3116,11 +3003,12 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexSubImage1DARB");
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
                               width, 1, 1, format, GL_NONE)) {
@@ -3153,11 +3041,12 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexSubImage2DARB");
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                               width, height, 1, format, GL_NONE)) {
@@ -3191,11 +3080,12 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexSubImage3DARB");
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
                               width, height, depth, format, GL_NONE)) {
@@ -3226,10 +3116,9 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 void
 _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 {
-   GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetCompressedTexImageARB");
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {

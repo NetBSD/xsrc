@@ -2,8 +2,7 @@
 #define	UTILS_H 1
 
   /*\
-   * $XConsortium: utils.h /main/3 1996/01/14 16:48:26 kaleb $
-   * $XFree86: xc/programs/xkbcomp/utils.h,v 3.1 1996/08/26 10:52:26 dawes Exp $
+   * $Xorg: utils.h,v 1.3 2000/08/17 19:54:33 cpqbld Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION
@@ -28,6 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
+/* $XFree86: xc/programs/xkbcomp/utils.h,v 3.3 2001/01/17 23:45:45 dawes Exp $ */
 
 /***====================================================================***/
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.7 2000/11/18 19:37:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.9 2001/03/21 16:21:40 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -73,6 +73,7 @@ typedef struct _XF86DRISAREA {
     drmLock			drawable_lock;
     XF86DRISAREADrawableRec	drawableTable[SAREA_MAX_DRAWABLES];
     XF86DRISAREAFrameRec        frame;
+    drmContext			dummy_context;
 } XF86DRISAREARec, *XF86DRISAREAPtr;
 
 #endif

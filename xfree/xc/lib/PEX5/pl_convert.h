@@ -1,4 +1,4 @@
-/* $TOG: pl_convert.h /main/4 1998/02/06 16:09:53 kaleb $ */
+/* $Xorg: pl_convert.h,v 1.3 2000/08/17 19:44:22 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

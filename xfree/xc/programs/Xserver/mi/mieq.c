@@ -1,5 +1,5 @@
 /*
- * $TOG: mieq.c /main/9 1998/02/09 14:46:43 kaleb $
+ * $Xorg: mieq.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -21,6 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/programs/Xserver/mi/mieq.c,v 1.1.1.4.2.1 2001/05/25 18:50:12 dawes Exp $ */
 
 /*
  * mieq.c
@@ -85,7 +86,7 @@ void
 mieqEnqueue (e)
     xEvent	*e;
 {
-    HWEventQueueType	oldtail, newtail, prevtail;
+    HWEventQueueType	oldtail, newtail;
     Bool    isMotion;
 
     oldtail = miEventQueue.tail;
@@ -135,7 +136,7 @@ mieqSwitchScreen (pScreen, fromDIX)
  * Call this from ProcessInputEvents()
  */
 
-mieqProcessInputEvents ()
+void mieqProcessInputEvents ()
 {
     EventRec	*e;
     int		x, y;
@@ -143,8 +144,6 @@ mieqProcessInputEvents ()
 
     while (miEventQueue.head != miEventQueue.tail)
     {
-	extern int  screenIsSaved;
-
 	if (screenIsSaved == SCREEN_SAVER_ON)
 	    SaveScreens (SCREEN_SAVER_OFF, ScreenSaverReset);
 

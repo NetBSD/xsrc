@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/dpstk/Imakefile,v 1.5 2000/05/23 19:32:52 dawes Exp $
+XCOMM $XFree86: xc/lib/dpstk/Imakefile,v 1.6 2000/06/07 22:03:00 tsi Exp $
 
 #define DoNormalLib NormalLibDpsTk
 #define DoSharedLib SharedLibDpsTk

@@ -35,7 +35,9 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/dps/dpsabbrev.c,v 1.3 2001/04/01 14:00:03 tsi Exp $ */
 
+#include <string.h>
 #include "publictypes.h"
 #include "DPS/dpsclient.h"
 #include "dpsprivate.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: LuvGcLC.c,v 1.3 93/09/07 21:31:47 rws Exp $ */
+/* $Xorg: LuvGcLC.c,v 1.3 2000/08/17 19:44:41 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -30,7 +30,7 @@
  *		Source for XcmsCIELuvClipLuv() gamut
  *		compression function.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/LuvGcLC.c,v 1.3 2001/01/17 19:41:39 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

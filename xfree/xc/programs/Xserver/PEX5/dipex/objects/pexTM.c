@@ -1,4 +1,4 @@
-/* $TOG: pexTM.c /main/3 1998/02/10 12:36:01 kaleb $ */
+/* $Xorg: pexTM.c,v 1.3 2000/08/17 19:47:15 cpqbld Exp $ */
 /*
 
 Copyright 1994, 1998  The Open Group

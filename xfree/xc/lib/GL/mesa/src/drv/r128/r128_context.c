@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.c,v 1.3 2000/12/04 19:21:44 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.c,v 1.6 2001/03/21 16:14:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -60,188 +60,176 @@ int R128_DEBUG = (0
    );
 #endif
 
-/* Create the device specific context */
-GLboolean r128CreateContext(Display *dpy, GLvisual *glVisual,
-			    __DRIcontextPrivate *driContextPriv)
+/* Create the device specific context.
+ */
+GLboolean r128CreateContext( Display *dpy, GLvisual *glVisual,
+			     __DRIcontextPrivate *driContextPriv )
 {
-    r128ContextPtr  r128ctx;
-    r128ScreenPtr   r128scrn;
-    GLcontext      *ctx    = driContextPriv->mesaContext;
-    int             i;
-    char           *v;
-    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   GLcontext *ctx = driContextPriv->mesaContext;
+   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   r128ContextPtr rmesa;
+   r128ScreenPtr r128scrn;
+   int i;
 
-    r128ctx = (r128ContextPtr)Xcalloc(1, sizeof(*r128ctx));
-    if (!r128ctx) return GL_FALSE;
+   rmesa = (r128ContextPtr) CALLOC( sizeof(*rmesa) );
+   if ( !rmesa ) return GL_FALSE;
 
-    /* Initialize r128Context */
-    r128ctx->glCtx       = ctx;
-    r128ctx->display     = dpy;
+   rmesa->glCtx = ctx;
+   rmesa->display = dpy;
 
-    r128ctx->driContext  = driContextPriv;
-    r128ctx->driScreen   = sPriv;
-    r128ctx->driDrawable = NULL; /* Set by XMesaMakeCurrent */
+   rmesa->driContext = driContextPriv;
+   rmesa->driScreen = sPriv;
+   rmesa->driDrawable = NULL; /* Set by XMesaMakeCurrent */
 
-    r128ctx->hHWContext  = driContextPriv->hHWContext;
-    r128ctx->driFd       = sPriv->fd;
-    r128ctx->driHwLock   = &sPriv->pSAREA->lock;
+   rmesa->hHWContext = driContextPriv->hHWContext;
+   rmesa->driHwLock = &sPriv->pSAREA->lock;
+   rmesa->driFd = sPriv->fd;
 
-    r128scrn = r128ctx->r128Screen = (r128ScreenPtr)(sPriv->private);
+   r128scrn = rmesa->r128Screen = (r128ScreenPtr)(sPriv->private);
 
-    r128ctx->sarea = (R128SAREAPriv *)((char *)sPriv->pSAREA +
-				       sizeof(XF86DRISAREARec));
+   rmesa->sarea = (R128SAREAPrivPtr)((char *)sPriv->pSAREA +
+				     r128scrn->sarea_priv_offset);
 
-    r128ctx->CurrentTexObj[0] = NULL;
-    r128ctx->CurrentTexObj[1] = NULL;
-    make_empty_list(&r128ctx->SwappedOut);
-    for (i = 0; i < r128scrn->NRTexHeaps; i++) {
-	make_empty_list(&r128ctx->TexObjList[i]);
-	r128ctx->texHeap[i] = mmInit(0, r128scrn->texSize[i]);
-	r128ctx->lastTexAge[i] = -1;
-    }
-    r128ctx->lastTexHeap = r128scrn->NRTexHeaps;
+   rmesa->tmp_matrix = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   if ( !rmesa->tmp_matrix ) {
+      FREE( rmesa );
+      return GL_FALSE;
+   }
 
-    r128ctx->DepthSize   = glVisual->DepthBits;
-    r128ctx->StencilSize = glVisual->StencilBits;
+   rmesa->CurrentTexObj[0] = NULL;
+   rmesa->CurrentTexObj[1] = NULL;
 
-    r128ctx->useFastPath = GL_FALSE;
-    r128ctx->lod_bias = 0x3f;
+   make_empty_list( &rmesa->SwappedOut );
 
-    r128ctx->num_verts = 0;
-    r128ctx->vert_buf = NULL;
+   for ( i = 0 ; i < r128scrn->numTexHeaps ; i++ ) {
+      make_empty_list( &rmesa->TexObjList[i] );
+      rmesa->texHeap[i] = mmInit( 0, r128scrn->texSize[i] );
+      rmesa->lastTexAge[i] = -1;
+   }
+   rmesa->lastTexHeap = r128scrn->numTexHeaps;
 
-    r128ctx->elt_buf = NULL;
-    r128ctx->retained_buf = NULL;
-    r128ctx->vert_heap = r128ctx->r128Screen->buffers->list->address;
+   rmesa->RenderIndex = -1;		/* Impossible value */
+   rmesa->OnFastPath = 0;
 
-#if 0
-    r128ctx->CCEbuf= (CARD32 *)MALLOC(sizeof(*r128ctx->CCEbuf) *
-				      r128scrn->ringEntries);
-    r128ctx->CCEcount = 0;
-#endif
+   rmesa->vert_buf = NULL;
+   rmesa->num_verts = 0;
 
-    if ((v = getenv("LIBGL_CCE_TIMEOUT")))
-	r128ctx->CCEtimeout   = strtoul(v, NULL, 10);
-    else
-	r128ctx->CCEtimeout   = (R128_DEFAULT_TOTAL_CCE_TIMEOUT /
-				 R128_DEFAULT_CCE_TIMEOUT);
-    if (r128ctx->CCEtimeout <= 0) r128ctx->CCEtimeout = 1;
+   rmesa->elt_buf = NULL;
+   rmesa->retained_buf = NULL;
+   rmesa->vert_heap = r128scrn->buffers->list->address;
 
-    /* Initialize GLcontext */
-    ctx->DriverCtx = (void *)r128ctx;
+   /* KW: Set the maximum texture size small enough that we can
+    * guarentee that both texture units can bind a maximal texture
+    * and have them both in on-card memory at once.  (Kevin or
+    * Gareth: Please check these numbers are OK)
+    */
+   if ( r128scrn->texSize[0] < 2*1024*1024 ) {
+      ctx->Const.MaxTextureLevels = 9;
+      ctx->Const.MaxTextureSize = (1 << 8);
+   } else if ( r128scrn->texSize[0] < 8*1024*1024 ) {
+      ctx->Const.MaxTextureLevels = 10;
+      ctx->Const.MaxTextureSize = (1 << 9);
+   } else {
+      ctx->Const.MaxTextureLevels = 11;
+      ctx->Const.MaxTextureSize = (1 << 10);
+   }
 
-    r128DDInitExtensions(ctx);
-
-    r128DDInitDriverFuncs(ctx);
-    r128DDInitIoctlFuncs(ctx);
-    r128DDInitStateFuncs(ctx);
-    r128DDInitSpanFuncs(ctx);
-    r128DDInitTextureFuncs(ctx);
-
-    ctx->Driver.TriangleCaps = (DD_TRI_CULL
-				| DD_TRI_LIGHT_TWOSIDE
-				| DD_TRI_OFFSET);
-
-    /* Ask Mesa to clip fog coordinates for us
-     */
-    ctx->TriangleCaps |= DD_CLIP_FOG_COORD;
-
-    /* Reset Mesa's current 2D texture pointers to the driver's textures */
-    ctx->Shared->DefaultD[2][0].DriverData = NULL;
-    ctx->Shared->DefaultD[2][1].DriverData = NULL;
-
-    /* KW: Set the maximum texture size small enough that we can
-     * guarentee that both texture units can bind a maximal texture
-     * and have them both in on-card memory at once.  (Kevin or
-     * Gareth: Please check these numbers are OK)
-     */
-    if (r128scrn->texSize[0] < 2*1024*1024) {
-       ctx->Const.MaxTextureLevels = 9;
-       ctx->Const.MaxTextureSize = 1<<8;
-    } else if (r128scrn->texSize[0] < 8*1024*1024) {
-       ctx->Const.MaxTextureLevels = 10;
-       ctx->Const.MaxTextureSize = 1<<9;
-    } else {
-       ctx->Const.MaxTextureLevels = 11;
-       ctx->Const.MaxTextureSize = 1<<10;
-    }
-
-    ctx->Const.MaxTextureUnits = 2;
+   ctx->Const.MaxTextureUnits = 2;
 
 #if ENABLE_PERF_BOXES
-    if (getenv("LIBGL_PERFORMANCE_BOXES"))
-	r128ctx->boxes = 1;
-    else
-	r128ctx->boxes = 0;
+   if ( getenv( "LIBGL_PERFORMANCE_BOXES" ) ) {
+      rmesa->boxes = 1;
+   } else {
+      rmesa->boxes = 0;
+   }
 #endif
 
-    /* If Mesa has current a vertex buffer, make sure the driver's VB
-       data is up to date */
-    if (ctx->VB) r128DDRegisterVB(ctx->VB);
+   ctx->DriverCtx = (void *)rmesa;
 
-    /* Register the fast path */
-    if (ctx->NrPipelineStages)
-	ctx->NrPipelineStages =
-	    r128DDRegisterPipelineStages(ctx->PipelineStage,
-					 ctx->PipelineStage,
-					 ctx->NrPipelineStages);
+   r128DDInitExtensions( ctx );
 
-    r128DDInitState(r128ctx);
+   r128DDInitDriverFuncs( ctx );
+   r128DDInitIoctlFuncs( ctx );
+   r128DDInitStateFuncs( ctx );
+   r128DDInitSpanFuncs( ctx );
+   r128DDInitTextureFuncs( ctx );
 
-    driContextPriv->driverPrivate = (void *)r128ctx;
+   ctx->Driver.TriangleCaps = (DD_TRI_CULL |
+			       DD_TRI_LIGHT_TWOSIDE |
+			       DD_TRI_STIPPLE |
+			       DD_TRI_OFFSET);
 
-    return GL_TRUE;
+   /* Ask Mesa to clip fog coordinates for us.
+    */
+   ctx->TriangleCaps |= DD_CLIP_FOG_COORD;
+
+   if ( ctx->VB )
+      r128DDRegisterVB( ctx->VB );
+
+   if ( ctx->NrPipelineStages ) {
+      ctx->NrPipelineStages =
+	 r128DDRegisterPipelineStages( ctx->PipelineStage,
+				       ctx->PipelineStage,
+				       ctx->NrPipelineStages );
+   }
+
+   r128DDInitState( rmesa );
+
+   driContextPriv->driverPrivate = (void *)rmesa;
+
+   return GL_TRUE;
 }
 
-/* Destroy the device specific context */
-void r128DestroyContext(r128ContextPtr r128ctx)
+/* Destroy the device specific context.
+ */
+void r128DestroyContext( r128ContextPtr rmesa )
 {
-    if (r128ctx) {
-	r128TexObjPtr t, next_t;
-	int           i;
+   if ( rmesa ) {
+      r128TexObjPtr t, next_t;
+      int i;
+
+      for ( i = 0 ; i < rmesa->r128Screen->numTexHeaps ; i++ ) {
+	 foreach_s ( t, next_t, &rmesa->TexObjList[i] ) {
+	    r128DestroyTexObj( rmesa, t );
+	 }
+	 mmDestroy( rmesa->texHeap[i] );
+      }
+
+      foreach_s ( t, next_t, &rmesa->SwappedOut ) {
+	 r128DestroyTexObj( rmesa, t );
+      }
+
+      ALIGN_FREE( rmesa->tmp_matrix );
+      FREE( rmesa );
+   }
 
 #if 0
-	FREE( r128ctx->CCEbuf );
-#endif
-
-	for (i = 0; i < r128ctx->r128Screen->NRTexHeaps; i++) {
-	    foreach_s (t, next_t, &r128ctx->TexObjList[i])
-		r128DestroyTexObj(r128ctx, t);
-	}
-
-	foreach_s (t, next_t, &r128ctx->SwappedOut)
-	    r128DestroyTexObj(r128ctx, t);
-
-	Xfree(r128ctx);
-    }
-
-#if 0
-    glx_fini_prof();
+   /* Use this to force shared object profiling. */
+   glx_fini_prof();
 #endif
 }
 
 /* Load the device specific context into the hardware.  The actual
-   setting of the hardware state is done in the r128UpdateHWState(). */
-r128ContextPtr r128MakeCurrent(r128ContextPtr oldCtx,
-			       r128ContextPtr newCtx,
-			       __DRIdrawablePrivate *dPriv)
+ * setting of the hardware state is done in the r128UpdateHWState().
+ */
+r128ContextPtr r128MakeCurrent( r128ContextPtr oldCtx,
+				r128ContextPtr newCtx,
+				__DRIdrawablePrivate *dPriv )
 {
-    if (oldCtx) {
-	if (!R128CCE_USE_RING_BUFFER(newCtx->r128Screen->CCEMode))
-	    newCtx->dirty |= R128_REQUIRE_QUIESCENCE;
-	if (oldCtx != newCtx) {
-	    newCtx->new_state |= R128_NEW_CONTEXT;
-	    newCtx->dirty = R128_UPLOAD_ALL;
-	}
-	if (oldCtx->driDrawable != dPriv) {
-	    newCtx->new_state |= R128_NEW_WINDOW;
-	}
-    } else {
-	newCtx->new_state |= R128_NEW_CONTEXT;
-	newCtx->dirty = R128_UPLOAD_ALL;
-    }
+   if ( oldCtx ) {
+      if ( oldCtx != newCtx ) {
+	 newCtx->new_state |= R128_NEW_CONTEXT;
+	 newCtx->dirty = R128_UPLOAD_ALL;
+      }
+      if ( oldCtx->driDrawable != dPriv ) {
+	 newCtx->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
+      }
+   } else {
+      newCtx->new_state |= R128_NEW_CONTEXT;
+      newCtx->dirty = R128_UPLOAD_ALL;
+   }
 
-    newCtx->driDrawable = dPriv;
+   newCtx->driDrawable = dPriv;
 
-    return newCtx;
+   return newCtx;
 }

@@ -1,7 +1,8 @@
-/* $TOG: xprop.c /main/44 1998/02/09 14:12:01 kaleb $*/
+/* $Xorg: xprop.c,v 1.5 2000/08/17 19:54:55 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
+Copyright (c) 2000  The XFree86 Project, Inc.
 
 All Rights Reserved.
 
@@ -22,32 +23,41 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xprop/xprop.c,v 1.6 1999/03/07 11:41:17 dawes Exp $ */
+/* $XFree86: xc/programs/xprop/xprop.c,v 1.10 2001/01/23 20:22:19 dawes Exp $ */
 
 
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
 #include <X11/Xutil.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#ifdef HAS_WCHAR_H
+#include <wchar.h>
+#endif
+#ifdef HAS_WCTYPE_H
+#include <wctype.h>
+#endif
+#include <locale.h>
+
+#ifndef HAS_WCTYPE_H
+#define iswprint(x) isprint(x)
+#endif
 
 #include <X11/Xatom.h>
 #include <X11/Xmu/WinUtil.h>
 
 #include "dsimple.h"
 
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-char *getenv();
-#endif
-
 #define MAXSTR 10000
 
 #ifndef min
 #define min(a,b)  ((a) < (b) ? (a) : (b))
 #endif
+
+/* isprint() in "C" locale */
+#define c_isprint(c) ((c) >= 0x20 && (c) < 0x7f)
 
 /*
  *
@@ -57,179 +67,188 @@ char *getenv();
 
 typedef struct {
   int thunk_count;
+  const char *propname;
   long value;
-  char *extra_value;
-  char *format;
-  char *dformat;
+  Atom extra_encoding;
+  const char *extra_value;
+  const char *format;
+  const char *dformat;
 } thunk;
 
-#if NeedFunctionPrototypes
-static Atom Parse_Atom(char *, int);
-extern thunk *Create_Thunk_List(void);
-extern void Free_Thunk_List(thunk *);
-extern thunk *Add_Thunk(thunk *, thunk);
-extern char *Copy_String(char *);
-extern int Read_Char(FILE *);
-extern void Read_White_Space(FILE *);
-extern char *Read_Quoted(FILE *);
-extern void Apply_Default_Formats(char **, char **);
-extern void Lookup_Formats(Atom, char **, char **);
-extern void Add_Mapping(Atom, char *, char *);
-extern void Setup_Mapping(void);
-extern char *GetAtomName(Atom);
-extern void Read_Mappings(FILE *);
-extern char *Format_Hex(long);
-extern char *Format_Unsigned(long);
-extern char *Format_Signed(long);
-extern int ignore_errors(Display *, XErrorEvent *);
-extern char *Format_Atom(Atom);
-extern char *Format_Mask_Word(long);
-extern char *Format_Bool(long);
-extern void _put_char(char);
-extern void _format_char(char);
-extern char *Format_String(char *);
-extern char *Format_Len_String(char *, int);
-extern char *Skip_Digits(char *);
-extern char *Scan_Long(char *, long *);
-extern char *Scan_Octal(char *, long *);
-extern char *Skip_Past_Right_Paran(char *);
-extern int Is_A_Format(char *);
-extern int Get_Format_Size(char *);
-extern char Get_Format_Char(char *, int);
-extern char *Format_Thunk(thunk, char);
-extern char *Format_Thunk_I(thunk *, char *, int);
-extern long Mask_Word(thunk *, char *);
-extern int Is_A_DFormat(char *);
-extern char *Handle_Backslash(char *);
-extern char *Handle_Dollar_sign(char *, thunk *, char *);
-extern int Mask_Bit_I(thunk *, char *, int);
-extern char *Scan_Term(char *, thunk *, char *, long *);
-extern char *Scan_Exp(char *, thunk *, char *, long *);
-extern char *Handle_Question_Mark(char *, thunk *, char *);
-extern void Display_Property(thunk *, char *, char *);
-extern long Extract_Value(char **, int *, int, int);
-extern long Extract_Len_String(char **, int *, int, char **);
-extern thunk *Break_Down_Property(char *, int, char *, int);
-extern void grammar(void);
-extern void Parse_Format_Mapping(int *, char ***);
-extern int main(int, char **);
-extern void remove_property(Display *, Window, char *);
-extern thunk *Handle_Prop_Requests(int, char **);
-extern void Show_All_Props(void);
-extern void Set_Prop(char *, char *, char *, char, char *);
-extern char *Get_Font_Property_Data_And_Type(Atom, long *, Atom *, int *);
-extern char *Get_Window_Property_Data_And_Type(Atom, long *, Atom *, int *);
-extern char *Get_Property_Data_And_Type(Atom, long *, Atom *, int *);
-extern void Show_Prop(char *, char *, char *);
+static thunk *
+Create_Thunk_List (void)
+{
+    thunk *tptr;
+
+    tptr = (thunk *) Malloc(sizeof(thunk));
+
+    tptr->thunk_count = 0;
+
+    return tptr;
+}
+
+#ifdef notused
+static void
+Free_Thunk_List (thunk *list)
+{
+    free(list);
+}
 #endif
 
-
-thunk *Create_Thunk_List()
+static thunk *
+Add_Thunk (thunk *list, thunk t)
 {
-  thunk *tptr;
+    int i;
 
-  tptr = (thunk *) Malloc( sizeof(thunk) );
+    i = list->thunk_count;
 
-  tptr->thunk_count = 0;
+    list = (thunk *) realloc(list, (i+1)*sizeof(thunk));
+    if (!list)
+	Fatal_Error("Out of memory!");
 
-  return(tptr);
-}
+    list[i++] = t;
+    list->thunk_count = i;
 
-void
-Free_Thunk_List(list)
-thunk *list;
-{
-  free(list);
-}
-
-thunk *Add_Thunk(list, t)
-thunk *list;
-thunk t;
-{
-  int i;
-
-  i = list->thunk_count;
-
-  list = (thunk *) realloc(list, (i+1)*sizeof(thunk) );
-  if (!list)
-    Fatal_Error("Out of memory!");
-
-  list[i++] = t;
-  list->thunk_count = i;
-
-  return(list);
+    return list;
 }
 
 /*
  * Misc. routines
  */
 
-char *Copy_String(string)
-     char *string;
+static char *
+Copy_String (const char *string)
 {
-	char *new;
-	int length;
+    char *new;
+    int length;
 
-	length = strlen(string) + 1;
+    length = strlen(string) + 1;
 
-	new = (char *) Malloc(length);
-	memmove( new, string, length);
+    new = (char *) Malloc(length);
+    memcpy(new, string, length);
 
-	return(new);
+    return new;
 }
 
-int Read_Char(stream)
-     FILE *stream;
+static int
+Read_Char (FILE *stream)
 {
-	int c;
+    int c;
 
-	c = getc(stream);
-	if (c==EOF)
-	  Fatal_Error("Bad format file: Unexpected EOF.");
-	return(c);
+    c = getc(stream);
+    if (c == EOF)
+	Fatal_Error("Bad format file: Unexpected EOF.");
+    return c;
 }
 
-void
-Read_White_Space(stream)
-     FILE *stream;
+static void
+Read_White_Space (FILE *stream)
 {
-	int c;
+    int c;
 
-	while ((c=getc(stream))==' ' || c=='\n' || c=='\t');
-	ungetc(c, stream);
+    while ((c = getc(stream)) == ' ' || c == '\n' || c == '\t');
+    ungetc(c, stream);
 }
 
 static char _large_buffer[MAXSTR+10];
 
-char *Read_Quoted(stream)
-     FILE *stream;
+static char *
+Read_Quoted (FILE *stream)
 {
-	char *ptr;
-	int c, length;
+    char *ptr;
+    int c, length;
 
-	Read_White_Space(stream);
-	if (Read_Char(stream)!='\'')
-	  Fatal_Error("Bad format file format: missing dformat.");
+    Read_White_Space(stream);
+    if (Read_Char(stream)!='\'')
+	Fatal_Error("Bad format file format: missing dformat.");
 
-	ptr = _large_buffer; length=MAXSTR;
-	for (;;) {
-		if (length<0)
-		  Fatal_Error("Bad format file format: dformat too long.");
-		c = Read_Char(stream);
-		if (c==(int) '\'')
-		  break;
-		ptr++[0]=c; length--;
-		if (c== (int) '\\') {
-			c=Read_Char(stream);
-			if (c=='\n') {
-				ptr--; length++;
-			} else
-			  ptr++[0]=c; length--;
-		}
+    ptr = _large_buffer; length = MAXSTR;
+    for (;;) {
+	if (length < 0)
+	    Fatal_Error("Bad format file format: dformat too long.");
+	c = Read_Char(stream);
+	if (c == (int) '\'')
+	    break;
+	ptr++[0] = c; length--;
+	if (c == (int) '\\') {
+	    c = Read_Char(stream);
+	    if (c == '\n') {
+		ptr--; length++;
+	    } else
+		ptr++[0] = c; length--;
 	}
-	ptr++[0]='\0';
+    }
+    ptr++[0] = '\0';
 
-	return(Copy_String(_large_buffer));
+    return Copy_String(_large_buffer);
+}
+
+/*
+ *
+ * Parsing Routines: a group of routines to parse strings into values
+ *
+ * Routines: Parse_Atom, Scan_Long, Skip_Past_Right_Paren, Scan_Octal
+ *
+ * Routines of the form Parse_XXX take a string which is parsed to a value.
+ * Routines of the form Scan_XXX take a string, parse the beginning to a value,
+ * and return the rest of the string.  The value is returned via. the last
+ * parameter.  All numeric values are longs!
+ *
+ */
+
+static const char *
+Skip_Digits (const char *string)
+{
+    while (isdigit((unsigned char) string[0])) string++;
+    return string;
+}
+
+static const char *
+Scan_Long (const char *string, long *value)
+{
+    if (!isdigit((unsigned char) *string))
+	Fatal_Error("Bad number: %s.", string);
+
+    *value = atol(string);
+    return Skip_Digits(string);
+}
+
+static const char *
+Scan_Octal (const char *string, long *value)
+{
+    if (sscanf(string, "%lo", value)!=1)
+	Fatal_Error("Bad octal number: %s.", string);
+    return Skip_Digits(string);
+}
+
+static Atom
+Parse_Atom (const char *name, int only_if_exists)
+{
+    /* may return None = 0 */
+    return XInternAtom(dpy, name, only_if_exists);
+}
+
+static const char *
+Skip_Past_Right_Paren (const char *string)
+{
+    char c;
+    int nesting = 0;
+
+    while (c = string++[0], c != ')' || nesting)
+	switch (c) {
+	  case '\0':
+	    Fatal_Error("Missing ')'.");
+	  case '(':
+	    nesting++;
+	    break;
+	  case ')':
+	    nesting--;
+	    break;
+	  case '\\':
+	    string++;
+	    break;
+	}
+    return string;
 }
 
 /*
@@ -241,54 +260,46 @@ char *Read_Quoted(stream)
 #define D_FORMAT "0x"              /* Default format for properties */
 #define D_DFORMAT " = $0+\n"       /* Default display pattern for properties */
 
-static thunk *_property_formats = 0;   /* Holds mapping */
+static thunk *_property_formats = NULL;   /* Holds mapping */
 
-void
-Apply_Default_Formats(format, dformat)
-     char **format;
-     char **dformat;
+static void
+Apply_Default_Formats (const char **format, const char **dformat)
 {
-  if (!*format)
-    *format = D_FORMAT;
-  if (!*dformat)
-    *dformat = D_DFORMAT;
+    if (!*format)
+	*format = D_FORMAT;
+    if (!*dformat)
+	*dformat = D_DFORMAT;
 }
 
-void
-Lookup_Formats(atom, format, dformat)
-     Atom atom;
-     char **format;
-     char **dformat;
+static void
+Lookup_Formats (Atom atom, const char **format, const char **dformat)
 {
-  int i;
+    int i;
 
-  if (_property_formats)
-    for (i=_property_formats->thunk_count-1; i>=0; i--)
-      if (_property_formats[i].value==atom) {
-	if (!*format)
-	  *format = _property_formats[i].format;
-	if (!*dformat)
-	  *dformat = _property_formats[i].dformat;
-	break;
-      }
+    if (_property_formats)
+	for (i = _property_formats->thunk_count-1; i >= 0; i--)
+	    if (_property_formats[i].value == atom) {
+		if (!*format)
+		    *format = _property_formats[i].format;
+		if (!*dformat)
+		    *dformat = _property_formats[i].dformat;
+		break;
+	    }
 }
 
-void
-Add_Mapping(atom, format, dformat)
-     Atom atom;
-     char *format;
-     char *dformat;
+static void
+Add_Mapping (Atom atom, const char *format, const char *dformat)
 {
-  thunk t;
+    thunk t;
 
-  if (!_property_formats)
-    _property_formats = Create_Thunk_List();
+    if (!_property_formats)
+	_property_formats = Create_Thunk_List();
 
-  t.value=atom;
-  t.format=format;
-  t.dformat=dformat;
+    t.value = atom;
+    t.format = format;
+    t.dformat = dformat;
 
-  _property_formats = Add_Thunk(_property_formats, t);
+    _property_formats = Add_Thunk(_property_formats, t);
 }
 
 /*
@@ -298,10 +309,10 @@ Add_Mapping(atom, format, dformat)
  */
 
 typedef struct _propertyRec {
-    char *	name;
-    Atom	atom;
-    char *	format;
-    char *	dformat;
+    const char *	name;
+    Atom		atom;
+    const char *	format;
+    const char *	dformat;
 } propertyRec;
 
 #define ARC_DFORMAT	":\n"\
@@ -375,7 +386,7 @@ typedef struct _propertyRec {
 "\t\twindow state: ?$0=0(Withdrawn)?$0=1(Normal)?$0=3(Iconic)\n"\
 "\t\ticon window: $1\n"
 
-propertyRec windowPropTable[] = {
+static propertyRec windowPropTable[] = {
     {"ARC",		XA_ARC,		"16iiccii",   ARC_DFORMAT },
     {"ATOM",		XA_ATOM,	 "32a",	      0 },
     {"BITMAP",		XA_BITMAP,	 "32x",	      ": bitmap id # $0\n" },
@@ -395,7 +406,9 @@ propertyRec windowPropTable[] = {
     {"WM_COLORMAP_WINDOWS",	0,	 "32x",       ": window id # $0+\n"},
     {"WM_COMMAND",	XA_WM_COMMAND,	 "8s",	      " = { $0+ }\n" },
     {"WM_HINTS",	XA_WM_HINTS,	 "32mbcxxiixx",	WM_HINTS_DFORMAT },
-    {"WM_ICON_SIZE",	XA_WM_ICON_SIZE, "32cccccc",	WM_ICON_SIZE_DFORMAT},
+    {"WM_ICON_NAME",	XA_WM_ICON_NAME, "8t",	      0 },
+    {"WM_ICON_SIZE",	XA_WM_ICON_SIZE, "32cccccc",  WM_ICON_SIZE_DFORMAT},
+    {"WM_NAME",		XA_WM_NAME,	 "8t",	      0 },
     {"WM_PROTOCOLS",		0,	 "32a",	      ": protocols  $0+\n"},
     {"WM_SIZE_HINTS",	XA_WM_SIZE_HINTS,"32mii",     WM_SIZE_HINTS_DFORMAT },
     {"WM_STATE",		0,	 "32cx",      WM_STATE_DFORMAT}
@@ -411,7 +424,7 @@ propertyRec windowPropTable[] = {
 /* 
  * Font-specific mapping of property names to types:
  */
-propertyRec fontPropTable[] = {
+static propertyRec fontPropTable[] = {
 
     /* XLFD name properties */
 
@@ -473,8 +486,8 @@ static int XpropMode;
 #define XpropWindowProperties 0
 #define XpropFontProperties   1
 
-void
-Setup_Mapping()
+static void
+Setup_Mapping (void)
 {
     int n;
     propertyRec *p;
@@ -496,12 +509,12 @@ Setup_Mapping()
     }	
 }
 
-char *GetAtomName(atom)
-    Atom atom;
+static const char *
+GetAtomName (Atom atom)
 {
     int n;
     propertyRec *p;
-        
+
     if (XpropMode == XpropWindowProperties) {
 	n = sizeof(windowPropTable) / sizeof(propertyRec);
 	p = windowPropTable;
@@ -513,7 +526,7 @@ char *GetAtomName(atom)
 	if (p->atom == atom)
 	    return p->name;
 
-    return (char *) NULL;
+    return NULL;
 }
 
 /*
@@ -521,31 +534,30 @@ char *GetAtomName(atom)
  *               already open for reading.
  */
 
-void
-Read_Mappings(stream)
-     FILE *stream;
+static void
+Read_Mappings (FILE *stream)
 {
-	char format_buffer[100];
-	char name[1000], *dformat, *format;
-	int count, c;
-	Atom atom;
+    char format_buffer[100];
+    char name[1000], *dformat, *format;
+    int count, c;
+    Atom atom;
 
-	while ((count=fscanf(stream," %990s %90s ",name,format_buffer))!=EOF) {
-		if (count != 2)
-		  Fatal_Error("Bad format file format.");
+    while ((count = fscanf(stream," %990s %90s ",name,format_buffer)) != EOF) {
+	if (count != 2)
+	    Fatal_Error("Bad format file format.");
 
-		atom = Parse_Atom(name, False);
-		format = Copy_String(format_buffer);
+	atom = Parse_Atom(name, False);
+	format = Copy_String(format_buffer);
 
-		Read_White_Space(stream);
-		dformat = D_DFORMAT;
-		c = getc(stream);
-		ungetc(c, stream);
-		if (c==(int)'\'')
-		  dformat = Read_Quoted(stream);
+	Read_White_Space(stream);
+	dformat = D_DFORMAT;
+	c = getc(stream);
+	ungetc(c, stream);
+	if (c == (int) '\'')
+	    dformat = Read_Quoted(stream);
 
-		Add_Mapping(atom, format, dformat);
-	}
+	Add_Mapping(atom, format, dformat);
+    }
 }
 
 /*
@@ -561,251 +573,217 @@ Read_Mappings(stream)
  *
  */
 static char _formatting_buffer[MAXSTR+100];
-static char _formatting_buffer2[10];
+static char _formatting_buffer2[21];
 
-char *Format_Hex(wrd)
-     long wrd;
+static const char *
+Format_Hex (long wrd)
 {
-  sprintf(_formatting_buffer2, "0x%lx", wrd);
-  return(_formatting_buffer2);
+    sprintf(_formatting_buffer2, "0x%lx", wrd);
+    return _formatting_buffer2;
 }
 
-char *Format_Unsigned(wrd)
-     long wrd;
+static const char *
+Format_Unsigned (long wrd)
 {
-  sprintf(_formatting_buffer2, "%lu", wrd);
-  return(_formatting_buffer2);
+    sprintf(_formatting_buffer2, "%lu", wrd);
+    return _formatting_buffer2;
 }
 
-char *Format_Signed(wrd)
-     long wrd;
+static const char *
+Format_Signed (long wrd)
 {
-  sprintf(_formatting_buffer2, "%ld", wrd);
-  return(_formatting_buffer2);
+    sprintf(_formatting_buffer2, "%ld", wrd);
+    return _formatting_buffer2;
 }
 
 /*ARGSUSED*/
-int ignore_errors (dpy, ev)
-    Display *dpy;
-    XErrorEvent *ev;
+static int
+ignore_errors (Display *dpy, XErrorEvent *ev)
 {
     return 0;
 }
 
-char *Format_Atom(atom)
-     Atom atom;
+static const char *
+Format_Atom (Atom atom)
 {
-  char *name;
-  XErrorHandler handler;
+    const char *found;
+    char *name;
+    XErrorHandler handler;
 
-  if ((name = GetAtomName(atom))) {
-      strncpy(_formatting_buffer, name, MAXSTR);
-      return(_formatting_buffer);
-  }
+    if ((found = GetAtomName(atom)) != NULL)
+	return found;
 
-  handler = XSetErrorHandler (ignore_errors);
-  name=XGetAtomName(dpy, atom);
-  XSetErrorHandler(handler);
-  if (! name)
-      sprintf(_formatting_buffer, "undefined atom # 0x%lx", atom);
-  else {
-      strncpy(_formatting_buffer, name, MAXSTR);
-      XFree(name);
-  }
-  return(_formatting_buffer);
-}
-
-char *Format_Mask_Word(wrd)
-     long wrd;
-{
-  long bit_mask, bit;
-  int seen = 0;
-
-  strcpy(_formatting_buffer, "{MASK: ");
-  for (bit=0, bit_mask=1; bit<=sizeof(long)*8; bit++, bit_mask<<=1) {
-    if (bit_mask & wrd) {
-      if (seen) {
-	strcat(_formatting_buffer, ", ");
-      }
-      seen=1;
-      strcat(_formatting_buffer, Format_Unsigned(bit));
+    handler = XSetErrorHandler (ignore_errors);
+    name = XGetAtomName(dpy, atom);
+    XSetErrorHandler(handler);
+    if (! name)
+	sprintf(_formatting_buffer, "undefined atom # 0x%lx", atom);
+    else {
+	int namelen = strlen(name);
+	if (namelen > MAXSTR) namelen = MAXSTR;
+	memcpy(_formatting_buffer, name, namelen);
+	_formatting_buffer[namelen] = '\0';
+	XFree(name);
     }
-  }
-  strcat(_formatting_buffer, "}");
-
-  return(_formatting_buffer);
+    return _formatting_buffer;
 }
 
-char *Format_Bool(value)
-     long value;
+static const char *
+Format_Mask_Word (long wrd)
 {
-  if (!value)
-    return("False");
+    long bit_mask, bit;
+    int seen = 0;
 
-  return("True");
+    strcpy(_formatting_buffer, "{MASK: ");
+    for (bit=0, bit_mask=1; bit <= sizeof(long)*8; bit++, bit_mask<<=1) {
+	if (bit_mask & wrd) {
+	    if (seen) {
+		strcat(_formatting_buffer, ", ");
+	    }
+	    seen = 1;
+	    strcat(_formatting_buffer, Format_Unsigned(bit));
+	}
+    }
+    strcat(_formatting_buffer, "}");
+
+    return _formatting_buffer;
+}
+
+static const char *
+Format_Bool (long value)
+{
+    if (!value)
+	return "False";
+
+    return "True";
 }
 
 static char *_buf_ptr;
 static int _buf_len;
 
-#if NeedFunctionPrototypes
-void
-_put_char(char c)
-#else
-void
-_put_char(c)
-     char c;
-#endif
+static void
+_put_char (char c)
 {
-	if (--_buf_len<0) {
-		_buf_ptr[0]='\0';
-		return;
-	}
-	_buf_ptr++[0] = c;
+    if (--_buf_len < 0) {
+	_buf_ptr[0] = '\0';
+	return;
+    }
+    _buf_ptr++[0] = c;
 }
 
-#if NeedFunctionPrototypes
-void
-_format_char(char c)
-#else
-void
-_format_char(c)
-     char c;
-#endif
+static void
+_format_char (char c)
 {
-	switch (c) {
-	      case '\\':
-	      case '\"':
-		_put_char('\\');
-		_put_char(c);
-		break;
-	      case '\n':
-		_put_char('\\');
-		_put_char('n');
-		break;
-	      case '\t':
-		_put_char('\\');
-		_put_char('t');
-		break;
-	      default:
-		if (!isprint (c)) {
-			_put_char('\\');
-			sprintf(_buf_ptr, "%o", (int) c & 0xff);
-			_buf_ptr += strlen(_buf_ptr);
-			_buf_len -= strlen(_buf_ptr);
-		} else
-		  _put_char(c);
-	}
+    switch (c) {
+      case '\\':
+      case '\"':
+	_put_char('\\');
+	_put_char(c);
+	break;
+      case '\n':
+	_put_char('\\');
+	_put_char('n');
+	break;
+      case '\t':
+	_put_char('\\');
+	_put_char('t');
+	break;
+      default:
+	if (!c_isprint(c)) {
+	    _put_char('\\');
+	    sprintf(_buf_ptr, "%03o", (unsigned char) c);
+	    _buf_ptr += 3;
+	    _buf_len -= 3;
+	} else
+	  _put_char(c);
+    }
 }
 
-char *Format_String(string)
-     char *string;
+static const char *
+Format_String (const char *string)
 {
-	char c;
+    char c;
 
-	_buf_ptr = _formatting_buffer;
-	_buf_len = MAXSTR;
-	_put_char('\"');
+    _buf_ptr = _formatting_buffer;
+    _buf_len = MAXSTR;
+    _put_char('\"');
 
-	while ((c = string++[0]))
-	  _format_char(c);
+    while ((c = string++[0]))
+	_format_char(c);
 
-	_buf_len += 3;
-	_put_char('\"');
-	_put_char('\0');
-	return(_formatting_buffer);
+    *_buf_ptr++ = '"';
+    *_buf_ptr++ = '\0';
+    return _formatting_buffer;
 }
 
-char *Format_Len_String(string, len)
-     char *string;
-     int len;
+static const char *
+Format_Len_String (const char *string, int len)
 {
-  char *data, *result;
+    char *data;
+    const char *result;
 
-  data = (char *) Malloc(len+1);
+    data = (char *) Malloc(len+1);
 
-  memmove( data, string, len);
-  data[len]='\0';
+    memcpy(data, string, len);
+    data[len] = '\0';
 
-  result = Format_String(data);
-  free(data);
+    result = Format_String(data);
+    free(data);
 
-  return(result);
+    return result;
 }  
 
-/*
- *
- * Parsing Routines: a group of routines to parse strings into values
- *
- * Routines: Parse_Atom, Scan_Long, Skip_Past_Right_Paran, Scan_Octal
- *
- * Routines of the form Parse_XXX take a string which is parsed to a value.
- * Routines of the form Scan_XXX take a string, parse the beginning to a value,
- * and return the rest of the string.  The value is returned via. the last
- * parameter.  All numeric values are longs!
- *
- */
-
-char *Skip_Digits(string)
-     char *string;
+static const char *
+Format_Len_Text (const char *string, int len, Atom encoding)
 {
-	while (isdigit(string[0])) string++;
-	return(string);
-}
+    XTextProperty textprop;
+    char **list;
+    int count;
 
-char *Scan_Long(string, value)
-     char *string;
-     long *value;
-{
-	if (!isdigit(*string))
-	  Fatal_Error("Bad number: %s.", string);
-
-	*value = atol(string);
-	return(Skip_Digits(string));
-}
-
-char *Scan_Octal(string, value)
-     char *string;
-     long *value;
-{
-	if (sscanf(string, "%lo", value)!=1)
-	  Fatal_Error("Bad octal number: %s.", string);
-	return(Skip_Digits(string));
-}
-
-Atom Parse_Atom(name, only_if_exists)
-     char *name;
-     int only_if_exists;
-{
-	Atom atom;
-
-	if ((atom = XInternAtom(dpy, name, only_if_exists))==None)
-	  return(0);
-
-	return(atom);
-}
-
-char *Skip_Past_Right_Paran(string)
-     char *string;
-{
-	char c;
-	int nesting=0;
-
-	while (c=string++[0], c!=')' || nesting)
-	  switch (c) {
-		case '\0':
-		  Fatal_Error("Missing ')'.");
-		case '(':
-		  nesting++;
-		  break;
-		case ')':
-		  nesting--;
-		  break;
-		case '\\':
-		  string++;
-		  break;
-	  }
-	return(string);
+    /* Try to convert to local encoding. */
+    textprop.encoding = encoding;
+    textprop.format = 8;
+    textprop.value = (unsigned char *) string;
+    textprop.nitems = len;
+    if (XmbTextPropertyToTextList(dpy, &textprop, &list, &count) == Success) {
+	_buf_ptr = _formatting_buffer;
+	_buf_len = MAXSTR;
+	*_buf_ptr++ = '"';
+	while (count > 0) {
+	    string = *list++;
+	    len = strlen(string);
+	    while (len > 0) {
+		wchar_t wc;
+		int n = mbtowc(&wc, string, len);
+		if (n > 0 && iswprint(wc)) {
+		    if (_buf_len >= n) {
+			memcpy(_buf_ptr, string, n);
+			_buf_ptr += n;
+			_buf_len -= n;
+		    }
+		    string += n;
+		    len -= n;
+		} else {
+		    _put_char('\\');
+		    sprintf(_buf_ptr, "%03o", (unsigned char) *string);
+		    _buf_ptr += 3;
+		    _buf_len -= 3;
+		    string++;
+		    len--;
+		}
+	    }
+	    count--;
+	    if (count > 0) {
+		sprintf(_buf_ptr, "\\000");
+	        _buf_ptr += 4;
+		_buf_len -= 4;
+	    }
+	}
+	*_buf_ptr++ = '"';
+	*_buf_ptr++ = '\0';
+	return _formatting_buffer;
+    } else
+	return Format_Len_String(string, len);
 }
 
 /*
@@ -814,97 +792,89 @@ char *Skip_Past_Right_Paran(string)
  *
  */
 
-int Is_A_Format(string)
-char *string;
+static int
+Is_A_Format (const char *string)
 {
-	return(isdigit(string[0]));
+    return isdigit((unsigned char) string[0]);
 }
 
-int Get_Format_Size(format)
-  char *format;
+static int
+Get_Format_Size (const char *format)
 {
-  long size;
+    long size;
 
-  Scan_Long(format, &size);
+    Scan_Long(format, &size);
 
-  /* Check for legal sizes */
-  if (size != 0 && size != 8 && size != 16 && size != 32)
-    Fatal_Error("bad format: %s", format);
+    /* Check for legal sizes */
+    if (size != 0 && size != 8 && size != 16 && size != 32)
+	Fatal_Error("bad format: %s", format);
 
-  return((int) size);
+    return (int) size;
 }
 
-char Get_Format_Char(format, i)
-     char *format;
-     int i;
+static char
+Get_Format_Char (const char *format, int i)
 {
-  long size;
+    long size;
 
-  /* Remove # at front of format */
-  format = Scan_Long(format, &size);
-  if (!*format)
-    Fatal_Error("bad format: %s", format);
+    /* Remove # at front of format */
+    format = Scan_Long(format, &size);
+    if (!*format)
+	Fatal_Error("bad format: %s", format);
 
-  /* Last character repeats forever... */
-  if (i >= (int)strlen(format))
-    i=strlen(format)-1;
+    /* Last character repeats forever... */
+    if (i >= (int)strlen(format))
+	i = strlen(format)-1;
 
-  return(format[i]);
+    return format[i];
 }
 
-#if NeedFunctionPrototypes
-char *
-Format_Thunk(thunk t, char format_char)
-#else
-char *Format_Thunk(t, format_char)
-     thunk t;
-     char format_char;
-#endif
+static const char *
+Format_Thunk (thunk t, char format_char)
 {
-  long value;
-  value = t.value;
+    long value;
+    value = t.value;
 
-  switch (format_char) {
-  case 's':
-    return(Format_Len_String(t.extra_value, (int)t.value));
-  case 'x':
-    return(Format_Hex(value));
-  case 'c':
-    return(Format_Unsigned(value));
-  case 'i':
-    return(Format_Signed(value));
-  case 'b':
-    return(Format_Bool(value));
-  case 'm':
-    return(Format_Mask_Word(value));
-  case 'a':
-    return(Format_Atom(value));
-  default:
-    Fatal_Error("bad format character: %c", format_char);
-  }
+    switch (format_char) {
+      case 's':
+	return Format_Len_String(t.extra_value, (int)t.value);
+      case 't':
+	return Format_Len_Text(t.extra_value, (int)t.value, t.extra_encoding);
+      case 'x':
+	return Format_Hex(value);
+      case 'c':
+	return Format_Unsigned(value);
+      case 'i':
+	return Format_Signed(value);
+      case 'b':
+	return Format_Bool(value);
+      case 'm':
+	return Format_Mask_Word(value);
+      case 'a':
+	return Format_Atom(value);
+      default:
+	Fatal_Error("bad format character: %c", format_char);
+    }
 }
 
-char *Format_Thunk_I(thunks, format, i)
-     thunk *thunks;
-     char *format;
-     int i;
+static const char *
+Format_Thunk_I (thunk *thunks, const char *format, int i)
 {
-  if (i >= thunks->thunk_count)
-    return("<field not available>");
+    if (i >= thunks->thunk_count)
+	return "<field not available>";
 
-  return(Format_Thunk(thunks[i], Get_Format_Char(format, i)));
+    return Format_Thunk(thunks[i], Get_Format_Char(format, i));
 }
 
-long Mask_Word(thunks, format)
-     thunk *thunks;
-     char *format;
+static long
+Mask_Word (thunk *thunks, const char *format)
 {
-	int j;
+    int j;
 
-	for (j=0; j<(int)strlen(format); j++)
-	  if (Get_Format_Char(format, j) == 'm')
-	    return(thunks[j].value);
-	return(0L);
+    for (j = 0; j  < (int)strlen(format); j++)
+	if (Get_Format_Char(format, j) == 'm')
+	    return thunks[j].value;
+    return 0;
 }
 
 /*
@@ -913,167 +883,156 @@ long Mask_Word(thunks, format)
  *
  */
 
-int Is_A_DFormat(string)
-     char *string;
+static int
+Is_A_DFormat (const char *string)
 {
-  return( string[0] && string[0] != '-' &&
-	 !(isalpha(string[0]) || string[0] == '_') );
+    return string[0] && string[0] != '-'
+	   && !(isalpha((unsigned char) string[0]) || string[0] == '_');
 }
 
-char *Handle_Backslash(dformat)
-     char *dformat;
+static const char *
+Handle_Backslash (const char *dformat)
 {
-	char c;
-	long i;
+    char c;
+    long i;
 
-	if (!(c = *(dformat++)))
-	  return(dformat);
+    if (!(c = *(dformat++)))
+	return dformat;
 
-	switch (c) {
-	      case 'n':
-		putchar('\n');
-		break;
-	      case 't':
-		putchar('\t');
-		break;
-	      case '0':
-	      case '1':
-	      case '2':
-	      case '3':
-	      case '4':
-	      case '5':
-	      case '6':
-	      case '7':
-		dformat = Scan_Octal(dformat, &i);
-		putchar((int) i);
-		break;
-	      default:
-		putchar(c);
-		break;
-	}
-	return(dformat);
-}
-
-char *Handle_Dollar_sign(dformat, thunks, format)
-     char *dformat;
-     thunk *thunks;
-     char *format;
-{
-	long i;
-
-	dformat = Scan_Long(dformat, &i);
-
-	if (dformat[0]=='+') {
-		int seen=0;
-		dformat++;
-		for (; i<thunks->thunk_count; i++) {
-			if (seen)
-			  printf(", ");
-			seen = 1;
-			printf("%s", Format_Thunk_I(thunks, format, (int) i));
-		}
-	} else
-	  printf("%s", Format_Thunk_I(thunks, format, (int) i));
-
-	return(dformat);
-}
-
-int Mask_Bit_I(thunks, format, i)
-     thunk *thunks;
-     char *format;
-     int i;
-{
-	long value;
-
-	value = Mask_Word(thunks, format);
-
-	value = value & (1L<<i);
-	if (value)
-	  value=1;
-	return(value);
-}
-
-char *Scan_Term(string, thunks, format, value)
-     thunk *thunks;
-     char *string, *format;
-     long *value;
-{
-	long i;
-
-	*value=0;
-
-	if (isdigit(*string))
-	  string = Scan_Long(string, value);
-	else if (*string=='$') {
-		string = Scan_Long(++string, &i);
-		if (i>=thunks->thunk_count)
-		  i=thunks->thunk_count;
-		*value = thunks[i].value;
-	} else if (*string=='m') {
-		string = Scan_Long(++string, &i);
-		*value = Mask_Bit_I(thunks, format, (int) i);
-	} else
-	  Fatal_Error("Bad term: %s.", string);
-
-	return(string);
-}
-
-char *Scan_Exp(string, thunks, format, value)
-     thunk *thunks;
-     char *string, *format;
-     long *value;
-{
-	long temp;
-
-	if (string[0]=='(') {
-		string = Scan_Exp(++string, thunks, format, value);
-		if (string[0]!=')')
-		  Fatal_Error("Missing ')'");
-		return(++string);
-	}
-	if (string[0]=='!') {
-		string = Scan_Exp(++string, thunks, format, value);
-		*value = !*value;
-		return(string);
-	}
-
-	string = Scan_Term(string, thunks, format, value);
-
-	if (string[0]=='=') {
-		string = Scan_Exp(++string, thunks, format, &temp);
-		*value = *value == temp;
-	}
-
-	return(string);
-}
-
-char *Handle_Question_Mark(dformat, thunks, format)
-     thunk *thunks;
-     char *dformat, *format;
-{
-	long true;
-
-	dformat = Scan_Exp(dformat, thunks, format, &true);
-
-	if (*dformat!='(')
-	  Fatal_Error("Bad conditional: '(' expected: %s.", dformat);
-	++dformat;
-
-	if (!true)
-	  dformat = Skip_Past_Right_Paran(dformat);
-
-	return(dformat);
-}
-
-void
-Display_Property(thunks, dformat, format)
-     thunk *thunks;
-     char *dformat, *format;
-{
-  char c;
-
-  while ((c = *(dformat++)))
     switch (c) {
+      case 'n':
+	putchar('\n');
+	break;
+      case 't':
+	putchar('\t');
+	break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+	dformat = Scan_Octal(dformat, &i);
+	putchar((int) i);
+	break;
+      default:
+	putchar(c);
+	break;
+    }
+    return dformat;
+}
+
+static const char *
+Handle_Dollar_sign (const char *dformat, thunk *thunks, const char *format)
+{
+    long i;
+
+    dformat = Scan_Long(dformat, &i);
+
+    if (dformat[0] == '+') {
+	int seen = 0;
+	dformat++;
+	for (; i < thunks->thunk_count; i++) {
+	    if (seen)
+		printf(", ");
+	    seen = 1;
+	    printf("%s", Format_Thunk_I(thunks, format, (int) i));
+	}
+    } else
+	printf("%s", Format_Thunk_I(thunks, format, (int) i));
+
+    return dformat;
+}
+
+static int
+Mask_Bit_I (thunk *thunks, const char *format, int i)
+{
+    long value;
+
+    value = Mask_Word(thunks, format);
+
+    value = value & (1L<<i);
+    if (value)
+	value = 1;
+    return value;
+}
+
+static const char *
+Scan_Term (const char *string, thunk *thunks, const char *format, long *value)
+{
+    long i;
+
+    *value = 0;
+
+    if (isdigit((unsigned char) *string))
+	string = Scan_Long(string, value);
+    else if (*string == '$') {
+	string = Scan_Long(++string, &i);
+	if (i >= thunks->thunk_count)
+	    i = thunks->thunk_count;
+	*value = thunks[i].value;
+    } else if (*string == 'm') {
+	string = Scan_Long(++string, &i);
+	*value = Mask_Bit_I(thunks, format, (int) i);
+    } else
+	Fatal_Error("Bad term: %s.", string);
+
+    return string;
+}
+
+static const char *
+Scan_Exp (const char *string, thunk *thunks, const char *format, long *value)
+{
+    long temp;
+
+    if (string[0] == '(') {
+	string = Scan_Exp(++string, thunks, format, value);
+	if (string[0]!=')')
+	    Fatal_Error("Missing ')'");
+	return ++string;
+    }
+    if (string[0] == '!') {
+	string = Scan_Exp(++string, thunks, format, value);
+	*value = !*value;
+	return string;
+    }
+
+    string = Scan_Term(string, thunks, format, value);
+
+    if (string[0] == '=') {
+	string = Scan_Exp(++string, thunks, format, &temp);
+	*value = *value == temp;
+    }
+
+    return string;
+}
+
+static const char *
+Handle_Question_Mark (const char *dformat, thunk *thunks, const char *format)
+{
+    long true;
+
+    dformat = Scan_Exp(dformat, thunks, format, &true);
+
+    if (*dformat != '(')
+	Fatal_Error("Bad conditional: '(' expected: %s.", dformat);
+    ++dformat;
+
+    if (!true)
+	dformat = Skip_Past_Right_Paren(dformat);
+
+    return dformat;
+}
+
+static void
+Display_Property (thunk *thunks, const char *dformat, const char *format)
+{
+    char c;
+
+    while ((c = *(dformat++)))
+	switch (c) {
 	  case ')':
 	    continue;
 	  case '\\':
@@ -1088,88 +1047,408 @@ Display_Property(thunks, dformat, format)
 	  default:
 	    putchar(c);
 	    continue;
-    }
+	}
 }
 
 /*
  *
- * Routines to convert property data to and from thunks
+ * Routines to convert property data to thunks
  *
  */
 
-long Extract_Value(pointer, length, size, signedp)
-     char **pointer;
-     int *length;
-     int size;
+static long
+Extract_Value (const char **pointer, int *length, int size, int signedp)
 {
-	long value, mask;
+    long value;
 
-	switch (size) {
-	      case 8:
-		value = (long) * (char *) *pointer;
-		*pointer += 1;
-		*length -= 1;
-		mask = 0xff;
-		break;
-	      case 16:
-		value = (long) * (short *) *pointer;
-		*pointer += sizeof(short);
-		*length -= sizeof(short);
-		mask = 0xffff;
-		break;
-	      default:
-		/* Error */
-	      case 32:
-		value = (long) * (long *) *pointer;
-		*pointer += sizeof(long);
-		*length -= sizeof(long);
-		mask = 0xffffffff;
-		break;
+    switch (size) {
+      case 8:
+	if (signedp)
+	    value = * (const signed char *) *pointer;
+	else
+	    value = * (const unsigned char *) *pointer;
+	*pointer += 1;
+	*length -= 1;
+	break;
+      case 16:
+	if (signedp)
+	    value = * (const short *) *pointer;
+	else
+	    value = * (const unsigned short *) *pointer;
+	*pointer += sizeof(short);
+	*length -= sizeof(short);
+	break;
+      case 32:
+	if (signedp)
+	    value = * (const long *) *pointer;
+	else
+	    value = * (const unsigned long *) *pointer & 0xffffffff;
+	*pointer += sizeof(long);
+	*length -= sizeof(long);
+	break;
+      default:
+	abort();
+    }
+    return value;
+}
+
+static long
+Extract_Len_String (const char **pointer, int *length, int size, const char **string)
+{
+    int len;
+
+    if (size != 8)
+	Fatal_Error("can't use format character 's' with any size except 8.");
+    len = 0; *string = *pointer;
+    while ((len++, --*length, *((*pointer)++)) && *length>0);
+
+    return len;
+}
+
+static thunk *
+Break_Down_Property (const char *pointer, int length, Atom type, const char *format, int size)
+{
+    thunk *thunks;
+    thunk t;
+    int i;
+    char format_char;
+
+    thunks = Create_Thunk_List();
+    i = 0;
+
+    while (length >= size/8) {
+	format_char = Get_Format_Char(format, i);
+	if (format_char == 's')
+	    t.value = Extract_Len_String(&pointer,&length,size,&t.extra_value);
+	else if (format_char == 't') {
+	    t.extra_encoding = type;
+	    t.value = Extract_Len_String(&pointer,&length,size,&t.extra_value);
+	} else
+	    t.value = Extract_Value(&pointer,&length,size,format_char=='i');
+	thunks = Add_Thunk(thunks, t);
+	i++;
+    }
+
+    return thunks;
+}
+
+/*
+ * Variables set by main()
+ */
+
+static Window target_win = 0;
+static int notype = 0;
+static int max_len = MAXSTR;
+static XFontStruct *font;
+static unsigned long _font_prop;
+
+/*
+ *
+ * Other Stuff (temp.):
+ *
+ */
+
+static const char *
+Get_Font_Property_Data_And_Type (Atom atom,
+                                 long *length, Atom *type, int *size)
+{
+    int i;
+	
+    *type = None;
+	
+    for (i = 0; i < font->n_properties; i++)
+	if (atom == font->properties[i].name) {
+	    _font_prop = font->properties[i].card32;
+	    *length = sizeof(long);
+	    *size = 32;
+	    return (const char *) &_font_prop;
 	}
-	if (!signedp)
-	  value &= mask;
-	return(value);
+    *size = 0;
+    return NULL;
 }
 
-long Extract_Len_String(pointer, length, size, string)
-     char **pointer;
-     int *length;
-     int size;
-     char **string;
+static const char *
+Get_Window_Property_Data_And_Type (Atom atom,
+                                   long *length, Atom *type, int *size)
 {
-	int len;
+    Atom actual_type;
+    int actual_format;
+    unsigned long nitems;
+    unsigned long nbytes;
+    unsigned long bytes_after;
+    unsigned char *prop;
+    int status;
+	
+    status = XGetWindowProperty(dpy, target_win, atom, 0, (max_len+3)/4,
+				False, AnyPropertyType, &actual_type,
+				&actual_format, &nitems, &bytes_after,
+				&prop);
+    if (status == BadWindow)
+	Fatal_Error("window id # 0x%lx does not exists!", target_win);
+    if (status != Success)
+	Fatal_Error("XGetWindowProperty failed!");
 
-	if (size!=8)
-	 Fatal_Error("can't use format character 's' with any size except 8.");
-	len=0; *string = *pointer;
-	while ((len++, --*length, *((*pointer)++)) && *length>0);
-
-	return(len);
+    if (actual_format == 32)
+	nbytes = sizeof(long);
+    else if (actual_format == 16)
+	nbytes = sizeof(short);
+    else if (actual_format == 8)
+	nbytes = 1;
+    else
+	abort();
+    *length = min(nitems * nbytes, max_len);
+    *type = actual_type;
+    *size = actual_format;
+    return (const char *)prop;
 }
 
-thunk *Break_Down_Property(pointer, length, format, size)
-     char *pointer, *format;
-     int length, size;
+static const char *
+Get_Property_Data_And_Type (Atom atom, long *length, Atom *type, int *size)
 {
-	thunk *thunks;
-	thunk t;
-	int i;
-	char format_char;
+    if (target_win == -1)
+	return Get_Font_Property_Data_And_Type(atom, length, type, size);
+    else
+	return Get_Window_Property_Data_And_Type(atom, length, type, size);
+}
 
-	thunks = Create_Thunk_List();
-	i=0;
+static void
+Show_Prop (const char *format, const char *dformat, const char *prop)
+{
+    const char *data;
+    long length;
+    Atom atom, type;
+    thunk *thunks;
+    int size, fsize;
 
-	while (length>=(size/8)) {
-	    format_char = Get_Format_Char(format, i);
-	    if (format_char=='s')
-	      t.value=Extract_Len_String(&pointer,&length,size,&t.extra_value);
-	    else
-	      t.value=Extract_Value(&pointer,&length,size,format_char=='i');
+    printf("%s", prop);
+    atom = Parse_Atom(prop, True);
+    if (atom == None) {
+	printf(":  no such atom on any window.\n");
+	return;
+    }
+
+    data = Get_Property_Data_And_Type(atom, &length, &type, &size);
+    if (!size) {
+	puts(":  not found.");
+	return;
+    }
+
+    if (!notype && type != None)
+	printf("(%s)", Format_Atom(type));
+
+    Lookup_Formats(atom, &format, &dformat);
+    if (type != None)
+	Lookup_Formats(type, &format, &dformat);
+    Apply_Default_Formats(&format, &dformat);
+
+    fsize = Get_Format_Size(format);
+    if (fsize != size && fsize != 0) {
+	printf(": Type mismatch: assumed size %d bits, actual size %d bits.\n",
+	       fsize, size);
+	return;
+    }
+
+    thunks = Break_Down_Property(data, (int)length, type, format, size);
+
+    Display_Property(thunks, dformat, format);
+}
+
+static void
+Show_All_Props (void)
+{
+    Atom *atoms, atom;
+    const char *name;
+    int count, i;
+
+    if (target_win != -1) {
+	atoms = XListProperties(dpy, target_win, &count);
+	for (i = 0; i < count; i++) {
+	    name = Format_Atom(atoms[i]);
+	    Show_Prop(NULL, NULL, name);
+	}
+    } else
+	for (i = 0; i < font->n_properties; i++) {
+	    atom = font->properties[i].name;
+	    name = Format_Atom(atom);
+	    Show_Prop(NULL, NULL, name);
+	}
+}
+
+static thunk *
+Handle_Prop_Requests (int argc, char **argv)
+{
+    char *format, *dformat, *prop;
+    thunk *thunks, t;
+
+    thunks = Create_Thunk_List();
+
+    /* if no prop referenced, by default list all properties for given window */
+    if (!argc) {
+	Show_All_Props();
+	return NULL;
+    }
+
+    while (argc > 0) {
+	format = NULL;
+	dformat = NULL;
+
+	/* Get overriding formats, if any */
+	if (Is_A_Format(argv[0])) {
+	    format = argv++[0]; argc--;
+	    if (!argc) usage();
+	}
+	if (Is_A_DFormat(argv[0])) {
+	    dformat = argv++[0]; argc--;
+	    if (!argc) usage();
+	}
+
+	/* Get property name */
+	prop = argv++[0]; argc--;
+
+	t.propname = prop;
+	t.value = Parse_Atom(prop, True);
+	t.format = format;
+	t.dformat = dformat;
+	if (t.value)
 	    thunks = Add_Thunk(thunks, t);
-	    i++;
-        }
+	Show_Prop(format, dformat, prop);
+    }
+    return thunks;
+}
 
-	return(thunks);
+static void
+Remove_Property (Display *dpy, Window w, const char *propname)
+{
+    Atom id = XInternAtom (dpy, propname, True);
+
+    if (id == None) {
+	fprintf (stderr, "%s:  no such property \"%s\"\n",
+		 program_name, propname);
+	return;
+    }
+    XDeleteProperty (dpy, w, id);
+}
+
+static void
+Set_Property (Display *dpy, Window w, const char *propname, const char *value)
+{
+    Atom atom;
+    const char *format;
+    const char *dformat;
+    int size;
+    char format_char;
+    Atom type;
+    unsigned char *data;
+    int nelements;
+
+    atom = Parse_Atom(propname, False);
+
+    format = dformat = NULL;
+    Lookup_Formats(atom, &format, &dformat);
+    if (format == NULL)
+	Fatal_Error("unsupported conversion for %s", propname);
+
+    size = Get_Format_Size(format);
+
+    format_char = Get_Format_Char(format, 0);
+    switch (format_char) {
+      case 's':
+	if (size != 8)
+	    Fatal_Error("can't use format character 's' with any size except 8.");
+	type = XA_STRING;
+	data = (unsigned char *) value;
+	nelements = strlen(value);
+	break;
+      case 't': {
+	XTextProperty textprop;
+	if (size != 8)
+	    Fatal_Error("can't use format character 't' with any size except 8.");
+	if (XmbTextListToTextProperty(dpy, (char **) &value, 1,
+				      XStdICCTextStyle, &textprop) != Success) {
+	    fprintf(stderr, "cannot convert %s argument to STRING or COMPOUND_TEXT.\n", propname);
+	    return;
+	}
+	type = textprop.encoding;
+	data = textprop.value;
+	nelements = textprop.nitems;
+	break;
+      }
+      case 'x':
+      case 'c': {
+	unsigned long intvalue = strtoul(value, NULL, 0);
+	static unsigned char data8;
+	static unsigned short data16;
+	static unsigned long data32;
+	type = XA_INTEGER;
+	switch (size) {
+	  case 8:
+	    data8 = intvalue; data = (unsigned char *) &data8; break;
+	  case 16:
+	    data16 = intvalue; data = (unsigned char *) &data16; break;
+	  case 32: default:
+	    data32 = intvalue; data = (unsigned char *) &data32; break;
+	}
+	nelements = 1;
+	break;
+      }
+      case 'i': {
+	long intvalue = strtol(value, NULL, 0);
+	static signed char data8;
+	static short data16;
+	static long data32;
+	type = XA_INTEGER;
+	switch (size) {
+	  case 8:
+	    data8 = intvalue; data = (unsigned char *) &data8; break;
+	  case 16:
+	    data16 = intvalue; data = (unsigned char *) &data16; break;
+	  case 32: default:
+	    data32 = intvalue; data = (unsigned char *) &data32; break;
+	}
+	nelements = 1;
+	break;
+      }
+      case 'b': {
+	unsigned long boolvalue;
+	static unsigned char data8;
+	static unsigned short data16;
+	static unsigned long data32;
+	if (!strcmp(value, "True"))
+	    boolvalue = 1;
+	else if (!strcmp(value, "False"))
+	    boolvalue = 0;
+	else {
+	    fprintf(stderr, "cannot convert %s argument to Bool\n", propname);
+	    return;
+	}
+	type = XA_INTEGER;
+	switch (size) {
+	  case 8:
+	    data8 = boolvalue; data = (unsigned char *) &data8; break;
+	  case 16:
+	    data16 = boolvalue; data = (unsigned char *) &data16; break;
+	  case 32: default:
+	    data32 = boolvalue; data = (unsigned char *) &data32; break;
+	}
+	nelements = 1;
+	break;
+      }
+      case 'a': {
+	static Atom avalue;
+	avalue = Parse_Atom(value, False);
+	type = XA_ATOM;
+	data = (unsigned char *) &avalue;
+	nelements = 1;
+	break;
+      }
+      case 'm':
+	/* NYI */
+      default:
+	Fatal_Error("bad format character: %c", format_char);
+    }
+
+    XChangeProperty(dpy, target_win, atom, type, size, PropModeReplace,
+		    data, nelements);
 }
 
 /*
@@ -1179,7 +1458,7 @@ thunk *Break_Down_Property(pointer, length, format, size)
  */
 
 void
-usage()
+usage (void)
 {
     char **cpp;
     static char *help_message[] = {
@@ -1189,7 +1468,8 @@ usage()
 "    -id id                         resource id of window to examine",
 "    -name name                     name of window to examine",
 "    -font name                     name of font to examine",
-"    -remove propname               name of property to remove",
+"    -remove propname               remove a property",
+"    -set propname value            set a property to a given value",
 "    -root                          examine the root window",
 "    -len n                         display at most n bytes of any property",
 "    -notype                        do not display the type field",
@@ -1200,7 +1480,8 @@ usage()
 NULL};
 
     fflush (stdout);
-    fprintf (stderr, "usage:  %s [-options ...] [[format [dformat]] atom]\n\n", 
+    fprintf (stderr,
+	     "usage:  %s [-options ...] [[format [dformat]] atom] ...\n\n", 
 	     program_name);
     for (cpp = help_message; *cpp; cpp++) {
 	fprintf (stderr, "%s\n", *cpp);
@@ -1209,18 +1490,20 @@ NULL};
     exit (1);
 }
 
-void
-grammar ()
+static void
+grammar (void)
 {
-	printf ("Grammar for xprop:\n\n");
-	printf("\t%s [<disp>] [<select option>] <option>* <mapping>* <spec>*",
-	     program_name);
-	printf("\n\n\tdisp ::= -display host:dpy\
+    printf ("Grammar for xprop:\n\n");
+    printf("\t%s [<disp>] [<select option>] <option>* <mapping>* <spec>*",
+	   program_name);
+    printf("\n\n\tdisp ::= -display host:dpy\
 \n\tselect option ::= -root | -id <id> | -font <font> | -name <name>\
 \n\toption ::= -len <n> | -notype | -spy | {-formats|-fs} <format file>\
-\n\tmapping ::= {-f|-format} <atom> <format> [<dformat>] | -remove <propname>\
+\n\tmapping ::= {-f|-format} <atom> <format> [<dformat>]\
+\n\t            | -remove <propname>\
+\n\t            | -set <propname> <value>\
 \n\tspec ::= [<format> [<dformat>]] <atom>\
-\n\tformat ::= {0|8|16|32}{a|b|c|i|m|s|x}*\
+\n\tformat ::= {0|8|16|32}{a|b|c|i|m|s|t|x}*\
 \n\tdformat ::= <unit><unit>*             (can't start with a letter or '-')\
 \n\tunit ::= ?<exp>(<unit>*) | $<n> | <display char>\
 \n\texp ::= <term> | <term>=<exp> | !<exp>\
@@ -1228,32 +1511,30 @@ grammar ()
 \n\tdisplay char ::= <normal char> | \\<non digit char> | \\<octal number>\
 \n\tnormal char ::= <any char except a digit, $, ?, \\, or )>\
 \n\n");
-	exit(0);
+    exit(0);
 }
 
-void
-Parse_Format_Mapping(argc, argv)
-     int *argc;
-     char ***argv;
+static void
+Parse_Format_Mapping (int *argc, char ***argv)
+{
 #define ARGC (*argc)
 #define ARGV (*argv)
 #define OPTION ARGV[0]
 #define NXTOPT if (++ARGV, --ARGC==0) usage()
-{
-  char *type_name, *format, *dformat;
+    char *type_name, *format, *dformat;
   
-  NXTOPT; type_name = OPTION;
+    NXTOPT; type_name = OPTION;
 
-  NXTOPT; format = OPTION;
-  if (!Is_A_Format(format))
-    Fatal_Error("Bad format: %s.", format);
+    NXTOPT; format = OPTION;
+    if (!Is_A_Format(format))
+	Fatal_Error("Bad format: %s.", format);
 
-  dformat=0;
-  if (ARGC>0 && Is_A_DFormat(ARGV[1])) {
-    ARGV++; ARGC--; dformat=OPTION;
-  }
+    dformat = NULL;
+    if (ARGC>0 && Is_A_DFormat(ARGV[1])) {
+	ARGV++; ARGC--; dformat = OPTION;
+    }
 
-  Add_Mapping( Parse_Atom(type_name, False), format, dformat);
+    Add_Mapping(Parse_Atom(type_name, False), format, dformat);
 }
 
 /*
@@ -1262,352 +1543,177 @@ Parse_Format_Mapping(argc, argv)
  *
  */
 
-Window target_win=0;
-int notype=0;
-int spy=0;
-int max_len=MAXSTR;
-XFontStruct *font;
+static int spy = 0;
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main (int argc, char **argv)
 {
-  FILE *stream;
-  char *name;
-  thunk *props;
-  char *remove_propname = NULL;
-  Bool frame_only = False;
-  int n;
-  char **nargv;
+    FILE *stream;
+    char *name;
+    thunk *props;
+    thunk *remove_props = NULL;
+    thunk *set_props = NULL;
+    Bool frame_only = False;
+    int n;
+    char **nargv;
 
-  INIT_NAME;
+    INIT_NAME;
 
-  /* Handle display name, opening the display */
-  Setup_Display_And_Screen(&argc, argv);
+    /* Set locale for XmbTextProptertyToTextList and iswprint(). */
+    setlocale(LC_CTYPE, "");
 
-  /* Handle selecting the window to display properties for */
-  target_win = Select_Window_Args(&argc, argv);
+    /* Handle display name, opening the display */
+    Setup_Display_And_Screen(&argc, argv);
 
-  /* Set up default atom to format, dformat mapping */
-  XpropMode = XpropWindowProperties;
-  for (n=argc, nargv=argv; n; nargv++, n--)
-      if (! strcmp(nargv[0], "-font")) {
-	  XpropMode = XpropFontProperties;
-	  break;
-      }
-  Setup_Mapping();
-  if ((name = getenv("XPROPFORMATS"))) {
-	  if (!(stream=fopen(name, "r")))
+    /* Handle selecting the window to display properties for */
+    target_win = Select_Window_Args(&argc, argv);
+
+    /* Set up default atom to format, dformat mapping */
+    XpropMode = XpropWindowProperties;
+    for (n = argc, nargv = argv; n; nargv++, n--)
+	if (! strcmp(nargv[0], "-font")) {
+	    XpropMode = XpropFontProperties;
+	    break;
+	}
+    Setup_Mapping();
+    if ((name = getenv("XPROPFORMATS"))) {
+	if (!(stream = fopen(name, "r")))
 	    Fatal_Error("unable to open file %s for reading.", name);
-	  Read_Mappings(stream);
-	  fclose(stream);
-  }
+	Read_Mappings(stream);
+	fclose(stream);
+    }
 
-  /* Handle '-' options to setup xprop, select window to work on */
-  while (argv++, --argc>0 && **argv=='-') {
-    if (!strcmp(argv[0], "-"))
-      continue;
-    if (!strcmp(argv[0], "-grammar")) {
-      grammar ();
-      /* NOTREACHED */
-    }
-    if (!strcmp(argv[0], "-notype")) {
-      notype=1;
-      continue;
-    }
-    if (!strcmp(argv[0], "-spy")) {
-	    spy=1;
+    /* Handle '-' options to setup xprop, select window to work on */
+    while (argv++, --argc>0 && **argv == '-') {
+	if (!strcmp(argv[0], "-"))
 	    continue;
-    }
-    if (!strcmp(argv[0], "-len")) {
-	    if (++argv, --argc==0) usage();
+	if (!strcmp(argv[0], "-grammar")) {
+	    grammar ();
+	    /* NOTREACHED */
+	}
+	if (!strcmp(argv[0], "-notype")) {
+	    notype = 1;
+	    continue;
+	}
+	if (!strcmp(argv[0], "-spy")) {
+	    spy = 1;
+	    continue;
+	}
+	if (!strcmp(argv[0], "-len")) {
+	    if (++argv, --argc == 0) usage();
 	    max_len = atoi(argv[0]);
 	    continue;
-    }
-    if (!strcmp(argv[0], "-formats") || !strcmp(argv[0], "-fs")) {
-	    if (++argv, --argc==0) usage();
-	    if (!(stream=fopen(argv[0], "r")))
-	      Fatal_Error("unable to open file %s for reading.", argv[0]);
+	}
+	if (!strcmp(argv[0], "-formats") || !strcmp(argv[0], "-fs")) {
+	    if (++argv, --argc == 0) usage();
+	    if (!(stream = fopen(argv[0], "r")))
+		Fatal_Error("unable to open file %s for reading.", argv[0]);
 	    Read_Mappings(stream);
 	    fclose(stream);
 	    continue;
-    }
-    if (!strcmp(argv[0], "-font")) {
-	    if (++argv, --argc==0) usage();
+	}
+	if (!strcmp(argv[0], "-font")) {
+	    if (++argv, --argc == 0) usage();
 	    font = Open_Font(argv[0]);
 	    target_win = -1;
 	    continue;
-    }
-    if (!strcmp(argv[0], "-remove")) {
-	    if (++argv, --argc==0) usage();
-	    remove_propname = argv[0];
+	}
+	if (!strcmp(argv[0], "-remove")) {
+	    thunk t;
+	    if (++argv, --argc == 0) usage();
+	    t.propname = argv[0];
+	    if (remove_props == NULL) remove_props = Create_Thunk_List();
+	    remove_props = Add_Thunk(remove_props, t);
 	    continue;
-    }
-    if (!strcmp(argv[0], "-frame")) {
+	}
+	if (!strcmp(argv[0], "-set")) {
+	    thunk t;
+	    if (argc < 3) usage();
+	    t.propname = argv[1];
+	    t.extra_value = argv[2];
+	    argv += 3; argc -= 3;
+	    if (set_props == NULL) set_props = Create_Thunk_List();
+	    set_props = Add_Thunk(set_props, t);
+	    continue;
+	}
+	if (!strcmp(argv[0], "-frame")) {
 	    frame_only = True;
 	    continue;
+	}
+	if (!strcmp(argv[0], "-f") || !strcmp(argv[0], "-format")) {
+	    Parse_Format_Mapping(&argc, &argv);
+	    continue;
+	}
+	usage();
     }
-    if (!strcmp(argv[0], "-f") || !strcmp(argv[0], "-format")) {
-      Parse_Format_Mapping(&argc, &argv);
-      continue;
+
+    if ((remove_props != NULL || set_props != NULL) && argc > 0)
+	usage();
+
+    if (target_win == None) {
+	target_win = Select_Window(dpy);
+	if (target_win != None && !frame_only) {
+	    Window root;
+	    int dummyi;
+	    unsigned int dummy;
+
+	    if (XGetGeometry (dpy, target_win, &root, &dummyi, &dummyi,
+			      &dummy, &dummy, &dummy, &dummy)
+		&& target_win != root)
+		target_win = XmuClientWindow (dpy, target_win);
+	}
     }
-    usage();
-  }
 
-  if (target_win == None) {
-      target_win = Select_Window(dpy);
-      if (target_win != None && !frame_only) {
-	Window root;
-	int dummyi;
-	unsigned int dummy;
+    if (remove_props != NULL) {
+	int count;
 
-	if (XGetGeometry (dpy, target_win, &root, &dummyi, &dummyi,
-			  &dummy, &dummy, &dummy, &dummy) &&
-	    target_win != root)
-	  target_win = XmuClientWindow (dpy, target_win);
-      }
-  }
+	if (target_win == -1)
+	    Fatal_Error("-remove works only on windows, not fonts");
 
-  if (remove_propname) {
-    remove_property (dpy, target_win, remove_propname);
-    XCloseDisplay (dpy);
-    exit (0);
-  }
+	count = remove_props->thunk_count;
+	for (; count > 0; remove_props++, count--)
+	    Remove_Property (dpy, target_win, remove_props->propname);
+    }
 
-  props=Handle_Prop_Requests(argc, argv);
+    if (set_props != NULL) {
+	int count;
 
-  if (spy && target_win != -1) {
+	if (target_win == -1)
+	    Fatal_Error("-set works only on windows, not fonts");
+
+	count = set_props->thunk_count;
+	for (; count > 0; set_props++, count--)
+	    Set_Property (dpy, target_win, set_props->propname,
+			  set_props->extra_value);
+    }
+
+    if (remove_props != NULL || set_props != NULL) {
+	XCloseDisplay (dpy);
+	exit (0);
+    }
+
+    props = Handle_Prop_Requests(argc, argv);
+
+    if (spy && target_win != -1) {
 	XEvent event;
-        char *format, *dformat;
+	const char *format, *dformat;
 	
 	XSelectInput(dpy, target_win, PropertyChangeMask);
 	for (;;) {
-		XNextEvent(dpy, &event);
-		format = dformat = NULL;
-		if (props) {
-			int i;
-			for (i=0; i<props->thunk_count; i++)
-			  if (props[i].value == event.xproperty.atom)
-			    break;
-			if (i>=props->thunk_count)
-			  continue;
-			format = props[i].format;
-			dformat = props[i].dformat;
-	        }
-		Show_Prop(format, dformat, Format_Atom(event.xproperty.atom));
-        }
-  }
-  exit (0);
-}
-
-/*
- *
- * Other Stuff (temp.):
- *
- */
-
-void
-remove_property (dpy, w, propname)
-    Display *dpy;
-    Window w;
-    char *propname;
-{
-    Atom id = XInternAtom (dpy, propname, True);
-
-    if (id == None) {
-	fprintf (stderr, "%s:  no such property \"%s\"\n",
-		 program_name, propname);
-	return;
+	    XNextEvent(dpy, &event);
+	    format = dformat = NULL;
+	    if (props) {
+		int i;
+		for (i = 0; i < props->thunk_count; i++)
+		    if (props[i].value == event.xproperty.atom)
+			break;
+		if (i >= props->thunk_count)
+		    continue;
+		format = props[i].format;
+		dformat = props[i].dformat;
+	    }
+	    Show_Prop(format, dformat, Format_Atom(event.xproperty.atom));
+	}
     }
-    XDeleteProperty (dpy, w, id);
-    return;
-}
-
-thunk *Handle_Prop_Requests(argc, argv)
-     int argc;
-     char **argv;
-{
-  char *format, *dformat, *prop;
-  thunk *thunks, t;
-
-  thunks = Create_Thunk_List();
-
-  /* if no prop referenced, by default list all properties for given window */
-  if (!argc) {
-    Show_All_Props();
-    return(NULL);
-  }
-
-  while (argc>0) {
-    format = 0;
-    dformat = 0;
-
-    /* Get overriding formats, if any */
-    if (Is_A_Format(argv[0])) {
-      format = argv++[0]; argc--;
-      if (!argc) usage();
-    }
-    if (Is_A_DFormat(argv[0])) {
-      dformat = argv++[0]; argc--;
-      if (!argc) usage();
-    }
-
-    /* Get property name */
-    prop = argv++[0]; argc--;
-
-    t.value = Parse_Atom(prop, True);
-    t.format = format;
-    t.dformat = dformat;
-    if (t.value)
-      thunks = Add_Thunk(thunks, t);
-    Show_Prop(format, dformat, prop);
-  }
-  return(thunks);
-}
-
-void
-Show_All_Props()
-{
-  Atom *atoms, atom;
-  char *name;
-  int count, i;
-
-  if (target_win!=-1) {
-	  atoms = XListProperties(dpy, target_win, &count);
-	  for (i=0; i<count; i++) {
-		  name = Format_Atom(atoms[i]);
-		  Show_Prop(0, 0, name);
-	  }
-  } else
-    for (i=0; i<font->n_properties; i++) {
-	    atom = font->properties[i].name;
-	    name = Format_Atom(atom);
-	    Show_Prop(0, 0, name);
-    }
-}
-
-#if NeedFunctionPrototypes
-void
-Set_Prop(char *format, char *dformat, char *prop, char mode, char *value)
-#else
-void
-Set_Prop(format, dformat, prop, mode, value)
-     char *format, *dformat, *prop, *value;
-     char mode;
-#endif
-{
-  outl("Seting prop %s(%s) using %s mode %c to %s",
-       prop, format, dformat, mode, value);
-}
-
-static unsigned long _font_prop;
-
-char *Get_Font_Property_Data_And_Type(atom, length, type, size)
-     Atom atom;
-     long *length;
-     Atom *type;
-     int *size;
-{
-	int i;
-	
-	*type = 0;
-	
-	for (i=0; i<font->n_properties; i++)
-	  if (atom==font->properties[i].name) {
-		  _font_prop=font->properties[i].card32;
-		  *length=sizeof(long);
-		  *size=32;
-		  return((char *) &_font_prop);
-	  }
-	return(0);
-}
-
-char *Get_Window_Property_Data_And_Type(atom, length, type, size)
-     Atom atom;
-     long *length;
-     Atom *type;
-     int *size;
-{
-	Atom actual_type;
-	int actual_format;
-	unsigned long nitems;
-	unsigned long nbytes;
-	unsigned long bytes_after;
-	unsigned char *prop;
-	int status;
-	
-	status = XGetWindowProperty(dpy, target_win, atom, 0, (max_len+3)/4,
-				    False, AnyPropertyType, &actual_type,
-				    &actual_format, &nitems, &bytes_after,
-				    &prop);
-	if (status==BadWindow)
-	  Fatal_Error("window id # 0x%lx does not exists!", target_win);
-	if (status!=Success)
-	  Fatal_Error("XGetWindowProperty failed!");
-	
-	if (actual_format == 32)
-	    nbytes = sizeof(long);
-	else if (actual_format == 16)
-	    nbytes = sizeof(short);
-	else
-	    nbytes = 1;
-	*length = min(nitems * nbytes, max_len);
-	*type = actual_type;
-	*size = actual_format;
-	return((char *)prop);
-}
-
-char *Get_Property_Data_And_Type(atom, length, type, size)
-     Atom atom;
-     long *length;
-     Atom *type;
-     int *size;
-{
-	if (target_win == -1)
-	  return(Get_Font_Property_Data_And_Type(atom, length, type, size));
-	else
-	  return(Get_Window_Property_Data_And_Type(atom, length, type, size));
-}
-
-void
-Show_Prop(format, dformat, prop)
-     char *format, *dformat, *prop;
-{
-  char *data;
-  long length;
-  Atom atom, type;
-  thunk *thunks;
-  int size, fsize;
-
-  printf("%s", prop);
-  if (!(atom = Parse_Atom(prop, True))) {
-	  printf(":  no such atom on any window.\n");
-	  return;
-  }
-
-  data = Get_Property_Data_And_Type(atom, &length, &type, &size);
-  if (!size) {
-          puts(":  not found.");
-	  return;
-  }
-
-  if (!notype && type)
-    printf("(%s)", Format_Atom(type));
-
-  Lookup_Formats(atom, &format, &dformat);
-  if (type)
-    Lookup_Formats(type, &format, &dformat);
-  Apply_Default_Formats(&format, &dformat);
-
-  fsize=Get_Format_Size(format);
-  if (fsize!=size && fsize!=0) {
-	printf(": Type mismatch: assumed size %d bits, actual size %d bits.\n",
-	 fsize, size);
-	  return;
-  }
-
-  thunks = Break_Down_Property(data, (int)length, format, size);
-
-  Display_Property(thunks, dformat, format);
+    exit (0);
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: ddxVT.c /main/2 1996/01/01 10:56:13 kaleb $ */
+/* $Xorg: ddxVT.c,v 1.3 2000/08/17 19:53:46 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $TOG: record.c /main/9 1998/02/09 15:17:09 kaleb $ */
+/* $Xorg: record.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 
 /*
 
@@ -28,7 +28,7 @@ This work benefited from earlier work done by Martha Zimet of NCD
 and Jim Haggerty of Metheus.
 
 */
-/* $XFree86: xc/programs/Xserver/record/record.c,v 1.5 1998/07/26 09:56:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/record/record.c,v 1.7 2001/01/17 22:37:14 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "dixstruct.h"

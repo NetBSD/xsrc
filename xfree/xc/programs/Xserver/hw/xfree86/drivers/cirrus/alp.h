@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp.h,v 1.4 2000/12/06 15:35:15 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp.h,v 1.7 2001/05/04 19:05:35 dawes Exp $ */
 
 /* (c) Itai Nahshon */
 
@@ -6,7 +6,7 @@
 #define ALP_H
 
 extern ScrnInfoPtr AlpProbe(int entity);
-extern OptionInfoPtr	AlpAvailableOptions(int chipid);
+extern const OptionInfoRec *	AlpAvailableOptions(int chipid);
 
 # ifdef _ALP_PRIVATE_
 /* Saved registers that are not part of the core VGA */
@@ -35,6 +35,8 @@ enum {
 	CIR_NSAVED
 };
 
+typedef enum {LCD_NONE, LCD_DUAL_MONO, LCD_UNKNOWN, LCD_DSTN, LCD_TFT} LCDType;
+
 typedef struct {
 	unsigned char	ExtVga[CIR_NSAVED];
 } AlpRegRec, *AlpRegPtr;
@@ -54,6 +56,8 @@ typedef struct alpRec {
 
 	AlpRegRec		SavedReg;
 	AlpRegRec		ModeReg;
+        LCDType                 lcdType;
+        int                     lcdWidth, lcdHeight;
         int                 CursorWidth;
         int                 CursorHeight;
         int                 waitMsk;
@@ -69,6 +73,10 @@ typedef struct alpRec {
         CARD32 monoPattern8x8;
 
         Bool                autoStart;
+
+	/* MMIO Base for BitBLT operation. This is
+	   IOBase for 5446 and 7548, IOBase+0x100 for 5480 */
+	unsigned char *	    BLTBase;
 /* XXX For XF86Config based mem configuration */
 	CARD32			sr0f, sr17;
 } AlpRec, *AlpPtr;

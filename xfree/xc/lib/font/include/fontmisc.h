@@ -1,4 +1,4 @@
-/* $TOG: fontmisc.h /main/11 1998/05/07 14:12:58 kaleb $ */
+/* $Xorg: fontmisc.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.11 1999/08/21 13:48:06 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.13 2001/01/17 19:43:32 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

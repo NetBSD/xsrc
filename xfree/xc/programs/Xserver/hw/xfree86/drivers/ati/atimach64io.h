@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.3 2000/08/22 21:54:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.9 2001/04/16 15:02:09 tsi Exp $ */
 /*
- * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 2000 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,10 +46,12 @@
  * inm/outm     32-bit R/W through MMIO space.  The register is specified as
  *              the actual MMIO offset (with Block 1 following Block 0), which,
  *              in this case, is equivalent to the register's IOPortTag from
- *              atiregs.h.  Can only be used for those few non-FIFO'ed
- *              registers outside of Block 0's first 256 bytes.  pATI->pBlock
- *              array elements must have been previously set up by
- *              ATIMapApertures().
+ *              atiregs.h.  Can be used for those few non-FIFO'ed registers
+ *              outside of Block 0's first 256 bytes.  inm() can also be used
+ *              for FIFO'ed registers if, and only if, it can be guaranteed to
+ *              not have been previously FIFO'ed (e.g. when the engine is
+ *              idle).  pATI->pBlock array elements must have been previously
+ *              set up by ATIMapApertures().
  *
  * outf         32-bit write through MMIO cache.  Identical to outm() but
  *              intended for FIFO'ed registers.  There is no inf() provided.
@@ -130,7 +132,7 @@ extern void ATIMach64PollEngineStatus FunctionPrototype((ATIPtr));
 /*
  * MMIO cache definitions
  */
-#define CacheByte(___Register) pATI->MMIOCached[CacheSlotOf(___Register >> 3)]
+#define CacheByte(___Register) pATI->MMIOCached[CacheSlotOf(___Register) >> 3]
 #define CacheBit(___Register)  (0x80U >> (CacheSlotOf(___Register) & 0x07U))
 
 #define RegisterIsCached(__Register) \
@@ -162,15 +164,15 @@ extern void ATIMach64PollEngineStatus FunctionPrototype((ATIPtr));
 
 /*
  * This is no longer as critical, especially for _n == 1.  However,
- * there is still a need to ensure _n <= pATI-<nFIFOEntries.
+ * there is still a need to ensure _n <= pATI->nFIFOEntries.
  */
 #define ATIMach64WaitForFIFO(_pATI, _n)        \
     while (pATI->nAvailableFIFOEntries < (_n)) \
-        ATIMach64PollEngineStatus(pATI);
+        ATIMach64PollEngineStatus(pATI)
 
 #define ATIMach64WaitForIdle(_pATI)      \
     while (pATI->EngineIsBusy)           \
-        ATIMach64PollEngineStatus(pATI);
+        ATIMach64PollEngineStatus(pATI)
 
 extern void ATIAccessMach64PLLReg FunctionPrototype((ATIPtr, const CARD8,
                                                      const Bool));
@@ -185,7 +187,7 @@ extern void ATIAccessMach64PLLReg FunctionPrototype((ATIPtr, const CARD8,
     {                                               \
         ATIAccessMach64PLLReg(pATI, _Index, TRUE);  \
         out8(CLOCK_CNTL + 2, _Value);               \
-    } while(0)
+    } while (0)
 
 #define ATIGetMach64LCDReg(_Index)                       \
     (                                                    \
@@ -197,7 +199,7 @@ extern void ATIAccessMach64PLLReg FunctionPrototype((ATIPtr, const CARD8,
     {                                                    \
         out8(LCD_INDEX, SetBits(_Index, LCD_REG_INDEX)); \
         outr(LCD_DATA, _Value);                          \
-    } while(0)
+    } while (0)
 
 #define ATIGetMach64TVReg(_Index)                          \
     (                                                      \
@@ -209,6 +211,6 @@ extern void ATIAccessMach64PLLReg FunctionPrototype((ATIPtr, const CARD8,
     {                                                      \
         out8(TV_OUT_INDEX, SetBits(_Index, TV_REG_INDEX)); \
         outr(TV_OUT_DATA, _Value);                         \
-    } while(0)
+    } while (0)
 
 #endif /* ___ATIMACH64IO_H___ */

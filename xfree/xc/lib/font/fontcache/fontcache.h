@@ -26,6 +26,7 @@
  *
  *	Id: fontcache.h,v 1.12 1999/01/09 06:24:30 akiyama Exp $
  */
+/* $XFree86: xc/lib/font/fontcache/fontcache.h,v 1.4 2001/04/06 17:44:58 dawes Exp $ */
 
 #ifndef _FONTCACHE_H_
 #define _FONTCACHE_H_
@@ -127,10 +128,10 @@ typedef struct fc_cache_statistics FontCacheStatistics, *FontCacheStatisticsPtr;
 
 /* Function prototypes */
 
-int			FontCacheInitialize();
+int			FontCacheInitialize(void);
 FCCBPtr			FontCacheOpenCache(void * /* arg */);
 void			FontCacheCloseCache(FCCBPtr /* this */);
-FontCacheEntryPtr	FontCacheGetEntry();
+FontCacheEntryPtr	FontCacheGetEntry(void);
 int			FontCacheSearchEntry(FCCBPtr /* this */, int /* key */,
 					     FontCacheEntryPtr * /* value */);
 int			FontCacheInsertEntry(FCCBPtr /* this */, int /* key */,

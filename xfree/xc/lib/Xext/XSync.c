@@ -1,4 +1,4 @@
-/* $TOG: XSync.c /main/10 1998/02/06 14:52:15 kaleb $ */
+/* $Xorg: XSync.c,v 1.4 2000/08/17 19:45:52 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1993, 1998  The Open Group
@@ -46,7 +46,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xext/XSync.c,v 1.4 2001/01/17 19:42:46 dawes Exp $ */
 
 #include <stdio.h>
 #define NEED_EVENTS

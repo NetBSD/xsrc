@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/rules/sun.lst,v 3.2 2000/12/06 15:35:35 eich Exp $
+// $XFree86: xc/programs/xkbcomp/rules/sun.lst,v 3.4.2.1 2001/05/23 18:32:19 dawes Exp $
 
 ! model
   type4			Sun Type4
@@ -10,7 +10,7 @@
   be			Belgian
   bg			Bulgarian
   ca			Canadian
-  cs			Czechoslovakian
+  cz			Czech
   de 			German
   de_CH			Swiss German
   dvorak		Dvorak (US)
@@ -27,9 +27,10 @@
   jp			Japanese
   no			Norwegian
   pl			Polish
-  pt			Portugese
+  pt			Portuguese
   ru			Russian
   se			Swedish
+  sk			Slovak
   th			Thai
   us			US/ASCII
   tr			Turkish

@@ -41,7 +41,9 @@
   /*************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+
 
 #ifdef FT_DEBUG_LEVEL_TRACE
   char  ft_trace_levels[trace_max];
@@ -104,6 +106,10 @@
 #endif /* FT_DEBUG_LEVEL_TRACE */
 
 #endif /* FT_DEBUG_LEVEL_TRACE || FT_DEBUG_LEVEL_ERROR */
+
+
+  /* ANSI C doesn't allow empty files, so we insert a dummy symbol */
+  extern const int  ft_debug_dummy;
 
 
 /* END */

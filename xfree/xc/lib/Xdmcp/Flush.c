@@ -1,5 +1,5 @@
 /*
- * $TOG: Flush.c /main/12 1998/02/06 14:39:43 kaleb $
+ * $Xorg: Flush.c,v 1.3 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/Flush.c,v 3.4 1997/01/18 06:52:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Flush.c,v 3.6 2001/01/17 19:42:43 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

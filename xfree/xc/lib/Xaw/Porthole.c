@@ -1,5 +1,5 @@
 /*
- * $TOG: Porthole.c /main/18 1998/02/11 14:54:27 kaleb $
+ * $Xorg: Porthole.c,v 1.3 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1990, 1994, 1998  The Open Group
 
@@ -24,7 +24,7 @@ in this Software without prior written authorization from The Open Group.
  * This widget is a trivial clipping widget.  It is typically used with a
  * panner or scrollbar to navigate.
  */
-/* $XFree86: xc/lib/Xaw/Porthole.c,v 1.4 1998/10/03 08:42:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Porthole.c,v 1.6 2001/01/17 19:42:29 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

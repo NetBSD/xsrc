@@ -1,7 +1,8 @@
 /*
- *	$XConsortium: input.c /main/21 1996/04/17 15:54:23 kaleb $
- *	$XFree86: xc/programs/xterm/input.c,v 3.49 2000/11/01 01:12:39 dawes Exp $
+ *	$Xorg: input.c,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
+
+/* $XFree86: xc/programs/xterm/input.c,v 3.52 2001/01/17 23:46:36 dawes Exp $ */
 
 /*
  * Copyright 1999-2000 by Thomas E. Dickey
@@ -377,15 +378,18 @@ Input (
 	 */
 	if (screen->utf8_mode) {
 		ucs = -1;
-		if (nbytes == 1) {
+		if (nbytes == 1 && strbuf[0]) {
 		/* Take ISO 8859-1 character delivered by XLookupString() */
 			ucs = (unsigned char) strbuf[0];
-		} else if (!nbytes &&
+		} else if ((!nbytes || !strbuf[0]) &&
 			   ((keysym >= 0x100 && keysym <= 0xf000) ||
 			    (keysym & 0xff000000U) == 0x01000000))
 			ucs = keysym2ucs(keysym);
 		else
 			ucs = -2;
+		if (nbytes == 1 && !strbuf[0]) {
+			nbytes = 0;
+		}
 		if (ucs == -1)
 			nbytes = 0;
 		if (ucs >= 0)
@@ -506,22 +510,6 @@ Input (
 #endif
 	    TRACE(("...ModifierParm %d\n", modify_parm));
 	}
-
-#if OPT_SHIFT_KEYS
-	if (term->misc.shift_keys
-	 && (event->state & ShiftMask) != 0) {
-		switch (keysym) {
-		case XK_KP_Add:
-		    HandleLargerFont((Widget)0, (XEvent *)0, (String *)0, (Cardinal *)0);
-		    return;
-		case XK_KP_Subtract:
-		    HandleSmallerFont((Widget)0, (XEvent *)0, (String *)0, (Cardinal *)0);
-		    return;
-		default:
-		    break;
-		}
-	}
-#endif
 
 	/* VT300 & up: backarrow toggle */
 	if ((nbytes == 1)

@@ -1,4 +1,4 @@
-/* $TOG: props.c /main/20 1998/02/11 09:48:55 kaleb $ */
+/* $Xorg: props.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

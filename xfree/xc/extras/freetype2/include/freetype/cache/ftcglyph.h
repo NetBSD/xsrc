@@ -53,13 +53,13 @@
 #ifndef __FTCGLYPH_H__
 #define __FTCGLYPH_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_CACHE_H
-#include   FT_CACHE_MANAGER_H
-#include   <stddef.h>
+
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_MANAGER_H
+
+#include <stddef.h>
+
 
 FT_BEGIN_HEADER
 
@@ -200,6 +200,7 @@ FT_BEGIN_HEADER
                                                  FT_Pointer       type,
                                                  FT_UInt          gindex,
                                                  FTC_GlyphNode   *anode );
+
 
 FT_END_HEADER
 

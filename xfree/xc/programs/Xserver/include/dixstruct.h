@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.12 2001/01/17 22:36:57 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -20,8 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: dixstruct.h /main/43 1996/12/15 21:25:06 rws $ */
-/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.10 1999/11/19 13:55:03 hohndel Exp $ */
+/* $Xorg: dixstruct.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 
 #ifndef DIXSTRUCT_H
 #define DIXSTRUCT_H

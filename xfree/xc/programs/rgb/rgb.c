@@ -1,4 +1,4 @@
-/* $TOG: rgb.c /main/29 1998/02/09 13:46:07 kaleb $ */
+/* $Xorg: rgb.c,v 1.3 2000/08/17 19:54:00 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/rgb/rgb.c,v 3.3 1996/10/03 08:49:25 dawes Exp $ */
+/* $XFree86: xc/programs/rgb/rgb.c,v 3.5 2001/01/17 23:45:03 dawes Exp $ */
 
 
 /* reads from standard input lines of the form:

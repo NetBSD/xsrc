@@ -1,4 +1,4 @@
-/* $TOG: TrCoords.c /main/7 1998/02/06 17:55:31 kaleb $ */
+/* $Xorg: TrCoords.c,v 1.3 2000/08/17 19:44:57 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

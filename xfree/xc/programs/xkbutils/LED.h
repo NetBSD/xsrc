@@ -1,4 +1,4 @@
-/* $XConsortium: LED.h /main/1 1995/11/30 19:20:18 kaleb $ */
+/* $Xorg: LED.h,v 1.3 2000/08/17 19:54:51 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

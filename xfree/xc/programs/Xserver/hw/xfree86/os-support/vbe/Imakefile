@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/Imakefile,v 1.7 2000/04/20 21:28:49 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/Imakefile,v 1.8 2000/05/23 04:47:49 dawes Exp $
 
 #if DoLoadableServer
 #define IHaveSubdirs

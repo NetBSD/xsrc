@@ -1,5 +1,5 @@
 /*
-* $TOG: TextSrcP.h /main/21 1998/02/06 12:51:38 kaleb $
+* $Xorg: TextSrcP.h,v 1.3 2000/08/17 19:45:42 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/TextSrcP.h,v 1.11 1999/08/28 09:00:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrcP.h,v 1.13 2001/01/17 19:42:35 dawes Exp $ */
 
 #ifndef _XawTextSrcP_h
 #define _XawTextSrcP_h

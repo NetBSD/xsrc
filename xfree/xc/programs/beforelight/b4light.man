@@ -1,4 +1,4 @@
-.\" $XFree86$
+.\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
 .\" a copy of this software and associated documentation files (the
 .\" "Software"), to deal in the Software without restriction, including
@@ -22,7 +22,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH beforelight 1 "Release 6" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/beforelight/b4light.man,v 3.2 2001/02/09 03:47:56 tsi Exp $
+.\"
+.TH beforelight 1 __xorgversion__
 .SH NAME
 beforelight \- screen saver
 .SH SYNOPSIS

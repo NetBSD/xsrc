@@ -1,4 +1,4 @@
-/* $TOG: pr.c /main/21 1998/02/06 11:10:30 kaleb $ */
+/* $Xorg: pr.c,v 1.3 2000/08/17 19:41:51 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/config/makedepend/pr.c,v 1.4 2001/04/29 23:25:02 tsi Exp $ */
 
 #include "def.h"
 
@@ -35,7 +35,7 @@ extern boolean	show_where_not;
 
 void
 add_include(struct filepointer *filep, struct inclist *file, 
-	    struct inclist *file_red, char *include, boolean dot, 
+	    struct inclist *file_red, char *include, int type,
 	    boolean failOK)
 {
 	register struct inclist	*newfile;
@@ -44,7 +44,7 @@ add_include(struct filepointer *filep, struct inclist *file,
 	/*
 	 * First decide what the pathname of this include file really is.
 	 */
-	newfile = inc_path(file->i_file, include, dot);
+	newfile = inc_path(file->i_file, include, type);
 	if (newfile == NULL) {
 		if (failOK)
 		    return;
@@ -55,7 +55,7 @@ add_include(struct filepointer *filep, struct inclist *file,
 			warning("%s, line %d: ", file->i_file, filep->f_line);
 		warning1("cannot find include file \"%s\"\n", include);
 		show_where_not = TRUE;
-		newfile = inc_path(file->i_file, include, dot);
+		newfile = inc_path(file->i_file, include, type);
 		show_where_not = FALSE;
 	}
 

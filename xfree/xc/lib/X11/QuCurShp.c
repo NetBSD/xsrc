@@ -1,4 +1,4 @@
-/* $TOG: QuCurShp.c /main/5 1998/02/06 17:48:56 kaleb $ */
+/* $Xorg: QuCurShp.c,v 1.3 2000/08/17 19:44:50 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

@@ -16,10 +16,12 @@
 /***************************************************************************/
 
 
-#include <freetype/cache/ftcmanag.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftdebug.h>
-#include <freetype/ftlist.h>
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_MANAGER_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_LIST_H
 
 
 #undef  FT_COMPONENT
@@ -139,6 +141,7 @@
     FT_UNUSED( lru );
 
     FT_Done_Size( (FT_Size)node->root.data );
+    node->root.data = 0;
   }
 
 
@@ -264,8 +267,8 @@
   Exit:
     if ( error && manager )
     {
-      FT_Lru_Done( manager->sizes_lru );
       FT_Lru_Done( manager->faces_lru );
+      FT_Lru_Done( manager->sizes_lru );
       FREE( manager );
     }
 
@@ -299,8 +302,11 @@
     }
 
     /* discard faces and sizes */
-    FT_Lru_Done( manager->sizes_lru );
     FT_Lru_Done( manager->faces_lru );
+    manager->faces_lru = 0;
+    
+    FT_Lru_Done( manager->sizes_lru );
+    manager->sizes_lru = 0;
 
     FREE( manager );
   }

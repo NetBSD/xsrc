@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86XKB.c,v 3.8 1999/03/28 15:32:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86XKB.c,v 3.9 2000/05/23 04:47:41 dawes Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1

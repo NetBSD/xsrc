@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.25 2000/08/10 17:40:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.30 2001/04/27 12:51:07 alanh Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: WaitFor.c /main/58 1998/02/09 15:13:07 kaleb $ */
+/* $Xorg: WaitFor.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:
@@ -73,8 +73,8 @@ extern int errno;
 #ifdef __EMX__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
-#include <X11/Xpoll.h>
 #include "osdep.h"
+#include <X11/Xpoll.h>
 #include "dixstruct.h"
 #include "opaque.h"
 
@@ -144,9 +144,6 @@ WaitForSomething(pClientsReady)
 {
     int i;
     struct timeval waittime, *wt;
-#ifdef __CYGWIN__
-    struct timeval waittime0, *wt0;
-#endif
     INT32 timeout;
 #ifdef DPMSExtension
     INT32 standbyTimeout, suspendTimeout, offTimeout;
@@ -242,11 +239,7 @@ WaitForSomething(pClientsReady)
 #endif /* DPMSExtension */
 
 	    if (
-#ifndef __CYGWIN__
 		timeout <= 0
-#else
-		timeout = 0
-#endif
 #ifdef DPMSExtension
 		 && ScreenSaverTime > 0
 #endif /* DPMSExtension */
@@ -346,10 +339,6 @@ WaitForSomething(pClientsReady)
 #ifdef XTESTEXT1
 	/* XXX how does this interact with new write block handling? */
 	if (playback_on) {
-#ifdef __CYGWIN__
-	    waittime.tv_sec = 0;
-	    waittime.tv_usec = 0;
-#endif
 	    wt = &waittime;
 	    XTestComputeWaitTime (&waittime);
 	}
@@ -364,14 +353,7 @@ WaitForSomething(pClientsReady)
 	}
 	else 
 	{
-#ifndef __CYGWIN__
 	    i = Select (MaxClients, &LastSelectMask, NULL, NULL, wt);
-#else
-	    waittime0.tv_sec = 0;
-	    waittime0.tv_usec = 10000;
-	    wt0 = &waittime0;
-	    i = Select (MaxClients, &LastSelectMask, NULL, NULL, wt0);
-#endif
 	}
 	selecterr = errno;
 	WakeupHandler(i, (pointer)&LastSelectMask);

@@ -1,4 +1,4 @@
-/* $TOG: main.c /main/36 1998/03/04 11:30:05 barstow $ */
+/* $Xorg: main.c,v 1.4 2000/08/17 19:54:00 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/main.c,v 1.3 1999/02/19 21:27:15 hohndel Exp $ */
+/* $XFree86: xc/programs/proxymngr/main.c,v 1.5 2001/01/17 23:45:02 dawes Exp $ */
 
 #include <stdlib.h>
 #include "pmint.h"
@@ -58,8 +58,8 @@ IcePaVersionRec	PMReplyVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 IcePoVersionRec	PMSetupVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 				      PMSetupProcessMessages}};
 
-char *PM_VENDOR_STRING = "The Open Group, Inc.";
-char *PM_VENDOR_RELEASE = "Release 6.4";
+char *PM_VENDOR_STRING = "The X.Org Group";
+char *PM_VENDOR_RELEASE = "Release 6.5.1";
 
 int verbose = 0;
 

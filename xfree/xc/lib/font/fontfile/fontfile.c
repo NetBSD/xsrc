@@ -1,4 +1,4 @@
-/* $TOG: fontfile.c /main/33 1998/05/07 15:04:47 kaleb $ */
+/* $Xorg: fontfile.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -21,12 +21,12 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.12 1999/07/17 05:30:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.14 2001/01/17 19:43:30 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $NCDId: @(#)fontfile.c,v 1.6 1991/07/02 17:00:46 lemke Exp $ */
+/* $NCDXorg: @(#)fontfile.c,v 1.6 1991/07/02 17:00:46 lemke Exp $ */
 
 #include    "fntfilst.h"
 

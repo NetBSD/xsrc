@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fboverlay.c,v 1.3 2000/08/09 17:50:52 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fboverlay.c,v 1.4 2000/09/26 15:57:03 tsi Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *

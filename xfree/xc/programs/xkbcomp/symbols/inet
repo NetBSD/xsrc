@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.7 2000/11/02 02:51:27 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.13 2001/04/06 02:16:26 dawes Exp $
 
 partial alphanumeric_keys 
 xkb_symbols "hp" {
@@ -55,20 +55,68 @@ xkb_symbols "logicordless" {
     // Describes the extra keys on a Logitech Desktop Pro keyboard.
  
     name[Group1]= "CordLess";
-    key <I5F>   {   [ XF86Standby       ]   };
-    key <I20>   {   [ XF86AudioMute     ]   };
-    key <I2E>   {   [ XF86AudioLowerVolume  ]   };
-    key <I30>   {   [ XF86AudioRaiseVolume  ]   };
-    key <I22>   {   [ XF86AudioPlay     ]   };
-    key <I24>   {   [ XF86AudioStop     ]   };
-    key <I10>   {   [ XF86AudioPrev     ]   };
-    key <I19>   {   [ XF86AudioNext     ]   };
-    key <I32>   {   [ XF86HomePage      ]   };
-    key <I6C>   {   [ XF86Mail      ]   };
-    key <I65>   {   [ XF86Search        ]   };
-    key <I66>   {   [ XF86Start     ]   };
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I20>	{	[ XF86AudioMute		]	};
+    key <I2E>	{	[ XF86AudioLowerVolume	]	};
+    key <I30>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPlay		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I10>	{	[ XF86AudioPrev		]	};
+    key <I19>	{	[ XF86AudioNext		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I65>	{	[ XF86Search		]	};
+    key <I66>	{	[ XF86Start		]	};
 };
 
+partial alphanumeric_keys
+xkb_symbols "logiinternet" {
+ 
+    // Describes the extra keys on a Logitech Internet Keyboard
+ 
+    name[Group1]= "LogiInternet";
+    key <I25>	{	[ XF86VendorHome	]	};
+    key <I10>	{	[ XF86Back		]	};
+    key <I22>	{	[ XF86Forward		]	};
+    key <I24>	{	[ XF86Stop		]	};
+    key <I19>	{	[ XF86Refresh		]	};
+    key <I1E>	{	[ XF86Search		]	};
+    key <I18>	{	[ XF86Favorites		]	};
+    key <I30>	{	[ XF86AudioRaiseVolume	]	};
+    key <I2E>	{	[ XF86AudioLowerVolume	]	};
+    key <I23>	{	[ XF86HomePage		]	};
+    key <I7A>	{	[ XF86WWW		]	};
+    key <I32>	{	[ XF86History		]	};
+    key <I21>	{	[ XF86OpenURL		]	};
+    key <I17>	{	[ Print			]	};
+    key <I12>	{	[ Find			]	};
+    key <I26>	{	[ XF86AddFavorite	]	};
+    key <I20>	{	[ XF86HotLinks		]	};
+};
+
+partial alphanumeric_keys
+xkb_symbols "geniuscomfy" {
+ 
+    // Describes the extra keys on a Genius Comfy KB-16M
+ 
+    name[Group1]= "GeniusComfy16M";
+    key <I23>	{	[ XF86AudioPrev		]	};
+    key <I22>   {	[ XF86AudioPlay, XF86AudioPause	]	};
+    key <I24>   {	[ XF86AudioStop		]	};
+    key <I21>   {	[ XF86AudioNext		]	};
+    key <I30>   {	[ XF86Eject		]	};
+    key <I19>   {	[ XF86AudioLowerVolume	]	};
+    key <I12>   {	[ XF86AudioRaiseVolume	]	};
+    key <I20>   {	[ XF86AudioMute		]	};
+    key <I26>   {	[ XF86ScreenSaver	]	};
+    key <I17>   {	[ XF86Calculator	]	};
+    key <I2E>   {	[ XF86Mail		]	};
+    key <I25>   {	[ XF86Back		]	};
+    key <I32>   {	[ XF86WWW		]	};
+    key <I1E>   {	[ XF86Forward		]	};
+    key <I5F>   {	[ XF86Sleep		]	};
+    key <I63>   {	[ XF86WakeUp		]	};
+};
 
 partial alphanumeric_keys 
 xkb_symbols "microsoftpro" {
@@ -118,5 +166,78 @@ xkb_symbols "btc9000" {
     key <I5F>	{	[ XF86Standby		]	};
     key <I5E>   {	[ XF86PowerOff		]	};
     key <I63>   {	[ XF86WakeUp		]	};
+};
+
+
+partial alphanumeric_keys 
+xkb_symbols "rapidaccess" {
+
+    // Describes the extra keys on an IBM Rapid Access keyboard
+
+    name[Group1]= "RapidAccess";
+    key <I22>	{	[ XF86AudioPause	]	};
+    key <I12>	{	[ XF86AudioMute		]	};
+    key <I1E>	{	[ XF86AudioLowerVolume	]	};
+    key <I20>	{	[ XF86AudioRaiseVolume	]	};
+    key <I19>	{	[ XF86AudioPlay		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I23>	{	[ XF86AudioPrev		]	};
+    key <I21>	{	[ XF86AudioNext		]	};
+    key <I25>	{	[ XF86Standby		]	};
+    key <I32>	{	[ XF86Launch1		]	};
+    key <I17>	{	[ XF86Launch2		]	};
+    key <I30>	{	[ XF86Launch3		]	};
+    key <I2E>	{	[ XF86Launch4		]	};
+    key <I26>	{	[ Help			]	};
+};
+
+
+partial alphanumeric_keys 
+xkb_symbols "rapidaccess2" {
+
+    // From <patrick@dcruze.org>
+    // Describes the extra keys on an IBM Rapid Access II keyboard
+
+    name[Group1]= "RapidAccess2";
+    key <I25>	{	[ XF86HomePage		]	};
+    key <I26>	{	[ XF86Shop		]	};
+    key <I32>	{	[ XF86VendorHome	]	};
+    key <I17>	{	[ XF86Favorites		]	};
+    key <I30>	{	[ XF86MyComputer	]	};
+    key <I2E>	{	[ XF86Search		]	};
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I1E>	{	[ XF86AudioMute		]	};
+    key <I21>	{	[ XF86AudioLowerVolume	]	};
+    key <I23>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPlay, XF86AudioPause	]	};
+    key <I20>	{	[ XF86AudioStop		]	};
+    key <I24>	{	[ XF86AudioPrev		]	};
+    key <I12>	{	[ XF86AudioNext		]	};
+};
+
+
+partial alphanumeric_keys 
+xkb_symbols "chicony" {
+
+    // Describes the extra keys on a Chicony internet keyboard
+
+    name[Group1]= "Chicony";
+    key <I19>	{	[ XF86AudioLowerVolume	]	};
+    key <I12>	{	[ XF86AudioMute		]	};
+    key <I23>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPrev		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I21>	{	[ XF86AudioPlay, XF86AudioPause	]	};
+    key <I20>	{	[ XF86AudioNext		]	};
+    key <I5E>	{	[ XF86PowerOff		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I17>	{	[ XF86Mail		]	};
+    key <I25>	{	[ XF86Back		]	};
+    key <I1E>	{	[ XF86Forward		]	};
+    key <I5F>	{	[ XF86ContrastAdjust	]	};
+    key <I63>	{	[ XF86BrightnessAdjust	]	};
+    key <I30>	{	[ XF86LaunchA		]	};
+    key <I26>	{	[ XF86LaunchB		]	};
+    key <I2E>	{	[ XF86LaunchC		]	};
 };
 

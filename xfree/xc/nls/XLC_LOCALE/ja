@@ -1,7 +1,9 @@
-XCOMM  $XFree86: $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/ja,v 1.4 2001/01/17 19:37:05 dawes Exp $
 XCOMM 
 XCOMM 
-XCOMM  $XConsortium: ja /main/7 1996/09/28 16:51:56 rws $
+XCOMM
+XCOMM  $Xorg: ja,v 1.3 2000/08/17 19:47:00 cpqbld Exp $
+XCOMM
 XCOMM  XLocale Database Sample for ja_JP.euc 
 XCOMM 
 

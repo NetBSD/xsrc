@@ -1,4 +1,4 @@
-/* $XConsortium: util.c,v 1.7 94/01/27 15:21:15 gildea Exp $ */
+/* $Xorg: util.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -44,7 +44,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/util.c,v 1.4 1999/05/03 05:58:49 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/util.c,v 1.6 2001/01/17 19:43:24 dawes Exp $ */
 /* Author: Katherine A. Hitchcock    IBM Almaden Research Laboratory */
  
 #ifndef FONTMODULE

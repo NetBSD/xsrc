@@ -1,16 +1,22 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/ddraw.h,v 1.2 2001/04/05 20:13:49 dawes Exp $ */
 
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include <X11/Xlib.h>
-#ifdef HAVE_LIBXXSHM
-#include <X11/extensions/XShm.h>
-#endif /* defined(HAVE_LIBXXSHM) */
+#include <winnt.h> /* LARGE_INTEGER ... */
+#include <wingdi.h> /* PALETTE stuff ... */
+#include "obj_base.h"
 
-#include "winnt.h" /* LARGE_INTEGER ... */
-#include "wingdi.h" /* PALETTE stuff ... */
-#include "wine/obj_base.h"
+# ifdef UNICODE
+#  define WINELIB_NAME_AW(func) func##W
+# else
+#  define WINELIB_NAME_AW(func) func##A
+# endif  /* UNICODE */
+#define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500
@@ -20,28 +26,35 @@
  * Predeclare the interfaces
  */
 DEFINE_GUID( CLSID_DirectDraw,		0xD7B70EE0,0x4340,0x11CF,0xB0,0x63,0x00,0x20,0xAF,0xC2,0xCD,0x35 );
+DEFINE_GUID( CLSID_DirectDraw7,         0x3C305196,0x50DB,0x11D3,0x9C,0xFE,0x00,0xC0,0x4F,0xD9,0x30,0xC5 );
 DEFINE_GUID( CLSID_DirectDrawClipper,	0x593817A0,0x7DB3,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xb9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw,		0x6C14DB80,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDraw2,		0xB3A6F3E0,0x2B43,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw4,          0x9c59509a,0x39bd,0x11d1,0x8c,0x4a,0x00,0xc0,0x4f,0xd9,0x30,0xc5 );
+DEFINE_GUID( IID_IDirectDraw7,          0x15e65ec0,0x3b9c,0x11d2,0xb9,0x2f,0x00,0x60,0x97,0x97,0xea,0x5b );
 DEFINE_GUID( IID_IDirectDrawSurface,	0x6C14DB81,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawSurface2,	0x57805885,0x6eec,0x11cf,0x94,0x41,0xa8,0x23,0x03,0xc1,0x0e,0x27 );
 DEFINE_GUID( IID_IDirectDrawSurface3,	0xDA044E00,0x69B2,0x11D0,0xA1,0xD5,0x00,0xAA,0x00,0xB8,0xDF,0xBB );
 DEFINE_GUID( IID_IDirectDrawSurface4,   0x0B2B8630,0xAD35,0x11D0,0x8E,0xA6,0x00,0x60,0x97,0x97,0xEA,0x5B );
+DEFINE_GUID( IID_IDirectDrawSurface7,   0x06675a80,0x3b9b,0x11d2,0xb9,0x2f,0x00,0x60,0x97,0x97,0xea,0x5b );
 DEFINE_GUID( IID_IDirectDrawPalette,	0x6C14DB84,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawClipper,	0x6C14DB85,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawColorControl,0x4B9F0EE0,0x0D7E,0x11D0,0x9B,0x06,0x00,0xA0,0xC9,0x03,0xA3,0xB8 );
+DEFINE_GUID( IID_IDirectDrawGammaControl,0x69C11C3E,0xB46B,0x11D1,0xAD,0x7A,0x00,0xC0,0x4F,0xC2,0x9B,0x4E );
 
 typedef struct IDirectDraw IDirectDraw,*LPDIRECTDRAW;
 typedef struct IDirectDraw2 IDirectDraw2,*LPDIRECTDRAW2;
 typedef struct IDirectDraw4 IDirectDraw4,*LPDIRECTDRAW4;
+typedef struct IDirectDraw7 IDirectDraw7,*LPDIRECTDRAW7;
 typedef struct IDirectDrawClipper IDirectDrawClipper,*LPDIRECTDRAWCLIPPER;
 typedef struct IDirectDrawPalette IDirectDrawPalette,*LPDIRECTDRAWPALETTE;
 typedef struct IDirectDrawSurface IDirectDrawSurface,*LPDIRECTDRAWSURFACE;
 typedef struct IDirectDrawSurface2 IDirectDrawSurface2,*LPDIRECTDRAWSURFACE2;
 typedef struct IDirectDrawSurface3 IDirectDrawSurface3,*LPDIRECTDRAWSURFACE3;
 typedef struct IDirectDrawSurface4 IDirectDrawSurface4,*LPDIRECTDRAWSURFACE4;
+typedef struct IDirectDrawSurface7 IDirectDrawSurface7,*LPDIRECTDRAWSURFACE7;
 typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLORCONTROL;
+typedef struct IDirectDrawGammaControl IDirectDrawGammaControl,*LPDIRECTDRAWGAMMACONTROL;
 
 
 #define DDENUMRET_CANCEL	0
@@ -71,6 +84,8 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_LOCKEDSURFACES			MAKE_DDHRESULT( 160 )
 #define DDERR_NO3D				MAKE_DDHRESULT( 170 )
 #define DDERR_NOALPHAHW				MAKE_DDHRESULT( 180 )
+#define DDERR_NOSTEREOHARDWARE          	MAKE_DDHRESULT( 181 )
+#define DDERR_NOSURFACELEFT                     MAKE_DDHRESULT( 182 )
 #define DDERR_NOCLIPLIST			MAKE_DDHRESULT( 205 )
 #define DDERR_NOCOLORCONVHW			MAKE_DDHRESULT( 210 )
 #define DDERR_NOCOOPERATIVELEVELSET		MAKE_DDHRESULT( 212 )
@@ -83,6 +98,7 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_NOMIRRORHW			MAKE_DDHRESULT( 250 )
 #define DDERR_NOTFOUND				MAKE_DDHRESULT( 255 )
 #define DDERR_NOOVERLAYHW			MAKE_DDHRESULT( 260 )
+#define DDERR_OVERLAPPINGRECTS                  MAKE_DDHRESULT( 270 )
 #define DDERR_NORASTEROPHW			MAKE_DDHRESULT( 280 )
 #define DDERR_NOROTATIONHW			MAKE_DDHRESULT( 290 )
 #define DDERR_NOSTRETCHHW			MAKE_DDHRESULT( 310 )
@@ -113,8 +129,10 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_UNSUPPORTED			E_NOTIMPL
 #define DDERR_UNSUPPORTEDFORMAT			MAKE_DDHRESULT( 510 )
 #define DDERR_UNSUPPORTEDMASK			MAKE_DDHRESULT( 520 )
+#define DDERR_INVALIDSTREAM                     MAKE_DDHRESULT( 521 )
 #define DDERR_VERTICALBLANKINPROGRESS		MAKE_DDHRESULT( 537 )
 #define DDERR_WASSTILLDRAWING			MAKE_DDHRESULT( 540 )
+#define DDERR_DDSCAPSCOMPLEXREQUIRED            MAKE_DDHRESULT( 542 )
 #define DDERR_XALIGN				MAKE_DDHRESULT( 560 )
 #define DDERR_INVALIDDIRECTDRAWGUID		MAKE_DDHRESULT( 561 )
 #define DDERR_DIRECTDRAWALREADYCREATED		MAKE_DDHRESULT( 562 )
@@ -151,13 +169,20 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_NOOPTIMIZEHW			MAKE_DDHRESULT( 600 )
 #define DDERR_NOTLOADED				MAKE_DDHRESULT( 601 )
 #define DDERR_NOFOCUSWINDOW			MAKE_DDHRESULT( 602 )
+#define DDERR_NOTONMIPMAPSUBLEVEL               MAKE_DDHRESULT( 603 )
 #define DDERR_DCALREADYCREATED			MAKE_DDHRESULT( 620 )
 #define DDERR_NONONLOCALVIDMEM			MAKE_DDHRESULT( 630 )
 #define DDERR_CANTPAGELOCK			MAKE_DDHRESULT( 640 )
 #define DDERR_CANTPAGEUNLOCK			MAKE_DDHRESULT( 660 )
 #define DDERR_NOTPAGELOCKED			MAKE_DDHRESULT( 680 )
 #define DDERR_MOREDATA				MAKE_DDHRESULT( 690 )
+#define DDERR_EXPIRED                           MAKE_DDHRESULT( 691 )
+#define DDERR_TESTFINISHED                      MAKE_DDHRESULT( 692 )
+#define DDERR_NEWMODE                           MAKE_DDHRESULT( 693 )
+#define DDERR_D3DNOTINITIALIZED                 MAKE_DDHRESULT( 694 )
 #define DDERR_VIDEONOTACTIVE			MAKE_DDHRESULT( 695 )
+#define DDERR_NOMONITORINFORMATION              MAKE_DDHRESULT( 696 )
+#define DDERR_NODRIVERSUPPORT                   MAKE_DDHRESULT( 697 )
 #define DDERR_DEVICEDOESNTOWNSURFACE		MAKE_DDHRESULT( 699 )
 #define DDERR_NOTINITIALIZED			CO_E_NOTINITIALIZED
 
@@ -188,17 +213,22 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDBLT_ZBUFFERSRCOVERRIDE		0x00800000
 #define DDBLT_WAIT				0x01000000
 #define DDBLT_DEPTHFILL				0x02000000
+#define DDBLT_DONOTWAIT                         0x08000000
 
 /* dwTrans for BltFast */
 #define DDBLTFAST_NOCOLORKEY			0x00000000
 #define DDBLTFAST_SRCCOLORKEY			0x00000001
 #define DDBLTFAST_DESTCOLORKEY			0x00000002
 #define DDBLTFAST_WAIT				0x00000010
+#define DDBLTFAST_DONOTWAIT                     0x00000020
 
 /* dwFlags for Flip */
-#define DDFLIP_WAIT	0x00000001
-#define DDFLIP_EVEN	0x00000002 /* only valid for overlay */
-#define DDFLIP_ODD	0x00000004 /* only valid for overlay */
+#define DDFLIP_WAIT		0x00000001
+#define DDFLIP_EVEN		0x00000002 /* only valid for overlay */
+#define DDFLIP_ODD		0x00000004 /* only valid for overlay */
+#define DDFLIP_NOVSYNC		0x00000008
+#define DDFLIP_STEREO		0x00000010
+#define DDFLIP_DONOTWAIT	0x00000020
 
 /* dwFlags for GetBltStatus */
 #define DDGBS_CANBLT				0x00000001
@@ -269,9 +299,242 @@ typedef struct _DDSCAPS {
 	DWORD	dwCaps;	/* capabilities of surface wanted */
 } DDSCAPS,*LPDDSCAPS;
 
+/* DDSCAPS2.dwCaps2 */
+/* indicates the surface will receive data from a video port using
+   deinterlacing hardware. */
+#define DDSCAPS2_HARDWAREDEINTERLACE	0x00000002
+/* indicates the surface will be locked very frequently. */
+#define DDSCAPS2_HINTDYNAMIC		0x00000004
+/* indicates surface can be re-ordered or retiled on load() */
+#define DDSCAPS2_HINTSTATIC             0x00000008
+/* indicates surface to be managed by directdraw/direct3D */
+#define DDSCAPS2_TEXTUREMANAGE          0x00000010
+/* reserved bits */
+#define DDSCAPS2_RESERVED1              0x00000020
+#define DDSCAPS2_RESERVED2              0x00000040
+/* indicates surface will never be locked again */
+#define DDSCAPS2_OPAQUE                 0x00000080
+/* set at CreateSurface() time to indicate antialising will be used */
+#define DDSCAPS2_HINTANTIALIASING       0x00000100
+/* set at CreateSurface() time to indicate cubic environment map */
+#define DDSCAPS2_CUBEMAP                0x00000200
+/* face flags for cube maps */
+#define DDSCAPS2_CUBEMAP_POSITIVEX      0x00000400
+#define DDSCAPS2_CUBEMAP_NEGATIVEX      0x00000800
+#define DDSCAPS2_CUBEMAP_POSITIVEY      0x00001000
+#define DDSCAPS2_CUBEMAP_NEGATIVEY      0x00002000
+#define DDSCAPS2_CUBEMAP_POSITIVEZ      0x00004000
+#define DDSCAPS2_CUBEMAP_NEGATIVEZ      0x00008000
+/* specifies all faces of a cube for CreateSurface() */
+#define DDSCAPS2_CUBEMAP_ALLFACES ( DDSCAPS2_CUBEMAP_POSITIVEX |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEX |\
+                                    DDSCAPS2_CUBEMAP_POSITIVEY |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEY |\
+                                    DDSCAPS2_CUBEMAP_POSITIVEZ |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEZ )
+/* set for mipmap sublevels on DirectX7 and later.  ignored by CreateSurface() */
+#define DDSCAPS2_MIPMAPSUBLEVEL         0x00010000
+/* indicates texture surface to be managed by Direct3D *only* */
+#define DDSCAPS2_D3DTEXTUREMANAGE       0x00020000
+/* indicates managed surface that can safely be lost */
+#define DDSCAPS2_DONOTPERSIST           0x00040000
+/* indicates surface is part of a stereo flipping chain */
+#define DDSCAPS2_STEREOSURFACELEFT      0x00080000
+
+typedef struct _DDSCAPS2 {
+	DWORD	dwCaps;	/* capabilities of surface wanted */
+	DWORD   dwCaps2; /* additional capabilities */
+	DWORD   dwCaps3; /* reserved capabilities */
+	DWORD   dwCaps4; /* more reserved capabilities */
+} DDSCAPS2,*LPDDSCAPS2;
+
 #define	DD_ROP_SPACE	(256/32)	/* space required to store ROP array */
 
-typedef struct _DDCAPS_DX3
+typedef struct _DDCAPS_DX7		/* DirectX 7 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+    DDSCAPS2    ddsCaps;		/* surface capabilities */
+} DDCAPS_DX7,*LPDDCAPS_DX7;
+
+typedef struct _DDCAPS_DX6		/* DirectX 6 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+    /* and one new member for DirectX 6 */
+    DDSCAPS2    ddsCaps;		/* surface capabilities */
+} DDCAPS_DX6,*LPDDCAPS_DX6;
+
+typedef struct _DDCAPS_DX5		/* DirectX5 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsCaps;                /* DDSCAPS structure has all the general capabilities */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    /* the following are the new DirectX 5 members */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+} DDCAPS_DX5,*LPDDCAPS_DX5;
+
+typedef struct _DDCAPS_DX3		/* DirectX3 version of caps struct */
 {
     DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
     DWORD	dwCaps;                 /* driver specific capabilities */
@@ -326,72 +589,19 @@ typedef struct _DDCAPS_DX3
     DWORD	dwReserved6;
 } DDCAPS_DX3,*LPDDCAPS_DX3;
 
-typedef struct _DDCAPS
-{
-/*  0*/ DWORD  dwSize;			/* size of the DDDRIVERCAPS structure */
-/*  4*/ DWORD  dwCaps;			/* driver specific capabilities */
-/*  8*/ DWORD  dwCaps2;			/* more driver specific capabilites */
-/*  c*/ DWORD  dwCKeyCaps;		/* color key capabilities of the surface */
-/* 10*/ DWORD  dwFXCaps;		/* driver specific stretching and effects capabilites */
-/* 14*/ DWORD  dwFXAlphaCaps;		/* alpha driver specific capabilities */
-/* 18*/ DWORD  dwPalCaps;		/* palette capabilities */
-/* 1c*/ DWORD  dwSVCaps;		/* stereo vision capabilities */
-/* 20*/ DWORD  dwAlphaBltConstBitDepths;	/* DDBD_2,4,8 */
-/* 24*/ DWORD  dwAlphaBltPixelBitDepths;	/* DDBD_1,2,4,8 */
-/* 28*/ DWORD  dwAlphaBltSurfaceBitDepths;	/* DDBD_1,2,4,8 */
-/* 2c*/ DWORD  dwAlphaOverlayConstBitDepths;	/* DDBD_2,4,8 */
-/* 30*/ DWORD  dwAlphaOverlayPixelBitDepths;	/* DDBD_1,2,4,8 */
-/* 34*/ DWORD  dwAlphaOverlaySurfaceBitDepths;	/* DDBD_1,2,4,8 */
-/* 38*/ DWORD  dwZBufferBitDepths;		/* DDBD_8,16,24,32 */
-/* 3c*/ DWORD  dwVidMemTotal;		/* total amount of video memory */
-/* 40*/ DWORD  dwVidMemFree;		/* amount of free video memory */
-/* 44*/ DWORD  dwMaxVisibleOverlays;	/* maximum number of visible overlays */
-/* 48*/ DWORD  dwCurrVisibleOverlays;	/* current number of visible overlays */
-/* 4c*/ DWORD  dwNumFourCCCodes;	/* number of four cc codes */
-/* 50*/ DWORD  dwAlignBoundarySrc;	/* source rectangle alignment */
-/* 54*/ DWORD  dwAlignSizeSrc;		/* source rectangle byte size */
-/* 58*/ DWORD  dwAlignBoundaryDest;	/* dest rectangle alignment */
-/* 5c*/ DWORD  dwAlignSizeDest;		/* dest rectangle byte size */
-/* 60*/ DWORD  dwAlignStrideAlign;	/* stride alignment */
-/* 64*/ DWORD  dwRops[DD_ROP_SPACE];	/* ROPS supported */
-/* 84*/ DDSCAPS ddsCaps;		/* DDSCAPS structure has all the general capabilities */
-/* 88*/ DWORD  dwMinOverlayStretch;	/* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 8c*/ DWORD  dwMaxOverlayStretch;	/* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 90*/ DWORD  dwMinLiveVideoStretch;	/* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 94*/ DWORD  dwMaxLiveVideoStretch;	/* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 98*/ DWORD  dwMinHwCodecStretch;	/* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 9c*/ DWORD  dwMaxHwCodecStretch;	/* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* a0*/ DWORD  dwReserved1;
-/* a4*/ DWORD  dwReserved2;
-/* a8*/ DWORD  dwReserved3;
-/* ac*/ DWORD  dwSVBCaps;	/* driver specific capabilities for System->Vmem blts */
-/* b0*/ DWORD  dwSVBCKeyCaps;	/* driver color key capabilities for System->Vmem blts */
-/* b4*/ DWORD  dwSVBFXCaps;	/* driver FX capabilities for System->Vmem blts */
-/* b8*/ DWORD  dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
-/* d8*/ DWORD  dwVSBCaps;	/* driver specific capabilities for Vmem->System blts */
-/* dc*/ DWORD  dwVSBCKeyCaps;	/* driver color key capabilities for Vmem->System blts */
-/* e0*/ DWORD  dwVSBFXCaps;	/* driver FX capabilities for Vmem->System blts */
-/* e4*/ DWORD  dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
-/*104*/ DWORD  dwSSBCaps;	/* driver specific capabilities for System->System blts */
-/*108*/ DWORD  dwSSBCKeyCaps;	/* driver color key capabilities for System->System blts */
-/*10c*/ DWORD  dwSSBFXCaps;	/* driver FX capabilities for System->System blts */
-/*110*/ DWORD  dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
-#if       DIRECTDRAW_VERSION >= 0x0500
-/*130*/ DWORD  dwMaxVideoPorts;	/* maximum number of usable video ports */
-/*134*/ DWORD  dwCurrVideoPorts;/* current number of video ports used */
-/*138*/ DWORD  dwSVBCaps2;	/* more driver specific capabilities for System->Vmem blts */
-/*13c*/ DWORD  dwNLVBCaps;	/* driver specific capabilities for non-local->local vidmem blts */
-/*140*/ DWORD  dwNLVBCaps2;	/* more driver specific capabilities non-local->local vidmem blts */
-/*144*/ DWORD  dwNLVBCKeyCaps;	/* driver color key capabilities for non-local->local vidmem blts */
-/*148*/ DWORD  dwNLVBFXCaps;	/* driver FX capabilities for non-local->local blts */
-/*14c*/ DWORD  dwNLVBRops[DD_ROP_SPACE];/* ROPS supported for non-local->local blts */
-#else  /* DIRECTDRAW_VERSION >= 0x0500 */
-/*130*/ DWORD  dwReserved4;
-/*134*/ DWORD  dwReserved5;
-/*138*/ DWORD  dwReserved6;
-#endif /* DIRECTDRAW_VERSION >= 0x0500 */
-} DDCAPS,*LPDDCAPS;
+/* set caps struct according to DIRECTDRAW_VERSION */
 
+#if DIRECTDRAW_VERSION <= 0x300
+typedef DDCAPS_DX3 DDCAPS;
+#elif DIRECTDRAW_VERSION <= 0x500
+typedef DDCAPS_DX5 DDCAPS;
+#elif DIRECTDRAW_VERSION <= 0x600
+typedef DDCAPS_DX6 DDCAPS;
+#else
+typedef DDCAPS_DX7 DDCAPS;
+#endif
+
+typedef DDCAPS *LPDDCAPS;
 
 /* DDCAPS.dwCaps */
 #define DDCAPS_3D			0x00000001
@@ -443,6 +653,16 @@ typedef struct _DDCAPS
 #define DDCAPS2_WIDESURFACES		0x00001000
 #define DDCAPS2_CANFLIPODDEVEN		0x00002000
 #define DDCAPS2_CANBOBHARDWARE		0x00004000
+#define DDCAPS2_COPYFOURCC              0x00008000
+#define DDCAPS2_PRIMARYGAMMA            0x00020000
+#define DDCAPS2_CANRENDERWINDOWED       0x00080000
+#define DDCAPS2_CANCALIBRATEGAMMA       0x00100000
+#define DDCAPS2_FLIPINTERVAL            0x00200000
+#define DDCAPS2_FLIPNOVSYNC             0x00400000
+#define DDCAPS2_CANMANAGETEXTURE        0x00800000
+#define DDCAPS2_TEXMANINNONLOCALVIDMEM  0x01000000
+#define DDCAPS2_STEREO                  0x02000000
+#define DDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL   0x04000000
 
 
 /* Set/Get Colour Key Flags */
@@ -492,31 +712,33 @@ typedef struct _DDPIXELFORMAT {
 	DWORD	dwYUVBitCount;          /* C: how many bits per pixel */
 	DWORD	dwZBufferBitDepth;      /* C: how many bits for z buffers */
 	DWORD	dwAlphaBitDepth;        /* C: how many bits for alpha channels*/
-    } x;
+    } DUMMYUNIONNAME;
     union {
 	DWORD	dwRBitMask;             /* 10: mask for red bit*/
 	DWORD	dwYBitMask;             /* 10: mask for Y bits*/
-    } y;
+    } DUMMYUNIONNAME2;
     union {
 	DWORD	dwGBitMask;             /* 14: mask for green bits*/
 	DWORD	dwUBitMask;             /* 14: mask for U bits*/
-    } z;
+    } DUMMYUNIONNAME3;
     union {
 	DWORD   dwBBitMask;             /* 18: mask for blue bits*/
 	DWORD   dwVBitMask;             /* 18: mask for V bits*/
-    } xx;
+    } DUMMYUNIONNAME4;
     union {
     	DWORD	dwRGBAlphaBitMask;	/* 1C: mask for alpha channel */
     	DWORD	dwYUVAlphaBitMask;	/* 1C: mask for alpha channel */
 	DWORD	dwRGBZBitMask;		/* 1C: mask for Z channel */
 	DWORD	dwYUVZBitMask;		/* 1C: mask for Z channel */
-    } xy;
+    } DUMMYUNIONNAME5;
     					/* 20: next structure */
 } DDPIXELFORMAT,*LPDDPIXELFORMAT;
 
 /* DDCAPS.dwFXCaps */
-#define DDFXCAPS_BLTARITHSTRETCHY	0x00000020
+#define DDFXCAPS_BLTALPHA               0x00000001
+#define DDFXCAPS_OVERLAYALPHA           0x00000004
 #define DDFXCAPS_BLTARITHSTRETCHYN	0x00000010
+#define DDFXCAPS_BLTARITHSTRETCHY	0x00000020
 #define DDFXCAPS_BLTMIRRORLEFTRIGHT	0x00000040
 #define DDFXCAPS_BLTMIRRORUPDOWN	0x00000080
 #define DDFXCAPS_BLTROTATION		0x00000100
@@ -541,6 +763,8 @@ typedef struct _DDPIXELFORMAT {
 #define DDFXCAPS_OVERLAYSTRETCHYN	0x04000000
 #define DDFXCAPS_OVERLAYMIRRORLEFTRIGHT	0x08000000
 #define DDFXCAPS_OVERLAYMIRRORUPDOWN	0x10000000
+
+#define DDFXCAPS_OVERLAYFILTER          DDFXCAPS_OVERLAYARITHSTRETCHY
 
 /* DDCAPS.dwFXAlphaCaps */
 #define DDFXALPHACAPS_BLTALPHAEDGEBLEND		0x00000001
@@ -568,10 +792,19 @@ typedef struct _DDPIXELFORMAT {
 #define DDPCAPS_ALPHA                   0x00000400
 
 /* DDCAPS.dwSVCaps */
-#define DDSVCAPS_ENIGMA			0x00000001l
-#define DDSVCAPS_FLICKER		0x00000002l
-#define DDSVCAPS_REDBLUE		0x00000004l
-#define DDSVCAPS_SPLIT			0x00000008l
+/* the first 4 of these are now obsolete */
+#if DIRECTDRAW_VERSION >= 0x700	/* FIXME: I'm not sure when this switch occured */
+#define DDSVCAPS_RESERVED1		0x00000001
+#define DDSVCAPS_RESERVED2		0x00000002
+#define DDSVCAPS_RESERVED3		0x00000004
+#define DDSVCAPS_RESERVED4		0x00000008
+#else
+#define DDSVCAPS_ENIGMA			0x00000001
+#define DDSVCAPS_FLICKER		0x00000002
+#define DDSVCAPS_REDBLUE		0x00000004
+#define DDSVCAPS_SPLIT			0x00000008
+#endif
+#define DDSVCAPS_STEREOSEQUENTIAL       0x00000010
 
 /* BitDepths */
 #define DDBD_1				0x00004000
@@ -586,6 +819,31 @@ typedef struct _DDPIXELFORMAT {
 #define DDOVERFX_ARITHSTRETCHY		0x00000001
 #define DDOVERFX_MIRRORLEFTRIGHT	0x00000002
 #define DDOVERFX_MIRRORUPDOWN		0x00000004
+
+/* UpdateOverlay flags */
+#define DDOVER_ALPHADEST                        0x00000001
+#define DDOVER_ALPHADESTCONSTOVERRIDE           0x00000002
+#define DDOVER_ALPHADESTNEG                     0x00000004
+#define DDOVER_ALPHADESTSURFACEOVERRIDE         0x00000008
+#define DDOVER_ALPHAEDGEBLEND                   0x00000010
+#define DDOVER_ALPHASRC                         0x00000020
+#define DDOVER_ALPHASRCCONSTOVERRIDE            0x00000040
+#define DDOVER_ALPHASRCNEG                      0x00000080
+#define DDOVER_ALPHASRCSURFACEOVERRIDE          0x00000100
+#define DDOVER_HIDE                             0x00000200
+#define DDOVER_KEYDEST                          0x00000400
+#define DDOVER_KEYDESTOVERRIDE                  0x00000800
+#define DDOVER_KEYSRC                           0x00001000
+#define DDOVER_KEYSRCOVERRIDE                   0x00002000
+#define DDOVER_SHOW                             0x00004000
+#define DDOVER_ADDDIRTYRECT                     0x00008000
+#define DDOVER_REFRESHDIRTYRECTS                0x00010000
+#define DDOVER_REFRESHALL                       0x00020000
+#define DDOVER_DDFX                             0x00080000
+#define DDOVER_AUTOFLIP                         0x00100000
+#define DDOVER_BOB                              0x00200000
+#define DDOVER_OVERRIDEBOBWEAVE                 0x00400000
+#define DDOVER_INTERLEAVED                      0x00800000
 
 /* DDCOLORKEY.dwFlags */
 #define DDPF_ALPHAPIXELS		0x00000001
@@ -602,6 +860,11 @@ typedef struct _DDPIXELFORMAT {
 #define DDPF_PALETTEINDEXED1		0x00000800
 #define DDPF_PALETTEINDEXED2		0x00001000
 #define DDPF_ZPIXELS			0x00002000
+#define DDPF_STENCILBUFFER              0x00004000
+#define DDPF_ALPHAPREMULT               0x00008000
+#define DDPF_LUMINANCE                  0x00020000
+#define DDPF_BUMPLUMINANCE              0x00040000
+#define DDPF_BUMPDUDV                   0x00080000
 
 /* SetCooperativeLevel dwFlags */
 #define DDSCL_FULLSCREEN		0x00000001
@@ -613,6 +876,9 @@ typedef struct _DDPIXELFORMAT {
 #define DDSCL_SETFOCUSWINDOW		0x00000080
 #define DDSCL_SETDEVICEWINDOW		0x00000100
 #define DDSCL_CREATEDEVICEWINDOW	0x00000200
+#define DDSCL_MULTITHREADED             0x00000400
+#define DDSCL_FPUSETUP                  0x00000800
+#define DDSCL_FPUPRESERVE               0x00001000
 
 
 /* DDSURFACEDESC.dwFlags */
@@ -632,7 +898,10 @@ typedef struct _DDPIXELFORMAT {
 #define	DDSD_MIPMAPCOUNT	0x00020000
 #define	DDSD_REFRESHRATE	0x00040000
 #define	DDSD_LINEARSIZE		0x00080000
-#define	DDSD_ALL		0x000ff9ee
+#define DDSD_TEXTURESTAGE       0x00100000
+#define DDSD_FVF                0x00200000
+#define DDSD_SRCVBHANDLE        0x00400000
+#define	DDSD_ALL		0x007ff9ee
 
 /* EnumSurfaces flags */
 #define DDENUMSURFACES_ALL          0x00000001
@@ -648,26 +917,32 @@ typedef struct _DDPIXELFORMAT {
 #define DDEDM_REFRESHRATES	0x00000001
 #define DDEDM_STANDARDVGAMODES	0x00000002
 
+/* WaitForVerticalDisplay flags */
 
+#define DDWAITVB_BLOCKBEGIN		0x00000001
+#define DDWAITVB_BLOCKBEGINEVENT	0x00000002
+#define DDWAITVB_BLOCKEND		0x00000004
+
+#if 0
 typedef struct _DDSURFACEDESC
 {
 	DWORD	dwSize;		/* 0: size of the DDSURFACEDESC structure*/
 	DWORD	dwFlags;	/* 4: determines what fields are valid*/
 	DWORD	dwHeight;	/* 8: height of surface to be created*/
 	DWORD	dwWidth;	/* C: width of input surface*/
-	LONG	lPitch;		/*10: distance to start of next line (return value only)*/
-	DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
+        LONG	lPitch;		/*10: distance to start of next line (return value only)*/
+        DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
 	union {
 		DWORD	dwMipMapCount;/* 18:number of mip-map levels requested*/
 		DWORD	dwZBufferBitDepth;/*18: depth of Z buffer requested*/
 		DWORD	dwRefreshRate;/* 18:refresh rate (used when display mode is described)*/
-	} x;		
+	} DUMMYUNIONNAME;		
 	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
 	DWORD	dwReserved;	/* 20:reserved*/
-	union {
-		LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
-		DWORD	dwLinearSize;	/* 24:Formless late-allocated optimized surface size*/
-	} y;
+        union {
+	        DWORD   dwLinearSize;
+	        LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
+	} DUMMYUNIONNAME2;
 	DDCOLORKEY	ddckCKDestOverlay;/* 28: CK for dest overlay use*/
 	DDCOLORKEY	ddckCKDestBlt;	/* 30: CK for destination blt use*/
 	DDCOLORKEY	ddckCKSrcOverlay;/* 38: CK for source overlay use*/
@@ -675,6 +950,66 @@ typedef struct _DDSURFACEDESC
 	DDPIXELFORMAT	ddpfPixelFormat;/* 48: pixel format description of the surface*/
 	DDSCAPS		ddsCaps;	/* 68: direct draw surface caps */
 } DDSURFACEDESC,*LPDDSURFACEDESC;
+#endif
+
+typedef struct _DDSURFACEDESC
+{
+  DWORD		dwSize;
+  DWORD		dwFlags;
+  DWORD		dwHeight;
+  DWORD		dwWidth;
+  union
+  {
+    LONG	lPitch;
+    DWORD	dwLinearSize;
+  } DUMMYUNIONNAME;
+  DWORD		dwBackBufferCount;
+  union
+  {
+    DWORD	dwMipMapCount;
+    DWORD	dwZBufferBitDepth;
+    DWORD	dwRefreshRate;
+  } DUMMYUNIONNAME2;
+  DWORD		dwAlphaBitDepth;
+  DWORD		dwReserved;
+  LPVOID	lpSurface;
+  DDCOLORKEY	ddckCKDestOverlay;
+  DDCOLORKEY	ddckCKDestBlt;
+  DDCOLORKEY	ddckCKSrcOverlay;
+  DDCOLORKEY	ddckCKSrcBlt;
+  DDPIXELFORMAT	ddpfPixelFormat;
+  DDSCAPS	ddsCaps;
+} DDSURFACEDESC, FAR* LPDDSURFACEDESC;
+
+typedef struct _DDSURFACEDESC2
+{
+	DWORD	dwSize;		/* 0: size of the DDSURFACEDESC structure*/
+	DWORD	dwFlags;	/* 4: determines what fields are valid*/
+	DWORD	dwHeight;	/* 8: height of surface to be created*/
+	DWORD	dwWidth;	/* C: width of input surface*/
+	union {
+		LONG	lPitch;	      /*10: distance to start of next line (return value only)*/
+		DWORD   dwLinearSize; /*10: formless late-allocated optimized surface size */
+	} DUMMYUNIONNAME;
+	DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
+	union {
+		DWORD	dwMipMapCount;/* 18:number of mip-map levels requested*/
+		DWORD	dwRefreshRate;/* 18:refresh rate (used when display mode is described)*/
+	} DUMMYUNIONNAME2;		
+	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
+	DWORD	dwReserved;	/* 20:reserved*/
+	LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
+	union {
+		DDCOLORKEY	ddckCKDestOverlay; /* 28: CK for dest overlay use*/
+		DWORD 		dwEmptyFaceColor;  /* 28: color for empty cubemap faces */
+	} DUMMYUNIONNAME3;
+	DDCOLORKEY	ddckCKDestBlt;	/* 2C: CK for destination blt use*/
+	DDCOLORKEY	ddckCKSrcOverlay;/* 30: CK for source overlay use*/
+	DDCOLORKEY	ddckCKSrcBlt;	/* 34: CK for source blt use*/
+	DDPIXELFORMAT	ddpfPixelFormat;/* 38: pixel format description of the surface*/
+	DDSCAPS2	ddsCaps;  /* 3C: DDraw surface caps */
+	DWORD		dwTextureStage; /* 40: stage in multitexture cascade */
+} DDSURFACEDESC2,*LPDDSURFACEDESC2;
 
 /* DDCOLORCONTROL.dwFlags */
 #define DDCOLOR_BRIGHTNESS	0x00000001
@@ -698,19 +1033,22 @@ typedef struct {
 	DWORD	dwReserved1;
 } DDCOLORCONTROL,*LPDDCOLORCONTROL;
 
-typedef BOOL (CALLBACK * LPDDENUMCALLBACKA)(GUID *, LPSTR, LPSTR, LPVOID);
-typedef BOOL (CALLBACK * LPDDENUMCALLBACKW)(GUID *, LPWSTR, LPWSTR, LPVOID);
+typedef BOOL CALLBACK (*LPDDENUMCALLBACKA)(GUID *, LPSTR, LPSTR, LPVOID);
+typedef BOOL CALLBACK (*LPDDENUMCALLBACKW)(GUID *, LPWSTR, LPWSTR, LPVOID);
 DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACK)
 
-typedef HRESULT (CALLBACK * LPDDENUMMODESCALLBACK)(LPDDSURFACEDESC, LPVOID);
-typedef HRESULT (CALLBACK * LPDDENUMSURFACESCALLBACK)(LPDIRECTDRAWSURFACE, LPDDSURFACEDESC, LPVOID);
+typedef HRESULT CALLBACK (*LPDDENUMMODESCALLBACK)(LPDDSURFACEDESC, LPVOID);
+typedef HRESULT CALLBACK (*LPDDENUMMODESCALLBACK7)(LPDDSURFACEDESC2, LPVOID);
+typedef HRESULT CALLBACK (*LPDDENUMSURFACESCALLBACK)(LPDIRECTDRAWSURFACE, LPDDSURFACEDESC, LPVOID);
+typedef HRESULT CALLBACK (*LPDDENUMSURFACESCALLBACK7)(LPDIRECTDRAWSURFACE7, LPDDSURFACEDESC2, LPVOID);
 
-typedef BOOL (CALLBACK * LPDDENUMCALLBACKEXA)(GUID *, LPSTR, LPSTR, LPVOID, HMONITOR);
-typedef BOOL (CALLBACK * LPDDENUMCALLBACKEXW)(GUID *, LPWSTR, LPWSTR, LPVOID, HMONITOR);
+typedef BOOL CALLBACK (*LPDDENUMCALLBACKEXA)(GUID *, LPSTR, LPSTR, LPVOID, HMONITOR);
+typedef BOOL CALLBACK (*LPDDENUMCALLBACKEXW)(GUID *, LPWSTR, LPWSTR, LPVOID, HMONITOR);
 DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACKEX)
 
 HRESULT WINAPI DirectDrawEnumerateExA( LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags);
 HRESULT WINAPI DirectDrawEnumerateExW( LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags);
+#define DirectDrawEnumerateEx WINELIB_NAME_AW(DirectDrawEnumerateEx)
 
 /* flags for DirectDrawEnumerateEx */
 #define DDENUM_ATTACHEDSECONDARYDEVICES	0x00000001
@@ -733,13 +1071,13 @@ typedef struct _DDBLTFX
     {
         DWORD   dwZDestConst;                   /* Constant to use as Z buffer for dest */
         LPDIRECTDRAWSURFACE lpDDSZBufferDest;   /* Surface to use as Z buffer for dest */
-    } x;
+    } DUMMYUNIONNAME;
     DWORD       dwZSrcConstBitDepth;            /* Bit depth used to specify Z constant for source */
     union
     {
         DWORD   dwZSrcConst;                    /* Constant to use as Z buffer for src */
         LPDIRECTDRAWSURFACE lpDDSZBufferSrc;    /* Surface to use as Z buffer for src */
-    } y;
+    } DUMMYUNIONNAME2;
     DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
     DWORD       dwAlphaEdgeBlend;               /* Alpha for edge blending */
     DWORD       dwReserved;
@@ -748,20 +1086,20 @@ typedef struct _DDBLTFX
     {
         DWORD   dwAlphaDestConst;               /* Constant to use as Alpha Channel */
         LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as Alpha Channel */
-    } z;
+    } DUMMYUNIONNAME3;
     DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
     union
     {
         DWORD   dwAlphaSrcConst;                /* Constant to use as Alpha Channel */
         LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as Alpha Channel */
-    } a;
+    } DUMMYUNIONNAME4;
     union
     {
         DWORD   dwFillColor;                    /* color in RGB or Palettized */
         DWORD   dwFillDepth;                    /* depth value for z-buffer */
 	DWORD   dwFillPixel;			/* pixel val for RGBA or RGBZ */
         LPDIRECTDRAWSURFACE lpDDSPattern;       /* Surface to use as pattern */
-    } b;
+    } DUMMYUNIONNAME5;
     DDCOLORKEY  ddckDestColorkey;               /* DestColorkey override */
     DDCOLORKEY  ddckSrcColorkey;                /* SrcColorkey override */
 } DDBLTFX,*LPDDBLTFX;
@@ -797,13 +1135,13 @@ typedef struct _DDOVERLAYFX
     {
         DWORD   dwAlphaDestConst;               /* Constant to use as alpha channel for dest */
         LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as alpha channel for dest */
-    } x;
+    } DUMMYUNIONNAME;
     DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
     union
     {
         DWORD   dwAlphaSrcConst;                /* Constant to use as alpha channel for src */
         LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
-    } y;
+    } DUMMYUNIONNAME2;
     DDCOLORKEY  dckDestColorkey;                /* DestColorkey override */
     DDCOLORKEY  dckSrcColorkey;                 /* DestColorkey override */
     DWORD       dwDDFX;                         /* Overlay FX */
@@ -832,6 +1170,17 @@ typedef struct tagDDDEVICEIDENTIFIER {
   GUID    guidDeviceIdentifier;
 } DDDEVICEIDENTIFIER, * LPDDDEVICEIDENTIFIER;
 
+typedef struct tagDDDEVICEIDENTIFIER2 {
+  char    szDriver[MAX_DDDEVICEID_STRING];	/* user readable driver name */
+  char    szDescription[MAX_DDDEVICEID_STRING]; /* user readable description */
+  LARGE_INTEGER  liDriverVersion;		/* driver version */
+  DWORD   dwVendorId;				/* vendor ID, zero if unknown */
+  DWORD   dwDeviceId;				/* chipset ID, zero if unknown */
+  DWORD   dwSubSysId;				/* board ID, zero if unknown */
+  DWORD   dwRevision;				/* chipset version, zero if unknown */
+  GUID    guidDeviceIdentifier;			/* unique ID for this driver/chipset combination */
+  DWORD   dwWHQLLevel;				/* Windows Hardware Quality Lab certification level */
+} DDDEVICEIDENTIFIER2, * LPDDDEVICEIDENTIFIER2;
 
 /*****************************************************************************
  * IDirectDrawPalette interface
@@ -848,7 +1197,6 @@ typedef struct tagDDDEVICEIDENTIFIER {
 ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawPalette_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawPalette_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -858,7 +1206,6 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 #define IDirectDrawPalette_GetEntries(p,a,b,c,d) ICOM_CALL4(GetEntries,p,a,b,c,d)
 #define IDirectDrawPalette_Initialize(p,a,b,c)   ICOM_CALL3(Initialize,p,a,b,c)
 #define IDirectDrawPalette_SetEntries(p,a,b,c,d) ICOM_CALL4(SetEntries,p,a,b,c,d)
-#endif
 
 
 /*****************************************************************************
@@ -878,7 +1225,6 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawClipper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawClipper_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -890,7 +1236,6 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 #define IDirectDrawClipper_IsClipListChanged(p,a) ICOM_CALL1(IsClipListChanged,p,a)
 #define IDirectDrawClipper_SetClipList(p,a,b)     ICOM_CALL2(SetClipList,p,a,b)
 #define IDirectDrawClipper_SetHWnd(p,a,b)         ICOM_CALL2(SetHWnd,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -924,7 +1269,6 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 ICOM_DEFINE(IDirectDraw,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -950,7 +1294,6 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 #define IDirectDraw_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
 #define IDirectDraw_SetDisplayMode(p,a,b,c)     ICOM_CALL3(SetDisplayMode,p,a,b,c)
 #define IDirectDraw_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
-#endif
 
 
 /* flags for Lock() */
@@ -970,35 +1313,34 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
  */
 #define ICOM_INTERFACE IDirectDraw2
 #define IDirectDraw2_METHODS \
-    ICOM_METHOD (HRESULT,Compact) \
-    ICOM_METHOD3(HRESULT,CreateClipper,          DWORD,dwFlags, LPDIRECTDRAWCLIPPER*,lplpDDClipper, IUnknown*,pUnkOuter) \
-    ICOM_METHOD4(HRESULT,CreatePalette,          DWORD,dwFlags, LPPALETTEENTRY,lpColorTable, LPDIRECTDRAWPALETTE*,lplpDDPalette, IUnknown*,pUnkOuter) \
-    ICOM_METHOD3(HRESULT,CreateSurface,          LPDDSURFACEDESC,lpDDSurfaceDesc, LPDIRECTDRAWSURFACE*,lplpDDSurface, IUnknown*,pUnkOuter) \
-    ICOM_METHOD2(HRESULT,DuplicateSurface,       LPDIRECTDRAWSURFACE,lpDDSurface, LPDIRECTDRAWSURFACE*,lplpDupDDSurface) \
-    ICOM_METHOD4(HRESULT,EnumDisplayModes,       DWORD,dwFlags, LPDDSURFACEDESC,lpDDSurfaceDesc, LPVOID,lpContext, LPDDENUMMODESCALLBACK,lpEnumModesCallback) \
-    ICOM_METHOD4(HRESULT,EnumSurfaces,           DWORD,dwFlags, LPDDSURFACEDESC,lpDDSD, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
-    ICOM_METHOD (HRESULT,FlipToGDISurface) \
-    ICOM_METHOD2(HRESULT,GetCaps,                LPDDCAPS,lpDDDriverCaps, LPDDCAPS,lpDDHELCaps) \
-    ICOM_METHOD1(HRESULT,GetDisplayMode,         LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD2(HRESULT,GetFourCCCodes,         LPDWORD,lpNumCodes, LPDWORD,lpCodes) \
-    ICOM_METHOD1(HRESULT,GetGDISurface,          LPDIRECTDRAWSURFACE*,lplpGDIDDSurface) \
-    ICOM_METHOD1(HRESULT,GetMonitorFrequency,    LPDWORD,lpdwFrequency) \
-    ICOM_METHOD1(HRESULT,GetScanLine,            LPDWORD,lpdwScanLine) \
-    ICOM_METHOD1(HRESULT,GetVerticalBlankStatus, BOOL*,lpbIsInVB) \
-    ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
-    ICOM_METHOD (HRESULT,RestoreDisplayMode) \
-    ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
-    ICOM_METHOD5(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP, DWORD,dwRefreshRate, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent) \
-    /* added in v2 */ \
-    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree)
+/*0c*/    ICOM_METHOD (HRESULT,Compact) \
+/*10*/    ICOM_METHOD3(HRESULT,CreateClipper,          DWORD,dwFlags, LPDIRECTDRAWCLIPPER*,lplpDDClipper, IUnknown*,pUnkOuter) \
+/*14*/    ICOM_METHOD4(HRESULT,CreatePalette,          DWORD,dwFlags, LPPALETTEENTRY,lpColorTable, LPDIRECTDRAWPALETTE*,lplpDDPalette, IUnknown*,pUnkOuter) \
+/*18*/    ICOM_METHOD3(HRESULT,CreateSurface,          LPDDSURFACEDESC,lpDDSurfaceDesc, LPDIRECTDRAWSURFACE*,lplpDDSurface, IUnknown*,pUnkOuter) \
+/*1c*/    ICOM_METHOD2(HRESULT,DuplicateSurface,       LPDIRECTDRAWSURFACE,lpDDSurface, LPDIRECTDRAWSURFACE*,lplpDupDDSurface) \
+/*20*/    ICOM_METHOD4(HRESULT,EnumDisplayModes,       DWORD,dwFlags, LPDDSURFACEDESC,lpDDSurfaceDesc, LPVOID,lpContext, LPDDENUMMODESCALLBACK,lpEnumModesCallback) \
+/*24*/    ICOM_METHOD4(HRESULT,EnumSurfaces,           DWORD,dwFlags, LPDDSURFACEDESC,lpDDSD, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
+/*28*/    ICOM_METHOD (HRESULT,FlipToGDISurface) \
+/*2c*/    ICOM_METHOD2(HRESULT,GetCaps,                LPDDCAPS,lpDDDriverCaps, LPDDCAPS,lpDDHELCaps) \
+/*30*/    ICOM_METHOD1(HRESULT,GetDisplayMode,         LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*34*/    ICOM_METHOD2(HRESULT,GetFourCCCodes,         LPDWORD,lpNumCodes, LPDWORD,lpCodes) \
+/*38*/    ICOM_METHOD1(HRESULT,GetGDISurface,          LPDIRECTDRAWSURFACE*,lplpGDIDDSurface) \
+/*3c*/    ICOM_METHOD1(HRESULT,GetMonitorFrequency,    LPDWORD,lpdwFrequency) \
+/*40*/    ICOM_METHOD1(HRESULT,GetScanLine,            LPDWORD,lpdwScanLine) \
+/*44*/    ICOM_METHOD1(HRESULT,GetVerticalBlankStatus, BOOL*,lpbIsInVB) \
+/*48*/    ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
+/*4c*/    ICOM_METHOD (HRESULT,RestoreDisplayMode) \
+/*50*/    ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
+/*54*/    ICOM_METHOD5(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP, DWORD,dwRefreshRate, DWORD,dwFlags) \
+/*58*/    ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent) \
+          /* added in v2 */ \
+/*5c*/    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree)
 #define IDirectDraw2_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDraw2_METHODS
 ICOM_DEFINE(IDirectDraw2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1026,7 +1368,6 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 #define IDirectDraw2_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
 /*** IDirectDraw2 methods ***/
 #define IDirectDraw2_GetAvailableVidMem(p,a,b,c) ICOM_CALL3(GetAvailableVidMem,p,a,b,c)
-#endif
 
 
 /*****************************************************************************
@@ -1044,7 +1385,6 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDraw4_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDraw4_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1068,7 +1408,7 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #define IDirectDraw4_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
 #define IDirectDraw4_RestoreDisplayMode(p)       ICOM_CALL (RestoreDisplayMode,p)
 #define IDirectDraw4_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectDraw4_SetDisplayMode(p,a,b,c)     ICOM_CALL3(SetDisplayMode,p,a,b,c)
+#define IDirectDraw4_SetDisplayMode(p,a,b,c,d,e) ICOM_CALL5(SetDisplayMode,p,a,b,c,d,e)
 #define IDirectDraw4_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
 /*** IDirectDraw2 methods ***/
 #define IDirectDraw4_GetAvailableVidMem(p,a,b,c) ICOM_CALL3(GetAvailableVidMem,p,a,b,c)
@@ -1077,7 +1417,87 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #define IDirectDraw4_RestoreAllSurfaces(pc)     ICOM_CALL (RestoreAllSurfaces,p)
 #define IDirectDraw4_TestCooperativeLevel(p)    ICOM_CALL (TestCooperativeLevel,p)
 #define IDirectDraw4_GetDeviceIdentifier(p,a,b) ICOM_CALL2(GetDeviceIdentifier,p,a,b)
-#endif
+
+
+/*****************************************************************************
+ * IDirectDraw7 interface
+ */
+/* Note: IDirectDraw7 cannot derive from IDirectDraw4; it is even documented
+ * as not interchangeable with earlier DirectDraw interfaces.
+ */
+#define ICOM_INTERFACE IDirectDraw7
+#define IDirectDraw7_METHODS \
+/*0c*/    ICOM_METHOD (HRESULT,Compact) \
+/*10*/    ICOM_METHOD3(HRESULT,CreateClipper,          DWORD,dwFlags, LPDIRECTDRAWCLIPPER*,lplpDDClipper, IUnknown*,pUnkOuter) \
+/*14*/    ICOM_METHOD4(HRESULT,CreatePalette,          DWORD,dwFlags, LPPALETTEENTRY,lpColorTable, LPDIRECTDRAWPALETTE*,lplpDDPalette, IUnknown*,pUnkOuter) \
+/*18*/    ICOM_METHOD3(HRESULT,CreateSurface,          LPDDSURFACEDESC2,lpDDSurfaceDesc, LPDIRECTDRAWSURFACE7*,lplpDDSurface, IUnknown*,pUnkOuter) \
+/*1c*/    ICOM_METHOD2(HRESULT,DuplicateSurface,       LPDIRECTDRAWSURFACE7,lpDDSurface, LPDIRECTDRAWSURFACE7*,lplpDupDDSurface) \
+/*20*/    ICOM_METHOD4(HRESULT,EnumDisplayModes,       DWORD,dwFlags, LPDDSURFACEDESC2,lpDDSurfaceDesc, LPVOID,lpContext, LPDDENUMMODESCALLBACK7,lpEnumModesCallback) \
+/*24*/    ICOM_METHOD4(HRESULT,EnumSurfaces,           DWORD,dwFlags, LPDDSURFACEDESC2,lpDDSD, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK7,lpEnumSurfacesCallback) \
+/*28*/    ICOM_METHOD (HRESULT,FlipToGDISurface) \
+/*2c*/    ICOM_METHOD2(HRESULT,GetCaps,                LPDDCAPS,lpDDDriverCaps, LPDDCAPS,lpDDHELCaps) \
+/*30*/    ICOM_METHOD1(HRESULT,GetDisplayMode,         LPDDSURFACEDESC2,lpDDSurfaceDesc) \
+/*34*/    ICOM_METHOD2(HRESULT,GetFourCCCodes,         LPDWORD,lpNumCodes, LPDWORD,lpCodes) \
+/*38*/    ICOM_METHOD1(HRESULT,GetGDISurface,          LPDIRECTDRAWSURFACE7*,lplpGDIDDSurface) \
+/*3c*/    ICOM_METHOD1(HRESULT,GetMonitorFrequency,    LPDWORD,lpdwFrequency) \
+/*40*/    ICOM_METHOD1(HRESULT,GetScanLine,            LPDWORD,lpdwScanLine) \
+/*44*/    ICOM_METHOD1(HRESULT,GetVerticalBlankStatus, BOOL*,lpbIsInVB) \
+/*48*/    ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
+/*4c*/    ICOM_METHOD (HRESULT,RestoreDisplayMode) \
+/*50*/    ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
+/*54*/    ICOM_METHOD5(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP, DWORD,dwRefreshRate, DWORD,dwFlags) \
+/*58*/    ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent) \
+          /* added in v2 */ \
+/*5c*/    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS2,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree) \
+          /* added in v4 */ \
+/*60*/    ICOM_METHOD2(HRESULT,GetSurfaceFromDC,    HDC,, LPDIRECTDRAWSURFACE7*,) \
+/*64*/    ICOM_METHOD (HRESULT,RestoreAllSurfaces) \
+/*68*/    ICOM_METHOD (HRESULT,TestCooperativeLevel) \
+/*6c*/    ICOM_METHOD2(HRESULT,GetDeviceIdentifier, LPDDDEVICEIDENTIFIER,, DWORD,) \
+          /* added in v7 */ \
+/*70*/    ICOM_METHOD3(HRESULT,StartModeTest,    LPSIZE,, DWORD,, DWORD,) \
+/*74*/    ICOM_METHOD2(HRESULT,EvaluateMode,     DWORD,, DWORD *,)
+#define IDirectDraw7_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectDraw7_METHODS
+ICOM_DEFINE(IDirectDraw7,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDirectDraw7_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectDraw7_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectDraw7_Release(p)            ICOM_CALL (Release,p)
+    /*** IDirectDraw methods ***/
+#define IDirectDraw7_Compact(p)                  ICOM_CALL (Compact,p)
+#define IDirectDraw7_CreateClipper(p,a,b,c)      ICOM_CALL3(CreateClipper,p,a,b,c)
+#define IDirectDraw7_CreatePalette(p,a,b,c,d)    ICOM_CALL4(CreatePalette,p,a,b,c,d)
+#define IDirectDraw7_CreateSurface(p,a,b,c)      ICOM_CALL3(CreateSurface,p,a,b,c)
+#define IDirectDraw7_DuplicateSurface(p,a,b)     ICOM_CALL2(DuplicateSurface,p,a,b)
+#define IDirectDraw7_EnumDisplayModes(p,a,b,c,d) ICOM_CALL4(EnumDisplayModes,p,a,b,c,d)
+#define IDirectDraw7_EnumSurfaces(p,a,b,c,d)     ICOM_CALL4(EnumSurfaces,p,a,b,c,d)
+#define IDirectDraw7_FlipToGDISurface(p)         ICOM_CALL (FlipToGDISurface,p)
+#define IDirectDraw7_GetCaps(p,a,b)              ICOM_CALL2(GetCaps,p,a,b)
+#define IDirectDraw7_GetDisplayMode(p,a)         ICOM_CALL1(GetDisplayMode,p,a)
+#define IDirectDraw7_GetFourCCCodes(p,a,b)       ICOM_CALL2(GetFourCCCodes,p,a,b)
+#define IDirectDraw7_GetGDISurface(p,a)          ICOM_CALL1(GetGDISurface,p,a)
+#define IDirectDraw7_GetMonitorFrequency(p,a)    ICOM_CALL1(GetMonitorFrequency,p,a)
+#define IDirectDraw7_GetScanLine(p,a)            ICOM_CALL1(GetScanLine,p,a)
+#define IDirectDraw7_GetVerticalBlankStatus(p,a) ICOM_CALL1(GetVerticalBlankStatus,p,a)
+#define IDirectDraw7_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+#define IDirectDraw7_RestoreDisplayMode(p)       ICOM_CALL (RestoreDisplayMode,p)
+#define IDirectDraw7_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectDraw7_SetDisplayMode(p,a,b,c,d,e) ICOM_CALL5(SetDisplayMode,p,a,b,c,d,e)
+#define IDirectDraw7_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
+/*** added in IDirectDraw2 ***/
+#define IDirectDraw7_GetAvailableVidMem(p,a,b,c) ICOM_CALL3(GetAvailableVidMem,p,a,b,c)
+/*** added in IDirectDraw4 ***/
+#define IDirectDraw7_GetSurfaceFromDC(p,a,b)    ICOM_CALL2(GetSurfaceFromDC,p,a,b,c)
+#define IDirectDraw7_RestoreAllSurfaces(pc)     ICOM_CALL (RestoreAllSurfaces,p)
+#define IDirectDraw7_TestCooperativeLevel(p)    ICOM_CALL (TestCooperativeLevel,p)
+#define IDirectDraw7_GetDeviceIdentifier(p,a,b) ICOM_CALL2(GetDeviceIdentifier,p,a,b)
+/*** added in IDirectDraw 7 ***/
+#define IDirectDraw7_StartModeTest(p,a,b,c)     ICOM_CALL3(StartModeTest,p,a,b,c)
+#define IDirectDraw7_EvaluateMode(p,a,b)        ICOM_CALL2(EvaluateMode,p,a,b)
 
 
 /*****************************************************************************
@@ -1085,46 +1505,45 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
  */
 #define ICOM_INTERFACE IDirectDrawSurface
 #define IDirectDrawSurface_METHODS \
-    ICOM_METHOD1(HRESULT,AddAttachedSurface,    LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
-    ICOM_METHOD1(HRESULT,AddOverlayDirtyRect,   LPRECT,lpRect) \
-    ICOM_METHOD5(HRESULT,Blt,                   LPRECT,lpDestRect, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwFlags, LPDDBLTFX,lpDDBltFx) \
-    ICOM_METHOD3(HRESULT,BltBatch,              LPDDBLTBATCH,lpDDBltBatch, DWORD,dwCount, DWORD,dwFlags) \
-    ICOM_METHOD5(HRESULT,BltFast,               DWORD,dwX, DWORD,dwY, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwTrans) \
-    ICOM_METHOD2(HRESULT,DeleteAttachedSurface, DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
-    ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
-    ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
-    ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS,lpDDSCaps, LPDIRECTDRAWSURFACE*,lplpDDAttachedSurface) \
-    ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS,lpDDSCaps) \
-    ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
-    ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
-    ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
-    ICOM_METHOD1(HRESULT,GetFlipStatus,         DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
-    ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
-    ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
-    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD (HRESULT,IsLost) \
-    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
-    ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
-    ICOM_METHOD (HRESULT,Restore) \
-    ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
-    ICOM_METHOD2(HRESULT,SetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
-    ICOM_METHOD2(HRESULT,SetOverlayPosition,    LONG,lX, LONG,lY) \
-    ICOM_METHOD1(HRESULT,SetPalette,            LPDIRECTDRAWPALETTE,lpDDPalette) \
-    ICOM_METHOD1(HRESULT,Unlock,                LPVOID,lpSurfaceData) \
-    ICOM_METHOD5(HRESULT,UpdateOverlay,         LPRECT,lpSrcRect, LPDIRECTDRAWSURFACE,lpDDDestSurface, LPRECT,lpDestRect, DWORD,dwFlags, LPDDOVERLAYFX,lpDDOverlayFx) \
-    ICOM_METHOD1(HRESULT,UpdateOverlayDisplay,  DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,UpdateOverlayZOrder,   DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSReference)
+/*0c*/    ICOM_METHOD1(HRESULT,AddAttachedSurface,    LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
+/*10*/    ICOM_METHOD1(HRESULT,AddOverlayDirtyRect,   LPRECT,lpRect) \
+/*14*/    ICOM_METHOD5(HRESULT,Blt,                   LPRECT,lpDestRect, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwFlags, LPDDBLTFX,lpDDBltFx) \
+/*18*/    ICOM_METHOD3(HRESULT,BltBatch,              LPDDBLTBATCH,lpDDBltBatch, DWORD,dwCount, DWORD,dwFlags) \
+/*1c*/    ICOM_METHOD5(HRESULT,BltFast,               DWORD,dwX, DWORD,dwY, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwTrans) \
+/*20*/    ICOM_METHOD2(HRESULT,DeleteAttachedSurface, DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
+/*24*/    ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
+/*28*/    ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
+/*2c*/    ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
+/*30*/    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS,lpDDSCaps, LPDIRECTDRAWSURFACE*,lplpDDAttachedSurface) \
+/*34*/    ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
+/*38*/    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS,lpDDSCaps) \
+/*3c*/    ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
+/*40*/    ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+/*44*/    ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
+/*48*/    ICOM_METHOD1(HRESULT,GetFlipStatus,         DWORD,dwFlags) \
+/*4c*/    ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
+/*50*/    ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
+/*54*/    ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
+/*58*/    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*5c*/    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*60*/    ICOM_METHOD (HRESULT,IsLost) \
+/*64*/    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
+/*68*/    ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
+/*6c*/    ICOM_METHOD (HRESULT,Restore) \
+/*70*/    ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
+/*74*/    ICOM_METHOD2(HRESULT,SetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+/*78*/    ICOM_METHOD2(HRESULT,SetOverlayPosition,    LONG,lX, LONG,lY) \
+/*7c*/    ICOM_METHOD1(HRESULT,SetPalette,            LPDIRECTDRAWPALETTE,lpDDPalette) \
+/*80*/    ICOM_METHOD1(HRESULT,Unlock,                LPVOID,lpSurfaceData) \
+/*84*/    ICOM_METHOD5(HRESULT,UpdateOverlay,         LPRECT,lpSrcRect, LPDIRECTDRAWSURFACE,lpDDDestSurface, LPRECT,lpDestRect, DWORD,dwFlags, LPDDOVERLAYFX,lpDDOverlayFx) \
+/*88*/    ICOM_METHOD1(HRESULT,UpdateOverlayDisplay,  DWORD,dwFlags) \
+/*8c*/    ICOM_METHOD2(HRESULT,UpdateOverlayZOrder,   DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSReference)
 #define IDirectDrawSurface_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDrawSurface_METHODS
 ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1154,8 +1573,8 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #define IDirectDrawSurface_IsLost(p)                    ICOM_CALL (IsLost,p)
 #define IDirectDrawSurface_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirectDrawSurface_ReleaseDC(p,a)               ICOM_CALL1(ReleaseDC,p,a)
-#define IDirectDrawSurface_Restore(p,a,b)               ICOM_CALL (Restore,p,a,b)
-#define IDirectDrawSurface_SetClipper(p,a,b)            ICOM_CALL1(SetClipper,p,a,b)
+#define IDirectDrawSurface_Restore(p)                   ICOM_CALL (Restore,p)
+#define IDirectDrawSurface_SetClipper(p,a)            ICOM_CALL1(SetClipper,p,a)
 #define IDirectDrawSurface_SetColorKey(p,a,b)           ICOM_CALL2(SetColorKey,p,a,b)
 #define IDirectDrawSurface_SetOverlayPosition(p,a,b)    ICOM_CALL2(SetOverlayPosition,p,a,b)
 #define IDirectDrawSurface_SetPalette(p,a)              ICOM_CALL1(SetPalette,p,a)
@@ -1163,7 +1582,6 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #define IDirectDrawSurface_UpdateOverlay(p,a,b,c,d,e)   ICOM_CALL5(UpdateOverlay,p,a,b,c,d,e)
 #define IDirectDrawSurface_UpdateOverlayDisplay(p,a)    ICOM_CALL1(UpdateOverlayDisplay,p,a)
 #define IDirectDrawSurface_UpdateOverlayZOrder(p,a,b)   ICOM_CALL2(UpdateOverlayZOrder,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1217,7 +1635,6 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1248,7 +1665,7 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #define IDirectDrawSurface2_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirectDrawSurface2_ReleaseDC(p,a)               ICOM_CALL1(ReleaseDC,p,a)
 #define IDirectDrawSurface2_Restore(p,a,b)               ICOM_CALL (Restore,p,a,b)
-#define IDirectDrawSurface2_SetClipper(p,a,b)            ICOM_CALL1(SetClipper,p,a,b)
+#define IDirectDrawSurface2_SetClipper(p,a)            ICOM_CALL1(SetClipper,p,a)
 #define IDirectDrawSurface2_SetColorKey(p,a,b)           ICOM_CALL2(SetColorKey,p,a,b)
 #define IDirectDrawSurface2_SetOverlayPosition(p,a,b)    ICOM_CALL2(SetOverlayPosition,p,a,b)
 #define IDirectDrawSurface2_SetPalette(p,a)              ICOM_CALL1(SetPalette,p,a)
@@ -1260,7 +1677,6 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #define IDirectDrawSurface2_GetDDInterface(p,a) ICOM_CALL1(GetDDInterface,p,a)
 #define IDirectDrawSurface2_PageLock(p,a)       ICOM_CALL1(PageLock,p,a)
 #define IDirectDrawSurface2_PageUnlock(p,a)     ICOM_CALL1(PageUnlock,p,a)
-#endif
 
 
 /*****************************************************************************
@@ -1316,7 +1732,6 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1347,7 +1762,7 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #define IDirectDrawSurface3_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirectDrawSurface3_ReleaseDC(p,a)               ICOM_CALL1(ReleaseDC,p,a)
 #define IDirectDrawSurface3_Restore(p,a,b)               ICOM_CALL (Restore,p,a,b)
-#define IDirectDrawSurface3_SetClipper(p,a,b)            ICOM_CALL1(SetClipper,p,a,b)
+#define IDirectDrawSurface3_SetClipper(p,a)            ICOM_CALL1(SetClipper,p,a)
 #define IDirectDrawSurface3_SetColorKey(p,a,b)           ICOM_CALL2(SetColorKey,p,a,b)
 #define IDirectDrawSurface3_SetOverlayPosition(p,a,b)    ICOM_CALL2(SetOverlayPosition,p,a,b)
 #define IDirectDrawSurface3_SetPalette(p,a)              ICOM_CALL1(SetPalette,p,a)
@@ -1361,7 +1776,6 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #define IDirectDrawSurface3_PageUnlock(p,a)     ICOM_CALL1(PageUnlock,p,a)
 /*** IDirectDrawSurface3 methods ***/
 #define IDirectDrawSurface3_SetSurfaceDesc(p,a,b) ICOM_CALL2(SetSurfaceDesc,p,a,b)
-#endif
 
 
 /*****************************************************************************
@@ -1427,7 +1841,6 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
 #define IDirectDrawSurface4_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawSurface4_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1458,7 +1871,7 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #define IDirectDrawSurface4_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirectDrawSurface4_ReleaseDC(p,a)               ICOM_CALL1(ReleaseDC,p,a)
 #define IDirectDrawSurface4_Restore(p,a,b)               ICOM_CALL (Restore,p,a,b)
-#define IDirectDrawSurface4_SetClipper(p,a,b)            ICOM_CALL1(SetClipper,p,a,b)
+#define IDirectDrawSurface4_SetClipper(p,a)            ICOM_CALL1(SetClipper,p,a)
 #define IDirectDrawSurface4_SetColorKey(p,a,b)           ICOM_CALL2(SetColorKey,p,a,b)
 #define IDirectDrawSurface4_SetOverlayPosition(p,a,b)    ICOM_CALL2(SetOverlayPosition,p,a,b)
 #define IDirectDrawSurface4_SetPalette(p,a)              ICOM_CALL1(SetPalette,p,a)
@@ -1478,7 +1891,68 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #define IDirectDrawSurface4_FreePrivateData(p,a)      ICOM_CALL1(FreePrivateData,p,a)
 #define IDirectDrawSurface4_GetUniquenessValue(p,a)   ICOM_CALL1(GetUniquenessValue,p,a)
 #define IDirectDrawSurface4_ChangeUniquenessValue(p)  ICOM_CALL (ChangeUniquenessValue,p)
-#endif
+
+
+/*****************************************************************************
+ * IDirectDrawSurface7 interface
+ */
+#define ICOM_INTERFACE IDirectDrawSurface7
+#define IDirectDrawSurface7_METHODS \
+    ICOM_METHOD1(HRESULT,AddAttachedSurface,    LPDIRECTDRAWSURFACE7,lpDDSAttachedSurface) \
+    ICOM_METHOD1(HRESULT,AddOverlayDirtyRect,   LPRECT,lpRect) \
+    ICOM_METHOD5(HRESULT,Blt,                   LPRECT,lpDestRect, LPDIRECTDRAWSURFACE7,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwFlags, LPDDBLTFX,lpDDBltFx) \
+    ICOM_METHOD3(HRESULT,BltBatch,              LPDDBLTBATCH,lpDDBltBatch, DWORD,dwCount, DWORD,dwFlags) \
+    ICOM_METHOD5(HRESULT,BltFast,               DWORD,dwX, DWORD,dwY, LPDIRECTDRAWSURFACE7,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwTrans) \
+    ICOM_METHOD2(HRESULT,DeleteAttachedSurface, DWORD,dwFlags, LPDIRECTDRAWSURFACE7,lpDDSAttachedSurface) \
+    ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
+    ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
+    ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE7,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS2,lpDDSCaps, LPDIRECTDRAWSURFACE7*,lplpDDAttachedSurface) \
+    ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS2,lpDDSCaps) \
+    ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
+    ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+    ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
+    ICOM_METHOD1(HRESULT,GetFlipStatus,         DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
+    ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
+    ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
+    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC2,lpDDSurfaceDesc) \
+    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC2,lpDDSurfaceDesc) \
+    ICOM_METHOD (HRESULT,IsLost) \
+    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC2,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
+    ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
+    ICOM_METHOD (HRESULT,Restore) \
+    ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
+    ICOM_METHOD2(HRESULT,SetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+    ICOM_METHOD2(HRESULT,SetOverlayPosition,    LONG,lX, LONG,lY) \
+    ICOM_METHOD1(HRESULT,SetPalette,            LPDIRECTDRAWPALETTE,lpDDPalette) \
+    ICOM_METHOD1(HRESULT,Unlock,                LPVOID,lpSurfaceData) \
+    ICOM_METHOD5(HRESULT,UpdateOverlay,         LPRECT,lpSrcRect, LPDIRECTDRAWSURFACE7,lpDDDestSurface, LPRECT,lpDestRect, DWORD,dwFlags, LPDDOVERLAYFX,lpDDOverlayFx) \
+    ICOM_METHOD1(HRESULT,UpdateOverlayDisplay,  DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,UpdateOverlayZOrder,   DWORD,dwFlags, LPDIRECTDRAWSURFACE7,lpDDSReference) \
+    /* added in v2 */ \
+    ICOM_METHOD1(HRESULT,GetDDInterface, LPVOID*,lplpDD) \
+    ICOM_METHOD1(HRESULT,PageLock,       DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,PageUnlock,     DWORD,dwFlags) \
+    /* added in v3 */ \
+    ICOM_METHOD2(HRESULT,SetSurfaceDesc, LPDDSURFACEDESC2,lpDDSD, DWORD,dwFlags) \
+    /* added in v4 */ \
+    ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,, LPVOID,, DWORD,, DWORD,) \
+    ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,, LPVOID,, LPDWORD,) \
+    ICOM_METHOD1(HRESULT,FreePrivateData,      REFGUID,) \
+    ICOM_METHOD1(HRESULT,GetUniquenessValue,   LPDWORD,) \
+    ICOM_METHOD (HRESULT,ChangeUniquenessValue) \
+    /* added in v7 */ \
+    ICOM_METHOD1(HRESULT,SetPriority,    DWORD,prio) \
+    ICOM_METHOD1(HRESULT,GetPriority,    LPDWORD,prio) \
+    ICOM_METHOD1(HRESULT,SetLOD,         DWORD,lod) \
+    ICOM_METHOD1(HRESULT,GetLOD,         LPDWORD,lod)
+#define IDirectDrawSurface7_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectDrawSurface7_METHODS
+ICOM_DEFINE(IDirectDrawSurface7,IUnknown)
+#undef ICOM_INTERFACE
 
 
 /*****************************************************************************
@@ -1494,7 +1968,6 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 #undef ICOM_INTERFACE
 
-#ifdef ICOM_CINTERFACE
 	/*** IUnknown methods ***/
 #define IDirectDrawColorControl_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectDrawColorControl_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -1502,13 +1975,17 @@ ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 	/*** IDirectDrawColorControl methods ***/
 #define IDirectDrawColorControl_GetColorControls(p,a) ICOM_CALL(GetColorControls,p,a)
 #define IDirectDrawColorControl_SetColorControls(p,a) ICOM_CALL(SetColorControls,p,a)
-#endif
 
 
 HRESULT WINAPI DirectDrawCreate(LPGUID,LPDIRECTDRAW*,LPUNKNOWN);
+HRESULT WINAPI DirectDrawCreateEx(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
 HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA,LPVOID);
 HRESULT WINAPI DirectDrawEnumerateW(LPDDENUMCALLBACKW,LPVOID);
 #define DirectDrawEnumerate WINELIB_NAME_AW(DirectDrawEnumerate)
 HRESULT WINAPI DirectDrawCreateClipper(DWORD,LPDIRECTDRAWCLIPPER*,LPUNKNOWN);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_DDRAW_H */

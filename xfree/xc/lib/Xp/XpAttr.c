@@ -1,4 +1,4 @@
-/* $XConsortium: XpAttr.c /main/3 1996/12/27 16:21:50 kaleb $ */
+/* $Xorg: XpAttr.c,v 1.4 2000/08/17 19:46:05 cpqbld Exp $ */
 /******************************************************************************
  ******************************************************************************
  **
@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.4 2000/01/25 18:37:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.6 2001/01/17 19:43:01 dawes Exp $ */
 
 #define NEED_REPLIES
 
@@ -109,7 +109,6 @@ XpGetOneAttribute (
     char          *attribute_name
 )
 {
-    int     buflen = 0;
     char    *buf;
 
     xPrintGetOneAttributeReq     *req;
@@ -173,8 +172,6 @@ XpSetAttributes (
     XPAttrReplacement replacement_rule
 )
 {
-    int     i;
-
     xPrintSetAttributesReq     *req;
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 

@@ -1,5 +1,5 @@
 /*
- * $TOG: RAofA8.c /main/7 1998/06/25 16:26:07 kaleb $
+ * $Xorg: RAofA8.c,v 1.5 2000/08/17 19:45:49 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -35,8 +35,14 @@ XdmcpReadARRAYofARRAY8 (buffer, array)
 {
     int	    i;
 
-    if (!XdmcpReadCARD8 (buffer, &array->length))
+    if (!XdmcpReadCARD8 (buffer, &array->length)) {
+
+	/* Must set array->data to NULL to guarantee safe call of
+ 	 * XdmcpDisposeARRAY*(array) (which calls Xfree(array->data));
+         * see defect 7329 */
+	array->data = 0;
 	return FALSE;
+    }
     if (!array->length)
     {
 	array->data = NULL;
@@ -49,9 +55,12 @@ XdmcpReadARRAYofARRAY8 (buffer, array)
     {
 	if (!XdmcpReadARRAY8 (buffer, &array->data[i]))
 	{
-	    Xfree (array->data);
-	    array->data = NULL;
-	    array->length = 0;
+
+	    /* All arrays allocated thus far in the loop must be freed
+	     * if there is an error in the read.
+             * See Defect 7328 */
+	    array->length = i;
+	    XdmcpDisposeARRAYofARRAY8(array);
 	    return FALSE;
 	}
     }

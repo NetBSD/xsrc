@@ -1,4 +1,4 @@
-/* $TOG: imRmAttr.c /main/13 1997/06/22 18:11:18 kaleb $ */
+/* $Xorg: imRmAttr.c,v 1.4 2000/08/17 19:45:15 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imRmAttr.c,v 1.3 1999/05/09 10:50:37 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imRmAttr.c,v 1.5 2001/01/17 19:41:52 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

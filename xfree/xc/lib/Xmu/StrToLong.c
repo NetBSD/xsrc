@@ -1,4 +1,4 @@
-/* $TOG: StrToLong.c /main/6 1998/02/06 15:45:51 kaleb $ */
+/* $Xorg: StrToLong.c,v 1.3 2000/08/17 19:46:03 cpqbld Exp $ */
 
 /*
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/StrToLong.c,v 1.5 1998/10/03 09:06:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToLong.c,v 1.7 2001/01/17 19:42:57 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

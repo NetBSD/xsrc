@@ -3,9 +3,9 @@
  *
  * machine independent cursor display routines
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/mi/midispcur.c,v 1.4 2001/01/17 22:37:06 dawes Exp $ */
 
-/* $TOG: midispcur.c /main/16 1998/02/09 14:46:39 kaleb $ */
+/* $Xorg: midispcur.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $TOG: utils.c /main/44 1998/02/23 10:36:34 barstow $ */
+/* $Xorg: utils.c,v 1.4 2000/08/17 19:53:56 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1996, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.8 1998/10/04 09:40:21 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.10 2001/01/17 23:44:56 dawes Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -466,13 +466,13 @@ char	*argv[];
      * However, if this is the case, the command line options will
      * take precedence so check the environment first.
      */
-    if (env = getenv ("LBXPROXY_MAXSERVERS"))
+    if ((env = getenv ("LBXPROXY_MAXSERVERS")))
 	lbxMaxServers = atoi (env);
 
     for ( i = 1; i < argc; i++ )
     {
 	/* do proxy-specific stuff first */
-        if(skip = proxyProcessArgument(argc, argv, i))
+        if((skip = proxyProcessArgument(argc, argv, i)))
 	{
 	    i += (skip - 1);
 	}
@@ -560,7 +560,7 @@ Xalloc (amount)
 	((random() % MEM_FAIL_SCALE) < Memory_fail))
 	return (unsigned long *)NULL;
 #endif
-    if (ptr = (pointer)malloc(amount))
+    if ((ptr = (pointer)malloc(amount)))
 	return (unsigned long *)ptr;
     if (Must_have_memory)
 	FatalError("Out of memory");
@@ -896,7 +896,7 @@ ClientWakeup (client)
     SleepQueuePtr   q, *prev;
 
     prev = &sleepQueue;
-    while (q = *prev)
+    while ((q = *prev))
     {
 	if (q->client == client)
 	{

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.19 2000/02/08 13:13:10 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.23 2001/05/15 10:19:36 eich Exp $ */
 
 /*
  * Copyright 1994  The XFree86 Project
@@ -40,10 +40,6 @@
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
-/* All drivers using the vgahw module need this */
-/* This driver needs to be modified to not use vgaHW for multihead operation */
-#include "vgaHW.h"
-
 #include "xf86Cursor.h"
 
 /* Driver specific headers */
@@ -74,6 +70,20 @@ CHIPSShowCursor(ScrnInfoPtr pScrn)
     if (IS_HiQV(cPtr)) {
 	tmp = cPtr->readXR(cPtr, 0xA0);
 	cPtr->writeXR(cPtr, 0xA0, (tmp & 0xF8) | 5);
+	if (cPtr->UseDualChannel && 
+	    (! xf86IsEntityShared(pScrn->entityList[0]))) {
+	    unsigned int IOSS, MSS;
+	    IOSS = cPtr->readIOSS(cPtr);
+	    MSS = cPtr->readMSS(cPtr);
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
+				   IOSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
+				  MSS_PIPE_B));
+	    tmp = cPtr->readXR(cPtr, 0xA0);
+	    cPtr->writeXR(cPtr, 0xA0, (tmp & 0xF8) | 5);
+	    cPtr->writeIOSS(cPtr, IOSS);
+	    cPtr->writeMSS(cPtr, MSS);
+	}
     } else {
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0x8);
@@ -99,6 +109,20 @@ CHIPSHideCursor(ScrnInfoPtr pScrn)
     if (IS_HiQV(cPtr)) {
 	tmp = cPtr->readXR(cPtr, 0xA0);
 	cPtr->writeXR(cPtr, 0xA0, tmp & 0xF8);
+	if (cPtr->UseDualChannel && 
+	    (! xf86IsEntityShared(pScrn->entityList[0]))) {
+	    unsigned int IOSS, MSS;
+	    IOSS = cPtr->readIOSS(cPtr);
+	    MSS = cPtr->readMSS(cPtr);
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
+				   IOSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
+				  MSS_PIPE_B));
+	    tmp = cPtr->readXR(cPtr, 0xA0);
+	    cPtr->writeXR(cPtr, 0xA0, tmp & 0xF8);
+	    cPtr->writeIOSS(cPtr, IOSS);
+	    cPtr->writeMSS(cPtr, MSS);
+	}
     } else {
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0x8);
@@ -133,6 +157,22 @@ CHIPSSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 	cPtr->writeXR(cPtr, 0xA5, (x >> 8) & 0x87);
 	cPtr->writeXR(cPtr, 0xA6, y & 0xFF);
 	cPtr->writeXR(cPtr, 0xA7, (y >> 8) & 0x87);
+	if (cPtr->UseDualChannel && 
+	    (! xf86IsEntityShared(pScrn->entityList[0]))) {
+	    unsigned int IOSS, MSS;
+	    IOSS = cPtr->readIOSS(cPtr);
+	    MSS = cPtr->readMSS(cPtr);
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
+				   IOSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
+				  MSS_PIPE_B));
+	    cPtr->writeXR(cPtr, 0xA4, x & 0xFF);
+	    cPtr->writeXR(cPtr, 0xA5, (x >> 8) & 0x87);
+	    cPtr->writeXR(cPtr, 0xA6, y & 0xFF);
+	    cPtr->writeXR(cPtr, 0xA7, (y >> 8) & 0x87);
+	    cPtr->writeIOSS(cPtr, IOSS);
+	    cPtr->writeMSS(cPtr, MSS);
+	}
     } else {
 	CARD32 xy;
 
@@ -188,6 +228,47 @@ CHIPSSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	}
 	/* Enable normal palette addressing */
 	cPtr->writeXR(cPtr, 0x80, xr80);
+
+	if (cPtr->UseDualChannel && 
+	    (! xf86IsEntityShared(pScrn->entityList[0]))) {
+	    unsigned int IOSS, MSS;
+	    IOSS = cPtr->readIOSS(cPtr);
+	    MSS = cPtr->readMSS(cPtr);
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
+				   IOSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
+				  MSS_PIPE_B));
+	    /* Enable extended palette addressing */
+	    xr80 = cPtr->readXR(cPtr, 0x80);
+	    cPtr->writeXR(cPtr, 0x80, xr80 | 0x1);
+
+	    /* Write the new colours to the extended VGA palette. Palette
+	     * index is incremented after each write, so only write index
+	     * once 
+	     */
+	    hwp->writeDacWriteAddr(hwp, 0x04);
+	    if (xr80 & 0x80) {
+		/* 8bit DAC */
+		hwp->writeDacData(hwp, (bg >> 16) & 0xFF);
+		hwp->writeDacData(hwp, (bg >> 8) & 0xFF);
+		hwp->writeDacData(hwp, bg & 0xFF);
+		hwp->writeDacData(hwp, (fg >> 16) & 0xFF);
+		hwp->writeDacData(hwp, (fg >> 8) & 0xFF);
+		hwp->writeDacData(hwp, fg & 0xFF);
+	    } else {
+		/* 6bit DAC */
+		hwp->writeDacData(hwp, (bg >> 18) & 0xFF);
+		hwp->writeDacData(hwp, (bg >> 10) & 0xFF);
+		hwp->writeDacData(hwp, (bg >> 2) & 0xFF);
+		hwp->writeDacData(hwp, (fg >> 18) & 0xFF);
+		hwp->writeDacData(hwp, (fg >> 10) & 0xFF);
+		hwp->writeDacData(hwp, (fg >> 2) & 0xFF);
+	    }
+	    /* Enable normal palette addressing */
+	    cPtr->writeXR(cPtr, 0x80, xr80);
+	    cPtr->writeIOSS(cPtr, IOSS);
+	    cPtr->writeMSS(cPtr, MSS);
+	}
     } else if (IS_Wingine(cPtr)) {
 	outl(DR(0xA), (bg & 0xFFFFFF));
 	outl(DR(0x9), (fg & 0xFFFFFF));
@@ -215,6 +296,11 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 
     CURSOR_SYNC(pScrn);
 
+    if (cPtr->cursorDelay) {
+	usleep(200000);
+	cPtr->cursorDelay = FALSE;
+    }
+    
     if (IS_Wingine(cPtr)) {
 	int i;
 	CARD32 *tmp = (CARD32 *)src;
@@ -258,6 +344,20 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
     if (IS_HiQV(cPtr)) {
 	cPtr->writeXR(cPtr, 0xA2, (cAcl->CursorAddress >> 8) & 0xFF);
 	cPtr->writeXR(cPtr, 0xA3, (cAcl->CursorAddress >> 16) & 0x3F);
+	if (cPtr->UseDualChannel && 
+	    (! xf86IsEntityShared(pScrn->entityList[0]))) {
+	    unsigned int IOSS, MSS;
+	    IOSS = cPtr->readIOSS(cPtr);
+	    MSS = cPtr->readMSS(cPtr);
+	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
+				   IOSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
+				  MSS_PIPE_B));
+	    cPtr->writeXR(cPtr, 0xA2, (cAcl->CursorAddress >> 8) & 0xFF);
+	    cPtr->writeXR(cPtr, 0xA3, (cAcl->CursorAddress >> 16) & 0x3F);
+	    cPtr->writeIOSS(cPtr, IOSS);
+	    cPtr->writeMSS(cPtr, MSS);
+	}
     } else if (!IS_Wingine(cPtr)) {
 	if (!cPtr->UseMMIO) {
 	    HW_DEBUG(0xC);

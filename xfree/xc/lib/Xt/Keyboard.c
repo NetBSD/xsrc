@@ -1,4 +1,4 @@
-/* $TOG: Keyboard.c /main/37 1998/02/06 13:23:52 kaleb $ */
+/* $Xorg: Keyboard.c,v 1.4 2000/08/17 19:46:13 cpqbld Exp $ */
 
 /********************************************************
 
@@ -92,7 +92,7 @@ static XtServerGrabPtr CheckServerGrabs(event, trace, traceDepth)
 
     for (i = traceDepth;  i > 0; i--)
       {
-	 if (grab = _XtCheckServerGrabsOnWidget(event, trace[i-1], KEYBOARD))
+	 if ((grab = _XtCheckServerGrabsOnWidget(event, trace[i-1], KEYBOARD)))
 	   return (grab);
      }
     return (XtServerGrabPtr)0;
@@ -159,7 +159,7 @@ static Widget _FindFocusWidget(widget, trace, traceDepth, activeCheck, isTarget)
     /* first check the trace list till done or we go to branch */
     for (src = traceDepth-1, dst = widget; src > 0;)
       {
-	  if (pwi = _XtGetPerWidgetInput(trace[src], FALSE))
+	  if ((pwi = _XtGetPerWidgetInput(trace[src], FALSE)))
 	    {
 		if (pwi->focusKid)
 		  {
@@ -352,9 +352,9 @@ static Widget 	FindKeyDestination(widget, event,
 				  /* ignore lca */
 				  pseudoTraceDepth--;
 			      }
-			    if (grab = CheckServerGrabs((XEvent*)event,
+			    if ((grab = CheckServerGrabs((XEvent*)event,
 							pseudoTrace,
-							pseudoTraceDepth))
+							pseudoTraceDepth)))
 			      {
 				  XtDevice device = &pdi->keyboard;
 				  

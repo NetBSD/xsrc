@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.70 2000/09/26 15:57:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.75 2001/05/18 20:22:30 tsi Exp $ */
 /*
  * Copyright 1997 by The XFree86 Project, Inc.
  *
@@ -25,6 +25,7 @@
 
 #include <X.h>
 #include <Xmd.h>
+#include <Xos.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #if defined(__bsdi__)
@@ -858,11 +859,50 @@ xf86ftell(XF86FILE* f)
 	return ftell(fp->filehnd);
 }
 
+#define mapnum(e) case (xf86_##e): err = e; break;
+
 char*
 xf86strerror(int n)
 {
-	return strerror(n);
+	int err;
+
+	switch (n)
+	{
+		case 0: err = 0; break;
+		mapnum (EACCES);
+		mapnum (EAGAIN);
+		mapnum (EBADF);
+		mapnum (EEXIST);
+		mapnum (EFAULT);
+		mapnum (EINTR);
+		mapnum (EINVAL);
+		mapnum (EISDIR);
+		mapnum (ELOOP);		/* not POSIX 1 */
+		mapnum (EMFILE);
+		mapnum (ENAMETOOLONG);
+		mapnum (ENFILE);
+		mapnum (ENOENT);
+		mapnum (ENOMEM);
+		mapnum (ENOSPC);
+		mapnum (ENOTDIR);
+		mapnum (EPIPE);
+		mapnum (EROFS);
+#ifndef __EMX__
+		mapnum (ETXTBSY);	/* not POSIX 1 */
+#endif
+		mapnum (ENOTTY);
+		mapnum (EBUSY);
+		mapnum (ENODEV);
+		mapnum (EIO);
+
+		default:
+			err = 999;
+	}
+	return strerror(err);
 }
+
+#undef mapnum
+
 
 /* required for portable fgetpos/fsetpos,
  * use as
@@ -1095,9 +1135,11 @@ xf86getsecs(long * secs, long * usecs)
 {
 	struct timeval tv;
 
-	gettimeofday(&tv, NULL);
-	*secs = tv.tv_sec;
-	*usecs= tv.tv_usec;
+	X_GETTIMEOFDAY(&tv);
+	if (secs)
+		*secs = tv.tv_sec;
+	if (usecs)
+		*usecs= tv.tv_usec;
 
 	return;
 }
@@ -1844,7 +1886,7 @@ xf86shmdt(char *addr)
  * for now only implement the rmid command.
  */
 int
-xf86shmctl(int id, int xf86cmd, pointer *buf)
+xf86shmctl(int id, int xf86cmd, pointer buf)
 {
     int cmd;
 
@@ -1856,7 +1898,7 @@ xf86shmctl(int id, int xf86cmd, pointer *buf)
 	return 0;
     }
     
-    return shmctl(id, cmd, NULL);
+    return shmctl(id, cmd, buf);
 }
 #else
 
@@ -1874,7 +1916,7 @@ xf86shmat(int id, char *addr, int xf86shmflg)
 }
 
 int
-xf86shmctl(int id, int xf86cmd, pointer *buf)
+xf86shmctl(int id, int xf86cmd, pointer buf)
 {
     return -1;
 }

@@ -1,4 +1,4 @@
-/* $TOG: miLevel1.c /main/3 1998/02/10 12:39:44 kaleb $ */
+/* $Xorg: miLevel1.c,v 1.3 2000/08/17 19:47:04 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1991, 1998  The Open Group

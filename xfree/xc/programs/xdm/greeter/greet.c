@@ -1,4 +1,4 @@
-/* $TOG: greet.c /main/44 1998/02/11 10:00:26 kaleb $ */
+/* $Xorg: greet.c,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.8 2000/11/14 21:59:25 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.13 2001/05/11 09:03:07 alanh Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -36,6 +36,10 @@ from The Open Group.
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
 #include <X11/XKBlib.h>
+
+#ifdef USE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
 
 #include "dm.h"
 #include "dm_error.h"
@@ -165,6 +169,10 @@ InitGreet (struct display *d)
     Screen		*scrn;
     static char	*argv[] = { "xlogin", 0 };
     Display		*dpy;
+#ifdef USE_XINERAMA
+    XineramaScreenInfo *screens;
+    int                 s_num;
+#endif
 
     Debug ("greet %s\n", d->name);
     argc = 1;
@@ -176,6 +184,7 @@ InitGreet (struct display *d)
     if (!dpy)
 	return 0;
 
+#ifdef XKB
     {
     int opcode, evbase, errbase, majret, minret;
     unsigned int value = XkbPCF_GrabsUseXKBStateMask;
@@ -184,7 +193,7 @@ InitGreet (struct display *d)
 	    LogError ("%s\n", "SetPerClientControls failed");
     }
     }
-
+#endif
     RegisterCloseOnFork (ConnectionNumber (dpy));
 
     SecureDisplay (d, dpy);
@@ -208,6 +217,21 @@ InitGreet (struct display *d)
 				    arglist, i);
     XtRealizeWidget (toplevel);
 
+#ifdef USE_XINERAMA
+    if (
+	XineramaIsActive(dpy) &&
+	(screens = XineramaQueryScreens(dpy, &s_num)) != NULL
+       )
+    {
+	XWarpPointer(dpy, None, XRootWindowOfScreen (scrn),
+			0, 0, 0, 0,
+			screens[0].x_org + screens[0].width / 2,
+			screens[0].y_org + screens[0].height / 2);
+
+	XFree(screens);
+    }
+    else
+#endif
     XWarpPointer(dpy, None, XRootWindowOfScreen (scrn),
 		    0, 0, 0, 0,
 		    XWidthOfScreen(scrn) / 2,
@@ -346,7 +370,7 @@ greet_user_rtn GreetUser(
 #endif
     __xdm_crypt = dlfuncs->_crypt;
 #ifdef USE_PAM
-    __xdm_thepamh = dlfuncs->_thepamh;
+    __xdm_thepamhp = dlfuncs->_thepamhp;
 #endif
 #endif
 

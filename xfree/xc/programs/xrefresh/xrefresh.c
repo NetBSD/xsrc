@@ -42,12 +42,12 @@ SOFTWARE.
 ******************************************************************/
 
 /*
- * $TOG: xrefresh.c /main/15 1998/02/09 14:12:23 kaleb $
+ * $Xorg: xrefresh.c,v 1.3 2000/08/17 19:54:56 cpqbld Exp $
  *
  * Kitchen sink version, useful for clearing small areas and flashing the 
  * screen.
  */
-/* $XFree86: xc/programs/xrefresh/xrefresh.c,v 3.2 1998/10/04 09:41:45 dawes Exp $ */
+/* $XFree86: xc/programs/xrefresh/xrefresh.c,v 3.4 2001/01/17 23:46:22 dawes Exp $ */
 
 #include <stdio.h>
 #include <errno.h>

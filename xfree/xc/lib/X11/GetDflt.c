@@ -1,4 +1,4 @@
-/* $TOG: GetDflt.c /main/59 1998/05/12 11:19:09 kaleb $ */
+/* $Xorg: GetDflt.c,v 1.5 2000/08/17 19:44:34 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.15 1998/10/03 08:41:18 dawes Exp $ */
+/* $XFree86: xc/lib/X11/GetDflt.c,v 3.17 2001/01/17 19:41:36 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>

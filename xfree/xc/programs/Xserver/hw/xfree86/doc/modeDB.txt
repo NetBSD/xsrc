@@ -1,4 +1,4 @@
-#  $XFree86: xc/programs/Xserver/hw/xfree86/doc/modeDB.txt,v 3.7 1996/12/23 06:45:21 dawes Exp $
+#  $XFree86: xc/programs/Xserver/hw/xfree86/doc/modeDB.txt,v 3.9 2001/01/06 20:58:02 tsi Exp $
 #
 #
 #
@@ -157,7 +157,7 @@
 
 ###############################################################################
 # Card:			ATI VGAWonder series
-# Contributor:		Marc Aurele La France [tsi@ualberta.ca]
+# Contributor:		Marc Aurele La France [tsi@xfree86.org]
 # Last Edit Date:       1994.06.07
 #
 # See file README.ati for clock information for these cards.

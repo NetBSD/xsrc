@@ -1,4 +1,4 @@
-/* $TOG: fslibos.h /main/17 1998/02/09 10:47:46 kaleb $ */
+/* $Xorg: fslibos.h,v 1.3 2000/08/17 19:46:36 cpqbld Exp $ */
 /*
  * Copyright 1990 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.3 1996/12/23 06:02:08 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.5 2001/01/17 19:43:29 dawes Exp $ */
 
 /*
  * FSlib networking & os include file

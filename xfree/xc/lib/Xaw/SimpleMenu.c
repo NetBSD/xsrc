@@ -1,4 +1,4 @@
-/* $TOG: SimpleMenu.c /main/47 1998/06/24 11:53:33 kaleb $ */
+/* $Xorg: SimpleMenu.c,v 1.3 2000/08/17 19:45:37 cpqbld Exp $ */
 
 /*
 Copyright 1989, 1994, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/lib/Xaw/SimpleMenu.c,v 3.18 1999/06/20 08:41:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SimpleMenu.c,v 3.21 2001/03/23 23:59:15 paulo Exp $ */
 
 /*
  * SimpleMenu.c - Source code file for SimpleMenu widget.
@@ -590,16 +590,17 @@ XawSimpleMenuSetValues(Widget current, Widget request, Widget cnew,
 	XDefineCursor(XtDisplay(cnew), XtWindow(cnew),
 		      smw_new->simple_menu.cursor);
 
-    if (smw_old->simple_menu.label_string !=smw_new->simple_menu.label_string)
-    if (smw_new->simple_menu.label_string == NULL)	/* Destroy */
-	XtDestroyWidget((Widget)smw_old->simple_menu.label);
-    else if (smw_old->simple_menu.label_string == NULL)	/* Create */
-	CreateLabel(cnew);
-    else {						/* Change */
-	Arg arglist[1];
+    if (smw_old->simple_menu.label_string !=smw_new->simple_menu.label_string) {
+	if (smw_new->simple_menu.label_string == NULL)	    /* Destroy */
+	    XtDestroyWidget((Widget)smw_old->simple_menu.label);
+	else if (smw_old->simple_menu.label_string == NULL) /* Create */
+	    CreateLabel(cnew);
+	else {						    /* Change */
+	    Arg arglist[1];
 	    
-	XtSetArg(arglist[0], XtNlabel, smw_new->simple_menu.label_string);
-	XtSetValues((Widget)smw_new->simple_menu.label, arglist, ONE);
+	    XtSetArg(arglist[0], XtNlabel, smw_new->simple_menu.label_string);
+	    XtSetValues((Widget)smw_new->simple_menu.label, arglist, ONE);
+	}
     }
 
     if (smw_old->simple_menu.label_class != smw_new->simple_menu.label_class)
@@ -1717,6 +1718,17 @@ static void
 Popdown(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
     SimpleMenuWidget smw = (SimpleMenuWidget)w;
+
+    while (XtParent(w) &&
+	   XtIsSubclass(XtParent(w), simpleMenuWidgetClass)) {
+	if (((SimpleMenuWidget)XtParent(w))->simple_menu.sub_menu == (Widget)w) {
+	    w = XtParent(w);
+	    smw = (SimpleMenuWidget)w;
+	    smw->simple_menu.entry_set = NULL;
+	}
+	else
+	    break;
+    }
 
     smw->simple_menu.state |= SMW_UNMAPPING;
     if (smw->simple_menu.sub_menu)

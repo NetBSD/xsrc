@@ -1,4 +1,4 @@
-/* $TOG: modify.c /main/15 1998/03/31 09:30:54 mgreess $ */
+/* $Xorg: modify.c,v 1.3 2000/08/17 19:54:27 cpqbld Exp $ */
 
 /**** module modify.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/modify.c,v 3.4 1998/10/04 09:41:22 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/modify.c,v 3.7 2001/01/17 23:45:38 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

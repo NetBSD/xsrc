@@ -18,11 +18,11 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/twm/cursor.c,v 1.4 2001/01/17 23:45:05 dawes Exp $ */
 
 /***********************************************************************
  *
- * $TOG: cursor.c /main/12 1998/02/09 13:47:44 kaleb $
+ * $Xorg: cursor.c,v 1.4 2000/08/17 19:54:05 cpqbld Exp $
  *
  * cursor creation code
  *

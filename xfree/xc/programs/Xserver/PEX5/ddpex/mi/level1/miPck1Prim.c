@@ -1,4 +1,4 @@
-/* $TOG: miPck1Prim.c /main/4 1998/02/10 12:40:00 kaleb $ */
+/* $Xorg: miPck1Prim.c,v 1.3 2000/08/17 19:47:04 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: spglyph.c /main/18 1998/02/09 10:51:16 kaleb $ */
+/* $Xorg: spglyph.c,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spglyph.c,v 1.4 1999/03/14 03:21:18 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spglyph.c,v 1.6 2001/01/17 19:43:20 dawes Exp $ */
 
 #include	<X11/X.h>	/* for bit order #defines */
 #include	"spint.h"

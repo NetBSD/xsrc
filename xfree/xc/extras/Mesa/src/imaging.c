@@ -1035,7 +1035,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    {
       const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[1];
       const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[1];
-      for (i = 0; i < width * height * 4; i++) {
+      for (i = 0; i < width * height; i++) {
          GLfloat r = ctx->Convolution2D.Filter[i * 4 + 0];
          GLfloat g = ctx->Convolution2D.Filter[i * 4 + 1];
          GLfloat b = ctx->Convolution2D.Filter[i * 4 + 2];

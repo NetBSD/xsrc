@@ -1,4 +1,4 @@
-/* $TOG: WhitePoint.h /main/5 1998/02/06 15:46:29 kaleb $ */
+/* $Xorg: WhitePoint.h,v 1.3 2000/08/17 19:46:04 cpqbld Exp $ */
 
 /*
 

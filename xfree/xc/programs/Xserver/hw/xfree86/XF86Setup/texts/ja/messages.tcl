@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.2 1998/04/05 15:30:34 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.3 1998/04/05 16:15:56 robin Exp $
 #
 # messages in done.tcl :
 set messages(done.1)	"\n\

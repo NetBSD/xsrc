@@ -16,24 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef CIDGLOAD_H
-#define CIDGLOAD_H
+#ifndef __CIDGLOAD_H__
+#define __CIDGLOAD_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "cidobjs.h"
 
-#else
 
-#include <cid/cidobjs.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
 #if 0
@@ -52,12 +43,9 @@
                             FT_Int         load_flags );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* CIDGLOAD_H */
+#endif /* __CIDGLOAD_H__ */
 
 
 /* END */

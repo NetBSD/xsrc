@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aout.h,v 1.5 1998/09/05 06:36:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aout.h,v 1.6 1999/04/29 09:13:47 dawes Exp $ */
 
 /*
  * Borrowed from NetBSD's exec_aout.h

@@ -1,4 +1,4 @@
-/* $TOG: cup.c /main/3 1998/02/09 15:23:52 kaleb $ */
+/* $Xorg: cup.c,v 1.3 2000/08/17 19:47:56 cpqbld Exp $ */
 /*
 
 Copyright 1997, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/Xext/cup.c,v 1.6 2001/01/17 22:13:14 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

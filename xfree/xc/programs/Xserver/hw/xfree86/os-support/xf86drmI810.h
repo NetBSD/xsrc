@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmI810.h,v 3.3 2001/04/01 14:00:14 tsi Exp $ */
 
 /* WARNING: If you change any of these defines, make sure to change
  * the kernel include file as well (i810_drm.h)
@@ -25,9 +26,9 @@
 typedef struct _drmI810Init {
    unsigned int start; 
    unsigned int end; 
-   unsigned int size; 
-   int ring_map_idx; 
-   int buffer_map_idx; 
+   unsigned int size;
+   unsigned int mmio_offset;
+   unsigned int buffers_offset;
    int sarea_off;
 
    unsigned int front_offset;

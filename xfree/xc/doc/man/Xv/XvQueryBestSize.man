@@ -1,5 +1,5 @@
-.TH XvQueryBestSize 3X
-.\" $XFree86$
+.TH XvQueryBestSize 3X __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvQueryBestSize.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvQueryBestSize \- determine the optimum drawable region size
 .\"

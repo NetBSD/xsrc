@@ -1,4 +1,4 @@
-/* $TOG: FilterEv.c /main/10 1998/02/06 17:21:51 kaleb $ */
+/* $Xorg: FilterEv.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $ */
 
  /*
   * Copyright 1990, 1991 by OMRON Corporation

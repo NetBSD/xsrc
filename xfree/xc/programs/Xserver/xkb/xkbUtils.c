@@ -1,5 +1,4 @@
-/* $XConsortium: xkbUtils.c /main/24 1996/09/28 17:16:26 rws $ */
-/* $XFree86: xc/programs/Xserver/xkb/xkbUtils.c,v 3.10 1997/07/10 08:17:47 hohndel Exp $ */
+/* $Xorg: xkbUtils.c,v 1.3 2000/08/17 19:53:48 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/xkbUtils.c,v 3.12 2001/01/17 22:37:15 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/* $TOG: XCrAssoc.c /main/6 1998/02/06 16:14:26 kaleb $ */
+/* $Xorg: XCrAssoc.c,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1998 The Open Group.

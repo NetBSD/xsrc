@@ -26,7 +26,7 @@
 !!
 !! Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
 !!
-!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.7 2000/12/27 23:37:36 paulo Exp $
+!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.13 2001/05/15 18:22:23 paulo Exp $
 !!
 
 *Form.background:			gray85
@@ -187,10 +187,23 @@ lines		-1,0,0,0,0,-1
 *card.fromHoriz:		keyboard
 *monitor.fromHoriz:		card
 
-*commands.mouse.tip:		Add mouse
-*commands.keyboard.tip:		Add keyboard
-*commands.card.tip:		Add video card
-*commands.monitor.tip:		Add monitor
+*commands.mouse*new.label:	Add new mouse
+*commands.keyboard*new.label:	Add new keyboard
+*commands.card*new.label:	Add new video card
+*commands.monitor*new.label:	Add new monitor
+*commands.mouse*configure.label:	Configure mouse(s)
+*commands.keyboard*configure.label:	Configure keyboard(s)
+*commands.card*configure.label:		Configure video card(s)
+*commands.monitor*configure.label:	Configure monitor(s)
+*commands.mouse*SimpleMenu*newMouse.label:	New mouse
+*commands.keyboard*SimpleMenu*newKeyboard.label:New keyboard
+*commands.card*SimpleMenu*newcard.label:	New card
+*commands.monitor*SimpleMenu*newMonitor.label:	New monitor
+
+*commands.MenuButton.translations: \
+<Enter>:	highlight()\n\
+<Leave>:	reset()\n\
+Any<BtnDown>:	highlight() set() PopupMenu()
 
 *hpane.showGrip:		False
 *hpane.expert.label:		Expert Mode
@@ -324,28 +337,40 @@ lines		-1,0,0,0,0,-1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! keyboardML widget
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-*keyboardML.labelL.vertDistance:	16
-*keyboardML.layout.vertDistance:	16
-*keyboardML.keyboard.vertDistance:	16
+*keyboardML.Label.vertDistance:		8
+*keyboardML.MenuButton.vertDistance:	8
+*keyboardML.keyboard.vertDistance:	10
 *keyboardML.Label.borderWidth:		0
 *keyboardML.Label.width:		115
+*keyboardML.MenuButton.width:		185
+*keyboardML.MenuButton.justify:		left
 *keyboardML.Label.internalWidth:	0
 *keyboardML.Label.justify:		right
-*keyboardML.model.width:		185
+*keyboardML.labelR.label:		Xkb rules:
+*keyboardML.rules.left:			chainRight
+*keyboardML.rules.right:		chainRight
+*keyboardML.rules.fromHoriz:		labelR
+*keyboardML.model.fromVert:		rules
+*keyboardML.labelM.fromVert:		rules
 *keyboardML.model.left:			chainRight
 *keyboardML.model.right:		chainRight
-*keyboardML.model.justify:		left
 *keyboardML.model.fromHoriz:		labelM
 *keyboardML.labelM.label:		Keyboard model:
-*keyboardML.layout.width:		185
 *keyboardML.layout.left:		chainRight
 *keyboardML.layout.right:		chainRight
-*keyboardML.layout.justify:		left
 *keyboardML.layout.fromVert:		model
 *keyboardML.labelL.fromVert:		model
 *keyboardML.layout.fromHoriz:		labelL
 *keyboardML.labelL.label:		Keyboard layout:
-*keyboardML.keyboard.fromVert:		labelL
+*keyboardML.variant.fromVert:		labelL
+*keyboardML.variant.fromHoriz:		labelV
+*keyboardML.labelV.fromVert:		labelL
+*keyboardML.labelV.label:		Xkb variant:
+*keyboardML.options.fromVert:		labelV
+*keyboardML.options.fromHoriz:		labelO
+*keyboardML.labelO.fromVert:		labelV
+*keyboardML.labelO.label:		Xkb options:
+*keyboardML.keyboard.fromVert:		labelO
 *keyboardML.keyboard.borderWidth:	0
 *keyboardML.keyboard.width:		305
 *keyboardML.keyboard.height:		121
@@ -450,6 +475,8 @@ XF86Cfg.translations:	#override \
 <Message>WM_PROTOCOLS:	testmode-cancel()
 .xf86cfg.Expert.translations:	#override \
 <Message>WM_PROTOCOLS:	expert-close()
+.xf86cfg.options.moduleOptions.translations:	#override \
+<Message>WM_PROTOCOLS:	module-options-close()
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -463,6 +490,7 @@ XF86Cfg.translations:	#override \
 
 *options*commands.remove.fromHoriz:	add
 *options*commands.update.fromHoriz:	remove
+*options*commands.help.fromHoriz:	update
 *options*commands.min:			30
 *options*commands.max:			30
 *options*commands.showGrip:		False
@@ -476,18 +504,18 @@ XF86Cfg.translations:	#override \
 *options*label3.fromHoriz:		value
 *options*viewport.fromVert:		name
 *options*Label.borderWidth:		0
-*options*Label.internalWidth:		0
-*options*Label.height:			21
-*options*Text.height:			19
-*options*Label.top:			chainTop
-*options*Text.top:			chainTop
-*options*Label.bottom:			chainTop
-*options*Text.bottom:			chainTop
-*options*Label.horizDistance:		0
-*options*Text.horizDistance:		0
-*options*Label.vertDistance:		8
-*options*Text.vertDistance:		8
-*options*Text.width:			147
+*options.pane.form.Label.internalWidth:	0
+*options.pane.form.Label.height:	21
+*options.pane.form.Text.height:		19
+*options.pane.form.Label.top:		chainTop
+*options.pane.form.Text.top:		chainTop
+*options.pane.form.Label.bottom:	chainTop
+*options.pane.form.Text.bottom:		chainTop
+*options.pane.form.Label.horizDistance:	0
+*options.pane.form.Text.horizDistance:	0
+*options.pane.form.Label.vertDistance:	8
+*options.pane.form.Text.vertDistance:	8
+*options.pane.form.Text.width:		147
 *options*viewport.width:		390
 *options*viewport.height:		50
 
@@ -497,13 +525,47 @@ XF86Cfg.translations:	#override \
 *options*viewport.right:		chainRight
 *options*list.longest:			376
 
-*options*driverOpts.label:		Options for driver\ 
+*options*driverOpts.label:		Options for module\ 
 *options*driverOpts.justify:		left
 *options*driverOpts.width:		278
 *options*popdown.label:			Popdown dialog
 *options*driverOpts.tip:		This menu shows:\n\
  o option name\n\
  o option type
+
+.xf86cfg*options.moduleOptions.geometry:			360x245
+.xf86cfg*options.moduleOptions.minWidth:			360
+.xf86cfg*options.moduleOptions.maxWidth:			360
+.xf86cfg*options.moduleOptions.minHeight:			245
+.xf86cfg*options.moduleOptions.maxHeight:			245
+*options.moduleOptions*descriptions*labelType.label:		Select option
+*options.moduleOptions*descriptions*labelType.width:		348
+*options.moduleOptions*descriptions*module.fromVert:		labelType
+*options.moduleOptions*descriptions*module.label:		Module
+*options.moduleOptions*descriptions*Label.horizDistance:	8
+*options.moduleOptions*descriptions*option.fromVert:		labelType
+*options.moduleOptions*descriptions*option.label:		Option
+*options.moduleOptions*descriptions*option.fromHoriz:		viewM
+*options.moduleOptions*descriptions*viewM.fromVert:		module
+*options.moduleOptions*descriptions*viewM.width:		120
+*options.moduleOptions*descriptions*viewM.height:		94
+*options.moduleOptions*descriptions*modL.longest:		100
+*options.moduleOptions*descriptions*viewO.fromHoriz:		viewM
+*options.moduleOptions*descriptions*viewO.fromVert:		option
+*options.moduleOptions*descriptions*viewO.width:		220
+*options.moduleOptions*descriptions*viewO.height:		94
+*options.moduleOptions*descriptions*optL.longest:		220
+*options.moduleOptions*descriptions*desc.horizDistance:		4
+*options.moduleOptions*descriptions*desc.fromVert:		viewM
+*options.moduleOptions*descriptions*desc.width:			348
+*options.moduleOptions*descriptions*desc.height:		62
+*options.moduleOptions*descriptions*desc.wrap:			word
+*options.moduleOptions*descriptions*desc.scrollVertical:	Always
+*options.moduleOptions*descriptions*desc.Scrollbar.foreground:	rgb:a/5/5
+*options.moduleOptions*descriptions*desc.Scrollbar.borderWidth:	1
+*options.moduleOptions*descriptions*desc.Scrollbar.borderColor:	gray60
+*options.moduleOptions*descriptions.showGrip:			False
+*options.moduleOptions*popdown.label:				Popdown dialog
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! monitor
@@ -1275,11 +1337,16 @@ kbd?family=Courier&pixelsize=10,\
 code?family=Courier&pixelsize=10,\
 samp?family=Courier&pixelsize=10,\
 tt?family=Courier&pixelsize=10
-*help*close.min:	18
-*help*close.max:	18
-*help*close.showGrip:	False
+*help*commands.min:	22
+*help*commands.max:	22
+*help*commands.showGrip:False
 *help*wrap:		word
+*help*commands.close.label:	Close
 .xf86cfg.help.geometry:		320x369
+.xf86cfg.help.minWidth:		320
+.xf86cfg.help.maxWidth:		320
+.xf86cfg.help.minHeight:	369
+.xf86cfg.help.maxHeight:	369
 .xf86cfg.help.translations:	#override \
 <Message>WM_PROTOCOLS:	help-close()
 *help*text.translations:\
@@ -1386,6 +1453,8 @@ lines		-1,0,0,0,0,-1
 *expert*tree*Text.width:			160
 
 *expert*tree*fontpath.Text.width:		228
+*expert*tree*fontpath.up.fromHoriz:		remove
+*expert*tree*fontpath.down.fromHoriz:		up
 *expert*tree*fontpath.value.fromVert:		remove
 *expert*tree*fontpath.valueNew.fromVert:	new
 

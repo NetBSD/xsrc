@@ -1,5 +1,5 @@
 XCOMM font server configuration file
-XCOMM $XConsortium: config.cpp,v 1.7 91/08/22 11:39:59 rws Exp $
+XCOMM $Xorg: config.cpp,v 1.3 2000/08/17 19:54:19 cpqbld Exp $
 
 clone-self = on
 use-syslog = off

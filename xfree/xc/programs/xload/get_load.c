@@ -1,5 +1,5 @@
 /* $XConsortium: get_load.c /main/37 1996/03/09 09:38:04 kaleb $ */
-/* $XFree86: xc/programs/xload/get_load.c,v 1.5 2000/11/14 18:20:39 dawes Exp $ */
+/* $XFree86: xc/programs/xload/get_load.c,v 1.8 2001/04/08 05:00:09 torrey Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -499,6 +499,40 @@ void GetLoadPoint( w, closure, call_data )
 
 #else /* __GNU__ */
 
+#ifdef __DARWIN__
+
+#include <mach/mach.h>
+
+static mach_port_t host_priv_port;
+
+void InitLoadPoint()
+{
+    host_priv_port = mach_host_self();
+}
+
+/* ARGSUSED */
+void GetLoadPoint( w, closure, call_data )
+    Widget	w;		/* unused */
+    caddr_t	closure;	/* unused */
+    caddr_t	call_data;	/* pointer to (double) return value */
+{
+    double *loadavg = (double *)call_data;
+
+    struct host_load_info load_data;
+    int host_count;
+    kern_return_t kr;
+
+    host_count = sizeof(load_data)/sizeof(integer_t);
+    kr = host_statistics(host_priv_port, HOST_LOAD_INFO,
+                        (host_info_t)&load_data, &host_count);
+    if (kr != KERN_SUCCESS)
+        xload_error("cannot get host statistics", "");
+    *loadavg = (double)load_data.avenrun[0]/LOAD_SCALE;
+    return;
+}
+
+#else /* __DARWIN__ */
+
 #ifdef LOADSTUB
 
 void InitLoadPoint()
@@ -592,7 +626,7 @@ void GetLoadPoint(w, closure, call_data)
 }
 #else /* not __bsdi__ */
 
-#if BSD >= 199306
+#if defined(BSD) && (BSD >= 199306)
 
 void InitLoadPoint()
 {
@@ -707,7 +741,7 @@ void GetLoadPoint(w, closure, call_data)
 
 
 #ifndef KERNEL_LOAD_VARIABLE
-#    if (BSD >= 199103)
+#    if defined(BSD) && (BSD >= 199103)
 #        define KERNEL_LOAD_VARIABLE "_averunnable"
 #    endif /* BSD >= 199103 */
 
@@ -849,7 +883,7 @@ InitLoadPoint()
     }
 #else /* sun svr4 5.5 or later */
 
-#if (!defined(SVR4) || !defined(__STDC__)) && !defined(sgi) && !defined(MOTOROLA) && !(BSD >= 199103) && !defined(MINIX) && !defined(__DARWIN__)
+#if (!defined(SVR4) || !defined(__STDC__)) && !defined(sgi) && !defined(MOTOROLA) && !(BSD >= 199103) && !defined(MINIX)
     extern void nlist();
 #endif
 
@@ -1070,6 +1104,7 @@ void GetLoadPoint( w, closure, call_data )
 #endif /* __bsdi__ else */
 #endif /* __osf__ else */
 #endif /* LOADSTUB else */
+#endif /* __DARWIN__ else */
 #endif /* __GNU__ else */
 #endif /* linux else */
 #endif /* AMOEBA else */

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/highpc.c,v 1.3 2000/09/26 15:56:45 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

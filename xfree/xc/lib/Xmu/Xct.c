@@ -1,4 +1,4 @@
-/* $TOG: Xct.c /main/21 1998/02/06 15:46:50 kaleb $ */
+/* $Xorg: Xct.c,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
 
 /* 
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Xct.c,v 1.5 1998/10/03 09:06:38 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Xct.c,v 1.7 2001/01/17 19:42:58 dawes Exp $ */
 
 #include <X11/Xfuncs.h>
 #include "Xct.h"

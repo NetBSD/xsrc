@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.2 2000/11/08 17:58:43 alanh Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.5.2.1 2001/05/28 21:36:44 paulo Exp $
  */
 #define LOADER_PRIVATE
 #include "loader.h"
@@ -34,10 +34,16 @@
 /* XXX beware (or fix it) libc functions called here are the xf86 ones */
 
 #ifdef USE_MODULES
+static void AddModuleOptions(char*, OptionInfoPtr);
 void xf86AddDriver(DriverPtr, void*, int);
 Bool xf86ServerIsOnlyDetecting(void);
+void xf86AddInputDriver(InputDriverPtr, pointer, int);
+void xf86AddModuleInfo(ModuleInfoPtr, void*);
+Bool xf86LoaderCheckSymbol(const char*);
+void xf86LoaderReqSymLists(const char **, ...);
+void xf86Msg(int, const char*, ...);
 
-xf86cfgDriverOptions *video_driver_info;
+xf86cfgModuleOptions *module_options;
 
 int xf86ShowUnresolved = 1;
 
@@ -231,10 +237,49 @@ LOOKUP xfree86LookupTab[] = {
 
     SYMFUNC(xf86AddDriver)
     SYMFUNC(xf86ServerIsOnlyDetecting)
+    SYMFUNC(xf86AddInputDriver)
+    SYMFUNC(xf86AddModuleInfo)
+    SYMFUNC(xf86LoaderCheckSymbol)
+
+    SYMFUNC(xf86LoaderReqSymLists)
+    SYMFUNC(xf86Msg)
+    SYMFUNC(ErrorF)
     {0,0}
 };
 
 static DriverPtr driver;
+static ModuleInfoPtr info;
+static ModuleType type = GenericModule;
+
+static void
+AddModuleOptions(char *name, OptionInfoPtr option)
+{
+    xf86cfgModuleOptions *ptr;
+    OptionInfoPtr tmp;
+
+    ptr = XtNew(xf86cfgModuleOptions);
+    ptr->name = XtNewString(name);
+    ptr->type = type;
+    if (option) {
+	int count;
+
+	for (count = 0, tmp = option; tmp->name != NULL; tmp++, count++)
+	    ;
+	++count;
+	ptr->option = (XtPointer)XtCalloc(1, count * sizeof(OptionInfoRec));
+	for (count = 0, tmp = option; tmp->name != NULL; count++, tmp++) {
+	    memcpy(&ptr->option[count], tmp, sizeof(OptionInfoRec));
+	    ptr->option[count].name = XtNewString(tmp->name);
+	    if (tmp->type == OPTV_STRING || tmp->type == OPTV_ANYSTR)
+		ptr->option[count].value.str = XtNewString(tmp->value.str);
+	}
+    }
+    else
+	ptr->option = NULL;
+
+    ptr->next = module_options;
+    module_options = ptr;
+}
 
 Bool
 LoaderInitializeOptions(void)
@@ -257,7 +302,9 @@ LoaderInitializeOptions(void)
     if (path == NULL || strcmp(XF86Module_path, path)) {
 	char **list, **l;
 	const char *subdirs[] = {
+	    ".",
 	    "drivers",
+	    "input",
 	    NULL
 	};
 	int errmaj, errmin;
@@ -268,61 +315,32 @@ LoaderInitializeOptions(void)
 
 	list = LoaderListDirs(subdirs, NULL);
 	if (list) {
-	    xf86cfgDriverOptions *prev, *ptr = video_driver_info;
-
+#if 0
 	    if (ptr) {
-		while (video_driver_info) {
-		    video_driver_info = video_driver_info->next;
+		while (module_options) {
+		    module_options = module_options->next;
 		    XtFree(ptr->name);
 		    XtFree((XtPointer)ptr->option);
 		    XtFree((XtPointer)ptr);
-		    ptr = video_driver_info;
+		    ptr = module_options;
 		}
 	    }
+#endif
 
 	    for (l = list; *l; l++) {
 		driver = NULL;
+		info = NULL;
+		type = GenericModule;
 		xf86Verbose = 0;
 		if ((module = LoadModule(*l, NULL, NULL, NULL, NULL,
 					 NULL, &errmaj, &errmin)) == NULL)
 		    LoaderErrorMsg(NULL, *l, errmaj, errmin);
-		else if (driver && driver->AvailableOptions) {
-		    OptionInfoPtr tmp,
-				  option = (*driver->AvailableOptions)(-1, -1);
+		else if (driver && driver->AvailableOptions)
+		    AddModuleOptions(*l, (*driver->AvailableOptions)(-1, -1));
+		else if (info && info->AvailableOptions)
+		    AddModuleOptions(*l, (*info->AvailableOptions)(NULL));
 
-		    ptr = XtNew(xf86cfgDriverOptions);
-		    ptr->name = XtNewString(*l);
-		    if (option) {
-			int count;
-
-			for (count = 0, tmp = option; tmp->name != NULL; tmp++, count++)
-			    ;
-			++count;
-			ptr->option = (XtPointer)XtCalloc(1, count *
-						 sizeof(OptionInfoRec));
-			for (count = 0, tmp = option; tmp->name != NULL;
-			    count++, tmp++) {
-			    memcpy(&ptr->option[count], tmp,
-				   sizeof(OptionInfoRec));
-			    ptr->option[count].name =
-				XtNewString(tmp->name);
-			    if (tmp->type == OPTV_STRING ||
-				tmp->type == OPTV_ANYSTR)
-				ptr->option[count].value.str =
-					XtNewString(tmp->value.str);
-			}
-		    }
-		    else
-			ptr->option = NULL;
-		    ptr->next = NULL;
-		    if (video_driver_info == NULL)
-			video_driver_info = ptr;
-		    else
-			prev->next = ptr;
-		    prev = ptr;
-
-		    UnloadModule(module);
-		}
+		UnloadModule(module);
 		xf86Verbose = saveVerbose;
 	    }
 	    LoaderFreeDirList(list);
@@ -342,11 +360,39 @@ void
 xf86AddDriver(DriverPtr drv, void *module, int flags)
 {
     driver = drv;
+    type = VideoModule;
 }
 
 Bool
 xf86ServerIsOnlyDetecting(void)
 {
     return (True);
+}
+
+void
+xf86AddInputDriver(InputDriverPtr inp, void *module, int flags)
+{
+    type = InputModule;
+}
+
+void
+xf86AddModuleInfo(ModuleInfoPtr inf, void *module)
+{
+    info = inf;
+}
+
+Bool
+xf86LoaderCheckSymbol(const char *symbol)
+{
+    return LoaderSymbol(symbol) != NULL;
+}
+
+void
+xf86LoaderReqSymLists(const char **list0, ...)
+{
+}
+
+void xf86Msg(int type, const char *format, ...)
+{
 }
 #endif

@@ -41,7 +41,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: lk201kbd.h /main/3 1998/02/10 13:24:01 kaleb $ */
+/* $Xorg: lk201kbd.h,v 1.3 2000/08/17 19:48:39 cpqbld Exp $ */
 
 #define MIN_LK201_KEY            86
 #define MAX_LK201_KEY           251

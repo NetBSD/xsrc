@@ -1,5 +1,5 @@
-.TH XvPutVideo 3X 
-.\" $XFree86$
+.TH XvPutVideo 3X  __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvPutVideo.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvPutVideo \- write video into a drawable
 .\"

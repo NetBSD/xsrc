@@ -1,4 +1,4 @@
-/* $TOG: flo.c /main/8 1998/02/09 16:11:19 kaleb $ */
+/* $Xorg: flo.c,v 1.3 2000/08/17 19:47:30 cpqbld Exp $ */
 /**** module flo.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/flo.c,v 3.3 1998/10/05 13:22:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/flo.c,v 3.5 2001/01/17 22:12:55 dawes Exp $ */
 
 /*
  *  Include files

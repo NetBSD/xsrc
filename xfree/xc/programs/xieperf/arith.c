@@ -1,4 +1,4 @@
-/* $TOG: arith.c /main/7 1998/02/09 13:59:15 kaleb $ */
+/* $Xorg: arith.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 
 /**** module arith.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/arith.c,v 1.5 2001/01/17 23:45:36 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

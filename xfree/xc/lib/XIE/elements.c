@@ -1,4 +1,4 @@
-/* $TOG: elements.c /main/6 1998/02/06 15:11:48 kaleb $ */
+/* $Xorg: elements.c,v 1.5 2000/08/17 19:45:26 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/elements.c,v 1.4 2001/01/17 19:42:21 dawes Exp $ */
 
 #include "XIElibint.h"
 #include "elements.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: imTransR.c /main/9 1995/12/06 11:23:40 kaleb $ */
+/* $Xorg: imTransR.c,v 1.4 2000/08/17 19:45:16 cpqbld Exp $ */
 /******************************************************************
 
               Copyright 1992 by Sun Microsystems, Inc.
@@ -28,7 +28,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/imTransR.c,v 3.4 2001/01/17 19:41:52 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

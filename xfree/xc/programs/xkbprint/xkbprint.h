@@ -1,7 +1,7 @@
 #ifndef _XKBPRINT_H_
 #define	_XKBPRINT_H_ 1
 
-/* $XConsortium: xkbprint.h /main/2 1996/01/01 10:58:29 kaleb $ */
+/* $Xorg: xkbprint.h,v 1.3 2000/08/17 19:54:50 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

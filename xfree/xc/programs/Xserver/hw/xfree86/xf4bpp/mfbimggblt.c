@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbimggblt.c,v 1.3 1999/06/06 08:48:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbimggblt.c,v 1.6 2001/05/15 10:19:43 eich Exp $ */
 
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
@@ -127,7 +127,6 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 			   in the general case, NOT necessarily
 			   the same as the string's bounding box
 			*/
-
     /* GJA -- I agree, this ALL should be moved to GC validation. */
     if ( (pDrawable->type != DRAWABLE_WINDOW) || (pGC->alu != GXcopy) ||
          !xf86Screens[pDrawable->pScreen->myNum]->vtSema ||
@@ -193,6 +192,7 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
                         colorRrop.alu = oldalu; /* GJA */
        pGC->alu = oldalu;
     }
+
 }
 
 static void
@@ -212,13 +212,13 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
     int widthDst;	/* width of dst in longwords */
 
 			/* these keep track of the character origin */
-    unsigned long *pdstBase;
+    CARD32 *pdstBase;
 			/* points to longword with character origin */
     int xchar;		/* xorigin of char (mod 32) */
 
 			/* these are used for placing the glyph */
     register int xoff;	/* x offset of left edge of glyph (mod 32) */
-    register unsigned long *pdst;
+    register CARD32 *pdst;
 			/* pointer to current longword in dst */
 
     int w;		/* width of glyph in bits */
@@ -239,20 +239,19 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
     yorg = pDrawable->y;
     if (pDrawable->type == DRAWABLE_WINDOW)
     {
-	pdstBase = (unsigned long *)
+	pdstBase = (CARD32 *)
 		(((PixmapPtr)(pDrawable->pScreen->devPrivate))->devPrivate.ptr);
 	widthDst = (int)
 		 (((PixmapPtr)(pDrawable->pScreen->devPrivate))->devKind) >> 2;
     }
     else
     {
-	pdstBase = (unsigned long *)(((PixmapPtr)pDrawable)->devPrivate.ptr);
+	pdstBase = (CARD32 *)(((PixmapPtr)pDrawable)->devPrivate.ptr);
 	widthDst = (int)(((PixmapPtr)pDrawable)->devKind) >> 2;
     }
 
     x += xorg;
     y += yorg;
-
     bbox.x1 = x + infop->overallLeft;
     bbox.x2 = x + infop->overallRight;
     bbox.y1 = y - infop->overallAscent;
@@ -313,6 +312,7 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 	    {
 	        /* glyph all in one longword */
 	        maskpartialbits(xoff, w, startmask);
+
 	        while (h--)
 	        {
 		    getleftbits(pglyph, w, tmpSrc);

@@ -1,4 +1,4 @@
-/* $XConsortium: PclSFonts.h /main/1 1996/09/28 17:02:39 rws $ */
+/* $Xorg: PclSFonts.h,v 1.3 2000/08/17 19:48:08 cpqbld Exp $ */
 #ifndef _PCLFONTS_H
 #define _PCLFONTS_H
 

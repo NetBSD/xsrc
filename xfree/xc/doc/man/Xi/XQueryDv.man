@@ -1,4 +1,7 @@
 .\"
+.\" $XFree86: xc/doc/man/Xi/XQueryDv.man,v 1.2 2001/01/27 18:20:21 dawes Exp $
+.\"
+.\"
 .\" Copyright ([\d,\s]*) by Hewlett-Packard Company, Ardent Computer, 
 .\" 
 .\" Permission to use, copy, modify, distribute, and sell this documentation 
@@ -8,9 +11,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $TOG: XQueryDv.man /main/8 1997/11/04 20:47:07 kaleb $
+.\" $Xorg: XQueryDv.man,v 1.3 2000/08/17 19:41:56 cpqbld Exp $
 .ds xL Programming with Xlib
-.TH XQueryDeviceState 3X11 "Release 6.4" "X Version 11" "X FUNCTIONS"
+.TH XQueryDeviceState 3X11 __xorgversion__ "X FUNCTIONS"
 .SH NAME
 XQueryDeviceState \- query the state of an extension input device.
 .SH SYNTAX

@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/xfsconf.h,v 3.3 1998/04/05 16:15:53 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/xfsconf.h,v 3.4 1999/04/05 07:13:03 dawes Exp $ */
 
 extern char *XtMalloc(
     unsigned int	/* size */

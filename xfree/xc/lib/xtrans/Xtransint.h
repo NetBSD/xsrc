@@ -1,4 +1,4 @@
-/* $TOG: Xtransint.h /main/27 1998/02/06 15:54:39 kaleb $ */
+/* $Xorg: Xtransint.h,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.26 1999/06/20 08:41:21 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.28 2001/01/17 19:43:46 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.44.2.4 2001/02/26 23:08:38 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.54 2001/04/22 16:28:18 herrb Exp $
 XCOMM
 
 #ifndef OSName
@@ -87,26 +87,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
- * Multi-thread safe libs 
- */	
-#if !defined(PpcArchitecture) && (OSMajorVersion == 2 && OSMinorVersion >= 6 || OSMajorVersion >= 3)
-# define HasPosixThreads	YES
-# define ThreadedX		YES
-# define SystemMTDefines	-D_REENTRANT
-# if HasLibPthread
-#  define ThreadsLibraries	-lpthread
-# else
-#  define BuildThreadStubLibrary  YES 
-#  define NeedUIThrStubs          YES 
-#  define ThreadsCompileFlags	-pthread
-#  define ThreadsLibraries     -lc_r
-# endif
-#endif
-
-/* Set this to YES when getpwuid_r is added to libc_r */
-# define HasThreadSafeAPI      NO
-
-/*
  * Compiler Features
  */
 #define GccUsesGas		YES
@@ -130,6 +110,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #undef CcCmd
 #define CcCmd 			gcc
+#ifndef DefaultCCOptions
 #if defined(UseInstalled)
 #define DefaultCCOptions 	/**/
 #else
@@ -139,67 +120,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #    define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
 #  endif
 #endif
+#endif
 
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
-
-#ifdef i386Architecture
-#  ifndef DefaultGcc2i386Opt
-#    if (OSMajorVersion == 2 && OSMinorVersion >= 3) || OSMajorVersion > 2
-       /* The GCC strength-reduce bug is fixed for OpenBSD 2.3 and later */
-#      define DefaultGcc2i386Opt	-O2
-#    endif
-#  endif
-#  define OptimizedCDebugFlags	DefaultGcc2i386Opt
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
-#  define ServerExtraSysLibs	-li386
-#  define LdPostLib		/**/
-#  define ServerExtraDefines GccGasOption XFree86ServerDefines
-#  ifndef XFree86ConsoleDefines
-#   if OSMajorVersion == 2 && OSMinorVersion <= 8
-#    define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
-#   else
-#    define XFree86ConsoleDefines -DWSCONS_SUPPORT
-#   endif
-#  endif
-#endif
-
-#ifdef SparcArchitecture
-#  define OptimizedCDebugFlags	-O2
-#  define ServerOSDefines 	-DDDXOSINIT
-#  define ServerExtraDefines	XFree86ServerDefines
-#endif 
-
-#ifdef AlphaArchitecture
-#  define OptimizedCDebugFlags	-O2
-#  define ServerOSDefines 	-DDDXOSINIT
-#  define ServerExtraDefines	GccGasOption -D_XSERVER64
-#endif
-
-#ifdef ArcArchitecture
-#  define ServerExtraDefines GccGasOption XFree86ServerDefines
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines -DPCCONS_SUPPORT
-#  endif
-#endif
-
-#ifdef PpcArchitecture
-#  define OptimizedCDebugFlags 	-O2
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
-#  define ServerExtraDefines	GccGasOption XFree86ServerDefines
-#  define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
-#  endif
-#endif /* Ppc */
-
-#ifndef ServerOSDefines
-#  define ServerOSDefines 	/**/
-#endif
-
-#ifndef ServerExtraDefines
-#  define ServerExtraDefines GccGasOption
-#endif
 
 #define StandardDefines	-DCSRG_BASED
 #define XawI18nDefines	-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
@@ -241,16 +165,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define NeqnCmd			neqn -Tlatin1
 #define NroffCmd		nroff -Tlatin1
 #define	EqnCmd 			eqn -Tps
-#define TroffCmd        	groff -Tps
-
-/*
- * To use the NetBSD Aperture driver
- */
-#if defined(i386Architecture)
-#ifndef HasNetBSDApertureDriver
-#define HasNetBSDApertureDriver	YES
-#endif
-#endif
+#define HasGroff		YES
+/* Don't build HTML manual pages */
+#define BuildRman		NO
+#define BuildHtmlManPages	NO
 
 #ifndef HasCookieMaker
 #  define HasCookieMaker	YES
@@ -270,11 +188,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define InstallManPageLongBase(file,destdir,dest)			@@\
 all:: file.0								@@\
 									@@\
-file.0:: file.man							@@\
-	@if [ -f file.man ]; \						@@\
+file.0:: file.$(MANNEWSUFFIX)						@@\
+	@if [ -f file.$(MANNEWSUFFIX) ]; \				@@\
 	then \								@@\
-	cat file.man | $(NEQN) | $(TBL) | $(NROFF) $(MANMACROS) \	@@\
-		| $(COL) > file.0; \					@@\
+	cat file.$(MANNEWSUFFIX) | $(NEQN) | $(TBL) | \			@@\
+		$(NROFF) $(MANMACROS) | $(COL) > file.0; \		@@\
 	fi 								@@\
 									@@\
 install.man::                                                           @@\
@@ -290,10 +208,14 @@ clean::									@@\
 #define InstallManPageLong(file,destdir,dest)				@@\
 BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
 									@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
 InstallManPageLongBase(file,destdir,dest)
 
 #define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
 BuildInstallHtmlManPage(file,dest,suffix)				@@\
+									@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
 									@@\
 InstallManPageLongBase(file,destdir,dest)
 
@@ -379,31 +301,24 @@ install:: fonts.alias							@@\
  */
 #ifdef AlphaArchitecture
 
-/*
- * The code for an Alpha XF86_TGA server compiles, but it DOES NOT work
- */
-# define BuildAlphaXF86		NO
+# define OptimizedCDebugFlags	-O2
+# define ServerOSDefines 	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D_XSERVER64 -DXFree86Server
 
-# if BuildAlphaXF86
-#  include <xf86.rules>
-# endif
+# define HasWeakSymbols		NO
 
- /*
-  * For the current ECOFF system
-  */
-# define HasSharedLibraries	NO
-# define UseElfFormat		NO
- /*
-  * For the upcoming ELF system
-  */
-# if 0 /* NOT YET */
-#  define HasSharedLibraries	YES
+# if (OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 9))
 #  define UseElfFormat		YES
 # endif
+# if 1
+#  define HasSharedLibraries	NO
+#  define SharedLibXThrStub	NO
+# else /* NOT YET */
+#  define HasSharedLibraries	YES
+# endif
 
-# define BuildServer		YES
-# define XnestServer		YES
-# define XVirtualFramebufferServer	YES
+
+# define XF86Server		NO
 
 # define BuildDPMSLibrary	NO
 # define BuildDPMSExt		NO
@@ -411,9 +326,7 @@ install:: fonts.alias							@@\
 # define BuildXF86DGALibrary	NO
 # define BuildXF86DGA		NO
 
-# if BuildAlphaXF86
-#  include <xfree86.cf>
-# endif
+# include <xfree86.cf>
 
 #endif /* AlphaArchitecture */
 
@@ -424,10 +337,15 @@ install:: fonts.alias							@@\
 #ifdef i386Architecture
 
 # ifndef DoLoadableServer
-# define DoLoadableServer	YES
+#  define DoLoadableServer	YES
 # endif
 
-/* 2.7 and later will have support for setting MTRRs */
+/* To use the NetBSD Aperture driver */
+# ifndef HasNetBSDApertureDriver
+#  define HasNetBSDApertureDriver	YES
+# endif
+
+/* 2.7 and later have support for setting MTRRs */
 # ifndef HasMTRRSupport
 #  if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion > 6)
 #   define HasMTRRSupport		YES
@@ -436,6 +354,23 @@ install:: fonts.alias							@@\
 #  endif
 # endif
 
+# ifndef DefaultGcc2i386Opt
+#   if (OSMajorVersion == 2 && OSMinorVersion >= 3) || OSMajorVersion > 2
+      /* The GCC strength-reduce bug is fixed for OpenBSD 2.3 and later */
+#     define DefaultGcc2i386Opt	-O2
+#   endif
+# endif
+# define OptimizedCDebugFlags	DefaultGcc2i386Opt
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraSysLibs	-li386
+# define LdPostLib		/**/
+# define ServerExtraDefines GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+#   define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCVT_SUPPORT
+# endif
+
+#define JoystickSupport	NO
+
 /* Support for USB Mices */
 # ifndef UsbMouseSupport
 #  if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 6)
@@ -443,9 +378,8 @@ install:: fonts.alias							@@\
 #  endif
 # endif
 
-/*
- * A hack to work around an optimization problem with gcc 2.95.2
- */
+
+/* A hack to work around an optimization problem with gcc 2.95.2 */
 # if OSMajorVersion == 2 && OSMinorVersion >= 6 
 #  define GccOptBug295
 # endif
@@ -469,6 +403,9 @@ install:: fonts.alias							@@\
  */
 
 # define PositionIndependentCFlags -fpic -fno-function-cse
+# define HasWeakSymbols		NO
+# define BuildGlxExt		NO
+# define BuildGLXLibrary	YES
  
 #endif /* Mc68020Architecture */
 
@@ -483,6 +420,8 @@ install:: fonts.alias							@@\
 #  define BuildServer		NO
 # endif
 
+# define ServerExtraDefines	-DXFree86Server
+
 #endif /* AmigaArchitecture */
 
 
@@ -491,7 +430,6 @@ install:: fonts.alias							@@\
  */
 #ifdef Hp300Architecture
 
-# include <xf86.rules>
 # ifndef BuildServer
 #  define BuildServer		NO
 # endif
@@ -499,6 +437,10 @@ install:: fonts.alias							@@\
 # define CompressAllFonts	NO
 # define InstallFontAliases	InstallFontAliasesNoComment
 # define UseRgbTxt		NO
+
+# define ServerExtraDefines	-DXFree86Server
+
+#include <xfree86.cf>
 
 #endif /* Hp300Architecture */
 
@@ -508,10 +450,14 @@ install:: fonts.alias							@@\
  */
 #ifdef Mac68kArchitecture
 
-# include <xf86.rules>
+
 # ifndef BuildServer
 #  define BuildServer		NO
 # endif
+
+# define ServerExtraDefines	-DXFree86Server
+
+# include <xfree86.cf>
 
 #endif /* mac68kArchitecture */
 
@@ -521,10 +467,13 @@ install:: fonts.alias							@@\
  */
 #ifdef Mvme68kArchitecture
 
-# include <xf86.rules>
 # ifndef BuildServer
 #  define BuildServer		NO
 # endif
+
+# define ServerExtraDefines	-DXFree86Server
+
+# include <xfree86.cf>
 
 #endif /* Mvme68kArchitecture */
 
@@ -541,7 +490,7 @@ install:: fonts.alias							@@\
 # define BootstrapCFlags       -Dsun3
 # define UnalignedReferencesAllowed	YES /* changes _XtCopyArgs() */
 /* Note: -ansi turns off -Dmc68000 */
-# define ServerExtraDefines    GccGasOption -Dmc68000 -Dmc68020
+# define ServerExtraDefines    GccGasOption -Dmc68000 -Dmc68020 -DXFree86Server
 
 # ifndef Xsun24Server
 #  define Xsun24Server		NO
@@ -554,16 +503,6 @@ install:: fonts.alias							@@\
 # endif
 
 #define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT
-
-#if 0
-# ifndef BuildXKB
-#  define BuildXKB        	NO
-# endif
-
-# ifndef BuildXKBlib
-#  define BuildXKBlib     	NO
-# endif
-#endif
 
 # ifndef BuildPexExt
 #  define BuildPexExt 		(XsunServer || Xsun24Server)
@@ -593,6 +532,11 @@ install:: fonts.alias							@@\
  */
 #ifdef ArcArchitecture
 
+#  define ServerExtraDefines GccGasOption XFree86ServerDefines
+#  ifndef XFree86ConsoleDefines
+#    define XFree86ConsoleDefines -DPCCONS_SUPPORT
+#  endif
+
 # include <xfree86.cf>
 
 #endif /* ArcArchitecture */
@@ -619,34 +563,51 @@ install:: fonts.alias							@@\
  */
 #ifdef PpcArchitecture
 
-# define UseElfFormat		YES
+# define OptimizedCDebugFlags 	-O2
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
+# ifndef XFree86ConsoleDefines
+#   define XFree86ConsoleDefines	-DWSCONS_SUPPORT
+# endif
 
-#  if XFree86Devel
+# define UseElfFormat		YES
+# define HasWeakSymbols		NO
+
+# if XFree86Devel
 #   define GccWarningOptions -Wall -Wpointer-arith -Wstrict-prototypes \
 			  -Wmissing-prototypes -Wmissing-declarations \
 			  -Wnested-externs
-#  else
+# else
 #   define GccWarningOptions -Wall -Wpointer-arith
-#  endif
-
-# if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 8)
-#   ifndef DoLoadableServer
-#     define DoLoadableServer	YES
-#   endif
-#   define DevelDrivers cirrus ati
-    /* Support for USB Mices */
-#   define UsbMouseSupport		YES
-#   include <xfree86.cf>
-
-# else /* 2.7 and earlier */
-#  include <xf86.rules>
-#  ifndef BuildServer
-#   define BuildServer		YES
-#  endif
-
-#  define HasSharedLibraries	NO
-#  define BuildDynamicLoading	NO
 # endif
+
+# ifndef XF86Server
+#   define XF86Server		NO
+# endif
+
+/* Definitions for building the XFree86 server */
+# if XF86Server
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
+#   define ServerExtraDefines	GccGasOption XFree86ServerDefines
+#   if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 8)
+#     ifndef DoLoadableServer
+#       define DoLoadableServer	YES
+#     endif
+#     define DevelDrivers cirrus ati
+      /* Support for USB Mices */
+#     define UsbMouseSupport		YES
+#     include <xfree86.cf>
+
+#   else /* 2.7 and earlier */
+#     include <xf86.rules>
+#     ifndef BuildServer
+#       define BuildServer		NO
+#     endif
+
+#     define HasSharedLibraries	NO
+#     define BuildDynamicLoading	NO
+#   endif
+# endif /* XF86Server */
+
 #endif /* PpcArchitecture */
 
 /*
@@ -654,20 +615,28 @@ install:: fonts.alias							@@\
  */
 #ifdef SparcArchitecture
 
+# define OptimizedCDebugFlags	-O2
+# define ServerOSDefines 	-DDDXOSINIT
+# define ServerExtraDefines	-DAVOID_GLYPHBLT -DPIXPRIV  -DXFree86Server \
+				ServerSnprintfDefines DebugDefines \
+				-DX_BYTE_ORDER=ByteOrder
+# define BuildXF86MiscExt	NO
+# define BuildMITMiscExt	NO
+
 # ifndef Xsun24Server
-# define Xsun24Server		NO
+#  define Xsun24Server		YES
 # endif
 # ifndef XsunServer
-# define XsunServer		YES
+#  define XsunServer		YES
 # endif
 # ifndef XsunMonoServer
-# define XsunMonoServer		NO
+#  define XsunMonoServer	YES
 # endif
 
-#define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 
 # ifndef BuildPexExt
-#  define BuildPexExt 	(XsunServer || Xsun24Server)
+#  define BuildPexExt		(XsunServer || Xsun24Server)
 # endif
 
 # define BuildXF86VidModeExt	NO
@@ -677,7 +646,6 @@ install:: fonts.alias							@@\
 
 #endif /* SparcArchitecture */
 
-
 /* End or architecture specific section */
 
 /*
@@ -685,8 +653,51 @@ install:: fonts.alias							@@\
  * which can be overridden by architecture specific sections above
  */
 
+#ifndef ServerOSDefines
+#  define ServerOSDefines 	/**/
+#endif
+
+#ifndef ServerExtraDefines
+#  define ServerExtraDefines GccGasOption
+#endif
+
+#ifndef BuildCyrillicFonts
+# define BuildCyrillicFonts	YES
+#endif
+#ifndef BuildLatin2Fonts
+# define BuildLatin2Fonts	YES
+#endif
+#ifndef UseKoi8RForCyrillic
+# define UseKoi8RForCyrillic	YES
+#endif
+
+#ifndef HasWeakSymbols
+# define HasWeakSymbols YES
+#endif
+
+/*
+ * Multi-thread safe libs 
+ */	
+#if HasWeakSymbols == YES && (OSMajorVersion == 2 && OSMinorVersion >= 6 || OSMajorVersion >= 3)
+# define HasPosixThreads	YES
+# define ThreadedX		YES
+# define SystemMTDefines	-D_REENTRANT
+# if HasLibPthread
+#  define ThreadsLibraries	-lpthread
+# else
+#  define BuildThreadStubLibrary  YES 
+#  define NeedUIThrStubs          YES 
+#  define ThreadsCompileFlags	-pthread
+#  define ThreadsLibraries	-pthread
+# endif
+#endif
+
+/* Set this to YES when getpwuid_r is added to libc_r */
+#define HasThreadSafeAPI	NO
+
+
 #ifndef DoLoadableServer
-#define DoLoadableServer		NO
+#define DoLoadableServer	NO
 #endif
 
 #ifndef XVirtualFramebufferServer
@@ -734,6 +745,10 @@ install:: fonts.alias							@@\
 #  define OSBinaryType			/**/
 # endif
 #endif
+
+#  if !defined(GccWarningOptions)
+#    define GccWarningOptions 		-Wall -Wpointer-arith
+#  endif
 
 /* This must come last */
 #if OSMajorVersion == 2 && OSMinorVersion >= 8 || OSMajorVersion > 2

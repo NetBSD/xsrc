@@ -1,4 +1,4 @@
-/* $TOG: privates.c /main/6 1998/02/09 14:20:16 kaleb $ */
+/* $Xorg: privates.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/dix/privates.c,v 3.5 1998/10/04 09:38:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/privates.c,v 3.7 2001/01/17 22:36:44 dawes Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"

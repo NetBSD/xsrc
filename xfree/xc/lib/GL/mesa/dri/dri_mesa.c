@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.12 2000/11/13 23:31:23 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.16 2001/04/10 16:07:49 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -32,6 +32,27 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Brian E. Paul <brian@precisioninsight.com>
  */
 
+/*
+ * This file gets compiled into each of the DRI 3D drivers.  The
+ * functions defined here are called from the GL library via
+ * function pointers in the __DRIdisplayRec, __DRIscreenRec,
+ * __DRIcontextRec, __DRIdrawableRec structures defined in glxclient.h
+ *
+ * Those function pointers are initialized by code in this file.
+ * The process starts when libGL calls the __driCreateScreen() function
+ * at the end of this file.
+ *
+ * The above-mentioned DRI structures have no dependencies on Mesa.
+ * Each structure instead has a generic (void *) private pointer that
+ * points to a private structure.  For Mesa drivers, these private
+ * structures are the __DRIdrawablePrivateRec, __DRIcontextPrivateRec,
+ * __DRIscreenPrivateRec, and __DRIvisualPrivateRec structures defined
+ * in dri_mesaint.h.  We allocate and attach those structs here in
+ * this file.
+ */
+
+
+
 #ifdef GLX_DIRECT_RENDERING
 
 #include <unistd.h>
@@ -58,19 +79,19 @@ static Bool driMesaUnbindContext(Display *dpy, int scrn,
 static void *driMesaCreateDrawable(Display *dpy, int scrn, GLXDrawable draw,
 				   VisualID vid, __DRIdrawable *pdraw);
 static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
-					 void *private);
-static void driMesaSwapBuffers(Display *dpy, void *private);
-static void driMesaDestroyDrawable(Display *dpy, void *private);
+					 void *screenPrivate);
+static void driMesaSwapBuffers(Display *dpy, void *drawPrivate);
+static void driMesaDestroyDrawable(Display *dpy, void *drawPrivate);
 
 /* Context methods */
 static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
 				  __DRIcontext *pctx);
-static void driMesaDestroyContext(Display *dpy, int scrn, void *private);
+static void driMesaDestroyContext(Display *dpy, int scrn, void *screenPrivate);
 
 /* Screen methods */
 static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 				 int numConfigs, __GLXvisualConfig *config);
-static void driMesaDestroyScreen(Display *dpy, int scrn, void *private);
+static void driMesaDestroyScreen(Display *dpy, int scrn, void *screenPrivate);
 
 static Bool driFeatureOn(const char *name)
 {
@@ -184,10 +205,15 @@ static void __driMesaGarbageCollectDrawables(void *drawHash)
 
 /*****************************************************************/
 
+/*
+ * XXX get rid of this level of indirection?
+ * Since the code in this file is compiled into each DRI 3D driver
+ * this layer of indirection serves no purpose.
+ */
 static void driMesaInitAPI(__MesaAPI *MesaAPI)
 {
-    MesaAPI->InitDriver = XMesaInitDriver;
-    MesaAPI->ResetDriver = XMesaResetDriver;
+    MesaAPI->InitDriver = XMesaInitDriver;  /* XXX rename as CreateScreen? */
+    MesaAPI->ResetDriver = XMesaResetDriver; /* rename as DestroyScreen? */
     MesaAPI->CreateVisual = XMesaCreateVisual;
     MesaAPI->CreateContext = XMesaCreateContext;
     MesaAPI->DestroyContext = XMesaDestroyContext;
@@ -283,9 +309,15 @@ static Bool driMesaUnbindContext(Display *dpy, int scrn,
 #endif
     }
 
+    /* XXX this is disabled so that if we call SwapBuffers on an unbound
+     * window we can determine the last context bound to the window and
+     * use that context's lock. (BrianP, 2-Dec-2000)
+     */
+#if 0
     /* Unbind the drawable */
     pcp->driDrawablePriv = NULL;
     pdp->driContextPriv = &psp->dummyContextPriv;
+#endif
 
     return GL_TRUE;
 }
@@ -427,7 +459,7 @@ static Bool driMesaBindContext(Display *dpy, int scrn,
 	if (try) {
 	    if (psp->fullscreen && !psp->pSAREA->frame.fullscreen) {
 				/* Server has closed fullscreen mode */
-		__driMesaMessage("server closed fullscreen mode\n");
+		__driMesaMessage("server closed fullscreen mode");
 		psp->fullscreen = NULL;
 	    }
 	    if (XF86DRIOpenFullScreen(dpy, scrn, draw)) {
@@ -444,10 +476,11 @@ static Bool driMesaBindContext(Display *dpy, int scrn,
 
 /*
  * This function basically updates the __DRIdrawablePrivate struct's
- * cliprect information by calling XF86DRIGetDrawableInfo().
- * This is usually called by a macro which compares the
- * __DRIdrwablePrivate pStamp and lastStamp values.  If the values
- * are different that means we have to update the clipping info.
+ * cliprect information by calling XF86DRIGetDrawableInfo().  This is
+ * usually called by the DRI_MESA_VALIDATE_DRAWABLE_INFO macro which
+ * compares the __DRIdrwablePrivate pStamp and lastStamp values.  If
+ * the values are different that means we have to update the clipping
+ * info.
  */
 void driMesaUpdateDrawableInfo(Display *dpy, int scrn,
 			       __DRIdrawablePrivate *pdp)
@@ -571,9 +604,9 @@ static void *driMesaCreateDrawable(Display *dpy, int scrn, GLXDrawable draw,
 }
 
 static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
-					 void *private)
+					 void *screenPrivate)
 {
-    __DRIscreenPrivate *psp = (__DRIscreenPrivate *)private;
+    __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
 
     /*
     ** Make sure this routine returns NULL if the drawable is not bound
@@ -582,17 +615,22 @@ static __DRIdrawable *driMesaGetDrawable(Display *dpy, GLXDrawable draw,
     return __driMesaFindDrawable(psp->drawHash, draw);
 }
 
-static void driMesaSwapBuffers(Display *dpy, void *private)
+/*
+ * XXX if we get rid of the XMesa function table then we should probably
+ * get rid of this function and require each driver to implement a
+ * driMesaSwapBuffers function.
+ */
+static void driMesaSwapBuffers(Display *dpy, void *drawPrivate)
 {
-    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)private;
+    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *) drawPrivate;
     __DRIscreenPrivate *psp = pdp->driScreenPriv;
 
     (*psp->MesaAPI.SwapBuffers)(pdp);
 }
 
-static void driMesaDestroyDrawable(Display *dpy, void *private)
+static void driMesaDestroyDrawable(Display *dpy, void *drawPrivate)
 {
-    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)private;
+    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)drawPrivate;
     __DRIscreenPrivate *psp = pdp->driScreenPriv;
     int scrn = psp->myNum;
 
@@ -625,18 +663,6 @@ static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
 	return NULL;
     }
 
-    if (!psp->dummyContextPriv.driScreenPriv) {
-	if (!XF86DRICreateContext(dpy, vis->screen, vis->visual,
-				  &psp->dummyContextPriv.contextID,
-				  &psp->dummyContextPriv.hHWContext)) {
-	    return NULL;
-	}
-	psp->dummyContextPriv.driScreenPriv = psp;
-	psp->dummyContextPriv.mesaContext = NULL;
-	psp->dummyContextPriv.driDrawablePriv = NULL;
-	/* No other fields should be used! */
-    }
-
     /* Create the hash table */
     if (!psp->drawHash) psp->drawHash = drmHashCreate();
 
@@ -656,6 +682,29 @@ static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
 	return NULL;
     }
 
+    /* This is moved because the Xserver creates a global dummy context
+     * the first time XF86DRICreateContext is called.
+     */
+
+    if (!psp->dummyContextPriv.driScreenPriv) {
+#if 0
+	/* We no longer use this cause we have the shared dummyContext
+	 * in the SAREA.
+	 */
+	if (!XF86DRICreateContext(dpy, vis->screen, vis->visual,
+				  &psp->dummyContextPriv.contextID,
+				  &psp->dummyContextPriv.hHWContext)) {
+	    return NULL;
+	}
+#endif
+        psp->dummyContextPriv.hHWContext = psp->pSAREA->dummy_context;
+	psp->dummyContextPriv.driScreenPriv = psp;
+	psp->dummyContextPriv.mesaContext = NULL;
+	psp->dummyContextPriv.driDrawablePriv = NULL;
+        psp->dummyContextPriv.driverPrivate = NULL;
+	/* No other fields should be used! */
+    }
+
     for (i = 0; i < psp->numVisuals; i++) {
         if (psp->visuals[i].vid == vis->visualid) {
             GLvisual *mesaVis = psp->visuals[i].mesaVisual;
@@ -672,6 +721,7 @@ static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
                 else {
                     gl_destroy_context(pcp->mesaContext);
                     pcp->mesaContext = NULL;
+                    pcp->driverPrivate = NULL;
                 }
             }
         }
@@ -692,9 +742,9 @@ static void *driMesaCreateContext(Display *dpy, XVisualInfo *vis, void *shared,
     return pcp;
 }
 
-static void driMesaDestroyContext(Display *dpy, int scrn, void *private)
+static void driMesaDestroyContext(Display *dpy, int scrn, void *contextPrivate)
 {
-    __DRIcontextPrivate  *pcp   = (__DRIcontextPrivate *)private;
+    __DRIcontextPrivate  *pcp   = (__DRIcontextPrivate *) contextPrivate;
     __DRIscreenPrivate   *psp;
     __DRIdrawablePrivate *pdp;
 
@@ -708,9 +758,9 @@ static void driMesaDestroyContext(Display *dpy, int scrn, void *private)
  	    }
 	}
 	__driMesaGarbageCollectDrawables(pcp->driScreenPriv->drawHash);
-	(void)XF86DRIDestroyContext(dpy, scrn, pcp->contextID);
 	(*pcp->driScreenPriv->MesaAPI.DestroyContext)(pcp);
         gl_destroy_context(pcp->mesaContext);
+	(void)XF86DRIDestroyContext(dpy, scrn, pcp->contextID);
 	Xfree(pcp);
     }
 }
@@ -757,6 +807,8 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
     psp->fd = drmOpen(NULL,BusID);
     if (psp->fd < 0) {
+        fprintf(stderr, "libGL error: failed to open DRM: %s\n", strerror(-psp->fd));
+        fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
 	Xfree(BusID);
 	Xfree(psp);
 	(void)XF86DRICloseConnection(dpy, scrn);
@@ -793,6 +845,11 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	return NULL;
     }
 
+    /*
+     * Get device name (like "tdfx") and the ddx version numbers.
+     * We'll check the version in each DRI driver's "createScreen"
+     * function.
+     */
     if (!XF86DRIGetClientDriverName(dpy, scrn,
 				    &psp->ddxMajor,
 				    &psp->ddxMinor,
@@ -804,8 +861,17 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	return NULL;
     }
 
+    /*
+     * XXX this XMesa indirection may go away.
+     */
     driMesaInitAPI(&psp->MesaAPI);
 
+    /*
+     * Get device-specific info.  pDevPriv will point to a struct
+     * (such as DRIRADEONRec in xfree86/driver/ati/radeon_dri.h)
+     * that has information about the screen size, depth, pitch,
+     * ancilliary buffers, DRM mmap handles, etc.
+     */
     if (!XF86DRIGetDeviceInfo(dpy, scrn,
 			      &hFB,
 			      &psp->fbOrigin,
@@ -822,6 +888,9 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
     psp->fbHeight = DisplayHeight(dpy, scrn);
     psp->fbBPP = 32; /* NOT_DONE: Get this from X server */
 
+    /*
+     * Map the framebuffer region.
+     */
     if (drmMap(psp->fd, hFB, psp->fbSize, (drmAddressPtr)&psp->pFB)) {
 	Xfree(psp->pDevPriv);
 	(void)drmClose(psp->fd);
@@ -830,6 +899,10 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	return NULL;
     }
 
+    /*
+     * Map the SAREA region.  Further mmap regions may be setup in
+     * each DRI driver's "createScreen" function.
+     */
     if (drmMap(psp->fd, hSAREA, SAREA_MAX, (drmAddressPtr)&psp->pSAREA)) {
 	(void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	Xfree(psp->pDevPriv);
@@ -839,6 +912,9 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	return NULL;
     }
 
+    /*
+     * Allocate space for an array of visual records and initialize them.
+     */
     psp->numVisuals = numConfigs;
     psp->visuals = (__DRIvisualPrivate *)Xmalloc(numConfigs *
 						 sizeof(__DRIvisualPrivate));
@@ -922,15 +998,21 @@ static void *driMesaCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
     return (void *)psp;
 }
 
-static void driMesaDestroyScreen(Display *dpy, int scrn, void *private)
+static void driMesaDestroyScreen(Display *dpy, int scrn, void *screenPrivate)
 {
-    __DRIscreenPrivate *psp = (__DRIscreenPrivate *)private;
+    __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
 
     if (psp) {
+#if 0
+	/*
+	** NOT_DONE: For the same reason as that listed below, we cannot
+	** call the X server here to destroy the dummy context.
+	*/
 	if (psp->dummyContextPriv.driScreenPriv) {
 	    (void)XF86DRIDestroyContext(dpy, scrn,
 					psp->dummyContextPriv.contextID);
 	}
+#endif
 	if (psp->MesaAPI.ResetDriver)
 	    (*psp->MesaAPI.ResetDriver)(psp);
 	while (--psp->numVisuals >= 0) {
@@ -959,13 +1041,14 @@ static void driMesaDestroyScreen(Display *dpy, int scrn, void *private)
 
 
 /*
- * This is the entrypoint into the driver.
- * The driCreateScreen name is the symbol that libGL.so fetches.
+ * This is the entrypoint into the DRI 3D driver.
+ * The driCreateScreen name is the symbol that libGL.so fetches via
+ * dlsym() in order to bootstrap the driver.
  */
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
-   return driMesaCreateScreen(dpy, scrn, psc, numConfigs, config);
+    return driMesaCreateScreen(dpy, scrn, psc, numConfigs, config);
 }
 
 

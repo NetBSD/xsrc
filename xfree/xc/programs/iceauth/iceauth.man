@@ -1,4 +1,4 @@
-.\" $TOG: iceauth.man /main/8 1998/02/09 13:44:11 kaleb $
+.\" $Xorg: iceauth.man,v 1.3 2000/08/17 19:53:53 cpqbld Exp $
 
 .\" Copyright 1994, 1998  The Open Group
 .\" 
@@ -19,7 +19,10 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" The Open Group.
-.TH ICEAUTH 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/iceauth/iceauth.man,v 3.6 2001/01/27 18:21:03 dawes Exp $
+.\"
+.TH ICEAUTH 1 __xorgversion__
 .SH NAME
 iceauth \- ICE authority file utility
 .SH SYNOPSIS

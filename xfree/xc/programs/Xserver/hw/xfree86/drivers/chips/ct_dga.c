@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.2 2000/12/06 15:35:12 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

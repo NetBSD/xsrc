@@ -1,4 +1,4 @@
-/* $TOG: Functions.c /main/14 1998/02/06 13:21:55 kaleb $ */
+/* $Xorg: Functions.c,v 1.3 2000/08/17 19:46:11 cpqbld Exp $ */
 
 /*
 

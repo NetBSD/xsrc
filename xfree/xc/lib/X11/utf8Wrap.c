@@ -68,7 +68,7 @@ from The Open Group.
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
  * OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/utf8Wrap.c,v 1.1 2000/11/28 18:49:58 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

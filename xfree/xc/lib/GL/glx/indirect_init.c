@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.4 2000/02/15 19:19:19 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.6 2001/03/21 16:04:39 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -140,6 +140,7 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->DrawBuffer = __indirect_glDrawBuffer;
     glAPI->DrawElements = __indirect_glDrawElements;
     glAPI->DrawPixels = __indirect_glDrawPixels;
+    glAPI->DrawRangeElements = __indirect_glDrawRangeElements;
     glAPI->EdgeFlag = __indirect_glEdgeFlag;
     glAPI->EdgeFlagPointer = __indirect_glEdgeFlagPointer;
     glAPI->EdgeFlagv = __indirect_glEdgeFlagv;
@@ -407,6 +408,84 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Vertex4sv = __indirect_glVertex4sv;
     glAPI->VertexPointer = __indirect_glVertexPointer;
     glAPI->Viewport = __indirect_glViewport;
+
+    /* 1.2 */
+    glAPI->CopyTexSubImage3D = __indirect_glCopyTexSubImage3D;
+    glAPI->DrawRangeElements = __indirect_glDrawRangeElements;
+    glAPI->TexImage3D = __indirect_glTexImage3D;
+    glAPI->TexSubImage3D = __indirect_glTexSubImage3D;
+
+    /* OpenGL 1.2  GL_ARB_imaging */
+    glAPI->BlendColor = __indirect_glBlendColor;
+    glAPI->BlendEquation = __indirect_glBlendEquation;
+    glAPI->ColorSubTable = __indirect_glColorSubTable;
+    glAPI->ColorTable = __indirect_glColorTable;
+    glAPI->ColorTableParameterfv = __indirect_glColorTableParameterfv;
+    glAPI->ColorTableParameteriv = __indirect_glColorTableParameteriv;
+    glAPI->ConvolutionFilter1D = __indirect_glConvolutionFilter1D;
+    glAPI->ConvolutionFilter2D = __indirect_glConvolutionFilter2D;
+    glAPI->ConvolutionParameterf = __indirect_glConvolutionParameterf;
+    glAPI->ConvolutionParameterfv = __indirect_glConvolutionParameterfv;
+    glAPI->ConvolutionParameteri = __indirect_glConvolutionParameteri;
+    glAPI->ConvolutionParameteriv = __indirect_glConvolutionParameteriv;
+    glAPI->CopyColorSubTable = __indirect_glCopyColorSubTable;
+    glAPI->CopyColorTable = __indirect_glCopyColorTable;
+    glAPI->CopyConvolutionFilter1D = __indirect_glCopyConvolutionFilter1D;
+    glAPI->CopyConvolutionFilter2D = __indirect_glCopyConvolutionFilter2D;
+    glAPI->GetColorTable = __indirect_glGetColorTable;
+    glAPI->GetColorTableParameterfv = __indirect_glGetColorTableParameterfv;
+    glAPI->GetColorTableParameteriv = __indirect_glGetColorTableParameteriv;
+    glAPI->GetConvolutionFilter = __indirect_glGetConvolutionFilter;
+    glAPI->GetConvolutionParameterfv = __indirect_glGetConvolutionParameterfv;
+    glAPI->GetConvolutionParameteriv = __indirect_glGetConvolutionParameteriv;
+    glAPI->GetHistogram = __indirect_glGetHistogram;
+    glAPI->GetHistogramParameterfv = __indirect_glGetHistogramParameterfv;
+    glAPI->GetHistogramParameteriv = __indirect_glGetHistogramParameteriv;
+    glAPI->GetMinmax = __indirect_glGetMinmax;
+    glAPI->GetMinmaxParameterfv = __indirect_glGetMinmaxParameterfv;
+    glAPI->GetMinmaxParameteriv = __indirect_glGetMinmaxParameteriv;
+    glAPI->GetSeparableFilter = __indirect_glGetSeparableFilter;
+    glAPI->Histogram = __indirect_glHistogram;
+    glAPI->Minmax = __indirect_glMinmax;
+    glAPI->ResetHistogram = __indirect_glResetHistogram;
+    glAPI->ResetMinmax = __indirect_glResetMinmax;
+    glAPI->SeparableFilter2D = __indirect_glSeparableFilter2D;
+
+    /* ARB 1. GL_ARB_multitexture */
+    glAPI->ActiveTextureARB = __indirect_glActiveTextureARB;
+    glAPI->ClientActiveTextureARB = __indirect_glClientActiveTextureARB;
+    glAPI->MultiTexCoord1dARB = __indirect_glMultiTexCoord1dARB;
+    glAPI->MultiTexCoord1dvARB = __indirect_glMultiTexCoord1dvARB;
+    glAPI->MultiTexCoord1fARB = __indirect_glMultiTexCoord1fARB;
+    glAPI->MultiTexCoord1fvARB = __indirect_glMultiTexCoord1fvARB;
+    glAPI->MultiTexCoord1iARB = __indirect_glMultiTexCoord1iARB;
+    glAPI->MultiTexCoord1ivARB = __indirect_glMultiTexCoord1ivARB;
+    glAPI->MultiTexCoord1sARB = __indirect_glMultiTexCoord1sARB;
+    glAPI->MultiTexCoord1svARB = __indirect_glMultiTexCoord1svARB;
+    glAPI->MultiTexCoord2dARB = __indirect_glMultiTexCoord2dARB;
+    glAPI->MultiTexCoord2dvARB = __indirect_glMultiTexCoord2dvARB;
+    glAPI->MultiTexCoord2fARB = __indirect_glMultiTexCoord2fARB;
+    glAPI->MultiTexCoord2fvARB = __indirect_glMultiTexCoord2fvARB;
+    glAPI->MultiTexCoord2iARB = __indirect_glMultiTexCoord2iARB;
+    glAPI->MultiTexCoord2ivARB = __indirect_glMultiTexCoord2ivARB;
+    glAPI->MultiTexCoord2sARB = __indirect_glMultiTexCoord2sARB;
+    glAPI->MultiTexCoord2svARB = __indirect_glMultiTexCoord2svARB;
+    glAPI->MultiTexCoord3dARB = __indirect_glMultiTexCoord3dARB;
+    glAPI->MultiTexCoord3dvARB = __indirect_glMultiTexCoord3dvARB;
+    glAPI->MultiTexCoord3fARB = __indirect_glMultiTexCoord3fARB;
+    glAPI->MultiTexCoord3fvARB = __indirect_glMultiTexCoord3fvARB;
+    glAPI->MultiTexCoord3iARB = __indirect_glMultiTexCoord3iARB;
+    glAPI->MultiTexCoord3ivARB = __indirect_glMultiTexCoord3ivARB;
+    glAPI->MultiTexCoord3sARB = __indirect_glMultiTexCoord3sARB;
+    glAPI->MultiTexCoord3svARB = __indirect_glMultiTexCoord3svARB;
+    glAPI->MultiTexCoord4dARB = __indirect_glMultiTexCoord4dARB;
+    glAPI->MultiTexCoord4dvARB = __indirect_glMultiTexCoord4dvARB;
+    glAPI->MultiTexCoord4fARB = __indirect_glMultiTexCoord4fARB;
+    glAPI->MultiTexCoord4fvARB = __indirect_glMultiTexCoord4fvARB;
+    glAPI->MultiTexCoord4iARB = __indirect_glMultiTexCoord4iARB;
+    glAPI->MultiTexCoord4ivARB = __indirect_glMultiTexCoord4ivARB;
+    glAPI->MultiTexCoord4sARB = __indirect_glMultiTexCoord4sARB;
+    glAPI->MultiTexCoord4svARB = __indirect_glMultiTexCoord4svARB;
 
     return glAPI;
 }

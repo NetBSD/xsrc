@@ -1,4 +1,4 @@
-/* $XConsortium: Events.c /main/6 1996/12/02 10:21:07 lehors $ */
+/* $Xorg: Events.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

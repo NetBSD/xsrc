@@ -1,4 +1,4 @@
-/* $TOG: osdep.h /main/10 1998/02/11 09:54:28 kaleb $ */
+/* $Xorg: osdep.h,v 1.3 2000/08/17 19:53:59 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.6 1998/10/04 09:40:29 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.8 2001/01/17 23:44:59 dawes Exp $ */
 
 #define BOTIMEOUT 200 /* in milliseconds */
 #define BUFSIZE 4096

@@ -8,4 +8,4 @@ EXPORTS
  XDestroyAssocTable
  XLookUpAssoc
  XMakeAssoc
-/* $XConsortium: oldX-def.cpp /main/2 1996/05/07 13:15:41 kaleb $ */
+/* $Xorg: oldX-def.cpp,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */

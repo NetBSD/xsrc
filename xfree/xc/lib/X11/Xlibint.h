@@ -1,4 +1,4 @@
-/* $TOG: Xlibint.h /main/117 1998/06/17 08:44:01 barstow $ */
+/* $Xorg: Xlibint.h,v 1.4 2000/08/17 19:45:07 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.14 2000/01/29 18:58:13 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.16 2001/01/17 19:41:50 dawes Exp $ */
 
 #ifndef _XLIBINT_H_
 #define _XLIBINT_H_ 1
@@ -561,6 +561,18 @@ extern int errno;			/* Internal system error number. */
     Data32(dpy, (long *)&_BRdat, 4); \
     }
 #else
+#ifdef LONG64
+#define MakeBigReq(req,n) \
+    { \
+    CARD64 _BRdat; \
+    CARD32 _BRlen = req->length - 1; \
+    req->length = 0; \
+    _BRdat = ((CARD32 *)req)[_BRlen]; \
+    memmove(((char *)req) + 8, ((char *)req) + 4, _BRlen << 2); \
+    ((CARD32 *)req)[1] = _BRlen + n + 2; \
+    Data32(dpy, &_BRdat, 4); \
+    }
+#else
 #define MakeBigReq(req,n) \
     { \
     CARD32 _BRdat; \
@@ -571,6 +583,7 @@ extern int errno;			/* Internal system error number. */
     ((CARD32 *)req)[1] = _BRlen + n + 2; \
     Data32(dpy, &_BRdat, 4); \
     }
+#endif
 #endif
 
 #define SetReqLen(req,n,badlen) \

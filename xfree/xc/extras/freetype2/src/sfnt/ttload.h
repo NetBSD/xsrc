@@ -17,17 +17,16 @@
 /***************************************************************************/
 
 
-#ifndef TTLOAD_H
-#define TTLOAD_H
+#ifndef __TTLOAD_H__
+#define __TTLOAD_H__
 
 
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/tttypes.h>
+#include <ft2build.h>
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_TRUETYPE_TYPES_H
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   FT_LOCAL
@@ -129,12 +128,9 @@
 #endif /* TT_CONFIG_OPTION_EMBEDDED_BITMAPS */
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* TTLOAD_H */
+#endif /* __TTLOAD_H__ */
 
 
 /* END */

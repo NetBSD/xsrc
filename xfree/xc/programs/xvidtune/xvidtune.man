@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/xvidtune/xvidtune.man,v 3.11 1996/01/17 12:55:03 dawes Exp $
+.\" $XFree86: xc/programs/xvidtune/xvidtune.man,v 3.13 2001/01/27 18:21:25 dawes Exp $
 .\"
 .\" Copyright (c) 1995  Kaleb S. KEITHLEY
 .\"
@@ -26,7 +26,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from Kaleb S. KEITHLEY.
 .\"
-.TH xvidtune 1 "Release 6.1" "X Version 11"
+.TH xvidtune 1 __vendorversion__
 .SH NAME
 xvidtune \- video mode tuner for XFree86
 .SH SYNOPSIS

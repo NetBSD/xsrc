@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx.c,v 1.8 2000/05/23 04:47:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx.c,v 1.10 2001/02/16 13:24:06 eich Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -580,13 +580,16 @@ extern void __MESA_resetExtension(void)
 
     for (i = 0; i < screenInfo.numScreens; i++) {
 	for (j = 0; j < MESAScreens[i].num_vis; j++) {
-	    if (MESAScreens[i].xm_vis[j])
+	  if (MESAScreens[i].xm_vis[j]) {
 	        XMesaDestroyVisual(MESAScreens[i].xm_vis[j]);
+		MESAScreens[i].xm_vis[j] = NULL;
+	  }
 	}
 	__glXFree(MESAScreens[i].glx_vis);
 	MESAScreens[i].glx_vis = NULL;
 	MESAScreens[i].num_vis = 0;
     }
+    __glDDXScreenInfo.pGlxVisual = NULL;
     MESA_CC = NULL;
 }
 

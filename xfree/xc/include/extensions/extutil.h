@@ -1,5 +1,5 @@
 /*
- * $TOG: extutil.h /main/16 1998/02/09 11:22:04 kaleb $
+ * $Xorg: extutil.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -27,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * protocol extensions.  THESE INTERFACES ARE NOT PART OF THE X STANDARD AND
  * ARE SUBJECT TO CHANGE!
  */
-/* $XFree86: xc/include/extensions/extutil.h,v 1.3 2000/08/26 00:33:41 keithp Exp $ */
+/* $XFree86: xc/include/extensions/extutil.h,v 1.5 2001/01/17 17:53:20 dawes Exp $ */
 
 #ifndef _EXTUTIL_H_
 #define _EXTUTIL_H_

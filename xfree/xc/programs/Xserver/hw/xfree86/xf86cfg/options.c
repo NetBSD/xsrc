@@ -26,11 +26,12 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/options.c,v 1.2 2000/05/18 16:29:59 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/options.c,v 1.6.2.2 2001/05/25 21:45:01 paulo Exp $
  */
 
 #include "options.h"
 #include "xf86config.h"
+#include <X11/Xresource.h>
 #include <X11/Shell.h>
 #include <X11/Xaw/AsciiText.h>
 #include <X11/Xaw/List.h>
@@ -52,6 +53,9 @@ static void UpdateOption(Widget, XtPointer, XtPointer);
 static void UpdateOptionList(void);
 #ifdef USE_MODULES
 static void AddDriverOption(Widget, XtPointer, XtPointer);
+static void SelectModuleCallback(Widget, XtPointer, XtPointer);
+static void SelectModuleOptionCallback(Widget, XtPointer, XtPointer);
+static void ModuleOptionsPopdown(Widget, XtPointer, XtPointer);
 #endif
 
 /*
@@ -62,10 +66,153 @@ static XF86OptionPtr *options;
 static Widget add, remov, update, list, name, value;
 static char *option_str;
 static int option_index, popped = False;
+static char *Options = "lib/X11/Options";
+static XrmDatabase xrm;
+#ifdef USE_MODULES
+static Widget modList, optList, desc, modOptionsShell, labelType;
+static char *module_sel;
+static char *types[] = {
+    "none", "integer", "(non null) string", "string", "real",
+    "boolean", "frequency",
+};
+#endif
 
 /*
  * Implementation
  */
+#ifdef USE_MODULES
+static int
+qcmp_str(_Xconst void *a, _Xconst void *b)
+{
+    return (strcmp(*(char**)a, *(char**)b));
+}
+
+void
+ModuleOptionsPopup(Widget w, XtPointer user_data, XtPointer call_data)
+{
+    xf86cfgModuleOptions *info = module_options;
+
+    if (modOptionsShell == NULL) {
+	char **ops;
+	int nops;
+	Widget pane, form, viewport, bottom, popdown;
+
+	modOptionsShell = XtCreatePopupShell("moduleOptions",
+					     transientShellWidgetClass,
+					     optionsShell, NULL, 0);
+
+	pane = XtCreateManagedWidget("pane", panedWidgetClass,
+				     modOptionsShell, NULL, 0);
+
+	form = XtCreateManagedWidget("descriptions", formWidgetClass,
+				     pane, NULL, 0);
+	labelType = XtCreateManagedWidget("labelType", labelWidgetClass,
+					  form, NULL, 0);
+	XtCreateManagedWidget("module", labelWidgetClass, form, NULL, 0);
+	viewport = XtCreateManagedWidget("viewM", viewportWidgetClass,
+					 form, NULL, 0);
+	ops = NULL;
+	nops = 0;
+	while (info) {
+	    ++nops;
+	    ops = (char**)XtRealloc((XtPointer)ops, sizeof(char*) * nops);
+	    ops[nops - 1] = XtNewString(info->name);
+	    info = info->next;
+	}
+	if (nops == 0) {
+	    ops = (char**)XtMalloc(sizeof(char*));
+	    ops[0] = XtNewString("");
+	    nops = 1;
+	}
+	else
+	    qsort(ops, nops, sizeof(char*), qcmp_str);
+	modList = XtVaCreateManagedWidget("modL", listWidgetClass,
+					  viewport, XtNlist, ops,
+					  XtNnumberStrings, nops,
+					  NULL, 0);
+	XtAddCallback(modList, XtNcallback, SelectModuleCallback, NULL);
+	XtCreateManagedWidget("option", labelWidgetClass, form, NULL, 0);
+	viewport = XtCreateManagedWidget("viewO", viewportWidgetClass,
+					 form, NULL, 0);
+	ops = (char**)XtMalloc(sizeof(char*));
+	ops[0] = XtNewString("");
+	optList = XtVaCreateManagedWidget("optL", listWidgetClass,
+					  viewport, XtNlist, ops,
+					  XtNnumberStrings, 1, NULL, 0);
+	XtAddCallback(optList, XtNcallback, SelectModuleOptionCallback, NULL);
+	desc = XtVaCreateManagedWidget("desc", asciiTextWidgetClass,
+				       form, XtNeditType, XawtextRead,
+				       NULL, 0);
+
+	bottom = XtCreateManagedWidget("bottom", formWidgetClass,
+				       pane, NULL, 0);
+	popdown = XtVaCreateManagedWidget("popdown", commandWidgetClass,
+					bottom, NULL, 0);
+	XtAddCallback(popdown, XtNcallback, ModuleOptionsPopdown, NULL);
+	XtRealizeWidget(modOptionsShell);
+	XSetWMProtocols(DPY, XtWindow(modOptionsShell), &wm_delete_window, 1);
+
+	info = module_options;
+    }
+
+    if (module_sel && *module_sel) {
+	XawListReturnStruct list;	/* hack to call ballbacks */
+	char **strs;
+	int nstrs, idx = 0;
+
+	XtVaGetValues(modList, XtNlist, &strs, XtNnumberStrings, &nstrs, NULL);
+	for (idx = nstrs - 1; idx > 0; idx--)
+	    if (strcmp(module_sel, strs[idx]) == 0)
+		break;
+	while (info) {
+	    if (strcmp(module_sel, info->name) == 0)
+		break;
+	    info = info->next;
+	}
+	if (info) {
+	    list.string = info->name;
+	    list.list_index = idx;
+	    XawListHighlight(modList, idx);
+	    SelectModuleCallback(modList, NULL, (XtPointer)&list);
+	}
+	if (option_str && *option_str) {
+	    OptionInfoPtr opts = info->option;
+
+	    idx = 0;
+	    while (opts && opts->name) {
+		if (strcmp(opts->name, option_str) == 0)
+		    break;
+		++idx;
+		++opts;
+	    }
+
+	    if (opts && opts->name) {
+		list.string = (char *)opts->name;
+		list.list_index = idx;
+		XawListHighlight(optList, idx);
+		SelectModuleOptionCallback(optList, NULL, (XtPointer)&list);
+	    }
+	}
+    }
+    XtPopup(modOptionsShell, XtGrabNone);
+}
+
+/*ARGSUSED*/
+static void
+ModuleOptionsPopdown(Widget w, XtPointer user_data, XtPointer call_data)
+{
+    XtPopdown(modOptionsShell);
+}
+
+/*ARGSUSED*/
+void
+ModuleOptionsCancelAction(Widget w, XEvent *event,
+			  String *params, Cardinal *num_params)
+{
+    ModuleOptionsPopdown(w, NULL, NULL);
+}
+#endif
+
 void
 CreateOptionsShell(void)
 {
@@ -95,7 +242,7 @@ OptionsPopup(XF86OptionPtr *opts)
     option_str = NULL;
     options = opts;
     if (first) {
-	Widget pane, form, viewport, bottom, popdown;
+	Widget pane, form, viewport, bottom, popdown, command;
 
 	first = 0;
 
@@ -103,6 +250,7 @@ OptionsPopup(XF86OptionPtr *opts)
 	    CreateOptionsShell();
 	pane = XtCreateManagedWidget("pane", panedWidgetClass,
 				     optionsShell, NULL, 0);
+
 	form = XtCreateManagedWidget("commands", formWidgetClass,
 				     pane, NULL, 0);
 	add = XtCreateManagedWidget("add", commandWidgetClass,
@@ -114,6 +262,13 @@ OptionsPopup(XF86OptionPtr *opts)
 	update = XtCreateManagedWidget("update", commandWidgetClass,
 				       form, NULL, 0);
 	XtAddCallback(update, XtNcallback, UpdateOption, NULL);
+#ifdef USE_MODULES
+	if (!nomodules) {
+	    command = XtCreateManagedWidget("help", commandWidgetClass,
+					    form, NULL, 0);
+	    XtAddCallback(command, XtNcallback, ModuleOptionsPopup, NULL);
+	}
+#endif
 	form = XtCreateManagedWidget("form", formWidgetClass,
 				     pane, NULL, 0);
 	XtVaCreateManagedWidget("label1", labelWidgetClass, form,
@@ -140,13 +295,15 @@ OptionsPopup(XF86OptionPtr *opts)
 	bottom = XtCreateManagedWidget("bottom", formWidgetClass,
 				       pane, NULL, 0);
 #ifdef USE_MODULES
-	button = XtCreateManagedWidget("driverOpts", menuButtonWidgetClass,
-					bottom, NULL, 0);
+	if (!nomodules)
+	    button = XtCreateManagedWidget("driverOpts", menuButtonWidgetClass,
+					    bottom, NULL, 0);
 #endif
 	popdown = XtVaCreateManagedWidget("popdown", commandWidgetClass,
 					bottom, NULL, 0);
 #ifdef USE_MODULES
-	XtVaSetValues(popdown, XtNfromHoriz, button, NULL, 0);
+	if (!nomodules)
+	    XtVaSetValues(popdown, XtNfromHoriz, button, NULL, 0);
 #endif
 
 	XtAddCallback(popdown, XtNcallback, PopdownCallback, NULL);
@@ -154,7 +311,7 @@ OptionsPopup(XF86OptionPtr *opts)
 	XSetWMProtocols(DPY, XtWindow(optionsShell), &wm_delete_window, 1);
 
 #ifdef USE_MODULES
-	{
+	if (!nomodules) {
 	    char *str;
 
 	    XtSetArg(args[0], XtNlabel, &str);
@@ -165,49 +322,57 @@ OptionsPopup(XF86OptionPtr *opts)
     }
 
 #ifdef USE_MODULES
-    if (menu)
-	XtDestroyWidget(menu);
-    XmuSnprintf(menuName, sizeof(buf), "optionM%d", menuN);
-    menuN = !menuN;
-    menu = XtCreatePopupShell(menuName, simpleMenuWidgetClass, button,
-			      NULL, 0);
-    XtVaSetValues(button, XtNmenuName, menuName, NULL, 0);
-    if (drv_opts) {
-	int len, longest = 0;
-	char fmt[32];
-	static char *types[] = {
-	    "none", "integer", "(non null) string", "string", "real",
-	    "boolean", "frequency",
-	};
+    if (!nomodules) {
+	if (menu)
+	    XtDestroyWidget(menu);
+	XmuSnprintf(menuName, sizeof(buf), "optionM%d", menuN);
+	menuN = !menuN;
+	menu = XtCreatePopupShell(menuName, simpleMenuWidgetClass, button,
+				  NULL, 0);
+	XtVaSetValues(button, XtNmenuName, menuName, NULL, 0);
+	if (drv_opts) {
+	    int len, longest = 0;
+	    char fmt[32];
 
-	for (i = 0; drv_opts[i].name != NULL; i++) {
-	    len = strlen(drv_opts[i].name);
-	    if (len > longest)
-		longest = len;
+	    for (i = 0; drv_opts[i].name != NULL; i++) {
+		len = strlen(drv_opts[i].name);
+		if (len > longest)
+		    longest = len;
+	    }
+	    XmuSnprintf(fmt, sizeof(fmt), "%c-%ds  %%s", '%', longest);
+	    for (; drv_opts->name != NULL; drv_opts++) {
+		char *type;
+
+		if (drv_opts->type >= OPTV_NONE && drv_opts->type <= OPTV_FREQ)
+		    type = types[drv_opts->type];
+		else
+		    type = "UNKNOWN";
+
+		XmuSnprintf(buf, sizeof(buf), fmt, drv_opts->name, type);
+		sme = XtVaCreateManagedWidget(drv_opts->name, smeBSBObjectClass,
+					      menu, XtNlabel, buf, NULL, 0);
+		XtAddCallback(sme, XtNcallback, AddDriverOption, (XtPointer)drv_opts);
+	    }
 	}
-	XmuSnprintf(fmt, sizeof(fmt), "%c-%ds  %%s", '%', longest);
-	for (; drv_opts->name != NULL; drv_opts++) {
-	    char *type;
+	if (i) {
+	    xf86cfgModuleOptions *mod = module_options;
 
-	    if (drv_opts->type >= OPTV_NONE && drv_opts->type <= OPTV_FREQ)
-		type = types[drv_opts->type];
-	    else
-		type = "UNKNOWN";
-
-	    XmuSnprintf(buf, sizeof(buf), fmt, drv_opts->name, type);
-	    sme = XtVaCreateManagedWidget(drv_opts->name, smeBSBObjectClass,
-					  menu, XtNlabel, buf, NULL, 0);
-	    XtAddCallback(sme, XtNcallback, AddDriverOption, (XtPointer)drv_opts);
+	    while (mod) {
+		if (strcmp(mod->name, driver) == 0) {
+		    /* don't assign to driver, as it may be a temp string */
+		    module_sel = mod->name;
+		    break;
+		}
+		mod = mod->next;
+	    }
+	    XmuSnprintf(buf, sizeof(buf), "%s%s", label, driver);
+	    XtSetArg(args[0], XtNlabel, buf);
+	    XtSetValues(button, args, 1);
+	    XtMapWidget(button);
 	}
+	else
+	    XtUnmapWidget(button);
     }
-    if (i) {
-	XmuSnprintf(buf, sizeof(buf), "%s%s", label, driver);
-	XtSetArg(args[0], XtNlabel, buf);
-	XtSetValues(button, args, 1);
-	XtMapWidget(button);
-    }
-    else
-	XtUnmapWidget(button);
 #endif
 
     UpdateOptionList();
@@ -334,6 +499,7 @@ AddDriverOption(Widget w, XtPointer user_data, XtPointer call_data)
     OptionInfoPtr opt = (OptionInfoPtr)user_data;
     XF86OptionPtr option;
 
+    option_str = (char *)opt->name;
     XtSetArg(args[0], XtNstring, opt->name);
     XtSetValues(name, args, 1);
     if ((option = xf86findOption(*options, opt->name)) == NULL)
@@ -341,6 +507,90 @@ AddDriverOption(Widget w, XtPointer user_data, XtPointer call_data)
     else
 	XtSetArg(args[0], XtNstring, option->opt_val);
     XtSetValues(value, args, 1);
+}
+
+/*ARGSUSED*/
+static void
+SelectModuleCallback(Widget w, XtPointer user_data, XtPointer call_data)
+{
+    xf86cfgModuleOptions *mod = module_options;
+    XawListReturnStruct *info = (XawListReturnStruct *)call_data;
+
+    while (mod) {
+	if (strcmp(mod->name, info->string) == 0)
+	    break;
+	mod = mod->next;
+    }
+
+    if (mod) {
+	Arg args[2];
+	char **list = NULL, **old;
+	OptionInfoPtr opts = mod->option;
+	int num = 0, oldnum;
+
+	module_sel = mod->name;
+	XtSetArg(args[0], XtNlist, &old);
+	XtSetArg(args[1], XtNnumberStrings, &oldnum);
+	XtGetValues(optList, args, 2);
+	while (opts && opts->name) {
+	    ++num;
+	    list = (char**)XtRealloc((XtPointer)list, sizeof(char*) * num);
+	    list[num - 1] = XtNewString(opts->name);
+	    ++opts;
+	}
+	if (num == 0) {
+	    list = (char**)XtMalloc(sizeof(char*));
+	    list[0] = XtNewString("");
+	    num = 1;
+	}
+	XtSetArg(args[0], XtNlist, list);
+	XtSetArg(args[1], XtNnumberStrings, num);
+	XtSetValues(optList, args, 2);
+	while (--oldnum >= 0)
+	    XtFree(old[oldnum]);
+	XtFree((XtPointer)old);
+
+	XtVaSetValues(desc, XtNstring, "", NULL);
+	XawListUnhighlight(optList);
+    }
+}
+
+static void
+SelectModuleOptionCallback(Widget w, XtPointer user_data, XtPointer call_data)
+{
+    xf86cfgModuleOptions *mod = module_options;
+    XawListReturnStruct *info = (XawListReturnStruct *)call_data;
+    char *description = NULL, *type = "undefined";
+    char label[256];
+
+    if (module_sel && info->string)
+	description = GetOptionDescription(module_sel, info->string);
+    if (description == NULL)
+	description = "** NO DESCRIPTION AVAILABLE **";
+
+    XtVaSetValues(desc, XtNstring, description, NULL);
+
+    while (mod) {
+	if (strcmp(module_sel, mod->name) == 0)
+	    break;
+	mod = mod->next;
+    }
+    if (mod) {
+	OptionInfoPtr opts = mod->option;
+
+	while (opts && opts->name) {
+	    if (strcmp(info->string, opts->name) == 0)
+		break;
+	    ++opts;
+	}
+	if (opts && opts->name && opts->type >= OPTV_NONE &&
+	    opts->type <= OPTV_FREQ)
+	    type = types[opts->type];
+    }
+
+    XmuSnprintf(label, sizeof(label), "%s.%s (%s)", module_sel, info->string,
+	        type);
+    XtVaSetValues(labelType, XtNlabel, label, NULL);
 }
 #endif
 
@@ -392,4 +642,28 @@ UpdateOption(Widget w, XtPointer user_data, XtPointer call_data)
 
     XtSetSensitive(remov, True);
     XtSetSensitive(update, True);
+}
+
+char *
+GetOptionDescription(char *module, char *option)
+{
+    static int first = 1;
+    char *type;
+    XrmValue value;
+    char query[256];
+
+    if (first) {
+	first = 0;
+	XrmInitialize();
+	if ((xrm = XrmGetFileDatabase(Options)) == (XrmDatabase)0) {
+	    fprintf(stderr, "Cannot open '%s' database.\n", Options);
+	    return (NULL);
+	}
+    }
+
+    XmuSnprintf(query, sizeof(query), "%s.%s", module, option);
+    if (XrmGetResource(xrm, query, "Module.Option", &type, &value))
+	return ((char*)value.addr);
+
+    return (NULL);
 }

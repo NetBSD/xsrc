@@ -1,4 +1,4 @@
-/* $TOG: floman.c /main/7 1998/02/09 16:12:19 kaleb $ */
+/* $Xorg: floman.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module floman.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/floman.c,v 3.2 1998/10/05 13:22:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/floman.c,v 3.4 2001/01/17 22:13:00 dawes Exp $ */
 
 /*
  *  Include files

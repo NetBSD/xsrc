@@ -1,4 +1,4 @@
-/* $TOG: fax.h /main/6 1998/02/09 16:17:29 kaleb $ */
+/* $Xorg: fax.h,v 1.3 2000/08/17 19:47:46 cpqbld Exp $ */
 /**** module fax.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc.  May 1993
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/include/fax.h,v 1.3 2001/01/17 22:13:06 dawes Exp $ */
 
 #ifndef XFree86LOADER
 #include <stdio.h>

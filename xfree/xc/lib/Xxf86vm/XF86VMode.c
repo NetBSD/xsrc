@@ -1,5 +1,5 @@
 /* $XConsortium: XF86VMode.c /main/2 1995/11/14 18:17:58 kaleb $ */
-/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.28 2000/08/04 16:13:16 eich Exp $ */
+/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.31 2001/05/07 20:11:13 mvojkovi Exp $ */
 /*
 
 Copyright (c) 1995  Kaleb S. KEITHLEY
@@ -1104,6 +1104,105 @@ XF86VidModeGetDotClocks(dpy, screen,
 	dotclocks[i] = dotclk;
     }
     *clocksPtr = dotclocks;
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return True;
+}
+
+Bool
+XF86VidModeSetGammaRamp (
+    Display *dpy,
+    int screen,
+    int size,
+    unsigned short *red,
+    unsigned short *green,
+    unsigned short *blue
+)
+{
+    int length = (size + 1) & ~1;
+    XExtDisplayInfo *info = find_display (dpy);
+    xXF86VidModeSetGammaRampReq *req;
+
+    XF86VidModeCheckExtension (dpy, info, False);
+    LockDisplay(dpy);
+    GetReq(XF86VidModeSetGammaRamp, req);
+    req->reqType = info->codes->major_opcode;
+    req->xf86vidmodeReqType = X_XF86VidModeSetGammaRamp;
+    req->screen = screen;
+    req->length += (length >> 1) * 3;
+    req->size = size;
+    _XSend(dpy, (char*)red, size * 2);
+    _XSend(dpy, (char*)green, size * 2);
+    _XSend(dpy, (char*)blue, size * 2);
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return True;
+}
+
+
+Bool
+XF86VidModeGetGammaRamp (
+    Display *dpy,
+    int screen,
+    int size,
+    unsigned short *red,
+    unsigned short *green,
+    unsigned short *blue
+)
+{
+    XExtDisplayInfo *info = find_display (dpy);
+    xXF86VidModeGetGammaRampReq *req;
+    xXF86VidModeGetGammaRampReply rep;
+  
+    XF86VidModeCheckExtension (dpy, info, False);
+
+    LockDisplay(dpy);
+    GetReq(XF86VidModeGetGammaRamp, req);
+    req->reqType = info->codes->major_opcode;
+    req->xf86vidmodeReqType = X_XF86VidModeGetGammaRamp;
+    req->screen = screen;
+    req->size = size;
+    if (!_XReply (dpy, (xReply *) &rep, 0, xFalse)) {
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return False;
+    }
+    if(rep.size) {
+	_XRead(dpy, (char*)red, rep.size << 1);
+	_XRead(dpy, (char*)green, rep.size << 1);
+	_XRead(dpy, (char*)blue, rep.size << 1);
+    }
+
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return True;
+}
+
+Bool XF86VidModeGetGammaRampSize(
+    Display *dpy,
+    int screen,
+    int *size
+)
+{
+    XExtDisplayInfo *info = find_display (dpy);
+    xXF86VidModeGetGammaRampSizeReq *req;
+    xXF86VidModeGetGammaRampSizeReply rep;
+  
+    *size = 0;
+
+    XF86VidModeCheckExtension (dpy, info, False);
+
+    LockDisplay(dpy);
+    GetReq(XF86VidModeGetGammaRampSize, req);
+    req->reqType = info->codes->major_opcode;
+    req->xf86vidmodeReqType = X_XF86VidModeGetGammaRampSize;
+    req->screen = screen;
+    if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
+        UnlockDisplay (dpy);
+        SyncHandle ();
+        return False; 
+    }
+    *size = rep.size;
     UnlockDisplay(dpy);
     SyncHandle();
     return True;

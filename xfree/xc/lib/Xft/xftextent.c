@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftextent.c,v 1.3 2000/12/08 07:51:28 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftextent.c,v 1.6 2001/04/01 14:00:01 tsi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,6 +22,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include "xftint.h"
 
 void
@@ -79,4 +81,110 @@ XftTextExtents32 (Display	*dpy,
 	XftRenderExtents32 (dpy, font->u.ft.font, string, len, extents);
     }
 #endif
+}
+
+void
+XftTextExtentsUtf8 (Display	*dpy,
+		    XftFont	*font,
+		    XftChar8	*string, 
+		    int		len,
+		    XGlyphInfo	*extents)
+{
+    XftChar8	*src;
+    XftChar32	c;
+    XftChar32	lbuf[4096];
+    XftChar32	*dst;
+    XftChar8	*dst8;
+    XftChar16	*dst16;
+    XftChar32	*dst32;
+    int		rlen, clen;
+    int		width = 1;
+    int		n;
+
+    /* compute needed width */
+    src = string;
+    rlen = len;
+    n = 0;
+    while (rlen)
+    {
+	clen = XftUtf8ToUcs4 (src, &c, rlen);
+	if (clen <= 0)	/* malformed UTF8 string */
+	{
+	    memset (extents, 0, sizeof (XGlyphInfo));
+	    return;
+	}
+	if (c >= 0x10000)
+	    width = 4;
+	else if (c >= 0x100)
+	{
+	    if (width == 1)
+		width = 2;
+	}
+	src += clen;
+	rlen -= clen;
+	n++;
+    }
+    dst = lbuf;
+    if (n * width > sizeof (lbuf))
+    {
+	dst = (XftChar32 *) malloc (n * width);
+	if (!dst)
+	{
+	    memset (extents, 0, sizeof (XGlyphInfo));
+	    return;
+	}
+    }
+    
+    switch (width) {
+    case 4:
+	src = string;
+	rlen = len;
+	dst32 = dst;
+	while (rlen)
+	{
+	    clen = XftUtf8ToUcs4 (src, &c, rlen);
+	    if (clen <= 0)	/* malformed UTF8 string */
+		return;
+	    *dst32++ = c;
+	    src += clen;
+	    rlen -= clen;
+	}
+	dst32 = dst;
+	XftTextExtents32 (dpy, font, dst32, n, extents);
+	break;
+    case 2:
+	src = string;
+	rlen = len;
+	dst16 = (XftChar16 *) dst;
+	while (rlen)
+	{
+	    clen = XftUtf8ToUcs4 (src, &c, rlen);
+	    if (clen <= 0)	/* malformed UTF8 string */
+		return;
+	    *dst16++ = c;
+	    src += clen;
+	    rlen -= clen;
+	}
+	dst16 = (XftChar16 *) dst;
+	XftTextExtents16 (dpy, font, dst16, n, extents);
+	break;
+    case 1:
+	src = string;
+	rlen = len;
+	dst8 = (XftChar8 *) dst;
+	while (rlen)
+	{
+	    clen = XftUtf8ToUcs4 (src, &c, rlen);
+	    if (clen <= 0)	/* malformed UTF8 string */
+		return;
+	    *dst8++ = c;
+	    src += clen;
+	    rlen -= clen;
+	}
+	dst8 = (XftChar8 *) dst;
+	XftTextExtents8 (dpy, font, dst8, n, extents);
+	break;
+    }
+    if (dst != lbuf)
+	free (dst);
 }

@@ -33,6 +33,11 @@
 #include "conf.h"
 #endif
 
+#ifdef VMS
+#include <GL/vms_x_fix.h>
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -254,7 +259,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
   bm = (GLubyte *) MALLOC((max_bm_width * max_bm_height) * sizeof 
 (GLubyte));
   if (!bm) {
-      XFreeFontInfo( NULL, fs, 0 );
+      XFreeFontInfo( NULL, fs, 1 );
       gl_error(NULL, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
@@ -369,7 +374,7 @@ bm_height);
     }
 
   FREE(bm);
-  XFreeFontInfo( NULL, fs, 0 );
+  XFreeFontInfo( NULL, fs, 1 );
   XFreeGC (dpy, gc);
 
   /* Restore saved packing modes.  */

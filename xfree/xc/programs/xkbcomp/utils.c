@@ -1,7 +1,6 @@
 
   /*\
-   * $XConsortium: utils.c /main/3 1996/01/14 16:48:22 kaleb $
-   * $XFree86: xc/programs/xkbcomp/utils.c,v 3.3 1996/08/26 10:52:25 dawes Exp $
+   * $Xorg: utils.c,v 1.4 2000/08/17 19:54:33 cpqbld Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION
@@ -26,6 +25,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
+/* $XFree86: xc/programs/xkbcomp/utils.c,v 3.5 2001/01/17 23:45:45 dawes Exp $ */
 
 #include 	"utils.h"
 #include	<ctype.h>
@@ -608,7 +608,7 @@ uStrCaseCmp(str1, str2)
     char c, *s;
     register int n;
 
-    for (n=0, s = buf1; (c = *str1++) != '\0'; n++) {
+    for (n=0, s = buf1; (c = *str1++); n++) {
 	if (isupper(c))
 	    c = tolower(c);
 	if (n>510)
@@ -616,7 +616,7 @@ uStrCaseCmp(str1, str2)
 	*s++ = c;
     }
     *s = '\0';
-    for (n=0, s = buf2; (c = *str2++) != '\0'; n++) {
+    for (n=0, s = buf2; (c = *str2++); n++) {
 	if (isupper(c))
 	    c = tolower(c);
 	if (n>510)

@@ -1,5 +1,5 @@
 ## 
-# $TOG: OCReduce.awk /main/3 1998/02/10 14:00:40 kaleb $
+# $Xorg: OCReduce.awk,v 1.3 2000/08/17 19:47:17 cpqbld Exp $
 ## 
 ##
 ## Copyright 1996, 1998  The Open Group

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# $TOG: excel /main/4 1997/06/13 14:31:58 kaleb $
+# $Xorg: excel,v 1.3 2000/08/17 19:54:57 cpqbld Exp $
 # CGI script to launch excel
 #
 

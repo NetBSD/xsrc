@@ -41,7 +41,7 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\"
-.\" $XFree86$
+.\" $XFree86: xc/doc/man/X11/XmbDTxt.man,v 1.3 2001/01/27 18:20:07 dawes Exp $
 .\" 
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xW Athena X Widgets \- C Language X Toolkit Interface
@@ -141,7 +141,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XmbDrawText 3X11 "Release 6.4" "X Version 11" "XLIB FUNCTIONS"
+.TH XmbDrawText 3X11 __xorgversion__ "XLIB FUNCTIONS"
 .SH NAME
 XmbDrawText, XwcDrawText, Xutf8DrawText \- draw text using multiple font sets 
 .SH SYNTAX

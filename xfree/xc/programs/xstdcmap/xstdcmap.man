@@ -1,4 +1,4 @@
-.\" $TOG: xstdcmap.man /main/16 1998/02/09 14:16:31 kaleb $
+.\" $Xorg: xstdcmap.man,v 1.3 2000/08/17 19:55:06 cpqbld Exp $
 .\" Copyright 1989, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,6 +18,9 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
+.\"
+.\" $XFree86: xc/programs/xstdcmap/xstdcmap.man,v 1.7 2001/01/27 18:21:24 dawes Exp $
+.\"
 .de EX		\"Begin example
 .ne 5
 .if n .sp 1
@@ -31,7 +34,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XSTDCMAP 1 "Release 6.4" "X Version 11"
+.TH XSTDCMAP 1 __xorgversion__
 .SH NAME
 xstdcmap - X standard colormap utility
 .SH SYNOPSIS
@@ -72,7 +75,7 @@ all such properties, should be removed.
 \fImap\fP may be one of: default, best, red, green, blue, gray, or all.
 .TP 8
 .B \-display \fIdisplay\fP
-This option specifies the host and display to use; see \fIX(1)\fP.
+This option specifies the host and display to use; see \fIX(__miscmansuffix__)\fP.
 .TP 8
 .B \-gray
 This option indicates that the RGB_GRAY_MAP should be defined.
@@ -99,7 +102,7 @@ standard colormap properties.
 .B DISPLAY
 to get default host and display number.
 .SH SEE ALSO
-X(1)
+X(__miscmansuffix__)
 .SH AUTHOR
 Donna Converse, MIT X Consortium
 

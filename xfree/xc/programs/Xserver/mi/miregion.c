@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miregion.c,v 1.4 1999/02/12 22:52:12 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miregion.c,v 1.6 2001/01/17 22:37:07 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1988, 1989, 1998  The Open Group
@@ -42,6 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $Xorg: miregion.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 /* The panoramix components contained the following notice */
 /****************************************************************
@@ -64,8 +65,6 @@ SOFTWARE.
 *   or  in  FAR 52.227-19, as applicable.                       *
 *                                                               *
 *****************************************************************/
-
-/* $TOG: miregion.c /main/40 1998/02/09 14:48:29 kaleb $ */
 
 #include "miscstruct.h"
 #include "regionstr.h"

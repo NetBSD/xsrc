@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.76.2.1 2001/03/02 20:40:45 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.81.2.1 2001/05/29 16:38:00 tsi Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -98,10 +98,6 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
 #endif
 
-#ifndef NO_COMPILER_H
-#include "compiler.h"
-#endif
-
 #if defined(MACH386) || defined(__OSF__)
 # undef NULL
 #endif /* MACH386 || __OSF__ */
@@ -112,7 +108,10 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 /**************************************************************************/
 /* SYSV386 (SVR3, SVR4) - But not Solaris8                                */
 /**************************************************************************/
-#if (defined(SYSV) || defined(SVR4)) && !defined(DGUX) && !defined(__SOL8__)
+#if (defined(SYSV) || defined(SVR4)) && \
+    !defined(DGUX) && \
+    !defined(__SOL8__) && \
+    (!defined(sun) || defined(i386))
 # ifdef SCO325
 #  ifndef _SVID3
 #   define _SVID3
@@ -130,12 +129,12 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 # include <sys/param.h>
 # endif
 
-#ifdef ISC
-#define       TIOCMSET        (TIOC|26)       /* set all modem bits */
-#define       TIOCMBIS        (TIOC|27)       /* bis modem bits */
-#define       TIOCMBIC        (TIOC|28)       /* bic modem bits */
-#define       TIOCMGET        (TIOC|29)       /* get all modem bits */
-#endif
+# ifdef ISC
+#  define TIOCMSET (TIOC|26)	/* set all modem bits */
+#  define TIOCMBIS (TIOC|27)	/* bis modem bits */
+#  define TIOCMBIC (TIOC|28)	/* bic modem bits */
+#  define TIOCMGET (TIOC|29)	/* get all modem bits */
+# endif
 
 # include <errno.h>
 
@@ -157,8 +156,6 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  if defined(sun) && defined (i386) && defined (SVR4) 	/* Solaris? */
 #   if !defined(V86SC_IOPL)				/* Solaris 7? */
 #    include <sys/v86.h>				/* Nope */
-#   else
-    /* Do nothing what so ever */			/* Yup */
 #   endif /* V86SC_IOPL */
 #  else 
 #   include <sys/v86.h>					/* Not solaris */
@@ -168,16 +165,18 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  endif
 # endif /* _NEED_SYSI86 */
 
-#if defined(HAS_SVR3_MMAPDRV)
-# include <sys/sysmacros.h>
-# if !defined(_NEED_SYSI86)
-#  include <sys/immu.h>
-#  include <sys/region.h>
+# if defined(HAS_SVR3_MMAPDRV)
+#  include <sys/sysmacros.h>
+#  if !defined(_NEED_SYSI86)
+#   include <sys/immu.h>
+#   include <sys/region.h>
+#  endif
+#  include <sys/mmap.h>		/* MMAP driver header */
 # endif
-# include <sys/mmap.h>		/* MMAP driver header */
-#endif
 
-# define HAS_USL_VTS
+# if !defined(sun) || !defined(sparc)
+#  define HAS_USL_VTS
+# endif
 # if !defined(sun)
 #  include <sys/emap.h>
 # endif
@@ -189,7 +188,7 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  define LED_CAP 0x01
 #  define LED_NUM 0x02
 #  define LED_SCR 0x04
-# else /* SCO */
+# elif defined(HAS_USL_VTS)
 #  include <sys/at_ansi.h>
 #  include <sys/kd.h>
 #  include <sys/vt.h>
@@ -230,25 +229,15 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 # endif
 
 # if defined(ATT) && !defined(i386)
-#  define i386 /* note defined in ANSI C mode */
+#  define i386 /* not defined in ANSI C mode */
 # endif /* ATT && !i386 */
 
-# if (defined(ATT) || defined(SVR4)) && !(defined(sun) && defined (i386) && defined (SVR4)) && !defined(SCO325)
+# if (defined(ATT) || defined(SVR4)) && !defined(sun) && !defined(SCO325)
 #  ifndef XQUEUE
 #   define XQUEUE
 #  endif
 #  include <sys/xque.h>
 # endif /* ATT || SVR4 */
-
-#if 0
-/* Hack on SVR3 and SVR4 to avoid linking in Xenix or BSD support */
-#if defined (sun) && defined (i386) && defined (SVR4)
-extern int xf86_solx86usleep(unsigned long);
-# define usleep(usec) xf86_solx86usleep(usec) 
-#else
-# define usleep(usec) syscall(3112, (usec) / 1000 + 1)
-#endif /* sun && i386 && SVR4 */
-#endif
 
 # ifdef SYSV
 #  if !defined(ISC) || defined(ISC202) || defined(ISC22)
@@ -256,9 +245,9 @@ extern int xf86_solx86usleep(unsigned long);
 #  endif
 # endif
 
-#ifndef NULL
-# define NULL 0
-#endif
+# ifndef NULL
+#  define NULL 0
+# endif
 
 #endif /* (SYSV || SVR4) && !DGUX */
 
@@ -266,21 +255,23 @@ extern int xf86_solx86usleep(unsigned long);
  * Good ol' Solaris8, and its lack of VT support 
  ***********/
 
-#ifdef __SOL8__
-#include <sys/mman.h>
-#include <errno.h>
-#include <sys/sysi86.h>
-#include <sys/psw.h>
+#if defined(__SOL8__) || (defined(sun) && !defined(i386))
+# include <sys/mman.h>
+# include <errno.h>
+# ifdef i386
+#  include <sys/sysi86.h>
+# endif
+# include <sys/psw.h>
 
-#include <termio.h>
-#include <sys/kbd.h>
-#include <sys/kbio.h>
+# include <termio.h>
+# include <sys/kbd.h>
+# include <sys/kbio.h>
 
-#define LED_CAP LED_CAPS_LOCK
-#define LED_NUM LED_NUM_LOCK
-#define LED_SCR LED_SCROLL_LOCK
+# define LED_CAP LED_CAPS_LOCK
+# define LED_NUM LED_NUM_LOCK
+# define LED_SCR LED_SCROLL_LOCK
 
-#include <signal.h>
+# include <signal.h>
 
 #endif /* __SOL8__ */
 
@@ -385,10 +376,6 @@ extern int errno;
 # define USE_VT_SYSREQ
 
 # define POSIX_TTY
-
-# ifdef __sparc__
-#  define DEV_MEM "/dev/fb"
-# endif
 
 #endif /* linux */
 
@@ -911,5 +898,9 @@ double RInt(
 
 #define XF86_OS_PRIVS
 #include "xf86_OSproc.h"
+
+#ifndef NO_COMPILER_H
+#include "compiler.h"
+#endif
 
 #endif /* _XF86_OSLIB_H */

@@ -2,7 +2,7 @@
  * Push Pixels for 8 bit displays.
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbpush8.c,v 1.3 1998/10/04 09:37:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpush8.c,v 1.5 2001/01/17 22:36:36 dawes Exp $ */
 
 /*
 
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $TOG: cfbpush8.c /main/18 1998/02/09 14:07:04 kaleb $ */
+/* $Xorg: cfbpush8.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 
 #if PSZ == 8
 

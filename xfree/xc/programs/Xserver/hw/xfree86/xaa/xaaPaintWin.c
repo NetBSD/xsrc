@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPaintWin.c,v 1.7 1999/05/15 06:24:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPaintWin.c,v 1.9 2000/03/28 01:21:05 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

@@ -1,4 +1,4 @@
-.\" $TOG: xmodmap.man /main/29 1998/02/09 14:11:47 kaleb $
+.\" $Xorg: xmodmap.man,v 1.3 2000/08/17 19:54:55 cpqbld Exp $
 .\" Copyright 1988, 1989, 1990, 1998  The Open Group
 .\" Copyright 1987 Sun Microsystems, Inc.
 .\" 
@@ -20,7 +20,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.5 1998/04/05 02:29:15 dawes Exp $
+.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.9 2001/01/27 18:21:21 dawes Exp $
 .\" 
 .de EX		\"Begin example
 .ne 5
@@ -35,7 +35,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XMODMAP 1 "Release 6.4" "X Version 11"
+.TH XMODMAP 1 __xorgversion__
 .SH NAME
 xmodmap - utility for modifying keymaps and pointer button mappings in X
 .SH SYNOPSIS
@@ -278,7 +278,7 @@ add Lock = Caps_Lock
 .B DISPLAY
 to get default host and display number.
 .SH SEE ALSO
-X(1), xev(1), \fIXlib\fP documentation on key and pointer events
+X(__miscmansuffix__), xev(1), \fIXlib\fP documentation on key and pointer events
 .SH BUGS
 .PP
 Every time a \fBkeycode\fP expression is evaluated, the server generates

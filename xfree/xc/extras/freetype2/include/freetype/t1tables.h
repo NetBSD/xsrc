@@ -20,14 +20,31 @@
 #ifndef __T1TABLES_H__
 #define __T1TABLES_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
 
-#include FT_BUILD_H
+#include <ft2build.h>
 #include FT_FREETYPE_H
 
+
 FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    type1_tables                                                       */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Type 1 Tables                                                      */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    Type 1 (PostScript) specific font tables.                          */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    This section contains the definition of Type 1-specific tables,    */
+  /*    including structures related to other PostScript font formats.     */
+  /*                                                                       */
+  /*************************************************************************/
+   
 
   /* Note that we separate font data in T1_FontInfo and T1_Private */
   /* structures in order to support Multiple Master fonts.         */
@@ -233,6 +250,9 @@ FT_BEGIN_HEADER
     FT_ULong       data_offset;
 
   } CID_Info;
+
+
+  /* */
 
 
 FT_END_HEADER

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.15 2000/05/18 23:21:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.18 2001/02/12 01:25:23 tsi Exp $ */
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
  */
@@ -113,6 +113,7 @@ extern int xf86NumEntities;
 extern xf86AccessRec AccessNULL;
 extern BusRec primaryBus;
 extern resPtr Acc;
+extern resPtr osRes;
 extern resPtr ResRange;
 extern BusAccPtr xf86BusAccInfo;
 
@@ -124,7 +125,8 @@ Bool xf86IsListSubsetOf(resPtr list, resPtr BaseList);
 resPtr xf86ExtractTypeFromList(resPtr list, unsigned long type);
 resPtr findIntersect(resRange Range, resPtr list);
 resPtr xf86FindIntersect(resRange Range, resPtr list);
-void RemoveOverlaps(resPtr target, resPtr list, Bool pow2Alignment);
+void RemoveOverlaps(resPtr target, resPtr list, Bool pow2Alignment,
+		    Bool useEstimated);
 void xf86ConvertListToHost(int entityIndex, resPtr list);
 
 #endif /* _XF86_BUS_H */

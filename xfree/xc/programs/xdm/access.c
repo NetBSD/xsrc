@@ -1,5 +1,5 @@
 /*
- * $TOG: access.c /main/17 1998/02/09 13:54:13 kaleb $
+ * $Xorg: access.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/access.c,v 3.4 1998/10/04 09:40:52 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/access.c,v 3.6 2001/01/17 23:45:20 dawes Exp $ */
 
 /*
  * Access control for XDMCP - keep a database of allowable display addresses
@@ -378,7 +378,7 @@ ReadDisplayEntry (FILE *file)
     	}
     }
     prev = &d->hosts;
-    while ((h = ReadHostEntry (file)) != 0)
+    while ((h = ReadHostEntry (file)))
     {
 	if (h->type == HOST_CHOOSER)
 	{
@@ -402,7 +402,7 @@ ReadAccessDatabase (FILE *file)
     DisplayEntry    *d, **prev;
 
     prev = &database;
-    while ((d = ReadDisplayEntry (file)) != 0)
+    while ((d = ReadDisplayEntry (file)))
     {
 	*prev = d;
 	prev = &d->next;

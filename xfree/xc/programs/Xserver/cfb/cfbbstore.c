@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbbstore.c,v 1.3 1999/01/26 12:17:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbbstore.c,v 1.5 2001/01/17 22:36:34 dawes Exp $ */
 /*-
  * cfbbstore.c --
  *	Functions required by the backing-store implementation in MI.
@@ -15,7 +15,7 @@
  *
  *
  */
-/* $TOG: cfbbstore.c /main/18 1998/02/17 11:03:44 kaleb $ */
+/* $Xorg: cfbbstore.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $ */
 
 #include    "cfb.h"
 #include    "X.h"

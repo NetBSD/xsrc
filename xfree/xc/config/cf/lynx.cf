@@ -1,4 +1,9 @@
-XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.39 2000/11/30 23:29:56 dawes Exp $
+XCOMM $Xorg: lynx.cf,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
+
+
+
+
+XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.43 2001/04/19 19:54:43 dawes Exp $
 
 
 #ifndef OSName
@@ -276,6 +281,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define FileManDir	$(MANSOURCEPATH)5
 #endif
 
+#define HasGroff	YES
+
 /* groff 1.09 compiles right out of the box with LynxOS 2.3,
  * so if you want to have manual pages you should install groff 1.09
  * before you run 'make install.man'
@@ -284,22 +291,26 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define InstallManPageLong(file,destdir,dest)                           @@\
 BuildInstallHtmlManPage(file,dest,$(MANSUFFIX))				@@\
 									@@\
-install.man:: file.man                                                  @@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
+install.man:: file.$(MANNEWSUFFIX)                                      @@\
 	MakeDir($(DESTDIR)destdir)					@@\
 	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*			@@\
-	groff -e -t -man -Tascii file.man >/tmp/file.man		@@\
+	groff -e -t -man -Tascii file.$(MANNEWSUFFIX) >/tmp/file.man	@@\
 	$(INSTALL) -c $(INSTMANFLAGS) /tmp/file.man $(DESTDIR)destdir/dest.$(MANSUFFIX) @@\
 	echo dest dest $(MANSUFFIX) >> $(DESTDIR)destdir/LIST$(MANSUFFIX) @@\
 	gawk '					\			@@\
 	/^\.SH[ 	]*NAME/ 	{ 	\			@@\
 		getline; sub("\\\\", "(" p ") "); print; exit	\	@@\
-	}' p=$(MANSUFFIX) file.man  >> $(DESTDIR)destdir/../whatis	@@\
+	}' p=$(MANSUFFIX) file.$(MANNEWSUFFIX)  >> $(DESTDIR)destdir/../whatis	@@\
 	$(RM) /tmp/file.man
 #endif
 
 #ifndef InstallManPageAliases
 #define InstallManPageAliases(file,destdir,aliases)                     @@\
 InstallHtmlManPageAliases(file,aliases,$(MANSUFFIX))			@@\
+									@@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
 									@@\
 install.man::                                                           @@\
 	@(SUFFIX=`echo $(DESTDIR)destdir/file.* | cut -f2,3 -d.`; \	@@\
@@ -315,16 +326,18 @@ install.man::                                                           @@\
 #define InstallGenManPageLong(file,destdir,dest,suffix)                 @@\
 BuildInstallHtmlManPage(file,dest,suffix)				@@\
 									@@\
-install.man:: file.man                                                  @@\
+CppManTarget(file, $(EXTRAMANDEFS))					@@\
+									@@\
+install.man:: file.$(MANNEWSUFFIX)                                      @@\
 	MakeDir($(DESTDIR)destdir)					@@\
 	$(RM) $(DESTDIR)destdir/dest.suffix*				@@\
-	groff -e -t -man -Tascii file.man >/tmp/file.man		@@\
+	groff -e -t -man -Tascii file.$(MANNEWSUFFIX) >/tmp/file.man	@@\
 	$(INSTALL) -c $(INSTMANFLAGS) /tmp/file.man $(DESTDIR)destdir/dest.suffix @@\
 	echo dest dest suffix >> $(DESTDIR)destdir/Concat(LIST,suffix)	 @@\
 	gawk '					\			@@\
 	/^\.SH[ 	]*NAME/ 	{ 	\			@@\
 		getline; sub("\\\\", "(" p ") "); print; exit	\	@@\
-	}' p=suffix file.man  >> $(DESTDIR)destdir/../whatis	@@\
+	}' p=suffix file.$(MANNEWSUFFIX)  >> $(DESTDIR)destdir/../whatis	@@\
 	$(RM) /tmp/file.man
 #endif
 

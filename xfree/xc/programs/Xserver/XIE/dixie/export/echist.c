@@ -1,4 +1,4 @@
-/* $TOG: echist.c /main/4 1998/02/09 16:07:45 kaleb $ */
+/* $Xorg: echist.c,v 1.3 2000/08/17 19:47:23 cpqbld Exp $ */
 /**** module echist.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. July 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/export/echist.c,v 3.2 1998/10/05 13:22:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/export/echist.c,v 3.4 2001/01/17 22:12:48 dawes Exp $ */
 
 #define _XIEC_ECHIST
 

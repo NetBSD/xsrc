@@ -1,4 +1,4 @@
-/* $TOG: minimain.c /main/5 1998/02/09 10:52:44 kaleb $ */
+/* $Xorg: minimain.c,v 1.3 2000/08/17 19:46:30 cpqbld Exp $ */
 
 /*
 

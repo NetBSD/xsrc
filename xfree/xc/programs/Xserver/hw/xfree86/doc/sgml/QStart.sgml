@@ -671,7 +671,7 @@ This guide is for them.
 <!-- Lots of things still need to be added -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.3 1998/04/29 04:18:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.7 1999/08/23 06:38:51 dawes Exp $
 </verb>
 
 </article>

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.h,v 1.3 2001/04/01 14:00:00 tsi Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -44,174 +44,128 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86drm.h"
 #include "xf86drmR128.h"
 
-#define R128_DEFAULT_TOTAL_CCE_TIMEOUT 1000000 /* usecs */
-
 #define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(CARD32))
 
 
-#define FLUSH_BATCH( r128ctx )						\
-do {									\
-   if ( R128_DEBUG & DEBUG_VERBOSE_IOCTL )				\
-      fprintf( stderr, "FLUSH_BATCH in %s\n", __FUNCTION__ );		\
-   if ( r128ctx->vert_buf ) {						\
-      r128FlushVertices( r128ctx );					\
-   } else if ( r128ctx->next_elt != r128ctx->first_elt ) {		\
-      r128FlushElts( r128ctx );						\
-   }									\
-} while (0)
+extern drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa );
+extern void r128FlushVerticesLocked( r128ContextPtr rmesa );
 
-#define r128FlushVertices( r128ctx )		\
-do {						\
-   LOCK_HARDWARE( r128ctx );			\
-   r128FlushVerticesLocked( r128ctx );		\
-   UNLOCK_HARDWARE( r128ctx );			\
-} while (0)
-
-
-extern drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx );
-extern void r128FlushVerticesLocked( r128ContextPtr r128ctx );
-
-
-#define r128FlushElts( r128ctx )		\
-do {						\
-   LOCK_HARDWARE( r128ctx );			\
-   r128FlushEltsLocked( r128ctx );		\
-   UNLOCK_HARDWARE( r128ctx );			\
-} while (0)
-
-extern void r128GetEltBufLocked( r128ContextPtr r128ctx );
-extern void r128FlushEltsLocked( r128ContextPtr r128ctx );
-extern void r128FireEltsLocked( r128ContextPtr r128ctx,
+extern void r128GetEltBufLocked( r128ContextPtr rmesa );
+extern void r128FlushEltsLocked( r128ContextPtr rmesa );
+extern void r128FireEltsLocked( r128ContextPtr rmesa,
 				GLuint start, GLuint end,
 				GLuint discard );
-extern void r128ReleaseBufLocked( r128ContextPtr r128ctx, drmBufPtr buffer );
-
-
-/* 64-bit align the next element address, and then make room for the
- * next indexed prim packet header.
- */
-#define ALIGN_NEXT_ELT( r128ctx )					\
-do {									\
-   r128ctx->next_elt = (GLushort *)					\
-      (((GLuint)r128ctx->next_elt + 7) & ~0x7);				\
-   r128ctx->next_elt = (GLushort *)					\
-      ((GLubyte *)r128ctx->next_elt + R128_INDEX_PRIM_OFFSET);		\
-} while (0)
-
+extern void r128ReleaseBufLocked( r128ContextPtr rmesa, drmBufPtr buffer );
 
 /* Make this available as both a regular and an inline function.
  */
-extern CARD32 *r128AllocVertices( r128ContextPtr r128ctx, int count );
+extern CARD32 *r128AllocVertices( r128ContextPtr rmesa, int count );
 
-static __inline CARD32 *r128AllocVerticesInline( r128ContextPtr r128ctx,
+static __inline CARD32 *r128AllocVerticesInline( r128ContextPtr rmesa,
 						 int count )
 {
-    int bytes = count * r128ctx->vertsize * sizeof(CARD32);
-    CARD32 *head;
+   int bytes = count * rmesa->vertsize * sizeof(CARD32);
+   CARD32 *head;
 
-    if ( !r128ctx->vert_buf ) {
-	LOCK_HARDWARE( r128ctx );
+   if ( !rmesa->vert_buf ) {
+      LOCK_HARDWARE( rmesa );
 
-	if ( r128ctx->first_elt != r128ctx->next_elt ) {
-	    r128FlushEltsLocked( r128ctx );
-	}
+      if ( rmesa->first_elt != rmesa->next_elt ) {
+	 r128FlushEltsLocked( rmesa );
+      }
 
-	r128ctx->vert_buf = r128GetBufferLocked( r128ctx );
+      rmesa->vert_buf = r128GetBufferLocked( rmesa );
 
-	UNLOCK_HARDWARE( r128ctx );
-    } else if ( r128ctx->vert_buf->used + bytes > r128ctx->vert_buf->total ) {
-	LOCK_HARDWARE( r128ctx );
+      UNLOCK_HARDWARE( rmesa );
+   } else if ( rmesa->vert_buf->used + bytes > rmesa->vert_buf->total ) {
+      LOCK_HARDWARE( rmesa );
 
-	r128FlushVerticesLocked( r128ctx );
-	r128ctx->vert_buf = r128GetBufferLocked( r128ctx );
+      r128FlushVerticesLocked( rmesa );
+      rmesa->vert_buf = r128GetBufferLocked( rmesa );
 
-	UNLOCK_HARDWARE( r128ctx );
-    }
+      UNLOCK_HARDWARE( rmesa );
+   }
 
-    head = (CARD32 *)((char *)r128ctx->vert_buf->address +
-		      r128ctx->vert_buf->used);
+   head = (CARD32 *)((char *)rmesa->vert_buf->address +
+		     rmesa->vert_buf->used);
 
-    r128ctx->num_verts += count;
-    r128ctx->vert_buf->used += bytes;
-    return head;
+   rmesa->num_verts += count;
+   rmesa->vert_buf->used += bytes;
+   return head;
 }
 
-
-extern void r128FireBlitLocked( r128ContextPtr r128ctx, drmBufPtr buffer,
+extern void r128FireBlitLocked( r128ContextPtr rmesa, drmBufPtr buffer,
 				GLint offset, GLint pitch, GLint format,
 				GLint x, GLint y, GLint width, GLint height );
 
-
-extern void r128WriteDepthSpanLocked( r128ContextPtr r128ctx,
+extern void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 				      GLuint n, GLint x, GLint y,
 				      const GLdepth depth[],
 				      const GLubyte mask[] );
-extern void r128WriteDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
+extern void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 					const GLint x[], const GLint y[],
 					const GLdepth depth[],
 					const GLubyte mask[] );
-extern void r128ReadDepthSpanLocked( r128ContextPtr r128ctx,
+extern void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 				     GLuint n, GLint x, GLint y );
-extern void r128ReadDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
+extern void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				       const GLint x[], const GLint y[] );
 
+extern void r128SwapBuffers( r128ContextPtr rmesa );
+extern void r128PageFlip( r128ContextPtr rmesa );
 
-extern void r128SwapBuffers( r128ContextPtr r128ctx );
-
-
-#define r128WaitForIdle( r128ctx )		\
-do {						\
-   LOCK_HARDWARE( r128ctx );			\
-   r128WaitForIdleLocked( r128ctx );		\
-   UNLOCK_HARDWARE( r128ctx );			\
-} while (0)
-
-extern void r128WaitForIdleLocked( r128ContextPtr r128ctx );
+extern void r128WaitForIdleLocked( r128ContextPtr rmesa );
 
 
 extern void r128DDInitIoctlFuncs( GLcontext *ctx );
 
 
-
 /* ================================================================
- * Deprecated functions:
+ * Helper macros:
  */
 
-typedef union {
-    float f;
-    int   i;
-} floatTOint;
-
-/* Insert an integer value into the CCE ring buffer. */
-#define R128CCE(v)				\
-do {						\
-   r128ctx->CCEbuf[r128ctx->CCEcount] = (v);	\
-   r128ctx->CCEcount++;				\
+#define FLUSH_BATCH( rmesa )						\
+do {									\
+   if ( R128_DEBUG & DEBUG_VERBOSE_IOCTL )				\
+      fprintf( stderr, "FLUSH_BATCH in %s\n", __FUNCTION__ );		\
+   if ( rmesa->vert_buf ) {						\
+      r128FlushVertices( rmesa );					\
+   } else if ( rmesa->next_elt != rmesa->first_elt ) {			\
+      r128FlushElts( rmesa );						\
+   }									\
 } while (0)
 
-/* Insert an floating point value into the CCE ring buffer. */
-#define R128CCEF(v)				\
-do {						\
-   floatTOint fTi;				\
-   fTi.f = (v);					\
-   r128ctx->CCEbuf[r128ctx->CCEcount] = fTi.i;	\
-   r128ctx->CCEcount++;				\
+/* 64-bit align the next element address, and then make room for the
+ * next indexed prim packet header.
+ */
+#define ALIGN_NEXT_ELT( rmesa )						\
+do {									\
+   rmesa->next_elt = (GLushort *)					\
+      (((unsigned long)rmesa->next_elt + 7) & ~0x7);			\
+   rmesa->next_elt = (GLushort *)					\
+      ((GLubyte *)rmesa->next_elt + R128_INDEX_PRIM_OFFSET);		\
 } while (0)
 
-/* Insert a type-[0123] packet header into the ring buffer */
-#define R128CCE0(p,r,n)   R128CCE((p) | ((n) << 16) | ((r) >> 2))
-#define R128CCE1(p,r1,r2) R128CCE((p) | (((r2) >> 2) << 11) | ((r1) >> 2))
-#define R128CCE2(p)       R128CCE((p))
-#define R128CCE3(p,n)     R128CCE((p) | ((n) << 16))
-
-#define R128CCE_SUBMIT_PACKET()						  \
-do {									  \
-   r128SubmitPacketLocked( r128ctx, r128ctx->CCEbuf, r128ctx->CCEcount ); \
-   r128ctx->CCEcount = 0;						  \
+#define r128FlushVertices( rmesa )					\
+do {									\
+   LOCK_HARDWARE( rmesa );						\
+   r128FlushVerticesLocked( rmesa );					\
+   UNLOCK_HARDWARE( rmesa );						\
 } while (0)
 
-extern void r128SubmitPacketLocked( r128ContextPtr r128ctx,
-				    CARD32 *buf, GLuint count );
+#define r128FlushElts( rmesa )						\
+do {									\
+   LOCK_HARDWARE( rmesa );						\
+   r128FlushEltsLocked( rmesa );					\
+   UNLOCK_HARDWARE( rmesa );						\
+} while (0)
+
+#define r128WaitForIdle( rmesa )					\
+   do {									\
+      LOCK_HARDWARE( rmesa );						\
+      r128WaitForIdleLocked( rmesa );					\
+      UNLOCK_HARDWARE( rmesa );						\
+   } while (0)
 
 #endif
 #endif /* __R128_IOCTL_H__ */

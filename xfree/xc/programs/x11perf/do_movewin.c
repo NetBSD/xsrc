@@ -1,4 +1,4 @@
-/* $XConsortium: do_movewin.c,v 2.5 94/02/06 20:17:39 rws Exp $ */
+/* $Xorg: do_movewin.c,v 1.4 2000/08/17 19:54:09 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/x11perf/do_movewin.c,v 1.5 2001/01/17 23:45:11 dawes Exp $ */
 
 #include "x11perf.h"
 

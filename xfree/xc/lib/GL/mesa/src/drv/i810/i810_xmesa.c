@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.8 2000/11/08 05:02:43 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.12 2001/03/21 16:14:21 dawes Exp $ */
 
 /*
  * Authors:
@@ -135,9 +135,9 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
    {
       int major, minor, patch;
       if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
-         if (major != 3 || minor != 0 || patch < 0) {
+         if (major != 4 || minor < 0) {
             char msg[1000];
-            sprintf(msg, "i810 DRI driver expected DRI version 3.0.x but got version %d.%d.%d", major, minor, patch);
+            sprintf(msg, "i810 DRI driver expected DRI version 4.0.x but got version %d.%d.%d", major, minor, patch);
             __driMesaMessage(msg);
             return GL_FALSE;
          }
@@ -146,8 +146,7 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
    /* Check that the DDX driver version is compatible */
    if (sPriv->ddxMajor != 1 ||
-       sPriv->ddxMinor != 0 ||
-       sPriv->ddxPatch < 0) {
+       sPriv->ddxMinor < 0) {
       char msg[1000];
       sprintf(msg, "i810 DRI driver expected DDX driver version 1.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
       __driMesaMessage(msg);
@@ -156,10 +155,9 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
    /* Check that the DRM driver version is compatible */
    if (sPriv->drmMajor != 1 ||
-       sPriv->drmMinor != 1 ||
-       sPriv->drmPatch < 0) {
+       sPriv->drmMinor < 1) {
       char msg[1000];
-      sprintf(msg, "i810 DRI driver expected DRM driver version 1.0.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
+      sprintf(msg, "i810 DRI driver expected DRM driver version 1.1.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
       __driMesaMessage(msg);
       return GL_FALSE;
    }
@@ -244,6 +242,7 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
    i810Screen->tex.handle = gDRIPriv->textures;
    i810Screen->tex.size = gDRIPriv->textureSize;
+   i810Screen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
 
    if (drmMap(sPriv->fd, 
 	      i810Screen->tex.handle, 
@@ -316,7 +315,7 @@ GLboolean XMesaCreateContext( Display *dpy, GLvisual *mesaVis,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
    drm_i810_sarea_t *saPriv=(drm_i810_sarea_t *)(((char*)sPriv->pSAREA)+
-						 sizeof(XF86DRISAREARec));
+						 i810Screen->sarea_priv_offset);
 
    imesa = (i810ContextPtr)Xcalloc(sizeof(i810Context), 1);
    if (!imesa) {

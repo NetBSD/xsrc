@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/pci.c,v 1.4 2000/11/03 18:46:16 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/pci.c,v 1.8.2.2 2001/05/25 18:15:46 eich Exp $ */
 
 /*
  *                   XFree86 int10 module
@@ -7,20 +7,18 @@
  */
 #include "xf86Pci.h"
 #include "xf86.h"
-#include "xf86str.h"
 #include "xf86_ansic.h"
 #define _INT10_PRIVATE
 #include "xf86int10.h"
 
 int
-mapPciRom(xf86Int10InfoPtr pInt, unsigned char * address)
+mapPciRom(int pciEntity, unsigned char * address)
 {
     PCITAG tag;
-    unsigned long offset = 0;
     unsigned char *mem, *ptr;
-    int length, rlength, blength;
-
-    pciVideoPtr pvp = xf86GetPciInfoForEntity(pInt->entityIndex);
+    int length;
+    
+    pciVideoPtr pvp = xf86GetPciInfoForEntity(pciEntity);
 
     if (pvp == NULL) {
 #ifdef DEBUG
@@ -30,25 +28,19 @@ mapPciRom(xf86Int10InfoPtr pInt, unsigned char * address)
     }
 
     tag = pciTag(pvp->bus,pvp->device,pvp->func);
-    rlength = blength = 1 << pvp->biosSize;
+    length = 1 << pvp->biosSize;
 
-    /* Read in entire PCI ROM in 64kB chunks */
-    mem = ptr = xnfcalloc(blength, 1);
-    while ((length = rlength) > 0) {
-	if (length > 0x10000) length = 0x10000;
-	if (xf86ReadPciBIOS(offset, tag, -1, ptr, length) < length) {
-	    xfree(mem);
+    /* Read in entire PCI ROM */
+    mem = ptr = xnfcalloc(length, 1);
+    if (xf86ReadPciBIOS(0, tag, -1, ptr, length) == 0) {
+	xfree(mem);
 #ifdef DEBUG
-	    ErrorF("mapPciRom: cannot read BIOS\n");
+	ErrorF("mapPciRom: cannot read BIOS\n");
 #endif
-	    return 0;
-	}
-	offset += length;
-	rlength -= length;
-	ptr += length;
+	return 0;
     }
 
-    ptr = mem;
+    length = 0;
     while ((ptr[0] == 0x55) && (ptr[1] == 0xAA)) {
 	unsigned short data_off = ptr[0x18] | (ptr[0x19] << 8);
 	unsigned char *data = ptr + data_off;
@@ -63,10 +55,10 @@ mapPciRom(xf86Int10InfoPtr pInt, unsigned char * address)
 #ifdef PRINT_PCI
 	ErrorF("data segment in BIOS: 0x%x, type: 0x%x\n", data_off, type);
 #endif
-	if (type) {     /* not PC-AT image: find next one */
+	if (type) {	/* not PC-AT image: find next one */
 	    unsigned int image_length;
 	    unsigned char indicator = data[0x15];
-	    if (indicator & 0x80) /* last image */
+	    if (indicator & 0x80)	/* last image */
 		break;
 	    image_length = (data[0x10] | (data[0x11] << 8)) << 9;
 #ifdef PRINT_PCI

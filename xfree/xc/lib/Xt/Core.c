@@ -1,4 +1,4 @@
-/* $TOG: Core.c /main/63 1998/02/06 13:21:00 kaleb $ */
+/* $Xorg: Core.c,v 1.3 2000/08/17 19:46:10 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,

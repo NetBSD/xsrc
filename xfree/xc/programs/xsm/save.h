@@ -1,4 +1,4 @@
-/* $TOG: save.h /main/5 1998/02/09 14:15:33 kaleb $ */
+/* $Xorg: save.h,v 1.3 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xsm/save.h,v 1.4 2001/01/17 23:46:31 dawes Exp $ */
 
 extern void DoSave(int saveType, int interactStyle, Bool fast);
 extern void LetClientInteract(List *cl);

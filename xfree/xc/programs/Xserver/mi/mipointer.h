@@ -3,7 +3,7 @@
  *
  */
 
-/* $TOG: mipointer.h /main/10 1998/02/09 14:47:38 kaleb $ */
+/* $Xorg: mipointer.h,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 /*
 
@@ -25,10 +25,13 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/mi/mipointer.h,v 3.4 1998/10/04 09:39:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipointer.h,v 3.7 2001/03/25 05:32:15 tsi Exp $ */
 
 #ifndef MIPOINTER_H
 #define MIPOINTER_H
+
+#include "cursor.h"
+#include "input.h"
 
 typedef struct _miPointerSpriteFuncRec {
     Bool	(*RealizeCursor)(

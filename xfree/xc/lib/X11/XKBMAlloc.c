@@ -1,4 +1,4 @@
-/* $TOG: XKBMAlloc.c /main/8 1997/08/17 20:51:56 kaleb $ */
+/* $Xorg: XKBMAlloc.c,v 1.4 2000/08/17 19:45:02 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBMAlloc.c,v 3.9 1998/08/20 08:55:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBMAlloc.c,v 3.11 2001/01/17 19:41:48 dawes Exp $ */
 
 #ifndef XKB_IN_SERVER
 

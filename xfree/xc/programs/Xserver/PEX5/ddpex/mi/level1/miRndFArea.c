@@ -1,4 +1,4 @@
-/* $TOG: miRndFArea.c /main/6 1998/02/10 12:40:05 kaleb $ */
+/* $Xorg: miRndFArea.c,v 1.3 2000/08/17 19:47:04 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xf86dga/dga.c,v 3.15 1997/11/08 16:24:37 hohndel Exp $ */
+/* $XFree86: xc/programs/xf86dga/dga.c,v 3.17 2000/05/14 20:44:00 alanh Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Intrinsic.h>

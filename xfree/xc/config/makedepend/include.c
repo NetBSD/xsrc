@@ -1,4 +1,4 @@
-/* $TOG: include.c /main/21 1998/02/06 11:10:06 kaleb $ */
+/* $Xorg: include.c,v 1.3 2000/08/17 19:41:51 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
@@ -20,14 +20,15 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/config/makedepend/include.c,v 3.6 2001/04/29 23:25:02 tsi Exp $ */
 
 
 #include "def.h"
 
 extern struct	inclist	inclist[ MAXFILES ],
-			*inclistp;
-extern char	*includedirs[ ];
+			*inclistp, *inclistnext;
+extern char	*includedirs[ ],
+		**includedirsnext;
 extern char	*notdotdot[ ];
 extern boolean show_where_not;
 extern boolean warn_multiple;
@@ -165,6 +166,7 @@ newinclude(char *newfile, char *incstring)
 	else
 		ip->i_incstring = copy(incstring);
 
+	inclistnext = inclistp;
 	return(ip);
 }
 
@@ -229,81 +231,84 @@ inc_clean (void)
 }
 
 struct inclist *
-inc_path(char *file, char *include, boolean dot)
+inc_path(char *file, char *include, int type)
 {
-	static char	path[ BUFSIZ ];
+	static char		path[ BUFSIZ ];
 	register char		**pp, *p;
 	register struct inclist	*ip;
-	struct stat	st;
-	boolean	found = FALSE;
+	struct stat		st;
 
 	/*
 	 * Check all previously found include files for a path that
 	 * has already been expanded.
 	 */
-	for (ip = inclist; ip->i_file; ip++)
-	    if ((strcmp(ip->i_incstring, include) == 0) &&
-		!(ip->i_flags & INCLUDED_SYM))
-	    {
-		found = TRUE;
-		break;
-	    }
+	if ((type == INCLUDE) || (type == INCLUDEDOT))
+		inclistnext = inclist;
+	ip = inclistnext;
 
-	/*
-	 * If the path was surrounded by "" or is an absolute path,
-	 * then check the exact path provided.
-	 */
-	if (!found && (dot || *include == '/')) {
-		if (stat(include, &st) == 0) {
-			ip = newinclude(include, include);
-			found = TRUE;
+	for (; ip->i_file; ip++) {
+		if ((strcmp(ip->i_incstring, include) == 0) &&
+		    !(ip->i_flags & INCLUDED_SYM)) {
+			inclistnext = ip + 1;
+			return ip;
 		}
-		else if (show_where_not)
-			warning1("\tnot in %s\n", include);
+	}
+
+	if (inclistnext == inclist) {
+		/*
+		 * If the path was surrounded by "" or is an absolute path,
+		 * then check the exact path provided.
+		 */
+		if ((type == INCLUDEDOT) ||
+		    (type == INCLUDENEXTDOT) ||
+		    (*include == '/')) {
+			if (stat(include, &st) == 0)
+				return newinclude(include, include);
+			if (show_where_not)
+				warning1("\tnot in %s\n", include);
+		}
+
+		/*
+		 * If the path was surrounded by "" see if this include file is
+		 * in the directory of the file being parsed.
+		 */
+		if ((type == INCLUDEDOT) || (type == INCLUDENEXTDOT)) {
+			for (p=file+strlen(file); p>file; p--)
+				if (*p == '/')
+					break;
+			if (p == file) {
+				strcpy(path, include);
+			} else {
+				strncpy(path, file, (p-file) + 1);
+				path[ (p-file) + 1 ] = '\0';
+				strcpy(path + (p-file) + 1, include);
+			}
+			remove_dotdot(path);
+			if (stat(path, &st) == 0)
+				return newinclude(path, include);
+			if (show_where_not)
+				warning1("\tnot in %s\n", path);
+		}
 	}
 
 	/*
-	 * If the path was surrounded by "" see if this include file is in the
-	 * directory of the file being parsed.
+	 * Check the include directories specified.  Standard include dirs
+	 * should be at the end.
 	 */
-	if (!found && dot) {
-		for (p=file+strlen(file); p>file; p--)
-			if (*p == '/')
-				break;
-		if (p == file)
-			strcpy(path, include);
-		else {
-			strncpy(path, file, (p-file) + 1);
-			path[ (p-file) + 1 ] = '\0';
-			strcpy(path + (p-file) + 1, include);
-		}
+	if ((type == INCLUDE) || (type == INCLUDEDOT))
+		includedirsnext = includedirs;
+	pp = includedirsnext;
+
+	for (; *pp; pp++) {
+		sprintf(path, "%s/%s", *pp, include);
 		remove_dotdot(path);
 		if (stat(path, &st) == 0) {
-			ip = newinclude(path, include);
-			found = TRUE;
+			includedirsnext = pp + 1;
+			return newinclude(path, include);
 		}
-		else if (show_where_not)
+		if (show_where_not)
 			warning1("\tnot in %s\n", path);
 	}
 
-	/*
-	 * Check the include directories specified. (standard include dir
-	 * should be at the end.)
-	 */
-	if (!found)
-		for (pp = includedirs; *pp; pp++) {
-			sprintf(path, "%s/%s", *pp, include);
-			remove_dotdot(path);
-			if (stat(path, &st) == 0) {
-				ip = newinclude(path, include);
-				found = TRUE;
-				break;
-			}
-			else if (show_where_not)
-				warning1("\tnot in %s\n", path);
-		}
-
-	if (!found)
-		ip = NULL;
-	return(ip);
+	return NULL;
 }

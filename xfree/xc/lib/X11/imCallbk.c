@@ -1,4 +1,4 @@
-/* $XConsortium: imCallbk.c /main/16 1996/09/28 16:37:06 rws $ */
+/* $Xorg: imCallbk.c,v 1.4 2000/08/17 19:45:10 cpqbld Exp $ */
 /***********************************************************************
 Copyright 1993 by Digital Equipment Corporation, Maynard, Massachusetts,
 Copyright 1994 by FUJITSU LIMITED
@@ -32,7 +32,7 @@ PERFORMANCE OF THIS SOFTWARE.
 		 	     makoto@sm.sony.co.jp
 				
 ***********************************************************************/
-/* $XFree86: xc/lib/X11/imCallbk.c,v 3.3 1996/12/23 05:59:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imCallbk.c,v 3.5 2001/01/17 19:41:51 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -545,7 +545,7 @@ _read_text_from_packet(im, buf, text_ptr)
 
 	tmp_len = (int)*(CARD16*)buf;
 	buf += sz_CARD16;
-	if ((tmp_buf = (char*)Xmalloc(tmp_len + 1)) != 0) {
+	if ((tmp_buf = (char*)Xmalloc(tmp_len + 1))) {
 	    memcpy(tmp_buf, buf, tmp_len);
 	    tmp_buf[tmp_len] = '\0';
 

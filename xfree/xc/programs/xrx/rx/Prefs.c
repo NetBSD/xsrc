@@ -1,4 +1,4 @@
-/* $TOG: Prefs.c /main/5 1998/02/10 18:36:29 kaleb $ */
+/* $Xorg: Prefs.c,v 1.4 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86: xc/programs/xrx/rx/Prefs.c,v 1.3 1997/01/18 07:19:09 dawes Exp $ */
+/* $XFree86: xc/programs/xrx/rx/Prefs.c,v 1.5 2001/01/17 23:46:25 dawes Exp $ */
 
 #include "Prefs.h"
 #include <ctype.h>
@@ -71,8 +71,8 @@ static XtResource resources[] = {
 static AddressFilter *
 NextAFListElem(AddressFilter **list, int *count)
 {
-    AddressFilter *l, *elem;
-    int n, nn;
+    AddressFilter *l;
+    int n;
 
     l = *list;
     n = *count;

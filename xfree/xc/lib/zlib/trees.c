@@ -1,4 +1,4 @@
-/* $TOG: trees.c /main/4 1998/02/04 14:34:17 kaleb $ */
+/* $Xorg: trees.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.8 2000/11/15 23:13:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.14 2001/05/10 16:48:12 dawes Exp $ */
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
  *
@@ -28,7 +28,7 @@
  *
  */
 
-
+#define COMPILER_H_EXTRAS
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -43,14 +43,14 @@
 #include "mipointer.h"
 #include "micmap.h"
 #include "mibstore.h"
-
+#include "fb.h"
 #include "ark.h"
 
 
 /*
  * prototypes
  */
-static OptionInfoPtr ARKAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * ARKAvailableOptions(int chipid, int busid);
 static void ARKIdentify(int flags);
 static Bool ARKProbe(DriverPtr drv, int flags);
 static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags);
@@ -73,7 +73,7 @@ static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
 static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new);
 
 /* helpers */
-static unsigned char get_daccomm();
+static unsigned char get_daccomm(void);
 static unsigned char set_daccom(unsigned char comm);
 
 
@@ -107,8 +107,9 @@ typedef enum {
 	OPTION_NOACCEL
 } ARKOpts;
 
-static OptionInfoRec ARKOptions[] = {
-	{ OPTION_NOACCEL, "noaccel", OPTV_BOOLEAN, {0}, FALSE }
+static const OptionInfoRec ARKOptions[] = {
+	{ OPTION_NOACCEL, "noaccel", OPTV_BOOLEAN, {0}, FALSE },
+	{ -1,		  NULL,	     OPTV_NONE,	   {0}, FALSE }
 };
 
 static const char *fbSymbols[] = {
@@ -195,7 +196,7 @@ static void ARKFreeRec(ScrnInfoPtr pScrn)
 	pScrn->driverPrivate = NULL;
 }
 
-static OptionInfoPtr ARKAvailableOptions(int chipid, int busid)
+static const OptionInfoRec * ARKAvailableOptions(int chipid, int busid)
 {
 	return ARKOptions;
 }
@@ -262,11 +263,8 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	EntityInfoPtr pEnt;
 	ARKPtr pARK;
 	vgaHWPtr hwp;
-	MessageType from = X_DEFAULT;
 	int i;
 	ClockRangePtr clockRanges;
-	char *mod = NULL;
-	const char *reqSym = NULL;
 	rgb zeros = {0, 0, 0};
 	Gamma gzeros = {0.0, 0.0, 0.0};
 	unsigned char tmp;
@@ -326,9 +324,12 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	pARK = ARKPTR(pScrn);
 
 	xf86CollectOptions(pScrn, NULL);
-	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ARKOptions);
+	if (!(pARK->Options = xalloc(sizeof(ARKOptions))))
+		return FALSE;
+	memcpy(pARK->Options, ARKOptions, sizeof(ARKOptions));
+	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pARK->Options);
 
-	if (xf86ReturnOptValBool(ARKOptions, OPTION_NOACCEL, FALSE)) {
+	if (xf86ReturnOptValBool(pARK->Options, OPTION_NOACCEL, FALSE)) {
 		pARK->NoAccel = TRUE;
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: NoAccel - acceleration disabled\n");
 	} else
@@ -414,10 +415,11 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 				pScrn->videoRam = 2048;
 			else
 				pScrn->videoRam = 4096;
-	}
+		}
 
-	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected %d bytes video ram\n",
-			pScrn->videoRam);
+		xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected %d bytes video ram\n",
+			   pScrn->videoRam);
+	}
 
 	/* try to detect the RAMDAC */
 	{
@@ -459,7 +461,7 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
 			      pScrn->display->modes, clockRanges,
 			      NULL, 256, 2048, pScrn->bitsPerPixel,
-			      128, 2048, pScrn->virtualX,
+			      128, 2048, pScrn->display->virtualX,
 			      pScrn->display->virtualY, pARK->videoRam * 1024,
 			      LOOKUP_BEST_REFRESH);
 	if (i == -1) {
@@ -491,15 +493,12 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 
 	return TRUE;
 }
-}
 
 static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 			  char **argv)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	ARKPtr pARK = ARKPTR(pScrn);
-	BoxRec MemBox;
-	int i;
 
 	pScrn->fbOffset = 0;
 
@@ -530,10 +529,14 @@ static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 			return FALSE;
 	}
 
+	miSetPixmapDepths ();
+
 	if (!fbScreenInit(pScreen, pARK->FBBase, pScrn->virtualX,
 			  pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
 			  pScrn->displayWidth, pScrn->bitsPerPixel))
 		return FALSE;
+
+	fbPictureInit (pScreen, 0, 0);
 
 	xf86SetBlackWhitePixels(pScreen);
 
@@ -1131,7 +1134,7 @@ static void ARKFreeScreen(int scrnIndex, int flags)
 }
 
 
-static unsigned char get_daccomm()
+static unsigned char get_daccomm(void)
 {
 	unsigned char tmp;
 

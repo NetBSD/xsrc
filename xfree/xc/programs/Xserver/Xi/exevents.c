@@ -1,4 +1,4 @@
-/* $TOG: exevents.c /main/53 1998/02/09 15:28:37 kaleb $ */
+/* $Xorg: exevents.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.6 1998/10/04 09:37:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.8 2001/01/17 22:13:24 dawes Exp $ */
 
 /********************************************************************
  *

@@ -1,4 +1,4 @@
-/* $TOG: header.c /main/6 1998/02/09 13:43:52 kaleb $ */
+/* $Xorg: header.c,v 1.3 2000/08/17 19:53:53 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/fstobdf/header.c,v 3.3 1999/02/19 21:27:09 hohndel Exp $ */
+/* $XFree86: xc/programs/fstobdf/header.c,v 3.5 2001/01/17 23:44:54 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<X11/Xosdefs.h>

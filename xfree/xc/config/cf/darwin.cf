@@ -1,6 +1,6 @@
-XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
+XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 
-/* Darwin / MacOS-X configuration by John Carmack <johnc@idsoftware.com> */
+/* Darwin / Mac OS X configuration by John Carmack <johnc@idsoftware.com> */
 
 /* imake determines the default values by parsing uname */
 #define OSName                  DefaultOSName
@@ -19,27 +19,34 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 /*
  * This enables some settings for developers.
  */
-#define XFree86Devel            NO
+#ifndef XFree86Devel
+# define XFree86Devel            NO
+#endif
+
+/*
+ * This enables Quartz compatibility.
+ * Turn off to build on raw Darwin systems.
+ */
+#ifndef DarwinQuartzSupport
+# define DarwinQuartzSupport     YES
+#endif
 
 /* we don't need -lm */
 #define MathLibrary             /**/
 
 /* we don't have a termcap library */
-#define TermcapLibrary         /**/
+#define TermcapLibrary          /**/
 
 /* we don't have a dbm library */
-#define DBMLibrary             /**/
+#define DBMLibrary              /**/
 
-/* our cpp isn't in /lib/cpp */
+/* our cpp isn't in /lib/cpp and it doesn't like -undef */
 #define CppCmd                  /usr/bin/cpp
+#define RawCppCmd               CppCmd
 
 /* we have a gcc compatible compiler, but its not called gcc */
 #define CcCmd                   /usr/bin/cc
-
-/* if -c isn't passed, there are problems with the cfb libs when
- * they include an object file without any symbols
- */
-#define RanlibCmd               ranlib -c
+#define CplusplusCmd            /usr/bin/c++
 
 /* uncommenting this line will get -g instead of -O, which builds
  * a lot faster and gets debug info
@@ -49,6 +56,7 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 #endif
 
 /* default flags to pass to cc */
+#ifndef DefaultCCOptions
 #if XFree86Devel
 # define DefaultCCOptions       -Wall -Wpointer-arith -Wstrict-prototypes \
                                 -Wmissing-prototypes -Wmissing-declarations \
@@ -57,17 +65,25 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 #else
 # define DefaultCCOptions       -Wall -Wpointer-arith -traditional-cpp
 #endif
+#endif
 
-/* a lot of xfree86 code needs __powerpc__ to avoid doing outport asm
- *
+/* flags to pass to cc when building libraries */
+#ifndef LibraryCCOptions
+# define LibraryCCOptions       DefaultCCOptions -fno-common
+#endif
+
+/*
  * __DARWIN__ will be used for platform specific #ifdefs that can't
- * be handled by existing X defines
+ * be handled by existing X defines.
  *
- * there is an unfortunate symbol collision with the appkit for TIFFFaxBlackCodes
- *
- * We need to define BSD44SOCKETS to get unix domain socket namelen calculated right
+ * Darwin's alloca() seg faults (rather than returning NULL) on failed
+ * allocations, so we can't use it.
  */
-#define StandardDefines         -D__powerpc__ -D__DARWIN__
+#ifdef PpcDarwinArchitecture
+#define StandardDefines         -D__powerpc__ -D__DARWIN__ -DNO_ALLOCA
+#else
+#define StandardDefines         -D__DARWIN__ -DNO_ALLOCA
+#endif
 
 /* programs/rgb/rgb.h and others needs this */
 #define HasNdbm                 YES
@@ -80,6 +96,11 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 /* our custom X server */
 #define XDarwinServer           YES
 
+/* Thanks to the IOKit, the X server does not have to be SetUID. */
+#ifndef InstallXserverSetUID
+# define InstallXserverSetUID	NO
+#endif
+
 /* pex? bah.  I'm not going to bother getting the device
  * dependent part of this working.  If I get the time, i'll
  * get glx working instead.
@@ -89,17 +110,37 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 /* no direct graphics extension */
 #define BuildXF86DGA            NO
 
-/* no extra tablets and weird input devices */
+/* no server support for extra tablets and weird input devices */
 #define BuildXInputExt          NO
+#define BuildXInputLib          YES
 
 /* no Display Power Management extension */
 #define BuildDPMSExt            NO
 
-/* no Render extension */
-#define BuildRender             NO
-
 #define BuildXvExt              NO
 
-/* include all the xfree rules */
-/* I haven't tracked down why this is needed, but it is... */
+/* no OpenGL libraries */
+#ifndef BuildGLXLibrary	
+# define BuildGLXLibrary        NO
+#endif
+#ifndef BuildGLULibrary
+# define BuildGLULibrary        NO
+#endif
+
+#define BuildLibPathVar         DYLD_LIBRARY_PATH
+
+/* include rules to build shared libraries */
+#include <darwinLib.rules>
+
+/*
+ * Darwin specific Imake Config files
+ */
+#ifndef LocalConfigFiles
+#define LocalConfigFiles \
+	darwinLib.rules \
+	darwinLib.tmpl
+#endif
+
+/* include all the XFree86 rules */
 #include <xfree86.cf>
+

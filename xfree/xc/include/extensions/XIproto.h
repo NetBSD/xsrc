@@ -1,4 +1,4 @@
-/* $TOG: XIproto.h /main/27 1998/02/09 11:20:33 kaleb $ */
+/* $Xorg: XIproto.h,v 1.4 2000/08/18 04:05:45 coskrey Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/include/extensions/XIproto.h,v 1.4 2001/01/17 17:53:17 dawes Exp $ */
 
 #ifndef _XIPROTO_H
 #define _XIPROTO_H
@@ -214,7 +214,11 @@ typedef struct _xDeviceInfo *xDeviceInfoPtr;
 typedef struct _xAnyClassinfo *xAnyClassPtr;
 
 typedef struct _xAnyClassinfo {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8 	c_class;
+#else
     CARD8 	class;
+#endif
     CARD8 	length;
     } xAnyClassInfo;
 
@@ -229,7 +233,11 @@ typedef struct _xDeviceInfo {
 typedef struct _xKeyInfo *xKeyInfoPtr;
 
 typedef struct _xKeyInfo {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8 	c_class;
+#else
     CARD8 	class;
+#endif
     CARD8 	length;
     KeyCode 	min_keycode; 
     KeyCode 	max_keycode; 
@@ -240,7 +248,11 @@ typedef struct _xKeyInfo {
 typedef struct _xButtonInfo *xButtonInfoPtr;
 
 typedef struct _xButtonInfo {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8 	c_class;
+#else
     CARD8 	class;
+#endif
     CARD8 	length;
     CARD16 	num_buttons B16;
     } xButtonInfo;
@@ -248,7 +260,11 @@ typedef struct _xButtonInfo {
 typedef struct _xValuatorInfo *xValuatorInfoPtr;
 
 typedef struct _xValuatorInfo {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8 	c_class;
+#else
     CARD8 	class;
+#endif
     CARD8 	length;
     CARD8 	num_axes;
     CARD8 	mode;
@@ -292,7 +308,11 @@ typedef struct {
     } xOpenDeviceReply;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8 	c_class;
+#else
     CARD8 	class;
+#endif
     CARD8 	event_type_base;
     } xInputClassInfo;
 
@@ -732,13 +752,21 @@ typedef struct {
 } xGetFeedbackControlReply;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class; 	/* feedback class		*/
+#else
     CARD8  	class; 		/* feedback class		*/
+#endif
     CARD8  	id; 		/* feedback id    		*/
     CARD16  	length B16; 	/* feedback length		*/
 } xFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8   c_class;
+#else
     CARD8   class;
+#endif
     CARD8   id;
     CARD16  length B16;
     CARD16  pitch B16;
@@ -753,7 +781,11 @@ typedef struct {
 } xKbdFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8   c_class;
+#else
     CARD8   class;
+#endif
     CARD8   id;
     CARD16  length B16;
     CARD8   pad1,pad2;
@@ -763,7 +795,11 @@ typedef struct {
 } xPtrFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8   	id;
     CARD16  	length B16; 	/* feedback length  		*/
     CARD32	resolution B32;
@@ -772,7 +808,11 @@ typedef struct {
 } xIntegerFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8   	id;
     CARD16  	length B16; 	/* feedback length  		*/
     CARD16	max_symbols B16;
@@ -780,7 +820,11 @@ typedef struct {
 } xStringFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8	id;
     CARD16  	length B16; 	/* feedback length  		*/
     CARD8	percent;
@@ -790,7 +834,11 @@ typedef struct {
 } xBellFeedbackState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8	id;
     CARD16  	length B16; 	/* feedback length  		*/
     CARD32	led_mask B32;
@@ -814,13 +862,21 @@ typedef struct {
 } xChangeFeedbackControlReq;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
 } xFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback length  		*/
     CARD16  	length B16; 	/* feedback length  		*/
     KeyCode 	key; 
@@ -834,7 +890,11 @@ typedef struct {
 } xKbdFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
     CARD8  	pad1,pad2;
@@ -844,14 +904,22 @@ typedef struct {
 } xPtrFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
     INT32	int_to_display B32;
 } xIntegerFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
     CARD8  	pad1,pad2;
@@ -859,7 +927,11 @@ typedef struct {
 } xStringFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
     INT8	percent;
@@ -869,7 +941,11 @@ typedef struct {
 } xBellFeedbackCtl;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;  	/* feedback class id		*/
+#else
     CARD8  	class;  	/* feedback class id		*/
+#endif
     CARD8  	id; 		/* feedback id      		*/
     CARD16  	length B16; 	/* feedback length  		*/
     CARD32	led_mask B32;
@@ -1070,7 +1146,11 @@ typedef struct {
 } xQueryDeviceStateReply;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;
+#else
     CARD8  	class;
+#endif
     CARD8  	length;
     CARD8	num_keys;
     BYTE   	pad1;
@@ -1078,7 +1158,11 @@ typedef struct {
 } xKeyState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;
+#else
     CARD8  	class;
+#endif
     CARD8  	length;
     CARD8	num_buttons;
     BYTE   	pad1;
@@ -1086,7 +1170,11 @@ typedef struct {
 } xButtonState;
 
 typedef struct {
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8  	c_class;
+#else
     CARD8  	class;
+#endif
     CARD8  	length;
     CARD8  	num_valuators;
     CARD8	mode;

@@ -17,15 +17,16 @@
 /***************************************************************************/
 
 
-#ifndef TTPOST_H
-#define TTPOST_H
+#ifndef __TTPOST_H__
+#define __TTPOST_H__
 
-#include <freetype/config/ftconfig.h>
-#include <freetype/internal/tttypes.h>
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_CONFIG_CONFIG_H
+#include FT_INTERNAL_TRUETYPE_TYPES_H
+
+
+FT_BEGIN_HEADER
 
 
 #define TT_Err_Invalid_Post_Table_Format  0x0B00
@@ -41,12 +42,9 @@
   void  TT_Free_Post_Names( TT_Face  face );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* TTPOST_H */
+#endif /* __TTPOST_H__ */
 
 
 /* END */

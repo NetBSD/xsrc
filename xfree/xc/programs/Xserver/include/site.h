@@ -1,4 +1,4 @@
-/* $TOG: site.h /main/29 1998/02/09 14:30:13 kaleb $ */
+/* $Xorg: site.h,v 1.4 2000/08/17 19:53:31 cpqbld Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/include/site.h,v 1.6 2001/01/17 22:36:58 dawes Exp $ */
 
 #ifndef SITE_H
 #define SITE_H
@@ -50,7 +50,7 @@ SOFTWARE.
  * server executable.
  */
 #ifndef VENDOR_STRING
-#define VENDOR_STRING "The Open Group"
+#define VENDOR_STRING "The X.Org Group"
 #endif
 
 /*
@@ -59,7 +59,7 @@ SOFTWARE.
  * by the vendor.
  */
 #ifndef VENDOR_RELEASE
-#define VENDOR_RELEASE	6400
+#define VENDOR_RELEASE	6510
 #endif
 
 /*

@@ -1,5 +1,5 @@
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbbres.c,v 1.4 2001/01/17 22:37:02 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbbres.c /main/13 1998/02/09 14:38:29 kaleb $ */
+/* $Xorg: mfbbres.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 #include "X.h"
 #include "misc.h"
 #include "mfb.h"

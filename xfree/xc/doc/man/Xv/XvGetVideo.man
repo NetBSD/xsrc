@@ -1,5 +1,5 @@
-.TH XvGetVideo 3X 
-.\" $XFree86$
+.TH XvGetVideo 3X  __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvGetVideo.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvGetVideo \- capture video from a drawable
 .\"

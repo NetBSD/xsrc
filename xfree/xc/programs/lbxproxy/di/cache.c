@@ -1,4 +1,4 @@
-/* $TOG: cache.c /main/13 1998/02/11 09:47:25 kaleb $ */
+/* $Xorg: cache.c,v 1.4 2000/08/17 19:53:54 cpqbld Exp $ */
 /*
 Copyright 1994, 1998  The Open Group
 
@@ -130,7 +130,7 @@ CacheFreeCache(server, cid)
     CacheEntryPtr cp;
 
     for (i = 0; i < cache->buckets; i++) {
-	while (cp = cache->entries[i]) {
+	while ((cp = cache->entries[i])) {
 	    cache->entries[i] = cp->next;
 	    (*cp->free_func) (cp->id, cp->client, cp->data, CacheWasReset);
 	    xfree(cp);
@@ -228,7 +228,7 @@ flush_cache(cache, needed)
 	oldest = NULL;
 	/* find oldest */
 	for (i = 0; i < cache->buckets; i++) {
-	    for (prev = &cache->entries[i]; cp = *prev; prev = &cp->next) {
+	    for (prev = &cache->entries[i]; (cp = *prev); prev = &cp->next) {
 		if (!oldest || (cp->timestamp < oldest->timestamp)) {
 		    oldest = cp;
 		    oldprev = prev;
@@ -334,7 +334,7 @@ CacheFreeMemory(server, cacheid, cid, notify)
     CacheEntryPtr cp, *prev;
 
     for (prev = &cache->entries[hash(server, cacheid, cid)];
-	 cp = *prev;
+	 (cp = *prev);
 	 prev = &cp->next) {
 	if (cp->id == cid) {
 	    *prev = cp->next;

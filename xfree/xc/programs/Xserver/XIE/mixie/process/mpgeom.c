@@ -1,4 +1,4 @@
-/* $TOG: mpgeom.c /main/5 1998/02/09 16:22:16 kaleb $ */
+/* $Xorg: mpgeom.c,v 1.3 2000/08/17 19:47:52 cpqbld Exp $ */
 /**** module mpgeom.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Ben Fahy  -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeom.c,v 1.4 2001/01/17 22:13:11 dawes Exp $ */
 
 
 #define _XIEC_MPGEOM

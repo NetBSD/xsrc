@@ -37,7 +37,7 @@
 *
 ****************************************************************************/
 
-/* $XFree86: xc/extras/x86emu/src/x86emu/decode.c,v 1.7 2000/12/11 16:38:33 dawes Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/decode.c,v 1.9 2001/01/06 20:19:03 tsi Exp $ */
 
 #include "x86emu/x86emui.h"
 
@@ -832,31 +832,31 @@ unsigned decode_rm10_address(
 	unsigned displacement = (u16)fetch_word_imm();
 	switch (rm) {
       case 0:
-		DECODE_PRINTF2("%d[BX+SI]", displacement);
+		DECODE_PRINTF2("%04x[BX+SI]", displacement);
 		return M.x86.R_BX + M.x86.R_SI + displacement;
 	  case 1:
-		DECODE_PRINTF2("%d[BX+DI]", displacement);
+		DECODE_PRINTF2("%04x[BX+DI]", displacement);
 		return M.x86.R_BX + M.x86.R_DI + displacement;
 	  case 2:
-		DECODE_PRINTF2("%d[BP+SI]", displacement);
+		DECODE_PRINTF2("%04x[BP+SI]", displacement);
 		M.x86.mode |= SYSMODE_SEG_DS_SS;
 		return M.x86.R_BP + M.x86.R_SI + displacement;
 	  case 3:
-		DECODE_PRINTF2("%d[BP+DI]", displacement);
+		DECODE_PRINTF2("%04x[BP+DI]", displacement);
 		M.x86.mode |= SYSMODE_SEG_DS_SS;
 		return M.x86.R_BP + M.x86.R_DI + displacement;
 	  case 4:
-		DECODE_PRINTF2("%d[SI]", displacement);
+		DECODE_PRINTF2("%04x[SI]", displacement);
 		return M.x86.R_SI + displacement;
 	  case 5:
-		DECODE_PRINTF2("%d[DI]", displacement);
+		DECODE_PRINTF2("%04x[DI]", displacement);
 		return M.x86.R_DI + displacement;
 	  case 6:
-		DECODE_PRINTF2("%d[BP]", displacement);
+		DECODE_PRINTF2("%04x[BP]", displacement);
 		M.x86.mode |= SYSMODE_SEG_DS_SS;
 		return M.x86.R_BP + displacement;
 	  case 7:
-		DECODE_PRINTF2("%d[BX]", displacement);
+		DECODE_PRINTF2("%04x[BX]", displacement);
 		return M.x86.R_BX + displacement;
 	}
 	HALT_SYS();

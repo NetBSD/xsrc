@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfbcpyarea.c,v 1.4 1999/03/28 15:33:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfbcpyarea.c,v 1.5 1999/05/16 10:13:05 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

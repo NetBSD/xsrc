@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.4.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,10 +43,9 @@ static void TAG(build_m3)(GLfloat      f[][3],
 			  const GLuint       flags[],
 			  const GLubyte      cullmask[] )
 {
-   GLuint stride = coord_vec->stride;
-   GLfloat *coord = (GLfloat *)coord_vec->start;
-   GLuint count = coord_vec->count;
-
+   const GLuint stride = coord_vec->stride;
+   const GLfloat *coord = (const GLfloat *) coord_vec->start;
+   const GLuint count = coord_vec->count;
    const GLfloat *normal = FIRST_NORMAL;
    GLuint i;
 
@@ -55,26 +54,21 @@ static void TAG(build_m3)(GLfloat      f[][3],
    (void) flags;
    (void) cullmask;
 
-   /* KW: Had to rearrange this loop to avoid a compiler bug with gcc
-    *     2.7.3.1 at -O3 optimization.  Using -fno-strength-reduce
-    *     also fixed the bug - is this generally necessary?  
-    */
-   for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
+   for (i=0; i<count; i++, STRIDE_F(coord,stride), NEXT_NORMAL) {
       CHECK {
-	 const GLfloat *norm = normal;
 	 GLfloat u[3], two_nu, fx, fy, fz;
+         CUR_NORMAL;
 	 COPY_3V( u, coord ); 
 	 NORMALIZE_3FV( u );
-	 two_nu = 2.0F * DOT3(norm,u);
-	 fx = f[i][0] = u[0] - norm[0] * two_nu;
-	 fy = f[i][1] = u[1] - norm[1] * two_nu;
-	 fz = f[i][2] = u[2] - norm[2] * two_nu;
+	 two_nu = 2.0F * DOT3(normal,u);
+	 fx = f[i][0] = u[0] - normal[0] * two_nu;
+	 fy = f[i][1] = u[1] - normal[1] * two_nu;
+	 fz = f[i][2] = u[2] - normal[2] * two_nu;
 	 m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
 	 if (m[i] != 0.0F) {
 	    m[i] = 0.5F / (GLfloat) GL_SQRT(m[i]);
 	 }
       }
-      NEXT_NORMAL;
    }
 }
 
@@ -87,11 +81,10 @@ static void TAG(build_m2)(GLfloat f[][3],
 			  const GLuint       flags[],
 			  const GLubyte      cullmask[] )
 {
-   GLuint stride = coord_vec->stride;
-   GLfloat *coord = coord_vec->start;
-   GLuint count = coord_vec->count;
-
-   GLfloat *normal = FIRST_NORMAL;
+   const GLuint stride = coord_vec->stride;
+   const GLfloat *coord = coord_vec->start;
+   const GLuint count = coord_vec->count;
+   const GLfloat *normal = FIRST_NORMAL;
    GLuint i;
 
    LOCAL_VARS;
@@ -99,23 +92,21 @@ static void TAG(build_m2)(GLfloat f[][3],
    (void) flags;
    (void) cullmask;
 
-   for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
+   for (i=0; i<count; i++, STRIDE_F(coord,stride), NEXT_NORMAL) {
       CHECK {
-	 GLfloat *norm = normal;
 	 GLfloat u[3], two_nu, fx, fy, fz;
-	 COPY_2V( u, coord ); 
-	 u[2] = 0;
+         CUR_NORMAL;
+	 COPY_2V( u, coord ); u[2] = 0;
 	 NORMALIZE_3FV( u );
-	 two_nu = 2.0F * DOT3(norm,u);
-	 fx = f[i][0] = u[0] - norm[0] * two_nu;
-	 fy = f[i][1] = u[1] - norm[1] * two_nu;
-	 fz = f[i][2] = u[2] - norm[2] * two_nu;
+	 two_nu = 2.0F * DOT3(normal,u);
+	 fx = f[i][0] = u[0] - normal[0] * two_nu;
+	 fy = f[i][1] = u[1] - normal[1] * two_nu;
+	 fz = f[i][2] = u[2] - normal[2] * two_nu;
 	 m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
 	 if (m[i] != 0.0F) {
 	    m[i] = 0.5F / (GLfloat) GL_SQRT(m[i]);
 	 }
       }
-      NEXT_NORMAL;
    }
 }
 
@@ -141,11 +132,10 @@ static void TAG(build_f3)( GLfloat *f,
 			   const GLuint       flags[],
 			   const GLubyte cullmask[] )
 {
-   GLuint stride = coord_vec->stride;
-   GLfloat *coord = coord_vec->start;
-   GLuint count = coord_vec->count;
-
-   GLfloat *normal = FIRST_NORMAL;
+   const GLuint stride = coord_vec->stride;
+   const GLfloat *coord = coord_vec->start;
+   const GLuint count = coord_vec->count;
+   const GLfloat *normal = FIRST_NORMAL;
    GLuint i;
 
    LOCAL_VARS;
@@ -153,9 +143,10 @@ static void TAG(build_f3)( GLfloat *f,
    (void) flags;
    (void) cullmask;
 
-   for (i=0;i<count;i++, STRIDE_F(coord,stride), STRIDE_F(f,fstride), NEXT_NORMAL) {
+   for (i=0; i<count; i++, STRIDE_F(coord,stride), STRIDE_F(f,fstride), NEXT_NORMAL) {
       CHECK {
 	 GLfloat u[3], two_nu;
+         CUR_NORMAL;
 	 COPY_3V( u, coord ); 
 	 NORMALIZE_3FV( u );
 	 two_nu = 2.0F * DOT3(normal,u);
@@ -174,11 +165,10 @@ static void TAG(build_f2)( GLfloat *f,
 			   const GLuint      flags[],
 			   const GLubyte     cullmask[] )
 {
-   GLuint stride = coord_vec->stride;
-   GLfloat *coord = coord_vec->start;
-   GLuint count = coord_vec->count;
-
-   GLfloat *normal = FIRST_NORMAL;
+   const GLuint stride = coord_vec->stride;
+   const GLfloat *coord = coord_vec->start;
+   const GLuint count = coord_vec->count;
+   const GLfloat *normal = FIRST_NORMAL;
    GLuint i;
 
    LOCAL_VARS;
@@ -186,11 +176,11 @@ static void TAG(build_f2)( GLfloat *f,
    (void) flags;
    (void) cullmask;
 
-   for (i=0;i<count;i++,STRIDE_F(coord,stride), STRIDE_F(f,fstride), NEXT_NORMAL) {
+   for (i=0; i<count; i++, STRIDE_F(coord,stride), STRIDE_F(f,fstride), NEXT_NORMAL) {
       CHECK {
 	 GLfloat u[3], two_nu;
-	 COPY_2V( u, coord ); 
-	 u[2] = 0;
+         CUR_NORMAL;
+	 COPY_2V( u, coord ); u[2] = 0;
 	 NORMALIZE_3FV( u );
 	 two_nu = 2.0F * DOT3(normal,u);
 	 f[0] = u[0] - normal[0] * two_nu;
@@ -250,16 +240,18 @@ static void TAG(texgen_normal_map_nv)( struct vertex_buffer *VB,
    GLubyte *cullmask = VB->CullMask + VB->Start;
    GLuint *flags = VB->Flag + VB->Start;
    GLuint count = VB->Count;
-   GLuint i;
+
    const GLfloat *normal = FIRST_NORMAL;
+   GLuint i;
 
    LOCAL_VARS;
 
    (void) flags;
-   
+   (void) cullmask;
 
-   for (i=0;i<count;i++, NEXT_NORMAL) {
+   for (i=0; i<count; i++,NEXT_NORMAL) {
       CHECK {
+         CUR_NORMAL;
 	 texcoord[i][0] = normal[0];
 	 texcoord[i][1] = normal[1];
 	 texcoord[i][2] = normal[2];
@@ -412,7 +404,10 @@ static void TAG(texgen)( struct vertex_buffer *VB, GLuint textureUnit )
 
 	 const GLfloat *normal = FIRST_NORMAL;
 	 for (i=0;i<count;i++, NEXT_NORMAL) {
-	    CHECK texcoord[i][0] = normal[0];
+	    CHECK {
+               CUR_NORMAL;
+               texcoord[i][0] = normal[0];
+            }
 	 }
 	 break;
       }
@@ -443,7 +438,10 @@ static void TAG(texgen)( struct vertex_buffer *VB, GLuint textureUnit )
       case GL_NORMAL_MAP_NV: {
 	 const GLfloat *normal = FIRST_NORMAL;
 	 for (i=0;i<count;i++, NEXT_NORMAL) {
-	    CHECK texcoord[i][1] = normal[1];
+	    CHECK {
+               CUR_NORMAL;
+               texcoord[i][1] = normal[1];
+            }
 	 }
 	 break;
       }
@@ -470,7 +468,10 @@ static void TAG(texgen)( struct vertex_buffer *VB, GLuint textureUnit )
       case GL_NORMAL_MAP_NV: {
 	 const GLfloat *normal = FIRST_NORMAL;
 	 for (i=0;i<count;i++,NEXT_NORMAL) {
-	    CHECK texcoord[i][2] = normal[2];
+	    CHECK {
+               CUR_NORMAL;
+               texcoord[i][2] = normal[2];
+            }
 	 }
 	 break;
       }
@@ -508,6 +509,7 @@ static void TAG(init_texgen)( void )
 #undef CULL
 #undef FIRST_NORMAL  
 #undef NEXT_NORMAL
+#undef CUR_NORMAL
 #undef LOCAL_VARS
 #undef CHECK
 

@@ -1,4 +1,4 @@
-/* $XConsortium: XHPlib.h /main/4 1996/12/04 10:23:16 lehors $ */
+/* $Xorg: XHPlib.h,v 1.3 2000/08/17 19:48:24 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1992 by Hewlett-Packard Company, Palo Alto, California.
 

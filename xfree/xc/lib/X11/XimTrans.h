@@ -1,4 +1,4 @@
-/* $XConsortium: XimTrans.h,v 1.3 94/03/26 16:57:12 rws Exp $ */
+/* $Xorg: XimTrans.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992 by Sun Microsystems, Inc.

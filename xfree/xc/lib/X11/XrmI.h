@@ -1,4 +1,4 @@
-/* $TOG: XrmI.h /main/11 1998/02/06 18:03:19 kaleb $ */
+/* $Xorg: XrmI.h,v 1.3 2000/08/17 19:45:08 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: technique.h /main/5 1998/02/06 15:13:09 kaleb $ */
+/* $Xorg: technique.h,v 1.3 2000/08/17 19:45:28 cpqbld Exp $ */
 
 /*
 

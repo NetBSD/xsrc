@@ -1,4 +1,4 @@
-/* $TOG: RootWinP.h /main/4 1998/02/09 14:10:30 kaleb $ */
+/* $Xorg: RootWinP.h,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: XawIm.c /main/12 1998/04/21 07:40:26 kaleb $ */
+/* $Xorg: XawIm.c,v 1.4 2000/08/17 19:45:44 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -48,7 +48,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/XawIm.c,v 1.10 2000/06/13 23:15:48 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawIm.c,v 1.12 2001/01/17 19:42:36 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

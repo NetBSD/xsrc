@@ -1,5 +1,5 @@
 /*
-* $TOG: VendorP.h /main/12 1998/02/06 13:27:55 kaleb $
+* $Xorg: VendorP.h,v 1.3 2000/08/17 19:46:20 cpqbld Exp $
 * $oHeader: VendorP.h,v 1.2 88/08/18 15:56:48 asente Exp $
 */
 

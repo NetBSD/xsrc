@@ -1,4 +1,4 @@
-/* $TOG: x_hilinit.c /main/10 1998/02/10 13:11:28 kaleb $ */
+/* $Xorg: x_hilinit.c,v 1.3 2000/08/17 19:48:24 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -46,7 +46,7 @@ Telephone and Telegraph Company or of the Regents of the
 University of California.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/hp/input/x_hilinit.c,v 3.2 1997/11/16 06:17:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/hp/input/x_hilinit.c,v 3.4 2001/01/17 22:36:47 dawes Exp $ */
 
 #define	NEED_EVENTS
 #define NITEMS(array) (sizeof(array)/sizeof(array[0]))

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/ar.h,v 1.1.2.1 1998/05/22 13:47:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/ar.h,v 1.3 1998/07/25 16:56:12 dawes Exp $ */
 
 
 #ifndef _AR_H

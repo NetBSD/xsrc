@@ -24,7 +24,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.10 2000/12/04 18:49:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.12 2001/02/09 00:02:53 dawes Exp $ */
 
 /*
  * This file contains:
@@ -267,7 +267,7 @@ static Utf8ConvRec all_charsets[] = {
     { "JISX0201.1976-0", NULLQUARK,
 	jisx0201_mbtowc, jisx0201_wctomb
     },
-    { "TIS620.2533-1", NULLQUARK,
+    { "TIS620-0", NULLQUARK,
 	tis620_mbtowc, tis620_wctomb
     },
     { "GB2312.1980-0", NULLQUARK,

@@ -1,4 +1,4 @@
-/* $TOG: mpbands.c /main/5 1998/02/09 16:21:21 kaleb $ */
+/* $Xorg: mpbands.c,v 1.3 2000/08/17 19:47:49 cpqbld Exp $ */
 /**** module mpbands.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. September, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpbands.c,v 3.2 1998/10/04 09:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpbands.c,v 3.4 2001/01/17 22:13:11 dawes Exp $ */
 
 #define _XIEC_MPBANDS
 #define _XIEC_PBANDS

@@ -48,7 +48,7 @@
  */
 void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "gl_enable/disable" );
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, state ? "glEnable" : "glDisable" );
 
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "%s %s (newstate is %x)\n", 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_pipeline.h,v 1.2 2000/08/25 13:42:29 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_pipeline.h,v 1.4 2001/01/08 01:07:21 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,13 +28,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_PIPELINE_H_
-#define _R128_PIPELINE_H_
+#ifndef __R128_PIPELINE_H__
+#define __R128_PIPELINE_H__
+
+#ifdef GLX_DIRECT_RENDERING
 
 extern GLboolean r128DDBuildPrecalcPipeline( GLcontext *ctx );
 extern GLuint r128DDRegisterPipelineStages( struct gl_pipeline_stage *out,
@@ -47,4 +49,5 @@ extern void r128DDFastPath( struct vertex_buffer *VB );
 extern void r128DDEltPathInit( void );
 extern void r128DDEltPath( struct vertex_buffer *VB );
 
-#endif /* _R128_PIPELINE_H_ */
+#endif
+#endif

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbbell.c /main/2 1995/12/07 21:31:13 kaleb $ */
+/* $Xorg: xkbbell.c,v 1.4 2000/08/17 19:54:51 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,9 +24,10 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbutils/xkbbell.c,v 1.5 2001/04/01 14:00:22 tsi Exp $ */
 
 #include <stdio.h>
+#include <string.h>
 #include <X11/Xproto.h>
 #include <X11/Xlib.h>
 #include <X11/X.h>

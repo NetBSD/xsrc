@@ -1,4 +1,4 @@
-/* $XConsortium: ddxCtrls.c /main/4 1996/02/02 14:39:24 kaleb $ */
+/* $Xorg: ddxCtrls.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxCtrls.c,v 1.3 2001/01/17 22:37:14 dawes Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1

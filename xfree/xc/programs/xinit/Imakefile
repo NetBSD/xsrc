@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/25 1996/01/15 12:19:07 gildea $
-XCOMM $XFree86: xc/programs/xinit/Imakefile,v 3.7 2000/11/30 23:30:12 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:29 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/xinit/Imakefile,v 3.11 2001/04/19 15:08:32 dawes Exp $
+
 #if HasVFork
   VFORK_DEFINES = -DHAS_VFORK
 #endif
@@ -11,8 +16,8 @@ XCOMM $XFree86: xc/programs/xinit/Imakefile,v 3.7 2000/11/30 23:30:12 dawes Exp 
 #endif
         DEFINES = $(CONNECTION_FLAGS) $(VFORK_DEFINES) $(SIGNAL_DEFINES) \
 			-DBINDIR=\"$(BINDIR)\" $(OS_DEFS)
-        DEPLIBS = $(DEPXMULIB) $(DEPXLIB)
-LOCAL_LIBRARIES = $(XMULIB) $(XLIB)
+        DEPLIBS = $(DEPXMUULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XMUULIB) $(XLIB)
           SRCS1 = xinit.c 
           OBJS1 = xinit.o 
    SAMPLECONFIG = xinitrc
@@ -32,6 +37,8 @@ MakeScriptFromCpp(startx, -DXINITDIR=$(XINITDIR) -DBINDIR=$(BINDIR))
 #else
 MakeScriptFromCpp(startx, -DXINITDIR=$(XINITDIR) $(COOKIEDEFS))
 #endif
+
+EXTRAMANDEFS=-D__xinitdir__=$(XINITDIR)
 
 #ifdef OS2Architecture
 InstallNamedProg(startx.cmd,startx.cmd,$(BINDIR))

@@ -1,4 +1,4 @@
-/* $TOG: misc.h /main/5 1998/02/09 13:58:22 kaleb $ */
+/* $Xorg: misc.h,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 /*
 
 Copyright "1986-1997, 1998  The Open Group 

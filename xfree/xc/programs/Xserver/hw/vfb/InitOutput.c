@@ -1,4 +1,4 @@
-/* $TOG: InitOutput.c /main/20 1998/02/10 13:23:56 kaleb $ */
+/* $Xorg: InitOutput.c,v 1.3 2000/08/17 19:48:38 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,9 +22,9 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.12 2000/08/10 17:40:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.19 2001/05/16 14:06:28 alanh Exp $ */
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32)
 #include <X11/Xwinsock.h>
 #endif
 #include <stdio.h>
@@ -55,28 +55,12 @@ from The Open Group.
 #endif
 #include <X11/XWDFile.h>
 #ifdef HAS_SHM
-#ifndef __CYGWIN__
 #include <sys/ipc.h>
-#else
-#include <sys/cygipc.h>
-#endif
 #include <sys/shm.h>
 #endif /* HAS_SHM */
 #include "dix.h"
 #include "miline.h"
-
-#ifdef __CYGWIN__
-/*
- * NT UX defines/includes
- */
-#include <sys/mman.h>
-
-#define HAS_MMAP 1
-
-extern char *get_surf( unsigned long size );
-extern char *get_framebuf( unsigned long size );
-extern int     enable_ntux_xf( );
-#endif /* __CYGWIN__ */
+#include "mfb.h"
 
 extern char *display;
 
@@ -118,15 +102,13 @@ typedef struct
 static int vfbNumScreens;
 static vfbScreenInfo vfbScreens[MAXSCREENS];
 static Bool vfbPixmapDepths[33];
+#ifdef HAS_MMAP
 static char *pfbdir = NULL;
+#endif
 typedef enum { NORMAL_MEMORY_FB, SHARED_MEMORY_FB, MMAPPED_FILE_FB } fbMemType;
 static fbMemType fbmemtype = NORMAL_MEMORY_FB;
 static char needswap = 0;
 static int lastScreen = -1;
-
-#ifdef __CYGWIN__
-static int b_video_memory = 0;
-#endif
 
 #define swapcopy16(_dst, _src) \
     if (needswap) { CARD16 _s = _src; cpswaps(_s, _dst); } \
@@ -196,6 +178,9 @@ ddxGiveUp()
 	    }
 	}
 	break;
+#else /* HAS_MMAP */
+    case MMAPPED_FILE_FB:
+        break;
 #endif /* HAS_MMAP */
 	
 #ifdef HAS_SHM
@@ -209,14 +194,14 @@ ddxGiveUp()
 	    }
 	}
 	break;
+#else /* HAS_SHM */
+    case SHARED_MEMORY_FB:
+        break;
 #endif /* HAS_SHM */
 	
     case NORMAL_MEMORY_FB:
 	for (i = 0; i < vfbNumScreens; i++)
 	{
-#ifdef __CYGWIN__
-          if (!b_video_memory)
-#endif
 	    Xfree(vfbScreens[i].pXWDHeader);
 	}
 	break;
@@ -228,6 +213,13 @@ AbortDDX()
 {
     ddxGiveUp();
 }
+
+#ifdef __DARWIN__
+void
+DarwinHandleGUI(int argc, char *argv[])
+{
+}
+#endif
 
 void
 OsVendorInit()
@@ -564,21 +556,32 @@ vfbStoreColors(pmap, ndef, pdefs)
     XWDColor *pXWDCmap;
     int i;
 
-    if (pmap != InstalledMaps[pmap->pScreen->myNum]) return;
+    if (pmap != InstalledMaps[pmap->pScreen->myNum])
+    {
+	return;
+    }
 
     pXWDCmap = vfbScreens[pmap->pScreen->myNum].pXWDCmap;
 
     if ((pmap->pVisual->class | DynamicClass) == DirectColor)
+    {
 	return;
+    }
 
     for (i = 0; i < ndef; i++)
     {
 	if (pdefs[i].flags & DoRed)
+	{
 	    swapcopy16(pXWDCmap[pdefs[i].pixel].red, pdefs[i].red);
+	}
 	if (pdefs[i].flags & DoGreen)
+	{
 	    swapcopy16(pXWDCmap[pdefs[i].pixel].green, pdefs[i].green);
+	}
 	if (pdefs[i].flags & DoBlue)
+	{
 	    swapcopy16(pXWDCmap[pdefs[i].pixel].blue, pdefs[i].blue);
+	}
     }
 }
 
@@ -753,10 +756,14 @@ vfbAllocateFramebufferMemory(pvfb)
     {
 #ifdef HAS_MMAP
     case MMAPPED_FILE_FB:  vfbAllocateMmappedFramebuffer(pvfb); break;
+#else
+    case MMAPPED_FILE_FB: break;
 #endif
 
 #ifdef HAS_SHM
     case SHARED_MEMORY_FB: vfbAllocateSharedMemoryFramebuffer(pvfb); break;
+#else
+    case SHARED_MEMORY_FB: break;
 #endif
 
     case NORMAL_MEMORY_FB:
@@ -768,17 +775,8 @@ vfbAllocateFramebufferMemory(pvfb)
     {
 	pvfb->pXWDCmap = (XWDColor *)((char *)pvfb->pXWDHeader
 				+ SIZEOF(XWDheader) + XWD_WINDOW_NAME_LEN);
-#ifndef __CYGWIN__
 	pvfb->pfbMemory = (char *)(pvfb->pXWDCmap + pvfb->ncolors);
-#else
-	pvfb->pfbMemory =
-		(char *)get_framebuf((unsigned long)
-			pvfb->paddedWidth * pvfb->height);
-	if (pvfb->pfbMemory)
-	    b_video_memory = 1;
-	else
-	    pvfb->pfbMemory = (char *)(pvfb->pXWDCmap + pvfb->ncolors);
-#endif
+
 	return pvfb->pfbMemory;
     }
     else
@@ -793,7 +791,6 @@ vfbWriteXWDFileHeader(pScreen)
     vfbScreenInfoPtr pvfb = &vfbScreens[pScreen->myNum];
     XWDFileHeader *pXWDHeader = pvfb->pXWDHeader;
     char hostname[XWD_WINDOW_NAME_LEN];
-    VisualPtr	pVisual;
     unsigned long swaptest = 1;
     int i;
 
@@ -967,12 +964,6 @@ InitOutput(screenInfo, argc, argv)
 {
     int i;
     int NumFormats = 0;
-    FILE *pf = stderr;
-
-
-#ifdef __CYGWIN__
-    enable_ntux_xf();
-#endif
 
     /* initialize pixmap formats */
 

@@ -1,4 +1,4 @@
-/* $TOG: udcInf.c /main/4 1998/02/06 17:55:37 kaleb $ */
+/* $Xorg: udcInf.c,v 1.6 2000/08/17 19:45:23 cpqbld Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 
@@ -29,7 +29,7 @@ from The Open Group.
  *
  */
 
-/* $XFree86: xc/lib/X11/udcInf.c,v 1.4 1998/10/03 08:41:45 dawes Exp $ */
+/* $XFree86: xc/lib/X11/udcInf.c,v 1.6 2001/01/17 19:41:57 dawes Exp $ */
 
 #include <stdio.h>
 #include <locale.h>

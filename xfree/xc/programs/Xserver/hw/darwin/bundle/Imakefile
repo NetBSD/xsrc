@@ -1,0 +1,74 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Imakefile,v 1.10.2.1 2001/05/21 04:56:06 torrey Exp $
+
+#include <Server.tmpl>
+#define IHaveSubdirs
+
+SRCS =	Preferences.m \
+        XApplication.m \
+        Xserver.m \
+        quartz.c \
+        quartzAudio.c \
+        quartzCocoa.m \
+        quartzCursor.c \
+        quartzPasteboard.c
+
+OBJS =	Preferences.o \
+        XApplication.o \
+        Xserver.o \
+        quartz.o \
+        quartzAudio.o \
+        quartzCocoa.o \
+        quartzCursor.o \
+        quartzPasteboard.o
+
+INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
+           -I$(FONTINCSRC)
+
+#if defined(XFree86CustomVersion)
+CUSTOMVERSION = XFree86CustomVersion
+CUSTOMVERDEF =  -DXF86_CUSTOM_VERSION='$(CUSTOMVERSION)'
+#endif
+
+DEFINES = $(CUSTOMVERDEF) -DXBINDIR=$(BINDIR) -DXINITDIR=$(XINITDIR)
+#if NothingOutsideProjectRoot
+XDARWINROOT = $(BINDIR)
+#else
+XDARWINROOT = /Applications
+#endif
+
+#if XFree86Devel
+PBXBUILDSTYLE = -buildstyle Development
+#else
+PBXBUILDSTYLE = -buildstyle Deployment
+#endif
+
+SUBDIRS = English.lproj Japanese.lproj
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+
+NormalLibraryObjectRule()
+NormalLibraryTarget(XQuartz,$(OBJS))
+
+AllTarget(quartzStartup.o)
+
+AllTarget(XDarwinStartup)
+NormalProgramTarget(XDarwinStartup,XDarwinStartup.o,NullParameter, \
+	NullParameter,NullParameter)
+InstallProgram(XDarwinStartup,$(BINDIR))
+install::
+	-(cd $(DESTDIR)$(BINDIR); $(RM) X; $(LN) XDarwinStartup X)
+
+AllTarget(XDarwin)
+XDarwin:
+	pbxbuild -target XDarwin $(PBXBUILDSTYLE)
+
+install::
+	pbxbuild install -target XDarwin $(PBXBUILDSTYLE) \
+		DSTROOT=$(DESTDIR)$(XDARWINROOT)
+
+clean::
+	pbxbuild "clean" -target XDarwin $(PBXBUILDSTYLE)
+
+DependTarget()
+

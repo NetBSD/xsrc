@@ -1,4 +1,4 @@
-/* $TOG: FToCback.c /main/6 1998/02/06 15:43:49 kaleb $ */
+/* $Xorg: FToCback.c,v 1.3 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /* 
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/FToCback.c,v 1.4 1998/09/05 06:36:14 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/FToCback.c,v 1.6 2001/01/17 19:42:55 dawes Exp $ */
 
 #include	<X11/Intrinsic.h>
 #include <X11/Xmu/Converters.h>

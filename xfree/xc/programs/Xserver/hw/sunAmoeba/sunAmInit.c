@@ -1,4 +1,4 @@
-/* $TOG: sunAmInit.c /main/4 1998/02/10 13:17:32 kaleb $ */
+/* $Xorg: sunAmInit.c,v 1.3 2000/08/17 19:48:33 cpqbld Exp $ */
 /*
  * sunAmInit.c --
  *	Amoeba implementation of initialization functions
@@ -18,7 +18,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunAmInit.c,v 1.4 1998/06/27 12:53:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunAmInit.c,v 1.6 2001/01/17 22:36:52 dawes Exp $ */
 
 /* This file was partly derived from sunInit.c (5.49 94/02/21 10:21:02) */
 

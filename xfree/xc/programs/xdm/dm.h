@@ -1,4 +1,4 @@
-/* $TOG: dm.h /main/67 1998/02/09 13:55:01 kaleb $ */
+/* $Xorg: dm.h,v 1.3 2000/08/17 19:54:14 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.h,v 3.20 2000/11/14 18:20:39 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.23 2001/02/16 13:24:10 eich Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -245,8 +245,8 @@ struct display {
 #ifdef XDMCP
 
 #define PROTO_TIMEOUT	(30 * 60)   /* 30 minutes should be long enough */
-#define XDM_BROKEN_INTERVAL (60)    /* server crashing more than once a */
-                                    /* minute is assumed to be broken!  */
+#define XDM_BROKEN_INTERVAL (120)   /* server crashing more than once within */
+                                    /* two minutes is assumed to be broken!  */
 struct protoDisplay {
 	struct protoDisplay	*next;
 	XdmcpNetaddr		address;   /* UDP address */

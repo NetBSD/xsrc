@@ -1,4 +1,4 @@
-/* $XConsortium: midbe.h /main/3 1995/09/22 10:21:33 dpw $ */
+/* $Xorg: midbe.h,v 1.3 2000/08/17 19:48:16 cpqbld Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company

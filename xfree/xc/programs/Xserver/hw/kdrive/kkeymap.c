@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kkeymap.c,v 1.1 1999/11/19 13:53:49 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kkeymap.c,v 1.2 2000/02/23 20:29:54 dawes Exp $ */
 
 #include "kdrive.h"
 #include <X11/keysym.h>

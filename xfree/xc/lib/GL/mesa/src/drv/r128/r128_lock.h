@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_lock.h,v 1.2 2000/12/04 19:21:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_lock.h,v 1.4 2001/01/08 01:07:21 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -33,40 +33,42 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifndef _R128_LOCK_H_
-#define _R128_LOCK_H_
+#ifndef __R128_LOCK_H__
+#define __R128_LOCK_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void r128GetLock( r128ContextPtr r128ctx, GLuint flags );
+extern void r128GetLock( r128ContextPtr rmesa, GLuint flags );
 
+/* Turn DEBUG_LOCKING on to find locking conflicts.
+ */
+#define DEBUG_LOCKING	0
 
-/* Turn DEBUG_LOCKING on to find locking conflicts (see r128_init.h) */
-#ifdef DEBUG_LOCKING
+#if DEBUG_LOCKING
 extern char *prevLockFile;
-extern int   prevLockLine;
+extern int prevLockLine;
 
-#define DEBUG_LOCK()                                                    \
-    do {                                                                \
-	prevLockFile = (__FILE__);                                      \
-	prevLockLine = (__LINE__);                                      \
-    } while (0)
+#define DEBUG_LOCK()							\
+   do {									\
+      prevLockFile = (__FILE__);					\
+      prevLockLine = (__LINE__);					\
+   } while (0)
 
-#define DEBUG_RESET()                                                   \
-    do {                                                                \
-	prevLockFile = 0;                                               \
-	prevLockLine = 0;                                               \
-    } while (0)
+#define DEBUG_RESET()							\
+   do {									\
+      prevLockFile = 0;							\
+      prevLockLine = 0;							\
+   } while (0)
 
-#define DEBUG_CHECK_LOCK()                                              \
-    do {                                                                \
-	if (prevLockFile) {                                             \
-	    fprintf(stderr,                                             \
-		    "LOCK SET!\n\tPrevious %s:%d\n\tCurrent: %s:%d\n",  \
-		    prevLockFile, prevLockLine, __FILE__, __LINE__);    \
-	    exit(1);                                                    \
-	}                                                               \
-    } while (0)
+#define DEBUG_CHECK_LOCK()						\
+   do {									\
+      if ( prevLockFile ) {						\
+	 fprintf( stderr,						\
+		  "LOCK SET!\n\tPrevious %s:%d\n\tCurrent: %s:%d\n",	\
+		  prevLockFile, prevLockLine, __FILE__, __LINE__ );	\
+	 exit( 1 );							\
+      }									\
+   } while (0)
 
 #else
 
@@ -84,26 +86,26 @@ extern int   prevLockLine;
 
 /* Lock the hardware and validate our state.
  */
-#define LOCK_HARDWARE( r128ctx )					\
+#define LOCK_HARDWARE( rmesa )						\
    do {									\
       char __ret = 0;							\
       DEBUG_CHECK_LOCK();						\
-      DRM_CAS( r128ctx->driHwLock, r128ctx->hHWContext,			\
-	       (DRM_LOCK_HELD | r128ctx->hHWContext), __ret );		\
+      DRM_CAS( rmesa->driHwLock, rmesa->hHWContext,			\
+	       (DRM_LOCK_HELD | rmesa->hHWContext), __ret );		\
       if ( __ret )							\
-	 r128GetLock( r128ctx, 0 );					\
+	 r128GetLock( rmesa, 0 );					\
       DEBUG_LOCK();							\
    } while (0)
 
 /* Unlock the hardware.
  */
-#define UNLOCK_HARDWARE( r128ctx )					\
+#define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( r128ctx->driFd,					\
-		  r128ctx->driHwLock,					\
-		  r128ctx->hHWContext );				\
+      DRM_UNLOCK( rmesa->driFd,						\
+		  rmesa->driHwLock,					\
+		  rmesa->hHWContext );					\
       DEBUG_RESET();							\
    } while (0)
 
 #endif
-#endif /* _R128_LOCK_H_ */
+#endif /* __R128_LOCK_H__ */

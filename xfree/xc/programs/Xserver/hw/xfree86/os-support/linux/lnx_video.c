@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.43 2000/12/06 15:35:30 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.51.2.3 2001/05/29 16:38:00 tsi Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -100,6 +100,9 @@ static unsigned long sparse_size;
 #endif
 
 #ifdef HAS_MTRR_SUPPORT
+
+#define SPLIT_WC_REGIONS 1
+
 static pointer setWC(int, unsigned long, unsigned long, Bool, MessageType);
 static void undoWC(int, pointer);
 
@@ -239,6 +242,56 @@ mtrr_add_wc_region(int screenNum, unsigned long base, unsigned long size,
 	wcr->added = TRUE;
 	wcr->next = NULL;
 
+#if SPLIT_WC_REGIONS
+	/*********************************** by _usul ********************/
+	/*
+	 * Splits up the write-combining region if it is not aligned on a
+ 	 * size boundary.
+	 */
+	if (base % size) {
+		struct mtrr_wc_region *wcrc = wcr;
+		int rgs = 1;
+		unsigned long srem, sdiv, bcurr;
+	    
+		xf86DrvMsgVerb(screenNum, X_INFO, 2,
+		    "WC region has to be split (0x%lx,0x%lx)\n", base, size);
+
+		bcurr = base;
+		srem = size;
+
+		do {
+			for (sdiv = (0x1 << 31); sdiv; sdiv = sdiv >> 1) {
+				while(sdiv > srem) {
+					sdiv >>= 1;
+				}
+				if (!(bcurr % sdiv)) {
+					mtrr_add_wc_region(screenNum, bcurr,
+							   sdiv, from);
+					break;
+				}
+			}
+			if (!sdiv) {
+				xf86DrvMsg(screenNum, X_ERROR,
+					"Serious error in region splitting!\n");
+			}
+			wcrc->sentry.base = bcurr;
+			wcrc->sentry.size = sdiv;
+			wcrc->sentry.type = MTRR_TYPE_WRCOMB;
+			wcrc->added = TRUE;
+			if ((srem - sdiv)) {
+				wcrc->next = xalloc(sizeof(*wcrc));
+				wcrc = wcrc->next;
+			} else {
+				wcrc->next = NULL;
+			}
+			srem -= sdiv;
+			bcurr += sdiv;
+		} while (srem);
+		return wcr;
+	}
+	/*****************************************************************/
+#endif /* SPLIT_WC_REGIONS */
+
 	if (ioctl(mtrr_fd, MTRRIOC_ADD_ENTRY, &wcr->sentry) >= 0) {
 		/* Avoid printing on every VT switch */
 		if (xf86ServerIsInitialising()) {
@@ -344,7 +397,15 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 	pVidMem->initialised = TRUE;
 }
 
-
+#ifdef __sparc__
+/* Basically, you simply cannot do this on Sparc.  You have to do something portable
+ * like use /dev/fb* or mmap() on /proc/bus/pci/X/Y nodes. -DaveM
+ */
+static pointer mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
+{
+	return NULL;
+}
+#else
 static pointer
 mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 {
@@ -399,6 +460,7 @@ mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 #endif
     return (char *)base + alignOff;
 }
+#endif /* !(__sparc__) */
     
 static void
 unmapVidMem(int ScreenNum, pointer Base, unsigned long Size)
@@ -418,21 +480,50 @@ unmapVidMem(int ScreenNum, pointer Base, unsigned long Size)
 /***************************************************************************/
 
 #if defined(__powerpc__)
-/* FIXME: init this... */
-volatile unsigned char *ioBase = MAP_FAILED;
+volatile unsigned char *ioBase = NULL;
+
+#ifndef __NR_pciconfig_iobase
+#define __NR_pciconfig_iobase	200
+#endif
 
 #endif
 
 void
 xf86EnableIO(void)
 {
+#if defined(__powerpc__)
+	int fd;
+	unsigned int ioBase_phys;
+#endif
+
 	if (ExtendedEnabled)
 		return;
 
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
+#if defined(__powerpc__)
+	ioBase_phys = syscall(__NR_pciconfig_iobase, 2, 0, 0);
+
+	fd = open("/dev/mem", O_RDWR);
+	if (ioBase == NULL) {
+		ioBase = (volatile unsigned char *)mmap(0, 0x20000,
+				PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+				ioBase_phys);
+/* Should this be fatal or just a warning? */
+#if 0
+		if (ioBase == MAP_FAILED) {
+			FatalError(
+			    "xf86EnableIOPorts: Failed to map iobase (%s)\n",
+			    strerror(errno));
+		}
+#endif
+	}
+	close(fd);
+#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__)
 	if (ioperm(0, 1024, 1) || iopl(3))
-		FatalError("%s: Failed to set IOPL for I/O\n",
-			   "xf86EnableIOPorts");
+		FatalError("xf86EnableIOPorts: Failed to set IOPL for I/O\n");
+# if !defined(__alpha__)
+	ioperm(0x40,4,0); /* trap access to the timer chip */
+	ioperm(0x60,4,0); /* trap access to the keyboard controller */
+# endif
 #endif
 	ExtendedEnabled = TRUE;
 
@@ -444,8 +535,10 @@ xf86DisableIO(void)
 {
 	if (!ExtendedEnabled)
 		return;
-
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
+#if defined(__powerpc__)
+	munmap(ioBase, 0x20000);
+	ioBase = NULL;
+#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__)
 	iopl(0);
 	ioperm(0, 1024, 0);
 #endif
@@ -471,7 +564,9 @@ xf86DisableInterrupts()
 #else
 #ifdef __GNUC__
 #if defined(__ia64__)
-      __asm__ __volatile__ (";; rsm psr.i;; srlz.d" ::: "memory");
+#if 0
+	__asm__ __volatile__ (";; rsm psr.i;; srlz.d" ::: "memory");
+#endif
 #else
       __asm__ __volatile__("cli");
 #endif
@@ -501,7 +596,9 @@ xf86EnableInterrupts()
 #else
 #ifdef __GNUC__
 #if defined(__ia64__)
-      __asm__ __volatile__ (";; ssm psr.i;; srlz.d" ::: "memory");
+#if 0
+	__asm__ __volatile__ (";; ssm psr.i;; srlz.d" ::: "memory");
+#endif
 #else
       __asm__ __volatile__("sti");
 #endif
@@ -612,17 +709,19 @@ readSparse8(pointer Base, register unsigned long Offset)
     register unsigned long result, shift;
     register unsigned long msb;
 
+    mem_barrier();
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     shift = (Offset & 0x3) << 3;
-      if (Offset >= (hae_thresh)) {
+    if (Offset >= (hae_thresh)) {
         msb = Offset & hae_mask;
         Offset -= msb;
 	if (msb_set != msb) {
-	sethae(msb);
-	msb_set = msb;
+	    sethae(msb);
+	    msb_set = msb;
 	}
-      }
+    }
 
+    mem_barrier();
     result = *(vuip) ((unsigned long)lnxSBase + (Offset << 5));
     result >>= shift;
     return 0xffUL & result;
@@ -634,16 +733,19 @@ readSparse16(pointer Base, register unsigned long Offset)
     register unsigned long result, shift;
     register unsigned long msb;
 
+    mem_barrier();
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     shift = (Offset & 0x2) << 3;
-      if (Offset >= hae_thresh) {
+    if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
         Offset -= msb;
-      if (msb_set != msb) {
-	sethae(msb);
-	msb_set = msb;
-      }
+	if (msb_set != msb) {
+	    sethae(msb);
+	    msb_set = msb;
+	}
     }
+
+    mem_barrier();
     result = *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2)));
     result >>= shift;
     return 0xffffUL & result;
@@ -652,6 +754,7 @@ readSparse16(pointer Base, register unsigned long Offset)
 static int
 readSparse32(pointer Base, register unsigned long Offset)
 {
+    mem_barrier();
     return *(vuip)((unsigned long)Base+(Offset));
 }
 
@@ -661,17 +764,19 @@ writeSparse8(int Value, pointer Base, register unsigned long Offset)
     register unsigned long msb;
     register unsigned int b = Value & 0xffU;
 
+    write_mem_barrier();
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     if (Offset >= hae_thresh) {
-      msb = Offset & hae_mask;
-      Offset -= msb;
-      if (msb_set != msb) {
-	sethae(msb); 
-	msb_set = msb;
-      }
+        msb = Offset & hae_mask;
+	Offset -= msb;
+	if (msb_set != msb) {
+	    sethae(msb); 
+	    msb_set = msb;
+	}
     }
+
+    write_mem_barrier();
     *(vuip) ((unsigned long)lnxSBase + (Offset << 5)) = b * 0x01010101;
-    mem_barrier();
 }
 
 static void
@@ -680,26 +785,27 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset)
     register unsigned long msb;
     register unsigned int w = Value & 0xffffU;
 
+    write_mem_barrier();
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     if (Offset >= hae_thresh) {
-      msb = Offset & hae_mask;
-      Offset -= msb;
-      if (msb_set != msb) {
-	sethae(msb);
-	msb_set = msb;
-      }
+        msb = Offset & hae_mask;
+	Offset -= msb;
+	if (msb_set != msb) {
+	    sethae(msb);
+	    msb_set = msb;
+	}
     }
+
+    write_mem_barrier();
     *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2))) =
       w * 0x00010001;
-    mem_barrier();
-
 }
 
 static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset)
 {
+    write_mem_barrier();
     *(vuip)((unsigned long)Base + (Offset)) = Value;
-    mem_barrier();
     return;
 }
 
@@ -711,12 +817,12 @@ writeSparseNB8(int Value, pointer Base, register unsigned long Offset)
 
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     if (Offset >= hae_thresh) {
-      msb = Offset & hae_mask;
-      Offset -= msb;
-      if (msb_set != msb) {
-	sethae(msb);
-	msb_set = msb;
-      }
+        msb = Offset & hae_mask;
+	Offset -= msb;
+	if (msb_set != msb) {
+	    sethae(msb);
+	    msb_set = msb;
+	}
     }
     *(vuip) ((unsigned long)lnxSBase + (Offset << 5)) = b * 0x01010101;
 }
@@ -729,12 +835,12 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
 
     Offset += (unsigned long)Base - (unsigned long)lnxBase;
     if (Offset >= hae_thresh) {
-      msb = Offset & hae_mask;
-      Offset -= msb;
-      if (msb_set != msb) {
-	sethae(msb);
-	msb_set = msb;
-      }
+        msb = Offset & hae_mask;
+	Offset -= msb;
+	if (msb_set != msb) {
+	    sethae(msb);
+	    msb_set = msb;
+	}
     }
     *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2))) =
       w * 0x00010001;
@@ -847,6 +953,7 @@ readSparseJensen8(pointer Base, register unsigned long Offset)
 {
     register unsigned long result, shift;
 
+    mem_barrier();
     shift = (Offset & 0x3) << 3;
 
     result = *(vuip) ((unsigned long)Base + (Offset << SPARSE));
@@ -860,6 +967,7 @@ readSparseJensen16(pointer Base, register unsigned long Offset)
 {
     register unsigned long result, shift;
 
+    mem_barrier();
     shift = (Offset & 0x2) << 3;
 
     result = *(vuip)((unsigned long)Base+(Offset<<SPARSE)+(1<<(SPARSE-2)));
@@ -873,6 +981,7 @@ readSparseJensen32(pointer Base, register unsigned long Offset)
 {
     register unsigned long result;
 
+    mem_barrier();
     result = *(vuip)((unsigned long)Base+(Offset<<SPARSE)+(3<<(SPARSE-2)));
 
     return result;
@@ -883,9 +992,8 @@ writeSparseJensen8(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int b = Value & 0xffU;
 
+    write_mem_barrier();
     *(vuip) ((unsigned long)Base + (Offset << SPARSE)) = b * 0x01010101;
-
-    mem_barrier();
 }
 
 static void
@@ -893,18 +1001,16 @@ writeSparseJensen16(int Value, pointer Base, register unsigned long Offset)
 {
     register unsigned int w = Value & 0xffffU;
 
+    write_mem_barrier();
     *(vuip)((unsigned long)Base+(Offset<<SPARSE)+(1<<(SPARSE-2))) =
       w * 0x00010001;
-
-    mem_barrier();
 }
 
 static void
 writeSparseJensen32(int Value, pointer Base, register unsigned long Offset)
 {
+    write_mem_barrier();
     *(vuip)((unsigned long)Base+(Offset<<SPARSE)+(3<<(SPARSE-2))) = Value;
-
-    mem_barrier();
 }
 
 static void

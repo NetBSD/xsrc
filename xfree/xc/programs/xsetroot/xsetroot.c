@@ -1,5 +1,5 @@
 /*
- * $TOG: xsetroot.c /main/24 1998/02/09 14:12:40 kaleb $
+ * $Xorg: xsetroot.c,v 1.3 2000/08/17 19:55:03 cpqbld Exp $
  *
 Copyright 1987, 1998  The Open Group
 
@@ -28,20 +28,16 @@ in this Software without prior written authorization from The Open Group.
  *  Author:	Mark Lillibridge, MIT Project Athena
  *		11-Jun-87
  */
-/* $XFree86: xc/programs/xsetroot/xsetroot.c,v 1.4 1998/10/04 09:41:57 dawes Exp $ */
+/* $XFree86: xc/programs/xsetroot/xsetroot.c,v 1.7 2001/04/01 14:00:24 tsi Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/CurUtil.h>
 #include <stdio.h>
-#include "X11/bitmaps/gray"
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern int atoi(char *);
-#endif
+#include <string.h>
+#include "X11/bitmaps/gray"
 
 #define Dynamic 1
 

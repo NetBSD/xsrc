@@ -1,4 +1,4 @@
-/* $TOG: migc.h /main/5 1998/02/09 14:47:18 kaleb $ */
+/* $Xorg: migc.h,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.4 1998/04/05 02:28:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.6 2001/01/17 22:37:06 dawes Exp $ */
 
 extern void miChangeGC(
 #if NeedFunctionPrototypes

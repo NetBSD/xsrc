@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.4 2000/09/19 12:46:15 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.6 2001/05/09 19:57:05 dbateman Exp $ */
 
 /*
  * The functions in this file are used to read/write the C&T extension register
@@ -64,9 +64,6 @@
 
 /* This is used for module versioning */
 #include "xf86Version.h"
-
-/* All drivers using the vgahw module need this */
-#include "vgaHW.h"
 
 /* Driver specific headers */
 #include "ct_driver.h"
@@ -201,8 +198,8 @@ CHIPSSetStdExtFuncs(CHIPSPtr cPtr)
  * MMIO Access to the C&T extension registers
  */
 
-#define chipsminb(p) MMIO_IN8(cPtr->MMIOBase, (p))
-#define chipsmoutb(p,v) MMIO_OUT8(cPtr->MMIOBase, (p),(v))
+#define chipsminb(p) MMIO_IN8(cPtr->MMIOBaseVGA, (p))
+#define chipsmoutb(p,v) MMIO_OUT8(cPtr->MMIOBaseVGA, (p),(v))
 
 static void
 chipsMmioWriteXR(CHIPSPtr cPtr, CARD8 index, CARD8 value)

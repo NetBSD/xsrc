@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: io.c /main/74 1998/02/09 15:12:19 kaleb $ */
+/* $Xorg: io.c,v 1.4 2000/08/17 19:53:41 cpqbld Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -48,7 +48,7 @@ SOFTWARE.
  *   InsertFakeRequest, ResetCurrentRequest
  *
  *****************************************************************/
-/* $XFree86: xc/programs/Xserver/os/io.c,v 3.22 2000/05/18 23:46:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/io.c,v 3.26 2001/04/27 12:51:07 alanh Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -71,8 +71,8 @@ extern int errno;
 #define NEED_REPLIES
 #include "Xproto.h"
 #include "os.h"
-#include "Xpoll.h"
 #include "osdep.h"
+#include "Xpoll.h"
 #include "opaque.h"
 #include "dixstruct.h"
 #include "misc.h"
@@ -213,7 +213,7 @@ ReadRequestFromClient(client)
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     register ConnectionInputPtr oci = oc->input;
     int fd = oc->fd;
-    register int gotnow, needed;
+    register unsigned int gotnow, needed;
     int result;
     register xReq *request;
     Bool need_header;
@@ -804,7 +804,7 @@ FlushAllOutput()
     OsCommPtr oc;
     register ClientPtr client;
     Bool newoutput = NewOutputPending;
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
     fd_set newOutputPending;
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * $TOG: stipsparc.s /main/10 1998/02/09 14:08:53 kaleb $
+ * $Xorg: stipsparc.s,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/cfb/stipsparc.s,v 1.4 2001/01/17 22:36:38 dawes Exp $ */
 
 /*
  * SPARC assembly code for optimized text rendering.

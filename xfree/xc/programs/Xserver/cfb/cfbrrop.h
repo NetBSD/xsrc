@@ -1,5 +1,5 @@
 /*
- * $TOG: cfbrrop.h /main/11 1998/02/09 14:07:24 kaleb $
+ * $Xorg: cfbrrop.h,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.5 2000/02/12 03:39:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.8 2001/01/30 22:06:15 tsi Exp $ */
 
 #ifndef GXcopy
 #include "X.h"
@@ -67,8 +67,6 @@ in this Software without prior written authorization from The Open Group.
 #define RROP_DECLARE	register CfbBits	rrop_xor;
 #define RROP_SOLID(dst)	    (*(dst) = (rrop_xor))
 #define RROP_SOLID_MASK(dst,mask) (*(dst) = (*(dst) & ~(mask)) | ((rrop_xor) & (mask)))
-#define RROP_SOLID_lu(dst)	    stq_u(rrop_xor, dst)
-#define RROP_SOLID_MASK_lu(dst,mask) stq_u((ldq_u(dst) & ~(mask)) | ((rrop_xor) & (mask)), dst)
 #endif
 #define RROP_NAME(prefix)   RROP_NAME_CAT(prefix,Copy)
 #endif /* GXcopy */
@@ -103,8 +101,6 @@ in this Software without prior written authorization from The Open Group.
 #define RROP_FETCH_GCPRIV(devPriv)  rrop_xor = (devPriv)->xor;
 #define RROP_SOLID(dst)	    (*(dst) ^= (rrop_xor))
 #define RROP_SOLID_MASK(dst,mask) (*(dst) ^= ((rrop_xor) & (mask)))
-#define RROP_SOLID_lu(dst)  stq_u(ldq_u(dst) ^ rrop_xor, dst)
-#define RROP_SOLID_MASK_lu(dst,mask) stq_u(ldq_u(dst) ^ ((rrop_xor) & (mask)), dst)
 #endif
 #define RROP_NAME(prefix)   RROP_NAME_CAT(prefix,Xor)
 #endif /* GXxor */
@@ -259,8 +255,6 @@ in this Software without prior written authorization from The Open Group.
 				    rrop_xor = (devPriv)->xor;
 #define RROP_SOLID(dst)	    (*(dst) = DoRRop (*(dst), rrop_and, rrop_xor))
 #define RROP_SOLID_MASK(dst,mask)   (*(dst) = DoMaskRRop (*(dst), rrop_and, rrop_xor, (mask)))
-#define RROP_SOLID_lu(dst)  stq_u(DoRRop (ldq_u(dst), rrop_and, rrop_xor), dst)
-#define RROP_SOLID_MASK_lu(dst,mask) stq_u(DoMaskRRop (ldq_u(dst), rrop_and, rrop_xor, (mask)), dst)
 #endif
 #define RROP_NAME(prefix)   RROP_NAME_CAT(prefix,General)
 #endif /* GXset */
@@ -321,12 +315,6 @@ in this Software without prior written authorization from The Open Group.
 	(pdst) += sizeof (CfbBits) / sizeof (*pdst); \
     }
 #endif
-
-#define RROP_SPAN_lu(pdst,nmiddle) \
-    while (--(nmiddle) >= 0) { \
-	RROP_SOLID_lu((CfbBits *) (pdst)); \
-	(pdst) += sizeof (CfbBits) / sizeof (*pdst); \
-    }
 
 #if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define RROP_NAME_CAT(prefix,suffix)	prefix##suffix

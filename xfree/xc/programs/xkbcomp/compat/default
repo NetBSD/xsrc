@@ -1,4 +1,4 @@
-// $XConsortium: default /main/5 1995/12/07 21:32:35 kaleb $
+// $Xorg: default,v 1.3 2000/08/17 19:54:34 cpqbld Exp $
 default xkb_compatibility "default"  {
     include "basic"
     augment "mousekeys"

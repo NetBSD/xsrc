@@ -1,10 +1,4 @@
-/* $XConsortium: vuid_event.h /main/1 1996/10/31 14:21:02 kaleb $ */
-
-
-
-/*	$NetBSD: vuid_event.h,v 1.1.1.2 2001/03/18 17:23:10 veego Exp $ */
-/*	$XFree86: xc/programs/Xserver/hw/sunLynx/vuid_event.h,v 3.0 1996/09/29 12:47:30 dawes Exp $ */
-
+/* $Xorg: vuid_event.h,v 1.3 2000/08/17 19:48:38 cpqbld Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,6 +42,8 @@
  *
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
  */
+/*	$NetBSD: vuid_event.h,v 1.1.1.3 2001/06/09 15:03:12 tron Exp $ */
+/*	$XFree86: xc/programs/Xserver/hw/sunLynx/vuid_event.h,v 3.2 2001/01/17 22:36:53 dawes Exp $ */
 
 /*
  * The following is a minimal emulation of Sun's `Firm_event' structures

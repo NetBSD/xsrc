@@ -1,4 +1,4 @@
-/* $TOG: Dialog.c /main/49 1998/02/06 12:45:36 kaleb $ */
+/* $Xorg: Dialog.c,v 1.3 2000/08/17 19:45:32 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.5 1999/06/06 08:47:55 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.7 2001/01/17 19:42:26 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

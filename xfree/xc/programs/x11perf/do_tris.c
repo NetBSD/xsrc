@@ -1,4 +1,4 @@
-/* $XConsortium: do_tris.c,v 2.8 94/02/06 20:17:44 rws Exp $ */
+/* $Xorg: do_tris.c,v 1.3 2000/08/17 19:54:10 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/x11perf/do_tris.c,v 1.5 2001/01/17 23:45:12 dawes Exp $ */
 
 
 #undef POLYTRIANGLE_HACK    /* don't use this code */

@@ -1,4 +1,4 @@
-// $TOG: sun /main/12 1998/02/10 13:44:20 kaleb $
+// $Xorg: sun,v 1.3 2000/08/17 19:54:37 cpqbld Exp $
 //
 //Copyright 1996, 1998  The Open Group
 //
@@ -20,7 +20,7 @@
 //other dealings in this Software without prior written authorization
 //from The Open Group.
 //
-// $XFree86: xc/programs/xkbcomp/keycodes/sun,v 3.1.2.2 1998/10/04 15:23:15 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/sun,v 3.4 2001/01/17 23:45:51 dawes Exp $
 //
 default xkb_keycodes "type4" {
 

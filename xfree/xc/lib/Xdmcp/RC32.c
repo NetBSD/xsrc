@@ -1,5 +1,5 @@
 /*
- * $TOG: RC32.c /main/4 1998/02/06 14:40:44 kaleb $
+ * $Xorg: RC32.c,v 1.3 2000/08/17 19:45:49 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group

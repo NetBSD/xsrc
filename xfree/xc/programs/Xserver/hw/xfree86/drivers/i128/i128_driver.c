@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.16 2000/12/06 01:07:34 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.20 2001/05/04 19:05:39 dawes Exp $ */
 
 
 /* All drivers should typically include these */
@@ -71,7 +71,7 @@
  */
 
 /* Mandatory functions */
-static OptionInfoPtr	I128AvailableOptions(int chipid, int busid);
+static const OptionInfoRec *	I128AvailableOptions(int chipid, int busid);
 static void	I128Identify(int flags);
 static Bool	I128Probe(DriverPtr drv, int flags);
 static Bool	I128PreInit(ScrnInfoPtr pScrn, int flags);
@@ -86,11 +86,9 @@ static Bool	I128SaveScreen(ScreenPtr pScreen, int mode);
 static void	I128FreeScreen(int scrnIndex, int flags);
 static int	I128ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose,
 			     int flags);
-#ifdef DPMSExtension
 static void	I128DisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					     int PowerManagementMode,
 					     int flags);
-#endif
 
 /* Internally used functions */
 static Bool	I128GetRec(ScrnInfoPtr pScrn);
@@ -188,9 +186,7 @@ static const char *vgahwSymbols[] = {
 
 static const char *fbSymbols[] = {
     "fbScreenInit",
-#ifdef RENDER
     "fbPictureInit",
-#endif
     NULL
 };
 
@@ -464,7 +460,7 @@ typedef enum {
     OPTION_DEBUG
 } I128Opts;
 
-static OptionInfoRec I128Options[] = {
+static const OptionInfoRec I128Options[] = {
     { OPTION_FLATPANEL,		"FlatPanel",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -486,10 +482,10 @@ static OptionInfoRec I128Options[] = {
  *		int chipid  - currently unused
  *		int busid   - currently unused
  * Returns:
- *		OptionInfoPtr - all accepted options
+ *		const OptionInfoRec * - all accepted options
  */
 
-static OptionInfoPtr
+static const OptionInfoRec *
 I128AvailableOptions(int chipid, int busid)
 {
     return I128Options;
@@ -641,7 +637,10 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, I128Options);
+    if (!(pI128->Options = xalloc(sizeof(I128Options))))
+	return FALSE;
+    memcpy(pI128->Options, I128Options, sizeof(I128Options));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pI128->Options);
 
     if (pScrn->depth == 8)
 	pScrn->rgbBits = 8;
@@ -652,38 +651,38 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
      */
     from = X_DEFAULT;
     pI128->HWCursor = TRUE;
-    if (xf86GetOptValBool(I128Options, OPTION_HW_CURSOR, &pI128->HWCursor)) {
+    if (xf86GetOptValBool(pI128->Options, OPTION_HW_CURSOR, &pI128->HWCursor)) {
 	from = X_CONFIG;
     }
     /* For compatibility, accept this too (as an override) */
-    if (xf86ReturnOptValBool(I128Options, OPTION_SW_CURSOR, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_SW_CURSOR, FALSE)) {
 	from = X_CONFIG;
 	pI128->HWCursor = FALSE;
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pI128->HWCursor ? "HW" : "SW");
-    if (xf86ReturnOptValBool(I128Options, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_NOACCEL, FALSE)) {
 	pI128->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     } else pI128->NoAccel = FALSE;
-    if (xf86ReturnOptValBool(I128Options, OPTION_SYNC_ON_GREEN, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_SYNC_ON_GREEN, FALSE)) {
 	pI128->DACSyncOnGreen = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Sync-on-Green enabled\n");
     } else pI128->DACSyncOnGreen = FALSE;
-    if (xf86ReturnOptValBool(I128Options, OPTION_SHOWCACHE, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_SHOWCACHE, FALSE)) {
 	pI128->ShowCache = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ShowCache enabled\n");
     } else pI128->ShowCache = FALSE;
-    if (xf86ReturnOptValBool(I128Options, OPTION_DAC6BIT, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_DAC6BIT, FALSE)) {
 	pI128->DAC8Bit = FALSE;
 	pScrn->rgbBits = 6;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Dac6Bit enabled\n");
     } else pI128->DAC8Bit = TRUE;
-    if (xf86ReturnOptValBool(I128Options, OPTION_DEBUG, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_DEBUG, FALSE)) {
 	pI128->Debug = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Debug enabled\n");
     } else pI128->Debug = FALSE;
-    if (xf86ReturnOptValBool(I128Options, OPTION_FLATPANEL, FALSE)) {
+    if (xf86ReturnOptValBool(pI128->Options, OPTION_FLATPANEL, FALSE)) {
 	pI128->FlatPanel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "FlatPanel forced\n");
     } else pI128->FlatPanel = FALSE;
@@ -1158,10 +1157,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 	I128FreeRec(pScrn);
 	return FALSE;
     }
-    xf86LoaderReqSymbols("fbScreenInit", NULL);
-#ifdef RENDER
-    xf86LoaderReqSymbols("fbPictureInit", NULL);
-#endif
+    xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
 
     /* Load XAA if needed */
     if (!pI128->NoAccel) {
@@ -1536,9 +1532,7 @@ I128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
-#ifdef RENDER
     fbPictureInit(pScreen, 0, 0);
-#endif
 
     if (pScrn->bitsPerPixel > 8) {
         /* Fixup RGB ordering */
@@ -1603,9 +1597,7 @@ I128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	CMAP_PALETTED_TRUECOLOR | CMAP_RELOAD_ON_MODE_SWITCH))	
 	return FALSE;
 
-#ifdef DPMSExtension
     xf86DPMSInit(pScreen, I128DisplayPowerManagementSet, 0);
-#endif
 
     pScrn->memPhysBase = (unsigned long)pI128->MemoryPtr;
     pScrn->fbOffset = 0;
@@ -1980,7 +1972,6 @@ I128getDDC(ScrnInfoPtr pScrn)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 void
 I128DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -2018,8 +2009,6 @@ I128DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
     pI128->mem.rbase_g[IDXL_I] = IBMRGB_sync;				MB;
     pI128->mem.rbase_g[DATA_I] = snc;					MB;
 }
-
-#endif
 
 void
 I128DumpBaseRegisters(ScrnInfoPtr pScrn)
@@ -2119,7 +2108,7 @@ I128DumpActiveRegisters(ScrnInfoPtr pScrn)
     unsigned short iobase;
     unsigned long rbase_g, rbase_w, rbase_a, rbase_b, rbase_i, rbase_e;
     unsigned long id, config1, config2, sgram, soft_sw, ddc, vga_ctl;
-    volatile unsigned long *vrba, *vrbg, *vrbw;
+    volatile CARD32 *vrba, *vrbg, *vrbw;
 
     vrba = pI128->mem.rbase_a;
     vrbg = pI128->mem.rbase_g;
@@ -2357,7 +2346,7 @@ static unsigned char ibm52Xmask[0xA0] = {
 };
 
 void
-I128DumpIBMDACRegisters(ScrnInfoPtr pScrn, volatile unsigned long *vrbg)
+I128DumpIBMDACRegisters(ScrnInfoPtr pScrn, volatile CARD32 *vrbg)
 {
 	unsigned char ibmr[0x100];
 	char buf[128], tbuf[10];

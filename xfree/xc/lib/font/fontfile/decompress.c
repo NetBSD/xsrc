@@ -1,4 +1,4 @@
-/* $TOG: decompress.c /main/9 1998/04/24 09:26:33 barstow $ */
+/* $Xorg: decompress.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 /*
  * Copyright 1985, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/fontfile/decompress.c,v 1.4 2001/01/17 19:43:29 dawes Exp $ */
 /* 
  * decompress - cat a compressed file
  */

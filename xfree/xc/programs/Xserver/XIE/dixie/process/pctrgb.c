@@ -1,4 +1,4 @@
-/* $TOG: pctrgb.c /main/5 1998/02/09 16:10:14 kaleb $ */
+/* $Xorg: pctrgb.c,v 1.3 2000/08/17 19:47:28 cpqbld Exp $ */
 /**** module pctrgb.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. August 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctrgb.c,v 3.3 1998/10/05 13:22:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctrgb.c,v 3.5 2001/01/17 22:12:52 dawes Exp $ */
 
 #define _XIEC_PCTRGB
 

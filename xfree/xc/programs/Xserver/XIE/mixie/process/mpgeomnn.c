@@ -1,4 +1,4 @@
-/* $TOG: mpgeomnn.c /main/9 1998/02/09 16:22:10 kaleb $ */
+/* $Xorg: mpgeomnn.c,v 1.3 2000/08/17 19:47:53 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mpgeomnn.c ****/
 /******************************************************************************
@@ -73,7 +73,7 @@ terms and conditions:
 	Ben Fahy && Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomnn.c,v 3.2 1998/10/04 09:36:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomnn.c,v 3.4 2001/01/17 22:13:12 dawes Exp $ */
 
 
 #define _XIEC_MPGEOM

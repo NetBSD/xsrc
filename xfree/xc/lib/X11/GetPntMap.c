@@ -1,4 +1,4 @@
-/* $TOG: GetPntMap.c /main/14 1998/05/30 08:06:05 kaleb $ */
+/* $Xorg: GetPntMap.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/GetPntMap.c,v 1.3 1998/10/03 08:41:18 dawes Exp $ */
+/* $XFree86: xc/lib/X11/GetPntMap.c,v 1.5 2001/01/17 19:41:36 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

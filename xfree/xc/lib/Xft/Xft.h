@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/Xft.h,v 1.12 2000/12/06 18:03:24 keithp Exp $
+ * $XFree86: xc/lib/Xft/Xft.h,v 1.19 2001/04/29 03:21:17 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -57,10 +57,13 @@ typedef unsigned int	XftChar32;
 /* defaults from resources */
 #define XFT_SCALE	    "scale"	/* double */
 #define XFT_RENDER	    "render"	/* Bool */
+#define XFT_MINSPACE	    "minspace"	/* Bool use minimum line spacing */
+#define XFT_DPI		    "dpi"	/* double */
 
 /* specific to FreeType rasterizer */
 #define XFT_CHAR_WIDTH	    "charwidth"	/* Int */
 #define XFT_CHAR_HEIGHT	    "charheight"/* Int */
+#define XFT_MATRIX	    "matrix"    /* XftMatrix */
 
 #define XFT_WEIGHT_LIGHT	0
 #define XFT_WEIGHT_MEDIUM	100
@@ -79,14 +82,24 @@ typedef unsigned int	XftChar32;
 #define XFT_RGBA_NONE	    0
 #define XFT_RGBA_RGB	    1
 #define XFT_RGBA_BGR	    2
+#define XFT_RGBA_VRGB	    3
+#define XFT_RGBA_VBGR	    4
 
 typedef enum _XftType {
     XftTypeVoid, 
     XftTypeInteger, 
     XftTypeDouble, 
     XftTypeString, 
-    XftTypeBool
+    XftTypeBool,
+    XftTypeMatrix
 } XftType;
+
+typedef struct _XftMatrix {
+    double xx, xy, yx, yy;
+} XftMatrix;
+
+#define XftMatrixInit(m)	((m)->xx = (m)->yy = 1, \
+				 (m)->xy = (m)->yx = 0)
 
 typedef enum _XftResult {
     XftResultMatch, XftResultNoMatch, XftResultTypeMismatch, XftResultNoId
@@ -99,6 +112,7 @@ typedef struct _XftValue {
 	int	i;
 	Bool	b;
 	double	d;
+	XftMatrix *m;
     } u;
 } XftValue;
 
@@ -254,6 +268,16 @@ XftDrawString32 (XftDraw	*draw,
 		 int		y,
 		 XftChar32	*string,
 		 int		len);
+
+void
+XftDrawStringUtf8 (XftDraw	*d,
+		   XftColor	*color,
+		   XftFont	*font,
+		   int		x, 
+		   int		y,
+		   XftChar8	*string,
+		   int		len);
+
 void
 XftDrawRect (XftDraw	    *d,
 	     XftColor	    *color,
@@ -290,6 +314,13 @@ XftTextExtents32 (Display	*dpy,
 		  int		len,
 		  XGlyphInfo	*extents);
     
+void
+XftTextExtentsUtf8 (Display	*dpy,
+		    XftFont	*font,
+		    XftChar8	*string, 
+		    int		len,
+		    XGlyphInfo	*extents);
+
 /* xftfont.c */
 XftPattern *
 XftFontMatch (Display *dpy, int screen, XftPattern *pattern, XftResult *result);
@@ -375,9 +406,28 @@ XftFontSetMatch (XftFontSet	**sets,
 		 XftPattern	*p, 
 		 XftResult	*result);
 
+/* xftmatrix.c */
+int
+XftMatrixEqual (const XftMatrix *mat1, const XftMatrix *mat2);
+
+void
+XftMatrixMultiply (XftMatrix *result, XftMatrix *a, XftMatrix *b);
+
+void
+XftMatrixRotate (XftMatrix *m, double c, double s);
+
+void
+XftMatrixScale (XftMatrix *m, double sx, double sy);
+
+void
+XftMatrixShear (XftMatrix *m, double sh, double sv);
+
 /* xftname.c */
 XftPattern *
 XftNameParse (const char *name);
+
+Bool
+XftNameUnparse (XftPattern *pat, char *dest, int len);
 
 /* xftpat.c */
 XftPattern *
@@ -417,6 +467,9 @@ Bool
 XftPatternAddString (XftPattern *p, const char *object, const char *s);
 
 Bool
+XftPatternAddMatrix (XftPattern *p, const char *object, const XftMatrix *s);
+
+Bool
 XftPatternAddBool (XftPattern *p, const char *object, Bool b);
 
 XftResult
@@ -427,6 +480,9 @@ XftPatternGetDouble (XftPattern *p, const char *object, int n, double *d);
 
 XftResult
 XftPatternGetString (XftPattern *p, const char *object, int n, char **s);
+
+XftResult
+XftPatternGetMatrix (XftPattern *p, const char *object, int n, XftMatrix **s);
 
 XftResult
 XftPatternGetBool (XftPattern *p, const char *object, int n, Bool *b);
@@ -442,12 +498,26 @@ XftPatternBuild (XftPattern *orig, ...);
 
 /* xftstr.c */
 
+int
+XftUtf8ToUcs4 (XftChar8    *src_orig,
+	       XftChar32   *dst,
+	       int	    len);
+
+Bool
+XftUtf8Len (XftChar8	*string,
+	    int		len,
+	    int		*nchar,
+	    int		*wchar);
+
 /* xftxlfd.c */
 XftPattern *
 XftXlfdParse (const char *xlfd_orig, Bool ignore_scalable, Bool complete);
     
 XFontStruct *
 XftCoreOpen (Display *dpy, XftPattern *pattern);
+
+void
+XftCoreClose (Display *dpy, XFontStruct *font);
 
 _XFUNCPROTOEND
 

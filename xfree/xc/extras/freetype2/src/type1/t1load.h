@@ -16,28 +16,20 @@
 /***************************************************************************/
 
 
-#ifndef T1LOAD_H
-#define T1LOAD_H
-
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/psaux.h>
-#include <freetype/ftmm.h>
+#ifndef __T1LOAD_H__
+#define __T1LOAD_H__
 
 
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
+#include FT_MULTIPLE_MASTERS_H
 
 #include "t1parse.h"
 
-#else
 
-#include <type1/t1parse.h>
+FT_BEGIN_HEADER
 
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
 
   typedef struct  T1_Loader_
   {
@@ -83,11 +75,9 @@
 #endif /* !T1_CONFIG_OPTION_NO_MM_SUPPORT */
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-#endif /* T1LOAD_H */
+#endif /* __T1LOAD_H__ */
 
 
 /* END */

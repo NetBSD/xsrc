@@ -1,5 +1,5 @@
 XCOMM! /bin/sh
-XCOMM $XConsortium: client.cpp,v 1.5 94/03/29 19:43:44 mor Exp $
+XCOMM $Xorg: client.cpp,v 1.3 2000/08/17 19:54:01 cpqbld Exp $
 XCOMM
 
 XCOMM Copyright (c) 1993 Quarterdeck Office Systems

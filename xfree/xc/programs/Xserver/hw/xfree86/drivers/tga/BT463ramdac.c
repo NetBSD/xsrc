@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/BT463ramdac.c,v 1.1 1998/08/29 05:43:34 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

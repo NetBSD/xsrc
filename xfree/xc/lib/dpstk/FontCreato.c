@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/dpstk/FontCreato.c,v 1.2 2000/06/07 22:02:59 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

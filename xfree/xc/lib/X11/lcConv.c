@@ -1,4 +1,4 @@
-/* $XConsortium: lcConv.c /main/8 1996/09/28 16:37:28 rws $ */
+/* $Xorg: lcConv.c,v 1.4 2000/08/17 19:45:17 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcConv.c,v 1.4 2000/11/28 18:49:41 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcConv.c,v 1.6 2001/01/17 19:41:53 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -302,7 +302,7 @@ _XlcOpenConverter(
     from_type = XrmStringToQuark(from);
     to_type = XrmStringToQuark(to);
 
-    if ((conv = get_converter(from_lcd, from_type, to_lcd, to_type)) != NULL)
+    if ((conv = get_converter(from_lcd, from_type, to_lcd, to_type)))
 	return conv;
 
     return open_indirect_converter(from_lcd, from, to_lcd, to);

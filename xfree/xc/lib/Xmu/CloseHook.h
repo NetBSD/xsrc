@@ -1,4 +1,4 @@
-/* $TOG: CloseHook.h /main/8 1998/02/06 15:41:32 kaleb $ */
+/* $Xorg: CloseHook.h,v 1.4 2000/08/17 19:45:59 cpqbld Exp $ */
 
 /* 
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CloseHook.h,v 1.4 1998/08/20 13:59:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CloseHook.h,v 1.6 2001/01/17 19:42:53 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities
@@ -31,6 +31,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _XMU_CLOSEHOOK_H_
 #define _XMU_CLOSEHOOK_H_
 
+#include <X11/Xlib.h>
 #include <X11/Xfuncproto.h>
 #include <X11/Xlibint.h>
 

@@ -1,11 +1,11 @@
-/* $TOG: zconf.h /main/5 1998/02/04 14:51:21 kaleb $ */
+/* $Xorg: zconf.h,v 1.3 2000/08/17 19:46:48 cpqbld Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $XFree86$ */
+/* $XFree86: xc/lib/zlib/zconf.h,v 1.7 2001/01/17 19:43:55 dawes Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H

@@ -6,20 +6,19 @@
 
 <title>Driver Status for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>4 December 2000
+<date>1 June 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.26.2.2 2001/03/16 14:55:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.29.2.2 2001/06/01 18:09:49 dawes Exp $
 </ident>
 
 <abstract>
 
 This document provides information about the status of the driver and
 hardware support in XFree86 &relvers; compared with that in XFree86
-&legacyvers;.  Unless otherwise stated, hardware is classified as "supported"
-if its driver provides basic 2D support.  Support for additional features
-may or may not be present.  Please send updates for this document to
-<email>fixes@xfree86.org</email>
+&legacyvers;.  Please send updates for this document to
+<email>fixes@xfree86.org</email>.  Please do not send requests for
+information or support to that address (they will not be answered).
 
 </abstract>
 
@@ -31,7 +30,10 @@ This document contains one section per vendor (organised alphabetically)
 for each chipset family that is supported in XFree86 &legacyvers; or
 XFree86 &relvers;.  It includes information about the status of the
 drivers and the hardware they support, including a comparison of the
-level of support between versions &legacyvers; and &relvers;.
+level of support between versions &legacyvers; and &relvers;.  Unless
+otherwise stated, hardware is classified as "supported" if its driver
+provides basic 2D support.  Support for additional features may or may
+not be present.
 
 In XFree86 &legacyvers;, several X servers are available; much hardware
 uses the XF86_SVGA server, which has a set of driver modules that are built
@@ -155,7 +157,7 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 	All chips supported in &legacyvers; are supported in &relvers;
 	except for Mach8 and some old Mach32 chips.  The support in
 	&relvers; is, however, unaccelerated for all chips except the
-	Mach64, Rage and Rage 128 variants.
+	Mach64, Rage, Rage 128 and Radeon variants.
 
 </descrip>
 
@@ -365,15 +367,17 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 	Linux, and requires the agpgart.o kernel module in order to use
 	modes that require more than 1MB of video memory.
 
-<tag>&relvers;:</tag>
-	Support (accelerated) for the Intel i740 is provided by the
-	"i740" driver, and support for the Intel i810 is provided by
-	the "i810" driver.  The "i810" driver is currently Linux-only,
-	and requires the agpgart.o kernel module.
+<tag>&relvers;:</tag> Support (accelerated) for the Intel i740 is
+	provided by the "i740" driver, and support for the Intel i810
+	(including i810-dc100 and i810e) and i815 is provided by the
+	"i810" driver.  The "i810" driver is currently supported only on
+	Linux and FreeBSD (4.1 and later), and requires the agpgart
+	kernel support.
 
 <tag>Summary:</tag>
-	The i740 and i810 are supported in both versions, but the i810 is
-	only supported on Linux/x86 platforms at present.
+	The i740 and i810 are supported in both versions, but the i810
+	is only supported on Linux/x86 and recent FreeBSD/i386 platforms
+	at present.
 
 </descrip>
 
@@ -461,7 +465,7 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 <tag>&relvers;:</tag>
 	Support (accelerated) for the Riva 128, 128ZX, TNT, TNT2 (Ultra,
 	Vanta, M64), GeForce (DDR, 256), GeForce2 (GTS, Ultra, MX), Quadro,
-	Quadro2, and GeForce3 is provided by the "nv" driver.
+	and Quadro2 is provided by the "nv" driver.
 
 <tag>Summary:</tag>
 	All chipsets supported in &legacyvers; except the NV1 are also

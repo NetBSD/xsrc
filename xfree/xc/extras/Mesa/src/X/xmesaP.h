@@ -226,7 +226,11 @@ struct xmesa_buffer {
 
    /* Used to do XAllocColor/XFreeColors accounting: */
    int num_alloced;
+#if defined(XFree86Server)
    Pixel alloced_colors[256];
+#else
+   unsigned long alloced_colors[256];
+#endif
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
   __DRIdrawablePrivate *driDrawPriv;	/* back pointer to DRI drawable

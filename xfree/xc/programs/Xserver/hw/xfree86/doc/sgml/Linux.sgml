@@ -137,7 +137,7 @@ The xdm binary provided should run with both shadow- and non-shadow password
 systems.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.8 1999/06/25 08:57:14 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.14 1999/08/23 06:38:46 dawes Exp $
 
 
 

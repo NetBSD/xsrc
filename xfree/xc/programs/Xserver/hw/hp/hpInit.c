@@ -1,4 +1,4 @@
-/* $TOG: hpInit.c /main/6 1997/11/12 14:38:12 kaleb $ */
+/* $Xorg: hpInit.c,v 1.3 2000/08/17 19:48:21 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

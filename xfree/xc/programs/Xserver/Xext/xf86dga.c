@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.19 1999/08/01 07:56:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.21 2000/06/30 19:06:54 keithp Exp $ */
 
 /*
 

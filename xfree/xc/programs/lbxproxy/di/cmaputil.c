@@ -1,4 +1,4 @@
-/* $TOG: cmaputil.c /main/9 1998/02/11 09:47:49 kaleb $ */
+/* $Xorg: cmaputil.c,v 1.4 2000/08/17 19:53:54 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -44,7 +44,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.4 1997/11/16 06:42:30 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.7 2001/01/17 23:44:55 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"
@@ -202,7 +202,7 @@ lookup(name, len, create)
   }
   h %= HASHSIZE;
 
-  if ( entry = hashTab[h] )
+  if (( entry = hashTab[h] ))
     {
       for( ; entry; prev = (dbEntryPtr*)entry, entry = entry->link )
 	if (! strcmp(name, entry->name) ) break;
@@ -263,7 +263,7 @@ InitColors()
 		  green >= 0 && green <= 0xff &&
 		  blue >= 0  && blue <= 0xff)
 		{
-		  if (entry = lookup(name, strlen(name), TRUE))
+		  if ((entry = lookup(name, strlen(name), TRUE)))
 		    {
 		      entry->red   = (red * 65535)   / 255;
 		      entry->green = (green * 65535) / 255;
@@ -298,7 +298,7 @@ OsLookupColor(name, len, pred, pgreen, pblue)
 {
   dbEntryPtr entry;
 
-  if (entry = lookup(name, len, FALSE))
+  if ((entry = lookup(name, len, FALSE)))
     {
       *pred   = entry->red;
       *pgreen = entry->green;

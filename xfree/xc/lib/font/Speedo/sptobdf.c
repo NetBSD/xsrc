@@ -1,4 +1,4 @@
-/* $TOG: sptobdf.c /main/6 1998/02/09 10:51:30 kaleb $ */
+/* $Xorg: sptobdf.c,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation

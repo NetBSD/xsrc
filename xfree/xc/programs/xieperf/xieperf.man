@@ -1,4 +1,4 @@
-.\" $TOG: xieperf.man /main/10 1998/02/09 14:02:11 kaleb $
+.\" $Xorg: xieperf.man,v 1.3 2000/08/17 19:54:29 cpqbld Exp $
 .\" Copyright 1993, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -58,7 +58,10 @@
 .\" 
 .\"      Title to this software shall at all times remain with AGE
 .\"      Logic, Inc.
-.TH xieperf 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xieperf/xieperf.man,v 1.7 2001/01/27 18:21:15 dawes Exp $
+.\"
+.TH xieperf 1 __xorgversion__
 .SH NAME
 xieperf - XIE server extension test and demo program
 .SH SYNTAX
@@ -768,7 +771,7 @@ A somewhat large flo which uses control planes, LUTs, Point, PasteUp, Logical, C
 .SH X DEFAULTS
 There are no X defaults used by this program.
 .SH "SEE ALSO"
-X(1), x11perf(1), x11perfcomp(1)
+X(__miscmansuffix__), x11perf(1), x11perfcomp(1)
 .SH BUGS
 There should be a IMAGES environment variable to augment the -images option.
 .PP

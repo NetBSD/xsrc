@@ -1,4 +1,4 @@
-/* $TOG: osinit.c /main/7 1998/02/11 10:07:02 kaleb $ */
+/* $Xorg: osinit.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
 /*
  * os init code
  */
@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)osinit.c	4.3	5/7/91
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfs/os/osinit.c,v 1.4 2001/01/17 23:45:33 dawes Exp $ */
 
 #include	"os.h"
 

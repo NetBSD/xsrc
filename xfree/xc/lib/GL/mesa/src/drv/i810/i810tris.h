@@ -22,7 +22,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tris.h,v 1.7 2000/11/13 23:31:27 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tris.h,v 1.9 2001/03/21 16:14:21 dawes Exp $ */
 
 #ifndef I810TRIS_INC
 #define I810TRIS_INC
@@ -87,40 +87,42 @@ static __inline__ void i810_draw_point( i810ContextPtr imesa,
 {
    int vertsize = imesa->vertsize;
    GLuint *vb = i810AllocDwordsInline( imesa, 6 * vertsize );
+   const GLfloat x = tmp->v.x + 0.125;
+   const GLfloat y = tmp->v.y - 0.5F;
    int j;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y - sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y - sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y + sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x + sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y + sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y + sz;
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y + sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
    vb += vertsize;
 
-   *(float *)&vb[0] = tmp->v.x - sz;
-   *(float *)&vb[1] = tmp->v.y - sz;
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y - sz;
    for (j = 2 ; j < vertsize ; j++)
       vb[j] = tmp->ui[j];
 }
@@ -143,13 +145,33 @@ static __inline__ void i810_draw_line( i810ContextPtr imesa,
 			 : "=%c" (j)
 			 : "0" (vertsize), "S" ((long)v1)
 			 : "memory" );
-#else
+#elif 0
    for (j = 0 ; j < vertsize ; j++)
       vb[j] = v0->ui[j];
 
    vb += vertsize;
    for (j = 0 ; j < vertsize ; j++)
       vb[j] = v1->ui[j];
+#else
+   const GLfloat dx = -0.5;
+   const GLfloat dy = -0.5;
+
+   v0->v.x += dx;
+   v0->v.y += dy;
+   v1->v.x += dx;
+   v1->v.y += dy;
+
+   for (j = 0 ; j < vertsize ; j++)
+      vb[j] = v0->ui[j];
+
+   vb += vertsize;
+   for (j = 0 ; j < vertsize ; j++)
+      vb[j] = v1->ui[j];
+
+   v0->v.x -= dx;
+   v0->v.y -= dy;
+   v1->v.x -= dx;
+   v1->v.y -= dy;
 #endif
 }
 

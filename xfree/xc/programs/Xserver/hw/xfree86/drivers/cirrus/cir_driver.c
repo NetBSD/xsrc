@@ -11,7 +11,7 @@
  *	Guy DESBIEF
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir_driver.c,v 1.60 2000/10/26 11:47:46 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir_driver.c,v 1.67 2001/05/15 10:19:37 eich Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -40,7 +40,7 @@
 
 /* Mandatory functions */
 
-static OptionInfoPtr	CIRAvailableOptions(int chipid, int busid);
+static const OptionInfoRec *	CIRAvailableOptions(int chipid, int busid);
 static void	CIRIdentify(int flags);
 static Bool	CIRProbe(DriverPtr drv, int flags);
 
@@ -65,9 +65,6 @@ static Bool alp_loaded = FALSE;
 DriverRec CIRRUS = {
 	VERSION,
 	CIR_DRIVER_NAME,
-#if 0
-	"Driver for Cirrus Logic GD5446, GD5480, and GD5462/4/5 cards",
-#endif
 	CIRIdentify,
 	CIRProbe,
 	CIRAvailableOptions,
@@ -129,6 +126,12 @@ static const char *lgSymbols[] = {
 	NULL
 };
 
+static const char *vbeSymbols[] = {
+	"VBEInit",
+	"vbeDoEDID",
+	"vbeFree",
+	NULL
+};
 
 #ifdef XFree86LOADER
 
@@ -165,7 +168,7 @@ cirSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		setupDone = TRUE;
 		xf86AddDriver(&CIRRUS, module, 0);
 
-		LoaderRefSymLists(alpSymbols, lgSymbols, NULL);
+		LoaderRefSymLists(alpSymbols, lgSymbols, vbeSymbols, NULL);
 		return (pointer)1;
 	}
 	if (errmaj) *errmaj = LDR_ONCEONLY;
@@ -181,8 +184,7 @@ CIRIdentify(int flags)
 	xf86PrintChipsets(CIR_NAME, "driver for Cirrus chipsets", CIRChipsets);
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 CIRAvailableOptions(int chipid, int busid)
 {
 	int chip = chipid & 0xffff;
@@ -399,7 +401,11 @@ cirProbeDDC(ScrnInfoPtr pScrn, int index)
     vbeInfoPtr pVbe;
 
     if (xf86LoadSubModule(pScrn, "vbe")) {
+#ifdef XFree86LOADER
+	xf86LoaderReqSymLists(vbeSymbols,NULL);
+#endif
         pVbe = VBEInit(NULL,index);
         ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+	vbeFree(pVbe);
     }
 }

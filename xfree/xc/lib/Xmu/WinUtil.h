@@ -1,4 +1,4 @@
-/* $TOG: WinUtil.h /main/8 1998/02/06 15:46:44 kaleb $ */
+/* $Xorg: WinUtil.h,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
 
 /*
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/WinUtil.h,v 1.4 1998/08/20 13:59:42 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/WinUtil.h,v 1.6 2001/01/17 19:42:57 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

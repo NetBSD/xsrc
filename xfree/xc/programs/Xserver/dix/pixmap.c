@@ -1,4 +1,4 @@
-/* $TOG: pixmap.c /main/5 1998/02/09 14:20:10 kaleb $ */
+/* $Xorg: pixmap.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/dix/pixmap.c,v 3.2 1998/07/25 09:24:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/pixmap.c,v 3.4 2001/01/17 22:36:44 dawes Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"

@@ -7,7 +7,7 @@
  * are used for depths other than 8.  Perhaps the file should be
  * renamed.  dpw
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfb8bit.h,v 3.3 1998/10/04 09:37:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfb8bit.h,v 3.5 2001/01/17 22:36:34 dawes Exp $ */
 
 /*
 
@@ -30,7 +30,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
 
-/* $TOG: cfb8bit.h /main/19 1998/02/09 14:04:05 kaleb $ */
+/* $Xorg: cfb8bit.h,v 1.3 2000/08/17 19:48:12 cpqbld Exp $ */
 
 #include "servermd.h"
 

@@ -1,4 +1,4 @@
-# $TOG: OCTables.awk /main/3 1998/02/10 14:00:53 kaleb $
+# $Xorg: OCTables.awk,v 1.3 2000/08/17 19:47:17 cpqbld Exp $
 ##
 ## Copyright 1996, 1998  The Open Group
 ##

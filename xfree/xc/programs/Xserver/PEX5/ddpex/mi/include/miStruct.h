@@ -1,4 +1,4 @@
-/* $TOG: miStruct.h /main/6 1998/02/10 12:39:15 kaleb $ */
+/* $Xorg: miStruct.h,v 1.3 2000/08/17 19:47:03 cpqbld Exp $ */
 
 
 /***********************************************************
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.3 1998/10/04 09:34:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.5 2001/01/17 22:12:20 dawes Exp $ */
 
 #ifndef MISTRUCT_H
 #define MISTRUCT_H

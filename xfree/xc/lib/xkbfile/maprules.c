@@ -1,4 +1,4 @@
-/* $TOG: maprules.c /main/13 1997/08/17 23:06:24 kaleb $ */
+/* $Xorg: maprules.c,v 1.4 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1996 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.10 1997/07/05 15:15:48 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.12 2001/01/17 19:43:41 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -1251,7 +1251,7 @@ XkbRF_GetNamesProp(dpy,rf_rtrn,vd_rtrn)
 #endif
 {
 Atom		rules_atom,actual_type;
-int		fmt,len;
+int		fmt;
 unsigned long	nitems,bytes_after;
 char            *data,*out;
 Status		rtrn;

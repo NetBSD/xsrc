@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/xditview/lex.c,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
