@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.67 2000/05/03 10:23:50 kleink Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.68 2000/05/06 06:01:48 takemura Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -329,9 +329,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(hpcmipsArchitecture)
-# define BuildServer		NO
+# define ServerOSDefines	-DDDXOSINIT
+# define BuildServer		YES
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
+# undef OptimizedCDebugFlags
+# define OptimizedCDebugFlags 	-g
+# define ServerExtraDefines	-DSTATIC_COLOR
 #endif
 
 #if defined(next68kArchitecture)
@@ -711,6 +715,13 @@ clean::									@@\
  */
 #if defined(pmaxArchitecture)
 # define XpmaxServer YES
+#endif
+
+/*
+ * Definitions for the NetBSD/hpcmips X server.
+ */
+#if defined(hpcmipsArchitecture)
+# define XhpcServer		YES
 #endif
 
 

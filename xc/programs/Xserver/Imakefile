@@ -240,6 +240,23 @@ ServerTarget(Xpmax,$(PMAXDIRS),$(PMAXOBJS),$(PMAXLIBS),$(SYSLIBS))
 #endif
 #endif /* XpmaxServer */
 
+#if XhpcServer
+XCOMM
+XCOMM NetBSD/hpcmips server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+DDXDIR1 = hw/netbsd/hpc
+HPCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(DDXDIR1) $(DEPDIRS)
+HPCOBJS = hw/netbsd/hpc/hpcInit.o
+HPCLIBS = hw/netbsd/hpc/libhpc.a CFB8Libs CFB16Libs
+ServerTarget(Xhpc,$(HPCDIRS),$(HPCOBJS),$(HPCLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xhpc
+#endif
+#endif /* XhpcServer */
+
 #if XdecServer
 XCOMM
 XCOMM Digital MIPS based WS server (ultrix 4.2 and beyond)
