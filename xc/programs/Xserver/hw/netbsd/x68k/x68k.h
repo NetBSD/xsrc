@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.1.1.1 1998/11/10 14:13:11 minoura Exp $ */
+/* $NetBSD: x68k.h,v 1.2 1999/04/06 14:17:25 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -32,9 +32,9 @@
 /* system */
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <signal.h>
 #include <sys/types.h>
-#include <sys/signal.h>
-#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
