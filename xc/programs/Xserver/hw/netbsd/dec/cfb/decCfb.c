@@ -1,4 +1,4 @@
-/* $NetBSD: decCfb.c,v 1.3 2002/02/26 12:34:53 ad Exp $ */
+/* $NetBSD: decCfb.c,v 1.4 2002/09/13 17:34:02 ad Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -158,7 +158,7 @@ decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
 	  width))
 	    return FALSE;
-        if (decFbs[pScreen->num].type == WSDISPLAY_TYPE_MFB)
+        if (decFbs[pScreen->myNum].type == WSDISPLAY_TYPE_MFB)
 		return (cfbSetVisualTypes(1, 1 << StaticGray, 8));
 	return TRUE;
     default:
