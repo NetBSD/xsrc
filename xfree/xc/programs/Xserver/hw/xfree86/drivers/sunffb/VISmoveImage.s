@@ -178,7 +178,7 @@ tgtr:
 	.globl			VISmoveImageLR
 	.align			32
 VISmoveImageLR:
-	save			%sp, -160, %sp				! Group 0
+	save			%sp, -192, %sp				! Group 0
 0:	rd			%pc, %tmp3				! Group 1
 	sub			%src, %dst, %mode			! Group 7
 	brz,pn			%h, return
@@ -1142,7 +1142,7 @@ tgtr:
 	.globl			VISmoveImageRL
 	.align			32
 VISmoveImageRL:
-	save			%sp, -160, %sp				! Group 0
+	save			%sp, -192, %sp				! Group 0
 0:	rd			%pc, %tmp3				! Group 1
 	and			%dst, 63, %leftw			! Group 7
 	mov			64, %tmp1
