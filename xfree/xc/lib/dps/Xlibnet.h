@@ -69,6 +69,12 @@ without express or implied warranty.
 
 #endif /* STREAMSCONN else */
 
+#if defined(LONG64)
+typedef	int BytesReadable_t;
+#else
+typedef	long BytesReadable_t;
+#endif
+
 /*
  * If your BytesReadable correctly detects broken connections, then
  * you should NOT define XCONN_CHECK_FREQ.
