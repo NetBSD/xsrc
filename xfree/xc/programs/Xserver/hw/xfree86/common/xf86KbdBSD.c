@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.15 2001/03/08 23:23:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.17 2001/09/29 20:40:30 herrb Exp $ */
 /*
  * Derived from xf86Kbd.c by S_ren Schmidt (sos@login.dkuug.dk)
  * which is Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -37,6 +37,7 @@
 #include "atKeynames.h"
 #include "xf86Keymap.h"
 
+#if (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)) && defined(GIO_KEYMAP)
 #define KD_GET_ENTRY(i,n) \
   eascii_to_x[((keymap.key[i].spcl << (n+1)) & 0x100) + keymap.key[i].map[n]]
 
@@ -357,6 +358,7 @@ static KeySym latin1_to_x[256] = {
 	XK_udiaeresis,	XK_yacute,	XK_thorn, 	XK_ydiaeresis
       };
 #endif
+#endif /* SYSCONS_SUPPORT || PCVT_SUPPORT */
 /*
  * LegalModifier --
  *      determine whether a key is a legal modifier key, i.e send a
