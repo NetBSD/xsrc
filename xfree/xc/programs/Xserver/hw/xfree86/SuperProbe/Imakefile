@@ -80,8 +80,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.37 2000/
 #endif
 #if defined(OpenBSDArchitecture) || defined(NetBSDArchitecture) \
    && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
-  IOPERMDEFINES = -DUSE_I386_IOPL
-  SYS_LIBRARIES = -li386
+# if defined(AlphaArchitecture)
+    IOPERMDEFINES = -DUSE_ALPHA_PIO
+    SYS_LIBRARIES = -lalpha
+# else
+    IOPERMDEFINES = -DUSE_I386_IOPL
+    SYS_LIBRARIES = -li386
+# endif
 #endif
 OS_SRC = OSModule.c $(OS_IO_SRC)
 OS_OBJ = OSModule.o $(OS_IO_OBJ)

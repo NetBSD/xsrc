@@ -173,16 +173,20 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #else
 # define OptimizedCDebugFlags 	-O2
-# if defined(SparcArchitecture) || defined(AlphaArchitecture)
+# if defined(SparcArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
+# elif defined(AlphaArchitecture)
+#  define ServerOSDefines 	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
+# elif defined(Arm32Architecture)
+#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # else
-#  ifdef Arm32Architecture
-#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
-#  else
 #  define ServerOSDefines 	/**/
 # endif
+# if defined(AlphaArchitecture)
+#  define ServerExtraSysLibs	-lalpha
+# else
+#  define ServerExtraSysLibs	/**/
 # endif
-# define ServerExtraSysLibs	/**/
 #endif
 #ifdef i386Architecture
 # define ServerExtraDefines GccGasOption XFree86ServerDefines
@@ -200,7 +204,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerExtraDefines XFree86ServerDefines
 # else
 #  if defined(AlphaArchitecture)
-#   define ServerExtraDefines GccGasOption -D_XSERVER64
+	/* XXX for the following */
+#   define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
+#   ifndef XFree86ConsoleDefines
+#    define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#   endif
 #  else
 #   ifdef Arm32Architecture
 #    define ServerExtraDefines GccGasOption XFree86ServerDefines
@@ -447,7 +455,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-#if defined(i386Architecture) || defined(Arm32Architecture)
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture)
 # include <xfree86.cf>
 #endif
 
@@ -497,8 +505,7 @@ sed 's/\.[0-9]*$$//'`
  * Definition for compiling on Alpha machines
  */
 #ifdef AlphaArchitecture
-#define	BuildServer	NO
-/* Build the shared XDM greeter on Alph if it supports shared libs */
+/* Build the shared XDM greeter on Alpha if it supports shared libs */
 #define SharedLibXdmGreet HasSharedLibraries
 #endif
 

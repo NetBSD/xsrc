@@ -75,7 +75,10 @@
 #endif
 
 #ifdef __alpha__
+#include <machine/sysarch.h>
+#ifdef __FreeBSD__
 #include <sys/sysctl.h>
+#endif
 #endif
 
 #ifdef __arm32__
@@ -124,7 +127,7 @@ struct memAccess ioMemInfo = { CONSOLE_GET_IO_INFO, NULL, NULL,
 #endif
 
 #ifdef __alpha__
-
+#ifdef __FreeBSD__
 extern unsigned long dense_base(void);
 
 static unsigned long
@@ -154,16 +157,68 @@ has_bwx(void)
     else
 	return bwx;
 }
+#endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+static struct alpha_bus_window *abw;
+static int abw_count = -1;
+
+static void
+init_abw()
+{
+	if (abw_count < 0) {
+		abw_count = alpha_bus_getwindows(ALPHA_BUS_TYPE_PCI_MEM, &abw);
+		if (abw_count <= 0)
+			FatalError("init_abw: alpha_bus_getwindows failed\n");
+	}
+}
+
+static int
+has_bwx(void)
+{
+	if (abw_count < 0)
+		init_abw();
+
+xf86Msg(X_INFO, "has_bwx = %d\n", abw[0].abw_abst.abst_flags & ABST_BWX ? 1 : 0);	/* XXXX */
+	return abw[0].abw_abst.abst_flags & ABST_BWX;
+}
+
+static unsigned long
+dense_base()
+{
+	if (abw_count < 0)
+		init_abw();
+
+	/* XXX check abst_flags for ABST_DENSE just to be safe? */
+xf86Msg(X_INFO, "dense base = %#lx\n", abw[0].abw_abst.abst_sys_start);			/* XXXX */
+	return abw[0].abw_abst.abst_sys_start;
+}
+
+static unsigned long
+memory_base()
+{
+	if (abw_count < 0)
+		init_abw();
+	
+	if (abw_count > 0) {
+xf86Msg(X_INFO, "memory base = %#lx\n", abw[1].abw_abst.abst_sys_start);		/* XXXX */
+		return abw[1].abw_abst.abst_sys_start;
+	} else {
+xf86Msg(X_INFO, "no memory base\n");							/* XXXX */
+		return 0;
+	}
+}
+#endif /* __NetBSD__ */
 
 #define BUS_BASE	dense_base()
 #define BUS_BASE_BWX	memory_base()
 
-#else
+#else /* !__alpha__ */
 
 #define BUS_BASE	0L
 #define BUS_BASE_BWX	0L
 
-#endif
+#endif /* !__alpha__ */
 
 /***************************************************************************/
 /* Video Memory Mapping section                                            */
@@ -806,6 +861,22 @@ xf86DisableIO()
 
 #endif /* __FreeBSD__ && __alpha__ */
 
+#ifdef USE_ALPHA_PIO
+
+void
+xf86EnableIO()
+{
+	alpha_pci_io_enable(1);
+}
+
+void
+xf86DisableIO()
+{
+	alpha_pci_io_enable(0);
+}
+
+#endif /* USE_ALPHA_PIO */
+
 /***************************************************************************/
 /* Interrupt Handling section                                              */
 /***************************************************************************/
@@ -1395,7 +1466,7 @@ undoWC(int screenNum, pointer list)
 
 #endif /* HAS_MTRR_SUPPORT */
 
-#if defined(__FreeBSD__) && defined(__alpha__)
+#if defined(__alpha__)
 
 #define vuip    volatile unsigned int *
 
@@ -1435,20 +1506,22 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset);
 static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset);
 
-#include <machine/sysarch.h>
-
+#ifdef __FreeBSD__
 extern int sysarch(int, char *);
+#endif
 
 struct parms {
 	u_int64_t hae;
 };
 
-static int
+static void
 sethae(u_int64_t hae)
 {
+#ifdef __FreeBSD__
 	struct parms p;
 	p.hae = hae;
 	return (sysarch(ALPHA_SETHAE, (char *)&p));
+#endif
 }
 
 static pointer
@@ -1471,15 +1544,18 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
       xf86ReadMmio16 = readSparse16;
       xf86ReadMmio32 = readSparse32;
 	
+xf86Msg(X_INFO, "memBase = mmap(0, 0x100000000, ... %#lx)\n", BUS_BASE);		/* XXXX */
       memBase = mmap((caddr_t)0, 0x100000000,
 		     PROT_READ | PROT_WRITE,
 		     MAP_SHARED, devMemFd,
-		     (off_t) dense_base());
+		     (off_t) BUS_BASE);
+xf86Msg(X_INFO, "memSBase = mmap(0, 0x100000000, ... %#lx)\n", BUS_BASE_BWX);		/* XXXX */
       memSBase = mmap((caddr_t)0, 0x100000000,
 		      PROT_READ | PROT_WRITE,
 		      MAP_SHARED, devMemFd,
-		      (off_t) memory_base());
+		      (off_t) BUS_BASE_BWX);
       
+xf86Msg(X_INFO, "memSBase = %p, memBase = %p\n", memSBase, memBase);			/* XXXX */
       if (memSBase == MAP_FAILED || memBase == MAP_FAILED)	{
 	FatalError("xf86MapVidMem: Could not mmap framebuffer (%s)\n",
 		   strerror(errno));
@@ -1653,4 +1729,4 @@ int  (*xf86ReadMmio16)(pointer Base, unsigned long Offset)
 int  (*xf86ReadMmio32)(pointer Base, unsigned long Offset)
      = readDense32;
 
-#endif /* __FreeBSD__ && __alpha__ */
+#endif /* __alpha__ */

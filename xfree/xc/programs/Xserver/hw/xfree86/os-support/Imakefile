@@ -13,6 +13,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 #if defined(i386Architecture) || defined(ia64Architecture) || \
 	(defined(LinuxArchitecture) && defined(AlphaArchitecture)) || \
 	(defined(FreeBSDArchitecture) && defined(AlphaArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(AlphaArchitecture)) || \
 	defined(PpcArchitecture) || defined(SparcArchitecture) || \
 	(defined(LinuxArchitecture) && defined(MipsArchitecture))
 BUS_SUBDIR = bus
