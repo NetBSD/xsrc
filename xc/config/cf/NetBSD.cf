@@ -486,9 +486,6 @@ install.man:: 								@@\
 /*
  * Shared libraries supported starting in 1.0 on a.out platforms,
  * and on all ELF platforms.
- *
- * XXX May not be correct on NetBSD/pmax (ELF, but might not have
- * working shared libs).
  */
 #if ((OSMajorVersion > 0) && \
      !defined(AlphaArchitecture) && !defined(MipsArchitecture) && \
