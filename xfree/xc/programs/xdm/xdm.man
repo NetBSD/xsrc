@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xdm/xdm.man,v 3.29 2004/01/12 21:43:19 herrb Exp $
+.\" $XFree86: xc/programs/xdm/xdm.man,v 3.33 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH XDM 1 __xorgversion__
+.TH XDM 1 __vendorversion__
 .SH NAME
 xdm \- X Display Manager with support for XDMCP, host chooser
 .SH SYNOPSIS
@@ -305,7 +305,11 @@ uses the \fIlockf\fP library call, while on BSD it uses \fIflock.\fP
 This names a directory under which
 .I xdm
 stores authorization files while initializing the session.  The
+<<<<<<< xdm.man
 default value is \fI\&XDMAUTHDIR\fP.
+=======
+default value is \fI XDMAUTHDIR\fP.
+>>>>>>> 1.1.1.8
 Can be overridden for specific displays by
 DisplayManager.\fIDISPLAY\fP.authFile.
 .IP \fBDisplayManager.autoRescan\fP
@@ -607,12 +611,21 @@ named \fIxdm-config\fP:
 
 .ta .5i 4i
 
+<<<<<<< xdm.man
 	DisplayManager.servers:	XDMDIR/Xservers
 	DisplayManager.errorLogFile:	XDMLOGDIR/xdm.log
 	DisplayManager*resources:	XDMDIR/Xresources
 	DisplayManager*startup:	XDMDIR/Xstartup
 	DisplayManager*session:	XDMDIR/Xsession
 	DisplayManager.pidFile:	XDMPIDDIR/xdm.pid
+=======
+	DisplayManager.servers:	__projectroot__/lib/X11/xdm/Xservers
+	DisplayManager.errorLogFile:	XDMLOGDIR/xdm.log
+	DisplayManager*resources:	__projectroot__/lib/X11/xdm/Xresources
+	DisplayManager*startup:	__projectroot__/lib/X11/xdm/Xstartup
+	DisplayManager*session:	__projectroot__/lib/X11/xdm/Xsession
+	DisplayManager.pidFile:	__projectroot__/lib/X11/xdm/xdm-pid
+>>>>>>> 1.1.1.8
 	DisplayManager._0.authorize:	true
 	DisplayManager*authorize:	false
 
@@ -700,7 +713,7 @@ XCOMM
 XCOMM Indirect query entries
 XCOMM
 
-%HOSTS	expo.lcs.mit.edu xenon.lcs.mit.edu \\
+%HOSTS	expo.lcs.mit.edu xenon.lcs.mit.edu \\\&
 	excess.lcs.mit.edu kanga.lcs.mit.edu
 
 extract.lcs.mit.edu	xenon.lcs.mit.edu	#force extract to contact xenon
@@ -869,9 +882,9 @@ parameters for that widget:
 .nf
 .ta .5i 1i
 
-	xlogin*login.translations: #override\\
-		Ctrl<Key>R: abort-display()\\n\\
-		<Key>F1: set-session-argument(failsafe) finish-field()\\n\\
+	xlogin*login.translations: #override\\\&
+		Ctrl<Key>R: abort-display()\\n\\/&
+		<Key>F1: set-session-argument(failsafe) finish-field()\\n\\\&
 		<Key>Return: set-session-argument() finish-field()
 	xlogin*borderWidth: 3
 	xlogin*greeting: CLIENTHOST
@@ -993,21 +1006,21 @@ translation table is:
 .nf
 .ta .5i 2i
 
-	Ctrl<Key>H:	delete-previous-character() \\n\\
-	Ctrl<Key>D:	delete-character() \\n\\
-	Ctrl<Key>B:	move-backward-character() \\n\\
-	Ctrl<Key>F:	move-forward-character() \\n\\
-	Ctrl<Key>A:	move-to-begining() \\n\\
-	Ctrl<Key>E:	move-to-end() \\n\\
-	Ctrl<Key>K:	erase-to-end-of-line() \\n\\
-	Ctrl<Key>U:	erase-line() \\n\\
-	Ctrl<Key>X:	erase-line() \\n\\
-	Ctrl<Key>C:	restart-session() \\n\\
-	Ctrl<Key>\\\\:	abort-session() \\n\\
-	<Key>BackSpace:	delete-previous-character() \\n\\
-	<Key>Delete:	delete-previous-character() \\n\\
-	<Key>Return:	finish-field() \\n\\
-	<Key>:	insert-char() \\
+	Ctrl<Key>H:	delete-previous-character() \\n\\\&
+	Ctrl<Key>D:	delete-character() \\n\\\&
+	Ctrl<Key>B:	move-backward-character() \\n\\\&
+	Ctrl<Key>F:	move-forward-character() \\n\\\&
+	Ctrl<Key>A:	move-to-begining() \\n\\\&
+	Ctrl<Key>E:	move-to-end() \\n\\\&
+	Ctrl<Key>K:	erase-to-end-of-line() \\n\\\&
+	Ctrl<Key>U:	erase-line() \\n\\\&
+	Ctrl<Key>X:	erase-line() \\n\\\&
+	Ctrl<Key>C:	restart-session() \\n\\\&
+	Ctrl<Key>\\\\:	abort-session() \\n\\\&
+	<Key>BackSpace:	delete-previous-character() \\n\\\&
+	<Key>Delete:	delete-previous-character() \\n\\\&
+	<Key>Return:	finish-field() \\n\\\&
+	<Key>:	insert-char() \\\&
 
 .fi
 .PP

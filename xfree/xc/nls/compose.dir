@@ -1,10 +1,9 @@
-XCOMM $Xorg: compose.dir,v 1.3 2000/08/17 19:46:48 cpqbld Exp $
 XCOMM
 XCOMM	This file contains compose table file name.
 XCOMM	The first word is the compose table file name and
 XCOMM	the second word is full locale name.
 XCOMM
-XCOMM $XFree86: xc/nls/compose.dir,v 1.25 2004/02/09 01:35:16 dawes Exp $
+XCOMM $XFree86: xc/nls/compose.dir,v 1.29 2005/02/25 18:25:34 dawes Exp $
 XCOMM
 iso8859-1/Compose:		C
 iso8859-1/Compose:		af_ZA.ISO8859-1
@@ -167,6 +166,8 @@ iso8859-1/Compose:		nb_NO.ISO8859-1
 iso8859-15/Compose:		nb_NO.ISO8859-15
 iso8859-1/Compose:		nn_NO.ISO8859-1
 iso8859-15/Compose:		nn_NO.ISO8859-15
+iso8859-1/Compose:		nr_ZA.ISO8859-1
+iso8859-15/Compose:		nso_ZA.ISO8859-15
 iso8859-1/Compose:		ny_NO.ISO8859-1
 iso8859-15/Compose:		ny_NO.ISO8859-15
 iso8859-1/Compose:		oc_FR.ISO8859-1
@@ -185,6 +186,7 @@ koi8-r/Compose:			ru_RU.KOI8-R
 iso8859-5/Compose:		ru_RU.ISO8859-5
 microsoft-cp1251/Compose:	ru_RU.CP1251
 koi8-u/Compose:			ru_UA.KOI8-U
+iso8859-1/Compose:		rw_RW.ISO8859-1
 iso8859-2/Compose: 		sh_YU.ISO8859-2
 iso8859-2/Compose: 		sk_SK.ISO8859-2
 iso8859-2/Compose: 		sl_CS.ISO8859-2
@@ -194,6 +196,8 @@ iso8859-2/Compose: 		sq_AL.ISO8859-2
 iso8859-2/Compose:		sr_SP.ISO8859-2
 iso8859-2/Compose:		sr_YU.ISO8859-2
 iso8859-5/Compose:		sr_YU.ISO8859-5
+iso8859-1/Compose:		ss_ZA.ISO8859-1
+iso8859-1/Compose:		st_ZA.ISO8859-1
 iso8859-1/Compose:		sv_FI.ISO8859-1
 iso8859-15/Compose:		sv_FI.ISO8859-15
 iso8859-1/Compose:		sv_SE.ISO8859-1
@@ -201,7 +205,9 @@ iso8859-15/Compose:		sv_SE.ISO8859-15
 tscii-0/Compose:		ta_IN.TSCII-0
 koi8-c/Compose:			tg_TJ.KOI8-C
 iso8859-1/Compose:		tl_PH.ISO8859-1
+iso8859-15/Compose:		tn_ZA.ISO8859-15
 iso8859-9/Compose:		tr_TR.ISO8859-9
+iso8859-1/Compose:		ts_ZA.ISO8859-1
 tatar-cyr/Compose:		tt_RU.TATAR-CYR
 koi8-c/Compose:			tt_RU.KOI8-C
 koi8-u/Compose:			uk_UA.KOI8-U
@@ -209,6 +215,7 @@ microsoft-cp1256/Compose:	ur_PK.CP1256
 vi_VN.viscii/Compose:		vi_VN.VISCII
 vi_VN.tcvn/Compose:		vi_VN.TCVN
 iso8859-1/Compose:		wa_BE.ISO8859-1
+iso8859-1/Compose:		xh_ZA.ISO8859-1
 microsoft-cp1255/Compose:	yi_US.CP1256
 zh_CN/Compose:			zh_CN.eucCN
 zh_CN/Compose:			zh_CN.GB2312
@@ -216,6 +223,7 @@ zh_CN.gbk/Compose:		zh_CN.GBK
 zh_TW.big5/Compose:		zh_TW.big5
 zh_TW.big5/Compose:		zh_TW.Big5
 zh_TW/Compose:			zh_TW.eucTW
+iso8859-1/Compose:		zu_ZA.ISO8859-1
 XCOMM
 XCOMM
 en_US.UTF-8/Compose:		af_ZA.UTF-8
@@ -309,6 +317,7 @@ en_US.UTF-8/Compose:		iu_CA.UTF-8
 en_US.UTF-8/Compose:		ka_GE.UTF-8
 en_US.UTF-8/Compose:		kl_GL.UTF-8
 en_US.UTF-8/Compose:		kw_GB.UTF-8
+en_US.UTF-8/Compose:		ky_KG.UTF-8
 en_US.UTF-8/Compose:		lo_LA.UTF-8
 en_US.UTF-8/Compose:		lt_LT.UTF-8
 en_US.UTF-8/Compose:		lv_LV.UTF-8
@@ -319,6 +328,8 @@ en_US.UTF-8/Compose:		nl_BE.UTF-8
 en_US.UTF-8/Compose:		nl_NL.UTF-8
 en_US.UTF-8/Compose:		no_NO.UTF-8
 en_US.UTF-8/Compose:		nb_NO.UTF-8
+en_US.UTF-8/Compose:		nr_ZA.UTF-8
+en_US.UTF-8/Compose:		nso_ZA.UTF-8
 en_US.UTF-8/Compose:		ny_NO.UTF-8
 en_US.UTF-8/Compose:		oc_FR.UTF-8
 en_US.UTF-8/Compose:		pd_DE.UTF-8
@@ -331,21 +342,29 @@ en_US.UTF-8/Compose:		pt_PT.UTF-8
 en_US.UTF-8/Compose:		ro_RO.UTF-8
 en_US.UTF-8/Compose:		ru_RU.UTF-8
 en_US.UTF-8/Compose:		ru_UA.UTF-8
+en_US.UTF-8/Compose:		si_LK.UTF-8
 en_US.UTF-8/Compose:		sk_SK.UTF-8
 en_US.UTF-8/Compose:		sl_SI.UTF-8
 en_US.UTF-8/Compose:		sq_AL.UTF-8
 en_US.UTF-8/Compose:		sr_YU.UTF-8
+en_US.UTF-8/Compose:		ss_ZA.UTF-8
+en_US.UTF-8/Compose:		st_ZA.UTF-8
 en_US.UTF-8/Compose:		sv_FI.UTF-8
 en_US.UTF-8/Compose:		sv_SE.UTF-8
 en_US.UTF-8/Compose:		ta_IN.UTF-8
 en_US.UTF-8/Compose:		tg_TJ.UTF-8
 en_US.UTF-8/Compose:		th_TH.UTF-8
 en_US.UTF-8/Compose:		tl_PH.UTF-8
+en_US.UTF-8/Compose:		tn_ZA.UTF-8
 en_US.UTF-8/Compose:		tr_TR.UTF-8
+en_US.UTF-8/Compose:		ts_ZA.UTF-8
 en_US.UTF-8/Compose:		tt_RU.UTF-8
 en_US.UTF-8/Compose:		uk_UA.UTF-8
 en_US.UTF-8/Compose:		ur_PK.UTF-8
 en_US.UTF-8/Compose:		uz_UZ.UTF-8
+en_US.UTF-8/Compose:		ve_ZA.UTF-8
 en_US.UTF-8/Compose:		vi_VN.UTF-8
 en_US.UTF-8/Compose:		wa_BE.UTF-8
+en_US.UTF-8/Compose:		xh_ZA.UTF-8
 en_US.UTF-8/Compose:		yi_US.UTF-8
+en_US.UTF-8/Compose:		zu_ZA.UTF-8

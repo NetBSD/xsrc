@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.57 2003/11/03 05:11:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.58 2004/03/21 11:27:06 herrb Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.57 2004/02/13 23:58:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.58 2004/06/02 22:43:04 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -22,7 +22,7 @@
  *
  */
 /*
- * Copyright (c) 1992-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1992-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -68,7 +68,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $XConsortium: xf86Io.c /main/27 1996/10/19 17:58:55 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -487,32 +486,4 @@ searchdone:
   }
   return (Success);
 }
-
-#if defined(DDXTIME) && !defined(QNX4)
-/*
- * These are getting tossed in here until I can think of where
- * they really belong
- */
-#define HALFMONTH ((unsigned long) 1<<31)
-CARD32
-GetTimeInMillis()
-{
-    struct timeval  tp;
-    register CARD32 val;
-    register INT32 diff;
-    static CARD32 oldval = 0;
-    static CARD32 time = 0;
-
-    gettimeofday(&tp, 0);
-    val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
-    if (oldval) {
-	diff = val - oldval;
-	if (diff > 0)
-	    time += diff;
-    }
-    oldval = val;
-
-    return time;
-}
-#endif /* DDXTIME && !QNX4 */
 

@@ -6,7 +6,7 @@
 char rcsId_vmwarecurs[] =
     "Id: vmwarecurs.c,v 1.5 2001/01/30 23:33:02 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.11 2003/02/05 12:47:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.12 2004/07/25 20:49:16 dawes Exp $ */
 
 #include "vmware.h"
 #include "bits2pixels.h"
@@ -36,8 +36,8 @@ RedefineCursor(VMWAREPtr pVMWARE)
     /* Define cursor */
     vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DEFINE_CURSOR);
     vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
-    vmwareWriteWordToFIFO(pVMWARE, 0);          /* HotX/HotY seem to be zero? */
-    vmwareWriteWordToFIFO(pVMWARE, 0);          /* HotX/HotY seem to be zero? */
+    vmwareWriteWordToFIFO(pVMWARE, pVMWARE->hwcur.hotX);
+    vmwareWriteWordToFIFO(pVMWARE, pVMWARE->hwcur.hotY);
     vmwareWriteWordToFIFO(pVMWARE, pVMWARE->CursorInfoRec->MaxWidth);
     vmwareWriteWordToFIFO(pVMWARE, pVMWARE->CursorInfoRec->MaxHeight);
     vmwareWriteWordToFIFO(pVMWARE, 1);
@@ -104,6 +104,18 @@ vmwareSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     }
 }
 
+static Bool
+vmwareUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
+{
+    ScrnInfoPtr pScrn = infoFromScreen(pScreen);
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+
+    pVMWARE->hwcur.hotX = pCurs->bits->xhot;
+    pVMWARE->hwcur.hotY = pCurs->bits->yhot;
+
+    return pScrn->bitsPerPixel > 8;
+}
+
 static void
 vmwareLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src )
 {
@@ -125,6 +137,7 @@ static Bool
 vmwareUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs)
 {
     ScrnInfoPtr pScrn = infoFromScreen(pScreen);
+
     return pCurs->bits->height <= MAX_CURS &&
            pCurs->bits->width <= MAX_CURS &&
            pScrn->bitsPerPixel > 8;
@@ -141,10 +154,13 @@ vmwareLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
 
     pVMWARE->cursorDefined = FALSE;
 
+    pVMWARE->hwcur.hotX = pCurs->bits->xhot;
+    pVMWARE->hwcur.hotY = pCurs->bits->yhot;
+
     vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DEFINE_ALPHA_CURSOR);
     vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
-    vmwareWriteWordToFIFO(pVMWARE, 0);
-    vmwareWriteWordToFIFO(pVMWARE, 0);
+    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->xhot);
+    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->yhot);
     vmwareWriteWordToFIFO(pVMWARE, width);
     vmwareWriteWordToFIFO(pVMWARE, height);
 
@@ -153,7 +169,6 @@ vmwareLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
     }
 
     vmwareWaitForFB(pVMWARE);
-
     pVMWARE->cursorDefined = TRUE;
 }
 #endif
@@ -165,10 +180,12 @@ vmwareWriteCursorRegs(VMWAREPtr pVMWARE, Bool visible, Bool force)
 
     vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
     if (visible) {
-        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_X, pVMWARE->hwcur.x);
-        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_Y, pVMWARE->hwcur.y);
+        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_X,
+                       pVMWARE->hwcur.x + pVMWARE->hwcur.hotX);
+        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_Y,
+                       pVMWARE->hwcur.y + pVMWARE->hwcur.hotY);
     }
-    
+
     if (force) {
         enableVal = visible ? SVGA_CURSOR_ON_SHOW : SVGA_CURSOR_ON_HIDE;
     } else {
@@ -275,6 +292,7 @@ vmwareCursorInit(ScreenPtr pScreen)
     infoPtr->LoadCursorImage = vmwareLoadCursorImage;
     infoPtr->HideCursor = vmwareHideCursor;
     infoPtr->ShowCursor = vmwareShowCursor;
+    infoPtr->UseHWCursor = vmwareUseHWCursor;
 
 #ifdef ARGB_CURSOR
     if (pVMWARE->vmwareCapability & SVGA_CAP_ALPHA_CURSOR) {

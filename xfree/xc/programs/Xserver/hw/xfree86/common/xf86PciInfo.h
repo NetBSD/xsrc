@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.158 2004/02/14 17:00:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.163 2005/02/15 21:31:09 tsi Exp $ */
 
 /*
  * Copyright (c) 1995-2003 by The XFree86 Project, Inc.
@@ -107,10 +107,12 @@
 #define PCI_VENDOR_NVIDIA		0x10DE
 #define PCI_VENDOR_IMS			0x10E0
 #define PCI_VENDOR_INTEGRAPHICS 	0x10EA
+#define PCI_VENDOR_CREATIVE		0x1102
 #define PCI_VENDOR_ALLIANCE		0x1142
 #define PCI_VENDOR_RENDITION		0x1163
 #define PCI_VENDOR_3DFX			0x121A
 #define PCI_VENDOR_SMI			0x126F
+#define PCI_VENDOR_ENSONIQ		0x1274
 #define PCI_VENDOR_TRITECH		0x1292
 #define PCI_VENDOR_NVIDIA_SGS		0x12D2
 #define PCI_VENDOR_VMWARE		0x15AD
@@ -316,6 +318,7 @@
 /* Cirrus Logic */
 #define PCI_CHIP_GD7548			0x0038
 #define PCI_CHIP_GD7555			0x0040
+#define PCI_CHIP_GD7556			0x004C
 #define PCI_CHIP_GD5430			0x00A0
 #define PCI_CHIP_GD5434_4		0x00A4
 #define PCI_CHIP_GD5434_8		0x00A8
@@ -435,9 +438,12 @@
 
 /* Hewlett-Packard */
 #define PCI_CHIP_ELROY			0x1054
+#define PCI_CHIP_REO_SBA		0x10F0
+#define PCI_CHIP_REO_IOC		0x10F1
 #define PCI_CHIP_ZX1_SBA		0x1229
 #define PCI_CHIP_ZX1_IOC		0x122A
 #define PCI_CHIP_ZX1_LBA		0x122E	/* a.k.a. Mercury */
+#define PCI_CHIP_SX1K_IOC		0x127C
 #define PCI_CHIP_ZX1_AGP8		0x12B4	/* a.k.a. QuickSilver */
 
 /* SGS */
@@ -459,13 +465,13 @@
 #define PCI_CHIP_I128_T2R4		0x5348
 
 /* Sun */
-#define PCI_CHIP_EBUS			0x1000
-#define PCI_CHIP_HAPPY_MEAL		0x1001
 #define PCI_CHIP_SIMBA			0x5000
 #define PCI_CHIP_PSYCHO			0x8000
 #define PCI_CHIP_SCHIZO			0x8001
+#define PCI_CHIP_SCHIZO_PLUS		0x8002
 #define PCI_CHIP_SABRE			0xA000
 #define PCI_CHIP_HUMMINGBIRD		0xA001
+#define PCI_CHIP_TOMATILLO		0xA801
 
 /* BrookTree */
 #define PCI_CHIP_BT848			0x0350

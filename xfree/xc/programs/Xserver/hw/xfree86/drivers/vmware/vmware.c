@@ -6,7 +6,7 @@
 char rcsId_vmware[] =
     "Id: vmware.c,v 1.11 2001/02/23 02:10:39 yoel Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.19 2003/10/30 17:37:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.24 2005/02/26 01:07:13 dawes Exp $ */
 
 /*
  * TODO: support the vmware linux kernel fb driver (Option "UseFBDev").
@@ -151,6 +151,7 @@ static const OptionInfoRec VMWAREOptions[] = {
 };
 
 static void VMWAREStopFIFO(ScrnInfoPtr pScrn);
+static void VMWARESave(ScrnInfoPtr pScrn);
 
 static Bool
 VMWAREGetRec(ScrnInfoPtr pScrn)
@@ -435,13 +436,6 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
                "VMware SVGA regs at (0x%04lx, 0x%04lx)\n",
                pVMWARE->indexReg, pVMWARE->valueReg);
 
-    id = VMXGetVMwareSvgaId(pVMWARE);
-    if (id == SVGA_ID_0 || id == SVGA_ID_INVALID) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "No supported VMware SVGA found (read ID 0x%08x).\n", id);
-        return FALSE;
-    }
-
     if (!xf86LoadSubModule(pScrn, "vgahw")) {
         return FALSE;
     }
@@ -449,6 +443,19 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     xf86LoaderReqSymLists(vgahwSymbols, NULL);
 
     if (!vgaHWGetHWRec(pScrn)) {
+        return FALSE;
+    }
+
+    /*
+     * Save the current video state.  Do it here before VMXGetVMwareSvgaId
+     * writes to any registers.
+     */
+    VMWARESave(pScrn);
+
+    id = VMXGetVMwareSvgaId(pVMWARE);
+    if (id == SVGA_ID_0 || id == SVGA_ID_INVALID) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "No supported VMware SVGA found (read ID 0x%08x).\n", id);
         return FALSE;
     }
 
@@ -464,15 +471,12 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     pVMWARE->vmwareCapability = 0;
 #endif
 
+    pVMWARE->bitsPerPixel = vmwareReadReg(pVMWARE,
+                                          SVGA_REG_HOST_BITS_PER_PIXEL);
     if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
-        pVMWARE->bitsPerPixel =
-           vmwareReadReg(pVMWARE, SVGA_REG_HOST_BITS_PER_PIXEL);
-        vmwareWriteReg(pVMWARE,
-                       SVGA_REG_BITS_PER_PIXEL, pVMWARE->bitsPerPixel);
-    } else {
-        pVMWARE->bitsPerPixel =
-           vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
+       vmwareWriteReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL, pVMWARE->bitsPerPixel);
     }
+
     pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
     pVMWARE->videoRam = vmwareReadReg(pVMWARE, SVGA_REG_VRAM_SIZE);
     pVMWARE->memPhysBase = vmwareReadReg(pVMWARE, SVGA_REG_FB_START);
@@ -498,51 +502,71 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "mwidt: %d\n", pVMWARE->maxWidth);
     xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "mheig: %d\n", pVMWARE->maxHeight);
 
-    switch (pVMWARE->depth) {
-    case 16:
-        /*
-         * In certain cases, the Windows host appears to
-         * report 16 bpp and 16 depth but 555 weight.  Just
-         * silently convert it to depth of 15.
-         */
-        if (pVMWARE->bitsPerPixel == 16 &&
-            pVMWARE->weight.green == 5)
-            pVMWARE->depth = 15;
-    case 8:
-    case 15:
-        bpp24flags = NoDepth24Support;
-        break;
+    if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
+        bpp24flags = Support24bppFb | Support32bppFb;
+    } else {
+        switch (pVMWARE->depth) {
+        case 16:
+            /*
+             * In certain cases, the Windows host appears to
+             * report 16 bpp and 16 depth but 555 weight.  Just
+             * silently convert it to depth of 15.
+             */
+            if (pVMWARE->bitsPerPixel == 16 &&
+                pVMWARE->weight.green == 5)
+                pVMWARE->depth = 15;
+        case 8:
+        case 15:
+            bpp24flags = NoDepth24Support;
+         break;
+        case 32:
+            /*
+             * There is no 32 bit depth, apparently it can get
+             * reported this way sometimes on the Windows host.
+             */
+            if (pVMWARE->bitsPerPixel == 32)
+                pVMWARE->depth = 24;
+        case 24:
+            if (pVMWARE->bitsPerPixel == 24)
+                bpp24flags = Support24bppFb;
+            else
+                bpp24flags = Support32bppFb;
+            break;
+       default:
+            xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                       "Adapter is using an unsupported depth (%d).\n",
+                       pVMWARE->depth);
+            return FALSE;
+       }
+    }
 
-    case 32:
-        /*
-         * There is no 32 bit depth, apparently it can get
-         * reported this way sometimes on the Windows host.
-         */
-        if (pVMWARE->bitsPerPixel == 32)
-            pVMWARE->depth = 24;
-    case 24:
-        if (pVMWARE->bitsPerPixel == 24)
-            bpp24flags = Support24bppFb;
-        else
-            bpp24flags = Support32bppFb;
-        break;
-    default:
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "Adapter is using an unsupported depth (%d).\n",
-                   pVMWARE->depth);
+    if (!xf86SetDepthBpp(pScrn, pVMWARE->depth, pVMWARE->bitsPerPixel,
+                         pVMWARE->bitsPerPixel, bpp24flags)) {
         return FALSE;
     }
 
-    if (!xf86SetDepthBpp(pScrn, pVMWARE->depth, pVMWARE->bitsPerPixel, pVMWARE->bitsPerPixel, bpp24flags)) {
+    /* Check that the returned depth is one we support */
+    switch (pScrn->depth) {
+    case 8:
+    case 15:
+    case 16:
+    case 24:
+        /* OK */
+        break;
+    default:
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "Given depth (%d) is not supported by this driver\n",
+                   pScrn->depth);
         return FALSE;
     }
 
     if (pScrn->bitsPerPixel != pVMWARE->bitsPerPixel) {
-        if (pScrn->bitsPerPixel == 8 &&
-            pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
-            vmwareWriteReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL, 8);
+        if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
+            vmwareWriteReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL,
+                           pScrn->bitsPerPixel);
             pVMWARE->bitsPerPixel =
                vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
+            pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
         } else {
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                        "Currently unavailable depth/bpp of %d/%d requested.\n"
@@ -556,11 +580,10 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     /*
-     * Reread depth and defer reading the colour registers until here
-     * in case we changed bpp above.
+     * Defer reading the colour registers until here in case we changed
+     * bpp above.
      */
 
-    pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
     pVMWARE->weight.red =
        vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_RED_MASK));
     pVMWARE->weight.green =
@@ -587,13 +610,23 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
                    2, "vis:   %d\n", pVMWARE->defaultVisual);
 
     if (pScrn->depth != pVMWARE->depth) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "Currently unavailable depth of %d requested.\n"
-                   "\tThe guest X server must run at the same depth as the host (which\n"
-                   "\tis currently %d).  This is automatically detected.  Please do not\n"
-                   "\tspecify a depth on the command line or via the config file.\n",
-                   pScrn->depth, pVMWARE->depth);
-        return FALSE;
+        if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
+            xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                       "Currently unavailable depth of %d requested.\n"
+                       "\tIf the guest X server's BPP matches the host's "
+                       "BPP, then\n\tthe guest X server's depth must also "
+                       "match the\n\thost's depth (currently %d).\n",
+                       pScrn->depth, pVMWARE->depth);
+        } else {
+            xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                       "Currently unavailable depth of %d requested.\n"
+                       "\tThe guest X server must run at the same depth as "
+                       "the host (which\n\tis currently %d).  This is "
+                       "automatically detected.  Please do not\n\tspecify "
+                       "a depth on the command line or via the config file.\n",
+                       pScrn->depth, pVMWARE->depth);
+        }
+           return FALSE;
     }
     xf86PrintDepthBpp(pScrn);
 
@@ -698,6 +731,16 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     clockRanges->ClockMulFactor = 1;
     clockRanges->ClockDivFactor = 1;
 
+    /*
+     * If the monitor parameters are not specified explicitly, set them
+     * so that 60Hz modes up to just below the maximum size are allowed.
+     */
+    if (!pScrn->monitor->DDC && pScrn->monitor->nHsync == 0) {
+	xf86SetMonitorParameters(pScrn, pScrn->monitor,
+				 pVMWARE->maxWidth * 0.88,
+				 pVMWARE->maxHeight * 0.88, 60);
+    }
+
     i = xf86ValidateModes(pScrn, pScrn->monitor->Modes, pScrn->display->modes,
                           clockRanges, NULL, 256, pVMWARE->maxWidth, 32 * 32,
                           128, pVMWARE->maxHeight,
@@ -794,6 +837,7 @@ VMWARESave(ScrnInfoPtr pScrn)
     vmwareReg->svga_reg_height = vmwareReadReg(pVMWARE, SVGA_REG_HEIGHT);
     vmwareReg->svga_reg_bits_per_pixel =
        vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
+    vmwareReg->svga_reg_id = vmwareReadReg(pVMWARE, SVGA_REG_ID);
 
     /* XXX this should be based on the cap bit, not hwCursor... */
     if (pVMWARE->hwCursor) {
@@ -818,6 +862,7 @@ VMWARERestoreRegs(ScrnInfoPtr pScrn, VMWARERegPtr vmwareReg)
 	       vmwareReg->svga_reg_width, vmwareReg->svga_reg_height,
 	       vmwareReg->svga_reg_bits_per_pixel, vmwareReg->svga_reg_enable));
     if (vmwareReg->svga_reg_enable) {
+        vmwareWriteReg(pVMWARE, SVGA_REG_ID, vmwareReg->svga_reg_id);
         vmwareWriteReg(pVMWARE, SVGA_REG_WIDTH, vmwareReg->svga_reg_width);
         vmwareWriteReg(pVMWARE, SVGA_REG_HEIGHT, vmwareReg->svga_reg_height);
         vmwareWriteReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL,
@@ -866,6 +911,7 @@ VMWAREModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
     VMWARERegPtr vmwareReg = &pVMWARE->ModeReg;
 
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     vgaHWUnlock(hwp);
     if (!vgaHWInit(pScrn, mode))
         return FALSE;
@@ -1095,9 +1141,6 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     hwp = VGAHWPTR(pScrn);
     vgaHWGetIOBase(hwp);
-
-    /* Save the current video state */
-    VMWARESave(pScrn);
 
     VMWAREInitFIFO(pScrn);
 

@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ConnDis.c,v 3.29 2003/12/19 02:05:37 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ConnDis.c,v 3.32 2004/06/24 02:21:15 tsi Exp $ */
 
 /* 
  * This file contains operating system dependencies.
@@ -289,12 +289,6 @@ _X11TransConnectDisplay (
 #endif
 	    pprotocol = copystring ("tcp", 3);
     }
-#else
-#if defined(AMRPCCONN)
-    if (!pprotocol) {
-            pprotocol = copystring ("amcon", 5);
-    }
-#endif
 #endif
 
 #if defined(UNIXCONN) || defined(LOCALCONN) || defined(OS2PIPECONN)
@@ -1163,8 +1157,8 @@ GetAuthorization(
 	    xdmcp_data[j++] = 0;
 	_XLockMutex(_Xglobal_lock);
 	/* this function might use static data, hence the lock around it */
-	XdmcpWrap (xdmcp_data, auth_data + 8,
-		      xdmcp_data, j);
+	XdmcpWrap ((unsigned char *)xdmcp_data, (unsigned char *)auth_data + 8,
+		   (unsigned char *)xdmcp_data, j);
 	_XUnlockMutex(_Xglobal_lock);
 	auth_data = xdmcp_data;
 	auth_datalen = j;

@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.32 2003/10/02 13:30:06 eich Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.33 2004/09/28 15:17:14 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -94,7 +94,8 @@ XCOMM ix86 PCI driver with OS fallback for Linux
 PCIDRVRSRC = ix86Pci.c linuxPci.c
 PCIDRVROBJ = ix86Pci.o linuxPci.o
 
-#elif defined(FreeBSDArchitecture) && defined(AlphaArchitecture)
+#elif defined(FreeBSDArchitecture) && \
+     (defined(AlphaArchitecture) || defined(AMD64Architecture))
 
 
 XCOMM generic FreeBSD PCI driver (using /dev/pci)

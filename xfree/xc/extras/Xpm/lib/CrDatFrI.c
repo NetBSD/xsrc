@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/extras/Xpm/lib/CrDatFrI.c,v 1.4 2004/11/18 21:30:51 herrb Exp $ */
 
 /* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 

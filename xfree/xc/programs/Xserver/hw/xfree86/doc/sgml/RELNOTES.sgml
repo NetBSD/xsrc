@@ -4,18 +4,18 @@
 
 <article>
 
-<title>Release Notes for XFree86&trade; &relvers;
+<title>Release Notes for XFree86&reg; &relvers;
 <author>The XFree86 Project, Inc
-<date>29 February 2004
+<date>16 March 2005
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.116 2004/02/28 16:33:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.135 2005/03/17 01:11:56 dawes Exp $
 </ident>
 
 <abstract>
 
-This document contains information about features and their status  in XFree86
-&relvers;.
+This document contains information about the various features and their current 
+status in the XFree86 &relvers; release.
 
 </abstract>
 
@@ -25,83 +25,108 @@ This document contains information about features and their status  in XFree86
 
 <sect>Introduction to the 4.x Release Series
 <p>
-XFree86 4.0 was the first official release of the new XFree86 4 series.
+XFree86 4.0 was the first official release of the XFree86 4 series.
 <![ %updaterel [
-XFree86 &relvers; is the &whichupdaterel; update to &fullrelvers;, which
-is the latest full release in that series.
+XFree86 &relvers; is the &whichupdaterel; update to &fullrelvers;, which is the 
+latest full release in that series.
 ]]>
 <![ %fullrel [
 The current release (&relvers;) is the latest in that series.
 ]]>
-XFree86
-4 represents a significant redesign of the XFree86 X server.  Not all
-of the hardware drivers from 3.3.x have been ported to 4.x yet, but
-conversely, 4.x has support for a lot of hardware that is not supported
-in 3.3.x.  Our <htmlurl name="Driver Status document" url="Status.html">
-summarizes how the hardware driver support compares between &legacyvers;
-and &relvers;.  
+The XFree86 4.x series  represents a significant redesign of the XFree86 X server,
+with a strong focus on modularity
+and configurability.
 
-XFree86 4.4 introduces an automatic configuration mechanism for the
-XFree86 server which makes it now possible to start XFree86 without first
-creating a configuration file.  The initial automatic configuration
-support is targeted towards Linux and FreeBSD and it is hoped that
-automatic configuration will be supported on other platforms in
-future releases. 
+<![ %relcandidate [
+<sect1>&fullrelvers; RC&rcnum;
+<p>
+This is release candidate &rcnum; for the &fullrelvers; release, and is 
+feature-complete.  Known problems with this release candidate include:
 
-If you are running either  Linux or FreeBSD, try it out if you
-do not already have a working <tt>XF86Config</tt> file.  If you want to
-customise things afterwards, you can cut and paste the automatically
-generated configuration from the <tt>/var/log/XFree86.0.log</tt> file
-into an <tt>XF86Config</tt> file and make your customisations there.
+<itemize>
 
-If you do not have any luck with automatic configuration, or you are using
-a platform that is not currently supported, try one of the older methods
-for getting started.
+<item>The documentation is not <em>fully</em> up to date.
 
-XFree86 comes with a graphical configuration tool called "<tt>xf86cfg</tt>",
-which also has a text mode interface and can be used to create an initial
-configuration file. It can also be used to customise existing
-configurations.
+</itemize>
+]]>
 
-Next in the order of configuration preferences is to use the XFree86
-server's ability to create a starting configuration file.  Run as root:
+<sect>Configuration: a Quick Synopsis
+<p>
+Automatic configuration was introduced with XFree86 4.4.0 
+which makes it possible to start XFree86 without first creating a 
+configuration file.  This was further improved in XFree86
+4.5.0.  
+
+While the initial automatic configuration support was originally targeted 
+ust for Linux and the FreeBSD variants, in 4.5.0 it now includes Solaris, NetBSD and OpenBSD support, 
+and it is planned that automatic configuration will be supported on other 
+platforms in future releases.
+
+If you are running either Linux, FreeBSD, NetBSD, OpenBSD, or Solaris,
+try Auto Configuration by running:
+
+<tscreen><verb>
+XFree86 -autoconfig
+</verb></tscreen>
+
+If you want to customise some things afterwards, you can cut and paste the
+automatically generated configuration from the
+<tt>/var/log/XFree86.0.log</tt> file into an <tt>XF86Config</tt> file
+and make your customisations there.  If you need to customise some parts
+of the configuration while leaving others to be automatically detected,
+you can combine a partial static configuration with the automatically
+detected one by running:
+
+<tscreen><verb>
+XFree86 -appendauto
+</verb></tscreen>
+
+If you using a platform that is not currently supported, then you must try one 
+of the older methods for getting started like <tt>xf86cfg</tt>", 
+which is our graphical configuration tool.  It also has a text mode 
+interface that an be used to create an initial configuration file and 
+customise existing configurations.
+
+After that, you can use XFree86 server's ability to create a 
+starting configuration file.  To do so you must login as root, and run:
 
 <tscreen><verb>
 XFree86 -configure
 </verb></tscreen>
 
-and follow the instructions.
+and then follow the instructions.
 
 Finally, if all else fails, the trusty old standby text-based tool
 "<tt>xf86config</tt>" can also be used for generating X server config
 files.
 
-At least one, and hopefully, all of these configuration options will
-give you a reasonable starting point for a suitable configuration
-file.  With the automatic mechanism you might even find that you don't
-need one!  
+Hopefully, at least one, and perhaps all of these various configuration options 
+will give you a reasonable starting point for a suitable configuration
+file but we think that with the automatic mechanism you will probably not 
+need any. 
 
-If you do need to customise the configuration file, see the <htmlurl
-name="XF86Config manual page" url="XF86Config.5.html">.  You can also
-check the driver-specific manual pages and the related documentation
-(found at <ref id="drivertables" name="tables below"> also.
+If you would like to customise the configuration file, see the <htmlurl
+name="XF86Config manual page" url="XF86Config.5.html">.  You should also
+check the driver-specific manual pages and the related documentation, which
+is found at <ref id="drivertables" name="tables below">.
 
-Before downloading  the binary distributions for this release, please
-have a quick read through the <htmlurl name="Installation Document"
-url="Install.html">.  It may save you some time and also help you figure out
-which of the binary releases you need.
+Before downloading any of the binary distributions for this release, 
+read through the <htmlurl name="Installation Document"
+url="Install.html"> as it can point out which particular binary you should 
+download. 
 
 <![ %updaterel [
-The next sections describe what has changed in the update release(s)
-as well as what is new in the latest full release (&fullrelvers;).
+The following sections describe what has changed in the update release(s)
+as well as what is <bf>new</bf> in the latest full release (&fullrelvers;).
 ]]>
 <![ %fullrel [
-The next section describes what is new in the latest version (&relvers;)
+The next section describes what is <bf>new</bf> in the latest version (&relvers;)
 compared with the previous full release (&prevfullrelvers).
 ]]>
-The other sections below describe some of the new features and changes
-between 3.3.x and 4.0.  There are lot's of new features, and we definitely
-don't have enough space to cover them all here.
+There are many new features in this release and we unfortunately do not have 
+enough space
+to cover
+them all here.
 
 </sect>
 
@@ -121,322 +146,886 @@ the XFree86 source tree.  It can also be viewed online at our <url
 name="CVSweb server"
 url="http://cvsweb.xfree86.org/cvsweb/xc/programs/Xserver/hw/xfree86/CHANGELOG?rev=HEAD">.
 
-<sect1>Video Driver Enhancements
-
+<sect1>Security Updates
 <p>
+The following security issues have been fixed in this release:
+
 <itemize>
-<item>Several stability issues with the support for the Intel 830M,
-	845G, 852GM, 855GM and 865G integrated graphics chipsets have been
-	fixed.  Some limitations related to the driver's use of the video
-	BIOS remain, especially for some laptops.
+<item>xdm would listen on a random socket when the
+<tt>DisplayManager.requestPort</tt> resource was set to <tt>0</tt>
+(<url name="CAN-2004-0419" url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0419">).
 
-<item>The nv driver for NVIDIA cards has been updated as follows:
+<item>Integer overflow in libICE/libSM.
 
-	<itemize>
-	<item>Support added to the nv driver for the GeForce FX 5700,
-		which didn't work with XFree86 4.3.
+<item>libXpm stack and integer overflow and other issues (<url
+name="CAN-2004-0687"
+url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0687">, <url
+name="CAN-2004-0688"
+url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0688">, <url
+name="CAN-2004-0914"
+url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0914">, <url
+name="CAN-2005-0605"
+url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2005-0605">).
 
-	<item>The driver now does a much better job of auto-detecting
-		which connector of dual output cards the monitor is
-		attached to, and this should reduce or eliminate the
-		need for manual XF86Config overrides.
+<item>Potential security issues related to wrap-around of memory allocation
+requests in font handling and other areas.
 
-	<item>The 2D acceleration for TNT and GeForce has been completely
-		rewritten and its performance should be substantially
-		improved.
+</itemize>
 
-	<item>TNT and GeForce cards have a new Xv PutImage adaptor which
-		does scaled YUV bit blits.
+<sect1>Video Driver Enhancements
+<p>
 
-	</itemize>
+<sect2>General
+<p>
 
-<item>The SiS driver has seen major updates, including:
+<itemize>
+<item>In most drivers, fix a long-standing off-by-one error in the programming
+of sync pulse start and end for video modes based on VGA or its extensions.
 
-	<itemize>
-	<item>Support for 661/741/760 and support for 330 (Xabre).
+</itemize>
 
-	<item>Merged Framebuffer mode.
+<sect2>ati
+<p>
 
-	<item>Support for DVI, and much more.
+<itemize>
+<item>Fix various bugs in the Mach64-based panel support.
 
-	<item>DRI for 300 series (300/305, 540, 630, 730) is supported
-		again.
+<item>Re-instate atimisc's support for DGA on UltraSPARC platforms.
 
-	</itemize>
+</itemize>
 
-<item>A new driver for several VIA integrated graphics chipsets has been added.
+<sect2>chips
+<p>
 
-<item>Various updates and bug fixes have been made to most other drivers.
+<itemize>
+<item>Fix the stretching option and centering.
+
+</itemize>
+
+<sect2>cirrus
+<p>
+
+<itemize>
+<item>Add support for the NEC PC-9821 with CLGD755x.
+
+</itemize>
+
+<sect2>i810
+<p>
+
+<itemize>
+<item>Add support for memory size tweaking in the BIOS for 845G.
+
+<item>Fix Xv flickering on the 830GM and later.
+
+<item>Add support for the 915G/915GM chipsets.
+
+<item>Add dual-head and clone support for the 915G, 855GM, 830GM chipsets.
+
+<item>Add ARGB cursor support for all chipsets.  This requires an updated
+agpgart kernel driver.
+
+<item>Add module lid status checking.
+
+<item>Fix XVideo when high resolutions are used on local flat panels.
+
+<item>Add PanelID identification.
+
+<item>Detect monitor changes on VT switch (830GM and up).
+
+<item>Support custom video modes in the video BIOS, when available.
+
+<item>Fix some Xv bugs.
+
+<item>Set the default monitor parameters to match the display size for
+the 830GM and up when they are not available from another source, improving
+the default video mode selection in these cases.
+
+
+</itemize>
+
+<sect2>mga
+<p>
+
+<itemize>
+<item>Make the Mystique lockup workaround more selective, avoiding different
+problems on cards that do not require the workaround.
+
+<item>Fix segfaults that occur when the XaaNoSolidFillRect and/or
+XaaNoMono8x8PatternFillRect options are used.
+
+<item>Fix for Xv resolution loss problem.
+
+<item>Add i2c and Maven support, providing DDC and DPMS support for the
+second head on dual-head cards.
+
+</itemize>
+
+<sect2>nv
+<p>
+
+<itemize>
+<item>PCI-Xpress support added.
+
+<item>Add support for newer hardware.
+
+<item>Workaround for Toshiba M30 laptop issue.
+
+<item>Reject modes larger than the flat panel.
+
+<item>DPMS support for DVI added.
+
+<item>Cursor update for NV11 so that alpha blended cursors will work
+in conjunction with dithering (laptop panels).
+
+</itemize>
+
+<sect2>r128
+<p>
+
+<itemize>
+<item>Improve the handling of timeouts in R128CCEWaitForIdle()
+
+</itemize>
+
+<sect2>radeon
+<p>
+
+<itemize>
+<item>The DAC is turned off for DPMS modes, fixing a problem that can badly
+affect some monitors.
+
+<item>Add an option for avoid flickering and blank screen problems with
+iBooks.
+
+</itemize>
+
+<sect2>rendition
+<p>
+
+<itemize>
+<item>Fix bad free() calls in the probe function.
+
+</itemize>
+
+<sect2>s3
+<p>
+
+<itemize>
+<item>Add support for interlaced video modes.
+
+<item>Remove cfb support.
+
+<item>Correct the depth checking (32 is not a supported depth).
+
+<item>Fix DAC probing.
+
+<item>Add IBM RGB525 support.
+
+<item>Fix a ScreenToScreenCopy bug that shows up with xtest.
+
+</itemize>
+
+<sect2>s3virge
+<p>
+
+<itemize>
+<item>Fix a bug that shows up when mode restoration results in a switch
+between colour and mono operation.
+
+</itemize>
+
+<sect2>savage
+<p>
+
+<itemize>
+<item>Fix HW cursor state on VT switching.
+
+<item>Disable the RANDR extension when using rotation.
+
+<item>Turn off the back light on panels when DPMS "off" mode is activated.
+
+<item>Allow black as an Xv colour key.
+
+</itemize>
+
+<sect2>sis
+<p>
+
+<itemize>
+<item>Fix some modes for 1400x1050 and 1600x1200 panels.
+
+<item>BIOS data layout-related fixes for 661/741/760.
+
+<item>Xv fixes.
+
+<item>Fix LCD support for ECS A90x and ECS A907.
+
+<item>Add video blitter as a second Xv adaptor for the M650/651 and later.
+
+<item>Add (display?) hot plug support.
+
+<item>Add preliminary support for the SiS340.
+
+<item>Fix bad external symbols in this driver module.
+
+</itemize>
+
+<sect2>sunffb
+<p>
+
+<itemize>
+<item>Fix a segfault when acceleration is disabled.
+
+</itemize>
+
+<sect2>vesa
+<p>
+
+<itemize>
+<item>Do not attempt to set the palette format for depths greater than 8.
+This fixes a problem on some platforms.
+
+<item>Fix a substantial memory leak on server regeneration.
+
+<item>Fix screen blanking for non-VGA compatible modes.
+
+<item>Blank the screen at startup, so that the contents of the previous
+session are not initially visible.
+
+</itemize>
+
+<sect2>via
+<p>
+
+<itemize>
+<item>Restructuring and acceleration cleanups.
+
+<item>Fix some DRM-related problems.
+
+<item>Cleanup the DDC/EDID retrieval.
+
+</itemize>
+
+<sect2>vmware
+<p>
+
+<itemize>
+<item>Various register state save/restore fixes.
+
+<item>Fix host-cursor mode.
+
+<item>Allow any reasonable depth if 8BIT_EMULATION is set, supporting non-host
+depths.
+
+<item>Set the "monitor" parameters to allow the default resolution to be
+a little smaller than the host resolution rather than simply 640x480.
 
 </itemize>
 
 <sect1>Input Driver Enhancements
 
 <p>
+<sect2>keyboard
+<p>
+
 <itemize>
-<item>The mouse driver has some support on Linux and FreeBSD for
-	auto-detecting which device node to use. This makes it unnecessary
-	to supply this information in the XF86Config file in most cases.
+<item>A bug in the application of the Linux <tt>KDKBDREP</tt> ioctl has
+been fixed, preventing unnecessary use of a fallback that directly programs
+the keyboard hardware and produces warning message with recent Linux kernels.
+
+<item>Differentiate between Alt+Ctrl+SPECIAL and Alt+Ctrl+Shift+SPECIAL
+key sequences.
+
+<item>Avoid various keycode conversions on NEC PC-98 platforms.
+
+<item>Fix off-by-one problem for keys on FreeBSD/sparc64.
 
 </itemize>
 
-<sect1>IPv6 support
+<sect2>mouse
 <p>
-XFree86 4.4 supports IPv6, based on the code contributed by Sun
-Microsystems, Inc. to X.Org. See <url name="X.org's document"
-url="http://www.x.org/IPV6_Specific_Changes.html"> for a detailed list
-of what these changes are and how your system is affected by them.
 
-<sect2>Protocol names and aliases. 
+<itemize>
+<item>Add a serial PNP entry for the Genius NetScroll+ mouse.
+
+<item>Fix a problem with the wsmouse driver losing events on 64-bit
+architectures.
+
+<item>Add/improve protocol and device auto-detection for FreeBSD, Linux,
+NetBSD, OpenBSD, and SunOS/Solaris, eliminating the need to provide any
+of this information in the config file in the majority of situations.
+
+<item>Increase the maximum number of buttons supported from 12 to 24.
+
+<item>Fix a multiple-free bug, that could lead to a crash.
+
+</itemize>
+
+<sect2>elographics
+<p>
+
+<itemize>
+<item>Fix problems where the driver gets out of sync under heavy loads.
+
+<item>Add an <tt>"AllowNoCntl"</tt> option, which allows the driver to be
+used with some other protocols, like the SmartSet 2500s, which share the
+same default protocol.
+
+<item>Fix a problem with the cursor not correctly following the touch
+in a dual-head configuration.  This fix has also been applied to other
+relevant input drivers.
+
+</itemize>
+
+<sect2>eloinput
 <p>
 <itemize>
-<item>tcp is an alias for both IPv6 and IPv4 transports.
-<item>inet specifies IPv4 only. 
-<item>inet6 specifies IPv6 only.
-</itemize>
-<p>
-You can force the X server to only listen to IPv4 connections with the
-<tt>X -nolisten inet6 </tt> command or you can force a IPv6 connection
-by setting <bf>DISPLAY</bf> to <tt>inet6/host:0</tt>.
+<item>A new driver for ELO Graphics 2500U USB touch screens.
 
-<sect2>XDM
+</itemize>
+
+<sect2>fpit
 <p>
-The IPv6 XDMCP code is not enabled by default on platforms that don't 
-support binding a IPv6 socket to a IPv4 address. 
+
+<itemize>
+<item>Add support for the passive pen of the Stylistic 2400.
+
+<item>Fix some driver bugs.
+
+</itemize>
+
+<sect1>XKB updates
 <p>
-The XDM-AUTHORIZATION-1 authentication scheme does not support IPv6
-addresses but a new release of the protocol, XDM-AUTHORIZATION-2 has
-been designed; this though is yet to be  implemented.  By default XFree86
-builds do not enable the XDM-AUTHORIZATION-1 code.
+
+<itemize>
+<item>Update the Hindi/Devanagari map.
+
+<item>Add Sorbian map.
+
+<item>Add German Dvorak map.
+
+<item>Fix wrong brokenbar keysym in the de_CH map.
+
+<item>Rename the microsoftprose keyboard model to microsoftprousb because it
+is not Swedish-specific but a common USB variant.
+
+<item>Add nodeadkeys variant to the gb map.
+
+<item>Replace the comma keysym on the KPDL key in the Brazilian map with
+KP_Separator.
+
+<item>Add multi-layout compatible Hungarian, Azerbaijani, Canadian,
+Mongolian, and Vietnamese maps.
+
+<item>Update Serbian map with new variant.
+
+<item>Add Genius KB-12e model to the inet map.
+
+<item>Update ABNT2 geometry (including two variants) and change the
+Brazilian map to avoid ABNT2 specific keycodes section.
+
+<item>Add Classical Latin map.
+
+<item>Replace the Latvian map with a new one.
+
+<item>Fix some errors in the Dzongka/Tibetan map.
+
+<item>Add ur_PK (Urdu) map.
+
+<item>Fixes for the Bengali map.
+
+<item>Add Sinhala (Sri Lanka) map.
+
+<item>Add missing keycode to the "xfree86" keycodes files.
+
+<item>Update the mapping for the Microsoft Natural Multimedia keyboard. 
+
+<item>Fixes for the Croatian map.
+
+<item>Add a Polish variant to the French keyboard layout.
+
+<item>Add a standard Kyrgyz map.
+
+</itemize>
 
 
 <sect1>X Server and Extension Updates
 
 <p>
 <itemize>
+<item>Mesa as used in the XFree86 <tt>"GLcore"</tt> module for indirect
+GLX rendering has been updated to version 6.2.1.
 
-<item>The Mesa version used for OpenGL&reg; 1.3 and DRI driver support
-	has been updated to 5.0.2.
+<item>Fixed bugs in the Screen Saver extension that could cause an X server
+crash.
+
+<item>Fixed a bug in the X-Resource extension that could cause an X
+server crash when the client host and server host have different
+endianness.
+
+<item>Added support to the Xvfb server for specifying the screen origins
+when Xinerama is enabled.
+
+<item>Ensure that the Xvfb's root window depth and visuals are set
+correctly.
+
+<item>Work around bug in Mac OS X 10.1's AppKit that causes rootless
+XDarwin to lock up when creating windows
+
+<item>Fix XDarwin's launch of X clients by double clicking in the Finder when
+there is a space in the path.
+
+<item>Allow XDarwin to interpret scroll wheel mouse events correctly when
+the shift key is held down.
+
+<item>Add initial XInput support for XDarwin.
+
+<item>Add an option for XDarwin to always use Mac command key equivalents.
+
+<item>Make XDarwin not default to StaticColor on ix86.
+
+<item>Fix a bug that caused restacks to be optimized away in rootless mode.
+
+<item>Add support for dynamic screen configuration changes in rootless
+XDarwin.
+
+<item>Fix a problem with multiple glyphs in the RENDER extension's
+RenderAddGlyphs that caused malloc corruption.
+
+<item>Fix a segfault when XAA's overlay acceleration is invoked with
+the XaaNoSolidFillRect option.
+
+<item>Fix the disabling of individual DPMS states.
+
+<item>Rework the XFree86 server's SBUS code so that SBUS adapters are properly
+detected on SunOS.
+
+<item>Auto-detect DPMS support based on EDID data.
+
+<item>Fix DPMS enable/disable logic.
+
+<item>Allow multiple probe phases when using automatic configuration, which
+allows the driver search to continue after failures at the PreInit stage.
+
+<item>Update the static XFree86 driver list to allow automatic configuration
+to work with statically linked XFree86 servers.
+
+<item>Add a '-autoconfig' command line option to the XFree86 server to
+enable automatic configuration even when a configuration file is present.
+
+<item>Integrate the TinyX servers into the standard XFree86 build.
+
+<item>Fix a problem where a big request length of zero does not generate
+a BadLength error.
+
+<item>Add a Distributed Multihead X server (DMX) and related extension.
+
+<item>Fix a segfault in the cfb module.
+
+<item>Fixes for the MIT-SHM extension's Xineramafication.
+
+<item>Fix detection of phantom PCI devices.
+
+<item>Fix x86emu's handling of the 0xe8 and 0xe9 opcodes.
+
+<item>Modify x86emu's handling of SHLD/SHRD instructions to allow shifts
+greater than 15 for 16-bit operands.  This undocumented behaviour is
+expected by the BIOS in an SM722 controller.
+
+<item>Avoid some references to unloaded data in the XFree86 server, which
+can cause crashes in some situations.
+
+<item>Change the DDC/EDID root window property data from signed to unsigned.
+
+<item>Fix the XFree86-Misc extension's PassMessage function.
+
+<item>Fix XFree86-DGA for multi-domain architectures.
+
+<item>Extend the XF86Config format and parser/config to allow multiple Monitor
+sections to be referenced from a Screen section.
+
+<item>Allow multiple XFree86 configuration sources to be combined, and
+add a -appendauto" command line option to allow automatic configuration data
+to be appended to a partial static configuration.
+
+<item>Extend the XF86Config format and parser/config to allow multiple
+ServerFlags, Files, and Module sections in a config file.
+
+<item>Use a more complete set of the probed EDID data in determining the
+default monitor parameters.
+
+<item>Add a "preferred" video mode type, which can be obtained from the
+probed EDID information, or from the static configuration.  This allows
+the native video mode to be used by default for digital panels.
+
+<item>Add tentative support for newer iterations of HP's zx1 chipsets.
+
+<item>Fix xf86fbman's largest linear area offscreen computation.
+
+<item>Print the XFree86 server's command line in the log file.
+
+<item>Update getconfig to work with older versions of Perl, and to
+detect when the version of Perl is too old and when Perl is not available.
+
+<item>Extend automatic configuration and getconfig to work with SBUS video
+devices in SPARC platforms.
+
+<item>Update the ValidMode functions in most video drivers to return
+more specific status values when a mode is rejected.
 
 </itemize>
 
 <sect1>Client and Library Updates
 
 <p>
-<sect2>Xterm
-<p>
 
-The user-visible changes to xterm since XFree86 4.3 are:
-
-	Bug Fixes:
-	<itemize>
-	<item>Make signalInhibit resource work, i.e., disable the menu
-		entries that would send signals to, or exit xterm.
-
-	<item>Make cursor definition in tek4014 emulation work as originally
-		implemented.
-
-	<item>Modify translations for scrollbar so that one can use
-		shifted pageup, wheel mouse, etc., while the mouse
-		pointer is over the scrollbar.
-
-	<item>Correct initialization of G1 character set mapping.
-
-	</itemize>
-
-	New Features:
-	<itemize>
-	<item>Modify the predictable version of the generated logfile
-		name to append the process-id rather than a random value.
-
-	<item>Modify scroll-back and scroll-forw actions to accept an
-		adjustment value, e.g.,
-
-		<tscreen><verb>
-scroll-back(1, page-2)
-		</verb></tscreen>
-
-		to scroll back by 2 lines less than a page.
-		
-	<item>Add visualBellDelay resource to modify the length of
-		time used for visual bell, for very slow displays or
-		very fast computers.
-
-	</itemize>
-
-	Improved Locale Support:
-	<itemize>
-	<item>modify uxterm script to strip modifiers such as "@euro" from the
-		locale setting before adding ".UTF-8".
-
-	<item>Add logic to wide-character support which attempts to
-		load fonts specified by utf8Fonts subresources at startup.
-		The subresources have the same names as the fonts which
-		they replace, e.g., font, font1, etc., so that the
-		ISO-10646-1 fonts can be specified in the XTerm
-		app-defaults file.
-
-	<item>Improved performance with chinput application.
-
-	</itemize>
-
-	Improved Font Handling:
-	<itemize>
-	<item>Document in xterm's manual page how to use XFree86 ":unscaled"
-		keyword to suppress scaling of bold fonts.
-
-	<item>Improved logic for deriving bold fontname from normal
-		fontname.
-
-	<item>Make double-width characters work with -u8 option.
-
-	<item>Updated table of Unicode line-drawing characters.
-
-	<item>Several fixes for rendering using Xft (option -fa):
-		<itemize>
-		<item>Make height of TrueType fonts match ascent+descent.
-
-		<item>Translate Unicode values (from UTF-8 output to
-			xterm) for line-drawing to xterm's internal
-			code, etc., since TrueType fonts generally do
-			not have either set of line-drawing glyphs.
-			xterm can draw these directly.
-
-		<item>Pass 16-bit values rather than 8-bit values to
-			xtermXftDrawString() to allow for wide-characters.
-
-		<item>Use built-in line-drawing characters for Xft fonts.
-
-		<item>Implement underlining.
-		</itemize>
-
-	<item>Implement boldMode for wide-characters.
-
-	<item>Modified to work with CJK double-width (bi-width/monospace)
-		fonts.
-
-	</itemize>
-
-	Workarounds for Special Applications:
-	<itemize>
-	<item>Add option -k8 and resource allowC1Printable to allow
-		users of non-VTxxx character sets such as KOI-8 to treat
-		the C1 control area (character codes 128-159) as printable
-		rather than control characters.
-
-	<item>Add configure option --enable-broken-st and resource
-		brokenStringTerm to allow user to revert one part of
-		the parsing table corrections.
-
-	<item>Add configure option --enable-broken-osc and resource
-		brokenLinuxOSC to accommodate scripts which do not
-		distinguish between running in the Linux console and
-		running in X.  Linux console recognizes malformed control
-		strings which start with an OSC, but are fixed-length,
-		with no terminator.
-
-	<item>Add configure option --enable-pty-handshake to allow
-		one to compile-in support for the pty handshaking logic,
-		and resource ptyHandshake to enable or disable it.  This
-		feature is normally enabled.
-
-	</itemize>
-
-	Modified Resources:
-	<itemize>
-	<item>Change color4 to "dodger blue", since this provides
-		better contrast.
-
-	<item>Remove color resources from XTerm.ad, leaving them only
-		in XTerm-col.ad
-
-	<item>Modify UXTerm.ad resource file to include "XTerm-color"
-		rather than "XTerm", in case the latter file contains
-		no color resource definitions.
-
-	<item>Changed class of veryBoldColors to VeryBoldColors, since
-		ColorMode is associated with boolean resources.
-
-	<item>Changed classes of colorBDMode and similar resources
-		that override colors when a video attribute is set to
-		ColorAttrMode, to make them distinct from ColorMode.
-		This avoids an unexpected rendering of reverse video,
-		for example.
-
-	</itemize>
-
-	Modified terminfo/termcap entries:
-	<itemize>
-	<item>Add indp and rin to terminfo entry.
-
-	<item>Add le to termcap xterm-basic entry.  Though missing
-		from older termcaps for xterm, some applications check
-		for it.
-
-	<item>Correct AF/AB strings in termcap for xterm-256color and
-		xterm-88color entries.
-
-	</itemize>
-
-<sect1>I18N and Font Updates
-
+<sect2>Xlib and related libraries
 <p>
 <itemize>
-<item>FreeType2 updated to version 2.1.4.
+<item>Fix an Xlib segfault that may occur when IPv6 XDM-AUTHORIZATION-1 data is
+present in the .Xauthority file.
 
-<item>The "freetype" X server font backend has been updated by the
-	<url name="After X-TT Project" url="http://x-tt.sourceforge.jp/"> to
-	include the functionality previously provided by the "xtt" backend,
-	and to fix some bugs.  The "xtt" backend will be dropped in the
-	next release in favour of the updated unified "freetype" backend.
+<item>Add WrapHelp.c and enable XdmAuth by default.
 
-	<itemize>
-	<item>The new "freetype" backend has the improved "very lazy" metric
-		calculation method which enables super-fast loading of
-		proportional CJKV fonts.
+<item>Fix a null dereference in libSM when given a bad previous session ID.
 
-	<item>All of the servers, including xfs, Xnest, Xprt, Xvfb, the
-		Cygwin-XFree86 server (as well as the XFree86 server)
-		can handle the perfect TTCap options.
+</itemize>
 
-	</itemize>
+<sect2>Xterm
+<p>
+The changes to xterm since XFree86 4.4 are:
 
-<item>The Compose file processing mechanism has been improved and made
-	more flexible.  See the <ref id="compose" name="Xlib Compose
-	file support and extensions section below">.
+Improved behavior
+<itemize>
+<item>Change resource settings for color4 and color12, add some discussion
+	in XTerm-col.ad.
 
-<item>The Bitstream Vera TrueType fonts that Bitstream, Inc donated to
-	the GNOME Foundation have been included with this release.
+<item>Modify the criteria for disowning primary selection.  Previously,
+	this happened anytime the cursor was moved before the end of the
+	selection.  That would ensure that any insert/delete of char or
+	line, as well as scrolling, would disown the selection.  The new
+	criteria change this to checking if the operations would modify
+	the data which is highlighted.
+
+<item>Change default translations so a BtnDown which is not recognized
+	is simply ignored rather than emitting a bell.  That makes it
+	less obtrusive when the user tries to use a mouse which provides
+	more capabilities than the X mouse driver supports, e.g., one
+	with a horizontal scroll wheel.
+
+<item>Modify to allow turning UTF-8 mode via escape sequence even if
+	-wc option was not given at startup.
+
+<item>Add menu items and corresponding actions for switching on/off the
+	UTF-8 mode and Xft (TrueType) support.
+
+<item>Modify FreeType support to allow resizing the font, in the same
+	ways the window can be resized if fixed fonts are used.  The
+	relative font sizes are derived from the fixed font sizes.
+
+<item>Implement blinking text, using the timer for blinking cursor.
+
+<item>Add translation to ASCII of commonly-used characters that groff
+	translates to Unicode, when the font in use does not provide the
+	corresponding glyphs.
+
+<item>Modify constraints in form used to layout toolbar, to work with
+	newer Xaw in XFree86 4.x.
+
+<item>Make active-icon work properly when TrueType fonts are used, as
+	well as when UTF-8 mode is used.
+
+<item>Improve rendering for Xft, allow it to draw non-linedrawing
+	characters such as "pi", which were drawn from internal tables
+	with patch #180.
+
+<item>Modify initialization of 256- and 88-colors so that colors beyond
+	16 are normally not X resources.  This works around a hard-coded
+	limit in Xt which breaks xterm when 256-colors and luit are both
+	configured (report by Noah Friedman).
+
+<item>Fix problem responding to session management events, e.g., which
+	would make logging out very slow.
+
+</itemize>
+
+Modified behavior
+
+<itemize>
+
+<item>Enable utmpx support for NetBSD 1.6C and newer.
+
+<item>Modify Help() to make "xterm -h" write to standard output rather
+	than standard error.
+
+<item>Improve error-reporting for root user by checking if $DISPLAY is
+	set rather than using the useless message from X11 library.
+
+<item>Improve $WINDOWID for configuration with toolbar by making it
+	refer to the top-level shell rather than the parent of the
+	current window.  For that case, the parent is a form widget,
+	which does not have a name, which made the $WINDOWID not very
+	useful as a parameter for xwininfo.
+
+<item>Improve pattern used in uxterm to check for UTF-8 locale, e.g.,
+	for HPUX.
+
+<item>Modify uxterm script to use locale program to verify if the
+	derived locale is installed.
+
+<item>Add case to uxterm to accommodate locales ending with "@euro",
+	e.g., fr_FR.UTF-8@euro.
+
+<item>For Linux, if IUTF8 is defined, e.g., on recent 2.6.x kernels,
+	set the corresponding flag for the slave pty, to enable UTF-8
+	interpretation of backspace in cooked mode.
+
+<item>Modify faceSize resource to use a floating-point internal value.
+
+<item>Modify XTerm.ad to set saveLines default to 1024.
+
+<item>Change xterm version string to use __vendorversion__ where that
+	is available, and "XTerm" otherwise.  Rather than reporting the
+	version of X that was current when xterm was modified, it reports
+	the version against which it was built.
+
+</itemize>
+
+New resource settings
+
+<itemize>
+
+<item>Add scoFunctionKeys resource, to match manpage.
+
+<item>Add -fd option and resource faceNameDoublesize to specify
+	double-wide fonts with Xft.
+
+<item>Add resource showMissingGlyphs to outline places on the screen
+	where a font lacks the corresponding glyph.
+
+<item>Add resource showBlinkAsBold to control whether blinking text
+	should be shown as bold or actual blinking text.
+
+<item>Add utmpDisplayId resource to allow users to control whether the
+	display identifier (display number and screen number) are
+	retained in the connection information recorded in utmp.
+
+<item>Add bellOnReset resource to allow users to disable bell which
+	sounds on hard reset since patch #183 changes to DECSCL.
+
+</itemize>
+
+New configure script options
+
+<itemize>
+
+<item>Add --disable-setuid option to configure script.
+
+<item>Add --disable-full-tgetent option to configure script, allowing
+	one to ignore a termcap library in favor of ncurses/curses.
+
+</itemize>
+
+Other new features
+
+<itemize>
+
+<item>Add mini-luit feature, which supports Latin9 directly rather than
+	via luit, provided that Unicode fonts are used.
+
+<item>Add dynamic abbreviation support like Emacs.
+
+<item>Add "erase2" and "eol2" keywords to ttyModes resource, for
+	recent/current FreeBSD.
+
+</itemize>
+
+Bug-fixes (see http://invisible-island.net/xterm/xterm.log.html for a
+more complete list):
+
+<itemize>
+
+<item>Modify initialization and cleanup of utmp data to also compare
+	the ut_line member.
+
+<item>Correct table entry for DEL in the ground state, which marked it
+	as a printable character from patch #171.
+
+<item>Correct change from patch #157 which uses getlogin() to check for
+	an alias; the storage used for the related getpwuid() call was
+	overwritten by the data used for comparison.
+
+<item>Correct case of SCS for character set 0 (line-drawing) to allow
+	it to be selected into GR.
+
+<item>Modify creat_as() to only fork if xterm is actually running as
+	setuid and/or setgid.  This works around a Cygwin bug which hangs
+	when logging is enabled and makes xterm a little faster for
+	systems using interfaces such as utempter.
+
+<item>Modify Cleanup() to avoid operations such as X calls that might
+	use unsafe functions when it is called by a signal handler.
+
+<item>Check for type of failure in xim_real_init() to avoid looping
+	when the problem is an unsupported input method rather than a
+	failure to connect to the XIM server.  Problem was introduced in
+	patch #175.
+
+<item>Add missing #undef OPT_SESSION_MGT to xtermcfg.hin to make the
+	configure script's --disable-session-mgt option work.
+
+<item>Correct options parsing for -into option so it can be combined
+	with -e.
+
+<item>Make escape sequence reporting dynamic colors consistent with the
+	logic that sets it; choosing the opposite color when reverse
+	video is set.
+
+<item>Fix a repainting bug introduced in patch #180:  when using a font
+	lacking line-drawing characters, a repaint of the screen could
+	skip horizontally an extra amount after filling in the missing
+	character.
+
+<item>Modify terminfo to accommodate luit, which relies on G1 being
+	used via an ISO-2022 escape sequence.  Note that this relies in
+	turn on bug fixes in ncurses after the 5.4 release.
+
+</itemize>
+
+<sect2>Luit
+<p>
+
+<itemize>
+<item>Fix a synchronization problem with luit's handling of tty settings.
+
+<item>Extract information from the pty before forking rather than after,
+to avoid conflicting with the child process's modifications to the line.
+
+</itemize>
+
+<sect2>GLX/DRI
+<p>
+
+<itemize>
+<item>Mesa and its DRI drivers have been updated to version 6.2.1, plus
+some bug fixes.
+
+<item>Add a 915G DRI driver.
+
+<item>Fix a GLX multi-thread bug.
+
+</itemize>
+
+<sect2>twm
+<p>
+
+<itemize>
+<item>Add support for XPM icons.
+
+<item>Add IconMaxWidth and TitleIndent configuration parameters.
+
+</itemize>
+
+<sect2>xdm
+<p>
+
+<itemize>
+<item>Improve the operation of IPv6-enabled xdm when the platforms's
+IPv6 support is disabled.
+
+<item>Make use of Xlib's _XGetHostname rather than attempting to duplicate
+it.
+
+<item>Fix sessreg for NetBSD.
+
+<item>Update docs and config to handle authDir being in a non-default
+location.
+
+</itemize>
+
+<sect2>xfs
+<p>
+
+<itemize>
+<item>Fix log file opening with the '-user nobody' option.
+
+</itemize>
+
+<sect1>I18n and Fonts
+<p>
+<itemize>
+<item>FreeType has been updated to version 2.1.8.
+
+<item>The FreeType-1.x based X-TrueType XFree86 server font backend has
+been retired.  The functionality it provides is now available in the
+"FreeType" font backend.  The old <tt>"xtt"</tt> module is now a wrapper
+that loads the <tt>"freetype"</tt> module.
+
+<item>A bug that prevented the <tt>VeraIt.ttf</tt> font from being
+installed has been fixed.
+
+<item>Fix a problem that could cause apps using the zh_CN.UTF-8 locale
+to crash.
+
+<item>Fix freetype module segfault with some Type1 fonts.
+
+<item>Replace unicode keysyms in the en_US.UTF-8 Compose file with "traditional"
+ones where such keysyms exist.
+
+<item>Fix the ct_encoding sequence in the zh_CN.gbk locale.
+
+<item>Update the 8859-7 unicode conversion data file to the current version.
+
+<item>Update the gb3212.1980-0 encoding to handle fonts that do not have
+a unicode table.
+
+<item>Add encoding files for cns11643-1, cns11643-2, cns11643-3, and
+suneu_greek.
+
+<item>Add support for the si_LK.UTF-8 locale.
+
+<item>Reinstate the original mkfontdir program, because its mkfontscale
+equivalent does not handle creating encodings.dir files as well as is
+necessary.
+
+<item>Fix for fstobdf generating corrupted BDF files.
+
+<item>Update locale info for Kinyarwanda, the language of Rwanda.
+
+<item>Add nine missing South African locales.
+
+<item>Add extra fontset records into XLC_LOCALE, fixing problems with text
+output by Xuft8 functions under non-Unicode locales.
+
+<item>Add a Kyrgyz locale.
 
 </itemize>
 
 <sect1>OS Support Updates
-
 <p>
+
 <itemize>
-<item>On Mac OS X, the appropriate backend drawing code is now dynamically
-	loaded at runtime which reduces the X server's memory footprint.
-	In rootless mode, Apple's Xplugin library is used where available.
-	(Xplugin is included as part of Mac OS X on Panther.) With Xplugin,
-	XDarwin provides identical performance to Apple's X11, including
-	the following improvements over 4.3:
-	<itemize>
-	<item>Added direct GLX rendering with thread support.
-	<item>Faster 2-D drawing.
-	<item>Added support for the Apple-WM extension so XDarwin interoperates
-		with quartz-wm.
-	</itemize>
+<item>Numerous fixes and enhancements for the Solaris/SPARC platform support,
+including the ability to build 64-bit shared libraries.
 
-<item>On Darwin, IOKit mode now uses shadowfb for much faster drawing.
+<item>Support added for OpenBSD/amd64.
 
-<item>Various GNU/Hurd support updates.
+<item>Differentiate left and right modifier keys on Mac OS X 10.3.
 
-<item>Experimental support added for GNU/KFreeBSD and GNU/KNetBSD systems.
+<item>Fix some path-related issues on OS/2 with xman and xf86cfg.
 
-<item>SCO OpenServer support updates.  XFree86 4.4 now works on Release
-5.0.7 with Maintenance Pack 1, or on prior releases through Release
-5.0.4.  Please consult the <htmlurl name="README.SCO" url="SCO.html">
-file for details.
+<item>Update the transport layer to allow LOCAL SCO connection types to be
+used for more than just X protocol connections.
+
+<item>Cleanups for the SCO port.
+
+<item>Fixes for FreeBSD/amd64 support.
+
+<item>Add support for newer UltraSPARC variants to the SunOS/Solaris and
+Linux ports.
+
+<item>Understand the PCI bus naming scheme found in Linux 2.6 kernels.
 
 </itemize>
 
@@ -462,7 +1051,8 @@ XFree86 &relvers; includes the following video drivers:
    <tabrow><tt>ark</tt><colsep>Ark Logic<colsep>&nbsp;</tabrow>
    <tabrow><tt>ati</tt><colsep>ATI<colsep><htmlurl
 		name="README.ati" url="ati.html">, <htmlurl
-		name="README.r128" url="r128.html">, <htmlurl
+		name="README.r128" url="r128.html">,</tabrow>
+   <tabrow><tt>&nbsp;</tt><colsep>&nbsp;<colsep><htmlurl
 		name="r128(4)" url="r128.4.html">, <htmlurl
 		name="radeon(4)" url="radeon.4.html"></tabrow>
    <tabrow><tt>chips</tt><colsep>Chips &amp; Technologies<colsep><htmlurl
@@ -540,7 +1130,7 @@ Drivers marked with (*) are present in a preliminary form in this release,
 but are not complete and/or stable yet.
 <p>
 
-Drivers marked with (+) are for Linux/Sparc only.
+Drivers marked with (+) are for Linux/SPARC only.
 <p>
 
 Drivers marked with (-) are for Linux/mips only.
@@ -549,11 +1139,12 @@ Drivers marked with (-) are for Linux/mips only.
 Darwin/Mac OS X uses IOKit drivers and does not use the module loader drivers
 listed above. Further information can be found in
 <htmlurl name="README.Darwin" url="Darwin.html">.
-
-XFree86 &relvers; includes the following input drivers:
+</sect1>
 
 <sect1>Input Drivers
 <p>
+
+XFree86 &relvers; includes the following input drivers:
 
 <table border=1 align="center">
 <tabular ca="|l|l|l|">
@@ -572,6 +1163,8 @@ XFree86 &relvers; includes the following input drivers:
 		name="dmc(4)" url="dmc.4.html"></tabrow>
    <tabrow><tt>dynapro</tt><colsep>Dynapro<colsep>&nbsp;</tabrow>
    <tabrow><tt>elographics</tt><colsep>EloGraphics<colsep>&nbsp;</tabrow>
+   <tabrow><tt>eloinput</tt><colsep>Elo 2500U USB<colsep><htmlurl
+		name="eloinput(4)" url="eloinput.4.html"></tabrow>
    <tabrow><tt>fpit</tt><colsep>Fujitsu Stylistic Tablet PCs<colsep><htmlurl
 		name="fpit(4)" url="fpit.4.html"></tabrow>
    <tabrow><tt>hyperpen</tt><colsep>Aiptek HyperPen 6000<colsep>&nbsp;</tabrow>
@@ -606,34 +1199,7 @@ Drivers marked with (*) are available for Linux only.
 <sect>Known Problems
 <p>
 
-<itemize>
-<item>Known issues with this version of the SiS driver:
-
-	<itemize>
-	<item>The driver will not work with upcoming laptops/notebooks
-	with 661/741/760 and 30xLV bridges as regards LCD output. This
-	is due folks at SiS at the very moment writing an entirely new
-	VBIOS for such machines whose data layout is not decided yet.
-	(This might affect machines with 650/740 as well within the next
-	year.)
-
-	<item>Xv does not work correctly in TV NTSC 1024x768 mode, if
-	the overlay is very large (or full screen). The effect are
-	flickering lines on the screen. This is a hardware problem. Do
-	not use this mode for video.
-
-	<item>YPbPr 720p output is blurry (at least at 1024x768; unknown
-	for other modes). This is a driver problem; solution currently
-	unknown.
-
-	</itemize>
-
-<item>We have received a late report that enabling DPMS support with
-the radeon driver can damage some Viewsonic monitors.  DPMS is usually
-disabled by default.  You can verify whether or not DPMS is enabled by
-running 'xset q' from within your X session.
-
-</itemize>
+Currently no known problems are documented.
 
 <sect>Overview of XFree86 4.x.
 <p>
@@ -644,25 +1210,20 @@ video drivers, input drivers, and other modules that are needed.
 
 XFree86 &relvers; has X server support for most UNIX&reg; and UNIX-like
 operating systems on Intel/x86 platforms, plus support for Linux and
-some BSD OSs on Alpha, PowerPC, IA-64, AMD64, Sparc, and Mips platforms,
-and for Darwin on PowerPC.  Support for additional architectures
-and operating systems is in progress and is planned for future releases.
+some BSD OSs on Alpha, PowerPC, IA-64, AMD64, SPARC, and Mips platforms,
+and for Darwin on PowerPC.  Support for additional architectures and
+operating systems is in progress and is planned for future releases.
 
 <sect1>Loader and Modules
 <p>
 The XFree86 X server has a built-in run-time loader, which can load
 normal object files and libraries in most of the commonly used formats.
-The loader does not rely on an operating system's native dynamic
-loader support and it works on platforms that do not provide this feature.
-This  allows  for the modules to be operating system independent (although
+The loader does not rely on an operating system's native dynamic loader
+support and it works on platforms that do not provide this feature.  This
+allows for the modules to be operating system independent (although
 not, of course, CPU architecture independent) which means that a module
 compiled on Linux/x86 can be loaded by an X server running on Solaris/x86,
 or FreeBSD, or even OS/2.
-
-A main benefit of this, is that when modules are updated, they do not
-need to be recompiled for every different operating system.  The loader
-in version &relvers; has support for Intel (x86), Alpha and PowerPC
-platforms.  It also has preliminary support for Sparc platforms.
 
 The X server makes use of modules for video drivers, X server extensions,
 font rasterisers, input device drivers, framebuffer layers (like mfb,
@@ -672,8 +1233,8 @@ The module interfaces (both API and ABI) used in this release are subject
 to change without notice.  While we will attempt to provide backward
 compatibility for the module interfaces as of the 4.0 release (meaning
 that 4.0 modules will work with future core X server binaries), we cannot
-guarantee this.  Compatibility in the other direction is explicitly
-not guaranteed because new modules may rely on interfaces added in new
+guarantee this.  Compatibility in the other direction is explicitly not
+guaranteed because new modules may rely on interfaces added in new
 releases.
 
 <bf>Note about module security</bf>
@@ -689,7 +1250,7 @@ releases.
 
 </quote>
 
-<sect1>Configuration File <label id="config">
+<sect1>Configuration <label id="config">
 <p>
 
 The XFree86 server uses a configuration file as the primary mechanism
@@ -747,7 +1308,7 @@ was completely rewritten for improved performance and correctness.
 
 Known problems:
 <itemize>
-  <item>Most window managers are not Xinerama-aware, and so some
+  <item>Not all window managers are Xinerama-aware, and so some
 	operations like window placement and resizing might not behave
 	in an ideal way.  This is an issue that needs to be dealt with
 	in the individual window managers, and isn't specifically an
@@ -777,9 +1338,8 @@ and 2; these can be disabled independently with <tt>Option "NoDDC1"</tt>
 and <tt>Option "NoDDC2"</tt>.
 
 At startup the server prints out DDC information from the display, and
-can use this information to set the default monitor parameters, or to
-warn about monitor sync limits if those provided in the configuration file
-don't match those that are detected.
+will use this information to set the default monitor parameters and video
+mode when none are provided explicitly in the configuration file.
 
 <sect2>Changed behavior caused by DDC.
 <p>
@@ -795,10 +1355,11 @@ of the config file.
 <p>
 
 Direct rendered OpenGL&reg; support is provided for several hardware
-platforms by the Direct Rendering Infrastructure (DRI).  Further information
-about DRI can be found at the <url name="DRI Project's web site"
-url="http://dri.sf.net/">.  The 3D core rendering component is provided by
-<url name="Mesa" url="http://www.mesa3d.org">.
+platforms by the Direct Rendering Infrastructure (DRI), which is part
+of Mesa.  Mesa also provides the 3D core rendering component of GLX.
+Further information can be found at the <url name="DRI Project's web
+site" url="http://dri.sf.net/"> and the <url name="Mesa web site"
+url="http://www.mesa3d.org">.
 
 <sect1>XVideo Extension (Xv)
 <p>
@@ -869,8 +1430,8 @@ file is included in the <htmlurl name="Xft(3)" url="Xft.3.man"> man page.
 <sect2>FreeType support in Xft
 <p>
 
-XFree86 &relvers; includes sources for FreeType version 2.1.4, and, by
-default, they are built and installed automatically.
+XFree86 &relvers; includes sources for FreeType version &freetypevers;,
+and, by default, they are built and installed automatically.
 
 </sect2>
 
@@ -903,7 +1464,7 @@ slower than core text.
 <p>
 
 The XFree86-Misc extension has not been fully ported to the new server
-architecture yet.  This should be completed in a future release.
+architecture yet.  This might be completed in a future release.
 
 The XFree86-VidModeExtension extension has been updated, and mostly ported
 to the new server architecture.  The area of mode validation needs further
@@ -914,11 +1475,6 @@ Compatibility with the 3.3.x version of the extension is provided.
 The missing parts of this extension and some new features should be
 completed in a future release.
 
-
-<!--
-<sect>X libraries and clients
-<p>
--->
 
 <sect1>xedit
 <p>
@@ -932,11 +1488,6 @@ Xedit has several new features, including:
 	for more details.
 </itemize>
 
-<!--
-<sect>Fonts and Internationalisation
-<p>
--->
-
 <sect1>Font support
 <p>
 
@@ -946,13 +1497,11 @@ in the <htmlurl name="README.fonts" url="fonts.html"> document.
 <sect1>TrueType support
 <p>
 
-XFree86 4.x comes with two TrueType backends, known as
-"FreeType" backend (the <tt>"freetype"</tt> module) and `X-TrueType'
-(the <tt>"xtt"</tt> module).  Both of these backends are based on the
-FreeType library.  The functionality of X-TrueType has been merged into
-the FreeType backend by the After X-TT Project for XFree86 4.4.
-Consequently, the old X-TrueType backend will be dropped as of XFree86
-4.5.
+The XFree86 4.x server comes with a TrueType backend, known as the
+"FreeType" backend, based on the FreeType library.  The functionality
+of the former X-TrueType was merged into the FreeType backend by the
+After X-TT Project for the XFree86 4.4.0 release, and the old X-TrueType
+backend has been dropped as of XFree86 4.5.0.
 
 <sect1>CID font support
 <p>
@@ -970,11 +1519,8 @@ License.
 
 XFree86 4.x has a ``fontenc'' layer to allow the scalable font backends
 to use a common method of font re-encoding.  This re-encoding makes it
-possible to uses fonts in encodings other than their their native
-encoding.  This layer is used by the Type1 and Speedo backends and the
-`xfsft' version of the TrueType backend.  The `X-TrueType' version of
-the TrueType backend uses a different re-encoding method based on loadable
-encoding modules.
+possible to use fonts in encodings other than their their native
+encoding.  This layer is used by the FreeType, Type1 and Speedo backends.
 
 <sect1>Large font optimisation
 <p>
@@ -1019,9 +1565,7 @@ What is included in 4.x:
   <item>ISO 10646/Unicode UTF-8 Level 1 support added to xterm
 	(enabled with the <tt>-u8</tt> option).
 
-  <item>Both the xfsft (the <tt>"freetype"</tt> module) and the X-TrueType
-	(the <tt>"xtt"</tt> module) TrueType font backends support
-	Unicode-encoded fonts.
+  <item>The FreeType font backend supports Unicode-encoded fonts.
 
 </itemize>
 
@@ -1119,21 +1663,16 @@ please contact
 <url name="URW++ web site" url="http://www.urwpp.de">.
 
 
-<!--
-<sect>Miscellaneous
-<p>
--->
-
 <sect>Credits
 <p>
 
-<![ %snapshot [
+<![ %draft [
 <bf>THIS IS A DRAFT OF THE XFree86 &fullrelvers; CREDITS SECTION.</bf>
 If you find missing credits, incorrect attributions, or other errors, please
 send details to <email>devel@XFree86.org</email>.
 ]]>
 
-This section lists the credits for the XFree86 &relvers; release.  For
+This section lists the credits for the XFree86 &fullrelvers; release.  For
 a more detailed breakdown, refer to the CHANGELOG file in the XFree86
 source tree, the <url name="cvs-commit archives"
 url="http://www.mail-archive.com/cvs-commit@xfree86.org/maillist.html">,
@@ -1142,254 +1681,190 @@ or the 'cvs log' information for individual source files.
 <descrip>
 <tag>New Features, Enhancements and Updates:</tag>
   <descrip>
-  <tag>IPv6 support:</tag>Alan Coopersmith, Fabio Massimo Di Nitto,
-	Marc Aurele La France, Matthieu Herrb, David H. Dawes.
-  <tag>NVIDIA 'nv' driver rewrite:</tag>Mark Vojkovich.
-  <tag>SiS driver development:</tag>Thomas Winischhofer.
-  <tag>New VIA video driver:</tag>VIA, Alan Cox, Luc Verhaegen, Thomas
-	Hellstr&ouml;m.
-  <tag>Intel 'i810' driver fixes and stability improvements:</tag>Egbert Eich,
-	David H. Dawes, Christian Zietz
-  <tag>Improved and more flexible Compose system:</tag>Ivan Pascal.
-  <tag>Automatic configuration for the XFree86 server:</tag>David H. Dawes.
-  <tag>Reworked FreeType font backend module:</tag>Chisato Yamauchi and
-	the After X-TT Project.
-  <tag>Xterm fixes, maintenance and enhancements:</tag>Thomas E. Dickey.
-  <tag>Mac OS X enhancements:</tag>Torrey T. Lyons, John Harper.
-  <tag>GNU/Hurd updates and preliminary GNU/KFreeBSD and GNU/KNetBSD
-	support:</tag>Robert Millan.
-  <tag>SCO support updates:</tag>Kean Johnston.
-  <tag>Bitstream Vera fonts:</tag>Bitstream, Inc, and the GNOME Foundation.
+  <tag>Xterm enhancements and updates:</tag>Thomas Dickey
+
+  <tag>Integrate TinyX into the mainline XFree86 build:</tag>X-Oz Technologies
+
+  <tag>Intel i915GM support, dual head i830/i855/i915 support:</tag>Tungsten
+  Graphics, Alan Hourihane, Keith Whitwell
+
+  <tag>Automatic configuration enhancements:</tag>X-Oz Technologies, David Dawes
+
+  <tag>Distributed Multihead X:</tag>Kevin Martin, Rik Faith
+
+  <tag>Preliminary work on SunOS/SPARC and IRIX ports:</tag>Marc La France
+
   </descrip>
 <tag>Integration:</tag>
   <descrip>
-  <tag>General Integration of Submissions:</tag>Egbert Eich, David H. Dawes,
-	Ivan Pascal, Alan Hourihane, Matthieu Herrb.
-  <tag>DRI Integration:</tag>Alan Hourihane.
+  <tag>General Integration of Submissions:</tag>David H. Dawes, Marc La France,
+	Alan Hourihane, Ivan Pascal.
+  <tag>DRI Integration:</tag>Alan Hourihane, David H. Dawes.
   </descrip>
 <tag>Release Engineering:</tag>David H. Dawes.
 
 <tag>Patches and other submissions (in alphabetical order):</tag>
-Roi a Torkilsheyggi,
-Dave Airlie,
+Szilveszter Adam,
+Tim Adye,
+Taneem Ahmed,
 Andrew Aitchison,
-Marco Antonio Alvarez,
-Alexandr Andreev,
-Jack Angel,
-Eric Anholt,
-Ani,
-Juuso &Aring;berg,
-Sergey Babkin,
-Alexey Baj,
-Bang Jun-Young,
-Uberto Barbini,
-Matthew W. S. Bell,
-Vano Beridze,
-Hiroyuki Bessho,
-Andrew Bevitt,
-Christian Biere,
-Martin Birgmeier,
-Jakub Bogusz,
-Le Hong Boi,
-Paul Bolle,
-Charl Botha,
-Stanislav Brabec,
-Eric Branlund,
-Rob Braun,
+Raoul Arranz,
+Zaeem Arshad,
+Dwayne Bailey,
+Ilyas Bakirov,
+Denis Barbier,
+Kyle Bateman,
+J. Scott Berg,
+Thomas Biege,
+Dmitry Bolkhovityanov,
+H Merijn Brand,
 Peter Breitenlohner,
-Michael Breuer,
-Kevin Brosius,
-Frederick Bruckman,
-Oswald Buddenhagen,
-Nilg&uuml;n Belma Bug&uuml;ner,
+Benjamin Burke,
+Dale L Busacker,
+busmanus,
 Julian Cable,
-Yukun Chen,
-Ping Cheng,
-Juliusz Chroboczek,
-Fred Clift,
+Mike Castle,
+David M. Clay,
+Philip Clayton,
 Alan Coopersmith,
-Martin Costabel,
-Alan Cox,
+Ricardo Cruz,
 Michel D&auml;nzer,
+J. D. Darling,
 David Dawes,
-Leif Delgass,
-Richard Dengler,
-John Dennis,
+Michael Dawes,
+Rafael &Aacute;vila de Esp&iacute;ndola,
+Rick De Laet,
+Josip Deanovic,
+Angelus Dei,
+Laurent Deniel,
 Thomas Dickey,
-Randy Dunlap,
-Chris Edgington,
-Paul Eggert,
-Paul Elliott,
-Emmanuel,
-Visanu Euarchukiati,
-Mike Fabian,
+Stefan Dirsch,
+Charles Dobson,
+DRI Project,
+Emmanuel Dreyfus,
+Boris Dusek,
+Georgina O. Economou,
+Egbert Eich,
+Bernd Ernesti,
+Chris Evans,
 Rik Faith,
-Brian Feldman,
-Wu Jian Feng,
-Kevin P. Fleming,
-Jose Fonseca,
-Hugues Fournier,
-Miguel Freitas,
-Quentin Garnier,
-B&oslash;rre Gaup,
-Michael Geddes,
+Adrian Fiechter,
+Matthew Fischer,
+FreeType Team,
+Terry R. Frienrichsen,
+Christopher Fynn,
+Hubert Gburzynski,
+Nicolas George,
 Frank Giessler,
-Hansruedi Glauser,
-Wolfram Gloger,
+Fred Gleason,
+Dmitry Golubev,
 Alexander Gottwald,
-Guido Guenther,
-Ralf Habacker,
-Bruno Haible,
-Lindsay Haigh,
+Herbert Graeber,
+Miroslav Halas,
 John Harper,
-James Harris,
-Mike A. Harris,
-Bryan W. Headley,
+Harshula,
 John Heasley,
-Thomas Hellstr&ouml;m,
 Matthieu Herrb,
-Jonathan Hough,
+David Holl,
+Alex Holland,
+Peng Hongbo,
 Alan Hourihane,
-Joel Ray Holveck,
 Harold L Hunt II,
-Ricardo Y. Igarashi,
-Mutsumi ISHIKAWA ,
-Tsuyoshi ITO,
+Alan Iwi,
+Timur Jamakeev,
+Paul Jarc,
 Kean Johnston,
-Nicolas JOLY,
-Phil Jones,
-Roman Kagan,
-Theppitak Karoonboonyanan,
-Etsushi Kato,
-Koike Kazuhiko,
-Aidan Kehoe,
-Juergen Keil,
-Andreas Kies,
-Thomas Klausner,
-Mario Klebsch,
-Egmont Koblinger,
+Nicolas Joly,
+Mark Kandianis,
+Kaleb Keithley,
+Chamath Keppitiyagama,
+Jung-uk Kim,
+Satoshi Kimura,
+Michael Knudsen,
 Vlatko Kosturjak,
-Kusanagi Kouichi,
-Mel Kravitz,
-Peter Kunzmann,
-Nick Kurshev,
-Mashrab Kuvatov,
+Alexei Kosut,
+Anton Kovalenko,
+Joachim Kuebart,
 Marc La France,
-Radics Laszlo,
+David Laight,
 Zarick Lau,
+Pierre Lalet,
+Michael Lampe,
+Lanka Linux User Group,
 Nolan Leake,
-Michel Lespinasse,
+Werner Lemberg,
+Dejan Lesjak,
 Noah Levitt,
-Dave Love,
-H.J. Lu,
-Lubos Lunak,
-Sven Luther,
+Greg Lewis,
+Bernhard R Link,
+Jonas Lund,
+S. Lussos,
 Torrey T. Lyons,
-Calum Mackay,
-Paul Mackerras,
 Roland Mainz,
+N Marci,
 Kevin Martin,
-Michal Maruska,
-Kensuke Matsuzaki,
-maxim,
 Stephen McCamant,
-Ferris McCormick,
+Mesa Developers,
 Luke Mewburn,
-Nicholas Miell,
-Robert Millan,
-Hisashi MIYASHITA,
-Gregory Mokhin,
-Patrik Montgomery,
-Joe Moss,
-Josselin Mouette,
-Frank Murphy,
-Reiko Nakajima,
-Paul Nasrat,
-Dan Nelson,
-Bastien Nocera,
-Alexandre Oliva,
-Hideki ONO,
-Peter Osterlund,
-Sergey V. Oudaltsov,
-S&eacute;amus &Oacute; Ciardhu&aacute;in,
-Bob Paauwe,
-Paul Pacheco,
-Tom Pala,
+Petr Mladek,
+Bram Moolenaar,
+Steve Murphy,
+Ishikawa MUTSUMI,
+Radu Octavian,
+Lee Olsen,
+Greg Parker,
 Ivan Pascal,
-T. M. Pederson,
-Earle F. Philhower III,
-Nils Philippsen,
-Manfred Pohler,
+Alexander E. Patrakov,
+Mike Pechkin,
+So&oacute;s P&eacute;ter,
+Zvezdan Petkovic,
 Alexander Pohoyda,
-Alain Poirier,
-Arnaud Quette,
-Jim Radford,
-Dale Rahn,
-Lucas Correia Villa Real,
-Ren&eacute; Rebe,
-Tyler Retzlaff,
-Sebastian Rittau,
+Xie Qian,
+Bill Randle,
+Adam J. Richter,
 Tim Roberts,
-Alastair M. Robinson,
-Branden Robinson,
-Daniel Rock,
-Ian Romanick,
 Bernhard Rosenkraenzer,
-M&aring;ns Rullg&aring;rd,
-Andriy Rysin,
-Supphachoke Santiwichaya,
-Pablo Saratxaga,
-Matthias Scheler,
-Jens Schweikhardt,
-Danilo Segan,
+Andreas R&uuml;den,
+Steve Rumble,
+Oleg Safiullin,
+Ty Sarna,
+Leo Savernik,
+Barry Scott,
 Shantonu Sen,
-Stas Sergeev,
-Jungshik Shin,
-Nikola Smolenski,
-Andreas Stenglein,
-Paul Stewart,
+Yu Shao,
+Andreas Schwab,
+Matthias Scheler,
+Dan Shearer,
+Michael Shell,
+Paul Shupak,
 Alexander Stohr,
-Alan Strohm,
-Will Styles,
-James Su,
-Mike Sulivan,
-Ville Syrjala,
-Slava Sysoltsev,
-Akira TAGOH,
-Toshimitsu Tanaka,
-Akira Taniguchi,
-Owen Taylor,
-Neil Terry,
-Jonathan Thambidurai,
-John Tillman,
-Adam Tlalka,
-Linus Torvalds,
-Christian Tosta,
-Warren Turkal,
-Stephen J. Turnbull,
-Ted Unangst,
-Mike Urban,
-Simon Vallet,
-Thuraiappah Vaseeharan,
+Marius Strobl,
+Mikko Markus Torni,
+Jess Thrysoee,
+Izumi Tsutsui,
+Tungsten Graphics,
+Ryan Underwood,
+Tristan Van Berkom,
+Michael van Elst,
+Phillip Vandry,
+Roman Vasylyev,
 Luc Verhaegen,
-Yann Vernier,
-Michail Vidiassov,
-Sebastiano Vigna,
+Rodion Vshevtsov,
 Mark Vojkovich,
-Stephane Voltz,
-Boris Weissman,
+Edi Werner,
 Keith Whitwell,
+Scot Wilcoxon,
+Dave Williss,
 Thomas Winischhofer,
-Eric Wittry,
-Kim Woelders,
-Roy Wood,
-Jason L. Wright,
-Joerg Wunsch,
+Kuang-che Wu,
+X-Oz Technologies,
 Chisato Yamauchi,
-Hui Yu.
-  
-<tag>Docbook/XML conversion:</tag>John Himpel and the XFree86 documentation
-team.
+Michael Yaroslavtsev,
+David Yerger,
+Su Yong,
+Hui Yu,
+Sagi Zeevi,
+Christian Zietz
 
 <tag>Webmaster:</tag>Georgina O. Economou
 
@@ -1404,7 +1879,7 @@ url="http://www.isc.org/">.
 This product includes software developed by The XFree86 Project, Inc
 (http://www.xfree86.org/) and its contributors.
 
-This produce includes software that is based in part of the work of the
+This product includes software that is based in part of the work of the
 FreeType Team (http://www.freetype.org).
 
 This product includes software developed by the University of California,

@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.9 2003/12/22 17:48:02 tsi Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.10 2004/12/31 02:56:03 tsi Exp $ */
 
 /*
 
@@ -163,7 +163,7 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
-#if SIZE_MAX <= UINT_MAX
+#if SIZE_MAX < UCHAR_MAX	/* ... not likely! ... */
     if (prefix.num_alternates > SIZE_MAX / sizeof(AlternateServer)) {
 	errno = ENOMEM;
 	FSfree((char *) alt_data);

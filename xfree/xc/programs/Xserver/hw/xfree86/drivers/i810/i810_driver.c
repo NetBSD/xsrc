@@ -25,7 +25,54 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_driver.c,v 1.102 2004/01/02 22:16:18 dawes Exp $ */
+/*
+ * Copyright (c) 2003-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_driver.c,v 1.113 2005/02/18 02:55:08 dawes Exp $ */
 
 /*
  * Reformatted with GNU indent (2.2.8), using the following options:
@@ -43,6 +90,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
+ *
+ * Add ARGB HW cursor support:
+ *   Alan Hourihane <alanh@tungstengraphics.com>
  *
  */
 
@@ -75,6 +125,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbe.h"
 
 #include "i810.h"
+#include "i830.h"
 
 #ifdef XF86DRI
 #include "dri.h"
@@ -124,6 +175,8 @@ static SymTabRec I810Chipsets[] = {
    {PCI_CHIP_845_G,		"845G"},
    {PCI_CHIP_I855_GM,		"852GM/855GM"},
    {PCI_CHIP_I865_G,		"865G"},
+   {PCI_CHIP_I915_G,		"915G"},
+   {PCI_CHIP_I915_GM,		"915GM"},
    {-1,				NULL}
 };
 
@@ -138,6 +191,8 @@ static PciChipsets I810PciChipsets[] = {
    {PCI_CHIP_845_G,		PCI_CHIP_845_G,		RES_SHARED_VGA},
    {PCI_CHIP_I855_GM,		PCI_CHIP_I855_GM,	RES_SHARED_VGA},
    {PCI_CHIP_I865_G,		PCI_CHIP_I865_G,	RES_SHARED_VGA},
+   {PCI_CHIP_I915_G,		PCI_CHIP_I915_G,	RES_SHARED_VGA},
+   {PCI_CHIP_I915_GM,		PCI_CHIP_I915_GM,	RES_SHARED_VGA},
    {-1,				-1, RES_UNDEFINED }
 };
 
@@ -268,6 +323,7 @@ const char *I810drmSymbols[] = {
    "drmAgpRelease",
    "drmAgpUnbind",
    "drmAuthMagic",
+   "drmCommandNone",
    "drmCommandWrite",
    "drmCreateContext",
    "drmCtlInstHandler",
@@ -292,6 +348,7 @@ const char *I810driSymbols[] = {
    "DRIScreenInit",
    "DRIUnlock",
    "GlxSetVisualConfigs",
+   "DRICreatePCIBusID",
    NULL
 };
 
@@ -397,6 +454,8 @@ i810Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 #endif
 
+int I830EntityIndex = -1;
+
 #ifndef I830_ONLY
 /*
  * I810GetRec and I810FreeRec --
@@ -466,6 +525,8 @@ static Bool
 I810Probe(DriverPtr drv, int flags)
 {
    int i, numUsed, numDevSections, *usedChips;
+   I830EntPtr pI830Ent = NULL;					
+   DevUnion *pPriv;						
    GDevPtr *devSections;
    Bool foundScreen = FALSE;
    pciVideoPtr *VideoInfo;
@@ -541,10 +602,39 @@ I810Probe(DriverPtr drv, int flags)
 	    pScrn->Probe = I810Probe;
 	    foundScreen = TRUE;
 	    switch (pEnt->chipset) {
-	    case PCI_CHIP_I830_M:
 	    case PCI_CHIP_845_G:
-	    case PCI_CHIP_I855_GM:
 	    case PCI_CHIP_I865_G:
+	       I830InitpScrn(pScrn);
+               break;
+	    case PCI_CHIP_I830_M:
+	    case PCI_CHIP_I855_GM:
+	    case PCI_CHIP_I915_G:
+	    case PCI_CHIP_I915_GM:
+    	       xf86SetEntitySharable(usedChips[i]);
+
+    	       /* Allocate an entity private if necessary */		
+    	       if (I830EntityIndex < 0)					
+		  I830EntityIndex = xf86AllocateEntityPrivateIndex();	
+
+    	       pPriv = xf86GetEntityPrivate(pScrn->entityList[0],		
+						I830EntityIndex);	
+    	       if (!pPriv->ptr) {						
+		  pPriv->ptr = xnfcalloc(sizeof(I830EntRec), 1);		
+		  pI830Ent = pPriv->ptr;					
+		  pI830Ent->lastInstance = -1;				
+    	       } else {							
+		  pI830Ent = pPriv->ptr;					
+    	       }
+								
+    	       /*								
+     	        * Set the entity instance for this instance of the driver.	
+     	        * For dual head per card, instance 0 is the "master" 	
+     	        * instance, driving the primary head, and instance 1 is 	
+     	        * the "slave".						
+     	        */								
+    	       pI830Ent->lastInstance++;					
+               xf86SetEntityInstanceForScreen(pScrn,			
+			pScrn->entityList[0], pI830Ent->lastInstance);	
 	       I830InitpScrn(pScrn);
 	       break;
 #ifndef I830_ONLY
@@ -637,6 +727,10 @@ I810PreInit(ScrnInfoPtr pScrn, int flags)
       return FALSE;
 
    pI810 = I810PTR(pScrn);
+
+   pI810->LpRing = xcalloc(1, sizeof(I810RingBuffer));
+   if (!pI810->LpRing)
+      return FALSE;
 
    pI810->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
    if (pI810->pEnt->location.type != BUS_PCI)
@@ -830,14 +924,21 @@ I810PreInit(ScrnInfoPtr pScrn, int flags)
 	 pI810->LmFreqSel = 100;
    }
 
-   /* Default to 4MB framebuffer, which is sufficient for all
-    * supported 2d resolutions.  If the user has specified a different
-    * size in the XF86Config, use that amount instead.
-    *
-    *  Changed to 8 Meg so we can have acceleration by default (Mark).
+   pI810->directRenderingDisabled =
+     !xf86ReturnOptValBool(pI810->Options, OPTION_DRI, TRUE);
+
+   /*
+    * Default to 8MB framebuffer when DRI is disabled, and to 16MB
+    * when DRI is enabled.
     */
-   pScrn->videoRam = 8192;
+#ifdef XF86DRI
+   if (!pI810->directRenderingDisabled)
+      pScrn->videoRam = I810_DEFAULT_VIDEOMEM_3D;
+   else
+#endif
+      pScrn->videoRam = I810_DEFAULT_VIDEOMEM_2D;
    from = X_DEFAULT;
+
    if (pI810->pEnt->device->videoRam) {
       pScrn->videoRam = pI810->pEnt->device->videoRam;
       from = X_CONFIG;
@@ -1005,9 +1106,6 @@ I810PreInit(ScrnInfoPtr pScrn, int flags)
 	      1) << pScrn->offset.blue);
    }
 
-   pI810->directRenderingDisabled =
-     !xf86ReturnOptValBool(pI810->Options, OPTION_DRI, TRUE);
-
 #ifdef XF86DRI
    if (!pI810->directRenderingDisabled) {
      if (pI810->noAccel) {
@@ -1121,7 +1219,7 @@ I810MapMem(ScrnInfoPtr pScrn)
    if (!pI810->FbBase)
       return FALSE;
 
-   pI810->LpRing.virtual_start = pI810->FbBase + pI810->LpRing.mem.Start;
+   pI810->LpRing->virtual_start = pI810->FbBase + pI810->LpRing->mem.Start;
 
    return TRUE;
 }
@@ -1154,13 +1252,14 @@ void
 I810PrintErrorState(ScrnInfoPtr pScrn)
 {
    I810Ptr pI810 = I810PTR(pScrn);
+   typedef unsigned int CARD32;		/* ... sigh ... */
 
-   ErrorF("pgetbl_ctl: 0x%lx pgetbl_err: 0x%lx\n",
+   ErrorF("pgetbl_ctl: 0x%x pgetbl_err: 0x%x\n",
 	  INREG(PGETBL_CTL), INREG(PGE_ERR));
 
-   ErrorF("ipeir: %lx iphdr: %lx\n", INREG(IPEIR), INREG(IPEHR));
+   ErrorF("ipeir: %x iphdr: %x\n", INREG(IPEIR), INREG(IPEHR));
 
-   ErrorF("LP ring tail: %lx head: %lx len: %lx start %lx\n",
+   ErrorF("LP ring tail: %x head: %x len: %x start %x\n",
 	  INREG(LP_RING + RING_TAIL),
 	  INREG(LP_RING + RING_HEAD) & HEAD_ADDR,
 	  INREG(LP_RING + RING_LEN), INREG(LP_RING + RING_START));
@@ -1170,7 +1269,7 @@ I810PrintErrorState(ScrnInfoPtr pScrn)
 
    ErrorF("instdone: %x instpm: %x\n", INREG16(INST_DONE), INREG8(INST_PM));
 
-   ErrorF("memmode: %lx instps: %lx\n", INREG(MEMMODE), INREG(INST_PS));
+   ErrorF("memmode: %x instps: %x\n", INREG(MEMMODE), INREG(INST_PS));
 
    ErrorF("hwstam: %x ier: %x imr: %x iir: %x\n",
 	  INREG16(HWSTAM), INREG16(IER), INREG16(IMR), INREG16(IIR));
@@ -1485,8 +1584,8 @@ DoRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, I810RegPtr i810Reg,
    OUTREG(LP_RING + RING_TAIL, 0);
    OUTREG(LP_RING + RING_HEAD, 0);
 
-   pI810->LpRing.head = 0;
-   pI810->LpRing.tail = 0;
+   pI810->LpRing->head = 0;
+   pI810->LpRing->tail = 0;
 
    itemp = INREG(LP_RING + RING_START);
    itemp &= ~(START_ADDR);
@@ -1526,12 +1625,12 @@ I810SetRingRegs(ScrnInfoPtr pScrn)
 
    itemp = INREG(LP_RING + RING_START);
    itemp &= ~(START_ADDR);
-   itemp |= pI810->LpRing.mem.Start;
+   itemp |= pI810->LpRing->mem.Start;
    OUTREG(LP_RING + RING_START, itemp);
 
    itemp = INREG(LP_RING + RING_LEN);
    itemp &= ~(RING_NR_PAGES | RING_REPORT_MASK | RING_VALID_MASK);
-   itemp |= ((pI810->LpRing.mem.Size - 4096) | RING_NO_REPORT | RING_VALID);
+   itemp |= ((pI810->LpRing->mem.Size - 4096) | RING_NO_REPORT | RING_VALID);
    OUTREG(LP_RING + RING_LEN, itemp);
 }
 
@@ -1679,11 +1778,12 @@ I810SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
    /* Calculate the extended CRTC regs */
    i810Reg->ExtVertTotal = (mode->CrtcVTotal - 2) >> 8;
    i810Reg->ExtVertDispEnd = (mode->CrtcVDisplay - 1) >> 8;
-   i810Reg->ExtVertSyncStart = mode->CrtcVSyncStart >> 8;
-   i810Reg->ExtVertBlankStart = mode->CrtcVBlankStart >> 8;
+   i810Reg->ExtVertSyncStart = (mode->CrtcVSyncStart - 1) >> 8;
+   i810Reg->ExtVertBlankStart = (mode->CrtcVBlankStart - 1) >> 8;
    i810Reg->ExtHorizTotal = ((mode->CrtcHTotal >> 3) - 5) >> 8;
    i810Reg->ExtHorizBlank = (((mode->CrtcHBlankEnd >> 3) - 1) & 0x40) >> 6;
 
+#if 0	/* I don't think these are needed anymore */
    /*
     * The following workarounds are needed to get video overlay working
     * at 1024x768 and 1280x1024 display resolutions.
@@ -1694,6 +1794,7 @@ I810SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
    if ((mode->CrtcVDisplay == 1024) && (i810Reg->ExtVertBlankStart == 4)) {
       i810Reg->ExtVertBlankStart = 3;
    }
+#endif
 
    /* OVRACT Register */
    i810Reg->OverlayActiveStart = mode->CrtcHTotal - 32;
@@ -1727,10 +1828,10 @@ I810SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
    /* Setup the ring buffer */
    i810Reg->LprbTail = 0;
    i810Reg->LprbHead = 0;
-   i810Reg->LprbStart = pI810->LpRing.mem.Start;
+   i810Reg->LprbStart = pI810->LpRing->mem.Start;
 
    if (i810Reg->LprbStart)
-      i810Reg->LprbLen = ((pI810->LpRing.mem.Size - 4096) |
+      i810Reg->LprbLen = ((pI810->LpRing->mem.Size - 4096) |
 			  RING_NO_REPORT | RING_VALID);
    else
       i810Reg->LprbLen = RING_INVALID;
@@ -1750,6 +1851,7 @@ I810ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
    vgaHWUnlock(hwp);
 
+   hwp->Flags |= VGA_FIX_SYNC_PULSES;
    if (!vgaHWInit(pScrn, mode))
       return FALSE;
    /*
@@ -1759,10 +1861,10 @@ I810ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     * to be blank. Restoring CRTC 3, 5, & 22 to their
     * "theoretical" values corrects the problem. KAO.
     */
-   pVga = &VGAHWPTR(pScrn)->ModeReg;
+   pVga = &hwp->ModeReg;
    pVga->CRTC[3] = (((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F) | 0x80;
    pVga->CRTC[5] = ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2)
-	 | (((mode->CrtcHSyncEnd >> 3)) & 0x1F);
+	 | (((mode->CrtcHSyncEnd >> 3) - 1) & 0x1F);
    pVga->CRTC[22] = (mode->CrtcVBlankEnd - 1) & 0xFF;
 
    pScrn->vtSema = TRUE;
@@ -1777,7 +1879,7 @@ I810ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
    }
 #endif
 
-   DoRestore(pScrn, &hwp->ModeReg, &pI810->ModeReg, FALSE);
+   DoRestore(pScrn, pVga, &pI810->ModeReg, FALSE);
 
 #ifdef XF86DRI
    if (pI810->directRenderingEnabled) {
@@ -1973,18 +2075,18 @@ I810AllocateFront(ScrnInfoPtr pScrn)
 	      pI810->FrontBuffer.Start,
 	      pI810->FrontBuffer.Size / 1024, pI810->FrontBuffer.Size);
 
-   memset(&(pI810->LpRing), 0, sizeof(I810RingBuffer));
-   if (I810AllocLow(&(pI810->LpRing.mem), &(pI810->SysMem), 16 * 4096)) {
+   memset(pI810->LpRing, 0, sizeof(I810RingBuffer));
+   if (I810AllocLow(&(pI810->LpRing->mem), &(pI810->SysMem), 16 * 4096)) {
       DPRINTF(PFX,
 	      "Ring buffer at 0x%.8x (%luk, %lu bytes)\n",
-	      pI810->LpRing.mem.Start,
-	      pI810->LpRing.mem.Size / 1024, pI810->LpRing.mem.Size);
+	      pI810->LpRing->mem.Start,
+	      pI810->LpRing->mem.Size / 1024, pI810->LpRing->mem.Size);
 
-      pI810->LpRing.tail_mask = pI810->LpRing.mem.Size - 1;
-      pI810->LpRing.virtual_start = pI810->FbBase + pI810->LpRing.mem.Start;
-      pI810->LpRing.head = 0;
-      pI810->LpRing.tail = 0;
-      pI810->LpRing.space = 0;
+      pI810->LpRing->tail_mask = pI810->LpRing->mem.Size - 1;
+      pI810->LpRing->virtual_start = pI810->FbBase + pI810->LpRing->mem.Start;
+      pI810->LpRing->head = 0;
+      pI810->LpRing->tail = 0;
+      pI810->LpRing->space = 0;
    } else {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		 "Ring buffer allocation failed\n");
@@ -2113,7 +2215,7 @@ I810ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
    xf86SetBlackWhitePixels(pScreen);
 
 #ifdef XF86DRI
-   if (pI810->LpRing.mem.Start == 0 && pI810->directRenderingEnabled) {
+   if (pI810->LpRing->mem.Start == 0 && pI810->directRenderingEnabled) {
       pI810->directRenderingEnabled = FALSE;
       driFrom = X_PROBED;
       I810DRICloseScreen(pScreen);
@@ -2137,7 +2239,7 @@ I810ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
    }
 
    if (!xf86ReturnOptValBool(pI810->Options, OPTION_NOACCEL, FALSE)) {
-      if (pI810->LpRing.mem.Size != 0) {
+      if (pI810->LpRing->mem.Size != 0) {
 	 I810SetRingRegs(pScrn);
 
 	 if (!I810AccelInit(pScreen)) {
@@ -2461,7 +2563,7 @@ I810ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 	 xf86DrvMsg(scrnIndex, X_PROBED,
 		    "Removing interlaced mode \"%s\"\n", mode->name);
       }
-      return MODE_BAD;
+      return MODE_NO_INTERLACE;
    }
    return MODE_OK;
 }
