@@ -24,6 +24,10 @@ static char rcsid[] =
 /* Modified nov 94 by Martin Schaller (Martin_Schaller@maus.r.de) for use with
 interleaved planes */
 
+#ifdef CFB_NEED_SCREEN_PRIVATE
+#include "iplmap.h"
+#endif
+
 #include    "ipl.h"
 #include    "X.h"
 #include    "mibstore.h"
