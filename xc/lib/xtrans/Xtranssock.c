@@ -754,6 +754,29 @@ int 		arg;
 }
 
 
+#ifdef UNIXCONN
+static int
+set_sun_path(const char *port, const char *upath, char *path)
+{
+    struct sockaddr_un s;
+    int maxlen = sizeof(s.sun_path) - 1;
+
+    if (!port || !*port || !path)
+	return -1;
+
+    if (*port == '/') { /* a full pathname */
+	if (strlen(port) > maxlen)
+	    return -1;
+	sprintf(path, "%s", port);
+    } else {
+	if (strlen(port) + strlen(upath) > maxlen)
+	    return -1;
+	sprintf(path, "%s%s", upath, port);
+    }
+    return 0;
+}
+#endif
+
 #ifdef TRANS_SERVER
 
 static int
@@ -957,10 +980,9 @@ char *port;
     sockname.sun_family = AF_UNIX;
 
     if (port && *port) {
-	if (*port == '/') { /* a full pathname */
-	    sprintf (sockname.sun_path, "%s", port);
-	} else {
-	    sprintf (sockname.sun_path, "%s%s", UNIX_PATH, port);
+	if (set_sun_path(port, UNIX_PATH, sockname.sun_path) != 0) {
+	    PRMSG (1, "SocketUNIXCreateListener: path too long\n", 0, 0, 0);
+	    return TRANS_CREATE_LISTENER_FAILED;
 	}
     } else {
 	sprintf (sockname.sun_path, "%s%d", UNIX_PATH, getpid());
@@ -1604,10 +1626,9 @@ char *port;
     
     sockname.sun_family = AF_UNIX;
 
-    if (*port == '/') { /* a full pathname */
-	sprintf (sockname.sun_path, "%s", port);
-    } else {
-	sprintf (sockname.sun_path, "%s%s", UNIX_PATH, port);
+    if (set_sun_path(port, UNIX_PATH, sockname.sun_path) != 0) {
+	PRMSG (1, "SocketUNIXCreateListener: path too long\n", 0, 0, 0);
+	return TRANS_CREATE_LISTENER_FAILED;
     }
 
 #if defined(BSD44SOCKETS) && !defined(Lynx)
@@ -1623,10 +1644,9 @@ char *port;
      * This is gross, but it was in Xlib
      */
     old_sockname.sun_family = AF_UNIX;
-    if (*port == '/') { /* a full pathname */
-	sprintf (old_sockname.sun_path, "%s", port);
-    } else {
-	sprintf (old_sockname.sun_path, "%s%s", OLD_UNIX_PATH, port);
+    if (set_sun_path(port, OLD_UNIX_PATH, old_sockname.sun_path) != 0) {
+	PRMSG (1, "SocketUNIXConnect: path too long\n", 0, 0, 0);
+	return TRANS_CONNECT_FAILED;
     }
     old_namelen = strlen (old_sockname.sun_path) +
 	sizeof (old_sockname.sun_family);
