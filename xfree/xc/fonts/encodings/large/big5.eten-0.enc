@@ -2,8 +2,9 @@ STARTENCODING big5.eten-0
 ALIAS big5-0
 ALIAS big5.cp950-0
 # This file is generated from glibc-2.2 BIG5 charmap
-# $XFree86: xc/fonts/encodings/large/big5.eten-0.enc,v 1.4 2000/11/29 17:40:22 dawes Exp $
+# $XFree86: xc/fonts/encodings/large/big5.eten-0.enc,v 1.6 2001/11/03 21:59:11 dawes Exp $
 SIZE 0xFA 0xFF
+FIRSTINDEX 0xA0 0x40
 STARTMAPPING unicode
 UNDEFINE 0x0000 0xF9FE
 0xA140  0x3000
@@ -12742,7 +12743,7 @@ UNDEFINE 0x0000 0xF9FE
 0xF9FD  0x256F
 0xF9FE  0x2593
 ENDMAPPING
-STARTMAPPING cmap 3 3
+STARTMAPPING cmap 3 4
 # just the identity mapping
 ENDMAPPING
 ENDENCODING
