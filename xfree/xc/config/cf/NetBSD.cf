@@ -99,6 +99,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * NetBSD 1.6M and newer supports POSIX Threads.
  */
 
+#define	NetBSDThreads
 #if defined(NetBSDThreads) && \
     ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
@@ -108,9 +109,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ThreadedX		YES
 # define HasThreadSafeAPI	YES
 # define ThreadsLibraries	-lpthread
+# define LibraryMTDefines	-DUSE_NBSD_THREADLIB
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
-# define SharedX11Reqs		-lpthread
 #endif
 
 /*
