@@ -234,8 +234,11 @@ stipmipste.s: stipmips.s
 clean::
 	$(RM) stipmipste.s
 
+stipmips.o: stipmips.s
+	$(CPP) stipmips.s AsmDefines | $(AS) -o $@ -
+
 stipmipste.o: stipmipste.s
-	$(AS) -o $@ -DTETEXT stipmipste.s
+	$(CPP) -DTETEXT stipmips.s AsmDefines | $(AS) -o $@ -
 #endif
 
 #ifdef SparcArchitecture
