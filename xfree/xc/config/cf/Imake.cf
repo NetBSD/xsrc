@@ -214,10 +214,13 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 #    define Sparc64Architecture
 #  endif
 # endif
-# ifdef mips
+# ifdef __mips__
 #   define MipsArchitecture
 #   define ArcArchitecture
-#   undef mips
+#   undef __mips__
+#   if defined(__sgimips__)
+#      define SGIMipsArchitecture
+#   endif
 # endif
 # ifdef __alpha__
 #   define AlphaArchitecture
