@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.196 2003/02/25 21:57:52 dawes Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.196.2.3 2003/10/08 17:56:30 eich Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -72,9 +72,11 @@ VENDORMANVERSION = XVendorManVersionString
 /*
  * X-specific things
  */
-#if CrossCompiling
-# if defined UseInstalled && !defined UseInstalledOnCrossCompile
+#if CrossCompiling && !defined(UseInstalledOnCrossCompile)
+# if defined(UseInstalled)
 #  define UseInstalledOnCrossCompile YES
+# else
+#  define UseInstalledOnCrossCompile NO
 # endif
 #endif
 
@@ -1143,6 +1145,34 @@ FCHOWN_DEFINES = -DHAS_FCHOWN
 # endif
 #endif
 
+#ifndef HasDevRandom
+#define HasDevRandom NO
+#endif
+
+#ifndef HasArc4Random
+#define HasArc4Random NO
+#endif
+
+#ifndef RandomDefines
+# if HasDevRandom
+#  ifndef RandomDeviceFile
+#   define RandomDeviceFile /dev/random
+#  endif
+#  ifndef ExtraRandomDefines
+#   ifdef PollDevRandom /* Set if can poll() /dev/random to avoid blocking */
+#    define ExtraRandomDefines -DPOLL_DEV_RANDOM
+#   else
+#    define ExtraRandomDefines /**/
+#   endif
+#  endif
+#  define RandomDefines -DDEV_RANDOM=\"RandomDeviceFile\" ExtraRandomDefines
+# elif HasArc4Random
+#  define RandomDefines -DARC4_RANDOM
+# else
+#  define RandomDefines /**/
+# endif
+#endif
+
 #ifndef ServerXdmcpDefines
 #define ServerXdmcpDefines -DXDMCP
 #endif
@@ -2181,14 +2211,14 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #define GLwUseXmStubs		NO	/* create stub (weak) Motif symbols */
 #endif
 #else
-#undef  SharedLibGlw
-#define SharedLibGlw		NO
-#undef  NormalLibGlw
-#define NormalLibGlw		NO
-#undef  DebugLibGlw
-#define DebugLibGlw		NO
-#undef  ProfileLibGlw
-#define ProfileLibGlw		NO
+#undef  SharedLibGLw
+#define SharedLibGLw		NO
+#undef  NormalLibGLw
+#define NormalLibGLw		NO
+#undef  DebugLibGLw
+#define DebugLibGLw		NO
+#undef  ProfileLibGLw
+#define ProfileLibGLw		NO
 #endif
 
 #ifndef SharedLibXext

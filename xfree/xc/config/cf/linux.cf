@@ -4,7 +4,7 @@ XCOMM platform:  $Xorg: linux.cf,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.201 2003/02/17 17:07:32 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.201.2.1 2003/03/13 04:10:40 tsi Exp $
 
 #ifndef LinuxElfDefault
 # define LinuxElfDefault	YES
@@ -418,13 +418,6 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #  else
 #    define Has3DNowSupport		NO
 #  endif
-#endif
-
-/*
- * libGLU doesn't build correctly on a libc5 system.
- */
-#if !defined(BuildGLULibrary) && (LinuxCLibMajorVersion < 6)
-# define BuildGLULibrary		NO
 #endif
 
 /*

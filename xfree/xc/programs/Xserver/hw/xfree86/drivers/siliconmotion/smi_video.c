@@ -41,7 +41,7 @@ Author of changes: Corvin Zahn <zahn@zac.de>
 Date:   2.11.2001
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.9 2003/01/12 03:55:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.9.2.1 2003/05/09 02:22:00 dawes Exp $ */
 
 #include "smi.h"
 #include "smi_video.h"

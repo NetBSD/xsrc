@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.439 2003/02/26 20:07:59 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.439.2.2 2003/04/23 19:55:19 herrb Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -54,7 +54,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
     defined(XF86_VERSION_MAJOR) && defined(XF86_VERSION_MINOR) && \
     defined(XF86_VERSION_PATCH) && defined(XF86_VERSION_SNAP)
 # if XF86_VERSION_SNAP == 0
-#define XFree86ManVersionString `echo XF86_VERSION_MAJOR XF86_VERSION_MINOR XF86_VERSION_PATCH | sed -e 's/ /./g' -e 's/^/Version /'`
+#define XFree86ManVersionString `echo XF86_VERSION_MAJOR XF86_VERSION_MINOR XF86_VERSION_PATCH | sed -e 's/ /./g' -e 's/^/Version\\\ /'`
 #else
 #define XFree86ManVersionString `echo XF86_VERSION_MAJOR XF86_VERSION_MINOR XF86_VERSION_PATCH XF86_VERSION_SNAP | sed -e 's/ /./g' -e 's/^/Version\\\ /'`
 # endif
@@ -2010,15 +2010,6 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # else
 #  define Egcs112Bug NO
 # endif
-#endif
-
-/*
- * Some Linux distributions (like RH 7.0) use glibc 2.1-style setjmp,
- * but have the glibc version set to 2.2.  This can be set it host.def
- * to handle these cases.
- */
-#ifndef HasGlibc21Sigsetjmp
-#define HasGlibc21Sigsetjmp NO
 #endif
 
 #ifdef i386Architecture

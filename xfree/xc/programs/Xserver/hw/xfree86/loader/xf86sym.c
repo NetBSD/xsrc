@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.227 2003/02/26 20:08:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.227.2.1 2003/03/13 04:10:47 tsi Exp $ */
 
 /*
  *
@@ -63,8 +63,9 @@
 #include "compiler.h"
 
 #ifndef HAS_GLIBC_SIGSETJMP
-#if defined(setjmp) && \
-    defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+#if defined(setjmp) && defined(__GNU_LIBRARY__) && \
+    (!defined(__GLIBC__) || (__GLIBC__ < 2) || \
+     ((__GLIBC__ == 2) && (__GLIBC_MINOR__ < 3)))
 #define HAS_GLIBC_SIGSETJMP 1
 #endif
 #endif
@@ -897,9 +898,15 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86shmctl)
 #ifdef HAS_GLIBC_SIGSETJMP
    SYMFUNC(xf86setjmp)
+   SYMFUNC(xf86setjmp0)
+#if defined(__GLIBC__) && (__GLIBC__ >= 2)
    SYMFUNCALIAS("xf86setjmp1",__sigsetjmp)
 #else
+   SYMFUNC(xf86setjmp1)		/* For libc5 */
+#endif
+#else
    SYMFUNCALIAS("xf86setjmp",setjmp)
+   SYMFUNCALIAS("xf86setjmp0",setjmp)
    SYMFUNC(xf86setjmp1)
 #endif
    SYMFUNCALIAS("xf86longjmp",longjmp)
