@@ -533,6 +533,23 @@ SetUIDServerTarget(X68k,$(X68DIRS),$(X68OBJS),$(X68LIBS),$(SYSLIBS))
 #endif /* X68kServer */
 
 
+#if XmacppcServer
+XCOMM
+XCOMM NetBSD/macppc server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+DDXDIR1  = hw/netbsd/macppc
+PMACDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+PMACOBJS = hw/netbsd/macppc/macppcInit.o
+PMACLIBS = hw/netbsd/macppc/libmacppc.a CFB8Libs
+ServerTarget(Xmacppc,$(PMACDIRS),$(PMACOBJS),$(PMACLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xmacppc
+#endif
+#endif /* XmacppcServer */
+
+
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
 XF86MINIT  = $(XF86COMSRC)/xf86Init_m.o $(XF86CONFIGSRC)/xf86MIniExt.o
