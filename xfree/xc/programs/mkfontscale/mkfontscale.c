@@ -549,6 +549,7 @@ doDirectory(char *dirname_given)
                                     encoding->value);
             }
         free(filename);
+	FT_Done_Face(face);
     }
     entries = reverseList(entries);
     fprintf(fontscale, "%d\n", listLength(entries));
