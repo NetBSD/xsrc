@@ -1,4 +1,4 @@
-.\" $XConsortium: XtTransC.man /main/8 1995/12/15 14:28:26 gildea $
+.\" $XConsortium: XtTransC.man /main/9 1996/12/09 16:21:00 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtTranslateCoords 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtTranslateCoords 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtTranslateCoords \- translate widget coordinates
 .SH SYNTAX

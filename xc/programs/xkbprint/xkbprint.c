@@ -1,5 +1,5 @@
-/* $XConsortium: xkbprint.c /main/4 1996/03/06 21:40:22 kaleb $ */
-/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.3 1996/08/13 11:36:36 dawes Exp $ */
+/* $XConsortium: xkbprint.c /main/5 1996/08/31 12:38:01 kaleb $ */
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.4 1996/12/23 07:14:00 dawes Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include <locale.h>
+#include <X11/Xlocale.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -717,7 +717,7 @@ XkbFileInfo 	result;
     }
     if (ok) {
 	FILE *out;
-	if (setlocale(LC_ALL,wantLocale)==NULL) {
+	if (setlocale(LC_ALL,(wantLocale))==NULL) {
 	    if (wantLocale!=NULL) {
 		uWarning("Couldn't change to locale %s\n",wantLocale);
 		uAction("Using \"C\" locale, instead\n");

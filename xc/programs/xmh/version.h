@@ -1,4 +1,4 @@
-/* $XConsortium: version.h /main/5 1995/12/12 16:43:22 gildea $ */
+/* $XConsortium: version.h /main/6 1996/12/09 17:57:11 kaleb $ */
 /*
 
 Copyright (c) 1993  X Consortium
@@ -29,4 +29,4 @@ from the X Consortium.
 
 */
 
-#define XMH_VERSION "xmh    X Consortium    R6.1"
+#define XMH_VERSION "xmh    X Consortium    R6.3"

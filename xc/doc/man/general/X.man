@@ -1,4 +1,4 @@
-.\" $XConsortium: X.man /main/68 1995/12/15 13:58:55 gildea $
+.\" $XConsortium: X.man /main/71 1996/12/18 10:56:33 rws $
 .\" Copyright (c) 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +23,7 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
-.TH X 1 "Release 6.1" "X Version 11"
+.TH X 1 "Release 6.3" "X Version 11"
 .SH NAME
 X \- a portable, network-transparent window system
 .SH SYNOPSIS
@@ -71,32 +71,39 @@ and various toolkit documents.
 .PP
 The number of programs that use \fIX\fP is quite large.
 Programs provided in the core X Consortium distribution include:
-a terminal emulator (\fIxterm\fP),
-a window manager (\fItwm\fP), 
-a display manager (\fIxdm\fP),
-a console redirect program (\fIxconsole\fP),
-a mail interface (\fIxmh\fP),
-a bitmap editor (\fIbitmap\fP),
-resource listing/manipulation tools (\fIappres\fP, \fIeditres\fP),
-access control programs (\fIxauth\fP, \fIxhost\fP, and \fIiceauth\fP),
-user preference setting programs (\fIxrdb\fP, \fIxcmsdb\fP,
-\fIxset\fP, \fIxsetroot\fP, \fIxstdcmap\fP, and \fIxmodmap\fP),
-clocks (\fIxclock\fP and \fIoclock\fP),
-a font displayer (\fIxfd\fP),
-utilities for listing information about fonts, windows, and displays
-(\fIxlsfonts\fP, \fIxwininfo\fP, \fIxlsclients\fP,
-\fIxdpyinfo\fP, \fIxlsatoms\fP, and \fIxprop\fP),
-screen image manipulation utilities (\fIxwd\fP, \fIxwud\fP, and \fIxmag\fP),
-a performance measurement utility (\fIx11perf\fP),
-a font compiler (\fIbdftopcf\fP),
-a font server and related utilities (\fIxfs\fP, \fIfsinfo\fP, \fIfslsfonts\fP, \fIfstobdf\fP),
-an X Image Extension exerciser (\fIxieperf\fP),
-a display server and related utilities (\fIXserver\fP, \fIrgb\fP, \fImkfontdir\fP),
-remote execution utilities (\fIrstart\fP and \fIxon\fP),
-a clipboard manager (\fIxclipboard\fP),
-a keyboard description compiler (\fIxkbcomp\fP),
-a utility to terminate clients (\fIxkill\fP), 
-and a utility to cause part or all of the screen to be redrawn (\fIxrefresh\fP). 
+a terminal emulator, \fIxterm\fP;
+a window manager, \fItwm\fP; 
+a display manager, \fIxdm\fP;
+a console redirect program, \fIxconsole\fP;
+a mail interface, \fIxmh\fP;
+a bitmap editor, \fIbitmap\fP;
+resource listing/manipulation tools, \fIappres\fP, \fIeditres\fP;
+access control programs, \fIxauth\fP, \fIxhost\fP, and \fIiceauth\fP;
+user preference setting programs, \fIxrdb\fP, \fIxcmsdb\fP,
+\fIxset\fP, \fIxsetroot\fP, \fIxstdcmap\fP, and \fIxmodmap\fP;
+clocks, \fIxclock\fP and \fIoclock\fP;
+a font displayer, (\fIxfd\fP;
+utilities for listing information about fonts, windows, and displays,
+\fIxlsfonts\fP, \fIxwininfo\fP, \fIxlsclients\fP,
+\fIxdpyinfo\fP, \fIxlsatoms\fP, and \fIxprop\fP;
+screen image manipulation utilities, \fIxwd\fP, \fIxwud\fP, and \fIxmag\fP;
+a performance measurement utility, \fIx11perf\fP;
+a font compiler, \fIbdftopcf\fP;
+a font server and related utilities, \fIxfs\fP, \fIfsinfo\fP, \fIfslsfonts\fP, \fIfstobdf\fP;
+an X Image Extension exerciser, \fIxieperf\fP;
+a display server and related utilities, \fIXserver\fP, \fIrgb\fP, \fImkfontdir\fP;
+remote execution utilities, \fIrstart\fP and \fIxon\fP;
+a clipboard manager, \fIxclipboard\fP;
+keyboard description compiler and related utilities, \fIxkbcomp\fP, 
+\fIxkbprint\fP, \fIxkbbell\fP, \fIxkbevd\fP, \fIxkbvleds\fP, and \fIxkbwatch\fP;
+a utility to terminate clients, \fIxkill\fP; 
+an optimized X protocol proxy, \fIlbxproxy\fP;
+a firewall security proxy, \fIxfwp\fP;
+a proxy manager to control them, \fIproxymngr\fP;
+a utility to find proxies, \fIxfindproxy\fP;
+Netscape Navigator Plug-ins, \fIlibxrx.so\fP and \fIlibxrxnest.so\fP;
+an RX MIME-type helper program, \fIxrx\fP;
+and a utility to cause part or all of the screen to be redrawn, \fIxrefresh\fP. 
 .PP
 Many other utilities, window managers, games, toolkits, etc. are included
 as user-contributed software in the X Consortium distribution, or are
@@ -1037,14 +1044,16 @@ Xsecurity(1),
 .\" clients, utilities, and demos
 
 appres(1), bdftopcf(1), bitmap(1), editres(1), fsinfo(1),
-fslsfonts(1), fstobdf(1), iceauth(1), imake(1), makedepend(1),
-mkfontdir(1), oclock(1), rgb(1), resize(1), rstart(1), twm(1),
-x11perf(1), x11perfcomp(1), xauth(1), xclipboard(1), xclock(1),
-xcmsdb(1), xconsole(1), xdm(1), xdpyinfo(1), xfd(1), xfs(1), xhost(1),
-xieperf(1), xinit(1), xkbcomp(1), xkill(1), xlogo(1), xlsatoms(1),
+fslsfonts(1), fstobdf(1), iceauth(1), imake(1), lbxproxy(1),
+makedepend(1), mkfontdir(1), oclock(1), proxymngr(1), rgb(1), 
+resize(1), rstart(1), smproxy(1), twm(1), x11perf(1), x11perfcomp(1), 
+xauth(1), xclipboard(1), xclock(1), xcmsdb(1), xconsole(1), xdm(1), 
+xdpyinfo(1), xfd(1), xfindproxy(1), xfs(1), xfwp(1), xhost(1),
+xieperf(1), xinit(1), xkbbell(1), xkbcomp(1), xbkevd(1), xkbprint(1),
+xkbvleds(1), xkbwatch(1), xkill(1), xlogo(1), xlsatoms(1),
 xlsclients(1), xlsfonts(1), xmag(1), xmh(1), xmodmap(1), xon(1),
-xprop(1), xrdb(1), xrefresh(1), xset(1), xsetroot(1),
-xstdcmap(1), xterm(1), xwd(1), xwininfo(1), xwud(1),
+xprop(1), xrdb(1), xrefresh(1), xrx(1), xset(1), xsetroot(1),
+xsm(1), xstdcmap(1), xterm(1), xwd(1), xwininfo(1), xwud(1).
 .\" servers
 Xserver(1), Xdec(1), XmacII(1), Xsun(1), Xnest(1), Xvfb(1),
 XF86_Acc(1), XF86_Mono(1), XF86_SVGA(1), XF86_VGA16(1), XFree86(1),
@@ -1056,17 +1065,20 @@ and
 .SH TRADEMARKS
 .PP
 X Window System is a trademark of X Consortium, Inc.
-Fresco is a registered trademark of X Consortium, Inc.
 .SH AUTHORS
 .PP
-A cast of thousands, literally.  The Release 6
-distribution is brought to you by X Consortium, Inc.  The names of all
-people who made it a reality will be found in the individual documents
-and source files.  The staff members at the X Consortium responsible
-for this release are: Donna Converse, Gary Cutbill,
-Stephen Gildea, Jay Hersh, Kaleb Keithley, Matt Landau, Ralph Mor, Janet
-O'Halloran, Bob Scheifler, Ralph Swick, and Dave Wiggins.
+A cast of thousands, literally.  The Release 6.3 distribution is 
+brought to you by X Consortium, Inc.  The names of all people who 
+made it a reality will be found in the individual documents and 
+source files.  The staff members at the X Consortium responsible
+for this release are: Donna Converse (emeritus), Stephen Gildea 
+(emeritus), Kaleb Keithley, Matt Landau (emeritus), Ralph Mor 
+(emeritus), Janet O'Halloran, Bob Scheifler, Ralph Swick, Dave 
+Wiggins (emeritus), and Reed Augliere.
 .PP
 The X Window System standard was originally developed at the
-Laboratory for Computer Science at the Massachusetts Institute of Technology,
-and all rights thereto were assigned to the X Consortium on January 1, 1994.
+Laboratory for Computer Science at the Massachusetts Institute 
+of Technology, and all rights thereto were assigned to the X Consortium 
+on January 1, 1994.
+X Consortium, Inc. closed its doors on December 31, 1996.  All rights to the
+X Window System have been assigned to the Open Software Foundation.

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtCallCbks.man /main/9 1995/12/15 14:21:56 gildea $
+.\" $XConsortium: XtCallCbks.man /main/10 1996/12/09 16:14:29 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtCallCallbacks 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtCallCallbacks 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtCallCallbacks, XtCallCallbackList, XtHasCallbacks \- process callbacks
 .SH SYNTAX

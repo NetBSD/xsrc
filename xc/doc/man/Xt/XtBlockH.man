@@ -1,4 +1,4 @@
-.\" $XConsortium: XtBlockH.man /main/4 1995/12/15 14:21:42 gildea $
+.\" $XConsortium: XtBlockH.man /main/5 1996/12/09 16:14:10 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppAddBlockHook 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppAddBlockHook 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppAddBlockHook, XtRemoveBlockHook \- register a block hook procedure
 .SH SYNTAX

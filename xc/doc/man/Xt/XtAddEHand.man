@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAddEHand.man /main/9 1995/12/15 14:19:34 gildea $
+.\" $XConsortium: XtAddEHand.man /main/10 1996/12/09 16:11:50 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAddEventHandler 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAddEventHandler 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAddEventHandler, XtAddRawEventHandler, XtRemoveEventHandler, XtRemoveRawEventHandler, XtInsertEventHandler, XtInsertRawEventHandler \- add and remove event handlers
 .SH SYNTAX

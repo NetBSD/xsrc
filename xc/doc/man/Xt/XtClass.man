@@ -1,4 +1,4 @@
-.\" $XConsortium: XtClass.man /main/8 1995/12/15 14:22:01 gildea $
+.\" $XConsortium: XtClass.man /main/9 1996/12/09 16:14:35 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtClass 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtClass 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtClass, XtSuperclass, XtIsSubclass, XtCheckSubclass, XtIsObject, XtIsRectObj, XtIsWidget, XtIsComposite, XtIsConstraint, XtIsShell, XtIsOverrideShell, XtIsWMShell, XtIsVendorShell, XtIsTransientShell, XtIsTopLevelShell, XtIsApplicationShell, XtIsSessionShell \- obtain and verify a widget's class
 .SH SYNTAX

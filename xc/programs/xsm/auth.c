@@ -24,10 +24,15 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 ******************************************************************************/
+/* $XFree86: xc/programs/xsm/auth.c,v 1.1.1.1.4.2 1997/05/13 11:31:37 hohndel Exp $ */
 
 #include "xsm.h"
 
 #include <X11/ICE/ICEutil.h>
+
+#ifdef HAS_MKSTEMP
+#include <unistd.h>
+#endif
 
 static char *addAuthFile = NULL;
 static char *remAuthFile = NULL;
@@ -81,13 +86,21 @@ IceAuthDataEntry *entry;
 
 
 
+#ifndef HAS_MKSTEMP
 static char *
 unique_filename (path, prefix)
-
 char *path;
 char *prefix;
+#else
+static char *
+unique_filename (path, prefix, pFd)
+char *path;
+char *prefix;
+int *pFd;
+#endif
 
 {
+#ifndef HAS_MKSTEMP
 #ifndef X_NOT_POSIX
     return ((char *) tempnam (path, prefix));
 #else
@@ -104,6 +117,19 @@ char *prefix;
     }
     else
 	return (NULL);
+#endif
+#else 
+    char tempFile[PATH_MAX];
+    char *ptr;
+
+    sprintf (tempFile, "%s/%sXXXXXX", path, prefix);
+    ptr = (char *)malloc(strlen(tempFile) + 1);
+    if (ptr != NULL) 
+    {
+	strcpy(ptr, tempFile);
+	*pFd =  mkstemp(ptr);
+    }
+    return ptr;
 #endif
 }
 
@@ -130,6 +156,9 @@ IceAuthDataEntry	**authDataEntries;
     int		original_umask;
     char	command[256];
     int		i;
+#ifdef HAS_MKSTEMP
+    int         fd;
+#endif
 
     original_umask = umask (0077);	/* disallow non-owner access */
 
@@ -140,7 +169,7 @@ IceAuthDataEntry	**authDataEntries;
 	if (!path)
 	    path = ".";
     }
-
+#ifndef HAS_MKSTEMP
     if ((addAuthFile = unique_filename (path, ".xsm")) == NULL)
 	goto bad;
 
@@ -152,6 +181,19 @@ IceAuthDataEntry	**authDataEntries;
 
     if (!(removefp = fopen (remAuthFile, "w")))
 	goto bad;
+#else
+    if ((addAuthFile = unique_filename (path, ".xsm", &fd)) == NULL)
+	goto bad;
+    
+    if (!(addfp = fdopen(fd, "wb"))) 
+	goto bad;
+
+    if ((remAuthFile = unique_filename (path, ".xsm", &fd)) == NULL)
+	goto bad;
+    
+    if (!(removefp = fdopen(fd, "wb"))) 
+	goto bad;
+#endif
 
     if ((*authDataEntries = (IceAuthDataEntry *) XtMalloc (
 	count * 2 * sizeof (IceAuthDataEntry))) == NULL)

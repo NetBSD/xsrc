@@ -1,4 +1,4 @@
-.\" $XConsortium: XdbeGetB.man /main/2 1995/12/15 14:07:59 gildea $
+.\" $XConsortium: XdbeGetB.man /main/3 1996/12/09 16:45:41 kaleb $
 .\"
 .\" Copyright (c) 1995  Hewlett-Packard Company
 .\" 
@@ -24,7 +24,7 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" Hewlett-Packard Company.
-.TH XdbeGetBackBufferAttributes 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XdbeGetBackBufferAttributes 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XdbeGetBackBufferAttributes - returns attributes of a DBE buffer.
 .SH SYNOPSIS

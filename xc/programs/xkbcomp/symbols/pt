@@ -1,5 +1,5 @@
-// $XConsortium: pt /main/2 1995/12/07 21:43:15 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/pt,v 3.2 1996/10/13 11:35:38 dawes Exp $
+// $XConsortium: pt /main/3 1996/08/31 12:20:08 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/pt,v 3.3 1996/12/23 07:13:30 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -56,4 +56,3 @@ partial alphanumeric_keys
 xkb_symbols "nodeadkeys" {
     include "pt(basic)" // for consistent naming
 };
-

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAppASig.man /main/7 1995/12/15 14:20:13 gildea $
+.\" $XConsortium: XtAppASig.man /main/9 1996/12/09 16:12:39 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppAddSignal 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppAddSignal 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppAddSignal, XtRemoveSignal, XtNoticeSignal \- register and remove a signal source
 .SH SYNTAX
@@ -131,7 +131,7 @@ XtSignalId XtAppAddSignal(\fIapp_context\fP, \fIproc\fP, \fIclient_data\fP)
 .br
       XtAppContext \fIapp_context\fP;
 .br
-      XtInputCallbackProc \fIproc\fP;
+      XtSignalCallbackProc \fIproc\fP;
 .br
       XtPointer \fIclient_data\fP;
 .LP

@@ -1,4 +1,4 @@
-// $XConsortium: en_US /main/5 1996/03/01 14:32:27 kaleb $
+// $XConsortium: en_US /main/6 1996/08/31 12:19:35 kaleb $
 
 partial hidden alphanumeric_keys 
 xkb_symbols "basic" {

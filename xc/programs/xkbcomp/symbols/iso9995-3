@@ -1,4 +1,4 @@
-// $XConsortium: iso9995-3 /main/4 1995/12/07 21:42:52 kaleb $
+// $XConsortium: iso9995-3 /main/5 1996/08/31 12:19:56 kaleb $
 partial alphanumeric_keys alternate_group 
 xkb_symbols "basic101" {
     // Part 3 of ISO9995 specifies a common alternate character set

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtGetSres.man /main/9 1995/12/15 14:25:01 gildea $
+.\" $XConsortium: XtGetSres.man /main/10 1996/12/09 16:17:21 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtGetSubresources 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtGetSubresources 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtGetSubresources, XtVaGetSubresources \- obtain subresources
 .SH SYNTAX

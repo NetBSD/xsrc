@@ -1,4 +1,4 @@
-.\" $XConsortium: XtNextEv.man /main/5 1995/12/15 14:26:10 gildea $
+.\" $XConsortium: XtNextEv.man /main/6 1996/12/09 16:18:26 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtNextEvent 3Xt "Release 6.1" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
+.TH XtNextEvent 3Xt "Release 6.3" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
 .SH NAME
 XtNextEvent, XtPending, XtPeekEvent, XtProcessEvent, XtMainLoop \- query and process events and input
 .SH SYNTAX

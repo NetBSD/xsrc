@@ -1,4 +1,4 @@
-.\" $XConsortium: XtNameTWid.man /main/8 1995/12/15 14:26:06 gildea $
+.\" $XConsortium: XtNameTWid.man /main/9 1996/12/09 16:18:20 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtNameToWidget 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtNameToWidget 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtNameToWidget, XtWindowToWidget \- translating strings to widgets or widgets to windows
 .SH SYNTAX

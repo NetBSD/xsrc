@@ -1,4 +1,4 @@
-// $XConsortium: th /main/2 1995/12/07 21:43:32 kaleb $
+// $XConsortium: th /main/3 1996/08/31 12:20:18 kaleb $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
     name[Group2]= "Thai";

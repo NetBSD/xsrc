@@ -1,4 +1,4 @@
-.\" $XConsortium: XtErr.man /main/4 1995/12/15 14:23:30 gildea $
+.\" $XConsortium: XtErr.man /main/5 1996/12/09 16:15:49 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtError 3Xt "Release 6.1" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
+.TH XtError 3Xt "Release 6.3" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
 .SH NAME
 XtError, XtSetErrorHandler, XtSetWarningHandler, XtWarning \- low-level error handlers
 .SH SYNTAX

@@ -140,7 +140,7 @@
 ..
 .ny0
 '\" t
-.TH XAllocStandardColormap 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XAllocStandardColormap 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XAllocStandardColormap, XSetRGBColormaps, XGetRGBColormaps, XStandardColormap \- allocate, set, or read a standard colormap structure
 .SH SYNTAX

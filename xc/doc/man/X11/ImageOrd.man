@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH ImageByteOrder 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH ImageByteOrder 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 ImageByteOrder, BitmapBitOrder, BitmapPad, BitmapUnit, DisplayHeight, DisplayHeightMM, DisplayWidth, DisplayWidthMM, XListPixmapFormats, XPixmapFormatValues \- image format functions and macros
 .SH SYNTAX

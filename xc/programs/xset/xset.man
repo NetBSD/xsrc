@@ -1,5 +1,5 @@
-.\" $XConsortium: xset.man /main/28 1995/12/15 14:05:55 gildea $
-.\" $XFree86: xc/programs/xset/xset.man,v 3.3 1996/03/04 05:31:26 dawes Exp $
+.\" $XConsortium: xset.man /main/29 1996/12/09 17:10:30 kaleb $
+.\" $XFree86: xc/programs/xset/xset.man,v 3.5 1997/01/22 11:18:54 dawes Exp $
 .\" Copyright (c) 1988  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XSET 1 "Release 6.1" "X Version 11"
+.TH XSET 1 "Release 6.3" "X Version 11"
 .SH NAME
 xset - user preference utility for X
 .SH SYNOPSIS
@@ -34,6 +34,7 @@ xset - user preference utility for X
 [-b] [b on/off] [b [\fIvolume\fP [\fIpitch\fP [\fIduration\fP]]]
 [[-]bc]
 [-c] [c on/off] [c [\fIvolume\fP]]
+[[+-]dpms] [dpms \fIstandby\fP [\fI suspend\fP [\fI off\fP]]] [dpms force standby/suspend/off]
 [[-+]fp[-+=] \fIpath\fP[,\fIpath\fP[,...]]] [fp default] [fp rehash]
 [[-]led [\fIinteger\fP]] [led on/off]
 [m[ouse] [\fIaccel_mult\fP[/\fIaccel_div\fP] [\fIthreshold\fP]]] [m[ouse] default]
@@ -41,7 +42,6 @@ xset - user preference utility for X
 [[-]r [keycode]] [r on/off] [r rate \fIdelay\fP [\fIrate\fP]]
 [s [\fIlength\fP [\fIperiod\fP]]] [s blank/noblank]
 [s expose/noexpose] [s on/off] [s default] [s activate] [s reset]
-[s power [\fIsuspend\fP [\fIoff\fP]]]
 [q]
 .SH DESCRIPTION
 This program is used to set various user preference options of the display.
@@ -95,6 +95,24 @@ indicate volume, as a percentage of the maximum.
 The X server will set
 the volume to the nearest value that the hardware can support.
 .PP
+.TP 8
+.B \-dpms
+The \fB\-dpms\fP option disables DPMS (Energy Star) features.
+.TP 8
+.B +dpms
+The \fB+dpms\fP option enables DPMS (Energy Star) features.
+.TP 8
+.B dpms \fIflags...\fP
+The \fBdpms\fP option allows the DPMS (Energy Star) parameters to be
+set.  The option can take up to three numerical values, or the `force'
+flag followed by a DPMS state.  The `force' flags forces the server
+to immediately switch to the DPMS state specified.  The DPMS state can
+be one of `standby', `suspend', or `off'.  When numerical values are
+given, they set the inactivity period before the three modes are activated.
+The first value given is for the `standby' mode, the second is for the
+`suspend' mode, and the third is for the `off' mode.  Setting these
+values implicitly enables the DPMS features.  A value of zero disables
+a particular mode.
 .TP 8
 .B fp= \fIpath,...\fP
 The \fBfp=\fP sets the font path to the entries given in the path argument.
@@ -180,8 +198,7 @@ the second specifies the repeat rate.
 .PP
 .TP 8
 .B s
-The \fBs\fP option lets you set the screen saver parameters.  For XFree86,
-it also allows setting the power saver parameters.
+The \fBs\fP option lets you set the screen saver parameters.
 This option accepts up to two numerical parameters, a 'blank/noblank'
 flag, an 'expose/noexpose' flag, an 'on/off' flag, an 'activate/reset' flag,
 or the 'default' flag.
@@ -206,10 +223,6 @@ server must be inactive for screen saving to activate, and the period
 to change the background pattern to avoid burn in.
 The arguments are specified in seconds.
 If only one numerical parameter is given, it will be used for the length.
-The 'power' flag allows the power saver parameters to be set on servers
-which have the XFree86-Misc server extension.  With no additional parameters
-the defaults are set.  The suspend time and off time can be specified in
-seconds.  If only one value is given it is used for the suspend time.
 .PP
 .TP 8
 .B q

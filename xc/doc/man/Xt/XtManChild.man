@@ -1,4 +1,4 @@
-.\" $XConsortium: XtManChild.man /main/9 1995/12/15 14:25:51 gildea $
+.\" $XConsortium: XtManChild.man /main/10 1996/12/09 16:18:06 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtManageChildren 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtManageChildren 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtManageChildren, XtManageChild, XtUnmanageChildren, XtUnmanageChild, XtChangeManagedSet, XtIsManaged \- manage and unmanage children
 .SH SYNTAX

@@ -1,12 +1,12 @@
-// $XConsortium: fi /main/2 1995/12/07 21:42:23 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/fi,v 3.2 1996/10/13 11:35:31 dawes Exp $
+// $XConsortium: fi /main/4 1996/09/13 09:23:11 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/fi,v 3.3 1996/12/23 07:13:22 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
     // Describes the differences between a very simple en_US
     // keyboard and a very simple Swedish(Finland) keybaord
 
-    name[Group1]= "Swedish";
+    name[Group1]= "Finnish";
 
     key <TLDE> {	[         section,         onehalf      ]	};
     key <AE02> {	[               2,        quotedbl     	],	

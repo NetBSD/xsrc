@@ -1,4 +1,4 @@
-.\" $XConsortium: protocol.ms /main/19 1996/02/05 15:08:39 swick $
+.\" $XConsortium: protocol.ms /main/20 1996/12/11 14:44:09 kaleb $
 .\" Use tbl, -ms, and macros.t
 .EH ''''
 .OH ''''
@@ -14,7 +14,7 @@
 \fBVersion 2.0\fP
 \fBX Consortium Standard\fR
 .sp
-\fBX Version 11, Release 6.1\fR
+\fBX Version 11, Release 6.3\fR
 .sp 6
 Jim Fulton
 Network Computing Devices, Inc.
@@ -63,8 +63,8 @@ in this Software without prior written authorization from the X Consortium.
 .ps 11
 .nr PS 11
 .bp 1
-.EH '\fBX Font Service Protocol\fP''\fBX11, Release 6.1\fP'
-.OH '\fBX Font Service Protocol\fP''\fBX11, Release 6.1\fP'
+.EH '\fBX Font Service Protocol\fP''\fBX11, Release 6.3\fP'
+.OH '\fBX Font Service Protocol\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB\\\\n(PN\fP''
 .OF ''\fB\\\\n(PN\fP''
 .NH 1

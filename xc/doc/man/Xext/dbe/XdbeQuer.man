@@ -1,4 +1,4 @@
-.\" $XConsortium: XdbeQuer.man /main/2 1995/12/15 14:08:10 gildea $
+.\" $XConsortium: XdbeQuer.man /main/3 1996/12/09 16:45:47 kaleb $
 .\"
 .\" Copyright (c) 1995  Hewlett-Packard Company
 .\" 
@@ -24,7 +24,7 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" Hewlett-Packard Company.
-.TH XdbeQueryExtension 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XdbeQueryExtension 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XdbeQueryExtension - returns the version of DBE supported by the server.
 .SH SYNOPSIS

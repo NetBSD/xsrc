@@ -1,4 +1,4 @@
-.\" $XConsortium: XtCreWin.man /main/7 1995/12/15 14:22:53 gildea $
+.\" $XConsortium: XtCreWin.man /main/8 1996/12/09 16:15:22 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtCreateWindow 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtCreateWindow 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtCreateWindow \- window creation convenience function
 .SH SYNTAX

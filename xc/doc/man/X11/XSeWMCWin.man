@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XSetWMColormapWindows 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XSetWMColormapWindows 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XSetWMColormapWindows, XGetWMColormapWindows \- set or read a window's WM_COLORMAP_WINDOWS property
 .SH SYNTAX

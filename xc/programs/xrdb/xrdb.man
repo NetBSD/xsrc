@@ -1,4 +1,4 @@
-.\" $XConsortium: xrdb.man /main/39 1995/12/15 14:05:37 gildea $
+.\" $XConsortium: xrdb.man /main/40 1996/12/09 17:10:22 kaleb $
 .\" Copyright 1991, Digital Equipment Corporation.
 .\" Copyright (c) 1991, 1994  X Consortium
 .\" 
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XRDB 1 "Release 6.1" "X Version 11"
+.TH XRDB 1 "Release 6.3" "X Version 11"
 .SH NAME
 xrdb - X server resource database utility
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-// $XConsortium: pc /main/4 1996/01/24 12:15:02 kaleb $
+// $XConsortium: pc /main/5 1996/08/31 12:20:29 kaleb $
 //
 //Copyright (c) 1996  Digital Equipment Corporation
 //
@@ -28,6 +28,9 @@
 //
 // HISTORY
 // Log
+// Revision 1.2  1996/06/18  09:10:12  erik
+// use flags correctly, assorted cleanups and consortium fixes
+//
 // Revision 1.1.6.4  1995/12/19  19:55:58  William_Walker
 // 	Update to XKB 0.65
 // 	[1995/12/17  02:37:07  William_Walker]

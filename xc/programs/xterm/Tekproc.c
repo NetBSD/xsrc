@@ -1,6 +1,6 @@
 /*
- * $XConsortium: Tekproc.c /main/118 1996/01/14 16:52:29 kaleb $
- * $XFree86: xc/programs/xterm/Tekproc.c,v 3.12 1996/08/13 11:36:43 dawes Exp $
+ * $XConsortium: Tekproc.c /main/120 1996/11/29 10:33:20 swick $
+ * $XFree86: xc/programs/xterm/Tekproc.c,v 3.13.2.1 1997/05/23 09:24:30 dawes Exp $
  *
  * Warning, there be crufty dragons here.
  */
@@ -55,6 +55,10 @@ in this Software without prior written authorization from the X Consortium.
  */
 
 /* Tekproc.c */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"
 #include <X11/Xos.h>
@@ -1300,6 +1304,10 @@ static void TekRealize (gw, valuemaskp, values)
     XSizeHints sizehints;
     char Tdefault[32];
 
+#ifndef NO_ACTIVE_ICON
+    term->screen.whichTwin = &term->screen.fullTwin;
+#endif /* NO_ACTIVE_ICON */
+
     tw->core.border_pixel = term->core.border_pixel;
 
     for (i = 0; i < TEKNUMFONTS; i++) {
@@ -1742,7 +1750,7 @@ TekCopy()
 
 	time(&l);
 	tp = localtime(&l);
-	sprintf(buf, "COPY%02d-%02d-%02d.%02d:%02d:%02d", tp->tm_year,
+	sprintf(buf, "COPY%d-%02d-%02d.%02d:%02d:%02d", tp->tm_year + 1900,
 	 tp->tm_mon + 1, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec);
 	if(access(buf, F_OK) >= 0) {	/* file exists */
 		if(access(buf, W_OK) < 0) {

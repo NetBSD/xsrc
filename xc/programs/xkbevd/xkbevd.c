@@ -1,5 +1,5 @@
-/* $XConsortium: xkbevd.c /main/5 1996/05/24 15:03:20 kaleb $ */
-/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.4 1996/08/25 14:15:22 dawes Exp $ */
+/* $XConsortium: xkbevd.c /main/6 1996/09/28 17:18:29 rws $ */
+/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.5 1996/12/23 07:13:55 dawes Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

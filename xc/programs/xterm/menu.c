@@ -1,5 +1,5 @@
-/* $XConsortium: menu.c /main/64 1996/01/14 16:52:55 kaleb $ */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.6 1996/08/20 12:33:52 dawes Exp $ */
+/* $XConsortium: menu.c /main/66 1996/12/01 23:46:59 swick $ */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.9.2.1 1997/05/23 09:24:39 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,6 +27,10 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
+
 #include "ptyx.h"
 #include "data.h"
 #include "menu.h"
@@ -51,7 +55,6 @@ Arg menuArgs[2] = {{ XtNleftBitmap, (XtArgVal) 0 },
 #ifdef ALLOWLOGGING
 static void do_logging PROTO_XT_CALLBACK_ARGS;
 #endif
-
 static void do_8bit_control    PROTO_XT_CALLBACK_ARGS;
 static void do_allow132        PROTO_XT_CALLBACK_ARGS;
 static void do_allowsends      PROTO_XT_CALLBACK_ARGS;
@@ -95,6 +98,9 @@ static void do_vtfont          PROTO_XT_CALLBACK_ARGS;
 static void do_vthide          PROTO_XT_CALLBACK_ARGS;
 static void do_vtmode          PROTO_XT_CALLBACK_ARGS;
 static void do_vtshow          PROTO_XT_CALLBACK_ARGS;
+#ifndef NO_ACTIVE_ICON
+static void do_activeicon      PROTO_XT_CALLBACK_ARGS;
+#endif /* NO_ACTIVE_ICON */
 
 /*
  * The order of entries MUST match the values given in menu.h
@@ -135,14 +141,17 @@ MenuEntry vtMenuEntries[] = {
     { "visualbell",	do_visualbell, NULL },		/* 12 */
     { "marginbell",	do_marginbell, NULL },		/* 13 */
     { "altscreen",	do_altscreen, NULL },		/* 14 */
-    { "line1",		NULL, NULL },			/* 15 */
-    { "softreset",	do_softreset, NULL },		/* 16 */
-    { "hardreset",	do_hardreset, NULL },		/* 17 */
-    { "clearsavedlines",do_clearsavedlines, NULL },	/* 18 */
-    { "line2",		NULL, NULL },			/* 19 */
-    { "tekshow",	do_tekshow, NULL },		/* 20 */
-    { "tekmode",	do_tekmode, NULL },		/* 21 */
-    { "vthide",		do_vthide, NULL }};		/* 22 */
+#ifndef NO_ACTIVE_ICON
+    { "activeicon",	do_activeicon, NULL },		/* 15 */
+#endif /* NO_ACTIVE_ICON */
+    { "line1",		NULL, NULL },			/* 16 */
+    { "softreset",	do_softreset, NULL },		/* 17 */
+    { "hardreset",	do_hardreset, NULL },		/* 18 */
+    { "clearsavedlines",do_clearsavedlines, NULL },	/* 19 */
+    { "line2",		NULL, NULL },			/* 20 */
+    { "tekshow",	do_tekshow, NULL },		/* 21 */
+    { "tekmode",	do_tekmode, NULL },		/* 22 */
+    { "vthide",		do_vthide, NULL }};		/* 23 */
 
 MenuEntry fontMenuEntries[] = {
     { "fontdefault",	do_vtfont, NULL },		/*  0 */
@@ -274,6 +283,15 @@ static Bool domenu (w, event, params, param_count)
 	    update_cursesemul();
 	    update_visualbell();
 	    update_marginbell();
+#ifndef NO_ACTIVE_ICON
+	    if (!screen->fnt_icon || !screen->iconVwin.window) {
+		set_sensitivity (screen->vtmenu,
+				 vtMenuEntries[vtMenu_activeicon].widget,
+				 FALSE);
+	    }
+	    else
+		update_activeicon();
+#endif /* NO_ACTIVE_ICON */
 	}
 	break;
 
@@ -562,7 +580,7 @@ static void do_scrollbar (gw, closure, data)
 {
     register TScreen *screen = &term->screen;
 
-    if (screen->scrollbar) {
+    if (screen->fullVwin.scrollbar) {
 	ScrollBarOff (screen);
     } else {
 	ScrollBarOn (term, FALSE, FALSE);
@@ -629,7 +647,7 @@ static void do_appcursor (gw, closure, data)
     Widget gw;
     XtPointer closure, data;
 {
-    term->keyboard.flags ^= CURSOR_APL;
+    term->keyboard.flags ^= MODE_DECCKM;
     update_appcursor();
 }
 
@@ -638,7 +656,7 @@ static void do_appkeypad (gw, closure, data)
     Widget gw;
     XtPointer closure, data;
 {
-    term->keyboard.flags ^= KYPD_APL;
+    term->keyboard.flags ^= MODE_DECKPAM;
     update_appkeypad();
 }
 
@@ -737,6 +755,24 @@ static void do_altscreen (gw, closure, data)
     /* do nothing for now; eventually, will want to flip screen */
 }
 
+#ifndef NO_ACTIVE_ICON
+/* ARGSUSED */
+static void do_activeicon (gw, closure, data)
+    Widget gw;
+    XtPointer closure, data;
+{
+    TScreen *screen = &term->screen;
+
+    if (screen->iconVwin.window) {
+	Widget shell = term->core.parent;
+	term->misc.active_icon = !term->misc.active_icon;
+	XtVaSetValues(shell, XtNiconWindow,
+		      term->misc.active_icon ? screen->iconVwin.window : None,
+		      NULL);
+	update_activeicon();
+    }
+}
+#endif /* NO_ACTIVE_ICON */
 
 static void do_softreset (gw, closure, data)
     Widget gw;
@@ -1084,7 +1120,7 @@ void HandleScrollbar(w, event, params, param_count)
     String *params;
     Cardinal *param_count;
 {
-    handle_toggle (do_scrollbar, (int) term->screen.scrollbar,
+    handle_toggle (do_scrollbar, (int) term->screen.fullVwin.scrollbar,
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1144,7 +1180,7 @@ void HandleAppCursor(w, event, params, param_count)
     String *params;
     Cardinal *param_count;
 {
-    handle_toggle (do_appcursor, (int) (term->keyboard.flags & CURSOR_APL),
+    handle_toggle (do_appcursor, (int) (term->keyboard.flags & MODE_DECCKM),
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1154,7 +1190,7 @@ void HandleAppKeypad(w, event, params, param_count)
     String *params;
     Cardinal *param_count;
 {
-    handle_toggle (do_appkeypad, (int) (term->keyboard.flags & KYPD_APL),
+    handle_toggle (do_appkeypad, (int) (term->keyboard.flags & MODE_DECKPAM),
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
