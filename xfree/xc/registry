@@ -1,4 +1,4 @@
-/* $Xorg: registry,v 1.5 2000/08/17 19:41:44 cpqbld Exp $ */
+/* $Xorg: registry,v 1.7 2001/06/01 18:55:58 coskrey Exp $ */
 
 				  X Registry
 
@@ -9,17 +9,18 @@ addressed to
 	xregistry@x.org
 or to
 	The X.Org Group -- X11 Registry
-	c/o X.Org Chair
-	Steve Swales
+	c/o Ienup Sung
 	Sun Microsystems, Inc.
-	901 San Antonio Road, MS MPK29-203
+	901 San Antonio Road, MS SJC07-201
 	Palo Alto, CA 94303-4900
 
 Electronic mail will be acknowledged upon receipt.
 Please allow up to 4 weeks for a formal response to registration and inquiries.
 
 The registry is published as part of the X software distribution
-from The X.Org Group.
+from The X.Org Group. The latest registry can be found at:
+
+	ftp://ftp.x.org/pub/DOCS/registry
 
 All registered items must have the postal address of someone responsible for
 the item, or a reference to a document describing the item and the postal
@@ -505,6 +506,7 @@ Name						Reference
 "RGB_COLOR_MAP"					[18]
 "SPAN"						[16]
 "STRING"					[16]
+"UTF8_STRING"					[134]
 "WINDOW"					[16]
 "WM_HINTS"					[16]
 "WM_ICON_SIZE"					[16]
@@ -578,6 +580,7 @@ Name						Reference
 "TEXT"						[16]
 "TIMESTAMP"					[16]
 "USER"						[16]
+"UTF8_STRING"					[134]
 "_ADOBE_EPS"					[69]
 "_ADOBE_EPSI"					[69]
 "_SONY_CDFF"					[37]
@@ -716,11 +719,19 @@ Name						Reference
 	ISO Latin alphabet No. 5
 "ISO8859-10"					[15],[12]
 	ISO Latin alphabet No. 6
+"ISO8859-13"					[15],[12]
+	ISO Latin alphabet No. 7
+"ISO8859-14"					[15],[12]
+	ISO Latin alphabet No. 8
+"ISO8859-15"					[15],[12]
+	ISO Latin alphabet No. 9
 "FCD8859-15"					[7]
+	(deprecated)
 	ISO Latin alphabet No. 9, Final Committee Draft
 "ISO10646-1"					[133]
 	Unicode Universal Multiple-Octet Coded Character Set
 "ISO10646-MES"					[133]
+	(deprecated)
 	Unicode Minimum European Subset
 "JISX0201.1976-0"				[38],[12]
 	8-Bit Alphanumeric-Katakana Code
@@ -1072,9 +1083,9 @@ REFERENCES
 	X.Org Chair:
 	Steve Swales
 	Sun Microsystems, Inc.
-	901 San Antonio Road, MS MPK29-203
+	901 San Antonio Road, MS SJC07-201
 	Palo Alto, CA 94303-4900
-	steve.swales@eng.sun.com
+	steve.swales@sun.com
 
 	X.Org Co-Chair:
 	Irene McCartney
@@ -1107,8 +1118,8 @@ REFERENCES
 [14]	VEX - Video Extension to X
 	Todd Brunhoff, Tektronix
 
-[15]	ISO 8859, Information processing - 8-bit single-byte coded graphic
-	character sets, parts 1 through 10
+[15]	ISO 8859, Information technology -- 8-bit single-byte coded graphic
+	character sets, Parts 1 through 10, 13, 14, and 15
 
 [16]	Inter-Client Communication Conventions Manual
 	The X.Org Group
@@ -1311,9 +1322,9 @@ REFERENCES
 [57]	(Originally David Rosenthal)
 	Steve Swales
 	Sun Microsystems, Inc.
-	901 San Antonio Road, MS MPK29-203
+	901 San Antonio Road, MS SJC07-201
 	Palo Alto, CA 94303-4900
-	steve.swales@eng.sun.com
+	steve.swales@sun.com
 
 [58]	(Originally Murali V. Srinivasan)
 	See Reference [57]
@@ -1669,3 +1680,6 @@ REFERENCES
 	Cambridge CB2 3QG
 	United Kingdom
 
+[134]   In R6.6 X.Org is reserving the string UTF8_STRING for use as an ICCCM
+        property type and selection target.  The ICCCM spec will be updated
+        in a future release to fully specify UTF8_STRING.

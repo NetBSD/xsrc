@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_accel.c,v 1.21 2000/11/28 20:59:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_accel.c,v 1.23 2001/12/13 18:01:50 eich Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -26,7 +26,6 @@ in this Software without prior written authorization from the XFree86 Project.
 */
 
 #include "s3v.h"
-#include "s3v_macros.h"
 
 #include "miline.h"
 	/* cfb includes are in s3v.h */
@@ -104,11 +103,15 @@ S3VAccelInit(ScreenPtr pScreen)
 
     infoPtr->Sync = S3VAccelSync;
 
-    /* Solid filled rects */
-    infoPtr->SetupForSolidFill = 
-        S3VSetupForSolidFill;
-    infoPtr->SubsequentSolidFillRect = 
-        S3VSubsequentSolidFillRect;
+    /* Problem reports with solid fill on trio3d */
+    if(!S3_TRIO_3D_SERIES(ps3v->Chipset)) 
+      {
+	/* Solid filled rects */
+	infoPtr->SetupForSolidFill = 
+	  S3VSetupForSolidFill;
+	infoPtr->SubsequentSolidFillRect = 
+	  S3VSubsequentSolidFillRect;
+      }
 
     /* Screen to screen copies */
     infoPtr->SetupForScreenToScreenCopy =
@@ -125,7 +128,7 @@ S3VAccelInit(ScreenPtr pScreen)
     infoPtr->Mono8x8PatternFillFlags = NO_TRANSPARENCY |
 				HARDWARE_PATTERN_PROGRAMMED_BITS |
 				HARDWARE_PATTERN_SCREEN_ORIGIN |
-				BIT_ORDER_IN_BYTE_LSBFIRST;
+				BIT_ORDER_IN_BYTE_MSBFIRST;
 
 
 #ifndef __alpha__

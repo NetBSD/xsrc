@@ -1,9 +1,13 @@
-/* $Xorg: miClrApLUT.c,v 1.3 2000/08/17 19:47:10 cpqbld Exp $ */
+/* $Xorg: miClrApLUT.c,v 1.4 2001/02/09 02:04:12 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miClrApLUT.c,v 1.8 2001/01/17 22:12:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miClrApLUT.c,v 1.9 2001/12/14 19:57:37 dawes Exp $ */
 
 #include "miLUT.h"
 #include "miWks.h"

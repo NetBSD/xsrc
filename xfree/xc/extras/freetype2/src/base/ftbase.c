@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Single object library component (body only).                         */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -21,11 +21,13 @@
 #define  FT_MAKE_OPTION_SINGLE_OBJECT
 
 #include "ftcalc.c"
+#include "fttrigon.c"
 #include "ftobjs.c"
 #include "ftstream.c"
 #include "ftlist.c"
 #include "ftoutln.c"
 #include "ftnames.c"
+#include "ftdbgmem.c"
 
 #if 0
 #include "ftextend.c"

@@ -1,4 +1,4 @@
-/* $Xorg: Resources.c,v 1.3 2000/08/17 19:46:16 cpqbld Exp $ */
+/* $Xorg: Resources.c,v 1.4 2001/02/09 02:03:56 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -55,7 +59,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xt/Resources.c,v 1.7 2001/01/17 19:43:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.9 2001/12/14 19:56:28 dawes Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"
@@ -368,12 +372,8 @@ void _XtCompileResourceList(resources, num_resources)
     	xrmres->xrm_name	 = PSToQ(resources->resource_name);
     	xrmres->xrm_class	 = PSToQ(resources->resource_class);
     	xrmres->xrm_type	 = PSToQ(resources->resource_type);
-#if defined(CRAY1) && !defined(__STDC__)
-	xrmres->xrm_offset = -(resources->resource_offset * sizeof(long) + 1);
-#else
         xrmres->xrm_offset	 = (Cardinal)
 		(-(int)resources->resource_offset - 1);
-#endif
     	xrmres->xrm_default_type = PSToQ(resources->default_type);
     }
 #undef PSToQ
@@ -393,12 +393,8 @@ static void  XrmCompileResourceListEphem(resources, num_resources)
     	xrmres->xrm_name	 = StringToName(resources->resource_name);
     	xrmres->xrm_class	 = StringToClass(resources->resource_class);
     	xrmres->xrm_type	 = StringToQuark(resources->resource_type);
-#if defined(CRAY1) && !defined(__STDC__)
-	xrmres->xrm_offset = -(resources->resource_offset * sizeof(long) + 1);
-#else
         xrmres->xrm_offset	 = (Cardinal)
 		(-(int)resources->resource_offset - 1);
-#endif
     	xrmres->xrm_default_type = StringToQuark(resources->default_type);
     }
 #undef xrmres

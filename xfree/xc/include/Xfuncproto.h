@@ -1,9 +1,13 @@
-/* $Xorg: Xfuncproto.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
+/* $Xorg: Xfuncproto.h,v 1.4 2001/02/09 02:03:22 xorgcvs Exp $ */
 /* 
  * 
 Copyright 1989, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,6 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
+/* $XFree86: xc/include/Xfuncproto.h,v 3.5 2001/12/19 21:37:28 dawes Exp $ */
 
 /* Definitions to make function prototypes manageable */
 
@@ -27,37 +32,21 @@ in this Software without prior written authorization from The Open Group.
 #define _XFUNCPROTO_H_
 
 #ifndef NeedFunctionPrototypes
-#if defined(FUNCPROTO) || defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus)
 #define NeedFunctionPrototypes 1
-#else
-#define NeedFunctionPrototypes 0
-#endif
 #endif /* NeedFunctionPrototypes */
 
 #ifndef NeedVarargsPrototypes
-#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus) || (FUNCPROTO&2)
 #define NeedVarargsPrototypes 1
-#else
-#define NeedVarargsPrototypes 0
-#endif
 #endif /* NeedVarargsPrototypes */
 
 #if NeedFunctionPrototypes
 
 #ifndef NeedNestedPrototypes
-#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus) || (FUNCPROTO&8)
 #define NeedNestedPrototypes 1
-#else
-#define NeedNestedPrototypes 0
-#endif
 #endif /* NeedNestedPrototypes */
 
 #ifndef _Xconst
-#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus) || (FUNCPROTO&4)
 #define _Xconst const
-#else
-#define _Xconst
-#endif
 #endif /* _Xconst */
 
 #ifndef NeedWidePrototypes
@@ -71,7 +60,7 @@ in this Software without prior written authorization from The Open Group.
 #endif /* NeedFunctionPrototypes */
 
 #ifndef _XFUNCPROTOBEGIN
-#ifdef __cplusplus			/* for C++ V2.0 */
+#if defined(__cplusplus) || defined(c_plusplus) /* for C++ V2.0 */
 #define _XFUNCPROTOBEGIN extern "C" {	/* do not leave open across includes */
 #define _XFUNCPROTOEND }
 #else

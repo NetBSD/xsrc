@@ -100,7 +100,7 @@ gluBeginTrim(nobj);
 gluEndTrim(nobj);
 .Ee
 .SH SEE ALSO
-\%\f3gluBeginSurface\fP, \%\f3gluNewNurbsRenderer\fP, \%\f3gluNurbsCallback\fP, 
-\%\f3gluNurbsCurve\fP, \%\f3gluPwlCurve\fP
+\%\f3gluBeginSurface(3G)\fP, \%\f3gluNewNurbsRenderer(3G)\fP, \%\f3gluNurbsCallback(3G)\fP, 
+\%\f3gluNurbsCurve(3G)\fP, \%\f3gluPwlCurve(3G)\fP
 
 

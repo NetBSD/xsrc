@@ -30,42 +30,70 @@
  *		Peter Busch
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winwndproc.c,v 1.4 2001/05/08 08:14:09 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winwndproc.c,v 1.19 2001/11/21 08:51:24 alanh Exp $ */
 
 #include "win.h"
+
 
 /*
  * Called by winWakeupHandler
  * Processes current Windows message
  */
+
 LRESULT CALLBACK
-winWindowProc (HWND hWnd, UINT message, 
+winWindowProc (HWND hwnd, UINT message, 
 	       WPARAM wParam, LPARAM lParam)
 {
-  winPrivScreenPtr      pScreenPriv = NULL;
-  winScreenInfo		*pScreenInfo = NULL;
-  ScreenPtr		pScreen = NULL;
-  xEvent		xCurrentEvent;
-  LPCREATESTRUCT	pcs;
-  HRESULT		ddrval;
-  RECT			rcClient, rcSrc;
-  int			iScanCode;
+  static winPrivScreenPtr	pScreenPriv = NULL;
+  static winScreenInfo		*pScreenInfo = NULL;
+  static ScreenPtr		pScreen = NULL;
+  static HWND			hwndLastMouse = NULL;
+  static unsigned long		ulServerGeneration = 0;
+  winPrivScreenPtr		pScreenPrivLast;
+  int				iScanCode;
+  int				i;
+  static HWND			hwndLastPrivates = NULL;
 
-  /* Initialize our event structure */
-  ZeroMemory (&xCurrentEvent, sizeof (xCurrentEvent));
-
-  /* Retrieve screen privates pointers for this window */
-  pScreenPriv = GetProp (hWnd, WIN_SCR_PROP);
-  if (pScreenPriv != NULL)
+  /* Watch for server regeneration */
+  if (g_ulServerGeneration != ulServerGeneration)
     {
+      /*
+       * Might as well declare that this window received 
+       * the last mouse message
+       */
+      hwndLastMouse = hwnd;
+      
+      /* Store new server generation */
+      ulServerGeneration = g_ulServerGeneration;
+    }
+
+  /* Only retrieve new privates pointers if window handle is null or changed */
+  if ((pScreenPriv == NULL || hwnd != hwndLastPrivates)
+      && (pScreenPriv = GetProp (hwnd, WIN_SCR_PROP)) != NULL)
+    {
+#if CYGDEGUG
+      ErrorF ("winWindowProc () - Setting privates handle\n");
+#endif
       pScreenInfo = pScreenPriv->pScreenInfo;
       pScreen = pScreenInfo->pScreen;
+      hwndLastPrivates = hwnd;
+    }
+  else if (pScreenPriv == NULL)
+    {
+      /* For safety, handle case that should never happen */
+      pScreenInfo = NULL;
+      pScreen = NULL;
+      hwndLastPrivates = NULL;
     }
 
   /* Branch on message type */
   switch (message)
     {
     case WM_CREATE:
+#if CYGDEBUG
+      ErrorF ("winWindowProc () - WM_CREATE\n");
+#endif
+      
       /*
        * Add a property to our display window that references
        * this screens' privates.
@@ -75,18 +103,20 @@ winWindowProc (HWND hWnd, UINT message,
        * it is processing.  We use this to repaint exposed
        * areas of our display window.
        */
-      pcs = (LPCREATESTRUCT) lParam;
-      pScreenPriv = pcs->lpCreateParams;
-      pScreen = pScreenPriv->pScreenInfo->pScreen;
-      SetProp (hWnd,
-	       WIN_SCR_PROP,
-	       pScreenPriv);
+      pScreenPriv = ((LPCREATESTRUCT) lParam)->lpCreateParams;
+      pScreenInfo = pScreenPriv->pScreenInfo;
+      pScreen = pScreenInfo->pScreen;
+      hwndLastPrivates = hwnd;
+      SetProp (hwnd, WIN_SCR_PROP, pScreenPriv);
 
       /* Store the mode key states so restore doesn't try to restore them */
       winStoreModeKeyStates (pScreen);
       return 0;
 
     case WM_PAINT:
+#if CYGDEBUG
+      ErrorF ("winWindowProc () - WM_PAINT\n");
+#endif
       /* Only paint if we have privates and the server is enabled */
       if (pScreenPriv == NULL
 	  || !pScreenPriv->fEnabled
@@ -95,18 +125,76 @@ winWindowProc (HWND hWnd, UINT message,
 	  /* We don't want to paint */
 	  break;
 	}
+
+      /* Break out here if we don't have a valid paint routine */
+      if (pScreenPriv->pwinBltExposedRegions == NULL)
+	break;
       
       /* Call the engine dependent repainter */
       (*pScreenPriv->pwinBltExposedRegions) (pScreen);
       return 0;
 
+    case WM_PALETTECHANGED:
+      {
+#if CYGDEBUG
+	ErrorF ("winWindowProc () WM_PALETTECHANGED\n");
+#endif
+	/* Don't process if we don't have privates or a colormap */
+	if (pScreenPriv == NULL || pScreenPriv->pcmapInstalled == NULL)
+	  break;
+
+	/* Return if we caused the palette to change */
+	if ((HWND) wParam == hwnd)
+	  {
+	    /* Redraw the screen */
+	    (*pScreenPriv->pwinRedrawScreen) (pScreen);
+	    return 0;
+	  }
+	
+	/* Reinstall the windows palette */
+	(*pScreenPriv->pwinRealizeInstalledPalette) (pScreen);
+	
+	/* Redraw the screen */
+	(*pScreenPriv->pwinRedrawScreen) (pScreen);
+	return 0;
+      }
+
     case WM_MOUSEMOVE:
       /* We can't do anything without privates */
-      if (pScreenPriv == NULL)
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
 	break;
+      
+      /* Has the mouse pointer crossed screens? */
+      if (pScreen != miPointerCurrentScreen ())
+	miPointerSetNewScreen (pScreenInfo->dwScreen, 0, 0);
 
       /* Sometimes we hide, sometimes we show */
-      if (pScreenPriv->fActive
+      if (hwndLastMouse != NULL && hwndLastMouse != hwnd)
+	{
+	  /* Cursor is now over NC area of another screen */
+	  pScreenPrivLast = GetProp (hwndLastMouse, WIN_SCR_PROP);
+	  if (pScreenPrivLast == NULL)
+	    {
+	      ErrorF ("winWindowProc () - WM_MOUSEMOVE - Couldn't obtain "
+		      "last screen privates\n");
+	      return 0;
+	    }
+
+	  /* Show cursor if last screen is still hiding it */
+	  if (!pScreenPrivLast->fCursor)
+	    {
+	      pScreenPrivLast->fCursor = TRUE;
+	      ShowCursor (TRUE);
+	    }
+
+	  /* Hide cursor for our screen if we are not hiding it */
+	  if (pScreenPriv->fCursor)
+	    {
+	      pScreenPriv->fCursor = FALSE;
+	      ShowCursor (FALSE);
+	    }
+	}
+      else if (pScreenPriv->fActive
 	  && pScreenPriv->fCursor)
 	{
 	  /* Hide Windows cursor */
@@ -125,39 +213,90 @@ winWindowProc (HWND hWnd, UINT message,
       miPointerAbsoluteCursor (GET_X_LPARAM(lParam),
 			       GET_Y_LPARAM(lParam),
 			       g_c32LastInputEventTime = GetTickCount ());
+
+      /* Store pointer to last window handle */
+      hwndLastMouse = hwnd;
       return 0;
 
     case WM_NCMOUSEMOVE:
+      /* We can't do anything without privates */
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
       /* Non-client mouse movement, show Windows cursor */
-      if (!pScreenPriv->fCursor)
+      if (hwndLastMouse != NULL && hwndLastMouse != hwnd)
+	{
+	  /* Cursor is now over NC area of another screen */
+	  pScreenPrivLast = GetProp (hwndLastMouse, WIN_SCR_PROP);
+	  if (pScreenPrivLast == NULL)
+	    {
+	      ErrorF ("winWindowProc () - WM_NCMOUSEMOVE - Couldn't obtain "
+		      "last screen privates\n");
+	      return 0;
+	    }
+
+	  /* Show cursor if last screen is still hiding it */
+	  if (!pScreenPrivLast->fCursor)
+	    {
+	      pScreenPrivLast->fCursor = TRUE;
+	      ShowCursor (TRUE);
+	    }
+
+	  /* Hide cursor for our screen if we are not hiding it */
+	  if (pScreenPriv->fCursor)
+	    {
+	      pScreenPriv->fCursor = FALSE;
+	      ShowCursor (FALSE);
+	    }
+	}
+      else if (!pScreenPriv->fCursor)
 	{
 	  pScreenPriv->fCursor = TRUE;
 	  ShowCursor (TRUE);
 	}
+
+      /* Store pointer to last window handle */
+      hwndLastMouse = hwnd;
       return 0;
 
     case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonPress, Button1, wParam);
       
     case WM_LBUTTONUP:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonRelease, Button1, wParam);
 
     case WM_MBUTTONDBLCLK:
     case WM_MBUTTONDOWN:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonPress, Button2, wParam);
       
     case WM_MBUTTONUP:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonRelease, Button2, wParam);
       
     case WM_RBUTTONDBLCLK:
     case WM_RBUTTONDOWN:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonPress, Button3, wParam);
       
     case WM_RBUTTONUP:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseButtonsHandle (pScreen, ButtonRelease, Button3, wParam);
 
     case WM_TIMER:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+      /* Branch on the timer id */
       switch (wParam)
 	{
 	case WIN_E3B_TIMER_ID:
@@ -175,190 +314,186 @@ winWindowProc (HWND hWnd, UINT message,
       return 0;
 
     case WM_MOUSEWHEEL:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
       return winMouseWheel (pScreen, GET_WHEEL_DELTA_WPARAM(wParam));
+
+    case WM_SETFOCUS:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+      /* Restore the state of all mode keys */
+      winRestoreModeKeyStates (pScreen);
+      return 0;
+
+    case WM_KILLFOCUS:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+      /* Store the state of all mode keys */
+      winStoreModeKeyStates (pScreen);
+
+      /* Release any pressed modifiers */
+      winKeybdReleaseModifierKeys ();
+      return 0;
 
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+      /*
+       * FIXME: Catching Alt-F4 like this is really terrible.  This should
+       * be generalized to handle other Windows keyboard signals.  Actually,
+       * the list keys to catch and the actions to perform when caught should
+       * be configurable; that way user's can customize the keys that they
+       * need to have passed through to their window manager or apps, or they
+       * can remap certain actions to new key codes that do not conflict
+       * with the X apps that they are using.  Yeah, that'll take awhile.
+       */
+      if ((pScreenInfo->fUseWinKillKey && wParam == VK_F4
+	   && (GetKeyState (VK_MENU) & 0x8000))
+	  || (pScreenInfo->fUseUnixKillKey && wParam == VK_BACK
+	      && (GetKeyState (VK_MENU) & 0x8000)
+	      && (GetKeyState (VK_CONTROL) & 0x8000))) 
+	{
+	  /*
+	   * Better leave this message here, just in case some unsuspecting
+	   * user enters Alt + F4 and is surprised when the application
+	   * quits.
+	   */
+	  ErrorF ("winWindowProc () - Closekey hit, quitting\n");
+	  
+	  /* Tell our message queue to give up */
+	  PostMessage (hwnd, WM_CLOSE, 0, 0);
+	  return 0;
+	}
+      
+      /*
+       * Don't do anything for the Windows keys, as focus will soon
+       * be returned to Windows.  We may be able to trap the Windows keys,
+       * but we should determine if that is desirable before doing so.
+       */
+      if (wParam == VK_LWIN || wParam == VK_RWIN)
+	break;
+
+      /* Discard fake Ctrl_L presses that precede AltGR on non-US keyboards */
       if (winIsFakeCtrl_L (message, wParam, lParam))
 	return 0;
+      
+      /* Send the key event(s) */
       winTranslateKey (wParam, lParam, &iScanCode);
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.u.detail = iScanCode;
-      xCurrentEvent.u.keyButtonPointer.time
-	= g_c32LastInputEventTime = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      for (i = 0; i < LOWORD(lParam); ++i)
+	winSendKeyEvent (iScanCode, TRUE);
       return 0;
 
     case WM_SYSKEYUP:
     case WM_KEYUP:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+      /*
+       * Don't do anything for the Windows keys, as focus will soon
+       * be returned to Windows.  We may be able to trap the Windows keys,
+       * but we should determine if that is desirable before doing so.
+       */
+      if (wParam == VK_LWIN || wParam == VK_RWIN)
+	break;
+
+      /* Ignore the fake Ctrl_L that follows an AltGr release */
       if (winIsFakeCtrl_L (message, wParam, lParam))
 	return 0;
+
+      /* Enqueue a keyup event */
       winTranslateKey (wParam, lParam, &iScanCode);
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.u.detail = iScanCode;
-      xCurrentEvent.u.keyButtonPointer.time
-	= g_c32LastInputEventTime = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (iScanCode, FALSE);
       return 0;
 
     case WM_HOTKEY:
       if (pScreenPriv == NULL)
 	break;
 
-      /* Handle each engine type */
-      switch (pScreenInfo->dwEngine)
-	{
-	case WIN_SERVER_PRIMARY_DD:
-	  /* Alt+Tab was pressed, we will lose focus very soon */
-	  pScreenPriv->fActive = FALSE;
-
-	  /*
-	   * We need to save the primary fb to an offscreen fb when
-	   * we get deactivated, and point the fb code at the offscreen
-	   * fb for the duration of the deactivation.
-	   */
-	  if (pScreenPriv != NULL
-	      && pScreenPriv->pddsPrimary != NULL
-	      && pScreenPriv->pddsPrimary != NULL)
-	    {
-	      /* We are deactivating */
-		      
-	      /* Get client area in screen coords */
-	      GetClientRect (pScreenPriv->hwndScreen, &rcClient);
-	      MapWindowPoints (pScreenPriv->hwndScreen,
-			       HWND_DESKTOP,
-			       (LPPOINT)&rcClient, 2);
-
-	      /* Did we loose the primary surface? */
-	      ddrval = IDirectDrawSurface_IsLost (pScreenPriv->pddsPrimary);
-	      if (ddrval == DD_OK)
-		{
-		  ddrval = IDirectDrawSurface_Unlock (pScreenPriv->pddsPrimary,
-						      NULL);
-		  if (FAILED (ddrval))
-		    FatalError ("winWindowProc () - Failed unlocking primary "\
-				"surface\n");
-		}
-	      
-	      /* Setup a source rectangle */
-	      rcSrc.left = 0;
-	      rcSrc.top = 0;
-	      rcSrc.right = pScreenInfo->dwWidth;
-	      rcSrc.bottom = pScreenInfo->dwHeight;
-
-	      /* Blit the primary surface to the offscreen surface */
-	      ddrval = IDirectDrawSurface_Blt (pScreenPriv->pddsOffscreen,
-					       NULL, /* should be rcDest */
-					       pScreenPriv->pddsPrimary,
-					       NULL,
-					       DDBLT_WAIT,
-					       NULL);
-	      if (ddrval == DDERR_SURFACELOST)
-		{
-		  IDirectDrawSurface_Restore (pScreenPriv->pddsOffscreen);  
-		  IDirectDrawSurface_Restore (pScreenPriv->pddsPrimary);
-		  		  
-		  /* Blit the primary surface to the offscreen surface */
-		  ddrval = IDirectDrawSurface_Blt (pScreenPriv->pddsOffscreen,
-						   NULL, /* should be rcDest */
-						   pScreenPriv->pddsPrimary,
-						   NULL,
-						   DDBLT_WAIT,
-						   NULL);
-		  if (FAILED (ddrval))
-		    FatalError ("winWindowProc () - Failed blitting primary "\
-				"surface to offscreen surface: %08x\n",
-				ddrval);
-		}
-	      else
-		{
-		  FatalError ("winWindowProc() - Unknown error from "\
-			      "Blt: %08dx\n", ddrval);
-		}
-
-	      /* Lock the offscreen surface */
-	      ddrval = IDirectDrawSurface_Lock (pScreenPriv->pddsOffscreen,
-						NULL,
-						pScreenPriv->pddsdOffscreen,
-						DDLOCK_WAIT,
-						NULL);
-	      if (ddrval != DD_OK
-		  || pScreenPriv->pddsdPrimary->lpSurface == NULL)
-		FatalError ("winWindowProc () - Could not lock "\
-			    "offscreen surface\n");
-
-	      /* Notify FB of the new memory pointer */
-	      winUpdateFBPointer (pScreen,
-				  pScreenPriv->pddsdOffscreen->lpSurface);
-
-	      /* Unregister our hotkey */
-	      UnregisterHotKey (hWnd, 1);
-	      return 0;
-	    }
-	}
-      break;
+      /* Call the engine-specific hot key handler */
+      (*pScreenPriv->pwinHotKeyAltTab) (pScreen);
+      return 0;
 
     case WM_ACTIVATE:
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
+	break;
+
+#if CYGDEBUG
+      ErrorF ("winWindowProc () - WM_ACTIVATE\n");
+#endif
       /*
        * Focus is being changed to another window.
        * The other window may or may not belong to
        * our process.
        */
-      
-      /* We can't do anything if we don't have screen privates */
-      if (pScreenPriv == NULL)
-	break;
 
       /* Clear any lingering wheel delta */
       pScreenPriv->iDeltaZ = 0;
 
-      /* Activating or deactivating? */
-      if (LOWORD (wParam) == WA_ACTIVE || LOWORD (wParam) == WA_CLICKACTIVE)
-	{
-	  /* Restore the state of all mode keys */
-	  winRestoreModeKeyStates (pScreen);
+      /* Have we changed X screens? */
+      if ((LOWORD (wParam) == WA_ACTIVE || LOWORD (wParam) == WA_CLICKACTIVE)
+	  && pScreenPriv->fEnabled && pScreen != miPointerCurrentScreen ())
+	miPointerSetNewScreen (pScreenInfo->dwScreen, 0, 0);
 
-	  /* Have we changed input screens? */
-	  if (pScreenPriv->fEnabled
-	      && pScreen != miPointerCurrentScreen ())
+      /* Handle showing or hiding the mouse */
+      if (hwndLastMouse != NULL && hwndLastMouse != hwnd)
+	{
+	  /*
+	   * Activation has transferred between screens.
+	   * This section is processed by the screen receiving
+	   * focus, as it is the only one that notices the difference
+	   * between hwndLastMouse and hwnd.
+	   */
+	  pScreenPrivLast = GetProp (hwndLastMouse, WIN_SCR_PROP);
+	  if (pScreenPrivLast == NULL)
 	    {
-	      /*
-	       * Tell mi that we are changing the screen that receives
-	       * mouse input events.
-	       */
-	      miPointerSetNewScreen (pScreenInfo->dwScreen,
-				     0, 0);
+	      ErrorF ("winWindowProc () - WM_ACTIVATE - Couldn't obtain last "
+		      "screen privates\n");
+	      return 0;
+	    }
+
+	  /* Show cursor if last screen is still hiding it */
+	  if (!pScreenPrivLast->fCursor)
+	    {
+	      pScreenPrivLast->fCursor = TRUE;
+	      ShowCursor (TRUE);
+	    }
+
+	  /* Hide cursor for our screen if we are not hiding it */
+	  if (pScreenPriv->fCursor)
+	    {
+	      pScreenPriv->fCursor = FALSE;
+	      ShowCursor (FALSE);
 	    }
 	}
-      else
+      else if ((LOWORD(wParam) == WA_ACTIVE
+		|| LOWORD(wParam) == WA_CLICKACTIVE)
+	       && pScreenPriv->fCursor)
 	{
-	  /* Store the state of all mode keys */
-	  winStoreModeKeyStates (pScreen);
-	}
-
-      /* Are we activating or deactivating? */
-      if ((LOWORD(wParam) == WA_ACTIVE
-	  || LOWORD(wParam) == WA_CLICKACTIVE)
-	  && pScreenPriv->fCursor)
-	{
-	  /* Hide Windows cursor */
 	  pScreenPriv->fCursor = FALSE;
 	  ShowCursor (FALSE);
 	}
       else if (LOWORD(wParam) == WA_INACTIVE
 	       && !pScreenPriv->fCursor)
 	{
-	  /* Show Windows cursor */
 	  pScreenPriv->fCursor = TRUE;
 	  ShowCursor (TRUE);
 	}
+
+      /* Store last active window handle */
+      hwndLastMouse = hwnd;
       return 0;
 
     case WM_ACTIVATEAPP:
-      /* We can't do anything if we don't have screen privates */
-      if (pScreenPriv == NULL)
+      if (pScreenPriv == NULL || pScreenInfo->fIgnoreInput)
 	break;
 
+#if CYGDEBUG
+      ErrorF ("winWindowProc () - WM_ACTIVATEAPP\n");
+#endif
       /* Activate or deactivate */
       pScreenPriv->fActive = wParam;
 
@@ -366,14 +501,12 @@ winWindowProc (HWND hWnd, UINT message,
       if (pScreenPriv->fActive
 	  && pScreenPriv->fCursor)
 	{
-	  /* Hide Windows cursor */
 	  pScreenPriv->fCursor = FALSE;
 	  ShowCursor (FALSE);
 	}
       else if (!pScreenPriv->fActive
 	       && !pScreenPriv->fCursor)
 	{
-	  /* Show Windows cursor */
 	  pScreenPriv->fCursor = TRUE;
 	  ShowCursor (TRUE);
 	}
@@ -388,5 +521,5 @@ winWindowProc (HWND hWnd, UINT message,
       return 0;
     }
 
-  return DefWindowProc (hWnd, message, wParam, lParam);
+  return DefWindowProc (hwnd, message, wParam, lParam);
 }

@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_blt.c,v 1.8 2001/05/01 16:19:16 alanh Exp $ */
+/* $XFree86: xc/programs/x11perf/do_blt.c,v 1.9 2001/11/03 21:59:20 dawes Exp $ */
 
 #include "x11perf.h"
 #include <stdio.h>
@@ -372,8 +372,18 @@ InitShmPutImage(XParms xp, Parms p, int reps)
     int	image_size;
 
     if(!InitGetImage(xp, p, reps))return False;
-    if (!XShmQueryExtension(xp->d))
-	return False;
+    if (!XShmQueryExtension(xp->d)) {
+	/*
+ 	 * Clean up here because cleanup function is not called if this
+	 * function fails
+	 */
+       	if (image)
+      	    XDestroyImage(image);
+    	image = NULL;
+    	free(segsa);
+    	free(segsb);
+    	return False;
+    }	
     XClearWindow(xp->d, xp->w);
     shm_image = *image;
     image_size = image->bytes_per_line * image->height;
@@ -382,12 +392,30 @@ InitShmPutImage(XParms xp, Parms p, int reps)
     shm_info.shmid = shmget(IPC_PRIVATE, image_size, IPC_CREAT|0777);
     if (shm_info.shmid < 0)
     {
+	/*
+	 * Clean up here because cleanup function is not called if this
+	 * function fails
+	 */
+	if (image)
+	    XDestroyImage(image);
+	image = NULL;
+	free(segsa);
+	free(segsb);
 	perror ("shmget");
 	return False;
     }
     shm_info.shmaddr = (char *) shmat(shm_info.shmid, 0, 0);
     if (shm_info.shmaddr == ((char *) -1))
     {
+	/*
+	 * Clean up here because cleanup function is not called if this
+	 * function fails
+	 */
+	if (image)
+	    XDestroyImage(image);
+	image = NULL;
+	free(segsa);
+	free(segsb);
 	perror ("shmat");
 	shmctl (shm_info.shmid, IPC_RMID, 0);
 	return False;
@@ -400,6 +428,15 @@ InitShmPutImage(XParms xp, Parms p, int reps)
     XSync(xp->d,True);	/* wait for error or ok */
     XSetErrorHandler(origerrorhandler);
     if(haderror){
+	/*
+	 * Clean up here because cleanup function is not called if this
+	 * function fails
+	 */
+	if (image)
+	    XDestroyImage(image);
+	image = NULL;
+	free(segsa);
+	free(segsb);
 	if(shmdt (shm_info.shmaddr)==-1)
 	    perror("shmdt:");
 	if(shmctl (shm_info.shmid, IPC_RMID, 0)==-1)

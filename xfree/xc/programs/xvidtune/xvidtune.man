@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/xvidtune/xvidtune.man,v 3.13 2001/01/27 18:21:25 dawes Exp $
+.\" $XFree86: xc/programs/xvidtune/xvidtune.man,v 3.14 2001/08/13 19:35:01 dawes Exp $
 .\"
 .\" Copyright (c) 1995  Kaleb S. KEITHLEY
 .\"
@@ -32,13 +32,14 @@ xvidtune \- video mode tuner for XFree86
 .SH SYNOPSIS
 .B xvidtune
 [
+.B -show
+|
 .B -prev
 |
 .B -next
 |
 .B -unlock
-|
-] ] [
+] [
 .I \-toolkitoption
 \&.\|.\|. ]
 .SH DESCRIPTION
@@ -147,6 +148,10 @@ screen section of XF86Config, e.g. using
 .SH OPTIONS
 \fIxvidtune\fP accepts the standard X Toolkit command line options as well
 as the following:
+.TP 10
+.B \-show
+Print the current settings to stdout in XF86Config
+"Modeline" format and exit.
 .TP 10
 .B \-prev
 Switch the Xserver to the previous video mode.

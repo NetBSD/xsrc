@@ -1,10 +1,14 @@
-/* $Xorg: cmsMath.c,v 1.3 2000/08/17 19:45:09 cpqbld Exp $ */
+/* $Xorg: cmsMath.c,v 1.4 2001/02/09 02:03:39 xorgcvs Exp $ */
 
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/X11/cmsMath.c,v 3.5 2001/12/14 19:54:10 dawes Exp $ */
 
 /*
  * Stephen Gildea, MIT X Consortium, January 1991
@@ -29,9 +34,7 @@ in this Software without prior written authorization from The Open Group.
 #include "Xlibint.h"
 #include "Xcmsint.h"
 
-#if !defined(X_NOT_STDC_ENV) && (defined(__STDC__) || !(defined(sun) || (defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV))))
 #include <float.h>
-#endif
 #ifndef DBL_EPSILON
 #define DBL_EPSILON 1e-6
 #endif

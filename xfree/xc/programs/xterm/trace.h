@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/trace.h,v 3.10 2000/09/22 10:42:09 alanh Exp $
+ * $XFree86: xc/programs/xterm/trace.h,v 3.12 2001/10/24 01:21:25 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2000 by Thomas E. Dickey
+Copyright 1997-2001 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -49,6 +49,15 @@ extern	char *	visibleIChar (IChar *, unsigned);
 
 extern	char	*trace_who;
 #define TRACE_CHILD int tracing_child = (trace_who = "child") != 0;
+
+extern	void	TraceTranslations(const char *, Widget);
+#define	TRACE_TRANS(name,w) TraceTranslations(name,w)
+
+extern	void	TraceArgv(const char *tag, char **argv);
+#define	TRACE_ARGV(tag,argv) TraceArgv(tag,argv)
+
+extern	void	TraceOptions(OptionHelp *options, XrmOptionDescRec *resources, Cardinal count);
+#define	TRACE_OPTS(opts,ress,lens) TraceOptions(opts,ress,lens)
 
 #endif
 

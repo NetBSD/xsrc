@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_accel.c,v 1.19 2001/04/05 21:29:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_accel.c,v 1.20 2001/10/28 03:33:49 tsi Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -897,9 +897,9 @@ TDFXSubsequentCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x, int y,
   TDFXWriteLong(pTDFX, SST_2D_CLIP1MAX, (((y+h)&0x1FFF)<<16)|((x+w)&0x1FFF));
 #if X_BYTE_ORDER == X_BIG_ENDIAN
   /* bit 20 byte swizzle */
-  TDFXWriteLong(pTDFX, SST_2D_SRCFORMAT, (((w+31)/32)*4) & 0x3FFF | BIT(20));
+  TDFXWriteLong(pTDFX, SST_2D_SRCFORMAT, ((((w+31)/32)*4) & 0x3FFF) | BIT(20));
 #else
-  TDFXWriteLong(pTDFX, SST_2D_SRCFORMAT, (((w+31)/32)*4) & 0x3FFF);
+  TDFXWriteLong(pTDFX, SST_2D_SRCFORMAT,  (((w+31)/32)*4) & 0x3FFF);
 #endif
   pTDFX->sst2DSrcFmtShadow = (((w+31)/32)*4) & 0x3FFF;
   TDFXWriteLong(pTDFX, SST_2D_SRCXY, skipleft&0x1F);

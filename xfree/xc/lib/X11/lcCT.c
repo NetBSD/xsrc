@@ -36,7 +36,7 @@
  *  Modifier: Ivan Pascal     The XFree86 Project
  *  Modifier: Bruno Haible    The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcCT.c,v 3.24 2001/02/09 00:02:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.26 2001/10/28 03:32:34 tsi Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -115,11 +115,13 @@ static CTDataRec default_ct_data[] =
     /* Backward compatibility with XFree86 3.x */
     { "ISO8859-14:GR",                                      "\033%/1" },
     { "ISO8859-15:GR",                                      "\033%/1" },
+    /* For use by utf8 -> ctext */
+    { "BIG5-0:GLGR", "\033%/2"},
     /* used by Emacs, but not backed by ISO-IR */
-    { "BIG5-0:GL", "\033$(0" },
-    { "BIG5-0:GR", "\033$)0" },
-    { "BIG5-1:GL", "\033$(1" },
-    { "BIG5-1:GR", "\033$)1" },
+    { "BIG5-E0:GL", "\033$(0" },
+    { "BIG5-E0:GR", "\033$)0" },
+    { "BIG5-E1:GL", "\033$(1" },
+    { "BIG5-E1:GR", "\033$)1" },
 
 };
 
@@ -859,7 +861,7 @@ cstoct(
 {
     State state = (State) conv->state;
     XlcSide side;
-    unsigned char min_ch, max_ch;
+    unsigned char min_ch = 0, max_ch = 0;
     int length, unconv_num;
     CTInfo ct_info;
     XlcCharSet charset;
@@ -1262,7 +1264,10 @@ _XlcInitCTInfo()
 	    charset = _XlcAddCT(ct_data->name, ct_data->ct_sequence);
             if (charset == NULL)
                 continue;
-            charset->source = CSsrcStd;
+			if (strncmp(charset->ct_sequence, "\x1b\x25\x2f", 3) != 0)
+				charset->source = CSsrcStd;
+			else
+				charset->source = CSsrcXLC;
 	}
 
         /* Register CompoundText and CharSet converters.  */

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbpixmap.c,v 1.8 2000/09/18 05:43:40 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbpixmap.c,v 1.10 2001/09/07 15:15:31 keithp Exp $ */
 
 #include "fb.h"
 #ifdef IN_MODULE
@@ -134,7 +134,7 @@ fbPixmapToRegion(PixmapPtr pPix)
     register RegionPtr	pReg;
     FbBits		*pw, w;
     register int	ib;
-    int			width, h, base, rx1, crects;
+    int			width, h, base, rx1 = 0, crects;
     FbBits		*pwLineEnd;
     int			irectPrevStart, irectLineStart;
     register BoxPtr	prectO, prectN;
@@ -340,12 +340,13 @@ fbValidateDrawable (DrawablePtr pDrawable)
 {
     FbStip	*bits, *first, *last;
     int		stride, bpp;
+    int		xoff, yoff;
     int		height;
     Bool	failed;
     
     if (pDrawable->type != DRAWABLE_PIXMAP)
 	pDrawable = (DrawablePtr) fbGetWindowPixmap(pDrawable);
-    fbGetStipDrawable(pDrawable, bits, stride, bpp);
+    fbGetStipDrawable(pDrawable, bits, stride, bpp, xoff, yoff);
     first = bits - stride;
     last = bits + stride * pDrawable->height;
     if (!fbValidateBits (first, stride, FB_HEAD_BITS) ||
@@ -365,8 +366,9 @@ fbInitializeDrawable (DrawablePtr pDrawable)
 {
     FbStip  *bits, *first, *last;
     int	    stride, bpp;
+    int	    xoff, yoff;
     
-    fbGetStipDrawable(pDrawable, bits, stride, bpp);
+    fbGetStipDrawable(pDrawable, bits, stride, bpp, xoff, yoff);
     first = bits - stride;
     last = bits + stride * pDrawable->height;
     fbSetBits (first, stride, FB_HEAD_BITS);

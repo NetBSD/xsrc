@@ -10,7 +10,7 @@
 # hackish perl - author Dirk Hohndel
 # Copyright 1999-2001 by The XFree86 Project, Inc.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/common/modeline2c.pl,v 1.7 2001/04/07 00:50:15 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/common/modeline2c.pl,v 1.8 2001/10/28 03:33:17 tsi Exp $
 
 #my %flagshash;
 $flagshash{""} = "0";
@@ -69,6 +69,9 @@ while (<>) {
     $values =~ /([\d.]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
     printf("\t{MODEPREFIX(%s),%d, %d,%d,%d,%d,0, %d,%d,%d,%d,0, %s, MODESUFFIX},\n",
 	   $name,$1*1000,$2,$3,$4,$5,$6,$7,$8,$9,$flagshash{$flags});
+# Also generate half-width doublescanned modes
+    printf("\t{MODEPREFIX(\"%dx%d\"),%d, %d,%d,%d,%d,0, %d,%d,%d,%d,0, %s | V_DBLSCAN, MODESUFFIX},\n",
+	   $2/2,$6/2,$1*500,$2/2,$3/2,$4/2,$5/2,$6/2,$7/2,$8/2,$9/2,$flagshash{$flags});
   }
 
 

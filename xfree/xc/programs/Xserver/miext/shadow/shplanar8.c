@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shplanar8.c,v 1.2 2000/09/19 03:33:33 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shplanar8.c,v 1.4 2001/10/28 03:34:16 tsi Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -64,6 +64,7 @@
 
 #if 0
 #define GetBits(p,o,d) { \
+    CARD32	m1,m2,m3,m4,m5,m6,m7,m8; \
     m1 = sha[o] << (7 - (p)); \
     m2 = sha[(o)+1] << (3 - (p)); \
     m3 = m1 & 0x80808080; \
@@ -76,6 +77,7 @@
 }
 #else
 #define GetBits(p,o,d) { \
+    CARD32	m5,m7; \
     m5 = ((sha[o] << (7 - (p))) & 0x80808080) | ((sha[(o)+1] << (3 - (p))) & 0x08080808); \
     m7 = m5 | (m5 >> 9); \
     d = m7 | (m7 >> 18); \
@@ -84,26 +86,25 @@
 
 void
 shadowUpdatePlanar4x8 (ScreenPtr	pScreen,
-		       PixmapPtr	pShadow,
-		       RegionPtr	damage)
+		       shadowBufPtr	pBuf)
 {
-    shadowScrPriv(pScreen);
+    RegionPtr	damage = &pBuf->damage;
+    PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = REGION_NUM_RECTS (damage);
     BoxPtr	pbox = REGION_RECTS (damage);
     CARD32	*shaBase, *shaLine, *sha;
     CARD8	s1, s2, s3, s4;
-    CARD32	m;
     FbStride	shaStride;
     int		scrBase, scrLine, scr;
     int		shaBpp;
+    int		shaXoff, shaYoff;   /* XXX assumed to be zero */
     int		x, y, w, h, width;
     int         i;
-    CARD32	*winBase, *winLine, *win;
+    CARD32	*winBase = NULL, *win;
     CARD32	winSize;
     int		plane;
-    CARD32	m1,m2,m3,m4,m5,m6,m7,m8;
 
-    fbGetStipDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp);
+    fbGetStipDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
     while (nbox--)
     {
 	x = pbox->x1 * shaBpp;
@@ -131,13 +132,14 @@ shadowUpdatePlanar4x8 (ScreenPtr	pScreen,
 		    i = scrBase + winSize - scr;
 		    if (i <= 0 || scr < scrBase)
 		    {
-			winBase = (CARD32 *) (*pScrPriv->window) (pScreen,
-								  y,
-								  (scr << 4) | (plane),
-								  SHADOW_WINDOW_WRITE,
-								  &winSize);
+			winBase = (CARD32 *) (*pBuf->window) (pScreen,
+							      y,
+							      (scr << 4) | (plane),
+							      SHADOW_WINDOW_WRITE,
+							      &winSize,
+							      pBuf->closure);
 			if(!winBase)
-			return;
+			    return;
 			winSize >>= 2;
 			scrBase = scr;
 			i = winSize;

@@ -26,7 +26,11 @@
 
 Portions Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -49,21 +53,18 @@ from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: twm.h,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
+ * $Xorg: twm.h,v 1.4 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * twm include file
  *
  * 28-Oct-87 Thomas E. LaStrange	File created
  * 10-Oct-90 David M. Sternlicht        Storeing saved colors on root
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/twm.h,v 3.6 2001/01/17 23:45:08 dawes Exp $ */
+/* $XFree86: xc/programs/twm/twm.h,v 3.12 2001/12/14 20:01:10 dawes Exp $ */
 
 #ifndef _TWM_
 #define _TWM_
 
-#ifdef MINIX
-#include <X11/Xos.h>
-#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -346,12 +347,7 @@ typedef struct TWMWinConfigEntry
 #define TBPM_QUESTION ":question"	/* name of unknown titlebar pixmap */
 
 #include <X11/Xosdefs.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern char *malloc(), *calloc(), *realloc(), *getenv();
-extern void free();
-#endif
 extern void InitVariables ( void );
 extern void CreateFonts ( void );
 extern void RestoreWithdrawnLocation ( TwmWindow *tmp );
@@ -403,6 +399,7 @@ extern void NewBitmapCursor ( Cursor *cp, char *source, char *mask );
 extern Pixmap CreateMenuIcon ( int height, unsigned int *widthp, unsigned int *heightp );
 
 extern Bool ErrorOccurred;
+extern volatile Bool TimeToYield;
 extern XErrorEvent LastErrorEvent;
 
 #define ResetError() (ErrorOccurred = False)
@@ -421,6 +418,9 @@ extern void RemoveDQuote ( char *str );
 extern Atom TwmAtoms[];
 
 extern Bool use_fontset;
+
+extern int ShapeEventBase;
+extern int ShapeErrorBase;
 
 #define _XA_MIT_PRIORITY_COLORS		TwmAtoms[0]
 #define _XA_WM_CHANGE_STATE		TwmAtoms[1]

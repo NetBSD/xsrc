@@ -1,9 +1,13 @@
-/* $Xorg: PsFonts.c,v 1.4 2000/08/17 19:48:09 cpqbld Exp $ */
+/* $Xorg: PsFonts.c,v 1.6 2001/03/06 16:30:15 pookie Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -53,7 +57,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsFonts.c,v 1.4 2001/01/17 22:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsFonts.c,v 1.6 2001/12/19 21:55:59 dawes Exp $ */
 
 /*******************************************************************
 **
@@ -141,7 +145,7 @@ PsGetPSFontName(FontPtr pFont)
   int         i;
   int         nprops = pFont->info.nprops;
   FontPropPtr props  = pFont->info.props;
-  Atom        name   = MakeAtom("_ADOBE_POSTSCRIPT_FONTNAME", 26, True);
+  Atom        name   = MakeAtom("PRINTER_RESIDENT_FONT", 21, True);
   Atom        value  = (Atom)0;
 
   for( i=0 ; i<nprops ; i++ )

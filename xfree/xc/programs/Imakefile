@@ -2,7 +2,7 @@ XCOMM $Xorg: Imakefile,v 1.4 2000/08/17 19:47:01 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Imakefile,v 3.45 2001/05/01 17:23:26 alanh Exp $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.49 2001/11/02 23:29:28 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -72,6 +72,10 @@ XFINDPROXYSRCDIR = xfindproxy
 XINPUTCLIENTDIRS = xsetmode xsetpointer
 #endif
 
+#if BuildXTrapLibrary
+XTRAPCLIENTDIRS = xtrap
+#endif
+
 /* makepsres should be considered as part of the DPS libraries */
 #if BuildDPSLibraries
     MAKEPSRESDIR = makepsres
@@ -95,13 +99,17 @@ XINPUTCLIENTDIRS = xsetmode xsetpointer
         XLOADDIR = xload
 #endif
 
+#if BuildRandRLibrary
+       XRANDRDIR = xrandr
+#endif
+
 #if BuildServersOnly || !BuildClients
 SUBDIRS = $(XSSRCDIR)
 #else
 SUBDIRS = \
 	appres bdftopcf bitmap \
 	$(SCREENSAVESRCDIR) editres fslsfonts fstobdf iceauth \
-	ico listres \
+	ico listres luit \
 	$(MAKEPSRESDIR) $(DPSCLIENTDIRS) \
 	$(MKCFMSRCDIR) \
 	mkfontdir oclock $(PROXYMGRSRCDIR) $(RGBSRCDIR) $(RSTARTSRCDIR) \
@@ -116,10 +124,10 @@ SUBDIRS = \
 	xlsclients xlsfonts xmag xman xmessage xmh xmodmap xprop xrdb \
 	xrefresh $(XRXSRCDIR) xset \
 	xsetroot $(XSMSRCDIR) xstdcmap $(XINPUTCLIENTDIRS) \
-	$(XTERMSRCDIR) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
+	$(XTERMSRCDIR) $(XTRAPCLIENTDIRS) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
 	$(XPMCLIENTDIRS) $(XVINFOSRCDIR) \
 	$(XSSRCDIR) $(XASSRCDIR) $(LBXPROXYSRCDIR) $(SCRIPTSDIR) \
-	$(GLXCLIENTDIRS) $(XFTCACHEDIR)
+	$(GLXCLIENTDIRS) $(XFTCACHEDIR) $(XRANDRDIR)
 #endif
 
 MakeSubdirs($(SUBDIRS))

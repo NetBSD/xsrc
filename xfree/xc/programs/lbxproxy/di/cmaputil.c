@@ -1,9 +1,13 @@
-/* $Xorg: cmaputil.c,v 1.4 2000/08/17 19:53:54 cpqbld Exp $ */
+/* $Xorg: cmaputil.c,v 1.5 2001/02/09 02:05:31 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -44,7 +48,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.7 2001/01/17 23:44:55 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.10 2001/12/14 20:00:50 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"
@@ -131,7 +135,7 @@ GetVisual(vid)
  * beware of too-small buffers
  */
 
-void
+static void
 CopyISOLatin1Lowered(dest, source, length)
     register unsigned char *dest, *source;
     int length;
@@ -188,7 +192,7 @@ lookup(name, len, create)
      Bool create;
 {
   unsigned int h = 0, g;
-  dbEntryPtr   entry, *prev;
+  dbEntryPtr   entry, *prev = NULL;
   char         *str = name;
 
   if (!(name = (char*)ALLOCATE_LOCAL(len +1))) return NULL;

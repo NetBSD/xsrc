@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftcache.c,v 1.1 2001/01/02 02:46:51 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftcache.c,v 1.2 2001/06/11 22:53:30 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -112,7 +112,7 @@ XftFileCacheFind (char *file, int id, int *count)
     }
     if (!name)
 	return 0;
-    *count = maxid;
+    *count = maxid + 1;
     return name->name;
 }
 

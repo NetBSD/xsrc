@@ -3,7 +3,11 @@
  *
  * Copyright 1990, 1998  The Open Group
  *
- * All Rights Reserved.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.
  * 
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -26,7 +30,7 @@
  *   by Andreas Stolcke <stolcke@icsi.berkeley.edu>
  */
 
-/* $XFree86: xc/programs/xdm/sessreg.c,v 3.16 2001/01/17 23:45:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/sessreg.c,v 3.18 2001/12/14 20:01:24 dawes Exp $ */
 
 /*
  * sessreg
@@ -110,13 +114,8 @@
 # endif
 #endif
 
-#ifdef X_NOT_STDC_ENV
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
 #ifdef X_NOT_POSIX
 extern long	lseek ();
 extern char	*ttyname ();

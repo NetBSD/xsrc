@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftrender.c,v 1.7 2001/04/21 16:58:02 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftrender.c,v 1.8 2001/07/13 18:16:10 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -32,7 +32,7 @@ XftRenderString8 (Display *dpy, Picture src,
 		  int x, int y,
 		  XftChar8 *string, int len)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
     XftChar8	    *s;
     int		    l;
@@ -41,7 +41,7 @@ XftRenderString8 (Display *dpy, Picture src,
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     XRenderCompositeString8 (dpy, PictOpOver, src, dst,
@@ -56,7 +56,7 @@ XftRenderString16 (Display *dpy, Picture src,
 		   int x, int y,
 		   XftChar16 *string, int len)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
     XftChar16	    *s;
     int		    l;
@@ -65,7 +65,7 @@ XftRenderString16 (Display *dpy, Picture src,
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     XRenderCompositeString16 (dpy, PictOpOver, src, dst,
@@ -78,18 +78,18 @@ XftRenderString32 (Display *dpy, Picture src,
 		   XftFontStruct *font, Picture dst,
 		   int srcx, int srcy,
 		   int x, int y,
-		   unsigned int *string, int len)
+		   XftChar32 *string, int len)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
-    unsigned int    *s;
+    XftChar32	    *s;
     int		    l;
 
     s = string;
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     XRenderCompositeString32 (dpy, PictOpOver, src, dst,
@@ -191,7 +191,7 @@ XftRenderExtents8 (Display	    *dpy,
 		   int		    len,
 		   XGlyphInfo	    *extents)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
     XftChar8	    *s, c;
     int		    l;
@@ -205,7 +205,7 @@ XftRenderExtents8 (Display	    *dpy,
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     
@@ -268,22 +268,25 @@ XftRenderExtents8 (Display	    *dpy,
 void
 XftRenderExtents16 (Display	    *dpy,
 		    XftFontStruct   *font,
-		    XftChar16  *string, 
+		    XftChar16	    *string,
 		    int		    len,
 		    XGlyphInfo	    *extents)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
     XftChar16	    *s, c;
     int		    l;
     XGlyphInfo	    *gi;
     int		    x, y;
+    int		    left, right, top, bottom;
+    int		    overall_left, overall_right;
+    int		    overall_top, overall_bottom;
 
     s = string;
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     
@@ -306,26 +309,39 @@ XftRenderExtents16 (Display	    *dpy,
 	extents->xOff = 0;
 	return;
     }
-    *extents = *gi;
-    x = gi->xOff;
-    y = gi->yOff;
+    x = 0;
+    y = 0;
+    overall_left = x - gi->x;
+    overall_top = y - gi->y;
+    overall_right = overall_left + (int) gi->width;
+    overall_bottom = overall_top + (int) gi->height;
+    x += gi->xOff;
+    y += gi->yOff;
     while (len--)
     {
 	c = *string++;
 	gi = c < font->nrealized ? font->realized[c] : 0;
 	if (!gi)
 	    continue;
-	if (gi->x + x < extents->x)
-	    extents->x = gi->x + x;
-	if (gi->y + y < extents->y)
-	    extents->y = gi->y + y;
-	if (gi->width + x > extents->width)
-	    extents->width = gi->width + x;
-	if (gi->height + y > extents->height)
-	    extents->height = gi->height + y;
+	left = x - gi->x;
+	top = y - gi->y;
+	right = left + (int) gi->width;
+	bottom = top + (int) gi->height;
+	if (left < overall_left)
+	    overall_left = left;
+	if (top < overall_top)
+	    overall_top = top;
+	if (right > overall_right)
+	    overall_right = right;
+	if (bottom > overall_bottom)
+	    overall_bottom = bottom;
 	x += gi->xOff;
 	y += gi->yOff;
     }
+    extents->x = -overall_left;
+    extents->y = -overall_top;
+    extents->width = overall_right - overall_left;
+    extents->height = overall_bottom - overall_top;
     extents->xOff = x;
     extents->yOff = y;
 }
@@ -333,22 +349,25 @@ XftRenderExtents16 (Display	    *dpy,
 void
 XftRenderExtents32 (Display	    *dpy,
 		    XftFontStruct   *font,
-		    unsigned int    *string, 
+		    XftChar32	    *string,
 		    int		    len,
 		    XGlyphInfo	    *extents)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
-    unsigned int    *s, c;
+    XftChar32	    *s, c;
     int		    l;
     XGlyphInfo	    *gi;
     int		    x, y;
+    int		    left, right, top, bottom;
+    int		    overall_left, overall_right;
+    int		    overall_top, overall_bottom;
 
     s = string;
     l = len;
     nmissing = 0;
     while (l--)
-	XftGlyphCheck (dpy, font, (unsigned int) *s++, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) *s++, missing, &nmissing);
     if (nmissing)
 	XftGlyphLoad (dpy, font, missing, nmissing);
     
@@ -371,26 +390,39 @@ XftRenderExtents32 (Display	    *dpy,
 	extents->xOff = 0;
 	return;
     }
-    *extents = *gi;
-    x = gi->xOff;
-    y = gi->yOff;
+    x = 0;
+    y = 0;
+    overall_left = x - gi->x;
+    overall_top = y - gi->y;
+    overall_right = overall_left + (int) gi->width;
+    overall_bottom = overall_top + (int) gi->height;
+    x += gi->xOff;
+    y += gi->yOff;
     while (len--)
     {
 	c = *string++;
 	gi = c < font->nrealized ? font->realized[c] : 0;
 	if (!gi)
 	    continue;
-	if (gi->x + x < extents->x)
-	    extents->x = gi->x + x;
-	if (gi->y + y < extents->y)
-	    extents->y = gi->y + y;
-	if (gi->width + x > extents->width)
-	    extents->width = gi->width + x;
-	if (gi->height + y > extents->height)
-	    extents->height = gi->height + y;
+	left = x - gi->x;
+	top = y - gi->y;
+	right = left + (int) gi->width;
+	bottom = top + (int) gi->height;
+	if (left < overall_left)
+	    overall_left = left;
+	if (top < overall_top)
+	    overall_top = top;
+	if (right > overall_right)
+	    overall_right = right;
+	if (bottom > overall_bottom)
+	    overall_bottom = bottom;
 	x += gi->xOff;
 	y += gi->yOff;
     }
+    extents->x = -overall_left;
+    extents->y = -overall_top;
+    extents->width = overall_right - overall_left;
+    extents->height = overall_bottom - overall_top;
     extents->xOff = x;
     extents->yOff = y;
 }
@@ -402,13 +434,16 @@ XftRenderExtentsUtf8 (Display	    *dpy,
 		      int	    len,
 		      XGlyphInfo    *extents)
 {
-    unsigned int    missing[XFT_NMISSING];
+    XftChar32	    missing[XFT_NMISSING];
     int		    nmissing;
     XftChar8	    *s;
     XftChar32	    c;
     int		    l, clen;
     XGlyphInfo	    *gi;
     int		    x, y;
+    int		    left, right, top, bottom;
+    int		    overall_left, overall_right;
+    int		    overall_top, overall_bottom;
 
     s = string;
     l = len;
@@ -418,7 +453,7 @@ XftRenderExtentsUtf8 (Display	    *dpy,
 	clen = XftUtf8ToUcs4 (s, &c, l);
 	if (clen < 0)
 	    break;
-	XftGlyphCheck (dpy, font, c, missing, &nmissing);
+	XftGlyphCheck (dpy, font, (XftChar32) c, missing, &nmissing);
 	s += clen;
 	l -= clen;
     }
@@ -450,9 +485,14 @@ XftRenderExtentsUtf8 (Display	    *dpy,
 	extents->xOff = 0;
 	return;
     }
-    *extents = *gi;
-    x = gi->xOff;
-    y = gi->yOff;
+    x = 0;
+    y = 0;
+    overall_left = x - gi->x;
+    overall_top = y - gi->y;
+    overall_right = overall_left + (int) gi->width;
+    overall_bottom = overall_top + (int) gi->height;
+    x += gi->xOff;
+    y += gi->yOff;
     while (len)
     {
 	clen = XftUtf8ToUcs4 (string, &c, len);
@@ -463,17 +503,25 @@ XftRenderExtentsUtf8 (Display	    *dpy,
 	gi = c < font->nrealized ? font->realized[c] : 0;
 	if (!gi)
 	    continue;
-	if (gi->x + x < extents->x)
-	    extents->x = gi->x + x;
-	if (gi->y + y < extents->y)
-	    extents->y = gi->y + y;
-	if (gi->width + x > extents->width)
-	    extents->width = gi->width + x;
-	if (gi->height + y > extents->height)
-	    extents->height = gi->height + y;
+	left = x - gi->x;
+	top = y - gi->y;
+	right = left + (int) gi->width;
+	bottom = top + (int) gi->height;
+	if (left < overall_left)
+	    overall_left = left;
+	if (top < overall_top)
+	    overall_top = top;
+	if (right > overall_right)
+	    overall_right = right;
+	if (bottom > overall_bottom)
+	    overall_bottom = bottom;
 	x += gi->xOff;
 	y += gi->yOff;
     }
+    extents->x = -overall_left;
+    extents->y = -overall_top;
+    extents->width = overall_right - overall_left;
+    extents->height = overall_bottom - overall_top;
     extents->xOff = x;
     extents->yOff = y;
 }

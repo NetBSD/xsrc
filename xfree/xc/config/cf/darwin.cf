@@ -1,26 +1,53 @@
-XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
+XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.21 2002/01/15 21:22:31 keithp Exp $
 
 /* Darwin / Mac OS X configuration by John Carmack <johnc@idsoftware.com> */
 
 /* imake determines the default values by parsing uname */
+#ifndef OSName
 #define OSName                  DefaultOSName
+#endif
+#ifndef OSMajorVersion
 #define OSMajorVersion          DefaultOSMajorVersion
+#endif
+#ifndef OSMinorVersion
 #define OSMinorVersion          DefaultOSMinorVersion
-#define OSTeenyVersion          0
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion          DefaultOSTeenyVersion
+#endif
 
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+
+/*
+ * Define the operating system's capabilities
+ */
 #define HasSnprintf             YES
 #define HasPutenv               YES
 #define HasBSD44Sockets         YES
-#define BuildGlxExt             NO
+#define HasUsableFileMmap       YES
+#define HasZlib                 YES
 #ifndef HasShm
 # define HasShm                 YES
+#endif
+#define HasNdbm                 YES
+
+#ifndef HasGroff
+# define HasGroff               YES
+#endif
+
+/* Libtool on Darwin always uses minor numbers */
+#define LibtoolMinorVersions	YES
+
+/* The most common file system, HFS+, is not case sensitive. */
+#ifndef CaseSensitiveFileSystem
+# define CaseSensitiveFileSystem NO
 #endif
 
 /*
  * This enables some settings for developers.
  */
 #ifndef XFree86Devel
-# define XFree86Devel            NO
+# define XFree86Devel           NO
 #endif
 
 /*
@@ -28,7 +55,7 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
  * Turn off to build on raw Darwin systems.
  */
 #ifndef DarwinQuartzSupport
-# define DarwinQuartzSupport     YES
+# define DarwinQuartzSupport    YES
 #endif
 
 /* we don't need -lm */
@@ -40,6 +67,8 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 /* we don't have a dbm library */
 #define DBMLibrary              /**/
 
+#define MkdirHierCmd            mkdir -p
+
 /* our cpp isn't in /lib/cpp and it doesn't like -undef */
 #define CppCmd                  /usr/bin/cpp
 #define RawCppCmd               CppCmd
@@ -48,22 +77,15 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 #define CcCmd                   /usr/bin/cc
 #define CplusplusCmd            /usr/bin/c++
 
-/* uncommenting this line will get -g instead of -O, which builds
- * a lot faster and gets debug info
- */
-#if 0
-#define DefaultCDebugFlags      -g
-#endif
-
 /* default flags to pass to cc */
 #ifndef DefaultCCOptions
 #if XFree86Devel
 # define DefaultCCOptions       -Wall -Wpointer-arith -Wstrict-prototypes \
                                 -Wmissing-prototypes -Wmissing-declarations \
                                 -Wredundant-decls -Wnested-externs \
-                                -traditional-cpp
+                                -no-cpp-precomp
 #else
-# define DefaultCCOptions       -Wall -Wpointer-arith -traditional-cpp
+# define DefaultCCOptions       -Wall -Wpointer-arith -no-cpp-precomp
 #endif
 #endif
 
@@ -72,23 +94,32 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 # define LibraryCCOptions       DefaultCCOptions -fno-common
 #endif
 
+#ifdef PpcDarwinArchitecture
+# define DarwinMachineDefines   -D__powerpc__
+# define OptimizedCDebugFlags   -O2
+# define ByteOrder              X_BIG_ENDIAN
+#endif /* PpcDarwinArchitecture */
+
+#ifdef i386DarwinArchitecture
+# define DarwinMachineDefines   -D__i386__
+# define OptimizedCDebugFlags   -O2 -fno-strength-reduce
+# define ByteOrder              X_LITTLE_ENDIAN
+#endif /* i386DarwinArchitecture */
+
 /*
  * __DARWIN__ will be used for platform specific #ifdefs that can't
  * be handled by existing X defines.
  *
  * Darwin's alloca() seg faults (rather than returning NULL) on failed
  * allocations, so we can't use it.
+ *
+ * Darwin's setlocale() doesn't work properly, so use X11's instead.
  */
-#ifdef PpcDarwinArchitecture
-#define StandardDefines         -D__powerpc__ -D__DARWIN__ -DNO_ALLOCA
-#else
-#define StandardDefines         -D__DARWIN__ -DNO_ALLOCA
-#endif
+#define StandardDefines         DarwinMachineDefines -D__DARWIN__ \
+                                -DNO_ALLOCA -DX_LOCALE
 
-/* programs/rgb/rgb.h and others needs this */
-#define HasNdbm                 YES
-
-/* set this to NO to just build the client libs, which should work without
+/*
+ * Set this to NO to just build the client libs, which should work without
  * having to write any platform specific code.
  */
 #define BuildServer             YES
@@ -98,14 +129,8 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 
 /* Thanks to the IOKit, the X server does not have to be SetUID. */
 #ifndef InstallXserverSetUID
-# define InstallXserverSetUID	NO
+# define InstallXserverSetUID   NO
 #endif
-
-/* pex? bah.  I'm not going to bother getting the device
- * dependent part of this working.  If I get the time, i'll
- * get glx working instead.
- */
-#define BuildPexExt             NO
 
 /* no direct graphics extension */
 #define BuildXF86DGA            NO
@@ -116,16 +141,6 @@ XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.14 2001/05/18 17:48:23 torrey Exp $
 
 /* no Display Power Management extension */
 #define BuildDPMSExt            NO
-
-#define BuildXvExt              NO
-
-/* no OpenGL libraries */
-#ifndef BuildGLXLibrary	
-# define BuildGLXLibrary        NO
-#endif
-#ifndef BuildGLULibrary
-# define BuildGLULibrary        NO
-#endif
 
 #define BuildLibPathVar         DYLD_LIBRARY_PATH
 

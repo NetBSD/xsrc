@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.6 2001/03/21 16:29:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.8 2001/10/31 22:50:27 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -97,6 +97,7 @@ CountBits(unsigned long mask)
     return count;
 }
 
+#if 0
 /*
 ** A typical implementation would not probably not run through the screen's
 ** visuals to find ones that match the visual configs supplied by the DDX
@@ -155,6 +156,7 @@ static int matchVisuals(__GLXvisualConfig *pGlxVisual, int numVisuals,
     __glXFree(used);
     return numMatchingVisuals;
 }
+#endif
 
 /*
 ** Destroy routine that gets called when a drawable is freed.  A drawable
@@ -202,7 +204,6 @@ static Bool PositionWindow(WindowPtr pWin, int x, int y)
     ScreenPtr pScreen;
     __GLXcontext *glxc;
     __GLXdrawablePrivate *glxPriv;
-    int i;
     Bool ret;
 
     /*

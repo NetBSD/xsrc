@@ -1,3 +1,8 @@
+/*
+ * THIS SAMPLE INPUT DRIVER IS OUT OF DATE.  DO NOT USE IT AS A TEMPLATE
+ * WHEN WRITING A NEW INPUT DRIVER.
+ */
+
 /* 
  * Copyright (c) 1998  Metro Link Incorporated
  *
@@ -24,7 +29,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/sample.c,v 1.8 1999/06/05 15:55:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/sample.c,v 1.11 2002/01/15 15:32:45 dawes Exp $ */
 
 #define _SAMPLE_C_
 /*****************************************************************************
@@ -71,7 +76,7 @@ static XF86ModuleVersionInfo VersionRec =
  * Be sure to set vmin appropriately for your device's protocol. You want to
  * read a full packet before returning
  */
-static char *default_options[] =
+static const char *default_options[] =
 {
 	"BaudRate", "9600",
 	"StopBits", "1",
@@ -101,8 +106,6 @@ TearDownProc( pointer p )
 	ErrorF ("Sample TearDownProc Called\n");
 
 	DeviceOff (local->dev);
-
-	xf86RemoveLocalDevice (local);
 
 	xf86CloseSerial (local->fd);
 	XisbFree (priv->buffer);
@@ -159,7 +162,7 @@ SetupProc(	pointer module,
 	priv->button_threshold = xf86SetIntOption( merged, "ButtonThreshold", 128 );
 
 	s = xf86FindOptionValue (merged, "ReportingMode");
-	if ((s) && (StrCaseCmp (s, "raw") == 0))
+	if ((s) && (strcasecmp (s, "raw") == 0))
 		priv->reporting_mode = TS_Raw;
 	else
 		priv->reporting_mode = TS_Scaled;

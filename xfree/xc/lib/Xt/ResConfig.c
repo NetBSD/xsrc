@@ -1,9 +1,13 @@
-/* $Xorg: ResConfig.c,v 1.4 2000/08/17 19:46:16 cpqbld Exp $ */
+/* $Xorg: ResConfig.c,v 1.5 2001/02/09 02:03:56 xorgcvs Exp $ */
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -48,6 +52,7 @@ dealings in this Software without prior written authorization from the IBM
 Corporation.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/ResConfig.c,v 3.8 2001/12/14 19:56:28 dawes Exp $ */
 
 #include "Intrinsic.h"
 #include "IntrinsicI.h"
@@ -57,10 +62,8 @@ Corporation.
 #include "StringDefs.h"
 #include "ResConfigP.h"
 #include <X11/Xatom.h>
-
-#ifdef DEBUG
 #include <stdio.h>
-#endif
+#include <stdlib.h>
 
 #define MAX_BUFFER 512
 
@@ -696,7 +699,7 @@ _search_widget_tree (w, resource, value)
 {
 	Widget	parent = w;
 	char	*last_part;
-	char	*remainder;
+	char	*remainder = NULL;
 	char	last_token;
 	char	*indx, *copy;
 	char	*loose, *tight;
@@ -988,7 +991,7 @@ _XtResourceConfigurationEH (w, client_data, event)
 	 *      resource and value fields.
 	 */
 		if (data) {
-			resource_len = Strtoul (data, &data_ptr, 10);
+			resource_len = Strtoul ((void *)data, &data_ptr, 10);
 			data_ptr++;
 
 			data_ptr[resource_len] = '\0';

@@ -1,9 +1,13 @@
-/* $Xorg: rpcauth.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: rpcauth.c,v 1.4 2001/02/09 02:05:23 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.4 2001/01/30 22:06:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.7 2001/12/14 20:00:35 dawes Exp $ */
 
 /*
  * SUN-DES-1 authentication mechanism
@@ -39,6 +43,11 @@ from The Open Group.
 #include "dixstruct.h"
 
 #include <rpc/rpc.h>
+
+#ifdef sun
+/* <rpc/auth.h> only includes this if _KERNEL is #defined... */
+extern bool_t xdr_opaque_auth(XDR *, struct opaque_auth *);
+#endif
 
 #if defined(DGUX)
 #include <time.h>
@@ -153,8 +162,8 @@ SecureRPCCheck (data_length, data, client, reason)
     return (XID) ~0L;
 }
     
-
-SecureRPCInit ()
+void
+SecureRPCInit (void)
 {
     if (rpc_id == ~0L)
 	AddAuthorization (9, "SUN-DES-1", 0, (char *) 0);
@@ -169,12 +178,14 @@ XID	id;
     if (data_length)
 	AddHost ((pointer) 0, FamilyNetname, data_length, data);
     rpc_id = id;
+    return 1;
 }
 
 int
-SecureRPCReset ()
+SecureRPCReset (void)
 {
     rpc_id = (XID) ~0L;
+    return 1;
 }
 
 XID
@@ -185,6 +196,7 @@ SecureRPCToID (data_length, data)
     return rpc_id;
 }
 
+int
 SecureRPCFromID (id, data_lenp, datap)
      XID id;
      unsigned short	*data_lenp;
@@ -193,6 +205,7 @@ SecureRPCFromID (id, data_lenp, datap)
     return 0;
 }
 
+int
 SecureRPCRemove (data_length, data)
      unsigned short	data_length;
      char	*data;

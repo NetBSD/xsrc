@@ -30,7 +30,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xrdb/xrdb.c,v 3.13 2001/01/17 23:46:22 dawes Exp $ */
+/* $XFree86: xc/programs/xrdb/xrdb.c,v 3.15 2001/11/06 16:11:37 alanh Exp $ */
 
 /*
  * this program is used to load, or dump the resource manager database
@@ -49,18 +49,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *malloc();
-char *realloc();
-#endif
-
-#if defined(X_NOT_STDC_ENV) && !defined(__EMX__)
-extern int errno;
-#endif
-
 #include <stdarg.h>
 
 #define SCREEN_RESOURCES "SCREEN_RESOURCES"
@@ -132,18 +121,13 @@ char *backup_suffix = BACKUP_SUFFIX;
 Bool dont_execute = False;
 String defines;
 int defines_base;
-char *cmd_defines[512];
+#define MAX_CMD_DEFINES 512
+char *cmd_defines[MAX_CMD_DEFINES];
 int num_cmd_defines = 0;
 String includes;
 Display *dpy;
 Buffer buffer;
 Entries newDB;
-
-#if !defined(sgi) && !defined(WIN32)
-#ifdef X_NOT_STDC_ENV
-extern FILE *popen();
-#endif
-#endif
 
 static void fatal(char *, ...);
 static void addstring ( String *arg, const char *s );
@@ -868,7 +852,11 @@ main(int argc, char *argv[])
 		addstring(&includes, arg);
 		continue;
 	    } else if (arg[1] == 'U' || arg[1] == 'D') {
-		cmd_defines[num_cmd_defines++] = arg;
+		if (num_cmd_defines < MAX_CMD_DEFINES) {
+		    cmd_defines[num_cmd_defines++] = arg;
+		} else {
+		    fatal("%s: Too many -U/-D arguments\n", ProgramName);
+		}
 		continue;
 	    }
 	    Syntax ();
@@ -920,6 +908,7 @@ main(int argc, char *argv[])
 	(whichResources == RALL || whichResources == RSCREENS)
 #endif
 	) {
+	char inputbuf[1024];
 #ifdef WIN32
 	strcpy(tmpname, "\\temp\\xrdb_XXXXXX");
 #else
@@ -946,8 +935,8 @@ main(int argc, char *argv[])
 	if (!fp)
 	    fatal("%s: Failed to open temp file: %s\n", ProgramName,
 		  filename);
-	while ((i = getc(stdin)) != EOF)
-	    putc(i, fp);
+	while (fgets(inputbuf, sizeof(inputbuf), stdin) != NULL) 
+	    fputs(inputbuf, fp);
 	fclose(fp);
     }
 	
@@ -1076,6 +1065,8 @@ Process(int scrno, Bool doScreen, Bool execute)
     FILE *input, *output;
     char *cmd;
 
+    defines.val[defines_base] = '\0';
+    defines.used = defines_base;
     buffer.used = 0;
     InitEntries(&newDB);
     DoScreenDefines(dpy, scrno, &defines);

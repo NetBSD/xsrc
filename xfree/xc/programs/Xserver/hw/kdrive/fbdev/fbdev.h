@@ -21,15 +21,20 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.h,v 1.8 2000/09/27 20:46:36 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.h,v 1.11 2001/06/03 21:52:45 keithp Exp $ */
 
 #ifndef _FBDEV_H_
 #define _FBDEV_H_
-#include "kdrive.h"
 #include <stdio.h>
 #include <linux/fb.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include "kdrive.h"
+#include "layer.h"
+
+#ifdef RANDR
+#include "randrstr.h"
+#endif
 
 typedef struct _fbdevPriv {
     struct fb_var_screeninfo	var;
@@ -43,9 +48,12 @@ typedef struct _fbdevPriv {
 } FbdevPriv;
     
 typedef struct _fbdevScrPriv {
-    Bool			rotate;
+    int				rotation;
     Bool			shadow;
+    LayerPtr			pLayer;
 } FbdevScrPriv;
+
+extern KdCardFuncs  fbdevFuncs;
 
 Bool
 fbdevInitialize (KdCardInfo *card, FbdevPriv *priv);

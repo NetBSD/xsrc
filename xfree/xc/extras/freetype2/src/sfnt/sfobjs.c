@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    SFNT object management (base).                                       */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,7 +23,8 @@
 #include FT_INTERNAL_POSTSCRIPT_NAMES_H
 #include FT_TRUETYPE_IDS_H
 #include FT_TRUETYPE_TAGS_H
-#include FT_INTERNAL_TRUETYPE_ERRORS_H
+
+#include "sferrors.h"
 
 
   /*************************************************************************/
@@ -52,9 +53,9 @@
   /* <Return>                                                              */
   /*    Character string.  NULL if no name is present.                     */
   /*                                                                       */
-  static
-  FT_String*  Get_Name( TT_Face    face,
-                        FT_UShort  nameid )
+  static FT_String*
+  Get_Name( TT_Face    face,
+            FT_UShort  nameid )
   {
     FT_Memory    memory = face->root.memory;
     FT_UShort    n;
@@ -127,9 +128,9 @@
   }
 
 
-  static
-  FT_Encoding  find_encoding( int  platform_id,
-                              int  encoding_id )
+  static FT_Encoding
+  find_encoding( int  platform_id,
+                 int  encoding_id )
   {
     typedef struct  TEncoding
     {
@@ -149,6 +150,7 @@
       { TT_PLATFORM_MACINTOSH,     TT_MAC_ID_ROMAN,     ft_encoding_apple_roman },
 
       { TT_PLATFORM_MICROSOFT,     TT_MS_ID_SYMBOL_CS,  ft_encoding_symbol },
+      { TT_PLATFORM_MICROSOFT,     TT_MS_ID_UCS_4,      ft_encoding_unicode },
       { TT_PLATFORM_MICROSOFT,     TT_MS_ID_UNICODE_CS, ft_encoding_unicode },
       { TT_PLATFORM_MICROSOFT,     TT_MS_ID_SJIS,       ft_encoding_sjis },
       { TT_PLATFORM_MICROSOFT,     TT_MS_ID_GB2312,     ft_encoding_gb2312 },
@@ -177,12 +179,12 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  SFNT_Init_Face( FT_Stream      stream,
-                            TT_Face        face,
-                            FT_Int         face_index,
-                            FT_Int         num_params,
-                            FT_Parameter*  params )
+  FT_LOCAL_DEF FT_Error
+  SFNT_Init_Face( FT_Stream      stream,
+                  TT_Face        face,
+                  FT_Int         face_index,
+                  FT_Int         num_params,
+                  FT_Parameter*  params )
   {
     FT_Error            error;
     FT_Library          library = face->root.driver->root.library;
@@ -199,7 +201,7 @@
       sfnt = (SFNT_Interface*)FT_Get_Module_Interface( library, "sfnt" );
       if ( !sfnt )
       {
-        error = FT_Err_Invalid_File_Format;
+        error = SFNT_Err_Invalid_File_Format;
         goto Exit;
       }
 
@@ -237,15 +239,15 @@
 
 #undef  LOAD_
 #define LOAD_( x )  ( ( error = sfnt->load_##x( face, stream ) ) \
-                      != TT_Err_Ok )
+                      != SFNT_Err_Ok )
 
 
-  FT_LOCAL_DEF
-  FT_Error  SFNT_Load_Face( FT_Stream      stream,
-                            TT_Face        face,
-                            FT_Int         face_index,
-                            FT_Int         num_params,
-                            FT_Parameter*  params )
+  FT_LOCAL_DEF FT_Error
+  SFNT_Load_Face( FT_Stream      stream,
+                  TT_Face        face,
+                  FT_Int         face_index,
+                  FT_Int         num_params,
+                  FT_Parameter*  params )
   {
     FT_Error         error;
     FT_Bool          has_outline;
@@ -276,16 +278,16 @@
     /*                                                             */
 
     /* do we have outlines in there? */
-    has_outline   = ( ( TT_LookUp_Table( face, TTAG_glyf ) != 0 ) ||
-                      ( TT_LookUp_Table( face, TTAG_CFF  ) != 0 ) );
+    has_outline   = FT_BOOL( ( TT_LookUp_Table( face, TTAG_glyf ) != 0 ) ||
+                             ( TT_LookUp_Table( face, TTAG_CFF  ) != 0 ) );
     is_apple_sbit = 0;
-    
+
 #ifdef TT_CONFIG_OPTION_EMBEDDED_BITMAPS
 
     /* if this font doesn't contain outlines, we try to load */
     /* a `bhed' table                                        */
     if ( !has_outline )
-      is_apple_sbit = !LOAD_( bitmap_header );
+      is_apple_sbit = FT_BOOL( !LOAD_( bitmap_header ) );
 
 #endif /* TT_CONFIG_OPTION_EMBEDDED_BITMAPS */
 
@@ -296,10 +298,13 @@
 
     /* load other tables */
     if ( LOAD_( max_profile ) ||
-         LOAD_( charmaps )    ||
-         LOAD_( names )       ||
-         LOAD_( psnames )     )
+         LOAD_( charmaps )    )
       goto Exit;
+      
+    /* the following tables are optional in PCL fonts -- */
+    /* don't check for errors                            */
+    (void)LOAD_( names );
+    (void)LOAD_( psnames );
 
     /* do not load the metrics headers and tables if this is an Apple */
     /* sbit font file                                                 */
@@ -309,12 +314,12 @@
       error = sfnt->load_metrics( face, stream, 0 );
       if ( error )
         goto Exit;
-        
+
       /* try to load the `vhea' and `vmtx' tables at once */
       error = sfnt->load_metrics( face, stream, 1 );
       if ( error )
         goto Exit;
-        
+
       if ( LOAD_( os2 ) )
         goto Exit;
     }
@@ -327,8 +332,8 @@
     if ( sfnt->load_sbits && LOAD_( sbits ) )
     {
       /* return an error if this font file has no outlines */
-      if ( error == TT_Err_Table_Missing && has_outline )
-        error = FT_Err_Ok;
+      if ( error == SFNT_Err_Table_Missing && has_outline )
+        error = SFNT_Err_Ok;
       else
         goto Exit;
     }
@@ -341,7 +346,7 @@
       goto Exit;
 
 #ifdef TT_CONFIG_OPTION_EXTEND_ENGINE
-    if ( ( error = TT_Extension_Create( face ) ) != TT_Err_Ok )
+    if ( ( error = TT_Extension_Create( face ) ) != SFNT_Err_Ok )
       goto Exit;
 #endif
 
@@ -436,8 +441,8 @@
 
 
         charmap->root.face        = (FT_Face)face;
-        charmap->root.platform_id = platform;
-        charmap->root.encoding_id = encoding;
+        charmap->root.platform_id = (FT_UShort)platform;
+        charmap->root.encoding_id = (FT_UShort)encoding;
         charmap->root.encoding    = find_encoding( platform, encoding );
 
         /* now, set root->charmap with a unicode charmap */
@@ -537,13 +542,13 @@
         root->ascender  = face->horizontal.Ascender;
         root->descender = face->horizontal.Descender;
 
-        root->height    = root->ascender - root->descender +
-                          face->horizontal.Line_Gap;
+        root->height    = (FT_Short)( root->ascender - root->descender +
+                                      face->horizontal.Line_Gap );
 
         /* if the line_gap is 0, we add an extra 15% to the text height --  */
         /* this computation is based on various versions of Times New Roman */
         if ( face->horizontal.Line_Gap == 0 )
-          root->height = ( root->height * 115 + 50 ) / 100;
+          root->height = (FT_Short)( ( root->height * 115 + 50 ) / 100 );
 
 #if 0
 
@@ -566,9 +571,9 @@
 
         root->max_advance_width   = face->horizontal.advance_Width_Max;
 
-        root->max_advance_height  = face->vertical_info
+        root->max_advance_height  = (FT_Short)( face->vertical_info
                                       ? face->vertical.advance_Height_Max
-                                      : root->height;
+                                      : root->height );
 
         root->underline_position  = face->postscript.underlinePosition;
         root->underline_thickness = face->postscript.underlineThickness;
@@ -586,8 +591,8 @@
 #undef LOAD_
 
 
-  FT_LOCAL_DEF
-  void  SFNT_Done_Face( TT_Face  face )
+  FT_LOCAL_DEF void
+  SFNT_Done_Face( TT_Face  face )
   {
     FT_Memory        memory = face->root.memory;
     SFNT_Interface*  sfnt   = (SFNT_Interface*)face->sfnt;

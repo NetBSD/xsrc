@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.9 2001/04/16 15:02:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.13 2002/01/16 16:22:27 tsi Exp $ */
 /*
- * Copyright 2000 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -63,6 +63,20 @@
  *              registers are non-FIFO'ed.
  *
  * in8/out8     8-bit counterparts to inr/outr.
+ *
+ * For portability reasons, inr/outr/in8/out8 should be used in preference to
+ * inl/outl/inb/outb to/from any register space starting with CRTC_H_TOTAL_DISP
+ * but before DST_OFF_PITCH (in the order defined by atiregs.h).  None of
+ * inm/outm/outf should ever be used for these registers.
+ *
+ * outf()'s should be grouped together as much as possible, while respecting
+ * any ordering constraints the engine might impose.  Groups larger than 16
+ * outf()'s should be split up into two or more groups as needed (but not
+ * necessarily wanted).  The outf() groups that result should be immediately
+ * preceeded by an ATIMach64WaitForFIFO(n) call, where "n" is the number of
+ * outf()'s in the group with the exception that groups containing a single
+ * outf() should not be thus preceeded.  This means "n" should not be less than
+ * 2, nor larger than 16.
  */
 
 /*
@@ -71,11 +85,11 @@
  *                                    accessed (nor by what).
  */
 
-#define inm(_Register)                                        \
-    MMIO_IN32(pATI->pBlock[GetBits(_Register, BLOCK_SELECT)], \
+#define inm(_Register)                                                   \
+    MMIO_IN32(pATI->pBlock[GetBits(_Register, BLOCK_SELECT)],            \
               (_Register) & MM_IO_SELECT)
-#define outm(_Register, _Value)                                \
-    MMIO_OUT32(pATI->pBlock[GetBits(_Register, BLOCK_SELECT)], \
+#define outm(_Register, _Value)                                          \
+    MMIO_OUT32(pATI->pBlock[GetBits(_Register, BLOCK_SELECT)],           \
                (_Register) & MM_IO_SELECT, _Value)
 
 #ifdef AVOID_CPIO
@@ -85,11 +99,11 @@
 #   define outr(_Register, _Value) \
         MMIO_OUT32(pATI->pBlock[0], (_Register) & MM_IO_SELECT, _Value)
 
-#   define in8(_Register)                                        \
-        MMIO_IN8(pATI->pBlock[0], \
+#   define in8(_Register)                                                \
+        MMIO_IN8(pATI->pBlock[0],                                        \
                  (_Register) & (MM_IO_SELECT | IO_BYTE_SELECT))
-#   define out8(_Register, _Value)                                \
-        MMIO_OUT8(pATI->pBlock[0], \
+#   define out8(_Register, _Value)                                       \
+        MMIO_OUT8(pATI->pBlock[0],                                       \
                   (_Register) & (MM_IO_SELECT | IO_BYTE_SELECT), _Value)
 
 /* Cause a cpp syntax error if any of these are used */
@@ -130,7 +144,19 @@
 extern void ATIMach64PollEngineStatus FunctionPrototype((ATIPtr));
 
 /*
- * MMIO cache definitions
+ * MMIO cache definitions.
+ *
+ * Many FIFO'ed registers can be cached by the driver.  Registers that qualify
+ * for caching must not contain values that can change without driver
+ * intervention.  Thus registers that contain hardware counters, strobe lines,
+ * etc., cannot be cached.  This caching is intended to minimise FIFO use.
+ * There is therefore not much point to enable it for non-FIFO'ed registers.
+ *
+ * The cache for a particular 32-bit register is enabled by coding a
+ * CacheRegister() line for that register in the ATIMach64Set() function.  The
+ * integrity of the cache for a particular register should be verified by the
+ * ATIMach64Sync() function.  This code should be kept in register order, as
+ * defined in atiregs.h.
  */
 #define CacheByte(___Register) pATI->MMIOCached[CacheSlotOf(___Register) >> 3]
 #define CacheBit(___Register)  (0x80U >> (CacheSlotOf(___Register) & 0x07U))
@@ -212,5 +238,32 @@ extern void ATIAccessMach64PLLReg FunctionPrototype((ATIPtr, const CARD8,
         out8(TV_OUT_INDEX, SetBits(_Index, TV_REG_INDEX)); \
         outr(TV_OUT_DATA, _Value);                         \
     } while (0)
+
+/*
+ * Block transfer definitions.
+ */
+
+#if defined(GCCUSESGAS) && \
+    (defined(i386) || defined(__i386) || defined(__i386__))
+
+#define ATIMove32(_pDst, _pSrc, _nCount) \
+    do                                   \
+    {                                    \
+        long d0, d1, d2;                 \
+        __asm__ __volatile__             \
+        (                                \
+            "cld\n\t"                    \
+            "rep ; movsl"                \
+            : "=&c" (d0),                \
+              "=&D" (d1),                \
+              "=&S" (d2)                 \
+            : "0" (_nCount),             \
+              "1" (_pDst),               \
+              "2" (_pSrc)                \
+            : "memory"                   \
+        );                               \
+    } while (0)
+
+#endif
 
 #endif /* ___ATIMACH64IO_H___ */

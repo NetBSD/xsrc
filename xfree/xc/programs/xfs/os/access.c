@@ -1,9 +1,13 @@
-/* $Xorg: access.c,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: access.c,v 1.4 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -39,10 +43,9 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/access.c,v 3.4 2001/01/17 23:45:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/access.c,v 3.7 2001/12/14 20:01:40 dawes Exp $ */
 
 #include	<X11/Xos.h>
-#ifndef MINIX
 #ifndef Lynx
 #include        <sys/param.h>
 #include	<sys/socket.h>
@@ -51,15 +54,13 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #include	<netdb.h>
 #include	<netinet/in.h>
-#else
-#include <net/gen/netdb.h>
-#endif /* !MINIX */
 #include	"clientstr.h"
 #include	"misc.h"
 #include	"site.h"
 #include	"accstr.h"
 #include	"osdep.h"
 #include	"osstruct.h"
+#include	"accstr.h"
 
 long        MaxClients = DEFAULT_CLIENT_LIMIT;
 

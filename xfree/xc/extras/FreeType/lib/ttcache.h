@@ -81,6 +81,7 @@
  *  - inserted an engine instance pointer in the cache structure
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttcache.h,v 1.2 2001/10/28 03:32:04 tsi Exp $ */
 
 #ifndef TTCACHE_H
 #define TTCACHE_H
@@ -154,6 +155,8 @@
   typedef struct TCache_  TCache;
   typedef TCache*         PCache;
 
+#if !defined(FTXCMAP_H) && !defined(FTXSBIT_H)
+
   /* Returns a new list element, either fresh or recycled. */
   /* Note: the returned element is unlinked.               */
 
@@ -205,6 +208,7 @@
   LOCAL_DEF
   TT_Error  TTCache_Done( PEngine_Instance  engine );
 
+#endif /* !FTXCMAP_H && !FTXSBIT_H */
 
 #ifdef __cplusplus
   }

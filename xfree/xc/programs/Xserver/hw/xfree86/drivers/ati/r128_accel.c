@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.9 2001/04/10 16:07:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.13 2001/10/02 19:44:01 herrb Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -83,6 +83,7 @@
 #include "r128.h"
 #include "r128_reg.h"
 #ifdef XF86DRI
+#include "r128_sarea.h"
 #define _XF86DRI_SERVER_
 #include "r128_dri.h"
 #endif
@@ -179,7 +180,7 @@ void R128WaitForFifoFunction(ScrnInfoPtr pScrn, int entries)
 	R128EngineReset(pScrn);
 #ifdef XF86DRI
 	R128CCE_RESET(pScrn, info);
-	if (info->CCE2D) {
+	if (info->directRenderingEnabled) {
 	    R128CCE_START(pScrn, info);
 	}
 #endif
@@ -213,7 +214,7 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 	R128EngineReset(pScrn);
 #ifdef XF86DRI
 	R128CCE_RESET(pScrn, info);
-	if (info->CCE2D) {
+	if (info->directRenderingEnabled) {
 	    R128CCE_START(pScrn, info);
 	}
 #endif
@@ -224,11 +225,13 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 /* Wait until the CCE is completely idle: the FIFO has drained and the
  * CCE is idle.
  */
-static void R128CCEWaitForIdle(ScrnInfoPtr pScrn)
+void R128CCEWaitForIdle(ScrnInfoPtr pScrn)
 {
     R128InfoPtr info = R128PTR(pScrn);
     int         ret;
     int         i    = 0;
+
+    FLUSH_RING();
 
     for (;;) {
 	do {
@@ -259,10 +262,6 @@ static void R128SetupForSolidFill(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     R128WaitForFifo(pScrn, 4);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
 				     | R128_GMC_BRUSH_SOLID_COLOR
@@ -284,10 +283,6 @@ static void  R128SubsequentSolidFillRect(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     R128WaitForFifo(pScrn, 2);
     OUTREG(R128_DST_Y_X,          (y << 16) | x);
     OUTREG(R128_DST_WIDTH_HEIGHT, (w << 16) | h);
@@ -299,10 +294,6 @@ static void R128SetupForSolidLine(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     R128WaitForFifo(pScrn, 3);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
@@ -336,10 +327,6 @@ static void R128SubsequentSolidBresenhamLine(ScrnInfoPtr pScrn,
     unsigned char *R128MMIO = info->MMIO;
     int           flags     = 0;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     if (octant & YMAJOR)         flags |= R128_DST_Y_MAJOR;
     if (!(octant & XDECREASING)) flags |= R128_DST_X_DIR_LEFT_TO_RIGHT;
     if (!(octant & YDECREASING)) flags |= R128_DST_Y_DIR_TOP_TO_BOTTOM;
@@ -365,10 +352,6 @@ static void R128SubsequentSolidHorVertLine(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     R128WaitForFifo(pScrn, 1);
     OUTREG(R128_DP_CNTL, (R128_DST_X_LEFT_TO_RIGHT
@@ -404,15 +387,17 @@ static void R128SetupForDashedLine(ScrnInfoPtr pScrn,
     unsigned char *R128MMIO = info->MMIO;
     CARD32        pat       = *(CARD32 *)(pointer)pattern;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+# define PAT_SHIFT(pat,n) pat << n
+#else
+# define PAT_SHIFT(pat,n) pat >> n
 #endif
 
     switch (length) {
-    case  2: pat |= pat <<  2; /* fall through */
-    case  4: pat |= pat <<  4; /* fall through */
-    case  8: pat |= pat <<  8; /* fall through */
-    case 16: pat |= pat << 16;
+    case  2: pat |= PAT_SHIFT(pat,2); /* fall through */
+    case  4: pat |= PAT_SHIFT(pat,4); /* fall through */
+    case  8: pat |= PAT_SHIFT(pat,8); /* fall through */
+    case 16: pat |= PAT_SHIFT(pat,16);
     }
 
     R128WaitForFifo(pScrn, 5);
@@ -438,10 +423,6 @@ static void R128SubsequentDashedBresenhamLine(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     int           flags     = 0;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     if (octant & YMAJOR)         flags |= R128_DST_Y_MAJOR;
     if (!(octant & XDECREASING)) flags |= R128_DST_X_DIR_LEFT_TO_RIGHT;
@@ -479,10 +460,6 @@ static void R128SubsequentSolidFillTrap(ScrnInfoPtr pScrn, int y, int h,
     int           Rymajor   = 0;
     int           origdxL   = dxL;
     int           origdxR   = dxR;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     R128TRACE(("Trap %d %d; L %d %d %d %d; R %d %d %d %d\n",
 	       y, h,
@@ -534,10 +511,6 @@ static void R128SetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     info->xdir = xdir;
     info->ydir = ydir;
     R128WaitForFifo(pScrn, 3);
@@ -552,7 +525,7 @@ static void R128SetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 					? R128_DST_Y_TOP_TO_BOTTOM
 					: 0)));
 
-    if (trans_color != -1) {
+    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
 				/* Set up for transparency */
 	R128WaitForFifo(pScrn, 3);
 	OUTREG(R128_CLR_CMP_CLR_SRC, trans_color);
@@ -570,10 +543,6 @@ static void R128SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     if (info->xdir < 0) xa += w - 1, xb += w - 1;
     if (info->ydir < 0) ya += h - 1, yb += h - 1;
@@ -604,10 +573,6 @@ static void R128SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     R128WaitForFifo(pScrn, 6);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
 				     | (bg == -1
@@ -631,10 +596,6 @@ static void R128SubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     R128WaitForFifo(pScrn, 3);
     OUTREG(R128_BRUSH_Y_X,        (patterny << 8) | patternx);
     OUTREG(R128_DST_Y_X,          (y << 16) | x);
@@ -653,10 +614,6 @@ static void R128SetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     R128TRACE(("Color8x8 %d %d %d\n", trans_color, patx, paty));
 
@@ -685,10 +642,6 @@ static void R128SubsequentColor8x8PatternFillRect( ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     R128TRACE(("Color8x8 %d,%d %d,%d %d %d\n", patx, paty, x, y, w, h));
     R128WaitForFifo(pScrn, 3);
@@ -750,10 +703,6 @@ static void R128SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     R128WaitForFifo(pScrn, 4);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
 				     | R128_GMC_DST_CLIPPING
@@ -780,10 +729,6 @@ static void R128SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     unsigned char *R128MMIO = info->MMIO;
     int x1clip = x+skipleft;
     int x2clip = x+w;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     info->scanline_h      = h;
     info->scanline_words  = (w + 31) >> 5;
@@ -831,10 +776,6 @@ static void R128SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
     int             left      = info->scanline_words;
     volatile CARD32 *d;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     if (info->scanline_direct) return;
     --info->scanline_h;
     while (left) {
@@ -881,10 +822,6 @@ static void R128SetupForScanlineImageWrite(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
-
     info->scanline_bpp = bpp;
 
     R128WaitForFifo(pScrn, 2);
@@ -920,10 +857,6 @@ static void R128SubsequentScanlineImageWriteRect(ScrnInfoPtr pScrn,
     int x2clip = x+w;
 
     int shift = 0; /* 32bpp */
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     if (pScrn->bitsPerPixel == 8) shift = 3;
     else if (pScrn->bitsPerPixel == 16) shift = 1;
@@ -972,10 +905,6 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
     int             i;
     int             left      = info->scanline_words;
     volatile CARD32 *d;
-
-#ifdef XF86DRI
-    R128CCE_TO_MMIO(pScrn, info);
-#endif
 
     if (info->scanline_direct) return;
     --info->scanline_h;
@@ -1069,18 +998,475 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     OUTREGP(R128_DP_DATATYPE, 0, ~R128_HOST_BIG_ENDIAN_EN);
 #endif
 
+#ifdef XF86DRI
+    info->sc_left         = 0x00000000;
+    info->sc_right        = R128_DEFAULT_SC_RIGHT_MAX;
+    info->sc_top          = 0x00000000;
+    info->sc_bottom       = R128_DEFAULT_SC_BOTTOM_MAX;
+
+    info->re_top_left     = 0x00000000;
+    info->re_width_height = ((0x7ff << R128_RE_WIDTH_SHIFT) |
+			     (0x7ff << R128_RE_HEIGHT_SHIFT));
+
+    info->aux_sc_cntl     = 0x00000000;
+#endif
+
     R128WaitForIdle(pScrn);
 }
 
 #ifdef XF86DRI
-    /* FIXME: When direct rendering is enabled, we should use the CCE to
-       draw 2D commands */
-static void R128CCEAccelInit(XAAInfoRecPtr a)
+
+/* Setup for XAA SolidFill. */
+static void R128CCESetupForSolidFill(ScrnInfoPtr pScrn,
+				     int color, int rop,
+				     unsigned int planemask)
 {
-    a->Flags                            = 0;
+    R128InfoPtr   info = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 8 );
+
+    OUT_RING_REG( R128_DP_GUI_MASTER_CNTL,
+		  (info->dp_gui_master_cntl
+		   | R128_GMC_BRUSH_SOLID_COLOR
+		   | R128_GMC_SRC_DATATYPE_COLOR
+		   | R128_ROP[rop].pattern) );
+
+    OUT_RING_REG( R128_DP_BRUSH_FRGD_CLR,  color );
+    OUT_RING_REG( R128_DP_WRITE_MASK,	   planemask );
+    OUT_RING_REG( R128_DP_CNTL,	           (R128_DST_X_LEFT_TO_RIGHT |
+					    R128_DST_Y_TOP_TO_BOTTOM));
+    ADVANCE_RING();
+}
+
+/* Subsequent XAA SolidFillRect.
+
+   Tests: xtest CH06/fllrctngl, xterm
+*/
+static void R128CCESubsequentSolidFillRect(ScrnInfoPtr pScrn,
+					   int x, int y, int w, int h)
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 4 );
+
+    OUT_RING_REG( R128_DST_Y_X,          (y << 16) | x );
+    OUT_RING_REG( R128_DST_WIDTH_HEIGHT, (w << 16) | h );
+
+    ADVANCE_RING();
+}
+
+/* Setup for XAA screen-to-screen copy.
+
+   Tests: xtest CH06/fllrctngl (also tests transparency).
+*/
+static void R128CCESetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
+					       int xdir, int ydir, int rop,
+					       unsigned int planemask,
+					       int trans_color)
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    info->xdir = xdir;
+    info->ydir = ydir;
+
+    BEGIN_RING( 6 );
+
+    OUT_RING_REG( R128_DP_GUI_MASTER_CNTL,
+		  (info->dp_gui_master_cntl
+		   | R128_GMC_BRUSH_NONE
+		   | R128_GMC_SRC_DATATYPE_COLOR
+		   | R128_ROP[rop].rop
+		   | R128_DP_SRC_SOURCE_MEMORY) );
+
+    OUT_RING_REG( R128_DP_WRITE_MASK, planemask );
+    OUT_RING_REG( R128_DP_CNTL,
+		  ((xdir >= 0 ? R128_DST_X_LEFT_TO_RIGHT : 0) |
+		   (ydir >= 0 ? R128_DST_Y_TOP_TO_BOTTOM : 0)) );
+
+    ADVANCE_RING();
+
+    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
+	BEGIN_RING( 6 );
+
+	OUT_RING_REG( R128_CLR_CMP_CLR_SRC, trans_color );
+	OUT_RING_REG( R128_CLR_CMP_MASK,    R128_CLR_CMP_MSK );
+	OUT_RING_REG( R128_CLR_CMP_CNTL,    (R128_SRC_CMP_NEQ_COLOR |
+					     R128_CLR_CMP_SRC_SOURCE) );
+
+	ADVANCE_RING();
+    }
+}
+
+/* Subsequent XAA screen-to-screen copy. */
+static void R128CCESubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
+						 int xa, int ya,
+						 int xb, int yb,
+						 int w, int h)
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    if (info->xdir < 0) xa += w - 1, xb += w - 1;
+    if (info->ydir < 0) ya += h - 1, yb += h - 1;
+
+    BEGIN_RING( 6 );
+
+    OUT_RING_REG( R128_SRC_Y_X,          (ya << 16) | xa );
+    OUT_RING_REG( R128_DST_Y_X,          (yb << 16) | xb );
+    OUT_RING_REG( R128_DST_HEIGHT_WIDTH, (h << 16) | w );
+
+    ADVANCE_RING();
+}
+
+/* Solid lines */
+static void R128CCESetupForSolidLine(ScrnInfoPtr pScrn,
+				  int color, int rop, unsigned int planemask)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 6 );
+
+    OUT_RING_REG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
+				     | R128_GMC_BRUSH_SOLID_COLOR
+				     | R128_GMC_SRC_DATATYPE_COLOR
+				     | R128_ROP[rop].pattern));
+    OUT_RING_REG(R128_DP_BRUSH_FRGD_CLR,  color);
+    OUT_RING_REG(R128_DP_WRITE_MASK,      planemask);
+
+    ADVANCE_RING();
+}
+
+static void R128CCESubsequentSolidBresenhamLine(ScrnInfoPtr pScrn,
+					     int x, int y,
+					     int major, int minor,
+					     int err, int len, int octant)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    int           flags     = 0;
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    if (octant & YMAJOR)         flags |= R128_DST_Y_MAJOR;
+    if (!(octant & XDECREASING)) flags |= R128_DST_X_DIR_LEFT_TO_RIGHT;
+    if (!(octant & YDECREASING)) flags |= R128_DST_Y_DIR_TOP_TO_BOTTOM;
+
+    BEGIN_RING( 12 );
+
+    OUT_RING_REG(R128_DP_CNTL_XDIR_YDIR_YMAJOR, flags);
+    OUT_RING_REG(R128_DST_Y_X,                  (y << 16) | x);
+    OUT_RING_REG(R128_DST_BRES_ERR,             err);
+    OUT_RING_REG(R128_DST_BRES_INC,             minor);
+    OUT_RING_REG(R128_DST_BRES_DEC,             -major);
+    OUT_RING_REG(R128_DST_BRES_LNTH,            len);
+
+    ADVANCE_RING();
+}
+
+static void R128CCESubsequentSolidHorVertLine(ScrnInfoPtr pScrn,
+					   int x, int y, int len, int dir )
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 2 );
+
+    OUT_RING_REG(R128_DP_CNTL, (R128_DST_X_LEFT_TO_RIGHT
+			  | R128_DST_Y_TOP_TO_BOTTOM));
+
+    ADVANCE_RING();
+
+    if (dir == DEGREES_0) {
+	R128CCESubsequentSolidFillRect(pScrn, x, y, len, 1);
+    } else {
+	R128CCESubsequentSolidFillRect(pScrn, x, y, 1, len);
+    }
+}
+
+/* Dashed lines */
+static void R128CCESetupForDashedLine(ScrnInfoPtr pScrn,
+				   int fg, int bg,
+				   int rop, unsigned int planemask,
+				   int length, unsigned char *pattern)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    CARD32        pat       = *(CARD32 *)(pointer)pattern;
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+# define PAT_SHIFT(pat,n) pat << n
+#else
+# define PAT_SHIFT(pat,n) pat >> n
+#endif
+
+    switch (length) {
+    case  2: pat |= PAT_SHIFT(pat,2); /* fall through */
+    case  4: pat |= PAT_SHIFT(pat,4); /* fall through */
+    case  8: pat |= PAT_SHIFT(pat,8); /* fall through */
+    case 16: pat |= PAT_SHIFT(pat,16);
+    }
+
+    BEGIN_RING( 10 );
+
+    OUT_RING_REG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
+				     | (bg == -1
+					? R128_GMC_BRUSH_32x1_MONO_FG_LA
+					: R128_GMC_BRUSH_32x1_MONO_FG_BG)
+				     | R128_ROP[rop].pattern
+				     | R128_GMC_BYTE_LSB_TO_MSB));
+    OUT_RING_REG(R128_DP_WRITE_MASK,      planemask);
+    OUT_RING_REG(R128_DP_BRUSH_FRGD_CLR,  fg);
+    OUT_RING_REG(R128_DP_BRUSH_BKGD_CLR,  bg);
+    OUT_RING_REG(R128_BRUSH_DATA0,        pat);
+
+    ADVANCE_RING();
+}
+
+static void R128CCESubsequentDashedBresenhamLine(ScrnInfoPtr pScrn,
+					      int x, int y,
+					      int major, int minor,
+					      int err, int len, int octant,
+					      int phase)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    int           flags     = 0;
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    if (octant & YMAJOR)         flags |= R128_DST_Y_MAJOR;
+    if (!(octant & XDECREASING)) flags |= R128_DST_X_DIR_LEFT_TO_RIGHT;
+    if (!(octant & YDECREASING)) flags |= R128_DST_Y_DIR_TOP_TO_BOTTOM;
+
+    BEGIN_RING( 14 );
+
+    OUT_RING_REG(R128_DP_CNTL_XDIR_YDIR_YMAJOR, flags);
+    OUT_RING_REG(R128_DST_Y_X,                  (y << 16) | x);
+    OUT_RING_REG(R128_BRUSH_Y_X,                (phase << 16) | phase);
+    OUT_RING_REG(R128_DST_BRES_ERR,             err);
+    OUT_RING_REG(R128_DST_BRES_INC,             minor);
+    OUT_RING_REG(R128_DST_BRES_DEC,             -major);
+    OUT_RING_REG(R128_DST_BRES_LNTH,            len);
+
+    ADVANCE_RING();
+}
+
+/* Mono 8x8 pattern color expansion */
+static void R128CCESetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
+					   int patternx, int patterny,
+					   int fg, int bg, int rop,
+					   unsigned int planemask)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 12 );
+
+    OUT_RING_REG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
+				     | (bg == -1
+					? R128_GMC_BRUSH_8X8_MONO_FG_LA
+					: R128_GMC_BRUSH_8X8_MONO_FG_BG)
+				     | R128_ROP[rop].pattern
+				     | R128_GMC_BYTE_LSB_TO_MSB));
+    OUT_RING_REG(R128_DP_WRITE_MASK,      planemask);
+    OUT_RING_REG(R128_DP_BRUSH_FRGD_CLR,  fg);
+    OUT_RING_REG(R128_DP_BRUSH_BKGD_CLR,  bg);
+    OUT_RING_REG(R128_BRUSH_DATA0,        patternx);
+    OUT_RING_REG(R128_BRUSH_DATA1,        patterny);
+
+    ADVANCE_RING();
+}
+
+static void R128CCESubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
+						 int patternx, int patterny,
+						 int x, int y, int w, int h)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 6 );
+
+    OUT_RING_REG(R128_BRUSH_Y_X,        (patterny << 8) | patternx);
+    OUT_RING_REG(R128_DST_Y_X,          (y << 16) | x);
+    OUT_RING_REG(R128_DST_HEIGHT_WIDTH, (h << 16) | w);
+
+    ADVANCE_RING();
+}
+
+/* Get an indirect buffer for the CCE 2D acceleration commands.
+ */
+drmBufPtr R128CCEGetBuffer( ScrnInfoPtr pScrn )
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    drmDMAReq dma;
+    drmBufPtr buf = NULL;
+    int indx = 0;
+    int size = 0;
+    int ret, i = 0;
+
+#if 0
+    /* FIXME: pScrn->pScreen has not been initialized when this is first
+       called from RADEONSelectBuffer via RADEONDRICPInit.  We could use
+       the screen index from pScrn, which is initialized, and then get
+       the screen from screenInfo.screens[index], but that is a hack. */
+    dma.context = DRIGetContext(pScrn->pScreen);
+#else
+    dma.context = 0x00000001; /* This is the X server's context */
+#endif
+    dma.send_count = 0;
+    dma.send_list = NULL;
+    dma.send_sizes = NULL;
+    dma.flags = 0;
+    dma.request_count = 1;
+    dma.request_size = R128_BUFFER_SIZE;
+    dma.request_list = &indx;
+    dma.request_sizes = &size;
+    dma.granted_count = 0;
+
+    while ( 1 ) {
+	do {
+	    ret = drmDMA( info->drmFD, &dma );
+	    if ( ret && ret != -EBUSY ) {
+		xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
+			    "%s: CCE GetBuffer %d\n", __FUNCTION__, ret );
+	    }
+	} while ( ( ret == -EBUSY ) && ( i++ < R128_TIMEOUT ) );
+
+	if ( ret == 0 ) {
+	    buf = &info->buffers->list[indx];
+	    buf->used = 0;
+	    if ( R128_VERBOSE ) {
+		xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+			    "   GetBuffer returning %d\n", buf->idx );
+	    }
+	    return buf;
+	}
+
+	xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
+		    "GetBuffer timed out, resetting engine...\n");
+	R128EngineReset( pScrn );
+ 	/* R128EngineRestore( pScrn ); FIXME ??? */
+
+	/* Always restart the engine when doing CCE 2D acceleration */
+	R128CCE_RESET( pScrn, info );
+	R128CCE_START( pScrn, info );
+    }
+}
+
+/* Flush the indirect buffer to the kernel for submission to the card.
+ */
+void R128CCEFlushIndirect( ScrnInfoPtr pScrn )
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    drmBufPtr buffer = info->indirectBuffer;
+    int start = info->indirectStart;
+    int discard;
+
+    if ( !buffer )
+	return;
+
+    if ( start == buffer->used )
+	return;
+
+    discard = ( buffer->used + RING_THRESHOLD > buffer->total );
+
+    drmR128FlushIndirectBuffer( info->drmFD, buffer->idx,
+				start, buffer->used, discard );
+
+    if ( discard ) {
+	info->indirectBuffer = R128CCEGetBuffer( pScrn );
+	info->indirectStart = 0;
+    } else {
+	info->indirectStart = buffer->used;
+    }
+}
+
+/* Flush and release the indirect buffer.
+ */
+void R128CCEReleaseIndirect( ScrnInfoPtr pScrn )
+{
+    R128InfoPtr   info = R128PTR(pScrn);
+    drmBufPtr buffer = info->indirectBuffer;
+    int start = info->indirectStart;
+
+    info->indirectBuffer = NULL;
+    info->indirectStart = 0;
+
+    if ( !buffer )
+	return;
+
+    drmR128FlushIndirectBuffer( info->drmFD, buffer->idx,
+				start, buffer->used, 1 );
+}
+
+static void R128CCEAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
+{
+    a->Flags                            = (PIXMAP_CACHE
+					   | OFFSCREEN_PIXMAPS
+					   | LINEAR_FRAMEBUFFER);
 
 				/* Sync */
     a->Sync                             = R128CCEWaitForIdle;
+
+    /* Solid Filled Rectangle */
+    a->PolyFillRectSolidFlags           = 0;
+    a->SetupForSolidFill                = R128CCESetupForSolidFill;
+    a->SubsequentSolidFillRect          = R128CCESubsequentSolidFillRect;
+    
+				/* Screen-to-screen Copy */
+				/* Transparency uses the wrong colors for
+				   24 bpp mode -- the transparent part is
+				   correct, but the opaque color is wrong.
+				   This can be seen with netscape's I-bar
+				   cursor when editing in the URL location
+				   box. */
+    a->ScreenToScreenCopyFlags          = ((pScrn->bitsPerPixel == 24)
+					   ? NO_TRANSPARENCY
+					   : 0);
+    a->SetupForScreenToScreenCopy       = R128CCESetupForScreenToScreenCopy;
+    a->SubsequentScreenToScreenCopy     = R128CCESubsequentScreenToScreenCopy;
+
+				/* Bresenham Solid Lines */
+    a->SetupForSolidLine               = R128CCESetupForSolidLine;
+    a->SubsequentSolidBresenhamLine    = R128CCESubsequentSolidBresenhamLine;
+    a->SubsequentSolidHorVertLine      = R128CCESubsequentSolidHorVertLine;
+
+				/* Bresenham Dashed Lines*/
+    a->SetupForDashedLine              = R128CCESetupForDashedLine;
+    a->SubsequentDashedBresenhamLine   = R128CCESubsequentDashedBresenhamLine;
+    a->DashPatternMaxLength            = 32;
+    a->DashedLineFlags                 = (LINE_PATTERN_LSBFIRST_LSBJUSTIFIED
+					  | LINE_PATTERN_POWER_OF_2_ONLY);
+
+				/* Mono 8x8 Pattern Fill (Color Expand) */
+    a->SetupForMono8x8PatternFill       = R128CCESetupForMono8x8PatternFill;
+    a->SubsequentMono8x8PatternFillRect = R128CCESubsequentMono8x8PatternFillRect;
+    a->Mono8x8PatternFillFlags          = (HARDWARE_PATTERN_PROGRAMMED_BITS
+					   | HARDWARE_PATTERN_PROGRAMMED_ORIGIN
+					   | HARDWARE_PATTERN_SCREEN_ORIGIN
+					   | BIT_ORDER_IN_BYTE_LSBFIRST);
 }
 #endif
 
@@ -1183,7 +1569,8 @@ Bool R128AccelInit(ScreenPtr pScreen)
 #ifdef XF86DRI
     /* FIXME: When direct rendering is enabled, we should use the CCE to
        draw 2D commands */
-    if (info->CCE2D) R128CCEAccelInit(a);
+    if (info->directRenderingEnabled)
+	R128CCEAccelInit(pScrn, a);
     else
 #endif
 	R128MMIOAccelInit(pScrn, a);

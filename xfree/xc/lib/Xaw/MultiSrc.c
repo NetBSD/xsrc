@@ -1,4 +1,4 @@
-/* $Xorg: MultiSrc.c,v 1.3 2000/08/17 19:45:35 cpqbld Exp $ */
+/* $Xorg: MultiSrc.c,v 1.4 2001/02/09 02:03:44 xorgcvs Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -27,13 +27,17 @@
  *
  * Much code taken from X11R3 String and Disk Sources.
  */
-/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.21 2001/01/26 22:45:59 herrb Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.24 2001/12/14 19:54:41 dawes Exp $ */
 
 /*
 
 Copyright 1991, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -82,9 +86,6 @@ in this Software without prior written authorization from The Open Group.
 #define Size_t size_t
 #endif
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 /*
  * Class Methods
@@ -1162,7 +1163,7 @@ StorePiecesInString(MultiSrcObject src)
 static FILE *
 InitStringOrFile(MultiSrcObject src, Bool newString)
 {
-    mode_t open_mode;
+    mode_t open_mode = 0;
     const char *fdopen_mode = NULL;
     int fd;
     FILE *file;

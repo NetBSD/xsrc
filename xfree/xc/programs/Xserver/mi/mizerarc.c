@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/mizerarc.c,v 1.4 2001/01/17 22:37:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mizerarc.c,v 1.6 2001/12/14 20:00:28 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ Author:  Bob Scheifler, MIT X Consortium
 
 ********************************************************/
 
-/* $Xorg: mizerarc.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
+/* $Xorg: mizerarc.c,v 1.4 2001/02/09 02:05:22 xorgcvs Exp $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"
@@ -499,12 +503,14 @@ miZeroArcPts(arc, pts)
     }
 
 static void
-miZeroArcDashPts(pGC, arc, dinfo, points, maxPts, evenPts, oddPts)
-    GCPtr pGC;
-    xArc *arc;
-    DashInfo *dinfo;
-    int maxPts;
-    register DDXPointPtr points, *evenPts, *oddPts;
+miZeroArcDashPts(
+    GCPtr pGC,
+    xArc *arc,
+    DashInfo *dinfo,
+    register DDXPointPtr points,
+    int maxPts,
+    register DDXPointPtr *evenPts, 
+    register DDXPointPtr *oddPts )
 {
     miZeroArcRec info;
     register int x, y, a, b, d, mask;
@@ -707,14 +713,14 @@ miZeroPolyArc(pDraw, pGC, narcs, parcs)
     xArc	*parcs;
 {
     int maxPts = 0;
-    register int n, maxw;
+    register int n, maxw = 0;
     register xArc *arc;
     register int i;
     DDXPointPtr points, pts, oddPts;
     register DDXPointPtr pt;
     int numPts;
     Bool dospans;
-    int *widths;
+    int *widths = NULL;
     XID fgPixel = pGC->fgPixel;
     DashInfo dinfo;
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/README.pm3,v 1.11 2001/05/08 19:31:22 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/README.pm3,v 1.12 2001/08/18 11:37:30 alanh Exp $ */
   
 STATUS as of Tue,  8 May 2001 19:01:39 +0200
   
@@ -23,22 +23,24 @@ Working :
     - Bitmap Writes using direct FIFO writes with or without FIFO Disconnect.
     - Pixmap Writes using direct FIFO writes with or without FIFO Disconnect.
   * Appian J2000 second head initialization.
-  * Dual head : The console fonts will get trashed, but dual head works.
   * Xv : Hardware video scaler :
     - Needs checking on a big endian machine.
-    - Needs acceleration to work.
-    - Clipping supported trough the alpha channel in depth 15 and 24
-      and with an overlay key color in depth 8 and 16.
+    - Needs acceleration to work - there is a hardware bug in YV12 mode.
     - Support both dual head and single head, trough gamma or permedia3.
+    - NOTE: depth 15 and 16 currently broken as I can't figure out the
+      colorKey equation. From the docs it needs to be padded to 8bits per RGB,
+      but that doesn't seem to work either. FIXME.
     - Attributes are :
       - FILTER : None, Partial (X only) or Full filtering.
-      - MIRROR : X and/or Y Axis mirroring.
-      - ALPHA :
+      - COLORKEY : Speaks for itself
+      - DOUBLE_BUFFER : Speaks for itself
+      - AUTOPAINT_COLORKEY : Speaks for itself
+      - MIRROR : X and/or Y Axis mirroring. (NOT DONE)
+      - ALPHA : (NOT DONE)
         - 0 -> FB Only
         - 1 -> 25% Video, 75% FB
         - 2 -> 75% Video, 25% FB
         - 3 -> Video Only
-      - [TODO] VIDEOKEY : Overlay Key Color for clipping in depth 8 and 16.
   * DRI : Work is underway.
 
 Not Working :
@@ -51,14 +53,6 @@ Not Working :
     - Render extension initialization.
     - CPUToScreenTexture.
     - CPUToScreenAlphaTexture.
-  * [NEED FIX] Xv has still some minor problems :
-    - depth 8 does not work, but then it may be the app i am using.
-    - when using 2D accels there is some unstability in the video display. I
-      guess this is because there is then not enough bandwith to do the
-      copying of the data in time. After a time of the above, the images
-      becomes black. It will come back once stopvideo is called.
-      [FIX] i will disable VideoOverlay each 25 frames, this causes a flicker,
-      but at least it will bing the image back.
   * [WORK IS UNDERWAY] DRI/OpenGL (only together with a gamma chip) :
     - DRI support should be ok, but accelerated openGL is not yet supported. 
     - The accelerated OpenGL library supposes we are using a gamma together
@@ -66,24 +60,12 @@ Not Working :
 
 Known problems :
 
-  * Console gets broken when using dual headed mode. The culprit seems to be
-    the vga graphics index & port (GraphicsIndexReg : 0x63ce, GraphicsPort :
-    0x3cf). I had to use IO acces for both these two, because if not, console
-    fonts would get trashed even in mono headed mode.
-    [FIX] Well, if you really need the console and are running linux, just use
-    vesafb, it will be a bit slower, but the fonts will no more become
-    corrupt. Maybe i will even try writting a specific fbdev for the pm3,
-    which will be much faster and have more functionality.
-    [FIX2] try : consolechars -d, it should reload the console fonts.
   * [FIXED] R-B inversion. Sometimes, all of a sudden, it seems as the
     RGB order gets changed. going to console and back solves this.
     Well, this is partly fixed, but still appears under very heavy load.
-  * [FIXED] When moving a window around a lot quickly, the video outputs dies.
-    Well, this is partly fixed, but still appears under very heavy load.
- => [NOTE] If this two still happens, try disabling the Hardware cursor, with
+ => [NOTE] If this still happens, try disabling the Hardware cursor, with
     the "SWCursor" option to your device XF86Config section.
-  * Sometimes there are blue transparent garbage in the form of small
-    horizontal bands, few pixels high, and more pixels width, maybe 64pixels ?
-    This may be a hardware bug.
+ => [NOTE2] Or, try starting the Xserver with the -nosilk option.
 
 Sven Luther <luther@dpt-info.u-strasbg.fr>
+Alan Hourihane <alanh@fairlite.demon.co.uk>

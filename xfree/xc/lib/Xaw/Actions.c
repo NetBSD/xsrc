@@ -25,7 +25,7 @@
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Actions.c,v 3.15 2000/09/26 15:56:53 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/Actions.c,v 3.16 2001/10/30 04:56:38 paulo Exp $ */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -275,6 +275,7 @@ get_token(XawEvalInfo *info)
 	      /* '\\' may have been used to escape a resource name.
 	       */
 
+	      succed = True;
 	      info->value = info->parse_proc(info->widget, value, info->event,
 					     &succed) & 1;
 	      if (!succed)

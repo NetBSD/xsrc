@@ -1,18 +1,14 @@
-XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.7 1998/07/25 05:57:16 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.8 2001/06/30 22:41:43 tsi Exp $
 
 /*
- * This is for SCO Open Server 5.0.2 or later.
+ * This is for SCO Open Server 5.0.6A or later.
  */
 
-#ifndef ScoOsMouse
-# define ScoOsMouse             YES
-#endif
-
 #ifndef OSName
-#define OSName                  UNIX System V/386 Open Server 5.0.4
+#define OSName                  UNIX System V/386 Open Server Release 5
 #endif
 #ifndef OSVendor
-#define OSVendor                SCO
+#define OSVendor                Caldera
 #endif
 #ifndef OSMajorVersion
 #define OSMajorVersion          5
@@ -21,7 +17,7 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.7 1998/07/25 05:57:16 dawes Exp $
 #define OSMinorVersion          0
 #endif
 #ifndef OSTeenyVersion
-#define OSTeenyVersion          4
+#define OSTeenyVersion          6
 #endif
 
 /*
@@ -35,7 +31,7 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.7 1998/07/25 05:57:16 dawes Exp $
  * product of this is that we get better signals too.
  */
 
-#define StandardDefines         -Dsco -DSCO -DSYSV -Di386 -DSCO325 -DFD_SETSIZE=256 -D_NO_STATIC
+#define StandardDefines         -Dsco -DSCO -DSYSV -Di386 -DSCO325 -DFD_SETSIZE=256 -D_NO_STATIC -DMAXPATHLEN=1024
 #ifdef HasGcc2
 # define DefaultCCOptions       -melf GccWarningOptions
 # define CcCmd                  gcc
@@ -69,22 +65,17 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.7 1998/07/25 05:57:16 dawes Exp $
 #endif
 
 #define XawI18nDefines          -DHAS_WCHAR_H -DHAS_ISW_FUNCS
-#if ScoOsMouse
-# define ServerExtraSysLibs     $(CBRT) -lm -levent SCODynamicFlags
-# define ServerExtraDefines     ServerCCOptions -DUSE_OSMOUSE XFree86ServerDefines
-#else
-# define ServerExtraSysLibs     $(CBRT) -lm SCODynamicFlags
-# define ServerExtraDefines     ServerCCOptions XFree86ServerDefines
-#endif
+#define ServerExtraSysLibs      $(CBRT) -lm -levent SCODynamicFlags
 #define ExtraLibraries          -lsocket
 #define NeedWidePrototypes      NO
-#define ServerOSDefines         -DDDXTIME
+#define ServerOSDefines         -DDDXTIME XFree86ServerOSDefines
 #define ToolkitStringsABIOptions -intelabi
 #define ThreadedX               NO
 #define HasThreadSafeAPI        NO
 #define HasNdbm                 YES
 #define HasVFork                YES
 #define HasPutenv               YES
+#define HasSnprintf             YES
 #define ExecableScripts         YES
 #define HasShadowPasswd         YES
 #define ManSourcePath           $(MANPATH)/cat.
@@ -107,26 +98,23 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.7 1998/07/25 05:57:16 dawes Exp $
 #define LdCombineFlags          -r 
 
 #define HasLdRunPath            YES
-#define HasPoll                 NO
+#define HasPoll                 YES
 #define PatheticCpp             YES
 
 #define ArCmdBase               ar
 #define AsCmd                   as
 #define CppCmd                  /lib/cpp
 #define LdCmd                   ld
-#define LexCmd                  lex
+#define LexCmd                  flex
 #define MakeCmd	                make
 #define YaccCmd                 yacc
 
 #define DefaultUserPath         /bin:/usr/bin:$(BINDIR):/usr/bin/X11:/usr/local/bin:/etc
 #define DefaultSystemPath       /etc:/bin:/usr/bin:$(BINDIR):/usr/bin/X11
 
-/*
- * If you are compiling on an SCO Open Server release prior to 5.0.2,
- * you may need to remove -DLOCALCONN. There have been reports of it
- * working on some 5.0.0 machines but not others.
- */
 #define ConnectionFlags         -DLOCALCONN -DTCPCONN -DUNIXCONN 
+
+#define SharedGLUReqs           $(LDPRELIB) $(XLIB) $(GLXLIB)
 
 #define InstallManPageAliases(file,destdir,aliases)                     @@\
 install.man::                                                           @@\
@@ -140,7 +128,4 @@ install.man::                                                           @@\
 #include <scoLib.rules>  /* minor changes to sv4Lib.rules */
 #include <sv4Lib.rules>
 
-#ifdef i386Architecture
 #include <xfree86.cf>
-#endif
-

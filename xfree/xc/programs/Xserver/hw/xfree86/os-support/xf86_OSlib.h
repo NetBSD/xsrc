@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.81.2.1 2001/05/29 16:38:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.89 2001/12/24 23:21:25 dawes Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -98,12 +98,9 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
 #endif
 
-#if defined(MACH386) || defined(__OSF__)
-# undef NULL
-#endif /* MACH386 || __OSF__ */
-
 #include <stdio.h>
 #include <ctype.h>
+#include <stddef.h>
 
 /**************************************************************************/
 /* SYSV386 (SVR3, SVR4) - But not Solaris8                                */
@@ -245,10 +242,6 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  endif
 # endif
 
-# ifndef NULL
-#  define NULL 0
-# endif
-
 #endif /* (SYSV || SVR4) && !DGUX */
 
 /**********
@@ -264,6 +257,7 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 # include <sys/psw.h>
 
 # include <termio.h>
+# include <sys/fbio.h>
 # include <sys/kbd.h>
 # include <sys/kbio.h>
 
@@ -340,10 +334,6 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #undef  VT_SYSREQ_DEFAULT
 #define VT_SYSREQ_DEFAULT FALSE        /* Make sure that we dont define any VTs since DG/ux has none */
 
-#ifndef NULL
-# define NULL 0
-#endif
-
 #endif /* DGUX && SVR4 */
 
 /**************************************************************************/
@@ -358,9 +348,6 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 # endif
 
 # include <errno.h>
-#ifndef __errno_location
-extern int errno;
-#endif
 
 # include <sys/stat.h>
 
@@ -452,9 +439,6 @@ extern int errno;
 #       undef CONSOLE_X_MODE_OFF
 #       undef CONSOLE_X_BELL
 #     endif
-#     if defined(WSCONS_SUPPORT) && !defined(PCVT_SUPPORT)
-#       include <dev/wscons/wsdisplay_usl_io.h>
-#     endif
 #   endif
 #   ifdef SYSCONS_SUPPORT
 #    define COMPAT_SYSCONS
@@ -481,10 +465,7 @@ extern int errno;
 #      include <machine/pcvt_ioctl.h>
 #     else
 #      if defined(__NetBSD__) || defined(__OpenBSD__)
-#       if defined(WSCONS_SUPPORT)
-         /* NetBSD's wscons has a PCVT-compatibility module. */
-#        include <dev/wscons/wsdisplay_usl_io.h>
-#       else
+#       if !defined(WSCONS_SUPPORT)
 #        include <machine/pcvt_ioctl.h>
 #       endif /* WSCONS_SUPPORT */
 #      else
@@ -501,6 +482,7 @@ extern int errno;
 #   endif /* PCVT_SUPPORT */
 #   ifdef WSCONS_SUPPORT
 #    include <dev/wscons/wsconsio.h>
+#    include <dev/wscons/wsdisplay_usl_io.h>
 #   endif /* WSCONS_SUPPORT */
 #   if defined(__FreeBSD__)
 #    include <osreldate.h>
@@ -564,99 +546,7 @@ extern int errno;
 #  define USE_VT_SYSREQ
 # endif
 
-# ifndef NULL
-#   define NULL 0
-# endif
-
 #endif /* CSRG_BASED */
-
-/**************************************************************************/
-/* Mach and OSF/1                                                         */
-/**************************************************************************/
-#if defined(MACH386) || defined(__OSF__)
-# include <sys/ioctl.h>
-
-# include <signal.h>
-
-# include <errno.h>
-extern int errno;
-
-# if defined(__OSF__)
-#  include <sys/param.h>
-#  include <machine/kd.h>
-# else /* __OSF__ */
-#  if !defined(__STDC__)
-#   define __STDC__ 1
-#   include <i386at/kd.h>
-#   include <i386at/kd_queue.h>
-#   undef __STDC__
-#  else /* !__STDC__ */
-#   include <i386at/kd.h>
-#   include <i386at/kd_queue.h>
-#  endif /* !__STDC__ */
-#  include <sys/file.h>
-#  define SEEK_SET L_SET
-# endif /* __OSF__ */
-
-# ifdef MACH386
-#  define NEED_STRERROR
-# endif
-
-# include <sys/mman.h>
-# include <sys/stat.h>
-# define MOUSE_PROTOCOL_IN_KERNEL
-
-#endif /* MACH386 || __OSF__ */
-
-/**************************************************************************/
-/* Minix                                                                  */
-/**************************************************************************/
-#if defined(MINIX)
-# include <sys/ioctl.h>
-# include <signal.h>
-
-# include <termios.h>
-# define termio termios
-# define POSIX_TTY
-
-# include <errno.h>
-
-# include <assert.h>
-# include <limits.h>
-# include <sys/memio.h>
-# include <sys/kbdio.h>
-
-# include <sys/stat.h>
-
-#endif /* MINIX */
-
-/**************************************************************************/
-/* Amoeba                                                                 */
-/**************************************************************************/
-#if defined(AMOEBA)
-# define port am_port_t
-# include <amoeba.h>
-# include <cmdreg.h>
-# include <stderr.h>
-# include <ampolicy.h>
-# include <proc.h>
-# include <signal.h>
-# include <server/iop/iop.h>
-# include <errno.h>
-# undef port
-
-# undef _POSIX_SOURCE    /* to get the BSD-compatible symbols */
-# include <sys/stat.h>
-
-  /* keyboard types */
-# define KB_84                   1
-# define KB_101                  2
-# define KB_OTHER                3
-
-extern capability iopcap;
-# define MOUSE_PROTOCOL_IN_KERNEL
-
-#endif /* AMOEBA */
 
 /**************************************************************************/
 /* OS/2                                                                   */
@@ -783,49 +673,6 @@ extern char* __XOS2RedirRoot(char*);
 #define USE_OSMOUSE
 
 #endif /* __GNU__ */
-
-/**************************************************************************/
-/* Cygwin                                                                 */
-/**************************************************************************/
-#if defined(__CYGWIN__)
-#include <signal.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/param.h>
-
-/* Warning: by default, the fd_set size is 32 in QNX!  */
-#define FD_SETSIZE 256
-#include <sys/select.h>
-
-  /* keyboard types */
-# define KB_84                   1
-# define KB_101                  2
-# define KB_OTHER                3
-
-  /* LEDs */
-#  define LED_CAP 0x04
-#  define LED_NUM 0x02
-#  define LED_SCR 0x01
-
-# define POSIX_TTY
-# define OSMOUSE_ONLY
-# define MOUSE_PROTOCOL_IN_KERNEL
-
-#define TIOCM_DTR       0x0001            /* data terminal ready */
-#define TIOCM_RTS       0x0002            /* request to send */
-#define TIOCM_CTS       0x1000            /* clear to send */
-#define TIOCM_DSR       0x2000            /* data set ready */
-#define TIOCM_RI        0x4000            /* ring */
-#define TIOCM_RNG       TIOCM_RI
-#define TIOCM_CD        0x8000            /* carrier detect */
-#define TIOCM_CAR       TIOCM_CD
-#define TIOCM_LE        0x0100            /* line enable */
-#define TIOCM_ST        0x0200            /* secondary transmit */
-#define TIOCM_SR        0x0400            /* secondary receive */
-#endif /* __CYGWIN__ */
-
 
 /**************************************************************************/
 /* Generic                                                                */

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.16 2001/02/16 13:24:09 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.22 2001/12/14 19:59:54 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: dix.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
+/* $Xorg: dix.h,v 1.4 2001/02/09 02:05:15 xorgcvs Exp $ */
 
 #ifndef DIX_H
 #define DIX_H
@@ -266,11 +270,11 @@ SOFTWARE.
 	ValidateGC(pDraw, pGC);
 
 
-#define WriteReplyToClient(pClient, size, pReply) \
+#define WriteReplyToClient(pClient, size, pReply) { \
    if ((pClient)->swapped) \
       (*ReplySwapVector[((xReq *)(pClient)->requestBuffer)->reqType]) \
            (pClient, (int)(size), pReply); \
-      else (void) WriteToClient(pClient, (int)(size), (char *)(pReply));
+      else (void) WriteToClient(pClient, (int)(size), (char *)(pReply)); }
 
 #define WriteSwappedDataToClient(pClient, size, pbuf) \
    if ((pClient)->swapped) \
@@ -668,13 +672,6 @@ extern void SetMaskForEvent(
 #endif
 );
 
-#if 0
-extern Bool PointerConfinedToScreen(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-#endif
 
 extern Bool IsParent(
 #if NeedFunctionPrototypes
@@ -695,14 +692,6 @@ extern WindowPtr GetSpriteWindow(
 #endif
 );
 
-#if 0
-extern void GetSpritePosition(
-#if NeedFunctionPrototypes
-    int * /* px */,
-    int * /* py */
-#endif
-);
-#endif
 
 extern void NoticeEventTime(
 #if NeedFunctionPrototypes
@@ -838,6 +827,15 @@ extern void DeliverGrabbedEvent(
 #endif
 );
 
+#ifdef XKB
+extern void FixKeyState(
+#if NeedFunctionPrototypes
+    xEvent * /* xE */,
+    DeviceIntPtr /* keybd */
+#endif
+);
+#endif /* XKB */
+
 extern void RecalculateDeliverableEvents(
 #if NeedFunctionPrototypes
     WindowPtr /* pWin */
@@ -900,13 +898,6 @@ extern void DeleteWindowFromAnyEvents(
 #endif
 );
 
-#if 0
-extern void CheckCursorConfinement(
-#if NeedFunctionPrototypes
-    WindowPtr /* pWin */
-#endif
-);
-#endif
 
 extern Mask EventMaskForClient(
 #if NeedFunctionPrototypes
@@ -926,11 +917,6 @@ extern int DeliverEvents(
 #endif
 );
 
-extern void SetCriticalEvent(
-#if NeedFunctionPrototypes
-    int /*event*/
-#endif
-);
 
 extern void WriteEventsToClient(
 #if NeedFunctionPrototypes
@@ -951,38 +937,17 @@ extern int TryClientEvents(
 #endif
 );
 
-extern int EventSelectForWindow(
-#if NeedFunctionPrototypes
-    WindowPtr /*pWin*/,
-    ClientPtr /*client*/,
-    Mask /*mask*/
-#endif
-);
-
-extern int EventSuppressForWindow(
-#if NeedFunctionPrototypes
-    WindowPtr /*pWin*/,
-    ClientPtr /*client*/,
-    Mask /*mask*/,
-    Bool * /*checkOptional*/
-#endif
-);
-
-extern int MaybeDeliverEventsToClient(
-#if NeedFunctionPrototypes
-    WindowPtr /*pWin*/,
-    xEventPtr /*pEvents*/,
-    int /*count*/,
-    Mask /*filter*/,
-    ClientPtr /*dontClient*/
-#endif
-);
-
 extern void WindowsRestructured(
 #if NeedFunctionPrototypes
     void
 #endif
 );
+
+
+#ifdef RANDR
+void
+ScreenRestructured (ScreenPtr pScreen);
+#endif
 
 extern void ResetClientPrivates(
 #if NeedFunctionPrototypes

@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.10.2.1 2001/05/31 08:31:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.12 2001/08/18 02:51:05 dawes Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -179,10 +179,6 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    } while (0)
 
    switch ( texImage->IntFormat ) {
-      /* GH: Bias towards GL_RGB, GL_RGBA texture formats.  This has
-       * got to be better than sticking them way down the end of this
-       * huge list.
-       */
    case GL_RGBA:
    case 4:
       if ( format == GL_BGRA ) {
@@ -211,9 +207,6 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
 			TMC_tformat_tw16, _mesa_texformat_rgb565 );
       break;
 
-      /* GH: Okay, keep checking as normal.  Still test for GL_RGB,
-       * GL_RGBA formats first.
-       */
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
@@ -224,12 +217,17 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
 
    case GL_RGBA4:
    case GL_RGBA2:
+   case GL_RGB5_A1:
       SET_FORMAT( TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
 
+#if 0
    case GL_RGB5_A1:
+      /* GH: Leave this until we use the new texture conversion code.
+       */
       SET_FORMAT( TMC_tformat_tw15, _mesa_texformat_argb1555 );
       break;
+#endif
 
    case GL_RGB8:
    case GL_RGB10:
@@ -485,16 +483,16 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
    case GL_MODULATE:
       if (unit == 0) {
 	 *reg = ( TD0_color_arg2_diffuse |
-		  TD0_color_sel_mul |
+		  TD0_color_sel_mulout |
 		  TD0_alpha_arg2_diffuse |
-		  TD0_alpha_sel_mul);
+		  TD0_alpha_sel_mulout);
       }
       else {
 	 *reg = ( TD0_color_arg2_prevstage |
 		  TD0_color_alpha_prevstage |
-		  TD0_color_sel_mul |
+		  TD0_color_sel_mulout |
 		  TD0_alpha_arg2_prevstage |
-		  TD0_alpha_sel_mul);
+		  TD0_alpha_sel_mulout);
       }
       break;
    case GL_DECAL:
@@ -567,44 +565,44 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
          if (format == GL_INTENSITY)
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_add_add |
-                     TD0_color_sel_add |
+                     TD0_color_sel_addout |
                      TD0_alpha_arg2_diffuse |
                      TD0_alpha_add_enable |
-                     TD0_alpha_sel_add);
+                     TD0_alpha_sel_addout);
          else if (format == GL_ALPHA)
             *reg = ( TD0_color_arg2_diffuse |
-                     TD0_color_sel_mul |
+                     TD0_color_sel_mulout |
                      TD0_alpha_arg2_diffuse |
-                     TD0_alpha_sel_mul);
+                     TD0_alpha_sel_mulout);
          else
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_add_add |
-                     TD0_color_sel_add |
+                     TD0_color_sel_addout |
                      TD0_alpha_arg2_diffuse |
-                     TD0_alpha_sel_mul);
+                     TD0_alpha_sel_mulout);
       }
       else {
          if (format == GL_INTENSITY) {
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_add |
+                     TD0_color_sel_addout |
                      TD0_alpha_arg2_prevstage |
                      TD0_alpha_add_enable |
-                     TD0_alpha_sel_add);
+                     TD0_alpha_sel_addout);
          }
          else if (format == GL_ALPHA) {
             *reg = ( TD0_color_arg2_prevstage |
-                     TD0_color_sel_mul |
+                     TD0_color_sel_mulout |
                      TD0_alpha_arg2_prevstage |
-                     TD0_alpha_sel_mul);
+                     TD0_alpha_sel_mulout);
          }
          else {
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_alpha_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_add |
+                     TD0_color_sel_addout |
                      TD0_alpha_arg2_prevstage |
-                     TD0_alpha_sel_mul);
+                     TD0_alpha_sel_mulout);
          }
       }
       break;
@@ -612,9 +610,9 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
    case GL_BLEND:
       if (format == GL_ALPHA) {
 	 *reg = ( TD0_color_arg2_diffuse |
-		  TD0_color_sel_mul |
+		  TD0_color_sel_mulout |
 		  TD0_alpha_arg2_diffuse |
-		  TD0_alpha_sel_mul);
+		  TD0_alpha_sel_mulout);
       }
       else {
 	 mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
@@ -632,7 +630,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
              */
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_arg1_inv_enable |
-                     TD0_color_sel_mul |
+                     TD0_color_sel_mulout |
                      TD0_alpha_arg2_diffuse |
                      TD0_alpha_sel_arg1);
          } else {
@@ -641,7 +639,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
              */
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_add |
+                     TD0_color_sel_addout |
                      TD0_alpha_arg2_prevstage |
                      TD0_alpha_sel_arg2);
          }

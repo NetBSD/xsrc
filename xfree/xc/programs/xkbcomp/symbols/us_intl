@@ -1,9 +1,32 @@
 //
-// $XFree86: xc/programs/xkbcomp/symbols/us_intl,v 1.3 2000/10/27 18:31:10 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/us_intl,v 1.4 2001/11/02 23:29:34 dawes Exp $
 //
 // Dead-keys definition for a very simple US/ASCII layout.
 // by Conectiva (http://www.conectiva.com.br)
 // modified by Ricardo Y. Igarashi (iga@that.com.br)
+
+// Added the following deadkeys, to make it truly international:
+//
+// dead_macron: on AltGr-minus
+// dead_breve: on AltGr-parenleft
+// dead_abovedot: on AltGr-period
+// dead_abovering: on AltGr-0
+// dead_doubleacute: on AltGr-equal (as quotedbl is already used)
+// dead_caron: on AltGr-less (AltGr-shift-comma)
+// dead_cedilla: on AltGr-comma
+// dead_ogonek: on AltGr-semicolon
+// dead_belowdot: on AltGr-underscore (AltGr-shift-minus)
+// dead_hook: on AltGr-question
+// dead_horn: on AltGr-plus (AltGr-shift-equal)
+// dead_diaeresis: on AltGr-colon (Alt-shift-semicolon)
+//
+// those were already there:
+// dead_grave
+// dead_acute
+// dead_circumflex
+// dead_tilde
+// dead_diaeresis
+
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
@@ -17,6 +40,24 @@ xkb_symbols "basic" {
 			[ asciicircum,	asciicircum	]	};
     key <AC11> {	[ dead_acute,	dead_diaeresis	],
 			[ apostrophe,	quotedbl	]	};
+			
+    key <AE09> {	[	  9,	parenleft	]
+			[      dead_breve,	dead_breve	]	};
+    key <AE10> {	[	  0,	parenright	]
+			[      dead_abovering, dead_abovering	]	};
+    key <AE11> {	[     minus,	underscore	],
+			[      dead_macron,	dead_belowdot	]	};
+    key <AE12> {	[     equal,	plus		],
+			[      dead_doubleacute,	dead_horn	]	};
+    key <AC10> {	[ semicolon,	colon		]
+			[      dead_ogonek,	dead_diaeresis	]	};
+    key <AB08> {	[     comma,	less		]
+			[      dead_cedilla,	dead_caron	]	};
+    key <AB09> {	[    period,	greater		]
+			[      dead_abovedot,	dead_circumflex	]	};
+    key <AB10> {	[     slash,	question	]
+			[      dead_hook,	dead_hook	]	};
+
 
     // End alphanumeric section
 };

@@ -3,7 +3,7 @@
 
    Written by Mark Vojkovich
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.40 2001/03/04 01:29:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.43 2001/12/16 18:30:22 keithp Exp $ */
 
 #include "xf86.h"
 #include "xf86str.h"
@@ -28,13 +28,6 @@ static int DGAScreenIndex = -1;
 static Bool DGACloseScreen(int i, ScreenPtr pScreen);
 static void DGADestroyColormap(ColormapPtr pmap);
 static void DGAInstallColormap(ColormapPtr pmap);
-
-static int
-DGASetDGAMode(
-   int index,
-   int num,
-   DGADevicePtr devRet
-);
 
 static void
 DGACopyModeInfo(
@@ -90,7 +83,7 @@ DGAInit(
     DGAScreenPtr pScreenPriv;
     int i;
 
-    if(!funcs->SetMode || !funcs->OpenFramebuffer)
+    if(!funcs || !funcs->SetMode || !funcs->OpenFramebuffer)
 	return FALSE;
 
     if(!modes || num <= 0)
@@ -137,7 +130,11 @@ DGAInit(
     pScreenPriv->InstallColormap = pScreen->InstallColormap;
     pScreen->InstallColormap = DGAInstallColormap;
 
-    pScrn->SetDGAMode = DGASetDGAMode;
+    /*
+     * This is now set in InitOutput().
+     *
+    pScrn->SetDGAMode = xf86SetDGAMode;
+     */
 
     return TRUE;
 }
@@ -240,18 +237,26 @@ DGAInstallColormap(ColormapPtr pmap)
     pScreen->InstallColormap = DGAInstallColormap;
 }
 
-static int
-DGASetDGAMode(
+int
+xf86SetDGAMode(
    int index,
    int num,
    DGADevicePtr devRet
 ){
    ScreenPtr pScreen = screenInfo.screens[index];
-   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
-   ScrnInfoPtr pScrn = pScreenPriv->pScrn;
+   DGAScreenPtr pScreenPriv;
+   ScrnInfoPtr pScrn;
    DGADevicePtr device;
    PixmapPtr pPix = NULL;
    DGAModePtr pMode = NULL;
+
+   /* First check if DGAInit was successful on this screen */
+   if (DGAScreenIndex < 0)
+	return BadValue;
+   pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
+   if (!pScreenPriv)
+	return BadValue;
+   pScrn = pScreenPriv->pScrn;
 
    if(!num) {
 	if(pScreenPriv->current) {
@@ -265,12 +270,12 @@ DGASetDGAMode(
 	    xfree(pScreenPriv->current);
 	    pScreenPriv->current = NULL;
 	    pScrn->vtSema = TRUE;
+	    (*pScreenPriv->funcs->SetMode)(pScrn, NULL);
 	    if(pScreenPriv->savedColormap) {
 	        (*pScreen->InstallColormap)(pScreenPriv->savedColormap);
 		pScreenPriv->savedColormap = NULL;
 	    }
 	    pScreenPriv->dgaColormap = NULL;
-	    (*pScreenPriv->funcs->SetMode)(pScrn, NULL);
 	    (*pScrn->EnableDisableFBAccess)(index, TRUE);
 
 	    FreeMarkedVisuals(pScreen);
@@ -343,7 +348,7 @@ DGASetDGAMode(
    pScreenPriv->pixmapMode = FALSE;
    pScreenPriv->grabMouse = TRUE;
    pScreenPriv->grabKeyboard = TRUE;
-   
+
    return Success;
 }
 
@@ -458,30 +463,16 @@ DGAActive(int index)
 void 
 DGAShutdown()
 {
-    DGAScreenPtr pScreenPriv;
-    ScreenPtr pScreen;
+    ScrnInfoPtr pScrn;
     int i;
 
     if(DGAScreenIndex < 0)
 	return;
 
     for(i = 0; i < screenInfo.numScreens; i++) {
-	pScreen = screenInfo.screens[i];	
-	pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
+	pScrn = xf86Screens[i];
 
-	if(pScreenPriv && pScreenPriv->current) {
-	    PixmapPtr oldPix = pScreenPriv->current->pPix;
-	    if(oldPix) {
-		if(oldPix->drawable.id)
-		    FreeResource(oldPix->drawable.id, RT_NONE);
-		else
-		    (*pScreen->DestroyPixmap)(oldPix);
-	    }
-	    xfree(pScreenPriv->current);
-
-	    (*pScreenPriv->funcs->SetMode)(pScreenPriv->pScrn, NULL);
-	    pScreenPriv->pScrn->vtSema = TRUE;
-	}
+	(void)(*pScrn->SetDGAMode)(pScrn->scrnIndex, 0, NULL);
     }
 }
 
@@ -1025,7 +1016,8 @@ DGAProcessPointerEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr mouse)
 	{
 	case ButtonPress: 
 	    mouse->valuator->motionHintWindow = NullWindow;
-	    butc->buttonsDown++;
+	    if (!(*kptr & bit))
+		butc->buttonsDown++;
 	    butc->motionMask = ButtonMotionMask;
 	    *kptr |= bit;
 	    if (key <= 5)
@@ -1033,7 +1025,9 @@ DGAProcessPointerEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr mouse)
 	    break;
 	case ButtonRelease: 
 	    mouse->valuator->motionHintWindow = NullWindow;
-	    if (!--butc->buttonsDown)
+	    if (*kptr & bit)
+		--butc->buttonsDown;
+	    if (!butc->buttonsDown)
 		butc->motionMask = 0;
 	    *kptr &= ~bit;
 	    if (key == 0)

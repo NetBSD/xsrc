@@ -64,7 +64,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.52 2001/05/19 00:26:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.54 2001/11/08 21:49:43 herrb Exp $ */
 
 #ifndef _XF86_OSPROC_H
 #define _XF86_OSPROC_H
@@ -93,6 +93,9 @@
 					 * assumed when VIDMEM_MMIO is
 					 * set. May be used with
 					 * VIDMEM_FRAMEBUFFER) */
+#define VIDMEM_READONLY		0x20	/* read-only mapping
+					 * used when reading BIOS images
+					 * through xf86MapVidMem() */
 
 /*
  * OS-independent modem state flags for xf86SetSerialModemState() and
@@ -229,6 +232,9 @@ extern void xf86KbdEvents(void);
 extern int  xf86XqueKbdProc(DeviceIntPtr, int);
 extern void xf86XqueEvents(void);
 #endif
+#ifdef WSCONS_SUPPORT
+extern void xf86WSKbdEvents(void);
+#endif
 extern PMClose xf86OSPMOpen(void);
 
 #ifdef NEED_OS_RAC_PROTOS
@@ -246,7 +252,10 @@ resPtr xf86IsaBusAccWindowsFromOS(void);
 resPtr xf86AccResFromOS(resPtr ret);
 #endif /* NEED_OS_RAC_PROTOS */
 
-Bool xf86GetPciSizeFromOS(PCITAG tag, int indx, int* bits);
+extern Bool xf86GetPciSizeFromOS(PCITAG tag, int indx, int* bits);
+
+extern void xf86MakeNewMapping(int, int, unsigned long, unsigned long, pointer);
+extern void xf86InitVidMem(void);
 
 #endif /* XF86_OS_PRIVS */
 

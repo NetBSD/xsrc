@@ -30,7 +30,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/X11/imLcPrs.c,v 1.6 2001/01/17 19:41:52 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcPrs.c,v 1.7 2001/10/28 03:32:34 tsi Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xmd.h>
@@ -317,9 +317,9 @@ parseline(fp, top, tokenbuf)
     unsigned modifier;
     unsigned tmp;
     KeySym keysym = NoSymbol;
-    DefTree *p;
+    DefTree *p = NULL;
     Bool exclam, tilde;
-    KeySym rhs_keysym;
+    KeySym rhs_keysym = 0;
     char *rhs_string_mb;
     int l;
     int lastch = 0;

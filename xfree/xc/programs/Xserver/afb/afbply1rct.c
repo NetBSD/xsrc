@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbply1rct.c,v 3.1 1998/03/20 21:04:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbply1rct.c,v 3.2 2001/10/28 03:32:58 tsi Exp $ */
 /*
  * $XConsortium: afbply1rct.c,v 1.9 94/04/17 20:28:28 dpw Exp $
  *
@@ -77,14 +77,14 @@ afbFillPolygonSolid (pDrawable, pGC, shape, mode, count, ptsIn)
 	BoxPtr extents;
 	int clip;
 	int y;
-	int *vertex1p, *vertex2p;
+	int *vertex1p = NULL, *vertex2p;
 	int *endp;
-	int x1, x2;
-	int dx1, dx2;
-	int dy1, dy2;
-	int e1, e2;
-	int step1, step2;
-	int sign1, sign2;
+	int x1 = 0, x2 = 0;
+	int dx1 = 0, dx2 = 0;
+	int dy1 = 0, dy2 = 0;
+	int e1 = 0, e2 = 0;
+	int step1 = 0, step2 = 0;
+	int sign1 = 0, sign2 = 0;
 	int h;
 	int l, r;
 	PixelType mask, bits = ~((PixelType)0);
@@ -144,7 +144,7 @@ afbFillPolygonSolid (pDrawable, pGC, shape, mode, count, ptsIn)
 		vertex2p = (int *) ptsIn;
 #define Setup(c,x,vertex,dx,dy,e,sign,step) {\
 	x = intToX(vertex); \
-	if (dy = intToY(c) - y) { \
+	if ((dy = intToY(c) - y)) { \
 		dx = intToX(c) - x; \
 		step = 0; \
 		if (dx >= 0) { \

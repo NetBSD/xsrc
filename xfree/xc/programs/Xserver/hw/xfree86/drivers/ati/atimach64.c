@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64.c,v 1.36 2001/05/09 03:12:02 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64.c,v 1.45 2002/01/16 16:22:26 tsi Exp $ */
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,9 +47,10 @@
 #include "ati.h"
 #include "atibus.h"
 #include "atichip.h"
-#include "aticrtc.h"
+#include "atidac.h"
 #include "atimach64.h"
 #include "atimach64io.h"
+#include "atirgb514.h"
 
 #include "miline.h"
 
@@ -110,8 +111,10 @@ ATIMach64PreInit
         pATIHW->crtc_off_pitch = SetBits(pATI->displayWidth >> 3, CRTC_PITCH);
     }
 
-    bus_cntl = inr(BUS_CNTL);
-    pATIHW->bus_cntl = (bus_cntl & ~BUS_HOST_ERR_INT_EN) | BUS_HOST_ERR_INT;
+    pATIHW->bus_cntl = bus_cntl = inr(BUS_CNTL);
+    if (pATI->Chip < ATI_CHIP_264VT4)
+        pATIHW->bus_cntl = (pATIHW->bus_cntl & ~BUS_HOST_ERR_INT_EN) |
+            BUS_HOST_ERR_INT;
     if (pATI->Chip < ATI_CHIP_264VTB)
     {
         pATIHW->bus_cntl &= ~(BUS_FIFO_ERR_INT_EN | BUS_ROM_DIS);
@@ -146,10 +149,12 @@ ATIMach64PreInit
 
     pATIHW->dac_cntl = inr(DAC_CNTL) &
         ~(DAC1_CLK_SEL | DAC_PALETTE_ACCESS_CNTL | DAC_8BIT_EN);
-    if ((pATI->depth > 8) || (pScreenInfo->rgbBits == 8))
+    if (pATI->rgbBits == 8)
         pATIHW->dac_cntl |= DAC_8BIT_EN;
 
     pATIHW->gen_test_cntl = pATI->LockData.gen_test_cntl & ~GEN_CUR_EN;
+    if (pATI->DAC == ATI_DAC_IBMRGB514)
+        pATIHW->gen_test_cntl |= GEN_OVR_OUTPUT_EN;
 
     pATIHW->config_cntl = config_cntl = inr(CONFIG_CNTL);
 
@@ -245,7 +250,7 @@ ATIMach64PreInit
         {
             case 8:
                 pATIHW->dp_chain_mask = DP_CHAIN_8BPP;
-                pATIHW->dp_pix_width = DP_BYTE_PIX_ORDER |
+                pATIHW->dp_pix_width =
                     SetBits(PIX_WIDTH_8BPP, DP_DST_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_8BPP, DP_SRC_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_1BPP, DP_HOST_PIX_WIDTH);
@@ -253,7 +258,7 @@ ATIMach64PreInit
 
             case 15:
                 pATIHW->dp_chain_mask = DP_CHAIN_15BPP_1555;
-                pATIHW->dp_pix_width = DP_BYTE_PIX_ORDER |
+                pATIHW->dp_pix_width =
                     SetBits(PIX_WIDTH_15BPP, DP_DST_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_15BPP, DP_SRC_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_1BPP, DP_HOST_PIX_WIDTH);
@@ -261,7 +266,7 @@ ATIMach64PreInit
 
             case 16:
                 pATIHW->dp_chain_mask = DP_CHAIN_16BPP_565;
-                pATIHW->dp_pix_width = DP_BYTE_PIX_ORDER |
+                pATIHW->dp_pix_width =
                     SetBits(PIX_WIDTH_16BPP, DP_DST_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_16BPP, DP_SRC_PIX_WIDTH) |
                     SetBits(PIX_WIDTH_1BPP, DP_HOST_PIX_WIDTH);
@@ -271,7 +276,7 @@ ATIMach64PreInit
                 if (pATI->bitsPerPixel == 24)
                 {
                     pATIHW->dp_chain_mask = DP_CHAIN_24BPP_888;
-                    pATIHW->dp_pix_width = DP_BYTE_PIX_ORDER |
+                    pATIHW->dp_pix_width =
                         SetBits(PIX_WIDTH_8BPP, DP_DST_PIX_WIDTH) |
                         SetBits(PIX_WIDTH_8BPP, DP_SRC_PIX_WIDTH) |
                         SetBits(PIX_WIDTH_1BPP, DP_HOST_PIX_WIDTH);
@@ -279,7 +284,7 @@ ATIMach64PreInit
                 else
                 {
                     pATIHW->dp_chain_mask = DP_CHAIN_32BPP_8888;
-                    pATIHW->dp_pix_width = DP_BYTE_PIX_ORDER |
+                    pATIHW->dp_pix_width =
                         SetBits(PIX_WIDTH_32BPP, DP_DST_PIX_WIDTH) |
                         SetBits(PIX_WIDTH_32BPP, DP_SRC_PIX_WIDTH) |
                         SetBits(PIX_WIDTH_1BPP, DP_HOST_PIX_WIDTH);
@@ -289,6 +294,12 @@ ATIMach64PreInit
             default:
                 break;
         }
+
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+
+        pATIHW->dp_pix_width |= DP_BYTE_PIX_ORDER;
+
+#endif /* X_BYTE_ORDER */
 
         pATIHW->dp_mix = SetBits(MIX_SRC, DP_FRGD_MIX) |
             SetBits(MIX_DST, DP_BKGD_MIX);
@@ -624,6 +635,9 @@ ATIMach64Set
         (pATI->ProgrammableClock != ATI_CLOCK_NONE))
         ATIClockSet(pATI, pATIHW);              /* Programme clock */
 
+    if (pATI->DAC == ATI_DAC_IBMRGB514)
+        ATIRGB514Set(pATI, pATIHW);
+
     /* Load Mach64 CRTC registers */
     outr(CRTC_H_TOTAL_DISP, pATIHW->crtc_h_total_disp);
     outr(CRTC_H_SYNC_STRT_WID, pATIHW->crtc_h_sync_strt_wid);
@@ -833,8 +847,9 @@ ATIMach64SaveScreen
 void
 ATIMach64SetDPMSMode
 (
-    ATIPtr pATI,
-    int    DPMSMode
+    ScrnInfoPtr pScreenInfo,
+    ATIPtr      pATI,
+    int         DPMSMode
 )
 {
     CARD32 crtc_gen_cntl =
@@ -860,6 +875,9 @@ ATIMach64SetDPMSMode
         default:                /* Muffle compiler */
             return;
     }
+
+    if (pATI->pXAAInfo && pATI->pXAAInfo->NeedToSync)
+        (*pATI->pXAAInfo->Sync)(pScreenInfo);
 
     outr(CRTC_GEN_CNTL, crtc_gen_cntl);
 
@@ -907,10 +925,6 @@ ATIMach64SetDPMSMode
                 default:        /* Muffle compiler */
                     return;
             }
-
-            /* Panel power management seems to involve the engine */
-            if (pATI->OptionAccel)
-                ATIMach64WaitForIdle(pATI);
 
             if (pATI->Chip == ATI_CHIP_264LT)
                 outr(POWER_MANAGEMENT, power_management);
@@ -1119,7 +1133,6 @@ ATIMach64Sync
             xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
                 "CLR_CMP_CNTL write cache disabled!\n");
         }
-
     }
 
     /*
@@ -1128,6 +1141,7 @@ ATIMach64Sync
      * caching of framebuffer data I haven't found any way of disabling, or
      * otherwise circumventing.  Thanks to Mark Vojkovich for the suggestion.
      */
+    pATI->pXAAInfo->NeedToSync = FALSE;
     pATI = *(volatile ATIPtr *)pATI->pMemory;
 }
 
@@ -1156,7 +1170,16 @@ ATIMach64SetupForScreenToScreenCopy
         SetBits(SRC_BLIT, DP_FRGD_SRC) | SetBits(SRC_BKGD, DP_BKGD_SRC));
     outf(DP_MIX, SetBits(ATIMach64ALU[rop], DP_FRGD_MIX));
 
+#ifdef AVOID_DGA
+
     if (TransparencyColour == -1)
+
+#else /* AVOID_DGA */
+
+    if (!pATI->XAAForceTransBlit && (TransparencyColour == -1))
+
+#endif /* AVOID_DGA */
+
         outf(CLR_CMP_CNTL, CLR_CMP_FN_FALSE);
     else
     {
@@ -1566,11 +1589,8 @@ ATIMach64SubsequentColorExpandScanline
 {
     ATIPtr          pATI         = ATIPTR(pScreenInfo);
     CARD32          *pBitmapData = pATI->ExpansionBitmapScanlinePtr[iBuffer];
-    volatile CARD32 *pDst;
-    CARD32          *pSrc;
     int             w            = pATI->ExpansionBitmapWidth;
     int             nDWord;
-    unsigned int    iDWord;
 
     while (w > 0)
     {
@@ -1589,37 +1609,51 @@ ATIMach64SubsequentColorExpandScanline
          * Always start transfers on a chuck-sized boundary.  Note that
          * HOST_DATA_0 is actually on a 512-byte boundary, but *pBitmapData can
          * only be guaranteed to be on a chunk-sized boundary.
-         */
-        iDWord = 16 - nDWord;
-        pDst = (volatile CARD32 *)pATI->pHOST_DATA - iDWord;
-        pSrc = pBitmapData - iDWord;
-
-        /*
+         *
          * Transfer current chunk.  With any luck, the compiler won't mangle
          * this too badly...
          */
-        switch (iDWord)
-        {
-            case  0:  MMIO_OUT32(pDst +  0, 0, *(pSrc +  0));
-            case  1:  MMIO_OUT32(pDst +  1, 0, *(pSrc +  1));
-            case  2:  MMIO_OUT32(pDst +  2, 0, *(pSrc +  2));
-            case  3:  MMIO_OUT32(pDst +  3, 0, *(pSrc +  3));
-            case  4:  MMIO_OUT32(pDst +  4, 0, *(pSrc +  4));
-            case  5:  MMIO_OUT32(pDst +  5, 0, *(pSrc +  5));
-            case  6:  MMIO_OUT32(pDst +  6, 0, *(pSrc +  6));
-            case  7:  MMIO_OUT32(pDst +  7, 0, *(pSrc +  7));
-            case  8:  MMIO_OUT32(pDst +  8, 0, *(pSrc +  8));
-            case  9:  MMIO_OUT32(pDst +  9, 0, *(pSrc +  9));
-            case 10:  MMIO_OUT32(pDst + 10, 0, *(pSrc + 10));
-            case 11:  MMIO_OUT32(pDst + 11, 0, *(pSrc + 11));
-            case 12:  MMIO_OUT32(pDst + 12, 0, *(pSrc + 12));
-            case 13:  MMIO_OUT32(pDst + 13, 0, *(pSrc + 13));
-            case 14:  MMIO_OUT32(pDst + 14, 0, *(pSrc + 14));
-            case 15:  MMIO_OUT32(pDst + 15, 0, *(pSrc + 15));
 
-            default:    /* Muffle compiler */
-                break;
+#       if defined(ATIMove32)
+
+            ATIMove32(pATI->pHOST_DATA, pBitmapData, nDWord);
+
+#       else
+
+        {
+            volatile CARD32 *pDst;
+            CARD32          *pSrc;
+            unsigned int    iDWord;
+
+            iDWord = 16 - nDWord;
+            pDst = (volatile CARD32 *)pATI->pHOST_DATA - iDWord;
+            pSrc = pBitmapData - iDWord;
+
+            switch (iDWord)
+            {
+                case  0:  MMIO_MOVE32(pDst +  0, 0, *(pSrc +  0));
+                case  1:  MMIO_MOVE32(pDst +  1, 0, *(pSrc +  1));
+                case  2:  MMIO_MOVE32(pDst +  2, 0, *(pSrc +  2));
+                case  3:  MMIO_MOVE32(pDst +  3, 0, *(pSrc +  3));
+                case  4:  MMIO_MOVE32(pDst +  4, 0, *(pSrc +  4));
+                case  5:  MMIO_MOVE32(pDst +  5, 0, *(pSrc +  5));
+                case  6:  MMIO_MOVE32(pDst +  6, 0, *(pSrc +  6));
+                case  7:  MMIO_MOVE32(pDst +  7, 0, *(pSrc +  7));
+                case  8:  MMIO_MOVE32(pDst +  8, 0, *(pSrc +  8));
+                case  9:  MMIO_MOVE32(pDst +  9, 0, *(pSrc +  9));
+                case 10:  MMIO_MOVE32(pDst + 10, 0, *(pSrc + 10));
+                case 11:  MMIO_MOVE32(pDst + 11, 0, *(pSrc + 11));
+                case 12:  MMIO_MOVE32(pDst + 12, 0, *(pSrc + 12));
+                case 13:  MMIO_MOVE32(pDst + 13, 0, *(pSrc + 13));
+                case 14:  MMIO_MOVE32(pDst + 14, 0, *(pSrc + 14));
+                case 15:  MMIO_MOVE32(pDst + 15, 0, *(pSrc + 15));
+
+                default:    /* Muffle compiler */
+                    break;
+            }
         }
+
+#       endif
 
         /* Step to next chunk */
         pBitmapData += nDWord;
@@ -1636,7 +1670,7 @@ ATIMach64SubsequentColorExpandScanline
  * This function fills in structure fields needed for acceleration on Mach64
  * variants.
  */
-unsigned int
+int
 ATIMach64AccelInit
 (
     ATIPtr        pATI,
@@ -1673,6 +1707,13 @@ ATIMach64AccelInit
 
     /* 8x8 mono pattern fills */
     pXAAInfo->Mono8x8PatternFillFlags =
+
+#if X_BYTE_ORDER != X_LITTLE_ENDIAN
+
+        BIT_ORDER_IN_BYTE_MSBFIRST |
+
+#endif /* X_BYTE_ORDER */
+
         HARDWARE_PATTERN_PROGRAMMED_BITS | HARDWARE_PATTERN_SCREEN_ORIGIN;
     pXAAInfo->SetupForMono8x8PatternFill = ATIMach64SetupForMono8x8PatternFill;
     pXAAInfo->SubsequentMono8x8PatternFillRect =
@@ -1684,9 +1725,6 @@ ATIMach64AccelInit
      */
     pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags =
         LEFT_EDGE_CLIPPING | LEFT_EDGE_CLIPPING_NEGATIVE_X |
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-	BIT_ORDER_IN_BYTE_MSBFIRST |
-#endif
         CPU_TRANSFER_PAD_DWORD | SCANLINE_PAD_DWORD;
     if (pATI->XModifier != 1)
         pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags |= TRIPLE_BITS_24BPP;
@@ -1823,146 +1861,153 @@ ATIMach64LoadCursorImage
     CARD8       *pImage
 )
 {
-    ATIPtr           pATI = ATIPTR(pScreenInfo);
-    CARD32          *pSrc = (pointer)pImage;
-    volatile CARD32 *pDst = pATI->pCursorImage;
+    ATIPtr           pATI     = ATIPTR(pScreenInfo);
+    XAAInfoRecPtr    pXAAInfo = pATI->pXAAInfo;
+    CARD32          *pSrc     = (pointer)pImage;
+    volatile CARD32 *pDst     = pATI->pCursorImage;
 
     /* Synchronise video memory accesses */
-    if (pATI->OptionAccel && pATI->pXAAInfo->NeedToSync)
-    {
-        (*pATI->pXAAInfo->Sync)(pScreenInfo);
-        pATI->pXAAInfo->NeedToSync = FALSE;
-    }
+    if (pXAAInfo && pXAAInfo->NeedToSync)
+        (*pXAAInfo->Sync)(pScreenInfo);
 
-    /* This is lengthy, but it does maximise burst modes */
-    pDst[  0] = pSrc[  0];  pDst[  1] = pSrc[  1];
-    pDst[  2] = pSrc[  2];  pDst[  3] = pSrc[  3];
-    pDst[  4] = pSrc[  4];  pDst[  5] = pSrc[  5];
-    pDst[  6] = pSrc[  6];  pDst[  7] = pSrc[  7];
-    pDst[  8] = pSrc[  8];  pDst[  9] = pSrc[  9];
-    pDst[ 10] = pSrc[ 10];  pDst[ 11] = pSrc[ 11];
-    pDst[ 12] = pSrc[ 12];  pDst[ 13] = pSrc[ 13];
-    pDst[ 14] = pSrc[ 14];  pDst[ 15] = pSrc[ 15];
-    pDst[ 16] = pSrc[ 16];  pDst[ 17] = pSrc[ 17];
-    pDst[ 18] = pSrc[ 18];  pDst[ 19] = pSrc[ 19];
-    pDst[ 20] = pSrc[ 20];  pDst[ 21] = pSrc[ 21];
-    pDst[ 22] = pSrc[ 22];  pDst[ 23] = pSrc[ 23];
-    pDst[ 24] = pSrc[ 24];  pDst[ 25] = pSrc[ 25];
-    pDst[ 26] = pSrc[ 26];  pDst[ 27] = pSrc[ 27];
-    pDst[ 28] = pSrc[ 28];  pDst[ 29] = pSrc[ 29];
-    pDst[ 30] = pSrc[ 30];  pDst[ 31] = pSrc[ 31];
-    pDst[ 32] = pSrc[ 32];  pDst[ 33] = pSrc[ 33];
-    pDst[ 34] = pSrc[ 34];  pDst[ 35] = pSrc[ 35];
-    pDst[ 36] = pSrc[ 36];  pDst[ 37] = pSrc[ 37];
-    pDst[ 38] = pSrc[ 38];  pDst[ 39] = pSrc[ 39];
-    pDst[ 40] = pSrc[ 40];  pDst[ 41] = pSrc[ 41];
-    pDst[ 42] = pSrc[ 42];  pDst[ 43] = pSrc[ 43];
-    pDst[ 44] = pSrc[ 44];  pDst[ 45] = pSrc[ 45];
-    pDst[ 46] = pSrc[ 46];  pDst[ 47] = pSrc[ 47];
-    pDst[ 48] = pSrc[ 48];  pDst[ 49] = pSrc[ 49];
-    pDst[ 50] = pSrc[ 50];  pDst[ 51] = pSrc[ 51];
-    pDst[ 52] = pSrc[ 52];  pDst[ 53] = pSrc[ 53];
-    pDst[ 54] = pSrc[ 54];  pDst[ 55] = pSrc[ 55];
-    pDst[ 56] = pSrc[ 56];  pDst[ 57] = pSrc[ 57];
-    pDst[ 58] = pSrc[ 58];  pDst[ 59] = pSrc[ 59];
-    pDst[ 60] = pSrc[ 60];  pDst[ 61] = pSrc[ 61];
-    pDst[ 62] = pSrc[ 62];  pDst[ 63] = pSrc[ 63];
-    pDst[ 64] = pSrc[ 64];  pDst[ 65] = pSrc[ 65];
-    pDst[ 66] = pSrc[ 66];  pDst[ 67] = pSrc[ 67];
-    pDst[ 68] = pSrc[ 68];  pDst[ 69] = pSrc[ 69];
-    pDst[ 70] = pSrc[ 70];  pDst[ 71] = pSrc[ 71];
-    pDst[ 72] = pSrc[ 72];  pDst[ 73] = pSrc[ 73];
-    pDst[ 74] = pSrc[ 74];  pDst[ 75] = pSrc[ 75];
-    pDst[ 76] = pSrc[ 76];  pDst[ 77] = pSrc[ 77];
-    pDst[ 78] = pSrc[ 78];  pDst[ 79] = pSrc[ 79];
-    pDst[ 80] = pSrc[ 80];  pDst[ 81] = pSrc[ 81];
-    pDst[ 82] = pSrc[ 82];  pDst[ 83] = pSrc[ 83];
-    pDst[ 84] = pSrc[ 84];  pDst[ 85] = pSrc[ 85];
-    pDst[ 86] = pSrc[ 86];  pDst[ 87] = pSrc[ 87];
-    pDst[ 88] = pSrc[ 88];  pDst[ 89] = pSrc[ 89];
-    pDst[ 90] = pSrc[ 90];  pDst[ 91] = pSrc[ 91];
-    pDst[ 92] = pSrc[ 92];  pDst[ 93] = pSrc[ 93];
-    pDst[ 94] = pSrc[ 94];  pDst[ 95] = pSrc[ 95];
-    pDst[ 96] = pSrc[ 96];  pDst[ 97] = pSrc[ 97];
-    pDst[ 98] = pSrc[ 98];  pDst[ 99] = pSrc[ 99];
-    pDst[100] = pSrc[100];  pDst[101] = pSrc[101];
-    pDst[102] = pSrc[102];  pDst[103] = pSrc[103];
-    pDst[104] = pSrc[104];  pDst[105] = pSrc[105];
-    pDst[106] = pSrc[106];  pDst[107] = pSrc[107];
-    pDst[108] = pSrc[108];  pDst[109] = pSrc[109];
-    pDst[110] = pSrc[110];  pDst[111] = pSrc[111];
-    pDst[112] = pSrc[112];  pDst[113] = pSrc[113];
-    pDst[114] = pSrc[114];  pDst[115] = pSrc[115];
-    pDst[116] = pSrc[116];  pDst[117] = pSrc[117];
-    pDst[118] = pSrc[118];  pDst[119] = pSrc[119];
-    pDst[120] = pSrc[120];  pDst[121] = pSrc[121];
-    pDst[122] = pSrc[122];  pDst[123] = pSrc[123];
-    pDst[124] = pSrc[124];  pDst[125] = pSrc[125];
-    pDst[126] = pSrc[126];  pDst[127] = pSrc[127];
-    pDst[128] = pSrc[128];  pDst[129] = pSrc[129];
-    pDst[130] = pSrc[130];  pDst[131] = pSrc[131];
-    pDst[132] = pSrc[132];  pDst[133] = pSrc[133];
-    pDst[134] = pSrc[134];  pDst[135] = pSrc[135];
-    pDst[136] = pSrc[136];  pDst[137] = pSrc[137];
-    pDst[138] = pSrc[138];  pDst[139] = pSrc[139];
-    pDst[140] = pSrc[140];  pDst[141] = pSrc[141];
-    pDst[142] = pSrc[142];  pDst[143] = pSrc[143];
-    pDst[144] = pSrc[144];  pDst[145] = pSrc[145];
-    pDst[146] = pSrc[146];  pDst[147] = pSrc[147];
-    pDst[148] = pSrc[148];  pDst[149] = pSrc[149];
-    pDst[150] = pSrc[150];  pDst[151] = pSrc[151];
-    pDst[152] = pSrc[152];  pDst[153] = pSrc[153];
-    pDst[154] = pSrc[154];  pDst[155] = pSrc[155];
-    pDst[156] = pSrc[156];  pDst[157] = pSrc[157];
-    pDst[158] = pSrc[158];  pDst[159] = pSrc[159];
-    pDst[160] = pSrc[160];  pDst[161] = pSrc[161];
-    pDst[162] = pSrc[162];  pDst[163] = pSrc[163];
-    pDst[164] = pSrc[164];  pDst[165] = pSrc[165];
-    pDst[166] = pSrc[166];  pDst[167] = pSrc[167];
-    pDst[168] = pSrc[168];  pDst[169] = pSrc[169];
-    pDst[170] = pSrc[170];  pDst[171] = pSrc[171];
-    pDst[172] = pSrc[172];  pDst[173] = pSrc[173];
-    pDst[174] = pSrc[174];  pDst[175] = pSrc[175];
-    pDst[176] = pSrc[176];  pDst[177] = pSrc[177];
-    pDst[178] = pSrc[178];  pDst[179] = pSrc[179];
-    pDst[180] = pSrc[180];  pDst[181] = pSrc[181];
-    pDst[182] = pSrc[182];  pDst[183] = pSrc[183];
-    pDst[184] = pSrc[184];  pDst[185] = pSrc[185];
-    pDst[186] = pSrc[186];  pDst[187] = pSrc[187];
-    pDst[188] = pSrc[188];  pDst[189] = pSrc[189];
-    pDst[190] = pSrc[190];  pDst[191] = pSrc[191];
-    pDst[192] = pSrc[192];  pDst[193] = pSrc[193];
-    pDst[194] = pSrc[194];  pDst[195] = pSrc[195];
-    pDst[196] = pSrc[196];  pDst[197] = pSrc[197];
-    pDst[198] = pSrc[198];  pDst[199] = pSrc[199];
-    pDst[200] = pSrc[200];  pDst[201] = pSrc[201];
-    pDst[202] = pSrc[202];  pDst[203] = pSrc[203];
-    pDst[204] = pSrc[204];  pDst[205] = pSrc[205];
-    pDst[206] = pSrc[206];  pDst[207] = pSrc[207];
-    pDst[208] = pSrc[208];  pDst[209] = pSrc[209];
-    pDst[210] = pSrc[210];  pDst[211] = pSrc[211];
-    pDst[212] = pSrc[212];  pDst[213] = pSrc[213];
-    pDst[214] = pSrc[214];  pDst[215] = pSrc[215];
-    pDst[216] = pSrc[216];  pDst[217] = pSrc[217];
-    pDst[218] = pSrc[218];  pDst[219] = pSrc[219];
-    pDst[220] = pSrc[220];  pDst[221] = pSrc[221];
-    pDst[222] = pSrc[222];  pDst[223] = pSrc[223];
-    pDst[224] = pSrc[224];  pDst[225] = pSrc[225];
-    pDst[226] = pSrc[226];  pDst[227] = pSrc[227];
-    pDst[228] = pSrc[228];  pDst[229] = pSrc[229];
-    pDst[230] = pSrc[230];  pDst[231] = pSrc[231];
-    pDst[232] = pSrc[232];  pDst[233] = pSrc[233];
-    pDst[234] = pSrc[234];  pDst[235] = pSrc[235];
-    pDst[236] = pSrc[236];  pDst[237] = pSrc[237];
-    pDst[238] = pSrc[238];  pDst[239] = pSrc[239];
-    pDst[240] = pSrc[240];  pDst[241] = pSrc[241];
-    pDst[242] = pSrc[242];  pDst[243] = pSrc[243];
-    pDst[244] = pSrc[244];  pDst[245] = pSrc[245];
-    pDst[246] = pSrc[246];  pDst[247] = pSrc[247];
-    pDst[248] = pSrc[248];  pDst[249] = pSrc[249];
-    pDst[250] = pSrc[250];  pDst[251] = pSrc[251];
-    pDst[252] = pSrc[252];  pDst[253] = pSrc[253];
-    pDst[254] = pSrc[254];  pDst[255] = pSrc[255];
+#   if defined(ATIMove32)
+
+        ATIMove32(pDst, pSrc, 256);
+
+#   else
+
+        /* This is lengthy, but it does maximise burst modes */
+        pDst[  0] = pSrc[  0];  pDst[  1] = pSrc[  1];
+        pDst[  2] = pSrc[  2];  pDst[  3] = pSrc[  3];
+        pDst[  4] = pSrc[  4];  pDst[  5] = pSrc[  5];
+        pDst[  6] = pSrc[  6];  pDst[  7] = pSrc[  7];
+        pDst[  8] = pSrc[  8];  pDst[  9] = pSrc[  9];
+        pDst[ 10] = pSrc[ 10];  pDst[ 11] = pSrc[ 11];
+        pDst[ 12] = pSrc[ 12];  pDst[ 13] = pSrc[ 13];
+        pDst[ 14] = pSrc[ 14];  pDst[ 15] = pSrc[ 15];
+        pDst[ 16] = pSrc[ 16];  pDst[ 17] = pSrc[ 17];
+        pDst[ 18] = pSrc[ 18];  pDst[ 19] = pSrc[ 19];
+        pDst[ 20] = pSrc[ 20];  pDst[ 21] = pSrc[ 21];
+        pDst[ 22] = pSrc[ 22];  pDst[ 23] = pSrc[ 23];
+        pDst[ 24] = pSrc[ 24];  pDst[ 25] = pSrc[ 25];
+        pDst[ 26] = pSrc[ 26];  pDst[ 27] = pSrc[ 27];
+        pDst[ 28] = pSrc[ 28];  pDst[ 29] = pSrc[ 29];
+        pDst[ 30] = pSrc[ 30];  pDst[ 31] = pSrc[ 31];
+        pDst[ 32] = pSrc[ 32];  pDst[ 33] = pSrc[ 33];
+        pDst[ 34] = pSrc[ 34];  pDst[ 35] = pSrc[ 35];
+        pDst[ 36] = pSrc[ 36];  pDst[ 37] = pSrc[ 37];
+        pDst[ 38] = pSrc[ 38];  pDst[ 39] = pSrc[ 39];
+        pDst[ 40] = pSrc[ 40];  pDst[ 41] = pSrc[ 41];
+        pDst[ 42] = pSrc[ 42];  pDst[ 43] = pSrc[ 43];
+        pDst[ 44] = pSrc[ 44];  pDst[ 45] = pSrc[ 45];
+        pDst[ 46] = pSrc[ 46];  pDst[ 47] = pSrc[ 47];
+        pDst[ 48] = pSrc[ 48];  pDst[ 49] = pSrc[ 49];
+        pDst[ 50] = pSrc[ 50];  pDst[ 51] = pSrc[ 51];
+        pDst[ 52] = pSrc[ 52];  pDst[ 53] = pSrc[ 53];
+        pDst[ 54] = pSrc[ 54];  pDst[ 55] = pSrc[ 55];
+        pDst[ 56] = pSrc[ 56];  pDst[ 57] = pSrc[ 57];
+        pDst[ 58] = pSrc[ 58];  pDst[ 59] = pSrc[ 59];
+        pDst[ 60] = pSrc[ 60];  pDst[ 61] = pSrc[ 61];
+        pDst[ 62] = pSrc[ 62];  pDst[ 63] = pSrc[ 63];
+        pDst[ 64] = pSrc[ 64];  pDst[ 65] = pSrc[ 65];
+        pDst[ 66] = pSrc[ 66];  pDst[ 67] = pSrc[ 67];
+        pDst[ 68] = pSrc[ 68];  pDst[ 69] = pSrc[ 69];
+        pDst[ 70] = pSrc[ 70];  pDst[ 71] = pSrc[ 71];
+        pDst[ 72] = pSrc[ 72];  pDst[ 73] = pSrc[ 73];
+        pDst[ 74] = pSrc[ 74];  pDst[ 75] = pSrc[ 75];
+        pDst[ 76] = pSrc[ 76];  pDst[ 77] = pSrc[ 77];
+        pDst[ 78] = pSrc[ 78];  pDst[ 79] = pSrc[ 79];
+        pDst[ 80] = pSrc[ 80];  pDst[ 81] = pSrc[ 81];
+        pDst[ 82] = pSrc[ 82];  pDst[ 83] = pSrc[ 83];
+        pDst[ 84] = pSrc[ 84];  pDst[ 85] = pSrc[ 85];
+        pDst[ 86] = pSrc[ 86];  pDst[ 87] = pSrc[ 87];
+        pDst[ 88] = pSrc[ 88];  pDst[ 89] = pSrc[ 89];
+        pDst[ 90] = pSrc[ 90];  pDst[ 91] = pSrc[ 91];
+        pDst[ 92] = pSrc[ 92];  pDst[ 93] = pSrc[ 93];
+        pDst[ 94] = pSrc[ 94];  pDst[ 95] = pSrc[ 95];
+        pDst[ 96] = pSrc[ 96];  pDst[ 97] = pSrc[ 97];
+        pDst[ 98] = pSrc[ 98];  pDst[ 99] = pSrc[ 99];
+        pDst[100] = pSrc[100];  pDst[101] = pSrc[101];
+        pDst[102] = pSrc[102];  pDst[103] = pSrc[103];
+        pDst[104] = pSrc[104];  pDst[105] = pSrc[105];
+        pDst[106] = pSrc[106];  pDst[107] = pSrc[107];
+        pDst[108] = pSrc[108];  pDst[109] = pSrc[109];
+        pDst[110] = pSrc[110];  pDst[111] = pSrc[111];
+        pDst[112] = pSrc[112];  pDst[113] = pSrc[113];
+        pDst[114] = pSrc[114];  pDst[115] = pSrc[115];
+        pDst[116] = pSrc[116];  pDst[117] = pSrc[117];
+        pDst[118] = pSrc[118];  pDst[119] = pSrc[119];
+        pDst[120] = pSrc[120];  pDst[121] = pSrc[121];
+        pDst[122] = pSrc[122];  pDst[123] = pSrc[123];
+        pDst[124] = pSrc[124];  pDst[125] = pSrc[125];
+        pDst[126] = pSrc[126];  pDst[127] = pSrc[127];
+        pDst[128] = pSrc[128];  pDst[129] = pSrc[129];
+        pDst[130] = pSrc[130];  pDst[131] = pSrc[131];
+        pDst[132] = pSrc[132];  pDst[133] = pSrc[133];
+        pDst[134] = pSrc[134];  pDst[135] = pSrc[135];
+        pDst[136] = pSrc[136];  pDst[137] = pSrc[137];
+        pDst[138] = pSrc[138];  pDst[139] = pSrc[139];
+        pDst[140] = pSrc[140];  pDst[141] = pSrc[141];
+        pDst[142] = pSrc[142];  pDst[143] = pSrc[143];
+        pDst[144] = pSrc[144];  pDst[145] = pSrc[145];
+        pDst[146] = pSrc[146];  pDst[147] = pSrc[147];
+        pDst[148] = pSrc[148];  pDst[149] = pSrc[149];
+        pDst[150] = pSrc[150];  pDst[151] = pSrc[151];
+        pDst[152] = pSrc[152];  pDst[153] = pSrc[153];
+        pDst[154] = pSrc[154];  pDst[155] = pSrc[155];
+        pDst[156] = pSrc[156];  pDst[157] = pSrc[157];
+        pDst[158] = pSrc[158];  pDst[159] = pSrc[159];
+        pDst[160] = pSrc[160];  pDst[161] = pSrc[161];
+        pDst[162] = pSrc[162];  pDst[163] = pSrc[163];
+        pDst[164] = pSrc[164];  pDst[165] = pSrc[165];
+        pDst[166] = pSrc[166];  pDst[167] = pSrc[167];
+        pDst[168] = pSrc[168];  pDst[169] = pSrc[169];
+        pDst[170] = pSrc[170];  pDst[171] = pSrc[171];
+        pDst[172] = pSrc[172];  pDst[173] = pSrc[173];
+        pDst[174] = pSrc[174];  pDst[175] = pSrc[175];
+        pDst[176] = pSrc[176];  pDst[177] = pSrc[177];
+        pDst[178] = pSrc[178];  pDst[179] = pSrc[179];
+        pDst[180] = pSrc[180];  pDst[181] = pSrc[181];
+        pDst[182] = pSrc[182];  pDst[183] = pSrc[183];
+        pDst[184] = pSrc[184];  pDst[185] = pSrc[185];
+        pDst[186] = pSrc[186];  pDst[187] = pSrc[187];
+        pDst[188] = pSrc[188];  pDst[189] = pSrc[189];
+        pDst[190] = pSrc[190];  pDst[191] = pSrc[191];
+        pDst[192] = pSrc[192];  pDst[193] = pSrc[193];
+        pDst[194] = pSrc[194];  pDst[195] = pSrc[195];
+        pDst[196] = pSrc[196];  pDst[197] = pSrc[197];
+        pDst[198] = pSrc[198];  pDst[199] = pSrc[199];
+        pDst[200] = pSrc[200];  pDst[201] = pSrc[201];
+        pDst[202] = pSrc[202];  pDst[203] = pSrc[203];
+        pDst[204] = pSrc[204];  pDst[205] = pSrc[205];
+        pDst[206] = pSrc[206];  pDst[207] = pSrc[207];
+        pDst[208] = pSrc[208];  pDst[209] = pSrc[209];
+        pDst[210] = pSrc[210];  pDst[211] = pSrc[211];
+        pDst[212] = pSrc[212];  pDst[213] = pSrc[213];
+        pDst[214] = pSrc[214];  pDst[215] = pSrc[215];
+        pDst[216] = pSrc[216];  pDst[217] = pSrc[217];
+        pDst[218] = pSrc[218];  pDst[219] = pSrc[219];
+        pDst[220] = pSrc[220];  pDst[221] = pSrc[221];
+        pDst[222] = pSrc[222];  pDst[223] = pSrc[223];
+        pDst[224] = pSrc[224];  pDst[225] = pSrc[225];
+        pDst[226] = pSrc[226];  pDst[227] = pSrc[227];
+        pDst[228] = pSrc[228];  pDst[229] = pSrc[229];
+        pDst[230] = pSrc[230];  pDst[231] = pSrc[231];
+        pDst[232] = pSrc[232];  pDst[233] = pSrc[233];
+        pDst[234] = pSrc[234];  pDst[235] = pSrc[235];
+        pDst[236] = pSrc[236];  pDst[237] = pSrc[237];
+        pDst[238] = pSrc[238];  pDst[239] = pSrc[239];
+        pDst[240] = pSrc[240];  pDst[241] = pSrc[241];
+        pDst[242] = pSrc[242];  pDst[243] = pSrc[243];
+        pDst[244] = pSrc[244];  pDst[245] = pSrc[245];
+        pDst[246] = pSrc[246];  pDst[247] = pSrc[247];
+        pDst[248] = pSrc[248];  pDst[249] = pSrc[249];
+        pDst[250] = pSrc[250];  pDst[251] = pSrc[251];
+        pDst[252] = pSrc[252];  pDst[253] = pSrc[253];
+        pDst[254] = pSrc[254];  pDst[255] = pSrc[255];
+
+#endif
+
 }
 
 /*

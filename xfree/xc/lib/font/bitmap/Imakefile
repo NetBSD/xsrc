@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:34 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/font/bitmap/Imakefile,v 1.11 2001/04/03 17:51:59 paulo Exp $
+XCOMM $XFree86: xc/lib/font/bitmap/Imakefile,v 1.13 2002/01/18 16:27:19 keithp Exp $
 
 #if BuildServer && DoLoadableServer
 #define IHaveSubdirs
@@ -12,9 +12,9 @@ XCOMM $XFree86: xc/lib/font/bitmap/Imakefile,v 1.11 2001/04/03 17:51:59 paulo Ex
 SUBDIRS = module
 #endif
 
-#ifndef KDriveXServer
 BDFSRCS=bdfread.c bdfutils.c
 BDFOBJS=bdfread.o bdfutils.o
+#ifndef KDriveXServer
 BDFDEFS=-DBDFFORMAT
 
 SNFSRCS=snfread.c
@@ -45,6 +45,7 @@ PCFDEFS=-DPCFFORMAT
 		   bitmapfunc.o $(PCFOBJS) $(SNFOBJS) \
 		   fontink.o
 
+#if BuildFontLib
 #define DoNormalLib NormalLibFont
 #define DoSharedLib SharedLibFont
 #define DoDebugLib DebugLibFont
@@ -57,6 +58,7 @@ SpecialCLibObjectRule(bitscale,$(ICONFIGFILES),$(GZIP_DEFS))
 
 SubdirLibraryRule($(OBJS))
 NormalLintTarget($(SRCS))
+#endif
 
 #if BuildServer && DoLoadableServer
 MakeSubdirs($(SUBDIRS))

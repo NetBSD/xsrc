@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidac.c,v 1.12 2001/01/11 03:36:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidac.c,v 1.14 2002/01/16 16:22:26 tsi Exp $ */
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -147,7 +147,7 @@ ATIDACPreInit
 )
 {
     int Index, Index2;
-    CARD8 maxColour = (1 << pScreenInfo->rgbBits) - 1;
+    CARD8 maxColour = (1 << pATI->rgbBits) - 1;
 
     pATIHW->dac_read = pATIHW->dac_write = 0x00U;
     pATIHW->dac_mask = 0xFFU;
@@ -379,7 +379,7 @@ ATILoadPalette
 {
     ATIPtr pATI = ATIPTR(pScreenInfo);
     CARD8  *LUTEntry;
-    int    i, Index;
+    int    i, j, Index;
 
     if (((pVisual->class | DynamicClass) == DirectColor) &&
         ((1 << pVisual->nplanes) > (SizeOf(pATI->NewHW.lut) / 3)))
@@ -398,6 +398,10 @@ ATILoadPalette
 
         int minShift;
 
+        CARD8 fChanged[SizeOf(pATI->NewHW.lut) / 3];
+
+        (void)memset(fChanged, SizeOf(fChanged), 0);
+
         minShift = redShift;
         if (minShift > greenShift)
             minShift = greenShift;
@@ -410,14 +414,23 @@ ATILoadPalette
                 continue;
 
             if (Index <= reds)
-                pATI->NewHW.lut[(Index * redMult) + 0] =
-                    Colours[Index].red << minShift;
+            {
+                j = Index * redMult;
+                pATI->NewHW.lut[j + 0] = Colours[Index].red;
+                fChanged[j / 3] = TRUE;
+            }
             if (Index <= greens)
-                pATI->NewHW.lut[(Index * greenMult) + 1] =
-                    Colours[Index].green << minShift;
+            {
+                j = Index * greenMult;
+                pATI->NewHW.lut[j + 1] = Colours[Index].green;
+                fChanged[j / 3] = TRUE;
+            }
             if (Index <= blues)
-                pATI->NewHW.lut[(Index * blueMult) + 2] =
-                    Colours[Index].blue << minShift;
+            {
+                j = Index * blueMult;
+                pATI->NewHW.lut[j + 2] = Colours[Index].blue;
+                fChanged[j / 3] = TRUE;
+            }
         }
 
         if (pScreenInfo->vtSema || pATI->currentMode)
@@ -430,6 +443,8 @@ ATILoadPalette
                  Index < (SizeOf(pATI->NewHW.lut) / 3);
                  Index += i, LUTEntry += i * 3)
             {
+                if (!fChanged[Index])
+                    continue;
 
 #ifdef AVOID_CPIO
 

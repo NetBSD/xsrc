@@ -1,9 +1,13 @@
-/* $Xorg: comm.c,v 1.4 2000/08/17 19:53:51 cpqbld Exp $ */
+/* $Xorg: comm.c,v 1.5 2001/02/09 02:05:29 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/editres/comm.c,v 1.4 2001/01/17 23:44:52 dawes Exp $ */
+/* $XFree86: xc/programs/editres/comm.c,v 1.5 2001/12/14 20:00:42 dawes Exp $ */
 
 
 /*

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:12 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.15 2001/01/17 19:43:05 dawes Exp $
+XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.16 2001/07/23 13:15:42 dawes Exp $
 
 #define DoNormalLib NormalLibXt
 #define DoSharedLib SharedLibXt
@@ -244,10 +244,6 @@ SpecialCObjectRule(sharedlib,$(_NOOP_),$(SHLIBDEF))
 #endif
 #if ItsyCompilerBug
 SpecialCLibObjectRule(PassivGrab,$(_NOOP_),-O0)
-#endif
-
-#ifdef MinixArchitecture
-SpecialCLibObjectRule(Shell,$(ICONFIGFILES),-DXT_NO_SM)
 #endif
 
 STRINGS_FILES = StringDefs.c StringDefs.h Shell.h

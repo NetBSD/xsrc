@@ -13,7 +13,7 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  */
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.6 2001/01/17 22:36:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.7 2001/07/25 15:05:02 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_
@@ -73,10 +73,6 @@ extern char *getenv();
 
 #include <errno.h>
 #include <memory.h>
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 /* 
  * Sun specific headers Sun moved in Solaris, and are different for NetBSD.

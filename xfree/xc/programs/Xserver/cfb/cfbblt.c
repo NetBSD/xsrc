@@ -1,13 +1,17 @@
 /*
  * cfb copy area
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.10 2001/01/17 22:36:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.12 2001/12/14 19:59:21 dawes Exp $ */
 
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -26,7 +30,7 @@ in this Software without prior written authorization from The Open Group.
 Author: Keith Packard
 
 */
-/* $Xorg: cfbblt.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $ */
+/* $Xorg: cfbblt.c,v 1.4 2001/02/09 02:04:37 xorgcvs Exp $ */
 
 /* 24-bit bug fixes: Peter Wainwright, 1998/11/28 */
 
@@ -147,19 +151,16 @@ MROP_NAME(cfbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 				/* following used for looping through a line */
     CfbBits startmask, endmask;	/* masks for writing ends of dst */
     int nlMiddle;		/* whole longwords in dst */
-    int xoffSrc, xoffDst, xoffEnd;
+    int xoffSrc, xoffDst;
+    register int nl;		/* temp copy of nlMiddle */
+    int careful;
+
+#if (PSZ != 24) || (MROP != 0)
     register int leftShift, rightShift;
     register CfbBits bits;
     register CfbBits bits1;
-    register int nl;		/* temp copy of nlMiddle */
+#endif
 
-				/* place to store full source word */
-    int nstart;			/* number of ragged bits at start of dst */
-    int nend;			/* number of ragged bits at end of dst */
-    int srcStartOver;		/* pulling nstart bits from src
-				   overflows into the next word? */
-    int careful;
-    int tmpSrc;
 #if PSZ == 24
 #ifdef DO_MEMCPY
     int w2;

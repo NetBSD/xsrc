@@ -1,9 +1,13 @@
-/* $Xorg: parse.c,v 1.4 2000/08/17 19:41:51 cpqbld Exp $ */
+/* $Xorg: parse.c,v 1.6 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/parse.c,v 1.9 2001/05/18 16:03:05 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/parse.c,v 1.11 2001/12/17 20:52:22 dawes Exp $ */
 
 #include "def.h"
 
@@ -34,7 +38,7 @@ extern char	*includedirs[ ],
 static int deftype (char *line, struct filepointer *filep,
 		    struct inclist *file_red, struct inclist *file,
 		    int parse_it);
-static int zero_value(char *exp, struct filepointer *filep,
+static int zero_value(char *filename, char *exp, struct filepointer *filep,
 		    struct inclist *file_red);
 static int merge2defines(struct inclist *file1, struct inclist *file2);
 
@@ -83,8 +87,11 @@ gobble(struct filepointer *filep, struct inclist *file,
 		case ELIFGUESSFALSE:
 			return(type);
 		case -1:
-			warning("%s, line %d: unknown directive == \"%s\"\n",
-				file_red->i_file, filep->f_line, line);
+			warning("%s", file_red->i_file);
+			if (file_red != file)
+				warning1(" (reading %s)", file->i_file);
+			warning1(", line %d: unknown directive == \"%s\"\n",
+				filep->f_line, line);
 			break;
 		}
 	}
@@ -132,7 +139,7 @@ deftype (char *line, struct filepointer *filep,
 	     */
 	    debug(0,("%s, line %d: #elif %s ",
 		   file->i_file, filep->f_line, p));
-	    ret = zero_value(p, filep, file_red);
+	    ret = zero_value(file->i_file, p, filep, file_red);
 	    if (ret != IF)
 	    {
 		debug(0,("false...\n"));
@@ -166,7 +173,7 @@ deftype (char *line, struct filepointer *filep,
 		/*
 		 * parse an expression.
 		 */
-		ret = zero_value(p, filep, file_red);
+		ret = zero_value(file->i_file, p, filep, file_red);
 		debug(0,("%s, line %d: %s #if %s\n",
 			 file->i_file, filep->f_line, ret?"false":"true", p));
 		break;
@@ -300,9 +307,12 @@ isdefined(char *symbol, struct inclist *file, struct inclist **srcfile)
  * Return type based on if the #if expression evaluates to 0
  */
 static int
-zero_value(char *exp, struct filepointer *filep, struct inclist *file_red)
+zero_value(char *filename,
+	   char *exp,
+	   struct filepointer *filep,
+	   struct inclist *file_red)
 {
-	if (cppsetup(exp, filep, file_red))
+	if (cppsetup(filename, exp, filep, file_red))
 	    return(IFFALSE);
 	else
 	    return(IF);
@@ -602,8 +612,11 @@ find_includes(struct filepointer *filep, struct inclist *file,
 			break;
 		case UNDEF:
 			if (!*line) {
-			    warning("%s, line %d: incomplete undef == \"%s\"\n",
-				file_red->i_file, filep->f_line, line);
+			    warning("%s", file_red->i_file);
+			    if (file_red != file)
+				warning1(" (reading %s)", file->i_file);
+			    warning1(", line %d: incomplete undef == \"%s\"\n",
+				filep->f_line, line);
 			    break;
 			}
 			undefine(line, file_red);
@@ -620,7 +633,10 @@ find_includes(struct filepointer *filep, struct inclist *file,
 			break;
 		case ERROR:
 		case WARNING:
-		    	warning("%s: %d: %s\n", file_red->i_file,
+		    	warning("%s", file_red->i_file);
+			if (file_red != file)
+				warning1(" (reading %s)", file->i_file);
+			warning1(", line %d: %s\n",
 				 filep->f_line, line);
 		    	break;
 		    

@@ -21,6 +21,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/lbxutil.c,v 1.5 2001/10/28 03:34:22 tsi Exp $ */
+
 /*
  * utility routines for LBX requests
  */
@@ -285,8 +287,8 @@ LbxFreeTag(server, tag, tagtype)
 	break;
     default:
 	fprintf(stderr,
-		"unknown type in InvalidateTag request: tag 0x%x type %d\n",
-		tag, tagtype);
+		"unknown type in InvalidateTag request: tag 0x%lx type %d\n",
+		(long)tag, tagtype);
 	return;
     }
     TagFreeData(server, tag_cache, tag, TRUE);
@@ -309,8 +311,8 @@ LbxSendTagData(client, tag, tagtype)
 	tdata = ptdp->data;
 	len = ptdp->length;
     } else {
-	fprintf(stderr, "invalid SendTagData request: tag 0x%x type %d\n",
-		tag, tagtype);
+	fprintf(stderr, "invalid SendTagData request: tag 0x%lx type %d\n",
+		(long)tag, tagtype);
 	len = 0;
 	tdata = NULL;
     }
@@ -330,22 +332,22 @@ void
 DumpCompressionStats()
 {
     if (raw_stream_out && stream_out_plain) {
-	fprintf(stderr, "Requests:  normal = %d, reencoded = %d",
-		raw_stream_out, stream_out_plain);
+	fprintf(stderr, "Requests:  normal = %ld, reencoded = %ld",
+		(long)raw_stream_out, (long)stream_out_plain);
 	stream_out_compressed += stream_out_uncompressed;
 	if (stream_out_compressed)
-	    fprintf(stderr, ", compressed = %d", stream_out_compressed);
+	    fprintf(stderr, ", compressed = %ld", (long)stream_out_compressed);
 	else
 	    stream_out_compressed = stream_out_plain;
 	fprintf(stderr, "\n           %.2f:1 overall reduction ratio\n",
 		(float)raw_stream_out / (float)stream_out_compressed);
     }
     if (raw_stream_in && stream_in_plain) {
-	fprintf(stderr, "Responses: normal = %d, reencoded = %d",
-		raw_stream_in, stream_in_plain);
+	fprintf(stderr, "Responses: normal = %ld, reencoded = %ld",
+		(long)raw_stream_in, (long)stream_in_plain);
 	stream_in_compressed += stream_in_uncompressed;
 	if (stream_in_compressed)
-	    fprintf(stderr, ", compressed = %d", stream_in_compressed);
+	    fprintf(stderr, ", compressed = %ld", (long)stream_in_compressed);
 	else
 	    stream_in_compressed = stream_in_plain;
 	fprintf(stderr, "\n           %.2f:1 overall reduction ratio\n",

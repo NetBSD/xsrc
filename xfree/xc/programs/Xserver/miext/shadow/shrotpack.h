@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shrotpack.h,v 1.2 2000/09/13 23:20:13 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shrotpack.h,v 1.4 2001/10/28 03:34:16 tsi Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -22,6 +22,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * Thanks to Daniel Chemko <dchemko@intrinsyc.com> for making the 90 and 180
+ * orientations work.
+ */
+
 #include    "X.h"
 #include    "scrnintstr.h"
 #include    "windowstr.h"
@@ -35,52 +40,60 @@
 #include    "shadow.h"
 #include    "fb.h"
 
-#define NONE		    0
-#define CLOCKWISE	    1
-#define COUNTERCLOCKWISE    2
-#define UPSIDEDOWN	    3
+#define DANDEBUG         0
 
-#define ROTATE	CLOCKWISE
+#if ROTATE == 270
 
-#if ROTATE == CLOCKWISE
-#define FIRSTSHA(x,y,w,h)   (((y) + (h) - 1) * shaStride + (x))
 #define SCRLEFT(x,y,w,h)    (pScreen->height - ((y) + (h)))
-#define SCRWIDTH(x,y,w,h)   (h)
-#define STEPDOWN(x,y,w,h)   ((w)--)
 #define SCRY(x,y,w,h)	    (x)
-#define SHASTEPX(stride)    -(stride)
-#define SHASTEPY(stride)    1
-#define NEXTY(x,y,w,h)	    ((x)++)
-#endif
-
-#if ROTATE == COUNTERCLOCKWISE
-#define FIRSTSHA(x,y,w,h)   ((y) * shaStride + (x))
-#define SCRLEFT(x,y,w,h)    (y)
 #define SCRWIDTH(x,y,w,h)   (h)
+#define FIRSTSHA(x,y,w,h)   (((y) + (h) - 1) * shaStride + (x))
 #define STEPDOWN(x,y,w,h)   ((w)--)
-#define SCRY(x,y,w,h)	    (pScreen->width - (x) - 1)
-#define SHASTEPX(stride)    (stride)
-#define SHASTEPY(stride)    -1
-#define NEXTY(x,y,w,h)	    ((x)--)
-#endif
+#define NEXTY(x,y,w,h)	    ((x)++)
+#define SHASTEPX(stride)    -(stride)
+#define SHASTEPY(stride)    (1)
 
-#if ROTATE == UPSIDEDOWN
-#define FIRSTSHA(x,y,w,h)   (((y) + (h) - 1) * shaStride + (x) + (w) - 1)
+#elif ROTATE == 90
+
+#define SCRLEFT(x,y,w,h)    (y)
+#define SCRY(x,y,w,h)	    (pScreen->width - ((x) + (w)) - 1)
+#define SCRWIDTH(x,y,w,h)   (h)
+#define FIRSTSHA(x,y,w,h)   ((y) * shaStride + (x + w - 1))
+#define STEPDOWN(x,y,w,h)   ((w)--)
+#define NEXTY(x,y,w,h)	    ((void)(x))
+#define SHASTEPX(stride)    (stride)
+#define SHASTEPY(stride)    (-1)
+
+#elif ROTATE == 180
+
 #define SCRLEFT(x,y,w,h)    (pScreen->width - ((x) + (w)))
+#define SCRY(x,y,w,h)	    (pScreen->height - ((y) + (h)) - 1)
 #define SCRWIDTH(x,y,w,h)   (w)
+#define FIRSTSHA(x,y,w,h)   ((y + h - 1) * shaStride + (x + w - 1))
 #define STEPDOWN(x,y,w,h)   ((h)--)
-#define SCRY(x,y,w,h)	    (pScreen->height - (y) - 1)
+#define NEXTY(x,y,w,h)	    ((void)(y))
 #define SHASTEPX(stride)    (-1)
 #define SHASTEPY(stride)    -(stride)
-#define NEXTY(x,y,w,h)	    ((y)--)
+
+#else
+
+#define SCRLEFT(x,y,w,h)    (x)
+#define SCRY(x,y,w,h)	    (y)
+#define SCRWIDTH(x,y,w,h)   (w)
+#define FIRSTSHA(x,y,w,h)   ((y) * shaStride + (x))
+#define STEPDOWN(x,y,w,h)   ((h)--)
+#define NEXTY(x,y,w,h)	    ((y)++)
+#define SHASTEPX(stride)    (1)
+#define SHASTEPY(stride)    (stride)
+
 #endif
 
 void
-FUNC (ScreenPtr pScreen,
-      PixmapPtr pShadow,
-      RegionPtr damage)
+FUNC (ScreenPtr	    pScreen,
+      shadowBufPtr  pBuf)
 {
-    shadowScrPriv(pScreen);
+    RegionPtr	damage = &pBuf->damage;
+    PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = REGION_NUM_RECTS (damage);
     BoxPtr	pbox = REGION_RECTS (damage);
     FbBits	*shaBits;
@@ -88,63 +101,82 @@ FUNC (ScreenPtr pScreen,
     FbStride	shaStride;
     int		scrBase, scrLine, scr;
     int		shaBpp;
+    int		shaXoff, shaYoff;   /* XXX assumed to be zero */
     int		x, y, w, h, width;
     int         i;
-    Data	*winBase, *winLine, *win;
+    Data	*winBase = NULL, *win;
     CARD32	winSize;
-    int		plane;
 
-    fbGetDrawable (&pShadow->drawable, shaBits, shaStride, shaBpp);
+    fbGetDrawable (&pShadow->drawable, shaBits, shaStride, shaBpp, shaXoff, shaYoff);
     shaBase = (Data *) shaBits;
     shaStride = shaStride * sizeof (FbBits) / sizeof (Data);
+#if (DANDEBUG > 1)
+    ErrorF ("-> Entering Shadow Update:\r\n   |- Origins: pShadow=%x, pScreen=%x, damage=%x\r\n   |- Metrics: shaStride=%d, shaBase=%x, shaBpp=%d\r\n   |                                                     \n", pShadow, pScreen, damage, shaStride, shaBase, shaBpp);
+#endif
     while (nbox--)
     {
-	x = pbox->x1;
-	y = pbox->y1;
-	w = (pbox->x2 - pbox->x1);
-	h = pbox->y2 - pbox->y1;
-
-
-	scrLine = SCRLEFT(x,y,w,h);
-	shaLine = shaBase + FIRSTSHA(x,y,w,h);
-				   
-	while (STEPDOWN(x,y,w,h))
-	{
-	    winSize = 0;
-	    scrBase = 0;
-	    width = SCRWIDTH(x,y,w,h);
-	    scr = scrLine;
-	    sha = shaLine;
-	    while (width) {
-		/* how much remains in this window */
-		i = scrBase + winSize - scr;
-		if (i <= 0 || scr < scrBase)
-		{
-		    winBase = (Data *) (*pScrPriv->window) (pScreen,
-							    SCRY(x,y,w,h),
-							    scr * sizeof (Data),
-							    SHADOW_WINDOW_WRITE,
-							    &winSize);
-		    if(!winBase)
-			return;
-		    scrBase = scr;
-		    winSize /= sizeof (Data);
-		    i = winSize;
-		}
-		win = winBase + (scr - scrBase);
-		if (i > width)
-		    i = width;
-		width -= i;
-		scr += i;
-		while (i--)
-		{
-		    *win++ = *sha;
-		    sha += SHASTEPX(shaStride);
-		}
-	    }
-	    shaLine += SHASTEPY(shaStride);
-	    NEXTY(x,y,w,h);
-	}
-	pbox++;
-    }
+        x = pbox->x1;
+        y = pbox->y1;
+        w = (pbox->x2 - pbox->x1);
+        h = pbox->y2 - pbox->y1;
+        
+#if (DANDEBUG > 2)
+        ErrorF ("   |-> Redrawing box - Metrics: X=%d, Y=%d, Width=%d, Height=%d\n", x, y, w, h);
+#endif
+        scrLine = SCRLEFT(x,y,w,h);
+        shaLine = shaBase + FIRSTSHA(x,y,w,h);
+        
+        while (STEPDOWN(x,y,w,h))
+        {
+            winSize = 0;
+            scrBase = 0;
+            width = SCRWIDTH(x,y,w,h);
+            scr = scrLine;
+            sha = shaLine;
+#if (DANDEBUG > 3)
+            ErrorF ("   |   |-> StepDown - Metrics: width=%d, scr=%x, sha=%x\n", width, scr, sha);
+#endif
+            while (width)
+            {
+                /*  how much remains in this window */
+                i = scrBase + winSize - scr;
+                if (i <= 0 || scr < scrBase)
+                {
+                    winBase = (Data *) (*pBuf->window) (pScreen,
+							SCRY(x,y,w,h),
+							scr * sizeof (Data),
+							SHADOW_WINDOW_WRITE,
+							&winSize,
+							pBuf->closure);
+                    if(!winBase)
+                        return;
+                    scrBase = scr;
+                    winSize /= sizeof (Data);
+                    i = winSize;
+#if(DANDEBUG > 4)
+                    ErrorF ("   |   |   |-> Starting New Line - Metrics: winBase=%x, scrBase=%x, winSize=%d\r\n   |   |   |   Xstride=%d, Ystride=%d, w=%d h=%d\n", winBase, scrBase, winSize, SHASTEPX(shaStride), SHASTEPY(shaStride), w, h);
+#endif
+                }
+                win = winBase + (scr - scrBase);
+                if (i > width)
+                    i = width;
+                width -= i;
+                scr += i;
+#if(DANDEBUG > 5)
+		ErrorF ("   |   |   |-> Writing Line - Metrics: win=%x, sha=%x\n", win, sha);
+#endif
+                while (i--)
+                {
+#if(DANDEBUG > 6)
+		    ErrorF ("   |   |   |-> Writing Pixel - Metrics: win=%x, sha=%d, remaining=%d\n", win, sha, i);
+#endif
+                    *win++ = *sha;
+                    sha += SHASTEPX(shaStride);
+                } /*  i */
+            } /*  width */
+            shaLine += SHASTEPY(shaStride);
+            NEXTY(x,y,w,h);
+        } /*  STEPDOWN */
+        pbox++;
+    } /*  nbox */
 }

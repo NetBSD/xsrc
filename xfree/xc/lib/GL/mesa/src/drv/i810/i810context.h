@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.5 2000/08/28 02:43:11 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.6 2001/08/27 21:12:19 dawes Exp $ */
 
 #ifndef I810CONTEXT_INC
 #define I810CONTEXT_INC
@@ -200,15 +200,6 @@ extern int I810_DEBUG;
 #define DEBUG_VERBOSE_LRU    0x1000
 #define DEBUG_VERBOSE_DRI    0x2000
 #define DEBUG_VERBOSE_IOCTL  0x4000
-
-
-
-extern GLuint i810DDRegisterPipelineStages( struct gl_pipeline_stage *out,
-					   const struct gl_pipeline_stage *in,
-					   GLuint nr );
-
-extern GLboolean i810DDBuildPrecalcPipeline( GLcontext *ctx );
-
 
 
 #endif

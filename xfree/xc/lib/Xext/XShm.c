@@ -1,9 +1,13 @@
 /*
- * $Xorg: XShm.c,v 1.3 2000/08/17 19:45:52 cpqbld Exp $
+ * $Xorg: XShm.c,v 1.4 2001/02/09 02:03:49 xorgcvs Exp $
  *
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Bob Scheifler and Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xext/XShm.c,v 1.3 2001/01/17 19:42:46 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XShm.c,v 1.4 2001/12/14 19:55:00 dawes Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 

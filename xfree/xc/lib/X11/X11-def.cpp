@@ -1755,9 +1755,10 @@ EXPORTS
 	_XimXTransGetPeerAddr   
 	_XimXTransGetConnectionNumber   
 	_XimXTransGetHostname   
-	_Xdebug  
+	_Xdebug DATA  
 	Xutf8TextPropertyToTextList 
 	Xutf8TextListToTextProperty	 
+	Xutf8LookupString
 	XkbIgnoreExtension  
 	XkbOpenDisplay  
 	XkbQueryExtension  
@@ -1985,7 +1986,14 @@ EXPORTS
 	_XimTransportRec  
 	_XlcGenericMethods  
 	_XlcPublicMethods  
+#ifdef HAS_THREADS
+	_XCreateMutex_fn DATA
+	_XFreeMutex_fn DATA
+	_XLockMutex_fn DATA
+	_XUnlockMutex_fn DATA
+	_Xglobal_lock DATA
+#endif
 #endif
 
 /* $Xorg: X11-def.cpp,v 1.3 2000/08/17 19:44:59 cpqbld Exp $ */
-/* $XFree86: xc/lib/X11/X11-def.cpp,v 1.10 2001/04/05 19:29:38 dawes Exp $ */
+/* $XFree86: xc/lib/X11/X11-def.cpp,v 1.12 2001/09/19 15:47:00 alanh Exp $ */

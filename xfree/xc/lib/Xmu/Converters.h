@@ -1,10 +1,14 @@
-/* $Xorg: Converters.h,v 1.4 2000/08/17 19:45:59 cpqbld Exp $ */
+/* $Xorg: Converters.h,v 1.5 2001/02/09 02:03:51 xorgcvs Exp $ */
 
 /*
  
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/Converters.h,v 1.5 2001/01/17 19:42:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Converters.h,v 1.6 2001/12/14 19:55:35 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

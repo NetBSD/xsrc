@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Id: vmware.h,v 1.6 2001/01/30 18:13:47 bennett Exp $
  * **********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.2 2001/05/16 06:48:12 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.3 2001/09/13 08:36:24 alanh Exp $ */
 
 #ifndef VMWARE_H
 #define VMWARE_H
@@ -69,6 +69,9 @@ typedef struct {
 	Bool hwCursor;
 	Bool cursorDefined;
 	Bool mouseHidden;
+
+        unsigned int    cursorRemoveFromFB;
+        unsigned int    cursorRestoreToFB;
 
 	unsigned long	mmioPhysBase;
 	unsigned long	mmioSize;
@@ -160,7 +163,8 @@ static __inline ScrnInfoPtr infoFromScreen(ScreenPtr s) {
 		(vmPtr)->mouseHidden = TRUE; \
 		if ((vmPtr)->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) { \
 		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, 0); \
+		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
+                                   (vmPtr)->cursorRemoveFromFB); \
 		} else { \
 		    vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
 		    vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
@@ -195,7 +199,8 @@ static __inline ScrnInfoPtr infoFromScreen(ScreenPtr s) {
 		(vmPtr)->mouseHidden = FALSE; \
 		if ((vmPtr)->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) { \
 		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, 1); \
+		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
+                                   (vmPtr)->cursorRestoreToFB); \
 		} else { \
 		    vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
 		    vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \

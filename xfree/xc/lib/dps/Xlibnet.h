@@ -13,7 +13,7 @@ written prior permission.  M.I.T. makes no representations about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 */
-/* $XFree86: xc/lib/dps/Xlibnet.h,v 1.5 2000/05/18 23:46:12 dawes Exp $ */
+/* $XFree86: xc/lib/dps/Xlibnet.h,v 1.6 2001/06/30 22:41:44 tsi Exp $ */
 /*
  * Xlibnet.h - Xlib networking include files for UNIX Systems.
  */
@@ -58,7 +58,9 @@ without express or implied warranty.
 #endif
 
 #if defined(i386) && defined(SYSV)
+#if !defined(SCO) && !defined(SCO325)
 #include <net/errno.h>
+#endif
 #include <sys/stropts.h>
 #define BytesReadable(fd,ptr) ioctl((fd), I_NREAD, (ptr))
 #else
@@ -271,7 +273,7 @@ extern Xstream _XsStream[];
 
 #ifndef USL_COMPAT
 #if !defined(USG) || defined(MOTOROLA)
-#if !(defined(SYSV) && defined(i386))
+#if (defined(SCO) || defined(SCO325)) || (!(defined(SYSV) && defined(i386)))
 #define _XReadV readv
 #endif
 #define _XWriteV writev

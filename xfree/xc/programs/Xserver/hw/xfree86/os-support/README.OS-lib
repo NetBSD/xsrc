@@ -34,13 +34,10 @@ have been made in implementation.
 			at build time via Imakefile rules.  This is alway
 			preferable to reproducing functions in more than one
 			OS library.
-		amoeba/	OS support for the Amoeba operating system.
 		bsd/	OS support for the 386BSD/NetBSD/FreeBSD operating 
 			systems.
 		bsdi/	OS support for the BSD/386 operating system.
 		linux/	OS support for the Linux operating system.
-		mach/	OS support for the Mach and OSF/1 operating systems.
-		minix/	OS support for the Minix operating system.
 		os2/	OS support for OS/2 2.11 and OS/2 Warp
 		sco/	OS support for the SCO SVR3.x operating system.
 		solx86/	OS support for the Solaris x86 operating system.
@@ -75,7 +72,7 @@ void xf86OpenConsole(void)
 {
 	/*
 	 * Open console device, activate VTs, etc, etc.  Fill in requisite
-	 * pieces of x386Info.  Most of this code comes from x386Init.c
+	 * pieces of xf86Info.  Most of this code comes from xf86Init.c
 	 */
 }
 
@@ -124,8 +121,7 @@ Bool xf86LinearVidMem(void)
 	 */
 }
 
-pointer xf86MapVidMem(int ScreenNum, int Region, pointer Base,
-		      unsigned long Size)
+pointer xf86MapVidMem(int ScreenNum, pointer Base, unsigned long Size)
 {
 	/*
 	 * Handle mapping the video memory.  Returns (pointer *)0 for
@@ -293,7 +289,7 @@ void xf86KbdEvents(void)
 {
 	/*
 	 * Read characters from the keyboard device, and post the events
-	 * by calling x386PostKbdEvent().  Read as much as is available
+	 * by calling xf86PostKbdEvent().  Read as much as is available
 	 * without waiting.
 	 */
 }
@@ -350,7 +346,7 @@ void xf86MouseEvents(void)
 {
 	/*
 	 * Read characters from the mouse device, and post the events
-	 * by calling x386PostMseEvent().  Read as much as is available
+	 * by calling xf86PostMseEvent().  Read as much as is available
 	 * without waiting.  If the OS doesn't handle the mouse protocol
 	 * translation, xf86MouseProtocol() may be called to do the
 	 * translation and event posting.  If the OS does handle the protocol
@@ -377,7 +373,7 @@ int xf86OsMouseEvents(void)
 	/*
 	 * When supporting an OS-based mouse driver (as opposed to the
 	 * server's internal mouse driver), read some events from the device
-	 * and post them to the DIX layer through x386PostMseEvent().
+	 * and post them to the DIX layer through xf86PostMseEvent().
 	 *
 	 * This function only needs to be implemented if USE_OSMOUSE is
 	 * defined for the OS.
@@ -501,7 +497,7 @@ xf86cos(double x)
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/os-support/README.OS-lib,v 3.7 2000/12/09 03:31:38 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/os-support/README.OS-lib,v 3.10 2001/12/17 20:00:45 dawes Exp $
 
 
 

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.5 2001/01/17 22:36:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.8 2001/12/14 19:59:29 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: colormap.c,v 1.3 2000/08/17 19:48:17 cpqbld Exp $ */
+/* $Xorg: colormap.c,v 1.4 2001/02/09 02:04:39 xorgcvs Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS
@@ -54,6 +58,9 @@ SOFTWARE.
 #include "scrnintstr.h"
 #include "resource.h"
 #include "windowstr.h"
+#ifdef LBX
+#include "lbxserve.h"
+#endif
 
 extern XID clientErrorValue;
 
@@ -1266,9 +1273,9 @@ FindColor (pmap, pentFirst, size, prgb, pPixel, channel, client, comp)
 {
     EntryPtr	pent;
     Bool	foundFree;
-    Pixel	pixel, Free;
-    int		npix, count, *nump;
-    Pixel	**pixp, *ppix;
+    Pixel	pixel, Free = 0;
+    int		npix, count, *nump = NULL;
+    Pixel	**pixp = NULL, *ppix;
     xColorItem	def;
 
     foundFree = FALSE;

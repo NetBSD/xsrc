@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xev/xev.c,v 1.4 2001/03/07 15:54:15 dawes Exp $ */
+/* $XFree86: xc/programs/xev/xev.c,v 1.5 2002/01/07 20:38:30 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -604,7 +604,9 @@ set_sizehints (hintp, min_width, min_height,
 				      (unsigned int *)&hintp->width,
 				      (unsigned int *)&hintp->height);
 	if ((geom_result & WidthValue) && (geom_result & HeightValue)) {
+#ifndef max
 #define max(a,b) ((a) > (b) ? (a) : (b))
+#endif
 	    hintp->width = max (hintp->width, hintp->min_width);
 	    hintp->height = max (hintp->height, hintp->min_height);
 	    hintp->flags |= USSize;

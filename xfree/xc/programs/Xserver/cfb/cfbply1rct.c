@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfbply1rct.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $
+ * $Xorg: cfbply1rct.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.7 2001/01/17 22:36:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.9 2001/12/14 19:59:24 dawes Exp $ */
 
 #include "X.h"
 
@@ -47,29 +51,32 @@ RROP_NAME(cfbFillPoly1Rect) (pDrawable, pGC, shape, mode, count, ptsIn)
 {
     cfbPrivGCPtr    devPriv;
     int		    nwidth;
-    CfbBits   *addrl, *addr;
+    CfbBits	    *addrl, *addr;
 #if PSZ == 24
-    CfbBits startmask, endmask;
-    register int pidx;
+    CfbBits	    startmask, endmask;
+    register int    pidx;
+#else
+#if PPW > 1
+    CfbBits	    mask, bits = ~((CfbBits)0);
+#endif
 #endif
     int		    maxy;
     int		    origin;
     register int    vertex1, vertex2;
-    int		    c;
+    int		    c = 0;
     BoxPtr	    extents;
     int		    clip;
     int		    y;
-    int		    *vertex1p, *vertex2p;
+    int		    *vertex1p = NULL, *vertex2p;
     int		    *endp;
-    int		    x1, x2;
-    int		    dx1, dx2;
-    int		    dy1, dy2;
-    int		    e1, e2;
-    int		    step1, step2;
-    int		    sign1, sign2;
+    int		    x1 = 0, x2 = 0;
+    int		    dx1 = 0, dx2 = 0;
+    int		    dy1 = 0, dy2 = 0;
+    int		    e1 = 0, e2 = 0;
+    int		    step1 = 0, step2 = 0;
+    int		    sign1 = 0, sign2 = 0;
     int		    h;
     int		    l, r;
-    CfbBits   mask, bits = ~((CfbBits)0);
     int		    nmiddle;
     RROP_DECLARE
 
@@ -179,7 +186,7 @@ RROP_NAME(cfbFillPoly1Rect) (pDrawable, pGC, shape, mode, count, ptsIn)
 	vertex2p = (int *) ptsIn;
 #define Setup(c,x,vertex,dx,dy,e,sign,step) {\
     x = intToX(vertex); \
-    if (dy = intToY(c) - y) { \
+    if ((dy = intToY(c) - y)) { \
     	dx = intToX(c) - x; \
 	step = 0; \
     	if (dx >= 0) \
@@ -329,7 +336,7 @@ RROP_NAME(cfbFillPoly1Rect) (pDrawable, pGC, shape, mode, count, ptsIn)
 		    RROP_SOLID(addr); addr++;
 		}
 #if PPW > 1
-	    	if (mask = ~SCRRIGHT(bits, r & PIM))
+	    	if ((mask = ~SCRRIGHT(bits, r & PIM)))
 	    	    RROP_SOLID_MASK(addr,mask);
 	    }
 #endif

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbUtils.c,v 3.12 2001/01/17 22:37:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbUtils.c,v 3.13 2001/08/23 14:33:26 alanh Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -363,7 +363,7 @@ register unsigned	key;
 	XkbApplyCompatMapToKey(xkb,key,changes);
     }
 
-    if (changes->map.changed&XkbVirtualModMapMask|XkbModifierMapMask) {
+    if (changes->map.changed&(XkbVirtualModMapMask|XkbModifierMapMask)) {
         unsigned char           newVMods[XkbNumVirtualMods];
         register  unsigned      bit,i;
         unsigned                present;
@@ -862,7 +862,7 @@ char		grp;
     state->lookup_mods= state->mods&(~ctrls->internal.mask);
     state->grab_mods= state->lookup_mods&(~ctrls->ignore_lock.mask);
     state->grab_mods|= 
-		(state->base_mods|state->latched_mods&ctrls->ignore_lock.mask);
+	((state->base_mods|state->latched_mods)&ctrls->ignore_lock.mask);
 
 
     grp= state->locked_group;

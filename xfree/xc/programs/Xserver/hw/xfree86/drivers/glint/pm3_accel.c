@@ -26,7 +26,7 @@
  * 
  * Permedia 3 accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_accel.c,v 1.25 2001/04/18 09:24:47 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_accel.c,v 1.29 2001/11/20 00:09:13 alanh Exp $ */
 
 #include "Xarch.h"
 #include "xf86.h"
@@ -56,6 +56,29 @@
 # define TRACE_ENTER(str)
 # define TRACE_EXIT(str)
 # define TRACE(str)
+#endif
+
+#define PM3_WRITEMASK \
+  (pGlint->PM3_UsingSGRAM ? PM3FBHardwareWriteMask : PM3FBSoftwareWriteMask )
+#define PM3_OTHERWRITEMASK \
+  (pGlint->PM3_UsingSGRAM ? PM3FBSoftwareWriteMask : PM3FBHardwareWriteMask )
+
+#ifndef XF86DRI
+#define PM3_PLANEMASK(planemask)				\
+{ 								\
+	if (planemask != pGlint->planemask) {			\
+		pGlint->planemask = planemask;			\
+		REPLICATE(planemask); 				\
+		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
+	}							\
+} 
+#else
+#define PM3_PLANEMASK(planemask)				\
+	{							\
+		pGlint->planemask = planemask;			\
+		REPLICATE(planemask); 				\
+		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
+	}
 #endif
 
 /* Clipping */
@@ -128,6 +151,13 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
     	/* Make sure the rest of the register writes go to both PM3's */
     	GLINT_SLOW_WRITE_REG(3, BroadcastMask);
     }
+
+    /* Disable LocalBuffer. Fixes stripes problems when 
+     * doing screen-to-screen copies */
+    GLINT_SLOW_WRITE_REG(UNIT_DISABLE, PM3LBDestReadMode);
+    GLINT_SLOW_WRITE_REG(UNIT_DISABLE, PM3LBDestReadEnables);
+    GLINT_SLOW_WRITE_REG(UNIT_DISABLE, PM3LBSourceReadMode);
+    GLINT_SLOW_WRITE_REG(UNIT_DISABLE, PM3LBWriteMode);
 
     /* Host out PreInit */
     /* Set filter mode to enable sync tag & data output */
@@ -271,7 +301,7 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
     TRACE("Permedia3InitializeEngine : PixelSize");
 
     /* LogicalOpUnit Initialization */
-    GLINT_SLOW_WRITE_REG(0xffffffff,	FBSoftwareWriteMask);
+    GLINT_SLOW_WRITE_REG(0xffffffff,	PM3_OTHERWRITEMASK);
 
     /* FBWriteUnit Initialization */
     GLINT_SLOW_WRITE_REG(
@@ -309,7 +339,7 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
 	    >4095?4095: 8 * pGlint->FbMapSize /
 	    (pScrn->bitsPerPixel * pScrn->displayWidth)),
 	PM3SizeOfFramebuffer);
-    GLINT_SLOW_WRITE_REG(0xffffffff,	FBHardwareWriteMask);
+    GLINT_SLOW_WRITE_REG(0xffffffff,	PM3_WRITEMASK);
     TRACE("Permedia3InitializeEngine : FBHardwareWriteMask & SizeOfFramebuffer");
     /* Color Format */
     switch (pScrn->depth) {
@@ -591,7 +621,7 @@ Permedia3SetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 	pGlint->PM3_Config2D |= PM3Config2D_FBDestReadEnable;
 
     GLINT_WAIT(2);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
 
     TRACE_EXIT("Permedia3SetupForScreenToScreenCopy");
@@ -650,21 +680,32 @@ Permedia3SetupForFillRectSolid(ScrnInfoPtr pScrn, int color,
 	(pScrn->displayWidth <= 1600)) {
     	pGlint->AccelInfoRec->SubsequentSolidFillRect = 
 		Permedia3SubsequentFillRectSolid32bpp;
-    	GLINT_WRITE_REG(color, PM3FBBlockColor);
+	if (pGlint->PM3_UsingSGRAM) {
+	    GLINT_WRITE_REG(color, PM3FBBlockColor);
+	} else {
+	    pGlint->PM3_Render2D |= PM3Render2D_SpanOperation;
+	    GLINT_WRITE_REG(color, PM3ForegroundColor);
+	}
     } else {
     	pGlint->AccelInfoRec->SubsequentSolidFillRect = 
 		Permedia3SubsequentFillRectSolid;
     	/* Can't do block fills at 8bpp either */
     	if ((rop == GXcopy) && (pScrn->bitsPerPixel == 16)) {
-    	    GLINT_WRITE_REG(color, PM3FBBlockColor);
+	    if (pGlint->PM3_UsingSGRAM) {
+	        GLINT_WRITE_REG(color, PM3FBBlockColor);
+	    } else {
+	        pGlint->PM3_Render2D |= PM3Render2D_SpanOperation;
+		GLINT_WRITE_REG(color, PM3ForegroundColor);
+	    }
         } else {
 	    pGlint->PM3_Render2D |= PM3Render2D_SpanOperation;
-    	    GLINT_WRITE_REG(color, PM3ForegroundColor);
+	    GLINT_WRITE_REG(color, PM3ForegroundColor);
     	}
     }
-    if ((rop!=GXclear)&&(rop!=GXset)&&(rop!=GXcopy)&&(rop!=GXcopyInverted))
+    PM3_PLANEMASK(planemask);
+    if (((rop!=GXclear)&&(rop!=GXset)&&(rop!=GXcopy)&&(rop!=GXcopyInverted))
+      || ((planemask != 0xffffffff) && !(pGlint->PM3_UsingSGRAM)))
 	pGlint->PM3_Config2D |= PM3Config2D_FBDestReadEnable;
-    DO_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
     TRACE_EXIT("Permedia3SetupForFillRectSolid");
 }
@@ -766,7 +807,7 @@ Permedia3SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
     GLINT_WRITE_REG((patterny & 0xFF0000) >> 16, AreaStipplePattern6);
     GLINT_WRITE_REG((patterny & 0xFF000000) >> 24, AreaStipplePattern7);
     GLINT_WRITE_REG(fg, PM3ForegroundColor);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
     TRACE_EXIT("Permedia3SetupForMono8x8PatternFill");
 }
@@ -823,7 +864,7 @@ Permedia3SetupForScanlineCPUToScreenColorExpandFill(
     }
     else GLINT_WAIT(3);
     GLINT_WRITE_REG(fg, PM3ForegroundColor);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
 }
 
@@ -918,7 +959,7 @@ static void Permedia3SetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
     if ((rop!=GXclear)&&(rop!=GXset)&&(rop!=GXcopy)&&(rop!=GXcopyInverted))
 	pGlint->PM3_Config2D |= PM3Config2D_FBDestReadEnable;
     GLINT_WAIT(2);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
     TRACE_EXIT("Permedia3SetupForScanlineImageWrite");
 }
@@ -1050,7 +1091,7 @@ Permedia3WritePixmap(
     if ((rop!=GXclear)&&(rop!=GXset)&&(rop!=GXcopy)&&(rop!=GXcopyInverted))
 	pGlint->PM3_Config2D |= PM3Config2D_FBDestReadEnable;
     GLINT_WAIT(6);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
     GLINT_WRITE_REG(((y&0x0fff)<<16)|((x+skipleft)&0x0fff), ScissorMinXY);
     GLINT_WRITE_REG((((y+h)&0x0fff)<<16)|((x+w)&0x0fff), ScissorMaxXY);
@@ -1135,7 +1176,7 @@ Permedia3WriteBitmap(ScrnInfoPtr pScrn,
     }
     else GLINT_WAIT(7);
     GLINT_WRITE_REG(fg, PM3ForegroundColor);
-    DO_PLANEMASK(planemask);
+    PM3_PLANEMASK(planemask);
     GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
     GLINT_WRITE_REG(((y&0x0fff)<<16)|((x+skipleft)&0x0fff), ScissorMinXY);
     GLINT_WRITE_REG((((y+h)&0x0fff)<<16)|((x+w)&0x0fff), ScissorMaxXY);

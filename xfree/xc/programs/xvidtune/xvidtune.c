@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.27 2001/04/06 02:16:26 dawes Exp $ */
+/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.31 2001/12/08 18:53:17 herrb Exp $ */
 
 /*
 
@@ -53,6 +53,7 @@ int MajorVersion, MinorVersion;
 int EventBase, ErrorBase;
 int dot_clock, mode_flags;
 unsigned long    TestTimeout=5000;  /* Default test timeout */
+XtSignalId sigId;
 
 /* Minimum extension version required */
 #define MINMAJOR 0
@@ -158,6 +159,12 @@ CleanUp(Display *dpy)
 
 static void
 CatchSig(int signal)
+{
+    XtNoticeSignal(sigId);
+}
+
+static void
+CatchXtSig(XtPointer closure, XtSignalId *id)
 {
     CleanUp(XtDisplay(Top));
     exit(3);
@@ -754,7 +761,7 @@ FlagsEditCB (Widget w, XtPointer client, XtPointer call)
 static void
 BlankEditCB (Widget w, XtPointer client, XtPointer call)
 {
-    int i, len;
+    int len;
     char* string;
     fields findex = (fields) client;
     ScrollData* sdp = &AppRes.field[findex];
@@ -1425,6 +1432,7 @@ usage(void)
 {
     fprintf(stderr, "Usage: xvidtune [option]\n");
     fprintf(stderr, "    where option is one of:\n");
+    fprintf(stderr, "        -show                             Print current modeline to stdout\n");
     fprintf(stderr, "        -next                             Switch to next video mode\n");
     fprintf(stderr, "        -prev                             Switch to previous video mode\n");
     fprintf(stderr, "        -unlock                           Enable mode switch hot-keys\n");
@@ -1439,7 +1447,6 @@ main (int argc, char** argv)
     Widget top;
     XtAppContext app;
     Display* dpy;
-    int suspendTime, offTime;
 
     static XtActionsRec actions[] = { { "xvidtune-quit", QuitAction },
 				      { "xvidtune-restore", RestoreAction },
@@ -1504,7 +1511,15 @@ main (int argc, char** argv)
         
 	if (argc != 2)
 		usage();
-	if (!strcmp(argv[1], "-next"))
+	if (!strcmp(argv[1], "-show")) {
+	  if (!GetModeLine(XtDisplay (top), DefaultScreen (XtDisplay (top)))) {
+	    fprintf(stderr, "Unable to get mode info\n");
+	    CleanUp(XtDisplay (top));
+	    return 2;
+	  }
+	  ShowCB(top, NULL, NULL);
+	  return 0;
+	} else if (!strcmp(argv[1], "-next"))
 	    i = 1;
 	else if (!strcmp(argv[1], "-prev"))
 	    i = -1;
@@ -1536,6 +1551,7 @@ main (int argc, char** argv)
     signal(SIGQUIT, CatchSig);
     signal(SIGTERM, CatchSig);
     signal(SIGHUP, CatchSig);
+    sigId = XtAppAddSignal(app, CatchXtSig, NULL);
 
     if (!GetModeLine(XtDisplay (top), DefaultScreen (XtDisplay (top)))) {
 	fprintf(stderr, "Unable to get mode info\n");

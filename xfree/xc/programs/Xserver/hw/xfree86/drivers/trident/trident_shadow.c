@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_shadow.c,v 1.2 2000/11/16 19:45:01 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_shadow.c,v 1.3 2001/06/14 02:23:50 keithp Exp $ */
 
 /*
    Copyright (c) 1999, 2000 The XFree86 Project Inc. 
@@ -43,8 +43,9 @@ TRIDENTRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 } 
 
 void
-TRIDENTShadowUpdate (ScreenPtr pScreen, PixmapPtr pShadow, RegionPtr damage)
+TRIDENTShadowUpdate (ScreenPtr pScreen, shadowBufPtr pBuf)
 {
+    RegionPtr damage = &pBuf->damage;
     ScrnInfoPtr pScrn;
     pScrn = xf86Screens[pScreen->myNum];
     

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/bus.c,v 1.1 2000/09/22 06:25:09 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/bus.c,v 1.3 2001/10/12 06:33:10 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -33,7 +33,7 @@
 /* /dev/adbmouse is a busmouse */
 
 void
-BusRead (int adbPort)
+BusRead (int adbPort, void *closure)
 {
     unsigned char   buf[3];
     unsigned char   *b;
@@ -53,7 +53,7 @@ BusRead (int adbPort)
 	    flags |= KD_BUTTON_2;
 	if ((buf[0] & 1) == 0)
 	    flags |= KD_BUTTON_3;
-        KdEnqueueMouseEvent (flags, dx, dy);
+        KdEnqueueMouseEvent (kdMouseInfo, flags, dx, dy);
     }
 }
 
@@ -64,29 +64,36 @@ char	*BusNames[] = {
 
 #define NUM_BUS_NAMES	(sizeof (BusNames) / sizeof (BusNames[0]))
 
+int	BusInputType;
+
 int
 BusInit (void)
 {
     int	    i;
     int	    busPort;
+    int	    n = 0;
 
+    if (!BusInputType)
+	BusInputType = KdAllocInputType ();
+    
     for (i = 0; i < NUM_BUS_NAMES; i++)
     {
 	busPort = open (BusNames[i], 0);
-	if (busPort >= 0)
-	    return busPort;
+	{
+	    KdRegisterFd (BusInputType, busPort, BusRead, 0);
+	    n++;
+	}
     }
+    return n;
 }
 
 void
-BusFini (int busPort)
+BusFini (void)
 {
-    if (busPort >= 0)
-	close (busPort);
+    KdUnregisterFds (BusInputType, TRUE);
 }
 
 KdMouseFuncs BusMouseFuncs = {
     BusInit,
-    BusRead,
     BusFini
 };

@@ -24,7 +24,7 @@
 /* Rewritten with reference from mga driver and 3.3.4 NVIDIA driver by
    Jarno Paananen <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.3 2001/01/22 21:32:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.5 2001/12/17 22:17:55 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -42,7 +42,7 @@
  */
 #define TRANSPARENT_PIXEL   0
 #define ConvertToRGB555(c) \
-( (( c & 0xf80000 ) >> 9 ) | (( c & 0xf800 ) >> 6 ) | (( c & 0xf8) >> 3 ) |0x8000)
+(((c & 0xf80000) >> 9 ) | ((c & 0xf800) >> 6 ) | ((c & 0xf8) >> 3 ) | 0x8000)
 
 static void ConvertCursor(NVPtr pNv, unsigned int* src, unsigned short *dst)
 {
@@ -54,14 +54,22 @@ static void ConvertCursor(NVPtr pNv, unsigned int* src, unsigned short *dst)
         m = *src++;
         for ( j = 0; j < MAX_CURS; j++ )
         {
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+            if ( m & 0x80000000)
+                *dst = ( b & 0x80000000) ? pNv->curFg : pNv->curBg;
+            else
+                *dst = TRANSPARENT_PIXEL;
+            b <<= 1;
+            m <<= 1;
+#else
             if ( m & 1 )
                 *dst = ( b & 1) ? pNv->curFg : pNv->curBg;
             else
                 *dst = TRANSPARENT_PIXEL;
-
-            dst++;
             b >>= 1;
             m >>= 1;
+#endif
+            dst++;
         }
     }
 }
@@ -69,17 +77,13 @@ static void ConvertCursor(NVPtr pNv, unsigned int* src, unsigned short *dst)
 static void
 LoadCursor(ScrnInfoPtr pScrn, unsigned short *tmp)
 {
-    int         *image, i, numInts, save;
+    int         *image, i, numInts;
     NVPtr pNv = NVPTR(pScrn);
     
     numInts = (MAX_CURS*MAX_CURS*2) / sizeof(int);
     image   = (int *)tmp;
-    /* Hide cursor, saving its current display state */
-    save    = pNv->riva.ShowHideCursor(&pNv->riva, 0);
     for (i = 0; i < numInts; i++)
         pNv->riva.CURSOR[i] = image[i];
-    /* Restore cursor display state */
-    pNv->riva.ShowHideCursor(&pNv->riva, save);
 }
 
 static void
@@ -104,12 +108,9 @@ NVSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 {
     NVPtr pNv = NVPTR(pScrn);
 
-    if (pScrn->vtSema)
-    {
-        pNv->riva.ShowHideCursor(&pNv->riva, 0);
-        *(pNv->riva.CURSORPOS) = (x & 0xFFFF) | (y << 16);
-        pNv->riva.ShowHideCursor(&pNv->riva, 1);
-    }
+    pNv->riva.ShowHideCursor(&pNv->riva, 0);
+    *(pNv->riva.CURSORPOS) = (x & 0xFFFF) | (y << 16);
+    pNv->riva.ShowHideCursor(&pNv->riva, 1);
 }
 
 static void
@@ -118,21 +119,22 @@ NVSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     NVPtr pNv = NVPTR(pScrn);
     unsigned short fore, back;
 
-    if (pScrn->vtSema)
-    {
-        fore = ConvertToRGB555(fg);
-        back = ConvertToRGB555(bg);
+    fore = ConvertToRGB555(fg);
+    back = ConvertToRGB555(bg);
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    fore = (fore << 8) | (fore >> 8);
+    back = (back << 8) | (back >> 8);
+#endif
+
+    if (pNv->curFg != fore || pNv->curBg != back) {
+        unsigned short      tmp[MAX_CURS*MAX_CURS];
         
-        if (pNv->curFg != fore || pNv->curBg != back)
-        {
-            unsigned short      tmp[MAX_CURS*MAX_CURS];
+        pNv->curFg = fore;
+        pNv->curBg = back;
             
-            pNv->curFg = fore;
-            pNv->curBg = back;
-            
-            ConvertCursor(pNv, pNv->curImage, tmp);
-            LoadCursor(pScrn, tmp);
-        }
+        ConvertCursor(pNv, pNv->curImage, tmp);
+        LoadCursor(pScrn, tmp);
     }
 }
 

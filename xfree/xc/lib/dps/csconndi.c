@@ -47,7 +47,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/csconndi.c,v 1.6 2001/04/16 20:33:08 tsi Exp $ */
+/* $XFree86: xc/lib/dps/csconndi.c,v 1.11 2002/01/07 19:55:04 dawes Exp $ */
 
 #if defined(sun) && !defined(SVR4)
 #define memmove(t,f,c) bcopy(f,t,c)
@@ -63,6 +63,7 @@
 #include <sys/param.h>
 #include <X11/Xlibint.h>
 #include "Xlibnet.h"		/* New for R5, delete for R4 */
+#include <arpa/inet.h>
 
 #ifndef hpux	/* HP doesn't include Xauth.h :-( */
 #include <X11/Xauth.h>
@@ -160,7 +161,6 @@ DPSCAPConnect(
     char *pscrnum = NULL;		/* start of screen of display */
     Bool dnet = False;			/* if true, then DECnet format */
     int iagent;				/* required display number */
-    int iscreen = 0;			/* optional screen number */
     int (*connfunc)(CONN_PARAMS);	/* method to create connection */
     int fd = -1;			/* file descriptor to return */
     int len;				/* length tmp variable */
@@ -333,19 +333,13 @@ DPSCAPConnect(
 	ioctl (fd, FIOSNBIO, &arg);
     }
 #else
-#if defined(sun) && defined(SVR4)
-#if !defined(_POSIX_C_SOURCE)
-    (void) fcntl (fd, F_SETFL, O_NDELAY);
-#else
+#if defined(O_NONBLOCK)
     (void) fcntl (fd, F_SETFL, O_NONBLOCK);
-#endif
-#else /* sun && SVR4 */
-#ifdef FNDELAY
+#elif defined(FNDELAY)
     (void) fcntl (fd, F_SETFL, FNDELAY);
 #else
     (void) fcntl (fd, F_SETFL, O_NDELAY);
-#endif /* FNDELAY */
-#endif /* sun && SVR4 */
+#endif /* O_NONBLOCK/FNDELAY */
 #endif /* FIOSNBIO */
 
     (void) fcntl (fd, F_SETFD, 1);
@@ -417,9 +411,7 @@ DPSCAPConnect(
 #include <netinet/tcp.h>
 #endif /* NO_TCP_H */
 #else  /* apollo */
-#ifndef __CYGWIN__
 #include <netinet/tcp.h>
-#endif /* __CYGWIN__ */
 #endif /* apollo */
 #endif
 #endif /* NEED_BSDISH */
@@ -722,9 +714,7 @@ int N_XDisconnectDisplay (int server)
 }
 
 
-
-#undef NULL
-#define NULL ((char *) 0)
+#include <stddef.h>
 /*
  * This is an OS dependent routine which:
  * 1) returns as soon as the connection can be written on....

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
-XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.6 2001/04/25 19:44:02 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.12 2001/11/11 22:45:57 alanh Exp $
 
 #include <Server.tmpl>
 
@@ -9,7 +9,7 @@ SHMDEF = -DHAS_SHM
 
 MMAPDEF = -DHAS_MMAP
 
-SRCSA =	InitInput.c \
+SRCS =	InitInput.c \
 	InitOutput.c \
 	stubs.c \
 	wingc.c \
@@ -35,9 +35,15 @@ SRCSA =	InitInput.c \
 	winshadddnl.c \
 	winpfbdd.c \
 	winkeybd.c \
-	winmouse.c
+	winmouse.c \
+	wincutpaste.c \
+	winnativegdi.c \
+	winlayer.c \
+	winerror.c \
+	winengine.c \
+	wincreatewnd.c
 
-OBJSA =	InitInput.o \
+OBJS =	InitInput.o \
 	InitOutput.o \
 	stubs.o \
 	wingc.o \
@@ -63,32 +69,29 @@ OBJSA =	InitInput.o \
 	winshadddnl.o \
 	winpfbdd.o \
 	winkeybd.o \
-	winmouse.o
+	winmouse.o \
+	wincutpaste.o \
+	winnativegdi.o \
+	winlayer.o \
+	winerror.o \
+	winengine.o \
+	wincreatewnd.o
 
-INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) -I$(SERVERSRC)/render \
+INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/miext/shadow -I$(SERVERSRC)/miext/layer \
 	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os  \
-           -I$(EXTINCSRC) -I$(XINCLUDESRC) -I$(SERVERSRC)/miext/shadow
+           -I$(EXTINCSRC) -I$(XINCLUDESRC) \
+	   -I$(SERVERSRC)/render -I$(SERVERSRC)/randr
 
 DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
-
-#if BuildDPMS
-SRCSB =	dpmsstubs.c
-OBJSB =	dpmsstubs.o
-#endif
-
-SRCS =	$(SRCSA) $(SRCSB) $(SRCSC)
-OBJS =	$(OBJSA) $(OBJSB) $(OBJSC)
 
 LinkSourceFile(stubs.c,$(SERVERSRC)/Xi)
 SpecialCObjectRule(stubs,$(ICONFIGFILES),$(EXT_DEFINES))
 
-#if BuildDPMS
-LinkSourceFile(dpmsstubs.c,$(SERVERSRC)/Xext)
-SpecialCObjectRule(dpmsstubs,$(ICONFIGFILES),$(EXT_DEFINES))
-#endif
-
 NormalLibraryObjectRule()
 NormalLibraryTarget(Xwin,$(OBJS))
+
+InstallManPage(XWin,$(MANDIR))
 
 DependTarget()

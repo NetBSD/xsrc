@@ -3,7 +3,7 @@
 **
 ** interprets and executes lines in the Xgc syntax.
 */
-/* $XFree86: xc/programs/xgc/interpret.c,v 1.3 2000/02/17 14:00:36 dawes Exp $ */
+/* $XFree86: xc/programs/xgc/interpret.c,v 1.4 2002/01/07 20:38:30 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,15 +157,15 @@ interpret(string)
       }
     }
     else if (!strcmp(word1,"planemask")) 
-      GC_change_planemask((unsigned int) atoi(word2),FALSE);
+      GC_change_planemask((unsigned long) atoi(word2),FALSE);
     else if (!strcmp(word1,"dashlist"))
       GC_change_dashlist(atoi(word2),FALSE);
     else if (!strcmp(word1,"font"))
       GC_change_font(word2,FALSE);
     else if (!strcmp(word1,"foreground"))
-      GC_change_foreground((unsigned int) atoi(word2),FALSE);
+      GC_change_foreground((unsigned long) atoi(word2),FALSE);
     else if (!strcmp(word1,"background"))
-      GC_change_background((unsigned int) atoi(word2),FALSE);
+      GC_change_background((unsigned long) atoi(word2),FALSE);
     else if (!strcmp(word1,"percent"))
       change_percent(atoi(word2), FALSE);
     else fprintf(stderr,"Ack... %s %s\n",word1,word2);

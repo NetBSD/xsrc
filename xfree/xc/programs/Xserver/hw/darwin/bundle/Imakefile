@@ -1,28 +1,49 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Imakefile,v 1.10.2.1 2001/05/21 04:56:06 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Imakefile,v 1.21 2001/12/22 05:28:34 torrey Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
 
-SRCS =	Preferences.m \
+SRCS =  Preferences.m \
         XApplication.m \
         Xserver.m \
+        XView.m \
+        XWindow.m \
         quartz.c \
         quartzAudio.c \
         quartzCocoa.m \
         quartzCursor.c \
-        quartzPasteboard.c
+        quartzPasteboard.c \
+        rootlessAquaGlue.c \
+        rootlessAquaImp.m \
+        rootlessCommon.c \
+        rootlessGC.c \
+        rootlessScreen.c \
+        rootlessValTree.c \
+        rootlessWindow.c \
+        pseudoramiX.c
 
-OBJS =	Preferences.o \
+OBJS =  Preferences.o \
         XApplication.o \
         Xserver.o \
+        XView.o \
+        XWindow.o \
         quartz.o \
         quartzAudio.o \
         quartzCocoa.o \
         quartzCursor.o \
-        quartzPasteboard.o
+        quartzPasteboard.o \
+        rootlessAquaGlue.o \
+        rootlessAquaImp.o \
+        rootlessCommon.o \
+        rootlessGC.o \
+        rootlessScreen.o \
+        rootlessValTree.o \
+        rootlessWindow.o \
+        pseudoramiX.o
 
-INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
-           -I$(FONTINCSRC)
+INCLUDES = -I. -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(FONTINCSRC) -I$(SERVERSRC)/render \
+           -I$(EXTINCSRC) -I.. -I$(SERVERSRC)/Xext
 
 #if defined(XFree86CustomVersion)
 CUSTOMVERSION = XFree86CustomVersion
@@ -42,7 +63,8 @@ PBXBUILDSTYLE = -buildstyle Development
 PBXBUILDSTYLE = -buildstyle Deployment
 #endif
 
-SUBDIRS = English.lproj Japanese.lproj
+SUBDIRS = Dutch.lproj English.lproj French.lproj German.lproj Japanese.lproj \
+          ko.lproj Spanish.lproj Swedish.lproj
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
@@ -58,6 +80,9 @@ NormalProgramTarget(XDarwinStartup,XDarwinStartup.o,NullParameter, \
 InstallProgram(XDarwinStartup,$(BINDIR))
 install::
 	-(cd $(DESTDIR)$(BINDIR); $(RM) X; $(LN) XDarwinStartup X)
+
+AllTarget(startXClients)
+MakeScriptFromCpp(startXClients, -DXINITDIR=$(XINITDIR) -DXBINDIR=$(BINDIR))
 
 AllTarget(XDarwin)
 XDarwin:

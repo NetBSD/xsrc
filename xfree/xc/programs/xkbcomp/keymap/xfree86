@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.20.2.2 2001/05/25 18:50:14 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.26 2002/01/16 18:20:11 dawes Exp $
 
 default xkb_keymap "us" {
     xkb_keycodes	{ include "xfree86"		};
@@ -124,13 +124,6 @@ xkb_keymap "lt_std"	{
     xkb_symbols		{ include "en_US(pc105)+lt_std"	};
     xkb_geometry 	{ include "pc(pc102)"		};
 };
-xkb_keymap "lt_p"	{
-    xkb_keycodes	{ include "xfree86"		};
-    xkb_types		{ include "default"		};
-    xkb_compatibility	{ include "default"		};
-    xkb_symbols		{ include "en_US(pc105)+lt_p"	};
-    xkb_geometry 	{ include "pc(pc102)"		};
-};
 xkb_keymap "lv"	{
     xkb_keycodes	{ include "xfree86"		};
     xkb_types		{ include "default"		};
@@ -143,6 +136,20 @@ xkb_keymap "mk" {
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
     xkb_symbols		{ include "en_US(pc105)+mk"	};
+    xkb_geometry	{ include "pc(pc102)"		};
+};
+xkb_keymap "mt" {
+    xkb_keycodes	{ include "xfree86"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "en_US(pc105)+mt"	};
+    xkb_geometry	{ include "pc(pc102)"		};
+};
+xkb_keymap "mt_us" {
+    xkb_keycodes	{ include "xfree86"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "en_US(pc105)+mt_us"	};
     xkb_geometry	{ include "pc(pc102)"		};
 };
 xkb_keymap "no"	{
@@ -321,5 +328,13 @@ xkb_keymap "tr" {
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
     xkb_symbols		{ include "en_US(pc105)+tr"	};
+    xkb_geometry	{ include "pc(pc102)"		};
+};
+// Additions by Arabeyes Team, <support@arabeyes.org>
+xkb_keymap "ar" {
+    xkb_keycodes	{ include "xfree86"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "en_US(pc105)+ar"	};
     xkb_geometry	{ include "pc(pc102)"		};
 };

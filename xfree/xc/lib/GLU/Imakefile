@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GLU/Imakefile,v 1.4 2001/02/13 19:19:11 dawes Exp $
+XCOMM $XFree86: xc/lib/GLU/Imakefile,v 1.5 2001/06/05 23:03:20 dawes Exp $
 
 XCOMM License Applicability. Except to the extent portions of this file are
 XCOMM made subject to an alternative license as permitted in the SGI Free
@@ -109,7 +109,11 @@ InstallLibrary($(LIBNAME),$(USRLIBDIR))
 #endif
 
 #if SharedLibGlu
+#ifdef SharedDepCplusplusLibraryTarget
+SharedDepCplusplusLibraryTarget($(LIBNAME),$(SOREV),$(SUBDIRS) $(DONES),$(SHARED_OBJS),.,.)
+#else
 SharedDepLibraryTarget($(LIBNAME),$(SOREV),$(SUBDIRS) $(DONES),$(SHARED_OBJS),.,.)
+#endif
 InstallSharedLibrary($(LIBNAME),$(SOREV),$(SHLIBDIR))
 #endif
 

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBgeom.h,v 3.7 2001/01/17 17:53:17 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKBgeom.h,v 3.8 2001/08/01 00:44:35 tsi Exp $ */
 
 #ifndef _XKBGEOM_H_
 #define	_XKBGEOM_H_
@@ -66,8 +66,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	XkbFreeGeomOverlayKeys		SrvXkbFreeGeomOverlayKeys
 #define	XkbFreeGeomOverlayRows		SrvXkbFreeGeomOverlayRows
 #define	XkbFreeGeomOverlays		SrvXkbFreeGeomOverlays
-#define	XkbFreeGeomKeys			SrvXKbFreeGeomKeys
-#define	XkbFreeGeomRows			SrvXKbFreeGeomRows
+#define	XkbFreeGeomKeys			SrvXkbFreeGeomKeys
+#define	XkbFreeGeomRows			SrvXkbFreeGeomRows
 #define XkbFreeGeomSections		SrvXkbFreeGeomSections
 #define	XkbFreeGeomPoints		SrvXkbFreeGeomPoints
 #define	XkbFreeGeomOutlines		SrvXkbFreeGeomOutlines

@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclWindow.c,v 1.8 2001/01/17 22:36:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclWindow.c,v 1.10 2001/12/19 21:55:58 dawes Exp $ */
 
 
 #include <stdio.h>
@@ -59,8 +59,7 @@ copyright holders.
 
 #include "Pcl.h"
 
-extern WindowPtr *WindowTable;
-
+#if 0
 /*
  * The following list of strings defines the properties which will be
  * placed on the screen's root window if the property was defined in
@@ -77,7 +76,7 @@ static /* const */ char *propStrings[] = {
 	DT_PRINT_PAGE_COMMAND,
 	(char *)NULL
 };
-
+#endif
 
 /*
  * PclCreateWindow - watch for the creation of the root window.
@@ -209,7 +208,6 @@ PclPaintWindow(
     RegionPtr	pRegion,
     int		what)
 {
-    int	status;
     WindowPtr pRoot;
 	
 #define FUNCTION	0

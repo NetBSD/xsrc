@@ -25,7 +25,7 @@
  * 
  * Authors: Rickard E. (Rik) Faith <faith@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.12 2000/11/14 21:59:24 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.13 2001/12/24 22:30:45 dawes Exp $
  * 
  */
 
@@ -107,7 +107,7 @@ xf86SIGIO (int sig)
 #endif
 }
 
-int
+static int
 xf86IsPipe (int fd)
 {
     struct stat	buf;
@@ -123,6 +123,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
     struct sigaction sa;
     struct sigaction osa;
     int	i;
+    int blocked;
 
     for (i = 0; i < MAX_FUNCS; i++)
     {
@@ -140,6 +141,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 #endif
 		return 0;
 	    }
+	    blocked = xf86BlockSIGIO();
 	    if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_ASYNC) == -1) {
 #ifdef XFree86Server
 		xf86Msg(X_WARNING, "fcntl(%d, O_ASYNC): %s\n", 
@@ -148,6 +150,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 		fprintf(stderr,"fcntl(%d, O_ASYNC): %s\n", 
 			fd, strerror(errno));
 #endif
+		xf86UnblockSIGIO(blocked);
 		return 0;
 	    }
 	    sigemptyset(&sa.sa_mask);
@@ -163,6 +166,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 	    if (fd >= xf86SigIOMaxFd)
 		xf86SigIOMaxFd = fd + 1;
 	    FD_SET (fd, &xf86SigIOMask);
+	    xf86UnblockSIGIO(blocked);
 	    return 1;
 	}
  	/* Allow overwriting of the closure and callback */

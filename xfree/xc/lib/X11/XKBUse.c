@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBUse.c,v 3.4 2001/01/17 19:41:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBUse.c,v 3.6 2001/08/13 17:46:02 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -33,10 +33,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "Xlibint.h"
 #include <X11/extensions/XKBproto.h>
 #include "XKBlibint.h"
-
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
 
 static Bool	_XkbIgnoreExtension = False;
 
@@ -693,8 +689,7 @@ XkbUseExtension(dpy,major_rtrn,minor_rtrn)
         dpy->xkb_info = xkbi;
         dpy->free_funcs->xkb = _XkbFreeInfo;
 
-        xkbi->xlib_ctrls|= 
-	    (XkbLC_BeepOnComposeFail|XkbLC_ComposeLED|XkbLC_ControlFallback);
+        xkbi->xlib_ctrls|= (XkbLC_ControlFallback|XkbLC_ConsumeLookupMods);
         if ((str=getenv("_XKB_OPTIONS_ENABLE"))!=NULL) {
 	    if ((str=getenv("_XKB_LATIN1_LOOKUP"))!=NULL) {
 	        if ((strcmp(str,"off")==0)||(strcmp(str,"0")==0))

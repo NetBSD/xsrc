@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.8 2001/01/17 23:46:11 dawes Exp $ */
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.9 2001/07/25 15:05:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -43,9 +43,7 @@
 
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include "utils.h"
 #include "xkbprint.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.7 2001/05/15 10:19:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.9 2001/10/01 13:44:04 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -167,6 +167,9 @@ typedef struct {
    CARD32	videoStatus;
    Time		offTime;
    Time		freeTime;
+   Bool         doubleBuffer;
+   Bool         manualDoubleBuffer;
+   int          currentBuffer;
 } CHIPSPortPrivRec, *CHIPSPortPrivPtr;
 
 
@@ -184,7 +187,6 @@ CHIPSResetVideo(ScrnInfoPtr pScrn)
     CHIPSHiQVSync(pScrn);
     mr3c = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (mr3c | 0x6));
-
     switch (pScrn->depth) {
     case 8:
 	cPtr->writeMR(cPtr, 0x3D, 0x00);
@@ -269,7 +271,10 @@ CHIPSSetupImageVideo(ScreenPtr pScreen)
 
     pPriv->colorKey = cPtr->videoKey;
     pPriv->videoStatus = 0;
-    
+    pPriv->doubleBuffer = TRUE;
+    pPriv->manualDoubleBuffer = FALSE;
+    pPriv->currentBuffer	= 0;
+
     /* gotta uninit this someplace */
     REGION_INIT(pScreen, &pPriv->clip, NullBox, 0); 
 
@@ -402,7 +407,7 @@ CHIPSClipVideo(
 } 
 
 static void 
-CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shadow)
 {
   CHIPSPortPrivPtr pPriv = (CHIPSPortPrivPtr)data;
   CHIPSPtr cPtr = CHIPSPTR(pScrn);
@@ -410,7 +415,7 @@ CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
 
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
   CHIPSHiQVSync(pScrn);
-  if(exit) {
+  if(shadow) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
 	mr3c = cPtr->readMR(cPtr, 0x3C);
 	cPtr->writeMR(cPtr, 0x3C, (mr3c & 0xFE));
@@ -601,6 +606,35 @@ CHIPSAllocateMemory(
    return new_linear;
 }
 
+static int
+CHIPSSetCurrentPlaybackBuffer(CHIPSPtr cPtr, int n)
+{
+  
+    CARD8 mr20;
+    mr20 = cPtr->readMR(cPtr, 0x20);
+    mr20 &= ~0x1B;
+    if (!n) mr20 |= 0x10;
+    cPtr->writeMR(cPtr, 0x22, mr20);
+    return n;
+}
+
+static int
+CHIPSWaitGetNextFrame(CHIPSPtr cPtr)
+{
+    volatile CARD8 mr20;
+    volatile CARD8 mr21;
+    
+    mr20 = cPtr->readMR(cPtr, 0x20);
+    while (1) {
+      mr21 = cPtr->readMR(cPtr, 0x21);
+      if (!(mr20 & (1 << 5)) || !(mr21 & 1))  
+	break;
+    }
+    mr20 &= ~0x4;
+    mr20 = cPtr->readMR(cPtr, 0x20);
+    return (mr21 & 2)? 0 : 1;
+}
+
 static void
 CHIPSDisplayVideo(
     ScrnInfoPtr pScrn,
@@ -611,56 +645,70 @@ CHIPSDisplayVideo(
     int x1, int y1, int x2, int y2,
     BoxPtr dstBox,
     short src_w, short src_h,
-    short drw_w, short drw_h
+    short drw_w, short drw_h,
+    Bool triggerBufSwitch
 ){
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
+    CHIPSPortPrivPtr pPriv = GET_PORT_PRIVATE(pScrn);
     DisplayModePtr mode = pScrn->currentMode;
-    unsigned char tmp;
+    unsigned char tmp, m1f, m1e;
+    int buffer = pPriv->currentBuffer;
 
     CHIPSHiQVSync(pScrn);
 
     tmp = cPtr->readXR(cPtr, 0xD0);
     cPtr->writeXR(cPtr, 0xD0, (tmp | 0x10));
     
-    tmp = cPtr->readMR(cPtr, 0x1E);
-    tmp &= 0xE0;		/* Set Zoom and Direction */
+    m1e = cPtr->readMR(cPtr, 0x1E);
+    m1e &= 0xE0;		/* Set Zoom and Direction */
     if ((!(cPtr->PanelType & ChipsLCD)) && (mode->Flags & V_INTERLACE)) 
-	tmp |= 0x10;
-    cPtr->writeMR(cPtr, 0x1E, tmp);
-    tmp = cPtr->readMR(cPtr, 0x1F);
-    tmp = (tmp & 0x14); /* Mask reserved bits, unset interpolation */
+	m1e |= 0x10;
+
+    m1f = cPtr->readMR(cPtr, 0x1F);
+    m1f = (m1f & 0x14); /* Mask reserved bits, unset interpolation */
     switch(id) {
     case 0x35315652:		/* RGB15 */
-	tmp |= 0x09;
+	m1f |= 0x09;
 	break;
     case 0x36315652:		/* RGB16 */
-	tmp |= 0x08;
+	m1f |= 0x08;
 	break;
     case FOURCC_YV12:		/* YV12 */
-      /* tmp |= 0x03 */
-	tmp |= 0x00; 
+      /* m1f |= 0x03 */
+	m1f |= 0x00; 
 	break;
     case FOURCC_YUY2:		/* YUY2 */
     default:
-	tmp |= 0x00;		/* Do nothing here */
+	m1f |= 0x00;		/* Do nothing here */
 	break;
     }  
 
-    cPtr->writeMR(cPtr, 0x1F, tmp);
+    offset += (x1 >> 15) & ~0x01;
+    /* Setup Pointer 1 */
+    if (!buffer || pPriv->manualDoubleBuffer || !pPriv->doubleBuffer) {
+        cPtr->writeMR(cPtr, 0x22, (offset & 0xF8));
+	cPtr->writeMR(cPtr, 0x23, ((offset >> 8) & 0xFF));
+	cPtr->writeMR(cPtr, 0x24, ((offset >> 16) & 0xFF));
+    }
+    /* Setup Pointer 2 */
+    if ((buffer && !pPriv->manualDoubleBuffer) || !pPriv->doubleBuffer) {
+        cPtr->writeMR(cPtr, 0x25, (offset & 0xF8));
+	cPtr->writeMR(cPtr, 0x26, ((offset >> 8) & 0xFF));
+	cPtr->writeMR(cPtr, 0x27, ((offset >> 16) & 0xFF));
+    }
+
+
+    tmp = cPtr->readMR(cPtr, 0x04);
+    if (pPriv->doubleBuffer && !pPriv->manualDoubleBuffer && triggerBufSwitch)
+      tmp |= 0x18;
+    cPtr->writeMR(cPtr, 0x04, tmp);
+
     tmp = cPtr->readMR(cPtr, 0x20);
     tmp &= 0xC3;
+    if (pPriv->doubleBuffer && !pPriv->manualDoubleBuffer && triggerBufSwitch) 
+	tmp |= ((1 << 2  | 1 << 5) | ((buffer) ? (1 << 4) : 0));
     cPtr->writeMR(cPtr, 0x20, tmp);
 
-    offset += (x1 >> 15) & ~0x01;
-    
-    /* Setup Pointer 1 */
-    cPtr->writeMR(cPtr, 0x22, (offset & 0xF8));
-    cPtr->writeMR(cPtr, 0x23, ((offset >> 8) & 0xFF));
-    cPtr->writeMR(cPtr, 0x24, ((offset >> 16) & 0xFF));
-    /* Setup Pointer 2 */
-    cPtr->writeMR(cPtr, 0x25, (offset & 0xF8));
-    cPtr->writeMR(cPtr, 0x26, ((offset >> 8) & 0xFF));
-    cPtr->writeMR(cPtr, 0x27, ((offset >> 16) & 0xFF));
     cPtr->writeMR(cPtr, 0x28, ((width >> 2) - 1)); /* Width */ 
     cPtr->writeMR(cPtr, 0x34, ((width >> 2) - 1));
 
@@ -688,25 +736,21 @@ CHIPSDisplayVideo(
 
     /* Horizontal Zoom */
     if (drw_w > src_w) {
-	tmp = cPtr->readMR(cPtr, 0x1F);
-	cPtr->writeMR(cPtr, 0x1F, (tmp | 0x20)); /* set H-interpolation */
-	tmp = cPtr->readMR(cPtr, 0x1E);
-	cPtr->writeMR(cPtr, 0x1E, (tmp | 0x04));
+        m1f = m1f | 0x20; /* set H-interpolation */
+	m1e = m1e | 0x04;
 	tmp = cPtr->VideoZoomMax * src_w / drw_w;
 	cPtr->writeMR(cPtr, 0x32, tmp);
     }
 
     /* Vertical Zoom */
     if (drw_h > src_h) {
-#if 1
-	tmp = cPtr->readMR(cPtr, 0x1F);
-	cPtr->writeMR(cPtr, 0x1F, (tmp | 0xc0)); /* set V-interpolation */
-#endif
-	tmp = cPtr->readMR(cPtr, 0x1E);
-	cPtr->writeMR(cPtr, 0x1E, (tmp | 0x08));
+        m1f = m1f | 0xc0;
+	m1e = m1e | 0x08; /* set V-interpolation */
 	tmp = cPtr->VideoZoomMax * src_h / drw_h ;
 	cPtr->writeMR(cPtr, 0x33, tmp);
     }
+    cPtr->writeMR(cPtr, 0x1F, m1f); 
+    cPtr->writeMR(cPtr, 0x1E, m1e);
 
     tmp = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (tmp | 0x7));
@@ -734,7 +778,7 @@ CHIPSPutImage(
    int top, left, npixels, nlines, bpp;
    BoxRec dstBox;
    CARD32 tmp;
-   
+
    if(drw_w > 16384) drw_w = 16384;
 
    /* Clip */
@@ -761,6 +805,8 @@ CHIPSPutImage(
 
    dstPitch = ((width << 1) + 15) & ~15;
    new_size = ((dstPitch * height) + bpp - 1) / bpp;
+   if (pPriv->doubleBuffer) 
+       new_size <<= 1;
 
    switch(id) {
    case FOURCC_YV12:		/* YV12 */
@@ -774,8 +820,15 @@ CHIPSPutImage(
 	break;
    }  
 
-   if(!(pPriv->linear = CHIPSAllocateMemory(pScrn, pPriv->linear, new_size)))
+   if(!(pPriv->linear = CHIPSAllocateMemory(pScrn, pPriv->linear, new_size))) {
+     if (pPriv->doubleBuffer &&
+	 (pPriv->linear = CHIPSAllocateMemory(pScrn, pPriv->linear, 
+					      new_size >> 1))) {
+         new_size >>= 1;
+	 pPriv->doubleBuffer = FALSE;
+     } else 
 	return BadAlloc;
+   }
 
    /* copy data */
    top = y1 >> 16;
@@ -784,6 +837,11 @@ CHIPSPutImage(
    left <<= 1;
 
    offset = pPriv->linear->offset * bpp;
+   if (!pPriv->manualDoubleBuffer)
+     pPriv->currentBuffer = CHIPSWaitGetNextFrame(cPtr);
+   if(pPriv->doubleBuffer && pPriv->currentBuffer) 
+	offset += (new_size * bpp) >> 1;
+
    dst_start = cPtr->FbBase + offset + left + (top * dstPitch);
 
    switch(id) {
@@ -813,12 +871,15 @@ CHIPSPutImage(
 					REGION_RECTS(clipBoxes));
    }
 
-offset += top * dstPitch;   
+   offset += top * dstPitch;   
    CHIPSDisplayVideo(pScrn, id, offset, width, height, dstPitch,
-	     x1, y1, x2, y2, &dstBox, src_w, src_h, drw_w, drw_h);
+	     x1, y1, x2, y2, &dstBox, src_w, src_h, drw_w, drw_h, TRUE);
 
    pPriv->videoStatus = CLIENT_VIDEO_ON;
    
+   if (pPriv->manualDoubleBuffer)
+     pPriv->currentBuffer ^= 1;   
+
    return Success;
 }
 
@@ -1047,10 +1108,14 @@ CHIPSDisplaySurface(
     dstBox.y1 -= pScrn->frameY0;
     dstBox.y2 -= pScrn->frameY0;
 
+    if (portPriv->doubleBuffer)
+      portPriv->currentBuffer = CHIPSSetCurrentPlaybackBuffer(cPtr,0);
+    else 
+      portPriv->currentBuffer = 0;
 
     CHIPSDisplayVideo(pScrn, surface->id, surface->offsets[0], 
 	     surface->width, surface->height, surface->pitches[0],
-	     x1, y1, x2, y2, &dstBox, src_w, src_h, drw_w, drw_h);
+	     x1, y1, x2, y2, &dstBox, src_w, src_h, drw_w, drw_h, FALSE);
 
     XAAFillSolidRects(pScrn, portPriv->colorKey, GXcopy, ~0, 
                                         REGION_NUM_RECTS(clipBoxes),

@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.15 1999/07/05 12:12:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.16 2001/07/25 15:05:09 dawes Exp $ */
 
 /*
  *  Functions to manipulate card database.
@@ -273,14 +273,8 @@ int parse_database() {
 	return 0;
 }
 
-#ifdef __STDC__
-#define CONST const
-#else
-#define CONST
-#endif
-
 static int
-compare_card(CONST void *e1, CONST void *e2)
+compare_card(const void *e1, const void *e2)
 {
 	return strcmp(((Card *)e1)->name, ((Card *)e2)->name);
 }

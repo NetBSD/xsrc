@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType bytecode interpreter (body).                                */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -19,9 +19,12 @@
 #include <ft2build.h>
 #include FT_INTERNAL_DEBUG_H
 #include FT_INTERNAL_CALC_H
+#include FT_TRIGONOMETRY_H
 #include FT_SYSTEM_H
+
 #include "ttinterp.h"
-#include FT_INTERNAL_TRUETYPE_ERRORS_H
+
+#include "tterrors.h"
 
 
 #ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
@@ -29,9 +32,7 @@
 
 #define TT_MULFIX  FT_MulFix
 #define TT_MULDIV  FT_MulDiv
-
 #define TT_INT64   FT_Int64
-
 
   /*************************************************************************/
   /*                                                                       */
@@ -255,10 +256,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Goto_CodeRange( TT_ExecContext  exec,
-                               FT_Int          range,
-                               FT_Long         IP )
+  FT_LOCAL_DEF FT_Error
+  TT_Goto_CodeRange( TT_ExecContext  exec,
+                     FT_Int          range,
+                     FT_Long         IP )
   {
     TT_CodeRange*  coderange;
 
@@ -305,11 +306,11 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Set_CodeRange( TT_ExecContext  exec,
-                              FT_Int          range,
-                              void*           base,
-                              FT_Long         length )
+  FT_LOCAL_DEF FT_Error
+  TT_Set_CodeRange( TT_ExecContext  exec,
+                    FT_Int          range,
+                    void*           base,
+                    FT_Long         length )
   {
     FT_Assert( range >= 1 && range <= 3 );
 
@@ -340,9 +341,9 @@
   /* <Note>                                                                */
   /*    Does not set the Error variable.                                   */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Clear_CodeRange( TT_ExecContext  exec,
-                                FT_Int          range )
+  FT_LOCAL_DEF FT_Error
+  TT_Clear_CodeRange( TT_ExecContext  exec,
+                      FT_Int          range )
   {
     FT_Assert( range >= 1 && range <= 3 );
 
@@ -379,9 +380,9 @@
   /* <Note>                                                                */
   /*    Only the glyph loader and debugger should call this function.      */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Destroy_Context( TT_ExecContext  exec,
-                                FT_Memory       memory )
+  FT_LOCAL_DEF FT_Error
+  TT_Destroy_Context( TT_ExecContext  exec,
+                      FT_Memory       memory )
   {
     /* free composite load stack */
     FREE( exec->loadStack );
@@ -431,10 +432,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  Init_Context( TT_ExecContext  exec,
-                          TT_Face         face,
-                          FT_Memory       memory )
+  static FT_Error
+  Init_Context( TT_ExecContext  exec,
+                TT_Face         face,
+                FT_Memory       memory )
   {
     FT_Error  error;
 
@@ -499,12 +500,12 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  Update_Max( FT_Memory  memory,
-                        FT_ULong*  size,
-                        FT_Long    multiplier,
-                        void**     buff,
-                        FT_ULong   new_max )
+  static FT_Error
+  Update_Max( FT_Memory  memory,
+              FT_ULong*  size,
+              FT_Long    multiplier,
+              void**     buff,
+              FT_ULong   new_max )
   {
     FT_Error  error;
 
@@ -543,10 +544,10 @@
   /* <Note>                                                                */
   /*    Only the glyph loader and debugger should call this function.      */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Context( TT_ExecContext  exec,
-                             TT_Face         face,
-                             TT_Size         size )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Context( TT_ExecContext  exec,
+                   TT_Face         face,
+                   TT_Size         size )
   {
     FT_Int          i;
     FT_ULong        tmp;
@@ -646,9 +647,9 @@
   /* <Note>                                                                */
   /*    Only the glyph loader and debugger should call this function.      */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Save_Context( TT_ExecContext  exec,
-                             TT_Size         size )
+  FT_LOCAL_DEF FT_Error
+  TT_Save_Context( TT_ExecContext  exec,
+                   TT_Size         size )
   {
     FT_Int  i;
 
@@ -693,9 +694,9 @@
   /* <Note>                                                                */
   /*    Only the glyph loader and debugger should call this function.      */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Run_Context( TT_ExecContext  exec,
-                            FT_Bool         debug )
+  FT_LOCAL_DEF FT_Error
+  TT_Run_Context( TT_ExecContext  exec,
+                  FT_Bool         debug )
   {
     FT_Error  error;
 
@@ -753,7 +754,8 @@
 
   /* documentation is in ttinterp.h */
 
-  FT_EXPORT_DEF( TT_ExecContext )  TT_New_Context( TT_Face  face )
+  FT_EXPORT_DEF( TT_ExecContext )
+  TT_New_Context( TT_Face  face )
   {
     TT_Driver       driver;
     TT_ExecContext  exec;
@@ -813,8 +815,8 @@
   /* <Note>                                                                */
   /*    Only the glyph loader and debugger should call this function.      */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Done_Context( TT_ExecContext  exec )
+  FT_LOCAL_DEF FT_Error
+  TT_Done_Context( TT_ExecContext  exec )
   {
     /* Nothing at all for now */
     FT_UNUSED( exec );
@@ -823,10 +825,12 @@
   }
 
 
+ /* return length of given vector */
 #ifdef FT_CONFIG_OPTION_OLD_CALCS
 
-  static FT_F26Dot6  Norm( FT_F26Dot6  X,
-                           FT_F26Dot6  Y )
+  static FT_F26Dot6
+  Norm( FT_F26Dot6  X,
+        FT_F26Dot6  Y )
   {
     TT_INT64  T1, T2;
 
@@ -837,6 +841,19 @@
     ADD_64( T1, T2, T1 );
 
     return (FT_F26Dot6)SQRT_64( T1 );
+  }
+
+#else  /* !FT_CONFIG_OPTION_OLD_CALCS */
+
+  static FT_F26Dot6
+  Norm( FT_F26Dot6  X,
+        FT_F26Dot6  Y )
+  {
+    FT_Vector  v;
+
+    v.x = X;
+    v.y = Y;
+    return FT_Vector_Length( &v );
   }
 
 #endif /* FT_CONFIG_OPTION_OLD_CALCS */
@@ -1196,8 +1213,8 @@
   /* <Return>                                                              */
   /*    The aspect ratio in 16.16 format, always <= 1.0 .                  */
   /*                                                                       */
-  static
-  FT_Long  Current_Ratio( EXEC_OP )
+  static FT_Long
+  Current_Ratio( EXEC_OP )
   {
     if ( CUR.tt_metrics.ratio )
       return CUR.tt_metrics.ratio;
@@ -1212,29 +1229,17 @@
     {
       FT_Long  x, y;
 
-
-#ifdef FT_CONFIG_OPTION_OLD_CALCS
-
       x = TT_MULDIV( CUR.GS.projVector.x, CUR.tt_metrics.x_ratio, 0x4000 );
       y = TT_MULDIV( CUR.GS.projVector.y, CUR.tt_metrics.y_ratio, 0x4000 );
       CUR.tt_metrics.ratio = Norm( x, y );
-
-#else
-
-      x = TT_MULDIV( CUR.GS.projVector.x, CUR.tt_metrics.x_ratio, 0x8000 );
-      y = TT_MULDIV( CUR.GS.projVector.y, CUR.tt_metrics.y_ratio, 0x8000 );
-      CUR.tt_metrics.ratio = FT_Sqrt32( x * x + y * y ) << 1;
-
-#endif /* FT_CONFIG_OPTION_OLD_CALCS */
-
     }
 
     return CUR.tt_metrics.ratio;
   }
 
 
-  static
-  FT_Long  Current_Ppem( EXEC_OP )
+  static FT_Long
+  Current_Ppem( EXEC_OP )
   {
     return TT_MULFIX( CUR.tt_metrics.ppem, CURRENT_Ratio() );
   }
@@ -1247,47 +1252,47 @@
   /*************************************************************************/
 
 
-  FT_CALLBACK_DEF
-  FT_F26Dot6  Read_CVT( EXEC_OP_ FT_ULong  index )
+  FT_CALLBACK_DEF( FT_F26Dot6 )
+  Read_CVT( EXEC_OP_ FT_ULong  index )
   {
     return CUR.cvt[index];
   }
 
 
-  FT_CALLBACK_DEF
-  FT_F26Dot6  Read_CVT_Stretched( EXEC_OP_ FT_ULong  index )
+  FT_CALLBACK_DEF( FT_F26Dot6 )
+  Read_CVT_Stretched( EXEC_OP_ FT_ULong  index )
   {
     return TT_MULFIX( CUR.cvt[index], CURRENT_Ratio() );
   }
 
 
-  FT_CALLBACK_DEF
-  void  Write_CVT( EXEC_OP_ FT_ULong    index,
-                            FT_F26Dot6  value )
+  FT_CALLBACK_DEF( void )
+  Write_CVT( EXEC_OP_ FT_ULong    index,
+                      FT_F26Dot6  value )
   {
     CUR.cvt[index] = value;
   }
 
 
-  FT_CALLBACK_DEF
-  void  Write_CVT_Stretched( EXEC_OP_ FT_ULong    index,
-                                      FT_F26Dot6  value )
+  FT_CALLBACK_DEF( void )
+  Write_CVT_Stretched( EXEC_OP_ FT_ULong    index,
+                                FT_F26Dot6  value )
   {
     CUR.cvt[index] = FT_DivFix( value, CURRENT_Ratio() );
   }
 
 
-  FT_CALLBACK_DEF
-  void  Move_CVT( EXEC_OP_ FT_ULong    index,
-                           FT_F26Dot6  value )
+  FT_CALLBACK_DEF( void )
+  Move_CVT( EXEC_OP_ FT_ULong    index,
+                     FT_F26Dot6  value )
   {
     CUR.cvt[index] += value;
   }
 
 
-  FT_CALLBACK_DEF
-  void  Move_CVT_Stretched( EXEC_OP_ FT_ULong    index,
-                                     FT_F26Dot6  value )
+  FT_CALLBACK_DEF( void )
+  Move_CVT_Stretched( EXEC_OP_ FT_ULong    index,
+                               FT_F26Dot6  value )
   {
     CUR.cvt[index] += FT_DivFix( value, CURRENT_Ratio() );
   }
@@ -1308,7 +1313,8 @@
   /* <Note>                                                                */
   /*    This one could become a macro.                                     */
   /*                                                                       */
-  static FT_Short  GetShortIns( EXEC_OP )
+  static FT_Short
+  GetShortIns( EXEC_OP )
   {
     /* Reading a byte stream so there is no endianess (DaveP) */
     CUR.IP += 2;
@@ -1333,9 +1339,9 @@
   /* <Return>                                                              */
   /*    SUCCESS or FAILURE.                                                */
   /*                                                                       */
-  static
-  FT_Bool  Ins_Goto_CodeRange( EXEC_OP_ FT_Int    aRange,
-                                        FT_ULong  aIP )
+  static FT_Bool
+  Ins_Goto_CodeRange( EXEC_OP_ FT_Int    aRange,
+                               FT_ULong  aIP )
   {
     TT_CodeRange*  range;
 
@@ -1390,10 +1396,10 @@
   /* <InOut>                                                               */
   /*    zone     :: The affected glyph zone.                               */
   /*                                                                       */
-  static
-  void  Direct_Move( EXEC_OP_ TT_GlyphZone*  zone,
-                              FT_UShort      point,
-                              FT_F26Dot6     distance )
+  static void
+  Direct_Move( EXEC_OP_ TT_GlyphZone*  zone,
+                        FT_UShort      point,
+                        FT_F26Dot6     distance )
   {
     FT_F26Dot6 v;
 
@@ -1452,10 +1458,10 @@
   /*************************************************************************/
 
 
-  static
-  void  Direct_Move_X( EXEC_OP_ TT_GlyphZone*  zone,
-                                FT_UShort      point,
-                                FT_F26Dot6     distance )
+  static void
+  Direct_Move_X( EXEC_OP_ TT_GlyphZone*  zone,
+                          FT_UShort      point,
+                          FT_F26Dot6     distance )
   {
     FT_UNUSED_EXEC;
 
@@ -1464,10 +1470,10 @@
   }
 
 
-  static
-  void  Direct_Move_Y( EXEC_OP_ TT_GlyphZone*  zone,
-                                FT_UShort      point,
-                                FT_F26Dot6     distance )
+  static void
+  Direct_Move_Y( EXEC_OP_ TT_GlyphZone*  zone,
+                          FT_UShort      point,
+                          FT_F26Dot6     distance )
   {
     FT_UNUSED_EXEC;
 
@@ -1498,9 +1504,9 @@
   /*    the description of super round that we should add the compensation */
   /*    before rounding.                                                   */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_None( EXEC_OP_ FT_F26Dot6  distance,
-                                   FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_None( EXEC_OP_ FT_F26Dot6  distance,
+                       FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1538,9 +1544,9 @@
   /* <Return>                                                              */
   /*    Rounded distance.                                                  */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
-                                      FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
+                          FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1582,9 +1588,9 @@
   /* <Return>                                                              */
   /*    Rounded distance.                                                  */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_To_Half_Grid( EXEC_OP_ FT_F26Dot6  distance,
-                                           FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_To_Half_Grid( EXEC_OP_ FT_F26Dot6  distance,
+                               FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1624,9 +1630,9 @@
   /* <Return>                                                              */
   /*    Rounded distance.                                                  */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_Down_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
-                                           FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_Down_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
+                               FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1668,9 +1674,9 @@
   /* <Return>                                                              */
   /*    Rounded distance.                                                  */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_Up_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
-                                         FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_Up_To_Grid( EXEC_OP_ FT_F26Dot6  distance,
+                             FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1712,9 +1718,9 @@
   /* <Return>                                                              */
   /*    Rounded distance.                                                  */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_To_Double_Grid( EXEC_OP_ FT_F26Dot6  distance,
-                                             FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_To_Double_Grid( EXEC_OP_ FT_F26Dot6  distance,
+                                 FT_F26Dot6  compensation )
   {
     FT_F26Dot6 val;
 
@@ -1762,9 +1768,9 @@
   /*    the description of super round that we should add the compensation */
   /*    before rounding.                                                   */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_Super( EXEC_OP_ FT_F26Dot6  distance,
-                                    FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_Super( EXEC_OP_ FT_F26Dot6  distance,
+                        FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1810,9 +1816,9 @@
   /*    There is a separate function for Round_Super_45() as we may need   */
   /*    greater precision.                                                 */
   /*                                                                       */
-  static
-  FT_F26Dot6  Round_Super_45( EXEC_OP_ FT_F26Dot6  distance,
-                                       FT_F26Dot6  compensation )
+  static FT_F26Dot6
+  Round_Super_45( EXEC_OP_ FT_F26Dot6  distance,
+                           FT_F26Dot6  compensation )
   {
     FT_F26Dot6  val;
 
@@ -1849,8 +1855,8 @@
   /* <Input>                                                               */
   /*    round_mode :: The rounding mode to be used.                        */
   /*                                                                       */
-  static
-  void  Compute_Round( EXEC_OP_ FT_Byte  round_mode )
+  static void
+  Compute_Round( EXEC_OP_ FT_Byte  round_mode )
   {
     switch ( round_mode )
     {
@@ -1901,9 +1907,9 @@
   /*    GridPeriod :: Grid period                                          */
   /*    selector   :: SROUND opcode                                        */
   /*                                                                       */
-  static
-  void  SetSuperRound( EXEC_OP_ FT_F26Dot6  GridPeriod,
-                                FT_Long     selector )
+  static void
+  SetSuperRound( EXEC_OP_ FT_F26Dot6  GridPeriod,
+                          FT_Long     selector )
   {
     switch ( (FT_Int)( selector & 0xC0 ) )
     {
@@ -1972,9 +1978,9 @@
   /* <Return>                                                              */
   /*    The distance in F26dot6 format.                                    */
   /*                                                                       */
-  static
-  FT_F26Dot6  Project( EXEC_OP_ FT_Vector*  v1,
-                                FT_Vector*  v2 )
+  static FT_F26Dot6
+  Project( EXEC_OP_ FT_Vector*  v1,
+                    FT_Vector*  v2 )
   {
     return TT_MULDIV( v1->x - v2->x, CUR.GS.projVector.x, 0x4000 ) +
            TT_MULDIV( v1->y - v2->y, CUR.GS.projVector.y, 0x4000 );
@@ -1997,9 +2003,9 @@
   /* <Return>                                                              */
   /*    The distance in F26dot6 format.                                    */
   /*                                                                       */
-  static
-  FT_F26Dot6  Dual_Project( EXEC_OP_ FT_Vector*  v1,
-                                     FT_Vector*  v2 )
+  static FT_F26Dot6
+  Dual_Project( EXEC_OP_ FT_Vector*  v1,
+                         FT_Vector*  v2 )
   {
     return TT_MULDIV( v1->x - v2->x, CUR.GS.dualVector.x, 0x4000 ) +
            TT_MULDIV( v1->y - v2->y, CUR.GS.dualVector.y, 0x4000 );
@@ -2022,9 +2028,9 @@
   /* <Return>                                                              */
   /*    The distance in F26dot6 format.                                    */
   /*                                                                       */
-  static
-  FT_F26Dot6  Free_Project( EXEC_OP_ FT_Vector*  v1,
-                                     FT_Vector*  v2 )
+  static FT_F26Dot6
+  Free_Project( EXEC_OP_ FT_Vector*  v1,
+                         FT_Vector*  v2 )
   {
     return TT_MULDIV( v1->x - v2->x, CUR.GS.freeVector.x, 0x4000 ) +
            TT_MULDIV( v1->y - v2->y, CUR.GS.freeVector.y, 0x4000 );
@@ -2047,9 +2053,9 @@
   /* <Return>                                                              */
   /*    The distance in F26dot6 format.                                    */
   /*                                                                       */
-  static
-  FT_F26Dot6  Project_x( EXEC_OP_ FT_Vector*  v1,
-                                  FT_Vector*  v2 )
+  static FT_F26Dot6
+  Project_x( EXEC_OP_ FT_Vector*  v1,
+                      FT_Vector*  v2 )
   {
     FT_UNUSED_EXEC;
 
@@ -2073,9 +2079,9 @@
   /* <Return>                                                              */
   /*    The distance in F26dot6 format.                                    */
   /*                                                                       */
-  static
-  FT_F26Dot6  Project_y( EXEC_OP_ FT_Vector*  v1,
-                                  FT_Vector*  v2 )
+  static FT_F26Dot6
+  Project_y( EXEC_OP_ FT_Vector*  v1,
+                      FT_Vector*  v2 )
   {
     FT_UNUSED_EXEC;
 
@@ -2092,8 +2098,8 @@
   /*    Computes the projection and movement function pointers according   */
   /*    to the current graphics state.                                     */
   /*                                                                       */
-  static
-  void  Compute_Funcs( EXEC_OP )
+  static void
+  Compute_Funcs( EXEC_OP )
   {
     if ( CUR.GS.freeVector.x == 0x4000 )
     {
@@ -2184,10 +2190,10 @@
 
 #ifdef FT_CONFIG_OPTION_OLD_CALCS
 
-  static
-  FT_Bool  Normalize( EXEC_OP_ FT_F26Dot6      Vx,
-                               FT_F26Dot6      Vy,
-                               FT_UnitVector*  R )
+  static FT_Bool
+  Normalize( EXEC_OP_ FT_F26Dot6      Vx,
+                      FT_F26Dot6      Vy,
+                      FT_UnitVector*  R )
   {
     FT_F26Dot6  W;
     FT_Bool     S1, S2;
@@ -2280,127 +2286,22 @@
 
 #else
 
-  static
-  FT_Bool  Normalize( EXEC_OP_ FT_F26Dot6      Vx,
-                               FT_F26Dot6      Vy,
-                               FT_UnitVector*  R )
+  static FT_Bool
+  Normalize( EXEC_OP_ FT_F26Dot6      Vx,
+                      FT_F26Dot6      Vy,
+                      FT_UnitVector*  R )
   {
-    FT_F26Dot6  u, v, d;
-    FT_Int      shift;
-    FT_ULong    H, L, L2, hi, lo, med;
+    FT_Vector  v;
+    FT_Angle   angle;
 
+    FT_UNUSED_EXEC;
 
-    u = ABS( Vx );
-    v = ABS( Vy );
+    angle = FT_Atan2( Vx, Vy );
 
-    if ( u < v )
-    {
-      d = u;
-      u = v;
-      v = d;
-    }
+    FT_Vector_Unit( &v, angle );
 
-    R->x = 0;
-    R->y = 0;
-
-    /* check that we are not trying to normalise zero! */
-    if ( u == 0 )
-      return SUCCESS;
-
-    /* compute (u*u + v*v) on 64 bits with two 32-bit registers [H:L] */
-    hi  = (FT_ULong)u >> 16;
-    lo  = (FT_ULong)u & 0xFFFF;
-    med = hi * lo;
-
-    H     = hi * hi + ( med >> 15 );
-    med <<= 17;
-    L     = lo * lo + med;
-    if ( L < med )
-      H++;
-
-    hi  = (FT_ULong)v >> 16;
-    lo  = (FT_ULong)v & 0xFFFF;
-    med = hi * lo;
-
-    H    += hi * hi + ( med >> 15 );
-    med <<= 17;
-    L2    = lo * lo + med;
-    if ( L2 < med )
-      H++;
-
-    L += L2;
-    if ( L < L2 )
-      H++;
-
-    /* if the value is smaller than 32-bits */
-    if ( H == 0 )
-    {
-      shift = 0;
-      while ( ( L & 0xC0000000L ) == 0 )
-      {
-        L <<= 2;
-        shift++;
-      }
-
-      d = FT_Sqrt32( L );
-      R->x = (FT_F2Dot14)TT_MULDIV( Vx << shift, 0x4000, d );
-      R->y = (FT_F2Dot14)TT_MULDIV( Vy << shift, 0x4000, d );
-    }
-    /* if the value is greater than 64-bits */
-    else
-    {
-      shift = 0;
-      while ( H )
-      {
-        L   = ( L >> 2 ) | ( H << 30 );
-        H >>= 2;
-        shift++;
-      }
-
-      d = FT_Sqrt32( L );
-      R->x = (FT_F2Dot14)TT_MULDIV( Vx >> shift, 0x4000, d );
-      R->y = (FT_F2Dot14)TT_MULDIV( Vy >> shift, 0x4000, d );
-    }
-
-    {
-      FT_ULong  x, y, w;
-      FT_Int    sx, sy;
-
-
-      sx = R->x >= 0 ? 1 : -1;
-      sy = R->y >= 0 ? 1 : -1;
-      x  = (FT_ULong)sx * R->x;
-      y  = (FT_ULong)sy * R->y;
-
-      w = x * x + y * y;
-
-      /* we now want to adjust (x,y) in order to have sqrt(w) == 0x4000 */
-      /* which means 0x1000000 <= w < 0x1004000                         */
-      while ( w <= 0x10000000L )
-      {
-        /* increment the smallest coordinate */
-        if ( x < y )
-          x++;
-        else
-          y++;
-
-        w = x * x + y * y;
-      }
-
-      while ( w >= 0x10040000L )
-      {
-        /* decrement the smallest coordinate */
-        if ( x < y )
-          x--;
-        else
-          y--;
-
-        w = x * x + y * y;
-      }
-
-      R->x = sx * x;
-      R->y = sy * y;
-    }
+    R->x = (short)(v.x >> 2);
+    R->y = (short)(v.y >> 2);
 
     return SUCCESS;
   }
@@ -2415,11 +2316,11 @@
   /*************************************************************************/
 
 
-  static
-  FT_Bool  Ins_SxVTL( EXEC_OP_ FT_UShort       aIdx1,
-                               FT_UShort       aIdx2,
-                               FT_Int          aOpc,
-                               FT_UnitVector*  Vec )
+  static FT_Bool
+  Ins_SxVTL( EXEC_OP_ FT_UShort       aIdx1,
+                      FT_UShort       aIdx2,
+                      FT_Int          aOpc,
+                      FT_UnitVector*  Vec )
   {
     FT_Long     A, B, C;
     FT_Vector*  p1;
@@ -2971,8 +2872,8 @@
   /* Opcode range: 0x00-0x01                                               */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_SVTCA( INS_ARG )
+  static void
+  Ins_SVTCA( INS_ARG )
   {
     DO_SVTCA
   }
@@ -2984,8 +2885,8 @@
   /* Opcode range: 0x02-0x03                                               */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_SPVTCA( INS_ARG )
+  static void
+  Ins_SPVTCA( INS_ARG )
   {
     DO_SPVTCA
   }
@@ -2997,8 +2898,8 @@
   /* Opcode range: 0x04-0x05                                               */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_SFVTCA( INS_ARG )
+  static void
+  Ins_SFVTCA( INS_ARG )
   {
     DO_SFVTCA
   }
@@ -3010,8 +2911,8 @@
   /* Opcode range: 0x06-0x07                                               */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_SPVTL( INS_ARG )
+  static void
+  Ins_SPVTL( INS_ARG )
   {
     DO_SPVTL
   }
@@ -3023,8 +2924,8 @@
   /* Opcode range: 0x08-0x09                                               */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_SFVTL( INS_ARG )
+  static void
+  Ins_SFVTL( INS_ARG )
   {
     DO_SFVTL
   }
@@ -3036,8 +2937,8 @@
   /* Opcode range: 0x0E                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_SFVTPV( INS_ARG )
+  static void
+  Ins_SFVTPV( INS_ARG )
   {
     DO_SFVTPV
   }
@@ -3049,8 +2950,8 @@
   /* Opcode range: 0x0A                                                    */
   /* Stack:        f2.14 f2.14 -->                                         */
   /*                                                                       */
-  static
-  void  Ins_SPVFS( INS_ARG )
+  static void
+  Ins_SPVFS( INS_ARG )
   {
     DO_SPVFS
   }
@@ -3062,8 +2963,8 @@
   /* Opcode range: 0x0B                                                    */
   /* Stack:        f2.14 f2.14 -->                                         */
   /*                                                                       */
-  static
-  void  Ins_SFVFS( INS_ARG )
+  static void
+  Ins_SFVFS( INS_ARG )
   {
     DO_SFVFS
   }
@@ -3075,8 +2976,8 @@
   /* Opcode range: 0x0C                                                    */
   /* Stack:        ef2.14 --> ef2.14                                       */
   /*                                                                       */
-  static
-  void  Ins_GPV( INS_ARG )
+  static void
+  Ins_GPV( INS_ARG )
   {
     DO_GPV
   }
@@ -3087,8 +2988,8 @@
   /* Opcode range: 0x0D                                                    */
   /* Stack:        ef2.14 --> ef2.14                                       */
   /*                                                                       */
-  static
-  void  Ins_GFV( INS_ARG )
+  static void
+  Ins_GFV( INS_ARG )
   {
     DO_GFV
   }
@@ -3100,8 +3001,8 @@
   /* Opcode range: 0x10                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SRP0( INS_ARG )
+  static void
+  Ins_SRP0( INS_ARG )
   {
     DO_SRP0
   }
@@ -3113,8 +3014,8 @@
   /* Opcode range: 0x11                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SRP1( INS_ARG )
+  static void
+  Ins_SRP1( INS_ARG )
   {
     DO_SRP1
   }
@@ -3126,8 +3027,8 @@
   /* Opcode range: 0x12                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SRP2( INS_ARG )
+  static void
+  Ins_SRP2( INS_ARG )
   {
     DO_SRP2
   }
@@ -3139,8 +3040,8 @@
   /* Opcode range: 0x19                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_RTHG( INS_ARG )
+  static void
+  Ins_RTHG( INS_ARG )
   {
     DO_RTHG
   }
@@ -3152,8 +3053,8 @@
   /* Opcode range: 0x18                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_RTG( INS_ARG )
+  static void
+  Ins_RTG( INS_ARG )
   {
     DO_RTG
   }
@@ -3164,8 +3065,8 @@
   /* Opcode range: 0x3D                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_RTDG( INS_ARG )
+  static void
+  Ins_RTDG( INS_ARG )
   {
     DO_RTDG
   }
@@ -3176,8 +3077,8 @@
   /* Opcode range: 0x7C                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_RUTG( INS_ARG )
+  static void
+  Ins_RUTG( INS_ARG )
   {
     DO_RUTG
   }
@@ -3189,8 +3090,8 @@
   /* Opcode range: 0x7D                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_RDTG( INS_ARG )
+  static void
+  Ins_RDTG( INS_ARG )
   {
     DO_RDTG
   }
@@ -3202,8 +3103,8 @@
   /* Opcode range: 0x7A                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_ROFF( INS_ARG )
+  static void
+  Ins_ROFF( INS_ARG )
   {
     DO_ROFF
   }
@@ -3215,8 +3116,8 @@
   /* Opcode range: 0x76                                                    */
   /* Stack:        Eint8 -->                                               */
   /*                                                                       */
-  static
-  void  Ins_SROUND( INS_ARG )
+  static void
+  Ins_SROUND( INS_ARG )
   {
     DO_SROUND
   }
@@ -3228,8 +3129,8 @@
   /* Opcode range: 0x77                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_S45ROUND( INS_ARG )
+  static void
+  Ins_S45ROUND( INS_ARG )
   {
     DO_S45ROUND
   }
@@ -3241,8 +3142,8 @@
   /* Opcode range: 0x17                                                    */
   /* Stack:        int32? -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SLOOP( INS_ARG )
+  static void
+  Ins_SLOOP( INS_ARG )
   {
     DO_SLOOP
   }
@@ -3254,8 +3155,8 @@
   /* Opcode range: 0x1A                                                    */
   /* Stack:        f26.6 -->                                               */
   /*                                                                       */
-  static
-  void  Ins_SMD( INS_ARG )
+  static void
+  Ins_SMD( INS_ARG )
   {
     DO_SMD
   }
@@ -3267,8 +3168,8 @@
   /* Opcode range: 0x1D                                                    */
   /* Stack:        f26.6 -->                                               */
   /*                                                                       */
-  static
-  void  Ins_SCVTCI( INS_ARG )
+  static void
+  Ins_SCVTCI( INS_ARG )
   {
     DO_SCVTCI
   }
@@ -3280,8 +3181,8 @@
   /* Opcode range: 0x1E                                                    */
   /* Stack:        f26.6 -->                                               */
   /*                                                                       */
-  static
-  void  Ins_SSWCI( INS_ARG )
+  static void
+  Ins_SSWCI( INS_ARG )
   {
     DO_SSWCI
   }
@@ -3293,8 +3194,8 @@
   /* Opcode range: 0x1F                                                    */
   /* Stack:        int32? -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SSW( INS_ARG )
+  static void
+  Ins_SSW( INS_ARG )
   {
     DO_SSW
   }
@@ -3306,8 +3207,8 @@
   /* Opcode range: 0x4D                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_FLIPON( INS_ARG )
+  static void
+  Ins_FLIPON( INS_ARG )
   {
     DO_FLIPON
   }
@@ -3319,8 +3220,8 @@
   /* Opcode range: 0x4E                                                    */
   /* Stack: -->                                                            */
   /*                                                                       */
-  static
-  void  Ins_FLIPOFF( INS_ARG )
+  static void
+  Ins_FLIPOFF( INS_ARG )
   {
     DO_FLIPOFF
   }
@@ -3332,8 +3233,8 @@
   /* Opcode range: 0x7E                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SANGW( INS_ARG )
+  static void
+  Ins_SANGW( INS_ARG )
   {
     /* instruction not supported anymore */
   }
@@ -3345,8 +3246,8 @@
   /* Opcode range: 0x5E                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SDB( INS_ARG )
+  static void
+  Ins_SDB( INS_ARG )
   {
     DO_SDB
   }
@@ -3358,8 +3259,8 @@
   /* Opcode range: 0x5F                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SDS( INS_ARG )
+  static void
+  Ins_SDS( INS_ARG )
   {
     DO_SDS
   }
@@ -3371,8 +3272,8 @@
   /* Opcode range: 0x4B                                                    */
   /* Stack:        --> Euint16                                             */
   /*                                                                       */
-  static
-  void  Ins_MPPEM( INS_ARG )
+  static void
+  Ins_MPPEM( INS_ARG )
   {
     DO_MPPEM
   }
@@ -3384,8 +3285,8 @@
   /* Opcode range: 0x4C                                                    */
   /* Stack:        --> Euint16                                             */
   /*                                                                       */
-  static
-  void  Ins_MPS( INS_ARG )
+  static void
+  Ins_MPS( INS_ARG )
   {
     DO_MPS
   }
@@ -3397,8 +3298,8 @@
   /* Opcode range: 0x20                                                    */
   /* Stack:        StkElt --> StkElt StkElt                                */
   /*                                                                       */
-  static
-  void  Ins_DUP( INS_ARG )
+  static void
+  Ins_DUP( INS_ARG )
   {
     DO_DUP
   }
@@ -3410,8 +3311,8 @@
   /* Opcode range: 0x21                                                    */
   /* Stack:        StkElt -->                                              */
   /*                                                                       */
-  static
-  void  Ins_POP( INS_ARG )
+  static void
+  Ins_POP( INS_ARG )
   {
     /* nothing to do */
   }
@@ -3423,8 +3324,8 @@
   /* Opcode range: 0x22                                                    */
   /* Stack:        StkElt... -->                                           */
   /*                                                                       */
-  static
-  void  Ins_CLEAR( INS_ARG )
+  static void
+  Ins_CLEAR( INS_ARG )
   {
     DO_CLEAR
   }
@@ -3436,8 +3337,8 @@
   /* Opcode range: 0x23                                                    */
   /* Stack:        2 * StkElt --> 2 * StkElt                               */
   /*                                                                       */
-  static
-  void  Ins_SWAP( INS_ARG )
+  static void
+  Ins_SWAP( INS_ARG )
   {
     DO_SWAP
   }
@@ -3449,8 +3350,8 @@
   /* Opcode range: 0x24                                                    */
   /* Stack:        --> uint32                                              */
   /*                                                                       */
-  static
-  void  Ins_DEPTH( INS_ARG )
+  static void
+  Ins_DEPTH( INS_ARG )
   {
     DO_DEPTH
   }
@@ -3462,8 +3363,8 @@
   /* Opcode range: 0x25                                                    */
   /* Stack:        int32 --> StkElt                                        */
   /*                                                                       */
-  static
-  void  Ins_CINDEX( INS_ARG )
+  static void
+  Ins_CINDEX( INS_ARG )
   {
     DO_CINDEX
   }
@@ -3475,8 +3376,8 @@
   /* Opcode range: 0x59                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_EIF( INS_ARG )
+  static void
+  Ins_EIF( INS_ARG )
   {
     /* nothing to do */
   }
@@ -3488,8 +3389,8 @@
   /* Opcode range: 0x78                                                    */
   /* Stack:        StkElt int32 -->                                        */
   /*                                                                       */
-  static
-  void  Ins_JROT( INS_ARG )
+  static void
+  Ins_JROT( INS_ARG )
   {
     DO_JROT
   }
@@ -3501,8 +3402,8 @@
   /* Opcode range: 0x1C                                                    */
   /* Stack:        int32 -->                                               */
   /*                                                                       */
-  static
-  void  Ins_JMPR( INS_ARG )
+  static void
+  Ins_JMPR( INS_ARG )
   {
     DO_JMPR
   }
@@ -3514,8 +3415,8 @@
   /* Opcode range: 0x79                                                    */
   /* Stack:        StkElt int32 -->                                        */
   /*                                                                       */
-  static
-  void  Ins_JROF( INS_ARG )
+  static void
+  Ins_JROF( INS_ARG )
   {
     DO_JROF
   }
@@ -3527,8 +3428,8 @@
   /* Opcode range: 0x50                                                    */
   /* Stack:        int32? int32? --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_LT( INS_ARG )
+  static void
+  Ins_LT( INS_ARG )
   {
     DO_LT
   }
@@ -3540,8 +3441,8 @@
   /* Opcode range: 0x51                                                    */
   /* Stack:        int32? int32? --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_LTEQ( INS_ARG )
+  static void
+  Ins_LTEQ( INS_ARG )
   {
     DO_LTEQ
   }
@@ -3553,8 +3454,8 @@
   /* Opcode range: 0x52                                                    */
   /* Stack:        int32? int32? --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_GT( INS_ARG )
+  static void
+  Ins_GT( INS_ARG )
   {
     DO_GT
   }
@@ -3566,8 +3467,8 @@
   /* Opcode range: 0x53                                                    */
   /* Stack:        int32? int32? --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_GTEQ( INS_ARG )
+  static void
+  Ins_GTEQ( INS_ARG )
   {
     DO_GTEQ
   }
@@ -3579,8 +3480,8 @@
   /* Opcode range: 0x54                                                    */
   /* Stack:        StkElt StkElt --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_EQ( INS_ARG )
+  static void
+  Ins_EQ( INS_ARG )
   {
     DO_EQ
   }
@@ -3592,8 +3493,8 @@
   /* Opcode range: 0x55                                                    */
   /* Stack:        StkElt StkElt --> bool                                  */
   /*                                                                       */
-  static
-  void  Ins_NEQ( INS_ARG )
+  static void
+  Ins_NEQ( INS_ARG )
   {
     DO_NEQ
   }
@@ -3605,8 +3506,8 @@
   /* Opcode range: 0x56                                                    */
   /* Stack:        f26.6 --> bool                                          */
   /*                                                                       */
-  static
-  void  Ins_ODD( INS_ARG )
+  static void
+  Ins_ODD( INS_ARG )
   {
     DO_ODD
   }
@@ -3618,8 +3519,8 @@
   /* Opcode range: 0x57                                                    */
   /* Stack:        f26.6 --> bool                                          */
   /*                                                                       */
-  static
-  void  Ins_EVEN( INS_ARG )
+  static void
+  Ins_EVEN( INS_ARG )
   {
     DO_EVEN
   }
@@ -3631,8 +3532,8 @@
   /* Opcode range: 0x5A                                                    */
   /* Stack:        uint32 uint32 --> uint32                                */
   /*                                                                       */
-  static
-  void  Ins_AND( INS_ARG )
+  static void
+  Ins_AND( INS_ARG )
   {
     DO_AND
   }
@@ -3644,8 +3545,8 @@
   /* Opcode range: 0x5B                                                    */
   /* Stack:        uint32 uint32 --> uint32                                */
   /*                                                                       */
-  static
-  void  Ins_OR( INS_ARG )
+  static void
+  Ins_OR( INS_ARG )
   {
     DO_OR
   }
@@ -3657,8 +3558,8 @@
   /* Opcode range: 0x5C                                                    */
   /* Stack:        StkElt --> uint32                                       */
   /*                                                                       */
-  static
-  void  Ins_NOT( INS_ARG )
+  static void
+  Ins_NOT( INS_ARG )
   {
     DO_NOT
   }
@@ -3670,8 +3571,8 @@
   /* Opcode range: 0x60                                                    */
   /* Stack:        f26.6 f26.6 --> f26.6                                   */
   /*                                                                       */
-  static
-  void  Ins_ADD( INS_ARG )
+  static void
+  Ins_ADD( INS_ARG )
   {
     DO_ADD
   }
@@ -3683,8 +3584,8 @@
   /* Opcode range: 0x61                                                    */
   /* Stack:        f26.6 f26.6 --> f26.6                                   */
   /*                                                                       */
-  static
-  void  Ins_SUB( INS_ARG )
+  static void
+  Ins_SUB( INS_ARG )
   {
     DO_SUB
   }
@@ -3696,8 +3597,8 @@
   /* Opcode range: 0x62                                                    */
   /* Stack:        f26.6 f26.6 --> f26.6                                   */
   /*                                                                       */
-  static
-  void  Ins_DIV( INS_ARG )
+  static void
+  Ins_DIV( INS_ARG )
   {
     DO_DIV
   }
@@ -3709,8 +3610,8 @@
   /* Opcode range: 0x63                                                    */
   /* Stack:        f26.6 f26.6 --> f26.6                                   */
   /*                                                                       */
-  static
-  void  Ins_MUL( INS_ARG )
+  static void
+  Ins_MUL( INS_ARG )
   {
     DO_MUL
   }
@@ -3722,8 +3623,8 @@
   /* Opcode range: 0x64                                                    */
   /* Stack:        f26.6 --> f26.6                                         */
   /*                                                                       */
-  static
-  void  Ins_ABS( INS_ARG )
+  static void
+  Ins_ABS( INS_ARG )
   {
     DO_ABS
   }
@@ -3735,8 +3636,8 @@
   /* Opcode range: 0x65                                                    */
   /* Stack: f26.6 --> f26.6                                                */
   /*                                                                       */
-  static
-  void  Ins_NEG( INS_ARG )
+  static void
+  Ins_NEG( INS_ARG )
   {
     DO_NEG
   }
@@ -3748,8 +3649,8 @@
   /* Opcode range: 0x66                                                    */
   /* Stack:        f26.6 --> f26.6                                         */
   /*                                                                       */
-  static
-  void  Ins_FLOOR( INS_ARG )
+  static void
+  Ins_FLOOR( INS_ARG )
   {
     DO_FLOOR
   }
@@ -3761,8 +3662,8 @@
   /* Opcode range: 0x67                                                    */
   /* Stack:        f26.6 --> f26.6                                         */
   /*                                                                       */
-  static
-  void  Ins_CEILING( INS_ARG )
+  static void
+  Ins_CEILING( INS_ARG )
   {
     DO_CEILING
   }
@@ -3774,8 +3675,8 @@
   /* Opcode range: 0x43                                                    */
   /* Stack:        uint32 --> uint32                                       */
   /*                                                                       */
-  static
-  void  Ins_RS( INS_ARG )
+  static void
+  Ins_RS( INS_ARG )
   {
     DO_RS
   }
@@ -3787,8 +3688,8 @@
   /* Opcode range: 0x42                                                    */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_WS( INS_ARG )
+  static void
+  Ins_WS( INS_ARG )
   {
     DO_WS
   }
@@ -3800,8 +3701,8 @@
   /* Opcode range: 0x44                                                    */
   /* Stack:        f26.6 uint32 -->                                        */
   /*                                                                       */
-  static
-  void  Ins_WCVTP( INS_ARG )
+  static void
+  Ins_WCVTP( INS_ARG )
   {
     DO_WCVTP
   }
@@ -3813,8 +3714,8 @@
   /* Opcode range: 0x70                                                    */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_WCVTF( INS_ARG )
+  static void
+  Ins_WCVTF( INS_ARG )
   {
     DO_WCVTF
   }
@@ -3826,8 +3727,8 @@
   /* Opcode range: 0x45                                                    */
   /* Stack:        uint32 --> f26.6                                        */
   /*                                                                       */
-  static
-  void  Ins_RCVT( INS_ARG )
+  static void
+  Ins_RCVT( INS_ARG )
   {
     DO_RCVT
   }
@@ -3839,8 +3740,8 @@
   /* Opcode range: 0x7F                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_AA( INS_ARG )
+  static void
+  Ins_AA( INS_ARG )
   {
     /* intentionally no longer supported */
   }
@@ -3854,8 +3755,8 @@
   /*                                                                       */
   /* Note: The original instruction pops a value from the stack.           */
   /*                                                                       */
-  static
-  void  Ins_DEBUG( INS_ARG )
+  static void
+  Ins_DEBUG( INS_ARG )
   {
     DO_DEBUG
   }
@@ -3867,8 +3768,8 @@
   /* Opcode range: 0x68-0x6B                                               */
   /* Stack:        f26.6 --> f26.6                                         */
   /*                                                                       */
-  static
-  void  Ins_ROUND( INS_ARG )
+  static void
+  Ins_ROUND( INS_ARG )
   {
     DO_ROUND
   }
@@ -3880,8 +3781,8 @@
   /* Opcode range: 0x6C-0x6F                                               */
   /* Stack:        f26.6 --> f26.6                                         */
   /*                                                                       */
-  static
-  void  Ins_NROUND( INS_ARG )
+  static void
+  Ins_NROUND( INS_ARG )
   {
     DO_NROUND
   }
@@ -3893,8 +3794,8 @@
   /* Opcode range: 0x68                                                    */
   /* Stack:        int32? int32? --> int32                                 */
   /*                                                                       */
-  static
-  void  Ins_MAX( INS_ARG )
+  static void
+  Ins_MAX( INS_ARG )
   {
     DO_MAX
   }
@@ -3906,8 +3807,8 @@
   /* Opcode range: 0x69                                                    */
   /* Stack:        int32? int32? --> int32                                 */
   /*                                                                       */
-  static
-  void  Ins_MIN( INS_ARG )
+  static void
+  Ins_MIN( INS_ARG )
   {
     DO_MIN
   }
@@ -3929,8 +3830,8 @@
   /* Opcode range: 0x26                                                    */
   /* Stack:        int32? --> StkElt                                       */
   /*                                                                       */
-  static
-  void  Ins_MINDEX( INS_ARG )
+  static void
+  Ins_MINDEX( INS_ARG )
   {
     FT_Long  L, K;
 
@@ -3959,8 +3860,8 @@
   /* Opcode range: 0x8A                                                    */
   /* Stack:        3 * StkElt --> 3 * StkElt                               */
   /*                                                                       */
-  static
-  void  Ins_ROLL( INS_ARG )
+  static void
+  Ins_ROLL( INS_ARG )
   {
     FT_Long  A, B, C;
 
@@ -3986,8 +3887,8 @@
   /*************************************************************************/
 
 
-  static
-  FT_Bool  SkipCode( EXEC_OP )
+  static FT_Bool
+  SkipCode( EXEC_OP )
   {
     CUR.IP += CUR.length;
 
@@ -4019,8 +3920,8 @@
   /* Opcode range: 0x58                                                    */
   /* Stack:        StkElt -->                                              */
   /*                                                                       */
-  static
-  void  Ins_IF( INS_ARG )
+  static void
+  Ins_IF( INS_ARG )
   {
     FT_Int   nIfs;
     FT_Bool  Out;
@@ -4044,12 +3945,12 @@
         break;
 
       case 0x1B:      /* ELSE */
-        Out = ( nIfs == 1 );
+        Out = FT_BOOL( nIfs == 1 );
         break;
 
       case 0x59:      /* EIF */
         nIfs--;
-        Out = ( nIfs == 0 );
+        Out = FT_BOOL( nIfs == 0 );
         break;
       }
     } while ( Out == 0 );
@@ -4062,8 +3963,8 @@
   /* Opcode range: 0x1B                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_ELSE( INS_ARG )
+  static void
+  Ins_ELSE( INS_ARG )
   {
     FT_Int  nIfs;
 
@@ -4106,8 +4007,8 @@
   /* Opcode range: 0x2C                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_FDEF( INS_ARG )
+  static void
+  Ins_FDEF( INS_ARG )
   {
     FT_ULong       n;
     TT_DefRecord*  rec;
@@ -4171,8 +4072,8 @@
   /* Opcode range: 0x2D                                                    */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_ENDF( INS_ARG )
+  static void
+  Ins_ENDF( INS_ARG )
   {
     TT_CallRec*  pRec;
 
@@ -4219,8 +4120,8 @@
   /* Opcode range: 0x2B                                                    */
   /* Stack:        uint32? -->                                             */
   /*                                                                       */
-  static
-  void  Ins_CALL( INS_ARG )
+  static void
+  Ins_CALL( INS_ARG )
   {
     FT_ULong       F;
     TT_CallRec*    pCrec;
@@ -4296,8 +4197,8 @@
   /* Opcode range: 0x2A                                                    */
   /* Stack:        uint32? Eint16? -->                                     */
   /*                                                                       */
-  static
-  void  Ins_LOOPCALL( INS_ARG )
+  static void
+  Ins_LOOPCALL( INS_ARG )
   {
     FT_ULong       F;
     TT_CallRec*    pCrec;
@@ -4374,8 +4275,8 @@
   /* Opcode range: 0x89                                                    */
   /* Stack:        Eint8 -->                                               */
   /*                                                                       */
-  static
-  void Ins_IDEF( INS_ARG )
+  static void
+  Ins_IDEF( INS_ARG )
   {
     TT_DefRecord*  def;
     TT_DefRecord*  limit;
@@ -4442,8 +4343,8 @@
   /* Opcode range: 0x40                                                    */
   /* Stack:        --> uint32...                                           */
   /*                                                                       */
-  static
-  void  Ins_NPUSHB( INS_ARG )
+  static void
+  Ins_NPUSHB( INS_ARG )
   {
     FT_UShort  L, K;
 
@@ -4469,8 +4370,8 @@
   /* Opcode range: 0x41                                                    */
   /* Stack:        --> int32...                                            */
   /*                                                                       */
-  static
-  void  Ins_NPUSHW( INS_ARG )
+  static void
+  Ins_NPUSHW( INS_ARG )
   {
     FT_UShort  L, K;
 
@@ -4499,13 +4400,13 @@
   /* Opcode range: 0xB0-0xB7                                               */
   /* Stack:        --> uint32...                                           */
   /*                                                                       */
-  static
-  void  Ins_PUSHB( INS_ARG )
+  static void
+  Ins_PUSHB( INS_ARG )
   {
     FT_UShort  L, K;
 
 
-    L = (FT_UShort)CUR.opcode - 0xB0 + 1;
+    L = (FT_UShort)(CUR.opcode - 0xB0 + 1);
 
     if ( BOUNDS( L, CUR.stackSize + 1 - CUR.top ) )
     {
@@ -4524,13 +4425,13 @@
   /* Opcode range: 0xB8-0xBF                                               */
   /* Stack:        --> int32...                                            */
   /*                                                                       */
-  static
-  void  Ins_PUSHW( INS_ARG )
+  static void
+  Ins_PUSHW( INS_ARG )
   {
     FT_UShort  L, K;
 
 
-    L = (FT_UShort)CUR.opcode - 0xB8 + 1;
+    L = (FT_UShort)(CUR.opcode - 0xB8 + 1);
 
     if ( BOUNDS( L, CUR.stackSize + 1 - CUR.top ) )
     {
@@ -4565,7 +4466,8 @@
   /* BULLSHIT: Measures from the original glyph must be taken along the    */
   /*           dual projection vector!                                     */
   /*                                                                       */
-  static void  Ins_GC( INS_ARG )
+  static void
+  Ins_GC( INS_ARG )
   {
     FT_ULong    L;
     FT_F26Dot6  R;
@@ -4605,8 +4507,8 @@
   /*                                                                       */
   /*   OA := OA + ( value - OA.p )/( f.p ) * f                             */
   /*                                                                       */
-  static
-  void  Ins_SCFS( INS_ARG )
+  static void
+  Ins_SCFS( INS_ARG )
   {
     FT_Long    K;
     FT_UShort  L;
@@ -4647,8 +4549,8 @@
   /*                                                                       */
   /* Third one: `zp0 - zp1', and not `zp2 - zp1!                           */
   /*                                                                       */
-  static
-  void  Ins_MD( INS_ARG )
+  static void
+  Ins_MD( INS_ARG )
   {
     FT_UShort   K, L;
     FT_F26Dot6  D;
@@ -4685,8 +4587,8 @@
   /* Opcode range: 0x86-0x87                                               */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_SDPVTL( INS_ARG )
+  static void
+  Ins_SDPVTL( INS_ARG )
   {
     FT_Long    A, B, C;
     FT_UShort  p1, p2;   /* was FT_Int in pas type ERROR */
@@ -4749,8 +4651,8 @@
   /* Opcode range: 0x13                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SZP0( INS_ARG )
+  static void
+  Ins_SZP0( INS_ARG )
   {
     switch ( (FT_Int)args[0] )
     {
@@ -4778,8 +4680,8 @@
   /* Opcode range: 0x14                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SZP1( INS_ARG )
+  static void
+  Ins_SZP1( INS_ARG )
   {
     switch ( (FT_Int)args[0] )
     {
@@ -4807,8 +4709,8 @@
   /* Opcode range: 0x15                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SZP2( INS_ARG )
+  static void
+  Ins_SZP2( INS_ARG )
   {
     switch ( (FT_Int)args[0] )
     {
@@ -4836,8 +4738,8 @@
   /* Opcode range: 0x16                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SZPS( INS_ARG )
+  static void
+  Ins_SZPS( INS_ARG )
   {
     switch ( (FT_Int)args[0] )
     {
@@ -4870,8 +4772,8 @@
   /* Opcode range: 0x8e                                                    */
   /* Stack:        int32 int32 -->                                         */
   /*                                                                       */
-  static
-  void  Ins_INSTCTRL( INS_ARG )
+  static void
+  Ins_INSTCTRL( INS_ARG )
   {
     FT_Long  K, L;
 
@@ -4889,8 +4791,8 @@
     if ( L != 0 )
         L = K;
 
-    CUR.GS.instruct_control =
-      (FT_Byte)( CUR.GS.instruct_control & ~(FT_Byte)K ) | (FT_Byte)L;
+    CUR.GS.instruct_control = FT_BOOL(
+      ( (FT_Byte)CUR.GS.instruct_control & ~(FT_Byte)K ) | (FT_Byte)L );
   }
 
 
@@ -4900,8 +4802,8 @@
   /* Opcode range: 0x85                                                    */
   /* Stack:        uint32? -->                                             */
   /*                                                                       */
-  static
-  void  Ins_SCANCTRL( INS_ARG )
+  static void
+  Ins_SCANCTRL( INS_ARG )
   {
     FT_Int  A;
 
@@ -4943,7 +4845,7 @@
 
     if ( (args[0] & 0x2000) != 0 && CUR.tt_metrics.stretched )
       CUR.GS.scan_control = FALSE;
-}
+  }
 
 
   /*************************************************************************/
@@ -4952,8 +4854,8 @@
   /* Opcode range: 0x8D                                                    */
   /* Stack:        uint32? -->                                             */
   /*                                                                       */
-  static
-  void  Ins_SCANTYPE( INS_ARG )
+  static void
+  Ins_SCANTYPE( INS_ARG )
   {
     /* for compatibility with future enhancements, */
     /* we must ignore new modes                    */
@@ -4983,8 +4885,8 @@
   /* Opcode range: 0x80                                                    */
   /* Stack:        uint32... -->                                           */
   /*                                                                       */
-  static
-  void  Ins_FLIPPT( INS_ARG )
+  static void
+  Ins_FLIPPT( INS_ARG )
   {
     FT_UShort  point;
 
@@ -5028,8 +4930,8 @@
   /* Opcode range: 0x81                                                    */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_FLIPRGON( INS_ARG )
+  static void
+  Ins_FLIPRGON( INS_ARG )
   {
     FT_UShort  I, K, L;
 
@@ -5056,8 +4958,8 @@
   /* Opcode range: 0x82                                                    */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_FLIPRGOFF( INS_ARG )
+  static void
+  Ins_FLIPRGOFF( INS_ARG )
   {
     FT_UShort  I, K, L;
 
@@ -5078,11 +4980,11 @@
   }
 
 
-  static
-  FT_Bool  Compute_Point_Displacement( EXEC_OP_ FT_F26Dot6*    x,
-                                                FT_F26Dot6*    y,
-                                                TT_GlyphZone*  zone,
-                                                FT_UShort*     refp )
+  static FT_Bool
+  Compute_Point_Displacement( EXEC_OP_ FT_F26Dot6*    x,
+                                       FT_F26Dot6*    y,
+                                       TT_GlyphZone*  zone,
+                                       FT_UShort*     refp )
   {
     TT_GlyphZone  zp;
     FT_UShort     p;
@@ -5132,11 +5034,11 @@
   }
 
 
-  static
-  void  Move_Zp2_Point( EXEC_OP_ FT_UShort   point,
-                                 FT_F26Dot6  dx,
-                                 FT_F26Dot6  dy,
-                                 FT_Bool     touch )
+  static void
+  Move_Zp2_Point( EXEC_OP_ FT_UShort   point,
+                           FT_F26Dot6  dx,
+                           FT_F26Dot6  dy,
+                           FT_Bool     touch )
   {
     if ( CUR.GS.freeVector.x != 0 )
     {
@@ -5160,8 +5062,8 @@
   /* Opcode range: 0x32-0x33                                               */
   /* Stack:        uint32... -->                                           */
   /*                                                                       */
-  static
-  void  Ins_SHP( INS_ARG )
+  static void
+  Ins_SHP( INS_ARG )
   {
     TT_GlyphZone  zp;
     FT_UShort     refp;
@@ -5213,8 +5115,8 @@
   /* Opcode range: 0x34-35                                                 */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SHC( INS_ARG )
+  static void
+  Ins_SHC( INS_ARG )
   {
     TT_GlyphZone zp;
     FT_UShort    refp;
@@ -5240,7 +5142,7 @@
     if ( contour == 0 )
       first_point = 0;
     else
-      first_point = CUR.pts.contours[contour - 1] + 1;
+      first_point = (FT_UShort)(CUR.pts.contours[contour - 1] + 1);
 
     last_point = CUR.pts.contours[contour];
 
@@ -5249,7 +5151,7 @@
     if ( last_point > CUR.zp2.n_points )
     {
       if ( CUR.zp2.n_points > 0 )
-        last_point = CUR.zp2.n_points - 1;
+        last_point = (FT_UShort)(CUR.zp2.n_points - 1);
       else
         last_point = 0;
     }
@@ -5269,8 +5171,8 @@
   /* Opcode range: 0x36-37                                                 */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_SHZ( INS_ARG )
+  static void
+  Ins_SHZ( INS_ARG )
   {
     TT_GlyphZone zp;
     FT_UShort    refp;
@@ -5291,7 +5193,7 @@
       return;
 
     if ( CUR.zp2.n_points > 0 )
-      last_point = CUR.zp2.n_points - 1;
+      last_point = (FT_UShort)(CUR.zp2.n_points - 1);
     else
       last_point = 0;
 
@@ -5310,8 +5212,8 @@
   /* Opcode range: 0x38                                                    */
   /* Stack:        f26.6 uint32... -->                                     */
   /*                                                                       */
-  static
-  void  Ins_SHPIX( INS_ARG )
+  static void
+  Ins_SHPIX( INS_ARG )
   {
     FT_F26Dot6  dx, dy;
     FT_UShort   point;
@@ -5361,8 +5263,8 @@
   /* Opcode range: 0x3A-0x3B                                               */
   /* Stack:        f26.6 uint32 -->                                        */
   /*                                                                       */
-  static
-  void  Ins_MSIRP( INS_ARG )
+  static void
+  Ins_MSIRP( INS_ARG )
   {
     FT_UShort   point;
     FT_F26Dot6  distance;
@@ -5404,8 +5306,8 @@
   /* Opcode range: 0x2E-0x2F                                               */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_MDAP( INS_ARG )
+  static void
+  Ins_MDAP( INS_ARG )
   {
     FT_UShort   point;
     FT_F26Dot6  cur_dist,
@@ -5445,8 +5347,8 @@
   /* Opcode range: 0x3E-0x3F                                               */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_MIAP( INS_ARG )
+  static void
+  Ins_MIAP( INS_ARG )
   {
     FT_ULong    cvtEntry;
     FT_UShort   point;
@@ -5521,8 +5423,8 @@
   /* Opcode range: 0xC0-0xDF                                               */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_MDRP( INS_ARG )
+  static void
+  Ins_MDRP( INS_ARG )
   {
     FT_UShort   point;
     FT_F26Dot6  org_dist, distance;
@@ -5602,8 +5504,8 @@
   /* Opcode range: 0xE0-0xFF                                               */
   /* Stack:        int32? uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_MIRP( INS_ARG )
+  static void
+  Ins_MIRP( INS_ARG )
   {
     FT_UShort   point;
     FT_ULong    cvtEntry;
@@ -5729,8 +5631,8 @@
   /* Opcode range: 0x3C                                                    */
   /* Stack:        uint32 uint32... -->                                    */
   /*                                                                       */
-  static
-  void  Ins_ALIGNRP( INS_ARG )
+  static void
+  Ins_ALIGNRP( INS_ARG )
   {
     FT_UShort   point;
     FT_F26Dot6  distance;
@@ -5782,8 +5684,8 @@
   /* Opcode range: 0x0F                                                    */
   /* Stack:        5 * uint32 -->                                          */
   /*                                                                       */
-  static
-  void  Ins_ISECT( INS_ARG )
+  static void
+  Ins_ISECT( INS_ARG )
   {
     FT_UShort   point,
                 a0, a1,
@@ -5864,8 +5766,8 @@
   /* Opcode range: 0x27                                                    */
   /* Stack:        uint32 uint32 -->                                       */
   /*                                                                       */
-  static
-  void  Ins_ALIGNPTS( INS_ARG )
+  static void
+  Ins_ALIGNPTS( INS_ARG )
   {
     FT_UShort   p1, p2;
     FT_F26Dot6  distance;
@@ -5896,8 +5798,8 @@
   /* Opcode range: 0x39                                                    */
   /* Stack:        uint32... -->                                           */
   /*                                                                       */
-  static
-  void  Ins_IP( INS_ARG )
+  static void
+  Ins_IP( INS_ARG )
   {
     FT_F26Dot6  org_a, org_b, org_x,
                 cur_a, cur_b, cur_x,
@@ -5986,8 +5888,8 @@
   /* Opcode range: 0x29                                                    */
   /* Stack:        uint32 -->                                              */
   /*                                                                       */
-  static
-  void  Ins_UTP( INS_ARG )
+  static void
+  Ins_UTP( INS_ARG )
   {
     FT_UShort  point;
     FT_Byte    mask;
@@ -6022,11 +5924,11 @@
   };
 
 
-  static
-  void  Shift( FT_UInt              p1,
-               FT_UInt              p2,
-               FT_UInt              p,
-               struct LOC_Ins_IUP*  LINK )
+  static void
+  Shift( FT_UInt              p1,
+         FT_UInt              p2,
+         FT_UInt              p,
+         struct LOC_Ins_IUP*  LINK )
   {
     FT_UInt     i;
     FT_F26Dot6  x;
@@ -6042,12 +5944,12 @@
   }
 
 
-  static
-  void  Interp( FT_UInt              p1,
-                FT_UInt              p2,
-                FT_UInt              ref1,
-                FT_UInt              ref2,
-                struct LOC_Ins_IUP*  LINK )
+  static void
+  Interp( FT_UInt              p1,
+          FT_UInt              p2,
+          FT_UInt              ref1,
+          FT_UInt              ref2,
+          struct LOC_Ins_IUP*  LINK )
   {
     FT_UInt     i;
     FT_F26Dot6  x, x1, x2, d1, d2;
@@ -6128,8 +6030,8 @@
   /* Opcode range: 0x30-0x31                                               */
   /* Stack:        -->                                                     */
   /*                                                                       */
-  static
-  void  Ins_IUP( INS_ARG )
+  static void
+  Ins_IUP( INS_ARG )
   {
     struct LOC_Ins_IUP  V;
     FT_Byte             mask;
@@ -6222,8 +6124,8 @@
   /* Opcode range: 0x5D,0x71,0x72                                          */
   /* Stack:        uint32 (2 * uint32)... -->                              */
   /*                                                                       */
-  static
-  void  Ins_DELTAP( INS_ARG )
+  static void
+  Ins_DELTAP( INS_ARG )
   {
     FT_ULong   k, nump;
     FT_UShort  A;
@@ -6298,8 +6200,8 @@
   /* Opcode range: 0x73,0x74,0x75                                          */
   /* Stack:        uint32 (2 * uint32)... -->                              */
   /*                                                                       */
-  static
-  void  Ins_DELTAC( INS_ARG )
+  static void
+  Ins_DELTAC( INS_ARG )
   {
     FT_ULong  nump, k;
     FT_ULong  A, C;
@@ -6380,8 +6282,8 @@
   /*                                                                       */
   /* XXX: According to Apple specs, bits 1 & 2 of the argument ought to be */
   /*      consulted before rotated/stretched info is returned.             */
-  static
-  void  Ins_GETINFO( INS_ARG )
+  static void
+  Ins_GETINFO( INS_ARG )
   {
     FT_Long  K;
 
@@ -6405,8 +6307,8 @@
   }
 
 
-  static
-  void  Ins_UNKNOWN( INS_ARG )
+  static void
+  Ins_UNKNOWN( INS_ARG )
   {
     TT_DefRecord*  def   = CUR.IDefs;
     TT_DefRecord*  limit = def + CUR.numIDefs;
@@ -6765,7 +6667,8 @@
 
   /* documentation is in ttinterp.h */
 
-  FT_EXPORT_DEF( FT_Error )  TT_RunIns( TT_ExecContext  exc )
+  FT_EXPORT_DEF( FT_Error )
+  TT_RunIns( TT_ExecContext  exc )
   {
     FT_Long  ins_counter = 0;  /* executed instructions counter */
 
@@ -6857,8 +6760,8 @@
             FT_Short AA, BB;
 
 
-            AA = (FT_Short)( opcode & 1 ) << 14;
-            BB = AA ^ (FT_Short)0x4000;
+            AA = (FT_Short)( ( opcode & 1 ) << 14 );
+            BB = (FT_Short)( AA ^ 0x4000 );
 
             if ( opcode < 4 )
             {

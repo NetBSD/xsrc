@@ -1,9 +1,13 @@
-/* $Xorg: Main.c,v 1.4 2000/08/17 19:54:59 cpqbld Exp $ */
+/* $Xorg: Main.c,v 1.5 2001/02/09 02:05:57 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,6 +26,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
+/* $XFree86: xc/programs/xrx/plugin/Main.c,v 1.8 2001/12/14 20:02:17 dawes Exp $ */
 
 /*
  * RX plug-in module based on the UnixTemplate file provided by Netcape.
@@ -563,9 +568,11 @@ exit:
 void 
 NPP_StreamAsFile(NPP instance, NPStream *stream, const char* fname)
 {
+    /*
     PluginInstance* This;
     if (instance != NULL)
 	This = (PluginInstance*) instance->pdata;
+     */
 }
 
 
@@ -576,7 +583,9 @@ NPP_Print(NPP instance, NPPrint* printInfo)
 	return;
 
     if (instance != NULL) {
+#if 0
 	PluginInstance* This = (PluginInstance*) instance->pdata;
+#endif
 	
 	if (printInfo->mode == NP_FULL) {
 	    /*
@@ -596,14 +605,17 @@ NPP_Print(NPP instance, NPPrint* printInfo)
 	     *	etc.
 	     */
 
+	    /*
 	    void* platformPrint =
 		printInfo->print.fullPrint.platformPrint;
 	    NPBool printOne =
 		printInfo->print.fullPrint.printOne;
+	     */
 			
 	    /* Do the default*/
 	    printInfo->print.fullPrint.pluginPrinted = FALSE;
 	}
+#if 0
 	else {	/* If not fullscreen, we must be embedded */
 	    /*
 	     * PLUGIN DEVELOPERS:
@@ -622,5 +634,6 @@ NPP_Print(NPP instance, NPPrint* printInfo)
 	    void* platformPrint =
 		printInfo->print.embedPrint.platformPrint;
 	}
+#endif
     }
 }

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.2 2000/10/24 18:07:37 dawes Exp $
+ * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.3 2001/11/18 21:13:26 herrb Exp $
  *
  * Copyright (c) 1995 David E. Wexelblat.  All rights reserved
  *
@@ -109,6 +109,10 @@ typedef pthread_t xthread_t;
 #pragma weak pthread_cond_wait = _Xthr_zero_stub_
 #pragma weak pthread_cond_signal = _Xthr_zero_stub_
 #pragma weak pthread_cond_broadcast = _Xthr_zero_stub_
+/* These are added for libGL */
+#pragma weak pthread_key_create = _Xthr_zero_stub_
+#pragma weak pthread_getspecific = _Xthr_zero_stub_
+#pragma weak pthread_setspecific = _Xthr_zero_stub_
 #if defined(_DECTHREADS_) || defined(linux)
 #pragma weak pthread_equal = _Xthr_equal_stub_	/* See Xthreads.h! */
 int

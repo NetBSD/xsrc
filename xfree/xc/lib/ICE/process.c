@@ -1,10 +1,14 @@
-/* $Xorg: process.c,v 1.3 2000/08/17 19:44:16 cpqbld Exp $ */
+/* $Xorg: process.c,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,16 +26,12 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/process.c,v 3.5 2001/01/17 19:41:29 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/process.c,v 3.8 2001/12/14 19:53:36 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
 
 #include <stdio.h> /* sprintf */
-
-#ifdef MINIX
-#include <X11/Xtrans.h>
-#endif
 
 /*
  * Check for bad length
@@ -540,7 +540,7 @@ Bool		 swap;
 IceReplyWaitInfo *replyWait;
 
 {
-    int		invokeHandler;
+    int		invokeHandler = 0;
     Bool	errorReturned = False;
     iceErrorMsg *message;
     char 	*pData, *pStart;
@@ -819,7 +819,7 @@ Bool		swap;
     int  hisMajorVersion, hisMinorVersion;
     int	 myAuthCount, hisAuthCount;
     int	 found, i, j;
-    char *myAuthName, **hisAuthNames;
+    char *myAuthName, **hisAuthNames = NULL;
     char *pData, *pStart, *pEnd;
     char *vendor = NULL;
     char *release = NULL;
@@ -1078,7 +1078,7 @@ IceReplyWaitInfo	*replyWait;
     IcePoAuthProc	authProc;
     IcePoAuthStatus	status;
     IcePointer 		authState;
-    int			realAuthIndex;
+    int			realAuthIndex = 0;
 
     CHECK_AT_LEAST_SIZE (iceConn, ICE_AuthRequired,
 	length, SIZEOF (iceAuthRequiredMsg),
@@ -1634,7 +1634,7 @@ IceReplyWaitInfo	*replyWait;
     }
     else if (status == IcePoAuthRejected || status == IcePoAuthFailed)
     {
-	char *prefix, *returnErrorString;
+	char *prefix = NULL, *returnErrorString;
 
 	if (status == IcePoAuthRejected)
 	{
@@ -1801,7 +1801,7 @@ Bool		swap;
     int	 	      	myAuthCount, hisAuthCount;
     int  	      	myOpcode, hisOpcode;
     int	 	      	found, i, j;
-    char	      	*myAuthName, **hisAuthNames;
+    char	      	*myAuthName, **hisAuthNames = NULL;
     char 	      	*protocolName;
     char 		*pData, *pStart, *pEnd;
     char 	      	*vendor = NULL;
@@ -2522,19 +2522,3 @@ Bool		 *connectionClosedRet;
 	*replyReadyRet = replyReady;
 }
 
-
-#ifdef MINIX
-int 
-MNX_IceMessagesAvailable(iceConn)
-
-IceConn          iceConn;
-{
-	BytesReadable_t bytes;
-
-	_IceTransSetOption(iceConn->trans_conn, TRANS_NONBLOCKING, 1);
-	if (_IceTransBytesReadable(iceConn->trans_conn, &bytes) < 0)
-		bytes= -1;
-	_IceTransSetOption(iceConn->trans_conn, TRANS_NONBLOCKING, 0);
-	return (bytes != 0);
-}
-#endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_cursor.c,v 1.4 2001/05/18 23:35:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_cursor.c,v 1.6 2001/11/02 16:24:51 alanh Exp $ */
 
 /*
  * Hardware cursor support for S3 Savage 4.0 driver. Taken with
@@ -69,7 +69,7 @@ SavageHWCursorInit(ScreenPtr pScreen)
         ((psav->Chipset != S3_SAVAGE4) 
        && (inCRReg(0x18) & 0x80) && (inCRReg(0x15) & 0x50) )
 	||
-	(psav->Chipset == S3_SAVAGE_MX)
+	S3_SAVAGE_MOBILE_SERIES(psav->Chipset)
       )
          infoPtr->Flags |= HARDWARE_CURSOR_TRUECOLOR_AT_8BPP; 
 
@@ -128,6 +128,7 @@ SavageLoadCursorImage(
 	 * loading the cursor.
 	 */
 	volatile unsigned int i = ALT_STATUS_WORD0;
+	(void)i;	/* Not to be optimised out */
     }
 }
 
@@ -197,7 +198,7 @@ SavageSetCursorColors(
         (psav->CursorInfoRec->Flags & HARDWARE_CURSOR_TRUECOLOR_AT_8BPP);
 
     if(
-        (psav->Chipset == S3_SAVAGE_MX) ||
+        S3_SAVAGE_MOBILE_SERIES(psav->Chipset) ||
 	(pScrn->depth == 24) ||
 	((pScrn->depth == 8) && bNeedExtra)
     )

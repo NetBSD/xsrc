@@ -1,7 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.11 2001/05/18 17:48:32 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.12 2002/01/09 18:07:23 torrey Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
+
+LinkSourceFile(XFree86.man,../xfree86)
 
 SRCS =	darwin.c \
         darwinKeyboard.c \
@@ -30,7 +32,7 @@ SUBDIRS = utils
 #endif
 
 DEFINES = $(CUSTOMVERDEF) $(QUARTZDEF)
-EXTRAMANDEFS = $(QUARTZDEF)
+EXTRAMANDEFS = $(QUARTZDEF) -D__logdir__=$(LOGDIRECTORY)
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(darwin,$(OBJS))
@@ -38,6 +40,7 @@ NormalLibraryTarget(darwin,$(OBJS))
 AllTarget(xfIOKitStartup.o)
 
 InstallManPage(XDarwin,$(MANDIR))
+InstallManPage(XFree86,$(MANDIR))
 
 DependTarget()
 

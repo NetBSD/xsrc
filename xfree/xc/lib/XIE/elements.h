@@ -1,10 +1,14 @@
-/* $Xorg: elements.h,v 1.3 2000/08/17 19:45:26 cpqbld Exp $ */
+/* $Xorg: elements.h,v 1.4 2001/02/09 02:03:41 xorgcvs Exp $ */
 
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,11 +27,12 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/lib/XIE/elements.h,v 3.5 2001/12/14 19:54:33 dawes Exp $ */
 
 #ifndef _ELEMENTS_H_
 #define _ELEMENTS_H_
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define ELEM_NAME(_name_) xieFlo##_name_
 #define ELEM_SIZE(_name_) sz_xieFlo##_name_
 #else

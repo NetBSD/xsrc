@@ -1,15 +1,14 @@
-/* $Xorg: Font.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $ */
+/* $Xorg: Font.c,v 1.4 2001/02/09 02:03:33 xorgcvs Exp $ */
 /*
 
-Copyright (c) 1986  X Consortium
+Copyright 1986, 1998  The Open Group
 Copyright (c) 2000  The XFree86 Project, Inc.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -28,7 +27,7 @@ sale, use or other dealings in this Software without prior written
 authorization from the X Consortium and the XFree86 Project.
 
 */
-/* $XFree86: xc/lib/X11/Font.c,v 1.13 2001/05/01 07:53:46 alanh Exp $ */
+/* $XFree86: xc/lib/X11/Font.c,v 1.15 2001/12/14 19:54:00 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"
@@ -47,6 +46,9 @@ authorization from the X Consortium and the XFree86 Project.
 #include <stdlib.h>
 #include <X11/extensions/xf86bigfstr.h>
 #endif
+
+#include "Xlcint.h"
+#include "XlcPubI.h"
 
 
 static XFontStruct *_XQueryFont(
@@ -112,6 +114,8 @@ XFontStruct *XLoadQueryFont(dpy, name)
     XF86BigfontCodes *extcodes = _XF86BigfontCodes(dpy);
 #endif
 
+    if (_XF86LoadQueryLocaleFont(dpy, name, &font_result, (Font *)0))
+      return font_result;
     LockDisplay(dpy);
     GetReq(OpenFont, req);
     seq = dpy->request;
@@ -678,3 +682,72 @@ _XF86BigfontFreeFontMetrics (fs)
 }
 
 #endif /* USE_XF86BIGFONT */
+
+#if NeedFunctionPrototypes
+int _XF86LoadQueryLocaleFont(
+   Display *dpy,
+   _Xconst char *name,
+   XFontStruct **xfp,
+   Font *fidp)
+#else
+int _XF86LoadQueryLocaleFont(dpy, name)
+   Display *dpy;
+   char *name;
+   XFontStruct **xfp;
+   Font *fidp;
+#endif
+{
+    int l;
+    char *charset, *p;
+    char buf[256];
+    XFontStruct *fs;
+    XLCd lcd;
+
+    if (!name)
+	return 0;
+    l = strlen(name);
+    if (l < 2 || name[l - 1] != '*' || name[l - 2] != '-')
+	return 0;
+    charset = 0;
+    /* next three lines stolen from _XkbGetCharset() */
+    lcd = _XlcCurrentLC();
+    if ((lcd = _XlcCurrentLC()) != 0)
+	charset = XLC_PUBLIC(lcd, encoding_name);
+    if (!charset || (p = strrchr(charset, '-')) == 0 || p == charset || p[1] == 0 || (p[1] == '*' && p[2] == 0)) {
+	/* prefer latin1 if no encoding found */
+	charset = "ISO8859-1";
+	p = charset + 7;
+    }
+    if (l - 2 - (p - charset) < 0)
+	return 0;
+    if (strncasecmp(name + l - 2 - (p - charset), charset, p - charset))
+	return 0;
+    if (strlen(p + 1) + l - 1 >= sizeof(buf) - 1)
+	return 0;
+    strcpy(buf, name);
+    strcpy(buf + l - 1, p + 1);
+    fs = XLoadQueryFont(dpy, buf);
+    if (!fs)
+	return 0;
+    if (xfp) {
+	*xfp = fs;
+	if (fidp)
+	    *fidp = fs->fid;
+    } else if (fidp) {
+	if (fs->per_char) {
+#ifdef USE_XF86BIGFONT
+	    _XF86BigfontFreeFontMetrics(fs);
+#else
+	    Xfree ((char *) fs->per_char);
+#endif
+	}
+	_XFreeExtData(fs->ext_data);
+	if (fs->properties)
+	    Xfree ((char *) fs->properties);
+	*fidp = fs->fid;
+	Xfree ((char *) fs);
+    } else {
+	XFreeFont(dpy, fs);
+    }
+    return 1;
+}

@@ -39,11 +39,11 @@
 
 #define DRIVER_NAME		"r128"
 #define DRIVER_DESC		"ATI Rage 128"
-#define DRIVER_DATE		"20010405"
+#define DRIVER_DATE		"20010917"
 
 #define DRIVER_MAJOR		2
-#define DRIVER_MINOR		1
-#define DRIVER_PATCHLEVEL	6
+#define DRIVER_MINOR		2
+#define DRIVER_PATCHLEVEL	0
 
 #define DRIVER_IOCTLS							    \
    [DRM_IOCTL_NR(DRM_IOCTL_DMA)]             = { r128_cce_buffers,  1, 0 }, \
@@ -81,6 +81,26 @@
 #include "drm_dma.h"
 #include "drm_drawable.h"
 #include "drm_drv.h"
+
+#ifndef MODULE
+/* DRM(options) is called by the kernel to parse command-line options
+ * passed via the boot-loader (e.g., LILO).  It calls the insmod option
+ * routine, drm_parse_drm.
+ */
+
+/* JH- We have to hand expand the string ourselves because of the cpp.  If
+ * anyone can think of a way that we can fit into the __setup macro without
+ * changing it, then please send the solution my way.
+ */
+static int __init r128_options( char *str )
+{
+	DRM(parse_options)( str );
+	return 1;
+}
+
+__setup( DRIVER_NAME "=", r128_options );
+#endif
+
 #include "drm_fops.h"
 #include "drm_init.h"
 #include "drm_ioctl.h"

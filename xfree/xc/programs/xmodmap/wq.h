@@ -1,9 +1,13 @@
-/* $Xorg: wq.h,v 1.3 2000/08/17 19:54:55 cpqbld Exp $ */
+/* $Xorg: wq.h,v 1.4 2001/02/09 02:05:56 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/wq.h,v 1.4 2001/01/17 23:46:21 dawes Exp $ */
+/* $XFree86: xc/programs/xmodmap/wq.h,v 1.5 2001/12/14 20:02:13 dawes Exp $ */
 
 #ifndef _WQ_H
 #define _WQ_H

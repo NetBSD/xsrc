@@ -1,4 +1,4 @@
-/* $Xorg: lcGeneric.c,v 1.6 2000/08/17 19:45:18 cpqbld Exp $ */
+/* $Xorg: lcGeneric.c,v 1.7 2000/12/12 12:44:05 coskrey Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.14 2001/01/17 19:41:54 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.16 2001/11/16 00:52:27 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -723,7 +723,6 @@ load_generic(
 	gen->wc_shift_bits = atoi(value[0]);
     if (gen->wc_shift_bits < 1)
 	gen->wc_shift_bits = 8;
-#ifndef X_NOT_STDC_ENV
     /***** use_stdc_env *****/
     _XlcGetResource(lcd, "XLC_XLOCALE", "use_stdc_env", &value, &num);
     if (num > 0 && !_XlcCompareISOLatin1(value[0], "True"))
@@ -736,7 +735,6 @@ load_generic(
 	gen->force_convert_to_mb = True;
     else
 	gen->force_convert_to_mb = False;
-#endif
     
     for (i = 0; ; i++) {
 	CodeSetRec *codeset = NULL;
@@ -989,6 +987,22 @@ err:
     return False;
 }
 
+#ifdef USE_DYNAMIC_LC
+/* override the open_om and open_im methods which were set by
+   super_class's initialize method() */
+
+static Bool
+initialize_core(lcd)
+    XLCd lcd;
+{
+    _XInitDynamicOM(lcd);
+
+    _XInitDynamicIM(lcd);
+
+    return True;
+}
+#endif
+
 static Bool
 initialize(lcd)
     XLCd lcd;
@@ -1001,6 +1015,11 @@ initialize(lcd)
 	if ((*superclass->pub.initialize)(lcd) == False)
 	    return False;
     }
+
+#ifdef USE_DYNAMIC_LC
+    if (initialize_core(lcd) == False)
+	return False;
+#endif
 
     if (load_generic(lcd) == False)
 	return False;

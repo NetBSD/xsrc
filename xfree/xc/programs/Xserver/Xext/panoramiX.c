@@ -23,7 +23,7 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.25 2001/01/17 22:13:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.31 2001/10/28 03:32:51 tsi Exp $ */
 
 #define NEED_REPLIES
 #include <stdio.h>
@@ -71,7 +71,7 @@ DepthPtr	PanoramiXDepths;
 int		PanoramiXNumVisuals;
 VisualPtr	PanoramiXVisuals;
 /* We support at most 256 visuals */
-XID		PanoramiXVisualTable[256][MAXSCREENS];
+XID		*PanoramiXVisualTable = NULL;
 
 unsigned long XRC_DRAWABLE;
 unsigned long XRT_WINDOW;
@@ -98,7 +98,6 @@ static void PanoramiXResetProc(ExtensionEntry*);
 extern int SProcPanoramiXDispatch();
 extern char *ConnectionInfo;
 extern int connBlockScreenStart;
-extern int (* ProcVector[256]) ();
 extern xConnSetupPrefix connSetupPrefix;
 
 /*
@@ -181,7 +180,8 @@ XineramaCloseScreen (int i, ScreenPtr pScreen)
     pScreen->CreateGC = pScreenPriv->CreateGC;
 
     REGION_UNINIT(pScreen, &XineramaScreenRegions[pScreen->myNum]);
-    REGION_UNINIT(pScreen, &PanoramiXScreenRegion);
+    if (pScreen->myNum == 0)
+	REGION_UNINIT(pScreen, &PanoramiXScreenRegion);
 
     xfree ((pointer) pScreenPriv);
 
@@ -447,7 +447,7 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 {
     int 	     	i;
     Bool	     	success = FALSE;
-    ExtensionEntry 	*extEntry, *AddExtension();
+    ExtensionEntry 	*extEntry;
     ScreenPtr		pScreen;
     PanoramiXScreenPtr	pScreenPriv;
     int			w, h;
@@ -622,16 +622,17 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 #ifdef RENDER
     PanoramiXRenderInit ();
 #endif
-    return;
 }
-extern 
+
+extern Bool CreateConnectionBlock(void);
+
 Bool PanoramiXCreateConnectionBlock(void)
 {
     int i, j, length;
     Bool disableBackingStore = FALSE;
     Bool disableSaveUnders = FALSE;
     int old_width, old_height;
-    int width_mult, height_mult;
+    float width_mult, height_mult;
     xWindowRoot *root;
     xConnSetup *setup;
     xVisualType *visual;
@@ -728,8 +729,8 @@ Bool PanoramiXCreateConnectionBlock(void)
 
     root->pixWidth = PanoramiXPixWidth;
     root->pixHeight = PanoramiXPixHeight;
-    width_mult = root->pixWidth / old_width;
-    height_mult = root->pixHeight / old_height;
+    width_mult = (1.0 * root->pixWidth) / old_width;
+    height_mult = (1.0 * root->pixHeight) / old_height;
     root->mmWidth *= width_mult;
     root->mmHeight *= height_mult;
 
@@ -748,16 +749,13 @@ Bool PanoramiXCreateConnectionBlock(void)
 extern
 void PanoramiXConsolidate(void)
 {
-    int 	i, j, k, l;
+    int 	i, j, k;
     VisualPtr   pVisual, pVisual2;
     ScreenPtr   pScreen, pScreen2;
     PanoramiXRes *root, *defmap;
 
-    /* initialize the visual table */
-    for (i = 0; i < 256; i++) {
-	for (j = 0; j < MAXSCREENS - 1; j++) 
-	 PanoramiXVisualTable[i][j] = 0;
-    }
+    if(!PanoramiXVisualTable)
+	PanoramiXVisualTable = xcalloc(256 * MAXSCREENS, sizeof(XID));
 
     pScreen = screenInfo.screens[0];
     pVisual = pScreen->visuals; 
@@ -768,7 +766,7 @@ void PanoramiXConsolidate(void)
     PanoramiXVisuals = xcalloc(pScreen->numVisuals,sizeof(VisualRec));
 
     for (i = 0; i < pScreen->numVisuals; i++, pVisual++) {
-	PanoramiXVisualTable[pVisual->vid][0] = pVisual->vid;
+	PanoramiXVisualTable[pVisual->vid * MAXSCREENS] = pVisual->vid;
 
 	/* check if the visual exists on all screens */
 	for (j = 1; j < PanoramiXNumScreens; j++) {
@@ -787,14 +785,20 @@ void PanoramiXConsolidate(void)
 		    (pVisual->offsetBlue == pVisual2->offsetBlue))
 		{
 		    Bool AlreadyUsed = FALSE;
+#if 0
+/* Open GL should do this reduction, not us */
 		    for (l = 0; l < 256; l++) {
-			if (pVisual2->vid == PanoramiXVisualTable[l][j]) {	
+			if (pVisual2->vid == 
+				PanoramiXVisualTable[(l * MAXSCREENS) + j]) 
+			{	
 			    AlreadyUsed = TRUE;
 			    break;
 			}
 		    }
+#endif
 		    if (!AlreadyUsed) {
-			PanoramiXVisualTable[pVisual->vid][j] = pVisual2->vid;
+			PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] =
+					 pVisual2->vid;
 			break;
 		    }
 		}
@@ -803,14 +807,14 @@ void PanoramiXConsolidate(void)
 	
 	/* if it doesn't exist on all screens we can't use it */
 	for (j = 0; j < PanoramiXNumScreens; j++) {
-	    if (!PanoramiXVisualTable[pVisual->vid][j]) {
-		PanoramiXVisualTable[pVisual->vid][0] = 0;
+	    if (!PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j]) {
+		PanoramiXVisualTable[pVisual->vid * MAXSCREENS] = 0;
 		break;
 	    }
 	}
 
 	/* if it does, make sure it's in the list of supported depths and visuals */
-	if(PanoramiXVisualTable[pVisual->vid][0]) {
+	if(PanoramiXVisualTable[pVisual->vid * MAXSCREENS]) {
 	    Bool GotIt = FALSE;
 
 	    PanoramiXVisuals[PanoramiXNumVisuals].vid = pVisual->vid;
@@ -885,7 +889,7 @@ static void PanoramiXResetProc(ExtensionEntry* extEntry)
 int
 ProcPanoramiXQueryVersion (ClientPtr client)
 {
-    REQUEST(xPanoramiXQueryVersionReq);
+    /* REQUEST(xPanoramiXQueryVersionReq); */
     xPanoramiXQueryVersionReply		rep;
     register 	int			n;
 
@@ -988,7 +992,7 @@ ProcPanoramiXGetScreenSize(ClientPtr client)
 int
 ProcXineramaIsActive(ClientPtr client)
 {
-    REQUEST(xXineramaIsActiveReq);
+    /* REQUEST(xXineramaIsActiveReq); */
     xXineramaIsActiveReply	rep;
 
     REQUEST_SIZE_MATCH(xXineramaIsActiveReq);
@@ -1011,7 +1015,7 @@ ProcXineramaIsActive(ClientPtr client)
 int
 ProcXineramaQueryScreens(ClientPtr client)
 {
-    REQUEST(xXineramaQueryScreensReq);
+    /* REQUEST(xXineramaQueryScreensReq); */
     xXineramaQueryScreensReply	rep;
 
     REQUEST_SIZE_MATCH(xXineramaQueryScreensReq);
@@ -1118,7 +1122,6 @@ XineramaGetImageData(
     BoxRec SrcBox, *pbox;
     int x, y, w, h, i, j, nbox, size, sizeNeeded, ScratchPitch, inOut, depth;
     DrawablePtr pDraw = pDrawables[0];
-    ScreenPtr pScreen = pDraw->pScreen;
     char *ScratchMem = NULL;
 
     size = 0;

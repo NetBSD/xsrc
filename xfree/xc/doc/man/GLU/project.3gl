@@ -82,5 +82,5 @@ The window coordinates are then computed as follows:
 .EN
 .sp
 .SH SEE ALSO
-\f3glGet\fP, \%\f3gluUnProject\fP
+\f3glGet(3G)\fP, \%\f3gluUnProject(3G)\fP
 

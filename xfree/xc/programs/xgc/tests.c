@@ -1,6 +1,6 @@
 /*
 ** $XConsortium: tests.c,v 1.20 91/06/08 18:57:07 rws Exp $
-** $XFree86: xc/programs/xgc/tests.c,v 1.5 2000/11/14 18:20:39 dawes Exp $
+** $XFree86: xc/programs/xgc/tests.c,v 1.9 2002/01/10 04:29:18 dawes Exp $
 **
 */
 
@@ -15,7 +15,7 @@
 #ifdef SVR4
 #define SYSV
 #endif
-#if !defined(SYSV) && !defined(MINIX)
+#if !defined(SYSV) && !defined(QNX4)
 #include <sys/timeb.h>
 #include <sys/resource.h>
 #endif
@@ -26,10 +26,6 @@
 
 #ifdef SYSV
 #define random lrand48
-#endif
-
-#ifdef X_NOT_STDC_ENV
-extern long random();
 #endif
 
 extern XStuff X;
@@ -53,10 +49,10 @@ static long
 timer(flag)
      int flag;
 {
-#if !defined(SYSV) && !defined(MINIX) && !defined(AMOEBA)
+#if !defined(SYSV)
   static struct timeval starttime;  /* starting time for gettimeofday() */
   struct timeval endtime;           /* ending time for gettimeofday() */
-#ifndef __EMX__
+#if !defined(__EMX__) && !defined(QNX4)
   static struct rusage startusage;  /* starting time for getrusage() */
   struct rusage endusage;           /* ending time for getrusage() */
 #endif
@@ -67,13 +63,13 @@ timer(flag)
   switch (flag) {
     case StartTimer:                       /* store initial values */
       gettimeofday(&starttime,&tz);       
-#ifndef __EMX__
+#if !defined(__EMX__) && !defined(QNX4)
       getrusage(RUSAGE_SELF,&startusage);
 #endif
       return((long) NULL);
     case EndTimer:
       gettimeofday(&endtime,&tz);          /* store final values */
-#ifndef __EMX__
+#if !defined(__EMX__) && !defined(QNX4)
       getrusage(RUSAGE_SELF,&endusage);
 #endif
 
@@ -81,7 +77,7 @@ timer(flag)
      elapsed time = ending time - starting time, but there are three 
      different timers and two different units of time, ack... */
 
-#ifndef __EMX__
+#if !defined(__EMX__) && !defined(QNX4)
       elapsedtime = (long) ((long)
 	((endtime.tv_sec - endusage.ru_utime.tv_sec - endusage.ru_stime.tv_sec
 	 - starttime.tv_sec + startusage.ru_utime.tv_sec

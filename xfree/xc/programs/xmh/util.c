@@ -1,6 +1,6 @@
 /*
  * $XConsortium: util.c /main/42 1996/01/14 16:51:55 kaleb $
- * $XFree86: xc/programs/xmh/util.c,v 3.3 1996/01/16 15:09:28 dawes Exp $
+ * $XFree86: xc/programs/xmh/util.c,v 3.6 2001/10/31 22:50:31 tsi Exp $
  *
  *
  *			  COPYRIGHT 1987
@@ -89,14 +89,14 @@ char *path, *mode;
 
 
 
-int myclose(fid)
+void myclose(fid)
 {
     if (close(fid) < 0) Punt("Error in myclose!");
     DEBUG1( "# %d : <Closed>\n", fid)
 }
 
 
-int myfclose(file)
+void myfclose(file)
 FILE *file;
 {
     int fid = fileno(file);
@@ -114,7 +114,7 @@ char *MakeNewTempFileName()
     static int  uniqueid = 0;
     do {
 	(void) sprintf(name, "%s/xmh_%ld_%d", app_resources.temp_dir,
-		       getpid(), uniqueid++);
+		       (long)getpid(), uniqueid++);
     } while (FileExists(name));
     return name;
 }
@@ -236,8 +236,8 @@ void CopyFileAndCheck(from, to)
 	n = read(fromfid, buf, 512);
 	if (n) (void) write(tofid, buf, n);
     } while (n);
-    (void) myclose(fromfid);
-    (void) myclose(tofid);
+    myclose(fromfid);
+    myclose(tofid);
 }
 
 
@@ -283,14 +283,13 @@ char *CreateGeometry(gbits, x, y, width, height)
     return result;
 }
 
-
-FileExists(file)
+int FileExists(file)
   char *file;
 {
     return (access(file, F_OK) == 0);
 }
 
-LastModifyDate(file)
+long LastModifyDate(file)
   char *file;
 {
     struct stat buf;
@@ -298,7 +297,7 @@ LastModifyDate(file)
     return buf.st_mtime;
 }
 
-GetFileLength(file)
+int GetFileLength(file)
 char *file;
 {
     struct stat buf;
@@ -325,7 +324,7 @@ void ChangeLabel(widget, str)
 Widget widget;
 char *str;
 {
-    static Arg arglist[] = {XtNlabel, (XtArgVal)NULL};
+    static Arg arglist[] = {{XtNlabel, (XtArgVal)NULL}};
     arglist[0].value = (XtArgVal) str;
     XtSetValues(widget, arglist, XtNumber(arglist));
 }

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Debugging and logging component (body).                              */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -58,7 +58,8 @@
 #include <string.h>
 
 
-  FT_EXPORT_DEF( void )  FT_Message( const char*  fmt, ... )
+  FT_EXPORT_DEF( void )
+  FT_Message( const char*  fmt, ... )
   {
     va_list  ap;
 
@@ -69,7 +70,8 @@
   }
 
 
-  FT_EXPORT_DEF( void )  FT_Panic( const char*  fmt, ... )
+  FT_EXPORT_DEF( void )
+  FT_Panic( const char*  fmt, ... )
   {
     va_list  ap;
 
@@ -84,8 +86,9 @@
 
 #ifdef FT_DEBUG_LEVEL_TRACE
 
-  FT_EXPORT_DEF( void )  FT_SetTraceLevel( FT_Trace  component,
-                                           char      level )
+  FT_EXPORT_DEF( void )
+  FT_SetTraceLevel( FT_Trace  component,
+                    char      level )
   {
     if ( component >= trace_max )
       return;

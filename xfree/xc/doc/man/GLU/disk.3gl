@@ -65,6 +65,6 @@ linearly such that where $ r ~=~ "outer" $, the value at (\f2r\fP, 0, 0) is
 it is (0, 0.5), and 
 at (0, \-\f2r\fP, 0) it is (0.5, 0).
 .SH SEE ALSO
-\%\f3gluCylinder\fP, \%\f3gluNewQuadric\fP, \%\f3gluPartialDisk\fP, 
-\%\f3gluQuadricOrientation\fP, 
-\%\f3gluQuadricTexture\fP, \%\f3gluSphere\fP
+\%\f3gluCylinder(3G)\fP, \%\f3gluNewQuadric(3G)\fP, \%\f3gluPartialDisk(3G)\fP, 
+\%\f3gluQuadricOrientation(3G)\fP, 
+\%\f3gluQuadricTexture(3G)\fP, \%\f3gluSphere(3G)\fP

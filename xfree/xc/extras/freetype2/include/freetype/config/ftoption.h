@@ -1,10 +1,11 @@
+/* $XFree86: xc/extras/freetype2/include/freetype/config/ftoption.h,v 1.4 2002/01/14 17:00:59 keithp Exp $ */
 /***************************************************************************/
 /*                                                                         */
 /*  ftoption.h                                                             */
 /*                                                                         */
 /*    User-selectable configuration macros (specification only).           */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -30,17 +31,39 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*                 USER-SELECTABLE CONFIGURATION MACROS                  */
   /*                                                                       */
-  /* These macros can be toggled by developers to enable or disable        */
-  /* certain aspects of FreeType.  This is a default file, where all major */
-  /* options are enabled.                                                  */
+  /* This file contains the default configuration macro definitions for    */
+  /* a standard build of the FreeType library.  There are three ways to    */
+  /* use this file to build project-specific versions of the library:      */
   /*                                                                       */
-  /* Note that if some modifications are required for your build, we       */
-  /* advise you to put a modified copy of this file in your build          */
-  /* directory, rather than modifying it in-place.                         */
+  /*  - You can modify this file by hand, but this is not recommended in   */
+  /*    cases where you would like to build several versions of the        */
+  /*    library from a single source directory.                            */
   /*                                                                       */
-  /* The build directory is normally `freetype/builds/<system>' and        */
-  /* contains build or system-specific files that are included in          */
-  /* priority when building the library.                                   */
+  /*  - You can put a copy of this file in your build directory, more      */
+  /*    precisely in "$BUILD/freetype/config/ftoption.h", where "$BUILD"   */
+  /*    is the name of a directory that is included _before_ the FreeType  */
+  /*    include path during compilation.                                   */
+  /*                                                                       */
+  /*    The default FreeType Makefiles and Jamfiles use the build          */
+  /*    directory "builds/<system>" by default, but you can easily change  */
+  /*    that for your own projects.                                        */
+  /*                                                                       */
+  /*  - Copy the file <ft2build.h> to "$BUILD/ft2build.h" and modify it    */
+  /*    slightly to pre-define the macro FT_CONFIG_OPTIONS_H used to       */
+  /*    locate this file during the build.  For example,                   */
+  /*                                                                       */
+  /*      #define FT_CONFIG_OPTIONS_H  <myftoptions.h>                     */
+  /*      #include <freetype/config/ftheader.h>                            */
+  /*                                                                       */
+  /*    will use "$BUILD/myftoptions.h" instead of this file for macro     */
+  /*    definitions.                                                       */
+  /*                                                                       */
+  /*    Note also that you can similarly pre-define the macro              */
+  /*    FT_CONFIG_MODULES_H used to locate the file listing of the modules */
+  /*    that are statically linked to the library at compile time.  By     */
+  /*    default, this file is <freetype/config/ftmodule.h>.                */
+  /*                                                                       */
+  /*  We highly recommend using the third method whenever possible.        */
   /*                                                                       */
   /*************************************************************************/
 
@@ -75,6 +98,23 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* Module errors                                                         */
+  /*                                                                       */
+  /*   If this macro is set (which is _not_ the default), the higher byte  */
+  /*   of an error code gives the module in which the error has occurred,  */
+  /*   while the lower byte is the real error code.                        */
+  /*                                                                       */
+  /*   Setting this macro makes sense for debugging purposes only, since   */
+  /*   it would break source compatibility of certain programs that use    */
+  /*   FreeType 2.                                                         */
+  /*                                                                       */
+  /*   More details can be found in the files ftmoderr.h and fterrors.h.   */
+  /*                                                                       */
+#undef FT_CONFIG_OPTION_USE_MODULE_ERRORS
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* Alternate Glyph Image Format support                                  */
   /*                                                                       */
   /*   By default, the glyph images returned by the FreeType glyph loader  */
@@ -99,7 +139,7 @@ FT_BEGIN_HEADER
   /* Glyph Postscript Names handling                                       */
   /*                                                                       */
   /*   By default, FreeType 2 is compiled with the `PSNames' module.  This */
-  /*   This module is in charge of converting a glyph name string into a   */
+  /*   module is in charge of converting a glyph name string into a        */
   /*   Unicode value, or return a Macintosh standard glyph name for the    */
   /*   use with the TrueType `post' table.                                 */
   /*                                                                       */
@@ -139,12 +179,22 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
-  /* Many compilers provide the non-ANSI `long long' 64-bit type.  You can */
-  /* activate it by defining the FTCALC_USE_LONG_LONG macro.  Note that    */
-  /* this will produce many -ansi warnings during library compilation, and */
-  /* that in many cases the generated code will not be smaller or faster!  */
+  /* Many compilers provide a non-ANSI 64-bit data type that can be used   */
+  /* by FreeType to speed up some computations.  However, this will create */
+  /* some problems when compiling the library in strict ANSI mode.         */
   /*                                                                       */
-#undef FTCALC_USE_LONG_LONG
+  /* For this reason, the use of 64-bit ints is normally disabled when     */
+  /* the __STDC__ macro is defined.  You can however disable this by       */
+  /* defining here the macro FT_CONFIG_OPTION_FORCE_INT64.                 */
+  /*                                                                       */
+  /* For most compilers, this will only create compilation warnings        */
+  /* when building the library.                                            */
+  /*                                                                       */
+  /* ObNote: The compiler-specific 64-bit integers are detected in the     */
+  /*         file "ftconfig.h" either statically, or through Autoconf      */
+  /*         on platforms that support it.                                 */
+  /*                                                                       */
+#undef FT_CONFIG_OPTION_FORCE_INT64
 
 
   /*************************************************************************/
@@ -206,12 +256,27 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* Memory Debugging                                                      */
+  /*                                                                       */
+  /*   FreeType now comes with an integrated memory debugger that is       */
+  /*   capable of detecting simple errors like memory leaks or double      */
+  /*   deletes.  To compile it within your build of the library, you       */
+  /*   should define FT_DEBUG_MEMORY here.                                 */
+  /*                                                                       */
+  /*   Note that the memory debugger is only activated at runtime when     */
+  /*   when the _environment_ variable "FT_DEBUG_MEMORY" is also defined!  */
+  /*                                                                       */
+#undef  FT_DEBUG_MEMORY
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* Computation Algorithms                                                */
   /*                                                                       */
   /*   Used for debugging, this configuration macro should disappear       */
   /*   soon.                                                               */
   /*                                                                       */
-#define FT_CONFIG_OPTION_OLD_CALCS
+#undef FT_CONFIG_OPTION_OLD_CALCS
 
 
   /*************************************************************************/
@@ -221,7 +286,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /* This must be greater than 4kByte.                                     */
   /*                                                                       */
-#define FT_RENDER_POOL_SIZE  32768
+#define FT_RENDER_POOL_SIZE  32768L
 
 
   /*************************************************************************/
@@ -389,6 +454,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
 #undef T1_CONFIG_OPTION_NO_MM_SUPPORT
 
+ /* */
 
 FT_END_HEADER
 

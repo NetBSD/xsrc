@@ -30,10 +30,12 @@
 
 Notice===
 */
+/* $XFree86: xc/extras/X-TrueType/xttstruct.h,v 1.2 2001/08/01 00:44:33 tsi Exp $ */
 
 #ifndef _XTTSTRUCT_H_
 #define _XTTSTRUCT_H_
 
+#define _FONTCACHE_SERVER_
 #include "fontcache.h"
 
 

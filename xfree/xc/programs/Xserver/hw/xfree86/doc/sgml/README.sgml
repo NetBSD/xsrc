@@ -13,15 +13,15 @@
 
 <title>README for XFree86&tm; &relvers;
 <author>The XFree86 Project, Inc
-<date>2 June 2001
+<date>16 January 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.113.2.3 2001/06/02 16:17:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.119 2002/01/16 19:40:48 dawes Exp $
 </ident>
 
 <abstract>
 
-XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
 several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
 operating systems on Intel and other platforms.
 
@@ -346,10 +346,14 @@ gzip -d &lt; &prevfullrelvers;-&fullrelvers;.diff4.gz | patch -p0 -E
 <![ %difftar; [
 <![ %removefiles; [
 <tscreen><verb>
-rm -f xc/programs/xieperf/images/image.012
-rm -fr xc/fonts/bdf/latin2
-rm -fr xc/fonts/bdf/100dpi
-rm -fr xc/fonts/bdf/75dpi
+rm -f xc/extras/freetype2/builds/mac/ftlib.prj
+rm -fr xc/extras/freetype2/docs/design 
+rm -fr xc/extras/freetype2/docs/glyphs
+rm -fr xc/extras/freetype2/docs/image
+rm -fr xc/extras/freetype2/docs/tutorial
+rm -f xc/programs/Xserver/hw/darwin/bundle/English.lproj/MainMenu.nib/objects.nib
+rm -f xc/programs/Xserver/hw/darwin/bundle/Japanese.lproj/Localizable.strings
+rm -f xc/programs/Xserver/hw/darwin/bundle/Japanese.lproj/MainMenu.nib/objects.nib
 </verb></tscreen>
 ]]>
 <tscreen><verb>
@@ -370,6 +374,12 @@ tree a while ago, so a separate contrib tarball is not required.
 To format the XFree86 documentation use the latest version of our doctools
 package available as <tt>doctools-&doctoolsvers;.tgz</tt>.
 ]]>  <!-- fullrel -->
+
+The XFree86 source code can also be accessed via the XFree86 CVS repository.
+Information about accessing this can be found at the <url name="CVS page"
+url="http://www.xfree86.org/cvs/"> on our web site.  It's also possible
+to browse the XFree86 CVS repository at our <url name="CVSWeb server"
+url="http://cvsweb.xfree86.org/">.
 
 <sect>Reporting Bugs
 <p>

@@ -4,7 +4,7 @@ XCOMM $Xorg: sv4Lib.rules,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
  * SVR4 shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.7 2001/01/17 16:38:49 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.8 2001/05/28 02:42:25 tsi Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES
@@ -26,14 +26,14 @@ XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.7 2001/01/17 16:38:49 dawes Exp $
 #endif
 #ifndef PositionIndependentCFlags
 # if HasGcc2
-#  define PositionIndependentCFlags -fpic
+#  define PositionIndependentCFlags -fPIC
 # else
 #  define PositionIndependentCFlags -K PIC
 # endif
 #endif
 #ifndef PositionIndependentCplusplusFlags
 # if HasGcc2ForCplusplus
-#  define PositionIndependentCplusplusFlags -fpic
+#  define PositionIndependentCplusplusFlags -fPIC
 # else
 #  define PositionIndependentCplusplusFlags -K PIC
 # endif

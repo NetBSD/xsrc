@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.h,v 1.3 2000/03/03 23:16:27 dawes Exp $ */
+/* $XFree86: xc/programs/xman/man.h,v 1.4 2001/07/25 15:05:27 dawes Exp $ */
 
 
 /* X toolkit header files */
@@ -190,13 +190,7 @@ typedef struct _Xman_Resources {
 #define StrAlloc(ptr) XtNewString(ptr)
 
 /* Standard library function definitions. */
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *getenv(), *malloc(), *realloc();
-void exit();
-#endif
 
 /* buttons.c */
 

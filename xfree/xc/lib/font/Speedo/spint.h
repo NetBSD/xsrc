@@ -1,4 +1,4 @@
-/* $Xorg: spint.h,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
+/* $Xorg: spint.h,v 1.4 2001/02/09 02:04:00 xorgcvs Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -24,7 +24,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.9 2001/01/17 19:43:20 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.10 2001/12/14 19:56:42 dawes Exp $ */
 
 #ifndef _SPINT_H_
 #define _SPINT_H_

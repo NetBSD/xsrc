@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbsetsp.c,v 3.1 1998/03/20 21:04:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbsetsp.c,v 3.3 2001/10/28 03:32:58 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -71,6 +71,7 @@ SOFTWARE.
  * boxes, we may not want to start grabbing bits at psrc but at some offset
  * further on.)
  */
+void
 afbSetScanline(y, xOrigin, xStart, xEnd, psrc, alu, pdstBase, widthDst,
 					 sizeDst, depthDst, sizeSrc)
 	int y;
@@ -163,7 +164,7 @@ afbSetSpans(pDrawable, pGC, pcharsrc, ppt, pwidth, nspans, fSorted)
 	int widthDst;						/* width of bitmap in words */
 	int sizeDst;
 	int depthDst;
-	int sizeSrc;
+	int sizeSrc = 0;
 	register BoxPtr pbox, pboxLast, pboxTest;
 	register DDXPointPtr pptLast;
 	int alu;

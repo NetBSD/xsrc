@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType font driver for Windows FNT/FON files                       */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -17,12 +17,14 @@
 
 
 #include <ft2build.h>
-#include FT_ERRORS_H
 #include FT_INTERNAL_DEBUG_H
 #include FT_INTERNAL_STREAM_H
 #include FT_INTERNAL_OBJECTS_H
 #include FT_INTERNAL_FNT_TYPES_H
+
 #include "winfnt.h"
+
+#include "fnterrs.h"
 
 
   /*************************************************************************/
@@ -109,9 +111,9 @@
   };
 
 
-  static
-  void  fnt_done_font( FT_Stream  stream,
-                       FNT_Font*  font )
+  static void
+  fnt_font_done( FNT_Font*  font,
+                 FT_Stream  stream )
   {
     if ( font->fnt_frame )
       RELEASE_Frame( font->fnt_frame );
@@ -121,9 +123,9 @@
   }
 
 
-  static
-  FT_Error  fnt_load_font( FT_Stream  stream,
-                           FNT_Font*  font )
+  static FT_Error
+  fnt_font_load( FNT_Font*  font,
+                 FT_Stream  stream )
   {
     FT_Error        error;
     WinFNT_Header*  header = &font->header;
@@ -139,14 +141,14 @@
          header->version != 0x300 )
     {
       FT_TRACE2(( "[not a valid FNT file]\n" ));
-      error = FT_Err_Unknown_File_Format;
+      error = FNT_Err_Unknown_File_Format;
       goto Exit;
     }
 
     if ( header->file_type & 1 )
     {
       FT_TRACE2(( "[can't handle vector FNT fonts]\n" ));
-      error = FT_Err_Unknown_File_Format;
+      error = FNT_Err_Unknown_File_Format;
       goto Exit;
     }
 
@@ -164,8 +166,8 @@
   }
 
 
-  static
-  void  fnt_done_fonts( FNT_Face  face )
+  static void
+  fnt_face_done_fonts( FNT_Face  face )
   {
     FT_Memory  memory = FT_FACE(face)->memory;
     FT_Stream  stream = FT_FACE(face)->stream;
@@ -174,15 +176,15 @@
 
 
     for ( ; cur < limit; cur++ )
-      fnt_done_font( stream, cur );
+      fnt_font_done( cur, stream );
 
     FREE( face->fonts );
     face->num_fonts = 0;
   }
 
 
-  static
-  FT_Error  fnt_get_dll_fonts( FNT_Face  face )
+  static FT_Error
+  fnt_face_get_dll_fonts( FNT_Face  face )
   {
     FT_Error      error;
     FT_Stream     stream = FT_FACE(face)->stream;
@@ -198,7 +200,7 @@
          READ_Fields( winmz_header_fields, &mz_header ) )
       goto Exit;
 
-    error = FT_Err_Unknown_File_Format;
+    error = FNT_Err_Unknown_File_Format;
     if ( mz_header.magic == WINFNT_MZ_MAGIC )
     {
       /* yes, now look for a NE header in the file */
@@ -209,7 +211,7 @@
            READ_Fields( winne_header_fields, &ne_header ) )
         goto Exit;
 
-      error = FT_Err_Unknown_File_Format;
+      error = FNT_Err_Unknown_File_Format;
       if ( ne_header.magic == WINFNT_NE_MAGIC )
       {
         /* good, now look in the resource table for each FNT resource */
@@ -254,7 +256,7 @@
         if ( !font_count || !font_offset )
         {
           FT_TRACE2(( "this file doesn't contain any FNT resources!\n" ));
-          error = FT_Err_Unknown_File_Format;
+          error = FNT_Err_Unknown_File_Format;
           goto Exit;
         }
 
@@ -291,7 +293,7 @@
 
           for ( ; cur < limit; cur++ )
           {
-            error = fnt_load_font( stream, cur );
+            error = fnt_font_load( cur, stream );
             if ( error )
               goto Fail;
           }
@@ -301,32 +303,32 @@
 
   Fail:
     if ( error )
-      fnt_done_fonts( face );
+      fnt_face_done_fonts( face );
 
   Exit:
     return error;
   }
 
 
-  static
-  void  FNT_Done_Face( FNT_Face  face )
+  static void
+  FNT_Face_Done( FNT_Face  face )
   {
     FT_Memory  memory = FT_FACE_MEMORY( face );
 
 
-    fnt_done_fonts( face );
+    fnt_face_done_fonts( face );
 
     FREE( face->root.available_sizes );
     face->root.num_fixed_sizes = 0;
   }
 
 
-  static
-  FT_Error  FNT_Init_Face( FT_Stream      stream,
-                           FNT_Face       face,
-                           FT_Int         face_index,
-                           FT_Int         num_params,
-                           FT_Parameter*  params )
+  static FT_Error
+  FNT_Face_Init( FT_Stream      stream,
+                 FNT_Face       face,
+                 FT_Int         face_index,
+                 FT_Int         num_params,
+                 FT_Parameter*  params )
   {
     FT_Error   error;
     FT_Memory  memory = FT_FACE_MEMORY( face );
@@ -337,7 +339,7 @@
 
 
     /* try to load several fonts from a DLL */
-    error = fnt_get_dll_fonts( face );
+    error = fnt_face_get_dll_fonts( face );
     if ( error )
     {
       /* this didn't work, now try to load a single FNT font */
@@ -352,7 +354,7 @@
       font->offset   = 0;
       font->fnt_size = stream->size;
 
-      error = fnt_load_font( stream, font );
+      error = fnt_font_load( font, stream );
       if ( error )
         goto Fail;
     }
@@ -431,15 +433,15 @@
 
   Fail:
     if ( error )
-      FNT_Done_Face( face );
+      FNT_Face_Done( face );
 
   Exit:
     return error;
   }
 
 
-  static
-  FT_Error  FNT_Set_Pixel_Size( FNT_Size  size )
+  static FT_Error
+  FNT_Size_Set_Pixels( FNT_Size  size )
   {
     /* look up a font corresponding to the current pixel size */
     FNT_Face   face  = (FNT_Face)FT_SIZE_FACE( size );
@@ -464,13 +466,13 @@
       }
     }
 
-    return ( size->font ? FT_Err_Ok : FT_Err_Invalid_Pixel_Size );
+    return ( size->font ? FNT_Err_Ok : FNT_Err_Invalid_Pixel_Size );
   }
 
 
-  static
-  FT_UInt  FNT_Get_Char_Index( FT_CharMap  charmap,
-                               FT_Long     char_code )
+  static FT_UInt
+  FNT_Get_Char_Index( FT_CharMap  charmap,
+                      FT_Long     char_code )
   {
     FT_Long  result = char_code;
 
@@ -493,11 +495,11 @@
   }
 
 
-  static
-  FT_Error  FNT_Load_Glyph( FT_GlyphSlot  slot,
-                            FNT_Size      size,
-                            FT_UInt       glyph_index,
-                            FT_Int        load_flags )
+  static FT_Error
+  FNT_Load_Glyph( FT_GlyphSlot  slot,
+                  FNT_Size      size,
+                  FT_UInt       glyph_index,
+                  FT_Int        load_flags )
   {
     FNT_Font*   font  = size->font;
     FT_Error    error = 0;
@@ -513,7 +515,7 @@
 
     if ( !font )
     {
-      error = FT_Err_Invalid_Argument;
+      error = FNT_Err_Invalid_Argument;
       goto Exit;
     }
 
@@ -522,7 +524,7 @@
     else
       glyph_index = font->header.default_char - font->header.first_char;
 
-    new_format = font->header.version == 0x300;
+    new_format = FT_BOOL( font->header.version == 0x300 );
     len        = new_format ? 6 : 4;
 
     /* jump to glyph entry */
@@ -605,15 +607,15 @@
     sizeof( FNT_SizeRec ),
     sizeof( FT_GlyphSlotRec ),
 
-    (FTDriver_initFace)     FNT_Init_Face,
-    (FTDriver_doneFace)     FNT_Done_Face,
+    (FTDriver_initFace)     FNT_Face_Init,
+    (FTDriver_doneFace)     FNT_Face_Done,
     (FTDriver_initSize)     0,
     (FTDriver_doneSize)     0,
     (FTDriver_initGlyphSlot)0,
     (FTDriver_doneGlyphSlot)0,
 
-    (FTDriver_setCharSizes) FNT_Set_Pixel_Size,
-    (FTDriver_setPixelSizes)FNT_Set_Pixel_Size,
+    (FTDriver_setCharSizes) FNT_Size_Set_Pixels,
+    (FTDriver_setPixelSizes)FNT_Size_Set_Pixels,
 
     (FTDriver_loadGlyph)    FNT_Load_Glyph,
     (FTDriver_getCharIndex) FNT_Get_Char_Index,
@@ -646,7 +648,8 @@
   /*    format-specific interface can then be retrieved through the method */
   /*    interface->get_format_interface.                                   */
   /*                                                                       */
-  FT_EXPORT_DEF( const FT_Driver_Class* )  getDriverClass( void )
+  FT_EXPORT_DEF( const FT_Driver_Class* )
+  getDriverClass( void )
   {
     return &winfnt_driver_class;
   }

@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.9 2001/01/19 18:34:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.10 2001/10/28 03:32:54 tsi Exp $ */
 
 #include "gcstruct.h"
 
@@ -144,7 +144,6 @@ PclGetDrawablePrivateStuff(
      FILE **file)
 {
     XpContextPtr pCon;
-    PclPixmapPrivPtr pPriv;
     PclContextPrivPtr cPriv;
     
     switch( pDrawable->type )
@@ -327,14 +326,12 @@ PclUpdateDrawableGC(
      DrawablePtr pDrawable,
      FILE **outFile)
 {
-    Mask drawableMask, changeMask = 0;
+    Mask changeMask = 0;
     GC dGC;
     unsigned long valid;
     int i;
     XpContextPtr pCon;
     PclContextPrivPtr cPriv;
-    Colormap c;
-    ColormapPtr cmap;
     PclGCPrivPtr gcPriv = (PclGCPrivPtr)
       (pGC->devPrivates[PclGCPrivateIndex].ptr);
     
@@ -505,9 +502,11 @@ PclUpdateDrawableGC(
     
     if( changeMask & GCForeground )
       {
+#ifdef XP_PCL_COLOR
+	  ColormapPtr cmap;
+	  Colormap c;
 	  char t[40];
 
-#ifdef XP_PCL_COLOR
 	  c = wColormap( ((WindowPtr)pDrawable) );
 	  cmap = (ColormapPtr)LookupIDByType( c, RT_COLORMAP );
 
@@ -646,9 +645,8 @@ PclUpdateDrawableGC(
 
     if( changeMask & GCTile && !pGC->tileIsPixel )
       {
-	  char t[80], *bits, *row, *mod;
-	  int h, w, w2, sz;
-	  int i, j;
+	  char *bits;
+	  int h, w, sz;
 
 	  h = pGC->tile.pixmap->drawable.height;
 	  w = pGC->tile.pixmap->drawable.width;
@@ -864,8 +862,6 @@ PclComputeCompositeClip(
     GCPtr           pGC,
     DrawablePtr     pDrawable)
 {
-    ScreenPtr       pScreen = pGC->pScreen;
-
     if (pDrawable->type == DRAWABLE_WINDOW)
     {
 	WindowPtr       pWin = (WindowPtr) pDrawable;
@@ -894,7 +890,7 @@ PclComputeCompositeClip(
 	if (pGC->clientClipType == CT_NONE)
 	{
 	    if (freeCompClip)
-		REGION_DESTROY(pScreen, pGC->pCompositeClip);
+		REGION_DESTROY(pGC->pScreen, pGC->pCompositeClip);
 	    pGC->pCompositeClip = pregWin;
 	    pGC->freeCompClip = freeTmpClip;
 	}
@@ -909,7 +905,7 @@ PclComputeCompositeClip(
 	     * clip. if neither is real, create a new region.
 	     */
 
-	    REGION_TRANSLATE(pScreen, pGC->clientClip,
+	    REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 					 pDrawable->x + pGC->clipOrg.x,
 					 pDrawable->y + pGC->clipOrg.y);
 
@@ -918,21 +914,22 @@ PclComputeCompositeClip(
 		REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 					    pregWin, pGC->clientClip);
 		if (freeTmpClip)
-		    REGION_DESTROY(pScreen, pregWin);
+		    REGION_DESTROY(pGC->pScreen, pregWin);
 	    }
 	    else if (freeTmpClip)
 	    {
-		REGION_INTERSECT(pScreen, pregWin, pregWin, pGC->clientClip);
+		REGION_INTERSECT(pGC->pScreen, pregWin, pregWin,
+				 pGC->clientClip);
 		pGC->pCompositeClip = pregWin;
 	    }
 	    else
 	    {
-		pGC->pCompositeClip = REGION_CREATE(pScreen, NullBox, 0);
-		REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+		pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, NullBox, 0);
+		REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				       pregWin, pGC->clientClip);
 	    }
 	    pGC->freeCompClip = TRUE;
-	    REGION_TRANSLATE(pScreen, pGC->clientClip,
+	    REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 					 -(pDrawable->x + pGC->clipOrg.x),
 					 -(pDrawable->y + pGC->clipOrg.y));
 	}
@@ -949,21 +946,21 @@ PclComputeCompositeClip(
 
 	if (pGC->freeCompClip)
 	{
-	    REGION_RESET(pScreen, pGC->pCompositeClip, &pixbounds);
+	    REGION_RESET(pGC->pScreen, pGC->pCompositeClip, &pixbounds);
 	}
 	else
 	{
 	    pGC->freeCompClip = TRUE;
-	    pGC->pCompositeClip = REGION_CREATE(pScreen, &pixbounds, 1);
+	    pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, &pixbounds, 1);
 	}
 
 	if (pGC->clientClipType == CT_REGION)
 	{
-	    REGION_TRANSLATE(pScreen, pGC->pCompositeClip,
+	    REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip,
 					 -pGC->clipOrg.x, -pGC->clipOrg.y);
-	    REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+	    REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				pGC->pCompositeClip, pGC->clientClip);
-	    REGION_TRANSLATE(pScreen, pGC->pCompositeClip,
+	    REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip,
 					 pGC->clipOrg.x, pGC->clipOrg.y);
 	}
     }	/* end of composite clip for pixmap */

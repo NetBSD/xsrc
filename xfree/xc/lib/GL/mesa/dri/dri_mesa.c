@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.16 2001/04/10 16:07:49 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.17 2001/08/27 17:40:57 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -56,16 +56,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include <unistd.h>
-#include <Xlibint.h>
-#include <Xext.h>
-#include <extutil.h>
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xext.h>
+#include "extutil.h"
 #include "glxclient.h"
 #include "xf86dri.h"
 #include "sarea.h"
 #include "dri_mesaint.h"
 #include "dri_xmesaapi.h"
-#include "../src/context.h"
-#include "../src/mmath.h"
+#include "context.h"
+#include "mmath.h"
 
 
 /* Context binding */

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/freetype/Imakefile,v 1.4 2001/05/16 03:57:27 keithp Exp $
+XCOMM $XFree86: xc/lib/freetype2/freetype/Imakefile,v 1.7 2002/01/14 22:59:06 herrb Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -13,18 +13,22 @@ HEADERS= \
         freetype.h \
         ftbbox.h \
         ftcache.h \
+        ftchapters.h \
         fterrors.h \
         ftglyph.h \
         ftimage.h \
         ftlist.h \
         ftmac.h \
         ftmm.h \
+        ftmoderr.h \
         ftmodule.h \
         ftoutln.h \
         ftrender.h \
+        ftsizes.h \
         ftsnames.h \
         ftsynth.h \
         ftsystem.h \
+        fttrigon.h \
         fttypes.h \
         t1tables.h \
         ttnameid.h \
@@ -37,18 +41,22 @@ InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2/freetype,$(INSTINCFLAGS))
 LinkSourceFile(freetype.h,$(FREETYPEINC))
 LinkSourceFile(ftbbox.h,$(FREETYPEINC))
 LinkSourceFile(ftcache.h,$(FREETYPEINC))
+LinkSourceFile(ftchapters.h,$(FREETYPEINC))
 LinkSourceFile(fterrors.h,$(FREETYPEINC))
 LinkSourceFile(ftglyph.h,$(FREETYPEINC))
 LinkSourceFile(ftimage.h,$(FREETYPEINC))
 LinkSourceFile(ftlist.h,$(FREETYPEINC))
 LinkSourceFile(ftmac.h,$(FREETYPEINC))
 LinkSourceFile(ftmm.h,$(FREETYPEINC))
+LinkSourceFile(ftmoderr.h,$(FREETYPEINC))
 LinkSourceFile(ftmodule.h,$(FREETYPEINC))
 LinkSourceFile(ftoutln.h,$(FREETYPEINC))
 LinkSourceFile(ftrender.h,$(FREETYPEINC))
+LinkSourceFile(ftsizes.h,$(FREETYPEINC))
 LinkSourceFile(ftsnames.h,$(FREETYPEINC))
 LinkSourceFile(ftsynth.h,$(FREETYPEINC))
 LinkSourceFile(ftsystem.h,$(FREETYPEINC))
+LinkSourceFile(fttrigon.h,$(FREETYPEINC))
 LinkSourceFile(fttypes.h,$(FREETYPEINC))
 LinkSourceFile(t1tables.h,$(FREETYPEINC))
 LinkSourceFile(ttnameid.h,$(FREETYPEINC))

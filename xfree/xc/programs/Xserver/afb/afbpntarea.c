@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbpntarea.c,v 3.0 1996/08/18 01:45:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbpntarea.c,v 3.1 2001/10/28 03:32:58 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -533,7 +533,6 @@ afbStippleArea (pDraw, nbox, pbox, pTile, xOff, yOff, rrops)
 	register PixelType *pdst;	/* pointer to bits we're writing */
 	int sizeDst;
 	int depthDst;
-	int sizeTile;
 	int tileLine;
 	int iline;
 	int w, width, x, xSrc, ySrc, srcStartOver, nend;

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/points.c,v 1.8 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
@@ -162,6 +162,8 @@ size1_ci_points( GLcontext *ctx, GLuint first, GLuint last )
    win = &VB->Win.data[first][0];
    for (i = first; i < last; i++) {
       if (VB->ClipMask[i] == 0) {
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
          pbx[pbcount] = (GLint)  win[0];
          pby[pbcount] = (GLint)  win[1];
          pbz[pbcount] = (GLint) (win[2] + ctx->PointZoffset);
@@ -190,10 +192,14 @@ size1_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
       if (VB->ClipMask[i] == 0) {
          GLint x, y, z;
          GLint red, green, blue, alpha;
+	 GLfloat *win = VB->Win.data[i];
 
-         x = (GLint)  VB->Win.data[i][0];
-         y = (GLint)  VB->Win.data[i][1];
-         z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
+
+         x = (GLint)  win[0];
+         y = (GLint)  win[1];
+         z = (GLint) (win[2] + ctx->PointZoffset);
 
          red   = VB->ColorPtr->data[i][0];
          green = VB->ColorPtr->data[i][1];
@@ -224,10 +230,13 @@ general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
       if (VB->ClipMask[i] == 0) {
          GLint x0, x1, y0, y1;
          GLint ix, iy;
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
 
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (isize & 1) {
             /* odd size */
@@ -273,10 +282,13 @@ general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
       if (VB->ClipMask[i] == 0) {
          GLint x0, x1, y0, y1;
          GLint ix, iy;
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
 
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (isize & 1) {
             /* odd size */
@@ -328,11 +340,14 @@ textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint ix, iy, radius;
          GLint red, green, blue, alpha;
          GLfloat s, t, u;
-
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
+
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (isize < 1) {
             isize = 1;
@@ -418,11 +433,14 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint sRed, sGreen, sBlue;
          GLfloat s, t, u;
          GLfloat s1, t1, u1;
-
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
+
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (isize < 1) {
             isize = 1;
@@ -556,14 +574,18 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLint red, green, blue, alpha;
             GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
             GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
-            GLfloat vx = VB->Win.data[i][0];
-            GLfloat vy = VB->Win.data[i][1];
+	    GLfloat *win = VB->Win.data[i];
+            GLfloat vx = win[0];
+            GLfloat vy = win[1];
 
             GLint xmin = (GLint) (vx - radius);
             GLint xmax = (GLint) (vx + radius);
             GLint ymin = (GLint) (vy - radius);
             GLint ymax = (GLint) (vy + radius);
-            GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+            GLint z = (GLint) (win[2] + ctx->PointZoffset);
+
+	    if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
             red   = VB->ColorPtr->data[i][0];
             green = VB->ColorPtr->data[i][1];
@@ -671,25 +693,29 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLint xmin, ymin, xmax, ymax;
             GLint x, y, z;
             GLint red, green, blue, alpha;
+	    GLfloat *win = VB->Win.data[i];
 
-            xmin = (GLint) (VB->Win.data[i][0] - 0.0 - radius);
-            xmax = (GLint) (VB->Win.data[i][0] - 0.0 + radius);
-            ymin = (GLint) (VB->Win.data[i][1] - 0.0 - radius);
-            ymax = (GLint) (VB->Win.data[i][1] - 0.0 + radius);
-            z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	    if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
+
+            xmin = (GLint) (win[0] - 0.0 - radius);
+            xmax = (GLint) (win[0] - 0.0 + radius);
+            ymin = (GLint) (win[1] - 0.0 - radius);
+            ymax = (GLint) (win[1] - 0.0 + radius);
+            z = (GLint) (win[2] + ctx->PointZoffset);
 
             red   = VB->ColorPtr->data[i][0];
             green = VB->ColorPtr->data[i][1];
             blue  = VB->ColorPtr->data[i][2];
 
             /*
-            printf("point %g, %g\n", VB->Win.data[i][0], VB->Win.data[i][1]);
+            printf("point %g, %g\n", win[0], win[1]);
             printf("%d..%d X %d..%d\n", xmin, xmax, ymin, ymax);
             */
             for (y = ymin; y <= ymax; y++) {
                for (x = xmin; x <= xmax; x++) {
-                  const GLfloat dx = x + 0.5F - VB->Win.data[i][0];
-                  const GLfloat dy = y + 0.5F - VB->Win.data[i][1];
+                  const GLfloat dx = x + 0.5F - win[0];
+                  const GLfloat dy = y + 0.5F - win[1];
                   const GLfloat dist2 = dx*dx + dy*dy;
                   if (dist2 < rmax2) {
                      alpha = VB->ColorPtr->data[i][3];
@@ -828,10 +854,14 @@ dist_atten_general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint x0, x1, y0, y1;
          GLint ix, iy;
          GLint isize, radius;
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
          GLfloat dsize = psize * dist[i];
+
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
@@ -890,11 +920,15 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint x0, x1, y0, y1;
          GLint ix, iy;
          GLint isize, radius;
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
          GLfloat dsize=psize*dist[i];
          GLubyte alpha;
+
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
          if (dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize,ctx->Point.MaxSize)+0.5F);
@@ -963,12 +997,15 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint red, green, blue, alpha;
          GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
          GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
-
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
-
+ 	 GLfloat *win = VB->Win.data[i];
+         GLint x = (GLint)  win[0];
+         GLint y = (GLint)  win[1];
+         GLint z = (GLint) (win[2] + ctx->PointZoffset);
          GLfloat dsize = psize*dist[i];
+
+	 if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
+
          if(dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
             alpha = VB->ColorPtr->data[i][3];
@@ -1112,6 +1149,10 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
             GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
             GLfloat dsize = psize * dist[i];
+	    GLfloat *win = VB->Win.data[i];
+	    
+	    if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
             if (dsize >= ctx->Point.Threshold) {
                radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
@@ -1128,11 +1169,11 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             rmax2 = rmax * rmax;
             cscale = 256.0F / (rmax2 - rmin2);
 
-            xmin = (GLint) (VB->Win.data[i][0] - radius);
-            xmax = (GLint) (VB->Win.data[i][0] + radius);
-            ymin = (GLint) (VB->Win.data[i][1] - radius);
-            ymax = (GLint) (VB->Win.data[i][1] + radius);
-            z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+            xmin = (GLint) (win[0] - radius);
+            xmax = (GLint) (win[0] + radius);
+            ymin = (GLint) (win[1] - radius);
+            ymax = (GLint) (win[1] + radius);
+            z = (GLint) (win[2] + ctx->PointZoffset);
 
 	    red   = VB->ColorPtr->data[i][0];
 	    green = VB->ColorPtr->data[i][1];
@@ -1204,8 +1245,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
             for (y = ymin; y <= ymax; y++) {
                for (x = xmin; x <= xmax; x++) {
-                  const GLfloat dx = x + 0.5F - VB->Win.data[i][0];
-                  const GLfloat dy = y + 0.5F - VB->Win.data[i][1];
+                  const GLfloat dx = x + 0.5F - win[0];
+                  const GLfloat dy = y + 0.5F - win[1];
                   const GLfloat dist2 = dx*dx + dy*dy;
                   if (dist2 < rmax2) {
                      alpha = VB->ColorPtr->data[i][3];
@@ -1238,6 +1279,10 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLint x, y, z;
             GLint red, green, blue, alpha;
             GLfloat dsize = psize * dist[i];
+	    GLfloat *win = VB->Win.data[i];
+
+	    if (IS_INF_OR_NAN(win[0] + win[1]))
+		 continue;
 
             if (dsize >= ctx->Point.Threshold) {
                radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
@@ -1254,11 +1299,11 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             rmax2 = rmax * rmax;
             cscale = 256.0F / (rmax2 - rmin2);
 
-            xmin = (GLint) (VB->Win.data[i][0] - radius);
-            xmax = (GLint) (VB->Win.data[i][0] + radius);
-            ymin = (GLint) (VB->Win.data[i][1] - radius);
-            ymax = (GLint) (VB->Win.data[i][1] + radius);
-            z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+            xmin = (GLint) (win[0] - radius);
+            xmax = (GLint) (win[0] + radius);
+            ymin = (GLint) (win[1] - radius);
+            ymax = (GLint) (win[1] + radius);
+            z = (GLint) (win[2] + ctx->PointZoffset);
 
             red   = VB->ColorPtr->data[i][0];
             green = VB->ColorPtr->data[i][1];
@@ -1266,8 +1311,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
             for (y = ymin; y <= ymax; y++) {
                for (x = xmin; x <= xmax; x++) {
-                  const GLfloat dx = x + 0.5F - VB->Win.data[i][0];
-                  const GLfloat dy = y + 0.5F - VB->Win.data[i][1];
+                  const GLfloat dx = x + 0.5F - win[0];
+                  const GLfloat dy = y + 0.5F - win[1];
                   const GLfloat dist2 = dx * dx + dy * dy;
                   if (dist2 < rmax2) {
 		     alpha = VB->ColorPtr->data[i][3];

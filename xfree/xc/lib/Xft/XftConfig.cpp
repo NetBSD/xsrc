@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xft/XftConfig.cpp,v 1.6 2001/04/27 14:55:22 tsi Exp $
+XCOMM $XFree86: xc/lib/Xft/XftConfig.cpp,v 1.8 2001/11/21 23:41:12 keithp Exp $
 
 dir XFT_TYPE1_DIR
 
@@ -13,11 +13,11 @@ XCOMM
 includeif	"~/.xftconfig"
 
 XCOMM
-XCOMM Use Lucidux fonts for default faces
+XCOMM Use Luxi fonts for default faces
 XCOMM
-match any family == "serif"		edit family += "LuciduxSerif";
-match any family == "sans"		edit family += "LuciduxSans";
-match any family == "mono"		edit family += "LuciduxMono";
+match any family == "serif"		edit family += "Luxi Serif";
+match any family == "sans"		edit family += "Luxi Sans";
+match any family == "mono"		edit family += "Luxi Mono";
 
 XCOMM
 XCOMM Alias between XLFD families and font file family name, prefer local
@@ -26,11 +26,14 @@ XCOMM
 match any family == "charter"		edit family += "bitstream charter";
 match any family == "bitstream charter" edit family =+ "charter";
 
-match any family == "Lucidux Serif"	edit family += "LuciduxSerif";
-match any family == "LuciduxSerif"	edit family =+ "Lucidux Serif";
+XCOMM
+XCOMM Alias older name for Luxi fonts
+XCOMM
+match any family == "LuciduxSerif" edit family += "Luxi Serif";
+match any family == "Lucidux Serif" edit family += "Luxi Serif";
 
-match any family == "Lucidux Sans"	edit family += "LuciduxSans";
-match any family == "LuciduxSans"	edit family =+ "Lucidux Sans";
+match any family == "LuciduxSans" edit family += "Luxi Sans";
+match any family == "Lucidux Sans" edit family += "Luxi Sans";
 
-match any family == "Lucidux Mono"	edit family += "LuciduxMono";
-match any family == "LuciduxMono"	edit family =+ "Lucidux Mono";
+match any family == "LuciduxMono" edit family += "Luxi Mono";
+match any family == "Lucidux Mono" edit family += "Luxi Mono";

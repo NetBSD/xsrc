@@ -2,14 +2,14 @@
 
                              The XFree86 Project
 
-                                 March 2001
+                                January 2002
 
 1.  XFree86 License
 
 XFree86 code without an explicit copyright is covered by the following copy-
 right/license:
 
-Copyright (C) 1994-2001 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-2002 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,11 +35,14 @@ Project.
 
 2.  Other Licenses
 
-Portions of code are covered by the following licenses/copyrights:
+Portions of code are covered by the following licenses/copyrights.  See indi-
+vidual files for the copyright dates.
 
-2.1  X Consortium
+2.1  X/MIT Copyrights
 
-Copyright (C) 1996 X Consortium
+2.1.1  X Consortium
+
+Copyright (C) <date> X Consortium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -63,6 +66,29 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 X Window System is a trademark of X Consortium, Inc.
+
+2.1.2  The Open Group
+
+Copyright <date>  The Open Group
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FIT-
+NESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of The Open Group shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from The Open Group.
 
 2.2  Berkeley-based copyrights:
 
@@ -552,10 +578,11 @@ Copyright (c) 1994-1999 Silicon Graphics, Inc. All Rights Reserved.
 solely in object code form, Recipient may replace the words "this file" with
 "this software" in both the first and second sentences.]
 
-2.6  Bigelow & Holmes Inc and Y&Y Inc Lucidux font license
+2.6  Bigelow & Holmes Inc and URW++ GmbH Luxi font license
 
-Copyright (C) 2000 Bigelow & Holmes Inc. and Y&Y, Inc.  Patents pending.  All
-Rights Reserved. Lucidux is a trademark of Bigelow & Holmes Inc.
+Luxi fonts copyright (c) 2001 by Bigelow & Holmes Inc. Luxi font instruction
+code copyright (c) 2001 by URW++ GmbH. All Rights Reserved. Luxi is a regis-
+tered trademark of Bigelow & Holmes Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of these Fonts and associated documentation files (the "Font Software"), to
@@ -564,35 +591,34 @@ copy, merge, publish, distribute, sublicense, and/or sell copies of the Font
 Software, and to permit persons to whom the Font Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright, trademark, patent notices and this permission notice
-shall be included in all copies of one or more of the Font Software.
+The above copyright and trademark notices and this permission notice shall be
+included in all copies of one or more of the Font Software.
 
 The Font Software may not be modified, altered, or added to, and in particu-
 lar the designs of glyphs or characters in the Fonts may not be modified nor
-may additional glyphs or characters be added to the Fonts, except that com-
-posite characters composed of two or more characters in the Fonts may be cre-
-ated using the seac (Standard Encoding Accented Character) Type 1 operator.
+may additional glyphs or characters be added to the Fonts. This License
+becomes null and void when the Fonts or Font Software have been modified.
 
 THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT,
-TRADEMARK, OR OTHER RIGHT.  IN NO EVENT SHALL BIGELOW & HOLMES INC. OR Y&Y,
-INC. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GEN-
+TRADEMARK, OR OTHER RIGHT.  IN NO EVENT SHALL BIGELOW & HOLMES INC. OR URW++
+GMBH. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GEN-
 ERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN
 ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR
 INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFT-
 WARE.
 
 Except as contained in this notice, the names of Bigelow & Holmes Inc. and
-Y&Y, Inc. shall not be used in advertising or otherwise to promote the sale,
-use or other dealings in this Font Software without prior written authoriza-
-tion from the Bigelow & Holmes Inc. and Y&Y, Inc.
+URW++ GmbH. shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Font Software without prior written
+authorization from Bigelow & Holmes Inc. and URW++ GmbH.
 
 For further information, contact:
 
-<sales@yandy.com> or <design@bigelowandholmes.com>
+info@urwpp.de or design@bigelowandholmes.com
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.8 2001/03/16 22:13:19 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.11 2002/01/16 20:38:45 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.12.2.1 2001/06/01 18:26:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.16 2002/01/16 20:51:01 dawes Exp $

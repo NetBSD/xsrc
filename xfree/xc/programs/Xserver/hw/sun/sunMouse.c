@@ -50,9 +50,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * any purpose.  It is provided "as is" without express or 
  * implied warranty.
  */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunMouse.c,v 1.3 2001/10/28 03:33:12 tsi Exp $ */
 
 #define NEED_EVENTS
 #include    "sun.h"
+#include    "mi.h"
 
 Bool sunActiveZaphod = TRUE;
 
@@ -128,7 +130,6 @@ int sunMouseProc (device, what)
     int	    	  format;
     static int	  oformat;
     BYTE    	  map[4];
-    char	  *dev;
 
     switch (what) {
 	case DEVICE_INIT:

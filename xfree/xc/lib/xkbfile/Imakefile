@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:42 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/xkbfile/Imakefile,v 3.3 2001/01/17 19:43:39 dawes Exp $
+XCOMM $XFree86: xc/lib/xkbfile/Imakefile,v 3.4 2001/08/27 17:40:59 dawes Exp $
 
 #define DoNormalLib	YES
 #define DoSharedLib	NO
@@ -15,6 +15,10 @@ XCOMM $XFree86: xc/lib/xkbfile/Imakefile,v 3.3 2001/01/17 19:43:39 dawes Exp $
 #define SoRev		SOXKBFILEREV
 #define IncSubdir	X11
 #define	IncSubSubdir	extensions
+
+#if !BuildXKBfilelib
+#define LibBuild	NO
+#endif
 
             SRCS = xkbtext.c xkbdraw.c xkbmisc.c xkbatom.c xkberrs.c \
 		   cout.c xkbout.c xkmout.c \

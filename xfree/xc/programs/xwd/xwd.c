@@ -1,10 +1,14 @@
-/* $Xorg: xwd.c,v 1.4 2000/08/17 19:55:13 cpqbld Exp $ */
+/* $Xorg: xwd.c,v 1.5 2001/02/09 02:06:03 xorgcvs Exp $ */
 
 /*
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwd/xwd.c,v 3.7 2001/01/17 23:46:42 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/xwd.c,v 3.10 2001/12/14 20:02:34 dawes Exp $ */
 
 /*
  * xwd.c MIT Project Athena, X Window system window raster image dumper.
@@ -65,13 +69,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <errno.h>
 #include <X11/Xos.h>
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-char *calloc();
-#else
 #include <stdlib.h>
-#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -643,7 +641,6 @@ _swaplong (bp, n)
 {
     register char c;
     register char *ep = bp + n;
-    register char *sp;
 
     while (bp < ep) {
         c = bp[3];

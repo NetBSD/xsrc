@@ -97,7 +97,7 @@ $INV()$ denotes matrix inversion.
 .SH NOTES
 \%\f3gluUnProject4\fP is available only if the GLU version is 1.3 or greater.
 .SH SEE ALSO
-\f3glGet\fP,
-\f3glFeedbackBuffer\fP,
-\%\f3gluProject\fP,
-\%\f3gluUnProject\fP
+\f3glGet(3G)\fP,
+\f3glFeedbackBuffer(3G)\fP,
+\%\f3gluProject(3G)\fP,
+\%\f3gluUnProject(3G)\fP

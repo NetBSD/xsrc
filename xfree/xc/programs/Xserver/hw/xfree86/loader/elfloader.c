@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elfloader.c,v 1.37 2001/04/27 19:34:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elfloader.c,v 1.40 2002/01/14 18:16:52 dawes Exp $ */
 
 /*
  *
@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifdef QNX
+#ifdef __QNX__
 #include <fcntl.h>
 #else
 #include <sys/fcntl.h>
@@ -1104,7 +1104,7 @@ int		force;
 {
     unsigned char *secp = elffile->saddr[secn];
     unsigned int *dest32;	/* address of the 32 bit place being modified */
-#if defined(__powerpc__) || defined(__mc68000__) || defined(__sparc__)
+#if defined(__powerpc__) || defined(__sparc__)
     unsigned short *dest16;	/* address of the 16 bit place being modified */
 #endif
 #if defined(__sparc__)
@@ -1380,35 +1380,53 @@ int		force;
 #endif /* alpha */
 #if defined(__mc68000__)
 	case R_68K_32:
-		dest32=(unsigned long *)(secp+rel->r_offset);
+	    dest32=(unsigned int *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-		ELFDEBUG( "R_68K_32\t", dest32 );
-		ELFDEBUG( "dest32=%x\t", dest32 );
-		ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
+	    ELFDEBUG( "R_68K_32\t" );
+	    ELFDEBUG( "secp=%x\t", secp );
+	    ELFDEBUG( "symval=%x\t", symval );
+	    ELFDEBUG( "r_addend=%x\t", rel->r_addend );
+	    ELFDEBUG( "dest32=%8.8x\t", dest32 );
+	    ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 #endif
-		*dest32=symval+(*dest32); /* S + A */
+	    {
+		unsigned long val;
+		/* S + A */
+		val=symval+(rel->r_addend);
 #ifdef ELFDEBUG
-		ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+		ELFDEBUG("S+A=%x\t",val);
 #endif
-		break;
+		*dest32=val; /* S + A */
+	    }
+#ifdef ELFDEBUG
+	    ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+#endif
+	    break;
 	case R_68K_PC32:
-		dest32=(unsigned long *)(secp+rel->r_offset);
+	    dest32=(unsigned int *)(secp+rel->r_offset);
 #ifdef ELFDEBUG
-		ELFDEBUG( "R_68K_PC32 %s\t",
-		  ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
-		ELFDEBUG( "secp=%x\t", secp );
-		ELFDEBUG( "symval=%x\t", symval );
-		ELFDEBUG( "dest32=%x\t", dest32 );
-		ELFDEBUG( "*dest32=%8.8x\t", *dest32 );
+	    ELFDEBUG( "R_68K_PC32\t" );
+	    ELFDEBUG( "secp=%x\t", secp );
+	    ELFDEBUG( "symval=%x\t", symval );
+	    ELFDEBUG( "r_addend=%x\t", rel->r_addend );
+	    ELFDEBUG( "dest32=%8.8x\t", dest32 );
+	    ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
 #endif
-
-		*dest32=symval+(*dest32)-(Elf_Addr)dest32; /* S + A - P */
-
+	    {
+		unsigned long val;
+		/* S + A - P */
+		val=symval+(rel->r_addend);
+		val-=*dest32;
 #ifdef ELFDEBUG
-		ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+		ELFDEBUG("S+A=%x\t",val);
+		ELFDEBUG("S+A-P=%x\t",val+(*dest32)-(Elf_Addr)dest32);
 #endif
-
-		break;
+	        *dest32=val+(*dest32)-(Elf_Addr)dest32; /* S + A - P */
+	    }
+#ifdef ELFDEBUG
+	    ELFDEBUG( "*dest32=%8.8x\n", *dest32 );
+#endif
+	    break;
 #endif /* __mc68000__ */
 #if defined(__powerpc__)
 #if defined(PowerMAX_OS)
@@ -2026,6 +2044,58 @@ int		force;
 	    break;
 
 #endif
+
+#if defined(__arm__)
+	case R_ARM_ABS32:
+	    dest32=(unsigned int *)(secp+rel->r_offset);
+#ifdef ELFDEBUG
+	    ELFDEBUG( "R_ARM_ABS32\t");
+	    ELFDEBUG( "dest32=%x\t", dest32 );
+	    ELFDEBUG( "*dest32=%8.8lx\t", *dest32 );
+#endif
+	    *dest32=symval+(*dest32); /* S + A */
+#ifdef ELFDEBUG
+	    ELFDEBUG( "*dest32=%8.8lx\n", *dest32 );
+#endif
+	    break;
+
+	case R_ARM_REL32:
+	    dest32=(unsigned int *)(secp+rel->r_offset);
+#ifdef ELFDEBUG
+	    {
+	    char *namestr;
+	    ELFDEBUG( "R_ARM_REL32 %s\t",
+			namestr=ElfGetSymbolName(elffile,ELF_R_SYM(rel->r_info)) );
+	    xf86loaderfree(namestr);
+	    ELFDEBUG( "secp=%x\t", secp );
+	    ELFDEBUG( "symval=%lx\t", symval );
+	    ELFDEBUG( "dest32=%x\t", dest32 );
+	    ELFDEBUG( "*dest32=%8.8lx\t", *dest32 );
+	    }
+#endif
+
+	    *dest32=symval+(*dest32)-(Elf_Addr)dest32; /* S + A - P */
+
+#ifdef ELFDEBUG
+	    ELFDEBUG( "*dest32=%8.8lx\n", *dest32 );
+#endif
+
+	    break;
+
+	case R_ARM_PC24:	
+	    {
+	    unsigned long val;
+            dest32=(unsigned int *)(secp+rel->r_offset);
+	    val = (*dest32 & 0x00ffffff) << 2;
+            val = symval - (unsigned long)dest32 + val;	
+            val >>= 2;
+	    *dest32 = (*dest32 & 0xff000000) | (val & 0x00ffffff); 
+	    arm_flush_cache(dest32);
+	    }
+	    break;
+
+#endif /* (__arm__) */
+
 	default:
 	    ErrorF("Elf_RelocateEntry() Unsupported relocation type %d\n",
 		   ELF_R_TYPE(rel->r_info));
@@ -2398,7 +2468,7 @@ int		*maxalign;
 #endif
 		continue;
 		}
-#if defined(i386) || defined(__alpha__) || defined(__ia64__)
+#if defined(i386) || defined(__alpha__) || defined(__ia64__) || defined(__arm__)
 	/* .rel.text */
 	if( strcmp(ElfGetSectionName(elffile, elffile->sections[i].sh_name),
 		   ".rel.text" ) == 0 ) {

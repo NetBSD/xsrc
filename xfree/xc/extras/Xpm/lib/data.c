@@ -31,14 +31,16 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/data.c,v 1.4 2002/01/07 19:40:49 dawes Exp $ */
 
 #ifndef CXPMPROG
+#if 0
 /* Official version number */
 static char *RCS_Version = "$XpmVersion: 3.4k $";
 
 /* Internal version number */
 static char *RCS_Id = "Id: xpm.shar,v 3.71 1998/03/19 19:47:14 lehors Exp $";
-
+#endif
 #include "XpmI.h"
 #endif
 #include <ctype.h>
@@ -49,8 +51,7 @@ static char *RCS_Id = "Id: xpm.shar,v 3.71 1998/03/19 19:47:14 lehors Exp $";
 #endif
 
 static int
-ParseComment(data)
-    xpmData *data;
+ParseComment(xpmData *data)
 {
     if (data->type == XPMBUFFER) {
 	register char c;
@@ -386,14 +387,10 @@ xpmGetCmt(data, cmt)
 
 xpmDataType xpmDataTypes[] =
 {
-    "", "!", "\n", '\0', '\n', "", "", "", "",	/* Natural type */
-    "C", "/*", "*/", '"', '"', ",\n", "static char *", "[] = {\n", "};\n",
-    "Lisp", ";", "\n", '"', '"', "\n", "(setq ", " '(\n", "))\n",
-#ifdef VMS
-    NULL
-#else
-    NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL
-#endif
+    {"", "!", "\n", '\0', '\n', "", "", "", ""},	/* Natural type */
+    {"C", "/*", "*/", '"', '"', ",\n", "static char *", "[] = {\n", "};\n"},
+    {"Lisp", ";", "\n", '"', '"', "\n", "(setq ", " '(\n", "))\n"},
+    {NULL, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL}
 };
 
 /*

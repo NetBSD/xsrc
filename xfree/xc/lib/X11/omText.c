@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omText.c,v 1.4 2001/01/17 19:41:56 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omText.c,v 1.5 2001/10/28 03:32:35 tsi Exp $ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint
@@ -176,7 +176,7 @@ DrawStringWithFontSet(dpy, d, oc, fs, gc, x, y, text, length)
     unsigned char *ptr;
     int ptr_len, char_len = 0;
     FontData fd;
-    int ret;
+    int ret = 0;
 
     ptr = (unsigned char *)text;
     is_xchar2b = fs->is_xchar2b;

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftmatch.c,v 1.5 2001/03/06 18:00:26 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftmatch.c,v 1.6 2001/09/21 19:54:53 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -97,7 +97,6 @@ _XftCompareSize (char *object, XftValue value1, XftValue value2)
 static XftMatcher _XftMatchers [] = {
     { XFT_FOUNDRY,	_XftCompareString, },
     { XFT_ENCODING,	_XftCompareString, },
-    { XFT_ANTIALIAS,	_XftCompareBool, },
     { XFT_FAMILY,	_XftCompareString, },
     { XFT_SPACING,	_XftCompareInteger, },
     { XFT_PIXEL_SIZE,	_XftCompareSize, },
@@ -105,6 +104,7 @@ static XftMatcher _XftMatchers [] = {
     { XFT_SLANT,	_XftCompareInteger, },
     { XFT_WEIGHT,	_XftCompareInteger, },
     { XFT_RASTERIZER,	_XftCompareString, },
+    { XFT_ANTIALIAS,	_XftCompareBool, },
     { XFT_OUTLINE,	_XftCompareBool, },
 };
 

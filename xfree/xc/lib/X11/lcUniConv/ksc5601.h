@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/X11/lcUniConv/ksc5601.h,v 1.3 2000/11/29 17:40:34 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUniConv/ksc5601.h,v 1.4 2001/08/09 19:14:09 dawes Exp $ */
 
 /*
  * KSC5601.1987-0
@@ -1170,10 +1170,10 @@ static const unsigned short ksc5601_2uni_page4a[4888] = {
 static int
 ksc5601_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
 {
-  unsigned char c1 = s[0];
+  unsigned char c1 = (s[0] & 0x7F);
   if ((c1 >= 0x21 && c1 <= 0x2c) || (c1 >= 0x30 && c1 <= 0x48) || (c1 >= 0x4a && c1 <= 0x7d)) {
     if (n >= 2) {
-      unsigned char c2 = s[1];
+      unsigned char c2 = (s[1] & 0x7F);
       if (c2 >= 0x21 && c2 < 0x7f) {
         unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
         unsigned short wc = 0xfffd;

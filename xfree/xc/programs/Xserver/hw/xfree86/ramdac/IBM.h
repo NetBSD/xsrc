@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.h,v 1.7 1999/02/12 22:52:11 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.h,v 1.8 2001/10/28 03:34:03 tsi Exp $ */
 
 #include <xf86RamDac.h>
 
@@ -18,16 +18,16 @@ unsigned long IBMramdac640CalculateMNPCForClock(unsigned long RefClock,
 void IBMramdac526HWCursorInit(xf86CursorInfoPtr infoPtr);
 void IBMramdac640HWCursorInit(xf86CursorInfoPtr infoPtr);
 
-#define IBM524_RAMDAC		(VENDOR_IBM << 16) | 0x00
-#define IBM524A_RAMDAC		(VENDOR_IBM << 16) | 0x01
-#define IBM525_RAMDAC		(VENDOR_IBM << 16) | 0x02
-#define IBM526_RAMDAC		(VENDOR_IBM << 16) | 0x03
-#define IBM526DB_RAMDAC		(VENDOR_IBM << 16) | 0x04
-#define IBM528_RAMDAC		(VENDOR_IBM << 16) | 0x05
-#define IBM528A_RAMDAC		(VENDOR_IBM << 16) | 0x06
-#define IBM624_RAMDAC		(VENDOR_IBM << 16) | 0x07
-#define IBM624DB_RAMDAC		(VENDOR_IBM << 16) | 0x08
-#define IBM640_RAMDAC		(VENDOR_IBM << 16) | 0x09
+#define IBM524_RAMDAC		((VENDOR_IBM << 16) | 0x00)
+#define IBM524A_RAMDAC		((VENDOR_IBM << 16) | 0x01)
+#define IBM525_RAMDAC		((VENDOR_IBM << 16) | 0x02)
+#define IBM526_RAMDAC		((VENDOR_IBM << 16) | 0x03)
+#define IBM526DB_RAMDAC		((VENDOR_IBM << 16) | 0x04)
+#define IBM528_RAMDAC		((VENDOR_IBM << 16) | 0x05)
+#define IBM528A_RAMDAC		((VENDOR_IBM << 16) | 0x06)
+#define IBM624_RAMDAC		((VENDOR_IBM << 16) | 0x07)
+#define IBM624DB_RAMDAC		((VENDOR_IBM << 16) | 0x08)
+#define IBM640_RAMDAC		((VENDOR_IBM << 16) | 0x09)
 
 /*
  * IBM Ramdac registers

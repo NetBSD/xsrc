@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.12 2001/01/17 22:37:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.16 2001/12/14 20:00:34 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,13 +47,10 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: lbxio.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: lbxio.c,v 1.4 2001/02/09 02:05:23 xorgcvs Exp $ */
 
 #include <stdio.h>
 #include <X11/Xtrans.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #include "Xmd.h"
 #include <errno.h>
 #ifndef Lynx
@@ -158,7 +159,7 @@ AppendFakeRequest (client, data, count)
 
     if (!oci)
     {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	    FreeInputs = oci->next;
 	else if (!(oci = AllocateInputBuffer()))
 	    return FALSE;
@@ -280,7 +281,7 @@ LbxAppendOutput(proxy, client, oco)
 	int n;
 
 	if (!noco || (noco->size - noco->count) < sz_xLbxSwitchEvent) {
-	    if (noco = FreeOutputs)
+	    if ((noco = FreeOutputs))
 		FreeOutputs = noco->next;
 	    else
 		noco = AllocateOutputBuffer();
@@ -326,7 +327,7 @@ LbxClientOutput(client, oc, extraBuf, extraCount, nocompress)
     ConnectionOutputPtr oco;
     int len;
 
-    if (oco = oc->output) {
+    if ((oco = oc->output)) {
 	oc->output = NULL;
 	if (!LbxAppendOutput(oc->proxy, client, oco))
 	    return -1;
@@ -379,7 +380,7 @@ LbxForceOutput(proxy)
 	if (!lbxClient)
 	    continue;
 	coc = (OsCommPtr)lbxClient->client->osPrivate;
-	if (oco = coc->output) {
+	if ((oco = coc->output)) {
 	    coc->output = NULL;
 	    LbxAppendOutput(proxy, lbxClient->client, oco);
 	}
@@ -396,7 +397,7 @@ LbxFlushClient(who, oc, extraBuf, extraCount)
     LbxProxyPtr proxy;
     ConnectionOutputPtr oco;
     int n;
-    XtransConnInfo trans_conn;
+    XtransConnInfo trans_conn = NULL;
 
     if (extraBuf)
 	return LbxClientOutput(who, oc, extraBuf, extraCount, FALSE);
@@ -406,7 +407,7 @@ LbxFlushClient(who, oc, extraBuf, extraCount)
     LbxForceOutput(proxy);
     if (!proxy->compHandle)
 	trans_conn = ((OsCommPtr)LbxProxyClient(proxy)->osPrivate)->trans_conn;
-    while (oco = proxy->ofirst) {
+    while ((oco = proxy->ofirst)) {
 	/* XXX bundle up into writev someday */
 	if (proxy->compHandle) {
 	    if (oco->nocompress)
@@ -466,12 +467,13 @@ UncompressedWriteToClient (who, count, buf)
     return LbxClientOutput(who, (OsCommPtr)who->osPrivate, buf, count, TRUE);
 }
 
+void
 LbxFreeOsBuffers(proxy)
     LbxProxyPtr proxy;
 {
     ConnectionOutputPtr oco;
 
-    while (oco = proxy->ofirst) {
+    while ((oco = proxy->ofirst)) {
 	proxy->ofirst = oco->next;
 	xfree(oco->buf);
 	xfree(oco);
@@ -487,7 +489,7 @@ AllocateLargeReqBuffer(client, size)
     register ConnectionInputPtr oci;
 
     if (!(oci = oc->largereq)) {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	    FreeInputs = oci->next;
 	else {
 	    oci = (ConnectionInputPtr)xalloc(sizeof(ConnectionInput));

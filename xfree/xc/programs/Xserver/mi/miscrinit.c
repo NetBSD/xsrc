@@ -1,9 +1,13 @@
-/* $Xorg: miscrinit.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
+/* $Xorg: miscrinit.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.13 2001/01/17 22:37:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.15 2001/12/14 20:00:26 dawes Exp $ */
 
 #include "X.h"
 #include "servermd.h"
@@ -32,6 +36,10 @@ from The Open Group.
 #include "pixmapstr.h"
 #include "dix.h"
 #include "miline.h"
+#ifdef MITSHM
+#define _XSHM_SERVER_
+#include "XShm.h"
+#endif
 
 /* We use this structure to propogate some information from miScreenInit to
  * miCreateScreenResources.  miScreenInit allocates the structure, fills it

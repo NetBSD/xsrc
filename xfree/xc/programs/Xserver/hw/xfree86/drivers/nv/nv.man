@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv.man,v 1.4 2001/02/18 23:47:29 mvojkovi Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv.man,v 1.7 2001/12/17 20:52:33 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH NV __drivermansuffix__ __vendorversion__
@@ -39,7 +39,12 @@ NV5
 NV10
 .TP 22
 .B GeForce2, QUADRO2
-NV11 & NV15
+NV11 & NV15 (except GeForce2 Go, which is 
+.B NOT 
+supported)
+.TP 22
+.B GeForce3
+NV20
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this
@@ -70,8 +75,7 @@ Rotate the display clockwise or counterclockwise.  This mode is unaccelerated.
 Default: no rotation.
 .TP
 .BI "Option \*qShadowFB\*q \*q" boolean \*q
-Enable or disable use of the shadow framebuffer layer.  See
-shadowfb(__drivermansuffix__) for further information.  Default: off.
+Enable or disable use of the shadow framebuffer layer.  Default: off.
 .SH "SEE ALSO"
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__)
 .SH AUTHORS

@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_wmark.c,v 1.4 2000/09/08 22:43:06 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_wmark.c,v 1.6 2001/11/26 18:55:48 dawes Exp $ */
 
 /*
  * Authors:
@@ -39,9 +39,6 @@ struct wm_info {
    double freq;
    unsigned int wm;
 };
-
-#define XCONFIG_PROBED "()"
-#define NAME "i810"
 
 struct wm_info i810_wm_8_100[] = {
    { 0,    0x22003000 },
@@ -295,7 +292,7 @@ unsigned int I810CalcWatermark( ScrnInfoPtr pScrn, double freq, Bool dcache )
    if (i == nr)
       i--;
 
-   xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+   xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 		"chose watermark 0x%x: (tab.freq %.1f)\n",
 		tab[i].wm, tab[i].freq);
 

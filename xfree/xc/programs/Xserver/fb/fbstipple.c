@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbstipple.c,v 1.6 2000/02/23 20:29:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbstipple.c,v 1.7 2001/10/28 03:33:08 tsi Exp $ */
 
 #include "fb.h"
 
@@ -31,15 +31,17 @@
  * code, the idea is to generate code for each case of a copy-mode
  * transparent stipple
  */
-#define LaneCases1(c,a)	    case c: while (n--) { FbLaneCase(c,a); a++; } break;
-#define LaneCases2(c,a)	    LaneCases1(c,a) LaneCases1(c+1,a)
-#define LaneCases4(c,a)	    LaneCases2(c,a) LaneCases2(c+2,a)
-#define LaneCases8(c,a)	    LaneCases4(c,a) LaneCases4(c+4,a)
-#define LaneCases16(c,a)    LaneCases8(c,a) LaneCases8(c+8,a)
-#define LaneCases32(c,a)    LaneCases16(c,a) LaneCases16(c+16,a)
-#define LaneCases64(c,a)    LaneCases32(c,a) LaneCases32(c+32,a)
-#define LaneCases128(c,a)   LaneCases64(c,a) LaneCases64(c+64,a)
-#define LaneCases256(c,a)   LaneCases128(c,a) LaneCases128(c+128,a)
+#define LaneCases1(c,a)	    case c: \
+				while (n--) { (void)FbLaneCase(c,a); a++; } \
+				break
+#define LaneCases2(c,a)	    LaneCases1(c,a); LaneCases1(c+1,a)
+#define LaneCases4(c,a)	    LaneCases2(c,a); LaneCases2(c+2,a)
+#define LaneCases8(c,a)	    LaneCases4(c,a); LaneCases4(c+4,a)
+#define LaneCases16(c,a)    LaneCases8(c,a); LaneCases8(c+8,a)
+#define LaneCases32(c,a)    LaneCases16(c,a); LaneCases16(c+16,a)
+#define LaneCases64(c,a)    LaneCases32(c,a); LaneCases32(c+32,a)
+#define LaneCases128(c,a)   LaneCases64(c,a); LaneCases64(c+64,a)
+#define LaneCases256(c,a)   LaneCases128(c,a); LaneCases128(c+128,a)
     
 #if FB_SHIFT == 6
 #define LaneCases(a)	    LaneCases256(0,a)

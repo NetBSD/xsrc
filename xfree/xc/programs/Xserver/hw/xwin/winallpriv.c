@@ -28,29 +28,47 @@
  * Authors:	Keith Packard, MIT X Consortium
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winallpriv.c,v 1.3 2001/05/14 16:52:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winallpriv.c,v 1.8 2001/10/29 21:10:23 alanh Exp $ */
 
 #include "win.h"
 
+
+
 /* See Porting Layer Definition - p. 58 */
+/*
+ * Allocate indexes for the privates that we use.
+ * Allocate memory directly for the screen privates.
+ * Reserve space in GCs and Pixmaps for our privates.
+ * Colormap privates are handled in winAllocateCmapPrivates ()
+ */
+
 Bool
 winAllocatePrivates (ScreenPtr pScreen)
 {
   winPrivScreenPtr	pScreenPriv;
 
+#if CYGDEBUG
+  ErrorF ("winAllocateScreenPrivates () - g_ulServerGeneration: %d "
+	  "serverGeneration: %d\n",
+	  g_ulServerGeneration, serverGeneration);
+#endif
+
   /* We need a new slot for our privates if the screen gen has changed */
-  if (g_winGeneration != serverGeneration)
+  if (g_ulServerGeneration != serverGeneration)
     {
       /* Get an index that we can store our privates at */
-      g_winScreenPrivateIndex = AllocateScreenPrivateIndex ();
-      g_winGeneration = serverGeneration;
+      g_iScreenPrivateIndex = AllocateScreenPrivateIndex ();
+      g_iGCPrivateIndex = AllocateGCPrivateIndex ();
+      g_iPixmapPrivateIndex = AllocatePixmapPrivateIndex ();
+
+      g_ulServerGeneration = serverGeneration;
     }
 
-  /* Allocate memory for our private structure */
-  pScreenPriv = (winPrivScreenPtr) xalloc (sizeof (*pScreenPriv));
+  /* Allocate memory for the screen private structure */
+  pScreenPriv = (winPrivScreenPtr) xalloc (sizeof (winPrivScreenRec));
   if (!pScreenPriv)
     {
-      ErrorF ("winAllocatePrivates () - xalloc () failed\n");
+      ErrorF ("winAllocateScreenPrivates () - xalloc () failed\n");
       return FALSE;
     }
 
@@ -63,6 +81,93 @@ winAllocatePrivates (ScreenPtr pScreen)
 
   /* Save the screen private pointer */
   winSetScreenPriv (pScreen, pScreenPriv);
+
+  /* Reserve GC memory for our privates */
+  if (!AllocateGCPrivate (pScreen, g_iGCPrivateIndex,
+			  sizeof (winPrivGCRec)))
+    {
+      ErrorF ("winAllocatePrivates () - AllocateGCPrivate () failed\n");
+      return FALSE;
+    }
+
+  /* Reserve Pixmap memory for our privates */
+  if (!AllocatePixmapPrivate (pScreen, g_iPixmapPrivateIndex,
+			      sizeof (winPrivPixmapRec)))
+    {
+      ErrorF ("winAllocatePrivates () - AllocatePixmapPrivates () failed\n");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+/*
+ * Colormap privates may be allocated after the default colormap has
+ * already been created for some screens.  This initialization procedure
+ * is called for each default colormap that is found.
+ */
+
+Bool
+winInitCmapPrivates (ColormapPtr pcmap)
+{
+#if CYGDEBUG
+  ErrorF ("winInitCmapPrivates ()\n");
+#endif
+  
+  /*
+   * I see no way that this function can do anything useful
+   * with only a ColormapPtr.  We don't have the index for
+   * our dev privates yet, so we can't really initialize
+   * anything.  Perhaps I am misunderstanding the purpose
+   * of this function.
+   */
+  
+  return TRUE;
+}
+
+
+/*
+ * Allocate memory for our colormap privates
+ */
+
+Bool
+winAllocateCmapPrivates (ColormapPtr pCmap)
+{
+  winPrivCmapPtr		pCmapPriv;
+  static unsigned long		ulPrivateGeneration = 0;
+
+#if CYGDEBUG
+  ErrorF ("winAllocateCmapPrivates ()\n");
+#endif
+
+  /* Get a new privates index when the server generation changes */
+  if (ulPrivateGeneration != serverGeneration)
+    {
+      /* Get an index that we can store our privates at */
+      g_iCmapPrivateIndex = AllocateColormapPrivateIndex (winInitCmapPrivates);
+      
+      /* Save the new server generation */
+      ulPrivateGeneration = serverGeneration;
+    }
+
+  /* Allocate memory for our private structure */
+  pCmapPriv = (winPrivCmapPtr) xalloc (sizeof (winPrivCmapRec));
+  if (!pCmapPriv)
+    {
+      ErrorF ("winAllocateCmapPrivates () - xalloc () failed\n");
+      return FALSE;
+    }
+
+  /* Initialize the memory of the private structure */
+  ZeroMemory (pCmapPriv, sizeof (winPrivCmapRec));
+
+  /* Save the cmap private pointer */
+  winSetCmapPriv (pCmap, pCmapPriv);
+
+#if CYGDEBUG
+  ErrorF ("winAllocateCmapPrivates () - Returning\n");
+#endif
 
   return TRUE;
 }

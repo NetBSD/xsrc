@@ -61,6 +61,6 @@ and \f2s\fP ranges from 0.0 at the +\f2y\fP axis, to 0.25 at the
 to 0.5 at the \-\f2y\fP axis, to 0.75 at the \-\f2x\fP axis, and back to 1.0 
 at the +\f2y\fP axis.
 .SH SEE ALSO
-\%\f3gluCylinder\fP, \%\f3gluDisk\fP, \%\f3gluNewQuadric\fP, 
-\%\f3gluPartialDisk\fP, \%\f3gluQuadricOrientation\fP,
-\%\f3gluQuadricTexture\fP
+\%\f3gluCylinder(3G)\fP, \%\f3gluDisk(3G)\fP, \%\f3gluNewQuadric(3G)\fP, 
+\%\f3gluPartialDisk(3G)\fP, \%\f3gluQuadricOrientation(3G)\fP,
+\%\f3gluQuadricTexture(3G)\fP

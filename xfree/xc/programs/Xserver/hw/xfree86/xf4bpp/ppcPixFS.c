@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcPixFS.c,v 1.3 1999/06/06 08:49:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcPixFS.c,v 1.4 2001/08/01 00:44:56 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -174,8 +174,8 @@ vgagetbits
 {
 register unsigned char bits ;
 register const unsigned char *cptr ;
-register shift ;
-register wrap ;
+register int shift ;
+register int wrap ;
 
 cptr = lineptr + ( x >> 3 ) ;
 bits = *cptr ;

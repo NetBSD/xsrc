@@ -1,10 +1,14 @@
-/* $XFree86: xc/programs/twm/parse.c,v 1.9 2001/04/23 20:31:08 dawes Exp $ */
+/* $XFree86: xc/programs/twm/parse.c,v 1.12 2001/12/14 20:01:09 dawes Exp $ */
 /*****************************************************************************/
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -49,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: parse.c,v 1.4 2000/08/17 19:54:07 cpqbld Exp $
+ * $Xorg: parse.c,v 1.5 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * parse the .twmrc file
  *
@@ -88,13 +92,10 @@ static int twmStringListInput ( void );
 static int ParseUsePPosition ( char *s );
 
 extern int yylineno;
-extern int mods;
 
 int ConstrainedMoveTime = 400;		/* milliseconds, event times */
 
 int (*twmInputFunc)(void);
-
-extern char *defTwmrc[];		/* default bindings */
 
 
 /***********************************************************************
@@ -492,6 +493,7 @@ static TwmKeyword keytable[] = {
     { "f.showiconmgr",		FKEYWORD, F_SHOWLIST },
     { "f.sorticonmgr",		FKEYWORD, F_SORTICONMGR },
     { "f.source",		FSKEYWORD, F_BEEP },  /* XXX - don't work */
+    { "f.startwm",		FSKEYWORD, F_STARTWM },
     { "f.title",		FKEYWORD, F_TITLE },
     { "f.topzoom",		FKEYWORD, F_TOPZOOM },
     { "f.twmrc",		FKEYWORD, F_RESTART },

@@ -4,7 +4,7 @@ XCOMM platform:  $Xorg: linux.cf,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.165.2.1 2001/06/01 02:24:14 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.175 2002/01/15 21:22:31 keithp Exp $
 
 #ifndef LinuxElfDefault
 # define LinuxElfDefault	YES
@@ -101,13 +101,6 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 # define XF86SetupUsesStaticTcl	NO
 /* un-comment this when it is un-broken */
 /* # define JoystickSupport YES */
-# define InstallXinitConfig	YES
-# define InstallXdmConfig	YES
-# define InstallFSConfig	YES
-# define DebuggableLibraries	YES
-# define ForceNormalLib		YES
-# define BuildSpecsDocs		YES
-# define SpecsDocDirs		CTEXT GL ICCCM X11 Xext Xv i18n xterm
 # define XAppLoadDir		EtcX11Directory/app-defaults
 # define XFileSearchPathDefault	Concat4(EtcX11Directory/%L/%T/%N%C,%S:EtcX11Directory/%l/%T/%N%C,%S:EtcX11Directory/%T/%N%C,%S:EtcX11Directory/%L/%T/%N%S:EtcX11Directory/%l/%T/%N%S:EtcX11Directory/%T/%N%S):Concat4($(LIBDIR)/%L/%T/%N%C,%S:$(LIBDIR)/%l/%T/%N%C,%S:$(LIBDIR)/%T/%N%C,%S:$(LIBDIR)/%L/%T/%N%S:$(LIBDIR)/%l/%T/%N%S:$(LIBDIR)/%T/%N%S)
 /* the relative symlink created by this rule causes problems for us */
@@ -125,8 +118,6 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # define HasZlib		YES
 # define SharedLibGlu		YES
 # define NormalLibGlu		YES
-# define BuildRman		NO
-# define BuildHtmlManPages	NO
 # define FSUseSyslog		YES
 
 /*
@@ -141,24 +132,43 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #  define BuilderEMailAddr	"submit@bugs.debian.org"
 #  define XFree86Devel		YES
 #  define BuildAllSpecsDocs	YES
+# define InstallXinitConfig	YES
+# define InstallXdmConfig	YES
+# define InstallFSConfig	YES
+# define DebuggableLibraries	YES
+# define ForceNormalLib		YES
+# define BuildSpecsDocs		YES
+# define SpecsDocDirs		CTEXT GL ICCCM X11 Xext Xv i18n xterm
+# define BuildRman		NO
+# define BuildHtmlManPages	NO
+
 /* we build-depend on libfreetype6-dev (FreeType 2.x) */
 #  define BuildFreetype2Library	NO
+#  define HasFreetype2		YES
+/* m68k has no 2.4 kernel yet */
+#  ifndef Mc68020Architecture
+#   define HasLinuxInput	YES
+#  endif
 #  define HasXdmAuth		YES
-/* modern LaTeX chokes on ancient sync.tex document */
-/* #  define HasLatex		YES */
-#  define BuilderEMailAddr	"submit@bugs.debian.org"
-/* right now glide only works on i386 */
+#  define HasLatex		YES
+/* at present, glide2 only works on i386 */
+#  ifdef i386Architecture
+#   define HasGlide2		YES
+#   define Glide2IncDir		/usr/include/glide
+#  endif /* i386Architecture */
+/* at present, glide3 only works on alpha and i386 */
+#  if defined(i386Architecture) || defined(AlphaArchitecture)
+#   define HasGlide3		YES
+#   define Glide3IncDir		/usr/include/glide3
+#  endif /* i386Architecture || AlphaArchitecture */
+/* extended instruction set support */
 #  ifdef i386Architecture
 #   define HasMMXSupport	YES
 #   define Has3DNowSupport	YES
 /* 2.4 is not yet the official (or predominant) kernel in unstable */
 #   define HasKatmaiSupport	NO
-#   define HasGlide2		YES
-#   define Glide2IncDir		/usr/include/glide
-#   define HasGlide3		YES
-#   define Glide3IncDir		/usr/include/glide3
 #  endif /* i386Architecture */
-# endif /* DebianMaintiner */
+# endif /* DebianMaintainer */
 #endif /* LinuxDebian */
 
 #if LinuxDistribution == LinuxRedHat
@@ -234,6 +244,9 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # endif
 #endif
 
+/* Libtool on linux always uses minor numbers */
+#define LibtoolMinorVersions	YES
+
 /* On x86, determine whether to build with MTRR support */
 #ifndef HasMTRRSupport
 # ifdef i386Architecture
@@ -252,6 +265,8 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #ifndef XF86INT10_BUILD
 # ifdef i386Architecture
 #  define XF86INT10_BUILD	X86VM
+# elif defined SparcArchitecture
+#  define XF86INT10_BUILD	X86INT10_STUB
 # else
 #  define XF86INT10_BUILD	X86EMU_GENERIC
 # endif
@@ -282,11 +297,13 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #endif
 
 /*
- * Build shared libGL and the DRI modules without -fPIC.  This improves
- * performance.
+ * Build shared libGL and the DRI modules without -fPIC on some architectures.
+ * This improves performance.
  */
 #if BuildXF86DRI
+# if defined(i386Architecture)
 #  define BuildLibGlxWithoutPIC	YES
+# endif
 #endif
 
 /* The DRM module requires kernel services that appeared in late 2.1.x
@@ -470,8 +487,8 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #   ifndef AsCmd
 #     define AsCmd		gcc -c -x assembler-with-cpp
 #   endif
-#   ifndef DoLoadableServer
-#     define DoLoadableServer	NO
+#   ifndef MakeDllModules
+#     define MakeDllModules	YES
 #   endif
 #  endif /* MipsArchitecure */
 #  ifndef CcCmd
@@ -515,12 +532,19 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #   define LdCmd		/usr/alpha-linuxecoff/bin/ld -m alpha
 #   define AsmDefines		-DUSE_GAS -U__ELF__
 #  endif /* AlphaArchitecture */
+#  ifdef HPArchitecture
+#   define CcCmd		gcc
+#   define CplusplusCmd		g++
+#   define AsCmd		as
+#   define LdCmd		ld
+#   define AsmDefines		-DUSE_GAS -U__ELF__
+#  endif /* HPArchitecture */
 #  ifdef ia64Architecture
-#   define CcCmd                 gcc
-#   define CplusplusCmd          g++
-#   define AsCmd                 as
-#   define LdCmd                 ld
-#   define AsmDefines            -DUSE_GAS -U__ELF__
+#   define CcCmd		gcc
+#   define CplusplusCmd		g++
+#   define AsCmd		as
+#   define LdCmd		ld
+#   define AsmDefines		-DUSE_GAS -U__ELF__
 #  endif /* ia64Architecture */
 #  ifdef i386Architecture
 #   define CcCmd		gcc -b i486-linuxaout
@@ -553,6 +577,14 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #   define LdCmd		ld
 #   define AsmDefines		-D__ELF__
 #  endif /* ia64Architecture */
+#  ifdef HPArchitecture
+#   define CcCmd		gcc
+#   define CplusplusCmd		g++
+#   define AsCmd		as
+#   define LdCmd		ld
+#   define AsmDefines		-D__ELF__
+#   define SharedLibXau		YES
+#  endif /* HPArchitecture */
 #  ifdef i386Architecture
 #   define CcCmd		gcc -b i486-linux
 #   define AsCmd		/usr/i486-linux/bin/as
@@ -576,7 +608,11 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #endif
 #if UseElfFormat
 # ifndef DoLoadableServer
-#  define DoLoadableServer	YES
+#  ifdef HPArchitecture
+#   define DoLoadableServer	NO
+#  else
+#   define DoLoadableServer	YES
+#  endif
 # endif
 #endif
 #ifndef CppCmd
@@ -627,6 +663,14 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* s390Architecture */
 
+#ifdef s390xArchitecture
+/*#define DefaultCCOptions	-fsigned-char */
+#define OptimizedCDebugFlags	-O3
+#define LinuxMachineDefines	-D__s390x__
+#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
+#define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* s390xArchitecture */
+
 #ifdef AlphaArchitecture
 # ifndef OptimizedCDebugFlags
 #  define OptimizedCDebugFlags	DefaultGcc2AxpOpt
@@ -642,7 +686,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #ifdef Arm32Architecture
 # define DefaultCCOptions	-fsigned-char
 # ifndef OptimizedCDebugFlags
-#  define OptimizedCDebugFlags 	-O3
+#  define OptimizedCDebugFlags	-O3
 # endif
 # define LinuxMachineDefines	-D__arm__ -D__arm32__ -U__arm -Uarm
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
@@ -651,9 +695,9 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 
 #ifdef ia64Architecture
 # ifndef OptimizedCDebugFlags
-#  define OptimizedCDebugFlags  -O2
+#  define OptimizedCDebugFlags	-O2
 # endif
-# define LinuxMachineDefines   -D__ia64__
+# define LinuxMachineDefines	-D__ia64__
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
 # define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
 #endif /* ia64Architecture */
@@ -699,6 +743,38 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #  define OptimizedCDebugFlags	-O2
 # endif
 # define LinuxMachineDefines	-D__mips__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif
+
+#ifdef HPArchitecture
+# define OptimizedCDebugFlags	-O2
+# define LinuxMachineDefines	-D__hppa__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif
+
+#ifdef SuperHArchitecture
+# ifndef SuperHArchOptFlags
+#  ifdef SuperH4Architecture
+#   define SuperHArchOptFlags	-m4
+#  elifdef SuperH4NOFPUArchitecture
+#   define SuperHArchOptFlags	-m4-nofpu
+#  else
+#   define SuperHArchOptFlags	-m3
+#  endif
+# endif 
+# ifndef SuperHebArchitecture
+#  ifdef SuperHebArchitecture
+#   define SuperHEndianFlags	-mb
+#  else
+#   define SuperHEndianFlags	-ml
+#  endif
+# endif
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags	-O2 SuperHArchOptFlags SuperHEndianFlags
+# endif
+# define LinuxMachineDefines	-D__sh__
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
 # define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif
@@ -772,7 +848,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #define TtClientLibs $(TTLIB) $(XTOOLLIB) $(XLIB)
 #define TtClientDepLibs $(DEPTTLIB) $(DEPXTOOLLIB) $(DEPXLIB)
 
-#ifdef s390Architecture
+#if (defined s390Architecture) || (defined s390xArchitecture)
 # define HasXServer	NO
 #endif
 

@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.47 2001/04/12 01:02:50 dickey Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.51 2001/11/05 02:07:15 dickey Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
@@ -57,6 +57,7 @@ AC_MINIX
 
 ###	checks for header files
 AC_CHECK_HEADERS( \
+ncurses/term.h \
 stdlib.h \
 termios.h \
 unistd.h \
@@ -128,6 +129,11 @@ AC_PATH_PROG(XTERM_PATH,xterm)
 AC_CHECK_FUNCS( \
 	XkbStdBell \
 	)
+AC_CHECK_FUNCS(Xutf8LookupString, [],[
+	EXTRAHDRS="$EXTRAHDRS xutf8.h"
+	EXTRASRCS="$EXTRASRCS xutf8.c"
+	EXTRAOBJS="$EXTRAOBJS xutf8.o"
+])
 
 AC_MSG_CHECKING(if we should use imake to help)
 CF_ARG_DISABLE(imake,
@@ -263,6 +269,14 @@ if test $enable_ansi_color = yes ; then
 		[enable_pc_color=yes])
 	AC_MSG_RESULT($enable_pc_color)
 	test $enable_pc_color = no && AC_DEFINE(OPT_PC_COLORS,0)
+
+	AC_MSG_CHECKING(if you want separate color-classes)
+	CF_ARG_DISABLE(color-class,
+		[  --disable-color-class   disable separate color class resources],
+		[enable_color_class=no],
+		[enable_color_class=yes])
+	AC_MSG_RESULT($enable_color_class)
+	test $enable_color_class = no && AC_DEFINE(OPT_COLOR_CLASS,FALSE)
 
 	AC_MSG_CHECKING(if you want color-mode enabled by default)
 	CF_ARG_DISABLE(color-mode,
@@ -461,9 +475,9 @@ CF_ARG_ENABLE(wide-chars,
 AC_MSG_RESULT($enable_wchar)
 if test $enable_wchar = yes ; then
 	AC_DEFINE(OPT_WIDE_CHARS,1)
-	EXTRAHDRS="$EXTRAHDRS charclass.h keysym2ucs.h precompose.h wcwidth.h"
-	EXTRASRCS="$EXTRASRCS charclass.c keysym2ucs.c precompose.c wcwidth.c"
-	EXTRAOBJS="$EXTRAOBJS charclass.o keysym2ucs.o precompose.o wcwidth.o"
+	EXTRAHDRS="$EXTRAHDRS charclass.h precompose.h wcwidth.h"
+	EXTRASRCS="$EXTRASRCS charclass.c precompose.c wcwidth.c"
+	EXTRAOBJS="$EXTRAOBJS charclass.o precompose.o wcwidth.o"
 fi
 
 AC_MSG_CHECKING(if you want DECterm Locator support)
@@ -535,8 +549,12 @@ AC_SUBST(EXTRAOBJS)
 
 ###	remove from CPPFLAGS the optional features we define in xtermcfg.h
 for cf_def in \
+	ALLOWLOGGING \
+	OPT_WIDE_CHARS \
 	SCROLLBAR_RIGHT \
-	OPT_WIDE_CHARS
+	USE_TTY_GROUP \
+	USE_UTEMPTER \
+	XRENDERFONT
 do
 	CPPFLAGS=`echo "$CPPFLAGS" | sed -e s/-D$cf_def//`
 done

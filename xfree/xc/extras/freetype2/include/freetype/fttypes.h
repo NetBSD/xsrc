@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType simple types definitions (specification only).              */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -77,7 +77,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*************************************************************************/
 
-   
+
   /*************************************************************************/
   /*                                                                       */
   /* <Type>                                                                */
@@ -509,6 +509,13 @@ FT_BEGIN_HEADER
 
 #define FT_IS_EMPTY( list )  ( (list).head == 0 )
 
+  /* return base error code (without module-specific prefix) */
+#define FT_ERROR_BASE( x )    ( (x) & 0xFF )
+
+  /* return module error code */
+#define FT_ERROR_MODULE( x )  ( (x) & 0xFF00U )
+
+#define FT_BOOL( x )  ( (FT_Bool)( x ) )
 
 FT_END_HEADER
 

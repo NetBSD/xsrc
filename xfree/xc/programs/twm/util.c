@@ -3,7 +3,11 @@
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,12 +48,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/util.c,v 1.8 2001/04/26 21:09:47 dawes Exp $ */
+/* $XFree86: xc/programs/twm/util.c,v 1.10 2001/12/14 20:01:11 dawes Exp $ */
 
 
 /***********************************************************************
  *
- * $Xorg: util.c,v 1.4 2000/08/17 19:54:08 cpqbld Exp $
+ * $Xorg: util.c,v 1.5 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * utility routines for twm
  *
@@ -788,11 +792,17 @@ I18N_FetchName(dpy, w, winname)
     XTextProperty text_prop;
     char **list;
     int    num;
-
+    
     status = XGetWMName(dpy, w, &text_prop);
-    if (!status || !text_prop.value || !text_prop.nitems) return 0;
+    if (!status || !text_prop.value || !text_prop.nitems) {
+      *winname = NULL;
+      return 0;
+    }
     status = XmbTextPropertyToTextList(dpy, &text_prop, &list, &num);
-    if (status < Success || !num || !*list) return 0;
+    if (status < Success || !num || !*list) {
+      *winname = NULL;      
+      return 0;
+    }
     XFree(text_prop.value);
     *winname = (char *)strdup(*list);
     XFreeStringList(list);

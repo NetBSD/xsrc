@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.man,v 1.2 2001/01/27 18:20:55 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.man,v 1.10 2002/01/13 21:06:59 alanh Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH TRIDENT __drivermansuffix__ __vendorversion__
@@ -14,12 +14,10 @@ trident \- Trident video driver
 .fi
 .SH DESCRIPTION
 .B trident
-is an XFree86 driver for Trident video cards.  The driver is fully
+is an XFree86 driver for Trident video cards.  The driver is 
 accelerated, and provides support for the following framebuffer depths:
-1, 4, 8, 15, 16, and 24. Multi-head configurations
-are supported. The XvImage extension is supported on all Blade and Image
-series cards. Currently the ZOOM feature doesn't work properly on the Image
-series.
+1, 4, 8, 15, 16, and 24. Multi-head configurations are supported.
+The XvImage extension is supported on TGUI96xx and greater cards.
 .SH SUPPORTED HARDWARE
 The
 .B trident
@@ -28,7 +26,9 @@ Trident chips:
 .TP 12
 .B Blade
 Blade3D, CyberBlade series i1, i7 (DSTN), i1, i1 (DSTN), Ai1, Ai1 (DSTN),
-CyberBlade/e4
+CyberBlade/e4, CyberBladeXPm8, CyberBladeXPm16, CyberBladeAi1/XP, BladeXP
+NOTE: The XP series are NOT hardware accelerated due to the specifications
+of the chip not being released.
 .TP 12
 .B Image
 3DImage975, 3DImage985, Cyber9520, Cyber9525, Cyber9397, Cyber9397DVD
@@ -39,8 +39,9 @@ CyberBlade/e4
 .B TGUI
 9440AGi, 9660, 9680
 .TP 12
-.B 8900
-8900D (ISA)
+.B ISA/VLBus
+8900C, 8900D, 9000, 9200CXr, Cyber9320, 9400CXi, 9440AGi
+These cards have been ported but need furthur testing and may not work.
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this
@@ -69,17 +70,38 @@ than the LCD's screen, this option will stretch the graphics mode to
 fill the entire LCD. Default: off.
 .TP
 .BI "Option \*qShadowFB\*q \*q" boolean \*q
-Enable or disable use of the shadow framebuffer layer.  See
-shadowfb(__drivermansuffix__) for further information.  Default: off.
+Enable or disable use of the shadow framebuffer layer.  Default: off.
 .TP
 .BI "Option \*qVideoKey\*q \*q" integer \*q
 This sets the default pixel value for the YUV video overlay key.
-NOTE: Default is 0 for depth 15 and 24. This needs fixing.
 Default: undefined.
 .TP
 .BI "Option \*qNoPciBurst\*q \*q" boolean \*q
 Turn off PCI burst mode, PCI Bursting is on by default.
 Default: off.
+.TP
+.BI "Option \*qXvHsync\*q \*q" integer \*q
+Override the default Horizontal-sync value for the Xv extension.
+This is used to center the Xv image on the screen.  By default the values
+are assigned based on the video card.
+Default: 0.
+.TP
+.BI "Option \*qXvVsync\*q \*q" integer \*q
+Override the default Vertical-sync value for the Xv extension.
+This is used to center the Xv image on the screen.  By default the values
+are assigned based on the video card.
+Default: 0.
+.BI "Option \*qXvBskew\*q \*q" integer \*q
+Override the default Bottom skew value for the Xv extension.
+This is used to extend the Xv image on the screen at the bottom.  By 
+default the values are assigned based on the video card.
+Default: 0.
+.TP
+.BI "Option \*qXvRskew\*q \*q" integer \*q
+Override the default Right skew value for the Xv extension.
+This is used to extend the Xv image on the screen at the right.  By 
+default the values are assigned based on the video card.
+Default: 0.
 .SH "SEE ALSO"
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__)
 .SH AUTHOR

@@ -1,9 +1,13 @@
-/* $Xorg: BitEdit.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
+/* $Xorg: BitEdit.c,v 1.4 2001/02/09 02:05:28 xorgcvs Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.4 2001/01/17 23:44:50 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.6 2001/12/26 21:39:34 paulo Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium
@@ -44,6 +48,7 @@ from The Open Group.
 #include <X11/Xaw/SimpleMenu.h>
 #include <X11/Xaw/SmeLine.h>
 #include <X11/Xaw/SmeBSB.h>
+#include <X11/Xmu/SysUtil.h>
 #include "Bitmap.h"
 
 #include <X11/bitmaps/xlogo16>
@@ -796,7 +801,7 @@ void DoLoad()
     case Yes:
       if (BWWriteFile(bitmap_widget, filename, NULL)
 	  != BitmapSuccess) {
-	sprintf(message, "Can't write file: %s", filename);
+	XmuSnprintf(message, sizeof(message), "Can't write file: %s", filename);
 	if (PopupDialog(error_dialog, message,
 			NULL, NULL, XtGrabExclusive) == Retry)
 	  goto RetryLoadSave;
@@ -812,7 +817,7 @@ void DoLoad()
   if (PopupDialog(input_dialog, "Load file:",
 		  filename, &filename, XtGrabExclusive) == Okay) {
     if (BWReadFile(bitmap_widget, filename, NULL) != BitmapSuccess) {
-      sprintf(message, "Can't read file: %s", filename);
+      XmuSnprintf(message, sizeof(message), "Can't read file: %s", filename);
       if (PopupDialog(error_dialog, message,
 		      NULL, NULL, XtGrabExclusive) == Retry)
 	goto RetryLoad;
@@ -832,7 +837,7 @@ void DoInsert()
   if (PopupDialog(input_dialog, "Insert file:",
 		  filename, &filename, XtGrabExclusive) == Okay) {
     if (BWStoreFile(bitmap_widget, filename, NULL) != BitmapSuccess) {
-      sprintf(message, "Can't read file: %s", filename);
+      XmuSnprintf(message, sizeof(message), "Can't read file: %s", filename);
       if (PopupDialog(error_dialog, message,
 		      NULL, NULL, XtGrabExclusive) == Retry)
 	goto RetryInsert;
@@ -849,7 +854,7 @@ void DoSave()
   if (!strcmp(filename, "")) 
     DoSaveAs();
   else if (BWWriteFile(bitmap_widget, NULL, NULL) != BitmapSuccess) {
-    sprintf(message, "Can't write file: %s", filename);
+    XmuSnprintf(message, sizeof(message), "Can't write file: %s", filename);
     if (PopupDialog(error_dialog, message,
 		    NULL, NULL, XtGrabExclusive) == Retry) 
       DoSaveAs();
@@ -866,7 +871,7 @@ void DoSaveAs()
   if (PopupDialog(input_dialog, "Save file:",
 		  filename, &filename, XtGrabExclusive) == Okay) {
     if (BWWriteFile(bitmap_widget, filename, NULL) != BitmapSuccess) {
-      sprintf(message, "Can't write file: %s", filename);
+      XmuSnprintf(message, sizeof(message), "Can't write file: %s", filename);
       if (PopupDialog(error_dialog, message,
 		      NULL, NULL, XtGrabExclusive) == Retry)
 	goto RetrySave;
@@ -892,7 +897,7 @@ void DoResize()
       FixStatus();
     }
     else {
-      sprintf(message, "Wrong format: %s", format);
+      XmuSnprintf(message, sizeof(message), "Wrong format: %s", format);
       if (PopupDialog(error_dialog, message,
 		      NULL, NULL, XtGrabExclusive) == Retry)
 	goto RetryResize;
@@ -915,7 +920,7 @@ void DoRescale()
       FixStatus();
     }
     else {
-      sprintf(message, "Wrong format: %s", format);
+      XmuSnprintf(message, sizeof(message), "Wrong format: %s", format);
       if (PopupDialog(error_dialog, message,
 		      NULL, NULL, XtGrabExclusive) == Retry)
 	goto RetryRescale;
@@ -957,7 +962,7 @@ void DoQuit(w, event, params, num_params) /* ARGSUSED */
     case Yes:
       if (BWWriteFile(bitmap_widget, filename, NULL) 
 	  != BitmapSuccess) {
-	sprintf(message, "Can't write file: %s", filename);
+	XmuSnprintf(message, sizeof(message), "Can't write file: %s", filename);
 	if (PopupDialog(error_dialog, message, 
 			NULL, NULL, XtGrabExclusive) == Retry) 
 	  goto RetryQuit;

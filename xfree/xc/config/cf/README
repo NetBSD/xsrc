@@ -3,7 +3,7 @@ $Xorg: README,v 1.4 2000/08/18 04:03:58 coskrey Exp $
 
 
 
-$XFree86: xc/config/cf/README,v 1.13 2001/01/17 16:22:30 dawes Exp $
+$XFree86: xc/config/cf/README,v 1.15 2001/09/29 17:38:41 herrb Exp $
 
 The easiest way to write an Imakefile is to find another one that does
 something similar and copy/modify it!
@@ -76,6 +76,7 @@ Imake.tmpl provides defaults for the following variables:
 	HasPurify		boolean for system has Purify
 	HasPutenv		boolean for libc has putenv()
 	HasSecureRPC		boolean for Sun Secure RPC
+	HasSetProcTitle		boolean for setproctitle()
 	HasSetUserContext	boolean for setusercontext()
 	HasSentinel		boolean for system has Sentinel available
 	HasSharedLibraries	boolean for system has shared libraries
@@ -446,6 +447,16 @@ An <os>Lib.tmpl file provides defaults for the following variables:
 	SharedDtMrmReqs		required libs for libDtMrm.so
 	SharedDtMrmRev		version number for libDtMrm.so
 
+Vendor.cf files and/or site/host specific .def files may define the
+following variables:
+
+	ProjectRoot		The directory under which the installation
+				will operate.  This value will be hard coded
+				into some programs.  As a result do not use it
+				to specify the installation directory for a
+				cross compiled system, use DESTDIR to
+				accomplish that task.
+
 The following variables are used by some part of the tree:
 
 	AckToolset		programs/Xserver/hw/xfree86
@@ -546,7 +557,9 @@ Variables that can be set on the make command line:
 
 DESTDIR			directory under which "make install" should
 			install instead of "/"; used only for testing
-			"make install" rules.
+			"make install" rules, binary package building,
+			and specifying alternative installation directories
+			for cross compiles.
 FILE			file for "lint1" target to run lint on.
 CDEBUGFLAGS		-g and/or -O flag to control C compiler optimization.
 CXXDEBUGFLAGS		-g and/or -O flag to control C++ optimization.

@@ -1,9 +1,13 @@
-/* $Xorg: greet.c,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
+/* $Xorg: greet.c,v 1.4 2001/02/09 02:05:41 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.13 2001/05/11 09:03:07 alanh Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.15 2001/12/14 20:01:29 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -48,6 +52,11 @@ from The Open Group.
 
 #ifdef __OpenBSD__
 #include <syslog.h>
+#endif
+
+#if defined(SECURE_RPC) && defined(sun)
+/* Go figure, there's no getdomainname() prototype available */
+extern int getdomainname(char *name, size_t len);
 #endif
 
 #ifdef GREET_LIB

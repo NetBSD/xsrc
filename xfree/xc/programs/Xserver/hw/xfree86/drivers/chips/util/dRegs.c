@@ -4,14 +4,14 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.6.4.1 2001/05/25 18:15:45 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.9 2001/11/16 21:13:34 tsi Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>
 #  include <machine/pio.h>
 #  include <machine/sysarch.h>
 #else
-#  ifdef SVR4 
+#  if defined(SVR4) && defined(i386)
 #    include <sys/types.h>
 #    ifdef NCR
        /* broken NCR <sys/sysi86.h> */
@@ -42,7 +42,7 @@
 #  define SET_IOPL() i386_iopl(3)
 #  define RESET_IOPL() i386_iopl(0)
 #else
-#  ifdef SVR4
+#  if defined(SVR4) && defined(i386)
 #    ifndef SI86IOPL
 #      define SET_IOPL() sysi86(SI86V86,V86SC_IOPL,PS_IOPL)
 #      define RESET_IOPL() sysi86(SI86V86,V86SC_IOPL,0)
@@ -51,21 +51,21 @@
 #      define RESET_IOPL() sysi86(SI86IOPL,0)
 #    endif
 #  else
-#    ifndef Lynx
+#    ifdef linux
 #      define SET_IOPL() iopl(3)
 #      define RESET_IOPL() iopl(0)
 #    else
-#      define SET_IOPL() 0
-#      define RESET_IOPL() 0
+#      define SET_IOPL() (void)0
+#      define RESET_IOPL() (void)0
 #    endif
 #  endif
 #endif
 
-void main(void)
+int main(void)
 {
     int i, HTotal, HDisplay, HSyncStart, HSyncEnd, 
-    VTotal, VDisplay, VSyncStart, VSyncEnd, Clock;
-    unsigned char storeReg, bpp, shift, IOSS, MSS, again;
+    VTotal, VDisplay, VSyncStart, VSyncEnd;
+    unsigned char storeReg, bpp, shift, IOSS = 0, MSS = 0, again = 0;
     unsigned short port;
     int isHiQV = 0;
     int is69030 = 0;
@@ -250,12 +250,11 @@ void main(void)
 	HTotal = ((inb(0x3D5)&0xFF) + 5) << shift;
 	outb(0x3D4,1);
 	HDisplay = ((inb(0x3D5)&0xFF) + 1) << shift;
-	outb(0x3D4,2);
+	outb(0x3D4,4);
 	HSyncStart = ((inb(0x3D5)&0xFF) + 1) << shift;
-	outb(0x3D4,3);
+	outb(0x3D4,5);
 	HSyncEnd = inb(0x3D5)&0x1F;
 	outb(0x3D4,5);
-	HSyncEnd |= (inb(0x3D5)&0x80) >> 2;
 	HSyncEnd += HSyncStart >> shift;
 	HSyncEnd <<= shift;
 	
@@ -271,6 +270,7 @@ void main(void)
 	VSyncStart |= (inb(0x3D5)&0x80) << 2;
 	outb(0x3D4,0x12);
 	    VDisplay |= inb(0x3D5)&0xFF;
+	VDisplay += 1;
 	outb(0x3D4,0x10);
 	VSyncStart |= inb(0x3D5)&0xFF;
 	
@@ -301,7 +301,5 @@ void main(void)
       }
     }
     RESET_IOPL();
+    return 0;
 }
-
-
-

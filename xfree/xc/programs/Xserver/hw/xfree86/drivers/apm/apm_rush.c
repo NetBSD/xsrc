@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.9.2.1 2001/05/23 20:21:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.10 2001/05/23 20:13:23 dawes Exp $ */
 /*
  * Copyright Loïc Grenié 1999
  */

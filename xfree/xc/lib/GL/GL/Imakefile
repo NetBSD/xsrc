@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.7 2001/04/03 02:29:31 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.10 2001/11/24 11:22:35 herrb Exp $
 
 #include <Threads.tmpl>
 
@@ -108,6 +108,19 @@ OTHERREQUIREDLIBS = -lglide3 -ldl
     DRVPOBJS = $(I810POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRIMESAPOBJS) \
 		$(DRMPOBJS)
 
+#elif GlxBuiltInI830
+#define MesaDrvI830BuildDir $(GLXLIBSRC)/mesa/src/drv/i830/
+#include "../mesa/src/drv/i830/Imakefile.inc"
+
+     DRVOBJS = $(I830OBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRIMESAOBJS) \
+		$(DRMOBJS)
+    DRVUOBJS = $(I830UOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRIMESAUOBJS) \
+		$(DRMUOBJS)
+    DRVDOBJS = $(I830DOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRIMESADOBJS) \
+		$(DRMDOBJS)
+    DRVPOBJS = $(I830POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRIMESAPOBJS) \
+		$(DRMPOBJS)
+
 #elif GlxBuiltInMga
 
 #define MesaDrvMgaBuildDir $(GLXLIBSRC)/mesa/src/drv/mga/
@@ -206,7 +219,11 @@ REQUIREDLIBS = $(BASEREQUIREDLIBS) $(OTHERREQUIREDLIBS)
        POBJS = $(GLXPOBJS) $(DRIPOBJS) $(DRVPOBJS)
 
 #if LocalThreads
+#if NeedUIThrStubs
+  THREADOBJS = $(LDPRELIB) $(XTHRSTUBLIB)
+#else
   THREADOBJS = $(THREADS_LIBS)
+#endif
 #endif
 
 #include <Library.tmpl>

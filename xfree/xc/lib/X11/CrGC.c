@@ -1,9 +1,13 @@
-/* $Xorg: CrGC.c,v 1.4 2000/08/17 19:44:32 cpqbld Exp $ */
+/* $Xorg: CrGC.c,v 1.5 2001/02/09 02:03:32 xorgcvs Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,17 +24,11 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/CrGC.c,v 3.4 2001/01/17 19:41:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/CrGC.c,v 3.6 2001/12/14 19:53:59 dawes Exp $ */
 
 #include "Xlibint.h"
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-
-static XGCValues Const initial_GC = {
+static XGCValues const initial_GC = {
     GXcopy, 	/* function */
     AllPlanes,	/* plane_mask */
     0L,		/* foreground */

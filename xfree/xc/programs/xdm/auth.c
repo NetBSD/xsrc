@@ -1,9 +1,13 @@
-/* $Xorg: auth.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $ */
+/* $Xorg: auth.c,v 1.5 2001/02/09 02:05:40 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/auth.c,v 3.21 2001/01/17 23:45:20 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.24 2001/12/14 20:01:19 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -42,13 +46,8 @@ from The Open Group.
 #include "dm_error.h"
 
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
-#ifndef ESIX
-# include <sys/ioctl.h>
-#endif /* !ESIX */
+#include <sys/ioctl.h>
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 # include "dm_socket.h"
@@ -69,9 +68,6 @@ extern int errno;
 #  include <stropts.h>
 #  include <sys/sioctl.h>
 # endif /* ISC */
-# ifdef ESIX
-#  include <lan/net_ioctl.h>
-# endif /* ESIX */
 #endif /* i386 */
 
 #ifdef SVR4
@@ -89,12 +85,7 @@ extern int errno;
 #include <netdb.h>
 #undef SIOCGIFCONF
 #else /* __GNU__ */
-#ifndef MINIX
 #include <net/if.h>
-#else
-#include <net/netlib.h>
-#include <net/gen/netdb.h>
-#endif /* !MINIX */
 #endif /* __GNU__ */
 
 #if ((defined(SVR4) && !defined(sun)) || defined(ISC)) && defined(SIOCGIFCONF)
@@ -1020,9 +1011,6 @@ static void
 writeLocalAuth (FILE *file, Xauth *auth, char *name)
 {
     int	fd;
-#ifdef MINIX
-    char *tcp_device;
-#endif
 
     Debug ("writeLocalAuth: %s %.*s\n", name, auth->name_length, auth->name);
     setAuthNumber (auth, name);
@@ -1034,14 +1022,7 @@ writeLocalAuth (FILE *file, Xauth *auth, char *name)
     t_close (fd);
 #endif
 #ifdef TCPCONN
-#ifdef MINIX
-    tcp_device= getenv("TCP_DEVICE");
-    if (tcp_device == NULL)
-    	tcp_device= TCP_DEVICE;
-    fd = open(tcp_device, O_RDWR);
-#else
     fd = socket (AF_INET, SOCK_STREAM, 0);
-#endif
     DefineSelf (fd, file, auth);
     close (fd);
 #endif

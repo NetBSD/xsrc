@@ -46,8 +46,8 @@ Extension names should not contain embedded spaces.
 .P
 All strings are null-terminated.
 .SH SEE ALSO
-\f3glGetString\fP,
-\%\f3gluGetString\fP,
-\f3glXGetClientString\fP,
-\f3glXQueryExtensionsString\fP,
-\f3glXQueryServerString\fP
+\f3glGetString(3G)\fP,
+\%\f3gluGetString(3G)\fP,
+\f3glXGetClientString(3G)\fP,
+\f3glXQueryExtensionsString(3G)\fP,
+\f3glXQueryServerString(3G)\fP

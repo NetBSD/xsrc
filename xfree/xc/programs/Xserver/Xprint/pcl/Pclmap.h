@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/Pclmap.h,v 1.4 2001/01/17 22:36:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/Pclmap.h,v 1.6 2001/12/21 21:02:05 dawes Exp $ */
 
 #ifndef _PCLMAP_H_
 #define _PCLMAP_H_
@@ -39,7 +39,7 @@ copyright holders.
 #ifdef CATNAME
 #undef CATNAME
 #endif
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define PCLNAME(subname) PclCr##subname
 #define CATNAME(prefix,subname) prefix##Color##subname
 #else
@@ -52,7 +52,7 @@ copyright holders.
 #ifdef CATNAME
 #undef CATNAME
 #endif
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define PCLNAME(subname) PclMn##subname
 #define CATNAME(prefix,subname) prefix##Mono##subname
 #else
@@ -65,7 +65,7 @@ copyright holders.
 #ifdef CATNAME
 #undef CATNAME
 #endif
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define PCLNAME(subname) PclLj3##subname
 #define CATNAME(prefix,subname) prefix##Lj3##subname
 #else
@@ -73,6 +73,8 @@ copyright holders.
 #define CATNAME(prefix,subname) prefix/**/Lj3/**/subname
 #endif
 #endif /* XP_PCL_LJ3 */
+
+#ifdef PCLNAME
 
 /* PclInit.c */
 #define InitializePclDriver		CATNAME(Initialize, PclDriver)
@@ -201,5 +203,7 @@ copyright holders.
 #define PclUnrealizeCursor		PCLNAME(UnrealizeCursor)
 #define PclRecolorCursor		PCLNAME(RecolorCursor)
 #define PclSetCursorPosition		PCLNAME(SetCursorPosition)
+
+#endif
 
 #endif /* _PCLMAP_H_ */

@@ -36,7 +36,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/config/pswrap/lexer.l,v 1.9 2000/06/07 19:48:09 tsi Exp $ */
+/* $XFree86: xc/config/pswrap/lexer.l,v 1.10 2001/10/28 03:32:03 tsi Exp $ */
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -346,7 +346,7 @@ endps { 		/* BOGUS end of a wrap */
 	    DEBUGP((stderr,"DEF ->CINTEGER %s\n",yytext));
 	    /* I have no idea why the cast is needed in the next line,
 	       but it seems to make the compiler happy on alpha */
-	    sscanf((char *) yytext,"%o",&yylval.intobj);
+	    sscanf((char *) yytext,"%lo",&yylval.intobj);
 	    return CINTEGER;
 	}
 }
@@ -355,7 +355,7 @@ endps { 		/* BOGUS end of a wrap */
 	if (nonComment) {
 	    DEBUGP((stderr,"DEF ->CINTEGER %s\n",yytext));
 	    /* See previous comment... */
-	    sscanf((char *) yytext,"0x%x",&yylval.intobj);
+	    sscanf((char *) yytext,"0x%lx",&yylval.intobj);
 	    return CINTEGER;
 	}
 }

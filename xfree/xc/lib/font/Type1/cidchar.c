@@ -15,7 +15,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/cidchar.c,v 1.8 1999/08/21 13:47:39 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/cidchar.c,v 1.9 2001/10/28 03:32:44 tsi Exp $ */
 
 #ifdef BUILDCID
 #ifndef FONTMODULE
@@ -74,7 +74,7 @@ CIDGetGlyphInfo(FontPtr pFont, unsigned int cidcode, CharInfoPtr pci, int *rc)
     unsigned int count = 0;
 #endif
     cidglyphs *cid;
-    unsigned char *p1;
+    unsigned char *p1 = NULL;
 #ifndef USE_MMAP
     unsigned char *p2;
 #endif
@@ -83,7 +83,7 @@ CIDGetGlyphInfo(FontPtr pFont, unsigned int cidcode, CharInfoPtr pci, int *rc)
     int FDindex, FDBytes, GDBytes, SDBytes, SubrCount, CIDMapOffset, len;
     psobj *arrayP;
     psobj charstring;
-    long *subroffsets, cstringoffset, nextcstringoffset;
+    long *subroffsets = NULL, cstringoffset, nextcstringoffset;
     struct blues_struct *blues;
 
     cid = (cidglyphs *)pFont->fontPrivate;

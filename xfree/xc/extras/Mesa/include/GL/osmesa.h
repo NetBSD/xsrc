@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/include/GL/osmesa.h,v 1.3 2001/10/28 03:32:06 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -58,7 +58,7 @@ extern "C" {
 #endif
 
 
-#include "GL/gl.h"
+#include <GL/gl.h>
 
 
 #define OSMESA_MAJOR_VERSION 3

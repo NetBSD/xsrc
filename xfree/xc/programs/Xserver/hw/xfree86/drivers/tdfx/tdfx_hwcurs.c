@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.4 2001/04/05 21:29:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.5 2001/10/28 03:33:50 tsi Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -60,7 +60,7 @@ HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 static unsigned int TDFXSwap(TDFXPtr pTDFX, unsigned int val) {
   switch (pTDFX->cpp) {
-  case 1:
+  default:
     return val;
   case 2:
     return ((val & 0x00ff00ff) << 8) |

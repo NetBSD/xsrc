@@ -1,9 +1,13 @@
-/* $Xorg: Xtransdnet.c,v 1.3 2000/08/17 19:46:45 cpqbld Exp $ */
+/* $Xorg: Xtransdnet.c,v 1.4 2001/02/09 02:04:06 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.5 2001/01/17 19:43:46 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.6 2001/12/14 19:57:05 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

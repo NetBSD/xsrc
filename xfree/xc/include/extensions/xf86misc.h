@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86misc.h,v 3.13 2000/04/17 16:29:48 eich Exp $ */
+/* $XFree86: xc/include/extensions/xf86misc.h,v 3.14 2001/08/15 16:25:20 paulo Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -20,6 +20,7 @@
 #define X_XF86MiscGetKbdSettings	4
 #define X_XF86MiscSetMouseSettings	5
 #define X_XF86MiscSetKbdSettings	6
+#define X_XF86MiscSetGrabKeysState	7
 
 #define XF86MiscNumberEvents		0
 
@@ -71,6 +72,13 @@
 #define MF_REOPEN		128
 
 #ifndef _XF86MISC_SERVER_
+
+/* return values for XF86MiscSetGrabKeysState */
+#define MiscExtGrabStateSuccess	0	/* No errors */
+#define MiscExtGrabStateLocked	1	/* A client already requested that
+					 * grabs cannot be removed/killed */
+#define MiscExtGrabStateAlready	2	/* Request for enabling/disabling
+					 * grab removeal/kill already done */
 
 _XFUNCPROTOBEGIN
 
@@ -124,6 +132,11 @@ Status XF86MiscSetMouseSettings(
 Status XF86MiscSetKbdSettings(
     Display*			/* dpy */,
     XF86MiscKbdSettings*	/* keyboard info */
+);
+
+int XF86MiscSetGrabKeysState(
+    Display*			/* dpy */,
+    Bool			/* enabled */
 );
 
 _XFUNCPROTOEND

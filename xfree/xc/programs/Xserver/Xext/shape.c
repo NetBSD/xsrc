@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.13.2.1 2001/05/31 16:33:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.16 2001/12/14 19:58:50 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $Xorg: shape.c,v 1.3 2000/08/17 19:47:58 cpqbld Exp $ */
+/* $Xorg: shape.c,v 1.4 2001/02/09 02:04:32 xorgcvs Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"
@@ -128,8 +132,6 @@ static DISPATCH_PROC(SProcShapeSelectInput);
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
-extern int PanoramiXNumScreens;
-extern Bool noPanoramiXExtension;
 #endif
 
 static unsigned char ShapeReqCode = 0;
@@ -393,7 +395,7 @@ ProcPanoramiXShapeRectangles (client)
 {
     REQUEST(xShapeRectanglesReq);
     PanoramiXRes	*win;
-    int        		j, result;
+    int        		j, result = 0;
 
     REQUEST_AT_LEAST_SIZE (xShapeRectanglesReq);
 
@@ -482,7 +484,7 @@ ProcPanoramiXShapeMask (client)
 {
     REQUEST(xShapeMaskReq);
     PanoramiXRes	*win, *pmap;
-    int 		j, result;
+    int 		j, result = 0;
 
     REQUEST_SIZE_MATCH (xShapeMaskReq);
 
@@ -597,7 +599,7 @@ ProcPanoramiXShapeCombine (client)
 {
     REQUEST(xShapeCombineReq);
     PanoramiXRes	*win, *win2;
-    int 		j, result;
+    int 		j, result = 0;
 
     REQUEST_AT_LEAST_SIZE (xShapeCombineReq);
 
@@ -666,7 +668,7 @@ ProcPanoramiXShapeOffset (client)
 {
     REQUEST(xShapeOffsetReq);
     PanoramiXRes *win;
-    int j, result;
+    int j, result = 0;
 
     REQUEST_AT_LEAST_SIZE (xShapeOffsetReq);
    

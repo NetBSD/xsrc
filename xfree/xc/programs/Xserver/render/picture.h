@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picture.h,v 1.5 2000/11/21 04:11:42 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/picture.h,v 1.7 2001/08/10 22:25:59 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -50,11 +50,12 @@ typedef struct _Picture		*PicturePtr;
 #define PICT_FORMAT_B(f)	(((f)      ) & 0x0f)
 #define PICT_FORMAT_RGB(f)	(((f)      ) & 0xfff)
 
-#define PICT_OTHER	0
+#define PICT_TYPE_OTHER	0
 #define PICT_TYPE_A	1
 #define PICT_TYPE_ARGB	2
 #define PICT_TYPE_ABGR	3
-#define PICT_TYPE_INDEX	4
+#define PICT_TYPE_COLOR	4
+#define PICT_TYPE_GRAY	5
 
 #define PICT_FORMAT_COLOR(f)	(PICT_FORMAT_TYPE(f) & 2)
 
@@ -84,6 +85,9 @@ typedef struct _Picture		*PicturePtr;
 #define PICT_a2r2g2b2	PICT_FORMAT(8,PICT_TYPE_ARGB,2,2,2,2)
 #define PICT_a2b2g2r2	PICT_FORMAT(8,PICT_TYPE_ABGR,2,2,2,2)
 
+#define PICT_c8		PICT_FORMAT(8,PICT_TYPE_COLOR,0,0,0,0)
+#define PICT_g8		PICT_FORMAT(8,PICT_TYPE_GRAY,0,0,0,0)
+
 /* 4bpp formats */
 #define PICT_a4		PICT_FORMAT(4,PICT_TYPE_A,4,0,0,0)
 #define PICT_r1g2b1	PICT_FORMAT(4,PICT_TYPE_ARGB,0,1,2,1)
@@ -91,8 +95,13 @@ typedef struct _Picture		*PicturePtr;
 #define PICT_a1r1g1b1	PICT_FORMAT(4,PICT_TYPE_ARGB,1,1,1,1)
 #define PICT_a1b1g1r1	PICT_FORMAT(4,PICT_TYPE_ABGR,1,1,1,1)
 				    
+#define PICT_c4		PICT_FORMAT(4,PICT_TYPE_COLOR,0,0,0,0)
+#define PICT_g4		PICT_FORMAT(4,PICT_TYPE_GRAY,0,0,0,0)
+
 /* 1bpp formats */
 #define PICT_a1		PICT_FORMAT(1,PICT_TYPE_A,1,0,0,0)
+
+#define PICT_g1		PICT_FORMAT(1,PICT_TYPE_GRAY,0,0,0,0)
 
 #define FixedToInt(f)	(int) ((f) >> 8)
 #define IntToFixed(i)	((Fixed) (i) << 8)

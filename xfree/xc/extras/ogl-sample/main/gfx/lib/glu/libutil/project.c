@@ -1,3 +1,4 @@
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libutil/project.c,v 1.2 2001/10/28 03:32:24 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -31,8 +32,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/06/09 15:21:07 $ $Revision: 1.1.1.1 $
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libutil/Attic/project.c,v 1.1.1.1 2001/06/09 15:21:07 tron Exp $
+** $Date: 2002/01/19 15:27:25 $ $Revision: 1.1.1.2 $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libutil/Attic/project.c,v 1.1.1.2 2002/01/19 15:27:25 tron Exp $
 */
 
 #include "gluos.h"
@@ -116,7 +117,6 @@ gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
 	  GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy,
 	  GLdouble upz)
 {
-    int i;
     float forward[3], side[3], up[3];
     GLfloat m[4][4];
 

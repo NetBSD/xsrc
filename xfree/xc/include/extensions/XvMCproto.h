@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/XvMCproto.h,v 1.4 2001/04/10 00:28:24 mvojkovi Exp $ */
+/* $XFree86: xc/include/extensions/XvMCproto.h,v 1.5 2001/11/14 21:54:37 mvojkovi Exp $ */
 
 #ifndef _XVMCPROTO_H_
 #define _XVMCPROTO_H_
@@ -20,7 +20,7 @@
 typedef struct {
   CARD32 surface_type_id B32;
   CARD16 chroma_format B16;
-  CARD16 color_description B16;
+  CARD16 pad0 B16;
   CARD16 max_width B16;
   CARD16 max_height B16;
   CARD16 subpicture_max_width B16;

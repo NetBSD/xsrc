@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vm_basic_types.h,v 1.4 2001/04/25 16:44:58 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vm_basic_types.h,v 1.5 2002/01/07 20:38:29 dawes Exp $ */
 /* **********************************************************
  * Copyright (C) 1998-2001 VMware, Inc.
  * All Rights Reserved
@@ -56,7 +56,10 @@ typedef unsigned long long uint64;
 typedef long long int64;
 #endif
 #else
+/* int64/uint64 aren't actually used in the vmware driver. */
+#if 0
 #error - Need compiler define for int64/uint64
+#endif
 #endif
 
 typedef unsigned int       uint32;
@@ -78,7 +81,10 @@ typedef char      int8;
 #elif defined(__GNUC__)
 #define FMT64   "L"
 #else
+/* FMT64 isn't actually used in the vmware driver. */
+#if 0
 #error - Need compiler define for FMT64
+#endif
 #endif
 
 typedef uint32 VA;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.31 2001/05/15 18:22:23 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.32 2001/06/03 19:47:59 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -1263,19 +1263,23 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     }
 
 #ifdef RENDER
-    /* Render stuff */
-    if(!infoRec->Composite &&
-       infoRec->SetupForCPUToScreenAlphaTexture &&
-       infoRec->SubsequentCPUToScreenAlphaTexture)
     {
-	infoRec->Composite = XAADoComposite;
-    }
+	Bool haveTexture = infoRec->CPUToScreenTextureFormats &&
+	                   infoRec->SetupForCPUToScreenTexture &&
+	                   infoRec->SubsequentCPUToScreenTexture;
+        Bool haveAlphaTexture = infoRec->CPUToScreenAlphaTextureFormats &&
+                                infoRec->SetupForCPUToScreenAlphaTexture &&
+                                infoRec->SubsequentCPUToScreenAlphaTexture;
 
-    if(!infoRec->Glyphs && infoRec->WriteBitmap &&
-	!(infoRec->WriteBitmapFlags & NO_TRANSPARENCY)) 
-    {
-	infoRec->Glyphs = XAADoGlyphs;
-    }	
+	if(!infoRec->Composite && (haveTexture || haveAlphaTexture)) 
+	    infoRec->Composite = XAADoComposite;
+
+	if(!infoRec->Glyphs && infoRec->WriteBitmap &&
+	   !(infoRec->WriteBitmapFlags & NO_TRANSPARENCY)) 
+        {
+            infoRec->Glyphs = XAADoGlyphs;
+        }	
+    }
 #endif
 
     /************  Validation Functions **************/

@@ -1152,7 +1152,7 @@ save_CopyColorSubTable(GLenum target, GLsizei start,
    Node *n;
 
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
+   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 5 );
    if (n) {
       n[1].e = target;
       n[2].i = start;
@@ -1174,7 +1174,7 @@ save_CopyColorTable(GLenum target, GLenum internalformat,
    Node *n;
 
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
+   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_TABLE, 5 );
    if (n) {
       n[1].e = target;
       n[2].e = internalformat;
@@ -1316,7 +1316,7 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_FV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -3669,7 +3669,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 8 );
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3713,7 +3713,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 9 );
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3758,7 +3758,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 10 );
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3799,7 +3799,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 8 );
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3838,7 +3838,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 10 );
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3879,7 +3879,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 12 );
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -5660,11 +5660,22 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
             fprintf(f,"Error: %s %s\n", enum_string(n[1].e), (const char *)n[2].data );
             break;
 	 case OPCODE_VERTEX_CASSETTE:
-            fprintf(f,"VERTEX-CASSETTE, id %u, rows %u..%u\n", 
-		    ((struct immediate *) n[1].data)->id,
-		    n[2].ui,
-		    n[3].ui);
-	    gl_print_cassette( (struct immediate *) n[1].data );
+            {
+               struct immediate *IM; 
+               fprintf(f,"VERTEX-CASSETTE, id %u, rows %u..%u\n", 
+                       ((struct immediate *) n[1].data)->id,
+                       n[2].ui,
+                       n[3].ui);
+               IM = (struct immediate *) n[1].data; 
+               IM->Start = n[2].ui; 
+               IM->Count = n[3].ui; 
+               IM->BeginState = n[4].ui; 
+               IM->OrFlag = n[5].ui; 
+               IM->AndFlag = n[6].ui; 
+               IM->LastData = n[7].ui; 
+               IM->LastPrimitive = n[8].ui; 
+               gl_print_cassette( (struct immediate *) n[1].data );
+            }
 	    break;
 	 case OPCODE_CONTINUE:
             fprintf(f,"DISPLAY-LIST-CONTINUE\n");

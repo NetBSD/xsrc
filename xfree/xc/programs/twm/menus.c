@@ -1,10 +1,14 @@
-/* $XFree86: xc/programs/twm/menus.c,v 1.9 2001/01/17 23:45:07 dawes Exp $ */
+/* $XFree86: xc/programs/twm/menus.c,v 1.12 2001/12/14 20:01:09 dawes Exp $ */
 /*****************************************************************************/
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -49,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: menus.c,v 1.5 2000/08/17 19:54:07 cpqbld Exp $
+ * $Xorg: menus.c,v 1.6 2001/02/09 02:05:36 xorgcvs Exp $
  *
  * twm menu code
  *
@@ -78,8 +82,6 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/extensions/sync.h>
 #include <X11/SM/SMlib.h>
 
-extern XEvent Event;
-
 int RootFunction = 0;
 MenuRoot *ActiveMenu = NULL;		/* the active menu */
 MenuItem *ActiveItem = NULL;		/* the active menu item */
@@ -107,13 +109,6 @@ static struct {
     int y;
 } MenuOrigins[MAXMENUDEPTH];
 static Cursor LastCursor;
-
-
-extern char *Action;
-extern int Context;
-extern TwmWindow *ButtonWindow, *Tmp_win;
-extern XEvent Event, ButtonEvent;
-extern char *InitFile;
 
 static Bool belongs_to_twm_window ( TwmWindow *t, Window w );
 static void Identify ( TwmWindow *t );
@@ -1236,11 +1231,6 @@ belongs_to_twm_window (t, w)
  */
 
 
-extern int AddingX;
-extern int AddingY;
-extern int AddingW;
-extern int AddingH;
-
 void 
 resizeFromCenter(w, tmp_win)
      Window w;
@@ -1367,7 +1357,6 @@ WarpThere(t)
     return false;
 }
 
-extern int MovedFromKeyPress;
 
 int
 ExecuteFunction(func, action, w, tmp_win, eventp, context, pulldown)
@@ -2325,6 +2314,11 @@ ExecuteFunction(func, action, w, tmp_win, eventp, context, pulldown)
 	    (void)XSyncSetPriority(dpy, tmp_win->w, atoi(action));
         }
 	break;
+   case F_STARTWM:
+	execlp("/bin/sh", "sh", "-c", action, NULL);
+	fprintf (stderr, "%s:  unable to start:  %s\n", ProgramName, *Argv);
+	break;
+
     }
 
     if (ButtonPressed == -1) XUngrabPointer(dpy, CurrentTime);

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.7 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.8 2001/12/19 21:30:30 dawes Exp $ */
 
 #ifndef XKBCOMP_H
 #define	XKBCOMP_H 1
@@ -228,14 +228,6 @@ typedef struct _InterpDef {
     VarDef	*def;
 } InterpDef;
 
-typedef struct _IndicatorMapDef {
-    ParseCommon	 common;
-    unsigned	 merge;
-    Atom	 name;
-    VarDef *	 body;
-    void *	 pad;	/* so that sizeof(IndicatorMapDef) == sizeof(DoodadDef) */
-} IndicatorMapDef;
-
 typedef struct _IndicatorNameDef {
     ParseCommon	 common;
     unsigned	 merge;
@@ -301,6 +293,11 @@ typedef struct _DoodadDef {
     Atom	 name;
     VarDef *	 body;
 } DoodadDef;
+
+/* IndicatorMapDef doesn't use the type field, but the rest of the fields
+   need to be at the same offsets as in DoodadDef.  Use #define to avoid
+   any strict aliasing problems.  */
+#define IndicatorMapDef DoodadDef
 
 typedef struct _XkbFile {
     ParseCommon	 common;

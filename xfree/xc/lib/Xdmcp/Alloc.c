@@ -1,10 +1,14 @@
 /*
- * $Xorg: Alloc.c,v 1.3 2000/08/17 19:45:47 cpqbld Exp $
+ * $Xorg: Alloc.c,v 1.4 2001/02/09 02:03:48 xorgcvs Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/Alloc.c,v 3.3 2001/01/17 19:42:43 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Alloc.c,v 3.5 2001/12/14 19:54:54 dawes Exp $ */
 
 /* stubs for use when Xalloc, Xrealloc and Xfree are not defined */
 
@@ -31,12 +35,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/X.h>
 #include <X11/Xmd.h>
 #include <X11/Xdmcp.h>
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *malloc(size_t), *realloc(char *, size_t);
-#endif
 
 void *
 Xalloc (unsigned long amount)

@@ -1,9 +1,13 @@
-/* $Xorg: access.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
+/* $Xorg: access.c,v 1.5 2001/02/09 02:05:23 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.32 2001/01/17 22:37:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.39 2002/01/07 20:38:29 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -57,36 +61,12 @@ SOFTWARE.
 #include <errno.h>
 #include <sys/types.h>
 #ifndef WIN32
-#if !defined(AMOEBA) && !defined(MINIX)
-#ifdef ESIX
-#include <lan/socket.h>
-#else
 #ifndef Lynx
 #include <sys/socket.h>
 #else
 #include <socket.h>
 #endif
-#endif
 #include <sys/ioctl.h>
-#else
-#ifdef AMOEBA
-#define port am_port_t
-#include <amoeba.h>
-#include <cmdreg.h>
-#include <stdcom.h>
-#include <stderr.h>
-#include <ampolicy.h>
-#include <server/ip/hton.h>
-#include <server/ip/types.h>
-#include <server/ip/tcpip.h>
-#include <server/ip/tcp_io.h>
-#include <server/ip/gen/in.h>
-#include <server/ip/gen/tcp.h>
-#include <server/ip/gen/tcp_io.h>
-#include <server/ip/gen/socket.h>
-#undef port
-#endif
-#endif /* AMOEBA || MINIX */
 #include <ctype.h>
 
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(ISC) || defined(SCO)
@@ -112,14 +92,13 @@ SOFTWARE.
 #endif
 
 
-#if !defined(AMOEBA)
-#if defined(hpux) || defined(__QNXNTO__)
+#if defined(hpux) || defined(QNX4)
 # include <sys/utsname.h>
 # ifdef HAS_IFREQ
 #  include <net/if.h>
 # endif
 #else
-#if defined(SVR4) ||  (defined(SYSV) && defined(i386)) || defined(MINIX) || defined(__GNU__)
+#if defined(SVR4) ||  (defined(SYSV) && defined(i386)) || defined(__GNU__)
 # include <sys/utsname.h>
 #endif
 #if defined(SYSV) &&  defined(i386)
@@ -129,20 +108,13 @@ SOFTWARE.
 #  include <sys/sioctl.h>
 # endif /* ISC */
 #endif
-#ifdef ESIX
-# include <lan/if.h>
-#else
 #ifdef __GNU__
 #undef SIOCGIFCONF
 #include <netdb.h>
 #else /*!__GNU__*/
-#ifndef MINIX
 # include <net/if.h>
-#endif
 #endif /*__GNU__ */
-#endif
 #endif /* hpux */
-#endif /* !AMOEBA */
 
 #ifdef SVR4
 #ifndef SCO
@@ -151,22 +123,7 @@ SOFTWARE.
 #include <sys/stropts.h>
 #endif
 
-#ifdef ESIX
-#include <lan/netdb.h>
-#else
-#if !defined(AMOEBA) && !defined(MINIX)
 #include <netdb.h>
-#else
-#ifdef AMOEBA
-#include <server/ip/gen/netdb.h>
-#endif
-#ifdef MINIX
-#include <net/hton.h>
-#include <net/gen/netdb.h>
-#define INADDR_BROADCAST 0xFFFFFFFF
-#endif
-#endif /* AMOEBA || MINIX */
-#endif /* ESIX */
 
 #ifdef CSRG_BASED
 #include <sys/param.h>
@@ -197,6 +154,9 @@ SOFTWARE.
 #endif
 #endif
 #endif 
+
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
 
 #include "dixstruct.h"
 #include "osdep.h"
@@ -494,7 +454,7 @@ DefineSelf (int fd)
 
 #else /* WINTCP */
 
-#if !defined(SIOCGIFCONF) || (defined (hpux) && ! defined (HAS_IFREQ)) || defined(__QNXNTO__)
+#if !defined(SIOCGIFCONF) || (defined (hpux) && ! defined (HAS_IFREQ)) || defined(QNX4)
 void
 DefineSelf (int fd)
 {
@@ -517,14 +477,26 @@ DefineSelf (int fd)
 	
     struct	sockaddr_in	*inetaddr;
     struct sockaddr_in broad_addr;
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
+    _Xgethostbynameparams hparams;
+#endif
 
     /* Why not use gethostname()?  Well, at least on my system, I've had to
      * make an ugly kernel patch to get a name longer than 8 characters, and
      * uname() lets me access to the whole string (it smashes release, you
      * see), whereas gethostname() kindly truncates it for me.
      */
+#ifndef QNX4
     uname(&name);
-    hp = gethostbyname (name.nodename);
+#else
+    /* QNX4's uname returns node number in name.nodename, not the hostname
+       have to overwrite it */
+    char hname[1024];
+    gethostname(hname, 1024);
+    name.nodename = hname;
+#endif
+
+    hp = _XGethostbyname(name.nodename, hparams);
     if (hp != NULL)
     {
 	saddr.sa.sa_family = hp->h_addrtype;
@@ -817,7 +789,6 @@ ResetHosts (char *display)
     FILE		*fd;
     char		*ptr;
     int                 i, hostlen;
-#ifndef AMOEBA
     union {
         struct sockaddr	sa;
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(MNX_TCPCONN)
@@ -827,7 +798,6 @@ ResetHosts (char *display)
         struct sockaddr_dn dn;
 #endif
     } 			saddr;
-#endif /* AMOEBA */
 #ifdef DNETCONN
     struct nodeent 	*np;
     struct dn_naddr 	dnaddr, *dnaddrp, *dnet_addr();
@@ -959,10 +929,14 @@ ResetHosts (char *display)
 #endif /* SECURE_RPC */
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(MNX_TCPCONN)
 	{
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
+	    _Xgethostbynameparams hparams;
+#endif
+
     	    /* host name */
-    	    if ((family == FamilyInternet
-	     && ((hp = gethostbyname (hostname)) != 0))
-	     || ((hp = gethostbyname (hostname)) != 0))
+    	    if ((family == FamilyInternet &&
+		 ((hp = _XGethostbyname(hostname, hparams)) != 0)) ||
+		((hp = _XGethostbyname(hostname, hparams)) != 0))
 	    {
     		saddr.sa.sa_family = hp->h_addrtype;
 		len = sizeof(saddr.sa);
@@ -1257,11 +1231,7 @@ CheckAddr (
     {
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(AMTCPCONN) || defined(MNX_TCPCONN)
       case FamilyInternet:
-#if !defined(AMOEBA)
 	if (length == sizeof (struct in_addr))
-#else
-	if (length == sizeof(ipaddr_t))
-#endif
 	    len = length;
 	else
 	    len = -1;
@@ -1293,11 +1263,7 @@ CheckAddr (
 
 int
 InvalidHost (
-#ifndef AMOEBA_ORIG
     register struct sockaddr	*saddr,
-#else
-    register ipaddr_t		*saddr,
-#endif
     int				len)
 {
     int 			family;
@@ -1340,15 +1306,10 @@ InvalidHost (
 
 static int
 ConvertAddr (
-#ifndef AMOEBA_ORIG
     register struct sockaddr	*saddr,
-#else
-    register ipaddr_t		*saddr,
-#endif
     int				*len,
     pointer			*addr)
 {
-#ifndef AMOEBA
     if (*len == 0)
         return (FamilyLocal);
     switch (saddr->sa_family)
@@ -1383,12 +1344,6 @@ ConvertAddr (
     default:
         return -1;
     }
-#else /* AMOEBA */
-    if (*len == 0) return -1;
-    *len = sizeof (ipaddr_t);
-    *addr = (pointer) saddr;
-    return FamilyInternet;
-#endif /* AMOEBA */
 }
 
 int

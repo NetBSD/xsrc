@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:22 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xfs/os/Imakefile,v 3.7 2001/01/17 23:45:32 dawes Exp $
+XCOMM $XFree86: xc/programs/xfs/os/Imakefile,v 3.8 2001/08/01 00:45:05 tsi Exp $
 
 #undef ServerDefines
 #include <Server.tmpl>
@@ -20,7 +20,8 @@ SRCS =	connection.c waitfor.c daemon.c io.c utils.c osinit.c \
 OBJS =  connection.o waitfor.o daemon.o io.o utils.o osinit.o \
 	config.o access.o osglue.o error.o $(OBJS1)
 
-INCLUDES = -I../include -I$(FONTINCSRC) -I$(EXTINCSRC)
+INCLUDES = -I../include -I$(FONTINCSRC) -I$(EXTINCSRC) \
+	   -I$(FONTLIBSRC)/include -I$(FONTLIBSRC)/bitmap
 
 CONN_DEFINES = $(CONNECTION_FLAGS) -DFONT_t -DTRANS_SERVER -DTRANS_REOPEN
 

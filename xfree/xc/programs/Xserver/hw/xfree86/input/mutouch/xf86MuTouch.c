@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.13 2001/04/01 14:00:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.14 2001/08/17 13:27:56 dawes Exp $ */
 
 /*
  *******************************************************************************
@@ -1751,13 +1751,13 @@ xf86MuTInit(InputDriverPtr	drv,
   xf86Msg(X_CONFIG, "Microtouch X device name: %s\n", local->name);  
   priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", 0);
   xf86Msg(X_CONFIG, "Microtouch associated screen: %d\n", priv->screen_no);  
-  priv->max_x = xf86SetIntOption(local->options, "MaximumXPosition", 3000);
+  priv->max_x = xf86SetIntOption(local->options, "MaxX", 3000);
   xf86Msg(X_CONFIG, "Microtouch maximum x position: %d\n", priv->max_x);
-  priv->min_x = xf86SetIntOption(local->options, "MinimumXPosition", 0);
+  priv->min_x = xf86SetIntOption(local->options, "MinX", 0);
   xf86Msg(X_CONFIG, "Microtouch minimum x position: %d\n", priv->min_x);
-  priv->max_y = xf86SetIntOption(local->options, "MaximumYPosition", 3000);
+  priv->max_y = xf86SetIntOption(local->options, "MaxY", 3000);
   xf86Msg(X_CONFIG, "Microtouch maximum y position: %d\n", priv->max_y);
-  priv->min_y = xf86SetIntOption(local->options, "MinimumYPosition", 0);
+  priv->min_y = xf86SetIntOption(local->options, "MinY", 0);
   xf86Msg(X_CONFIG, "Microtouch minimum y position: %d\n", priv->min_y);
   priv->frequency = xf86SetIntOption(local->options, "Frequency", 0);
   xf86Msg(X_CONFIG, "Microtouch ThruGlass frequency is: %d\n", priv->frequency);

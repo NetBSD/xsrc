@@ -40,6 +40,6 @@ initial value is \%\f3GL_FALSE\fP.
 The manner in which texture coordinates are generated depends 
 upon the specific quadric rendered.
 .SH SEE ALSO
-\%\f3gluNewQuadric\fP, \%\f3gluQuadricDrawStyle\fP, \%\f3gluQuadricNormals\fP, 
-\%\f3gluQuadricOrientation\fP
+\%\f3gluNewQuadric(3G)\fP, \%\f3gluQuadricDrawStyle(3G)\fP, \%\f3gluQuadricNormals(3G)\fP, 
+\%\f3gluQuadricOrientation(3G)\fP
 

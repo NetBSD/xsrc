@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.5 2001/05/09 19:57:06 dbateman Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.6 2001/11/16 21:13:34 tsi Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>
 #  include <machine/pio.h>
 #  include <machine/sysarch.h>
 #else
-#  ifdef SVR4 
+#  if defined(SVR4) && defined(i386)
 #    include <sys/types.h>
 #    ifdef NCR
        /* broken NCR <sys/sysi86.h> */
@@ -39,7 +39,7 @@
 #  define SET_IOPL() i386_iopl(3)
 #  define RESET_IOPL() i386_iopl(0)
 #else
-#  ifdef SVR4
+#  if defined(SVR4) && defined(i386)
 #    ifndef SI86IOPL
 #      define SET_IOPL() sysi86(SI86V86,V86SC_IOPL,PS_IOPL)
 #      define RESET_IOPL() sysi86(SI86V86,V86SC_IOPL,0)
@@ -48,12 +48,12 @@
 #      define RESET_IOPL() sysi86(SI86IOPL,0)
 #    endif
 #  else
-#    ifndef Lynx
+#    ifdef linux
 #      define SET_IOPL() iopl(3)
 #      define RESET_IOPL() iopl(0)
 #    else
-#      define SET_IOPL() 0
-#      define RESET_IOPL() 0
+#      define SET_IOPL() (void)0
+#      define RESET_IOPL() (void)0
 #    endif
 #  endif
 #endif
@@ -100,7 +100,7 @@ int compute_clock (
 
   unsigned int M, N, P, PSN, PSNx;
 
-  double bestError, abest = 42, bestFout;
+  double bestError = 0, abest = 42, bestFout = 0;
 
   double Fvco, Fout;
   double error, aerror;
@@ -196,7 +196,6 @@ int compute_clock (
   }
 
   if (abest < tolerance) {
-    unsigned char tmp, idx;
     printf ("best: M=%d N=%d P=%d PSN=%d\n", *bestM, *bestN, *bestP, *bestPSN);
 
     if (bestFout > 1.0e6)
@@ -230,7 +229,7 @@ int set_clock(
     if (IS_MemClk(ClockType)) {
       printf ("XRCC = 0x%02X\n", M - 2);
       printf ("XRCD = 0x%02X\n", N - 2);
-      printf ("XRCE = 0x%02X\n", (0x80 | P * 16 + (PSN == 1)));
+      printf ("XRCE = 0x%02X\n", (0x80 | (P * 16 + (PSN == 1))));
 
       outb(0x3D6, 0xCE); /* Select Fix MClk before */
       tmp = inb(0x3D7);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.4 2000/11/21 23:10:33 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.6 2001/11/06 15:53:10 alanh Exp $ */
 /*
  * Authors:
  *   Ove Kåven <ovek@transgaming.com>,
@@ -23,27 +23,8 @@ static int  R128_GetViewport(ScrnInfoPtr);
 static void R128_SetViewport(ScrnInfoPtr, int, int, int);
 static void R128_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void R128_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
-#if 0
 static void R128_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int,
-					unsigned long);
-#endif
-
-static
-DGAFunctionRec R128_DGAFuncs = {
-   R128_OpenFramebuffer,
-   NULL,
-   R128_SetMode,
-   R128_SetViewport,
-   R128_GetViewport,
-   R128WaitForIdle,
-   R128_FillRect,
-   R128_BlitRect,
-#if 0
-   R128_BlitTransRect
-#else
-   NULL
-#endif
-};
+			       unsigned long);
 
 
 static DGAModePtr
@@ -92,12 +73,23 @@ SECOND_PASS:
 	(*num)++;
 
 	currentMode->mode = pMode;
-	/* FIXME: is concurrent access really possible? */
 	currentMode->flags = DGA_CONCURRENT_ACCESS;
 	if(pixmap)
 	   currentMode->flags |= DGA_PIXMAP_AVAILABLE;
-	if(info->accel)
-	   currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+	if(info->accel) {
+	  if(info->accel->SetupForSolidFill &&
+	     info->accel->SubsequentSolidFillRect)
+	   currentMode->flags |= DGA_FILL_RECT;
+	  if(info->accel->SetupForScreenToScreenCopy &&
+	     info->accel->SubsequentScreenToScreenCopy)
+	   currentMode->flags |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
+
+	  if(currentMode->flags &
+	     (DGA_PIXMAP_AVAILABLE | DGA_FILL_RECT |
+	      DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS))
+	     currentMode->flags &= -DGA_CONCURRENT_ACCESS;
+	}
+
 	if(pMode->Flags & V_DBLSCAN)
 	   currentMode->flags |= DGA_DOUBLESCAN;
 	if(pMode->Flags & V_INTERLACE)
@@ -213,7 +205,30 @@ R128DGAInit(ScreenPtr pScreen)
    info->numDGAModes = num;
    info->DGAModes = modes;
 
-   return DGAInit(pScreen, &R128_DGAFuncs, modes, num);
+   info->DGAFuncs.OpenFramebuffer    = R128_OpenFramebuffer;
+   info->DGAFuncs.CloseFramebuffer   = NULL;
+   info->DGAFuncs.SetMode            = R128_SetMode;
+   info->DGAFuncs.SetViewport        = R128_SetViewport;
+   info->DGAFuncs.GetViewport        = R128_GetViewport;
+
+   info->DGAFuncs.Sync               = NULL;
+   info->DGAFuncs.FillRect           = NULL;
+   info->DGAFuncs.BlitRect           = NULL;
+   info->DGAFuncs.BlitTransRect      = NULL;
+
+   if (info->accel) {
+      info->DGAFuncs.Sync            = R128WaitForIdle;
+      if (info->accel->SetupForSolidFill &&
+	  info->accel->SubsequentSolidFillRect)
+	info->DGAFuncs.FillRect      = R128_FillRect;
+      if (info->accel->SetupForScreenToScreenCopy &&
+	  info->accel->SubsequentScreenToScreenCopy) {
+	info->DGAFuncs.BlitRect      = R128_BlitRect;
+	info->DGAFuncs.BlitTransRect = R128_BlitTransRect;
+      }
+   }
+
+   return DGAInit(pScreen, &(info->DGAFuncs), modes, num);
 }
 
 
@@ -233,8 +248,8 @@ R128_SetMode(
 
 	pScrn->currentMode = info->CurrentLayout.mode;
 
-	R128SwitchMode(indx, pScrn->currentMode, 0);
-	R128AdjustFrame(indx, 0, 0, 0);
+	pScrn->SwitchMode(indx, pScrn->currentMode, 0);
+	pScrn->AdjustFrame(indx, 0, 0, 0);
 	info->DGAactive = FALSE;
    } else {
 	if(!info->DGAactive) {  /* save the old parameters */
@@ -252,7 +267,7 @@ R128_SetMode(
 					  : pMode->depth);
 	/* R128ModeInit() will set the mode field */
 
-	R128SwitchMode(indx, pMode->mode, 0);
+	pScrn->SwitchMode(indx, pMode->mode, 0);
    }
 
    return TRUE;
@@ -278,7 +293,7 @@ R128_SetViewport(
 ){
    R128InfoPtr info = R128PTR(pScrn);
 
-   R128AdjustFrame(pScrn->pScreen->myNum, x, y, flags);
+   pScrn->AdjustFrame(pScrn->pScreen->myNum, x, y, flags);
    info->DGAViewportStatus = 0;  /* FIXME */
 }
 
@@ -291,11 +306,11 @@ R128_FillRect (
 ){
     R128InfoPtr info = R128PTR(pScrn);
 
-    if(info->accel) {
-	(*info->accel->SetupForSolidFill)(pScrn, color, GXcopy, (CARD32)(~0));
-	(*info->accel->SubsequentSolidFillRect)(pScrn, x, y, w, h);
+    (*info->accel->SetupForSolidFill)(pScrn, color, GXcopy, (CARD32)(~0));
+    (*info->accel->SubsequentSolidFillRect)(pScrn, x, y, w, h);
+
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
 	SET_SYNC_FLAG(info->accel);
-    }
 }
 
 static void
@@ -306,21 +321,19 @@ R128_BlitRect(
    int dstx, int dsty
 ){
     R128InfoPtr info = R128PTR(pScrn);
+    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int ydir = (srcy < dsty) ? -1 : 1;
 
-    if(info->accel) {
-	int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
-	int ydir = (srcy < dsty) ? -1 : 1;
+    (*info->accel->SetupForScreenToScreenCopy)(
+	pScrn, xdir, ydir, GXcopy, (CARD32)(~0), -1);
+    (*info->accel->SubsequentScreenToScreenCopy)(
+	pScrn, srcx, srcy, dstx, dsty, w, h);
 
-	(*info->accel->SetupForScreenToScreenCopy)(
-		pScrn, xdir, ydir, GXcopy, (CARD32)(~0), -1);
-	(*info->accel->SubsequentScreenToScreenCopy)(
-		pScrn, srcx, srcy, dstx, dsty, w, h);
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
 	SET_SYNC_FLAG(info->accel);
-    }
 }
 
 
-#if 0
 static void
 R128_BlitTransRect(
    ScrnInfoPtr pScrn,
@@ -329,10 +342,23 @@ R128_BlitTransRect(
    int dstx, int dsty,
    unsigned long color
 ){
-  /* this one should be separate since the XAA function would
-     prohibit usage of ~0 as the key */
+    R128InfoPtr info = R128PTR(pScrn);
+    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int ydir = (srcy < dsty) ? -1 : 1;
+
+    info->XAAForceTransBlit = TRUE;
+
+    (*info->accel->SetupForScreenToScreenCopy)(
+	pScrn, xdir, ydir, GXcopy, (CARD32)(~0), color);
+
+    info->XAAForceTransBlit = FALSE;
+
+    (*info->accel->SubsequentScreenToScreenCopy)(
+	pScrn, srcx, srcy, dstx, dsty, w, h);
+
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
+	SET_SYNC_FLAG(info->accel);
 }
-#endif
 
 
 static Bool

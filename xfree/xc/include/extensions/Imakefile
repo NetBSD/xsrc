@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/18 04:05:44 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.41 2001/04/28 23:52:32 dawes Exp $
+XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.47 2001/12/16 18:19:50 keithp Exp $
 
 #if BuildScreenSaverExt || BuildScreenSaveLibrary
 SCREENSAVERHEADERS = saver.h saverproto.h scrnsaver.h
@@ -21,8 +21,9 @@ XF86VIDMODEHEADERS = xf86vmode.h xf86vmstr.h
 #if BuildXF86DGA || BuildXF86DGALibrary
 XF86DGAHEADERS = xf86dga.h xf86dgastr.h xf86dga1.h xf86dga1str.h
 #endif
-#if BuildLBX
-LBXHEADERS = lbxbuf.h lbxbufstr.h lbxdeltastr.h lbximage.h lbxopts.h lbxstr.h lbxzlib.h
+#if BuildLBX || BuildXextLib
+LBXHEADERS = XLbx.h lbxbuf.h lbxbufstr.h lbxdeltastr.h lbximage.h lbxopts.h \
+	     lbxstr.h lbxzlib.h
 #endif
 #if BuildXvExt || BuildXvLibrary
 XVHEADERS = Xv.h Xvlib.h Xvproto.h
@@ -40,11 +41,19 @@ XINERAMAHEADERS = panoramiXext.h panoramiXproto.h Xinerama.h
 #if BuildRender || BuildXftLibrary
 RENDERHEADERS = render.h renderproto.h
 #endif
+#if BuildRandR || BuildRandRLibrary
+RANDRHEADERS = randr.h randrproto.h
+#endif
+#if BuildXTrap || BuildXTrapLibrary
+XTRAPHEADERS = xtrapbits.h xtrapddmi.h xtrapdi.h xtrapemacros.h xtraplib.h \
+	xtraplibp.h xtrapproto.h
+#endif
 
 EXTRAHEADERS = $(SCREENSAVERHEADERS) $(XF86MISCHEADERS) $(XF86BIGFONTHEADERS) \
 	       $(XF86VIDMODEHEADERS) $(XF86DGAHEADERS) $(XINERAMAHEADERS) \
 	       $(LBXHEADERS) $(XVHEADERS) $(XVMCHEADERS) $(XF86RUSHHEADERS) \
-	       $(FONTCACHEHEADERS) $(RENDERHEADERS)
+	       $(FONTCACHEHEADERS) $(RENDERHEADERS) $(RANDRHEADERS) \
+	       $(XTRAPHEADERS)
 
 
 
@@ -68,7 +77,10 @@ HEADERS = Xext.h multibuf.h shape.h sync.h XShm.h MITMisc.h \
 all::
 
 BuildIncludes($(HEADERS),X11/extensions,../..)
+
+#if BuildLibraries
 InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/extensions,$(INSTINCFLAGS))
+#endif
 
 InstallDriverSDKNonExecFile(XI.h,$(DRIVERSDKINCLUDEDIR)/extensions)
 InstallDriverSDKNonExecFile(XIproto.h,$(DRIVERSDKINCLUDEDIR)/extensions)

@@ -35,8 +35,8 @@ The DRI provides 3D graphics hardware acceleration for the XFree86 project.
 This information is intended for experienced Linux developers.  Beginners are
 probably better off installing precompiled packages.
 
-Edits, corrections and updates to this document may be mailed to brianp@val-
-inux.com.
+Edits, corrections and updates to this document may be mailed to <brian@tung-
+stengrahpics.com>.
 
 3.  Prerequisites
 
@@ -272,7 +272,7 @@ the mailing lists.
   3.  Check out the CVS sources:
 
                        cd ~/DRI-CVS
-                       cvs -z3 -dYOURID@cvs.dri.sourceforge.net:/cvsroot/dri co xc
+                       cvs -z3 -d:ext:YOURID@cvs.dri.sourceforge.net:/cvsroot/dri co xc
 
       Replace YOURID with your CVS login name.  You'll be prompted to enter
       your sourceforge password.
@@ -598,7 +598,7 @@ At this point your X server should be up and running with hardware-acceler-
 ated direct rendering.  Please read the DRI User Guide for information about
 trouble shooting and how to use the DRI-enabled X server for 3D applications.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.14 2001/05/02 15:06:08 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.16 2002/01/07 22:05:57 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.10.2.1 2001/06/01 18:26:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.13 2002/01/07 22:07:16 dawes Exp $

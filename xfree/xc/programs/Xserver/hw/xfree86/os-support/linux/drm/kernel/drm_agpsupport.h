@@ -35,12 +35,8 @@
 
 #if __REALLY_HAVE_AGP
 
-#if LINUX_VERSION_CODE < 0x020400
-#include "agpsupport-pre24.h"
-#else
 #define DRM_AGP_GET (drm_agp_t *)inter_module_get("drm_agp")
 #define DRM_AGP_PUT inter_module_put("drm_agp")
-#endif
 
 static const drm_agp_t *drm_agp = NULL;
 
@@ -271,21 +267,24 @@ drm_agp_head_t *DRM(agp_init)(void)
 		case INTEL_GX:		head->chipset = "Intel 440GX";   break;
 		case INTEL_I810:	head->chipset = "Intel i810";    break;
 
-#if LINUX_VERSION_CODE >= 0x020400
-		case INTEL_I840:	head->chipset = "Intel i840";    break;
+		case INTEL_I815:	head->chipset = "Intel i815";	 break;
+#if LINUX_VERSION_CODE >= 0x020415
+	 	case INTEL_I820:	head->chipset = "Intel i820";	 break;
 #endif
+		case INTEL_I840:	head->chipset = "Intel i840";    break;
+#if LINUX_VERSION_CODE >= 0x020415
+		case INTEL_I845:	head->chipset = "Intel i845";    break;
+#endif
+		case INTEL_I850:	head->chipset = "Intel i850";	 break;
 
 		case VIA_GENERIC:	head->chipset = "VIA";           break;
 		case VIA_VP3:		head->chipset = "VIA VP3";       break;
 		case VIA_MVP3:		head->chipset = "VIA MVP3";      break;
-
-#if LINUX_VERSION_CODE >= 0x020400
 		case VIA_MVP4:		head->chipset = "VIA MVP4";      break;
 		case VIA_APOLLO_KX133:	head->chipset = "VIA Apollo KX133";
 			break;
 		case VIA_APOLLO_KT133:	head->chipset = "VIA Apollo KT133";
 			break;
-#endif
 
 		case VIA_APOLLO_PRO: 	head->chipset = "VIA Apollo Pro";
 			break;
@@ -294,8 +293,35 @@ drm_agp_head_t *DRM(agp_init)(void)
 		case AMD_IRONGATE:	head->chipset = "AMD Irongate";  break;
 		case ALI_GENERIC:	head->chipset = "ALi";           break;
 		case ALI_M1541: 	head->chipset = "ALi M1541";     break;
+
+#if LINUX_VERSION_CODE >= 0x020402
+		case ALI_M1621: 	head->chipset = "ALi M1621";	 break;
+		case ALI_M1631: 	head->chipset = "ALi M1631";	 break;
+		case ALI_M1632: 	head->chipset = "ALi M1632";	 break;
+		case ALI_M1641: 	head->chipset = "ALi M1641";	 break;
+		case ALI_M1647: 	head->chipset = "ALi M1647";	 break;
+		case ALI_M1651: 	head->chipset = "ALi M1651";	 break;
+#endif
+
+#if LINUX_VERSION_CODE >= 0x020406
+		case SVWRKS_HE: 	head->chipset = "Serverworks HE";
+			break;
+		case SVWRKS_LE: 	head->chipset = "Serverworks LE";
+			break;
+		case SVWRKS_GENERIC: 	head->chipset = "Serverworks Generic";
+			break;
+#endif
+
 		default:		head->chipset = "Unknown";       break;
 		}
+#if LINUX_VERSION_CODE <= 0x020408
+		head->cant_use_aperture = 0;
+		head->page_mask = ~(0xfff);
+#else
+		head->cant_use_aperture = head->agp_info.cant_use_aperture;
+		head->page_mask = head->agp_info.page_mask;
+#endif
+
 		DRM_INFO("AGP %d.%d on %s @ 0x%08lx %ZuMB\n",
 			 head->agp_info.version.major,
 			 head->agp_info.version.minor,

@@ -1,9 +1,13 @@
-/* $Xorg: wire.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
+/* $Xorg: wire.c,v 1.4 2001/02/09 02:05:32 xorgcvs Exp $ */
 /*
 
 Copyright 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,11 +45,14 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.10 2001/01/17 23:44:56 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.12 2001/12/14 20:00:53 dawes Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "wire.h"
+#include "tags.h"
+#include "colormap.h"
 #include "init.h"
 #ifndef Lynx
 #include <sys/uio.h>
@@ -408,10 +415,21 @@ SendIncrementPixel(client, cmap, pixel)
 }
 
 void
+#ifdef NeedFunctionPrototypes
+SendAllocColor(
+    ClientPtr	client,
+    XID		cmap,
+    CARD32	pixel,
+    CARD16	red,
+    CARD16	green,
+    CARD16	blue)
+#else
 SendAllocColor(client, cmap, pixel, red, green, blue)
     ClientPtr   client;
     XID         cmap;
+    CARD32      pixel;
     CARD16	red, green, blue;
+#endif
 {
     xLbxAllocColorReq req;
 
@@ -953,7 +971,7 @@ ServerProcStandardEvent(sc)
 		     start, end);
 #endif
 	    if (pmap && pmap->grab_status == CMAP_GRABBED)
-		GotServerFreeCellsEvent (pmap, start, end, 1);
+		GotServerFreeCellsEvent (pmap, start, end);
 	    break;
 	}
 	}

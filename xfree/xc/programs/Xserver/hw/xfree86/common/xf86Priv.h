@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.72 2001/05/15 18:22:21 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.76 2002/01/15 01:56:56 dawes Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -61,6 +61,7 @@ extern const char *xf86ModulePath;
 extern MessageType xf86ModPathFrom;
 extern const char *xf86LogFile;
 extern MessageType xf86LogFileFrom;
+extern Bool xf86LogFileWasOpened;
 extern serverLayoutRec xf86ConfigLayout;
 extern Pix24Flags xf86ConfigPix24;
 
@@ -89,7 +90,7 @@ extern Bool xf86ProbeOnly;
 extern Bool xf86DoProbe;
 
 #ifndef DEFAULT_VERBOSE
-#define DEFAULT_VERBOSE		1
+#define DEFAULT_VERBOSE		0
 #endif
 #ifndef DEFAULT_LOG_VERBOSE
 #define DEFAULT_LOG_VERBOSE	3
@@ -157,7 +158,7 @@ void xf86SigHandler(int signo);
 void xf86HandlePMEvents(int fd, pointer data);
 extern int (*xf86PMGetEventFromOs)(int fd,pmEvent *events,int num);
 extern pmWait (*xf86PMConfirmEventToOs)(int fd,pmEvent event);
-
+void xf86GrabServerCallback(CallbackListPtr *, pointer, pointer);
 
 /* xf86Helper.c */
 void xf86LogInit(void);

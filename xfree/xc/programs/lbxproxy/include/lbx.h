@@ -1,9 +1,13 @@
-/* $Xorg: lbx.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
+/* $Xorg: lbx.h,v 1.4 2001/02/09 02:05:32 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,13 +45,13 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/include/lbx.h,v 1.6 2001/12/14 20:00:55 dawes Exp $ */
 
 #ifndef _LBX_H_
 #define _LBX_H_
 #include "misc.h"
 #include "os.h"
 #include "util.h"
-#define _XLBX_SERVER_
 #include "lbxstr.h"
 
 /* we keep the ifdefs in the code as a guide to what's going on */

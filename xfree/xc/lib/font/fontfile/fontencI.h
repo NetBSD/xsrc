@@ -1,5 +1,5 @@
 /*
-Copyright (c) 1998 by Juliusz Chroboczek
+Copyright (c) 1998-2001 by Juliusz Chroboczek
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/fontencI.h,v 1.3 1999/04/25 10:01:43 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontencI.h,v 1.4 2001/08/13 21:46:47 dawes Exp $ */
 
 /* Private types and functions for the encoding code. */
 /* Used by the files `fontenc.h' and `encparse.h' */
 
-struct font_encoding_simple_mapping {
-  unsigned len;                 /* might be 0x10000 */
-  unsigned short row_size;
-  unsigned short first;
-  unsigned short *map;
-};
+typedef struct _FontEncSimpleMap {
+    unsigned len;                 /* might be 0x10000 */
+    unsigned short row_size;
+    unsigned short first;
+    unsigned short *map;
+} FontEncSimpleMapRec, *FontEncSimpleMapPtr;
 
-struct font_encoding_simple_naming {
-  unsigned len;
-  unsigned short first;
-  char **map;
-};
+typedef struct _FontEncSimpleName {
+    unsigned len;
+    unsigned short first;
+    char **map;
+} FontEncSimpleNameRec, *FontEncSimpleNamePtr;
 
-unsigned font_encoding_simple_recode(unsigned, void*);
-unsigned font_encoding_undefined_recode(unsigned, void*);
-char *font_encoding_simple_name(unsigned, void*);
-char *font_encoding_undefined_name(unsigned, void*);
+unsigned FontEncSimpleRecode(unsigned, void*);
+unsigned FontEncUndefinedRecode(unsigned, void*);
+char *FontEncSimpleName(unsigned, void*);
+char *FontEncUndefinedName(unsigned, void*);
 
-struct font_encoding* loadEncodingFile(const char*, const char*);
+FontEncPtr FontEncReallyLoad(const char*, const char*);

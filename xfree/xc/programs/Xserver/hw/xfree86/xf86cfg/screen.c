@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.6 2001/03/24 01:17:21 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.8 2001/10/28 03:34:08 tsi Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -563,7 +563,7 @@ DrawScreenMask(Display *dpy, Drawable win, GC gc, int xs, int ys, int xe, int ye
 {
     double xfact, yfact;
     XPoint points[(sizeof(lin) / sizeof(lin[0])) >> 1];
-    int i, x, y, width, height;
+    int i = 0, x = 0, y = 0, width, height;
 
     if (rotate) {
 	xfact = (xe - xs) / 80.0;
@@ -650,48 +650,46 @@ AdjustScreenUI(void)
     XtUnmapWidget(work);
 
     while (adj) {
-	xf86cfgScreen *scr, *topscr, *botscr, *lefscr, *rigscr;
+	xf86cfgScreen *scr = NULL,
+	    *topscr = NULL, *botscr = NULL, *lefscr = NULL, *rigscr = NULL;
 
 	for (i = 0; i < computer.num_screens; i++)
 	    if (computer.screens[i]->screen == adj->adj_screen)
 		break;
+	if (i < computer.num_screens)
 	    scr = computer.screens[i];
 
 	if (adj->adj_top != NULL) {
 	    for (i = 0; i < computer.num_screens; i++)
 		if (computer.screens[i]->screen == adj->adj_top)
 		    break;
-	    topscr = computer.screens[i];
+	    if (i < computer.num_screens)
+		topscr = computer.screens[i];
 	}
-	else
-	    topscr = NULL;
 
 	if (adj->adj_bottom != NULL) {
 	    for (i = 0; i < computer.num_screens; i++)
 		if (computer.screens[i]->screen == adj->adj_bottom)
 		    break;
-	    botscr = computer.screens[i];
+	    if (i < computer.num_screens)
+		botscr = computer.screens[i];
 	}
-	else
-	    botscr = NULL;
 
 	if (adj->adj_left != NULL) {
 	    for (i = 0; i < computer.num_screens; i++)
 		if (computer.screens[i]->screen == adj->adj_left)
 		    break;
-	    lefscr = computer.screens[i];
+	    if (i < computer.num_screens)
+		lefscr = computer.screens[i];
 	}
-	else
-	    lefscr = NULL;
 
 	if (adj->adj_right != NULL) {
 	    for (i = 0; i < computer.num_screens; i++)
 		if (computer.screens[i]->screen == adj->adj_right)
 		    break;
-	    rigscr = computer.screens[i];
+	    if (i < computer.num_screens)
+		rigscr = computer.screens[i];
 	}
-	else
-	    rigscr = NULL;
 
 	if (lefscr == NULL && rigscr == NULL && topscr == NULL && lefscr == NULL) {
 	    XF86ConfScreenPtr s;
@@ -701,19 +699,21 @@ AdjustScreenUI(void)
 		for (i = 0; i < computer.num_screens; i++)
 		    if (computer.screens[i]->screen == s)
 			break;
-		switch (adj->adj_where) {
-		    case CONF_ADJ_RIGHTOF:
-			lefscr = computer.screens[i];
-			break;
-		    case CONF_ADJ_LEFTOF:
-			rigscr = computer.screens[i];
-			break;
-		    case CONF_ADJ_ABOVE:
-			botscr = computer.screens[i];
-			break;
-		    case CONF_ADJ_BELOW:
-			topscr = computer.screens[i];
-			break;
+		if (i < computer.num_screens) {
+		    switch (adj->adj_where) {
+			case CONF_ADJ_RIGHTOF:
+			    lefscr = computer.screens[i];
+			    break;
+			case CONF_ADJ_LEFTOF:
+			    rigscr = computer.screens[i];
+			    break;
+			case CONF_ADJ_ABOVE:
+			    botscr = computer.screens[i];
+			    break;
+			case CONF_ADJ_BELOW:
+			    topscr = computer.screens[i];
+			    break;
+		    }
 		}
 	    }
 	}
@@ -923,7 +923,7 @@ UpdateScreenUI(void)
     qsort(computer.screens, computer.num_screens, sizeof(xf86cfgScreen*),
 	  qcmp_screen);
 
-    adj = prev, base = NULL;
+    adj = prev = left = base = NULL;
     for (i = p = scrno = 0; i < computer.num_screens; i++) {
 	XF86ConfScreenPtr scr = computer.screens[i]->screen;
 

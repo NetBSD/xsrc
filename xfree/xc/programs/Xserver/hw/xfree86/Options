@@ -24,7 +24,7 @@
 !! dealings in this Software without prior written authorization from the
 !! XFree86 Project.
 !!
-!! $XFree86: xc/programs/Xserver/hw/xfree86/Options,v 1.1.2.2 2001/06/01 02:24:16 dawes Exp $
+!! $XFree86: xc/programs/Xserver/hw/xfree86/Options,v 1.8 2001/12/17 20:52:29 dawes Exp $
 
 !! XAA options
 xaa.XaaNoCPUToScreenColorExpandFill:\
@@ -64,12 +64,12 @@ Disables accelerated rectangular expansion blits from source patterns \
 stored in system memory (one scan line at a time).
 
 xaa.XaaNoScanlineImageWriteRect:\
-Disables acclerated transfers of full-color rectangular patterns from \
+Disables accelerated transfers of full-color rectangular patterns from \
 system memory to video memory (one scan line at a time).
 
 xaa.XaaNoScreenToScreenColorExpandFill:\
 Disables accelerated rectangular expansion blits from source patterns \
-stored in offscreen video memory.
+stored in off-screen video memory.
 
 xaa.XaaNoScreenToScreenCopy:\
 Disables accelerated copies of rectangular regions from one part of video \
@@ -91,6 +91,21 @@ xaa.XaaNoSolidTwoPointLine:\
 Disables accelerated solid line draws between two arbitrary points.
 
 
+!! DDC Options
+ddc.NoDDC:\
+Disables DDC (Display Data Channel) so that the Xserver doesn't try to talk to\
+the Monitor. \
+Default: off, implies DDC is used.
+
+ddc.NoDDC1:\
+Disables use of DDC version 1 (DDC using vertical refresh). \
+Default: off, implies DDC1 is used.
+
+ddc.NoDDC2:\
+Disables use of DDC version 2 (DDC using I2C - usually over vga connector). \
+Default: off, implies DDC2 is used.
+
+
 !! FBDev options
 fbdev.fbdev:\
 The framebuffer device to use. \
@@ -100,6 +115,12 @@ fbdev.ShadowFB:\
 Enable or disable use of the shadow framebuffer layer. \
 Default: on.
 
+fbdev.Rotate:\
+Enable rotation of the display. The supported values are "CW" (clockwise, \
+90 degrees), "UD" (upside down, 180 degrees) and "CCW" (counter clockwise, \
+270 degrees). Implies use of the shadow framebuffer layer. \
+Default: off.
+
 
 !! MGA options
 mga.ColorKey:\
@@ -107,8 +128,8 @@ Set the colormap index used for the transparency key for the depth 8 plane \
 when operating in 8+24 overlay mode. The value must be in the range 2-255. \
 Default: 255.
 
-mga.HWcursor:\
-Enable or disable the HW cursor. Default: on.
+!mga.HWcursor:\
+!Enable or disable the HW cursor. Default: on.
 
 mga.MGASDRAM:\
 Specify whether G100, G200 or G400 cards have SDRAM. The driver attempts to \
@@ -116,10 +137,10 @@ auto-detect this based on the card's PCI subsystem ID. This option may be \
 used to override that auto-detection. The mga driver is not able to \
 auto-detect the presence of of SDRAM on secondary heads in multihead \
 configurations so this option will often need to be specified in multihead \
-configurations. Default: autodetected.
+configurations. Default: auto-detected.
 
 mga.NoAccel:\
-Disable or enable acceleration. Default: acceleration is enabled.
+Disable or enable 2D hardware acceleration. Default: acceleration is enabled.
 
 mga.OverclockMem:\
 Set clocks to values used by some commercial X-Servers (G100, G200 and \
@@ -138,8 +159,7 @@ Rotate the display clockwise or counterclockwise. This mode is unaccelerated. \
 Default: no rotation.
 
 mga.ShadowFB:\
-Enable or disable use of the shadow framebuffer layer. See shadowfb(4) for \
-further information. Default: off.
+Enable or disable use of the shadow framebuffer layer. Default: off. \
 
 mga.SyncOnGreen:\
 Enable or disable combining the sync signals with the green signal. \
@@ -158,12 +178,58 @@ This has XvImage support use the texture engine rather than the video \
 overlay. This option is only supported by the G200 and G400, and only in \
 16 and 32 bits per pixel. Default: off.
 
+mga.NoHal:\
+Matrox provides a "Hardware Abstraction Layer", \
+a separate binary which enables extra hardware features from G400 onwards. \
+Default: HAL is used.
+
+!mga.DigitalScreen:\
+! Option Ignored. Drivers auto-detect Digital output if they support it at all.
+!Default: Auto-detected.
+
+! mga.TV:\
+! Option Ignored. Drivers auto-detect TV if they support TV out at all.
+!Default: Auto-detected.
+
+mga.TVStandard:\
+(HAL only) Picture standard for TV out. Use "PAL" for 50Hz PAL. \
+Default: 60Hz NTSC.
+
+mga.CableType:\
+(HAL only) Set the cable type for TV out. Options are "SCART_RGB", \
+"SCART_COMPOSITE", or "SCART_TYPE2". Any other string enables the default. \
+Default: YC_COMPOSITE.
+
+mga.SwappedHead:\
+(HAL only) For Dual Head cards, reverse relationship between CRTC picture \
+generators and video output sockets. \
+Especially useful with TV or digital outputs. \
+Default: CRTC1 generates output for socket 1 and CRTC2 generates output for socket 2.
+
+mga.Crtc2Half:\
+In dual head mode, allow CRTC2 to use half of the video memory. \
+Default: CRTC2 uses min{8MB, half video RAM}, but see also Crtc2Ram.
+
+mga.Crtc2Ram:\
+In dual head mode, CRTC2 will use this many KB of video memory. \
+Overrrides Crtc2Half. \
+Default: CRTC2 uses min{8MB, half video RAM}, but see also Crtc2Half.
+
+mga.ShowCache:\
+An option for hackers. The pixmap cache lives in off-screen video memory. \
+This option extends the virtual desktop to show this part of video memory. \
+Default: Off.
+
+mga.AGPMode:\
+AGP bus speed multiplier, used by DRI. \
+Default: x1 (slowest but most stable).
+
 
 !! R128 options
 
-r128.SWcursor: \
-Selects software cursor. \
-Default: off.
+!r128.SWcursor: \
+!Selects software cursor. \
+!Default: off.
 
 r128.NoAccel:\
 Enables or disables all hardware acceleration. \
@@ -200,9 +266,73 @@ r128.UseFBDev:\
 Enable or disable use of on OS-specific fb interface (and is not supported \
 on all OSs). See fbdevhw(4) for further information. Default: off.
 
+!! NeoMagic options
+
+neo.StrangeLockups:\
+Before XFree86 version 4.2.0 many NeoMagic systems experienced \
+strange lockups unless they used the options \ 
+"XaaNoScanlineImageWriteRect" and "XaaNoScanlineCPUToScreenColorExpandFill". \
+Setting this to "No" is faster but will lock some machines. \
+Default: Yes.
 
 !! Vesa options
 vesa.ShadowFB:\
 Enable or disable use of the shadow framebuffer layer. See shadowfb(4)\
 for further information. Default: on.
 
+
+!! SiS Options
+sis.NoAccel:\
+Disable or enable acceleration. \
+Default: acceleration is enabled.
+
+!sis.HWcursor:\
+!Enable or disable the HW cursor. \
+!Default: on.
+
+!sis.SWcursor:\
+!The opposite of HWCursor. \
+!Default: on.
+
+sis.NoXVideo:\
+Disable XV (XVideo) extension support. \
+Default: off.
+
+sis.SetMClk:\
+Set the memory clock in MHz. \
+Default: autodetect.
+
+sis.PciRetry:\
+Enable or disable PCI retries. \
+Default: on.
+
+sis.TurboQueue:\
+Enable or disable TurboQueue mode. \
+Default: off for SIS530, on for the others.
+
+sis.FastVram:\
+Enable or disable FastVram mode. \
+Default: on.
+
+sis.Rotate:\
+Rotate the display clockwise (CW) or counterclockwise (CCW). \
+This mode is unaccelerated, and uses the Shadow Frame Buffer layer \
+Default: no rotation.
+
+sis.ForceCRT2Type:\
+Force display type to one of: TV, LCD or VGA. \
+Default: autodetect.
+
+sis.ShadowFB:\
+Enable or disable use of the shadow framebuffer layer. See shadowfb(4) for \
+further information. Default: off.
+ 
+!! Generic driver options, apply to many drivers
+
+*.SWcursor:\
+See also HWcursor.\
+Default: Usually Off.
+
+*.HWcursor:\
+Use the hardware cursor. See also SWcursor. \
+Default: usually HWcursor, but some drivers may default to software.

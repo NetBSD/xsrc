@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_wrapper.c,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_wrapper.c,v 1.2 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -42,7 +42,7 @@
 
 
 FxI32
-FX_grGetInteger_NoLock(FxU32 pname)
+FX_grGetInteger_NoLock(tdfxContextPtr fxMesa, FxU32 pname)
 {
    switch (pname) {
    case FX_FOG_TABLE_ENTRIES:
@@ -56,13 +56,13 @@ FX_grGetInteger_NoLock(FxU32 pname)
    {
       FxI32 result;
       FxU32 grname = pname;
-      grGet(grname, 4, &result);
+      fxMesa->Glide.grGet(grname, 4, &result);
       return result;
    }
    case FX_ZDEPTH_MAX:
    {
       FxI32 zvals[2];
-      grGet(GR_ZDEPTH_MIN_MAX, 8, zvals);
+      fxMesa->Glide.grGet(GR_ZDEPTH_MIN_MAX, 8, zvals);
       return zvals[0];
    }
    default:
@@ -80,7 +80,7 @@ FX_grGetInteger(tdfxContextPtr fxMesa, FxU32 pname)
 {
    int result;
    LOCK_HARDWARE(fxMesa);
-   result = FX_grGetInteger_NoLock(pname);
+   result = FX_grGetInteger_NoLock(fxMesa, pname);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -91,7 +91,7 @@ FX_grGetString(tdfxContextPtr fxMesa, FxU32 pname)
 {
    const char *s;
    LOCK_HARDWARE(fxMesa);
-   s = grGetString(pname);
+   s = fxMesa->Glide.grGetString(pname);
    UNLOCK_HARDWARE(fxMesa);
    return s;
 }
@@ -108,13 +108,13 @@ FX_grColorMask(GLcontext *ctx, GLboolean r, GLboolean g,
    LOCK_HARDWARE(fxMesa);
    if (ctx->Visual->RedBits == 8) {
       /* 32bpp mode */
-      ASSERT( grColorMaskExtProc );
-      grColorMaskExtProc(r, g, b, a);
+      ASSERT( fxMesa->Glide.grColorMaskExt );
+      fxMesa->Glide.grColorMaskExt(r, g, b, a);
    }
    else {
       /* 16 bpp mode */
       /* we never have an alpha buffer */
-      grColorMask(r || g || b, GL_FALSE);
+      fxMesa->Glide.grColorMask(r || g || b, GL_FALSE);
    }
    UNLOCK_HARDWARE(fxMesa);
 }
@@ -124,15 +124,16 @@ void
 FX_grColorMask_NoLock(GLcontext *ctx, GLboolean r, GLboolean g,
                       GLboolean b, GLboolean a)
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (ctx->Visual->RedBits == 8) {
       /* 32bpp mode */
-      ASSERT( grColorMaskExtProc );
-      grColorMaskExtProc(r, g, b, a);
+      ASSERT( fxMesa->Glide.grColorMaskExt );
+      fxMesa->Glide.grColorMaskExt(r, g, b, a);
    }
    else {
       /* 16 bpp mode */
       /* we never have an alpha buffer */
-      grColorMask(r || g || b, GL_FALSE);
+      fxMesa->Glide.grColorMask(r || g || b, GL_FALSE);
    }
 }
 
@@ -146,14 +147,14 @@ FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
    LOCK_HARDWARE(fxMesa);
    if (ctx->Visual->RedBits == 8) {
       /* 32bpp mode */
-      ASSERT( grColorMaskExtProc );
-      grColorMaskExtProc(rgba[RCOMP], rgba[GCOMP],
+      ASSERT( fxMesa->Glide.grColorMaskExt );
+      fxMesa->Glide.grColorMaskExt(rgba[RCOMP], rgba[GCOMP],
 			 rgba[BCOMP], rgba[ACOMP]);
    }
    else {
       /* 16 bpp mode */
       /* we never have an alpha buffer */
-      grColorMask(rgba[RCOMP] || rgba[GCOMP] || rgba[BCOMP], GL_FALSE);
+      fxMesa->Glide.grColorMask(rgba[RCOMP] || rgba[GCOMP] || rgba[BCOMP], GL_FALSE);
    }
    UNLOCK_HARDWARE(fxMesa);
 }
@@ -161,16 +162,17 @@ FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
 void
 FX_grColorMaskv_NoLock(GLcontext *ctx, const GLboolean rgba[4])
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (ctx->Visual->RedBits == 8) {
       /* 32bpp mode */
-      ASSERT( grColorMaskExtProc );
-      grColorMaskExtProc(rgba[RCOMP], rgba[GCOMP],
-			 rgba[BCOMP], rgba[ACOMP]);
+      ASSERT( fxMesa->Glide.grColorMaskExt );
+      fxMesa->Glide.grColorMaskExt(rgba[RCOMP], rgba[GCOMP],
+                                   rgba[BCOMP], rgba[ACOMP]);
    }
    else {
       /* 16 bpp mode */
       /* we never have an alpha buffer */
-      grColorMask(rgba[RCOMP] || rgba[GCOMP] || rgba[BCOMP], GL_FALSE);
+      fxMesa->Glide.grColorMask(rgba[RCOMP] || rgba[GCOMP] || rgba[BCOMP], GL_FALSE);
    }
 }
 
@@ -184,7 +186,8 @@ FX_grLfbLock(tdfxContextPtr fxMesa, GrLock_t type, GrBuffer_t buffer,
    FxBool result;
 
    LOCK_HARDWARE(fxMesa);
-   result = grLfbLock(type, buffer, writeMode, origin, pixelPipeline, info);
+   result = fxMesa->Glide.grLfbLock(type, buffer, writeMode,
+                                    origin, pixelPipeline, info);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -195,7 +198,7 @@ FX_grTexTextureMemRequired(tdfxContextPtr fxMesa, FxU32 evenOdd, GrTexInfo * inf
    FxU32 result;
 
    LOCK_HARDWARE(fxMesa);
-   result = grTexTextureMemRequired(evenOdd, info);
+   result = fxMesa->Glide.grTexTextureMemRequired(evenOdd, info);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -206,7 +209,7 @@ FX_grTexMinAddress(tdfxContextPtr fxMesa, GrChipID_t tmu)
    FxU32 result;
 
    LOCK_HARDWARE(fxMesa);
-   result = grTexMinAddress(tmu);
+   result = fxMesa->Glide.grTexMinAddress(tmu);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -217,7 +220,7 @@ FX_grTexMaxAddress(tdfxContextPtr fxMesa, GrChipID_t tmu)
    FxU32 result;
 
    LOCK_HARDWARE(fxMesa);
-   result = grTexMaxAddress(tmu);
+   result = fxMesa->Glide.grTexMaxAddress(tmu);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -228,7 +231,7 @@ FX_getFogTableSize(tdfxContextPtr fxMesa)
 {
    int result;
    LOCK_HARDWARE(fxMesa);
-   grGet(GR_FOG_TABLE_ENTRIES, sizeof(int), (void *) &result);
+   fxMesa->Glide.grGet(GR_FOG_TABLE_ENTRIES, sizeof(int), (void *) &result);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -238,7 +241,7 @@ FX_getGrStateSize(tdfxContextPtr fxMesa)
 {
    int result;
    LOCK_HARDWARE(fxMesa);
-   grGet(GR_GLIDE_STATE_SIZE, sizeof(int), (void *) &result);
+   fxMesa->Glide.grGet(GR_GLIDE_STATE_SIZE, sizeof(int), (void *) &result);
    UNLOCK_HARDWARE(fxMesa);
    return result;
 }
@@ -248,7 +251,7 @@ FX_grAADrawLine(tdfxContextPtr fxMesa, GrVertex * a, GrVertex * b)
 {
    /* ToDo */
    BEGIN_CLIP_LOOP(fxMesa);
-   grDrawLine(a, b);
+   fxMesa->Glide.grDrawLine(a, b);
    END_CLIP_LOOP(fxMesa);
 }
 
@@ -256,7 +259,7 @@ void
 FX_grAADrawPoint(tdfxContextPtr fxMesa, GrVertex * a)
 {
    BEGIN_CLIP_LOOP(fxMesa);
-   grDrawPoint(a);
+   fxMesa->Glide.grDrawPoint(a);
    END_CLIP_LOOP(fxMesa);
 }
 
@@ -264,7 +267,7 @@ void
 FX_grDrawPolygonVertexList(tdfxContextPtr fxMesa, int n, GrVertex * verts)
 {
    BEGIN_CLIP_LOOP(fxMesa);
-   grDrawVertexArrayContiguous(GR_POLYGON, n, verts, sizeof(GrVertex));
+   fxMesa->Glide.grDrawVertexArrayContiguous(GR_POLYGON, n, verts, sizeof(GrVertex));
    END_CLIP_LOOP(fxMesa);
 }
 
@@ -273,17 +276,17 @@ void
 FX_setupGrVertexLayout(tdfxContextPtr fxMesa)
 {
    LOCK_HARDWARE(fxMesa);
-   grReset(GR_VERTEX_PARAMETER);
+   fxMesa->Glide.grReset(GR_VERTEX_PARAMETER);
 
-   grCoordinateSpace(GR_WINDOW_COORDS);
-   grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PARGB_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE);
-   grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
-   grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grCoordinateSpace(GR_WINDOW_COORDS);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PARGB_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
    UNLOCK_HARDWARE(fxMesa);
 }
 #else /* TDFX_USE_PARGB */
@@ -291,48 +294,54 @@ void
 FX_setupGrVertexLayout(tdfxContextPtr fxMesa)
 {
    LOCK_HARDWARE(fxMesa);
-   grReset(GR_VERTEX_PARAMETER);
+   fxMesa->Glide.grReset(GR_VERTEX_PARAMETER);
 
-   grCoordinateSpace(GR_WINDOW_COORDS);
-   grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_RGB, GR_VERTEX_R_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_A, GR_VERTEX_A_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE);
-   grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
-   grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grCoordinateSpace(GR_WINDOW_COORDS);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_RGB, GR_VERTEX_R_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_A, GR_VERTEX_A_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
+   fxMesa->Glide.grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
    UNLOCK_HARDWARE(fxMesa);
 }
 #endif /* TDFX_USE_PARGB */
 
 void
-FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask)
+FX_grHints_NoLock(tdfxContextPtr fxMesa, GrHint_t hintType, FxU32 hintMask)
 {
    switch (hintType) {
    case GR_HINT_STWHINT:
    {
       if (hintMask & GR_STWHINT_W_DIFF_TMU0)
-	 grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2,
-			GR_PARAM_ENABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_Q0,
+                                      GR_VERTEX_OOW_TMU0_OFFSET << 2,
+                                      GR_PARAM_ENABLE);
       else
-	 grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2,
-			GR_PARAM_DISABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_Q0,
+                                      GR_VERTEX_OOW_TMU0_OFFSET << 2,
+                                      GR_PARAM_DISABLE);
 
       if (hintMask & GR_STWHINT_ST_DIFF_TMU1)
-	 grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2,
-			GR_PARAM_ENABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_ST1,
+                                      GR_VERTEX_SOW_TMU1_OFFSET << 2,
+                                      GR_PARAM_ENABLE);
       else
-	 grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2,
-			GR_PARAM_DISABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_ST1,
+                                      GR_VERTEX_SOW_TMU1_OFFSET << 2,
+                                      GR_PARAM_DISABLE);
 
       if (hintMask & GR_STWHINT_W_DIFF_TMU1)
-	 grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2,
-			GR_PARAM_ENABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_Q1,
+                                      GR_VERTEX_OOW_TMU1_OFFSET << 2,
+                                      GR_PARAM_ENABLE);
       else
-	 grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2,
-			GR_PARAM_DISABLE);
+	 fxMesa->Glide.grVertexLayout(GR_PARAM_Q1,
+                                      GR_VERTEX_OOW_TMU1_OFFSET << 2,
+                                      GR_PARAM_DISABLE);
 
    }
    }
@@ -342,7 +351,7 @@ void
 FX_grHints(tdfxContextPtr fxMesa, GrHint_t hintType, FxU32 hintMask)
 {
    LOCK_HARDWARE(fxMesa);
-   FX_grHints_NoLock(hintType, hintMask);
+   FX_grHints_NoLock(fxMesa, hintType, hintMask);
    UNLOCK_HARDWARE(fxMesa);
 }
 
@@ -358,10 +367,11 @@ FX_grSstWinOpen(tdfxContextPtr fxMesa,
 {
    FX_GrContext_t i;
    LOCK_HARDWARE(fxMesa);
-   i = grSstWinOpen(hWnd,
-		    screen_resolution,
-		    refresh_rate,
-		    color_format, origin_location, nColBuffers, nAuxBuffers);
+   i = fxMesa->Glide.grSstWinOpen(hWnd,
+                                  screen_resolution,
+                                  refresh_rate,
+                                  color_format, origin_location,
+                                  nColBuffers, nAuxBuffers);
 
    /*
      fprintf(stderr,

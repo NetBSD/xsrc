@@ -24,6 +24,7 @@
  * or publicity pertaining to distribution of the software without specific,
  * written prior permission.
  */
+/* $XFree86: xc/programs/xmh/tsource.c,v 1.2 2001/10/28 03:34:40 tsi Exp $ */
 
 /* File: tsource.c -- the code for a toc source */
 
@@ -236,7 +237,7 @@ Boolean include;
     XawTextPosition textindex;
     Msg msg;
     char    c;
-    int     ddir, doff, i, whiteSpace;
+    int     ddir, doff, i, whiteSpace = 0;
     ddir = (dir == XawsdRight) ? 1 : -1;
     doff = (dir == XawsdRight) ? 0 : -1;
 
@@ -291,6 +292,8 @@ Boolean include;
 		textindex = 0;
 	    else
 		textindex = toc->lastPos;
+	    break;
+	default:
 	    break;
     }
     return textindex;

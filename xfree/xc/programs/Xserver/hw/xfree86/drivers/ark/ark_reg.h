@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_reg.h,v 1.1 2000/11/14 17:28:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_reg.h,v 1.2 2002/01/04 21:05:51 tsi Exp $ */
 
 #ifndef _ARK_REG_H
 #define _ARK_REG_H
@@ -80,9 +80,9 @@
 /* IO macros */
 
 #define OUTREG16(offset, value)	\
-	*(unsigned short *)(pARK->MMIOBase + offset) = value
+	*(volatile unsigned short *)(pARK->MMIOBase + offset) = value
 #define OUTREG(offset, value) \
-	*(unsigned int *)(pARK->MMIOBase + offset) = value
+	*(volatile unsigned int *)(pARK->MMIOBase + offset) = value
 
 
 #endif /* _ARK_REG_H */

@@ -1,8 +1,8 @@
-                          Information for SCO Users
+                    Information for SCO OpenServer Users
 
-                      J. Kean Johnston (hug@netcom.com)
+                       J. Kean Johnston (jkj@sco.com)
 
-                              30 November 1996
+                                 21 May 2001
 
 1.  Binary Distribution
 
@@ -544,9 +544,9 @@ for its input on everything.
 Special thanks to Jerry Whelan (guru@stasi.bradley.edu) for providing an ftp
 site for the binary distribution.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.17 1997/12/05 22:01:38 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.18 2001/06/30 22:41:48 tsi Exp $
 
      $XConsortium: SCO.sgml /main/11 1996/10/23 11:45:55 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.31 2000/03/01 01:48:12 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.32 2001/06/30 22:58:10 tsi Exp $

@@ -1,10 +1,14 @@
-/* $XFree86: xc/programs/twm/events.c,v 1.9 2001/01/22 21:32:37 dawes Exp $ */
+/* $XFree86: xc/programs/twm/events.c,v 1.12 2001/12/14 20:01:06 dawes Exp $ */
 /*****************************************************************************/
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -49,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: events.c,v 1.3 2000/08/17 19:54:05 cpqbld Exp $
+ * $Xorg: events.c,v 1.4 2001/02/09 02:05:36 xorgcvs Exp $
  *
  * twm event handling
  *
@@ -72,9 +76,6 @@ in this Software without prior written authorization from The Open Group.
 #include "icons.h"
 #include "version.h"
 
-extern int iconifybox_width, iconifybox_height;
-extern unsigned int mods_used;
-extern int menuFromFrameOrWindowOrTitlebar;
 
 #define MAX_X_EVENT 256
 event_proc EventHandler[MAX_X_EVENT]; /* event handler jump table */
@@ -100,10 +101,6 @@ int DragHeight;
 int CurrentDragX;
 int CurrentDragY;
 
-/* Vars to tell if the resize has moved. */
-extern int ResizeOrigX;
-extern int ResizeOrigY;
-
 static int enter_flag;
 static int ColortableThrashing;
 static TwmWindow *enter_win, *raise_win;
@@ -119,8 +116,6 @@ static Bool UninstallRootColormapQScanner ( Display *dpy, XEvent *ev, char *args
 int ButtonPressed = -1;
 int Cancel = FALSE;
 
-
-extern int ShapeEventBase, ShapeErrorBase;
 
 void AutoRaiseWindow (tmp)
     TwmWindow *tmp;
@@ -355,7 +350,7 @@ Bool DispatchEvent ()
 void
 HandleEvents()
 {
-    while (TRUE)
+    while (!TimeToYield)
     {
 	if (enter_flag && !QLength(dpy)) {
 	    if (enter_win && enter_win != raise_win) {
@@ -374,6 +369,12 @@ HandleEvents()
 	else
 	    XtDispatchEvent (&Event);
     }
+    if (dpy)
+    {
+	Reborder (CurrentTime);
+	XCloseDisplay(dpy);
+    }
+    exit(0);
 }
 
 

@@ -1,10 +1,14 @@
-/* $Xorg: Simple.c,v 1.3 2000/08/17 19:45:37 cpqbld Exp $ */
+/* $Xorg: Simple.c,v 1.4 2001/02/09 02:03:45 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xaw/Simple.c,v 1.15 2001/01/17 19:42:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Simple.c,v 1.17 2001/12/14 19:54:42 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -64,6 +68,8 @@ static Bool ChangeSensitive(Widget);
 static void XawSimpleClassInitialize(void);
 static void XawSimpleClassPartInitialize(WidgetClass);
 #ifndef OLDXAW
+static void XawSimpleInitialize(Widget, Widget, ArgList, Cardinal*);
+static void XawSimpleDestroy(Widget);
 static void XawSimpleExpose(Widget, XEvent*, Region);
 #endif
 static void XawSimpleRealize(Widget, Mask*, XSetWindowAttributes*);
@@ -174,7 +180,11 @@ SimpleClassRec simpleClassRec = {
     XawSimpleClassInitialize,		/* class_initialize */
     XawSimpleClassPartInitialize,	/* class_part_initialize */
     False,				/* class_inited */
+#ifndef OLDXAW
+    XawSimpleInitialize,		/* initialize */
+#else
     NULL,				/* initialize */
+#endif
     NULL,				/* initialize_hook */
     XawSimpleRealize,			/* realize */
 #ifndef OLDXAW
@@ -191,7 +201,11 @@ SimpleClassRec simpleClassRec = {
     True,				/* compress_exposure */
     True,				/* compress_enterleave */
     False,				/* visible_interest */
+#ifndef OLDXAW
+    XawSimpleDestroy,			/* destroy */
+#else
     NULL,				/* destroy */
+#endif
     NULL,				/* resize */
 #ifndef OLDXAW
     XawSimpleExpose,			/* expose */
@@ -270,6 +284,28 @@ XawSimpleClassPartInitialize(WidgetClass cclass)
     if (c->simple_class.change_sensitive == XtInheritChangeSensitive)
 	c->simple_class.change_sensitive = super->simple_class.change_sensitive;
 }
+
+#ifndef OLDXAW
+/*ARGSUSED*/
+static void
+XawSimpleInitialize(Widget request, Widget cnew,
+		    ArgList args, Cardinal *num_args)
+{
+    SimpleWidget simple = (SimpleWidget)cnew;
+
+    if (simple->simple.tip)
+	simple->simple.tip = XtNewString(simple->simple.tip);
+}
+
+static void
+XawSimpleDestroy(Widget w)
+{
+    SimpleWidget simple = (SimpleWidget)w;
+
+    if (simple->simple.tip)
+	XtFree((XtPointer)simple->simple.tip);
+}
+#endif
 
 static void
 XawSimpleRealize(Widget w, Mask *valueMask, XSetWindowAttributes *attributes)
@@ -406,6 +442,13 @@ XawSimpleSetValues(Widget current, Widget request, Widget cnew,
 				    s_new->core.depth);
 	if ((npix && npix->mask) || (opix && opix->mask))
 	    XawReshapeWidget(cnew, npix);
+    }
+
+    if (s_old->simple.tip != s_new->simple.tip) {
+	if (s_old->simple.tip)
+	    XtFree((XtPointer)s_old->simple.tip);
+	if (s_new->simple.tip)
+	    s_new->simple.tip = XtNewString(s_new->simple.tip);
     }
 
     if (s_old->simple.tip && !s_new->simple.tip)

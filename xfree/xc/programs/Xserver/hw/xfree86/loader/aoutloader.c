@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aoutloader.c,v 1.15 1999/03/14 11:18:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aoutloader.c,v 1.17 2001/11/16 16:47:55 dawes Exp $ */
 
 /*
  *
@@ -29,12 +29,13 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef QNX
+#ifdef __QNX__
 #include <fcntl.h>
 #else
 #include <sys/fcntl.h>
 #endif
 #include <sys/stat.h>
+#include <netinet/in.h>
 
 #ifdef DBMALLOC
 #include <debug/malloc.h>

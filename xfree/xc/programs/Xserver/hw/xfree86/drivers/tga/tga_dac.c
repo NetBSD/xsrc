@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_dac.c,v 1.13 2001/02/17 14:18:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_dac.c,v 1.14 2001/10/28 03:33:50 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -643,7 +643,6 @@ static void
 ICS9110ClockSelect(ScrnInfoPtr pScrn, int freq)
 {
     unsigned int temp, temp1[6];
-    int i;
 
     /* There lies an ICS9110 Clock Generator. */
     /* ICS9110_CalcClockBits(freq, pll_bits); */

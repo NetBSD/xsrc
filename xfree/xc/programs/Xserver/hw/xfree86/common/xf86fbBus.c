@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbBus.c,v 1.1 2000/12/06 15:35:11 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbBus.c,v 1.2 2001/10/28 03:33:19 tsi Exp $ */
 
 /*
  * Copyright (c) 2000 by The XFree86 Project, Inc.
@@ -31,7 +31,6 @@ int
 xf86ClaimFbSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active)
 {
     EntityPtr p;
-    BusAccPtr pbap = xf86BusAccInfo;
     int num;
     
     num = xf86AllocateEntity();

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/glapi.c,v 1.10 2001/12/19 15:44:34 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
@@ -1738,6 +1738,7 @@ _glapi_get_proc_name(GLuint offset)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
+#ifdef DEBUG
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
@@ -1745,7 +1746,6 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(tab[i]);
    }
 
-#ifdef DEBUG
    /* Do some spot checks to be sure that the dispatch table
     * slots are assigned correctly.
     */

@@ -1,9 +1,13 @@
 /*
- * $Xorg: xconsole.c,v 1.4 2000/08/17 19:54:13 cpqbld Exp $
+ * $Xorg: xconsole.c,v 1.5 2001/02/09 02:05:40 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.25 2001/04/23 21:41:46 dawes Exp $ */
+/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.29 2001/12/14 20:01:19 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -57,18 +61,7 @@ extern char *_XawTextGetSTRING(TextWidget ctx, XawTextPosition left,
 #endif
 #include <X11/Shell.h>
 #include <ctype.h>
-
-#ifdef X_NOT_STDC_ENV
-extern char *malloc ();
-#else
 #include <stdlib.h>
-#endif
-
-#ifdef MINIX
-#define USE_FILE
-#define FILE_NAME "/dev/log"
-#define read(n,b,s) nbio_read(n,b,s)
-#endif
 
 /* Fix ISC brain damage.  When using gcc fdopen isn't declared in <stdio.h>. */
 #if defined(ISC) && __STDC__ && !defined(ISC30)
@@ -298,11 +291,6 @@ OpenConsole(void)
 
     if (input)
     {
-#ifdef MINIX
-	fcntl(fileno (input), F_SETFD,
-		fcntl(fileno (input), F_GETFD) | FD_ASYNCHIO);
-	nbio_register(fileno (input));
-#endif
 	input_id = XtAddInput (fileno (input), (XtPointer) XtInputReadMask,
 			       inputReady, (XtPointer) text);
     }
@@ -313,9 +301,6 @@ CloseConsole (void)
 {
     if (input) {
 	XtRemoveInput (input_id);
-#ifdef MINIX
-	nbio_unregister(fileno (input));
-#endif
 	fclose (input);
     }
 #ifdef USE_PTY
@@ -329,7 +314,7 @@ KillChild(int sig)
 {
     if (child_pid > 0)
 	kill(child_pid, SIGTERM);
-    exit(0);
+    _exit(0);
 }
 #endif
 
@@ -471,11 +456,6 @@ inputReady(XtPointer w, int *source, XtInputId *id)
 	    return;
 	}
 	    
-#ifdef MINIX
-	if (n == -1 && errno == EAGAIN)
-		return;
-	nbio_unregister(fileno (input));
-#endif
 	fclose (input);
 	XtRemoveInput (*id);
 

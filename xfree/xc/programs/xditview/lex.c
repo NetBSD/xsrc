@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xditview/lex.c,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
+/* $XFree86: xc/programs/xditview/lex.c,v 1.4 2001/08/01 00:45:03 tsi Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include "DviP.h"
 
+int
 DviGetAndPut(dw, cp)
     DviWidget	dw;
     int		*cp;
@@ -32,9 +33,9 @@ GetLine(dw, Buffer, Length)
 {
 	int 	i = 0, c;
 	char	*p = Buffer;
-	
+
 	Length--;			    /* Save room for final NULL */
-	
+
 	while ((!p || i < Length) && DviGetC (dw, &c) != EOF && c != '\n')
 		if (p)
 			*p++ = c;
@@ -44,10 +45,10 @@ GetLine(dw, Buffer, Length)
 #endif
 	if (c == '\n')
 		DviUngetC(dw, c);
-	if (p)	
+	if (p)
 		*p = '\0';
 	return (Buffer);
-} 
+}
 
 char *
 GetWord(dw, Buffer, Length)
@@ -57,7 +58,7 @@ GetWord(dw, Buffer, Length)
 {
 	int 	i = 0, c;
 	char	*p = Buffer;
-	
+
 	Length--;			    /* Save room for final NULL */
 	while (DviGetC(dw, &c) != EOF && isspace(c))
 		;
@@ -71,8 +72,9 @@ GetWord(dw, Buffer, Length)
 	if (p)
 		*p = '\0';
 	return (Buffer);
-} 
+}
 
+int
 GetNumber(dw)
 	DviWidget	dw;
 {
@@ -88,5 +90,3 @@ GetNumber(dw)
 		DviUngetC(dw, c);
 	return (i);
 }
-	
-	    

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.24 2001/01/17 22:36:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.26 2001/10/28 03:33:06 tsi Exp $ */
 /************************************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -43,6 +43,15 @@ SOFTWARE.
 
 #ifdef PANORAMIX
 #include "panoramiX.h"
+#endif
+
+#ifdef LBX
+#include "lbxserve.h"
+#endif
+
+#ifdef XF86BIGFONT
+#define _XF86BIGFONT_SERVER_
+#include "xf86bigfont.h"
 #endif
 
 #define QUERYCHARINFO(pci, pr)  *(pr) = (pci)->metrics
@@ -220,7 +229,7 @@ doOpenFont(client, c)
 #endif
 {
     FontPtr     pfont = NullFont;
-    FontPathElementPtr fpe;
+    FontPathElementPtr fpe = NULL;
     ScreenPtr   pScr;
     int         err = Successful;
     int         i;
@@ -586,7 +595,7 @@ doListFontsAndAliases(client, c)
     xListFontsReply reply;
     char	*bufptr;
     char	*bufferStart;
-    int		aliascount;
+    int		aliascount = 0;
 
     if (client->clientGone)
     {
@@ -897,7 +906,7 @@ doListFontsWithInfo(client, c)
     int         length;
     xFontProp  *pFP;
     int         i;
-    int		aliascount;
+    int		aliascount = 0;
     xListFontsWithInfoReply finalReply;
 
     if (client->clientGone)
@@ -1165,9 +1174,9 @@ doPolyText(client, c)
     register FontPtr pFont = c->pGC->font, oldpFont;
     Font	fid, oldfid;
     int err = Success, lgerr;	/* err is in X error, not font error, space */
-    enum { NEVER_SLEPT, START_SLEEP, SLEEPING } client_state;
+    enum { NEVER_SLEPT, START_SLEEP, SLEEPING } client_state = NEVER_SLEPT;
     FontPathElementPtr fpe;
-    GC *origGC;
+    GC *origGC = NULL;
 
     if (client->clientGone)
     {
@@ -1718,13 +1727,11 @@ SetFontPathElements(npaths, paths, bad, persist)
     Bool	persist;
 #endif
 {
-    int         i,
-                err;
+    int         i, err = 0;
     int         valid_paths = 0;
     unsigned int len;
     unsigned char *cp = paths;
-    FontPathElementPtr fpe,
-               *fplist;
+    FontPathElementPtr fpe = NULL, *fplist;
 
     fplist = (FontPathElementPtr *)
 	xalloc(sizeof(FontPathElementPtr) * npaths);

@@ -24,12 +24,10 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/util.c,v 1.15 2000/04/05 18:14:04 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/util.c,v 1.18 2001/09/11 06:42:54 paulo Exp $ */
 
 #include <stdio.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>		/* for realpath() */
-#endif
 #include "xedit.h"
 
 #include <X11/Xfuncs.h>
@@ -57,6 +55,7 @@ extern void _XawTextShowPosition(TextWidget);
  */
 extern Widget scratch;
 extern Widget vpanes[2], labels[3], texts[3], forms[3];
+extern XawTextWrapMode wrapmodes[3];
 
 /*
  * Implementation
@@ -242,6 +241,10 @@ KillTextSource(xedit_flist_item *item)
     if (idx >= flist.num_itens)
 	return (False);
 
+    flist.current = nitem;
+    if (item == flist.other)
+	flist.other = NULL;
+
     if (nitem->file_access == READ_OK)
 	XmuSnprintf(label_buf, sizeof(label_buf), "%s       READ ONLY",
 		    nitem->name);
@@ -321,12 +324,16 @@ FindTextSource(Widget source, char *filename)
 void
 SwitchTextSource(xedit_flist_item *item)
 {
-    Arg args[3];
+    Arg args[4];
     Cardinal num_args;
     char label_buf[BUFSIZ];
     xedit_flist_item *old_item =
 	FindTextSource(XawTextGetSource(textwindow), NULL);
     int i;
+
+    if (old_item != item)
+	flist.other = old_item;
+    flist.current = item;
 
     XawTextDisableRedisplay(textwindow);
     if (item->file_access == READ_OK)
@@ -391,6 +398,11 @@ SwitchTextSource(xedit_flist_item *item)
     ++num_args;
     XtSetArg(args[num_args], XtNinsertPosition, item->insert_position);
     ++num_args;
+    if (item->flags & WRAP_BIT)
+	XtSetArg(args[num_args], XtNwrap, item->wrap);
+    else
+	XtSetArg(args[num_args], XtNwrap, wrapmodes[WindowIndex(textwindow)]);
+    ++num_args;
     XtSetValues(textwindow, args, num_args);
 
     UpdateTextProperties();
@@ -430,6 +442,14 @@ ChangeTextWindow(Widget w)
     Arg args[1];
 
     if (textwindow != w) {
+	xedit_flist_item *other, *current;
+
+	other = FindTextSource(XawTextGetSource(textwindow), NULL);
+	current = FindTextSource(XawTextGetSource(w), NULL);
+	if (other != current)
+	    flist.other = other;
+	if (current)
+	    flist.current = current;
 	XtSetArg(args[0], XtNdisplayCaret, False);
 	XtSetValues(textwindow, args, 1);
 	XtSetArg(args[0], XtNdisplayCaret, True);
@@ -525,12 +545,13 @@ DeleteWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	XtUnmanageChild(vpanes[1]);
 
     if ((!current && idx == 0) || (current && idx != 0)) {
-	Arg args[3];
+	Arg args[4];
 	Cardinal num_args;
 	String label_str;
 	Pixmap label_pix;
 	XawTextPosition d_pos, i_pos;
 	Widget source;
+	xedit_flist_item *item;
 
 	num_args = 0;
 	XtSetArg(args[num_args], XtNlabel, &label_str);		++num_args;
@@ -552,6 +573,13 @@ DeleteWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	XtSetArg(args[num_args], XtNdisplayPosition, d_pos);	++num_args;
 	XtSetArg(args[num_args], XtNinsertPosition, i_pos);	++num_args;
 	XtSetArg(args[num_args], XtNtextSource, source);	++num_args;
+
+	item = FindTextSource(source, NULL);
+	if (item && (item->flags & WRAP_BIT))
+	    XtSetArg(args[num_args], XtNwrap, item->wrap);
+	else
+	    XtSetArg(args[num_args], XtNwrap,
+		     wrapmodes[WindowIndex(texts[current ? idx : uidx])]);
 	XtSetValues(texts[0], args, num_args);
 
 	UpdateTextProperties();
@@ -626,6 +654,7 @@ SplitWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
     Pixmap label_pix;
     int idx = WindowIndex(w), dimension;
     Bool vert = True;
+    xedit_flist_item *item;
 
     if (num_params && *num_params == 1
 	&& (*params[0] == 'h' || *params[0] == 'H'))
@@ -746,6 +775,12 @@ SplitWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
     XtSetArg(args[num_args], XtNtextSource, source);		++num_args;
     XtSetArg(args[num_args], XtNdisplayPosition, d_pos);	++num_args;
     XtSetArg(args[num_args], XtNinsertPosition, i_pos);		++num_args;
+    item = FindTextSource(source, NULL);
+    if (item && (item->flags & WRAP_BIT))
+	XtSetArg(args[num_args], XtNwrap, item->wrap);
+    else
+	XtSetArg(args[num_args], XtNwrap, wrapmodes[WindowIndex(ntext)]);
+    ++num_args;
     XtSetValues(ntext, args, num_args);
 
     UpdateTextProperties();

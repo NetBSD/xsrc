@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.29 2001/05/01 17:03:35 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.33 2001/12/14 19:58:51 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 
-/* $Xorg: shm.c,v 1.3 2000/08/17 19:47:58 cpqbld Exp $ */
+/* $Xorg: shm.c,v 1.4 2001/02/09 02:04:33 xorgcvs Exp $ */
 
 #include <sys/types.h>
 #ifndef Lynx
@@ -33,6 +37,7 @@ in this Software without prior written authorization from The Open Group.
 #include <ipc.h>
 #include <shm.h>
 #endif
+#include <unistd.h>
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"
@@ -57,9 +62,6 @@ in this Software without prior written authorization from The Open Group.
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
-extern int PanoramiXNumScreens;
-extern Bool noPanoramiXExtension;
-extern PanoramiXData   *panoramiXdataPtr;
 #endif
 
 typedef struct _ShmDesc {
@@ -98,8 +100,6 @@ static DISPATCH_PROC(ProcShmAttach);
 static DISPATCH_PROC(ProcShmCreatePixmap);
 static DISPATCH_PROC(ProcShmDetach);
 static DISPATCH_PROC(ProcShmDispatch);
-static DISPATCH_PROC(ProcShmGetImage);
-static DISPATCH_PROC(ProcShmGetImage);
 static DISPATCH_PROC(ProcShmGetImage);
 static DISPATCH_PROC(ProcShmPutImage);
 static DISPATCH_PROC(ProcShmQueryVersion);
@@ -504,7 +504,7 @@ fbShmPutImage(dst, pGC, depth, format, w, h, sx, sy, sw, sh, dx, dy, data)
 static int 
 ProcPanoramiXShmPutImage(register ClientPtr client)
 {
-    int			 j, result, orig_x, orig_y;
+    int			 j, result = 0, orig_x, orig_y;
     PanoramiXRes	*draw, *gc;
     Bool		 sendEvent, isRoot;
 
@@ -549,8 +549,8 @@ ProcPanoramiXShmGetImage(ClientPtr client)
     xShmGetImageReply	xgi;
     ShmDescPtr		shmdesc;
     int         	i, x, y, w, h, format;
-    Mask		plane, planemask;
-    long		lenPer, length, widthBytesLine;
+    Mask		plane = 0, planemask;
+    long		lenPer = 0, length, widthBytesLine;
     Bool		isRoot;
 
     REQUEST(xShmGetImageReq);
@@ -659,8 +659,8 @@ static int
 ProcPanoramiXShmCreatePixmap(client)
     register ClientPtr client;
 {
-    ScreenPtr pScreen;
-    PixmapPtr pMap;
+    ScreenPtr pScreen = NULL;
+    PixmapPtr pMap = NULL;
     DrawablePtr pDraw;
     DepthPtr pDepth;
     int i, j, result;
@@ -853,8 +853,8 @@ ProcShmGetImage(client)
     register ClientPtr client;
 {
     register DrawablePtr pDraw;
-    long		lenPer, length;
-    Mask		plane;
+    long		lenPer = 0, length;
+    Mask		plane = 0;
     xShmGetImageReply	xgi;
     ShmDescPtr		shmdesc;
     int			n;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.10 2001/04/06 18:16:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.12 2001/10/28 03:33:55 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86cmap.h"
@@ -39,7 +39,7 @@ fbdevHWGetName(ScrnInfoPtr pScrn)
 }
 
 int
-fbdevHWGetDepth(ScrnInfoPtr pScrn)
+fbdevHWGetDepth(ScrnInfoPtr pScrn, int *fbbpp)
 {
 	return -1;
 }
@@ -47,6 +47,7 @@ fbdevHWGetDepth(ScrnInfoPtr pScrn)
 int
 fbdevHWGetLineLength(ScrnInfoPtr pScrn)
 {
+	return -1;	/* Should cause something spectacular... */
 }
 
 int
@@ -165,4 +166,5 @@ fbdevHWDPMSSet(ScrnInfoPtr pScrn, int mode, int flags)
 Bool
 fbdevHWSaveScreen(ScreenPtr pScreen, int mode)
 {
+	return FALSE;
 }

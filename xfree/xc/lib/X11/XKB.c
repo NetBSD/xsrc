@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKB.c,v 1.5 2001/02/20 16:43:14 paulo Exp $ */
+/* $XFree86: xc/lib/X11/XKB.c,v 1.6 2001/10/28 03:32:33 tsi Exp $ */
 
 #include <stdio.h>
 #define NEED_REPLIES
@@ -172,7 +172,7 @@ XkbSelectEventDetails(dpy,deviceSpec,eventType,affect,details)
 {
     register xkbSelectEventsReq *req;
     XkbInfoPtr xkbi;
-    int	     size;
+    int	     size = 0;
     char     *out;
     union {
 	CARD8	*c8;
@@ -529,7 +529,7 @@ XkbComputeEffectiveMap(xkb,type,map_rtrn)
 {
 register int 		i;
 unsigned     		tmp;
-XkbKTMapEntryPtr	entry;
+XkbKTMapEntryPtr	entry = NULL;
 
     if ((!xkb)||(!type)||(!xkb->server))
 	return False;

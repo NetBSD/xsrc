@@ -1,9 +1,13 @@
-/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.7 2001/01/17 19:42:46 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.9 2001/12/14 19:54:59 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $Xorg: XAppgroup.c,v 1.4 2000/08/17 19:45:51 cpqbld Exp $ */
+/* $Xorg: XAppgroup.c,v 1.5 2001/02/09 02:03:49 xorgcvs Exp $ */
 
 #ifdef WIN32
 #define BOOL wBOOL
@@ -39,11 +43,7 @@ in this Software without prior written authorization from The Open Group.
 #include "Xext.h"
 #include "extutil.h"
 
-#if NeedVarargsPrototypes
-#define Va_start(a,b) va_start(a,b)
-#else
-#define Va_start(a,b) va_start(a)
-#endif
+#include <stdarg.h>
 
 struct xagstuff {
     int attrib_mask;
@@ -269,17 +269,10 @@ Bool XagDestroyApplicationGroup(dpy,app_group)
 }
 
 Bool
-#if NeedVarargsPrototypes
 XagGetApplicationGroupAttributes(
     Display* dpy,
     XAppGroup app_group,
     ...)
-#else
-XagGetApplicationGroupAttributes(dpy, app_group, va_alist)
-    Display* dpy;
-    XAppGroup app_group;
-    va_dcl
-#endif
 {
     va_list var;
     XExtDisplayInfo *info = find_display (dpy);
@@ -299,7 +292,7 @@ XagGetApplicationGroupAttributes(dpy, app_group, va_alist)
 	SyncHandle();
 	return False;
     }
-    Va_start (var, app_group);
+    va_start (var, app_group);
     for (attr = va_arg(var, int); attr != 0; attr = va_arg(var, int)) {
 	void* ptr;
 

@@ -27,7 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbutils/utils.h,v 1.4 2001/01/17 23:46:13 dawes Exp $ */
+/* $XFree86: xc/programs/xkbutils/utils.h,v 1.5 2001/07/25 15:05:26 dawes Exp $ */
 
 /***====================================================================***/
 
@@ -35,15 +35,11 @@
 #include	<X11/Xos.h>
 #include	<X11/Xfuncproto.h>
 #include	<X11/Xfuncs.h>
-#ifdef NeedVarargsPrototypes
 #include 	<stdarg.h>
-#endif
+#include	<stddef.h>
 
 _XFUNCPROTOBEGIN
 
-#ifndef	NULL
-#define	NULL	0
-#endif
 
 #ifndef NUL
 #define	NUL	'\0'

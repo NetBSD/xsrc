@@ -1,5 +1,5 @@
 /* $XConsortium: fbcmap.c,v 4.19 94/04/17 20:28:46 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/fb/fbcmap.c,v 1.5 2000/09/20 00:09:13 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbcmap.c,v 1.6 2001/10/28 03:33:08 tsi Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -215,7 +215,6 @@ fbExpandDirectColors (ColormapPtr   pmap,
 		      xColorItem    *indefs,
 		      xColorItem    *outdefs)
 {
-    int		    minred, mingreen, minblue;
     register int    red, green, blue;
     int		    maxred, maxgreen, maxblue;
     int		    stepred, stepgreen, stepblue;
@@ -404,7 +403,7 @@ fbSetVisualTypesAndMasks (int depth, int visuals, int bitsPerRGB,
     new->greenMask = greenMask;
     new->blueMask = blueMask;
     new->count = popCount (visuals);
-    for (prev = &fbVisuals; v = *prev; prev = &v->next);
+    for (prev = &fbVisuals; (v = *prev); prev = &v->next);
     *prev = new;
     return TRUE;
 }
@@ -423,8 +422,8 @@ fbHasVisualTypes (int depth)
 Bool
 fbSetVisualTypes (int depth, int visuals, int bitsPerRGB)
 {
-    fbSetVisualTypesAndMasks (depth, visuals, bitsPerRGB,
-			      _RM(depth), _GM(depth), _BM(depth));
+    return fbSetVisualTypesAndMasks (depth, visuals, bitsPerRGB,
+				     _RM(depth), _GM(depth), _BM(depth));
 }
 
 /*
@@ -443,7 +442,7 @@ fbInitVisuals (VisualPtr    *visualp,
 	       unsigned long	sizes,
 	       int	    bitsPerRGB)
 {
-    int		i, j, k;
+    int		i, j = 0, k;
     VisualPtr	visual;
     DepthPtr	depth;
     VisualID	*vid;
@@ -452,7 +451,6 @@ fbInitVisuals (VisualPtr    *visualp,
     int		ndepth, nvisual;
     int		nvtype;
     int		vtype;
-    VisualID	defaultVisual;
     fbVisualsPtr   visuals, nextVisuals;
 
     /* none specified, we'll guess from pixmap formats */

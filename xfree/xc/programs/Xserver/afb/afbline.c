@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbline.c,v 3.1 1998/03/20 21:04:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbline.c,v 3.2 2001/10/28 03:32:58 tsi Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -118,7 +118,6 @@ afbLineSS(pDrawable, pGC, mode, npt, pptInit)
 	unsigned int oc2;				/* outcode of point 2 */
 
 	PixelType *addrlBase;		/* pointer to start of drawable */
-	PixelType *addrl;				/* address of destination pixmap */
 	int nlwidth;				/* width in longwords of destination pixmap */
 	int xorg, yorg;				/* origin of window */
 
@@ -132,7 +131,10 @@ afbLineSS(pDrawable, pGC, mode, npt, pptInit)
 	int octant;
 	unsigned int bias = miGetZeroLineBias(pDrawable->pScreen);
 	int depthDst;
+#ifndef POLYSEGMENT
+	PixelType *addrl;				/* address of destination pixmap */
 	int d;
+#endif
 	int sizeDst;
 	unsigned char *rrops;
 
@@ -451,7 +453,6 @@ afbLineSD(pDrawable, pGC, mode, npt, pptInit)
 	register unsigned int oc2;		/* outcode of point 2 */
 
 	PixelType *addrlBase;		/* address of destination pixmap */
-	PixelType *addrl;
 	int nlwidth;				/* width in longwords of destination pixmap */
 	int sizeDst;
 	int depthDst;
@@ -477,7 +478,10 @@ afbLineSD(pDrawable, pGC, mode, npt, pptInit)
 	int					isDoubleDash;
 	int					dashIndexTmp, dashOffsetTmp;
 	int					unclippedlen;
+#ifndef POLYSEGMENT
+	PixelType *addrl;
 	int					d;
+#endif
 
 	cclip = pGC->pCompositeClip;
 	rrops = ((afbPrivGC *)(pGC->devPrivates[afbGCPrivateIndex].ptr))->rrops;

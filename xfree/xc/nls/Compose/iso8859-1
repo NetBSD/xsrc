@@ -3,7 +3,7 @@ XCOMM
 XCOMM ISO 8859-1 (Latin1) Compose Sequence
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/nls/Compose/iso8859-1,v 1.7 2001/04/26 21:09:40 dawes Exp $
+XCOMM $XFree86: xc/nls/Compose/iso8859-1,v 1.8 2001/12/24 17:15:09 dawes Exp $
 XCOMM
 XCOMM Sequence Definition
 XCOMM
@@ -221,8 +221,8 @@ XCOMM Accented Alphabet
 <Multi_key> <a> <a>			: "\345"	aring
 <Multi_key> <a> <o>			: "\345"	aring
 <Multi_key> <a> <e>			: "\346"	ae
-<Multi_key> <acute> <C>                 : "\307"        Ccedilla
-<Multi_key> <acute> <c>                 : "\347"        ccedilla
+<Multi_key> <acute> <C>			: "\307"	Ccedilla
+<Multi_key> <acute> <c>			: "\347"	ccedilla
 <Multi_key> <C> <comma>			: "\307"	Ccedilla
 <Multi_key> <comma> <C>			: "\307"	Ccedilla
 <Multi_key> <c> <comma>			: "\347"	ccedilla
@@ -382,7 +382,7 @@ XCOMM
 XCOMM
 XCOMM dead key accent keysyms
 XCOMM Special Character
-<dead_circumflex>  <slash>		: "|"	bar
+<dead_circumflex> <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
 <dead_diaeresis> <space>		: "\250"	diaeresis
@@ -462,15 +462,15 @@ XCOMM Accented Alphabet
 <dead_acute> <y>			: "\375"	yacute
 <dead_diaeresis> <y>			: "\377"	ydiaeresis
 XCOMM Useful for portuguese language
-<dead_acute> <C>                        : "\307"        Ccedilla
-<dead_acute> <c>                        : "\347"        ccedilla
-<dead_acute> <dead_acute>               : "'"           apostrophe
-<dead_grave> <dead_grave>               : "`"           grave
+<dead_acute> <C>			: "\307"	Ccedilla
+<dead_acute> <c>			: "\347"	ccedilla
+<dead_acute> <dead_acute>		: "'"	apostrophe
+<dead_grave> <dead_grave>		: "`"	grave
 XCOMM These are for us_intl, that does not has diaeresis, etc
-<dead_diaeresis> <space>                : "\""          quotedbl
-<dead_diaeresis> <dead_diaeresis>       : "\""          quotedbl
-<dead_tilde> <dead_tilde>               : "~"           asciitilde
-<dead_circumflex> <dead_circumflex>     : "^"           asciicircum
+<dead_diaeresis> <space>		: "\""	quotedbl
+<dead_diaeresis> <dead_diaeresis>	: "\""	quotedbl
+<dead_tilde> <dead_tilde>		: "~"	asciitilde
+<dead_circumflex> <dead_circumflex>	: "^"	asciicircum
 XCOMM
 #ifdef USE_CTRL_SHIFT_T_SEQS
 XCOMM Ctrl<T> Means <Compose>

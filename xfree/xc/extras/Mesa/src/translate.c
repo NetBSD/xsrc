@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/translate.c,v 1.4 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -33,6 +33,7 @@
 #else
 #include "glheader.h"
 #include "mem.h"
+#include "macros.h"
 #include "mmath.h"
 #include "translate.h"
 #include "types.h"

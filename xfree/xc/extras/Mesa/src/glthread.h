@@ -22,7 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+/* $XFree86: xc/extras/Mesa/src/glthread.h,v 1.3 2001/10/28 03:32:06 tsi Exp $ */
 
 /*
  * Thread support for gl dispatch.
@@ -184,8 +184,13 @@ typedef xthread_t _glthread_Thread;
 
 typedef xmutex_rec _glthread_Mutex;
 
+#ifdef XMUTEX_INITIALIZER
 #define _glthread_DECLARE_STATIC_MUTEX(name) \
    static _glthread_Mutex name = XMUTEX_INITIALIZER
+#else
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   static _glthread_Mutex name
+#endif
 
 #define _glthread_INIT_MUTEX(name) \
    xmutex_init(&(name))

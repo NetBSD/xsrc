@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.2 2001/01/27 18:20:58 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.3 2001/08/06 21:13:19 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH MOUSE __drivermansuffix__ __vendorversion__
@@ -89,6 +89,49 @@ enabled.  Default: 50.
 Enable/disable handling of mice that send left+right events when the middle
 button is used.  Default: off.
 .TP 7
+.BI "Option \*qEmulateWheel\*q \*q" boolean \*q
+Enable/disable "wheel" emulation.  Wheel emulation means emulating button
+press/release events when the mouse is moved while a specific real button
+is pressed.  Wheel button events (typically buttons 4 and 5) are
+usually used for scrolling.  Wheel emulation is useful for getting wheel-like
+behaviour with trackballs.  It can also be useful for mice with 4 or
+more buttons but no wheel.  See the description of the
+.BR EmulateWheelButton ,
+.BR EmulateWheelInertia ,
+.BR XAxisMapping ,
+and
+.B YAxisMapping
+options below.  Default: off.
+.TP 7
+.BI "Option \*qEmulateWheelButton\*q \*q" integer \*q
+Specifies which button must be held down to enable wheel emulation mode.
+While this button is down, X and/or Y pointer movement will generate button
+press/release events as specified for the
+.B XAxisMapping
+and
+.B YAxisMapping
+settings.  Default: 4.
+.TP 7
+.BI "Option \*qEmulateWheelInertia\*q \*q" integer \*q
+Specifies how far (in pixels) the pointer must move to generate button
+press/release events in wheel emulation mode.  Default: 50.
+.TP 7
+.BI "Option \*qXAxisMapping\*q \*q" "N1 N2" \*q
+Specifies which buttons are mapped to motion in the X direction in wheel
+emulation mode.  Button number
+.I N1
+is mapped to the negative X axis motion and button number
+.I N2
+is mapped to the positive X axis motion.  Default: no mapping.
+.TP 7
+.BI "Option \*qYAxisMapping\*q \*q" "N1 N2" \*q
+Specifies which buttons are mapped to motion in the Y direction in wheel
+emulation mode.  Button number
+.I N1
+is mapped to the negative Y axis motion and button number
+.I N2
+is mapped to the positive Y axis motion.  Default: "4 5".
+.TP 7
 .BI "Option \*qZAxisMapping\*q \*qX\*q"
 .TP 7
 .BI "Option \*qZAxisMapping\*q \*qY\*q"
@@ -110,6 +153,7 @@ of the second wheel mapped respectively to buttons number
 .I N3
 and
 .IR N4 .
+Default: no mapping.
 .TP 7
 .BI "Option \*qFlipXY\*q \*q" boolean \*q
 Enable/disable swapping the X and Y axes.  Default: off.

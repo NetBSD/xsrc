@@ -1,5 +1,5 @@
 /*
-* $Xorg: Vendor.h,v 1.4 2000/08/17 19:46:20 cpqbld Exp $
+* $Xorg: Vendor.h,v 1.5 2001/02/09 02:03:59 xorgcvs Exp $
 * $oHeader: Vendor.h,v 1.2 88/08/18 15:56:44 asente Exp $
 */
 
@@ -7,7 +7,11 @@
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.

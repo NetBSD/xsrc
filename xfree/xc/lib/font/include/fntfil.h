@@ -1,10 +1,14 @@
-/* $Xorg: fntfil.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
+/* $Xorg: fntfil.h,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfil.h,v 1.7 2001/04/05 17:42:28 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fntfil.h,v 1.9 2001/12/14 19:56:54 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -29,6 +33,9 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef _FONTFILE_H_
 #define _FONTFILE_H_
+
+#include "fontxlfd.h"
+
 typedef struct _FontEntry	    *FontEntryPtr;
 typedef struct _FontTable	    *FontTablePtr;
 typedef struct _FontName	    *FontNamePtr;

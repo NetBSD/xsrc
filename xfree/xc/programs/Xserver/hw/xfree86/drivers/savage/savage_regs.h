@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_regs.h,v 1.8 2001/05/15 10:19:39 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_regs.h,v 1.10 2001/11/04 22:17:48 alanh Exp $ */
 
 #ifndef _SAVAGE_REGS_H
 #define _SAVAGE_REGS_H
@@ -11,10 +11,23 @@
 #ifndef PCI_CHIP_S3TWISTER_K
 #define PCI_CHIP_S3TWISTER_K	0x8d02
 #endif
+#ifndef PCI_CHIP_SUPSAV_MX128
+#define PCI_CHIP_SUPSAV_MX128		0x8c22
+#define PCI_CHIP_SUPSAV_MX64		0x8c24
+#define PCI_CHIP_SUPSAV_MX64C		0x8c26
+#define PCI_CHIP_SUPSAV_IX128SDR	0x8c2a
+#define PCI_CHIP_SUPSAV_IX128DDR	0x8c2b
+#define PCI_CHIP_SUPSAV_IX64SDR		0x8c2c
+#define PCI_CHIP_SUPSAV_IX64DDR		0x8c2d
+#define PCI_CHIP_SUPSAV_IXCSDR		0x8c2e
+#define PCI_CHIP_SUPSAV_IXCDDR		0x8c2f
+#endif
 
 #define S3_SAVAGE3D_SERIES(chip)  ((chip>=S3_SAVAGE3D) && (chip<=S3_SAVAGE_MX))
 
 #define S3_SAVAGE4_SERIES(chip)   ((chip==S3_SAVAGE4) || (chip==S3_PROSAVAGE))
+
+#define	S3_SAVAGE_MOBILE_SERIES(chip)	((chip==S3_SAVAGE_MX) || (chip==S3_SUPERSAVAGE))
 
 #define S3_SAVAGE_SERIES(chip)    ((chip>=S3_SAVAGE3D) && (chip<=S3_SAVAGE2000))
 
@@ -29,6 +42,7 @@ enum S3CHIPTAGS {
     S3_SAVAGE_MX,
     S3_SAVAGE4,
     S3_PROSAVAGE,
+    S3_SUPERSAVAGE,
     S3_SAVAGE2000,
     S3_LAST
 };

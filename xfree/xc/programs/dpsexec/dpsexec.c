@@ -34,7 +34,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/dpsexec/dpsexec.c,v 1.4 2001/04/01 14:00:16 tsi Exp $ */
+/* $XFree86: xc/programs/dpsexec/dpsexec.c,v 1.6 2002/01/07 20:38:29 dawes Exp $ */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -47,6 +47,10 @@
 #include <X11/Xlib.h>
 #include <DPS/XDPSlib.h>
 #include <DPS/dpsXclient.h>
+
+#ifdef __QNX__
+#include <sys/select.h>
+#endif
 
 #define W_HEIGHT	512
 #define W_WIDTH		512
@@ -81,12 +85,9 @@ int main(argc, argv)
     int sync = 0;
     int backingStore = 0;
     int exe = 1;
-    int c;
     Window win;
     XSetWindowAttributes xswa;
-    char *wh;
     DPSContext ctxt;
-    XStandardColormap ccube, gramp;
     XWMHints *hints;
     int root = 0;
     int width = W_WIDTH;

@@ -1,4 +1,4 @@
-/* $Xorg: fonts.c,v 1.4 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: fonts.c,v 1.5 2001/02/09 02:05:42 xorgcvs Exp $ */
 /*
  * font control
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/fonts.c,v 3.9 2001/04/01 14:00:20 tsi Exp $ */
+/* $XFree86: xc/programs/xfs/difs/fonts.c,v 3.13 2001/12/14 20:01:34 dawes Exp $ */
 
 #include        "FS.h"
 #include        "FSproto.h"
@@ -56,6 +60,8 @@ in this Software without prior written authorization from The Open Group.
 #include	"closestr.h"
 #include	"globals.h"
 #include	"difs.h"
+#include	"dispatch.h"
+#include	"swaprep.h"
 
 static FontPathElementPtr *font_path_elements = (FontPathElementPtr *) 0;
 static int  num_fpes = 0;
@@ -631,15 +637,12 @@ set_font_path_elements(
     char       *paths,
     int        *bad)
 {
-    int		i,
-		validpaths,
-		err;
+    int		i, validpaths, err = 0;
     int		len;
     int		type;
     char       *cp = paths;
     char       *name;
-    FontPathElementPtr fpe,
-               *fplist;
+    FontPathElementPtr fpe, *fplist;
 
     fplist = (FontPathElementPtr *)
 	fsalloc(sizeof(FontPathElementPtr) * npaths);
@@ -709,8 +712,12 @@ set_font_path_elements(
 	}
     }
     if (validpaths < npaths) {
-	fplist = (FontPathElementPtr *)
+	FontPathElementPtr *ftmp = (FontPathElementPtr *)
 	    fsrealloc(fplist, sizeof(FontPathElementPtr) * validpaths);
+
+	if (!ftmp)
+	    goto bail;
+	fplist = ftmp;
 	npaths = validpaths;
     }
     if (validpaths == 0) {

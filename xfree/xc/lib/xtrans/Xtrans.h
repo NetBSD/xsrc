@@ -1,9 +1,13 @@
-/* $Xorg: Xtrans.h,v 1.3 2000/08/17 19:46:45 cpqbld Exp $ */
+/* $Xorg: Xtrans.h,v 1.4 2001/02/09 02:04:06 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtrans.h,v 3.15 2001/01/17 19:43:45 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtrans.h,v 3.18 2001/12/14 19:57:04 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -59,7 +63,7 @@ from The Open Group.
  */
 
 #ifdef X11_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _X11Trans##func
 #else
 #define TRANS(func) _X11Trans/**/func
@@ -70,7 +74,7 @@ static char* __xtransname = "_X11Trans";
 #endif /* X11_t */
 
 #ifdef XSERV_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _XSERVTrans##func
 #else
 #define TRANS(func) _XSERVTrans/**/func
@@ -82,7 +86,7 @@ static char* __xtransname = "_XSERVTrans";
 #endif /* X11_t */
 
 #ifdef XIM_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _XimXTrans##func
 #else
 #define TRANS(func) _XimXTrans/**/func
@@ -93,7 +97,7 @@ static char* __xtransname = "_XimTrans";
 #endif /* XIM_t */
 
 #ifdef FS_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _FSTrans##func
 #else
 #define TRANS(func) _FSTrans/**/func
@@ -104,7 +108,7 @@ static char* __xtransname = "_FSTrans";
 #endif /* FS_t */
 
 #ifdef FONT_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _FontTrans##func
 #else
 #define TRANS(func) _FontTrans/**/func
@@ -115,7 +119,7 @@ static char* __xtransname = "_FontTrans";
 #endif /* FONT_t */
 
 #ifdef ICE_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _IceTrans##func
 #else
 #define TRANS(func) _IceTrans/**/func
@@ -126,7 +130,7 @@ static char* __xtransname = "_IceTrans";
 #endif /* ICE_t */
 
 #ifdef TEST_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _TESTTrans##func
 #else
 #define TRANS(func) _TESTTrans/**/func
@@ -137,7 +141,7 @@ static char* __xtransname = "_TESTTrans";
 #endif /* TEST_t */
 
 #ifdef LBXPROXY_t
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _LBXPROXYTrans##func
 #else
 #define TRANS(func) _LBXPROXYTrans/**/func
@@ -149,7 +153,7 @@ static char* __xtransname = "_LBXPROXYTrans";
 #endif /* LBXPROXY_t */
 
 #if !defined(TRANS)
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _XTrans##func
 #else
 #define TRANS(func) _XTrans/**/func
@@ -183,7 +187,7 @@ typedef long BytesReadable_t;
 #endif
 
 
-#if defined(WIN32) || (defined(USG) && !defined(CRAY) && !defined(umips) && !defined(MOTOROLA) && !defined(uniosu) && !defined(__sxg__)) || defined(MINIX)
+#if defined(WIN32) || (defined(USG) && !defined(CRAY) && !defined(umips) && !defined(MOTOROLA) && !defined(uniosu) && !defined(__sxg__))
 
 /*
  *      TRANS(Readv) and TRANS(Writev) use struct iovec, normally found

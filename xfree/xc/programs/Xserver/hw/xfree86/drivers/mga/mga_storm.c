@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_storm.c,v 1.91 2001/05/10 21:53:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_storm.c,v 1.96 2001/12/06 15:54:52 keithp Exp $ */
 
 
 /* All drivers should typically include these */
@@ -102,12 +102,14 @@ static void MGANAME(SetupForScreenToScreenColorExpandFill)(ScrnInfoPtr pScrn,
 static void MGANAME(SubsequentScreenToScreenColorExpandFill)(ScrnInfoPtr pScrn,
 				int x, int y, int w, int h,
 				int srcx, int srcy, int skipleft);
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
 static void MGANAME(SetupForDashedLine)(ScrnInfoPtr pScrn, int fg, int bg,
 				int rop, unsigned int planemask, int length,
     				unsigned char *pattern);
 static void MGANAME(SubsequentDashedTwoPointLine)(ScrnInfoPtr pScrn,
 				int x1, int y1, int x2, int y2,
 				int flags, int phase);
+#endif
 void MGANAME(RestoreAccelState)(ScrnInfoPtr pScrn);
 #if PSZ == 8
 void Mga16RestoreAccelState(ScrnInfoPtr pScrn);
@@ -582,6 +584,9 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
     pMga->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
 
+    pMga->RenderTime = 0;
+    pMga->LinearScratch = 0;
+    
     pMga->MaxFastBlitY = 0;
     pMga->MaxBlitDWORDS = 0x40000 >> 5;
 
@@ -596,6 +601,7 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
  			   USE_RECTS_FOR_LINES;
         break;
     case PCI_CHIP_MGAG400:
+    case PCI_CHIP_MGAG550:
         if(pMga->SecondCrtc == TRUE) {
 	    pMga->HasFBitBlt = FALSE;
 	}
@@ -603,7 +609,8 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
 	/* fallthrough */
     case PCI_CHIP_MGAG200:
     case PCI_CHIP_MGAG200_PCI:
-        doRender = TRUE;
+	if (pMga->SecondCrtc == FALSE)
+	    doRender = TRUE;
         pMga->AccelFlags = TRANSC_SOLID_FILL |
 			   TWO_PASS_COLOR_EXPAND;
 
@@ -712,11 +719,7 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
     if(pMga->ILOADBase) {
 	pMga->ColorExpandBase = pMga->ILOADBase;
     } else {
-#ifdef __alpha__
-	pMga->ColorExpandBase = pMga->IOBaseDense;
-#else
 	pMga->ColorExpandBase = pMga->IOBase;
-#endif
     }
     infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
 		MGANAME(SetupForScanlineCPUToScreenColorExpandFill);
@@ -794,7 +797,9 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
 	infoPtr->ScanlineCPUToScreenColorExpandFillFlags |= NO_PLANEMASK;
 	infoPtr->SolidFillFlags |= NO_PLANEMASK;
 	infoPtr->SolidLineFlags |= NO_PLANEMASK;
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
 	infoPtr->DashedLineFlags |= NO_PLANEMASK;
+#endif
 	infoPtr->Mono8x8PatternFillFlags |= NO_PLANEMASK;
 	infoPtr->ScreenToScreenColorExpandFillFlags |= NO_PLANEMASK;
 	infoPtr->FillSolidRectsFlags |= NO_PLANEMASK;
@@ -951,7 +956,7 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
 #ifdef RENDER
    if(doRender && ((pScrn->bitsPerPixel == 32) || (pScrn->bitsPerPixel == 16)))
    {
-       if(pMga->Chipset == PCI_CHIP_MGAG400) {
+       if(pMga->Chipset == PCI_CHIP_MGAG400 || pMga->Chipset == PCI_CHIP_MGAG550) {
            infoPtr->CPUToScreenAlphaTextureFlags = XAA_RENDER_NO_TILE;
            infoPtr->SetupForCPUToScreenAlphaTexture =
 				MGASetupForCPUToScreenAlphaTexture;
@@ -1161,6 +1166,7 @@ MGAStormEngineInit(ScrnInfoPtr pScrn)
     pMga->AccelFlags &= ~CLIPPER_ON;
 
     switch(pMga->Chipset) {
+    case PCI_CHIP_MGAG550:
     case PCI_CHIP_MGAG400:
     case PCI_CHIP_MGAG200:
     case PCI_CHIP_MGAG200_PCI:
@@ -1861,6 +1867,7 @@ static void MGANAME(SubsequentImageWriteScanline)(
     }
 }
 
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
 
 	/***************************\
 	|      Dashed  Lines        |
@@ -1971,6 +1978,7 @@ MGANAME(SubsequentDashedTwoPointLine)(
     }
 }
 
+#endif /* X_BYTE_ORDER == X_LITTLE_ENDIAN */
 
 #if PSZ != 24
 

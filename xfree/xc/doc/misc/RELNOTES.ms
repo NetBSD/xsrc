@@ -1,10 +1,10 @@
-.\" $Xorg: RELNOTES.ms,v 1.3 2000/08/17 19:42:05 cpqbld Exp $
+.\" $Xorg: RELNOTES.ms,v 1.7 2001/04/04 17:37:28 coskrey Exp $
 .\"
 .\" X11R6.4 Release Notes. Use troff -ms macros
 .\"
 .\"
-.\" $XFree86: xc/doc/misc/RELNOTES.ms,v 1.6 2001/01/22 22:27:00 dawes Exp $
-.ds Ts August 20, 2000\" 
+.\" $XFree86: xc/doc/misc/RELNOTES.ms,v 1.8 2001/12/21 20:59:12 dawes Exp $
+.ds Ts April 4, 2001\" 
 .\"
 .ie t \{
 .nr LL 6.5i
@@ -35,7 +35,7 @@
 .TL
 \s+2\fBX Window System, Version 11
 .sp 1
-Release 6.5.1\fP\s-2
+Release 6.6\fP\s-2
 
 \s+1\fBRelease Notes\fP\s-1
 .AU
@@ -52,13 +52,13 @@ Release 6.5.1\fP\s-2
 .\}
 .sp 5
 .nf
-Copyright \(co 1999,2000 Compaq Computer Corporation
-Copyright \(co 1999,2000 Hewlett-Packard Company
-Copyright \(co 1999,2000 IBM Corporation
-Copyright \(co 1999,2000 Hummingbird Communications Ltd.
-Copyright \(co 1999,2000 Silicon Graphics, Inc.
-Copyright \(co 1999,2000 Sun Microsystems, Inc.
-Copyright \(co 1999,2000 The Open Group
+Copyright \(co 1999,2000,2001 Compaq Computer Corporation
+Copyright \(co 1999,2000,2001 Hewlett-Packard Company
+Copyright \(co 1999,2000,2001 IBM Corporation
+Copyright \(co 1999,2000,2001 Hummingbird Communications Ltd.
+Copyright \(co 1999,2000,2001 Silicon Graphics, Inc.
+Copyright \(co 1999,2000,2001 Sun Microsystems, Inc.
+Copyright \(co 1999,2000,2001 The Open Group
 .fi
 .LP
 All rights reserved.
@@ -93,8 +93,8 @@ of the copyright holder.
 \fIX Window System\fP is a trademark of The Open Group.
 .\"
 .if t \{
-.OH 'X Version 11, Release 6.5.1''X Window System Release Notes'
-.EH 'X Window System Release Notes''X Version 11, Release 6.5.1'
+.OH 'X Version 11, Release 6.6''X Window System Release Notes'
+.EH 'X Window System Release Notes''X Version 11, Release 6.6'
 .bp 1
 .ds CF \\n(PN
 .\}
@@ -104,7 +104,7 @@ of the copyright holder.
 
 .nH 1 "Introductory Note"
 This document is the release notes that were provided with X.Org's
-X11R6.5.1 release.  The XFree86-specific information in this document is
+X11R6.6 release.  The XFree86-specific information in this document is
 out of date.  The XFree86-specific documentation can be found
 in the \fBxc/programs/Xserver/hw/xfree86/doc\fP directory, and on-line
 at http://www.xfree86.org/current/.
@@ -121,13 +121,13 @@ Computers. X can use your network \(em you may run CPU-intensive
 programs on high powered workstations and display the user 
 interface (the windows) on inexpensive desktop machines.
 
-.nH 1 "What is Release 6.5.1"
+.nH 1 "What is Release 6.6"
 
-Release 6.5.1 (R6.5.1) is X.Org's update to 
-the Open Group's X Project Release 6.4 patch 3 and all prior releases. 
-It is compatible with with all releases going back to R1 at both the 
-source and protocol levels.  Note that Release 6.5 was an internal
-X.Org release, and Release 6.5.1 supersedes it.
+Release 6.6 (R6.6) is The X.Org Group's update to its Release 6.5.1
+patch 1 and all prior releases.
+It is compatible with with all releases going back to R1 at both the
+source and protocol levels.
+
 .LP
 The X Consortium was an independent, not-for-profit membership
 corporation formed in 1993 as the successor to the MIT X Consortium.
@@ -143,19 +143,20 @@ web-based interface are available to X.Org members.  The contractor
 has been chartered to provide quarterly update releases to the
 X source.
 .LP
-Membership information for X.Org may be found at http://www.x.org/members.htm.
+Membership information for X.Org may be found at:
+      http://www.x.org/members.htm.
 .LP
 This X.Org release addresses a portion of the backlog of bug reports
 since Release 6.4 patch 3, along with  additional fixes from the Xfree86
 community.
 .LP
-Instructions for building and installing R6.5.1 can be found in the
-file INSTALL.TXT (INSTALL-X.org), available
-separately and also contained in the release.
+Instructions for building and installing R6.6 can be found in the
+file INSTALL.TXT (INSTALL-X.org), available separately and also contained 
+in the release.
 
 .nH 1 "Overview of the X.Org Release"
 
-Like all the releases that preceded it, R6.5.1 is a source code 
+Like all the releases that preceded it, R6.6 is a source code 
 release. In order to use the release it is necessary to first 
 unpack the distribution, compile it, and then install it. The 
 source contains the following items:
@@ -163,7 +164,7 @@ source contains the following items:
 .KS
 .ID
 Documentation
-Sample implemenations
+Sample implementations
 Fonts and bitmaps
 Utility libraries
 Programs
@@ -235,7 +236,7 @@ registry is in the file \fBxc/registry\fP.
 
 .nH 1 "Extensions Supported"
 
-Release 6.5.1  includes source for the following extensions:
+Release 6.6  includes source for the following extensions:
 BIG-REQUESTS,
 DOUBLE-BUFFER,
 DPMS,
@@ -284,7 +285,7 @@ ProjectRoot in \fBxc/config/cf/site.def\fP. See
 \fBxc/config/cf/X11.tmpl\fP for details of how these configuration 
 variables are used.
 .IP
-By default the imake variable ProjectRoot is \fB/usr/X11R6.5\fP 
+By default the imake variable ProjectRoot is \fB/usr/X11R6.6\fP 
 and XFILESEARCHPATH has these components:
 .ID
 \fI$ProjectRoot\fP/lib/X11/%L/%T/%N%C%S
@@ -353,12 +354,11 @@ for the supported compositions.
 The Input Method Server Development Kit (IMdkit) is at 
 ftp://ftp.x.org/pub/unsupported/lib/IMdkit/.
 
-.nH 1 "What is Unchanged in Release 6.5.1"
+.nH 1 "What is Unchanged in Release 6.6"
 
 As this is an update release, there is a great deal of stability in the
 standards, libraries, and clients. No existing standards have changed
-in a material way.  All previous interfaces in these and all other
-libraries are unchanged.
+in a material way.  All previous interfaces are unchanged.
 
 .nH 1 "New OS Support"
 
@@ -367,29 +367,29 @@ that were used to develop this and prior releases:
 .LP
 .KS
 .DS 0
-.ta 2.0i 3.0i 4.0i 5.0i 6.0i
-System	R6	R6.1	R6.[23]	R6.4	R6.5.1
-.sp 1
-AIX	3.2.5	4.1.4	4.2	4.2	\(en
-A/UX	3.0.1	\(en	\(en	\(en	\(en
-BSD/386	1.0	\(en	\(en	\(en	\(en
-Compaq Tru64 UNIX	1.0/1.3	3.2C	4.0A	4.0A	5.0
-FreeBSD	\(en	2.1.0	2.1.6	2.2.2	\(en
-Fujitsu UXP	\(en	\(en	\(en	V20L10	\(en
-HP-UX	9.1	10.01	10.01	10.20	10.20
-IRIX	5.2	5.3	6.2	6.2	\(en
-Linux (kernel)
-  Slackware 2.3	\(en	1.2.11	\(en	\(en	\(en
-  Slackware 3.1	\(en	\(en	2.0	\(en	\(en
-  S.u.S.E. 5.0	\(en	\(en	\(en	2.0.30	\(en
-Mach	2.5	\(en	\(en	\(en	\(en
-NEWS-OS	6.0	\(en	\(en	\(en	\(en
-Solaris	2.3	2.4	2.5	2.5	7.0
-SunOS	4.1.3	4.1.3	4.1.4	4.1.4	\(en
-Ultrix-32	4.3	4.4	\(en	\(en	\(en
-UNICOS	8.0	\(en	\(en	\(en	\(en
-Unixware SVR4.2	1.0	2.02	2.02	\(en	\(en
-Windows NT	3.1	3.5	4.0	3.51	\(en
+.ta 1.5i 2.25i 3i 3.75i 4.5i 5.25i
+System	R6	R6.1	R6.[23]	R6.4	R6.5	R6.6
+.sp
+AIX	3.2.5	4.1.4	4.2	4.2	-	-
+A/UX	3.0.1	-	-	-	-	-
+BSD/386	1.0	-	-	-	-	-
+Compaq	Tru64	UNIX	1.0/1.3	3.2C	4.0A4.0A	5.0
+FreeBSD	-	2.1.0	2.1.6	2.2.2	-	-
+Fujitsu	UXP	-	-	-	V20L10	-
+HP-UX	9.1	10.01	10.01	10.20	10.20	10.20
+IRIX	5.2	5.3	6.2	6.2	-	-
+Linux	(kernel)					
+Slackware	2.3	-	1.2.11	-	-	-
+Slackware	3.1	-	-	2.0	-	-
+S.u.S.E.	5.0	-	-	-	2.0.30	-
+Mach	2.5	-	-	-	-	-
+NEWS-OS	6.0	-	-	-	-	-
+Solaris	2.3	2.4	2.5	2.5	7.0	7.0
+SunOS	4.1.3	4.1.3	4.1.4	4.1.4	-	-
+Ultrix-32	4.3	4.4	-	-	-	-
+UNICOS	8.0	-	-	-	-	-
+Unixware	SVR4.2	1.0	2.02	2.02	-	-
+Windows	NT	3.1	3.5	4.0	3.51	-
 .DE
 .KE
 
@@ -419,14 +419,14 @@ X Project Team specification.
 .nH 1 "ANSIfication"
 
 R6.1 was officially the last release that supported traditional K&R C.
-Like R6.3 and R6.4, R6.5 assumes a Standard C compiler and environment.
-We have not intentionally removed any K&R C support from old code, and
-most of the release will continue to build on platforms without an ANSI
-C compiler.
+Like all releases since R6.3, R6.6 assumes a Standard C compiler and
+environment.  We have not intentionally removed any K&R C support from
+old code, and most of the release will continue to build on platforms
+without an ANSI C compiler.
 
 .nH 1 "VSW5"
 
-We have tested this release with VSW5 version 5.0.0. This release 
+We have tested this release with VSW5 version 5.1.1A. This release 
 passes all tests in VSW5 with the following exceptions:
 .IP \(bu 
 tests for which a permanent waiver has been granted.
@@ -438,24 +438,20 @@ tests where a defect in the test has been identified and reported.
 VSW licensees may obtain a list of waivers granted from
 http://www.rdg.opengroup.org/interpretations/database/.
 
-.nH 1 "XtAppPeekEvent() behavior"
+.nH 1 "XtAppPeekEvent() behavior - Environment variable no longer needed"
 
 XtAppPeekEvent() has been modified in R6.5.1 to behave as it is
-documented in the Xt spec.  The routine will now process timer
-events without returning to the caller.  However, there are
-applications which rely on the previous behavior of XtAppPeekEvent().
-One such application is Netscape, as of version 4.7.
+documented in the Xt spec.  Certain applications, including Netscape,
+did not work properly with these modifications, so the routine was
+changed so that users could set the XTAPPPEEKEVENT_SKIPTIMER environment
+variable in order to make XtAppPeekEvent() behave as it did prior to
+R6.5.1.
 .LP
-To allow these applications to work with R6.5.1, the environment
-variable XTAPPPEEKEVENT_SKIPTIMER can be set to any value prior to
-starting the application.  If the environment variable is set,
-XtAppPeekEvent() will revert to its previous behavior.  For example,
-the following shell commands
-.ID
-export XTAPPPEEKEVENT_SKIPTIMER=1
-/opt/netscape/netscape
-.DE
-can be used to make Netscape function properly with R6.5.1.
+In R6.6, the routine has been changed so that there is no need to set
+the environment variable.  Timers are handled as specified by the spec,
+but Netscape and other applications now work properly without the
+environment variable.  In R6.6, the XTAPPPEEKEVENT_SKIPTIMER variable
+is ignored, and users may unset it if they were using it in R6.5.1.
 
 .nH 1 "Year 2000 (Y2K) Compliance"
 
@@ -506,16 +502,80 @@ handled on any official basis. Consult the documentation for the
 individual software to see where (if anywhere) to report the bug.
 
 .nH 1 "Acknowledgements"
+.LP
+The following individuals served as X.Org representatives for their
+respective companies.  These companies are Executive Members of X.Org.
 
-Jeff Walls of Hewlett Packard.
 .LP
-Garry Paxinos of Metro Link.
+Paul Anderson of Hewlett-Packard.
+
 .LP
-Irene McCartney of Compaq.
+Heather Lanigan of Compaq.
+
 .LP
-Paul Shearer of IBM.
+Danny Masci of Hummingbird.
+
+.LP
+Dan McNichol of IBM.
+
+.LP
+Richard Offer of SGI.
+
 .LP
 Steve Swales of Sun Microsystems, Inc.
+
+
+The following individuals contributed significantly to the development
+of X11R6.6, in the form of code, testing, and support.
+
+.LP
+Stuart Anderson of Metro Link, Inc.
+
+.LP
+Robert W. Boone of Metro Link, Inc.
+
+.LP
+Alan Coopersmith of Sun Microsystems, Inc.
+
+.LP
+Glen Cornell of Metro Link, Inc.
+
+.LP
+Ernie Coskrey of Metro Link, Inc.
+
+.LP
+Gudrun Enger of Metro Link, Inc.
+
+.LP
+Gemma Exton of Adacel Technologies Limited.
+
+.LP
+Jay Hobson of Sun Microsystems, Inc.
+
+.LP
+Steve McClure of Metro Link, Inc.
+
+.LP
+Scott McDonald of Metro Link, Inc.
+
+.LP
+Andrew Miller of Marconi Corporation.
+
+.LP
+Quentin Neill of Metro Link, Inc.
+
+.LP
+Keith Packard of The XFree86 Project.
+
+.LP
+Simon Pickup of Adacel Technologies Limited.
+
+.LP
+Paul Shearer of IBM.
+
+.LP
+Hidetoshi Tajima of Sun Microsystems, Inc.
+
 .ie t \{
 .\"
 .\" print Table of Contents

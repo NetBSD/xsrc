@@ -24,17 +24,19 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/folder.c,v 1.3 2001/10/28 03:34:38 tsi Exp $ */
 
 /* folder.c -- implement buttons relating to folders and other globals. */
 
-
 #include "xmh.h"
+#include <X11/Xmu/CharSet.h>
 #include <X11/Xaw/Cardinals.h>
 #include <X11/Xatom.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include "bboxint.h"
 #include "tocintrnl.h"
+#include "actions.h"
 
 typedef struct {	/* client data structure for callbacks */
     Scrn	scrn;		/* the xmh scrn of action */
@@ -287,7 +289,7 @@ static void CreateFolder(widget, client_data, call_data)
 	if (scrnList[i]->folderbuttons) {
 	    char	*c;
 	    Button	button;
-	    if (c = strchr(name, '/')) { /* if is subfolder */
+	    if ((c = strchr(name, '/'))) { /* if is subfolder */
 		c[0] = '\0';
 		button = BBoxFindButtonNamed(scrnList[i]->folderbuttons,
 					     name);

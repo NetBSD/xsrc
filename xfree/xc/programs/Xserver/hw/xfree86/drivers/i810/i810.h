@@ -25,13 +25,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.21 2001/05/19 00:26:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.29 2002/01/14 18:43:51 dawes Exp $ */
 
 /*
  * Authors:
  *   Keith Whitwell <keithw@precisioninsight.com>
  *
  */
+
+/* #define I830DEBUG */
 
 #ifndef _I810_H_
 #define _I810_H_
@@ -44,6 +46,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xaa.h"
 #include "xf86Cursor.h"
 #include "xf86xv.h"
+#include "xf86int10.h"
+#include "vgaHW.h"
 
 #ifdef XF86DRI
 #include "xf86drm.h"
@@ -53,6 +57,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri.h"
 #include "GL/glxint.h"
 #include "i810_dri.h"
+#include "i830_dri.h"
 #endif
 
 
@@ -60,8 +65,251 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define I810_NAME "I810"
 #define I810_DRIVER_NAME "i810"
 #define I810_MAJOR_VERSION 1
-#define I810_MINOR_VERSION 0
+#define I810_MINOR_VERSION 1
 #define I810_PATCHLEVEL 0
+
+#ifdef __GNUC__
+#define PFX __FILE__,__LINE__,__FUNCTION__
+#define FUNCTION_NAME __FUNCTION__
+#else
+#define PFX __FILE__,__LINE__,""
+#define FUNCTION_NAME ""
+#endif
+
+#ifdef I830DEBUG
+#define MARKER() fprintf(stderr,"\n### %s:%d: >>> %s <<< ###\n\n",__FILE__,__LINE__,__FUNCTION__)
+#define DPRINTF DPRINTF_stub
+#else	/* #ifdef I830DEBUG */
+#define MARKER()
+/* this is a real ugle hack to get the compiler to optimize the debugging statements into oblivion */
+#define DPRINTF if(0) DPRINTF_stub
+#endif	/* #ifdef I830DEBUG */
+
+#define KB(x) ((x) * 1024)
+#define MB(x) ((x) * KB(1024))
+
+/* I830 Video BIOS support */
+
+/* This code is Heavily based upon the VESA driver written by:
+ * Paulo C~^Aésar Pereira de Andrade <pcpa@conectiva.com.br> */
+
+typedef struct _VBEInfoBlock VBEInfoBlock;
+typedef struct _ModeInfoBlock ModeInfoBlock;
+typedef struct _CRTCInfoBlock CRTCInfoBlock;
+typedef struct _VBT_header VBTHeader;
+typedef struct _BIOSDataBlock BIOSDataBlock;
+
+#define FARP(p)        (((unsigned)(p & 0xffff0000) >> 12) | (p & 0xffff))
+
+typedef struct _VESARec
+{
+   xf86Int10InfoPtr pInt;
+   EntityInfoPtr pEnt;
+   CARD16 major, minor;
+   VBEInfoBlock *vbeInfo;
+   GDevPtr device;
+   pciVideoPtr pciInfo;
+   PCITAG pciTag;
+   CARD16 maxBytesPerScanline;
+   int mapPhys, mapOff, mapSize;  /* video memory */
+   void *base, *VGAbase;
+   CARD8 *state, *pstate; /* SVGA state */
+   int statePage, stateSize, stateMode;
+   int page;
+   CARD8 *block;
+   int pix24bpp;
+   CARD32 *pal, *savedPal;
+   CARD8 *fonts;
+   xf86MonPtr monitor;
+   Bool shadowFB, primary;
+   CARD8 *shadowPtr;
+   CARD32 windowAoffset;
+} VESARec, *VESAPtr;
+
+typedef struct _ModeInfoData 
+{
+   int mode;
+   ModeInfoBlock *data;
+   CRTCInfoBlock *block;
+} ModeInfoData;
+
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(a)
+#endif
+
+/*
+ * INT 0
+ */
+struct _VBEInfoBlock
+{
+   /* VESA 1.2 fields */
+   CARD8 VESASignature[4];        /* VESA */
+   CARD16 VESAVersion;            /* Higher byte major, lower byte minor */
+   /*CARD32*/char *OEMStringPtr;  /* Pointer to OEM string */
+   CARD8 Capabilities[4];         /* Capabilities of the video environment */
+
+   /*CARD32*/CARD16 *VideoModePtr;    /* pointer to supported Super VGA modes */
+
+   CARD16 TotalMemory;            /* Number of 64kb memory blocks on board */
+   /* if not VESA 2, 236 scratch bytes follow (256 bytes total size) */
+
+   /* VESA 2 fields */
+   CARD16 OemSoftwareRev;     /* VBE implementation Software revision */
+   /*CARD32*/char *OemVendorNamePtr;  /* Pointer to Vendor Name String */
+   /*CARD32*/char *OemProductNamePtr; /* Pointer to Product Name String */
+   /*CARD32*/char *OemProductRevPtr;  /* Pointer to Product Revision String */
+   CARD8 Reserved[222];       /* Reserved for VBE implementation */
+   CARD8 OemData[256];            /* Data Area for OEM Strings */
+} __attribute__((packed));
+
+/*
+ * INT 1
+ */
+struct _ModeInfoBlock {
+   CARD16 ModeAttributes;     /* mode attributes */
+   CARD8 WinAAttributes;      /* window A attributes */
+   CARD8 WinBAttributes;      /* window B attributes */
+   CARD16 WinGranularity;     /* window granularity */
+   CARD16 WinSize;            /* window size */
+   CARD16 WinASegment;            /* window A start segment */
+   CARD16 WinBSegment;            /* window B start segment */
+   CARD32 WinFuncPtr;         /* real mode pointer to window function */
+   CARD16 BytesPerScanline;       /* bytes per scanline */
+
+   /* Mandatory information for VBE 1.2 and above */
+   CARD16 XResolution;            /* horizontal resolution in pixels or characters */
+   CARD16 YResolution;            /* vertical resolution in pixels or characters */
+   CARD8 XCharSize;           /* character cell width in pixels */
+   CARD8 YCharSize;           /* character cell height in pixels */
+   CARD8 NumberOfPlanes;      /* number of memory planes */
+   CARD8 BitsPerPixel;            /* bits per pixel */
+   CARD8 NumberOfBanks;       /* number of banks */
+   CARD8 MemoryModel;         /* memory model type */
+   CARD8 BankSize;            /* bank size in KB */
+   CARD8 NumberOfImages;      /* number of images */
+   CARD8 Reserved;    /* 1 */     /* reserved for page function */
+
+   /* Direct color fields (required for direct/6 and YUV/7 memory models) */
+   CARD8 RedMaskSize;         /* size of direct color red mask in bits */
+   CARD8 RedFieldPosition;        /* bit position of lsb of red mask */
+   CARD8 GreenMaskSize;       /* size of direct color green mask in bits */
+   CARD8 GreenFieldPosition;      /* bit position of lsb of green mask */
+   CARD8 BlueMaskSize;            /* size of direct color blue mask in bits */
+   CARD8 BlueFieldPosition;       /* bit position of lsb of blue mask */
+   CARD8 RsvdMaskSize;            /* size of direct color reserved mask in bits */
+   CARD8 RsvdFieldPosition;       /* bit position of lsb of reserved mask */
+   CARD8 DirectColorModeInfo;     /* direct color mode attributes */
+
+   /* Mandatory information for VBE 2.0 and above */
+   CARD32 PhysBasePtr;            /* physical address for flat memory frame buffer */
+   CARD32 Reserved32; /* 0 */     /* Reserved - always set to 0 */
+   CARD16 Reserved16; /* 0 */     /* Reserved - always set to 0 */
+
+   /* Mandatory information for VBE 3.0 and above */
+   CARD16 LinBytesPerScanLine;        /* bytes per scan line for linear modes */
+   CARD8 BnkNumberOfImagePages;   /* number of images for banked modes */
+   CARD8 LinNumberOfImagePages;   /* number of images for linear modes */
+   CARD8 LinRedMaskSize;      /* size of direct color red mask (linear modes) */
+   CARD8 LinRedFieldPosition;     /* bit position of lsb of red mask (linear modes) */
+   CARD8 LinGreenMaskSize;        /* size of direct color green mask (linear modes) */
+   CARD8 LinGreenFieldPosition;   /* bit position of lsb of green mask (linear modes) */
+   CARD8 LinBlueMaskSize;     /* size of direct color blue mask (linear modes) */
+   CARD8 LinBlueFieldPosition;        /* bit position of lsb of blue mask (linear modes) */
+   CARD8 LinRsvdMaskSize;     /* size of direct color reserved mask (linear modes) */
+   CARD8 LinRsvdFieldPosition;        /* bit position of lsb of reserved mask (linear modes) */
+   CARD32 MaxPixelClock;      /* maximum pixel clock (in Hz) for graphics mode */
+   CARD8 Reserved2[189];      /* remainder of ModeInfoBlock */
+} __attribute__((packed));
+
+/*
+ * INT2
+ */
+#define CRTC_DBLSCAN   (1<<0)
+#define CRTC_INTERLACE (1<<1)
+#define CRTC_NHSYNC    (1<<2)
+#define CRTC_NVSYNC    (1<<3)
+
+struct _CRTCInfoBlock 
+{
+   CARD16 HorizontalTotal;        /* Horizontal total in pixels */
+   CARD16 HorizontalSyncStart;        /* Horizontal sync start in pixels */
+   CARD16 HorizontalSyncEnd;      /* Horizontal sync end in pixels */
+   CARD16 VerticalTotal;      /* Vertical total in lines */
+   CARD16 VerticalSyncStart;      /* Vertical sync start in lines */
+   CARD16 VerticalSyncEnd;        /* Vertical sync end in lines */
+   CARD8 Flags;           /* Flags (Interlaced, Double Scan etc) */
+   CARD32 PixelClock;         /* Pixel clock in units of Hz */
+   CARD16 RefreshRate;            /* Refresh rate in units of 0.01 Hz */
+   CARD8 Reserved[40];            /* remainder of ModeInfoBlock */
+} __attribute__((packed));
+
+/* CRTCInfoBlock is in the VESA 3.0 specs */
+typedef struct _VESApmi 
+{
+   int seg_tbl;
+   int tbl_off;
+   int tbl_len;
+} VESApmi;
+
+/* Functions */
+const OptionInfoRec *I830BIOSAvailableOptions(int chipid, int busid);
+ModeInfoBlock *I830VESAGetModeInfo(ScrnInfoPtr pScrn, int mode);
+void I830BIOSProbeDDC(ScrnInfoPtr pScrn, int index);
+void I830VESAFreeModeInfo(ModeInfoBlock *block);
+Bool I830BIOSPreInit(ScrnInfoPtr pScrn, int flags);
+void I830BIOSSaveRegisters(ScrnInfoPtr pScrn);
+void I830BIOSSetRegisters(ScrnInfoPtr pScrn, int mode);
+Bool I830VESAGetVBEMode(ScrnInfoPtr pScrn, int *mode);
+Bool I830VESASetVBEMode(ScrnInfoPtr pScrn, int mode, CRTCInfoBlock *block);
+Bool I830VESASaveRestore(ScrnInfoPtr pScrn, int function);
+Bool I830VESASetGetLogicalScanlineLength(ScrnInfoPtr pScrn, int command,
+                 int width, int *pixels, int *bytes,
+                 int *max);
+int I830VESASetGetDACPaletteFormat(ScrnInfoPtr pScrn, int bits);
+CARD32 *I830VESASetGetPaletteData(ScrnInfoPtr pScrn, Bool set, int first,
+                 int num, CARD32 *data, Bool secondary,
+                 Bool wait_retrace);
+Bool I830BIOSInitializeFirstMode(int scrnIndex);
+Bool I830BIOSScreenInit(int scrnIndex, ScreenPtr pScreen,
+                 int argc, char **argv);
+Bool I830VESASetDisplayStart(ScrnInfoPtr pScrn, int x, int y,
+                 Bool wait_retrace);
+void I830BIOSAdjustFrame(int scrnIndex, int x, int y, int flags);
+void I830BIOSFreeScreen(int scrnIndex, int flags);
+void I830BIOSLeaveVT(int scrnIndex, int flags);
+Bool I830BIOSEnterVT(int scrnIndex, int flags);
+Bool I830BIOSSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+Bool I830BIOSSaveScreen(ScreenPtr pScreen, Bool unblack);
+Bool I830BIOSCloseScreen(int scrnIndex, ScreenPtr pScreen);
+
+#define    SCANWID_SET     0
+#define SCANWID_GET        1
+#define SCANWID_SET_BYTES  2
+#define SCANWID_GET_MAX        3
+#define I830VESASetLogicalScanline(pScrn, width)   \
+  I830VESASetGetLogicalScanlineLength(pScrn, SCANWID_SET, \
+                 width, NULL, NULL, NULL)
+#define I830VESASetLogicalScanlineBytes(pScrn, width)  \
+  I830VESASetGetLogicalScanlineLength(pScrn, width, SCANWID_SET_BYTES, \
+                 NULL, NULL, NULL)
+#define I830VESAGetLogicalScanline(pScrn, pixels, bytes, max)  \
+  I830VESASetGetLogicalScanlineLength(pScrn, SCANWID_GET, NULL, \
+                 pixels, bytes, max)
+#define I830VESAGetMaxLogicalScanline(pScrn, pixels, bytes, max)   \
+  I830VESASetGetLogicalScanlineLength(pScrn, SCANWID_GET_MAX, \
+                 NULL, pixels, bytes, max)
+
+#define MODE_QUERY 0
+#define MODE_SAVE  1
+#define MODE_RESTORE   2
+
+#define SET_SAVED_MODE     1
+#define SET_CURRENT_MODE   2
+
+/* HWMC Surfaces */
+#define I810_MAX_SURFACES 7
+#define I810_MAX_SUBPICTURES 2
+#define I810_TOTAL_SURFACES 9
 
 /* Globals */
 
@@ -80,6 +328,18 @@ extern void I810SetTiledMemory(ScrnInfoPtr pScrn,
 			       unsigned pitch,
 			       unsigned size);
 
+typedef enum {
+   OPTION_NOACCEL,
+   OPTION_SW_CURSOR,
+   OPTION_COLOR_KEY,
+   OPTION_CACHE_LINES,
+   OPTION_DAC_6BIT,
+   OPTION_DRI,
+   OPTION_NO_DDC,
+   OPTION_STRETCH,
+   OPTION_CENTER,
+   OPTION_XVMC_SURFACES
+} I810Opts;
 
 /* Linear region allocated in framebuffer.
  */
@@ -132,6 +392,58 @@ typedef struct {
 
 } I810RegRec, *I810RegPtr;
 
+typedef struct
+{
+   unsigned int  LprbTail;
+   unsigned int  LprbHead;
+   unsigned int  LprbStart;
+   unsigned int  LprbLen;
+
+   unsigned int Fence[8];
+
+   unsigned int VideoClk_VGA0_M1M2N;
+   unsigned int VideoClk_VGA1_M1M2N;
+   unsigned int VideoClk_PostDiv;
+   unsigned int fpa_0;
+   unsigned int fpa_1;
+   unsigned int dpll_a;
+   unsigned int dpll_b;
+
+   unsigned int  LMI_FIFO_Watermark;
+   unsigned int  LMI_FIFO_Watermark2;
+
+   unsigned int HTotal_A;
+   unsigned int HBlank_A;
+   unsigned int HSync_A;
+   unsigned int VTotal_A;
+   unsigned int VBlank_A;
+   unsigned int VSync_A;
+   unsigned int Bclrpat_A;
+   unsigned int PipeASRC;
+
+   unsigned int HTotal_B;
+   unsigned int HBlank_B;
+   unsigned int HSync_B;
+   unsigned int VTotal_B;
+   unsigned int VBlank_B;
+   unsigned int VSync_B;
+   unsigned int Bclrpat_B;
+   unsigned int PipeBSRC;
+
+   unsigned int PipeAConf;
+   unsigned int PipeBConf;
+   unsigned int DspACntr;
+   unsigned int DspAStride;
+   unsigned int DspABase;
+   unsigned int DspBCntr;
+   unsigned int DspBStride;
+   unsigned int DspBBase;
+
+   unsigned int adpa;
+   unsigned int dv0a;
+   unsigned int dv0b;
+} I830RegRec, *I830RegPtr;
+
 typedef struct _I810Rec {
    unsigned char *MMIOBase;
    unsigned char *FbBase;
@@ -150,7 +462,8 @@ typedef struct _I810Rec {
    I810MemRange TexMem;
    I810MemRange Scratch;
    I810MemRange BufferMem;
- 
+   I810MemRange ContextMem;
+   I810MemRange MC; 
 
    int auxPitch;
    int auxPitchBits;
@@ -161,6 +474,8 @@ typedef struct _I810Rec {
    unsigned long OverlayPhysical;
    unsigned long OverlayStart;
    int colorKey;
+   int surfaceAllocation[I810_TOTAL_SURFACES];
+   int numSurfaces;
 
    DGAModePtr DGAModes;
    int numDGAModes;
@@ -200,6 +515,10 @@ typedef struct _I810Rec {
 
    I810RegRec SavedReg;
    I810RegRec ModeReg;
+
+   I830RegRec i830_SavedReg;
+   I830RegRec i830_ModeReg;
+
    XAAInfoRecPtr AccelInfoRec;
    xf86CursorInfoPtr CursorInfoRec;
    CloseScreenProcPtr CloseScreen;
@@ -223,16 +542,28 @@ typedef struct _I810Rec {
    unsigned long backHandle;
    unsigned long zHandle;
    unsigned long cursorHandle;
+   unsigned long xvmcHandle;
    unsigned long sysmemHandle;
    Bool agpAcquired;
    drmHandle buffer_map;
    drmHandle ring_map;
    drmHandle overlay_map;
+   drmHandle mc_map;
+   drmHandle xvmcContext;
 #endif
    Bool agpAcquired2d;
 
    XF86VideoAdaptorPtr adaptor;
    OptionInfoPtr Options;
+
+   /* Stolen memory support */
+   unsigned long StolenSize;
+   Bool StolenOnly;
+
+   /* Video BIOS support */
+   VESAPtr vesa;
+
+   int configured_device;
 } I810Rec;
 
 #define I810PTR(p) ((I810Ptr)((p)->driverPrivate))
@@ -240,6 +571,14 @@ typedef struct _I810Rec {
 #define I810_FRONT 0
 #define I810_BACK 1
 #define I810_DEPTH 2
+
+extern const char *I810vgahwSymbols[];
+extern const char *I810ramdacSymbols[];
+extern const char *I810int10Symbols[];
+extern const char *I810vbeSymbols[];
+extern const char *I810ddcSymbols[];
+extern const char *I810fbSymbols[];
+extern const char *I810xaaSymbols[];
 
 extern Bool I810DRIScreenInit(ScreenPtr pScreen);
 extern void I810DRICloseScreen(ScreenPtr pScreen);
@@ -299,6 +638,59 @@ extern void I810EmitInvarientState(ScrnInfoPtr pScrn);
 extern Bool I810DGAInit(ScreenPtr pScreen);
 
 extern void I810InitVideo(ScreenPtr pScreen);
+extern void I810InitMC(ScreenPtr pScreen);
+
+extern const OptionInfoRec *I810AvailableOptions(int chipid, int busid);
+
+extern Bool I810MapMem(ScrnInfoPtr pScrn);
+extern Bool I810UnmapMem(ScrnInfoPtr pScrn);
+extern void I810SetRingRegs(ScrnInfoPtr pScrn);
+
+/* I830 specific functions */
+extern void I830EmitInvarientState(ScrnInfoPtr pScrn);
+
+extern Bool I830DRIScreenInit(ScreenPtr pScreen);
+extern void I830DRICloseScreen(ScreenPtr pScreen);
+extern Bool I830DRIFinishScreenInit(ScreenPtr pScreen);
+extern Bool I830InitDma(ScrnInfoPtr pScrn);
+extern Bool I830CleanupDma(ScrnInfoPtr pScrn);
+extern Bool I830AccelInit(ScreenPtr pScreen);
+extern void I830SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir,
+										   int ydir, int rop,
+										   unsigned int planemask,
+										   int trans_color);
+extern void I830SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int srcX,
+											 int srcY, int dstX, int dstY,
+											 int w, int h);
+extern void I830SetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
+								  unsigned int planemask);
+extern void I830SubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y,
+										int w, int h);
+
+/* Debug functions */
+extern char *i810_outreg_get_addr_name(unsigned int addr, int size);
+extern void i810_outreg_decode_register(unsigned int addr, unsigned int val, int size);
+extern void I830PrintAllRegisters(I830RegPtr i810Reg);
+extern void I830ReadAllRegisters(I810Ptr pI810, I830RegPtr i810Reg);
+void DPRINTF_stub (const char *filename,int line,const char *function,const char *fmt, ...);
+
+/* BIOS debug macro */
+#define xf86ExecX86int10_wrapper(pInt, pScrn) do							\
+	{																		\
+	   if(I810_DEBUG & DEBUG_VERBOSE_BIOS)									\
+		 {																	\
+			ErrorF("\n\n\n\nExecuting (ax == 0x%x) BIOS call\n", pInt->ax);	\
+			ErrorF("Checking Error state before execution\n");				\
+			I810PrintErrorState(pScrn);										\
+		 }																	\
+	   xf86ExecX86int10(pInt);												\
+	   if(I810_DEBUG & DEBUG_VERBOSE_BIOS)									\
+		 {																	\
+			ErrorF("Checking Error state after execution\n");				\
+			usleep(50000);													\
+			I810PrintErrorState(pScrn);										\
+		 }																	\
+	} while(0)
 
 #define minb(p) *(volatile CARD8 *)(pI810->MMIOBase + (p))
 #define moutb(p,v) *(volatile CARD8 *)(pI810->MMIOBase + (p)) = (v)
@@ -316,48 +708,66 @@ extern void I810InitVideo(ScreenPtr pScreen);
     OUTREG(LP_RING + RING_TAIL, outring);	\
 }
 
-#ifdef __GNUC__
-#define LP_RING_MESSAGE(n) \
-   ErrorF("BEGIN_LP_RING %d in %s\n", n, __FUNCTION__)
-#else
-#define LP_RING_MESSAGE(n) \
-   ErrorF("BEGIN_LP_RING %d in %s:%d\n", n, __FILE__, __LINE__)
-#endif
+#define DO_RING_IDLE() do									\
+	{														\
+	   int _head;											\
+	   int _tail;											\
+	   int _i;												\
+	   do													\
+		 {													\
+			_head = INREG(LP_RING + RING_HEAD) & HEAD_ADDR;	\
+			_tail = INREG(LP_RING + RING_TAIL) & TAIL_ADDR;	\
+			for(_i = 0; _i < 65535; _i++);					\
+		 }													\
+	   while(_head != _tail);								\
+	} while(0)
 
-#define BEGIN_LP_RING(n)						\
-   unsigned int outring, ringmask;					\
-   volatile unsigned char *virt;							\
-   if (n>2 && (I810_DEBUG&DEBUG_ALWAYS_SYNC)) I810Sync( pScrn );	\
+#define BEGIN_LP_RING(n)											\
+   unsigned int outring, ringmask;									\
+   volatile unsigned char *virt;									\
+   if (n>2 && (I810_DEBUG&DEBUG_ALWAYS_SYNC)) DO_RING_IDLE();		\
    if (pI810->LpRing.space < n*4) I810WaitLpRing( pScrn, n*4, 0);	\
-   pI810->LpRing.space -= n*4;						\
-   if (I810_DEBUG & DEBUG_VERBOSE_RING) 				\
-      LP_RING_MESSAGE(n);						\
-   outring = pI810->LpRing.tail;					\
-   ringmask = pI810->LpRing.tail_mask;					\
-   virt = pI810->LpRing.virtual_start;			
+   pI810->LpRing.space -= n*4;										\
+   if (I810_DEBUG & DEBUG_VERBOSE_RING)								\
+	 ErrorF( "BEGIN_LP_RING %d in %s\n", n, FUNCTION_NAME);			\
+   outring = pI810->LpRing.tail;									\
+   ringmask = pI810->LpRing.tail_mask;								\
+   virt = pI810->LpRing.virtual_start;
 
 /* Memory mapped register access macros */
 #define INREG8(addr)        *(volatile CARD8  *)(pI810->MMIOBase + (addr))
 #define INREG16(addr)       *(volatile CARD16 *)(pI810->MMIOBase + (addr))
 #define INREG(addr)         *(volatile CARD32 *)(pI810->MMIOBase + (addr))
 
-#define OUTREG8(addr, val) do {				\
-   *(volatile CARD8 *)(pI810->MMIOBase  + (addr)) = (val);	\
-   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG)			\
-     ErrorF( "OUTREG8(%x, %x)\n", addr, val);	\
-} while (0)
+#define OUTREG8(addr, val) do														\
+	{																				\
+	   *(volatile CARD8 *)(pI810->MMIOBase  + (addr)) = (val);						\
+	   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG) {										\
+		  char *_name = i810_outreg_get_addr_name(addr, 8);							\
+		  ErrorF( "OUTREG8(%s, %x, %x) in %s\n", _name, addr, val, FUNCTION_NAME);	\
+		  i810_outreg_decode_register(addr, val, 8);								\
+	   }																			\
+	} while (0)
 
-#define OUTREG16(addr, val) do {			\
-   *(volatile CARD16 *)(pI810->MMIOBase + (addr)) = (val);	\
-   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG)			\
-     ErrorF( "OUTREG16(%x, %x)\n", addr, val);	\
-} while (0)
+#define OUTREG16(addr, val) do														\
+	{																				\
+	   *(volatile CARD16 *)(pI810->MMIOBase + (addr)) = (val);						\
+	   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG) {										\
+		  char *_name = i810_outreg_get_addr_name(addr, 16);						\
+		  ErrorF( "OUTREG16(%s, %x, %x) in %s\n", _name, addr, val, FUNCTION_NAME);	\
+		  i810_outreg_decode_register(addr, val, 16);								\
+	   }																			\
+	} while (0)
 
-#define OUTREG(addr, val) do {				\
-   *(volatile CARD32 *)(pI810->MMIOBase + (addr)) = (val);	\
-   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG)			\
-     ErrorF( "OUTREG(%x, %x)\n", addr, val);	\
-} while (0)
+#define OUTREG(addr, val) do														\
+	{																				\
+	   *(volatile CARD32 *)(pI810->MMIOBase + (addr)) = (val);						\
+	   if (I810_DEBUG&DEBUG_VERBOSE_OUTREG) {										\
+		  char *_name = i810_outreg_get_addr_name(addr, 32);						\
+		  ErrorF( "OUTREG(%s, %x, %x) in %s\n", _name, addr, val, FUNCTION_NAME);	\
+		  i810_outreg_decode_register(addr, val, 32);								\
+	   }																			\
+	} while (0)
 
 /* To remove all debugging, make sure I810_DEBUG is defined as a
  * preprocessor symbol, and equal to zero.  
@@ -377,7 +787,7 @@ extern int I810_DEBUG;
 #define DEBUG_VERBOSE_CURSOR 0x40
 #define DEBUG_ALWAYS_SYNC    0x80
 #define DEBUG_VERBOSE_DRI    0x100
-
+#define DEBUG_VERBOSE_BIOS   0x200
 
 /* Size of the mmio region.
  */
@@ -400,11 +810,8 @@ extern int I810_DEBUG;
 			pI810->PciInfo->chipType == PCI_CHIP_I810_DC100 || \
 			pI810->PciInfo->chipType == PCI_CHIP_I810_E)
 #define IS_I815(pI810) (pI810->PciInfo->chipType == PCI_CHIP_I815)
+#define IS_I830(pI810) (pI810->PciInfo->chipType == PCI_CHIP_I830_M)
 
 
 #endif
   
-
-
-
-

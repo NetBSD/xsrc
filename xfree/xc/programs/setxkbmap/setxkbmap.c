@@ -23,7 +23,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/setxkbmap/setxkbmap.c,v 3.5 2001/05/08 22:05:17 paulo Exp $ */
+/* $XFree86: xc/programs/setxkbmap/setxkbmap.c,v 3.6 2001/08/17 15:39:50 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -392,10 +392,10 @@ unsigned	present;
 	else if (streq(argv[i],"-model"))
 	    ok= setOptString(&i,argc,argv,MODEL_NDX,FROM_CMD_LINE);
 	else if (streq(argv[i],"-option")) {
-	    if ((i>=argc-1)||(argv[i+1][0]=='\0')||(argv[i+1][0]=='-')) {
+	    if ((i==argc-1)||(argv[i+1][0]=='\0')||(argv[i+1][0]=='-')) {
 		clearOptions= True;
 		ok= addToList(&szOptions,&numOptions,&options,"");
-                if (argv[i+1][0]=='\0')
+                if (i<argc-1 && argv[i+1][0]=='\0')
                    i++;
 	    }
 	    else {

@@ -1,4 +1,4 @@
-/* $Xorg: Composite.c,v 1.3 2000/08/17 19:46:09 cpqbld Exp $ */
+/* $Xorg: Composite.c,v 1.4 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,6 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/Composite.c,v 1.6 2001/12/14 19:56:08 dawes Exp $ */
 
 #define COMPOSITE
 #include "IntrinsicI.h"
@@ -163,7 +168,7 @@ static void CompositeClassPartInitialize(widgetClass)
 	WidgetClass widgetClass;
 {
     register CompositePartPtr wcPtr;
-    register CompositePartPtr superPtr;
+    register CompositePartPtr superPtr = NULL;
 
     wcPtr = (CompositePartPtr)
 	&(((CompositeWidgetClass)widgetClass)->composite_class);
@@ -172,10 +177,6 @@ static void CompositeClassPartInitialize(widgetClass)
 	/* don't compute possible bogus pointer */
 	superPtr = (CompositePartPtr)&(((CompositeWidgetClass)widgetClass
 			->core_class.superclass)->composite_class);
-#ifdef lint
-    else
-	superPtr = NULL;
-#endif
 
     /* We don't need to check for null super since we'll get to composite
        eventually, and it had better define them!  */

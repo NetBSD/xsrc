@@ -3,7 +3,11 @@
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,12 +48,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/gc.c,v 1.5 2001/01/17 23:45:06 dawes Exp $ */
+/* $XFree86: xc/programs/twm/gc.c,v 1.6 2001/12/14 20:01:07 dawes Exp $ */
 
 
 /**********************************************************************
  *
- * $Xorg: gc.c,v 1.3 2000/08/17 19:54:06 cpqbld Exp $
+ * $Xorg: gc.c,v 1.4 2001/02/09 02:05:36 xorgcvs Exp $
  *
  * Open the fonts and create the GCs
  *

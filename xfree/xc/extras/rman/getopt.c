@@ -9,16 +9,17 @@ UNIFORUM conference in Dallas.  I obtained it by electronic mail
 directly from AT&T.  The people there assure me that it is indeed
 in the public domain.
 */
+/* $XFree86: xc/extras/rman/getopt.c,v 1.3 2001/07/29 05:01:10 tsi Exp $ */
 
 /*LINTLIBRARY*/
 
-extern int strlen();
-extern int strcmp();
-extern char *strchr();
-extern int write();
+#include <stdlib.h>
+#include <unistd.h>
+#include <stddef.h>
 
-#define NULL	0
+#ifndef EOF
 #define EOF	(-1)
+#endif
 #define ERR(s, c)	if(opterr){\
 	char errbuf[2];\
 	errbuf[0] = c; errbuf[1] = '\n';\

@@ -5,7 +5,7 @@
 
    Copyright: 1998,1999
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.23.2.1 2001/05/22 21:25:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.25 2001/08/18 02:51:13 dawes Exp $ */
 
 #ifndef _TDFX_H_
 #define _TDFX_H_
@@ -109,7 +109,9 @@ typedef struct {
   unsigned int vidpll;
   unsigned int dacmode;
   unsigned int vgainit0;
+  unsigned int vgainit1;
   unsigned int miscinit0;
+  unsigned int miscinit1;
   unsigned int screensize;
   unsigned int stride;
   unsigned int cursloc;
@@ -150,6 +152,7 @@ typedef struct _TDFXRec {
   EntityInfoPtr pEnt;
   int numChips;
   PCITAG PciTag[MAXCHIPS];
+  Bool Primary;
   int HasSGRAM;
   int PciCnt;
   int PrevDrawState;

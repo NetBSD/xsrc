@@ -1,5 +1,5 @@
 .TH XvSelectPortNotify 3X __vendorversion__
-.\" $XFree86: xc/doc/man/Xv/XvSelectPortNotify.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/XvSelectPortNotify.man,v 1.6 2001/08/17 13:27:50 dawes Exp $
 .SH Name
 XvSelectPortNotify \- enable or disable XvPortNotify(3X) events
 .\"
@@ -38,7 +38,7 @@ generated when port attributes are changed using XvSetPortAttribute(3X).
 .\"
 .SH Returned Values
 .IP [Success] 8
-Returns True if XvSelectPortNotify(3X) completed successfully.
+Returned if XvSelectPortNotify(3X) completed successfully.
 .IP [XvBadExtension] 8
 Returned if the Xv extension is unavailable.
 .IP [XvBadAlloc] 8

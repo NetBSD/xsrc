@@ -1,9 +1,13 @@
 /*
- * $Xorg: access.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $
+ * $Xorg: access.c,v 1.5 2001/02/09 02:05:40 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/access.c,v 3.6 2001/01/17 23:45:20 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/access.c,v 3.8 2001/12/14 20:01:19 dawes Exp $ */
 
 /*
  * Access control for XDMCP - keep a database of allowable display addresses
@@ -42,11 +46,7 @@ in this Software without prior written authorization from The Open Group.
 
 # include   "dm_socket.h"
 
-#ifndef MINIX
 # include   <netdb.h>
-#else /* MINIX */
-# include   <net/gen/netdb.h>
-#endif /* !MINIX */
 
 #define ALIAS_CHARACTER	    '%'
 #define NEGATE_CHARACTER    '!'

@@ -1,10 +1,14 @@
-/* $Xorg: Xalloca.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
+/* $Xorg: Xalloca.h,v 1.4 2001/02/09 02:03:22 xorgcvs Exp $ */
 
 /*
 
 Copyright 1995, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/include/Xalloca.h,v 3.9 2001/01/17 17:53:10 dawes Exp $ */
+/* $XFree86: xc/include/Xalloca.h,v 3.10 2001/12/14 19:53:25 dawes Exp $ */
 
 /*
  * The purpose of this header is to define the macros ALLOCATE_LOCAL and

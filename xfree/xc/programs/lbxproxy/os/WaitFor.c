@@ -1,9 +1,13 @@
-/* $Xorg: WaitFor.c,v 1.3 2000/08/17 19:53:58 cpqbld Exp $ */
+/* $Xorg: WaitFor.c,v 1.4 2001/02/09 02:05:33 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.6 2001/01/17 23:44:59 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.9 2001/12/14 20:00:57 dawes Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:
@@ -54,10 +58,6 @@ SOFTWARE.
 #include "Xos.h"			/* for strings, fcntl, time */
 
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
-
 #include <stdio.h>
 #include "misc.h"
 #include "util.h"
@@ -150,7 +150,7 @@ WaitForSomething(pClientsReady, poll)
 	    if (dispatchException)
 		return 0;
 	    FD_ZERO(&clientsWritable);
-	    if (i < 0) 
+	    if (i < 0) {
 		if (selecterr == EBADF)    /* Some client disconnected */
 		{
 		    CheckConnections ();
@@ -160,6 +160,7 @@ WaitForSomething(pClientsReady, poll)
 		else if (selecterr != EINTR)
 		    ErrorF("WaitForSomething(): select: errno=%d\n",
 			selecterr);
+	    }
 	}
 	else
 	{

@@ -1,6 +1,6 @@
 // Latvian keyboard map by Ilya Ketris <Ilya.Ketris@ipro.lv>
 //
-// $XFree86: xc/programs/xkbcomp/symbols/lv,v 1.1.2.1 2001/05/23 20:21:53 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/lv,v 1.2 2001/05/23 20:13:23 dawes Exp $
 
 partial default alphanumeric_keys modifier_keys 
 xkb_symbols "basic" {

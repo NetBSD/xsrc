@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb24_32.c,v 1.4 2000/08/09 17:50:51 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb24_32.c,v 1.5 2001/05/29 04:54:08 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -278,17 +278,18 @@ fb24_32GetSpans(DrawablePtr	pDrawable,
     CARD8	    *src;
     FbStride	    srcStride;
     int		    srcBpp;
+    int		    srcXoff, srcYoff;
     CARD8	    *dst;
     
-    fbGetDrawable (pDrawable, srcBits, srcStride, srcBpp);
+    fbGetDrawable (pDrawable, srcBits, srcStride, srcBpp, srcXoff, srcYoff);
     src = (CARD8 *) srcBits;
     srcStride *= sizeof (FbBits);
     
     while (nspans--)
     {
 	dst = (CARD8 *) pchardstStart;
-	fb24_32BltUp (src + ppt->y * srcStride, srcStride,
-		      ppt->x,
+	fb24_32BltUp (src + (ppt->y + srcYoff) * srcStride, srcStride,
+		      ppt->x + srcXoff,
 	       
 		      dst,
 		      1,
@@ -321,16 +322,17 @@ fb24_32SetSpans (DrawablePtr	    pDrawable,
     CARD8	    *dst, *d, *s;
     FbStride	    dstStride;
     int		    dstBpp;
+    int		    dstXoff, dstYoff;
     BoxPtr	    pbox;
     int		    n;
     int		    x1, x2;
 
-    fbGetDrawable (pDrawable, dstBits, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dstBits, dstStride, dstBpp, dstXoff, dstYoff);
     dst = (CARD8 *) dstBits;
     dstStride *= sizeof (FbBits);
     while (nspans--)
     {
-	d = dst + ppt->y * dstStride;
+	d = dst + (ppt->y + dstYoff) * dstStride;
 	s = (CARD8 *) src;
 	n = REGION_NUM_RECTS(pClip);
 	pbox = REGION_RECTS (pClip);
@@ -352,7 +354,7 @@ fb24_32SetSpans (DrawablePtr	    pDrawable,
 				    (x1 - ppt->x),
 				    d,
 				    dstStride,
-				    x1,
+				    x1 + dstXoff,
 
 				    (x2 - x1),
 				    1,
@@ -385,11 +387,12 @@ fb24_32PutZImage (DrawablePtr	pDrawable,
     CARD8	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     int		nbox;
     BoxPtr	pbox;
     int		x1, y1, x2, y2;
 
-    fbGetDrawable (pDrawable, dstBits, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dstBits, dstStride, dstBpp, dstXoff, dstYoff);
     dstStride *= sizeof(FbBits);
     dst = (CARD8 *) dstBits;
 
@@ -416,9 +419,9 @@ fb24_32PutZImage (DrawablePtr	pDrawable,
 			srcStride,
 			(x1 - x),
 
-			dst + y1 * dstStride,
+			dst + (y1 + dstYoff) * dstStride,
 			dstStride,
-			x1,
+			x1 + dstXoff,
 
 			(x2 - x1),
 			(y2 - y1),
@@ -442,10 +445,11 @@ fb24_32GetImage (DrawablePtr     pDrawable,
     CARD8	    *src;
     FbStride	    srcStride;
     int		    srcBpp;
+    int		    srcXoff, srcYoff;
     FbStride	    dstStride;
     FbBits	    pm;
 
-    fbGetDrawable (pDrawable, srcBits, srcStride, srcBpp);
+    fbGetDrawable (pDrawable, srcBits, srcStride, srcBpp, srcXoff, srcYoff);
     src = (CARD8 *) srcBits;
     srcStride *= sizeof (FbBits);
 
@@ -456,7 +460,7 @@ fb24_32GetImage (DrawablePtr     pDrawable,
     dstStride = PixmapBytePad(w, pDrawable->depth);
     if (pm != FB_ALLONES)
 	memset (d, 0, dstStride * h);
-    fb24_32BltUp (src + y * srcStride, srcStride, x,
+    fb24_32BltUp (src + (y + srcYoff) * srcStride, srcStride, x + srcXoff,
 		  (CARD8 *) d, dstStride, 0,
 		  w, h, GXcopy, pm);
 }
@@ -484,11 +488,13 @@ fb24_32CopyMtoN (DrawablePtr pSrcDrawable,
     FbStride	dstStride;
     int		dstBpp;
     fb24_32BltFunc  blt;
+    int		srcXoff, srcYoff;
+    int		dstXoff, dstYoff;
     
-    fbGetDrawable (pSrcDrawable, srcBits, srcStride, srcBpp);
+    fbGetDrawable (pSrcDrawable, srcBits, srcStride, srcBpp, srcXoff, srcYoff);
     src = (CARD8 *) srcBits;
     srcStride *= sizeof (FbBits);
-    fbGetDrawable (pDstDrawable, dstBits, dstStride, dstBpp);
+    fbGetDrawable (pDstDrawable, dstBits, dstStride, dstBpp, dstXoff, dstYoff);
     dst = (CARD8 *) dstBits;
     dstStride *= sizeof (FbBits);
     if (srcBpp == 24)
@@ -498,13 +504,13 @@ fb24_32CopyMtoN (DrawablePtr pSrcDrawable,
     
     while (nbox--)
     {
-	(*blt) (src + (pbox->y1 + dy) * srcStride,
+	(*blt) (src + (pbox->y1 + dy + srcYoff) * srcStride,
 		srcStride,
-		(pbox->x1 + dx),
+		(pbox->x1 + dx + srcXoff),
 
-		dst + (pbox->y1) * dstStride,
+		dst + (pbox->y1 + dstYoff) * dstStride,
 		dstStride,
-		(pbox->x1),
+		(pbox->x1 + dstXoff),
 
 		(pbox->x2 - pbox->x1),
 		(pbox->y2 - pbox->y1),
@@ -524,6 +530,8 @@ fb24_32ReformatTile(PixmapPtr pOldTile, int bitsPerPixel)
     FbStride	oldStride, newStride;
     int		oldBpp, newBpp;
     fb24_32BltFunc  blt;
+    int		oldXoff, oldYoff;
+    int		newXoff, newYoff;
 
     pNewTile = fbCreatePixmapBpp (pScreen,
 				  pOldTile->drawable.width,
@@ -533,9 +541,9 @@ fb24_32ReformatTile(PixmapPtr pOldTile, int bitsPerPixel)
     if (!pNewTile)
 	return 0;
     fbGetDrawable (&pOldTile->drawable, 
-		   old, oldStride, oldBpp);
+		   old, oldStride, oldBpp, oldXoff, oldYoff);
     fbGetDrawable (&pNewTile->drawable, 
-		   new, newStride, newBpp);
+		   new, newStride, newBpp, newXoff, newYoff);
     if (oldBpp == 24)
 	blt = fb24_32BltUp;
     else

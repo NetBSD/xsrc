@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_io.c,v 1.2 1999/12/27 00:45:45 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_io.c,v 1.3 2001/11/16 16:47:56 dawes Exp $
  */
 
 /* This module contains the NTO-specific functions to access the keyboard
@@ -105,29 +105,3 @@ int xf86KbdOff()
 	return (-1);
 }
 
-void xf86MouseInit(mouse)
-MouseDevPtr mouse;
-{
-	return;
-}
-
-int xf86MouseOn(mouse)
-MouseDevPtr mouse;
-{
-	if ((mouse->mseFd = open(mouse->mseDevice, O_RDWR | O_NDELAY)) < 0)
-	{
-		if (xf86AllowMouseOpenFail) {
-			ErrorF("Cannot open mouse (%s) - Continuing...\n",
-				strerror(errno));
-			return(-2);
-		}
-		FatalError("Cannot open mouse (%s)\n", strerror(errno));
-	}
-
-	xf86SetupMouse(mouse);
-
-	/* Flush any pending input */
-	tcflush(mouse->mseFd, TCIFLUSH);
-
-	return(mouse->mseFd);
-}

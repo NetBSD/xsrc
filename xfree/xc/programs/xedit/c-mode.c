@@ -27,16 +27,14 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/c-mode.c,v 1.5 2001/01/30 15:03:33 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/c-mode.c,v 1.10 2001/12/02 15:02:31 paulo Exp $ */
 
 #include "xedit.h"
 #include <X11/IntrinsicP.h>
 #include <X11/Xaw/TextSinkP.h>
 #include <X11/Xaw/TextSrcP.h>
 #include <X11/Xmu/Xmu.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>		/* for bsearch() */
-#endif
 #include <ctype.h>
 
 #define C_Peek(parser)	((parser)->next)
@@ -77,9 +75,6 @@ static int C_Parse2(C_Parser*);
 static int C_Parse3(C_Parser*);
 static int C_Parse4(C_Parser*);
 static void C_ParseCallback(Widget, XtPointer, XtPointer);
-
-extern void _XawTextNeedsUpdating(TextWidget, XawTextPosition, XawTextPosition);
-
 
 /*
  * Initialization
@@ -404,10 +399,10 @@ previous_anchor:
 	C_ParserEnt *ent, *nent;
 	XawTextAnchor *kanc;
 	XawTextEntity *kent;
-	XawTextPosition kfrom, kto;
+	XawTextPosition kfrom = 0, kto = 0;
 	int delta = info->block->length - (info->right - info->left);
 
-	if (XawTextSourceAnchorAndEntity(w, position - MAX(1, ABS(delta)),
+	if (XawTextSourceAnchorAndEntity(w, position - 1,
 					 &kanc, &kent) == False)
 	    kent = NULL;
 	else {
@@ -743,7 +738,8 @@ static int
 C_Parse2(C_Parser *parser)
 {
     int ch = C_Parse3(parser);
-    Bool dot = False, E = False, U = False, L = False, sign = False,
+    int L = 0;
+    Bool dot = False, E = False, U = False, F = False, sign = False,
 	octal = False, real = False, hexa = False, first = True, did_get = False;
 
     for (;;) {
@@ -755,7 +751,7 @@ C_Parse2(C_Parser *parser)
 		sign = True;
 		break;
 	    case '.':
-		if (dot || E || L || U || hexa)
+		if (dot || E || L || U || F || hexa)
 		    return (C_Parse2Fail(parser));
 		if (first && !isdigit(C_Peek(parser)))
 		    return ('.');
@@ -770,14 +766,20 @@ C_Parse2(C_Parser *parser)
 		    E = real = True;
 		break;
 	    case 'a': case 'A': case 'b': case 'B': case 'c': case 'C':
-	    case 'd': case 'D': case 'f': case 'F':
+	    case 'd': case 'D':
 		if (dot || E || !hexa)
 		    return (C_Parse2Fail(parser));
 		break;
 	    case 'l': case 'L':
-		if (L)
+		if (L > 1)
 		    return (C_Parse2Fail(parser));
-		L = True;
+		++L;
+		break;
+	    case 'f': case 'F':
+		if (F)
+		    return (C_Parse2Fail(parser));
+		if (!hexa)
+		    F = real = True;
 		break;
 	    case 'u': case 'U':
 		if (U || real)

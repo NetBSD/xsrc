@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xvinfo/xvinfo.c,v 1.6 2001/04/01 14:00:24 tsi Exp $ */
+/* $XFree86: xc/programs/xvinfo/xvinfo.c,v 1.7 2001/10/28 03:34:43 tsi Exp $ */
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
 
 	for(j = 0; j < nadaptors; j++) {
 	    fprintf(stdout, "  Adaptor #%i: \"%s\"\n", j, ainfo[j].name);
-	    fprintf(stdout, "    number of ports: %i\n", ainfo[j].num_ports);
-	    fprintf(stdout, "    port base: %i\n", ainfo[j].base_id);
+	    fprintf(stdout, "    number of ports: %li\n", ainfo[j].num_ports);
+	    fprintf(stdout, "    port base: %li\n", ainfo[j].base_id);
 	    fprintf(stdout, "    operations supported: ");
 	    switch(ainfo[j].type & (XvInputMask | XvOutputMask)) {
 	    case XvInputMask:
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
 	    fprintf(stdout, "    supported visuals:\n");
 	    for(k = 0; k < ainfo[j].num_formats; k++, format++) {
-	         fprintf(stdout, "      depth %i, visualID 0x%2x\n",
+	         fprintf(stdout, "      depth %i, visualID 0x%2lx\n",
 				 format->depth, format->visual_id);
 	    }
 
@@ -154,10 +154,10 @@ int main(int argc, char *argv[])
 
 		    for(n = 0; n < nencode; n++) {
 		    	if(strcmp(encodings[n].name, "XV_IMAGE")) {
-			    fprintf(stdout, "      encoding ID #%i: \"%s\"\n",
+			    fprintf(stdout, "      encoding ID #%li: \"%s\"\n",
 					encodings[n].encoding_id,
 					encodings[n].name);
-			    fprintf(stdout, "        size: %i x %i\n",
+			    fprintf(stdout, "        size: %li x %li\n",
 					encodings[n].width,
 					encodings[n].height);
 			    fprintf(stdout, "        rate: %f\n",
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 		   for(n = 0; n < nencode; n++) {
 		      if(!strcmp(encodings[n].name, "XV_IMAGE")) {
 			fprintf(stdout, 
-				"    maximum XvImage size: %i x %i\n",	
+				"    maximum XvImage size: %li x %li\n",	
 				encodings[n].width, encodings[n].height);
 			break;
 		      }
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 			    		formats[n].depth == XvRGB);
 
 			    fprintf(stdout, "        red, green, blue masks: " 
-					"0x%lx, 0x%lx, 0x%lx\n", 
+					"0x%x, 0x%x, 0x%x\n", 
 					formats[n].red_mask,
 					formats[n].green_mask,
 					formats[n].blue_mask);

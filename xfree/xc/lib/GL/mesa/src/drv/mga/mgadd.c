@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgadd.c,v 1.10 2001/04/10 16:07:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgadd.c,v 1.11 2001/08/18 02:51:05 dawes Exp $ */
 
 
 #include "types.h"
@@ -51,7 +51,7 @@
 #include "X86/common_x86_asm.h"
 #endif
 
-#define MGA_DATE	"20010321"
+#define MGA_DATE	"20010622"
 
 
 

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/mmath.h,v 1.15 2002/01/07 17:26:06 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
@@ -232,8 +232,9 @@ do {						\
  * GLubyte b = FloatToInt(CLAMP(f, 0, 1) * 255)
  */
 
-#if defined(__i386__) || defined(__sparc__) || ( defined(__alpha__) && \
-	      ( defined( __IEEE_FLOAT ) || !defined( VMS ) ) )
+#if defined(__i386__) || defined(__sparc__) || defined(__s390x__) || \
+    defined(__ppc__) || defined(__powerpc__) || \
+    ( defined(__alpha__) && ( defined( __IEEE_FLOAT ) || !defined( VMS ) ) )
 #define USE_IEEE
 #define IEEE_ONE 0x3f7f0000
 #endif
@@ -285,6 +286,17 @@ do {						\
 
 #endif
 
+#ifdef USE_IEEE
+/* Returns TRUE for x == Inf or x == NaN. */
+static INLINE int IS_INF_OR_NAN( float x )
+{
+   union {float f; int i;} tmp;
+   tmp.f = x;
+   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+}
+#else
+#define IS_INF_OR_NAN(x)        (!finite(x)) 
+#endif
 
 extern float gl_ubyte_to_float_color_tab[256];
 extern float gl_ubyte_to_float_255_color_tab[256];

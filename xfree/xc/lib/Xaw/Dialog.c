@@ -1,10 +1,14 @@
-/* $Xorg: Dialog.c,v 1.3 2000/08/17 19:45:32 cpqbld Exp $ */
+/* $Xorg: Dialog.c,v 1.4 2001/02/09 02:03:43 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.7 2001/01/17 19:42:26 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.8 2001/12/14 19:54:39 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

@@ -713,7 +713,7 @@ have to add the line
 
       s3MNadjust -31 255
 
-to the device section in your XF86Config file and restart X Windows.  With
+to the device section in your XF86Config file and restart X.  With
 this option (which is for testing and debugging only) you'll get lots of dis-
 astrous display flickering and snowing, so it should be removed again immedi-
 ately after running the test script below.
@@ -810,4 +810,4 @@ force the server to use this address with the MemBase field in the XF86Config
      $XConsortium: S3.sgml /main/14 1996/02/21 17:45:58 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3,v 3.56 2000/03/01 01:48:11 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3,v 3.57 2001/12/17 20:52:30 dawes Exp $

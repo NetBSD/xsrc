@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/FillRect.c,v 1.1 2000/11/20 07:13:09 keithp Exp $
+ * $XFree86: xc/lib/Xrender/FillRect.c,v 1.2 2001/12/16 18:27:55 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -33,7 +33,7 @@ void
 XRenderFillRectangle (Display	    *dpy,
 		      int	    op,
 		      Picture	    dst,
-		      XRenderColor  *color,
+		      _Xconst XRenderColor  *color,
 		      int	    x,
 		      int	    y,
 		      unsigned int  width,

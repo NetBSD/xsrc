@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:00 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/Imakefile,v 3.52 2001/04/03 17:36:28 dawes Exp $
+XCOMM $XFree86: xc/lib/Imakefile,v 3.58 2001/11/02 23:29:26 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -20,7 +20,7 @@ XAW6LIBDIR = Xaw6
 BERKDIR = Xbsd
 #endif
 
-#if BuildXKBlib
+#if BuildXKBfilelib || BuildXKB
 XKBLIBDIR = xkbfile
 #endif
 
@@ -75,6 +75,9 @@ XINERAMADIR=Xinerama
 
 #if BuildGLXLibrary
 GLXLIBDIR = GL
+#endif
+
+#if BuildGLwLibrary
 GLWLIBDIR = GLw
 #endif
 
@@ -106,6 +109,14 @@ XFTLIBDIR = Xft
 FREETYPE2BUILDDIR = freetype2
 #endif
 
+#if BuildRandRLibrary
+RANDRLIBDIR = Xrandr
+#endif
+
+#if BuildXTrapLibrary
+XTRAPLIBDIR = XTrap
+#endif
+
 XF86EXTLIBS = $(XF86MISCLIBDIR) $(XF86VMLIBDIR) \
 		$(XF86DGALIBDIR) $(XF86RUSHLIBDIR)
 
@@ -135,11 +146,23 @@ FONTCACHELIBDIR = Xfontcache
 
 FONTSUBDIR = font
 
-XAULIBDIR = Xau
-XDMCPLIBDIR = Xdmcp
-X11LIBDIR = X11
+#if BuildFontEncLib
+FONTENCSUBDIR = fontenc
+#endif
 
-#if BuildLibraries || XnestServer || BuildGLXLibrary
+#if BuildXauLib
+XAULIBDIR = Xau
+#endif
+
+#if BuildXdmcpLib
+XDMCPLIBDIR = Xdmcp
+#endif
+
+#if BuildX11Lib
+X11LIBDIR = X11
+#endif
+
+#if BuildXextLib
 XEXTLIBDIR = Xext
 #endif
 
@@ -167,9 +190,10 @@ LINTSUBDIRS = $(XAULIBDIR) $(XDMCPLIBDIR) $(THRSTUBLIBDIR) $(X11LIBDIR) \
 	     $(XVLIBDIR) $(GLXLIBDIR) $(GLULIBDIR) $(GLWLIBDIR) \
 	     $(DPSLIBDIR) $(DPSTKLIBDIR) $(PSRESLIBDIR) $(XINERAMADIR) \
 	     $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) $(FREETYPE2BUILDDIR) \
-	     $(XFTLIBDIR) $(XVMCLIBDIR)
+	     $(XFTLIBDIR) $(XVMCLIBDIR) $(RANDRLIBDIR) $(XTRAPLIBDIR)
 
-SUBDIRS = $(BERKDIR) xtrans $(LINTSUBDIRS) $(FONTSUBDIR) $(FONTCACHELIBDIR)
+SUBDIRS = $(BERKDIR) xtrans $(LINTSUBDIRS) $(FONTSUBDIR) $(FONTENCSUBDIR) \
+	  $(FONTCACHELIBDIR)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

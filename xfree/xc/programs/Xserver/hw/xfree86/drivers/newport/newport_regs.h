@@ -4,7 +4,7 @@
  * Register Layouts of the various newport chips
  * mostly as found in linux/include/asm/newport.h 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.h,v 1.1 2000/12/01 19:48:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.h,v 1.2 2001/11/23 19:50:45 dawes Exp $ */
 
 typedef volatile unsigned long npireg_t;
 
@@ -131,6 +131,8 @@ struct Newport_rexregs {
 #define NPORT_DMODE0_YSTR     0x00800000
 
 	npireg_t lsmode;      /* Mode for line stipple ops */
+#define NPORT_LSMODE_REPMASK  0x0000ff00
+#define NPORT_LSMODE_LENMASK  0x0f000000
 	npireg_t lspattern;   /* Pattern for line stipple ops */
 	npireg_t lspatsave;   /* Backup save pattern */
 	npireg_t zpattern;    /* Pixel zpattern */
@@ -189,7 +191,7 @@ struct Newport_rexregs {
 	npireg_t hostrw0;
 	npireg_t hostrw1;
 	npireg_t dcbmode;
-#define NPORT_DMODE_WMASK   0x00000003
+#define NPORT_DMODE_WMASK   0x00000003	/* dataWidth of data being transfered */
 #define NPORT_DMODE_W4      0x00000000
 #define NPORT_DMODE_W1      0x00000001
 #define NPORT_DMODE_W2      0x00000002
@@ -235,6 +237,8 @@ struct Newport_cregs {
 	npireg_t topscan;
 	npireg_t xywin;
 	npireg_t clipmode;
+#define NPORT_SMASKXOFF 	4096
+#define NPORT_SMASKYOFF 	4096
 #define NPORT_CMODE_SM0   0x00000001
 #define NPORT_CMODE_SM1   0x00000002
 #define NPORT_CMODE_SM2   0x00000004
@@ -331,12 +335,12 @@ struct Newport_regs {
 
 /* Controlling the color map on Newport. */
 #define NCMAP_REGADDR_AREG   0x00000000
-#define NCMAP_REGADDR_ALO    0x00000000
-#define NCMAP_REGADDR_AHI    0x00000010
-#define NCMAP_REGADDR_PBUF   0x00000020
-#define NCMAP_REGADDR_CREG   0x00000030
-#define NCMAP_REGADDR_SREG   0x00000040
-#define NCMAP_REGADDR_RREG   0x00000060
+#define NCMAP_REGADDR_ALO    0x00000000		/* address register low  */
+#define NCMAP_REGADDR_AHI    0x00000010		/* address register high */
+#define NCMAP_REGADDR_PBUF   0x00000020		/* color palette buffer  */
+#define NCMAP_REGADDR_CREG   0x00000030		/* command register 	 */
+#define NCMAP_REGADDR_SREG   0x00000040		/* color buffer register */
+#define NCMAP_REGADDR_RREG   0x00000060		/* revision register 	 */
 #define NCMAP_PROTOCOL       (0x00008000 | 0x00040000 | 0x00800000)
 
 /*

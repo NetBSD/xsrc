@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.20 1999/12/27 00:39:43 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.23 2001/10/28 03:33:19 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -38,22 +38,21 @@
 
 #include "xf86Keymap.h"
 
-#define KD_GET_ENTRY(i,n) \
-  eascii_to_x[((keymap.key[i].spcl << (n+1)) & 0x100) + keymap.key[i].map[n]]
-
 #if defined(KDGKBTYPE) && \
-	!defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && \
-	!defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && \
+	!defined(Lynx) && \
+	!defined(__EMX__) && !defined(__mips__) && \
 	!defined(__arm32__) && !defined(__GNU__) && !defined(__QNX__)
 #define HAS_GETKBTYPE
 #endif
 #if defined(GIO_KEYMAP) && \
-	!defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && \
-	!defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && \
+	!defined(Lynx) && \
+	!defined(__EMX__) && !defined(__mips__) && \
 	!defined(__arm32__) && !defined(__GNU__) && !defined(DGUX) && \
 	!defined(__QNX__)
 #define HAS_GETKEYMAP
-#endif
+
+#define KD_GET_ENTRY(i,n) \
+  eascii_to_x[((keymap.key[i].spcl << (n+1)) & 0x100) + keymap.key[i].map[n]]
 
 /*
  * NOTE: Not all possible remappable symbols are remapped. There are two main
@@ -223,6 +222,7 @@ static KeySym eascii_to_x[512] = {
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
       };
 
+#endif /* HAS_GETKEYMAP */
 
 /*
  * LegalModifier --
@@ -256,11 +256,12 @@ xf86KbdGetMapping (pKeySyms, pModMap)
 #ifdef HAS_GETKEYMAP
   keymap_t      keymap;
 #endif
-  char          type;
   int           i;
   KeySym        *pMap;
-  
+
 #ifdef HAS_GETKBTYPE
+  char          type;
+  
   xf86Info.kbdType =
     ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
   if (xf86Info.kbdType == KB_84)
@@ -268,7 +269,10 @@ xf86KbdGetMapping (pKeySyms, pModMap)
   else
     pMap = map;
 #else
+/* OS/2 sets the keyboard type during xf86OpenKbd */
+#ifndef __EMX__
   xf86Info.kbdType = 0;
+#endif
   pMap = map;
 #endif
 
@@ -349,17 +353,6 @@ xf86KbdGetMapping (pKeySyms, pModMap)
 
     }
   
-#ifdef HAS_GETKBTYPE
-  xf86Info.kbdType =
-    ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
-#else
-/* OS/2 sets the keyboard type during xf86OpenKbd */
-#ifndef __EMX__
-  xf86Info.kbdType = 0;
-#endif
-#endif
-
-
   pKeySyms->map        = pMap;
   pKeySyms->mapWidth   = GLYPHS_PER_KEY;
   pKeySyms->minKeyCode = MIN_KEYCODE;

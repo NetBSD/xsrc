@@ -19,7 +19,7 @@ XCOMM $Xorg: Library.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.13 2001/01/17 16:22:30 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.15 2001/08/27 17:40:55 dawes Exp $
 
 #ifndef LibraryCplusplusOptions
 # if DoSharedLib && defined(SharedLibraryCplusplusOptions)
@@ -302,13 +302,14 @@ CenterLoadTarget(debug_src,basename.SRCsuf,NullParameter,$(ALLDEFINES) options)
 #ifndef MakeStringsDependency
 # define MakeStringsDependency						@@\
 MAKESTRS = $(CONFIGSRC)/util/makestrs					@@\
-NoCmpScript(ProgramTargetName($(MAKESTRS)) $(MAKESTRS).Osuf)		@@\
+NoCmpScript(HostProgramTargetName($(MAKESTRS)) $(MAKESTRS).Osuf)	@@\
 									@@\
-ProgramTargetName($(MAKESTRS)) $(MAKESTRS).Osuf:			@@\
-	cd $(CONFIGSRC)/util && $(MAKE) ProgramTargetName(makestrs)	@@\
+HostProgramTargetName($(MAKESTRS)) $(MAKESTRS).Osuf:			@@\
+	cd $(CONFIGSRC)/util && $(MAKE) HostProgramTargetName(makestrs)	@@\
 									@@\
-includes:: ProgramTargetName($(MAKESTRS))
+includes:: HostProgramTargetName($(MAKESTRS))
 #endif
+
 #ifndef ToolkitMakeStrings
 # if defined(LibTookitMakeStringsDependency) && LibTookitMakeStringsDependency
 #  define ToolkitMakeStrings(files,source,options,depends,dest)		@@\
@@ -362,6 +363,10 @@ LibraryObjectRule()
 #  define _LinkBuildLibrary(lib) LinkBuildLibrary(lib)
 # else
 #  define _LinkBuildLibrary(lib) $(_NULLCMD_)
+# endif
+
+# if defined(LibBuild) && !LibBuild
+#  define LibCreate NO
 # endif
 
 # if !defined(LibCreate) || LibCreate
@@ -423,27 +428,35 @@ LintLibraryTarget($(LIBNAME),$(SRCS))
 InstallLintLibrary($(LIBNAME),$(LINTLIBDIR))
 #  endif
 # else /* not LibCreate */
-#  if HugeLibrary
+#  if LibBuild
+#   if HugeLibrary
 AllTarget($(OBJS1))
 AllTarget($(OBJS2))
 AllTarget($(OBJS3))
-#  else
+#   else
 AllTarget($(OBJS))
-#  endif
+#   endif
+#  endif /* LibBuild */
 # endif /* LibCreate */
 # ifdef IncSubdir
 #  ifdef IncSubSubdir
 BuildIncludes($(HEADERS),IncSubdir/IncSubSubdir,../..)
+#   if BuildLibraries
 InstallMultipleFlags($(HEADERS),$(INCDIR)/IncSubdir/IncSubSubdir,$(INSTINCFLAGS))
+#   endif
 #  else
 BuildIncludes($(HEADERS),IncSubdir,..)
+#   if BuildLibraries
 InstallMultipleFlags($(HEADERS),$(INCDIR)/IncSubdir,$(INSTINCFLAGS))
+#   endif
 #  endif
 # else
 #  ifndef CplusplusSource
 #   if !defined(LibHeaders) || LibHeaders
 BuildIncludesTop($(HEADERS))
+#    if BuildLibraries
 InstallMultipleFlags($(HEADERS),$(INCDIR),$(INSTINCFLAGS))
+#    endif
 #   endif
 #  endif
 # endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.8 2000/10/20 14:59:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.12 2001/08/06 20:51:13 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -38,7 +38,6 @@ extern LexRec val;
 
 static xf86ConfigSymTabRec FilesTab[] =
 {
-	{COMMENT, "###"},
 	{ENDSECTION, "endsection"},
 	{FONTPATH, "fontpath"},
 	{RGBPATH, "rgbpath"},
@@ -66,6 +65,7 @@ xf86parseFilesSection (void)
 	int i, j;
 	int k, l;
 	char *str;
+	int token;
 	parsePrologue (XF86ConfFilesPtr, XF86ConfFilesRec)
 
 	while ((token = xf86getToken (FilesTab)) != ENDSECTION)
@@ -73,12 +73,10 @@ xf86parseFilesSection (void)
 		switch (token)
 		{
 		case COMMENT:
-			if (xf86getToken (NULL) != STRING)
-				Error (QUOTE_MSG, "###");
-			ptr->file_comment = val.str;
+			ptr->file_comment = xf86addComment(ptr->file_comment, val.str);
 			break;
 		case FONTPATH:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
 				Error (QUOTE_MSG, "FontPath");
 			j = FALSE;
 			str = prependRoot (val.str);
@@ -106,12 +104,12 @@ xf86parseFilesSection (void)
 			xf86conffree (val.str);
 			break;
 		case RGBPATH:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
 				Error (QUOTE_MSG, "RGBPath");
 			ptr->file_rgbpath = val.str;
 			break;
 		case MODULEPATH:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
 				Error (QUOTE_MSG, "ModulePath");
 			l = FALSE;
 			str = prependRoot (val.str);
@@ -138,7 +136,7 @@ xf86parseFilesSection (void)
 			xf86conffree (val.str);
 			break;
 		case LOGFILEPATH:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
 				Error (QUOTE_MSG, "LogFile");
 			ptr->file_logfile = val.str;
 			break;
@@ -169,7 +167,7 @@ xf86printFileSection (FILE * cf, XF86ConfFilesPtr ptr)
 		return;
 
 	if (ptr->file_comment)
-		fprintf (cf, "\t###          \"%s\"\n", ptr->file_comment);
+		fprintf (cf, "%s", ptr->file_comment);
 	if (ptr->file_logfile)
 		fprintf (cf, "\tLogFile      \"%s\"\n", ptr->file_logfile);
 	if (ptr->file_rgbpath)
@@ -216,6 +214,7 @@ xf86freeFiles (XF86ConfFilesPtr p)
 	TestFree (p->file_rgbpath);
 	TestFree (p->file_modulepath);
 	TestFree (p->file_fontpath);
+	TestFree (p->file_comment);
 
 	xf86conffree (p);
 }

@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.12 2001/03/21 16:14:21 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.14 2001/10/02 11:44:13 alanh Exp $ */
 
 /*
  * Authors:
@@ -155,9 +155,9 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
    /* Check that the DRM driver version is compatible */
    if (sPriv->drmMajor != 1 ||
-       sPriv->drmMinor < 1) {
+       sPriv->drmMinor < 2) {
       char msg[1000];
-      sprintf(msg, "i810 DRI driver expected DRM driver version 1.1.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
+      sprintf(msg, "i810 DRI driver expected DRM driver version 1.2 or greater but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
       __driMesaMessage(msg);
       return GL_FALSE;
    }

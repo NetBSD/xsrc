@@ -1,4 +1,4 @@
-/* $Xorg: OidStrs.h,v 1.3 2000/08/17 19:48:06 cpqbld Exp $ */
+/* $Xorg: OidStrs.h,v 1.4 2001/03/14 18:45:40 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -30,9 +30,9 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/OidStrs.h,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/OidStrs.h,v 1.5 2001/12/21 21:02:05 dawes Exp $ */
 
-static int XpOidStringMapCount = 117;
+static int XpOidStringMapCount = 127;
 
 #define OIDATA(name) { name, sizeof(name)-1, 0, 0, 0 }
 
@@ -71,6 +71,8 @@ static const XpOidStringMapEntry XpOidStringMap[] = {
     OIDATA("job-attributes-supported"),
     OIDATA("locale"),
     OIDATA("multiple-documents-supported"),
+    OIDATA("available-compression"),
+    OIDATA("available-compressions-supported"),
     OIDATA("portrait"),
     OIDATA("landscape"),
     OIDATA("reverse-portrait"),
@@ -153,7 +155,15 @@ static const XpOidStringMapEntry XpOidStringMap[] = {
     OIDATA("xp-setup-ok"),
     OIDATA("xp-setup-incomplete"),
     OIDATA("xp-list-glyph-fonts"),
-    OIDATA("xp-list-internal-printer-fonts")
+    OIDATA("xp-list-internal-printer-fonts"),
+    OIDATA("0"),
+    OIDATA("01"),
+    OIDATA("02"),
+    OIDATA("03"),
+    OIDATA("012"),
+    OIDATA("013"),
+    OIDATA("023"),
+    OIDATA("0123")
 };
 
 #undef OIDATA

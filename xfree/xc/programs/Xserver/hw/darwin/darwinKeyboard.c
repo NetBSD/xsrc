@@ -36,7 +36,7 @@
 //
 //=============================================================================
 
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwinKeyboard.c,v 1.5 2001/04/25 02:23:47 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwinKeyboard.c,v 1.14 2001/12/05 06:27:43 torrey Exp $ */
 
 /*
 ===========================================================================
@@ -51,7 +51,7 @@
 
  The modifier map is accessed by the keyCode, but the normal map is
  accessed by keyCode - MIN_KEYCODE.  Sigh.
- 
+
 ===========================================================================
 */
 
@@ -64,27 +64,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <architecture/byte_order.h>  // For the NXSwap*
 #include "darwin.h"
 #include "xfIOKit.h"
 #include "bundle/quartzAudio.h"
 #include "bundle/quartzShared.h"
 
 #define XK_TECHNICAL		// needed to get XK_Escape
+#define XK_PUBLISHING
 #include "keysym.h"
 
+// Each key can generate 4 glyphs. They are, in order:
+// unshifted, shifted, modeswitch unshifted, modeswitch shifted
 #define GLYPHS_PER_KEY  4
-#define NUM_KEYCODES    248		// NX_NUMKEYCODES might be better
+#define NUM_KEYCODES    248	// NX_NUMKEYCODES might be better
 #define MAX_KEYCODE     NUM_KEYCODES + MIN_KEYCODE - 1
 
-#define AltMask	        Mod1Mask
-#define NumLockMask     Mod2Mask
-#define MetaMask        Mod3Mask
-#define ScrollLockMask  Mod4Mask
+#define AltMask         Mod1Mask
+#define MetaMask        Mod2Mask
+#define FunctionMask    Mod3Mask
 
-static KeySym const ascii_to_x[256] = {
+// FIXME: It would be nice to support some of the extra keys in XF86keysym.h,
+// at least the volume controls that now ship on every Apple keyboard.
+
+#define UK(a)           NoSymbol	// unknown symbol
+
+static KeySym const next_to_x[256] = {
 	NoSymbol,	NoSymbol,	NoSymbol,	XK_KP_Enter,
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	XK_Delete,	XK_Tab,		XK_Linefeed,	NoSymbol,
+	XK_BackSpace,	XK_Tab,		XK_Linefeed,	NoSymbol,
 	NoSymbol,	XK_Return,	NoSymbol,	NoSymbol,
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
@@ -115,41 +123,57 @@ static KeySym const ascii_to_x[256] = {
 	XK_x,		XK_y,		XK_z,		XK_braceleft,
 	XK_bar,		XK_braceright,	XK_asciitilde,	XK_BackSpace,
 // 128
-	XK_Ccedilla,	XK_udiaeresis,	XK_eacute,	XK_acircumflex,
-	XK_adiaeresis,	XK_agrave,	XK_aring,	XK_ccedilla,
-	XK_ecircumflex,	XK_ediaeresis,	XK_egrave,	XK_idiaeresis,
-	XK_icircumflex,	XK_igrave,	XK_Adiaeresis,	XK_Aring,
-	XK_Eacute,	XK_ae,		XK_AE,		XK_ocircumflex,
-	XK_odiaeresis,	XK_ograve,	XK_ntilde,	XK_ugrave,
-	XK_ydiaeresis,	XK_Odiaeresis,	XK_Udiaeresis,	XK_cent,
-	XK_sterling,	XK_yen,		XK_paragraph,	XK_section,
+	NoSymbol,	XK_Agrave,	XK_Aacute,	XK_Acircumflex,
+	XK_Atilde,	XK_Adiaeresis,	XK_Aring,	XK_Ccedilla,
+	XK_Egrave,	XK_Eacute,	XK_Ecircumflex,	XK_Ediaeresis,
+	XK_Igrave,	XK_Iacute,	XK_Icircumflex,	XK_Idiaeresis,
+// 144
+	XK_ETH,		XK_Ntilde,	XK_Ograve,	XK_Oacute,
+	XK_Ocircumflex,	XK_Otilde,	XK_Odiaeresis,	XK_Ugrave,
+	XK_Uacute,	XK_Ucircumflex,	XK_Udiaeresis,	XK_Yacute,
+	XK_THORN,	XK_mu,		XK_multiply,	XK_division,
 // 160
-	XK_aacute,	XK_degree,	XK_cent,	XK_sterling,
-	XK_ntilde,	XK_Ntilde,	XK_paragraph,	XK_Greek_BETA,
-	XK_questiondown,XK_hyphen,	XK_notsign,	XK_onehalf,
-	XK_onequarter,	XK_exclamdown,	XK_guillemotleft,XK_guillemotright,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	XK_copyright,	XK_exclamdown,	XK_cent,	XK_sterling,
+	UK(fraction),	XK_yen,		UK(fhook),	XK_section,
+	XK_currency,	XK_rightsinglequotemark,
+					XK_leftdoublequotemark,
+							XK_guillemotleft,
+	XK_leftanglebracket,
+			XK_rightanglebracket,
+					UK(filigature),	UK(flligature),
+// 176
+	XK_registered,	XK_endash,	XK_dagger,	XK_doubledagger,
+	XK_periodcentered,XK_brokenbar,	XK_paragraph,	UK(bullet),
+	XK_singlelowquotemark,
+			XK_doublelowquotemark,
+					XK_rightdoublequotemark,
+							XK_guillemotright,
+	XK_ellipsis,	UK(permille),	XK_notsign,	XK_questiondown,
 // 192
-	XK_questiondown,XK_exclamdown,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	XK_AE,		XK_ae,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	XK_onesuperior,	XK_dead_grave,	XK_dead_acute,	XK_dead_circumflex,
+	XK_dead_tilde,	XK_dead_macron,	XK_dead_breve,	XK_dead_abovedot,
+	XK_dead_diaeresis,
+			XK_twosuperior,	XK_dead_abovering,
+							XK_dead_cedilla,
+	XK_threesuperior,
+			XK_dead_doubleacute,
+					XK_dead_ogonek,	XK_dead_caron,
+// 208
+	XK_emdash,	XK_plusminus,	XK_onequarter,	XK_onehalf,
+	XK_threequarters,
+			XK_agrave,	XK_aacute,	XK_acircumflex,
+	XK_atilde,	XK_adiaeresis,	XK_aring,	XK_ccedilla,
+	XK_egrave,	XK_eacute,	XK_ecircumflex,	XK_ediaeresis,
 // 224
-	XK_Greek_alpha,	XK_ssharp,	XK_Greek_GAMMA,	XK_Greek_pi,
-	XK_Greek_SIGMA,	XK_Greek_sigma,	XK_mu,	        XK_Greek_tau,
-	XK_Greek_PHI,	XK_Greek_THETA,	XK_Greek_OMEGA,	XK_Greek_delta,
-	XK_infinity,	XK_Ooblique,	XK_Greek_epsilon, XK_intersection,
-	XK_identical,	XK_plusminus,	XK_greaterthanequal, XK_lessthanequal,
-	XK_topintegral,	XK_botintegral,	XK_division,	XK_similarequal,
-	XK_degree,	NoSymbol,	NoSymbol,	XK_radical,
-	XK_Greek_eta,	XK_twosuperior,	XK_periodcentered, NoSymbol,
+	XK_igrave,	XK_AE,		XK_iacute,	XK_ordfeminine,
+	XK_icircumflex,	XK_idiaeresis,	XK_eth,		XK_ntilde,
+	XK_Lstroke,	XK_Ooblique,	XK_OE,		XK_masculine,
+	XK_ograve,	XK_oacute,	XK_ocircumflex, XK_otilde,
+// 240
+	XK_odiaeresis,	XK_ae,		XK_ugrave,	XK_uacute,
+	XK_ucircumflex,	XK_idotless,	XK_udiaeresis,	XK_ygrave,
+	XK_lstroke,	XK_ooblique,	XK_oe,		XK_ssharp,
+	XK_thorn,	XK_ydiaeresis,	NoSymbol,	NoSymbol,
   };
 
 #define MIN_SYMBOL		0xAC
@@ -195,20 +219,21 @@ static darwinKeyPad_t const normal_to_keypad[] = {
 };
 int const NUM_KEYPAD = sizeof(normal_to_keypad) / sizeof(normal_to_keypad[0]);
 
-static void DarwinChangeKeyboardControl( DeviceIntPtr device, KeybdCtrl *ctrl ) {
+static void DarwinChangeKeyboardControl( DeviceIntPtr device, KeybdCtrl *ctrl )
+{
     // keyclick, bell volume / pitch, autorepead, LED's
 }
 
-static	CARD8 modMap[MAP_LENGTH];
-static	KeySym map[256 * GLYPHS_PER_KEY];
+static  CARD8 modMap[MAP_LENGTH];
+static  KeySym map[MAP_LENGTH * GLYPHS_PER_KEY];
 static  unsigned char modifierKeycodes[NX_NUMMODIFIERS][2];
 static  FILE *fref = NULL;
 static  char *inBuffer = NULL;
 
 //-----------------------------------------------------------------------------
 // Data Stream Object
-//	Can be configured to treat embedded "numbers" as being composed of
-//	either 1, 2, or 4 bytes, apiece.
+//      Can be configured to treat embedded "numbers" as being composed of
+//      either 1, 2, or 4 bytes, apiece.
 //-----------------------------------------------------------------------------
 typedef struct _DataStream
 {
@@ -260,9 +285,9 @@ static int get_dword( DataStream* s )
 static int get_number( DataStream* s )
 {
     switch (s->number_size) {
-	case 4:  return get_dword(s);
-	case 2:  return get_word(s);
-	default: return get_byte(s);
+        case 4:  return get_dword(s);
+        case 2:  return get_word(s);
+        default: return get_byte(s);
     }
 }
 
@@ -272,22 +297,22 @@ static int get_number( DataStream* s )
 
 /*
  * bits_set
- * Calculate number of bits set in the modifier mask.
+ *      Calculate number of bits set in the modifier mask.
  */
 static short bits_set( short mask )
 {
     short n = 0;
 
     for ( ; mask != 0; mask >>= 1)
-	if ((mask & 0x01) != 0)
-	    n++;
+        if ((mask & 0x01) != 0)
+            n++;
     return n;
 }
 
 /*
  * parse_next_char_code
- * Read the next character code from the Darwin keymapping
- * and write it to the X keymap.
+ *      Read the next character code from the Darwin keymapping
+ *      and write it to the X keymap.
  */
 static void parse_next_char_code(
     DataStream  *s,
@@ -298,7 +323,7 @@ static void parse_next_char_code(
 
     if (charSet == 0) {                 // ascii character
         if (charCode >= 0 && charCode < 256)
-            *k = ascii_to_x[charCode];
+            *k = next_to_x[charCode];
     } else if (charSet == 0x01) {       // symbol character
         if (charCode >= MIN_SYMBOL &&
             charCode <= MIN_SYMBOL + NUM_SYMBOL)
@@ -310,101 +335,118 @@ static void parse_next_char_code(
     }
 }
 
+
 /*
  * DarwinReadKeymapFile
  *      Read the appropriate keymapping from a keymapping file.
  */
 Bool DarwinReadKeymapFile(
-    NXKeyMapping        *keyMap )
+    NXKeyMapping        *keyMap)
 {
     struct stat         st;
     NXEventSystemDevice info[20];
     int                 interface = 0, handler_id = 0;
     int                 map_interface, map_handler_id, map_size = 0;
     unsigned int        i, size;
-    Boolean             hasMatch = FALSE;
+    int                 *bufferEnd;
     union km_tag {
         int             *intP;
         char            *charP;
     } km;
 
     fref = fopen( darwinKeymapFile, "rb" );
-    if (fref == 0) {
-        ErrorF("Unable to open keymapping file %s.\n", darwinKeymapFile);
+    if (fref == NULL) {
+        ErrorF("Unable to open keymapping file '%s' (errno %d).\n",
+               darwinKeymapFile, errno);
         return FALSE;
     }
-    assert( !fstat(fileno(fref), &st) );
+    if (fstat(fileno(fref), &st) == -1) {
+        ErrorF("Could not stat keymapping file '%s' (errno %d).\n",
+               darwinKeymapFile, errno);
+        return FALSE;
+    }
 
     // check to make sure we don't crash later
     if (st.st_size <= 16*sizeof(int)) {
-        ErrorF("Invalid keymapping file.\n");
+        ErrorF("Keymapping file '%s' is invalid (too small).\n",
+               darwinKeymapFile);
         return FALSE;
     }
 
     inBuffer = (char*) xalloc( st.st_size );
-    assert( fread(inBuffer, st.st_size, 1, fref) );
+    bufferEnd = (int *) (inBuffer + st.st_size);
+    if (fread(inBuffer, st.st_size, 1, fref) != 1) {
+        ErrorF("Could not read %qd bytes from keymapping file '%s' (errno %d).\n",
+               st.st_size, darwinKeymapFile, errno);
+        return FALSE;
+    }
+
+    if (strncmp( inBuffer, "KYM1", 4 ) == 0) {
+        // Magic number OK.
+    } else if (strncmp( inBuffer, "KYMP", 4 ) == 0) {
+        ErrorF("Keymapping file '%s' is intended for use with the original NeXT keyboards and cannot be used by XDarwin.\n", darwinKeymapFile);
+        return FALSE;
+    } else {
+        ErrorF("Keymapping file '%s' has a bad magic number and cannot be used by XDarwin.\n", darwinKeymapFile);
+        return FALSE;
+    }
 
     // find the keyboard interface and handler id
     size = sizeof( info ) / sizeof( int );
-    if (!NXEventSystemInfo( dfb.hidParam, NX_EVS_DEVICE_INFO,
+    if (!NXEventSystemInfo( hid.paramConnect, NX_EVS_DEVICE_INFO,
                             (NXEventSystemInfoType) info, &size )) {
         ErrorF("Error reading event status driver info.\n");
         return FALSE;
     }
+
     size = size * sizeof( int ) / sizeof( info[0] );
     for( i = 0; i < size; i++) {
         if (info[i].dev_type == NX_EVS_DEVICE_TYPE_KEYBOARD) {
+            Bool hasInterface = FALSE;
+            Bool hasMatch = FALSE;
+
             interface = info[i].interface;
             handler_id = info[i].id;
-            break;
-        }
-    }
 
-    // Find the appropriate keymapping:
-    // The first time through we try to match both interface and handler_id.
-    // If we can't match both, we take the first match for interface.
-    if (strncmp( inBuffer, "KYM1", 4 ) == 0) {
-        Bool hasInterface = FALSE;
-        int *bufferEnd = (int *) (inBuffer + st.st_size);
-        do {
-            km.charP = inBuffer;
-            km.intP++;
-            while (km.intP+3 < bufferEnd) {
-                map_interface = *(km.intP++);
-                map_handler_id = *(km.intP++);
-                map_size = *(km.intP++);
-                if (map_interface == interface) {
-                    if (map_handler_id == handler_id || hasInterface) {
-                        hasMatch = TRUE;
-                        break;
-                    } else {
-                        hasInterface = TRUE;
+            // Find an appropriate keymapping:
+            // The first time we try to match both interface and handler_id.
+            // If we can't match both, we take the first match for interface.
+
+            do {
+                km.charP = inBuffer;
+                km.intP++;
+                while (km.intP+3 < bufferEnd) {
+                    map_interface = *(km.intP++);
+                    map_handler_id = *(km.intP++);
+                    map_size = *(km.intP++);
+                    if (map_interface == interface) {
+                        if (map_handler_id == handler_id || hasInterface) {
+                            hasMatch = TRUE;
+                            break;
+                        } else {
+                            hasInterface = TRUE;
+                        }
                     }
+                    km.charP += map_size;
                 }
-                km.charP += map_size;
+            } while (hasInterface && !hasMatch);
+
+            if (hasMatch) {
+                // fill in NXKeyMapping structure
+                keyMap->size = map_size;
+                keyMap->mapping = (char*) xalloc(map_size);
+                memcpy(keyMap->mapping, km.charP, map_size);
+                return TRUE;
             }
-            if (hasMatch) break;
-        } while (hasInterface);
-    } else if (strncmp( inBuffer, "KYMP", 4 ) == 0) {
-        ErrorF("This old style keymapping file is intended for use with the original NeXT keyboards.\n");
-        return FALSE;        
-    } else {
-        ErrorF("The keymapping file has a bad magic number.\n");
-        return FALSE;
-    }
+        } // if dev_id == keyboard device
+    } // foreach info struct
 
-    if (hasMatch) {
-        // fill in NXKeyMapping structure
-        keyMap->size = map_size;
-        keyMap->mapping = (char*) xalloc(map_size);
-        memcpy(keyMap->mapping, km.charP, map_size);
-    } else {
-        ErrorF("Keymapping file did not contain appropriate keyboard interface.\n");
-        return FALSE;
-    }
-
-    return TRUE;
+    // The keymapping file didn't match any of the info structs
+    // returned by NXEventSystemInfo.
+    ErrorF("Keymapping file '%s' did not contain appropriate keyboard interface.\n", darwinKeymapFile);
+    return FALSE;
 }
+
 
 /*
  * DarwinKeyboardInit
@@ -434,7 +476,7 @@ void DarwinKeyboardInit(
     // Open a shared connection to the HID System.
     // Note that the Event Status Driver is really just a wrapper
     // for a kIOHIDParamConnectType connection.
-    assert( dfb.hidParam = NXOpenEventStatus() );
+    assert( hid.paramConnect = NXOpenEventStatus() );
 
     if (darwinKeymapFile) {
         haveKeymap = DarwinReadKeymapFile(&keyMap);
@@ -449,9 +491,11 @@ void DarwinKeyboardInit(
 
     if (!haveKeymap) {
         // get the Darwin keyboard map
-        keyMap.size = NXKeyMappingLength( dfb.hidParam );
+        keyMap.size = NXKeyMappingLength( hid.paramConnect );
         keyMap.mapping = (char*) xalloc( keyMap.size );
-        assert( NXGetKeyMapping( dfb.hidParam, &keyMap ));
+        if (!NXGetKeyMapping( hid.paramConnect, &keyMap )) {
+            FatalError("Could not get kernel keymapping! Load keymapping from file instead.\n");
+        }
     }
 
     keyMapStream = new_data_stream( (unsigned char const*)keyMap.mapping,
@@ -468,101 +512,142 @@ void DarwinKeyboardInit(
     // Store modifier keycodes in modifierKeycodes.
     numMods = get_number(keyMapStream);
     while (numMods-- > 0) {
-        int	            left = 1;                   // first keycode is left
+        int             left = 1;               // first keycode is left
         short const     charCode = get_number(keyMapStream);
         short           numKeyCodes = get_number(keyMapStream);
+
+        // This is just a marker, not a real modifier.
+        // Store numeric keypad keys for later.
         if (charCode == NX_MODIFIERKEY_NUMERICPAD) {
             numPadStart = keyMapStream->data;
             numPadKeys = numKeyCodes;
         }
+
         while (numKeyCodes-- > 0) {
             const short keyCode = get_number(keyMapStream);
-            if (charCode == NX_MODIFIERKEY_ALPHALOCK) {
-                modMap[keyCode + MIN_KEYCODE] = LockMask;
-                map[keyCode * GLYPHS_PER_KEY] = XK_Caps_Lock;
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else if (charCode == NX_MODIFIERKEY_SHIFT) {
-                modMap[keyCode + MIN_KEYCODE] = ShiftMask;
-                map[keyCode * GLYPHS_PER_KEY] =
-                        (left ? XK_Shift_L : XK_Shift_R);
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else if (charCode == NX_MODIFIERKEY_CONTROL) {
-                modMap[keyCode + MIN_KEYCODE] = ControlMask;
-                map[keyCode * GLYPHS_PER_KEY] =
-                        (left ? XK_Control_L : XK_Control_R);
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else if (charCode == NX_MODIFIERKEY_ALTERNATE) {
-                modMap[keyCode + MIN_KEYCODE] = AltMask;
-                map[keyCode * GLYPHS_PER_KEY] =
-                        (left ? XK_Alt_L : XK_Alt_R);
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else if (charCode == NX_MODIFIERKEY_COMMAND) {
-                modMap[keyCode + MIN_KEYCODE] = MetaMask;
-                map[keyCode * GLYPHS_PER_KEY] =
-                        (left ? XK_Meta_L : XK_Meta_R);
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else if (charCode == NX_MODIFIERKEY_NUMERICPAD) {
-                continue;
-            } else if (charCode == NX_MODIFIERKEY_HELP) {
-                map[keyCode * GLYPHS_PER_KEY] = XK_Help;
-                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
-            } else {
-                break;
+            if (charCode != NX_MODIFIERKEY_NUMERICPAD) {
+                modifierKeycodes[charCode][1-left] = keyCode;
+                switch (charCode) {
+                    case NX_MODIFIERKEY_ALPHALOCK:
+                        modMap[keyCode + MIN_KEYCODE] = LockMask;
+                        map[keyCode * GLYPHS_PER_KEY] = XK_Caps_Lock;
+                        break;
+                    case NX_MODIFIERKEY_SHIFT:
+                        modMap[keyCode + MIN_KEYCODE] = ShiftMask;
+                        map[keyCode * GLYPHS_PER_KEY] =
+                                (left ? XK_Shift_L : XK_Shift_R);
+                        break;
+                    case NX_MODIFIERKEY_CONTROL:
+                        modMap[keyCode + MIN_KEYCODE] = ControlMask;
+                        map[keyCode * GLYPHS_PER_KEY] =
+                                (left ? XK_Control_L : XK_Control_R);
+                        break;
+                    case NX_MODIFIERKEY_ALTERNATE:
+                        modMap[keyCode + MIN_KEYCODE] = AltMask;
+                        map[keyCode * GLYPHS_PER_KEY] =
+                                (left ? XK_Mode_switch : XK_Alt_R);
+                        break;
+                    case NX_MODIFIERKEY_COMMAND:
+                        modMap[keyCode + MIN_KEYCODE] = MetaMask;
+                        map[keyCode * GLYPHS_PER_KEY] =
+                                (left ? XK_Meta_L : XK_Meta_R);
+                        break;
+                    case NX_MODIFIERKEY_SECONDARYFN:
+                        modMap[keyCode + MIN_KEYCODE] = FunctionMask;
+                        map[keyCode * GLYPHS_PER_KEY] =
+                                (left ? XK_Control_L : XK_Control_R);
+                        break;
+                    case NX_MODIFIERKEY_HELP:
+                        // Help is not an X11 modifier; treat as normal key
+                        map[keyCode * GLYPHS_PER_KEY] = XK_Help;
+                        break;
+                }
             }
             left = 0;
         }
     }
 
     // Convert the Darwin keyboard map to an X keyboard map.
-    // A key can have shifted and unshifted character codes.
-    // Other modifiers are ignored although they are
-    // present in the Darwin keyboard map.
+    // A key can have a different character code for each combination of
+    // modifiers. We currently ignore all modifier combinations except
+    // those with Shift, AlphaLock, and Alt.
     numKeys = get_number(keyMapStream);
     for (i = 0, k = map; i < numKeys; i++, k += GLYPHS_PER_KEY) {
         short const     charGenMask = get_number(keyMapStream);
         if (charGenMask != 0xFF) {              // is key bound?
             short       numKeyCodes = 1 << bits_set(charGenMask);
 
-            // If alphalock and shift modifiers produce different codes,
-            // we only need the shift case since X handles alphalock.
-            if (charGenMask & 0x01 && charGenMask & 0x02) {
-                // record unshifted case
-                parse_next_char_code( keyMapStream, k );
-                // skip alphalock case
-                get_number(keyMapStream); get_number(keyMapStream);
-                // record shifted case
-                parse_next_char_code( keyMapStream, k+1 );
-                if (k[1] == k[0]) k[1] = NoSymbol;
-                numKeyCodes -= 3;
-                // skip the rest
-                while (numKeyCodes-- > 0) {
-                    get_number(keyMapStream); get_number(keyMapStream);
-                }
+            // Record unmodified case
+            parse_next_char_code( keyMapStream, k );
+            numKeyCodes--;
 
-            // If alphalock and shift modifiers produce same code, use it.
-            } else if (charGenMask & 0x03) {
-                // record unshifted case
-                parse_next_char_code( keyMapStream, k );
-                // record shifted case
+            // If AlphaLock and Shift modifiers produce different codes,
+            // we record the Shift case since X handles AlphaLock.
+            if (charGenMask & 0x01) {		// AlphaLock
                 parse_next_char_code( keyMapStream, k+1 );
-                if (k[1] == k[0]) k[1] = NoSymbol;
-                numKeyCodes -= 2;
-                // skip the rest
-                while (numKeyCodes-- > 0) {
-                    get_number(keyMapStream); get_number(keyMapStream);
-                }
-
-            // If neither alphalock or shift produce characters,
-            // use only one character code for this key,
-            // but it can be a special character.
-            } else {
-                parse_next_char_code( keyMapStream, k );
                 numKeyCodes--;
-                while (numKeyCodes-- > 0) {     // skip the rest
+            }
+
+            if (charGenMask & 0x02) {		// Shift
+                parse_next_char_code( keyMapStream, k+1 );
+                numKeyCodes--;
+
+                if (charGenMask & 0x01) {	// Shift-AlphaLock
                     get_number(keyMapStream); get_number(keyMapStream);
-                
+                    numKeyCodes--;
                 }
             }
+
+            // Skip the Control cases
+            if (charGenMask & 0x04) {		// Control
+                get_number(keyMapStream); get_number(keyMapStream);
+                numKeyCodes--;
+
+                if (charGenMask & 0x01) {	// Control-AlphaLock
+                    get_number(keyMapStream); get_number(keyMapStream);
+                    numKeyCodes--;
+                }
+
+                if (charGenMask & 0x02) {	// Control-Shift
+                    get_number(keyMapStream); get_number(keyMapStream);
+                    numKeyCodes--;
+
+                    if (charGenMask & 0x01) {	// Shift-Control-AlphaLock
+                        get_number(keyMapStream); get_number(keyMapStream);
+                        numKeyCodes--;
+                    }
+                }
+            }
+
+            // Process Alt cases
+            if (charGenMask & 0x08) {		// Alt
+                parse_next_char_code( keyMapStream, k+2 );
+                numKeyCodes--;
+
+                if (charGenMask & 0x01) {	// Alt-AlphaLock
+                    parse_next_char_code( keyMapStream, k+3 );
+                    numKeyCodes--;
+                }
+
+                if (charGenMask & 0x02) {	// Alt-Shift
+                    parse_next_char_code( keyMapStream, k+3 );
+                    numKeyCodes--;
+
+                    if (charGenMask & 0x01) {	// Alt-Shift-AlphaLock
+                        get_number(keyMapStream); get_number(keyMapStream);
+                        numKeyCodes--;
+                    }
+                }
+            }
+
+            while (numKeyCodes-- > 0) {
+                get_number(keyMapStream); get_number(keyMapStream);
+            }
+
+            if (k[3] == k[2]) k[3] = NoSymbol;
+            if (k[2] == k[1]) k[2] = NoSymbol;
+            if (k[1] == k[0]) k[1] = NoSymbol;
+            if (k[0] == k[2] && k[1] == k[3]) k[2] = k[3] = NoSymbol;
         }
     }
 
@@ -615,21 +700,104 @@ void DarwinKeyboardInit(
                                       DarwinChangeKeyboardControl ));
 }
 
+//-----------------------------------------------------------------------------
+// Modifier translation functions
+//
+// There are three different ways to specify a Mac modifier key:
+// keycode - specifies hardware key, read from keymapping
+// key     - NX_MODIFIERKEY_*, really an index
+// mask    - NX_*MASK, mask for modifier flags in event record
+// Left and right side have different keycodes but the same key and mask.
+//-----------------------------------------------------------------------------
+
 /*
- * DarwinModifierKeycode
- * Return the keycode + MIN_KEYCODE for an NX_MODIFIERKEY_* modifier.
- * side = 0 for left or 1 for right.
+ * DarwinModifierNXKeyToNXKeycode
+ *      Return the keycode for an NX_MODIFIERKEY_* modifier.
+ *      side = 0 for left or 1 for right.
+ *      Returns 0 if key+side is not a known modifier.
  */
-int DarwinModifierKeycode(int modifier, int side)
+int DarwinModifierNXKeyToNXKeycode(int key, int side)
 {
-    return modifierKeycodes[modifier][side];
+    return modifierKeycodes[key][side];
+}
+
+/*
+ * DarwinModifierNXKeycodeToNXKey
+ *      Returns -1 if keycode+side is not a modifier key
+ *      outSide may be NULL, else it gets 0 for left and 1 for right.
+ */
+int DarwinModifierNXKeycodeToNXKey(unsigned char keycode, int *outSide)
+{
+    int key, side;
+
+    keycode += MIN_KEYCODE;
+    // search modifierKeycodes for this keycode+side
+    for (key = 0; key < NX_NUMMODIFIERS; key++) {
+        for (side = 0; side <= 1; side++) {
+            if (modifierKeycodes[key][side] == keycode) break;
+        }
+    }
+    if (key == NX_NUMMODIFIERS) return -1;
+    if (outSide) *outSide = side;
+    return key;
+}
+
+/*
+ * DarwinModifierNXMaskToNXKey
+ *      Returns -1 if mask is not a known modifier mask.
+ */
+int DarwinModifierNXMaskToNXKey(int mask)
+{
+    switch (mask) {
+        case NX_ALPHASHIFTMASK:  return NX_MODIFIERKEY_ALPHALOCK;
+        case NX_SHIFTMASK:       return NX_MODIFIERKEY_SHIFT;
+        case NX_CONTROLMASK:     return NX_MODIFIERKEY_CONTROL;
+        case NX_ALTERNATEMASK:   return NX_MODIFIERKEY_ALTERNATE;
+        case NX_COMMANDMASK:     return NX_MODIFIERKEY_COMMAND;
+        case NX_NUMERICPADMASK:  return NX_MODIFIERKEY_NUMERICPAD;
+        case NX_HELPMASK:        return NX_MODIFIERKEY_HELP;
+        case NX_SECONDARYFNMASK: return NX_MODIFIERKEY_SECONDARYFN;
+    }
+    return -1;
+}
+
+/*
+ * DarwinModifierNXKeyToNXMask
+ *      Returns 0 if key is not a known modifier key.
+ */
+int DarwinModifierNXKeyToNXMask(int key)
+{
+    switch (key) {
+        case NX_MODIFIERKEY_ALPHALOCK:   return NX_ALPHASHIFTMASK;
+        case NX_MODIFIERKEY_SHIFT:       return NX_SHIFTMASK;
+        case NX_MODIFIERKEY_CONTROL:     return NX_CONTROLMASK;
+        case NX_MODIFIERKEY_ALTERNATE:   return NX_ALTERNATEMASK;
+        case NX_MODIFIERKEY_COMMAND:     return NX_COMMANDMASK;
+        case NX_MODIFIERKEY_NUMERICPAD:  return NX_NUMERICPADMASK;
+        case NX_MODIFIERKEY_HELP:        return NX_HELPMASK;
+        case NX_MODIFIERKEY_SECONDARYFN: return NX_SECONDARYFNMASK;
+    }
+    return 0;
+}
+
+/*
+ * DarwinModifierStringToNXKey
+ *      Returns -1 if string is not a known modifier.
+ */
+int DarwinModifierStringToNXKey(const char *str)
+{
+    if      (!strcasecmp(str, "shift"))   return NX_MODIFIERKEY_SHIFT;
+    else if (!strcasecmp(str, "control")) return NX_MODIFIERKEY_CONTROL;
+    else if (!strcasecmp(str, "option"))  return NX_MODIFIERKEY_ALTERNATE;
+    else if (!strcasecmp(str, "command")) return NX_MODIFIERKEY_COMMAND;
+    else if (!strcasecmp(str, "fn"))      return NX_MODIFIERKEY_SECONDARYFN;
+    else return -1;
 }
 
 /*
  * LegalModifier
- * This allows the driver level to prevent some keys from being remapped
- * as modifier keys.
- * I have no idea why this is useful.
+ *      This allows the ddx layer to prevent some keys from being remapped
+ *      as modifier keys.
  */
 Bool LegalModifier(unsigned int key, DevicePtr pDev)
 {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbblt.c,v 3.0 1996/08/18 01:45:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbblt.c,v 3.1 2001/10/28 03:32:57 tsi Exp $ */
 /*
  * afb copy area
  */
@@ -56,7 +56,6 @@ MROP_NAME(afbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 {
 	PixelType *psrcBase, *pdstBase;	/* start of src and dst bitmaps */
 	int widthSrc, widthDst;			/* add to get to same position in next line */
-	int heightSrc, heightDst;
 	int sizeSrc, sizeDst;
 
 	BoxPtr pbox;
@@ -87,13 +86,7 @@ MROP_NAME(afbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 	register PixelType bits1;
 	register int nl;				/* temp copy of nlMiddle */
 
-										/* place to store full source word */
-	int nstart;						/* number of ragged bits at start of dst */
-	int nend;						/* number of ragged bits at end of dst */
-	int srcStartOver;				/* pulling nstart bits from src
-											overflows into the next word? */
 	int careful;
-	int tmpSrc;
 	int depthSrc;
 	int depthDst;
 

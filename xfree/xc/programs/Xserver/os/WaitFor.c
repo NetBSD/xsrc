@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.30 2001/04/27 12:51:07 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.37 2001/12/14 20:00:33 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: WaitFor.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
+/* $Xorg: WaitFor.c,v 1.4 2001/02/09 02:05:22 xorgcvs Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:
@@ -56,20 +60,11 @@ SOFTWARE.
 #include <X11/Xwinsock.h>
 #endif
 #include "Xos.h"			/* for strings, fcntl, time */
-
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
-
 #include <stdio.h>
 #include "X.h"
 #include "misc.h"
 
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
 #ifdef __EMX__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
@@ -77,6 +72,9 @@ extern int errno;
 #include <X11/Xpoll.h>
 #include "dixstruct.h"
 #include "opaque.h"
+#ifdef DPMSExtension
+#include "dpmsproc.h"
+#endif
 
 /* modifications by raphael */
 int
@@ -97,7 +95,6 @@ mffs(fd_mask mask)
 #ifdef DPMSExtension
 #define DPMS_SERVER
 #include "dpms.h"
-extern void DPMSSet();
 #endif
 
 #ifdef XTESTEXT1
@@ -114,7 +111,7 @@ struct _OsTimerRec {
     pointer		arg;
 };
 
-static void DoTimer();
+static void DoTimer(OsTimerPtr timer, CARD32 now, OsTimerPtr *prev);
 static OsTimerPtr timers;
 
 /*****************
@@ -136,17 +133,15 @@ static OsTimerPtr timers;
 
 static INT32 timeTilFrob = 0;		/* while screen saving */
 
-#if !defined(AMOEBA)
-
 int
 WaitForSomething(pClientsReady)
     int *pClientsReady;
 {
     int i;
     struct timeval waittime, *wt;
-    INT32 timeout;
+    INT32 timeout = 0;
 #ifdef DPMSExtension
-    INT32 standbyTimeout, suspendTimeout, offTimeout;
+    INT32 standbyTimeout = 0, suspendTimeout = 0, offTimeout = 0;
 #endif
     fd_set clientsReadable;
     fd_set clientsWritable;
@@ -154,10 +149,9 @@ WaitForSomething(pClientsReady)
     int selecterr;
     int nready;
     fd_set devicesReadable;
-    CARD32 now;
+    CARD32 now = 0;
 #ifdef SMART_SCHEDULE
     Bool    someReady = FALSE;
-    extern Bool	SmartScheduleIdle;
 #endif
 
     FD_ZERO(&clientsReadable);
@@ -204,7 +198,7 @@ WaitForSomething(pClientsReady)
 	wt = NULL;
 	if (timers)
 	{
-	    while (timers && timers->expires <= now)
+	    while (timers && (int) (timers->expires - now) <= 0)
 		DoTimer(timers, now, &timers);
 	    if (timers)
 	    {
@@ -286,7 +280,7 @@ WaitForSomething(pClientsReady)
 		    timeout = offTimeout;
 	    }
 #endif
-	    if (timeout > 0 && (!wt || timeout < (timers->expires - now)))
+	    if (timeout > 0 && (!wt || timeout < (int) (timers->expires - now)))
 	    {
 		waittime.tv_sec = timeout / MILLI_PER_SECOND;
 		waittime.tv_usec = (timeout % MILLI_PER_SECOND) *
@@ -365,10 +359,6 @@ WaitForSomething(pClientsReady)
 #ifdef SMART_SCHEDULE
 	if (i >= 0)
 	{
-	    extern unsigned long    SmartScheduleIdleCount;
-	    extern Bool		    SmartScheduleTimerStopped;
-	    extern Bool		    SmartScheduleStartTimer(void);
-
 	    SmartScheduleIdle = FALSE;
 	    SmartScheduleIdleCount = 0;
 	    if (SmartScheduleTimerStopped)
@@ -412,7 +402,7 @@ WaitForSomething(pClientsReady)
 	    if (timers)
 	    {
 		now = GetTimeInMillis();
-		while (timers && timers->expires <= now)
+		while (timers && (int) (timers->expires - now) <= 0)
 		    DoTimer(timers, now, &timers);
 	    }
 	    if (*checkForInput[0] != *checkForInput[1])
@@ -455,7 +445,7 @@ WaitForSomething(pClientsReady)
 #ifndef WIN32
 	for (i=0; i<howmany(XFD_SETSIZE, NFDBITS); i++)
 	{
-	    int highest_priority;
+	    int highest_priority = 0;
 
 	    while (clientsReadable.fds_bits[i])
 	    {
@@ -465,7 +455,7 @@ WaitForSomething(pClientsReady)
 		client_index = /* raphael: modified */
 			ConnectionTranslation[curclient + (i * (sizeof(fd_mask) * 8))];
 #else
-	int highest_priority;
+	int highest_priority = 0;
 	fd_set savedClientsReadable;
 	XFD_COPYSET(&clientsReadable, &savedClientsReadable);
 	for (i = 0; i < XFD_SETCOUNT(&savedClientsReadable); i++)
@@ -533,173 +523,9 @@ ANYSET(src)
 }
 #endif
 
-#else /* AMOEBA */
-
-#define dbprintf(list)  /* printf list */
-
-int
-WaitForSomething(pClientsReady)
-    int		*pClientsReady;
-{
-    register int	i, wt, nt;
-    struct timeval	*wtp;
-    HWEventQueueType   	alwaysCheckForInput[2];
-    int 		nready;
-    int 		timeout;
-    unsigned long	now;
-
-    WakeupInitWaiters();
-
-    /* Be sure to check for input on every sweep in the dispatcher.
-     * This routine should be in InitInput, but since this is more
-     * or less a device dependent routine, and the semantics of it
-     * are device independent I decided to put it here.
-     */
-    alwaysCheckForInput[0] = 0;
-    alwaysCheckForInput[1] = 1;
-    SetInputCheck(&alwaysCheckForInput[0], &alwaysCheckForInput[1]);
-
-    while (1) {
-	/* deal with any blocked jobs */
-	if (workQueue)
-	    ProcessWorkQueue();
-
-	if (ANYSET(ClientsWithInput)) {
-	    FdSet clientsReadable;
-	    int highest_priority;
-
-	    COPYBITS(ClientsWithInput, clientsReadable);
-	    dbprintf(("WaitFor: "));
-	    nready = 0;
-	    for (i=0; i < mskcnt; i++) {
-		while (clientsReadable[i]) {
-		    int client_priority, curclient, client_index;
-
-		    curclient = ffs (clientsReadable[i]) - 1;
-		    client_index = ConnectionTranslation[curclient + (i * (sizeof(fd_mask)*8))];
-		    dbprintf(("%d has input\n", curclient));
-#ifdef XSYNC
-		    client_priority = clients[client_index]->priority;
-		    if (nready == 0 || client_priority > highest_priority)
-		    {
-		        pClientsReady[0] = client_index;
-		        highest_priority = client_priority;
-		        nready = 1;
-		    }
-		    else if (client_priority == highest_priority)
-#endif
-		    {
-		        pClientsReady[nready++] = client_index;
-		    }
-		    clientsReadable[i] &= ~(((FdMask)1L) << curclient);
-		}
-	    }
-	    break;
-	}	
-
-	wt = -1;
-	now = GetTimeInMillis();
-	if (timers)
-	{
-	    while (timers && timers->expires <= now)
-		DoTimer(timers, now, &timers);
-	    if (timers)
-	    {
-		timeout = timers->expires - now;
-		wt = timeout;
-	    }
-	}
-	if (ScreenSaverTime) {
-	    timeout = ScreenSaverTime - TimeSinceLastInputEvent();
-	    if (timeout <= 0) { /* may be forced by AutoResetServer() */
-		long timeSinceSave;
-
-		timeSinceSave = -timeout;
-		if ((timeSinceSave >= timeTilFrob) && (timeTilFrob >= 0)) {
-		    SaveScreens(SCREEN_SAVER_ON, ScreenSaverActive);
-		    if (ScreenSaverInterval)
-			/* round up to the next ScreenSaverInterval */
-			timeTilFrob = ScreenSaverInterval *
-				((timeSinceSave + ScreenSaverInterval) /
-					ScreenSaverInterval);
-		    else
-			timeTilFrob = -1;
-		}
-		timeout = timeTilFrob - timeSinceSave;
-	    } else {
-		if (timeout > ScreenSaverTime)
-		    timeout = ScreenSaverTime;
-		timeTilFrob = 0;
-	    }
-	    
-	    if (wt < 0 || (timeTilFrob >= 0 && wt > timeout)) {
-		wt = timeout;
-	    }
-	}
-
-	/* Check for new clients. We do this here and not in the listener
-	 * threads because we cannot be sure that dix is re-entrant, and
-	 * we need to call some dix routines during startup.
-	 */
-	if (nNewConns) {
-	    QueueWorkProc(EstablishNewConnections, NULL,
-			  (pointer) 0);
-	}
-
-	/* Call device dependent block handlers, which may want to
-	 * specify a different timeout (e.g. used for key auto-repeat).
-	 */
-	wtp = (struct timeval *) NULL;
-	BlockHandler((pointer)&wtp, (pointer)NULL);
-	if (wtp) wt = (wtp->tv_sec * 1000) + (wtp->tv_usec / 1000);
-
-	if (NewOutputPending)
-	    FlushAllOutput();
-
-	/* TODO: XTESTEXT1 */
-
-	nready = AmFindReadyClients(pClientsReady, AllSockets);
-
-	/* If we found some work, or the iop server has us informed about
-	 * new device events, we return.
-	 */
-	if (nready || AmoebaEventsAvailable())
-	    break;
-
-	if (dispatchException)
-	    return 0;
-
-	/* Nothing interesting is available. Go to sleep with a timeout.
-	 * The other threads will wake us when needed.
-	 */
-	i = SleepMainThread(wt);
-
-	/* Wake up any of the sleeping handlers */
-	WakeupHandler((unsigned long)0, (pointer)NULL);
-
-	/* TODO: XTESTEXT1 */
-
-	if (dispatchException)
-	    return 0;
-
-	if (i == -1) {
-	    /* An error or timeout occurred */
-	    return 0;
-	}
-    }
-
-    dbprintf(("WaitForSomething: %d clients ready\n", nready));
-    return nready;
-}
-
-#endif /* AMOEBA */
-
 
 static void
-DoTimer(timer, now, prev)
-    register OsTimerPtr timer;
-    CARD32 now;
-    OsTimerPtr *prev;
+DoTimer(OsTimerPtr timer, CARD32 now, OsTimerPtr *prev)
 {
     CARD32 newTime;
 
@@ -755,7 +581,7 @@ TimerSet(timer, flags, millis, func, arg)
 	    return timer;
     }
     for (prev = &timers;
-	 *prev && millis > (*prev)->expires;
+	 *prev && (int) ((*prev)->expires - millis) <= 0;
 	 prev = &(*prev)->next)
 	;
     timer->next = *prev;
@@ -768,7 +594,6 @@ TimerForce(timer)
     register OsTimerPtr timer;
 {
     register OsTimerPtr *prev;
-    register CARD32 newTime;
 
     for (prev = &timers; *prev; prev = &(*prev)->next)
     {
@@ -815,7 +640,7 @@ TimerCheck()
 {
     register CARD32 now = GetTimeInMillis();
 
-    while (timers && timers->expires <= now)
+    while (timers && (int) (timers->expires - now) <= 0)
 	DoTimer(timers, now, &timers);
 }
 
@@ -824,7 +649,7 @@ TimerInit()
 {
     OsTimerPtr timer;
 
-    while (timer = timers)
+    while ((timer = timers))
     {
 	timers = timer->next;
 	xfree(timer);

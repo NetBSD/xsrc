@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/ddxInit.c,v 1.12 2001/03/04 17:40:04 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ddxInit.c,v 1.14 2001/10/28 03:32:53 tsi Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -39,14 +39,6 @@ copyright holders.
 #include "Xos.h"
 #include "DiPrint.h"
 
-#ifdef XFree86Server
-/*
- * when building the loader, we add some code that tries to 
- * switch bit ordering based on xf86bpp; since Xprt doesn't
- * use that, we have to add this dummy here
- */
-int xf86bpp = 8;
-#endif
 static void Exit(int);
 
 /*-
@@ -82,8 +74,6 @@ InitOutput(
     int     	  argc,
     char    	  **argv)
 {
-    int i;
-
     pScreenInfo->imageByteOrder = IMAGE_BYTE_ORDER;
     pScreenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
     pScreenInfo->bitmapScanlinePad = BITMAP_SCANLINE_PAD;

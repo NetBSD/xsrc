@@ -6,7 +6,7 @@
  *      (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.9 2001/01/22 21:09:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.10 2001/12/20 21:35:40 eich Exp $ */
 
 #if 1
 #include "misc.h"
@@ -782,8 +782,10 @@ xf86DestroyI2CBusRec(I2CBusPtr b, Bool unalloc, Bool devs_too)
 	    if (devs_too) {
 		I2CDevPtr d;
 
-		while ((d = b->FirstDev) != NULL)
-		    xf86DestroyI2CDevRec(d, unalloc); 
+		while ((d = b->FirstDev) != NULL) {
+		    b->FirstDev = d->NextDev;
+		    xf86DestroyI2CDevRec(d, unalloc);
+		}
 	    } else {
 		if (unalloc) {
 		    xf86Msg(X_ERROR, "i2c bug: Attempt to remove I2C bus \"%s\", "

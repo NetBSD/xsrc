@@ -2,7 +2,7 @@ XCOMM $TOG: fcd8859-15 /main/2 1998/06/17 15:53:45 kaleb $
 XCOMM
 XCOMM ISO 8859-15 (Latin1) Compose Sequence
 XCOMM
-XCOMM $XFree86: xc/nls/Compose/iso8859-15,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM $XFree86: xc/nls/Compose/iso8859-15,v 1.6 2001/12/24 17:15:09 dawes Exp $
 XCOMM
 XCOMM Sequence Definition
 XCOMM
@@ -19,8 +19,8 @@ XCOMM Special Character
 <Multi_key> <parenright> <parenright>	: "]"	bracketright
 <Multi_key> <asciicircum> <space>	: "^"	asciicircum
 <Multi_key> <space> <asciicircum>	: "^"	asciicircum
-<Multi_key> <greater> <space>		: "^"	asciicirum
-<Multi_key> <space> <greater>		: "^"	asciicirum
+<Multi_key> <greater> <space>		: "^"	asciicircum
+<Multi_key> <space> <greater>		: "^"	asciicircum
 <Multi_key> <grave> <space>		: "`"	grave
 <Multi_key> <space> <grave>		: "`"	grave
 <Multi_key> <parenleft> <minus>		: "{"	braceleft
@@ -377,7 +377,7 @@ XCOMM Accented Alphabet
 XCOMM
 XCOMM dead key accent keysyms
 XCOMM Special Character
-<dead_circumflex>  <slash>		: "|"	bar
+<dead_circumflex> <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
 <dead_diaeresis> <space>		: "\250"	diaeresis
@@ -464,4 +464,5 @@ XCOMM Useful for portuguese language
 <dead_acute> <c>			: "\347"	ccedilla
 <dead_acute> <dead_acute>		: "'"		apostrophe
 <dead_grave> <dead_grave>		: "`"		grave
+<acute>					: "'"		apostrophe
 XCOMM End of Sequence Definition

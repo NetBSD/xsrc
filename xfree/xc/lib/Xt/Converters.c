@@ -1,4 +1,4 @@
-/* $Xorg: Converters.c,v 1.4 2000/08/17 19:46:09 cpqbld Exp $ */
+/* $Xorg: Converters.c,v 1.5 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Converters.c,v 3.8 2001/01/17 19:43:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Converters.c,v 3.11 2001/12/14 19:56:09 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -68,16 +72,6 @@ in this Software without prior written authorization from The Open Group.
 #include	<X11/Xlocale.h>
 #include	<errno.h>	/* for StringToDirectoryString */
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;	
-#endif
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-
 #ifdef __EMX__
 #define IsNewline(str) ((str) == '\n' || (str) == '\r')
 #define IsWhitespace(str) ((str)== ' ' || (str) == '\t' || (str) == '\r')
@@ -86,9 +80,9 @@ extern int errno;
 #define IsWhitespace(str) ((str)== ' ' || (str) == '\t')
 #endif
 
-static Const String XtNwrongParameters = "wrongParameters";
-static Const String XtNconversionError = "conversionError";
-static Const String XtNmissingCharsetList = "missingCharsetList";
+static const String XtNwrongParameters = "wrongParameters";
+static const String XtNconversionError = "conversionError";
+static const String XtNmissingCharsetList = "missingCharsetList";
 
 /* Representation types */
 
@@ -434,7 +428,7 @@ Boolean XtCvtStringToBool(dpy, args, num_args, fromVal, toVal, closure_ret)
     return False;
 }
 
-XtConvertArgRec Const colorConvertArgs[] = {
+XtConvertArgRec const colorConvertArgs[] = {
     {XtWidgetBaseOffset, (XtPointer)XtOffsetOf(WidgetRec, core.screen),
      sizeof(Screen *)},
     {XtWidgetBaseOffset, (XtPointer)XtOffsetOf(WidgetRec, core.colormap),
@@ -567,7 +561,7 @@ static void FreePixel(app, toVal, closure, args, num_args)
 
 
 /* no longer used by Xt, but it's in the spec */
-XtConvertArgRec Const screenConvertArg[] = {
+XtConvertArgRec const screenConvertArg[] = {
     {XtWidgetBaseOffset, (XtPointer)XtOffsetOf(WidgetRec, core.screen),
      sizeof(Screen *)}
 };
@@ -589,7 +583,7 @@ static void FetchDisplayArg(widget, size, value)
     value->addr = (XPointer)&DisplayOfScreen(XtScreenOfObject(widget));
 }
 
-static XtConvertArgRec Const displayConvertArg[] = {
+static XtConvertArgRec const displayConvertArg[] = {
     {XtProcedureArg, (XtPointer)FetchDisplayArg, 0},
 };
 
@@ -603,8 +597,8 @@ Boolean XtCvtStringToCursor(dpy, args, num_args, fromVal, toVal, closure_ret)
 
     XtPointer	*closure_ret;
 {
-    static Const struct _CursorName {
-	Const char	*name;
+    static const struct _CursorName {
+	const char	*name;
 	unsigned int	shape;
     } cursor_names[] = {
 			{"X_cursor",		XC_X_cursor},
@@ -685,7 +679,7 @@ Boolean XtCvtStringToCursor(dpy, args, num_args, fromVal, toVal, closure_ret)
 			{"watch",		XC_watch},
 			{"xterm",		XC_xterm},
     };
-    Const struct _CursorName *nP;
+    const struct _CursorName *nP;
     char *name = (char *)fromVal->addr;
     register int i;
 
@@ -909,13 +903,13 @@ Boolean XtCvtStringToFont(dpy, args, num_args, fromVal, toVal, closure_ret)
 	}
     }
     /* Should really do XListFonts, but most servers support this */
-    f = XLoadFont(display, "-*-*-*-R-*-*-*-120-*-*-*-*-ISO8859-1");
+    f = XLoadFont(display, "-*-*-*-R-*-*-*-120-*-*-*-*-ISO8859-*");
     if (f != 0)
 	goto Done;
 
     XtAppWarningMsg(XtDisplayToApplicationContext(dpy),
 		    "noFont","cvtStringToFont",XtCXtToolkitError,
-		    "Unable to load any usable ISO8859-1 font",
+		    "Unable to load any usable ISO8859 font",
 		    (String *) NULL, (Cardinal *)NULL);
 
     return False;
@@ -1098,7 +1092,7 @@ static void FetchLocaleArg(widget, size, value )
     value->addr = (XPointer)&locale;
 }
 
-static XtConvertArgRec Const localeDisplayConvertArgs[] = {
+static XtConvertArgRec const localeDisplayConvertArgs[] = {
     {XtProcedureArg, (XtPointer)FetchDisplayArg, 0},
     {XtProcedureArg, (XtPointer)FetchLocaleArg, 0},
 };
@@ -1168,13 +1162,13 @@ XtCvtStringToFontStruct(dpy, args, num_args, fromVal, toVal, closure_ret)
 	}
     }
     /* Should really do XListFonts, but most servers support this */
-    f = XLoadQueryFont(display, "-*-*-*-R-*-*-*-120-*-*-*-*-ISO8859-1");
+    f = XLoadQueryFont(display, "-*-*-*-R-*-*-*-120-*-*-*-*-ISO8859-*");
     if (f != NULL)
 	goto Done;
 
     XtAppWarningMsg(XtDisplayToApplicationContext(dpy),
 	     "noFont","cvtStringToFontStruct",XtCXtToolkitError,
-             "Unable to load any usable ISO8859-1 font",
+             "Unable to load any usable ISO8859 font",
               (String *) NULL, (Cardinal *)NULL);
     
     return False;
@@ -1466,7 +1460,7 @@ XtCvtStringToInitialState(dpy, args, num_args, fromVal, toVal, closure_ret)
     return False;
 }
 
-static XtConvertArgRec Const visualConvertArgs[] = {
+static XtConvertArgRec const visualConvertArgs[] = {
     {XtWidgetBaseOffset, (XtPointer)XtOffsetOf(WidgetRec, core.screen),
      sizeof(Screen *)},
     {XtWidgetBaseOffset, (XtPointer)XtOffsetOf(WidgetRec, core.depth),

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/xfont.c,v 1.6 2001/05/02 15:06:02 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/xfont.c,v 1.7 2001/10/28 03:32:27 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
@@ -171,7 +171,7 @@ fill_bitmap (Display *dpy, Window win, GC gc,
 static XCharStruct *isvalid(XFontStruct *fs, int which)
 {
   unsigned int  rows,pages;
-  int           byte1,byte2;
+  int           byte1 = 0, byte2 = 0;
   int           i,valid = 1;
 
   rows = fs->max_byte1 - fs->min_byte1 + 1;

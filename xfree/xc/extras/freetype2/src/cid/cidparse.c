@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CID-keyed Type1 parser (body).                                       */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -21,8 +21,10 @@
 #include FT_INTERNAL_CALC_H
 #include FT_INTERNAL_OBJECTS_H
 #include FT_INTERNAL_STREAM_H
-#include FT_INTERNAL_TYPE1_ERRORS_H
+
 #include "cidparse.h"
+
+#include "ciderrs.h"
 
 #include <string.h>     /* for strncmp() */
 
@@ -48,11 +50,11 @@
   /*************************************************************************/
 
 
-  FT_LOCAL_DEF
-  FT_Error  CID_New_Parser( CID_Parser*       parser,
-                            FT_Stream         stream,
-                            FT_Memory         memory,
-                            PSAux_Interface*  psaux )
+  FT_LOCAL_DEF FT_Error
+  CID_New_Parser( CID_Parser*       parser,
+                  FT_Stream         stream,
+                  FT_Memory         memory,
+                  PSAux_Interface*  psaux )
   {
     FT_Error  error;
     FT_ULong  base_offset, offset, ps_len;
@@ -75,7 +77,7 @@
                   "%!PS-Adobe-3.0 Resource-CIDFont", 31 ) )
     {
       FT_TRACE2(( "[not a valid CID-keyed font]\n" ));
-      error = FT_Err_Unknown_File_Format;
+      error = CID_Err_Unknown_File_Format;
     }
 
     FORGET_Frame();
@@ -137,8 +139,8 @@
   }
 
 
-  FT_LOCAL_DEF
-  void  CID_Done_Parser( CID_Parser*  parser )
+  FT_LOCAL_DEF void
+  CID_Done_Parser( CID_Parser*  parser )
   {
     /* always free the private dictionary */
     if ( parser->postscript )

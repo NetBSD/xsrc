@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.35 2001/04/28 20:42:17 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.38 2001/12/14 19:59:32 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: main.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
+/* $Xorg: main.c,v 1.4 2001/02/09 02:04:40 xorgcvs Exp $ */
 
 /* The panoramix components contained the following notice */
 /****************************************************************
@@ -79,9 +83,6 @@ SOFTWARE.
 #include "dixstruct.h"
 #include "gcstruct.h"
 #include "extension.h"
-#ifndef PANORAMIX
-#include "extnsionst.h"
-#endif
 #include "colormap.h"
 #include "colormapst.h"
 #include "cursorstr.h"
@@ -90,7 +91,10 @@ SOFTWARE.
 #include "servermd.h"
 #include "site.h"
 #include "dixfont.h"
-#ifndef PANORAMIX
+#ifdef PANORAMIX
+#include "panoramiXsrv.h"
+#else
+#include "extnsionst.h"
 #include "dixevents.h"		/* InitEvents() */
 #include "dispatch.h"		/* InitProcVectors() */
 #endif
@@ -98,6 +102,7 @@ SOFTWARE.
 #ifdef DPMSExtension
 #define DPMS_SERVER
 #include "dpms.h"
+#include "dpmsproc.h"
 #endif
 
 void ddxGiveUp();
@@ -147,7 +152,7 @@ static int restart = 0;
 /*ARGSUSED*/
 void
 NotImplemented(
-#if NeedFunctionPrototypes && defined(EVENT_SWAP_PTR)
+#if NeedFunctionPrototypes
 	xEvent * from,
 	xEvent * to
 #endif

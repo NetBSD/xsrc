@@ -1,3 +1,4 @@
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libtess/normal.c,v 1.2 2001/10/28 03:32:22 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -35,8 +36,8 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2001/06/09 15:21:02 $ $Revision: 1.1.1.1 $
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libtess/Attic/normal.c,v 1.1.1.1 2001/06/09 15:21:02 tron Exp $
+** $Date: 2002/01/19 15:27:19 $ $Revision: 1.1.1.2 $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libtess/Attic/normal.c,v 1.1.1.2 2002/01/19 15:27:19 tron Exp $
 */
 
 #include "gluos.h"
@@ -198,7 +199,10 @@ extern int RandomSweep;
 void __gl_projectPolygon( GLUtesselator *tess )
 {
   GLUvertex *v, *vHead = &tess->mesh->vHead;
-  GLdouble w, norm[3];
+  GLdouble norm[3];
+#if defined(FOR_TRITE_TEST_PROGRAM) || defined(TRUE_PROJECT)
+  Gldouble w;
+#endif
   GLdouble *sUnit, *tUnit;
   int i, computedNormal = FALSE;
 

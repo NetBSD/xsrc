@@ -1,9 +1,13 @@
-/* $Xorg: XKBCvt.c,v 1.4 2000/08/17 19:45:00 cpqbld Exp $ */
+/* $Xorg: XKBCvt.c,v 1.5 2001/02/09 02:03:38 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.30 2001/02/09 00:02:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.32 2001/12/14 19:54:08 dawes Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -48,21 +52,6 @@ from The Open Group.
 
 #ifdef __sgi_not_xconsortium
 #define	XKB_EXTEND_LOOKUP_STRING
-#endif
-
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-#if defined(__STDC__) && !defined(NORCONST)
-#define RConst const
-#else
-#define RConst /**/
 #endif
 
 static int 

@@ -24,12 +24,11 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/srvmisc.c,v 3.4 2001/10/28 03:32:47 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBgeom.h>
@@ -100,7 +99,7 @@ XkbReadFromServer(dpy,need,want,result)
 #endif
 {
 unsigned which= need|want;
-unsigned tmp;
+unsigned tmp = 0;
 
     if ((result==NULL)||(dpy==NULL))
 	return which;

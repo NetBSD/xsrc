@@ -63,8 +63,8 @@ gluEndSurface(nobj);
 .Ee
 .sp
 .SH SEE ALSO
-\%\f3gluBeginCurve\fP, \%\f3gluBeginTrim\fP, \%\f3gluNewNurbsRenderer\fP, 
-\%\f3gluNurbsCurve\fP, \%\f3gluNurbsSurface\fP, \%\f3gluPwlCurve\fP
+\%\f3gluBeginCurve(3G)\fP, \%\f3gluBeginTrim(3G)\fP, \%\f3gluNewNurbsRenderer(3G)\fP, 
+\%\f3gluNurbsCurve(3G)\fP, \%\f3gluNurbsSurface(3G)\fP, \%\f3gluPwlCurve(3G)\fP
 
 
 

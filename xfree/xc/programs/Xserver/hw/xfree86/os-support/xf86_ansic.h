@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.47 2001/05/18 20:22:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.48 2001/12/31 18:13:37 herrb Exp $ */
 
 #ifndef _XF86_ANSIC_H
 #define _XF86_ANSIC_H
@@ -168,6 +168,7 @@ extern int xf86fgetc(XF86FILE*);
 extern int xf86getc(XF86FILE*);
 extern int xf86fgetpos(XF86FILE*,XF86fpos_t*);
 extern char* xf86fgets(char*,INT32,XF86FILE*);
+extern int xf86finite(double);
 extern double xf86floor(double);
 extern double xf86fmod(double,double);
 extern XF86FILE* xf86fopen(const char*,const char*);

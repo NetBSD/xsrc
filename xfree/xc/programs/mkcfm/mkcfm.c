@@ -16,7 +16,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.10 2000/11/14 17:33:01 dawes Exp $ */
+/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.11 2001/08/13 21:46:51 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,21 +239,20 @@ void
 ErrorF(const char *f, ...) { ; }
 
 char *
-font_encoding_from_xlfd(const char *name, int n ) { return NULL; }
+FontEncFromXLFD(const char *name, int n ) { return NULL; }
 
-struct font_encoding *
-font_encoding_find(const char *c1, const char *c2) { return NULL; }
+FontMapPtr
+FontEncMapFind(const char *c1, int n1, int n2, int n3, const char *c2) 
+{ return NULL; }
 
 char *
 unicodetoPSname(unsigned short code) { return NULL; }
 
 unsigned 
-font_encoding_recode(unsigned i, struct font_encoding *fe, 
-		     struct font_encoding_mapping *m) { return 0; }
+FontEncRecode(unsigned i, FontMapPtr m) { return 0; }
 
 char *
-font_encoding_name(unsigned i, struct font_encoding *fe,
-		   struct font_encoding_mapping *m) { return NULL; }
+FontEncName(unsigned i, FontMapPtr m) { return NULL; }
 
 FontPtr 
 CreateFontRec (void)
@@ -271,3 +270,4 @@ void DestroyFontRec (FontPtr pFont)
 {
    xfree(pFont);
 }
+

@@ -1,5 +1,5 @@
 .TH XvSelectVideoNotify 3X __vendorversion__
-.\" $XFree86: xc/doc/man/Xv/XvSelectVideoNotify.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/XvSelectVideoNotify.man,v 1.6 2001/08/17 13:27:50 dawes Exp $
 .SH Name
 XvSelectVideoNotify \- enable or disable VideoNotify events
 .\"
@@ -34,7 +34,7 @@ video activity in a drawable.
 .\"
 .SH Returned Values
 .IP [Success] 8
-Returns True if XvSelectVideoNotify(3X) completed successfully.
+Returned if XvSelectVideoNotify(3X) completed successfully.
 .IP [XvBadExtension] 8
 Returned if the Xv extension is unavailable.
 .IP [XvBadAlloc] 8

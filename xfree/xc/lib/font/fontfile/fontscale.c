@@ -1,10 +1,14 @@
-/* $Xorg: fontscale.c,v 1.4 2000/08/17 19:46:37 cpqbld Exp $ */
+/* $Xorg: fontscale.c,v 1.5 2001/02/09 02:04:03 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.8 2001/01/17 19:43:30 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.10 2001/12/14 19:56:52 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -360,13 +364,13 @@ MatchScalable (FontScalablePtr a, FontScalablePtr b)
 	  a->y == b->y &&
 	  (a->width == b->width || a->width == 0 || b->width == 0 || b->width == -1) &&
 	  (!(b->values_supplied & PIXELSIZE_MASK) ||
-	    (a->values_supplied & PIXELSIZE_MASK) ==
-	    (b->values_supplied & PIXELSIZE_MASK) &&
-	    EQUAL(a->pixel_matrix, b->pixel_matrix)) &&
+	    ((a->values_supplied & PIXELSIZE_MASK) ==
+	     (b->values_supplied & PIXELSIZE_MASK) &&
+	    EQUAL(a->pixel_matrix, b->pixel_matrix))) &&
 	  (!(b->values_supplied & POINTSIZE_MASK) ||
-	    (a->values_supplied & POINTSIZE_MASK) ==
-	    (b->values_supplied & POINTSIZE_MASK) &&
-	    EQUAL(a->point_matrix, b->point_matrix)) &&
+	    ((a->values_supplied & POINTSIZE_MASK) ==
+	     (b->values_supplied & POINTSIZE_MASK) &&
+	    EQUAL(a->point_matrix, b->point_matrix))) &&
 	  (a->nranges == 0 || a->nranges == b->nranges)))
       return FALSE;
 

@@ -1,4 +1,4 @@
-/* $Xorg: io.c,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: io.c,v 1.5 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
  * i/o functions
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,13 +46,12 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/io.c,v 3.12 2001/01/17 23:45:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/io.c,v 3.18 2001/12/14 20:01:41 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdio.h>
 #include	<errno.h>
 #include	<sys/types.h>
-#ifndef MINIX
 #ifndef Lynx
 #include	<sys/param.h>
 #ifndef __EMX__
@@ -57,7 +60,6 @@ in this Software without prior written authorization from The Open Group.
 #else
 #include	<uio.h>
 #endif
-#endif
 
 #include	"FSproto.h"
 #include	"clientstr.h"
@@ -65,10 +67,6 @@ in this Software without prior written authorization from The Open Group.
 #include	"osdep.h"
 #include	"globals.h"
 #include	"dispatch.h"
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 
 /* check for both EAGAIN and EWOULDBLOCK, because some supposedly POSIX
@@ -127,14 +125,24 @@ static ConnectionOutputPtr AllocateOutputBuffer(void);
 int
 ReadRequest(ClientPtr client)
 {
-    OsCommPtr   oc = (OsCommPtr) client->osPrivate;
-    ConnectionInputPtr oci = oc->input;
+    OsCommPtr   oc;
+    ConnectionInputPtr oci;
     fsReq      *request;
-    int         fd = oc->fd;
-    int         result,
+    int         fd,
+                result,
                 gotnow,
                 needed = 0;
 
+    if (client == NULL)
+	return -1;
+    oc = (OsCommPtr) client->osPrivate;
+    if (oc == NULL)
+	return -1;
+    oci = oc->input;
+    fd = oc->fd;
+    if (oci != NULL && fd < 0)
+	return -1;
+		
     if (AvailableInput) {
 	if (AvailableInput != oc) {
 	    ConnectionInputPtr aci = AvailableInput->input;
@@ -207,6 +215,10 @@ ReadRequest(ClientPtr client)
 	    oci->bufcnt = gotnow;
 	}
 	/* fill 'er up */
+	if (oc->trans_conn == NULL) {
+	    yield_control_death();
+	    return -1;
+	}
 	result = _FontTransRead(oc->trans_conn, oci->buffer + oci->bufcnt,
 		      oci->size - oci->bufcnt);
 	if (result <= 0) {
@@ -230,7 +242,7 @@ ReadRequest(ClientPtr client)
 		(oci->bufcnt < BUFSIZE) && (needed < BUFSIZE)) {
 	    char       *ibuf;
 
-	    ibuf = (char *) fsrealloc(oci, BUFSIZE);
+	    ibuf = (char *) fsrealloc(oci->buffer, BUFSIZE);
 	    if (ibuf) {
 		oci->size = BUFSIZE;
 		oci->buffer = ibuf;

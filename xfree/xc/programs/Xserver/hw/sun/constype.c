@@ -17,7 +17,7 @@
  *
  * Author:  Doug Moran, SRI
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.5 2001/01/17 22:36:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.7 2001/10/28 03:33:10 tsi Exp $ */
 
 /*
 SUN-SPOTS DIGEST         Thursday, 17 March 1988       Volume 6 : Issue 31
@@ -45,7 +45,11 @@ style.
 /* NetBSD seemingly still uses <strings.h> and naturally SunOS does */
 #include <strings.h>
 #endif
+#include <unistd.h>
 
+int wu_fbid(char *devname, char **fbname, int *fbtype);
+
+int
 main (argc, argv)
     int argc;
     char **argv;
@@ -147,9 +151,8 @@ int wu_fbid(devname, fbname, fbtype)
 	    return 2;
 	}
 	/* FBIOGATTR fails for early frame buffer types */
-	if (ioctl_ret = ioctl(fd,FBIOGATTR,&fbattr)) {	/*success=>0(false)*/
+	if ((ioctl_ret = ioctl(fd,FBIOGATTR,&fbattr))) 	/*success=>0(false)*/
 	    ioctl_ret = ioctl(fd, FBIOGTYPE, &fbattr.fbtype);
-	}
 	close(fd);
 	if ( ioctl_ret == -1 ) {
 	    *fbname = "ioctl on fb failed";

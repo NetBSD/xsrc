@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -44,7 +44,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/mi/mibank.c,v 1.9 2001/01/06 20:58:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibank.c,v 1.12 2002/01/16 16:22:32 tsi Exp $ */
 
 /*
  * This thing originated from an idea of Edwin Goei and his bank switching
@@ -178,8 +178,6 @@ typedef struct _miBankQueue
 static int           miBankScreenIndex;
 static int           miBankGCIndex;
 static unsigned long miBankGeneration = 0;
-static GCOps         miBankGCOps;
-static GCFuncs       miBankGCFuncs;
 
 #define BANK_SCRPRIVLVAL pScreen->devPrivates[miBankScreenIndex].ptr
 
@@ -2524,8 +2522,8 @@ miScanLineWidth(
     if (ysize == 1)
         return (int)width;
 
-    maxBitsPerScanline = (((unsigned long)(-1) >> 1) - minBitsPerScanline) /
-                          (ysize - 1);
+    maxBitsPerScanline =
+        (((unsigned long)(-1) >> 1) - minBitsPerScanline) / (ysize - 1);
     while (nBitsPerScanline <= maxBitsPerScanline)
     {
         unsigned long BankBase, BankUnit;
@@ -2563,7 +2561,7 @@ miScanLineWidth(
             if (BankBase != BankUnit)
                 continue;
 
-            if (!(nBitsPerBank % x))
+            if (!(nBitsPerScanline % x))
                 return (int)width;
 
             BankBase = ((nBitsPerScanline - minBitsPerScanline) /

@@ -1,8 +1,12 @@
-/* $Xorg: initfonts.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: initfonts.c,v 1.4 2001/02/09 02:05:42 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,13 +47,13 @@ in this Software without prior written authorization from The Open Group.
  * %W%	%E%
  *
  */
-/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.5 2001/01/17 23:45:29 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.7 2001/12/14 20:01:34 dawes Exp $ */
 
 #include        "font.h"
 #include	"difs.h"
 #ifdef FONTCACHE
 #include        "misc.h"
-#include        "fontcacheP.h"
+#include        <X11/extensions/fontcacheP.h>
 
 #define CACHE_HI_MARK	(2048 * 1024)
 #define CACHE_LOW_MARK	(((2048 * 1024) / 4) * 3)

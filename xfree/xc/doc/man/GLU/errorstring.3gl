@@ -41,7 +41,7 @@ GL error codes.
 .SH ERRORS
 \%\f3NULL\fP is returned if \f2error\fP is not a valid GL or GLU error code.
 .SH SEE ALSO
-\f3glGetError\fP,
-\%\f3gluNurbsCallback\fP,
-\%\f3gluQuadricCallback\fP,
-\%\f3gluTessCallback\fP
+\f3glGetError(3G)\fP,
+\%\f3gluNurbsCallback(3G)\fP,
+\%\f3gluQuadricCallback(3G)\fP,
+\%\f3gluTessCallback(3G)\fP

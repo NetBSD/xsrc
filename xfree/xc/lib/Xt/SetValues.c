@@ -1,4 +1,4 @@
-/* $Xorg: SetValues.c,v 1.3 2000/08/17 19:46:17 cpqbld Exp $ */
+/* $Xorg: SetValues.c,v 1.4 2001/02/09 02:03:58 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,6 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/SetValues.c,v 1.3 2001/12/14 19:56:30 dawes Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -62,15 +67,12 @@ in this Software without prior written authorization from The Open Group.
  */
 
 
-extern void _XtCopyFromArg();
-extern XrmResourceList* _XtCreateIndirectionTable();
-
-static void SetValues(base, res, num_resources, args, num_args)
-  char*			base;		/* Base address to write values to   */
-  XrmResourceList*	res;		/* The current resource values.      */
-  register Cardinal	num_resources;	/* number of items in resources      */
-  ArgList 		args;		/* The resource values to set        */
-  Cardinal		num_args;	/* number of items in arg list       */
+static void SetValues(
+  char*			base,		/* Base address to write values to   */
+  XrmResourceList*	res,		/* The current resource values.      */
+  register Cardinal	num_resources,	/* number of items in resources      */
+  ArgList 		args,		/* The resource values to set        */
+  Cardinal		num_args)	/* number of items in arg list       */
 {
     register ArgList		arg;
     register int 	        i;
@@ -93,11 +95,13 @@ static void SetValues(base, res, num_resources, args, num_args)
     }
 } /* SetValues */
 
-static Boolean CallSetValues (class, current, request, new, args, num_args)
-    WidgetClass class;
-    Widget      current, request, new;
-    ArgList     args;
-    Cardinal    num_args;
+static Boolean CallSetValues (
+    WidgetClass class,
+    Widget      current,
+    Widget      request,
+    Widget      new,
+    ArgList     args,
+    Cardinal    num_args)
 {
     Boolean redisplay = FALSE;
     WidgetClass superclass;
@@ -126,11 +130,13 @@ static Boolean CallSetValues (class, current, request, new, args, num_args)
 }
 
 static Boolean
-CallConstraintSetValues (class, current, request, new, args, num_args)
-    ConstraintWidgetClass class;
-    Widget      current, request, new;
-    ArgList     args;
-    Cardinal    num_args;
+CallConstraintSetValues (
+    ConstraintWidgetClass class,
+    Widget      current,
+    Widget      request,
+    Widget      new,
+    ArgList     args,
+    Cardinal    num_args)
 {
     Boolean redisplay = FALSE;
     XtSetValuesFunc set_values;
@@ -185,7 +191,7 @@ void XtSetValues(w, args, num_args)
     XtGeometryResult result;
     XtWidgetGeometry geoReq, geoReply;
     WidgetClass     wc;
-    ConstraintWidgetClass cwc;
+    ConstraintWidgetClass cwc = 0;
     Boolean	    hasConstraints;
     XtAlmostProc set_values_almost;
     XtAppContext app = XtWidgetToApplicationContext(w);

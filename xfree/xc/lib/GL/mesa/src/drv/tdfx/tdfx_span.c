@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_span.c,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_span.c,v 1.3 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -83,12 +83,12 @@
    UNLOCK_HARDWARE( fxMesa );						\
    LOCK_HARDWARE( fxMesa );						\
    info.size = sizeof(GrLfbInfo_t);					\
-   if ( grLfbLock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer, LFB_MODE,	\
-		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
+   if ( fxMesa->Glide.grLfbLock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer,	\
+         LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
    {
 
 #define HW_WRITE_UNLOCK()						\
-      grLfbUnlock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer );		\
+      fxMesa->Glide.grLfbUnlock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer );\
    }
 
 
@@ -99,12 +99,12 @@
    UNLOCK_HARDWARE( fxMesa );						\
    LOCK_HARDWARE( fxMesa );						\
    info.size = sizeof(GrLfbInfo_t);					\
-   if ( grLfbLock( GR_LFB_READ_ONLY, fxMesa->ReadBuffer, LFB_MODE,	\
-		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
+   if ( fxMesa->Glide.grLfbLock( GR_LFB_READ_ONLY, fxMesa->ReadBuffer,	\
+	 LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
    {
 
 #define HW_READ_UNLOCK()						\
-      grLfbUnlock( GR_LFB_READ_ONLY, fxMesa->ReadBuffer );		\
+      fxMesa->Glide.grLfbUnlock( GR_LFB_READ_ONLY, fxMesa->ReadBuffer );\
    }
 
 
@@ -344,10 +344,10 @@ visible_pixel(const tdfxContextPtr fxMesa, int scrX, int scrY)
  *   what's the point after all.
  */
 #define READ_FB_SPAN_LOCK(fxMesa, info, target_buffer)              \
-  UNLOCK_HARDWARE(fxMesa);                                         \
-  LOCK_HARDWARE(fxMesa);                                         \
+  UNLOCK_HARDWARE(fxMesa);                                          \
+  LOCK_HARDWARE(fxMesa);                                            \
   (info).size=sizeof(info);                                         \
-  if (grLfbLock(GR_LFB_READ_ONLY,                                   \
+  if (fxMesa->Glide.grLfbLock(GR_LFB_READ_ONLY,                     \
                 target_buffer,                                      \
                 GR_LFBWRITEMODE_ANY,                                \
                 GR_ORIGIN_UPPER_LEFT,                               \
@@ -355,9 +355,9 @@ visible_pixel(const tdfxContextPtr fxMesa, int scrX, int scrY)
                 &(info))) {
 
 #define READ_FB_SPAN_UNLOCK(fxMesa, target_buffer)                  \
-    grLfbUnlock(GR_LFB_READ_ONLY, target_buffer);                   \
+    fxMesa->Glide.grLfbUnlock(GR_LFB_READ_ONLY, target_buffer);     \
   } else {                                                          \
-    fprintf(stderr, "tdfxDriver: Can't get %s (%d) read lock\n",      \
+    fprintf(stderr, "tdfxDriver: Can't get %s (%d) read lock\n",    \
             (target_buffer == GR_BUFFER_BACKBUFFER)                 \
                 ? "back buffer"                                     \
             : ((target_buffer == GR_BUFFER_AUXBUFFER)               \
@@ -367,10 +367,10 @@ visible_pixel(const tdfxContextPtr fxMesa, int scrX, int scrY)
   }
 
 #define WRITE_FB_SPAN_LOCK(fxMesa, info, target_buffer, write_mode) \
-  UNLOCK_HARDWARE(fxMesa);                                         \
-  LOCK_HARDWARE(fxMesa);                                         \
+  UNLOCK_HARDWARE(fxMesa);                                          \
+  LOCK_HARDWARE(fxMesa);                                            \
   info.size=sizeof(info);                                           \
-  if (grLfbLock(GR_LFB_WRITE_ONLY,                                  \
+  if (fxMesa->Glide.grLfbLock(GR_LFB_WRITE_ONLY,                    \
                 target_buffer,                                      \
                 write_mode,                                         \
                 GR_ORIGIN_UPPER_LEFT,                               \
@@ -378,9 +378,9 @@ visible_pixel(const tdfxContextPtr fxMesa, int scrX, int scrY)
                 &info)) {
 
 #define WRITE_FB_SPAN_UNLOCK(fxMesa, target_buffer)                 \
-    grLfbUnlock(GR_LFB_WRITE_ONLY, target_buffer);                  \
+    fxMesa->Glide.grLfbUnlock(GR_LFB_WRITE_ONLY, target_buffer);    \
   } else {                                                          \
-    fprintf(stderr, "tdfxDriver: Can't get %s (%d) write lock\n",     \
+    fprintf(stderr, "tdfxDriver: Can't get %s (%d) write lock\n",   \
             (target_buffer == GR_BUFFER_BACKBUFFER)                 \
                 ? "back buffer"                                     \
             : ((target_buffer == GR_BUFFER_AUXBUFFER)               \
@@ -557,6 +557,10 @@ GetFbParams(tdfxContextPtr fxMesa,
  * it's better in the macro or in the call.
  *
  * Recall that x and y are screen coordinates.
+ *
+ * Note: ANSI C doesn't allow conditional expressions or cast expressions
+ * as lvalues.  Some of these macros violate that.
+ *
  */
 #define GET_FB_DATA(ReadParamsp, type, x, y)                        \
    (((x) < (ReadParamsp)->firstWrappedX)                            \

@@ -1,10 +1,14 @@
 /*
- * $Xorg: Xfuncs.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $
+ * $Xorg: Xfuncs.h,v 1.4 2001/02/09 02:03:22 xorgcvs Exp $
  * 
  * 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/include/Xfuncs.h,v 3.7 2001/01/17 17:53:11 dawes Exp $ */
+/* $XFree86: xc/include/Xfuncs.h,v 3.9 2001/12/14 19:53:25 dawes Exp $ */
 
 #ifndef _XFUNCS_H_
 #define _XFUNCS_H_
@@ -36,34 +40,22 @@ void bcopy();
 void bzero();
 int bcmp();
 #else
-#if (__STDC__ && !defined(X_NOT_STDC_ENV) && !defined(sun) && !defined(macII) && !defined(apollo)) || defined(SVR4) || defined(hpux) || defined(_IBMR2) || defined(_SEQUENT_)
+#if defined(SYSV)
+#include <memory.h>
+void bcopy();
+#define bzero(b,len) memset(b, 0, len)
+#define bcmp(b1,b2,len) memcmp(b1, b2, len)
+#elif defined(__EMX__)
+#include <strings.h>
+/* bcopy, bcmp, bzero declared */
+#define _XFUNCS_H_INCLUDED_STRING_H
+#else
 #include <string.h>
 #define _XFUNCS_H_INCLUDED_STRING_H
 #define bcopy(b1,b2,len) memmove(b2, b1, (size_t)(len))
 #define bzero(b,len) memset(b, 0, (size_t)(len))
 #define bcmp(b1,b2,len) memcmp(b1, b2, (size_t)(len))
-#else
-#ifdef sgi
-#include <bstring.h>
-#else
-#ifdef SYSV
-#include <memory.h>
-void bcopy();
-#define bzero(b,len) memset(b, 0, len)
-#define bcmp(b1,b2,len) memcmp(b1, b2, len)
-#else
-#ifdef __EMX__
-#include <strings.h>
-#define _XFUNCS_H_INCLUDED_STRING_H
-/* bcopy, bcmp, bzero declared */
-#else /* bsd */
-void bcopy();
-void bzero();
-int bcmp();
 #endif
-#endif /* SYSV */
-#endif /* sgi */
-#endif /* __STDC__ and relatives */
 #endif /* X_USEBFUNCS */
 
 /* the new Xfuncs.h */

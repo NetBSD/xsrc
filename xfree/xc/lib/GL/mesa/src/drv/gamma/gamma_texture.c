@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_texture.c,v 1.3 2000/06/17 00:02:56 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_texture.c,v 1.4 2001/08/27 17:40:57 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -34,7 +34,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include <Xarch.h>
+#include <X11/Xarch.h>
 #include <X11/Xlibint.h>
 #include "gamma_init.h"
 #include <string.h>

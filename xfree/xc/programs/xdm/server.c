@@ -1,9 +1,13 @@
-/* $Xorg: server.c,v 1.4 2000/08/17 19:54:15 cpqbld Exp $ */
+/* $Xorg: server.c,v 1.5 2001/02/09 02:05:40 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/server.c,v 3.9 2001/01/17 23:45:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/server.c,v 3.13 2001/12/14 20:01:23 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -42,18 +46,7 @@ from The Open Group.
 # include	<errno.h>
 # include 	<sys/socket.h>
 
-#ifdef MINIX
-#include <sys/ioctl.h>
-#include <net/gen/in.h>
-#include <net/gen/tcp.h>
-#include <net/gen/tcp_io.h>
-#endif
-
 static int receivedUsr1;
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 static int serverPause (unsigned t, int serverPid);
 
@@ -63,11 +56,14 @@ static Display	*dpy;
 static SIGVAL
 CatchUsr1 (int n)
 {
+    int olderrno = errno;
+
 #ifdef SIGNALS_RESET_WHEN_CAUGHT
     (void) Signal (SIGUSR1, CatchUsr1);
 #endif
     Debug ("display manager caught SIGUSR1\n");
     ++receivedUsr1;
+    errno = olderrno;
 }
 
 char *_SysErrorMsg (int n)
@@ -263,9 +259,6 @@ GetRemoteAddress (struct display *d, int fd)
 #ifdef STREAMSCONN
     struct netbuf	netb;
 #endif
-#ifdef MINIX
-    nwio_tcpconf_t tcpconf;
-#endif
 
     if (d->peer)
 	free ((char *) d->peer);
@@ -276,25 +269,7 @@ GetRemoteAddress (struct display *d, int fd)
     len = 8;
     /* lucky for us, t_getname returns something that looks like a sockaddr */
 #else
-#ifdef MINIX
-    if (ioctl(fd, NWIOGTCPCONF, &tcpconf) == -1)
-    {
-    	LogError("NWIOGTCPCONF failed: %s\n", strerror(errno));
-    	len= 0;
-    }
-    else
-    {
-    	struct sockaddr_in *sinp;
-
-    	sinp= (struct sockaddr_in *)buf;
-    	len= sizeof(*sinp);
-    	sinp->sin_family= AF_INET;
-    	sinp->sin_port= tcpconf.nwtc_remport;
-    	sinp->sin_addr.s_addr= tcpconf.nwtc_remaddr;
-    }
-#else
     getpeername (fd, (struct sockaddr *) buf, (void *)&len);
-#endif
 #endif
     d->peerlen = 0;
     if (len)

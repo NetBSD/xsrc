@@ -1,11 +1,15 @@
-/* $Xorg: importcl.c,v 1.3 2000/08/17 19:54:26 cpqbld Exp $ */
+/* $Xorg: importcl.c,v 1.4 2001/02/09 02:05:47 xorgcvs Exp $ */
 
 /**** module importcl.c ****/
 /******************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -67,7 +71,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/importcl.c,v 1.5 2001/01/17 23:45:38 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/importcl.c,v 1.6 2001/12/14 20:01:50 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

@@ -1,9 +1,13 @@
-/* $Xorg: misc.h,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: misc.h,v 1.4 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -39,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/include/misc.h,v 3.6 2001/01/17 23:45:31 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/misc.h,v 3.9 2001/12/14 20:01:38 dawes Exp $ */
 
 #ifndef _MISC_H_
 #define _MISC_H_
@@ -51,13 +55,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"assert.h"	/* so its everywhere */
 
 #ifndef NULL
-
-#ifndef X_NOT_STDC_ENV
 #include	<stddef.h>
-#else
-#define	NULL	0
-#endif
-
 #endif
 
 #define	MAXCLIENTS	128
@@ -72,7 +70,6 @@ in this Software without prior written authorization from The Open Group.
 
 #define	min(a, b)	(((a) < (b)) ? (a) : (b))
 #define	max(a, b)	(((a) > (b)) ? (a) : (b))
-#define	abs(a)		((a) > 0 ? (a) : -(a))
 
 #include	"os.h"
 
@@ -123,7 +120,7 @@ extern char *NameForAtom(Atom atom);
 extern void BitOrderInvert(unsigned char *buf, int nbytes);
 
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define fsCat(x,y) x##_##y
 #else
 #define fsCat(x,y) x/**/_/**/y

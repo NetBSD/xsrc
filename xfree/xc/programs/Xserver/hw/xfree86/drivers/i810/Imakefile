@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/Imakefile,v 1.14 2001/01/24 00:06:20 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/Imakefile,v 1.18 2001/10/04 18:28:21 alanh Exp $
 XCOMM
 XCOMM This is the Imakefile for the i810 driver.  
 XCOMM 
@@ -7,18 +7,20 @@ XCOMM
 #include <Server.tmpl>
 
 #if BuildXF86DRI
-DRISRCS = i810_dri.c
-DRIOBJS = i810_dri.o
+DRISRCS = i810_dri.c i810_hwmc.c i830_dri.c
+DRIOBJS = i810_dri.o i810_hwmc.o i830_dri.o
 DRIINCLUDES = -I$(SERVERSRC)/GL/dri -I$(LIBSRC)/GL/dri \
 	-I$(XF86OSSRC)/linux/drm/kernel -I$(TOP)/include
 DRIDEFINES = $(GLX_DEFINES)
 #endif
 
 SRCS = 	i810_driver.c i810_cursor.c i810_accel.c i810_io.c	\
-	i810_memory.c i810_wmark.c i810_dga.c i810_video.c $(DRISRCS)
+	i810_memory.c i810_wmark.c i810_dga.c i810_video.c \
+	i830_driver.c $(DRISRCS)
 
 OBJS = 	i810_driver.o i810_cursor.o i810_accel.o i810_io.o	\
-	i810_memory.o i810_wmark.o i810_dga.o i810_video.o $(DRIOBJS)
+	i810_memory.o i810_wmark.o i810_dga.o i810_video.o \
+	i830_driver.o $(DRIOBJS)
 
 #if defined(XF86DriverSDK)
 INCLUDES = -I. -I../../include
@@ -35,6 +37,8 @@ INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC)				\
 	   $(DRIINCLUDES)
 #endif
 DEFINES = $(DRIDEFINES)
+
+LinkSourceFile(i830_3d_reg.h, $(GLXLIBSRC)/mesa/src/drv/i830)
 
 #if MakeHasPosixVariableSubstitutions
 SubdirLibraryRule($(OBJS))
@@ -64,5 +68,8 @@ InstallDriverSDKNonExecFile(i810_io.c,$(DRIVERSDKDIR)/drivers/i810)
 InstallDriverSDKNonExecFile(i810_memory.c,$(DRIVERSDKDIR)/drivers/i810)
 InstallDriverSDKNonExecFile(i810_wmark.c,$(DRIVERSDKDIR)/drivers/i810)
 InstallDriverSDKNonExecFile(i810_reg.h,$(DRIVERSDKDIR)/drivers/i810)
+InstallDriverSDKNonExecFile(i830_dri.c,$(DRIVERSDKDIR)/drivers/i810)
+InstallDriverSDKNonExecFile(i830_dri.h,$(DRIVERSDKDIR)/drivers/i810)
+InstallDriverSDKNonExecFile(i830_driver.c,$(DRIVERSDKDIR)/drivers/i810)
 
 InstallDriverSDKObjectModule(i810,$(DRIVERSDKMODULEDIR),drivers)

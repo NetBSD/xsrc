@@ -2,13 +2,17 @@
  * Fill odd tiled rectangles and spans.
  * no depth dependencies.
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbtileodd.c,v 3.4 2001/01/17 22:36:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbtileodd.c,v 3.6 2001/12/14 19:59:25 dawes Exp $ */
 
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -25,7 +29,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
 
-/* $Xorg: cfbtileodd.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
+/* $Xorg: cfbtileodd.c,v 1.4 2001/02/09 02:04:39 xorgcvs Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -143,8 +147,7 @@ MROP_NAME(cfbFillBoxTileOdd) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, plan
     CfbBits *pSrcLine;	/* pointer to start of source line */
     register CfbBits *pDst;
     register CfbBits *pSrc;
-    register CfbBits bits, tmp;
-    register int	   nlwPart;
+    register CfbBits bits, tmp = 0;
     int xoffStart, xoff;
     int leftShiftStart, rightShiftStart, nlwSrcStart;
     CfbBits tileEndMask;
@@ -153,8 +156,8 @@ MROP_NAME(cfbFillBoxTileOdd) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, plan
     int tileEndPart;
     int needFirst;
     CfbBits   narrow[2];
-    CfbBits   narrowMask;
-    int	    narrowShift;
+    CfbBits   narrowMask = 0;
+    int	    narrowShift = 0;
     Bool    narrowTile;
 
     MROP_INITIALIZE (alu, planemask)
@@ -292,7 +295,8 @@ MROP_NAME(cfbFillBoxTileOdd) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, plan
 #if MROP == Mcopy
 		if (nlwSrc > 1)
 		{
-		    nlwPart = nlw;
+		    int nlwPart = nlw;
+
 		    if (nlwPart >= nlwSrc)
 			nlwPart = nlwSrc - 1;
 		    nlw -= nlwPart;
@@ -399,8 +403,7 @@ MROP_NAME(cfbFillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, alu,
     CfbBits *pSrcLine;	/* pointer to start of source line */
     register CfbBits *pDst;
     register CfbBits *pSrc;
-    register CfbBits bits, tmp;
-    register int	   nlwPart;
+    register CfbBits bits, tmp = 0;
     int xoffStart, xoff;
     int leftShiftStart, rightShiftStart, nlwSrcStart;
     CfbBits tileEndMask;
@@ -409,8 +412,8 @@ MROP_NAME(cfbFillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, alu,
     int tileEndPart;
     int needFirst;
     CfbBits   narrow[2];
-    CfbBits   narrowMask;
-    int	    narrowShift;
+    CfbBits   narrowMask = 0;
+    int	    narrowShift = 0;
     Bool    narrowTile;
 
     MROP_INITIALIZE (alu, planemask)
@@ -541,7 +544,8 @@ MROP_NAME(cfbFillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, alu,
 #if MROP == Mcopy
 	    if (nlwSrc > 1)
 	    {
-		nlwPart = nlw;
+		int nlwPart = nlw;
+
 		if (nlwPart >= nlwSrc)
 		    nlwPart = nlwSrc - 1;
 		nlw -= nlwPart;

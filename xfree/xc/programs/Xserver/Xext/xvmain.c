@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvmain.c,v 1.11 2000/09/08 02:29:41 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvmain.c,v 1.13 2001/08/23 13:01:36 alanh Exp $ */
 
 /*
 ** File: 
@@ -124,7 +124,6 @@ unsigned long XvRTPortNotify;
 
 /* EXTERNAL */
 
-extern WindowPtr *WindowTable;
 extern XID clientErrorValue;
 
 static void WriteSwappedVideoNotifyEvent(xvEvent *, xvEvent *);
@@ -195,9 +194,9 @@ XvExtensionInit()
       XvErrorBase = extEntry->errorBase;
 
       EventSwapVector[XvEventBase+XvVideoNotify] = 
-	WriteSwappedVideoNotifyEvent;
+	(EventSwapPtr)WriteSwappedVideoNotifyEvent;
       EventSwapVector[XvEventBase+XvPortNotify] = 
-	WriteSwappedPortNotifyEvent;
+	(EventSwapPtr)WriteSwappedPortNotifyEvent;
 
       (void)MakeAtom(XvName, strlen(XvName), xTrue);
 

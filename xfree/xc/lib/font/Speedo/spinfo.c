@@ -1,4 +1,4 @@
-/* $Xorg: spinfo.c,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
+/* $Xorg: spinfo.c,v 1.4 2001/02/09 02:04:00 xorgcvs Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -26,7 +26,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.10 2001/01/17 19:43:20 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.12 2001/12/14 19:56:42 dawes Exp $ */
 
 #include "fntfilst.h"
 #include "fontutil.h"
@@ -117,8 +121,6 @@ static fontProp extraProps[] = {
 #define NEXTRAPROPS (sizeof(extraProps) / sizeof(fontProp))
 
 #define	NPROPS	(NNAMEPROPS + NEXTRAPROPS)
-
-extern Atom MakeAtom();
 
 void
 sp_make_standard_props()
@@ -343,7 +345,7 @@ sp_compute_props(
                 nprops;
     fontProp   *fpt;
     char       *is_str;
-    char       *ptr1,
+    char       *ptr1 = NULL,
                *ptr2;
     char       *ptr3;
     char	tmpname[1024];

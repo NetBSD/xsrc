@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.4 2001/04/10 16:07:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/drimodule.c,v 1.6 2001/12/10 19:07:19 dawes Exp $ */
 
 /*
  * Authors:
@@ -64,8 +64,29 @@ ExtensionModule XF86DRIExt =
     NULL
 };
 
-static const char *glxSymbols[] = {
-    "__glXActiveScreens",
+static const char *drmSymbols[] = {
+    "drmAddContextTag",
+    "drmAddMap",
+    "drmAuthMagic",
+    "drmAvailable",
+    "drmClose",
+    "drmCreateContext",
+    "drmCreateDrawable",
+    "drmDelContextTag",
+    "drmDestroyContext",
+    "drmDestroyDrawable",
+    "drmFreeReservedContextList",
+    "drmGetContextTag",
+    "drmGetLock",
+    "drmGetReservedContextList",
+    "drmInstallSIGIOHandler",
+    "drmMap",
+    "drmOpen",
+    "drmRemoveSIGIOHandler",
+    "drmSetBusid",
+    "drmSetContextFlags",
+    "drmUnlock",
+    "drmUnmap",
     NULL
 };
 
@@ -80,18 +101,20 @@ driSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
     
-	LoaderRefSymLists(glxSymbols, NULL);
-    
     	drm = 
 	   LoadSubModule(module, "drm", NULL, NULL, NULL, NULL, errmaj, errmin);
     
-	if (!drm) 
-	    ErrorF("Cannot load the drm library\n");
-	else
+	if (!drm) {
+	    if (errmaj) *errmaj = LDR_NOSUBENT;
+	}
+	else {
+	    LoaderReqSymLists(drmSymbols, NULL);
+	    LoaderRefSymbols("noPanoramiXExtension", NULL);
 	    LoadExtension(&XF86DRIExt, FALSE);
+	}
+    } else {
+	if (errmaj) *errmaj = LDR_ONCEONLY;
     }
-
-    if (errmaj) *errmaj = LDR_ONCEONLY;
     /* Need a non-NULL return value to indicate success */
     return drm;
 }

@@ -5,7 +5,7 @@
 /*    Basic SFNT/TrueType type definitions and interface (specification    */
 /*    only).                                                               */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -92,7 +92,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    range_shift    :: Must be num_tables*16 - search_range.            */
   /*                                                                       */
-  typedef struct SFNT_Header_
+  typedef struct  SFNT_Header_
   {
     FT_ULong   format_tag;
     FT_UShort  num_tables;
@@ -922,6 +922,8 @@ FT_BEGIN_HEADER
 
   typedef struct  TT_CMap0_
   {
+    FT_ULong  language;       /* for Mac fonts (originally ushort) */
+
     FT_Byte*  glyphIdArray;
 
   } TT_CMap0;
@@ -941,6 +943,8 @@ FT_BEGIN_HEADER
 
   typedef struct  TT_CMap2_
   {
+    FT_ULong            language;     /* for Mac fonts (originally ushort) */
+
     FT_UShort*          subHeaderKeys;
     /* high byte mapping table            */
     /* value = subHeader index * 8        */
@@ -966,14 +970,16 @@ FT_BEGIN_HEADER
 
   typedef struct  TT_CMap4_
   {
-    FT_UShort         segCountX2;     /* number of segments * 2       */
-    FT_UShort         searchRange;    /* these parameters can be used */
-    FT_UShort         entrySelector;  /* for a binary search          */
+    FT_ULong          language;       /* for Mac fonts (originally ushort) */
+
+    FT_UShort         segCountX2;     /* number of segments * 2            */
+    FT_UShort         searchRange;    /* these parameters can be used      */
+    FT_UShort         entrySelector;  /* for a binary search               */
     FT_UShort         rangeShift;
 
     TT_CMap4Segment*  segments;
     FT_UShort*        glyphIdArray;
-    FT_UShort         numGlyphId;   /* control value */
+    FT_UShort         numGlyphId;    /* control value */
 
     TT_CMap4Segment*  last_segment;  /* last used segment; this is a small  */
                                      /* cache to potentially increase speed */
@@ -984,6 +990,8 @@ FT_BEGIN_HEADER
 
   typedef struct  TT_CMap6_
   {
+    FT_ULong    language;       /* for Mac fonts (originally ushort)     */
+
     FT_UShort   firstCode;      /* first character code of subrange      */
     FT_UShort   entryCount;     /* number of character codes in subrange */
 
@@ -992,12 +1000,54 @@ FT_BEGIN_HEADER
   } TT_CMap6;
 
 
+  /* auxiliary table for format 8 and 12 */
+
+  typedef struct  TT_CMapGroup_
+  {
+    FT_ULong  startCharCode;
+    FT_ULong  endCharCode;
+    FT_ULong  startGlyphID;
+
+  } TT_CMapGroup;
+
+
+  /* FreeType handles format 8 and 12 identically.  It is not necessary to
+     cover mixed 16bit and 32bit codes since FreeType always uses FT_ULong
+     for input character codes -- converting Unicode surrogates to 32bit
+     character codes must be done by the application.                      */
+
+  typedef struct  TT_CMap8_12_
+  {
+    FT_ULong       language;        /* for Mac fonts */
+
+    FT_ULong       nGroups;
+    TT_CMapGroup*  groups;
+
+    TT_CMapGroup*  last_group;      /* last used group; this is a small    */
+                                    /* cache to potentially increase speed */
+  } TT_CMap8_12;
+
+
+  /* format 10 */
+
+  typedef struct  TT_CMap10_
+  {
+    FT_ULong    language;           /* for Mac fonts */
+
+    FT_ULong    startCharCode;      /* first character covered */
+    FT_ULong    numChars;           /* number of characters covered */
+
+    FT_UShort*  glyphs;
+
+  } TT_CMap10;
+
+
   typedef struct TT_CMapTable_  TT_CMapTable;
 
 
-  typedef
-  FT_UInt  (*TT_CharMap_Func)( TT_CMapTable*  charmap,
-                               FT_ULong       char_code );
+  typedef FT_UInt
+  (*TT_CharMap_Func)( TT_CMapTable*  charmap,
+                      FT_ULong       char_code );
 
 
   /* charmap table */
@@ -1006,18 +1056,19 @@ FT_BEGIN_HEADER
     FT_UShort  platformID;
     FT_UShort  platformEncodingID;
     FT_UShort  format;
-    FT_UShort  length;
-    FT_UShort  version;
+    FT_ULong   length;          /* must be ulong for formats 8, 10, and 12 */
 
     FT_Bool    loaded;
     FT_ULong   offset;
 
     union
     {
-      TT_CMap0  cmap0;
-      TT_CMap2  cmap2;
-      TT_CMap4  cmap4;
-      TT_CMap6  cmap6;
+      TT_CMap0     cmap0;
+      TT_CMap2     cmap2;
+      TT_CMap4     cmap4;
+      TT_CMap6     cmap6;
+      TT_CMap8_12  cmap8_12;
+      TT_CMap10    cmap10;
     } c;
 
     TT_CharMap_Func  get_index;
@@ -1099,7 +1150,8 @@ FT_BEGIN_HEADER
 
 
   /* a function type used for the truetype bytecode interpreter hooks */
-  typedef FT_Error  (*TT_Interpreter)( void*  exec_context );
+  typedef FT_Error
+  (*TT_Interpreter)( void*  exec_context );
 
   /* forward declaration */
   typedef struct TT_Loader_  TT_Loader;
@@ -1130,11 +1182,11 @@ FT_BEGIN_HEADER
   /* <Note>                                                                */
   /*    The stream cursor must be at the font file's origin.               */
   /*                                                                       */
-  typedef
-  FT_Error  (*TT_Goto_Table_Func)( TT_Face    face,
-                                   FT_ULong   tag,
-                                   FT_Stream  stream,
-                                   FT_ULong*  length );
+  typedef FT_Error
+  (*TT_Goto_Table_Func)( TT_Face    face,
+                         FT_ULong   tag,
+                         FT_Stream  stream,
+                         FT_ULong*  length );
 
 
   /*************************************************************************/
@@ -1165,11 +1217,11 @@ FT_BEGIN_HEADER
   /*    alternative formats (e.g. compressed ones) might use something     */
   /*    different.                                                         */
   /*                                                                       */
-  typedef
-  FT_Error  (*TT_Access_Glyph_Frame_Func)( TT_Loader*  loader,
-                                           FT_UInt     glyph_index,
-                                           FT_ULong    offset,
-                                           FT_UInt     byte_count );
+  typedef FT_Error
+  (*TT_Access_Glyph_Frame_Func)( TT_Loader*  loader,
+                                 FT_UInt     glyph_index,
+                                 FT_ULong    offset,
+                                 FT_UInt     byte_count );
 
 
   /*************************************************************************/
@@ -1187,8 +1239,8 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  typedef
-  FT_Error  (*TT_Load_Glyph_Element_Func)( TT_Loader*  loader );
+  typedef FT_Error
+  (*TT_Load_Glyph_Element_Func)( TT_Loader*  loader );
 
 
   /*************************************************************************/
@@ -1202,8 +1254,8 @@ FT_BEGIN_HEADER
   /* <Input>                                                               */
   /*    loader :: The current TrueType glyph loader object.                */
   /*                                                                       */
-  typedef
-  void  (*TT_Forget_Glyph_Frame_Func)( TT_Loader*  loader );
+  typedef void
+  (*TT_Forget_Glyph_Frame_Func)( TT_Loader*  loader );
 
 
 
@@ -1570,6 +1622,8 @@ FT_BEGIN_HEADER
     FT_BBox          bbox;
     FT_Int           left_bearing;
     FT_Int           advance;
+    FT_Int           linear;
+    FT_Bool          linear_def;
     FT_Bool          preserve_pps;
     FT_Vector        pp1;
     FT_Vector        pp2;
@@ -1586,7 +1640,6 @@ FT_BEGIN_HEADER
 
     /* for possible extensibility in other formats */
     void*            other;
-
   };
 
 

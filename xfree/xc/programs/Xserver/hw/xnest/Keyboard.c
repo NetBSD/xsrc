@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Keyboard.c,v 1.6 2001/03/25 05:32:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Keyboard.c,v 1.8 2001/10/28 03:34:11 tsi Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -52,6 +52,14 @@ extern	XkbDescPtr XkbGetKeyboard(
 	Display *		/* dpy */,
 	unsigned int		/* which */,
 	unsigned int		/* deviceSpec */
+#endif
+);
+
+extern	Status	XkbGetControls(
+#if NeedFunctionPrototypes
+	Display *		/* dpy */,
+	unsigned long		/* which */,
+	XkbDescPtr		/* desc */
 #endif
 );
 
@@ -173,9 +181,9 @@ int xnestKeyboardProc(pDev, onoff, argc, argv)
       for (j = 0; j < 8; j++)
 	for(i = 0; i < modifier_keymap->max_keypermod; i++) {
 	  CARD8 keycode;
-	  if (keycode = 
+	  if ((keycode = 
 	      modifier_keymap->
-	        modifiermap[j * modifier_keymap->max_keypermod + i])
+	        modifiermap[j * modifier_keymap->max_keypermod + i]))
 	    modmap[keycode] |= 1<<j;
 	}
       XFreeModifiermap(modifier_keymap);

@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.9 2001/03/28 01:17:43 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.11 2001/10/30 19:38:29 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -217,7 +217,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     mmioFlags = VIDMEM_MMIO | VIDMEM_READSIDEEFFECT;
 
     pNv->riva.PRAMDAC = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
-                                      regBase+0x00680000, 0x00001000);
+                                      regBase+0x00680000, 0x00003000);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- PRAMDAC %x\n", pNv->riva.PRAMDAC));
     pNv->riva.PFB     = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
                                       regBase+0x00100000, 0x00001000);
@@ -255,7 +255,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
                                            pNv->PciTag, regBase+0x000C0000,
                                            0x00001000);
     
-    RivaGetConfig(&pNv->riva);
+    RivaGetConfig(pNv);
 
     pNv->Dac.maxPixelClock = pNv->riva.MaxVClockFreqKHz;
 

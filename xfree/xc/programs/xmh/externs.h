@@ -25,148 +25,162 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/externs.h,v 1.4 2001/10/28 03:34:38 tsi Exp $ */
 
+#include <X11/Intrinsic.h>
 #include <errno.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern int errno;
-extern char *getenv();
-extern void exit();
-extern void free();
-#endif
 
 /* Action routines are declared in actions.h */
 /* Functions which begin with `Do' are the corresponding callbacks. */
 
 	/* from command.c */
 
-extern char *	DoCommandToFile		(/* Widget, XtPointer, XtPointer */);
-extern char *	DoCommandToString	(/* Widget, XtPointer, XtPointer */);
+extern int	DoCommand		(char **, char *, char *);
+extern char *	DoCommandToFile		(char **);
+extern char *	DoCommandToString	(char **);
 
-	/* from compfuncs. */
+	/* from compfuncs.c */
 
-extern void 	DoResetCompose		(/* Widget, XtPointer, XtPointer */);
+extern void 	DoResetCompose		(Widget, XtPointer, XtPointer);
+extern void	CreateForward		(MsgList, String *, Cardinal);
 
 	/* from folder.c */
 
-extern void	DoClose			(/* Widget, XtPointer, XtPointer */);
-extern void	DoComposeMessage	(/* Widget, XtPointer, XtPointer */);
-extern void	DoOpenFolder		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoOpenFolderInNewWindow	(/* Widget, XtPointer, XtPointer */);
-extern void	DoCreateFolder		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoDeleteFolder		(/* Widget, XtPointer, XtPointer */);
-extern void	DoSaveYourself		(/* Widget, XtPointer, XtPointer */);
-extern void	Push			(/* Stack, char* */);
-extern char *	Pop			(/* Stack */);
+extern void	DoClose			(Widget, XtPointer, XtPointer);
+extern void	DoComposeMessage	(Widget, XtPointer, XtPointer);
+extern void	DoOpenFolder		(Widget, XtPointer, XtPointer);
+extern void 	DoOpenFolderInNewWindow	(Widget, XtPointer, XtPointer);
+extern void	DoCreateFolder		(Widget, XtPointer, XtPointer);
+extern void 	DoDeleteFolder		(Widget, XtPointer, XtPointer);
+extern void	DoSaveYourself		(Widget, XtPointer, XtPointer);
+extern void	Push			(Stack *, char *);
+extern char *	Pop			(Stack *);
+
+	/* from init.c */
+
+extern void	InitializeWorld		(int, char **);
 
 	/* from menu.c */
 
-extern void	AttachMenuToButton	(/* Button, Widget, char * */);
-extern void 	AddMenuEntry		(/* Widget, char *, ... */);
-extern void	DoRememberMenuSelection (/* Widget, XtPointer, XtPointer */);
-extern void	SendMenuEntryEnableMsg	(/* Button, char *, int */);
-extern void	ToggleMenuItem		(/* Widget, Boolean */);
+extern void	AttachMenuToButton	(Button, Widget, char *);
+extern void 	AddMenuEntry		(Widget, char *, ...);
+extern void	DoRememberMenuSelection (Widget, XtPointer, XtPointer);
+extern void	SendMenuEntryEnableMsg	(Button, char *, int);
+extern void	ToggleMenuItem		(Widget, Boolean);
+
+	/* from miscfuncs.c */
+
+extern int	ScanDir			(char *, char ***, int (*)(char *));
 
 	/* from msg.c */
 
-extern Widget   CreateFileSource	(/* Widget, String, Boolean */);
-extern char*	MsgName			(/* Msg */);
+extern Widget   CreateFileSource	(Widget, String, Boolean);
+extern char*	MsgName			(Msg);
+
+	/* from pick.c */
+
+extern void	InitPick		(void);
+extern void	AddPick			(Scrn, Toc, char *, char *);
 
 	/* from popup.c */
 
-extern void	DestroyPopup	(/* Widget, XtPointer, XtPointer */);
-extern void	WMDeletePopup	(/* Widget, XEvent* */);
-extern void	PopupPrompt	(/* Widget, String, XtCallbackProc */);
-extern void	PopupConfirm	(/* Widget, String, XtCallbackList, ... */);
-extern void	PopupNotice	(/* char *, XtCallbackProc, XtPointer */);
-extern void 	PopupError	(/* Widget, String */);
+extern void	DestroyPopup		(Widget, XtPointer, XtPointer);
+extern void	WMDeletePopup		(Widget, XEvent*);
+extern void	PopupPrompt		(Widget, String, XtCallbackProc);
+extern void	PopupConfirm		(Widget, String,
+					 XtCallbackList, XtCallbackList);
+extern void	PopupNotice		(char *, XtCallbackProc, XtPointer);
+extern void 	PopupError		(Widget, String);
 extern void	PopupWarningHandler();	/* for Xt to call */
 
 	/* from screen.c */
 
-extern void	EnableProperButtons	(/* Scrn */);
-extern Scrn	CreateNewScrn		(/* ScrnKind */);
-extern Scrn	NewViewScrn		(/* void */);
-extern Scrn	NewCompScrn		(/* void */);
-extern void	ScreenSetAssocMsg	(/* Scrn, Msg */);
-extern void	DestroyScrn		(/* Scrn */);
-extern void	MapScrn			(/* Scrn */);
-extern Scrn	ScrnFromWidget		(/* Widget */);
+extern void	EnableProperButtons	(Scrn);
+extern Scrn	CreateNewScrn		(ScrnKind);
+extern Scrn	NewViewScrn		(void);
+extern Scrn	NewCompScrn		(void);
+extern void	ScreenSetAssocMsg	(Scrn, Msg);
+extern void	DestroyScrn		(Scrn);
+extern void	MapScrn			(Scrn);
+extern Scrn	ScrnFromWidget		(Widget);
 
 	/* from toc.c */
 
-extern Boolean	TocHasChanges		(/* Toc */);
+extern int	TocFolderExists		(Toc);
+extern Boolean	TocHasChanges		(Toc);
 
 	/* from tocfuncs.c */
 
-extern Boolean	UserWantsAction		(/* Widget, Scrn */);
-extern void 	DoIncorporateNewMail	(/* Widget, XtPointer, XtPointer */);
-extern void 	DoCommit		(/* Widget, XtPointer, XtPointer */);
-extern void	DoPack			(/* Widget, XtPointer, XtPointer */);
-extern void	DoSort			(/* Widget, XtPointer, XtPointer */);
-extern void 	DoForceRescan		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoReverseReadOrder	(/* Widget, XtPointer, XtPointer */);
-extern void	DoNextView		(/* Widget, XtPointer, XtPointer */);
-extern void	DoPrevView		(/* Widget, XtPointer, XtPointer */);
-extern void	DoDelete		(/* Widget, XtPointer, XtPointer */);
-extern void	DoMove			(/* Widget, XtPointer, XtPointer */);
-extern void	DoCopy			(/* Widget, XtPointer, XtPointer */);
-extern void	DoUnmark		(/* Widget, XtPointer, XtPointer */);
-extern void	DoViewNew		(/* Widget, XtPointer, XtPointer */);
-extern void	DoReply			(/* Widget, XtPointer, XtPointer */);
-extern void	DoForward		(/* Widget, XtPointer, XtPointer */);
-extern void	DoTocUseAsComp		(/* Widget, XtPointer, XtPointer */);
-extern void	DoPrint			(/* Widget, XtPointer, XtPointer */);
-extern void	DoPickMessages		(/* Widget, XtPointer, XtPointer */);
-extern void	DoSelectSequence	(/* Widget, XtPointer, XtPointer */);
-extern void	DoOpenSeq		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoAddToSeq		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoRemoveFromSeq		(/* Widget, XtPointer, XtPointer */);
-extern void	DoDeleteSeq		(/* Widget, XtPointer, XtPointer */);
+extern Boolean	UserWantsAction		(Widget, Scrn);
+extern void 	DoIncorporateNewMail	(Widget, XtPointer, XtPointer);
+extern void 	DoCommit		(Widget, XtPointer, XtPointer);
+extern void	DoPack			(Widget, XtPointer, XtPointer);
+extern void	DoSort			(Widget, XtPointer, XtPointer);
+extern void 	DoForceRescan		(Widget, XtPointer, XtPointer);
+extern void 	DoReverseReadOrder	(Widget, XtPointer, XtPointer);
+extern void	DoNextView		(Widget, XtPointer, XtPointer);
+extern void	DoPrevView		(Widget, XtPointer, XtPointer);
+extern void	DoDelete		(Widget, XtPointer, XtPointer);
+extern void	DoMove			(Widget, XtPointer, XtPointer);
+extern void	DoCopy			(Widget, XtPointer, XtPointer);
+extern void	DoUnmark		(Widget, XtPointer, XtPointer);
+extern void	DoViewNew		(Widget, XtPointer, XtPointer);
+extern void	DoReply			(Widget, XtPointer, XtPointer);
+extern void	DoForward		(Widget, XtPointer, XtPointer);
+extern void	DoTocUseAsComp		(Widget, XtPointer, XtPointer);
+extern void	DoPrint			(Widget, XtPointer, XtPointer);
+extern void	DoPickMessages		(Widget, XtPointer, XtPointer);
+extern void	DoSelectSequence	(Widget, XtPointer, XtPointer);
+extern void	DoOpenSeq		(Widget, XtPointer, XtPointer);
+extern void 	DoAddToSeq		(Widget, XtPointer, XtPointer);
+extern void 	DoRemoveFromSeq		(Widget, XtPointer, XtPointer);
+extern void	DoDeleteSeq		(Widget, XtPointer, XtPointer);
 
 	/* from util.c */
 
-extern void	Punt			(/* char * */);
-extern int	myopen			(/* char *, int, int */);
-extern FILE *	myfopen			(/* char *, char * */);
-extern int	myclose			(/* int */);
-extern int	myfclose		(/* FILE * */);
-extern char *	MakeNewTempFileName	(/* void */);
-extern char **	MakeArgv		(/* int */);
-extern char **	ResizeArgv		(/* char **, int */);
-extern FILEPTR	FOpenAndCheck		(/* char *, char * */);
-extern char *	ReadLine		(/* FILE * */);
-extern char *	ReadLineWithCR		(/* FILE * */);
-extern void	DeleteFileAndCheck	(/* char * */);
-extern void	CopyFileAndCheck	(/* char *, char * */);
-extern void	RenameAndCheck		(/* char *, char * */);
-extern char *	CreateGeometry		(/* int, int, int, int, int */);
-extern int	FileExists		(/* char * */);
-extern Boolean	IsSubfolder		(/* char * */);
-extern void 	SetCurrentFolderName	(/* Scrn, char * */);
-extern void	ChangeLabel		(/* Widget, char * */);
-extern Widget	CreateTextSW	(/* Scrn, char *, ArgList, Cardinal */);
-extern Widget	CreateTitleBar		(/* Scrn, char * */);
-extern void	Feep			(/* type, volume, window */);
-extern MsgList	CurMsgListOrCurMsg	(/* Toc */);
-extern int	GetWidth		(/* Widget */);
-extern int	GetHeight		(/* Widget */);
-extern Toc	SelectedToc		(/* Scrn */);
-extern Toc	CurrentToc		(/* Scrn */);
+extern void	Punt			(char *);
+extern int	myopen			(char *, int, int);
+extern FILE *	myfopen			(char *, char *);
+extern void	myclose			(int);
+extern void	myfclose		(FILE *);
+extern char *	MakeNewTempFileName	(void);
+extern char **	MakeArgv		(int);
+extern char **	ResizeArgv		(char **, int);
+extern FILEPTR	FOpenAndCheck		(char *, char *);
+extern char *	ReadLine		(FILE *);
+extern char *	ReadLineWithCR		(FILE *);
+extern void	DeleteFileAndCheck	(char *);
+extern void	CopyFileAndCheck	(char *, char *);
+extern void	RenameAndCheck		(char *, char *);
+extern char *	CreateGeometry		(int, int, int, int, int);
+extern int	FileExists		(char *);
+extern long	LastModifyDate		(char *);
+extern int	GetFileLength		(char *);
+extern Boolean	IsSubfolder		(char *);
+extern void 	SetCurrentFolderName	(Scrn, char *);
+extern void	ChangeLabel		(Widget, char *);
+extern Widget	CreateTextSW		(Scrn, char *, ArgList, Cardinal);
+extern Widget	CreateTitleBar		(Scrn, char *);
+extern void	Feep			(int, int, Window);
+extern MsgList	CurMsgListOrCurMsg	(Toc);
+extern int	GetWidth		(Widget);
+extern int	GetHeight		(Widget);
+extern Toc	SelectedToc		(Scrn);
+extern Toc	CurrentToc		(Scrn);
 extern int	strncmpIgnoringCase();
-extern void 	StoreWindowName		(/* Scrn, char * */);
-extern void	InitBusyCursor		(/* Scrn */);
-extern void	ShowBusyCursor		(/* void */);
-extern void 	UnshowBusyCursor	(/* void */);
-extern void 	SetCursorColor		(/* Widget, Cursor, unsigned long */);
+extern void 	StoreWindowName		(Scrn, char *);
+extern void	InitBusyCursor		(Scrn);
+extern void	ShowBusyCursor		(void);
+extern void 	UnshowBusyCursor	(void);
+extern void 	SetCursorColor		(Widget, Cursor, unsigned long);
 
 	/* from viewfuncs.c */
 
-extern void	DoCloseView		(/* Widget, XtPointer, XtPointer */);
-extern void	DoViewReply		(/* Widget, XtPointer, XtPointer */);
-extern void 	DoViewForward		(/* Widget, XtPointer, XtPointer */);
-extern void	DoViewUseAsComposition	(/* Widget, XtPointer, XtPointer */);
-extern void	DoEditView		(/* Widget, XtPointer, XtPointer */);
-extern void	DoSaveView		(/* Widget, XtPointer, XtPointer */);
-extern void	DoPrintView		(/* Widget, XtPointer, XtPointer */);
+extern void	DoCloseView		(Widget, XtPointer, XtPointer);
+extern void	DoViewReply		(Widget, XtPointer, XtPointer);
+extern void 	DoViewForward		(Widget, XtPointer, XtPointer);
+extern void	DoViewUseAsComposition	(Widget, XtPointer, XtPointer);
+extern void	DoEditView		(Widget, XtPointer, XtPointer);
+extern void	DoSaveView		(Widget, XtPointer, XtPointer);
+extern void	DoPrintView		(Widget, XtPointer, XtPointer);

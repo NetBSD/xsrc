@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Privstr.h,v 1.25 2001/05/18 16:03:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Privstr.h,v 1.30 2001/11/30 12:11:55 eich Exp $ */
 
 /*
  * Copyright (c) 1997,1998 by The XFree86 Project, Inc.
@@ -59,6 +59,9 @@ typedef struct {
 #if defined(SVR4) && defined(i386)
     Bool		panix106;
 #endif  /* SVR4 && i386 */
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+    int                 wsKbdType;
+#endif
 
     /* mouse part */
     DeviceIntPtr	pMouse;
@@ -82,9 +85,6 @@ typedef struct {
     int			screenFd;	/* fd for memory mapped access to
 					 * vga card */
     int			consType;	/* Which console driver? */
-#endif
-#if defined(AMOEBA)
-    void *		screenPtr;
 #endif
 
 #ifdef XKB
@@ -121,8 +121,21 @@ typedef struct {
     Bool		pc98;
 #endif
     Bool                pmFlag;
+    Bool		syncLog;
     int                 estimateSizesAggressively;
     Bool                kbdCustomKeycodes;
+    struct {
+	Bool		disabled;		/* enable/disable deactivating
+						 * grabs or closing the
+						 * connection to the grabbing
+						 * client */
+	ClientPtr	override;		/* client that disabled
+						 * grab deactivation.
+						 */
+	Bool		allowDeactivate;
+	Bool		allowClosedown;
+	ServerGrabInfoRec server;
+    } grabInfo;
 } xf86InfoRec, *xf86InfoPtr;
 
 #ifdef DPMSExtension

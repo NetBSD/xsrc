@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.14 2001/03/07 16:21:04 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.16 2001/08/06 20:51:10 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
@@ -127,10 +127,10 @@ typedef struct _MouseDevRec {
 					 * Arg to maintain before
 					 * emulate3buttons timer callback */
     int			resolution;
-    int			negativeZ;
-    int			positiveZ;
-    int			negativeW;
-    int			positiveW;
+    int			negativeZ;	/* button mask */
+    int			positiveZ;	/* button mask */
+    int			negativeW;	/* button mask */
+    int			positiveW;	/* button mask */
     pointer		buffer;		/* usually an XISBuffer* */
     int			protoBufTail;
     unsigned char	protoBuf[8];
@@ -140,12 +140,28 @@ typedef struct _MouseDevRec {
     InputInfoPtr	pInfo;
     int			origProtocolID;
     const char *	origProtocol;
+    Bool		emulate3Pending;/* timer waiting */
+    CARD32		emulate3Expires;/* time to fire emulation code */
+    Bool		emulateWheel;
+    int			wheelInertia;
+    int			wheelButtonMask;
+    int			negativeX;	/* Button values.  Unlike the Z and */
+    int			positiveX;	/* W equivalents, these are button  */
+    int			negativeY;	/* values rather than button masks. */
+    int			positiveY;
+    int			wheelYDistance;
+    int			wheelXDistance;
 } MouseDevRec, *MouseDevPtr;
 
 /* Z axis mapping */
 #define MSE_NOZMAP	0
 #define MSE_MAPTOX	-1
 #define MSE_MAPTOY	-2
+#define MSE_MAPTOZ	-3
+#define MSE_MAPTOW	-4
+
+/* Generalize for other axes. */
+#define MSE_NOAXISMAP	MSE_NOZMAP
 
 #define MSE_MAXBUTTONS	12
 #define MSE_DFLTBUTTONS	 3

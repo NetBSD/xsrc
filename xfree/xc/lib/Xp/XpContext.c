@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpContext.c,v 1.5 2001/01/17 19:43:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpContext.c,v 1.6 2001/10/28 03:32:39 tsi Exp $ */
 
 #define NEED_REPLIES
 
@@ -201,7 +201,7 @@ XpGetScreenOfContext (
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
     int    i;
-    Screen *checkScr;
+    Screen *checkScr = NULL;
     int    ok;
 
 

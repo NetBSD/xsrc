@@ -1,4 +1,4 @@
-/* $Xorg: Geometry.c,v 1.4 2000/08/17 19:46:11 cpqbld Exp $ */
+/* $Xorg: Geometry.c,v 1.5 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,14 +58,15 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Geometry.c,v 1.9 2001/01/17 19:43:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Geometry.c,v 1.12 2001/12/14 19:56:15 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "ShellP.h"
+#include "ShellI.h"
 
-static void ClearRectObjAreas(r, old)
-    RectObj r;
-    XWindowChanges* old;
+static void ClearRectObjAreas(
+    RectObj r,
+    XWindowChanges* old)
 {
     Widget pw = _XtWindowedAncestor((Widget)r);
     int bw2;
@@ -409,11 +414,12 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 	if (req.changeMask & CWStackMode) {
 	    req.changes.stack_mode = request->stack_mode;
 	    CALLGEOTAT(_XtGeoTrace(widget,"stack_mode changing\n"));
-	    if (req.changeMask & CWSibling)
+	    if (req.changeMask & CWSibling) {
 		if (XtIsWidget(request->sibling))
 		    req.changes.sibling = XtWindow(request->sibling);
 		else
 		    req.changeMask &= ~(CWStackMode | CWSibling);
+	    }
 	}
 
 #ifdef XT_GEO_TATTLER
@@ -531,16 +537,18 @@ XtMakeResizeRequest (widget, width, height, replyWidth, replyHeight)
     } else {
 	r = _XtMakeGeometryRequest(widget, &request, &reply, &junk);
     }
-    if (replyWidth != NULL)
+    if (replyWidth != NULL) {
 	if (r == XtGeometryAlmost && reply.request_mode & CWWidth)
 	    *replyWidth = reply.width;
 	else
 	    *replyWidth = width;
-    if (replyHeight != NULL)
+    }
+    if (replyHeight != NULL) {
 	if (r == XtGeometryAlmost && reply.request_mode & CWHeight)
 	    *replyHeight = reply.height;
 	else
 	    *replyHeight = height;
+    }
     UNLOCK_APP(app);
     return ((r == XtGeometryDone) ? XtGeometryYes : r);
 } /* XtMakeResizeRequest */
@@ -744,7 +752,6 @@ void XtTranslateCoords(w, x, y, rootx, rooty)
 		(String *)NULL, (Cardinal *)NULL);
     else {
 	Position x, y;
-	extern void _XtShellGetCoordinates();
 	_XtShellGetCoordinates( w, &x, &y );
 	*rootx += x + w->core.border_width;
 	*rooty += y + w->core.border_width;

@@ -34,7 +34,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/texteroids/texteroids.c,v 1.4 2001/04/01 14:00:18 tsi Exp $ */
+/* $XFree86: xc/programs/texteroids/texteroids.c,v 1.5 2001/08/01 00:45:02 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -45,8 +45,15 @@
 #include <stdlib.h>
 #include "twraps.h"
 
-int CheckForAHit(), ExplodeString();
-void PrepareSubject(), DrawSubject(), UpdatePosition();
+static int  CheckForAHit(int angle);
+static int  ExplodeString(String str, int angle, int n);
+static void PrepareSubject(int i, String str, float initx, float inity,
+			   float llx, float lly, float urx, float ury);
+static void DrawSubject(int i, int angle);
+static void UpdatePosition(int i, int angle);
+static void PrepareExplodedArrays(char *str, int n);
+static void SyncAndCheck(int angle);
+static void CreateRegionForClipping(Region reg, int angle);
 
 #undef PI
 #define PI 3.14159
@@ -367,8 +374,10 @@ EXPLODE: if (n == 1) exit(0);
 
 float *llx, *lly, *urx, *ury, *altwidths;
 
+static void
 PrepareExplodedArrays(str, n)
     char *str;
+    int n;
 {
     char *altstr = (char *) XtNewString(str);
     int i, texti;
@@ -391,7 +400,8 @@ PrepareExplodedArrays(str, n)
     XtFree(altstr);
 }
 
-int ExplodeString(str, angle, n)
+static int
+ExplodeString(str, angle, n)
     String str;
     int angle, n;
 {
@@ -453,11 +463,13 @@ int ExplodeString(str, angle, n)
     return num;
 }
 
-void PrepareSubject(i, str, initx, inity, llx, lly, urx, ury)
-    int i;
-    String str;
-    float initx, inity;
-    float llx, lly, urx, ury;
+static void
+PrepareSubject(
+    int i,
+    String str,
+    float initx, float inity,
+    float llx, float lly, float urx, float ury
+)
 {
     subject[i] = str;
     centerx[i] = initx;
@@ -482,7 +494,8 @@ void PrepareSubject(i, str, initx, inity, llx, lly, urx, ury)
     changing[i] = changing[0];
 }
 
-void DrawSubject(i, angle)
+static void
+DrawSubject(i, angle)
     int i, angle;
 {
     if (!live[i]) return;
@@ -492,6 +505,7 @@ void DrawSubject(i, angle)
 
 Region empty = NULL;
 
+static void
 SyncAndCheck(angle)
     int angle;
 {
@@ -553,7 +567,8 @@ SyncAndCheck(angle)
     }
 }
 
-void UpdatePosition(i, angle)
+static void
+UpdatePosition(i, angle)
     int i, angle;
 {
     float incr;
@@ -638,7 +653,8 @@ void UpdatePosition(i, angle)
     }
 }
 
-int CheckForAHit(angle)
+static int
+CheckForAHit(angle)
     int angle;
 {
     int i;
@@ -666,6 +682,7 @@ int CheckForAHit(angle)
     return -1;
 }
 
+static void
 CreateRegionForClipping(reg, angle)
     Region reg;
     int angle;

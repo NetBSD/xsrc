@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaSolid.c,v 1.3 1999/06/06 08:49:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaSolid.c,v 1.4 2001/08/01 00:44:56 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -171,9 +171,9 @@ register int lx ;
 register const int ly ;		/* MUST BE > 0 !! */
 {
 register volatile unsigned char *dst ;
-register tmp ;
-register tmp2 ;
-register tmp3 ;
+register int tmp ;
+register int tmp2 ;
+register int tmp3 ;
 unsigned int data_rotate_value = VGA_COPY_MODE ;
 unsigned int read_write_modify = FALSE ;
 unsigned int invert_existing_data = FALSE ;

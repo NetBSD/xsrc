@@ -1,8 +1,12 @@
-/* $XFree86: xc/programs/Xserver/Xext/appgroup.c,v 1.4 2001/01/17 22:13:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/appgroup.c,v 1.9 2001/12/17 20:52:25 dawes Exp $ */
 /*
-Copyright 1996, 1998  The Open Group
+Copyright 1996, 1998, 2001  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $Xorg: appgroup.c,v 1.3 2000/08/17 19:47:56 cpqbld Exp $ */
+/* $Xorg: appgroup.c,v 1.6 2001/02/09 02:04:32 xorgcvs Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -71,9 +75,9 @@ static int		XagCallbackRefCount = 0;
 static RESTYPE		RT_APPGROUP;
 static AppGroupPtr	appGrpList = NULL;
 
-extern WindowPtr* WindowTable;
 extern xConnSetupPrefix connSetupPrefix;
 extern char* ConnectionInfo;
+extern int connBlockScreenStart;
 
 static 
 int XagAppGroupFree (what, id)
@@ -118,7 +122,7 @@ void XagClientStateChange (pcbl, nulldata, calldata)
     NewClientInfoRec* pci = (NewClientInfoRec*) calldata;
     ClientPtr pClient = pci->client;
     AppGroupPtr pAppGrp;
-    XID authId;
+    XID authId = 0;
 
     if (!pClient->appgroup) {
 	switch (pClient->clientState) {
@@ -217,13 +221,13 @@ XagExtensionInit ()
 {
     ExtensionEntry* extEntry;
 
-    if (extEntry = AddExtension (XAGNAME,
+    if ((extEntry = AddExtension (XAGNAME,
 				0,
 				XagNumberErrors,
 				ProcXagDispatch,
 				SProcXagDispatch,
 				XagResetProc,
-				StandardMinorOpcode)) {
+				StandardMinorOpcode))) {
 	XagReqCode = (unsigned char)extEntry->base;
 	XagErrorBase = extEntry->errorBase;
 	RT_APPGROUP = CreateNewResourceType (XagAppGroupFree);
@@ -244,7 +248,7 @@ static
 int ProcXagQueryVersion (client)
     register ClientPtr client;
 {
-    REQUEST (xXagQueryVersionReq);
+    /* REQUEST (xXagQueryVersionReq); */
     xXagQueryVersionReply rep;
     register int n;
 
@@ -273,7 +277,7 @@ void ProcessAttr (pAppGrp, client, attrib_mask, attribs)
 {
     int i;
 
-    for (i = XagNsingleScreen; i <= XagNappGroupLeader; i++) {
+    for (i = 0; i <= XagNappGroupLeader; i++) {
 	switch (attrib_mask & (1 << i)) {
 	case XagSingleScreenMask:
 	    pAppGrp->single_screen = *attribs;
@@ -306,8 +310,6 @@ static
 void CreateConnectionInfo (pAppGrp)
     AppGroupPtr pAppGrp;
 {
-    extern int connBlockScreenStart;
-    xConnSetup *setup = (xConnSetup*) ConnectionInfo;
     xWindowRoot* rootp;
     xWindowRoot* roots[MAXSCREENS];
     unsigned int rootlens[MAXSCREENS];
@@ -373,7 +375,6 @@ AppGroupPtr CreateAppGroup (client, appgroupId, attrib_mask, attribs)
     CARD32* attribs;
 {
     AppGroupPtr pAppGrp;
-    int i;
 
     pAppGrp = (AppGroupPtr) xalloc (sizeof(AppGroupRec));
     if (pAppGrp) {
@@ -499,9 +500,14 @@ int ProcXagGetAttr (client)
     pAppGrp = (AppGroupPtr)SecurityLookupIDByType (client, 
 		(XID)stuff->app_group, RT_APPGROUP, SecurityReadAccess);
     if (!pAppGrp) return XagBadAppGroup;
+    rep.type = X_Reply;
+    rep.length = 0;
+    rep.sequence_number = client->sequence;
     rep.default_root = pAppGrp->default_root;
     rep.root_visual = pAppGrp->root_visual;
     rep.default_colormap = pAppGrp->default_colormap;
+    rep.black_pixel = pAppGrp->black_pixel;
+    rep.white_pixel = pAppGrp->white_pixel;
     rep.single_screen = pAppGrp->single_screen;
     rep.app_group_leader = (pAppGrp->leader) ? 1 : 0;
     if (client->swapped) {
@@ -510,6 +516,8 @@ int ProcXagGetAttr (client)
     	swapl (&rep.default_root, n);
     	swapl (&rep.root_visual, n);
     	swapl (&rep.default_colormap, n);
+    	swapl (&rep.black_pixel, n);
+    	swapl (&rep.white_pixel, n);
     }
     WriteToClient (client, sizeof (xXagGetAttrReply), (char *)&rep);
     return client->noClientException;
@@ -574,7 +582,7 @@ static
 int ProcXagDestroyAssoc (client)
     register ClientPtr client;
 {
-    REQUEST (xXagDestroyAssocReq);
+    /* REQUEST (xXagDestroyAssocReq); */
 
     REQUEST_SIZE_MATCH (xXagDestroyAssocReq);
 /* Macintosh, OS/2, and MS-Windows servers have some work to do here */

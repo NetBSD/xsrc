@@ -1,7 +1,7 @@
 #
-# Id: README,v 1.11 2000/12/06 22:13:11 mleisher Exp $
+# Id: README,v 1.13 2001/10/29 18:54:35 mleisher Exp $
 #
-# Copyright 2000 Computing Research Lab, New Mexico State University
+# Copyright 2001 Computing Research Lab, New Mexico State University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,13 +23,13 @@
 #
 
 Version: 1.8
-6 December 2000
+29 October 2001
 
 This set of fonts provides a 12pt, 100dpi proportional font with many of
 the glyphs needed for Unicode text.  I call the typeface "ClearlyU" and
 it was influenced by Donald Knuth's Computer Modern.
 
-The fonts together contain 7564 glyphs at the moment.
+The fonts together contain 8669 glyphs at the moment.
 
 Information about this font and samples, are located at:
 
@@ -40,6 +40,12 @@ ACKNOWLEDGEMENTS
 Thanks to Otto Stolz <Otto.Stolz@uni-konstanz.de> for finding spelling errors
 in one of the Greek samples.
 
+Thanks to Theppitak Karoonboonyanan <theppitak@nectec.or.th> for his excellent
+cleanup of the Thai glyphs, particularly the vowel and tone marks.
+
+Thanks to Ahmed Abdelali <ahmed@crl.nmsu.edu> for his help in improving the
+Arabic glyphs.
+
 AUTHOR
 ======
 Mark Leisher <mleisher@crl.nmsu.edu>
@@ -48,7 +54,22 @@ CHANGES
 =======
 
 CHANGES FROM 1.7
----------------
+----------------
+
+  o  Added Unified Canadian Aboriginal Syllabics glyphs.
+
+  o  Added Cherokee glyphs.
+
+  o  Changed some of the "caron" forms to the preferred "apostrophe" forms.
+
+  o  Added Thaana (Dhivehi - Maldivian) glyphs.
+
+  o  Finished the Arabic glyph improvements.
+
+  o  Adjusted the Lao dependent vowels, tones, and marks based on work done on
+     the Thai glyphs.
+
+  o  Replaced the Thai glyphs with cleaned up versions.
 
   o  Adjusted the shapes of U+01A2 and U+01A3 based on:
        http://www.indigo.ie/egt/standards/iso10646/pdf/gha.pdf

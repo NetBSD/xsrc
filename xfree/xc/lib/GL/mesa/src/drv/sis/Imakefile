@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/sis/Imakefile,v 1.17 2001/05/10 16:56:12 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/sis/Imakefile,v 1.18 2001/11/02 23:29:27 dawes Exp $
 
 #include <Threads.tmpl>
 
@@ -64,7 +64,7 @@ NormalLintTarget($(SRCS))
 
 #if !GlxUseBuiltInDRIDriver
 LIBNAME = sis_dri.so
-SharedDepModuleTarget($(LIBNAME),DONE $(OBJS),$(OBJS))
+SharedDriModuleTarget($(LIBNAME),DONE $(OBJS),$(OBJS))
 InstallDynamicModule($(LIBNAME),$(MODULEDIR),dri)
 
 #ifdef GlxSoProf

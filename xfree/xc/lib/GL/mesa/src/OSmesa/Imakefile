@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.10 2001/04/03 02:29:33 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.11 2001/06/04 20:43:30 dawes Exp $
 
 #include <Threads.tmpl>
 
@@ -64,7 +64,7 @@ NormalLibraryTarget($(LIBNAME), $(UOBJS))
 InstallLibrary($(LIBNAME),$(USRLIBDIR))
 #endif
 
-#if DoSharedLib
+#if SharedLibGlx
 SharedLibraryTarget($(LIBNAME),$(SOREV), $(OBJS), ., .)
 InstallSharedLibrary($(LIBNAME),$(SOREV),$(SHLIBDIR))
 #endif

@@ -9,10 +9,10 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 3 March 2001
+<Date>Last modified on: 16 January 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.60.2.1 2001/06/01 18:09:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.63 2002/01/16 22:35:18 herrb Exp $
 </ident>
 <toc>
 
@@ -20,7 +20,7 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.60.2.1 2001/06
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
 several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
 operating systems on Intel and other platforms.
 
@@ -42,7 +42,7 @@ url="http://www.xfree86.org/MIRRORS.shtml">
 
 
 XFree86 also builds on other NetBSD architectures. See section
-<ref id="sparc" name="Building on other architectures"> for details.
+<ref id="otherarchs" name="Building on other architectures"> for details.
 
 XFree86 also supports NetBSD on PC98 machines. 
 
@@ -60,6 +60,19 @@ this file and we'll revise it.
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
 non-OS dependent new features in XFree86 &relvers;.
 ]]>
+
+<sect1>New OS dependent features in 4.2.0
+<p>
+<itemize>
+<item>Support of client side on NetBSD/sparc64
+<item>Support for in-kernel MTRR and AGP support in NetBSD 1.5Y
+</itemize>
+
+<sect1>New OS dependent features in 4.1.0
+<p>
+<itemize>
+<item>Enable wide characters support in NetBSD 1.5P and later. 
+</itemize>
 
 <sect1>New OS dependent features in 4.0.2
 <p>
@@ -407,7 +420,7 @@ to use the pcvt compatibility mode of wscons:
  #define XFree86ConsoleDefines -DPCVT_SUPPORT -DWSCONS_SUPPORT
 </verb></tscreen>
 
-<sect1>Building on other architectures<label id="sparc">
+<sect1>Building on other architectures<label id="otherarchs">
 
 <p> 
 Note that the NetBSD project has now its own source tree, based on the
@@ -416,13 +429,6 @@ start with this tree to rebuild from sources.
 The NetBSD xsrc source tree is available at: 
 <htmlurl url="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/"
 name="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/">
-
-<p>
-There's an <em/experimental/ patch by Tsubai Masanari to make XFree86
-4.0.1 work on 
-NetBSD/macppc at:
-<htmlurl url="ftp://nandra.iri.co.jp/pub/NetBSD/macppc/XFree86/README"
-name="ftp://nandra.iri.co.jp/pub/NetBSD/macppc/XFree86/README">.
 
 <sect>Building New X Clients
 

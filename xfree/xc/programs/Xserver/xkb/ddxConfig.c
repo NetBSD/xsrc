@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.4 2001/01/17 22:37:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.5 2001/08/23 14:33:25 alanh Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1
@@ -107,7 +107,6 @@ char			buf[PATH_MAX];
 char *			dName;
 FILE *			file;
 XkbConfigRtrnPtr	rtrn;
-extern char *		display;
 
 #if defined(MetroLink)
     if (dev && dev->name)

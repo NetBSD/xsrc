@@ -61,5 +61,5 @@ NULL is returned if \f2name\fP is not
 \%\f3GLU_VERSION\fP or \%\f3GLU_EXTENSIONS\fP.
 .P
 .SH SEE ALSO
-\f3glGetString\fP
+\f3glGetString(3G)\fP
 

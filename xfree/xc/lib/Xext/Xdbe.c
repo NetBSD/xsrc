@@ -30,7 +30,7 @@
  *     Xlib DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.4 2001/04/01 14:00:01 tsi Exp $ */
+/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.5 2001/07/25 15:04:50 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -50,7 +50,7 @@ static char *dbe_extension_name = DBE_PROTOCOL_NAME;
 #define DbeSimpleCheckExtension(dpy,i) \
   XextSimpleCheckExtension (dpy, i, dbe_extension_name)
 
-#if defined(__STDC__) && !defined(UNIXCPP)
+#if !defined(UNIXCPP)
 #define DbeGetReq(name,req,info) GetReq (name, req); \
         req->reqType = info->codes->major_opcode; \
         req->dbeReqType = X_##name;

@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xedit/Xedit.ad,v 1.19 2001/02/05 22:38:04 paulo Exp $
+! $XFree86: xc/programs/xedit/Xedit.ad,v 1.20 2001/08/31 15:00:11 paulo Exp $
 
 *geometry:				590x440
 *input:					TRUE
@@ -37,7 +37,8 @@ Use Control-X,d to list directory. Control-G to Cancel.\n\
 Use Control-X,k to close file being edited.\n\
 Use Control-X,o to switch to another splitted window.\n\
 Use Control-X,u to undo. Control-G to switch between Undo and Redo.\n\
-Use Insert to toggle Overwrite mode.
+Use Insert to toggle Overwrite mode.\n\
+Use Control-G to interrupt the lisp subprocess
 
 *formWindow*defaultDistance:		2
 *formWindow.?.borderWidth:		0
@@ -166,6 +167,9 @@ m<Key>I:	no-op(r)
 <Ctrl>X,<Ctrl>F:find-file()
 
 *messageWindow.Translations: #override \
+<Ctrl>X,<Ctrl>C:quit()\n\
+<Ctrl>X,<Ctrl>S:save-file()\n\
+<Ctrl>X,<Ctrl>F:find-file()\n\
 <Enter>:	no-op()\n\
 <Leave>:	no-op()\n\
 <Btn1Down>:	set-keyboard-focus() select-start()
@@ -181,6 +185,7 @@ m<Key>I:	no-op(r)
 <Btn1Down>:	set-keyboard-focus() select-start()
 
 *editWindow.translations: #override \
+<Ctrl>X,<Ctrl>E:lisp-eval()\n\
 <Ctrl>X,<Key>Tab:indent()\n\
 <Ctrl>X,:<Key>0:delete-window(current)\n\
 <Ctrl>X,:<Key>1:delete-window(other)\n\
@@ -206,6 +211,8 @@ m<Key>I:	no-op(r)
 <Ctrl>X,!l <Key>u:undo()\n\
 <Ctrl>X,!@Num_Lock<Key>u:undo()\n\
 <Ctrl>X,!<Key>u:undo()\n\
+<Ctrl>G:	xedit-keyboard-reset()\n\
+<Ctrl>J:	xedit-print-lisp-eval()\n\
 <Key>Tab:	insert-char()\n\
 !l @Num_Lock<Key>b:insert-char()\n\
 !l <Key>b:	insert-char()\n\

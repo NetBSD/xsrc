@@ -1,4 +1,4 @@
-/* $Xorg: Selection.c,v 1.3 2000/08/17 19:46:16 cpqbld Exp $ */
+/* $Xorg: Selection.c,v 1.4 2001/02/09 02:03:56 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,11 +58,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/Selection.c,v 3.9 2001/12/14 19:56:29 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "StringDefs.h"
 #include "SelectionI.h"
 #include <X11/Xatom.h>
+#include <stdio.h>
 
 void _XtSetDefaultSelectionTimeout(timeout)
 	unsigned long *timeout;
@@ -610,13 +616,14 @@ Boolean *cont;
     XtRemoveTimeOut(req->timeout);
 #endif 
     if (req->allSent) { 
-	if (ctx->notify)  
+	if (ctx->notify) {
 	    if (ctx->incremental) {
 		(*(XtSelectionDoneIncrProc)ctx->notify)
 			      (ctx->widget, &ctx->selection, &req->target,
 			       (XtRequestId*)&req, ctx->owner_closure);
 	    }
 	    else (*ctx->notify)(ctx->widget, &ctx->selection, &req->target);
+	}
 	RemoveHandler(req, (EventMask)PropertyChangeMask,
 		      HandlePropertyGone, closure); 
 	XtFree((char*)req);

@@ -28,6 +28,7 @@
 
 Notice===
 */
+/* $XFree86: xc/extras/X-TrueType/xttblit.h,v 1.2 2001/10/28 03:32:08 tsi Exp $ */
 
 /* written by Yamano-uchi, Hidetoshi */
 
@@ -36,16 +37,6 @@ Notice===
 
 #ifndef XTT_BLIT_H
 #define XTT_BLIT_H
-
-static
-void blit_stream( TT_Raster_Map*  target,
-                  TT_Byte*        source,
-                  TT_Int          line_bits,
-                  TT_Int          height,
-                  TT_Bool         align,
-                  TT_Int          x_offset,
-                  TT_Int          y_offset,
-                  TT_Bool         inverted );
 
 TT_Error XTT_Get_SBit_Bitmap( TT_Raster_Map* target,
                               TT_SBit_Image* source_sbit,

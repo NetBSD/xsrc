@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbbitblt.c,v 3.2 1998/03/20 21:04:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbbitblt.c,v 3.3 2001/10/28 03:32:57 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -171,7 +171,7 @@ afbBitBlt(pSrcDrawable, pDstDrawable, pGC, srcx, srcy, width, height,
 	void (*doBitBlt)();
 	unsigned long planemask;
 {
-	RegionPtr prgnSrcClip;		/* may be a new region, or just a copy */
+	RegionPtr prgnSrcClip = NULL;		/* may be a new region, or just a copy */
 	Bool freeSrcClip = FALSE;
 
 	RegionPtr prgnExposed;
@@ -188,7 +188,6 @@ afbBitBlt(pSrcDrawable, pDstDrawable, pGC, srcx, srcy, width, height,
 	BoxRec fastBox;
 	int fastClip = 0;					/* for fast clipping with pixmap source */
 	int fastExpose = 0;				/* for fast exposures with pixmap source */
-	void (*localDoBitBlt)();
 
 	origSource.x = srcx;
 	origSource.y = srcy;
@@ -374,7 +373,6 @@ unsigned long plane;
 	int alu;
 	RegionPtr		prgnExposed = NULL;
 	unsigned long old_planemask;
-	PixmapPtr pPixmap = NULL;
 
 	if (pDstDrawable->depth == 1) {
 		old_planemask = pGC->planemask;
@@ -405,7 +403,7 @@ unsigned long plane;
 		int free_pixmap = FALSE;
 		PixmapPtr pBitmap = (PixmapPtr)pSrcDrawable;
 		ScreenPtr pScreen = pSrcDrawable->pScreen;
-		GCPtr pGC1;
+		GCPtr pGC1 = NULL;
 
 		if (pSrcDrawable == pDstDrawable ||
 			pSrcDrawable->type == DRAWABLE_WINDOW || pSrcDrawable->depth != 1) {

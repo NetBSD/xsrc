@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.16 2001/02/12 03:27:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.18 2002/01/16 16:22:26 tsi Exp $ */
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -263,7 +263,7 @@ ClockRec ATIClockDescriptors[] =
     },
     {
          65, 128,  65, 1, 1,
-          2,  31,   0,
+          2,  14,   0,
           4, ATIPostDividers,
         "IBM RGB 514 or similar"
     }
@@ -784,7 +784,7 @@ ProbeClocks:
 
             /* Ensure clock select pins are not OR'ed with anything */
             if (pATI->CPIO_VGAWonder && (pATI->OldHW.crtc == ATI_CRTC_VGA))
-                ATIModifyExtReg(pATI, 0xB5, pATI->OldHW.b5, 0x7FU, 0x00U);
+                ATIModifyExtReg(pATI, 0xB5U, pATI->OldHW.b5, 0x7FU, 0x00U);
         }
 
 #endif /* AVOID_CPIO */
@@ -977,8 +977,9 @@ ProbeClocks:
             else if (pScreenInfo->clock[ClockIndex])
                 /* Round to the nearest 10 kHz */
                 pScreenInfo->clock[ClockIndex] =
-                    (((ScaleFactor / (double)pScreenInfo->clock[ClockIndex]) +
-                      5) / 10) * 10;
+                    (int)(((ScaleFactor /
+                            (double)pScreenInfo->clock[ClockIndex]) +
+                           5) / 10) * 10;
         }
 
         pScreenInfo->numClocks = NumberOfClocks;
@@ -1176,7 +1177,7 @@ ProbeClocks:
                      * Due to the way clock lines are matched, the following
                      * can prevent the override if the clock is probed,
                      * documented or set by the user to a value greater than
-                     * MaximumClock.
+                     * maxClock.
                      */
                     if (abs(SpecificationClock -
                             pScreenInfo->clock[ClockIndex]) > CLOCK_TOLERANCE)
@@ -1311,6 +1312,12 @@ ATIClockCalculate
             for (D = 0;  D < pATI->ClockDescriptor.NumD;  D++)
             {
                 if (!pATI->ClockDescriptor.PostDividers[D])
+                    continue;
+
+                /* Limit undivided VCO to maxClock */
+                if (pATI->maxClock &&
+                    ((pATI->maxClock / pATI->ClockDescriptor.PostDividers[D]) <
+                     pMode->Clock))
                     continue;
 
                 /*
@@ -1452,7 +1459,8 @@ ATIClockSet
 
     /* Temporarily switch to accelerator mode */
     crtc_gen_cntl = inr(CRTC_GEN_CNTL);
-    outr(CRTC_GEN_CNTL, crtc_gen_cntl | CRTC_EXT_DISP_EN);
+    if (!(crtc_gen_cntl & CRTC_EXT_DISP_EN))
+        outr(CRTC_GEN_CNTL, crtc_gen_cntl | CRTC_EXT_DISP_EN);
 
     switch (pATI->ProgrammableClock)
     {
@@ -1556,17 +1564,14 @@ ATIClockSet
             break;
 
         case ATI_CLOCK_IBMRGB514:
-            tmp = inr(DAC_CNTL);
-            outr(DAC_CNTL, (tmp & ~DAC_EXT_SEL_RS3) | DAC_EXT_SEL_RS2);
-            tmp2 = (pATIHW->clock << 1) + 0x20U;
-            out8(M64_DAC_WRITE, tmp2);
-            out8(M64_DAC_DATA, 0);
-            out8(M64_DAC_MASK,
-                (SetBits(N, 0x3FU) | SetBits(D, 0xC0U)) ^ 0xC0U);
-            out8(M64_DAC_WRITE, tmp2 + 1);
-            out8(M64_DAC_DATA, 0);
-            out8(M64_DAC_MASK, SetBits(M, 0x3FU));
-            outr(DAC_CNTL, tmp);
+            /*
+             * Here, only update in-core data.  It will be written out later by
+             * ATIRGB514Set().
+             */
+            tmp = (pATIHW->clock << 1) + 0x20U;
+            pATIHW->ibmrgb514[tmp] =
+                (SetBits(N, 0x3FU) | SetBits(D, 0xC0U)) ^ 0xC0U;
+            pATIHW->ibmrgb514[tmp + 1] = SetBits(M, 0x3FU);
             break;
 
         default:
@@ -1576,5 +1581,6 @@ ATIClockSet
     (void)in8(M64_DAC_WRITE);    /* Clear DAC counter */
 
     /* Restore register */
-    outr(CRTC_GEN_CNTL, crtc_gen_cntl);
+    if (!(crtc_gen_cntl & CRTC_EXT_DISP_EN))
+        outr(CRTC_GEN_CNTL, crtc_gen_cntl);
 }

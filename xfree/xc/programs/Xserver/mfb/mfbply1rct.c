@@ -1,9 +1,13 @@
 /*
- * $Xorg: mfbply1rct.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $
+ * $Xorg: mfbply1rct.c,v 1.4 2001/02/09 02:05:19 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.5 2001/01/17 22:37:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.7 2001/12/14 20:00:10 dawes Exp $ */
 
 #include "X.h"
 
@@ -70,14 +74,14 @@ MFBFILLPOLY1RECT (pDrawable, pGC, shape, mode, count, ptsIn)
     BoxPtr	    extents;
     int		    clip;
     int		    y;
-    int		    *vertex1p, *vertex2p;
+    int		    *vertex1p = NULL, *vertex2p;
     int		    *endp;
-    int		    x1, x2;
-    int		    dx1, dx2;
-    int		    dy1, dy2;
-    int		    e1, e2;
-    int		    step1, step2;
-    int		    sign1, sign2;
+    int		    x1 = 0, x2 = 0;
+    int		    dx1 = 0, dx2 = 0;
+    int		    dy1 = 0, dy2 = 0;
+    int		    e1 = 0, e2 = 0;
+    int		    step1 = 0, step2 = 0;
+    int		    sign1 = 0, sign2 = 0;
     int		    h;
     int		    l, r;
     PixelType	    mask, bits = ~((PixelType)0);
@@ -131,7 +135,7 @@ MFBFILLPOLY1RECT (pDrawable, pGC, shape, mode, count, ptsIn)
 	vertex2p = (int *) ptsIn;
 #define Setup(c,x,vertex,dx,dy,e,sign,step) {\
     x = intToX(vertex); \
-    if (dy = intToY(c) - y) { \
+    if ((dy = intToY(c) - y)) { \
     	dx = intToX(c) - x; \
 	step = 0; \
     	if (dx >= 0) \
@@ -235,7 +239,7 @@ MFBFILLPOLY1RECT (pDrawable, pGC, shape, mode, count, ptsIn)
 	    	}
 	    	nmiddle >>= PWSH;
 		Duff (nmiddle, *addr++ EQWHOLEWORD)
-	    	if (mask = ~SCRRIGHT(bits, r & PIM))
+	    	if ((mask = ~SCRRIGHT(bits, r & PIM)))
 	    	    *addr OPEQ mask;
 	    }
 	    if (!--h)

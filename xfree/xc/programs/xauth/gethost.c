@@ -1,10 +1,14 @@
 /*
- * $Xorg: gethost.c,v 1.4 2000/08/17 19:54:11 cpqbld Exp $
+ * $Xorg: gethost.c,v 1.5 2001/02/09 02:05:38 xorgcvs Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xauth/gethost.c,v 3.13 2001/01/17 23:45:14 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/gethost.c,v 3.16 2001/12/14 20:01:14 dawes Exp $ */
 
 /* sorry, streams support does not really work yet */
 #if defined(STREAMSCONN) && defined(SVR4)
@@ -45,7 +49,6 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #ifndef WIN32
 #ifndef STREAMSCONN
-#ifndef MINIX
 #ifndef Lynx
 #include <sys/socket.h>
 #else
@@ -61,23 +64,10 @@ in this Software without prior written authorization from The Open Group.
 #endif /* !sco */
 #endif /* i386 */
 #endif /* SYSV */
-#else /* MINIX */
-#include <net/gen/netdb.h>
-#endif /* !MINIX */
 #endif /* !STREAMSCONN */
 #endif /* !WIN32 */
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #include "xauth.h"
-
-#ifdef MINIX
-#ifdef MNX_TCPCONN
-#define TCPCONN
-#endif
-#define EPROTOTYPE EGENERIC
-#endif
 
 #ifdef DNETCONN
 #include <netdnet/dn.h>
@@ -117,9 +107,6 @@ get_hostname (auth)
     Xauth *auth;
 {
     static struct hostent *hp = NULL;
-#if !defined(WIN32) && defined(X_NOT_STDC_ENV)
-    char *inet_ntoa();
-#endif
 #ifdef DNETCONN
     struct nodeent *np;
     static char nodeaddr[4 + 2 * DN_MAXADDL];

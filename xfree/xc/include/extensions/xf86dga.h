@@ -1,13 +1,13 @@
 /*
    Copyright (c) 1999  XFree86 Inc
 */
-/* $XFree86: xc/include/extensions/xf86dga.h,v 3.20 1999/10/13 04:20:48 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86dga.h,v 3.21 2001/08/01 00:44:36 tsi Exp $ */
 
 #ifndef _XF86DGA_H_
 #define _XF86DGA_H_
 
 #include <X11/Xfuncproto.h>
-#include "xf86dga1.h"
+#include <X11/extensions/xf86dga1.h>
 
 #define X_XDGAQueryVersion		0
 

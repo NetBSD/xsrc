@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/keyboard.c,v 1.6 2001/03/30 02:15:20 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/keyboard.c,v 1.10 2001/11/08 10:26:24 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -104,8 +104,8 @@ static unsigned char tbl[KD_MAX_WIDTH] =
 {
     0,
     1 << KG_SHIFT,
-    (1 << KG_ALT),
-    (1 << KG_ALT) | (1 << KG_SHIFT)
+    (1 << KG_ALTGR),
+    (1 << KG_ALTGR) | (1 << KG_SHIFT)
 };
 
 static void
@@ -289,7 +289,7 @@ readKernelMapping()
 		switch (kbe.kb_value)
 		{
 		case K_ALTGR:
-		    k[j] = XK_Alt_R;
+		    k[j] = XK_Mode_switch;
 		    break;
 		case K_ALT:
 		    k[j] = (kbe.kb_index == 0x64 ?
@@ -376,40 +376,8 @@ LinuxKeyboardLoad (void)
     readKernelMapping ();
 }
 
-static int		LinuxKbdTrans;
-static struct termios	LinuxTermios;
-
-int
-LinuxKeyboardInit (void)
-{
-    struct termios nTty;
-
-    ioctl (LinuxConsoleFd, KDGKBMODE, &LinuxKbdTrans);
-    tcgetattr (LinuxConsoleFd, &LinuxTermios);
-    
-    ioctl(LinuxConsoleFd, KDSKBMODE, K_MEDIUMRAW);
-    nTty = LinuxTermios;
-    nTty.c_iflag = (IGNPAR | IGNBRK) & (~PARMRK) & (~ISTRIP);
-    nTty.c_oflag = 0;
-    nTty.c_cflag = CREAD | CS8;
-    nTty.c_lflag = 0;
-    nTty.c_cc[VTIME]=0;
-    nTty.c_cc[VMIN]=1;
-    cfsetispeed(&nTty, 9600);
-    cfsetospeed(&nTty, 9600);
-    tcsetattr(LinuxConsoleFd, TCSANOW, &nTty);
-    return LinuxConsoleFd;
-}
-
 void
-LinuxKeyboardFini (int fd)
-{
-    ioctl(LinuxConsoleFd, KDSKBMODE, LinuxKbdTrans);
-    tcsetattr(LinuxConsoleFd, TCSANOW, &LinuxTermios);
-}
-
-void
-LinuxKeyboardRead (int fd)
+LinuxKeyboardRead (int fd, void *closure)
 {
     unsigned char   buf[256], *b;
     int		    n;
@@ -423,6 +391,66 @@ LinuxKeyboardRead (int fd)
 	    b++;
 	}
     }
+}
+
+static int		LinuxKbdTrans;
+static struct termios	LinuxTermios;
+static int		LinuxKbdType;
+
+void
+LinuxKeyboardEnable (int fd, void *closure)
+{
+    struct termios nTty;
+    unsigned char   buf[256];
+    int		    n;
+
+    ioctl (fd, KDGKBMODE, &LinuxKbdTrans);
+    tcgetattr (fd, &LinuxTermios);
+    
+    ioctl(fd, KDSKBMODE, K_MEDIUMRAW);
+    nTty = LinuxTermios;
+    nTty.c_iflag = (IGNPAR | IGNBRK) & (~PARMRK) & (~ISTRIP);
+    nTty.c_oflag = 0;
+    nTty.c_cflag = CREAD | CS8;
+    nTty.c_lflag = 0;
+    nTty.c_cc[VTIME]=0;
+    nTty.c_cc[VMIN]=1;
+    cfsetispeed(&nTty, 9600);
+    cfsetospeed(&nTty, 9600);
+    tcsetattr(fd, TCSANOW, &nTty);
+    /*
+     * Flush any pending keystrokes
+     */
+    while ((n = read (fd, buf, sizeof (buf))) > 0)
+	;
+}
+
+void
+LinuxKeyboardDisable (int fd, void *closure)
+{
+    ioctl(LinuxConsoleFd, KDSKBMODE, LinuxKbdTrans);
+    tcsetattr(LinuxConsoleFd, TCSANOW, &LinuxTermios);
+}
+
+int
+LinuxKeyboardInit (void)
+{
+    if (!LinuxKbdType)
+	LinuxKbdType = KdAllocInputType ();
+
+    KdRegisterFd (LinuxKbdType, LinuxConsoleFd, LinuxKeyboardRead, 0);
+    LinuxKeyboardEnable (LinuxConsoleFd, 0);
+    KdRegisterFdEnableDisable (LinuxConsoleFd, 
+			       LinuxKeyboardEnable,
+			       LinuxKeyboardDisable);
+    return 1;
+}
+
+void
+LinuxKeyboardFini (void)
+{
+    LinuxKeyboardDisable (LinuxConsoleFd, 0);
+    KdUnregisterFds (LinuxKbdType, FALSE);
 }
 
 void
@@ -447,7 +475,6 @@ LinuxKeyboardBell (int volume, int pitch, int duration)
 KdKeyboardFuncs	LinuxKeyboardFuncs = {
     LinuxKeyboardLoad,
     LinuxKeyboardInit,
-    LinuxKeyboardRead,
     LinuxKeyboardLeds,
     LinuxKeyboardBell,
     LinuxKeyboardFini,

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/card-cfg.c,v 1.6.2.2 2001/05/23 14:45:15 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/card-cfg.c,v 1.11 2001/11/01 19:08:58 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -258,13 +258,15 @@ CardModelCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
     Arg args[1];
     XawListReturnStruct *info = (XawListReturnStruct *)call_data;
-    char tip[4096], *str;
+    char tip[4096];
     int len;
-    static int first = 1;
 
     XtSetArg(args[0], XtNstring, info->string);
     XtSetValues(filter, args, 1);
     card_entry = LookupCard(info->string);
+
+    if (card_entry == NULL)
+	return;
 
     len = XmuSnprintf(tip, sizeof(tip), "Name:      %s\n", card_entry->name);
     if (card_entry->flags & F_UNSUPPORTED)
@@ -297,25 +299,13 @@ CardModelCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	len += XmuSnprintf(tip + len, sizeof(tip) - len,
 			   "\n%s\n", card_entry->lines);
 
-    /* the first tip memory, if any, cannot be released */
-    if (!first) {
-	XtSetArg(args[0], XtNtip, &str);
-	XtGetValues(filter, args, 1);
-	XtFree(str);
-    }
-    else
-	first = 0;
-
 #ifndef USE_MODULES
-    if (!nomodules) {
-	XtSetArg(args[0], XtNstring,
-		 card_entry->driver ? card_entry->driver : "vga");
-	XtSetValues(driver, args, 1);
-    }
+    XtSetArg(args[0], XtNstring,
+	     card_entry->driver ? card_entry->driver : "vga");
+    XtSetValues(driver, args, 1);
 #endif
 
-    str = XtNewString(tip);
-    XtSetArg(args[0], XtNtip, str);
+    XtSetArg(args[0], XtNtip, tip);
     XtSetValues(filter, args, 1);
 }
 

@@ -27,6 +27,7 @@
  *    (re-entrant builds only)
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttfile.h,v 1.2 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTFILE_H
 #define TTFILE_H
@@ -39,6 +40,8 @@
 #ifdef __cplusplus
   extern "C" {
 #endif
+
+#if !defined(FTXSBIT_H)
 
   /* Initialize file component */
   LOCAL_DEF
@@ -68,6 +71,8 @@
 
   LOCAL_DEF
   TT_Error  TT_Close_Stream( TT_Stream*  stream );
+
+#endif /* !FTXSBIT */
 
 
   /* Informs the component that we're going to use the file   */

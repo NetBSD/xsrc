@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.13 2001/01/17 19:43:29 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.15 2001/07/25 15:04:56 dawes Exp $ */
 /*
  * font server i/o routines
  */
@@ -43,7 +43,7 @@
 #include	<stdio.h>
 #include	<signal.h>
 #include	<sys/types.h>
-#if !defined(WIN32) && !defined(AMOEBA) && !defined(_MINIX)
+#if !defined(WIN32)
 #ifndef Lynx
 #include	<sys/socket.h>
 #else
@@ -51,18 +51,10 @@
 #endif
 #endif
 #include	<errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif 
 #ifdef WIN32
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #undef EINTR
 #define EINTR WSAEINTR
-#endif
-
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
 #endif
 
 #ifdef __EMX__
@@ -440,7 +432,6 @@ _fs_data_ready(FSFpePtr conn)
 int
 _fs_wait_for_readable(FSFpePtr conn, int ms)
 {
-#ifndef AMOEBA
     fd_set	r_mask;
     fd_set	e_mask;
     int         result;
@@ -469,9 +460,6 @@ _fs_wait_for_readable(FSFpePtr conn, int ms)
 	    return FSIO_READY;
 	return FSIO_ERROR;
     }
-#else
-    return FSIO_READY;
-#endif
 }
 
 int

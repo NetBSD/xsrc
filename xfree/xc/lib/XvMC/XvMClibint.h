@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/XvMC/XvMClibint.h,v 1.3 2001/04/01 14:00:02 tsi Exp $ */
+/* $XFree86: xc/lib/XvMC/XvMClibint.h,v 1.4 2001/07/25 15:04:54 dawes Exp $ */
 
 #ifndef _XVMCLIBINT_H
 #define _XVMCLIBINT_H
@@ -13,7 +13,7 @@
   XextCheckExtension(dpy, i, xvmc_extension_name, val)
 
 
-#if defined(__STDC__) && !defined(UNIXCPP)
+#if !defined(UNIXCPP)
 #define XvMCGetReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + sizeof(xvmc##name##Req)) > dpy->bufmax)\

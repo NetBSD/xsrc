@@ -1,9 +1,13 @@
-/* $Xorg: Xtranslcl.c,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
+/* $Xorg: Xtranslcl.c,v 1.6 2001/02/09 02:04:06 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.34 2001/01/17 19:43:47 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.37 2001/12/14 19:57:05 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -275,12 +279,14 @@ static int
 TRANS(PTSOpenClient)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef PTSNODENAME
     int			fd,server,exitval,alarm_time,ret;
     char		server_path[64];
     char		*slave, namelen;
     char		buf[20]; /* MAX_PATH_LEN?? */
     PFV			savef;
     pid_t		saved_pid;
+#endif
 
     PRMSG(2,"PTSOpenClient(%s)\n", port, 0,0 );
 
@@ -415,9 +421,11 @@ static int
 TRANS(PTSOpenServer)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef PTSNODENAME
     int fd, server;
     char server_path[64], *slave;
     int mode;
+#endif
 
     PRMSG(2,"PTSOpenServer(%s)\n", port, 0,0 );
 
@@ -446,8 +454,8 @@ TRANS(PTSOpenServer)(XtransConnInfo ciptr, char *port)
 	return(-1);
     }
 
-    if( (fd=open(server_path, O_RDWR)) >= 0 ) {
 #if 0
+    if( (fd=open(server_path, O_RDWR)) >= 0 ) {
 	/*
 	 * This doesn't prevent the server from starting up, and doesn't
 	 * prevent clients from trying to connect to the in-use PTS (which
@@ -457,11 +465,10 @@ TRANS(PTSOpenServer)(XtransConnInfo ciptr, char *port)
 	PRMSG(1, "PTSOpenServer: Remove %s if this is incorrect.\n", server_path, 0,0 );
 	close(fd);
 	return(-1);
-#else
-	/* Just remove the old path (which is what happens with UNIXCONN) */
-	;
-#endif
     }
+#else
+    /* Just remove the old path (which is what happens with UNIXCONN) */
+#endif
 
     unlink(server_path);
 
@@ -618,10 +625,12 @@ static int
 TRANS(NAMEDOpenClient)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef NAMEDNODENAME
     int			fd;
     char		server_path[64];
     struct stat		filestat;
     extern int		isastream();
+#endif
 
     PRMSG(2,"NAMEDOpenClient(%s)\n", port, 0,0 );
 
@@ -636,7 +645,7 @@ TRANS(NAMEDOpenClient)(XtransConnInfo ciptr, char *port)
 		(void) sprintf(server_path, "%s%s", NAMEDNODENAME, port);
 	    }
     } else {
-	(void) sprintf(server_path, "%s%d", NAMEDNODENAME, getpid());
+	(void) sprintf(server_path, "%s%ld", NAMEDNODENAME, (long)getpid());
     }
 
     if (stat(server_path, &filestat) < 0 ) {
@@ -687,10 +696,12 @@ static int
 TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef NAMEDNODENAME
     int			fd, pipefd[2];
     char		server_path[64];
     struct stat		sbuf;
     int			mode;
+#endif
 
     PRMSG(2,"NAMEDOpenServer(%s)\n", port, 0,0 );
 
@@ -705,7 +716,7 @@ TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, char *port)
 	    (void) sprintf(server_path, "%s%s", NAMEDNODENAME, port);
 	}
     } else {
-	(void) sprintf(server_path, "%s%d", NAMEDNODENAME, getpid());
+	(void) sprintf(server_path, "%s%ld", NAMEDNODENAME, (long)getpid());
     }
 
 #ifdef HAS_STICKY_DIR_BIT
@@ -761,9 +772,7 @@ TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, char *port)
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
     {
-	PRMSG(1,"NAMEDOpenServer: failed to fill in addr info\n",
-								0,0,0);
-	close(fd);
+	PRMSG(1,"NAMEDOpenServer: failed to fill in addr info\n", 0,0,0);
 	return -1;
     }
 
@@ -889,6 +898,7 @@ static int
 TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef ISCDEVNODENAME
     int		fd,fds,server;
     char	server_path[64];
     char	server_dev_path[64];
@@ -896,6 +906,7 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
     long	temp;
     mode_t 	spmode;
     struct stat 	filestat;
+#endif
     
     PRMSG(2,"ISCOpenClient(%s)\n", port, 0,0 );
     
@@ -1002,9 +1013,11 @@ static int
 TRANS(ISCOpenServer)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef ISCDEVNODENAME
     int	fd = -1,fds = -1;
     char	server_path[64],server_unix_path[64];
     unsigned int mode = 0;
+#endif
     
     PRMSG(2,"ISCOpenServer(%s)\n", port, 0,0 );
     
@@ -1163,7 +1176,6 @@ TRANS(ISCAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 
 
 
-
 /* SCO */
 
 #ifdef TRANS_CLIENT
@@ -1172,6 +1184,7 @@ static int
 TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef SCORNODENAME
     int			fd, server, fl, ret;
     char		server_path[64];
     struct strbuf	ctlbuf;
@@ -1179,6 +1192,7 @@ TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
     void		(*savef)();
     long		temp;
     extern int	getmsg(), putmsg();
+#endif
     
     PRMSG(2,"SCOOpenClient(%s)\n", port, 0,0 );
     
@@ -1255,10 +1269,12 @@ static int
 TRANS(SCOOpenServer)(XtransConnInfo ciptr, char *port)
 
 {
+#ifdef SCORNODENAME
     char		serverR_path[64];
     char		serverS_path[64];
     int	fdr = -1;
     int	fds = -1;
+#endif
     
     PRMSG(2,"SCOOpenServer(%s)\n", port, 0,0 );
     
@@ -1375,12 +1391,15 @@ TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 
 
 #ifdef TRANS_REOPEN
+#ifndef sun
 
 static int
 TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
 {
+#ifdef PTSNODENAME
     char server_path[64];
+#endif
 
     PRMSG(2,"PTSReopenServer(%d,%s)\n", fd, port, 0 );
 
@@ -1395,7 +1414,7 @@ TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 		(void) sprintf(server_path, "%s%s", PTSNODENAME, port);
 	    }
     } else {
-	(void) sprintf(server_path, "%s%d", PTSNODENAME, getpid());
+	(void) sprintf(server_path, "%s%ld", PTSNODENAME, (long)getpid());
     }
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
@@ -1410,11 +1429,15 @@ TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #endif /* !PTSNODENAME */
 }
 
+#endif /* !sun */
+
 static int
 TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
 {
+#ifdef NAMEDNODENAME
     char server_path[64];
+#endif
 
     PRMSG(2,"NAMEDReopenServer(%s)\n", port, 0,0 );
 
@@ -1429,7 +1452,7 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 	    (void) sprintf(server_path, "%s%s", NAMEDNODENAME, port);
 	}
     } else {
-	(void) sprintf(server_path, "%s%d", NAMEDNODENAME, getpid());
+	(void) sprintf(server_path, "%s%ld", NAMEDNODENAME, (long)getpid());
     }
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
@@ -1444,11 +1467,15 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #endif /* !NAMEDNODENAME */
 }
 
+#ifndef sun
+
 static int
 TRANS(ISCReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
 {
-    char server_path[64],server_unix_path[64];
+#ifdef ISCDEVNODENAME
+    char server_path[64], server_unix_path[64];
+#endif
     
     PRMSG(2,"ISCReopenServer(%s)\n", port, 0,0 );
     
@@ -1461,8 +1488,7 @@ TRANS(ISCReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
     {
-	PRMSG(1,"ISCReopenServer: failed to fill in addr info\n",
-								0,0,0);
+	PRMSG(1, "ISCReopenServer: failed to fill in addr info\n", 0,0,0);
 	return 0;
     }
     
@@ -1476,8 +1502,9 @@ static int
 TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
 {
-    char		serverR_path[64];
-    char		serverS_path[64];
+#ifdef SCORNODENAME
+    char serverR_path[64], serverS_path[64];
+#endif
     
     PRMSG(2,"SCOReopenServer(%s)\n", port, 0,0 );
     
@@ -1487,11 +1514,10 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #else
     (void) sprintf(serverR_path, SCORNODENAME, port);
     (void) sprintf(serverS_path, SCOSNODENAME, port);
-    
+
     if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0)
     {
-	PRMSG(1,"SCOReopenServer: failed to fill in addr info\n",
-	      0,0,0);
+	PRMSG(1, "SCOReopenServer: failed to fill in addr info\n", 0,0,0);
 	return 0;
     }
     
@@ -1499,6 +1525,8 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
 #endif /* SCORNODENAME */
 }
+
+#endif /* !sun */
 
 #endif /* TRANS_REOPEN */
 
@@ -1796,13 +1824,16 @@ TRANS(LocalEndTransports)(void)
     xfree(freeXLOCAL);
 }
 
+#define TYPEBUFSIZE	32
+
+#ifdef TRANS_CLIENT
+
 static LOCALtrans2dev *
 TRANS(LocalGetNextTransport)(void)
 
 {
     int	i,j;
     char	*typetocheck;
-#define TYPEBUFSIZE	32
     char	typebuf[TYPEBUFSIZE];
     PRMSG(3,"LocalGetNextTransport()\n", 0,0,0 );
     
@@ -1837,8 +1868,6 @@ TRANS(LocalGetNextTransport)(void)
     return NULL;
 #endif
 }
-
-#ifdef TRANS_CLIENT
 
 #ifdef NEED_UTSNAME
 #include <sys/utsname.h>
@@ -1882,7 +1911,6 @@ static XtransConnInfo
 TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
 
 {
-    int	fd = -1;
     LOCALtrans2dev *transptr;
     XtransConnInfo ciptr;
     int index;
@@ -1979,7 +2007,7 @@ static XtransConnInfo
 TRANS(LocalOpenServer)(int type, char *protocol, char *host, char *port)
 
 {
-    int	i,fd = -1;
+    int	i;
     XtransConnInfo ciptr;
     
     PRMSG(2,"LocalOpenServer(%d,%s,%s)\n", type, protocol, port);
@@ -2044,7 +2072,7 @@ TRANS(LocalReopenServer)(int type, int index, int fd, char *port)
 
 {
     XtransConnInfo ciptr;
-    int stat;
+    int stat = 0;
     
     PRMSG(2,"LocalReopenServer(%d,%d,%d)\n", type, index, fd);
     
@@ -2232,7 +2260,7 @@ TRANS(LocalReopenCLTSServer)(Xtransport *thistrans, int fd, char *port)
 
 
 
-static
+static int
 TRANS(LocalSetOption)(XtransConnInfo ciptr, int option, int arg)
 
 {
@@ -2244,7 +2272,7 @@ TRANS(LocalSetOption)(XtransConnInfo ciptr, int option, int arg)
 
 #ifdef TRANS_SERVER
 
-static
+static int
 TRANS(LocalCreateListener)(XtransConnInfo ciptr, char *port)
 
 {
@@ -2293,7 +2321,7 @@ TRANS(LocalAccept)(XtransConnInfo ciptr, int *status)
 
 #ifdef TRANS_CLIENT
 
-static
+static int
 TRANS(LocalConnect)(XtransConnInfo ciptr, char *host, char *port)
 
 {

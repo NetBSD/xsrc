@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.14 2001/02/12 03:27:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.16 2002/01/16 16:22:25 tsi Exp $ */
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -86,9 +86,9 @@ ATIClaimResources
         if (pATI->CPIO_VGAWonder)
         {
             if (pATI->SharedVGA)
-                Resources[0].type = ResShrIoSparse;
+                Resources[0].type = ResShrIoSparse | ResBus;
             else
-                Resources[0].type = ResExcIoSparse;
+                Resources[0].type = ResExcIoSparse | ResBus;
             Resources[0].rBase = pATI->CPIO_VGAWonder;
             if (pATI->Chip <= ATI_CHIP_18800_1)
                 Resources[0].rMask = 0x03FEU;
@@ -116,9 +116,9 @@ ATIClaimResources
         (pATI->CPIODecoding == SPARSE_IO))
     {
         if (pATI->SharedAccelerator)
-            Resources[0].type = ResShrIoSparse;
+            Resources[0].type = ResShrIoSparse | ResBus;
         else
-            Resources[0].type = ResExcIoSparse;
+            Resources[0].type = ResExcIoSparse | ResBus;
         Resources[0].rBase = pATI->CPIOBase;
         Resources[0].rMask = 0x03FCU;
 

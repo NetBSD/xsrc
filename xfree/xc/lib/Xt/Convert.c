@@ -1,4 +1,4 @@
-/* $Xorg: Convert.c,v 1.4 2000/08/17 19:46:09 cpqbld Exp $ */
+/* $Xorg: Convert.c,v 1.5 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Convert.c,v 3.5 2001/01/17 19:43:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Convert.c,v 3.7 2001/12/14 19:56:09 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -608,13 +612,8 @@ static void ComputeArgs(widget, convert_args, num_args, args)
 	    break;
 
 	case XtBaseOffset:
-#if defined(CRAY1) && !defined(__STDC__)
-	    args[i].addr =
-		(XPointer)((int)widget + (int)convert_args[i].address_id);
-#else
 	    args[i].addr =
 		(XPointer)((char *)widget + (long)convert_args[i].address_id);
-#endif
 	    break;
 
 	case XtWidgetBaseOffset:
@@ -625,13 +624,8 @@ static void ComputeArgs(widget, convert_args, num_args, args)
 		    ancestor = _XtWindowedAncestor(widget);
 	    }
 
-#if defined(CRAY1) && !defined(__STDC__)
-	    args[i].addr =
-		(XPointer)((int)ancestor + (int)convert_args[i].address_id);
-#else
 	    args[i].addr =
 		(XPointer)((char *)ancestor + (long)convert_args[i].address_id);
-#endif
 	    break;
 
 	case XtImmediate:
@@ -661,11 +655,7 @@ static void ComputeArgs(widget, convert_args, num_args, args)
                      params,&num_params);
 		offset = 0;
 	    }
-#if defined(CRAY1) && !defined(__STDC__)
-	    args[i].addr = (XPointer)((int)widget + offset);
-#else
 	    args[i].addr = (XPointer)((char *)widget + offset);
-#endif
 	    break;
 	default:
 	    params[0] = XtName(widget);

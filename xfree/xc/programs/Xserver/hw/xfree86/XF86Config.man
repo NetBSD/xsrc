@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.man,v 1.5 2001/05/08 21:53:08 paulo Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.man,v 1.6 2001/08/15 16:25:21 paulo Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH XF86Config __filemansuffix__ __vendorversion__
@@ -519,6 +519,28 @@ on platforms that support it.
 .TP 7
 .BI "Option \*qXinerama\*q  \*q" boolean \*q
 enable or disable XINERAMA extension. Default is disabled. 
+.TP 7
+.BI "Option \*qAllowDeactivateGrabs\*q \*q" boolean \*q
+This option enables the use of the
+.B Ctrl+Alt+Keypad-Divide
+key sequence to desactivate any active keyboard and mouse grabs.
+Default: off.
+.TP 7
+.BI "Option \*qAllowClosedownGrabs\*q \*q" boolean \*q
+This option enables the use of the
+.B Ctrl+Alt+Keypad-Multiply
+key sequence to kill clients with an active keyboard or mouse grab as well
+as killing any application that may have locked the server,
+normally using the XGrabServer(3) Xlib function.
+Default: off.
+.br
+Note that the options
+.BI AllowDeactivateGrabs
+and
+.BI AllowClosedownGrabs
+will allow users to remove the grab used by screen saver/locker programs.
+An API was written to such cases. If you enable this option, make sure your
+screen saver/locker is updated.
 .SH MODULE SECTION
 The
 .B Module

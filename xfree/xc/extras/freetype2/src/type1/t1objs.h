@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 objects manager (specification).                              */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,7 +23,6 @@
 #include <ft2build.h>
 #include FT_INTERNAL_OBJECTS_H
 #include FT_CONFIG_CONFIG_H
-#include FT_INTERNAL_TYPE1_ERRORS_H
 #include FT_INTERNAL_TYPE1_TYPES_H
 
 
@@ -101,13 +100,19 @@ FT_BEGIN_HEADER
   /*                                                                       */
   typedef struct  T1_SizeRec_
   {
-    FT_SizeRec      root;
-    FT_Bool         valid;
-    T1_Size_Hints*  hints;  /* defined in the hinter. This allows */
-                            /* us to experiment with different    */
-                            /* hinting schemes without having to  */
-                            /* change `t1objs' each time.         */
+    FT_SizeRec  root;
+
   } T1_SizeRec;
+
+
+  FT_LOCAL void
+  T1_Size_Done( T1_Size  size );
+
+  FT_LOCAL FT_Error
+  T1_Size_Reset( T1_Size  size );
+
+  FT_LOCAL FT_Error
+  T1_Size_Init( T1_Size  size );
 
 
   /*************************************************************************/
@@ -131,26 +136,30 @@ FT_BEGIN_HEADER
     FT_Fixed         x_scale;
     FT_Fixed         y_scale;
 
-    T1_Glyph_Hints*  hints;  /* defined in the hinter */
-
   } T1_GlyphSlotRec;
 
 
-  FT_LOCAL
-  FT_Error  T1_Init_Face( FT_Stream      stream,
-                          T1_Face        face,
-                          FT_Int         face_index,
-                          FT_Int         num_params,
-                          FT_Parameter*  params );
+  FT_LOCAL FT_Error
+  T1_Face_Init( FT_Stream      stream,
+                T1_Face        face,
+                FT_Int         face_index,
+                FT_Int         num_params,
+                FT_Parameter*  params );
 
-  FT_LOCAL
-  void  T1_Done_Face( T1_Face  face );
+  FT_LOCAL void
+  T1_Face_Done( T1_Face  face );
 
-  FT_LOCAL
-  FT_Error  T1_Init_Driver( T1_Driver  driver );
+  FT_LOCAL FT_Error
+  T1_GlyphSlot_Init( T1_GlyphSlot  slot );
+  
+  FT_LOCAL void
+  T1_GlyphSlot_Done( T1_GlyphSlot  slot );
 
-  FT_LOCAL
-  void  T1_Done_Driver( T1_Driver  driver );
+  FT_LOCAL FT_Error
+  T1_Driver_Init( T1_Driver  driver );
+
+  FT_LOCAL void
+  T1_Driver_Done( T1_Driver  driver );
 
 
 FT_END_HEADER

@@ -1,5 +1,5 @@
 /* $XConsortium: XF86VMode.c /main/2 1995/11/14 18:17:58 kaleb $ */
-/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.31 2001/05/07 20:11:13 mvojkovi Exp $ */
+/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.32 2001/07/25 15:04:54 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Kaleb S. KEITHLEY
@@ -426,7 +426,7 @@ XF86VidModeGetAllModeLines(dpy, screen, modecount, modelinesPtr)
 /*
  * GetReq replacement for use with VidMode protocols earlier than 2.0
  */
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetOldReq(name, oldname, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x##oldname##Req)) > dpy->bufmax)\

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmSiS.c,v 1.6.2.1 2001/05/22 21:25:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmSiS.c,v 1.10 2001/12/15 00:59:12 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"
@@ -28,7 +28,7 @@
 extern int xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *);
 extern int xf86RemoveSIGIOHandler(int fd);
 # else
-#  include <Xlibint.h>
+#  include <X11/Xlibint.h>
 #  define _DRM_MALLOC Xmalloc
 #  define _DRM_FREE   Xfree
 # endif
@@ -43,6 +43,7 @@ extern int xf86RemoveSIGIOHandler(int fd);
 #include <sys/sysmacros.h>	/* for makedev() */
 #endif
 #include "xf86drm.h"
+#include "xf86drmSiS.h"
 #define CONFIG_DRM_SIS
 #include "drm.h"
 #undef CONFIG_DRM_SIS
@@ -53,7 +54,7 @@ Bool drmSiSAgpInit(int driSubFD, int offset, int size)
       
    agp.offset = offset;
    agp.size = size;
-   xf86ioctl(driSubFD, SIS_IOCTL_AGP_INIT, &agp);
+   ioctl(driSubFD, SIS_IOCTL_AGP_INIT, &agp);
 
    return TRUE;
 }

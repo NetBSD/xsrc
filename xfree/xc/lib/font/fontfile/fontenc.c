@@ -1,5 +1,5 @@
 /*
-Copyright (c) 1998-2000 by Juliusz Chroboczek
+Copyright (c) 1998-2001 by Juliusz Chroboczek
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.11 2001/04/18 16:13:18 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.14 2001/11/02 03:06:40 dawes Exp $ */
 
 /* Backend-independent encoding code */
 
 #include <string.h>
+
+#ifndef FONTENC_NO_LIBFONT
+
 #include "fontmisc.h"           /* defines xalloc and friends */
+#include "fntfilst.h"
+
+#else
+
+#include <stdlib.h>
+#define xalloc(n) malloc(n)
+#define xrealloc(p, n) realloc(p, n)
+#define xfree(p) free(p)
+#define FALSE 0
+#define TRUE 1
+#define MAXFONTNAMELEN 1024
+#define MAXFONTFILENAMELEN 1024
+
+#endif /* FONTENC_NO_FONTFILE */
+
 #include "fontenc.h"
 #include "fontencI.h"
 
 /* Functions local to this file */
 
-static struct font_encoding *loadEncoding(const char*, const char*);
+static FontEncPtr FontEncLoad(const char*, const char*);
 
-/* Of course, one could add millions of tables here.  In order for a table
- * to be suitable for inclusion, it must satisfy the following condition:
- * some fonts will be useless under Unix for some people without it.  This
- * means that an encoding function must go from some encoding used under
- * Unix to either Unicode or an Apple encoding.  Apple encodings should be
- * avoided, as most fonts will have a Unicode table anyway.
- *
- * Now that the code knows how to load an encoding from a file, most
- * of these hard-coded tables could go away.  However, having them
- * here simplifies administration in common cases. */
+/* Early versions of this code only knew about hardwired encodings,
+   hence the following data.  Now that the code knows how to load an
+   encoding from a file, most of these tables could go away. */
 
-static struct font_encoding_mapping iso10646[]=
+/* At any rate, no new hardcoded encodings will be added. */
+
+static FontMapRec iso10646[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
-/* Notice that the Apple encodings do not have all the characters in the
- * corresponding ISO 8859, and the tables have some holes.  There's not
- * much more we can do with fonts without a Unicode cmap unless we are
- * willing to combine cmaps (which we are not). */
+/* Notice that the Apple encodings do not have all the characters in
+   the corresponding ISO 8859, and therefore the table has some holes.
+   There's not much more we can do with fonts without a Unicode cmap
+   unless we are willing to combine cmaps (which we are not). */
 
 static unsigned short 
 iso8859_1_apple_roman[]=
@@ -74,20 +87,20 @@ iso8859_1_apple_roman[]=
 static unsigned
 iso8859_1_to_apple_roman(unsigned isocode, void *client_data)
 {
-  if(isocode<=0x80)
-    return isocode;
-  else if(isocode>=0xA0)
-    return iso8859_1_apple_roman[isocode-0xA0];
-  else
-    return 0;
+    if(isocode<=0x80)
+        return isocode;
+    else if(isocode>=0xA0)
+        return iso8859_1_apple_roman[isocode-0xA0];
+    else
+        return 0;
 }
 
-static struct font_encoding_mapping iso8859_1[]=
+static FontMapRec iso8859_1[]=
 {
-  {FONT_ENCODING_TRUETYPE,2,2,0,0,0,0}, /* ISO 8859-1 */
-  {FONT_ENCODING_UNICODE,0,0,0,0,0,0}, /* ISO 8859-1 coincides with Unicode*/
-  {FONT_ENCODING_TRUETYPE,1,0,iso8859_1_to_apple_roman,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_TRUETYPE,2,2,0,0,0,0}, /* ISO 8859-1 */
+    {FONT_ENCODING_UNICODE,0,0,0,0,0,0}, /* ISO 8859-1 coincides with Unicode*/
+    {FONT_ENCODING_TRUETYPE,1,0,iso8859_1_to_apple_roman,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned short iso8859_2_tophalf[]=
@@ -104,7 +117,7 @@ static unsigned short iso8859_2_tophalf[]=
   0x0111, 0x0144, 0x0148, 0x00F3, 0x00F4, 0x0151, 0x00F6, 0x00F7,
   0x0159, 0x016F, 0x00FA, 0x0171, 0x00FC, 0x00FD, 0x0163, 0x02D9 };
 
-static struct font_encoding_simple_mapping iso8859_2_to_unicode_map=
+static FontEncSimpleMapRec iso8859_2_to_unicode_map=
 {0x60, 0, 0xA0, iso8859_2_tophalf };
 
 static unsigned short iso8859_2_apple_centeuro[]=
@@ -124,21 +137,21 @@ static unsigned short iso8859_2_apple_centeuro[]=
 static unsigned
 iso8859_2_to_apple_centeuro(unsigned isocode, void *client_data)
 {
-  if(isocode<=0x80)
-    return isocode;
-  else if(isocode>=0xA0)
-    return iso8859_2_apple_centeuro[isocode-0xA0];
-  else
-    return 0;
+    if(isocode<=0x80)
+        return isocode;
+    else if(isocode>=0xA0)
+        return iso8859_2_apple_centeuro[isocode-0xA0];
+    else
+        return 0;
 }
 
 
-static struct font_encoding_mapping iso8859_2[]=
+static FontMapRec iso8859_2[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,
-   font_encoding_simple_recode,0,&iso8859_2_to_unicode_map,0},
-  {FONT_ENCODING_TRUETYPE,1,29,iso8859_2_to_apple_centeuro,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,
+     FontEncSimpleRecode,0,&iso8859_2_to_unicode_map,0},
+    {FONT_ENCODING_TRUETYPE,1,29,iso8859_2_to_apple_centeuro,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned short iso8859_3_tophalf[]=
@@ -155,14 +168,14 @@ static unsigned short iso8859_3_tophalf[]=
   0x0000, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x0121, 0x00F6, 0x00F7,
   0x011D, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x016D, 0x015D, 0x02D9};
 
-static struct font_encoding_simple_mapping iso8859_3_to_unicode_map=
+static FontEncSimpleMapRec iso8859_3_to_unicode_map=
 { 0x60, 0, 0xA0, iso8859_3_tophalf };
 
-static struct font_encoding_mapping iso8859_3[]=
+static FontMapRec iso8859_3[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,
-   font_encoding_simple_recode,0,&iso8859_3_to_unicode_map,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,
+     FontEncSimpleRecode,0,&iso8859_3_to_unicode_map,0},
+    {0,0,0,0,0,0,0}
 };
 
 
@@ -181,14 +194,14 @@ static unsigned short iso8859_4_tophalf[]=
   0x00F8, 0x0173, 0x00FA, 0x00FB, 0x00FC, 0x0169, 0x016B, 0x02D9,
 };
 
-static struct font_encoding_simple_mapping iso8859_4_to_unicode_map=
+static FontEncSimpleMapRec iso8859_4_to_unicode_map=
 { 0x60, 0, 0xA0, iso8859_4_tophalf };
 
-static struct font_encoding_mapping iso8859_4[]=
+static FontMapRec iso8859_4[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,font_encoding_simple_recode,0,
-   &iso8859_4_to_unicode_map,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,FontEncSimpleRecode,0,
+     &iso8859_4_to_unicode_map,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned short iso8859_5_tophalf[]=
@@ -205,7 +218,7 @@ static unsigned short iso8859_5_tophalf[]=
   0x2116, 0x0451, 0x0452, 0x0453, 0x0454, 0x0455, 0x0456, 0x0457,
   0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x00A7, 0x045E, 0x045F};
 
-static struct font_encoding_simple_mapping iso8859_5_to_unicode_map=
+static FontEncSimpleMapRec iso8859_5_to_unicode_map=
 { 0x60, 0, 0xA0, iso8859_5_tophalf };
 
 static unsigned short 
@@ -226,19 +239,19 @@ iso8859_5_apple_cyrillic[]=
 static unsigned
 iso8859_5_to_apple_cyrillic(unsigned isocode, void *client_data)
 {
-  if(isocode<=0x80)
-    return isocode;
-  else if(isocode>=0xA0)
-    return iso8859_5_apple_cyrillic[isocode-0x80];
-  else return 0;
+    if(isocode<=0x80)
+        return isocode;
+    else if(isocode>=0xA0)
+        return iso8859_5_apple_cyrillic[isocode-0x80];
+    else return 0;
 }
 
-static struct font_encoding_mapping iso8859_5[]=
+static FontMapRec iso8859_5[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,font_encoding_simple_recode,0,
-   &iso8859_5_to_unicode_map,0},
-  {FONT_ENCODING_TRUETYPE,1,7,iso8859_5_to_apple_cyrillic,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,FontEncSimpleRecode,0,
+     &iso8859_5_to_unicode_map,0},
+    {FONT_ENCODING_TRUETYPE,1,7,iso8859_5_to_apple_cyrillic,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 /* ISO 8859-6 seems useless for serving fonts (not enough presentation
@@ -247,88 +260,88 @@ static struct font_encoding_mapping iso8859_5[]=
 static unsigned
 iso8859_6_to_unicode(unsigned isocode, void *client_data)
 {
-  if(isocode<=0xA0 || isocode==0xA4 || isocode==0xAD)
-    return isocode;
-  else if(isocode==0xAC || isocode==0xBB || 
-          (isocode>=0xBF && isocode<=0xDA) ||
-          (isocode>=0xE0 && isocode<=0xEF) ||
-          (isocode>=0xF0 && isocode<=0xF2))
-    return isocode-0xA0+0x0600;
-  else
-    return 0;
+    if(isocode<=0xA0 || isocode==0xA4 || isocode==0xAD)
+        return isocode;
+    else if(isocode==0xAC || isocode==0xBB || 
+            (isocode>=0xBF && isocode<=0xDA) ||
+            (isocode>=0xE0 && isocode<=0xEF) ||
+            (isocode>=0xF0 && isocode<=0xF2))
+        return isocode-0xA0+0x0600;
+    else
+        return 0;
 }
 
-static struct font_encoding_mapping iso8859_6[]=
+static FontMapRec iso8859_6[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,iso8859_6_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,iso8859_6_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned 
 iso8859_7_to_unicode(unsigned isocode, void *client_data)
 {
-  if(isocode<=0xA0 ||
-     (isocode>=0xA3 && isocode<=0xAD) ||
-     (isocode>=0xB0 && isocode<=0xB3) ||
-     isocode==0xB7 || isocode==0xBB || isocode==0xBD)
-    return isocode;
-  else if(isocode==0xA1)
-    return 0x02BD;
-  else if(isocode==0xA2)
-    return 0x02BC;
-  else if(isocode==0xAF)
-    return 0x2015;
-  else if(isocode>=0xB4)
-    return isocode-0xA0+0x0370;
-  else
-    return 0;
+    if(isocode<=0xA0 ||
+       (isocode>=0xA3 && isocode<=0xAD) ||
+       (isocode>=0xB0 && isocode<=0xB3) ||
+       isocode==0xB7 || isocode==0xBB || isocode==0xBD)
+        return isocode;
+    else if(isocode==0xA1)
+        return 0x02BD;
+    else if(isocode==0xA2)
+        return 0x02BC;
+    else if(isocode==0xAF)
+        return 0x2015;
+    else if(isocode>=0xB4)
+        return isocode-0xA0+0x0370;
+    else
+        return 0;
 }
 
-static struct font_encoding_mapping iso8859_7[]=
+static FontMapRec iso8859_7[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,iso8859_7_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,iso8859_7_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned
 iso8859_8_to_unicode(unsigned isocode, void *client_data)
 {
-  if(isocode==0xA1)
-    return 0;
-  else if(isocode<0xBF)
-    return isocode;
-  else if(isocode==0xDF)
-    return 0x2017;
-  else if(isocode>=0xE0 && isocode<=0xFA)
-    return isocode+0x04F0;
-  else 
-    return 0;
+    if(isocode==0xA1)
+        return 0;
+    else if(isocode<0xBF)
+        return isocode;
+    else if(isocode==0xDF)
+        return 0x2017;
+    else if(isocode>=0xE0 && isocode<=0xFA)
+        return isocode+0x04F0;
+    else 
+        return 0;
 }
 
-static struct font_encoding_mapping iso8859_8[]=
+static FontMapRec iso8859_8[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,iso8859_8_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,iso8859_8_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned
 iso8859_9_to_unicode(unsigned isocode, void *client_data)
 {
-  switch(isocode) {
-  case 0xD0: return 0x011E;
-  case 0xDD: return 0x0130;
-  case 0xDE: return 0x015E;
-  case 0xF0: return 0x011F;
-  case 0xFD: return 0x0131;
-  case 0xFE: return 0x015F;
-  default: return isocode;
-  }
+    switch(isocode) {
+    case 0xD0: return 0x011E;
+    case 0xDD: return 0x0130;
+    case 0xDE: return 0x015E;
+    case 0xF0: return 0x011F;
+    case 0xFD: return 0x0131;
+    case 0xFE: return 0x015F;
+    default: return isocode;
+    }
 }
 
-static struct font_encoding_mapping iso8859_9[]=
+static FontMapRec iso8859_9[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,iso8859_9_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,iso8859_9_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned short iso8859_10_tophalf[]=
@@ -345,36 +358,36 @@ static unsigned short iso8859_10_tophalf[]=
   0x00F0, 0x0146, 0x014D, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x0169,
   0x00F8, 0x0173, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x0138};
 
-static struct font_encoding_simple_mapping iso8859_10_to_unicode_map=
+static FontEncSimpleMapRec iso8859_10_to_unicode_map=
 { 0x60, 0, 0xA0, iso8859_10_tophalf };
 
-static struct font_encoding_mapping iso8859_10[]=
+static FontMapRec iso8859_10[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,font_encoding_simple_recode,0,
-   &iso8859_10_to_unicode_map,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,FontEncSimpleRecode,0,
+     &iso8859_10_to_unicode_map,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned
 iso8859_15_to_unicode(unsigned isocode, void *client_data)
 {
-  switch(isocode) {
-  case 0xA4: return 0x20AC;
-  case 0xA6: return 0x0160;
-  case 0xA8: return 0x0161;
-  case 0xB4: return 0x017D;
-  case 0xB8: return 0x017E;
-  case 0xBC: return 0x0152;
-  case 0xBD: return 0x0153;
-  case 0xBE: return 0x0178;
-  default: return isocode;
-  }
+    switch(isocode) {
+    case 0xA4: return 0x20AC;
+    case 0xA6: return 0x0160;
+    case 0xA8: return 0x0161;
+    case 0xB4: return 0x017D;
+    case 0xB8: return 0x017E;
+    case 0xBC: return 0x0152;
+    case 0xBD: return 0x0153;
+    case 0xBE: return 0x0178;
+    default: return isocode;
+    }
 }
 
-static struct font_encoding_mapping iso8859_15[]=
+static FontMapRec iso8859_15[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,iso8859_15_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,iso8859_15_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned short koi8_r_tophalf[]=
@@ -395,48 +408,48 @@ static unsigned short koi8_r_tophalf[]=
   0x041F, 0x042F, 0x0420, 0x0421, 0x0422, 0x0423, 0x0416, 0x0412,
   0x042C, 0x042B, 0x0417, 0x0428, 0x042D, 0x0429, 0x0427, 0x042A};
 
-static struct font_encoding_simple_mapping koi8_r_to_unicode_map=
+static FontEncSimpleMapRec koi8_r_to_unicode_map=
 { 0x80, 0, 0x80, koi8_r_tophalf };
 
 
-static struct font_encoding_mapping koi8_r[]=
+static FontMapRec koi8_r[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,font_encoding_simple_recode,0,
-   &koi8_r_to_unicode_map,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,FontEncSimpleRecode,0,
+     &koi8_r_to_unicode_map,0},
+    {0,0,0,0,0,0,0}
 };
 
 static unsigned 
 koi8_ru_to_unicode(unsigned koicode, void *client_data)
 {
-  switch(koicode) {
-  case 0x93: return 0x201C;
-  case 0x96: return 0x201D;
-  case 0x97: return 0x2014;
-  case 0x98: return 0x2116;
-  case 0x99: return 0x2122;
-  case 0x9B: return 0x00BB;
-  case 0x9C: return 0x00AE;
-  case 0x9D: return 0x00AB;
-  case 0x9F: return 0x00A4;
-  case 0xA4: return 0x0454;
-  case 0xA6: return 0x0456;
-  case 0xA7: return 0x0457;
-  case 0xAD: return 0x0491;
-  case 0xAE: return 0x045E;
-  case 0xB4: return 0x0404;
-  case 0xB6: return 0x0406;
-  case 0xB7: return 0x0407;
-  case 0xBD: return 0x0490;
-  case 0xBE: return 0x040E;
-  default: return font_encoding_simple_recode(koicode, &koi8_r_to_unicode_map);
+    switch(koicode) {
+    case 0x93: return 0x201C;
+    case 0x96: return 0x201D;
+    case 0x97: return 0x2014;
+    case 0x98: return 0x2116;
+    case 0x99: return 0x2122;
+    case 0x9B: return 0x00BB;
+    case 0x9C: return 0x00AE;
+    case 0x9D: return 0x00AB;
+    case 0x9F: return 0x00A4;
+    case 0xA4: return 0x0454;
+    case 0xA6: return 0x0456;
+    case 0xA7: return 0x0457;
+    case 0xAD: return 0x0491;
+    case 0xAE: return 0x045E;
+    case 0xB4: return 0x0404;
+    case 0xB6: return 0x0406;
+    case 0xB7: return 0x0407;
+    case 0xBD: return 0x0490;
+    case 0xBE: return 0x040E;
+    default: return FontEncSimpleRecode(koicode, &koi8_r_to_unicode_map);
   }
 }
 
-static struct font_encoding_mapping koi8_ru[]=
+static FontMapRec koi8_ru[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,koi8_ru_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,koi8_ru_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 /* koi8-e, ISO-IR-111 or ECMA-Cyrillic */
@@ -450,18 +463,18 @@ static unsigned short koi8_e_A0_BF[]=
 static unsigned
 koi8_e_to_unicode(unsigned koicode, void *client_data)
 {
-  if(koicode<0xA0)
-    return koicode;
-  else if(koicode<0xC0)
-    return koi8_e_A0_BF[koicode-0xA0];
-  else 
-    return font_encoding_simple_recode(koicode, &koi8_r_to_unicode_map);
+    if(koicode<0xA0)
+        return koicode;
+    else if(koicode<0xC0)
+        return koi8_e_A0_BF[koicode-0xA0];
+    else 
+        return FontEncSimpleRecode(koicode, &koi8_r_to_unicode_map);
 }
 
-static struct font_encoding_mapping koi8_e[]=
+static FontMapRec koi8_e[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,koi8_e_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,koi8_e_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 /* Koi8 unified */
@@ -479,19 +492,18 @@ static unsigned short koi8_uni_80_BF[]=
 static unsigned 
 koi8_uni_to_unicode(unsigned koicode, void *client_data)
 {
-  if(koicode<0x80)
-    return koicode;
-  else if(koicode<0xC0)
-    return koi8_uni_80_BF[koicode-0x80];
-  else
-    return font_encoding_simple_recode(koicode, &koi8_r_to_unicode_map);
+    if(koicode<0x80)
+        return koicode;
+    else if(koicode<0xC0)
+        return koi8_uni_80_BF[koicode-0x80];
+    else
+        return FontEncSimpleRecode(koicode, &koi8_r_to_unicode_map);
 }
 
-static struct font_encoding_mapping koi8_uni[]=
+static FontMapRec koi8_uni[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,koi8_uni_to_unicode, 0,
-   0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,koi8_uni_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
 /* Ukrainian variant of Koi8-R; see RFC 2319 */
@@ -499,263 +511,295 @@ static struct font_encoding_mapping koi8_uni[]=
 static unsigned 
 koi8_u_to_unicode(unsigned koicode, void *client_data)
 {
-  switch(koicode) {
-  case 0xA4: return 0x0454;
-  case 0xA6: return 0x0456;
-  case 0xA7: return 0x0457;
-  case 0xAD: return 0x0491;
-  case 0xB4: return 0x0404;
-  case 0xB6: return 0x0406;
-  case 0xB7: return 0x0407;
-  case 0xBD: return 0x0490;
-  default: return font_encoding_simple_recode(koicode, &koi8_r_to_unicode_map);
-  }
+    switch(koicode) {
+    case 0xA4: return 0x0454;
+    case 0xA6: return 0x0456;
+    case 0xA7: return 0x0457;
+    case 0xAD: return 0x0491;
+    case 0xB4: return 0x0404;
+    case 0xB6: return 0x0406;
+    case 0xB7: return 0x0407;
+    case 0xBD: return 0x0490;
+    default: return FontEncSimpleRecode(koicode, &koi8_r_to_unicode_map);
+    }
 }
 
-static struct font_encoding_mapping koi8_u[]=
+static FontMapRec koi8_u[]=
 {
-  {FONT_ENCODING_UNICODE,0,0,koi8_u_to_unicode,0,0,0},
-  {0,0,0,0,0,0,0}
+    {FONT_ENCODING_UNICODE,0,0,koi8_u_to_unicode,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
-/* Microsoft Symbol is treated specially in ftenc.c, where we add
- * usFirstCharIndex-0x20 to the glyph index before applying the
- * cmap. */
+/* Microsoft Symbol, which is only meaningful for TrueType fonts, is
+   treated specially in ftenc.c, where we add usFirstCharIndex-0x20 to
+   the glyph index before applying the cmap.  Lovely design. */
 
-static struct font_encoding_mapping microsoft_symbol[]=
+static FontMapRec microsoft_symbol[]=
 {{FONT_ENCODING_TRUETYPE,3,0,0,0,0,0}, 
  /* You never know */
  {FONT_ENCODING_TRUETYPE,3,1,0,0,0,0}, 
  {0,0,0,0,0,0,0}};
 
-static struct font_encoding_mapping apple_roman[]=
+static FontMapRec apple_roman[]=
 {{FONT_ENCODING_TRUETYPE,1,0,0,0,0,0}, {0,0,0,0,0,0,0}};
 
 /* The data for recodings */
 
-/* For compatibility with X11R6.4 */
+/* For compatibility with X11R6.4.  Losers. */
 static char *iso8859_15_aliases[2]={"fcd8859-15",0};
 
-static struct font_encoding initial_encodings[]=
+static FontEncRec initial_encodings[]=
 {
-  {"iso10646-1",0,256*256,0,iso10646,0,0,0}, /* Unicode */
-  {"iso8859-1",0,256,0,iso8859_1,0,0,0}, /* Latin 1 (West European) */
-  {"iso8859-2",0,256,0,iso8859_2,0,0,0}, /* Latin 2 (East European) */
-  {"iso8859-3",0,256,0,iso8859_3,0,0,0}, /* Latin 3 (South European) */
-  {"iso8859-4",0,256,0,iso8859_4,0,0,0}, /* Latin 4 (North European) */
-  {"iso8859-5",0,256,0,iso8859_5,0,0,0}, /* Cyrillic */
-  {"iso8859-6",0,256,0,iso8859_6,0,0,0}, /* Arabic */
-  {"iso8859-7",0,256,0,iso8859_7,0,0,0}, /* Greek */
-  {"iso8859-8",0,256,0,iso8859_8,0,0,0}, /* Hebrew */
-  {"iso8859-9",0,256,0,iso8859_9,0,0,0}, /* Latin 5 (Turkish) */
-  {"iso8859-10",0,256,0,iso8859_10,0,0,0}, /* Latin 6 (Nordic) */
-  {"iso8859-15",iso8859_15_aliases,256,0,iso8859_15,0,0,0}, /* Latin 9 */
-  {"koi8-r",0,256,0,koi8_r,0,0,0},       /* Russian */
-  {"koi8-ru",0,256,0,koi8_ru,0,0,0},     /* Ukrainian */
-  {"koi8-uni",0,256,0,koi8_uni,0,0,0},   /* Russian/Ukrainian/Bielorussian */
-  {"koi8-e",0,256,0,koi8_e,0,0,0},       /* ``European'' */
-  {"koi8-u",0,256,0,koi8_u,0,0,0},       /* Ukrainian too */
-  {"microsoft-symbol",0,256,0,microsoft_symbol,0,0,0},
-  {"apple-roman",0,256,0,apple_roman,0,0,0},
-  {0,0,0,0,0,0,0}
+    {"iso10646-1",0,256*256,0,iso10646,0,0,0}, /* Unicode */
+    {"iso8859-1",0,256,0,iso8859_1,0,0,0}, /* Latin 1 (West European) */
+    {"iso8859-2",0,256,0,iso8859_2,0,0,0}, /* Latin 2 (East European) */
+    {"iso8859-3",0,256,0,iso8859_3,0,0,0}, /* Latin 3 (South European) */
+    {"iso8859-4",0,256,0,iso8859_4,0,0,0}, /* Latin 4 (North European) */
+    {"iso8859-5",0,256,0,iso8859_5,0,0,0}, /* Cyrillic */
+    {"iso8859-6",0,256,0,iso8859_6,0,0,0}, /* Arabic */
+    {"iso8859-7",0,256,0,iso8859_7,0,0,0}, /* Greek */
+    {"iso8859-8",0,256,0,iso8859_8,0,0,0}, /* Hebrew */
+    {"iso8859-9",0,256,0,iso8859_9,0,0,0}, /* Latin 5 (Turkish) */
+    {"iso8859-10",0,256,0,iso8859_10,0,0,0}, /* Latin 6 (Nordic) */
+    {"iso8859-15",iso8859_15_aliases,256,0,iso8859_15,0,0,0}, /* Latin 9 */
+    {"koi8-r",0,256,0,koi8_r,0,0,0},       /* Russian */
+    {"koi8-ru",0,256,0,koi8_ru,0,0,0},     /* Ukrainian */
+    {"koi8-uni",0,256,0,koi8_uni,0,0,0},   /* Russian/Ukrainian/Bielorussian */
+    {"koi8-e",0,256,0,koi8_e,0,0,0},       /* ``European'' */
+    {"koi8-u",0,256,0,koi8_u,0,0,0},       /* Ukrainian too */
+    {"microsoft-symbol",0,256,0,microsoft_symbol,0,0,0},
+    {"apple-roman",0,256,0,apple_roman,0,0,0},
+    {0,0,0,0,0,0,0}
 };
 
-static struct font_encoding *font_encodings=NULL;
+static FontEncPtr font_encodings=NULL;
 
 static void
 define_initial_encoding_info(void)
 {
-  struct font_encoding *encoding;
-  struct font_encoding_mapping *mapping;
+    FontEncPtr encoding;
+    FontMapPtr mapping;
 
-  font_encodings=initial_encodings;
-  for(encoding=font_encodings; ; encoding++) {
-    encoding->next=encoding+1;
-    for(mapping=encoding->mappings; ; mapping++) {
-      mapping->next=mapping+1;
-      if(mapping->next->type==0) {
-        mapping->next=NULL;
-        break;
-      }
+    font_encodings = initial_encodings;
+    for(encoding = font_encodings; ; encoding++) {
+        encoding->next = encoding + 1;
+        for(mapping = encoding->mappings; ; mapping++) {
+            mapping->next = mapping+1;
+            mapping->encoding = encoding;
+            if(mapping->next->type == 0) {
+                mapping->next = NULL;
+                break;
+            }
+        }
+        if(!encoding->next->name) {
+            encoding->next = NULL;
+            break;
+        }
     }
-    if(!encoding->next->name) {
-      encoding->next=NULL;
-      break;
-    }
-  }
 }
 
 
 char*
-font_encoding_from_xlfd(const char *name, int length)
+FontEncFromXLFD(const char *name, int length)
 {
-  const char *p;
-  char *q;
-  static char charset[256];
-  int len;
+    const char *p;
+    char *q;
+    static char charset[MAXFONTNAMELEN];
+    int len;
 
-  if(name==0)
-    p=0;
-  else {
-    p=name+length-1;
-    while(p>name && *p!='-')
-      p--;
-    p--;
-    while(p>=name && *p!='-')
-      p--;
-  if(p<=name)
-    p=0;
-  }
+    if(length > MAXFONTNAMELEN - 1)
+        return 0;
 
-  /* now p either is null or points at the '-' before the charset registry */
+    if(name == NULL)
+        p = NULL;
+    else {
+        p = name + length - 1;
+        while(p > name && *p != '-')
+            p--;
+        p--;
+        while(p >= name && *p != '-')
+            p--;
+        if(p <= name)
+            p = 0;
+    }
 
-  if(p==0)
-    return 0;
-
-  len=length-(p-name)-1;
-  memcpy(charset,p+1,len);
-  charset[len]=0;
-
-  /* check for a subset specification */
-  if((q=strchr(charset,(int)'[')))
-    *q=0;
-
-  return charset;
+    /* now p either is null or points at the '-' before the charset registry */
+    
+    if(p == 0)
+        return 0;
+    
+    len = length - (p - name) - 1;
+    memcpy(charset, p+1, len);
+    charset[len] = 0;
+    
+    /* check for a subset specification */
+    if((q = strchr(charset, (int)'[')))
+        *q = 0;
+    
+    return charset;
 }
 
 unsigned
-font_encoding_recode(unsigned code, 
-                     struct font_encoding *encoding,
-                     struct font_encoding_mapping *mapping)
+FontEncRecode(unsigned code,  FontMapPtr mapping)
 {
-  if(mapping->recode) {
-    if(encoding->row_size==0) {
-      /* linear encoding */
-      if(code < encoding->first || code>=encoding->size)
-        return 0;
-    } else {
-      /* matrix encoding */
-      int row=code/0x100, col=code&0xFF;
-      if(row < encoding->first || row >= encoding->size ||
-         col < encoding->first_col || col >= encoding->row_size)
-        return 0;
-    }
-    return (*mapping->recode)(code, mapping->client_data);
-  } else
-    return code;
+    FontEncPtr encoding = mapping->encoding;
+    if(encoding && mapping->recode) {
+        if(encoding->row_size == 0) {
+            /* linear encoding */
+            if(code < encoding->first || code>=encoding->size)
+                return 0;
+        } else {
+            /* matrix encoding */
+            int row = code/0x100, col = code&0xFF;
+            if(row < encoding->first || row >= encoding->size ||
+               col < encoding->first_col || col >= encoding->row_size)
+                return 0;
+        }
+        return (*mapping->recode)(code, mapping->client_data);
+    } else
+        return code;
 }
 
 char*
-font_encoding_name(unsigned code, 
-                   struct font_encoding *encoding,
-                   struct font_encoding_mapping *mapping)
+FontEncName(unsigned code, FontMapPtr mapping)
 {
-  if(mapping->name) {
-    if((encoding->row_size==0 && code>=encoding->size) ||
-       (encoding->row_size!=0 &&
-        (code/0x100>=encoding->size || ((code&0xFF)>=encoding->row_size))))
-      return 0;
-    return (*mapping->name)(code, mapping->client_data);
-  } else
-    return 0;
+    FontEncPtr encoding = mapping->encoding;
+    if(encoding && mapping->name) {
+        if((encoding->row_size == 0 && code >= encoding->size) ||
+           (encoding->row_size != 0 &&
+            (code/0x100 >= encoding->size || 
+             (code&0xFF) >= encoding->row_size)))
+            return 0;
+        return (*mapping->name)(code, mapping->client_data);
+    } else
+        return 0;
 }
 
-struct font_encoding *
-font_encoding_find(const char *encoding_name, const char *filename)
+FontEncPtr
+FontEncFind(const char *encoding_name, const char *filename)
 {
-  struct font_encoding *encoding;
-  char **alias;
-
-  if(font_encodings==NULL) define_initial_encoding_info();
-
-  for(encoding=font_encodings; encoding; encoding=encoding->next) {
-    if(!strcasecmp(encoding->name, encoding_name))
-      return encoding;
-    if(encoding->aliases)
-      for(alias=encoding->aliases; *alias; alias++)
-        if(!strcasecmp(*alias, encoding_name))
-          return encoding;
+    FontEncPtr encoding;
+    char **alias;
+    
+    if(font_encodings == NULL) define_initial_encoding_info();
+    
+    for(encoding = font_encodings; encoding; encoding = encoding->next) {
+        if(!strcasecmp(encoding->name, encoding_name))
+            return encoding;
+        if(encoding->aliases)
+            for(alias=encoding->aliases; *alias; alias++)
+                if(!strcasecmp(*alias, encoding_name))
+                    return encoding;
   }
 
   /* Unknown charset, try to load a definition file */
-  return loadEncoding(encoding_name, filename);
+    return FontEncLoad(encoding_name, filename);
 }
 
-
-struct font_encoding*
-loadEncoding(const char *encoding_name, const char *filename)
+FontMapPtr
+FontMapFind(FontEncPtr encoding, int type, int pid, int eid)
 {
-  struct font_encoding *encoding;
+    FontMapPtr mapping;
+    if(encoding == NULL)
+        return NULL;
 
-  if((encoding=loadEncodingFile(encoding_name, filename))==NULL) {
-    return 0;
-  } else {
-    char **alias;
-    int found = 0;
+    for(mapping = encoding->mappings; mapping; mapping = mapping->next) {
+        if(mapping->type != type)
+            continue;
+        if(pid > 0 && mapping->pid != pid)
+            continue;
+        if(eid > 0 && mapping->eid != eid)
+            continue;
+        return mapping;
+    }
+    return NULL;
+}
 
-    /* Check whether the name is already known for this encoding */
-    if(strcasecmp(encoding->name, encoding_name) == 0) {
-      found = 1;
+FontMapPtr
+FontEncMapFind(const char *encoding_name, int type, int pid, int eid,
+               const char *filename)
+{
+    FontEncPtr encoding;
+    FontMapPtr mapping;
+
+    encoding = FontEncFind(encoding_name, filename);
+    if(encoding == NULL)
+        return NULL;
+    mapping = FontMapFind(encoding, type, pid, eid);
+    return mapping;
+}
+
+static FontEncPtr
+FontEncLoad(const char *encoding_name, const char *filename)
+{
+    FontEncPtr encoding;
+    
+    encoding = FontEncReallyLoad(encoding_name, filename);
+    if (encoding == NULL) {
+        return 0;
     } else {
-      if(encoding->aliases)
-        for(alias=encoding->aliases; *alias; alias++)
-          if(!strcasecmp(*alias, encoding_name)) {
+        char **alias;
+        int found = 0;
+        
+        /* Check whether the name is already known for this encoding */
+        if(strcasecmp(encoding->name, encoding_name) == 0) {
             found = 1;
-            break;
-          }
+        } else {
+            for(alias=encoding->aliases; *alias; alias++)
+                if(!strcasecmp(*alias, encoding_name)) {
+                    found = 1;
+                    break;
+                }
+        }
+        
+        if(!found) {
+            /* Add a new alias.  This works because we know that this
+               particular encoding has been allocated dynamically */
+            char **new_aliases;
+            char *new_name;
+            int numaliases = 0;
+            
+            new_name = xalloc(strlen(encoding_name) + 1);
+            if(new_name == NULL)
+                return NULL;
+            strcpy(new_name, encoding_name);
+            for(alias = encoding->aliases; *alias; alias++)
+                numaliases++;
+            new_aliases = (char**)xalloc((numaliases+2)*sizeof(char*));
+            if(new_aliases == NULL) {
+                xfree(new_name);
+                return NULL;
+            }
+            memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
+            new_aliases[numaliases] = new_name;
+            new_aliases[numaliases+1] = NULL;
+            xfree(encoding->aliases);
+            encoding->aliases = new_aliases;
+        }
+        
+        /* register the new encoding */
+        encoding->next=font_encodings;
+        font_encodings=encoding;
+        
+        return encoding;
     }
-
-    if(!found) {
-      /* Add a new alias.  This works because the encoding has been
-         allocated dynamically */
-      char **new_aliases;
-      char *new_name;
-      int numaliases = 0;
-
-      new_name = xalloc(strlen(encoding_name) + 1);
-      if(new_name == NULL)
-        return NULL;
-      strcpy(new_name, encoding_name);
-      if(encoding->aliases)
-        for(alias = encoding->aliases; *alias; alias++)
-          numaliases++;
-      new_aliases = (char**)xalloc((numaliases+2)*sizeof(char*));
-      if(new_aliases == NULL) {
-        xfree(new_name);
-        return NULL;
-      }
-      if(numaliases)
-        memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
-      new_aliases[numaliases] = new_name;
-      new_aliases[numaliases+1] = NULL;
-      if(encoding->aliases)
-        xfree(encoding->aliases);
-      encoding->aliases = new_aliases;
-    }
-          
-    /* register the new encoding */
-    encoding->next=font_encodings;
-    font_encodings=encoding;
-
-    return encoding;
-  }
 }
 
 unsigned
-font_encoding_simple_recode(unsigned code, void *client_data)
+FontEncSimpleRecode(unsigned code, void *client_data)
 {
-  struct font_encoding_simple_mapping *map;
-  unsigned index;
+    FontEncSimpleMapPtr map;
+    unsigned index;
 
-  map=client_data;
+    map = client_data;
 
-  if(code>0xFFFF || (map->row_size && (code&0xFF)>=map->row_size))
-    return 0;
+    if(code > 0xFFFF || (map->row_size && (code&0xFF) >= map->row_size))
+        return 0;
 
-  if(map->row_size)
-    index=(code&0xFF)+(code>>8)*map->row_size;
-  else
-    index=code;
+    if(map->row_size)
+        index = (code&0xFF)+(code>>8)*map->row_size;
+    else
+        index = code;
 
   if(map->map && index>=map->first && index<map->first+map->len)    
     return map->map[index-map->first];
@@ -764,27 +808,134 @@ font_encoding_simple_recode(unsigned code, void *client_data)
 }
 
 char *
-font_encoding_simple_name(unsigned code, void *client_data)
+FontEncSimpleName(unsigned code, void *client_data)
 {
-  struct font_encoding_simple_naming *map;
+    FontEncSimpleNamePtr map;
 
-  map=client_data;
-  if(map && code>=map->first && code<map->first+map->len)
-    return map->map[code-map->first];
-  else
-    return NULL;
+    map = client_data;
+    if(map && code >= map->first && code<map->first+map->len)
+        return map->map[code-map->first];
+    else
+        return NULL;
 }
 
 unsigned
-font_encoding_undefined_recode(unsigned code, void *client_data)
+FontEncUndefinedRecode(unsigned code, void *client_data)
 {
-  return code;
+    return code;
 }
 
 char *
-font_encoding_undefined_name(unsigned code, void *client_data)
+FontEncUndefinedName(unsigned code, void *client_data)
 {
-  return NULL;
+    return NULL;
 }
 
+#define FONTENC_SEGMENT_SIZE 256
+#define FONTENC_SEGMENTS 256
+#define FONTENC_INVERSE_CODES (FONTENC_SEGMENT_SIZE * FONTENC_SEGMENTS)
 
+static unsigned int
+reverse_reverse(unsigned i, void* data)
+{
+    int s, j;
+    unsigned **map = (unsigned**)data;
+
+    if(i >= FONTENC_INVERSE_CODES)
+        return 0;
+
+    if(map == NULL)
+        return 0;
+
+    s = i / FONTENC_SEGMENT_SIZE;
+    j = i % FONTENC_SEGMENT_SIZE;
+
+    if(map[s] == NULL)
+        return 0;
+    else
+        return map[s][j];
+}
+
+static int
+tree_set(unsigned int **map, unsigned int i, unsigned int j)
+{
+    int s, c;
+
+    if(i >= FONTENC_INVERSE_CODES)
+        return FALSE;
+
+    s = i / FONTENC_SEGMENT_SIZE;
+    c = i % FONTENC_SEGMENT_SIZE;
+
+    if(map[s] == NULL) {
+        map[s] = calloc(FONTENC_SEGMENT_SIZE, sizeof(int)); 
+        if(map[s] == NULL)
+            return FALSE;
+  }
+
+    map[s][c] = j;
+    return TRUE;
+}
+
+FontMapReversePtr
+FontMapReverse(FontMapPtr mapping)
+{
+    FontEncPtr encoding = mapping->encoding;
+    FontMapReversePtr reverse = NULL;
+    unsigned int **map = NULL;
+    int i, j, k;
+
+    if(encoding == NULL) goto bail;
+
+    map = calloc(FONTENC_SEGMENTS, sizeof(int*));
+    if(map == NULL) goto bail;
+
+    if(encoding->row_size == 0) {
+        for(i = encoding->first; i < encoding->size; i++) {
+            k = FontEncRecode(i, mapping);
+            if(k != 0)
+                if(!tree_set(map, k, i))
+                    goto bail;
+        }
+    } else {
+        for(i = encoding->first; i < encoding->size; i++) {
+            for(j = encoding->first_col; j < encoding->row_size; j++) {
+                k = FontEncRecode(i*256 + j, mapping);
+                if(k != 0)
+                    if(!tree_set(map, k, i*256+j))
+                        goto bail;
+            }
+        }
+    }
+
+    reverse = malloc(sizeof(FontMapReverseRec));
+    if(!reverse) goto bail;
+
+    reverse->reverse = reverse_reverse;
+    reverse->data = map;
+    return reverse;
+
+  bail:
+    if(map)
+        xfree(map);
+    if(reverse)
+        xfree(reverse);
+    return NULL;
+}
+
+void
+FontMapReverseFree(FontMapReversePtr delendum)
+{
+    unsigned int **map = (unsigned int**)delendum;
+    int i;
+    
+    if(map == NULL)
+        return;
+
+    for(i = 0; i < FONTENC_SEGMENTS; i++)
+        if(map[i] != NULL)
+            xfree(map[i]);
+
+    xfree(map);
+    return;
+}

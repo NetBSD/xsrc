@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga.h,v 1.17 2001/05/04 19:05:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga.h,v 1.18 2001/11/21 22:32:58 alanh Exp $ */
 
 #ifndef _TGA_H_
 #define _TGA_H_
@@ -52,6 +52,7 @@ typedef struct {
     unsigned char *     IOBase;
     unsigned char *     ClkBase; /* TGA2 */
     unsigned char *     DACBase; /* TGA2 */
+    unsigned char *     HACKBase; /* TGA2 */
     long		FbMapSize;
     unsigned long	regOffset;
     Bool		NoAccel;
@@ -135,6 +136,8 @@ void DEC21030Save(ScrnInfoPtr pScrn, /*vgaRegPtr vgaReg,*/ TGARegPtr tgaReg/*,
 Bool DEC21030Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void write_av9110(ScrnInfoPtr pScrn, unsigned int *);
 void TGA2SetupMode(ScrnInfoPtr pScrn);
+void Ibm561Init(TGAPtr pTga);
+void Bt463Init(TGAPtr pTga);
 
 /* tga_accel.c */
 Bool DEC21030AccelInit(ScreenPtr pScreen);
@@ -164,6 +167,8 @@ void BT463ramdacRestore(ScrnInfoPtr pScrn, unsigned char *data);
 void IBM561ramdacSave(ScrnInfoPtr pScrn, unsigned char *data);
 void IBM561ramdacHWInit(ScrnInfoPtr pScrn);
 void IBM561ramdacRestore(ScrnInfoPtr pScrn, unsigned char *data);
+unsigned char IBM561ReadReg(ScrnInfoPtr pScrn, CARD32 reg);
+void IBM561WriteReg(ScrnInfoPtr pScrn, CARD32 reg, unsigned char data);
 
 /* tga_cursor.c */
 Bool TGAHWCursorInit(ScreenPtr pScreen);

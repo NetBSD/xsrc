@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/xditview/XFontName.c,v 1.3 2001/08/27 23:35:12 dawes Exp $ */
 /*
  * XFontName.c
  *
@@ -10,12 +11,12 @@
 #include	<ctype.h>
 
 static char *
-extractStringField (name, buffer, size, attrp, bit)
-	char		*name;
-	char		*buffer;
-	int		size;
-	unsigned int	*attrp;
-	unsigned int	bit;
+extractStringField (
+	char		*name,
+	char		*buffer,
+	int		size,
+	unsigned int	*attrp,
+	unsigned int	bit)
 {
 	char	*buf = buffer;
 
@@ -36,11 +37,11 @@ extractStringField (name, buffer, size, attrp, bit)
 }
 
 static char *
-extractUnsignedField (name, result, attrp, bit)
-	char		*name;
-	unsigned int	*result;
-	unsigned int	*attrp;
-	unsigned int	bit;
+extractUnsignedField (
+	char		*name,
+	unsigned int	*result,
+	unsigned int	*attrp,
+	unsigned int	bit)
 {
 	char		buf[256];
 	char		*c;
@@ -109,10 +110,10 @@ XParseFontName (fontNameString, fontName, fontNameAttributes)
 }
 
 static char *
-utoa (u, s, size)
-	unsigned int	u;
-	char		*s;
-	int		size;
+utoa (
+	unsigned int	u,
+	char		*s,
+	int		size)
 {
 	char	*t;
 
@@ -192,10 +193,12 @@ XFormatFontName (fontName, fontNameAttributes, fontNameString)
 	return True;
 }
 
+#if 0
 Bool
-XCompareFontName (name1, name2, fontNameAttributes)
-	XFontName	*name1, *name2;
-	unsigned int	fontNameAttributes;
+XCompareFontName (
+	XFontName	*name1,
+	XFontName	*name2,
+	unsigned int	fontNameAttributes)
 {
 #define CompareString(field,bit) \
 	if (fontNameAttributes & bit) \
@@ -225,9 +228,11 @@ XCompareFontName (name1, name2, fontNameAttributes)
 	return True;
 }
 
-XCopyFontName (name1, name2, fontNameAttributes)
-	XFontName	*name1, *name2;
-	unsigned int	fontNameAttributes;
+Bool
+XCopyFontName (
+	XFontName	*name1,
+	XFontName	*name2,
+	unsigned int	fontNameAttributes)
 {
 #define CopyString(field,bit) \
 	if (fontNameAttributes & bit) \
@@ -254,3 +259,4 @@ XCopyFontName (name1, name2, fontNameAttributes)
 	CopyString (CharSetEncoding, FontNameCharSetEncoding)
 	return True;
 }
+#endif

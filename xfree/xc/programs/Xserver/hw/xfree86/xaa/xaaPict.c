@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.12 2001/04/21 23:32:56 mvojkovi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.14 2001/06/03 19:47:59 mvojkovi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -191,8 +191,9 @@ XAADoComposite (
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_SCREEN(pScreen);
     RegionRec region;
     CARD32 *formats;
+    int flags = 0;
     BoxPtr pbox;
-    int nbox;
+    int nbox, w, h;
 
     if(!REGION_NUM_RECTS(pDst->pCompositeClip))
         return TRUE;
@@ -227,7 +228,7 @@ XAADoComposite (
 		
 	   /* pull out color expandable operations here */
 	   if((pMask->format == PICT_a1) && (alpha == 0xffff) &&
-	       (op == PictOpOver) && infoRec->WriteBitmap &&  
+	       (op == PictOpOver) && infoRec->WriteBitmap && !pMask->repeat &&
 	       !(infoRec->WriteBitmapFlags & NO_TRANSPARENCY) &&
 	       (!(infoRec->WriteBitmapFlags & RGB_EQUAL) || 
 	         (red == green == blue)))
@@ -269,11 +270,26 @@ XAADoComposite (
 		return TRUE;
 	  }
 
+	  if(!(formats = infoRec->CPUToScreenAlphaTextureFormats))
+		return FALSE;
+
+	  w = pMask->pDrawable->width;
+	  h = pMask->pDrawable->height;
+
+	  if(pMask->repeat) {
+	      if((infoRec->CPUToScreenAlphaTextureFlags & XAA_RENDER_NO_TILE) ||
+		   ((infoRec->CPUToScreenAlphaTextureFlags & 
+                                   XAA_RENDER_POWER_OF_2_TILE_ONLY) && 
+				((h & (h - 1)) || (w & (w - 1)))))
+	      {
+		 return FALSE;
+	      }
+	      flags |= XAA_RENDER_REPEAT;
+	  } 
+
 	  if((alpha != 0xffff) &&
               (infoRec->CPUToScreenAlphaTextureFlags & XAA_RENDER_NO_SRC_ALPHA))
 		return FALSE;
-
-	  formats = infoRec->CPUToScreenAlphaTextureFormats;
 
 	  while(*formats != pMask->format) {
 		if(!(*formats)) return FALSE;
@@ -297,7 +313,7 @@ XAADoComposite (
 			op, red, green, blue, alpha, pMask->format, 
 			((PixmapPtr)(pMask->pDrawable))->devPrivate.ptr,
 			((PixmapPtr)(pMask->pDrawable))->devKind, 
-			pMask->pDrawable->width, pMask->pDrawable->height, 0))
+			w, h, flags))
 	  {
                 REGION_UNINIT(pScreen, &region);
 		return FALSE;
@@ -319,7 +335,23 @@ XAADoComposite (
 	   return TRUE;
 	}
     } else {	
-	formats = infoRec->CPUToScreenTextureFormats;
+	if(!(formats = infoRec->CPUToScreenTextureFormats))
+	    return FALSE;
+
+        w = pSrc->pDrawable->width;
+        h = pSrc->pDrawable->height;
+
+        if(pSrc->repeat) {
+              if((infoRec->CPUToScreenTextureFlags & XAA_RENDER_NO_TILE) ||
+                   ((infoRec->CPUToScreenTextureFlags &
+                                   XAA_RENDER_POWER_OF_2_TILE_ONLY) &&
+                                ((h & (h - 1)) || (w & (w - 1)))))
+              {
+                 return FALSE;
+              }
+              flags |= XAA_RENDER_REPEAT;
+        }
+
 
 	while(*formats != pSrc->format) {
 	    if(!(*formats)) return FALSE;
@@ -339,12 +371,11 @@ XAADoComposite (
              return TRUE;
         }
 
-
 	if(!(infoRec->SetupForCPUToScreenTexture)(infoRec->pScrn,
 			op, pSrc->format, 
 			((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr,
 			((PixmapPtr)(pSrc->pDrawable))->devKind, 
-			pSrc->pDrawable->width, pSrc->pDrawable->height, 0))
+			w, h, flags))
         {
               REGION_UNINIT(pScreen, &region);
               return FALSE;

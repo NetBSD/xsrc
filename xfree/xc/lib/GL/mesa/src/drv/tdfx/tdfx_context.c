@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.c,v 1.1.2.1 2001/05/22 21:25:41 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.c,v 1.6 2001/12/13 00:34:21 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -35,6 +35,7 @@
  *
  */
 
+#include <dlfcn.h>
 #include "dri_glide.h"
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
@@ -134,7 +135,7 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
 					      fxScreen->sarea_priv_offset);
 
 
-   fxMesa = (tdfxContextPtr) Xmalloc( sizeof(tdfxContextRec) );
+   fxMesa = (tdfxContextPtr) MALLOC( sizeof(tdfxContextRec) );
    if ( !fxMesa ) {
       return GL_FALSE;
    }
@@ -168,7 +169,13 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
    fxMesa->glCtx = driContextPriv->mesaContext;
    fxMesa->glVis = mesaVis;
 
-   grDRIOpen( sPriv->pFB, fxScreen->regs.map, fxScreen->deviceID,
+   /* NOTE: This MUST be called before any Glide functions are called! */
+   if (!tdfxInitGlide(fxMesa)) {
+      FREE(fxMesa);
+      return GL_FALSE;
+   }
+
+   fxMesa->Glide.grDRIOpen( (char*) sPriv->pFB, fxScreen->regs.map, fxScreen->deviceID,
 	      fxScreen->width, fxScreen->height, fxScreen->mem, fxScreen->cpp,
 	      fxScreen->stride, fxScreen->fifoOffset, fxScreen->fifoSize,
 	      fxScreen->fbOffset, fxScreen->backOffset, fxScreen->depthOffset,
@@ -178,7 +185,7 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
    if ( getenv( "FX_GLIDE_SWAPINTERVAL" ) ) {
       fxMesa->Glide.SwapInterval = atoi( getenv( "FX_GLIDE_SWAPINTERVAL" ) );
    } else {
-      fxMesa->Glide.SwapInterval = 1;
+      fxMesa->Glide.SwapInterval = 0;
    }
    if ( getenv( "FX_MAX_PENDING_SWAPS" ) ) {
       fxMesa->Glide.MaxPendingSwaps = atoi( getenv( "FX_MAX_PENDING_SWAPS" ) );
@@ -268,7 +275,7 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
 
    LOCK_HARDWARE( fxMesa );
 
-   grGet( GR_GLIDE_VERTEXLAYOUT_SIZE, sizeof(FxI32), &result );
+   fxMesa->Glide.grGet( GR_GLIDE_VERTEXLAYOUT_SIZE, sizeof(FxI32), &result );
    for ( i = 0 ; i < TDFX_NUM_LAYOUTS ; i++ ) {
       fxMesa->layout[i] = MALLOC( result );
       if ( !fxMesa->layout[i] ) {
@@ -279,55 +286,55 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
 
    /* Single textured vertex format - 32 bytes.
     */
-   grReset( GR_VERTEX_PARAMETER );
+   fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
 
-   grCoordinateSpace( GR_WINDOW_COORDS );
-   grVertexLayout( GR_PARAM_XY,	TDFX_XY_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_XY,	TDFX_XY_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
 #if 0
-   grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
 #endif
 
-   grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_SINGLE] );
+   fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_SINGLE] );
 
    /* Multitextured vertex format - 40 bytes.
     */
-   grReset( GR_VERTEX_PARAMETER );
+   fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
 
-   grCoordinateSpace( GR_WINDOW_COORDS );
-   grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
 #if 0
-   grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
 #endif
 
-   grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_MULTI] );
+   fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_MULTI] );
 
    /* Projected texture vertex format - 48 bytes.
     */
-   grReset( GR_VERTEX_PARAMETER );
+   fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
 
-   grCoordinateSpace( GR_WINDOW_COORDS );
-   grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Q0, TDFX_Q0_OFFSET, GR_PARAM_ENABLE );
-   grVertexLayout( GR_PARAM_Q1, TDFX_Q1_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q0, TDFX_Q0_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q1, TDFX_Q1_OFFSET, GR_PARAM_ENABLE );
 #if 0
-   grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
 #endif
 
-   grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_PROJECT] );
+   fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_PROJECT] );
 
    UNLOCK_HARDWARE( fxMesa );
 
@@ -364,17 +371,17 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
     */
    DRM_LIGHT_LOCK( fxMesa->driFd, fxMesa->driHwLock, fxMesa->hHWContext );
 
-   grGlideInit();
-   grSstSelect( fxMesa->Glide.Board );
+   fxMesa->Glide.grGlideInit();
+   fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
 
-   fxMesa->Glide.Context = grSstWinOpen( (FxU32) -1,
+   fxMesa->Glide.Context = fxMesa->Glide.grSstWinOpen( (FxU32) -1,
 					 GR_RESOLUTION_NONE,
 					 GR_REFRESH_NONE,
 					 fxMesa->Glide.ColorFormat,
 					 fxMesa->Glide.Origin,
 					 2, 1 );
 
-   grDRIResetSAREA();
+   fxMesa->Glide.grDRIResetSAREA();
 
    DRM_UNLOCK( fxMesa->driFd, fxMesa->driHwLock, fxMesa->hHWContext );
 
@@ -391,22 +398,22 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
    LOCK_HARDWARE( fxMesa );
 
    if ( fxMesa->glVis->DepthBits > 0 ) {
-      grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
+      fxMesa->Glide.grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
    } else {
-      grDepthBufferMode(GR_DEPTHBUFFER_DISABLE);
+      fxMesa->Glide.grDepthBufferMode(GR_DEPTHBUFFER_DISABLE);
    }
 
-   grLfbWriteColorFormat( GR_COLORFORMAT_ABGR );
+   fxMesa->Glide.grLfbWriteColorFormat( GR_COLORFORMAT_ABGR );
 
-   grGet( GR_TEXTURE_ALIGN, sizeof(FxI32), result );
+   fxMesa->Glide.grGet( GR_TEXTURE_ALIGN, sizeof(FxI32), result );
    fxMesa->Glide.TextureAlign = result[0];
 
    fxMesa->Glide.State = NULL;
-   grGet( GR_GLIDE_STATE_SIZE, sizeof(FxI32), result );
+   fxMesa->Glide.grGet( GR_GLIDE_STATE_SIZE, sizeof(FxI32), result );
    fxMesa->Glide.State = MALLOC( result[0] );
 
    fxMesa->Fog.Table = NULL;
-   grGet( GR_FOG_TABLE_ENTRIES, sizeof(FxI32), result );
+   fxMesa->Glide.grGet( GR_FOG_TABLE_ENTRIES, sizeof(FxI32), result );
    fxMesa->Fog.Table = MALLOC( result[0] * sizeof(GrFog_t) );
 
    UNLOCK_HARDWARE( fxMesa );
@@ -425,14 +432,14 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
 
    LOCK_HARDWARE( fxMesa );
 
-   grGlideGetState( fxMesa->Glide.State );
+   fxMesa->Glide.grGlideGetState( fxMesa->Glide.State );
 
    if ( getenv( "FX_GLIDE_INFO" ) ) {
-      printf( "GR_RENDERER  = %s\n", (char *) grGetString( GR_RENDERER ) );
-      printf( "GR_VERSION   = %s\n", (char *) grGetString( GR_VERSION ) );
-      printf( "GR_VENDOR    = %s\n", (char *) grGetString( GR_VENDOR ) );
-      printf( "GR_HARDWARE  = %s\n", (char *) grGetString( GR_HARDWARE ) );
-      printf( "GR_EXTENSION = %s\n", (char *) grGetString( GR_EXTENSION ) );
+      printf( "GR_RENDERER  = %s\n", (char *) fxMesa->Glide.grGetString( GR_RENDERER ) );
+      printf( "GR_VERSION   = %s\n", (char *) fxMesa->Glide.grGetString( GR_VERSION ) );
+      printf( "GR_VENDOR    = %s\n", (char *) fxMesa->Glide.grGetString( GR_VENDOR ) );
+      printf( "GR_HARDWARE  = %s\n", (char *) fxMesa->Glide.grGetString( GR_HARDWARE ) );
+      printf( "GR_EXTENSION = %s\n", (char *) fxMesa->Glide.grGetString( GR_EXTENSION ) );
    }
 
    UNLOCK_HARDWARE( fxMesa );
@@ -469,10 +476,214 @@ void tdfxDestroyContext( tdfxContextPtr fxMesa )
       }
 
       tdfxTMClose( fxMesa );  /* free texture memory */
-      XFree( fxMesa );
+      FREE( fxMesa );
    }
 
 #if 0
    glx_fini_prof();
 #endif
+}
+
+
+
+/*
+ * Examine the context's deviceID to determine what kind of 3dfx hardware
+ * is installed.  dlopen() the appropriate Glide library and initialize
+ * this context's Glide function pointers.
+ * Return:  true/false = success/failure
+ */
+GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
+{
+   static const char *defaultGlide = "libglide3.so";
+   const char *libName;
+   void *libHandle;
+
+   /*
+    * XXX this code which selects a Glide library filename given the
+    * deviceID may need to be cleaned up a bit.
+    * Non-Linux systems may have different filenames, for example.
+    */
+   switch (tmesa->fxScreen->deviceID) {
+   case PCI_CHIP_BANSHEE:
+   case PCI_CHIP_VOODOO3:
+      libName = "libglide3-v3.so";
+      break;
+   case PCI_CHIP_VOODOO5:   /* same as PCI_CHIP_VOODOO4 */
+      libName = "libglide3-v5.so";
+      break;
+   default:
+      {
+         char err[1000];
+         sprintf(err, "unrecognized 3dfx deviceID: 0x%x",
+                 tmesa->fxScreen->deviceID);
+         __driMesaMessage(err);
+      }
+      return GL_FALSE;
+   }
+
+   libHandle = dlopen(libName, RTLD_NOW);
+   if (!libHandle) {
+      /* The device-specific Glide library filename didn't work, try the
+       * old, generic libglide3.so library.
+       */
+      libHandle = dlopen(defaultGlide, RTLD_NOW); 
+      if (!libHandle) {
+         char err[1000];
+         sprintf(err,
+            "can't find Glide library, dlopen(%s) and dlopen(%s) both failed.",
+            libName, defaultGlide);
+         __driMesaMessage(err);
+	 sprintf(err, "dlerror() message: %s", dlerror());
+	 __driMesaMessage(err);
+         return GL_FALSE;
+      }
+      libName = defaultGlide;
+   }
+
+   {
+      const char *env = getenv("LIBGL_DEBUG");
+      if (env && strstr(env, "verbose")) {
+         fprintf(stderr, "libGL: using Glide library %s\n", libName);
+      }
+   }         
+
+#define GET_FUNCTION(PTR, NAME)						\
+   tmesa->Glide.PTR = dlsym(libHandle, NAME);				\
+   if (!tmesa->Glide.PTR) {						\
+      char err[1000];							\
+      sprintf(err, "couldn't find Glide function %s in %s.",		\
+              NAME, libName);						\
+      __driMesaMessage(err);						\
+   }
+
+   GET_FUNCTION(grDrawPoint, "grDrawPoint");
+   GET_FUNCTION(grDrawLine, "grDrawLine");
+   GET_FUNCTION(grDrawTriangle, "grDrawTriangle");
+   GET_FUNCTION(grVertexLayout, "grVertexLayout");
+   GET_FUNCTION(grDrawVertexArray, "grDrawVertexArray");
+   GET_FUNCTION(grDrawVertexArrayContiguous, "grDrawVertexArrayContiguous");
+   GET_FUNCTION(grBufferClear, "grBufferClear");
+   /*GET_FUNCTION(grBufferSwap, "grBufferSwap");*/
+   GET_FUNCTION(grRenderBuffer, "grRenderBuffer");
+   GET_FUNCTION(grErrorSetCallback, "grErrorSetCallback");
+   GET_FUNCTION(grFinish, "grFinish");
+   GET_FUNCTION(grFlush, "grFlush");
+   GET_FUNCTION(grSstWinOpen, "grSstWinOpen");
+   GET_FUNCTION(grSstWinClose, "grSstWinClose");
+#if 0
+   /* Not in V3 lib, and not used anyway. */
+   GET_FUNCTION(grSetNumPendingBuffers, "grSetNumPendingBuffers");
+#endif
+   GET_FUNCTION(grSelectContext, "grSelectContext");
+   GET_FUNCTION(grSstOrigin, "grSstOrigin");
+   GET_FUNCTION(grSstSelect, "grSstSelect");
+   GET_FUNCTION(grAlphaBlendFunction, "grAlphaBlendFunction");
+   GET_FUNCTION(grAlphaCombine, "grAlphaCombine");
+   GET_FUNCTION(grAlphaControlsITRGBLighting, "grAlphaControlsITRGBLighting");
+   GET_FUNCTION(grAlphaTestFunction, "grAlphaTestFunction");
+   GET_FUNCTION(grAlphaTestReferenceValue, "grAlphaTestReferenceValue");
+   GET_FUNCTION(grChromakeyMode, "grChromakeyMode");
+   GET_FUNCTION(grChromakeyValue, "grChromakeyValue");
+   GET_FUNCTION(grClipWindow, "grClipWindow");
+   GET_FUNCTION(grColorCombine, "grColorCombine");
+   GET_FUNCTION(grColorMask, "grColorMask");
+   GET_FUNCTION(grCullMode, "grCullMode");
+   GET_FUNCTION(grConstantColorValue, "grConstantColorValue");
+   GET_FUNCTION(grDepthBiasLevel, "grDepthBiasLevel");
+   GET_FUNCTION(grDepthBufferFunction, "grDepthBufferFunction");
+   GET_FUNCTION(grDepthBufferMode, "grDepthBufferMode");
+   GET_FUNCTION(grDepthMask, "grDepthMask");
+   GET_FUNCTION(grDisableAllEffects, "grDisableAllEffects");
+   GET_FUNCTION(grDitherMode, "grDitherMode");
+   GET_FUNCTION(grFogColorValue, "grFogColorValue");
+   GET_FUNCTION(grFogMode, "grFogMode");
+   GET_FUNCTION(grFogTable, "grFogTable");
+   GET_FUNCTION(grLoadGammaTable, "grLoadGammaTable");
+   GET_FUNCTION(grSplash, "grSplash");
+   GET_FUNCTION(grGet, "grGet");
+   GET_FUNCTION(grGetString, "grGetString");
+   GET_FUNCTION(grQueryResolutions, "grQueryResolutions");
+   GET_FUNCTION(grReset, "grReset");
+   GET_FUNCTION(grGetProcAddress, "grGetProcAddress");
+   GET_FUNCTION(grEnable, "grEnable");
+   GET_FUNCTION(grDisable, "grDisable");
+   GET_FUNCTION(grCoordinateSpace, "grCoordinateSpace");
+   GET_FUNCTION(grDepthRange, "grDepthRange");
+#if defined(__linux__) || defined(__FreeBSD__) 
+   GET_FUNCTION(grStippleMode, "grStippleMode");
+   GET_FUNCTION(grStipplePattern, "grStipplePattern");
+#endif /* __linux__ || __FreeBSD__ */
+   GET_FUNCTION(grViewport, "grViewport");
+   GET_FUNCTION(grTexCalcMemRequired, "grTexCalcMemRequired");
+   GET_FUNCTION(grTexTextureMemRequired, "grTexTextureMemRequired");
+   GET_FUNCTION(grTexMinAddress, "grTexMinAddress");
+   GET_FUNCTION(grTexMaxAddress, "grTexMaxAddress");
+   GET_FUNCTION(grTexNCCTable, "grTexNCCTable");
+   GET_FUNCTION(grTexSource, "grTexSource");
+   GET_FUNCTION(grTexClampMode, "grTexClampMode");
+   GET_FUNCTION(grTexCombine, "grTexCombine");
+   GET_FUNCTION(grTexDetailControl, "grTexDetailControl");
+   GET_FUNCTION(grTexFilterMode, "grTexFilterMode");
+   GET_FUNCTION(grTexLodBiasValue, "grTexLodBiasValue");
+   GET_FUNCTION(grTexDownloadMipMap, "grTexDownloadMipMap");
+   GET_FUNCTION(grTexDownloadMipMapLevel, "grTexDownloadMipMapLevel");
+   GET_FUNCTION(grTexDownloadMipMapLevelPartial, "grTexDownloadMipMapLevelPartial");
+   GET_FUNCTION(grTexDownloadTable, "grTexDownloadTable");
+   GET_FUNCTION(grTexDownloadTablePartial, "grTexDownloadTablePartial");
+   GET_FUNCTION(grTexMipMapMode, "grTexMipMapMode");
+   GET_FUNCTION(grTexMultibase, "grTexMultibase");
+   GET_FUNCTION(grTexMultibaseAddress, "grTexMultibaseAddress");
+   GET_FUNCTION(grLfbLock, "grLfbLock");
+   GET_FUNCTION(grLfbUnlock, "grLfbUnlock");
+   GET_FUNCTION(grLfbConstantAlpha, "grLfbConstantAlpha");
+   GET_FUNCTION(grLfbConstantDepth, "grLfbConstantDepth");
+   GET_FUNCTION(grLfbWriteColorSwizzle, "grLfbWriteColorSwizzle");
+   GET_FUNCTION(grLfbWriteColorFormat, "grLfbWriteColorFormat");
+   GET_FUNCTION(grLfbWriteRegion, "grLfbWriteRegion");
+   GET_FUNCTION(grLfbReadRegion, "grLfbReadRegion");
+   GET_FUNCTION(grGlideInit, "grGlideInit");
+   GET_FUNCTION(grGlideShutdown, "grGlideShutdown");
+   GET_FUNCTION(grGlideGetState, "grGlideGetState");
+   GET_FUNCTION(grGlideSetState, "grGlideSetState");
+   GET_FUNCTION(grGlideGetVertexLayout, "grGlideGetVertexLayout");
+   GET_FUNCTION(grGlideSetVertexLayout, "grGlideSetVertexLayout");
+
+   /* Glide utility functions */
+   GET_FUNCTION(guFogGenerateExp, "guFogGenerateExp");
+   GET_FUNCTION(guFogGenerateExp2, "guFogGenerateExp2");
+   GET_FUNCTION(guFogGenerateLinear, "guFogGenerateLinear");
+
+   /* DRI functions */
+   GET_FUNCTION(grDRIOpen, "grDRIOpen");
+   GET_FUNCTION(grDRIPosition, "grDRIPosition");
+   /*GET_FUNCTION(grDRILostContext, "grDRILostContext");*/
+   GET_FUNCTION(grDRIImportFifo, "grDRIImportFifo");
+   GET_FUNCTION(grDRIInvalidateAll, "grDRIInvalidateAll");
+   GET_FUNCTION(grDRIResetSAREA, "grDRIResetSAREA");
+   GET_FUNCTION(grDRIBufferSwap, "grDRIBufferSwap");
+
+   /*
+    * Extension functions:
+    * Just use dlysm() because we want a NULL pointer if the function is
+    * not found.
+    */
+   /* PIXEXT extension */
+   tmesa->Glide.grStencilFunc = dlsym(libHandle, "grStencilFunc");
+   tmesa->Glide.grStencilMask = dlsym(libHandle, "grStencilMask");
+   tmesa->Glide.grStencilOp = dlsym(libHandle, "grStencilOp");
+   tmesa->Glide.grBufferClearExt = dlsym(libHandle, "grBufferClearExt");
+   tmesa->Glide.grColorMaskExt = dlsym(libHandle, "grColorMaskExt");
+   /* COMBINE extension */
+   tmesa->Glide.grColorCombineExt = dlsym(libHandle, "grColorCombineExt");
+   tmesa->Glide.grTexColorCombineExt = dlsym(libHandle, "grTexColorCombineExt");
+   tmesa->Glide.grAlphaCombineExt = dlsym(libHandle, "grAlphaCombineExt");
+   tmesa->Glide.grTexAlphaCombineExt = dlsym(libHandle, "grTexAlphaCombineExt");
+   tmesa->Glide.grAlphaBlendFunctionExt = dlsym(libHandle, "grAlphaBlendFunctionExt");
+   tmesa->Glide.grConstantColorValueExt = dlsym(libHandle, "grConstantColorValueExt");
+   /* Texus 2 */
+   tmesa->Glide.txImgQuantize = dlsym(libHandle, "txImgQuantize");
+   tmesa->Glide.txImgDequantizeFXT1 = dlsym(libHandle, "_txImgDequantizeFXT1");
+   tmesa->Glide.txErrorSetCallback = dlsym(libHandle, "txErrorSetCallback");
+   
+   return GL_TRUE;
 }

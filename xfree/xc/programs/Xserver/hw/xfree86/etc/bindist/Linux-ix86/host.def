@@ -1,7 +1,7 @@
 /*
  * Host.def for building Linux/ix86 bindists
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/Linux-ix86/host.def,v 1.7.2.1 2001/05/31 22:20:29 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/Linux-ix86/host.def,v 1.9 2001/06/05 23:00:41 dawes Exp $
  */
 
 #define InstallEmptyHostDef
@@ -11,9 +11,9 @@
 /* Need to have glide 2 and glide 3 installed, where available */
 
 #define HasGlide2 YES
-#if LinuxCLibMajorVersion > 5
+
+/* May need to turn this off for libc5 builds */
 #define HasGlide3 YES
-#endif
 
 #define BuildXF86DRI YES
 

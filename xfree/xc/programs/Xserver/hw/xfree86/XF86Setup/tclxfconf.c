@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.29 1999/09/04 13:04:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.30 2001/07/25 15:05:05 dawes Exp $ */
 /*
  * Copyright 1996,1999 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -43,9 +43,7 @@
 
 #include "xfsconf.h"
 
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -57,7 +55,6 @@ Bool Must_have_memory = FALSE;
 
 /* Error handling functions */
 
-#if NeedVarargsPrototypes
 void
 VErrorF(f, args)
     const char *f;
@@ -67,59 +64,24 @@ VErrorF(f, args)
     vsprintf(tmpbuf, f, args);
     Tcl_AppendResult(errinterp, tmpbuf, (char *) NULL);
 }
-#endif
 
-/*VARARGS1*/
 void
-ErrorF(
-#if NeedVarargsPrototypes
-    const char * f, ...)
-#else
- f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-#endif
+ErrorF(const char * f, ...)
 {
-#if NeedVarargsPrototypes
     va_list args;
     va_start(args, f);
     VErrorF(f, args);
     va_end(args);
-#else
-    char tmpbuf[1024];
-#ifdef AMOEBA
-    mu_lock(&print_lock);
-#endif
-    sprintf( tmpbuf, f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-    Tcl_AppendResult(errinterp, tmpbuf, (char *) NULL);
-#ifdef AMOEBA
-    mu_unlock(&print_lock);
-#endif
-#endif
 }
 
-/*VARARGS1*/
 void
-FatalError(
-#if NeedVarargsPrototypes
-    const char *f, ...)
-#else
-f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-#endif
+FatalError(const char *f, ...)
 {
-#if NeedVarargsPrototypes
     va_list args;
-#endif
     ErrorF("\nFatal server error:\n");
-#if NeedVarargsPrototypes
     va_start(args, f);
     VErrorF(f, args);
     va_end(args);
-#else
-    ErrorF(f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-#endif
     ErrorF("\n");
 }
 

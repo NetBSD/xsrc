@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidga.c,v 1.5 2001/01/06 20:58:05 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidga.c,v 1.8 2002/01/16 16:22:26 tsi Exp $ */
 /*
- * Copyright 2000 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,6 +20,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef AVOID_DGA
 
 #include "ati.h"
 #include "atiadjust.h"
@@ -87,9 +89,9 @@ ATIDGASetMode
     DGAModePtr  pDGAMode
 )
 {
-    ATIPtr         pATI      = ATIPTR(pScreenInfo);
+    ATIPtr         pATI    = ATIPTR(pScreenInfo);
     DisplayModePtr pMode;
-    int            scrnIndex = pScreenInfo->pScreen->myNum;
+    int            iScreen = pScreenInfo->scrnIndex;
     int            frameX0, frameY0;
 
     if (pDGAMode)
@@ -123,11 +125,11 @@ ATIDGASetMode
     ATIAdjustPreInit(pATI);
     ATIModePreInit(pScreenInfo, pATI, &pATI->NewHW);
 
-    if (!(*pScreenInfo->SwitchMode)(scrnIndex, pMode, 0))
+    if (!(*pScreenInfo->SwitchMode)(iScreen, pMode, 0))
         return FALSE;
     if (!pDGAMode)
         pATI->currentMode = NULL;
-    (*pScreenInfo->AdjustFrame)(scrnIndex, frameX0, frameY0, 0);
+    (*pScreenInfo->AdjustFrame)(iScreen, frameX0, frameY0, 0);
 
     return TRUE;
 }
@@ -164,18 +166,102 @@ ATIDGAGetViewport
     return 0;   /* There are never any pending requests */
 }
 
-static DGAFunctionRec ATIDGAFunctions =
+/*
+ * ATIDGAFillRect --
+ *
+ * This function calls XAA solid fill primitives to fill a rectangle.
+ */
+static void
+ATIDGAFillRect
+(
+    ScrnInfoPtr   pScreenInfo,
+    int           x,
+    int           y,
+    int           w,
+    int           h,
+    unsigned long colour
+)
 {
-    ATIDGAOpenFramebuffer,
-    NULL,       /* CloseFramebuffer */
-    ATIDGASetMode,
-    ATIDGASetViewport,
-    ATIDGAGetViewport,
-    NULL,       /* Sync */
-    NULL,       /* FillRect */
-    NULL,       /* BlitRect */
-    NULL,       /* BlitTransRect */
-};
+    ATIPtr        pATI     = ATIPTR(pScreenInfo);
+    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
+
+    (*pXAAInfo->SetupForSolidFill)(pScreenInfo, (int)colour, GXcopy,
+                                   (CARD32)(~0));
+    (*pXAAInfo->SubsequentSolidFillRect)(pScreenInfo, x, y, w, h);
+
+    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
+        SET_SYNC_FLAG(pXAAInfo);
+}
+
+/*
+ * ATIDGABlitRect --
+ *
+ * This function calls XAA screen-to-screen copy primitives to copy a
+ * rectangle.
+ */
+static void
+ATIDGABlitRect
+(
+    ScrnInfoPtr pScreenInfo,
+    int         xSrc,
+    int         ySrc,
+    int         w,
+    int         h,
+    int         xDst,
+    int         yDst
+)
+{
+    ATIPtr        pATI     = ATIPTR(pScreenInfo);
+    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
+    int           xdir     = ((xSrc < xDst) && (ySrc == yDst)) ? -1 : 1;
+    int           ydir     = (ySrc < yDst) ? -1 : 1;
+
+    (*pXAAInfo->SetupForScreenToScreenCopy)(pScreenInfo,
+        xdir, ydir, GXcopy, (CARD32)(~0), -1);
+    (*pXAAInfo->SubsequentScreenToScreenCopy)(pScreenInfo,
+        xSrc, ySrc, xDst, yDst, w, h);
+
+    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
+        SET_SYNC_FLAG(pXAAInfo);
+}
+
+/*
+ * ATIDGABlitTransRect --
+ *
+ * This function calls XAA screen-to-screen copy primitives to transparently
+ * copy a rectangle.
+ */
+static void
+ATIDGABlitTransRect
+(
+    ScrnInfoPtr   pScreenInfo,
+    int           xSrc,
+    int           ySrc,
+    int           w,
+    int           h,
+    int           xDst,
+    int           yDst,
+    unsigned long colour
+)
+{
+    ATIPtr        pATI     = ATIPTR(pScreenInfo);
+    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
+    int           xdir     = ((xSrc < xDst) && (ySrc == yDst)) ? -1 : 1;
+    int           ydir     = (ySrc < yDst) ? -1 : 1;
+
+    pATI->XAAForceTransBlit = TRUE;
+
+    (*pXAAInfo->SetupForScreenToScreenCopy)(pScreenInfo,
+        xdir, ydir, GXcopy, (CARD32)(~0), (int)colour);
+
+    pATI->XAAForceTransBlit = FALSE;
+
+    (*pXAAInfo->SubsequentScreenToScreenCopy)(pScreenInfo,
+        xSrc, ySrc, xDst, yDst, w, h);
+
+    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
+        SET_SYNC_FLAG(pXAAInfo);
+}
 
 /*
  * ATIDGAAddModes --
@@ -187,6 +273,7 @@ ATIDGAAddModes
 (
     ScrnInfoPtr pScreenInfo,
     ATIPtr      pATI,
+    int         flags,
     int         depth,
     int         bitsPerPixel,
     int         redMask,
@@ -237,13 +324,13 @@ ATIDGAAddModes
 
                 /* Fill in the mode structure */
                 pDGAMode->mode = pMode;
-                pDGAMode->flags = DGA_CONCURRENT_ACCESS;
+                pDGAMode->flags = flags;
                 if (bitsPerPixel == pScreenInfo->bitsPerPixel)
                 {
                     pDGAMode->flags |= DGA_PIXMAP_AVAILABLE;
                     pDGAMode->address = pATI->pMemory;
 
-                    if (pATI->OptionAccel)
+                    if (pATI->pXAAInfo)
                         pDGAMode->flags &= ~DGA_CONCURRENT_ACCESS;
                 }
                 if ((pMode->Flags & V_DBLSCAN) || (pMode->VScan > 1))
@@ -305,6 +392,9 @@ ATIDGAInit
     ATIPtr      pATI
 )
 {
+    XAAInfoRecPtr pXAAInfo;
+    int           flags;
+
     if (!pATI->nDGAMode)
     {
 
@@ -320,40 +410,70 @@ ATIDGAInit
 
 #endif /* AVOID_CPIO */
 
-        ATIDGAAddModes(pScreenInfo, pATI,
+        /* Set up DGA callbacks */
+        pATI->ATIDGAFunctions.OpenFramebuffer = ATIDGAOpenFramebuffer;
+        pATI->ATIDGAFunctions.SetMode         = ATIDGASetMode;
+        pATI->ATIDGAFunctions.SetViewport     = ATIDGASetViewport;
+        pATI->ATIDGAFunctions.GetViewport     = ATIDGAGetViewport;
+
+        flags = 0;
+        if ((pXAAInfo = pATI->pXAAInfo))
+        {
+            pATI->ATIDGAFunctions.Sync = pXAAInfo->Sync;
+            if (pXAAInfo->SetupForSolidFill &&
+                pXAAInfo->SubsequentSolidFillRect)
+            {
+                flags |= DGA_FILL_RECT;
+                pATI->ATIDGAFunctions.FillRect = ATIDGAFillRect;
+            }
+            if (pXAAInfo->SetupForScreenToScreenCopy &&
+                pXAAInfo->SubsequentScreenToScreenCopy)
+            {
+                flags |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
+                pATI->ATIDGAFunctions.BlitRect      = ATIDGABlitRect;
+                pATI->ATIDGAFunctions.BlitTransRect = ATIDGABlitTransRect;
+            }
+        }
+        if (!flags)
+            flags = DGA_CONCURRENT_ACCESS;
+
+        ATIDGAAddModes(pScreenInfo, pATI, flags,
             8, 8, 0, 0, 0, PseudoColor);
 
         if ((pATI->Chip >= ATI_CHIP_264CT) &&
             (pATI->Chipset == ATI_CHIPSET_ATI))
         {
-            ATIDGAAddModes(pScreenInfo, pATI, 15, 16,
-                0x7C00U, 0x03E0U, 0x001FU, TrueColor);
+            ATIDGAAddModes(pScreenInfo, pATI, flags,
+                15, 16, 0x7C00U, 0x03E0U, 0x001FU, TrueColor);
 
-            ATIDGAAddModes(pScreenInfo, pATI, 16, 16,
-                0xF800U, 0x07E0U, 0x001FU, TrueColor);
+            ATIDGAAddModes(pScreenInfo, pATI, flags,
+                16, 16, 0xF800U, 0x07E0U, 0x001FU, TrueColor);
 
-            ATIDGAAddModes(pScreenInfo, pATI, 24, 24,
-                0x00FF0000U, 0x0000FF00U, 0x000000FFU, TrueColor);
+            ATIDGAAddModes(pScreenInfo, pATI, flags,
+                24, 24, 0x00FF0000U, 0x0000FF00U, 0x000000FFU, TrueColor);
 
-            ATIDGAAddModes(pScreenInfo, pATI, 24, 32,
-                0x00FF0000U, 0x0000FF00U, 0x000000FFU, TrueColor);
+            ATIDGAAddModes(pScreenInfo, pATI, flags,
+                24, 32, 0x00FF0000U, 0x0000FF00U, 0x000000FFU, TrueColor);
 
             if (pATI->DAC != ATI_DAC_INTERNAL)      /* Not first revision */
             {
-                ATIDGAAddModes(pScreenInfo, pATI, 15, 16,
-                    0x7C00U, 0x03E0U, 0x001FU, DirectColor);
+                ATIDGAAddModes(pScreenInfo, pATI, flags,
+                    15, 16, 0x7C00U, 0x03E0U, 0x001FU, DirectColor);
 
-                ATIDGAAddModes(pScreenInfo, pATI, 16, 16,
-                    0xF800U, 0x07E0U, 0x001FU, DirectColor);
+                ATIDGAAddModes(pScreenInfo, pATI, flags,
+                    16, 16, 0xF800U, 0x07E0U, 0x001FU, DirectColor);
 
-                ATIDGAAddModes(pScreenInfo, pATI, 24, 24,
-                    0x00FF0000U, 0x0000FF00U, 0x000000FFU, DirectColor);
+                ATIDGAAddModes(pScreenInfo, pATI, flags,
+                    24, 24, 0x00FF0000U, 0x0000FF00U, 0x000000FFU, DirectColor);
 
-                ATIDGAAddModes(pScreenInfo, pATI, 24, 32,
-                    0x00FF0000U, 0x0000FF00U, 0x000000FFU, DirectColor);
+                ATIDGAAddModes(pScreenInfo, pATI, flags,
+                    24, 32, 0x00FF0000U, 0x0000FF00U, 0x000000FFU, DirectColor);
             }
         }
     }
 
-    return DGAInit(pScreen, &ATIDGAFunctions, pATI->pDGAMode, pATI->nDGAMode);
+    return DGAInit(pScreen, &pATI->ATIDGAFunctions, pATI->pDGAMode,
+                   pATI->nDGAMode);
 }
+
+#endif /* AVOID_DGA */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.c,v 1.7 2001/03/25 05:32:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.c,v 1.8 2001/10/01 13:44:13 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -742,7 +742,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 	dump_registers(pInt);
 	if (xf86GetVerbosity() > 3)
 	    stack_trace(pInt);
-	return 1;
+	return 0;
     }
 }
 

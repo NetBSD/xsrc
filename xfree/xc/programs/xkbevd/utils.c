@@ -1,6 +1,6 @@
 
   /*\
-   * $XFree86: xc/programs/xkbevd/utils.c,v 3.4 2001/01/17 23:46:08 dawes Exp $
+   * $XFree86: xc/programs/xkbevd/utils.c,v 3.6 2002/01/14 18:30:11 dawes Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION
@@ -27,13 +27,10 @@
   \*/
 /* $Xorg: utils.c,v 1.5 2000/08/17 19:54:49 cpqbld Exp $ */
 
+#define DEBUG_VAR_LOCAL
 #include 	"utils.h"
 #include	<ctype.h>
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-char *malloc();
-#endif
+#include	<stdlib.h>
 
 /***====================================================================***/
 

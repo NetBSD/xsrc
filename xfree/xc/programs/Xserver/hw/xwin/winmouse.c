@@ -30,7 +30,7 @@
  *		Peter Busch
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winmouse.c,v 1.3 2001/05/08 08:14:09 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winmouse.c,v 1.4 2001/10/29 21:10:24 alanh Exp $ */
 
 #include "win.h"
 
@@ -39,10 +39,12 @@ winMouseCtrl (DeviceIntPtr pDevice, PtrCtrl *pCtrl)
 {
 }
 
+
 /*
  * See Porting Layer Definition - p. 18
  * This is known as a DeviceProc
  */
+
 int
 winMouseProc (DeviceIntPtr pDeviceInt, int iState)
 {
@@ -76,6 +78,7 @@ winMouseProc (DeviceIntPtr pDeviceInt, int iState)
     }
   return Success;
 }
+
 
 /* Handle the mouse wheel */
 int
@@ -169,9 +172,11 @@ winMouseWheel (ScreenPtr pScreen, int iDeltaZ)
   return 0;
 }
 
+
 /*
  * Enqueue a mouse button event
  */
+
 void
 winMouseButtonsSendEvent (int iEventType, int iButton)
 {
@@ -185,9 +190,11 @@ winMouseButtonsSendEvent (int iEventType, int iButton)
   mieqEnqueue (&xCurrentEvent);
 }
 
+
 /*
  * Decide what to do with a Windows mouse message
  */
+
 int
 winMouseButtonsHandle (ScreenPtr pScreen,
 		       int iEventType, int iButton,

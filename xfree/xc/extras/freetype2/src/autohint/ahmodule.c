@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auto-hinting module implementation (declaration).                    */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -24,6 +24,12 @@
 #include "ahhint.h"
 
 
+#ifdef  DEBUG_HINTER
+   extern AH_Hinter*  ah_debug_hinter = NULL;
+   extern FT_Bool     ah_debug_disable_horz = 0;
+   extern FT_Bool     ah_debug_disable_vert = 0;
+#endif
+
   typedef struct  FT_AutoHinterRec_
   {
     FT_ModuleRec  root;
@@ -32,35 +38,46 @@
   } FT_AutoHinterRec;
 
 
-  FT_CALLBACK_DEF
-  FT_Error  ft_autohinter_init( FT_AutoHinter  module )
+  FT_CALLBACK_DEF( FT_Error )
+  ft_autohinter_init( FT_AutoHinter  module )
   {
-    return ah_hinter_new( module->root.library, &module->hinter );
+    FT_Error  error;
+
+    error = ah_hinter_new( module->root.library, &module->hinter );
+#ifdef DEBUG_HINTER
+    if ( !error )
+      ah_debug_hinter = module->hinter;
+#endif
+    return error;
   }
 
 
-  FT_CALLBACK_DEF
-  void  ft_autohinter_done( FT_AutoHinter  module )
+  FT_CALLBACK_DEF( void )
+  ft_autohinter_done( FT_AutoHinter  module )
   {
     ah_hinter_done( module->hinter );
+
+#ifdef DEBUG_HINTER
+    ah_debug_hinter = NULL;
+#endif
   }
 
 
-  FT_CALLBACK_DEF
-  FT_Error  ft_autohinter_load( FT_AutoHinter  module,
-                                FT_GlyphSlot   slot,
-                                FT_Size        size,
-                                FT_UInt        glyph_index,
-                                FT_ULong       load_flags )
+  FT_CALLBACK_DEF( FT_Error )
+  ft_autohinter_load( FT_AutoHinter  module,
+                      FT_GlyphSlot   slot,
+                      FT_Size        size,
+                      FT_UInt        glyph_index,
+                      FT_ULong       load_flags )
   {
     return ah_hinter_load_glyph( module->hinter,
                                  slot, size, glyph_index, load_flags );
   }
 
 
-  FT_CALLBACK_DEF
-  void   ft_autohinter_reset( FT_AutoHinter  module,
-                              FT_Face        face )
+  FT_CALLBACK_DEF( void )
+  ft_autohinter_reset( FT_AutoHinter  module,
+                       FT_Face        face )
   {
     UNUSED( module );
 
@@ -69,20 +86,20 @@
   }
 
 
-  FT_CALLBACK_DEF
-  void  ft_autohinter_get_globals( FT_AutoHinter  module,
-                                   FT_Face        face,
-                                   void**         global_hints,
-                                   long*          global_len )
+  FT_CALLBACK_DEF( void )
+  ft_autohinter_get_globals( FT_AutoHinter  module,
+                             FT_Face        face,
+                             void**         global_hints,
+                             long*          global_len )
   {
     ah_hinter_get_global_hints( module->hinter, face,
                                 global_hints, global_len );
   }
 
 
-  FT_CALLBACK_DEF
-  void  ft_autohinter_done_globals( FT_AutoHinter  module,
-                                    void*          global_hints )
+  FT_CALLBACK_DEF( void )
+  ft_autohinter_done_globals( FT_AutoHinter  module,
+                              void*          global_hints )
   {
     ah_hinter_done_global_hints( module->hinter, global_hints );
   }

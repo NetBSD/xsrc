@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.8.2.1 2001/05/21 22:24:02 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.10 2001/10/28 03:34:08 tsi Exp $
  */
 
 #include "xf86config.h"
@@ -146,7 +146,7 @@ ScreenConfig(XtPointer conf)
 	(&xf86info);
 
     if (ConfigLoop(NULL) == True) {
-	XF86ModePtr prev, mod;
+	XF86ModePtr prev = NULL, mod;
 
 	/* user may have changed the default depth, read variables again */
 	disp = screen->scrn_display_lst;

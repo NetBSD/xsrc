@@ -1,9 +1,13 @@
-/* $Xorg: OpenDis.c,v 1.3 2000/08/17 19:44:47 cpqbld Exp $ */
+/* $Xorg: OpenDis.c,v 1.4 2001/02/09 02:03:34 xorgcvs Exp $ */
 /*
 
 Copyright 1985, 1986, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/OpenDis.c,v 3.9 2001/01/17 19:41:41 dawes Exp $ */
+/* $XFree86: xc/lib/X11/OpenDis.c,v 3.12 2001/12/14 19:54:03 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -29,14 +33,11 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xatom.h>
 #include "bigreqstr.h"
 #include <stdio.h>
+#include "Xintconn.h"
 
 #ifdef XKB
 #include "XKBlib.h"
 #endif /* XKB */
-
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
 
 #ifdef X_NOT_POSIX
 #define Size_t unsigned int
@@ -51,14 +52,14 @@ typedef struct {
     int opcode;
 } _XBigReqState;
 
-extern int _Xdebug;
 #ifdef WIN32
 int *_Xdebug_p = &_Xdebug;
 #endif
 
 #ifdef XTHREADS
-int  (*_XInitDisplayLock_fn)() = NULL;
-void (*_XFreeDisplayLock_fn)() = NULL;
+#include "locking.h"
+int  (*_XInitDisplayLock_fn)(Display *dpy) = NULL;
+void (*_XFreeDisplayLock_fn)(Display *dpy) = NULL;
 
 #define InitDisplayLock(d)	(_XInitDisplayLock_fn ? (*_XInitDisplayLock_fn)(d) : Success)
 #define FreeDisplayLock(d)	if (_XFreeDisplayLock_fn) (*_XFreeDisplayLock_fn)(d)
@@ -71,21 +72,9 @@ static xReq _dummy_request = {
 	0, 0, 0
 };
 
-static void OutOfMemory();
-static Bool _XBigReqHandler();
-
-extern Bool _XWireToEvent();
-extern Status _XUnknownNativeEvent();
-extern Bool _XUnknownWireEvent();
-
-/* XlibInt.c */
-extern Bool _XPollfdCacheInit();
-
-/* ConnDis.c */
-extern int _XDisconnectDisplay();
-
-/* FreeEData.c */
-extern int _XFreeExtData();
+static void OutOfMemory(Display *dpy, char *setup);
+static Bool _XBigReqHandler(Display *dpy, xReply *rep, char *buf, int len,
+				XPointer data);
 
 /* 
  * Connects to a server, creates a Display object and returns a pointer to
@@ -125,10 +114,6 @@ Display *XOpenDisplay (display)
 	char *conn_auth_name, *conn_auth_data;
 	int conn_auth_namelen, conn_auth_datalen;
 	unsigned long mask;
-	extern Bool _XSendClientPrefix();
-	extern XtransConnInfo _X11TransConnectDisplay();
-	extern XID _XAllocID();
-	extern void _XAllocIDs();
 
 	bzero((char *) &client, sizeof(client));
 	bzero((char *) &prefix, sizeof(prefix));

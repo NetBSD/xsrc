@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.3 2001/02/09 03:23:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.5 2001/11/21 22:43:00 dawes Exp $ */
 /*
 Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
 
@@ -106,11 +106,13 @@ void S3VInitVideo(ScreenPtr pScreen)
 	(pScrn->bitsPerPixel == 16)
 	) 
        &&
-       ((ps3v->Chipset == S3_ViRGE_DXGX) /* || */
-	/* S3_ViRGE_GX2_SERIES(ps3v->Chipset) || */
+       ((ps3v->Chipset == S3_ViRGE_DXGX)  || 
+	S3_ViRGE_MX_SERIES(ps3v->Chipset) || 
+	S3_ViRGE_GX2_SERIES(ps3v->Chipset) /* || */
 	/* (ps3v->Chipset == S3_ViRGE) */
 	)
        && !ps3v->NoAccel
+       && ps3v->XVideo
        )
     {
 	#if 0
@@ -625,7 +627,7 @@ S3VClipVideo(
 
 
 static void 
-S3VStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+S3VStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
   S3VPtr ps3v = S3VPTR(pScrn);
   S3VPortPrivPtr pPriv = ps3v->portPrivate;
@@ -646,28 +648,21 @@ S3VStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
 
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
 
-  if(exit) {
+  if(shutdown) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON)
        {
-#if 0
-	 /*OUTREG(MGAREG_BESCTL, 0);*/
-	 /*OUTREG(SSTREAM_CONTROL_REG, 0x02000000);*/
-
-	 OUTREG(SSTREAM_CONTROL_REG, 0);
-	 /*OUTREG(SSTREAM_STRIDE_REG, 0 );*/
-	 
-	 /*OUTREG(K1_VSCALE_REG, 0 );
-	 OUTREG(K2_VSCALE_REG, 0 );
-	 */
-	 OUTREG(DDA_VERT_REG, 0 );
-
-	 /*OUTREG(SSTREAM_START_REG, ((dstBox->x1 +1) << 16) | (dstBox->y1 +1));
-	 OUTREG(SSTREAM_WINDOW_SIZE_REG, 0);
-	  */
-#endif	 
-	 if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
+	 if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	      S3_ViRGE_MX_SERIES(ps3v->Chipset)
+	      )
 	   {
-	     OUTREG(SSTREAM_CONTROL_REG, 0);
+	     /*  Aaarg... It .. won't.. go .. away!  */
+	     /* So let's be creative, make the overlay really */
+	     /* small and near an edge. */
+	     /* Size of 0 leaves a window sized vertical stripe */
+	     /* Size of 1 leaves a single pixel.. */
+	     OUTREG(SSTREAM_WINDOW_SIZE_REG, 1);
+	     /* And hide it at 0,0 */
+	     OUTREG(SSTREAM_START_REG, 0 );
 	   }
 	 else
 	   {
@@ -839,30 +834,27 @@ S3VDisplayVideoOverlay(
       else 
 	tmp =2;
       /* YCbCr-16 */
-    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
-      {
-	OUTREG(SSTREAM_CONTROL_REG, 
-	       tmp << 28 | 0x05000000 | 0x800000 |
-	       ((((src_w-1)<<1)-(drw_w-1)) & 0xfff)
-	       );
-      }
-    else
-      {
-	OUTREG(SSTREAM_CONTROL_REG, 
-	       tmp << 28 | 0x01000000 |
-	       ((((src_w-1)<<1)-(drw_w-1)) & 0xfff)
-	       );
-      }
+    OUTREG(SSTREAM_CONTROL_REG, 
+	   tmp << 28 | 0x01000000 |
+	   ((((src_w-1)<<1)-(drw_w-1)) & 0xfff)
+	   );
 
     OUTREG(SSTREAM_STRETCH_REG, 
-	   ((src_w - 1) & 0x7ff) | (((src_w-drw_w) & 0x7ff) << 16)
+	   ((src_w - 1) & 0x7ff) | (((src_w-drw_w-1) & 0x7ff) << 16)	   
 	   );
 
     /* Color key on primary */
-    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
+    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	 S3_ViRGE_MX_SERIES(ps3v->Chipset)
+	 )
       {
-	/*OUTREG(BLEND_CONTROL_REG, 0x00000000)*/
-	;
+	/* 100% of secondary, no primary */
+	/* gx2/mx can both blend while keying, need to */
+	/* select secondary here, otherwise all you'll get */
+	/* from the primary is the color key.  (And setting */
+	/* 0 here gives you black... no primary or secondary. */
+	/* Discovered that the hard way!) */
+	OUTREG(BLEND_CONTROL_REG, 0x20 );
       }
     else
       {
@@ -875,7 +867,8 @@ S3VDisplayVideoOverlay(
     OUTREG(K1_VSCALE_REG, src_h-1 );
     OUTREG(K2_VSCALE_REG, (src_h - drw_h) & 0x7ff );
 
-    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
+    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) || 
+	 S3_ViRGE_MX_SERIES(ps3v->Chipset) )
       {
 	/* enable vert interp. & bandwidth saving - gx2 */
 	OUTREG(DDA_VERT_REG, (((~drw_h)-1) & 0xfff ) |
@@ -894,14 +887,13 @@ S3VDisplayVideoOverlay(
 	   ( ((drw_w-1) << 16) | (drw_h ) ) & 0x7ff07ff
 	   );
 
-    /*cep*/
-    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
+    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	 S3_ViRGE_MX_SERIES(ps3v->Chipset)
+	 )
       {
 	OUTREG(COL_CHROMA_KEY_CONTROL_REG, 
-	       /* color key ON */
-	       /*0xc0000000 | */
-	       /*0x40000000  | */
-	       0x40000000  |
+	       /* color key ON - keying on primary */
+	       0x40000000  | 
 	       /* # bits to compare */
 	       ((pScrn->weight.red-1) << 24) |
 
@@ -934,7 +926,8 @@ S3VDisplayVideoOverlay(
 	       );
       }
 
-    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) )
+    if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	 S3_ViRGE_MX_SERIES(ps3v->Chipset) )
       {
 	VGAOUT8(vgaCRIndex, 0x92);
 	VGAOUT8(vgaCRReg, (((pitch + 7) / 8) >> 8) | 0x80);

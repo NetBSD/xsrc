@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.17 2000/11/13 23:09:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.18 2001/06/13 23:10:43 dawes Exp $ */
 
 /*
  *
@@ -76,6 +76,8 @@ void LoaderSortExtensions(void);
 
 void LoaderVReqSymLists(const char **, va_list args);
 void LoaderVReqSymbols(const char *, va_list args);
+void LoaderVRefSymLists(const char **, va_list args);
+void LoaderVRefSymbols(const char *, va_list args);
 
 void LoaderShowStack(void);
 void *LoaderSymbolHandle(const char *, int);

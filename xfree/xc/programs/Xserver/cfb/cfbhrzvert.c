@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.5 2001/01/17 22:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.7 2001/12/14 19:59:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987,1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: cfbhrzvert.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
+/* $Xorg: cfbhrzvert.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $ */
 #include "X.h"
 
 #include "gc.h"
@@ -67,10 +71,10 @@ int y1;
 int len;		/* length of line */
 {
     register int nlmiddle;
-    register CfbBits startmask;
-    register CfbBits endmask;
+
 #if PSZ == 24
-    int leftIndex, rightIndex, xOffset;
+
+    int leftIndex, rightIndex;
     CfbBits piQxelAnd[3], piQxelXor[3];
     piQxelAnd[0] = (and & 0xFFFFFF) | ((and<<24)  & 0xFF000000);
     piQxelAnd[1] = ((and>>8)  & 0xFFFF)| ((and<<16) & 0xFFFF0000);
@@ -275,6 +279,9 @@ int len;		/* length of line */
       }
     }
 #else
+    register CfbBits startmask;
+    register CfbBits endmask;
+
     addrl = addrl + (y1 * nlwidth) + (x1 >> PWSH);
 
     /* all bits inside same longword */
@@ -338,7 +345,7 @@ register int len;	/* length of line */
 {
 #if PSZ == 24
     int xIdx;
-    CfbBits and2, xor2, offset, mask, mask2;
+    CfbBits and2 = 0, xor2 = 0, mask = 0, mask2;
 #endif
 #ifdef PIXEL_ADDR
     register PixelType    *bits = (PixelType *) addrl;

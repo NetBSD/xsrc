@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.2 2000/09/26 15:56:43 tsi Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.3 2001/10/28 03:32:10 tsi Exp $ */
 
 /*****************************************************************************\
 * parse.c:                                                                    *
@@ -33,6 +33,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.3 2001/10/28 03:32:10 tsi Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -174,7 +175,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
     XpmColor **colorTablePtr;
     xpmHashTable *hashtable;
 {
-    unsigned int key, l, a, b;
+    unsigned int key = 0, l, a, b;
     unsigned int curkey;		/* current color key */
     unsigned int lastwaskey;		/* key read */
     char buf[BUFSIZ];
@@ -224,7 +225,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
 	    curkey = 0;
 	    lastwaskey = 0;
 	    *curbuf = '\0';		/* init curbuf */
-	    while (l = xpmNextWord(data, buf, BUFSIZ)) {
+	    while ((l = xpmNextWord(data, buf, BUFSIZ))) {
 		if (!lastwaskey) {
 		    for (key = 0, sptr = xpmColorKeys; key < NKEYS; key++,
 			 sptr++)
@@ -304,7 +305,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
 	     */
 	    xpmNextString(data);	/* get to the next string */
 	    *curbuf = '\0';		/* init curbuf */
-	    while (l = xpmNextWord(data, buf, BUFSIZ)) {
+	    while ((l = xpmNextWord(data, buf, BUFSIZ))) {
 		if (*curbuf != '\0')
 		    strcat(curbuf, " ");/* append space */
 		buf[l] = '\0';
@@ -695,7 +696,7 @@ xpmParseData(data, image, info)
     /*
      * parse extensions
      */
-    if (info && (info->valuemask & XpmReturnExtensions))
+    if (info && (info->valuemask & XpmReturnExtensions)) {
 	if (extensions) {
 	    ErrorStatus = xpmParseExtensions(data, &info->extensions,
 					     &info->nextensions);
@@ -705,6 +706,7 @@ xpmParseData(data, image, info)
 	    info->extensions = NULL;
 	    info->nextensions = 0;
 	}
+    }
 
     /*
      * store found informations in the XpmImage structure

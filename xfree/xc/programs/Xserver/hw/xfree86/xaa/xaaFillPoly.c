@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaFillPoly.c,v 1.13 2000/05/03 00:44:22 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaFillPoly.c,v 1.15 2001/10/28 03:34:04 tsi Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -41,8 +41,7 @@
 #include "pixmapstr.h"
 #include "xf86str.h"
 #include "mi.h"
-#define PSZ 8   /* PSZ doesn't matter */
-#include "cfb.h"
+#include "micoord.h"
 
 #include "xaa.h"
 #include "xaalocal.h"
@@ -124,7 +123,7 @@ XAAIsEasyPolygon(
    int *topY, int *bottomY,	/* return */
    int shape
 ){
-    int c,vertex1, vertex2;
+    int c = 0, vertex1, vertex2;
 
     *topY = 32767;
     *bottomY = 0;
@@ -153,7 +152,7 @@ XAAIsEasyPolygon(
 	int dx2, dx1, x1, x2;
 
 	x2 = x1 = -1;
-	dx1 = 1;
+	dx2 = dx1 = 1;
 
     	while (count--) {
 	    c = *((int*)ptsIn);
@@ -205,8 +204,10 @@ XAAFillPolygonSolid(
     XAAInfoRecPtr   infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
     int    	    origin, vertex1, vertex2;
     int		    *vertex1p, *vertex2p, *endp;
-    int		    x1, x2, dx1, dx2, dy1, dy2, DX1, DX2, e1, e2;
-    int		    step1, step2, sign1, sign2;
+    int		    x1 = 0, x2 = 0;
+    int 	    dx1 = 0, dx2 = 0, dy1 = 0, dy2 = 0;
+    int		    DX1 = 0, DX2 = 0, e1 = 0, e2 = 0;
+    int		    step1 = 0, step2 = 0, sign1 = 0, sign2 = 0;
     int		    c, y, maxy, h, yoffset;
     DDXPointPtr	    topPoint;
 
@@ -357,8 +358,10 @@ XAAFillPolygonHelper(
 ){
     int		    *vertex1p, *vertex2p, *endp;
     int		    vertex1, vertex2;
-    int		    x1, x2, dx1, dx2, dy1, dy2, DX1, DX2, e1, e2;
-    int		    step1, step2, sign1, sign2;
+    int		    x1 = 0, x2 = 0;
+    int		    dx1 = 0, dx2 = 0, dy1 = 0, dy2 = 0;
+    int		    DX1 = 0, DX2 = 0, e1 = 0, e2 = 0;
+    int		    step1 = 0, step2 = 0, sign1 = 0, sign2 = 0;
     int		    c, h, yoffset;
 
 

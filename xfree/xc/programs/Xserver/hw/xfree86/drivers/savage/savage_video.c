@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_video.c,v 1.3 2001/05/18 23:35:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_video.c,v 1.7 2001/11/21 22:43:01 dawes Exp $ */
 
 #include "Xv.h"
 #include "dix.h"
@@ -115,8 +115,6 @@ static XF86AttributeRec Attributes[NUM_ATTRIBUTES] =
    {XvSettable | XvGettable, -180, 180, "XV_HUE"}
 };
 
-#define NUM_IMAGES 7
-
 #define FOURCC_RV16	0x36315652
 #define FOURCC_RV15	0x35315652
 #define FOURCC_Y211	0x31313259
@@ -132,7 +130,7 @@ static XF86AttributeRec Attributes[NUM_ATTRIBUTES] =
  */
   
 
-static XF86ImageRec Images[NUM_IMAGES] =
+static XF86ImageRec Images[] =
 {
    XVIMAGE_YUY2,
    XVIMAGE_YV12,
@@ -190,6 +188,8 @@ static XF86ImageRec Images[NUM_IMAGES] =
    }
 };
 
+#define NUM_IMAGES (sizeof(Images)/sizeof(Images[0]))
+
 typedef struct {
    int		brightness;	/* -128 .. 127 */
    CARD32	contrast;	/* 0 .. 255 */
@@ -237,7 +237,7 @@ typedef struct {
 /*
  * There are two different streams engines used in the Savage line.
  * The old engine is in the 3D, 4, Pro, and Twister.
- * The new engine is in the 2000, MX and IX.
+ * The new engine is in the 2000, MX, IX, and Super.
  */
 
 
@@ -420,6 +420,7 @@ void SavageStreamsOn(ScrnInfoPtr pScrn, int id)
     VGAOUT8( vgaCRIndex, EXT_MISC_CTRL2 );
 
     if( (psav->Chipset == S3_SAVAGE_MX)  ||
+        (psav->Chipset == S3_SUPERSAVAGE) ||
         (psav->Chipset == S3_SAVAGE2000) )
     {
 	jStreamsControl = VGAIN8( vgaCRReg ) | ENABLE_STREAM1;
@@ -495,6 +496,7 @@ void SavageStreamsOff(ScrnInfoPtr pScrn)
 
     VGAOUT8( vgaCRIndex, EXT_MISC_CTRL2 );
     if( (psav->Chipset == S3_SAVAGE_MX)  ||
+        (psav->Chipset == S3_SUPERSAVAGE) ||
         (psav->Chipset == S3_SAVAGE2000) )
 	jStreamsControl = VGAIN8( vgaCRReg ) & NO_STREAMS;
     else
@@ -525,9 +527,9 @@ void SavageInitVideo(ScreenPtr pScreen)
     int num_adaptors;
 
     xf86ErrorFVerb(XVTRACE,"SavageInitVideo\n");
-xf86Break1();
     if(
 	(psav->Chipset == S3_SAVAGE_MX) ||
+	(psav->Chipset == S3_SUPERSAVAGE) ||
 	(psav->Chipset == S3_SAVAGE2000)
     )
     {
@@ -966,7 +968,7 @@ SavageClipVideo(
 } 
 
 static void 
-SavageStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+SavageStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
     SavagePortPrivPtr pPriv = (SavagePortPrivPtr)data;
     /*SavagePtr psav = SAVPTR(pScrn); */
@@ -977,7 +979,7 @@ SavageStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
 
     SavageStreamsOff( pScrn );
 
-    if(exit) {
+    if(shutdown) {
 	if(pPriv->area) {
 	    xf86FreeOffscreenArea(pPriv->area);
 	    pPriv->area = NULL;

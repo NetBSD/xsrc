@@ -1,10 +1,14 @@
-/* $Xorg: AsciiSrc.c,v 1.3 2000/08/17 19:45:30 cpqbld Exp $ */
+/* $Xorg: AsciiSrc.c,v 1.4 2001/02/09 02:03:42 xorgcvs Exp $ */
 
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.27 2001/01/26 22:35:23 herrb Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.30 2001/12/14 19:54:38 dawes Exp $ */
 
 /*
  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).
@@ -30,9 +34,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #include <stdio.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include <ctype.h>
 #include <errno.h>
 #include <X11/IntrinsicP.h>
@@ -201,9 +203,6 @@ static XtResource resources[] = {
 };
 #undef offset
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 #define Superclass	(&textSrcClassRec)
 AsciiSrcClassRec asciiSrcClassRec = {
@@ -1484,7 +1483,7 @@ InitStringOrFile(AsciiSrcObject src, Bool newString)
     }
 
     if (!src->ascii_src.is_tempfile) {
-	if ((fd = open(src->ascii_src.string, open_mode, 0666))) {
+	if ((fd = open(src->ascii_src.string, open_mode, 0666)) != -1) {
 	    if ((file = fdopen(fd, fdopen_mode))) {
 		(void)fseek(file, 0, SEEK_END);
 		src->ascii_src.length = (XawTextPosition)ftell(file);

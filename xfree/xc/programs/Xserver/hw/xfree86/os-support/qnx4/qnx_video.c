@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_video.c,v 1.2 2000/01/21 02:30:06 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_video.c,v 1.3 2002/01/07 20:38:29 dawes Exp $
  */
 
 /* This module contains the qnx-specific functions to deal with video 
@@ -166,5 +166,12 @@ void
 xf86MapReadSideEffects(int ScreenNum, int Flags, pointer Base,
         unsigned long Size)
 {
+        return;
+}
+
+Bool
+xf86CheckMTRR(int s)
+{
+        return FALSE;
 }
 

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:19 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xfs/difs/Imakefile,v 1.5 2001/01/17 23:45:28 dawes Exp $
+XCOMM $XFree86: xc/programs/xfs/difs/Imakefile,v 1.6 2001/08/01 00:45:04 tsi Exp $
 
 #undef ServerDefines
 #include <Server.tmpl>
@@ -17,7 +17,7 @@ OBJS =  main.o dispatch.o extensions.o globals.o events.o tables.o \
 	fonts.o difsutils.o cache.o initfonts.o atom.o
 
 
-INCLUDES = -I../include -I$(FONTINCSRC) -I$(EXTINCSRC)
+INCLUDES = -I../include -I$(FONTINCSRC) -I$(EXTINCSRC) -I$(FONTLIBSRC)/include
  DEFINES = AllocateLocalDefines
 #if BuildLowMem
 LOWMEMDEFINES = -DLOWMEMFTPT

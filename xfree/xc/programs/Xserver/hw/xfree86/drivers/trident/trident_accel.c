@@ -23,7 +23,7 @@
  * 
  * Trident accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_accel.c,v 1.20 2001/01/14 21:36:21 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_accel.c,v 1.22 2001/09/24 11:19:10 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -71,12 +71,14 @@ static void TridentSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 static void TridentSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#if 0
 static void TridentSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, 
 				int rop, unsigned int planemask, int trans_col);
 static void TridentSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#endif
 static void TridentSetupForScanlineCPUToScreenColorExpandFill(
 				ScrnInfoPtr pScrn,
 				int fg, int bg, int rop, 
@@ -115,16 +117,29 @@ TridentAccelInit(ScreenPtr pScreen)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     BoxRec AvailFBArea;
 
+    AvailFBArea.x1 = 0;
+    AvailFBArea.y1 = 0;
+    AvailFBArea.x2 = pScrn->displayWidth;
+    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
+					    pScrn->bitsPerPixel / 8);
+
+    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
+
+    xf86InitFBManager(pScreen, &AvailFBArea);
+
+    if (pTrident->NoAccel)
+	return FALSE;
+
     pTrident->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if (!infoPtr) return FALSE;
-
-    pTrident->InitializeAccelerator = TridentInitializeAccelerator;
-    TridentInitializeAccelerator(pScrn);
 
     if (!(pTrident->Chipset == TGUI9440AGi && pScrn->bitsPerPixel > 8)) 
     	infoPtr->Flags = PIXMAP_CACHE |
 		     OFFSCREEN_PIXMAPS |
 		     LINEAR_FRAMEBUFFER;
+
+    pTrident->InitializeAccelerator = TridentInitializeAccelerator;
+    TridentInitializeAccelerator(pScrn);
 
     infoPtr->PixmapCacheFlags = DO_NOT_BLIT_STIPPLES;
  
@@ -201,16 +216,6 @@ TridentAccelInit(ScreenPtr pScreen)
 			TridentSubsequentScanlineCPUToScreenColorExpandFill;
     infoPtr->SubsequentColorExpandScanline = 
 			TridentSubsequentColorExpandScanline;
-
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
-					    pScrn->bitsPerPixel / 8);
-
-    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
-
-    xf86InitFBManager(pScreen, &AvailFBArea);
 
     return(XAAInit(pScreen, infoPtr));
 }
@@ -292,15 +297,6 @@ TridentSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 	TGUI_CKEY(transparency_color);
     }
 
-    if (rop == GXcopy) {
-    	if ((pTrident->Chipset == PROVIDIA9682) || 
-	    (pTrident->Chipset == TGUI9680))
-		dst |= FASTMODE;
-	if (pTrident->Chipset == PROVIDIA9685 ||
-	    pTrident->Chipset == CYBER9388)
-		dst |= 1<<21;
-    }
-
     TGUI_DRAWFLAG(pTrident->DrawFlag | pTrident->BltScanDirection | SCR2SCR | dst);
     TGUI_FMIX(XAACopyROP[rop]);
 }
@@ -338,12 +334,7 @@ TridentSetupForSolidLine(ScrnInfoPtr pScrn, int color,
     if (pTrident->Chipset == PROVIDIA9685 ||
         pTrident->Chipset == CYBER9388) {
     	TGUI_FPATCOL(color);
-	if (rop == GXcopy) 
-	    pTrident->BltScanDirection |= 1<<21;
     } else {
-    	if ((pTrident->Chipset == PROVIDIA9682 ||
-	     pTrident->Chipset == TGUI9680) && rop == GXcopy)
-		pTrident->BltScanDirection |= FASTMODE;
     	TGUI_FCOLOUR(color);
     }
 }
@@ -405,12 +396,6 @@ TridentSetupForDashedLine(
 	case 8:	NiceDashPattern |= NiceDashPattern << 8;
     }
     pTrident->BltScanDirection = 0;
-    if ((pTrident->Chipset == PROVIDIA9682 ||
-	 pTrident->Chipset == TGUI9680) && rop == GXcopy)
-	pTrident->BltScanDirection |= FASTMODE;
-    if ((pTrident->Chipset == PROVIDIA9685 ||
-        pTrident->Chipset == CYBER9388) && rop == GXcopy)
-	pTrident->BltScanDirection |= 1<<21;
     REPLICATE(fg);
     if (pTrident->Chipset == PROVIDIA9685 ||
         pTrident->Chipset == CYBER9388) {
@@ -467,11 +452,8 @@ TridentSetupForFillRectSolid(ScrnInfoPtr pScrn, int color,
 
     REPLICATE(color);
     TGUI_FMIX(XAAPatternROP[rop]);
-    if ((pTrident->Chipset == PROVIDIA9682 ||
-	 pTrident->Chipset == TGUI9680) && rop == GXcopy) drawflag = FASTMODE;
     if (pTrident->Chipset == PROVIDIA9685 ||
         pTrident->Chipset == CYBER9388) {
-    	if (rop == GXcopy) drawflag |= 1<<21;
     	TGUI_FPATCOL(color);
     } else {
     	drawflag |= PATMONO;
@@ -554,11 +536,7 @@ TridentSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
     if (pTrident->Chipset == PROVIDIA9685 ||
         pTrident->Chipset == CYBER9388) {
 	drawflag |= 7<<18;
-        if (rop == GXcopy) drawflag |= 1<<21;
     }
-    if ((pTrident->Chipset == PROVIDIA9682 ||
-	 pTrident->Chipset == TGUI9680) && rop == GXcopy)
-	drawflag |= FASTMODE;
     TGUI_DRAWFLAG(pTrident->DrawFlag | PAT2SCR | PATMONO | drawflag);
     TGUI_PATLOC(((patterny * pTrident->PatternLocation) +
 		 (patternx * pScrn->bitsPerPixel / 8)) >> 6);
@@ -579,6 +557,7 @@ TridentSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
     TridentSync(pScrn);
 }
 
+#if 0
 static void 
 TridentSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 					   int patternx, int patterny, 
@@ -588,10 +567,6 @@ TridentSetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     int drawflag = 0;
-
-    if ((pTrident->Chipset == PROVIDIA9682 ||
-	 pTrident->Chipset == TGUI9680) && rop == GXcopy)
-	drawflag |= FASTMODE;
 
     REPLICATE(transparency_color);
     if (transparency_color != -1) {
@@ -623,6 +598,7 @@ TridentSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
     TGUI_COMMAND(GE_BLT);
     TridentClearSync(pScrn);
 }
+#endif
 
 static void
 TridentSetupForScanlineCPUToScreenColorExpandFill(
@@ -644,9 +620,6 @@ TridentSetupForScanlineCPUToScreenColorExpandFill(
     	TGUI_BCOLOUR(bg);
     }
 
-    if ((pTrident->Chipset == PROVIDIA9682 ||
-	 pTrident->Chipset == TGUI9680) && rop == GXcopy)
-	drawflag |= FASTMODE;
     TGUI_SRC_XY(0,0);
     TGUI_DRAWFLAG(drawflag);
     TGUI_FMIX(XAACopyROP[rop]);

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.6 2001/10/28 03:33:32 tsi Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -25,7 +25,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.4 2000/09/26 15:57:12 tsi Exp $ */
 
 /*
  * Authors:
@@ -218,6 +217,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VCLK2_VCO_M        0x6008 /* treat as 16 bit? (includes msbs) */
 #define VCLK2_VCO_N        0x600a
 #define VCLK2_VCO_DIV_SEL  0x6012
+
+#define VCLK_DIVISOR_VGA0   0x6000
+#define VCLK_DIVISOR_VGA1   0x6004
+#define VCLK_POST_DIV	    0x6010
+
 #define POST_DIV_SELECT        0x70
 #define POST_DIV_1             0x00
 #define POST_DIV_2             0x10
@@ -302,6 +306,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * - what does it all mean?
  */
 #define FWATER_BLC       0x20d8
+#define FWATER_BLC2	 0x20dc
 #define MM_BURST_LENGTH     0x00700000
 #define MM_FIFO_WATERMARK   0x0001F000
 #define LM_BURST_LENGTH     0x00000700
@@ -312,6 +317,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define FENCE            0x2000
 #define FENCE_NR         8
+
+#define I830_FENCE_START_MASK	0x07f80000
 
 #define FENCE_START_MASK    0x03F80000
 #define FENCE_X_MAJOR       0x00000000
@@ -324,6 +331,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FENCE_SIZE_8M       0x00000400
 #define FENCE_SIZE_16M      0x00000500
 #define FENCE_SIZE_32M      0x00000600
+#define FENCE_SIZE_64M	    0x00000700
 #define FENCE_PITCH_MASK    0x00000070
 #define FENCE_PITCH_1       0x00000000
 #define FENCE_PITCH_2       0x00000010
@@ -331,6 +339,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FENCE_PITCH_8       0x00000030
 #define FENCE_PITCH_16      0x00000040
 #define FENCE_PITCH_32      0x00000050
+#define FENCE_PITCH_64	    0x00000060
 #define FENCE_VALID         0x00000001
 
 
@@ -395,6 +404,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define RING_LEN       0x0C
 #define RING_NR_PAGES       0x000FF000 
+#define I830_RING_NR_PAGES	0x001FF000
 #define RING_REPORT_MASK    0x00000006
 #define RING_REPORT_64K     0x00000002
 #define RING_REPORT_128K    0x00000004
@@ -560,3 +570,245 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CS_USE_CTX0              0
 #define CS_USE_CTX1              (1<<0)
 
+/* I830 CRTC registers */
+#define HTOTAL_A	0x60000
+#define HBLANK_A	0x60004
+#define HSYNC_A 	0x60008
+#define VTOTAL_A	0x6000c
+#define VBLANK_A	0x60010
+#define VSYNC_A 	0x60014
+#define PIPEASRC	0x6001c
+#define BCLRPAT_A	0x60020
+
+#define HTOTAL_B	0x61000
+#define HBLANK_B	0x61004
+#define HSYNC_B 	0x61008
+#define VTOTAL_B	0x6100c
+#define VBLANK_B	0x61010
+#define VSYNC_B 	0x61014
+#define PIPEBSRC	0x6101c
+#define BCLRPAT_B	0x61020
+
+#define DPLL_A		0x06014
+#define DPLL_B		0x06018
+#define FPA0		0x06040
+#define FPA1		0x06044
+
+#define I830_HTOTAL_MASK 	0xfff0000
+#define I830_HACTIVE_MASK	0x7ff
+
+#define I830_HBLANKEND_MASK	0xfff0000
+#define I830_HBLANKSTART_MASK    0xfff
+
+#define I830_HSYNCEND_MASK	0xfff0000
+#define I830_HSYNCSTART_MASK    0xfff
+
+#define I830_VTOTAL_MASK 	0xfff0000
+#define I830_VACTIVE_MASK	0x7ff
+
+#define I830_VBLANKEND_MASK	0xfff0000
+#define I830_VBLANKSTART_MASK    0xfff
+
+#define I830_VSYNCEND_MASK	0xfff0000
+#define I830_VSYNCSTART_MASK    0xfff
+
+#define I830_PIPEA_HORZ_MASK	0x7ff0000
+#define I830_PIPEA_VERT_MASK	0x7ff
+
+#define ADPA			0x61100
+#define ADPA_DAC_ENABLE 	(1<<31)
+#define ADPA_DAC_DISABLE	0
+#define ADPA_PIPE_A_SELECT	0
+#define ADPA_USE_VGA_HVPOLARITY (1<<15)
+#define ADPA_SETS_HVPOLARITY	0
+#define ADPA_VSYNC_CNTL_DISABLE (1<<11)
+#define ADPA_VSYNC_CNTL_ENABLE	0
+#define ADPA_HSYNC_CNTL_DISABLE (1<<10)
+#define ADPA_HSYNC_CNTL_ENABLE	0
+#define ADPA_VSYNC_ACTIVE_HIGH	(1<<4)
+#define ADPA_VSYNC_ACTIVE_LOW	0
+#define ADPA_HSYNC_ACTIVE_HIGH	(1<<3)
+#define ADPA_HSYNC_ACTIVE_LOW	0
+
+
+#define DV0A			0x61120
+#define DV0A_DISABLE		(1<<31)
+
+#define DV0B			0x61140
+#define DV0B_DISABLE		(1<<31)
+
+
+#define PIPEACONF 0x70008
+#define PIPEACONF_ENABLE	(1<<31)
+#define PIPEACONF_DISABLE	0
+#define PIPEACONF_DOUBLE_WIDE	(1<<30)
+#define PIPEACONF_SINGLE_WIDE	0
+#define PIPEACONF_PIPE_UNLOCKED 0
+#define PIPEACONF_PIPE_LOCKED	(1<<25)
+#define PIPEACONF_PALETTE	0
+#define PIPEACONF_GAMMA 	(1<<24)
+
+#define PIPEBCONF 0x71008
+#define PIPEBCONF_ENABLE	(1<<31)
+#define PIPEBCONF_DISABLE	0
+#define PIPEBCONF_GAMMA 	(1<<24)
+#define PIPEBCONF_PALETTE	0
+
+#define DSPACNTR		0x70180
+#define DSPACNTR_PLANE_A_ENABLE 	(1<<31)
+#define DSPACNTR_PLANE_A_DISABLE	0
+#define DSPACNTR_GAMMA_ENABLE		(1<<30)
+#define DSPACNTR_GAMMA_DISABLE		0
+#define DSPACNTR_8BPP			(1<<27)
+#define DSPACNTR_16BPP			((1<<26)|(1<<28))
+#define DSPACNTR_32BPP_NO_ALPHA 	((1<<27)|(1<<28))
+#define DSPACNTR_32BPP			((1<<26)|(1<<27)|(1<<28))
+#define DSPACNTR_STEREO_ENABLE		(1<<25)
+#define DSPACNTR_STEREO_DISABLE 	0
+#define DSPACNTR_SEL_PIPE_A		0
+#define DSPACNTR_SEL_PIPE_B		(1<<24)
+#define DSPACNTR_SRC_KEY_ENABLE 	(1<<22)
+#define DSPACNTR_SRC_KEY_DISABLE	0
+#define DSPACNTR_LINE_DOUBLE		(1<<20)
+#define DSPACNTR_NO_LINE_DOUBLE 	0
+#define DSPACNTR_STEREO_POLARITY_FIRST	0
+#define DSPACNTR_STEREO_POLARITY_SECOND (1<<18)
+
+#define DSPABASE		0x70184
+#define DSPASTRIDE		0x70188
+
+#define DSPBCNTR		0x71180
+#define DSPBCNTR_PLANE_B_ENABLE 	(1<<31)
+#define DSPBCNTR_PLANE_B_DISABLE	0
+#define DSPBCNTR_GAMMA_ENABLE		(1<<30)
+#define DSPBCNTR_GAMMA_DISABLE		0
+#define DSPBCNTR_8BPP			(1<<27)
+#define DSPBCNTR_16BPP			((1<<26)|(1<<28))
+#define DSPBCNTR_32BPP_NO_ALPHA 	((1<<27)|(1<<28))
+#define DSPBCNTR_32BPP			((1<<26)|(1<<27)|(1<<28))
+#define DSPBCNTR_STEREO_ENABLE		(1<<25)
+#define DSPBCNTR_STEREO_DISABLE 	0
+#define DSPBCNTR_SEL_PIPE_A		0
+#define DSPBCNTR_SEL_PIPE_B		(1<<24)
+#define DSPBCNTR_SRC_KEY_ENABLE 	(1<<22)
+#define DSPBCNTR_SRC_KEY_DISABLE	0
+#define DSPBCNTR_LINE_DOUBLE		(1<<20)
+#define DSPBCNTR_NO_LINE_DOUBLE 	0
+#define DSPBCNTR_STEREO_POLARITY_FIRST	0
+#define DSPBCNTR_STEREO_POLARITY_SECOND (1<<18)
+#define DSPBCNTR_ALPHA_TRANS_ENABLE	(1<<15)
+#define DSPBCNTR_ALPHA_TRANS_DISABLE	0
+#define DSPBCNTR_SPRITE_ABOVE_DISPLAYA	0
+#define DSPBCNTR_SPRITE_ABOVE_OVERLAY	(1)
+
+#define DSPBBASE		0x71184
+#define DSPBSTRIDE		0x71188
+
+/* Various masks for reserved bits, etc. */
+#define I830_FWATER1_MASK        (~((1<<11)|(1<<10)|(1<<9)|      \
+        (1<<8)|(1<<26)|(1<<25)|(1<<24)|(1<<5)|(1<<4)|(1<<3)|    \
+        (1<<2)|(1<<1)|1|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16)))
+#define I830_FWATER2_MASK ~(0)
+
+#define DV0A_RESERVED ((1<<26)|(1<<25)|(1<<24)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<16)|(1<<5)|(1<<1)|1)
+#define DV0B_RESERVED ((1<<27)|(1<<26)|(1<<25)|(1<<24)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<16)|(1<<5)|(1<<1)|1)
+#define VGA0_N_DIVISOR_MASK     ((1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16))
+#define VGA0_M1_DIVISOR_MASK    ((1<<13)|(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8))
+#define VGA0_M2_DIVISOR_MASK    ((1<<5)|(1<<4)|(1<<3)|(1<<2)|(1<<1)|1)
+#define VGA0_M1M2N_RESERVED	~(VGA0_N_DIVISOR_MASK|VGA0_M1_DIVISOR_MASK|VGA0_M2_DIVISOR_MASK)
+#define VGA0_POSTDIV_MASK       ((1<<7)|(1<<5)|(1<<4)|(1<<3)|(1<<2)|(1<<1)|1)
+#define VGA1_POSTDIV_MASK       ((1<<15)|(1<<13)|(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8))
+#define VGA_POSTDIV_RESERVED	~(VGA0_POSTDIV_MASK|VGA1_POSTDIV_MASK|(1<<7)|(1<<15))
+#define DPLLA_POSTDIV_MASK ((1<<23)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16))
+#define DPLLA_RESERVED     ((1<<27)|(1<<26)|(1<<25)|(1<<24)|(1<<22)|(1<<15)|(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8)|(1<<7)|(1<<6)|(1<<5)|(1<<4)|(1<<3)|(1<<2)|(1<<1)|1)
+#define ADPA_RESERVED	((1<<2)|(1<<1)|1|(1<<9)|(1<<8)|(1<<7)|(1<<6)|(1<<5)|(1<<30)|(1<<29)|(1<<28)|(1<<27)|(1<<26)|(1<<25)|(1<<24)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16))
+#define SUPER_WORD              32
+#define BURST_A_MASK    ((1<<11)|(1<<10)|(1<<9)|(1<<8))
+#define BURST_B_MASK    ((1<<26)|(1<<25)|(1<<24))
+#define WATER_A_MASK    ((1<<5)|(1<<4)|(1<<3)|(1<<2)|(1<<1)|1)
+#define WATER_B_MASK    ((1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16))
+#define WATER_RESERVED	((1<<31)|(1<<30)|(1<<29)|(1<<28)|(1<<27)|(1<<23)|(1<<22)|(1<<21)|(1<<15)|(1<<14)|(1<<13)|(1<<12)|(1<<7)|(1<<6))
+#define PIPEACONF_RESERVED ((1<<29)|(1<<28)|(1<<27)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16)|0xffff)
+#define PIPEBCONF_RESERVED ((1<<30)|(1<<29)|(1<<28)|(1<<27)|(1<<26)|(1<<25)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16)|0xffff)
+#define DSPACNTR_RESERVED ((1<<23)|(1<<19)|(1<<17)|(1<<16)|0xffff)
+#define DSPBCNTR_RESERVED ((1<<23)|(1<<19)|(1<<17)|(1<<16)|0x7ffe)
+
+#define I830_GMCH_CTRL		0x52
+
+#define I830_GMCH_ENABLED	0x4
+#define I830_GMCH_MEM_MASK	0x1
+#define I830_GMCH_MEM_64M	0x1
+#define I830_GMCH_MEM_128M	0
+
+#define I830_GMCH_GMS_MASK			0x70
+#define I830_GMCH_GMS_DISABLED		0x00
+#define I830_GMCH_GMS_LOCAL			0x10
+#define I830_GMCH_GMS_STOLEN_512	0x20
+#define I830_GMCH_GMS_STOLEN_1024	0x30
+#define I830_GMCH_GMS_STOLEN_8192	0x40
+
+#define I830_RDRAM_CHANNEL_TYPE		0x03010
+#define I830_RDRAM_ND(x)			(((x) & 0x20) >> 5)
+#define I830_RDRAM_DDT(x)			(((x) & 0x18) >> 3)
+
+/* BLT commands */
+#define COLOR_BLT_CMD		((2<<29)|(0x40<<22)|(0x3))
+#define COLOR_BLT_WRITE_ALPHA	(1<<21)
+#define COLOR_BLT_WRITE_RGB	(1<<20)
+
+#define XY_COLOR_BLT_CMD		((2<<29)|(0x50<<22)|(0x4))
+#define XY_COLOR_BLT_WRITE_ALPHA	(1<<21)
+#define XY_COLOR_BLT_WRITE_RGB		(1<<20)
+
+#define XY_SETUP_CLIP_BLT_CMD		((2<<29)|(3<<22)|1)
+
+#define XY_SRC_COPY_BLT_CMD		((2<<29)|(0x53<<22)|6)
+#define XY_SRC_COPY_BLT_WRITE_ALPHA	(1<<21)
+#define XY_SRC_COPY_BLT_WRITE_RGB	(1<<20)
+
+#define SRC_COPY_BLT_CMD		((2<<29)|(0x43<<22)|0x4)
+#define SRC_COPY_BLT_WRITE_ALPHA	(1<<21)
+#define SRC_COPY_BLT_WRITE_RGB		(1<<20)
+
+#define XY_MONO_PAT_BLT_CMD		((0x2<<29)|(0x52<<22)|0x7)
+#define XY_MONO_PAT_VERT_SEED		((1<<10)|(1<<9)|(1<<8))
+#define XY_MONO_PAT_HORT_SEED		((1<<14)|(1<<13)|(1<<12))
+#define XY_MONO_PAT_BLT_WRITE_ALPHA	(1<<21)
+#define XY_MONO_PAT_BLT_WRITE_RGB	(1<<20)
+
+#define XY_MONO_SRC_BLT_CMD		((0x2<<29)|(0x54<<22)|(0x6))
+#define XY_MONO_SRC_BLT_WRITE_ALPHA	(1<<21)
+#define XY_MONO_SRC_BLT_WRITE_RGB	(1<<20)
+
+/* 3d state */
+#define STATE3D_FOG_MODE		((3<<29)|(0x1d<<24)|(0x89<<16)|2)
+#define FOG_MODE_VERTEX 		(1<<31)
+#define STATE3D_MAP_COORD_TRANSFORM	((3<<29)|(0x1d<<24)|(0x8c<<16))
+#define DISABLE_TEX_TRANSFORM		(1<<28)
+#define TEXTURE_SET(x)			(x<<29)
+#define STATE3D_RASTERIZATION_RULES	((3<<29)|(0x07<<24))
+#define POINT_RASTER_ENABLE		(1<<15)
+#define POINT_RASTER_OGL		(1<<13)
+#define STATE3D_VERTEX_TRANSFORM	((3<<29)|(0x1d<<24)|(0x8b<<16))
+#define DISABLE_VIEWPORT_TRANSFORM	(1<<31)
+#define DISABLE_PERSPECTIVE_DIVIDE	(1<<29)
+
+#define MI_SET_CONTEXT			(0x18<<23)
+#define CTXT_NO_RESTORE 		(1)
+#define CTXT_PALETTE_SAVE_DISABLE	(1<<3)
+#define CTXT_PALETTE_RESTORE_DISABLE	(1<<2)
+
+/* Dword 0 */
+#define MI_VERTEX_BUFFER		(0x17<<23)
+#define MI_VERTEX_BUFFER_IDX(x) 	(x<<20)
+#define MI_VERTEX_BUFFER_PITCH(x)	(x<<13)
+#define MI_VERTEX_BUFFER_WIDTH(x)	(x<<6)
+/* Dword 1 */
+#define MI_VERTEX_BUFFER_DISABLE	(1)
+
+#define STATE3D_COLOR_FACTOR	((0x3<<29)|(0x1d<<24)|(0x01<<16))
+
+/* STATE3D_FOG_MODE stuff */
+#define ENABLE_FOG_SOURCE	(1<<27)
+#define ENABLE_FOG_CONST	(1<<24)
+#define ENABLE_FOG_DENSITY	(1<<23)

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbscreen.c,v 1.12 2000/09/18 05:43:40 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbscreen.c,v 1.13 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 
@@ -80,6 +80,24 @@ fbQueryBestSize (int class,
     }
 }
 
+#ifndef FB_OLD_SCREEN
+PixmapPtr
+_fbGetWindowPixmap (WindowPtr pWindow)
+{
+    return fbGetWindowPixmap (pWindow);
+}
+
+void
+_fbSetWindowPixmap (WindowPtr pWindow, PixmapPtr pPixmap)
+{
+#ifdef FB_NO_WINDOW_PIXMAPS
+    FatalError ("Attempted to set window pixmap without fb support\n");
+#else
+    pWindow->devPrivates[fbWinPrivateIndex].ptr = (pointer) pPixmap;
+#endif
+}
+#endif
+
 Bool
 fbSetupScreen(ScreenPtr	pScreen, 
 	      pointer	pbits,		/* pointer to screen bitmap */
@@ -123,6 +141,9 @@ fbSetupScreen(ScreenPtr	pScreen,
     pScreen->BitmapToRegion = fbPixmapToRegion;
     
 #ifndef FB_OLD_SCREEN
+    pScreen->GetWindowPixmap = _fbGetWindowPixmap;
+    pScreen->SetWindowPixmap = _fbSetWindowPixmap;
+
     pScreen->BackingStoreFuncs.SaveAreas = fbSaveAreas;
     pScreen->BackingStoreFuncs.RestoreAreas = fbRestoreAreas;
     pScreen->BackingStoreFuncs.SetClipmaskRgn = 0;

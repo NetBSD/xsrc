@@ -69,8 +69,8 @@ gluNextContour(tobj, GLU_INTERIOR);
 gluEndPolygon(tobj);
 .Ee
 .SH SEE ALSO
-\%\f3gluNewTess\fP, \%\f3gluNextContour\fP, \%\f3gluTessCallback\fP, \%\f3gluTessVertex\fP,
-\%\f3gluTessBeginPolygon\fP, \%\f3gluTessBeginContour\fP
+\%\f3gluNewTess(3G)\fP, \%\f3gluNextContour(3G)\fP, \%\f3gluTessCallback(3G)\fP, \%\f3gluTessVertex(3G)\fP,
+\%\f3gluTessBeginPolygon(3G)\fP, \%\f3gluTessBeginContour(3G)\fP
 
 
 

@@ -35,19 +35,13 @@
  *		    4. RGB intensity to CIE XYZ
  *
  */
-/* $XFree86: xc/lib/X11/LRGB.c,v 3.4 2001/01/17 19:41:38 dawes Exp $ */
+/* $XFree86: xc/lib/X11/LRGB.c,v 3.5 2001/07/25 15:04:44 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include "Xlibint.h"
 #include "Xcmsint.h"
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
 
 /*
  *      EXTERNS
@@ -105,7 +99,7 @@ Status _XcmsGetTableType1();
  *		        static int	ExampleLocalVar;
  */
 
-static unsigned short Const MASK[17] = {
+static unsigned short const MASK[17] = {
     0x0000,	/*  0 bitsPerRGB */
     0x8000,	/*  1 bitsPerRGB */
     0xc000,	/*  2 bitsPerRGB */
@@ -235,7 +229,7 @@ XcmsFunctionSet	XcmsLinearRGBFunctionSet =
  * MODEL		Tek4300, Tek4800
  */
 
-static IntensityRec Const Default_RGB_RedTuples[] = {
+static IntensityRec const Default_RGB_RedTuples[] = {
     /* {unsigned short value, XcmsFloat intensity} */
             { 0x0000,    0.000000 },
             { 0x0909,    0.000000 },
@@ -291,7 +285,7 @@ static IntensityRec Const Default_RGB_RedTuples[] = {
             { 0xffff,    1.000000 }
 };
 
-static IntensityRec Const Default_RGB_GreenTuples[] = {
+static IntensityRec const Default_RGB_GreenTuples[] = {
     /* {unsigned short value, XcmsFloat intensity} */
             { 0x0000,    0.000000 },
             { 0x1313,    0.000000 },
@@ -345,7 +339,7 @@ static IntensityRec Const Default_RGB_GreenTuples[] = {
             { 0xffff,    1.000000 }
 };
 
-static IntensityRec Const Default_RGB_BlueTuples[] = {
+static IntensityRec const Default_RGB_BlueTuples[] = {
     /* {unsigned short value, XcmsFloat intensity} */
             { 0x0000,    0.000000 },
             { 0x0e0e,    0.000000 },

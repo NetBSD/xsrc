@@ -32,7 +32,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/cmsLkCol.c,v 1.3 2001/01/17 19:41:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/cmsLkCol.c,v 1.4 2001/07/25 15:04:44 dawes Exp $ */
 
 #define NEED_REPLIES
 #include <stdio.h>
@@ -50,9 +50,6 @@ extern void _XcmsUnresolveColor();
 /* cmsColNm.c */
 extern Status _XcmsResolveColorString();
 
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
 
 /*
  *	NAME

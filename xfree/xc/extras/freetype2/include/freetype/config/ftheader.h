@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Build macros of the FreeType 2 library.                              */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -167,6 +167,18 @@
   /*************************************************************************/
   /*                                                                       */
   /* @macro:                                                               */
+  /*    FT_MODULE_ERRORS_H                                                 */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    the list of FreeType 2 module error offsets (and messages).        */
+  /*                                                                       */
+#define FT_MODULE_ERRORS_H  <freetype/ftmoderr.h>
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
   /*    FT_SYSTEM_H                                                        */
   /*                                                                       */
   /* @description:                                                         */
@@ -232,6 +244,18 @@
   /*    the scalable outline management API of FreeType 2.                 */
   /*                                                                       */
 #define FT_OUTLINE_H  <freetype/ftoutln.h>
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
+  /*    FT_SIZES_H                                                         */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    the API used to manage multiple @FT_Size objects per face.         */
+  /*                                                                       */
+#define FT_SIZES_H  <freetype/ftsizes.h>
 
 
   /*************************************************************************/
@@ -338,6 +362,19 @@
   /*************************************************************************/
   /*                                                                       */
   /* @macro:                                                               */
+  /*    FT_BEZIER_H                                                        */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    a small useful API to handle bezier arcs.  Note that you _must_    */
+  /*    include FT_FREETYPE_H or FT_IMAGE_H before this header.            */
+  /*                                                                       */
+#define FT_BEZIER_H  <freetype/ftbezier.h>
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
   /*    FT_CACHE_H                                                         */
   /*                                                                       */
   /* @description:                                                         */
@@ -383,6 +420,18 @@
   /*************************************************************************/
   /*                                                                       */
   /* @macro:                                                               */
+  /*    FT_CACHE_CHARMAP_H                                                 */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    the `charmap' API of the FreeType 2 cache sub-system.              */
+  /*                                                                       */
+#define FT_CACHE_CHARMAP_H  <freetype/cache/ftccmap.h>
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
   /*    FT_MAC_H                                                           */
   /*                                                                       */
   /* @description:                                                         */
@@ -423,14 +472,14 @@
 
   /* */
 
- 
+#define FT_TRIGONOMETRY_H          <freetype/fttrigon.h>
 #define FT_SYNTHESIS_H             <freetype/ftsynth.h>
 
 #define FT_CACHE_MANAGER_H         <freetype/cache/ftcmanag.h>
 
 #define FT_CACHE_INTERNAL_LRU_H    <freetype/cache/ftlru.h>
 #define FT_CACHE_INTERNAL_GLYPH_H  <freetype/cache/ftcglyph.h>
-#define FT_CACHE_INTERNAL_CHUNK_H  <freetype/cache/ftcchunk.h>
+#define FT_CACHE_INTERNAL_CACHE_H  <freetype/cache/ftccache.h>
 
   /* now include internal headers definitions from <freetype/internal/...> */
 

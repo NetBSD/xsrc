@@ -1,9 +1,13 @@
-/* $Xorg: dsimple.h,v 1.3 2000/08/17 19:54:53 cpqbld Exp $ */
+/* $Xorg: dsimple.h,v 1.4 2001/02/09 02:05:54 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,6 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/programs/xlsfonts/dsimple.h,v 1.7 2001/12/14 20:02:10 dawes Exp $ */
 
 /*
  * Just_display.h: This file contains the definitions needed to use the
@@ -95,14 +100,9 @@ Window Select_Window();
 void blip();
 Window Window_With_Name();
 #endif
-#if NeedVarargsPrototypes
 #if __GNUC__
 void Fatal_Error(char *, ...) __attribute__((__noreturn__));
 #else
 void Fatal_Error(char *, ...);
 #endif
 void outl(char *, ...);
-#else
-void Fatal_Error();
-void outl();
-#endif

@@ -7,7 +7,7 @@
    Mark Vojkovich's work.
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32wid/cfbwindow.c,v 1.1 2000/05/21 01:02:44 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32wid/cfbwindow.c,v 1.2 2001/10/28 03:34:09 tsi Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"
@@ -63,16 +63,15 @@ cfb8_32WidPositionWindow(WindowPtr pWin, int x, int y)
 static void
 SegregateChildrenBpp(WindowPtr pWin, RegionPtr pReg, int subtract, int bpp, int other_bpp)
 {
-	ScreenPtr pScreen = pWin->drawable.pScreen;
 	WindowPtr pChild;
 
 	for (pChild = pWin->firstChild; pChild; pChild = pChild->nextSib) {
 		if (pChild->drawable.bitsPerPixel == bpp) {
 			if (subtract) {
-				REGION_SUBTRACT(pScreen, pReg,
+				REGION_SUBTRACT(pWin->drawable.pScreen, pReg,
 						pReg, &pChild->borderClip);
 			} else {
-				REGION_UNION(pScreen, pReg,
+				REGION_UNION(pWin->drawable.pScreen, pReg,
 					     pReg, &pChild->borderClip);
 			}
 			if (pChild->firstChild)

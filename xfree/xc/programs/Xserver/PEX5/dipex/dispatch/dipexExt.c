@@ -1,10 +1,14 @@
-/* $Xorg: dipexExt.c,v 1.3 2000/08/17 19:47:12 cpqbld Exp $ */
+/* $Xorg: dipexExt.c,v 1.4 2001/02/09 02:04:13 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.20 2001/02/16 13:24:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.22 2001/12/14 19:57:41 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -228,7 +232,7 @@ PexExtensionInit()
     PexErrorBase = PextEntry->errorBase;
     PexEventBase = PextEntry->eventBase;
     EventSwapVector[PexEventBase + PEXMaxHitsReached] = 
-						    SwapPEXMaxHitsReachedEvent;
+				    (EventSwapPtr)SwapPEXMaxHitsReachedEvent;
     
 }
 

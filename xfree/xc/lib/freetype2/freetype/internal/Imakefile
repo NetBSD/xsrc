@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/freetype/internal/Imakefile,v 1.2 2001/05/16 03:57:28 keithp Exp $
+XCOMM $XFree86: xc/lib/freetype2/freetype/internal/Imakefile,v 1.4 2002/01/14 22:59:07 herrb Exp $
 
 FREETYPETOP = $(TOP)/extras/freetype2
 FREETYPESRC = $(FREETYPETOP)/src
@@ -6,7 +6,6 @@ FREETYPEINC = $(FREETYPETOP)/include/freetype
 
 HEADERS= \
         autohint.h \
-        cfferrs.h \
         cfftypes.h \
         fnttypes.h \
         ftcalc.h \
@@ -19,18 +18,17 @@ HEADERS= \
         internal.h \
         pcftypes.h \
         psaux.h \
+        psglobal.h \
+        pshints.h \
         psnames.h \
         sfnt.h \
-        t1errors.h \
         t1types.h \
-        tterrors.h \
         tttypes.h
 
 BuildIncludes($(HEADERS),freetype2/freetype/internal,../../..)
 InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2/freetype/internal,$(INSTINCFLAGS))
 
 LinkSourceFile(autohint.h,$(FREETYPEINC)/internal)
-LinkSourceFile(cfferrs.h,$(FREETYPEINC)/internal)
 LinkSourceFile(cfftypes.h,$(FREETYPEINC)/internal)
 LinkSourceFile(fnttypes.h,$(FREETYPEINC)/internal)
 LinkSourceFile(ftcalc.h,$(FREETYPEINC)/internal)
@@ -43,9 +41,9 @@ LinkSourceFile(ftstream.h,$(FREETYPEINC)/internal)
 LinkSourceFile(internal.h,$(FREETYPEINC)/internal)
 LinkSourceFile(pcftypes.h,$(FREETYPEINC)/internal)
 LinkSourceFile(psaux.h,$(FREETYPEINC)/internal)
+LinkSourceFile(pshints.h,$(FREETYPEINC)/internal)
+LinkSourceFile(psglobal.h,$(FREETYPEINC)/internal)
 LinkSourceFile(psnames.h,$(FREETYPEINC)/internal)
 LinkSourceFile(sfnt.h,$(FREETYPEINC)/internal)
-LinkSourceFile(t1errors.h,$(FREETYPEINC)/internal)
 LinkSourceFile(t1types.h,$(FREETYPEINC)/internal)
-LinkSourceFile(tterrors.h,$(FREETYPEINC)/internal)
 LinkSourceFile(tttypes.h,$(FREETYPEINC)/internal)

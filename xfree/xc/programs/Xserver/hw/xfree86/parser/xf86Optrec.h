@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Optrec.h,v 1.9 2000/11/02 19:58:21 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Optrec.h,v 1.10 2001/06/30 04:00:24 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -33,6 +33,7 @@
  */
 #ifndef _xf86Optrec_h_
 #define _xf86Optrec_h_
+#include <stdio.h>
 
 /* 
  * all records that need to be linked lists should contain a GenericList as
@@ -74,8 +75,8 @@ char *xf86configStrdup (const char *s);
 int xf86nameCompare (const char *s1, const char *s2);
 char *xf86uLongToString(unsigned long i);
 void xf86debugListOptions(XF86OptionPtr);
-
-
+XF86OptionPtr xf86parseOption(XF86OptionPtr head);
+void xf86printOptionList(FILE *fp, XF86OptionPtr list, int tabs);
 
 
 #endif /* _xf86Optrec_h_ */

@@ -25,20 +25,12 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbcomp/utils.c,v 3.5 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/utils.c,v 3.6 2001/07/25 15:05:24 dawes Exp $ */
 
 #include 	"utils.h"
 #include	<ctype.h>
-
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-char *malloc();
-#endif
-
-#if NeedVarargsPrototypes
-#include <stdarg.h>
-#endif
+#include	<stdlib.h>
+#include	<stdarg.h>
 
 /***====================================================================***/
 
@@ -152,7 +144,6 @@ uSetEntryFile(name)
     return(True);
 }
 
-#if NeedVarargsPrototypes
 void
 uEntry(int l,char *s,...)
 {
@@ -167,23 +158,6 @@ va_list args;
     va_end(args);
     uEntryLevel+= l;
 }
-#else
-void
-uEntry(l,s,a1,a2,a3,a4,a5,a6)
-int	l;
-char	*s;
-Opaque	a1,a2,a3,a4,a5,a6;
-{
-int	i;
-
-    for (i=0;i<uEntryLevel;i++) {
-	putc(' ',entryFile);
-    }
-    fprintf(entryFile,s,a1,a2,a3,a4,a5,a6);
-    uEntryLevel+= l;
-    return;
-}
-#endif
 
 void
 #if NeedFunctionPrototypes
@@ -234,7 +208,6 @@ uSetDebugFile(name)
     return(True);
 }
 
-#if NeedVarargsPrototypes
 void
 uDebug(char *s,...)
 {
@@ -249,24 +222,7 @@ va_list	args;
     va_end(args);
     fflush(uDebugFile);
 }
-#else
-void
-uDebug(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-int	i;
 
-    for (i=(uDebugIndentLevel*uDebugIndentSize);i>0;i--) {
-	putc(' ',uDebugFile);
-    }
-    fprintf(uDebugFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(uDebugFile);
-    return;
-}
-#endif
-
-#if NeedVarargsPrototypes
 void
 uDebugNOI(char *s,...)
 {
@@ -277,17 +233,6 @@ va_list args;
     va_end(args);
     fflush(uDebugFile);
 }
-#else
-void
-uDebugNOI(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    fprintf(uDebugFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(uDebugFile);
-    return;
-}
-#endif
 
 /***====================================================================***/
 
@@ -318,7 +263,6 @@ uSetErrorFile(name)
     return(True);
 }
 
-#if NeedVarargsPrototypes
 void
 uInformation(char *s, ...)
 {
@@ -329,21 +273,9 @@ va_list args;
     va_end(args);
     fflush(errorFile);
 }
-#else
-void
-uInformation(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(errorFile);
-    return;
-}
-#endif
 
 /***====================================================================***/
 
-#if NeedVarargsPrototypes
 void
 uAction(char *s, ...)
 {
@@ -357,24 +289,9 @@ va_list args;
     va_end(args);
     fflush(errorFile);
 }
-#else
-void
-uAction(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    if (prefix!=NULL)
-	fprintf(errorFile,"%s",prefix);
-    fprintf(errorFile,"                  ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(errorFile);
-    return;
-}
-#endif
 
 /***====================================================================***/
 
-#if NeedVarargsPrototypes
 void
 uWarning(char *s, ...)
 {
@@ -391,27 +308,9 @@ va_list args;
     fflush(errorFile);
     outCount++;
 }
-#else
-void
-uWarning(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    if ((outCount==0)&&(preMsg!=NULL))
-	fprintf(errorFile,"%s\n",preMsg);
-    if (prefix!=NULL)
-	fprintf(errorFile,"%s",prefix);
-    fprintf(errorFile,"Warning:          ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(errorFile);
-    outCount++;
-    return;
-}
-#endif
 
 /***====================================================================***/
 
-#if NeedVarargsPrototypes
 void
 uError(char *s, ...)
 {
@@ -428,27 +327,9 @@ va_list args;
     fflush(errorFile);
     outCount++;
 }
-#else
-void
-uError(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    if ((outCount==0)&&(preMsg!=NULL))
-	fprintf(errorFile,"%s\n",preMsg);
-    if (prefix!=NULL)
-	fprintf(errorFile,"%s",prefix);
-    fprintf(errorFile,"Error:            ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(errorFile);
-    outCount++;
-    return;
-}
-#endif
 
 /***====================================================================***/
 
-#if NeedVarargsPrototypes
 void
 uFatalError(char *s, ...)
 {
@@ -468,29 +349,9 @@ va_list args;
     exit(1);
     /* NOTREACHED */
 }
-#else
-void
-uFatalError(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    if ((outCount==0)&&(preMsg!=NULL))
-	fprintf(errorFile,"%s\n",preMsg);
-    if (prefix!=NULL)
-	fprintf(errorFile,"%s",prefix);
-    fprintf(errorFile,"Fatal Error:      ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fprintf(errorFile,"                  Exiting\n");
-    fflush(errorFile);
-    outCount++;
-    exit(1);
-    /* NOTREACHED */
-}
-#endif
 
 /***====================================================================***/
 
-#if NeedVarargsPrototypes
 void
 uInternalError(char *s, ...)
 {
@@ -507,23 +368,6 @@ va_list args;
     fflush(errorFile);
     outCount++;
 }
-#else
-void
-uInternalError(s,a1,a2,a3,a4,a5,a6)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6;
-{
-    if ((outCount==0)&&(preMsg!=NULL))
-	fprintf(errorFile,"%s\n",preMsg);
-    if (prefix!=NULL)
-	fprintf(errorFile,"%s",prefix);
-    fprintf(errorFile,"Internal error:   ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6);
-    fflush(errorFile);
-    outCount++;
-    return;
-}
-#endif
 
 void
 #if NeedFunctionPrototypes

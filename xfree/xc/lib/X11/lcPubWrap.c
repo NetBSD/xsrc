@@ -23,20 +23,13 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcPubWrap.c,v 1.4 2001/01/17 19:41:55 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcPubWrap.c,v 1.5 2001/07/25 15:04:45 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
 
-#if NeedVarargsPrototypes
 char *
 _XGetLCValues(XLCd lcd, ...)
-#else
-char *
-_XGetLCValues(lcd, va_alist)
-    XLCd lcd;
-    va_dcl
-#endif
 {
     va_list var;
     XlcArgList args;
@@ -44,11 +37,11 @@ _XGetLCValues(lcd, va_alist)
     int num_args;
     XLCdPublicMethodsPart *methods = XLC_PUBLIC_METHODS(lcd);
 
-    Va_start(var, lcd);
+    va_start(var, lcd);
     _XlcCountVaList(var, &num_args);
     va_end(var);
 
-    Va_start(var, lcd);
+    va_start(var, lcd);
     _XlcVaToArgList(var, num_args, &args);
     va_end(var);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/XvMC/XvMC.c,v 1.3 2001/04/01 14:00:02 tsi Exp $ */
+/* $XFree86: xc/lib/XvMC/XvMC.c,v 1.4 2001/11/14 21:54:38 mvojkovi Exp $ */
 
 #define NEED_REPLIES
 
@@ -114,7 +114,6 @@ XvMCSurfaceInfo * XvMCListSurfaceTypes(Display *dpy, XvPortID port, int *num)
 		_XRead(dpy, (char*)&sinfo, sizeof(xvmcSurfaceInfo));
 	       surface_info[i].surface_type_id = sinfo.surface_type_id;
 	       surface_info[i].chroma_format = sinfo.chroma_format;
-	       surface_info[i].color_description = sinfo.color_description;
 	       surface_info[i].max_width = sinfo.max_width;
 	       surface_info[i].max_height = sinfo.max_height;
 	       surface_info[i].subpicture_max_width = 

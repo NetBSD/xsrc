@@ -7,7 +7,7 @@ char rcsId_vmware[] =
 
     "Id: vmware.c,v 1.11 2001/02/23 02:10:39 yoel Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.4 2001/05/16 06:48:12 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.8 2001/10/28 03:33:53 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -55,7 +55,7 @@ char rcsId_vmware[] =
 #define VMWARE_NAME	"VMWARE"
 #define VMWARE_DRIVER_NAME	"vmware"
 #define VMWARE_MAJOR_VERSION	10
-#define VMWARE_MINOR_VERSION	4
+#define VMWARE_MINOR_VERSION	7
 #define VMWARE_PATCHLEVEL	0
 #define VERSION		(VMWARE_MAJOR_VERSION * 65536 + VMWARE_MINOR_VERSION * 256 + VMWARE_PATCHLEVEL)
 
@@ -86,6 +86,25 @@ static PciChipsets VMWAREPciChipsets[] = {
 	{ PCI_CHIP_VMWARE0405, PCI_CHIP_VMWARE0405, RES_EXCLUSIVE_VGA },
 	{ PCI_CHIP_VMWARE0710, PCI_CHIP_VMWARE0710, vmwareLegacyRes },
 	{ -1,		       -1,		    RES_UNDEFINED }
+};
+
+static const char *vgahwSymbols[] = {
+	"vgaHWGetHWRec",
+	"vgaHWGetIOBase",
+	"vgaHWGetIndex",
+	"vgaHWInit",
+	"vgaHWProtect",
+	"vgaHWRestore",
+	"vgaHWSave",
+	"vgaHWSaveScreen",
+	"vgaHWUnlock",
+	NULL
+};
+
+static const char *fbSymbols[] = {
+	"fbPictureInit",
+	"fbScreenInit",
+	NULL
 };
 
 #ifdef XFree86LOADER
@@ -390,7 +409,7 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
 	}
 
-/*	xf86LoaderReqSymLists(vgahwSymbols, NULL); */ /* FIXME */
+	xf86LoaderReqSymLists(vgahwSymbols, NULL);
 
 	if (!vgaHWGetHWRec(pScrn)) {
 		return FALSE;
@@ -402,39 +421,46 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 
 	pScrn->monitor = pScrn->confScreen->monitor;
 
-	pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
-	pVMWARE->weight.red = vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_RED_MASK));
-	pVMWARE->weight.green =	vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_GREEN_MASK));
-	pVMWARE->weight.blue = vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_BLUE_MASK));
-	pVMWARE->offset.blue = 0;
-	pVMWARE->offset.green = pVMWARE->weight.blue;
-	pVMWARE->offset.red = pVMWARE->weight.green + pVMWARE->offset.green;
-	pVMWARE->bitsPerPixel = vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
-	pVMWARE->defaultVisual = vmwareReadReg(pVMWARE, SVGA_REG_PSEUDOCOLOR) ? PseudoColor : TrueColor;
-	pVMWARE->videoRam = vmwareReadReg(pVMWARE, SVGA_REG_FB_MAX_SIZE);
-	pVMWARE->memPhysBase = vmwareReadReg(pVMWARE, SVGA_REG_FB_START);
-	pVMWARE->maxWidth = vmwareReadReg(pVMWARE, SVGA_REG_MAX_WIDTH);
-	pVMWARE->maxHeight = vmwareReadReg(pVMWARE, SVGA_REG_MAX_HEIGHT);
 #define ACCELERATE_OPS
 #ifdef ACCELERATE_OPS
 	pVMWARE->vmwareCapability = vmwareReadReg(pVMWARE, SVGA_REG_CAPABILITIES);
 #else
 	pVMWARE->vmwareCapability = 0;
 #endif
+
+        if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
+	        pVMWARE->bitsPerPixel =
+                   vmwareReadReg(pVMWARE, SVGA_REG_HOST_BITS_PER_PIXEL);
+                vmwareWriteReg(pVMWARE,
+                               SVGA_REG_BITS_PER_PIXEL, pVMWARE->bitsPerPixel);
+        } else {
+	        pVMWARE->bitsPerPixel =
+                   vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
+        }
+	pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
+	pVMWARE->videoRam = vmwareReadReg(pVMWARE, SVGA_REG_FB_MAX_SIZE);
+	pVMWARE->memPhysBase = vmwareReadReg(pVMWARE, SVGA_REG_FB_START);
+	pVMWARE->maxWidth = vmwareReadReg(pVMWARE, SVGA_REG_MAX_WIDTH);
+	pVMWARE->maxHeight = vmwareReadReg(pVMWARE, SVGA_REG_MAX_HEIGHT);
 	pVMWARE->cursorDefined = FALSE;
 	pVMWARE->mouseHidden = FALSE;
 
+        if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS_2) {
+                pVMWARE->cursorRemoveFromFB = SVGA_CURSOR_ON_REMOVE_FROM_FB;
+                pVMWARE->cursorRestoreToFB = SVGA_CURSOR_ON_RESTORE_TO_FB;
+        } else {
+                pVMWARE->cursorRemoveFromFB = SVGA_CURSOR_ON_HIDE;
+                pVMWARE->cursorRestoreToFB = SVGA_CURSOR_ON_SHOW;
+        }
+
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "caps:  0x%08X\n", pVMWARE->vmwareCapability);
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "depth: %d\n", pVMWARE->depth);
-	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "w.red: %d\n", pVMWARE->weight.red);
-	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "w.grn: %d\n", pVMWARE->weight.green);
-	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "w.blu: %d\n", pVMWARE->weight.blue);
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "bpp:   %d\n", pVMWARE->bitsPerPixel);
-	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "vis:   %d\n", pVMWARE->defaultVisual);
+
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "vram:  %d\n", pVMWARE->videoRam);
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "pbase: %p\n", pVMWARE->memPhysBase);
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "mwidt: %d\n", pVMWARE->maxWidth);
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "mheig: %d\n", pVMWARE->maxHeight);
-	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED, 2, "caps:  0x%08X\n", pVMWARE->vmwareCapability);
 
 	switch (pVMWARE->depth) {
 		case 16:
@@ -474,20 +500,64 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!xf86SetDepthBpp(pScrn, pVMWARE->depth, pVMWARE->bitsPerPixel, pVMWARE->bitsPerPixel, bpp24flags)) {
 		return FALSE;
 	}
-	if (pScrn->depth != pVMWARE->depth) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		           "Currently unavailable depth of %d requested.\n"
-			   "\tThe guest X server must run at the same depth as the host (which\n"
-			   "\tis currently %d).  This is automatically detected.  Please do not\n"
-			   "\tspecify a depth on the command line or via the config file.\n",
-			   pScrn->depth, pVMWARE->depth);
-		return FALSE;
-	}
+
 	if (pScrn->bitsPerPixel != pVMWARE->bitsPerPixel) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "Given bpp (%d) is not supported by this driver (%d is required)\n",
-			   pScrn->bitsPerPixel, pVMWARE->bitsPerPixel);
-		return FALSE;
+                if (pScrn->bitsPerPixel == 8 &&
+                    pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
+                        vmwareWriteReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL, 8);
+                        pVMWARE->bitsPerPixel =
+                           vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
+                } else {
+                        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                           "Currently unavailable depth/bpp of %d/%d requested.\n"
+                           "\tThe guest X server must run at the same depth and bpp as the host\n"
+                           "\t(which are currently %d/%d).  This is automatically detected.  Please\n"
+                           "\tdo not specify a depth on the command line or via the config file.\n",
+                            pScrn->depth, pScrn->bitsPerPixel,
+                            pVMWARE->depth, pVMWARE->bitsPerPixel);
+		        return FALSE;
+                }
+	}
+
+        /*
+         * Reread depth and defer reading the colour registers until here
+         * in case we changed bpp above.
+         */
+
+	pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
+	pVMWARE->weight.red =
+           vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_RED_MASK));
+	pVMWARE->weight.green =
+           vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_GREEN_MASK));
+	pVMWARE->weight.blue =
+           vmwareCalculateWeight(vmwareReadReg(pVMWARE, SVGA_REG_BLUE_MASK));
+	pVMWARE->offset.blue = 0;
+	pVMWARE->offset.green = pVMWARE->weight.blue;
+	pVMWARE->offset.red = pVMWARE->weight.green + pVMWARE->offset.green;
+	pVMWARE->defaultVisual = vmwareReadReg(pVMWARE, SVGA_REG_PSEUDOCOLOR) ?
+           PseudoColor : TrueColor;
+
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "depth: %d\n", pVMWARE->depth);
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "bpp:   %d\n", pVMWARE->bitsPerPixel);
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "w.red: %d\n", pVMWARE->weight.red);
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "w.grn: %d\n", pVMWARE->weight.green);
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "w.blu: %d\n", pVMWARE->weight.blue);
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_PROBED,
+                       2, "vis:   %d\n", pVMWARE->defaultVisual);
+
+	if (pScrn->depth != pVMWARE->depth) {
+                xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                           "Currently unavailable depth of %d requested.\n"
+                           "\tThe guest X server must run at the same depth as the host (which\n"
+                           "\tis currently %d).  This is automatically detected.  Please do not\n"
+                           "\tspecify a depth on the command line or via the config file.\n",
+                            pScrn->depth, pVMWARE->depth);
+                return FALSE;
 	}
 	xf86PrintDepthBpp(pScrn);
 
@@ -617,12 +687,17 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 		VMWAREFreeRec(pScrn);
 		return FALSE;
 	}
+	xf86LoaderReqSymLists(fbSymbols, NULL);
+#if 0
+	/* XXX This driver doesn't use XAA! */
 	if (!pVMWARE->noAccel || pVMWARE->hwCursor) {
 		if (!xf86LoadSubModule(pScrn, "xaa")) {
 			VMWAREFreeRec(pScrn);
 			return FALSE;
 		}
+		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
+#endif
 	return TRUE;
 }
 
@@ -887,10 +962,6 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (!ret)
 		return FALSE;
 
-#ifdef RENDER
-	fbPictureInit (pScreen, 0, 0);
-#endif
-
         /* Override the default mask/offset settings */
         if (pScrn->bitsPerPixel > 8) {
 	int i;
@@ -908,6 +979,9 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			}
 		}
 	}
+
+	/* must be after RGB ordering fixed */
+	fbPictureInit (pScreen, 0, 0);
 
 	/*
 	 * Wrap the CloseScreen vector and set SaveScreen.
@@ -1010,11 +1084,13 @@ VMWAREProbe(DriverPtr drv, int flags)
 	char buildString[sizeof(VMWAREBuildStr)];
 
 	RewriteTagString(VMWAREBuildStr, buildString, sizeof(VMWAREBuildStr));
-	xf86DrvMsg(0, X_PROBED, "%s", buildString);
+	xf86MsgVerb(X_PROBED, 4, "%s", buildString);
 
 	numDevSections = xf86MatchDevice(VMWARE_DRIVER_NAME, &devSections);
 	if (numDevSections <= 0) {
-		xf86DrvMsg(0, X_ERROR, "No vmware driver section\n");
+#ifdef DEBUG
+		xf86MsgVerb(X_ERROR, 0, "No vmware driver section\n");
+#endif
 		return FALSE;
 	}
 	if (xf86GetPciVideoInfo()) {
@@ -1079,6 +1155,9 @@ vmwareSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	if (!setupDone) {
 		setupDone = TRUE;
 		xf86AddDriver(&VMWARE, module, 0);
+
+		LoaderRefSymLists(vgahwSymbols, fbSymbols, NULL);
+
 		return (pointer)1;
 	}
 	if (errmaj) {

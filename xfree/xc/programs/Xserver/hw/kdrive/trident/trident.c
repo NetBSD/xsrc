@@ -19,12 +19,10 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/trident/trident.c,v 1.16 2001/03/21 16:43:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/trident/trident.c,v 1.18 2001/06/04 09:45:42 keithp Exp $ */
 
 #include "trident.h"
-#define extern
-#include <asm/io.h>
-#undef extern
+#include <sys/io.h>
 
 #undef TRI_DEBUG
 
@@ -154,6 +152,14 @@ tridentInitScreen (ScreenPtr pScreen)
     return vesaInitScreen (pScreen);
 #else
     return fbdevInitScreen (pScreen);
+#endif
+}
+
+Bool
+tridentFinishInitScreen (ScreenPtr pScreen)
+{
+#ifdef VESA
+    return vesaFinishInitScreen (pScreen);
 #endif
 }
 
@@ -600,4 +606,5 @@ KdCardFuncs	tridentFuncs = {
     fbdevGetColors,    	    /* getColors */
     fbdevPutColors,	    /* putColors */
 #endif
+    tridentFinishInitScreen /* finishInitScreen */
 };

@@ -26,7 +26,7 @@
  *
  *	Id: fontcache.c,v 1.19 1999/01/31 13:06:00 akiyama Exp $
  */
-/* $XFree86: xc/lib/font/fontcache/fontcache.c,v 1.4 2001/04/05 17:42:28 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontcache/fontcache.c,v 1.5 2001/10/28 03:32:45 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -234,7 +234,7 @@ FontCacheOpenCache(void *arg)
 {
     int linesize;
     FCCBPtr this;
-    int size, mask;
+    int size = 0, mask = 0;
     int i;
 
     static int sizes[] = { 16, 32, 64, 128, 0 };

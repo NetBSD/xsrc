@@ -1,5 +1,5 @@
 .TH XvSetPortAttribute 3X  __vendorversion__
-.\" $XFree86: xc/doc/man/Xv/XvSetPortAttribute.man,v 1.6 2001/01/27 18:20:36 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/XvSetPortAttribute.man,v 1.7 2001/08/17 13:27:50 dawes Exp $
 .SH Name
 XvSetPortAttribute \- sets an attribute of a video port 
 .\"
@@ -80,7 +80,7 @@ PortControlNotify(3X) event is generated for all clients
 that have requested for port changes using XvSelectPortNotify(3X).
 .SH Returned Values
 .IP [Success] 8
-Returns True if XvSetPortAttribute(3X) completed successfully.
+Returned if XvSetPortAttribute(3X) completed successfully.
 .IP [XvBadExtension] 8
 Returned if the Xv extension is unavailable.
 .IP [XvBadAlloc] 8

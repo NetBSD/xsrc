@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.h,v 1.5 2001/03/21 17:02:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.h,v 1.6 2001/10/04 18:28:21 alanh Exp $ */
 
 #ifndef _I810_DRI_
 #define _I810_DRI_
 
-#include "xf86drm.h"
-#include "xf86drmI810.h"
+#include <xf86drm.h>
+#include <xf86drmI810.h>
 
 #define I810_MAX_DRAWABLES 256
 

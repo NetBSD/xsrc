@@ -1,5 +1,5 @@
 /*
- * Id: kdrive.c,v 1.1 1999/11/02 03:54:46 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.c,v 1.22 2001/10/29 16:34:56 tsi Exp $ 
  *
  * Copyright © 1999 Keith Packard
  *
@@ -21,7 +21,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.c,v 1.12 2001/03/30 02:15:20 keithp Exp $ */
 
 #include "kdrive.h"
 #ifdef PSEUDO8
@@ -32,6 +31,10 @@
 
 #ifdef XV
 #include "kxv.h"
+#endif
+
+#ifdef DPMSExtension
+#include "dpmsproc.h"
 #endif
 
 CARD8	kdBpp[] = { 1, 4, 8, 16, 24, 32 };
@@ -47,6 +50,7 @@ Bool		    kdEmulateMiddleButton;
 Bool		    kdDisableZaphod;
 Bool		    kdEnabled;
 Bool		    kdSwitchPending;
+DDXPointRec	    kdOrigin;
 
 /*
  * Carry arguments from InitOutput through driver initialization
@@ -105,6 +109,10 @@ KdSetRootClip (ScreenPtr pScreen, BOOL enable)
 	box.y1 = 0;
 	box.x2 = pScreen->width;
 	box.y2 = pScreen->height;
+	pWin->drawable.width = pScreen->width;
+	pWin->drawable.height = pScreen->height;
+	REGION_INIT (pScreen, &pWin->winSize, &box, 1);
+	REGION_INIT (pScreen, &pWin->borderSize, &box, 1);
 	REGION_RESET(pScreen, &pWin->borderClip, &box);
 	REGION_BREAK (pWin->drawable.pScreen, &pWin->clipList);
     }
@@ -207,14 +215,13 @@ KdDisableScreen (ScreenPtr pScreen)
 }
 
 void
-KdDisableScreens (void)
+KdSuspend (void)
 {
     KdCardInfo	    *card;
     KdScreenInfo    *screen;
 
     if (kdEnabled)
     {
-	kdEnabled = FALSE;
 	for (card = kdCardInfo; card; card = card->next)
 	{
 	    for (screen = card->screenList; screen; screen = screen->next)
@@ -223,8 +230,18 @@ KdDisableScreens (void)
 	    if (card->driver)
 		(*card->cfuncs->restore) (card);
 	}
-	(*kdOsFuncs->Disable) ();
 	KdDisableInput ();
+    }
+}
+
+void
+KdDisableScreens (void)
+{
+    KdSuspend ();
+    if (kdEnabled)
+    {
+	(*kdOsFuncs->Disable) ();
+	kdEnabled = FALSE;
     }
 }
 
@@ -251,6 +268,26 @@ KdEnableScreen (ScreenPtr pScreen)
 }
 
 void
+KdResume (void)
+{
+    KdCardInfo	    *card;
+    KdScreenInfo    *screen;
+
+    if (kdEnabled)
+    {
+	for (card = kdCardInfo; card; card = card->next)
+	{
+	    (*card->cfuncs->preserve) (card);
+	    for (screen = card->screenList; screen; screen = screen->next)
+		if (screen->mynum == card->selected && screen->pScreen)
+		    KdEnableScreen (screen->pScreen);
+	}
+	KdEnableInput ();
+	KdReleaseAllKeys ();
+    }
+}
+
+void
 KdEnableScreens (void)
 {
     KdCardInfo	    *card;
@@ -260,15 +297,8 @@ KdEnableScreens (void)
     {
 	kdEnabled = TRUE;
 	(*kdOsFuncs->Enable) ();
-	for (card = kdCardInfo; card; card = card->next)
-	{
-	    (*card->cfuncs->preserve) (card);
-	    for (screen = card->screenList; screen; screen = screen->next)
-		if (screen->mynum == card->selected && screen->pScreen)
-		    KdEnableScreen (screen->pScreen);
-	}
-	KdEnableInput ();
     }
+    KdResume ();
 }
 
 void
@@ -278,7 +308,6 @@ KdProcessSwitch (void)
 	KdDisableScreens ();
     else
     {
-	KdReleaseAllKeys ();
 	KdEnableScreens ();
     }
 }
@@ -336,8 +365,8 @@ KdParseScreen (KdScreenInfo *screen,
     
     screen->dumb = kdDumbDriver;
     screen->softCursor = kdSoftCursor;
-    kdDumbDriver = FALSE;
-    kdSoftCursor = FALSE;
+    screen->origin = kdOrigin;
+    screen->rotation = 0;
     screen->width = 0;
     screen->height = 0;
     screen->width_mm = 0;
@@ -347,12 +376,12 @@ KdParseScreen (KdScreenInfo *screen,
 	screen->fb[fb].depth = 0;
     if (!arg)
 	return;
-    if (strlen (arg) > sizeof (save))
+    if (strlen (arg) >= sizeof (save))
 	return;
     
     for (i = 0; i < 2; i++)
     {
-	arg = KdParseFindNext (arg, "x/", save, &delim);
+	arg = KdParseFindNext (arg, "x/@", save, &delim);
 	if (!save[0])
 	    return;
 	
@@ -361,7 +390,7 @@ KdParseScreen (KdScreenInfo *screen,
 	
 	if (delim == '/')
 	{
-	    arg = KdParseFindNext (arg, "x", save, &delim);
+	    arg = KdParseFindNext (arg, "x@", save, &delim);
 	    if (!save[0])
 		return;
 	    mm = atoi(save);
@@ -377,8 +406,32 @@ KdParseScreen (KdScreenInfo *screen,
 	    screen->height = pixels;
 	    screen->height_mm = mm;
 	}
-	if (delim != 'x')
+	if (delim != 'x' && delim != '@')
 	    return;
+    }
+
+    kdOrigin.x += screen->width;
+    kdOrigin.y = 0;
+    kdDumbDriver = FALSE;
+    kdSoftCursor = FALSE;
+    
+    if (delim == '@')
+    {
+	arg = KdParseFindNext (arg, "x", save, &delim);
+	if (save[0])
+	{
+	    screen->rotation = atoi (save);
+	    if (screen->rotation < 45)
+		screen->rotation = 0;
+	    else if (screen->rotation < 135)
+		screen->rotation = 90;
+	    else if (screen->rotation < 225)
+		screen->rotation = 180;
+	    else if (screen->rotation < 315)
+		screen->rotation = 270;
+	    else
+		screen->rotation = 0;
+	}
     }
     
     fb = 0;
@@ -407,6 +460,114 @@ KdParseScreen (KdScreenInfo *screen,
 	arg = KdParseFindNext (arg, "x", save, &delim);
 	if (save[0])
 	    screen->rate = atoi(save);
+    }
+}
+
+/*
+ * Mouse argument syntax:
+ *
+ *  device,protocol,options...
+ *
+ *  Options are any of:
+ *	1-5	    n button mouse
+ *	2button	    emulate middle button
+ *	{NMO}	    Reorder buttons
+ */
+
+char *
+KdSaveString (char *str)
+{
+    char    *n = (char *) xalloc (strlen (str) + 1);
+
+    if (!n)
+	return 0;
+    strcpy (n, str);
+    return n;
+}
+
+/*
+ * Parse mouse information.  Syntax:
+ *
+ *  <device>,<nbutton>,<protocol>{,<option>}...
+ *
+ * options: {nmo}   pointer mapping (e.g. {321})
+ *	    2button emulate middle button
+ *	    3button dont emulate middle button
+ */
+
+void
+KdParseMouse (char *arg)
+{
+    char	save[1024];
+    char	delim;
+    KdMouseInfo	*mi;
+    int		i;
+    
+    mi = KdMouseInfoAdd ();
+    if (!mi)
+	return;
+    mi->name = 0;
+    mi->prot = 0;
+    mi->emulateMiddleButton = kdEmulateMiddleButton;
+    mi->nbutton = 3;
+    for (i = 0; i < KD_MAX_BUTTON; i++)
+	mi->map[i] = i + 1;
+    
+    if (!arg)
+	return;
+    if (strlen (arg) >= sizeof (save))
+	return;
+    arg = KdParseFindNext (arg, ",", save, &delim);
+    if (!save[0])
+	return;
+    mi->name = KdSaveString (save);
+    if (delim != ',')
+	return;
+    
+    arg = KdParseFindNext (arg, ",", save, &delim);
+    if (!save[0])
+	return;
+    
+    if ('1' <= save[0] && save[0] <= '0' + KD_MAX_BUTTON && save[1] == '\0')
+    {
+        mi->nbutton = save[0] - '0';
+	if (mi->nbutton > KD_MAX_BUTTON)
+	{
+	    UseMsg ();
+	    return;
+	}
+    }
+    
+    if (!delim != ',')
+	return;
+    
+    arg = KdParseFindNext (arg, ",", save, &delim);
+    
+    if (save[0])
+	mi->prot = KdSaveString (save);
+    
+    while (delim == ',')
+    {
+	arg = KdParseFindNext (arg, ",", save, &delim);
+	if (save[0] == '{')
+	{
+	    char	*s = save + 1;
+	    i = 0;
+	    while (*s && *s != '}')
+	    {
+		if ('1' <= *s && *s <= '0' + mi->nbutton)
+		    mi->map[i] = *s - '0';
+		else
+		    UseMsg ();
+		s++;
+	    }
+	}
+	else if (!strcmp (save, "2button"))
+	    mi->emulateMiddleButton = TRUE;
+	else if (!strcmp (save, "3button"))
+	    mi->emulateMiddleButton = FALSE;
+	else
+	    UseMsg ();
     }
 }
 
@@ -473,6 +634,33 @@ KdProcessArgument (int argc, char **argv, int i)
     }
     if (!strcmp (argv[i], "-standalone"))
 	return 1;
+    if (!strcmp (argv[i], "-origin"))
+    {
+	if ((i+1) < argc)
+	{
+	    char    *x = argv[i+1];
+	    char    *y = strchr (x, ',');
+	    if (x)
+		kdOrigin.x = atoi (x);
+	    else
+		kdOrigin.x = 0;
+	    if (y)
+		kdOrigin.y = atoi(y+1);
+	    else
+		kdOrigin.y = 0;
+	}
+	else
+	    UseMsg ();
+	return 2;
+    }
+    if (!strcmp (argv[i], "-mouse"))
+    {
+	if ((i+1) < argc)
+	    KdParseMouse (argv[i+1]);
+	else
+	    UseMsg ();
+	return 2;
+    }
 #ifdef PSEUDO8
     return p8ProcessArgument (argc, argv, i);
 #else
@@ -648,7 +836,12 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     for (fb = 0; fb < KD_MAX_FB && screen->fb[fb].depth; fb++)
 	pScreenPriv->bytesPerPixel[fb] = screen->fb[fb].bitsPerPixel >> 3;
     pScreenPriv->dpmsState = KD_DPMS_NORMAL;
+#ifdef PANORAMIX
+    dixScreenOrigins[pScreen->myNum] = screen->origin;
+#endif
 
+    if (!monitorResolution)
+	monitorResolution = 75;
     /*
      * This is done in this order so that backing store wraps
      * our GC functions; fbFinishScreenInit initializes MI
@@ -657,7 +850,7 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     if (!fbSetupScreen (pScreen, 
 			screen->fb[0].frameBuffer, 
 			screen->width, screen->height, 
-			75, 75, 
+			monitorResolution, monitorResolution, 
 			screen->fb[0].pixelStride,
 			screen->fb[0].bitsPerPixel))
     {
@@ -690,7 +883,7 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 					screen->fb[0].frameBuffer, 
 					screen->fb[1].frameBuffer, 
 					screen->width, screen->height, 
-					75, 75,
+					monitorResolution, monitorResolution,
 					screen->fb[0].pixelStride,
 					screen->fb[1].pixelStride,
 					screen->fb[0].bitsPerPixel,
@@ -707,7 +900,7 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	if (!fbFinishScreenInit (pScreen, 
 				 screen->fb[0].frameBuffer, 
 				 screen->width, screen->height,
-				 75, 75,
+				 monitorResolution, monitorResolution,
 				 screen->fb[0].pixelStride,
 				 screen->fb[0].bitsPerPixel))
 	{
@@ -721,8 +914,12 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
      */
     if (screen->width_mm)
 	pScreen->mmWidth = screen->width_mm;
+    else
+	screen->width_mm = pScreen->mmWidth;
     if (screen->height_mm)
 	pScreen->mmHeight = screen->height_mm;
+    else
+	screen->height_mm = pScreen->mmHeight;
     
     /*
      * Plug in our own block/wakeup handlers.
@@ -735,7 +932,6 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     if (!fbPictureInit (pScreen, 0, 0))
 	return FALSE;
 #endif
-    
     if (card->cfuncs->initScreen)
 	if (!(*card->cfuncs->initScreen) (pScreen))
 	    return FALSE;
@@ -748,6 +944,10 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     (void) p8Init (pScreen, PSEUDO8_USE_DEFAULT);
 #endif
     
+    if (card->cfuncs->finishInitScreen)
+	if (!(*card->cfuncs->finishInitScreen) (pScreen))
+	    return FALSE;
+	    
 #if 0
     fbInitValidateTree (pScreen);
 #endif

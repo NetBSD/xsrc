@@ -29,7 +29,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcLkup.c,v 3.5 2001/01/17 19:41:52 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcLkup.c,v 3.6 2001/08/13 21:46:46 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xatom.h>
@@ -213,10 +213,6 @@ _XimLocalUtf8LookupString(xic, ev, buffer, bytes, keysym, status)
     return (ret);
 }
 
-#ifndef MAXINT
-#define MAXINT		(~((unsigned int)1 << ((8 * sizeof(int)) - 1)))
-#endif /* !MAXINT */
-
 Private int
 _XimLcctsconvert(conv, from, from_len, to, to_len, state)
     XlcConv	 conv;
@@ -234,6 +230,7 @@ _XimLcctsconvert(conv, from, from_len, to, to_len, state)
     int		 to_cnvlen;
     char	*from_buf;
     char	*to_buf;
+    char	 scratchbuf[BUFSIZ];
     Status	 tmp_state;
 
     if (!state)
@@ -243,6 +240,10 @@ _XimLcctsconvert(conv, from, from_len, to, to_len, state)
 	*state = XLookupNone;
 	return 0;
     }
+
+    /* Reset the converter.  The CompoundText at 'from' starts in
+       initial state.  */
+    _XlcResetConverter(conv);
 
     if (to && to_len) {
 	from_left = from_len;
@@ -277,10 +278,10 @@ _XimLcctsconvert(conv, from, from_len, to, to_len, state)
     from_left = from_len;
     from_cnvlen = 0;
     to_cnvlen = 0;
-    to_buf = NULL;
     for (;;) {
 	from_savelen = from_left;
-	to_left = MAXINT;
+	to_buf = scratchbuf;
+	to_left = BUFSIZ;
 	from_buf = &from[from_cnvlen];
 	if (_XlcConvert(conv, (XPointer *)&from_buf, &from_left,
 				 (XPointer *)&to_buf, &to_left, NULL, 0) < 0) {
@@ -288,7 +289,7 @@ _XimLcctsconvert(conv, from, from_len, to, to_len, state)
 	    return 0;
 	}
 	from_cnvlen += (from_savelen - from_left);
-	to_cnvlen += (MAXINT - to_left);
+	to_cnvlen += (BUFSIZ - to_left);
 	if (from_left == 0) {
 	    if (to_cnvlen > 0)
 		*state = XBufferOverflow;
@@ -332,6 +333,7 @@ _XimLcctstowcs(xim, from, from_len, to, to_len, state)
     int		 to_cnvlen;
     char	*from_buf;
     wchar_t	*to_buf;
+    wchar_t	 scratchbuf[BUFSIZ];
     Status	 tmp_state;
 
     if (!state)
@@ -341,6 +343,10 @@ _XimLcctstowcs(xim, from, from_len, to, to_len, state)
 	*state = XLookupNone;
 	return 0;
     }
+
+    /* Reset the converter.  The CompoundText at 'from' starts in
+       initial state.  */
+    _XlcResetConverter(conv);
 
     if (to && to_len) {
 	from_left = from_len;
@@ -375,10 +381,10 @@ _XimLcctstowcs(xim, from, from_len, to, to_len, state)
     from_left = from_len;
     from_cnvlen = 0;
     to_cnvlen = 0;
-    to_buf = (wchar_t *)NULL;
     for (;;) {
 	from_savelen = from_left;
-	to_left = MAXINT;
+	to_buf = scratchbuf;
+	to_left = BUFSIZ * sizeof(wchar_t);
 	from_buf = &from[from_cnvlen];
 	if (_XlcConvert(conv, (XPointer *)&from_buf, &from_left,
 				 (XPointer *)&to_buf, &to_left, NULL, 0) < 0) {
@@ -386,7 +392,7 @@ _XimLcctstowcs(xim, from, from_len, to, to_len, state)
 	    return 0;
 	}
 	from_cnvlen += (from_savelen - from_left);
-	to_cnvlen += (MAXINT - to_left);
+	to_cnvlen += (BUFSIZ * sizeof(wchar_t) - to_left);
 	if (from_left == 0) {
 	    if (to_cnvlen > 0)
 		*state = XBufferOverflow;

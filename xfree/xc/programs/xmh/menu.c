@@ -25,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  *
  */
+/* $XFree86: xc/programs/xmh/menu.c,v 1.3 2001/10/28 03:34:38 tsi Exp $ */
 
 #include "xmh.h"
 #include "bboxint.h"
@@ -65,7 +66,7 @@ void SendMenuEntryEnableMsg(button, entry_name, value)
     int		value;
 {
     Widget	entry;
-    static Arg	args[] = { XtNsensitive, (XtArgVal) NULL };
+    static Arg	args[] = {{XtNsensitive, (XtArgVal) NULL}};
 
     if ((entry = XtNameToWidget(button->menu, entry_name)) != NULL) {
 	args[0].value = (XtArgVal) ((value == 0) ? False : True);
@@ -74,9 +75,7 @@ void SendMenuEntryEnableMsg(button, entry_name, value)
 }
 
 
-void ToggleMenuItem(entry, state)
-    Widget	entry;
-    Boolean	state;
+void ToggleMenuItem(Widget entry, Boolean state)
 {
     Arg		args[1];
 

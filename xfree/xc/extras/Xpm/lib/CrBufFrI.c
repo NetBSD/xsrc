@@ -31,6 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/CrBufFrI.c,v 1.2 2001/10/28 03:32:09 tsi Exp $ */
 
 #include "XpmI.h"
 
@@ -269,7 +270,7 @@ WriteColors(dataptr, data_size, used_size, colors, ncolors, cpp)
 	s += cpp;
 
 	for (key = 1; key <= NKEYS; key++, defaults++) {
-	    if (s2 = *defaults) {
+	    if ((s2 = *defaults)) {
 #ifndef VOID_SPRINTF
 		s +=
 #endif

@@ -59,7 +59,7 @@ gluBeginCurve(nobj);
 gluEndCurve(nobj);
 .Ee
 .SH SEE ALSO
-\%\f3gluBeginSurface\fP, \%\f3gluBeginTrim\fP, \%\f3gluNewNurbsRenderer\fP, 
-\%\f3gluNurbsCurve\fP, 
-\f3glPopAttrib\fP, \f3glPushAttrib\fP
+\%\f3gluBeginSurface(3G)\fP, \%\f3gluBeginTrim(3G)\fP, \%\f3gluNewNurbsRenderer(3G)\fP, 
+\%\f3gluNurbsCurve(3G)\fP, 
+\f3glPopAttrib(3G)\fP, \f3glPushAttrib(3G)\fP
 

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbline.c,v 3.4 2001/01/17 22:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbline.c,v 3.6 2001/12/14 19:59:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: cfbline.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
+/* $Xorg: cfbline.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $ */
 #include "X.h"
 
 #include "gcstruct.h"
@@ -634,7 +638,6 @@ cfbLineSD( pDrawable, pGC, mode, npt, pptInit)
 		int clip1 = 0, clip2 = 0;
 		int clipdx, clipdy;
 		int err;
-		int dashIndexTmp, dashOffsetTmp;
 		
 		if (miZeroClipLine(pbox->x1, pbox->y1, pbox->x2-1,
 				   pbox->y2-1,

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxmem.c,v 1.5 2001/03/21 16:29:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxmem.c,v 1.6 2001/10/31 22:50:27 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -56,7 +56,6 @@ Resize(__GLdrawableBuffer *buf,
        GLint x, GLint y, GLuint width, GLuint height,
        __GLdrawablePrivate *glPriv, GLuint bufferMask)
 {
-    __GLXdrawablePrivate *glxPriv = (__GLXdrawablePrivate *) glPriv->other;
     GLuint newSize;
     void *ubase;
     GLint pixelWidth;

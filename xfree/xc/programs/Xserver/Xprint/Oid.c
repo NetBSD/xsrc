@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/Oid.c,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Oid.c,v 1.5 2001/10/28 03:32:53 tsi Exp $ */
 
 #include "attributes.h"
 
@@ -1652,8 +1652,6 @@ TrayMediumListValidate(XpOidTrayMediumList* me,
 		       const XpOidMediumSS* msss)
 {
     int i_mss, i_ds, i_itm;
-    XpOidMediumDiscreteSizeList* ds_list;
-    int tray_count;
     XpOid current_tray, current_medium;
     XpOidMediumDiscreteSizeList* unspecified_tray_ds;
     XpOidMediumDiscreteSizeList* tray_ds;

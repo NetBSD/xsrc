@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType convenience functions to handle glyphs (specification).     */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -65,6 +65,24 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* <Type>                                                                */
+  /*    FT_Glyph                                                           */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Handle to an object used to model generic glyph images.  It is a   */
+  /*    pointer to the @FT_GlyphRec structure and can contain a glyph      */
+  /*    bitmap or pointer.                                                 */
+  /*                                                                       */
+  /* <Note>                                                                */
+  /*    Glyph objects are not owned by the library.  You must thus release */
+  /*    them manually (through @FT_Done_Glyph) _before_ calling            */
+  /*    @FT_Done_FreeType.                                                 */
+  /*                                                                       */
+  typedef struct FT_GlyphRec_*  FT_Glyph;
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* <Struct>                                                              */
   /*    FT_GlyphRec                                                        */
   /*                                                                       */
@@ -88,7 +106,19 @@ FT_BEGIN_HEADER
     FT_Glyph_Format        format;
     FT_Vector              advance;
 
-  } FT_GlyphRec, *FT_Glyph;
+  } FT_GlyphRec;
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Type>                                                                */
+  /*    FT_BitmapGlyph                                                     */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    A handle to an object used to model a bitmap glyph image.  This is */
+  /*    a sub-class of @FT_Glyph, and a pointer to @FT_BitmapGlyphRec.     */
+  /*                                                                       */
+  typedef struct FT_BitmapGlyphRec_*  FT_BitmapGlyph;
 
 
   /*************************************************************************/
@@ -128,7 +158,19 @@ FT_BEGIN_HEADER
     FT_Int       top;
     FT_Bitmap    bitmap;
 
-  } FT_BitmapGlyphRec, *FT_BitmapGlyph;
+  } FT_BitmapGlyphRec;
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Type>                                                                */
+  /*    FT_OutlineGlyph                                                    */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    A handle to an object used to model an outline glyph image.  This  */
+  /*    is a sub-class of @FT_Glyph, and a pointer to @FT_OutlineGlyphRec. */
+  /*                                                                       */
+  typedef struct FT_OutlineGlyphRec_*  FT_OutlineGlyph;
 
 
   /*************************************************************************/
@@ -162,7 +204,7 @@ FT_BEGIN_HEADER
     FT_GlyphRec  root;
     FT_Outline   outline;
 
-  } FT_OutlineGlyphRec, *FT_OutlineGlyph;
+  } FT_OutlineGlyphRec;
 
 
   /*************************************************************************/
@@ -182,8 +224,9 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Get_Glyph( FT_GlyphSlot  slot,
-                                       FT_Glyph     *aglyph );
+  FT_EXPORT( FT_Error )
+  FT_Get_Glyph( FT_GlyphSlot  slot,
+                FT_Glyph     *aglyph );
 
 
   /*************************************************************************/
@@ -204,8 +247,9 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Glyph_Copy( FT_Glyph   source,
-                                        FT_Glyph  *target );
+  FT_EXPORT( FT_Error )
+  FT_Glyph_Copy( FT_Glyph   source,
+                 FT_Glyph  *target );
 
 
   /*************************************************************************/
@@ -233,12 +277,13 @@ FT_BEGIN_HEADER
   /*    The 2x2 transformation matrix is also applied to the glyph's       */
   /*    advance vector.                                                    */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Glyph_Transform( FT_Glyph    glyph,
-                                             FT_Matrix*  matrix,
-                                             FT_Vector*  delta );
+  FT_EXPORT( FT_Error )
+  FT_Glyph_Transform( FT_Glyph    glyph,
+                      FT_Matrix*  matrix,
+                      FT_Vector*  delta );
 
   /* */
-  
+
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -311,9 +356,10 @@ FT_BEGIN_HEADER
   };
 
 
-  FT_EXPORT( void )  FT_Glyph_Get_CBox( FT_Glyph  glyph,
-                                        FT_UInt   bbox_mode,
-                                        FT_BBox  *acbox );
+  FT_EXPORT( void )
+  FT_Glyph_Get_CBox( FT_Glyph  glyph,
+                     FT_UInt   bbox_mode,
+                     FT_BBox  *acbox );
 
 
   /*************************************************************************/
@@ -387,10 +433,11 @@ FT_BEGIN_HEADER
   /*    This function will always fail if the glyph's format isn't         */
   /*    scalable.                                                          */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Glyph_To_Bitmap( FT_Glyph*   the_glyph,
-                                             FT_ULong    render_mode,
-                                             FT_Vector*  origin,
-                                             FT_Bool     destroy );
+  FT_EXPORT( FT_Error )
+  FT_Glyph_To_Bitmap( FT_Glyph*   the_glyph,
+                      FT_ULong    render_mode,
+                      FT_Vector*  origin,
+                      FT_Bool     destroy );
 
 
   /*************************************************************************/
@@ -404,7 +451,8 @@ FT_BEGIN_HEADER
   /* <Input>                                                               */
   /*    glyph :: A handle to the target glyph object.                      */
   /*                                                                       */
-  FT_EXPORT( void )  FT_Done_Glyph( FT_Glyph  glyph );
+  FT_EXPORT( void )
+  FT_Done_Glyph( FT_Glyph  glyph );
 
 
   /* other helpful functions */
@@ -434,8 +482,9 @@ FT_BEGIN_HEADER
   /* <Note>                                                                */
   /*    The result is undefined if either `a' or `b' is zero.              */
   /*                                                                       */
-  FT_EXPORT( void )  FT_Matrix_Multiply( FT_Matrix*  a,
-                                         FT_Matrix*  b );
+  FT_EXPORT( void )
+  FT_Matrix_Multiply( FT_Matrix*  a,
+                      FT_Matrix*  b );
 
 
   /*************************************************************************/
@@ -453,7 +502,8 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Matrix_Invert( FT_Matrix*  matrix );
+  FT_EXPORT( FT_Error )
+  FT_Matrix_Invert( FT_Matrix*  matrix );
 
 
   /* */

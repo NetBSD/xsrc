@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/FillRects.c,v 1.1 2000/11/20 07:13:10 keithp Exp $
+ * $XFree86: xc/lib/Xrender/FillRects.c,v 1.2 2001/12/16 18:27:55 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -30,12 +30,12 @@
 #define size (SIZEOF(xRenderFillRectanglesReq) + FRCTSPERBATCH * SIZEOF(xRectangle))
 
 void
-XRenderFillRectangles (Display	    *dpy,
-		       int	    op,
-		       Picture	    dst,
-		       XRenderColor *color,
-		       XRectangle   *rectangles,
-		       int	    n_rects)
+XRenderFillRectangles (Display		    *dpy,
+		       int		    op,
+		       Picture		    dst,
+		       _Xconst XRenderColor *color,
+		       _Xconst XRectangle   *rectangles,
+		       int		    n_rects)
 {
     XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
     xRenderFillRectanglesReq	*req;

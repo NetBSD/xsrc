@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/mizerline.c,v 3.5 2001/01/17 22:37:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mizerline.c,v 3.7 2001/12/14 20:00:29 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: mizerline.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
+/* $Xorg: mizerline.c,v 1.4 2001/02/09 02:05:22 xorgcvs Exp $ */
 #include "X.h"
 
 #include "misc.h"
@@ -99,13 +103,13 @@ miZeroLine(pDraw, pGC, mode, npt, pptInit)
     int		npt;		/* number of points */
     DDXPointPtr pptInit;
 {
-    int Nspans, current_y;
+    int Nspans, current_y = 0;
     DDXPointPtr ppt; 
     DDXPointPtr pspanInit, spans;
     int *pwidthInit, *widths, list_len;
     int xleft, ytop, xright, ybottom;
     int new_x1, new_y1, new_x2, new_y2;
-    int x, y, x1, y1, x2, y2, xstart, ystart;
+    int x = 0, y = 0, x1, y1, x2, y2, xstart, ystart;
     int oc1, oc2;
     int result;
     int pt1_clipped, pt2_clipped = 0;

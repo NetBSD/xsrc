@@ -1,9 +1,13 @@
-/* $Xorg: PsText.c,v 1.6 2000/08/17 19:48:11 cpqbld Exp $ */
+/* $Xorg: PsText.c,v 1.7 2001/02/09 02:04:36 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -69,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.10 2001/01/19 17:42:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.12 2001/12/14 19:59:17 dawes Exp $ */
 
 #include "Ps.h"
 #include "gcstruct.h"
@@ -81,9 +85,8 @@ static int readFontName(char *fileName, char *file_name, char *dlfnam)
 {
     FILE        *file;
     struct stat statb;
-    int         count, i, status;
     char        buf[256];
-    char 	*front, *end, *fn;
+    char 	*front, *fn;
 
     file = fopen(fileName, "r");
     if(file)
@@ -385,7 +388,7 @@ PsPolyGlyphBlt(
   pointer       pGlyphBase)
 {
     int width, height;
-    PixmapPtr pPixmap;
+    PixmapPtr pPixmap = NullPixmap;
     int nbyLine;                        /* bytes per line of padded pixmap */
     FontPtr pfont;
     GCPtr pGCtmp;

@@ -1,7 +1,12 @@
+/* $XFree86: xc/include/extensions/Xag.h,v 1.5 2001/12/17 20:52:24 dawes Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -19,7 +24,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $Xorg: Xag.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
+/* $Xorg: Xag.h,v 1.5 2001/02/09 02:03:24 xorgcvs Exp $ */
 
 #ifndef _XAG_H_
 #define _XAG_H_
@@ -37,7 +42,7 @@ from The Open Group.
 #define XagBadAppGroup			0
 #define XagNumberErrors			(XagBadAppGroup + 1)
 
-#define XagNsingleScreen		0
+#define XagNsingleScreen		7
 #define XagNdefaultRoot			1
 #define XagNrootVisual			2
 #define XagNdefaultColormap		3
@@ -47,11 +52,7 @@ from The Open Group.
 
 #ifndef _XAG_SERVER_
 
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 _XFUNCPROTOBEGIN
 

@@ -1,6 +1,6 @@
 /* Copyright 1996, The XFree86 Project, Inc */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.7 1998/08/16 10:25:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.8 2001/07/25 15:05:05 dawes Exp $ */
 
 /*
  * This is for publicly released beta server binaries.
@@ -54,10 +54,6 @@
 #define XOR_VALUE_2 0x7df6324bL
 #define KEY_LENGTH 16
 
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
-
 void
 xf86CheckBeta(int extraDays, char *key)
 {
@@ -74,11 +70,7 @@ xf86CheckBeta(int extraDays, char *key)
   Bool writefile = FALSE;
   char oldvers[16] = {0, };
 #endif
-#ifndef X_NOT_STDC_ENV
   time_t expirytime = EXPIRY_TIME;
-#else
-  long expirytime = EXPIRY_TIME;
-#endif
  
   /*
    * Check if the beta message should be displayed.  It is displayed when
@@ -120,11 +112,7 @@ xf86CheckBeta(int extraDays, char *key)
 #ifdef EXPIRE_SERVER
   if (expirytime != 0) {
     if (extraDays > 0 && key != NULL && strlen(key) == KEY_LENGTH) {
-#ifndef X_NOT_STDC_ENV
       time_t newExpiry;
-#else
-      long newExpiry;
-#endif
       unsigned long key1, key2;
       char tmp[9];
       

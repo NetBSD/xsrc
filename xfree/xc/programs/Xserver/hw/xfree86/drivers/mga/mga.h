@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.75 2001/05/04 19:05:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.79 2002/01/11 15:42:57 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -108,7 +108,7 @@ void dbg_outreg32(ScrnInfoPtr,int,int);
 #define MGA_MODULE_DATA mgaModuleData
 #define MGA_DRIVER_NAME "mga"
 #define MGA_MAJOR_VERSION 1
-#define MGA_MINOR_VERSION 0
+#define MGA_MINOR_VERSION 1
 #define MGA_PATCHLEVEL 0
 
 typedef struct {
@@ -142,6 +142,8 @@ typedef struct {
 typedef struct {
    int          brightness;
    int          contrast;
+   Bool         doubleBuffer;
+   unsigned char currentBuffer;
    FBLinearPtr	linear;
    RegionRec	clip;
    CARD32	colorKey;
@@ -237,6 +239,7 @@ typedef struct {
     EntityInfoPtr	pEnt;
     MGABiosInfo		Bios;
     MGABios2Info	Bios2;
+    CARD8               BiosOutputMode;
     pciVideoPtr		PciInfo;
     PCITAG		PciTag;
     xf86AccessRec	Access;
@@ -259,7 +262,6 @@ typedef struct {
     unsigned long	BiosAddress;
     MessageType		BiosFrom;
     unsigned char *     IOBase;
-    unsigned char *     IOBaseDense;
     unsigned char *	FbBase;
     unsigned char *	ILOADBase;
     unsigned char *	FbStart;
@@ -352,6 +354,7 @@ typedef struct {
 #endif
     XF86VideoAdaptorPtr adaptor;
     Bool		SecondCrtc;
+    Bool                SecondOutput;
     GDevPtr		device;
     /* The hardware's real SrcOrg */
     int			realSrcOrg;
@@ -482,15 +485,36 @@ Bool MgaInitDma(ScrnInfoPtr pScrn, int prim_size);
 
 #endif
 
-void CRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
-void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
-void CRTC2SetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
-void CRTC2SetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
+void MGACRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void MGAEnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void MGACRTC2SetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
+void MGACRTC2SetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
 
-void CRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
-void CRTC2GetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
-void CRTC2GetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
+void MGACRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
+void MGACRTC2GetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
+void MGACRTC2GetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
  
-double G450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
-void printDac(ScrnInfoPtr pScrn);
+double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
+void MGAprintDac(ScrnInfoPtr pScrn);
+
+#ifdef USEMGAHAL
+/************ ESC Call Definition ***************/
+typedef struct {
+    char *function;
+    void (*funcptr)(ScrnInfoPtr pScrn, unsigned long *param, char *out, DisplayModePtr pMode);
+} MGAEscFuncRec, *MGAEscFuncPtr;
+
+typedef struct {
+    char function[32];
+    unsigned long parameters[32];
+} EscCmdStruct;
+
+extern LPMGAMODEINFO pMgaModeInfo[2];
+extern MGAMODEINFO   TmpMgaModeInfo[2];
+
+extern void MGAExecuteEscCmd(ScrnInfoPtr pScrn, char *cmdline , char *sResult, DisplayModePtr pMode);
+void FillDisplayModeStruct(DisplayModePtr pMode, LPMGAMODEINFO pModeInfo);
+/************************************************/
+#endif
+
 #endif

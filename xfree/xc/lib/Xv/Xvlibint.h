@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xv/Xvlibint.h,v 1.4 2000/06/07 22:02:57 tsi Exp $ */
+/* $XFree86: xc/lib/Xv/Xvlibint.h,v 1.5 2001/07/25 15:04:53 dawes Exp $ */
 
 #ifndef XVLIBINT_H
 #define XVLIBINT_H
@@ -47,7 +47,7 @@ SOFTWARE.
 #include "Xvproto.h"
 #include "Xvlib.h"
 
-#if defined(__STDC__) && !defined(UNIXCPP)
+#if !defined(UNIXCPP)
 #define XvGetReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(xv##name##Req)) > dpy->bufmax)\

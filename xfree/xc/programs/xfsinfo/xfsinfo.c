@@ -7,7 +7,11 @@
 
 Portions Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -26,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xfsinfo/xfsinfo.c,v 1.2 2001/04/01 14:00:21 tsi Exp $ */
+/* $XFree86: xc/programs/xfsinfo/xfsinfo.c,v 1.4 2001/12/14 20:01:42 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -57,7 +61,7 @@ from The Open Group.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<X11/Xos.h>
-#include	"FSlib.h"
+#include	<X11/fonts/FSlib.h>
 
 static void print_server_info(FSServer *svr);
 static void print_catalogue_info(FSServer *svr);

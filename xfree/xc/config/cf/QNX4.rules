@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/QNX4.rules,v 1.1 1999/12/27 00:45:43 robin Exp $
+XCOMM platform:  $XFree86: xc/config/cf/QNX4.rules,v 1.2 2002/01/07 20:38:18 dawes Exp $
 
 XCOMM Rules to work around wlib for QNX...
 
@@ -12,16 +12,6 @@ depend:: tofile							@@\
 								@@\
 clean::								@@\
 	RemoveFile(tofile)
-
-XCOMM This special rule is used to install the install script.
-XCOMM Else there's a name conflict with the QNX installer.
-
-#define QNXCopyInstaller(tofile, fromfile)			@@\
-tofile:: 							@@\
-	$(CP) fromfile tofile					@@\
-								@@\
-includes:: tofile
-
 
 #define ObjectFromSpecialSource(dst, src, flags)		@@\
 NoConfigRec(dst.c)						@@\
@@ -58,13 +48,16 @@ clean::								@@\
 
 /* This is the rule to make reloc. OMF objects. We use a little
  * trick which works only for OMF....
+ * "catomf" can be downloaded from 
+ * http://prdownloads.sourceforge.net/openqnx/catomf.tar.gz
+ * or contact Rick Lake <rick@anp.nl>
  */
 #define NormalRelocatableTarget(objname,objlist)		@@\
 AllTarget(objname.Osuf)						@@\
 								@@\
 objname.Osuf: objlist $(EXTRALIBRARYDEPS)			@@\
 	RemoveFile($@)						@@\
-	/bin/cat objlist > $@
+	/usr/local/bin/catomf -O $@ objlist
 
 
 	

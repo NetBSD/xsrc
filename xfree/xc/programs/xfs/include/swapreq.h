@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xfs/include/swapreq.h,v 1.1 1998/10/25 07:12:32 dawes Exp $
+ * $XFree86: xc/programs/xfs/include/swapreq.h,v 1.2 2001/06/25 20:40:18 paulo Exp $
  */
 
 /************************************************************
@@ -48,7 +48,7 @@ extern int SProcQueryXExtents(ClientPtr client);
 extern int SProcResourceRequest(ClientPtr client);
 extern int SProcSetResolution(ClientPtr client);
 extern int SProcSimpleRequest(ClientPtr client);
-extern void SwapConnClientPrefix(fsConnClientPrefix *pCCP);
+extern int SwapConnClientPrefix(ClientPtr client, fsConnClientPrefix *pCCP);
 extern void SwapLongs(long *list, unsigned long count);
 extern void SwapShorts(short *list, unsigned long count);
 

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atipreinit.c,v 1.47.2.1 2001/05/22 15:57:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atipreinit.c,v 1.57 2002/01/18 16:56:16 tsi Exp $ */
 /*
- * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1999 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -409,6 +409,7 @@ ATIPreInit
     int              Numerator, Denominator;
     int              MinX, MinY;
     ClockRange       ATIClockRange = {NULL, 0, 80000, 0, TRUE, TRUE, 1, 1, 0};
+    int              DefaultmaxClock = 0;
     int              minPitch, maxPitch = 0xFFU, maxHeight = 0;
     int              ApertureSize = 0x00010000U;
     LookupModeFlags  Strategy = LOOKUP_CLOSEST_CLOCK;
@@ -442,7 +443,7 @@ ATIPreInit
     }
 
     /* Register resources */
-    pEntity = xf86GetEntityInfo(pScreenInfo->entityList[0]);
+    pEntity = xf86GetEntityInfo(pATI->iEntity);
     pGDev = pEntity->device;
     pResources = pEntity->resources;
     xfree(pEntity);
@@ -1061,8 +1062,21 @@ ATIPreInit
 
         if ((pATI->ProgrammableClock > ATI_CLOCK_FIXED) &&
             (pATI->ProgrammableClock < ATI_CLOCK_MAX))
+        {
+            /*
+             * Graphics PRO TURBO 1600's are unusual in that an ICS2595 is used
+             * to generate clocks for VGA modes, and an IBM RGB514 is used for
+             * accelerator modes.
+             */
+            if ((pATI->ProgrammableClock == ATI_CLOCK_ICS2595) &&
+                (pATI->DAC == ATI_DAC_IBMRGB514) &&
+                (pScreenInfo->depth >= 8) &&
+                (pATI->Chipset == ATI_CHIPSET_ATI))
+                pATI->ProgrammableClock = ATI_CLOCK_IBMRGB514;
+
             pATI->ClockDescriptor =
                 ATIClockDescriptors[pATI->ProgrammableClock];
+        }
 
         ClockDac = pATI->DAC;
         switch (pATI->ProgrammableClock)
@@ -1328,6 +1342,11 @@ ATIPreInit
 
     xf86DrvMsg(pScreenInfo->scrnIndex, X_PROBED,
         "%s adapter detected.\n", ATIAdapterNames[pATI->Adapter]);
+
+    if (pATI->Chip >= ATI_CHIP_264GT)
+        xf86DrvMsg(pScreenInfo->scrnIndex, X_NOTICE,
+            "For information on using the multimedia capabilities\n of this"
+            " adapter, please see http://gatos.sf.net.\n");
 
     if ((pATI->DAC & ~0x0FU) == ATI_DAC_INTERNAL)
         xf86DrvMsg(pScreenInfo->scrnIndex, X_PROBED,
@@ -1602,12 +1621,12 @@ ATIPreInit
                 pATI->LCDVSyncWidth =
                     (pATIHW->crt[17] - pATIHW->crt[16]) & 0x0FU;
                 pATI->LCDVBlankWidth =
-                    (pATIHW->crt[22] - pATIHW->crt[21]) & 0xFFU;
+                    ((pATIHW->crt[22] - pATIHW->crt[21]) & 0xFFU) + 1;
 
                 HDisplay = pATIHW->crt[0] + 5 - pATI->LCDHBlankWidth;
                 VDisplay = (((pATIHW->crt[7] << 4) & 0x0200U) |
                             ((pATIHW->crt[7] << 8) & 0x0100U) |
-                            pATIHW->crt[6]) + 2 - pATI->LCDVBlankWidth;
+                            pATIHW->crt[6]) + 3 - pATI->LCDVBlankWidth;
 
                 pATI->LCDHSyncStart =
                     ((pATIHW->crt[4] - pATIHW->crt[2]) & 0xFFU) + 1;
@@ -1995,7 +2014,8 @@ ATIPreInit
                  */
                 if (pATI->LinearBase && !pATI->LinearSize)
                 {
-                    if (pATI->VideoRAM < 4096)
+                    if ((pATI->Chip <= ATI_CHIP_88800GXD) &&
+                        (pATI->VideoRAM < 4096))
                         pATI->LinearSize = 4 * 1024 * 1024;
                     else
                         pATI->LinearSize = 8 * 1024 * 1024;
@@ -2005,7 +2025,7 @@ ATIPreInit
 #ifndef AVOID_CPIO
 
             /* Except for PCI & AGP, allow for user override */
-            if (!pATI->PCIInfo)
+            if (!pVideo)
             {
                 if (pATI->Chip == ATI_CHIP_88800CX)
                     IOValue = ~((CARD32)((1 << 23) - 1));
@@ -2028,13 +2048,14 @@ ATIPreInit
                 {
                     if (!pATI->LinearSize)
                     {
-                        if (pATI->VideoRAM < 4096)
+                        if ((pATI->Chip <= ATI_CHIP_88800GXD) &&
+                            (pATI->VideoRAM < 4096))
                             pATI->LinearSize = 4 * 1024 * 1024;
                         else
                             pATI->LinearSize = 8 * 1024 * 1024;
                     }
 
-                    Resources[0].type = ResExcMemBlock;
+                    Resources[0].type = ResExcMemBlock | ResBus;
                     Resources[0].rBegin = pATI->LinearBase;
                     Resources[0].rEnd =
                         pATI->LinearBase + pATI->LinearSize - 1;
@@ -2622,7 +2643,7 @@ ATIPreInit
             DacSpeed = pGDev->dacSpeeds[DAC_BPP8];
         if (DacSpeed < ATIClockRange.maxClock)
         {
-            int DefaultmaxClock = 135000;
+            DefaultmaxClock = 135000;
 
             if (pATI->depth > 8)
                 DefaultmaxClock = 80000;
@@ -2644,45 +2665,68 @@ ATIPreInit
                 ATIClockRange.maxClock = DefaultmaxClock;
         }
     }
-    else switch(pATI->DAC)
+    else
     {
-        case ATI_DAC_STG1700:
-        case ATI_DAC_STG1702:
-        case ATI_DAC_STG1703:
-            ATIClockRange.maxClock = 110000;
-            break;
+        switch(pATI->DAC)
+        {
+            case ATI_DAC_STG1700:
+            case ATI_DAC_STG1702:
+            case ATI_DAC_STG1703:
+                DefaultmaxClock = 110000;
+                break;
 
-        default:
+            case ATI_DAC_IBMRGB514:
+                pATI->maxClock = 220000;
 
 #ifndef AVOID_CPIO
 
-            /*
-             * 80 MHz is too high in some cases.  Limit 18800-x's to 40 MHz.
-             * Don't exceed the memory clock on VGA Wonder capables with less
-             * than 1 MB, if using a packed mode.
-             */
-            if ((pATI->Chip == ATI_CHIP_18800) ||
-                (pATI->Chip == ATI_CHIP_18800_1))
-                ATIClockRange.maxClock = 40000;
-            else if (pATI->CPIO_VGAWonder &&
-                    (pATI->VideoRAM < 1024) &&
-                    (pATI->depth >= 8))
-                ATIClockRange.maxClock =
-                    (GetBits(BIOSByte(0x44U), 0x04U) * 5000) + 40000;
-            else
+                if (pATI->NewHW.crtc == ATI_CRTC_VGA)
+                    DefaultmaxClock = 100000;
+                else
 
 #endif /* AVOID_CPIO */
 
-            {
-                ATIClockRange.maxClock = 80000;
-            }
+                    DefaultmaxClock = 220000;
+                break;
 
-            break;
+            default:
+
+#ifndef AVOID_CPIO
+
+                /*
+                 * 80 MHz is too high in some cases.  Limit 18800-x's to 40
+                 * MHz.  Don't exceed the memory clock on VGA Wonder capables
+                 * with less than 1 MB, if using a packed mode.
+                 */
+                if ((pATI->Chip == ATI_CHIP_18800) ||
+                    (pATI->Chip == ATI_CHIP_18800_1))
+                    DefaultmaxClock = 40000;
+                else if (pATI->CPIO_VGAWonder &&
+                        (pATI->VideoRAM < 1024) &&
+                        (pATI->depth >= 8))
+                    DefaultmaxClock =
+                        (GetBits(BIOSByte(0x44U), 0x04U) * 5000) + 40000;
+                else
+
+#endif /* AVOID_CPIO */
+
+                {
+                    DefaultmaxClock = 80000;
+                }
+
+                break;
+        }
+
+        if (DefaultmaxClock < ATIClockRange.maxClock)
+            ATIClockRange.maxClock = DefaultmaxClock;
     }
     if (pATI->ClockDescriptor.MaxN <= 0)
+    {
+        ATIClockRange.maxClock = DefaultmaxClock;
         xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
             "Maximum pixel clock:  %.3f MHz.\n",
             (double)ATIClockRange.maxClock / 1000.0);
+    }
 
     /*
      * Determine available pixel clock frequencies.

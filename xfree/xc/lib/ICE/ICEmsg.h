@@ -1,10 +1,14 @@
-/* $Xorg: ICEmsg.h,v 1.3 2000/08/17 19:44:10 cpqbld Exp $ */
+/* $Xorg: ICEmsg.h,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,11 +26,16 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
+/* $XFree86: xc/lib/ICE/ICEmsg.h,v 1.4 2001/12/20 19:40:59 tsi Exp $ */
 
 #ifndef _ICEMSG_H_
 #define _ICEMSG_H_
 
+#include <X11/Xfuncproto.h>
+
 #include <X11/ICE/ICEconn.h>
+
+_XFUNCPROTOBEGIN
 
 /*
  * Function prototypes for internal ICElib functions
@@ -294,5 +303,7 @@ extern void _IceErrorBadValue (
     char _dummy[7]; \
     _IceRead (_iceConn, (unsigned long) (_bytes), _dummy); \
 }
+
+_XFUNCPROTOEND
 
 #endif /* _ICEMSG_H_ */

@@ -1,9 +1,13 @@
-/* $Xorg: psout.h,v 1.4 2000/08/17 19:48:11 cpqbld Exp $ */
+/* $Xorg: psout.h,v 1.6 2001/02/09 02:04:37 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -53,6 +57,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/psout.h,v 1.5 2001/12/21 21:02:06 dawes Exp $ */
 
 /*******************************************************************
 **
@@ -145,7 +150,7 @@ typedef PsClipRec *PsClipPtr;
 typedef struct PsOutRec_ *PsOutPtr;
 
 extern PsOutPtr PsOut_BeginFile(FILE *fp, int orient, int count, int plex,
-                              int res, int wd, int ht);
+                              int res, int wd, int ht, Bool raw);
 extern void PsOut_EndFile(PsOutPtr self, int closeFile);
 extern void PsOut_BeginPage(PsOutPtr self, int orient, int count, int plex,
                             int res, int wd, int ht);
@@ -178,8 +183,10 @@ extern void PsOut_DrawArc(PsOutPtr self, int x, int y, int w, int h,
 extern void PsOut_Text(PsOutPtr self, int x, int y, char *text, int textl,
                        int bclr);
 
-extern void PsOut_BeginImage(PsOutPtr self, int bclr, int  fclr, int x, int y,
+extern void PsOut_BeginImage(PsOutPtr self, int bclr, int fclr, int x, int y,
                              int w, int h, int sw, int sh, int format);
+extern void PsOut_BeginImageIM(PsOutPtr self, int bclr, int fclr, int x, int y,
+                               int w, int h, int sw, int sh, int format);
 extern void PsOut_EndImage(PsOutPtr self);
 extern void PsOut_OutImageBytes(PsOutPtr self, int nBytes, char *bytes);
 
@@ -194,5 +201,15 @@ extern void PsOut_SetPattern(PsOutPtr self, void *tag, PsFillEnum type);
 
 extern void PsOut_RawData(PsOutPtr self, char *data, int len);
 extern void PsOut_DownloadType1(PsOutPtr self, char *name, char *fname);
+
+#ifdef BM_CACHE
+extern void PsOut_BeginImageCache(PsOutPtr self, long cache_id);
+extern void PsOut_EndImageCache(PsOutPtr self);
+extern void PsOut_ImageCache(PsOutPtr self, int x, int y, long cache_id,
+			     int bclr, int fclr);
+#endif
+
+extern FILE *PsOut_ChangeFile(PsOutPtr self, FILE *fp);
+
 
 #endif

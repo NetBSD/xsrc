@@ -1,12 +1,16 @@
 /*
  * Fill 32 bit stippled rectangles for 8 bit frame buffers
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbrctstp8.c,v 3.4 2001/01/17 22:36:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrctstp8.c,v 3.6 2001/12/14 19:59:24 dawes Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -26,7 +30,7 @@ Author: Keith Packard, MIT X Consortium
 
 */
 
-/* $Xorg: cfbrctstp8.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
+/* $Xorg: cfbrctstp8.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $ */
 
 #if PSZ == 8
 
@@ -70,8 +74,8 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 
     CfbBits *pbits;/* pointer to start of pixmap */
     register CfbBits bits;	/* bits from stipple */
-    int	rot, lastStop, i;
-    register CfbBits  xor, and;
+    int	rot;
+    register CfbBits xor;
     PixmapPtr		    stipple;
     int	    wEnd;
 
@@ -120,8 +124,8 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 	    	    dstLine += nlwDst;
 	    	    if (startmask)
 	    	    {
-		    	*dst = *dst & ~startmask |
-				GetPixelGroup (bits) & startmask;
+		    	*dst = (*dst & ~startmask) |
+			       (GetPixelGroup (bits) & startmask);
 		    	dst++;
 		    	RotBitsLeft (bits, PGSZB);
 	    	    }
@@ -133,8 +137,8 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 	    	    }
 	    	    if (endmask)
 	    	    {
-			*dst = *dst & ~endmask |
-			      GetPixelGroup (bits) & endmask;
+			*dst = (*dst & ~endmask) |
+			       (GetPixelGroup (bits) & endmask);
 	    	    }
 	    	}
 	    }
@@ -154,8 +158,8 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 	    	    dstLine += nlwDst;
 		    if (startmask)
 		    {
-			*dstTmp = *dstTmp & ~startmask |
-			       GetPixelGroup (bits) & startmask;
+			*dstTmp = (*dstTmp & ~startmask) |
+				  (GetPixelGroup (bits) & startmask);
 			dstTmp++;
 			RotBitsLeft (bits, PGSZB);
 		    }
@@ -179,7 +183,7 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 		    {
 			dst = dstTmp + (nlwMiddle << 3);
 			*dst = (*dst & ~endmask) |
-			       GetPixelGroup (bits) & endmask;
+			       (GetPixelGroup(bits) & endmask);
 		    }
 		    while (w--)
 		    {
@@ -243,7 +247,7 @@ cfb8FillRectTransparentStippled32 (pDrawable, pGC, nBox, pBox)
     BoxPtr 	    pBox;	/* pointer to list of boxes to fill */
 {
     int		    x, y, w, h;
-    int		    nlwMiddle, nlwDst, nlwTmp;
+    int		    nlwMiddle, nlwDst;
     CfbBits   startmask, endmask;
     register CfbBits   *dst;
     CfbBits   *dstLine, *pbits, *dstTmp;

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: tocutil.c,v 2.60 95/01/09 16:52:53 swick Exp $
- * $XFree86: xc/programs/xmh/tocutil.c,v 3.1 1995/01/27 04:55:04 dawes Exp $
+ * $XFree86: xc/programs/xmh/tocutil.c,v 3.3 2001/10/28 03:34:40 tsi Exp $
  *
  *
  *			COPYRIGHT 1987, 1989
@@ -163,7 +163,7 @@ int TUGetMsgPosition(toc, msg)
   Toc toc;
   Msg msg;
 {
-    int msgid, h, l, m;
+    int msgid, h = 0, l, m;
     char str[100];
     static Boolean ordered = True;
     msgid = msg->msgid;
@@ -276,7 +276,7 @@ void TULoadSeqLists(toc)
     (void) sprintf(str, "%s/.mh_sequences", toc->path);
     fid = myfopen(str, "r");
     if (fid) {
-	while (ptr = ReadLine(fid)) {
+	while ((ptr = ReadLine(fid))) {
 	    ptr2 = strchr(ptr, ':');
 	    if (ptr2) {
 		*ptr2 = 0;
@@ -390,7 +390,7 @@ void TULoadTocFile(toc)
     position = 0;
     i = 0;
     curmsg = NULL;
-    while (ptr = fgets(buf, bufsiz, fid)) {
+    while ((ptr = fgets(buf, bufsiz, fid))) {
 	toc->msgs[toc->nummsgs++] = msg = XtNew(MsgRec);
 	bzero((char *) msg, sizeof(MsgRec));
 	msg->toc = toc;
@@ -502,11 +502,11 @@ void TUSaveTocFile(toc)
     if (fid < 0 && toc->length != toc->origlength)
 	fid = myopen(toc->scanfile, O_RDWR, 0666);
     if (fid >= 0) {
-#if defined(SYSV) && (defined(i386) || defined(MOTOROLA)) || defined(MINIX)
+#if defined(SYSV) && (defined(i386) || defined(MOTOROLA))
 	(void) ftruncate_emu(fid, toc->length, toc->scanfile);
 #else
 	(void) ftruncate(fid, toc->length);
-	(void) myclose(fid);
+	myclose(fid);
 #endif
 	toc->origlength = toc->length;
     }
@@ -550,7 +550,7 @@ void TUEnsureScanIsValidAndOpen(toc, delay)
 		 * Need to make sure the scanfile exists at this point.
 		 */
 		int fid = myopen(toc->scanfile, O_RDWR|O_CREAT, 0666);
-		(void) myclose(fid);
+		myclose(fid);
 		XtAppAddWorkProc(XtWidgetToApplicationContext(toplevel),
 				 UpdateScanFile,
 				 (XtPointer)toc);
@@ -619,7 +619,7 @@ Msg TUAppendToc(toc, ptr)
   char *ptr;
 {
     Msg msg;
-    int msgid, i;
+    int msgid;
 
     TUGetFullFolderInfo(toc);
     if (toc->validity != valid)

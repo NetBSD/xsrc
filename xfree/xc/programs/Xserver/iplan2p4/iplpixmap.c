@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/iplpixmap.c,v 3.0 1996/08/18 01:54:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/iplpixmap.c,v 3.1 2001/12/17 20:00:46 dawes Exp $ */
 /* $XConsortium: iplpixmap.c,v 5.14 94/04/17 20:28:56 dpw Exp $ */
 /***********************************************************
 
@@ -137,7 +137,7 @@ iplCopyPixmap(pSrc)
 
 /* replicates a pattern to be a full 32 bits wide.
    relies on the fact that each scnaline is longword padded.
-   doesn't do anything if pixmap is not a factor osf 32 wide.
+   doesn't do anything if pixmap is not a factor of 32 wide.
    changes width field of pixmap if successful, so that the fast
 	iplXRotatePixmap code gets used if we rotate the pixmap later.
 	iplYRotatePixmap code gets used if we rotate the pixmap later.

@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.10.2.1 2001/05/31 08:31:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.11 2001/05/31 08:29:42 alanh Exp $ */
 
 #include <stdio.h>
 

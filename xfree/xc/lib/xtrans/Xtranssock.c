@@ -1,9 +1,13 @@
-/* $Xorg: Xtranssock.c,v 1.8 2000/08/17 19:46:46 cpqbld Exp $ */
+/* $Xorg: Xtranssock.c,v 1.11 2001/02/09 02:04:06 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.49 2001/01/19 06:41:02 keithp Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.53 2001/12/14 19:57:06 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -56,10 +60,6 @@ from The Open Group.
 
 #if defined(TCPCONN) || defined(UNIXCONN)
 #include <netinet/in.h>
-#else
-#ifdef ESIX
-#include <lan/in.h>
-#endif
 #endif
 
 #if defined(TCPCONN) || defined(UNIXCONN)
@@ -98,7 +98,7 @@ from The Open Group.
 #include <sys/filio.h>
 #endif
 
-#if (defined(i386) && defined(SYSV)) && !defined(ESIX) && !defined(sco)
+#if (defined(i386) && defined(SYSV)) && !defined(sco)
 #include <net/errno.h>
 #endif 
 
@@ -811,7 +811,7 @@ TRANS(SocketINETCreateListener) (XtransConnInfo ciptr, char *port)
     int		namelen = sizeof(sockname);
     int		status;
     long	tmpport;
-#ifdef XTHREADS
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
     _Xgetservbynameparams sparams;
 #endif
     struct servent *servp;
@@ -945,7 +945,7 @@ TRANS(SocketUNIXCreateListener) (XtransConnInfo ciptr, char *port)
 	    return TRANS_CREATE_LISTENER_FAILED;
 	}
     } else {
-	sprintf (sockname.sun_path, "%s%d", UNIX_PATH, getpid());
+	sprintf (sockname.sun_path, "%s%ld", UNIX_PATH, (long)getpid());
     }
 
 #if defined(BSD44SOCKETS) && !defined(Lynx)
@@ -1239,7 +1239,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 #else
     int namelen = sizeof sockname;
 #endif
-#ifdef XTHREADS
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
     _Xgethostbynameparams hparams;
     _Xgetservbynameparams sparams;
 #endif
@@ -1482,7 +1482,7 @@ UnixHostReallyLocal (char *host)
 	 */
 	char specified_local_addr_list[10][4];
 	int scount, equiv, i, j;
-#ifdef XTHREADS
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
 	_Xgethostbynameparams hparams;
 #endif
 	struct hostent *hostp;

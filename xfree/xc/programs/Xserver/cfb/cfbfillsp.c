@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.5 2001/01/17 22:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.7 2001/12/14 19:59:22 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -32,7 +32,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -71,7 +75,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: cfbfillsp.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
+/* $Xorg: cfbfillsp.c,v 1.4 2001/02/09 02:04:37 xorgcvs Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -416,7 +420,7 @@ int fSorted;
     CfbBits	    tmpSrc, tmpDst1, tmpDst2;
     int			    stwidth, stippleWidth;
     CfbBits	    *psrcS;
-    int			    rop, stiprop;
+    int			    rop, stiprop = 0;
     int			    stippleHeight;
     int			    *pwidthFree;    /* copies of the pointers to free */
     DDXPointPtr		    pptFree;
@@ -837,7 +841,6 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 
     CfbBits   *pbits;		/* pointer to start of pixmap */
     register CfbBits  xor;
-    register CfbBits  mask;
     register CfbBits  bits;	/* bits from stipple */
     int		    wEnd;
 
@@ -898,8 +901,8 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	    {
 		if (startmask)
 		{
-		    *dst = *dst & ~startmask |
-			   GetPixelGroup (bits) & startmask;
+		    *dst = (*dst & ~startmask) |
+			   (GetPixelGroup (bits) & startmask);
 		    dst++;
 		    RotBitsLeft (bits, PGSZB);
 		}
@@ -910,8 +913,8 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		}
 		if (endmask)
 		{
-		    *dst = *dst & ~endmask |
-			   GetPixelGroup (bits) & endmask;
+		    *dst = (*dst & ~endmask) |
+			   (GetPixelGroup (bits) & endmask);
 		}
 	    }
 	    else
@@ -922,8 +925,8 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		nlwTmp = nlw;
 		if (startmask)
 		{
-		    *dstTmp = *dstTmp & ~startmask |
-			   GetPixelGroup (bits) & startmask;
+		    *dstTmp = (*dstTmp & ~startmask) |
+			      (GetPixelGroup (bits) & startmask);
 		    dstTmp++;
 		    RotBitsLeft (bits, PGSZB);
 		}
@@ -947,7 +950,7 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		{
 		    dst = dstTmp + (nlwTmp << 3);
 		    *dst = (*dst & ~endmask) |
-			   GetPixelGroup (bits) & endmask;
+			   (GetPixelGroup (bits) & endmask);
 		}
 		while (w--)
 		{

@@ -1,9 +1,13 @@
-/* $Xorg: lbxmain.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
+/* $Xorg: lbxmain.c,v 1.4 2001/02/09 02:05:16 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.9 2001/01/17 22:36:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.13 2001/12/14 20:00:00 dawes Exp $ */
  
 #include <sys/types.h>
 #define NEED_REPLIES
@@ -68,9 +72,6 @@ in this Software without prior written authorization from The Open Group.
 #include "lbxtags.h"
 #include "Xfuncproto.h"
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #ifndef Lynx
 #include <sys/uio.h>
 #else
@@ -85,15 +86,6 @@ extern int errno;
 #define CloseLbxClient	0xff
 
 #define MAXBYTESDIFF	8
-
-extern void LbxAllowMotion ( ClientPtr client, int num );
-extern int LbxDecodePoints ( char *in, char *inend, short *out );
-extern int LbxDecodeSegment ( char *in, char *inend, short *out );
-extern int LbxDecodeRectangle ( char *in, char *inend, short *out );
-extern int LbxDecodeArc ( char *in, char *inend, short *out );
-
-
-extern int	GrabInProgress;
 
 int LbxWhoAmI = 1;		/*
 				 * for lbx zlib library to know who we are
@@ -930,7 +922,7 @@ LbxShutdownProxy (LbxProxyPtr proxy)
 int
 ProcLbxQueryVersion (ClientPtr client)
 {
-    REQUEST(xLbxQueryVersionReq);
+    /* REQUEST(xLbxQueryVersionReq); */
     xLbxQueryVersionReply rep;
     register int n;
 
@@ -1119,7 +1111,7 @@ ProcLbxStartProxy (ClientPtr	client)
 int
 ProcLbxStopProxy(ClientPtr client)
 {
-    REQUEST(xLbxStopProxyReq);
+    /* REQUEST(xLbxStopProxyReq); */
     LbxProxyPtr	    proxy;
     LbxClientPtr    lbxClient = LbxClient(client);
 
@@ -1188,7 +1180,7 @@ ProcLbxLargeRequestData(ClientPtr client)
 int
 ProcLbxEndLargeRequest(ClientPtr client)
 {
-    REQUEST(xReq);
+    /* REQUEST(xReq); */
 
     client->sequence--;
     REQUEST_SIZE_MATCH(xReq);
@@ -1482,7 +1474,7 @@ DecodeLbxDelta (ClientPtr client)
 int
 ProcLbxGetModifierMapping(ClientPtr client)
 {
-    REQUEST(xLbxGetModifierMappingReq);
+    /* REQUEST(xLbxGetModifierMappingReq); */
 
     REQUEST_SIZE_MATCH(xLbxGetModifierMappingReq);
     return LbxGetModifierMapping(client);
@@ -1491,7 +1483,7 @@ ProcLbxGetModifierMapping(ClientPtr client)
 int
 ProcLbxGetKeyboardMapping(ClientPtr client)
 {
-    REQUEST(xLbxGetKeyboardMappingReq);
+    /* REQUEST(xLbxGetKeyboardMappingReq); */
 
     REQUEST_SIZE_MATCH(xLbxGetKeyboardMappingReq);
     return LbxGetKeyboardMapping(client);
@@ -1500,7 +1492,7 @@ ProcLbxGetKeyboardMapping(ClientPtr client)
 int
 ProcLbxQueryFont(ClientPtr client)
 {
-    REQUEST(xLbxQueryFontReq);
+    /* REQUEST(xLbxQueryFontReq); */
 
     REQUEST_SIZE_MATCH(xLbxQueryFontReq);
     return LbxQueryFont(client);
@@ -1509,7 +1501,7 @@ ProcLbxQueryFont(ClientPtr client)
 int
 ProcLbxChangeProperty(ClientPtr	client)
 {
-    REQUEST(xLbxChangePropertyReq);
+    /* REQUEST(xLbxChangePropertyReq); */
 
     REQUEST_SIZE_MATCH(xLbxChangePropertyReq);
     return LbxChangeProperty(client);
@@ -1518,7 +1510,7 @@ ProcLbxChangeProperty(ClientPtr	client)
 int
 ProcLbxGetProperty(ClientPtr client)
 {
-    REQUEST(xLbxGetPropertyReq);
+    /* REQUEST(xLbxGetPropertyReq); */
 
     REQUEST_SIZE_MATCH(xLbxGetPropertyReq);
     return LbxGetProperty(client);

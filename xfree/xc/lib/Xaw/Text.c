@@ -1,10 +1,14 @@
-/* $Xorg: Text.c,v 1.3 2000/08/17 19:45:40 cpqbld Exp $ */
+/* $Xorg: Text.c,v 1.4 2001/02/09 02:03:46 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -70,7 +74,7 @@ SOFTWARE.
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Text.c,v 3.42.2.1 2001/05/25 21:44:59 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.50 2001/12/17 20:29:18 paulo Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -232,7 +236,6 @@ void _XawTextSourceChanged(Widget, XawTextPosition, XawTextPosition,
 /* Not used by other modules, but were extern on previous versions
  * of the library
  */
-void _XawTextNeedsUpdating(TextWidget, XawTextPosition, XawTextPosition);
 void _XawTextShowPosition(TextWidget);
 
 /*
@@ -3309,6 +3312,9 @@ FlushUpdate(TextWidget ctx)
     void (*display_text)(Widget, XawTextPosition, XawTextPosition);
 
     if (XtIsRealized((Widget)ctx)) {
+	ctx->text.s.right = XawMin(ctx->text.s.right, ctx->text.lastPos);
+	ctx->text.s.left = XawMin(ctx->text.s.left, ctx->text.s.right);
+
 #ifndef OLDXAW
 	if (XawTextSinkBeginPaint(ctx->text.sink) == False)
 #endif
@@ -3858,7 +3864,6 @@ _XawTextSetSource(Widget w, Widget source,
     Bool resolve = False;
 #endif
 
-    _XawTextPrepareToUpdate(ctx);
 #ifndef OLDXAW
     if (source != ctx->text.source)
 	_XawSourceRemoveText(ctx->text.source, w, ctx->text.source &&
@@ -3872,8 +3877,11 @@ _XawTextSetSource(Widget w, Widget source,
 #endif
     ctx->text.source = source;
     ctx->text.s.left = ctx->text.s.right = 0;
-    ctx->text.insertPos = ctx->text.old_insert = startPos;
     ctx->text.lastPos = GETLASTPOS;
+    top = FindGoodPosition(ctx, top);
+    startPos = FindGoodPosition(ctx, startPos);
+    ctx->text.insertPos = ctx->text.old_insert = startPos;
+    _XawTextPrepareToUpdate(ctx);
 
     _XawTextBuildLineTable(ctx, top, True);
 

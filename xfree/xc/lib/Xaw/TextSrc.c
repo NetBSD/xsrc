@@ -1,9 +1,13 @@
-/* $Xorg: TextSrc.c,v 1.4 2000/08/17 19:45:41 cpqbld Exp $ */
+/* $Xorg: TextSrc.c,v 1.5 2001/02/09 02:03:47 xorgcvs Exp $ */
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.27 2001/01/30 15:03:34 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.30 2001/12/14 19:54:45 dawes Exp $ */
 
 /*
  * Author:  Chris Peterson, MIT X Consortium.
@@ -983,7 +987,7 @@ XawTextSourceReplace(Widget w, XawTextPosition left,
 	 * or similar function, to speed up */
 	if ((anchor = XawTextSourceFindAnchor(w, left))) {
 	    XawTextEntity *eprev, *entity, *enext;
-	    XawTextPosition offset, diff = block->length - (right - left);
+	    XawTextPosition offset = 0, diff = block->length - (right - left);
 
 	    for (i = 0; i < src->textSrc.num_anchors; i++)
 		if (src->textSrc.anchors[i] == anchor)
@@ -1572,8 +1576,6 @@ XawTextSourceAddAnchor(Widget w, XawTextPosition position)
 	if (position - panchor->position < ANCHORS_DIST)
 	    return (panchor);
 
-	anchor = XtNew(XawTextAnchor);
-
 	if (panchor->cache && panchor->position + panchor->cache->offset +
 	    panchor->cache->length < position)
 	    pentity = entity = panchor->cache;
@@ -1591,6 +1593,10 @@ XawTextSourceAddAnchor(Widget w, XawTextPosition position)
 	    if (panchor->position + entity->offset < position)
 		position = panchor->position + entity->offset;
 
+	    if (position == panchor->position)
+		return (panchor);
+
+	    anchor = XtNew(XawTextAnchor);
 	    diff = position - panchor->position;
 
 	    panchor->cache = NULL;
@@ -1604,8 +1610,10 @@ XawTextSourceAddAnchor(Widget w, XawTextPosition position)
 		entity = entity->next;
 	    }
 	}
-	else
+	else {
+	    anchor = XtNew(XawTextAnchor);
 	    anchor->entities = NULL;
+	}
     }
     else {
 	anchor = XtNew(XawTextAnchor);
@@ -1943,8 +1951,10 @@ _XawTextSourceFindAnchor(Widget w, XawTextPosition position)
 
     anchor = XawTextSourceFindAnchor(w, position);
 
+    position -= position % ANCHORS_DIST;
+
     if (position - anchor->position >= ANCHORS_DIST)
-	return (XawTextSourceAddAnchor(w, position - (position % ANCHORS_DIST)));
+	return (XawTextSourceAddAnchor(w, position));
 
     return (anchor);
 }

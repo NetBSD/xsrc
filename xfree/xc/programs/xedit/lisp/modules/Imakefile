@@ -1,0 +1,20 @@
+XCOMM $XFree86: xc/programs/xedit/lisp/modules/Imakefile,v 1.6 2001/10/28 03:34:31 tsi Exp $
+
+#include "../lisp.cf"
+#include "../lisp.rules"
+
+INCLUDES	= -I..  -I$(XINCLUDESRC)
+
+#if BuildSharedLispModules
+LispModuleTarget(x11, $(XLIB),)
+LispModuleTarget(xt, $(XTOOLLIB) $(XLIB),)
+LispModuleTarget(xaw, $(XAWLIB) $(XMULIB) $(XTOOLLIB) $(XLIB),)
+LispModuleTarget(psql, -lpq, -I/usr/include/pgsql)
+
+InstallMultipleFlags(x11.so,$(LISPDIR),$(INSTINCFLAGS))
+InstallMultipleFlags(xt.so,$(LISPDIR),$(INSTINCFLAGS))
+InstallMultipleFlags(xaw.so,$(LISPDIR),$(INSTINCFLAGS))
+InstallMultipleFlags(psql.so,$(LISPDIR),$(INSTINCFLAGS))
+#endif
+
+InstallMultipleFlags(fun.lsp,$(LISPDIR),$(INSTINCFLAGS))

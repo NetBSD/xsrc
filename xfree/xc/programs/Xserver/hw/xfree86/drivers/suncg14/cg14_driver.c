@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.4 2001/05/16 06:48:10 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.6 2001/10/01 13:44:10 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -323,7 +323,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     deal with depth
     *********************/
     
-    if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support32bppFb)) {
+    if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
 	return FALSE;
     } else {
 	/* Check that the returned depth is one we support */
@@ -479,10 +479,6 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
-#ifdef RENDER
-    fbPictureInit (pScreen, 0, 0);
-#endif
-
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
@@ -503,6 +499,11 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    }
 	}
     }
+
+#ifdef RENDER
+    /* must be after RGB ordering fixed */
+    fbPictureInit (pScreen, 0, 0);
+#endif
 
     /* Initialise cursor functions */
     miDCInitialize (pScreen, xf86GetPointerScreenFuncs());

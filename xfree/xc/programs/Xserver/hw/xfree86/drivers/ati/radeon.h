@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.19 2001/05/04 19:05:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.24 2001/11/14 16:50:44 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -46,6 +46,9 @@
 				/* XAA and Cursor Support */
 #include "xaa.h"
 #include "xf86Cursor.h"
+
+				/* DDC support */
+#include "xf86DDC.h"
 
 				/* Xv support */
 #include "xf86xv.h"
@@ -113,6 +116,7 @@ typedef struct {
     CARD32     cap0_trig_cntl;
     CARD32     cap1_trig_cntl;
     CARD32     bus_cntl;
+    CARD32     surface_cntl;
 
 				/* Other registers to save for VT switches */
     CARD32     dp_datatype;
@@ -136,6 +140,15 @@ typedef struct {
 				/* CRTC2 registers */
     CARD32     crtc2_gen_cntl;
 
+    CARD32     dac2_cntl;
+    CARD32     disp_output_cntl;
+    CARD32     crtc2_h_total_disp;
+    CARD32     crtc2_h_sync_strt_wid;
+    CARD32     crtc2_v_total_disp;
+    CARD32     crtc2_v_sync_strt_wid;
+    CARD32     crtc2_offset;
+    CARD32     crtc2_offset_cntl;
+    CARD32     crtc2_pitch;
 				/* Flat panel registers */
     CARD32     fp_crtc_h_total_disp;
     CARD32     fp_crtc_v_total_disp;
@@ -146,6 +159,7 @@ typedef struct {
     CARD32     fp_v_sync_strt_wid;
     CARD32     fp_vert_stretch;
     CARD32     lvds_gen_cntl;
+    CARD32     lvds_pll_cntl;
     CARD32     tmds_crc;
 
 				/* Computed values for PLL */
@@ -159,6 +173,17 @@ typedef struct {
     CARD32     ppll_div_3;
     CARD32     htotal_cntl;
 
+				/* Computed values for PLL2 */
+    CARD32     dot_clock_freq_2;
+    CARD32     pll_output_freq_2;
+    int        feedback_div_2;
+    int        post_div_2;
+
+				/* PLL2 registers */
+    CARD32     p2pll_ref_div;
+    CARD32     p2pll_div_0;
+    CARD32     htotal_cntl2;
+
 				/* DDA register */
     CARD32     dda_config;
     CARD32     dda_on_off;
@@ -166,6 +191,7 @@ typedef struct {
 				/* Pallet */
     Bool       palette_valid;
     CARD32     palette[256];
+    CARD32     palette2[256];
 } RADEONSaveRec, *RADEONSavePtr;
 
 typedef struct {
@@ -184,6 +210,34 @@ typedef struct {
     int                pixel_bytes;
     DisplayModePtr     mode;
 } RADEONFBLayout;
+
+typedef enum
+{
+    MT_NONE,
+    MT_CRT,
+    MT_LCD,
+    MT_DFP,
+    MT_CTV,
+    MT_STV
+}RADEONMonitorType;
+
+typedef enum
+{
+    DDC_NONE_DETECTED,
+    DDC_MONID,
+    DDC_DVI,
+    DDC_VGA,
+    DDC_CRT2
+}RADEONDDCType;
+
+typedef enum
+{
+    CONNECTOR_NONE,
+    CONNECTOR_PROPRIETARY,
+    CONNECTOR_CRT,
+    CONNECTOR_DVI_I,
+    CONNECTOR_DVI_D
+}RADEONConnectorType;
 
 typedef struct {
     EntityInfoPtr     pEnt;
@@ -207,16 +261,39 @@ typedef struct {
     unsigned long     FbMapSize;  /* Size of frame buffer, in bytes          */
     int               Flags;      /* Saved copy of mode flags                */
 
-#ifdef ENABLE_FLAT_PANEL
-    Bool              HasPanelRegs; /* Current chip can connect to a FP      */
-    Bool              CRTOnly;      /* Only use External CRT instead of FP   */
+    /****** Added for VE/M6 support *******************/
+    RADEONMonitorType DisplayType;  /* Monitor connected on*/
+    RADEONDDCType     DDCType;
+    RADEONConnectorType ConnectorType;
+    BOOL              HasCRTC2;     /* VE/M6/M7 */
+    BOOL              IsR200;       /* R200 chip */
+    BOOL              IsRV200;      /* RV200 chip */
+    BOOL              IsSecondary;  /* second Screen */
+    BOOL              UseCRT;       /* force use CRT port as primary */
+    BOOL              IsM6;         /* M6 card, for some workarounds */
+    BOOL              SwitchingMode;
     int               FPBIOSstart;  /* Start of the flat panel info          */
 
-				/* Computed values for FPs */
+				/* EDID or BIOS values for FPs */
     int               PanelXRes;
     int               PanelYRes;
+    int               HOverPlus;
+    int               HSyncWidth;
+    int               HBlank;
+    int               VOverPlus;
+    int               VSyncWidth;
+    int               VBlank;
     int               PanelPwrDly;
-#endif
+    int               DotClock;
+    /****************************************************/
+
+    /*for getting EDID data using DDC interface*/
+    BOOL                      ddc_bios;
+    BOOL                      ddc1;
+    BOOL                      ddc2;
+    I2CBusPtr		      pI2CBus;
+    CARD32                    DDCReg;
+    BOOL                      HasEDID;
 
     RADEONPLLRec        pll;
     RADEONRAMPtr        ram;
@@ -234,6 +311,12 @@ typedef struct {
     xf86CursorInfoPtr cursor;
     unsigned long     cursor_start;
     unsigned long     cursor_end;
+
+    /*
+     * XAAForceTransBlit is used to change the behavior of the XAA
+     * SetupForScreenToScreenCopy function, to make it DGA-friendly.
+     */
+    Bool              XAAForceTransBlit;
 
     int               fifo_slots; /* Free slots in the FIFO (64 max)         */
     int               pix24bpp;   /* Depth of pixmap for 24bpp framebuffer   */
@@ -263,6 +346,7 @@ typedef struct {
     int               numDGAModes;
     Bool              DGAactive;
     int               DGAViewportStatus;
+    DGAFunctionRec    DGAFuncs;
 
     RADEONFBLayout      CurrentLayout;
 #ifdef XF86DRI

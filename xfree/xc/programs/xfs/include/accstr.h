@@ -1,8 +1,12 @@
-/* $Xorg: accstr.h,v 1.3 2000/08/17 19:54:21 cpqbld Exp $ */
+/* $Xorg: accstr.h,v 1.4 2001/02/09 02:05:43 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)accstr.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.5 2001/01/17 23:45:31 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.7 2001/12/14 20:01:36 dawes Exp $ */
 
 #ifndef _ACCSTR_H_
 #define _ACCSTR_H_
@@ -64,9 +68,9 @@ typedef struct _hostaddress {
 extern int AddHost(HostList *list, HostAddress *addr);
 extern int RemoveHost(HostList *list, HostAddress *addr);
 extern int ValidHost(HostList list, HostAddress *addr);
+#endif
 
 /* os/access.c */
 extern int  GetHostAddress(HostAddress *addr);
-#endif
 
 #endif				/* _ACCSTR_H_ */

@@ -5,7 +5,7 @@
 /*    General types and definitions for the auto-hint module               */
 /*    (specification only).                                                */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -26,7 +26,12 @@
 
 #include <ft2build.h>
 #include FT_INTERNAL_OBJECTS_H
+
+#ifdef DEBUG_HINTER
+#include <../src/autohint/ahloader.h>
+#else
 #include "ahloader.h"
+#endif
 
 
 #define xxAH_DEBUG
@@ -121,27 +126,27 @@ FT_BEGIN_HEADER
 
 
   /* hint flags */
-#define ah_flah_none       0
+#define ah_flag_none       0
 
   /* bezier control points flags */
-#define ah_flah_conic                 1
-#define ah_flah_cubic                 2
-#define ah_flah_control               ( ah_flah_conic | ah_flah_cubic )
+#define ah_flag_conic                 1
+#define ah_flag_cubic                 2
+#define ah_flag_control               ( ah_flag_conic | ah_flag_cubic )
 
   /* extrema flags */
-#define ah_flah_extrema_x             4
-#define ah_flah_extrema_y             8
+#define ah_flag_extrema_x             4
+#define ah_flag_extrema_y             8
 
   /* roundness */
-#define ah_flah_round_x              16
-#define ah_flah_round_y              32
+#define ah_flag_round_x              16
+#define ah_flag_round_y              32
 
   /* touched */
-#define ah_flah_touch_x              64
-#define ah_flah_touch_y             128
+#define ah_flag_touch_x              64
+#define ah_flag_touch_y             128
 
   /* weak interpolation */
-#define ah_flah_weak_interpolation  256
+#define ah_flag_weak_interpolation  256
 
   typedef FT_Int AH_Flags;
 
@@ -186,7 +191,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    fx, fy    :: The current coordinates in font units.                */
   /*                                                                       */
-  /*    x,  y     :: The current hinter coordinates.                       */
+  /*    x,  y     :: The current hinted coordinates.                       */
   /*                                                                       */
   /*    u, v      :: Point coordinates -- meaning varies with context.     */
   /*                                                                       */
@@ -413,7 +418,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    blue_shoots :: The overshoot positions of blue zones.              */
   /*                                                                       */
-  typedef struct AH_Globals_
+  typedef struct  AH_Globals_
   {
     FT_Int    num_widths;
     FT_Int    num_heights;
@@ -480,10 +485,17 @@ FT_BEGIN_HEADER
     FT_Vector         trans_delta;
     FT_Matrix         trans_matrix;
 
-    FT_Bool           disable_horz_edges;
-    FT_Bool           disable_vert_edges;
   } AH_Hinter;
 
+
+#ifdef    DEBUG_HINTER
+  extern AH_Hinter*   ah_debug_hinter;
+  extern FT_Bool      ah_debug_disable_horz;
+  extern FT_Bool      ah_debug_disable_vert;
+#else
+# define ah_debug_disable_horz   0
+# define ah_debug_disable_vert   0
+#endif  /* DEBUG_HINTER */
 
 FT_END_HEADER
 

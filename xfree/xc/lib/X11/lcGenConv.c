@@ -35,7 +35,7 @@
  *  2000  
  *  Modifier: Ivan Pascal      The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.18 2001/01/17 19:41:54 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.24 2001/12/19 23:07:00 tsi Exp $ */
 
 /*
  * A generic locale loader for all kinds of ISO-2022 based codesets.
@@ -52,12 +52,8 @@
 #include "XlcGeneric.h"
 #include <stdio.h>
 
-#if !defined(X_NOT_STDC_ENV) && !defined(macII) && !defined(Lynx_22) && !defined(X_LOCALE)
+#if !defined(macII) && !defined(Lynx_22) && !defined(X_LOCALE)
 #define STDCVT
-#endif
-
-#ifdef __CYGWIN__
-int __mb_cur_max = 1;
 #endif
 
 typedef struct _CTDataRec {
@@ -332,7 +328,7 @@ byteM_parse_codeset(
     ByteInfoListRec byteM_rec;
     ByteInfo byteinfo;
     ByteInfoRec byteinfo_rec;
-    Bool hit;
+    Bool hit = False;
     int i, j, k;
 
     int codeset_num               = XLC_GENERIC(lcd, codeset_num);
@@ -381,7 +377,7 @@ gi_parse_charset(
     XlcCharSet *charset_list = codeset->charset_list;
     int num_charsets = codeset->num_charsets;
     ExtdSegment ctextseg = codeset->ctextseg;
-    XlcCharSet charset;
+    XlcCharSet charset = NULL;
     int area_num;
     FontScope area;
 
@@ -475,18 +471,20 @@ cmp_esc_sequence(
     inbufptr += seq_len;
     byte_m = *inbufptr++;
     byte_l = *inbufptr++;
-    name_len = ((byte_m - 128) * 128) + (byte_l - 128);
-    total_len = seq_len + name_len;
+    name_len = strlen(encoding_name);
 
-    /* compare encoding names */
-    if ( strncmp(inbufptr, encoding_name, name_len - 3) != 0 )
+    if (((byte_m - 128) * 128 + (byte_l - 128) - 1) < name_len)
+	return(0);
+
+    if ( _XlcNCompareISOLatin1(inbufptr, encoding_name, name_len) != 0 )
 	return(0);
 
     /* check STX (Start of Text) */
-    inbufptr = inbufptr + name_len - 3;
+    inbufptr = inbufptr + name_len;
     if ( *inbufptr != STX )
 	return(0);
 
+    total_len = seq_len + name_len + 3;
     return(total_len);
 }
 
@@ -626,7 +624,7 @@ _XlcGetCodeSetFromCharSet(
     XlcCharSet *charset_list;
     int codeset_num, num_charsets;
     Conversion ctconv;
-    unsigned long glyph_index_tmp;
+    unsigned long glyph_index_tmp = 0;
     ExtdSegment ctextseg;
 
     codeset_num = XLC_GENERIC(lcd, codeset_num);
@@ -1079,7 +1077,7 @@ wcstocts(
     const wchar_t *inbufptr = (const wchar_t *) *from;
     char *outbufptr = *to;
     int from_size = *from_left;
-
+    char *ext_seg_len = NULL;
 
     if (*from_left > *to_left)
         *from_left = *to_left;
@@ -1132,14 +1130,21 @@ wcstocts(
             name_len = 0;
 	    total_len = seq_len;
 	} else {
-            name_len = 2 + strlen(charset->encoding_name) + 1;
-	    total_len = seq_len + name_len;
+            name_len = strlen(charset->encoding_name) + 1;
+	    total_len = seq_len + name_len + 2;
 	}
 
         /* output escape sequence of CT */
 	if ( (charset != old_charset) &&
 	    !(first_flag && charset->string_encoding) ){
 
+            if ( (ext_seg_len != NULL) && outbufptr) {
+                int i = (outbufptr - ext_seg_len) - 2;
+                *ext_seg_len++ = i / 128 + 128;
+                *ext_seg_len   = i % 128 + 128;
+                ext_seg_len = NULL;
+            }
+	    
 	    if (*to_left < total_len + 1) {
                 unconv_num++;
 	        break;
@@ -1150,10 +1155,12 @@ wcstocts(
 		outbufptr += seq_len;
 
                 if (!standard_flag) {
-		    *outbufptr++ = name_len / 128 + 128;
-		    *outbufptr++ = name_len % 128 + 128;
-	            strcpy((char *)outbufptr, charset->encoding_name);
-		    outbufptr = outbufptr + name_len - 2 - 1;
+                    const char *i = charset->encoding_name;
+                    ext_seg_len = outbufptr;
+                    outbufptr += 2;
+	            for (; *i ; i++)
+                        *outbufptr++ = ((*i >= 'A') && (*i <= 'Z')) ?
+                                       *i - 'A' + 'a' : *i;
 		    *outbufptr++ = STX;
                 }
 	    }
@@ -1180,6 +1187,12 @@ wcstocts(
 	(*to_left) -= charset->char_size;
 
     } /* end of while */
+
+    if ( (ext_seg_len != NULL) && outbufptr) {
+        int i = (outbufptr - ext_seg_len) - 2;
+        *ext_seg_len++ = i / 128 + 128;
+        *ext_seg_len   = i % 128 + 128;
+    }
 
     *from = (XPointer) ((const char *) *from + from_size);
     *from_left = 0;
@@ -1289,7 +1302,7 @@ ctstowcs(
             if ( !ct_parse_csi(inbufptr - 1, &ctr_seq_len) )
 	        goto skip_the_seg;
 
-	    if (*from_left < ctr_seq_len) {
+	    if (*from_left + 1 < ctr_seq_len) {
 		inbufptr--;
 		(*from_left)++;
 		unconv_num += *from_left;
@@ -1325,7 +1338,7 @@ ctstowcs(
 		state->GR_charset = state->charset;
 	      }	
 
-	    if (*from_left < ctr_seq_len) {
+	    if (*from_left + 1 < ctr_seq_len) {
 		inbufptr--;
 		(*from_left)++;
 		unconv_num += *from_left;
@@ -1757,7 +1770,7 @@ mbtocs(
     XlcSide side;
 
     CodeSet codeset = NULL;
-    XlcCharSet charset;
+    XlcCharSet charset = NULL;
 
     const char *inbufptr = *from;
     char *outbufptr = *to;
@@ -2097,7 +2110,7 @@ wctocs(
     XlcSide side;
 
     CodeSet codeset;
-    XlcCharSet charset;
+    XlcCharSet charset = NULL;
 
     const wchar_t *inbufptr = (const wchar_t *) *from;
     char *outbufptr = *to;
@@ -3073,7 +3086,9 @@ _XlcGenericLoader(
     const char *name)
 {
     XLCd lcd;
+#ifdef STDCVT
     XLCdGenericPart *gen;
+#endif
 
     lcd = _XlcCreateLC(name, _XlcGenericMethods);
 

@@ -1,10 +1,14 @@
-/* $Xorg: checktree.c,v 1.3 2000/08/17 19:41:52 cpqbld Exp $ */
+/* $Xorg: checktree.c,v 1.4 2001/02/09 02:03:16 xorgcvs Exp $ */
 
 /*
 
 Copyright (c) 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,6 +24,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
+/* $XFree86: xc/config/util/checktree.c,v 1.4 2001/12/14 19:53:22 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <stdio.h>
@@ -57,10 +62,6 @@ in this Software without prior written authorization from The Open Group.
 #define fmode_bits_maxset 0777
 #define fmode_bits_write  0222
 #define dmode_bits_minset 0775
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 int dorcs = 1;			/* check RCS file */
 int do83 = 1;			/* check for 8+3 clash */

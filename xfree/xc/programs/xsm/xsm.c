@@ -1,9 +1,13 @@
-/* $Xorg: xsm.c,v 1.6 2000/08/17 19:55:06 cpqbld Exp $ */
+/* $Xorg: xsm.c,v 1.7 2001/02/09 02:06:01 xorgcvs Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -19,7 +23,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.c,v 1.7 2001/01/17 23:46:31 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/xsm.c,v 1.9 2001/12/14 20:02:27 dawes Exp $ */
 
 /*
  * X Session Manager.
@@ -96,6 +100,7 @@ extern Widget checkPointButton;
 extern Widget shutdownButton;
 extern Widget clientListWidget;
 extern Widget savePopup;
+extern XtSignalId sig_term_id, sig_usr1_id;
 
 extern int checkpoint_from_signal;
 
@@ -155,7 +160,7 @@ main(int argc, char *argv[])
     wmDeleteAtom = XInternAtom (
 	XtDisplay (topLevel), "WM_DELETE_WINDOW", False);
 
-    register_signals ();
+    register_signals (appContext);
 
 
     /*

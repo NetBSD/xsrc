@@ -1,7 +1,7 @@
 #ifndef _GLX_glxproto_h_
 #define _GLX_glxproto_h_
 
-/* $XFree86: xc/include/GL/glxproto.h,v 1.4 2001/04/10 16:07:49 dawes Exp $ */
+/* $XFree86: xc/include/GL/glxproto.h,v 1.5 2001/08/01 00:44:34 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -36,7 +36,7 @@
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
 
-#include "GL/glxmd.h"
+#include <GL/glxmd.h>
 
 /*****************************************************************************/
 

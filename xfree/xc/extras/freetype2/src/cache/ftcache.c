@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType Caching sub-system (body only).                         */
 /*                                                                         */
-/*  Copyright 2000 by                                                      */
+/*  Copyright 2000-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -21,10 +21,11 @@
 #include <ft2build.h>
 #include "ftlru.c"
 #include "ftcmanag.c"
+#include "ftccache.c"
 #include "ftcglyph.c"
-#include "ftcchunk.c"
 #include "ftcimage.c"
 #include "ftcsbits.c"
+#include "ftccmap.c"
 
 
 /* END */

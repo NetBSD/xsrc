@@ -11,7 +11,7 @@
  *    Guy DESBIEF
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_driver.c,v 1.20 2001/05/04 19:05:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_driver.c,v 1.26 2002/01/04 21:22:29 tsi Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -155,53 +155,53 @@ static int gd7548_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
  */
 
 static const char *vgahwSymbols[] = {
-	"vgaHWGetHWRec",
-	"vgaHWUnlock",
-	"vgaHWInit",
-	"vgaHWProtect",
-	"vgaHWSetMmioFuncs",
-	"vgaHWGetIOBase",
-	"vgaHWMapMem",
-	"vgaHWLock",
 	"vgaHWFreeHWRec",
+	"vgaHWGetHWRec",
+	"vgaHWGetIOBase",
+	"vgaHWGetIndex",
+	"vgaHWHandleColormaps",
+	"vgaHWInit",
+	"vgaHWLock",
+	"vgaHWMapMem",
+	"vgaHWProtect",
+	"vgaHWRestore",
+	"vgaHWSave",
 	"vgaHWSaveScreen",
-	"vgaHWddc1SetSpeed",
+	"vgaHWSetMmioFuncs",
+	"vgaHWSetStdFuncs",
+	"vgaHWUnlock",
 	NULL
 };
 
-#ifdef XFree86LOADER
-
-static const char *fbSymbols[] = {
+static const char *miscfbSymbols[] = {
     "xf1bppScreenInit",
     "xf4bppScreenInit",
+    NULL
+};
+
+static const char *fbSymbols[] = {
     "fbScreenInit",
     "fbPictureInit",
     NULL
 };
 
-#endif
-
 static const char *xaaSymbols[] = {
-	"XAADestroyInfoRec",
 	"XAACreateInfoRec",
+	"XAADestroyInfoRec",
 	"XAAInit",
-	"XAAStippleScanlineFuncLSBFirst",
-	"XAAOverlayFBfuncs",
-	"XAACachePlanarMonoStipple",
-	"XAAScreenIndex",
 	NULL
 };
 
 static const char *ramdacSymbols[] = {
-	"xf86InitCursor",
 	"xf86CreateCursorInfoRec",
 	"xf86DestroyCursorInfoRec",
+	"xf86InitCursor",
 	NULL
 };
 
 static const char *int10Symbols[] = {
-    "xf86InitInt10",
     "xf86FreeInt10",
+    "xf86InitInt10",
     NULL
 };
 
@@ -210,14 +210,10 @@ static const char *shadowSymbols[] = {
     NULL
 };
 
-#define ALPuseI2C 0
-
 static const char *ddcSymbols[] = {
 	"xf86PrintEDID",
-	"xf86DoEDID_DDC1",
-#if ALPuseI2C
 	"xf86DoEDID_DDC2",
-#endif
+	"xf86SetDDCproperties",
 	NULL
 };
 
@@ -262,7 +258,7 @@ alpSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	if (!setupDone) {
 		setupDone = TRUE;
 		LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-				  ramdacSymbols,int10Symbols,
+				  miscfbSymbols, ramdacSymbols,int10Symbols,
 				  ddcSymbols, i2cSymbols, shadowSymbols, NULL);
 	}
 	return (pointer)1;
@@ -758,7 +754,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
       * XXX Check if this is correct
       */
      if (!pCir->UseMMIO) {
-         pScrn->racIoFlags =   RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
+         pScrn->racIoFlags = RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT | RAC_FB;
  	xf86SetOperatingState(resVgaMemShared, pCir->pEnt->index,ResUnusedOpr);
      } else {
          xf86SetOperatingState(RES_SHARED_VGA, pCir->pEnt->index, ResUnusedOpr);
@@ -896,7 +892,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	  break;
 	}
 
-     /* We use a programamble clock */
+     /* We use a programmable clock */
      pScrn->progClock = TRUE;
  
 	/* XXX Set HW cursor use */
@@ -1090,7 +1086,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
+	    xf86LoaderReqSymLists(fbSymbols, NULL);
 	    break;
 	}
 
@@ -1464,6 +1460,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	CirPtr pCir;
 	AlpPtr pAlp;
 	int i, ret;
+	int init_picture = 0;
 	VisualPtr visual;
 	int displayWidth,width,height;
 	unsigned char * FbBase = NULL;
@@ -1582,6 +1579,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				width,height,
 				pScrn->xDpi, pScrn->yDpi,
 				displayWidth,pScrn->bitsPerPixel);
+	    init_picture = 1;
 	    break;
 	default:
 	    xf86DrvMsg(scrnIndex, X_ERROR,
@@ -1592,7 +1590,6 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 	if (!ret)
 		return FALSE;
-	fbPictureInit (pScreen, 0, 0);
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpScreenInit after depth dependent init\n");
@@ -1613,6 +1610,10 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		}
 	}
 
+	/* must be after RGB ordering fixed */
+	if (init_picture)
+		fbPictureInit (pScreen, 0, 0);
+    
 	miInitializeBackingStore(pScreen);
 
 	/*
@@ -1807,9 +1808,10 @@ AlpEnterVT(int scrnIndex, int flags)
 
 	/* Should we re-save the text mode on each VT enter? */
 	if (!(ret = AlpModeInit(pScrn, pScrn->currentMode)))
-	  return FALSE;
+		return FALSE;
 	
-	pCir->InitAccel(pScrn);
+	if (!pCir->NoAccel)
+		pCir->InitAccel(pScrn);
 
 	return ret;
 }

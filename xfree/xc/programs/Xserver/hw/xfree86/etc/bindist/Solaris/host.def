@@ -1,7 +1,7 @@
 /*
  * Host.def for building Solaris bindists
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/Solaris/host.def,v 1.4.2.1 2001/05/31 22:20:35 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/Solaris/host.def,v 1.5 2001/05/31 18:47:11 dawes Exp $
  */
 
 #define InstallEmptyHostDef
