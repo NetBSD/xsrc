@@ -23,10 +23,12 @@ INCLUDES = -I$(EXTINCSRC)
 PROGRAMS = ProgramTarget(xkbcomp)
 
 #ifdef amigaArchitecture
-MDXKBFILES = de-amiga.xkm fr-amiga.xkm
+MDXKBFILES = de-amiga.xkm fr-amiga.xkm pl_us-amiga.xkm pl_eur-amiga.xkm
 $(MDXKBFILES): $(PROGRAMS)
 	$(XKBCOMPCMD) -xkm -o de-amiga.xkm -m de keymap/amiga
 	$(XKBCOMPCMD) -xkm -o fr-amiga.xkm -m fr keymap/amiga
+	$(XKBCOMPCMD) -xkm -o pl_us-amiga.xkm -m pl_us keymap/amiga
+	$(XKBCOMPCMD) -xkm -o pl_eur-amiga.xkm -m pl_eur keymap/amiga
 #endif
 
 all:: $(PROGRAMS) $(MDXKBFILES)
@@ -42,6 +44,8 @@ install::
 #ifdef amigaArchitecture
 	$(INSTALL) -c $(INSTDATFLAGS) de-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/de.xkm
 	$(INSTALL) -c $(INSTDATFLAGS) fr-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/fr.xkm
+	$(INSTALL) -c $(INSTDATFLAGS) pl_us-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/pl_us.xkm
+	$(INSTALL) -c $(INSTDATFLAGS) pl_eur-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/pl_eur.xkm
 #endif
 
 LinkVarDirectory(xkb,xkb,compiled,compiled)
