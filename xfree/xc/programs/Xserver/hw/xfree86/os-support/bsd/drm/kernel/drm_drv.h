@@ -994,6 +994,13 @@ int DRM(ioctl)(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		return 0;
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
+	case FIOSETOWN:
+		return fsetown(DRM_CURRENTPID, &dev->buf_pgid, cmd, data);
+
+	case FIOGETOWN:
+		fgetown(DRM_CURRENTPID, &dev->buf_pgid, cmd, data);
+		return 0;
+
 	case TIOCSPGRP:
 		dev->buf_pgid = *(int *)data;
 		return 0;
