@@ -397,7 +397,7 @@ Tekparse(void)
 {
     register TScreen *screen = &term->screen;
     register int c = 0, x, y;
-    Char ch;
+    IChar ch;
     int nextstate;
 
     for (;;) {
@@ -699,7 +699,7 @@ Tekparse(void)
 
 #if OPT_WIDE_CHARS
 	    if (screen->wide_chars
-		&& (c > 255)) {
+		&& (ch > 255)) {
 		XChar2b sbuf;
 		sbuf.byte2 = CharOf(ch);
 		sbuf.byte1 = CharOf(ch >> 8);
