@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miLUT.c,v 1.9 1999/07/18 08:34:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miLUT.c,v 1.8 1999/01/31 12:21:30 dawes Exp $ */
 
 #include "miLUT.h"
 #include "pexUtils.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_macros.h,v 1.4 2000/06/17 00:02:56 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_macros.h,v 1.3 2000/02/23 04:46:44 martin Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.8 2000/11/03 18:46:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.10 2001/02/18 23:47:29 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -134,7 +134,8 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                            vertStart,
                            vertEnd,
                            vertTotal,
-                           mode->Clock);
+                           mode->Clock,
+			   mode->Flags & V_DBLSCAN);
 
     return (TRUE);
 }
@@ -165,23 +166,48 @@ NVDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
     pNv->riva.UnloadStateExt(&pNv->riva, nvReg);
 }
 
+#define DEPTH_SHIFT(val, w) ((val << (8 - w)) | (val >> ((w << 1) - 8)))
+#define MAKE_INDEX(in, w) (DEPTH_SHIFT(in, w) * 3)
+
 void
 NVDACLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors,
                  VisualPtr pVisual )
 {
     int i, index;
+    NVPtr pNv = NVPTR(pScrn);
     vgaRegPtr   pVga;
 
     pVga = &VGAHWPTR(pScrn)->ModeReg;
 
-    if(pVisual->nplanes != 8) return;
-
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVDACLoadPalette\n"));
-    for(i = 0; i < numColors; i++) {
-        index = indices[i];
-	pVga->DAC[index*3]     = colors[index].red;
-	pVga->DAC[(index*3)+1] = colors[index].green;
-	pVga->DAC[(index*3)+2] = colors[index].blue;
+
+    switch(pNv->CurrentLayout.depth) {
+    case 15:
+        for(i = 0; i < numColors; i++) {
+            index = indices[i];
+            pVga->DAC[MAKE_INDEX(index, 5) + 0] = colors[index].red;
+            pVga->DAC[MAKE_INDEX(index, 5) + 1] = colors[index].green;
+            pVga->DAC[MAKE_INDEX(index, 5) + 2] = colors[index].blue;
+        }
+        break;
+    case 16:
+        for(i = 0; i < numColors; i++) {
+            index = indices[i];
+            pVga->DAC[MAKE_INDEX(index, 6) + 1] = colors[index].green;
+	    if(index < 32) {
+            	pVga->DAC[MAKE_INDEX(index, 5) + 0] = colors[index].red;
+            	pVga->DAC[MAKE_INDEX(index, 5) + 2] = colors[index].blue;
+	    }
+        }
+        break;
+    default:
+	for(i = 0; i < numColors; i++) {
+            index = indices[i];
+            pVga->DAC[index*3]     = colors[index].red;
+            pVga->DAC[(index*3)+1] = colors[index].green;
+            pVga->DAC[(index*3)+2] = colors[index].blue;
+	}
+	break;
     }
     vgaHWRestore(pScrn, pVga, VGA_SR_CMAP);
 }

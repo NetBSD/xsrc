@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.21 2000/10/20 14:58:59 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.20 2000/08/09 20:33:20 tsi Exp $ */
 
 /*
  * Copyright (c) 1998 by The XFree86 Project, Inc.

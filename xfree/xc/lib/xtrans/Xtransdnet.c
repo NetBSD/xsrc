@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.4 1999/06/20 08:41:21 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.3 1998/10/03 09:07:34 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

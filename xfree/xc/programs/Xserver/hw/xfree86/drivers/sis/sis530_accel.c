@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis530_accel.c,v 1.1 2000/02/12 20:45:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_accel2.c,v 1.1 1999/03/21 07:35:19 dawes Exp $ */
 
 /*
  *

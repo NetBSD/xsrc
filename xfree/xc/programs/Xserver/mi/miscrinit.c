@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.12 2000/08/26 00:23:19 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.10 1999/10/13 22:33:12 dawes Exp $ */
 
 #include "X.h"
 #include "servermd.h"

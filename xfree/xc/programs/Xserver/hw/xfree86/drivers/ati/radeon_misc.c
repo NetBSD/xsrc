@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_misc.c,v 1.2 2000/11/18 19:37:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_misc.c,v 1.1 2000/11/02 16:55:43 tsi Exp $ */
 /*
  * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

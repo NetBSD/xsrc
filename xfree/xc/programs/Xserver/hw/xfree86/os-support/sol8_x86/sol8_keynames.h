@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_keynames.h,v 1.8 2000/12/18 02:25:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_keynames.h,v 1.7 2000/12/18 00:44:18 dawes Exp $ */
 
 #ifndef _SOL8KEYNAMES_H
 #define _SOL8KEYNAMES_H

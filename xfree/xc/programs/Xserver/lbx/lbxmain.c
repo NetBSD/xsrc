@@ -41,7 +41,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.8 2000/06/07 22:03:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxmain.c,v 1.7 2000/05/18 23:46:24 dawes Exp $ */
  
 #include <sys/types.h>
 #define NEED_REPLIES

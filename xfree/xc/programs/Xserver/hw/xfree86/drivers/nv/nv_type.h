@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.18 2000/12/07 21:42:17 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.21 2001/02/23 01:19:09 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -112,7 +112,7 @@ typedef struct {
     void                (*DDC1SetSpeed)(ScrnInfoPtr, xf86ddcSpeed);
     Bool                (*i2cInit)(ScrnInfoPtr);
     I2CBusPtr           I2C;
-  xf86Int10InfoPtr pInt;
+    xf86Int10InfoPtr    pInt;
 } NVRec, *NVPtr;
 
 #define NVPTR(p) ((NVPtr)((p)->driverPrivate))
@@ -126,6 +126,8 @@ void NVPointerMoved(int index, int x, int y);
 #define NV_CHIP_RIVA128    ((PCI_VENDOR_NVIDIA_SGS << 16)| PCI_CHIP_RIVA128)
 #define NV_CHIP_TNT        ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT)
 #define NV_CHIP_TNT2       ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2)
+#define NV_CHIP_TNT2_A     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2_A)
+#define NV_CHIP_TNT2_B     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2_B)
 #define NV_CHIP_UTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UTNT2)
 #define NV_CHIP_VTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_VTNT2)
 #define NV_CHIP_UVTNT2     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UVTNT2)
@@ -141,5 +143,9 @@ void NVPointerMoved(int index, int x, int y);
 #define NV_CHIP_GEFORCE2GTS_1   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GTS_1)
 #define NV_CHIP_GEFORCE2ULTRA   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2ULTRA)
 #define NV_CHIP_QUADRO2PRO      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO2PRO)
+#define NV_CHIP_GEFORCE3     ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3)
+#define NV_CHIP_GEFORCE3_1   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_1)
+#define NV_CHIP_GEFORCE3_2   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_2)
+#define NV_CHIP_GEFORCE3_3   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_3)
 
 #endif /* __NV_STRUCT_H__ */

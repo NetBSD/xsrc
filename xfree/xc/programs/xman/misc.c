@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/misc.c,v 1.4 2000/06/13 23:15:53 dawes Exp $ */
+/* $XFree86: xc/programs/xman/misc.c,v 1.5 2001/01/27 17:24:27 herrb Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -45,8 +45,18 @@ from the X Consortium.
 #include <X11/Shell.h>
 
 static FILE * Uncompress(ManpageGlobals * man_globals, char * filename);
-static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output);
-static Boolean UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filename);
+#ifndef HAS_MKSTEMP
+static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename, 
+			       char * output);
+static Boolean UncompressUnformatted(ManpageGlobals * man_globals, 
+				     char * entry, char * filename);
+#else
+static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename, 
+			       char * output, FILE ** output_fd);
+static Boolean UncompressUnformatted(ManpageGlobals * man_globals, 
+				     char * entry, char * filename, 
+				     FILE **file);
+#endif
 
 #if defined(ISC) || defined(SCO)
 static char *uncompress_format = NULL;
@@ -279,14 +289,23 @@ Uncompress(ManpageGlobals * man_globals, char * filename)
   char tmp_file[BUFSIZ], error_buf[BUFSIZ];
   FILE * file;
 
+#ifndef HAS_MKSTEMP
   if ( !UncompressNamed(man_globals, filename, tmp_file) )
     return(NULL);
 
   else if ((file = fopen(tmp_file, "r")) == NULL) {  
-    sprintf(error_buf, "Something went wrong in retrieving the %s",
-	    "uncompressed manual page try cleaning up /tmp.");
-    PopupWarning(man_globals, error_buf);
+      sprintf(error_buf, "Something went wrong in retrieving the %s",
+	      "uncompressed manual page try cleaning up /tmp.");
+      PopupWarning(man_globals, error_buf);
   }
+#else
+  if (!UncompressNamed(man_globals, filename, tmp_file, &file)) {
+      sprintf(error_buf, "Something went wrong in retrieving the %s",
+	      "uncompressed manual page try cleaning up /tmp.");
+      PopupWarning(man_globals, error_buf);
+      return(NULL);
+  }
+#endif
 
   unlink(tmp_file);		/* remove name in tree, it will remain
 				   until we close the fd, however. */
@@ -302,11 +321,20 @@ Uncompress(ManpageGlobals * man_globals, char * filename)
  *	Returns:; TRUE if the file was found.
  */
 
+#ifndef HAS_MKSTEMP
 static Boolean
 UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output)
+#else
+static Boolean
+UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output,
+		FILE ** output_fd)
+#endif
 {
   char tmp[BUFSIZ], cmdbuf[BUFSIZ], error_buf[BUFSIZ];
   struct stat junk;
+#ifdef HAS_MKSTEMP
+  int fd;
+#endif
 
   if (stat(filename, &junk) != 0) { /* Check for existance of the file. */
     if (errno != ENOENT) {
@@ -323,7 +351,16 @@ UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output)
  */
 
   strcpy(tmp, MANTEMP);		/* get a temp file. */
+#ifndef HAS_MKSTEMP
   (void) mktemp(tmp);
+#else
+  fd = mkstemp(tmp);
+  if (fd < 0) {
+      PopupWarning(man_globals, "Error creating a temp file");
+      return FALSE;
+  }
+  *output_fd = fdopen(fd, "r");
+#endif
   strcpy(output, tmp);
 
 #ifdef GZIP_EXTENSION
@@ -357,6 +394,9 @@ FILE *
 Format(ManpageGlobals * man_globals, char * entry)
 {
   FILE * file;
+#ifdef HAS_MKSTEMP
+  int fd;
+#endif
   Widget manpage = man_globals->manpagewidgets.manpage;
   char cmdbuf[BUFSIZ], tmp[BUFSIZ], filename[BUFSIZ], error_buf[BUFSIZ];
   char path[BUFSIZ];
@@ -364,7 +404,11 @@ Format(ManpageGlobals * man_globals, char * entry)
   Position x,y;			/* location to pop up the
 				   "would you like to save" widget. */
 
+#ifndef HAS_MKSTEMP
   if ( !UncompressUnformatted(man_globals, entry, filename) ) {
+#else
+  if ( !UncompressUnformatted(man_globals, entry, filename, &file) ) {
+#endif
     /* We Really could not find it, this should never happen, yea right. */
     sprintf(error_buf, "Could not open manual page, %s", entry);
     PopupWarning(man_globals, error_buf);
@@ -372,7 +416,11 @@ Format(ManpageGlobals * man_globals, char * entry)
     return(NULL);
   }
 
+#ifndef HAS_MKSTEMP
   if ((file = fopen(filename, "r")) != NULL) {
+#else
+  if (file != NULL) {
+#endif
     char line[BUFSIZ];
 
     if (fgets(line, sizeof(line), file) != NULL) {
@@ -408,13 +456,23 @@ Format(ManpageGlobals * man_globals, char * entry)
   XFlush(XtDisplay(man_globals->standby));
 
   strcpy(tmp,MANTEMP);		          /* Get a temp file. */
+#ifndef HAS_MKSTEMP
   (void) mktemp(tmp);
+#else
+  fd = mkstemp(tmp);
+  file = fdopen(fd, "r");
+#endif
   strcpy(man_globals->tempfile, tmp);
 
   ParseEntry(entry, path, NULL, NULL);
 
+#ifndef HAS_MKSTEMP
   sprintf(cmdbuf,"cd %s ; %s %s %s > %s %s", path, TBL,
 	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
+#else
+  sprintf(cmdbuf,"cd %s ; %s %s %s >> %s %s", path, TBL,
+	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
+#endif  
 
   if(system(cmdbuf) != 0) {	/* execute search. */
     sprintf(error_buf,
@@ -423,12 +481,14 @@ Format(ManpageGlobals * man_globals, char * entry)
     file = NULL;
   }
   else {
+#ifndef HAS_MKSTEMP
     if ((file = fopen(man_globals->tempfile,"r")) == NULL) {  
       sprintf(error_buf, "Something went wrong in retrieving the %s",
 	      "temp file, try cleaning up /tmp");
       PopupWarning(man_globals, error_buf);
     }
     else {
+#endif
 
       XtPopdown( XtParent(man_globals->standby) );
   
@@ -460,7 +520,9 @@ Format(ManpageGlobals * man_globals, char * entry)
 	else 
 	  unlink(man_globals->tempfile);
       }
+#ifndef HAS_MKSTEMP
     }
+#endif
   }
 
   if (man_globals->compress || man_globals->gzip)    /* If the original
@@ -481,7 +543,13 @@ Format(ManpageGlobals * man_globals, char * entry)
  */
 
 static Boolean
-UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filename)
+#ifndef HAS_MKSTEMP
+UncompressUnformatted(ManpageGlobals * man_globals, char * entry, 
+		      char * filename)
+#else
+UncompressUnformatted(ManpageGlobals * man_globals, char * entry, 
+		      char * filename, FILE **file)
+#endif
 {
   char path[BUFSIZ], page[BUFSIZ], section[BUFSIZ], input[BUFSIZ];
   int len_cat = strlen(CAT), len_man = strlen(MAN);
@@ -505,7 +573,11 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filenam
   * Then for compressed files in an uncompressed directory.
   */
   sprintf(input, "%s.%s", filename, COMPRESSION_EXTENSION);
+#ifndef HAS_MKSTEMP
   if ( UncompressNamed(man_globals, input, filename) ) {
+#else
+  if ( UncompressNamed(man_globals, input, filename, file) ) {
+#endif
     man_globals->compress = TRUE;
     sprintf(man_globals->save_file, "%s/%s%s/%s.%s", path,
 	    CAT, section + len_cat, page, COMPRESSION_EXTENSION);
@@ -514,7 +586,11 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filenam
 #ifdef GZIP_EXTENSION
   else {
     sprintf(input, "%s.%s", filename, GZIP_EXTENSION);
+#ifndef HAS_MKSTEMP
     if ( UncompressNamed(man_globals, input, filename) ) {
+#else
+    if ( UncompressNamed(man_globals, input, filename, file) ) {
+#endif
       man_globals->compress = TRUE;
       man_globals->gzip = TRUE;
       sprintf(man_globals->save_file, "%s/%s%s/%s.%s", path,
@@ -542,7 +618,11 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filenam
  */
 
   sprintf(input, "%s.%s", filename, COMPRESSION_EXTENSION);
+#ifndef HAS_MKSTEMP
   if ( UncompressNamed(man_globals, input, filename) ) {
+#else
+  if ( UncompressNamed(man_globals, input, filename, file) ) {
+#endif
     man_globals->compress = TRUE;
     sprintf(man_globals->save_file, "%s/%s%s/%s.%s", path,
 	    CAT, section + len_cat, page, COMPRESSION_EXTENSION);
@@ -551,7 +631,11 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filenam
 #ifdef GZIP_EXTENSION
   else {
     sprintf(input, "%s.%s", filename, GZIP_EXTENSION);
+#ifndef HAS_MKSTEMP
     if ( UncompressNamed(man_globals, input, filename) ) {
+#else
+    if ( UncompressNamed(man_globals, input, filename, file) ) {
+#endif	
       man_globals->compress = TRUE;
       man_globals->gzip = TRUE;
       sprintf(man_globals->save_file, "%s/%s%s/%s.%s", path,
@@ -566,7 +650,11 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry, char * filenam
 
   sprintf(input, "%s/%s%s.%s/%s", path, 
 	  MAN, section + len_man, COMPRESSION_EXTENSION, page);
+#ifndef HAS_MKSTEMP
   if ( UncompressNamed(man_globals, input, filename) ) {
+#else
+  if ( UncompressNamed(man_globals, input, filename, file) ) {
+#endif
     man_globals->compress = TRUE;
     sprintf(man_globals->save_file, "%s/%s%s.%s/%s", path, 
 	    CAT, section + len_cat, COMPRESSION_EXTENSION, page);

@@ -3,7 +3,7 @@
 
    Written by Mark Vojkovich
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.37 2000/06/30 19:06:56 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.36 2000/06/24 18:59:20 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86str.h"
@@ -266,7 +266,7 @@ DGASetDGAMode(
 	    pScreenPriv->current = NULL;
 	    pScrn->vtSema = TRUE;
 	    if(pScreenPriv->savedColormap) {
-		miInstalledMaps[index] = pScreenPriv->savedColormap;
+	        (*pScreen->InstallColormap)(pScreenPriv->savedColormap);
 		pScreenPriv->savedColormap = NULL;
 	    }
 	    pScreenPriv->dgaColormap = NULL;
@@ -644,6 +644,7 @@ DGAInstallCmap(ColormapPtr cmap)
 
     if(!pScreenPriv->dgaColormap) 
 	pScreenPriv->savedColormap = miInstalledMaps[pScreen->myNum];
+
     pScreenPriv->dgaColormap = cmap;    
 
     (*pScreen->InstallColormap)(cmap);

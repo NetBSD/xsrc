@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/io.c,v 3.11 2000/11/30 23:30:11 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/io.c,v 3.10 2000/02/13 06:15:46 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdio.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.12 2000/08/22 21:54:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.11 2000/08/04 21:07:15 tsi Exp $ */
 /*
  * Copyright 1994 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

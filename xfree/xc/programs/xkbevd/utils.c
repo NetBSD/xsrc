@@ -1,7 +1,7 @@
 
   /*\
    * $XConsortium: utils.c /main/2 1996/12/04 10:24:13 lehors $
-   * $XFree86: xc/programs/xkbevd/utils.c,v 3.3 1999/03/02 10:42:26 dawes Exp $
+   * $XFree86: xc/programs/xkbevd/utils.c,v 3.2 1997/12/06 09:26:15 hohndel Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION

@@ -217,6 +217,10 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # endif
 #endif
 
+#ifndef InstallXloadSetGID
+#define InstallXloadSetGID	NO
+#endif
+
 /* <linux/input.h> support mainly for USB support */
 #ifndef HasLinuxInput
 # if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 4)

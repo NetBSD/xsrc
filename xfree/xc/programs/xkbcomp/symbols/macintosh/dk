@@ -1,5 +1,5 @@
 // $XConsortium: dk /main/3 1996/08/31 12:19:29 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/macintosh/dk,v 1.1 2000/09/19 12:46:25 eich Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/dk,v 3.3.2.1 1999/12/20 12:56:01 hohndel Exp $
 partial alphanumeric_keys 
 xkb_symbols "basic" {
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgafb.h,v 1.2 1998/07/25 16:58:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgafb.h,v 1.1.2.2 1997/09/25 04:49:01 hohndel Exp $ */
 
 
 

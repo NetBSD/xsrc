@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/include/extensions/lbxopts.h,v 1.4 2000/05/18 23:46:11 dawes Exp $ */
+/* $XFree86: xc/include/extensions/lbxopts.h,v 1.3 1997/01/18 07:17:15 dawes Exp $ */
 
 #ifndef _LBX_OPTS_H_
 #define _LBX_OPTS_H_

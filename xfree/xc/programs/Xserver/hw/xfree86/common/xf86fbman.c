@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.19 2000/11/24 23:18:29 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.18 2000/10/25 06:14:24 keithp Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

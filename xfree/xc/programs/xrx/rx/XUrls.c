@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86: xc/programs/xrx/rx/XUrls.c,v 1.6 2000/05/11 18:14:45 tsi Exp $ */
+/* $XFree86$ */
 
 #include "RxI.h"
 #include <sys/utsname.h>

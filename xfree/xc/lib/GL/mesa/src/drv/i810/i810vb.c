@@ -22,7 +22,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.c,v 1.7 2000/11/08 05:02:43 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.c,v 1.6 2000/09/24 13:51:04 alanh Exp $ */
  
 #include <stdio.h>
 #include <stdlib.h>

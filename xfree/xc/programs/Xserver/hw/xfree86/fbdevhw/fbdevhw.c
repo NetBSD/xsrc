@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.21 2000/10/24 22:45:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.20 2000/10/20 14:59:01 alanh Exp $ */
 
 /* all driver need this */
 #include "xf86.h"

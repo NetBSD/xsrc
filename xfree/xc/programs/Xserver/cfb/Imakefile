@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/71 1997/11/17 10:00:11 msr $
-XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile,v 3.25 2000/12/01 00:24:31 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile,v 3.24 1999/09/27 06:29:16 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

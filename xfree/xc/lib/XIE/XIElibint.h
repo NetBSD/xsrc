@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/XIElibint.h,v 3.3 1999/06/13 16:18:06 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XIELIBINT_H_
 #define _XIELIBINT_H_

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/arith.h,v 1.4 1999/08/21 13:47:39 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/arith.h,v 1.3 1999/02/13 01:13:36 dawes Exp $ */
 
 /*SHARED*/
 

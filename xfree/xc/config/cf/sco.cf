@@ -1,5 +1,5 @@
 XCOMM platform:  $XConsortium: sco.cf /main/5 1996/12/04 10:12:36 swick $
-XCOMM platform:  $XFree86: xc/config/cf/sco.cf,v 3.13 1997/05/24 13:46:28 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/sco.cf,v 3.12 1996/12/23 05:50:30 dawes Exp $
 
 /*
  * This is sco.cf, for SCO Open Server 5.0.2 and SCO UNIX.

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/session.c,v 3.26 2000/11/30 23:30:07 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.25 2000/11/15 01:36:17 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

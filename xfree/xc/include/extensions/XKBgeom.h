@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBgeom.h,v 3.6 1999/03/14 03:20:35 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKBgeom.h,v 1.0tsi Exp $ */
 
 #ifndef _XKBGEOM_H_
 #define	_XKBGEOM_H_

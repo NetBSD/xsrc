@@ -44,7 +44,7 @@ static XF86ModuleVersionInfo VersRec =
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XF86_VERSION_CURRENT,
-	1, 1, 8,
+	1, 1, 9,
 	ABI_CLASS_FONT,			/* Font module */
 	ABI_FONT_VERSION,
 	MOD_CLASS_FONT,

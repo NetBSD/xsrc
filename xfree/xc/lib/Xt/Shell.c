@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Shell.c,v 3.8 1998/10/03 09:06:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Shell.c,v 3.7 1997/05/17 12:52:15 dawes Exp $ */
 
 /*
 

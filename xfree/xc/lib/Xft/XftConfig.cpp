@@ -1,4 +1,4 @@
-# $XFree86: xc/lib/Xft/XftConfig.cpp,v 1.5 2000/12/14 23:03:53 keithp Exp $
+# $XFree86$
 
 dir XFT_TYPE1_DIR
 

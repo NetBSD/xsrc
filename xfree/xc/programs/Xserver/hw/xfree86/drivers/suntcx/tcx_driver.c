@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suntcx/tcx_driver.c,v 1.3 2000/12/02 15:30:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suntcx/tcx_driver.c,v 1.2 2000/12/01 00:24:35 dawes Exp $ */
 
 #define PSZ 8
 #include "xf86.h"

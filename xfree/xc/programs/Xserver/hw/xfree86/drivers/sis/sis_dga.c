@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.1 2000/06/26 10:26:15 alanh Exp $ */
+/* $XFree86: $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

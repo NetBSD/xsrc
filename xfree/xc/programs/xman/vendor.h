@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/vendor.h,v 1.5 2000/08/01 18:53:07 dawes Exp $ */
+/* $XFree86: xc/programs/xman/vendor.h,v 1.6 2001/01/27 17:24:27 herrb Exp $ */
 
 /* Vendor-specific definitions */
 
@@ -135,10 +135,18 @@ from the X Consortium.
 #      define NO_COMPRESS
 #    else
 #      define COMPRESSION_EXTENSION "Z"
-#      define UNCOMPRESS_FORMAT     "zcat < %s > %s"
+#      ifndef HAS_MKSTEMP
+#        define UNCOMPRESS_FORMAT     "zcat < %s > %s"
+#      else
+#        define UNCOMPRESS_FORMAT     "zcat < %s >> %s"
+#      endif
 #      define COMPRESS              "compress"
 #      define GZIP_EXTENSION "gz"
-#      define GUNZIP_FORMAT "gzip -c -d < %s > %s"
+#      ifndef HAS_MKSTEMP
+#        define GUNZIP_FORMAT "gzip -c -d < %s > %s"
+#      else
+#        define GUNZIP_FORMAT "gzip -c -d < %s >> %s"
+#      endif
 #      define GZIP_COMPRESS "gzip"
 #    endif /* ISC */
 #  endif /* UTEK */
@@ -154,10 +162,19 @@ from the X Consortium.
 #  define NO_MANPATH_SUPPORT
 #endif
 
-#ifdef NO_MANPATH_SUPPORT
-#  define APROPOS_FORMAT ("man -k %s | pr -h Apropos >> %s")
+#ifndef HAS_MKSTEMP
+#  ifdef NO_MANPATH_SUPPORT
+#    define APROPOS_FORMAT ("man -k %s | pr -h Apropos > %s")
+#  else
+#    define APROPOS_FORMAT ("man -M %s -k %s | pr -h Apropos > %s")
+#  endif
 #else
-#  define APROPOS_FORMAT ("man -M %s -k %s | pr -h Apropos > %s")
+/* with mkstemp the temp output file is already created */
+#  ifdef NO_MANPATH_SUPPORT
+#    define APROPOS_FORMAT ("man -k %s | pr -h Apropos >> %s")
+#  else
+#    define APROPOS_FORMAT ("man -M %s -k %s | pr -h Apropos >> %s")
+#  endif
 #endif
 
 #ifdef ultrix

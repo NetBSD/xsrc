@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_regs.h,v 1.3 2000/10/17 09:07:05 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_regs.h,v 1.2 2000/09/19 14:39:15 alanh Exp $ */
 
 /*
  * glint register file 

@@ -33,7 +33,7 @@
 Notice===
 
  */
-/* $XFree86: xc/extras/X-TrueType/ARABIC/CP1256toUCS2.c,v 1.2 2000/06/27 21:26:32 tsi Exp $ */
+/* $XFree86$ */
 
 #include "xttversion.h"
 

@@ -29,7 +29,7 @@
  */
 /*SHARED*/
 
-/* $XFree86: xc/lib/font/Type1/trig.h,v 1.2 1998/07/25 06:57:00 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/trig.h,v 1.1.1.1.14.1 1998/07/18 17:53:09 dawes Exp $ */
 
 #undef    DegreeCos
 #undef    DegreeSin

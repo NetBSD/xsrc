@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/dri/Imakefile,v 1.2 2000/02/23 04:46:36 martin Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/dri/Imakefile,v 1.1 2000/02/08 17:18:35 dawes Exp $
 
 #define DoNormalLib NormalLibGlx
 #define DoSharedLib SharedLibGlx

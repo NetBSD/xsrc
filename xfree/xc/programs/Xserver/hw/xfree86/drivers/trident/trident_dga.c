@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dga.c,v 1.3 1999/10/26 22:46:59 alanh Exp $ */
+/* $XFree86: $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

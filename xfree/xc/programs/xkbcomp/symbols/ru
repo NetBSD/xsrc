@@ -3,7 +3,7 @@
 // russian standard keyboard 
 // AEN <aen@logic.ru>
 //
-// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.7 1999/04/25 10:02:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.6 1999/04/11 13:11:25 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {

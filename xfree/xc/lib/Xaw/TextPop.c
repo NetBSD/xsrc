@@ -837,7 +837,7 @@ AddSearchChildren(Widget form, char *ptr, Widget tw)
 static Bool
 DoSearch(struct SearchAndReplace *search)
 {
-    char msg[BUFSIZ];
+    char msg[37];
     Widget tw = XtParent(search->search_popup);
     XawTextPosition pos;
     XawTextScanDirection dir;
@@ -875,11 +875,27 @@ DoSearch(struct SearchAndReplace *search)
      GetString to get a tame version */
 
     if (pos == XawTextSearchError) {
-	(void)XmuSnprintf(msg, sizeof(msg),
-			  "Could not find string ``%s''.",
-			  GetString(search->search_text));
+	char *ptr;
+	int len;
+
+	ptr = GetString(search->search_text);
+	len = strlen(ptr);
+	(void)XmuSnprintf(msg, sizeof(msg), "%s", ptr);
+
+	ptr = strchr(msg, '\n');
+	if (ptr != NULL || sizeof(msg) - 1 < len) {
+	    if (ptr != NULL)
+		len = ptr - msg + 4;
+	    else
+		len = strlen(msg);
+
+	    if (len < 4)
+		strcpy(msg, "...");
+	    else
+		strcpy(msg + len - 4, "...");
+	}
 	XawTextUnsetSelection(tw);
-	SetSearchLabels(search, msg, "", True);
+	SetSearchLabels(search, "Could not find string", msg, True);
 
 	return (False);
     }
@@ -1019,15 +1035,26 @@ Replace(struct SearchAndReplace *search, Bool once_only, Bool show_current)
 
 	    if (new_pos == XawTextSearchError) {
 		if (count == 0) {
-		    char msg[BUFSIZ];
+		    char msg[37];
+		    char *ptr;
+		    int len;
 
-		    /* The Raw string in find.ptr may be WC I can't use here, 
-		       so I call GetString to get a tame version */
+		    ptr = GetString(search->search_text);
+		    len = strlen(ptr);
+		    (void)XmuSnprintf(msg, sizeof(msg), "%s", ptr);
+		    ptr = strchr(msg, '\n');
+		    if (ptr != NULL || sizeof(msg) - 1 < len) {
+			if (ptr != NULL)
+			    len = ptr - msg + 4;
+			else
+			    len = strlen(msg);
 
-		    (void)XmuSnprintf(msg, sizeof(msg),
-				      "Error: Could not find string ``%s''",
-				      GetString(search->search_text));
-		    SetSearchLabels(search, msg, "", True);
+			if (len < 4)
+			    strcpy(msg, "...");
+			else
+			    strcpy(msg + len - 4, "...");
+		    }
+		    SetSearchLabels(search, "Could not find string", msg, True);
 
 		    if (redisplay) {
 			XawTextSetInsertionPoint(tw, ipos);
@@ -1047,7 +1074,7 @@ Replace(struct SearchAndReplace *search, Bool once_only, Bool show_current)
 	    XawTextGetSelectionPos(tw, &pos, &end_pos);
 
 	    if (search->selection_changed) {
-		SetSearchLabels(search, "Selection has been modified, aborting.",
+		SetSearchLabels(search, "Selection modified, aborting.",
 				"", True);
 		if (redisplay) {
 		    XawTextSetInsertionPoint(tw, ipos);
@@ -1067,11 +1094,7 @@ Replace(struct SearchAndReplace *search, Bool once_only, Bool show_current)
 	}
 
 	if (XawTextReplace(tw, pos, end_pos, &replace) != XawEditDone) {
-	    char msg[BUFSIZ];
-
-	    (void)XmuSnprintf(msg, sizeof(msg),
-			      "'%s' with '%s'", find.ptr, replace.ptr);
-	    SetSearchLabels(search, "Error while replacing", msg, True);
+	    SetSearchLabels(search, "Error while replacing.", "", True);
 	    if (redisplay) {
 		XawTextSetInsertionPoint(tw, ipos);
 		XawTextEnableRedisplay(tw);

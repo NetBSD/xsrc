@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/misc/snprintf.h,v 3.2 1999/04/28 15:04:51 dawes Exp $ */
+/* $XFree86: xc/lib/misc/snprintf.h,v 3.1 1996/08/26 14:42:33 dawes Exp $ */
 
 #ifndef SNPRINTF_H
 #define SNPRINTF_H

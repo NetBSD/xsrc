@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/SmeBSBP.h,v 1.7 1999/06/20 08:41:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeBSBP.h,v 1.6 1999/06/06 08:48:11 dawes Exp $ */
 
 #ifndef _XawSmeBSBP_h
 #define _XawSmeBSBP_h

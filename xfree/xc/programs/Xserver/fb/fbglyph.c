@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbglyph.c,v 1.9 2000/09/27 00:14:08 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbglyph.c,v 1.8 2000/09/22 05:58:01 keithp Exp $ */
 
 #include "fb.h"
 #include	"fontstruct.h"

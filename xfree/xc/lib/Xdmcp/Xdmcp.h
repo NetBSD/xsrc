@@ -13,7 +13,7 @@
  * without express or implied warranty.
  *
  */
-/* $XFree86: xc/lib/Xdmcp/Xdmcp.h,v 3.3 1998/10/25 07:11:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Xdmcp.h,v 3.2 1998/10/10 15:25:18 dawes Exp $ */
 
 #ifndef _XDMCP_H_
 #define _XDMCP_H_

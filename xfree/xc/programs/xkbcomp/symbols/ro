@@ -5,7 +5,7 @@
 //
 // Created by Cristian Gafton, <gafton@redhat.com> (C) 2000
 // 
-// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.1 2000/08/15 16:51:32 dawes Exp $
+// $XFree86$
 
 partial hidden alphanumeric_keys modifier_keys
 xkb_symbols "basic" {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.36 2000/11/28 20:59:16 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.35 2000/02/12 20:45:13 dawes Exp $ */ 
 /*
  * PCI Probe
  *

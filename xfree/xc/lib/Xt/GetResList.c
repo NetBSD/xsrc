@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/GetResList.c,v 3.3 1998/12/20 11:57:08 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/GetResList.c,v 3.2 1998/10/03 09:06:53 dawes Exp $ */
 
 /*
 

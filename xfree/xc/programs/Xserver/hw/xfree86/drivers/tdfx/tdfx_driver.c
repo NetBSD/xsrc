@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_driver.c,v 1.59 2000/12/18 15:50:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_driver.c,v 1.58 2000/12/16 06:33:43 dawes Exp $ */
 
 /*
  * Authors:
@@ -701,11 +701,30 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
       TDFXFreeRec(pScrn);
       return FALSE;
   }
+  /* 
+   * We don't need VGA resources during OPERATING state. However I'm
+   * not sure if they are disabled.
+   */
+  xf86SetOperatingState(RES_SHARED_VGA, pTDFX->pEnt->index, ResUnusedOpr);
+#if 1
 
+  /* Is VGA memory disabled during OPERATING state? */
+
+  xf86SetOperatingState(resVgaMemShared, pTDFX->pEnt->index, ResDisableOpr);
+#else
+  pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
+#endif
+
+#if 0  
+    /* 
+     * I'm sure we don't need to set these. All resources 
+     * for these operations are exclusive.
+     */
   if (pTDFX->usePIO)
     pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
   else
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
+#endif
 
   /* Set pScrn->monitor */
   pScrn->monitor = pScrn->confScreen->monitor;

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/search.c,v 1.4 2000/06/13 23:15:53 dawes Exp $ */
+/* $XFree86: xc/programs/xman/search.c,v 1.5 2001/01/27 17:24:27 herrb Exp $ */
 
 
 #include "globals.h"
@@ -149,11 +149,14 @@ ManpageGlobals * man_globals)
 FILE *
 DoSearch(ManpageGlobals * man_globals, int type)
 {
-  char cmdbuf[BUFSIZ],*mantmp;
+  char cmdbuf[BUFSIZ],*mantmp, *manpath;
   char tmp[BUFSIZ],path[BUFSIZ];
   char string_buf[BUFSIZ], cmp_str[BUFSIZ], error_buf[BUFSIZ];
   char * search_string = SearchString(man_globals);
   FILE * file;
+#ifdef HAS_MKSTEMP
+  int fd;
+#endif
   int count;
   Boolean flag;
 
@@ -171,12 +174,36 @@ DoSearch(ManpageGlobals * man_globals, int type)
     return(NULL);
   }
 
-  strcpy(tmp, MANTEMP);		/* get a temp file. */
-  (void) mktemp(tmp);
-  mantmp = tmp;
-
   if (type == APROPOS) {
     char label[BUFSIZ];
+
+    strcpy(tmp, MANTEMP);		/* get a temp file. */
+#ifdef HAS_MKSTEMP
+    fd = mkstemp(tmp);
+    if (fd < 0) {
+      PopupWarning(man_globals, "Cant create temp file");
+      return NULL;
+    }
+#else
+    (void)mktemp(tmp);
+#endif
+    mantmp = tmp;
+
+    manpath=getenv("MANPATH");
+    if (manpath == NULL || streq(manpath,"") ) {
+#ifdef MANCONF
+      if (!ReadManConfig(path))
+#endif
+      {
+	strcpy(path,SYSMANPATH);
+#ifdef LOCALMANPATH
+	strcat(path,":");
+	strcat(path,LOCALMANPATH);
+#endif
+      }
+    } else {
+      strcpy(path,manpath);
+    }
 
     sprintf(label,"Results of apropos search on: %s", search_string);
 
@@ -191,7 +218,11 @@ DoSearch(ManpageGlobals * man_globals, int type)
       PopupWarning(man_globals, error_buf);
     }
 
+#ifdef HAS_MKSTEMP
+    if ((file = fdopen(fd, "r")) == NULL) 
+#else
     if((file = fopen(mantmp,"r")) == NULL)
+#endif
       PrintError("lost temp file? out of temp space?");
 
 /* 

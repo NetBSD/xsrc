@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/QNX4.rules,v 1.1 1999/12/27 00:45:43 robin Exp $
+XCOMM platform:  $XFree86: xc/config/cf/QNX.rules,v 1.1.2.2 1999/07/23 13:42:29 hohndel Exp $
 
 XCOMM Rules to work around wlib for QNX...
 

@@ -22,7 +22,7 @@
 
 /* Massively rewritten by Mark Vojkovich <markv@valinux.com> */
 
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.27 2000/04/08 19:18:54 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.19 2000/01/02 18:39:00 mvojkovi Exp $ */
 
 #include <stdio.h>
 #include "X.h"

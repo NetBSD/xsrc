@@ -43,7 +43,7 @@
  *		Source for XcmsTekHVCClipC() gamut compression routine.
  *
  */
-/* $XFree86: xc/lib/X11/HVCGcC.c,v 1.2 1999/05/09 10:49:31 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

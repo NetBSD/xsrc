@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/general/X.cpp,v 1.4 2000/12/12 18:06:51 dawes Exp $
+.\" $XFree86$
 .\"
 .TH X __miscmansuffix__ "XFree86 4.0.2" "X Version 11"
 .SH NAME

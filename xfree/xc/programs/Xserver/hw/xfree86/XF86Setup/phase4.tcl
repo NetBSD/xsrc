@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.11 1999/04/05 07:13:01 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.10 1998/04/26 16:04:36 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

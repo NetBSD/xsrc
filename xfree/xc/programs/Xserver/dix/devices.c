@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/devices.c,v 3.15 1999/05/16 06:55:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/devices.c,v 3.14 1999/01/13 08:30:50 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group

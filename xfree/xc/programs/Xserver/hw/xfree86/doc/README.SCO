@@ -549,4 +549,4 @@ site for the binary distribution.
      $XConsortium: SCO.sgml /main/11 1996/10/23 11:45:55 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.31 2000/03/01 01:48:12 dawes Exp $
+$XFree86$

@@ -23,7 +23,7 @@
  *
  * Generic RAMDAC access routines.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86RamDac.c,v 1.6 2000/09/26 15:57:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86RamDac.c,v 1.5 1999/01/14 13:05:21 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

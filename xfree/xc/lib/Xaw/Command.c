@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Command.c,v 1.11 1999/06/13 13:47:18 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Command.c,v 1.10 1999/06/06 08:47:54 dawes Exp $ */
 
 /*
  * Command.c - Command button widget

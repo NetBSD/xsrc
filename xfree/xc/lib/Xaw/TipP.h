@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/lib/Xaw/TipP.h,v 1.1 1999/06/27 14:07:35 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XawTipP_h
 #define _XawTipP_h

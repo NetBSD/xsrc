@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlcint.h,v 3.7 2000/12/02 15:30:22 tsi Exp $ */
+/* $XFree86: xc/lib/X11/Xlcint.h,v 3.6 2000/11/28 18:49:27 dawes Exp $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,

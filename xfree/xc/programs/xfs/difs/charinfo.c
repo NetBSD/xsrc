@@ -45,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * This file was once on the other side of
  * the font library interface as util/fsfuncs.c.
  */
-/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.8 2000/02/13 06:15:43 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.7 1999/08/22 07:19:44 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include "misc.h"

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/NextEvent.c,v 1.2 1999/05/09 10:49:51 dawes Exp $ */
+/* $XFree86$ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"

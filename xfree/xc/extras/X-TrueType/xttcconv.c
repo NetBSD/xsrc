@@ -30,7 +30,7 @@
 
 Notice===
  */
-/* $XFree86: xc/extras/X-TrueType/xttcconv.c,v 1.8 2000/05/18 23:46:10 dawes Exp $ */
+/* $XFree86: xc/extras/X-TrueType/xttcconv.c,v 1.7 2000/02/29 16:07:13 tsi Exp $ */
 
 #include "xttversion.h"
 

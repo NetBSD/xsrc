@@ -337,8 +337,8 @@ Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
 
     if ((dstY < srcY) || ((dstY == srcY) && (dstX < srcX))) {
-	if (((dstX < 64) && ((srcX + w) == pScrn->displayWidth)) ||
-	    ((dstX == 0) && (w > (pScrn->displayWidth - 64)))) {
+	if ((((dstX < 64) && ((srcX + w) == pScrn->displayWidth)) ||
+	    ((dstX == 0) && (w > (pScrn->displayWidth - 64)))) && (w > 64)) {
 	    
 	    int srcX1 = srcX + 64;
 	    int dstX1 = dstX + 64;
@@ -368,9 +368,9 @@ Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
 	    OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
 	}
     } else {
-	if ((((dstX + w) > (pScrn->displayWidth - 64)) && (srcX == 0))
+	if (((((dstX + w) > (pScrn->displayWidth - 64)) && (srcX == 0))
 	    || (((dstX + w) == pScrn->displayWidth)
-		&& (w > (pScrn->displayWidth - 64)))) {
+		&& (w > (pScrn->displayWidth - 64)))) && (w > 64)) {
 	    int srcX1, dstX1;
 	    
 	    w -= 64;

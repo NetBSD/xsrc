@@ -25,7 +25,7 @@
  * 
  * Authors: Rickard E. (Rik) Faith <faith@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.12 2000/11/14 21:59:24 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.11 2000/06/17 00:03:43 martin Exp $
  * 
  */
 

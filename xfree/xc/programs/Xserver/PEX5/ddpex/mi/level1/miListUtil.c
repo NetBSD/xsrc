@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level1/miListUtil.c,v 3.5 1998/10/04 09:34:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level1/miListUtil.c,v 3.4 1998/07/26 13:13:42 dawes Exp $ */
 
 #include "miRender.h"
 #include "misc.h"

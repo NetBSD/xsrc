@@ -1,0 +1,56 @@
+XCOMM $XFree86: xc/lib/freetype2/freetype/Imakefile,v 1.2 2001/02/09 00:35:03 keithp Exp $
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS=config cache internal
+
+FREETYPETOP = $(TOP)/extras/freetype2
+FREETYPESRC = $(FREETYPETOP)/src
+FREETYPEINC = $(FREETYPETOP)/include/freetype
+
+HEADERS= \
+        freetype.h \
+        ftbbox.h \
+        ftcache.h \
+        fterrors.h \
+        ftglyph.h \
+        ftimage.h \
+        ftlist.h \
+        ftmac.h \
+        ftmm.h \
+        ftmodule.h \
+        ftnames.h \
+        ftoutln.h \
+        ftrender.h \
+        ftsynth.h \
+        ftsystem.h \
+        fttypes.h \
+        t1tables.h \
+        ttnameid.h \
+        tttables.h \
+        tttags.h
+
+BuildIncludes($(HEADERS),freetype2/freetype,../..)
+InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2/freetype,$(INSTINCFLAGS))
+
+LinkSourceFile(freetype.h,$(FREETYPEINC))
+LinkSourceFile(ftbbox.h,$(FREETYPEINC))
+LinkSourceFile(ftcache.h,$(FREETYPEINC))
+LinkSourceFile(fterrors.h,$(FREETYPEINC))
+LinkSourceFile(ftglyph.h,$(FREETYPEINC))
+LinkSourceFile(ftimage.h,$(FREETYPEINC))
+LinkSourceFile(ftlist.h,$(FREETYPEINC))
+LinkSourceFile(ftmac.h,$(FREETYPEINC))
+LinkSourceFile(ftmm.h,$(FREETYPEINC))
+LinkSourceFile(ftmodule.h,$(FREETYPEINC))
+LinkSourceFile(ftnames.h,$(FREETYPEINC))
+LinkSourceFile(ftoutln.h,$(FREETYPEINC))
+LinkSourceFile(ftrender.h,$(FREETYPEINC))
+LinkSourceFile(ftsynth.h,$(FREETYPEINC))
+LinkSourceFile(ftsystem.h,$(FREETYPEINC))
+LinkSourceFile(fttypes.h,$(FREETYPEINC))
+LinkSourceFile(t1tables.h,$(FREETYPEINC))
+LinkSourceFile(ttnameid.h,$(FREETYPEINC))
+LinkSourceFile(tttables.h,$(FREETYPEINC))
+LinkSourceFile(tttags.h,$(FREETYPEINC))

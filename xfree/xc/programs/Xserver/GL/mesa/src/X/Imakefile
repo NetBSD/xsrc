@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.8 2000/08/01 20:28:40 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.7 2000/02/23 04:46:56 martin Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

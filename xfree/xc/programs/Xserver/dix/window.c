@@ -66,7 +66,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.21 2000/02/21 01:16:28 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.14 1999/09/27 06:29:17 dawes Exp $ */
 
 #include "misc.h"
 #include "scrnintstr.h"

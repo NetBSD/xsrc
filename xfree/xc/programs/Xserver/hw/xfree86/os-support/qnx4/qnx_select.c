@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_select.c,v 1.1 1999/12/27 00:45:48 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx/qnx_select.c,v 1.1.2.2 1999/07/23 13:42:37 hohndel Exp $
  */
 
 /* This module contains the code to use _select_receive to handle 

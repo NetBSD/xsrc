@@ -5,7 +5,7 @@ COMMENT from an ISO10646-1 encoded source BDF font.
 COMMENT ucs2any.pl by Markus Kuhn <mkuhn@acm.org>, 2000.
 COMMENT Id: 7x14.bdf,v 1.38 2000-09-02 18:25:06+01 mgk25 Exp mgk25 $
 COMMENT Send bug reports to Markus Kuhn <mkuhn@acm.org>
-COMMENT $XFree86: xc/fonts/bdf/misc/7x14-JISX0201.bdf,v 1.1 2000/12/08 19:37:46 dawes Exp $
+COMMENT $XFree86$
 FONT -Misc-Fixed-Medium-R-Normal--14-130-75-75-C-70-JISX0201.1976-0
 SIZE 7 75 75
 FONTBOUNDINGBOX 7 14 0 -2

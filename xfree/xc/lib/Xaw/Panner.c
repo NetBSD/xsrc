@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xaw/Panner.c,v 3.5 1999/06/06 08:48:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Panner.c,v 3.4 1998/10/03 08:42:14 dawes Exp $ */
 
 #include <ctype.h>
 #include <math.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/configProcs.h,v 1.14 2000/11/02 19:58:20 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/configProcs.h,v 1.12 1999/09/04 13:04:54 dawes Exp $ */
 
 /* Private procs.  Public procs are in xf86Parser.h and xf86Optrec.h */
 

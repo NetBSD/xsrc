@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/include/fonts/FS.h,v 1.5 1999/08/22 08:58:48 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _FS_H_
 #define	_FS_H_

@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/doc/specs/Xmu/Xmu.ms,v 1.2 2000/11/28 18:49:20 dawes Exp $
+.\" $XFree86$
 .\"
 .sp 8
 .ce 2

@@ -1,5 +1,5 @@
 .\" $TOG: xkbcomp.man /main/5 1997/11/04 20:57:14 kaleb $
-.\" $XFree86: xc/programs/xkbcomp/xkbcomp.man,v 1.6 2000/08/03 12:24:03 dawes Exp $
+.\" $XFree86$
 .TH XKBCOMP 1 "Release 6.4" "X Version 11"
 .SH NAME
 xkbcomp \- compile XKB keyboard description

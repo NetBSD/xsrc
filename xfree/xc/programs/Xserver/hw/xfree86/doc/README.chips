@@ -7,7 +7,7 @@
 
 1.  Introduction
 
-With the release of XFree86 version 4.0.2, the Chips and Technologies driver
+With the release of XFree86 version 4.0.3, the Chips and Technologies driver
 has been extensively rewritten and contains many new features.  This driver
 must be considered work in progress, and those users wanting stability are
 encouraged to use the older XFree86 3.3.x versions. However this version of
@@ -829,7 +829,7 @@ cause damage.
 
                         startx -- -depth 24 -fbbpp 32   8-8-8 RGB truecolor
 
-            however as XFree86 version 4.0.2 allows 32bpp pixmaps to be used
+            however as XFree86 version 4.0.3 allows 32bpp pixmaps to be used
             with framebuffers operating in 24bpp, this mode of operating will
             cost performance for no gain in functionality.
 
@@ -902,4 +902,4 @@ bugs and extensively testing this server.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.33 2000/12/02 21:52:22 dbateman Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.chips,v 3.35 2000/12/04 19:47:24 dawes Exp $
+$XFree86$

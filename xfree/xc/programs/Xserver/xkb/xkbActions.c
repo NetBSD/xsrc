@@ -1318,6 +1318,9 @@ Bool		xiEvent;
 	}
 	else CoreProcessPointerEvent(xE,dev,count);
     }
+    else if (keyEvent)
+	FixKeyState(xE,dev);
+
     xkbi->prev_state= oldState;
     XkbComputeDerivedState(xkbi);
     keyc->prev_state= keyc->state;

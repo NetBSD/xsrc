@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.3 1998/10/04 09:36:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.2 1996/12/23 06:28:58 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

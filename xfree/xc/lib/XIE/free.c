@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/free.c,v 1.3 1999/06/13 16:18:10 dawes Exp $ */
+/* $XFree86$ */
 
 #include "XIElibint.h"
 

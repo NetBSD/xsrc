@@ -1,22 +1,39 @@
 #!/bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.4 2000/12/14 21:50:09 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.4.2.1 2001/03/09 22:58:46 dawes Exp $
 #
 
 Usage()
 {
-  echo `basename $0` [-l] [prefix] from-dir to-dir
+  echo `basename $0` [-l] [-t type] [prefix] from-dir to-dir
   exit 1
 }
 
+args=
 createlist=NO
+type=list
 
-case $1 in
+while [ $# != 0 ]; do
+  case $1 in
   -l)
     createlist=YES
     shift
     ;;
-esac
+  -t)
+    shift
+    type=$1
+    shift
+    ;;
+  *)
+    args="$args $1"
+    shift
+    ;;
+  esac
+done
+
+if [ X"$args" != X ]; then
+  set - $args
+fi
 
 case $# in
 3)
@@ -97,11 +114,11 @@ for d in $SUBDIRS; do
 #      exit 3
     else
       DEFPREFIX=`cat $DIRFILE`
-      for i in *-list; do
-        name=`basename $i -list`
+      for i in *-$type; do
+        name=`basename $i -$type`
         tarball=$PRE$name.tgz
         echo creating $tarball
-        lfile="-T $TODIR/$d/$i"
+        lfile="`cat $TODIR/$d/$i`"
         if [ -f $name-excl ]; then
           xfile="-X $TODIR/$d/$name-excl"
         else
@@ -113,7 +130,7 @@ for d in $SUBDIRS; do
 	  PREFIX=$DEFPREFIX
 	fi
         (cd $FROMDIR/$PREFIX
-          $TAR $TAROPTS -f $TODIR/$BINDIR/$tarball $lfile $xfile
+          $TAR $TAROPTS -f $TODIR/$BINDIR/$tarball $xfile $lfile
         )
       done
     fi

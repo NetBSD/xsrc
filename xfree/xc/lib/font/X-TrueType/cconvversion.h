@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/X-TrueType/cconvversion.h,v 1.4 2000/09/26 15:57:01 tsi Exp $ */
+/* $XFree86$ */
 #if (!defined(__CODECONV_H))
 #define __CODECONV_H
 

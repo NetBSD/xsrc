@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xsm/popup.h,v 1.3 1999/03/07 14:23:42 dawes Exp $ */
+/* $XFree86$ */
 
 extern void PopupPopup(Widget parent, Widget popup, Bool transient, 
 		       Bool first_time, int offset_x, int offset_y, 

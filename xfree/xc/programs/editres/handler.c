@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/programs/editres/handler.c,v 1.4 1999/02/01 11:56:16 dawes Exp $ */
+/* $XFree86: xc/programs/editres/handler.c,v 1.3 1998/10/11 11:23:45 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>

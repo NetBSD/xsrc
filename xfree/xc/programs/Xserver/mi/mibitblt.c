@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.8 2000/02/12 03:40:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.7 1998/10/04 09:39:24 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_mouse.c,v 1.2 1999/09/04 13:04:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_mouse.c,v 1.1 1999/05/22 08:40:15 dawes Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.

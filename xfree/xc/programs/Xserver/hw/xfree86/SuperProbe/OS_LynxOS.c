@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_LynxOS.c,v 3.8 2000/06/17 00:27:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_LynxOS.c,v 3.7 1997/07/10 08:17:19 hohndel Exp $ */
 /*
  * Copyright 1993 by Thomas Mueller
  *

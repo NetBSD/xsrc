@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbpolypnt.c,v 3.3 2000/02/12 03:39:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpolypnt.c,v 3.2 1998/10/04 09:37:48 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

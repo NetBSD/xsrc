@@ -508,6 +508,7 @@ XqueueMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     MouseDevPtr pMse;
     XqInfoPtr pXq;
 
+    pMse = pInfo->private;
     pMse->protocol = protocol;
     xf86Msg(X_CONFIG, "%s: Protocol: %s\n", pInfo->name, protocol);
     pXq = pMse->mousePriv = xnfcalloc(sizeof(XqInfoRec), 1);

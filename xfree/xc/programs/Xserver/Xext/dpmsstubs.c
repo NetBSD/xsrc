@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/dpmsstubs.c,v 3.3 1999/12/16 02:26:23 robin Exp $ */
+/* $XFree86: $ */
 
 /* $TOG: dpmsstubs.c /main/3 1997/11/14 11:08:23 kaleb $ */
 /*****************************************************************

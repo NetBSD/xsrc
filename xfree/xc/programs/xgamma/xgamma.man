@@ -18,7 +18,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The XFree86 Project.
 .\"
-.\" $XFree86: xc/programs/xgamma/xgamma.man,v 1.5 1999/11/19 13:55:13 hohndel Exp $
+.\" $XFree86: xc/programs/xgamma/xgamma.man,v 1.3 1999/03/21 07:35:38 dawes Exp $
 .\"
 .TH xgamma 1 "Release 6.4" "X Version 11"
 .SH NAME

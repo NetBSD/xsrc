@@ -21,7 +21,7 @@
  * 
  * Written by David Bateman
  */
-/* $XFree86: xc/programs/xgamma/xgamma.c,v 1.4 1999/04/25 10:02:57 dawes Exp $ */
+/* $XFree86: xc/programs/xgamma/xgamma.c,v 1.3 1999/03/21 07:35:38 dawes Exp $ */
 
 #include <stdio.h>
 #include <errno.h>

@@ -68,7 +68,7 @@ terms and conditions:
 	Fax stuff added by Ben Fahy
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/micphoto.c,v 3.3 1998/10/05 13:22:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/micphoto.c,v 3.2 1998/10/04 09:36:12 dawes Exp $ */
 
 #define _XIEC_MICPHOTO
 #define _XIEC_ICPHOTO

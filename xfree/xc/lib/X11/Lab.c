@@ -36,7 +36,7 @@
  *
  *		Note that the range for L* is 0 to 1.
  */
-/* $XFree86: xc/lib/X11/Lab.c,v 1.2 1999/05/09 10:49:40 dawes Exp $ */
+/* $XFree86$ */
 
 
 #include <X11/Xos.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir_shadow.c,v 1.1 2000/02/08 13:13:14 eich Exp $ */
+/* $XFree86: Exp $ */
 
 /*
    Copyright (c) 1999,2000  The XFree86 Project Inc. 

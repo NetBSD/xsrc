@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.2 2000/11/28 17:25:07 dawes Exp $
+XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.1 2000/11/02 02:51:06 dawes Exp $
 
 /* Darwin / MacOS-X configuration by John Carmack <johnc@idsoftware.com> */
 

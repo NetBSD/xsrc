@@ -54,7 +54,7 @@
  *
  * Author: Adobe Systems Incorporated and Donna Converse, MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/dpsXcmu.c,v 1.4 2000/09/26 15:56:59 tsi Exp $ */
+/* $XFree86$ */
 
 #include <X11/X.h>
 #include <X11/Xlib.h>

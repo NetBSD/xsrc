@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/renderproto.h,v 1.5 2000/11/20 07:13:09 keithp Exp $
+ * $XFree86: xc/include/extensions/renderproto.h,v 1.4 2000/10/07 05:59:32 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *

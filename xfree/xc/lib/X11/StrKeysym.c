@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/StrKeysym.c,v 3.3 2000/12/02 01:16:03 dawes Exp $ */
+/* $XFree86: xc/lib/X11/StrKeysym.c,v 3.2 1999/05/09 10:50:15 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>

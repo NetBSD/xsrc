@@ -24,7 +24,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/GLw/GLwXm/XmStrDefs.h,v 1.1 2000/11/02 20:39:08 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * This file is a fake Motif(TM) header intended to allow the compilation of

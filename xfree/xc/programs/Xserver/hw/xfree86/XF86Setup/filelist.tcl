@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.5 1997/12/05 22:01:27 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4 1996/12/27 06:54:03 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

@@ -26,4 +26,4 @@ Note that we'll very soon be able to build X natively on NTO...
 Sebastien Marineau
 sebastien@qnx.com
 
-$XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/README,v 1.2 1999/12/27 00:45:45 robin Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/README,v 1.1.2.1 1999/07/29 09:40:14 hohndel Exp $

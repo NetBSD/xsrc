@@ -5,7 +5,7 @@ XCOMM $XConsortium: Imakefile /main/10 1996/10/25 10:34:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/Imakefile,v 1.2 1998/07/25 16:58:11 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/Imakefile,v 1.1.2.3 1997/07/29 10:56:04 hohndel Exp $
 #include <Server.tmpl>
 
 #ifdef i386Architecture

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitmap.c,v 1.5 1999/08/01 07:56:54 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitmap.c,v 1.4 1999/07/17 05:30:30 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

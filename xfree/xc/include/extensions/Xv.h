@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/extensions/Xv.h,v 1.5 1999/12/11 19:28:48 mvojkovi Exp $ */
+/* $XFree86: xc/include/extensions/Xv.h,v 1.3 1999/05/23 06:33:22 dawes Exp $ */
 
 #ifndef XV_H
 #define XV_H

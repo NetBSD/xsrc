@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., October 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jrdjfif.c,v 1.3 1998/10/04 09:36:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jrdjfif.c,v 1.2 1998/07/25 08:05:12 dawes Exp $ */
 
 /*
  * jrdjfif.c

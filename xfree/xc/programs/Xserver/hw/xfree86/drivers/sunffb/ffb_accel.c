@@ -24,7 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.4 2000/12/01 00:24:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.3 2000/06/23 19:29:45 dawes Exp $ */
 
 #include	<asm/types.h>
 #include	<math.h>

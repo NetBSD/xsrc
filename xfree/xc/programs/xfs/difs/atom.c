@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)atom.c	4.1	5/2/91
  *
  */
-/* $XFree86: xc/programs/xfs/difs/atom.c,v 3.2 1999/03/07 11:40:51 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/atom.c,v 3.1 1998/10/04 09:41:08 dawes Exp $ */
 
 #include "misc.h"
 #include "fsresource.h"

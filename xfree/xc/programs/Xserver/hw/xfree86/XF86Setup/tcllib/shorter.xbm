@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/shorter.xbm,v 1.1 1999/04/05 07:13:04 dawes Exp $ */
+/* $XFree86$ */
 #define shorter_width 24
 #define shorter_height 24
 static unsigned char shorter_bits[] = {

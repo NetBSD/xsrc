@@ -28,7 +28,7 @@ from The Open Group.
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/lcDynamic.c,v 1.3 2000/11/28 18:49:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDynamic.c,v 1.2 2000/02/12 02:54:11 dawes Exp $ */
 
 /*
  * A dynamically loaded locale.

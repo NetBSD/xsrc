@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsio.h,v 1.5 1999/12/30 02:39:06 robin Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.h,v 1.4 1999/12/27 01:14:11 robin Exp $ */
 
 #ifndef	_FSIO_H_
 #define	_FSIO_H_

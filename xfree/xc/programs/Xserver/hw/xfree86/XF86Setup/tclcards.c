@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclcards.c,v 3.4 1996/12/27 06:54:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclcards.c,v 3.3 1996/08/24 12:50:58 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *

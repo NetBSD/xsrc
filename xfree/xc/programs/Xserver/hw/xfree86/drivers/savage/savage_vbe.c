@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_vbe.c,v 1.1 2000/12/02 01:16:15 dawes Exp $ */
+/* $XFree86$ */
 
 #include "savage_driver.h"
 #include "savage_vbe.h"

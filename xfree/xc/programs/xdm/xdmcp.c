@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.11 2000/11/27 00:10:06 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.11.2.1 2001/02/10 19:06:32 herrb Exp $ */
 
 /*
  * xdm - display manager daemon

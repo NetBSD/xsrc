@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_xmesa.c,v 1.10 2000/12/08 19:36:24 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_xmesa.c,v 1.9 2000/12/07 20:26:10 dawes Exp $ */
 
 /*
  * Authors:

@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/type1.c,v 1.8 1999/08/21 13:47:52 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/type1.c,v 1.7 1999/05/03 05:58:48 dawes Exp $ */
  
 /*********************************************************************/
 /*                                                                   */

@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/iceauth/iceauth.h,v 3.2 1999/02/19 21:27:10 hohndel Exp $ */
+/* $XFree86: xc/programs/iceauth/iceauth.h,v 3.1 1998/10/04 09:40:07 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xos.h>

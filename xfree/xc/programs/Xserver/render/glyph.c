@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/glyph.c,v 1.4 2000/12/05 03:13:31 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/glyph.c,v 1.5 2001/01/30 07:01:22 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -329,20 +329,23 @@ ResizeGlyphHash (GlyphHashPtr hash, CARD32 change, Bool global)
 	CheckDuplicates (hash, "ResizeGlyphHash top");
     if (!AllocateGlyphHash (&newHash, hashSet))
 	return FALSE;
-    oldSize = hash->hashSet->size;
-    for (i = 0; i < oldSize; i++)
+    if (hash->table)
     {
-	glyph = hash->table[i].glyph;
-	if (glyph && glyph != DeletedGlyph)
+	oldSize = hash->hashSet->size;
+	for (i = 0; i < oldSize; i++)
 	{
-	    s = hash->table[i].signature;
-	    gr = FindGlyphRef (&newHash, s, global, glyph);
-	    gr->signature = s;
-	    gr->glyph = glyph;
-	    ++newHash.tableEntries;
+	    glyph = hash->table[i].glyph;
+	    if (glyph && glyph != DeletedGlyph)
+	    {
+		s = hash->table[i].signature;
+		gr = FindGlyphRef (&newHash, s, global, glyph);
+		gr->signature = s;
+		gr->glyph = glyph;
+		++newHash.tableEntries;
+	    }
 	}
+	xfree (hash->table);
     }
-    xfree (hash->table);
     *hash = newHash;
     if (global)
 	CheckDuplicates (hash, "ResizeGlyphHash bottom");

@@ -1,6 +1,6 @@
 // ukrainian standard keyboard 
 // AEN <aen@logic.ru> & Leon Kanter <leon@geon.donetsk.ua>
-// $XFree86: xc/programs/xkbcomp/symbols/ua,v 1.1 1999/05/30 02:28:13 dawes Exp $
+// $XFree86$
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {

@@ -35,7 +35,7 @@
  *  2000  
  *  Modifier: Ivan Pascal      The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.17 2000/12/04 18:49:27 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.16 2000/11/28 18:49:44 dawes Exp $ */
 
 /*
  * A generic locale loader for all kinds of ISO-2022 based codesets.

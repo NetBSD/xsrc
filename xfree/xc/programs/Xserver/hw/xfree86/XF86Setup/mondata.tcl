@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mondata.tcl,v 3.12 1997/12/14 10:03:55 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mondata.tcl,v 3.11 1997/07/29 12:07:24 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

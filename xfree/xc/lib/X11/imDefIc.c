@@ -28,7 +28,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIc.c,v 3.7 2000/11/28 18:49:35 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefIc.c,v 3.6 1999/05/09 10:50:31 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/xf86dga/dga.man,v 3.4 1997/11/08 16:24:37 hohndel Exp $
+.\" $XFree86: xc/programs/xf86dga/dga.man,v 3.3 1996/10/19 15:17:58 dawes Exp $
 .\"
 .TH dga 1 "4.0" "XFree86"
 .SH NAME

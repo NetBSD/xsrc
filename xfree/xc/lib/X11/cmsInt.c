@@ -34,7 +34,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/cmsInt.c,v 1.2 1999/05/09 10:50:29 dawes Exp $ */
+/* $XFree86$ */
 
 /* #define NEED_EVENTS */
 #include <stdio.h>

@@ -1,0 +1,4 @@
+XCOMM $XFree86$
+
+InstallHardcopyDoc(xieSIarch,xieSIarch.PS.gz xieSIarch.txt)
+

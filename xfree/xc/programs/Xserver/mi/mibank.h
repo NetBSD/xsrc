@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/mi/mibank.h,v 1.6 2000/02/18 12:20:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibank.h,v 1.5 1999/09/27 06:30:06 dawes Exp $ */
 
 #ifndef __MIBANK_H__
 #define __MIBANK_H__ 1

@@ -48,7 +48,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elo2300/elo.c,v 1.10 2000/08/11 19:10:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elo2300/elo.c,v 1.9 1999/06/05 15:55:24 dawes Exp $ */
 
 #define _elo_C_
 /*****************************************************************************

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_map.c,v 1.8 2000/11/19 16:38:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_map.c,v 1.7 2000/06/27 14:27:31 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *

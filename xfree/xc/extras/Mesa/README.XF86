@@ -44,4 +44,4 @@ except check out the branch with:
 and import with the tag MESA-X_Y-yyyymmdd indicating the date of the snapshot.
 
 
-$XFree86: xc/extras/Mesa/README.XF86,v 1.1 2000/11/30 15:46:25 dawes Exp $
+$XFree86$

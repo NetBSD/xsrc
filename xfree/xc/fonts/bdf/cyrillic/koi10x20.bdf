@@ -8,7 +8,7 @@ COMMENT in both source and binary form provided that the copyright
 COMMENT and these terms are retained. Under no circumstances is the author
 COMMENT responsible for the proper functioning of this software, nor does
 COMMENT the author assume any responsibility for damages incurred with its use.
-COMMENT $XFree86: xc/fonts/bdf/cyrillic/koi10x20.bdf,v 3.1 1996/09/01 12:19:00 dawes Exp $
+COMMENT $XFree86: xc/fonts/bdf/cyrillic/koi10x20.bdf,v 3.0 1995/07/22 04:15:16 dawes Exp $
 FONT -Cronyx-Fixed-Medium-R-Normal--20-200-75-75-C-100-KOI8-R
 SIZE 20 75 75
 FONTBOUNDINGBOX 11 20 0 -5

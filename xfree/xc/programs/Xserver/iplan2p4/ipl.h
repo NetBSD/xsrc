@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.4 1999/01/31 12:22:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.3 1998/04/05 16:42:25 robin Exp $ */
 /* $XConsortium: ipl.h,v 5.37 94/04/17 20:28:38 dpw Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.

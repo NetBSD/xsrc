@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vm86.c,v 1.1 2000/10/20 00:19:51 keithp Exp $
+ * $XFree86$
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

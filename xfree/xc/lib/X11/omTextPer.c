@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omTextPer.c,v 1.3 2000/11/29 17:40:26 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"

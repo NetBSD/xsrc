@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: xc/programs/twm/iconmgr.c,v 1.4 2000/11/02 02:51:24 dawes Exp $ */
+/* $XFree86: xc/programs/twm/iconmgr.c,v 1.3 1999/02/20 15:07:23 hohndel Exp $ */
 
 /***********************************************************************
  *
@@ -29,7 +29,7 @@ in this Software without prior written authorization from The Open Group.
  * 09-Mar-89 Tom LaStrange		File Created
  *
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/iconmgr.c,v 1.4 2000/11/02 02:51:24 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include "twm.h"

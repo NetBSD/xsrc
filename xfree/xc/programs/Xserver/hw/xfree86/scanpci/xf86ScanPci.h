@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/xf86ScanPci.h,v 1.1 2000/02/08 13:13:33 eich Exp $ */
+/* $XFree86: Exp $ */
 
 #ifndef SCANPCI_H_
 #define SCANPCI_H_

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.5 2000/09/24 13:51:07 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.4 2000/08/28 02:43:12 tsi Exp $ */
 
 #include "types.h"
 #include "mgadd.h"

@@ -26,7 +26,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/mi/misprite.c,v 3.5 2000/11/16 19:45:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/misprite.c,v 3.3 2000/10/02 22:54:36 keithp Exp $ */
 
 # include   "X.h"
 # include   "Xproto.h"

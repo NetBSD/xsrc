@@ -1,5 +1,5 @@
 # $XConsortium: jump_vars,v 1.2 94/12/07 10:48:04 kaleb Exp $
-# $XFree86: xc/lib/X11/jump_vars,v 3.1 1995/01/28 15:42:57 dawes Exp $
+# $XFree86: xc/lib/X11/jump_vars,v 3.0 1994/04/28 12:31:18 dawes Exp $
 #
 00008000 K __XkeyTable          libX11         XStrKeysym
 00000100 K __Xevent_to_mask     libX11         evtomask

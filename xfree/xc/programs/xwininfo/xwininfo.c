@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwininfo/xwininfo.c,v 1.5 1999/03/02 11:50:04 dawes Exp $ */
+/* $XFree86$ */
 
 
 /*

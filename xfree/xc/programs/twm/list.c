@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/list.c,v 1.3 1999/02/20 15:07:24 hohndel Exp $ */
+/* $XFree86: $ */
 
 
 /**********************************************************************

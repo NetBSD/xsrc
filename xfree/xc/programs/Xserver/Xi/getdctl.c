@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/getdctl.c,v 3.2 1998/10/04 09:37:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getdctl.c,v 3.1 1996/03/29 22:13:17 dawes Exp $ */
 
 /********************************************************************
  *

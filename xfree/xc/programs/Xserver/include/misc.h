@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.24 2000/08/23 22:10:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.23 2000/08/10 17:40:39 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

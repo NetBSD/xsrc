@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/commonregs.h,v 1.1 1999/11/19 13:54:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/v1kregs.h,v 1.2 1999/04/17 07:06:34 dawes Exp $ */
 
 #ifndef __COMMONREGS_H__
 #define __COMMONREGS_H__

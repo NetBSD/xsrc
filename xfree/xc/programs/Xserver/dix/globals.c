@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.7 1999/09/25 14:36:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.6 1998/10/04 09:38:09 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group

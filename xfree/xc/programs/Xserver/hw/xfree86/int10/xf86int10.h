@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.h,v 1.15 2000/12/06 18:08:55 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.h,v 1.14 2000/12/06 15:35:26 eich Exp $ */
 
 /*
  *                   XFree86 int10 module

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/ToggleP.h,v 1.6 1999/06/20 08:41:11 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/ToggleP.h,v 1.5 1999/06/06 08:48:19 dawes Exp $ */
 
 /* 
  * Author: Chris D. Peterson

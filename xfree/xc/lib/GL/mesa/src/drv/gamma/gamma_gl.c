@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.7 2000/11/27 10:59:36 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.6 2000/06/17 00:02:55 martin Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

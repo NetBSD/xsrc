@@ -26,7 +26,7 @@ dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xext/DPMS.c,v 3.3 1999/03/07 14:23:31 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * HISTORY

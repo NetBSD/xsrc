@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.16 1999/11/19 13:54:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.14 1999/03/14 03:21:45 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *

@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/GL/glxmodule.c,v 1.9 2000/02/23 04:46:51 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glxmodule.c,v 1.8 2000/02/18 16:23:12 dawes Exp $ */
 
 /*
  * Authors:

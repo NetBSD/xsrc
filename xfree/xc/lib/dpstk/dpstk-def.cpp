@@ -62,4 +62,4 @@ DPSHitUserPath
 PSDoUserPath
 PSHitUserPath
 
-/* $XFree86: xc/lib/dpstk/dpstk-def.cpp,v 1.1 2000/08/09 23:40:14 dawes Exp $ */
+/* $XFree86$ */

@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/Type1/t1unicode.c,v 1.1 1999/01/31 04:59:30 dawes Exp $ */
+/* $XFree86$ */
 
 #include "t1unicode.h"
 

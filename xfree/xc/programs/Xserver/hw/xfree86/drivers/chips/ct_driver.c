@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.c,v 1.103 2000/12/06 15:35:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.c,v 1.101 2000/12/01 17:08:32 dawes Exp $ */
 
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
@@ -4985,7 +4985,24 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if ((cPtr->Chipset == CHIPS_CT69000) || (cPtr->Chipset == CHIPS_CT69030)) {
 	/* The 690xx has overflow bits for the horizontal values as well */
 	ChipsNew->CR[0x38] = (((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8;
-	ChipsNew->CR[0x3C] = ((mode->CrtcHSyncEnd >> 3) & 0xC0);
+	/* We need to redo the overscan voodoo from vgaHW.c */
+	ChipsStd->CRTC[3]  = (ChipsStd->CRTC[3] & ~0x1F) 
+	  | (((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F);
+	ChipsStd->CRTC[5]  = (ChipsStd->CRTC[5] & ~0x80) 
+	  | ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2);
+	ChipsNew->CR[0x3C] = ((mode->CrtcHBlankEnd >> 3) - 1) & 0xC0;
+	if ((mode->CrtcHBlankEnd >> 3) == (mode->CrtcHTotal >> 3)) {
+	    int i = (ChipsStd->CRTC[3] & 0x1F) 
+	             | ((ChipsStd->CRTC[5] & 0x80) >> 2) 
+	             | (ChipsNew->CR[0x3C] & 0xC0);
+	    if ((i-- > (ChipsStd->CRTC[2])) &&
+		(mode->CrtcHBlankEnd == mode->CrtcHTotal))
+	        i = 0;
+	    ChipsStd->CRTC[3] = (ChipsStd->CRTC[3] & ~0x1F) | (i & 0x1F);
+	    ChipsStd->CRTC[5] = (ChipsStd->CRTC[5] & ~0x80) | ((i << 2) &0x80);
+	    ChipsNew->CR[0x3C] = (i & 0xC0);
+    }
+
     }
     ChipsNew->CR[0x40] |= 0x80;
 

@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/cfb/cfbglblt8.c,v 3.3 2000/02/12 03:39:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbglblt8.c,v 3.2 1998/10/04 09:37:43 dawes Exp $ */
 
 /*
  * Poly glyph blt.  Accepts an arbitrary font <= 32 bits wide, in Copy mode

@@ -22,7 +22,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.9 1999/12/27 01:14:09 robin Exp $ */
+/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.8 1999/12/13 02:52:51 robin Exp $ */
 /*
  * FS data conversion
  */

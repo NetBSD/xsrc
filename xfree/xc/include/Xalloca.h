@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/include/Xalloca.h,v 3.8 2000/02/17 14:00:31 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * The purpose of this header is to define the macros ALLOCATE_LOCAL and

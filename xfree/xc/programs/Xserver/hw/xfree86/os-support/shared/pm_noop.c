@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/pm_noop.c,v 1.1 2000/02/13 03:36:11 dawes Exp $ */
+/* $XFree86$ */
 
 /* Stubs for the OS-support layer power-management functions. */
 

@@ -1,5 +1,5 @@
 XCOMM platform:  $XConsortium: bsdi.cf /main/22 1996/09/28 16:09:30 rws $
-XCOMM platform:  $XFree86: xc/config/cf/bsdi.cf,v 3.32 2000/10/24 22:45:00 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/bsdi.cf,v 3.31 2000/08/01 23:38:45 dawes Exp $
 
 #ifndef OSName
 #define OSName		DefaultOSName

@@ -20,7 +20,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunMfb.c,v 3.2 1998/10/04 09:38:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunMfb.c,v 3.1 1995/01/28 15:46:07 dawes Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/joycal.c,v 3.4 1997/11/22 00:00:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/joycal.c,v 3.3 1996/10/16 14:41:29 dawes Exp $ */
 
 /* A simple program to get the Joystick calibration coordinates */
 

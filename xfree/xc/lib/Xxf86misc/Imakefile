@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xxf86misc/Imakefile,v 3.1 1998/12/20 11:57:13 dawes Exp $
+XCOMM $XFree86: xc/lib/Xxf86misc/Imakefile,v 3.0 1996/01/16 15:01:46 dawes Exp $
 #define DoNormalLib NormalLibXxf86misc
 #define DoSharedLib SharedLibXxf86misc
 #define DoExtraLib SharedLibXxf86misc

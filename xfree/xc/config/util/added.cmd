@@ -2,7 +2,7 @@
  * run with 'added dirlist_file'
  * where dirlist_file is a XFree86 added-* file
  *
- * $XFree86: xc/config/util/added.cmd,v 3.0 1994/10/20 06:01:00 dawes Exp $
+ * $XFree86$
  */
 
 file = arg(1)

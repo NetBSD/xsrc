@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.5 93/09/04 16:43:32 rws Exp $
-XCOMM $XFree86: xc/lib/font/Type1/Imakefile,v 1.9 2000/09/19 12:46:07 eich Exp $
+XCOMM $XFree86: xc/lib/font/Type1/Imakefile,v 1.7 1999/03/02 02:49:14 dawes Exp $
 
 #if BuildServer && DoLoadableServer
 #define IHaveSubdirs

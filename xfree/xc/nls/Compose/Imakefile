@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/9 1998/06/29 09:17:20 kaleb $
-XCOMM $XFree86: xc/nls/Compose/Imakefile,v 1.12 2000/12/06 22:00:43 dawes Exp $
+XCOMM $XFree86: xc/nls/Compose/Imakefile,v 1.11 2000/10/27 18:30:50 dawes Exp $
 
 #ifndef Win32Architecture
 #ifndef OS2Architecture

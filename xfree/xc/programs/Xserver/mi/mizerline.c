@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mizerline.c,v 3.4 1999/10/14 04:43:16 dawes Exp $ */
+/* $XFree86$ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

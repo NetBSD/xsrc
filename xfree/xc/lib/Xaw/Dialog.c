@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.6 2000/06/13 23:15:48 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Dialog.c,v 1.5 1999/06/06 08:47:55 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

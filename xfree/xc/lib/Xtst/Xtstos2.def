@@ -1,5 +1,5 @@
 LIBRARY XTST
-DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/Xtst/Xtstos2.def,v 3.5 1999/04/29 09:13:34 dawes Exp $"
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86$"
 CODE
 	PRELOAD
 DATA

@@ -3,10 +3,17 @@
 <!-- shared entity definitions for the XFree86 documentation -->
 
 <!-- XFree86 version string -->
-<!ENTITY relvers CDATA "4.0.2">
-<!ENTITY prevrelvers CDATA "4.0.1">
-<!ENTITY srcvers CDATA "402">
-<!ENTITY prevsrcvers CDATA "401">
+<!ENTITY relvers CDATA "4.0.3">
+<!ENTITY prevrelvers CDATA "4.0.2">
+<!ENTITY fullrelvers CDATA "4.0.2">
+<!ENTITY prevfullrelvers CDATA "4.0.1">
+<!ENTITY srcvers CDATA "403">
+<!ENTITY prevsrcvers CDATA "402">
+<!ENTITY fullsrcvers CDATA "402">
+<!ENTITY prevfullsrcvers CDATA "401">
+<!ENTITY whichfullrel CDATA "third">
+<!ENTITY whichupdaterel CDATA "first">
+
 <!-- Version of the most recent 3.3.x release -->
 <!ENTITY legacyvers CDATA "3.3.6">
 
@@ -25,4 +32,6 @@
 <!ENTITY % firstrel 'IGNORE'>
 <!ENTITY % earlyrel 'INCLUDE'>
 <!ENTITY % laterrel 'INCLUDE'>
+<!ENTITY % fullrel 'IGNORE'>
+<!ENTITY % updaterel 'INCLUDE'>
 

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.32 2000/11/29 15:51:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.31 1999/12/27 00:39:43 robin Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.16 2000/12/01 16:10:01 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.15 2000/11/30 20:45:34 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

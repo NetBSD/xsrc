@@ -2,7 +2,7 @@
 #
 # MODIFIED FOR XFREE86 - David Wexelblat <dwex@goblin.org>, May 15, 1993
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/xcode.xfree86,v 3.2 1996/12/23 06:47:26 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/xcode.xfree86,v 3.1 1996/02/04 09:09:10 dawes Exp $
 #
 # Keycode to keynumber table for use by XCRT.
 # This table is for use with the Xsight X-Window server.

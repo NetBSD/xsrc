@@ -1,5 +1,5 @@
 // $XConsortium: xfree86 /main/4 1996/08/31 12:16:59 kaleb $
-// $XFree86: xc/programs/xkbcomp/keycodes/powerpcps2,v 1.1 2000/09/19 12:46:23 eich Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.3.2.1 1999/06/21 09:45:28 hohndel Exp $
 default xkb_keycodes "powerpcps2" {
 
     minimum= 8;

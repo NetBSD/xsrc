@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/oclock/Clock.h,v 1.3 1999/02/20 15:07:16 hohndel Exp $ */
+/* $XFree86: $ */
 
 #ifndef _XtClock_h
 #define _XtClock_h

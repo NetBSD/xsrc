@@ -6,10 +6,10 @@
 
 <title>Release Notes for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>17 December 2000
+<date>16 March 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.58 2000/12/17 23:01:10 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.58.2.1 2001/03/02 17:40:20 dawes Exp $
 </ident>
 
 <abstract>
@@ -24,13 +24,20 @@ in XFree86 &relvers; and their status.
 <sect>Introduction to the 4.x Release Series
 <p>
 XFree86 4.0 was the first official release of the new XFree86 4 series.
-The current release (&relvers;) is the latest in that series.  XFree86
+<![ %updaterel [
+XFree86 &relvers; is the &whichupdaterel; update to &fullrelvers;, which
+is the latest full release in that series.
+]]>
+<![ %fullrel [
+The current release (&relvers;) is the latest in that series.
+]]>
+XFree86
 4 represents a significant redesign of the XFree86 X server.
 Not all of the hardware drivers from 3.3.x have been ported to 4.x yet,
 but conversely, 4.x has some hardware support not present in 3.3.x.
 Our <htmlurl name="Driver Status document" url="Status.html"> summarizes
 how the hardware driver support compares between &legacyvers; and &relvers;.
-Please check there first before downloading  &relvers;.
+Please check there first before downloading &relvers;.
 
 The 4.0.1 release introduced a new graphical configuration tool,
 "<tt>xf86cfg</tt>", and a text mode interface was added to it for the
@@ -60,14 +67,65 @@ this release, please have a quick read through the <htmlurl
 name="Installation Document" url="Install.html">.  It may save you some
 time and help you figure out which of the binary releases you need.
 
+<![ %updaterel [
+The next sections describe what has changed in the update release(s)
+as well as what is new in the latest full release (&fullrelvers;).
+]]>
+<![ %fullrel [
 The next section describes what is new in the latest version (&relvers;).
+]]>
 The other sections below describe some of the new features and changes
 between 3.3.x and 4.0.  There are lot's of new features, and we definitely
 don't have enough space to cover them all here.
 
 </sect>
 
-<sect>Summary of new features in &relvers;.
+<![ %updaterel [
+<sect>Summary of updates in &relvers;.
+<p>
+<itemize>
+  <item>Some temporary file-related security vulnerabilities are fixed.
+  <item>Screen corruption problems and palette saving problems with some
+	Neomagic chips are fixed.
+  <item>'XFree86 -configure' problems are fixed in some drivers (including
+	sis and i810).
+  <item>A problem with some plain S3 ViRGE cards is fixed.
+  <item>Some Xaw incompatibilities with Xaw6 are fixed.
+  <item>Some XKB files are updated.
+  <item>Some trident driver updates, including fixing acceleration for the
+	Cyber9388.
+  <item>A palette saving problem in the vgahw module is fixed.
+  <item>Support for the wsmouse protocol is added for OpenBSD/i386.
+  <item>A load problem with the sis driver module, and some depth 24
+	problems are fixed.
+  <item>Support for the "PD" variant of the ATI Rage 128 is added.
+  <item>Support for GNU Hurd is updated.
+  <item>Some TrueType font problems are fixed.
+  <item>The mga driver doesn't attempt to drive the G450 if the "mga_hal"
+	module isn't available.
+  <item>A problem with bold font simulation in xterm is fixed.
+  <item>The (DPS) stub files created by pswrap are now compatible with the
+	Adobe version.
+  <item>Some glint driver problems are fixed.
+  <item>Support for building on OpenBSD-current, and multi-thread support
+	for OpenBSD are provided.
+  <item>A problem with the ThinkingMousePS/2 protocol is fixed in the mouse
+	driver.
+  <item>Support for the Render extension with Xinerama is added.
+  <item>A DGA-related server crash is fixed.
+  <item>Some Chips &amp; Technologies driver bugs are fixed.
+  <item>Some tseng driver bugs are fixed.
+  <item>Some Alpha platform updates are included.
+  <item>Support for the GeForce3 is added to the nv driver.
+  <item>Misc build-related issues are fixed.
+  <item>Various documentation updates, including a reworked <htmlurl
+	name="XFree86(1)" url="XFree86.1.html"> manual page.
+</itemize>
+
+</sect>
+]]>
+
+<sect>Summary of new features in &fullrelvers;.
 <p>
 <sect1>X server
 <p>

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/config/pswrap/pswparser.y,v 1.5 2000/09/26 15:56:28 tsi Exp $ */
+/* $XFree86: xc/config/pswrap/pswparser.y,v 1.4 2000/05/18 23:46:08 dawes Exp $ */
 
 /* 
  * Not all yaccs understand this.

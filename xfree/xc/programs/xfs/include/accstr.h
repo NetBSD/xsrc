@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)accstr.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.4 1999/03/07 11:40:58 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/accstr.h,v 1.3 1998/10/25 12:48:02 dawes Exp $ */
 
 #ifndef _ACCSTR_H_
 #define _ACCSTR_H_

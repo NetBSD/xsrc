@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.13 2000/10/28 01:42:28 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.12 2000/07/11 01:46:37 tsi Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc
  *

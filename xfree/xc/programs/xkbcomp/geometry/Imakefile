@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/16 1997/08/02 10:10:37 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/geometry/Imakefile,v 3.9 1999/05/23 05:27:50 dawes Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/geometry/Imakefile,v 3.8 1997/10/26 13:25:33 dawes Exp $
 #define IHaveSubdirs
 
      TESTDATA = 

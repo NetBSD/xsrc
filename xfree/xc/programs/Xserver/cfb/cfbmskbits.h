@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.10 2000/10/24 18:07:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.9 2000/07/26 01:52:14 tsi Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 

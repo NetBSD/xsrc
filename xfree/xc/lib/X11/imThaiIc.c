@@ -32,7 +32,7 @@ THIS SOFTWARE.
 	                          frankyling@hgrd01.enet.dec.com
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imThaiIc.c,v 1.3 2000/11/29 17:40:24 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>

@@ -33,7 +33,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/XYZ.c,v 1.2 1999/05/09 10:50:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xos.h>
 #include "Xlibint.h"

@@ -28,7 +28,7 @@
  * Modified version of tx_accel.c to support dual MX chips by
  *   Jens Owen, <jens@precisioninsight.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/dualmx_accel.c,v 1.9 2000/06/21 13:35:51 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/dualmx_accel.c,v 1.8 2000/05/10 18:55:28 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

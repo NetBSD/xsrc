@@ -27,7 +27,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Os2.c,v 3.9 1997/03/11 13:05:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Os2.c,v 3.8 1997/03/10 10:11:39 hohndel Exp $ */
 
 
 #include "Probe.h"

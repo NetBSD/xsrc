@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.24 2000/11/02 16:33:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.23 2000/02/15 18:01:21 dawes Exp $ */
 
 
 /*

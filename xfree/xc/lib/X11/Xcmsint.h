@@ -29,7 +29,7 @@
  *		(i.e., for API internal use only)
  *
  */
-/* $XFree86: xc/lib/X11/Xcmsint.h,v 3.1 2000/01/29 18:58:11 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XCMSINT_H_
 #define _XCMSINT_H_

@@ -63,7 +63,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunCfb.c,v 1.3 1998/10/04 09:38:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunCfb.c,v 1.2 1998/06/27 12:53:55 hohndel Exp $ */
 
 /****************************************************************/
 /* Modified from  sunCG4C.c for X11R3 by Tom Jarmolowski	*/

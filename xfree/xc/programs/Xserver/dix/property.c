@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.7 1999/01/13 08:30:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.6 1998/10/04 09:38:11 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

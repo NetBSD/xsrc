@@ -1,5 +1,5 @@
 /* $XConsortium: xkbSwap.c /main/9 1996/02/02 14:39:39 kaleb $ */
-/* $XFree86: xc/programs/Xserver/xkb/xkbSwap.c,v 3.0 1996/08/25 14:14:04 dawes Exp $ */
+/* $XFree86$ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/oclock/oclock.c,v 1.4 1999/02/19 21:27:13 hohndel Exp $ */
+/* $XFree86: xc/programs/oclock/oclock.c,v 1.3 1998/12/20 22:19:00 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xatom.h>

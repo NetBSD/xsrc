@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.69 2000/12/07 15:43:40 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.68 2000/10/30 23:02:11 tsi Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shplanar8.c,v 1.2 2000/09/19 03:33:33 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shplanar8.c,v 1.1 2000/09/12 19:40:13 keithp Exp $
  *
  * Copyright © 2000 Keith Packard
  *

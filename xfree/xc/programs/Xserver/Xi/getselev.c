@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.3 1998/10/04 09:37:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.2 1996/04/15 11:18:48 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

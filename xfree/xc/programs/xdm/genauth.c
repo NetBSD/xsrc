@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.9 2000/05/31 07:15:11 eich Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.7 1998/10/10 15:25:35 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

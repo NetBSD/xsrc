@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.h,v 1.3 2000/08/04 21:07:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.h,v 1.2 2000/02/18 12:19:40 tsi Exp $ */
 /*
  * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

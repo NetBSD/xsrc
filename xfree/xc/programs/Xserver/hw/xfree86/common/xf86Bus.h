@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.16 2000/06/20 05:08:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.15 2000/05/18 23:21:33 dawes Exp $ */
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
  */

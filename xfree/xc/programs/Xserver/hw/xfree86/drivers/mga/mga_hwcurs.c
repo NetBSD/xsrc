@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_hwcurs.c,v 1.9 1999/03/14 03:22:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_hwcurs.c,v 1.8tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

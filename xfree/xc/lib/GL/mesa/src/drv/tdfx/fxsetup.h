@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxsetup.h,v 1.2 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxsetup.h,v 1.1 2000/09/24 13:51:19 alanh Exp $ */
 #ifndef FXSETUP_H
 #define FXSETUP_H
 

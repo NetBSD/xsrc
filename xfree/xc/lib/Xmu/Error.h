@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Error.h,v 1.4 1998/10/03 09:06:28 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Error.h,v 1.3 1998/08/20 13:59:35 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

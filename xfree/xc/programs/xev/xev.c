@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xev/xev.c,v 1.3 2000/02/17 14:00:34 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium

@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/imake/Imakefile,v 3.9 1999/08/14 10:49:01 dawes Exp $
+XCOMM $XFree86: xc/config/imake/Imakefile,v 3.8 1999/04/17 09:08:08 dawes Exp $
 
 XCOMM Some compilers generate fatal errors if an -L directory does
 XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.

@@ -23,7 +23,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/agpgart.h,v 1.4 2000/08/26 04:30:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/agpgart.h,v 1.3 2000/06/17 00:03:33 martin Exp $ */
 
 #ifndef _AGP_H
 #define _AGP_H 1

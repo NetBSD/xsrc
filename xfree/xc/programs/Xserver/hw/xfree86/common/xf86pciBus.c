@@ -2343,7 +2343,8 @@ xf86ClaimPciSlot(int bus, int device, int func, DriverPtr drvp,
 	p->pciBusId.func = func;
 	p->active = active;
 	p->inUse = FALSE;
-        xf86AddDevToEntity(num, dev);
+	if (dev)
+            xf86AddDevToEntity(num, dev);
 	/* Here we initialize the access structure */
 	p->access = xnfcalloc(1,sizeof(EntityAccessRec));
 	while (ppaccp && *ppaccp) {

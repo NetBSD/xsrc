@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ************************************************************************/
-/* $XFree86: xc/lib/X11/Region.c,v 1.5 1999/05/09 10:50:01 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Region.c,v 1.4 1998/10/03 08:41:22 dawes Exp $ */
 /*
  * The functions in this file implement the Region abstraction, similar to one
  * used in the X11 sample server. A Region is simply an area, as the name

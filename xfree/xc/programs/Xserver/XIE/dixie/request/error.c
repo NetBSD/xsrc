@@ -61,7 +61,7 @@ terms and conditions:
      Title to this software shall at all times remain with AGE
      Logic, Inc.
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/error.c,v 3.3 1998/10/10 15:25:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/error.c,v 3.2 1998/10/05 13:22:18 dawes Exp $ */
 
 /*
  *  Include files

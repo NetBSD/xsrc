@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide.cpp,v 1.11 2000/12/11 20:18:12 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide.cpp,v 1.10 2000/06/14 02:13:09 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH GLIDE __drivermansuffix__ "Version 4.0.2"  "XFree86"

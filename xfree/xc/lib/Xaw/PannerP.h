@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/PannerP.h,v 1.6 1999/06/20 08:41:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/PannerP.h,v 1.5 1999/06/06 08:48:06 dawes Exp $ */
 
 #ifndef _XawPannerP_h
 #define _XawPannerP_h

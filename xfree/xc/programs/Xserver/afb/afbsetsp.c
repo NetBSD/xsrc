@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbsetsp.c,v 3.1 1998/03/20 21:04:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbsetsp.c,v 3.0 1996/08/18 01:45:55 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

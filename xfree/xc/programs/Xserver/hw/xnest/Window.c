@@ -1,5 +1,5 @@
 /* $XConsortium: Window.c /main/8 1996/12/02 10:21:53 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.4 1996/12/27 07:07:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.3 1996/12/23 07:09:20 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

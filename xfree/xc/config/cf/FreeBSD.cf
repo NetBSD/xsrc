@@ -2,7 +2,7 @@ XCOMM platform:  $TOG: FreeBSD.cf /main/21 1997/10/05 20:42:34 kaleb $
 XCOMM
 XCOMM
 XCOMM
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.101 2000/12/04 18:49:09 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.101.2.2 2001/02/26 18:21:36 dawes Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -60,6 +60,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasVarRun		YES
 #define HasVarDb		YES
 
+#if (OSMajorVersion > 1)
+#define InstallXloadSetGID	NO
+#else
+#define InstallXloadSetGID	YES
+#endif
+
 #define AvoidNullMakeCommand	YES
 #define StripInstalledPrograms	YES
 #define CompressAllFonts	YES
@@ -80,6 +86,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #ifndef HasFlex
 #define HasFlex			YES
+#endif
+
+#ifndef HasMktemp
+#if (OSMajorVersion >= 4) || (OSMajorVersion == 3 && OSMinorVersion >= 1) || \
+	(OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion >= 7)
+#define HasMktemp		YES
+#else
+#define HasMktemp		NO
+#endif
 #endif
 
 #define CcCmd			cc
@@ -210,7 +225,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /* PAM appeared in FreeBSD 3.1 */
 #if (OSMajorVersion > 3) || (OSMajorVersion == 3 && OSMinorVersion >=1 )
+#ifndef HasPam
 #define HasPam		YES
+#endif
 #endif
 
 /*

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftint.h,v 1.15 2000/12/15 17:12:53 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftint.h,v 1.14 2000/12/14 23:03:55 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

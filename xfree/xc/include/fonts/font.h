@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/fonts/font.h,v 3.4 2000/11/27 00:10:02 dawes Exp $ */
+/* $XFree86: xc/include/fonts/font.h,v 3.3 1998/10/25 07:11:11 dawes Exp $ */
 /* $NCDId: @(#)font.h,v 1.7 1991/06/24 17:00:23 lemke Exp $ */
 
 #ifndef FONT_H

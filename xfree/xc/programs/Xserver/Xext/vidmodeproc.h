@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.4 1999/12/13 01:39:40 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.3 1999/12/03 19:17:18 eich Exp $ */
 
 /* Prototypes for DGA functions that the DDX must provide */
 

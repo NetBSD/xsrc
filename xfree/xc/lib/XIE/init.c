@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/init.c,v 3.4 2000/09/26 15:56:53 tsi Exp $ */
+/* $XFree86: xc/lib/XIE/init.c,v 3.3 1999/06/13 16:18:10 dawes Exp $ */
 
 #define NEED_EVENTS	/* so XErrorEvent will get pulled in */
 

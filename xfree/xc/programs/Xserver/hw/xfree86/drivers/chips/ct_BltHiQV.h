@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_BltHiQV.h,v 1.10 2000/12/06 15:35:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_BltHiQV.h,v 1.7 1998/12/06 06:08:28 dawes Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* These are done using Memory Mapped IO, of the registers */

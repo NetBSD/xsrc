@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. September 1993
 
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miuncomp.c,v 1.4 1998/10/25 07:11:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miuncomp.c,v 1.3 1998/10/06 10:35:18 dawes Exp $ */
 
 #define _XIEC_MIUNCOMP
 

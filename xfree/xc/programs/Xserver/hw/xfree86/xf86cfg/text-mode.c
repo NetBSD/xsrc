@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.7 2000/12/13 12:58:20 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.6 2000/12/11 22:52:07 herrb Exp $
  */
 
 #include <stdio.h>

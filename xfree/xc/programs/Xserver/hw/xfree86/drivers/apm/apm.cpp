@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm.cpp,v 1.5 2000/12/11 20:18:05 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm.cpp,v 1.4 2000/06/14 02:13:07 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH APM __drivermansuffix__ "Version 4.0.2"  "XFree86"

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPc.c,v 3.5 1998/10/04 09:35:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPc.c,v 3.4 1998/07/26 13:14:16 dawes Exp $ */
 
 
 /*++

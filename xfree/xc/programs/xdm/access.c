@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/access.c,v 3.5 1998/10/10 15:25:30 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/access.c,v 3.4 1998/10/04 09:40:52 dawes Exp $ */
 
 /*
  * Access control for XDMCP - keep a database of allowable display addresses

@@ -26,7 +26,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix.h,v 1.2 2000/04/19 16:57:43 eich Exp $ */
+/* $XFree86$ */
 
 #ifndef _CYRIX_H_
 #define _CYRIX_H_

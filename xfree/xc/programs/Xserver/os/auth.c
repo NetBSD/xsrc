@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.5 2000/08/04 16:13:44 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.3 1998/10/11 11:23:43 dawes Exp $ */
 
 /*
  * authorization hooks for the server

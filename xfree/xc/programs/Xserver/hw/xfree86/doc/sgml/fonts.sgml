@@ -6,7 +6,7 @@
 
 <title>Fonts in XFree86
 <author>Juliusz Chroboczek, <email/jch@xfree86.org/
-<date>14 December 2000</date>
+<date>21 January 2001</date>
 
 <ident>
 $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.11 2000/12/15 20:01:56 dawes Exp $
@@ -277,7 +277,7 @@ backends are included in modules that are loaded at runtime.  The
 modules to be loaded are specified in the `<tt/XF86Config/' file using
 the `<tt/Load/' directive:
 <tscreen><verb>
-Load "Type1"
+Load "type1"
 </verb></tscreen>
 If you have trouble installing fonts in a specific format, you may
 want to check the server's log file in order to see whether the
@@ -286,13 +286,15 @@ distributed with XFree86 is as follows:
 <itemize>
 <item> <tt/"bitmap"/: bitmap fonts (`<tt/*.bdf/', `<tt/*.pcf/'
 and `<tt/*.snf/');
-<item> <tt/"Type1"/: Type&nbsp;1 fonts (`<tt/*.pfa/' and
+<item> <tt/"type1"/: Type&nbsp;1 fonts (`<tt/*.pfa/' and
 `<tt/*.pfb/') and CIDFonts;
-<item> <tt/"Speedo"/: Bitstream Speedo fonts (`<tt/*.spd/');
+<item> <tt/"speedo"/: Bitstream Speedo fonts (`<tt/*.spd/');
 <item> <tt/"freetype"/: TrueType fonts (`<tt/*.ttf/' and `<tt/*.ttc/');
 <item> <tt/"xtt"/: alternate TrueType backend (`<tt/*.ttf/' and
 `<tt/*.ttc/').
 </itemize>
+Please note that the argument of the `<tt/Load/' directive is
+case-sensitive.
 
 <sect>Fonts included with XFree86
 

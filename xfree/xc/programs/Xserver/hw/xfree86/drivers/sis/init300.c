@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/init300.c,v 1.6 2000/12/02 15:30:50 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/init300.c,v 1.5 2000/12/02 01:16:16 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86PciInfo.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_kbdEv.c,v 1.1 1998/12/13 07:37:47 dawes Exp $ */
+/* $XFree86$ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU02
  * Copyright 1997 Takis Psarogiannakopoulos Cambridge,UK

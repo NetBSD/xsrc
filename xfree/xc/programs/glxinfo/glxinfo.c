@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.1.1.1 2001/01/01 12:47:41 veego Exp $ */
+/* $Id: glxinfo.c,v 1.1.1.2 2001/03/18 17:38:16 veego Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -20,7 +20,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.2 2000/09/26 15:57:23 tsi Exp $ */
+/* $XFree86$ */
 
 /*
  * This program is a work-alike of the IRIX glxinfo program.

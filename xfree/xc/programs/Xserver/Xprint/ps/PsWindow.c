@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.8 1998/12/20 11:57:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.7 1998/10/04 09:37:30 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>

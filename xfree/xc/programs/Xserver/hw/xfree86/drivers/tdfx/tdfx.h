@@ -5,7 +5,7 @@
 
    Copyright: 1998,1999
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.17 2000/12/15 15:19:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.16 2000/12/08 17:22:13 dawes Exp $ */
 
 #ifndef _TDFX_H_
 #define _TDFX_H_

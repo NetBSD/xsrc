@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/StripChart.h,v 1.4 1998/10/03 08:42:23 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/StripChart.h,v 1.3 1998/08/20 13:59:13 dawes Exp $ */
 
 #ifndef _XawStripChart_h
 #define _XawStripChart_h

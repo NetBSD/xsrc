@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/xf86PciData.c,v 1.5 2000/04/05 18:13:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/xf86PciData.c,v 1.4 2000/02/21 18:05:49 dawes Exp $ */
 /*
  * the PCI data structures
  *

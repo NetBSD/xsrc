@@ -517,8 +517,8 @@ is what &s.code;InitOutput()&e.code; does:
     &s.code;InitOutput()&e.code;.  &s.code;xf86AddDriver()&e.code; adds
     it to the global &s.code;xf86DriverList[]&e.code; array.
 
-    The &s.code;DriverRec&e.code; contains the driver's version, a short
-    descriptive message, the &s.code;Identify()&e.code;,
+    The &s.code;DriverRec&e.code; contains the driver canonical name,
+    the &s.code;Identify()&e.code;,
     &s.code;Probe()&e.code; and &s.code;AvailableOptions()&e.code;
     function entry points as well as a pointer
     to the driver's module (as returned from the loader when the driver
@@ -6336,7 +6336,7 @@ visible symbols.
     <code>
 DriverRec ZZZ = {
     VERSION,
-    "unaccelerated driver for ZZZ Zzzzzy cards",
+    ZZZ_DRIVER_NAME,
     ZZZIdentify,
     ZZZProbe,
     ZZZAvailableOptions,

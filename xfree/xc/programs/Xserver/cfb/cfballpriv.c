@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.9 1999/12/13 02:13:06 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.8 1999/04/04 08:46:06 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

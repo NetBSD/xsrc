@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc  March, 1993
 
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.12 1999/01/31 12:21:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.11 1998/10/25 07:11:42 dawes Exp $ */
 
 #define _XIEC_SESSION
 

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/config/pswrap/pswpriv.h,v 1.6 2000/06/07 21:58:25 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef PSWPRIV_H
 #define PSWPRIV_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/dummylib/getvalidbios.c,v 1.2 2000/12/07 15:43:45 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/dummylib/getvalidbios.c,v 1.1 2000/02/13 03:06:38 dawes Exp $ */
 
 #include "X.h"
 #include "os.h"

@@ -23,7 +23,7 @@
  *
  *    Wittawat Yamwong <Wittawat.Yamwong@stud.uni-hannover.de>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.7 2000/11/08 05:02:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.6 2000/09/24 13:51:09 alanh Exp $ */
  
 #include "mgacontext.h"
 #include "mgavb.h"

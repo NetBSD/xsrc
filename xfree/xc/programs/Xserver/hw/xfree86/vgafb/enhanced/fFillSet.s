@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/fFillSet.s,v 1.2 1998/07/25 16:58:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/fFillSet.s,v 1.1.2.1 1997/07/16 10:37:04 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *

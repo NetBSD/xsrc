@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.108 2000/12/14 16:33:08 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.107 2000/12/08 20:13:33 eich Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.

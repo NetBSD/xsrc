@@ -18,7 +18,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunAmInit.c,v 1.5 1998/10/04 09:38:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sunAmInit.c,v 1.4 1998/06/27 12:53:55 hohndel Exp $ */
 
 /* This file was partly derived from sunInit.c (5.49 94/02/21 10:21:02) */
 

@@ -118,8 +118,12 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #ifdef __GNU__
+#ifndef PATH_MAX
 #define PATH_MAX 4096
+#endif
+#ifndef MAXPATHLEN
 #define MAXPATHLEN 4096
+#endif
 #endif
 #endif /* _XOSDEFS_H_ */
 

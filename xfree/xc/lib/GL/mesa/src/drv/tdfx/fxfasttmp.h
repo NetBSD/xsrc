@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxfasttmp.h,v 1.4 2000/12/12 23:24:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxfasttmp.h,v 1.3 2000/12/08 19:36:23 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. March, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/colorlst.c,v 3.3 1998/10/25 07:11:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/colorlst.c,v 3.2 1998/10/05 13:22:18 dawes Exp $ */
 
 #define _XIEC_COLORLST
 

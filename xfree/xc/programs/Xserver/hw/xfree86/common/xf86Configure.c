@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.49 2000/12/12 18:23:50 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.51 2001/01/16 23:46:29 herrb Exp $ */
 /*
  * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales.
  *
@@ -286,6 +286,14 @@ configureInputSection (void)
 	    path[len] = '\0';
 	    if (strstr(path, "psaux") != NULL)
 		DFLT_MOUSE_PROTO = "PS/2";
+	}
+#endif
+#ifdef WSCONS_SUPPORT
+	fd = open("/dev/wsmouse0", 0);
+	if (fd > 0) {
+	    DFLT_MOUSE_DEV = "/dev/wsmouse0";
+	    DFLT_MOUSE_PROTO = "wsmouse";
+	    close(fd);
 	}
 #endif
 

@@ -55,7 +55,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xt/Resources.c,v 1.6 1998/12/20 11:57:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.5 1998/10/03 09:06:57 dawes Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"

@@ -32,7 +32,7 @@
  * 1.0 by Torrey T. Lyons, October 30, 2000
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwinCursor.c,v 1.2 2000/11/28 17:25:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwinCursor.c,v 1.1 2000/11/15 01:36:13 dawes Exp $ */
 
 #include "scrnintstr.h"
 #include "cursorstr.h"

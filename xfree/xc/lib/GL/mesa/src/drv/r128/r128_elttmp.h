@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_elttmp.h,v 1.1 2000/12/04 19:21:46 dawes Exp $ */
+/* $XFree86$ */
 /*
  * DRI Hardware Device Driver for G200/G400
  * Copyright (C) 1999 Keith Whitwell

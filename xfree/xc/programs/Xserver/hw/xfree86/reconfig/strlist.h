@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/strlist.h,v 3.3 1996/12/23 06:51:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/strlist.h,v 3.2 1996/02/04 09:10:41 dawes Exp $ */
 
 
 

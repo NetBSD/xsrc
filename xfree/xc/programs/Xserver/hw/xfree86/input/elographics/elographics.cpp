@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/elographics.cpp,v 1.3 2000/12/11 20:18:49 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/elographics.cpp,v 1.2 2000/06/14 02:13:17 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH ELOGRAPHICS __drivermansuffix__ "Version 4.0.2"  "XFree86"

@@ -1,5 +1,5 @@
 .\" $XConsortium: ico.man,v 1.14 94/04/17 20:45:16 gildea Exp $
-.\" $XFree86: xc/programs/ico/ico.man,v 1.1 2000/02/13 03:26:13 dawes Exp $
+.\" $XFree86: contrib/programs/ico/ico.man,v 1.2 1999/09/27 07:01:53 dawes Exp $
 .TH ICO 1 "Release 6" "X Version 11"
 .SH NAME
 ico \- animate an icosahedron or other polyhedron

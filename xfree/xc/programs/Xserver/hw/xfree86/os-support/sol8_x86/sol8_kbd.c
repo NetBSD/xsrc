@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_kbd.c,v 1.3 1999/11/19 13:55:03 hohndel Exp $ */
+/* $XFree86$ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@XFree86.org> 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbmodule.c,v 1.1 1999/06/13 13:47:38 dawes Exp $ */
+/* $XFree86$ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *

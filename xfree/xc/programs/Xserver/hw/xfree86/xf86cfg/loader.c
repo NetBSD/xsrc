@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.3 2000/12/01 18:31:07 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.2 2000/11/08 17:58:43 alanh Exp $
  */
 #define LOADER_PRIVATE
 #include "loader.h"

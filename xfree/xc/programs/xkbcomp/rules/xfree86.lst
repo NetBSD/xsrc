@@ -38,6 +38,7 @@
   ca		Canadian
   cs		Czechoslovakian
   dk		Danish
+  dvorak	Dvorak
   ee		Estonian
   fi		Finnish
   fr		French
@@ -64,7 +65,7 @@
   es		Spanish
   se		Swedish
   th		Thai
-  uk		Ukrainian 
+  ua		Ukrainian 
   gb		United Kingdom
   vn		Vietnamese
   nec/jp	PC-98xx Series

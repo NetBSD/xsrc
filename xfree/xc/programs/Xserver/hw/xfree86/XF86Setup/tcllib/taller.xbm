@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/taller.xbm,v 1.1 1999/04/05 07:13:05 dawes Exp $ */
+/* $XFree86$ */
 #define taller_width 24
 #define taller_height 24
 static unsigned char taller_bits[] = {

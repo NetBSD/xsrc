@@ -31,7 +31,7 @@ dealings in this Software without prior written authorization from said
 copyright holders.
 */
 
-/* $XFree86: xc/programs/Xserver/Xprint/raster/Raster.c,v 1.3 1998/10/04 09:37:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/raster/Raster.c,v 1.2 1998/06/27 12:53:46 hohndel Exp $ */
 
 /*******************************************************************
 **

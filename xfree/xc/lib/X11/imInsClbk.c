@@ -1,5 +1,5 @@
 /* $XConsortium: imInsClbk.c /main/4 1995/11/18 16:08:11 kaleb $ */
-/* $XFree86: xc/lib/X11/imInsClbk.c,v 3.0 1996/02/09 08:18:54 dawes Exp $ */
+/* $XFree86$ */
 /******************************************************************
 
            Copyright 1993, 1994 by Sony Corporation

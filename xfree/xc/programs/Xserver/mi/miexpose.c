@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miexpose.c,v 3.6 2000/01/02 00:25:57 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miexpose.c,v 3.5 1999/04/11 13:11:19 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

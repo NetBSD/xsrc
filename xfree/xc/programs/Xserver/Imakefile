@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/249 1997/12/11 11:18:14 kaleb $
 /*
  * Server Master Makefile
  */
-XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.205 2000/12/11 20:29:31 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.204 2000/11/30 23:30:01 dawes Exp $
 
 #ifndef InstallXserverSetUID
 #define InstallXserverSetUID NO

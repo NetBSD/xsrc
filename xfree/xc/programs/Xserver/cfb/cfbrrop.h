@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.6 2000/10/24 18:07:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.5 2000/02/12 03:39:30 dawes Exp $ */
 
 #ifndef GXcopy
 #include "X.h"

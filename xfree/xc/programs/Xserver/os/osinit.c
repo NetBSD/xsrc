@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.20 2000/08/10 17:40:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.19 1999/12/27 00:39:58 robin Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

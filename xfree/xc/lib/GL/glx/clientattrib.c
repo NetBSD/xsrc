@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/clientattrib.c,v 1.4 2000/02/18 16:23:09 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/clientattrib.c,v 1.3 2000/02/15 19:19:17 dawes Exp $ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

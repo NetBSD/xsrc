@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.23 2000/04/04 19:24:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.22 2000/02/08 17:18:54 dawes Exp $ */
 /************************************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 

@@ -70,7 +70,7 @@
 *
 ****************************************************************************/
 
-/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.4 2000/04/17 16:29:45 eich Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.2 2000/01/23 04:32:42 dawes Exp $ */
 
 #include "x86emu/x86emui.h"
 

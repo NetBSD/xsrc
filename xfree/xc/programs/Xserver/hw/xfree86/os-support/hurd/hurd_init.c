@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_init.c,v 1.2 1999/03/07 14:05:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_init.c,v 1.1 1998/08/16 10:25:48 dawes Exp $ */
 
 #include "X.h"
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.6 2000/12/15 17:12:53 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.5 2000/12/11 21:48:40 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

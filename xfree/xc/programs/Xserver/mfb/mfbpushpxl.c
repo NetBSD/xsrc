@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbpushpxl.c,v 1.3 1998/10/04 09:39:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbpushpxl.c,v 1.2 1998/03/20 21:08:18 hohndel Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

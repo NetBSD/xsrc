@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.h,v 1.6 2000/09/24 13:51:05 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.h,v 1.5 2000/08/28 02:43:12 tsi Exp $ */
 
 /*
  * Authors:

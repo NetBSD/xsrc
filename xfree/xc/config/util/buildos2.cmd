@@ -1,5 +1,5 @@
 /* REXX */
-/* $XFree86: xc/config/util/buildos2.cmd,v 3.10 2000/04/05 18:13:12 dawes Exp $
+/* $XFree86: xc/config/util/buildos2.cmd,v 3.9 1999/04/29 09:13:24 dawes Exp $
  * this file is supposed to run from the xc/ dir.
  * you must copy it manually to there before using. It is just here
  * in order not to be in the root dir.

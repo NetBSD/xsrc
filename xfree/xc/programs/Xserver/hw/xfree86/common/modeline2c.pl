@@ -10,7 +10,7 @@
 # hackish perl - author Dirk Hohndel
 # Copyright 1999 by The XFree86 Project, Inc.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/common/modeline2c.pl,v 1.3 1999/11/18 16:52:06 tsi Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/common/modeline2c.pl,v 1.2 1999/03/29 12:55:55 dawes Exp $
 
 my %flagshash;
 $flagshash{""} = "0";

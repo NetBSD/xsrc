@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/snfstr.h,v 1.2 1999/07/17 05:30:33 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef SNFSTR_H
 #define SNFSTR_H 1

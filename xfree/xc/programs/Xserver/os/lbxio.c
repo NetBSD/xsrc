@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.11 2000/05/18 23:46:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.10 1998/10/04 09:39:44 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

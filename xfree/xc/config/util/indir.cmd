@@ -1,7 +1,7 @@
 /* OS/2 rexx script to emulate the "cd dir; command" mechanism in make
  * which does not work with stupid CMD.EXE
  *
- * $XFree86: xc/config/util/indir.cmd,v 3.2 2000/04/05 18:13:13 dawes Exp $
+ * $XFree86: xc/config/util/indir.cmd,v 3.1 1996/01/24 21:56:12 dawes Exp $
  */
 curdir = directory()
 line = fixbadprefix(ARG(1))

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/wq.h,v 1.3 1999/03/07 14:23:37 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _WQ_H
 #define _WQ_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.4 2000/12/07 20:26:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.3 2000/12/06 22:00:46 dawes Exp $ */
 
 /*
  *

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.338 2000/12/14 16:59:06 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.338.2.5 2001/03/12 18:40:28 dawes Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -97,7 +97,7 @@ XCOMM $TOG: xfree86.cf /main/38 1997/10/22 13:01:59 kaleb $
  *                     you don't need to have the HALlib library to do this.
  *                     but you want to build support for loading it and using
  *                     it into the mga driver module.
- *                     Default: YES for loadable server build
+ *                     Default: YES for loadable server build on x86
  *                              (HaveMatroxHal || BuildMatroxHal) for static
  */
 
@@ -110,7 +110,7 @@ XCOMM $TOG: xfree86.cf /main/38 1997/10/22 13:01:59 kaleb $
 #endif
 
 #ifndef UseMatroxHal 
-#if DoLoadableServer
+#if DoLoadableServer && defined(i386Architecture)
 #define UseMatroxHal YES
 #else
 #define UseMatroxHal (HaveMatroxHal || BuildMatroxHal)
@@ -988,7 +988,7 @@ IPLAN2P8_DEFS = -DUSE_IPLAN2P8
     (defined(LinuxArchitecture) && !defined(Mc68020Architecture) && \
      !defined(PpcArchitecture)) || \
     defined(i386BsdArchitecture) || defined(LynxOSArchitecture) || \
-    defined(OS2Architecture)
+    defined(OS2Architecture) || defined(GNUMachArchitecture)
 #   define BuildScanpci		YES
 # else
 #   define BuildScanpci		NO
@@ -1176,9 +1176,16 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
  *
  *    X * 1000 + Y * 100 + Z * 10 + W
  *
+ *
+ * NOTE:  Starting with XFree86 development version 4.0.99.1 (leading up
+ * to the 4.1.0 release version) XFree86Version for version M.m.P.s will
+ * be calculated as:
+ *
+ *    M * 10000000 + m * 100000 + P * 1000 + s
+ *
  */
 #ifndef XFree86Version
-# define XFree86Version	4002
+# define XFree86Version	4003
 #endif
 
 #ifndef XVendorString

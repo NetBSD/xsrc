@@ -48,7 +48,7 @@ in this Software without prior written authorization from the X Consortium.
  * @(#)events.h	4.2	91/05/03
  *
  */
-/* $XFree86: xc/programs/xfs/include/fsevents.h,v 1.3 1998/10/25 12:48:04 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _EVENTS_H_
 #define _EVENTS_H_

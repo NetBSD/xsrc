@@ -1,5 +1,5 @@
 /* This includes various utility functions which are missing otherwise 
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_utils.c,v 1.1 1999/12/27 00:45:48 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx/qnx_utils.c,v 1.1.2.2 1999/07/23 13:42:39 hohndel Exp $
  */
 
 #include <limits.h>

@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxSbus.c,v 1.4 2000/10/17 16:53:19 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxSbus.c,v 1.3 2000/06/30 17:15:18 dawes Exp $ */
     
 #include <fcntl.h>
 #include <stdio.h>

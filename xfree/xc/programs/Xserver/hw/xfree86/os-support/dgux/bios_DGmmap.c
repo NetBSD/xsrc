@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.4 2000/11/19 16:38:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.3 2000/02/11 22:36:02 dawes Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU03
  * Copyright 1997 Takis Psarogiannakopoulos Cambridge,UK

@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * %W%	%E%
  *
  */
-/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.4 2000/02/13 06:15:44 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/initfonts.c,v 1.3 1999/03/07 14:23:32 dawes Exp $ */
 
 #include        "font.h"
 #include	"difs.h"

@@ -22,7 +22,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: maskbits.h,v 1.33 94/04/17 20:28:13 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/mfb/maskbits.h,v 3.7 2000/11/22 00:58:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/maskbits.h,v 3.6 2000/02/12 03:40:00 dawes Exp $ */
 #include "X.h"
 #include "Xmd.h"
 #include "servermd.h"

@@ -1,6 +1,6 @@
 .\" $TOG: INSTALL.ms /main/10 1998/02/05 15:35:11 kaleb $
 .\" X11R6.4 Installation instructions. Use troff -ms macros
-.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.3 2000/12/14 21:14:07 dawes Exp $
+.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.2 2000/12/14 21:11:46 dawes Exp $
 .ds Ts 30 January, 1998\"
 .\"
 .ie t \{

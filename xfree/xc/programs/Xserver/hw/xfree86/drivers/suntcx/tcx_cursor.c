@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suntcx/tcx_cursor.c,v 1.1 2000/06/30 17:15:16 dawes Exp $ */
+/* $XFree86:$ */
 
 #include "tcx.h"
 

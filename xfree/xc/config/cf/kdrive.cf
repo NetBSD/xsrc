@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/kdrive.cf,v 1.8 2000/12/08 22:09:39 keithp Exp $
+XCOMM $XFree86: xc/config/cf/kdrive.cf,v 1.4 2000/07/07 20:06:56 tsi Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.

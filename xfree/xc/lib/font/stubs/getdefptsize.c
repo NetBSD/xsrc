@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/stubs/getdefptsize.c,v 1.1 1999/01/11 05:13:20 dawes Exp $ */
+/* $XFree86$ */
 
 #include "stubs.h"
 

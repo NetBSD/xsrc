@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.9 2000/03/31 20:13:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.8 2000/02/25 21:03:07 dawes Exp $ */
 /*
  * file vvga.c
  *

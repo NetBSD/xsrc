@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/rac/xf86RAC.c,v 1.6 1999/09/25 14:38:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/rac/xf86RAC.c,v 1.5 1999/06/12 17:30:21 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

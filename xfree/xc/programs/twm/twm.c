@@ -55,7 +55,7 @@ in this Software without prior written authorization from The Open Group.
  * 27-Oct-87 Thomas E. LaStrange	File created
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/twm.c,v 3.6 2000/10/24 22:45:15 dawes Exp $ */
+/* $XFree86: xc/programs/twm/twm.c,v 3.5 1999/02/25 06:01:03 dawes Exp $ */
 
 #include <stdio.h>
 #include <signal.h>

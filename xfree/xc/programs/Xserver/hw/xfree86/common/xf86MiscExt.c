@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1999 by The XFree86 Project, Inc.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.6 2000/08/04 16:13:25 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.3 1999/09/04 13:04:34 dawes Exp $ */
 
 /*
  * This file contains the Pointer/Keyboard functions needed by the 

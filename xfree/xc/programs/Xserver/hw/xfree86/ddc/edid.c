@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/edid.c,v 1.3 2000/11/03 18:46:08 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/edid.c,v 1.1 1998/11/28 10:43:04 dawes Exp $ */
 
 /* edid.c:  retrieve EDID record from raw DDC1 data stream: data 
  * is contained in an array of unsigned int each unsigned int 

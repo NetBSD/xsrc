@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/keytypes.c,v 1.3 2000/11/06 21:57:11 dawes Exp $ */
+/* $XFree86$ */
 
 #include "xkbcomp.h"
 #include "tokens.h"

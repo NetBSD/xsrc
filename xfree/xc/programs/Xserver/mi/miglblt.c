@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miglblt.c,v 1.3 1998/10/04 09:39:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miglblt.c,v 1.2 1998/04/27 03:14:54 robin Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.5 2000/10/20 14:59:06 alanh Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.4 2000/09/26 15:57:22 tsi Exp $
  */
 
 #include "xf86config.h"

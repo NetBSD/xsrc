@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.6 2000/09/22 11:35:49 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.5 2000/09/19 12:46:15 eich Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>

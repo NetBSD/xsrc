@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/chooser.c,v 3.20 2000/06/15 20:50:04 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/chooser.c,v 3.19 2000/05/31 07:15:11 eich Exp $ */
 
 /*
  * Chooser - display a menu of names and let the user select one

@@ -19,7 +19,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/mkfontdir/mkfontdir.man,v 1.9 2000/11/09 01:35:51 dawes Exp $
+.\" $XFree86: xc/programs/mkfontdir/mkfontdir.man,v 1.8 1999/05/23 06:33:52 dawes Exp $
 .\"
 .TH MKFONTDIR 1 "Release 6.4" "X Version 11"
 .SH NAME

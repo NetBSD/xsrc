@@ -2,7 +2,7 @@
  * This script serves as a helper cmd file for imake. Install this in
  * the path just like imake itself.
  *
- * $XFree86: xc/config/imake/imakesvc.cmd,v 3.14 2000/04/05 18:13:11 dawes Exp $
+ * $XFree86: xc/config/imake/imakesvc.cmd,v 3.13 1999/04/29 09:13:23 dawes Exp $
  */
 '@echo off'
 ADDRESS CMD

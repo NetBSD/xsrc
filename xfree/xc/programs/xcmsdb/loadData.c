@@ -1,5 +1,5 @@
 /* $XConsortium: loadData.c,v 1.12 94/02/07 23:28:48 rws Exp $ */
-/* $XFree86: xc/programs/xcmsdb/loadData.c,v 3.1 1999/02/28 11:20:10 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * (c) Copyright 1990 Tektronix Inc.

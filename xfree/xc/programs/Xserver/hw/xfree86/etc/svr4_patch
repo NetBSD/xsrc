@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/svr4_patch,v 3.2 1996/12/23 06:47:23 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/svr4_patch,v 3.1 1996/02/04 09:09:07 dawes Exp $
 #
 # Apply patch to kernel to prevent losing IOPL on signals.
 #

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.26 2000/09/19 12:46:21 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.23 2000/02/08 13:13:29 eich Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *

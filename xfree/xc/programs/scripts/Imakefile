@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.27 94/02/10 16:55:34 rws Exp $
-XCOMM $XFree86: xc/programs/scripts/Imakefile,v 3.0 1996/02/09 08:22:38 dawes Exp $
+XCOMM $XFree86$
 
 all::
 

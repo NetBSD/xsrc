@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/midraw.c,v 3.4 1999/09/25 14:36:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/midraw.c,v 3.3 1998/10/05 13:22:35 dawes Exp $ */
 
 #define _XIEC_IDRAW
 #define _XIEC_MIDRAW

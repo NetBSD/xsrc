@@ -1,5 +1,5 @@
 /* $XConsortium: x11perf.c,v 2.54 94/03/30 19:40:27 gildea Exp $ */
-/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.3 2000/11/29 08:58:20 keithp Exp $ */
+/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.1 1999/02/28 11:20:01 dawes Exp $ */
 /****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 

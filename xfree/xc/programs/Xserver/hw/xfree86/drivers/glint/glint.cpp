@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.cpp,v 1.10 2000/12/11 20:18:13 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.cpp,v 1.9 2000/10/17 09:07:04 alanh Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH GLINT __drivermansuffix__ "Version 4.0.2"  "XFree86"

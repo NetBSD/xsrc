@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/attributes.h,v 1.3 1999/12/16 02:26:25 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: attributes.h /main/1 1996/09/28 16:59:43 rws $ */
 /*

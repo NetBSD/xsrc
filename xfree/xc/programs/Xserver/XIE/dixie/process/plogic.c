@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/plogic.c,v 3.3 1998/10/25 07:11:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/plogic.c,v 3.2 1998/10/05 13:22:14 dawes Exp $ */
 
 #define _XIEC_PLOGIC
 

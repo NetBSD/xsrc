@@ -28,7 +28,7 @@
  * 
  * GLINT 300SX accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/sx_accel.c,v 1.3 2000/04/12 14:44:41 tsi Exp $ */
+/* $XFree86$ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

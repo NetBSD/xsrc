@@ -35,7 +35,7 @@
  *
  * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
  */
-/* $XFree86: xc/lib/GLw/GLwM1DrawA.c,v 1.1 2000/11/02 20:39:07 dawes Exp $ */
+/* $XFree86$ */
 
 #define __GLX_MOTIF 1
 

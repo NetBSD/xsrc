@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/PortholeP.h,v 1.6 1999/06/20 08:41:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/PortholeP.h,v 1.5 1999/06/06 08:48:07 dawes Exp $ */
 
 #ifndef _XawPortholeP_h
 #define _XawPortholeP_h

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/SM/globals.h,v 1.2 1998/12/20 11:56:53 dawes Exp $ */
+/* $XFree86: xc/lib/SM/globals.h,v 1.1.1.1.12.2 1998/10/19 20:57:05 hohndel Exp $ */
 
 /*
  * Author: Ralph Mor, X Consortium

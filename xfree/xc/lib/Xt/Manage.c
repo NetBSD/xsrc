@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Manage.c,v 3.5 1998/10/03 09:06:56 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Manage.c,v 3.4 1997/05/17 12:52:12 dawes Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.25 2000/11/14 21:59:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.24 1999/11/19 13:55:02 hohndel Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc.
  *

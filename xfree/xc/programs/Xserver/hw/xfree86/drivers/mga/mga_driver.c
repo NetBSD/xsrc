@@ -43,7 +43,7 @@
  *		Fixed 32bpp hires 8MB horizontal line glitch at middle right
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c,v 1.185 2000/12/07 20:26:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c,v 1.185.2.1 2001/02/28 21:44:25 dawes Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -143,6 +143,7 @@ static void	MGARestore(ScrnInfoPtr pScrn);
 static Bool	MGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void		MGAAdjustFrameCrtc2(int scrnIndex, int x, int y, int flags);
 static void 	MGABlockHandler(int, pointer, pointer, pointer);
+static void     MGAG100BlackMagic(MGAPtr pMga);
 
 static int MGAEntityIndex = -1;
 
@@ -1427,8 +1428,15 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	 xf86LoaderReqSymLists(halSymbols, NULL);
 	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,"Matrox HAL module used\n");
 	 pMga->HALLoaded = TRUE;
-       } else 
-	 pMga->HALLoaded = FALSE;
+   } else {
+	   pMga->HALLoaded = FALSE;
+	   if (MGAISG450(pMga)) {
+		   /* Ouch. We cannot drive a G450 without HALlib. Don't try. */
+		   xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "G450 support not available without Matrox HAL module\n");
+		   return FALSE;
+	   }
+	   xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Matrox HAL module not found - using builtin mode setup instead\n");
+   }
 #endif
 
     /*
@@ -2752,7 +2760,7 @@ MGACrtc2FillStrip(ScrnInfoPtr pScrn)
     } else {
 	xf86SetLastScrnFlag(pScrn->entityList[0], pScrn->scrnIndex);
 	pMga->RestoreAccelState(pScrn);
-	pMga->SetupForSolidFill(pScrn, 0, GXcopy, 0x00000000);
+	pMga->SetupForSolidFill(pScrn, 0, GXcopy, 0xFFFFFFFF);
 	pMga->SubsequentSolidFillRect(pScrn, pScrn->virtualX, 0,
 				  pScrn->displayWidth - pScrn->virtualX,
 				  pScrn->virtualY);
@@ -2796,6 +2804,10 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (!MGAMapMem(pScrn))
 	    return FALSE;
     }
+
+    if ((pMga->Chipset == PCI_CHIP_MGAG100) 
+	|| (pMga->Chipset == PCI_CHIP_MGAG100_PCI)) 
+        MGAG100BlackMagic(pMga);
 
     if (xf86IsEntityShared(pScrn->entityList[0])) {
        DevUnion *pPriv;
@@ -3682,3 +3694,12 @@ dbg_outreg32(ScrnInfoPtr pScrn,int addr,int val)
     *(volatile CARD32 *)(pMga->IOBase + (addr)) = (val);
 }
 #endif /* DEBUG */
+
+static void
+MGAG100BlackMagic(MGAPtr pMga)
+{
+    OUTREG(MGAREG_PLNWT, ~(CARD32)0x0);
+    /* reset memory */
+    OUTREG(MGAREG_MACCESS, 1<<15);
+    usleep(10);
+}

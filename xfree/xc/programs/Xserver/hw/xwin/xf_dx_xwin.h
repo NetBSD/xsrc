@@ -26,7 +26,7 @@
  * in this Software without prior written authorization from Peter Busch.
  *
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/xf_dx_xwin.h,v 1.1 2000/08/10 17:40:38 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef __XF_DX_CALLBACK_H__
 #define __XF_DX_CALLBACK_H__

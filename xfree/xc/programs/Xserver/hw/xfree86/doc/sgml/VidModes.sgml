@@ -1408,7 +1408,7 @@ mathematical analysis behind <TT>modeplot</TT>.  The distributed
 <TT>modeplot</TT> was redesigned and generalized by ESR from
 Martin's original gnuplot code for one case.
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.16 2000/02/23 20:30:16 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.15 2000/01/24 19:38:29 dawes Exp $
   
   
   

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/FreeType/module/Imakefile,v 1.6 1999/08/14 10:49:17 dawes Exp $
+XCOMM $XFree86: xc/lib/font/FreeType/module/Imakefile,v 1.5 1999/01/31 04:59:25 dawes Exp $
 
 XCOMM Imakefile created for the Freetype TrueType renderer.
 XCOMM Mark Leisher <mleisher@crl.nmsu.edu>

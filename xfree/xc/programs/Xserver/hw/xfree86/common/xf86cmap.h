@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.h,v 1.6 2000/05/11 18:14:28 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.h,v 1.5 1999/07/18 03:26:49 dawes Exp $ */
 
 #ifndef _XF86CMAP_H
 #define _XF86CMAP_H

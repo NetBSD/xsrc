@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_region.h,v 1.2 2000/02/23 04:46:45 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_region.h,v 1.1 1999/06/14 07:31:16 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/85 1997/12/07 18:26:23 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/os/Imakefile,v 3.28 2000/11/30 23:30:06 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/os/Imakefile,v 3.27 2000/05/05 17:47:29 keithp Exp $
 #include <Server.tmpl>
 
 /*

@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyMouse.c,v 3.2 1998/10/04 09:38:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyMouse.c,v 3.1 1996/12/27 06:51:41 dawes Exp $ */
 
 /*
  * This is sunMouse.c modified for LynxOS

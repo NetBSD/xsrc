@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclcurses.c,v 1.2 1999/04/05 08:28:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclcurses.c,v 1.1 1999/04/05 07:13:01 dawes Exp $ */
 /*
  * Copyright 1997 by Joseph V. Moss <joe@XFree86.Org>
  *

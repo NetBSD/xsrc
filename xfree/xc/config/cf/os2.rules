@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2.rules /main/1 1996/10/31 14:47:27 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.21 2000/04/05 18:13:09 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.20 1999/07/10 07:24:34 dawes Exp $
 
 .SUFFIXES: .Osuf .c .CCsuf
 

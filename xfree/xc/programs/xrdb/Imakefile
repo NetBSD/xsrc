@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.8 92/09/14 18:53:12 rws Exp $
-XCOMM $XFree86: xc/programs/xrdb/Imakefile,v 3.2 1997/09/30 04:51:05 hohndel Exp $
+XCOMM $XFree86: xc/programs/xrdb/Imakefile,v 3.1 1994/12/17 10:10:44 dawes Exp $
 #if PatheticCpp
         CPPDEFS = -DPATHETICCPP
 #endif

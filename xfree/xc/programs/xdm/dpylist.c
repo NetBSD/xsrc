@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dpylist.c,v 1.3 2000/04/27 16:26:50 eich Exp $ */
+/* $XFree86$ */
 
 /*
  * xdm - display manager daemon

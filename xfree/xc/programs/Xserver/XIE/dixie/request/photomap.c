@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden, Robert NC Shelley  AGE Logic, Inc.  April 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/photomap.c,v 3.3 1998/10/25 07:11:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/photomap.c,v 3.2 1998/10/05 13:22:20 dawes Exp $ */
 
 #define _XIEC_PHOTOMAP
 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/xvidtune/Imakefile,v 3.5 1996/02/12 11:17:17 dawes Exp $
+XCOMM $XFree86: xc/programs/xvidtune/Imakefile,v 3.4 1996/01/24 22:05:05 dawes Exp $
 
         DEPLIBS = XawClientDepLibs $(DEPXXF86VMLIB)
 #ifdef OS2Architecture

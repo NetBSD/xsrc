@@ -23,7 +23,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbmodule.c,v 1.3 2000/02/14 19:20:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbmodule.c,v 1.2 2000/01/21 18:41:49 dawes Exp $ */
 
 #ifdef XFree86LOADER
 

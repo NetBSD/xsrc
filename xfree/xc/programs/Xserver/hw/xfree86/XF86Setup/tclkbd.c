@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclkbd.c,v 3.5 1996/12/27 06:54:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclkbd.c,v 3.4 1996/08/24 12:50:59 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *

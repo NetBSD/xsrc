@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xterm/XTerm-col.ad,v 3.0 1995/09/17 06:33:11 dawes Exp $
+! $XFree86$
 
 #include "XTerm"
 

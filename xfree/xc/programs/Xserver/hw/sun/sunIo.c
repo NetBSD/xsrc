@@ -15,7 +15,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.4 1998/10/04 09:38:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.3 1997/05/21 15:17:01 dawes Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.

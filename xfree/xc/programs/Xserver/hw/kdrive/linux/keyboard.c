@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/keyboard.c,v 1.5 2000/12/08 23:04:57 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/keyboard.c,v 1.4 2000/10/10 14:05:48 tsi Exp $
  *
  * Copyright © 1999 Keith Packard
  *

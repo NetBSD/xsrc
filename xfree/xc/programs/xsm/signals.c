@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/signals.c,v 3.1 1998/10/04 09:41:59 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/signals.c,v 3.0 1996/12/09 11:57:25 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>

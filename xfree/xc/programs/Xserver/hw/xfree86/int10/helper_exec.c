@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_exec.c,v 1.11 2000/12/06 15:35:26 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_exec.c,v 1.9 2000/11/03 18:46:16 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.21 2000/12/05 20:03:45 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.20 2000/11/08 00:51:10 mvojkovi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

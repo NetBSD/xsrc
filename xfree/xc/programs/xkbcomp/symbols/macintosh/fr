@@ -1,5 +1,5 @@
 // $XConsortium: macintosh /main/10 1996/01/29 19:54:54 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/macintosh/fr,v 1.2 2000/09/26 15:57:25 tsi Exp $
+// $XFree86$
 //
 
 xkb_symbols "extended" {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/Xmd.h,v 3.8 2000/08/23 22:10:01 tsi Exp $ */
+/* $XFree86: xc/include/Xmd.h,v 3.7 2000/08/09 23:40:11 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

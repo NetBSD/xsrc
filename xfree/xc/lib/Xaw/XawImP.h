@@ -47,7 +47,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/XawImP.h,v 3.7 1999/03/14 11:17:41 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawImP.h,v 3.6 1999/03/14 03:21:13 dawes Exp $ */
 
 #ifndef _XawImP_h
 #define _XawImP_h

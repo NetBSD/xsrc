@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86bigfont.c,v 1.10 2000/08/10 17:40:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86bigfont.c,v 1.9 2000/06/22 16:59:25 tsi Exp $ */
 /*
  * BIGFONT extension for sharing font metrics between clients (if possible)
  * and for transmitting font metrics to clients in a compressed form.

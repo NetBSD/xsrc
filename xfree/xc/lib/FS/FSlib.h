@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSlib.h,v 1.3 1999/02/20 15:07:14 hohndel Exp $ */
+/* $XFree86: $ */
 
 /*
 

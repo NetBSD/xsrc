@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.15 1999/03/14 03:21:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.14tsi Exp $ */
 
 #include "IntrinsicI.h"
 #include <stdio.h>

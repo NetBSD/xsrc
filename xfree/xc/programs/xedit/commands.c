@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/commands.c,v 1.22 2000/09/26 15:57:24 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/commands.c,v 1.21 1999/09/27 06:30:08 dawes Exp $ */
 
 #include <X11/Xfuncs.h>
 #include <X11/Xos.h>

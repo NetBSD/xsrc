@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/stubs.c,v 3.2 1998/10/04 09:37:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/stubs.c,v 3.1 1996/03/30 05:25:21 dawes Exp $ */
 
 /*
  * stubs.c -- stub routines for the X server side of the XINPUT

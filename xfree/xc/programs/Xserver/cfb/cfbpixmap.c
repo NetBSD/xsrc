@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbpixmap.c,v 1.3 2000/02/12 05:43:17 dawes Exp $ */
+/* $XFree86$ */
 /* pixmap management
    written by drewry, september 1986
 

@@ -1,5 +1,5 @@
 
-.\" $XFree86: xc/programs/xvinfo/xvinfo.man,v 1.1 2000/09/19 06:08:11 mvojkovi Exp $
+.\" $XFree86: xc/programs/xvinfo/xvinfo.man Exp $
 .\"
 .TH xvinfo 1 "Release 6.4" "X Version 11"
 .SH NAME

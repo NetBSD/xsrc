@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Dialog.h,v 1.4 1998/10/03 08:42:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Dialog.h,v 1.3 1998/08/20 13:58:58 dawes Exp $ */
 
 #ifndef _XawDialog_h
 #define _XawDialog_h

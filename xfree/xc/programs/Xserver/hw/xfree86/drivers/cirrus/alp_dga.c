@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_dga.c,v 1.2 2000/02/08 13:13:14 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_dga.c,v 1.3 1998/09/05 06:36:44 dawes Exp $ */
 
 /* (c) Itai Nahshon */
 

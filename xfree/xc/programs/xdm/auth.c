@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/auth.c,v 3.20 1999/12/27 00:40:08 robin Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.19 1998/10/10 15:25:31 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

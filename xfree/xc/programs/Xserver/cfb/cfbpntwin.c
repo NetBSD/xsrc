@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.3 2000/02/12 03:39:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.2 1999/05/15 06:24:50 dawes Exp $ */
 
 #include "X.h"
 

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/cfb/cfb8bit.c,v 1.3 2000/02/12 05:43:17 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * cfb8bit.c

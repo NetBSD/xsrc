@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyUtil.c,v 3.1 1996/12/27 06:51:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyUtil.c,v 3.0 1996/09/29 12:47:29 dawes Exp $ */
 
 /*
  * CG3 and CG6 utility functions for LynxOS, derived from NetBSD
@@ -28,7 +28,7 @@
  *
  */
 
-/*      $NetBSD: sunLyUtil.c,v 1.1.1.1 2001/01/01 12:45:41 veego Exp $ */
+/*      $NetBSD: sunLyUtil.c,v 1.1.1.2 2001/03/18 17:23:10 veego Exp $ */
 
 /*
  * Copyright (c) 1993

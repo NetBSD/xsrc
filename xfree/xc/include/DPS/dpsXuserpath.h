@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsXuserpath.h,v 1.2 2000/06/07 22:02:56 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef DPS_X_DOUSERPATH_H
 #define DPS_X_DOUSERPATH_H

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/XIE/include/dixie_p.h,v 1.1 1998/10/25 07:11:45 dawes Exp $
+ * $XFree86$
  */
 
 /************************************************************

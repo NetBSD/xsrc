@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_io.c,v 1.7 2000/11/14 18:20:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_io.c,v 1.6 1999/09/04 13:04:43 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Intergraphics.c,v 1.3 1999/11/19 13:54:14 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Intergraphics.c,v 1.2tsi Exp $ */
 
 #include "Probe.h"
 

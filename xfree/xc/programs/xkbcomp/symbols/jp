@@ -2,7 +2,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.5 2000/06/15 20:34:14 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.4 1997/10/26 13:25:39 dawes Exp $
 //
 // symbols for a Japanese 106 keyboard(by tsuka@kawalab.dnj.ynu.ac.jp)
 default xkb_symbols "jp106" {

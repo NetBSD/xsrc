@@ -25,7 +25,7 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_driver.c,v 1.55 2000/12/02 15:30:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_driver.c,v 1.55.2.1 2001/02/08 19:31:09 dawes Exp $ */
 
 
 #include "fb.h"
@@ -117,7 +117,7 @@ static int pix24bpp = 0;
 
 DriverRec SIS = {
     SIS_CURRENT_VERSION,
-    "accelerated driver for SiS chipsets",
+    SIS_DRIVER_NAME,
     SISIdentify,
     SISProbe,
     SISAvailableOptions,
@@ -627,7 +627,8 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
      * Our preference for depth 24 is 24bpp, so tell it that too.
      */
     pix24flags = Support32bppFb | Support24bppFb |
-                SupportConvert24to32 | SupportConvert32to24;
+                SupportConvert24to32 | SupportConvert32to24 |
+                PreferConvert32to24;
 
     if (!xf86SetDepthBpp(pScrn, 8, 8, 8, pix24flags)) {
         return FALSE;
@@ -1434,7 +1435,9 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 #endif
 
-    SISInitVideo(pScreen);
+    if (pSiS->Chipset == PCI_CHIP_SIS630) {
+        SISInitVideo(pScreen);
+    }
 
     pSiS->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = SISCloseScreen;

@@ -38,7 +38,7 @@
  *    new "Load_TrueType_Any" function in the tables loader.
  *
  ******************************************************************/
-/* $XFree86: xc/extras/FreeType/lib/ttfile.c,v 1.4 2000/02/18 12:18:43 tsi Exp $ */
+/* $XFree86: xc/extras/FreeType/lib/ttfile.c,v 1.3 2000/02/13 05:03:52 dawes Exp $ */
 
 #include "ttconfig.h"
 

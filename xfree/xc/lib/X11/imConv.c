@@ -33,7 +33,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ******************************************************************/
 /* 2000 Modifier: Ivan Pascal	The XFree86 Project.
  */
-/* $XFree86: xc/lib/X11/imConv.c,v 1.30 2000/12/04 18:49:21 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imConv.c,v 1.29 2000/12/02 01:16:03 dawes Exp $ */
 
 #define NEED_EVENTS
 #include <stdio.h>

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/netaddr.c,v 3.4 1998/10/10 15:25:36 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/netaddr.c,v 3.3 1998/10/04 09:40:56 dawes Exp $ */
 
 /*
  * xdm - X display manager

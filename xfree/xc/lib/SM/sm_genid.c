@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/SM/sm_genid.c,v 3.10 1998/12/20 11:56:54 dawes Exp $ */
+/* $XFree86: xc/lib/SM/sm_genid.c,v 3.9 1998/10/03 08:41:14 dawes Exp $ */
 
 /*
  * Author: Ralph Mor, X Consortium

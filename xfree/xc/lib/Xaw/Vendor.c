@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.6 1999/03/21 07:34:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.5 1998/10/03 08:42:30 dawes Exp $ */
 
 /*
  * This is a copy of Xt/Vendor.c with an additional ClassInitialize

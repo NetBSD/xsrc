@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_dac.c,v 1.11 2000/10/20 12:57:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_dac.c,v 1.10 2000/03/06 22:59:31 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

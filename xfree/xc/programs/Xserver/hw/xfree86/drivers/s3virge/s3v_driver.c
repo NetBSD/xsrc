@@ -116,9 +116,9 @@ static int pix24bpp = 0;
  
 #define S3VIRGE_NAME "S3VIRGE"
 #define S3VIRGE_DRIVER_NAME "s3virge"
-#define S3VIRGE_VERSION_NAME "1.5.0"
+#define S3VIRGE_VERSION_NAME "1.6.0"
 #define S3VIRGE_VERSION_MAJOR   1
-#define S3VIRGE_VERSION_MINOR   5
+#define S3VIRGE_VERSION_MINOR   6
 #define S3VIRGE_PATCHLEVEL      0
 #define S3VIRGE_DRIVER_VERSION ((S3VIRGE_VERSION_MAJOR << 24) | \
 				(S3VIRGE_VERSION_MINOR << 16) | \
@@ -3073,7 +3073,7 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
       S3VCommonCalcClock(dclk, 1, 1, 31, 0, 4,
                      230000, 460000, &new->SR13, &new->SR12);
    } /* end TRIO_3D if() */
-   else {           /* Is this correct for DX/GX as well? */
+   else if(ps3v->Chipset == S3_ViRGE_DXGX) {
       if (pScrn->bitsPerPixel == 8) {
          if(dclk > 80000) {                     /* We need pixmux */
             new->CR67 = 0x10;
@@ -3110,7 +3110,39 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
          }
       S3VCommonCalcClock(dclk, 1, 1, 31, 0, 3, 
 	135000, 270000, &new->SR13, &new->SR12);
-      }
+   } /* end DXGX if() */
+   else {           /* Everything else ... (only ViRGE) */
+      if (pScrn->bitsPerPixel == 8) {
+         if(dclk > 80000) {                     /* We need pixmux */
+            new->CR67 = 0x10;
+            new->SR15 |= 0x10;                   /* Set DCLK/2 bit */
+            new->SR18 = 0x80;                   /* Enable pixmux */
+            }
+         }
+      else if ((pScrn->bitsPerPixel == 16) && (pScrn->weight.green == 5)) {
+         new->CR67 = 0x30;                       /* 15bpp */
+         }
+      else if (pScrn->bitsPerPixel == 16) {
+         new->CR67 = 0x50;
+         }
+      else if (pScrn->bitsPerPixel == 24) { 
+         new->CR67 = 0xd0 | 0x0c;
+	  					/* Flag STREAMS proc. required */
+         ps3v->NeedSTREAMS = TRUE;
+         S3VInitSTREAMS(pScrn, new->STREAMS, mode);
+	 new->MMPR0 = 0xc000;            /* Adjust FIFO slots */
+         }
+      else if (pScrn->bitsPerPixel == 32) { 
+         new->CR67 = 0xd0 | 0x0c;
+	  					/* Flag STREAMS proc. required */
+         ps3v->NeedSTREAMS = TRUE;
+         S3VInitSTREAMS(pScrn, new->STREAMS, mode);
+         new->MMPR0 = 0x10000;            /* Still more FIFO slots */
+         }
+      S3VCommonCalcClock(dclk, 1, 1, 31, 0, 3, 
+	135000, 270000, &new->SR13, &new->SR12);
+      } /* end great big if()... */
+
 
    /* Now adjust the value of the FIFO based upon options specified */
    if( ps3v->fifo_moderate ) {

@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)osdep.h	4.1	5/2/91
  *
  */
-/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.7 1999/12/27 00:40:12 robin Exp $ */
+/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.6 1999/03/07 11:41:07 dawes Exp $ */
 
 #ifndef _OSDEP_H_
 #define	_OSDEP_H_

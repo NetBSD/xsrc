@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ppcPci.c,v 1.5 2000/02/08 13:13:29 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ppcPci.c,v 1.3 1998/09/13 05:23:48 dawes Exp $ */
 /*
  * ppcPci.c - PowerPC PCI access functions
  *

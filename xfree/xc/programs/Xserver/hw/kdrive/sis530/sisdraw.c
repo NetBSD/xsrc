@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/sis530/sisdraw.c,v 1.5 2000/08/09 17:52:44 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/sis530/sisdraw.c,v 1.4 2000/05/06 22:17:50 keithp Exp $ */
 
 #include "sis.h"
 #include "sisdraw.h"

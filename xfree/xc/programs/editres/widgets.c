@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/editres/widgets.c,v 1.4 1999/05/09 10:52:01 dawes Exp $ */
+/* $XFree86: xc/programs/editres/widgets.c,v 1.3 1999/02/01 12:52:27 dawes Exp $ */
 
 /*
  * Code for creating all widgets used by EditRes.

@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/include/client.h,v 1.5 1999/08/21 13:48:50 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/client.h,v 1.4 1999/03/07 11:40:59 dawes Exp $ */
 
 #ifndef	_CLIENT_H_
 #define	_CLIENT_H_

@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.8 1998/06/28 03:52:34 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.7 1998/06/27 12:53:24 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc

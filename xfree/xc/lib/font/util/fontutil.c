@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontutil.c,v 3.4 1999/08/21 13:48:09 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/fontutil.c,v 3.3 1999/04/27 07:08:59 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tritmp.h,v 1.4 2000/12/04 22:46:01 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tritmp.h,v 1.2 2000/08/25 13:42:31 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,

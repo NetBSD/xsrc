@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxcvatmp.h,v 1.1 2000/09/24 13:51:14 alanh Exp $ */
+/* $XFree86: $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

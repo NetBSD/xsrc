@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.7 1999/06/20 08:40:57 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.6 1999/06/06 08:47:52 dawes Exp $ */
 
 /*
  * AsciiSrcP.h - Private Header for Ascii Text Source.

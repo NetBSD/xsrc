@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/tables.c,v 3.2 1998/10/04 09:38:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/tables.c,v 3.1 1996/05/06 05:56:25 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

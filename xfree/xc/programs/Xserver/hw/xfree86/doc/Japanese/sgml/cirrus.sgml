@@ -1104,7 +1104,7 @@ XFree86 3.2 での新機能:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/cirrus.sgml,v 3.2 1997/01/26 04:34:29 dawes Exp $
+$XFree86$
 </verb>
 <hrule>
 このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/cirrus.sgml,v 3.17 1996/10/26 09:38:57   を、岡本  一幸 

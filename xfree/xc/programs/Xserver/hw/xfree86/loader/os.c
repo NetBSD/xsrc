@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/os.c,v 1.1 1999/03/06 13:12:43 dawes Exp $ */
+/* $XFree86$ */
 
 #include "loaderProcs.h"
 

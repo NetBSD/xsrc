@@ -27,7 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbevd/utils.h,v 1.3 1999/03/02 11:49:59 dawes Exp $ */
+/* $XFree86$ */
 
 /***====================================================================***/
 

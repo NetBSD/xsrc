@@ -440,7 +440,7 @@ the SVGA server.  Some other drivers may be affected too.  The problem with
 the MGA driver is now fixed.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.16 1999/08/23 06:38:52 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.3 1998/02/28 08:54:11 dawes Exp $
 
 
 

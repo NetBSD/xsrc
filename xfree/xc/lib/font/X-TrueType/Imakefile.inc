@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile.inc,v 1.3 2000/02/14 19:20:24 dawes Exp $
+XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile.inc,v 1.2 2000/02/13 06:15:24 dawes Exp $
 /* -*- Makefile -*- */
 
 DEFAULT_CCONV_SUBDIR = ISO8859.1

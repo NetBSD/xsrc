@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_blt.c,v 1.6 2000/11/29 08:58:19 keithp Exp $ */
+/* $XFree86: xc/programs/x11perf/do_blt.c,v 1.4 1999/02/28 11:19:52 dawes Exp $ */
 
 #include "x11perf.h"
 #include <stdio.h>

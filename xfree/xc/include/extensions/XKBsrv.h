@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.17 2000/08/26 15:11:23 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.16 1999/01/31 12:21:16 dawes Exp $ */
 
 #ifndef _XKBSRV_H_
 #define	_XKBSRV_H_

@@ -1,5 +1,5 @@
 ! $XConsortium: Editres.ad,v 1.16 93/04/28 14:26:57 dave Exp $
-! $XFree86: xc/programs/editres/Editres.ad,v 1.2 1999/05/09 10:52:00 dawes Exp $
+! $XFree86$
 ! The App-defaults file for Editres.
 
 Editres.Geometry:			500x568

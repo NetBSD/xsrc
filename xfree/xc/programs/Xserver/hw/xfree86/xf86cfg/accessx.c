@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.7 2000/10/20 14:59:05 alanh Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.8 2001/01/26 21:17:40 paulo Exp $
  */
 
 #include "config.h"
@@ -179,15 +179,12 @@ AccessXInitialize(void)
 				     XtNstate,
 				     (xkb_info->xkb->ctrls->enabled_ctrls &
 				      (XkbAccessXKeysMask | XkbStickyKeysMask |
-				       XkbMouseKeysMask | XkbMouseKeysAccelMask |
-				       XkbRepeatKeysMask | XkbSlowKeysMask |
-				       XkbBounceKeysMask)) != 0, NULL, 0);
+				       XkbSlowKeysMask | XkbBounceKeysMask)) != 0, NULL, 0);
 
     apply = XtCreateManagedWidget("apply", commandWidgetClass, accessx, NULL, 0);
     XtAddCallback(apply, XtNcallback, ApplyCallback, NULL);
 
     form = XtCreateManagedWidget("Accessx", formWidgetClass, accessx, NULL, 0);
-    XtAddCallback(enable, XtNcallback, EnableCallback, (XtPointer)form);
     timeoutToggle = XtVaCreateManagedWidget("timeoutToggle", toggleWidgetClass,
 					    form, XtNstate,
 					    xkb_info->xkb->ctrls->ax_timeout > 60
@@ -450,7 +447,6 @@ AccessXInitialize(void)
 
     XtSetArg(args[0], XtNstate, &state);
     XtGetValues(enable, args, 1);
-    EnableCallback(enable, (XtPointer)form, (XtPointer)(long)state);
 }
 
 void
@@ -471,7 +467,7 @@ AccessXConfigureEnd(void)
 static void
 EnableCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
-    XtSetSensitive(user_data, (long)call_data);
+    XtSetSensitive((Widget)user_data, (long)call_data);
 }
 
 /*ARGSUSED*/
@@ -534,162 +530,148 @@ ApplyCallback(Widget w, XtPointer user_data, XtPointer call_data)
     XtSetArg(args[0], XtNstate, &state);
     XtGetValues(enable, args, 1);
     if (state) {
-	xkb_info->xkb->ctrls->enabled_ctrls |= XkbAccessXKeysMask;
 	xkb_info->config.initial_ctrls |= XkbAccessXKeysMask;
-
-	/* Timeout */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(timeoutToggle, args, 1);
-	if (state)
-	    xkb_info->config.ax_timeout =
-	    xkb_info->xkb->ctrls->ax_timeout = timeout->value * 60;
-	else
-	    xkb_info->config.ax_timeout =
-	    xkb_info->xkb->ctrls->ax_timeout = 65535;
-
-	/* Enable StickyKeys */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(sticky, args, 1);
-	if (state) {
-	    xkb_info->config.initial_ctrls |= XkbStickyKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls |= XkbStickyKeysMask;
-	}
-	else {
-	    xkb_info->config.initial_ctrls &= ~XkbStickyKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbStickyKeysMask;
-	}
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(stickyAuto, args, 1);
-	if (state) {
-	    xkb_info->config.initial_opts &= ~XkbAX_TwoKeysMask;
-	    xkb_info->config.initial_opts &= ~XkbAX_LatchToLockMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_TwoKeysMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_LatchToLockMask;
-	}
-	else {
-	    xkb_info->config.initial_opts &= ~XkbAX_TwoKeysMask;
-	    xkb_info->config.initial_opts |= XkbAX_LatchToLockMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_TwoKeysMask;
-	    xkb_info->xkb->ctrls->ax_options |= XkbAX_LatchToLockMask;
-	}
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(stickyBeep, args, 1);
-	if (state) {
-	    xkb_info->config.initial_opts |= XkbAX_StickyKeysFBMask;
-	    xkb_info->xkb->ctrls->ax_options |= XkbAX_StickyKeysFBMask;
-	}
-	else {
-	    xkb_info->config.initial_opts &= ~XkbAX_StickyKeysFBMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_StickyKeysFBMask;
-	}
-
-	/* Enable MouseKeys */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(mouse, args, 1);
-	if (state) {
-	    xkb_info->config.initial_ctrls |=  XkbMouseKeysMask |
-						  XkbMouseKeysAccelMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls |= XkbMouseKeysMask |
-						   XkbMouseKeysAccelMask;
-	    xkb_info->config.mk_delay =
-		xkb_info->xkb->ctrls->mk_delay = mouseDelay->value * 100;
-	    xkb_info->config.mk_interval =
-		xkb_info->xkb->ctrls->mk_interval = 40;
-	    xkb_info->config.mk_time_to_max =
-	    xkb_info->xkb->ctrls->mk_time_to_max =
-		(mouseTime->value * 1000) / xkb_info->xkb->ctrls->mk_interval;
-	    xkb_info->config.mk_max_speed =
-	    xkb_info->xkb->ctrls->mk_max_speed =
-		mouseSpeed->value * mouseTime->value;
-	    xkb_info->config.mk_curve = xkb_info->xkb->ctrls->mk_curve = 0;
-	}
-	else {
-	    xkb_info->config.initial_ctrls &= ~(XkbMouseKeysMask |
-						   XkbMouseKeysAccelMask);
-	    xkb_info->xkb->ctrls->enabled_ctrls &= ~(XkbMouseKeysMask |
-						     XkbMouseKeysAccelMask);
-	}
-
-	/* Enable RepeatKeys */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(repeat, args, 1);
-	if (state) {
-	    xkb_info->config.initial_ctrls |= XkbRepeatKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls |= XkbRepeatKeysMask;
-	    xkb_info->config.repeat_interval =
-	    xkb_info->xkb->ctrls->repeat_interval = repeatRate->value * 1000;
-	    xkb_info->config.repeat_delay =
-	    xkb_info->xkb->ctrls->repeat_delay = repeatDelay->value * 1000;
-	}
-	else {
-	    xkb_info->config.initial_ctrls &= ~XkbRepeatKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbRepeatKeysMask;
-	}
-
-	/* Enable SlowKeys */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(slowToggle, args, 1);
-	if (state) {
-	    xkb_info->config.initial_ctrls |= XkbSlowKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls |= XkbSlowKeysMask;
-	    xkb_info->config.slow_keys_delay =
-	    xkb_info->xkb->ctrls->slow_keys_delay = slow->value * 1000;
-	}
-	else {
-	    xkb_info->config.initial_ctrls &= ~XkbSlowKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbSlowKeysMask;
-	}
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(slowPressed, args, 1);
-	if (state) {
-	    xkb_info->config.initial_opts |= XkbAX_SKPressFBMask;
-	    xkb_info->xkb->ctrls->ax_options |= XkbAX_SKPressFBMask;
-	}
-	else {
-	    xkb_info->config.initial_opts &= ~XkbAX_SKPressFBMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_SKPressFBMask;
-	}
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(slowAccepted, args, 1);
-	if (state) {
-	    xkb_info->config.initial_opts |= XkbAX_SKAcceptFBMask;
-	    xkb_info->xkb->ctrls->ax_options |= XkbAX_SKAcceptFBMask;
-	}
-	else {
-	    xkb_info->config.initial_opts &= ~XkbAX_SKAcceptFBMask;
-	    xkb_info->xkb->ctrls->ax_options &= ~XkbAX_SKAcceptFBMask;
-	}
-
-	/* Enable BounceKeys */
-	XtSetArg(args[0], XtNstate, &state);
-	XtGetValues(bounceToggle, args, 1);
-	if (state) {
-	    xkb_info->config.initial_ctrls |= XkbBounceKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls |= XkbBounceKeysMask;
-	    xkb_info->config.debounce_delay =
-	    xkb_info->xkb->ctrls->debounce_delay = bounce->value * 1000;
-	}
-	else {
-	    xkb_info->config.initial_ctrls &= ~XkbBounceKeysMask;
-	    xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbBounceKeysMask;
-	}
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbAccessXKeysMask;
     }
     else {
-	xkb_info->config.initial_ctrls &=
-	~(XkbAccessXKeysMask | XkbStickyKeysMask | XkbMouseKeysMask |
-	  XkbMouseKeysAccelMask | XkbRepeatKeysMask | XkbSlowKeysMask |
-	  XkbBounceKeysMask);
-	xkb_info->config.initial_opts &=
-	~(XkbAX_TwoKeysMask | XkbAX_LatchToLockMask | XkbAX_StickyKeysFBMask |
-	  XkbAX_SKPressFBMask | XkbAX_SKAcceptFBMask);
+	xkb_info->config.initial_ctrls &= ~XkbAccessXKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbAccessXKeysMask;
+    }
 
-	xkb_info->xkb->ctrls->enabled_ctrls &=
-	~(XkbAccessXKeysMask | XkbStickyKeysMask | XkbMouseKeysMask |
-	  XkbMouseKeysAccelMask | XkbRepeatKeysMask | XkbSlowKeysMask |
-	  XkbBounceKeysMask);
-	xkb_info->xkb->ctrls->ax_options &=
-	~(XkbAX_TwoKeysMask | XkbAX_LatchToLockMask | XkbAX_StickyKeysFBMask |
-	  XkbAX_SKPressFBMask | XkbAX_SKAcceptFBMask);
+    /* Timeout */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(timeoutToggle, args, 1);
+    if (state)
+	xkb_info->config.ax_timeout =
+	xkb_info->xkb->ctrls->ax_timeout = timeout->value * 60;
+    else
+	xkb_info->config.ax_timeout =
+	xkb_info->xkb->ctrls->ax_timeout = 65535;
+
+    /* Enable StickyKeys */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(sticky, args, 1);
+    if (state) {
+	xkb_info->config.initial_ctrls |= XkbStickyKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbStickyKeysMask;
+    }
+    else {
+	xkb_info->config.initial_ctrls &= ~XkbStickyKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbStickyKeysMask;
+    }
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(stickyAuto, args, 1);
+    if (state) {
+	xkb_info->config.initial_opts &= ~XkbAX_TwoKeysMask;
+	xkb_info->config.initial_opts &= ~XkbAX_LatchToLockMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_TwoKeysMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_LatchToLockMask;
+    }
+    else {
+	xkb_info->config.initial_opts &= ~XkbAX_TwoKeysMask;
+	xkb_info->config.initial_opts |= XkbAX_LatchToLockMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_TwoKeysMask;
+	xkb_info->xkb->ctrls->ax_options |= XkbAX_LatchToLockMask;
+    }
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(stickyBeep, args, 1);
+    if (state) {
+	xkb_info->config.initial_opts |= XkbAX_StickyKeysFBMask;
+	xkb_info->xkb->ctrls->ax_options |= XkbAX_StickyKeysFBMask;
+    }
+    else {
+	xkb_info->config.initial_opts &= ~XkbAX_StickyKeysFBMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_StickyKeysFBMask;
+    }
+
+    /* Enable MouseKeys */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(mouse, args, 1);
+    if (state) {
+	xkb_info->config.initial_ctrls |= XkbMouseKeysAccelMask;
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbMouseKeysMask |
+					       XkbMouseKeysAccelMask;
+	xkb_info->config.mk_delay =
+	    xkb_info->xkb->ctrls->mk_delay = mouseDelay->value * 100;
+	xkb_info->config.mk_interval =
+	    xkb_info->xkb->ctrls->mk_interval = 40;
+	xkb_info->config.mk_time_to_max =
+	xkb_info->xkb->ctrls->mk_time_to_max =
+	    (mouseTime->value * 1000) / xkb_info->xkb->ctrls->mk_interval;
+	xkb_info->config.mk_max_speed =
+	xkb_info->xkb->ctrls->mk_max_speed =
+	    mouseSpeed->value * mouseTime->value;
+	xkb_info->config.mk_curve = xkb_info->xkb->ctrls->mk_curve = 0;
+    }
+    else {
+	xkb_info->config.initial_ctrls &= ~(XkbMouseKeysMask |
+					    XkbMouseKeysAccelMask);
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~(XkbMouseKeysMask |
+						 XkbMouseKeysAccelMask);
+    }
+
+    /* Enable RepeatKeys */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(repeat, args, 1);
+    if (state) {
+	xkb_info->config.initial_ctrls |= XkbRepeatKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbRepeatKeysMask;
+	xkb_info->config.repeat_interval =
+	xkb_info->xkb->ctrls->repeat_interval = repeatRate->value * 1000;
+	xkb_info->config.repeat_delay =
+	xkb_info->xkb->ctrls->repeat_delay = repeatDelay->value * 1000;
+    }
+    else {
+	xkb_info->config.initial_ctrls &= ~XkbRepeatKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbRepeatKeysMask;
+    }
+
+    /* Enable SlowKeys */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(slowToggle, args, 1);
+    if (state) {
+	xkb_info->config.initial_ctrls |= XkbSlowKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbSlowKeysMask;
+	xkb_info->config.slow_keys_delay =
+	xkb_info->xkb->ctrls->slow_keys_delay = slow->value * 1000;
+    }
+    else {
+	xkb_info->config.initial_ctrls &= ~XkbSlowKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbSlowKeysMask;
+    }
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(slowPressed, args, 1);
+    if (state) {
+	xkb_info->config.initial_opts |= XkbAX_SKPressFBMask;
+	xkb_info->xkb->ctrls->ax_options |= XkbAX_SKPressFBMask;
+    }
+    else {
+	xkb_info->config.initial_opts &= ~XkbAX_SKPressFBMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_SKPressFBMask;
+    }
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(slowAccepted, args, 1);
+    if (state) {
+	xkb_info->config.initial_opts |= XkbAX_SKAcceptFBMask;
+	xkb_info->xkb->ctrls->ax_options |= XkbAX_SKAcceptFBMask;
+    }
+    else {
+	xkb_info->config.initial_opts &= ~XkbAX_SKAcceptFBMask;
+	xkb_info->xkb->ctrls->ax_options &= ~XkbAX_SKAcceptFBMask;
+    }
+
+    /* Enable BounceKeys */
+    XtSetArg(args[0], XtNstate, &state);
+    XtGetValues(bounceToggle, args, 1);
+    if (state) {
+	xkb_info->config.initial_ctrls |= XkbBounceKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbBounceKeysMask;
+	xkb_info->config.debounce_delay =
+	xkb_info->xkb->ctrls->debounce_delay = bounce->value * 1000;
+    }
+    else {
+	xkb_info->config.initial_ctrls &= ~XkbBounceKeysMask;
+	xkb_info->xkb->ctrls->enabled_ctrls &= ~XkbBounceKeysMask;
     }
 
     XkbSetControls(DPY, XkbAllControlsMask, xkb_info->xkb);

@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley && Dean Verheiden -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecphoto.c,v 3.4 1998/10/25 07:11:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecphoto.c,v 3.3 1998/10/05 13:22:29 dawes Exp $ */
 #define _XIEC_MECPHOTO
 #define _XIEC_ECPHOTO
 #define _XIEC_EPHOTO

@@ -19,7 +19,7 @@
 *   or  in  FAR 52.227-19, as applicable.                       *
 *                                                               *
 *****************************************************************/
-/* $XFree86: xc/include/extensions/panoramiXproto.h,v 3.5 2000/03/01 01:04:21 dawes Exp $ */
+/* $XFree86$ */
 
 /* THIS IS NOT AN X PROJECT TEAM SPECIFICATION */
 

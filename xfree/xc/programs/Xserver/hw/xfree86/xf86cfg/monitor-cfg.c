@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/monitor-cfg.c,v 1.4 2000/11/30 20:55:18 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/monitor-cfg.c,v 1.5 2001/01/31 20:52:19 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -275,6 +275,7 @@ string_to_parser_range(char *str, parser_range *range, int nrange)
 	    range[i].lo = range[i].hi = val;
 	    if (++i >= nrange || *str == '\0')
 		break;
+	    continue;
 	}
 	else if (*str != '-')
 	    return (0);

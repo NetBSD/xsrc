@@ -40,7 +40,7 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/include/difsfn.h,v 1.3 1998/10/25 12:48:03 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _DIFSFONT_H_
 #define _DIFSFONT_H_

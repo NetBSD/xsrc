@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/editres/comm.c,v 1.3 1999/02/01 12:52:25 dawes Exp $ */
+/* $XFree86$ */
 
 
 /*

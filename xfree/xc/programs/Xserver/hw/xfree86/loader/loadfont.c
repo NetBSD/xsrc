@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadfont.c,v 1.2 1998/12/13 12:42:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadfont.c,v 1.1 1998/12/13 05:32:55 dawes Exp $ */
 
 /* Maybe this file belongs in lib/font/fontfile/module/ ? */
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.13 2000/10/20 14:59:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.12 2000/04/04 22:36:54 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

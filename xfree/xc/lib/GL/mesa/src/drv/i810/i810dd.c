@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810dd.c,v 1.4 2000/09/24 13:51:04 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810dd.c,v 1.3 2000/06/22 16:59:24 tsi Exp $ */
 
 #include "types.h"
 #include "vbrender.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.13 2000/08/11 17:27:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.12 1999/04/29 05:12:58 dawes Exp $ */
 /*
  *
  * For Scancodes see notes in atKeynames.h  !!!!

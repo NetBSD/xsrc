@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/globals.h,v 1.3 1999/06/13 13:47:01 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/globals.h,v 1.2 1998/12/20 11:56:59 dawes Exp $ */
 
 extern void _XieElemImportClientLUT		(char **, XiePhotoElement *);
 extern void _XieElemImportClientPhoto		(char **, XiePhotoElement *);

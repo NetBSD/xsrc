@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)configstr.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/os/configstr.h,v 1.3 1999/03/07 14:23:33 dawes Exp $ */
+/* $XFree86$ */
 #ifndef _CONFIGSTR_H_
 #define _CONFIGSTR_H_
 #include	"config.h"

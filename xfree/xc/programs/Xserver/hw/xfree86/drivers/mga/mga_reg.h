@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.14 2000/11/08 05:03:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.13 2000/11/01 21:55:09 mvojkovi Exp $ */
 
 
 

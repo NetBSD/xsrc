@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xtst/XTest.c,v 1.2 1998/12/20 11:57:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.1.1.1.12.2 1998/10/04 15:22:55 hohndel Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

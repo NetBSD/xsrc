@@ -1,5 +1,5 @@
 /* $XConsortium: GCOps.c /main/10 1996/12/02 10:21:24 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.3 1996/12/23 07:09:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.2 1996/01/24 22:04:13 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

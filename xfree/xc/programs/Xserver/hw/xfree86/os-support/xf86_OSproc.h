@@ -64,7 +64,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.49 2000/12/07 15:43:45 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.48 2000/11/21 23:10:40 tsi Exp $ */
 
 #ifndef _XF86_OSPROC_H
 #define _XF86_OSPROC_H

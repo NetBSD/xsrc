@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.4 2000/10/11 22:52:56 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64io.h,v 1.3 2000/08/22 21:54:30 tsi Exp $ */
 /*
  * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

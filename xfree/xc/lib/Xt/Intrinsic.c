@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.16 2000/09/27 18:49:59 keithp Exp $ */
+/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.13 1998/10/03 09:06:54 dawes Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xaw/OS.c,v 1.2 1998/12/06 11:24:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/OS.c,v 1.1 1998/12/06 10:44:34 dawes Exp $ */
 
 /* Some OS-dependent utility code */
 

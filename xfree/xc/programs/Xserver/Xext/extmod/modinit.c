@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/extmod/modinit.c,v 1.14 2000/08/09 03:06:55 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/extmod/modinit.c,v 1.13 2000/02/13 06:15:31 dawes Exp $ */
 
 /*
  *

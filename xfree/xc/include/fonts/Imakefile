@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/6 1996/09/28 16:32:27 rws $
-XCOMM $XFree86: xc/include/fonts/Imakefile,v 3.6 1999/08/28 09:00:23 dawes Exp $
+XCOMM $XFree86: xc/include/fonts/Imakefile,v 3.5 1999/08/14 10:49:16 dawes Exp $
 
     HEADERS = FS.h FSproto.h fsmasks.h
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.9 2000/09/07 19:06:52 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.9 2000/09/07 14:40:26 anderson Exp $ */
 
 
 typedef unsigned long	Elf32_Addr;

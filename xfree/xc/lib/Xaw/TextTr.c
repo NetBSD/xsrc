@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextTr.c,v 3.14 2000/06/13 23:15:48 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextTr.c,v 3.13 1999/06/06 08:48:18 dawes Exp $ */
 
 /* INTERNATIONALIZATION:
 

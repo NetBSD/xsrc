@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/getnext.c,v 1.3 1999/03/02 11:49:49 dawes Exp $ */
+/* $XFree86$ */
 
 #include	<stdio.h>
 #include	<ctype.h>

@@ -22,7 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_clip.c,v 1.1 2000/05/18 23:21:36 dawes Exp $ */
+/* $XFree86$ */
 
 #include "ffb.h"
 #include "ffb_regs.h"

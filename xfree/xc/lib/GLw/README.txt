@@ -196,4 +196,4 @@ should be grateful to Sallman too :-).
 
 
 
-$XFree86: xc/lib/GLw/README.txt,v 1.2 2000/11/06 21:57:10 dawes Exp $
+$XFree86$

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/ISO8859.6/Imakefile.inc,v 1.1 1999/03/28 15:31:53 dawes Exp $
+XCOMM $XFree86$
 
 #define ModuleName ISO8859_6
 MODULENAME = ModuleName

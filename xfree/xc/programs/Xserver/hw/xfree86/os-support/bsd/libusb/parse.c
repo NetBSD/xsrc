@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.1 2001/01/01 12:46:30 veego Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.2 2001/03/18 17:33:10 veego Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/libusb/parse.c,v 1.1 2000/02/11 18:06:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/libusb/parse.c,v 1.1.2.2 1999/12/03 10:12:42 hohndel Exp $ */
 
 #include <assert.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.4 2000/09/22 11:35:49 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.3 1999/04/04 08:46:14 dawes Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>

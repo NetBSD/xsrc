@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/StripChart.c,v 1.6 1999/06/06 08:48:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/StripChart.c,v 1.5 1999/01/31 12:21:18 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>

@@ -24,7 +24,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.11 2000/12/07 20:26:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.10 2000/12/04 18:49:28 dawes Exp $ */
 
 /*
  * This file contains:

@@ -25,4 +25,4 @@ EXPORTS
 	_XRenderFindFormat
 	_XRenderFindVisual
 
-/* $XFree86: xc/lib/Xrender/Xrender-def.cpp,v 1.2 2000/12/04 21:01:00 dawes Exp $ */
+/* $XFree86$ */

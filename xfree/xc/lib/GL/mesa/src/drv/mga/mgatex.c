@@ -25,7 +25,7 @@
  *	9/20/99 rewrite by John Carmack <johnc@idsoftware.com>
  *      13/1/00 port to DRI by Keith Whitwell <keithw@precisioninsight.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.7 2000/11/08 05:02:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.6 2000/09/24 13:51:07 alanh Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>

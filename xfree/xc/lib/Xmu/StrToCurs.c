@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.6 1998/10/03 09:06:34 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.5 1998/08/16 10:25:19 dawes Exp $ */
 
 #include	<X11/Intrinsic.h>
 #include	<X11/StringDefs.h>

@@ -19,7 +19,7 @@
 *   or  in  FAR 52.227-19, as applicable.                       *
 *                                                               *
 *****************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXSwap.c,v 3.6 2000/02/27 23:15:30 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXSwap.c,v 3.4 1999/01/13 08:30:48 dawes Exp $ */
 
 #include <stdio.h>
 #include "X.h"

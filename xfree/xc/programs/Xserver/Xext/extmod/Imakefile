@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.20 2000/08/15 16:05:33 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.19 2000/08/09 03:06:55 tsi Exp $
 XCOMM This directory is only entered if DoLoadableServer is set
 
 #define IHaveModules

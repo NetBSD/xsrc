@@ -6,7 +6,7 @@
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.28 2000/08/05 03:32:37 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.27 2000/08/04 16:13:26 eich Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

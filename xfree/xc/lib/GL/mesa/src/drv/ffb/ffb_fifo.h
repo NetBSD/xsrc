@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_fifo.h,v 1.1 2000/06/20 05:08:38 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _FFB_FIFO_H
 #define _FFB_FIFO_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_linetmp.h,v 1.1 2000/06/20 05:08:38 dawes Exp $ */
+/* $XFree86$ */
 
 static void TAG(ffb_line)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint pv)
 {

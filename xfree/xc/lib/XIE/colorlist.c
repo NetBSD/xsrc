@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/colorlist.c,v 1.4 2000/09/26 15:56:53 tsi Exp $ */
+/* $XFree86: xc/lib/XIE/colorlist.c,v 1.3 1999/06/13 16:18:08 dawes Exp $ */
 
 #include "XIElibint.h"
 

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.9 1997/12/06 09:26:14 hohndel Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.8 1997/10/26 13:25:31 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xaw6/Imakefile,v 1.2 1999/06/06 14:05:55 dawes Exp $
+XCOMM $XFree86: xc/lib/Xaw6/Imakefile,v 1.1 1999/06/06 08:48:36 dawes Exp $
 #define DoNormalLib NormalLibXaw6
 #define DoSharedLib SharedLibXaw6
 #define DoExtraLib SharedLibXaw6

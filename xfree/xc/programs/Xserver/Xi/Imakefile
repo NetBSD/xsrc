@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:56:49 rws $
-XCOMM $XFree86: xc/programs/Xserver/Xi/Imakefile,v 3.2 1999/04/17 09:08:22 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xi/Imakefile,v 3.1 1996/12/23 06:29:11 dawes Exp $
 #include <Server.tmpl>
 
        SRCS = 	allowev.c \

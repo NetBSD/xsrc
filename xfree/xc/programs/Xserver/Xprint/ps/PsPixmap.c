@@ -53,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixmap.c,v 1.3 1999/12/13 02:13:01 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPixmap.c,v 1.2 1999/01/31 12:21:40 dawes Exp $ */
 /*******************************************************************
 **
 **    *********************************************************

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.9 2000/10/06 12:31:03 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.7 2000/02/25 21:02:56 dawes Exp $ */
 
 #ifndef __NV_INCLUDE_H__
 #define __NV_INCLUDE_H__

@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexLut.c,v 3.7 1999/01/31 12:21:31 dawes Exp $ */
+/* $XFree86$ */
 
 
 /*++

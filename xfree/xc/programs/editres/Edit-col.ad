@@ -1,7 +1,7 @@
 ! $XConsortium: Edit-col.ad,v 1.6 93/04/28 14:26:45 dave Exp $
 ! Here are some suggested resources if you are using a color workstation.
 ! They look pretty good on my display, your mileage may vary.
-! $XFree86: xc/programs/editres/Edit-col.ad,v 1.2 1999/05/16 10:13:06 dawes Exp $
+! $XFree86$
 
 #include "Editres"
 

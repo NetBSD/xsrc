@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.7 2000/06/30 18:27:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.6 2000/02/29 03:09:18 dawes Exp $ */
 
 #if PSZ != 24
 #include "dixstruct.h"

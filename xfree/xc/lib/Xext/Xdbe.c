@@ -30,7 +30,7 @@
  *     Xlib DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.2 2000/09/26 15:56:56 tsi Exp $ */
+/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.1tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

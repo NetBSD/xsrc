@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miline.h,v 1.4 1999/10/13 22:33:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miline.h,v 1.3 1998/10/04 09:39:30 dawes Exp $ */
 
 #ifndef MILINE_H
 

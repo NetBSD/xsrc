@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/render.c,v 1.8 2000/12/05 03:13:34 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/render.c,v 1.10 2001/03/08 03:48:44 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -69,8 +69,11 @@ static int ProcRenderFreeGlyphSet (ClientPtr pClient);
 static int ProcRenderAddGlyphs (ClientPtr pClient);
 static int ProcRenderAddGlyphsFromPicture (ClientPtr pClient);
 static int ProcRenderFreeGlyphs (ClientPtr pClient);
-static int ProcRenderCompositeGlyphs (ClientPtr pClient, int size);
+static int ProcRenderCompositeGlyphs (ClientPtr pClient);
+static int ProcRenderFillRectangles (ClientPtr pClient);
+
 static int ProcRenderDispatch (ClientPtr pClient);
+
 static int SProcRenderQueryVersion (ClientPtr pClient);
 static int SProcRenderQueryPictFormats (ClientPtr pClient);
 static int SProcRenderQueryPictIndexValues (ClientPtr pClient);
@@ -94,13 +97,78 @@ static int SProcRenderFreeGlyphSet (ClientPtr pClient);
 static int SProcRenderAddGlyphs (ClientPtr pClient);
 static int SProcRenderAddGlyphsFromPicture (ClientPtr pClient);
 static int SProcRenderFreeGlyphs (ClientPtr pClient);
+static int SProcRenderCompositeGlyphs (ClientPtr pClient);
+static int SProcRenderFillRectangles (ClientPtr pClient);
+
 static int SProcRenderDispatch (ClientPtr pClient);
+
+#define	RenderNumRequests   (X_RenderFillRectangles+1)
+
+int	(*ProcRenderVector[RenderNumRequests])(ClientPtr) = {
+    ProcRenderQueryVersion,
+    ProcRenderQueryPictFormats,
+    ProcRenderQueryPictIndexValues,
+    ProcRenderQueryDithers,
+    ProcRenderCreatePicture,
+    ProcRenderChangePicture,
+    ProcRenderSetPictureClipRectangles,
+    ProcRenderFreePicture,
+    ProcRenderComposite,
+    ProcRenderScale,
+    ProcRenderTrapezoids,
+    ProcRenderTriangles,
+    ProcRenderTriStrip,
+    ProcRenderTriFan,
+    ProcRenderColorTrapezoids,
+    ProcRenderColorTriangles,
+    ProcRenderTransform,
+    ProcRenderCreateGlyphSet,
+    ProcRenderReferenceGlyphSet,
+    ProcRenderFreeGlyphSet,
+    ProcRenderAddGlyphs,
+    ProcRenderAddGlyphsFromPicture,
+    ProcRenderFreeGlyphs,
+    ProcRenderCompositeGlyphs,
+    ProcRenderCompositeGlyphs,
+    ProcRenderCompositeGlyphs,
+    ProcRenderFillRectangles,
+};
+
+int	(*SProcRenderVector[RenderNumRequests])(ClientPtr) = {
+    SProcRenderQueryVersion,
+    SProcRenderQueryPictFormats,
+    SProcRenderQueryPictIndexValues,
+    SProcRenderQueryDithers,
+    SProcRenderCreatePicture,
+    SProcRenderChangePicture,
+    SProcRenderSetPictureClipRectangles,
+    SProcRenderFreePicture,
+    SProcRenderComposite,
+    SProcRenderScale,
+    SProcRenderTrapezoids,
+    SProcRenderTriangles,
+    SProcRenderTriStrip,
+    SProcRenderTriFan,
+    SProcRenderColorTrapezoids,
+    SProcRenderColorTriangles,
+    SProcRenderTransform,
+    SProcRenderCreateGlyphSet,
+    SProcRenderReferenceGlyphSet,
+    SProcRenderFreeGlyphSet,
+    SProcRenderAddGlyphs,
+    SProcRenderAddGlyphsFromPicture,
+    SProcRenderFreeGlyphs,
+    SProcRenderCompositeGlyphs,
+    SProcRenderCompositeGlyphs,
+    SProcRenderCompositeGlyphs,
+    SProcRenderFillRectangles,
+};
 
 static void
 RenderResetProc (ExtensionEntry *extEntry);
     
 static CARD8	RenderReqCode;
-static int	RenderErrBase;
+int	RenderErrBase;
 
 void
 RenderExtensionInit (void)
@@ -181,6 +249,8 @@ findVisual (ScreenPtr pScreen, VisualID vid)
     return 0;
 }
 
+extern char *ConnectionInfo;
+
 static int
 ProcRenderQueryPictFormats (ClientPtr client)
 {
@@ -201,12 +271,21 @@ ProcRenderQueryPictFormats (ClientPtr client)
     int				    rlength;
     int				    s;
     int				    n;
+    int				    numScreens;
 /*    REQUEST(xRenderQueryPictFormatsReq); */
 
     REQUEST_SIZE_MATCH(xRenderQueryPictFormatsReq);
 
+#ifdef PANORAMIX
+    if (noPanoramiXExtension)
+	numScreens = screenInfo.numScreens;
+    else 
+        numScreens = ((xConnSetup *)ConnectionInfo)->numRoots;
+#else
+    numScreens = screenInfo.numScreens;
+#endif
     ndepth = nformat = nvisual = 0;
-    for (s = 0; s < screenInfo.numScreens; s++)
+    for (s = 0; s < numScreens; s++)
     {
 	pScreen = screenInfo.screens[s];
 	for (d = 0; d < pScreen->numDepths; d++)
@@ -227,7 +306,7 @@ ProcRenderQueryPictFormats (ClientPtr client)
     }
     rlength = (sizeof (xRenderQueryPictFormatsReply) +
 	       nformat * sizeof (xPictFormInfo) +
-	       screenInfo.numScreens * sizeof (xPictScreen) +
+	       numScreens * sizeof (xPictScreen) +
 	       ndepth * sizeof (xPictDepth) +
 	       nvisual * sizeof (xPictVisual));
     reply = (xRenderQueryPictFormatsReply *) xalloc (rlength);
@@ -237,13 +316,13 @@ ProcRenderQueryPictFormats (ClientPtr client)
     reply->sequenceNumber = client->sequence;
     reply->length = (rlength - sizeof(xGenericReply)) >> 2;
     reply->numFormats = nformat;
-    reply->numScreens = screenInfo.numScreens;
+    reply->numScreens = numScreens;
     reply->numDepths = ndepth;
     reply->numVisuals = nvisual;
     
     pictForm = (xPictFormInfo *) (reply + 1);
     
-    for (s = 0; s < screenInfo.numScreens; s++)
+    for (s = 0; s < numScreens; s++)
     {
 	pScreen = screenInfo.screens[s];
 	ps = GetPictureScreenIfSet(pScreen);
@@ -287,7 +366,7 @@ ProcRenderQueryPictFormats (ClientPtr client)
     }
     
     pictScreen = (xPictScreen *) pictForm;
-    for (s = 0; s < screenInfo.numScreens; s++)
+    for (s = 0; s < numScreens; s++)
     {
 	pScreen = screenInfo.screens[s];
 	pictDepth = (xPictDepth *) (pictScreen + 1);
@@ -761,7 +840,7 @@ ProcRenderFreeGlyphs (ClientPtr client)
 }
 
 static int
-ProcRenderCompositeGlyphs (ClientPtr client, int size)
+ProcRenderCompositeGlyphs (ClientPtr client)
 {
     GlyphSetPtr     glyphSet;
     GlyphSet	    gs;
@@ -777,12 +856,19 @@ ProcRenderCompositeGlyphs (ClientPtr client, int size)
     int		    nglyph;
     int		    nlist;
     int		    space;
+    int		    size;
     int		    n;
     
     REQUEST(xRenderCompositeGlyphsReq);
 
     REQUEST_AT_LEAST_SIZE(xRenderCompositeGlyphsReq);
 
+    switch (stuff->renderReqType) {
+    default:			    size = 1; break;
+    case X_RenderCompositeGlyphs16: size = 2; break;
+    case X_RenderCompositeGlyphs32: size = 4; break;
+    }
+	    
     VERIFY_PICTURE (pSrc, stuff->src, client, SecurityReadAccess,
 		    RenderErrBase + BadPicture);
     VERIFY_PICTURE (pDst, stuff->dst, client, SecurityWriteAccess,
@@ -970,65 +1056,11 @@ static int
 ProcRenderDispatch (ClientPtr client)
 {
     REQUEST(xReq);
-    switch (stuff->data)
-    {
-    case X_RenderQueryVersion:
-	return ProcRenderQueryVersion(client);
-    case X_RenderQueryPictFormats:
-	return ProcRenderQueryPictFormats(client);
-    case X_RenderQueryPictIndexValues:
-	return ProcRenderQueryPictIndexValues(client);
-    case X_RenderQueryDithers:
-	return ProcRenderQueryDithers(client);
-    case X_RenderCreatePicture:
-	return ProcRenderCreatePicture(client);
-    case X_RenderChangePicture:
-	return ProcRenderChangePicture(client);
-    case X_RenderSetPictureClipRectangles:
-	return ProcRenderSetPictureClipRectangles(client);
-    case X_RenderFreePicture:
-	return ProcRenderFreePicture(client);
-    case X_RenderComposite:
-	return ProcRenderComposite(client);
-    case X_RenderScale:
-	return ProcRenderScale(client);
-    case X_RenderTrapezoids:
-	return ProcRenderTrapezoids(client);
-    case X_RenderTriangles:
-	return ProcRenderTriangles(client);
-    case X_RenderTriStrip:
-	return ProcRenderTriStrip(client);
-    case X_RenderTriFan:
-	return ProcRenderTriFan(client);
-    case X_RenderColorTrapezoids:
-	return ProcRenderColorTrapezoids(client);
-    case X_RenderColorTriangles:
-	return ProcRenderColorTriangles(client);
-    case X_RenderTransform:
-	return ProcRenderTransform(client);
-    case X_RenderCreateGlyphSet:
-	return ProcRenderCreateGlyphSet(client);
-    case X_RenderReferenceGlyphSet:
-	return ProcRenderReferenceGlyphSet(client);
-    case X_RenderFreeGlyphSet:
-	return ProcRenderFreeGlyphSet(client);
-    case X_RenderAddGlyphs:
-	return ProcRenderAddGlyphs(client);
-    case X_RenderAddGlyphsFromPicture:
-	return ProcRenderAddGlyphsFromPicture(client);
-    case X_RenderFreeGlyphs:
-	return ProcRenderFreeGlyphs(client);
-    case X_RenderCompositeGlyphs8:
-	return ProcRenderCompositeGlyphs(client, 1);
-    case X_RenderCompositeGlyphs16:
-	return ProcRenderCompositeGlyphs(client, 2);
-    case X_RenderCompositeGlyphs32:
-	return ProcRenderCompositeGlyphs(client, 4);
-    case X_RenderFillRectangles:
-	return ProcRenderFillRectangles(client);
-    default:
+    
+    if (stuff->data < RenderNumRequests)
+	return (*ProcRenderVector[stuff->data]) (client);
+    else
 	return BadRequest;
-    }
 }
 
 static int
@@ -1040,7 +1072,7 @@ SProcRenderQueryVersion (ClientPtr client)
     swaps(&stuff->length, n);
     swapl(&stuff->majorVersion, n);
     swapl(&stuff->minorVersion, n);
-    return ProcRenderQueryVersion(client);
+    return (*ProcRenderVector[stuff->renderReqType])(client);
 }
 
 static int
@@ -1049,7 +1081,7 @@ SProcRenderQueryPictFormats (ClientPtr client)
     register int n;
     REQUEST(xRenderQueryPictFormatsReq);
     swaps(&stuff->length, n);
-    return ProcRenderQueryPictFormats (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1075,7 +1107,7 @@ SProcRenderCreatePicture (ClientPtr client)
     swapl(&stuff->format, n);
     swapl(&stuff->mask, n);
     SwapRestL(stuff);
-    return ProcRenderCreatePicture (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1087,7 +1119,7 @@ SProcRenderChangePicture (ClientPtr client)
     swapl(&stuff->picture, n);
     swapl(&stuff->mask, n);
     SwapRestL(stuff);
-    return ProcRenderChangePicture (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1098,7 +1130,7 @@ SProcRenderSetPictureClipRectangles (ClientPtr client)
     swaps(&stuff->length, n);
     swapl(&stuff->picture, n);
     SwapRestS(stuff);
-    return ProcRenderSetPictureClipRectangles (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1108,7 +1140,7 @@ SProcRenderFreePicture (ClientPtr client)
     REQUEST(xRenderFreePictureReq);
     swaps(&stuff->length, n);
     swapl(&stuff->picture, n);
-    return ProcRenderFreePicture (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1128,7 +1160,7 @@ SProcRenderComposite (ClientPtr client)
     swaps(&stuff->yDst, n);
     swaps(&stuff->width, n);
     swaps(&stuff->height, n);
-    return ProcRenderComposite (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1147,7 +1179,7 @@ SProcRenderScale (ClientPtr client)
     swaps(&stuff->yDst, n);
     swaps(&stuff->width, n);
     swaps(&stuff->height, n);
-    return ProcRenderScale (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1200,7 +1232,7 @@ SProcRenderCreateGlyphSet (ClientPtr client)
     swaps(&stuff->length, n);
     swapl(&stuff->gsid, n);
     swapl(&stuff->format, n);
-    return ProcRenderCreateGlyphSet (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1211,7 +1243,7 @@ SProcRenderReferenceGlyphSet (ClientPtr client)
     swaps(&stuff->length, n);
     swapl(&stuff->gsid, n);
     swapl(&stuff->existing, n);
-    return ProcRenderReferenceGlyphSet  (client);
+    return (*ProcRenderVector[stuff->renderReqType])  (client);
 }
 
 static int
@@ -1221,7 +1253,7 @@ SProcRenderFreeGlyphSet (ClientPtr client)
     REQUEST(xRenderFreeGlyphSetReq);
     swaps(&stuff->length, n);
     swapl(&stuff->glyphset, n);
-    return ProcRenderFreeGlyphSet (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1255,7 +1287,7 @@ SProcRenderAddGlyphs (ClientPtr client)
 	swaps (&gi[i].xOff, n);
 	swaps (&gi[i].yOff, n);
     }
-    return ProcRenderAddGlyphs (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1272,19 +1304,28 @@ SProcRenderFreeGlyphs (ClientPtr client)
     swaps(&stuff->length, n);
     swapl(&stuff->glyphset, n);
     SwapRestL(stuff);
-    return ProcRenderFreeGlyphs (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
-SProcRenderCompositeGlyphs (ClientPtr client, int size)
+SProcRenderCompositeGlyphs (ClientPtr client)
 {
     register int n;
     xGlyphElt	*elt;
     CARD8	*buffer;
     CARD8	*end;
     int		space;
+    int		i;
+    int		size;
     
     REQUEST(xRenderCompositeGlyphsReq);
+    
+    switch (stuff->renderReqType) {
+    default:			    size = 1; break;
+    case X_RenderCompositeGlyphs16: size = 2; break;
+    case X_RenderCompositeGlyphs32: size = 4; break;
+    }
+	    
     swaps(&stuff->length, n);
     swapl(&stuff->src, n);
     swapl(&stuff->dst, n);
@@ -1302,19 +1343,39 @@ SProcRenderCompositeGlyphs (ClientPtr client, int size)
 	swaps (&elt->deltax, n);
 	swaps (&elt->deltay, n);
 	
-	if (elt->len == 0xff)
+	i = elt->len;
+	if (i == 0xff)
 	{
+	    swapl (buffer, n);
 	    buffer += 4;
 	}
 	else
 	{
-	    space = size * elt->len;
+	    space = size * i;
+	    switch (size) {
+	    case 1:
+		buffer += i;
+		break;
+	    case 2:
+		while (i--)
+		{
+		    swaps (buffer, n);
+		    buffer += 2;
+		}
+		break;
+	    case 4:
+		while (i--)
+		{
+		    swapl (buffer, n);
+		    buffer += 4;
+		}
+		break;
+	    }
 	    if (space & 3)
-		space += 4 - (space & 3);
-	    buffer += space;
+		buffer += 4 - (space & 3);
 	}
     }
-    return ProcRenderCompositeGlyphs (client, size);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
 
 static int
@@ -1330,70 +1391,321 @@ SProcRenderFillRectangles (ClientPtr client)
     swaps(&stuff->color.blue, n);
     swaps(&stuff->color.alpha, n);
     SwapRestS(stuff);
-    return ProcRenderFillRectangles (client);
+    return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
     
 static int
 SProcRenderDispatch (ClientPtr client)
 {
     REQUEST(xReq);
-    switch (stuff->data)
-    {
-    case X_RenderQueryVersion:
-	return SProcRenderQueryVersion(client);
-    case X_RenderQueryPictFormats:
-	return SProcRenderQueryPictFormats(client);
-    case X_RenderQueryPictIndexValues:
-	return SProcRenderQueryPictIndexValues(client);
-    case X_RenderQueryDithers:
-	return SProcRenderQueryDithers(client);
-    case X_RenderCreatePicture:
-	return SProcRenderCreatePicture(client);
-    case X_RenderChangePicture:
-	return SProcRenderChangePicture(client);
-    case X_RenderSetPictureClipRectangles:
-	return SProcRenderSetPictureClipRectangles(client);
-    case X_RenderFreePicture:
-	return SProcRenderFreePicture(client);
-    case X_RenderComposite:
-	return SProcRenderComposite(client);
-    case X_RenderScale:
-	return SProcRenderScale(client);
-    case X_RenderTrapezoids:
-	return SProcRenderTrapezoids(client);
-    case X_RenderTriangles:
-	return SProcRenderTriangles(client);
-    case X_RenderTriStrip:
-	return SProcRenderTriStrip(client);
-    case X_RenderTriFan:
-	return SProcRenderTriFan(client);
-    case X_RenderColorTrapezoids:
-	return SProcRenderColorTrapezoids(client);
-    case X_RenderColorTriangles:
-	return SProcRenderColorTriangles(client);
-    case X_RenderTransform:
-	return SProcRenderTransform(client);
-    case X_RenderCreateGlyphSet:
-	return SProcRenderCreateGlyphSet(client);
-    case X_RenderReferenceGlyphSet:
-	return SProcRenderReferenceGlyphSet(client);
-    case X_RenderFreeGlyphSet:
-	return SProcRenderFreeGlyphSet(client);
-    case X_RenderAddGlyphs:
-	return SProcRenderAddGlyphs(client);
-    case X_RenderAddGlyphsFromPicture:
-	return SProcRenderAddGlyphsFromPicture(client);
-    case X_RenderFreeGlyphs:
-	return SProcRenderFreeGlyphs(client);
-    case X_RenderCompositeGlyphs8:
-	return SProcRenderCompositeGlyphs(client, 1);
-    case X_RenderCompositeGlyphs16:
-	return SProcRenderCompositeGlyphs(client, 2);
-    case X_RenderCompositeGlyphs32:
-	return SProcRenderCompositeGlyphs(client, 4);
-    case X_RenderFillRectangles:
-	return SProcRenderFillRectangles(client);
-    default:
+    
+    if (stuff->data < RenderNumRequests)
+	return (*SProcRenderVector[stuff->data]) (client);
+    else
 	return BadRequest;
-    }
 }
+
+#ifdef PANORAMIX
+#include "panoramiX.h"
+#include "panoramiXsrv.h"
+
+#define VERIFY_XIN_PICTURE(pPicture, pid, client, mode, err) {\
+    pPicture = SecurityLookupIDByType(client, pid, XRT_PICTURE, mode);\
+    if (!pPicture) { \
+	client->errorValue = pid; \
+	return err; \
+    } \
+}
+
+#define VERIFY_XIN_ALPHA(pPicture, pid, client, mode, err) {\
+    if (pid == None) \
+	pPicture = 0; \
+    else { \
+	VERIFY_XIN_PICTURE(pPicture, pid, client, mode, err); \
+    } \
+} \
+
+int	    (*PanoramiXSaveRenderVector[RenderNumRequests])(ClientPtr);
+extern int  XineramaDeleteResource(pointer data, XID id);
+
+unsigned long	XRT_PICTURE;
+
+static int
+PanoramiXRenderCreatePicture (ClientPtr client)
+{
+    REQUEST(xRenderCreatePictureReq);
+    PanoramiXRes    *refDraw, *newPict;
+    int		    result = Success, j;
+
+    REQUEST_AT_LEAST_SIZE(xRenderCreatePictureReq);
+    if(!(refDraw = (PanoramiXRes *)SecurityLookupIDByClass(
+		client, stuff->drawable, XRC_DRAWABLE, SecurityWriteAccess)))
+	return BadDrawable;
+    if(!(newPict = (PanoramiXRes *) xalloc(sizeof(PanoramiXRes))))
+	return BadAlloc;
+    newPict->type = XRT_PICTURE;
+    newPict->info[0].id = stuff->pid;
+    
+    if (refDraw->type == XRT_WINDOW &&
+	stuff->drawable == WindowTable[0]->drawable.id)
+    {
+	newPict->u.pict.root = TRUE;
+    }
+    else
+	newPict->u.pict.root = FALSE;
+
+    for(j = 1; j < PanoramiXNumScreens; j++)
+	newPict->info[j].id = FakeClientID(client->index);
+    
+    FOR_NSCREENS_BACKWARD(j) {
+	stuff->pid = newPict->info[j].id;
+	stuff->drawable = refDraw->info[j].id;
+	result = (*PanoramiXSaveRenderVector[X_RenderCreatePicture]) (client);
+	if(result != Success) break;
+    }
+
+    if (result == Success)
+	AddResource(newPict->info[0].id, XRT_PICTURE, newPict);
+    else 
+	xfree(newPict);
+
+    return (result);
+}
+
+static int
+PanoramiXRenderChangePicture (ClientPtr client)
+{
+    PanoramiXRes    *pict;
+    int		    result = Success, j;
+    REQUEST(xRenderChangePictureReq);
+
+    REQUEST_AT_LEAST_SIZE(xChangeWindowAttributesReq);
+    
+    VERIFY_XIN_PICTURE(pict, stuff->picture, client, SecurityWriteAccess,
+		       RenderErrBase + BadPicture);
+    
+    FOR_NSCREENS_BACKWARD(j) {
+        stuff->picture = pict->info[j].id;
+        result = (*PanoramiXSaveRenderVector[X_RenderChangePicture]) (client);
+        if(result != Success) break;
+    }
+
+    return (result);
+}
+
+static int
+PanoramiXRenderSetPictureClipRectangles (ClientPtr client)
+{
+    REQUEST(xRenderSetPictureClipRectanglesReq);
+    int		    result = Success, j;
+    PanoramiXRes    *pict;
+
+    REQUEST_AT_LEAST_SIZE(xRenderSetPictureClipRectanglesReq);
+    
+    VERIFY_XIN_PICTURE(pict, stuff->picture, client, SecurityWriteAccess,
+		       RenderErrBase + BadPicture);
+    
+    FOR_NSCREENS_BACKWARD(j) {
+        stuff->picture = pict->info[j].id;
+        result = (*PanoramiXSaveRenderVector[X_RenderSetPictureClipRectangles]) (client);
+        if(result != Success) break;
+    }
+
+    return (result);
+}
+
+static int
+PanoramiXRenderFreePicture (ClientPtr client)
+{
+    PanoramiXRes *pict;
+    int         result = Success, j;
+    REQUEST(xRenderFreePictureReq);
+
+    REQUEST_SIZE_MATCH(xRenderFreePictureReq);
+
+    client->errorValue = stuff->picture;
+
+    VERIFY_XIN_PICTURE(pict, stuff->picture, client, SecurityDestroyAccess,
+		       RenderErrBase + BadPicture);
+    
+
+    FOR_NSCREENS_BACKWARD(j) {
+	stuff->picture = pict->info[j].id;
+	result = (*PanoramiXSaveRenderVector[X_RenderFreePicture]) (client);
+	if(result != Success) break;
+    }
+
+    /* Since ProcRenderFreePicture is using FreeResource, it will free
+	our resource for us on the last pass through the loop above */
+ 
+    return (result);
+}
+
+static int
+PanoramiXRenderComposite (ClientPtr client)
+{
+    PanoramiXRes	*src, *msk, *dst;
+    int			result = Success, j;
+    xRenderCompositeReq	orig;
+    REQUEST(xRenderCompositeReq);
+
+    REQUEST_SIZE_MATCH(xRenderCompositeReq);
+    
+    VERIFY_XIN_PICTURE (src, stuff->src, client, SecurityReadAccess, 
+			RenderErrBase + BadPicture);
+    VERIFY_XIN_ALPHA (msk, stuff->mask, client, SecurityReadAccess, 
+		      RenderErrBase + BadPicture);
+    VERIFY_XIN_PICTURE (dst, stuff->dst, client, SecurityWriteAccess, 
+			RenderErrBase + BadPicture);
+    
+    orig = *stuff;
+    
+    FOR_NSCREENS_FORWARD(j) {
+	stuff->src = src->info[j].id;
+	if (src->u.pict.root)
+	{
+	    stuff->xSrc = orig.xSrc - panoramiXdataPtr[j].x;
+	    stuff->ySrc = orig.ySrc - panoramiXdataPtr[j].y;
+	}
+	stuff->dst = dst->info[j].id;
+	if (dst->u.pict.root)
+	{
+	    stuff->xDst = orig.xDst - panoramiXdataPtr[j].x;
+	    stuff->yDst = orig.yDst - panoramiXdataPtr[j].y;
+	}
+	if (msk)
+	{
+	    stuff->mask = msk->info[j].id;
+	    if (msk->u.pict.root)
+	    {
+		stuff->xMask = orig.xMask - panoramiXdataPtr[j].x;
+		stuff->yMask = orig.yMask - panoramiXdataPtr[j].y;
+	    }
+	}
+	result = (*PanoramiXSaveRenderVector[X_RenderComposite]) (client);
+	if(result != Success) break;
+    }
+
+    return result;
+}
+
+static int
+PanoramiXRenderCompositeGlyphs (ClientPtr client)
+{
+    PanoramiXRes    *src, *dst;
+    int		    result = Success, j;
+    REQUEST(xRenderCompositeGlyphsReq);
+    xGlyphElt	    origElt, *elt;
+    INT16	    xSrc, ySrc;
+
+    REQUEST_AT_LEAST_SIZE(xRenderCompositeGlyphsReq);
+    VERIFY_XIN_PICTURE (src, stuff->src, client, SecurityReadAccess,
+			RenderErrBase + BadPicture);
+    VERIFY_XIN_PICTURE (dst, stuff->dst, client, SecurityWriteAccess,
+			RenderErrBase + BadPicture);
+
+    if (stuff->length << 2 >= (sizeof (xRenderCompositeGlyphsReq) +
+			       sizeof (xGlyphElt)))
+    {
+	elt = (xGlyphElt *) (stuff + 1);
+	origElt = *elt;
+	xSrc = stuff->xSrc;
+	ySrc = stuff->ySrc;
+	FOR_NSCREENS_FORWARD(j) {
+	    stuff->src = src->info[j].id;
+	    if (src->u.pict.root)
+	    {
+		stuff->xSrc = xSrc - panoramiXdataPtr[j].x;
+		stuff->ySrc = ySrc - panoramiXdataPtr[j].y;
+	    }
+	    stuff->dst = dst->info[j].id;
+	    if (dst->u.pict.root)
+	    {
+		elt->deltax = origElt.deltax - panoramiXdataPtr[j].x;
+		elt->deltay = origElt.deltay - panoramiXdataPtr[j].y;
+	    }
+	    result = (*PanoramiXSaveRenderVector[stuff->renderReqType]) (client);
+	    if(result != Success) break;
+	}
+    }
+
+    return result;
+}
+
+static int
+PanoramiXRenderFillRectangles (ClientPtr client)
+{
+    PanoramiXRes    *dst;
+    int		    result = Success, j;
+    REQUEST(xRenderFillRectanglesReq);
+    char	    *extra;
+    int		    extra_len;
+
+    REQUEST_AT_LEAST_SIZE (xRenderFillRectanglesReq);
+    VERIFY_XIN_PICTURE (dst, stuff->dst, client, SecurityWriteAccess, 
+			RenderErrBase + BadPicture);
+    extra_len = (stuff->length << 2) - sizeof (xRenderFillRectanglesReq);
+    if (extra_len &&
+	(extra = (char *) ALLOCATE_LOCAL (extra_len)))
+    {
+	memcpy (extra, stuff + 1, extra_len);
+	FOR_NSCREENS_FORWARD(j) {
+	    if (j) memcpy (stuff + 1, extra, extra_len);
+	    if (dst->u.pict.root)
+	    {
+		int x_off = panoramiXdataPtr[j].x;
+		int y_off = panoramiXdataPtr[j].y;
+
+		if(x_off || y_off) {
+		    xRectangle	*rects = (xRectangle *) (stuff + 1);
+		    int		i = extra_len / sizeof (xRectangle);
+
+		    while (i--)
+		    {
+			rects->x -= x_off;
+			rects->y -= y_off;
+			rects++;
+		    }
+		}
+	    }
+	    stuff->dst = dst->info[j].id;
+	    result = (*PanoramiXSaveRenderVector[X_RenderFillRectangles]) (client);
+	    if(result != Success) break;
+	}
+	DEALLOCATE_LOCAL(extra);
+    }
+
+    return result;
+}
+
+void
+PanoramiXRenderInit (void)
+{
+    int	    i;
+    
+    XRT_PICTURE = CreateNewResourceType (XineramaDeleteResource);
+    for (i = 0; i < RenderNumRequests; i++)
+	PanoramiXSaveRenderVector[i] = ProcRenderVector[i];
+    /*
+     * Stuff in Xinerama aware request processing hooks
+     */
+    ProcRenderVector[X_RenderCreatePicture] = PanoramiXRenderCreatePicture;
+    ProcRenderVector[X_RenderChangePicture] = PanoramiXRenderChangePicture;
+    ProcRenderVector[X_RenderSetPictureClipRectangles] = PanoramiXRenderSetPictureClipRectangles;
+    ProcRenderVector[X_RenderFreePicture] = PanoramiXRenderFreePicture;
+    ProcRenderVector[X_RenderComposite] = PanoramiXRenderComposite;
+    ProcRenderVector[X_RenderCompositeGlyphs8] = PanoramiXRenderCompositeGlyphs;
+    ProcRenderVector[X_RenderCompositeGlyphs16] = PanoramiXRenderCompositeGlyphs;
+    ProcRenderVector[X_RenderCompositeGlyphs32] = PanoramiXRenderCompositeGlyphs;
+    ProcRenderVector[X_RenderFillRectangles] = PanoramiXRenderFillRectangles;
+}
+
+void
+PanoramiXRenderReset (void)
+{
+    int	    i;
+    for (i = 0; i < RenderNumRequests; i++)
+	ProcRenderVector[i] = PanoramiXSaveRenderVector[i];
+}
+
+#endif	/* PANORAMIX */

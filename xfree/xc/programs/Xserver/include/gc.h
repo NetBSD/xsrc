@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/gc.h,v 1.3 1999/08/22 08:59:01 dawes Exp $ */
+/* $XFree86$ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

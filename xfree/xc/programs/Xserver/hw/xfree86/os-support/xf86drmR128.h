@@ -25,7 +25,7 @@
  *
  * Author: Kevin E. Martin <kevin@precisioninsight.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmR128.h,v 3.5 2000/12/12 17:17:13 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmR128.h,v 3.4 2000/12/07 15:43:45 tsi Exp $
  *
  */
 

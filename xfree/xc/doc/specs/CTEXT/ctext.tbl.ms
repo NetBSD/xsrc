@@ -1,6 +1,6 @@
 .\" Use tbl and -ms
 .\"
-.\" $XFree86: xc/doc/specs/CTEXT/ctext.tbl.ms,v 1.2 2000/12/11 19:39:40 dawes Exp $
+.\" $XFree86$
 .\"
 .\" --- bP --- bulleted paragraph macro
 .\"

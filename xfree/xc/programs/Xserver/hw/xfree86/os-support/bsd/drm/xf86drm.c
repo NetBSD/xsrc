@@ -25,7 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  * 
  * $PI: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drm.c,v 1.43 1999/08/04 18:14:43 faith Exp $
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/xf86drm.c,v 1.1 2000/06/17 00:03:27 martin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drm.c,v 1.4 1999/09/25 14:37:49 dawes Exp $
  * 
  */
 

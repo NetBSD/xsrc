@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/modeselect.tcl,v 3.2 1998/04/05 16:15:50 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/modeselect.tcl,v 3.1 1997/12/14 10:03:55 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #           1997 by Dirk H Hohndel <hohndel@XFree86.Org>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.14 2000/12/07 20:42:52 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.13 2000/12/07 15:43:44 tsi Exp $ */
 
 #include "r128.h"
 #include "r128_reg.h"

@@ -32,7 +32,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/cmsGlobls.c,v 1.3 2000/01/29 18:58:14 dawes Exp $ */
+/* $XFree86: xc/lib/X11/cmsGlobls.c,v 1.2 1999/05/09 10:50:28 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

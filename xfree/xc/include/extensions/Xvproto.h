@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/extensions/Xvproto.h,v 1.5 2000/01/25 00:08:07 mvojkovi Exp $ */
+/* $XFree86$ */
 
 #ifndef XVPROTO_H
 #define XVPROTO_H

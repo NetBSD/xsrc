@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.35 2000/09/26 15:57:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.34 2000/09/19 12:46:14 eich Exp $ */
 /*
  * Copyright 1996, 1997, 1998 by David Bateman <dbateman@ee.uts.edu.au>
  *   Modified 1997, 1998 by Nozomi Ytow

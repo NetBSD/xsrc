@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontaccel.c,v 1.5 1999/08/22 08:58:58 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

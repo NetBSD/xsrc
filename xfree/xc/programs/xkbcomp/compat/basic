@@ -5,7 +5,7 @@
 // caps lock and mode switch) and set up the 
 // automatic updating of common keyboard LEDs.
 
-// $XFree86: xc/programs/xkbcomp/compat/basic,v 1.2 2000/11/06 19:24:10 dawes Exp $
+// $XFree86$
 
 default xkb_compatibility "basic"  {
     virtual_modifiers NumLock,AltGr;

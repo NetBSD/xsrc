@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.cpp,v 1.1 2000/12/11 20:49:07 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86conf.man,v 3.7 1998/04/05 02:28:43 dawes Exp $
 .TH xf86config 1 "Version 4.0.2" "XFree86"
 .SH NAME
 xf86config \- generate an XF86Config file

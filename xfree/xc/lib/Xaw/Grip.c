@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Grip.c,v 1.6 1999/06/06 08:47:57 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Grip.c,v 1.5 1998/10/03 08:42:05 dawes Exp $ */
 
 /*
  * Grip.c - Grip Widget (Used by Paned Widget)

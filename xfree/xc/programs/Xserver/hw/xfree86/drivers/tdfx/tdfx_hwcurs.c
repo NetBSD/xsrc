@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.3 2000/02/15 07:13:43 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_hwcurs.c,v 1.2 1999/09/27 06:29:58 dawes Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 

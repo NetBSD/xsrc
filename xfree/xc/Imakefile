@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/138 1997/12/29 16:37:30 kaleb $
-XCOMM $XFree86: xc/Imakefile,v 3.20 2000/07/07 20:06:55 tsi Exp $
+XCOMM $XFree86: xc/Imakefile,v 3.19 2000/05/31 15:02:54 eich Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 

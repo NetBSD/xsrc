@@ -1,6 +1,6 @@
 XCOMM
 XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:54:48 rws $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/Imakefile,v 3.12 2000/08/24 22:20:10 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/Imakefile,v 3.11tsi Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium.

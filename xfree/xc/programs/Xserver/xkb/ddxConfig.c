@@ -1,5 +1,5 @@
 /* $XConsortium: ddxConfig.c /main/8 1996/09/28 17:15:56 rws $ */
-/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.3 1996/12/23 07:10:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.2 1996/08/13 11:32:19 dawes Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

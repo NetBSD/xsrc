@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_mouse.c,v 1.1 1999/09/25 14:38:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8/sol8_mouse.c,v 1.2 1999/06/12 15:37:12 dawes Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.

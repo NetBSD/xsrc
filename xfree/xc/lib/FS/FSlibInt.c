@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.7 1999/12/27 00:39:20 robin Exp $ */
+/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.6 1999/02/25 06:00:56 dawes Exp $ */
 
 /*
  *	FSlibInt.c - Internal support routines for the C subroutine

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CloseHook.c,v 3.3 1998/10/03 09:06:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CloseHook.c,v 3.2 1998/09/05 06:36:11 dawes Exp $ */
 
 /*
  * CloseDisplayHook package - provide callback on XCloseDisplay

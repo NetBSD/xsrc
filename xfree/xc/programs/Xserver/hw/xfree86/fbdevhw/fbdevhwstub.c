@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.9 2000/10/20 14:59:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhwstub.c,v 1.8 2000/08/11 17:27:14 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86cmap.h"

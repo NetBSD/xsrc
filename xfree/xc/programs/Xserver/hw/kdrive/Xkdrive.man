@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/kdrive/Xkdrive.man,v 1.2 2000/12/04 21:01:00 dawes Exp $
+.\" $XFree86$
 .\"
 .TH Xkdrive 1
 .SH NAME

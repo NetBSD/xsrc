@@ -1776,6 +1776,10 @@ HandleButtonPress()
     unsigned int modifier;
     Cursor cur;
 
+    /* too much code relies on this assumption */
+    if (Event.xbutton.button > MAX_BUTTONS)
+	return;
+
     /* pop down the menu, if any */
     if (ActiveMenu != NULL)
 	PopDownMenu();

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/stubs.h,v 1.2 2000/10/23 21:16:52 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/stubs.h,v 1.1 2000/10/20 14:59:08 alanh Exp $
  */
 
 #ifndef _xf86cfg_stubs_h

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.28 2000/03/08 05:38:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.27 2000/01/25 00:18:28 alanh Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.

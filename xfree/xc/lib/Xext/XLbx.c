@@ -22,7 +22,7 @@
  *
  * Author:  Keith Packard, Network Computing Devices
  */
-/* $XFree86: xc/lib/Xext/XLbx.c,v 1.2 1999/07/12 05:57:21 dawes Exp $ */
+/* $XFree86$ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

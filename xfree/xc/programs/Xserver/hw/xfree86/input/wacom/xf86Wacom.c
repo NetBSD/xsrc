@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.24 2000/12/07 20:26:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/xf86Wacom.c,v 1.23 2000/12/06 20:39:52 dawes Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV and Wacom V protocols.

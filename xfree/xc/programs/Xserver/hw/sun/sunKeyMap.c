@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/sunKeyMap.c,v 1.2 1998/12/20 11:57:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKeyMap.c,v 1.1.1.5.4.2 1998/10/04 15:22:59 hohndel Exp $ */
 
 #include	"sun.h"
 #define		XK_KATAKANA

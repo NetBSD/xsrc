@@ -36,7 +36,7 @@ XCOMM $XConsortium: Imakefile /main/2 1996/11/16 15:20:42 rws $
  **
  ******************************************************************************
  *****************************************************************************/
-XCOMM $XFree86: xc/lib/Xp/Imakefile,v 1.2 1998/12/20 11:57:06 dawes Exp $
+XCOMM $XFree86$
 
 
 #define DoNormalLib	NormalLibXp

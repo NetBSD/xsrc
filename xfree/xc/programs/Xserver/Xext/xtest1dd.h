@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xtest1dd.h,v 3.1 1999/03/14 03:21:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xtest1dd.h,v 3.0tsi Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>

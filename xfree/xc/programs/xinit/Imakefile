@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/25 1996/01/15 12:19:07 gildea $
-XCOMM $XFree86: xc/programs/xinit/Imakefile,v 3.8 2000/12/02 19:06:58 herrb Exp $
+XCOMM $XFree86: xc/programs/xinit/Imakefile,v 3.7 2000/11/30 23:30:12 dawes Exp $
 #if HasVFork
   VFORK_DEFINES = -DHAS_VFORK
 #endif

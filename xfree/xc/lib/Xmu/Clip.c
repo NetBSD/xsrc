@@ -24,7 +24,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/Xmu/Clip.c,v 1.2 1999/08/15 13:00:44 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Clip.c,v 1.1 1998/08/16 10:25:03 dawes Exp $ */
 
 #include <stdlib.h>
 

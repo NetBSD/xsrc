@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/glxStub/glxstub.c,v 1.4 1997/05/03 09:15:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/glxStub/glxstub.c,v 1.3 1997/04/18 09:11:05 hohndel Exp $ */
 
 /*
  * Copyright 1997  The XFree86 Project

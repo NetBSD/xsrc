@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/keysym.h,v 1.2 2000/10/27 18:30:46 dawes Exp $ */
+/* $XFree86$ */
 
 /* default keysyms */
 #define XK_MISCELLANY

@@ -9,7 +9,7 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 7 December 2000
+<Date>Last modified on: 3 March 2001
 
 <ident>
 $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.59 2000/12/12 18:54:29 dawes Exp $
@@ -20,10 +20,9 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.59 2000/12/12 
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is a port of X11R6.4 that supports several versions of
-Intel-based Unix.  It is derived from X386 1.2, which was the X server
-distributed with X11R5.  This release consists of many new features
-and performance improvements as well as many bug fixes.  
+XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
+operating systems on Intel and other platforms.
 
 See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 
@@ -32,7 +31,7 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;">
 
-Binaries for NetBSD 1.3 and later are available from:
+Binaries for NetBSD 1.4 and later are available from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/NetBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/NetBSD">
 
@@ -111,7 +110,7 @@ for detailed installation instructions.
 <sect>Configuring X for Your Hardware
 
 <p>
-The <tt>/etc/XF86Config</tt> file tells the X server what kind of
+The <tt>/etc/X11/XF86Config</tt> file tells the X server what kind of
 monitor, 
 video card and mouse you have.  You <em/must/ create it to tell the
 server what specific hardware you have.
@@ -123,13 +122,12 @@ You'll need info on your hardware:
 <item>Your monitor's sync frequencies.
 </itemize>
 
-<!--
+
 The recommended way to generate an <tt/XF86Config/ file is to use the
-<tt/XF86Setup/ utility.  The xf86config text utility is still there
-for the (few) cases where XF86Setup can't be used. Also, there is a
+<tt/xf86cfg/ utility.  The xf86config text utility is still there
+for the (few) cases where xf86cfg can't be used. Also, there is a
 sample file installed as <tt>/usr/X11R6/lib/X11/XF86Config.eg</tt>,
 which can be used as a starting point.
--->
 
 For details about the <tt/XF86Config/ file format, refer to the
 <em>XF86Config(5)</em> manual page.
@@ -140,20 +138,21 @@ modes with the <tt>xvidtune</tt> utility.
 <sect1>About mouse configuration
 
 <p>
-The NetBSD pms mouse driver handles PS/2 style mice as
-Busmouse. Specify the protocol as ``<bf/busmouse/'' in the mouse
-section of your 
-<tt/XF86Config/ file if you're using a PS/2 mouse.
+XFree86 &relvers; has support for the mouse driver included in
+the <bf/wscons/ console driver introduced by NetBSD 1.4. Specify
+``<tt/wsmouse/'' as the protocol and ``<tt>/dev/wsmouse0</tt>'' as the 
+device in <tt>/etc/X11/XF86Config</tt> if you're using NetBSD 1.4 or later
+with a PS/2 mouse.
+<p>
+For older releases, the NetBSD <bf/pms/ mouse driver handles PS/2 style
+mice as Busmouse. Specify the protocol as ``<tt/busmouse/'' in the
+mouse section of your <tt/XF86Config/ file if you're using a PS/2
+mouse with NetBSD 1.3 or former releases.
 <p>
 Only standard PS/2 mice are supported by this driver. Newest PS/2
 mice that send more than three bytes at a time (especially
-Intellimouse, or MouseMan+ with a ``3D'' roller) are not supported yet. 
-<p>
-XFree86 &relvers; also has support for the mouse driver included in
-the new <bf/wscons/ console driver introduced by NetBSD 1.4. Specify
-``<tt/wsmouse/'' as the protocol and ``<tt>/dev/wsmouse0</tt>'' as the 
-device in <tt>/etc/XF86Config</tt> if you're using NetBSD 1.4 with
-wscons. 
+Intellimouse, or MouseMan+ with a wheel) are not supported by NetBSD
+1.3 and former releases. 
 <p>
 See <htmlurl url="mouse.html" name="README.mouse">  for general
 instruction on mouse configuration in XFree86.
@@ -190,8 +189,9 @@ xdm=YES			xdm_flags=""            # x11 display manager
 in <tt>/etc/rc.conf</tt>. 
 
 <p>
-Under NetBSD 1.4 with the wscons console driver, you must enable a
-virtual console for the X server first. To do this follow these steps:
+Under NetBSD 1.4 and later with the wscons console driver, you must
+enable a virtual console for the X server first. To do this follow
+these steps:
 <itemize>
 <item>Make sure the device file exists. If not, ``<tt>cd /dev ;
 ./MAKEDEV wscons</tt>''. 
@@ -210,8 +210,8 @@ screen	4	-	-
 screen	5	-	vt100
 </verb></tscreen>
 </itemize>
-(Thanks to Mason Loring Bliss <tt>&lt;mason@acheron.middleboro.ma.us&gt;</tt> for
-this explanation)
+(Thanks to Mason Loring Bliss
+<tt>&lt;mason@acheron.middleboro.ma.us&gt;</tt> for this explanation)
 <p>
 Note that the binary distributions of XFree86 for NetBSD don't include
 support for the XDM-AUTHORIZATION-1 protocol. 
@@ -239,7 +239,7 @@ The pccons driver is the most widely tested and is the console driver
 contained in the NetBSD binary distribution's kernels.
 
 <p>
-The pcvt console driver is bundled with NetBSD. The pcvt X
+The pcvt console driver was bundled with NetBSD until 1.4. The pcvt X
 mode is compatible with the pccons driver X mode. It offers several
 virtual consoles and international keyboard support. In order to use
 this driver, change the line:
@@ -258,9 +258,9 @@ in your kernel config file, and rebuild and install your kernel.
 
 <p>
 <label id="wscons">
-XFree86 will also run with the wscons console driver in
-NetBSD 1.4. For now, it uses the pcvt compatibility mode, so be
-sure to have the lines:
+Wscons is the current console driver, included in NetBSD 1.4 and
+later. For now, XFree86 supports wscons using the pcvt compatibility
+mode, so be sure to have the lines:
 <tscreen><verb>
 options         WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
 options         WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
@@ -344,11 +344,6 @@ extension.
 <sect> Rebuilding the XFree86 Distribution
 
 <p>
-<!-- out of date
-See <htmlurl url="INSTALL.html" name="INSTALL"> for instructions on
-unbundling and building the source distribution.
--->
-
 You should configure the distribution by editing
 <tt>xc/config/cf/host.def</tt>  before compiling.  To compile the
 sources, invoke ``<tt/make World/'' in the xc directory.
@@ -403,6 +398,12 @@ by adding:
 </verb></tscreen>
 to <tt>xc/config/host.def</tt> before rebuilding the server. 
 This has not been thoroughly tested, except on the macppc. 
+<p>
+For the i386, you should include both pcvt and wscons support in order
+to use the pcvt compatibility mode of wscons:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DPCVT_SUPPORT -DWSCONS_SUPPORT
+</verb></tscreen>
 
 <sect1>Building on other architectures<label id="sparc">
 

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/include/extensions/multibuf.h,v 3.2 1999/01/31 12:21:17 dawes Exp $ */
+/* $XFree86: xc/include/extensions/multibuf.h,v 3.1 1998/10/02 07:39:16 dawes Exp $ */
 
 #ifndef _MULTIBUF_H_
 #define _MULTIBUF_H_

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbpath.c,v 3.3 1998/10/04 09:41:28 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbpath.c,v 3.2 1997/10/26 13:25:31 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>

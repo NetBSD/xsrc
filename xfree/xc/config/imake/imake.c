@@ -8,7 +8,7 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
-/* $XFree86: xc/config/imake/imake.c,v 3.40 2000/11/27 05:06:43 dawes Exp $ */
+/* $XFree86: xc/config/imake/imake.c,v 3.39 2000/11/21 23:10:22 tsi Exp $ */
 
 /*
  * 

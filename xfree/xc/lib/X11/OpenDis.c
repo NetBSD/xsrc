@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/OpenDis.c,v 3.8 2000/11/27 05:06:44 dawes Exp $ */
+/* $XFree86: xc/lib/X11/OpenDis.c,v 3.7 2000/06/16 01:50:18 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

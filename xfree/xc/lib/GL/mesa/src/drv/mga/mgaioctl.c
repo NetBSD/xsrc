@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.8 2000/11/08 05:02:45 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.7 2000/09/26 15:56:47 tsi Exp $ */
 
 #include <stdio.h>
 

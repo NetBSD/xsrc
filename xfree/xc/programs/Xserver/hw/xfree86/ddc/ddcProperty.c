@@ -3,7 +3,7 @@
  * 
  * Copyright 1999 by Andrew C Aitchison <A.C.Aitchison@dpmms.cam.ac.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.4 2000/11/06 19:24:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.3 2000/03/05 23:47:50 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

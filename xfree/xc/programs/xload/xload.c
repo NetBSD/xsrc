@@ -1,5 +1,5 @@
 /* $XConsortium: xload.c,v 1.37 94/04/17 20:43:44 converse Exp $ */
-/* $XFree86: xc/programs/xload/xload.c,v 1.2 2000/05/11 18:14:45 tsi Exp $ */
+/* $XFree86: xc/programs/xload/xload.c,v 1.1 2000/02/13 03:26:32 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium

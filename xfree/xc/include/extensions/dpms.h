@@ -26,7 +26,7 @@ dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 
 ******************************************************************/
-/* $XFree86: xc/include/extensions/dpms.h,v 3.4 2000/03/15 16:51:51 tsi Exp $ */
+/* $XFree86: xc/include/extensions/dpms.h,v 3.3 1999/03/07 11:40:23 dawes Exp $ */
 
 /*
  * HISTORY

@@ -24,7 +24,7 @@ in this Software without prior written authorization from The Open Group.
  * Updated for R4:  Chris D. Peterson,  MIT X Consortium.
  * Reauthored by: Keith Packard, MIT X Consortium.
  */
-/* $XFree86: xc/programs/xclipboard/xclipboard.c,v 1.5 1999/03/21 07:35:36 dawes Exp $ */
+/* $XFree86: xc/programs/xclipboard/xclipboard.c,v 1.4 1999/02/28 11:20:07 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

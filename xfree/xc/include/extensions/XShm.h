@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/XShm.h,v 1.4 1999/04/29 09:13:26 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XShm.h,v 1.3 1998/10/02 07:39:14 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

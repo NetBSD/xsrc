@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.h,v 1.7 1999/02/12 22:52:11 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.h,v 1.6 1998/08/29 14:34:41 dawes Exp $ */
 
 #include <xf86RamDac.h>
 

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/xmodmap.c,v 1.4 1999/06/27 14:08:34 dawes Exp $ */
+/* $XFree86: xc/programs/xmodmap/xmodmap.c,v 1.3 1999/03/07 14:23:37 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>

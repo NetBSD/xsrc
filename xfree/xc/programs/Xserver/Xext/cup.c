@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/cup.c,v 1.5 1998/12/06 13:30:39 dawes Exp $ */
+/* $XFree86$ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttr.c,v 1.3 1999/12/16 02:26:28 robin Exp $ */
+/* $XFree86: $ */
 
 /* $TOG: PsAttr.c /main/3 1998/02/09 15:42:17 kaleb $ */
 /*

@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/programs/twm/session.c,v 3.5 1999/02/25 06:01:03 dawes Exp $ */
+/* $XFree86: xc/programs/twm/session.c,v 3.4 1999/02/20 15:07:25 hohndel Exp $ */
 
 #include <X11/Xos.h>
 

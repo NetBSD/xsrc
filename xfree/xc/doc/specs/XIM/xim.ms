@@ -1,6 +1,6 @@
 .\" $TOG: xim.ms /main/10 1997/11/04 18:24:16 kaleb $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
-.\" $XFree86: xc/doc/specs/XIM/xim.ms,v 1.2 2000/12/14 17:48:58 dawes Exp $
+.\" $XFree86$
 .EH ''''
 .OH ''''
 .EF ''''

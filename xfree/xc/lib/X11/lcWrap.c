@@ -49,7 +49,7 @@ from The Open Group.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
-/* $XFree86: xc/lib/X11/lcWrap.c,v 3.9 2000/11/28 18:49:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.8 2000/09/26 15:56:52 tsi Exp $ */
 
 #include <stdlib.h>
 #include "Xlibint.h"

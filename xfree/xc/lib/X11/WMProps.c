@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/WMProps.c,v 3.3 2000/03/31 20:13:12 dawes Exp $ */
+/* $XFree86: xc/lib/X11/WMProps.c,v 3.2 1998/10/03 08:41:24 dawes Exp $ */
 
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca.,

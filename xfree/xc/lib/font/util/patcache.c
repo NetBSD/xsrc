@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/patcache.c,v 3.3 1999/08/21 13:48:10 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/patcache.c,v 3.2 1998/10/03 09:07:31 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

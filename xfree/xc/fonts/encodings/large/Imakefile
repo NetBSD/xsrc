@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/fonts/encodings/large/Imakefile,v 1.1 1999/05/30 02:29:56 dawes Exp $
+XCOMM $XFree86$
 
 OBJS = EncObjComp(big5.eten-0) EncObjComp(gb2312.1980-0) \
 	EncObjComp(jisx0201.1976-0) EncObjComp(jisx0208.1983-0) \

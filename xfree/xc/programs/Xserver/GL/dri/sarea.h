@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.8 2000/12/07 20:26:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.7 2000/11/18 19:37:06 tsi Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare && Dean Verheiden -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecroi.c,v 3.4 1998/10/25 07:11:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mecroi.c,v 3.3 1998/10/05 13:22:29 dawes Exp $ */
 
 #define _XIEC_MECROI
 #define _XIEC_ECROI

@@ -91,6 +91,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "picturestr.h"
 #endif
 
+#include "picturestr.h"
+
+#ifdef XvExtension
+#include "xf86xv.h"
+#include "Xv.h"
+#endif
+
 /*
  * Driver data structures.
  */
@@ -835,7 +842,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	maxClock   = 110000;
 	CursorMem  = 1024;
 	CursorOff  = 0x1000;
-	linearSize = 4096;
+	linearSize = 8192;
 	maxWidth   = 1280;
 	maxHeight  = 1024;  /* ???? */
 	break;
@@ -1139,7 +1146,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	nPtr->NeoCursorMem = CursorMem;
     else
 	nPtr->NeoCursorMem = 0;
-    apertureSize = nPtr->NeoFbMapSize - nPtr->NeoCursorMem;
+    apertureSize = (pScrn->videoRam * 1024) - nPtr->NeoCursorMem;
     /*
      * For external displays, limit the width to 1024 pixels or less.
      */
@@ -1562,6 +1569,22 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (nPtr->NeoChipset != NM2070)
 	xf86DPMSInit(pScreen, (DPMSSetProcPtr)NeoDisplayPowerManagementSet,
 		     0);
+#endif
+
+    if (!nPtr->noLinear) {
+        pScrn->memPhysBase = (unsigned long)nPtr->NeoFbBase;
+	pScrn->fbOffset = 0;
+    }
+
+#ifdef XvExtension
+    {
+        XF86VideoAdaptorPtr *ptr;
+	int n;
+	
+	n = xf86XVListGenericAdaptors(pScrn,&ptr);
+	if (n)
+	    xf86XVScreenInit(pScreen, ptr, n);
+    }
 #endif
 
     /* Wrap the current CloseScreen function */
@@ -2119,7 +2142,11 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
 	break;
     }
     VGAwGR(0x90,temp);
-    
+    /*
+     * In some rare cases a lockup might occur if we don't delay
+     * here. (Reported by Miles Lane)
+     */
+    xf86UDelay(200000);
     /*
      * Disable horizontal and vertical graphics and text expansions so
      * that vgaHWRestore works properly.
@@ -2137,7 +2164,8 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
     /*
      * This function handles restoring the generic VGA registers.  */
     vgaHWRestore(pScrn, VgaReg,
-		 VGA_SR_MODE | (restoreFonts ? VGA_SR_FONTS : 0));
+		 VGA_SR_MODE | VGA_SR_CMAP 
+		 | (restoreFonts ? VGA_SR_FONTS : 0));
 
     VGAwGR(0x0E, restore->ExtCRTDispAddr);
     VGAwGR(0x0F, restore->ExtCRTOffset);

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/FontSBI.h,v 1.2 2000/06/07 22:03:00 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef _FontSelectionBoxI_H
 #define _FontSelectionBoxI_H
