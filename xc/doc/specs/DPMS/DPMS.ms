@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.so macros.t
+.\".so macros.t
 .EH ''''
 .OH ''''
 .EF ''''

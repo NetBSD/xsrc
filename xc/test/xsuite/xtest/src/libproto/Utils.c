@@ -37,7 +37,6 @@ in this Software without prior written authorization from the X Consortium.
  * purpose.  It is provided "as is" without express or implied warranty.
  *
  * $XConsortium: Utils.c,v 1.5 94/04/17 21:01:34 rws Exp $
- * $XFree86: xc/test/xsuite/xtest/src/libproto/Utils.c,v 3.1 1994/08/01 12:24:24 dawes Exp $
  */
 /*
  * ***************************************************************************
@@ -63,6 +62,7 @@ in this Software without prior written authorization from the X Consortium.
  *  SOFTWARE.                                                                *
  * ***************************************************************************
  */
+/* $XFree86: test/xsuite/xtest/src/libproto/Utils.c,v 3.1.6.1 1997/05/18 13:48:08 dawes Exp $ */
 
 /* UNIX/DYNIX library for X Server tests.  
  *
@@ -97,7 +97,7 @@ Get_Date()
 	return(buf);
 }
 
-#if !defined(__bsdi__) && !defined(__386BSD__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__linux__)
+#if !defined(CSRG_BASED) && !defined(linux)
 /*
  * These are routines found in BSD and not found in SYSV.
  */

@@ -1,0 +1,8 @@
+XCOMM $XConsortium: Imakefile /main/1 1996/08/12 11:48:30 kaleb $
+        DEPLIBS = $(DEPXAGLIB) XawClientDepLibs
+LOCAL_LIBRARIES = $(XAGLIB) XawClientLibs
+           SRCS = embedtest.c 
+           OBJS = embedtest.o 
+
+ComplexProgramTarget(embedtest)
+

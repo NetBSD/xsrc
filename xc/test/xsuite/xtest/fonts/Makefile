@@ -36,6 +36,12 @@
 # 
 # $XConsortium: Makefile,v 1.10 94/04/17 21:00:11 rws Exp $
 #
+#
+#
+#
+#
+# $XFree86: test/xsuite/xtest/fonts/Makefile,v 1.2 1997/01/16 10:54:58 dawes Exp $
+#
 
 ##########################################################################
 #
@@ -83,7 +89,7 @@ clean:
 
 clobber:	clean
 
-install: all
+install: all install_pcf
 	$(CP) libfont.a $(XTESTLIBDIR)
 	$(RANLIB) $(XTESTLIBDIR)/libfont.a
 
@@ -129,7 +135,7 @@ comp_fb:
 	done
 	bldfamily -d .
 
-install_pcf install_dxpcf:
+install_pcf install_dxpcf: comp_pcf
 	@ echo "These commands are system dependent - See User Guide"
 	@ if [ -d $(XTESTFONTDIR) ]; then set +x; \
 		else (set -x; mkdir $(XTESTFONTDIR)); fi
