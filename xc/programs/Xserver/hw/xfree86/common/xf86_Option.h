@@ -58,6 +58,7 @@ typedef struct {
 				       in addition to bare clocks */
 #define OPTION_HW_CLKS		 8  /* (ct) Hardware clocks */
 #define OPTION_FORCE_VCLK1	 9  /* (ct) Use VClk1 as programmable clock */
+#define	OPTION_CRAZYDOTS	10  /* Crazy Dots board with 15 clocks */
 
 /* Laptop display options */
 #define OPTION_INTERN_DISP	15  /* Laptops - enable internal display (WD)*/
@@ -295,6 +296,7 @@ OptFlagRec xf86_OptionTab[] = {
   { "clkdiv2",		OPTION_CLKDIV2 },
   { "hw_clocks",        OPTION_HW_CLKS },
   { "use_vclk1",        OPTION_FORCE_VCLK1 },
+  { "crazy_dots",	OPTION_CRAZYDOTS },
 
   { "intern_disp",	OPTION_INTERN_DISP },
   { "extern_disp",	OPTION_EXTERN_DISP },
