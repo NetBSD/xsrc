@@ -1,4 +1,4 @@
-/* $NetBSD: hpc.h,v 1.2 2000/07/29 14:23:58 takemura Exp $	*/
+/* $NetBSD: hpc.h,v 1.3 2001/06/24 14:46:54 takemura Exp $	*/
 /* $XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp $ */
 /*-
@@ -141,6 +141,7 @@ typedef struct {
     int		    fd;		/* frame buffer for ioctl()s, */
     struct hpcfb_fbconf info;	/* Frame buffer characteristics */
     void	    (*EnterLeave)();/* screen switch */
+    char*           devname;	/* device name (e.g. "/dev/ttyE0") */
 } hpcFbRec, *hpcFbPtr;
 
 typedef struct {
@@ -153,6 +154,26 @@ typedef struct {
 #ifdef XKB
 extern Bool		noXkbExtension;
 #endif
+
+#define hpcError(str)	{ \
+	int mode; \
+	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+	Error(str); \
+	hpcSetDisplayMode(fileno(stderr), mode, NULL); \
+}
+
+#define hpcErrorF(a)	{ \
+	int mode; \
+	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+	ErrorF a; \
+	hpcSetDisplayMode(fileno(stderr), mode, NULL); \
+}
+
+#define hpcFatalError(a)	{ \
+	int mode; \
+	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+	FatalError a; \
+}
 
 /*
  * hpcInit.c
@@ -190,5 +211,6 @@ hpcScreenPtr hpcGetScreenPrivate __P((ScreenPtr	pScreen));
  * hpcFB.c
  */
 Bool hpcFBInit __P((int scrn, ScreenPtr pScrn, int argc, char** argv));
+int hpcSetDisplayMode(int, int, int *);
 
 #endif

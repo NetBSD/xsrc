@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.5 2001/01/12 15:30:43 sato Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.6 2001/06/24 14:46:54 takemura Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -72,18 +72,20 @@ OpenFrameBuffer(device, screen)
     int			ret = TRUE;
 
     hpcFbs[screen].fd = -1;
+    hpcFbs[screen].devname = device;
     if (access (device, R_OK | W_OK) == -1)
 	return FALSE;
-    if ((hpcFbs[screen].fd = open(device, O_RDWR, 0)) == -1)
+    if ((hpcFbs[screen].fd = open(device, O_RDWR, 0)) == -1) {
+	hpcError(device);
 	ret = FALSE;
-    else {
+    } else {
 	int mode = WSDISPLAYIO_MODE_MAPPED;
 	if (ioctl(hpcFbs[screen].fd, WSDISPLAYIO_SMODE, &mode) == -1) {
-		Error("unable to set frame buffer mode");
+		hpcError("unable to set frame buffer mode");
 	}
 	if (ioctl(hpcFbs[screen].fd, WSDISPLAYIO_GINFO,
 	    &hpcFbs[screen].info) == -1) {
-		Error("unable to get frame buffer info");
+		hpcError("unable to get frame buffer info");
 		(void) close(hpcFbs[screen].fd);
 		hpcFbs[screen].fd = -1;
 		ret = FALSE;
@@ -166,7 +168,7 @@ GetDeviceList (argc, argv)
 	for (_i1 = 0; _i1 < MAXSCREENS; _i1++) {
 	    _tmpb = strtok (_tmpa, ":");
 	    if (_tmpb)
-		deviceList[_i1] = _tmpb;
+		deviceList[_i1] = strdup(_tmpb);
 	    else
 		deviceList[_i1] = NULL;
 	    _tmpa = NULL;
@@ -235,14 +237,17 @@ InitKbdMouse(argc, argv)
 	     * We can't use wskbd for now, because primary keyboard(wskbd0)
              * is already connected with console(/dev/ttyE0).
 	     */
-	    sprintf(devname, "/dev/wskbd%d", i);
-	    if (hpcKbdPriv.fd == -1)
+	    if (hpcKbdPriv.fd == -1) {
+		sprintf(devname, "/dev/wskbd%d", i);
 		hpcKbdPriv.fd = open(devname, O_RDWR);
+	    }
 #endif
 
-	    sprintf(devname, "/dev/wsmouse%d", i);
-	    if (hpcPtrPriv.fd == -1)
-		hpcPtrPriv.fd = open(devname, O_RDWR);
+	    if (hpcPtrPriv.fd == -1) {
+		sprintf(devname, "/dev/wsmouse%d", i);
+		if ((hpcPtrPriv.fd = open(devname, O_RDWR)) < 0)
+		    hpcError(devname);
+	    }
 	}
 
 	if (hpcKbdPriv.fd != -1) {
@@ -254,21 +259,23 @@ InitKbdMouse(argc, argv)
 	    devList = GetDeviceList (argc, argv);
 	    for (i = 0; devList[i] != NULL; i++) {
 		if (0 <= (hpcKbdPriv.fd = open(devList[i], O_RDWR))) {
-		    fprintf(stderr, "use RAW XT keyboard, %s\n",
-			    devList[i]);
+		    /* this isn't error */
+		    hpcErrorF(("use RAW XT keyboard, %s\n", devList[i]));
 		    hpcKbdPriv.devtype = HPC_KBDDEV_RAW;
 		    break;
 		}
 	    }
 	}
 
-	if (hpcKbdPriv.fd == -1 || hpcPtrPriv.fd == -1)
-	    err(1, "open kbd/mouse");
+	if (hpcKbdPriv.fd == -1)
+	    hpcFatalError(("Can't open keyboard device\n"));
+	if (hpcPtrPriv.fd == -1)
+	    hpcFatalError(("Can't open pointer device\n"));
 	noXkbExtension = FALSE;		/* XXX for now */
 	inited = 1;
 
 	if (ioctl(hpcKbdPriv.fd, WSKBDIO_GTYPE, &kbdtype) == -1) {
-	    Error("cannot get keyboard type\n");
+	    hpcError("cannot get keyboard type\n");
 	    kbdtype = 0;
 	}
 
@@ -370,7 +377,7 @@ InitInput(argc, argv)
     p = AddInputDevice(hpcMouseProc, TRUE);
     k = AddInputDevice(hpcKbdProc, TRUE);
     if (!p || !k)
-	FatalError("failed to create input devices in InitInput");
+	hpcFatalError(("failed to create input devices in InitInput"));
 
     RegisterPointerDevice(p);
     RegisterKeyboardDevice(k);
@@ -384,7 +391,7 @@ InitInput(argc, argv)
 	    WANT_SIGNALS(hpcKbdPriv.fd) == -1) {
 	    (void) close (hpcKbdPriv.fd);
 	    hpcKbdPriv.fd = -1;
-	    FatalError("Async kbd I/O failed in InitInput");
+	    hpcFatalError(("Async kbd I/O failed in InitInput"));
 	}
     }
     if (hpcPtrPriv.fd >= 0) {
@@ -392,7 +399,7 @@ InitInput(argc, argv)
 	    WANT_SIGNALS(hpcPtrPriv.fd) == -1) {
 	    (void) close (hpcPtrPriv.fd);
 	    hpcPtrPriv.fd = -1;
-	    FatalError("Async mouse I/O failed in InitInput");
+	    hpcFatalError(("Async mouse I/O failed in InitInput"));
 	}
     }
 }

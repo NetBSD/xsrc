@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.2 2000/07/29 14:23:58 takemura Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.3 2001/06/24 14:46:54 takemura Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -90,7 +90,7 @@ hpcBell(percent, device, ctrl, unused)
     wbd.wbd_period = kctrl->bell_duration;
 
     if (ioctl (pPriv->fd, WSCONSIO_COMPLEXBELL, &wbd) == -1) {
- 	Error("Failed to activate bell");
+ 	hpcError("Failed to activate bell");
 	return;
     }
 #endif
@@ -143,7 +143,7 @@ hpcKbdProc(device, what)
     switch (what) {
     case DEVICE_INIT:
 	if (pKeyboard != LookupKeyboardDevice()) {
-	    ErrorF ("Cannot open non-system keyboard\n");
+	    hpcErrorF (("Cannot open non-system keyboard\n"));
 	    return (!Success);
 	}
 
@@ -207,7 +207,7 @@ hpcKbdProc(device, what)
 	case HPC_KBDDEV_RAW:
 	    pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 	    if (ioctl(pPriv->fd, KDSKBMODE, K_RAW) < 0) {
-		FatalError("Can't set keyboard mode\n");
+		hpcFatalError(("Can't set keyboard mode\n"));
 	    }
 	    tcgetattr(pPriv->fd, &pPriv->kbdtty);
 	    tkbdtty = pPriv->kbdtty;
@@ -237,7 +237,7 @@ hpcKbdProc(device, what)
 	switch (pPriv->devtype) {
 	case HPC_KBDDEV_RAW:
 	    if (ioctl(pPriv->fd, KDSKBMODE, K_XLATE) < 0) {
-		Error("Can't set keyboard mode\n");
+		hpcError("Can't set keyboard mode\n");
 	    }
 	    tcsetattr(pPriv->fd, TCSANOW, &pPriv->kbdtty);
 	    break;
@@ -246,7 +246,7 @@ hpcKbdProc(device, what)
 	}
 	break;
     default:
-	FatalError("Unknown keyboard operation\n");
+	hpcFatalError(("Unknown keyboard operation\n"));
     }
     return Success;
 }
@@ -283,8 +283,8 @@ AGAIN:
 		    *pNumEvents = 0;
 		    *pAgain = FALSE;
 		} else {
-		    Error ("Reading keyboard");
-		    FatalError ("Could not read the keyboard");
+		    hpcError ("Reading keyboard");
+		    hpcFatalError (("Could not read the keyboard"));
 		}
 	    } else {
 		*pAgain = TRUE;
@@ -317,8 +317,8 @@ AGAIN:
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT1_9D;
 			goto AGAIN;
 		    } else {
-			ErrorF("hpcKbdGetEvents: unexpected input"
-			       " %02x, stat=%d", c, pPriv->xlatestat);
+			hpcErrorF(("hpcKbdGetEvents: unexpected input"
+			    " %02x, stat=%d", c, pPriv->xlatestat));
 			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 			goto AGAIN;
 		    }
@@ -330,14 +330,14 @@ AGAIN:
 			evBuf[0].value = 0x7f;
 			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 		    } else {
-			ErrorF("hpcKbdGetEvents: unexpected input %02x, stat=%d",
-			       c, pPriv->xlatestat);
+			hpcErrorF(("hpcKbdGetEvents: unexpected input %02x, stat=%d",
+			    c, pPriv->xlatestat));
 			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 			goto AGAIN;
 		    }
 		    break;
 		default:
-		    FatalError("hpcKbdGetEvents: invalid xlate status");
+		    hpcFatalError(("hpcKbdGetEvents: invalid xlate status"));
 		    break;
 		}
 		if (*pNumEvents != 0) {
@@ -356,8 +356,8 @@ AGAIN:
 		*pNumEvents = 0;
 		*pAgain = FALSE;
 	    } else {
-		Error ("Reading keyboard");
-		FatalError ("Could not read the keyboard");
+		hpcError ("Reading keyboard");
+		hpcFatalError (("Could not read the keyboard"));
 	    }
 	} else {
 	    *pNumEvents = nBytes / sizeof (hpcEvent);
