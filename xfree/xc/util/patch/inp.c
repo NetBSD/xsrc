@@ -1,4 +1,4 @@
-/* $XConsortium: inp.c,v 3.4 94/09/14 21:18:35 gildea Exp $
+/* $Xorg: inp.c,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
  *
  * Revision 3.1  94/03/29  13:39:15  gildea
  * check that a patch that creates a file has not already been applied.

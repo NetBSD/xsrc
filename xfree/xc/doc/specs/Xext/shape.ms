@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.\" $TOG: shape.ms /main/23 1997/11/04 17:55:50 kaleb $
+.\" $Xorg: shape.ms,v 1.3 2000/08/17 19:42:36 cpqbld Exp $
 .\" edited for DP edits and code consistency w/ core protocol/xlib 4/1/96
 .EH ''''
 .OH ''''

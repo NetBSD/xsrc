@@ -1,6 +1,6 @@
 .\" Record Extension Protocol, v1.13
 .\" Use tbl, -ms and macros.t
-.\" $TOG: record.ms /main/30 1997/11/04 17:55:33 kaleb $
+.\" $Xorg: record.ms,v 1.3 2000/08/17 19:42:36 cpqbld Exp $
 .\" -----------------------------------------------
 .de Ip
 .IP \(bu 3

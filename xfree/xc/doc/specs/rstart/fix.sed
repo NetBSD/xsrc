@@ -1,6 +1,6 @@
 #! /bin/sed -f
 #
-# $XConsortium: fix.sed,v 1.2 94/02/06 16:38:06 mor Exp $
+# $Xorg: fix.sed,v 1.3 2000/08/17 19:42:50 cpqbld Exp $
 #
 s/o+/./g
 s/|-/+/g

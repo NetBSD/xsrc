@@ -1,5 +1,5 @@
 .\" Use tbl and -ms and macros.t	-*- Nroff -*-
-.\" $TOG: xlfd.tbl.ms /main/46 1997/11/04 18:25:16 kaleb $
+.\" $Xorg: xlfd.tbl.ms,v 1.3 2000/08/17 19:42:22 cpqbld Exp $
 .nr sM 4		\" section on Matrix Transformations
 .nr sS 5		\" section on Scalable fonts
 .nr sP 6		\" section on Polymorphic font support

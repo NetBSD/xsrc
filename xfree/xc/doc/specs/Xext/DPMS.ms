@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.\" $XFree86$
+.\" $XFree86: xc/doc/specs/Xext/DPMS.ms,v 1.2 1998/12/20 11:56:39 dawes Exp $
 .EH ''''
 .OH ''''
 .EF ''''

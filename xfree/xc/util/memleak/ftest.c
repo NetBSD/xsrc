@@ -1,5 +1,5 @@
 /*
- * $TOG: ftest.c /main/5 1998/02/09 11:39:56 kaleb $
+ * $Xorg: ftest.c,v 1.3 2000/08/17 19:55:20 cpqbld Exp $
  *
 Copyright 1992, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-static char    *foo, *bar, *bletch;
+static char    *foo, *bar, *bletch, *snarf;
 static char    *glorf[100];
 
 extern char *malloc ();
@@ -34,12 +34,14 @@ main ()
     foo = malloc (1000);
     bar = malloc (2000);
     bletch = malloc (3000);
+    snarf = malloc(1000);
     for (i = 0; i < 100; i++)
 	glorf[i] = malloc (i * 200);
     for (i = 0; i < 100; i++) {
 	free (glorf[i]);
 	glorf[i] = 0;
     }
+    *(char **)snarf = bletch;
     free (foo);
     free (bletch);
     bletch = 0;

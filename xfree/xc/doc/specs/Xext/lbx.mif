@@ -10326,7 +10326,7 @@
     <FTag `'>
     <FSize  9.0 pt>
    > # end of Font
-   <String `$XConsortium: lbx.mif /main/4 1996/12/21 19:36:48 ray $'>
+   <String `$Xorg: lbx.mif,v 1.3 2000/08/17 19:42:31 cpqbld Exp $'>
   >
  > # end of Para
 > # end of TextFlow
@@ -10384,7 +10384,7 @@
     <Unique 713395>
    > # end of Variable
    <Char Tab >
-   <String `$XConsortium: lbx.mif /main/4 1996/12/21 19:36:48 ray $'>
+   <String `$Xorg: lbx.mif,v 1.3 2000/08/17 19:42:31 cpqbld Exp $'>
   >
  > # end of Para
 > # end of TextFlow
@@ -10695,7 +10695,7 @@
    <Conditional 
     <InCondition `Version Tag'>
    > # end of Conditional
-   <String `$XConsortium: lbx.mif /main/4 1996/12/21 19:36:48 ray $'>
+   <String `$Xorg: lbx.mif,v 1.3 2000/08/17 19:42:31 cpqbld Exp $'>
   >
  > # end of Para
  <Para 

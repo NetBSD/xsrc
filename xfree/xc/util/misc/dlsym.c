@@ -1,4 +1,4 @@
-/* $XConsortium: dlsym.c,v 1.1 93/12/06 16:24:15 kaleb Exp $ */
+/* $Xorg: dlsym.c,v 1.3 2000/08/17 19:55:21 cpqbld Exp $ */
 /*
  * Stub interface to dynamic linker routines
  * that SunOS uses but didn't ship with 4.1.

@@ -1,4 +1,4 @@
-.\" $XConsortium: appgroup.ms /main/2 1996/10/14 10:36:38 swick $"
+.\" $Xorg: appgroup.ms,v 1.3 2000/08/17 19:42:41 cpqbld Exp $
 .EF 'AppGroup Extension Definition'- % -'October, 1996'
 .OF 'AppGroup Extension Definition'- % -'October, 1996'
 .EH '''

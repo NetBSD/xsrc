@@ -4,7 +4,7 @@ esac
 echo "Extracting Makefile (with variable substitutions)"
 cat >Makefile <<!GROK!THIS!
 # oldHeader: Makefile.SH,v 2.0.1.2 88/06/22 20:43:40 lwall Locked $
-# $XConsortium: Makefile.SH,v 3.1 94/09/09 20:04:28 gildea Exp $
+# $Xorg: Makefile.SH,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
 #
 # Revision 2.0.1.2  88/06/22  20:43:40  lwall
 # patch12: config.h now depends on config.h.SH

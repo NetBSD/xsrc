@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .rn '' }`
-'\" $XConsortium: patch.man,v 1.2 94/09/09 20:04:28 gildea Exp $
+'\" $Xorg: patch.man,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
 '\" 
 '\" Revision 2.0.1.2  88/06/22  20:47:18  lwall
 '\" patch12: now avoids Bell System Logo
@@ -33,6 +33,7 @@
 '\" Revision 1.2  84/12/04  17:22:02  lwall
 '\" Baseline version.
 '\" 
+'\" $XFree86: xc/util/patch/patch.man,v 1.2 2001/02/07 22:35:23 tsi Exp $
 .de Sh
 .br
 .ne 5
@@ -539,7 +540,7 @@ Could be smarter about partial matches, excessively \&deviant offsets and
 swapped code, but that would take an extra pass.
 .PP
 If code has been duplicated (for instance with #ifdef OLDCODE ... #else ...
-#endif),
+\&#endif),
 .I patch
 is incapable of patching both versions, and, if it works at all, will likely
 patch the wrong one, and tell you that it succeeded to boot.

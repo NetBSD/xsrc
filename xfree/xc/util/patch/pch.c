@@ -1,5 +1,5 @@
 /* oldHeader: pch.c,v 2.0.1.7 88/06/03 15:13:28 lwall Locked $
- * $XConsortium: pch.c,v 3.3 94/09/14 21:22:55 gildea Exp $
+/* $Xorg: pch.c,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
  *
  * Revision 2.0.2.0  90/05/01  22:17:51  davison
  * patch12u: unidiff support added

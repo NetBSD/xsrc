@@ -1,4 +1,4 @@
-.\" $XConsortium: encoding.ms,v 1.9 94/04/28 16:38:34 gildea Exp $
+.\" $Xorg: encoding.ms,v 1.3 2000/08/17 19:42:37 cpqbld Exp $
 \&
 .sp 1
 .XS

@@ -1,4 +1,4 @@
-.\" $TOG: LocaleDB.ms /main/7 1997/11/04 18:03:16 kaleb $
+.\" $Xorg: LocaleDB.ms,v 1.3 2000/08/17 19:42:49 cpqbld Exp $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
 .EH ''''
 .OH ''''
@@ -400,7 +400,7 @@ The following is sample X Locale Database file.
 .sp
 .RS
 .nf
-#  $TOG: LocaleDB.ms /main/7 1997/11/04 18:03:16 kaleb $
+#  $Xorg: LocaleDB.ms,v 1.3 2000/08/17 19:42:49 cpqbld Exp $
 #  XLocale Database Sample for ja_JP.euc 
 # 
 

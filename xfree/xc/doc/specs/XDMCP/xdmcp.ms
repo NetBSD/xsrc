@@ -1,5 +1,5 @@
 .\" Use eqn, tbl, and -ms
-.\" $TOG: xdmcp.ms /main/30 1997/11/04 18:19:23 kaleb $
+.\" $Xorg: xdmcp.ms,v 1.3 2000/08/17 19:42:20 cpqbld Exp $
 .EQ
 delim @@
 define oc % "\\fR{\\fP" %

@@ -1,5 +1,5 @@
 /* oldHeader: pch.h,v 2.0.1.1 87/01/30 22:47:16 lwall Exp $
- * $XConsortium: pch.h,v 3.3 94/09/14 21:24:15 gildea Exp $
+ * $Xorg: pch.h,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
  *
  * Revision 2.0.1.1  87/01/30  22:47:16  lwall
  * Added do_ed_script().

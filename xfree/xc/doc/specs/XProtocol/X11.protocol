@@ -1,5 +1,9 @@
-.\" $TOG: X11.protocol /main/49 1997/11/04 18:34:11 kaleb $
-.\" $XFree86$
+.\" $Xorg: X11.protocol,v 1.3 2000/08/17 19:42:23 cpqbld Exp $
+.\"
+.\"
+.\"
+.\"
+.\" $XFree86: xc/doc/specs/XProtocol/X11.protocol,v 1.3 2001/01/17 16:57:42 dawes Exp $
 .EH ''''
 .OH ''''
 .EF ''''

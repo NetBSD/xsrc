@@ -464,6 +464,8 @@ void XrmStringToQuarkList\^(\^\fIstring\fP, \fIquarks_return\fP\^)
 Specifies the string for which a quark\*(Ql is to be allocated.
 .IP \fIquarks_return\fP 1i
 Returns the list of quarks.
+The caller must allocate sufficient space for the quarks list before calling 
+.PN XrmStringToQuarkList .
 .LP
 .eM
 The

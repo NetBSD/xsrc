@@ -1,7 +1,11 @@
 .\"#! troff -ms $1		-*- Nroff -*-
 .\" "Xterm Control Sequences" document
-.\" $XConsortium: ctlseqs.ms,v 1.16 94/12/28 20:45:48 gildea Exp $
-.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.39 2000/08/25 21:50:58 dawes Exp $
+.\" $Xorg: ctlseqs.ms,v 1.3 2000/08/17 19:42:51 cpqbld Exp $
+.\"
+.\"
+.\"
+.\"
+.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.43 2001/03/29 22:48:02 dickey Exp $
 .\"
 .\"
 .\" Copyright 1996,1997,1998,1999,2000 by Thomas E. Dickey
@@ -205,7 +209,7 @@
 .[] & &
 .[] ^ ^
 .[] _ _
-.[] qu \`
+.[] qu \'
 .[] ` \`
 .[] a a
 .[] b b
@@ -734,7 +738,7 @@ See the section \fBMouse Tracking\fP.
   \*(Ps = \*1\*9 \(-> Set print extent to full screen (DECPEX)
   \*(Ps = \*2\*5 \(-> Show Cursor (DECTCEM)
   \*(Ps = \*3\*0 \(-> Show scrollbar (rxvt).
-  \*(Ps = \*3\*5 \(-> Enable shifted key-functions (rxvt).
+  \*(Ps = \*3\*5 \(-> Enable font-shifting functions (rxvt).
   \*(Ps = \*3\*8 \(-> Enter Tektronix Mode (DECTEK)
   \*(Ps = \*4\*0 \(-> Allow 80 \z\(<-\(-> 132 Mode
   \*(Ps = \*4\*1 \(-> \fImore\fP(1) fix (see \fIcurses\fP resource)
@@ -806,7 +810,7 @@ DEC Private Mode Reset (DECRST)
   \*(Ps = \*1\*9 \(-> Limit print to scrolling region (DECPEX)
   \*(Ps = \*2\*5 \(-> Hide Cursor (DECTCEM)
   \*(Ps = \*3\*0 \(-> Don't show scrollbar (rxvt).
-  \*(Ps = \*3\*5 \(-> Disable shifted key-functions (rxvt).
+  \*(Ps = \*3\*5 \(-> Disable font-shifting functions (rxvt).
   \*(Ps = \*4\*0 \(-> Disallow 80 \z\(<-\(-> 132 Mode
   \*(Ps = \*4\*1 \(-> No \fImore\fP(1) fix (see \fIcurses\fP resource)
   \*(Ps = \*4\*2 \(-> Disable Nation Replacement Character sets (DECNRCM)
@@ -900,8 +904,8 @@ the following, from \fIrxvt\fP:
   \*(Ps = \*1\*0\*0 \(-> Set foreground and background color to default
 .sp
 If 88- or 256-color support is compiled, the following apply.
-  \*(Ps = \*3\*8 ; \*5 ; \*(Ps \(-> Set background color to \*(Ps
-  \*(Ps = \*4\*8 ; \*5 ; \*(Ps \(-> Set foreground color to \*(Ps
+  \*(Ps = \*3\*8 ; \*5 ; \*(Ps \(-> Set foreground color to the second \*(Ps
+  \*(Ps = \*4\*8 ; \*5 ; \*(Ps \(-> Set background color to the second \*(Ps
 .sp
 .
 .IP \\*(Cs\\*(Ps\\*s\\*n

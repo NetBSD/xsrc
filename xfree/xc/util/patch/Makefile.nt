@@ -1,4 +1,4 @@
-# $XConsortium: Makefile.nt,v 1.2 94/09/12 20:19:31 kaleb Exp $
+# $Xorg: Makefile.nt,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
 
 # Simple Makefile for MS Windows NT.
 

@@ -9,7 +9,7 @@
 # of config.h for certain machines, so you might look for one of those.)
 #
 # oldHeader: Head.U,v 1.0 87/05/22 12:28:10 lwall Exp $
-# $XConsortium: Configure,v 1.1 94/09/09 20:04:01 gildea Exp $
+# $Xorg: Configure,v 1.3 2000/08/17 19:55:21 cpqbld Exp $
 #
 # Yes, you may rip this off to use in other distribution packages.
 # (Note: this Configure script was generated automatically.  Rather than
