@@ -47,6 +47,13 @@ XCOMM OpenBSD/powerpc
 PCIDRVRSRC = freebsdPci.c
 PCIDRVROBJ = freebsdPci.o
 
+#elif defined(NetBSDArchitecture) && defined(PpcArchitecture)
+
+XCOMM NetBSD/powerpc
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
+
 #elif defined(PpcArchitecture)
 
 XCOMM PowerPC PCI drivers

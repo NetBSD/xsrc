@@ -147,6 +147,9 @@
 #elif defined(__powerpc__) && defined(__OpenBSD__)
 # define  ARCH_PCI_INIT freebsdPciInit
 # define INCLUDE_XF86_MAP_PCI_MEM
+#elif defined(__powerpc__) && defined(__NetBSD__)
+# define ARCH_PCI_INIT netbsdPciInit
+# define INCLUDE_XF86_MAP_PCI_MEM
 #elif defined(__powerpc__)
 # define ARCH_PCI_INIT ppcPciInit
 # if !defined(PowerMAX_OS)
