@@ -395,6 +395,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #ifndef HasPamMisc
 #define HasPamMisc		NO
 #endif
+#ifndef HasGetpeereid
+#define HasGetpeereid		NO
+#endif
 /* byte-order defaults */
 #ifndef ByteOrder
 #if defined(VaxArchitecture)

@@ -213,6 +213,13 @@ Note that the shared memory ID returned by the system is stored in the
 shminfo structure.  The server will need that ID to attach itself to the
 segment.
 .LP
+Also note that, on many systems for security reasons, the X server
+will only accept to attach to the shared memory segment if it's
+readable and writeable by ``other''. On systems where the X server is
+able to determine the uid of the X client over a local transport, the
+shared memory segment can be readable and writeable only by the uid of
+the client.
+.LP
 Next, attach this shared memory segment to your process:
 .Cs
 shminfo.shmaddr = image->data = shmat (shminfo.shmid, 0, 0);

@@ -97,6 +97,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define HasBSDAuth		YES
 #endif
 
+/* OpenBSD 3.0 and later has getpeereid() */
+#if OSMajorVersion >= 3
+# define HasGetpeereid		YES
+#endif
+
 /* OpenBSD 3.0 has APM with kqueue interface */
 #if OSMajorVersion >= 3
 # define HasApmKqueue		YES

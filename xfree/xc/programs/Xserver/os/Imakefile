@@ -78,6 +78,10 @@ MALLOC_SRCS=xalloc.c
 MALLOC_OBJS=xalloc.o
 #endif
 
+#if HasGetpeereid
+GETPEEREID_DEFINES = -DHAS_GETPEEREID
+#endif
+
 BOOTSTRAPCFLAGS = 
            SRCS = WaitFor.c access.c connection.c io.c $(COLOR_SRCS) \
                   osinit.c utils.c auth.c mitauth.c secauth.c $(XDMAUTHSRCS) \
@@ -111,7 +115,7 @@ BOOTSTRAPCFLAGS =
 #endif
         DEFINES = -DXSERV_t -DTRANS_SERVER $(CONNECTION_FLAGS) $(MEM_DEFINES) \
 		  $(XDMAUTHDEFS) $(RPCDEFS) $(SIGNAL_DEFINES) $(OS_DEFINES) \
-		  $(KRB5_DEFINES) $(RGB_DEFINES)
+		  $(KRB5_DEFINES) $(RGB_DEFINES) $(GETPEEREID_DEFINES)
        INCLUDES = -I. -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC) \
 		  -I$(SERVERSRC)/Xext -I$(FONTINCSRC) \
 		  -I$(TOP)/lib/Xau -I../lbx Krb5Includes
