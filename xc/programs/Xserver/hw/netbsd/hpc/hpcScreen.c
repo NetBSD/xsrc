@@ -1,4 +1,4 @@
-/* $NetBSD: hpcScreen.c,v 1.3 2001/06/24 14:46:54 takemura Exp $	*/
+/* $NetBSD: hpcScreen.c,v 1.4 2001/06/26 14:21:54 takemura Exp $	*/
 /* $XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp $ */
 /*
 Copyright (c) 1990, 1993  X Consortium
@@ -129,7 +129,7 @@ hpcMemoryMap (len, off, fd)
     if (mapaddr == (pointer) -1) {
 	hpcError ("mapping frame buffer memory");
 	(void) close (fd);
-	mapaddr = NULL;
+	return NULL;
     }
     return mapaddr + off;
 }
