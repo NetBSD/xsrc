@@ -1,6 +1,7 @@
 XCOMM  $XConsortium: ja.SJIS /main/8 1996/10/23 07:16:28 kaleb $
 XCOMM  XLocale Database Sample for ja_JP.sjis
 XCOMM 
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/ja.SJIS,v 1.1.1.1.2.2 1998/02/01 22:08:11 robin Exp $
 
 #ifndef __uxp__
 
@@ -36,6 +37,7 @@ fs2	{
 	}
 	font	{
 		primary		JISX0201.1976-0:GR
+		substitute	JISX0201.1976-0:GR
 		vertical_rotate	all
 	}
 }

@@ -1,5 +1,5 @@
 # $XConsortium: Makefile /main/36 1996/11/13 14:42:50 lehors $
-# $XFree86: xc/Makefile,v 3.6.2.1 1997/05/03 04:53:19 dawes Exp $
+# $XFree86: xc/Makefile,v 3.6.2.2 1998/02/07 00:44:32 dawes Exp $
 
 # Luna users will need to either run make as "make MAKE=make"
 # or add "MAKE = make" to this file.
@@ -47,7 +47,15 @@ World:
 	@date
 	@echo ""
 	@if [ ! -f $(IRULESRC)/host.def ]; then \
-		echo "" > $(IRULESRC)/host.def; \
+	    if [ ! -f $(TOP)/lib/Xt/Imakefile ]; then \
+		echo "#define BuildServersOnly YES" > $(IRULESRC)/host.def; \
+	    else \
+		if [ ! -f $(TOP)/fonts/Imakefile ]; then \
+		    echo "#define BuildFonts NO" > $(IRULESRC)/host.def; \
+		else \
+		    echo "" > $(IRULESRC)/host.def; \
+		fi \
+	    fi \
 	fi
 	cd $(IMAKESRC) && $(MAKE) $(FLAGS) clean
 	$(MAKE) $(MFLAGS) Makefile.boot

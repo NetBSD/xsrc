@@ -1,0 +1,8 @@
+bin/XF86_*
+bin/XF86Setup
+bin/Xnest
+bin/Xvfb
+bin/Xprt
+bin/X
+bin/xfs
+bin/xmseconfig

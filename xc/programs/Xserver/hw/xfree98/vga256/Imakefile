@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:43:07 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/Imakefile,v 3.10.2.1 1997/05/03 09:50:37 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/Imakefile,v 3.10.2.3 1998/02/15 16:09:47 hohndel Exp $
 #include <Server.tmpl>
 
 #define IHaveSubdirs
@@ -58,15 +58,29 @@ TGUIOBJS    = trident/?*.o
 TGUIDONES   = trident/DONE
 #endif
 
+#if XF98MGAServer
+MGASUBDIRS = mga
+MGASRCS    = mga/?*.c
+MGAOBJS    = mga/?*.o
+MGADONES   = mga/DONE
+#endif
+
+#if XF98SVGAServer
+SVGASUBDIRS = svga
+SVGASRCS    = svga/?*.c
+SVGAOBJS    = svga/?*.o
+SVGADONES   = svga/DONE
+#endif
+
 SUBDIRS = $(GANBWAPSUBDIRS) $(NEC480SUBDIRS) $(NKVNECSUBDIRS) \
 	  $(WABSSUBDIRS) $(WABEPSUBDIRS) $(WSNASUBDIRS) $(TGUISUBDIRS) \
-	  drivers
+	  $(MGASUBDIRS) $(SVGASUBDIRS) drivers
 SRCS    = $(GANBWAPSRCS) $(NEC480SRCS) $(NKVNECSRCS) $(WABSSRCS) \
-	  $(WABEPSRCS) $(WSNASRCS) $(TGUISRCS)
+	  $(WABEPSRCS) $(WSNASRCS) $(TGUISRCS) $(MGASRCS) $(SVGASRCS)
 OBJS    = $(GANBWAPOBJS) $(NEC480OBJS) $(NKVNECOBJS) $(WABSOBJS) \
-	  $(WABEPOBJS) $(WSNAOBJS) $(TGUIOBJS)
+	  $(WABEPOBJS) $(WSNAOBJS) $(TGUIOBJS) $(MGAOBJS) $(SVGAOBJS)
 DONES   = $(GANBWAPDONES) $(NEC480DONES) $(NKVNECDONES) $(WABSDONES) \
-	  $(WABEPDONES) $(WSNADONES) $(TGUIDONES)
+	  $(WABEPDONES) $(WSNADONES) $(TGUIDONES) $(MGADONES) $(SVGADONES)
 
 INCLUDES = -I$(XF86SRC)/vga256/vga -I$(XF86COMSRC) -I$(XF86OSSRC) \
 	   -I$(SERVERSRC)/include -I$(XINCLUDESRC)
@@ -81,26 +95,18 @@ MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
 $(DONES): $(SUBDIRS)
 #endif
 
-#if XF98GANBWAPServer
-ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,cirrus)
-#endif
-#if XF98WSNAServer
+#if XF98GANBWAPServer || XF98WSNAServer || XF98NKVNECServer || \
+    XF98WABSServer || XF98WABEPServer || XF98SVGAServer
 ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,cirrus)
 #endif
 #if XF98NEC480Server
 ConfigTargetNoDepend(nec480Conf,$(ICONFIGFILES),cnec480.SHsuf,nec480)
 #endif
-#if XF98NKVNECServer
-ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,cirrus)
-#endif
-#if XF98WABSServer
-ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,cirrus)
-#endif
-#if XF98WABEPServer
-ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,cirrus)
-#endif
 #if XF98TGUIServer
 ConfigTargetNoDepend(tguiConf,$(ICONFIGFILES),ctgui.SHsuf,tvga8900)
+#endif
+#if XF98MGAServer
+ConfigTargetNoDepend(mgaConf,$(ICONFIGFILES),cmga.SHsuf,mga)
 #endif
 
 #ifdef OS2Architecture
@@ -128,6 +134,12 @@ NormalDepLibraryTarget(wabep,$(WABEPSUBDIRS) drivers $(WABEPDONES),?*.o)
 #if XF98TGUIServer
 NormalDepLibraryTarget(trident,$(TGUISUBDIRS) drivers $(TGUIDONES),?*.o)
 #endif
+#if XF98MGAServer
+NormalDepLibraryTarget(mga,$(MGASUBDIRS) drivers $(MGADONES),?*.o)
+#endif
+#if XF98SVGAServer
+NormalDepLibraryTarget(vga256,$(SVGASUBDIRS) drivers $(SVGADONES),?*.o)
+#endif
 #else
 #if XF98GANBWAPServer
 NormalDepLibraryTarget(ganbwap,$(GANBWAPSUBDIRS) drivers $(GANBWAPDONES),$(GANBWAPOBJS))
@@ -150,6 +162,12 @@ NormalDepLibraryTarget(wabep,$(WABEPSUBDIRS) drivers $(WABEPDONES),$(WABEPOBJS))
 #if XF98TGUIServer
 NormalDepLibraryTarget(trident,$(TGUISUBDIRS) drivers $(TGUIDONES),$(TGUIOBJS))
 #endif
+#if XF98MGAServer
+NormalDepLibraryTarget(mga,$(MGASUBDIRS) drivers $(MGADONES),$(MGAOBJS))
+#endif
+#if XF98SVGAServer
+NormalDepLibraryTarget(vga256,$(SVGASUBDIRS) drivers $(SVGADONES),$(SVGAOBJS))
+#endif
 #endif
 
 NormalLibraryObjectRule()
@@ -160,6 +178,8 @@ InstallLinkKitLibrary(ganbwap,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(nec480,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(nkvnec,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(trident,$(XF98LINKKITDIR)/drivers98)
+InstallLinkKitLibrary(mga,$(XF98LINKKITDIR)/drivers98)
+InstallLinkKitLibrary(vga256,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(wabep,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(wabs,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitLibrary(wsna,$(XF98LINKKITDIR)/drivers98)
@@ -168,5 +188,6 @@ InstallLinkKitNonExecFile(cvga256.SHsuf,$(XF98LINKKITDIR))
 #endif
 InstallLinkKitNonExecFile(cnec480.SHsuf,$(XF98LINKKITDIR))
 InstallLinkKitNonExecFile(ctgui.SHsuf,$(XF98LINKKITDIR))
+InstallLinkKitNonExecFile(cmga.SHsuf,$(XF98LINKKITDIR))
 
 DependSubdirs($(SUBDIRS))

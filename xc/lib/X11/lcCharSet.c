@@ -23,6 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/* $XFree86: xc/lib/X11/lcCharSet.c,v 3.0.6.1 1998/01/25 06:11:05 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -138,7 +139,7 @@ get_values(charset, args, num_args)
 
 XlcCharSet
 _XlcCreateDefaultCharSet(name, ct_sequence)
-    char *name;
+    _Xconst char *name;
     char *ct_sequence;
 {
     XlcCharSet charset;

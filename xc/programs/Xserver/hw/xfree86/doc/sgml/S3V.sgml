@@ -1,28 +1,37 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
-<title> Information for S3 ViRGE, ViRGE/DX, ViRGE/GX and ViRGE/VX Users
+<title> Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, 
+ViRGE/MX and ViRGE/VX Users
 <author>The XFree86 Project Inc.
-<date>1 June 1997
+<date>1 March 1998
 <toc>
 
 <sect> Supported hardware
 <p>
-With release 3.3 of XFree86, there are now two servers which support
-the ViRGE family of chips. The XF86_S3V server (also available in 3.2A)
+With release 3.3.2 of XFree86, there are now two servers which support
+the ViRGE family of chips. The XF86_S3V server 
 is a dedicated server which supports the S3 ViRGE (86C325), the ViRGE/DX 
 (86C375), ViRGE/GX (86C385) and the ViRGE/VX (86C988) chips. New with 
 this release, the above ViRGE chipsets are also supported in the 
 XF86_SVGA server, which includes a new ViRGE driver making use 
-of the XAA acceleration architecture.
+of the XAA acceleration architecture and also supports 
+ViRGE/GX2 (86C357) and ViRGE/MX (86C260) chips now.
+<p>
+The following sections describe details of ViRGE support.  Be aware that
+there are two servers described.  XF86_S3V is the ViRGE specific server
+and was created first.  The new acceleration architecture support is found
+in the XF86_SVGA server using the s3_virge driver.  Each has strengths and
+weaknesses.
 
 <sect> XF86_S3V server
 <p>
-The S3V server has many enhancements and bug fixes since 3.2A. With the
-release of 3.3 you should find that the ViRGE server is stable at all depths.
-Supported for 24bpp has been enhanced.  The server now supports 1 and 32 bpp
-pixmap formats (3.2A supported 1 and 24bpp pixmaps).
-This fixes known problems with xanim and Netscape clients in 3.2A.
+The S3V server has some minor fixes since 3.3.1.
+You should find that the ViRGE server is stable at all depths.
+The server supports 1 and 32 bpp
+pixmap formats.
+This fixes known problems with xanim and Netscape clients in 
+early versions of the S3V server.
 It has been tested with ViRGE cards with 2 and 4MB DRAM, ViRGE/DX 4M,
  ViRGE/VX 8M (4M VRAM/4M DRAM), and with a 220MHz ViRGE/VX card with 2MB
 VRAM up to 1600x1200 with 8/15/16bpp.
@@ -93,8 +102,8 @@ chipset.
 It uses the XAA acceleration architecture for acceleration, and allows
 color depths of 8, 15, 16, 24 and 32 bpp. It has been tested on several 2MB
 and 4MB ViRGE cards, a 4MB ViRGE/DX card and a ViRGE/VX card. Resolutions 
-of up to 1600x1200 have been achieved. As this is the first release of this
-driver, not everything may work as expected. Please report any problems 
+of up to 1600x1200 have been achieved. This is an early release of this
+driver, and not everything may work as expected. Please report any problems 
 to <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
 using the appropriate bug report sheet. 
 
@@ -102,7 +111,8 @@ using the appropriate bug report sheet.
 <p>
 
 <itemize>
-<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX and ViRGE/VX.
+<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX 
+and ViRGE/VX.
 <item>Supports 8bpp, 15/16bpp, 24bpp and 32bpp.
 <item>VT switching seems to work well, no corruption reported 
 at all color depths. 
@@ -198,7 +208,46 @@ Color depth options and limitations:
 <item>32bpp uses STREAMS as well; however, because the ViRGE does not really 
 support 32 bpp "natively", acceleration is quite limited.
 <item>Both 24bpp and 32bpp do not support interlace modes.  
+<item>32bpp is limited to a width of < 1024 pixels.  (1024x768 is not possible,
+even if you have the memory.)  This is a hardware limit of ViRGE chips.
 </itemize>
+
+
+<sect1>Hints for LCD configuration (S3 ViRGE/MX)
+<p>
+If LCD is active the CRT will always output 1024x768 (or whatever is 
+the _physical_ LCD size) and smaller modes are zoomed to fit on the LCD
+unless you specify Option "lcd_center" in the device section.
+
+The pixel clock for this physical size (e.g. 1024x768) mode...
+<itemize>
+<item>...can explicitly set in the config file (device section) with  e.g. `Set_LCDClk 70'
+(resulting 70 MHz pixel clock being used for all modes when LCD is on)
+<item>...is taken from the _first_ mode in the modes line iff this mode's display size
+is the same as the physical LCD size
+<item>...the default LCD pixel clock of BIOS initialisation setup is used.  
+This value is output at server startup in the line `LCD size ...' 
+unless you're specifying a value using `Set_LCDClk ...'
+</itemize>
+
+If LCD is _not_ active, the normal mode lines and pixel clocks 
+are used for the VGA output.
+
+Whenever you switch output sources with Fn-F5 or similar,
+the Xserver won't get informed and pixel clock and other settings are wrong.
+Because of this you have to switch modes _after_ switch output sources!
+Then the server will check which outputs are active and select the correct
+clocks etc.  
+So the recommended key sequence to switch output is
+
+	Fn-F5  Ctrl-Alt-Plus  Ctrl-Alt-Minus
+
+and everything should be ok..  
+
+on the Toshiba keypad you can first hold down Ctrl-Alt, then press `Fn' additionally 
+before pressing Plus/Minus too to avoid to explicitly enable/disable 
+the numeric keypad for mode switching.
+
 
 
 <sect>Authors
@@ -211,7 +260,7 @@ Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
 and:
 
 <itemize>
-<item>Kevin Brosius <it>70247.1640@compuserve.com</it>
+<item>Kevin Brosius <it>Cobra@compuserve.com</it>
 <item>Berry Dijk <it>berry_dijk@tasking.nl</it>
 <item>Dirk Hohndel <it>hohndel@XFree86.Org</it>
 <item>Huver Hu <it>huver@amgraf.com</it>
@@ -225,11 +274,13 @@ Sebastien Marineau <it>&lt;marineau@genie.uottawa.ca&gt;</it>
 
 and: 
 
-Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
-
+<itemize>
+<item>Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
+<item>Kevin Brosius <it>Cobra@compuserve.com</it>
+</itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.5 1997/06/02 01:44:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.8 1998/02/27 04:53:51 dawes Exp $
 </verb>
 
 </article>

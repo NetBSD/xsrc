@@ -1,5 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86fpoly.c,v 3.0 1996/11/18 13:22:17 dawes Exp $ */
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86fpoly.c,v 3.0.2.2 1998/02/21 06:07:09 robin Exp $ */
 /*
  * Copyright 1996  The XFree86 Project
  *
@@ -50,6 +49,58 @@
 #include "xf86xaa.h"
 
 
+#define Setup(c,x,vertex,dx,dy,e,sign,step,DX) {\
+    x = intToX(vertex); \
+    if (dy = intToY(c) - y) { \
+    	DX = dx = intToX(c) - x; \
+	step = 0; \
+    	if (dx >= 0) \
+    	{ \
+	    e = 0; \
+	    sign = 1; \
+	    if (dx >= dy) {\
+	    	step = dx / dy; \
+	    	dx %= dy; \
+	    } \
+    	} \
+    	else \
+    	{ \
+	    e = 1 - dy; \
+	    sign = -1; \
+	    dx = -dx; \
+	    if (dx >= dy) { \
+		step = - (dx / dy); \
+		dx %= dy; \
+	    } \
+    	} \
+    } \
+    x += origin; \
+    vertex = c; \
+}
+
+#define Step(x,dx,dy,e,sign,step) {\
+    x += step; \
+    if ((e += dx) > 0) \
+    { \
+	x += sign; \
+	e -= dy; \
+    } \
+}
+
+#define FixError(x, dx, dy, e, sign, step, h)	{	\
+	   e += (h) * dx;				\
+	   x += (h) * step;				\
+	   if(e > 0) {					\
+		x += e * sign/dy;			\
+		e %= dy;				\
+	   	if(e) {					\
+		   x += sign;				\
+		   e -= dy;				\
+		}					\
+	   } 	 					\
+}
+
+
 void
 xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
     DrawablePtr	pDrawable;
@@ -60,7 +111,6 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
     DDXPointPtr	ptsIn;
 {
     cfbPrivGCPtr    devPriv;
-    int		    nwidth;
     int		    maxy;
     int		    origin;
     register int    vertex1, vertex2;
@@ -78,21 +128,27 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
     int		    sign1, sign2;
     int		    h;
     int		    yoffset;
+    int		    DX1, DX2;  /* for trapezoid fills */
 
     if (mode == CoordModePrevious)
     {
-	miFillPolygon (pDrawable, pGC, shape, mode, count, ptsIn);
-	return;
+	register DDXPointPtr ppt = ptsIn + 1;
+
+	for (c = 1; c < count; c++, ppt++) 
+        {
+	    ppt->x += (ppt-1)->x;
+	    ppt->y += (ppt-1)->y;
+	}
+        mode = CoordModeOrigin;
     }
     
     devPriv = cfbGetGCPrivate(pGC);
-#ifdef NO_ONE_RECT
     if (REGION_NUM_RECTS(devPriv->pCompositeClip) != 1)
     {
 	miFillPolygon (pDrawable, pGC, shape, mode, count, ptsIn);
 	return;
     }
-#endif
+
     origin = *((int *) &pDrawable->x);
     origin -= (origin & 0x8000) << 1;
     extents = &devPriv->pCompositeClip->extents;
@@ -181,43 +237,6 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
     vertex2 = vertex1 = *vertex2p++;
     if (vertex2p == endp)
 	vertex2p = (int *) ptsIn;
-#define Setup(c,x,vertex,dx,dy,e,sign,step) {\
-    x = intToX(vertex); \
-    if (dy = intToY(c) - y) { \
-    	dx = intToX(c) - x; \
-	step = 0; \
-    	if (dx >= 0) \
-    	{ \
-	    e = 0; \
-	    sign = 1; \
-	    if (dx >= dy) {\
-	    	step = dx / dy; \
-	    	dx = dx % dy; \
-	    } \
-    	} \
-    	else \
-    	{ \
-	    e = 1 - dy; \
-	    sign = -1; \
-	    dx = -dx; \
-	    if (dx >= dy) { \
-		step = - (dx / dy); \
-		dx = dx % dy; \
-	    } \
-    	} \
-    } \
-    x += origin; \
-    vertex = c; \
-}
-
-#define Step(x,dx,dy,e,sign,step) {\
-    x += step; \
-    if ((e += dx) > 0) \
-    { \
-	x += sign; \
-	e -= dy; \
-    } \
-}
 
     yoffset = pDrawable->y;
     for (;;)
@@ -229,7 +248,7 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
 	    	if (vertex1p == (int *) ptsIn)
 		    vertex1p = endp;
 	    	c = *--vertex1p;
-	    	Setup (c,x1,vertex1,dx1,dy1,e1,sign1,step1)
+	    	Setup (c,x1,vertex1,dx1,dy1,e1,sign1,step1,DX1)
 	    } while (y >= intToY(vertex1));
 	    h = dy1;
 	}
@@ -245,7 +264,7 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
 	    	c = *vertex2p++;
 	    	if (vertex2p == endp)
 		    vertex2p = (int *) ptsIn;
-	    	Setup (c,x2,vertex2,dx2,dy2,e2,sign2,step2)
+	    	Setup (c,x2,vertex2,dx2,dy2,e2,sign2,step2,DX2)
 	    } while (y >= intToY(vertex2));
 	    if (dy2 < h)
 		h = dy2;
@@ -256,24 +275,68 @@ xf86FillPolygonSolid1Rect(pDrawable, pGC, shape, mode, count, ptsIn)
 	    if ((c = (intToY(vertex2) - y)) < h)
 		h = c;
 	}
+
 	/* fill spans for this segment */
-	for (;;) {
+        if(DX1 | DX2) {
+      	  if(xf86AccelInfoRec.SubsequentFillTrapezoidSolid && (h > 6)) {
+	     if(x1 == x2) {
+		while(x1 == x2) {
+	     	   y++;
+	    	   if (!--h)
+		   	break;
+	    	   Step(x1,dx1,dy1,e1,sign1,step1)
+	    	   Step(x2,dx2,dy2,e2,sign2,step2)
+		}
+		if(y == maxy) break;
+    		if(!h) continue;
+	     }
+
+             if(x1 < x2)
+ 	     	xf86AccelInfoRec.SubsequentFillTrapezoidSolid(y + yoffset, h,
+					x1, DX1, dy1, e1, 
+					x2 - 1, DX2, dy2, e2);
+	     else
+	     	xf86AccelInfoRec.SubsequentFillTrapezoidSolid(y + yoffset, h,
+					x2, DX2, dy2, e2, 
+					x1 - 1, DX1, dy1, e1);
+	     y += h;	
+             if(--h) {
+	     	FixError(x1,dx1,dy1,e1,sign1,step1,h);
+	     	FixError(x2,dx2,dy2,e2,sign2,step2,h);
+		h = 0;
+	     }  	
+	  } else {
+	     for (;;) {
+	    	if (x2 > x1)
+	            xf86AccelInfoRec.SubsequentFillRectSolid(
+	            	x1, y + yoffset, x2 - x1, 1);
+	        else
+	            if (x1 > x2)
+	            	xf86AccelInfoRec.SubsequentFillRectSolid(
+	                    x2, y + yoffset, x1 - x2, 1);
+	     	y++;
+	    	if (!--h)
+		   break;
+	    	Step(x1,dx1,dy1,e1,sign1,step1)
+	    	Step(x2,dx2,dy2,e2,sign2,step2)
+	     }
+	  }
+	} else {
 	    if (x2 > x1)
 	        xf86AccelInfoRec.SubsequentFillRectSolid(
-	            x1, y + yoffset, x2 - x1, 1);
+	            x1, y + yoffset, x2 - x1, h);
 	    else
 	        if (x1 > x2)
 	            xf86AccelInfoRec.SubsequentFillRectSolid(
-	                x2, y + yoffset, x1 - x2, 1);
-	    y++;
-	    if (!--h)
-		break;
-	    Step(x1,dx1,dy1,e1,sign1,step1)
-	    Step(x2,dx2,dy2,e2,sign2,step2)
-	}
+	                x2, y + yoffset, x1 - x2, h);
+
+	    y += h;
+	    h = 0;
+        } 
 	if (y == maxy)
 	    break;
     }
+
     if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
         xf86AccelInfoRec.Sync();
 }

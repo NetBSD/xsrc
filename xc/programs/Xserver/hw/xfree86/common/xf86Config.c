@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.13 1997/08/04 02:10:39 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.17 1998/02/24 19:05:54 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -1578,15 +1578,15 @@ configPointerSection(MouseDevPtr	mouse_dev,
 {
   int            token;
   int		 mtoken;
-#if defined(USE_OSMOUSE) || defined(OSMOUSE_ONLY)
   int            i;
-#endif
   char *mouseType = "unknown";
 
   /* Set defaults */
   mouse_dev->baudRate        = 1200;
   mouse_dev->oldBaudRate     = -1;
   mouse_dev->sampleRate      = 0;
+  mouse_dev->resolution      = 0;
+  mouse_dev->buttons         = MSE_DFLTBUTTONS;
   mouse_dev->emulate3Buttons = FALSE;
   mouse_dev->emulate3Timeout = 50;
   mouse_dev->chordMiddle     = FALSE;
@@ -1594,6 +1594,9 @@ configPointerSection(MouseDevPtr	mouse_dev,
   mouse_dev->mseProc         = (DeviceProc)0;
   mouse_dev->mseDevice       = NULL;
   mouse_dev->mseType         = -1;
+  mouse_dev->mseModel        = 0;
+  mouse_dev->negativeZ       = 0;
+  mouse_dev->positiveZ       = 0;
       
   while ((token = xf86GetToken(PointerTab)) != end_tag) {
     switch (token) {
@@ -1691,6 +1694,13 @@ configPointerSection(MouseDevPtr	mouse_dev,
 #endif
       mouse_dev->sampleRate = val.num;
       break;
+
+    case PRESOLUTION:
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("Resolution expected");
+      if (val.num <= 0)
+	    xf86ConfigError("Resolution must be a positive value");
+      mouse_dev->resolution = val.num;
+      break;
 #endif /* OSMOUSE_ONLY */
     case EMULATE3:
       if (mouse_dev->chordMiddle)
@@ -1714,7 +1724,7 @@ configPointerSection(MouseDevPtr	mouse_dev,
         mouse_dev->chordMiddle = TRUE;
       }
       else
-        xf86ConfigError("ChordMiddle is only supported for Microsoft and Logiman");
+        xf86ConfigError("ChordMiddle is only supported for Microsoft and MouseMan");
       break;
 
     case CLEARDTR:
@@ -1756,6 +1766,36 @@ configPointerSection(MouseDevPtr	mouse_dev,
 #endif
 #endif
 	
+    case ZAXISMAPPING:
+      switch (xf86GetToken(ZMapTab)) {
+      case NUMBER:
+        if (val.num <= 0 || val.num > MSE_MAXBUTTONS)
+	  xf86ConfigError("Button number (1..12) expected");
+        mouse_dev->negativeZ = 1 << (val.num - 1);
+        if (xf86GetToken(NULL) != NUMBER || 
+	    val.num <= 0 || val.num > MSE_MAXBUTTONS)
+	  xf86ConfigError("Button number (1..12) expected");
+        mouse_dev->positiveZ = 1 << (val.num - 1);
+        break;
+      case XAXIS:
+        mouse_dev->negativeZ = mouse_dev->positiveZ = MSE_MAPTOX;
+	break;
+      case YAXIS:
+        mouse_dev->negativeZ = mouse_dev->positiveZ = MSE_MAPTOY;
+	break;
+      default:
+	xf86ConfigError("Button number (1..12), X or Y expected");
+      }
+      break;
+
+    case PBUTTONS:
+      if (xf86GetToken(NULL) != NUMBER)
+	xf86ConfigError("Number of buttons (1..12) expected");
+      if (val.num <= 0 || val.num > MSE_MAXBUTTONS)
+	xf86ConfigError("Number of buttons must be a positive value (1..12)");
+      mouse_dev->buttons = val.num;
+      break;
+
     case EOF:
       FatalError("Unexpected EOF (missing EndSection?)");
       break; /* :-) */
@@ -1782,28 +1822,87 @@ configPointerSection(MouseDevPtr	mouse_dev,
     xf86ConfigError("No mouse device given");
   }
 
+  switch (mouse_dev->negativeZ) {
+  case 0: /* none */
+  case MSE_MAPTOX:
+  case MSE_MAPTOY:
+    break;
+  default: /* buttons */
+    for (i = 0; mouse_dev->negativeZ != (1 << i); ++i)
+      ;
+    if (i + 1 > mouse_dev->buttons)
+      mouse_dev->buttons = i + 1;
+    for (i = 0; mouse_dev->positiveZ != (1 << i); ++i)
+      ;
+    if (i + 1 > mouse_dev->buttons)
+      mouse_dev->buttons = i + 1;
+    break;
+  }
+
   if (xf86Verbose && mouse_dev->mseType >= 0)
   {
     Bool formatFlag = FALSE;
     ErrorF("%s Mouse: type: %s, device: %s", 
        XCONFIG_GIVEN, mouseType, mouse_dev->mseDevice);
-    if (token != BUSMOUSE && token != PS_2)
+    if (mouse_dev->mseType != P_BM
+	&& mouse_dev->mseType != P_PS2
+	&& mouse_dev->mseType != P_IMPS2
+	&& mouse_dev->mseType != P_THINKINGPS2
+	&& mouse_dev->mseType != P_MMANPLUSPS2
+	&& mouse_dev->mseType != P_GLIDEPOINTPS2
+	&& mouse_dev->mseType != P_NETPS2
+	&& mouse_dev->mseType != P_NETSCROLLPS2
+	&& mouse_dev->mseType != P_SYSMOUSE)
     {
       formatFlag = TRUE;
       ErrorF(", baudrate: %d", mouse_dev->baudRate);
     }
     if (mouse_dev->sampleRate)
     {
-      ErrorF("%ssamplerate: %d", formatFlag ? ",\n       " : ", ",
-             mouse_dev->sampleRate);
+      ErrorF(formatFlag ? "\n%s Mouse: samplerate: %d" : "%ssamplerate: %d", 
+	     formatFlag ? XCONFIG_GIVEN : ", ", mouse_dev->sampleRate);
       formatFlag = !formatFlag;
     }
+    if (mouse_dev->resolution)
+    {
+      ErrorF(formatFlag ? "\n%s Mouse: resolution: %d" : "%sresolution: %d", 
+	     formatFlag ? XCONFIG_GIVEN : ", ", mouse_dev->resolution);
+      formatFlag = !formatFlag;
+    }
+    ErrorF(formatFlag ? "\n%s Mouse: buttons: %d" : "%sbuttons: %d",
+	   formatFlag ? XCONFIG_GIVEN : ", ", mouse_dev->buttons);
+    formatFlag = !formatFlag;
     if (mouse_dev->emulate3Buttons)
-      ErrorF("%s3 button emulation (timeout: %dms)",
-             formatFlag ? ",\n       " : ", ", mouse_dev->emulate3Timeout);
+    {
+      ErrorF(formatFlag ? "\n%s Mouse: 3 button emulation (timeout: %dms)" :
+			  "%s3 button emulation (timeout: %dms)",
+             formatFlag ? XCONFIG_GIVEN : ", ", mouse_dev->emulate3Timeout);
+      formatFlag = !formatFlag;
+    }
     if (mouse_dev->chordMiddle)
-      ErrorF("%sChorded middle button", formatFlag ? ",\n       " : ", ");
+      ErrorF(formatFlag ? "\n%s Mouse: Chorded middle button" : 
+                          "%sChorded middle button",
+             formatFlag ? XCONFIG_GIVEN : ", ");
     ErrorF("\n");
+
+    switch (mouse_dev->negativeZ) {
+    case 0: /* none */
+      break;
+    case MSE_MAPTOX:
+      ErrorF("%s Mouse: zaxismapping: X\n", XCONFIG_GIVEN);
+      break;
+    case MSE_MAPTOY:
+      ErrorF("%s Mouse: zaxismapping: Y\n", XCONFIG_GIVEN);
+      break;
+    default: /* buttons */
+      for (i = 0; mouse_dev->negativeZ != (1 << i); ++i)
+	;
+      ErrorF("%s Mouse: zaxismapping: (-)%d", XCONFIG_GIVEN, i + 1);
+      for (i = 0; mouse_dev->positiveZ != (1 << i); ++i)
+	;
+      ErrorF(" (+)%d\n", i + 1);
+      break;
+    }
   }
 #ifdef NEED_RETURN_VALUE
   return RET_OKAY;
@@ -1865,6 +1964,7 @@ configDeviceSection()
   devp->DCConfig = NULL;
   devp->DCOptions = NULL;
   devp->MemClk = 0;
+  devp->LCDClk = 0;
 
   while ((token = xf86GetToken(DeviceTab)) != ENDSECTION) {
     devp->DCConfig = xf86DCSaveLine(devp->DCConfig, token);
@@ -2129,6 +2229,12 @@ configDeviceSection()
       if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("Memory Clock value in MHz expected");
       devp->MemClk = (int)(val.realnum * 1000.0 + 0.5);
       OFLG_SET(XCONFIG_MEMCLOCK,&(devp->xconfigFlag));
+      break;
+
+    case LCDCLOCK:
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("LCD Clock value in MHz expected");
+      devp->LCDClk = (int)(val.realnum * 1000.0 + 0.5);
+      OFLG_SET(XCONFIG_LCDCLOCK,&(devp->xconfigFlag));
       break;
 
     case CHIPID:
@@ -2781,6 +2887,7 @@ configScreenSection()
           screen->s3Nadjust = device_list[i].s3Nadjust;
 	  screen->s3MClk = device_list[i].s3MClk;
 	  screen->MemClk = device_list[i].MemClk;
+	  screen->LCDClk = device_list[i].LCDClk;
 	  screen->chipID = device_list[i].chipID;
 	  screen->chipRev = device_list[i].chipRev;
 	  screen->s3RefClk = device_list[i].s3RefClk;
@@ -3470,6 +3577,7 @@ xf86LookupMode(target, driver, flags)
     target->HSyncStart     = best_mode->HSyncStart;
     target->HSyncEnd       = best_mode->HSyncEnd;
     target->HTotal         = best_mode->HTotal;
+    target->HSkew          = best_mode->HSkew;
     target->VDisplay       = best_mode->VDisplay;
     target->VSyncStart     = best_mode->VSyncStart;
     target->VSyncEnd       = best_mode->VSyncEnd;
@@ -3479,6 +3587,7 @@ xf86LookupMode(target, driver, flags)
     target->CrtcHSyncStart = best_mode->CrtcHSyncStart;
     target->CrtcHSyncEnd   = best_mode->CrtcHSyncEnd;
     target->CrtcHTotal     = best_mode->CrtcHTotal;
+    target->CrtcHSkew      = best_mode->CrtcHSkew;
     target->CrtcVDisplay   = best_mode->CrtcVDisplay;
     target->CrtcVSyncStart = best_mode->CrtcVSyncStart;
     target->CrtcVSyncEnd   = best_mode->CrtcVSyncEnd;

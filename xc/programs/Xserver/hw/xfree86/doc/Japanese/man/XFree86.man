@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XFree86.man,v 1.1.2.1 1997/08/04 02:10:42 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XFree86.man,v 1.1.2.2 1998/02/15 23:32:00 robin Exp $ 
 .\"
 .\" Japanese Version Copyright (c) 1996 Kazuyuki Okamoto
 .\"         all rights reserved.
@@ -562,7 +562,7 @@ Philip Homburg,    \fIphilip@cs.vu.nl\fP
 .\" Ported to \fBMinix-386vm\fP.
 \fBMinix-386vm\fP への移植。
 .TP 8
-Thomas Mueller,    \fItm@systrix.de\fP
+Thomas Mueller,    \fItmueller@sysgo.de\fP
 .\" Ported to \fBLynxOS\fP.
 \fBLynxOS\fP への移植。
 .TP 8

@@ -1,5 +1,5 @@
 /* $XConsortium: sunInit.c /main/78 1996/06/10 11:07:58 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.3 1996/12/23 06:30:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.3.2.1 1998/02/15 16:08:42 hohndel Exp $ */
 /*
  * sunInit.c --
  *	Initialization functions for screen/keyboard/mouse, etc.
@@ -660,7 +660,7 @@ void InitInput(argc, argv)
     int     	  argc;
     char    	  **argv;
 {
-    DevicePtr	p, k;
+    DeviceIntPtr	p, k;
     extern Bool mieqInit();
 
     p = AddInputDevice(sunMouseProc, TRUE);
@@ -671,7 +671,7 @@ void InitInput(argc, argv)
     RegisterPointerDevice(p);
     RegisterKeyboardDevice(k);
     miRegisterPointerDevice(screenInfo.screens[0], p);
-    (void) mieqInit (k, p);
+    (void) mieqInit ((DevicePtr)k, (DevicePtr)p);
 #define SET_FLOW(fd) fcntl(fd, F_SETFL, FNDELAY | FASYNC)
 #ifdef SVR4
     (void) OsSignal(SIGPOLL, SigIOHandler);

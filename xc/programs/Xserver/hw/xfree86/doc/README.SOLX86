@@ -11,17 +11,18 @@
 
 				 David Holland
 
-				  16 May 1997
+				  25 Feb 1998
 
 
 
-1.  What is XFree86 3.3
+1.  What is XFree86 3.3.2
 
-XFree86 3.3 is a port of X11R6.3 that supports several versions of Intel-based
-Unix.  It is derived from X386 1.2 which was the X server distributed with
-X11R5.	This release consists of many new features and performance improvements
-as well as many bug fixes.  The release is available as source patches against
-the X Consortium code, as well as binary distributions for many architectures.
+XFree86 3.3.2 is a port of X11R6.3 that supports several versions of Intel-
+based Unix.  It is derived from X386 1.2 which was the X server distributed
+with X11R5.  This release consists of many new features and performance
+improvements as well as many bug fixes.  The release is available as source
+patches against the X Consortium code, as well as binary distributions for many
+architectures.
 
 The sources for XFree86 are available by anonymous ftp from:
 
@@ -33,13 +34,15 @@ Solaris binaries for XFree86 are available for anonymous ftp from:
      ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris
 
 
-2.  Solaris for x86, versions on which XFree86 3.3 has been tested
+2.  Solaris for x86, versions on which XFree86 3.3.2 has been tested
 
-XFree86 3.3 has been actively tested on:
+XFree86 3.3.2 has been actively tested on:
 
    o Solaris 2.4 for x86 FCS
 
    o Solaris 2.5.1 for x86
+
+   o Solaris 2.6 for x86
 
 And is expected to run under:
 
@@ -56,21 +59,21 @@ RISK.
 
 The virtual terminals of Solaris work basically the same way as most other
 Intel based SVR4 VT sub-systems.  However, there are a number of limitations
+
+
+Information for Solaris for x86 Users
+
+
+
+
+
+Information for Solaris for x86 Users
+
+
+
 documented below.
 
 First, if you are running a Solaris 2.4 x86 system, and you want VT's, you will
-
-
-Information for Solaris for x86 Users
-
-
-
-
-
-Information for Solaris for x86 Users
-
-
-
 have to create the necessary devices first, so become root.
 
 First verify the chanmux device driver's major number is 100:
@@ -130,9 +133,6 @@ The keys used for VT switching are as follows:
 
 
 
-
-
-
 Information for Solaris for x86 Users
 
 
@@ -168,7 +168,7 @@ number of ioctl() calls are broken.
       ~xc/config/cf/xf86site.def.
 
 
-  2.  Both Gcc, and ProWorks are supported by XFree86. Gcc-2.5.8 or gcc-2.7.2
+  2.  Both Gcc, and ProWorks are supported by XFree86. Gcc-2.5.8 or gcc-2.7.2.3
       are suggested, Gcc-2.6.0 is known not to work.  You also need to set Has-
       Gcc2 correctly in ~xc/config/cf/xf86site.def.
 
@@ -187,7 +187,7 @@ number of ioctl() calls are broken.
       GNU binutils. Don't install gas or ld from GNU binutils, use the one pro-
       vided by Sun.
 
-      With XFree86 3.3, you will need to setup a /opt/SUNWspro/bin directory
+      With XFree86 3.3.2, you will need to setup a /opt/SUNWspro/bin directory
       containing symbolic links named cc, CC, and c++filt pointing respectively
       to the actual gcc, g++ and c++filt commands.
 
@@ -228,7 +228,7 @@ Information for Solaris for x86 Users
 
        to enable the aperture driver.
 
-      Under Solaris 2.5 and 2.5.1, there's a system driver (/dev/xsvc that pro-
+      Under Solaris 2.5 and later, there's a system driver (/dev/xsvc that pro-
       vides this functionality. It will be detected automatically by the
       server, so you don't need to install the driver.
 
@@ -305,7 +305,7 @@ Bug reports need to be sent to XFree86@XFree86.org, or posted to the comp.win-
 dows.x.i386unix newsgroup.  Questions or comments about the Solaris support, or
 the Solaris distribution need to be made to davidh@use.com, or danson@lgc.com.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.4 1997/05/24 08:36:08 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.6 1998/02/28 04:47:09 dawes Exp $
 
 
 
@@ -405,9 +405,9 @@ Information for Solaris for x86 Users
 
 
 
-1. What is XFree86 3.3 ...................................................... 1
+1. What is XFree86 3.3.2 .................................................... 1
 
-2. Solaris for x86, versions on which XFree86 3.3 has been tested ........... 1
+2. Solaris for x86, versions on which XFree86 3.3.2 has been tested ......... 1
 
 3. The VT-switching sub-system in Solaris x86 ............................... 1
 
@@ -461,4 +461,4 @@ Information for Solaris for x86 Users
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SOLX86,v 3.20.2.4 1997/05/24 09:12:07 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SOLX86,v 3.20.2.6 1998/02/28 13:05:35 dawes Exp $

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13 1996/12/27 06:54:13 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13.2.7 1998/02/28 08:54:10 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -22,6 +22,7 @@ proc initconfig {xwinhome} {
 	global "Monitor_Primary Monitor" "Device_Primary Card"
 	global DeviceIDs MonitorIDs
 	global Scrn_Accel Scrn_Mono Scrn_VGA2 Scrn_VGA16 Scrn_SVGA
+	global pc98 pc98_EGC
 
 	set fontdir  "$xwinhome/lib/X11/fonts"
 	set Files(FontPath)	[list $fontdir/misc:unscaled \
@@ -47,35 +48,71 @@ proc initconfig {xwinhome} {
 			XkbSymbols XkbGeometry XkbKeymap } {
 		set Keyboard($key) ""
 	}
-	set Keyboard(XkbDisable)	""
-	set Keyboard(XkbRules)		xfree86
-	set Keyboard(XkbModel)		pc101
-	set Keyboard(XkbLayout)		us
-	set Keyboard(XkbVariant)	""
-	set Keyboard(XkbOptions)	""
+	if !$pc98 {
+		set Keyboard(XkbDisable)	""
+		set Keyboard(XkbRules)		xfree86
+		set Keyboard(XkbModel)		pc101
+		set Keyboard(XkbLayout)		us
+		set Keyboard(XkbVariant)	""
+		set Keyboard(XkbOptions)	""
+		set Pointer(Protocol)		Microsoft
+		set Pointer(Emulate3Buttons)	""
+	} else {
+		set Keyboard(XkbDisable)	""
+		set Keyboard(XkbRules)		xfree98
+		set Keyboard(XkbModel)		pc98
+		set Keyboard(XkbLayout)		nec/jp
+		set Keyboard(XkbVariant)	""
+		set Keyboard(XkbOptions)	""
+		set Pointer(Protocol)		BusMouse
+		set Pointer(Emulate3Buttons)	1
+	}
 
-	set Pointer(Protocol)		Microsoft
 	set Pointer(Device)		/dev/mouse
 	set Pointer(BaudRate)		""
-	set Pointer(Emulate3Buttons)	""
 	set Pointer(Emulate3Timeout)	""
 	set Pointer(ChordMiddle)	""
 	set Pointer(SampleRate)		""
+	set Pointer(Resolution)		""
+	set Pointer(Buttons)		""
 	set Pointer(ClearDTR)		""
 	set Pointer(ClearRTS)		""
 
-	set id				"Primary Monitor"
-	set Monitor_${id}(VendorName)	Unknown
-	set Monitor_${id}(ModelName)	Unknown
-	set Monitor_${id}(HorizSync)	31.5
-	set Monitor_${id}(VertRefresh)	60
-	set Monitor_${id}(Gamma)	""
-	set MonitorIDs [list $id]
-
+	if !$pc98_EGC {
+	    set id				"Primary Monitor"
+	    set Monitor_${id}(VendorName)	Unknown
+	    set Monitor_${id}(ModelName)	Unknown
+	    set Monitor_${id}(HorizSync)	31.5
+	    set Monitor_${id}(VertRefresh)	60
+	    set Monitor_${id}(Gamma)	""
+	    set MonitorIDs [list $id]
+	} else {
+	    set id				"Primary Monitor"
+	    set Monitor_${id}(VendorName)	Unknown
+	    set Monitor_${id}(ModelName)	Unknown
+	    set Monitor_${id}(HorizSync)	24.8
+	    set Monitor_${id}(VertRefresh)	56.4
+	    set Monitor_${id}(Gamma)	""
+	    set MonitorIDs [list $id]
+	}
 	set id				"Primary Card"
 	set Device_${id}(VendorName)	Unknown
 	set Device_${id}(BoardName)	Unknown
-	set Device_${id}(Server)	SVGA
+	if !$pc98 {
+		set Device_${id}(Server)	SVGA
+	} else {
+		if !$pc98_EGC {
+			set Device_${id}(Server)	NEC480
+		} else {
+			set Device_${id}(Server)	EGC
+		}
+		set uname [exec uname]
+		if {$uname == {FreeBSD}} {
+			set Pointer(Device)	/dev/mse0
+		} elseif {$uname == {NetBSD}} {
+			set Pointer(Device)	/dev/lms0
+		}
+	}
 	foreach key {Chipset Ramdac DacSpeed Clocks ClockChip
 			ClockProg Options VideoRam BIOSBase Membase
 			IOBase DACBase POSBase COPBase VGABase
@@ -94,18 +131,24 @@ proc initconfig {xwinhome} {
 	set Scrn_Accel(OffTime)		""
 	set Scrn_Accel(DefaultColorDepth)	""
 
-	array set Scrn_Mono  [array get Scrn_Accel]
-	array set Scrn_VGA2  [array get Scrn_Accel]
+	if !$pc98 {
+		array set Scrn_Mono  [array get Scrn_Accel]
+		array set Scrn_VGA2  [array get Scrn_Accel]
+	}
 	array set Scrn_VGA16 [array get Scrn_Accel]
 	array set Scrn_SVGA  [array get Scrn_Accel]
 
-	set Scrn_Mono(Driver)		"Mono"
+	if !$pc98 {
+		set Scrn_Mono(Driver)		"Mono"
+		set Scrn_VGA2(Driver)		"VGA2"
+	}
 	set Scrn_SVGA(Driver)		"SVGA"
-	set Scrn_VGA2(Driver)		"VGA2"
 	set Scrn_VGA16(Driver)		"VGA16"
 
-	set Scrn_Mono(Depth,1)		1
-	set Scrn_VGA2(Depth,1)		1
+	if !$pc98 {
+		set Scrn_Mono(Depth,1)		1
+		set Scrn_VGA2(Depth,1)		1
+	}
 	set Scrn_VGA16(Depth,4)		4
 
 	foreach depth {8 15 16 24 32} {
@@ -119,8 +162,9 @@ proc initconfig {xwinhome} {
 
 proc writeXF86Config {filename args} {
 	global Files ServerFlags Keyboard Pointer
-	global MonitorIDs DeviceIDs MonitorStdModes
+	global MonitorIDs DeviceIDs MonitorStdModes SelectedMonitorModes
 	global Scrn_Accel Scrn_Mono Scrn_VGA2 Scrn_VGA16 Scrn_SVGA
+	global pc98 pc98_EGC haveSelectedModes DefaultColorDepth
 
 	check_tmpdirs
 	set fd [open $filename w]
@@ -225,8 +269,8 @@ proc writeXF86Config {filename args} {
 	} elseif { [string length $Pointer(Device)] } {
 		puts $fd "   Device          \"$Pointer(Device)\""
 	}
-	foreach key {BaudRate Emulate3Timeout SampleRate} {
-		if { [string length $Pointer($key)] } {
+	foreach key {BaudRate Emulate3Timeout SampleRate Resolution Buttons} {
+		if { [string length $Pointer($key)] && $Pointer($key) } {
 			puts $fd [format "   %-15s %s" $key $Pointer($key)]
 		}
 	}
@@ -256,21 +300,41 @@ proc writeXF86Config {filename args} {
 	    }
 	    set modepattern "None"
 	    if { [lsearch -exact $args -vgamode] >= 0 } {
-		set modepattern " 640x480*"
+		if !$pc98_EGC {
+		    set modepattern " 640x480*"
+		} else {
+		    set modepattern " 640x400*"
+		}
 	    }
 	    if { [lsearch -exact $args -defaultmodes] >= 0 } {
 		set modepattern "*"
 	    }
 	    if { [string compare None $modepattern] != 0} {
-		foreach desc [lsort -decreasing \
-				[array names MonitorStdModes $modepattern]] {
+		if { $haveSelectedModes <= 0 } {
+#		    puts stderr "No selected modes"
+		    foreach desc [lsort -decreasing \
+				      [array names MonitorStdModes $modepattern]] {
 			set modeline $MonitorStdModes($desc)
 			puts $fd "# $desc"
 			set id [format "%dx%d" \
-			    [lindex $modeline 1] [lindex $modeline 5]]
+				    [lindex $modeline 1] [lindex $modeline 5]]
 			puts $fd [format "   Modeline  %-11s %s" \
-			    "\"$id\""  $modeline]
+				      "\"$id\""  $modeline]
 			lappend modeNames $id
+		    }
+		} else {
+		    foreach desc [lsort -decreasing \
+				[array names SelectedMonitorModes $modepattern]] {
+			set modeline $SelectedMonitorModes($desc)
+			if ![string match \#removed $modeline] {
+			    puts $fd "# $desc"
+			    set id [format "%dx%d" \
+					[lindex $modeline 1] [lindex $modeline 5]]
+			    puts $fd [format "   Modeline  %-11s %s" \
+					  "\"$id\""  $modeline]
+			    lappend modeNames $id
+			}
+		    }
 		}
 	    } else {
 		set dispof [lsearch -exact $args -displayof]
@@ -344,8 +408,13 @@ proc writeXF86Config {filename args} {
 	    puts $fd "EndSection"
 	}
 
-	foreach drvr {Accel Mono VGA2 VGA16 SVGA} {
+	foreach drvr {Accel SVGA VGA16 VGA2 Mono} {
 
+		if $pc98 {
+			if {![string compare $drvr "Mono"] || \
+			    ![string compare $drvr "VGA2"]} \
+				continue
+		}
 		if { [string compare $drvr [set Scrn_${drvr}(Driver)]] } \
 			continue
 		puts $fd ""
@@ -353,8 +422,11 @@ proc writeXF86Config {filename args} {
 		puts $fd "   Driver          \"$drvr\""
 		puts $fd "   Device          \"[set Scrn_${drvr}(Device)]\""
 		puts $fd "   Monitor         \"[set Scrn_${drvr}(Monitor)]\""
-		foreach key {ScreenNo BlankTime SuspendTime OffTime \
-				DefaultColorDepth} {
+		if { ![string compare $drvr "Accel"] ||
+		     ![string compare $drvr "SVGA"] } {
+			puts $fd "   DefaultColorDepth $DefaultColorDepth"
+		}
+		foreach key {ScreenNo BlankTime SuspendTime OffTime } {
 			if { [string length [set Scrn_${drvr}($key)]] } {
 				puts $fd [format "   %-15s %s" \
 					$key [set Scrn_${drvr}($key)] ]
@@ -420,11 +492,21 @@ proc set_resource_defaults {} {
 }
 
 proc create_main_window { w } {
+	global pc98_EGC
+
 	toplevel $w
-	$w configure -height 480 -width 640 -highlightthickness 0
+	if !$pc98_EGC {
+	    $w configure -height 480 -width 640 -highlightthickness 0
+	} else {
+	    $w configure -height 400 -width 640 -highlightthickness 0
+	}
 	pack propagate $w no
 	wm geometry $w +0+0
-	#wm minsize $w 640 480
+	if !$pc98_EGC {
+	    #wm minsize $w 640 480
+	} else {
+	    #wm minsize $w 640 400
+	}
 }
 
 proc set_default_arrow_bindings { } {
@@ -437,7 +519,7 @@ proc set_default_arrow_bindings { } {
 }
 
 proc start_server { server configfile outfile } {
-	global env TmpDir Xwinhome serverNumber
+	global env TmpDir Xwinhome serverNumber pc98
 
 	if { ![info exists serverNumber] } {
 		set serverNumber 7
@@ -446,9 +528,15 @@ proc start_server { server configfile outfile } {
 	}
 	set env(DISPLAY) [set disp :$serverNumber]
 
-	set pid [exec $Xwinhome/bin/XF86_$server $disp \
-		-allowMouseOpenFail -xf86config $configfile \
-		-bestRefresh >& $TmpDir/$outfile & ]
+	if !$pc98 {
+	    set pid [exec $Xwinhome/bin/XF86_$server $disp \
+		    -allowMouseOpenFail -xf86config $configfile \
+		    -bestRefresh >& $TmpDir/$outfile & ]
+	} else {
+	    set pid [exec $Xwinhome/bin/XF98_$server $disp \
+		    -allowMouseOpenFail -xf86config $configfile \
+		    -bestRefresh >& $TmpDir/$outfile & ]
+	}
 
 	sleep 9
 	set trycount 0
@@ -528,12 +616,14 @@ proc mesg { text {buttontype okay} } {
 }
 
 proc save_state {} {
-	global env XF86SetupDir TmpDir StateFileName PID
+	global env XF86SetupDir TmpDir StateFileName PID 
 	set StateFileName "$TmpDir/state"
 	check_tmpdirs
 	set fd [open $StateFileName w]
 
 	global Dialog Confname ConfigFile UseConfigFile StartServer
+	global pc98
+
 	puts $fd [list set Dialog $Dialog]
 	puts $fd [list set Confname $Confname]
 	puts $fd [list set ConfigFile $ConfigFile]
@@ -542,11 +632,20 @@ proc save_state {} {
 	puts $fd [list set XF86SetupDir $XF86SetupDir]
 	puts $fd [list set TmpDir $TmpDir]
 	puts $fd [list set PID $PID]
-	global DeviceIDs MonitorIDs
+	global DeviceIDs MonitorIDs haveSelectedModes DefaultColorDepth
 	puts $fd [list set DeviceIDs $DeviceIDs]
 	puts $fd [list set MonitorIDs $MonitorIDs]
-	set arrlist [list Files ServerFlags Keyboard Pointer \
-		Scrn_Accel Scrn_Mono Scrn_VGA2 Scrn_VGA16 Scrn_SVGA]
+	puts $fd [list set DefaultColorDepth $DefaultColorDepth]
+	puts $fd [list set haveSelectedModes $haveSelectedModes]
+	if !$pc98 {
+		set arrlist [list Files ServerFlags Keyboard Pointer \
+			SelectedMonitorModes MonitorStdModes \
+			Scrn_Accel Scrn_Mono Scrn_VGA2 Scrn_VGA16 Scrn_SVGA]
+	} else {
+		set arrlist [list Files ServerFlags Keyboard Pointer \
+			SelectedMonitorModes MonitorStdModes \
+			Scrn_Accel Scrn_VGA16 Scrn_SVGA]
+	}
 	foreach devid $DeviceIDs {
 		lappend arrlist Device_$devid
 	}

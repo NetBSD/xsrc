@@ -26,6 +26,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 */
+/* $XFree86: xc/lib/X11/lcDynamic.c,v 1.1.1.1.2.1 1998/01/25 06:11:06 dawes Exp $ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint
@@ -56,7 +57,7 @@ extern char *dlerror();
 
 XLCd
 _XlcDynamicLoader(name)
-    char *name;
+    _Xconst char *name;
 {
     char libpath[1024];
     XLCdMethods _XlcGenericMethods;

@@ -11,7 +11,7 @@
 
 				  Holger Veit
 
-			   Last modified 17 May 1997
+			   Last modified 26 Mar 1998
 
 
 
@@ -27,18 +27,17 @@ intend to rebuild the system from scratch under OS/2.
 Please also read README.OS2 for end-user information, and set at least the
 environment variables described there.
 
-At the current time, the most recent version available is XFree86-3.3.	This is
-a full and unrestricted version which comes with complete source code. 3.3 is
-an intermediate version which was released because the last beta version (3.2A)
-was about to expire and the new 4.0 version was not completely finished in
-time. 3.3 is the last ``classical'' version which has separate Xservers for
-different video cards.
+At the current time, the most recent version available is XFree86-3.3.2.  This
+is a full and unrestricted version which comes with complete source code. 3.3.2
+is not only a bugfix release, but also supports new hardware, some of which
+might not even supported by OS/2 itself. See the RELEASE NOTES document for
+details.
 
 If you want to join the XFree86 developer team, e.g. to add support for certain
 hardware, please send a request to BOD@XFree86.org. Please think about such a
 step carefully before, though, since much work is involved. Please use the
-XFree86-3.3 source code as a test example how to compile the system. The abil-
-ity to manage that is a basic requirement for becoming a developer.
+XFree86-3.3.2 source code as a test example how to compile the system. The
+ability to manage that is a basic requirement for becoming a developer.
 
 
 2.  Tools required
@@ -50,7 +49,7 @@ required.  Most of this software is available from hobbes.nmsu.edu or
 ftp.leo.org via anonymous FTP. The following shopping list shows what you will
 need:
 
-   o gcc  EMX/gcc emx 0.9C patch2 or later
+   o gcc  EMX/gcc emx 0.9C patch4 or later
 
    o gzip GNU zip/unzip
 
@@ -58,6 +57,7 @@ need:
 
    o patch     Larry Wall's patch utility (attention: incompatible tool with
      same name in OS/2)
+
 
 
 
@@ -85,7 +85,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
    o gawk GNU awk
 
-   o make GNU make 3.71/3.72 (use the one coming with XFree86!)
+   o make GNU make 3.71/3.72 (use the one from X332prog.zip!)
 
    o flex GNU flex
 
@@ -252,11 +252,11 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 		 xmake install.man
 
 
-Well, you see, this was quite easy :-)
+ 15.  There are a few minor glitches in the installation:
 
-
-
-
+	1.  The xdm and linkkit directories will fail in compile and installa-
+	    tion.  This is no problem and has no effect on the rest of the sys-
+	    tem.
 
 
 
@@ -269,27 +269,27 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.2 1997/05/24 08:36:06 dawes Exp $
+	2.  The imake.exe which is installed in \XFree86\bin is usually defec-
+	    tive.  The one which was built initially and installed in the root
+	    directory of the drive where you have the source tree is okay. So
+	    simply copy this \imake.exe to the \XFree86\bin directory manually.
+	    Some day this might be fixed.
+
+	3.  XF86Setup is not ported yet and won't work with the tcl/tk port
+	    available for XFree86/OS2. My idea was to replace this by some
+	    native installation tool, which I didn't find the time to do yet.
+	    Feel free to spend a bit of time to play with XF86Setup if you
+	    like.
+
+Well, you see, this was quite easy :-)
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.3 1998/02/26 20:11:29 hohndel Exp $
 
 
 
 
 
      $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -461,4 +461,4 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.2 1997/05/24 09:12:05 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.3 1998/02/27 02:54:55 dawes Exp $

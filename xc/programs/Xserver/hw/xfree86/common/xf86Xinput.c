@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.5 1997/05/27 09:27:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.7 1998/02/07 10:05:22 hohndel Exp $ */
 
 #include "Xmd.h"
 #include "XI.h"
@@ -117,6 +117,15 @@ xf86IsCorePointer(DeviceIntPtr	device)
 	   (device == inputInfo.pointer));
 }
 
+static int
+xf86IsAlwaysCore(DeviceIntPtr	device)
+{
+    LocalDevicePtr	local = (LocalDevicePtr) device->public.devicePrivate;
+    
+    return(local->always_core_feedback &&
+	   local->always_core_feedback->ctrl.integer_displayed);
+}
+
 int
 xf86IsCoreKeyboard(DeviceIntPtr	device)
 {
@@ -150,7 +159,8 @@ Bool
 xf86CheckButton(int	button,
 		int	down)
 {
-    int	state = (inputInfo.pointer->button->state & 0x1f00) >> 8;
+    /* The device may have up to MSE_MAXBUTTONS (12) buttons. */
+    int	state = (inputInfo.pointer->button->state & 0x0fff00) >> 8;
     int	check = (state & (1 << (button - 1)));
     
     if ((check && down) && (!check && !down)) {
@@ -1109,9 +1119,26 @@ xf86PostButtonEvent(DeviceIntPtr	device,
 	    int       cx, cy;
 	    
 	    GetSpritePosition(&cx, &cy);
+
+	    /* Try to find the index in the core buttons map
+	     * which corresponds to the extended button for
+	     * an AlwaysCore device.
+	     */
+	    if (xf86IsAlwaysCore(device)) {
+		int	loop;
+
+		button = device->button->map[button];
+		
+		for(loop=1; loop<=inputInfo.pointer->button->numButtons; loop++) {
+		    if (inputInfo.pointer->button->map[loop] == button) {
+			button = loop;
+			break;
+		    }
+		}
+	    }
 	    
 	    xE->u.u.type = is_down ? ButtonPress : ButtonRelease;
-	    xE->u.u.detail =  button;
+	    xE->u.u.detail = button;
 	    xE->u.keyButtonPointer.rootY = cx;
 	    xE->u.keyButtonPointer.rootX = cy;
 	    xf86Info.lastEventTime = xE->u.keyButtonPointer.time = GetTimeInMillis();

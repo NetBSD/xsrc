@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/Xserver/mi/miwideline.c,v 1.1.1.3.2.2 1998/02/01 22:08:22 robin Exp $ */
 
 /* Author:  Keith Packard, MIT X Consortium */
 
@@ -250,7 +251,7 @@ miFillRectPolyHelper (pDrawable, pGC, pixel, spanData, x, y, w, h)
     }
 }
 
-static int
+int
 miPolyBuildEdge (x0, y0, k, dx, dy, xi, yi, left, edge)
     double	x0, y0;
     double	k;  /* x0 * dy - y0 * dx */
@@ -309,7 +310,7 @@ miPolyBuildEdge (x0, y0, k, dx, dy, xi, yi, left, edge)
 
 #define StepAround(v, incr, max) (((v) + (incr) < 0) ? (max - 1) : ((v) + (incr) == max) ? 0 : ((v) + (incr)))
 
-static int
+int
 miPolyBuildPoly (vertices, slopes, count, xi, yi, left, right, pnleft, pnright, h)
     register PolyVertexPtr vertices;
     register PolySlopePtr  slopes;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.44.2.6 1997/06/15 12:32:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.44.2.7 1998/02/07 10:05:11 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1994 by Erik Nygren <nygren@mit.edu>
@@ -151,7 +151,8 @@ ScrnInfoRec p9000InfoRec = {
     0,			/* int textClockFreq */
     NULL,               /* char* DCConfig */
     NULL,               /* char* DCOptions */
-    0			/* int MemClk */
+    0,			/* int MemClk */
+    0			/* int LCDClk */
 #ifdef XFreeXDGA
     /* Note that the double buffered support is 
      * a hack in the P9000 server.  See the README.P9000

@@ -1,0 +1,470 @@
+Enhancing Mouse Support in the X server
+
+22 January 1998.
+Kazutaka YOKOTA
+yokota@zodiac.mech.utsunomiya-u.ac.jp,  yokota@freebsd.org
+
+0. Introduction -------------------------------------------------------
+
+Since Microsoft introduced IntelliMouse to the market, manufacturers
+have added new features, such as a wheel/roller and additional
+buttons, to their mouse products.  However, these mice often need
+specific initialization procedure and may use new data format which
+XFree86 servers have not known.
+
+This tar file contains two sets of patches to enhance mouse support in
+the XFree86 servers: one set for 3.3.1 (331.diff) and the other for
+3.9Ac (39Ac.diff).
+
+The diff files modify the following files:
+
+xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h
+xc/programs/Xserver/hw/xfree86/common/xf86.h
+xc/programs/Xserver/hw/xfree86/common/xf86_Config.h
+xc/programs/Xserver/hw/xfree86/common/xf86Config.c
+xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c
+xc/programs/Xserver/hw/xfree86/common/xf86_PnPMouse.c (NEW FILE)
+xc/programs/Xserver/hw/xfree86/common/xf86Events.c
+xc/programs/Xserver/hw/xfree86/common/xf86Io.c
+xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c
+
+Choose an appropriate diff file and apply it in
+xc/programs/Xserver/hw/xfree86.
+
+%cd xc/programs/Xserver/hw/xfree86
+%patch -p0 < _diff_file_
+
+1. Modifications  -----------------------------------------------------
+
+1.1. Support more mice
+
+The patch adds the support for the following mice:
+
+Kensington ThinkingMouse (serial, PS/2¡¤4 buttons)
+ALPS GlidePoint (PS/2¡¤3 buttons)*1
+Genius NetScroll (PS/2¡¤4 buttons, wheel)
+Genius NetMouse (serial, PS/2, 2 buttons + magic button)
+Genius NetMouse Pro (serial, PS/2, 3 buttons + magic button)
+ASCII MieMouse (serial, PS/2, 3 buttons, knob)
+Logitech MouseMan+ (serial, PS/2, 4 buttons, wheel)
+Logitech FirstMouse+ (serial, PS/2, 3 buttons, wheel)
+
+*1 The serial version of GlidePoint has been supported by XFree86
+since 3.2(?).
+
+To support wheel/roller and additional buttons of the above mice, the
+following enhancements were added:
+
+a) Add support for up to 12 buttons.  XFree86 3.3.1 and 3.9Ac assumed
+the maximum number of buttons for the mouse is 5.
+
+b) Recognize the wheel/roller/magic_button movement as the Z (third)
+axis movement.  I am very aware that the IntelliMouse support in
+XFree86 3.3.1 and 3.9 betas interpret the wheel movement as the button
+4 and 5.  However, some mice have more than three buttons AND a wheel
+as you can see in the above list.  It is overly restrictive to always
+have the wheel movement treated as the button 4 and 5.  Instead, the
+wheel is regarded as the Z axis in this patch.
+
+Ideally, the wheel movement should be handled in the XInput extension
+as the third valuator. I hope this patch will provide the basis for
+such support in the future.
+
+Currently the Z axis movement is NOT reported back to the upper
+routines by xf86MouseProtocol().  In order to let the user to utilize
+this Z axis (wheel) movement, a new option, `ZAxisMapping', is added
+in XF86Config so that the user can choose any pair of buttons or
+another axis (X or Y) to which the Z axis (wheel) movement is
+assigned.
+
+For example, to make the IntelliMouse behave in the same way as
+before, add the following option to XF86Config.
+
+    ZAxisMapping 4 5
+
+c) PS/2 mouse initialization
+The above PS/2 mice need specialized initialization procedure to
+enable their features, otherwise they behave like the standard two
+button (or three button) PS/2 mouse. To initialize these mice, the
+host system must send a sequence of commands which is specific to each
+model.
+
+The PS/2 IntelliMouse support code in XFree86 3.9Ac beta already does
+this.  The same technique is used to initialize the other PS/2 mice in
+this patch.  However, the current implementation works only if the
+PS/2 mouse device allows `write' operation to the device and pass the
+written data as is to the PS/2 mouse.  I don't know how many OS
+platforms support this, but suspect Linux is OK.
+
+If the initialization code does not work on the user's OS, s/he has 
+to use the mouse as the standard PS/2 mouse by specifying "PS/2" as
+the mouse protocol.
+
+FreeBSD 2.2.5 or earlier certainly can NOT support PS/2 mouse
+initialization this way and the user is forced to use these mice as
+the standard PS/2 mouse ;-< FreeBSD 2.2.6 or later has better mouse
+support code and all these initialization chores are handled in the
+device driver in the kernel and the X server does not need to bother
+about them.
+
+1.2. Automatic protocol detection
+
+1.2.1 Serial mouse detection
+
+The user may specify "Auto" as the Protocol of his/her SERIAL mouse.
+Then, xf86SetupMouse() in xf86_Mouse.c will invoke the PnP COM device
+enumeration procedure (xf86GetPnPMouseProtocol() in xf86_PnPMouse.c)
+and select the appropriate protocol automatically based on the PnP ID
+string.
+
+If the user purchased a serial mouse in the last two, three years,
+there is a good chance that s/he can just write
+
+    Protocol "Auto"
+    Device "/dev/xxxx" (where xxxx is a serial device)
+
+in XF86Config and the X server is able to detect the right protocol.
+
+This PnP capability is OS-independent and the code should on any
+platforms running XFree86.
+
+1.2.2 Automatic detection in FreeBSD
+
+In FreeBSD 3.0-CURRENT and forthcoming 2.2.6, the user may specify
+"Auto" to the bus mouse, PS/2 mouse and system mouse (sysmouse)
+devices too, as the X server queries the mouse protocol used by these
+drivers via ioctls provided by the drivers.
+
+(FreeBSD 2.2.6 has not been released. But, a snapshot is available
+as ftp://releng22.FreeBSD.ORG/pub/FreeBSD.)
+
+This is made possible because these new versions of FreeBSD have
+improved mouse support.  The bus and PS/2 mouse drivers and the mouse
+daemon can handle wide variety of mouse models and offer new services
+in the following area.  The drivers can now be instructed to send
+mouse data in the standardized format, the SysMouse format. (The first
+5 bytes of this format are exactly the same as the MouseSystems
+format.)
+
+To maintain compatibility with previous versions of the drivers, the
+concept of operation level is introduced.  The drivers are at the
+basic level (level 0) when opened and send data in the previous,
+proprietary format.  They will switch to the standard SysMouse format
+after the user program sends an ioctl call to change the level to the
+extended level (level 1).
+
+A set of new ioctl functions is supported by the drivers. The user
+program can obtain various information about the driver and the
+pointing device.  These ioctls are useful because even if the user
+failed to specify the correct protocol type in XF86Config, the X
+server can override it with the information obtained from the driver.
+
+To take advantage of the new services, xf86SetupMouse() does the
+followings:
+
+Step 1. Call the ioctl function to set the operation level 1.
+
+Step 2. Call ioctl functions obtain driver and device information. 
+Inspect the protocol type the driver uses. If Step 1 was successful,
+we should see the driver is using the SysMouse protocol. If the
+protocol type specified in XF86Config and the one reported by the
+driver do not agree, the latter should be taken as the correct type
+hereafter.
+
+Step 3. If the ioctl functions in Step 2 failed, we must be dealing
+with either a serial mouse or a mouse driver which is incapable of
+serving new functions. If the user specified "Auto" in XF86Config,
+invoke the PnP COM device enumeration procedure to detect the mouse.
+Otherwise use the protocol specified by the user.
+
+Step 4. Complete initialization according to the detected protocol
+type.
+
+FreeBSD-specific code is marked by #if defined(__FreeBSD__) in the
+patch.
+
+1.3. New options in XF86Config
+
+a) New keywords for mouse protocol
+The following strings are accepted in the Protocol statement:
+    "ThinkingMouse"	(Kensington ThinkingMouse, serial version)
+    "ThinkingMousePS/2"	(Kensington ThinkingMouse, PS/2 version)
+    "GlidePointPS/2"	(ALPS GlidePoint, PS/2 version)
+    "MouseManPlusPS/2"	(Logitech MouseMan+, FistMouse+, PS/2 version)
+    "NetMousePS/2"	(Genius NetMouse, NetMouse Pro, PS/2 version,
+			 ASCII MieMouse, PS/2 version)
+    "NetScrollPS/2"	(Genius NetScroll, PS/2 version)
+    "SysMouse"		(FreeBSD sysmouse)
+    "Auto"		(for automatic protocol detection)
+
+(The serial version of MouseMan+, FirstMouse+, NetMouse and MieMouse
+are compatible with MS IntelliMouse: specify "IntelliMouse" in the
+Protocol statement, or "Auto" to invoke the PnP enumeration
+procedure.)
+
+"ThinkingMousePS/2", "GlidePointPS/2", "MouseManPlusPS/2",
+"NetMousePS/2" and "NetScrollPS/2" are NOT supported by FreeBSD 2.2.5
+or earlier, because the OS does not support `write' operation to the
+PS/2 mouse driver, thus, these PS/2 mice cannot be initialized in the
+manner described in 1.1 (c).  The user should specify "PS/2" for these
+mice and the X server will use the mice as the standard PS/2 mouse.
+
+These keywords are NOT supported by FreeBSD 2.2.6 or later too,
+because these mice are supported by the PS/2 mouse driver in the
+kernel and the X server does not need to initialize the mice or
+interpret new data format; it should simply read the data in the
+standardized "SysMouse" format passed by the PS/2 mouse driver.  The
+user should specify "PS/2", "SysMouse" or "Auto" as the protocol for
+these mice.
+
+b) ZAxisMappping
+The option to map the Z axis (wheel) motion to a pair of buttons or to
+another axis.
+
+	ZAxisMapping X
+	ZAxisMapping Y
+	ZAxisMapping N M
+
+The first example will map the Z axis motion to the X axis motion.
+Whenever the user moves the wheel/roller, its movement is reported as
+the X axis motion.  When the wheel/roller stays still, the real X axis
+motion is reported as is.  The last example will map negative Z axis
+motion to the button N and positive Z axis motion to the button M.  If
+this option is used and the buttons N or M actually exists in the
+mouse, their actions cannot be detected by the X server.
+
+c) Resolution
+The following option will set the mouse device resolution to N, if
+possible:
+
+	Resolution N
+
+Not all mice can support this.  The PS/2 mouse device driver in
+FreeBSD 3.0-CURRENT and 2.2.6 can support it.  I wrote generic code in
+xf86_Mouse.c for other platforms, but have no idea if it works.
+
+2. Some notes on mice  ------------------------------------------------
+
+2.1 MS IntelliMouse  (serial, PS/2): 
+
+This mouse has been supported since XFree86 3.3.  However, my patch
+will slightly change its behavior.  The wheel movement is recognized
+as the Z axis motion.  This behavior is not compatible with XFree86
+3.3, but is more consistent with the support for other mice with
+wheels or rollers.  If you want to make the wheel behave like before,
+you can use the new option `ZAxisMapping'. 
+
+IntelliMouse supports the PnP COM device specification.
+
+To use this mouse as a serial device:
+	Protocol "Auto" or "IntelliMouse"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use this mouse as the PS/2 device:
+	Protocol "IMPS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.2 Kensington Thinking Mouse (serial, PS/2):
+
+This mouse has four buttons.
+
+ThinkingMouse supports the PnP COM device specification.
+
+To use this mouse as a serial device:
+	Protocol "Auto" or "ThinkingMouse"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use this mouse as a PS/2 device;
+	Protocol "ThinkingMousePS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.3 Genius NetScroll (PS/2):
+
+This mouse has four buttons and a roller.  The roller movement is
+recognized as the Z axis motion.  
+
+To use this mouse as a PS/2 device;
+	Protocol "NetScrollPS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.4 Genius NetMouse and NetMouse Pro (serial, PS/2):
+
+These mice have a "magic button" which is used like a wheel or a
+roller.  The "magic button" action is recognized as the Z axis motion.
+NetMouse Pro is identical to NetMouse except that it has the third
+button on the left hand side.
+
+NetMouse and NetMouse Pro support the PnP COM device specification.
+When used as a serial mouse, they are compatible with MS IntelliMouse.
+
+To use these mice as a serial device:
+	Protocol "Auto" or "IntelliMouse"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use these mice as the PS/2 device:
+	Protocol "NetMousePS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.5 ALPS GlidePoint (serial, PS/2): 
+
+The serial version of this mouse(pad) has been supported since XFree86
+3.2.  `Tapping' action is interpreted as the fourth button press.
+(IMHO, the fourth button of GlidePoint should be mapped to the first
+button in order to make this pad behave like the other pad products.)
+
+To use this pad as a serial device:
+	Protocol "GlidePoint"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use this mouse as the PS/2 device:
+	Protocol "GlidePointPS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.6 ASCII MieMouse (serial, PS/2):
+
+This mouse appears to be OEMed from Genius.  Although its shape is
+quite different, it works like Genius NetMouse Pro.  This mouse has a
+"knob" which is used like a wheel or a roller.  The "knob" action is
+recognized as the Z axis motion.
+
+MieMouse supports the PnP COM device specification.  When used as a
+serial mouse, it is compatible with MS IntelliMouse.
+
+To use this mouse as a serial device:
+	Protocol "Auto" or "IntelliMouse"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use this mouse as the PS/2 device:
+	Protocol "NetMousePS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+2.7 Logitech MouseMan+ and FirstMouse+ (serial, PS/2):
+
+MouseMan+ has two buttons on top, one side button and a roller.
+FirstMouse+ has two buttons and a roller.  The roller movement is
+recognized as the Z axis motion.  The roller also acts as the third
+button.  The side button is recognized as the fourth button.  
+
+MouseMan+ and FirstMouse+ support the PnP COM device specification.
+They have MS IntelliMouse compatible mode when used as a serial mouse.
+
+To use these mice as a serial device:
+	Protocol "Auto" or "IntelliMouse"
+	Device   "/dev/xxxx" (where xxxx is a serial port)
+To use these mice as the PS/2 device:
+	Protocol "MouseManPlusPS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+As the PS/2 device in FreeBSD 2.2.5 or earlier:
+	Protocol "PS/2"
+	Device   "/dev/psm0"
+As the PS/2 device in FreeBSD 2.2.6 or later:
+	Protocol "Auto", "SysMouse" or "PS/2"
+	Device   "/dev/psm0"
+
+3. TODO ---------------------------------------------------------------
+
+a) xf86 Misc Extention
+ProcXF86MiscGetMouseSettings() and ProcXF86MiscSetMouseSettings()
+should handle newly added protocol types.  Expand the struct
+XF86MiscGetMouseSettings to accomodate the device resolution value and
+ZAxisMapping settings?
+
+b) Integration with XInput
+Wheel/roller movement should be processed as the third valuator.
+Currently the core pointer and the extended mouse device code in
+XInput always assume there are only two valuators.
+  
+c) XF86Setup, xmseconfig
+Update lib/X11/XF86Setup/mouse.tcl, lib/X11/XF86Setup/scripts/mseconfig.tcl.
+
+4. Comments on the patch  ---------------------------------------------
+
+xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h
+
+- Include `machine/mouse.h' for FreeBSD.
+
+xc/programs/Xserver/hw/xfree86/common/xf86.h
+
+- Added `mseModel', `negativeZ', `positiveZ' and `resolution' to
+  MouseDevRec.
+- Added prototype for xf86GetPnPMouseProtocol().
+
+xc/programs/Xserver/hw/xfree86/common/xf86_Config.h
+
+- Defined constants and strings for new options and newly supported mice.
+
+xc/programs/Xserver/hw/xfree86/common/xf86Config.c
+
+- Initialize `mseModel', `negativeZ', `positiveZ' and `resolution' 
+  at the start of configPointerSection().
+- Recognize new keywords.
+
+xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c
+
+- Added support for the following PS/2 type mice:
+      ALPS GlidePoint, MS IntelliMouse, Kensington ThinkingMouse, 
+      Genius NetScroll, Genius NetMouse, NetMouse Pro, ASCII
+      Mie Mouse, Logitech MouseMan+, FirstMouse+
+- Added support for the following SERIAL mice:
+      Kensington ThinkingMouse
+  (Genius NetMouse, NetMouse Pro, ASCII MieMouse, Logitech MouseMan+
+  and FirstMouse+ are compatible with MS IntelliMouse, when connected
+  to a serial port, thus requires no explicit support)
+- MS IntelliMouse support code is modified so that the wheel 
+  movement is recognized as the Z axis motion.  
+- Added support for `Auto' to invoke PnP COM device detection code.
+- Added support for `SysMouse' protocol for FreeBSD.
+- Optionally map the Z axis movement to another axis or button events
+  based on `negativeZ' and `positiveZ' settings.
+- Reorganized xf86SetupMouse().
+
+xc/programs/Xserver/hw/xfree86/common/xf86_PnPMouse.c
+
+- PnP COM device support. The bulk of the code is taken from the mouse
+  daemon code in FreeBSD.
+
+xc/programs/Xserver/hw/xfree86/common/xf86Events.c
+
+- Support up to 12 buttons.
+
+xc/programs/Xserver/hw/xfree86/common/xf86Io.c
+
+- Make xf86MseProcAux() support up to 12 buttons.
+
+xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c
+
+- Make xf86CheckButton() recognize up to 12 buttons.
+
+
+----------------------------------------------------------- end of file

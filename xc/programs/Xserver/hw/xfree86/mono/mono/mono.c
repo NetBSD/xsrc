@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/mono.c,v 3.28.2.3 1997/05/11 02:56:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/mono.c,v 3.28.2.5 1998/03/01 13:58:22 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -155,7 +155,8 @@ ScrnInfoRec monoInfoRec = {
   0,			/* int textClockFreq */
   NULL,			/* char* DCConfig */
   NULL,			/* char* DCOptions */
-  0	                /* int MemClk */
+  0,	                /* int MemClk */
+  0			/* int LCDClk */
 #ifdef XFreeXDGA
   ,0,			/* int directMode */
   NULL,			/* Set Vid Page */
@@ -521,6 +522,9 @@ monoEnterLeaveVT(enter, screen_idx)
     PixmapPtr   pspix;	/* Pointer to the pixmap of the saved screen */
     ScreenPtr   pScreen = savepScreen;	/* This is the 'old' Screen:
 				real screen on leave, dummy on enter */
+
+    if (monoEnterLeaveFunc == NULL)
+	return;
 
     /* Set up pointer to the saved pixmap (pspix) only if not resetting
 						and not exiting */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.3 1997/05/28 13:12:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.6 1998/02/09 14:27:40 robin Exp $ */
 
 /*
  *
@@ -12,6 +12,9 @@
  * 
  * Created 18/03/97 by Sebastien Marineau
  * Revision: 
+ * [0.2] 08/02/98: Rewrite to use the VGA PCI information instead of re-probing
+ *       the PCI bus.
+ *
  * [0.1] 18/03/97: Added PCI probe function, taken from accel/s3_virge server.
  *       Not sure if the code used to adjust the PCI base address is 
  *       still needed for the ViRGE chipsets.
@@ -45,6 +48,7 @@
 #include "regs3v.h"
 #include "s3v_driver.h"
 
+extern vgaPCIInformation *vgaPCIInfo;
 extern SymTabRec s3vChipTable[];
 extern S3VPRIV s3vPriv;
 
@@ -57,39 +61,52 @@ S3PCIInformation *
 s3vGetPCIInfo()
 {
    static S3PCIInformation info = {0, };
-   pciConfigPtr pcrp, *pcrpp;
+   pciConfigPtr pcrp = NULL;
    Bool found = FALSE;
    int i = 0;
 
-   pcrpp = xf86scanpci(vga256InfoRec.scrnIndex);
 
-   if (!pcrpp)
-      return NULL;
+   if (vgaPCIInfo && vgaPCIInfo->AllCards) {
+      while (pcrp = vgaPCIInfo->AllCards[i]) {
+         if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
+	    int ChipId = pcrp->_device;
+	    if (vga256InfoRec.chipID) {
+	      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%04x instead of 0x%04x\n",
+		  XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.chipID, ChipId);
+	      ChipId = vga256InfoRec.chipID;
+	    }
+	    found = TRUE;
 
-   while ((pcrp = pcrpp[i])) {
-      if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
-	 found = TRUE;
-	 switch (pcrp->_device) {
-	 case PCI_ViRGE:
-	    info.ChipType = S3_ViRGE;
+	    switch (ChipId) {
+	    case PCI_ViRGE:
+	       info.ChipType = S3_ViRGE;
+	       break;
+	    case PCI_ViRGE_VX:
+	       info.ChipType = S3_ViRGE_VX;
+	       break;
+	    case PCI_ViRGE_DXGX:
+	       info.ChipType = S3_ViRGE_DXGX;
+	       break;
+	    case PCI_ViRGE_GX2:
+	       info.ChipType = S3_ViRGE_GX2;
+	       break;
+	    case PCI_ViRGE_MX:
+	       info.ChipType = S3_ViRGE_MX;
+	       break;
+	    default:
+	       info.ChipType = S3_UNKNOWN;
+	       info.DevID = pcrp->_device;
+	       break;
+	    }
+	    info.ChipRev = pcrp->_rev_id;
+	    info.MemBase = pcrp->_base0 & 0xFF800000;
 	    break;
-	 case PCI_ViRGE_VX:
-	    info.ChipType = S3_ViRGE_VX;
-	    break;
-	 case PCI_ViRGE_DXGX:
-	    info.ChipType = S3_ViRGE_DXGX;
-	    break;
-	 default:
-	    info.ChipType = S3_UNKNOWN;
-	    info.DevID = pcrp->_device;
-	    break;
-	 }
-	 info.ChipRev = pcrp->_rev_id;
-	 info.MemBase = pcrp->_base0 & 0xFF800000;
-	 break;
-      }
+         }
       i++;
+      }
    }
+   else 
+      return (FALSE);
 
    /* for new mmio we have to ensure that the PCI base address is
     * 64MB aligned and that there are no address collitions within 64MB.
@@ -114,7 +131,7 @@ s3vGetPCIInfo()
       /* map allocated 64MB blocks */
       for (j=0; j<64; j++) map_64m[j] = 0;
       map_64m[63] = 1;  /* don't use the last 64MB area */
-      for (j=0; (pcrp = pcrpp[j]); j++) {
+      for (j=0; (pcrp = vgaPCIInfo->AllCards[j]); j++) {
 	 if (i != j) {
 	    map_64m[ (pcrp->_base0 >> 26) & 0x3f] = 1;
 	    map_64m[((pcrp->_base0+0x3ffffff) >> 26) & 0x3f] = 1;
@@ -141,23 +158,17 @@ s3vGetPCIInfo()
 		probed, vga256InfoRec.name);
 	 ErrorF("\t\tbase address changed from 0x%08lx to 0x%08lx\n",
 		base0, info.MemBase);
-         xf86writepci(vga256InfoRec.scrnIndex, pcrpp[i]->_bus, pcrpp[i]->_cardnum,
-		    pcrpp[i]->_func, PCI_MAP_REG_START, ~0L,
+         xf86writepci(vga256InfoRec.scrnIndex, vgaPCIInfo->AllCards[i]->_bus, 
+		    vgaPCIInfo->AllCards[i]->_cardnum,
+		    vgaPCIInfo->AllCards[i]->_func, 
+		    PCI_MAP_REG_START, ~0L,
 		    info.MemBase | PCI_MAP_MEMORY | PCI_MAP_MEMORY_TYPE_32BIT);
       }
    }
    else {
-      if (vga256InfoRec.MemBase != 0) {
-	  /* Should we allow the user to specify this??? */
-          /* Guess this should be reenabled for VLB */
-      }
-      else {
-	
-      }
+	/* Don't do this check for other chipsets. */
    }
 
-   /* Free PCI information */
-   xf86cleanpci();
    if (found && xf86Verbose) {
       if (info.ChipType != S3_UNKNOWN) {
 	 ErrorF("%s %s: S3V: %s rev %x, Linear FB @ 0x%08lx\n", XCONFIG_PROBED,

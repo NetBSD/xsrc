@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.12.2.1 1997/05/21 15:02:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.12.2.2 1998/02/24 13:20:07 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -902,6 +902,7 @@ XkbProcessArguments(argc,argv,i)
 	noXkbExtension= False;
 	return 1;
     }
+#if 0
     else if (strncmp(argv[i], "-xkbdir", 7) == 0) {
 	if(++i < argc) {
 	    XkbBaseDirectory= argv[i];
@@ -911,6 +912,7 @@ XkbProcessArguments(argc,argv,i)
 	    return -1;
 	}
     }
+#endif
     else if (strncmp(argv[i], "-xkbmap", 7) == 0) {
 	if(++i < argc) {
 	    XkbInitialMap= argv[i];
@@ -999,8 +1001,12 @@ XkbUseMsg()
     ErrorF("-ar1                   set XKB autorepeat delay\n");
     ErrorF("-ar2                   set XKB autorepeat interval\n");
     ErrorF("-noloadxkb             don't load XKB keymap description\n");
+#if 0
     ErrorF("-xkbcomp               default keymap compiler\n");
+#endif
     ErrorF("-xkbdb                 file that contains default XKB keymaps\n");
+#if 0
     ErrorF("-xkbdir                base directory for XKB layout files\n");
+#endif
     ErrorF("-xkbmap                XKB keyboard description to load on startup\n");
 }

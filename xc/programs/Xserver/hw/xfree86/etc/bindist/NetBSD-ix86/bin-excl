@@ -1,6 +1,7 @@
 bin/XF86_*
 bin/XF98_*
 bin/XF86Setup
+bin/XF98Setup
 bin/Xnest
 bin/Xprt
 bin/Xvfb

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.32.2.1 1997/05/10 09:10:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.32.2.2 1998/02/15 16:09:35 hohndel Exp $ */
 /*
  *
  * Copyright 1993 by Simon P. Cooper, New Brunswick, New Jersey, USA.
@@ -23,7 +23,7 @@
  *
  * Author:  Simon P. Cooper, <scooper@vizlab.rutgers.edu>
  * Modified: Harm Hanemaayer, <hhanemaa@cs.ruu.nl>
- * Modified: Corin Anderson, <corina@bdc.cirrus.com>
+ * Modified: Corin Anderson, <corina@the4cs.com>
  *
  * cir_driver.h,v 1.8 1994/09/14 13:58:59 scooper Exp
  */

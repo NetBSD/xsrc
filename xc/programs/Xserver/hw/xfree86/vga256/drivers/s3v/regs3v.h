@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.2 1997/06/29 08:43:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.3 1998/01/31 14:23:30 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -68,12 +68,16 @@
 #define PCI_ViRGE		0x5631
 #define PCI_ViRGE_VX		0x883D
 #define PCI_ViRGE_DXGX 		0x8A01
+#define PCI_ViRGE_GX2 		0x8A10
+#define PCI_ViRGE_MX 		0x8C01
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
 #define S3_ViRGE		 1
 #define S3_ViRGE_VX		 2
 #define S3_ViRGE_DXGX		 3
+#define S3_ViRGE_GX2		 4
+#define S3_ViRGE_MX		 5
 
 
 /* VESA Approved Register Definitions */
@@ -373,7 +377,12 @@ LUTENTRY;
 #define WaitIdle()       do { mem_barrier(); while (!(IN_SUBSYS_STAT() & 0x2000)); } while (0)
 
 /* Wait until Command FIFO is empty */
-#define WaitCommandEmpty()       do { mem_barrier(); while (!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x200)); } while (0)
+#define WaitCommandEmpty()       do { mem_barrier(); 					\
+	if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) 		\
+	     while (!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x400));	\
+	  else 										\
+	     while (!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x200));	\
+	} while (0)
 
 /* Wait until a DMA transfer is done */ 
 #define WaitDMAEmpty()    do { mem_barrier(); while  ((((mmtr)s3vMmioMem)->dma_regs.regs.cmd.write_pointer) != (((mmtr)s3vMmioMem)->dma_regs.regs.cmd.read_pointer)); } while(0)

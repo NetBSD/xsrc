@@ -3,7 +3,7 @@
 
 <title>Information for DEC 21030 Users (aka TGA)
 <author>The XFree86 Project, Inc.
-<date>20th May 1997
+<date>26th February 1998
 <toc>
 
 <p>
@@ -36,6 +36,8 @@ have access to the 24plane or the 24plane3D chip.
 	If the server does not detect the base address of the 21030, then
 	Check /proc/pci for the 21030 and look for the "Prefetchable 32 bit
 	memory at 0x???????" and enter this as your MemBase setting.
+	In XFree86 v3.3.2, if you are using Linux > v2.0.27 with the PCI
+	routines the server should detect the base address automatically.
 
 </descrip>
 <item>No acceleration features of the 21030 have been taken advantage of yet!
@@ -47,7 +49,7 @@ known as the Multia, in a Linux environment.
 
 <p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.6.2.1 1997/05/21 15:02:39 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.6.2.3 1998/02/26 20:11:25 hohndel Exp $
 </verb>
 
 </article>

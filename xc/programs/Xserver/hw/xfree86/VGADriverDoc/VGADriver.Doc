@@ -1095,7 +1095,7 @@ ment/beta-testing team if you need to be working in these areas.
 
 12.  Vendor Contact Information
 
-      ATI Technologies (VGA-Wonder, Mach8, Mach32)
+      ATI Technologies (VGA-Wonder, Mach8, Mach32, Mach64)
 		 33 Commerce Valley Drive East" Thornhill, Ontario
 
 	    Canada L3T 7N6
@@ -1196,7 +1196,7 @@ ment/beta-testing team if you need to be working in these areas.
       Western Digital
 	    (714) 932-4900
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13 1997/01/25 03:22:16 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13.2.1 1998/02/01 16:04:54 robin Exp $
 
 
 
@@ -1385,4 +1385,4 @@ ment/beta-testing team if you need to be working in these areas.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/VGADriver.Doc,v 3.27 1997/01/27 22:12:18 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/VGADriver.Doc,v 3.27.2.1 1998/02/08 11:19:29 dawes Exp $

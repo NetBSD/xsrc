@@ -1,5 +1,5 @@
 /* $XConsortium: xinit.c /main/58 1996/02/22 10:37:38 kaleb $ */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.17 1997/01/18 07:03:01 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.17.2.1 1998/02/07 10:39:12 dawes Exp $ */
 
 /*
 
@@ -143,6 +143,7 @@ char xserverrcbuf[256];
 #define	OK_EXIT		0
 #define	ERR_EXIT	1
 
+char *default_wrapper = BINDIR "/Xwrapper";
 char *default_server = "X";
 char *default_display = ":0";		/* choose most efficient */
 #ifndef __EMX__
@@ -305,7 +306,10 @@ main(int argc, char **argv, char **envp)
 	if (argc == 0 ||
 #ifndef __EMX__
 	    (**argv != '/' && **argv != '.')) {
-		*sptr++ = default_server;
+		if (access(default_wrapper, X_OK) == 0)
+			*sptr++ = default_wrapper;
+		else
+			*sptr++ = default_server;
 #else
 	    (**argv != '/' && **argv != '\\' && **argv != '.' &&
 	     !(isalpha(**argv) && (*argv)[1]==':'))) {

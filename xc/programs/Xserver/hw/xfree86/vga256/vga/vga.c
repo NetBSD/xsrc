@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.10 1997/06/01 12:33:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.14 1998/02/15 16:09:40 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -44,10 +44,6 @@
 #include "xf86_Config.h"
 #include "vga.h"
 #include "vgaPCI.h"
-
-#ifdef PC98
-#include "pc98_vers.h"
-#endif
 
 #ifdef XFreeXDGA
 #include "scrnintstr.h"
@@ -198,13 +194,26 @@ ScrnInfoRec vga256InfoRec = {
   0,			/* int s3MClk */
   0,			/* int chipID */
   0,			/* int chipRev */
-  0,			/* unsigned long VGAbase */
+#if defined (PC98_WAB) || defined(PC98_WABEP)
+  0x0E0000,		/* unsigned long VGAbase */
+#else
+#if defined(PC98_GANB_WAP) || defined(PC98_WSNA) || defined(PC98_NKVNEC)
+  0xF00000,		/* unsigned long VGAbase */
+#else
+#if defined(PC98_EGC) || defined(PC98_PEGC)
+  0x0A8000,		/* unsigned long VGAbase */
+#else
+  0x0A0000,		/* unsigned long VGAbase */
+#endif /* PC98_EGC || PC98_PEGC */
+#endif /* PC98_GANB_WAP || PC98_WSNA || PC98_NKVNEC */
+#endif /* PC98_WAB || PC98_WABEP */
   0,			/* int s3RefClk */
   -1,			/* int s3BlankDelay */
   0,			/* int textClockFreq */
   NULL,			/* char* DCConfig */
   NULL,			/* char* DCOptions */
-  0			/* int MemClk */
+  0,			/* int MemClk */
+  0			/* int LCDClk */
 #ifdef XFreeXDGA
   ,0,                   /* int directMode */
   NULL,                 /* Set Vid Page */
@@ -364,22 +373,6 @@ vgaPrintIdent()
       c += strlen(id);
     }
   ErrorF("\n");
-#ifdef PC98
-  ErrorF("  PC98: Supported Video Boards:\n\t");
-#endif
-#ifdef PC98_EGC
-  ErrorF("%s\n",PC98_VGA16_BOARDS);
-#endif
-#ifdef PC98_NEC480
-  ErrorF("%s\n",PC98_VGA256_BOARDS);
-#endif
-#if defined(PC98_WAB)||defined(PC98_WABEP)||defined(PC98_GANB_WAP)||\
-	defined(PC98_NKVNEC)||defined(PC98_WSNA)
-  ErrorF("%s\n",PC98_CIRRUS_BOARDS);
-#endif
-#ifdef PC98_TGUI
-  ErrorF("%s\n",PC98_TGUI_BOARDS);
-#endif
 }
 
 
@@ -543,7 +536,7 @@ vgaProbe()
     }
   }
       
-#if !defined(PC98) || defined(PC98_TGUI)
+#if !defined(PC98) || defined(PC98_TGUI) || defined(PC98_MGA) || defined(PC98_SVGA)
   /* First do a general PCI probe (unless disabled) */
   if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
     vgaPCIInfo = vgaGetPCIInfo();
@@ -552,9 +545,9 @@ vgaProbe()
 
   for (i=0; Drivers[i]; i++)
   {
-    vgaSaveScreenFunc = Drivers[i]->ChipSaveScreen;
     if ((Drivers[i]->ChipProbe)())
       {
+        vgaSaveScreenFunc = Drivers[i]->ChipSaveScreen;
         xf86ProbeFailed = FALSE;
 #ifdef MONOVGA
 #ifdef BANKEDMONOVGA
@@ -1147,7 +1140,7 @@ vgaProbe()
 #endif /* !MONOVGA */
 #endif /* !XF86VGA16 */
 
-#if !defined(PC98) || defined(PC98_TGUI)
+#if !defined(PC98) || defined(PC98_TGUI) || defined(PC98_MGA) || defined(PC98_SVGA)
 	if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
 	  /* Free PCI information */
 	  xf86cleanpci();
@@ -1159,7 +1152,7 @@ vgaProbe()
 #endif
 
 	return TRUE;
-      }
+     }
   }
 
   vgaSaveScreenFunc = vgaHWSaveScreen;
@@ -1380,8 +1373,6 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 		     vga256InfoRec.displayWidth);
 #endif /* XF86VGA16 */
 
-  pScreen->CloseScreen = vgaCloseScreen;
-  pScreen->SaveScreen = vgaSaveScreen;
   pScreen->whitePixel = 1;
   pScreen->blackPixel = 0;
   XF86FLIP_PIXELS();
@@ -1415,6 +1406,9 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
   {
     miDCInitialize (pScreen, &xf86PointerScreenFuncs);
   }
+
+  pScreen->CloseScreen = vgaCloseScreen;
+  pScreen->SaveScreen = vgaSaveScreen;
 
 #ifndef XF86VGA16
 #ifdef MONOVGA
@@ -1609,13 +1603,6 @@ vgaEnterLeaveVT(enter, screen_idx)
       {
 	ScrnInfoPtr pScr = XF86SCRNINFO(pScreen);
 
-	if (vgaHWCursor.Initialized)
-	{
-	  vgaHWCursor.Init(0, pScreen);
-	  vgaHWCursor.Restore(pScreen);
-	  vgaAdjustFunc(pScr->frameX0, pScr->frameY0);
-	}
-
         if ((pointer)pspix->devPrivate.ptr != (pointer)vgaVirtBase && ppix)
         {
 #if !defined(MONOVGA) && !defined(XF86VGA16)
@@ -1648,6 +1635,13 @@ vgaEnterLeaveVT(enter, screen_idx)
 	  vgaRestoreScreenPix(pScreen,ppix);
 #endif /* XF86VGA16 */
         }
+
+	if (vgaHWCursor.Initialized)
+	{
+	  vgaHWCursor.Init(0, pScreen);
+	  vgaHWCursor.Restore(pScreen);
+	  vgaAdjustFunc(pScr->frameX0, pScr->frameY0);
+	}
       }
       if (ppix) {
         (pScreen->DestroyPixmap)(ppix);

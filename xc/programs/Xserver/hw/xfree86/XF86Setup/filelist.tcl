@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4 1996/12/27 06:54:03 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4.2.1 1998/02/26 13:58:58 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -93,13 +93,25 @@ array set FilePermsXKB {
 }
 
 array set FilePermsReadMe {
-	lib/X11/doc/README.Oak			444
-	lib/X11/doc/README.ati			444
-	lib/X11/doc/README.trident		444
-	lib/X11/doc/README.agx			444
+	lib/X11/doc/README.DECtga		444
+	lib/X11/doc/README.MGA			444
+	lib/X11/doc/README.Mach32		444
 	lib/X11/doc/README.Mach64		444
+	lib/X11/doc/README.NV1			444
+	lib/X11/doc/README.Oak			444
 	lib/X11/doc/README.P9000		444
 	lib/X11/doc/README.S3			444
+	lib/X11/doc/README.S3V			444
+	lib/X11/doc/README.SiS			444
+	lib/X11/doc/README.Video7		444
 	lib/X11/doc/README.W32			444
+	lib/X11/doc/README.WstDig		444
+	lib/X11/doc/README.agx			444
+	lib/X11/doc/README.ark			444
+	lib/X11/doc/README.ati			444
+	lib/X11/doc/README.chips		444
+	lib/X11/doc/README.cirrus		444
+	lib/X11/doc/README.trident		444
+	lib/X11/doc/README.tseng		444
 }
 

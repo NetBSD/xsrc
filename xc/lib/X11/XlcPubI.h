@@ -23,6 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.2.2.3 1998/02/01 22:08:09 robin Exp $ */
 
 #ifndef _XLCPUBLICI_H_
 #define _XLCPUBLICI_H_
@@ -41,7 +42,7 @@ typedef struct _XLCdPublicMethodsRec *XLCdPublicMethods;
 
 typedef XLCd (*XlcPubCreateProc)(
 #if NeedFunctionPrototypes
-    char*		/* name */,
+    _Xconst char*		/* name */,
     XLCdMethods		/* methods */
 #endif
 );
@@ -117,7 +118,7 @@ _XFUNCPROTOBEGIN
 
 extern XLCd _XlcCreateLC(
 #if NeedFunctionPrototypes
-    char*		/* name */,
+    _Xconst char*		/* name */,
     XLCdMethods		/* methods */
 #endif
 );
@@ -136,14 +137,14 @@ extern Bool _XlcParseCharSet(
 
 extern XlcCharSet _XlcCreateDefaultCharSet(
 #if NeedFunctionPrototypes
-    char*		/* name */,
+    _Xconst char*		/* name */,
     char*		/* control_sequence */
 #endif
 );
 
 extern XlcCharSet _XlcAddCT(
 #if NeedFunctionPrototypes
-    char*		/* name */,
+    _Xconst char*		/* name */,
     char*		/* control_sequence */
 #endif
 );

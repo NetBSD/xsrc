@@ -11,7 +11,7 @@
 
 			       Michael Rohleder
 
-				13 January 1997
+				11 January 1998
 
 
 
@@ -41,10 +41,10 @@ ties provided in the X11R6 Libraries against them.
 
 2.  Things needed for compiling the sources
 
-      gcc-2.x.x
+      gcc
 	    Use the highest number for x you found.  Fresco will only build
-	    2.6.3 and later.  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2 and
-	    2.6.3.  I'm currently using 2.7.2.
+	    2.6.3 and later.  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2, 2.6.3
+	    and 2.7.2.	Current: 2.7.2.3
 
 	    Since 2.6.3 the current source tree should be able to compile with
 	    a little bit more Optimization:
@@ -71,13 +71,14 @@ ties provided in the X11R6 Libraries against them.
 
 
 
-      binutils-2.5.2
+      binutils
 	    You could use the assembler and linker the assembler is most pre-
 	    ferred,and the linker is needed at least if you want to link
 	    libFresco.a within a Program.  Don't use strip and ar/ranlib, the
 	    first generates buggy binaries when stripping (at least on my
 	    machines) and the last requires the use of ranlib after creating an
-	    archive, this is not configured.
+	    archive, this is not configured.  Current: 2.8.1.0.15 (Used: as,
+	    ld, ar, strip)
 
       gnu-malloc
 	    Due to better memory usage we should use GNU's malloc library on
@@ -88,6 +89,13 @@ ties provided in the X11R6 Libraries against them.
 
 	    Enable and set #define GnuMallocLibrary to your needs, if it isn't
 	    like the default -L/usr/local/lib -lgmalloc.
+
+      inline-math (optional)
+	    This is the "original" inline-math package available at your
+	    favorite Linux Mirror.
+
+	    Use #define UseInlineMath YES inside host.def to enable it. Please
+	    note the changes section what else to do, to use this package.
 
 
 
@@ -117,14 +125,6 @@ and gcc-lib/include/sys/limits.h
 
 
 
-OPEN_MAX had to be increased to prevent Xlib Errors (max no. of clients
-reached).
-
-3.2  /usr/include/sys/ioctl.h
-
-surrounded by
-
-
 
 
 
@@ -136,6 +136,13 @@ surrounded by
  Information for ISC Users
 
 
+
+OPEN_MAX had to be increased to prevent Xlib Errors (max no. of clients
+reached).
+
+3.2  /usr/include/sys/ioctl.h
+
+surrounded by
 
 	     #ifndef _IOCTL_H
 	     #define _IOCTL_H
@@ -184,13 +191,6 @@ such a file does not exist on Interactive. You may like to generate it, if you
 don't like a warning from depend. It isn't needed to compile the sources suc-
 cessfully.
 
-You could use the following to produce it:
-
-
-
-
-
-
 
 
 
@@ -203,12 +203,50 @@ You could use the following to produce it:
 
 
 
+You could use the following to produce it:
+
 	      #ifndef X_NO_SYS_UN
 	      struct  sockaddr_un {
 		      short   sun_family;	      /* AF_UNIX */
 		      char    sun_path[108];	      /* path name (gag) */
 	      };
 	      #endif
+
+
+3.6  /usr/include/math.h
+
+To use the Inline Math package you have to change your existing math.h. Please
+note, the way I include the new Header file, is different than suggested in
+inline-math's README.
+
+Please add the following at the bottom of math.h, before the last #endif
+
+     #if defined(UseInlineMath)
+
+     /* Needed on ISC __CONCAT, PI */
+     #ifndef __CONCAT
+     /*
+      * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
+      * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
+      * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
+      * in between its arguments.  __CONCAT can also concatenate double-quoted
+      * strings produced by the __STRING macro, but this only works with ANSI C.
+      */
+     #if defined(__STDC__) || defined(__cplusplus)
+     #define __CONCAT(x,y)   x ## y
+     #define __STRING(x)     #x
+     #else   /* !(__STDC__ || __cplusplus) */
+     #define __CONCAT(x,y)   x/**/y
+     #define __STRING(x)     "x"
+     #endif  /* !(__STDC__ || __cplusplus) */
+     #endif
+
+     #ifndef PI
+     #define PI M_PI
+     #endif
+
+     #include "/usr/local/include/i386/__math.h"
+     #endif
 
 
 
@@ -219,6 +257,17 @@ You could use the following to produce it:
       -DISC -DISC30
 	    these two defines are necessary to build the release I don't know
 	    if the build will succeed for ISC versions prior than 3.x
+
+
+
+
+
+
+
+
+ Information for ISC Users
+
+
 
       -DISC40
 	    are only for getting the ISC version and therefore set the HasSym-
@@ -232,13 +281,15 @@ You could use the following to produce it:
 	    A build on ISC 4.x only needs -DISC40 defined in the BOOT-
 	    STRAPCFLAGS ( -DISC30 will be included automatically ).
 
-	    Note: if you still use Version 4.0, or you want to build binaries
-	    on Version 4.1 which should run on 4.0, you have to set  #define
-	    UseChmod YES  inside your host.def.
+	    Note: due to some incompatibilities between ISC 4.0 and 4.1, the
+	    default is to build for ISC4.0, even if you build on 4.1.  If you
+	    want to build only for 4.1 you should set  #define IscCompileVer-
+	    sion       410  inside your host.def.
 
 	    (the fchmod function isn't available on 4.0, so it won't compile,
 	    and binaries from 4.1 won't run cause of the unsupported System
-	    call) On Versions less 4.0 this will be the default.
+	    call The libraries build for 4.1 couldn't be used with 4.0 Systems,
+	    due to some functions not available on 4.0)
 
       -DSYSV [-Di386]
 	    standard defines for SystemV Release3 on x86 platform.  You don't
@@ -257,18 +308,6 @@ You could use the following to produce it:
 
 
      in xf86site.def.  This is necessary to get the correct setup to be defined
-
-
-
-
-
-
-
-
- Information for ISC Users
-
-
-
      for the build.
 
      You need the mmap-2.2.3 driver installed on your system.  If you don't
@@ -284,6 +323,18 @@ You could use the following to produce it:
 
 
      Build and install the driver as instructed. You'll need the file
+
+
+
+
+
+
+
+
+ Information for ISC Users
+
+
+
      /usr/include/sys/mmap.h for compiling the X11R6/XFree86 source tree, with
      linear addressing enabled.
 
@@ -324,17 +375,6 @@ You could use the following to produce it:
 
 	  Expand your .Xdefaults with
 
-
-
-
-
-
-
-
- Information for ISC Users
-
-
-
 			  *blinkRate:		  0
 			  *cursorPositionVisible: false
 
@@ -348,6 +388,18 @@ You could use the following to produce it:
 	  older Chipset Driver instead "newmmio".
 
 	  If you declare
+
+
+
+
+
+
+
+
+
+ Information for ISC Users
+
+
 
 			  Chipset "mmio_928"
 
@@ -386,7 +438,21 @@ You could use the following to produce it:
 
 This is an obsolete Extension. Anyway, if you want to include this Extension
 inside your build, you have to add: #define BuildMultibuffer	    YES inside
-xf86site.def
+xf86site.def Please note, this Extension should be disabled when building the
+Loader Server.
+
+
+8.  Sample Definitions
+
+This is my current host.def, if I build the sources. (So no more changes were
+necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
+
+
+
+
+
+
+
 
 
 
@@ -401,37 +467,20 @@ xf86site.def
 
 
 
-8.  Sample Definitions
-
-This is my current host.def, if I build the sources. (So no more changes were
-necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
-
-
      #ifdef BeforeVendorCF
 
-     /* Only when building official binaries*/
-     /*
-     #define InstallJapaneseDocs     YES
-     #define InstallEmptyHostDef
+     /* ISC 4.1Mu - build only for 4.1
+     #define IscCompileVersion	     410
      */
 
+     /* Use inline Math from linux ;-) package inline-math-2.6.tar.gz */
+     /* should be available on your favorite linux ftp		      */
+     # define UseInlineMath	   YES
 
-     /* Try MultiBuffer Extension */
-     #define BuildMultibuffer	     YES
-
-     /* Build all Contrib SW */
-     #ifdef XF86Contrib
-     #undef XF86Contrib
-     #endif
-
-     /* gcc 2.6.3 tested Optimization Flags				  */
-     # define DefaultGcc2i386Opt   -O2 -fstrength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
-
-     /* binaries which should run on ISC 4.0 or for the build on a real 4.0 System */
-     # define UseChmod	      YES
-
-     /* For a POSIXized build on Interactive maybe needed to use gcc2.7.2 */
-     # define UsePosix	      YES
+     /* Use cbrt from liboptm.a (Interactive icc Compiler) */
+     /*
+     */
+     # define HasCbrt	      YES
 
      /* Use GNUs MallocLibrary (and the Location for the Lib)		  */
      # define UseGnuMalloc	   YES
@@ -455,6 +504,23 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
      /* Install Config's for xdm, xfs, and xinit */
      # define InstallXinitConfig    YES
      # define InstallXdmConfig	    YES
+     # define InstallFSConfig		    YES
+
+     #define BuildChooser	   YES
+
+     /* for the new XF86Setup Util */
+     #define HasTk	      YES
+     #define HasTcl	      YES
+
+     #endif /* BeforeVendorCF */
+
+
+9.  Installation
+
+After your make World BOOTSTRAPCFLAGS="... succeed,
+
+     make install
+
 
 
 
@@ -465,25 +531,6 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 
  Information for ISC Users
 
-
-
-     # define InstallFSConfig		    YES
-
-     #define BuildChooser	   YES
-
-     /* for the new XF86Setup Util */
-     #define HasTk	      YES
-     #define HasTcl	      YES
-
-
-     #endif /* BeforeVendorCF */
-
-
-9.  Installation
-
-After your make World BOOTSTRAPCFLAGS="... succeed,
-
-     make install
 
 
 to install in /usr/X11R6. Make sure you have enough space, and /usr/X11R6
@@ -510,6 +557,14 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
 	    to use inside sysadm. You could also install
 	    some additional Fonts and Terminal files.
 
+You also should increase MAXUMEM to its maximum, else programs may die with:
+
+     X Error of failed request:  BadAlloc (insufficient resources for operation)
+       Major opcode of failed request:	53 (X_CreatePixmap)
+       Serial number of failed request:  37791
+       Current serial number in output stream:	37822
+       Widget hierarchy of resource: unknown
+
 
 10.  Using ...
 
@@ -521,6 +576,17 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
    o Keyboard:
 
      You don't need any modmap-File to get your keyboard working with any
+     iso-8859-1 Font. Simply enable
+
+	o LeftAlt  Meta
+
+	o RightAlt ModeShift
+
+	o RightCtl Compose
+
+     in your XF86Config - Section "Keyboard"
+
+
 
 
 
@@ -532,16 +598,6 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
  Information for ISC Users
 
 
-
-     iso-8859-1 Font. Simply enable
-
-	o LeftAlt  Meta
-
-	o RightAlt ModeShift
-
-	o RightCtl Compose
-
-     in your XF86Config - Section "Keyboard"
 
    o xpcterm:
 
@@ -586,6 +642,16 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
 
    o Warnings you may see:
 
+	o Since 3.2A, you could see a warning from pre X11R6.3 clients.
+
+			  Warning: Unable to load any usable fontset
+
+
+
+	  The case are the new gzipped fonts, but the Warning isn't serious.
+
+	o If you start a server you may see the following message:
+
 
 
 
@@ -598,16 +664,6 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
  Information for ISC Users
 
 
-
-	o Since 3.2A, you could see a warning from pre X11R6.3 clients.
-
-			  Warning: Unable to load any usable fontset
-
-
-
-	  The case are the new gzipped fonts, but the Warning isn't serious.
-
-	o If you start a server you may see the following message:
 
 		       _XSERVTransOpen: transport open failed for named/enigma:0
 		       _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
@@ -624,13 +680,23 @@ All thanks should go to the members of the XFree86 Team for their great work
 and the X Consortium for their Public Release of X11R6, as to all who con-
 tribute to this excellent piece of free software.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.18 1997/01/25 03:22:23 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.18.2.2 1998/02/20 23:10:31 dawes Exp $
 
 
 
 
 
      $XConsortium: isc.sgml /main/8 1996/10/23 11:45:58 kaleb $
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -741,27 +807,27 @@ tribute to this excellent piece of free software.
 
 3.  Changes to the System Header Files ...................................... 2
     3.1 /usr/include/sys/limits.h ........................................... 2
-    3.2 /usr/include/sys/ioctl.h ............................................ 2
+    3.2 /usr/include/sys/ioctl.h ............................................ 3
     3.3 /usr/include/errno.h ................................................ 3
     3.4 /usr/include/rpc/types.h ............................................ 3
     3.5 /usr/include/sys/un.h ............................................... 3
+    3.6 /usr/include/math.h ................................................. 4
 
 4.  make World	............................................................. 4
 
-5.  linear Addressing  ...................................................... 4
+5.  linear Addressing  ...................................................... 5
 
-6.  XKeyboard Extension ..................................................... 6
+6.  XKeyboard Extension ..................................................... 7
 
-7.  Multibuffer Extension  .................................................. 6
+7.  Multibuffer Extension  .................................................. 7
 
 8.  Sample Definitions	..................................................... 7
 
 9.  Installation  ........................................................... 8
 
-10. Using ...  .............................................................. 8
+10. Using ...  .............................................................. 9
 
-11. Acknowledgements  ...................................................... 10
-
+11. Acknowledgements  ...................................................... 11
 
 
 
@@ -791,4 +857,4 @@ tribute to this excellent piece of free software.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.28 1997/01/27 22:13:07 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.28.2.1 1998/02/20 23:14:30 dawes Exp $

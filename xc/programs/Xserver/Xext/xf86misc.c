@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.21.2.1 1997/05/03 09:44:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.21.2.4 1998/02/25 14:26:43 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -202,6 +202,8 @@ ProcXF86MiscGetMouseSettings(client)
 #endif
     rep.baudrate = xf86Info.mouseDev->baudRate;
     rep.samplerate = xf86Info.mouseDev->sampleRate;
+    rep.resolution = xf86Info.mouseDev->resolution;
+    rep.buttons = xf86Info.mouseDev->buttons;
     rep.emulate3buttons = xf86Info.mouseDev->emulate3Buttons;
     rep.emulate3timeout = xf86Info.mouseDev->emulate3Timeout;
     rep.chordmiddle = xf86Info.mouseDev->chordMiddle;
@@ -219,6 +221,8 @@ ProcXF86MiscGetMouseSettings(client)
     	swapl(&rep.mousetype, n);
     	swapl(&rep.baudrate, n);
     	swapl(&rep.samplerate, n);
+    	swapl(&rep.resolution, n);
+    	swapl(&rep.buttons, n);
     	swapl(&rep.emulate3buttons, n);
     	swapl(&rep.emulate3timeout, n);
     	swapl(&rep.chordmiddle, n);
@@ -264,7 +268,7 @@ static int
 ProcXF86MiscSetMouseSettings(client)
     register ClientPtr client;
 {
-    int reopen, msetype, flags, baudrate, samplerate;
+    int reopen, msetype, flags, baudrate, samplerate, resolution;
 
     REQUEST(xXF86MiscSetMouseSettingsReq);
 
@@ -274,9 +278,9 @@ ProcXF86MiscSetMouseSettings(client)
 	ErrorF("SetMouseSettings - type: %d brate: %d srate: %d chdmid: %d\n",
 		stuff->mousetype, stuff->baudrate,
 		stuff->samplerate, stuff->chordmiddle);
-	ErrorF("                   em3but: %d em3tim: %d flags: %d\n",
+	ErrorF("                   em3but: %d em3tim: %d res: %d flags: %d\n",
 		stuff->emulate3buttons, stuff->emulate3timeout,
-		stuff->flags);
+		stuff->resolution, stuff->flags);
     }
     if (stuff->mousetype > MTYPE_OSMOUSE
             || stuff->mousetype < MTYPE_MICROSOFT)
@@ -305,6 +309,7 @@ ProcXF86MiscSetMouseSettings(client)
 	return miscErrorBase + XF86MiscBadMouseCombo;
 
     samplerate = xf86Info.mouseDev->sampleRate;
+    resolution = xf86Info.mouseDev->resolution;
     baudrate   = xf86Info.mouseDev->baudRate;
     flags      = xf86Info.mouseDev->mouseFlags;
     msetype    = xf86Info.mouseDev->mseType;
@@ -337,23 +342,23 @@ ProcXF86MiscSetMouseSettings(client)
     if (stuff->mousetype != MTYPE_OSMOUSE
 	    && stuff->mousetype != MTYPE_XQUEUE
 	    && stuff->mousetype != MTYPE_PS_2
-	    && stuff->mousetype != MTYPE_BUSMOUSE)
+	    && stuff->mousetype != MTYPE_BUSMOUSE
+	    && stuff->mousetype != MTYPE_IMPS2
+	    && stuff->mousetype != MTYPE_THINKINGPS2
+	    && stuff->mousetype != MTYPE_MMANPLUSPS2
+	    && stuff->mousetype != MTYPE_GLIDEPOINTPS2
+	    && stuff->mousetype != MTYPE_NETPS2
+	    && stuff->mousetype != MTYPE_NETSCROLLPS2
+	    && stuff->mousetype != MTYPE_SYSMOUSE)
     {
         if (stuff->baudrate < 1200)
 	    return miscErrorBase + XF86MiscBadMouseBaudRate;
         if (stuff->baudrate % 1200 != 0
                 || stuff->baudrate < 1200 || stuff->baudrate > 9600)
 	    return miscErrorBase + XF86MiscBadMouseBaudRate;
-        if (stuff->samplerate < 0)
-	    return BadValue;
-	
 	if (xf86Info.mouseDev->baudRate != stuff->baudrate) {
 		reopen++;
 		baudrate = stuff->baudrate;
-	}
-	if (xf86Info.mouseDev->sampleRate != stuff->samplerate) {
-		reopen++;
-		samplerate = stuff->samplerate;
 	}
     }
     if (stuff->flags & (MF_CLEAR_DTR|MF_CLEAR_RTS))
@@ -363,6 +368,33 @@ ProcXF86MiscSetMouseSettings(client)
 	    reopen++;
             flags = stuff->flags;
 	}
+
+    if (stuff->mousetype != MTYPE_OSMOUSE
+	    && stuff->mousetype != MTYPE_XQUEUE
+	    && stuff->mousetype != MTYPE_BUSMOUSE)
+    {
+        if (stuff->samplerate < 0)
+	    return BadValue;
+	
+	if (xf86Info.mouseDev->sampleRate != stuff->samplerate) {
+		reopen++;
+		samplerate = stuff->samplerate;
+	}
+    }
+
+    if (stuff->resolution < 0)
+	return BadValue;
+    if (xf86Info.mouseDev->resolution != stuff->resolution) {
+	reopen++;
+	resolution = stuff->resolution;
+    }
+
+#if 0
+    /* Ignore the buttons field */
+    if (xf86Info.mouseDev->buttons != stuff->buttons)
+	/* we cannot change this field on the fly... */
+	return BadValue;
+#endif
 
     if (stuff->chordmiddle)
         if (stuff->emulate3buttons
@@ -375,31 +407,14 @@ ProcXF86MiscSetMouseSettings(client)
     xf86Info.mouseDev->emulate3Timeout = stuff->emulate3timeout;
 
     if (reopen && msetype != MTYPE_OSMOUSE && msetype != MTYPE_XQUEUE) {
-	ButtonClassPtr butc = inputInfo.pointer->button;
 
         (xf86Info.mouseDev->mseProc)(xf86Info.pMouse, DEVICE_CLOSE);
-
-	/* Dynamically changing the number of buttons could
-	   confuse some clients, but we'll do it anyway */
-	if (stuff->mousetype == MTYPE_MMHIT
-	        || stuff->mousetype == MTYPE_GLIDEPOINT) {
-	    if (xf86Info.mouseDev->mseType != MTYPE_MMHIT
-		    && xf86Info.mouseDev->mseType != MTYPE_GLIDEPOINT) {
-		butc->numButtons = 4;
-		/* should this be set or left alone?? */
-		butc->map[4] = 4;
-	    }
-	} else {
-	    if (xf86Info.mouseDev->mseType == MTYPE_MMHIT
-		    || xf86Info.mouseDev->mseType == MTYPE_GLIDEPOINT) {
-		butc->numButtons = 3;
-	    }
-	}
 
         xf86Info.mouseDev->mseType    = msetype;
         xf86Info.mouseDev->mouseFlags = flags;
         xf86Info.mouseDev->baudRate   = baudrate;
         xf86Info.mouseDev->sampleRate = samplerate;
+	xf86Info.mouseDev->resolution = resolution;
 
 	xf86Info.pMouse->public.on = FALSE;
 	xf86AllowMouseOpenFail = TRUE;
@@ -560,6 +575,8 @@ SProcXF86MiscSetMouseSettings(client)
     swapl(&stuff->mousetype, n);
     swapl(&stuff->baudrate, n);
     swapl(&stuff->samplerate, n);
+    swapl(&stuff->resolution, n);
+    swapl(&stuff->buttons, n);
     swapl(&stuff->emulate3timeout, n);
     swapl(&stuff->flags, n);
     return ProcXF86MiscSetMouseSettings(client);

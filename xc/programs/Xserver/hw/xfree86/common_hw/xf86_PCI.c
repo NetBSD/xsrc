@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.5 1997/07/26 06:30:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.6 1998/02/01 16:04:49 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -36,8 +36,10 @@
 
 #ifdef PC98
 #define outb(port,data) _outb(port,data)
+#define outw(port,data) _outw(port,data)
 #define outl(port,data) _outl(port,data)
 #define inb(port) _inb(port)
+#define inw(port) _inw(port)
 #define inl(port) _inl(port)
 #endif
 

@@ -18,7 +18,7 @@
 XFree86 code without an explicit copyright is covered by the following copy-
 right:
 
-Copyright (C) 1994-1997 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -169,7 +169,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 2.3  NVidia Corp
 
-Copyright (c) 1996 NVIDIA, Corp.  All rights reserved.
+Copyright (c) 1996-1998 NVIDIA, Corp.  All rights reserved.
 
 NOTICE TO USER: The source code is copyrighted under U.S. and international
 laws.  NVIDIA, Corp. of Sunnyvale, California owns the copyright and as design
@@ -181,8 +181,8 @@ software.
 Any use of this source code must include, in the user documentation and inter-
 nal comments to the code, notices to the end user as follows:
 
-Copyright (c) 1996 NVIDIA, Corp.  NVIDIA design patents pending in the U.S. and
-foreign countries.
+Copyright (c) 1996-1998 NVIDIA, Corp.  NVIDIA design patents pending in the
+U.S. and foreign countries.
 
 NVIDIA, CORP.  MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF THIS SOURCE
 CODE FOR ANY PURPOSE.  IT IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WAR-
@@ -206,7 +206,7 @@ Copyright
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOURCE CODE.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.1 1997/06/08 15:41:26 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.2 1998/01/24 11:55:06 dawes Exp $
 
 
 
@@ -395,4 +395,4 @@ Copyright
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/COPYRIGHT,v 3.16.2.1 1997/06/08 15:42:54 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/COPYRIGHT,v 3.16.2.2 1998/01/25 04:06:33 dawes Exp $

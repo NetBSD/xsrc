@@ -11,19 +11,20 @@
 
 			   The XFree86 Project, Inc.
 
-				  20 May 1997
+			       10th February 1998
 
 
 
 1.  Supported chipsets
 
-The Trident driver has undergone some more work for XFree86 3.3.  Because of
+The Trident driver has undergone some more work for XFree86 3.3.2.  Because of
 this work, all of the Trident SVGA chipsets, except the very first one, are
 supported by both the color and monochrome servers.
 
      8800CS 8200LX 8900B 8900C 8900CL/D 9000 9000i 9100B 9200CXr 9320LCD
-     9400CXi 9420 9420DGi 9430DGi 9440AGi 9660XGi 9680 9682 9685 Cyber9382
-     Cyber9385 Cyber9385-1
+     9400CXi 9420 9420DGi 9430DGi 9440AGi 9660XGi 9680 ProVidia9682 Pro-
+     Vidia9685 Cyber9382 Cyber9385 Cyber9385-1 Cyber9388 Cyber9397 3DIm-
+     age975(PCI) 3DImage985(AGP)
 
 
 It must be noted that the 9000i chipset is treated as a 9000 by the server.
@@ -34,48 +35,41 @@ server, but should work in this way according to the chipset documentation.
 
  NOTES:
 
-   o Acceleration is now supported for the 9440/96xx and Cyber938x chips.
+   o  The chipset keyword has changed in XFree86 v3.3.2 and now you no longer
+     specify 'tgui96xx' as the generic keyword, but you actually specify your
+     chip. i.e. Chipset 'tgui9685' will set a ProVidia9685 chip.
 
-   o 24bpp is supported for the 9440, 32bpp is supported for the 96xx and
-     Cyber938x based chips.
+   o  The new Cyber9397, 3DImage975(PCI) and 3DImage985(AGP) cards are intro-
+     duced in XFree86 v3.3.2, but is still experimental, these chipsets are
+     currently unaccelerated.
 
-   o The Cyber 9382/5 chips that have started to appear, have much improved
-     support in XFree86 3.3 and appear to work at 800x600 on the LCD.
+   o  24bpp is all drivers remains unaccelerated, this will change in a future
+     version, although 32bpp acceleration is supported for all TGUI based
+     chipset except the 9440 which doesn't have the capability.
 
-   o The TGUI9440 and TGUI96xx based cards are supported by the SVGA server.
-
-   o 16 bits per pixel is now supported for the 8900D, 9200CXr, 9400CXi,
-     9420DGi, 9430DGi, 9440AGi, 96xx, but only the 9440AGi and 9400CXi have
-     been tested.
-
-   o Linear access has been implemented for chipsets that support it.  It is
-     enabled by default for PCI cards, and disabled by default for other cards.
-     Additionally Hardware cursor is implemented for the 9430, 9440, 96xx,
-     although only the 9440 and 9660 have been tested with the hardware cursor.
-
-   o The following options may be specified for the Trident driver:
+   o  24/32bpp is not supported for the 9685, it will be fixed in a future ver-
+     sion.
 
 	   Option "nolinear"
 		 Turn off linear mapping
-
-
-
-
- Information for Trident Chipset Users
-
-
-
-
-
- Information for Trident Chipset Users
-
-
 
 	   Option "linear"
 		 Force linear mapping.	Use this if you have a non-PCI card and
 		 require 16bpp support.  Note: ISA cards can only access up to
 		 16MB of memory, so be sure you have less than this or it could
 		 cause a system hang.
+
+
+
+ Information for Trident Chipset Users
+
+
+
+
+
+ Information for Trident Chipset Users
+
+
 
 	   MemBase "0x???????"
 		 This option may be used to specify the start address of the
@@ -109,8 +103,7 @@ server, but should work in this way according to the chipset documentation.
 		 Turn off XAA acceleration.
 
 	   Option "xaa_no_color_exp"
-		 Disable color expansion, which is needed for some 9440 cards
-		 (and maybe others?).
+		 Disable color expansion.
 
 	   Option "no_stretch"
 		 Disable LCD stretching on Cyber 938x based chips.
@@ -118,13 +111,20 @@ server, but should work in this way according to the chipset documentation.
 	   Option "lcd_center"
 		 Enable LCD centering on Cyber 938x based chips.
 
+	   Option "cyber_shadow"
+		 Enable Shadow registers, might be needed for some Cyber
+		 chipsets. (laptop machines)
+
 	   Option "tgui_mclk_66'
 		 Pushes the Memory Clock from its default value to 66MHz.
 		 Increases graphics speed dramatically, but use entirely at
 		 your own risk, as it may damage the video card.  If snow
-		 appears, disable.
+		 appears, disable. Only tested on the 9440.
 
 The original Trident chipset, 8800BR, cannot be supported as an SVGA chipset by
+either the color or monochrome servers.  The chip is supported, however, by the
+``generic'' driver for the monochrome server.
+
 
 
 
@@ -135,10 +135,6 @@ The original Trident chipset, 8800BR, cannot be supported as an SVGA chipset by
 
  Information for Trident Chipset Users
 
-
-
-either the color or monochrome servers.  The chip is supported, however, by the
-``generic'' driver for the monochrome server.
 
 
 2.  Special considerations for 512k boards
@@ -191,6 +187,10 @@ phenomenon was discovered.  When using the default board jumper configuration,
 dot-clocks above 57Mhz would frequently lock up the machine.  There appear to
 be jumpers on all of the Trident boards that determine whether the board will
 operate in zero-wait-state mode on the ISA bus.  Disabling the zero-wait-state
+mode via jumpers cured the lockups, but at the expense of performance.	Whether
+or not a given system will experience this problem is likely a combination of
+(a) bus speed, (b) video memory speed, and (c) dot clock speed.  So be prepared
+for this phenomenon to occur, and have the board documentation handy.
 
 
 
@@ -203,16 +203,11 @@ operate in zero-wait-state mode on the ISA bus.  Disabling the zero-wait-state
 
 
 
-mode via jumpers cured the lockups, but at the expense of performance.	Whether
-or not a given system will experience this problem is likely a combination of
-(a) bus speed, (b) video memory speed, and (c) dot clock speed.  So be prepared
-for this phenomenon to occur, and have the board documentation handy.
-
 NOTE: VLBus cards are also subject to the above. By specifying the Clocks in
 the XF86Config file, these lockups are overcome. But it may be worth checking
 wait states etc. on the card and in the BIOS setup.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.1 1997/05/21 15:02:40 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.3 1998/02/24 13:54:23 hohndel Exp $
 
 
 
@@ -220,6 +215,11 @@ wait states etc. on the card and in the BIOS setup.
 
 
      $XConsortium: trident.sgml /main/11 1996/10/28 04:24:08 kaleb $
+
+
+
+
+
 
 
 
@@ -395,4 +395,4 @@ wait states etc. on the card and in the BIOS setup.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.trident,v 3.32.2.1 1997/05/21 15:07:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.trident,v 3.32.2.3 1998/02/25 12:20:27 dawes Exp $

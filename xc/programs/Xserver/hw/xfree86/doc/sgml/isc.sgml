@@ -4,7 +4,7 @@
 <!-- made up title -->
 <title> Information for ISC Users
 <author> Michael Rohleder
-<date> 13 January 1997
+<date> 11 January 1998
 <toc>
 
 <sect> X11R6/XFree86&tm; on Interactive Unix <p>
@@ -31,11 +31,11 @@ new facilities provided in the X11R6 Libraries against them.
 <sect> Things needed for compiling the sources<p>
 
 <descrip>
-    <tag> gcc-2.x.x </tag>
+    <tag> gcc </tag>
           Use the highest number for x you found.
           Fresco will only build 2.6.3 and later.
-	  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2 and 2.6.3.
-          I'm currently using 2.7.2.
+	  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2, 2.6.3 and 2.7.2.
+          Current: 2.7.2.3
           <p>
           Since 2.6.3 the current source tree should be able to compile
           with a little bit more Optimization:
@@ -50,13 +50,14 @@ new facilities provided in the X11R6 Libraries against them.
     <tag> libg++-2.x.x </tag>
           The needed g++ Libraries for use with g++ 2.x.x. As this is only 
           necessary for Fresco, it isn't needed anymore since X11R6.1.
-    <tag> binutils-2.5.2 </tag>
+    <tag> binutils </tag>
           You could use the assembler and linker
           the assembler is most preferred,and the linker is needed
           at least if you want to link libFresco.a within a Program.
           Don't use strip and ar/ranlib, the first generates buggy binaries
           when stripping (at least on my machines) and the last requires 
           the use of ranlib after creating an archive, this is not configured.
+          Current: 2.8.1.0.15 (Used: as, ld, ar, strip)
     <tag> gnu-malloc </tag>
           Due to better memory usage we should use GNU's malloc library
           on systems where possible. 
@@ -67,6 +68,14 @@ new facilities provided in the X11R6 Libraries against them.
           Enable and set <tt>&num;define GnuMallocLibrary</tt>
 	  to your needs, if it isn't like the default 
           <tt>-L/usr/local/lib -lgmalloc</tt>.
+
+    <tag> inline-math (optional)</tag>
+          This is the "original" inline-math package available at your
+          favorite Linux Mirror. 
+
+          Use <tt>&num;define UseInlineMath YES</tt>
+	  inside host.def to enable it. Please note the changes section
+          what else to do, to use this package.
 
 </descrip>          
 
@@ -152,6 +161,43 @@ referred to as <tt>"gcc-lib"</tt>
          };
          #endif
          </verb>
+<p>
+      <sect1><tt>/usr/include/math.h</tt><p>
+         To use the Inline Math package you have to change your existing
+         math.h. Please note, the way I include the new Header file, is
+         different than suggested in inline-math's README.
+          
+         Please add the following at the bottom of math.h, before the last 
+         #endif
+         <verb>
+#if defined(UseInlineMath)
+
+/* Needed on ISC __CONCAT, PI */
+#ifndef __CONCAT
+/*
+ * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
+ * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
+ * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
+ * in between its arguments.  __CONCAT can also concatenate double-quoted
+ * strings produced by the __STRING macro, but this only works with ANSI C.
+ */
+#if defined(__STDC__) || defined(__cplusplus)
+#define __CONCAT(x,y)   x ## y
+#define __STRING(x)     #x
+#else   /* !(__STDC__ || __cplusplus) */
+#define __CONCAT(x,y)   x/**/y
+#define __STRING(x)     "x"
+#endif  /* !(__STDC__ || __cplusplus) */
+#endif
+
+#ifndef PI
+#define PI M_PI
+#endif
+
+#include "/usr/local/include/i386/__math.h"
+#endif
+         </verb>
+         
          
 
 <sect> make World <p>
@@ -175,13 +221,15 @@ BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
         inside xf86site.def.<p>
 	A build on ISC 4.x only needs -DISC40 defined in the BOOTSTRAPCFLAGS 
         ( -DISC30 will be included automatically ).<p>
-        Note: if you still use Version 4.0, or you want to build
-        binaries on Version 4.1 which should run on 4.0, you have 
-        to set <tt> &num;define UseChmod	YES </tt> inside your
+        Note: due to some incompatibilities between ISC 4.0 and 4.1, the default
+        is to build for ISC4.0, even if you build on 4.1.
+        If you want to build only for 4.1 you should
+        set <tt> &num;define IscCompileVersion       410 </tt> inside your
         host.def.<p>
         (the fchmod function isn't available on 4.0, so it won't compile,
-        and binaries from 4.1 won't run cause of the unsupported System call)
-        On Versions less 4.0 this will be the default.
+        and binaries from 4.1 won't run cause of the unsupported System call
+        The libraries build for 4.1 couldn't be used with 4.0 Systems, due
+        to some functions not available on 4.0)
 
 <tag>-DSYSV &lsqb;-Di386&rsqb;</tag>
 	standard defines for SystemV Release3 on x86 platform.
@@ -302,6 +350,7 @@ or you could use this one with the new Options:
 This is an obsolete Extension. Anyway, if you want to include this Extension 
 inside your build, you have to add:
  <tt>&num;define BuildMultibuffer        YES</tt> inside xf86site.def
+Please note, this Extension should be disabled when building the Loader Server.
 
 <sect> Sample Definitions <p>
 
@@ -311,29 +360,18 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 
 #ifdef BeforeVendorCF
 
-/* Only when building official binaries*/
-/*
-#define InstallJapaneseDocs     YES
-#define InstallEmptyHostDef 
+/* ISC 4.1Mu - build only for 4.1
+#define IscCompileVersion       410
 */
 
+/* Use inline Math from linux ;-) package inline-math-2.6.tar.gz */
+/* should be available on your favorite linux ftp                */
+# define UseInlineMath		YES
 
-/* Try MultiBuffer Extension */
-#define BuildMultibuffer        YES
-
-/* Build all Contrib SW */
-#ifdef XF86Contrib
-#undef XF86Contrib
-#endif
-
-/* gcc 2.6.3 tested Optimization Flags                               */
-# define DefaultGcc2i386Opt	-O2 -fstrength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
-
-/* binaries which should run on ISC 4.0 or for the build on a real 4.0 System */
-# define UseChmod		YES
-
-/* For a POSIXized build on Interactive maybe needed to use gcc2.7.2 */
-# define UsePosix		YES
+/* Use cbrt from liboptm.a (Interactive icc Compiler) */
+/*
+*/
+# define HasCbrt		YES
 
 /* Use GNUs MallocLibrary (and the Location for the Lib)             */
 # define UseGnuMalloc		YES
@@ -365,7 +403,6 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 #define HasTk			YES
 #define HasTcl			YES
 
-
 #endif /* BeforeVendorCF */
 </verb>
 <sect> Installation <p>
@@ -396,6 +433,16 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
        some Tunable Parameters and install some files 
        to use inside sysadm. You could also install 
        some additional Fonts and Terminal files.
+</code>
+
+       You also should increase MAXUMEM to its maximum, else
+       programs may die with:
+<code>
+X Error of failed request:  BadAlloc (insufficient resources for operation)
+  Major opcode of failed request:  53 (X_CreatePixmap)
+  Serial number of failed request:  37791
+  Current serial number in output stream:  37822
+  Widget hierarchy of resource: unknown
 </code>
 
 <sect>Using &hellip; <p>
@@ -493,7 +540,7 @@ as to all who contribute to this excellent piece of free software.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.18 1997/01/25 03:22:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.18.2.2 1998/02/20 23:10:31 dawes Exp $
 
 
 

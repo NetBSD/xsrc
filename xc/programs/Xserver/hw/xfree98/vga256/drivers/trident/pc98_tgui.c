@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/trident/pc98_tgui.c,v 3.7.2.1 1997/05/16 11:35:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/trident/pc98_tgui.c,v 3.7.2.2 1998/02/01 16:05:35 robin Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -59,35 +59,52 @@ void crtswNECGen(short);
 void crtswTGUiGen(short);
 void crtswNEC96xx(short);
 void crtswNEC9320(short);
-void crtswDRV96xx(short);
+void crtswGA96xx(short);
 Bool testTRUE();
-Bool testDRV();
+Bool testGA();
+unsigned long GetMCLK(int);
 
-static PC98TGUiTable pc98TGUiTab[]={
+static PC98TGUiTable pc98TGUiRunTime={
+  PC98NoExist, PC98Unknown, PC98PAGE,
+  0, 0, 0, 0, 0, {0, 0, 0, 0},
+  NULL};
+
+static PC98TGUiIOMap ioMapNEC96xx[]={
+  {0x20000000, 0, 0x20400000}
+  ,{0x21000000, 0, 0x21400000}
+  ,{0, 0 ,0}
+};
+
+static PC98TGUiIOMap ioMapNEC9320[]={
+  {0xffc00000, 0, 0xffe00000}
+  ,{0, 0, 0}
+};
+
+static PC98TGUiIOMap ioMapGA96xx[]={
+  {0, 0x00f20000, 0x00f00000}
+  ,{0, 0, 0}
+};
+
+static PC98TGUiIOMap ioMapDummy[]={
+  {0, 0, 0}
+};
+
+static PC98TGUiDataBase pc98TGUidb[]={
   {"NEC Trident TGUi96xx(PCI Bus Type)",
-     PC98NEC96xx, PC98PCIBus, PC98LINEAR,
-     0x20000000, 0, 0x20400000,
-     45, 0x00af, {108000, 58500, 0, 31500},
+     PC98NEC96xx, PC98PCIBus, PC98LINEAR, ioMapNEC96xx,
+     80000, {135000, 58500, 0, 40000},
      crtswNEC96xx, testTRUE, ChipInit}
-  ,{"NEC Trident TGUi96xx(PCI Bus Type)",
-      PC98NEC96xx, PC98PCIBus, PC98LINEAR,
-      0x21000000, 0, 0x21400000,
-      45, 0x00af, {108000, 58500, 0, 31500},
-      crtswNEC96xx, testTRUE, ChipInit}
   ,{"NEC Trident Cyber9320(PCI Bus Type)", 
-      PC98NEC9320, PC98PCIBus, PC98LINEAR,
-      0xffc00000, 0, 0xffe00000,
-      45, 0x00af, {108000, 58500, 0, 25175},
+      PC98NEC9320, PC98PCIBus, PC98LINEAR, ioMapNEC9320,
+      80000, {108000, 58500, 0, 25175},
       crtswNEC9320, testTRUE, ChipInit}
   ,{"I/O-Data GA-DRV/98,GA-DR/98(C Bus Type)",
-      PC98DRV96xx, PC98CBus, PC98PAGE,
-      0, 0x00f20000, 0x00f00000,
-      45, 0x00af, {108000, 58500, 0, 25175},
-      crtswDRV96xx, testDRV, ChipInit}
+      PC98GA96xx, PC98CBus, PC98PAGE, ioMapGA96xx,
+      80000, {135000, 58500, 0, 40000},
+      crtswGA96xx, testGA, ChipInit}
   ,{"End of Data Base",
-      PC98NoExist, PC98Unknown, PC98PAGE,
-      0, 0, 0,
-      0, 0, {0, 0, 0, 0},
+      PC98NoExist, PC98Unknown, PC98PAGE, ioMapDummy,
+      0, {0, 0, 0, 0},
       NULL, NULL, NULL}};
 
 static unsigned char seqreg_data[ 0x05 ] = {
@@ -122,64 +139,128 @@ static void SetRegisters( unsigned char *,unsigned char *,unsigned char *);
 
 Bool BoardInit(void)
 {
-  int i;
+  unsigned long mclk;
+  PC98TGUiIOMap *iomap;
+  PC98TGUiDataBase *tguidb;
+
   /* Save current horizontal sync, 1: 31.5KHz */
   hsync31 = _inb(0x9a8) & 0x01;
 
-  for(i=0;pc98TGUiTab[i].TGUiType != PC98NoExist;i++){
-    switch(pc98TGUiTab[i].BusType){
-    case PC98PCIBus: /* Serach mmioBase on PCI Bus */ 
-      if(vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT
-	 && vgaPCIInfo->MemBase == pc98TGUiTab[i].pciBase){
-	mmioBase  = xf86MapVidMem(0, VGA_REGION,
-				  (pointer)(pc98TGUiTab[i].mmioBase), 0x10000);
-	if(!pc98TGUiTab[i].test()){
-	  xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
-	  mmioBase = NULL;
+  mmioBase = NULL;
+  for(tguidb = pc98TGUidb; tguidb->TGUiType != PC98NoExist; tguidb++){
+    switch(tguidb->BusType){
+    case PC98PCIBus: /* Search mmioBase on PCI Bus */
+      if(vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT)
+	for(iomap = tguidb->ioMap; iomap->mmioBase != 0; iomap++){
+	  if(vgaPCIInfo->MemBase == iomap->pciBase){
+	    mmioBase  = xf86MapVidMem(0, VGA_REGION,
+				      (pointer)(iomap->mmioBase), 0x10000);
+	    if(!tguidb->test()){
+	      xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
+	      mmioBase = NULL;
+	    }
+	  }
+	  if(mmioBase != NULL)break; /* break IO search loop if mmio Found */
 	}
-      }
       break;
-    case PC98CBus:  /* Serach mmioBase on C Bus */ 
-      mmioBase  = xf86MapVidMem(0, VGA_REGION,
-				(pointer)(pc98TGUiTab[i].mmioBase), 0x10000);
-      if(!pc98TGUiTab[i].test()){
-	xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
-	mmioBase = NULL;
-      }
+
+    case PC98CBus:  /* Search mmioBase on C Bus */ 
+      for(iomap = tguidb->ioMap; iomap->mmioBase != 0; iomap++){
+	  mmioBase  = xf86MapVidMem(0, VGA_REGION,
+				    (pointer)(iomap->mmioBase), 0x10000);
+	  if(!tguidb->test()){
+	    xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
+	    mmioBase = NULL;
+	  }
+	  if(mmioBase != NULL)break; /* break IO search loop if mmio Found */
+	}
       break;
+
     default:
-      FatalError("PC98: Server DataBase Error\n");
+      FatalError("Server Internal DataBase Error\n");
       break;
     }
-    if(mmioBase != NULL)break;
-  }
-
-  pc98TGUi = &pc98TGUiTab[i];
-
-  if(pc98TGUi->TGUiType != PC98NoExist){
-    switch(pc98TGUi->VramType){
+    if(mmioBase != NULL)break; /* break board search loop if mmio Found */
+  }  
+  if(tguidb->TGUiType != PC98NoExist){
+    switch(tguidb->VramType){
     case PC98LINEAR:
       pc98PvramBase = (pointer)(NULL);
       break;
 
     case PC98PAGE:
     case PC98BOTH:
-      pc98PvramBase = (pointer)(pc98TGUi->vgaBase);
+      pc98PvramBase = (pointer)(iomap->vgaBase);
       break;
 
     default:
-      FatalError("PC98: Server DataBase Error\n");
+      FatalError("Server Internal DataBase Error\n");
       break;
     }
-    ErrorF("%s %s: Config for %s MMIO @ 0x%08X\n",
-	   XCONFIG_PROBED, vga256InfoRec.name, pc98TGUi->info,
-	   pc98TGUi->mmioBase);
-    pc98TGUi->init();
   } else {
     FatalError("No Data Base Entry for this Trident Chip\n");
   }
 
+  mclk = GetMCLK(tguidb->MCLK);
+
+  /* making runtime database */
+  pc98TGUi = &pc98TGUiRunTime;
+
+  pc98TGUi->TGUiType = tguidb->TGUiType;
+  pc98TGUi->BusType  = tguidb->BusType;
+  pc98TGUi->VramType = tguidb->VramType;
+  pc98TGUi->mmioBase = iomap->mmioBase;
+  pc98TGUi->pciBase  = iomap->pciBase;
+  pc98TGUi->vgaBase  = iomap->vgaBase;
+  pc98TGUi->crtsw    = tguidb->crtsw;
+
+  pc98TGUi->Bpp_Clocks[0] = tguidb->Bpp_Clocks[0];
+  pc98TGUi->Bpp_Clocks[1] = tguidb->Bpp_Clocks[1];
+  pc98TGUi->Bpp_Clocks[2] = tguidb->Bpp_Clocks[2];
+  pc98TGUi->Bpp_Clocks[3] = tguidb->Bpp_Clocks[3];
+  
+  pc98TGUi->MCLK_A = (mclk & 0x00ff);
+  pc98TGUi->MCLK_B = (mclk & 0x0300) >> 8;
+
+  ErrorF("%s %s: Config for %s MMIO @ 0x%08X\n",
+	 XCONFIG_PROBED, vga256InfoRec.name, tguidb->info,
+	 iomap->mmioBase);
+  ErrorF("%s %s: Set MCLK %8.3fMHz (0x%02X%02X)\n",
+	 XCONFIG_PROBED, vga256InfoRec.name, tguidb->MCLK / 1000.0,
+	 pc98TGUi->MCLK_B, pc98TGUi->MCLK_A);
+  tguidb->init();
+
   return TRUE;
+}
+
+unsigned long GetMCLK(int freq){
+  int clock_diff=750;
+  int ffreq;
+  unsigned int m, n, k ,s;
+  unsigned long mclk;
+
+  s = 0;
+
+  for(k=0;k<2;k++)
+    for(n=0; n<64; n++)
+      for(m=0; m<8; m++)
+	{
+	  ffreq = (( (n + 4) * (2-k) * 14318.18 ) / (m + 2));
+	  if((ffreq > freq - clock_diff) && (ffreq < freq + clock_diff)) 
+	    {
+	      if((n+4)*100/(m+2) < 500 && (n+4)*100/(m+2) > 170){
+		clock_diff = (freq > ffreq) ? freq - ffreq : ffreq - freq;
+		mclk = (k << 9) | (n << 3) | m;
+		s = ffreq;
+	      }
+	    }
+	}
+
+  if(s == 0)FatalError("MCLK %d is not a valid clock.\n"
+			 "Server Inner DataBase Error.\n",	
+			 freq);
+  
+  return(mclk);
 }
 
 Bool testTRUE()
@@ -187,7 +268,7 @@ Bool testTRUE()
   return TRUE;
 }
 
-Bool testDRV()
+Bool testGA()
 {
   _outw(0x52e8,0x00ff);
   _outw(0x56e8,0x6fa1);
@@ -278,7 +359,7 @@ void crtswNEC9320(short crtmod)
   return;
 }
 
-void crtswDRV96xx(short crtmod)
+void crtswGA96xx(short crtmod)
 {
   if(crtmod != 0){
     crtswNECGen(crtmod);
@@ -313,7 +394,7 @@ Bool ChipInit(void)
 
   /* Bus & DRAM Setup */
   CRTCwrite(0x2a, CRTCread(0x2a) | 0x40); /* Local Bus / DRAM Select */
-  CRTCwrite(0x20, 0x30); /* Command FIFO Register */
+  CRTCwrite(0x20, 0x38); /* Command FIFO Register */
   CRTCwrite(0x23, 0xe8); /* DRAM Timing Control */
   CRTCwrite(0x25, 0x0a); /* RAMDAC R/W Timing Control */
   CRTCwrite(0x2f, 0x27); /* Performance Tuning */
@@ -322,8 +403,8 @@ Bool ChipInit(void)
   CRTCwrite(0x3b, 0x21); /* Clock and Tuning */
   CRTCwrite(0x3c, 0x00); /* Miscellaneous Control */
 
-  outb(0x43C6, pc98TGUi->MCLK & 0x00ff);
-  outb(0x43C7, (pc98TGUi->MCLK & 0xff00) >> 8);
+  outb(0x43C6, pc98TGUi->MCLK_A);
+  outb(0x43C7, pc98TGUi->MCLK_B);
 
   /* Enable Graphic Engine */
   CRTCwrite(0x34, ((pc98TGUi->mmioBase & 0x00ff0000L) >> 16));

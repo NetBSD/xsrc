@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/137 1996/10/08 07:38:14 swick $
-XCOMM $XFree86: xc/Imakefile,v 3.11 1996/12/23 05:49:49 dawes Exp $
+XCOMM $XFree86: xc/Imakefile,v 3.11.2.2 1998/02/28 04:47:00 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
@@ -42,8 +42,12 @@ DependSubdirs($(SUBDIRS))
 #ifndef OS2Architecture
 VerifyOS::
 	@echo ""
-	@echo Building on OSName.
+	@echo Building on OSName "("OSMajorVersion"."OSMinorVersion"."OSTeenyVersion")."
 	@echo ""
+#ifdef LinuxArchitecture
+	@echo libc version LinuxCLibMajorVersion"."LinuxCLibMinorVersion"."LinuxCLibTeenyVersion
+	@echo ""
+#endif
 
 includes::
 	MakeDir($(BUILDINCDIR))

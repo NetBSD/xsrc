@@ -5,7 +5,7 @@
 
 <title>Information for SVR4 Users
 <author>The XFree86 Project, Inc
-<date>1 June 1997
+<date>27 Feb 1998
 
 <abstract>
 <bf>NOTE:</bf> If you intend to use any of the accelerated servers, read section
@@ -35,7 +35,7 @@ when exiting, restarting, or switching VTs.
 and the following versions of <bf>SVR4.2</bf>:
 <itemize>
 <item>Consensys
-<item>Novell UnixWare 1.x and 2.0
+<item>Novell/SCO UnixWare 1.x and 2.0
 </itemize>
 Basically, we believe that XFree86 binaries will run unmodified on any
 ISA, EISA, or MCA platform version version of SVR4.0 (Solaris 2.x is an
@@ -273,7 +273,7 @@ problems with SVR4.2.  Basically, the base SVR4.2 code has broken
 Unix-domain sockets in such a way that making local connections via
 <tt>UNIXCONN</tt> does not work properly (this bug is known to exist 
 on Consensys
-SVR4.2 and Novell UnixWare).  The manifestation of this bug is that
+SVR4.2 and Novell/SCO UnixWare).  The manifestation of this bug is that
 windows remain on the screen after the client program exits, until you
 move the mouse into the window, or otherwise cause the server to try to
 write to the client.<p>
@@ -435,12 +435,12 @@ Some accelerated drivers may cause the machine to lockup when starting
 up the server on some versions of SVR4.0.  The problem seems to be
 related to the kernel checking for the presence of physical memory
 when mmaping /dev/pmem.  This can cause problems when mapping memory
-mapped registers.  This is known to be a problem with the MGA driver in
-the SVGA server.  Some other drivers may be affected too.  We currently
-have no workaround for this.
+mapped registers.  This was known to be a problem with the MGA driver in
+the SVGA server.  Some other drivers may be affected too.  The problem with
+the MGA driver is now fixed.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.1 1997/06/01 12:33:36 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.3 1998/02/28 08:54:11 dawes Exp $
 
 
 

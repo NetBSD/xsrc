@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: oscolor.c,v 1.23 94/04/17 20:27:04 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.2 1996/02/19 09:52:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.2.4.1 1998/01/22 10:47:14 dawes Exp $ */
 
 #ifndef USE_RGB_TXT
 
@@ -264,8 +264,7 @@ OsInitColors()
 		    }
 		}
 	      else
-		ErrorF("Value for \"%s\" out of range: %s:%d\n",
-		       name, path, lineno);
+		ErrorF("Value out of range: %s:%d\n", path, lineno);
 	    }
 	  else if (*line && *line != '#' && *line != '!')
 	    ErrorF("Syntax Error: %s:%d\n", path, lineno);

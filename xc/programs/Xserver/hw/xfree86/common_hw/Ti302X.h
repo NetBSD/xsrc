@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti302X.h,v 3.9.2.1 1997/05/11 02:56:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti302X.h,v 3.9.2.2 1998/01/25 05:06:13 robin Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -87,6 +87,8 @@
 #define   TI_MUX1_3026D_888	0x06     /* 3026 only */
 #define   TI_MUX1_3026D_565	0x05     /* 3026 only */
 #define   TI_MUX1_3026D_555	0x04     /* 3026 only */
+#define   TI_MUX1_3026D_888_P8	0x16     /* 3026 only */
+#define   TI_MUX1_3026D_888_P5	0x1e     /* 3026 only */
 #define   TI_MUX1_3026T_888	0x46     /* 3026 only */
 #define   TI_MUX1_3026T_565	0x45     /* 3026 only */
 #define   TI_MUX1_3026T_555	0x44     /* 3026 only */
@@ -157,6 +159,7 @@
 #define   TI_MC_DOTCLK_DISABLE	0x02
 #define   TI_MC_INT_6_8_CONTROL	0x04     /* 00 == external 6/8 pin */
 #define   TI_MC_8_BPP		0x08     /* 00 == 6bpp */
+#define   TI_MC_PSEL_POLARITY	0x20	 /* 3026 only, PSEL polarity select */
 #define   TI_MC_VCLK_POLARITY	0x20
 #define   TI_MC_LCLK_LATCH	0x40     /* VCLK == 00, default */
 #define   TI_MC_LOOP_PLL_RCLK	0x80

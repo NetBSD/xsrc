@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.1 1997/07/19 04:59:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.5 1998/02/15 16:09:30 hohndel Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -54,10 +54,6 @@
 #if defined(SYSV) || defined(SVR4)
 # ifdef SCO325
 #  define _SVID3
-# endif
-# if defined(sun) && defined(i386) && defined(SVR4)
-#  /* Fix for Solaris ANSI compilation */
-#  define __EXTENSIONS__
 # endif
 # include <sys/ioctl.h>
 # include <signal.h>
@@ -245,6 +241,9 @@ extern int errno;
 
 #ifdef CSRG_BASED
 # include <sys/ioctl.h>
+# if defined(__OpenBSD__) && defined(_status)
+#  undef _status
+# endif
 # include <signal.h>
 
 # include <termios.h>
@@ -302,6 +301,10 @@ extern int errno;
       };
 #    endif /* PCVT_SUPPORT && SYSCONS_SUPPORT */
 #   endif /* PCVT_SUPPORT */
+#   if defined(__FreeBSD__)
+#    undef MOUSE_GETINFO
+#    include <machine/mouse.h>
+#   endif
     /* Include these definitions in case ioctl_pc.h didn't get included */
 #   ifndef CONSOLE_X_MODE_ON
 #    define CONSOLE_X_MODE_ON _IO('t',121)

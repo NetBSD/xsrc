@@ -1,5 +1,4 @@
 /* $XConsortium: Xlcint.h /main/25 1996/09/28 16:35:19 rws $ */
-/* $XFree86: xc/lib/X11/Xlcint.h,v 3.1 1996/12/23 05:59:45 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -69,6 +68,7 @@ from the X Consortium.
  *               Makoto Wakamatsu       Sony Corporation
  *               Takashi Fujiwara	FUJITSU LIMITED
  */				
+/* $XFree86: xc/lib/X11/Xlcint.h,v 3.1.2.3 1998/01/25 06:11:04 dawes Exp $ */
 
 
 #ifndef	_XLCINT_H_
@@ -826,7 +826,7 @@ typedef struct _XIC {
 
 typedef XLCd (*XLCdLoadProc)(
 #if NeedFunctionPrototypes
-    char*
+    _Xconst char*
 #endif
 );
 
@@ -834,7 +834,7 @@ _XFUNCPROTOBEGIN
 
 extern XLCd _XOpenLC(
 #if NeedFunctionPrototypes
-    char*		/* name */
+    _Xconst char*		/* name */
 #endif
 );
 

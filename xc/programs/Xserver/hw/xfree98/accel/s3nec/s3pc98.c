@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.c,v 3.8 1996/12/23 07:05:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.c,v 3.8.2.1 1998/02/15 16:09:44 hohndel Exp $ */
 
 
 
@@ -18,7 +18,6 @@
 
 extern int xf86bpp;
 
-#include "pc98_vers.h"
 #include "s3pc98.h"
 
 #define MasterClock		52000000l	/* 52MHz */	 

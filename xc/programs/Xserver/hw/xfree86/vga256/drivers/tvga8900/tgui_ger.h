@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_ger.h,v 3.9.2.2 1997/06/25 08:16:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_ger.h,v 3.9.2.3 1998/01/18 10:35:39 hohndel Exp $ */
 
 /* Graphics Engine for 9420/9430 */
 
@@ -64,6 +64,11 @@
 #define		GE_ELLIP_FILL	0x09	/* Ellipse Fill (96xx only) (RES)*/
 #define	GER_FMIX	0x27
 #define GER_DRAWFLAG	0x28		/* long */
+#define		CLIPENABLE	0x40000000
+#define		SRCLINEAR	0x10000000
+#define		DSTLINEAR	0x08000000
+#define		BYTEPACK	0x00400000
+#define		DSTTRANS	0x00010000
 #define		STENCIL		0x8000
 #define		SOLIDFILL	0x4000
 #define		TRANS_ENABLE	0x1000
@@ -89,6 +94,9 @@
 #define GER_DIM_Y	0x42		/* Word */
 #define GER_PATTERN	0x80		/* from 0x2180 to 0x21FF */
 
+/* Additional - Graphics Engine for 9440 */
+#define GER_PENSTYLE	0x44		/* Word */
+
 /* Additional - Graphics Engine for 96xx */
 #define GER_SRCCLIP_XY	0x48
 #define GER_SRCCLIP_X	0x48		/* Word */
@@ -98,8 +106,16 @@
 #define GER_DSTCLIP_Y	0x4E		/* Word */
 
 /* Additional - Graphics Engine for 9685 */
+#define GER_BBDST	0x00
+#define GER_BBSRC	0x08
+#define GER_BBDSTSIZE	0x04
+#define GER_BBSRCSIZE	0x0C
+#define GER_DEST_LINEAR	0x50
+#define GER_DEST_PITCH	0x54
+#define GER_DSTKEY	0x68
 #define GER_FPATCOL	0x78
 #define GER_BPATCOL	0x7C
+#define GER_PLANEMASK	0x80
 
 /* ROPS */
 #define TGUIROP_0		0x00		/* 0 */

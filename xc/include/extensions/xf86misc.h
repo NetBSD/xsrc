@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86misc.h,v 3.6.2.1 1997/05/03 09:43:29 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86misc.h,v 3.6.2.4 1998/02/24 19:05:44 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -32,6 +32,7 @@
 #define XF86MiscModInDevClientNotLocal	6
 #define XF86MiscNumberErrors		(XF86MiscModInDevClientNotLocal + 1)
 
+/* Never renumber these */
 #define MTYPE_MICROSOFT		0
 #define MTYPE_MOUSESYS		1
 #define MTYPE_MMSERIES		2
@@ -41,8 +42,19 @@
 #define MTYPE_PS_2		6
 #define MTYPE_MMHIT		7
 #define MTYPE_GLIDEPOINT	8
-#define MTYPE_XQUEUE		10
-#define MTYPE_OSMOUSE		11
+#define MTYPE_IMSERIAL		9
+#define MTYPE_THINKING		10
+#define MTYPE_IMPS2		11
+#define MTYPE_THINKINGPS2	12
+#define MTYPE_MMANPLUSPS2	13
+#define MTYPE_GLIDEPOINTPS2	14
+#define MTYPE_NETPS2		15
+#define MTYPE_NETSCROLLPS2	16
+#define MTYPE_SYSMOUSE		17
+#define MTYPE_AUTOMOUSE		18
+
+#define MTYPE_XQUEUE		127
+#define MTYPE_OSMOUSE		126
 
 #define KTYPE_UNKNOWN		0
 #define KTYPE_84KEY		1
@@ -63,6 +75,8 @@ typedef struct {
     int		type;
     int		baudrate;
     int		samplerate;
+    int		resolution;
+    int		buttons;
     Bool	emulate3buttons;
     int		emulate3timeout;
     Bool	chordmiddle;

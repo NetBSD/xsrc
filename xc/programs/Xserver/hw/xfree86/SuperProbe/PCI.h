@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.5 1997/08/02 13:48:08 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.7 1998/02/15 23:31:54 robin Exp $ */ 
 /*
  * PCI Probe
  *
@@ -227,6 +227,7 @@ void xf86writepci(
 #define PCI_VENDOR_S3		0x5333
 #define PCI_VENDOR_ARK		0xEDD8
 #define PCI_VENDOR_3DLABS	0x3D3D
+#define PCI_VENDOR_INTERGRAPHICS	0x10ea
 
 /* Matrox */
 #define PCI_CHIP_MGA2085PX	0x0518
@@ -315,6 +316,8 @@ void xf86writepci(
 #define PCI_CHIP_ViRGE		0x5631
 #define PCI_CHIP_ViRGE_VX	0x883D
 #define PCI_CHIP_ViRGE_DXGX	0x8A01
+#define PCI_CHIP_ViRGE_GX2	0x8A10
+#define PCI_CHIP_ViRGE_MX	0x8C01
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091
@@ -328,7 +331,12 @@ void xf86writepci(
 #define PCI_CHIP_3DLABS_DELTA      0x0003
 #define PCI_CHIP_3DLABS_PERMEDIA   0x0004
 
+/* Intergraphics */
+#define PCI_CHIP_INTERG_1680	0x1680
+#define PCI_CHIP_INTERG_1682	0x1682
+
+
 /* Increase this as required */
-#define MAX_DEV_PER_VENDOR 16
+#define MAX_DEV_PER_VENDOR 18
    
 #endif /* _PCI_H */

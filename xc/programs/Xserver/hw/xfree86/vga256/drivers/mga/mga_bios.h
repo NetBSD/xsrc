@@ -2,22 +2,27 @@
 #ifndef MGA_BIOS_H
 #define MGA_BIOS_H
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_bios.h,v 1.1.2.1 1997/05/09 09:09:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_bios.h,v 1.1.2.2 1998/02/01 16:05:11 robin Exp $ */
 
 /*
  * MGABiosInfo - This struct describes the video BIOS info block.
+ * MGABios2Info - This struct describes the Myst, Mill II, and poss Mill 1 rev 3
  *
  * DESCRIPTION
  *   Do not mess with this, unless you know what you are doing.
  *   The data lengths and types are critical.
  *
  * HISTORY
+ *   August 31, 1997 - [ajv] Andrew van der Stock
+ *   Updated to reflected PINS 2.06 information from Matrox
+ *
  *   October 7, 1996 - [aem] Andrew E. Mileski
  *   This struct was shamelessly stolen from the MGA DDK.
  *   It has been reformatted, and the data types changed.
  */
+
 typedef struct {
-	/* Length of this structure in bytes */
+        /* Length of this structure in bytes */
 	CARD16 StructLen;
 
 	/*
@@ -108,6 +113,39 @@ typedef struct {
 	CARD16 Reserved[ 3 ];
 } MGABiosInfo;
 
-extern MGABiosInfo MGABios;
+/* from the PINS structure, refer pins info from MGA */
+typedef struct tagParamMGA {
+	CARD16 	PinID;		/* 0 */
+	CARD8	StructLen;	/* 2 */
+	CARD8	Rsvd1;		/* 3 */
+	CARD16	StructRev;	/* 4 */
+	CARD16	ProgramDate;	/* 6 */
+	CARD16	ProgramCnt;	/* 8 */
+	CARD16	ProductID;	/* 10 */
+	CARD8	SerNo[16];	/* 12 */
+	CARD8	PLInfo[6];	/* 28 */
+	CARD16	PCBInfo;	/* 34 */
+	CARD32	FeatFlag;	/* 36 */
+	CARD8	RamdacType;	/* 40 */
+	CARD8	RamdacSpeed;	/* 41 */
+	CARD8	PclkMax;	/* 42 */
+	CARD8	ClkGE;		/* 43 */
+	CARD8   ClkMem;		/* 44 */
+	CARD8	Clk4MB;		/* 45 */
+	CARD8	Clk8MB;		/* 46 */
+	CARD8	ClkMod;		/* 47 */
+	CARD8	TestClk;	/* 48 */
+	CARD8	VGAFreq1;	/* 49 */
+	CARD8	VGAFreq2;	/* 50 */
+	CARD8	MCTLWTST;	/* 51 */
+	CARD8	VidCtrl;	/* 52 */
+	CARD8	Clk12MB;	/* 53 */
+	CARD8	Clk16MB;	/* 54 */
+	CARD8	Reserved[8];	/* 55-62 */
+	CARD8	PinCheck;	/* 63 */
+}	MGABios2Info;
+
+extern MGABiosInfo 	MGABios;
+extern MGABios2Info	MGABios2;
 
 #endif

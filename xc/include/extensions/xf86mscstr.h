@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.5 1997/01/18 06:51:27 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.5.2.3 1998/02/24 19:05:45 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -14,7 +14,7 @@
 #define XF86MISCNAME		"XFree86-Misc"
 
 #define XF86MISC_MAJOR_VERSION	0	/* current version numbers */
-#define XF86MISC_MINOR_VERSION	3
+#define XF86MISC_MINOR_VERSION	4
 
 typedef struct _XF86MiscQueryVersion {
     CARD8	reqType;		/* always XF86MiscReqCode */
@@ -89,6 +89,8 @@ typedef struct {
     CARD32	mousetype B32;
     CARD32	baudrate B32;
     CARD32	samplerate B32;
+    CARD32	resolution B32;
+    CARD32	buttons B32;
     BOOL	emulate3buttons;
     BOOL	chordmiddle;
     CARD16	pad2 B16;
@@ -96,7 +98,7 @@ typedef struct {
     CARD32	flags B32;
     CARD32	devnamelen B32;		/* strlen(device)+1 */
 } xXF86MiscGetMouseSettingsReply;
-#define sz_xXF86MiscGetMouseSettingsReply	36
+#define sz_xXF86MiscGetMouseSettingsReply	44
 
 typedef struct _XF86MiscGetKbdSettings {
     CARD8	reqType;		/* always XF86MiscReqCode */
@@ -128,13 +130,15 @@ typedef struct _XF86MiscSetMouseSettings {
     CARD32	mousetype B32;
     CARD32	baudrate B32;
     CARD32	samplerate B32;
+    CARD32	resolution B32;
+    CARD32	buttons B32;
     BOOL	emulate3buttons;
     BOOL	chordmiddle;
     CARD16	pad2 B16;
     CARD32	emulate3timeout B32;
     CARD32	flags B32;
 } xXF86MiscSetMouseSettingsReq;
-#define sz_xXF86MiscSetMouseSettingsReq	28
+#define sz_xXF86MiscSetMouseSettingsReq	36
 
 typedef struct _XF86MiscSetKbdSettings {
     CARD8	reqType;		/* always XF86MiscReqCode */

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/4 1996/10/24 10:16:33 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.14.2.2 1997/05/27 11:26:49 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.14.2.6 1998/02/24 13:02:56 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -31,7 +31,8 @@ includes::
        TCL_FILES = phase1.tcl phase2.tcl phase3.tcl phase4.tcl phase5.tcl \
 		   setuplib.tcl srvflags.tcl carddata.tcl \
 		   card.tcl done.tcl filelist.tcl keyboard.tcl \
-		   mondata.tcl monitor.tcl mouse.tcl LICENSE
+		   mseproto.tcl \
+		   mondata.tcl monitor.tcl modeselect.tcl mouse.tcl LICENSE
     TCLLIB_FILES = tcllib/button.tcl tcllib/combobox.tcl tcllib/misc.tcl \
 		   tcllib/downarrow.xbm tcllib/dialog.tcl tcllib/entry.tcl \
 		   tcllib/focus.tcl tcllib/init.tcl tcllib/listbox.tcl \
@@ -41,7 +42,7 @@ includes::
 		   tcllib/tkerror.tcl tcllib/uparrow.xbm tcllib/license.terms
       PICS_FILES = pics/vidcard.xbm pics/vidcard.msk \
 		   pics/XFree86.xbm pics/XFree86.msk
-         SUBDIRS = scripts
+         SUBDIRS = scripts texts
 
 #if BuildServersOnly && !defined(UseInstalled)
 /* Use installed X libraries and headers */
@@ -53,7 +54,7 @@ includes::
 #define XawClientDepLibs /**/
 #endif
 
-#if defined(SVR4Architecture) || (defined(LinuxArchitecture) && UseElfFormat)
+#if defined(SVR4Architecture) || (defined(LinuxArchitecture) && UseElfFormat) || defined(BSD386Architecture)
 /* Some OSs need this, and it should(?) be harmless when not needed */
 /* Not available for Linux x86/a.out and Linux AXP/ECOFF */
     EXTRASYSLIBS = -ldl
@@ -87,6 +88,8 @@ includes::
 		   -I$(EXTINCSRC) $(USEINSTALLEDINC) \
 		   -I$(TCLINCDIR) -I$(TKINCDIR)
 
+    MSEPROTODEFS = $(STD_DEFINES)
+
 #if HasLdRunPath
        CCENVSETUP = LD_RUN_PATH=$(USRLIBDIR):$(TCLLIBDIR)
            CCLINK = $(CCENVSETUP) $(CC)
@@ -99,6 +102,8 @@ LinkSourceFile(cards.h,../xf86config)
 LinkSourceFile(cards.c,../xf86config)
 LinkSourceFile(xf86Config.c,../common)
 LinkSourceFile(xf86_Config.h,../common)
+
+CppFileTarget(mseproto.tcl, mseproto.cpp, $(MSEPROTODEFS), NullParameter)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

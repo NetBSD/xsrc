@@ -6,7 +6,7 @@
 <title> Information for Cirrus Chipset Users
 <author> Harm Hanemaayer (<it>H.Hanemaayer@inter.nl.net</it>),
 Randy Hendry (<it>randy@sgi.com</it>) (64xx),
-Corin Anderson (<it>corina@bdc.cirrus.com</it>)
+Corin Anderson (<it>corina@the4cs.com</it>)
 <date> 24 May 1997
 
 <!-- Table of contents -->
@@ -203,7 +203,8 @@ Memory-mapped I/O is the default mode of operation for any Alpine family
 chip. For the 5429, the <tt>&dquot;mmio&dquot;</tt> option may be used
 to enable it, but it has not been tested.
 
-Finally, if you have 546X chip, it will be on the PCI bus.  As such, there 
+Finally, if you have 546X chip, it will be on either a PCI or AGP bus.
+As such, there
 is no problem about memory mapped I/O or linear frame buffer address spaces
 running into system memory.  The PCI spaces are mapped way up near the 4GB
 point.  Because the mmio and linear frame buffer don't conflict at all on 
@@ -229,9 +230,11 @@ Device section).
 	is likely to help with problems related to bugs in acceleration
 	functions, and perhaps high dot clocks and DRAM timing, at the cost
 	of performance (which will still be reasonable on a local bus).
-<tag>Option &dquot;fast_dram&dquot; &dquot;med_dram&dquot; &dquot;slow_dram&dquot; (5424/6/8/9, 543x, 5446)
+<tag>Option &dquot;fast_dram&dquot; &dquot;med_dram&dquot;
+&dquot;slow_dram&dquot; (5424/6/8/9, 543x, 5446, 546x)
 </tag>
-        These options set the internal memory clock (MCLK) register to
+        These options set the internal memory clock (MCLK, or BCLK for
+	the 546x) register to
 	another value. The default value programmed by the BIOS is
 	usually OK, don't mess with these options unless absolutely
         required.
@@ -287,13 +290,20 @@ Device section).
         the 5429 and 5430 is probably 60 MHz (0x22). Current revisions
 	of the 5434 (E and greater) support 60 MHz MCLK in graphics modes,
 	and the driver will program this automatically. If it causes
-	problems, use the "slow_dram" option.
+	problems, use the <tt>"slow_dram"</tt> option.
 
 	The driver takes the MCLK into account for clock limits that
 	are determined by DRAM bandwidth.
 
-	If you are not having any problems (performance or stability at
-	high dot clocks), it is best not to use any of the DRAM options.
+	For the 546x chips, the BCLK is the Rambus access clock.
+	Typical values live in the range of 258 MHz to 300 MHz.  If you
+	have troubles, such as a black checkerboard pattern on the
+	screen, try using the <tt>"med_dram"</tt> or
+	<tt>"slow_dram"</tt> options.
+
+	In all cases, if you are not having any problems (performance
+	or stability at high dot clocks), it is best not to use any of
+	the DRAM options.
 <tag>
 Option &dquot;no_bitblt&dquot;
 </tag>
@@ -402,7 +412,7 @@ Option &dquot;no_mmio&dquot; (543x/4x)
         engine on any chip for which it is the default mode of
         operation. 
 <tag>
-Option &dquot;sw_cursor&dquot; (542x/3x/46)
+Option &dquot;sw_cursor&dquot; (542x/3x/46/6x)
 </tag>
 	This disables use of the hardware cursor provided by the chip. Try
         this if the cursor seems to have problems. In particular, use this
@@ -430,6 +440,16 @@ Option &dquot;no_stretch&dquot; (754x)
 </tag>
 	Disable automatic stretching (horizontal and vertical expansion)
 	of 640x480 on a 800x600 LCD.
+<tag>
+Option &dquot;pci_retry&dquot; (546x)
+</tag>
+        Enables a performance feature for PCI based cards.  When this
+	feature is enabled, the driver code will attempt to transmit
+	data on the PCI bus as fast as possible.  For the most part,
+	this option is safe, but may cause trouble with other PCI
+	devices such as PCI network cards, sound cards, SCSI
+	controllers, etc.  When this option is not selected, a safer
+	approach (polling the VGA's command queue) is taken.
 </descrip>
 
 
@@ -747,6 +767,12 @@ Erratic system behaviour at very high dot clocks
 	card and/or motherboard design. It has been observed on some PCI
 	5428-based cards (which are very rare, since the 5428 chip doesn't
 	support PCI).
+<tag>
+No mouse cursor, or cursor appears twice on screen
+</tag>
+        With high dot clocks, the graphics card's hardware cursor
+	doesn't operate correctly.  Try option <tt>"sw_cursor"</tt> or
+	use a lower screen refresh.
 </descrip>
 For other screen drawing related problems, try the <tt>"noaccel"</tt>
 option (if <tt>"no_bitblt"</tt> doesn't help).
@@ -881,7 +907,7 @@ Changes since XFree86 3.2:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cirrus.sgml,v 3.23.2.1 1997/05/24 08:36:08 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cirrus.sgml,v 3.23.2.3 1998/02/20 23:10:31 dawes Exp $
 
 
 

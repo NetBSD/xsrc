@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.8 1997/06/01 12:33:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.10 1998/02/07 10:05:18 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -137,7 +137,8 @@ ScrnInfoRec s3InfoRec =
    0,				/* int textClockFreq */
    NULL,                        /* char* DCConfig */
    NULL,                        /* char* DCOptions */
-   0				/* int MemClk */
+   0,				/* int MemClk */
+   0				/* int LCDClk */
 #ifdef XFreeXDGA
    ,0,				/* int directMode */
    s3SetVidPage,		/* Set Vid Page */
@@ -169,6 +170,8 @@ static SymTabRec s3ChipTable[] = {
    { S3_ViRGE,		"ViRGE" },
    { S3_ViRGE_VX,	"ViRGE/VX" },
    { S3_ViRGE_DXGX,	"ViRGE/DX or /GX" },
+   { S3_ViRGE_GX2,	"ViRGE/GX2" },
+   { S3_ViRGE_MX,	"ViRGE/MX" },
    { -1,		"" },
 };
 
@@ -350,6 +353,12 @@ s3GetPCIInfo()
 	    break;
 	 case PCI_ViRGE_DXGX:
 	    info.ChipType = S3_ViRGE_DXGX;
+	    break;
+	 case PCI_ViRGE_GX2:
+	    info.ChipType = S3_ViRGE_GX2;
+	    break;
+	 case PCI_ViRGE_MX:
+	    info.ChipType = S3_ViRGE_MX;
 	    break;
 	 default:
 	    info.ChipType = S3_UNKNOWN;
@@ -784,6 +793,12 @@ s3Probe()
       if (S3_ViRGE_SERIES(s3ChipId)) {
 	 chipname = "ViRGE";
       }
+      else if (S3_ViRGE_GX2_SERIES(s3ChipId)) {
+	 chipname = "ViRGE/GX";
+      }
+      else if (S3_ViRGE_MX_SERIES(s3ChipId)) {
+	 chipname = "ViRGE/MX";
+      }
       else if (S3_ViRGE_DXGX_SERIES(s3ChipId)) {
 	 outb(vgaCRIndex, 0x39);
 	 outb(vgaCRReg, 0xa5);
@@ -832,6 +847,16 @@ s3Probe()
 	    break;
 	 }
 	 s3InfoRec.videoRam -= MemOffScreen;
+      }
+      else if (S3_ViRGE_GX2_SERIES(s3ChipId) || S3_ViRGE_MX_SERIES(s3ChipId)) {
+         switch((config & 0xC0) >> 6) {
+         case 1:
+            s3InfoRec.videoRam = 4 * 1024;
+            break;
+         case 3:
+            s3InfoRec.videoRam = 2 * 1024;
+            break;
+         }
       }
       else {
 	 switch((config & 0xE0) >> 5) {

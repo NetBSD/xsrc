@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3misc.c,v 3.68.2.2 1997/05/19 08:06:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3misc.c,v 3.68.2.3 1998/02/07 10:05:15 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -987,6 +987,7 @@ s3SaveScreen(pScreen, on)
      Bool  on;
 {
    unsigned char scrn;
+   static unsigned char saved_sr31=0x10;
 
    if (on)
       SetTimeSinceLastInputEvent();
@@ -1007,6 +1008,18 @@ s3SaveScreen(pScreen, on)
       outw(0x3C4, 0x0100);              /* syncronous reset */
       outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
       outw(0x3C4, 0x0300);              /* end reset */
+
+      if (OFLG_ISSET(CLOCK_OPTION_S3AURORA, &s3InfoRec.clockOptions)) {
+         outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
+         outb(0x3c5, 0x06);
+         outb(0x3c4, 0x31);
+         if (on)
+            outb(0x3c5, saved_sr31);           /* LCD on */
+         else {  
+            saved_sr31 = inb(0x3c5);
+            outb(0x3c5, saved_sr31 & ~0x10);   /* LCD off */
+         }
+      }
    }
    return (TRUE);
 }
@@ -1144,6 +1157,13 @@ s3AdjustFrame(int x, int y)
 	 Base &= ~a;
       }
    }
+
+#ifdef XFreeXDGA
+   if (s3InfoRec.directMode & XF86DGADirectGraphics) {
+      /* unlock ext. registers */
+      s3Unlock();
+   }
+#endif
 
    outb(vgaCRIndex, 0x31);
    outb(vgaCRReg, ((Base & 0x030000) >> 12) | s3Port31);

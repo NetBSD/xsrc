@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.7 1996/12/27 06:54:02 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.7.2.2 1998/02/21 06:06:59 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -16,21 +16,21 @@
 #
 
 proc Done_create_widgets { win } {
+	global pc98_EGC messages
 	set w [winpathprefix $win]
-	frame $w.done -width 640 -height 420 \
-		-relief ridge -borderwidth 5
+        if !$pc98_EGC {
+	    frame $w.done -width 640 -height 420 \
+		    -relief ridge -borderwidth 5
+	} else {
+	    frame $w.done -width 640 -height 400 \
+		    -relief ridge -borderwidth 5
+	}
 	frame $w.done.pad -relief raised -bd 3
 	pack  $w.done.pad -padx 20 -pady 15 -expand yes
 	label $w.done.pad.text
-	$w.done.pad.text configure -text "\n\n\
-		If you've finished configuring everything press the\n\
-		Okay button to start the X server using the\
-		configuration you've selected.\n\n\
-		If you still wish to configure some things,\n\
-		press one of the buttons at the top and then\n\
-		press \"Done\" again, when you've finished."
+	$w.done.pad.text configure -text $messages(done.1)
 	pack  $w.done.pad.text -fill both -expand yes
-	button $w.done.pad.okay -text "Okay" \
+	button $w.done.pad.okay -text $messages(done.2) \
 		-command [list Done_nextphase $w]
 	pack  $w.done.pad.okay -side bottom -pady 10m
 	focus $w.done.pad.okay
@@ -47,27 +47,6 @@ proc Done_deactivate { win } {
 	pack forget $w.done
 }
 
-proc Done_popup_help { win } {
-	catch {destroy .donehelp}
-	toplevel .donehelp -bd 5 -relief ridge
-	wm title .donehelp "Help"
-	wm geometry .donehelp +30+30
-	text .donehelp.text
-	.donehelp.text insert 0.0 "\n\n\
-		If you've finished configuring everything, select the\
-		'Okay' button.\n\n\
-		If there are still some configuration screens you\
-		have not completed,\n\
-		pick the appropriate button from the row across the top\
-		and then press\n\
-		'Done' again, when you've finished all of the\
-		configuration screens."
-	.donehelp.text configure -state disabled
-	button .donehelp.ok -text "Dismiss" -command "destroy .donehelp"
-	focus .donehelp.ok
-	pack .donehelp.text .donehelp.ok
-}
-
 proc Done_execute { win } {
 	global CfgSelection
 
@@ -77,7 +56,7 @@ proc Done_execute { win } {
 }
 
 proc Done_nextphase { win } {
-	global StartServer XF86Setup_library env
+	global StartServer XF86Setup_library env messages
 
 	set w [winpathprefix $win]
 	if $StartServer {

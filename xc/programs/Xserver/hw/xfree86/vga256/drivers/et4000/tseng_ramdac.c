@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_ramdac.c,v 3.3.2.12 1997/07/28 15:06:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_ramdac.c,v 3.3.2.14 1998/02/01 16:05:08 robin Exp $ */
 
 /*
  *
@@ -18,10 +18,10 @@
 #include "compiler.h"
 
 #include "xf86.h"
+#include "xf86_HWlib.h"
 #include "xf86Procs.h"
 #include "xf86Priv.h"
 
-#include "xf86.h"
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 
@@ -38,12 +38,13 @@ SymTabRec TsengDacTable[] = {
    { ATT20C491_DAC,      "att20c491" },
    { ATT20C492_DAC,      "att20c492" },
    { ICS5341_DAC,        "ics5341" },
-   { GENDAC_DAC,         "gendac" },
+   { ICS5301_DAC,        "ics5301" },
    { STG1700_DAC,        "stg1700" },
    { STG1702_DAC,        "stg1702" },
    { STG1703_DAC,        "stg1703" },
    { ET6000_DAC,         "et6000" },
    { CH8398_DAC,         "ch8398" },
+   { MUSIC4910_DAC,      "music4910" },
    { UNKNOWN_DAC,        "unknown" },
 };
 
@@ -52,7 +53,6 @@ t_ramdactype TsengRamdacType = UNKNOWN_DAC;
 /* pixel multiplexing variables */
 Bool Tseng_pixMuxPossible = FALSE;
 int Tseng_nonMuxMaxClock = 0;
-int Tseng_pixMuxMinClock = 0;
 int Tseng_pixMuxMinWidth = 1024;
 
 
@@ -205,22 +205,24 @@ ProbeGenDAC(Bool quiet)
              ErrorF("%s %s: Ramdac: ICS 5301 GENDAC and programmable clock (MClk = %1.2f MHz)\n",
                     XCONFIG_PROBED, vga256InfoRec.name, mclk);
           }
-          TsengRamdacType = GENDAC_DAC;
+          TsengRamdacType = ICS5301_DAC;
           break;
          default:
           if (!quiet) {
-             ErrorF("%s %s: Ramdac: unknown GENDAC and programmable clock (ID code = 0x%02x)\n",
+             ErrorF("%s %s: Ramdac: unknown GENDAC and programmable clock (ID code = 0x%02x). Please report. (we'll treat it as a standard ICS5301 for now).\n",
                     XCONFIG_PROBED, vga256InfoRec.name, dbyte);
           }
-          TsengRamdacType = GENDAC_DAC;
+          TsengRamdacType = ICS5301_DAC;
        }
        xf86dactopel();
     }
     return found;
 }
 
+
+/* probe for RAMDAC using the chip-ID method */
 static Bool
-ProbeCH8398(Bool quiet)
+ProbeRamdacID(Bool quiet)
 {
     unsigned char cid;
     Bool Found = FALSE;
@@ -230,9 +232,18 @@ ProbeCH8398(Bool quiet)
     cid = inb(RAMDAC_RMR);
     cid = inb(RAMDAC_RMR);
     cid = inb(RAMDAC_RMR);  /* this returns chip ID */
-    if (cid == 0xc0) {
-       Found = TRUE;
-       TsengRamdacType = CH8398_DAC;
+    switch(cid)
+    {
+      case 0xc0:
+        Found = TRUE;
+        TsengRamdacType = CH8398_DAC;
+        break;
+      case 0x82:
+        Found = TRUE;
+        TsengRamdacType = MUSIC4910_DAC;
+        break;
+      default:
+        Found = FALSE;
     }
     xf86dactopel();
 
@@ -304,7 +315,24 @@ read_color(entry, cmap)
     GlennsIODelay();
 }
 
-          
+static void
+check_mclk(min, max)
+    int min, max;
+{
+    if (vga256InfoRec.MemClk <= 0) return;
+
+    if (vga256InfoRec.MemClk < min || vga256InfoRec.MemClk > max) {
+          ErrorF("%s %s: MCLK %1.3f MHz out of range (=%1.3f..%1.3f), not changed!\n",
+                 OFLG_ISSET(XCONFIG_MEMCLOCK, &vga256InfoRec.xconfigFlag) ?
+                 XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name,
+                 vga256InfoRec.MemClk / 1000.0, min / 1000.0, max / 1000.0);
+          vga256InfoRec.MemClk = 0;
+       }
+       else if (xf86Verbose)
+          ErrorF("%s %s: set MCLK to %1.3f MHz\n",
+                 XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.MemClk / 1000.0);
+}
+           
 
 void Check_Tseng_Ramdac()
 {
@@ -323,13 +351,16 @@ void Check_Tseng_Ramdac()
        if (TsengRamdacType < 0) {
           ErrorF("%s %s: Unknown RAMDAC type \"%s\"\n", XCONFIG_GIVEN,
                  vga256InfoRec.name, vga256InfoRec.ramdac);
-          return ;
+          return;
        }
     }
     else    /* autoprobe for the RAMDAC */
     {
-        /* is it an ICS GenDAC ? */
-        if (ProbeGenDAC(FALSE))
+        if (Is_ET6K)
+        {
+           TsengRamdacType = ET6000_DAC;
+        }
+        else if (ProbeGenDAC(FALSE))
         {
           /* It is. Nothing to do here */
         }
@@ -337,12 +368,12 @@ void Check_Tseng_Ramdac()
         {
           /* it's a STG170x */
         }
-        else if (ProbeCH8398(FALSE))
+        else if (ProbeRamdacID(FALSE))
         {
-          /* it's a CH8398 */
+          /* found one using RAMDAC ID code */
         }
         else
-        /* if none of the above: start probing for other DAC's */
+        /* if none of the above: start probing for other DACs */
         {
           outb(RAMDAC_RMR, 0xff); GlennsIODelay();
           inb(RAMDAC_RMR); GlennsIODelay();
@@ -394,7 +425,6 @@ void Check_Tseng_Ramdac()
     }
 
 dac_found:
-
    /* defaults: 8-bit wide DAC port, 6-bit color lookup-tables */
    RamdacShift = 10;
    vgaRamdacMask = 0x3f;
@@ -419,11 +449,17 @@ dac_found:
               OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
               OFLG_SET(CLOCK_OPTION_ET6000, &vga256InfoRec.clockOptions);
               generic_ramdac = TRUE;   /* avoids treatment as ATT compatible DAC */
+              check_mclk(80000,110000);
               break;
      case ICS5341_DAC:
               OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
               OFLG_SET(CLOCK_OPTION_ICS5341, &vga256InfoRec.clockOptions);
+              check_mclk(40000,60000);
               dac_is_16bit = TRUE;
+              break;
+     case ICS5301_DAC:
+              OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
+              OFLG_SET(CLOCK_OPTION_ICS5301, &vga256InfoRec.clockOptions);
               break;
      case STG1702_DAC:
      case STG1700_DAC:
@@ -449,15 +485,15 @@ dac_found:
 }
 
 
-void tseng_init_clockscale(int bytesperpixel)
+void tseng_init_clockscale()
 {
     /* nothing to do for 1:1 modes */
-    if (bytesperpixel <= 1) return;
-    if (et4000_type >= TYPE_ET6000) return;
+    if (tseng_bytesperpixel <= 1) return;
+    if (Is_ET6K) return;
 
     /* 16-bit ET4000W32p RAMDACs need different treatment than 8-bitters */
      if (dac_is_16bit) {
-         switch (bytesperpixel) {
+         switch (tseng_bytesperpixel) {
              case 3: ET4000.ChipClockDivFactor = 2; 
                      ET4000.ChipClockMulFactor = 3;
                      break;
@@ -468,12 +504,11 @@ void tseng_init_clockscale(int bytesperpixel)
      }
      
      /* 8-bit RAMDACs */
-     ET4000.ChipClockMulFactor = bytesperpixel; /* 8-bit RAMDAC */
+     ET4000.ChipClockMulFactor = tseng_bytesperpixel; /* 8-bit RAMDAC */
      return;
 }
 
-
-void tseng_set_dacspeed(int bytesperpixel)
+void tseng_set_dacspeed()
 {
    /*
     * Memory bandwidth is important in > 8bpp modes, especially on ET4000
@@ -492,67 +527,33 @@ void tseng_set_dacspeed(int bytesperpixel)
     */
 
     int mem_bw;     /* memory bandwidth */
-#ifndef USE_OFFICIAL_TSENG_LIMITS
-    unsigned char bw_reg;
-#endif
+    int local_bytesperpixel = tseng_bytesperpixel;
 
-    if (bytesperpixel < 1) bytesperpixel = 1;  /* for MONO/VGA16 */
+    /* kludge for 1 and 4bpp modes */
+    if (tseng_bytesperpixel < 1) local_bytesperpixel = 1;
 
     /*
      * First, determine if we can use pixel multiplexing. This will have
      * impact on the max allowed pixelclock.
      */
 
-    if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions)) {
-      if (OFLG_ISSET(CLOCK_OPTION_ICS5341, &vga256InfoRec.clockOptions))
-      {
-        ErrorF("%s %s: Using W32p programmable clock chip ICS5341\n",
-               OFLG_ISSET(CLOCK_OPTION_ICS5341, &vga256InfoRec.clockOptions) ?
-               XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name);
+    switch (TsengRamdacType)
+    {
+      case ICS5341_DAC:
+      case STG1703_DAC:
+      case STG1702_DAC:
+      case STG1700_DAC:
         if (vgaBitsPerPixel == 8) {
           Tseng_pixMuxPossible = TRUE;
           Tseng_nonMuxMaxClock = MAX_TSENG_CLOCK;  /* or 75000 ? */
-          Tseng_pixMuxMinClock = 67500;
           Tseng_pixMuxMinWidth = 1024;   /* seems to be this way: 1024x768 is wrong with pixmux */
         }
-      }
-      else if (OFLG_ISSET(CLOCK_OPTION_STG1703, &vga256InfoRec.clockOptions))
-      {
-        ErrorF("%s %s: Using W32p programmable clock chip STG1703\n",
-               OFLG_ISSET(CLOCK_OPTION_STG1703, &vga256InfoRec.clockOptions) ?
-               XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name);
-        if (vgaBitsPerPixel == 8) {
-        Tseng_pixMuxPossible = TRUE;
-        Tseng_nonMuxMaxClock = MAX_TSENG_CLOCK;  /* or 75000 ? */
-        Tseng_pixMuxMinClock = 67500;
-        Tseng_pixMuxMinWidth = 1024;   /* seems to be this way: 1024x768 is wrong with pixmux */
-        }
-      }
-      else if (OFLG_ISSET(CLOCK_OPTION_ICD2061A, &vga256InfoRec.clockOptions))
-      {
-        ErrorF("%s %s: Using W32 programmable clock chip ICD2061a\n",
-               OFLG_ISSET(CLOCK_OPTION_ICD2061A, &vga256InfoRec.clockOptions) ?
-               XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name);
-      }
-      else if (OFLG_ISSET(CLOCK_OPTION_ET6000, &vga256InfoRec.clockOptions))
-      {
-        ErrorF("%s %s: Using ET6000 built-in programmable clock\n",
-               OFLG_ISSET(CLOCK_OPTION_ET6000, &vga256InfoRec.clockOptions) ?
-               XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name);
-      }
-      else
-      {
-        ErrorF("%s %s: Unsupported clock chip given for ET4000 W32\n",
-               XCONFIG_GIVEN, vga256InfoRec.name);
-        /* return(FALSE); */
-      }
     }
 
     /* if not set in the XF86Config file, use defaults */
     if (vga256InfoRec.dacSpeeds[0] <= 0) {
         switch(TsengRamdacType) {
           case CH8398_DAC:
-          case GENDAC_DAC:
           case ICS5341_DAC:
           case STG1700_DAC:
           case STG1702_DAC:
@@ -563,10 +564,10 @@ void tseng_set_dacspeed(int bytesperpixel)
                    vga256InfoRec.dacSpeeds[0] = MAX_TSENG_CLOCK;
               break;
           case ET6000_DAC:
-              vga256InfoRec.dacSpeeds[0] = 135000;
-              break;
-          case ET6300_DAC:
-              vga256InfoRec.dacSpeeds[0] = 175000;
+              if (et4000_type == TYPE_ET6000)
+                   vga256InfoRec.dacSpeeds[0] = 135000;
+              else
+                   vga256InfoRec.dacSpeeds[0] = 175000;
               break;
           default:
               vga256InfoRec.dacSpeeds[0] = MAX_TSENG_CLOCK;
@@ -584,12 +585,11 @@ void tseng_set_dacspeed(int bytesperpixel)
          */
         vga256InfoRec.maxClock =
           min(vga256InfoRec.dacSpeeds[0],
-           ((mem_bw/bytesperpixel)*ET4000.ChipClockMulFactor)/ET4000.ChipClockDivFactor);
+           ((mem_bw/local_bytesperpixel)*ET4000.ChipClockMulFactor)/ET4000.ChipClockDivFactor);
     }
     else
     {
-#define USE_OFFICIAL_TSENG_LIMITS
-    /* According to Tseng:
+    /* According to Tseng (about the ET6000):
      * "Besides the 135 MHz maximum pixel clock frequency, the other limit has to
      * do with where you get FIFO breakdown (usually appears as stray horizontal
      * lines on the screen). Assuming the accelerator is running steadily doing a
@@ -604,39 +604,23 @@ void tseng_set_dacspeed(int bytesperpixel)
      * for q3, the ET6300] will raise the pixel clock limit to 175 MHz and
      * the pixel_clock*(bytes/pixel) FIFO breakdown limit to about 275 MHz."
      */
-#ifdef USE_OFFICIAL_TSENG_LIMITS
-      if (et4000_type > TYPE_ET6000)      /* ET6300 */
-          mem_bw = 275000;
+      if (et4000_type > TYPE_ET6000)      /* ET6100/6300 */
+          mem_bw = 280000; /* 275000 is _just_ not enough for 1152x864x24 @ 70Hz */
       else                                /* ET6000 */
           mem_bw = 225000;
-#else
-      mem_bw = 90000 * 2 * 5/6;       /* 1 MDRAM bandwidth at 90 MHz, with 80% efficiency */
-      bw_reg = inb(ET6Kbase + 0x45);
-      if (bw_reg & 0x04) mem_bw *=2;  /* 2 MDRAM channels  (2 chips) */
-      if (bw_reg & 0x03) mem_bw *=2;  /* interleaved MDRAM (4 chips) */
-#endif
-      vga256InfoRec.maxClock = min(vga256InfoRec.dacSpeeds[0], mem_bw/bytesperpixel);
+      vga256InfoRec.maxClock = min(vga256InfoRec.dacSpeeds[0], mem_bw/local_bytesperpixel);
     }
-    
-#ifndef USE_OFFICIAL_TSENG_LIMITS
-    if (xf86Verbose) {
-    ErrorF("%s %s: Estimated video memory bandwidth: %d MB/s.\n",
-             XCONFIG_PROBED, vga256InfoRec.name, mem_bw/1000);
-    }
-#endif
 
-    if (vga256InfoRec.dacSpeeds[bytesperpixel-1] > 0)
-      vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[bytesperpixel-1];
-
-#ifndef MONOVGA  /* cosmetic: vgaBitsPerPixel is "0" in VGA16 and MONO mode */
-#ifndef XF86VGA16
+    if (vga256InfoRec.dacSpeeds[local_bytesperpixel-1] > 0)
+      vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[local_bytesperpixel-1];
+  
+#ifdef SUPERFLUOUS
     if (xf86Verbose) {
       ErrorF("%s %s: Ramdac speed at %dbpp: %3.3f MHz\n",
              OFLG_ISSET(XCONFIG_DACSPEED, &vga256InfoRec.xconfigFlag) ?
              XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name,
              vgaBitsPerPixel, vga256InfoRec.dacSpeeds[0] / 1000.0);
     }
-#endif
 #endif
 
     /* Check that maxClock is not higher than dacSpeed */
@@ -646,9 +630,10 @@ void tseng_set_dacspeed(int bytesperpixel)
 
 }
 
-void tseng_validate_mode(DisplayModePtr mode, int bytesperpixel, Bool verbose)
+void tseng_validate_mode(DisplayModePtr mode, Bool verbose)
 {
    int pixel_clock;
+   int data_clock;
    int hdiv=1, hmul=1;
 
    /*
@@ -660,6 +645,7 @@ void tseng_validate_mode(DisplayModePtr mode, int bytesperpixel, Bool verbose)
     * in ET4000Validate(), mode->Clock is enough.
     */
     pixel_clock = vga256InfoRec.clock[mode->Clock];
+    data_clock  = (pixel_clock * ET4000.ChipClockMulFactor) / ET4000.ChipClockDivFactor;
  
    /*
     * For programmable clocks, fill in the SynthClock value
@@ -667,65 +653,22 @@ void tseng_validate_mode(DisplayModePtr mode, int bytesperpixel, Bool verbose)
     */
 
    if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions)) {
-         mode->SynthClock = (pixel_clock * ET4000.ChipClockMulFactor) / ET4000.ChipClockDivFactor;
+         mode->SynthClock = data_clock;
    }
 
-   /* nothing more to do for MONO/VGA16 (pixmux doesn't work anyway) */
-   if (bytesperpixel < 1) return;
-
-   /*
-    * Check what impact each mode has on pixel multiplexing,
-    * and mark those modes for which pixmux must be used.
-    * PixMux is only possible in 8bpp.
-    * Pixmux SHOULD work in interlaced mode, but I don't know how to do it :-(
-    */
-
-   if ( (Tseng_pixMuxPossible) &&
-        ((pixel_clock / 1000) > (Tseng_nonMuxMaxClock / 1000)) &&
-        (mode->HDisplay >= Tseng_pixMuxMinWidth) &&
-        (!(mode->Flags & V_INTERLACE)) ) {
-            mode->Flags |= V_PIXMUX;
-            switch(TsengRamdacType) {
-                case ICS5341_DAC:
-                case STG1700_DAC:
-                case STG1702_DAC:
-                case STG1703_DAC:
-                   if (mode->SynthClock > Tseng_nonMuxMaxClock) {
-                      mode->SynthClock /= 2;
-                      mode->Flags |= V_DBLCLK;
-                   }
-                   break;
-                default:
-                   /* Do nothing */
-                   break;
-            }
-            if (verbose)
-                ErrorF("%s %s: Mode \"%s\" will use pixel multiplexing.\n",
-                        XCONFIG_PROBED, vga256InfoRec.name, mode->name);
-        }
+   /* nothing more to do for 1 or 4 bpp (pixmux doesn't work anyway) */
+   if (tseng_bytesperpixel < 1) return;
 
    /*
     * define hdiv and hmul depending on mode, pixel multiplexing and ramdac type
     */
-    if (mode->Flags & V_PIXMUX)
-    {
-       if ((OFLG_ISSET(CLOCK_OPTION_ICS5341, &vga256InfoRec.clockOptions))
-            && (TsengRamdacType==ICS5341_DAC))
-       {
-          if (mode->Flags & V_DBLCLK)
-              hdiv = 2;
-       }
-       if ((OFLG_ISSET(CLOCK_OPTION_STG1703, &vga256InfoRec.clockOptions))
-            && (TsengRamdacType==STG1703_DAC))
-       {
-          if (mode->Flags & V_DBLCLK)
-              hdiv = 2;
-       }
+    if (mode->Flags & V_PIXMUX) {
+       hdiv *= 2;
     }
     
     hmul *= ET4000.ChipClockMulFactor;
     hdiv *= ET4000.ChipClockDivFactor;
-
+    
    /*
     * Modify mode timings accordingly
     */
@@ -736,18 +679,21 @@ void tseng_validate_mode(DisplayModePtr mode, int bytesperpixel, Bool verbose)
           mode->CrtcHSyncStart = (mode->CrtcHSyncStart * hmul) / hdiv;
           mode->CrtcHSyncEnd   = (mode->CrtcHSyncEnd * hmul) / hdiv;
           mode->CrtcHSkew      = (mode->CrtcHSkew * hmul) / hdiv;
-          if (bytesperpixel == 3) {
+          if (tseng_bytesperpixel == 3) {
              int rgb_skew;
-            /* in 24bpp, the position of the BLANK signal determines the
+            /*
+             * in 24bpp, the position of the BLANK signal determines the
              * phase of the R,G and B values. XFree86 sets blanking equal to
              * the Sync, so setting the Sync correctly will also set the
-             * BLANK corectly, and thus also the RGB phase */
+             * BLANK corectly, and thus also the RGB phase
+             */
              rgb_skew = (mode->CrtcHTotal/8 - mode->CrtcHSyncEnd/8 - 1) % 3;
              mode->CrtcHSyncEnd += rgb_skew * 8 + 24;
              /* HSyncEnd must come BEFORE HTotal */
              if (mode->CrtcHSyncEnd > mode->CrtcHTotal)
                mode->CrtcHSyncEnd -= 24;
-             /* HSyncEnd could now have been moved BEFORE HSyncStart,
+             /*
+              * HSyncEnd could now have been moved BEFORE HSyncStart,
               * but if that happens, it means you had a sync of only 8
               * clocks long. This should not happen
               */
@@ -768,10 +714,10 @@ void tseng_validate_mode(DisplayModePtr mode, int bytesperpixel, Bool verbose)
  * "0xFF" is used as a "not-supported" flag. Assuming no RAMDAC uses this
  * value for some real configuration...
  */
-static unsigned char CMD_ICS5341[] = { 0x00, 0x20, 0x60, 0x40, 0xFF,
-                                       0x10, 0x30, 0x50, 0x90, 0x70 };
+static unsigned char CMD_GENDAC[]  = { 0x00, 0x20, 0x60, 0x40, 0xFF,
+         /* gendac and ICS53x1 */      0x10, 0x30, 0x50, 0x90, 0x70 };
 
-static unsigned char CMD_STG1703[] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+static unsigned char CMD_STG170x[] = { 0x00, 0x08, 0xFF, 0xFF, 0xFF,
                                        0x05, 0x02, 0x03, 0x09, 0x04 };
 
 static unsigned char CMD_CH8398[]  = { 0x04, 0xC4, 0x64, 0x74, 0xFF,
@@ -780,18 +726,26 @@ static unsigned char CMD_CH8398[]  = { 0x04, 0xC4, 0x64, 0x74, 0xFF,
 static unsigned char CMD_ATT49x[]  = { 0x00, 0xa0, 0xc0, 0xe0, 0xe0,
                                        0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
+static unsigned char CMD_SC15025[] = { 0x00, 0xa0, 0xe0, 0x60, 0xFF,
+                                       0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
+static unsigned char CMD_MU4910[]  = { 0x1C, 0xBC, 0xDC, 0xFC, 0xFF,
+                                       0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
+
 /*
  * This sets up the RAMDAC registers for the correct BPP and pixmux values.
  * (also set VGA controller registers for pixmux and BPP)
  */
-void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs, int bytesperpixel)
+void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs)
 {
    Bool rgb555, rgb565, dac16bit;
    unsigned char* cmd_array = NULL;
    unsigned char* cmd_dest = NULL;
-   int index;
+   int index, dataclock;
+   int local_bytesperpixel = tseng_bytesperpixel;
    
-   if (bytesperpixel < 1) bytesperpixel = 1;  /* for MONO/VGA16 */
+   if (tseng_bytesperpixel < 1) local_bytesperpixel = 1;  /* for 1 and 4bpp */
 
    rgb555 = (xf86weight.red == 5 && xf86weight.green == 5 && xf86weight.blue == 5);
    rgb565 = (xf86weight.red == 5 && xf86weight.green == 6 && xf86weight.blue == 5);
@@ -800,11 +754,11 @@ void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs, int byte
    * mode It should rather be passed on from the tseng_validate_mode() code.
    * Right now it'd better agree with what tseng_validate_mode() proposed.
    */ 
-   dac16bit = (dac_is_16bit) && ((bytesperpixel > 1) || (mode->Flags & V_PIXMUX));
+   dac16bit = (dac_is_16bit) && ((local_bytesperpixel > 1) || (mode->Flags & V_PIXMUX));
 
    tseng_regs->Misc &= 0xCF; /* ATC index 0x16 -- bits-per-PCLK */
-   if (et4000_type >= TYPE_ET6000)
-       tseng_regs->Misc |= (bytesperpixel-1) << 4;
+   if (Is_ET6K)
+       tseng_regs->Misc |= (local_bytesperpixel-1) << 4;
    else if (dac16bit)
        tseng_regs->Misc |= 0x20;
 
@@ -820,13 +774,32 @@ void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs, int byte
        case STG1700_DAC:
        case STG1702_DAC:
        case STG1703_DAC:
-           tseng_regs->gendac.cmd_reg |= 8;
-           cmd_array = CMD_STG1703;
+           tseng_regs->gendac.cmd_reg &= 0x04; /* keep 7.5 IRE setup setting */
+           tseng_regs->gendac.cmd_reg |= 0x18; /* enable ext regs and pixel modes */
+           switch (local_bytesperpixel) {
+             case 2: if (rgb555) tseng_regs->gendac.cmd_reg |= 0xA0;
+                     if (rgb565) tseng_regs->gendac.cmd_reg |= 0xC0;
+                     break;
+             case 3:
+             case 4:
+                     tseng_regs->gendac.cmd_reg |= 0xE0;
+                     break;
+           }
+           cmd_array = CMD_STG170x;
            cmd_dest = &(tseng_regs->gendac.PLL_ctrl);
+           /* set PLL (input) range */
+           dataclock = (vga256InfoRec.clock[mode->Clock] * ET4000.ChipClockMulFactor) / ET4000.ChipClockDivFactor;
+           if (dataclock <= 16000)
+             tseng_regs->gendac.timingctrl = 0;
+           else if (dataclock <= 32000)
+             tseng_regs->gendac.timingctrl = 1;
+           else if (dataclock <= 67500)
+             tseng_regs->gendac.timingctrl = 2;
+           else tseng_regs->gendac.timingctrl = 3;
            break;
        case ICS5341_DAC:
-       case GENDAC_DAC:
-           cmd_array = CMD_ICS5341;
+       case ICS5301_DAC:
+           cmd_array = CMD_GENDAC;
            tseng_regs->gendac.PLL_ctrl = 0;
            cmd_dest = &(tseng_regs->gendac.cmd_reg);
            break;
@@ -842,10 +815,14 @@ void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs, int byte
                    tseng_regs->ET6KVidCtrl1 |=  0x02; /* 5-6-5 RGB mode */
            }
            break;
+       case MUSIC4910_DAC:
+           cmd_array = CMD_MU4910;
+           cmd_dest = &(tseng_regs->ATTdac_cmd);
+           break;
    }
 
    if (cmd_array != NULL) {
-       switch (bytesperpixel) {
+       switch (local_bytesperpixel) {
            case 1: index = 0; break;
            case 2: index = rgb555 ? 1 : 2; break;
            case 3: index = 3; break;
@@ -863,7 +840,7 @@ void tseng_set_ramdac_bpp(DisplayModePtr mode, vgaET4000Ptr tseng_regs, int byte
        else {
            tseng_regs->gendac.cmd_reg = 0;
            ErrorF("%s %s: %dbpp not supported in %d-bit DAC mode on this RAMDAC -- Please report.\n",
-                 XCONFIG_PROBED, vga256InfoRec.name, bytesperpixel*8, dac16bit ? 16 : 8);
+                 XCONFIG_PROBED, vga256InfoRec.name, vgaBitsPerPixel, dac16bit ? 16 : 8);
        }
    }
 

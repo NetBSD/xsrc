@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/xaa/Imakefile,v 3.6 1997/01/14 22:22:34 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/xaa/Imakefile,v 3.6.2.2 1998/02/15 16:09:48 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -6,13 +6,14 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/xaa/Imakefile,v 3.6 1997/01/14 22
 
 BPPSRCS = xaavga256/?*.c xaa8/?*.c xaa16/?*.c xaa24/?*.c xaa32/?*.c
 
-GENSRCS =  xf86initac.c \
+GENSRCS = xf86initac.c \
 	xf86cparea.c xf86frect.c xf86spans.c xf86text.c xf86window.c \
 	xf86defs.c xf86pcache.c xf86farc.c xf86fpoly.c \
 	xf86expblt.c xf86expblM.c xf86bitmap.c xf86plane.c \
 	xf86orect.c xf86line.c xf86seg.c \
 	xf86bench.c xf86line2.c xf86seg2.c \
-	xf86expblF.c xf86expbFM.c xf86tables.c xf86stip.c
+	xf86expblF.c xf86expbFM.c xf86tables.c xf86stip.c xf86dseg.c \
+	xf86dline.c xf86wline.c xf86cursor.c
 
 BPPOBJS = xaavga256/xaavga256.o xaa8/xaa8.o xaa16/xaa16.o xaa24/xaa24.o \
 	  xaa32/xaa32.o
@@ -23,10 +24,11 @@ GENOBJS = xf86initac.o \
 	xf86expblt.o xf86expblM.o xf86bitmap.o xf86plane.o \
 	xf86orect.o xf86line.o xf86seg.o \
 	xf86bench.o xf86line2.o xf86seg2.o \
-	xf86expblF.o xf86expbFM.o xf86tables.o xf86stip.o
+	xf86expblF.o xf86expbFM.o xf86tables.o xf86stip.o xf86dseg.o \
+	xf86dline.o xf86wline.o xf86cursor.o
 
 #ifdef i386Architecture
-SRCS = $(GENSRCS) xf86txtblt.s xf86txtblM.s
+SRCS = $(GENSRCS) xf86txtblt.s xf86txtblM.s 
 OBJS = $(GENOBJS) xf86txtblt.o xf86txtblM.o
 #else
 SRCS = $(GENSRCS)
@@ -43,6 +45,10 @@ INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
 	   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(FONTINCSRC)
 
 
+#if HasGnuMake
+$(DONES): $(SUBDIRS)
+#endif
+
 NormalDepLibraryTarget(xaa,$(OBJS) $(SUBDIRS) $(DONES),$(OBJS))
 NormalLibraryObjectRule()
 NormalAsmObjectRule()
@@ -54,7 +60,11 @@ LinkSourceFile(vga256map.h,$(XF86SRC)/xaa)
 LinkSourceFile(xf86bench.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86bitmap.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86cparea.c,$(XF86SRC)/xaa)
+LinkSourceFile(xf86cursor.c,$(XF86SRC)/xaa)
+LinkSourceFile(xf86cursor.h,$(XF86SRC)/xaa)
 LinkSourceFile(xf86defs.c,$(XF86SRC)/xaa)
+LinkSourceFile(xf86dline.c,$(XF86SRC)/xaa)
+LinkSourceFile(xf86dseg.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86expblt.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86expblt.h,$(XF86SRC)/xaa)
 LinkSourceFile(xf86farc.c,$(XF86SRC)/xaa)
@@ -81,6 +91,7 @@ LinkSourceFile(xf86tables.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86text.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86txtblt.s,$(XF86SRC)/xaa)
 LinkSourceFile(xf86window.c,$(XF86SRC)/xaa)
+LinkSourceFile(xf86wline.c,$(XF86SRC)/xaa)
 LinkSourceFile(xf86xaa.h,$(XF86SRC)/xaa)
 
 ObjectFromSpecialSource(xf86expblM, xf86expblt, -DMSBFIRST)
@@ -99,6 +110,9 @@ DependSubdirs($(SUBDIRS))
 
 #ifndef DontInstallPC98Version
 InstallLinkKitLibrary(xaa,$(LINKKITDIR)/lib)
+InstallLinkKitNonExecFile(xf86cursor.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(xf86expblt.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(xf86local.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86scrin.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86xaa.h,$(LINKKITDIR)/include)
 #endif

@@ -376,7 +376,7 @@ X11R6 パッケージに XFree86 を統合する作業は次のメンバーで行なっています。:
 </itemize>
 <tag/LynxOS 用は次のメンバーがサポートしています。:  /
 <itemize>
-       <item> Thomas Mueller <it>&lt;tm@systrix.de&gt</it>
+       <item> Thomas Mueller <it>&lt;tmueller@sysgo.de&gt</it>
 </itemize>
 <tag/Linux 用共有ライブラリは次のメンバーがサポートしています。:  /
 <itemize>
@@ -987,7 +987,7 @@ url="RELNOTE.html"> に格納場所からダウンする必要のあるファイル
 について記載されています。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/README.sgml,v 3.2.2.1 1997/07/06 07:28:17 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/README.sgml,v 3.2.2.2 1998/02/15 23:32:01 robin Exp $
 </verb>
 <hrule>
 

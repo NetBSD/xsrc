@@ -5,19 +5,21 @@
 <!-- Title information -->
 <title>List of XFree86 documentation
 <author>The XFree86 Project, Inc
-<date>22 January 1997
+<date>8 August 1997
 
 <sect> Available Documentation <p>
 
 <itemize>
-<item><htmlurl name="Release Notes for XFree86&tm; 3.3"
+<item><htmlurl name="Release Notes for XFree86&tm; 3.3.2"
 	url="RELNOTES.html">
-<item><htmlurl name="README for XFree86&tm; 3.3"
+<item><htmlurl name="README for XFree86&tm; 3.3.2"
 	url="README.html">
 <item><htmlurl name="Copyright"
 	url="COPYRIGHT.html">
 <item><htmlurl name="Quick Start Guide for XFree86"
 	url="QuickStart.html">
+<item><htmlurl name="Mouse Support in XFree86"
+	url="mouse.html">
 <item><htmlurl name="The XInput extension in XFree86"
 	url="xinput.html">
 <!--
@@ -30,15 +32,17 @@
 	url="isc.html">
 <item><htmlurl name="Information for Linux Users"
 	url="Linux.html">
-<item><htmlurl name="README for XFree86 3.3 on LynxOS"
+<item><htmlurl name="README for XFree86 3.3.2 on LynxOS"
 	url="LynxOS.html">
 <!--
 <item><htmlurl name="README for XFree86 3.1 on Mach"
 	url="Mach.html">
 -->
-<item><htmlurl name="README for XFree86 3.3 on NetBSD and OpenBSD"
+<item><htmlurl name="README for XFree86 3.3.2 on NetBSD"
 	url="NetBSD.html">
-<item><htmlurl name="README for XFree86 3.3 on OS/2"
+<item><htmlurl name="README for XFree86 3.3.2 on OpenBSD"
+	url="NetBSD.html">
+<item><htmlurl name="README for XFree86 3.3.2 on OS/2"
 	url="OS2.html">
 <item><htmlurl name="Notes on Rebuilding XFree86/OS2 from Scratch"
 	url="OS2Notes.html">
@@ -52,18 +56,18 @@
 	url="Config.html">
 <item><htmlurl name="Building XFree86"
 	url="BUILD.html">
-<!--
-<item><htmlurl name="The Hitchhiker's Guide to X386/XFree86 Video Timing"
+<item><htmlurl name="XFree86 Video Timings HOWTO"
 	url="VideoModes.html">
-<item><htmlurl name="Readme for the XFree86 3.1.2 LinkKit"
+<item><htmlurl name="Readme for the XFree86 3.3.2 LinkKit"
 	url="LinkKit.html">
--->
 <item><htmlurl name="How to add an (S)VGA driver to XFree86"
 	url="VGADriver.html">
 <item><htmlurl name="Information for using/developing external clock setting programs"
 	url="clkprog.html">
 <item><htmlurl name="Notes on the AGX Server"
 	url="agx.html">
+<item><htmlurl name="Information for Alliance Promotion Chipset Users"
+	url="apm.html">
 <item><htmlurl name="Information for ARK Logic Chipset Users"
 	url="ark.html">
 <item><htmlurl name="ATI boards README"
@@ -80,7 +84,7 @@
 	url="Mach64.html">
 <item><htmlurl name="Information for Matrox Millennium Users"
 	url="MGA.html">
-<item><htmlurl name="Information for NVidia NV1 / SGS-Thomson Users"
+<item><htmlurl name="Information for NVidia / SGS-Thomson NV1, Riva128 Users"
 	url="NV1.html">
 <item><htmlurl name="Information for Oak Technologies Inc. Chipset Users"
 	url="Oak.html">
@@ -107,7 +111,7 @@
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.4 1997/05/24 11:35:35 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.7 1998/02/28 11:11:41 dawes Exp $ 
 
 
 

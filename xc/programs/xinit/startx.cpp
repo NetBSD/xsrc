@@ -1,7 +1,7 @@
 XCOMM!/bin/sh
 
 XCOMM $XConsortium: startx.cpp,v 1.4 91/08/22 11:41:29 rws Exp $
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0 1994/05/22 00:02:28 dawes Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0.8.2 1998/02/07 10:39:11 dawes Exp $
 XCOMM 
 XCOMM This is just a sample implementation of a slightly less primitive 
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
@@ -13,6 +13,7 @@ XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM 
 
+bindir=BINDIR
 #ifdef SCO
 
 XCOMM Check for /usr/bin/X11 and BINDIR in the path, if not add them.
@@ -21,7 +22,6 @@ XCOMM and people may use X without changing their PATH
 
 XCOMM First our compiled path
 
-bindir=BINDIR
 if expr $PATH : ".*`echo $bindir | sed 's?/?\\/?g'`.*" > /dev/null 2>&1; then
 	:
 else

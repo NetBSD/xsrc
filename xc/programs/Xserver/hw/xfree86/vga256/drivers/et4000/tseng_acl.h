@@ -1,12 +1,27 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.h,v 3.5.2.4 1997/07/26 06:30:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.h,v 3.5.2.8 1998/02/01 19:44:24 robin Exp $ */
 
 #ifndef _TSENG_ACL_H
 #define _TSENG_ACL_H
 
+#include "compiler.h"
+
+/*
+ * if NO_OPTIMIZE is set, some optimizations are disabled.
+ *
+ * What it basically tries to do is minimize the amounts of writes to
+ * accelerator registers, since these are the ones that slow down small
+ * operations a lot.
+ */
+
+#undef NO_OPTIMIZE
+
+
 typedef volatile unsigned char *ByteP; 
 typedef volatile unsigned short *WordP;
 typedef volatile unsigned *LongP;
+
+void tseng_recover_timeout();
 
 /*
  * Shortcuts to Tseng memory-mapped accelerator-control registers
@@ -20,6 +35,7 @@ extern
 ByteP ACL_SUSPEND_TERMINATE,
       ACL_OPERATION_STATE,
       ACL_SYNC_ENABLE,
+      ACL_WRITE_INTERFACE_VALID,
       ACL_INTERRUPT_MASK,
       ACL_INTERRUPT_STATUS,
       ACL_ACCELERATOR_STATUS;
@@ -61,6 +77,7 @@ ByteP ACL_PATTERN_WRAP,
 extern
 WordP ACL_X_COUNT,
       ACL_Y_COUNT;
+LongP ACL_XY_COUNT; /* for combined writes to X and Y count registers */
 
 
 extern
@@ -95,13 +112,21 @@ extern
 WordP ACL_SECONDARY_ERROR_TERM,
       ACL_SECONDARY_DELTA_MINOR,
       ACL_SECONDARY_DELTA_MAJOR;
+extern
 ByteP ACL_TRANSFER_DISABLE;
 
+/*
+ * Some data structures for faster accelerator programming.
+ */
 
 extern int W32OpTable[16];
+extern int W32OpTable_planemask[16];
 extern int W32PatternOpTable[16];
-
 extern int W32BresTable[8];
+
+/*
+ * The ping-pong registers. Probably too much hassle for too little gain. "TODO".
+ */
 
 extern long W32ForegroundPing;
 extern long W32ForegroundPong;
@@ -119,57 +144,147 @@ extern LongP MemW32PatternPing;
 extern LongP MemW32PatternPong;
 extern LongP MemW32Mix;    /* ping-ponging the MIX map is done by XAA */ 
 
-extern LongP CPU2ACLBase;
+/*
+ * Some exported variables used by several source files. They are all
+ * prepended with "tseng" to avoid name clashes with other modules.
+ */
 
-extern long scratchVidBase;
+extern LongP tsengCPU2ACLBase;
 
-extern Bool Use_Pci_Retry; /* Often checked value */
+extern long tsengScratchVidBase;
+extern int tsengImageWriteBase;
 
-/******************************************************************************/
+extern int tseng_powerPerPixel;
+extern int tseng_neg_x_pixel_offset;
+extern int tseng_line_width;
+extern Bool tseng_need_wait_acl;
+extern Bool tseng_use_PCI_Retry; /* Do we use PCI-retry or busy-waiting */
 
-#define WAIT_QUEUE \
-{while (*(volatile unsigned char *)ACL_ACCELERATOR_STATUS & 0x1);}
+/* for ImageWrite and WriteBitmap */
+extern CARD32 *tsengFirstLinePntr, *tsengSecondLinePntr;
+extern CARD32 tsengFirstLine, tsengSecondLine;
 
-#define WAIT_QUEUE_VERBOSE \
-{ int cnt=0; while (*(volatile unsigned char *)ACL_ACCELERATOR_STATUS & 0x1) cnt++; ErrorF("Q%d ",cnt);}
+/*
+ * These will hold the ping-pong registers.
+ */
 
-#define MAX_WAIT_CNT 500000
+extern LongP tsengMemFg;
+extern long tsengFg;
 
-#define WAIT_ACL_VERBOSE DO_WAIT_ACL(ErrorF("W%d ",MAX_WAIT_CNT - cnt))
+extern LongP tsengMemBg;
+extern long tsengBg;
 
-#define WAIT_ACL DO_WAIT_ACL( {} )
+extern LongP tsengMemPat;
+extern long tsengPat;
+
+/* for register write optimisation */
+extern int old_x, old_y;
+extern int tseng_old_dir;
+
+
+/*
+ * Some shortcuts. 
+ */
+
+#define MAX_WAIT_CNT 500000  /* how long we wait before we time out */
+#undef WAIT_VERBOSE          /* if defined: print out how long we waited */
+
+static __inline__ void tseng_wait(reg,name,mask)
+     ByteP reg;
+     char* name;
+     unsigned char mask;
+{
+    int cnt = MAX_WAIT_CNT;
+    while (*reg & mask)
+      if (--cnt < 0)
+      {
+        ErrorF("WAIT_%s: timeout.\n",name);
+        tseng_recover_timeout();
+        break;
+      }
+#ifdef WAIT_VERBOSE
+      ErrorF("%s%d ",name,MAX_WAIT_CNT-cnt);
+#endif
+}
+
+#define WAIT_QUEUE tseng_wait(ACL_ACCELERATOR_STATUS, "QUEUE", 0x1)
+
+/* This is only for W32p rev b...d*/
+#define WAIT_INTERFACE tseng_wait(ACL_WRITE_INTERFACE_VALID, "INTERFACE", 0xf)
+
+#define WAIT_ACL tseng_wait(ACL_ACCELERATOR_STATUS, "ACL", 0x2)
   
-#define DO_WAIT_ACL(command) \
-  { int cnt = MAX_WAIT_CNT; \
-    while (*(volatile unsigned char *)ACL_ACCELERATOR_STATUS & 0x2) \
-      if (--cnt < 0) \
-      { \
-        if (et4000_type < TYPE_ET6000) \
-        { \
-          *CPU2ACLBase = 0L; /* try unlocking the bus when CPU-to-accel gets stuck */ \
-          FLUSH_ACL \
-        } \
-        ErrorF("WAIT_ACL: timeout.\n"); \
-        break; \
-      } \
-    command; \
-  }
-  
-#define WAIT_XY \
-  {while (*(volatile unsigned char *)ACL_ACCELERATOR_STATUS & 0x4);}
+#define WAIT_XY tseng_wait(ACL_ACCELERATOR_STATUS, "XY", 0x4)
 
-#define FLUSH_ACL \
-  if (et4000_type > TYPE_ET4000W32I) \
-  { \
-    *ACL_SUSPEND_TERMINATE = 0x00; \
-    *ACL_SUSPEND_TERMINATE = 0x02; \
-    *ACL_SUSPEND_TERMINATE = 0x00; \
-  }
+
+#define SET_FUNCTION_BLT \
+    if (Is_ET6K) \
+        *ACL_MIX_CONTROL     = 0x33; \
+    else \
+        *ACL_ROUTING_CONTROL = 0x00;
+
+#define SET_FUNCTION_BLT_TR \
+        *ACL_MIX_CONTROL     = 0x13;
+
+#define FBADDR(x,y) ( (y) * tseng_line_width + MULBPP(x) )
+
+#define SET_FG_ROP(rop) \
+    *ACL_FOREGROUND_RASTER_OPERATION = W32OpTable[rop];
+
+#define SET_FG_ROP_PLANEMASK(rop) \
+    *ACL_FOREGROUND_RASTER_OPERATION = W32OpTable_planemask[rop];
+
+#define SET_BG_ROP(rop) \
+    *ACL_BACKGROUND_RASTER_OPERATION = W32PatternOpTable[rop];
+
+#define SET_BG_ROP_TR(rop, bg_color) \
+  if ((bg_color) == -1)    /* transparent color expansion */ \
+    *ACL_BACKGROUND_RASTER_OPERATION = 0xaa; \
+  else \
+    *ACL_BACKGROUND_RASTER_OPERATION = W32PatternOpTable[rop];
+
+#define SET_DELTA(Min, Maj) \
+    *((LongP) ACL_DELTA_MINOR) = ((Maj) << 16) + (Min)
+
+#define SET_SECONDARY_DELTA(Min, Maj) \
+    *((LongP) ACL_SECONDARY_DELTA_MINOR) = ((Maj) << 16) + (Min)
+
+#ifdef NO_OPTIMIZE
+#define SET_XYDIR(dir) \
+      *ACL_XY_DIRECTION = (dir);
+#else
+/*
+ * only changing ACL_XY_DIRECTION when it needs to be changed avoids
+ * unnecessary PCI bus writes, which are slow. This shows up very well
+ * on consecutive small fills.
+ */
+#define SET_XYDIR(dir) \
+    if ((dir) != tseng_old_dir) \
+      *ACL_XY_DIRECTION = tseng_old_dir = (dir);
+#endif
+
+#define SET_SECONDARY_XYDIR(dir) \
+      *ACL_SECONDARY_EDGE = (dir);
+
+
+/* Must do 0x09 (in one operation) for the W32 */
+#define START_ACL(dst) \
+    *(ACL_DESTINATION_ADDRESS) = dst; \
+    if (et4000_type < TYPE_ET4000W32P) *ACL_OPERATION_STATE = 0x09;
+
+/* START_ACL for the ET6000 */
+#define START_ACL_6(dst) \
+    *(ACL_DESTINATION_ADDRESS) = dst;
+
+#define START_ACL_CPU(dst) \
+    if (et4000_type < TYPE_ET4000W32P) \
+      *tsengCPU2ACLBase = dst; \
+    else \
+      *(ACL_DESTINATION_ADDRESS) = dst;
 
 
 /***********************************************************************/
 
 void tseng_init_acl();
-
 
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.8 1996/12/23 06:51:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.8.2.1 1998/02/07 14:27:25 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -163,5 +163,12 @@ unsigned cflag;
 		xf86FatalError("Unable to set status of mouse fd (%s)\n",
 			       strerror(errno));
 	}
+}
+
+int
+xf86FlushInput(fd)
+int fd;
+{
+	return tcflush(fd, TCIFLUSH);
 }
 

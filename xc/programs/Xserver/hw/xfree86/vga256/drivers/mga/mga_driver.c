@@ -17,7 +17,7 @@
  * Contributors:
  *		Andrew Vanderstock, Melbourne, Australia
  *			vanderaj@mail2.svhm.org.au
- *		additions, corrections, cleanups, Mill II early support
+ *		additions, corrections, cleanups, Mill II and BIOS stuff
  *
  *		Dirk Hohndel
  *			hohndel@XFree86.Org
@@ -37,7 +37,7 @@
  *		Support for 8MB boards, RGB Sync-on-Green, and DPMS.
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.20 1997/08/02 13:48:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.24 1998/02/24 19:06:00 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -70,12 +70,18 @@
 
 extern vgaPCIInformation *vgaPCIInfo;
 
-#define DEFAULT_SW_CURSOR
+/* #define DEFAULT_SW_CURSOR */
 
 /*
  * Driver data structures.
  */
+#ifdef PC98_MGA
+pointer mmioBase = NULL;
+#endif
+
 MGABiosInfo MGABios;
+MGABios2Info MGABios2;
+
 pciTagRec MGAPciTag;
 int MGAchipset;
 int MGArev;
@@ -104,6 +110,10 @@ static void		MGAFbInit();
 static int		MGAPitchAdjust();
 static int		MGALinearOffset();
 static void		MGADisplayPowerManagementSet();
+
+#ifdef PC98_MGA
+extern void		MGATi3026StoreColors();
+#endif
 
 /*
  * This data structure defines the driver itself.
@@ -210,29 +220,18 @@ vgaVideoChipRec MGA = {
 	 * to pixel clocks.	 This is rarely used, and in most cases, set
 	 * it to 1.
 	 */
-	1,		/* ChipClockMulFactor */
-	1		/* ChipClockDivFactor */
+	1,     /* ClockMulFactor */
+	1     /* ClockDivFactor */
 };
 
-/* 
- * ramdac info structure initialization
- */
+
 MGARamdacRec MGAdac = {
-	FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	90000, /* maxPixelClock */
-	0
+        FALSE, 0, 0, 0, NULL, NULL, NULL, NULL, NULL,
+        90000, /* maxPixelClock */
+        0
 }; 
 
-/*
- * array of ports
- */ 
-static unsigned mgaExtPorts[] =
-{
-	0x400			/* This is enough to enable all ports */
-};
 
-static int Num_mgaExtPorts =
-	(sizeof(mgaExtPorts)/sizeof(mgaExtPorts[0]));
 
 /*
  * MGAReadBios - Read the video BIOS info block.
@@ -248,27 +247,33 @@ static int Num_mgaExtPorts =
  *   MGABios			OUT	The video BIOS info block.
  *
  * HISTORY
+ *   August  31, 1997 - [ajv] Andrew van der Stock
+ *   Fixed to understand Mystique and Millennium II
+ * 
  *   January 11, 1997 - [aem] Andrew E. Mileski
  *   Set default values for GCLK (= MCLK / pre-scale ).
  *
  *   October 7, 1996 - [aem] Andrew E. Mileski
  *   Written and tested.
  */ 
+
 static void
 MGAReadBios()
 {
-	CARD8 tmp[ 64 ];
-	CARD16 offset;
+	CARD8 	tmp[ 64 ];
+	CARD16 	offset;
+	CARD8	chksum;
+	CARD8	*pPINSInfo; 
 	int i;
 
 	/* Make sure the BIOS is present */
 	xf86ReadBIOS( vga256InfoRec.BIOSbase, 0, tmp, sizeof( tmp ));
-	if (
-		tmp[ 0 ] != 0x55
-		|| tmp[ 1 ] != 0xaa
-		|| strncmp(( char * )( tmp + 45 ), "MATROX", 6 )
-	) {
-		ErrorF( "%s %s: Video BIOS info block not detected!" );
+
+	if ( tmp[ 0 ] != 0x55 || tmp[ 1 ] != 0xaa
+	     || strncmp(( char * )( tmp + 45 ), "MATROX", 6 ) )
+        {
+		ErrorF( "%s %s: Video BIOS info block not detected!\n",
+			XCONFIG_PROBED, vga256InfoRec.name);
 		return;
 	}
 
@@ -276,40 +281,119 @@ MGAReadBios()
 	xf86ReadBIOS( vga256InfoRec.BIOSbase, 0x7ffc,
 		( CARD8 * ) & offset, sizeof( offset ));
 
-	/* Copy the info block */
-	xf86ReadBIOS( vga256InfoRec.BIOSbase, offset,
-		( CARD8 * ) & MGABios.StructLen, sizeof( MGABios ));
-
 	/* Let the world know what we are up to */
 	ErrorF( "%s %s: Video BIOS info block at 0x%08lx\n",
 		XCONFIG_PROBED, vga256InfoRec.name,
 		vga256InfoRec.BIOSbase + offset );	
 
-	/* Set default MCLK values (scaled by 10 kHz) */
-	if ( MGABios.ClkBase == 0 )
+	/* Copy the info block */
+	switch (MGAchipset)
+	{
+		case PCI_CHIP_MGA2064:
+			xf86ReadBIOS( vga256InfoRec.BIOSbase, offset,
+				( CARD8 * ) & MGABios.StructLen, sizeof( MGABios ));
+		break;
+
+		default:
+			xf86ReadBIOS( vga256InfoRec.BIOSbase, offset,
+				( CARD8 * ) & MGABios2.PinID, sizeof( MGABios2 ));
+	}
+	
+	/* matrox millennium-2 and mystique pins info */
+	if ( MGABios2.PinID == 0x412e )
+	{
+		/* check that the pins info is correct */
+		if ( MGABios2.StructLen != 0x40 )
+		{
+			ErrorF( "%s %s: Video BIOS info block not detected!\n",
+		                XCONFIG_PROBED, vga256InfoRec.name);
+			return;
+		}
+		/* check that the chksum is correct */
+		chksum = 0;
+		pPINSInfo = (CARD8 *) &MGABios2.PinID;
+
+		for (i=0; i < MGABios2.StructLen; i++)
+		{
+			chksum += *pPINSInfo;
+			pPINSInfo++;
+		}
+
+		if ( chksum )
+		{
+			ErrorF("%s %s: Video BIOS info block did not checksum!\n",
+		                XCONFIG_PROBED, vga256InfoRec.name);
+			MGABios2.PinID = 0;
+			return;
+		}
+
+		/* last check */
+		if ( MGABios2.StructRev == 0 ) 
+		{
+			ErrorF( "%s %s: Video BIOS info block does not have a valid revision!\n",
+		                XCONFIG_PROBED, vga256InfoRec.name);
+			MGABios2.PinID = 0;
+			return;
+		}
+		ErrorF( "%s %s: Found and verified enhanced Video BIOS info block\n",
+			XCONFIG_PROBED, vga256InfoRec.name);
+
+#if DEBUG
+		ErrorF( "%s %s: MClk %d Clk4MB %d Clk8MB %d\n",
+			XCONFIG_PROBED, vga256InfoRec.name,
+			MGABios2.ClkMem,MGABios2.Clk4MB,MGABios2.Clk8MB);
+#endif
+	  	/* Set default MCLK values (scaled by 100 kHz) */
+		if ( MGABios2.ClkMem == 0 )
+		    MGABios2.ClkMem = 50;
+	  	if ( MGABios2.Clk4MB == 0 )
+		    MGABios2.Clk4MB = MGABios.ClkBase;
+		if ( MGABios2.Clk8MB == 0 )
+		    MGABios2.Clk8MB = MGABios.Clk4MB;
+		MGABios.StructLen = 0; /* not in use */
+		return;
+	}
+	else
+	{
+	  /* Set default MCLK values (scaled by 10 kHz) */
+	  if ( MGABios.ClkBase == 0 )
 		MGABios.ClkBase = 4500;
-	if ( MGABios.Clk4MB == 0 )
+  	  if ( MGABios.Clk4MB == 0 )
 		MGABios.Clk4MB = MGABios.ClkBase;
-	if ( MGABios.Clk8MB == 0 )
+	  if ( MGABios.Clk8MB == 0 )
 		MGABios.Clk8MB = MGABios.Clk4MB;
+	  MGABios2.PinID = 0; /* not in use */
+	  return;
+	}
 }
 
 /*
  * MGACountRAM --
  *
  * Counts amount of installed RAM 
+ * 
+ * now counts in 2 MB increments, all the way to 16 MB.
+ * also preserves fb contents, - ajv 970830
+ * 
+ * blocks = # of 2 MB blocks to check. = 4 on 8 MB addr, =8 on 16 MB addr 
  */
+
 static int
-MGACountRam()
+MGACountRam(int blocks)
 {
+	int 	videoMem;
+
+	videoMem = 2048;
+
 	if(MGA.ChipLinearBase)
 	{
 		volatile unsigned char* base;
-		unsigned char tmp, tmp3, tmp5;
+		int			i, basePtr;
+		unsigned char 		tmp, seed, oldMem, cacheMem, newMem[8];
 	
 		base = xf86MapVidMem(vga256InfoRec.scrnIndex, LINEAR_REGION,
 			      (pointer)((unsigned long)MGA.ChipLinearBase),
-			      8192 * 1024);
+			      blocks * 2097152 );
 	
 		/* turn MGA mode on - enable linear frame buffer (CRTCEXT3) */
 		outb(0x3DE, 3);
@@ -317,25 +401,51 @@ MGACountRam()
 		outb(0x3DF, tmp | 0x80);
 	
 		/* write, read and compare method */
-		base[0x500000] = 0x55;
-		base[0x300000] = 0x33;
-		base[0x100000] = 0x11;
-		tmp5 = base[0x500000];
-		tmp3 = base[0x300000];
+
+		seed = 0x11;
+
+		/* clear out newMem */		
+		newMem[0] = newMem[1] = newMem[2] = newMem[3] = 0;
+		newMem[4] = newMem[5] = newMem[6] = newMem[7] = 0;
+
+		basePtr = 0x100000;		/* 1 MB */
+		cacheMem = base[0x5000];	/* cache flush spot */
+		for (i = 0; i < blocks; i++)
+		{	
+			oldMem = base[basePtr];		/* remember previous contents */
+			base[basePtr] = 0;		/* clear it */
+			base[basePtr] = seed;
+			if ( MGAchipset != PCI_CHIP_MGA2064 )
+				OUTREG8(MGAREG_CACHEFLUSH, 0);	/* flush the cache on the mystique */
+			else
+				base[0x5000] = 0x11; /* flush the cache */
+
+			newMem[i] = base[basePtr];
+			base[basePtr] = oldMem;		/* restore it to old val */
+			seed += 0x11;	
+			basePtr += 0x200000;		/* go forward another 2 MB */
+		}
+		base[0x5000] = cacheMem;	/* restore the state */
 
 		/* restore CRTCEXT3 state */
 		outb(0x3DE, 3);
 		outb(0x3DF, tmp);
 	
 		xf86UnMapVidMem(vga256InfoRec.scrnIndex, LINEAR_REGION, 
-				(pointer)base, 8192 * 1024);
-	
-		if(tmp5 == 0x55)
-			return 8192;
-		if(tmp3 == 0x33)
-			return 4096;
+				(pointer)base, blocks * 2097152 );
+		seed = 0x11;
+		videoMem = 0;
+		
+		for ( i=0; i < blocks; i++ )
+		{
+			if ( newMem[i] == seed )
+			{
+				seed += 0x11;
+				videoMem += 2048;
+			}
+		}
 	}
-	return 2048;
+	return videoMem;
 }
 
 /*
@@ -347,7 +457,7 @@ static char *
 MGAIdent(n)
 int n;
 {
-	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w" };
+	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w", "mga2164w AGP" };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
 		return(NULL);
@@ -366,6 +476,7 @@ MGAProbe()
 {
 	unsigned long MGAMMIOAddr = 0;
 	pciConfigPtr pcr = NULL;
+	pciConfigPtr mgapcr = NULL;
 	int i;
 	CARD32 save;
 
@@ -409,9 +520,13 @@ MGAProbe()
 				case PCI_CHIP_MGA2164:
 					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(2);
+				break;
+				case PCI_CHIP_MGA2164_AGP:
+					MGAchipset = id;
+					vga256InfoRec.chipset = MGAIdent(3);
 			}
 			if (MGAchipset)
-				break;
+				mgapcr = pcr;
 		}
 	  }
 	} else return(FALSE);
@@ -423,6 +538,7 @@ MGAProbe()
 		return(FALSE);
 	}
 
+	pcr = mgapcr;
 	if (vga256InfoRec.chipRev) {
 		ErrorF("%s %s: MGA chipset override, using ChipRev "
 		       "0x%02x instead of 0x%02x\n", XCONFIG_GIVEN,
@@ -431,20 +547,6 @@ MGAProbe()
 	} else {
 		MGArev = pcr->_rev_id;
 	}
-	/*
-	 * make it obvious that Millennium II support is experimental
-	 */
-	if (MGAchipset == PCI_CHIP_MGA2164) 
-	{
-		ErrorF("(!!) %s: Support for the Millennium II in this release\n",
-			vga256InfoRec.name);
-	
-		ErrorF("(!!) %s: is HIGHLY EXPERIMENTAL and largely untested\n",
-			vga256InfoRec.name);
-		ErrorF("(!!) %s:    ===================     ================\n",
-			vga256InfoRec.name);
-	}
-	   
 	/*
 	 *	OK. It's MGA
 	 */
@@ -461,13 +563,15 @@ MGAProbe()
 	
 	if ( pcr->_base0 ) {	/* details: mgabase1 sdk pp 4-11 */
 		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 )
+			MGAchipset == PCI_CHIP_MGA2164 ||
+			MGAchipset == PCI_CHIP_MGA2164_AGP)
 			MGA.ChipLinearBase = pcr->_base0 & 0xff800000;
 		else
 			MGAMMIOAddr = pcr->_base0 & 0xffffc000;
 	} else {
 		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 )
+			MGAchipset == PCI_CHIP_MGA2164 ||
+			MGAchipset == PCI_CHIP_MGA2164_AGP)
 			MGA.ChipLinearBase = 0;
 		else
 			MGAMMIOAddr = 0;
@@ -475,14 +579,16 @@ MGAProbe()
 	
 	if ( pcr->_base1 ) {	/* details: mgabase2 sdk pp 4-12 */
 		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 )
+			MGAchipset == PCI_CHIP_MGA2164 ||
+			MGAchipset == PCI_CHIP_MGA2164_AGP)
 	
 			MGAMMIOAddr = pcr->_base1 & 0xffffc000;
 		else
 			MGA.ChipLinearBase = pcr->_base1 & 0xff800000;
 	} else {
 		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 )
+			MGAchipset == PCI_CHIP_MGA2164 ||
+			MGAchipset == PCI_CHIP_MGA2164_AGP)
 			MGAMMIOAddr = 0;
 		else
 			MGA.ChipLinearBase = 0;
@@ -515,17 +621,14 @@ MGAProbe()
 			vga256InfoRec.name, MGAMMIOAddr);
 	}
 	
-	/*
-	 * Set up I/O ports to be used by this card.
-	 */
-	xf86ClearIOPortList(vga256InfoRec.scrnIndex);
-	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_VGA_IOPorts, VGA_IOPorts);
-	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_mgaExtPorts,
-				mgaExtPorts);
 
+#ifndef PC98_MGA
 	/* enable IO ports, etc. */
 	MGAEnterLeave(ENTER);
-	
+#else
+	xf86EnableIOPorts(vga256InfoRec.scrnIndex);
+#endif
+
 	/*
 	 * Disable memory and I/O before mapping the MMIO area.
 	 * This avoids the MMIO area being read during the mapping
@@ -579,12 +682,26 @@ MGAProbe()
 			    (pointer)(MGAMMIOAddr), 0x4000);
 #endif /* __alpha__ */
 
+#ifdef PC98_MGA
+	/* Re-enable memory (don't enable I/O) */
+	pciWriteLong(MGAPciTag, PCI_CMD_STAT_REG,
+		     save | PCI_CMD_MEM_ENABLE);
+#else
 	/* Re-enable I/O and memory */
 	pciWriteLong(MGAPciTag, PCI_CMD_STAT_REG,
 		     save | (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE));
+#endif
 
 	if (!MGAMMIOBase)
 		FatalError("MGA: Can't map IO registers\n");
+	
+#ifdef PC98_MGA
+	/* overlap BIOS ROM onto frame buffer aperture */
+	save = pciReadLong(MGAPciTag, PCI_OPTION_REG);
+	pciWriteLong(MGAPciTag, PCI_OPTION_REG, save | 0x40000000);
+	pciWriteLong(MGAPciTag, 0x30, MGA.ChipLinearBase | 0x00000001);
+	vga256InfoRec.BIOSbase = MGA.ChipLinearBase;
+#endif
 
 	/*
 	 * Read the BIOS data struct
@@ -593,16 +710,65 @@ MGAProbe()
 #ifdef DEBUG
 	ErrorF("MGABios.RamdacType = 0x%x\n",MGABios.RamdacType);
 #endif
+
+#ifdef PC98_MGA
+	/* disable BIOS ROM */
+	pciWriteLong(MGAPciTag, 0x30, 0);
+	pciWriteLong(MGAPciTag, PCI_OPTION_REG, save);
+
+	/* set VGA I/O to MMIO redirection base */
+	mmioBase = MGAMMIOBase + 0x1c00;
+
+	/* enable IO ports, etc. */
+	MGAEnterLeave(ENTER);
+
+	switch (MGAchipset) {
+	case PCI_CHIP_MGA2064:
+		MGA3026Reset();
+		break;
+	case PCI_CHIP_MGA2164:
+		break;
+	case PCI_CHIP_MGA1064:
+		break;
+	}
+#endif /* PC98_MGA */
 	
 	/*
 	 * If the user has specified the amount of memory in the XF86Config
 	 * file, we respect that setting.
 	 */
+
 	if (!vga256InfoRec.videoRam)
-		vga256InfoRec.videoRam = MGACountRam();
+	   if ( MGAchipset == PCI_CHIP_MGA2164 || MGAchipset == PCI_CHIP_MGA2164_AGP )
+		vga256InfoRec.videoRam = MGACountRam(8); /* count to 16 mb */
+	   else
+		vga256InfoRec.videoRam = MGACountRam(4); /* count to 8 mb */
 	
-	MGA.ChipLinearSize = vga256InfoRec.videoRam * 1024;
+	MGA.ChipLinearSize = vga256InfoRec.videoRam;
+
+	/* sanity check ChipLinearSize */
+
+	if ( MGAchipset == PCI_CHIP_MGA2164 || MGAchipset == PCI_CHIP_MGA2164_AGP )
+	{
+		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 16384 )
+		{
+			MGA.ChipLinearSize = 2048; /* nice safe size */
+			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!",
+				vga256InfoRec.name);
+		}
+	}
+	else
+	{
+		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 8192 )
+		{
+			MGA.ChipLinearSize = 2048; /* nice safe size */
+			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!",
+				vga256InfoRec.name);
+		}
+	}
 	
+	MGA.ChipLinearSize *= 1024;
+
 	/*
 	 * fill MGAdac struct
 	 * Warning: currently, it should be after RAM counting
@@ -611,6 +777,7 @@ MGAProbe()
 	{
 	case PCI_CHIP_MGA2064:
 	case PCI_CHIP_MGA2164:
+	case PCI_CHIP_MGA2164_AGP:
 		MGA3026RamdacInit();
 		break;
 	case PCI_CHIP_MGA1064:
@@ -641,6 +808,8 @@ MGAProbe()
 	OFLG_SET(OPTION_DAC_8_BIT, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_SW_CURSOR, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_HW_CURSOR, &MGA.ChipOptionFlags);
+	OFLG_SET(OPTION_PCI_RETRY, &MGA.ChipOptionFlags);
+	OFLG_SET(OPTION_MGA_24BPP_FIX, &MGA.ChipOptionFlags);
 
 	OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 	OFLG_SET(OPTION_DAC_8_BIT, &vga256InfoRec.options);
@@ -739,35 +908,46 @@ TestAndSetRounding(pitch)
 static int
 MGAPitchAdjust()
 {
-	int pitch = 0;
+	int *pWidth, pitch = 0;
 	int accel;
 	
-	/* XXX ajv - 512, 576, and 1536 may not be supported
-	   virtual resolutions. see sdk pp 4-59 for more
-	   details. Why anyone would want less than 640 is 
-	   bizarre. (maybe lots of pixels tall?) */
+	/* ajv - See MGA2064 p4-59 for millennium supported pitches
+         * See MGA1064 p4-68 for mystique pitch 
+	 * XXX see if MGA2164 has same width types as MGA1064
+         */
 
-#if 0		
-	int width[] = { 512, 576, 640, 768, 800, 960, 
-			1024, 1152, 1280, 1536, 1600, 1920, 2048, 0 };
-#else
 	int width[] = { 640, 768, 800, 960, 1024, 1152, 1280,
 			1600, 1920, 2048, 0 };
-#endif
-	int i;
+	int width2[] = { 512, 640, 768, 800, 832, 960, 1024, 1152, 1280,
+			1600, 1664, 1920, 2048, 0 };
+
+	switch (MGAchipset)
+	{
+		case PCI_CHIP_MGA1064:
+			pWidth = &width2[0];
+			break;
+
+		case PCI_CHIP_MGA2064:
+		case PCI_CHIP_MGA2164:	/* XXX - may need to be with 1064 */
+	        case PCI_CHIP_MGA2164_AGP:
+		default:
+			pWidth = &width[0];
+			break;
+	}
 
 	if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
 	{
 		accel = TRUE;
 		
-		for (i = 0; width[i]; i++)
+		while ( *pWidth )
 		{
-			if (width[i] >= vga256InfoRec.virtualX && 
-			    TestAndSetRounding(width[i]) == width[i])
+			if (*pWidth >= vga256InfoRec.virtualX && 
+			    TestAndSetRounding(*pWidth) == *pWidth)
 			{
-				pitch = width[i];
+				pitch = *pWidth;
 				break;
 			}
+			pWidth++;
 		}
 	}
 	else
@@ -860,6 +1040,21 @@ MGALinearOffset()
 	return MGAydstorg * BytesPerPixel;
 }
 
+#ifdef PC98_MGA
+static Bool
+MGAScreenInit(ScreenPtr pScreen, pointer pbits,
+	      int xsize, int ysize, int dpix, int dpiy, int width)
+{
+  switch (MGAchipset) {
+  case PCI_CHIP_MGA2064:
+    pScreen->StoreColors = MGATi3026StoreColors;
+    break;
+  default:
+    break;
+  }
+  return TRUE;
+}
+#endif
 
 /*
  * MGAFbInit --
@@ -870,6 +1065,16 @@ MGALinearOffset()
 static void
 MGAFbInit()
 {
+#ifdef PC98_MGA
+	switch (MGAchipset) {
+	case PCI_CHIP_MGA2064:
+	  vgaSetScreenInitHook(MGAScreenInit);
+	  break;
+	default:
+	  break;
+	}
+#endif
+
 	if (MGAdac.MemoryClock && xf86Verbose)
 	{
 	    ErrorF("%s %s: MCLK set to %1.3f MHz\n",
@@ -930,6 +1135,7 @@ DisplayModePtr mode;
 	{
 	case PCI_CHIP_MGA2064:
 	case PCI_CHIP_MGA2164:
+	case PCI_CHIP_MGA2164_AGP:
 		return MGA3026Init(mode);
 	case PCI_CHIP_MGA1064:                               
 		return MGA1064Init(mode);
@@ -955,6 +1161,7 @@ vgaHWPtr restore;
 	{
 	case PCI_CHIP_MGA2064:
 	case PCI_CHIP_MGA2164:
+	case PCI_CHIP_MGA2164_AGP:
 		MGA3026Restore(restore);
 		break;
 	case PCI_CHIP_MGA1064:
@@ -982,6 +1189,7 @@ vgaHWPtr save;
 	{
 	case PCI_CHIP_MGA2064:
 	case PCI_CHIP_MGA2164:
+	case PCI_CHIP_MGA2164_AGP:
 		return (void *)MGA3026Save(save);
 	case PCI_CHIP_MGA1064:
 		return (void *)MGA1064Save(save);
@@ -1008,7 +1216,7 @@ Bool enter;
 #ifdef XFreeXDGA
       	if (vga256InfoRec.directMode&XF86DGADirectGraphics && !enter) {
        		if (MGAdac.isHwCursor) {
-       			MGAdac.CursorOff();
+       			MGAdac.HideCursor();
        		}
        		return;
    	}
@@ -1016,7 +1224,9 @@ Bool enter;
 
 	if (enter)
 	{
+#ifndef PC98_MGA
 		xf86EnableIOPorts(vga256InfoRec.scrnIndex);
+#endif
 		if (MGAMMIOBase)
 		{
 			xf86MapDisplay(vga256InfoRec.scrnIndex,
@@ -1029,9 +1239,18 @@ Bool enter;
 		/* Unprotect CRTC[0-7] */
 		outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
 		outb(vgaIOBase + 5, temp & 0x7F);
+#ifdef PC98_MGA
+		if (MGAchipset == PCI_CHIP_MGA1064)
+			_outb(0xfac, 0x02);
+		else
+			_outb(0xfac, 0x01);
+#endif
 	}
 	else
 	{
+#ifdef PC98_MGA
+		_outb(0xfac, 0x00);
+#endif
 		/* Protect CRTC[0-7] */
 		outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
 		outb(vgaIOBase + 5, (temp & 0x7F) | 0x80);
@@ -1071,26 +1290,24 @@ int x, y;
 	int Base = (y * vga256InfoRec.displayWidth + x + MGAydstorg) >>
 			(3 - MGABppShft);
 	int tmp;
+	CARD32 count;
 
 	if (vgaBitsPerPixel == 24)
 		Base *= 3;
 
-	/* Wait for vertical retrace */
-	while (!(inb(vgaIOBase + 0xA) & 0x08));
-	
+	/* find start of retrace */
+        while (inb(vgaIOBase + 0x0A) & 0x08);
+	while (!(inb(vgaIOBase + 0xA) & 0x08)); 
+	/* wait until we're past the start (fixseg.c in the DDK) */
+	count = INREG(MGAREG_VCOUNT) + 2;
+	while(INREG(MGAREG_VCOUNT) < count);
+
+
 	outw(vgaIOBase + 4, (Base & 0x00FF00) | 0x0C);
 	outw(vgaIOBase + 4, ((Base & 0x0000FF) << 8) | 0x0D);
 	outb(0x3DE, 0x00);
 	tmp = inb(0x3DF);
 	outb(0x3DF, (tmp & 0xF0) | ((Base & 0x0F0000) >> 16));
-
-#ifdef XFreeXDGA
-	if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
-	/* Wait for vertical retrace end */
-		while (!(inb(vgaIOBase + 0xA) & 0x08));
-		while (inb(vgaIOBase + 0xA) & 0x08);
-	}
-#endif
 }
 
 /*

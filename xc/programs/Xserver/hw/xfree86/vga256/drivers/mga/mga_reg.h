@@ -1,8 +1,8 @@
-/* $XConsortium: mga_reg.h /main/2 1996/10/25 10:33:21 kaleb $ */
+/* $XConsortium: mgareg.h /main/2 1996/10/25 10:33:21 kaleb $ */
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_reg.h,v 1.1.2.1 1997/05/09 09:09:11 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_reg.h,v 1.1.2.2 1998/02/01 16:05:13 robin Exp $ */
 
 
 
@@ -114,6 +114,8 @@
 #define	MGAREG_Reset		0x1e40
 
 #define	MGAREG_OPMODE		0x1e54
+
+#define MGAREG_CACHEFLUSH	0x1fff		/* mystique & poss mistral */
 
 /* OPMODE register additives */
 
@@ -263,6 +265,8 @@
 #define TVP3026_PIX_CLK_DATA	0x2d
 #define TVP3026_MEM_CLK_DATA	0x2e
 #define TVP3026_LOAD_CLK_DATA	0x2f
+#define TVP3026_KEY_OVRLY_LOW	0x30
+#define TVP3026_KEY_OVRLY_HI	0x31
 #define TVP3026_KEY_RED_LOW	0x32
 #define TVP3026_KEY_RED_HI	0x33
 #define TVP3026_KEY_GREEN_LOW	0x34

@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.5 1997/07/06 07:27:59 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.8 1998/02/08 11:19:24 dawes Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -102,6 +102,12 @@ XCOMM the platform-specific parameters - edit site.def to change
 
 /* the following are needed before we can include Imake.rules */
 
+#ifndef HasVarDirectory
+#define HasVarDirectory		NO
+#endif
+#ifndef HasSymLinks
+#define HasSymLinks		YES
+#endif
 #ifndef SystemV
 #define SystemV			NO	/* SYSV (R3) */
 #endif
@@ -165,6 +171,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #endif
 #ifndef OSMinorVersion
 #define OSMinorVersion          0
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion          0
 #endif
 #ifndef UnalignedReferencesAllowed
 #define UnalignedReferencesAllowed NO	/* if arbitrary deref is okay */
@@ -235,6 +244,12 @@ XCOMM the platform-specific parameters - edit site.def to change
 #else
 #define HasVFork		YES
 #endif
+#endif
+#ifndef HasSetUserContext
+#define HasSetUserContext	NO
+#endif
+#ifndef HasLibCrypt
+#define HasLibCrypt		NO
 #endif
 #ifndef HasPutenv
 #define HasPutenv		NO	/* assume not */
@@ -738,9 +753,6 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef CpCmd
 #define CpCmd cp
-#endif
-#ifndef HasSymLinks
-#define HasSymLinks YES
 #endif
 #ifndef LnCmd /* can use cp instead of ln if necessary */
 #if HasSymLinks

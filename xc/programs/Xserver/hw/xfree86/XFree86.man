@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.36.2.6 1997/07/26 09:21:14 dawes Exp $ 
-.TH XFree86 1 "Version 3.3.1"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.36.2.8 1998/02/26 13:58:55 dawes Exp $ 
+.TH XFree86 1 "Version 3.3.2"  "XFree86"
 .SH NAME
 XFree86 - X11R6 for UNIX on x86 platforms
 .SH DESCRIPTION
@@ -16,13 +16,17 @@ operates under the following operating systems:
 .PP
 -- SVR3.2: SCO 3.2.2, 3.2.4, ISC 3.x, 4.x
 .br
--- SVR4.0: ESIX, Microport, Dell, UHC, Consensys, MST, ISC, AT&T, NCR
+-- SVR4.0: ESIX, Microport, Dell, UHC, Consensys, MST, ISC, AT&T, NCR, PANIX
 .br
 -- SVR4.2: Consensys, Univel (UnixWare)
 .br
--- Solaris (x86) 2.1, 2.4
+-- Solaris (x86) 2.1, 2.4, 2.5, 2.5.1, 2.6
 .br
--- FreeBSD 1.1.5, 2.0, 2.0.5, NetBSD 1.0 (i386 port only)
+-- FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2, 2.2.1, 2.2.2, 2.2.5, 2.2.6, 3.0-current
+.br
+-- NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3 (i386 port only)
+.br
+-- OpenBSD 2.0, 2.1
 .br
 -- BSD/386 version 1.1 and BSD/OS 2.0
 .br
@@ -403,7 +407,7 @@ Ported to \fBOSF/1\fP.
 Philip Homburg,    \fIphilip@cs.vu.nl\fP
 Ported to \fBMinix-386vm\fP.
 .TP 8
-Thomas Mueller,    \fItm@systrix.de\fP
+Thomas Mueller,    \fItmueller@sysgo.de\fP
 Ported to \fBLynxOS\fP.
 .TP 8
 Jon Tombs,         \fItombs@XFree86.org\fP

@@ -24,6 +24,11 @@ related to the order in which registers are restored: the ARK driver first
 restores extended registers before restoring the standard registers for
 excactly this reason.
 
+* The code needs to be heavily reworked to fix all sorts of data type
+problems. The current code will certainly not run on an Alpha. The first
+step is to replace all hardware related variables by CARD8/CARD16/CARD32
+types.
+
 
 ET6000:
 
@@ -33,35 +38,9 @@ non-accelerated ("cfb") code does things. This needs to be fixed.
 
 ET-4000(W32):
 
-* The ET4000 can also do CPU-to-screen color expansion, and the code for
-that is present in the current 3.2A code, albeit disabled. At this point,
-this method sometimes causes a complete (hardware) system hang. This happens
-when the ET4000 expects more data than it is getting. Probably a programming
-error, either in the ET4000 code, or the XAA code. Someone needs to fix
-this: it is much faster than scanline-screen-to-screen color expansion. And
-it may also provide a useful workaround for the scanline color expansion
-problems. It should work: it works in the XF86_W32 server... The problems
-could have been due to a bug in XAA that also caused problems on other chips
-when using non-TE fonts. Since this bug is now fixed, CPU-to-screen color
-expansion may even work now.
-
-* There is a fundamental limitation in the W32 chips regarding color
-expansion: it _always_ expands colors from 1 to 8 bit. That means
-"out-of-the-box" for 8bpp, but trouble in 16/24/32 bpp modes. Maybe XAA
-needs to be extended to support chips that can only do 8bpp color expansion.
-This seems to be a very large change, with benefit for only a few chips.
-There is already support in XAA for doing acceleration in 24bpp using the
-8bpp acceleration primitives, so maybe someone needs to add the same for
-16bpp. Of course, this is useless unless we _have_ 16/24/32bpp first.
-Another option is to expand the bitmap in the Tseng acceleration code
-before rendering it. That's a lot easier to do.
-
-* The W32i doesn't work accelerated in the current Tseng driver. At least
- not correct. WARNING: trying it may cause a complete system hang. Prepare.
-
 * Hardware cursor support for the W32 is still lacking color support. We
 need to reserve color cells #0 and #255 to make this work. From discussions
-on the beta list, it seems the best solution is to allocate these cells
+on the development list, it seems the best solution is to allocate these cells
 read-write, and then use them for the HW cursor. We MUST however document
 that this will break some clients which depend on a fixed color in cell #0,
 and some others that rely on the presence of 256 color cells. It will also
@@ -73,31 +52,42 @@ cause cursor color problems when someone uses a local color map.
 All cards:
 
 * The accelerator on the Tseng devices is capable of much more. Especially
-the pattern support if not used most of the time: It can render a pattern in
+the pattern support is not used most of the time: It can render a pattern in
 just about every accelerated operation. This means patterned lines, bitblts,
-screencopies, etc. are possible.
+screencopies, etc. are possible. However, operations like these are very
+uncommon in normal server use, so the speed benefit would go largely unnoticed.
 
 
 ET4000:
 
 * support needs to be added for several clockchips and RAMDACs:
-	- CH8398 clockchip support (doesn't support programmable clockchip yet)
-	- 8-bit RAMDAC support for >8bpp modes: Sierra DACs and possibly others
+        - 8-bit RAMDAC support for >8bpp modes: Sierra DACs and possibly others
+        - AT&T 20C49x RAMDAC support is not correct.
 
 * SuperProbe could use an update. It doesn't detect some of the RAMDACs that
-are detected by the driver. It also doesn't have the enhanced ET6000 memory
-detection code that is in the driver (the 2.25 MB problem).
+are detected by the driver.
+
+* Several of the color expansion-related accelerations are still only 8bpp.
+It should be easy to use the same trick on those as on the standard color
+expand code (use intermediate buffer, expand data before blitting).
+
+* many of the operations that the W32 family can't support natively (e.g.
+FillRectSolid for 24bpp) can be performed using CPU-to-screen operations,
+feeding the correct (color) information through the ACL aperture.
 
 
-ET-6000:
+ET6000:
 
 * someone might want to look at how the bitBLT engine of the ET6000 is
 constructed, and come up with some fancy ways of abusing it. We're still
 only using a small part of it (I'm thinking about the compare map and the
 extensions to the MIX hardware compared to the ET4000).
 
+* Mclk support is still lacking (that would also allow MClk-dependent
+maximum bandwidth).
+
 * Apart from the things mentionned above, I think the ET6000 server is
-pretty complete. SOme optimisations could possibly be added. Like for
+pretty complete. Some optimisations could possibly be added. Like for
 example some assembler code for calculating a framebuffer address from X/Y
 coordinates. That would help to speed up small blits.
 
@@ -264,4 +254,4 @@ the off-screen scanline buffers and calling the Subsequent() function.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/README,v 1.1.2.2 1997/05/24 08:36:13 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/README,v 1.1.2.3 1998/02/01 16:05:04 robin Exp $

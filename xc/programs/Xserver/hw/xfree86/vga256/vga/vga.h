@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.23.2.4 1997/05/09 09:31:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.23.2.6 1998/02/01 16:05:16 robin Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -37,6 +37,7 @@
 #include "input.h"
 #include "scrnintstr.h"
 #include "colormapst.h"
+#include "xf86.h"
 
 #ifdef DPMSExtension
 #include "opaque.h"
@@ -287,6 +288,10 @@ extern void (* vgaSetReadWriteFunc)(
 	int
 #endif
 );
+
+
+extern Bool (*vgaBlankScreenFunc)(ScreenPtr pScreen,Bool On);
+
 extern int vgaMapSize;
 extern int vgaSegmentSize;
 extern int vgaSegmentShift;
@@ -351,13 +356,9 @@ typedef struct {
 
 #define OVERSCAN 0x11		/* Index of OverScan register */
 
-#ifdef MONOVGA
 #define BIT_PLANE 3		/* Which plane we write to in mono mode */
-#else
 #define BITS_PER_GUN 6
 #define COLORMAP_SIZE 256
-
-#endif
 
 #define DACDelay \
 	{ \
@@ -553,5 +554,11 @@ void vgaUninstallColormap(
     ColormapPtr pmap
 #endif
 );
+
+/* Blanks screen */
+Bool vgaBlankScreen(ScreenPtr pScreen,Bool On);
+
+/* Checks if color map already installed ? */
+int vgaCheckColorMap(ColormapPtr pmap);
 
 #endif /* _XF86_VGA_H_ */

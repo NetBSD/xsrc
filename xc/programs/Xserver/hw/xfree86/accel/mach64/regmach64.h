@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.2 1997/07/27 02:41:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.3 1998/01/18 10:35:24 hohndel Exp $ */
 /*
- * Copyright 1992,1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
+ * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
  * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee,
@@ -85,6 +85,8 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define CUR_OFFSET              0x0068  /* Dword offset 1A */
 #define CUR_HORZ_VERT_POSN      0x006C  /* Dword offset 1B */
 #define CUR_HORZ_VERT_OFF       0x0070  /* Dword offset 1C */
+
+#define HW_DEBUG                0x007C  /* Dword offset 1F */
 
 #define SCRATCH_REG0            0x0080  /* Dword offset 20 */
 #define SCRATCH_REG1            0x0084  /* Dword offset 21 */
@@ -268,9 +270,15 @@ extern unsigned ioCRTC_GEN_CNTL;
 
 /* Mach64 engine bit constants - these are typically ORed together */
 
+/* HW_DEBUG register constants */
+/* For RagePro only... */
+#define AUTO_FF_DIS             0x000001000
+#define AUTO_BLKWRT_DIS         0x000002000
+
 /* BUS_CNTL register constants */
 #define BUS_FIFO_ERR_ACK        0x00200000
 #define BUS_HOST_ERR_ACK        0x00800000
+#define BUS_APER_REG_DIS        0x00000010
 
 /* GEN_TEST_CNTL register constants */
 #define GEN_OVR_OUTPUT_EN       0x20
@@ -404,11 +412,13 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MEM_SIZE_4M		0x00000003
 #define MEM_SIZE_6M		0x00000004
 #define MEM_SIZE_8M		0x00000005
+#define MEM_SIZE_16M		0x00000006
 #define MEM_SIZE_ALIAS_GTB	0x0000000F
 #define MEM_SIZE_2M_GTB		0x00000003
 #define MEM_SIZE_4M_GTB		0x00000007
 #define MEM_SIZE_6M_GTB		0x00000009
 #define MEM_SIZE_8M_GTB		0x0000000B
+#define MEM_SIZE_16M_GTB	0x0000000F
 #define MEM_BNDRY               0x00030000
 #define MEM_BNDRY_0K            0x00000000
 #define MEM_BNDRY_256K          0x00010000
@@ -418,15 +428,19 @@ extern unsigned ioCRTC_GEN_CNTL;
 
 /* ATI PCI constants */
 #define PCI_ATI_VENDOR_ID	0x1002
-#define PCI_MACH64_GX		0x4758
-#define PCI_MACH64_CX		0x4358
-#define PCI_MACH64_CT		0x4354
-#define PCI_MACH64_ET		0x4554
-#define PCI_MACH64_VT		0x5654
-#define PCI_MACH64_VU		0x5655
-#define PCI_MACH64_GT		0x4754
-#define PCI_MACH64_GU		0x4755
-#define PCI_MACH64_GP		0x4750
+#define PCI_MACH64_GX_ID	0x4758
+#define PCI_MACH64_CX_ID	0x4358
+#define PCI_MACH64_CT_ID	0x4354
+#define PCI_MACH64_ET_ID	0x4554
+#define PCI_MACH64_VT_ID	0x5654
+#define PCI_MACH64_VU_ID	0x5655
+#define PCI_MACH64_GT_ID	0x4754
+#define PCI_MACH64_GU_ID	0x4755
+#define PCI_MACH64_GB_ID	0x4742
+#define PCI_MACH64_GD_ID	0x4744
+#define PCI_MACH64_GI_ID	0x4749
+#define PCI_MACH64_GP_ID	0x4750
+#define PCI_MACH64_GQ_ID	0x4751
 
 /* CONFIG_CHIP_ID register constants */
 #define CFG_CHIP_TYPE		0x0000FFFF
@@ -445,16 +459,12 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MACH64_VU_ID		0x5655
 #define MACH64_GT_ID		0x4754
 #define MACH64_GU_ID		0x4755
+#define MACH64_GB_ID		0x4742
+#define MACH64_GD_ID		0x4744
+#define MACH64_GI_ID		0x4749
 #define MACH64_GP_ID		0x4750
-
-/* Mach64 chip types */
-#define MACH64_UNKNOWN		0
-#define MACH64_GX		1
-#define MACH64_CX		2
-#define MACH64_CT		3
-#define MACH64_ET		4
-#define MACH64_VT		5
-#define MACH64_GT		6
+#define MACH64_GQ_ID		0x4751
+#define MACH64_UNKNOWN_ID	0x0000
 
 /* DST_CNTL register constants */
 #define DST_X_RIGHT_TO_LEFT     0

@@ -55,6 +55,7 @@ from the X Consortium.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.1.4.3 1998/01/25 06:11:09 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -265,7 +266,7 @@ _XlcAddLoader(proc, position)
 
 XLCd
 _XOpenLC(name)
-    char *name;
+    _Xconst char *name;
 {
     XLCd lcd;
     XlcLoaderList loader;

@@ -1,5 +1,5 @@
 /* $XConsortium: FSConnServ.c,v 1.27 95/04/05 19:58:15 kaleb Exp $ */
-/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.4 1996/01/05 13:10:17 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.4.4.1 1998/02/15 16:08:36 hohndel Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -62,7 +62,11 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef WIN32
 #define ECHECK(err) (WSAGetLastError() == err)
 #else
+#ifdef ISC
+#define ECHECK(err) ((errno == err) || errno == EAGAIN || errno == EWOULDBLOCK)
+#else
 #define ECHECK(err) (errno == err)
+#endif
 #endif
 
 #ifdef MINIX

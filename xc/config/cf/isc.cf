@@ -2,7 +2,7 @@ XCOMM $XConsortium: isc.cf /main/1 1996/10/31 14:45:18 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.11 1997/01/14 22:12:37 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.11.2.1 1998/02/15 16:08:33 hohndel Exp $
 
 #ifndef HasGcc2
 #define HasGcc2			YES
@@ -28,11 +28,48 @@ XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.11 1997/01/14 22:12:37 dawes 
 # endif
 #endif
 
+/* gcc 2.7.2 tested Optimization Flags                               */
+#ifndef DefaultGcc2i386Opt
+# define DefaultGcc2i386Opt	-m486 -O2 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
+/* -fomit-frame-pointer */ 
+#endif
 
-#if defined(UseChmod) || IscVersion < 400
-# define IscCompatDefines		-DUSE_CHMOD
+/* For a POSIXized build on Interactive maybe needed to use gcc2.7.2 */
+#ifndef UsePosix
+# define UsePosix		YES
+#endif
+
+/* ISC 4.1Mu 
+#define IscCompileVersion	410
+*/
+
+#if !defined(IscCompileVersion) && IscVersion < 410
+/* ISC 4.0 compatible */
+#define IscCompileVersion	400
+#endif
+
+#if IscCompileVersion == 400
+
+/* binaries which should run on ISC 4.0 or for the build on a real 4.0 System */
+# define UseChmod		YES
+
+/* for compatibility with ISC 4.0 - reported by Ami Fischmann            */
+/* troubles when linking with libX11.a build on ISC4.1 and used with 4.0 */
+# define HasSnprintf		NO
+# define UseXwctomb		YES
+
+#endif
+
+#if defined(UseXwctomb)
+# define XwctombDefine	-DUSE_XMBTOWC 
 #else
-# define IscCompatDefines
+# define XwctombDefine	
+#endif 
+
+#if defined(UseChmod)
+# define IscCompatDefines	XwctombDefine -DUSE_CHMOD
+#else
+# define IscCompatDefines	XwctombDefine
 #endif 
 
 #ifdef UsePosix
@@ -78,7 +115,11 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define SocketLibraries		-linet
 
 #ifndef GnuMallocLibrary
+#ifndef UseIscLd
 # define GnuMallocLibrary	-L/usr/local/lib -lgmalloc
+#else
+# define GnuMallocLibrary       /usr/local/lib/libgmalloc.a
+#endif
 #endif
 
 #ifndef MallocLibrary
@@ -100,9 +141,26 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 /* Don't know if this is necessary, but it avoids breaking the current setup */
 #define MallocLibraries		/**/
 
+#if UseXwctomb
+#define XawI18nDefines		-DUSE_XWCHAR_STRING
+#else
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#endif
 
+#if HasCbrt
+#define MathLibrary -loptm
+#endif
+
+#ifdef UseInlineMath
+#define InlineMathDefines	-DUseInlineMath
+#if !HasCbrt
+#define ServerExtraSysLibs	$(CBRT) MathLibrary
+#endif
+#endif
+
+#ifndef ServerExtraSysLibs
 #define ServerExtraSysLibs	$(CBRT)
+#endif
 
 #define ServerExtraDefines	SVR3mmapFlags XFree86ServerDefines
 
@@ -113,7 +171,10 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #endif
 
 #define HasShm			YES
+
+#ifndef HasSnprintf
 #define HasSnprintf		YES
+#endif
 
 #ifndef HasLibCrypt
 #define HasLibCrypt		YES
@@ -122,9 +183,9 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 #ifndef DefaultCDebugFlags
 # if HasGcc2
-#  define DefaultCDebugFlags DefaultGcc2i386Opt PosixDefines
+#  define DefaultCDebugFlags DefaultGcc2i386Opt PosixDefines InlineMathDefines
 # else
-#  define DefaultCDebugFlags -O PosixDefines
+#  define DefaultCDebugFlags -O PosixDefines InlineMathDefines
 # endif
 #endif
 

@@ -845,7 +845,7 @@ development/beta-testing team if you need to be working in these areas.
 
 <sect> Vendor Contact Information <p>
 <descrip>
-<tag/ATI Technologies (VGA-Wonder, Mach8, Mach32)
+<tag/ATI Technologies (VGA-Wonder, Mach8, Mach32, Mach64)
      33 Commerce Valley Drive East/
 Thornhill, Ontario <newline>
 Canada L3T 7N6 <newline>
@@ -904,7 +904,7 @@ Sunnyvale, CA  94086 <newline>
 </descrip>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13 1997/01/25 03:22:16 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13.2.1 1998/02/01 16:04:54 robin Exp $
 
 
 

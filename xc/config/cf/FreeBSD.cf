@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.7 1997/06/29 08:43:25 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.11 1998/03/01 01:08:59 dawes Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -70,6 +70,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 
+/* 2.2.2 and later has setusercontext() */
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion > 2) || \
+     (OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion >= 2)
+#define HasSetUserContext	YES
+#endif
+
 /* 
  * This doesn't work the way it does on every other system. On FreeBSD it's
  * only a "hint, not a demand", whatever that means. Note that this is not 
@@ -81,7 +87,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * e.g. in /usr/X11R6/lib, and you have added /usr/X11R6/lib to your 
  * ld.so.cache with ldconfig, then any programs linked with this "hint" will
  * find that ld.so ignores the "hint" at runtime and loads the libraries in 
- * the ld.so.cache, * i.e.the wrong ones, instead! Empirically we find that
+ * the ld.so.cache, i.e.the wrong ones, instead! Empirically we find that
  * the run-path is only used as a last resort to find the libraries, after
  * the LD_LIBRARY_PATH and ld.so.cache.
  *
@@ -121,8 +127,39 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 
-#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2) || \
+    (OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion > 2)
 /*
+ * FreeBSD 2.2.5 or later.
+ *
+ * Don't make any assumptions about the version of Tcl in the base OS.
+ * These settings assume that the tcl-7.6 and tk-4.2 packages have been
+ * installed.
+ *
+ * Note the static libs in some versions of the FreeBSD packages are
+ * broken.  The symptom of this is unresolved symbols when linking
+ * XF86Setup.  If you run into this problem, either build your own
+ * static libs from the standard Tcl and Tk source, or change the
+ * definitions of XF86SetupUsesStatic{Tcl,Tk}.  The latter is not
+ * recommended for binaries that are going to be redistributed.
+ */
+#ifndef TkLibName
+#define TkLibName		tk42
+#endif
+#ifndef TkIncDir
+#define TkIncDir		/usr/local/include/tk4.2
+#endif
+#ifndef TclLibName
+#define TclLibName		tcl76
+#endif
+#ifndef TclIncDir
+#define TclIncDir		/usr/local/include/tcl7.6
+#endif
+#else
+#if OSMajorVersion == 2 && OSMinorVersion == 2
+/*
+ * FreeBSD 2.2 prior to 2.2.5
+ *
  * Note: the tk-4.1 package for FreeBSD doesn't have the static lib, so
  * you'll have to build it yourself, or change the definition of
  * XF86SetupUsesStaticTk.
@@ -172,6 +209,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define TclLibName		tcl74
 #endif
 
+#endif
 #endif
 #endif
 
@@ -233,6 +271,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define DefaultUserPath		/bin:/usr/bin:/sbin:/usr/sbin:$(BINDIR):/usr/gnu/bin:/usr/local/bin
 #define DefaultSystemPath	/bin:/usr/bin:/sbin:/usr/sbin:$(BINDIR)
+#ifndef SystemManDirectory
+#define SystemManDirectory	/usr/share/man
+#endif
 
 #define InstKmemFlags	-g kmem -m 2755
 

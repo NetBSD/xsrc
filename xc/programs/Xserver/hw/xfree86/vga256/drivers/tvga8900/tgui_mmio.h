@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.3 1997/06/25 08:16:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.4 1998/01/18 10:35:39 hohndel Exp $ */
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
  *
@@ -61,8 +61,12 @@
 		*(unsigned long *)(tguiMMIOBase + GER_BCOLOUR) = c;
 #define TGUI_BPATCOL(c) \
 		*(unsigned long *)(tguiMMIOBase + GER_BPATCOL) = c;
+#define TGUI_DSTKEY(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_DSTKEY) = c;
 #define OLDTGUI_BCOLOUR(c) \
 		*(unsigned long *)(tguiMMIOBase + OLDGER_BCOLOUR) = c;
+#define TGUI_PENSTYLE(c) \
+		*(unsigned long *)(tguiMMIOBase +GER_PENSTYLE) = c;
 #define TGUI_DRAWFLAG(c) \
 		*(unsigned long *)(tguiMMIOBase + GER_DRAWFLAG) = c;
 #define OLDTGUI_STYLE(c) \
@@ -81,6 +85,18 @@
 		*(unsigned long *)(tguiMMIOBase + GER_SRC_XY) = XY_MERGE(x,y);
 #define TGUI_DEST_XY(x,y) \
 		*(unsigned long *)(tguiMMIOBase + GER_DEST_XY) = XY_MERGE(x,y);
+#define TGUI_DEST_LINEAR(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_DEST_LINEAR) = (c & 0xFFF) | ((c & 0xFFFFF000) << 4);
+#define TGUI_DEST_PITCH(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_DEST_PITCH) = c;
+#define TGUI_BBDST(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_BBDST) = c;
+#define TGUI_BBSRC(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_BBSRC) = c;
+#define TGUI_BBDSTSIZE(x,y) \
+		*(unsigned long *)(tguiMMIOBase + GER_BBDSTSIZE) = XY_MERGE(x,y);
+#define TGUI_BBSRCSIZE(x,y) \
+		*(unsigned long *)(tguiMMIOBase + GER_BBSRCSIZE) = XY_MERGE(x,y);
 #define OLDTGUI_DESTXY(x,y) \
 		*(unsigned long *)(tguiMMIOBase + OLDGER_DESTXY) = XY_MERGE(x,y);
 #define OLDTGUI_DESTLINEAR(c) \
@@ -91,16 +107,19 @@
 		*(unsigned long *)(tguiMMIOBase + GER_DSTCLIP_XY) = XY_MERGE(x,y);
 #define TGUI_PATLOC(addr) \
 		*(unsigned short *)(tguiMMIOBase +GER_PATLOC) = addr;
+#define TGUI_PLANEMASK(c) \
+		*(unsigned long *)(tguiMMIOBase + GER_PLANEMASK) = c;
 #define TGUI_OUTB(addr, c) \
-		*(unsigned char *)(tguiMMIOBase + addr) = c;
+		*(unsigned long *)(tguiMMIOBase + addr) = c;
 #define TGUI_COMMAND(c) \
 		{ \
-		if (TVGAchipset >= TGUI96xx) { \
-			TGUI_SRCCLIP_XY(0,0); \
-			TGUI_DSTCLIP_XY(4095,2047); \
-		} \
 		TGUI_OPERMODE(GE_OP); \
-		TGUISync(); \
+		if ((IsTGUI9660 || IsTGUI9680) && !ClipOn) { \
+			TGUI_SRCCLIP_XY(0,0);\
+			TGUI_DSTCLIP_XY(2047, 2047);\
+		}; \
+		if (!OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options)) \
+			TGUISync(); \
 		*(unsigned char *)(tguiMMIOBase + GER_COMMAND) = c; \
 		}
 #define OLDTGUI_COMMAND(c) \
@@ -146,11 +165,15 @@
 		outl(GER_BASE+GER_BCOLOUR, c);
 #define TGUI_BPATCOL(c) \
 		outl(GER_BASE+GER_BPATCOL, c);
+#define TGUI_DSTKEY(c) \
+		outl(GER_BASE+GER_DSTKEY, c);
 #define OLDTGUI_BCOLOUR(c) \
 		{	\
 			outb(GER_INDEX, OLDGER_BCOLOUR); \
 			outl(GER_BYTE0, c); \
 		}
+#define TGUI_PENSTYLE(c) \
+		outl(GER_BASE+GER_PENSTYLE, c);
 #define TGUI_DRAWFLAG(c) \
 		outl(GER_BASE+GER_DRAWFLAG, c);
 #define OLDTGUI_STYLE(c) \
@@ -181,6 +204,18 @@
 		outl(GER_BASE+GER_SRC_XY, XY_MERGE(x,y));
 #define TGUI_DEST_XY(x,y) \
 		outl(GER_BASE+GER_DEST_XY, XY_MERGE(x,y));
+#define TGUI_DEST_LINEAR(c) \
+		outl(GER_BASE+GER_DEST_LINEAR, (c & 0xFFF) | ((c & 0xFFFFF000) << 4));
+#define TGUI_DEST_PITCH(c) \
+		outl(GER_BASE+GER_DEST_PITCH, c);
+#define TGUI_BBDST(c) \
+		outl(GER_BASE+GER_BBDST, c);
+#define TGUI_BBSRC(c) \
+		outl(GER_BASE+GER_BBSRC, c);
+#define TGUI_BBDSTSIZE(x,y) \
+		outl(GER_BASE+GER_BBDSTSIZE, XY_MERGE(x,y));
+#define TGUI_BBSRCSIZE(x,y) \
+		outl(GER_BASE+GER_BBSRCSIZE, XY_MERGE(x,y));
 #define OLDTGUI_DESTXY(x,y) \
 		{	\
 			outb(GER_INDEX, OLDGER_DESTXY); \
@@ -197,16 +232,19 @@
 		outl(GER_BASE+GER_DSTCLIP_XY, XY_MERGE(x,y));
 #define TGUI_PATLOC(addr) \
 		outw(GER_BASE+GER_PATLOC, addr);
+#define TGUI_PLANEMASK(c) \
+		outl(GER_BASE+GER_PLANEMASK, c);
 #define TGUI_OUTB(addr, c) \
-		outw(GER_BASE+addr, c);
+		outb(GER_BASE+addr, c);
 #define TGUI_COMMAND(c) \
 		{ \
-		if (TVGAchipset >= TGUI96xx) { \
-			outl(GER_BASE+GER_SRCCLIP_XY,XY_MERGE(0,0)); \
-			outl(GER_BASE+GER_DSTCLIP_XY,XY_MERGE(4095,2047)); \
-		} \
 		outw(GER_BASE+GER_OPERMODE,GE_OP); \
-		TGUISync(); \
+		if ((IsTGUI9660 || IsTGUI9680) && !ClipOn) { \
+			TGUI_SRCCLIP_XY(0,0);\
+			TGUI_DSTCLIP_XY(vga256InfoRec.displayWidth - 1, 2047);\
+		}; \
+		if (OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options)) \
+			TGUISync(); \
 		outb(GER_BASE+GER_COMMAND, c); \
 		}
 #define OLDTGUI_COMMAND(c) \

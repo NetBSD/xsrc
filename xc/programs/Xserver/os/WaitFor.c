@@ -47,7 +47,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: WaitFor.c /main/55 1996/12/02 10:22:24 lehors $ */
-/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.11.2.2 1997/06/01 12:33:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.11.2.3 1998/01/31 14:23:33 hohndel Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:
@@ -259,11 +259,14 @@ WaitForSomething(pClientsReady)
 #ifdef DPMSExtension
 	    if (DPMSEnabled)
 	    {
-		if (standbyTimeout > 0 && timeout > standbyTimeout)
+		if (standbyTimeout > 0 
+		    && (timeout <= 0 || timeout > standbyTimeout))
 		    timeout = standbyTimeout;
-		if (suspendTimeout > 0 && timeout > suspendTimeout)
+		if (suspendTimeout > 0 
+		    && (timeout <= 0 || timeout > suspendTimeout))
 		    timeout = suspendTimeout;
-		if (offTimeout > 0 && timeout > offTimeout)
+		if (offTimeout > 0 
+		    && (timeout <= 0 || timeout > offTimeout))
 		    timeout = offTimeout;
 	    }
 #endif

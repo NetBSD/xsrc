@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.4.2.2 1997/05/10 07:03:04 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.4.2.3 1998/02/01 16:05:43 robin Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -643,7 +643,7 @@ forward_respond (from, fromlen, length)
 		    memmove( un_addr.sun_path, clientAddress.data, clientAddress.length);
 		    un_addr.sun_path[clientAddress.length] = '\0';
 		    client = (struct sockaddr *) &un_addr;
-#ifdef BSD44SOCKETS
+#if defined(BSD44SOCKETS) && !defined(Lynx)
 		    un_addr.sun_len = strlen(un_addr.sun_path);
 		    clientlen = SUN_LEN(&un_addr);
 #else

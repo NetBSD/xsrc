@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.11 1997/08/02 13:48:24 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.15 1998/02/27 15:28:57 dawes Exp $
 
 #Chips & Technologies
 
@@ -645,6 +645,32 @@ SEE S3 Trio64V2/GX (generic)
 NAME ELSA WINNER 1000/T2D
 SEE S3 Trio64V2/DX (generic)
 
+
+# S3 Aurora64V+
+
+NAME S3 Aurora64V+ (generic)
+CHIPSET S3 Aurora64V+
+SERVER S3
+NOCLOCKPROBE
+LINE     # Option "lcd_center"
+LINE     # Set_LCDClk  <pixel_clock_for_LCD>
+
+NAME S3 86CM65
+SEE S3 Aurora64V+ (generic)
+
+NAME SHARP 9080
+SEE S3 Aurora64V+ (generic)
+
+NAME SHARP 9090
+SEE S3 Aurora64V+ (generic)
+
+NAME COMPAQ Armada 7730MT
+SEE S3 Aurora64V+ (generic)
+
+NAME COMPAQ Armada 7380DMT
+SEE S3 Aurora64V+ (generic)
+
+
 # S3 964/968
 
 NAME S3 964 (generic)
@@ -953,7 +979,7 @@ LINE     #Clocks 130.2 119.5 79.4 31.2 110.0 65.2 74.9 71.3
 
 # S3 ViRGE,/DX,/GX and ViRGE/VX
 
-NAME S3 ViRGE (S3V server)
+NAME S3 ViRGE (old S3V server)
 CHIPSET S3 ViRGE
 SERVER S3V
 NOCLOCKPROBE
@@ -966,7 +992,6 @@ LINE      #Option "xaa_benchmark"
 LINE      #Option "fifo_moderate"
 LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
-LINE      #Option "hw_cursor"
 
 NAME S3 ViRGE/DX (generic)
 CHIPSET S3 ViRGE/DX
@@ -976,7 +1001,6 @@ LINE      #Option "xaa_benchmark"
 LINE      #Option "fifo_moderate"
 LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
-LINE      #Option "hw_cursor"
 
 NAME S3 ViRGE/GX (generic)
 CHIPSET S3 ViRGE/GX
@@ -986,7 +1010,29 @@ LINE      #Option "xaa_benchmark"
 LINE      #Option "fifo_moderate"
 LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
-LINE      #Option "hw_cursor"
+
+
+NAME S3 ViRGE/GX2 (generic)
+CHIPSET S3 ViRGE/GX2
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+
+NAME S3 ViRGE/MX (generic)
+CHIPSET S3 ViRGE/MX
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "lcd_center"
+LINE      #Set_LCDClk  <pixel_clock_for_LCD>
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+
+
 
 
 NAME S3 86C325 (generic)
@@ -997,6 +1043,12 @@ SEE S3 ViRGE/DX (generic)
 
 NAME S3 86C385 (generic)
 SEE S3 ViRGE/GX (generic)
+
+NAME S3 86C357 (generic)
+SEE S3 ViRGE/GX2 (generic)
+
+NAME S3 86C260 (generic)
+SEE S3 ViRGE/MX (generic)
 
 
 NAME ELSA Victory 3D
@@ -1050,6 +1102,12 @@ SEE S3 ViRGE (generic)
 NAME WinFast 3D S600
 SEE LeadTek WinFast 3D S600
 
+NAME LeadTek WinFast 3D S680
+SEE S3 ViRGE/GX2 (generic)
+
+NAME WinFast 3D S600
+SEE LeadTek WinFast 3D S680
+
 NAME miro miroMedia 3D
 SEE S3 ViRGE (generic)
 
@@ -1078,7 +1136,6 @@ LINE      #Option "xaa_benchmark"
 LINE      #Option "fifo_moderate"
 LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
-LINE      #Option "hw_cursor"
 
 
 NAME S3 86C988 (generic)
@@ -1104,6 +1161,19 @@ SEE S3 ViRGE/VX (generic)
 
 NAME MELCO WGP-VX8
 SEE S3 ViRGE/VX (generic)
+
+
+NAME Toshiba Tecra 750CDT
+SEE S3 ViRGE/MX (generic)
+
+NAME Toshiba Tecra 750DVD
+SEE S3 ViRGE/MX (generic)
+
+NAME Toshiba Tecra 540CDT
+SEE S3 ViRGE/MX (generic)
+
+NAME Toshiba Tecra 550CDT
+SEE S3 ViRGE/MX (generic)
 
 
 
@@ -1150,6 +1220,11 @@ LINE     #Option "power_saver"  # enable VESA DPMS
 LINE     #Option "pci_retry"    # faster, but problematic for ISA DMA
 LINE     #Option "hw_cursor"    # Use hardware cursor (see docs for limitations)
 LINE     #Option "xaa_no_color_exp"  # When text (or bitmap) is not rendered correctly
+
+NAME ET6100 (generic)
+CHIPSET ET6100
+SERVER XSuSE_Tseng
+NOCLOCKPROBE
 
 NAME Diamond Stealth 32
 CLOCKCHIP icd2061a
@@ -1328,6 +1403,10 @@ NAME ATI Ultra Plus
 CHIPSET ATI-Mach32
 SERVER Mach32
 
+NAME ATI Mach32
+CHIPSET ATI-Mach32
+SERVER Mach32
+
 NAME ATI Mach64
 CHIPSET ATI-Mach64
 SERVER Mach64
@@ -1372,6 +1451,21 @@ SERVER Mach64
 NOCLOCKPROBE
 
 NAME ATI Mach64 3D RAGE II+, Internal RAMDAC
+CHIPSET ATI-Mach64
+SERVER Mach64
+NOCLOCKPROBE
+
+NAME ATI Xpert@Play PCI and AGP, 3D Rage Pro
+CHIPSET ATI-Mach64
+SERVER Mach64
+NOCLOCKPROBE
+
+NAME ATI Xpert@Work, 3D Rage Pro
+CHIPSET ATI-Mach64
+SERVER Mach64
+NOCLOCKPROBE
+
+NAME ATI Pro Turbo+PC2TV, 3D Rage II+DVD
 CHIPSET ATI-Mach64
 SERVER Mach64
 NOCLOCKPROBE
@@ -1744,6 +1838,36 @@ CHIPSET TGUI9680
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME Trident TGUI9682 (generic)
+CHIPSET TGUI9682
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident TGUI9685 (generic)
+CHIPSET TGUI9685
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9382 (generic)
+CHIPSET Cyber9382
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9385 (generic)
+CHIPSET Cyber9385
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9388 (generic)
+CHIPSET Cyber9388
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9397 (generic)
+CHIPSET Cyber9397
+SERVER SVGA
+NOCLOCKPROBE
+
 # SiS
 
 NAME SiS SG86C201
@@ -1789,6 +1913,11 @@ CHIPSET mga2164w
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME Matrox Millennium II AGP
+CHIPSET mga2164w AGP
+SERVER SVGA
+NOCLOCKPROBE
+
 NAME Matrox Mystique
 CHIPSET mga1064sg
 SERVER SVGA
@@ -1800,6 +1929,42 @@ NAME Diamond Edge 3D
 CHIPSET nv1
 SERVER SVGA
 NOCLOCKPROBE
+
+NAME RIVA128
+CHIPSET RIVA128
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME ELSA VICTORY ERAZOR
+SEE RIVA128
+
+NAME Diamond Viper 330
+SEE RIVA128
+
+NAME STB Velocity 128
+SEE RIVA128
+
+NAME ASUS 3Dexplorer
+SEE RIVA128
+
+# Alliance Semiconductor
+
+NAME Diamond Stealth Video 2500
+CHIPSET Alliance AT24 
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME AT3D
+CHIPSET Alliance AT3D
+SERVER SVGA
+NOCLOCKPROBE
+LINE #Option "no_accel"
+
+NAME AT25
+SEE AT3D
+
+NAME Hercules Stingray 128 3D
+SEE AT3D
 
 # Misc
 
@@ -1817,11 +1982,6 @@ SEE Cirrus Logic GD5464
 
 NAME Jaton Video-58P
 SEE ET6000 (generic)
-
-NAME Diamond Stealth Video 2500
-CHIPSET Alliance AT24 
-SERVER SVGA
-NOCLOCKPROBE
 
 NAME Rendition Verite 1000
 CHIPSET Verite 1000

@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.3 1997/07/26 06:30:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.4 1998/01/12 03:02:09 robin Exp $ */
 
 #include "servermd.h"
 
@@ -52,7 +52,7 @@ extern pointer vgaBase;
 extern pointer i128VideoMem;
 extern struct i128mem i128mem;
 
-extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed, xf86Verbose;
+extern Bool xf86Exiting, xf86Resetting;
 
 static Bool AlreadyInited = FALSE;
 static Bool i128ModeSwitched = FALSE;
@@ -265,10 +265,11 @@ i128SaveScreen(pScreen, on)
       /* the server is running on the current vt */
       /* so just go for it */
 
-      if (on)
-         i128mem.rbase_g[0x58/4] |= 0x40;
-      else
-         i128mem.rbase_g[0x58/4] &= ~0x40;
+      if (on) {
+         i128mem.rbase_g[CRT_1CON] |= 0x40;				MB;
+      } else {
+         i128mem.rbase_g[CRT_1CON] &= ~0x40;				MB;
+      }
    }
    return (TRUE);
 }
@@ -320,7 +321,7 @@ i128AdjustFrame(int x, int y)
       x  = i128DisplayWidth - i128HDisplay;
 
    Base = ((y*i128DisplayWidth + x) * (i128InfoRec.bitsPerPixel/8));
-   i128mem.rbase_g[DB_ADR] = (Base & I128_PAN_MASK) + i128DisplayOffset;
+   i128mem.rbase_g[DB_ADR] = (Base & I128_PAN_MASK) + i128DisplayOffset; MB;
 
    /* now warp the cursor after the screen move */
    i128AdjustCursorXPos = Base - (Base & I128_PAN_MASK);

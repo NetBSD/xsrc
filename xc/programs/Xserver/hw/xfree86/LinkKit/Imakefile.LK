@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile.LK /main/11 1996/10/25 21:18:33 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.39.2.3 1997/05/12 12:52:17 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.39.2.4 1998/02/15 16:08:49 hohndel Exp $
 /*
  * Server Makefile for LinkKit
  */
@@ -654,6 +654,48 @@ SetUIDServerTarget(XF98_TGUI,$(XF98TGUIUBDIRS),$(XF98TGUIOBJS),$(XF98TGUILIBS),$
 #endif	/* XF98TGUIServer */
 
 
+#if XF98MGAServer
+XCOMM
+XCOMM XFree98 Matrox Millennium/Mystique Server
+XCOMM
+INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
+DDXDIR1 = $(XF98VGADRIVERSRC)
+XF98MGAUBDIRS = $(XF98VGADRIVERSRC)
+XF98MGAOBJS = XF86_SVGA.o mgaConf.o $(XAAOBJS)
+XF98MGALIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivermga) $(XAALIBS) \
+	       $(XF98DRIVERSRC)/LibraryTargetName(mga) $(XF98LIBS) CFBLibs
+XF98MGASYSLIBS = $(SYSLIBS)
+XF98VGADRIVERS = XF98SvgaDrivers
+ConfigTargetNoDepend(mgaConf,$(ICONFIGFILES),cmga.sh,mga)
+XF86_SVGA.o: XF86_SVGA.c $(ICONFIGFILES)
+SetUIDServerTarget(XF98_MGA,$(XF98MGAUBDIRS),$(XF98MGAOBJS),$(XF98MGALIBS),$(XF98MGASYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF98_MGA
+#endif
+#endif	/* XF98MGAServer */
+
+
+#if XF98SVGAServer
+XCOMM
+XCOMM XFree98 Cirrus Logic CLGD7555 Server
+XCOMM
+INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
+DDXDIR1 = $(XF98VGADRIVERSRC)
+XF98SVGAUBDIRS = $(XF98VGADRIVERSRC)
+XF98SVGAOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98SVGALIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driversvga) $(XAALIBS) \
+	       $(XF98DRIVERSRC)/LibraryTargetName(vga256) $(XF98LIBS) CFBLibs
+XF98SVGASYSLIBS = $(SYSLIBS)
+XF98VGADRIVERS = XF98SvgaDrivers
+ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.sh,cirrus)
+XF86_SVGA.o: XF86_SVGA.c $(ICONFIGFILES)
+SetUIDServerTarget(XF98_SVGA,$(XF98SVGAUBDIRS),$(XF98SVGAOBJS),$(XF98SVGALIBS),$(XF98SVGASYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF98_SVGA
+#endif
+#endif	/* XF98SVGAServer */
+
+
 #if XF98EGCServer
 XCOMM
 XCOMM XFree98 EGC Server
@@ -886,7 +928,11 @@ install::
 #endif
 
 /* Only these servers have subdirs */
-#if XF86SVGAServer || XF86MonoServer || XF86VGA16Server || XF86S3Server || XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || XF98NECS3Server || XF98PWSKBServer || XF98PWLBServer || XF98GA968Server
+#if XF86SVGAServer || XF86MonoServer || XF86VGA16Server || XF86S3Server || \
+    XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
+    XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
+    XF98MGAServer || XF98SVGAServer || XF98NECS3Server || XF98PWSKBServer || \
+    XF98PWLBServer || XF98GA968Server
 
 #define IHaveSubdirs
 

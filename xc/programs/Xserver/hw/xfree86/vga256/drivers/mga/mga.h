@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.3 1997/07/26 06:30:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.4 1998/02/01 16:05:10 robin Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -18,6 +18,7 @@
 #define mb() __asm__ __volatile__("mb": : :"memory")
 #define INREG8(addr) xf86ReadSparse8(MGAMMIOBase, (addr))
 #define INREG16(addr) xf86ReadSparse16(MGAMMIOBase, (addr))
+#define INREG(addr) xf86ReadSparse32(MGAMMIOBase, (addr))
 #define OUTREG8(addr,val) do { xf86WriteSparse8((val),MGAMMIOBase,(addr)); \
 				mb();} while(0)
 #define OUTREG16(addr,val) do { xf86WriteSparse16((val),MGAMMIOBase,(addr)); \
@@ -27,6 +28,7 @@
 #else /* __alpha__ */
 #define INREG8(addr) *(volatile CARD8 *)(MGAMMIOBase + (addr))
 #define INREG16(addr) *(volatile CARD16 *)(MGAMMIOBase + (addr))
+#define INREG(addr) *(volatile CARD32 *)(MGAMMIOBase + (addr))
 #define OUTREG8(addr, val) *(volatile CARD8 *)(MGAMMIOBase + (addr)) = (val)
 #define OUTREG16(addr, val) *(volatile CARD16 *)(MGAMMIOBase + (addr)) = (val)
 #define OUTREG(addr, val) *(volatile CARD32 *)(MGAMMIOBase + (addr)) = (val)
@@ -39,14 +41,14 @@
 
 typedef struct {
     Bool	isHwCursor;
-    pointer	(*RealizeCursor)();
-    void	(*LoadCursor)();
-    void	(*QueryCursorSize)();
-    Bool	(*CursorState)();
-    void	(*CursorOn)();
-    void	(*CursorOff)();
-    void	(*MoveCursor)();
-    void	(*RecolorCursor)();
+    int		CursorMaxWidth;
+    int 	CursorMaxHeight;
+    int		CursorFlags;
+    void	(*LoadCursorImage)();
+    void	(*ShowCursor)();
+    void	(*HideCursor)();
+    void	(*SetCursorPosition)();
+    void	(*SetCursorColors)();
     long	maxPixelClock;
     long	MemoryClock;
 } MGARamdacRec;
@@ -60,6 +62,17 @@ extern int MGABppShft;
 extern int MGAusefbitblt;
 extern int MGAydstorg;
 extern unsigned char *MGAMMIOBase;
+
+extern void Mga8AccelInit();
+extern void Mga16AccelInit();
+extern void Mga24AccelInit();
+extern void Mga32AccelInit();
+extern void MGAStormAccelInit();
+extern void MGAStormSync();
+extern void MGAStormEngineInit();
+extern void MGA3026RamdacInit();
+extern void MGA1064RamdacInit();
+
 #ifdef __alpha__
 extern unsigned char *MGAMMIOBaseDENSE;
 #endif
@@ -76,10 +89,7 @@ extern unsigned char *MGAMMIOBaseDENSE;
 #define WAITUNTILFINISHED()	MGAWAITFREE()
 #define SETBACKGROUNDCOLOR(col)	OUTREG(MGAREG_BCOL, (col))
 #define SETFOREGROUNDCOLOR(col)	OUTREG(MGAREG_FCOL, (col))
-#define SETRASTEROP(rop)	mga_cmd |= (((rop & 1)==1)*8 | \
-					    ((rop & 2)==2)*4 | \
-					    ((rop & 4)==4)*2 | \
-					    ((rop & 8)==8)) << 16;
+#define SETRASTEROP(rop)	mga_cmd |= MGARop[rop]
 #define SETWRITEPLANEMASK(pm)	OUTREG(MGAREG_PLNWT, (pm))
 #define SETBLTXYDIR(x,y)	OUTREG(MGAREG_SGN, ((-x+1)>>1)+4*((-y+1)>>1))
 
