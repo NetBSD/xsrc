@@ -497,17 +497,18 @@ InstallManPageAliasesBase(file,destdir,aliases)
  */
 #ifdef SparcArchitecture
 #ifndef Xsun24Server
-#define Xsun24Server	NO
+#define Xsun24Server	YES
 #endif
 #ifndef XsunServer
 #define XsunServer	YES
 #endif
 #ifndef XsunMonoServer
-#define XsunMonoServer	YES
+#define XsunMonoServer	NO	/* XXX: does not link */
 #endif
 #ifndef BuildScreenSaverLibrary
 #define BuildScreenSaverLibrary	YES
 #endif
+
 /*
  * XFree86 uses its own (more portable) database routines to speed up 
  * the RGB database lookups
