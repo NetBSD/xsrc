@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.19 2001/10/01 13:44:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.21 2002/04/04 14:05:44 eich Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -59,6 +59,11 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "xf86Pci.h"
 
 #include "xf86i2c.h"
+
+#ifdef XvExtension
+# include "xf86xv.h"
+# include "Xv.h"
+#endif /* XvExtension */
 
 /*
  * Driver data structures.
@@ -120,6 +125,10 @@ void neoRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 
 /* in neo_dga.c */
 Bool NEODGAInit(ScreenPtr pScreen);
+
+/* in neo_video.c */
+extern void NEOInitVideo(ScreenPtr pScreen);
+extern void NEOResetVideo(ScrnInfoPtr pScrn);
 
 /* shadow regs */
 
@@ -199,6 +208,8 @@ typedef struct neoRec
     unsigned long NeoMMIOAddr;
     unsigned long NeoLinearAddr;
     unsigned char* NeoMMIOBase;
+    unsigned long NeoMMIOAddr2;
+    unsigned char* NeoMMIOBase2;
     unsigned char* NeoFbBase;
     long NeoFbMapSize;
     unsigned long vgaIOBase;
@@ -249,6 +260,17 @@ typedef struct neoRec
     RefreshAreaFuncPtr refreshArea;
     void	(*PointerMoved)(int index, int x, int y);
     int rotate;
+    Bool showcache;
+#ifdef XvExtension
+    Bool video;
+    double videoHZoom;
+    double videoVZoom;
+    XF86VideoAdaptorPtr overlayAdaptor;
+    int overlay;
+    int overlay_offset;
+    int videoKey;
+    int interlace;
+#endif /* XvExtension */
 } NEORec, *NEOPtr;
 
 typedef struct {
@@ -264,18 +286,20 @@ typedef struct {
 #define GRAX	0x3CE
 
 /* vga IO functions */
-#define VGArCR(index) hwp->readCrtc(hwp,index)
-#define VGAwCR(index,val) hwp->writeCrtc(hwp,index,val)
-#define VGArGR(index) hwp->readGr(hwp,index)
-#define VGAwGR(index,val) hwp->writeGr(hwp,index,val)
+#define VGArCR(index)		(*hwp->readCrtc)(hwp, index)
+#define VGAwCR(index, val)	(*hwp->writeCrtc)(hwp, index, val)
+#define VGArGR(index)		(*hwp->readGr)(hwp, index)
+#define VGAwGR(index, val)	(*hwp->writeGr)(hwp, index, val)
+#define VGArSR(index)		(*hwp->readSeq)(hwp, index)
+#define VGAwSR(index, val)	(*hwp->writeSeq)(hwp, index, val)
 
 /* memory mapped register access macros */
-#define INREG8(addr) MMIO_IN8(nPtr->NeoMMIOBase, (addr))
-#define INREG16(addr) MMIO_IN16(nPtr->NeoMMIOBase, (addr))
-#define INREG(addr) MMIO_IN32(nPtr->NeoMMIOBase, (addr))
-#define OUTREG8(addr, val) MMIO_OUT8(nPtr->NeoMMIOBase, (addr), (val))
-#define OUTREG16(addr, val) MMIO_OUT16(nPtr->NeoMMIOBase, (addr), (val))
-#define OUTREG(addr, val) MMIO_OUT32(nPtr->NeoMMIOBase, (addr), (val))
+#define INREG8(addr)		MMIO_IN8(nPtr->NeoMMIOBase, addr)
+#define INREG16(addr)		MMIO_IN16(nPtr->NeoMMIOBase, addr)
+#define INREG(addr)		MMIO_IN32(nPtr->NeoMMIOBase, addr)
+#define OUTREG8(addr, val)	MMIO_OUT8(nPtr->NeoMMIOBase, addr, val)
+#define OUTREG16(addr, val)	MMIO_OUT16(nPtr->NeoMMIOBase, addr, val)
+#define OUTREG(addr, val)	MMIO_OUT32(nPtr->NeoMMIOBase, addr, val)
 
 /* This swizzle macro is to support the manipulation of cursor masks when
  * the sprite moves off the left edge of the display.  This code is
