@@ -58,6 +58,10 @@
 #include "xf86xv.h"
 #include "Xv.h"
 
+/* DPMS */
+#define DPMS_SERVER
+#include "extensions/dpms.h"
+
 #define VERSION			4000
 #define NEWPORT_NAME		"NEWPORT"
 #define NEWPORT_DRIVER_NAME	"newport"
@@ -84,6 +88,7 @@ static Bool NewportFreeRec(ScrnInfoPtr pScrn);
 static Bool NewportMapRegs(ScrnInfoPtr pScrn);
 static void NewportUnmapRegs(ScrnInfoPtr pScrn);
 static Bool NewportProbeCardInfo(ScrnInfoPtr pScrn);
+static void NewportDisplayPowerManagementSet(ScrnInfoPtr, int, int);
 /* ------------------------------------------------------------------ */
 
 DriverRec NEWPORT = {
@@ -595,6 +600,10 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	pNewport->CloseScreen = pScreen->CloseScreen;
 	pScreen->CloseScreen = NewportCloseScreen;
 
+	if(xf86DPMSInit(pScreen, NewportDisplayPowerManagementSet, 0) == FALSE)
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "DPMS initialization failed!\n");
+
+
 	if (serverGeneration == 1) {
 		xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 	}
@@ -664,6 +673,39 @@ NewportSaveScreen(ScreenPtr pScreen, int mode)
 		pNewport->vc2ctrl &= ~VC2_CTRL_EDISP;           
 	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->vc2ctrl);
 	return TRUE;
+}
+
+static void
+NewportDisplayPowerManagementSet(ScrnInfoPtr pScrn, int Mode, int flags)
+{
+	NewportPtr pNewport;
+	NewportRegsPtr pNewportRegs;
+	char modestr[][40] = { "On","Standby","Suspend","Off" };
+
+	pNewport = NEWPORTPTR(pScrn);
+	pNewportRegs = NEWPORTPTR(pScrn)->pNewportRegs;
+
+	switch (Mode) {
+		case DPMSModeOn:
+			/* Screen: On; HSync: On, VSync: On */
+			pNewport->vc2ctrl |= VC2_CTRL_EDISP;            
+			NewportVc2Set(  pNewportRegs, VC2_IREG_CONTROL,
+					pNewport->vc2ctrl);
+			break;
+		case DPMSModeStandby:
+		case DPMSModeSuspend:
+		case DPMSModeOff:
+			pNewport->vc2ctrl &= ~VC2_CTRL_EDISP;           
+			NewportVc2Set(  pNewportRegs, VC2_IREG_CONTROL,
+					pNewport->vc2ctrl);
+			break;
+		default:
+			xf86ErrorFVerb(1, "Invalid PowerManagementMode %d passed to NewportDisplay PowerManagementSet\n", Mode);
+			break;
+	}
+
+	xf86ErrorFVerb(1, "Power Manag: set:%s\n", modestr[Mode]);
+
 }
 
 
