@@ -52,10 +52,16 @@ set PnpMouseTypes [list \
 set ExtraMouseTypes [list \
 	"SysMouse" \
 ]
+
 #define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types \
 			$PnpMouseTypes $ExtraMouseTypes
 #elif defined(__NetBSD__)
-#define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $PnpMouseTypes
+set ExtraMouseTypes [list \
+	"wsmouse" \
+]
+
+#define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $ExtraMouseTypes \
+			$PnpMouseTypes 
 #elif defined(__OpenBSD__)
 #define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types \
 			$PnpMouseTypes

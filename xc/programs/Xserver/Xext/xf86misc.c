@@ -349,7 +349,8 @@ ProcXF86MiscSetMouseSettings(client)
 	    && stuff->mousetype != MTYPE_GLIDEPOINTPS2
 	    && stuff->mousetype != MTYPE_NETPS2
 	    && stuff->mousetype != MTYPE_NETSCROLLPS2
-	    && stuff->mousetype != MTYPE_SYSMOUSE)
+	    && stuff->mousetype != MTYPE_SYSMOUSE
+	    && stuff->mousetype != MTYPE_WSMOUSE)
     {
         if (stuff->baudrate < 1200)
 	    return miscErrorBase + XF86MiscBadMouseBaudRate;

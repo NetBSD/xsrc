@@ -516,7 +516,7 @@ static char *msetypes[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		"Logitech", "BusMouse", "Mouseman", "PS/2", "MMHitTab",
 		"GlidePoint", "IntelliMouse", "ThinkingMouse", "IMPS/2",
 		"ThinkingMousePS/2", "MouseManPlusPS/2", "GlidePointPS/2",
-		"NetMousePS/2", "NetScrollPS/2", "SysMouse", "Auto", };
+		"NetMousePS/2", "NetScrollPS/2", "SysMouse", "wsmouse", "Auto", };
 
 
 int

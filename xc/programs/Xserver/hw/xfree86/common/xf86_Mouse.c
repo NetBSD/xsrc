@@ -131,8 +131,6 @@ Bool xf86SupportedMouseTypes[] =
 	FALSE,	/* auto */
 #endif
 	TRUE,	/* ACECAD */
-	FALSE,	/* xque */
-	FALSE,	/* osmouse */
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
 	TRUE,	/* wsmouse */
 #else
@@ -231,8 +229,6 @@ static unsigned char proto[][7] = {
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* sysmouse */
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* dummy entry for auto - used only to fill space */
   {  0x80,   0x80, 0x80,   0x00, 3,    0x00,   0xff },  /* ACECAD */
-  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* xque */
-  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* osmouse */
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
   {  0x00,   0x00, 0x00,   0x00, sizeof(struct wscons_event),
      				       0x00,   0x00 },  /* wsmouse */
