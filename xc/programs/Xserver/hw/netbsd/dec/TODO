@@ -1,10 +1,4 @@
-$NetBSD: TODO,v 1.3 2002/02/26 12:34:53 ad Exp $
-
-Things that need to be done:
-
-- Unmap registers before core-dump.
-
-Things that are optional:
+$NetBSD: TODO,v 1.4 2002/09/13 17:33:26 ad Exp $
 
 - More SFB acceleration.
 - Figure out why SFB hardware cursor refuses to display.
