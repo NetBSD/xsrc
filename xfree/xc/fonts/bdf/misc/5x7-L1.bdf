@@ -3,7 +3,7 @@ COMMENT AUTOMATICALLY GENERATED FILE. DO NOT EDIT!
 COMMENT Generated with 'ucs2any.pl 5x7.bdf ../../../fonts/util/map-ISO8859-1 ISO8859-1'
 COMMENT from an ISO10646-1 encoded source BDF font.
 COMMENT ucs2any.pl by Markus Kuhn <mkuhn@acm.org>, 2000.
-COMMENT Id: 5x7.bdf,v 1.34 2001-04-03 13:22:08+01 mgk25 Exp mgk25 $
+COMMENT Id: 5x7.bdf,v 1.35 2001-07-19 12:09:22+01 mgk25 Exp mgk25 $
 COMMENT Send bug reports to Markus Kuhn <mkuhn@acm.org>
 FONT -Misc-Fixed-Medium-R-Normal--7-70-75-75-C-50-ISO8859-1
 SIZE 7 75 75

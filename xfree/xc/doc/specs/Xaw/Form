@@ -40,7 +40,7 @@ be clipped by the right and bottom edges of the Form.
 .NH 3
 Resources
 .LP
-When creating an Form widget instance, the following resources are
+When creating a Form widget instance, the following resources are
 retrieved from the argument list or from the resource database:
 .LP
 .IN "Form widget" "resources"

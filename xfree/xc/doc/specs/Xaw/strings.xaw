@@ -227,7 +227,7 @@ one.
 .el .IP label 1.5i
 Specifies the text string to be displayed in the widget's window
 if no bitmap is specified.  The default is the name of this widget.
-Irregardless of the value of \fBencoding\fP or \fBinternational\fP,
+Regardless of the value of \fBencoding\fP or \fBinternational\fP,
 a single newline character (1 byte) will cause a line break.
 ..
 .de Ll \" Label leftBitmap
@@ -670,7 +670,7 @@ internal memory, but may be used in place by setting the
 When the \fBstring\fP resource is queried, using \fBXtGetValues\fP, and
 \fBuseStringInPlace\fP is false, the value returned is valid until
 the next time the \fBstring\fP resource is queried, or until the application 
-writer calls \fBXawAsciiSrcFreeString\fP.  If \fBuseStringInPlace\fP is
+writer calls \fBXawAsciiSourceFreeString\fP.  If \fBuseStringInPlace\fP is
 true, a pointer to the actual string is returned.  See also section 5.6.
 ..
 .de Ot \" AsciiSrc type

@@ -25,7 +25,7 @@ Source Name	textSource
 .sp 1
 .LP
 For the ease of internationalization, the AsciiText widget class name has not
-been changed, although it is actually able support non-ASCII locales.
+been changed, although it is actually able to support non-ASCII locales.
 The AsciiText widget is really a collection of smaller parts.  It
 includes the Text widget itself, a ``Source'' (which supports memory management),
 and a ``Sink'' (which handles the display).  There are currently two supported

@@ -47,7 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.14 2001/12/14 19:53:24 dawes Exp $ */
+/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.15 2002/11/25 14:04:49 eich Exp $ */
 
 
 #define YYMAXDEPTH 10000
@@ -144,9 +144,9 @@ num_ch: NUM_CH INTEGER { set_num_ch($2);};
 fontprops : /* empty */ | properties;
 
 properties : PROPERTIES INTEGER { init_properties ($2); } property_list
-        { check_num_props (); }
+        { check_num_props (); };
 
-property_list : /* empty */ | single_property property_list
+property_list : /* empty */ | single_property property_list;
 
 single_property : STRING STRING { add_property($1, $2); };
 
@@ -174,7 +174,7 @@ right : RIGHT REAL{ $$ = $2; };
 strokes :	/* empty */ | path strokes;
 
 path : closeflag n_pts { init_path($1, $2); } points
-	{ check_npts(); }
+	{ check_npts(); };
 
 points : 	/* empty */ | coord points;
 

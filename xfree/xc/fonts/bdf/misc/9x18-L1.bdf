@@ -3,7 +3,7 @@ COMMENT AUTOMATICALLY GENERATED FILE. DO NOT EDIT!
 COMMENT Generated with 'ucs2any.pl 9x18.bdf ../../../fonts/util/map-ISO8859-1 ISO8859-1'
 COMMENT from an ISO10646-1 encoded source BDF font.
 COMMENT ucs2any.pl by Markus Kuhn <mkuhn@acm.org>, 2000.
-COMMENT Id: 9x18.bdf,v 1.44 2001-04-03 13:27:23+01 mgk25 Exp mgk25 $
+COMMENT Id: 9x18.bdf,v 1.46 2002-04-06 19:48:26+01 mgk25 Exp mgk25 $
 COMMENT Send bug reports to Markus Kuhn <mkuhn@acm.org>
 FONT -Misc-Fixed-Medium-R-Normal--18-120-100-100-C-90-ISO8859-1
 SIZE 12 100 100
@@ -3467,13 +3467,13 @@ BITMAP
 0000
 0000
 0000
-0C00
-1200
-0E00
-1200
-0F00
+3000
+4800
+3800
+4800
+3C00
 0000
-1F00
+7C00
 0000
 0000
 0000
@@ -3866,13 +3866,13 @@ BITMAP
 0000
 0000
 0000
+0000
 3800
 4400
 4400
 3800
 0000
 7C00
-0000
 0000
 0000
 0000

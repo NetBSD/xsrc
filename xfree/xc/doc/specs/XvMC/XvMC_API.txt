@@ -528,15 +528,15 @@ typedef struct {
 
             Field structure:
 
-                vector[0][0][1:0] -> PMV[0][0][1:0]
-                vector[2][0][1:0] -> PMV[0][1][1:0]
+                PMV[0][0][1:0]  from same parity
+                PMV[0][1][1:0]  from opposite parity
 
             Frame structure:
  
-                vector[0][0][1:0] -> PMV[0][0][1:0]  top from top
-                vector[0][0][1:0] -> PMV[0][1][1:0]  bottom from bottom
-                vector[2][0][1:0] -> PMV[1][0][1:0]  top from bottom
-                vector[3][0][1:0] -> PMV[1][1][1:0]  bottom from top
+                PMV[0][0][1:0]  top from top
+                PMV[0][1][1:0]  bottom from bottom
+                PMV[1][0][1:0]  top from bottom
+                PMV[1][1][1:0]  bottom from top
 
 
     index -  The offset in units of (64 * sizeof(short)) from the start of

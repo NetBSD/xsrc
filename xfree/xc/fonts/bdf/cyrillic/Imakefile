@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/fonts/bdf/cyrillic/Imakefile,v 3.2 1999/05/03 13:11:59 dawes Exp $
+XCOMM $XFree86: xc/fonts/bdf/cyrillic/Imakefile,v 3.3 2002/12/15 01:48:56 dawes Exp $
 
 OBJS = FontObj(crox1c) FontObj(crox1cb) FontObj(crox1cbo) FontObj(crox1co) \
 	FontObj(crox1h) FontObj(crox1hb) FontObj(crox1hbo) FontObj(crox1ho) \
@@ -16,8 +16,13 @@ OBJS = FontObj(crox1c) FontObj(crox1cb) FontObj(crox1cbo) FontObj(crox1co) \
 	FontObj(crox6h) FontObj(crox6hb) FontObj(crox6hbo) FontObj(crox6ho) \
 	FontObj(crox6t) FontObj(crox6tb) FontObj(crox6tbo) FontObj(crox6to) \
 	FontObj(koi10x16b) FontObj(koi10x20) FontObj(koi12x24) \
-	FontObj(koi6x10) FontObj(koi6x13) FontObj(koi8x13) FontObj(koi9x15) \
-	FontObj(koinil2)
+	FontObj(koi12x24b) FontObj(koi5x8) FontObj(koi6x10) \
+	FontObj(koi6x13) FontObj(koi6x13b) FontObj(koi6x9) \
+	FontObj(koi7x14) FontObj(koi7x14b) FontObj(koi8x13) \
+	FontObj(koi8x16) FontObj(koi8x16b) FontObj(koi9x15) \
+	FontObj(koi9x15b) FontObj(koi9x18) FontObj(koi9x18b) \
+	FontObj(koinil2) FontObj(proof9x16) FontObj(screen8x16) \
+	FontObj(screen8x16b)
 
 FONTINSTDIR = $(FONTDIR)/cyrillic
 
@@ -86,11 +91,25 @@ FontTarget(crox6to)
 FontTarget(koi10x16b)
 FontTarget(koi10x20)
 FontTarget(koi12x24)
+FontTarget(koi12x24b)
+FontTarget(koi5x8)
 FontTarget(koi6x10)
 FontTarget(koi6x13)
+FontTarget(koi6x13b)
+FontTarget(koi6x9)
+FontTarget(koi7x14)
+FontTarget(koi7x14b)
 FontTarget(koi8x13)
+FontTarget(koi8x16)
+FontTarget(koi8x16b)
 FontTarget(koi9x15)
+FontTarget(koi9x15b)
+FontTarget(koi9x18)
+FontTarget(koi9x18b)
 FontTarget(koinil2)
+FontTarget(proof9x16)
+FontTarget(screen8x16)
+FontTarget(screen8x16b)
 
 InstallFonts($(FONTINSTDIR))
 InstallFontAliases($(FONTINSTDIR))

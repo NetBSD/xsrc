@@ -46,7 +46,7 @@ Toggle widgets may also be part of a ``radio group.''  A radio group is a
 .IN "Radio groups" ""
 .IN "Radio button" ""
 .IN "Toggle widget" "used in radio groups"
-list of at least two Toggle widget in which no more than one Toggle may 
+list of at least two Toggle widgets in which no more than one Toggle may 
 be set at
 any time.  A radio group is identified by the widget ID of any one of
 its members.  The convenience routine \fBXawToggleGetCurrent\fP will

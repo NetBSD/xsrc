@@ -12,7 +12,7 @@
 # a waste of storage capacity).
 #
 # Id: ucs2any.pl,v 1.12 2001-02-17 15:21:05+00 mgk25 Rel
-# $XFree86: xc/fonts/util/ucs2any.pl,v 1.4 2001/03/01 00:37:06 dawes Exp $
+# $XFree86: xc/fonts/util/ucs2any.pl,v 1.5 2002/10/12 16:06:42 herrb Exp $
 
 use strict 'subs';
 
@@ -89,7 +89,7 @@ sub combine_bbx {
 
 print <<End if $#ARGV < 0;
 
-Usage: ucs2any.pl [+d|-d] <source-name> { <mapping-file> <registry-encoding> }
+Usage: ucs2any [+d|-d] <source-name> { <mapping-file> <registry-encoding> }
 
 where
 
@@ -110,7 +110,7 @@ where
 
 Example:
 
-   ucs2any.pl 6x13.bdf 8859-1.TXT iso8859-1 8859-2.TXT iso8859-2
+   ucs2any 6x13.bdf 8859-1.TXT iso8859-1 8859-2.TXT iso8859-2
 
 will generate the files 6x13-iso8859-1.bdf and 6x13-iso8859-2.bdf
 

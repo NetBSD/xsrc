@@ -31,7 +31,7 @@ Text widget, and explains the functionality provided by each.
 .NH 3
 Resources
 .LP
-When creating an Text widget instance, the following resources are
+When creating a Text widget instance, the following resources are
 retrieved from the argument list or from the resource database:
 .LP
 .IN "Text widget" "resources"

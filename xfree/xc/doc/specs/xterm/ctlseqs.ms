@@ -5,10 +5,10 @@
 .\"
 .\"
 .\"
-.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.44 2002/01/05 21:55:11 dickey Exp $
+.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.48 2002/12/27 19:30:24 dickey Exp $
 .\"
 .\"
-.\" Copyright 1996,1997,1998,1999,2000,2001,2002 by Thomas E. Dickey
+.\" Copyright 1996-2001,2002 by Thomas E. Dickey
 .\"
 .\"                         All Rights Reserved
 .\"
@@ -128,9 +128,17 @@
 .[] AP \v'-1p'\s\nsAPC\s0\v'1p'
 .[] Bs \v'-1p'\s\nsBS\s0\v'1p'
 .[] Cs \v'-1p'\s\nsCSI\s0\v'1p'
+.[] S2 \v'-1p'\s\nsSS2\s0\v'1p'
 .[] S3 \v'-1p'\s\nsSS3\s0\v'1p'
+.[] SS \v'-1p'\s\nsSOS\s0\v'1p'
+.[] Eg \v'-1p'\s\nsEPA\s0\v'1p'
+.[] Sg \v'-1p'\s\nsSPA\s0\v'1p'
 .[] Dc \v'-1p'\s\nsDCS\s0\v'1p'
+.[] Ht \v'-1p'\s\nsHTS\s0\v'1p'
+.[] ID \v'-1p'\s\nsIND\s0\v'1p'
+.[] Nl \v'-1p'\s\nsNEL\s0\v'1p'
 .[] Os \v'-1p'\s\nsOSC\s0\v'1p'
+.[] RI \v'-1p'\s\nsRI\s0\v'1p'
 .[] PM \v'-1p'\s\nsPM\s0\v'1p'
 .[] ST \v'-1p'\s\nsST\s0\v'1p'
 .[] Ta \v'-1p'\*T\v'1p'
@@ -158,6 +166,9 @@
 .[] ) )
 .[] * *
 .[] + +
+.[] , ,
+.[] - -
+.[] . .
 .[] 0 0
 .[] 1 1
 .[] 2 2
@@ -209,7 +220,7 @@
 .[] & &
 .[] ^ ^
 .[] _ _
-.[] qu \'
+.[] qu \&'
 .[] ` \`
 .[] a a
 .[] b b
@@ -311,37 +322,37 @@ It generates 7-bit controls (by default) or 8-bit if S8C1T is enabled.
 The following pairs of 7-bit and 8-bit control characters are equivalent:
 .St
 .IP \\*(Es\\*D
-Index (IND: 0x84)
+Index (\*(ID is 0x84)
 .IP \\*(Es\\*E
-Next Line (NEL: 0x85)
+Next Line (\*(Nl is 0x85)
 .IP \\*(Es\\*H
-Tab Set (HTS: 0x88)
+Tab Set (\*(Ht is 0x88)
 .IP \\*(Es\\*M
-Reverse Index (RI: 0x8d)
+Reverse Index (\*(RI is 0x8d)
 .IP \\*(Es\\*N
-Single Shift Select of G2 Character Set (SS2: 0x8e): affects next character only
+Single Shift Select of G2 Character Set (\*(S2 is 0x8e): affects next character only
 .IP \\*(Es\\*O
-Single Shift Select of G3 Character Set (SS3: 0x8f): affects next character only
+Single Shift Select of G3 Character Set (\*(S3 is 0x8f): affects next character only
 .IP \\*(Es\\*P
-Device Control String (DCS: 0x90)
+Device Control String (\*(Dc is 0x90)
 .IP \\*(Es\\*V
-Start of Guarded Area (SPA: 0x96)
+Start of Guarded Area (\*(Sg is 0x96)
 .IP \\*(Es\\*W
-End of Guarded Area (EPA: 0x97)
-.IP \\*(Es\\(*X
-Start of String (SOS: 0x98)
+End of Guarded Area (\*(Eg is 0x97)
+.IP \\*(Es\\*(XX
+Start of String (\*(SS is 0x98)
 .IP \\*(Es\\*Z
-Return Terminal ID (DECID: 0x9a).  Obsolete form of \*(Cs\*c (DA).
+Return Terminal ID (DECID is 0x9a).  Obsolete form of \*(Cs\*c (DA).
 .IP \\*(Es\\*([[
-Control Sequence Introducer (CSI: 0x9b)
+Control Sequence Introducer (\*(Cs is 0x9b)
 .IP \\*(Es\\*(bS
-String Terminator (ST: 0x9c)
+String Terminator (\*(ST is 0x9c)
 .IP \\*(Es\\*(]]
-Operating System Command (OSC: 0x9d)
+Operating System Command (\*(Os is 0x9d)
 .IP \\*(Es\\*^
-Privacy Message (PM: 0x9e)
+Privacy Message (\*(PM is 0x9e)
 .IP \\*(Es\\*_
-Application Program Command (APC: 0x9f)
+Application Program Command (\*(AP is 0x9f)
 .Ed
 .sp
 .LP
@@ -380,7 +391,7 @@ Carriage Return (Ctrl-M)
 .
 .IP \\*(En
 Return Terminal Status (Ctrl-E).
-Default response is the terminal name, e.g., "xterm", but may be overridden
+Default response is an empty string, but may be overridden
 by a resource \fIanswerbackString\fP.
 .
 .IP \\*(Ff
@@ -421,13 +432,13 @@ Controls beginning with ESC (other than those where ESC is part of a 7-bit equiv
 8-bit controls (S8C1T).
 .
 .IP \\*(Es\\*(Sp\\*L
-Set ANSI conformance level 1 (vt100, 7-bit controls).
+Set ANSI conformance level 1 (VT100, 7-bit controls).
 .
 .IP \\*(Es\\*(Sp\\*M
-Set ANSI conformance level 2 (vt200).
+Set ANSI conformance level 2 (VT200).
 .
 .IP \\*(Es\\*(Sp\\*N
-Set ANSI conformance level 3 (vt300).
+Set ANSI conformance level 3 (VT300).
 .
 .IP \\*(Es\\*#\\*3
 DEC double-height line, top half (DECDHL)
@@ -523,7 +534,7 @@ Invoke the G1 Character Set as GR (LS1R).  Has no visible effect in \fIxterm\fP.
 .B
 Application Program-Control functions
 .IP \\*(AP\\*(Pt\\*s\\*(ST
-\fIxterm\fP implements no APC functions; \*(Pt is ignored.
+\fIxterm\fP implements no \*(AP functions; \*(Pt is ignored.
 \*(Pt need not be printable characters.
 .Ed
 .
@@ -581,7 +592,7 @@ The strings are encoded in hexadecimal (2 digits per character).
 .St
 .LP
 .B
-Functions using CSI, ordered by the final character(s)
+Functions using \*(Cs, ordered by the final character(s)
 .IP \\*(Cs\\*(Ps\\*s\\*@
 Insert \*(Ps (Blank) Character(s) (default = 1) (ICH)
 .
@@ -672,7 +683,7 @@ Repeat the preceding graphic character \*(Ps times (REP)
 .IP \\*(Cs\\*(Ps\\*s\\*c
 Send Device Attributes (Primary DA)
   \*(Ps = \*0, 1 or omitted \(-> request attributes from terminal.
-The response depends on the \fBdecTerminalId\fP resource setting.
+The response depends on the \fBdecTerminalID\fP resource setting.
   \(-> \*(Cs\*?\*1\*;\*2\*c (``VT100 with Advanced Video Option'')
   \(-> \*(Cs\*?\*1\*;\*0\*c (``VT101 with No Options'')
   \(-> \*(Cs\*?\*6\*c (``VT102'')
@@ -686,13 +697,15 @@ VT220 parameters do, telling the host what features the terminal supports:
   \(-> \*8 User-defined keys
   \(-> \*9 National replacement character sets
   \(-> \*1\*5 Technical characters
+  \(-> \*2\*2 ANSI color, e.g., VT525
+  \(-> \*2\*9 ANSI text locator (i.e., DEC Locator mode)
 .
 .IP \\*(Cs\\*>\\*(Ps\\*s\\*c
 Send Device Attributes (Secondary DA)
   \*(Ps = \*0, 1 or omitted \(-> request the terminal's identification code.
-The response depends on the \fBdecTerminalId\fP resource setting.
+The response depends on the \fBdecTerminalID\fP resource setting.
 It should apply only to VT220 and up, but \fIxterm\fP extends this to VT100.
-  \(-> \*(Cs\*(Pp\*s\*;\*(Pv\*s\*;\*(Pc\*s\*c
+  \(-> \*(Cs\*s\*>\*(Pp\*s\*;\*(Pv\*s\*;\*(Pc\*s\*c
 .br
 where \*(Pp denotes the terminal type
   \(-> \*0 (``VT100'')
@@ -853,12 +866,12 @@ Character Attributes (SGR)
   \*(Ps = \*4 \(-> Underlined
   \*(Ps = \*5 \(-> Blink (appears as Bold)
   \*(Ps = \*7 \(-> Inverse
-  \*(Ps = \*8 \(-> Invisible (hidden)
+  \*(Ps = \*8 \(-> Invisible, i.e., hidden (VT300)
   \*(Ps = \*2\*2 \(-> Normal (neither bold nor faint)
   \*(Ps = \*2\*4 \(-> Not underlined
   \*(Ps = \*2\*5 \(-> Steady (not blinking)
   \*(Ps = \*2\*7 \(-> Positive (not inverse)
-  \*(Ps = \*2\*8 \(-> Visible (not hidden)
+  \*(Ps = \*2\*8 \(-> Visible, i.e., not hidden (VT300)
   \*(Ps = \*3\*0 \(-> Set foreground color to Black
   \*(Ps = \*3\*1 \(-> Set foreground color to Red
   \*(Ps = \*3\*2 \(-> Set foreground color to Green
@@ -931,6 +944,9 @@ or
   \*(Ps = \*2\*6 \(-> Report Keyboard status as
 .br
 \*(Cs\*?\*2\*7\*s\*;\*s\*1\*s\*;\*s\*0\*s\*;\*s\*0\*s\*n (North American)
+.br
+The last two parameters apply to VT400 & up, and denote keyboard ready and LK01 respectively.
+  \*(Ps = \*5\*3 \(-> Report Locator status as
 .br
 \*(Cs\*?\*5\*3\*s\*n Locator available, if compiled-in, or
 .br
@@ -1019,6 +1035,17 @@ DECELR always cancels any prevous rectangle definition.
 .
 .IP \\*(Cs\\*(Ps\\*s\\*x
 Request Terminal Parameters (DECREQTPARM)
+.br
+if \*(Ps is a "0" (default) or "1", and \fBxterm\fR is emulating VT100,
+the control sequence elicits a response of the same form
+whose parameters describe the terminal:
+  \*(Ps \(-> the given \*(Ps incremented by 2.
+  \*1 \(-> no parity
+  \*1 \(-> eight bits
+  \*1 \*2 \*8 \(-> transmit 38.4k baud
+  \*1 \*2 \*8 \(-> receive 38.4k baud
+  \*1 \(-> clock multiplier
+  \*0 \(-> STP flags
 .
 .IP \\*(Cs\\*(Ps\\*s\\*;\\*(Pu\\*s\\*(qu\\*z
 Enable Locator Reporting (DECELR)
@@ -1107,18 +1134,45 @@ and window title.
   \*(Ps = \*2 \(-> Change Window Title to \*(Pt
   \*(Ps = \*3 \(-> Set X property on top-level window. \*(Pt should be in the form
 "\fIprop=value\fP", or just "\fIprop\fP" to delete the property
-  \*(Ps = \*4 ; \fIc ; name\fP \(-> Change Color #\fIc\fP to \fIcname\fP.  Any
-number of \fIc name\fP pairs may be given.
-  \*(Ps = \*1\*0 \(-> Change color names starting with text foreground to \*(Pt
-(a list of one or more color names or RGB specifications, separated by
-semicolon, up to eight, as per \fIXParseColor\fP).
-  \*(Ps = \*1\*1 \(-> Change colors starting with text background to \*(Pt
-  \*(Ps = \*1\*2 \(-> Change colors starting with text cursor to \*(Pt
-  \*(Ps = \*1\*3 \(-> Change colors starting with mouse foreground to \*(Pt
-  \*(Ps = \*1\*4 \(-> Change colors starting with mouse background to \*(Pt
-  \*(Ps = \*1\*5 \(-> Change colors starting with Tek foreground to \*(Pt
-  \*(Ps = \*1\*6 \(-> Change colors starting with Tek background to \*(Pt
-  \*(Ps = \*1\*7 \(-> Change colors starting with highlight to \*(Pt
+  \*(Ps = \*4 ; \fIc ; spec\fP \(-> Change Color Number \fIc\fP to
+the color specified by \fIspec\fP,
+i.e., a name or RGB specification as per \fIXParseColor\fP.
+Any number of \fIc name\fP pairs may be given.
+The color numbers correspond to the ANSI colors 0-7,
+their bright versions 8-15,
+and if supported, the remainder of the 88-color or 256-color table.
+.sp
+If a "?" is given rather than a name or RGB specification,
+xterm replies with a control sequence of the same form which can be used
+to set the corresponding color.
+Because more than one pair of color number and specification can
+be given in one control sequence, \fBxterm\fR can make more than one reply.
+.sp
+The 8 colors which may be set using \*1\*0 through \*1\*7 are
+denoted \fIdynamic colors\fR, since the corresponding control sequences
+were the first means for setting \fBxterm\fR's colors dynamically,
+i.e., after it was started.
+They are not the same as the ANSI colors.
+One or more parameters is expected for \*(Pt.
+Each succesive parameter changes the next color in the list.
+The value of \*(Ps tells the starting point in the list.
+The colors are specified by name or RGB specification as per \fIXParseColor\fP.
+.sp
+If a "?" is given rather than a name or RGB specification,
+xterm replies with a control sequence of the same form which can be used
+to set the corresponding dynamic color.
+Because more than one pair of color number and specification can
+be given in one control sequence, \fBxterm\fR can make more than one reply.
+.sp
+  \*(Ps = \*1\*0 \(-> Change vt100 text foreground color to \*(Pt
+  \*(Ps = \*1\*1 \(-> Change vt100 text background color to \*(Pt
+  \*(Ps = \*1\*2 \(-> Change text cursor color to \*(Pt
+  \*(Ps = \*1\*3 \(-> Change mouse foreground color to \*(Pt
+  \*(Ps = \*1\*4 \(-> Change mouse background color to \*(Pt
+  \*(Ps = \*1\*5 \(-> Change Tektronix foreground color to \*(Pt
+  \*(Ps = \*1\*6 \(-> Change Tektronix background color to \*(Pt
+  \*(Ps = \*1\*7 \(-> Change highlight color to \*(Pt
+.sp
   \*(Ps = \*4\*6 \(-> Change Log File to \*(Pt (normally disabled by a
 compile-time option)
   \*(Ps = \*5\*0 \(-> Set Font to \*(Pt
@@ -1133,7 +1187,7 @@ entry for relative, zero for absolute indexing).
 .B
 Privacy Message
 .IP \\*(PM\\*(Pt\\*s\\*(ST
-\fIxterm\fP implements no PM functions; \*(Pt is ignored.
+\fIxterm\fP implements no \*(PM functions; \*(Pt is ignored.
 \*(Pt need not be printable characters.
 .Ed
 .
@@ -1186,23 +1240,23 @@ PF1	\*(S3\*P	\*(S3\*P	kf1	k1
 PF2	\*(S3\*Q	\*(S3\*Q	kf2	k2
 PF3	\*(S3\*R	\*(S3\*R	kf3	k3
 PF4	\*(S3\*S	\*(S3\*S	kf4	k4
-* \f1(multiply)\fP	*	\*(S3\*j	-	-
-+ \f1(add)\fP	+	\*(S3\*k	-	-
-, \f1(comma)\fP	,	\*(S3\*l	-	-
-- \f1(minus)\fP	-	\*(S3\*m	-	-
-\. \f1(Delete)\fP	\.	\*(S3\*3\*(c~	-	-
-/ \f1(divide)\fP	/	\*(S3\*o	-	-
-0 \f1(Insert)\fP	0	\*(Cs\*2\*(c~	-	-
-1 \f1(End)\fP	1	\*(Cs\*4\*(c~	kc1	K4
-2 \f1(DownArrow)\fP	2	\*(Cs\*(cB	-	-
-3 \f1(PageDown)\fP	3	\*(Cs\*5\*(c~	kc3	K5
-4 \f1(LeftArrow)\fP	4	\*(Cs\*D	-	-
-5 \f1(Begin)\fP	5	\*(Cs\*E	kb2	K2
-6 \f1(RightArrow)\fP	6	\*(Cs\*C	-	-
-7 \f1(Home)\fP	7	\*(Cs\*1\*(c~	ka1	K1
-8 \f1(UpArrow)\fP	8	\*(Cs\*A	-	-
-9 \f1(PageUp)\fP	9	\*(Cs\*5\*(c~	ka3	K3
-= (equal)	\&=	\*(S3\*(XX	-	-
+* \f1(multiply)\fP	\**	\*(S3\*j	-	-
++ \f1(add)\fP	\*+	\*(S3\*k	-	-
+, \f1(comma)\fP	\*,	\*(S3\*l	-	-
+- \f1(minus)\fP	\*-	\*(S3\*m	-	-
+\&. \f1(Delete)\fP	\*.	\*(S3\*3\*(c~	-	-
+/ \f1(divide)\fP	\*/	\*(S3\*o	-	-
+0 \f1(Insert)\fP	\*0	\*(Cs\*2\*(c~	-	-
+1 \f1(End)\fP	\*1	\*(Cs\*4\*(c~	kc1	K4
+2 \f1(DownArrow)\fP	\*2	\*(Cs\*(cB	-	-
+3 \f1(PageDown)\fP	\*3	\*(Cs\*5\*(c~	kc3	K5
+4 \f1(LeftArrow)\fP	\*4	\*(Cs\*D	-	-
+5 \f1(Begin)\fP	\*5	\*(Cs\*E	kb2	K2
+6 \f1(RightArrow)\fP	\*6	\*(Cs\*C	-	-
+7 \f1(Home)\fP	\*7	\*(Cs\*1\*(c~	ka1	K1
+8 \f1(UpArrow)\fP	\*8	\*(Cs\*A	-	-
+9 \f1(PageUp)\fP	\*9	\*(Cs\*5\*(c~	ka3	K3
+= (equal)	\*=	\*(S3\*(XX	-	-
 .TE
 They also provide 12 function keys, as well as a few other special-purpose keys.
 .TS
@@ -1279,30 +1333,30 @@ cf3	cf3	cf3
 lf3w(2c)	lf3w(2c)	lf3w(2c) .
 Key	Numeric	Application
 _
-Space	Space	\*(S3\*(Sp
-Tab	Tab	\*(S3\*I
-Enter	CR	\*(S3\*M
+Space	\*(Sp	\*(S3\*(Sp
+Tab	\*(Ta	\*(S3\*I
+Enter	\*(Cr	\*(S3\*M
 PF1	\*(S3\*P	\*(S3\*P
 PF2	\*(S3\*Q	\*(S3\*Q
 PF3	\*(S3\*R	\*(S3\*R
 PF4	\*(S3\*S	\*(S3\*S
-* \f1(multiply)\fP	*	\*(S3\*j
-+ \f1(add)\fP	+	\*(S3\*k
-, \f1(comma)\fP	,	\*(S3\*l
-- \f1(minus)\fP	-	\*(S3\*m
-\. \f1(period)\fP	\.	\*(S3\*n
-/ \f1(divide)\fP	/	\*(S3\*o
-0	0	\*(S3\*p
-1	1	\*(S3\*q
-2	2	\*(S3\*r
-3	3	\*(S3\*(cs
-4	4	\*(S3\*t
-5	5	\*(S3\*u
-6	6	\*(S3\*v
-7	7	\*(S3\*w
-8	8	\*(S3\*x
-9	9	\*(S3\*y
-= (equal)	\&=	\*(S3\*(XX
+* \f1(multiply)\fP	\**	\*(S3\*j
++ \f1(add)\fP	\*+	\*(S3\*k
+, \f1(comma)\fP	\*,	\*(S3\*l
+- \f1(minus)\fP	\*-	\*(S3\*m
+\&. \f1(period)\fP	\*.	\*(S3\*n
+/ \f1(divide)\fP	\*/	\*(S3\*o
+0	\*0	\*(S3\*p
+1	\*1	\*(S3\*q
+2	\*2	\*(S3\*r
+3	\*3	\*(S3\*(cs
+4	\*4	\*(S3\*t
+5	\*5	\*(S3\*u
+6	\*6	\*(S3\*v
+7	\*7	\*(S3\*w
+8	\*8	\*(S3\*x
+9	\*9	\*(S3\*y
+= (equal)	\*=	\*(S3\*(XX
 .TE
 .LP
 The VT220 provides 8 additional function keys.
@@ -1346,37 +1400,37 @@ cf3	cf3	cf3
 lf3w(2c)	lf3w(2c)	lf3w(2c) .
 Key	Numeric	Application
 _
-Space	Space	\*(Es\*?\*(Sp
-Tab	Tab	\*(Es\*?\*I
-Enter	CR	\*(Es\*?\*M
+Space	\*(Sp	\*(Es\*?\*(Sp
+Tab	\*(Ta	\*(Es\*?\*I
+Enter	\*(Cr	\*(Es\*?\*M
 PF1	\*(Es\*P	\*(Es\*P
 PF2	\*(Es\*Q	\*(Es\*Q
 PF3	\*(Es\*R	\*(Es\*R
 PF4	\*(Es\*S	\*(Es\*S
-* \f1(multiply)\fP	*	\*(Es\*?\*j
-+ \f1(add)\fP	+	\*(Es\*?\*k
-, \f1(comma)\fP	,	\*(Es\*?\*l
-- \f1(minus)\fP	-	\*(Es\*?\*m
-\. \f1(period)\fP	\.	\*(Es\*?\*n
-/ \f1(divide)\fP	/	\*(Es\*?\*o
-0	0	\*(Es\*?\*p
-1	1	\*(Es\*?\*q
-2	2	\*(Es\*?\*r
-3	3	\*(Es\*?\*(cs
-4	4	\*(Es\*?\*t
-5	5	\*(Es\*?\*u
-6	6	\*(Es\*?\*v
-7	7	\*(Es\*?\*w
-8	8	\*(Es\*?\*x
-9	9	\*(Es\*?\*y
-= (equal)	\&=	\*(Es\*?\*(XX
+* \f1(multiply)\fP	\**	\*(Es\*?\*j
++ \f1(add)\fP	\*+	\*(Es\*?\*k
+, \f1(comma)\fP	\*,	\*(Es\*?\*l
+- \f1(minus)\fP	\*-	\*(Es\*?\*m
+\&. \f1(period)\fP	\*.	\*(Es\*?\*n
+/ \f1(divide)\fP	\*/	\*(Es\*?\*o
+0	\*0	\*(Es\*?\*p
+1	\*1	\*(Es\*?\*q
+2	\*2	\*(Es\*?\*r
+3	\*3	\*(Es\*?\*(cs
+4	\*4	\*(Es\*?\*t
+5	\*5	\*(Es\*?\*u
+6	\*6	\*(Es\*?\*v
+7	\*7	\*(Es\*?\*w
+8	\*8	\*(Es\*?\*x
+9	\*9	\*(Es\*?\*y
+= (equal)	\*=	\*(Es\*?\*(XX
 .TE
 .SH
 Sun-Style Function Keys
 .LP
 The \fIxterm\fP program provides support for Sun keyboards more directly, by
 a menu toggle that causes it to send Sun-style function key codes rather than VT220.
-Note, however, that the \fIsun\fP and \fIvt100\fP emulations are not really
+Note, however, that the \fIsun\fP and \fIVt100\fP emulations are not really
 compatible.  For example, their wrap-margin behavior differs.
 .LP
 Only function keys are altered; keypad and cursor keys are the same.
@@ -1396,9 +1450,12 @@ information on button presses.  These modes are typically used by
 editors and other full-screen applications that want to make use of
 the mouse.
 
-There are six mutually exclusive modes.  One is DEC Locator mode, enabled by the
+There are six mutually exclusive modes.
+One is DEC Locator mode, enabled by the
 DECELR \*(Cs\*(Ps\*s\*;\*(Ps\*s\*s\*'\*s\*z
-control sequence, and is not described here.  The remaining five
+control sequence, and is not described here
+(control sequences are summarized above).
+The remaining five
 modes are each enabled (or disabled) by a different parameter in
 DECSET \*(Cs\*?\*(Pm\*s\*h
 or
@@ -1454,7 +1511,10 @@ and is not necessarily the "Meta" key (see \fIxmodmap\fP).
 in X10 mode.
 
 Wheel mice may return buttons 4 and 5.
-Those buttons are represented by adding 64 to the event code.
+Those buttons are represented by the same event codes
+as buttons 1 and 2 respectively,
+except that 64 is added to the event code.
+Release events for the wheel buttons are not reported.
 
 Mouse hilite tracking notifies a program of a button press, receives a
 range of lines from the program, highlights the region covered by
@@ -1503,8 +1563,8 @@ Similarly, motion with button 3
 down is reported as \*(Cs\*M\*(cB\*(Cx\*(Cy.
 ( \*(cB = 32 + 2 (button 3) + 32 (motion indicator) ).
 
-Any-event mode is the same as button-event mode, except that all motion
-events are reported instead of just those that enter a new character cell.
+Any-event mode is the same as button-event mode, except that all motion  
+events are reported, even if no mouse button is down.
 It is enabled by specifying 1003 to DECSET.
 .
 .br

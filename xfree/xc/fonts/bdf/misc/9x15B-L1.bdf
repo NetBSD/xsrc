@@ -3,7 +3,7 @@ COMMENT AUTOMATICALLY GENERATED FILE. DO NOT EDIT!
 COMMENT Generated with 'ucs2any.pl 9x15B.bdf ../../../fonts/util/map-ISO8859-1 ISO8859-1'
 COMMENT from an ISO10646-1 encoded source BDF font.
 COMMENT ucs2any.pl by Markus Kuhn <mkuhn@acm.org>, 2000.
-COMMENT Id: 9x15B.bdf,v 1.31 2001-04-03 13:37:48+01 mgk25 Exp mgk25 $
+COMMENT Id: 9x15B.bdf,v 1.32 2001-06-18 09:45:18+01 mgk25 Exp mgk25 $
 COMMENT Send bug reports to Markus Kuhn <mkuhn@acm.org>
 FONT -Misc-Fixed-Bold-R-Normal--15-140-75-75-C-90-ISO8859-1
 SIZE 11 75 75
@@ -3054,13 +3054,13 @@ BBX 9 15 0 -3
 BITMAP
 0000
 0000
-3C00
-0600
-3E00
-2600
-3E00
+7800
+0C00
+7C00
+4C00
+7C00
 0000
-3E00
+7C00
 0000
 0000
 0000
@@ -3405,13 +3405,13 @@ DWIDTH 9 0
 BBX 9 15 0 -3
 BITMAP
 0000
-1C00
-3600
-3600
-1C00
 0000
-3E00
+3800
+6C00
+6C00
+3800
 0000
+7C00
 0000
 0000
 0000

@@ -23,6 +23,8 @@ XCOMM CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
 XCOMM USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 XCOMM OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 XCOMM PERFORMANCE OF THIS SOFTWARE.
+XCOMM
+XCOMM $XFree86: xc/doc/specs/PEX5/PEX5.1/SI/Arch_Spec/Imakefile,v 1.2 2002/10/08 23:07:43 dawes Exp $
 
 DOCBIN=..
 
@@ -54,7 +56,7 @@ doc.PS:
 index.PS:
 	grep '^\.IE' slush.file | \
 	(cat $(PEXMACROS) ; echo .UH INDEX ; $(INDEXER)) | \
-	$(TROFF) -rF1 -rM1 -rP`tail -1 slush.file` > index.PS 2>>slush.file
+	$(TROFF) -rF1 -rM1 -rP`sed -n '$$p' slush.file` > index.PS 2>>slush.file
 
 contents.PS:
 	(cat $(PEXMACROS) ; echo .UH CONTENTS ; \
@@ -63,11 +65,11 @@ contents.PS:
 
 tables.PS:
 	(cat $(PEXMACROS) ; echo .UH TABLES; grep '^\.CE T' slush.file) | \
-	$(TROFF) -rF1 -rM1 -rP`tail -1 slush.file` >tables.PS 2>>slush.file
+	$(TROFF) -rF1 -rM1 -rP`sed -n '$$p' slush.file` >tables.PS 2>>slush.file
 
 figures.PS:
 	(cat $(PEXMACROS) ; echo .UH FIGURES; grep '^\.CE F' slush.file) | \
-	$(TROFF) -rF1 -rM1 -rP`tail -1 slush.file` >figures.PS 2>>slush.file
+	$(TROFF) -rF1 -rM1 -rP`sed -n '$$p' slush.file` >figures.PS 2>>slush.file
 
 cover.PS:
 	$(TROFF) $(MSMACROS) cover.irm > cover.PS

@@ -1,6 +1,6 @@
 			The X Rendering Extension
-			      Version 0.0.15
-			        2000-11-19
+			      Version 0.7
+			        2002-11-6
 			      Keith Packard
 			    keithp@xfree86.org
 
@@ -27,6 +27,14 @@ This extension was the work of many people, in particular:
 
  +	Jon Leech, Brad Grantham and Allen Akin for patiently explaining
 	how OpenGL works.
+
+ +	Carl Worth for providing the sample implementation of
+ 	trapezoid rendering
+
+ +	Sam Pottle and Jamey Sharp for helping demonstrate the correctness
+ 	of the trapezoid specification.
+
+ +	Owen Taylor for helping specify projective transformations
 
 3. Rendering Model
 
@@ -58,14 +66,24 @@ To use this operator several additional values are required:
  +	The OP to use
 
  +	Whether the source should be repeated to cover the destination
-   	rectangle or whether rendering should be clipped by the source
+ 	rectangle, extended with a constant pixel value or extended by
+	using the nearest available source pixel.
 
  +	Whether the mask should be repeated to cover the destination
- 	rectangle or whether rendering should be clipped by the mask
+ 	rectangle, extended with a constant pixel value or extended by
+	using the nearest available mask pixel.
 
  +	Whether the mask has a single alpha value for all four channels or
  	whether each mask channel should affect the associated source/dest
 	channels.
+
+ +	Whether the source should be reshaped with a projective
+        transformation, and if so, what filter to apply while
+	resampling the data.
+	
+ +	Whether the mask should be reshaped with a projective
+        transformation, and if so, what filter to apply while
+	resampling the data.
 	
 These parameters are variously attached to the operands or included in each
 rendering request.
@@ -113,7 +131,18 @@ PICTURE		32-bit value (top three bits guaranteed to be zero)
 PICTFORMAT	32-bit value (top three bits guaranteed to be zero)
 PICTTYPE	{ Indexed, Direct }
 PICTOP		{ Clear, Src, Dst, Over, OverReverse, In, InReverse,
-		  Out, OutReverse, Atop, AtopReverse, Xor, Add, Saturate }
+		  Out, OutReverse, Atop, AtopReverse, Xor, Add, Saturate,
+		  DisjointClear, DisjointSrc, DisjointDst, DisjointOver,
+		  DisjointOverReverse, DisjointIn, DisjointInReverse,
+		  DisjointOut, DisjointOutReverse, DisjointAtop,
+		  DisjointAtopReverse, DisjointXor,
+		  ConjointClear, ConjointSrc, ConjointDst, ConjointOver,
+		  ConjointOverReverse, ConjointIn, ConjointInReverse,
+		  ConjointOut, ConjointOutReverse, ConjointAtop,
+		  ConjointAtopReverse, ConjointXor }
+SUBPIXEL	{ Unknown, HorizontalRGB, HorizontalBGR, 
+		  VerticalRGB, VerticalBGR, None
+		}
 COLOR		[	
 			red, green, blue, alpha: CARD16
 		]
@@ -147,14 +176,12 @@ PICTDEPTH	[
 
 PICTSCREEN	LISTofPICTDEPTH
 
-DITHERINFO	[
-			name:		ATOM
-			format:		PICTFORMAT
-			width:		CARD16
-			height:		CARD16
+FIXED		32-bit value (top 16 are integer portion, bottom 16 are fraction)
+TRANSFORM	[
+			p11, p12, p13:	FIXED
+			p21, p22, p23:	FIXED
+			p31, p32, p33:	FIXED
 		]
-
-FIXED		32-bit value (top 24 are integer portion, bottom 8 are fraction)
 POINTFIX	[
 			x, y: FIXED
 		]
@@ -177,8 +204,12 @@ QUAD		[
 TRIANGLE	[
 			p1, p2, p3:	POINTFIX
 		]
+LINEFIX		[
+			p1, p2:		POINTFIX
+		]
 TRAP		[
-			top, bottom:	SPANFIX
+			top, bottom:	FIXED
+			left, right:	LINEFIX
 		]
 COLORTRIANGLE	[
 			p1, p2, p3:	COLORPOINT
@@ -234,7 +265,11 @@ PictFormats never have colormaps and are therefore screen independent.
 
 Indexed PictFormats never have alpha channels and the direct component is all
 zeros.  Indexed PictFormats always have a colormap in which the specified
-colors are allocated read-only and are therefore screen dependent.
+colors are allocated read-only and are therefore screen dependent.  Drawing
+to in Indexed Picture uses only pixel values listed by QueryPictIndexValues.
+Reading from an Indexed Picture uses red, green and blue values from the
+colormap and alpha values from those listed by QueryPictIndexValues.  Pixel
+values not present in QueryPictIndexValues are given alpha values of 1.
 
 8. Compositing Operators
 
@@ -245,45 +280,93 @@ For each pixel, the four channels of the image are computed with:
 where C, Ca, Cb are the values of the respective channels and Fa and Fb
 come from the following table:
 
-	PictOp		Fa			Fb
-	------------------------------------------
-	Clear		0			0
-	Src		1			0
-	Dst		0			1
-	Over		1			1-Aa
-	OverReverse	1-Ab			1
-	In		Ab			0
-	InReverse	0			Aa
-	Out		1-Ab			0
-	OutReverse	0			1-Aa
-	Atop		Ab			1-Aa
-	AtopReverse	1-Ab			Aa
-	Xor		1-Ab			1-Aa
-	Add		1			1
-	Saturate	min(1,(1-Ab)/Aa)	1
+	PictOp			Fa			Fb
+	--------------------------------------------------
+	Clear			0			0
+	Src			1			0
+	Dst			0			1
+	Over			1			1-Aa
+	OverReverse		1-Ab			1
+	In			Ab			0
+	InReverse		0			Aa
+	Out			1-Ab			0
+	OutReverse		0			1-Aa
+	Atop			Ab			1-Aa
+	AtopReverse		1-Ab			Aa
+	Xor			1-Ab			1-Aa
+	Add			1			1
+	Saturate		min(1,(1-Ab)/Aa)	1
+	DisjointClear		0			0
+	DisjointSrc		1			0
+	DisjointDst		0			1
+	DisjointOver		1			min(1,(1-Aa)/Ab)
+	DisjointOverReverse	min(1,(1-Ab)/Aa)	1
+	DisjointIn		max(1-(1-Ab)/Aa,0)	0
+	DisjointInReverse	0			max(1-(1-Aa)/Ab,0)
+	DisjointOut		min(1,(1-Ab)/Aa)	0
+	DisjointOutReverse	0			min(1,(1-Aa)/Ab)
+	DisjointAtop		max(1-(1-Ab)/Aa,0)	min(1,(1-Aa)/Ab)
+	DisjointAtopReverse	min(1,(1-Ab)/Aa)	max(1-(1-Aa)/Ab,0)
+	DisjointXor		min(1,(1-Ab)/Aa)	min(1,(1-Aa)/Ab)
+	ConjointClear		0			0
+	ConjointSrc		1			0
+	ConjointDst		0			1
+	ConjointOver		1			max(1-Aa/Ab,0)
+	ConjointOverReverse	max(1-Ab/Aa,0)		1
+	ConjointIn		min(1,Ab/Aa)		0
+	ConjointInReverse	0			min(Aa/Ab,1)
+	ConjointOut		max(1-Ab/Aa,0)		0
+	ConjointOutReverse	0			max(1-Aa/Ab,0)
+	ConjointAtop		min(1,Ab/Aa)		max(1-Aa/Ab,0)
+	ConjointAtopReverse	max(1-Ab/Aa,0)		min(1,Aa/Ab)
+	ConjointXor		max(1-Ab/Aa,0)		max(1-Aa/Ab,0)
 
----
-
-Saturate matches GL with FUNC_ADD, SRC_ALPHA_SATURATE, ONE, except
-that it uses premultiplied alphas while GL uses non-premultiplied alphas.
-
-Remember the idea is to apply (src In mask) Saturate Dst so that
-computing (src In mask) effectively applies alpha values of 'mask' to
-src; the server could 'short circuit' that computation by only multiplying
-the alpha channel and then applying the regular GL SRC_ALPHA_SATURATE
-operator.
-
----
+Saturate and DisjointOverReverse are the same.  They match OpenGL
+compositing with FUNC_ADD, SRC_ALPHA_SATURATE, ONE, except that Render uses
+premultiplied alpha while Open GL uses non-premultiplied alpha.
 
 The result of any compositing operator is always limited to the range
 [0,1] for each component.  Components whose value would be greater than 1
 are set to 1.
 
+For operations involving division, when the divisor is zero, define the
+quotient to be positive infinity.  The result is always well defined
+because the division is surrounded with a max or min operator which will
+give a finite result.
+
 When the mask contains separate alpha values for each channel, the
 alpha value resulting from the combination of that value with the source
 alpha channel is used in the final image composition.
 
-9. Polygon Rasterization
+9. Source and Mask Transformations
+
+When fetching pixels from the source or mask pictures, Render provides three
+options for pixel values which fall outside the drawable (this includes
+pixels within a window geometry obscured by other windows).
+
+ +	Transparent.  Missing values are replaced with transparent.
+ 
+ +	Nearest.  Replace missing pixels with the nearest available
+ 	pixel.  Where multiple pixels are equidistant, select
+	those with smallest Y and then smallest X coordinates
+
+ +	Tile.  Select the pixel which would appear were the
+ 	drawable tiled to enclose the missing coordinate.  If
+	the tiling doesn't cover the coordinate, use the
+	selected Constant or Nearest mode.
+
+When GraphicsExposures are selected in the destination picture, a region
+containing at least the union of all destination pixel values affected by
+data replaced as above is delivered after each compositing operation.  If
+the resulting region is empty, a NoExpose event is delivered instead.
+
+To construct the source and mask operands, the computed pixels values are
+transformed through a homogeneous matrix, filtered and then used in the
+fundemental rendering operator described above.  Each screen provides a list
+of supported filter names. There are a few required filters, and several
+required filter alias which must map to one of the available filters.
+
+10. Polygon Rasterization
 
 All polygons must be convex.  Rendering of concave polygons is unspecified
 except that the result must obey the clipping rules.
@@ -307,15 +390,24 @@ in the general compositing operator along with a supplied source image:
 	tmp = Rasterize (polygon)
 	Composite (op, dst, src, tmp)
 
-When rasterized with Sharp edges, the mask is generated by setting pixels
-inside the polygon to 1 and pixels outside the mask to 0.
+When rasterized with Sharp edges, the mask is computed with a depth of 1 so
+that all of the mask values are either 0 or 1.
 
 When rasterized with Smooth edges, the mask is generated by creating a square
 around each pixel coordinate and computing the amount of that square covered
-by the polygon.  Yes, this ignores sampling theory but it provides a precise
+by the polygon.  This ignores sampling theory but it provides a precise
 definition which is close to the right answer.  This value is truncated to
 the alpha width in the fallback format before application of the compositing
 operator.
+
+---
+
+This needs rewriting to match current trapezoid specification and
+base other polygons on that.  I suspect imprecise polygons will need
+to have a relaxed specification as well; hardware is unlikely to
+meet the "sum to one" constraint.
+
+---
 
 When rasterized in Precise mode, the pixelization will match this
 specification exactly.
@@ -350,7 +442,37 @@ interpolated from a triangle containing the pixel which is formed from any
 three polygon vertices.  Any interpolated color value can err up to 1 lsb in
 each channel.
 
-10. Glyph Rendering
+11. Image Filtering
+
+When computing pixels from source and mask images, a filter may be applied
+to the data.  This is usually used with a non-identity transformation
+matrix, but filtering may be applied with an identity transformation.
+
+Each filter is given a unique name encoded as an ISO Latin-1 string.
+Filters may be configured with a list of fixed point values; the number of
+parameters and their interpretation is currently left to conventions passed
+outside of the protocol.  A set of standard filters are required to be
+provided:
+
+	Filter Name	Description
+
+	Nearest		Nearest neighbor filtering
+	Bilinear	Linear interpolation in two dimensions
+
+Additional names may be provided for any filter as aliases.  A set of
+standard alias names are required to be mapped to a provided filter so that
+applications can use the alias names without checking for availability.
+
+	Alias name	Intended interpretation
+	
+	Fast		High performance, quality similar to Nearest
+	Good		Reasonable performance, quality similar to Bilinear
+	Best		Highest quality available, performance may not
+			be suitable for interactive use
+
+Aliases must map directly to a non-aliased filter name.
+
+12. Glyph Rendering
 
 Glyphs are small alpha masks which can be stored in the X server and
 rendered by referring to them by name.  A set of glyphs can be rendered in a
@@ -365,27 +487,7 @@ client-specified 32-bit numbers.
 Glyphs can be stored in any PictFormat supported by the server.  All glyphs
 in a GlyphSet are stored in the same format.
 
-11. Dithering
-
-Each screen supports a list of dithers.  There are several standard dithers
-with defined pixelization, the server is free to offer others as well.  The
-width and height of the dither are a hint about the size of the matrix used
-if the dither is ordered.  An unordered dither will have zero in these
-fields.
-
-The standard dithers are:
-
-	"Standard2x2"
-	"Standard4x4"
-	"Standard128x128"
-
----
-
-Need a notation for specifying pixelization of dithers.
-
----
-
-12. Extension Initialization
+13. Extension Initialization
 
 The client must negotiate the version of the extension before executing
 extension requests.  Behavior of the server is undefined otherwise.
@@ -415,6 +517,10 @@ QueryPictFormats
 	fallback:	PICTFORMAT
 	formats:	LISTofPICTFORMINFO
 	screens:	LISTofPICTSCREEN
+	subpixels:	LISTofSUBPIXEL
+
+	Errors:
+		<none>
 
 	The server responds with a list of supported PictFormats and
 	a list of which PictFormat goes with each visual on each screen.
@@ -423,6 +529,13 @@ QueryPictFormats
 
 	The fallback format is used as an intermediate representation
 	in cases where there is no ideal choice.
+
+	The relationship between the red, green and blue elements making
+	up each pixel indexed by screen is returned in subpixels.
+	This list is not present in servers advertising protocol
+	versions earlier than 0.6.  This list may be shorter than
+	the number of screens, in which case the remaining screens
+	are given sub pixel order Unknown.
 
 QueryPictIndexValues
 
@@ -439,18 +552,17 @@ QueryPictIndexValues
 	specified Indexed PictFormat.  If 'format' does not refer to
 	an Indexed PictFormat a Match error is generated.
 
-QueryDithers
+QueryFilters
 
 	drawable:	DRAWABLE
 
 	->
 
-	dithers:	LISTofDITHERINFO
+	filters:	LISTofSTRING8
+	aliases:	LISTofCARD16
 
-	Returns all of the supported dithers on the screen specified by
-	drawable.
-
-13. Extension Requests
+	
+14. Extension Requests
 
 CreatePicture
 
@@ -476,6 +588,7 @@ CreatePicture
 	are to be explicitly initialized.  The possible values are:
 	
 	repeat:			BOOL
+	fill-nearest:		BOOL
 	alpha-map:		PICTURE or None
 	alpha-x-origin:		INT16
 	alpha-y-origin:		INT16
@@ -489,11 +602,21 @@ CreatePicture
 	dither:			ATOM or None
 	component-alpha:	BOOL
 	
-	The repeat value controls whether the image is replicated
-	when used as the source or mask in a rendering operation.  When
-	True, the contents are tiled over the destination instead of clipping
-	to the geometry of the drawable.
+	When used as a source or mask operand, the repeat and fill-constant
+	values control how pixels outside the geometry of the drawable are
+	computed.
+	
+	Fill-nearest indicates that pixel values outside of the drawable
+	geometry should be replaced the nearest available pixel within the
+	drawable geometry is used.  When multiple pixels are equidistant,
+	those with smaller Y and then X values are preferred.  Otherwise,
+	missing pixels are replaced with transparent.
 
+	Repeat indicates that the drawable contents should be treated
+	as if tiled in both directions.  Pixels falling in missing
+	areas of this tile are replaced according to the fill-nearest
+	rule.
+	
 	The alpha channel of alpha-map is used in place of any alpha channel
 	contained within the drawable for all rendering operations.  The
 	alpha-mask origin is interpreted relative to the origin of drawable.
@@ -524,8 +647,8 @@ CreatePicture
 	extension.
 
 	The graphics-exposures flag controls GraphicsExposure event
-	generation for Composite and Transform requests (and any similar
-	requests defined by additional extensions).
+	generation for Composite requests (and any similar requests
+	defined by additional extensions).
 
 	Poly-edge and poly-mode control the rasterization of polygons
 	as described above.
@@ -541,8 +664,8 @@ CreatePicture
 
 		Component		Default
 		-------------------------------
-		op			Over
 		repeat			False
+		fill-nearest:		False
 		clip-x-origin        	0
 		clip-y-origin          	0
 		clip-mask		None
@@ -588,6 +711,42 @@ SetPictureClipRectangles
 	Note that output is clipped to the union of all of the rectangles
 	and that no particular ordering among the rectangles is required.
 
+SetPictureTransform
+
+	picture:	PICTURE
+	transform:	TRANSFORM
+
+	Errors:
+		Alloc, Value, Picture
+
+	This request changes the projective transformation used to
+	map coordinates when 'picture' is used as the source or
+	mask in any compositing operation.  The transform
+	maps from destination pixel geometry back to the source pixel
+	geometry.
+
+	The matrix must be invertable, else a Value error is generated.
+
+SetPictureFilter
+
+	picture:	PICTURE
+	filter:		STRING8
+	values:		LISTofFIXED
+
+	Errors:
+		Value, Match, Picture
+
+	This request sets the current filter used when picture is a source
+	or mask operand.  Filter must be one of the filters supported
+	for the screen associated with picture, else a Match error
+	is generated.  If the filter accepts additional parameters,
+	they can be provided in values, incorrect values generate Value
+	errors, too many values generate Match errors.  Too few values
+	cause the filter to assume default values for the missing
+	parameters.
+
+	When created, Pictures are set to the Nearest filter.
+
 FreePicture
 
 	pid:		PICTURE
@@ -596,7 +755,8 @@ FreePicture
 		Picture
 
 	This request deletes the association between the resource ID and the
-	picture and destroys the picture.
+	picture.  The picture storage will be freed when no other resource
+	references it.
 
 Composite
 
@@ -609,22 +769,15 @@ Composite
 	dst-x, dst-y:	INT16
 	width, height:	CARD16
 
-	This request combines the specified rectangle of src and mask with
-	the specified rectangle of dst using op as the compositing
-	operator.  The coordinates are relative their respective drawable's
-	origin.  Rendering is clipped to the geometry of the dst drawable
-	and then to the dst clip-list, the src clip-list and the mask
-	clip-list.
+	This request combines the specified rectangle of the transformed
+	src and mask operands with the specified rectangle of dst using op
+	as the compositing operator.  The coordinates are relative their
+	respective (transformed) drawable's origin.  Rendering is clipped
+	to the geometry of the dst drawable and then to the dst clip-list.
 
-	If the specified rectangle extends beyond src, then if src has
-	the repeat attribute set, the src picture will be tiled to
-	fill the specified rectangle, otherwise rendering is clipped to
-	the src geometry.
-
-        If the specified rectangle extends beyond mask, then if mask has
-	the repeat attribute set, the mask picture will be tiled to
-	fill the specified rectangle, otherwise rendering is clipped to
-	the mask geometry.
+	Pixels outside the geometry of src or mask needed for this
+	computation are substituted as described in the Source and Mask
+	Transformations section above.
 	
 	If src, mask and dst are not in the same format, and one of their
 	formats can hold all without loss of precision, they are converted
@@ -633,39 +786,11 @@ Composite
 
 	If mask is None, it is replaced by a constant alpha value of 1.
 
-	When dst has clip-notify set, a NoExpose event is sent if the
-	rendering operation was not clipped by either src or mask, otherwise
-	a sequence of GraphicsExpose events are sent covering areas in dst
-	where rendering was clipped by src or mask.
-
-Scale
-
-	color-scale:	CARD32
-	alpha-scale:	CARD32
-        src:            PICTURE
-        dst:            PICTURE
-        src-x, src-y:   INT16
-        dst-x, dst-y:   INT16
-        width, height:  CARD16
-
-	This request replaces the specified rectangle in dst with
-	the specified rectangle of src with the components multiplied
-	in the following fashion:
-
-		dst-red   = src-red   * color-scale / 65536
-		dst-green = src-green * color-scale / 65536
-		dst-blue  = src-blue  * color-scale / 65536
-		dst-alpha = src-alpha * alpha-scale / 65536
-
-	The coordinates are relative their respective drawable's
-        origin.  Rendering is clipped to the geometry of the dst drawable
-        and then to the dst clip-list, the src clip-list and the mask
-        clip-list.
-
-        If the specified rectangle extends beyond src, then if src has
-        the repeat attribute set, the src picture will be tiled to
-        fill the specified rectangle, otherwise rendering is clipped to
-        the src geometry.
+	When dst has graphics-exposures true, a region covering all dst
+	pixels affected by substitutions performed on src or mask pixels
+	outside their respective geometries is computed.  If that region is
+	empty, a NoExpose event is sent.  Otherwise, a sequence of
+	GraphicsExpose events are sent covering that region.
 
 FillRectangles
 
@@ -686,12 +811,30 @@ Trapezoids
 	src:		PICTURE
 	src-x, src-y:   INT16
 	dst:		PICTURE
+	mask-format:	PICTFORMAT or None
 	traps:		LISTofTRAP
 
-	This request rasterizes the list of trapezoids.  For each span, the
-	left coordinate must be less than or equal to the right coordinate.
-	The y coordinate of the top span must be less than or equal to the 
-	y coordinate of the bottom span.  Results are undefined otherwise.
+	This request rasterizes the list of trapezoids.  For each trap, the
+	area between the left and right edges is filled from the top to the
+	bottom.  src-x and src-y register the pattern to the floor of the
+	top x and y coordinate of the left edge of the first trapezoid, they
+	are adjusted for subsequent trapezoids so that the pattern remains
+	globally aligned within the destination.
+
+	When mask-format is not None, trapezoids are rendered in the
+	following way with the effective mask computed in mask-format:
+
+		tmp = temporary alpha picture (in mask-format)
+		Combine (Zero, tmp, tmp, None)
+		for each trapezoid
+			Combine (Add, tmp, trapezoid, None)
+		Combine (op, dst, source, tmp)
+
+	When mask-format is None, trapezoids are rendered in the order
+	specified directly to the destination:
+
+		for each trapezoid
+			Combine (op, dst, source, trapezoid)
 
 Triangles
 
@@ -699,10 +842,26 @@ Triangles
 	src:		PICTURE
 	src-x, src-y:   INT16
 	dst:		PICTURE
-	traps:		LISTofTRIANGLE
+	mask-format:	PICTFORMAT or None
+	triangles:	LISTofTRIANGLE
 
 	This request rasterizes the list of triangles in the order they
 	occur in the list.
+
+	When mask-format is not None, triangles are rendered in the
+	following way with the effective mask computed in mask-format:
+
+		tmp = temporary alpha picture (in mask-format)
+		Combine (Zero, tmp, tmp, None)
+		for each triangle
+			Combine (Add, tmp, triangle, None)
+		Combine (op, dst, source, tmp)
+
+	When mask-format is None, triangles are rendered in the order
+	specified directly to the destination:
+
+		for each triangle
+			Combine (op, dst, source, triangle)
 
 TriStrip
 
@@ -710,6 +869,7 @@ TriStrip
 	src:		PICTURE
 	src-x, src-y:   INT16
 	dst:		PICTURE
+	mask-format:	PICTFORMAT or None
 	points:		LISTofPOINTFIX
 
 	Triangles are formed by initially using the first three points and
@@ -717,11 +877,27 @@ TriStrip
 	the list. If fewer than three points are provided, this request does
 	nothing.
 
+	When mask-format is not None, triangles are rendered in the
+	following way with the effective mask computed in mask-format:
+
+		tmp = temporary alpha picture (in mask-format)
+		Combine (Zero, tmp, tmp, None)
+		for each triangle
+			Combine (Add, tmp, triangle, None)
+		Combine (op, dst, source, tmp)
+
+	When mask-format is None, triangles are rendered in the order
+	specified directly to the destination:
+
+		for each triangle
+			Combine (op, dst, source, triangle)
+
 TriFan
 	op:		PICTOP
 	src:		PICTURE
 	src-x, src-y:   INT16
 	dst:		PICTURE
+	mask-format:	PICTFORMAT or None
 	points:		LISTofPOINTFIX
 
 	Triangles are formed by initially using the first three points and
@@ -729,17 +905,26 @@ TriFan
 	int the list. If fewer than three points are provided, this request
 	does nothing.
 
-???
+	When mask-format is not None, triangles are rendered in the
+	following way with the effective mask computed in mask-format:
 
-Should I bother with these two compressed triangle representations?
+		tmp = temporary alpha picture (in mask-format)
+		Combine (Zero, tmp, tmp, None)
+		for each triangle
+			Combine (Add, tmp, triangle, None)
+		Combine (op, dst, source, tmp)
 
-???
+	When mask-format is None, triangles are rendered in the order
+	specified directly to the destination:
+
+		for each triangle
+			Combine (op, dst, source, triangle)
 
 ColorTrapezoids
 
 	op:		PICTOP
 	dst:		PICTURE
-	triangles:	LISTofCOLORTRAP
+	trapezoids:	LISTofCOLORTRAP
 
 	The geometry of the trapezoids must meet the same requirements as
 	for the Trapezoids request.  The trapezoids are filled in the order
@@ -759,84 +944,6 @@ ColorTriangles
 Should I included compressed triangle representations here?
 
 ???
-
-Transform
-
-	op:		PICTOP
-	src:            PICTURE
-	dst:            PICTURE
-	src-quad:	QUAD
-	dst-quad:	QUAD
-	filter:		{ Nearest, ... }
-
-	Errors:
-		Picture, Value
-
-	This request combines the specified quadrilateral of src with the
-	specified quadrilateral of dst using op as the compositing operator.
-	The coordinates are relative their respective drawable's origin.
-	Rendering is clipped to the geometry of the dst drawable and then to
-	the dst clip-list and the src clip-list.
-
-	If the specified rectangle extends beyond src, then if src has
-	the repeat attribute set, the src picture will be tiled to
-	fill the specified rectangle, otherwise rendering is clipped to
-	the src geometry.
-
-        If the specified rectangle extends beyond mask, then if mask has
-	the repeat attribute set, the mask picture will be tiled to
-	fill the specified rectangle, otherwise rendering is clipped to
-	the mask geometry.
-	
-	The effect of this request is:
-
-		tmp_image = affine-transform (src, src-quad * dst-quad)
-		tmp_mask = render (dst-quad)
-		Composite (op, dst, tmp_image, tmp_mask)
-
-	That is, the entire transformed source image is masked by an
-	image of the destination quadrilateral and rendered using the Composite
-	operator.
-
-	If the specified quadrilateral extends beyond src, then if src has
-	the repeat attribute set, the src picture will be tiled to
-	fill the specified rectangle, otherwise rendering is clipped to
-	the src geometry.
-	
-	It is a Value error to specify a self intersecting quadrilateral for
-	either src-quad or dst-quad.
-	
-	If src and dst are not in the same format, and one of their formats
-	can hold both without loss of precision, they are converted to that
-	format.  Alternatively, the server will convert each operand to the
-	fallback format.
-
-	The compositing operator from the src picture is used to merge the
-	images together.
-
-	If filter is Nearest, then the nearest (converted) pixel values to
-	each destination pixel is used without averaging.
-
-	When dst has clip-notify set, a NoExpose event is sent if the
-	rendering operation was not clipped by src, otherwise a sequence of
-	GraphicsExpose events are sent covering areas in dst where rendering
-	was clipped by src.
-
-???
-
-	What (small) set of filters should be included
-
-???
-
----
-
-	Need to describe in more detail the semantics here
-
-	Looks like the geometric extension needs to be tied to the
-	compositing extension (sigh).
-
----
-
 
 CreateGlyphSet
 
@@ -962,3 +1069,75 @@ CompositeGlyphs32
 		for each glyph
 			Combine (op, dst, source, glyph)
 
+CreateCursor
+
+	cid:		CURSOR
+	source:		PICTURE
+	x, y:		CARD16
+
+	Errors:		Alloc, IDChoice, Match, Picture
+
+	This request creates a cursor and associates identifier cid with it.
+	The x and y coordinates define the hotspot relative to the source's
+	origin and must be a point within the source (or a Match error
+	results).  The resulting picture will nominally be drawn to the
+	screen with PictOpOver. 
+	
+	The components of the cursor may be transformed arbitrarily to meet
+	display limitations.  In particular, if the display supports only
+	two colors cursors without translucency, the cursor will be
+	transformed so that areas less than .5 alpha will be transparent,
+	else opaque, and areas darker than 50% gray will be black else white.
+
+	The source picture can be freed immediately if no further explicit
+	references to it are to be made.
+
+	Subsequent drawing in the source has an undefined effect on the
+	cursor.  The server might or might not make a copy of the picture.
+
+15. Extension Versioning
+
+The Render extension was developed in parallel with the implementation to
+ensure the feasibility of various portions of the design.  As portions of
+the extension are implemented, the version number of the extension has
+changed to reflect the portions of the standard provied.  This document
+describes the intent for version 1.0 of the specification, the partial
+implementations have version numbers less than that.  Here's a list of
+what each version before 1.0 implemented:
+
+	0.0:	
+		No disjoint/conjoint operators
+		No component alpha
+		Composite
+		CreateGlyphSet
+		FreeGlyphSet
+		AddGlyphs
+		CompositeGlyphs
+
+	0.1:
+		Component alpha
+		FillRectangles
+
+	0.2:
+		Disjoint/Conjoint operators
+
+	0.3:
+		FreeGlyphs
+
+	0.4:
+		Trapezoids
+		Triangles
+		TriStrip
+		TriFan
+
+	0.5:
+		CreateCursor
+
+	0.6:
+		SetPictureTransform
+		QueryFilters
+		SetPictureFilter
+		subpixels member of QueryPictFormats
+
+	0.7:
+		QueryPictIndexValues

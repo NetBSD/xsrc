@@ -1,6 +1,6 @@
 STARTFONT 2.1
-COMMENT "Id: 8x13B.bdf,v 1.26 2001-04-03 13:37:48+01 mgk25 Exp mgk25 $"
-COMMENT "Send bug reports to Markus Kuhn <mkuhn@acm.org>"
+COMMENT "$ucs-fonts: 8x13B.bdf,v 1.27 2002-08-26 18:05:49+01 mgk25 Rel $"
+COMMENT "Send bug reports to Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/>"
 FONT -Misc-Fixed-Bold-R-Normal--13-120-75-75-C-80-ISO10646-1
 SIZE 13 78 78
 FONTBOUNDINGBOX 8 13 0 -2

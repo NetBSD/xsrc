@@ -69,7 +69,7 @@ is not affected by subsequent updates to the text buffer, i.e.,
 it is not updated as the user types input into the text buffer.
 This copy is freed upon the next call to XtGetValues to 
 retrieve the string resource; however, to conserve memory,
-there is a convenience routine, \fBXawAsciiSrcFreeString\fP, allowing the
+there is a convenience routine, \fBXawAsciiSourceFreeString\fP, allowing the
 application programmer to direct the widget to free the copy.
 .LP
 When the resource \fBuseStringInPlace\fP is true and the AsciiSrc object
@@ -135,7 +135,7 @@ space must be allocated whenever the file is saved, or the string is
 requested with a call to \fBXtGetValues\fP.  This memory is allocated on the
 fly, and remains valid until the next time a string needs to be allocated.
 You may save memory by freeing this string as soon as you are done
-with it by calling \fBXawAsciiSrcFreeString\fP.
+with it by calling \fBXawAsciiSourceFreeString\fP.
 .FD 0
 void XawAsciiSourceFreeString(\fIw\fP)
 .IN "XawAsciiSourceFreeString" "" @DEF@

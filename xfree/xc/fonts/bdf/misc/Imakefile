@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/21 16:42:31 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/fonts/bdf/misc/Imakefile,v 1.23 2001/11/21 21:20:53 dawes Exp $
+XCOMM $XFree86: xc/fonts/bdf/misc/Imakefile,v 1.29 2002/12/14 16:32:00 dawes Exp $
 
 
 #if BuildUCSFonts
@@ -15,7 +15,8 @@ ARABIC24DIR = $(TOP)/extras/fonts/arabic24
 
 CLEARLYUOBJS = FontObj(cu-alt12) FontObj(cu-arabic12) \
 	FontObj(cu-devnag12) FontObj(cu-lig12) \
-	FontObj(cu-pua12) FontObj(cu12)
+	FontObj(cu-pua12) FontObj(cu12) FontObj(cuarabic12) \
+	FontObj(cudevnag12)
 CLEARLYUDIR = $(TOP)/extras/fonts/ClearlyU
 
 #if BuildJapaneseFonts
@@ -24,18 +25,19 @@ UCSJAOBJS = FontObj(12x13ja) FontObj(18x18ja)
 #if BuildKoreanFonts
 UCSKOOBJS = FontObj(18x18ko)
 #endif
-UCSOBJS = FontObj(5x7) FontObj(5x8) \
+UCSOBJS = FontObj(4x6) FontObj(5x7) FontObj(5x8) \
 	FontObj(6x9) FontObj(6x10) FontObj(6x12) \
 	FontObj(6x13) FontObj(6x13B) FontObj(6x13O) \
 	FontObj(7x13) FontObj(7x13B) FontObj(7x13O) \
 	FontObj(7x14) FontObj(7x14B) \
 	FontObj(8x13) FontObj(8x13B) FontObj(8x13O) \
 	FontObj(9x15) FontObj(9x15B) FontObj(9x18) FontObj(9x18B) \
-	FontObj(10x20) $(UCSJAOBJS) $(UCSKOOBJS)
+	FontObj(10x20) FontObj(clR6x12) $(UCSJAOBJS) $(UCSKOOBJS)
 #endif
 
 #if BuildISO8859_1Fonts
 DERIVED_8859_1_OBJS = \
+	FontObj(4x6-ISO8859-1) \
 	FontObj(5x7-ISO8859-1) FontObj(5x8-ISO8859-1) FontObj(6x9-ISO8859-1) \
 	FontObj(6x10-ISO8859-1) FontObj(6x12-ISO8859-1) \
 	FontObj(6x13-ISO8859-1) FontObj(6x13B-ISO8859-1) \
@@ -45,7 +47,8 @@ DERIVED_8859_1_OBJS = \
 	FontObj(8x13-ISO8859-1) FontObj(8x13B-ISO8859-1) \
 	FontObj(8x13O-ISO8859-1) FontObj(9x15-ISO8859-1) \
 	FontObj(9x15B-ISO8859-1) FontObj(9x18-ISO8859-1) \
-	FontObj(9x18B-ISO8859-1) FontObj(10x20-ISO8859-1)
+	FontObj(9x18B-ISO8859-1) FontObj(10x20-ISO8859-1) \
+	FontObj(clR6x12-ISO8859-1)
 #endif
 
 #if BuildJISX0201Fonts
@@ -56,6 +59,7 @@ DERIVED_JISX0201_OBJS = \
 #if DerivedUCSFonts
 #if BuildISO8859_2Fonts
 DERIVED_8859_2_OBJS = \
+	FontObj(4x6-ISO8859-2) \
 	FontObj(5x7-ISO8859-2) FontObj(5x8-ISO8859-2) FontObj(6x9-ISO8859-2) \
 	FontObj(6x10-ISO8859-2) FontObj(6x12-ISO8859-2) \
 	FontObj(6x13-ISO8859-2) FontObj(6x13B-ISO8859-2) \
@@ -65,11 +69,13 @@ DERIVED_8859_2_OBJS = \
 	FontObj(8x13-ISO8859-2) FontObj(8x13B-ISO8859-2) \
 	FontObj(8x13O-ISO8859-2) FontObj(9x15-ISO8859-2) \
 	FontObj(9x15B-ISO8859-2) FontObj(9x18-ISO8859-2) \
-	FontObj(9x18B-ISO8859-2) FontObj(10x20-ISO8859-2)
+	FontObj(9x18B-ISO8859-2) FontObj(10x20-ISO8859-2) \
+	FontObj(clR6x12-ISO8859-2)
 #endif
 
 #if BuildISO8859_3Fonts
 DERIVED_8859_3_OBJS = \
+	FontObj(4x6-ISO8859-3) \
 	FontObj(5x7-ISO8859-3) FontObj(5x8-ISO8859-3) FontObj(6x9-ISO8859-3) \
 	FontObj(6x10-ISO8859-3) FontObj(6x12-ISO8859-3) \
 	FontObj(6x13-ISO8859-3) FontObj(6x13B-ISO8859-3) \
@@ -79,11 +85,13 @@ DERIVED_8859_3_OBJS = \
 	FontObj(8x13-ISO8859-3) FontObj(8x13B-ISO8859-3) \
 	FontObj(8x13O-ISO8859-3) FontObj(9x15-ISO8859-3) \
 	FontObj(9x15B-ISO8859-3) FontObj(9x18-ISO8859-3) \
-	FontObj(9x18B-ISO8859-3) FontObj(10x20-ISO8859-3)
+	FontObj(9x18B-ISO8859-3) FontObj(10x20-ISO8859-3) \
+	FontObj(clR6x12-ISO8859-3)
 #endif
 
 #if BuildISO8859_4Fonts
 DERIVED_8859_4_OBJS = \
+	FontObj(4x6-ISO8859-4) \
 	FontObj(5x7-ISO8859-4) FontObj(5x8-ISO8859-4) FontObj(6x9-ISO8859-4) \
 	FontObj(6x10-ISO8859-4) FontObj(6x12-ISO8859-4) \
 	FontObj(6x13-ISO8859-4) FontObj(6x13B-ISO8859-4) \
@@ -93,11 +101,13 @@ DERIVED_8859_4_OBJS = \
 	FontObj(8x13-ISO8859-4) FontObj(8x13B-ISO8859-4) \
 	FontObj(8x13O-ISO8859-4) FontObj(9x15-ISO8859-4) \
 	FontObj(9x15B-ISO8859-4) FontObj(9x18-ISO8859-4) \
-	FontObj(9x18B-ISO8859-4) FontObj(10x20-ISO8859-4)
+	FontObj(9x18B-ISO8859-4) FontObj(10x20-ISO8859-4) \
+	FontObj(clR6x12-ISO8859-4)
 #endif
 
 #if BuildISO8859_5Fonts
 DERIVED_8859_5_OBJS = \
+	FontObj(4x6-ISO8859-5) \
 	FontObj(5x7-ISO8859-5) FontObj(5x8-ISO8859-5) FontObj(6x9-ISO8859-5) \
 	FontObj(6x10-ISO8859-5) FontObj(6x12-ISO8859-5) \
 	FontObj(6x13-ISO8859-5) FontObj(6x13B-ISO8859-5) \
@@ -107,11 +117,13 @@ DERIVED_8859_5_OBJS = \
 	FontObj(8x13-ISO8859-5) FontObj(8x13B-ISO8859-5) \
 	FontObj(8x13O-ISO8859-5) FontObj(9x15-ISO8859-5) \
 	FontObj(9x15B-ISO8859-5) FontObj(9x18-ISO8859-5) \
-	FontObj(9x18B-ISO8859-5) FontObj(10x20-ISO8859-5)
+	FontObj(9x18B-ISO8859-5) FontObj(10x20-ISO8859-5) \
+	FontObj(clR6x12-ISO8859-5)
 #endif
 
 #if BuildISO8859_7Fonts
 DERIVED_8859_7_OBJS = \
+	FontObj(4x6-ISO8859-7) \
 	FontObj(5x7-ISO8859-7) FontObj(5x8-ISO8859-7) FontObj(6x9-ISO8859-7) \
 	FontObj(6x10-ISO8859-7) FontObj(6x12-ISO8859-7) \
 	FontObj(6x13-ISO8859-7) FontObj(6x13B-ISO8859-7) \
@@ -121,11 +133,13 @@ DERIVED_8859_7_OBJS = \
 	FontObj(8x13-ISO8859-7) FontObj(8x13B-ISO8859-7) \
 	FontObj(8x13O-ISO8859-7) FontObj(9x15-ISO8859-7) \
 	FontObj(9x15B-ISO8859-7) FontObj(9x18-ISO8859-7) \
-	FontObj(9x18B-ISO8859-7) FontObj(10x20-ISO8859-7)
+	FontObj(9x18B-ISO8859-7) FontObj(10x20-ISO8859-7) \
+	FontObj(clR6x12-ISO8859-7)
 #endif
 
 #if BuildISO8859_8Fonts
 DERIVED_8859_8_OBJS = \
+	FontObj(4x6-ISO8859-8) \
 	FontObj(5x7-ISO8859-8) FontObj(5x8-ISO8859-8) FontObj(6x9-ISO8859-8) \
 	FontObj(6x10-ISO8859-8) FontObj(6x12-ISO8859-8) \
 	FontObj(6x13-ISO8859-8) FontObj(6x13B-ISO8859-8) \
@@ -134,11 +148,12 @@ DERIVED_8859_8_OBJS = \
 	FontObj(8x13-ISO8859-8) FontObj(8x13B-ISO8859-8) \
 	FontObj(9x15-ISO8859-8) FontObj(9x15B-ISO8859-8) \
 	FontObj(9x18-ISO8859-8) FontObj(9x18B-ISO8859-8) \
-	FontObj(10x20-ISO8859-8)
+	FontObj(10x20-ISO8859-8) FontObj(clR6x12-ISO8859-8)
 #endif
 
 #if BuildISO8859_9Fonts
 DERIVED_8859_9_OBJS = \
+	FontObj(4x6-ISO8859-9) \
 	FontObj(5x7-ISO8859-9) FontObj(5x8-ISO8859-9) FontObj(6x9-ISO8859-9) \
 	FontObj(6x10-ISO8859-9) FontObj(6x12-ISO8859-9) \
 	FontObj(6x13-ISO8859-9) FontObj(6x13B-ISO8859-9) \
@@ -148,11 +163,13 @@ DERIVED_8859_9_OBJS = \
 	FontObj(8x13-ISO8859-9) FontObj(8x13B-ISO8859-9) \
 	FontObj(8x13O-ISO8859-9) FontObj(9x15-ISO8859-9) \
 	FontObj(9x15B-ISO8859-9) FontObj(9x18-ISO8859-9) \
-	FontObj(9x18B-ISO8859-9) FontObj(10x20-ISO8859-9)
+	FontObj(9x18B-ISO8859-9) FontObj(10x20-ISO8859-9) \
+	FontObj(clR6x12-ISO8859-9)
 #endif
 
 #if BuildISO8859_10Fonts
 DERIVED_8859_10_OBJS = \
+	FontObj(4x6-ISO8859-10) \
 	FontObj(5x7-ISO8859-10) FontObj(5x8-ISO8859-10) \
 	FontObj(6x9-ISO8859-10) FontObj(6x10-ISO8859-10) \
 	FontObj(6x12-ISO8859-10) FontObj(6x13-ISO8859-10) \
@@ -163,11 +180,23 @@ DERIVED_8859_10_OBJS = \
 	FontObj(8x13B-ISO8859-10) FontObj(8x13O-ISO8859-10) \
 	FontObj(9x15-ISO8859-10) FontObj(9x15B-ISO8859-10) \
 	FontObj(9x18-ISO8859-10) FontObj(9x18B-ISO8859-10) \
-	FontObj(10x20-ISO8859-10)
+	FontObj(10x20-ISO8859-10) FontObj(clR6x12-ISO8859-10)
+#endif
+
+#if BuildISO8859_11Fonts
+DERIVED_8859_11_OBJS = \
+	FontObj(6x13-ISO8859-11) \
+	FontObj(7x13-ISO8859-11) FontObj(7x13B-ISO8859-11) \
+	FontObj(7x13O-ISO8859-11) \
+	FontObj(7x14-ISO8859-11) FontObj(7x14B-ISO8859-11) \
+	FontObj(9x15-ISO8859-11) FontObj(9x15B-ISO8859-11) \
+	FontObj(9x18-ISO8859-11) \
+	FontObj(10x20-ISO8859-11)
 #endif
 
 #if BuildISO8859_13Fonts
 DERIVED_8859_13_OBJS = \
+	FontObj(4x6-ISO8859-13) \
 	FontObj(5x7-ISO8859-13) FontObj(5x8-ISO8859-13) \
 	FontObj(6x9-ISO8859-13) FontObj(6x10-ISO8859-13) \
 	FontObj(6x12-ISO8859-13) FontObj(6x13-ISO8859-13) \
@@ -178,11 +207,12 @@ DERIVED_8859_13_OBJS = \
 	FontObj(8x13B-ISO8859-13) FontObj(8x13O-ISO8859-13) \
 	FontObj(9x15-ISO8859-13) FontObj(9x15B-ISO8859-13) \
 	FontObj(9x18-ISO8859-13) FontObj(9x18B-ISO8859-13) \
-	FontObj(10x20-ISO8859-13)
+	FontObj(10x20-ISO8859-13) FontObj(clR6x12-ISO8859-13)
 #endif
 
 #if BuildISO8859_14Fonts
 DERIVED_8859_14_OBJS = \
+	FontObj(4x6-ISO8859-14) \
 	FontObj(5x7-ISO8859-14) FontObj(5x8-ISO8859-14) \
 	FontObj(6x9-ISO8859-14) FontObj(6x10-ISO8859-14) \
 	FontObj(6x12-ISO8859-14) FontObj(6x13-ISO8859-14) \
@@ -193,11 +223,12 @@ DERIVED_8859_14_OBJS = \
 	FontObj(8x13B-ISO8859-14) FontObj(8x13O-ISO8859-14) \
 	FontObj(9x15-ISO8859-14) FontObj(9x15B-ISO8859-14) \
 	FontObj(9x18-ISO8859-14) FontObj(9x18B-ISO8859-14) \
-	FontObj(10x20-ISO8859-14)
+	FontObj(10x20-ISO8859-14) FontObj(clR6x12-ISO8859-14)
 #endif
 
 #if BuildISO8859_15Fonts
 DERIVED_8859_15_OBJS = \
+	FontObj(4x6-ISO8859-15) \
 	FontObj(5x7-ISO8859-15) FontObj(5x8-ISO8859-15) \
 	FontObj(6x9-ISO8859-15) FontObj(6x10-ISO8859-15) \
 	FontObj(6x12-ISO8859-15) FontObj(6x13-ISO8859-15) \
@@ -208,15 +239,33 @@ DERIVED_8859_15_OBJS = \
 	FontObj(8x13B-ISO8859-15) FontObj(8x13O-ISO8859-15) \
 	FontObj(9x15-ISO8859-15) FontObj(9x15B-ISO8859-15) \
 	FontObj(9x18-ISO8859-15) FontObj(9x18B-ISO8859-15) \
-	FontObj(10x20-ISO8859-15)
+	FontObj(10x20-ISO8859-15) FontObj(clR6x12-ISO8859-15)
+#endif
+
+#if BuildISO8859_16Fonts
+DERIVED_8859_16_OBJS = \
+	FontObj(4x6-ISO8859-16) \
+	FontObj(5x7-ISO8859-16) FontObj(5x8-ISO8859-16) \
+	FontObj(6x9-ISO8859-16) FontObj(6x10-ISO8859-16) \
+	FontObj(6x12-ISO8859-16) FontObj(6x13-ISO8859-16) \
+	FontObj(6x13B-ISO8859-16) FontObj(6x13O-ISO8859-16) \
+	FontObj(7x13-ISO8859-16) FontObj(7x13B-ISO8859-16) \
+	FontObj(7x13O-ISO8859-16) FontObj(7x14-ISO8859-16) \
+	FontObj(7x14B-ISO8859-16) FontObj(8x13-ISO8859-16) \
+	FontObj(8x13B-ISO8859-16) FontObj(8x13O-ISO8859-16) \
+	FontObj(9x15-ISO8859-16) FontObj(9x15B-ISO8859-16) \
+	FontObj(9x18-ISO8859-16) FontObj(9x18B-ISO8859-16) \
+	FontObj(10x20-ISO8859-16) FontObj(clR6x12-ISO8859-16)
 #endif
 
 #if BuildKOI8_RFonts
 DERIVED_KOI8_R_OBJS = \
+	FontObj(4x6-KOI8-R) \
 	FontObj(5x7-KOI8-R) FontObj(5x8-KOI8-R) FontObj(6x9-KOI8-R) \
 	FontObj(6x10-KOI8-R) FontObj(6x12-KOI8-R) FontObj(6x13-KOI8-R) \
 	FontObj(7x13-KOI8-R) FontObj(7x14-KOI8-R) FontObj(8x13-KOI8-R) \
-	FontObj(9x15-KOI8-R) FontObj(9x18-KOI8-R) FontObj(10x20-KOI8-R)
+	FontObj(9x15-KOI8-R) FontObj(9x18-KOI8-R) FontObj(10x20-KOI8-R) \
+	FontObj(clR6x12-KOI8-R)
 #endif
 
 DERIVEDOBJS = \
@@ -224,8 +273,9 @@ DERIVEDOBJS = \
 	$(DERIVED_8859_3_OBJS) $(DERIVED_8859_4_OBJS) \
 	$(DERIVED_8859_5_OBJS) $(DERIVED_8859_7_OBJS) \
 	$(DERIVED_8859_8_OBJS) $(DERIVED_8859_9_OBJS) \
-	$(DERIVED_8859_10_OBJS) $(DERIVED_8859_13_OBJS) \
-	$(DERIVED_8859_14_OBJS) $(DERIVED_8859_15_OBJS) \
+	$(DERIVED_8859_10_OBJS) $(DERIVED_8859_11_OBJS) \
+	$(DERIVED_8859_13_OBJS) $(DERIVED_8859_14_OBJS) \
+	$(DERIVED_8859_15_OBJS) $(DERIVED_8859_16_OBJS) \
 	$(DERIVED_KOI8_R_OBJS) $(DERIVED_JISX0201_OBJS)
 
 #else  /* DerivedUCSFonts */
@@ -272,7 +322,7 @@ MISC_MISC_OBJS = \
 	FontObj(clB8x12) FontObj(clB8x13) FontObj(clB8x14) FontObj(clB8x16) \
 	FontObj(clB8x8) FontObj(clB9x15) FontObj(clI6x12) FontObj(clI8x8) \
 	FontObj(clR4x6) FontObj(clR5x10) FontObj(clR5x6) FontObj(clR5x8) \
-	FontObj(clR6x10) FontObj(clR6x12) FontObj(clR6x13) FontObj(clR6x6) \
+	FontObj(clR6x10) FontObj(clR6x13) FontObj(clR6x6) \
 	FontObj(clR6x8) FontObj(clR7x10) FontObj(clR7x12) FontObj(clR7x14) \
 	FontObj(clR7x8) FontObj(clR8x10) FontObj(clR8x12) FontObj(clR8x13) \
 	FontObj(clR8x14) FontObj(clR8x16) FontObj(clR8x8) FontObj(clR9x15)
@@ -294,6 +344,7 @@ MakeFonts()
 /* UCS fonts */
 #if BuildUCSFonts
 #if TruncateUCSFonts
+FontTargetLong(4x6t,4x6)
 FontTargetLong(5x7t,5x7)
 FontTargetLong(5x8t,5x8)
 FontTargetLong(6x9t,6x9)
@@ -315,7 +366,9 @@ FontTargetLong(9x15Bt,9x15B)
 FontTargetLong(9x18t,9x18)
 FontTargetLong(9x18Bt,9x18B)
 FontTargetLong(10x20t,10x20)
+FontTargetLong(clR6x12t,clR6x12)
 #else
+FontTarget(4x6)
 FontTarget(5x7)
 FontTarget(5x8)
 FontTarget(6x9)
@@ -337,6 +390,7 @@ FontTarget(9x15B)
 FontTarget(9x18)
 FontTarget(9x18B)
 FontTarget(10x20)
+FontTarget(clR6x12)
 #endif
 #if BuildJapaneseFonts
 FontTarget(12x13ja)
@@ -354,9 +408,12 @@ FontTarget(cu-devnag12)
 FontTarget(cu-lig12)
 FontTarget(cu-pua12)
 FontTarget(cu12)
+FontTarget(cuarabic12)
+FontTarget(cudevnag12)
 #endif
 
 #if BuildISO8859_1Fonts
+FontTarget(4x6-ISO8859-1)
 FontTarget(5x7-ISO8859-1)
 FontTarget(5x8-ISO8859-1)
 FontTarget(6x9-ISO8859-1)
@@ -378,6 +435,7 @@ FontTarget(9x15B-ISO8859-1)
 FontTarget(9x18-ISO8859-1)
 FontTarget(9x18B-ISO8859-1)
 FontTarget(10x20-ISO8859-1)
+FontTarget(clR6x12-ISO8859-1)
 #endif
 
 #if BuildJISX0201Fonts
@@ -387,6 +445,7 @@ FontTarget(7x14-JISX0201.1976-0)
 /* 8-bit fonts derived from UCS fonts */
 #if DerivedUCSFonts
 #if BuildISO8859_2Fonts
+FontTarget(4x6-ISO8859-2)
 FontTarget(5x7-ISO8859-2)
 FontTarget(5x8-ISO8859-2)
 FontTarget(6x9-ISO8859-2)
@@ -408,9 +467,11 @@ FontTarget(9x15B-ISO8859-2)
 FontTarget(9x18-ISO8859-2)
 FontTarget(9x18B-ISO8859-2)
 FontTarget(10x20-ISO8859-2)
+FontTarget(clR6x12-ISO8859-2)
 #endif
 
 #if BuildISO8859_3Fonts
+FontTarget(4x6-ISO8859-3)
 FontTarget(5x7-ISO8859-3)
 FontTarget(5x8-ISO8859-3)
 FontTarget(6x9-ISO8859-3)
@@ -432,9 +493,11 @@ FontTarget(9x15B-ISO8859-3)
 FontTarget(9x18-ISO8859-3)
 FontTarget(9x18B-ISO8859-3)
 FontTarget(10x20-ISO8859-3)
+FontTarget(clR6x12-ISO8859-3)
 #endif
 
 #if BuildISO8859_4Fonts
+FontTarget(4x6-ISO8859-4)
 FontTarget(5x7-ISO8859-4)
 FontTarget(5x8-ISO8859-4)
 FontTarget(6x9-ISO8859-4)
@@ -456,9 +519,11 @@ FontTarget(9x15B-ISO8859-4)
 FontTarget(9x18-ISO8859-4)
 FontTarget(9x18B-ISO8859-4)
 FontTarget(10x20-ISO8859-4)
+FontTarget(clR6x12-ISO8859-4)
 #endif
 
 #if BuildISO8859_5Fonts
+FontTarget(4x6-ISO8859-5)
 FontTarget(5x7-ISO8859-5)
 FontTarget(5x8-ISO8859-5)
 FontTarget(6x9-ISO8859-5)
@@ -480,9 +545,11 @@ FontTarget(9x15B-ISO8859-5)
 FontTarget(9x18-ISO8859-5)
 FontTarget(9x18B-ISO8859-5)
 FontTarget(10x20-ISO8859-5)
+FontTarget(clR6x12-ISO8859-5)
 #endif
 
 #if BuildISO8859_7Fonts
+FontTarget(4x6-ISO8859-7)
 FontTarget(5x7-ISO8859-7)
 FontTarget(5x8-ISO8859-7)
 FontTarget(6x9-ISO8859-7)
@@ -504,9 +571,11 @@ FontTarget(9x15B-ISO8859-7)
 FontTarget(9x18-ISO8859-7)
 FontTarget(9x18B-ISO8859-7)
 FontTarget(10x20-ISO8859-7)
+FontTarget(clR6x12-ISO8859-7)
 #endif
 
 #if BuildISO8859_8Fonts
+FontTarget(4x6-ISO8859-8)
 FontTarget(5x7-ISO8859-8)
 FontTarget(5x8-ISO8859-8)
 FontTarget(6x9-ISO8859-8)
@@ -525,9 +594,11 @@ FontTarget(9x15B-ISO8859-8)
 FontTarget(9x18-ISO8859-8)
 FontTarget(9x18B-ISO8859-8)
 FontTarget(10x20-ISO8859-8)
+FontTarget(clR6x12-ISO8859-8)
 #endif
 
 #if BuildISO8859_9Fonts
+FontTarget(4x6-ISO8859-9)
 FontTarget(5x7-ISO8859-9)
 FontTarget(5x8-ISO8859-9)
 FontTarget(6x9-ISO8859-9)
@@ -549,9 +620,11 @@ FontTarget(9x15B-ISO8859-9)
 FontTarget(9x18-ISO8859-9)
 FontTarget(9x18B-ISO8859-9)
 FontTarget(10x20-ISO8859-9)
+FontTarget(clR6x12-ISO8859-9)
 #endif
 
 #if BuildISO8859_10Fonts
+FontTarget(4x6-ISO8859-10)
 FontTarget(5x7-ISO8859-10)
 FontTarget(5x8-ISO8859-10)
 FontTarget(6x9-ISO8859-10)
@@ -573,9 +646,24 @@ FontTarget(9x15B-ISO8859-10)
 FontTarget(9x18-ISO8859-10)
 FontTarget(9x18B-ISO8859-10)
 FontTarget(10x20-ISO8859-10)
+FontTarget(clR6x12-ISO8859-10)
+#endif
+
+#if BuildISO8859_11Fonts
+FontTarget(6x13-ISO8859-11)
+FontTarget(7x13-ISO8859-11)
+FontTarget(7x13B-ISO8859-11)
+FontTarget(7x13O-ISO8859-11)
+FontTarget(7x14-ISO8859-11)
+FontTarget(7x14B-ISO8859-11)
+FontTarget(9x15-ISO8859-11)
+FontTarget(9x15B-ISO8859-11)
+FontTarget(9x18-ISO8859-11)
+FontTarget(10x20-ISO8859-11)
 #endif
 
 #if BuildISO8859_13Fonts
+FontTarget(4x6-ISO8859-13)
 FontTarget(5x7-ISO8859-13)
 FontTarget(5x8-ISO8859-13)
 FontTarget(6x9-ISO8859-13)
@@ -597,9 +685,11 @@ FontTarget(9x15B-ISO8859-13)
 FontTarget(9x18-ISO8859-13)
 FontTarget(9x18B-ISO8859-13)
 FontTarget(10x20-ISO8859-13)
+FontTarget(clR6x12-ISO8859-13)
 #endif
 
 #if BuildISO8859_14Fonts
+FontTarget(4x6-ISO8859-14)
 FontTarget(5x7-ISO8859-14)
 FontTarget(5x8-ISO8859-14)
 FontTarget(6x9-ISO8859-14)
@@ -621,9 +711,11 @@ FontTarget(9x15B-ISO8859-14)
 FontTarget(9x18-ISO8859-14)
 FontTarget(9x18B-ISO8859-14)
 FontTarget(10x20-ISO8859-14)
+FontTarget(clR6x12-ISO8859-14)
 #endif
 
 #if BuildISO8859_15Fonts
+FontTarget(4x6-ISO8859-15)
 FontTarget(5x7-ISO8859-15)
 FontTarget(5x8-ISO8859-15)
 FontTarget(6x9-ISO8859-15)
@@ -645,14 +737,42 @@ FontTarget(9x15B-ISO8859-15)
 FontTarget(9x18-ISO8859-15)
 FontTarget(9x18B-ISO8859-15)
 FontTarget(10x20-ISO8859-15)
+FontTarget(clR6x12-ISO8859-15)
+#endif
+
+#if BuildISO8859_16Fonts
+FontTarget(4x6-ISO8859-16)
+FontTarget(5x7-ISO8859-16)
+FontTarget(5x8-ISO8859-16)
+FontTarget(6x9-ISO8859-16)
+FontTarget(6x10-ISO8859-16)
+FontTarget(6x12-ISO8859-16)
+FontTarget(6x13-ISO8859-16)
+FontTarget(6x13B-ISO8859-16)
+FontTarget(6x13O-ISO8859-16)
+FontTarget(7x13-ISO8859-16)
+FontTarget(7x13B-ISO8859-16)
+FontTarget(7x13O-ISO8859-16)
+FontTarget(7x14-ISO8859-16)
+FontTarget(7x14B-ISO8859-16)
+FontTarget(8x13-ISO8859-16)
+FontTarget(8x13B-ISO8859-16)
+FontTarget(8x13O-ISO8859-16)
+FontTarget(9x15-ISO8859-16)
+FontTarget(9x15B-ISO8859-16)
+FontTarget(9x18-ISO8859-16)
+FontTarget(9x18B-ISO8859-16)
+FontTarget(10x20-ISO8859-16)
+FontTarget(clR6x12-ISO8859-16)
 #endif
 
 #if BuildKOI8_RFonts
-FontTarget(6x12-KOI8-R)
+FontTarget(4x6-KOI8-R)
 FontTarget(5x7-KOI8-R)
 FontTarget(5x8-KOI8-R)
 FontTarget(6x9-KOI8-R)
 FontTarget(6x10-KOI8-R)
+FontTarget(6x12-KOI8-R)
 FontTarget(6x13-KOI8-R)
 FontTarget(7x13-KOI8-R)
 FontTarget(7x14-KOI8-R)
@@ -660,6 +780,7 @@ FontTarget(8x13-KOI8-R)
 FontTarget(9x15-KOI8-R)
 FontTarget(9x18-KOI8-R)
 FontTarget(10x20-KOI8-R)
+FontTarget(clR6x12-KOI8-R)
 #endif
 #endif
 
@@ -698,7 +819,6 @@ FontTarget(clR5x10)
 FontTarget(clR5x6)
 FontTarget(clR5x8)
 FontTarget(clR6x10)
-FontTarget(clR6x12)
 FontTarget(clR6x13)
 FontTarget(clR6x6)
 FontTarget(clR6x8)
@@ -739,9 +859,12 @@ LinkSourceFile(cu-devnag12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu-lig12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu-pua12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu12.bdf,$(CLEARLYUDIR))
+LinkSourceFile(cuarabic12.bdf,$(CLEARLYUDIR))
+LinkSourceFile(cudevnag12.bdf,$(CLEARLYUDIR))
 #endif
 
 #if BuildUCSFonts && TruncateUCSFonts
+MakeTruncatedUCSBdfFont(4x6,MaxUCSChar,4x6t)
 MakeTruncatedUCSBdfFont(5x7,MaxUCSChar,5x7t)
 MakeTruncatedUCSBdfFont(5x8,MaxUCSChar,5x8t)
 MakeTruncatedUCSBdfFont(6x9,MaxUCSChar,6x9t)
@@ -763,10 +886,12 @@ MakeTruncatedUCSBdfFont(9x15B,MaxUCSChar,9x15Bt)
 MakeTruncatedUCSBdfFont(9x18,MaxUCSChar,9x18t)
 MakeTruncatedUCSBdfFont(9x18B,MaxUCSChar,9x18Bt)
 MakeTruncatedUCSBdfFont(10x20,MaxUCSChar,10x20t)
+MakeTruncatedUCSBdfFont(clR6x12,MaxUCSChar,clR6x12t)
 #endif
 
 #if DerivedUCSFonts
 #if BuildISO8859_1Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-1)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-1)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-1)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-1)
@@ -788,9 +913,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-1)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-1)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-1)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-1)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-1)
 #endif
 
 #if BuildISO8859_2Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-2)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-2)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-2)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-2)
@@ -812,9 +939,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-2)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-2)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-2)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-2)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-2)
 #endif
 
 #if BuildISO8859_3Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-3)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-3)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-3)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-3)
@@ -836,9 +965,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-3)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-3)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-3)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-3)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-3)
 #endif
 
 #if BuildISO8859_4Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-4)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-4)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-4)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-4)
@@ -860,9 +991,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-4)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-4)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-4)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-4)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-4)
 #endif
 
 #if BuildISO8859_5Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-5)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-5)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-5)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-5)
@@ -884,9 +1017,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-5)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-5)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-5)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-5)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-5)
 #endif
 
 #if BuildISO8859_7Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-7)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-7)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-7)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-7)
@@ -908,9 +1043,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-7)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-7)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-7)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-7)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-7)
 #endif
 
 #if BuildISO8859_8Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-8)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-8)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-8)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-8)
@@ -929,9 +1066,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-8)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-8)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-8)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-8)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-8)
 #endif
 
 #if BuildISO8859_9Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-9)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-9)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-9)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-9)
@@ -953,9 +1092,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-9)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-9)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-9)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-9)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-9)
 #endif
 
 #if BuildISO8859_10Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-10)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-10)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-10)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-10)
@@ -977,9 +1118,24 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-10)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-10)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-10)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-10)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-10)
+#endif
+
+#if BuildISO8859_11Fonts
+MakeBdfFontFromUCSMaster(6x13,ISO8859-11)
+MakeBdfFontFromUCSMaster(7x13,ISO8859-11)
+MakeBdfFontFromUCSMaster(7x13B,ISO8859-11)
+MakeBdfFontFromUCSMaster(7x13O,ISO8859-11)
+MakeBdfFontFromUCSMaster(7x14,ISO8859-11)
+MakeBdfFontFromUCSMaster(7x14B,ISO8859-11)
+MakeBdfFontFromUCSMaster(9x15,ISO8859-11)
+MakeBdfFontFromUCSMaster(9x15B,ISO8859-11)
+MakeBdfFontFromUCSMaster(9x18,ISO8859-11)
+MakeBdfFontFromUCSMaster(10x20,ISO8859-11)
 #endif
 
 #if BuildISO8859_13Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-13)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-13)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-13)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-13)
@@ -1001,9 +1157,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-13)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-13)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-13)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-13)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-13)
 #endif
 
 #if BuildISO8859_14Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-14)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-14)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-14)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-14)
@@ -1025,9 +1183,11 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-14)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-14)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-14)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-14)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-14)
 #endif
 
 #if BuildISO8859_15Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-15)
 MakeBdfFontFromUCSMaster(5x7,ISO8859-15)
 MakeBdfFontFromUCSMaster(5x8,ISO8859-15)
 MakeBdfFontFromUCSMaster(6x9,ISO8859-15)
@@ -1049,14 +1209,42 @@ MakeBdfFontFromUCSMaster(9x15B,ISO8859-15)
 MakeBdfFontFromUCSMaster(9x18,ISO8859-15)
 MakeBdfFontFromUCSMaster(9x18B,ISO8859-15)
 MakeBdfFontFromUCSMaster(10x20,ISO8859-15)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-15)
+#endif
+
+#if BuildISO8859_16Fonts
+MakeBdfFontFromUCSMaster(4x6,ISO8859-16)
+MakeBdfFontFromUCSMaster(5x7,ISO8859-16)
+MakeBdfFontFromUCSMaster(5x8,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x9,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x10,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x12,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x13,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x13B,ISO8859-16)
+MakeBdfFontFromUCSMaster(6x13O,ISO8859-16)
+MakeBdfFontFromUCSMaster(7x13,ISO8859-16)
+MakeBdfFontFromUCSMaster(7x13B,ISO8859-16)
+MakeBdfFontFromUCSMaster(7x13O,ISO8859-16)
+MakeBdfFontFromUCSMaster(7x14,ISO8859-16)
+MakeBdfFontFromUCSMaster(7x14B,ISO8859-16)
+MakeBdfFontFromUCSMaster(8x13,ISO8859-16)
+MakeBdfFontFromUCSMaster(8x13B,ISO8859-16)
+MakeBdfFontFromUCSMaster(8x13O,ISO8859-16)
+MakeBdfFontFromUCSMaster(9x15,ISO8859-16)
+MakeBdfFontFromUCSMaster(9x15B,ISO8859-16)
+MakeBdfFontFromUCSMaster(9x18,ISO8859-16)
+MakeBdfFontFromUCSMaster(9x18B,ISO8859-16)
+MakeBdfFontFromUCSMaster(10x20,ISO8859-16)
+MakeBdfFontFromUCSMaster(clR6x12,ISO8859-16)
 #endif
 
 #if BuildKOI8_RFonts
-MakeBdfFontFromUCSMaster(6x12,KOI8-R)
+MakeBdfFontFromUCSMaster(4x6,KOI8-R)
 MakeBdfFontFromUCSMaster(5x7,KOI8-R)
 MakeBdfFontFromUCSMaster(5x8,KOI8-R)
 MakeBdfFontFromUCSMaster(6x9,KOI8-R)
 MakeBdfFontFromUCSMaster(6x10,KOI8-R)
+MakeBdfFontFromUCSMaster(6x12,KOI8-R)
 MakeBdfFontFromUCSMaster(6x13,KOI8-R)
 MakeBdfFontFromUCSMaster(7x13,KOI8-R)
 MakeBdfFontFromUCSMaster(7x14,KOI8-R)
@@ -1064,6 +1252,7 @@ MakeBdfFontFromUCSMaster(8x13,KOI8-R)
 MakeBdfFontFromUCSMaster(9x15,KOI8-R)
 MakeBdfFontFromUCSMaster(9x18,KOI8-R)
 MakeBdfFontFromUCSMaster(10x20,KOI8-R)
+MakeBdfFontFromUCSMaster(clR6x12,KOI8-R)
 #endif
 
 #if BuildJISX0201Fonts
@@ -1073,6 +1262,7 @@ MakeBdfFontFromUCSMaster(7x14,JISX0201.1976-0)
 #else
 
 #if BuildISO8859_1Fonts
+LinkFile(4x6-ISO8859-1.bdf,4x6-L1.bdf)
 LinkFile(5x7-ISO8859-1.bdf,5x7-L1.bdf)
 LinkFile(5x8-ISO8859-1.bdf,5x8-L1.bdf)
 LinkFile(6x9-ISO8859-1.bdf,6x9-L1.bdf)
@@ -1094,6 +1284,7 @@ LinkFile(9x15B-ISO8859-1.bdf,9x15B-L1.bdf)
 LinkFile(9x18-ISO8859-1.bdf,9x18-L1.bdf)
 LinkFile(9x18B-ISO8859-1.bdf,9x18B-L1.bdf)
 LinkFile(10x20-ISO8859-1.bdf,10x20-L1.bdf)
+LinkFile(clR6x12-ISO8859-1.bdf,clR6x12-L1.bdf)
 #endif
 
 #if BuildJISX0201Fonts
@@ -1102,6 +1293,7 @@ LinkFile(7x14-JISX0201.1976-0.bdf,7x14-JISX0201.bdf)
 
 #endif
 
+UpdateDerivedFont(4x6-ISO8859-1.bdf,4x6-L1.bdf)
 UpdateDerivedFont(5x7-ISO8859-1.bdf,5x7-L1.bdf)
 UpdateDerivedFont(5x8-ISO8859-1.bdf,5x8-L1.bdf)
 UpdateDerivedFont(6x9-ISO8859-1.bdf,6x9-L1.bdf)
@@ -1123,6 +1315,7 @@ UpdateDerivedFont(9x15B-ISO8859-1.bdf,9x15B-L1.bdf)
 UpdateDerivedFont(9x18-ISO8859-1.bdf,9x18-L1.bdf)
 UpdateDerivedFont(9x18B-ISO8859-1.bdf,9x18B-L1.bdf)
 UpdateDerivedFont(10x20-ISO8859-1.bdf,10x20-L1.bdf)
+UpdateDerivedFont(clR6x12-ISO8859-1.bdf,clR6x12-L1.bdf)
 UpdateDerivedFont(7x14-JISX0201.1976-0.bdf,7x14-JISX0201.bdf)
 
 InstallFonts($(FONTINSTDIR))
