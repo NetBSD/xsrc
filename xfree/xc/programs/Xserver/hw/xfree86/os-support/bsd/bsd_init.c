@@ -33,6 +33,7 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
+#include <sys/param.h>
 #include <sys/utsname.h>
 #include <stdlib.h>
 
@@ -151,7 +152,9 @@ xf86OpenConsole()
     xf86ConsOpen_t *driver;
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
     int result;
+#ifdef __FreeBSD__
     struct utsname uts;
+#endif
     vtmode_t vtmode;
 #endif
     
@@ -231,6 +234,7 @@ xf86OpenConsole()
 #endif
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	case SYSCONS:
+#ifdef __FreeBSD__
 	    /* as of FreeBSD 2.2.8, syscons driver does not need the #1 vt
 	     * switching anymore. Here we check for FreeBSD 3.1 and up.
 	     * Add cases for other *BSD that behave the same.
@@ -240,8 +244,10 @@ xf86OpenConsole()
 		i = atof(uts.release) * 100;
 		if (i >= 310) goto acquire_vt;
 	    }
+#endif
 	    /* otherwise fall through */
 	case PCVT:
+#if !(defined(__NetBSD__) && (__NetBSD_Version__ >= 200000000))
 	    /*
 	     * First activate the #1 VT.  This is a hack to allow a server
 	     * to be started while another one is active.  There should be
@@ -256,6 +262,7 @@ xf86OpenConsole()
 		}
 		sleep(1);
 	    }
+#endif
 
 acquire_vt:
 	    /*
