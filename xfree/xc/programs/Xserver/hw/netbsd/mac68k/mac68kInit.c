@@ -53,15 +53,15 @@ Time mac_lasteventtime;
 int mac_scrs = 0;
 fbinfo_t mac_fbs[MAXSCREENS];
 
-DevicePtr mac68k_mouse;
-DevicePtr mac68k_kbd;
+DeviceIntPtr mac68k_mouse;
+DeviceIntPtr mac68k_kbd;
 
 int mac68k_mouseproc(
-	DevicePtr mouse,
+	DeviceIntPtr mouse,
 	int what);
 
 int mac68k_kbdproc(
-	DevicePtr mouse,
+	DeviceIntPtr mouse,
 	int what);
 
 Bool mac68kMonoInit(
@@ -300,8 +300,8 @@ void InitInput(
 	int argc,
 	char **argv)
 {
-	DevicePtr mouse;
-	DevicePtr kbd;
+	DeviceIntPtr mouse;
+	DeviceIntPtr kbd;
 	static int dejavu = 0;
 
 	if(dejavu)
@@ -317,7 +317,7 @@ void InitInput(
 	mac68k_kbd = kbd = AddInputDevice((DeviceProc)mac68k_kbdproc, TRUE);
 	RegisterKeyboardDevice(kbd);
 
-	if (!mieqInit (kbd, mouse))
+	if (!mieqInit ((DevicePtr)kbd, (DevicePtr)mouse))
 		FatalError ("could not initialize event queue");
 
 	mac_lasteventtime = time(0) * 1000;
