@@ -16,6 +16,7 @@ XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
+XCOMM		NetBSD/arm32	client
 XCOMM
 
 #ifndef OSName
@@ -230,6 +231,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif
+
+#if defined(arm32Architecture)
+# define BuildServer		NO		/* XXX */
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
 
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2

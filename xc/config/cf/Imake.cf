@@ -160,6 +160,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 #  define amigaArchitecture
 #  undef amiga
 # endif
+# if defined(__arm32__) || defined(arm32)
+#  define arm32Architecture
+#  undef arm32
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
