@@ -41,6 +41,9 @@ in this Software without prior written authorization from the X Consortium.
  * Author: Steve Ratcliffe, UniSoft Ltd.
  */
 
+
+/* $XFree86: test/xsuite/xtest/src/bin/mc/make.c,v 1.1.1.1.10.2 1997/05/17 13:59:23 dawes Exp $ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -387,7 +390,7 @@ struct mclist *list;
 int 	n;
 {
 
-	if (n > list->num)
+	if (n >= list->num)
 		return((char*)0);
 
 	return(list->items[n]);

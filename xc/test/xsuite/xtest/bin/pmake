@@ -1,3 +1,4 @@
+#!/bin/sh
 
 # 
 #  Copyright 1990, 1991 by the Massachusetts Institute of Technology and
@@ -14,6 +15,12 @@
 #  purpose.  It is provided "as is" without express or implied warranty.
 # 
 # $XConsortium: pmake,v 1.7 92/06/11 18:01:33 rws Exp $
+#
+#
+#
+#
+#
+# $XFree86: test/xsuite/xtest/bin/pmake,v 1.2 1997/01/16 10:54:54 dawes Exp $
 #
 
 

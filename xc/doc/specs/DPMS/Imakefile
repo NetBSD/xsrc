@@ -1,5 +1,5 @@
 SRCS1 = DPMS.ms
-SRCS2 = DPMSLib.ps
+SRCS2 = DPMSLib.ms
 
 MakeEqnDoc(DPMS,$(SRCS1))
 MakeEqnDoc(DPMSLib,$(SRCS2))

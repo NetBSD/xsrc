@@ -1,0 +1,19 @@
+$XConsortium: README /main/1 1996/10/10 16:21:14 kaleb $
+
+Here's how to use embedtest (assuming that :0 is security and appgroup
+ready):
+
+  1. run `embedtest -display :0`
+  2. press "genauth" button -- you should get a line like:
+     "add :0.0 MIT-MAGIC-COOKIE-1 66604A47713D480A" on stdout.
+  3. set an XAUTHORITY environment variable, e.g. in csh:
+     `setenv XAUTHORITY /tmp/xauth`
+  4. Add the new auth to the authority file, e.g.:
+     `xauth add :0.0 MIT-MAGIC-COOKIE-1 66604A47713D480A`
+     xauth will output something like: 
+     "xauth:  creating new authority file /tmp/auth"
+  5. Run xlogo: `xlogo -display :0`
+     The xlogo program will be embedded inside the embedtest "html"
+     window.
+
+

@@ -1,7 +1,7 @@
 .\"#! troff -ms $1		-*- Nroff -*-
 .\" "Xterm Control Sequences" document
 .\" $XConsortium: ctlseqs.ms,v 1.16 94/12/28 20:45:48 gildea Exp $
-.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.8.2.1 1997/05/25 05:06:27 dawes Exp $
+.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.8.2.2 1998/02/15 16:08:34 hohndel Exp $
 .\"
 .\" Copyright 1991, 1994 X Consortium
 .\"
@@ -301,7 +301,7 @@ Most of these control sequences are standard VT102 control sequences,
 but there is support for later DEC VT terminals (i.e., VT220 and VT320),
 as well as ISO 6429 and \fIaixterm\fP color controls.
 VT102 features not supported are
-double size characters and blinking characters.
+auto-repeat and blinking characters.
 There are additional control sequences to provide
 \fIxterm-\fPdependent functions, such as the scrollbar or window size.
 Where the function is specified by DEC or ISO 6429, the code assigned
@@ -367,6 +367,18 @@ Set ANSI conformance level 2 (vt200).
 .
 .IP \\*(Es\\*(Sp\\*N
 Set ANSI conformance level 3 (vt300).
+.
+.IP \\*(Es\\*#\\*3
+DEC double-height line, top half (DECDHL)
+.
+.IP \\*(Es\\*#\\*4
+DEC double-height line, bottom half (DECDHL)
+.
+.IP \\*(Es\\*#\\*5
+DEC single-width line (DECSWL)
+.
+.IP \\*(Es\\*#\\*6
+DEC double-width line (DECDWL)
 .
 .IP \\*(Es\\*#\\*8
 DEC Screen Alignment Test (DECALN)
@@ -514,7 +526,7 @@ Erase in Display (ED)
   \*(Ps = \*1 \(-> Erase Above
   \*(Ps = \*2 \(-> Erase All
 .
-.IP \\*(Cs\\*(Ps\\*s\\*?\\*s\\*J
+.IP \\*(Cs\\*?\\*(Ps\\*s\\*J
 Erase in Display (DECSED)
   \*(Ps = \*0 \(-> Selective Erase Below (default)
   \*(Ps = \*1 \(-> Selective Erase Above
@@ -526,7 +538,7 @@ Erase in Line (EL)
   \*(Ps = \*1 \(-> Erase to Left
   \*(Ps = \*2 \(-> Erase All
 .
-.IP \\*(Cs\\*(Ps\\*s\\*?\\*s\\*K
+.IP \\*(Cs\\*?\\*(Ps\\*s\\*K
 Erase in Line (DECSEL)
   \*(Ps = \*0 \(-> Selective Erase to Right (default)
   \*(Ps = \*1 \(-> Selective Erase to Left
@@ -585,12 +597,28 @@ Tab Clear (TBC)
 .
 .IP \\*(Cs\\*(Pm\\*s\\*h
 Set Mode (SM)
+  \*(Ps = \*2 \(-> Keyboard Action Mode (AM)
   \*(Ps = \*4 \(-> Insert Mode (IRM)
+  \*(Ps = \*1\*2 \(-> Send/receive (SRM)
   \*(Ps = \*2\*0 \(-> Automatic Newline (LNM)
+.
+.IP \\*(Cs\\*(Pm\\*s\\*i
+Media Copy (MC)
+  \*(Ps = \*0 \(-> Print screen (default)
+  \*(Ps = \*4 \(-> Turn off printer controller mode
+  \*(Ps = \*5 \(-> Turn on printer controller mode
+.
+.IP \\*(Cs\\*?\\*(Pm\\*s\\*i
+Media Copy (MC, DEC-specific)
+  \*(Ps = \*1 \(-> Print line containing cursor
+  \*(Ps = \*4 \(-> Turn off autoprint mode
+  \*(Ps = \*5 \(-> Turn on autoprint mode
 .
 .IP \\*(Cs\\*(Pm\\*s\\*l
 Reset Mode (RM)
+  \*(Ps = \*2 \(-> Keyboard Action Mode (AM)
   \*(Ps = \*4 \(-> Replace Mode (IRM)
+  \*(Ps = \*1\*2 \(-> Send/receive (SRM)
   \*(Ps = \*2\*0 \(-> Normal Linefeed (LNM)
 .
 .IP \\*(Cs\\*(Pm\\*s\\*m
@@ -655,7 +683,7 @@ Device Status Report (DSR)
   \*(Ps = \*6 \(-> Report Cursor Position (CPR) [row;column] as
 \*(Cs\*(Ir\*s\*;\*(Ic\*s\*R
 .
-.IP \\*(Cs\\*(Ps\\*s\\*?\\*n
+.IP \\*(Cs\\*?\\*(Ps\\*s\\*n
 Device Status Report (DSR, DEC-specific)
   \*(Ps = \*6 \(-> Report Cursor Position (CPR) [row;column] as
 \*(Cs\*?\*(Ir\*s\*;\*(Ic\*s\*R
@@ -737,6 +765,8 @@ and set VT100 mode.
   \*(Ps = \*8 \(-> Auto-repeat Keys (DECARM)
   \*(Ps = \*9 \(-> Send Mouse X & Y on button press.
 See the section \fBMouse Tracking\fP.
+  \*(Ps = \*1\*8 \(-> Print form feed (DECPFF)
+  \*(Ps = \*1\*9 \(-> Set print extent to full screen (DECPEX)
   \*(Ps = \*2\*5 \(-> Show Cursor (DECTCEM)
   \*(Ps = \*3\*8 \(-> Enter Tektronix Mode (DECTEK)
   \*(Ps = \*4\*0 \(-> Allow 80 \z\(<-\(-> 132 Mode
@@ -747,10 +777,15 @@ See the section \fBMouse Tracking\fP.
 (normally disabled by a compile-time option)
   \*(Ps = \*4\*7 \(-> Use Alternate Screen Buffer (unless
 disabled by the \fBtiteInhibit\fP resource)
+  \*(Ps = \*6\*7 \(-> Backarrow key (DECBKM)
   \*(Ps = \*1\*0\*0\*0 \(-> Send Mouse X & Y on button press and release.
 See the section \fBMouse Tracking\fP.
   \*(Ps = \*1\*0\*0\*1 \(-> Use Hilite Mouse Tracking.
 See the section \fBMouse Tracking\fP.
+  \*(Ps = \*1\*0\*4\*7 \(-> Use Alternate Screen Buffer (unless
+disabled by the \fBtiteInhibit\fP resource)
+  \*(Ps = \*1\*0\*4\*8 \(-> Save cursor as in DECSC (unless
+disabled by the \fBtiteInhibit\fP resource)
 .
 .IP \\*(Cs\\*?\\*(Pm\\*s\\*l
 DEC Private Mode Reset (DECRST)
@@ -763,6 +798,8 @@ DEC Private Mode Reset (DECRST)
   \*(Ps = \*7 \(-> No Wraparound Mode (DECAWM)
   \*(Ps = \*8 \(-> No Auto-repeat Keys (DECARM)
   \*(Ps = \*9 \(-> Don't Send Mouse X & Y on button press
+  \*(Ps = \*1\*8 \(-> Don't print form feed (DECPFF)
+  \*(Ps = \*1\*9 \(-> Limit print to scrolling region (DECPEX)
   \*(Ps = \*2\*5 \(-> Hide Cursor (DECTCEM)
   \*(Ps = \*4\*0 \(-> Disallow 80 \z\(<-\(-> 132 Mode
   \*(Ps = \*4\*1 \(-> No \fImore\fP(1) fix (see \fIcurses\fP resource)
@@ -771,9 +808,15 @@ DEC Private Mode Reset (DECRST)
   \*(Ps = \*4\*6 \(-> Stop Logging
 (normally disabled by a compile-time option)
   \*(Ps = \*4\*7 \(-> Use Normal Screen Buffer
+  \*(Ps = \*6\*7 \(-> Backarrow key (DECBKM)
   \*(Ps = \*1\*0\*0\*0 \(-> Don't Send Mouse X & Y on button press and
 release
   \*(Ps = \*1\*0\*0\*1 \(-> Don't Use Hilite Mouse Tracking
+  \*(Ps = \*1\*0\*4\*7 \(-> Use Normal Screen Buffer, clearing screen
+first if in the Alternate Screen (unless
+disabled by the \fBtiteInhibit\fP resource)
+  \*(Ps = \*1\*0\*4\*8 \(-> Restore cursor as in DECRC (unless
+disabled by the \fBtiteInhibit\fP resource)
 .
 .IP \\*(Cs\\*?\\*(Pm\\*s\\*r
 Restore DEC Private Mode Values.  The value of \*(Ps previously saved is
@@ -790,13 +833,14 @@ Set Text Parameters
   \*(Ps = \*1 \(-> Change Icon Name to \*(Pt
   \*(Ps = \*2 \(-> Change Window Title to \*(Pt
   \*(Ps = \*1\*0 \(-> Change color names starting with text foreground to \*(Pt (a
-list of one or more color names, separated by semicolon, up to color6).
+list of one or more color names, separated by semicolon, up to seven).
   \*(Ps = \*1\*1 \(-> Change colors starting with text background to \*(Pt
   \*(Ps = \*1\*2 \(-> Change colors starting with text cursor to \*(Pt
   \*(Ps = \*1\*3 \(-> Change colors starting with mouse foreground to \*(Pt
   \*(Ps = \*1\*4 \(-> Change colors starting with mouse background to \*(Pt
   \*(Ps = \*1\*5 \(-> Change colors starting with Tek foreground to \*(Pt
   \*(Ps = \*1\*6 \(-> Change colors starting with Tek background to \*(Pt
+  \*(Ps = \*1\*7 \(-> Change colors starting with highlight to \*(Pt
   \*(Ps = \*4\*6 \(-> Change Log File to \*(Pt (normally disabled by a
 compile-time option)
   \*(Ps = \*5\*0 \(-> Set Font to \*(Pt

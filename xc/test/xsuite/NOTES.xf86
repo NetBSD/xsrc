@@ -1,0 +1,133 @@
+These are some brief notes to help in getting started with the
+X test suite on XFree86 platforms.
+
+Throughout this document, <VAL> means enter the actual setting of
+the environment variable $VAL.
+
+The syntax for setting environment variables here is for csh/tcsh.
+If you are using sh/ksh/bash, replace "setenv VAR value" with
+"VAR=value; export VAR"
+
+A build of the test suite requires about 50-60MB of disk space (including
+a few largish log files).
+
+
+1. Go to the test/xsuite directory, and do:
+
+   setenv TET_ROOT `pwd`
+   setenv PATH $TET_ROOT/xtest/bin:$PATH
+
+   Note, it is important to have $TET_ROOT/xtest/bin as the first component
+   of your path.
+
+2. Go to $TET_ROOT/xtest, and edit tetbuild.cfg.  Uncomment/change the
+   appropriate settings for the OS you are using, and set the following
+   value:
+
+   TET_ROOT=<TET_ROOT>
+
+3. Copy tetbuild.cfg to tetclean.cfg
+
+4. Build the "tet" tools:
+
+   cd $TET_ROOT
+   xmkmf
+   make
+
+   You may now need to type 'rehash' so that your shell re-searches the
+   paths, otherwise it may not find the new 'tcc' commane.
+
+5. Build the test suite:
+
+   [This seems to get done automatically as part of step 4]
+
+   cd $TET_ROOT/xtest
+   tcc -b -s link_scen xtest linkbuild
+
+   This will install xtest's fonts in /usr/X11R6/lib/X11/fonts/xtest,
+   so make sure that you have permission to create/write to that
+   directory.  You will need to manually copy this directory across
+   to any machines you'll be running servers on.
+
+   Warning messages like:
+
+     Tcc error, message from source file journal.c line 104 :
+     Warning journal line truncated because it exceeded 512 bytes
+
+   can safely be ignored.
+
+   The report log for the build of the tests gets written to a subdirectory
+   of the $TET_ROOT/xtest/results directory.  The subdirectories are
+   numbered, and those for a build end with 'b'.
+
+6. Edit tetexec.cfg. Set XT_HEIGHT_MM and XT_WIDTH_MM to match the
+   values reported by xdpyinfo, and XT_DISPLAYHOST to the hostname of
+   the machine you are running the test server on, and set the
+   following value:
+
+   XT_FONTDIR=<TET_ROOT>/xtest/fonts/
+
+   If running at a depth other than 8bpp, Change the value of
+   XT_VISUAL_CLASSES to match the visuals the server supports.  For
+   example, for 16bpp use:
+
+   XT_VISUAL_CLASSES=TrueColor(16)
+
+   Also change XT_BLACK_PIXEL, XT_WHITE_PIXEL, XT_PIXMAP_DEPTHS to match
+   the values reported by xdpyinfo.
+
+7. Start up a server on the machine you are testing on.  The server
+   should not have any clients running.  Starting it with the '-ac -s 0'
+   flags will disable both access control and the screen saver.
+
+8. Run the tests
+
+   cd $TET_ROOT/xtest
+   tcc -e -s link_scen xtest linkexec
+
+   The report log for running the tests gets written to a subdirectory
+   of the $TET_ROOT/xtest/results directory.  The subdirectories are
+   numbered, and those for a test run (execution) end with 'e'.  A new
+   directory is created for each run.
+
+   The log file is called "journal".  The "tset" subdirectory contains
+   subdirs for each test that fails *and* for which there are error
+   bitmaps saved to help in debugging the problem.  The "blowup"
+   utility can be used to view these.
+
+   The "rpt" utility can be used to extract various information from
+   the journal file.  For example. "rpt -p" gives a summary for each
+   test + details for those which failed.  To specify which journal
+   file to report on, add the "-f journal-name" flag.  Without this
+   it uses the most recent one.
+
+9. Running subsets of tests.
+
+   It is possible to create new "scenario" files to run some subset
+   of the tests.  Start with the $TET_ROOT/xtest/link_scen file, and
+   edit the linkexec section to include only those tests you want to
+   run.  Each line describes a group of tests.  The value in '{}'
+   indicates which tests in each group are run.  'all' means run all
+   of them.  Other legal values are comma separated ranges of numbers
+   (e.g., {1,3-5}).
+
+   To run a test with the new scenario file, use the same command as
+   above, but replace "link_scen" with the name of the new file.
+
+10. Running individual tests separately.
+
+   Individual tests can be run by going to the directory containing
+   the test (these are the subdirs of $TET_ROOT/xtest/tset/, for
+   example $TET_ROOT/xtest/tset/CH03/stwdwbrdr), and using the 'pt'
+   command.  The '-i' flag allows individual tests to be specified.
+   For example, 'pt -i 1,3-5' will run tests 1, 3, 4, 5.  The result
+   log for the test gets written to the file tet_xres.
+
+
+For further information refer to $TET_ROOT/xtest/doc/userguide.mm.
+There is a hardcopy version of this in the main X distribution
+(in xc/doc/hardcopy/test/xsuite/userguide.PS.Z).
+
+
+
+$XFree86: test/xsuite/NOTES.xf86,v 1.4.2.2 1997/05/26 14:58:00 dawes Exp $
