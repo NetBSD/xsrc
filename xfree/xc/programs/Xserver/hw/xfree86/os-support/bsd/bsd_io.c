@@ -131,7 +131,9 @@ xf86KbdInit()
 #endif
 #if defined WSCONS_SUPPORT
 	case WSCONS:
+#if 0
 		xf86FlushInput(xf86Info.kbdFd);
+#endif
 		break;
 #endif
 	}
