@@ -151,6 +151,7 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 		fprintf(stderr,"fcntl(%d, F_SETOWN): %s\n", 
 			fd, strerror(errno));
 #endif
+		xf86UnblockSIGIO(blocked);
 		return 0;
 	    }
 	    sigemptyset(&sa.sa_mask);
