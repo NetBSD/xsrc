@@ -2,7 +2,7 @@
 
                                  Holger Veit
 
-                       Last modified August 1st, 1999
+                      Last modified December 12th, 1999
 
 1.  Preface
 
@@ -16,16 +16,16 @@ hints if you intend to rebuild the system from scratch under OS/2.
 Please also read README.OS2 for end-user information, and set at least the
 environment variables described there.
 
-At the current time, the most recent version available is XFree86-3.3.5.
+At the current time, the most recent version available is XFree86-3.3.6.
 This is a full and unrestricted version which comes with complete source
-code. 3.3.5 is not only a bugfix release, but also supports new hardware,
+code. 3.3.6 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 
 If you want to join the XFree86 developer team, e.g. to add support for cer-
 tain hardware, please send a request to BOD@XFree86.org. Please think about
 such a step carefully before, though, since much work is involved. Please use
-the XFree86-3.3.5 source code as a test example how to compile the system.
+the XFree86-3.3.6 source code as a test example how to compile the system.
 The ability to manage that is a basic requirement for becoming a developer.
 
 2.  Tools required
@@ -37,7 +37,7 @@ software required.  Most of this software is available from hobbes.nmsu.edu
 or ftp.leo.org via anonymous FTP. The following shopping list shows what you
 will need:
 
-   o gcc  EMX/gcc emx 0.9C patch4 or later (0.9d preferred!)
+   o gcc  EMX/gcc emx 0.9d patch2 or later
 
    o gzip GNU zip/unzip
 
@@ -69,19 +69,22 @@ will need:
    o find GNU find    (attention: incompatible tool with the same name in
      OS/2)
 
+   o unix2dos  Some conversion utility to convert LF delimiter to CRLF (may
+     be called unixtoos2 or alike as well)
+
 If there is no version number given, any new version will do. Particularly
 critical is only EMX/gcc and GNU make. Note that the second GCC implementa-
 tion which might still be available from some archives is NOT compatible.
 
 Furthermore, you need the XFree86 sources. These are available from the com-
 mon XFree86 repositories. Look into a directory which is often named
-/pub/XFree86/3.3.5/source.
+/pub/XFree86/3.3.6/source.
 
 3.  Compiling and Installing
 
-You need about 300MB of free HPFS space for the whole system. This does not
-include space for the postscript and troff documentation files. I have never
-installed them. Nor did I install the test subtree.
+You need about 300MB of free HPFS (or NFS, JFS, ext2fs) space for the whole
+system. This does not include space for the postscript and troff documenta-
+tion files. I have never installed them. Nor did I install the test subtree.
 
   1.  Install all the above utilities. Refer to the corresponding documenta-
       tion.  Verify that everything works well, particularly EMX.
@@ -145,21 +148,22 @@ installed them. Nor did I install the test subtree.
 
                  find \x11 -name *.orig -print -exec rm {} ;
 
-  7.  Go to the xc/config/cf directory and edit the xf86site.def file to
+  7.  Go to the xc\config\cf directory and copy the file \x11bsol;xcbsol;pro-
+      gramsbsol;Xserverbsol;hwbsol;xfree86bsol;etcbsol;bindistb-
+      sol;OS2bsol;host.def.os2 into xc/config/cf/host.def and edit it to
       match your requirements (you probably don't want to compile all X
-      servers). Certain changes must be set to the following values:
+      servers).  Certain changes must be set to the following values:
 
          o Disable if not already done any PC98 server; PC98 (Japanese
            XFree86) does not work yet. Porters from Japan are welcome!
 
-         o #define WacomSupport            NO #define ElographicsSupport
-           NO Both options are not yet supported.
-
-         o Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
-           are in the other config files, provided you have a complete
-           XFree86/OS2 binary tree with the tcl/tk runtime support installed.
+         o Disable the whole external input device stuff, like JoystickSup-
+           port, Wacom- Support, etc.
 
          o #define BuildDynamicLoading   NO This does not work.
+
+         o Disable the special servers XVirtualFramebufferServer, Xnest-
+           Server, XprtServer
 
   8.  Go to the directory xc\util\compress and make compress.exe there.
       Install the program produced there in your path. I stumbled more than
@@ -184,7 +188,12 @@ installed them. Nor did I install the test subtree.
       toplevel Makefile.os2 back to Makefile.
 
  12.  Execute this buildos2.cmd command in the xc directory; it will produce
-      a logfile buildxc.log in this directory.
+      a logfile buildxc.log in this directory.  Note: this may immediately
+      fail in case, you got your distribution from a Unix tar archive. Unfor-
+      tunately the OS/2 REXX interpreter has a problem with scripts that use
+      the Unix convention as a line delimiter. So go through the whole tree
+      and convert the *.cmd files to "OS/2 ASCII" by one of the typical
+      unix2dos or unixtoos2 programs.
 
  13.  Go have a bucket of coffee, or better, buy new coffee - in Colombia!
       The compile will need between 2 and 20 hours, depending on your selec-
@@ -219,9 +228,9 @@ installed them. Nor did I install the test subtree.
 
 Well, you see, this was quite easy :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.6 1999/08/02 08:38:17 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.7 1999/12/20 12:55:51 hohndel Exp $
 
      $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.9 1999/08/02 09:52:40 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.10 1999/12/20 16:36:58 hohndel Exp $

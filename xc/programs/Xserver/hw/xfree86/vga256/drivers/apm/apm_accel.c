@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_accel.c,v 1.1.2.4 1998/10/21 10:44:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_accel.c,v 1.1.2.5 1999/10/13 14:44:23 hohndel Exp $ */
 
 
 /*
@@ -41,8 +41,10 @@ static void ApmSubsequentFillRectSolid(int x, int y, int w, int h);
 static void ApmSetupForScreenToScreenCopy(int xdir, int ydir, int rop, unsigned int planemask,
                                           int transparency_color);
 static void ApmSubsequentScreenToScreenCopy(int x1, int y1, int x2, int y2, int w, int h);
+#if 0
 static void ApmSetupForCPUToScreenColorExpand(int bg, int fg, int rop, unsigned int planemask);
 static void ApmSubsequentCPUToScreenColorExpand(int x, int y, int w, int h, int skipleft);
+#endif
 static void ApmSetupForScreenToScreenColorExpand(int bg, int fg, int rop,
                                                  unsigned int planemask);
 static void ApmSubsequentScreenToScreenColorExpand(int srcx, int srcy, int x, 
@@ -124,7 +126,10 @@ ApmAccelInit(void)
   xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK;
   xf86AccelInfoRec.SetupForFillRectSolid = ApmSetupForFillRectSolid;
   xf86AccelInfoRec.SubsequentFillRectSolid = ApmSubsequentFillRectSolid;
-
+#if 0
+  /* The Alliance chips are too much demanding. Need to check after each write
+   * if the chip is ok to have the next one. If not the machine ends crashed...
+   */
   /* Accelerated CPU to screen color expansion */
   xf86AccelInfoRec.SetupForCPUToScreenColorExpand = ApmSetupForCPUToScreenColorExpand;
   xf86AccelInfoRec.SubsequentCPUToScreenColorExpand = ApmSubsequentCPUToScreenColorExpand;
@@ -133,6 +138,7 @@ ApmAccelInit(void)
     NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
     | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
     LEFT_EDGE_CLIPPING_NEGATIVE_X;
+#endif
 
 
 #if 0
@@ -163,6 +169,7 @@ ApmAccelInit(void)
   xf86AccelInfoRec.PixmapCacheMemoryEnd =
     vga256InfoRec.videoRam * 1024 - 1024;
 
+#if 0
   if (apmChip == AP6422)
   {
     xf86AccelInfoRec.Sync = ApmSync6422;
@@ -170,6 +177,7 @@ ApmAccelInit(void)
     xf86AccelInfoRec.SubsequentCPUToScreenColorExpand = NULL;
     xf86AccelInfoRec.SubsequentBresenhamLine = ApmSubsequentBresenhamLine6422;
   }
+#endif
 
 }
 
@@ -249,6 +257,7 @@ ApmSubsequentScreenToScreenCopy(int x1, int y1, int x2, int y2, int w, int h)
 
 }
 
+#if 0
 static void 
 ApmSetupForCPUToScreenColorExpand(int bg, int fg, int rop, unsigned int planemask)
 {
@@ -289,6 +298,7 @@ ApmSubsequentCPUToScreenColorExpand(int x, int y, int w, int h, int skipleft)
 
   SETDEC(DEC_START | c | apmScreenWidth_DEC | apmBitsPerPixel_DEC);
 }
+#endif
 
 
 static void 
@@ -422,8 +432,10 @@ ApmCheckMMIO_Init(void)
 
     SETROP(ROP_S);     
 
+#if 0
     xf86AccelInfoRec.CPUToScreenColorExpandBase = (pointer)((u8*)vgaLinearBase + 
       APM.ChipLinearSize - 32*1024);
+#endif
 
     /*Dump(apmRegBase + 0xe8, 8);*/
 

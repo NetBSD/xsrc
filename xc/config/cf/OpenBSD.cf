@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.13 1998/12/22 11:23:02 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.14 1999/12/01 12:49:09 hohndel Exp $
 XCOMM
 XCOMM $OpenBSD: OpenBSD.cf,v 1.33 1998/09/27 04:52:48 rahnds Exp $
 XCOMM
@@ -337,6 +337,12 @@ install:: fonts.alias							@@\
  * Definitions for the i386 architecture
  */
 #ifdef i386Architecture
+
+/* Support for USB Mices */
+#if OSMajorVersion == 2 && OSMinorVersion >= 6 || OSMajorVersion > 2
+#define UsbMouseSupport		YES
+#define HasLibUsb		NO
+#endif
 
 /*
  * For safety reasons, don't install the X server setuid on OpenBSD

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1.2.5 1999/05/15 13:53:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1.2.8 1999/12/21 07:43:44 hohndel Exp $ */
 
 /*
  *
@@ -25,7 +25,12 @@
  */
 
 
-/*#define DEBUG*/
+#define	SIS_MAJOR_VERSION	3
+#define	SIS_MINOR_VERSION	0
+#define	SIS_PATCH_LEVEL		0
+#define	SIS_CURRENT_VERSION	(SIS_DRV_MAJOR_VERSION << 16 | \
+				 SIS_DRV_MINOR_VERSION << 8 | \
+				 SIS_DRV_PATCH_LEVEL)
 
 #define SIS86C201 0
 #define SIS86C202 1
@@ -37,8 +42,27 @@
 #define SIS6326   7
 #define SIS530    8 /* 2nd generation graphics engine */
 #define SIS620    9 /* treated as SIS530 */
+#define SIS300   10
+#define SIS630   11
+#define SIS540   12
+
+#define SIS5597_3C5_LAST	0x39
+#define SIS6326_3C5_LAST	0x3C
+#define SIS530_3C5_LAST		0x3F
+#define SIS300_3C5_LAST		0x3D
+#define DEFAULT_3C5_LAST	0x37
+
+#define SIS300_CURSOR_CONTROL	0x8500
+#define SIS300_CURSOR_COLOR0	0x8504
+#define SIS300_CURSOR_COLOR1	0x8508
+#define SIS300_CURSOR_H_LOC	0x850C
+#define SIS300_CURSOR_V_LOC	0x8510
+
+#define SIS300_CURSOR_ENABLE	0x40000000
+#define SIS300_CURSOR_DISABLE	0x3FFFFFFF
 
 extern int SISchipset;
+extern int SISfamily;
 
 extern Bool sisLinearSupport;	       /*linear addressing enable */
 

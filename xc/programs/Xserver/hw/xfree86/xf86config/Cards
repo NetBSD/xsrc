@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.37 1999/08/17 07:39:38 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.43 1999/12/20 12:55:58 hohndel Exp $
 
 # VGA
 
@@ -555,7 +555,7 @@ CHIPSET S3 Trio64
 SERVER S3
 NOCLOCKPROBE
 
-NAME S3 86C764 (generic)
+NAME S3 86C764 (Trio64)
 SEE S3 Trio64 (generic)
 
 NAME S3 Trio64V+ (generic)
@@ -563,7 +563,7 @@ CHIPSET S3 Trio64V+
 SERVER S3
 NOCLOCKPROBE
 
-NAME S3 86C765 (generic)
+NAME S3 86C765 (Trio64V+)
 SEE S3 Trio64V+ (generic)
 
 NAME S3 Trio32 (generic)
@@ -721,10 +721,10 @@ SEE S3 Trio64V2 (generic)
 NAME S3 Trio64V2/GX (generic)
 SEE S3 Trio64V2 (generic)
 
-NAME S3 86C775 (generic)
+NAME S3 86C775 (Trio64V2/DX)
 SEE S3 Trio64V2/DX (generic)
 
-NAME S3 86C785 (generic)
+NAME S3 86C785 (Trio64V2/GX)
 SEE S3 Trio64V2/GX (generic)
 
 NAME ELSA WINNER 1000/T2D
@@ -740,7 +740,7 @@ NOCLOCKPROBE
 LINE     # Option "lcd_center"
 LINE     # Set_LCDClk  <pixel_clock_for_LCD>
 
-NAME S3 86CM65
+NAME S3 86CM65 (Aurora64V+)
 SEE S3 Aurora64V+ (generic)
 
 NAME SHARP 9080
@@ -1137,22 +1137,30 @@ SEE S3 Trio3D
 NAME AOpen PG128
 SEE S3 Trio3D
 
-NAME S3 86C325 (generic)
+NAME S3 86C368 (Trio3D/2X)
+LINE      # Option "no_accel"	# You may enable this if there are timeouts when starting X
+SEE S3 Trio3D
+
+NAME S3 Trio3D/2X
+LINE      # Option "no_accel"	# You may enable this if there are timeouts when starting X
+SEE S3 Trio3D
+
+NAME S3 86C325 (ViRGE)
 SEE S3 ViRGE (generic)
 
-NAME S3 86C375 (generic)
+NAME S3 86C375 (ViRGE/DX)
 SEE S3 ViRGE/DX (generic)
 
-NAME S3 86C385 (generic)
+NAME S3 86C385 (ViRGE/GX)
 SEE S3 ViRGE/GX (generic)
 
-NAME S3 86C357 (generic)
+NAME S3 86C357 (ViRGE/GX2)
 SEE S3 ViRGE/GX2 (generic)
 
-NAME S3 86C260 (generic)
+NAME S3 86C260 (ViRGE/MX)
 SEE S3 ViRGE/MX (generic)
 
-NAME S3 86C280 (generic)
+NAME S3 86C280 (ViRGE/MX+)
 SEE S3 ViRGE/MX+ (generic)
 
 
@@ -1243,7 +1251,7 @@ LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
 
 
-NAME S3 86C988 (generic)
+NAME S3 86C988 (ViRGE/VX)
 SEE S3 ViRGE/VX (generic)
 
 NAME ELSA Winner 3000
@@ -1285,13 +1293,67 @@ SEE S3 ViRGE/MX (generic)
 NAME Toshiba Tecra 550CDT
 SEE S3 ViRGE/MX (generic)
 
-# currently unsupported S3
+NAME Toshiba Satellite 2050 CDS
+SEE S3 ViRGE/MX (generic)
+
+NAME Toshiba Satellite 2520 CDS
+SEE S3 ViRGE/MX (generic)
+
+NAME Compaq Armada 7400
+SEE S3 ViRGE/MX (generic)
+
+NAME Compaq Armada 7800
+SEE S3 ViRGE/MX (generic)
+
+
+NAME S3 Savage (generic)
+CHIPSET S3 Savage
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+
+NAME S3 86C390 (Savage3D)
+SEE S3 Savage (generic)
 
 NAME S3 86C391 (Savage3D)
-SEE Unsupported VGA compatible
+SEE S3 Savage (generic)
 
 NAME S3 Savage3D
-SEE Unsupported VGA compatible
+SEE S3 Savage (generic)
+
+NAME Aristo ART-390-G  S3 Savage3D
+SEE S3 Savage (generic)
+
+
+NAME S3 Savage4 (generic)
+LINE      # Option "no_accel"	# You may enable this if there are timeouts when starting X
+SEE S3 Savage (generic)
+
+NAME S3 86C395 (Savage4 Pro+)
+SEE S3 Savage4 (generic)
+
+NAME S3 86C396 (Savage4)
+SEE S3 Savage4 (generic)
+
+NAME S3 86C397 (Savage4)
+SEE S3 Savage4 (generic)
+
+NAME S3 Savage4
+SEE S3 Savage4 (generic)
+
+NAME S3 Savage4 Pro+
+SEE S3 Savage4 (generic)
+
+NAME Diamond Stealth III (S520/S540)
+SEE S3 Savage4 (generic)
+
+NAME Creative Labs Savage 4  3D Blaster
+SEE S3 Savage4 (generic)
+
+NAME S3 Savage2000 (generic)
+CHIPSET S3 Savage2000
+SERVER SVGA
+NOCLOCKPROBE
 
 
 
@@ -1809,11 +1871,44 @@ SEE ATI Mach64 with Internal RAMDAC
 NAME ATI integrated on Intel Maui MU440EX motherboard
 SEE ATI Mach64 with Internal RAMDAC
 
+NAME ATI Rage LT
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Rage LT PRO
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Rage Mobility
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Rage Mobility P
+SEE ATI Mach64 with Internal RAMDAC
+
+
 NAME ASUS PCI-V264CT
 SEE ATI Mach64 with Internal RAMDAC
 
 NAME ASUS PCI-AV264CT
 SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Rage 128 (generic)
+CHIPSET ATI Rage 128
+SERVER SVGA
+NOCLOCKPROBE
+LINE     #Option     "no_accel"
+LINE     #Option     "sw_cursor"
+LINE     #Option     "hw_cursor"
+LINE     #Option     "dac_8_bit"
+LINE     #Option     "dac_6_bit"
+
+NAME ATI Rage Fury AGP
+SEE ATI Rage 128 (generic)
+
+NAME ATI XPERT 128 AGP
+SEE ATI Rage 128 (generic)
+
+NAME ATI XPERT 99 AGP
+SEE ATI Rage 128 (generic)
+
 
 # AGX
 
@@ -2233,6 +2328,16 @@ SEE Generic VGA compatible
 NAME AOpen PG975
 SEE Trident 3DImage975 AGP (generic)
 
+NAME Toshiba Satellite 4030CDT
+LINE     Option "cyber_shadow"
+SEE Trident Cyber 9525 (generic)
+
+NAME Toshiba Satellite 4060CDT
+SEE Trident Cyber 9525 (generic)
+
+NAME Toshiba Satellite 4080CDT
+SEE Trident Cyber 9525 (generic)
+
 # SiS
 
 NAME SiS SG86C201
@@ -2315,8 +2420,23 @@ CHIPSET SiS530
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME SiS 540
+CHIPSET SiS540
+SERVER SVGA
+NOCLOCKPROBE
+
 NAME SiS 620
 CHIPSET SiS620
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SiS 630
+CHIPSET SiS630
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SiS 300
+CHIPSET SiS300
 SERVER SVGA
 NOCLOCKPROBE
 
@@ -2543,6 +2663,11 @@ CHIPSET RIVATNT2
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME RIVA Ultra TNT2 
+CHIPSET RIVA ULTRA TNT2 
+SERVER SVGA 
+NOCLOCKPROBE 
+
 NAME ELSA VICTORY ERAZOR
 SEE RIVA128
 
@@ -2608,6 +2733,43 @@ SEE RIVA TNT2
 
 NAME Hercules Dynamite TNT
 SEE RIVA TNT
+
+NAME MELCO WGA-TS 
+SEE RIVA TNT2 
+
+NAME Canopus SPECTRA 3200R2 
+SEE RIVA TNT 
+
+NAME Canopus SPECTRA 5400 
+SEE RIVA TNT2 
+
+NAME Canopus SPECTRA 5400 Premium Edition 
+SEE RIVA Ultra TNT2 
+
+NAME NVIDIA Riva 128 (generic)
+CHIPSET Riva 128
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME NVIDIA Riva TNT (generic)
+CHIPSET Riva TNT
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME NVIDIA Riva TNT2 (generic)
+CHIPSET Riva TNT2
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME NVIDIA GeForce 256 (generic)
+CHIPSET GeForce 256
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME NVIDIA GeForce DDR (generic)
+CHIPSET GeForce DDR
+SERVER SVGA
+NOCLOCKPROBE
 
 # 3DLabs
 
@@ -2949,6 +3111,37 @@ SEE Voodoo Banshee (generic)
 
 NAME Chaintech Desperado 3F10
 SEE Voodoo Banshee (generic)
+
+NAME SMI Lynx (generic)
+CHIPSET Lynx
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SMI LynxE (generic)
+CHIPSET LynxE
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SMI Lynx3D (generic)
+CHIPSET Lynx3D
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SMI LynxEM (generic)
+CHIPSET LynxEM
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SMI LynxEM+ (generic)
+CHIPSET LynxEM+
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME SMI Lynx3DM (generic)
+CHIPSET Lynx3DM
+SERVER SVGA
+NOCLOCKPROBE
+
 
 # Misc
 

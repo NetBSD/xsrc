@@ -6,17 +6,18 @@
 -->
 <title>OS/2 における XFree86 に関する README
 <author>Holger Veit
-<Date>Last modified on: December 29, 1998
+<Date>Last modified on: December 12th, 1999
 <trans>The X Japanese Documentation Project
-<tdate>Last modified on: February 11, 1999
+<tdate>Last modified on: December 21th, 1999
 
 <toc>
 
 <!--
-<sect>Introductory Note about the release 3.3.3
+<sect>Introductory Note about the release 3.3.6
 -->
-<sect>リリース 3.3.3 に関する最初の注意
+<sect>リリース 3.3.6 に関する最初の注意
 <p>
+
 <!--
 Before looking into this file, please check for any LATEST.OS2 files
 that may come with the binary distribution. Please also check out the
@@ -26,48 +27,49 @@ following XFree86/OS2 WWW pages:
 確認してください。問題があったと騒ぐ前には、以下の XFree86/OS2 の WWW
 ページもチェックしてください:
 <itemize>
-<item><htmlurl name="http://set.gmd.de/~veit/os2/xf86os2.html" url="http://set.gmd.de/~veit/os2/xf86os2.html"> 
-<item><htmlurl name="http://set.gmd.de/~veit/os2/xf86bugs.html" url="http://set.gmd.de/~veit/os2/xf86bugs.html"> 
-<item><htmlurl name="http://set.gmd.de/~veit/os2/x11os2faq.html" url="http://set.gmd.de/~veit/os2/x11os2faq.html"> 
+<item><htmlurl name="http://ais.gmd.de/~veit/os2/xf86os2.html" url="http://ais.gmd.de/~veit/os2/xf86os2.html"> 
+<item><htmlurl name="http://ais.gmd.de/~veit/os2/xf86bugs.html" url="http://ais.gmd.de/~veit/os2/xf86bugs.html"> 
+<item><htmlurl name="http://ais.gmd.de/~veit/os2/x11os2faq.html" url="http://ais.gmd.de/~veit/os2/x11os2faq.html"> 
 </itemize>
 <!--
 before you claim to have found any problems.
 -->
 
 <!--
-This version of the code is called XFree86/OS2 3.3.3. This is a
-bugfix release for 3.3 and later which also adds hardware support for
-some newer cards (including AGP boards). XFree86-3.3.3 contains all
-security fixes that were released for earlier versions. See the
-RELNOTES document for details. 
+This version of the code is called XFree86/OS2 3.3.6. This is a
+bugfix release for 3.3.5 and previous versions which again adds 
+hardware support for some newer cards, including AGP 
+boards. XFree86-3.3.6 contains all security fixes that were released 
+for earlier versions. See the RELNOTES document for details. 
 -->
-このバージョンのコードは XFree86/OS2 3.3.3 と呼ばれます。これは 3.3 に
-対し、バグ修正といくつかの新しいカード(AGP ボードを含む)のハードウェア
-のサポートの追加を行ったものです。XFree86-3.3.3 は以前のバージョンに対
-してリリースされたセキュリティ関連の修正も全て含んでいます。詳しくは
-RELNOTES ドキュメントを参照してください。
+このバージョンのコードは XFree86/OS2 3.3.6 と呼ばれます。これは 
+3.3.5 以前のバージョンのバグ修正リリースであり、AGP ボードを含むいくつ
+かの新しいカードに対するハードウェアサポートがさらに追加されたものです。
+XFree86-3.3.6 は以前のバージョンに対してリリースされたセキュリティ関連
+の修正も全て含んでいます。詳しくは RELNOTES ドキュメントを参照してください。
 
 <!--
-XFree86/OS2-3.3.3 is a full, unrestricted version which does not
+XFree86/OS2-3.3.6 is a full, unrestricted version which does not
 expire, and for which the complete  source code is available. In
 contrast to beta versions, we consider this  code as sufficiently
 stable for use by an end user. Since there  have been numerous
-bugfixes, we recommend this version, even if you had  XFree86/OS2 3.3
+bugfixes, we recommend this version, even if you had  XFree86/OS2 3.3.x
 before and it worked satisfyingly with your hardware. By the time
-3.3.3 is released, the older version 3.3 will be withdrawn, and
+3.3.6 is released, the older version 3.3 will be withdrawn, and
 archives will be updated to this version. There may still be
-references  to 3.3 still in documents; these apply to 3.3.3 as well,
-unless otherwise noted.
+references  to 3.3 or 3.3.x still in documents; these apply 
+to 3.3.6 as well, unless otherwise noted.
 -->
-XFree86/OS2-3.3.3 は全ての機能を持ち、制限も無く、古くなっていないバー
+XFree86/OS2-3.3.6 は全ての機能を持ち、制限も無く、古くなっていないバー
 ジョンで、ソースコードも全て入手可能です。ベータ版とは異なり、このコー
 ドはエンドユーザが使う分には十分安定していると考えています。バグがたく
-さん修正されているので、今まで XFree86/OS2 3.3 を使っていて、お使いの
-ハードウェア上でうまく動いていたとしても、このバージョンをお勧めします。
-3.3.3 がリリースがリリースされたことにより、古いバージョン 3.3 が引っ
+さん修正されているので、今まで XFree86/OS2 3.3.x を使っていて、それが
+お使いのハードウェア上でうまく動いていたとしても、このバージョンに移行
+することをお勧めします。
+3.3.6 がリリースがリリースされたことにより、3.3 系の古いバージョンは引っ
 込められ、アーカイブはこのバージョンに更新されるでしょう。このドキュメ
-ント中にはまだ 3.3 についての言及があるかもしれませんが、特に注意書き
-が無ければ、これらは 3.3.3 にも当てはまります。
+ント中にはまだ 3.3 や 3.3.x についての言及があるかもしれませんが、特に
+注意書きが無ければ、これらは 3.3.6 にも当てはまります。
 
 <!--
 Previous versions have been tested in a large number of configurations
@@ -80,11 +82,11 @@ and have been found to be working, with some bugs left, rather flawlessly.
 This release is almost complete (with a few exceptions) regarding
 the X11R6.3 ``core'' distribution. A subset of the ``contrib'' distribution
 is available from the ported software page 
-<htmlurl name="http://set.gmd.de/~veit/os2/xf86ported.html" url="http://set.gmd.de/~veit/os2/xf86ported.html"> 
+<htmlurl name="http://ais.gmd.de/~veit/os2/xf86ported.html" url="http://ais.gmd.de/~veit/os2/xf86ported.html"> 
 -->
 X11R6.3 の「core」配布という点では、このリリースは(例外が少しあります
 が)ほぼ完全です。「contrib」配布の一部は移植版ソフトウェアのページ
-<htmlurl name="http://set.gmd.de/~veit/os2/xf86ported.html" url="http://set.gmd.de/~veit/os2/xf86ported.html"> 
+<htmlurl name="http://ais.gmd.de/~veit/os2/xf86ported.html" url="http://ais.gmd.de/~veit/os2/xf86ported.html"> 
 から入手することができます。
 
 <!--
@@ -172,21 +174,27 @@ See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 <htmlurl url="COPYRIGHT.html" name="著作権表示">には目を通しておいてく
 ださい。
 
-<!--
+<!-- 原文でコメントアウト
 The sources for XFree86/OS2 are available by anonymous ftp from:
--->
+
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.6/source"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.6/source">
+--> <!--
 XFree86/OS2 のソースは以下の場所から anonymous ftp で入手することがで
 きます:
 
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.3/source"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.3/source">
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.6/source"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.6/source">
+-->
 
 <!--
-Binaries for OS/2 Warp and Merlin are available from:
+Binaries for OS/2 Warp, Merlin, and Aurora are available from:
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.6/OS2"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.6/OS2">
 -->
-OS/2 Warp と Merlin 用のバイナリは以下の場所から入手することができます:
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.3/OS2"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.3/OS2">
+OS/2 Warp, Merlin, Aurora 用のバイナリは以下の場所から入手できます:
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.6/OS2"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.6/OS2">
 <p>
 <!--
 The WWW page
@@ -300,12 +308,13 @@ this file and we'll revise it.
 ありません。当然ながら、性能は高ければ高いほど良いです。
 <!--
 <item>Depending on the packages installed, a disk space of 20-55MB on a
-       HPFS formatted partition (or a NFS or ext2fs partition natively 
+       HPFS formatted partition (or a JFS, NFS or ext2fs partition natively 
        allowing long filenames) is required. XFree86/OS2 will not run on FAT partitions.
 -->
 <item>インストールしているパッケージによって、フォーマット済の HPFS パー
-ティションに 20〜55MB のディスク領域が必要です。XFree86/OS2 は FAT パー
-ティション上では動作しません。
+ティション(またはロングファイルネームをネイティブに利用できる
+JFS, NFS, ext2fs パーティション)に 20〜55MB のディスク領域が必要です。
+XFree86/OS2 は FAT パーティション上では動作しません。
 <!--
 <item>You need a video card that is supported by XFree86. Refer to the general
        README document for a list of supported cards. Note that the sets
@@ -337,10 +346,10 @@ OS/2 オペレーティングシステムのビデオサービスを使いません。
 <item>少なくとも修正パック 17 が当たっている全てのバージョンの Warp3
 あるいは Warp 4 が必要です。
 <!--
-<item>XFree86/OS2-3.3.3 may use a local named-pipe connection or a TCP/IP 
+<item>XFree86/OS2-3.3.6 may use a local named-pipe connection or a TCP/IP 
        based network connection.
 -->
-<item>XFree86/OS2-3.3.3 はローカルの名前付きパイプ接続か TCP/IP ベース
+<item>XFree86/OS2-3.3.6 はローカルの名前付きパイプ接続か TCP/IP ベース
 のネットワーク接続を使うことがあります。
        <enum>
 <!--
@@ -454,16 +463,23 @@ were ported to XFree86.
 <tag/必須:/
     <descrip>
 <!--
-    <tag/X333base/	A special device driver and the SuperProbe program
-    <tag/X333doc/	READMEs and XFree86 specific man pages.
-    <tag/X333bin/	all of the executable X client applications and shared libs
-    <tag/X333fnts/	the misc and 75dpi fonts
+    <tag/Xbase/	A special device driver and the SuperProbe program
+                <em/Note:/ In order to fix a problem occurring with 
+		WSeB (Aurora), you must install the most recent version
+		of the xf86sup.sys driver that comes with this file.
+		Older versions won't work.
+    <tag/Xdoc/	READMEs and XFree86 specific man pages.
+    <tag/Xbin/	all of the executable X client applications and shared libs
+    <tag/Xfnts/	the misc and 75dpi fonts
     <tag/emxrt/         Runtime libraries of EMX
 -->
-    <tag/X333base/	特殊なデバイスドライバと SuperProbe プログラム
-    <tag/X333doc/	README と XFree86 固有のオンラインマニュアル
-    <tag/X333bin/	実行可能な X クライアントアプリケーションと共有ライブラリ全て
-    <tag/X333fnts/	misc フォントと 75dpi フォント
+    <tag/Xbase/	特殊なデバイスドライバと SuperProbe プログラム
+<em/注意:/ WSeB (Aurora) で起こる問題を避けるためには、このファイルに
+付属している最新バージョンの xf86sup.sys をインストールしなければなり
+ません。古いバージョンでは動作しません。
+    <tag/Xdoc/	README と XFree86 固有のオンラインマニュアル
+    <tag/Xbin/	実行可能な X クライアントアプリケーションと共有ライブラリ全て
+    <tag/Xfnts/	misc フォントと 75dpi フォント
     <tag/emxrt/         EMX のランタイムライブラリ
     </descrip>
 
@@ -474,35 +490,35 @@ were ported to XFree86.
 
     <descrip>
 <!--
-    <tag/X3338514/	the X server for IBM 8514/A and compatible boards
-    <tag/X333AGX/	the X server for AGX boards
-    <tag/X333Glnt/	the X server for Permedia / GLINT boards
-    <tag/X333I128/	the X server for &num;9 Imagination 128 boards
-    <tag/X333Ma32/	the X server for ATI Mach32 graphics boards
-    <tag/X333Ma64/	the X server for ATI Mach64 graphics boards
-    <tag/X333Ma8/	the X server for ATI Mach8 graphics boards
-    <tag/X333Mono/	the Monochrome X Server
-    <tag/X333P9K/	the X server for P9000 based boards
-    <tag/X333S3/ 	the X server for S3 based boards (excluding S3 ViRGE)
-    <tag/X333S3V/ 	the X server for S3 ViRGE based boards
-    <tag/X333SVGA/	the 8-bit pseudo-color X server for Super VGA cards
-    <tag/X333VG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
-    <tag/X333W32/	the X server for et4000w32 based boards
+    <tag/X8514/	the X server for IBM 8514/A and compatible boards
+    <tag/XAGX/	the X server for AGX boards
+    <tag/XGlnt/	the X server for Permedia / GLINT boards
+    <tag/XI128/	the X server for &num;9 Imagination 128 boards
+    <tag/XMa32/	the X server for ATI Mach32 graphics boards
+    <tag/XMa64/	the X server for ATI Mach64 graphics boards
+    <tag/XMa8/	the X server for ATI Mach8 graphics boards
+    <tag/XMono/	the Monochrome X Server
+    <tag/XP9K/	the X server for P9000 based boards
+    <tag/XS3/ 	the X server for S3 based boards (excluding S3 ViRGE)
+    <tag/XS3V/ 	the X server for S3 ViRGE based boards
+    <tag/XSVGA/	the 8-bit pseudo-color X server for Super VGA cards
+    <tag/XVG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
+    <tag/XW32/	the X server for et4000w32 based boards
 -->
-    <tag/X3338514/	IBM 8514/A とその互換ボード用の X サーバ
-    <tag/X333AGX/	AGX ボード用の X サーバ
-    <tag/X333Glnt/	Permedia / GLINT ボード用の X サーバ
-    <tag/X333I128/	&num;9 Imagination 128 ボード用の X サーバ
-    <tag/X333Ma32/	ATI Mach32 グラフィックスボード用の X サーバ
-    <tag/X333Ma64/	ATI Mach64 グラフィックスボード用の X サーバ
-    <tag/X333Ma8/	ATI Mach8 グラフィックスボード用の X サーバ
-    <tag/X333Mono/	白黒 X サーバ
-    <tag/X333P9K/	P9000 ベースのボード用の X サーバ
-    <tag/X333S3/ 	S3 ベースのボード(S3 ViRGE を除く)用の X サーバ
-    <tag/X333S3V/ 	S3 ViRGE ベースのボード用の X サーバ
-    <tag/X333SVGA/	Super VGA カード用の 8 ビット pseudo-color X サーバ
-    <tag/X333VG16/	VGA &amp; SVGA カード用の 4 ビット pseudo-color X サーバ
-    <tag/X333W32/	et4000w32 ベースのボード用の X サーバ
+    <tag/X8514/	IBM 8514/A とその互換ボード用の X サーバ
+    <tag/XAGX/	AGX ボード用の X サーバ
+    <tag/XGlnt/	Permedia / GLINT ボード用の X サーバ
+    <tag/XI128/	&num;9 Imagination 128 ボード用の X サーバ
+    <tag/XMa32/	ATI Mach32 グラフィックスボード用の X サーバ
+    <tag/XMa64/	ATI Mach64 グラフィックスボード用の X サーバ
+    <tag/XMa8/	ATI Mach8 グラフィックスボード用の X サーバ
+    <tag/XMono/	白黒 X サーバ
+    <tag/XP9K/	P9000 ベースのボード用の X サーバ
+    <tag/XS3/ 	S3 ベースのボード(S3 ViRGE を除く)用の X サーバ
+    <tag/XS3V/ 	S3 ViRGE ベースのボード用の X サーバ
+    <tag/XSVGA/	Super VGA カード用の 8 ビット pseudo-color X サーバ
+    <tag/XVG16/	VGA &amp; SVGA カード用の 4 ビット pseudo-color X サーバ
+    <tag/XW32/	et4000w32 ベースのボード用の X サーバ
     </descrip>
 
 <!--
@@ -512,26 +528,26 @@ were ported to XFree86.
 
     <descrip>
 <!--
-    <tag/X333man/ 	pre-formatted man pages for the X11 interface and clients
-    <tag/X333f100/	100dpi fonts
-    <tag/X333fscl/	Speedo and Type1 fonts
-    <tag/X333fnon/ 	Japanese, Chinese and other fonts
-    <tag/X333fcyr/	Cyrillic fonts
-    <tag/X333fsrv/	the font server with man pages.
-    <tag/X333prog/	the X11 header files and programmer's utilities
-			for compiling other X applications
-    <tag/X333pex/	PEX fonts and libraries required for PEX applications
+    <tag/Xman/ 	pre-formatted man pages for the X11 interface and clients
+    <tag/Xf100/	100dpi fonts
+    <tag/Xfscl/	Speedo and Type1 fonts
+    <tag/Xfnon/ Japanese, Chinese and other fonts
+    <tag/Xfcyr/	Cyrillic fonts
+    <tag/Xfsrv/	the font server with man pages.
+    <tag/Xprog/	the X11 header files and programmer's utilities
+		for compiling other X applications
+    <tag/Xpex/	PEX fonts and libraries required for PEX applications
 -->
-    <tag/X333man/ 	X11 のインタフェースとクライアントに関するフォー
-			マット済のオンラインマニュアル
-    <tag/X333f100/	100dpi フォント
-    <tag/X333fscl/	Speedo フォントと Type1 フォント
-    <tag/X333fnon/ 	日本語、中国語などのフォント
-    <tag/X333fcyr/	キリル文字フォント
-    <tag/X333fsrv/	フォントサーバと、そのオンラインマニュアル
-    <tag/X333prog/	他の Xアプリケーションをコンパイルするための
-			X11 のヘッダファイルとプログラマ向けのユーティリティ
-    <tag/X333pex/	PEX アプリケーションに必要な PEX のフォントとライブラリ
+    <tag/Xman/ 	X11 のインタフェースとクライアントに関するフォー
+		マット済のオンラインマニュアル
+    <tag/Xf100/	100dpi フォント
+    <tag/Xfscl/	Speedo フォントと Type1 フォント
+    <tag/Xfnon/ 日本語、中国語などのフォント
+    <tag/Xfcyr/	キリル文字フォント
+    <tag/Xfsrv/	フォントサーバと、そのオンラインマニュアル
+    <tag/Xprog/	他の Xアプリケーションをコンパイルするための
+		X11 のヘッダファイルとプログラマ向けのユーティリティ
+    <tag/Xpex/	PEX アプリケーションに必要な PEX のフォントとライブラリ
     </descrip>
 </descrip>
 
@@ -547,14 +563,14 @@ single Xserver tailored to your video card.
 通常は、ビデオボードにあった X サーバ 1 つ以外は必要無いはずです。
 
 <!--
-If it is your first time install, get the <tt/X333base/ archive before any
+If it is your first time install, get the <tt/Xbase/ archive before any
 of the other packages. This package contains a driver and a test program,
 which analyzes your video hardware. If this program fails or reports an
 incompatible hardware, it makes no sense to obtain the other packages in
 the hope that they would magically work.
 -->
 インストールを初めて行う場合には、他のどのパッケージよりも先に
-<tt/X333base/ アーカイブを入手してください。このパッケージにはドライバ
+<tt/Xbase/ アーカイブを入手してください。このパッケージにはドライバ
 と、ビデオハードウェアを解析するテストプログラムが入っています。このプ
 ログラムが動作しない場合や、利用できないハードウェアであると報告した場
 合、奇跡的に動くことを期待して他のパッケージを入手しても無意味です。
@@ -587,31 +603,30 @@ may be some special situations and configurations where the below description
 is not successful. If this happens, read - I repeat <bf/READ/ - the list
 of ``frequently asked questions'' (FAQ) which has meanwhile evolved to
 a troubleshooting guide. The latest version is always at
-<htmlurl name="http://set.gmd.de/~veit/os2/x11os2faq.html" url="http://set.gmd.de/~veit/os2/x11os2faq.html"> .
+<htmlurl name="http://ais.gmd.de/~veit/os2/x11os2faq.html" url="http://ais.gmd.de/~veit/os2/x11os2faq.html"> .
 -->
 しかし、信じられないくらいの数の機器構成があるため、以下の説明ではうま
 く行かない特殊な状況や機器構成もあると思います。そういう場合には、いつ
 の間にかトラブル対処ガイドに発展した「よく聞かれる質問(Frequently
 Asked Questions, FAQ)」のリストを読んでください。繰り返しますが、<bf/
 必ず読んで/ください。最新版は常に
-<htmlurl name="http://set.gmd.de/~veit/os2/x11os2faq.html" url="http://set.gmd.de/~veit/os2/x11os2faq.html">
+<htmlurl name="http://ais.gmd.de/~veit/os2/x11os2faq.html" url="http://ais.gmd.de/~veit/os2/x11os2faq.html">
 にあります。
 
 <!--
 Maybe - but we found you must be very creative - you find a bug. Consult the
-page <htmlurl name="http://set.gmd.de/~veit/os2/xf86bugs.html" url="http://set.gmd.de/~veit/os2/xf86bugs.html"> 
+page <htmlurl name="http://ais.gmd.de/~veit/os2/xf86bugs.html" url="http://ais.gmd.de/~veit/os2/xf86bugs.html"> 
 whether it is already known. If not, you have a case and should report it
 to XFree86 (<em/xfree86@xfree86.org/). Please refer to the FAQ about the
 information to be provided for a complete problem report.
 -->
 もしかすると、あなたがバグを見つけたのかもしれません(きっとあなたの想
 像力がたくましすぎただけだと思いますが)。その場合には
-<htmlurl name="http://set.gmd.de/~veit/os2/xf86bugs.html"
-url="http://set.gmd.de/~veit/os2/xf86bugs.html"> を見て、それが既知の
-ものかどうか調べてください。なければ、新しい問題に出会っていることにな
-るので、これを XFree86(<em/xfree86@xfree86.org/)に報告してください。ちゃ
-んとした問題報告を書くための情報が FAQ に用意されているので、これを参
-照してください。
+<htmlurl name="http://ais.gmd.de/~veit/os2/xf86bugs.html" url="http://ais.gmd.de/~veit/os2/xf86bugs.html"> 
+を見て、それが既知のものかどうか調べてください。これで見つからなければ、
+新しい問題に出会っていることになるので、これを 
+XFree86(<em/xfree86@xfree86.org/)に報告してください。ちゃんとした問題
+報告を書くための情報が FAQ に用意されているので、これを参照してください。
 
 <!--
 The recommended newsgroup for setup questions is <em/comp.os.os2.setup.misc/.
@@ -648,15 +663,15 @@ in all commands accordingly.
 
 <enum>
 <!--
-<item>Obtain the package <tt/X333base/ and install it from the root directory
+<item>Obtain the package <tt/Xbase/ and install it from the root directory
        of the Y: drive, by entering the following commands:
 -->
-<item>パッケージ <tt/X333base/ を入手し、Y: ドライブのルートディレクト
+<item>パッケージ <tt/Xbase/ を入手し、Y: ドライブのルートディレクト
 リからインストールします。インストールでは以下のコマンドを入力します:
 <tscreen><verb>
 [C:\] Y:
 [Y:\] cd \
-[Y:\] unzip \path_of_package\X333base.zip
+[Y:\] unzip \path_of_package\Xbase.zip
 </verb></tscreen>
 
 <!--
@@ -670,6 +685,7 @@ DEVICE=Y:\XFree86\lib\xf86sup.sys
        Of course replace ``Y:'' with the correct drive letter.
 -->
        当然ながら、``Y:'' は正しいドライブレターに置き換えてください。
+
 
 <!--
 <item>At this point, you may consider to add the variables required for
@@ -772,22 +788,22 @@ XFree86/OS2 は <tt>drive:&bsol;XFree86</tt> から始まるディレクトリ階層
 <!--
 <tscreen><verb>
 drive:> cd \
-drive:> unzip \path_of_packages\X333xxxx.zip
+drive:> unzip \path_of_packages\Xxxxx.zip
 </verb></tscreen>
 -->
 <tscreen><verb>
 drive:> cd \
-drive:> unzip \パッケージのパス名\X333xxxx.zip
+drive:> unzip \パッケージのパス名\Xxxxx.zip
 </verb></tscreen>
 <!--
 <item>You might encounter that some packages report duplicate files, e.g.
 the X server packages install corresponding README files, which are also
-in the X333doc package. This is okay, the files are the same. Let unzip
+in the Xdoc package. This is okay, the files are the same. Let unzip
 replace the files.
 -->
 <item>一部のパッケージではファイルが重なっていると報告されるかもしれま
 せん。例えば、X サーバのパッケージは対応する README ファイルをインストー
-ルしますが、これは X333doc パッケージにも入っています。これは問題あり
+ルしますが、これは Xdoc パッケージにも入っています。これは問題あり
 ません。ファイルは同じものです。unzip にファイルを上書きさせてください。
 <!--
 <item>No special sequence to unpack the files is required.
@@ -850,14 +866,31 @@ EMX, EMACS やその他の移植ソフトウェアに付属している termcap ファイルの
 ETC ディレクトリを設定します。通常、これは以下のように TCP/IP コードの
 ETC ディレクトリに設定されています:
 <tscreen><verb>SET ETC=C:&bsol;TCPIP&bsol;ETC</verb></tscreen>
+<!--
+	For Warp 4 and later, this may point to the <tt/&bsol;MPTN&bsol;/
+	directory. This is okay.
+-->
+Warp 4 以降では、これは <tt/&bsol;MPTN&bsol;/ ディレクトリを指していて
+も構いません。これでOKです。
 <tag/TMP/
 <!--
-	Set to an TMP directory. Normally, this is already set to the TMP
-        directory of the TCP/IP code, such as
+	Set to an TMP directory which should reside on a HPFS drive
+	(or other filesystem that has real long names). Often, 
+	this variable is already set to the TMP directory of the 
+	TCP/IP code, such as
 -->
-TMP ディレクトリを設定します。通常、これは以下のように TCP/IP コードの
-TMP ディレクトリに設定されています:
+TMP ディレクトリを設定します。TMP ディレクトリは HPFS ドライブ(または
+本物のロングファイルネームが使えるファイルシステム)上になければなりま
+せん。多くの場合、これは既に以下のように TCP/IP コードの TMP ディレク
+トリに設定されています:
 <tscreen><verb>SET TMP=C:&bsol;TCPIP&bsol;TMP</verb></tscreen>
+<!--
+	If you have installed additional software, like VisualAge for C++,
+	it might be that this variable points to some directory <tt/&bsol;ibmcpp&bsol;tmp/ .
+-->
+VisualAge for C++ といったソフトウェアを追加インストールしている場合に
+は、この変数は <tt/&bsol;ibmcpp&bsol;tmp/ 等のディレクトリを指している
+かもしれません。
 <tag/HOSTNAME/
 <!--
 	Set to the internet hostname. Normally, this is already set by the
@@ -949,10 +982,10 @@ IAK では、通常はループバック設定(<ref id="loopback" name="Network configuration"
 <tag/XSERVER/
 <!--
 	Set this to the executable name of the X server to be used. This
-	must be a complete path. My setting is as follows:
+	must be a complete path. My setting, for instance, looks as follows:
 -->
 この変数には、使用する X サーバの実行ファイル名を設定します。これは完
-全パスでなければなりません。筆者は以下のように設定しています:
+全パスでなければなりません。例えば、筆者は以下のように設定しています:
 <tscreen><verb>SET XSERVER=D:/XFree86/bin/XF86_Mach64.exe</verb></tscreen>
 <tag/PATH/
 <!--
@@ -965,11 +998,13 @@ X11 ユーティリティ用のバイナリディレクトリを検索パスに追加してください。
 <!--
 	It is possible to move the binaries to another directory in the
 	search path; for maintenance reasons and clarity of the structure, this
-	is not recommended, though.
+	is not recommended, though. You might, of course, use a software like
+	TVFS to redirect these files to elsewhere.
 -->
 これらのバイナリを検索パスに含まれる他のディレクトリに移動させることは
-可能です。しかし、メンテナンス上の理由や構造のわかりやすさの面から、こ
-れはお勧めできません。
+可能です。しかし、これはメンテナンス上の理由や構成のわかりやすさの面か
+らお勧めできません。もちろん、TVFS 等のソフトウェアを使ってこれらの
+ファイルを別の場所にリダイレクトしても構いません。
 <tag/LIBPATH/
 <!--
 	Add the DLL directory for the X11 utilities to the LIBPATH.
@@ -995,6 +1030,38 @@ DLL をライブラリパスに含まれる他のディレクトリに移動させることは可能で
 ずっとそこになければいけません。というのも、大部分のユーティリティは
 <tt>%X11ROOT%&bsol;XFree86&bsol;lib</tt> をベース値として使ってディレ
 クトリへのパスを作っているからです。
+<tscreen><verb>SET MANPATH=Y:&bsol;XFree86&bsol;man;Y:&bsol;EMX&bsol;man</verb></tscreen>
+<!--
+	Note: xman alone might not be sufficient to display arbitrary Unix
+	man pages correctly. You might have to install the <tt/GROFF/ formatter
+	tool as well. See FAQ for more details.
+-->
+注意: xman 単体では全ての Unix のオンラインマニュアルを正しく表示する
+ことはできません。<tt/GROFF/ という整形ツールもインストールしなければ
+ならないでしょう。詳しくは FAQ を見てください。
+<tag/OS2_SHELL/
+<tag/COMSPEC/
+<tag/SHELL/
+<tag/X11SHELL/
+<!--
+	Some scripts in XFree86 rely on a shell that is compatible to the
+	standard CMD.EXE. CMD.EXE has some essential properties that allows
+	it to work correctly in an xterm. Third party shells may not been
+	developed with running in an environment that, like xterm.  accept
+	input and output from the stdin/stdout file channels, but access
+	keyboard and video services directly. The above variables allow
+	reconfiguration of your system in order to run any favorite shell
+	outside XFree86 and still have XFree86 use CMD.EXE. See the FAQ
+	for more details.
+-->
+XFree86 に入っているスクリプトの一部は、標準の CMD.EXE に互換なシェル
+を前提としています。CMD.EXE には、xterm 内で正常に動作するための重要な
+機能がいくつかあります。他で作られたシェルは、入出力は標準入力/標準出
+力のファイルチャネルから受け取るけれど、キーボードとビデオのサービスは
+直接アクセスするといった xterm のような環境で動作するように開発されて
+いません。上記の変数を使うと、XFree86 の外では好きなシェルを使い、
+XFree86 の中だけでは CMD.EXE を使うようにシステムを再設定できます。
+詳しくは FAQ を見てください。
 </descrip>
 
 <!--
@@ -1106,10 +1173,23 @@ PC が LAN に接続されている場合(直接でも、SLIP/PPP 経由でも)には、この
 
 <!--
 In case of a SLIP/PPP line, you have to establish this connection BEFORE
-you start XFree86.
+you start XFree86. See the next section for more details.
 -->
 SLIP/PPP 回線の場合には、XFree86 を起動する<em/前/に、この接続を確立し
-なければなりません。
+なければなりません。詳しくは次の節を見てください。
+
+<!--
+Note that the ability to use host names, for instance in the <tt/DISPLAY/
+variable, correlates with the existance of a name resolver. If you don't
+have a LAN-based DNS server available, you have to add the relevant hostnames
+to your <tt>HOSTS/ file. The TCP/IP configuration dialogue in your system 
+configuration folder allows you to edit this file.
+-->
+ホスト名を使う(例えば <tt/DISPLAY/ 変数内での使用)機能は、
+ホスト名解決機構と関係する点に注意してください。LAN ベースの DNS サー
+バを利用できないのであれば、関係するホスト名を<tt/HOSTS/ ファイルに追
+加しなければなりません。システムの設定フォルダの TCP/IP 設定ダイアログ
+を使えば、このファイルを編集できます。
 
 <!--
 The <tt/checkinstall.cmd/ script coming with XFree86/OS2 gives some advice
@@ -1120,10 +1200,66 @@ XFree86/OS2 に付属している <tt/checkinstall.cmd/ スクリプトは、設定に
 
 <!--
 If you have problems to get this or other basic networking things running,
-seek assistance elsewhere.
+seek assistance in the FAQ, the <htmlurl name="xf86os2 mailing list" url="http://ais.gmd.de/~veit/os2/xf86mail.html">
+or the <htmlurl name="mailing list archive" url="http://ais.gmd.de/~veit/os2/xf86search.html">.
 -->
 これやや他の基本的なネットワーク関係のツールを動作させる際に問題が起こっ
-たら、他に手伝ってくれる人を探してください。
+たら、FAQ
+(<htmlurl name="xf86os2 mailing list" url="http://ais.gmd.de/~veit/os2/xf86mail.html">)
+を調べるか、
+<htmlurl name="メーリングリストのアーカイブ" url="http://ais.gmd.de/~veit/os2/xf86search.html">
+を調べてください。
+
+<!--
+<sect>Dynamic IP Considerations
+-->
+<sect>動的な IP の考慮
+
+<!--
+Generally, the whole stuff works best, if your machine has a fixed IP address.
+The localhost address, and also fixed (non-routable) local addresses
+(10.x.x.x, 192.168.x.x, 172.16.x.x-172.31.x.x) work fine. A problem occurs
+on both sides of such an X connection if there are dynamic IP addresses
+involved, for instance in case of a PPP line to an ISP. Unfortunately, the
+XFree86/OS2 net community hasn't come up with a set of helpful scripts yet
+(which I would integrate), so there are here only some hints what the problem
+really is: The X server listens for X protocol packets on some defined 
+host/port socket. It gets the information about the socket from either the
+command line or the resolved hostname (which it gets from the <tt/HOSTS/ file
+or the DNS server). Here the <tt/HOSTNAME/ variable comes into play. Once the
+server is running, a change in the IP/HOSTNAME configuration won't be
+recognized any more. Thus, the general approach for X over a dynamic IP line
+is: build the connection to the ISP first, then start the server. The
+relevant script that is responsible for starting the server is the startx.cmd
+script which executes (indirectly) the &bsol;XFree86&bsol;lib&bsol;X11&bsol;xinit&bsol;xinitrc.cmd
+script. You have to modify these scripts in order to set the <tt/HOSTNAME/ and
+<tt/DISPLAY/ variables correctly and start the server with the right IP address.
+The X server log shows, right to the beginning, at which IP address it is
+listening, for debug purposes.
+-->
+<p>
+一般的には、マシンの IP が固定であれば全体が最もうまく動作します。
+ローカルホストアドレスと(ルーティングされない)固定のローカルアドレス
+(10.x.x.x, 192.168.x.x, 172.16.x.x-172.31.x.x)でもうまく動作します。
+X 接続などの両端で問題が起こるのは、動的な IP アドレスが含まれている場
+合です。これは例えば、ISP に PPP 接続している場合などです。残念ながら、
+XFree86/OS2 のネットコミュニティはこれに役立つスクリプト群をまだ用意で
+きていないので(筆者がまとめるつもりです)、ここでは実際に問題になってい
+ることについてヒントをいくつか出すだけにします: X サーバは定義された何
+らかの値を持つホスト/ポート番号のソケットで X プロトコルのパケットを
+監視します。X サーバはソケットに関する情報をコマンドラインまたは解決さ
+れたホスト名(ホスト名は <tt/HOSTS/ ファイルまたは DNS サーバから取得し
+ます)から得ます。ここで <tt/HOSTNAME/ 変数が出てきます。一度サーバが動
+き出すと、IP/ホスト名の設定変更はもはや認識されません。したがって、動
+的に IP が割り当てられる接続上で X を使うための一般的なアプローチは以
+下のようになります: ISP への接続をまず確立し、それから X サーバを起動
+します。X サーバの起動を行う関連スクリプトは startx.cmd です。このスク
+リプトは(間接的に) &bsol;XFree86&bsol;lib&bsol;X11&bsol;xinit&bsol;xinitrc.cmd
+スクリプトを実行します。したがって、これらのスクリプトを修正して、
+<tt/HOSTNAME/ 変数と <tt/DISPLAY/ 変数を正しく設定し、正しい IP アドレ
+スを使って X サーバを起動しなければなりません。X サーバのログの一番初
+めのあたりには、監視している IP アドレスがデバッグ目的のために出力され
+ています。
 
 <!--
 <sect>Configuring X for Your Hardware
@@ -1231,34 +1367,65 @@ xmodmap のオンラインマニュアルを参照してください(あるいは Linux などで
 
 <!--
 In most cases, an existing <tt/XF86Config/ file for the same XFree86 version
-from Linux or another platform may be used without changes. There is one 
-prominent exception: some S3 805 based VLB cards put their video memory
-in odd locations. The X server can search for this memory by experimentally
-mapping and unmapping possible memory regions. In XFree86/OS2, the OS may
-run out of memory tiles during this process. If this happens, you must
-find out the location of the memory yourself and add it as an option
+from Linux or another platform may be used without changes. There are two
+prominent exceptions: some S3 805 based VLB cards put their video memory
+in odd locations, and there seems to be an unresolvable PM driver 
+inconsistency with Matrox cards. 
 -->
 大抵の場合、Linux や他のプラットフォームの同じバージョンの XFree86 用
-の既存の <tt/XF86Config/ を変更無しで使えると思います。ただし、1 つだ
-けよく知られた例外があります: S3 805 ベースの VLB カードの一部はビデオ
-メモリをおかしな位置に配置します。X サーバは、可能性のあるメモリ領域を
-実験的にマップやアンマップすることで、このメモリを探すことができます。
-XFree86/OS2 では、OS はこの処理の途中でメモリタイルを使い果たすことが
-あります。こうなった場合、メモリの位置を自分で見つけ、オプション
+の既存の <tt/XF86Config/ を変更無しで使えると思います。ただし、よく知
+られた例外が 2 つあります: S3 805 ベースの VLB カードの一部はビデオメ
+モリをおかしな位置に配置します。また、Matrox のカードでは PM ドライバ
+が解決できない矛盾を起こすようです。
+
+<!--
+For S3 VLB cards, the X server can search for this memory by experimentally 
+mapping and unmapping possible memory regions. However, in XFree86/OS2, 
+the OS may run out of memory tiles during this process. If this happens,
+you must find out the location of the memory yourself
+and add it as an option
+-->
+S3 VLB カードの場合、X サーバは可能性のあるメモリ領域を実験的にマップ
+やアンマップすることで、このメモリを探すことができます。しかし、
+XFree86/OS2 ではこの処理の途中で OS がメモリタイルを使い果たすことがあ
+ります。こうなった場合、メモリの位置を自分で見つけ、オプション
 <tscreen><verb>
 	MemBase 0x12345678
 </verb></tscreen>
 <!--
-to the XF86Config file.
+to the section "Device" of your XF86Config file.
 -->
-を XF86Config ファイルに追加しなくてはなりません。
+を XF86Config ファイルの "Device" セクションに追加しなくてはなりません。
+
+<!--
+For Matrox cards, the X server may fail to detect the PCI ID of the card
+correctly, as the PM driver and Matrox BIOS may have reprogrammed the card's
+PCI configuration in a non-standard way. The server will then fall into a
+VGA compatible mode at 320x200 resolution. To prevent this, add a
+-->
+Matrox のカードの場合には、X サーバがカードの PCI ID を正しく検出でき
+ず、そのために PM ドライバと Matrox BIOS がカードの PCI 設定をおかしな
+風に再プログラムするかもしれません。こうなるとサーバは VGA 互換で解像
+度が 320x200 のモードに陥ります。これを防ぐには、
+<tscreen><verb>
+	PCIProbe2
+</verb></tscreen>
+<!--
+to the section "ServerFlags" of your XF86Config file.
+-->
+を XF86Config ファイルの "ServerFlags" セクションに追加します。
 
 <!--
 Once you've set up a XF86Config file, you can fine tune the video
-modes with the <tt>xvidtune</tt> utility. 
+modes with the <tt>xvidtune</tt> utility. Note this is an X11 program which
+has to be executed in a local xterm window of a running X server, not in
+a PM window.
 -->
 一度 XF86Config ファイルが設定できれば、<tt>xvidtune</tt> ユーティリティ
 を使ってビデオモードを良い設定にチューニングすることができます。
+これは PM ウィンドウの中からではなく、動作中の X サーバのローカルの 
+xterm のウィンドウの中から実行しなければならない X11 プログラムである
+ことに注意してください。
 
 <!--
 <sect>Running X
@@ -1272,7 +1439,7 @@ X and the presentation manager in parallel.  The server, window manager and
 an xterm take about 4-6 Mb of memory themselves.  X will start up on a
 system with 8MB or less, but the performance will severely suffer from
 heavy disk swapping. Your mileage may vary, though, so some people might
-consider this still tolerable.
+consider this still tolerable. 
 -->
 ネットワークソフトウェア、 X, プレゼンテーションマネージャを同時に実行
 するには、メモリは最低 16MB は欲しいところです。サーバ、ウィンドウマネー
@@ -1282,12 +1449,39 @@ consider this still tolerable.
 しれません。
 
 <!--
-The easiest way for new users to start X windows is to type: 
-<tscreen><verb>[C:&bsol;] startx</verb></tscreen>.
+Some more on resource requirements: With the arrival of complex desktops like
+WindowMaker, KDE, Gnome, Enlightment, etc. which add a lot of graphical
+features, resource requirements grow. The X server will cache used fonts and
+resource settings internally, and depending on the number of windows (backing-
+store) it may require much more memory and swapspace than the mentioned
+few MBs. Also take into consideration that X runs in parallel to PM which
+also takes its share. My own system, albeit meanwhile rather outdated,
+is a PII-233 with 128MB, however, it is a development system. 64 MB are 
+meanwhile standard, and okay for the purpose, and my laptop runs Aurora
+with XFree86 in 32MB, as well.
 -->
-始めてのユーザが X ウィンドウを起動するための最も簡単な方法は、
-<tscreen><verb>[C:&bsol;] startx</verb></tscreen>
-を実行することです。
+リソースに関する要求は他にもいくつかあります: WindowMaker, KDE, Gnome,
+Enlightenment 等の複雑なデスクトップ環境が登場したことにより、非常に多
+くのグラフィックスフィーチャが追加され、必要なリソースは大きくなりました。
+X サーバは使われたフォントやリソース設定を内部的にキャッシュするので、
+ウィンドウ(バッキングストア)の数によっては、先に述べた量よりもずっと多
+くのメモリとスワップ領域が必要となります。また、X は PM と同時に動作し
+て資源を共有することも考慮してください。筆者のシステムは比較的強力な 
+PII-233、メモリ 128M のマシンですが、これは開発システムです。
+64MB がだいたい標準で、普通の目的ではこれで十分です。筆者のラップトッ
+プ機では、メモリ 32MB でも Aurora と XFree86 が一緒に動いています。
+
+<!--
+The easiest way for new users to start X windows is to type: 
+<tscreen><verb>startx</verb></tscreen> in a PM CMD window. People have
+reported problems when starting this in a fullscreen session or through
+a remote telnet session, so don't try it.
+-->
+初めてのユーザが X ウィンドウを起動するための最も簡単な方法は、
+<tscreen><verb>startx</verb></tscreen>
+を PM の CMD ウィンドウから実行することです。このコマンドを
+フルスクリーンのセッションやリモートの telnet セッションから実行すると
+問題が起きることが報告されているので、これを行ってはいけません。
 
 <!--
 To get out of X windows, type: ``<tt/exit/'' in the console xterm.
@@ -1306,13 +1500,13 @@ X ウィンドウから抜け出すには、コンソールになっている xterm で
 By default, the systemwide <tt/xinitrc/ file (in <tt>Y:/XFree86/lib/X11/xinit/xinitrc.cmd</tt>)
 installs the rather simplistic <tt/twm/ window manager. You can find better
 window managers on the ported software page at 
-<htmlurl name="http://set.gmd.de/~veit/os2/xf86ported.html" url="http://set.gmd.de/~veit/os2/xf86ported.html"> .
+<htmlurl name="http://ais.gmd.de/~veit/os2/xf86ported.html" url="http://ais.gmd.de/~veit/os2/xf86ported.html"> .
 -->
 デフォルトでは、システム全体の <tt/xinitrc/ ファイル
 (<tt>Y:/XFree86/lib/X11/xinit/xinitrc.cmd</tt>)は
 かなり作りが簡単である <tt/twm/ ウィンドウマネージャをインストールしま
 す。
-<htmlurl name="http://set.gmd.de/~veit/os2/xf86ported.html" url="http://set.gmd.de/~veit/os2/xf86ported.html"> 
+<htmlurl name="http://ais.gmd.de/~veit/os2/xf86ported.html" url="http://ais.gmd.de/~veit/os2/xf86ported.html">
 にある移植ソフトウェアのページで、もっと良いウィンドウマネージャを見つ
 けることができるでしょう。
 
@@ -1380,11 +1574,13 @@ EMX を作成された <bf/Eberhard Mattes/ さん
 <!--
 <item><bf/ME/ - no, no, forget this: I won't praise myself :-)
 -->
-<item><bf/わたし/ - いやいや、これは忘れてください。自分を誉める気はないです :-)
+<item><bf/わたし/ - いやいや、これは忘れてください。自分を誉める気はありません :-)
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2.sgml,v 1.1.2.1 1999/05/25 06:39:17 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2.sgml,v 1.1.2.3 1999/12/28 12:13:54 hohndel Exp $
+
+
 
 
 
@@ -1392,5 +1588,13 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2.sgml,v 1.1.2.1 19
 
 $XConsortium: OS2.sgml /main/4 1996/03/11 10:46:06 kaleb $
 </verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳に伴う権利は X Japanese Documentation
+Project にあります。
 
 </article>

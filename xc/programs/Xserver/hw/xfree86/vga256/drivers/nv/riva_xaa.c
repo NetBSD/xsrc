@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.7 1999/08/17 07:39:35 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.9 2000/01/08 03:25:41 robin Exp $ */
 /*
  * Based initially on the NV1, NV3 code by Dave McKay.
  *
@@ -1185,7 +1185,7 @@ static Bool RivaInit(DisplayModePtr mode)
      */
     if(vgaBitsPerPixel != 8 )
     {
-        if (riva.Architecture == 3)
+        if (riva.Architecture == NV_ARCH_03)
             for (i = 0; i < 256; i++)
             {
                 ((vgaNVPtr)vgaNewVideoState)->std.DAC[i*3]     = i >> 2;
@@ -1386,7 +1386,7 @@ int NV3Probe(vgaVideoChipRec *nv, void *regBase, void *frameBase)
     /*
      * Record chip architecture based in PCI probe.
      */
-    riva.Architecture = 3;
+    riva.Architecture = NV_ARCH_03;
     /*
      * Map chip-specific memory-mapped registers. This MUST be done in the OS specific driver code.
      */
@@ -1403,7 +1403,25 @@ int NV4Probe(vgaVideoChipRec *nv, void *regBase, void *frameBase)
     /*
      * Record chip architecture based in PCI probe.
      */
-    riva.Architecture = 4;
+    riva.Architecture = NV_ARCH_04;
+    /*
+     * Map chip-specific memory-mapped registers. This MUST be done in the OS specific driver code.
+     */
+    riva.PRAMIN = (unsigned *)xf86MapVidMem(vga256InfoRec.scrnIndex, MMIO_REGION,((char *)regBase+0x00710000), 0x00010000);
+    riva.PCRTC  = (unsigned *)xf86MapVidMem(vga256InfoRec.scrnIndex, MMIO_REGION,((char *)regBase+0x00600000), 0x00001000);
+    /*
+     * Call the common chip probe.
+     */
+    return (RivaProbe(nv, regBase, frameBase));
+}
+int NV10Probe(vgaVideoChipRec *nv, void *regBase, void *frameBase)
+{
+    OFLG_SET(OPTION_DAC_8_BIT, &(nv->ChipOptionFlags));
+    OFLG_SET(OPTION_DAC_8_BIT, &vga256InfoRec.options);
+    /*
+     * Record chip architecture based in PCI probe.
+     */
+    riva.Architecture = NV_ARCH_10;
     /*
      * Map chip-specific memory-mapped registers. This MUST be done in the OS specific driver code.
      */

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.19.2.6 1999/07/19 11:46:38 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.19.2.8 1999/11/18 15:37:26 hohndel Exp $ */
 
 /*
  *******************************************************************************
@@ -52,6 +52,12 @@
 #endif
 
 #ifdef XFREE86_V4
+
+#ifndef XFree86LOADER
+#include <unistd.h>
+#include <errno.h>
+#endif
+
 #include <misc.h>
 #include <xf86.h>
 #if !defined(DGUX)
@@ -60,6 +66,10 @@
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
 #include <exevents.h>
+
+#ifdef XFree86LOADER
+#include <xf86Module.h>
+#endif
 
 #else /* XFREE86_V4 */
 
@@ -128,6 +138,8 @@
 #define HISTORY_SIZE	11
 #define LINK_SPEED	12
 #define ALWAYS_CORE	13
+#define SWAP_AXES	14
+#define PORTRAIT_MODE	15
 
 static SymTabRec EloTab[] = {
   { ENDSUBSECTION,     "endsubsection" },
@@ -144,6 +156,8 @@ static SymTabRec EloTab[] = {
   { HISTORY_SIZE,      "historysize" },
   { LINK_SPEED,        "linkspeed" },
   { ALWAYS_CORE,       "alwayscore" },
+  { SWAP_AXES,	       "swapxy" },
+  { PORTRAIT_MODE,     "portraitmode" },
   { -1,                "" },
 };
 
@@ -177,11 +191,11 @@ typedef struct {
 } LinkParameterStruct;
 
 static LinkParameterStruct	LinkSpeedValues[] = {
-  { B300, 64 },
-  { B1200, 16 },
-  { B2400, 8 },
-  { B9600, 4 },
-  { B19200, 2 }
+  { B300, 32 },
+  { B1200, 8 },
+  { B2400, 4 },
+  { B9600, 1 },
+  { B19200, 0 }
 };
 #endif /* XFREE86_V4 */
 
@@ -196,8 +210,8 @@ static LinkParameterStruct	LinkSpeedValues[] = {
 #define ELO_MAX_TRIALS	3		/* Number of timeouts waiting for a	*/
 					/* pending reply.			*/
 #define ELO_MAX_WAIT		100000	/* Max wait time for a reply (microsec)	*/
-#define ELO_UNTOUCH_DELAY	10	/* 100 ms				*/
-#define ELO_REPORT_DELAY	4	/* 40 ms or 25 motion reports/s		*/
+#define ELO_UNTOUCH_DELAY	5	/* 100 ms				*/
+#define ELO_REPORT_DELAY	1	/* 40 ms or 25 motion reports/s		*/
 #define ELO_LINK_SPEED		B9600	/* 9600 Bauds				*/
 #define ELO_PORT		"/dev/ttyS1"
 
@@ -278,10 +292,12 @@ static int      debug_level = 0;
 #undef read
 #undef write
 #undef close
+#undef strdup
 #define SYSCALL(call) call
 #define read(fd, ptr, num) xf86ReadSerial(fd, ptr, num)
 #define write(fd, ptr, num) xf86WriteSerial(fd, ptr, num)
 #define close(fd) xf86CloseSerial(fd)
+#define strdup(str) xf86strdup(str)
 #endif
 
 
@@ -310,6 +326,7 @@ typedef struct _EloPrivateRec {
   Bool		is_a_2310;		/* Set if the smartset is a 2310.		*/
   int		checksum;		/* Current checksum of data in assembly buffer	*/
   int		packet_buf_p;		/* Assembly buffer pointer			*/
+  int		swap_axes;		/* Swap X an Y axes if != 0 */
   unsigned char	packet_buf[ELO_PACKET_SIZE]; /* Assembly buffer				*/
 } EloPrivateRec, *EloPrivatePtr;
 
@@ -333,7 +350,8 @@ xf86EloConfig(LocalDevicePtr    *array,
   LocalDevicePtr        local = array[inx];
   EloPrivatePtr         priv = (EloPrivatePtr)(local->private);
   int                   token;
-
+  int			portrait=0;
+  
   while ((token = xf86GetToken(EloTab)) != ENDSUBSECTION) {
     switch(token) {
       
@@ -487,6 +505,34 @@ xf86EloConfig(LocalDevicePtr    *array,
       }
       break;
 
+    case SWAP_AXES:
+      priv->swap_axes = 1;
+      if (xf86Verbose) {
+	ErrorF("%s Elographics device will work with X and Y axes swapped\n",
+	       XCONFIG_GIVEN);
+      }      
+      break;
+
+    case PORTRAIT_MODE:
+      if (xf86GetToken(NULL) != STRING) {
+      portrait_mode_err:
+	xf86ConfigError("Elographics portrait mode should be: Portrait, Landscape or PortraitCCW");
+      }
+      if (strcmp(val->str, "portrait") == 0) {
+	portrait = 1;
+      }
+      else if (strcmp(val->str, "portraitccw") == 0) {
+	portrait = -1;
+      }
+      else if (strcmp(val->str, "landscape") != 0) {
+	goto portrait_mode_err;
+      }
+      if (xf86Verbose) {
+	ErrorF("%s Elographics device will work in %s mode\n",
+	       XCONFIG_GIVEN, val->str);
+      }      
+      break;
+
     case EOF:
       FatalError("Unexpected EOF (missing EndSubSection)");
       break;
@@ -498,14 +544,40 @@ xf86EloConfig(LocalDevicePtr    *array,
   }
 
   if (priv->max_x - priv->min_x <= 0) {
-    ErrorF("%s Elographics: swap x mode (minimum x position >= maximum x position)\n",
+    ErrorF("%s Elographics: reverse x mode (minimum x position >= maximum x position)\n",
 	   XCONFIG_GIVEN);
   }  
   if (priv->max_y - priv->min_y <= 0) {
-    ErrorF("%s Elographics: swap y mode (minimum y position >= maximum y position)\n",
-	   XCONFIG_GIVEN, priv->max_y, priv->min_y);
+    ErrorF("%s Elographics: reverse y mode (minimum y position >= maximum y position)\n",
+	   XCONFIG_GIVEN);
   }
-  
+  /*
+   * The portrait adjustments need to be done after axis reversing
+   * and axes swap. This way the driver can cope with deffective
+   * hardware and still do the correct processing depending on the
+   * actual display orientation.
+   */
+  if (portrait == 1) {
+    /*
+     * Portrait Clockwise: reverse Y axis and exchange X and Y.
+     */
+    int tmp;
+    tmp = priv->min_y;
+    priv->min_y = priv->max_y;
+    priv->max_y = tmp;
+    priv->swap_axes = (priv->swap_axes==0) ? 1 : 0;
+  }
+  else if (portrait == -1) {
+    /*
+     * Portrait Counter Clockwise: reverse X axis and exchange X and Y.
+     */
+    int tmp;
+    tmp = priv->min_x;
+    priv->min_x = priv->max_x;
+    priv->max_x = tmp;
+    priv->swap_axes = (priv->swap_axes==0) ? 1 : 0;
+  }
+    
   DBG(2, ErrorF("xf86EloConfig port name=%s\n", priv->input_dev))
 
   return Success;
@@ -577,8 +649,8 @@ xf86EloGetPacket(unsigned char	*buffer,
       /*
        * No match, shift data one byte toward the start of the buffer.
        */
-      DBG(4, ErrorF("Dropping one byte in an attempt to synchronize: '%c' 0x%X\n",
-		    buffer[0], buffer[0]));
+      ErrorF("Elographics: Dropping one byte in an attempt to synchronize: '%c' 0x%X\n",
+	     buffer[0], buffer[0]);
       memcpy(&buffer[0], &buffer[1], num_bytes-1);
     }
     else {
@@ -645,17 +717,26 @@ xf86EloConvert(LocalDevicePtr	local,
   EloPrivatePtr	priv = (EloPrivatePtr) local->private;
   int		width = priv->max_x - priv->min_x;
   int		height = priv->max_y - priv->min_y;
-
+  int		input_x, input_y;
+  
   if (first != 0 || num != 2) {
     return FALSE;
   }
-    
+
   DBG(3, ErrorF("EloConvert: v0(%d), v1(%d)\n",	v0, v1));
 
-  *x = (priv->screen_width * (v0 - priv->min_x)) / width;
+  if (priv->swap_axes) {
+    input_x = v1;
+    input_y = v0;
+  }
+  else {
+    input_x = v0;
+    input_y = v1;
+  }
+  *x = (priv->screen_width * (input_x - priv->min_x)) / width;
   *y = (priv->screen_height -
-	(priv->screen_height * (v1 - priv->min_y)) / height);
-
+	(priv->screen_height * (input_y - priv->min_y)) / height);
+  
 #ifdef XFREE86_V4
   /*
    * Need to check if still on the correct screen.
@@ -1201,6 +1282,11 @@ xf86EloControl(DeviceIntPtr	dev,
 	return !Success;
       }
       
+      if (InitFocusClassDeviceStruct(dev) == FALSE) {
+	ErrorF("Unable to allocate Elographics touchscreen FocusClassDeviceStruct\n");
+	return !Success;
+      }
+      
       /*
        * Device reports motions on 2 axes in absolute coordinates.
        * Axes min and max values are reported in raw coordinates.
@@ -1397,9 +1483,17 @@ xf86EloControl(DeviceIntPtr	dev,
  ***************************************************************************
  */
 static LocalDevicePtr
+#ifndef XFREE86_V4
 xf86EloAllocate(void)
+#else
+xf86EloAllocate(InputDriverPtr	drv)     
+#endif
 {
+#ifndef XFREE86_V4
   LocalDevicePtr        local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
+#else
+  LocalDevicePtr        local = xf86AllocateInput(drv, 0);
+#endif
   EloPrivatePtr         priv = (EloPrivatePtr) xalloc(sizeof(EloPrivateRec));
 
   if (!local) {
@@ -1434,9 +1528,10 @@ xf86EloAllocate(void)
   priv->is_a_2310 = 0;
   priv->checksum = ELO_INIT_CHECKSUM;
   priv->packet_buf_p = 0;
+  priv->swap_axes = 0;
 
   local->name = XI_TOUCHSCREEN;
-  local->flags = XI86_NO_OPEN_ON_INIT;
+  local->flags = 0 /* XI86_NO_OPEN_ON_INIT */;
 #ifndef XFREE86_V4
 #if !defined(sun) || defined(i386)
   local->device_config = xf86EloConfig;
@@ -1501,6 +1596,24 @@ init_xf86Elo(unsigned long      server_version)
 #endif
 
 #else /* XFREE86_V4 */
+
+static void
+xf86EloUninit(InputDriverPtr	drv,
+	      LocalDevicePtr	local,
+	      int flags)
+{
+  EloPrivatePtr		priv = (EloPrivatePtr) local->private;
+  
+  xf86EloControl(local->dev, DEVICE_OFF);
+
+  xfree(priv->input_dev);
+  xfree(priv);
+  xfree(local->name);
+  xfree(local);
+
+  xf86DeleteInput(local, 0);
+}
+
 static const char *default_options[] = {
   "BaudRate", "9600",
   "StopBits", "1",
@@ -1508,7 +1621,131 @@ static const char *default_options[] = {
   "Parity", "None",
   "Vmin", "10",
   "Vtime", "1",
-  "FlowControl", "None"
+  "FlowControl", "None",
+  NULL
+};
+
+static InputInfoPtr
+xf86EloInit(InputDriverPtr	drv,
+	    IDevPtr		dev,
+	    int			flags)
+{
+  LocalDevicePtr	local=NULL;
+  EloPrivatePtr		priv=NULL;
+  char			*str;
+  int			portrait = 0;
+  
+  local = xf86EloAllocate(drv);
+  if (!local) {
+    return NULL;
+  }
+  priv = local->private;
+  local->conf_idev = dev;
+  
+  xf86CollectInputOptions(local, default_options, NULL);
+  /* Process the common options. */
+  xf86ProcessCommonOptions(local, local->options);
+
+  str = xf86FindOptionValue(local->options, "Device");
+  if (!str) {
+    xf86Msg(X_ERROR, "%s: No Device specified in Elographics module config.\n",
+	    dev->identifier);
+    if (priv) {
+      if (priv->input_dev) {
+	xfree(priv->input_dev);
+      }
+      xfree(priv);
+    }
+    xfree(local);
+    return NULL;
+  }
+  priv->input_dev = strdup(str);
+
+  local->name = xf86SetStrOption(local->options, "DeviceName", XI_TOUCHSCREEN);
+  xf86Msg(X_CONFIG, "Elographics X device name: %s\n", local->name);  
+  priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", 0);
+  xf86Msg(X_CONFIG, "Elographics associated screen: %d\n", priv->screen_no);  
+  priv->untouch_delay = xf86SetIntOption(local->options, "UntouchDelay", ELO_UNTOUCH_DELAY);
+  xf86Msg(X_CONFIG, "Elographics untouch delay: %d ms\n", priv->untouch_delay*10);
+  priv->report_delay = xf86SetIntOption(local->options, "ReportDelay", ELO_REPORT_DELAY);
+  xf86Msg(X_CONFIG, "Elographics report delay: %d ms\n", priv->report_delay*10);
+  priv->max_x = xf86SetIntOption(local->options, "MaximumXPosition", 3000);
+  xf86Msg(X_CONFIG, "Elographics maximum x position: %d\n", priv->max_x);
+  priv->min_x = xf86SetIntOption(local->options, "MinimumXPosition", 0);
+  xf86Msg(X_CONFIG, "Elographics minimum x position: %d\n", priv->min_x);
+  priv->max_y = xf86SetIntOption(local->options, "MaximumYPosition", 3000);
+  xf86Msg(X_CONFIG, "Elographics maximum y position: %d\n", priv->max_y);
+  priv->min_y = xf86SetIntOption(local->options, "MinimumYPosition", 0);
+  xf86Msg(X_CONFIG, "Elographics minimum y position: %d\n", priv->min_y);
+  priv->swap_axes = xf86SetBoolOption(local->options, "SwapXY", 0);
+  if (priv->swap_axes) {
+    xf86Msg(X_CONFIG, "Elographics device will work with X and Y axes swapped\n");
+  }
+  debug_level = xf86SetIntOption(local->options, "DebugLevel", 0);
+  if (debug_level) {
+#if DEBUG
+    xf86Msg(X_CONFIG, "Elographics debug level sets to %d\n", debug_level);      
+#else
+    xf86Msg(X_INFO, "Elographics debug not available\n");      
+#endif
+  }
+  str = xf86SetStrOption(local->options, "PortraitMode", "Landscape");
+  if (strcmp(str, "Portrait") == 0) {
+    portrait = 1;
+  }
+  else if (strcmp(str, "PortraitCCW") == 0) {
+    portrait = -1;
+  }
+  else if (strcmp(str, "Landscape") != 0) {
+    xf86Msg(X_ERROR, "Elographics portrait mode should be: Portrait, Landscape or PortraitCCW");
+    str = "Landscape";
+  }
+  xf86Msg(X_CONFIG, "Elographics device will work in %s mode\n", str);      
+  
+  if (priv->max_x - priv->min_x <= 0) {
+    xf86Msg(X_INFO, "Elographics: reverse x mode (minimum x position >= maximum x position)\n");
+  }  
+  if (priv->max_y - priv->min_y <= 0) {
+    xf86Msg(X_INFO, "Elographics: reverse y mode (minimum y position >= maximum y position)\n");
+  }
+
+  if (portrait == 1) {
+    /*
+     * Portrait Clockwise: reverse Y axis and exchange X and Y.
+     */
+    int tmp;
+    tmp = priv->min_y;
+    priv->min_y = priv->max_y;
+    priv->max_y = tmp;
+    priv->swap_axes = (priv->swap_axes==0) ? 1 : 0;
+  }
+  else if (portrait == -1) {
+    /*
+     * Portrait Counter Clockwise: reverse X axis and exchange X and Y.
+     */
+    int tmp;
+    tmp = priv->min_x;
+    priv->min_x = priv->max_x;
+    priv->max_x = tmp;
+    priv->swap_axes = (priv->swap_axes==0) ? 1 : 0;
+  }
+
+  /* mark the device configured */
+  local->flags |= XI86_CONFIGURED;
+  return local;
+}
+
+#ifdef XFree86LOADER
+static
+#endif
+InputDriverRec ELO = {
+    1,				/* driver version */
+    "elographics",		/* driver name */
+    NULL,			/* identify */
+    xf86EloInit,		/* pre-init */
+    xf86EloUninit,		/* un-init */
+    NULL,			/* module */
+    0				/* ref count */
 };
 
 static pointer
@@ -1517,79 +1754,15 @@ Plug(pointer	module,
      int	*errmaj,
      int	*errmin)
 {
-  LocalDevicePtr	local;
-  EloPrivatePtr		priv;
-  pointer		defaults, merged;
-  char			*dev;
-  
-  local = xf86EloAllocate();
-  if (!local) {
-    *errmaj = LDR_NOMEM;
-    return NULL;
-  }
-  priv = local->private;
-  
-  defaults = xf86OptionListCreate(default_options,
-				  sizeof(default_options)/sizeof(default_options[0]));
-  merged = xf86OptionListMerge(defaults, options);
-  xf86OptionListReport(merged);
+  xf86AddInputDriver(&ELO, module, 0);
 
-  dev = xf86FindOptionValue(merged, "Device");
-  if (dev) {
-    xfree(priv->input_dev);
-    priv->input_dev = strdup(dev);
-  }
-
-  local->name = xf86SetStrOption(merged, "DeviceName", XI_TOUCHSCREEN);
-  xf86Msg(X_CONFIG, "Elographics X device name: %s\n", local->name);  
-  priv->screen_no = xf86SetIntOption(merged, "ScreenNo", 0);
-  xf86Msg(X_CONFIG, "Elographics associated screen: %d\n", priv->screen_no);  
-  priv->untouch_delay = xf86SetIntOption(merged, "UntouchDelay", ELO_UNTOUCH_DELAY);
-  xf86Msg(X_CONFIG, "Elographics untouch delay: %d ms\n", priv->untouch_delay*10);
-  priv->report_delay = xf86SetIntOption(merged, "ReportDelay", ELO_REPORT_DELAY);
-  xf86Msg(X_CONFIG, "Elographics report delay: %d ms\n", priv->report_delay*10);
-  priv->max_x = xf86SetIntOption(merged, "MaximumXPosition", 3000);
-  xf86Msg(X_CONFIG, "Elographics maximum x position: %d\n", priv->max_x);
-  priv->min_x = xf86SetIntOption(merged, "MinimumXPosition", 0);
-  xf86Msg(X_CONFIG, "Elographics minimum x position: %d\n", priv->min_x);
-  priv->max_y = xf86SetIntOption(merged, "MaximumYPosition", 3000);
-  xf86Msg(X_CONFIG, "Elographics maximum y position: %d\n", priv->max_y);
-  priv->min_y = xf86SetIntOption(merged, "MinimumYPosition", 0);
-  xf86Msg(X_CONFIG, "Elographics minimum y position: %d\n", priv->min_y);
-  debug_level = xf86SetIntOption(merged, "DebugLevel", 0);
-  if (debug_level) {
-#if DEBUG
-    xf86Msg(X_CONFIG, "Elographics debug level sets to %d\n", debug_level);      
-#else
-    xf86Msg(X_INFO, "Elographics debug not available\n");      
-#endif
-  }
-
-  if (priv->max_x - priv->min_x <= 0) {
-    xf86Msg(X_INFO, "Elographics: swap x mode (minimum x position >= maximum x position)\n");
-  }  
-  if (priv->max_y - priv->min_y <= 0) {
-    xf86Msg(X_INFO, "Elographics: swap y mode (minimum y position >= maximum y position)\n");
-  }
-
-  xf86AddLocalDevice(local, merged);
-
-  return local;
+  return module;
 }
 
 static void
 Unplug(pointer	p)
 {
-  LocalDevicePtr	local = (LocalDevicePtr) p;
-  EloPrivatePtr		priv = (EloPrivatePtr) local->private;
-  
-  xf86EloControl(local->dev, DEVICE_OFF);
-  xf86RemoveLocalDevice(local);
-
-  xfree(priv->input_dev);
-  xfree(priv);
-  xfree(local->name);
-  xfree(local);
+  DBG(1, ErrorF("EloUnplug\n"));
 }
 
 static XF86ModuleVersionInfo version_rec = {

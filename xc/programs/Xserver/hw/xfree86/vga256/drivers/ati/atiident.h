@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiident.h,v 1.1.2.1 1998/02/01 16:41:55 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiident.h,v 1.1.2.2 1999/10/12 17:18:54 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,10 +27,10 @@
 #include "atiproto.h"
 #include "misc.h"
 
-#define ATI_CHIPSET_ATI		0
-#define ATI_CHIPSET_ATIVGA	1
-#define ATI_CHIPSET_IBMVGA	2
-#define ATI_CHIPSET_IBM8514	3	/* ? */
+#define ATI_CHIPSET_ATI     0
+#define ATI_CHIPSET_ATIVGA  1
+#define ATI_CHIPSET_IBMVGA  2
+#define ATI_CHIPSET_IBM8514 3            /* ? */
 extern CARD8 ATIChipSet;
 extern char * ATIChipSetNames[];
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.16 1999/07/13 07:09:52 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.17 1999/11/18 15:37:31 hohndel Exp $ */
 /*
  * Millennium G200 RAMDAC driver
  */
@@ -431,10 +431,9 @@ DisplayModePtr mode;
 		newVS->DACreg[MGA1064_GEN_CTL] &= ~0x20;
 		newVS->ExtVga[3] |= 0x40;
 	}
-        if(OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options))
-	    newVS->DAClong &= ~(1 << 29);
-	else
-	    newVS->DAClong |= (1 << 29);
+
+        /* Have to leave retries on.  Artifacts without it. */
+	newVS->DAClong &= ~(1 << 29);
 
 	MGASetPCLK( vga256InfoRec.clock[newVS->std.NoClock] );
 

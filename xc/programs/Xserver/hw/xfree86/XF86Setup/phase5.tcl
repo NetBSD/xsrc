@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7.2.3 1998/02/21 06:07:02 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7.2.4 1999/10/11 16:05:00 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -72,7 +72,12 @@ if { ![getuid] } {
 	    cd $linkdir
 	    catch "unlink X" ret
 	    if !$pc98 {
-	        if [catch "link $Xwinhome/bin/XF86_$server X" ret] {
+		if [string match XFCom* $server] {
+		    set serverpath $Xwinhome/bin/$server
+		} else {
+		    set serverpath $Xwinhome/bin/XF86_$server
+		}
+		if [catch "link $serverpath X" ret] {
 		    mesg "Link creation failed!\n\
 			    You'll have to do it yourself" okay
 	        } else {

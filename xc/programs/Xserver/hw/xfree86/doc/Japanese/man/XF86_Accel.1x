@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86_Accel.1x,v 1.1.2.1 1999/05/25 06:11:00 hohndel Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86_Accel.1x,v 1.1.2.2 1999/11/26 15:23:32 hohndel Exp $
 .\"
 .\" Copyright (c) 1998 The X Japanese Documentation Project.
 .\" 
@@ -31,7 +31,7 @@
 .\" Translated Thu Nov 19 20:53:16 JST 1998
 .\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>
 .\"
-.TH XF86_Accel 1 "Version 3.3.3"  "XFree86"
+.TH XF86_Accel 1 "Version 3.3.5"  "XFree86"
 .SH 名前
 .\"0 XF86_Accel - accelerated X Window System servers for
 .\"0 UNIX on x86 and Alpha platforms with an S3, Mach8, Mach32, Mach64, P9000, AGX,
@@ -671,7 +671,7 @@ RAMDAC を搭載しているが、67.5MHz 以上のクロックの利用で問題が生じる場
 .sp
 .\"0 \fBstg1702\fP - (Mach64) Card has an STG1702 RAMDAC.  This must be
 .\"0 specified if the server fails to detect it.
-\fBstg1702\fP - (Mach64) STG1702 RAMDAC を詰んでいるカードで用いる。サーバ
+\fBstg1702\fP - (Mach64) STG1702 RAMDAC を積んでいるカードで用いる。サーバ
 が検出に失敗した場合には、このオプションを指定する必要がある。
 .sp
 .\"0 \fBstg1703\fP - (S3, W32, Mach64) Card has an STG1703 RAMDAC.  This
@@ -680,7 +680,7 @@ RAMDAC を搭載しているが、67.5MHz 以上のクロックの利用で問題が生じる場
 .\"0 use the programming capabilities.
 \fBstg1703\fP - (S3, W32, Mach64) STG1703 RAMDAC を積んでいるカードで
 用いる。サーバが検出に失敗した場合には、このオプションを指定する必要が
-ある。W32 サーバを使う場合には、STG1703 で ClockChip をプログラマブル
+ある。W32 サーバを使う場合には、STG1703 で ClockChip のプログラマブル
 機能を使えるように明示的に設定しなければならない。
 .sp
 .\"0 \fBs3gendac\fP - (S3) Card has an S3 86C708 GENDAC.
@@ -1197,7 +1197,7 @@ W32 サーバと古い W32 カードを使うとディスプレイが省電力モードになる場
 .\"0 \fBw32_interleave_off\fP - (W32) Turns off the memory interleave for the
 .\"0 W32i and W32p chipset.  Try this if your picture looks distorted or you
 .\"0 don't get a picture at all.
-\fBw32_interleave_on\fP - (W32) W32i, W32p チップセットでメモリインタ
+\fBw32_interleave_off\fP - (W32) W32i, W32p チップセットでメモリインタ
 リーブを無効にする。表示が歪んだり、全く表示されないときにはこのオプショ
 ンを試すこと。
 .sp

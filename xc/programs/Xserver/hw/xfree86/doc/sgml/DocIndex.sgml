@@ -26,6 +26,9 @@
 <item><htmlurl name="README for XFree86 on BSD/OS 2.0"
 	url="Bsdi.html">
 -->
+<item><htmlurl name="Instructions for Building XFree86 on an Intel Pentium
+Aviion machine with DG/ux R4.20MU04"
+	url="DGux.html">
 <item><htmlurl name="README for XFree86 on FreeBSD"
 	url="FreeBSD.html">
 <item><htmlurl name="Information for ISC Users"
@@ -125,7 +128,7 @@
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.18 1999/05/29 09:39:05 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.19 1999/09/13 07:29:56 dawes Exp $ 
 
 
 

@@ -23,7 +23,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XFree86: xc/include/Xos_r.h,v 1.3.2.2 1999/07/23 09:00:22 hohndel Exp $ */
+/* $XFree86: xc/include/Xos_r.h,v 1.3.2.4 1999/12/02 14:27:25 hohndel Exp $ */
 
 /* 
  * Various and sundry Thread-Safe functions used by X11, Motif, and CDE.
@@ -83,6 +83,9 @@ in this Software without prior written authorization from the X Consortium.
 #   include <limits.h>
 #   undef _POSIX_SOURCE
 #  endif
+# endif
+# ifdef CSRG_BASED
+#  include <sys/param.h>	/* for MAXHOSTNAMELEN */
 # endif
 #endif /* _XOS_R_H */
 
@@ -234,31 +237,69 @@ typedef struct {
   struct passwd* pwp;
   size_t len;
 } _Xgetpwparams;
-# define _Xpw_copyPasswd(p) \
+# if defined(CSRG_BASED) /* FreeBSD and hopefully NetBSD, OpenBSD and BSD/OS */
+#  define _Xpw_copyPasswd(p) \
    (memcpy(&(p).pws, (p).pwp, sizeof(struct passwd)), \
     ((p).pws.pw_name = (p).pwbuf), \
     ((p).len = strlen((p).pwp->pw_name)), \
     strcpy((p).pws.pw_name, (p).pwp->pw_name), \
+    \
     ((p).pws.pw_passwd = (p).pws.pw_name + (p).len + 1), \
     ((p).len = strlen((p).pwp->pw_passwd)), \
     strcpy((p).pws.pw_passwd,(p).pwp->pw_passwd), \
-    ((p).pws.pw_age = (p).pws.pw_passwd + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_age)), \
-    strcpy((p).pws.pw_age, (p).pwp->pw_age), \
-    ((p).pws.pw_comment = (p).pws.pw_age + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_comment)), \
-    strcpy((p).pws.pw_comment, (p).pwp->pw_comment), \
-    ((p).pws.pw_gecos = (p).pws.pw_comment + (p).len + 1), \
+    \
+    ((p).pws.pw_class = (p).pws.pw_class + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_class)), \
+    strcpy((p).pws.pw_class, (p).pwp->pw_class), \
+    \
+    ((p).pws.pw_gecos = (p).pws.pw_class + (p).len + 1), \
     ((p).len = strlen((p).pwp->pw_gecos)), \
     strcpy((p).pws.pw_gecos, (p).pwp->pw_gecos), \
-    ((p).pws.pw_dir = (p).pws.pw_comment + (p).len + 1), \
+    \
+    ((p).pws.pw_dir = (p).pws.pw_class + (p).len + 1), \
     ((p).len = strlen((p).pwp->pw_dir)), \
     strcpy((p).pws.pw_dir, (p).pwp->pw_dir), \
+    \
     ((p).pws.pw_shell = (p).pws.pw_dir + (p).len + 1), \
     ((p).len = strlen((p).pwp->pw_shell)), \
     strcpy((p).pws.pw_shell, (p).pwp->pw_shell), \
+    \
     ((p).pwp = &(p).pws), \
     0 )
+# else /* CSRG_BASED */
+#  define _Xpw_copyPasswd(p) \
+   (memcpy(&(p).pws, (p).pwp, sizeof(struct passwd)), \
+    ((p).pws.pw_name = (p).pwbuf), \
+    ((p).len = strlen((p).pwp->pw_name)), \
+    strcpy((p).pws.pw_name, (p).pwp->pw_name), \
+    \
+    ((p).pws.pw_passwd = (p).pws.pw_name + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_passwd)), \
+    strcpy((p).pws.pw_passwd,(p).pwp->pw_passwd), \
+    \
+    ((p).pws.pw_age = (p).pws.pw_passwd + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_age)), \
+    strcpy((p).pws.pw_age, (p).pwp->pw_age), \
+    \
+    ((p).pws.pw_comment = (p).pws.pw_age + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_comment)), \
+    strcpy((p).pws.pw_comment, (p).pwp->pw_comment), \
+    \
+    ((p).pws.pw_gecos = (p).pws.pw_comment + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_gecos)), \
+    strcpy((p).pws.pw_gecos, (p).pwp->pw_gecos), \
+    \
+    ((p).pws.pw_dir = (p).pws.pw_comment + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_dir)), \
+    strcpy((p).pws.pw_dir, (p).pwp->pw_dir), \
+    \
+    ((p).pws.pw_shell = (p).pws.pw_dir + (p).len + 1), \
+    ((p).len = strlen((p).pwp->pw_shell)), \
+    strcpy((p).pws.pw_shell, (p).pwp->pw_shell), \
+    \
+    ((p).pwp = &(p).pws), \
+    0 )
+# endif /* CSRG_BASED */
 # define _XGetpwuid(u,p) \
 ( (_Xos_processLock), \
   (((p).pwp = getpwuid((u))) ? _Xpw_copyPasswd(p) : 0), \
@@ -454,10 +495,10 @@ typedef struct {
 } _Xgetservbynameparams;
 #  define _XGethostbyname(h,hp) \
   (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
-   ((gethostbyname_r((h),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent) : NULL)
+   ((gethostbyname_r((h),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent : NULL))
 #  define _XGethostbyaddr(a,al,t,hp) \
   (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
-   ((gethostbyaddr_r((a),(al),(t),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent) : NULL)
+   ((gethostbyaddr_r((a),(al),(t),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent : NULL))
 #  define _XGetservbyname(s,p,sp) \
   (bzero((char*)&(sp).sdata,sizeof((sp).sdata)),	\
    ((getservbyname_r((s),(p),&(sp).sent,&(sp).sdata) == 0) ? &(sp).sent : NULL) )
@@ -1088,11 +1129,11 @@ typedef struct {
 } _Xgetgrparams;
 
 #define _XGetgrgid(g,p)	\
- ((getgrgid_r((g), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0 ? \
-   (p).result) : NULL)
+ ((getgrgid_r((g), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0) ? \
+   (p).result : NULL)
 #define _XGetgrnam(n,p)	\
- ((getgrnam_r((n), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0 ? \
-   (p).result) : NULL)
+ ((getgrnam_r((n), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0) ? \
+   (p).result : NULL)
 #endif
 
 #if defined(X_INCLUDE_GRP_H) && !defined(_XOS_INCLUDED_GRP_H)

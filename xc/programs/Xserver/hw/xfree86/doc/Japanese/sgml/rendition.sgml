@@ -3,24 +3,48 @@
 <article>
 <!--
 <title>Information for Rendition Users
+<author>The XFree86 Project Inc. Last updates by Dejan Ilic <it>&lt;dejan.ilic@home.se&gt;</it>
 -->
 <title>Rendition ユーザ向けの情報
-<author>The XFree86 Project Inc.
-<date>23 October 1998
+<author>The XFree86 Project Inc. (最終更新: Dejan Ilic <it>&lt;dejan.ilic@home.se&gt;</it>)
+<date>1 August 1999
 <trans>The X Japanese Documentation Project
-<tdate>12 January 1999
+<tdate>4 December 1999
 <toc>
 
 <!-- <sect>Supported hardware <p> -->
 <sect>サポートしているハードウェア <p>
 <!--
 All cards based on the V1000 or the V2x00 should be supported. The server
-was tested on a miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100), and
-Hercules Thriller3D (V2200).
+was tested on a miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000), Diamond Stealth II S220 (V2100), Hercules Thriller3D (V2200) and Innovision Warrior3D (V2200).
 -->
 V1000, V2x00 ベースのカードは全てサポートされているはずです。サーバの
-テストは miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100),
-Hercules Thriller3D (V2200) で行いました。
+テストは miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000),
+Diamond Stealth II S220 (V2100), Hercules Thriller3D (V2200),
+Innovision Warrior3D (V2200)で行いました。
+
+<!--
+<sect>Important notices <p>
+-->
+<sect>重要な注意 <p>
+<!--
+V1000 cards can only work as primary display card due to hardware limitations. <p>
+Some V1000-based videocards are known to lock up the computer if you have write-combine activated. Disabling it removes the problem. Look for settings in the motherboards BIOS and disable ALL settings that has to do with write-combine (usualy called USWC or just WC for short). <p>
+The "chipset" option is now implemented and honored when used. Unfortunatly some legacy-code in the driver is preventing it from working with any cards but the primary display card. <p>
+If you have problems with hardware cursor use the "sw_cursor" option to revert back to software cursor.
+-->
+V1000 カードはハードウェアの制限のため、プライマリのディスプレイカード
+でしか動作しません。<p>
+V1000 ベースの一部のビデオカードでは、write-combine 機能を有効にすると
+コンピュータを凍ってしまうことが知られています。この問題を回避するには、
+この機能を無効にしてください。マザーボードの BIOS 設定を参照し、
+write-combine 機能に関係する<em>全て</em>の設定を無効にしてください(
+通常は USWC と呼ばれるか、あるいは短縮して WC と呼ばれています)。<p>
+"chipset" オプションは現在は実装されており、指定されていればこれに従い
+ます。残念ながら、ドライバ中の一部の古いコードのせいで、プライマリの
+ディスプレイカード以外の任意のカードでは動作しません。<p>
+ハードウェアカーソルを使っていて問題があれば、"sw_cursor" オプションを
+使ってソフトウェアカーソルに戻してください。
 
 <!-- <sect>Features <p> -->
 <sect>機能 <p>
@@ -31,8 +55,9 @@ Hercules Thriller3D (V2200) で行いました。
 <item>Supported color depths
 <itemize>
 <item>8 bits per pixel (256 pseudo colour)
-<item>16 bits per pixel (high colour)
-<item>32 bits per pixel (true colour)
+<item>15 bits per pixel (16-bits with RGB-weight 555, 32768 colors, V1000 cards only)
+<item>16 bits per pixel (high colour, RGB-weight 565, 65536 colors)
+<item>32 bits per pixel (true colour, sparse 24bit, 16M colors)
 </itemize>
 </itemize>
 -->
@@ -42,13 +67,16 @@ Hercules Thriller3D (V2200) で行いました。
 <item>サポートされている色の深さ
 <itemize>
 <item>8 bpp (256 pseudo colour)
-<item>16 bpp (high color)
-<item>32 bpp (true colour)
+<item>15 bpp (RGB の重み付けが 555 の 16 ビット。32768 色。V1000 カードのみ)
+<item>16 bpp (high colour, RGB の重み付けは 565, 65536 色)
+<item>32 bpp (true colour, 疎な 24 ビット、1600 万色)
 </itemize>
 </itemize>
 
-<!-- <sect>XF86Config Option <p> -->
-<sect>XF86Config のオプション <p>
+<!--
+<sect>XF86Config options recognized and used by Rendition driver<p>
+-->
+<sect>Rendition 用ドライバが識別・利用する XF86Config のオプション <p>
 <descrip>
 <!--
 <tag>Option "sw_cursor"</tag>
@@ -57,6 +85,8 @@ Disables use of the hardware cursor.
 Run the memory at a higher clock. Useful on some cards with display glitches
 at higher resolutions. But adds the risk to damage the hardware. Use with
 caution.
+<tag>DacSpeed "MHz"</tag>
+Set custom ramdac limit. We have currently no way of knowing if the v2x00 chip is a v2100 (170MHz) or v2200 (203MHz and 230MHz) so we assume the lowest. Use this option to manualy override the value.
 </descrip>
 -->
 <tag>Option &dquot;sw_cursor&dquot;</tag>
@@ -65,19 +95,95 @@ caution.
 メモリを高いクロックで動作させます。高解像度のときに表示が乱れるカード
 で有効なことがあります。ただし、ハードウェアを壊してしまうリスクを負う
 ことになります。使うときには注意しましょう。
+<tag>DacSpeed &dquot;MHz&dquot;</tag>
+RAMDAC 独自の上限値を設定します。現在は v2x00 チップが
+v2100 (170MHz) と v2200 (203MHz, 230MHz)のどちらであるかを調べる方法が
+ないので、最も低い値を使うことにしています。このオプションを手動で設定
+して、この値を上書きしてください。
 </descrip>
 
+<!--
+<sect>News in this release <p>
+-->
+<sect>本リリースの新しい点 <p>
+<itemize>
+<!--
+<item>XFree 3.3.x Rendition driver development discontinued in favour of XFree 4.0 driver.
+-->
+<item>XFree86 4.0 ドライバのため、XFree86 3.3.x の Rendition ドライバ
+の開発は停止しました
+</itemize>
+
+<!--
+<sect>Known problems in current driver<p>
+-->
+<sect>現在のドライバで知られている問題<p>
+<itemize>
+<!--
+<item>Displays with depth 15 ("-bpp 15" or "-bpp 16 -weight 555") are NOT supported on V2x00 cards. This is a hardware-"limitation" and has been confirmed by Rendition. The driver lets you display the mode but you will get a reddish display as the card is actualy in 565-weight while X thinks it should display weight 555.
+-->
+<item>15 bpp ("-bpp 15" または "-bpp 16 -weight 555")の表示は、
+V2x00 カードではサポートされて<em/いません/。これはハードウェアの
+「制限」であり、Rendition もこれを認めています。ドライバはこのモードの
+表示ができますが、画面表示は赤みがかってしまいます。というのも、カード
+は実際には 565 の重みになっているのに、X はこの重みが 555 のはずだと考
+えるからです。
+<!--
+<item>Switching from display to VC and back to display can lock up V2x00 cards.
+-->
+<item>V2x00 カードでは、ディスプレイから仮想コンソールに行き、また
+ディスプレイに戻ると固まることがあります。
+<!--
+<item>When scrolling the virtual display on a V1000 card parts of the screen will become distorted. Problem dissapears when you continue moving around. V2x00 does not exhibit this problem. Probably a bug in the driver rather than a limitation of the chip.
+-->
+<item>V1000 カードで仮想ディスプレイをスクロールさせると、画面の一部が
+歪んでしまいます。動かし続ければおかしい部分は消えます。V2x00 ではこの
+問題は現われません。たぶんチップの制限ではなく、ドライバのバグだと思い
+ます。
+<!--
+<item>Option "chipset" is honored. Unfortunatly the driver still has problems and will only work if the rendition card is the primary display card in the system.
+-->
+<item>オプション "chipset" に従います。残念ながらドライバにはまだ問題
+があり、rendition のカードがシステムのプライマリのディスプレイカードで
+なければ動作しません。
+<!--
+<item>Switching to VC does not restore correct textmode. Instead it defaults to 80x25.
+-->
+<item>仮想コンソールに切り替えても正しいテキストモードが復元されません。
+正しいモードではなく、デフォルトの 80x25 モードになります。
+<!--
+<item>A horizontal distortion around the hardware cursor can be seen on certain modes. It can be fixed by turning off hardware cursor or by lowering the required bandwith of the mode.
+-->
+<item>特定のモードで、ハードウェアカーソルのまわりに水平な歪みが現われ
+ることがあります。この問題は、ハードウェアカーソルを使わないか、そのモー
+ドで必要なバンド幅を小さくすることにより直せます。
+</itemize>
+
+<!--
+<sect>Work in progress<p>
+-->
+<sect>進行中の作業<p>
+<itemize>
+<!--
+<item> All future development, including acceleration, has been redirected to development of XFree 4.0 driver. No more improvments of XFree 3.3.x driver is planned for the moment.
+-->
+<item>アクセラレーションを含めた将来的な開発項目は全て、
+XFree86 4.0 用のドライバに移行しました。現時点では、XFree86 3.3.x 用ド
+ライバの改良はもう計画されていません。
+</itemize>
+
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/rendition.sgml,v 1.1.2.1 1999/05/25 06:39:33 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/rendition.sgml,v 1.1.2.3 1999/12/28 12:13:59 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>
 日本語訳は X Japanese Documentation Project が行いました
-(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+(3.3.5, 3.3.6 版翻訳:
+藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
 name="&lt;fujiwara@linux.or.jp&gt;">,
 校正: 金田浩司 <url url="mailto:vanitas@ma3.seikyou.ne.jp"
 name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。問題点の指摘やご意
 見は藤原まで御連絡ください。
-原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳に伴う権利は
 X Japanese Documentation Project にあります。
 </article>

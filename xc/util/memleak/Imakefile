@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/9 1996/09/28 17:19:05 rws $
-XCOMM $XFree86: xc/util/memleak/Imakefile,v 3.2 1996/12/23 07:19:34 dawes Exp $
+XCOMM $XFree86: xc/util/memleak/Imakefile,v 3.2.2.1 1999/12/20 14:36:30 hohndel Exp $
 #define DoNormalLib YES
 #define DoSharedLib NO
 #define DoDebugLib NO
@@ -35,6 +35,16 @@ GRA_SRCS = getretspar.c
 #define BottomOfData \&etext
 GRA_OBJS = getreti386.o stackbottom.o
 GRA_SRCS = getreti386.c stackbottom.c
+#endif
+
+#ifdef LinuxArchitecture
+#ifdef i386Architecture
+#define HasGetReturnAddress	YES
+#define TopOfStack 0xbffff800
+#define BottomOfData \&__data_start
+GRA_OBJS = getreti386.o stackbottom.o
+GRA_SRCS = getreti386.c stackbottom.c
+#endif
 #endif
 
 #ifndef HasGetReturnAddress

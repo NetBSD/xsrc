@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.16 1999/06/02 07:51:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.17 1999/11/18 15:37:31 hohndel Exp $ */
 
 #include "compiler.h"
 #include "vga256.h"
@@ -365,6 +365,13 @@ MGAStormEngineInit()
     OUTREG(MGAREG_CXBNDRY, 0xFFFF0000);	/* (maxX << 16) | minX */ 
     OUTREG(MGAREG_YTOP, 0x00000000);	/* minPixelPointer */ 
     OUTREG(MGAREG_YBOT, 0x007FFFFF);	/* maxPixelPointer */ 
+
+    if(MGA_IS_G200(MGAchipset) || MGA_IS_G400(MGAchipset)) {
+	/* set the blit origins */
+	WAITFIFO(2);
+	OUTREG(0x2cb4, 0);
+	OUTREG(0x2cb8, 0);
+    }
 }
 
 

@@ -7,13 +7,11 @@
 
   目次
 
-
   1. サポートしているチップセット
   2. 特に考慮すべき点
   3. WD90C24 の機能
   4. WD90C24 のクロック値
   5. WD90C24 に関する追加の情報
-
 
   ______________________________________________________________________
 
@@ -32,7 +30,6 @@
   してサポートされています。WD90C24, WD90C31, WD90C33 のいずれかが検出さ
   れた場合か、 XF86Config で指定を行った場合、アクセラレーションが効く機
   能は自動的に有効になります。
-
 
   2.  特に考慮すべき点
 
@@ -72,7 +69,6 @@
   系のチップを WD90C30 とは別のチップとして識別するので、このチップを
   WD90C3X として扱ったときに起こる問題のほとんどは解決するようです。
   pvga1 ドライバの新しいコードは以下の機能を持っています:
-
 
   o  シャドウレジスタを適切な時にロックします。これは LCD 表示モードや
      LCD/CRT 同時表示モードが選択時に、デュアルスキャンスクリーンを使っ
@@ -115,8 +111,6 @@
 
            Option "noaccel"
 
-
-
   という行を追加してアクセラレーションを無効にすることができます。
 
   o  新しいサーバは、他の一部のサーバと同じようにはプログラマブルクロッ
@@ -124,22 +118,16 @@
      を使って(ほとんど)任意の値に設定することができます。新しいサーバに
      は VRAM のクロック値を調整するためのオプションもあります。
 
-
   4.  WD90C24 のクロック値
 
   調整可能なクロック値についてもう少し詳しく説明します:
 
-
   VRAM のクロック値(Mclk 値)は、XF86Config の Device セクションに以下の
   オプション行の「いずれか」を追加することで調整できます:
-
 
           Option      "slow_dram"     # Set Mclk to 47.429 MHz
           Option      "med_dram"      # Set Mclk to 49.219 MHz
           Option      "fast_dram"     # Set Mclk to 55.035 MHz
-
-
-
 
   デフォルトでは BIOS が設定した Mclk 値のままになります。多くのシステム
   では、この値は 44.297 です。これらのオプションのどれかは一部のシステム
@@ -170,8 +158,6 @@
      Clocks     44.297                      # Change this if you change
                                             #   Mclk above.
 
-
-
   クロック値は .447443 MHz ずつ増やしてプログラムすることができます。こ
   の規則に合わないクロック値を指定した場合、サーバは警告を出してから増分
   が規則に最も近くなるように調整します。Clocks 値 1-4 と 9-12 (固定のク
@@ -189,8 +175,6 @@
 
      ModeLine "640x480"  25.175   640 664 760 800     480 491 493 525 #CRT/LCD
 
-
-
   以下のモード行はいくつかのシステム上で 上記の Clocks 行を使ってテスト
   を行ったもので、ここで例として示します。テスタによっては、固定のドット
   クロック値 65MHz, 75.166MHz でちょっとした問題(雪のようなノイズが乗
@@ -201,14 +185,12 @@
    # VESA 800x600@72Hz Non-Interlaced mode
      ModeLine  "800x600.50"  50  800  856  976 1040 600 637 643 666  +hsync +vsync
 
-
    # 1024x768  Interlaced mode
      ModeLine  "1024x768i"   45  1024 1048 1208 1264 768 776 784 817 +hsync +vsync Interlace
 
    # 1024x768@60Hz Non-interlaced Mode
    # One of the dram options may be necessary
      ModeLine  "1024x768.65" 65  1024 1032 1176 1344 768 771 777 806 -hsync -vsync
-
 
    # 1024x768@60Hz Non-Interlaced mode (non-standard dot-clock)
    # Seems to work without dram options
@@ -217,9 +199,6 @@
    # 1024x768@70Hz Non-Interlaced mode (non-standard dot-clock)
    # May need fast_dram option
      ModeLine  "1024x768.72" 72  1024 1056 1192 1280 768 770 776 806 -hsync -vsync
-
-
-
 
   5.  WD90C24 に関する追加の情報
 
@@ -233,32 +212,7 @@
   dernst@pppl.gov です。筆者は WD90C24 専用のコードしか提供していませ
   ん。筆者(Brad Bosch)の連絡先は brad@Lachman.com です。
 
-
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.WstDig,v 1.1.2.1 1999/06/02 07:50:55 hohndel Exp $
-
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.WstDig,v 1.1.2.2 1999/11/26 15:23:14 hohndel Exp $
 
   $XConsortium: WstDig.sgml /main/5 1996/02/21 17:46:29 kaleb $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,0 +1,9 @@
+The i810 driver needs kernel support for the way it manages local video ram.
+At the moment this kernel module is not built automatically with make World.
+To build the kernel module cd into the os-support/linux directory and type
+make.  Insert the agpgart.o module and mknod /dev/agpgart c 10 175.  This
+should get you going.
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/i810/README.I810Gtt,v 1.1.2.2 1999/11/18 19:06:15 hohndel Exp $

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.3 1998/12/22 07:37:49 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.4 1999/11/26 15:24:13 hohndel Exp $ */
 
 #ifndef __NVREG_H_
 #define __NVREG_H_
@@ -199,7 +199,7 @@ extern volatile unsigned  *nvPNVMPort;    /* Priviled Bus */
 extern volatile unsigned  *dumb;          /* FrameBuffer - hack!!!! */
 
 
-typedef enum {NV1,NV3,NV4,NumNVChips} NVChipType;
+typedef enum {NV1,NV3,NV4,NV10,NumNVChips} NVChipType;
 
 NVChipType GetChipType(void);
 

@@ -1,4 +1,7 @@
 #! /bin/sh
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/convert.sh,v 1.1.2.4 1999/12/28 12:13:51 hohndel Exp $
+#
 for i in sgml/*.sgml 
  do
    sgml2txt -f -l ja -c nippon $i
@@ -19,6 +22,7 @@ mv isc.txt README.isc
 mv OS2.txt README.OS2
 mv OS2note.txt OS2.Notes
 mv SVR3.txt README.SVR3
+mv DGux.txt README.DGux
 
 mv SOLX86.txt README.SOLX86
 mv SVR4.txt README.SVR4
@@ -53,6 +57,8 @@ mv 3DLabs.txt README.3DLabs
 mv trident.txt README.trident
 mv tseng.txt README.tseng
 mv fbdev.txt README.fbdev
+mv i740.txt README.i740
+mv i810.txt README.i810
 
 /* Main docs */
 mv CPYRIGHT.txt COPYRIGHT

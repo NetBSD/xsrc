@@ -32,7 +32,7 @@ For further details about this release, including installation instructions,
 please refer to the <htmlurl name="Release Notes" url="RELNOTES.html">.
 -->
 このリリースについての詳細(インストール手順も含めて)については、
-<htmlurl name="リリースノート" url="RELNOTES.html">を参照してください
+<htmlurl name="リリースノート" url="RELNOTES.html">を参照してください。
 
 <!--
 See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
@@ -181,6 +181,7 @@ The serial mouse has a D-Sub female 9- or 25-pin connector.
 The bus mouse has either a D-Sub male 9-pin connector 
 or a round DIN 9-pin connector.
 The PS/2 mouse is equipped with a small, round DIN 6-pin connector.
+The USB mouse has a flat rectangular connector.
 Some mice come with adapters with which the connector can 
 be converted to another.  If you are to use such an adapter,
 remember the connector at the very end of the mouse/adapter pair is 
@@ -190,7 +191,9 @@ what matters.
 スの場合には D-Sub メスの 9 ピンまたは 25 ピンのコネクタが付いています。
 バスマウスの場合には、D-Sub オスの 9 ピンコネクタか丸型 DIN の 9 ピン
 コネクタが付いています。PS/2 マウスには小さい丸型 DIN の 6 ピンコネク
-タが付いています。一部のマウスには、コネクタを他のタイプのインタフェー
+タが付いています。
+USB マウスには平たい長方形のコネクタが付いています。
+一部のマウスには、コネクタを他のタイプのインタフェー
 スに接続できるアダプタが付属しています。このようなアダプタを使う場合に
 は、マウスとアダプタを組み合わせた状態で一番端になるコネクタがインタ
 フェースの種類を決めることを覚えておいてください。
@@ -200,6 +203,8 @@ The next thing to decide is a <tt>/dev</tt> entry for the given interface.
 For the bus and PS/2 mice, there is little choice: 
 the bus mouse always use <tt>/dev/mse0</tt>,
 and the PS/2 mouse is always at <tt>/dev/psm0</tt>.
+You can attach multiple USB mice to your system or to your USB hub.
+They are accessible as <tt>/dev/ums0</tt>, <tt>/dev/ums1</tt>,...
 There may be more than one serial port to which the serial
 mouse can be attached.  Many people often assign the first, built-in 
 serial port <tt>/dev/cuaa0</tt> to the mouse.
@@ -207,10 +212,13 @@ serial port <tt>/dev/cuaa0</tt> to the mouse.
 次に決めることは、与えられたインタフェースに対する <tt>/dev</tt> エン
 トリです。バスマウスと PS/2 マウスの場合、選ぶ必要はほとんどありません:
 バスマウスでは必ず <tt>/dev/mse0</tt> を使いますし、PS/2 マウスでは必
-ず <tt>/dev/psm0</tt> を使います。シリアルマウスの場合には、マウスを接
-続できるシリアルポートが複数個あるかもしれません。普通は最初の組み込み
-シリアルポートである <tt>/dev/cuaa0</tt> をマウスに割り当てることが多
-いようです。
+ず <tt>/dev/psm0</tt> を使います。
+複数個の USB マウスをお使いのシステムまたは USB ハブに取り付けることが
+できます。これらは <tt>/dev/ums0</tt>, <tt>/dev/ums1</tt>, …として
+アクセスできます。
+シリアルマウスの場合には、マウスを接続できるシリアルポートが複数個ある
+かもしれません。普通は最初の組み込みシリアルポートである 
+<tt>/dev/cuaa0</tt> をマウスに割り当てることが多いようです。
 
 <!--
 If you are not sure which serial device your mouse is plugged into, 
@@ -324,6 +332,22 @@ PS/2 マウスドライバ <tt/psm/ でこれらの種類のプロトコルを直接サポート
 しているので、使用する PS/2 マウスプロトコルを X サーバに伝える必要は
 ありません。``<tt/Auto/'' は動作するはずですが、これではなく
 ``<tt>PS/2</tt>'' を使ってください。
+</quote>
+<!--
+<item>You must specify the ``<tt>Auto</tt>'' protocol for the USB mouse.
+<quote>
+<bf/NOTE:/ Other XFree86 document may mention ``<tt>Usb</tt>'' as one of 
+keywords for the mouse protocol.  This keyword is not necessary, thus, not 
+supported in FreeBSD.  Be sure to use ``<tt>Auto</tt>'' for the USB
+mouse.
+</quote>
+-->
+<item>USB マウスに対しては ``<tt>Auto</tt>'' を指定しなければなりません。
+<quote>
+<bf/注意:/ XFree86 の他の文書では、``<tt>Usb</tt>'' はマウスプロトコル
+用のキーワードの一つと書かれているかもしれません。このキーワードは必要
+でなく、したがって FreeBSD ではサポートされていません。USB マウスに対
+しては必ず ``<tt>Auto</tt>'' を使ってください。
 </quote>
 <!--
 <item>The ``<tt>Logitech</tt>'' protocol is for old mouse models 
@@ -677,7 +701,7 @@ Many thanks to:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/FreeBSD.sgml,v 3.1.2.1 1999/05/25 06:39:11 hohndel Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/FreeBSD.sgml,v 3.1.2.3 1999/12/28 12:13:53 hohndel Exp $ 
 
 
 
@@ -686,4 +710,12 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/FreeBSD.sgml,v 3.1.2.
 $XConsortium: FreeBSD.sgml /main/12 1996/10/28 05:43:08 kaleb $
 </verb>
 
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました。
+(3.3.6 版 翻訳: 藤原輝嘉
+<url url="mailto:fujiwara@linux.or.jp" name="&lt;fujiwara@linux.or.jp&gt;">)
+
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳に関する権利は
+X Japanese Documentation Project にあります。
+問題点の指摘やご意見は藤原まで御連絡ください。
 </article>

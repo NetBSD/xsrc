@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13.2.8 1998/11/01 11:19:27 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13.2.9 1999/10/11 16:05:01 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -530,9 +530,15 @@ proc start_server { server configfile outfile } {
 	set env(DISPLAY) [set disp :$serverNumber]
 
 	if !$pc98 {
-	    set pid [exec $Xwinhome/bin/XF86_$server $disp \
-		    -allowMouseOpenFail -xf86config $configfile \
-		    -bestRefresh >& $TmpDir/$outfile & ]
+	    if [string match XFCom* $server] {
+		set pid [exec $Xwinhome/bin/$server $disp \
+			     -allowMouseOpenFail -xf86config $configfile \
+			     -bestRefresh >& $TmpDir/$outfile & ]
+	    } else {
+		set pid [exec $Xwinhome/bin/XF86_$server $disp \
+			     -allowMouseOpenFail -xf86config $configfile \
+			     -bestRefresh >& $TmpDir/$outfile & ]
+	    }
 	} else {
 	    set pid [exec $Xwinhome/bin/XF98_$server $disp \
 		    -allowMouseOpenFail -xf86config $configfile \

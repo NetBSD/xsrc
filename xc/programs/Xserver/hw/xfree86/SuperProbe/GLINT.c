@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/GLINT.c,v 3.1.2.1 1997/05/06 13:24:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/GLINT.c,v 3.1.2.2 1999/11/26 15:22:50 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by Dirk Hohndel <hohndel@xfree86.org>
  *
@@ -83,7 +83,7 @@ int *Chipset;
 	while (pci_devp[++i] != NULL)
 	{
 	    pcip = pci_devp[i];
-	    if (pcip->_vendor == PCI_VENDOR_3DLABS)
+	    if (pcip->_vendor == PCI_VENDOR_3DLABS && pcip->_status_command & 7)
 	    {
 	    	switch (pcip->_device)
 		{
@@ -217,7 +217,7 @@ int Chipset;
 
 	while ((pci_devp[++i] != NULL) && !found)
 	{
-	    if (pci_devp[i]->_vendor == PCI_VENDOR_3DLABS)
+	    if (pci_devp[i]->_vendor == PCI_VENDOR_3DLABS && pci_devp[i]->_status_command & 7)
 	    {
 	    	/*
 		 * ignore the Delta chip and use one of the real 

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.18 1999/07/22 08:13:51 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.19 1999/09/04 09:12:27 dawes Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -168,7 +168,11 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #define AsmDefines		-D__ELF__
 #define CplusplusCmd		c++
 #if UseStaticTermcapLib
+#if LinuxCLibMajorVersion >= 6
+#define TermcapLibrary		StaticLibrary(/usr/lib,ncurses)
+#else
 #define TermcapLibrary		StaticLibrary(/usr/lib/termcap,termcap)
+#endif
 #endif
 #else
 #ifdef AlphaArchitecture
@@ -281,6 +285,14 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #endif /* Arm */
 
 #define StandardDefines		-Dlinux LinuxMachineDefines LinuxSourceDefines
+
+#ifndef TermcapLibrary
+#if LinuxCLibMajorVersion >= 6
+#define TermcapLibrary		-lncurses
+#else
+#define TermcapLibrary		-ltermcap
+#endif
+#endif
 
 #if UseElfFormat
 #define DlLibrary		-rdynamic -ldl

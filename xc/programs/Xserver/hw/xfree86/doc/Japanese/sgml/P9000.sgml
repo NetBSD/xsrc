@@ -3,18 +3,19 @@
 <article>
  
 <!--
-<title>XFree86 3.3.3 P9000 Server Release Notes
+<title>XFree86 P9000 Server Release Notes
 -->
-<title>XFree86 3.3.3 P9000 サーバ リリースノート
+<title>XFree86 P9000 サーバ リリースノート
 <author>Erik Nygren (<it>nygren@mit.edu</it>)
-<date>1998 October 13
+<date>1998 December 29
 <trans>The X Japanese Documentation Project
-<tdate>1999 January 27
+<tdate>1999 November 22
 <toc>
  
-<!-- <sect>Change Log <p> -->
+<!--
+<sect>Change Log <p>
+-->
 <sect>変更履歴 <p>
-
 <descrip>
 <tag/1998.10.13:/
 	<itemize>
@@ -31,13 +32,13 @@
 	<item>
 <!--
 	  Added probing for MemBase and IOBase on Diamond Viper PCI cards
-          (Karl Anders リygard)
+          (Karl Anders ﾘygard)
 -->
 Diamond Viper PCI カードの MemBase 値と IOBase 値の検出機能を追加しました
 (Karl Anders Oygard)
 	<item>
 <!--
-	  Added support for DPMI screen saving (Karl Anders Oygard)
+	  Added support for DPMI screen saving (Karl Anders ﾘygard)
 -->
 DPMI によるスクリーン保護のサポートを追加しました(Karl Anders さんに感謝)
 	</itemize>
@@ -199,7 +200,7 @@ p9000blt.c, と p9000win.c を変更し、矩形/blit エンジンの空きを待つよう
 にしました。矩形/blit を行う前に SR_ISSUE_QBN をチェックし、それから
 blit 操作を行います。そして全ての blit 操作が終了したときに 
 p9000QBNotBusy を実行します。(Chris Mason)
-<item>
+	<item>
 <!--
 	 Changed p9000init.c to clear the screen using the quad meta coord
 	 drawing mode.  Appears the rect mode does not update the CINDEX
@@ -219,7 +220,7 @@ p9000QuadAlu を追加しました。矩形を描画するとき、X の入力に対応するの
 は p9000 では前景マスクです。blit/pixel8/pixel1 操作をするとき、これは
 p9000 の入力マスクであり、p9000alu 検索テーブルを使わなければなりませ
 ん。(Chris Mason)
-<item>
+	<item>
 <!--
 	 Added some more registers to p9000reg.h. (Chris Mason)
 -->
@@ -248,6 +249,13 @@ p9000reg.h にレジスタをいくつか追加しました. (Chris Mason)
 <!--
 	  Fixed more problems caused by switch to <tt>XF86Config</tt>
 	  (Erik Nygren)
+-->
+<tt>XF86Config</tt> のオプション指定が原因となる問題をさらにいくつか修
+正しました。(Erik Nygren)
+	<item>
+<!--
+	  Possible fix to maxclock for Orchid P9000 (Harry Langenbacher,
+	  Erik Nygren)
 -->
 <tt>XF86Config</tt> のオプション指定が原因となる問題をさらにいくつか修
 正しました。(Erik Nygren)
@@ -416,7 +424,9 @@ Xconfig における <tt>"Modes"</tt> 行の処理方法を変更しました。
 	</itemize>
 </descrip>
 
-<!-- <sect>Supported Cards <p>  -->
+<!--
+<sect>Supported Cards <p>
+-->
 <sect>サポートしているカード <p> 
 
 <sect1>Diamond Viper VLB <p>
@@ -449,7 +459,9 @@ Previously you had to find out the values for <tt>MemBase</tt> and
 以前は <tt>MemBase</tt> と <tt>IOBase</tt> の値はユーザが調べなければ
 なりませんでした。現在はこれらの値は自動的に検出されます。
 
-<!-- <sect>Orchid P9000 and random clones <p> -->
+<!--
+<sect>Orchid P9000 and random clones <p>
+-->
 <sect>Orchid P9000 と互換カード <p>
 <!--
 The Orchid P9000 and other cards based on the Weitek board design
@@ -475,7 +487,9 @@ p9x00 driver of the SVGA server.
 これらのカードは、このサーバではサポートされていませんが、SVGA サーバ
 の p9x00 ドライバでサポートされています。
 
-<!-- <sect>Acceleration <p> -->
+<!--
+<sect>Acceleration <p>
+-->
 <sect>アクセラレーション <p>
 <!--
 Some of the acceleration code is working, but
@@ -505,7 +519,9 @@ The following things are now accelerated:
    <item> CopyArea 操作(8bpp)
 </itemize>
 
-<!-- <sect>XFree86-DGA Extension Support <p> -->
+<!--
+<sect>XFree86-DGA Extension Support <p>
+-->
 <sect>XFree86-DGA 機能拡張のサポート <p>
 
 <!--
@@ -560,7 +576,9 @@ xres*yres*Bpp となります。このモードでは、書き込み、読み出し、表示が可
 ムと2つの垂直に隣接しているバンクを使うプログラムは、P9000 特有の変更
 をすることなしに動作するはずです。
 
-<!-- <sect>High Color and TrueColor <p> -->
+<!--
+<sect>High Color and TrueColor <p>
+-->
 <sect>ハイカラーとトゥルーカラー <p>
 <!--
 Support for 16 and 24 bit truecolor is now supported.  Note that 24
@@ -585,6 +603,7 @@ It's their fault&hellip  :-)
 これらのモードでは、まだ正しく動作しないアプリケーションがたくさんあり
 ます。これに関する指摘は筆者にしないでください。アプリの作者が既に問題
 を解決していなければ、彼らに知らせてくだい。悪いのは彼らですからね&hellip;  :-)
+
 <!--
 Example problems:
 -->
@@ -620,7 +639,9 @@ Example problems:
 ると思います。
 </descrip>
 
-<!-- <sect>Random Notes <p> -->
+<!--
+<sect>Random Notes <p>
+-->
 <sect>雑記 <p>
 <!--
 Text restoration should now be fixed.  Color restoration should
@@ -660,7 +681,9 @@ Diamond はドキュメント中で 135MHz が最大値であるとしていますが、実験に
 者の皆さんのお持ちのチップがこれより遅い場合、Diamond 社の技術サポート
 に連絡して、ボードを交換してもらうための RMA を送ってもらいましょう。
 
-<!-- <sect>Operating System Notes <p> -->
+<!--
+<sect>Operating System Notes <p>
+-->
 <sect>オペレーティングシステム別の注意事項 <p>
 <!--
 Any operating system that can memory map linear regions in really
@@ -795,11 +818,11 @@ of the <tt>XF86Config</tt> file are:
 <!--
    <tag/Modes/		almost any valid mode (there are constraints on
 				the horiz res so not all values are possible)
-			
 -->
    <tag/Modes/		ほとんど全ての有効なモード(この値は水平方向の
 解像度を制約するので、水平方向の解像度にはどんな値でも使えるわけではあ
 りません)
+			
 </descrip>
 <!--
 The current supported keywords in the Display section
@@ -855,11 +878,13 @@ Section "Screen"
 EndSection
 </verb>
 
-<!-- <sect>Known Bugs <p> -->
+<!--
+<sect>Known Bugs <p>
+-->
 <sect>既知のバグ <p>
 <!--
 There are currently problems with the server when used in conjunction
-with xdm, olvwm, and VT switching under Linux.  
+with xdm, olvwm, and VT switching under Linux.
 -->
 現在は、X サーバと xdm, olvm を一緒に使った場合に問題が起こります。ま
 た、Linux で 仮想端末の切り替えでも問題が起こります。
@@ -886,7 +911,9 @@ amount of memory you have.  If you have a 1 MB card, try put
 ださい。これが動作しなければ、<tt>Device</tt> セクションに
 <tt>Option "vram_128"</tt> と追加してみてください。
 
-<!-- <sect>Credits <p> -->
+<!--
+<sect>Credits <p>
+-->
 <sect>クレジット <p>
 <!--
 Major contributors to P9000 code:
@@ -898,7 +925,6 @@ P9000 のコードの開発に貢献した主なメンバーを以下に示します:
 <item>Chris Mason (<it>clmtch@osfmail.isc.rit.edu</it>) 
 <item>Henrik Harmsen (<it>harmsen@eritel.se</it>)
 </itemize>
-
 <!--
 Thanks to Matt Thomas (<it>thomas@lkg.dec.com</it>) and Bob Hollinger
 (<it>bob@interaccess.com</it>) for helping to get the Viper PCI server working.
@@ -930,7 +956,7 @@ acceleration, etc.  Please send any patches to me (<it>nygren@mit.edu</it>).
 したら、どうか筆者 (<it>nygren@mit.edu</it>) まで送ってください。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/P9000.sgml,v 1.1.2.1 1999/05/25 06:39:19 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/P9000.sgml,v 1.1.2.3 1999/12/28 12:13:55 hohndel Exp $
 
 
 

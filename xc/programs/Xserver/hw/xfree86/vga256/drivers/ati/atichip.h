@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.h,v 1.1.2.3 1999/07/05 09:07:31 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.h,v 1.1.2.4 1999/10/12 17:18:52 hohndel Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -66,7 +66,8 @@
 #define ATI_CHIP_264GTPRO 33    /* Mach64 */
 #define ATI_CHIP_264LTPRO 34    /* Mach64 */
 #define ATI_CHIP_264XL    35    /* Mach64 */
-#define ATI_CHIP_Mach64   36    /* Mach64 */
+#define ATI_CHIP_MOBILITY 36    /* Mach64 */
+#define ATI_CHIP_Mach64   37    /* Mach64 */
 extern CARD8 ATIChip;
 extern const char *ATIChipNames[];
 
@@ -77,7 +78,7 @@ extern const char *ATIChipNames[];
 #define ATI_FOUNDRY_NEC  1      /* NEC */
 #define ATI_FOUNDRY_KSC  2      /* KSC (?) */
 #define ATI_FOUNDRY_UMC  3      /* United Microelectronics Corporation */
-#define ATI_FOUNDRY_4    4
+#define ATI_FOUNDRY_TSMC 4      /* TSMC (?) */
 #define ATI_FOUNDRY_5    5
 #define ATI_FOUNDRY_6    6
 #define ATI_FOUNDRY_UMCA 7      /* UMC alternate */

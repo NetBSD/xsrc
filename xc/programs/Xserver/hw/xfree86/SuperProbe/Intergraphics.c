@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Intergraphics.c,v 1.1.2.2 1999/06/17 16:23:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Intergraphics.c,v 1.1.2.3 1999/11/26 15:22:50 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -55,7 +55,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_INTERGRAPHICS)
+		if (pcrp->_vendor == PCI_VENDOR_INTERGRAPHICS && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

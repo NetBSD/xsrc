@@ -10,10 +10,10 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 29 December 1998
+<Date>Last modified on: 20 August 1999
 <trans> 大石  勲 Isao Ohishi &lt;ohishi@hf.rim.or.jp&gt; &amp;
 The X Documentation Project
-<tdate>
+<tdate>Last modified on: 12 September 1999
 
 <toc>
 
@@ -53,18 +53,13 @@ XFree86 のソースは次の anonymous ftp から入手できます:
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
 <!--
-Binaries for NetBSD 1.2 are available from:
+Binaries for NetBSD 1.4 and later are available from:
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4"
+url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4">
 -->
-NetBSD 1.2 用のバイナリは以下の場所から入手できます:
-<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2"
-url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2">
-
-<!--
-Binaries for NetBSD 1.3 and later are available from:
--->
-NetBSD 1.3 以降用のバイナリは以下の場所から入手できます:
-<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.3"
-url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.3">
+NetBSD 1.4 以降用のバイナリは以下の場所から入手できます:
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4"
+url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4">
 
 <!--
 A list of mirror sites is provided by
@@ -81,11 +76,11 @@ Other NetBSD versions:
 
 <!--
 These binaries are not compatible with earlier NetBSD versions. If
-you're still running NetBSD 0.9, 1.0 or 1.1, you should think about
+you're still running NetBSD earlier than 1.4, you should think about
 upgrading to a newer version of NetBSD first.
 -->
 これらのバイナリは初期のバージョンの NetBSD とは互換性がありません。
-もし NetBSD 0.9, 1.0, 1.1 を使用しているのであれば、まず最初に新しい
+もしバージョン 1.4 より前の NetBSD を使用しているのであれば、まず最初に新しい
 バージョンの NetBSD を使用する事を検討してください。
 
 <!--
@@ -132,17 +127,23 @@ this file and we'll revise it.
 宛に送っていただければ、修正します。
 
 <!--
-<sect>New features in this release
+<sect>New OS-dependant features in XFree86 3.3.4
 -->
-<sect>本リリースの新しい機能
-
+<sect>XFree86 3.3.4 における、OS 依存の新機能
 <p>
+<itemize>
 <!--
-See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-non-OS dependent new features in XFree86 3.3.3.1.
+<item>The maximum number of open connections in the server has been
+raised to 128,
 -->
-XFree86 3.3.3.1 の OS に依存しない新機能に関しては、
-<htmlurl url="RELNOTES.html" name="リリースノート"> を参照してください。
+<item>サーバの最大接続数が 128 に増えました。
+<!--
+<item>support for the <bf/wsmouse/ mouse protocol included in  NetBSD 1.4 has
+been added. 
+-->
+<item>NetBSD 1.4 に含まれている <bf/wsmouse/ マウスプロトコルに対応しました。
+</itemize>
+
 
 <!--
 <sect>Installing the Binaries
@@ -263,6 +264,19 @@ Intellimouse, or MouseMan+ with a ``3D'' roller) are not supported yet.
 このドライバは普通の PS/2 マウスしかサポートしていません。最新のPS/2
 マウス(特に"3D"ローラー付の IntelliMouse や MouseMan+ 等)は一度に3バイト
 以上の通信が可能ですが、これらはまだサポートされていません。
+<p>
+<!--
+XFree86 3.3.4 and later also have support for the mouse driver included in
+the new <bf/wscons/ console driver introduced by NetBSD 1.4. Specify
+``<tt/wsmouse/'' as the protocol and ``<tt>/dev/wsmouse0</tt>'' as the 
+device in <tt>/etc/XF86Config</tt> if you're using NetBSD 1.4 with
+wscons. 
+-->
+XFree86 3.3.4 以降は NetBSD 1.4 で導入された新しい <bf/wscons/ コンソール
+ドライバに含まれているマウスドライバもサポートしています。NetBSD 1.4 
+で wscons を使っているならば、<tt>/etc/XF86Config</tt> ではマウスの
+プロトコルとして ``<tt/wsmouse/'' を指定し、デバイスとして
+``<tt>/dev/wsmouse0</tt>'' を指定してください。
 <p>
 <!--
 See <htmlurl url="mouse.html" name="README.mouse">  for general
@@ -439,6 +453,55 @@ the console entry in <tt>/etc/ttys</tt>:
 
 <p>
 <!--
+Under NetBSD 1.4 with the wscons console driver, you must enable a
+virtual console for the X server first. To do this follow these steps:
+-->
+NetBSD 1.4 で wscons コンソールドライバを使っている場合、最初に X サー
+バ用の仮想コンソールを有効にしなければなりません。これを行うには、以下
+の手順に従ってください:
+<itemize>
+<!--
+<item>Make sure the device file exists. If not, ``<tt>cd /dev ;
+./MAKEDEV wscons</tt>''. 
+-->
+<item>デバイスファイルが存在することを確かめます。もしなければ
+``<tt>cd /dev ; ./MAKEDEV wscons</tt>'' で作ります。
+<!--
+<item>Next, make sure your kernel wants to do wscons. (see <ref
+id="wscons" name="below">).
+-->
+<item>次に、カーネルが wscons を使う設定になっていることを確かめます
+(これは <ref id="wscons" name="後述します">)。
+<!--
+<item>Next, make sure ``<tt>wscons=YES</tt>'' in
+<tt>/etc/rc.conf</tt>.
+-->
+<item>次に、<tt>/etc/rc.conf</tt> において ``<tt>wscons=YES</tt>''
+が設定されていることを確かめます。
+<!--
+<item>Next, make sure <tt>/etc/wscons.conf</tt> exists. The relevant
+bits:
+<item>次に、<tt>/etc/wscons.conf</tt> が存在することを確かめます。関連
+するビットを以下に示します:
+-->
+<tscreen><verb>
+#screen	0	-	vt100
+screen	1	-	vt100
+screen	2	-	vt100
+screen	3	-	vt100
+screen	4	-	-
+screen	5	-	vt100
+</verb></tscreen>
+</itemize>
+<!--
+(Thanks to Mason Loring Bliss <tt>&lt;mason@acheron.middleboro.ma.us&gt;</tt> for
+this explanation)
+-->
+(この説明を書いてくださった
+Mason Loring Bliss さん(<tt>&lt;mason@acheron.middleboro.ma.us&gt;</tt>)
+に感謝します)
+<p>
+<!--
 Note that the binary distributions of XFree86 for NetBSD don't include
 support for the XDM-AUTHORIZATION-1 protocol. 
 -->
@@ -469,13 +532,14 @@ NetBSD で X のサポートを行うためには、次の行を <tt>/sys/arch/i386/conf</tt>
 
 <p>
 <!--
-The server supports the two standard NetBSD/i386
-console drivers: pccons and pcvt. They are detected at runtime and no
+The server supports the standard NetBSD/i386
+console drivers: pccons, pcvt and wscons (in pcvt compatibility
+mode). They are detected at runtime and no 
 configuration of the server itself is required.
 -->
-サーバは NetBSD/i386 で標準的な 2 つのコンソールドライバ(pccons と pcvt)
-をサポートしています。これらは実行時に検出されるので、サーバの設定など
-は必要ありません。
+このサーバは NetBSD/i386 で標準的な コンソールドライバである
+pccons, pcvt, wscons(pcvt 互換モード)をサポートしています。
+これらは実行時に検出されるので、サーバの設定などは必要ありません。
 
 <p>
 <!--
@@ -516,20 +580,28 @@ in your kernel config file, and rebuild and install your kernel.
 に変更してカーネルを再構築して新しいカーネルをインストールしてください。
 
 <p>
+<label id="wscons">
 <!--
 XFree86 will also run with the wscons console driver in
-NetBSD-current. For now, it uses the pcvt compatibility mode, so be
-sure to have the line:
+NetBSD 1.4. For now, it uses the pcvt compatibility mode, so be
+sure to have the lines:
 -->
-XFree86 は NetBSD-current の  wscons コンソールドライバでも動作します。
+XFree86 は NetBSD 1.4 の  wscons コンソールドライバでも動作します。
 現在のところは pcvt 互換モードを使っているので、wscons を使っている場
 合には、以下の行をカーネルの設定ファイルに必ず入れてください:
-<tscreen>
+<tscreen><verb>
 options         WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
-</tscreen>
+options         WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
+options         WSDISPLAY_COMPAT_USL		# VT handling
+options         WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
+</verb></tscreen>
 <!--
-in your kernel configuration file if you're using wscons. 
+in your kernel configuration file if you're using wscons. Refer to the 
+<em>wscons(4)</em> and <em>wsmouse(4)</em> manual pages for
+informations on how to configure wscons into the kernel.
 -->
+wscons をカーネルに組み込む方法については、<em>wscons(4)</em> と 
+<em>wsmouse(4)</em> のオンラインマニュアルを参照してください。
 
 <!--
 <sect1>Aperture Driver
@@ -1087,19 +1159,21 @@ and many others.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/NetBSD.sgml,v 1.1.2.2 1999/05/25 06:39:16 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/NetBSD.sgml,v 1.1.2.4 1999/12/28 12:13:54 hohndel Exp $
 
 
-<sect>日本語訳について<p>
-この日本語訳は
-大石勲 さん &lt;ohishi@hf.rim.or.jp&gt;
-の 3.3.2 版の翻訳をベースに
-X Japanese Documentation Project が更新を行ったものです(
-(更新: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
-name="&lt;fujiwara@linux.or.jp&gt;">
-)。
+
+
+
 
 $XConsortium: NetBSD.sgml /main/26 1996/10/28 05:43:20 kaleb $
 </verb>
 
+<sect>日本語訳について<p>
+この日本語訳(バージョン 3.3.3-3.3.6)は
+大石勲 さん &lt;ohishi@hf.rim.or.jp&gt;
+の 3.3.2 版の翻訳をベースに
+X Japanese Documentation Project が更新を行ったものです
+(更新: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">)。
 </article>

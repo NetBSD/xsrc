@@ -1,7 +1,7 @@
 
 /*
  *
- *	Acceleration for SiS530 SiS620.
+ *	Acceleration for SiS530 SiS620 SiS300.
  *	It is done in a separate file because the register formats are 
  *      very different from the previous chips.
  *
@@ -9,13 +9,18 @@
  *	
  *	Xavier Ducoin <x.ducoin@lectra.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel2.c,v 1.1.2.3 1999/07/23 13:23:00 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel2.c,v 1.1.2.6 1999/12/21 07:43:43 hohndel Exp $ */
 
 #if 0
 #define PDEBUG(arg)  arg 
 #else
 #define PDEBUG(arg) 
 #endif
+
+#define ENABLE_LINE		1
+#define FORCE_CLIPPING		0
+#define ENABLE_MULTISLINE	0
+#define ENABLE_TRAPEZOID	0
 
 #include "vga256.h"
 #include "xf86.h"
@@ -42,6 +47,11 @@ extern Bool sisUseXAAcolorExp ;
 void SISNAME(Sync)();
 void SISNAME(SetupForFillRectSolid)();
 void SISNAME(SubsequentFillRectSolid)();
+
+#if ENABLE_TRAPEZOID
+void SISNAME(SubsequentFillTrapezoidSolid)();
+#endif
+
 void SISNAME(SetupForScreenToScreenCopy)();
 void SISNAME(SubsequentScreenToScreenCopy)();
 
@@ -53,6 +63,24 @@ void SISNAME(SubsequentScanlineScreenToScreenColorExpand)();
 void SISNAME(SetupFor8x8PatternColorExpand)();
 void SISNAME(Subsequent8x8PatternColorExpand)();
 
+#if ENABLE_LINE
+void SISNAME(SetClippingRectangle)();
+void SISNAME(SubsequentTwoPointLine)();
+void SISNAME(SetupForDashedLine)();
+void SISNAME(SubsequentDashedTwoPointLine)();
+
+unsigned int sisLinePatternBuffer;
+int sisLinePatternMaxLength = 32;
+int sisPatternSize = 0;
+unsigned int sisPatternMask;
+int sisClippingSet = 0;
+unsigned int sisLineop;
+#endif
+
+#if ENABLE_MULTISLINE
+extern void xf86FillSpans();
+void SISNAME(FillSpansSolid)();
+#endif
 
 /*
  * The following function sets up the supported acceleration. Call it
@@ -95,15 +123,20 @@ void SISNAME(AccelInit)()
      */
        
 
-    /* Yeou: SiS 530/620 2D engine not support 24bpp */ 	
+    /* Yeou: SiS 530/620 and SiS 300 2D engine do not support 24bpp */ 	
 
-    if ((SISchipset == SIS530) && 
+    if (((SISchipset == SIS530) || (SISfamily == SIS300)) && 
        (vga256InfoRec.bitsPerPixel == 24)) return;
 
     xf86AccelInfoRec.Flags =  BACKGROUND_OPERATIONS | 
 	  (sisUseXAAcolorExp ? PIXMAP_CACHE : 0 ) |
 	    HARDWARE_PATTERN_PROGRAMMED_BITS | 
                 HARDWARE_PATTERN_PROGRAMMED_ORIGIN | 
+#if ENABLE_LINE
+		TWO_POINT_LINE_NOT_LAST |
+		HARDWARE_CLIP_LINE |
+		LINE_PATTERN_MSBFIRST_MSBJUSTIFIED |
+#endif
 		    HARDWARE_PATTERN_BIT_ORDER_MSBFIRST 
                /* | HARDWARE_PATTERN_MONO_TRANSPARENCY // does not work right now */ ;
 
@@ -118,13 +151,35 @@ void SISNAME(AccelInit)()
      * rectangle. First we set up the flags for the graphics operation.
      * It may include GXCOPY_ONLY, NO_PLANEMASK, and RGB_EQUAL.
      */
-    xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK ;
+    xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK;
 
     /*
      * Install the low-level functions for drawing solid filled rectangles.
      */
     xf86AccelInfoRec.SetupForFillRectSolid = SISNAME(SetupForFillRectSolid);
     xf86AccelInfoRec.SubsequentFillRectSolid = SISNAME(SubsequentFillRectSolid);
+
+#if ENABLE_TRAPEZOID
+    xf86AccelInfoRec.ErrorTermBits = 21;
+    xf86AccelInfoRec.SubsequentFillTrapezoidSolid
+	= SISNAME(SubsequentFillTrapezoidSolid);
+#endif
+
+#if ENABLE_LINE
+    xf86AccelInfoRec.LinePatternBuffer = &sisLinePatternBuffer;
+    xf86AccelInfoRec.LinePatternMaxLength = sisLinePatternMaxLength;
+    xf86AccelInfoRec.SetClippingRectangle = SISNAME(SetClippingRectangle);
+    xf86AccelInfoRec.SetupForDashedLine = SISNAME(SetupForDashedLine);
+    xf86AccelInfoRec.SubsequentDashedTwoPointLine =
+	SISNAME(SubsequentDashedTwoPointLine);
+    xf86AccelInfoRec.SubsequentTwoPointLine = SISNAME(SubsequentTwoPointLine);
+#endif
+
+#if ENABLE_MULTISLINE
+    xf86GCInfoRec.FillSpansSolidFlags = NO_PLANEMASK;
+    xf86GCInfoRec.FillSpansSolid = xf86FillSpans;
+    xf86AccelInfoRec.FillSpansSolid = SISNAME(FillSpansSolid);
+#endif
 
     /*
      * We also want to set up the ScreenToScreenCopy (BitBLT) primitive for
@@ -144,7 +199,7 @@ void SISNAME(AccelInit)()
         SISNAME(SubsequentScreenToScreenCopy);
 
     /* Color Expansion */
-    if (vga256InfoRec.bitsPerPixel != 24) { 
+    if (vga256InfoRec.bitsPerPixel != 24) {
 	/* the enhanced color expansion is not supported
 	 * by the engine in 16M-color graphic mode.
 	 */
@@ -288,8 +343,11 @@ void SISNAME(SetupForFillRectSolid)(color, rop, planemask)
     unsigned planemask;
 {
 
+    PDEBUG(ErrorF("SetupForFillRectSolid(%d, %d, %d)\n",color,rop,planemask));
+
     sisSETPATFGCOLOR(color);
     sisSETROP(sisPatALUConv[rop & 0xF]);
+    sisSETAGPBASE();
     sisSETPITCH(vga256InfoRec.displayWidth * vgaBytesPerPixel, 
 		vga256InfoRec.displayWidth * vgaBytesPerPixel);
     sisSETDSTHEIGHT(-1);	/* disable merge clipping */
@@ -305,13 +363,14 @@ void SISNAME(SubsequentFillRectSolid)(x, y, w, h)
 {
     int op;
 
+    PDEBUG(ErrorF("SubsequentFillRectSolid(%d, %d, %d, %d)\n", x, y, w, h));
+
     op = sisCMDBLT | sisTOP2BOTTOM | sisLEFT2RIGHT | sisROP;
 
     sisSETHEIGHTWIDTH(h, w);
     sisSETDSTXDSTY(x,y);
 
     sisSETCMD(op);
-
 }
 
 static int blitxdir, blitydir;
@@ -323,6 +382,9 @@ transparency_color)
     unsigned planemask;
     int transparency_color;
 {
+    PDEBUG(ErrorF("SetupForScreenToScreenCopy()\n"));
+
+    sisSETAGPBASE();
     sisSETPITCH(vga256InfoRec.displayWidth * vgaBytesPerPixel, 
 		vga256InfoRec.displayWidth * vgaBytesPerPixel);
     sisSETROP(sisALUConv[rop & 0xF]);
@@ -339,6 +401,7 @@ void SISNAME(SubsequentScreenToScreenCopy)(x1, y1, x2, y2, w, h)
 {
     int op ;
 
+    PDEBUG(ErrorF("SubsequentScreenToScreenCopy()\n"));
     /*
      * If the direction is "decreasing", the chip wants the addresses
      * to be at the other end, so we must be aware of that in our
@@ -403,6 +466,7 @@ void SISNAME(SubsequentScreenToScreenColorExpand)(srcx, srcy, x, y, w, h)
 
     PDEBUG(ErrorF("SISSubsequentScreenToScreenColorExpand()\n"));
     srcpitch =  ((w + 31)& ~31) /8 ;
+    sisSETAGPBASE();
     sisSETPITCH(srcpitch, destpitch);
     sisSETHEIGHTWIDTH(h, w);
     sisSETSRCXSRCY(srcx, srcy);
@@ -444,6 +508,7 @@ planemask)
     sisSETDSTHEIGHT(-1);	/* disable merge clipping */
     sisSETHEIGHTWIDTH(1, w);
     srcpitch =  ((w + 31)& ~31) /8 ;
+    sisSETAGPBASE();
     sisSETPITCH(srcpitch, pitch);    
 
     sisDstX = x;
@@ -485,6 +550,7 @@ void SISNAME(SetupFor8x8PatternColorExpand)(patternx, patterny, bg, fg,
     /* becareful with rop */
     sisSETROP(sisPatALUConv[rop & 0xF]);
 
+    sisSETAGPBASE();
     sisSETPITCH(1, dstpitch);
     sisSETSRCADDR(0);
     sisSETDSTADDR(0);
@@ -513,3 +579,297 @@ void SISNAME(Subsequent8x8PatternColorExpand)(patternx, patterny, x, y, w, h)
     sisSETCMD(sisColExp_op);
 }
 
+#if ENABLE_TRAPEZOID
+void SISNAME(SubsequentFillTrapezoidSolid)(
+	int ytop,
+	int height,
+	int left,
+	int dxL, int dyL,
+	int eL,
+	int right,
+	int dxR, int dyR,
+	int eR)
+{
+	int op,bL,bR, t;
+
+	/**/
+	if (dxL >= 0)
+		bL = left - 1;
+	else {
+		t = height * dxL / dyL;
+		if (t < 0)
+			bL = left + t - 1;
+		else
+			bL = left - t - 1;
+	}
+
+	if (dxR <= 0)
+		bR = right + 1;
+	else {
+		t = height * dxR / dyR;
+		if (t < 0)
+			bR = right - t + 1;
+		else
+			bR = right + t + 1;
+	}
+        sisSETCLIPTOP(bL, ytop-1);
+        sisSETCLIPBOTTOM(bR, ytop+height);
+	/**/
+#if 0
+	/***/
+	if ((dxL > 0) && (dxR < 0)) {
+		int l, r;
+		l = left + abs(height * dxL / dyL);
+		r = right - abs(height * dxR / dyR);
+		if (l > r) {
+			dxR = (l - right)*dyR/height;
+		}
+		if (dxR > dyR)
+			eR = dyR - dxR;
+		else
+			eR = dxR - dyR;
+	}
+	/***/
+#endif
+	sisSETTRAPEZOIDHY(height,ytop);
+	sisSETTRAPEZOIDX(left,right+1);
+
+	op = sisCMDTRAPEZOIDFILL | sisROP | sisCLIPENABL;
+
+	if (dyR >= 0)
+		op |= sisRIGHTYINC;
+	else
+		dyR = -dyR;
+
+	if (dxR >= 0)
+		op |= sisRIGHTXINC;
+	else
+		dxR = -dxR;
+
+	if (dxR >= dyR) {
+		op |= sisRIGHTXMAJOR;
+		eR = (dxR - eR)*dyR/dxR + dyR;
+		while (eR >= 0)
+			eR -= dxR;
+			
+	} 
+
+	sisSETRIGHTDELTA(dxR,dyR);
+
+	if (dyL >= 0)
+		op |= sisLEFTYINC;
+	else
+		dyL = -dyL;
+
+	if (dxL >= 0)
+		op |= sisLEFTXINC;
+	else
+		dxL = -dxL;
+
+
+	if (dxL >= dyL) {
+		op |= sisLEFTXMAJOR;
+		eL = (dxL - eL)*dyL/dxL + dyL;
+		while (eL >= 0)
+			eL -= dxL;
+	}
+
+	sisSETLEFTDELTA(dxL, dyL);
+
+	sisSETLEFTERR(eL);
+	sisSETRIGHTERR(eR);
+
+	sisSETCMD(op);
+}
+#endif
+
+#if ENABLE_LINE
+
+void SISNAME(SubsequentTwoPointLine)(x1, y1, x2, y2, bias)
+    int x1, y1, x2, y2, bias;
+{
+	int op;
+
+	sisSETSRCXSRCY(y1, x1);
+	sisSETDSTXDSTY(y2, x2);
+	sisSETLINEPERIODCOUNT(0, 1);
+	sisSETLINESTYLE1(0x80000000);
+
+	op = sisCMDLINE | sisLINESTYLEENABLE | sisROP;
+
+	if (bias & 0x100)
+		op |= sisLASTPIXELNOTDRAW;
+	if (sisClippingSet)
+		op |= sisCLIPENABL;
+	sisSETCMD(op);
+	sisClippingSet = 0;
+}
+
+void SISNAME(SetupForDashedLine)(
+	int fg,
+        int bg,
+        int rop,
+        unsigned planemask,
+        int size)
+{
+	int 	isTransparent = ( bg == -1 );
+	int 	op,i;
+
+	sisSETAGPBASE();
+	sisSETDSTADDR(0);
+	sisSETPITCH(vga256InfoRec.displayWidth * vgaBytesPerPixel, 
+		vga256InfoRec.displayWidth * vgaBytesPerPixel);
+	sisSETDSTHEIGHT(-1);	/* disable merge clipping */
+	sisSETLINEPERIODCOUNT(size-1, 1);
+	sisPatternSize = size;
+	sisPatternMask = 0;
+	for (i=0;i<size;i++) {
+		sisPatternMask >>= 1;
+		sisPatternMask |= 0x80000000;
+	}
+	sisSETPATFGCOLOR(fg);
+	sisSETPATBGCOLOR(bg);
+
+	sisLineop = sisCMDLINE | sisLINESTYLEENABLE | sisPatALUConv[rop & 0xF];
+	if (isTransparent) {
+		sisLineop |= sisTRANSPARENT;
+	} 
+}
+
+void SISNAME(SubsequentDashedTwoPointLine)(
+        int x1,
+        int y1,
+        int x2,
+        int y2,
+        int bias,
+        int offset)
+{
+	unsigned int op;
+	unsigned int pat;
+
+	sisSETSRCXSRCY(y1, x1);
+	sisSETDSTXDSTY(y2, x2);
+	pat = (sisLinePatternBuffer << offset) 
+		| (sisLinePatternBuffer >> (sisPatternSize - offset));
+	pat &= sisPatternMask;
+	sisSETLINESTYLE1(pat);
+
+	op = sisLineop;
+	if (bias & 0x100)
+		op |= sisLASTPIXELNOTDRAW; /* last pixel does NOT drawn */
+#if FORCE_CLIPPING
+	if (!sisClippingSet) {
+		int xb1,yb1,xb2,yb2;
+		if (x1 > x2) {
+			xb1 = x2 -1;
+			xb2 = x1;
+		} else {
+			xb1 = x1 -1;
+			xb2 = x2;
+		}
+
+		if (y1 > y2) {
+			yb1 = y2 -1;
+			yb2 = y1;
+		} else {
+			yb1 = y1 -1;
+			yb2 = y2;
+		}
+		SISNAME(SetClippingRectangle)(xb1, yb1, xb2, yb2);
+	}
+#endif
+	if (sisClippingSet)
+		op |= sisCLIPENABL;
+	sisSETCMD(op);
+	sisClippingSet = 0;
+}
+
+void SISNAME(SetClippingRectangle)(
+	int x1,
+	int y1,
+	int x2,
+	int y2)
+{
+
+	sisSETCLIPTOP(x1, y1);
+	sisSETCLIPBOTTOM(x2+1, y2+1);
+	sisClippingSet = 1;
+}
+
+#endif
+
+#if ENABLE_MULTISLINE
+void SISNAME(FillSpansSolid)(
+        int             nInit,
+        DDXPointPtr     pptInit,
+        int             *pwidthInit,
+        int             fSorted,
+        int             fg,
+        int             rop)
+{
+	int y,next_y,line2base,maxline,i,total,p,n,op;
+
+	if (!nInit)
+		return;
+
+	if (!fSorted) {
+		SISNAME(SetupForFillRectSolid)(fg, rop, 0);
+		for (i=0;i<nInit;i++) {
+			SISNAME(SubsequentFillRectSolid)(
+				pptInit[i].x,pptInit[i].y,pwidthInit[i],1);
+		}
+	}
+
+	switch (xf86AccelInfoRec.BitsPerPixel) {
+	case 8:  maxline = 48; line2base = 0x8340;
+		break;
+	case 16: maxline = 32; line2base = 0x8380;
+		break;
+	case 32:
+	default:
+		 maxline = 32; line2base = 0x8400;
+		break;
+	}
+
+	/* setup */
+	sisSETAGPBASE();
+	sisSETDSTADDR(0);
+	sisSETPITCH(0,
+		vga256InfoRec.displayWidth * vgaBytesPerPixel);
+	sisSETDSTHEIGHT(-1);	/* disable merge clipping */
+	sisSETPATFGCOLOR(fg);
+	op = sisCMDMULTISLINE | sisTOP2BOTTOM | sisPatALUConv[rop & 0xF];
+	total = nInit;
+	p = 0;
+	n = 0;
+	next_y = y = pptInit[p].y;
+	while (total) {
+		if (n == 0)
+			sisSETMULTISLINE0(pptInit[p].x,
+				pptInit[p].x + pwidthInit[p]);
+		else if (n == 1)
+			sisSETMULTISLINE1(pptInit[p].x,
+				pptInit[p].x + pwidthInit[p]);
+		else
+			sisSETMULTISLINEN(line2base,n,pptInit[p].x,
+				pptInit[p].x + pwidthInit[p]);
+		total--;p++;next_y++;n++;
+		if (!total || (n >= maxline)) {
+			sisSETLINECNT(y,n);
+			sisSETCMD(op);
+			next_y = y = pptInit[p].y;
+			n = 0;
+			continue;
+		}
+
+		if (pptInit[p].y != next_y) {
+			sisSETLINECNT(y,n);
+			sisSETCMD(op);
+			next_y = y = pptInit[p].y;
+			n = 0;
+		}
+	}
+	if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
+		xf86AccelInfoRec.Sync();
+}
+#endif

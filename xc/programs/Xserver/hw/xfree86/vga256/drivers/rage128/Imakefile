@@ -1,0 +1,30 @@
+XCOMM 
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rage128/Imakefile,v 1.1.2.2 1999/10/12 18:33:27 hohndel Exp $
+XCOMM 
+#include <Server.tmpl>
+
+SRCS = rage128.c rage128_acl.c
+
+OBJS = rage128.o rage128_acl.o
+
+DEFINES = -DPSZ=8
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
+           -I../../vga -I../../../xaa -I$(FONTINCSRC) \
+           -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(r128_drv,$(OBJS))
+
+DependTarget()
+

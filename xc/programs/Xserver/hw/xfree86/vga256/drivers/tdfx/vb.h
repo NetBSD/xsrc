@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb.h,v 1.1.2.5 1999/07/13 07:09:52 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb.h,v 1.1.2.6 1999/10/21 12:08:07 hohndel Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -90,11 +90,9 @@ typedef struct {
   Bool			Transparent;
   int			LinePatternBuffer;
   int			PciCnt;
-  int			BltPrevX;
   int			BltPrevY;
-  int			BltPrevW;
-  int			BltPrevH;
   Bool			ErrorSet;
+  Bool			vgaInitDone;
 } VBRec, *VBPtr;
 
 extern VBRec VBinfo;

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-
+/* $XFree86: xc/programs/lbxproxy/di/atomcache.c,v 1.1.1.1.2.2 1999/12/03 10:12:44 hohndel Exp $ */
 /*
  * atom cache for LBX
  *
@@ -127,14 +127,20 @@ ResizeHashTable()
 static Bool
 ResizeReverseMap()
 {
+    AtomListPtr *oldMap = reverseMap;
+    int  oldMapSize = reverseMapSize;
+
     if (reverseMapSize == 0)
 	reverseMapSize = 1000;
     else
 	reverseMapSize *= 2;
     reverseMap = (AtomListPtr *) xrealloc(reverseMap, reverseMapSize * sizeof(AtomListPtr));
-    bzero((char *)reverseMap, (reverseMapSize * sizeof(AtomListPtr)));
-    if (!reverseMap)
+    if (!reverseMap) {
+    	reverseMap = oldMap;
+    	reverseMapSize = oldMapSize;
 	return FALSE;
+    }
+    bzero((char *)reverseMap, (reverseMapSize * sizeof(AtomListPtr)));
     return TRUE;
 }
 
@@ -180,8 +186,6 @@ LbxMakeAtom(string, len, atom, makeit)
     strncpy(a->name, string, len);
     a->name[len] = '\0';
     a->atom = atom;
-    if (atom > lastAtom)
-	lastAtom = atom;
     a->hash = hash;
     if (hashUsed >= hashSize / 2) {
 	ResizeHashTable();
@@ -195,8 +199,6 @@ LbxMakeAtom(string, len, atom, makeit)
 	    } while (hashTable[h]);
 	}
     }
-    hashTable[h] = a;
-    hashUsed++;
     a->flags = 0;
     for (r = 0; r < atom_control_count; r++) {
 	if (a->len == atom_control[r].len &&
@@ -205,8 +207,16 @@ LbxMakeAtom(string, len, atom, makeit)
 	    break;
 	}
     }
-    if (reverseMapSize <= a->atom)
-	ResizeReverseMap();
+    while (reverseMapSize <= a->atom) {
+	if (!ResizeReverseMap()) {
+		xfree(a);
+		return None;
+	}
+    }
+    if (atom > lastAtom)
+	lastAtom = atom;
+    hashTable[h] = a;
+    hashUsed++;
     reverseMap[a->atom] = a;
     return a->atom;
 }

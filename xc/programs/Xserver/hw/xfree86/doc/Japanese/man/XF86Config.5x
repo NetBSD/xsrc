@@ -1,8 +1,8 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.1 1999/05/25 06:10:59 hohndel Exp $
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.1 1999/05/25 06:10:59 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.2 1999/11/26 15:23:31 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86Config.5x,v 1.1.2.2 1999/11/26 15:23:31 hohndel Exp $
 .\" $xjman: XF86Config.5x v1.1 1998/11/29 11:56:00 take_s Exp $
 .\" 
-.\" Copyright (c) 1998 The X Japanese Documentation Project.
+.\" Copyright (c) 1998, 1999 The X Japanese Documentation Project.
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
 .\" copy of this software and associated documentation files (the
@@ -32,8 +32,9 @@
 .\"
 .\" Translated by Kazuyuki Okamoto <ikko-@pacific.rim.or.jp>
 .\" Updated for XFree86 3.3.3 by Taketoshi Sano <xlj06203@nifty.ne.jp>
+.\" Updated for XFree86 3.3.4, 3.3.5 by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>
 .\"
-.TH XF86Config 4/5 "Version 3.3.3"  "XFree86"
+.TH XF86Config 4/5 "Version 3.3.5"  "XFree86"
 .SH 名前
 .\"0 XF86Config - Configuration File for XFree86
 XF86Config - XFree86 用構成情報ファイル
@@ -182,6 +183,7 @@ RGB カラーデータベース用のパス名称を設定する。
 .B xf86Wacom.so
 .B xf86Summa.so
 .B xf86AceCad.so
+.B xf86Calcomp.so
 .B xf86Dial.so
 .fi
 
@@ -403,7 +405,6 @@ XkbOptions   ""
 
 [訳注：日本語 106 キーボードの場合は、上の XkbModel を "jp106" に
 しておくと良いんでしたっけ ? 誰か教えて下さい。 ]
-
 .RE
 .PP
 .\"0 This is the preferred method of specifying the keyboard configuration,
@@ -1458,6 +1459,8 @@ EarlySC の標準設定を変更する。
 \fBDialBox\fP (SGI ボタンボックス)
 .\"0 \fBAceCad\fP (an AceCad tablet)
 \fBAceCad\fP (AceCad タブレット)
+.\"0 \fBDrawingBoard\fP (a Calcomp DrawingBoard tablet)
+\fBDrawingBoard\fP (Calcomp DrawingBoard タブレット)
 .fi
 
 .\"0 The \fBJoystick\fP subsection supports the following entries:
@@ -1484,7 +1487,7 @@ EarlySC の標準設定を変更する。
 .\"0 sets the maximum X value reported by the device driver.
 デバイスドライバーから渡される X 座標の最大値を指定する。
 .TP 4
-.B MininimumXPosition \fIvalue\fP
+.B MinimumXPosition \fIvalue\fP
 .\"0 sets the minimum X value reported by the device driver.
 デバイスドライバーから渡される X 座標の最小値を指定する。
 .TP 4
@@ -1624,6 +1627,28 @@ Wacom タブレットは複数同時に使用することができる。複数の装置をそれぞれ別の
 右下角の位置は TopX, TopY, BottomX, BottomY によって表現される作業領域
 (アクティブゾーン) が、縦横比を実際の画面と一致させることの可能な最大面積を
 占めるように調整される。
+.TP 4
+.B DebugLevel \fInumber \fP
+.\"0 sets the level of debugging info reported.
+報告するデバッグ情報のレベルを設定する。
+.TP 4
+.B BaudRate \f19200\fP or \f9600\fP (default)
+.\"0 changes the serial link speed. This option is only available for
+.\"0 wacom V models (Intuos).
+シリアル接続の速度を変更する。このオプションが有効なのは
+Wacom V モデル(Intuos)のみである。
+.TP 4
+.B Serial \fInumber\fP
+.\"0 sets the serial number associated with the physical device. This allows
+.\"0 to have multiple devices of the same type (i.e. multiple pens). This
+.\"0 option is only available on wacom V devices (Intuos). To see which
+.\"0 serial number belongs to a device, you have to set the DebugLevel to 6 and
+.\"0 whatch the output of the X server.
+物理デバイスに対応するシリアル番号を設定する。このオプションを使うと
+同じ種類のデバイス(つまり複数のペン)を複数個接続することができる。
+このオプションが有効なのは Wacom V デバイス(Intuos)のみである。
+シリアル番号とデバイスの対応を調べるには、DebugLevel を 6 に設定して
+X サーバの出力を見なければならない。
 .RE
 
 .\"0 The \fBElographics\fP subsection support the following entries:
@@ -1703,7 +1728,7 @@ Wacom タブレットは複数同時に使用することができる。複数の装置をそれぞれ別の
 .\"0 enables the sharing of the core pointer. When this feature is enabled, the
 .\"0 device will take control of the core pointer (and thus will emit core events)
 .\"0 and at the same time will be able, when asked so, to report extended events.
-.\"0You can use the last available integer feedback to control this feature. When
+.\"0 You can use the last available integer feedback to control this feature. When
 .\"0 the value of the feedback is zero, the feature is disabled. The feature is
 .\"0 enabled for any other value.
 コアポインタを共有できるようにする。この機能が有効にされた場合、
@@ -1851,8 +1876,8 @@ FINGER であり、 MicrotouchStylus 副節では SYLUS である。
 最新の整数フィードバックを使用してこの機能を制御することが可能である。
 フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
 どんな数値であっても、この機能が有効にされる。
-
 .RE
+
 .\"0 The \fBDialBox\fP subsection support the following entries:
 \fBDialBox\fP 副節は以下の項目をサポートする：
 .RS 8
@@ -1886,8 +1911,98 @@ FINGER であり、 MicrotouchStylus 副節では SYLUS である。
 最新の整数フィードバックを使用してこの機能を制御することが可能である。
 フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
 どんな数値であっても、この機能が有効にされる。
-
 .RE
+
+.\"0 The \fBAceCad\fP subsection support the following entries:
+\fBAceCad\fP 副節は以下の項目をサポートする：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents the device driver.
+デバイスドライバーを表現するスペシャルファイルへのパスを指定する。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+.\"0 sets the mode of the device.
+装置のモードを指定する。
+.TP 4
+.B Cursor \fIStylus|Puck\fP
+.\"0 sets the cursor type, 3 button stylus or 4 button puck.
+カーソル種類 (3 ボタンのペンまたは 4 ボタンパック) を指定する。
+.TP 4
+.B Increment \fIvalue\fP
+.\"0 sets the maximum change in coordinates before new report.
+位置情報を出力する座標変化量の下限 (閾値) を指定する。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B Model \fIacecadIII|flair\fP
+.\"0 Select either tablet model according to your hardware.
+ハードウェアにしたがっていずれかのタブレットを選択すること。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.RE
+
+.\"0 The \fBDrawingBoard\fP subsection support the following entries:
+\fBDrawingBoard\fP 副節は以下の項目をサポートする：
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+.\"0 sets the path to the special file which represents the device driver.
+デバイスドライバーを表現するスペシャルファイルへのパスを指定する。
+.TP 4
+.B DeviceName \fI"name"\fP
+.\"0 sets the name of the X device.
+拡張装置 (X device) の名称を指定する。
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+.\"0 sets the mode of the device.
+装置のモードを指定する。
+.TP 4
+.B Cursor \fIStylus|Puck\fP
+.\"0 sets the cursor type, stylus or 4 button puck.
+カーソル種類 (ペンまたは 4 ボタンパック) を指定する。
+.TP 4
+.B Increment \fIvalue\fP
+.\"0 sets the maximum change in coordinates before new report.
+位置情報を出力する座標変化量の下限 (閾値) を指定する。
+.TP 4
+.B HistorySize \fInumber\fP
+.\"0 sets the motion history size. By default the value is zero.
+移動履歴の保存量を指定する。標準ではゼロ (まったく保存されない) である。
+.TP 4
+.B AlwaysCore
+.\"0 enables the sharing of the core pointer. When this feature is enabled, the
+.\"0 device will take control of the core pointer (and thus will emit core events)
+.\"0 and at the same time will be able, when asked so, to report extended events.
+.\"0 You can use the last available integer feedback to control this feature. When
+.\"0 the value of the feedback is zero, the feature is disabled. The feature is
+.\"0 enabled for any other value.
+コアポインタを共有できるようにする。この機能が有効にされた場合、
+装置はコアポインタを制御するようになる (つまりコアイベントを発生する)。
+また同時に、もしそう指定されれば、拡張イベントも発生させることができる。
+最新の整数フィードバックを使用してこの機能を制御することが可能である。
+フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
+どんな数値であっても、この機能が有効にされる。
+.RE
+
 .\"0 The \fBMouse\fP subsection support the same entries as the
 .\"0 standard \fBPointer\fP section, plus the following:
 \fBMouse\fP 副節は標準の \fBPointer\fP 節と同じ項目に加えて、
@@ -1911,7 +2026,6 @@ FINGER であり、 MicrotouchStylus 副節では SYLUS である。
 最新の整数フィードバックを使用してこの機能を制御することが可能である。
 フィードバック数値がゼロの時、この機能は無効にされる。ゼロ以外であれば
 どんな数値であっても、この機能が有効にされる。
-
 .RE
 .PP
 .\"0 For an example of an XF86Config file, see the file installed as

@@ -1,0 +1,62 @@
+XCOMM *******************************************************************************
+XCOMM 
+XCOMM 				   Copyright (c) 1999 by Silicon Motion, Inc.
+XCOMM 							   All Rights Reserved
+XCOMM 
+XCOMM  Permission to use, copy, modify, distribute, and sell this software and its
+XCOMM  documentation for any purpose is hereby granted without fee, provided that the
+XCOMM  above copyright notice appear in all copies and that both that copyright
+XCOMM  notice and this permission notice appear in supporting documentation, and that
+XCOMM  the name of Silicon Motion, Inc. not be used in advertising or publicity
+XCOMM  pertaining to distribution of the software without specific, written prior
+XCOMM  permission.  Silicon Motion, Inc. and its suppliers make no representations
+XCOMM  about the suitability of this software for any purpose.  It is provided "as
+XCOMM  is" without express or implied warranty.
+XCOMM 
+XCOMM  SILICON MOTION, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+XCOMM  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+XCOMM  SHALL SILICON MOTION, INC. AND/OR ITS SUPPLIERS BE LIABLE FOR ANY SPECIAL,
+XCOMM  INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+XCOMM  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+XCOMM  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+XCOMM  PERFORMANCE OF THIS SOFTWARE.
+XCOMM ******************************************************************************/
+XCOMM 
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/smi/Imakefile,v 1.1.2.2 1999/12/11 17:43:19 hohndel Exp $
+XCOMM 
+
+#include <Server.tmpl>
+
+SRCS = smi_driver.c smi_misc.c smi_accel.c smi_cursor.c
+
+OBJS = smi_driver.o smi_misc.o smi_accel.o smi_cursor.o
+
+DEFINES = -DPSZ=8
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(smi_drv, $(OBJS))
+
+InstallLinkKitNonExecFile(smi_driver.c,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(smi_accel.c,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(smi_misc.c,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(smi_cursor.c,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(regsmi.h,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(mmio.h,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(smi_driver.h,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(smi_rop.h,$(LINKKITDIR)/drivers/vga256/smi)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/smi)
+
+DependTarget()

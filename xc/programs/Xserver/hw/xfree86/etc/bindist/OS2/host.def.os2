@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2,v 1.1.2.2 1999/07/13 07:09:50 hohndel Exp $
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2,v 1.1.2.3 1999/12/20 12:55:52 hohndel Exp $
  * hv's own host.def file for building XFree86/OS2
  */
 
@@ -18,9 +18,9 @@
 
 /* which servers to build */
 #define XF86VGA16Server         YES
-#define XF86VGA16DualServer	NO
+#define XF86VGA16DualServer	YES
 #define XF86MonoServer          YES
-#define XF86MonoDualServer	NO
+#define XF86MonoDualServer	YES
 #define XF86S3Server            YES
 #define XF86S3VServer           YES
 #define XF86I8514Server         YES
@@ -38,13 +38,24 @@
 #define XF86I128Server		YES
 #define XF86SVGAServer		YES
 
+/* don't build these: not functional */
+#define XVirtualFramebufferServer	NO
+#define XnestServer             NO
+#define XprtServer		NO
+
 /* don't build XF86Setup */
 #define BuildXF86Setup          NO
 
 /* The following are the difference between big and small servers */
-#define BuildXIE		NO
-#define BuildXIElib		NO
-#define BuildPexExt		NO
+/* undefine this first, as xfree86.cf creates them */
+#undef BuildXIE
+#undef BuildXIElib
+#undef BuildPexExt
+
+/* define the stuff here */
+#define BuildXIE		YES
+#define BuildXIElib		YES
+#define BuildPexExt		YES
 
 /* Stuff from SuSE for the special servers now in 3.3.3
  * LEAVE DISABLED!
@@ -147,3 +158,6 @@
 #define XprtServer		NO
 
 #define BuildXF86RushLibrary	NO
+
+/* build normal libs */
+#define ForceNormalLib	YES

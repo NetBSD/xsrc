@@ -4,7 +4,7 @@
 
 <title>README for XFree86 on LynxOS
 <author>Thomas Mueller
-<date>Last modified on: 30 May 1999
+<date>Last modified on: 15 November 1999
 <toc>
 
 <sect>What and Where is XFree86?<p>
@@ -23,7 +23,7 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries of XFree86 for LynxOS AT are available from:
+Binaries of XFree86 for LynxOS x86 are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
@@ -52,14 +52,14 @@ this file and we'll revise it.
 
 <sect>Installing the Binaries
 <p>
-Please refer to section "Installing the XFree86 3.3.4 Release" of the 
+Please refer to section "Installing the XFree86 3.3.6 Release" of the 
 <htmlurl url="RELNOTES.html" name="Release Notes"> for detailed 
 installation instructions.
 
 If you plan to install XF86Setup you'll have to install
-<tt/X333prog/ as well since XF86Setup checks for the existence of
+<tt/X336prog/ as well since XF86Setup checks for the existence of
 a certain file name pattern which is satisfied only if you install
-the library files from <tt/X333prog/.
+the library files from <tt/X336prog/.
 
 It may be necessary to increase the process stack limit in order to
 run XFree86 on your system. Edit <tt>/etc/startab</tt> and reboot your
@@ -142,13 +142,18 @@ server, you will have to increase the value of the SMEMS parameter in
   manipulation of the RTS line and therefore the support for
   PnP mice has been disabled for LynxOS.
 
+  Starting with LynxOS x86 2.4.0 LynxOS includes a PS/2 mouse driver.
+  This driver does protocol conversion and requires to specify the 
+  mouse type as <em>Microsoft</em> regardless of real mouse type.
+  In some cases you won't have all mouse buttons supported.
+
+  The PS/2 mouse driver included in LynxOS x86 3.0.1 patch #XXX
+  does not perform protocol conversion and requires to set the
+  mouse type to <em>PS/2</em>. This driver will also support the
+  extended PS/2 mouse types.
+
 <sect1>Bus mouse drivers<p>
 
-  Starting with LynxOS AT 2.4.0 LynxOS includes a PS/2 mouse driver.
-  Currently this driver is not fully supported by XFree86 (you'll
-  probably have to specify the mouse type as <em>Microsoft</em>
-  regardless of real mouse type and in some cases you won't have
-  all mouse buttons supported).
   <tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> contains a LynxOS port 
   of the Linux bus mouse drivers. To install the drivers
   unpack the shar archive
@@ -162,7 +167,7 @@ server, you will have to increase the value of the SMEMS parameter in
   configuration notes.
 
   The XFree86 PS/2 mouse driver works also with MetroLink X 2.3.3.1 as
-  shipped with LynxOS AT 2.4.0 unless you have the LynxOS patch
+  shipped with LynxOS x86 2.4.0 unless you have the LynxOS patch
   000055-00 installed.
 
 <sect1> ATC console driver and VT switching<p>
@@ -252,7 +257,7 @@ server, you will have to increase the value of the SMEMS parameter in
 
 <sect>Using XFree86 with Motif<p>
 
-  The Motif libraries shipped with LynxOS AT 2.3.0 and 2.4.0 can be
+  The Motif libraries shipped with LynxOS x86 2.3.0 and 2.4.0 can be
   used with the XFree86 libraries. Follow the steps outlined below after
   you have installed XFree86 and LynxOS Motif on your system.
 
@@ -277,10 +282,10 @@ server, you will have to increase the value of the SMEMS parameter in
       cp /usr/lib/X11/config/Motif.* /usr/X11R6/lib/X11/config
   </verb></tscreen>
 
-<sect1>Motif library patch for LynxOS AT 2.3.0<p>
+<sect1>Motif library patch for LynxOS x86 2.3.0<p>
 
   The XFree86 libraries are compiled with the -mposix compiler option
-  while the Motif libraries shipped with LynxOS AT 2.3.0 are not. This
+  while the Motif libraries shipped with LynxOS x86 2.3.0 are not. This
   incompatibility will cause Motif <tt>XmFileSelection</tt> widgets to be linked 
   with the wrong (i.e. POSIX) directory routines. To circumvent this 
   problem apply the following patch to the library:
@@ -340,12 +345,12 @@ XFree86 port. A complete binary installation along with manual pages
 will require approximately 90-100 MBytes of disk space. To compile
 the system you will need at least 230 MBytes of free disk space.
 
-<sect1>Changes to system environment (LynxOS AT)<p>
+<sect1>Changes to system environment (LynxOS x86)<p>
 Before compiling the XFree86 distribution you will have to make a
 few little adjustments to your system:
 
   <descrip>
-  <tag>LynxOS AT 2.5</tag>
+  <tag>LynxOS x86 2.5</tag>
   <itemize>
   <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
   <tscreen><verb>
@@ -378,7 +383,7 @@ few little adjustments to your system:
   </verb></tscreen>
 
   </itemize>
-  <tag>LynxOS AT 2.4</tag>
+  <tag>LynxOS x86 2.4</tag>
   <itemize>
   <item>Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 
     2.4.0 you must execute the shell script <tt>/CYGNUS.bash</tt> to 
@@ -400,10 +405,10 @@ few little adjustments to your system:
 	# chmod 755 /lib/cpp
   </verb></tscreen>
   </itemize>
-  <tag>LynxOS AT 2.3</tag>
+  <tag>LynxOS x86 2.3</tag>
   This has actually not been tested, but the steps for described
   for 2.4 should apply to 2.3 as well.
-  <tag>LynxOS AT 2.2.1</tag>
+  <tag>LynxOS x86 2.2.1</tag>
   This has actually never been tested, be prepared that the build will
   fail somewhere!
   <itemize>
@@ -483,7 +488,7 @@ few little adjustments to your system:
   Refer to section <ref id="installman" name="Installing XFree86 manual pages"> 
   for manual page installation.
 
-  On LynxOS AT 2.5.0 you may encounter problems with <tt>make</tt> in
+  On LynxOS x86 2.5.0 you may encounter problems with <tt>make</tt> in
   deeply nested subdirectories (eg core dumps, hangups). In this case
   update to GNU make version 3.75 or higher.
 
@@ -541,7 +546,7 @@ few little adjustments to your system:
   <tt>lynx.cf</tt> but it has never been tested (reports are welcome).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.10 1999/06/02 07:51:49 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.11 1999/12/11 19:00:43 hohndel Exp $
 
 
 

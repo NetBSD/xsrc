@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_cursor.c,v 1.1.2.1 1999/07/30 11:21:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_cursor.c,v 1.1.2.2 1999/12/01 12:49:33 hohndel Exp $ */
 
 /*
  *
@@ -77,7 +77,7 @@ extern xf86InfoRec xf86Info;
 /* For byte swapping, use the XAA array */
 extern unsigned char byte_reversed[256];
 extern S3VPRIV s3vPriv;
-extern pointer s3vMmioMem;
+extern pointer s3savMmioMem;
 extern int vgaCRIndex, vgaCRReg;
 
 static int s3vCursGeneration = -1;
@@ -110,9 +110,16 @@ S3SAVCursorInit(pm, pScr)
     * buffer.  Savage4 requires 4k alignment for the cursor image.
     */
 
-#define S3_IN32(off) (*(unsigned int*)(((char*)s3vMmioMem)+(off)))
+#define S3_IN32(off) (*(unsigned int*)(((char*)s3savMmioMem)+(off)))
 
-   s3vCursorVRAMMemSegment = (S3_IN32(0x48C14) & 0x3FFF) * 2 - 4;
+   if( s3vPriv.chip < S3_SAVAGE2000) {
+      s3vCursorVRAMMemSegment = (S3_IN32(0x48C14) & 0x3FFF) * 2 - 4;
+   } else {
+      s3vCursorVRAMMemSegment = ((S3_IN32(0x48C18) >> 4) & 0x3FFF) * 2 - 4;
+   }
+
+   if( !s3vCursorVRAMMemSegment )
+      s3vCursorVRAMMemSegment = vga256InfoRec.videoRam - 1;
 
    return TRUE;
 }

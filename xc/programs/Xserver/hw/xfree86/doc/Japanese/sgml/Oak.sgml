@@ -7,10 +7,10 @@
 <title>Information for Oak Technologies Inc. Chipset Users
 -->
 <title>Oak Technologies Inc. 製チップセットユーザ向けの情報
-<author>Jorge F. Delgado Mendoza (<it>ernar@dit.upm.es</it>)
-<date>27 February 1998
+<author>Jorge F. Delgado Mendoza (<it>delgadomendoza.j@pg.com</it>)
+<date>17 August 1999
 <trans>The X Japanese Documentation Project
-<tdate>15 January 1999
+<tdate>12 September 1999
 
 <!-- Table of contents -->
 <toc>
@@ -89,17 +89,22 @@ BIOS の最大解像度は 1024x768x256(ノンインタレース)と 1280x1024x256(イ
         These are new, PCI chipsets by Oak Tech. Inc. Support is not
         included for them, as they are very rare and I haven't had
         the chance to look at one of these boards. 
-        We have been unable to locate either 107's or 111's (also
-        called "Spitfire 64111"). If anybody has such a board and
-        can donate it to XFree86, I would be more than glad to add
+        We have been unable to locate 107's. If anybody has such a board and
+        can donate it to XFree86, we would be more than glad to add
         support for them. 
 -->
 Oak Tech. の新しい PCI チップセットです。このチップセットへの対応は行
 われていません。というのも、このチップセットは非常に珍しく、筆者も実物
-を見たことがないからです。現在のところ、107 搭載ボードも 111 搭載ボー
-ド("Spitfire 64111" とも呼ばれます)も見つけることはできていません。こ
-のようなボードを持っている方がいらっしゃれば、ぜひ XFree86 に寄付して
-ください。喜んでこのチップセットのサポートを追加します。
+を見たことがないからです。現在のところ、107 搭載ボードを見つけることは
+できていません。このようなボードを持っている方がいらっしゃれば、ぜひ 
+XFree86 に寄付してください。喜んでこのチップセットのサポートを追加しま
+す。
+	<p>
+<!--
+	An OTI111 is now available and we are working on support for it.
+-->
+現在は OTI111 が入手できるようになっており、我々もこれをサポートするた
+めの作業を行っています。
 </descrip>
 
 <!--
@@ -377,7 +382,7 @@ OTI087 では 76Hz, 1024x768 モード時に最高のクロック(78MHz)を使っても
 います(完全にはテストしていません)。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Oak.sgml,v 1.1.2.1 1999/05/25 06:39:18 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Oak.sgml,v 1.1.2.2 1999/11/26 15:23:46 hohndel Exp $
 
 
 
@@ -393,6 +398,6 @@ name="&lt;fujiwara@linux.or.jp&gt;">,
 校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
 name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
 問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
-プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+プロジェクト社にあり、日本語訳に伴う権利は X Japanese Documentation
 Project にあります。
 </article>

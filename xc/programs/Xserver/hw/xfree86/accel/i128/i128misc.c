@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.5 1999/01/28 18:20:54 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.6 2000/01/08 02:06:34 robin Exp $ */
 
 #include "servermd.h"
 
@@ -176,6 +176,8 @@ i128EnterLeaveVT(enter, screen_idx)
       if (!xf86Resetting) {
 	 ScrnInfoPtr pScr = XF86SCRNINFO(pScreen);
 
+         xf86EnableIOPorts(i128InfoRec.scrnIndex);
+
          i128Init(i128InfoRec.modes);
          i128InitEnvironment();
          AlreadyInited = TRUE;
@@ -216,6 +218,8 @@ i128EnterLeaveVT(enter, screen_idx)
 	  i128CleanUp();
 	  AlreadyInited = FALSE;
       }
+
+      xf86DisableIOPorts(i128InfoRec.scrnIndex);
    }
 }
 

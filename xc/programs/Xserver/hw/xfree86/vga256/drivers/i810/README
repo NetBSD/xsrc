@@ -1,0 +1,84 @@
+		      Information for i810 Users
+		      i810 Driver Version 1.0.0
+
+
+1. Supported Hardware
+
+   * Intel 810 motherboards
+
+
+2. Features
+
+   * Full support for 8, 15, 16 and 24 bit per pixel depths.
+   * Hardware cursor support to reduce sprite flicker.
+   * Hardware accelerated 2D drawing engine support for 8, 15, 16 and
+     24 bit per pixel depths.
+   * Support for high resolution video modes up to 1600x1200.
+   * Fully programmable clock supported.
+   * Robust text mode restore for VT switching.
+
+
+3. Technical Notes
+
+   * 32 bpp is unaccelerated on this chipset, and unsupported by this driver.
+   * Interlace modes cannot be supported.
+   * Normal use requires agpgart.o module, distributed with the server.
+
+
+4. Reported Working Video Cards
+
+   * Intel evaluation hardware
+
+
+5. Configuration
+
+   The driver auto-detects all device information necessary to
+   initialize the card.  The only lines you need in the "Device"
+   section of your XF86Config file are:
+
+       Section "Device"
+           Identifier "i810"
+       EndSection
+
+   or let xf86config or XF86Setup do this for you. [NOTE - config
+   programs not tested]
+
+   However, if you have problems with auto-detection, you can specify:
+
+       DacSpeed - in MHz
+       MemBase  - physical address of the linear framebuffer
+       IOBase   - physical address of the memory mapped IO registers
+
+
+   In order to use most resolutions, it is necessary to install the
+   'agpgart.o' module which accompanies this server.  You will probably
+   have to compile the module yourself (see the notes in the module).
+
+   Note: the i810 X server detects whether your motherboard has
+	display cache video memory.  This memory is has reduced bandwidth
+	compared to 'normal' system memory, and isn't used by the server.  The
+	main function of this memory is for ancillary buffers (eg. z buffer)
+	in a forthcoming 3d capable server.
+
+
+6. Driver Options
+
+   "no_accel"  - software rendering only
+
+
+7. Known Limitations
+
+   - No 3d support in this release.
+
+8. Author
+
+   Keith Whitwell <keithw@precisioninsight.com>
+
+   Precision Insight, Inc.
+   Cedar Park, TX
+   USA
+
+   http://www.precisioninsight.com
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/i810/README,v 1.1.2.2 1999/11/18 19:06:15 hohndel Exp $

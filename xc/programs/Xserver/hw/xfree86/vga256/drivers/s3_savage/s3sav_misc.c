@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_misc.c,v 1.1.2.1 1999/07/30 11:21:35 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_misc.c,v 1.1.2.3 1999/12/20 14:36:28 hohndel Exp $ */
 
 /*
  *
@@ -68,7 +68,10 @@ S3SAVGetPCIInfo()
 
    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
       while (pcrp = vgaPCIInfo->AllCards[i]) {
-         if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
+         if (pcrp->_vendor == PCI_S3_VENDOR_ID &&
+	     (pcrp->_base_class == PCI_CLASS_DISPLAY) &&
+	     (pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA) &&
+	     pcrp->_command != 0) {
 	    int ChipId = pcrp->_device;
 	    if (vga256InfoRec.chipID) {
 	      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%04x instead of 0x%04x\n",
@@ -87,13 +90,16 @@ S3SAVGetPCIInfo()
 	    case PCI_SAVAGE4:
 	       info.ChipType = S3_SAVAGE4;
 	       break;
+	    case PCI_SAVAGE2000:
+	       info.ChipType = S3_SAVAGE2000;
+	       break;
 	    default:
 	       info.ChipType = S3_UNKNOWN;
 	       info.DevID = pcrp->_device;
 	       break;
 	    }
 	    info.ChipRev = pcrp->_rev_id;
-	    if (ChipId == PCI_SAVAGE4) {
+	    if( (ChipId == PCI_SAVAGE4) || (ChipId == PCI_SAVAGE2000) ) {
 	       info.MemBase = pcrp->_base0 & 0xFFFFFFF0;
 	       info.MemBase1 = pcrp->_base1 & 0xFFFFFFF0;
 	    }

@@ -1,6 +1,6 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86_SVGA.1x,v 1.1.2.1 1999/05/25 06:11:01 hohndel Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XF86_SVGA.1x,v 1.1.2.2 1999/11/26 15:23:33 hohndel Exp $
 .\"
-.\" Copyright (c) 1998 The X Japanese Documentation Project.
+.\" Copyright (c) 1998, 1999 The X Japanese Documentation Project.
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
 .\" copy of this software and associated documentation files (the
@@ -30,12 +30,16 @@
 .\"
 .\" Translated Wed Nov 18 23:01:22 JST 1998
 .\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>
+.\" Updated Sat Aug 21 11:36:14 JST 1999
+.\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>, for XFree86 3.3.4
+.\" Updated Sun Sep 12 00:39:34 JST 1999
+.\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>, for XFree86 3.3.5
 .\"
-.TH XF86_SVGA 1 "Version 3.3.3"  "XFree86"
+.TH XF86_SVGA 1 "Version 3.3.5"  "XFree86"
 .SH 名前
 .\"0 XF86_SVGA - SVGA X Window System servers for UNIX on 
 .\"0 x86 platforms
-XF86_SVGA - x86 プラットフォームの UNIX で動作する SVGA X サーバ
+XF86_SVGA - x86 プラットフォームの UNIX で動作する SVGA 用 X サーバ
 .SH 書式
 .B XF86_SVGA
 [:displaynumber] [ option ] ...
@@ -112,7 +116,10 @@ GVGA
 Trident:
 TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000
 TVGA9000i, TVGA9100B, TVGA9200CXr, TGUI9320LCD, TGUI9400CXi, TGUI9420,
-TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680
+TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680,
+PROVIDIA9682, PROVIDIA9685, CYBER9382, CYBER9385, CYBER9385-1,
+CYBER9388, CYBER9397, CYBER9520, CYBER9525, 3DIMAGE975, 3DIMAGE975 AGP,
+3DIMAGE985 AGP, BLADE3D, CYBERBLADE
 .TP 4
 NCR:
 77C22, 77C22E
@@ -158,10 +165,15 @@ Alliance:
 AP6422
 .TP 4
 Matrox:
-MGA2064W
+MGA1064SG, MGA1164SG, MGA2064W, MGA2164W, MGA2164 AGP,
+MGAG100, MGAG200, MGAG400
 .TP 4
 NVidia:
 NV1, STG2000
+.TP 4
+Intel and Real3D:
+.\"0 I740 (AGP and PCI)
+I740 (AGP および PCI)
 .RE
 .PP
 .\"0 Accelerated support is included for most of the Cirrus chipsets, the Western
@@ -175,12 +187,16 @@ Technologies 製, ARK Logic 製チップセット、ET6000 および ET4000/W32p
 .\"0 implemented in a separate server (see
 .\"0 \fIXF86_W32(1)\fP). Users of boards based on ATI's Mach8, Mach32 and Mach64
 .\"0 chipsets should refer to the \fIXF86_Mach8(1)\fP, \fIXF86_Mach32(1)\fP and
-.\"0 \fIXF86_Mach64(1)\fP manual pages, respectively.
+.\"0 \fIXF86_Mach64(1)\fP manual pages, respectively. Accelerated support is
+also included for i740 (AGP and PCI) based cards in 8bpp, 16bpp and 24bpp
+color depths (32bpp is unaccelerated).
 ET4000/W32 (i および p)と ET6000 用の 8bpp でのアクセラレーションのサ
 ポートは、別のサーバで実装されている(\fIXF86_W32(1)\fP 参照)。ATI 製
 Mach8, Mach32, Mach64 ベースのボードのユーザは、オンラインマニュアルの
 \fIXF86_Mach8(1)\fP, \fIXF86_Mach32(1)\fP ,\fIXF86_Mach64(1)\fP をそれ
-ぞれ参照すること。
+ぞれ参照すること。i740 ベースのカード(AGP および PCI)は、色の深さ 8bpp,
+16bpp, 24bpp でアクセラレーションに対応している(32bpp ではアクセラレーション
+は効かない)。
 .SH オプション
 .\"0 In addition to the normal server options described in the \fIXserver(1)\fP
 .\"0 manual page, \fIXF86_SVGA\fP accepts some more command line switches,
@@ -295,7 +311,12 @@ mga2064w
 NVidia:
 nv1, stg2000
 .TP 4
-Generic:
+.\"0 Intel and Real3D:
+Intel および Real3D:
+i740, i740_pci
+.TP 4
+.\"0 Generic:
+汎用:
 generic
 .RE
 .TP 8
@@ -408,13 +429,14 @@ ClockProg を使わない)全てのチップセットで使用する。このオプションを有
 異なるレベルの操作でのタイムアウト値の設定方法については、オンラインマ
 ニュアルの \fIXF86Config(4/5)\fP を参照すること。
 .sp
-.\"0 \fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA and Tseng chipsets.  This option
-.\"0 disables the accelerated features for the clgd542X, clgd543x, clgd5446,
-.\"0 clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA and Tseng chipsets.
-\fBnoaccel\fP - Cirrus, WD, ARK, C&T, MGA, Tseng 製のチップセットで使
-用する。このオプションは、clgd542X, clgd543x, clgd5446, clgd546X,
-wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng チップセットのアク
-セラレーション機能を無効にする。
+.\"0 \fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA, Tseng and i740 chipsets.
+.\"0 This option disables the accelerated features for the clgd542X, clgd543x,
+.\"0 clgd5446, clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng
+.\"0 and i740 chipsets.
+\fBnoaccel\fP - Cirrus, WD, ARK, C&T, MGA, Tseng, i740 チップセットで
+使用する。このオプションは、clgd542X, clgd543x, clgd5446, clgd546X,
+wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng, i740 チップセット
+のアクセラレーション機能を無効にする。
 .sp
 .\"0 \fBno_pixmap_cache\fP - for any chip that uses XAA for acceleration,
 .\"0 which includes ARK, Cirrus, C&T, MGA, SiS, Trident 9440/9680, and Tseng
@@ -482,6 +504,16 @@ oti087, ARK で使用する。
 に DRAM のタイミングをセットする。通常はこのオプションを指定する必要は
 ない。
 .sp
+.\"0 \fBsgram\fP - for i740 chipsets. This option forces the use of SGRAM
+.\"0 timing informaiton.
+\fBsgram\fP - i740 チップセット用である。このオプションを指定すると 
+SGRAM のタイミング情報が使われる。
+.sp
+.\"0 \fBsdram\fP - for i740 chipsets. This option forces the use of SDRAM
+.\"0 timing informaiton.
+\fBsdram\fP - i740 チップセット用である。このオプションを指定すると 
+SDRAM のタイミング情報が使われる。
+.sp
 .\"0 \fBno_2mb_banksel\fP - for Cirrus chipsets.  This option is required for
 .\"0 Cirrus cards with 2MB of videoram which is in the form of 512kx8 DRAMs
 .\"0 (4 chips) rather than 256kx4 DRAMs (16 chips).
@@ -542,14 +574,14 @@ suspend_hack, use_18bit_bus\fP - LCD 画面で使うための Chips &
 Technologies 固有のオプション。これらのオプションの詳細については、
 <XRoot>/lib/X11/doc/README.chips を参照すること。
 .sp
-.\"0 \fBhw_cursor\fP - for ARK or ET6000 chipsets.  This option enables the
+.\"0 \fBhw_cursor\fP - for ARK, ET6000 and i740 chipsets.  This option enables the
 .\"0 hardware cursor.
-\fBhw_cursor\fP - ARK, ET6000 チップセットで用いる。このオプションはハー
-ドウェアカーソルを有効にする。
+\fBhw_cursor\fP - ARK, ET6000, i740 チップセットで用いる。このオプションは
+ハードウェアカーソルを有効にする。
 .sp
-.\"0 \fBsw_cursor\fP - for Cirrus and C&T chipsets.  This option disables the
+.\"0 \fBsw_cursor\fP - for Cirrus, C&T and i740 chipsets.  This option disables the
 .\"0 hardware cursor.
-\fBsw_cursor\fP - Cirrus と C&T のチップセットで用いる。このオプション
+\fBsw_cursor\fP - Cirrus, C&T, i740 チップセットで用いる。このオプション
 はハードウェアカーソルを無効にする。
 .sp
 .\"0 \fBsync_on_green\fP - for Chips & Technologies 65550's and 65554's
@@ -699,6 +731,10 @@ Video7 ドライバに関する追加の文書
 <XRoot>/lib/X11/doc/README.WstDig
 .\"0 Extra documentation for the WD/PVGA driver
 WD/PVGA ドライバに関する追加の文書
+.TP 30
+<XRoot>/lib/X11/doc/README.i740
+.\"0 Extra documentation for the i740 driver
+i740 ドライバに関する追加の文書
 .LP
 .\"0 Note: <XRoot> refers to the root of the X11 install tree.
 注: <XRoot> は X11 のインストールツリーのルートディレクトリを指す。

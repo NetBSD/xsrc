@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.0 1995/11/02 00:27:07 dawes Exp $
+ * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.0.4.1 1999/12/02 14:27:26 hohndel Exp $
  *
  * Copyright (c) 1995 David E. Wexelblat.  All rights reserved
  *
@@ -37,89 +37,149 @@
  * specificies the thread library on the link line.
  */
 
-#include <thread.h>
-#include <synch.h>
+/*
+ * Modifications by Carlos A M dos Santos, XFree86 Project, November 1999.
+ *
+ * Explanation from <X11/Xos_r.h>:
+ * The structure below is complicated, mostly because P1003.1c (the
+ * IEEE POSIX Threads spec) went through lots of drafts, and some
+ * vendors shipped systems based on draft API that were changed later.
+ * Unfortunately POSIX did not provide a feature-test macro for
+ * distinguishing each of the drafts.
+ */
 
+#ifdef CTHREADS
+#include <cthreads.h>
+typedef cthread_t xthread_t;
+#define xthread_self cthread_self
+#pragma weak cthread_self = _Xthr_self_stub_
+#define xmutex_init mutex_init
+#pragma weak mutex_init = _Xmutex_init_stub_
+#pragma weak mutex_clear = _Xmutex_destroy_stub_
+#pragma weak mutex_lock = _Xmutex_lock_stub_
+#pragma weak mutex_unlock = _Xmutex_unlock_stub_
+#pragma weak condition_init = _Xcond_init_stub_
+#pragma weak condition_clear = _Xcond_destroy_stub_
+#pragma weak condition_wait = _Xcond_wait_stub_
+#pragma weak condition_signal = _Xcond_signal_stub_
+#pragma weak condition_broadcast = _Xcond_signal_stub_
+#else /* !CTHREADS */
+#if defined(SVR4) && !defined(__sgi)
+#include <thread.h>
+typedef thread_t xthread_t;
 #pragma weak thr_self = _Xthr_self_stub_
-thread_t 
+#pragma weak mutex_init = _Xmutex_init_stub_
+#pragma weak mutex_destroy = _Xmutex_destroy_stub_
+#pragma weak mutex_lock = _Xmutex_lock_stub_
+#pragma weak mutex_unlock = _Xmutex_unlock_stub_
+#pragma weak cond_init = _Xcond_init_stub_
+#pragma weak cond_destroy = _Xcond_destroy_stub_
+#pragma weak cond_wait = _Xcond_wait_stub_
+#pragma weak cond_signal = _Xcond_signal_stub_
+#pragma weak cond_broadcast = _Xcond_signal_stub_
+#else /* !SVR4 */
+#ifdef WIN32
+    /*
+     * Don't know what to do here. Is there something do be done at all?
+     */
+#else /* !WIN32 */
+#ifdef USE_TIS_SUPPORT
+#include <tis.h>
+typedef pthread_t xthread_t;
+#pragma weak tis_self = _Xthr_self_stub_
+#pragma weak tis_mutex_init = _Xmutex_init_stub_
+#pragma weak tis_mutex_destroy = _Xmutex_destroy_stub_
+#pragma weak tis_mutex_lock = _Xmutex_lock_stub_
+#pragma weak tis_mutex_unlock = _Xmutex_unlock_stub_
+#pragma weak tis_cond_init = _Xcond_init_stub_
+#pragma weak tis_cond_destroy = _Xcond_destroy_stub_
+#pragma weak tis_cond_wait = _Xcond_wait_stub_
+#pragma weak tis_cond_signal = _Xcond_signal_stub_
+#pragma weak tis_cond_broadcast = _Xcond_signal_stub_
+#else
+#include <pthread.h>
+typedef pthread_t xthread_t;
+#pragma weak pthread_self = _Xthr_self_stub_
+#pragma weak pthread_mutex_init = _Xmutex_init_stub_
+#pragma weak pthread_mutex_destroy = _Xmutex_destroy_stub_
+#pragma weak pthread_mutex_lock = _Xmutex_lock_stub_
+#pragma weak pthread_mutex_unlock = _Xmutex_unlock_stub_
+#pragma weak pthread_cond_init = _Xcond_init_stub_
+#pragma weak pthread_cond_destroy = _Xcond_destroy_stub_
+#pragma weak pthread_cond_wait = _Xcond_wait_stub_
+#pragma weak pthread_cond_signal = _Xcond_signal_stub_
+#pragma weak pthread_cond_broadcast = _Xcond_broadcast_stub_
+#if defined(_DECTHREADS_) || defined(linux)
+#pragma weak pthread_equal = _Xthr_equal_stub_	/* See Xthreads.h! */
+int
+_Xthr_equal_stub_()
+{
+    return(1);
+}
+#endif /* _DECTHREADS_ || linux */
+#endif /* USE_TIS_SUPPORT */
+#endif /* WIN32 */
+#endif /* SVR4 */
+#endif /* CTHREADS */
+
+xthread_t 
 _Xthr_self_stub_()
 {
-    return((thread_t)0);
+    static xthread_t _X_no_thread_id;
+
+    return(_X_no_thread_id);	/* defined by <X11/Xthreads.h> */
 }
 
-#pragma weak mutex_init = _Xmutex_init_stub_
 int 
-_Xmutex_init_stub_(m, t, a)
-    mutex_t *m;
-    int t;
-    void *a;
+_Xmutex_init_stub_()
 {
     return(0);
 }
 
-#pragma weak mutex_destroy = _Xmutex_destroy_stub_
 int
-_Xmutex_destroy_stub_(m)
-    mutex_t *m;
+_Xmutex_destroy_stub_()
 {
     return(0);
 }
 
-#pragma weak mutex_lock = _Xmutex_lock_stub_
 int
-_Xmutex_lock_stub_(m)
-    mutex_t *m;
+_Xmutex_lock_stub_()
 {
     return(0);
 }
 
-#pragma weak mutex_unlock = _Xmutex_unlock_stub_
 int
-_Xmutex_unlock_stub_(m)
-    mutex_t *m;
+_Xmutex_unlock_stub_()
 {
     return(0);
 }
 
-#pragma weak cond_init = _Xcond_init_stub_
 int 
-_Xcond_init_stub_(c, t, a)
-    cond_t *c;
-    int t;
-    void *a;
+_Xcond_init_stub_()
 {
     return(0);
 }
 
-#pragma weak cond_destroy = _Xcond_destroy_stub_
 int
-_Xcond_destroy_stub_(c)
-    cond_t *c;
+_Xcond_destroy_stub_()
 {
     return(0);
 }
 
-#pragma weak cond_wait = _Xcond_wait_stub_
 int
-_Xcond_wait_stub_(c,m)
-    cond_t *c;
-    mutex_t *m;
+_Xcond_wait_stub_()
 {
     return(0);
 }
 
-#pragma weak cond_signal = _Xcond_signal_stub_
 int
-_Xcond_signal_stub_(c)
-    cond_t *c;
+_Xcond_signal_stub_()
 {
     return(0);
 }
 
-#pragma weak cond_broadcast = _Xcond_broadcast_stub_
 int
-_Xcond_broadcast_stub_(c)
-    cond_t *c;
+_Xcond_broadcast_stub_()
 {
     return(0);
 }

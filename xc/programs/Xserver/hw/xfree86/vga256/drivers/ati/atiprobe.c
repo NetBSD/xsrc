@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.6 1999/07/05 09:07:35 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.8 1999/10/13 14:32:32 hohndel Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -390,6 +390,7 @@ ATIProbe(void)
     CARD8 BIOS[BIOS_SIZE];
 #   define BIOSByte(_n)     (*((CARD8  *)(BIOS + (_n))))
 #   define BIOSWord(_n)     (*((CARD16 *)(BIOS + (_n))))
+#   define BIOSLong(_n)     (*((CARD32 *)(BIOS + (_n))))
     CARD32 IO_Value = 0, IO_Value2;
     unsigned int BIOSSize = 0;
     unsigned int Signature = No_Signature;
@@ -400,7 +401,7 @@ ATIProbe(void)
     CARD16 ClockDac;
     static const int videoRamSizes[] =
         {0, 256, 512, 1024, 2*1024, 4*1024, 6*1024, 8*1024, 12*1024, 16*1024, 0};
-    int Index;
+    int Index, Index2;
     unsigned int ROMTable = 0, ClockTable = 0, FrequencyTable = 0;
     unsigned int LCDTable = 0, LCDPanelInfo = 0;
     const DACRec *DAC;
@@ -552,6 +553,27 @@ Skip8514Probe:
                 if (PCIDevice->_vendor != PCI_VENDOR_ATI)
                     continue;
                 if (PCIDevice->_device == PCI_CHIP_MACH32)
+                    continue;
+                /*
+                 * The legacy servers provide Rage 128 support elsewhere.
+                 */
+                if (PCIDevice->_device == PCI_CHIP_RAGE128RE)
+                    continue;
+                if (PCIDevice->_device == PCI_CHIP_RAGE128RF)
+                    continue;
+                if (PCIDevice->_device == PCI_CHIP_RAGE128RK)
+                    continue;
+                if (PCIDevice->_device == PCI_CHIP_RAGE128RL)
+                    continue;
+                /* Rage 128 PRO */
+                if ((PCIDevice->_device >= PCI_CHIP_RAGE128PA) &&
+                    (PCIDevice->_device <= PCI_CHIP_RAGE128PX))
+                    continue;
+                if ((PCIDevice->_device >= PCI_CHIP_RAGE128SE) &&
+                    (PCIDevice->_device <= PCI_CHIP_RAGE128SG))
+                    continue;
+                if ((PCIDevice->_device >= PCI_CHIP_RAGE128SK) &&
+                    (PCIDevice->_device <= PCI_CHIP_RAGE128SM))
                     continue;
                 if ((PCIDevice->_command &
                      (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE)) !=
@@ -716,7 +738,8 @@ Skip8514Probe:
                         ATILCDPanelID = -1;
                 }
                 else if ((ATIChip == ATI_CHIP_264LTPRO) ||
-                         (ATIChip == ATI_CHIP_264XL))
+                         (ATIChip == ATI_CHIP_264XL) ||
+                         (ATIChip == ATI_CHIP_MOBILITY))
                 {
                     ATILCDPanelID = GetBits(IO_Value2, CFG_PANEL_ID);
 
@@ -730,6 +753,18 @@ Skip8514Probe:
                      * BIOS initialization.
                      */
                     IO_Value = inl(ATIIOPortLCD_INDEX);
+                    IO_Value2 = ATIGetLTProLCDReg(LCD_HORZ_STRETCHING);
+#if 0
+                    if (IO_Value2 & AUTO_HORZ_RATIO)
+#endif
+                        ATILCDHorizontal =
+                            (GetBits(IO_Value2, HORZ_PANEL_SIZE) + 1) << 3;
+                    IO_Value2 = ATIGetLTProLCDReg(LCD_EXT_VERT_STRETCH);
+#if 0
+                    if (IO_Value2 & AUTO_VERT_RATIO)
+#endif
+                        ATILCDVertical =
+                            GetBits(IO_Value2, VERT_PANEL_SIZE) + 1;
                     IO_Value2 = ATIGetLTProLCDReg(LCD_GEN_CNTL);
                     outl(ATIIOPortLCD_INDEX, IO_Value);
                     if (!(IO_Value2 & LCD_ON))
@@ -1075,20 +1110,77 @@ Skip8514Probe:
         if (ATILCDPanelID >= 0)
         {
             LCDTable = BIOSWord(0x78U);
-            if (((LCDTable + 0x1AU) > BIOSSize) ||
-                (BIOSByte(LCDTable + 5) != 0x1AU))
+            if ((LCDTable + BIOSByte(LCDTable + 5)) > BIOSSize)
                 LCDTable = 0;
 
             if (LCDTable > 0)
             {
                 LCDPanelInfo = BIOSWord(LCDTable + 0x0AU);
                 if (((LCDPanelInfo + 0x1DU) > BIOSSize) ||
-                    (BIOSByte(LCDPanelInfo) != ATILCDPanelID))
+                    ((BIOSByte(LCDPanelInfo) != ATILCDPanelID) &&
+                     (ATILCDPanelID || (BIOSByte(LCDPanelInfo) > 0x1Fu) ||
+                      (ATIChip <= ATI_CHIP_264LTPRO))))
                     LCDPanelInfo = 0;
+            }
+
+            if (!LCDPanelInfo)
+            {
+                /*
+                 * Scan BIOS for panel info table.
+                 */
+                for (Index = 0;  Index < (int)(BIOSSize - 0x1DU);  Index++)
+                {
+                    /* Look for panel ID ... */
+                    if ((BIOSByte(Index) != ATILCDPanelID) &&
+                        (ATILCDPanelID || (BIOSByte(Index) > 0x1FU) ||
+                         (ATIChip <= ATI_CHIP_264LTPRO)))
+                        continue;
+
+                    /* ... followed by 24-byte panel model name ... */
+                    for (Index2 = 0;  Index2 < 24;  Index2++)
+                        if ((CARD8)(BIOSByte(Index + Index2 + 1) - 0x20U) >
+                            0x5FU)
+                        {
+                            Index += Index2;
+                            goto NextBIOSByte;
+                        }
+
+                    /* ... verify panel width ... */
+                    if ((ATILCDHorizontal > 8) &&
+                        (ATILCDHorizontal <=
+                         (int)(MaxBits(HORZ_PANEL_SIZE) << 3)) &&
+                        (ATILCDHorizontal != BIOSWord(Index + 0x19U)))
+                        continue;
+
+                    /* ... and verify panel height */
+                    if ((ATILCDVertical > 1) &&
+                        (ATILCDVertical <= (int)MaxBits(VERT_PANEL_SIZE)) &&
+                        (ATILCDVertical != BIOSWord(Index + 0x1BU)))
+                        continue;
+
+                    if (LCDPanelInfo)
+                    {
+                        /*
+                         * More than one possibility, but don't care if all
+                         * tables describe panels of the same size.
+                         */
+                        if (BIOSLong(LCDPanelInfo + 0x19U) ==
+                            BIOSLong(Index + 0x19U))
+                            continue;
+
+                        LCDPanelInfo = 0;
+                        break;
+                    }
+
+                    LCDPanelInfo = Index;
+
+            NextBIOSByte:  ;
+                }
             }
 
             if (LCDPanelInfo > 0)
             {
+                ATILCDPanelID = BIOSByte(LCDPanelInfo);
                 ATILCDHorizontal = BIOSWord(LCDPanelInfo + 0x19U);
                 ATILCDVertical = BIOSWord(LCDPanelInfo + 0x1BU);
 
@@ -1545,7 +1637,7 @@ Skip8514Probe:
         if (ATIChip >= ATI_CHIP_264CT)
         {
             if (xf86Verbose || (ATIMemoryType == MEM_264_NONE) ||
-                (ATIMemoryType >= MEM_264_TYPE_6))
+                (ATIMemoryType >= MEM_264_TYPE_7))
                 ATIPrintMemoryType(ATIMemoryTypeNames_264xT[ATIMemoryType]);
         }
         else if (ATIChip == ATI_CHIP_88800CX)

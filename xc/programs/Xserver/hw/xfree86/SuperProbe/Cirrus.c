@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.13.2.1 1998/10/25 14:15:08 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.13.2.2 1999/11/26 15:22:49 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -110,7 +110,7 @@ int Class;
 	{
 	    i = 0;
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_CIRRUS)
+		if (pcrp->_vendor == PCI_VENDOR_CIRRUS && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

@@ -1745,11 +1745,11 @@ bugs and extensively testing this server before its inclusion in XFree86 3.2
 インターネット上の多くの皆さんにも感謝致します。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/chips.sgml,v 1.1.2.3 1999/06/02 07:51:46 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/chips.sgml,v 1.1.2.4 1999/11/26 15:23:56 hohndel Exp $
 </verb>
 
-<code>
-</code>
+<hrule>
+
 このファイルは
 岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
@@ -1767,7 +1767,5 @@ xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.12 1998/11/07 13:52:
 原文の著作権は XFree86 プロジェクト社にあります。
 この和訳の著作権は xjman プロジェクトが所有しますが、
 文章内容についての不具合は私 (佐野) まで電子メールで送って下さい。
-
-<code>
-</code>
+<hrule>
 </article>

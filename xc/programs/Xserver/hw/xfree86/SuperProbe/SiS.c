@@ -26,7 +26,7 @@
  * added SiS 6326/530/620 Dirk Hohndel <hohndel@XFree86.Org>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.2.4.3 1999/06/17 16:24:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.2.4.4 1999/11/26 15:22:51 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -54,7 +54,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_SIS)
+		if (pcrp->_vendor == PCI_VENDOR_SIS && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

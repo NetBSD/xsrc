@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.1.2.2 1999/06/17 16:24:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.1.2.3 1999/11/26 15:22:52 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -55,7 +55,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_SIGMADESIGNS)
+		if (pcrp->_vendor == PCI_VENDOR_SIGMADESIGNS && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

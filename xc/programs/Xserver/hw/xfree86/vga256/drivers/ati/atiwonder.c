@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiwonder.c,v 1.1.2.1 1998/02/01 16:42:09 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiwonder.c,v 1.1.2.2 1999/10/12 17:18:58 hohndel Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -136,7 +136,7 @@ ATIVGAWonderInit(DisplayModePtr mode)
 #           define Display_Enable_Skew_Threshold 4500
 
             /* Set a reasonable default Display Enable Skew */
-            mode->HSkew = mode->CrtcHSkew = 
+            mode->HSkew = mode->CrtcHSkew =
                 ATIDivide(vga256InfoRec.clock[mode->Clock],
                     Display_Enable_Skew_Threshold, 0, 0);
         }

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atividmem.c,v 1.1.2.1 1998/02/01 16:42:08 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atividmem.c,v 1.1.2.2 1999/10/12 17:18:57 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -73,8 +73,8 @@ const char *ATIMemoryTypeNames_264xT[] =
     "DRAM",
     "EDO DRAM",
     "Pseudo-EDO DRAM",
-    "SDRAM",
-    "SGRAM",
-    "Unknown video memory type",
+    "SDRAM (1:1)",
+    "SGRAM (1:1)",
+    "SGRAM (2:1) 32-bit",
     "Unknown video memory type"
 };

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.19 1999/07/19 11:46:36 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.20 1999/10/12 17:18:42 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -241,6 +241,8 @@ unsigned ioCRTC_GEN_CNTL;
 unsigned ioLCD_GEN_CTRL;
 unsigned ioLCD_INDEX;
 unsigned ioLCD_DATA;
+unsigned ioHORZ_STRETCHING;
+unsigned ioVERT_STRETCHING;
 unsigned ATIExtReg;
 
 /*
@@ -371,11 +373,16 @@ SymTabRec mach64ChipTable[] = {
     { MACH64_LB_ID, "Mach64 Rage LT Pro" },
     { MACH64_LI_ID, "Mach64 Rage LT Pro" },
     { MACH64_LP_ID, "Mach64 Rage LT Pro" },
+    { MACH64_GL_ID, "Mach64 Rage XL or XC" },
     { MACH64_GM_ID, "Mach64 Rage XL or XC" },
     { MACH64_GN_ID, "Mach64 Rage XL or XC" },
     { MACH64_GO_ID, "Mach64 Rage XL or XC" },
     { MACH64_GR_ID, "Mach64 Rage XL or XC" },
     { MACH64_GS_ID, "Mach64 Rage XL or XC" },
+    { MACH64_LM_ID, "Mach64 Rage Mobility" },
+    { MACH64_LN_ID, "Mach64 Rage Mobility" },
+    { MACH64_LR_ID, "Mach64 Rage Mobility" },
+    { MACH64_LS_ID, "Mach64 Rage Mobility" },
     { -1, "" },
 };
 
@@ -525,11 +532,16 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    case MACH64_LB_ID:
    case MACH64_LI_ID:
    case MACH64_LP_ID:
+   case MACH64_GL_ID:
    case MACH64_GM_ID:
    case MACH64_GN_ID:
    case MACH64_GO_ID:
    case MACH64_GR_ID:
    case MACH64_GS_ID:
+   case MACH64_LM_ID:
+   case MACH64_LN_ID:
+   case MACH64_LR_ID:
+   case MACH64_LS_ID:
 	info.ChipType = tmp & CFG_CHIP_TYPE;
 	break;
    default:
@@ -581,11 +593,28 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    case MACH64_LB_ID:
    case MACH64_LI_ID:
    case MACH64_LP_ID:
+   case MACH64_GL_ID:
    case MACH64_GM_ID:
    case MACH64_GN_ID:
    case MACH64_GO_ID:
    case MACH64_GR_ID:
    case MACH64_GS_ID:
+   case MACH64_LM_ID:
+   case MACH64_LN_ID:
+   case MACH64_LR_ID:
+   case MACH64_LS_ID:
+	outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+	tmp2 = inl(ioLCD_DATA);
+#if 0
+	if (tmp2 & AUTO_HORZ_RATIO)
+#endif
+	    info.LCDHorizontal = (((tmp2 >> 20) & 0x0FF) + 1) << 3;
+	outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
+	tmp2 = inl(ioLCD_DATA);
+#if 0
+	if (tmp2 & AUTO_VERT_RATIO)
+#endif
+	    info.LCDVertical = ((tmp2 >> 11) & 0x7FF) + 1;
 	outb(ioLCD_INDEX, LCD_GEN_CNTL);
 	tmp2 = inl(ioLCD_DATA);
 	break;
@@ -711,16 +740,66 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    LCDPanelInfo = sbios_data(LCDTable + 0x0A);
 
    if (!LCDTable || !LCDPanelInfo ||
-       (bios_data[LCDTable + 5] != 0x1A) ||
-       (bios_data[LCDPanelInfo] != info.PanelID) ||
-       ((LCDTable + 0x1A) > BIOS_DATA_SIZE) ||
-       ((LCDPanelInfo + 0x1D) > BIOS_DATA_SIZE)) {
-	ErrorF("Warning:  Unable to determine dimensions of panel (ID %d)\n",
-		info.PanelID);
-	info.PanelID = -1;
-	return &info;
+       ((LCDTable + bios_data[LCDTable + 5]) > BIOS_DATA_SIZE) ||
+       ((LCDPanelInfo + 0x1D) > BIOS_DATA_SIZE) ||
+       ((bios_data[LCDPanelInfo] != info.PanelID) &&
+	(info.PanelID || (bios_data[LCDPanelInfo] > 0x1F) ||
+	 (info.ChipType == MACH64_LB_ID) ||
+	 (info.ChipType == MACH64_LD_ID) ||
+	 (info.ChipType == MACH64_LG_ID) ||
+	 (info.ChipType == MACH64_LI_ID) ||
+	 (info.ChipType == MACH64_LP_ID)))) {
+	/*
+	 * Scan BIOS for panel info table.
+	 */
+	LCDPanelInfo = 0;
+	for (i = 0; i <= ((bios_data[2] << 9) - 0x1D); i++) {
+	    if ((bios_data[i] != info.PanelID) &&
+		(info.PanelID || (bios_data[i] > 0x1F) ||
+		 (info.ChipType == MACH64_LB_ID) ||
+		 (info.ChipType == MACH64_LD_ID) ||
+		 (info.ChipType == MACH64_LG_ID) ||
+		 (info.ChipType == MACH64_LI_ID) ||
+		 (info.ChipType == MACH64_LP_ID)))
+		continue;
+	    for (j = 0;  j < 24;  j++)
+		if ((CARD8)(bios_data[i + j + 1] - 0x20) > 0x5F) {
+		    i += j;
+		    goto NextBIOSByte;
+		}
+	    if ((info.LCDHorizontal > 8) &&
+		(info.LCDHorizontal <= 0x7F8) &&
+		(info.LCDHorizontal != sbios_data(i + 0x19)))
+		continue;
+	    if ((info.LCDVertical > 1) &&
+		(info.LCDVertical <= 0x7FF) &&
+		(info.LCDVertical != sbios_data(i + 0x1B)))
+		continue;
+	    if (LCDPanelInfo) {
+		/*
+		 * More than one possibility, but don't care if all tables
+		 * describe panels of the same size.
+		 */
+		if ((bios_data[LCDPanelInfo + 0x19] == bios_data[i + 0x19]) &&
+		    (bios_data[LCDPanelInfo + 0x1A] == bios_data[i + 0x1A]) &&
+		    (bios_data[LCDPanelInfo + 0x1B] == bios_data[i + 0x1B]) &&
+		    (bios_data[LCDPanelInfo + 0x1C] == bios_data[i + 0x1C]))
+		    continue;
+		LCDPanelInfo = 0;
+		break;
+	    }
+	    LCDPanelInfo = i;
+   NextBIOSByte:  ;
+	}
+	if (!LCDPanelInfo) {
+	    ErrorF("Warning:  Unable to determine dimensions of panel"
+		   " (ID %d)\n", info.PanelID);
+	    info.PanelID = -1;
+	    return &info;
+	}
    }
 
+   info.PanelID = bios_data[LCDPanelInfo];
    info.LCDHorizontal =
        (bios_data[LCDPanelInfo + 0x1A] << 8) + bios_data[LCDPanelInfo + 0x19];
    info.LCDVertical =
@@ -776,11 +855,16 @@ GetATIPCIInformation()
 	    case PCI_MACH64_LB_ID:
 	    case PCI_MACH64_LI_ID:
 	    case PCI_MACH64_LP_ID:
+	    case PCI_MACH64_GL_ID:
 	    case PCI_MACH64_GM_ID:
 	    case PCI_MACH64_GN_ID:
 	    case PCI_MACH64_GO_ID:
 	    case PCI_MACH64_GR_ID:
 	    case PCI_MACH64_GS_ID:
+	    case PCI_MACH64_LM_ID:
+	    case PCI_MACH64_LN_ID:
+	    case PCI_MACH64_LR_ID:
+	    case PCI_MACH64_LS_ID:
 		info.ChipType = devid;
 		break;
 	    default:
@@ -983,6 +1067,8 @@ InitIOAddresses(base, block)
 	ioLCD_GEN_CTRL	 = base + LCD_GEN_CTRL;
 	ioLCD_INDEX	 = base + LCD_INDEX;
 	ioLCD_DATA	 = base + LCD_DATA;
+	ioHORZ_STRETCHING = base + HORZ_STRETCHING;
+	ioVERT_STRETCHING = base + VERT_STRETCHING;
 	/* These are only needed for panel support (and are thus needed only
 	 * through block I/O) */
 	ioCRTC_H_TOTAL_DISP = base + CRTC_H_TOTAL_DISP;
@@ -1120,11 +1206,16 @@ mach64Probe()
         mach64ChipType == MACH64_LB_ID ||
         mach64ChipType == MACH64_LI_ID ||
         mach64ChipType == MACH64_LP_ID ||
+        mach64ChipType == MACH64_GL_ID ||
         mach64ChipType == MACH64_GM_ID ||
         mach64ChipType == MACH64_GN_ID ||
         mach64ChipType == MACH64_GO_ID ||
         mach64ChipType == MACH64_GR_ID ||
-        mach64ChipType == MACH64_GS_ID) {
+        mach64ChipType == MACH64_GS_ID ||
+        mach64ChipType == MACH64_LM_ID ||
+        mach64ChipType == MACH64_LN_ID ||
+        mach64ChipType == MACH64_LR_ID ||
+        mach64ChipType == MACH64_LS_ID) {
 	mach64HasBlockWrite = TRUE;
     } else {
 	mach64HasBlockWrite = FALSE;
@@ -1137,7 +1228,9 @@ mach64Probe()
         mach64ChipType == MACH64_LB_ID ||
         mach64ChipType == MACH64_LD_ID ||
         mach64ChipType == MACH64_GM_ID ||
-        mach64ChipType == MACH64_GN_ID) {
+        mach64ChipType == MACH64_GN_ID ||
+        mach64ChipType == MACH64_LM_ID ||
+        mach64ChipType == MACH64_LN_ID) {
 	mach64AGP = TRUE;
     } else {
 	mach64AGP = FALSE;
@@ -1289,11 +1382,16 @@ mach64Probe()
 		   mach64ChipType == MACH64_LB_ID ||
 		   mach64ChipType == MACH64_LI_ID ||
 		   mach64ChipType == MACH64_LP_ID ||
+		   mach64ChipType == MACH64_GL_ID ||
 		   mach64ChipType == MACH64_GM_ID ||
 		   mach64ChipType == MACH64_GN_ID ||
 		   mach64ChipType == MACH64_GO_ID ||
 		   mach64ChipType == MACH64_GR_ID ||
-		   mach64ChipType == MACH64_GS_ID) {
+		   mach64ChipType == MACH64_GS_ID ||
+		   mach64ChipType == MACH64_LM_ID ||
+		   mach64ChipType == MACH64_LN_ID ||
+		   mach64ChipType == MACH64_LR_ID ||
+		   mach64ChipType == MACH64_LS_ID) {
 	    mach64InfoRec.maxClock = 230000;
 	} else {
 	    if (xf86bpp == 8)
@@ -1406,7 +1504,10 @@ mach64Probe()
 		ErrorF("SDRAM");
 		break;
 	    case SGRAM:
-		ErrorF("SGRAM");
+		ErrorF("SGRAM (1:1)");
+		break;
+	    case SGRAM32:
+		ErrorF("SGRAM (2:1)");
 		break;
 	    }
 	} else {
@@ -1497,9 +1598,59 @@ mach64Probe()
 	    LCDVBlankWidth++;
 	}
 
+	HDisplay <<= 3;
 	LCDHSyncStart <<= 3;
 	LCDHSyncWidth <<= 3;
 	LCDHBlankWidth <<= 3;
+
+	/* If the mode on entry isn't stretched, adjust timings */
+	do {
+	    CARD32 horz_stretching;
+
+	    if ((HDisplay = mach64LCDHorizontal - HDisplay) <= 0)
+		break;
+
+	    if (mach64ChipType == MACH64_LG_ID) {
+		horz_stretching = inl(ioHORZ_STRETCHING);
+	    } else {
+		outb(ioLCD_INDEX, LCD_HORZ_STRETCHING);
+		horz_stretching = inl(ioLCD_DATA);
+	    }
+
+	    if (horz_stretching & HORZ_STRETCH_EN)
+		break;
+
+	    if ((LCDHSyncStart -= HDisplay) < 0)
+		LCDHSyncStart = 0;
+	    LCDHBlankWidth -= HDisplay;
+	    HDisplay = LCDHSyncStart + LCDHSyncWidth;
+	    if (LCDHBlankWidth < HDisplay)
+		LCDHBlankWidth = HDisplay;
+	} while(0);
+
+	do {
+	    CARD32 vert_stretching;
+
+	    if ((VDisplay = mach64LCDVertical - VDisplay) <= 0)
+		break;
+
+	    if (mach64ChipType == MACH64_LG_ID) {
+		vert_stretching = inl(ioVERT_STRETCHING);
+	    } else {
+		outb(ioLCD_INDEX, LCD_VERT_STRETCHING);
+		vert_stretching = inl(ioLCD_DATA);
+	    }
+
+	    if (vert_stretching & VERT_STRETCH_EN)
+		break;
+
+	    if ((LCDVSyncStart -= VDisplay) < 0)
+		LCDVSyncStart = 0;
+	    LCDVBlankWidth -= VDisplay;
+	    VDisplay = LCDVSyncStart + LCDVSyncWidth;
+	    if (LCDVBlankWidth < VDisplay)
+		LCDVBlankWidth = VDisplay;
+	} while(0);
     }
 
     if (OFLG_ISSET(OPTION_NO_PROGRAM_CLOCKS, &mach64InfoRec.options)) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86wline.c,v 1.8.2.2 1998/02/27 01:29:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86wline.c,v 1.8.2.3 1999/10/21 12:08:11 hohndel Exp $ */
 /*
 
 xf86WideLine does not maintain a span list and subsequently does not
@@ -194,6 +194,10 @@ xf86FillPolyHelper (pDrawable, pGC, y, overall_height, left, right,
 	    }	
 	}
 
+	if (height <= 0 || height > 0x7fff0000) {
+	  /* ErrorF("xf86FillPolyHelper height %d %x\n",height,height); */
+	}
+	else
 	while (height--) {
 	    if((right_x > left_x) && Y_IN_BOX(y))
 		xf86SpanHelper(left_x, y, right_x - left_x);

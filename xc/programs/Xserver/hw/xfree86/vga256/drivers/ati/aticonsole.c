@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticonsole.c,v 1.1.2.1 1998/02/01 16:41:46 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticonsole.c,v 1.1.2.2 1999/10/12 17:18:52 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -51,7 +51,7 @@ ATIEnterLeave(const Bool enter)
         saved_mem_cfg;
     static CARD32 saved_bus_cntl, saved_config_cntl, saved_crtc_gen_cntl,
         saved_mem_info, saved_gen_test_cntl, saved_dac_cntl,
-        saved_crtc_int_cntl;
+        saved_crtc_int_cntl, saved_lcd_index;
 
     static Bool entered = LEAVE;
     CARD32 tmp;
@@ -134,9 +134,17 @@ ATIEnterLeave(const Bool enter)
             saved_crtc_gen_cntl = inl(ATIIOPortCRTC_GEN_CNTL) &
                 ~(CRTC_EN | CRTC_LOCK_REGS);
             tmp = saved_crtc_gen_cntl & ~CRTC_EXT_DISP_EN;
+            if (ATIChip >= ATI_CHIP_264XL)
+                tmp = (tmp & ~CRTC_INT_ENS_X) | CRTC_INT_ACKS_X;
             outl(ATIIOPortCRTC_GEN_CNTL, tmp | CRTC_EN);
             outl(ATIIOPortCRTC_GEN_CNTL, tmp);
             outl(ATIIOPortCRTC_GEN_CNTL, tmp | CRTC_EN);
+            if (ATIChip >= ATI_CHIP_264XL)
+            {
+                saved_lcd_index = inl(ATIIOPortLCD_INDEX);
+                outl(ATIIOPortLCD_INDEX,
+                    saved_lcd_index & ~(LCD_MONDET_INT_EN | LCD_MONDET_INT));
+            }
 
             /* Ensure VGA aperture is enabled */
             outl(ATIIOPortDAC_CNTL, saved_dac_cntl | DAC_VGA_ADR_EN);
@@ -306,7 +314,9 @@ ATIEnterLeave(const Bool enter)
             outl(ATIIOPortCONFIG_CNTL, saved_config_cntl);
             outl(ATIIOPortDAC_CNTL, saved_dac_cntl);
             if (ATIChip < ATI_CHIP_264CT)
-                    outl(ATIIOPortMEM_INFO, saved_mem_info);
+                outl(ATIIOPortMEM_INFO, saved_mem_info);
+            else if (ATIChip >= ATI_CHIP_264XL)
+                outl(ATIIOPortLCD_INDEX, saved_lcd_index);
         }
 
         xf86DisableIOPorts(vga256InfoRec.scrnIndex);

@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.19 1999/07/23 13:22:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.23 1999/12/21 07:43:42 hohndel Exp $ */
 
 /* 
   Modified Feb - Jul 1998 for SiS 5597/8 by Mike Chapman <mike@paranoia.com>, 
@@ -96,8 +96,8 @@ int sisReg32MMIO[]={0x8280,0x8284,0x8288,0x828C,0x8290,0x8294,0x8298,0x829C,
 		    0x82A0,0x82A4,0x82A8,0x82AC};
 /* Engine Register for the 2nd Generation Graphics Engine */
 int sis2Reg32MMIO[]={0x8200,0x8204,0x8208,0x820C,0x8210,0x8214,0x8218,0x821C,
-		    0x8220,0x8224,0x8228,0x822C,0x8230,0x8234,0x8238,0x823C,
-		     0x8240, 0x8300};
+		     0x8220,0x8224,0x8228,0x822C,0x8230,0x8234,0x8238,0x823C,
+		     0x8240,0x8244,0x8248,0x824C,0x8250,0x8300};
 #ifndef MONOVGA
 extern GCOps cfb16TEOps1Rect, cfb16TEOps, cfb16NonTEOps1Rect, cfb16NonTEOps;
 extern GCOps cfb24TEOps1Rect, cfb24TEOps, cfb24NonTEOps1Rect, cfb24NonTEOps;
@@ -111,6 +111,8 @@ typedef struct {
     unsigned char msr;
     unsigned char xr2A;
     unsigned char xr2B;
+    unsigned char xr2C;
+    unsigned char xr2D;
     unsigned char xr13;			/* extended clock gen for 5597 */
     int Clock;
 } sisClockReg, *sisClockPtr;
@@ -118,6 +120,7 @@ typedef struct {
 typedef struct {
 	vgaHWRec std;          		/* std IBM VGA register 	*/
 	unsigned char Port_3C4[0x40];	/* 0x37 top for 20x, 0x3D for 5597, 0x3F for 530*/
+	unsigned char Port_3D4[0x1B];	/* Only CR19 and CR1A used by 630 */
 	unsigned char ClockReg2;
 	sisClockReg   sisClock;
 } vgaSISRec, *vgaSISPtr;
@@ -198,6 +201,7 @@ vgaVideoChipRec SIS = {
 #define read_xr(num,var) {outb(0x3c4, num);var=inb(0x3c5);}
 
 int SISchipset;
+int SISfamily;
 /* default is enhanced mode (use option to disable)*/
 Bool sisUseLinear = TRUE;
 Bool sisUseMMIO = TRUE;
@@ -217,7 +221,8 @@ SISIdent(n)
 	static char *chipsets[] = {"sis86c201", "sis86c202", "sis86c205", 
 				   "sis86c215", "sis86c225",  	
 				   "sis5597", "sis5598", "sis6326",
-	                           "sis530", "sis620"};
+	                           "sis530", "sis620", "sis300" ,
+			  	   "sis630", "sis540" };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
 		return(NULL);
@@ -311,6 +316,7 @@ sisMClk()
 	}
 	return(mclk);
     }
+
     /* Numerator */
     read_xr(0x28,xr28);
     mclk=14318*((xr28 & 0x7f)+1);
@@ -326,15 +332,18 @@ sisMClk()
   ErrorF(" / %d(N)",(xr29 & 0x1f)+1);
 #endif
   /* Divider. Does not seem to work for mclk for older cards */
-  if ( (SISchipset==SIS6326) &&
-        ((xr28 & 0x80)!=0 ) ) {
+  if ( ((SISchipset==SIS6326) || (SISfamily==SIS300)) && ((xr28 & 0x80)!=0) ) {
          mclk = mclk*2;
 #ifdef DEBUG
   ErrorF(" * 2(VLD) ");
 #endif
     }
-    /* Post-scaler. Values depends on SR13 bit 7  */
-    read_xr(0x13,xr13);
+
+    if (SISfamily == SIS300)
+	xr13 = xr29 & 0x80;
+    else
+	    /* Post-scaler. Values depends on SR13 bit 7  */
+	read_xr(0x13,xr13);
 
     if ( (xr13 & 0x80)==0 ) {
       mclk = mclk / (((xr29 & 0x60) >> 5)+1);
@@ -396,7 +405,43 @@ sisMemBandWidth()
    return(band*7/10);
 }
 
-int compute_vclk(
+float magic300[4] = { 1.2, 1.368421, 2.263158, 1.2 };
+float magic630[4] = { 2.03, 2.03, 3.47, 2.03 };
+static
+int sis300MemBandWidth()
+{
+	int	mclk;
+	unsigned char temp;
+
+	mclk = sisMClk();
+
+	read_xr(0x14, temp);
+	temp = temp >> 6;
+	switch (temp)  {
+	case 1:
+		mclk *= 64;
+		break;
+	case 2:
+		mclk *= 128;
+		break;
+	case 3:
+	case 0:
+		mclk *= 32;
+		break;
+	}
+
+	switch (SISchipset)  {
+	case SIS300:
+		return (int)(mclk / magic300[temp]);
+	    break;
+	case SIS630:
+	case SIS540:
+		return (int)(mclk / magic630[temp]);
+	    break;
+	}
+}
+
+int sisCalcVCLK(
 	int Clock,
 	int *out_n,
 	int *out_dn,
@@ -493,10 +538,10 @@ int compute_vclk(
 	}
 	*out_n = best_n;
 	*out_dn = best_dn;
-#ifdef DEBUG 
-ErrorF("compute_vclk: Clock=%d, n=%d, dn=%d, div=%d, sbit=%d, scale=%d\n",
+#ifdef DEBUG
+ErrorF("sisCalcVCLK: Clock=%d, n=%d, dn=%d, div=%d, sbit=%d, scale=%d\n",
 	Clock, best_n, best_dn, *out_div, *out_sbit, *out_scale);
-#endif 
+#endif
 	return 1;
 }
 
@@ -736,9 +781,15 @@ sisClockSave(Clock)
 #endif
     Clock->msr = (inb(0x3CC) & 0xFE);	/* save the standard VGA clock 
 					 * registers */
-    read_xr(0x2A, Clock->xr2A);
-    read_xr(0x2B, Clock->xr2B);
-    read_xr(0x13, Clock->xr13);
+    if (SISfamily == SIS300) {
+	read_xr(0x2B, Clock->xr2B);
+	read_xr(0x2C, Clock->xr2C);
+	read_xr(0x2D, Clock->xr2D);
+    } else {
+	read_xr(0x2A, Clock->xr2A);
+	read_xr(0x2B, Clock->xr2B);
+	read_xr(0x13, Clock->xr13);
+    }
 
 }
 
@@ -750,9 +801,15 @@ sisClockRestore(Clock)
     ErrorF("sisClockRestore(Clock)\n");
 #endif
     outb(0x3C2, Clock->msr);
-    write_xr(0x2A, Clock->xr2A);
-    write_xr(0x2B, Clock->xr2B);
-    write_xr(0x13, Clock->xr13);
+    if (SISfamily == SIS300) {
+	write_xr(0x2B, Clock->xr2B);
+	write_xr(0x2C, Clock->xr2C);
+	write_xr(0x2D, Clock->xr2D);
+    } else {
+	write_xr(0x2A, Clock->xr2A);
+	write_xr(0x2B, Clock->xr2B);
+	write_xr(0x13, Clock->xr13);
+    }
 }
 
 static Bool
@@ -781,7 +838,7 @@ sisClockLoad(Clock)
     sisClockPtr Clock;
  {
     unsigned int 	vclk[5];
-    unsigned char 	temp, xr2a, xr2b;
+    unsigned char 	temp, xr2a, xr2b, xr2c;
     int num, denum, div, sbit, scale;
   #ifdef DEBUG
       ErrorF("sisClockLoad(Clock)\n");
@@ -789,27 +846,42 @@ sisClockLoad(Clock)
 
     if (!Clock->Clock) {       /* Hack to load saved console clock */
 	sisClockRestore(Clock) ;
-    } else if ((SISchipset == SIS530) && (compute_vclk(Clock->Clock, &num,
+    } else if (((SISchipset == SIS530) || (SISfamily == SIS300))
+		&& (sisCalcVCLK(Clock->Clock, &num,
 		&denum, &div, &sbit, &scale))){
-		xr2a = (num - 1) & 0x7f;
-		xr2a |= (div == 2)? 0x80 : 0;
-		xr2b = (denum - 1) & 0x1f;
-		xr2b |= (((scale - 1) & 0x3) << 5);
+		if (SISchipset == SIS530) {
+			xr2a = (num - 1) & 0x7f;
+			xr2a |= (div == 2)? 0x80 : 0;
+			xr2b = (denum - 1) & 0x1f;
+			xr2b |= (((scale - 1) & 3) << 5);
 
-		/* When set VCLK, you should set SR13 first */
-		if (sbit) {
-			read_xr(0x13, temp);
-			temp |= 0x40;
-			write_xr(0x13, temp);
-		} else {
-			read_xr(0x13, temp);
-			temp &= 0xBF;
-			write_xr(0x13, temp);
+			/* When set VCLK, you should set SR13 first */
+			if (sbit) {
+				read_xr(0x13, temp);
+				temp |= 0x40;
+				write_xr(0x13, temp);
+			} else {
+				read_xr(0x13, temp);
+				temp &= 0xBF;
+				write_xr(0x13, temp);
+			}
+
+			write_xr(0x2A, xr2a);
+			write_xr(0x2B, xr2b);
+ErrorF("SetVCLK Finished\n");
+		} else { /* SIS300 */
+			xr2b = (num - 1) & 0x7f;
+			if (div == 2)
+				xr2b |= 0x80;
+			xr2c = (denum - 1) & 0x1f;
+			xr2c |= (((scale - 1) & 3) << 5);
+			if (sbit)
+				xr2c |= 0x80;
+			write_xr(0x2B, xr2b);
+			write_xr(0x2C, xr2c);
+			write_xr(0x2D, 0x80);
 		}
-
-		write_xr(0x2A, xr2a);
-		write_xr(0x2B, xr2b);
-		/* if compute_vclk cannot handle the request clock,
+		/* if sisCalcVCLK cannot handle the request clock,
 		   try sisCalcClock! */
     } else {
 	sisCalcClock(Clock->Clock, 2, vclk);
@@ -937,23 +1009,29 @@ SISProbe()
 		 * If chipset from XF86Config doesn't match...
 		 */
 		if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS86C201)))
-			SISchipset = SIS86C201;
+			SISfamily = SISchipset = SIS86C201;
 		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS86C202)))
- 			SISchipset = SIS86C202;
+ 			SISfamily = SISchipset = SIS86C202;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS86C205)))
- 			SISchipset = SIS86C205;
+ 			SISfamily = SISchipset = SIS86C205;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS86C215)))
- 			SISchipset = SIS86C205;
+ 			SISfamily = SISchipset = SIS86C205;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS86C225)))
- 			SISchipset = SIS86C205;
+ 			SISfamily = SISchipset = SIS86C205;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS5597)) ||
  				!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS5598)) )
- 			SISchipset = SIS5597;
+ 			SISfamily = SISchipset = SIS5597;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS6326)))
- 			SISchipset = SIS6326;
+ 			SISfamily = SISchipset = SIS6326;
  		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS530))||
  			 !StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS620)) )
- 			SISchipset = SIS530;
+ 			SISfamily = SISchipset = SIS530;
+ 		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS300)))
+ 			{ SISchipset = SIS300;	SISfamily = SIS300; }
+ 		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS630)))
+ 			{ SISchipset = SIS630;	SISfamily = SIS300; }
+ 		else if (!StrCaseCmp(vga256InfoRec.chipset, SISIdent(SIS540)))
+ 			{ SISchipset = SIS540;	SISfamily = SIS300; }
  		else
  			return(FALSE);
     	}
@@ -964,28 +1042,40 @@ SISProbe()
 			switch(vgaPCIInfo->ChipType)
 			{
 			case PCI_CHIP_SG86C201: 	/* 86C201 */
-				SISchipset = SIS86C201;
+				SISfamily = SISchipset = SIS86C201;
 				break;
 			case PCI_CHIP_SG86C202:		/* 86C202 */
-				SISchipset = SIS86C202;
+				SISfamily = SISchipset = SIS86C202;
 				break;
 			case PCI_CHIP_SG86C205:		/* 86C205 */
-				SISchipset = SIS86C205;
+				SISfamily = SISchipset = SIS86C205;
 				break;
 			case PCI_CHIP_SG86C215:		/* 86C215 */
-				SISchipset = SIS86C205;
+				SISfamily = SISchipset = SIS86C205;
 				break;
 			case PCI_CHIP_SG86C225:		/* 86C225 */
-				SISchipset = SIS86C205;
+				SISfamily = SISchipset = SIS86C205;
 				break;
                         case PCI_CHIP_SIS5597:          /* 5597/5598 */
-                                SISchipset = SIS5597;
+                                SISfamily = SISchipset = SIS5597;
                                 break;
 			case PCI_CHIP_SIS6326:		/* 6326 */
-				SISchipset = SIS6326;
+				SISfamily = SISchipset = SIS6326;
 				break;
 			case PCI_CHIP_SIS530:		/* 530/620 */
-				SISchipset = SIS530;
+				SISfamily = SISchipset = SIS530;
+				break;
+			case PCI_CHIP_SIS300:		/* 300 */
+				SISchipset = SIS300;
+				SISfamily = SIS300;
+				break;
+			case PCI_CHIP_SIS630:
+				SISchipset = SIS630;
+				SISfamily = SIS300;
+				break;
+			case PCI_CHIP_SIS540:
+				SISchipset = SIS540;
+				SISfamily = SIS300;
 				break;
 			}
 		}
@@ -993,6 +1083,8 @@ SISProbe()
 			return (FALSE);
 		vga256InfoRec.chipset = SISIdent(SISchipset);
 	}
+	ErrorF("Using XFree86 SiS driver version %d.%d.%d\n",
+			SIS_MAJOR_VERSION, SIS_MINOR_VERSION, SIS_PATCH_LEVEL);
 
 	SISEnterLeave(ENTER);
 	
@@ -1052,7 +1144,21 @@ SISProbe()
 			break;
 		}
 	    }		
-	    else 
+	    else if (SISfamily == SIS300)  {
+			unsigned char mem;
+			read_xr(0x14,mem);
+			mem &= 0x3F;
+			vga256InfoRec.videoRam = 1024;
+			while (mem) {
+				if (mem & 1) {
+					vga256InfoRec.videoRam <<= 1;
+					mem >>= 1;
+					continue;
+				} else
+					break;
+			}
+	    }
+	    else
 	    {
 		if ( SISchipset == SIS5597)  
 		{
@@ -1089,7 +1195,8 @@ SISProbe()
 			}
 		}
 	    }
-	    if ((SISchipset != SIS530) && (vga256InfoRec.videoRam > 4096))
+	    if ((SISfamily != SIS300) && (SISchipset != SIS530)
+		&& (vga256InfoRec.videoRam > 4096))
 	    {
 	    	ErrorF("%s %s: Restricting video memory use to 4 MB\n",
 		       XCONFIG_PROBED, vga256InfoRec.name);
@@ -1151,6 +1258,8 @@ SISProbe()
 	    vga256InfoRec.maxClock = (sisMemBandWidth() / vgaBitsPerPixel);
 	    if (vga256InfoRec.maxClock > 175500)
                vga256InfoRec.maxClock = 175500;
+	  } else if (SISfamily == SIS300) {
+		vga256InfoRec.maxClock = sis300MemBandWidth() / vgaBitsPerPixel;
 	  } else if (SISchipset == SIS530) {
             vga256InfoRec.maxClock = 230000;
 	    /* check the mem type installed */
@@ -1345,9 +1454,10 @@ SISFbInit()
 		   XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name); 
 	}
 
-	if ( sisUseMMIO ){
+	if ( sisUseMMIO || (SISfamily == SIS300)){
 	    PCIMMIOBase = sisPCIMMIOBase() ;
-	    sisUseMMIO = TRUE ;
+	    if (SISfamily != SIS300)
+		sisUseMMIO = TRUE ;
 	    if ( PCIMMIOBase == 0 ) {
 		/* use default base */
 		if ( sisUseLinear) 
@@ -1407,7 +1517,7 @@ SISFbInit()
 	}
 
 	/* Enable Turbo-queue */
-        if (OFLG_ISSET(OPTION_EXT_ENG_QUEUE, &vga256InfoRec.options)) {
+        if (OFLG_ISSET(OPTION_EXT_ENG_QUEUE, &vga256InfoRec.options))
  	    if ( ((SISchipset == SIS5597) || (SISchipset == SIS6326) || 
 		  (SISchipset == SIS530)) && 
 		 (offscreen_available >= (sisHWCursor ? 49152 : 32768)) )  {
@@ -1424,8 +1534,28 @@ SISFbInit()
 
 		turbo_queue_address = vga256InfoRec.videoRam - (offscreen_used / 1024);
 	    }
-	} else {
+	else {
  	    sisTurboQueue = FALSE;
+	}
+
+	/* Enable Turbo-queue for SiS 300 */
+
+	if ((SISfamily == SIS300) &&
+		(offscreen_available >= (sisHWCursor ? 114688: 65536))){
+		/* Turbo Queue size is 64K */
+		offscreen_available -= 65536;
+		offscreen_used += 65536;
+
+		if (sisHWCursor) { /* alignment loss */
+     		    offscreen_available -= 49152;
+		    offscreen_used += 49152;
+		    }
+		    
+		sisTurboQueue = TRUE;
+		turbo_queue_address = vga256InfoRec.videoRam
+					- (offscreen_used / 1024);
+		ErrorF("%s %s: SIS: Enabling Turbo-queue\n",
+			XCONFIG_GIVEN, vga256InfoRec.name); 
 	}
     
 	if (OFLG_ISSET(OPTION_NO_IMAGEBLT, &vga256InfoRec.options)) {
@@ -1439,7 +1569,7 @@ SISFbInit()
 	       if ( !sisUseLinear || 
 		   OFLG_ISSET(OPTION_XAA_NO_COL_EXP, &vga256InfoRec.options))
 		   sisUseXAAcolorExp = FALSE;
-	       if (SISchipset != SIS530)
+	       if ((SISchipset != SIS530) && (SISfamily != SIS300))
 		 SISAccelInit();
 	       else
 		 SIS2AccelInit();
@@ -1634,9 +1764,35 @@ SISEnterLeave(enter)
     	}
   	else
     	{
+#ifndef MONOVGA
+		if (SISfamily == SIS300) { /* hide cursor */
+			unsigned char tmp;
+			int mapped = 1;
+			outb(0x3c4, 5);
+			if (inb(0x3c5) == 0x21)
+				outb(0x3c5, 0x86);
+
+			outb(0x3c4, 0x20);
+			if (!(inb(0x3c5)&1)) {
+				mapped = 0;
+				tmp = inb(0x3c4)|1;
+				outb(0x3c5, tmp);
+			}
+
+			SISHideCursor();
+
+			if (!mapped) {
+				outb(0x3c4, 0x20);
+				tmp = inb(0x3c5)&0xFE;
+				outb(0x3c5, tmp);
+			}
+		}
+#endif
+
 		outw(0x3c4, 0x0005);	/* Lock extended registers */
 
       		xf86DisableIOPorts(vga256InfoRec.scrnIndex);
+
     	}
 }
 
@@ -1648,7 +1804,7 @@ static void
 SISRestore(restore)
      	vgaSISPtr restore;
 {
-    int i;
+    int i, last;
 
 #ifdef DEBUG
     ErrorF("SISRestore\n");
@@ -1662,7 +1818,26 @@ SISRestore(restore)
 
     restore->Port_3C4[5]=0x86;
    
-    for (i = 5 ; i <= 0x37; i++) {
+    switch(SISchipset) {
+    case SIS5597: last = SIS5597_3C5_LAST;
+	break;
+    case SIS6326: last = SIS6326_3C5_LAST;
+	break;
+    case SIS530:  last = SIS530_3C5_LAST;
+	break;
+    case SIS630:
+    case SIS540:
+		outw(0x3d4, restore->Port_3D4[0x19] << 8 | 0x19);
+		outw(0x3d4, restore->Port_3D4[0x1A] << 8 | 0x1a);
+    case SIS300:  last = SIS300_3C5_LAST;
+	break;
+    default:      last = DEFAULT_3C5_LAST;
+	break;
+    }
+    if ((SISchipset == SIS630) && (restore->Port_3C4[0x1E] & 0x40))
+	outw(0x3c4, restore->Port_3C4[0x20] << 8 | 0x20);
+
+    for (i = 5 ; i <= last; i++) {
 	outb(0x3c4, i);
 #ifdef IO_DEBUG
 	    ErrorF("XR%X Contents - %X ", i, inb(0x3c5));
@@ -1673,45 +1848,6 @@ SISRestore(restore)
 	    ErrorF("Restore to - %X Read after - %X\n",restore->Port_3C4[i], inb(0x3c5));
 #endif
     }
-
-    if (SISchipset == SIS5597)
-  	for (i = 0x38 ; i <= 0x39; i++) {
-    	    outb(0x3c4, i);
-#ifdef IO_DEBUG
-	    ErrorF("XR%X Contents - %X ", i, inb(0x3c5));
-#endif
-	if (inb(0x3c5) != restore->Port_3C4[i])
-	    outb(0x3c5,restore->Port_3C4[i]);
-#ifdef IO_DEBUG
-	    ErrorF("Restore to - %X Read after - %X\n", restore->Port_3C4[i], inb(0x3c5));
-#endif
-	  }
-
-    if (SISchipset == SIS6326)
-  	for (i = 0x38 ; i <= 0x3c; i++) {
-    	    outb(0x3c4, i);
-#ifdef IO_DEBUG
-	    ErrorF("XR%X Contents - %X ", i, inb(0x3c5));
-#endif
-	if (inb(0x3c5) != restore->Port_3C4[i])
-	    outb(0x3c5,restore->Port_3C4[i]);
-#ifdef IO_DEBUG
-	    ErrorF("Restore to - %X Read after - %X\n", restore->Port_3C4[i], inb(0x3c5));
-#endif
-	  }
-
-    if (SISchipset == SIS530)
-  	for (i = 0x38 ; i <= 0x3f; i++) {
-    	    outb(0x3c4, i);
-#ifdef IO_DEBUG
-	    ErrorF("XR%X Contents - %X ", i, inb(0x3c5));
-#endif
-	if (inb(0x3c5) != restore->Port_3C4[i])
-	    outb(0x3c5,restore->Port_3C4[i]);
-#ifdef IO_DEBUG
-	    ErrorF("Restore to - %X Read after - %X\n", restore->Port_3C4[i], inb(0x3c5));
-#endif
-	  }
 
     /* set the clock */
     if ( ClockProgramable() ) {
@@ -1739,47 +1875,38 @@ static void *
 SISSave(save)
      	vgaSISPtr save;
 {
-    int	i;
+	int i, last;
 #ifdef DEBUG
     ErrorF("SISSave\n");
 #endif
   	save = (vgaSISPtr)vgaHWSave((vgaHWPtr)save, sizeof(vgaSISRec));
 
-      for (i = 5 ; i <= 0x37; i++) {
-	outb(0x3c4, i);
-	save->Port_3C4[i] = inb(0x3c5) ;
+	switch(SISchipset) {
+	case SIS5597: last = SIS5597_3C5_LAST;
+		break;
+	case SIS6326: last = SIS6326_3C5_LAST;
+		break;
+	case SIS530:  last = SIS530_3C5_LAST;
+		break;
+	case SIS630:
+	case SIS540:
+		outb(0x3d4, 0x19);
+		save->Port_3D4[0x19] = inb(0x3d5);
+		outb(0x3d4, 0x1a);
+		save->Port_3D4[0x1A] = inb(0x3d5);
+	case SIS300:  last = SIS300_3C5_LAST;
+		break;
+	default:      last = DEFAULT_3C5_LAST;
+		break;
+	}
+
+	for (i = 6 ; i <= last; i++) {
+		outb(0x3c4, i);
+		save->Port_3C4[i] = inb(0x3c5) ;
 #ifdef IO_DEBUG
 	ErrorF("XS%X - %X\n", i, inb(0x3c5));
 #endif
 	}
-
-    if (SISchipset == SIS5597)
-  	for (i = 0x38 ; i <= 0x39; i++) {
-	    outb(0x3c4,i);
-   	    save->Port_3C4[i] = inb(0x3c5) ;
-#ifdef IO_DEBUG
-  	ErrorF("XS%X - %X\n", i, inb(0x3c5));
-#endif
-	  }
-
-    if (SISchipset == SIS6326 )
-  	for (i = 0x38 ; i <= 0x3c; i++) {
-	    outb(0x3c4,i);
-   	    save->Port_3C4[i] = inb(0x3c5) ;
-#ifdef IO_DEBUG
-  	ErrorF("XS%X - %X\n", i, inb(0x3c5));
-#endif
-	  }
-
-    if (SISchipset == SIS530)
-  	for (i = 0x38 ; i <= 0x3f; i++) {
-	    outb(0x3c4,i);
-   	    save->Port_3C4[i] = inb(0x3c5) ;
-#ifdef IO_DEBUG
-  	ErrorF("XS%X - %X\n", i, inb(0x3c5));
-#endif
-	  }
-
 
 	save->ClockReg2 = inb(0x3CC);
 
@@ -1788,6 +1915,194 @@ SISSave(save)
 	    sisClockSave(&save->sisClock);
 
   	return ((void *) save);
+}
+struct QConfig  {
+	int	GT;
+	int	QC;
+};
+
+struct	QConfig qconfig[20] = {
+	{1, 0x0}, {1, 0x2}, {1, 0x4}, {1, 0x6}, {1, 0x8},
+	{1, 0x3}, {1, 0x5}, {1, 0x7}, {1, 0x9}, {1, 0xb},
+	{0, 0x0}, {0, 0x2}, {0, 0x4}, {0, 0x6}, {0, 0x8},
+	{0, 0x3}, {0, 0x5}, {0, 0x7}, {0, 0x9}, {0, 0xb}};
+
+int cycleA[20][2] = {
+	{88,88}, {80,80}, {78,78}, {72,72}, {70,70},
+	{79,72}, {77,70}, {71,64}, {69,62}, {49,44},
+	{73,78}, {65,70}, {63,68}, {57,62}, {55,60},
+	{64,62}, {62,60}, {56,54}, {54,52}, {34,34}};
+
+static BOOL
+Find630CRT_CPUthreshold(
+	int	vclk, /* in MHz */
+	int	mclk, /* in MHz */
+	unsigned char sr14,
+	unsigned char *sr16, /* in/out */
+	unsigned char *sr8,  /* out */
+	unsigned char *sr9,  /* out */
+	unsigned char *srF)  /* out */
+{
+	unsigned int	lowa, low, bpp, cyclea;
+	unsigned int	i, j;
+	pciTagRec NBridge;
+	CARD32	temp;
+
+	switch(vgaBitsPerPixel){
+	case 16: bpp = 2;
+		break;
+	case 24: /* 24 bpp not support */
+	case 32:
+		bpp = 4;
+		break;
+	case 8:
+	default:
+		bpp = 1;
+	}
+
+	i = 0;
+	j = (sr14 >> 6) - 1;
+
+	while (1)  {
+#ifdef	DEBUG
+		ErrorF("Config %d GT = %d, QC = %x, CycleA = %d\n",
+			i, qconfig[i].GT, qconfig[i].QC, cycleA[i][j]);
+#endif
+		cyclea = cycleA[i][j];
+		lowa = cyclea * vclk * bpp;
+		lowa = (lowa + (mclk-1)) / mclk;
+		lowa = (lowa + 15) / 16;
+		low = lowa + 1;
+		if (low <= 0x13)
+			break;
+		else
+			if (i < 19)
+				i++;
+			else  {
+				low = 0x13;
+#ifdef	DEBUG
+	ErrorF("This mode may has threshold problem and had better removed\n");
+#endif
+				break;
+			}
+	}
+#ifdef	DEBUG
+	ErrorF("Using Config %d with CycleA = %d\n", i, cyclea);
+#endif
+	*sr8 = ((low & 0xF) << 4) | 0xF;
+	*srF = (low & 0x10) << 1;
+	*sr9 = lowa + 4;
+	if (*sr9 > 15)
+		*sr9 = 15;
+
+	/* write PCI configuration space */
+	NBridge = pcibusTag(0, 0, 0);
+	temp = pcibusRead(NBridge, 0x50);
+	temp &= 0xF0FFFFFF;
+	temp |= qconfig[i].QC << 24;
+	pcibusWrite(NBridge, 0x50, temp);
+
+	temp = pcibusRead(NBridge, 0xA0);
+	temp &= 0xF0FFFFFF;
+	temp |= qconfig[i].GT << 24;
+	pcibusWrite(NBridge, 0xA0, temp);
+
+#ifdef	DEBUG
+	temp = pcibusRead(NBridge, 0x50);
+	ErrorF("QueueConfig: 0x80000050 = %x\n", temp);
+	temp = pcibusRead(NBridge, 0xA0);
+	ErrorF("QueueConfig: 0x800000A0 = %x\n", temp);
+#endif
+
+	return TRUE;
+}
+
+struct funcargc {
+	char	base;
+	char	inc;
+};
+
+struct funcargc funca[12] = {
+	{61, 3}, {52, 5}, {68, 7}, {100, 11},
+	{43, 3}, {42, 5}, {54, 7}, {78, 11},
+	{34, 3}, {37, 5}, {47, 7}, {67, 11}};
+
+struct funcargc funcb[12] = {
+	{81, 4}, {72, 6}, {88, 8}, {120, 12},
+	{55, 4}, {54, 6}, {66, 8}, {90, 12},
+	{42, 4}, {45, 6}, {55, 8}, {75, 12}};
+
+char timing[8] = {1, 2, 2, 3, 0, 1, 1, 2};
+
+static void
+Find300CRT_CPUthreshold(
+	int	vclk, /* in MHz */
+	int	mclk, /* in MHz */
+	unsigned char sr14,
+	unsigned char *sr16, /* in/out */
+	unsigned char sr18,
+	unsigned char *sr8,  /* out */
+	unsigned char *sr9,  /* out */
+	unsigned char *srF)  /* out */
+{
+	unsigned char i,j,bpp;
+	int lowa, lowb, low;
+	struct funcargc *p;
+
+	switch(vgaBitsPerPixel){
+	case 16: bpp = 2;
+		break;
+	case 24: /* 24 bpp not support */
+	case 32:
+		bpp = 4;
+		break;
+	case 8:
+	default:
+		bpp = 1;
+	}
+
+	do {
+		i = ((sr18 >> 4) & 0x06) | ((sr18 >> 1) & 1);
+		j = ((sr14 >> 4) & 0x0c) | ((*sr16 >> 6) & 3);
+		p = &funca[j];
+
+		lowa = (p->base + p->inc*timing[i])*vclk*bpp;
+		lowa = (lowa + (mclk-1)) / mclk;
+		lowa = (lowa + 15)/16;
+
+		p = &funcb[j];
+		lowb = (p->base + p->inc*timing[i])*vclk*bpp;
+		lowb = (lowb + (mclk-1)) / mclk;
+		lowb = (lowb + 15)/16;
+
+		if (lowb < 4)
+			lowb = 0;
+		else
+			lowb -= 4;
+
+		low = (lowa > lowb)? lowa: lowb;
+
+		low++;
+
+		if (low <= 0x13) {
+			break;
+		} else {
+			i = (*sr16 >> 6) & 3;
+			if (!i) {
+				low = 0x13;
+				break;
+			} else {
+				i--;
+				*sr16 = (*sr16 & 0x3c) | (i << 6);
+			}
+		}
+	} while (1);
+
+	*sr8 = ((low & 0xF) << 4) | 0xF;
+	*srF = (low & 0x10) << 1;
+	*sr9 = low + 3;
+	if (*sr9 > 15)
+		*sr9 = 15;
 }
 
 /*
@@ -1829,7 +2144,7 @@ int *thresholdHigh;
     int mclk;
     int safetymargin, gap;
     float z, z1, z2; /* Yeou */
-    int factor; 
+    int factor;
     
 
     /* here is an hack to set the CRT/CPU threshold register.
@@ -1923,83 +2238,253 @@ int *thresholdHigh;
 
     }
 
-#ifdef DEBUG 
+#ifdef DEBUG
     ErrorF("Old FindCRT_CPUthreshold(%d, %d) = 0x%x 0x%x\n", dotClock, bpp,
 	   *thresholdLow,*thresholdHigh);
-#endif 
+#endif
 #else /*OldThresholds*/
     /* Juanjo Santamarta */
     
     mclk=sisMClk();
-
+    
     if (SISchipset == SIS530) /* Yeou for 530 thresholod */
     {
         /* z = f *((dotClock * bpp)/(buswidth*mclk);
            thresholdLow  = (z+1)/2 + 4;
            thresholdHigh = 0x1F;
-           
+
            where f = 0x60 when UMA (SR0D D[0] = 1)
                      0x30      LFB (SR0D D[0] = 0)
         */
-        read_xr (0x0d, temp); 
-	if (temp & 0x01) factor = 0x60;
+        read_xr (0x0d, temp);
+        if (temp & 0x01) factor = 0x60;
         else factor = 0x30;
-   
-        z1 = (float)(dotClock * bpp); 
+
+        z1 = (float)(dotClock * bpp);
         z2 = (float)(64.0 * mclk);
- 	z = ((float) factor * (z1 / z2));
-        *thresholdLow = ((int)z + 1) / 2 + 4 ;   
-        *thresholdHigh = 0x1F; 
+        z = ((float) factor * (z1 / z2));
+        *thresholdLow = ((int)z + 1) / 2 + 4 ;
+	if (*thresholdLow > 0x1F)
+		*thresholdLow = 0x1F;
+        *thresholdHigh = 0x1F;
     }
     else {   /* For sis other product */
-        /* Adjust thresholds. Safetymargin is to be adjusted by fifo_XXX 
-           options. Try to mantain a fifo margin of gap. At high Vclk*bpp
-           this isn't possible, so limit the thresholds. 
+     /* Adjust thresholds. Safetymargin is to be adjusted by fifo_XXX 
+	options. Try to mantain a fifo margin of gap. At high Vclk*bpp
+	this isn't possible, so limit the thresholds. 
        
-           The values I guess are :
+	The values I guess are :
 
-           FIFO_CONSERVATIVE : safetymargin = 5 ;
-           FIFO_MODERATE     : safetymargin = 3 ;
-           Default           : safetymargin = 1 ;  (good enough in many cases) 
-           FIFO_AGGRESSIVE   : safetymargin = 0 ;
+	FIFO_CONSERVATIVE : safetymargin = 5 ;
+	FIFO_MODERATE     : safetymargin = 3 ;
+	Default           : safetymargin = 1 ;  (good enough in many cases) 
+	FIFO_AGGRESSIVE   : safetymargin = 0 ;
 	 
-           gap=4 seems to be the best value in either case...
-       */
+	gap=4 seems to be the best value in either case...
+     */
     
-       if (OFLG_ISSET(OPTION_FIFO_CONSERV, &vga256InfoRec.options)) 
-           safetymargin=5; 
-       else if (OFLG_ISSET(OPTION_FIFO_MODERATE, &vga256InfoRec.options)) 
-           safetymargin=3; 
-       else if (OFLG_ISSET(OPTION_FIFO_AGGRESSIVE, &vga256InfoRec.options)) 
-           safetymargin=0; 
-       else 
-           safetymargin=1; 
+	if (OFLG_ISSET(OPTION_FIFO_CONSERV, &vga256InfoRec.options)) 
+		safetymargin=5; 
+	else if (OFLG_ISSET(OPTION_FIFO_MODERATE, &vga256InfoRec.options)) 
+		safetymargin=3; 
+	else if (OFLG_ISSET(OPTION_FIFO_AGGRESSIVE, &vga256InfoRec.options)) 
+		safetymargin=0; 
+	else 
+		safetymargin=1; 
 
-       gap = 4;
-       *thresholdLow = ((bpp*dotClock) / mclk)+safetymargin;
-       *thresholdHigh = ((bpp*dotClock) / mclk)+gap+safetymargin;
+	gap = 4;
+	*thresholdLow = ((bpp*dotClock) / mclk)+safetymargin;
+	*thresholdHigh = ((bpp*dotClock) / mclk)+gap+safetymargin;
 
-       /* 24 bpp seems to need lower FIFO limits. 
-          At 16bpp is possible to put a thresholdHigh of 0 (0x10) with 
-          good results on my system(good performance, and virtually no noise) */
-     
-        if ( *thresholdLow > (bpp < 24 ? 0xe:0x0d) ) { 
-    	     *thresholdLow = (bpp < 24 ? 0xe:0x0d); 
- 	}
-
-        if ( *thresholdHigh > (bpp < 24 ? 0x10:0x0f) ) { 
- 	     *thresholdHigh = (bpp < 24 ? 0x10:0x0f);
+	/* 24 bpp seems to need lower FIFO limits. 
+	   At 16bpp is possible to put a thresholdHigh of 0 (0x10) with
+	   good results on my system (good performance,
+	   and virtually no noise) */
+	if ( *thresholdLow > (bpp < 24 ? 0xe:0x0d) ) {
+		*thresholdLow = (bpp < 24 ? 0xe:0x0d);
 	}
-    }; /* sis530 */
-#ifdef DEBUG 
+
+	if ( *thresholdHigh > (bpp < 24 ? 0x10:0x0f) ) {
+		*thresholdHigh = (bpp < 24 ? 0x10:0x0f);
+	}
+    }
+
+#ifdef DEBUG
     ErrorF("FindCRT_CPUthreshold(%d, %d) = 0x%x 0x%x\n", dotClock, bpp,
 	   *thresholdLow,*thresholdHigh);
     ErrorF("%s %s: %s: MClk = %d Hz\n", XCONFIG_PROBED,
 	    vga256InfoRec.name, vga256InfoRec.chipset, sisMClk()*1000); 
-#endif  
+#endif
 #endif
 }
 
+
+SIS300Init(mode)
+	DisplayModePtr mode;
+{
+	static unsigned char orig_sr16 = 0;
+	static int orig_sr16_save = 0;
+	unsigned char temp,sr8,sr9,srF,sr14,sr16,sr18;
+	int offset;
+	int i;
+	unsigned int	CRT_CPUthresholdLow ;
+	unsigned int	CRT_CPUthresholdHigh ;
+	unsigned char	CRT_ENGthreshold ;
+        unsigned int vclk[5];
+
+#if !defined(MONOVGA) && !defined(XF86VGA16)
+	offset = vga256InfoRec.displayWidth >>
+#ifdef MONOVGA
+		(mode->Flags & V_INTERLACE ? 3 : 4);
+#else
+		(mode->Flags & V_INTERLACE ? 2 : 3);
+#endif
+
+	/* some generic settings */
+	new->std.Attribute[0x10] = 0x01;   /* mode */
+	new->std.Attribute[0x11] = 0x00;   /* overscan (border) color */
+	new->std.Attribute[0x12] = 0x0F;   /* enable all color planes */
+	new->std.Attribute[0x13] = 0x00;   /* horiz pixel panning 0 */
+
+	if ( (vgaBitsPerPixel == 16) || (vgaBitsPerPixel == 24) ||
+	     (vgaBitsPerPixel == 32))
+	    new->std.Graphics[0x05] = 0x00;    /* normal read/write mode */
+
+	if (vgaBitsPerPixel == 16) {
+	    offset <<= 1;	       /* double the width of the buffer */
+	} else if (vgaBitsPerPixel == 24) {
+	    offset += offset << 1;
+	} else if (vgaBitsPerPixel == 32) {
+	    offset <<= 2;
+	} 
+
+	if (! orig_sr16_save) {
+		orig_sr16 = new->Port_3C4[0x16];
+		orig_sr16_save = 1;
+	}
+
+	new->Port_3C4[0x06] = 0x02;
+
+	if (mode->Flags & V_INTERLACE)
+		new->Port_3C4[0x06] |= 0x20;
+
+	if (vgaBitsPerPixel == 32)
+		new->Port_3C4[0x06] |= 0x10;
+	else if (vgaBitsPerPixel == 24)
+		new->Port_3C4[0x06] |= 0x0C;
+	else if (vgaBitsPerPixel == 16)
+		new->Port_3C4[0x06] |= 0x08;
+
+	new->Port_3C4[0x07] &= 0xFC;
+	new->Port_3C4[0x07] |= 0x10;
+	if (vga256InfoRec.clock[mode->Clock] < 100000)
+		new->Port_3C4[0x07] |= 3;
+	else if (vga256InfoRec.clock[mode->Clock] < 200000)
+		new->Port_3C4[0x07] |= 2;
+	else if (vga256InfoRec.clock[mode->Clock] < 250000)
+		new->Port_3C4[0x07] |= 1;
+	
+	sr14 = new->Port_3C4[0x14];
+	sr16 = orig_sr16;
+	sr18 = new->Port_3C4[0x18];
+
+	if (SISchipset == SIS300)
+		Find300CRT_CPUthreshold(
+			vga256InfoRec.clock[mode->Clock]/1000, 
+			sisMClk()/1000,
+			sr14, &sr16, sr18, &sr8, &sr9, &srF);
+	else
+		if (Find630CRT_CPUthreshold(
+				vga256InfoRec.clock[mode->Clock]/1000,
+				sisMClk()/1000,
+				sr14, &sr16, &sr8, &sr9, &srF)==FALSE)
+			return FALSE;
+
+	new->Port_3C4[0x08] = sr8;
+	new->Port_3C4[0x09] &= 0xF0;
+	new->Port_3C4[0x09] |= (sr9 & 0xF);
+	new->Port_3C4[0x0F] &= 0xDF;
+	new->Port_3C4[0x0F] |= (srF & 0x20);
+	new->Port_3C4[0x16] = sr16;
+
+	new->Port_3C4[0x0A] = (
+		(((mode->CrtcVSyncEnd  ) & 0x10 ) <<  1) | /* D5 */
+		(((mode->CrtcVSyncEnd+1) & 0x100) >>  4) | /* D4 */
+		(((mode->CrtcVSyncStart) & 0x400) >>  7) | /* D3 */
+		(((mode->CrtcVSyncStart) & 0x400) >>  8) | /* D2 */
+		(((mode->CrtcVDisplay-1) & 0x400) >>  9) | /* D1 */
+		(((mode->CrtcVTotal-2)   & 0x400) >> 10)); /* D0 */
+
+	new->Port_3C4[0x0B] = (
+		(((mode->CrtcHSyncStart >> 3) & 0x300) >> 2)       | /* D76 */
+		((((mode->CrtcHSyncStart >> 3) - 1) & 0x300) >> 4) | /* D54 */
+		((((mode->CrtcHDisplay >> 3) - 1) & 0x300) >> 6)   | /* D32 */
+		((((mode->CrtcHTotal >> 3) - 5) & 0x300) >> 8));     /* D10 */
+			
+	new->Port_3C4[0x0C] = (
+		(((mode->CrtcHSyncEnd >> 3) & 0x20) >> 3) | /* D2 */
+		(((mode->CrtcHSyncEnd >> 3) & 0xC0) >> 6)); /* D10 */
+
+	if ((mode->Flags & V_INTERLACE) &&
+	    (SISchipset==SIS630 || SISchipset==SIS540))  {
+		temp = ((new->Port_3C4[0x0B] & 0xC0) << 2) | new->std.CRTC[4];
+		temp -= (((((new->Port_3C4[0x0B] & 0x03) << 8) | new->std.CRTC[0]) + 5)/2);
+		new->Port_3D4[0x1A] &= 0xFC;
+		new->Port_3D4[0x1A] |= (temp & 0x300) >> 8;
+		new->Port_3D4[0x19] = temp & 0xFF;
+	}
+	else  {
+		new->Port_3D4[0x1A] &= 0xFC;
+		new->Port_3D4[0x19] = 0;
+	}
+
+	new->std.CRTC[0x13] = offset & 0xFF;
+	new->Port_3C4[0x0E] &= 0xF0;
+	new->Port_3C4[0x0E] |= (offset >> 8) & 0x0F;
+
+	new->Port_3C4[0x0F] |= 0x08; /* disable line compare */
+	new->Port_3C4[0x10] =
+		((mode->HDisplay * (vgaBitsPerPixel >> 3) + 63) >> 6) + 1;
+	new->Port_3C4[0x06] |= 0x01;
+
+	if ( ClockProgramable() ){
+	    /* init clock */
+	    if (!sisClockFind(mode->Clock, &new->sisClock)) {
+		ErrorF("Can't find desired clock\n");
+		return (FALSE);
+	    }
+	}
+
+	if (new->std.NoClock >= 0) {
+	    new->ClockReg2 = inb(0x3CC) | 0x0C; /* set internal/external clk */
+	}
+
+	new->Port_3C4[0x20] |= 0x81; /* linear address mode, MMIO */
+	new->Port_3C4[0x21] &= 0xBF;
+	new->Port_3C4[0x21] |= 0x80; /* PCI 32-bit access */
+	/* Enable Turbo-queue */
+        if (sisTurboQueue) {
+		new->Port_3C4[0x26] = (turbo_queue_address >>  6) & 0xFF;
+		new->Port_3C4[0x27] = (turbo_queue_address >> 14) & 0x03;
+		new->Port_3C4[0x27] |= 0x80;
+	} else {
+            /* Disable turbo-queue */
+		new->Port_3C4[0x27] &= 0x7F;
+	}
+	
+	new->Port_3C4[0x1E] = 0x40;
+
+	if (vga256InfoRec.clock[mode->Clock] > 150000) {
+		new->Port_3C4[0x07] |= 0x80;
+		new->Port_3C4[0x32] |= 0x08;
+	} else {
+		new->Port_3C4[0x07] &= 0x7F;
+		new->Port_3C4[0x32] &= 0xF7;
+	}
+
+#endif
+        return(TRUE);
+}
 
 /*
  * SISInit --
@@ -2011,7 +2496,7 @@ SISInit(mode)
 {
 	unsigned char temp;
 	int offset;
-	int i;
+	int i, last;
 	unsigned int	CRT_CPUthresholdLow ;
 	unsigned int	CRT_CPUthresholdHigh ;
 	unsigned char	CRT_ENGthreshold ;
@@ -2024,29 +2509,29 @@ SISInit(mode)
 	 */
 	vgaHWInit(mode, sizeof(vgaSISRec));
 
+	switch(SISchipset) {
+	case SIS5597: last = SIS5597_3C5_LAST;
+		break;
+	case SIS6326: last = SIS6326_3C5_LAST;
+		break;
+	case SIS530: last = SIS530_3C5_LAST;
+		break;
+	case SIS630:
+	case SIS540:
+	case SIS300: last = SIS300_3C5_LAST;
+		break;
+	default: last = DEFAULT_3C5_LAST;
+		break;
+	}
+
 	/* get SIS Specific Registers */
-	for (i = 5 ; i <= 0x37; i++) {
+	for (i = 5 ; i <= last; i++) {
 	    outb(0x3c4, i);
 	    new->Port_3C4[i] = inb(0x3c5);
 	}
 	
-	if (SISchipset == SIS5597)
-  	  for (i = 0x38 ; i <= 0x39; i++) {
-	      outb(0x3c4, i);
-	      new->Port_3C4[i] = inb(0x3c5);
-	  }
-
-	if (SISchipset == SIS6326)
-  	  for (i = 0x38 ; i <= 0x3c; i++) {
-	      outb(0x3c4, i);
-	      new->Port_3C4[i] = inb(0x3c5);
-	  }
-
-	if (SISchipset == SIS530)
-  	  for (i = 0x38 ; i <= 0x3f; i++) {
-	      outb(0x3c4, i);
-	      new->Port_3C4[i] = inb(0x3c5);
-	  }
+	if (SISfamily == SIS300)
+		return(SIS300Init(mode));
 
 #if !defined(MONOVGA) && !defined(XF86VGA16)
 	offset = vga256InfoRec.displayWidth >>
@@ -2079,7 +2564,10 @@ SISInit(mode)
 	} 
 
 	new->BankReg = 0x02;
-	new->DualBanks = 0x01; 
+	if (SISchipset == SIS530)
+		new->DualBanks = 0x01;
+	else
+		new->DualBanks = 0x00; 
 
 	if ( sisUseLinear ) {
 	    new->BankReg |= 0x80;  	/* enable linear mode addressing */
@@ -2167,7 +2655,7 @@ SISInit(mode)
 	 *  (pixelsize, displaysize, dotclock)
          *  worst case is not optimal
 	 */
-	CRT_ENGthreshold = 0x1F; 
+	CRT_ENGthreshold = 0x1F; /* ?????? old == 0x1F	*/
 	FindCRT_CPUthreshold(vga256InfoRec.clock[new->std.NoClock], 
 			     vgaBitsPerPixel,
 			     &CRT_CPUthresholdLow, &CRT_CPUthresholdHigh);
@@ -2244,8 +2732,14 @@ SISInit(mode)
 #endif
 	    }
 	    temp = turbo_queue_address / 32;
-	    new->Port_3C4[0x2C] = temp & 0x7F;
+	    if (SISchipset == SIS530)
+		new->Port_3C4[0x2C] = temp & 0xFF;
+	    else
+		new->Port_3C4[0x2C] = temp & 0x7F;
 #ifdef DEBUG
+	    if (SISchipset == SIS530)
+		ErrorF("Turbo-queue buffer at top - %d K; sr2C = 0x0%x \n", vga256InfoRec.videoRam - (temp*32), temp & 0xFF);
+	    else
 		ErrorF("Turbo-queue buffer at top - %d K; sr2C = 0x0%x \n", vga256InfoRec.videoRam - (temp*32), temp & 0x7F);
 #endif
 	} else {
@@ -2302,29 +2796,33 @@ SISAdjust(x, y)
   	outw(vgaIOBase + 4, (base & 0x00FF00) | 0x0C);
 	outw(vgaIOBase + 4, ((base & 0x00FF) << 8) | 0x0D);
 
-	read_xr(0x27,temp);
-        temp &= 0xF0;
-	temp |= (base & 0x0F0000) >> 16;
-	write_xr(0x27,temp);
+	if (SISfamily == SIS300) {
+		write_xr(0x0d, (base >> 16) & 0xFF);
+	} else {
+		read_xr(0x27,temp);
+		temp &= 0xF0;
+		temp |= (base & 0x0F0000) >> 16;
+		write_xr(0x27,temp);
 #ifdef DEBUG
 	ErrorF("3C5/27h set to hex %2X, base %d\n",  temp, base);
 #endif
 
-	if (SISchipset == SIS530) {
+		if (SISchipset == SIS530) {
 		/* Extended screen starting address Bit[20] */
-		read_xr(0x26,temp);
-		temp &= 0xFE;
-		temp |= (base >> 20) & 1;
-		write_xr(0x26,temp);
-	}
+			read_xr(0x26,temp);
+			temp &= 0xFE;
+			temp |= (base >> 20) & 1;
+			write_xr(0x26,temp);
+		}
 
 #ifdef XFreeXDGA
-	if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
+		if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
 		/* Wait until vertical retrace is in progress. */
-		while (inb(vgaIOBase + 0xA) & 0x08);
-		while (!(inb(vgaIOBase + 0xA) & 0x08));
-	}
+			while (inb(vgaIOBase + 0xA) & 0x08);
+			while (!(inb(vgaIOBase + 0xA) & 0x08));
+		}
 #endif
+	}
 }
 
 /*

@@ -2,17 +2,17 @@
 
 <article>
 
-<title>Release Notes for XFree86&tm; 3.3.5
+<title>Release Notes for XFree86&tm; 3.3.6
 <author>The XFree86 Project, Inc
-<date>17 August 1999
+<date>31 December 1999
 
 <abstract>
 
 This document describes the bugs fixed and the features added in
-XFree86 3.3.5 compared with the 3.3.4 release, 
+XFree86 3.3.6 compared with the 3.3.5 release, 
 It also includes installation instructions for the binary distributions.
 It is strongly recommended that anyone using XFree86 update to version
-3.3.5. 
+3.3.6. 
 
 </abstract>
 
@@ -47,11 +47,8 @@ In September 1998 The Open Group changed the copyright of X11R6.4
 from the non-free copyright used for the initial release of
 X11R6.4 back to the old free X Consortium style copyright.
 Given the fact that our main development focus is on XFree86-4.0 and that 
-the 3.3.3 release was intended mostly to fix some bugs and get out new
-drivers to the public, we opted not to include X11R6.4 in XFree86-3.3.3.
-Since XFree86-3.3.5, XFree86-3.3.4 and XFree86-3.3.3.1 are merely quick bug fix releases to
-XFree86-3.3.3 (that happen to add support for some new common hardware as
-well), the same applies here.
+the 3.3.x releases are intended mostly to fix some bugs and get out new
+drivers to the public, we opted not to include X11R6.4 in XFree86-3.3.x.
 <p>
 XFree86-4.0 will be X11R6.4 based.
 <p>
@@ -68,6 +65,19 @@ Users running FreeBSD 3.0 should note that only ELF binaries are provided
 with this release.  a.out shared libraries are also included for compatibility
 purposes.
 
+<p> 
+<sect> What's new in 3.3.6?
+<p>
+<itemize>
+  <item>Support for ATI Rage128.
+  <item>Support for ATI Rage Mobility
+  <item>Support for SiS 540/630 and SiS 300
+  <item>Support for Silicon Motion Lynx chipsets
+  <item>Support for Savage2000
+  <item>Support for NVIDIA GeForce
+  <item>Support for Intel i810 (not enabled by default as it needs kernel module)
+  <item>Fixes to several drivers
+</itemize>
 <p> 
 <sect> What's new in 3.3.5?
 <p>
@@ -263,17 +273,17 @@ as set forth at <htmlurl name="http://www.opensource.org/osd.html"
 url="http://www.opensource.org/osd.html">. 
 This definition is actually a subset of our requirements.
 <p>
-All code in XFree86 3.3.5 satisfies the Open Source Software definition.
+All code in XFree86 3.3.6 satisfies the Open Source Software definition.
 <p>
 
-<sect>Installing the XFree86 3.3.5 Release
+<sect>Installing the XFree86 3.3.6 Release
 <p>
-The XFree86 3.3.5 binaries are distributed as a full release.
+The XFree86 3.3.6 binaries are distributed as a full release.
 <!--
 , and as an
-update to the 3.3.3 release.  For information about upgrading from 3.3.3
-to 3.3.4 see section <ref id="upgrade"
-name="Updating XFree86 3.3.3 to XFree86 3.3.4">.
+update to the 3.3.5 release.  For information about upgrading from 3.3.5
+to 3.3.6 see section <ref id="upgrade"
+name="Updating XFree86 3.3.5 to XFree86 3.3.6">.
 -->
 
 NOTE: the X servers are no longer installed setuid root.  If you are
@@ -281,7 +291,7 @@ starting your X servers with startx/xinit, or something similar, you
 will need a copy of the setuid Xwrapper, and an updated xinit.  These
 can be found in Xbin.tgz.
 
-What follows is a list of the XFree86 3.3.3 components.  There may be
+What follows is a list of the XFree86 3.3.6 components.  There may be
 some variations in this for some OSs.
 
 The following are required for all new installations, or when upgrading
@@ -423,8 +433,8 @@ Xvfb.tgz        Virtual framebuffer X server
 Xprt.tgz        X Print server
 Xps.tgz         PostScript version of the documentation
 Xhtml.tgz       HTML version of the documentation
-Xjdoc.tgz       Documentation in Japanese (for version 3.3.4)
-Xjhtm.tgz       HTML version of the documentation in Japanese (3.3.4)
+Xjdoc.tgz       Documentation in Japanese
+Xjhtm.tgz       HTML version of the documentation in Japanese
 Xlkit.tgz       X server LinkKit
 Xlk98.tgz       X server LinkKit for PC98 servers
 </verb>
@@ -509,16 +519,16 @@ optional for an existing installation.  Refer to the
 information.
 
 <!--
-<sect>Updating XFree86 3.3.3 to XFree86 3.3.4<label id="upgrade">
+<sect>Updating XFree86 3.3.5 to XFree86 3.3.6<label id="upgrade">
 <p>
-The following is required to update an XFree86 3.3.3 (or XFree86-3.3.3.1)
-installation to XFree86 3.3.4:
+The following is required to update an XFree86 3.3.5
+installation to XFree86 3.3.6:
 <quote>
 <verb>
 extract              XFree86 extraction utility
-X334upd.tgz          XFree86 3.3.4 update
-Xdoc.tgz             XFree86 3.3.4 documentation
-X{SERVER}.tgz        3.3.4 Server update from the Servers or PC98_Servers
+X336upd.tgz          XFree86 3.3.6 update
+Xdoc.tgz             XFree86 3.3.6 documentation
+X{SERVER}.tgz        3.3.6 Server update from the Servers or PC98_Servers
 		     directory.
                      You must select the appropriate SERVER file for the
 		     server that you are currently running (i.e. XI128.tgz).
@@ -529,17 +539,17 @@ First make the extract utility executable by running:
 <tscreen><verb>
 	chmod 755 extract
 </verb></tscreen>
-To update your installation to 3.3.4, run the following as
+To update your installation to 3.3.6, run the following as
 <bf>root</bf>:
 <tscreen><verb>
 	cd /usr/X11R6
-	/var/tmp/extract /var/tmp/X334upd.tgz
+	/var/tmp/extract /var/tmp/X336upd.tgz
 	/var/tmp/extract /var/tmp/X{SERVER}.tgz
 </verb></tscreen>
 -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.79 1999/08/17 07:39:30 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.82 1999/12/31 14:10:41 robin Exp $
 </verb>
 
 </article>

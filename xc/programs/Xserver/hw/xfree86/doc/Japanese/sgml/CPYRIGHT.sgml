@@ -16,7 +16,7 @@ copyright: -->
 有する:
 
 <p>
-Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
 
 <!-- Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -278,13 +278,16 @@ are met:-->
     
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.2 1999/06/02 07:51:41 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.3 1999/11/26 15:23:37 hohndel Exp $
+
+
+
 
 
 $XConsortium: CPYRIGHT.sgml /main/5 1996/10/25 16:24:53 kaleb $
 
 </verb>
-<code></code>
+<hrule>
 
 このファイルは
 xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.2 1998/01/24 11:55:06
@@ -300,9 +303,9 @@ XFree86 プロジェクト社と X Japanese Documentation Project にありますが、
 <verb>
 Copyright (C) 1995-1998 The X Japanese Documentation Project
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.2 1999/06/02 07:51:41 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2.2.3 1999/11/26 15:23:37 hohndel Exp $
 </verb>
-<code></code>
+<hrule>
 &lsqb;EOF&rsqb;
 
 </article>

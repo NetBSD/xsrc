@@ -1,3 +1,181 @@
+XFree86 3.3.6 (8 January 2000)
+1577. Allow I/O port access throughout I128 server generation (Robin Cutshaw).
+1576. Fix I/O port access problem for Linux kbd rate code (#3555,
+      Keith Packard).
+1575. Add GLX for GeForce to NVIDIA driver (#3553, Jarno Paananen).
+1574. Fix Trio3D to work at 15/16 bpp above 115 MHz (#3547, Harald Koenig).
+1573. Fix for 2 Meg CL5480 cards (#3538, Mark Vojkovich).
+1572. Fix S3 Trio3D problems caused by driving the PLL in the wrong
+      frequency range (#3515, Harald Koenig).
+1571. Add an option to set the pressure threshold to generate a button 1 
+      on Wacom Graphire and Inutos model tablets (#3509, Frederic Lepied).
+1570. Update Japanese docs (#3506, Fujiwara Teruyoshi).
+1569. Fix S3 Savage loop/lockup when running "xlock bubble" at
+      resolutions > 1152 (#3507, Tim Roberts).
+1568. Re-enable the Linux kbd rate handling. Values below 10 for rate
+      are ignored (to work around config files with the silly value 5 as a
+      default) (#3504, Harald Koenig).
+1567. Fix several serious bugs for sis630/540 A1. Add version number for
+      sis driver. Fix SiS 630/540 threadhold issue. Support interlance
+      mode. Using bandwidth to decide the supported modes (Can-Ru Yeou, SiS).
+
+XFree86 3.3.5Za (20 December 1999)
+1566. Stop S3 drivers to recognize SonicVibes cards as VGA cards (#3502,
+      Takashi Manabe).
+1565. Fix Wacom Graphire support and Wacom IV cursor problems
+      (#3498,3500, Frederic Lepied).
+1564. Fix type in S3 Trio3D/2X memory detection (#3494, Harald Koenig).
+1563. Fix memleak util to work on Linux/glibc (#3492, Keith Packard).
+1562. Updates to xf86Summa module. Remove artificial limitations, fix
+      tablet mapping to correspond to screen aspect ratio, add
+      resolution config option, add option to use Hitachi 1217D tablet
+      in Summa mode (#3490, Huver Hu).
+1561. Fix compile problem with libc5 (#3487, Thomas Dickey).
+1560. Fix default keyboard repeat in xf86config (#3486, Harald Koenig).
+1559. Fix problems with reading the BIOS on OS/2 (#3483, Holger Veit).
+1558. Improved Danish keyboard layout (#3481, Keld Jorn Simonsen).
+1557. Remove wrongly merged kbdrate patch (#3478, Harald Koenig).
+1556. Update XF86Config manpage for wsmouse and Usb protocols (#3477,
+      Matthieu Herrb).
+1555. OS/2 documentation update (#3476, Holger Veit).
+1554. Fix the problems with ViRGE/MX for Compaq Armada 7400/7800
+      notebooks (#3475, Harald Koenig).
+1553. Fix build problem on PANIX(SVR4.0) (#3474, Takaaki Nomura).
+1552. Enable extended PS/2 mouse types on LynxOS x86 (#3408, Thomas Mueller).
+1551. Fix pixel clock programming problem CT69000 (#3409, Thomas Mueller).
+
+XFree86 3.3.5Z (10 December 1999)
+1550. Disable setting the keyboard repeat rate on Linux for now.
+1549. Update Documentation and Cards file (Dirk Hohndel).
+1548. Fix S3 Aurora64V+ driver for some laptops (#3469, Harald Koenig).
+1547. Optionally enable the use of crypt() for xdm on LynxOS (#3471,
+      Thomas Mueller).
+1546. Clearify documentation on USB mouse support in FreeBSD (#3468,
+      Kazutaka Yokota).
+1545. Get Permedia boards with disabled  PCI COMMAND IO bit recognized
+      and fix a localbuffer problem (#3465, Stefan Dirsch).
+1544. Work around Lynx not having mkstemp (#3461, Thomas Mueller).
+1543. Add /usr/X11R6/bin to the PATH that xon is looking at (#3454,
+      Harald Koenig).
+1542. Add driver for Silicon Motion Lynx chipsets (Frido Garritsen,
+      Tom Kao, Kevin Walsh, Silicom Motion).
+
+XFree86 3.3.5c (3 December 1999)
+1541. Fix font server to not crash on bogus requests (#3449, Keith Packard).
+1540. Fix font library to pick bitmap fonts over scaled ones if average
+      width field is wildcarded (#3448, Keith Packard).
+1539. Fix core dump in lbxproxy (Thomas Mueller).
+1538. Add SiS630/SiS540 acceleration, fix SiS300 threadhold problem
+      (Can-Ru Yeou, SiS).
+1537. Add thread support for FreeBSD 3.3 (#3398, Carlos A M dos Santos).
+1536. Fix Savage driver (Tim Roberts, Harald Koenig).
+1535. Add OpenBSD-2.6 USB support. This should work for NetBSD and FreeBSD
+      as well, but has not been enabled (#3441,3442, Matthieu Herrb)
+1534. Update s3_savage driver to support Savage3D, Savage4, and
+      Savage2000 (#3444, Tim Roberts).
+1533. Fix Linux keyboard rate setting code and remove floating point
+      calculations (3440, Derek Fawcus).
+1532. Port GeForce suport from 3.9 to 3.3 (#3438,3439, Jarno Paananen, 
+      original code from Mark Vojkovich, Chas Inman).
+1531. Resync PC98 Imakefile, fix trident driver (#3431, Takaaki Nomura,
+      Satoshi Kimura).
+1530. Update Japanese documentation (#3334, Fujiwara Teruyoshi).
+1529. Fix some insecure uses of mktemp(3) in the imake program (#3428,
+      Colin Phipps).
+1528. Add support for register dump in log file and dumping core after
+      crash (Linux i386 only) (#3412. Harald Koenig).
+1527. Fix Savage driver (#3412, Tim Roberts).
+1526. Actually add Linux keyboard rate code from change 1512 (#3412,
+      Harald Koenig).
+1526. Fix typo in scanpci (#3412, Harald Koenig).
+1525. Xterm fix (ptyInitialErase) (#3376, Thomas Dickey).
+1524. Make SuperProbe check primary cards, only (#3374, Harald Koenig).
+
+XFree86 3.3.5b (18 November 1999)
+1523. Fix macro expansion in s3_savage server (#3403, Harald Koenig).
+1522. Fix some G200/G400 problems, add an option for 80Hz sample rates
+      on PS/2 mice (#3401, Mark Vojkovich).
+1521. Change the SwapAxes option elographics and microtouch drivers to
+      SwapXY to match an already existing option in the Dynapro driver.
+      Add a Focus class capability to the elographics driver (#3394,
+      Patrick Lecoanet).
+1520. Fix Xos_r.h compile problem (#3389, Kars de Jong).
+1519. Update mouse rate handling (#3388, Harald Koenig).
+1518. Fix Rage128 driver output if chip override is given (#3386, 
+      Kevin Martin).
+1517. Fix NULL pointer dereference in misprite.c (#3380 Edward Wang).
+1516. Add detection for S3 Savage4, Savage2000 and clean up Trio3D/Savage3D
+      detection in SuperProbe (#3381,3384 Harald Koenig, Tim Roberts).
+1515. Display load in chooser menues for *BSD systems (#3375, 
+      Christian Weisgerber).
+1514. Update QNX/Neutrino support (#3359, Frank Guangxin Liu).
+1513. Fix drawing transparent 8x8 stipples and a problem with 8 bpp
+      rendering in r128 server (#3356, Rik Faith).
+1512. Add kbd rate support for Linux (#3362, Harald Koenig).
+1511. Update Portuguese XKB map (#3351, Joao Esteves, Francisco Colaco).
+1510. Clean up Cards file (#3346, Harald Koenig).
+1509. Trio3D/2X fix and cleanup (#3344, Harald Koenig).
+1508. Fix ViRGE/MX and APM (#3345, Harald Koenig).
+1507. Fix typo in Rage128 driver (#3350, Anthony Tong).
+1506. Fix XAA loop (#3347, Harald Koenig).
+1505. Add i810 driver (#3332, Keith Whitwell PI).
+1504. Fix a lockup bug in 3dfx server and improve interaction with glide
+      (#3330,3331 Daryll Strauss).
+1503. Add support for Wacom Graphire and minimize timeouts (#3329,
+      Frederic Lepied).
+1502. Handle console switches for XInput devices (#3328, Frederic Lepied).
+1501. Bring over some xterm changes from the 3.9 branch (#3327, Tom Dickey).
+1500. Disable CPU to screen color expansion on Alliance chips (#3320,
+      Loic Grenie).
+1499. Rendition documentation updates (#3315, Dejan Ilic).
+1498. Make ati driver ignore Rage128 cards (#3319, Marc LaFrance).
+1497. Actually add the changes from item 1467 (#3115, Scott J. Bertin).
+
+XFree86 3.3.5a (12 October 1999)
+1496. Fix ViRGE driver when starting the server with Linux fbdev enabled
+      (#3304, Harald Koenig).
+1495. Added SwapAxes and PortraitMode options in Elographics and Microtouch
+      drivers. Microtouch driver now supports ThruGlass touchscreens
+      (contributed by Andreas Micklei). Updated XF86Conf.man to reflect the
+      current state of the drivers. (#3268, Patrick Lecoanet).
+1494. Fix pm2 acceleration build for PPC (#3266, Sven Luther).
+1493. ATI driver: Rage XC & Rage XL fixes. Rage Mobility support.
+      Disable TVOUT feature of 3D Rage (#3263,3312, Marc LaFrance, 
+      Christian Lupien).
+1492. Remove scanpci's redundant check for "root", have it check for
+      euid, stop it from probing too manz devices per bus (#3263, 3312,
+      Marc LaFrance).
+1491. Fix some problems that prevented use of acceleration on some chipsets 
+      with Trident driver (#3261, Harald Koenig)
+1490. Add iso8859-1ified micro.bdf (#3246, Mark Montague).
+1489. Resync SuperProbe and scanpci with 3.9.16a (#3225, Marc LaFrance).
+1488. Rage LCD: Fix determination of panel dimensions with older BIOS's. 
+      Fix panel display problems by ensuring 8-dot character clocks are always
+      used (#3218, Marc LaFrance).
+1487. NetBSD does not have mktemp (#3205, Matthias Scheler).
+1486. Better default memory size for MGA G400 cards (#3201, Matthias Scheler).
+1485. Update S3_Savage driver to fall back to traditional register setting
+      when it encounters a mode not supported by the BIOS (#3198, Tim Roberts).
+1484. Make MicrotTouch driver drop packages for unconfigured devices
+      (#3177, David Woodhouse).
+1483. More card entries (#3152, Takashi Manabe)
+1482. Extend XF86Setup/xf86config to handle multiple Cards files 
+      (Dirk Hohndel)
+1481. More SiS fixes (provided by SiS).
+1480. Add Rage128 server (Alan Hourihane, Dirk Hohndel). Add R128 driver
+      that is partly based on that code (Rik Faith, Kevin Martin, PI).
+1479. Fix a problem with xman that prevents it form recognising the
+      XM_DELETE_WINDOW message when xman is run with the "topbox" disabled
+      (#3207, Carlos A M dos Santos).
+1478. Prevent xkbcomp from overwriting writing through symlinks (#3206,
+      Branden Robinson).
+1477. Use ncurses instead of termcap for Linux/libc6 (#3204, H.J. Lu).
+1476. Fix a problem building xterm with gcc on Solaris 2.x.
+1475. Update the default xdm config file to disable listening for XDMCP
+      requests (#3183, Matthieu Herrb).
+1474. Fix a typo in ObjectFromAsmSource() in xf86.rules (#3157,
+      Matthieu Herrb).
+
 XFree86 3.3.5 (23 August 1999)
 1473. Update preinst.sh (#3140,3143, Joe Gibson).
 1472. Update NetBSD and OpenBSD docs (#3136, Matthieu Herrb).
@@ -5840,4 +6018,4 @@ XFree86 3.0a (28 April 1994)
 
 XFree86 3.0 (26 April 1994)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.277 1999/08/23 08:49:37 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.303 2000/01/08 03:27:50 robin Exp $

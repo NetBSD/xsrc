@@ -7,11 +7,9 @@
 
   目次
 
-
   1. クロック設定用外部プログラムの使用
   2. クロック設定用外部プログラムの開発
   3. 日本語訳について
-
 
   ______________________________________________________________________
 
@@ -26,7 +24,6 @@
   ています:
 
        ClockProg  "commandpath"
-
 
   ここで commandpath はクロック設定プログラムのフルパス名です。 command-
   path に引き数を付けることはできません。
@@ -50,7 +47,6 @@
   決まっているカードではインデックス番号を使うことになるでしょうし、ク
   ロックが完全にプログラマブルなカードでは周波数を引き数にすることになる
   でしょう。
-
 
   2.  クロック設定用外部プログラムの開発
 
@@ -86,16 +82,9 @@
   クロック設定に外部プログラムを使うというアイディアは、 Frank Klemm さ
   ん <pfk@rz.uni-jena.de> が提案したものです。
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.clkprog,v 1.1.2.1 1999/06/02 07:50:58 hohndel Exp $
-
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.clkprog,v 1.1.2.2 1999/11/26 15:23:18 hohndel Exp $
 
   $XConsortium: clkprog.sgml /main/3 1996/02/21 17:46:48 kaleb $
-
-
-
 
   3.  日本語訳について
 
@@ -105,28 +94,4 @@
   問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86
   プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
   Project にあります。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

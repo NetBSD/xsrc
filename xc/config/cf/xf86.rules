@@ -1,5 +1,5 @@
 XCOMM $XConsortium: xf86.rules /main/9 1996/10/31 14:54:26 kaleb $
-XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.16.2.2 1999/07/23 09:00:21 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.16.2.3 1999/09/04 07:08:46 dawes Exp $
 
 /*
  * These rules are needed to build the Xfree86 X Servers
@@ -52,7 +52,7 @@ src.o:  src.s								@@\
 	AssembleObject(flags)						@@\
 									@@\
 src.i:  src.s								@@\
-	CPPOnlyAsm(dst,flags)						@@\
+	CPPOnlyAsm(src,flags)						@@\
 									@@\
 depend:: src.s
 #endif
