@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86config.h,v 1.4 2000/11/30 20:55:18 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86config.h,v 1.5 2005/01/07 23:03:15 dawes Exp $
  */
 
 #include "config.h"
@@ -102,10 +102,5 @@ int xf86renameDevice(XF86ConfigPtr, XF86ConfDevicePtr, char*);
 int xf86renameMonitor(XF86ConfigPtr, XF86ConfMonitorPtr, char*);
 int xf86renameLayout(XF86ConfigPtr, XF86ConfLayoutPtr, char*);
 int xf86renameScreen(XF86ConfigPtr, XF86ConfScreenPtr, char*);
-
-extern void xf86freeAdaptorLinkList(XF86ConfAdaptorLinkPtr);
-extern void xf86freeDisplayList(XF86ConfDisplayPtr);
-extern void xf86freeModeList(XF86ModePtr);
-extern void xf86freeVendorSubList(XF86ConfVendSubPtr);
 
 #endif /* _xf86cfg_xf86config_h */

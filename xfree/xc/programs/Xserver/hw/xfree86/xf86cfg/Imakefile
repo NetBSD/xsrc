@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.26 2003/12/12 03:02:28 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.29 2004/11/26 11:27:20 tsi Exp $
 
 XCOMM CDEBUGFLAGS=-g -Wall -ansi -pedantic
 
@@ -99,10 +99,13 @@ MODULEDEFINES  = -DUSE_MODULES
 INCLUDES       = -I../common -I../scanpci -I../loader -I$(XF86OSSRC) \
 		 -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
 		 -I$(FONTLIBSRC)/include
+#if !HasStrlcat
+STRLCAT_DEFS = -DNEED_STRLCAT
+#endif
 #if !HasSnprintf
 SNPRINTF_DEFS  = -DNEED_SNPRINTF
 #endif
-WRAPPERDEFINES = -DSELF_CONTAINED_WRAPPER $(SNPRINTF_DEFS)
+WRAPPERDEFINES = -DSELF_CONTAINED_WRAPPER $(STRLCAT_DEFS) $(SNPRINTF_DEFS)
 #endif
 
 #if HasNCurses

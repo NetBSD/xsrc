@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/miext/rootless/Imakefile,v 1.3 2003/10/24 00:33:14 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/miext/rootless/Imakefile,v 1.4 2004/03/18 07:07:11 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -39,7 +39,7 @@ INCLUDES = -I. -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
            -I$(EXTINCSRC) -I$(ACCELDIRS)
 
 NormalLibraryObjectRule()
-LibraryModuleTarget(rootless,$(OBJS))
+LibraryModuleTarget(rootless,$(OBJS),.)
 
 DependTarget()
 

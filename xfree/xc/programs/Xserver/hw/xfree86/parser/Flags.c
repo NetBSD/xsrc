@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.24 2004/02/13 23:58:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.27 2005/01/26 05:31:50 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -27,7 +27,7 @@
  * 
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -72,6 +72,50 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright © 2003, 2004, 2005 David H. Dawes.
+ * Copyright © 2003, 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 
 /* View/edit this file with tab stops set to 4 */
@@ -86,6 +130,7 @@ extern LexRec val;
 static xf86ConfigSymTabRec ServerFlagsTab[] =
 {
 	{ENDSECTION, "endsection"},
+	{IDENTIFIER, "identifier"},
 	{NOTRAPSIGNALS, "notrapsignals"},
 	{DONTZAP, "dontzap"},
 	{DONTZOOM, "dontzoom"},
@@ -103,11 +148,12 @@ static xf86ConfigSymTabRec ServerFlagsTab[] =
 	{-1, ""},
 };
 
-#define CLEANUP xf86freeFlags
+#define CLEANUP xf86freeFlagsList
 
 XF86ConfFlagsPtr
 xf86parseFlagsSection (void)
 {
+	int has_ident = FALSE;
 	int token;
 	parsePrologue (XF86ConfFlagsPtr, XF86ConfFlagsRec)
 
@@ -121,9 +167,17 @@ xf86parseFlagsSection (void)
 		case COMMENT:
 			ptr->flg_comment = xf86addComment(ptr->flg_comment, val.str);
 			break;
+		case IDENTIFIER:
+			if (xf86getSubToken (&(ptr->flg_comment)) != STRING)
+				Error (QUOTE_MSG, "Identifier");
+			if (has_ident)
+				Error (MULTIPLE_MSG, "Identifier");
+			ptr->flg_identifier = val.str;
+			has_ident = TRUE;
+			break;
 			/* 
-			 * these old keywords are turned into standard generic options.
-			 * we fall through here on purpose
+			 * These old keywords are turned into standard generic options.
+			 * We fall through here on purpose.
 			 */
 		case DEFAULTLAYOUT:
 			strvalue = TRUE;
@@ -196,18 +250,20 @@ xf86parseFlagsSection (void)
 #undef CLEANUP
 
 void
-xf86printServerFlagsSection (FILE * f, XF86ConfFlagsPtr flags)
+xf86printServerFlagsSection (FILE * f, XF86ConfFlagsPtr ptr)
 {
-	XF86OptionPtr p;
-
-	if ((!flags) || (!flags->flg_option_lst))
+	if ((!ptr) || (!ptr->flg_option_lst))
 		return;
-	p = flags->flg_option_lst;
-	fprintf (f, "Section \"ServerFlags\"\n");
-	if (flags->flg_comment)
-		fprintf (f, "%s", flags->flg_comment);
-	xf86printOptionList(f, p, 1);
-	fprintf (f, "EndSection\n\n");
+	while (ptr) {
+		fprintf (f, "Section \"ServerFlags\"\n");
+		if (ptr->flg_comment)
+			fprintf (f, "%s", ptr->flg_comment);
+		if (ptr->flg_identifier)
+			fprintf (f, "\tIdentifier   \"%s\"\n", ptr->flg_identifier);
+		xf86printOptionList(f, ptr->flg_option_lst, 1);
+		fprintf (f, "EndSection\n\n");
+		ptr = ptr->list.next;
+	}
 }
 
 static XF86OptionPtr
@@ -239,13 +295,18 @@ xf86addNewOption (XF86OptionPtr head, char *name, char *val)
 }
 
 void
-xf86freeFlags (XF86ConfFlagsPtr flags)
+xf86freeFlagsList (XF86ConfFlagsPtr ptr)
 {
-	if (flags == NULL)
-		return;
-	xf86optionListFree (flags->flg_option_lst);
-	TestFree(flags->flg_comment);
-	xf86conffree (flags);
+	XF86ConfFlagsPtr prev;
+
+	while (ptr) {
+		xf86optionListFree (ptr->flg_option_lst);
+		TestFree(ptr->flg_comment);
+		TestFree(ptr->flg_identifier);
+		prev = ptr;
+		ptr = ptr->list.next;
+		xf86conffree (prev);
+	}
 }
 
 XF86OptionPtr

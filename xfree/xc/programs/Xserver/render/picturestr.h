@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.22 2002/11/23 02:38:15 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.23 2004/06/30 20:21:46 martin Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -301,6 +301,15 @@ extern RESTYPE		GlyphSetType;
 	VERIFY_PICTURE(pPicture, pid, client, mode, err); \
     } \
 } \
+
+void
+ResetPicturePrivateIndex (void);
+
+int
+AllocatePicturePrivateIndex (void);
+
+Bool
+AllocatePicturePrivate (ScreenPtr pScreen, int index2, unsigned int amount);
 
 Bool
 PictureDestroyWindow (WindowPtr pWindow);

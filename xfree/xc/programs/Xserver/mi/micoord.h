@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/micoord.h,v 1.8 2004/02/13 23:58:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/micoord.h,v 1.9 2004/03/21 11:27:06 herrb Exp $ */
 /*
  * Copyright (C) 2000 The XFree86 Project, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
     defined(__i386__) || defined(i386) || \
     defined(__ia64__) || defined(ia64) || \
     defined(__s390x__) || defined(__s390__) || \
-    defined(__AMD64__) || defined(AMD64)
+    defined(__AMD64__) || defined(AMD64) || defined(__amd64__)
 #define GetHighWord(x) (((int) (x)) >> 16)
 #else
 #define GetHighWord(x) (((int) (x)) / 65536)
