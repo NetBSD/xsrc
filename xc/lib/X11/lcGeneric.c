@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.3.2.1 1997/07/19 04:59:10 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.3.2.3 1998/05/19 07:31:41 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -301,7 +301,7 @@ static char *getscope(str,scp)
 char *str;
 FontScope scp;
 {
-    char buff[256],*next;
+    char *next;
     unsigned long start=0,end=0,dest=0,shift=0,direction=0;
     sscanf(str,"[\\x%lx,\\x%lx]->\\x%lx", &start, &end,&dest);
     if( dest ){
@@ -430,7 +430,7 @@ XLCdGenericPart *gen;
         sprintf(name, "%s.%s", csd , "charset_name");
         _XlcGetResource(lcd, "XLC_CHARSET_DEFINE", name, &value, &num);
         _XlcDbg_printValue(name,value,num);
-        if (num > 0) {
+        if (num > 0 && strlen(value[0]) + 5 <= sizeof(cset_name)) {
             strcpy(cset_name,value[0]);
             sprintf(name, "%s.%s", csd , "side");
             _XlcGetResource(lcd, "XLC_CHARSET_DEFINE", name, &value, &num);
@@ -658,8 +658,8 @@ char **value;
 int num;
 {
     ExtdSegment ret;
-    char side_str[128],*ptr;
-    char cset_name[128],*tmp;
+    char *ptr;
+    char *cset_name = NULL;
     int i,new;
     FontScope scope;
     ret = (ExtdSegment)Xmalloc(sizeof(ExtdSegmentRec));
@@ -669,12 +669,18 @@ int num;
     if(strchr(value[0],':')){
         ret->name = (char *)Xmalloc(strlen(value[0])+1);
         if(ret->name == NULL){
-            return NULL; /* XXX ick, without freeing ret */
+	    Xfree(ret);
+            return NULL;
         }
         strcpy(ret->name,value[0]);
         ptr = strchr(ret->name,':');
         *ptr = '\0';
         ptr++;
+	cset_name = (char *)Xmalloc(strlen(ret->name) + 5 + 1);
+	if (cset_name == NULL){
+	    Xfree(ret);
+            return NULL;
+        }
         if( !_XlcNCompareISOLatin1(ptr, "none", 4) ){
             ret->side =  XlcNONE ;
             sprintf(cset_name,"%s:%s",ret->name,"none");
@@ -689,13 +695,15 @@ int num;
     } else {
         ret->name = (char *)Xmalloc(strlen(value[0])+1);
         if(ret->name == NULL){
-            return NULL; /* XXX ick, without freeing ret */
+	    Xfree(ret);
+            return NULL;
         }
         strcpy(ret->name,value[0]);
     }
     ret->area = (FontScope)Xmalloc((num - 1)*sizeof(FontScopeRec));
     if(ret->area == NULL){
-        return NULL; /* XXX ick, without freeing ret */
+	Xfree(ret);
+        return NULL;
     }
     ret->area_num  = num - 1;
     scope = ret->area ;
@@ -705,12 +713,10 @@ int num;
     }
     ret->charset = srch_charset_define(cset_name,&new);
     if(new){
-        tmp = (char *)Xmalloc(strlen(cset_name)+1);
-        if(tmp == NULL){
-            return NULL; /* XXX ick, without freeing ret */
-        }
-        strcpy(tmp,cset_name);
-        ret->charset->name = tmp;
+	ret->charset->name = cset_name;
+    } else {
+	if (cset_name != NULL)
+	    Xfree(cset_name);
     }
     return(ret);
 }
@@ -832,6 +838,8 @@ load_generic(lcd)
 			break;
 		    }
 		}
+		if (strlen(tmp) >= sizeof(encoding))
+			goto err;
 		if (string_to_encoding(tmp, encoding) == False)
 			goto err;
 		add_parse_list(gen, type, encoding, codeset);
@@ -859,6 +867,8 @@ load_generic(lcd)
 	    if (codeset == NULL && (codeset = add_codeset(gen)) == NULL)
 		goto err;
 	    for ( ; num-- > 0; value++) {
+		if (strlen(*value) >= sizeof(name))
+			continue;
 		string_to_encoding(*value, name);
 		charset = NULL;
 		if ((encoding = strchr(name, ':')) &&
@@ -914,7 +924,6 @@ load_generic(lcd)
                 (codeset->byteM)[M-1].byteinfo =
                     (ByteInfo)Xmalloc( num * sizeof(ByteInfoRec));
                 for(ii = 0 ; ii < num ; ii++){
-                    char tmp[128];
                     tmpb = (codeset->byteM)[M-1].byteinfo ;
                     /* default 0x00 - 0xff */
                     sscanf(value[ii],"\\x%lx,\\x%lx",&start,&end);

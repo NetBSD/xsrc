@@ -1,4 +1,4 @@
-/* $TOG: Initialize.c /main/210 1997/05/15 17:29:50 kaleb $ */
+/* $TOG: Initialize.c /main/210.0 1998/05/12 11:19:17 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Initialize.c,v 3.11.2.1 1997/05/17 12:24:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Initialize.c,v 3.11.2.5 1998/05/18 10:34:24 dawes Exp $ */
 
 /*
 
@@ -170,12 +170,18 @@ static void GetHostname (buf, maxlen)
 #ifdef USE_UNAME
     struct utsname name;
 
+    if (maxlen <= 0 || buf == NULL)
+	return;
+
     uname (&name);
     len = strlen (name.nodename);
     if (len >= maxlen) len = maxlen;
-    (void) strncpy (buf, name.nodename, len);
+    (void) strncpy (buf, name.nodename, len-1);
     buf[len-1] = '\0';
 #else
+    if (maxlen <= 0 || buf == NULL)
+	return;
+
     buf[0] = '\0';
     (void) gethostname (buf, maxlen);
     buf [maxlen - 1] = '\0';
@@ -231,7 +237,7 @@ String _XtGetUserName(dest, len)
     String ptr = NULL;
 
     if ((ptr = getenv("USERNAME"))) {
-	(void) strncpy (dest, ptr, len);
+	(void) strncpy (dest, ptr, len-1);
 	dest[len-1] = '\0';
     } else
 	*dest = '\0';
@@ -241,12 +247,13 @@ String _XtGetUserName(dest, len)
     char* ptr;
 
     if ((ptr = getenv("USER"))) {
-	(void) strncpy (dest, ptr, len);
+	(void) strncpy (dest, ptr, len-1);
 	dest[len-1] = '\0';
     } else {
-	if ((pw = _XGetpwuid(getuid(),pwparams)) != NULL)
-	    (void) strcpy (dest, pw->pw_name);
-	else
+	if ((pw = _XGetpwuid(getuid(),pwparams)) != NULL) {
+	    (void) strncpy (dest, pw->pw_name, len-1);
+	    dest[len-1] = '\0';
+	} else
 	    *dest = '\0';
     }
 #endif
@@ -261,8 +268,11 @@ static String GetRootDirName(dest, len)
 #ifdef WIN32
     register char *ptr;
 
+    if (len <= 0 || dest == NULL)
+	return NULL;
+
     if (ptr = getenv("HOME")) {
-	(void) strncpy(dest, ptr, len);
+	(void) strncpy(dest, ptr, len-1);
 	dest[len-1] = '\0';
     } else if (ptr = getenv("USERNAME")) {
 	(void) strcpy (dest, "/users/");
@@ -275,17 +285,21 @@ static String GetRootDirName(dest, len)
     struct passwd *pw;
     static char *ptr;
 
+    if (len <= 0 || dest == NULL)
+	return NULL;
+
     if ((ptr = getenv("HOME"))) {
-	(void) strncpy (dest, ptr, len);
+	(void) strncpy (dest, ptr, len-1);
 	dest[len-1] = '\0';
     } else {
 	if (ptr = getenv("USER"))
 	    pw = _XGetpwnam(ptr,pwparams);
 	else
  	    pw = _XGetpwuid(getuid(),pwparams);
-	if (pw != NULL)
-	    (void) strcpy (dest, pw->pw_dir);
-	else
+	if (pw != NULL) {
+	    (void) strncpy (dest, pw->pw_dir, len-1);
+	    dest[len-1] = '\0';
+	} else
 	    *dest = '\0';
     }
 #endif

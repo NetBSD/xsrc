@@ -25,6 +25,8 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  */
 
+/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.1.1.2.2.3 1998/05/20 05:06:18 dawes Exp $ */
+
 /*
  * SmeBSB.c - Source code file for BSB Menu Entry object.
  *
@@ -54,6 +56,8 @@ extern int abs();
 #include <X11/Xaw/Cardinals.h>
 
 #include <stdio.h>
+
+#include "XawAlloc.h"
 
 #define ONE_HUNDRED 100
 
@@ -587,22 +591,31 @@ Boolean is_left;
     int x, y;
     unsigned int width, height;
     char buf[BUFSIZ];
+    char *pbuf;
+    int len;
     
     if (is_left) {
 	if (entry->sme_bsb.left_bitmap != None) {
 	    if (!XGetGeometry(XtDisplayOfObject(w), 
 			      entry->sme_bsb.left_bitmap, &root, 
 			      &x, &y, &width, &height, &bw, &depth)) {
-		(void) sprintf(buf, "Xaw SmeBSB Object: %s %s \"%s\".", "Could not",
-			"get Left Bitmap geometry information for menu entry ",
-			XtName(w));
-		XtAppError(XtWidgetToApplicationContext(w), buf);
+		char *err1 = "Xaw SmeBSB Object: Could not get Left Bitmap geometry information for menu entry ";
+		len = strlen(err1) + strlen(XtName(w)) + 3 + 1;
+		pbuf = XtStackAlloc(len, buf);
+		if (pbuf == NULL) return;
+		sprintf(pbuf, "%s\"%s\".", err1, XtName(w));
+		XtAppError(XtWidgetToApplicationContext(w), pbuf);
+		XtStackFree(pbuf, buf);
 	    }
 	    if (depth != 1) {
-		(void) sprintf(buf, "Xaw SmeBSB Object: %s \"%s\"%s.", 
-			"Left Bitmap of entry ", 
-			XtName(w), " is not one bit deep.");
-		XtAppError(XtWidgetToApplicationContext(w), buf);
+		char *err1 = "Xaw SmeBSB Object: Left Bitmap of entry ";
+		char *err2 = " is not one bit deep.";
+		len = strlen(err1) + strlen(err2) + strlen(XtName(w)) + 2 + 1;
+		pbuf = XtStackAlloc(len, buf);
+		if (pbuf == NULL) return;
+		sprintf(pbuf, "%s\"%s\"%s", err1, XtName(w), err2);
+		XtAppError(XtWidgetToApplicationContext(w), pbuf);
+		XtStackFree(pbuf, buf);
 	    }
 	    entry->sme_bsb.left_bitmap_width = (Dimension) width; 
 	    entry->sme_bsb.left_bitmap_height = (Dimension) height;
@@ -612,16 +625,23 @@ Boolean is_left;
 	if (!XGetGeometry(XtDisplayOfObject(w),
 			  entry->sme_bsb.right_bitmap, &root,
 			  &x, &y, &width, &height, &bw, &depth)) {
-	    (void) sprintf(buf, "Xaw SmeBSB Object: %s %s \"%s\".", "Could not",
-		    "get Right Bitmap geometry information for menu entry ",
-		    XtName(w));
-	    XtAppError(XtWidgetToApplicationContext(w), buf);
+	    char *err1 = "Xaw SmeBSB Object: Could not get Right Bitmap geometry information for menu entry ";
+	    len = strlen(err1) + strlen(XtName(w)) + 3 + 1;
+	    pbuf = XtStackAlloc(len, buf);
+	    if (pbuf == NULL) return;
+	    sprintf(pbuf, "%s\"%s\".", err1, XtName(w));
+	    XtAppError(XtWidgetToApplicationContext(w), pbuf);
+	    XtStackFree(pbuf, buf);
 	}
 	if (depth != 1) {
-	    (void) sprintf(buf, "Xaw SmeBSB Object: %s \"%s\"%s.", 
-		    "Right Bitmap of entry ", XtName(w),
-		    " is not one bit deep.");
-	    XtAppError(XtWidgetToApplicationContext(w), buf);
+	    char *err1 = "Xaw SmeBSB Object: Right Bitmap of entry ";
+	    char *err2 = " is not one bit deep.";
+	    len = strlen(err1) + strlen(err2) + strlen(XtName(w)) + 2 + 1;
+	    pbuf = XtStackAlloc(len, buf);
+	    if (pbuf == NULL) return;
+	    sprintf(pbuf, "%s\"%s\"%s", err1, XtName(w), err2);
+	    XtAppError(XtWidgetToApplicationContext(w), pbuf);
+	    XtStackFree(pbuf, buf);
 	}
 	entry->sme_bsb.right_bitmap_width = (Dimension) width; 
 	entry->sme_bsb.right_bitmap_height = (Dimension) height;

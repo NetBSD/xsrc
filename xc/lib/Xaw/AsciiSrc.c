@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.1.1.2.4.2 1998/05/16 09:05:19 dawes Exp $ */
+
 /*
  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).
  *
@@ -1291,15 +1293,21 @@ XrmValuePtr	toVal;
     XtQEfile   = XrmPermStringToQuark(XtEfile);
   }
 
+  if (strlen((char *) fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
+    return;
+  }
   XmuCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
   if (q == XtQEstring) type = XawAsciiString;
   if (q == XtQEfile)  type = XawAsciiFile;
-
-  (*toVal).size = sizeof(XawAsciiType);
-  (*toVal).addr = (XPointer) &type;
-  return;
+  if (q == XtQEstring || q == XtQEfile) {
+    (*toVal).size = sizeof(XawAsciiType);
+    (*toVal).addr = (XPointer) &type;
+    return;
+  }
+  XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
 }
 
 #if (defined(ASCII_STRING) || defined(ASCII_DISK))

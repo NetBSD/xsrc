@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.11 1998/03/01 01:08:59 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.12 1998/04/29 04:18:26 dawes Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -59,7 +59,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DefaultCCOptions	-ansi -pedantic -Dasm=__asm
 #endif
 #ifndef ExtraLibraries
+/* support for multi-byte locales is in libxpg4 rather than libc */
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
+#define ExtraLibraries		-lxpg4
+#else
 #define ExtraLibraries		/**/
+#endif
 #endif
 #ifndef UseGnuMalloc
 /* 2.2 doesn't really have GnuMalloc */

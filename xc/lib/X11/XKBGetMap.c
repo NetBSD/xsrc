@@ -25,6 +25,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
+/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.1.1.4.4.2 1998/05/19 14:36:44 dawes Exp $ */
+
 #define NEED_REPLIES
 #define NEED_EVENTS
 #define	NEED_MAP_READERS
@@ -253,6 +255,9 @@ _XkbReadKeyActions(buf,info,rep)
 int		i;
 CARD8		numDesc[248];
 register int	nKeyActs;
+
+    if (rep->nKeyActs > sizeof(numDesc))
+	return BadLength;
 
     if ( (nKeyActs=rep->nKeyActs)>0 ) {
 	XkbSymMapPtr	symMap;

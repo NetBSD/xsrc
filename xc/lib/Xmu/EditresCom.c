@@ -26,7 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3 1997/01/18 07:17:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3.2.3 1998/05/18 10:34:23 dawes Exp $ */
 
 /*
  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium
@@ -843,25 +843,89 @@ Cardinal * num_params;
 {
     SVErrorInfo * info = &globals.error_info;	
     char buf[BUFSIZ];
+    char *pbuf;
+    int len;
 
-    if ( streq(name, "unknownType") ) 
-	sprintf(buf, "The `%s' resource is not used by this widget.", 
-		info->event->name); 
-    else if ( streq(name, "noColormap") ) 
-	sprintf(buf, msg, params[0]);
+    if ( streq(name, "unknownType") ) {
+	char *msg1 = "The `";
+	char *msg2 = "' resource is not used by this widget.";
+	len = strlen(msg1) + strlen(msg2) + strlen(info->event->name) + 1;
+	if (len > sizeof(buf))
+	    pbuf = XtMalloc(len);
+	else
+	    pbuf = buf;
+	if (pbuf == NULL) {
+	    pbuf = buf;
+	    sprintf(pbuf, "A%s", msg2);
+	} else {
+	    sprintf(pbuf, "%s%s%s", msg1, info->event->name, msg2); 
+	}
+    } else if ( streq(name, "noColormap") ) {
+	len = strlen(msg) + 1;
+	if (params[0])
+	    len += strlen(params[0]);
+	if (len > sizeof(buf))
+	    pbuf = XtMalloc(len);
+	else
+	    pbuf = buf;
+	if (pbuf == NULL) {
+	    pbuf = buf;
+	    sprintf(pbuf, "Message too long");
+	} else {
+	    sprintf(pbuf, msg, params[0]); 
+	}
+    }
     else if (streq(name, "conversionFailed") || streq(name, "conversionError"))
     {
-	if (streq(info->event->value, XtRString))
-	    sprintf(buf, 
-		    "Could not convert the string '%s' for the `%s' resource.",
-		    info->event->value, info->event->name);   
+	char *msg1, *msg2, *msg3;
+	if (streq(info->event->value, XtRString)) {
+	    msg1 = "Could not convert the string '";
+	    msg2 = "' for the `";
+	    msg3 = "' resource.";
+	    len = strlen(msg1) + strlen(msg2) + strlen(msg3) + 1 +
+			strlen(info->event->value) + strlen(info->event->name);
+	} else {
+	    msg1 = "Could not convert the `";
+	    msg2 = "' resource.";
+	    len = strlen(msg1) + strlen(msg2) + strlen(info->event->name) + 1;
+	}
+	if (len > sizeof(buf))
+	    pbuf = XtMalloc(len);
 	else
-	    sprintf(buf, "Could not convert the `%s' resource.",
-		    info->event->name);
+	    pbuf = buf;
+	if (streq(info->event->value, XtRString)) {
+	    if (pbuf == NULL) {
+		pbuf = buf;
+		sprintf(pbuf, "Could not convert a string");
+	    } else {
+		sprintf(pbuf, "%s%s%s%s%s", msg1, info->event->value, msg2,
+			info->event->name, msg3);
+	    }
+	} else {
+	    if (pbuf == NULL) {
+		pbuf = buf;
+		sprintf(pbuf, "Could not convert a resource");
+	    } else {
+		sprintf(pbuf, "%s%s%s", msg1, info->event->name, msg2);
+	    }
+	}
+    } else {
+	char *msg1 = "Name: ", *msg2 = ", Type: ", *msg3 = ", Class: ";
+	char *msg4 = ", Msg: ";
+	len = strlen(msg1) + strlen(msg2) + strlen(msg3) + strlen(msg4) +
+		strlen(name) + strlen(type) + strlen(class) + strlen(msg) + 1;
+	if (len > sizeof(buf))
+	    pbuf = XtMalloc(len);
+	else
+	    pbuf = buf;
+	if (pbuf == NULL) {
+	    pbuf = buf;
+	    sprintf(pbuf, "Message too long to show");
+	} else {
+	    sprintf(pbuf, "%s%s%s%s%s%s%s%s", msg1, name, msg2, type,
+			msg3, class, msg4, msg);
+	}
     }
-    else 
-	sprintf(buf, "Name: %s, Type: %s, Class: %s, Msg: %s",
-		name, type, class, msg);
 
     /*
      * Insert this info into the protocol stream, and update the count.
@@ -869,7 +933,9 @@ Cardinal * num_params;
 
     (*(info->count))++;
     _XEditResPutWidgetInfo(info->stream, info->entry);
-    _XEditResPutString8(info->stream, buf);
+    _XEditResPutString8(info->stream, pbuf);
+    if (pbuf != buf)
+	XtFree(pbuf);
 }
 
 /*	Function Name: ExecuteSetValues
@@ -1778,7 +1844,7 @@ XtPointer * converter_data;
     char ptr[BUFSIZ];
     static EditresBlock block;
 
-    XmuCopyISOLatin1Lowered(ptr, from_val->addr);
+    _XmuNCopyISOLatin1Lowered(ptr, from_val->addr, sizeof(ptr));
 
     if (streq(ptr, "none")) 
 	block = BlockNone;

@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xmu/Lower.c,v 1.1.1.1.12.2 1998/05/19 13:29:00 dawes Exp $ */
+
 #define  XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/Xmu/CharSet.h>
@@ -120,3 +122,64 @@ int XmuCompareISOLatin1 (first, second)
     }
     return (((int) *ap) - ((int) *bp));
 }
+
+#if NeedFunctionPrototypes
+void _XmuNCopyISOLatin1Lowered(char *dst, _Xconst char *src, int size)
+#else
+void _XmuNCopyISOLatin1Lowered(dst, src, size)
+    char *dst, *src;
+    int size;
+#endif
+{
+    register unsigned char *dest, *source;
+    int bytes;
+
+    if (size <= 0)
+	return;
+
+    for (dest = (unsigned char *)dst, source = (unsigned char *)src, bytes = 0;
+	 *source && bytes < size - 1;
+	 source++, dest++, bytes++)
+    {
+	if ((*source >= XK_A) && (*source <= XK_Z))
+	    *dest = *source + (XK_a - XK_A);
+	else if ((*source >= XK_Agrave) && (*source <= XK_Odiaeresis))
+	    *dest = *source + (XK_agrave - XK_Agrave);
+	else if ((*source >= XK_Ooblique) && (*source <= XK_Thorn))
+	    *dest = *source + (XK_oslash - XK_Ooblique);
+	else
+	    *dest = *source;
+    }
+    *dest = '\0';
+}
+
+#if NeedFunctionPrototypes
+void _XmuNCopyISOLatin1Uppered(char *dst, _Xconst char *src, int size)
+#else
+void _XmuNCopyISOLatin1Uppered(dst, src, size)
+    char *dst, *src;
+    int size;
+#endif
+{
+    register unsigned char *dest, *source;
+    int bytes;
+
+    if (size <= 0)
+	return;
+
+    for (dest = (unsigned char *)dst, source = (unsigned char *)src, bytes = 0;
+	 *source && bytes < size - 1;
+	 source++, dest++, bytes++)
+    {
+	if ((*source >= XK_a) && (*source <= XK_z))
+	    *dest = *source - (XK_a - XK_A);
+	else if ((*source >= XK_agrave) && (*source <= XK_odiaeresis))
+	    *dest = *source - (XK_agrave - XK_Agrave);
+	else if ((*source >= XK_slash) && (*source <= XK_thorn))
+	    *dest = *source - (XK_oslash - XK_Ooblique);
+	else
+	    *dest = *source;
+    }
+    *dest = '\0';
+}
+

@@ -1,5 +1,4 @@
 /* $XConsortium: connect.c /main/32 1996/12/10 15:58:34 swick $ */
-/* $XFree86: xc/lib/ICE/connect.c,v 3.2 1996/12/23 05:59:00 dawes Exp $ */
 /******************************************************************************
 
 
@@ -28,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
+/* $XFree86: xc/lib/ICE/connect.c,v 3.2.2.2 1998/05/19 14:21:32 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -490,6 +490,8 @@ char **actualConnectionRet;
 	    delim = endptr;
 
 	len = delim - ptr;
+	if (len > sizeof(address) - 1)
+	    len = sizeof(address) - 1;
 	strncpy (address, ptr, len);
 	address[len] = '\0';
 

@@ -1,5 +1,4 @@
 /* $XConsortium: LocBitmap.c,v 1.19 94/04/17 20:16:10 rws Exp $ */
-/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.1 1996/05/06 05:54:35 dawes Exp $ */
 
 /*
  
@@ -27,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.1.4.1 1998/05/16 09:05:26 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -186,6 +186,8 @@ Pixmap XmuLocatePixmapFile (screen, name, fore, back, depth,
 	    break;
 	  case 2:
 	    if (file_paths && *file_paths) {
+		if (strlen(*file_paths) + strlen(name) + 2 > sizeof(filename))
+		    continue;
 		sprintf (filename, "%s/%s", *file_paths, name);
 		file_paths++;
 		i--;
@@ -193,6 +195,8 @@ Pixmap XmuLocatePixmapFile (screen, name, fore, back, depth,
 	    }
 	    continue;
 	  case 3:
+	    if (strlen(BITMAPDIR) + strlen(name) + 2 > sizeof(filename))
+		continue;
 	    sprintf (filename, "%s/%s", BITMAPDIR, name);
 	    break;
 	  case 4:

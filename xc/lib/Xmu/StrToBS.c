@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xmu/StrToBS.c,v 1.1.1.1.12.2 1998/05/16 09:05:27 dawes Exp $ */
+
 #include <X11/Intrinsic.h>
 #include "Converters.h"
 #include "CharSet.h"
@@ -61,7 +63,8 @@ XmuCvtStringToBackingStore (args, num_args, fromVal, toVal)
 	XtQEdefault = XrmStringToQuark(lowerString);
 	haveQuarks = 1;
     }
-    XmuCopyISOLatin1Lowered (lowerString, (char *) fromVal->addr);
+    _XmuNCopyISOLatin1Lowered (lowerString, (char *) fromVal->addr,
+				sizeof(lowerString));
     q = XrmStringToQuark (lowerString);
     if (q == XtQEnotUseful) {
 	backingStoreType = NotUseful;

@@ -25,6 +25,8 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  */
 
+/* $XFree86: xc/lib/Xaw/SimpleMenu.c,v 3.1.6.3 1998/05/20 05:06:17 dawes Exp $ */
+
 /*
  * SimpleMenu.c - Source code file for SimpleMenu widget.
  *
@@ -46,6 +48,8 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <X11/Xmu/Initer.h>
 #include <X11/Xmu/CharSet.h>
+
+#include "XawAlloc.h"
 
 #define streq(a, b)        ( strcmp((a), (b)) == 0 )
 
@@ -625,9 +629,17 @@ Cardinal * num_params;
 
   if ( (menu = FindMenu(w, params[0])) == NULL) {
     char error_buf[BUFSIZ];
-    (void) sprintf(error_buf, "%s '%s'",
-	    "Xaw - SimpleMenuWidget: could not find menu named: ", params[0]);
-    XtAppWarning(XtWidgetToApplicationContext(w), error_buf);
+    char *err1 = "Xaw - SimpleMenuWidget: could not find menu named: ";
+    char *perr;
+    int len;
+
+    len = strlen(err1) + strlen(params[0]) + 2 + 1;
+    perr = XtStackAlloc(len, error_buf);
+    if (perr == NULL)
+	return;
+    sprintf(perr, "%s'%s'", err1, params[0]);
+    XtAppWarning(XtWidgetToApplicationContext(w), perr);
+    XtStackFree(perr, error_buf);
     return;
   }
   

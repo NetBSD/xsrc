@@ -26,6 +26,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/X11/FontNames.c,v 1.1.1.2.2.2 1998/05/18 14:08:38 dawes Exp $ */
+
 #define NEED_REPLIES
 #include "Xlibint.h"
 
@@ -60,7 +62,11 @@ int *actualCount;	/* RETURN */
     _XSend (dpy, pattern, nbytes);
     /* use _XSend instead of Data, since following _XReply will flush buffer */
 
-    (void) _XReply (dpy, (xReply *)&rep, 0, xFalse);
+    if (!_XReply (dpy, (xReply *)&rep, 0, xFalse)) {
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return (char **) NULL;
+    }
 
     if (rep.nFonts) {
 	flist = (char **)Xmalloc ((unsigned)rep.nFonts * sizeof(char *));

@@ -72,6 +72,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.1.1.1.12.2 1998/05/19 14:36:47 dawes Exp $ */
 
 /*
  * MultiSrcP.h - Private Header for Multi Text Source.
@@ -113,7 +114,11 @@ SOFTWARE.
 #ifdef L_tmpnam
 #define TMPSIZ L_tmpnam
 #else
-#define TMPSIZ 32		/* bytes to allocate for tmpnam */
+#ifdef PATH_MAX
+#define TMPSIZ PATH_MAX
+#else
+#define TMPSIZ 1024		/* bytes to allocate for tmpnam */
+#endif
 #endif
 
 #define MAGIC_VALUE ((XawTextPosition) -1) /* Magic value. */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.6 1998/02/01 16:04:49 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.7 1998/05/22 13:46:11 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -52,7 +52,7 @@ int scrnIndex;
 {
     unsigned long tmplong1, tmplong2, config_cmd;
     unsigned char tmp1, tmp2;
-    unsigned int i, j, idx = 0;
+    unsigned int i, j, idx = 0, hostbridges = 0;;
     pciConfigRec pcr;
     unsigned PCI_CtrlIOPorts[] = { PCI_MODE1_ADDRESS_REG,
 				   PCI_MODE2_FORWARD_REG,
@@ -214,6 +214,12 @@ int scrnIndex;
                         pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
                     }
                         break;
+                case PCI_CLASS_BRIDGE:
+		    if (++hostbridges > 1) {
+			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
+			pcr._pcinumbus++;
+		    }
+			break;
                 default:
                         break;
             }
@@ -302,6 +308,12 @@ int scrnIndex;
                         pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;            
                     }       
                         break;
+                case PCI_CLASS_BRIDGE:
+		    if (++hostbridges > 1) {
+			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
+			pcr._pcinumbus++;
+		    }
+			break;
                 default:
                         break;
             }
@@ -1092,7 +1104,7 @@ xf86scanpci(int scrnIndex)
 {
     pciConfigRec pcr;
     int pcibusidx, pcinumbus, pcibuses[16];
-    int idx = 0;
+    int idx = 0, hostbridges = 0;
 
     if (pci_devp[0])
 	return pci_devp;
@@ -1143,10 +1155,13 @@ xf86scanpci(int scrnIndex)
 		pcr._user_config = pcibusRead(tag, PCI_REG_USERCONFIG);
 
 		/* Check for PCI-PCI bridges */
-		if (pcr._base_class == PCI_CLASS_BRIDGE &&
-		    pcr._sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
-		    if (pcr._secondary_bus_number > 0) {
-			pcibuses[pcinumbus++] = pcr._secondary_bus_number;
+		if (pcr._base_class == PCI_CLASS_BRIDGE) {
+		    if (pcr._sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
+		        if (pcr._secondary_bus_number > 0)
+			    pcibuses[pcinumbus++] = pcr._secondary_bus_number;
+		    } else if (++hostbridges > 1) {
+			    pcibuses[pcinumbus] = pcinumbus;
+			    pcinumbus++;
 		    }
 		}
 
