@@ -38,6 +38,7 @@ pciBusInfo_t netbsdPci0 = {
 void
 netbsdPciInit()
 {
+    	struct pciio_businfo pci_businfo;
 
 	devpci = open("/dev/pci0", O_RDWR);
 	if (devpci == -1)
@@ -47,6 +48,10 @@ netbsdPciInit()
 	pciBusInfo[0]  = &netbsdPci0;
 	pciFindFirstFP = pciGenFindFirst;
 	pciFindNextFP  = pciGenFindNext;
+	/* use businfo to get the number of devs */
+	if (ioctl(devpci, PCI_IOC_BUSINFO, &pci_businfo) != 0)
+	    FatalError("netbsdPciInit: not a PCI bus device", dvname);
+	netbsdPci0.numDevices = pci_businfo.maxdevs;
 }
 
 CARD32
