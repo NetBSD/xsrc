@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.2 2001/06/24 14:46:54 takemura Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.3 2001/06/26 14:20:40 takemura Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -285,6 +285,8 @@ hpcFBInit(screen, pScreen, argc, argv)
 				  fbconf->hf_bytes_per_line / 2);
 		break;
 	default:
+		hpcErrorF(("%dbpp frame buffer is not supported\n",
+		    fbconf->hf_pixel_width));
 		return FALSE;
 	}
 
