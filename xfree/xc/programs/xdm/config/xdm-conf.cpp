@@ -20,6 +20,7 @@ DisplayManager._0.setup:	XDMDIR/Xsetup_0
 DisplayManager._0.startup:	XDMDIR/GiveConsole
 DisplayManager._0.reset:	XDMDIR/TakeConsole
 !
+DisplayManager*chooser:		CHOOSERPATH
 DisplayManager*resources:	XDMDIR/Xresources
 DisplayManager*session:		XDMDIR/Xsession
 DisplayManager*authComplain:	true
