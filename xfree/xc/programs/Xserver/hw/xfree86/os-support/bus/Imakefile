@@ -65,6 +65,13 @@ XCOMM NetBSD/powerpc
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
 
+#elif defined(NetBSDArchitecture) && defined(MipsArchitecture)
+
+XCOMM NetBSD/mips
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
+
 #elif defined(PpcArchitecture)
 
 XCOMM PowerPC PCI drivers
