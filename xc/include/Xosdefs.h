@@ -85,13 +85,11 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef i386
 #ifdef SYSV
 #if !(defined(ISC) && defined(_POSIX_SOURCE))
-#ifndef __NetBSD__
 #ifndef SCO
 #ifndef _SCO_DS /* SCO 5.0 has SVR4 header files */
 #define X_NOT_POSIX
 #endif
 #define X_NOT_STDC_ENV
-#endif
 #endif
 #endif /* !(defined(ISC) && defined(_POSIX_SOURCE)) */
 #endif
