@@ -248,7 +248,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 #   undef __macppc__
 # endif
 # ifdef __x86_64__
-#  define x86_64Architecture
+#  define AMD64Architecture
 #  undef __x86_64__
 # endif
 #endif /* NetBSD */
