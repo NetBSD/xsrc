@@ -525,6 +525,14 @@ sed 's/\.[0-9]*$$//'`
 #define BuildServer	NO
 #endif
 
+
+/*
+ * General settings for all platforms
+ */
 #ifndef SharedLibXdmGreet
 #define SharedLibXdmGreet NO
+#endif
+
+#ifndef BuildHtmlManPages
+#define BuildHtmlManPages NO           /* We don't want HTML manpages */
 #endif
