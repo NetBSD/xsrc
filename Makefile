@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/07/06 14:41:06 tron Exp $
+#	$NetBSD: Makefile,v 1.33 2002/12/16 00:38:40 lukem Exp $
 #
 # Targets & Variables
 #
@@ -140,7 +140,7 @@ release snapshot: build
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
 	cd ${NETBSDSRCDIR}/distrib/sets && \
-	    sh ./maketars -x -d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
+	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -t ${RELEASEDIR}/binary/sets
 	cd ${RELEASEDIR}/binary/sets && \
 		cksum -o 1 *.tgz >BSDSUM && \
 		cksum *.tgz >CKSUM && \
