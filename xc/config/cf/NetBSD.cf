@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.100 2002/09/05 15:14:44 itojun Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.101 2002/09/20 21:45:30 ad Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -817,7 +817,7 @@ clean::									@@\
  * Definitions for the NetBSD/alpha X server.
  */
 #if defined(AlphaArchitecture)
-# define XalphaNetBSDServer	YES
+# define XdecNetBSDServer	YES
 #ifndef XkbServerDefines
 #define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 #endif
