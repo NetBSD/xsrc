@@ -31,13 +31,13 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/mysetjmp.h,v 1.1.1.1.8.1 2003/03/13 04:10:41 tsi Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/mysetjmp.h,v 1.4 2003/10/22 19:20:57 tsi Exp $ */
 
 /*
  * mysetjmp.h
  *
- * $Date: 2003/12/19 12:47:33 $ $Revision: 1.1.1.2 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/mysetjmp.h,v 1.1.1.2 2003/12/19 12:47:33 tron Exp $
+ * $Date: 2004/03/05 14:26:37 $ $Revision: 1.1.1.3 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/mysetjmp.h,v 1.1.1.3 2004/03/05 14:26:37 tron Exp $
  */
 
 #ifndef __glumysetjmp_h_
@@ -56,7 +56,7 @@ extern "C" int mysetjmp( JumpBuffer * );
 #define longjmp 	gl_longjmp
 #endif
 
-#if LIBRARYBUILD | GLBUILD
+#if defined(LIBRARYBUILD) || defined(GLBUILD)
 #include <setjmp.h>
 #include <stdlib.h>
 

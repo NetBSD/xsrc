@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/server.c,v 3.13.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/server.c,v 3.14 2003/04/12 16:42:14 herrb Exp $ */
 
 /*
  * xdm - display manager daemon

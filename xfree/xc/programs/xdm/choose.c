@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/choose.c,v 3.15.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/choose.c,v 3.17 2003/07/09 15:27:38 tsi Exp $ */
 
 /*
  * choose.c
@@ -198,11 +198,20 @@ FormatChooserArgument (char *buf, int len)
     netfamily = NetaddrFamily((XdmcpNetaddr)addr_buf);
     switch (netfamily) {
     case AF_INET:
+#if defined(IPv6) && defined(AF_INET6)
+    case AF_INET6:
+#endif
 	{
 	    char *port;
 	    int portlen;
 	    ARRAY8Ptr localAddress = getLocalAddress ();
 
+#if defined(IPv6) && defined(AF_INET6)
+	    if (localAddress->length == 16)
+		netfamily = AF_INET6;
+	    else
+		netfamily = AF_INET;
+#endif
 
 	    port = NetaddrPort((XdmcpNetaddr)addr_buf, &portlen);
 	    result_buf[0] = netfamily >> 8;
@@ -378,6 +387,13 @@ AddChooserHost (
     {
 	*argp = parseArgs (*argp, "BROADCAST");
     }
+#if defined(IPv6) && defined(AF_INET6)
+    else if ( (addr->length == 16) && 
+      (inet_ntop(AF_INET6, addr->data, hostbuf, sizeof(hostbuf))))
+    {
+	*argp = parseArgs (*argp, hostbuf);
+    }
+#endif
     else if (ARRAY8ToDottedDecimal (addr, hostbuf, sizeof (hostbuf)))
     {
 	*argp = parseArgs (*argp, hostbuf);

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.c,v 3.21.2.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dm.c,v 3.24 2004/01/10 21:26:29 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -133,11 +133,9 @@ main (int argc, char **argv)
 	exit (1);
     }
     if (debugLevel == 0 && daemonMode)
-	BecomeOrphan ();
+	BecomeDaemon ();
     if (debugLevel >= 10)
 	nofork_session = 1;
-    if (debugLevel == 0 && daemonMode)
-	BecomeDaemon ();
     /* SUPPRESS 560 */
     if ((oldpid = StorePid ()))
     {
@@ -478,12 +476,6 @@ WaitForChild (void)
 		else
 		    RestartDisplay (d, FALSE);
 		break;
-	    default:
-		Debug ("Display exited with unknown status %d\n", waitVal(status));
-		LogError ("Unknown session exit code %d from process %d\n",
-			  waitVal (status), pid);
-		StopDisplay (d);
-		break;
 	    case OPENFAILED_DISPLAY:
 		Debug ("Display exited with OPENFAILED_DISPLAY, try %d of %d\n",
 		       d->startTries, d->startAttempts);
@@ -555,6 +547,12 @@ WaitForChild (void)
 		    StopDisplay(d);
 		else
 		    RestartDisplay (d, FALSE);
+		break;
+	    default:
+		Debug ("Display exited with unknown status %d\n", waitVal(status));
+		LogError ("Unknown session exit code %d from process %d\n",
+			  waitVal (status), pid);
+		StopDisplay (d);
 		break;
 	    }
 	}

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.16.2.1 2003/09/17 05:58:18 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.17 2003/07/09 15:27:40 tsi Exp $ */
 
 /*
  * xdm - display manager daemon

@@ -31,10 +31,11 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/06/09 15:20:58 $ $Revision: 1.1.1.1 $
+** $Date: 2004/03/05 14:26:38 $ $Revision: 1.1.1.2 $
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/sampleCompRight.cc,v 1.2 2003/10/22 19:20:58 tsi Exp $ */
 /*
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/sampleCompRight.cc,v 1.1.1.1 2001/06/09 15:20:58 tron Exp $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/sampleCompRight.cc,v 1.1.1.2 2004/03/05 14:26:38 tron Exp $
 */
 
 #include <stdlib.h>
@@ -497,7 +498,8 @@ void sampleRightOneGridStep(vertexArray* rightChain,
 
     return;
   }
-	   
+
+#if 0
   //this following code cannot be reached, but leave it for debuggig purpose.
   Int i;
   //find the maximal U-monotone chain of beginRightIndex, beginRightIndex+1,...
@@ -575,6 +577,7 @@ void sampleRightOneGridStep(vertexArray* rightChain,
 		     j+1,
 		     0, ///a decreae chain
 		     pStream);
+#endif
 }
 		  
 #endif    

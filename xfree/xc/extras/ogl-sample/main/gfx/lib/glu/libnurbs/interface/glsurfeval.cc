@@ -31,12 +31,13 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/interface/glsurfeval.cc,v 1.2 2003/10/22 19:20:55 tsi Exp $ */
 
 /*
  * glsurfeval.c++
  *
- * $Date: 2001/06/09 15:20:48 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/interface/Attic/glsurfeval.cc,v 1.1.1.1 2001/06/09 15:20:48 tron Exp $
+ * $Date: 2004/03/05 14:26:35 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/interface/Attic/glsurfeval.cc,v 1.1.1.2 2004/03/05 14:26:35 tron Exp $
  */
 
 /* Polynomial Evaluator Interface */
@@ -815,8 +816,6 @@ OpenGLSurfaceEvaluator::endmap2f(void)
       
       inBPMListEvalEM(global_bpm);
       
-      
-      
 /*
     global_bpm = bezierPatchMeshListReverse(global_bpm);
     {
@@ -972,7 +971,6 @@ if(output_triangles)
 
   REAL du, dv;
   long i,j;
-  long row;
   if(global_grid_nu == 0 || global_grid_nv == 0)
     return; /*no points need to be output*/
   du = (global_grid_u1 - global_grid_u0) / (REAL)global_grid_nu;

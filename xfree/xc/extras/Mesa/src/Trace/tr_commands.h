@@ -1,5 +1,4 @@
 /* This may look like C code, but it is really -*- C++ -*-  */
-/* $Id: tr_commands.h,v 1.1.1.1 2003/02/28 13:19:08 tron Exp $ */
 
 /*
  * DebugGL

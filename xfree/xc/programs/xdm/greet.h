@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greet.h,v 1.8.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/greet.h,v 1.10 2003/09/21 13:03:03 herrb Exp $ */
 
 /*
  * greet.h - interface to xdm's dynamically-loadable modular greeter
@@ -120,25 +120,11 @@ typedef enum {
  * option such as SECURE_RPC or K5AUTH.
  */
 
-extern greet_user_rtn GreetUser(
-#if NeedFunctionPrototypes
-    struct display *d,
-    Display **dpy,
-    struct verify_info *verify,
-    struct greet_info *greet,
-    struct dlfuncs *dlfcns
-#endif
-);
+extern greet_user_rtn GreetUser(struct display *, Display **,
+    struct verify_info *, struct greet_info *, struct dlfuncs *);
 
-typedef greet_user_rtn (*GreetUserProc)(
-#if NeedFunctionPrototypes
-    struct display *,
-    Display **,
-    struct verify_info *,
-    struct greet_info *,
-    struct dlfuncs *dlfcns
-#endif
-);
+typedef greet_user_rtn (*GreetUserProc)(struct display *, Display **,
+    struct verify_info *, struct greet_info *, struct dlfuncs *dlfcns);
 
 #ifdef GREET_LIB
 /*

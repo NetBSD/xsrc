@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xdm/dm_auth.h,v 1.2.10.1 2003/09/17 05:58:16 herrb Exp $
+ * $XFree86: xc/programs/xdm/dm_auth.h,v 1.4 2003/10/27 21:39:06 herrb Exp $
  */
 
 /************************************************************
@@ -50,6 +50,9 @@ extern void	XdmGetXdmcpAuth (
     struct protoDisplay	*pdpy,
     unsigned short	authorizationNameLen,
     char		*authorizationName);
+extern int XdmCheckAuthentication (struct protoDisplay *pdpy, 
+    ARRAY8Ptr displayID, ARRAY8Ptr authenticationName, 
+    ARRAY8Ptr authenticationData);
 #else
 #define XdmGetXdmcpAuth NULL
 #endif

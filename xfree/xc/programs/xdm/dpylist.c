@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dpylist.c,v 1.5.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dpylist.c,v 1.6 2003/07/09 15:27:38 tsi Exp $ */
 
 /*
  * xdm - display manager daemon
