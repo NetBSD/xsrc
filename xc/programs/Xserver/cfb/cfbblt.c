@@ -31,7 +31,9 @@ Author: Keith Packard
 
 */
 /* $XConsortium: cfbblt.c,v 1.13 94/04/17 20:28:44 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.1 1996/12/09 11:50:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.1.2.1 1998/12/13 14:12:03 dawes Exp $ */
+
+/* 24-bit bug fixes: Peter Wainwright, 1998/11/28 */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -56,6 +58,103 @@ Author: Keith Packard
 #if defined(FAST_MEMCPY) && (MROP == Mcopy) && PSZ == 8
 #define DO_MEMCPY
 #endif
+
+/* ................................................. */
+/* SPECIAL CODE FOR 24 BITS      by Peter Wainwright */
+
+#if PSZ == 24 && (MROP) == 0
+
+/* The default macros are defined in mergerop.h, and none of them are
+   really appropriate for what we want to do.
+
+   There are two ways of fixing this: either define SLOW_24BIT_COPY
+   to copy pixel by pixel, or (by default) use the following macros
+   modified from mergerop.h
+
+   MROP_SOLID and MROP_MASK are defined for each of the operations,
+   i.e. each value of MROP.
+
+   There are special cases for Mcopy, McopyInverted, Mxor, and Mor.
+   There is a completely generic version for MROP=0, and a simplified
+   generic version which works for (Mcopy|Mxor|MandReverse|Mor).
+
+   However, the generic version does not work for the 24-bit case
+   because the pixels cannot be packed exactly into a machine word (32
+   bits).
+
+   Alternative macros MROP_SOLID24 and MROP_MASK24 are provided for
+   the 24-bit case. However, these each copy a single *pixel*, not a
+   single machine word. They take an rvalue source pixel, an lvalue
+   destination, and the pixel index. The latter is used to find the
+   position of the pixel data within the two words *dst and *(dst+1).
+
+   Further macros MROP_SOLID24P and MROP_MASK24P are used to copy from
+   an lvalue source to an lvalue destination. MROP_PIXEL24 is used to
+   assemble the source pixel from the adjacent words *src and
+   *(src+1), and this is then split between the destination words
+   using the non-P macros above.
+
+   But we want to copy entire words for the sake of efficiency.
+   Unfortunately if a plane mask is specified this must be shifted
+   from one word to the next.  Fortunately the pattern repeats after 3
+   words, so we unroll the planemask here and redefine MROP_SOLID
+   and MROP_MASK. */
+
+#define DeclareMergeRop24i() unsigned long   _ca1[3], _cx1[3], _ca2[3], _cx2[3];
+
+#if	(BITMAP_BIT_ORDER == MSBFirst)
+#define InitializeMergeRop24i(alu,pm) {		\
+  unsigned long _pm;				\
+  mergeRopPtr  _bits;				\
+  int i;					\
+  for (i = 0; i < 3; i++) {			\
+    _pm = ((pm << (8+8*i)) | (pm >> (16-8*i)));	\
+    _bits = &mergeRopBits[alu];			\
+    _ca1[i] = _bits->ca1 &  _pm;		\
+    _cx1[i] = _bits->cx1 | ~_pm;		\
+    _ca2[i] = _bits->ca2 &  _pm;		\
+    _cx2[i] = _bits->cx2 &  _pm;		\
+  }						\
+}
+#else	/* (BITMAP_BIT_ORDER == LSBFirst) */
+#define InitializeMergeRop24i(alu,pm) {		\
+  unsigned long _pm;				\
+  mergeRopPtr  _bits;				\
+  int i;					\
+  for (i = 0; i < 3; i++) {			\
+    _pm = ((pm >> (8*i)) | (pm << (24-8*i)));	\
+    _bits = &mergeRopBits[alu];			\
+    _ca1[i] = _bits->ca1 &  _pm;		\
+    _cx1[i] = _bits->cx1 | ~_pm;		\
+    _ca2[i] = _bits->ca2 &  _pm;		\
+    _cx2[i] = _bits->cx2 &  _pm;		\
+  }						\
+}
+#endif	/* (BITMAP_BIT_ORDER == MSBFirst) */
+
+#define DoMergeRop24i(src, dst, i)					\
+((dst) & ((src) & _ca1[i] ^ _cx1[i]) ^ ((src) & _ca2[i] ^ _cx2[i]))
+
+#define DoMaskMergeRop24i(src, dst, mask, i)							\
+((dst) & (((src) & _ca1[i] ^ _cx1[i]) | ~(mask)) ^ (((src) & _ca2[i] ^ _cx2[i]) & (mask)))
+
+#undef MROP_DECLARE
+#define MROP_DECLARE()			DeclareMergeRop24i()
+/* We can't put the arrays in registers */
+#undef MROP_DECLARE_REG
+#define MROP_DECLARE_REG()		DeclareMergeRop24i()
+#undef MROP_INITIALIZE
+#define MROP_INITIALIZE(alu, pm)	InitializeMergeRop24i(alu, pm)
+#undef MROP_SOLID
+#define MROP_SOLID(src, dst)		\
+	DoMergeRop24i(src, dst, (&(dst)-pdstBase) % 3)
+#undef MROP_MASK
+#define MROP_MASK(src, dst, mask)	\
+	DoMaskMergeRop24i(src, dst, mask, (&(dst)-pdstBase) % 3)
+
+#endif /* MROP == 0 && PSZ == 24 */
+
+/* ................................................. */
 
 void
 MROP_NAME(cfbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
@@ -286,9 +385,39 @@ MROP_NAME(cfbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 #else /* ! DO_MEMCPY */
 	if (xdir == 1)
 	{
+#if defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0
+	  while (h--)
+	    {
+	      /* Unfortunately a word-by-word copy is difficult for 24-bit
+		 pixmaps, since the planemask is in a different position
+		 for each word (though the pattern repeats every 3
+		 words). So instead we copy pixel by pixel.
+
+		 We can accelerate this by unrolling the loop and copying
+		 3 words at a time. */
+	      register int i, si, sii, di;
+
+	      for (i = 0, si = pptSrc->x, di = pbox->x1;
+		   i < w;
+		   i++, si++, di++) {
+		psrc = psrcLine + ((si * 3) >> 2);
+		pdst = pdstLine + ((di * 3) >> 2);
+		sii = (si & 3);
+		MROP_SOLID24P(psrc, pdst, sii, di);
+	      }
+	      pdstLine += widthDst;
+	      psrcLine += widthSrc;
+	    }
+#else /* ! (defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0) */
 #if PSZ == 24
-	    xoffSrc = (4 - pptSrc->x) & 3;
-	    xoffDst = (4 - pbox->x1) & 3;
+	    /* Note: x is a pixel number; the byte offset is 3*x;
+	       therefore the offset within a word is (3*x) & 3 ==
+	       (4*x-x) & 3 == (-x) & 3.  The offsets therefore
+	       DECREASE by 1 for each pixel.
+	       Note: We are assuming 4 bytes per word here!
+	    */
+	    xoffSrc = (-pptSrc->x) & 3;
+	    xoffDst = (-pbox->x1) & 3;
 	    pdstLine += (pbox->x1 * 3) >> 2;
 	    psrcLine += (pptSrc->x * 3) >> 2;
 #else
@@ -486,10 +615,35 @@ pdst++;
 		}
 	    }
 #endif /* DO_UNALIGNED_BITBLT */
+#endif /* defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0 */
 	}
 #endif /* ! DO_MEMCPY */
 	else	/* xdir == -1 */
 	{
+#if defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0
+	  while (h--)
+	    {
+	      /* Unfortunately a word-by-word copy is difficult for 24-bit
+		 pixmaps, since the planemask is in a different position
+		 for each word (though the pattern repeats every 3
+		 words). So instead we copy pixel by pixel.
+
+		 We can accelerate this by unrolling the loop and copying
+		 3 words at a time. */
+	      register int i, si, sii, di;
+
+	      for (i = 0, si = pptSrc->x, di = pbox->x1;
+		   i < w;
+		   i++, si++, di++) {
+		psrc = psrcLine + ((si * 3) >> 2);
+		pdst = pdstLine + ((di * 3) >> 2);
+		sii = (si & 3);
+		MROP_SOLID24P(psrc, pdst, sii, di);
+	      }
+	      psrcLine += widthSrc;
+	      pdstLine += widthDst;
+	    }
+#else /* ! (defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0) */
 #if PSZ == 24
 	    xoffSrc = (pptSrc->x + w) & 3;
 	    xoffDst = pbox->x2 & 3;
@@ -681,6 +835,7 @@ bits1 = *--psrc; --pdst; \
 		}
 	    }
 #endif
+#endif /* defined(SLOW_24BIT_COPY) && PSZ == 24 && MROP == 0 */
 	}
 	pbox++;
 	pptSrc++;

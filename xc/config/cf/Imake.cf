@@ -1,5 +1,5 @@
 XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Exp $
 /*
  * To add support for another platform:
  * 
@@ -406,7 +406,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 # endif
 #endif /* MOTOROLA */
 
-#ifdef SVR4
+#if defined(SVR4) && !defined(DGUX)
 # ifdef i386
 #  define i386Architecture
 #  undef i386
@@ -500,6 +500,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 #endif /* SYSV386 */
 
 #ifdef DGUX
+# define i386Architecture
+# define SVR4Architecture
 # define MacroIncludeFile <DGUX.cf>
 # define MacroFile DGUX.cf
 # undef DGUX
@@ -655,8 +657,14 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 #endif /* minix */
 
 #ifdef MACH
+#ifdef __GNU__
+#define MacroIncludeFile <gnu.cf>
+#define MacroFile gnu.cf
+#define GNUMachArchitecture
+#else
 #define MacroIncludeFile <mach.cf>
 #define MacroFile mach.cf
+#endif
 #undef MACH
 #ifdef	i386
 #define i386MachArchitecture

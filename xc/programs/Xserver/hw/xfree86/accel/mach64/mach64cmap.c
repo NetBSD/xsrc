@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64cmap.c,v 3.9 1996/12/23 06:39:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64cmap.c,v 3.9.2.1 1998/12/22 07:49:52 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -82,6 +82,8 @@ mach64StoreColors(pmap, ndef, pdefs)
     int		i;
     xColorItem	directDefs[256];
     extern LUTENTRY mach64savedLUT[256];
+    extern unsigned char xf86rGammaMap[], xf86gGammaMap[], xf86bGammaMap[];
+    LUTENTRY entry;
 
     if (pmap != InstalledMaps[pmap->pScreen->myNum])
 	return;
@@ -95,15 +97,27 @@ mach64StoreColors(pmap, ndef, pdefs)
 	/* Return the n most significant bits from a 16-bit value.
 	 * For VGA, n = 6.  For 8-bit DACs, n = 8.
 	 */
-	if (mach64DAC8Bit) {
-	    mach64savedLUT[pdefs[i].pixel].r = pdefs[i].red >> 8;
-	    mach64savedLUT[pdefs[i].pixel].g = pdefs[i].green >> 8;
-	    mach64savedLUT[pdefs[i].pixel].b = pdefs[i].blue >> 8;
-	} else {
-	    mach64savedLUT[pdefs[i].pixel].r = pdefs[i].red >> 10;
-	    mach64savedLUT[pdefs[i].pixel].g = pdefs[i].green >> 10;
-	    mach64savedLUT[pdefs[i].pixel].b = pdefs[i].blue >> 10;
+	entry.r = pdefs[i].red >> 8;
+	entry.g = pdefs[i].green >> 8;
+	entry.b = pdefs[i].blue >> 8;
+
+	/* Include gamma correction if supported */
+	if (mach64IntegratedController) {
+	    entry.r = xf86rGammaMap[entry.r];
+	    entry.g = xf86gGammaMap[entry.g];
+	    entry.b = xf86bGammaMap[entry.b];
 	}
+
+	if (!mach64DAC8Bit) {
+	    entry.r >>= 2;
+	    entry.g >>= 2;
+	    entry.b >>= 2;
+	}
+
+	mach64savedLUT[pdefs[i].pixel].r = entry.r;
+	mach64savedLUT[pdefs[i].pixel].g = entry.g;
+	mach64savedLUT[pdefs[i].pixel].b = entry.b;
+
 	if (xf86VTSema
 #ifdef XFreeXDGA
 	    || ((mach64InfoRec.directMode & XF86DGADirectGraphics)
@@ -113,15 +127,9 @@ mach64StoreColors(pmap, ndef, pdefs)
 	   ) {
             /* WaitQueue(4); */
             outb(ioDAC_REGS, pdefs[i].pixel);
-	    if (mach64DAC8Bit) {
-                outb(ioDAC_REGS+1, pdefs[i].red >> 8);
-                outb(ioDAC_REGS+1, pdefs[i].green >> 8);
-                outb(ioDAC_REGS+1, pdefs[i].blue >> 8);
-	    } else {
-                outb(ioDAC_REGS+1, pdefs[i].red >> 10);
-                outb(ioDAC_REGS+1, pdefs[i].green >> 10);
-                outb(ioDAC_REGS+1, pdefs[i].blue >> 10);
-	    }
+            outb(ioDAC_REGS+1, entry.r);
+            outb(ioDAC_REGS+1, entry.g);
+            outb(ioDAC_REGS+1, entry.b);
 	}
     }
     checkCursorColor = TRUE;
@@ -205,23 +213,34 @@ void
 mach64RestoreColor0(pScreen)
      ScreenPtr pScreen;
 {
-  Pixel       pix = 0;
-  xrgb        rgb;
+    Pixel       pix = 0;
+    xrgb        rgb;
+    extern unsigned char xf86rGammaMap[], xf86gGammaMap[], xf86bGammaMap[];
 
-  if (InstalledMaps[pScreen->myNum] == NOMAPYET)
-      return;
+    if (InstalledMaps[pScreen->myNum] == NOMAPYET)
+	return;
 
-  QueryColors(InstalledMaps[pScreen->myNum], 1, &pix, &rgb);
+    QueryColors(InstalledMaps[pScreen->myNum], 1, &pix, &rgb);
 
-    /* WaitQueue(4); */
-    outb(ioDAC_REGS, 0);
-    if (mach64DAC8Bit) {
-        outb(ioDAC_REGS+1, rgb.red >> 8);
-        outb(ioDAC_REGS+1, rgb.green >> 8);
-        outb(ioDAC_REGS+1, rgb.blue >> 8);
-    } else {
-        outb(ioDAC_REGS+1, rgb.red >> 10);
-        outb(ioDAC_REGS+1, rgb.green >> 10);
-        outb(ioDAC_REGS+1, rgb.blue >> 10);
+    rgb.red   >>= 8;
+    rgb.green >>= 8;
+    rgb.blue  >>= 8;
+
+    /* Include gamma correction if supported */
+    if (mach64IntegratedController) {
+	rgb.red   = xf86rGammaMap[rgb.red];
+	rgb.green = xf86gGammaMap[rgb.green];
+	rgb.blue  = xf86bGammaMap[rgb.blue];
     }
+
+    if (!mach64DAC8Bit) {
+	rgb.red   >>= 2;
+	rgb.green >>= 2;
+	rgb.blue  >>= 2;
+    }
+
+    outb(ioDAC_REGS, 0);
+    outb(ioDAC_REGS+1, rgb.red);
+    outb(ioDAC_REGS+1, rgb.green);
+    outb(ioDAC_REGS+1, rgb.blue);
 }

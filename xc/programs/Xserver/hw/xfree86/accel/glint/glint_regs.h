@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_regs.h,v 1.16.2.3 1998/09/13 12:29:03 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_regs.h,v 1.16.2.4 1998/11/30 11:58:16 dawes Exp $ */
 
 /*
  * glint register file 
@@ -933,7 +933,7 @@ typedef struct {
 	*(unsigned int *)((char*)GLINTMMIOBase+r)
 
 #define GLINT_SLOW_READ_REG(r) \
-	( outb(80,0),*(unsigned int *)((char*)GLINTMMIOBase+r))
+	( outb(0x80,0),*(unsigned int *)((char*)GLINTMMIOBase+r))
 
 #define GLINT_WAIT(n)	\
  	if (!UsePCIRetry)  \

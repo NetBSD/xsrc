@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BltHiQV.h,v 3.4.2.1 1997/05/03 09:47:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BltHiQV.h,v 3.4.2.2 1998/12/06 05:40:40 dawes Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* These are done using Memory Mapped IO, of the registers */
@@ -107,7 +107,7 @@
       ((Width)&0xFFFF)
 
 #define ctSETPATSRCADDR(srcAddr)\
-  *(unsigned int *)(ctMMIOBase + BR(0x5)) = (srcAddr)&0x1FFFFFL
+  *(unsigned int *)(ctMMIOBase + BR(0x5)) = (srcAddr)&0x7FFFFFL
 
 #define ctSETBGCOLOR8(bgColor)\
   *(unsigned int *)(ctMMIOBase + BR(0x1)) = ((bgColor)&0xFF)

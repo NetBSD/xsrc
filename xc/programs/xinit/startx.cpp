@@ -1,7 +1,7 @@
 XCOMM!/bin/sh
 
 XCOMM $XConsortium: startx.cpp,v 1.4 91/08/22 11:41:29 rws Exp $
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0.8.3 1998/11/08 02:16:43 dawes Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0.8.4 1998/12/27 13:10:18 dawes Exp $
 XCOMM 
 XCOMM This is just a sample implementation of a slightly less primitive 
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
@@ -82,9 +82,17 @@ whoseargs="client"
 while [ "x$1" != "x" ]; do
     case "$1" in
 	/''*|\.*)	if [ "$whoseargs" = "client" ]; then
-		    clientargs="$1"
+		    if [ "x$clientargs" = x ]; then
+			clientargs="$1"
+		    else
+			clientargs="$clientargs $1"
+		    fi
 		else
-		    serverargs="$1"
+		    if [ "x$serverargs" = x ]; then
+			serverargs="$1"
+		    else
+			serverargs="$serverargs $1"
+		    fi
 		fi ;;
 	--)	whoseargs="server" ;;
 	*)	if [ "$whoseargs" = "client" ]; then

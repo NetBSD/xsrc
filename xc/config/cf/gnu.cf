@@ -1,0 +1,113 @@
+XCOMM platform:  $XFree86: xc/config/cf/gnu.cf,v 1.2.2.2 1998/12/22 12:27:31 hohndel Exp $
+
+#ifndef OSName
+#define OSName			GNU 0.2
+#endif
+#ifndef OSVendor
+#define OSVendor		/**/
+#endif
+#ifndef OSMajorVersion
+#define OSMajorVersion		DefaultOSMajorVersion
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion		DefaultOSMinorVersion
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion		DefaultOSTeenyVersion
+#endif
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+
+#define HasGcc 			YES
+#define HasGcc2			YES
+#define GccUsesGas		YES
+#define UseGas			YES
+#define GnuCpp			YES
+#define UseGccMakeDepend	YES
+#define HasGnuMake		YES
+#ifndef HasGcc2ForCplusplus
+#define HasGcc2ForCplusplus	YES
+#endif
+
+#define XserverNeedsSetUID	YES
+
+#define ProjectRoot 		/usr/X11R6
+#define YaccCmd                 bison -y
+#define LexCmd			flex
+#ifndef LexLib
+#define LexLib			-lfl
+#endif
+#define ArCmd			/bin/ar clq
+#define AsCmd			/bin/as
+#define CcCmd			/bin/gcc
+#define CppCmd			/lib/gcc-lib/i586--gnu/egcs-2.91.60/cpp
+#define PreProcessCmd		CcCmd -EP -x c
+#define RanlibCmd		/bin/ranlib
+#define LdCmd			/bin/ld
+#define DefaultCCOptions	-pedantic
+#define GccGasOption 		-DGCCUSESGAS
+#define DefaultGcc2i386Opt 	-O2
+#if HasGcc2 && defined(i386Architecture)
+#define OptimizedCDebugFlags	DefaultGcc2i386Opt
+#else
+#define OptimizedCDebugFlags	
+#endif
+
+
+#define AsmDefines		-DUSE_GAS
+#define BootstrapCFlags		
+#define ExtensionOSDefines	
+
+#ifdef i386Architecture
+#define ServerExtraDefines	GccGasOption XFree86ServerDefines -DNO_ALLOCA
+#else
+#define ServerExtraDefines	GccGasOption
+#endif
+#define StandardCppDefines	-traditional StandardDefines 
+#define StandardDefines		-D_XOPEN_SOURCE -D_POSIX_SOURCE -D_BSD_SOURCE  -D__ELF__
+#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME
+#define ConnectionFlags		-DTCPCONN
+#define HasBSD44Sockets		YES
+#define HasSockets		YES
+
+#define UseElfFormat		YES
+#define	HasSharedLibraries	YES
+#include <gnuLib.rules>
+
+#define BuildXCSecurity		YES
+#define AvoidNullMakeCommand	YES
+#define CompressAllFonts	YES
+#define DirFailPrefix -
+#define HasNdbm         	YES
+#define HasPutenv       	YES
+#define Malloc0ReturnsNull	NO
+#define NeedConstPrototypes	YES
+#define NeedFunctionPrototypes	YES
+#define NeedNestedPrototypes	YES
+#define NeedVarargsPrototypes	YES
+#define NeedWidePrototypes	NO
+#define StripInstalledPrograms	YES
+#ifndef HasLibCrypt
+# define HasLibCrypt		YES
+#endif
+#define HasPoll			YES
+#define TermcapLibrary		-lncurses
+#ifndef GnuMallocLibrary
+#define GnuMallocLibrary	/* -lgnumalloc */
+#endif
+
+#ifdef InstallCmd
+#undef  InstallCmd
+#endif
+#define InstallCmd		/bin/install
+
+#define TroffCmd        groff -Tps
+
+#ifndef ExtraFilesToClean
+# define ExtraFilesToClean *.core
+#endif
+
+#ifdef i386Architecture
+# include <xfree86.cf>
+#endif
+
+

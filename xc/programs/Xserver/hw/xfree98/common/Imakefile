@@ -4,14 +4,18 @@ XCOMM $XConsortium: Imakefile /main/19 1996/10/25 21:24:28 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.6 1998/10/31 14:41:13 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/12/23 13:36:30 hohndel Exp $
 
 
 
 #include <Server.tmpl>
 
 #ifdef i386MachArchitecture
+#ifdef GNUMachArchitecture
+        KBD = xf86Kbd
+#else
         KBD = xf86KbdMach
+#endif /* GNUMachArchitecture */
 #else
 # ifdef i386BsdArchitecture
         KBD = xf86KbdBSD
@@ -92,13 +96,19 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.6 1998/
 # endif
 #endif
 
+#if !defined(LynxOSArchitecture) && !defined(OS2Architecture)
+ PNP_MOUSE_SRC=xf86_PnPMouse.c
+ PNP_MOUSE_OBJ=xf86_PnPMouse.o
+ PNP_MOUSE_DEFINES=-DPNP_MOUSE
+#endif
+
 #if BuildDynamicLoading
 #  if PexDynamicModule
    PEX_MODULE_DEFINES = -DPEX_MODULE
 #  endif
 #  if XieDynamicModule
    XIE_MODULE_DEFINES = -DXIE_MODULE
-#endif
+#  endif
    XF86DL_SRC = xf86Dl.c
    XF86DL_OBJ = xf86Dl.o
 #if HasDlsymBug
@@ -138,7 +148,28 @@ SERVERSRCS = \
 	XF86_AGX.c \
 	XF86_W32.c \
 	XF86_I128.c \
-	XF86_TGA.c
+	XF86_TGA.c \
+	XF86_GLINT.c
+
+#if BuildXInputExt
+XINPUT_DEV_SRCS = \
+	$(JOYSTICK_SRC) \
+	$(WACOM_SRC) \
+	$(ELOGRAPHICS_SRC) \
+	$(MICROTOUCH_SRC) \
+	$(SUMMASKETCH_SRC) \
+	$(ACECAD_SRC) \
+	$(DIALBOX_SRC)
+
+XINPUT_DEV_OBJS = \
+	$(JOYSTICK_OBJ) \
+	$(WACOM_OBJ) \
+	$(ELOGRAPHICS_OBJ) \
+	$(MICROTOUCH_OBJ) \
+	$(SUMMASKETCH_OBJ) \
+	$(ACECAD_OBJ) \
+	$(DIALBOX_OBJ)
+#endif
 
 SRCS =	\
 	$(XF86DL_SRC) \
@@ -153,17 +184,11 @@ SRCS =	\
 	xf86Io.c \
 	xf86Lock.c \
 	xf86_Mouse.c \
-	xf86_PnPMouse.c \
 	xf86_Option.c \
 	$(KBD).c \
+	$(PNP_MOUSE_SRC) \
 	$(XF86_XINPUT_SRC) \
-	$(JOYSTICK_SRC) \
-	$(WACOM_SRC) \
-	$(ELOGRAPHICS_SRC) \
-	$(MICROTOUCH_SRC) \
-	$(SUMMASKETCH_SRC) \
-	$(ACECAD_SRC) \
-	$(DIALBOX_SRC) \
+	$(XINPUT_DEV_SRCS) \
 	$(XKBDDXSRC) \
 	$(BETASRC) \
 	$(SERVERSRCS)
@@ -177,15 +202,9 @@ OBJS = \
 	xf86Io.o \
 	xf86Lock.o \
 	xf86_Mouse.o \
-	xf86_PnPMouse.o \
+	$(PNP_MOUSE_OBJ) \
 	$(XF86_XINPUT_OBJ) \
-	$(JOYSTICK_OBJ) \
-	$(WACOM_OBJ) \
-	$(ELOGRAPHICS_OBJ) \
-	$(MICROTOUCH_OBJ) \
-	$(SUMMASKETCH_OBJ) \
-	$(ACECAD_OBJ) \
-	$(DIALBOX_OBJ) \
+	$(XINPUT_DEV_OBJS) \
 	$(XKBDDXOBJ) \
 	$(BETAOBJ) \
 	$(KBD).o
@@ -207,7 +226,7 @@ OFILES = \
 CONSDEFINES = XFree86ConsoleDefines
 EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
 
-    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) -DPC98
+    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES) -DPC98
 
 #if XF98EGCServer
 VGA16BUILD = -DBUILD_VGA16
@@ -219,6 +238,7 @@ all:: $(OFILES)
 
 #if BuildXInputExt
 SpecialObjectRule(xf86Xinput.o,xf86Xinput.c $(ICONFIGFILES),$(XINPUT_DEVICES) $(MODULEDEFINES))
+SpecialObjectRule(xf86Switch.o,xf86Switch.c $(ICONFIGFILES),$(XINPUT_DEVICES) $(MODULEDEFINES))
 # if BuildDynamicLoading
 SpecialObjectRule(xf86Dl.o,xf86Dl.c,$(MODULEDEFINES))
 #  if JoystickSupport
@@ -309,14 +329,15 @@ LinkFile(xf86IniExt.c,$(SERVERSRC)/mi/miinitext.c)
 LinkFile(xf86MIniExt.c,$(SERVERSRC)/mi/miinitext.c)
 LinkSourceFile(XF86_8514.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_AGX.c,$(XF86SRC)/common)
+LinkSourceFile(XF86_GLINT.c,$(XF86SRC)/common)
+LinkSourceFile(XF86_I128.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_Mono.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_P9000.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_S3.c,$(XF86SRC)/common)
-LinkSourceFile(XF86_TGA.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_SVGA.c,$(XF86SRC)/common)
+LinkSourceFile(XF86_TGA.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_VGA16.c,$(XF86SRC)/common)
 LinkSourceFile(XF86_W32.c,$(XF86SRC)/common)
-LinkSourceFile(XF86_I128.c,$(XF86SRC)/common)
 LinkSourceFile(atKeynames.h,$(XF86SRC)/common)
 LinkSourceFile(cfb16.h,$(XF86SRC)/common)
 LinkSourceFile(cfb24.h,$(XF86SRC)/common)

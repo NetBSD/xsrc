@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.3 1998/01/12 03:02:12 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.4 1998/12/19 15:40:52 robin Exp $ */
 
 #include "servermd.h"
 
@@ -34,6 +34,7 @@
 
 extern volatile struct i128mem i128mem;
 extern Bool i128BlockCursor;
+extern Bool i128Doublescan;
 
 
 /*
@@ -167,6 +168,9 @@ i128IBMMoveCursor(pScr, x, y)
    y -= i128InfoRec.frameY0;
    if (y < 0)
       return;
+
+   if (i128Doublescan)
+      y *= 2;
 
    tmp = i128mem.rbase_g[IDXL_I] & 0xFF;
    i128mem.rbase_g[IDXL_I] = IBMRGB_curs_hot_x;				MB;

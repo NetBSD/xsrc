@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.6 1998/10/19 07:33:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.8 1998/12/22 12:39:13 hohndel Exp $ */
 
 #include <math.h>
 #include <stdlib.h>

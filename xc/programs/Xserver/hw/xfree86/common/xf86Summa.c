@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.4 1998/11/12 11:32:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.5 1998/12/22 11:23:24 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -1043,6 +1043,7 @@ xf86SumAllocate()
     local->close_proc = xf86SumClose;
     local->switch_mode = xf86SumSwitchMode;
     local->conversion_proc = xf86SumConvert;
+    local->reverse_conversion_proc = xf86SumReverseConvert;
     local->fd = -1;
     local->atom = 0;
     local->dev = NULL;

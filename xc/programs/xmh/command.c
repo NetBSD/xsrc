@@ -1,5 +1,5 @@
 /* $XConsortium: command.c,v 2.49 95/04/05 19:59:06 kaleb Exp $ */
-/* $XFree86: xc/programs/xmh/command.c,v 3.4 1996/10/03 08:50:27 dawes Exp $ */
+/* $XFree86: xc/programs/xmh/command.c,v 3.4.4.1 1998/12/18 11:56:39 dawes Exp $ */
 
 /*
  *			  COPYRIGHT 1987, 1989
@@ -35,7 +35,7 @@
 #ifndef SYSV
 #include <sys/wait.h>
 #endif	/* SYSV */
-#if defined(SVR4) && !defined(SCO325)
+#if !defined(DGUX) && !defined(SCO325) && defined(SVR4)
 #include <sys/filio.h>
 #endif
 

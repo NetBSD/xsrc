@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.6 1998/10/31 14:41:09 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.7 1998/12/26 00:12:42 dawes Exp $ */
 
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
@@ -34,7 +34,6 @@
 
 #include "xf86xaa.h"
 
-extern unsigned char *tguiMMIOBase;
 extern int TGUIRops_alu[16];
 extern int TGUIRops_Pixalu[16];
 extern int GE_OP;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.20 1998/11/08 10:03:46 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.21 1998/12/26 00:12:40 dawes Exp $ */
 
 /*
  *
@@ -195,8 +195,11 @@ Bool enter;
    unsigned char tmp;
 
 #ifdef XFreeXDGA
-	if (vga256InfoRec.directMode&XF86DGADirectGraphics && !enter)
+	if (vga256InfoRec.directMode&XF86DGADirectGraphics && !enter) {
+		if (vgaHWCursor.Initialized)
+			S3VHideCursor();
 		return;
+	}
 #endif
 
    if (enter){

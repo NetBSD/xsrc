@@ -1,0 +1,28 @@
+XCOMM
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/Imakefile,v 1.2.2.2 1998/12/22 12:27:33 hohndel Exp $
+XCOMM
+
+#include <Server.tmpl>
+
+BIOS_MOD = bios_mmap
+
+SRCS = hurd_init.c hurd_video.c hurd_io.c $(BIOS_MOD).c mapVT_noop.c std_mseEv.c std_kbdEv.c\
+       VTsw_noop.c posix_tty.c
+
+OBJS = hurd_init.o hurd_video.o hurd_io.o $(BIOS_MOD).o mapVT_noop.o std_mseEv.o std_kbdEv.o\
+       VTsw_noop.o posix_tty.o
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+
+ObjectFromSpecialSource(std_kbdEv,../shared/std_kbdEv,/**/)
+ObjectFromSpecialSource(std_mseEv,../shared/std_mseEv,/**/)
+ObjectFromSpecialSource(mapVT_noop,../shared/mapVT_noop,/**/)
+ObjectFromSpecialSource(VTsw_noop,../shared/VTsw_noop,/**/)
+ObjectFromSpecialSource(posix_tty,../shared/posix_tty,/**/)
+
+DependTarget()
+

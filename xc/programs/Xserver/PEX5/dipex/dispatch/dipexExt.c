@@ -1,5 +1,5 @@
 /* $XConsortium: dipexExt.c,v 5.11 94/04/17 20:36:04 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3.4.2 1998/09/20 05:42:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3.4.3 1998/12/20 10:37:54 dawes Exp $ */
 
 /***********************************************************
 
@@ -130,7 +130,7 @@ PexExtensionInit()
     if (!PEXStructType || !PEXSearchType || !PEXRendType || !PEXWksDrawableType
 	|| !PEXWksType || !PEXPipeType   || !PEXNameType || !PEXFontType 
 	|| !PEXLutType || !PEXPickType   || !PEXClass    || !PEXContextType ) {
-	    ErrorF("PEXExtensionInit: Could not create PEX resource types");
+	    ErrorF("PEXExtensionInit: Could not create PEX resource types\n");
 	    return;
 	}
 

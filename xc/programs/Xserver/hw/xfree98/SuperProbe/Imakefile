@@ -4,13 +4,17 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:39:32 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/SuperProbe/Imakefile,v 3.12.2.5 1998/10/19 03:51:20 hohndel Exp $
-#if defined(SVR3Architecture) || defined(SVR4Architecture) || defined(SCOArchitecture)
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/SuperProbe/Imakefile,v 3.12.2.8 1998/12/23 13:36:29 hohndel Exp $
+#if (defined(SVR3Architecture) || defined(SVR4Architecture) || defined(SCOArchitecture)) && !defined(DguxArchitecture)
 # define OSModule OS_SYSV
 #endif
 
 #if defined(SVR4Architecture)
 # include <Server.tmpl>
+#endif
+
+#if defined(DguxArchitecture)
+# define OSModule OS_DGUX
 #endif
 
 #if defined(SVR4Architecture) && defined(SunArchitecture) && !HasGcc
@@ -34,8 +38,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/SuperProbe/Imakefile,v 3.12.2.5 1
 # define OSModule OS_Minix
 #endif
 #if defined(i386MachArchitecture)
+#if defined(GNUMachArchitecture)
+   SYS_LIBRARIES = 
+# define OSModule OS_GNUmach
+#else
    SYS_LIBRARIES = /usr/lib/libmach.a
 # define OSModule OS_Mach
+#endif
 #endif
 #if defined(OS2Architecture)
 # define OSModule OS_Os2
@@ -46,7 +55,6 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/SuperProbe/Imakefile,v 3.12.2.5 1
   IOPERMDEFINES = -DUSE_I386_IOPL
   SYS_LIBRARIES = -li386
 #endif
-
 OS_SRC = OSModule.c $(OS_IO_SRC)
 OS_OBJ = OSModule.o $(OS_IO_OBJ)
 BASE_SRC = MDA.c Herc.c CGA.c VGA.c RamDac.c MemProbe.c PCI.c
@@ -122,6 +130,8 @@ LinkSourceFile(Matrox.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(MemProbe.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(NCR.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(OS_386BSD.c,$(XF86SRC)/SuperProbe)
+LinkSourceFile(OS_DGUX.c,$(XF86SRC)/SuperProbe)
+LinkSourceFile(OS_GNUmach.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(OS_Linux.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(OS_LynxOS.c,$(XF86SRC)/SuperProbe)
 LinkSourceFile(OS_Mach.c,$(XF86SRC)/SuperProbe)

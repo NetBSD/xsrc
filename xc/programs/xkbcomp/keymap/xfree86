@@ -1,4 +1,5 @@
 // $XConsortium: xfree86 /main/12 1996/08/31 12:17:30 kaleb $
+// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.8.2.1 1998/12/18 11:56:36 dawes Exp $
 default xkb_keymap "us" {
     xkb_keycodes	{ include "xfree86"		};
     xkb_types		{ include "default"		};
@@ -168,3 +169,21 @@ xkb_keymap "jp106" {
     xkb_geometry	{ include "pc(jp106)"			};
 };
 
+// Additions by Eric Moreau, 1998-09-27
+// I am reachable at eric_moreau@compuserve.com
+
+xkb_keymap "fr_CA_sundeadkeys"	{
+    xkb_keycodes	{ include "xfree86"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "en_US(pc102)+ca_enhanced(sundeadkeys)+us_group3(basic)+group(ctrl_shift_toggle)+ralt(mode_switch)" };
+    xkb_geometry 	{ include "pc(pc102)"		};
+};
+
+xkb_keymap "fr_CA"	{
+    xkb_keycodes	{ include "xfree86"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "en_US(pc102)+ca_enhanced(basic)+us_group3(basic)+group(ctrl_shift_toggle)+ralt(mode_switch)" };
+    xkb_geometry 	{ include "pc(pc102)"		};
+};

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.19 1998/10/18 20:42:11 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.20 1998/12/22 11:23:20 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -964,7 +964,7 @@ xf86Config (vtopen)
 #ifdef MINIX
       setuid(getuid());
 #else
-#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
+#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__)
       setruid(0);
 #endif
       seteuid(real_uid);
@@ -978,7 +978,7 @@ xf86Config (vtopen)
 #else
     if (real_uid) {
       seteuid(0);
-#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
+#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__)
       setruid(real_uid);
 #endif
     }

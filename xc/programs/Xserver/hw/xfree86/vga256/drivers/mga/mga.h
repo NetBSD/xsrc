@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.8 1998/10/20 20:51:20 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.9 1998/12/27 13:10:16 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -86,6 +86,7 @@ extern int MGAusefbitblt;
 extern int MGAydstorg;
 extern unsigned char *MGAMMIOBase;
 extern Bool MGAIsSDRAM;
+extern Bool MGACursorBug;
 
 extern void Mga8AccelInit();
 extern void Mga16AccelInit();

@@ -7,22 +7,22 @@
 
 
 
-                      README for XFree86 3.3.3 on NetBSD
+                         README for XFree86 on NetBSD
 
  Rich  Murphey, David Dawes, Marc  Wandschneider, Mark  Weaver, Matthieu Herrb
 
-                       Last modified on: 17 October 1998
+                      Last modified on: 29 December 1998
 
 
 
 1.  What and Where is XFree86?
 
-XFree86 3.3.3 is a port of X11R6.3 that supports several versions of Intel-
-based Unix.  It is derived from X386 1.2, which was the X server distributed
-with X11R5.  This release consists of many new features and performance
-improvements as well as many bug fixes.  The release is available as source
-patches against the X Consortium X11R6.3 code, as well as binary distributions
-for many architectures.
+XFree86 is a port of X11R6.3 that supports several versions of Intel-based
+Unix.  It is derived from X386 1.2, which was the X server distributed with
+X11R5.  This release consists of many new features and performance improvements
+as well as many bug fixes.  The release is available as source patches against
+the X Consortium X11R6.3 code, as well as binary distributions for many archi-
+tectures.
 
 See the Copyright Notice.
 
@@ -45,29 +45,29 @@ running NetBSD 0.9, 1.0 or 1.1, you should think about upgrading to a newer
 version of NetBSD first.
 
 If you don't upgrade, you'll have to build XFree86 from the sources.  XFree86
-3.3.3 should compile cleanly under earlier versions of NetBSD, although this
-has not been tested.
+should compile cleanly under earlier versions of NetBSD, although this has not
+been tested.
 
-XFree86 3.3.3 also builds on NetBSD/sparc. See section Building on other archi-
-tectures (section 8.5, page 8) for details.
+XFree86 also builds on NetBSD/sparc. See section Building on other architec-
+tures (section 8.5, page 8) for details.
 
 The client side of XFree86 also builds on NetBSD/alpha and many other architec-
 ture supported by NetBSD.
 
-XFree86 3.3.3 also supports NetBSD on PC98 machines.
+XFree86 also supports NetBSD on PC98 machines.
 
 
 
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            1
+README for XFree86 on NetBSD                                                  1
 
 
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            2
+README for XFree86 on NetBSD                                                  2
 
 
 
@@ -79,7 +79,7 @@ have comments or suggestions about this file and we'll revise it.
 
 3.  New features in this release
 
-See the Release Notes for non-OS dependent new features in XFree86 3.3.3.
+See the Release Notes for non-OS dependent new features in XFree86 3.3.3.1.
 
 
 4.  Installing the Binaries
@@ -133,7 +133,7 @@ using a PS/2 mouse.
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            3
+README for XFree86 on NetBSD                                                  3
 
 
 
@@ -199,7 +199,7 @@ The easiest way for new users to start X windows is to type:
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            4
+README for XFree86 on NetBSD                                                  4
 
 
 
@@ -265,7 +265,7 @@ to
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            5
+README for XFree86 on NetBSD                                                  5
 
 
 
@@ -331,7 +331,7 @@ sion:
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            6
+README for XFree86 on NetBSD                                                  6
 
 
 
@@ -381,8 +381,8 @@ compiling.  To compile the sources, invoke ``make World'' in the xc directory.
 
 8.1  Console drivers
 
-XFree86 3.3.3 has a configuration option to select the console drivers to use
-in xf86site.def:
+XFree86 has a configuration option to select the console drivers to use in
+xf86site.def:
 
    o  if you're using pccons put:
 
@@ -397,7 +397,7 @@ in xf86site.def:
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            7
+README for XFree86 on NetBSD                                                  7
 
 
 
@@ -463,7 +463,7 @@ host.def:
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            8
+README for XFree86 on NetBSD                                                  8
 
 
 
@@ -472,8 +472,8 @@ README for XFree86 3.3.3 on NetBSD                                            8
 
 8.5  Building on other architectures
 
-XFree86 3.3.3 also compiles on NetBSD/sparc. The Sun server patches from Dennis
-Ferguson and Matthew Green have been integrated in xc/programs/Xserver/hw/sun.
+XFree86 also compiles on NetBSD/sparc. The Sun server patches from Dennis Fer-
+guson and Matthew Green have been integrated in xc/programs/Xserver/hw/sun.
 Small modifications to xf86site.def are needed:
 
    o Set all variables defining the servers to build to NO. (The variables con-
@@ -529,7 +529,7 @@ sion of <sys/param.h>.
 
 
 
-README for XFree86 3.3.3 on NetBSD                                            9
+README for XFree86 on NetBSD                                                  9
 
 
 
@@ -564,7 +564,7 @@ Many thanks to:
    o Rod Grimes and Jack Velte of Walnut Creek Cdrom for use of their machines
      in preparing the FreeBSD binary release.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.9 1998/11/07 13:52:42 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.10 1998/12/29 07:54:28 hohndel Exp $
 
 
 
@@ -595,7 +595,7 @@ Many thanks to:
 
 
 
-README for XFree86 3.3.3 on NetBSD                                           10
+README for XFree86 on NetBSD                                                 10
 
 
 
@@ -725,4 +725,4 @@ README for XFree86 3.3.3 on NetBSD                                           10
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.57.2.11 1998/11/14 06:46:49 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.57.2.12 1998/12/29 08:00:07 hohndel Exp $

@@ -9,7 +9,7 @@
  *
  *  supported O/S's:  SVR4, UnixWare, SCO, Solaris,
  *                    FreeBSD, NetBSD, 386BSD, BSDI BSD/386,
- *                    Linux, Mach/386, ISC
+ *                    Linux, Mach/386, ISC, DGUX
  *                    DOS (WATCOM 9.5 compiler)
  *
  *  compiling:        [g]cc scanpci.c -o scanpci
@@ -18,10 +18,11 @@
  *                    for DOS, watcom 9.5:
  *                        wcc386p -zq -omaxet -7 -4s -s -w3 -d2 name.c
  *                        and link with PharLap or other dos extender for exe
+ * case Intel DG/ux:  gcc -DDGUX scanpci.c -o scanpci (with gcc-DG-2.7.2.88)
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.17 1998/11/10 11:55:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.22 1998/12/29 10:57:46 dawes Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -47,11 +48,14 @@
  *
  */
 
+#if !defined(DGUX)
 #if defined(__SVR4)
 #if !defined(SVR4)
 #define SVR4
 #endif
 #endif
+#endif
+
 
 #ifdef __EMX__
 #define INCL_DOSFILEMGR
@@ -60,7 +64,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#if defined(SVR4)
+#if defined(SVR4) && !defined(DGUX)
 #if defined(sun)
 #ifndef __EXTENSIONS__
 #define __EXTENSIONS__
@@ -104,6 +108,13 @@
 #ifndef GCCUSESGAS
 #define GCCUSESGAS
 #endif
+#endif
+#if defined(DGUX)
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/param.h>
+#include <sys/kd.h>
 #endif
 #if defined(SCO) || defined(ISC)
 #ifndef ISC
@@ -219,9 +230,15 @@ static unsigned long inl(unsigned short port) { unsigned long ret;
 	}
 #else
 
-#if defined(SVR4)
+#if defined(SVR4) && !defined(DGUX)
 # if !defined(__USLC__)
 #  define __USLC__
+# endif
+#endif
+
+#if defined(DGUX)
+# if !defined(_USL)
+#  define _USL
 # endif
 #endif
 
@@ -879,6 +896,7 @@ struct pci_vendor_device {
                             { 0x2309, "Imagine-128", print_i128 },
                             { 0x2339, "Imagine-128-II", print_i128 },
                             { 0x493D, "Imagine-128-T2R", print_i128 },
+                            { 0x5348, "Imagine-128-T2R4", print_i128 },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1060, "UMC", {
                             { 0x0101, "UM8673F", NF },
@@ -896,6 +914,9 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1066, "PICOP", {
                             { 0x0001, "PT86C52x Vesuvius", NF },
+                            { 0x0000, (char *)NULL, NF } } },
+        { 0x1069, "Mylex", {
+                            { 0x0010, "AccelRAID 250", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x106B, "Apple", {
                             { 0x0001, "Bandit", NF },
@@ -1149,9 +1170,10 @@ struct pci_vendor_device {
                             { 0x0484, "82378IB/ZB pci-isa bridge", NF },
                             { 0x0486, "82430ZX Aries", NF },
                             { 0x04A3, "82434LX/NX pci cache mem controller", NF },
+                            { 0x0960, "960RD processor/bridge", NF },
                             { 0x1230, "82371 bus-master IDE controller", NF },
                             { 0x1223, "SAA7116", NF },
-                            { 0x1229, "82557 10/100MBit network controller",NF},
+                            { 0x1229, "82557/8 10/100MBit network controller",NF},
                             { 0x122D, "82437 Triton", NF },
                             { 0x122E, "82471 Triton", NF },
                             { 0x1230, "82438", NF },
@@ -1170,16 +1192,26 @@ struct pci_vendor_device {
 			    { 0x7192, "82443BX Host (no AGP)", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x9004, "Adaptec", {
+                            { 0x0010, "2940U2", NF },
+                            { 0x1078, "7810", NF },
                             { 0x5078, "7850", NF },
                             { 0x5578, "7855", NF },
                             { 0x6078, "7860", NF },
-                            { 0x7078, "294x", NF },
+                            { 0x6178, "2940AU", NF },
+                            { 0x7078, "7870", NF },
                             { 0x7178, "2940", NF },
                             { 0x7278, "7872", NF },
+                            { 0x7378, "398X", NF },
                             { 0x7478, "2944", NF },
-                            { 0x8178, "2940U", NF },
-                            { 0x8278, "3940U", NF },
+                            { 0x7895, "7895", NF },
+                            { 0x8078, "7880", NF },
+                            { 0x8178, "2940U/UW", NF },
+                            { 0x8278, "3940U/UW", NF },
+                            { 0x8378, "389XU", NF },
                             { 0x8478, "2944U", NF },
+                            { 0x0000, (char *)NULL, NF } } },
+        { 0x9005, "Adaptec", {
+                            { 0x001F, "7890/7891", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x907F, "Atronics", {
                             { 0x2015, "IDE-2015PL", NF },
@@ -1244,6 +1276,10 @@ main(int argc, char *argv[])
 	printf("This program must be run as root\n");
 	exit(1);
     }
+#endif
+
+#if defined(DGUX)
+    printf("Scanpci for Intel ix86 DG/ux R4.20MU03...MUxx\n\n");
 #endif
 
     enable_os_io();
@@ -1517,32 +1553,32 @@ identify_card(struct pci_config_reg *pcr, int verbose)
             if (pcr->_base0)
                 printf("  BASE0     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base0, pcr->_base0 & (pcr->_base0 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base0 & 0x1 ? "I/O" : "MEM");
             if (pcr->_base1)
                 printf("  BASE1     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base1, pcr->_base1 & (pcr->_base1 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base1 & 0x1 ? "I/O" : "MEM");
             if (pcr->_base2)
                 printf("  BASE2     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base2, pcr->_base2 & (pcr->_base2 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base2 & 0x1 ? "I/O" : "MEM");
             if (pcr->_base3)
                 printf("  BASE3     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base3, pcr->_base3 & (pcr->_base3 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base3 & 0x1 ? "I/O" : "MEM");
             if (pcr->_base4)
                 printf("  BASE4     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base4, pcr->_base4 & (pcr->_base4 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base4 & 0x1 ? "I/O" : "MEM");
             if (pcr->_base5)
                 printf("  BASE5     0x%08x  addr 0x%08x  %s\n",
                     pcr->_base5, pcr->_base5 & (pcr->_base5 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0), 
+		    0xFFFFFFFC : 0xFFFFFFF0),
 		    pcr->_base5 & 0x1 ? "I/O" : "MEM");
             if (pcr->_baserom)
                 printf("  BASEROM   0x%08x  addr 0x%08x  %sdecode-enabled\n",
@@ -1550,11 +1586,11 @@ identify_card(struct pci_config_reg *pcr, int verbose)
                     pcr->_baserom & 0x1 ? "" : "not-");
             if (pcr->_max_min_ipin_iline)
                 printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
-                    pcr->_max_lat, pcr->_min_gnt, 
+                    pcr->_max_lat, pcr->_min_gnt,
 		    pcr->_int_pin, pcr->_int_line);
             if (pcr->_user_config)
                 printf("  BYTE_0    0x%02x  BYTE_1  0x%02x  BYTE_2  0x%02x  BYTE_3  0x%02x\n",
-                    pcr->_user_config_0, pcr->_user_config_1, 
+                    pcr->_user_config_0, pcr->_user_config_1,
 		    pcr->_user_config_2, pcr->_user_config_3);
 	}
 }
@@ -1684,7 +1720,7 @@ USHORT callgate[3] = {0,0,0};
 void
 enable_os_io()
 {
-#if defined(SVR4) || defined(SCO) || defined(ISC)
+#if (defined(SVR4) || defined(SCO) || defined(ISC)) && !defined(DGUX)
 #if defined(SI86IOPL)
     sysi86(SI86IOPL, 3);
 #else
@@ -1694,12 +1730,12 @@ enable_os_io()
 #if defined(linux)
     iopl(3);
 #endif
-#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(__bsdi__)
+#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(__bsdi__) || defined(DGUX)
     if ((io_fd = open("/dev/console", O_RDWR, 0)) < 0) {
         perror("/dev/console");
         exit(1);
     }
-#if defined(__FreeBSD__)  || defined(__386BSD__)
+#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(DGUX)
     if (ioctl(io_fd, KDENABIO, 0) < 0) {
         perror("ioctl(KDENABIO)");
         exit(1);
@@ -1769,7 +1805,7 @@ enable_os_io()
 /* Calling callgate with function 13 sets IOPL for the program */
 
 	asm volatile ("movl $13,%%ebx;.byte 0xff,0x1d;.long _callgate"
-			: /*no outputs */ 
+			: /*no outputs */
 			: /*no inputs */
 			: "eax","ebx","ecx","edx","cc");
 
@@ -1788,7 +1824,7 @@ enable_os_io()
 void
 disable_os_io()
 {
-#if defined(SVR4) || defined(SCO) || defined(ISC)
+#if (defined(SVR4) || defined(SCO) || defined(ISC)) && !defined(DGUX)
 #if defined(SI86IOPL)
     sysi86(SI86IOPL, 0);
 #else
@@ -1798,10 +1834,10 @@ disable_os_io()
 #if defined(linux)
     iopl(0);
 #endif
-#if defined(__FreeBSD__)  || defined(__386BSD__)
+#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(DGUX)
     if (ioctl(io_fd, KDDISABIO, 0) < 0) {
         perror("ioctl(KDDISABIO)");
-	close(io_fd);
+        close(io_fd);
         exit(1);
     }
     close(io_fd);
@@ -1811,15 +1847,15 @@ disable_os_io()
     close(io_fd);
 #else
     if (i386_iopl(0) < 0) {
-	perror("i386_iopl");
-	exit(1);
+        perror("i386_iopl");
+        exit(1);
     }
 #endif /* NetBSD1_1 */
 #endif /* __NetBSD__ */
 #if defined(__bsdi__)
     if (ioctl(io_fd, PCCONDISABIOPL, 0) < 0) {
         perror("ioctl(PCCONDISABIOPL)");
-	close(io_fd);
+        close(io_fd);
         exit(1);
     }
     close(io_fd);
@@ -1833,3 +1869,4 @@ disable_os_io()
     pciConfBase = NULL;
 #endif
 }
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.6 1998/11/06 09:46:25 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.9 1998/12/26 00:12:37 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -437,6 +437,11 @@ ProcessInputEvents ()
   mieqProcessInputEvents();
 #endif
   miPointerUpdate();
+
+#ifdef XFreeXDGA
+  if (((ScrnInfoPtr)(xf86Info.currentScreen->devPrivates[xf86ScreenIndex].ptr))->directMode&XF86DGADirectGraphics) 
+    return;
+#endif
 
   miPointerPosition(&x, &y);
   xf86SetViewport(xf86Info.currentScreen, x, y);
@@ -978,7 +983,7 @@ xf86PostKbdEvent(key)
    * normal, non-keypad keys
    */
   if (scanCode < KEY_KP_7 || scanCode > KEY_KP_Decimal) {
-#if !defined(CSRG_BASED) && !defined(MACH386) && !defined(MINIX) && !defined(__OSF__)
+#if !defined(CSRG_BASED) && !defined(MACH386) && !defined(MINIX) && !defined(__OSF__) && !defined(__GNU__)
     /*
      * magic ALT_L key on AT84 keyboards for multilingual support
      */
@@ -1138,17 +1143,19 @@ xf86PostMseEvent(device, buttons, dx, dy)
 	      dyremaind = dyremaind - (float)dy;
 	  }
       }
+#endif /* !XINPUT */
 
 #ifdef XFreeXDGA
       if (((ScrnInfoPtr)(xf86Info.currentScreen->devPrivates[xf86ScreenIndex].ptr))->directMode&XF86DGADirectMouse) {
 	XF86DirectVideoMoveMouse(dx, dy, mevent->u.keyButtonPointer.time);
       } else
 #endif
+#ifndef XINPUT
 	{
 	  MOVEPOINTER(dx, dy, mevent->u.keyButtonPointer.time);
 	}
 #else
-      xf86PostMotionEvent(device, 0, 0, 2, dx, dy);
+	xf86PostMotionEvent(device, 0, 0, 2, dx, dy);
 #endif /* XINPUT */
   }
 

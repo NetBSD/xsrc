@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvcursor.h,v 1.1.2.3 1998/10/19 07:33:49 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvcursor.h,v 1.1.2.5 1998/12/22 12:39:14 hohndel Exp $ */
 
 #ifndef _NVCURSOR_H_
 #define _NVCURSOR_H_
@@ -32,17 +32,5 @@ void NVWarpCursor(ScreenPtr pScr,int x,int y);
 void NVQueryBestSize(int class,unsigned short *pwidth,
                      unsigned short *pheight,ScreenPtr pScreen);
 
-
-Bool NV3CursorInit(char *pm,ScreenPtr pScr);
-void NV3RestoreCursor(ScreenPtr pScr);
-void NV3WarpCursor(ScreenPtr pScr,int x,int y);
-void NV3QueryBestSize(int class,unsigned short *pwidth,
-                     unsigned short *pheight,ScreenPtr pScreen);
-
-Bool NV4CursorInit(char *pm,ScreenPtr pScr);
-void NV4RestoreCursor(ScreenPtr pScr);
-void NV4WarpCursor(ScreenPtr pScr,int x,int y);
-void NV4QueryBestSize(int class,unsigned short *pwidth,
-                     unsigned short *pheight,ScreenPtr pScreen);
 
 #endif

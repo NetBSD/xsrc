@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix.h,v 1.1.2.5 1998/11/06 09:47:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix.h,v 1.1.2.6 1998/12/22 07:49:58 hohndel Exp $ */
 
 /* this code is partly based on the MediaGX sources from the GGI project
    based on CYRIX example code (gxvideo.c) and included with CYRIX and
@@ -88,9 +88,10 @@ extern void CYRIXAccelInit();
 #define CYRIXsetVectorMode()                 \
                      GX_REG(GP_VECTOR_MODE)  = (vectorMode)
 
-#define IfDest(xrop, val)   ((((xrop) & 0x5) ^ (((xrop) & 0xA) >> 1)) ? (val) : 0)
-
-
+#define IfDest(rop, planemask, val)                                        \
+                                 (( (((rop) & 0x5) ^ (((rop) & 0xA) >> 1)) \
+                                 || (~((planemask) & 0xFF))                \
+                                 ) ? (val) : 0)
 
 /* Generic MediaGX hardware register and value definitions */
 

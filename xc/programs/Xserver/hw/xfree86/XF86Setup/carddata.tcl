@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.14 1998/11/14 09:20:44 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.16 1998/12/23 13:36:25 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -68,12 +68,15 @@ set CardChipSets(SVGA-realtek)	realtek
 set CardChipSets(SVGA-s3v)	s3_virge
 set CardChipSets(SVGA-sis)	{ sis86c201 sis86c202 sis86c205 sis86c215 \
 				  sis86c225 sis5597 sis5598 sis6326 }
-set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b tvga8900c \
-				  tvga8900cl tvga8900d tvga9000 tvga9000i \
-				  tvga9100b tvga9200cxr \
-				  tgui9320lcd tgui9400cxi tgui9420 \
-				  tgui9420dgi tgui9430dgi tgui9440agi \
-				  tgui96xx cyber938x }
+set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b \
+                                  tvga8900c tvga8900cl tvga8900d tvga9000 \
+                                  tvga9000i tvga9100b tvga9200cxr \
+                                  tgui9400cxi tgui9420 tgui9420dgi tgui9430dgi \
+                                  tgui9440agi cyber9320 tgui9660 tgui9680 \
+				  tgui9682 tgui9685 cyber9382 cyber9385 \
+                                  cyber9388 cyber9397 cyber9520 \
+                                  3dimage975 3dimage985 }
+
 set CardChipSets(SVGA-video7)	video7
 set CardChipSets(SVGA-neo)	{ NM2070 NM2090 NM2093 NM2097 NM2160 NM2200 }
 set chiplist ""
@@ -147,8 +150,9 @@ set CardChipSets(WABEP)	   { clgd5426 clgd5428 clgd5429 clgd5430 \
 set CardChipSets(WSNA)	   { clgd5426 clgd5428 clgd5429 clgd5430 \
 			     clgd5434 clgd5440 clgd5446 clgd7543 \
 			     clgd7548 clgd7555 }
-set CardChipSets(TGUI)	   { tgui9660xgi tgui9680 cyber938x }
-set CardChipSets(MGA)	   { }
+set CardChipSets(TGUI)	   { cyber9320 cyber9382 cyber9385 \
+		             tgui9660 tgui9680 tgui9682 tgui9685 3dimage975 }
+set CardChipSets(MGA)	   { mga2064w mga1064sg }
 set CardChipSets(NECS3)	   { s3_generic mmio_928 }
 set CardChipSets(PWSKB)	   { s3_generic mmio_928 }
 set CardChipSets(PWLB)	   { mmio_928 s3_generic }
@@ -325,14 +329,14 @@ set CardOptions(Mono)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     enable_bitblt epsonmemwin extern_disp \
 			     fast_dram favour_bitblt favor_bitblt \
 			     fb_debug fifo_aggressive fifo_conservative \
-			     first_wwait ga98nb1 ga98nb2 ga98nb4 \
+			     first_wwait \
 			     hibit_high hibit_low hw_clocks hw_cursor \
 			     intern_disp lcd_center lcd_stretch \
 			     legend linear med_dram mmio nec_cirrus \
 			     noaccel nolinear no_2mb_banksel no_bitblt \
 			     no_imageblt no_pci_probe no_pixmap_cache \
 			     no_program_clocks \
-			     no_wait one_wait pc98_tgui pci_burst_off \
+			     no_wait one_wait pci_burst_off \
 			     pci_burst_on pci_retry power_saver probe_clocks \
 			     read_wait secondary \
 			     slow_dram swap_hibit sw_cursor tgui_mclk_66 \
@@ -350,7 +354,7 @@ set CardOptions(VGA16)	   { 16clocks all_wait clgd6225_lcd clkdiv2 \
 			     linear med_dram \
 			     mmio noaccel nolinear no_pci_probe \
 			     no_program_clocks no_wait one_wait \
-			     pc98_tgui pci_burst_off pci_burst_on pci_retry \
+			     pci_burst_off pci_burst_on pci_retry \
 			     power_saver probe_clocks read_wait \
 			     secondary \
 			     slow_dram tgui_mclk_66 \
@@ -368,8 +372,7 @@ set CardOptions(SVGA)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     favor_bitblt fb_debug fifo_aggressive \
 			     fifo_conservative fifo_moderate \
 			     first_wwait fix_panel_size \
-			     fpm_vram ga98nb1 \
-			     ga98nb2 ga98nb4 hibit_high hibit_low \
+			     fpm_vram hibit_high hibit_low \
 			     hw_clocks hw_cursor intern_disp \
 			     late_ras_precharge lcd_center \
 			     lcd_centre legend linear \
@@ -377,7 +380,7 @@ set CardOptions(SVGA)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     no_2mb_banksel no_bitblt no_imageblt \
 			     no_pci_probe no_pixmap_cache \
 			     no_program_clocks no_stretch no_wait \
-			     one_wait pc98_tgui pci_burst_off\
+			     one_wait pci_burst_off\
 			     pci_burst_on pci_retry power_saver probe_clocks \
 			     read_wait slow_edoram slow_dram stn suspend_hack \
 			     swap_hibit sw_cursor sync_on_green \
@@ -450,19 +453,27 @@ set CardOptions(3DLabs)	   { dac_8_bit noaccel power_saver no_pixmap_cache \
 set CardOptions(EGC)		{}
 set CardOptions(NEC480)		{}
 set CardOptions(GANBWAP)	{ ga98nb1 ga98nb2 ga98nb4 wap epsonmemwin \
-				  sw_cursor }
-set CardOptions(NKVNEC)		{ nec_cirrus }
-set CardOptions(WABS)		{}
-set CardOptions(WABEP)		{ med_dram }
-set CardOptions(WSNA)		{ epsonmemwin sw_cursor med_dram }
-set CardOptions(TGUI)		{ noaccel }
-set CardOptions(MGA)		{ noaccel }
-set CardOptions(NECS3)		{ necwab nomemaccess dac_8_bit bt485_curs }
+				  sw_cursor power_saver \
+			          xaa_benchmark xaa_no_color_exp }
+set CardOptions(NKVNEC)		{ nec_cirrus power_saver sw_cursor \
+			          xaa_benchmark xaa_no_color_exp }
+set CardOptions(WABS)		{ power_saver sw_cursor xaa_benchmark }
+set CardOptions(WABEP)		{ med_dram power_saver sw_cursor \
+			          xaa_benchmark xaa_no_color_exp }
+set CardOptions(WSNA)		{ epsonmemwin sw_cursor med_dram power_saver \
+				  xaa_benchmark xaa_no_color_exp }
+set CardOptions(TGUI)		{ noaccel power_saver sw_cursor \
+			          xaa_benchmark xaa_no_color_exp }
+set CardOptions(MGA)		{ noaccel power_saver sw_cursor \
+			          xaa_benchmark xaa_no_color_exp }
+set CardOptions(NECS3)		{ necwab nomemaccess dac_8_bit bt485_curs \
+				  power_saver sw_cursor }
 set CardOptions(PWSKB)		{ pcskb pcskb4 pchkb pw805i pw_mux \
 				  nomemaccess epsonmemwin dac_8_bit \
-				  bt485_curs }
-set CardOptions(PWLB)		{ pw_localbus dac_8_bit bt485_curs numbernine }
-set CardOptions(GA968)		{}
+				  bt485_curs power_saver sw_cursor }
+set CardOptions(PWLB)		{ pw_localbus dac_8_bit bt485_curs numbernine \
+				  power_saver sw_cursor }
+set CardOptions(GA968)		{ power_saver sw_cursor }
 
 # For each server, what readme files are applicable?
 set CardReadmes(SVGA-ark)	README.ark
@@ -519,7 +530,7 @@ set CardReadmes(Mono)	   [concat [lrmdups $rdmelist]]
 
 set CardReadmes(8514)	   {}
 set CardReadmes(AGX)	   README.agx
-set CardReadmes(I128)	   {}
+set CardReadmes(I128)	   README.I128
 set CardReadmes(Mach8)	   {}
 set CardReadmes(Mach32)	   README.Mach32
 set CardReadmes(Mach64)	   README.Mach64

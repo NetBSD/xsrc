@@ -7,11 +7,11 @@
 
 
 
-                      README for XFree86 3.3.3 on LynxOS
+                         README for XFree86 on LynxOS
 
                                 Thomas Mueller
 
-                       Last modified on: 10 October 1998
+                      Last modified on: 29 December 1998
 
 
 
@@ -30,7 +30,7 @@ The sources for XFree86 are available by anonymous ftp from:
 
 ftp://ftp.XFree86.org/pub/XFree86/current
 
-Binaries of the 3.3.3 release for LynxOS AT are available from:
+Binaries of XFree86 for LynxOS AT are available from:
 
 ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS
 
@@ -55,19 +55,19 @@ have comments or suggestions about this file and we'll revise it.
 
 2.  Installing the Binaries
 
-Please refer to section "Installing the XFree86 3.3.3 Release" of the Release
+Please refer to section "Installing the XFree86 3.3.3.1 Release" of the Release
 Notes for detailed installation instructions.
 
 If you plan to install XF86Setup you'll have to install X333prog as well since
 
 
-README for XFree86 3.3.3 on LynxOS                                            1
+README for XFree86 on LynxOS                                                  1
 
 
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            2
+README for XFree86 on LynxOS                                                  2
 
 
 
@@ -133,7 +133,7 @@ dow package.
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            3
+README for XFree86 on LynxOS                                                  3
 
 
 
@@ -153,12 +153,12 @@ rebuilding the kernel, if not, you should rebuild the kernel now:
           # reboot -N
 
 
-3.3  Mouse support in 3.3.3
+3.3  Mouse support in XFree86
 
-XFree86 3.3.3 includes support for PnP mice (see also Mouse Support in
-XFree86). The current LynxOS TTY device driver doesn't allow the necessary
-manipulation of the RTS line and therefore the support for PnP mice has been
-disabled for LynxOS.
+XFree86 includes support for PnP mice (see also Mouse Support in XFree86). The
+current LynxOS TTY device driver doesn't allow the necessary manipulation of
+the RTS line and therefore the support for PnP mice has been disabled for
+LynxOS.
 
 3.4  Bus mouse drivers
 
@@ -199,7 +199,7 @@ change
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            4
+README for XFree86 on LynxOS                                                  4
 
 
 
@@ -265,7 +265,7 @@ variable.
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            5
+README for XFree86 on LynxOS                                                  5
 
 
 
@@ -331,7 +331,7 @@ library:
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            6
+README for XFree86 on LynxOS                                                  6
 
 
 
@@ -397,7 +397,7 @@ mately 90-100 MBytes of disk space. To compile the system you will need at
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            7
+README for XFree86 on LynxOS                                                  7
 
 
 
@@ -463,7 +463,7 @@ adjustments to your system:
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            8
+README for XFree86 on LynxOS                                                  8
 
 
 
@@ -529,7 +529,7 @@ README for XFree86 3.3.3 on LynxOS                                            8
 
 
 
-README for XFree86 3.3.3 on LynxOS                                            9
+README for XFree86 on LynxOS                                                  9
 
 
 
@@ -595,7 +595,7 @@ rectories (eg core dumps, hangups). In this case update to GNU make version
 
 
 
-README for XFree86 3.3.3 on LynxOS                                           10
+README for XFree86 on LynxOS                                                 10
 
 
 
@@ -661,11 +661,11 @@ it has never been tested (reports are welcome).
 
 
 
-README for XFree86 3.3.3 on LynxOS                                           11
+README for XFree86 on LynxOS                                                 11
 
 
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.8 1998/11/07 13:52:41 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.9 1998/12/29 07:54:27 hohndel Exp $
 
 
 
@@ -727,7 +727,7 @@ README for XFree86 3.3.3 on LynxOS                                           11
 
 
 
-README for XFree86 3.3.3 on LynxOS                                           12
+README for XFree86 on LynxOS                                                 12
 
 
 
@@ -808,7 +808,7 @@ README for XFree86 3.3.3 on LynxOS                                           12
 3. Running XFree86 .......................................................... 2
    3.1 System requirements .................................................. 2
    3.2 System tuning ........................................................ 2
-   3.3 Mouse support in 3.3.3 ............................................... 3
+   3.3 Mouse support in XFree86 ............................................. 3
    3.4 Bus mouse drivers .................................................... 3
    3.5 ATC console driver and VT switching .................................. 3
    3.6 X Server debug diagnostics output and other VT peculiarities ......... 4
@@ -857,4 +857,4 @@ README for XFree86 3.3.3 on LynxOS                                           12
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.LynxOS,v 3.18.2.9 1998/11/14 06:46:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.LynxOS,v 3.18.2.10 1998/12/29 08:00:07 hohndel Exp $

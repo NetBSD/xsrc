@@ -5,14 +5,14 @@
 <!-- Title information -->
 <title>List of XFree86 documentation
 <author>The XFree86 Project, Inc
-<date>5 November 1998
+<date>23 December 1998
 
 <sect> Available Documentation <p>
 
 <itemize>
-<item><htmlurl name="Release Notes for XFree86&trade; 3.3.3"
+<item><htmlurl name="Release Notes for XFree86&trade; 3.3.3.1"
 	url="RELNOTES.html">
-<item><htmlurl name="README for XFree86&trade; 3.3.3"
+<item><htmlurl name="README for XFree86&trade; 3.3.3.1"
 	url="README.html">
 <item><htmlurl name="Copyright"
 	url="COPYRIGHT.html">
@@ -23,7 +23,7 @@
 <item><htmlurl name="The XInput extension in XFree86"
 	url="xinput.html">
 <!--
-<item><htmlurl name="README for XFree86 3.1.2 on BSD/OS 2.0"
+<item><htmlurl name="README for XFree86 on BSD/OS 2.0"
 	url="Bsdi.html">
 -->
 <item><htmlurl name="README for XFree86 on FreeBSD"
@@ -32,17 +32,17 @@
 	url="isc.html">
 <item><htmlurl name="Information for Linux Users"
 	url="Linux.html">
-<item><htmlurl name="README for XFree86 3.3.3 on LynxOS"
+<item><htmlurl name="README for XFree86 on LynxOS"
 	url="LynxOS.html">
 <!--
-<item><htmlurl name="README for XFree86 3.1 on Mach"
+<item><htmlurl name="README for XFree86 on Mach"
 	url="Mach.html">
 -->
-<item><htmlurl name="README for XFree86 3.3.3 on NetBSD"
+<item><htmlurl name="README for XFree86 on NetBSD"
 	url="NetBSD.html">
-<item><htmlurl name="README for XFree86 3.3.3 on OpenBSD"
+<item><htmlurl name="README for XFree86 on OpenBSD"
 	url="OpenBSD.html">
-<item><htmlurl name="README for XFree86 3.3.3 on OS/2"
+<item><htmlurl name="README for XFree86 on OS/2"
 	url="OS2.html">
 <item><htmlurl name="Notes on Rebuilding XFree86/OS2 from Scratch"
 	url="OS2Notes.html">
@@ -58,7 +58,7 @@
 	url="BUILD.html">
 <item><htmlurl name="XFree86 Video Timings HOWTO"
 	url="VideoModes.html">
-<item><htmlurl name="Readme for the XFree86 3.3.3 LinkKit"
+<item><htmlurl name="Readme for the XFree86 LinkKit"
 	url="LinkKit.html">
 <item><htmlurl name="How to add an (S)VGA driver to XFree86"
 	url="VGADriver.html">
@@ -84,11 +84,13 @@
 	url="Mach64.html">
 <item><htmlurl name="Information for Matrox Millennium Users"
 	url="MGA.html">
+<item><htmlurl name="Information for Number Nine I128 Users"
+	url="I128.html">
 <item><htmlurl name="Information for NVidia / SGS-Thomson NV1, Riva 128 and Riva TNT Users"
 	url="NVIDIA.html">
 <item><htmlurl name="Information for Oak Technologies Inc. Chipset Users"
 	url="Oak.html">
-<item><htmlurl name="XFree86 3.3.3 P9000 Server Release Notes"
+<item><htmlurl name="XFree86 P9000 Server Release Notes"
 	url="P9000.html">
 <item><htmlurl name="Information for S3 Chipset Users"
 	url="S3.html">
@@ -121,7 +123,7 @@
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.15 1998/11/13 13:00:43 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.24.2.17 1998/12/23 13:36:26 hohndel Exp $ 
 
 
 

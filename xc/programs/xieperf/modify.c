@@ -1,5 +1,5 @@
 /* $XConsortium: modify.c,v 1.12 94/04/17 20:39:26 rws Exp $ */
-/* $XFree86: xc/programs/xieperf/modify.c,v 3.1 1996/10/23 13:13:37 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/modify.c,v 3.1.4.1 1998/12/22 11:23:33 hohndel Exp $ */
 
 /**** module modify.c ****/
 /******************************************************************************
@@ -827,7 +827,7 @@ XiePhotoElement **flograph;
 #if defined(SYSV) || defined(SVR4) || defined(__osf__)
 #define random lrand48
 #endif
-#if !defined(sgi) && !defined(linux) && !defined(__alpha__)
+#if !defined(sgi) && !defined(linux) && !defined(__alpha__) && !defined(__GNU__)
 extern long random();
 #endif
 #define RAND( x, y ) ( ( random() / 2147483648.0 ) * ( y - x ) + x )

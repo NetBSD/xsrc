@@ -1,5 +1,5 @@
 /* $XConsortium: Xtrans.c,v 1.31 95/03/28 19:49:02 mor Exp $ */
-/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.15.2.2 1997/07/19 04:59:16 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.15.2.3 1998/12/13 14:12:01 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -723,7 +723,7 @@ int		arg;
 	    break;
 	case 1: /* Set to non-blocking mode */
 
-#if defined(O_NONBLOCK) && (!defined(ultrix) && !defined(hpux) && !defined(AIXV3) && !defined(uniosu) && !defined(__EMX__) && !defined(SCO))
+#if defined(O_NONBLOCK) && (!defined(ultrix) && !defined(hpux) && !defined(AIXV3) && !defined(uniosu) && !defined(__EMX__))
 	    ret = fcntl (fd, F_SETFL, O_NONBLOCK);
 #else
 #ifdef FIOSNBIO

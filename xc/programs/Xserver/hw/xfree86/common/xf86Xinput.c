@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.12 1998/11/12 11:32:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.13 1998/12/20 01:54:06 dawes Exp $ */
 
 #include "Xmd.h"
 #include "XI.h"
@@ -1286,6 +1286,13 @@ xf86PostButtonEvent(DeviceIntPtr	device,
     Bool			is_core		= xf86IsCorePointer(device);
     Bool			is_shared       = xf86ShareCorePointer(device);
     
+    DBG(5, ErrorF("xf86PostButtonEvent BEGIN 0x%x(%s) button=%d down=%s is_core=%s is_shared=%s is_absolute=%s\n",
+		  device, device->name, button,
+		  is_down ? "True" : "False",
+		  is_core ? "True" : "False",
+		  is_shared ? "True" : "False",
+		  is_absolute ? "True" : "False"));
+    
     /* Check the core pointer button state not to send an inconsistent
      * event. This can happen with the AlwaysCore feature.
      */
@@ -1368,6 +1375,7 @@ xf86PostButtonEvent(DeviceIntPtr	device,
 	xf86Info.lastEventTime = xE->u.keyButtonPointer.time = GetTimeInMillis();
 	xf86eqEnqueue(xE);
     }
+    DBG(5, ErrorF("xf86PostButtonEvent END\n"));
 }
 
 void

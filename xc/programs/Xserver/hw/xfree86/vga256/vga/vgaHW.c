@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.5 1998/11/08 10:03:50 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.6 1998/12/22 11:23:28 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -78,7 +78,7 @@
 #endif
 #endif
 
-#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(linux) || defined(AMOEBA) || defined(MINIX)
+#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)  || defined(linux) || defined(AMOEBA) || defined(MINIX)
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
@@ -103,11 +103,11 @@
 #define FONT_AMOUNT 8192
 #endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) && !defined(PC98_MGA) */
 
-#if defined(CSRG_BASED) || defined(MACH386)
+#if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__) 
 #include <sys/time.h>
 #endif
 
-#ifdef MACH386
+#if defined(MACH386)||defined(__GNU__)
 #define WEXITSTATUS(x) (x.w_retcode)
 #define WTERMSIG(x) (x.w_termsig)
 #define WSTOPSIG(x) (x.w_stopsig)
@@ -439,7 +439,7 @@ setExternClock(clock2)
      int clock2;       /* the Clock index */
 {
     int i;
-#ifdef MACH386
+#if defined(MACH386) || defined(__GNU__)
     union wait exit_status;
 #else
     int exit_status;
@@ -462,7 +462,7 @@ setExternClock(clock2)
 	for (i = 0; i < MAXSCREENS; i++)
 	  xf86DisableIOPorts(i);
         setuid(getuid());
-#if !defined(AMOEBA) && !defined(MINIX)
+#if !defined(AMOEBA) && !defined(MINIX) && !defined(__GNU__)
         /* set stdin, stdout to the consoleFD, and leave stderr alone */
         for (i = 0; i < 2; i++)
         {

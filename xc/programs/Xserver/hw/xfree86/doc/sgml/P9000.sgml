@@ -2,9 +2,9 @@
  
 <article>
  
-<title>XFree86 3.3.3 P9000 Server Release Notes
+<title>XFree86 P9000 Server Release Notes
 <author>Erik Nygren (<it>nygren@mit.edu</it>)
-<date>1998 October 13
+<date>1998 December 29
 <toc>
  
 <sect>Change Log <p>
@@ -459,7 +459,7 @@ During the course of the next few months, people will be working on
 acceleration, etc.  Please send any patches to me (<it>nygren@mit.edu</it>).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.6 1998/11/07 13:37:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.7 1998/12/29 07:54:30 hohndel Exp $
 
 
 

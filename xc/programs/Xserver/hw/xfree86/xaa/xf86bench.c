@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.3 1998/01/23 14:27:06 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.4 1998/12/18 11:56:31 dawes Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -40,6 +40,14 @@
 
 #include "xf86.h"
 #include "xf86xaa.h"
+
+#if defined(DGUX)
+#define _BSD_TIMEOFDAY_FLAVOR
+#include <sys/time.h>
+#define __bsd_tod    1
+#define tz_minuteswest  __hide__tz_minuteswest
+#define tz_dsttime      __hide__tz_dsttime
+#endif
 
 static struct timeval tv;
 static struct timezone tz;

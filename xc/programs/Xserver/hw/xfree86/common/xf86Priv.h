@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24.2.1 1998/02/01 16:04:47 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24.2.2 1998/12/18 11:56:23 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -46,7 +46,7 @@ typedef struct {
 #else
   int		kbdFd;
 #endif /* MINIX */
-#if defined(MACH386) || defined(__OSF__)
+#if defined(MACH386) || defined(__OSF__) || defined(DGUX)
   int           kbdFd;
 #endif /* MACH386 || __OSF__ */
   int           vtno;

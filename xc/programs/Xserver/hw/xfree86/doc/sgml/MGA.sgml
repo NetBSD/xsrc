@@ -3,7 +3,7 @@
 <article>
 <title>Information for Matrox Users
 <author>The XFree86 Project Inc.
-<date>24 October 1998
+<date>30 December 1998
 <toc>
 
 <sect>Supported hardware
@@ -46,7 +46,7 @@ RAMDAC (like the Matrox Corona) are not supported.
 <item>supports RGB Sync-on-Green 
 <item>supports the XF86_DGA extension
 <item>Makes extensive use of the graphics accelerator.  This server is very 
-well accelerated, and is one of the fastest XFree86 3.3.3 Xservers.
+well accelerated, and is one of the fastest XFree86 X servers.
 </itemize>
 
 <sect>Configuration:
@@ -105,7 +105,7 @@ mode fills and hardware planemasks.
 <itemize>
 <item>Temporary loss of monitor sync when the cursor shape changes on 
 Millennium and Millennium II.  The hardware cursor has been enabled by 
-default in 3.3.3. This seems to cause some problems on a minority of
+default in 3.3.3.1. This seems to cause some problems on a minority of
 systems.  If you experience problems with this on your system, 
 please put:
 <verb>
@@ -121,7 +121,8 @@ If you experience this problem, please put:
 	Option "sw_cursor"
 </verb>
 in the Section "Device" of the XF86Config file to disable the hardware
-cursor.
+cursor. This should be fixed in XFree86 3.3.3.1 as in cases like this the
+software cursor should be used automatically.
 <item>the driver doesn't support some values of HTotal parameter in
 Modelines in the XF86Config file. If you get flickering vertical stripes on
 the screen, try to change this parameter +/- 8.
@@ -143,6 +144,14 @@ earlier now shows pixel errors and strange effects when returning to the
 text console, make sure that the amount of memory that the server reports 
 is correct.
 See item above for details.
+<item>With virtual screens that use 8MB of memory or more (e.g.,
+2048x2048 at 16bpp) there can be cursor distortions when panning the screen
+vertically. If that occurs, please put
+<verb>
+	Option "sw_cursor"
+</verb>
+in the Section "Device" of the XF86Config file to disable the hardware
+cursor.
 </itemize>
 
 <sect>Authors
@@ -169,7 +178,7 @@ and:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.14 1998/11/19 10:08:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.15 1998/12/30 09:14:45 hohndel Exp $
 </verb>
 
 </article>

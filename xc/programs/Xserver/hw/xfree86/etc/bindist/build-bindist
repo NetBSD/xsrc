@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.1.2.3 1997/07/27 02:41:18 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.1.2.4 1998/12/06 05:40:39 dawes Exp $
 #
 #
 # This script assumes that you have the `extract' binary installed somewhere
@@ -53,7 +53,7 @@ SUMFILE=SUMS.md5
 LISTFILE=FILES
 
 case `uname` in
-Linux*)
+Linux*|dgux*)
   CKSUM=md5sum
   ;;
 *)

@@ -1,10 +1,10 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
-<title>README for XFree86 3.3.3 on OpenBSD
+<title>README for XFree86 on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 17 October 1998
+<Date>Last modified on: 29 December 1998
 
 <toc>
 
@@ -12,7 +12,7 @@ Matthieu Herrb
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 3.3.3 is a port of X11R6.3 that supports several versions of
+XFree86 is a port of X11R6.3 that supports several versions of
 Intel-based Unix.  It is derived from X386 1.2, which was the X server
 distributed with X11R5.  This release consists of many new features
 and performance improvements as well as many bug fixes.  The release
@@ -26,7 +26,7 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries for OpenBSD 2.3 and later are available from:
+Binaries for OpenBSD 2.4 and later are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD">
@@ -37,7 +37,7 @@ url="ftp://ftp.XFree86.org/pub/XFree86/MIRRORS">
 
 <p>
 
-XFree86 3.3.3 also builds on other OpenBSD architectures. See section
+XFree86 also builds on other OpenBSD architectures. See section
 <ref id="otherarch" name="Building on other architectures"> for details.
 
 
@@ -51,7 +51,7 @@ this file and we'll revise it.
 <sect>New features in this release
 <p>
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-new features in XFree86 3.3.3.
+new features in XFree86.
 
 <sect>Installing the Binaries
 
@@ -258,7 +258,7 @@ add the following lines to the end of <tt>/etc/rc.local</tt>:
 Uncomment the lines loading the aperture driver from
 <tt>/etc/rc.securelevel</tt> 
 
-<item> OpenBSD-2.3
+<item> OpenBSD 2.3
      
 The aperture driver is part of the kernel.  Add 'option APERTURE' to
 your kernel configuration file, build and install the new kernel and
@@ -266,7 +266,7 @@ run <tt>./MAKEDEV std</tt> in <tt>/dev</tt>. Edit
 <tt>/etc/sysctl.conf</tt> to set the variable
 <bf>machdep.allowaperture</bf> to 1.
 
-<item> OpenBSD-current and the upcoming OpenBSD 2.4 
+<item> OpenBSD 2.4 and later
 
 OpenBSD now requires the aperture driver to be enabled for all X
 servers, because the aperture driver also controls access to the
@@ -335,7 +335,7 @@ sources, invoke ``<tt/make World/'' in the xc directory.
 <sect1>Console drivers<label id="console-drivers">
 
 <p>
-XFree86 3.3.3 has a configuration option to select the console
+XFree86 has a configuration option to select the console
 drivers to use in <tt/xf86site.def/:
 <itemize>
 <item> if you're using pccons only put:
@@ -355,7 +355,7 @@ pccons and pcvt drivers will be supported.
 <sect1>Building on other architectures<label id="otherarch">
 
 <p>
-XFree86 3.3.3 also compiles on other OpenBSD architectures. 
+XFree86 also compiles on other OpenBSD architectures. 
 
 The XFree86 servers can also been built on OpenBSD/mips. The S3 server
 has been tested on an Acer Mips system with a S3/928 board. Contact
@@ -393,7 +393,7 @@ pages you should update <tt/whatis.db/ by running ``<tt>makewhatis
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.7 1998/11/07 13:52:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.9 1999/01/05 07:15:47 hohndel Exp $
 
 
 

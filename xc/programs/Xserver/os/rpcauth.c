@@ -1,5 +1,5 @@
 /* $XConsortium: rpcauth.c,v 1.9 94/04/17 20:27:06 gildea Exp $ */
-/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.0 1995/07/07 15:46:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/rpcauth.c,v 3.0.6.1 1998/12/18 11:56:33 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -45,6 +45,11 @@ from the X Consortium.
 #include "dixstruct.h"
 
 #include <rpc/rpc.h>
+
+#if defined(DGUX)
+#include <time.h>
+#include <rpc/auth_des.h>
+#endif /* DGUX */
 
 #ifdef ultrix
 #include <time.h>

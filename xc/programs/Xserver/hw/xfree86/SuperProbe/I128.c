@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/I128.c,v 3.6 1997/01/03 07:59:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/I128.c,v 3.6.2.3 1998/12/08 14:32:48 robin Exp $ */
 /*
  * (c) Copyright 1993,1994 by Robin Cutshaw <robin@xfree86.org>
  *
@@ -96,7 +96,8 @@ int *Chipset;
 	    pcibus | cardnum, vendor, device);
 #endif
 		    if ((vendor == 0x105D) &&
-		        ((device == 0x2309) || (device == 0x2339))) {
+		        ((device == 0x2309) || (device == 0x2339) ||
+		         (device == 0x493D) || (device == 0x5348))) {
 			outpl(PCI_MODE1_ADDRESS_REG, PCI_EN | pcibus | cardnum | 0x24);
 			iobase = inpl(PCI_MODE1_DATA_REG) & 0xFFFFFF00;
 
@@ -154,7 +155,8 @@ int *Chipset;
 #endif
 
 	    if ((vendor != 0x105D) ||
-		((device != 0x2309) && (device != 0x2339))) {
+		((device != 0x2309) && (device != 0x2339) &&
+		 (device != 0x493D) && (device != 0x5348))) {
 	        DisableIOPorts(NUMPORTS, Ports);
 	        continue;
 	    }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.16 1998/11/12 11:32:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.17 1998/12/20 01:54:07 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -631,8 +631,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
     int nBytes;
 {
   int                  i, buttons, dx, dy, dz;
-  static int           pBufP = 0;
-  static unsigned char pBuf[8];
+/*   static int           pBufP = 0;
+ *   static unsigned char pBuf[8];
+ */
   MouseDevPtr          mouse = MOUSE_DEV(device);
   
 #ifdef EXTMOUSEDEBUG
@@ -663,20 +664,20 @@ xf86MouseProtocol(device, rBuf, nBytes)
      *         that bit is supposed to be always on, but nobody told
      *         Microsoft...)
      */
-    if (pBufP != 0 &&
+    if (mouse->pBufP != 0 &&
 #if !defined(__NetBSD__)
 	mouse->mseType != P_PS2 &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
       {
-	pBufP = 0;          /* skip package */
+	mouse->pBufP = 0;          /* skip package */
       }
 
-    if (pBufP == 0 && (rBuf[i] & mouse->protoPara[0]) != mouse->protoPara[1])
+    if (mouse->pBufP == 0 && (rBuf[i] & mouse->protoPara[0]) != mouse->protoPara[1])
       continue;
 
-    if (pBufP >= mouse->protoPara[4] 
+    if (mouse->pBufP >= mouse->protoPara[4] 
 	&& (rBuf[i] & mouse->protoPara[0]) != mouse->protoPara[1])
       {
 	/*
@@ -707,15 +708,15 @@ xf86MouseProtocol(device, rBuf, nBytes)
         /*
 	 * [KAZU-030897]
 	 * Receive the fourth byte only when preceeding three bytes have
-	 * been detected (pBufP >= mouse->protoPara[4]).  In the previous
-	 * versions, the test was pBufP == 0; we may have mistakingly
+	 * been detected (mouse->pBufP >= mouse->protoPara[4]).  In the previous
+	 * versions, the test was mouse->pBufP == 0; we may have mistakingly
 	 * received a byte even if we didn't see anything preceeding 
 	 * the byte.
 	 */
 
 	if ((rBuf[i] & mouse->protoPara[5]) != mouse->protoPara[6])
 	  {
-	    pBufP = 0;
+	    mouse->pBufP = 0;
 	    continue;
 	  }
 
@@ -749,163 +750,163 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	  buttons |= ((int)(rBuf[i] & 0x20) >> 4) | (mouse->lastButtons & 0x05);
 	  break;
 	}
-        pBufP = 0;
+        mouse->pBufP = 0;
 	goto post_event;
       }
 
-    if (pBufP >= mouse->protoPara[4])
-      pBufP = 0;
-    pBuf[pBufP++] = rBuf[i];
-    if (pBufP != mouse->protoPara[4]) continue;
+    if (mouse->pBufP >= mouse->protoPara[4])
+      mouse->pBufP = 0;
+    mouse->pBuf[mouse->pBufP++] = rBuf[i];
+    if (mouse->pBufP != mouse->protoPara[4]) continue;
 
     /*
      * assembly full package
      */
     dz = 0;
 #ifdef EXTMOUSEDEBUG
-    ErrorF("packet %2x %2x %2x %2x\n",pBuf[0],pBuf[1],pBuf[2],pBuf[3]);
+    ErrorF("packet %2x %2x %2x %2x\n",mouse->pBuf[0],mouse->pBuf[1],mouse->pBuf[2],mouse->pBuf[3]);
 #endif
     switch(mouse->mseType) {
       
     case P_LOGIMAN:	    /* MouseMan / TrackMan   [CHRIS-211092] */
     case P_MS:              /* Microsoft */
       if (mouse->chordMiddle)
-	buttons = (((int) pBuf[0] & 0x30) == 0x30) ? 2 :
-		  ((int)(pBuf[0] & 0x20) >> 3)
-		  | ((int)(pBuf[0] & 0x10) >> 4);
+	buttons = (((int) mouse->pBuf[0] & 0x30) == 0x30) ? 2 :
+		  ((int)(mouse->pBuf[0] & 0x20) >> 3)
+		  | ((int)(mouse->pBuf[0] & 0x10) >> 4);
       else
         buttons = (mouse->lastButtons & 2)
-		  | ((int)(pBuf[0] & 0x20) >> 3)
-		  | ((int)(pBuf[0] & 0x10) >> 4);
-      dx = (char)(((pBuf[0] & 0x03) << 6) | (pBuf[1] & 0x3F));
-      dy = (char)(((pBuf[0] & 0x0C) << 4) | (pBuf[2] & 0x3F));
+		  | ((int)(mouse->pBuf[0] & 0x20) >> 3)
+		  | ((int)(mouse->pBuf[0] & 0x10) >> 4);
+      dx = (char)(((mouse->pBuf[0] & 0x03) << 6) | (mouse->pBuf[1] & 0x3F));
+      dy = (char)(((mouse->pBuf[0] & 0x0C) << 4) | (mouse->pBuf[2] & 0x3F));
       break;
 
     case P_GLIDEPOINT:      /* ALPS GlidePoint */
     case P_THINKING:        /* ThinkingMouse */
     case P_IMSERIAL:        /* IntelliMouse, NetMouse, Mie Mouse, MouseMan+ */
       buttons =  (mouse->lastButtons & (8 + 2))
-		| ((int)(pBuf[0] & 0x20) >> 3)
-		| ((int)(pBuf[0] & 0x10) >> 4);
-      dx = (char)(((pBuf[0] & 0x03) << 6) | (pBuf[1] & 0x3F));
-      dy = (char)(((pBuf[0] & 0x0C) << 4) | (pBuf[2] & 0x3F));
+		| ((int)(mouse->pBuf[0] & 0x20) >> 3)
+		| ((int)(mouse->pBuf[0] & 0x10) >> 4);
+      dx = (char)(((mouse->pBuf[0] & 0x03) << 6) | (mouse->pBuf[1] & 0x3F));
+      dy = (char)(((mouse->pBuf[0] & 0x0C) << 4) | (mouse->pBuf[2] & 0x3F));
       break;
 
     case P_MSC:             /* Mouse Systems Corp */
-      buttons = (~pBuf[0]) & 0x07;
-      dx =    (char)(pBuf[1]) + (char)(pBuf[3]);
-      dy = - ((char)(pBuf[2]) + (char)(pBuf[4]));
+      buttons = (~mouse->pBuf[0]) & 0x07;
+      dx =    (char)(mouse->pBuf[1]) + (char)(mouse->pBuf[3]);
+      dy = - ((char)(mouse->pBuf[2]) + (char)(mouse->pBuf[4]));
       break;
       
     case P_MMHIT:           /* MM_HitTablet */
-      buttons = pBuf[0] & 0x07;
+      buttons = mouse->pBuf[0] & 0x07;
       if (buttons != 0)
         buttons = 1 << (buttons - 1);
-      dx = (pBuf[0] & 0x10) ?   pBuf[1] : - pBuf[1];
-      dy = (pBuf[0] & 0x08) ? - pBuf[2] :   pBuf[2];
+      dx = (mouse->pBuf[0] & 0x10) ?   mouse->pBuf[1] : - mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x08) ? - mouse->pBuf[2] :   mouse->pBuf[2];
       break;
 
     case P_ACECAD:	    /* ACECAD */
 	/* ACECAD is almost exactly like MM but the buttons are different */
-      buttons = (pBuf[0] & 0x02) | ((pBuf[0] & 0x04) >> 2) | ((pBuf[0] & 1) << 2);
-      dx = (pBuf[0] & 0x10) ?   pBuf[1] : - pBuf[1];
-      dy = (pBuf[0] & 0x08) ? - pBuf[2] :   pBuf[2];
+      buttons = (mouse->pBuf[0] & 0x02) | ((mouse->pBuf[0] & 0x04) >> 2) | ((mouse->pBuf[0] & 1) << 2);
+      dx = (mouse->pBuf[0] & 0x10) ?   mouse->pBuf[1] : - mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x08) ? - mouse->pBuf[2] :   mouse->pBuf[2];
       break;
 
     case P_MM:              /* MM Series */
     case P_LOGI:            /* Logitech Mice */
-      buttons = pBuf[0] & 0x07;
-      dx = (pBuf[0] & 0x10) ?   pBuf[1] : - pBuf[1];
-      dy = (pBuf[0] & 0x08) ? - pBuf[2] :   pBuf[2];
+      buttons = mouse->pBuf[0] & 0x07;
+      dx = (mouse->pBuf[0] & 0x10) ?   mouse->pBuf[1] : - mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x08) ? - mouse->pBuf[2] :   mouse->pBuf[2];
       break;
       
     case P_BM:              /* BusMouse */
 #if defined(__NetBSD__)
     case P_PS2:
 #endif
-      buttons = (~pBuf[0]) & 0x07;
-      dx =   (char)pBuf[1];
-      dy = - (char)pBuf[2];
+      buttons = (~mouse->pBuf[0]) & 0x07;
+      dx =   (char)mouse->pBuf[1];
+      dy = - (char)mouse->pBuf[2];
       break;
 
 #if !defined(__NetBSD__)
     case P_PS2:             /* PS/2 mouse */
-      buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	        (pBuf[0] & 0x02) >> 1 |       /* Right */
-		(pBuf[0] & 0x01) << 2;        /* Left */
-      dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-      dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2;        /* Left */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 
     /* PS/2 mouse variants */
     case P_IMPS2:           /* IntelliMouse PS/2 */
     case P_NETPS2:          /* NetMouse PS/2 */
-      buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	        (pBuf[0] & 0x02) >> 1 |       /* Right */
-		(pBuf[0] & 0x01) << 2;        /* Left */
-      dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-      dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
-      dz = (char)pBuf[3];
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2;        /* Left */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
+      dz = (char)mouse->pBuf[3];
       break;
 
     case P_MMANPLUSPS2:     /* MouseMan+ PS/2 */
-      if ((pBuf[0] & ~0x07) == 0xc8) {
+      if ((mouse->pBuf[0] & ~0x07) == 0xc8) {
 	/* extended data packet */
-        buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	          (pBuf[0] & 0x02) >> 1 |       /* Right */
-		  (pBuf[0] & 0x01) << 2 |       /* Left */
-		  ((pBuf[2] & 0x10) ? 0x08 : 0);/* fourth button */
+        buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	          (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		  (mouse->pBuf[0] & 0x01) << 2 |       /* Left */
+		  ((mouse->pBuf[2] & 0x10) ? 0x08 : 0);/* fourth button */
 	dx = dy = 0;
-	dz = (pBuf[1] & 0x08) ? (pBuf[2] & 0x0f) - 16 : (pBuf[2] & 0x0f);
+	dz = (mouse->pBuf[1] & 0x08) ? (mouse->pBuf[2] & 0x0f) - 16 : (mouse->pBuf[2] & 0x0f);
       } else {
-        buttons = (pBuf[0] & 0x04) >> 1 |     /* Middle */
-	          (pBuf[0] & 0x02) >> 1 |     /* Right */
-		  (pBuf[0] & 0x01) << 2 |     /* Left */
+        buttons = (mouse->pBuf[0] & 0x04) >> 1 |     /* Middle */
+	          (mouse->pBuf[0] & 0x02) >> 1 |     /* Right */
+		  (mouse->pBuf[0] & 0x01) << 2 |     /* Left */
 		  (mouse->lastButtons & ~0x07);
-        dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-        dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
+        dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+        dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       }
       break;
 
     case P_GLIDEPOINTPS2:   /* GlidePoint PS/2 */
-      buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	        (pBuf[0] & 0x02) >> 1 |       /* Right */
-		(pBuf[0] & 0x01) << 2 |       /* Left */
-		((pBuf[0] & 0x08) ? 0 : 0x08);/* fourth button */
-      dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-      dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
+		((mouse->pBuf[0] & 0x08) ? 0 : 0x08);/* fourth button */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 
     case P_NETSCROLLPS2:    /* NetScroll PS/2 */
-      buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	        (pBuf[0] & 0x02) >> 1 |       /* Right */
-		(pBuf[0] & 0x01) << 2 |       /* Left */
-		((pBuf[3] & 0x02) ? 0x08 : 0);/* fourth button */
-      dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-      dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
-      dz = (pBuf[3] & 0x10) ? pBuf[4] - 256 : pBuf[4];
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
+		((mouse->pBuf[3] & 0x02) ? 0x08 : 0);/* fourth button */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
+      dz = (mouse->pBuf[3] & 0x10) ? mouse->pBuf[4] - 256 : mouse->pBuf[4];
       break;
 
     case P_THINKINGPS2:     /* ThinkingMouse PS/2 */
-      buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
-	        (pBuf[0] & 0x02) >> 1 |       /* Right */
-		(pBuf[0] & 0x01) << 2 |       /* Left */
-		((pBuf[0] & 0x08) ? 0x08 : 0);/* fourth button */
-      dx = (pBuf[0] & 0x10) ?    pBuf[1]-256  :  pBuf[1];
-      dy = (pBuf[0] & 0x20) ?  -(pBuf[2]-256) : -pBuf[2];
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
+		((mouse->pBuf[0] & 0x08) ? 0x08 : 0);/* fourth button */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 
 #endif /* !__NetBSD__ */
 
     case P_SYSMOUSE:        /* sysmouse */
-      buttons = (~pBuf[0]) & 0x07;
-      dx =    (char)(pBuf[1]) + (char)(pBuf[3]);
-      dy = - ((char)(pBuf[2]) + (char)(pBuf[4]));
+      buttons = (~mouse->pBuf[0]) & 0x07;
+      dx =    (char)(mouse->pBuf[1]) + (char)(mouse->pBuf[3]);
+      dy = - ((char)(mouse->pBuf[2]) + (char)(mouse->pBuf[4]));
       /* FreeBSD sysmouse sends additional data bytes */
       if (mouse->protoPara[4] >= 8)
 	{
-          dz = ((char)(pBuf[5] << 1) + (char)(pBuf[6] << 1))/2;
-          buttons |= (int)(~pBuf[7] & 0x07) << 3;
+          dz = ((char)(mouse->pBuf[5] << 1) + (char)(mouse->pBuf[6] << 1))/2;
+          buttons |= (int)(~mouse->pBuf[7] & 0x07) << 3;
 	}
       break;
 
@@ -957,7 +958,7 @@ post_event:
       }
 
     /* 
-     * We don't reset pBufP here yet, as there may be an additional data
+     * We don't reset mouse->pBufP here yet, as there may be an additional data
      * byte in some protocols. See above.
      */
   }
@@ -1152,7 +1153,7 @@ xf86MouseAllocate()
     mouse->local = local;
     
 #ifdef EXTMOUSEDEBUG
-    ErrorF("xf86MouseAllocate mouse=0x%x\n", local->private);
+    ErrorF("xf86MouseAllocate mouse=0x%x local=0x%x\n", local->private, local);
 #endif
     
     return local;
@@ -1171,4 +1172,4 @@ DeviceAssocRec mouse_assoc =
   xf86MouseAllocate			/* device_allocate */
 };
 
-#endif
+#endif /* XINPUT */

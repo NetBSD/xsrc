@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_hwcurs.c,v 1.1.2.3 1998/02/01 16:05:12 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_hwcurs.c,v 1.1.2.4 1998/12/20 11:12:07 hohndel Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.org>
  *
@@ -61,9 +61,21 @@ extern vgaHWCursorRec vgaHWCursor;
  */
 Bool MGAHwCursorInit()
 {
+    int RamUsed;
+
     if (!MGAdac.isHwCursor) 
 	return FALSE;
-
+    RamUsed = vga256InfoRec.virtualY * vga256InfoRec.displayWidth 
+                 * vgaBitsPerPixel / 8;
+#ifdef DEBUG
+    ErrorF("Ram %d Used %d Cursor %d\n",vga256InfoRec.videoRam*1024,RamUsed,
+    		MGAdac.CursorMaxWidth * MGAdac.CursorMaxHeight*
+		vgaBitsPerPixel / 8);
+#endif
+    if ((vga256InfoRec.videoRam * 1024 - RamUsed) < 
+	    (MGAdac.CursorMaxWidth * MGAdac.CursorMaxHeight 
+		* vgaBitsPerPixel / 8))
+        return FALSE;
     XAACursorInfoRec.MaxWidth = MGAdac.CursorMaxWidth;
     XAACursorInfoRec.MaxHeight = MGAdac.CursorMaxHeight;
     XAACursorInfoRec.Flags = MGAdac.CursorFlags;
