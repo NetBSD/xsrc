@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.71 2000/05/26 11:31:45 shin Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.72 2000/05/26 19:32:41 matt Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -301,7 +301,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(VaxArchitecture)
-# define BuildServer		YES
+# define BuildServer		NO
 # define ServerExtraDefines	GccGasOption
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
@@ -643,7 +643,7 @@ clean::									@@\
 #  define BuildPex        NO      /* compiler runs out of table space */
 #  define BuildXInputLib  NO      /* compiler runs out of table space */
 # endif
-# define HasSaberC YES
+# define HasSaberC NO
 # define UnalignedReferencesAllowed YES         /* if arbitrary deref is okay */
 #endif
 
