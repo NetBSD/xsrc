@@ -59,6 +59,11 @@ next:		;
 	}
 	os = XftObjectSetCreate();
 	XftObjectSetAdd(os, XFT_FAMILY);
+	XftObjectSetAdd(os, XFT_STYLE);
+#if 0
+	XftObjectSetAdd(os, XFT_SPACING);
+	XftObjectSetAdd(os, XFT_FOUNDRY);
+#endif
 	XftObjectSetAdd(os, XFT_XLFD);
 	XftObjectSetAdd(os, XFT_FILE);
 	font_set = XftListFontsPatternObjects(display, screen, pattern, os);
