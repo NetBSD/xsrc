@@ -65,6 +65,8 @@ SRVDEFS = -DSERVERNAME=\"$(SERVERNAME)\" -DDEFAULT_CONFIG=\"$(MYLIBDIR)/config\"
 PEDEFS = -DNOPUTENV
 #endif
 
+EXTRAMANDEFS = -DRSTARTCONFIGDIR=$(MYLIBDIR)
+
 AllTarget(ProgramTargetName($(RSERVERNAME)))
 NormalProgramTarget($(RSERVERNAME), $(OBJS),NullParameter,NullParameter,NullParameter)
 InstallProgram($(RSERVERNAME),$(MYLIBDIR))
