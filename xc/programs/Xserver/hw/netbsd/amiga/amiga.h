@@ -17,12 +17,13 @@
 #define _AMIGA_H_
 
 #include <errno.h>
+#include <signal.h>
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
-#include <sys/signal.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include "dev/kbdreg.h"
