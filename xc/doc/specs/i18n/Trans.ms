@@ -1,4 +1,4 @@
-.\" $XConsortium: Trans.ms /main/4 1996/02/07 21:33:13 swick $
+.\" $XConsortium: Trans.ms /main/5 1996/12/11 15:09:09 kaleb $
 .\" To print this out, type tbl macros.t This File | troff -ms
 .EH ''''
 .OH ''''
@@ -16,7 +16,7 @@
 .sp
 \fBRevision 0.1\fP
 .sp
-\fBX Version 11, Release 6.1\fP
+\fBX Version 11, Release 6.3\fP
 .sp 3
 .AU
 Takashi Fujiwara
@@ -75,8 +75,8 @@ in this Software without prior written authorization from the X Consortium.
 .ps 11
 .nr PS 11
 .bp 1
-.EH '\fBXIM Transport Specification\fP''\fBX11, Release 6.1\fP'
-.OH '\fBXIM Transport Specification\fP''\fBX11, Release 6.1\fP'
+.EH '\fBXIM Transport Specification\fP''\fBX11, Release 6.3\fP'
+.OH '\fBXIM Transport Specification\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
 .NH 1

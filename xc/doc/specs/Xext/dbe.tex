@@ -1,21 +1,29 @@
-% $XConsortium: dbe.tex /main/5 1996/01/19 15:03:46 converse $
+% $XConsortium: dbe.tex /main/7 1996/09/12 13:24:34 kaleb $
+% edited for DP edits and code consistency w/ core protocol/xlib 3/30/96
+% split into separate library and protocol documentos 4/15/96
 \documentstyle{article}
 \pagestyle{myheadings}
 \markboth{Double Buffer Extension Specification}{Double Buffer Extension Specification}
 \setlength{\parindent}{0 pt}
 \setlength{\parskip}{6pt}
+\setlength{\topsep}{0 pt}
 
 % Request names are literal symbols; therefore, use the same font for both.
 \newcommand{\requestname}[1]{{\tt #1}}
 \newcommand{\literal}[1]{\mbox{\tt #1}}
 
+\newcommand{\encodingsection}[1]{{\bf #1}}
+\newcommand{\requestsection}[1]{{\bf #1}}
+
 % Font treatment of type names differs between protocol and library sections.
 \newcommand{\libtypename}[1]{\mbox{\tt #1}}
-\newcommand{\typename}[1]{\mbox{\rm #1}}
+\newcommand{\typename}[1]{\mbox{\rm #1}}  % default font
+\newcommand{\typeargname}[1]{\mbox{\rm #1}}  % default font
 \newcommand{\argname}[1]{\mbox{\it #1}}
 \newcommand{\argdecl}[2]{\argname{#1} & : \typename{#2}\\}
+\newcommand{\areplyargdecl}[2]{#1 & : \typename{#2}\\}
 
-\newenvironment{arequest}[1]{\requestname{#1} \\ \begin{tabular}{ll}}{\end{tabular}}
+\newenvironment{arequest}[1]{\requestsection{#1} \\ \begin{tabular}{ll}}{\end{tabular}}
 \newcommand{\areply}{$\Rightarrow$\\}
 
 \newcommand{\etabstops}{\hspace*{0cm}\=\hspace*{1cm}\=\hspace*{5cm}\=\kill}
@@ -24,7 +32,9 @@
 
 \newenvironment{keeptogether}{\vbox \bgroup}{\egroup}
 
-\newenvironment{erequest}[3]{\pagebreak[3] \begin{keeptogether} \requestname{#1} \begin{tabbing} \etabstops \eargdecl{1}{CARD8}{major-opcode} \eargdecl{1}{#2}{minor-opcode} \eargdecl{2}{#3}{request length}}{\end{tabbing} \end{keeptogether}}
+\newenvironment{erequest}[3]{\pagebreak[3] \begin{keeptogether} \encodingsection{#1} \begin{tabbing} \etabstops \eargdecl{1}{CARD8}{major-opcode} \eargdecl{1}{#2}{minor-opcode} \eargdecl{2}{#3}{request length}}{\end{tabbing} \end{keeptogether}}
+
+\newenvironment{eerror}[1]{\begin{keeptogether} \encodingsection{#1} \begin{tabbing} \etabstops }{\end{tabbing} \end{keeptogether}}
 
 \newenvironment{etypedef}[1]{\begin{keeptogether} \typename{#1} \begin{tabbing} \etabstops }{\end{tabbing} \end{keeptogether}}
 
@@ -39,7 +49,7 @@
 
 \begin{document}
 
-\title{Double Buffer Extension Specification\\Protocol Version 1.0\\X Consortium Standard}
+\title{Double Buffer Extension Protocol\\Protocol Version 1.0\\X Consortium Standard}
 \author{Ian Elliott\\Hewlett-Packard Company \and David P. Wiggins\\X Consortium, Inc.}
 \maketitle
 \thispagestyle{empty}
@@ -94,7 +104,7 @@ a window.
 
 \item Specify a wide range of actions to be taken when a window is
 swapped.  This includes explicit, simple swap actions (defined
-below), and more complex actions (e.g., clearing ancillary buffers)
+below), and more complex actions (for example, clearing ancillary buffers)
 that can be put together within explicit ``begin'' and ``end''
 requests (defined below).
 
@@ -130,7 +140,7 @@ visible.
 This extension enables applications to use double-buffering with a
 window.  This involves creating a second buffer, called a back buffer,
 and associating one or more back buffer names (\typename{XID}s) with
-the window, for use when referring to (i.e., drawing to or reading
+the window for use when referring to (that is, drawing to or reading
 from) the window's back buffer.  The back buffer name is a
 \typename{DRAWABLE} of type \typename{BACKBUFFER}.
 
@@ -157,7 +167,7 @@ associated with the window.  Subsequently, the window already is a
 double-buffered window, and nothing about the window changes when a
 new back buffer name is allocated, except that the new back buffer
 name is associated with the window.  The window remains
-double-buffered until either the window is destroyed, or until all of
+double-buffered until either the window is destroyed or until all of
 the back buffer names for the window are deallocated.
 
 In general, both the front and back buffers are treated the same.  In
@@ -209,8 +219,8 @@ front buffer are synonomous with each other.  This includes obeying
 the \requestname{GetImage} semantics and the subwindow-mode semantics
 if a core graphics context is involved.  Regardless of whether the
 window was explicitly passed in a \requestname{GetImage} request, or
-implicitly referenced (i.e., one of the window's ancestors was passed
-in the request), the front (i.e., visible) buffer is always referenced.
+implicitly referenced (that is, one of the window's ancestors was passed
+in the request), the front (that is, visible) buffer is always referenced.
 Thus, DBE-na\"{\i}ve screen dump clients will always get the front buffer.
 \requestname{GetImage} on a back buffer returns undefined image
 contents for any obscured regions of the back buffer that fall within
@@ -230,7 +240,7 @@ pixels that the \literal{IncludeInferiors} drawing touched.
 DBE adds no new events.  DBE does not extend the semantics of any
 existing events with the exception of adding a new \typename{DRAWABLE}
 type called \typename{BACKBUFFER}.  If events, replies, or errors that
-contain a \typename{DRAWABLE} (e.g., \literal{GraphicsExpose}) are
+contain a \typename{DRAWABLE} (for example, \literal{GraphicsExpose}) are
 generated in
 response to a request, the \typename{DRAWABLE} returned will be the
 one specified in the request.
@@ -238,7 +248,7 @@ one specified in the request.
 DBE advertises which visuals support double-buffering.
 
 DBE does not include any timing or synchronization facilities.
-Applications that need such facilities (e.g., to maintain a constant
+Applications that need such facilities (for example, to maintain a constant
 frame rate) should investigate the Synchronization Extension, an X
 Consortium standard.
 
@@ -272,13 +282,16 @@ If the Shape extension \requestname{ShapeRectangles},
 \requestname{ShapeMask}, \requestname{ShapeCombine}, or
 \requestname{ShapeOffset} request is executed on a double-buffered
 window, both buffers are reshaped to match the new window shape.  The
-region difference \[ D = new shape - old shape \] is tiled with the
-window background in both buffers, and \literal{Expose} events are
-generated for D.
+region difference is the following:
+
+\[ D = new shape - old shape \]
+
+It is tiled with the window background in both buffers,
+and \literal{Expose} events are generated for D.
 
 \subsection{Complex Swap Actions}
 
-DBE has no explicit knowledge of ancillary buffers (e.g., depth buffers
+DBE has no explicit knowledge of ancillary buffers (for example, depth buffers
 or alpha buffers), and only has a limited set of defined swap actions.
 Some applications may need a richer set of swap actions than DBE
 provides.  Some DBE implementations have knowledge of ancillary
@@ -318,7 +331,7 @@ of which uses a swap action of \literal{Untouched}.
 The \requestname{DBEBeginIdiom} and \requestname{DBEEndIdiom} requests
 do not perform any actions themselves.  They are treated as markers by
 implementations that can combine certain groups/series of requests as
-idioms, and are ignored by other implementations or for non-recognized
+idioms, and are ignored by other implementations or for nonrecognized
 groups/series of requests.  If these requests are sent out of order,
 or are mismatched, no errors are sent, and the requests are executed
 as usual, though performance may suffer.
@@ -340,9 +353,9 @@ request, then the contents of the new back buffer (after the idiom)
 will be the same as if the idiom was not recognized by the
 implementation.
 
-It is highly recommended that API providers define, and application
-developers use, ``convenience'' functions that allow client
-applications to call one procedure that encapsulates common idioms.
+It is highly recommended that Application Programming Interface (API) 
+providers define, and application developers use, ``convenience'' functions 
+that allow client applications to call one procedure that encapsulates common idioms.
 These functions will generate the \requestname{DBEBeginIdiom} request,
 the idiom requests, and \requestname{DBEEndIdiom} request.  Usage of
 these functions will ensure best possible performance across a wide
@@ -350,36 +363,40 @@ variety of implementations.
 
 \section{Requests}
 
+The DBE defines the following requests.
+
 \subsection{DBEGetVersion}
 
 This request returns the major and minor version numbers of this
 extension.
 
+% start marker
 \begin{arequest}{DBEGetVersion}
 \argdecl{client-major-version}{CARD8}
 \argdecl{client-minor-version}{CARD8}
 \areply
-\argdecl{server-major-version}{CARD8}
-\argdecl{server-minor-version}{CARD8}
+\areplyargdecl{server-major-version}{CARD8}
+\areplyargdecl{server-minor-version}{CARD8}
 \end{arequest}
+% end marker
 
-The \argname{client-major-version} and \argname{client-minor-version}
+The client-major-version and client-minor-version
 numbers indicate what version of the protocol the client wants the
-server to implement.  The \argname{server-major-version} and the
-\argname{server-minor-version} numbers returned indicate the protocol
+server to implement.  The server-major-version and the
+server-minor-version numbers returned indicate the protocol
 this extension actually supports.  This might not equal the version
 sent by the client.  An implementation can (but need not) support more
-than one version simultaneously.  The \argname{server-major-version}
-and \argname{server-minor-version} allow the creation of future
-revisions of the Double Buffering Extension protocol which may be
+than one version simultaneously.  The server-major-version
+and server-minor-version allow the creation of future
+revisions of the DBE protocol that may be
 necessary.  In general, the major version would increment for
 incompatible changes, and the minor version would increment for small,
 upward-compatible changes.  Servers that support the protocol defined
-in this document will return a \argname{server-major-version} of one
-(1), and a \argname{server-minor-version} of zero (0).
+in this document will return a server-major-version of one
+(1), and a server-minor-version of zero (0).
 
-The Double Buffering client must issue a \requestname{DBEGetVersion}
-request before any other Double Buffering request in order to
+The DBE client must issue a \requestname{DBEGetVersion}
+request before any other double buffering request in order to
 negotiate a compatible protocol version; otherwise, the client will get
 undefined behavior (DBE may or may not work).
 
@@ -388,40 +405,41 @@ undefined behavior (DBE may or may not work).
 This request returns information about which visuals support double
 buffering.
 
+% start marker
 \begin{arequest}{DBEGetVisualInfo}
 \argdecl{screen-specifiers}{LISTofDRAWABLE}
 \areply
-\argdecl{visinfo}{LISTofSCREENVISINFO}
+\areplyargdecl{visinfo}{LISTofSCREENVISINFO}
 \end{arequest}
 
-(Errors: \literal{Drawable})
-
-The following type definitions apply:
-
+where:
 \begin{tabbing}
 \typename{SCREENVISINFO}: \= \typename{LISTofVISINFO}\\
-\typename{VISINFO}: \> [ \= \typename{VISUALID} \argname{visual};\\
-			\>\> \typename{CARD8} \argname{depth};\\
-			\>\> \typename{CARD8} \argname{perflevel} ]\\
+\typename{VISINFO}: \> [ \= \typeargname{visual}: \typename{VISUALID}\\
+			\>\> \typeargname{depth}: \typename{CARD8}\\
+			\>\> \typeargname{perflevel}: \typename{CARD8} ]
 \end{tabbing}
+%
+Errors: \literal{Drawable}
+% end marker
 
-All of the values passed in \argname{screen-specifiers} must be valid
+All of the values passed in screen-specifiers must be valid
 \typename{DRAWABLE}s (or a \literal{Drawable} error results).  For each drawable
-in \argname{screen-specifiers}, the reply will contain a list of
+in screen-specifiers, the reply will contain a list of
 VISINFO structures for visuals that support double-buffering on the
-screen on which the drawable resides.  The \argname{visual} member
-specifies the VISUALID\@.  The \argname{depth} member specifies the
-depth in bits for the \argname{visual}.  The \argname{perflevel} is a
-performance hint.  The only operation defined on a \argname{perflevel}
-is comparison to a \argname{perflevel} of another visual on the same
-screen.  The visual having the higher \argname{perflevel} is likely to
+screen on which the drawable resides.  The visual member
+specifies the VISUALID\@.  The depth member specifies the
+depth in bits for the visual.  The perflevel is a
+performance hint.  The only operation defined on a perflevel
+is comparison to a perflevel of another visual on the same
+screen.  The visual having the higher perflevel is likely to
 have better double-buffer graphics performance than the visual having
-the lower \argname{perflevel}.  Nothing can be deduced from any of the
+the lower perflevel.  Nothing can be deduced from any of the
 following: the magnitude of the difference of two
-\argname{perflevel}s, a \argname{perflevel} value in isolation, or
-comparing \argname{perflevel}s from different servers.
+perflevels, a perflevel value in isolation, or
+comparing perflevels from different servers.
 
-If the list of \argname{screen-specifiers} is empty, information for
+If the list of screen-specifiers is empty, information for
 all screens is returned, starting with screen zero.
 
 \subsection{DBEAllocateBackBufferName}
@@ -429,26 +447,28 @@ all screens is returned, starting with screen zero.
 This request allocates a drawable ID used to refer to the back buffer of a
 window.
 
+% start marker
 \begin{arequest}{DBEAllocateBackBufferName}
 \argdecl{window}{WINDOW}
 \argdecl{back-buffer-name}{BACKBUFFER}
 \argdecl{swap-action-hint}{SWAPACTION}
 \end{arequest}
 
-(Errors: \literal{Alloc, Value, IDChoice, Match, Window})
+Errors: \literal{Alloc, Value, IDChoice, Match, Window}
+% end marker
 
-If the \argname{window} is not already a double-buffered window, the
-window becomes double-buffered, and the \argname{back-buffer-name} is
-associated with the window.  The \argname{swap-action-hint} tells the
+If the window is not already a double-buffered window, the
+window becomes double-buffered, and the back-buffer-name is
+associated with the window.  The swap-action-hint tells the
 server which swap action is most likely to be used with the window in
 subsequent \requestname{DBESwapBuffers} requests.  The
-\argname{swap-action-hint} must have one of the values specified for
-type \typename{SWAPACTION} (or a Value error results).  See the
+swap-action-hint must have one of the values specified for
+type \typename{SWAPACTION} (or a \literal{Value} error results).  See the
 description of the \requestname{DBESwapBuffers} request for a complete
 discussion of swap actions and the \typename{SWAPACTION} type.
 
 If the window already is a double-buffered window, nothing about the
-window changes, except that an additional \argname{back-buffer-name}
+window changes, except that an additional back-buffer-name
 is associated with the window.  The window remains double-buffered
 until either the window is destroyed, or until all of the back buffer
 names for the window are deallocated.
@@ -459,33 +479,35 @@ The window passed into the request must
 be an \literal{InputOutput} window (or a \literal{Match} error results).
 The visual of the window must be in the list returned by
 \requestname{DBEGetVisualInfo} (or a \literal{Match} error results).
-The \argname{back-buffer-name} must be in the range assigned to the
+The back-buffer-name must be in the range assigned to the
 client, and must not already be in use (or an \literal{IDChoice}
 error results).
 If the server cannot allocate all resources associated with turning on
 double-buffering for the window, an \literal{Alloc} error results, the
 window's double-buffer status (whether it is already double-buffered or not)
-remains unchanged, and the \argname{back-buffer-name} is freed.
+remains unchanged, and the back-buffer-name is freed.
 
 \subsection{DBEDeallocateBackBufferName}
 
 This request frees a drawable ID that was obtained by
 \requestname{DBEAllocateBackBufferName}.
 
+% start marker
 \begin{arequest}{DBEDeallocateBackBufferName}
 \argdecl{back-buffer-name}{BACKBUFFER}
 \end{arequest}
 
-                (Errors: \literal{Buffer})
+Errors: \literal{Buffer}
+% end marker
 
-The \argname{back-buffer-name} passed in the request is freed and no
+The back-buffer-name passed in the request is freed and no
 longer associated with the window.  If this is the last
-\argname{back-buffer-name} associated with the window, then the back
+back-buffer-name associated with the window, then the back
 buffer is no longer accessible to clients, and all double-buffering
 resources associated with the window may be freed.  The window's
 current front buffer remains the front buffer.
 
-The \argname{back-buffer-name} must be a valid \typename{BACKBUFFER}
+The back-buffer-name must be a valid \typename{BACKBUFFER}
 associated with a window (or a \literal{Buffer} error results).
 
 \subsection{DBESwapBuffers}
@@ -493,18 +515,20 @@ associated with a window (or a \literal{Buffer} error results).
 This request swaps the buffers for all windows listed, applying the
 appropriate swap action for each window.
 
+% start marker
 \begin{arequest}{DBESwapBuffers}
 \argdecl{windows}{LISTofSWAPINFO}
 \end{arequest}
 
-                (Errors: \literal{Match, Window, Value})
-
-The following type definitions apply:
-
-\typename{SWAPINFO}: [\typename{WINDOW}
-\argname{window}; \typename{SWAPACTION} \argname{swap-action}]
-
-\typename{SWAPACTION}: {\{\literal{Undefined, Background, Untouched, Copied}\}}
+where:
+\begin{tabbing}
+\typename{SWAPINFO}: \= [ \= \typeargname{window}: \typename{WINDOW}\\
+			\>\> \typeargname{swap-action}: \typename{SWAPACTION} ]\\
+\typename{SWAPACTION}: \{\literal{Undefined, Background, Untouched, Copied}\}
+\end{tabbing}
+%
+Errors: \literal{Match, Window, Value}
+% end marker
 
 Each window passed into the request must be a valid \typename{WINDOW}
 (or a \literal{Window} error results).
@@ -512,33 +536,34 @@ Each window passed into the request must
 be a double-buffered window (or a \literal{Match} error results).
 Each window passed into the request must only be listed once
 (or a \literal{Match} error results).
-Each \argname{swap-action} in the list must have one of the
+Each swap-action in the list must have one of the
 values specified for type \typename{SWAPACTION} (or a \literal{Value} error
 results).  If an error results, none of the valid double-buffered
 windows will have their buffers swapped.
 
-The \argname{swap-action} determines what will happen to the new back
-buffer of the \argname{window} it is paired with in the list in
+The swap-action determines what will happen to the new back
+buffer of the window it is paired with in the list in
 addition to making the old back buffer become visible.  The
 defined actions are as follows:
 
 \begin{description}
+\setlength{\labelsep}{2em}
 \item[\literal{Undefined}]	The contents of the new back buffer become
-			undefined.  This may be the most efficient
-			action since it allows the implementation to
-			discard the contents of the buffer if it needs
-			to.
+			 	undefined.  This may be the most efficient
+				action since it allows the implementation to
+				discard the contents of the buffer if it needs
+				to.
 
 \item[\literal{Background}]	The unobscured region of the new back buffer
-			will be tiled with the window background.  The
-			background action allows devices to use a fast
-			clear capability during a swap.
+				will be tiled with the window background.  The
+				background action allows devices to use a fast
+				clear capability during a swap.
 
 \item[\literal{Untouched}]	The unobscured region of the new back buffer
-			will be unmodified by the swap.
+				will be unmodified by the swap.
 
 \item[\literal{Copied}]		The unobscured region of the new back buffer
-			will be the contents of the old back buffer.
+				will be the contents of the old back buffer.
 \end{description}
 
 If \requestname{DBESwapBuffers} is included in a ``swap and clear''
@@ -550,11 +575,13 @@ request.
 This request informs the server that a complex swap will immediately
 follow this request.  
 
+% start marker
 \begin{arequest}{DBEBeginIdiom}
 \end{arequest}
+% end marker
 
 As previously discussed, a complex swap action is a group/series of
-requests, which, taken together, may be combined into an atomic
+requests that, taken together, may be combined into an atomic
 operation by the implementation.  The sole function of this request is
 to serve as a ``marker'' that the server can use to aid in idiom
 processing.  The server is free to implement this request as a no-op.
@@ -563,8 +590,10 @@ processing.  The server is free to implement this request as a no-op.
 
 This request informs the server that a complex swap has concluded.  
 
+% start marker
 \begin{arequest}{DBEEndIdiom}
 \end{arequest}
+% end marker
 
 The sole function of this request is to serve as a ``marker'' that the
 server can use to aid in idiom processing.  The server is free to
@@ -575,22 +604,24 @@ implement this request as a no-op.
 
 This request returns information about a back buffer.
 
+% start marker
 \begin{arequest}{DBEGetBackBufferAttributes}
 \argdecl{back-buffer-name}{BACKBUFFER}
 \areply
-\argdecl{attributes}{BUFFER\_ATTRIBUTES}
+\areplyargdecl{attributes}{BUFFER\_ATTRIBUTES}
 \end{arequest}
 
-The following type definitions apply:
+where:
 
-\typename{BUFFER\_ATTRIBUTES}: [\typename{WINDOW} \argname{window}; ]
+\typename{BUFFER\_ATTRIBUTES}: [\typeargname{window}: \typename{WINDOW} ]
+% end marker
 
-If \argname{back-buffer-name} is a valid \typename{BACKBUFFER}, the
-\argname{window} field of the \argname{attributes} in the reply will
+If back-buffer-name is a valid \typename{BACKBUFFER}, the
+window field of the attributes in the reply will
 be the window which has the back buffer that
-\argname{back-buffer-name} refers to.  If \argname{back-buffer-name}
-is not a valid \typename{BACKBUFFER}, the \argname{window} field of
-the \argname{attributes} in the reply will be \literal{None}.
+back-buffer-name refers to.  If back-buffer-name
+is not a valid \typename{BACKBUFFER}, the window field of
+the attributes in the reply will be \literal{None}.
 
 \section{Encoding}
 
@@ -637,7 +668,7 @@ The following new types are used by the extension.
 
 \subsection{Errors}
 
-\begin{etypedef}{Buffer}
+\begin{eerror}{Buffer}
 \eargdecl{1}{0}{error}
 \eargdecl{1}{error base + 0}{code}
 \eargdecl{2}{CARD16}{sequence number}
@@ -645,7 +676,7 @@ The following new types are used by the extension.
 \eargdecl{2}{CARD16}{minor-opcode}
 \eargdecl{1}{CARD8}{major-opcode}
 \eargdecl{21}{}{unused}
-\end{etypedef}
+\end{eerror}
 
 \subsection{Requests}
 
@@ -710,240 +741,42 @@ The following new types are used by the extension.
 \end{erequest}
 
 \pagebreak[4]
-\section{C Language Binding}
-
-The header for this extension is \verb|<X11/extensions/Xdbe.h>|.  All
-identifier names provided by this header begin with Xdbe.
-
-\subsection{Types}
-
-The type \libtypename{XdbeBackBuffer} is a \libtypename{Drawable}.
-
-The type \libtypename{XdbeSwapAction} can be one of the constants
-\literal{XdbeUndefined}, \literal{XdbeBackground},
-\literal{XdbeUntouched}, or \literal{XdbeCopied}.
-
-\subsection{Functions}
-
-The C routines provide direct access to the protocol and add no
-additional semantics.  For complete details on the effects of these
-functions, refer to the appropriate protocol request, which can be
-derived by replacing Xdbe at the start of the function name with DBE\@.
-All functions that have return type \libtypename{Status} will return
-non-zero for success and zero for failure.
-
-\begin{keeptogether}
-\begin{cfunction}{Status}{XdbeQueryExtension}
-\cargdecl{Display *}{dpy},
-\cargdecl{int *}{major\_version\_return},
-\cargdecl{int *}{minor\_version\_return}
-\end{cfunction}
-
-This function sets \argname{major\_version\_return} and
-\argname{minor\_version\_return} to the major and minor DBE protocol
-version supported by the server.  If the DBE library is compatible
-with the version returned by the server, this function returns
-non-zero.  If \argname{dpy} does not support the DBE extension, or if
-there was an error during communication with the server, or if the
-server and library protocol versions are incompatible, this function
-returns zero.  No other Xdbe functions may be called before this
-function.  If a client violates this rule, the effects of all
-subsequent Xdbe calls that it makes are undefined.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{XdbeScreenVisualInfo *}{XdbeGetVisualInfo}
-\cargdecl{Display *}{dpy},
-\cargdecl{Drawable *}{screen\_specifiers},
-\cargdecl{int *}{num\_screens}
-\end{cfunction}
-
-This function returns information about which visuals support double
-buffering.  The argument \argname{num\_screens} specifies how many
-elements there are in the \argname{screen\_specifiers} list.  Each
-drawable in \argname{screen\_specifiers} designates a screen for which
-the supported visuals are being requested.  If \argname{num\_screens}
-is zero, information for all screens is requested.  In this case, upon
-return from this function, \argname{num\_screens} will be set to the
-number of screens that were found.  If an error occurs, this function
-returns NULL; otherwise, it returns a pointer to a list of
-\libtypename{XdbeScreenVisualInfo} structures of length \argname{num\_screens}.
-The {\it n}th element in the returned list corresponds to the {\it
-n}th drawable in the \argname{screen\_specifiers} list, unless
-\argname{num\_screens} was passed in with the value zero, in which
-case the {\it n}th element in the returned list corresponds to the
-{\it n}th screen of the server, starting with screen zero.
-
-The \libtypename{XdbeScreenVisualInfo} structure has the following
-fields:
-
-\begin{tabular}{lll}
-\typename{int} & \argname{count} & number of items in \argname{visinfo} \\
-\typename{XdbeVisualInfo *} & \argname{visinfo} & list of visuals and depths for this screen \\
-\end{tabular}
-
-The \libtypename{XdbeVisualInfo} structure has the following fields:
-
-\begin{tabular}{lll}
-\typename{VisualID} & \argname{visual} & one visual ID that supports double-buffering\\
-\typename{int} & \argname{depth} & depth of \argname{visual} in bits\\
-\typename{int} & \argname{perflevel} & performance level of \argname{visual} \\
-\end{tabular}
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{void }{XdbeFreeVisualInfo}
-\cargdecl{XdbeScreenVisualInfo *}{visual\_info}
-\end{cfunction}
-
-This function frees the list of \libtypename{XdbeScreenVisualInfo} returned by
-the function \cfunctionname{XdbeGetVisualInfo}.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{XdbeBackBuffer}{XdbeAllocateBackBufferName}
-\cargdecl{Display *}{dpy},
-\cargdecl{Window}{window},
-\cargdecl{XdbeSwapAction}{swap\_action}
-\end{cfunction}
-
-This function returns a drawable ID used to refer to the back buffer
-of the specified \argname{window}.  The \argname{swap\_action} is a
-hint to indicate the swap action that will likely be used in
-subsequent calls to \cfunctionname{XdbeSwapBuffers}.  The actual swap
-action used in calls to \cfunctionname{XdbeSwapBuffers} does not have
-to be the same as the \argname{swap\_action} passed to this function,
-though clients are encouraged to provide accurate information whenever
-possible.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{Status}{XdbeDeallocateBackBufferName}
-\cargdecl{Display *}{dpy},
-\cargdecl{XdbeBackBuffer}{buffer}
-\end{cfunction}
-
-This function frees a drawable ID, \argname{buffer}, that was obtained
-via \cfunctionname{XdbeAllocateBackBufferName}.  The \argname{buffer}
-must be a valid name for the back buffer of a window, or an XdbeBadBuffer
-error results.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{Status}{XdbeSwapBuffers}
-\cargdecl{Display *}{dpy},
-\cargdecl{XdbeSwapInfo *}{swap\_info},
-\cargdecl{int}{num\_windows}
-\end{cfunction}
-
-This function swaps the front and back buffers for a list of windows.
-The argument \argname{num\_windows} specifies how many windows are to
-have their buffers swapped; it is the number of elements in the
-\argname{swap\_info} array.  The argument \argname{swap\_info}
-specifies the information needed per window to do the swap.
-
-The \libtypename{XdbeSwapInfo} structure has the following fields:
-
-\begin{tabular}{lll}
-\typename{Window} & \argname{swap\_window} & window for which to swap buffers \\
-\typename{XdbeSwapAction} & \argname{swap\_action} & swap action to use for this \argname{swap\_window} \\
-\end{tabular}
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{Status}{XdbeBeginIdiom}
-\cargdecl{Display *}{dpy}
-\end{cfunction}
-
-This function marks the beginning of an idiom sequence.  See section 3.2
-for a complete discussion of idioms.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{Status}{XdbeEndIdiom}
-\cargdecl{Display *}{dpy}
-\end{cfunction}
-
-This function marks the end of an idiom sequence.
-\end{keeptogether}
-
-\begin{keeptogether}
-\begin{cfunction}{XdbeBackBufferAttributes *}{XdbeGetBackBufferAttributes}
-\cargdecl{Display *}{dpy},
-\cargdecl{XdbeBackBuffer}{buffer}
-\end{cfunction}
-
-This function returns the attributes associated with the specified
-\argname{buffer}.
-
-The \libtypename{XdbeBackBufferAttributes} structure has the following fields:
-
-\begin{tabular}{lll}
-\typename{Window} & \argname{window} & window that buffer belongs to \\
-\end{tabular}
-
-If \argname{buffer} is not a valid \libtypename{XdbeBackBuffer},
-\argname{window} is set to \literal{None}.
-
-The returned \libtypename{XdbeBackBufferAttributes} structure can be
-freed with the Xlib function \cfunctionname{XFree}.
-\end{keeptogether}
-
-\begin{keeptogether}
-\subsection{Errors}
-
-The \libtypename{XdbeBufferError} structure has the following fields:
-
-\begin{tabular}{lll}
-\typename{int} & \argname{type} \\
-\typename{Display *} & \argname{display}& Display the event was read from\\
-\typename{XdbeBackBuffer} &  \argname{buffer}& resource id \\
-\typename{unsigned long} & \argname{serial}& serial number of failed request\\
-\typename{unsigned char} & \argname{error\_code}& error base + \literal{XdbeBadBuffer}\\
-\typename{unsigned char} & \argname{request\_code}& Major op-code of failed request\\
-\typename{unsigned char} & \argname{minor\_code}& Minor op-code of failed request\\
-\end{tabular}
-\end{keeptogether}
-
-\pagebreak[4]
 \section{Acknowledgements}
 
 We wish to thank the following individuals who have contributed their
-time and talent toward shaping the DBE specification.
+time and talent toward shaping the DBE specification:
 
-\begin{tabular}{lll}
-T. Alex Chen & IBM \\
-Peter Daifuku & Silicon Graphics, Inc. \\
-Ian Elliott & Hewlett-Packard Company \\
-Stephen Gildea & X Consortium, Inc. \\
-Jim Graham & Sun \\
-Larry Hare & AGE Logic \\
-Jay Hersh & X Consortium, Inc. \\
-Daryl Huff & Sun \\
-Deron Dann Johnson & Sun \\
-Louis Khouw & Sun \\
-Mark Kilgard & Silicon Graphics, Inc. \\
-Rob Lembree & Digital Equipment Corporation \\
-Alan Ricker & Metheus \\
-Michael Rosenblum & Digital Equipment Corporation \\
-Bob Scheifler & X Consortium, Inc. \\
-Larry Seiler & Digital Equipment Corporation \\
-Jeanne Sparlin Smith & IBM \\
-Jeff Stevenson & Hewlett-Packard Company \\
-Walter Strand & Metheus \\
-Ken Tidwell & Hewlett-Packard Company \\
-David P. Wiggins & X Consortium, Inc. \\
-\end{tabular}
+T. Alex Chen, IBM;
+Peter Daifuku, Silicon Graphics, Inc.; 
+Ian Elliott, Hewlett-Packard Company;
+Stephen Gildea, X Consortium, Inc.;
+Jim Graham, Sun;
+Larry Hare, AGE Logic;
+Jay Hersh, X Consortium, Inc.;
+Daryl Huff, Sun;
+Deron Dann Johnson, Sun;
+Louis Khouw, Sun;
+Mark Kilgard, Silicon Graphics, Inc.;
+Rob Lembree, Digital Equipment Corporation;
+Alan Ricker, Metheus;
+Michael Rosenblum, Digital Equipment Corporation;
+Bob Scheifler, X Consortium, Inc.;
+Larry Seiler, Digital Equipment Corporation;
+Jeanne Sparlin Smith, IBM;
+Jeff Stevenson, Hewlett-Packard Company;
+Walter Strand, Metheus;
+Ken Tidwell, Hewlett-Packard Company; and
+David P. Wiggins, X Consortium, Inc.
 
 Mark provided the impetus to start the DBE project.  Ian wrote the
 first draft of the specification.  David served as architect.
 
 \section{References}
 
-Jeffrey Friedberg, Larry Seiler, Jeff Vroom, ``Multi-buffering Extension
-Specification Version 3.3''
+Jeffrey Friedberg, Larry Seiler, and Jeff Vroom, ``Multi-buffering Extension
+Specification Version 3.3.''
 
-Tim Glauert, Dave Carver, Jim Gettys, David P. Wiggins,
-``X Synchronization Extension Version 3.0'' 
+Tim Glauert, Dave Carver, Jim Gettys, and David P. Wiggins,
+``X Synchronization Extension Version 3.0.'' 
 
 \end{document}

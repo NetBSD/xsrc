@@ -76,7 +76,7 @@ Event types
 .IP \(bu 5
 Event structures
 .IP \(bu 5
-Event mask
+Event masks
 .IP \(bu 5
 Event processing
 .LP
@@ -2971,6 +2971,7 @@ The request member is set to indicate the kind of mapping change that occurred
 and can be
 .PN MappingModifier ,
 .PN MappingKeyboard ,
+or
 .PN MappingPointer .
 If it is
 .PN MappingModifier ,
@@ -3167,7 +3168,7 @@ The structure for this event type contains:
 .TA .5i 3i
 .ta .5i 3i
 typedef struct {
-	int type;	/* VisibiltyNotify */
+	int type;	/* VisibilityNotify */
 	unsigned long serial;	/* # of last request processed by server */
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */

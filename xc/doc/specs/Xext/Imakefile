@@ -1,8 +1,12 @@
-XCOMM $XConsortium: Imakefile /main/13 1996/01/04 11:11:00 gildea $
+XCOMM $XConsortium: Imakefile /main/18 1996/10/07 16:15:21 dpw $
 
 MakeSimpleDoc(shape,shape.ms)
 
+MakeSimpleDoc(shapelib,shapelib.ms)
+
 MakeSimpleDoc(xtest,xtest.ms)
+
+MakeSimpleDoc(xtestlib,xtestlib.ms)
 
 MakeSimpleDoc(mit-shm,mit-shm.ms)
 
@@ -18,4 +22,10 @@ MakeTblDoc(buffer,buffer.ms)
 
 MakeLatexDoc(sync,sync.tex)
 
+MakeLatexDoc(synclib,synclib.tex)
+
 MakeLatexDoc(dbe,dbe.tex)
+
+MakeLatexDoc(dbelib,dbelib.tex)
+
+MakeLatexDoc(security,security.tex)

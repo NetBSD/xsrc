@@ -107,7 +107,7 @@ of a class of ``Mail'' programs.
 By convention, the first character of class components is capitalized,
 and the first letter of name components is in lowercase.
 Each name and class finally has an attribute
-(for example ``foreground'' or ``font'').
+(for example, ``foreground'' or ``font'').
 If each window is properly assigned a name and class,
 it is easy for the user to specify attributes of any portion 
 of the application.
@@ -196,7 +196,7 @@ which the line occurs (for example, if the file name contains no
 directory or contains a relative directory specification).
 .LP
 If a ResourceName contains a contiguous sequence of two or more Binding
-characters, the sequence will be replaced with single ``\&.'' character
+characters, the sequence will be replaced with a single ``\&.'' character
 if the sequence contains only ``\&.'' characters;
 otherwise, the sequence will be replaced with a single ``*'' character.
 .LP
@@ -243,7 +243,7 @@ Resource Manager Matching Rules
 The algorithm for determining which resource database entry
 matches a given query is the heart of the resource manager.
 All queries must fully specify the name and class of the desired resource
-(use of the characters ``*'' and ``?'' are not permitted).
+(use of the characters ``*'' and ``?'' is not permitted).
 The library supports up to 100 components in a full name or class.
 Resources are stored in the database with only partially specified
 names and classes, using pattern matching constructs.
@@ -451,7 +451,7 @@ To convert a string with one or more components to a quark list, use
 .sM
 .FD 0
 #define XrmStringToNameList(str, name)  XrmStringToQuarkList((str), (name))
-#define XrmStringToClassList(str,class) XrmStringToQuarkList((str), (class))
+#define XrmStringToClassList(str, class) XrmStringToQuarkList((str), (class))
 .sp
 void XrmStringToQuarkList\^(\^\fIstring\fP, \fIquarks_return\fP\^)
 .br
@@ -717,7 +717,7 @@ The string is parsed in the current locale,
 and the database is created in the current locale.
 .LP
 .sp
-To obtain locale name of a database, use
+To obtain the locale name of a database, use
 .PN XrmLocaleOfDatabase .
 .IN "XrmLocaleOfDatabase" "" "@DEF@"
 .sM
@@ -1018,7 +1018,7 @@ delim %%
 Most applications and toolkits do not make random probes
 into a resource database to fetch resources.
 The X toolkit access pattern for a resource database is quite stylized.
-A series of from 1 to 20 probes are made with only the 
+A series of from 1 to 20 probes is made with only the 
 last name/class differing in each probe.
 The 
 .PN XrmGetResource 
@@ -1443,7 +1443,7 @@ The bindings and quarks lists are terminated by
 Note that pointers
 to the database and type are passed, but these values should not be modified.
 .LP
-The procedure must not modifiy the database.
+The procedure must not modify the database.
 If Xlib has been initialized for threads, the procedure is called with
 the database locked and the result of a call by the procedure to any
 Xlib function using the same database is not defined.

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile,v 1.17 94/02/10 16:51:00 rws Exp $
+XCOMM $XConsortium: Imakefile /main/18 1996/10/04 13:31:36 dpw $
 
 OBJS1 =	FontObj(courB08) FontObj(courB10) FontObj(courB12) FontObj(courB14) \
 	FontObj(courB18) FontObj(courB24) FontObj(courBO08) \
@@ -51,7 +51,10 @@ OBJS2 = FontObj(charI08) \
 	FontObj(lutRS14) FontObj(lutRS18) FontObj(lutRS24) FontObj(luBIS19) \
 	FontObj(luBS19) FontObj(luIS19) FontObj(luRS19) FontObj(lubB19) \
 	FontObj(lubBI19) FontObj(lubI19) FontObj(lubR19) FontObj(lutBS19) \
-	FontObj(lutRS19)
+	FontObj(lutRS19)  FontObj(UTI___14) FontObj(UTI___12) \
+	FontObj(UTI___24) FontObj(UTI___10) FontObj(UTI___18) \
+	FontObj(UTRG__14) FontObj(UTRG__12) FontObj(UTRG__24) \
+	FontObj(UTRG__10) FontObj(UTRG__18)
 
 OBJS = $(OBJS1) $(OBJS2)
 
@@ -247,7 +250,16 @@ FontTarget(lutRS14)
 FontTarget(lutRS18)
 FontTarget(lutRS19)
 FontTarget(lutRS24)
-
+FontTarget(UTI___14)
+FontTarget(UTI___12)
+FontTarget(UTI___24)
+FontTarget(UTI___10)
+FontTarget(UTI___18)
+FontTarget(UTRG__14)
+FontTarget(UTRG__12)
+FontTarget(UTRG__24)
+FontTarget(UTRG__10)
+FontTarget(UTRG__18)
 
 InstallFontObjs($(OBJS1),$(FONTINSTDIR))
 InstallFontObjs($(OBJS2),$(FONTINSTDIR))

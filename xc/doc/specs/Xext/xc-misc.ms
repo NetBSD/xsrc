@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.\" $XConsortium: xc-misc.ms /main/3 1996/02/07 17:33:08 swick $
+.\" $XConsortium: xc-misc.ms /main/4 1996/12/11 15:00:55 kaleb $
 .EH ''''
 .OH ''''
 .EF ''''
@@ -14,7 +14,7 @@
 .ce 3
 Version 1.1
 X Consortium Standard
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .sp 6
 .ce 4
 Bob Scheifler

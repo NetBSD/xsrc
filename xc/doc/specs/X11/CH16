@@ -1125,8 +1125,8 @@ Specifies the region.
 .ns
 .IP \fIy\fP 1i
 Specify the x and y coordinates\*(Xy.
-.eM
 .LP
+.eM
 The
 .PN XPointInRegion
 function returns 

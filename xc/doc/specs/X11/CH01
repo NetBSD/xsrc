@@ -40,8 +40,8 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\" 
-.EH '\fBXlib \- C Library\fP''\fBX11, Release 6.1\fP'
-.OH '\fBXlib \- C Library\fP''\fBX11, Release 6.1\fP'
+.EH '\fBXlib \- C Library\fP''\fBX11, Release 6.3\fP'
+.OH '\fBXlib \- C Library\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
 .hw WM_NORMAL_HINTS
@@ -107,7 +107,7 @@ Naming and argument conventions within Xlib
 .IP \(bu 5
 Programming considerations
 .IP \(bu 5
-Character sets and encoding
+Character sets and encodings
 .IP \(bu 5
 Formatting conventions
 .NH 2
@@ -379,7 +379,8 @@ which are symbols with the prefix ``XK_''.
 The KeySyms are arranged in groups, and a preprocessor symbol controls
 inclusion of each group.  The preprocessor symbol must be defined
 prior to inclusion of the file to obtain the associated values.
-The preprocessor symbols are XK_MISCELLANY, XK_LATIN1, XK_LATIN2,
+The preprocessor symbols are XK_MISCELLANY, XK_XKB_KEYS, XK_3270,
+XK_LATIN1, XK_LATIN2,
 XK_LATIN3, XK_LATIN4, XK_KATAKANA, XK_ARABIC, XK_CYRILLIC, XK_GREEK,
 XK_TECHNICAL, XK_SPECIAL, XK_PUBLISHING, XK_APL, XK_HEBREW,
 XK_THAI, and XK_KOREAN.
@@ -387,7 +388,8 @@ XK_THAI, and XK_KOREAN.
 .hN X11/keysym.h
 .IP
 This file defines the preprocessor symbols
-XK_MISCELLANY, XK_LATIN1, XK_LATIN2, XK_LATIN3, XK_LATIN4, and XK_GREEK
+XK_MISCELLANY, XK_XKB_KEYS, XK_LATIN1, XK_LATIN2, XK_LATIN3,
+XK_LATIN4, and XK_GREEK
 and then includes
 .hN X11/keysymdef.h .
 .IP \(bu 5
