@@ -1,4 +1,4 @@
-/*	$NetBSD: rpccons.c,v 1.1 2004/01/18 04:15:18 rtr Exp $	*/
+/*	$NetBSD: rpccons.c,v 1.2 2004/03/07 11:21:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -69,7 +69,6 @@
 #include <machine/vconsole.h>
 #include <machine/mouse.h>
 #include <machine/kbd.h>
-#include <machine/beep.h>
 
 /* Keymap, from XFree86*/
 #include "atKeynames.h"
@@ -93,7 +92,6 @@
 #define PMOUSE_PATH	"/dev/pms0"		/* Mouse pointer (rpc format) */
 #define CON_PATH	"/dev/vidcvideo0"	/* Console */
 #define KBD_PATH	"/dev/kbd"		/* Keyboard (rpc format) */
-#define BEEP_PATH	"/dev/beep"		/* Beep device */
 
 extern struct _private private;
 
@@ -121,18 +119,6 @@ void vidc_mousectrl(DeviceIntPtr device, PtrCtrl *ctrl)
 void vidc_kbdctrl(DeviceIntPtr device, KeybdCtrl *ctrl)
 {
 	DPRINTF(("kbdmousectrl\n"));
-}
-
-void vidc_bell(int percent, DeviceIntPtr device, pointer ctrl, int unused)
-{
-	KeybdCtrl *kctrl = (KeybdCtrl *)ctrl;
-	DPRINTF(("Bell\n"));
-
-	if (percent == 0 || kctrl->bell == 0)
-		return;
-
-	if (private.beep_fd >= 0)
-		ioctl(private.beep_fd, BEEP_GENERATE);
 }
 
 /* Map wsmouse button codes to X button codes
@@ -330,11 +316,6 @@ int rpc_init_kbd(void)
 	} while (len > 0);
 
 	return fd;
-}
-
-int rpc_init_bell(void)
-{
-	return open(BEEP_PATH, O_RDONLY);
 }
 
 int rpc_init_screen(ScreenPtr screen, int argc, char **argv)
