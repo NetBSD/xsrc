@@ -994,7 +994,7 @@ PclComputeCompositeClip(pGC, pDrawable)
 void
 PclValidateGC( pGC, changes, pDrawable )
      GCPtr pGC;
-     Mask changes;
+     unsigned long changes;
      DrawablePtr pDrawable;
 {
     XpContextPtr pCon;
