@@ -30,6 +30,9 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.4 1999/06/17 16:23:45 hohndel Ex
 #ifndef WacomSupport
 #define WacomSupport		NO
 #endif
+#ifndef USBSupport
+#define USBSupport		NO
+#endif
 #ifndef ElographicsSupport
 #define ElographicsSupport	NO
 #endif
@@ -66,6 +69,11 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.4 1999/06/17 16:23:45 hohndel Ex
 #  define WacomDefines -DWACOM_SUPPORT
 # else
 #  define WacomDefines
+# endif
+# if USBSupport
+#  define USBDefines -DUSB_SUPPORT
+# else
+#  define USBDefines
 # endif
 # if ElographicsSupport
 #  define ElographicsDefines -DELOGRAPHICS_SUPPORT

@@ -234,6 +234,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohnd
 #define XF86I128Server		NO
 #define XF86GLINTServer		NO
 #define XF86FBDevServer		NO
+
 #endif /* NetBSDArchitecture */
 #endif
 
@@ -491,6 +492,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohnd
  *
 #define JoystickSupport		NO
 #define WacomSupport		YES
+#define USBSupport		YES
 #define MicroTouchSupport	YES 
 #define ElographicsSupport	YES 
 #define DynaproSupport		YES 
