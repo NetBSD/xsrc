@@ -35,8 +35,6 @@ NormalAsmObjectRule()
 NormalRelocatableTarget(nv_drv,$(OBJS))
 
 InstallLinkKitNonExecFile(nv1ref.h,$(LINKKITDIR)/drivers/vga256/nv)
-InstallLinkKitNonExecFile(nv3ref.h,$(LINKKITDIR)/drivers/vga256/nv)
-InstallLinkKitNonExecFile(nv4ref.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv3arb.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv4arb.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvreg.h,$(LINKKITDIR)/drivers/vga256/nv)
