@@ -60,6 +60,10 @@ MOUSEOBJ = bsd_mouse.o
 MTRRDEFINES = -DHAS_MTRR_SUPPORT
 #endif
 
+#if defined(NetBSDArchitecture) && defined(HasMTRRBuiltin)
+MTRRDEFINES = -DHAS_MTRR_BUILTIN
+#endif
+
 #if UsbMouseSupport
 USBMOUSEDEFINES = -DUSBMOUSE_SUPPORT
 #if !HasLibUsb
