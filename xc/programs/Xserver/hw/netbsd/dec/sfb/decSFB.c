@@ -1,7 +1,7 @@
-/* $NetBSD: decSFB.c,v 1.1 2001/09/18 20:02:54 ad Exp $ */
+/* $NetBSD: decSFB.c,v 1.2 2001/09/22 19:43:51 ad Exp $ */
 
-/* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
+/* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
+/* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
 
 /*
 Copyright (c) 1990  X Consortium
@@ -178,13 +178,13 @@ Bool decSFBInit (screen, pScreen, argc, argv)
 	    monitorResolution, monitorResolution,
 	    realwidth,
 	    decFbs[screen].depth)) {
-fprintf(stderr, "decSfbScreenInit failed\n");
+	    ErrorF("decSfbScreenInit failed\n");
             return FALSE;
 	}
 
 	decColormapScreenInit(pScreen);
 	if (!decScreenInit(pScreen)) {
-fprintf(stderr, "decScreenInit failed\n");
+		ErrorF("decScreenInit failed\n");
 		return FALSE;
 	}
 	pScreen->CloseScreen = decSfbCloseScreen;
@@ -217,7 +217,7 @@ decSfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	}
 	return TRUE;
     default:
-	fprintf(stderr, "decSfbSetupScreen:  unsupported bpp = %d\n", bpp);
+	ErrorF("decSfbSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
     }
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.1 2001/09/18 20:02:51 ad Exp $ */
+/* $NetBSD: decInit.c,v 1.2 2001/09/22 19:43:47 ad Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -22,6 +22,7 @@ decKbdPrivRec decKbdPriv = {
     -1,		/* layout */
     0,		/* click */
     (Leds)0,	/* leds */
+    0,		/* prevClick */
     { -1, -1, -1, -1, -1, -1, -1, -1 }, /* keys_down */
 };
 

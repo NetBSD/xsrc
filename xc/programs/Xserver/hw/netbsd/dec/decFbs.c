@@ -1,4 +1,4 @@
-/*	$NetBSD: decFbs.c,v 1.1 2001/09/18 20:02:51 ad Exp $	*/
+/*	$NetBSD: decFbs.c,v 1.2 2001/09/22 19:43:47 ad Exp $	*/
 
 /* XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp */
 
@@ -229,54 +229,3 @@ Bool decScreenInit (pScreen)
 	miDCInitialize (pScreen, &decPointerScreenFuncs);
     return TRUE;
 }
-
-#if NeedFunctionPrototypes
-Bool decInitCommon (
-    int		scrn,
-    ScreenPtr	pScrn,
-    off_t	offset,
-    Bool	(*init1)(),
-    void	(*init2)(),
-    Bool	(*cr_cm)(),
-    Bool	(*save)(),
-    int		fb_off)
-#else
-Bool decInitCommon (scrn, pScrn, offset, init1, init2, cr_cm, save, fb_off)
-    int		scrn;
-    ScreenPtr	pScrn;
-    off_t	offset;
-    Bool	(*init1)();
-    void	(*init2)();
-    Bool	(*cr_cm)();
-    Bool	(*save)();
-    int		fb_off;
-#endif
-{
-    unsigned char*	fb = decFbs[scrn].fb;
-
-    if (!decScreenAllocate (pScrn))
-	return FALSE;
-    if (!fb) {
-	if ((fb = decMemoryMap ((size_t) decFbs[scrn].size, 
-			     offset, 
-			     decFbs[scrn].fd)) == NULL)
-	    return FALSE;
-	decFbs[scrn].fb = fb;
-    }
-    /* mfbScreenInit() or cfbScreenInit() */
-    if (!(*init1)(pScrn, fb + fb_off,
-	    decFbs[scrn].width,
-	    decFbs[scrn].height,
-	    monitorResolution, monitorResolution,
-	    decFbs[scrn].width,
-	    decFbs[scrn].depth))
-	    return FALSE;
-    /* decCGScreenInit() if cfb... */
-    if (init2)
-	(*init2)(pScrn);
-    if (!decScreenInit(pScrn))
-	return FALSE;
-    (void) (*save) (pScrn, SCREEN_SAVER_OFF);
-    return (*cr_cm)(pScrn);
-}
-

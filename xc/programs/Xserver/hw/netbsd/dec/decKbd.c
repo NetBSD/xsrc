@@ -1,4 +1,4 @@
-/*	$NetBSD: decKbd.c,v 1.1 2001/09/18 20:02:51 ad Exp $	*/
+/*	$NetBSD: decKbd.c,v 1.2 2001/09/22 19:43:48 ad Exp $	*/
 
 /* XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp */
 /*-
@@ -408,18 +408,17 @@ static void decKbdCtrl (device, ctrl)
 {
     decKbdPrivPtr pPriv = (decKbdPrivPtr) device->public.devicePrivate;
 
-    if (pPriv->fd < 0) return;
+    if (pPriv->fd < 0)
+        return;
 
-#if 0 /* XXX */
     if (ctrl->click != pPriv->click) {
-    	int kbdClickCmd;
+    	int vol;
 
 	pPriv->click = ctrl->click;
-	kbdClickCmd = pPriv->click ? KBD_CMD_CLICK : KBD_CMD_NOCLICK;
-    	if (ioctl (pPriv->fd, KIOCCMD, &kbdClickCmd) == -1)
- 	    Error("Failed to set keyclick");
+	vol = pPriv->click;
+    	ioctl(pPriv->fd, WSKBDIO_SETKEYCLICK, &vol);
     }
-#endif /* 0 XXX */
+
     if (pPriv->type <= WSKBD_TYPE_LK401 && pPriv->leds != ctrl->leds & 0x0f)
         DoLEDs(device, ctrl, pPriv);
 
@@ -515,14 +514,12 @@ int decKbdProc (device, what)
 
     case DEVICE_ON:
 	pPriv = (decKbdPrivPtr)pKeyboard->devicePrivate;
+
 	/*
-	 * Set the keyboard into "direct" mode and turn on
-	 * event translation.
+	 * Save the original keyclick volume.
 	 */
-#if 0 /* XXX */
-	if (decChangeKbdTranslation(pPriv->fd,TRUE) == -1)
-	    FatalError("Can't set keyboard translation\n");
-#endif /* 0 XXX */
+	ioctl(pPriv->fd, WSKBDIO_GETKEYCLICK, &pPriv->prevClick);
+
 	(void) AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
 	break;
@@ -530,21 +527,12 @@ int decKbdProc (device, what)
     case DEVICE_CLOSE:
     case DEVICE_OFF:
 	pPriv = (decKbdPrivPtr)pKeyboard->devicePrivate;
-#if 0 /* XXX */
-	if (pPriv->type == KB_SUN4) {
-	    /* dumb bug in Sun's keyboard! Turn off LEDS before resetting */
-	    pPriv->leds = 0;
-	    ctrl->leds = 0;
-	    SetLights(ctrl, pPriv->fd);
-	}
-#endif /* 0 XXX */
+
 	/*
-	 * Restore original keyboard directness and translation.
+	 * Restore original keyclick volume.
 	 */
-#if 0 /* XXX */
-	if (decChangeKbdTranslation(pPriv->fd,FALSE) == -1)
-	    FatalError("Can't reset keyboard translation\n");
-#endif /* 0 XXX */
+	ioctl(pPriv->fd, WSKBDIO_SETKEYCLICK, &pPriv->prevClick);
+
 	RemoveEnabledDevice(pPriv->fd);
 	pKeyboard->on = FALSE;
 	break;

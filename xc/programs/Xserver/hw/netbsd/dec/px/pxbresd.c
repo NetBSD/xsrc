@@ -1,4 +1,4 @@
-/*	$NetBSD: pxbresd.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxbresd.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ pxBresD(pxScreenPrivPtr sp, pxPacketPtr pp, pxPrivGCPtr gcPriv,
 			ystart = y1;
 			Loop()
 			pxAddLineC(sp, pp, xstart, ystart, x1, y1,
-				gcPriv->fgPixel);
+				gcPriv->fgFill);
 		}
 		if (!len)
 			break;

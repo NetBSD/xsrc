@@ -1,4 +1,4 @@
-/*	$NetBSD: pxglyph.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxglyph.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -199,7 +199,11 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	stamph = sp->stamph;
 	x += pDrawable->x;
 	y += pDrawable->y;
+#ifdef _IMAGEGLYPH
 	fg = gcPriv->fgPixel;
+#else
+	fg = gcPriv->fgFill;
+#endif
 	bg = gcPriv->bgPixel;
 
 	while (nglyph--) {
@@ -340,7 +344,11 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	DOBG(v1, v2, lw, xya, gcPriv->bgPixel);
 #endif
 
+#ifdef _IMAGEGLYPH
 	fg = gcPriv->fgPixel;
+#else
+	fg = gcPriv->fgFill;
+#endif
 
 	while (nglyph--) {
 		fb = (u_int32_t *)FONTGLYPHBITS(pglyphBase, *ppci++);

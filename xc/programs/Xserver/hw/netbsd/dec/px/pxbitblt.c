@@ -1,4 +1,4 @@
-/*	$NetBSD: pxbitblt.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxbitblt.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ pxDoBitblt(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int alu,
 			 * the sub-pixel coordinate system.  More testing
 			 * required.
 			 */
-			if (pptSrc->x < pbox->x1)
+			if (pptSrc->x <= pbox->x1)
 				w--;
 
 			if (pptSrc->x == pbox->x1)

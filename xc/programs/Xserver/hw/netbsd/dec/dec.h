@@ -1,4 +1,4 @@
-/*	$NetBSD: dec.h,v 1.1 2001/09/18 20:02:51 ad Exp $	*/
+/*	$NetBSD: dec.h,v 1.2 2001/09/22 19:43:47 ad Exp $	*/
 
 /* XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp */
@@ -51,10 +51,6 @@ extern int errno;
 
 #include <dev/wscons/wsconsio.h>
 
-#include <dev/pci/tgareg.h>
-#include <dev/tc/sfbreg.h>
-#include <dev/tc/sticreg.h>
-#include <dev/tc/sticio.h>
 #define LK_KLL 8 /* from dev/dec/lk201var.h XXX */
 
 extern int gettimeofday();
@@ -79,6 +75,9 @@ extern int gettimeofday();
 #include "resource.h"
 #include "servermd.h"
 #include "windowstr.h"
+
+#include <dev/pci/tgareg.h>
+#include <dev/tc/sfbreg.h>
 
 /* 
  * ddx specific headers 
@@ -106,6 +105,7 @@ typedef struct {
     int		layout;		/* The layout of the keyboard */
     int		click;		/* kbd click save state */
     Leds	leds;		/* last known LED state */
+    int		prevClick;	/* click state before server start */
     KeyCode     keys_down[LK_KLL]; /* which keys are down */
 } decKbdPrivRec, *decKbdPrivPtr;
 

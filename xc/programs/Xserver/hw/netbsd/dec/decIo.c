@@ -1,4 +1,4 @@
-/*	$NetBSD: decIo.c,v 1.1 2001/09/18 20:02:51 ad Exp $	*/
+/*	$NetBSD: decIo.c,v 1.2 2001/09/22 19:43:48 ad Exp $	*/
 
 /* XConsortium: sunIo.c,v 5.26.1.3 95/01/25 23:02:33 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.1 1995/01/28 15:46:06 dawes Exp */
@@ -166,12 +166,10 @@ void decEnqueueEvents (
 	      */
 	     if (PtrAgain) {
 	         serPtrData = decSerMouseGetEvents (ptrPriv->fd, &serPtrBytes, &PtrAgain);
-	         ErrorF("read %d bytes from mouse\n", serPtrBytes);
 	     }
 	     if ((numKbdEvents == 0) && KbdAgain) {
 	         kbdEvents = decKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
 	         numKbdEvents = nKE;
-	         ErrorF("read %d events from kbd\n", nKE);
 	     }
 	     if ((serPtrBytes == 0) && (numKbdEvents == 0))
 	         break;
@@ -191,7 +189,8 @@ void decEnqueueEvents (
 /*
  * DDX - specific abort routine.  Called by AbortServer().
  */
-void AbortDDX()
+void
+AbortDDX()
 {
     int		i, mode;
     ScreenPtr	pScreen;

@@ -1,7 +1,7 @@
-/* $NetBSD: decCfb.c,v 1.1 2001/09/18 20:02:52 ad Exp $ */
+/* $NetBSD: decCfb.c,v 1.2 2001/09/22 19:43:49 ad Exp $ */
 
-/* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
+/* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
+/* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
 
 /*
 Copyright (c) 1990  X Consortium
@@ -89,9 +89,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "dec.h"
 #include "cfb.h"
 
-/* XXX */
-#include <stdio.h>
-
 Bool decCFBInit (screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
     ScreenPtr	  pScreen;  	/* The Screen to initialize */
@@ -122,13 +119,13 @@ Bool decCFBInit (screen, pScreen, argc, argv)
 	    monitorResolution, monitorResolution,
 	    decFbs[screen].width,
 	    decFbs[screen].depth)) {
-            fprintf(stderr, "decCfbScreenInit failed\n");
+            ErrorF("decCfbScreenInit failed\n");
             return FALSE;
 	}
 
 	decColormapScreenInit(pScreen);
 	if (!decScreenInit(pScreen)) {
-                fprintf(stderr, "decScreenInit failed\n");
+                ErrorF("decScreenInit failed\n");
 		return FALSE;
 	}
 
@@ -146,20 +143,18 @@ decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int	bpp;			/* bits per pixel of root */
 {
     switch (bpp) {
-#ifdef notyet
     case 32:
 	if (!cfb32SetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
 	  width))
 	    return FALSE;
 	return cfbSetVisualTypes(24, 1 << TrueColor, 8);
-#endif
     case 8:
 	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
 	  width))
 	    return FALSE;
 	return TRUE;
     default:
-	fprintf(stderr, "decCfbSetupScreen:  unsupported bpp = %d\n", bpp);
+	ErrorF("decCfbSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
     }
 }
@@ -176,7 +171,6 @@ decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     Bool retval;
 
     switch (bpp) {
-#ifdef notyet
     case 32:
 	retval = cfb32FinishScreenInit(pScreen, pbits, xsize, ysize,
 		    dpix, dpiy, width);
@@ -191,7 +185,6 @@ decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	pScreen->visuals[0].offsetBlue = 0;
 
 	break;
-#endif
     case 8:
 	retval = cfbFinishScreenInit(pScreen, pbits, xsize, ysize,
 		    dpix, dpiy, width);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxmisc.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxmisc.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -192,122 +192,6 @@ pxMaskFromTile(pxScreenPrivPtr sp, PixmapPtr pix, pxMaskPtr mask)
 	return (TRUE);
 }
 
-void
-pxTileBuf(pxScreenPrivPtr sp, int w, int xorg, int yorg, PixmapPtr pix,
-	  u_int32_t *ib)
-{
-	int tx, tw, tbp, i;
-	u_int8_t *p, *dp, *base;
-
-	PX_TRACE("pxTileBuf");
-
-	tbp = pix->drawable.bitsPerPixel >> 3;
-	base = (u_int8_t *)pix->devPrivate.ptr +
-	    (yorg % pix->drawable.height + pix->drawable.y) * pix->devKind +
-	    (pix->drawable.x * tbp);
-	tw = pix->drawable.width;
-	tx = xorg % tw;
-
-	if (tbp == 1) {
-		p = base + tx;
-
-		if (sp->realbpp == 8) {
-			do {
-				i = min(tw - tx, w);
-				w -= i;
-				tx = 0;
-				do {
-					i--;
-					*ib++ = *p++;
-				} while (i > 0);
-				p = base;
-			} while (w > 0);
-		} else /* if (sp->realbpp == 32) */ {
-			dp = (u_int8_t *)ib;
-			do {
-				i = min(tw - tx, w);
-				w -= i;
-				tx = 0;
-				do {
-					i--;
-					dp[0] = *p;
-					dp[1] = dp[0];
-					dp[2] = dp[0];
-					dp[3] = 0;
-					dp += 4;
-					p++;
-				} while (i > 0);
-				p = base;
-			} while (w > 0);
-		}
-	} else /* if (tbp == 4) */ {
-		p = base + (tx << 2);
-
-		do {
-			i = min(tw - tx, w);
-			w -= i;
-			tx = 0;
-			do {
-				*ib++ = *(u_int32_t *)p;
-				i--;
-				p += 4;
-			} while (i > 0);
-			p = base;
-		} while (w > 0);
-	}
-}
-
-void
-pxStippleBuf(PixmapPtr pStipple, u_int32_t *pdst, int width, int fillStyle,
-	     u_int32_t fgfill, u_int32_t bgfill, int xorg, int yorg)
-{
-	int sx, sy, sxmin, sxmax, w;
-	u_int sbits, smask;
-	u_int32_t *sptr, *pdstmax;
-
-	PX_TRACE("pxStippleBuf");
-
-	sx = pStipple->drawable.x + xorg % pStipple->drawable.width;
-	sy = pStipple->drawable.y + yorg % pStipple->drawable.height;
-
-	sxmin = pStipple->drawable.x;
-	sxmax = pStipple->drawable.x + pStipple->drawable.width;
-
-	sptr = (u_int32_t *)((u_int8_t *)pStipple->devPrivate.ptr +
-	    sy * pStipple->devKind);
-
-	while (width > 0) {
-		w = min(width, sxmax - sx);
-		w = min(w, 32 - (sx & 31));
-		width -= w;
-
-		sbits = sptr[sx >> 5];
-		smask = 1 << (sx & 31);
-
-		pdstmax = pdst + w;
-
-		if ((sx += w) >= sxmax)
-			sx = sxmin;
-
-		if (fillStyle == FillOpaqueStippled) {
-			do {
-				if ((sbits & smask) != 0)
-					*pdst = fgfill;
-				else
-					*pdst = bgfill;
-				pdst++;
-				smask <<= 1;
-			} while (pdst < pdstmax);
-		} else {
-			do {
-				if ((sbits & smask) != 0)
-					*pdst = fgfill;
-				pdst++;
-				smask <<= 1;
-			} while (pdst < pdstmax);
-		}
-	}
-}
 
 void
 pxFillBoxSolid(pxScreenPrivPtr sp, RegionPtr pRegion, u_int pixel)
@@ -392,7 +276,12 @@ pxCompressBuf24to24(void *dst, void *src, int pixelcnt)
 
 	pixelcnt <<= 2;
 	memcpy(dst, src, pixelcnt);
+
+#ifdef __alpha__
+	return ((caddr_t)dst + ((pixelcnt + 1) & ~1));
+#else
 	return ((caddr_t)dst + pixelcnt);
+#endif
 }
 
 void *
@@ -405,10 +294,15 @@ pxCompressBuf24to8(void *dst, void *src, int pixelcnt)
 	dp = dst;
 	maxdp = dp + pixelcnt;
 
-	while (dp < maxdp)
+	do {
 		*dp++ = (u_int8_t)*sp++;
+	} while (dp < maxdp);
 
-	return (dp);
+#ifdef __alpha__
+	return ((void *)(((u_long)dp + 7) & ~7));
+#else
+	return ((void *)(((u_long)dp + 3) & ~3));
+#endif
 }
 
 void
@@ -428,8 +322,9 @@ pxExpandBuf8to8(void *dst, void *src, int pixelcnt)
 	sp = src;
 	maxsp = sp + pixelcnt;
 
-	while (sp < maxsp)
+	do {
 		*dp++ = *sp++;
+	} while (sp < maxsp);
 }
 
 void
@@ -442,8 +337,162 @@ pxExpandBuf8to24(void *dst, void *src, int pixelcnt)
 	sp = src;
 	maxsp = sp + pixelcnt;
 
-	while (sp < maxsp) {
+	do {
 		v = *sp++;
 		*dp++ = v | (v << 8) | (v << 16);
+	} while (sp < maxsp);
+}
+
+void
+pxTileBuf8r8(void *dst, void *src, int width, int tw, int tx)
+{
+	u_int8_t *p, *base;
+	u_int32_t *ib, *ibmax;
+	int i;
+
+	ib = dst;
+	base = src;
+	p = base + tx;
+
+	do {
+		i = min(tw - tx, width);
+		width -= i;
+		ibmax = ib + i;
+		tx = 0;
+		do {
+			*ib++ = *p;
+			p++;
+		} while (ib < ibmax);
+		p = base;
+	} while (width > 0);
+}
+
+void
+pxTileBuf24r24(void *dst, void *src, int width, int tw, int tx)
+{
+	u_int32_t *p, *base, *ib, *ibmax;
+	int i;
+
+	ib = dst;
+	base = src;
+	p = base + tx;
+
+	do {
+		i = min(tw - tx, width);
+		width -= i;
+		ibmax = ib + i;
+		tx = 0;
+		do {
+			*ib++ = *p++;
+		} while (ib < ibmax);
+		p = base;
+	} while (width > 0);
+}
+
+void
+pxTileBuf8r24(void *dst, void *src, int width, int tw, int tx)
+{
+	u_int32_t *ib, *ibmax;
+	u_int8_t *p, *base;
+	int i;
+
+	ib = dst;
+	base = src;
+	p = base + tx;
+
+	do {
+		i = min(tw - tx, width);
+		width -= i;
+		tx = 0;
+		ibmax = ib + i;
+		do {
+			*ib++ = (*p << 16) | (*p << 8) | *p;
+			p++;
+		} while (ib < ibmax);
+		p = base;
+	} while (width > 0);
+}
+
+void
+pxStippleBuf(PixmapPtr pStipple, u_int32_t *pdst, int width, int fillStyle,
+	     u_int32_t fgfill, u_int32_t bgfill, int xorg, int yorg)
+{
+	int sx, sy, sxmin, sxmax, w;
+	u_int sbits, smask;
+	u_int32_t *sptr, *pdstmax;
+
+	PX_TRACE("pxStippleBuf");
+
+	sx = pStipple->drawable.x + xorg % pStipple->drawable.width;
+	sy = pStipple->drawable.y + yorg % pStipple->drawable.height;
+
+	sxmin = pStipple->drawable.x;
+	sxmax = pStipple->drawable.x + pStipple->drawable.width;
+
+	sptr = (u_int32_t *)((u_int8_t *)pStipple->devPrivate.ptr +
+	    sy * pStipple->devKind);
+
+	while (width > 0) {
+		w = min(width, sxmax - sx);
+		w = min(w, 32 - (sx & 31));
+		width -= w;
+
+		sbits = sptr[sx >> 5];
+		smask = 1 << (sx & 31);
+
+		pdstmax = pdst + w;
+
+		if ((sx += w) >= sxmax)
+			sx = sxmin;
+
+		do {
+			if ((sbits & smask) != 0)
+				*pdst = fgfill;
+			pdst++;
+			smask <<= 1;
+		} while (pdst < pdstmax);
+	}
+}
+
+void
+pxStippleBufOpaque(PixmapPtr pStipple, u_int32_t *pdst, int width,
+		   int fillStyle, u_int32_t fgfill, u_int32_t bgfill,
+		   int xorg, int yorg)
+{
+	int sx, sy, sxmin, sxmax, w;
+	u_int sbits, smask;
+	u_int32_t *sptr, *pdstmax, tmp;
+
+	PX_TRACE("pxStippleBuf");
+
+	sx = pStipple->drawable.x + xorg % pStipple->drawable.width;
+	sy = pStipple->drawable.y + yorg % pStipple->drawable.height;
+
+	sxmin = pStipple->drawable.x;
+	sxmax = pStipple->drawable.x + pStipple->drawable.width;
+
+	sptr = (u_int32_t *)((u_int8_t *)pStipple->devPrivate.ptr +
+	    sy * pStipple->devKind);
+
+	while (width > 0) {
+		w = min(width, sxmax - sx);
+		w = min(w, 32 - (sx & 31));
+		width -= w;
+
+		sbits = sptr[sx >> 5];
+		smask = 1 << (sx & 31);
+
+		pdstmax = pdst + w;
+
+		if ((sx += w) >= sxmax)
+			sx = sxmin;
+
+		do {
+			tmp = bgfill;
+			if ((sbits & smask) != 0)
+				tmp = fgfill;
+			*pdst++ = tmp;
+			smask <<= 1;
+		} while (pdst < pdstmax);
 	}
 }
