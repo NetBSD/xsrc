@@ -1,4 +1,4 @@
-/* $NetBSD: tgasimpleblt.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: tgasimpleblt.c,v 1.2 1999/04/27 17:52:43 ross Exp $ */
 
 /*
  * tga simple rops
@@ -78,42 +78,58 @@ alphaTgaDoBitbltSimple(
 	int cxdir = xdir; /* current xdir */
 	int creg = 0;
 
-	regs[creg][TGA_REG_GMOR] = 0x0007;	/* Copy Mode */
-	regs[creg][TGA_REG_GOPR] = 0x0003;	/* GXcopy */
 	switch (alu) {
 	case GXclear:
 		alu = 0x0;
+		break;
 	case GXand:
 		alu = 0x1;
+		break;
 	case GXandReverse:
 		alu = 0x2;
+		break;
 	case GXcopy:
 		alu = 0x3;
+		break;
 	case GXandInverted:
 		alu = 0x4;
+		break;
 	case GXnoop:
 		alu = 0x5;
+		break;
 	case GXxor:
 		alu = 0x6;
+		break;
 	case GXor:
 		alu = 0x7;
+		break;
 	case GXnor:
 		alu = 0x8;
+		break;
 	case GXequiv:
 		alu = 0x9;
+		break;
 	case GXinvert:
 		alu = 0xa;
+		break;
 	case GXorReverse:
 		alu = 0xb;
+		break;
 	case GXcopyInverted:
 		alu = 0xc;
+		break;
 	case GXorInverted:
 		alu = 0xd;
+		break;
 	case GXnand:
 		alu = 0xe;
+		break;
 	case GXset:
 		alu = 0xf;
+		break;
 	}
+	regs[creg][TGA_REG_GMOR] = 0x0007;	/* Copy Mode */
+	regs[creg][TGA_REG_GOPR] = alu;
 
 	if (sy != dy)		/* Source and dest are not on a line, */
 		cxdir = 1;	/* so just forward copy */
