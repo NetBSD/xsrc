@@ -12,9 +12,9 @@ MISCDIR = misc
 SPECSDIR = specs
 #endif
 
-#if InstallHardcopyDocs
-HARDCOPYDIR = hardcopy
-#endif
+XCOMM #if InstallHardcopyDocs
+XCOMM HARDCOPYDIR = hardcopy
+XCOMM #endif
 
 SUBDIRS = man $(MISCDIR) $(SPECSDIR) $(HARDCOPYDIR)
 
