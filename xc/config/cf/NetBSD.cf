@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.107 2003/10/03 15:47:41 seb Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.108 2003/10/05 15:53:22 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -276,6 +276,21 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  else
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DWSCONS_SUPPORT
 #  endif
+# endif
+# if ((OSMajorVersion > 1) || \
+      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+      (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion > 25))
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga r128 ati sis tvga8900 \
+				cirrus ncr77c22 compaq mga oak al2101 \
+				ali cl64xx video7 ark mx realtek s3v apm \
+				s3_svga neo chips cyrix rendition p9x00 \
+				spc8110 i740 tdfx smi generic
+#else
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga r128 ati sis tvga8900 \
+				cirrus ncr77c22 compaq mga oak al2101 \
+				ali cl64xx video7 ark mx realtek s3v apm \
+				s3_savage s3_svga neo chips cyrix rendition p9x00 \
+				spc8110 i740 tdfx smi generic
 # endif
 #else
 # if defined(m68kArchitecture) && OSMajorVersion == 1 && OSMinorVersion <= 3
