@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.2 2001/09/22 19:43:47 ad Exp $ */
+/* $NetBSD: decInit.c,v 1.3 2002/02/22 15:46:33 ad Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -69,9 +69,6 @@ static char *fallbackList[] = {
 fbFd decFbs[MAXSCREENS];
 Bool decSoftCursor = 0;
 Bool decAccelerate = 1;
-Bool decSerMouse = 0;
-int decSerMouseType = SERMSE_MS;
-int decSerMouseBaud = 1200;
 int decWantedDepth = 0;
 char *decKbdDev;
 char *decPtrDev;
@@ -254,7 +251,7 @@ static void
 InitKbdMouse(void)
 {
     static int inited;
-    int i, ptrflg;
+    int i;
 
     if (inited)
         return;
@@ -263,22 +260,12 @@ InitKbdMouse(void)
     if (decKbdDev == NULL)
         decKbdDev = "/dev/wskbd0";
     if (decPtrDev == NULL) {
-        if (decSerMouse)
-            decPtrDev = "/dev/ttyB0";
-        else
-            decPtrDev = "/dev/wsmouse0";
-    }
-
-    if (decSerMouse) {
-    	/* Mouse will not set DSR. */
-        ptrflg = O_RDWR | O_NONBLOCK;
-    } else
-    	ptrflg = O_RDWR;
+       decPtrDev = "/dev/wsmouse0";
 
     /* warn(3) isn't X11 API, but we know we are on NetBSD */
     if((decKbdPriv.fd = open (decKbdDev, O_RDWR, 0)) == -1)
 	warn("Keyboard device %s", decKbdDev);
-    else if((decPtrPriv.fd = open (decPtrDev, ptrflg, 0)) == -1)
+    else if((decPtrPriv.fd = open (decPtrDev, O_RDWR, 0)) == -1)
 	warn("Pointer device %s", decPtrDev);
     (void) ioctl (decKbdPriv.fd, WSKBDIO_GTYPE, &decKbdPriv.type);
 }
@@ -377,10 +364,7 @@ void InitInput(argc, argv)
 
     InitKbdMouse();
 
-    if (decSerMouse)
-        p = AddInputDevice(decSerMouseProc, TRUE);
-    else
-        p = AddInputDevice(decWsMouseProc, TRUE);
+    p = AddInputDevice(decMouseProc, TRUE);
     k = AddInputDevice(decKbdProc, TRUE);
     if (!p || !k)
 	FatalError("failed to create input devices in InitInput");

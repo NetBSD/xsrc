@@ -1,4 +1,4 @@
-/*	$NetBSD: decKeyMap.c,v 1.2 2001/09/22 19:43:48 ad Exp $	*/
+/*	$NetBSD: decKeyMap.c,v 1.3 2002/02/22 15:46:33 ad Exp $	*/
 
 /* XConsortium: sunKeyMap.c,v 4.22 94/05/18 11:16:07 kaleb Exp */
 /************************************************************
@@ -45,9 +45,9 @@ KeySymsRec decKeySyms[] = {
     lk201map,		0,	LK201_NUM_KEYCODES,	4,   /* lk201 */
     lk201map,		0,	LK201_NUM_KEYCODES,	4,   /* lk401 */
 #ifdef __alpha__
-    map84,              0,      MAX_STD_KEYCODE,        4,   /* XT */
+    map,                0,      MAX_STD_KEYCODE,        4,   /* XT */
     map,		0,	MAX_STD_KEYCODE,	4,   /* AT */
-    map84,              0,      MAX_STD_KEYCODE,        4,   /* USB/XT */
+    map,                0,      MAX_STD_KEYCODE,        4,   /* USB/XT */
 #else
     NULL,               0,      0,                      0,   /* XT */
     NULL,               0,      0,                      0,   /* AT */
@@ -75,7 +75,7 @@ DecModmapRec *decModMaps[] = {
 #ifdef __alpha__
     xf86modmap,
     xf86modmap,
-    NULL,
+    xf86modmap,
 #else
     NULL,
     NULL,

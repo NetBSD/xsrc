@@ -1,4 +1,4 @@
-/*	$NetBSD: decCursor.c,v 1.1 2001/09/18 20:02:51 ad Exp $	*/
+/*	$NetBSD: decCursor.c,v 1.2 2002/02/22 15:46:33 ad Exp $	*/
 
 /* XConsortium: sunCursor.c,v 5.19 94/04/17 20:29:35 gildea Exp */
 /*
@@ -48,6 +48,8 @@ static void decLoadCursor();
 static Bool decCursorOffScreen();
 static void decCrossScreen();
 static void decWarpCursor();
+
+Bool decActiveZaphod = TRUE;
 
 miPointerScreenFuncRec decPointerScreenFuncs = {
     decCursorOffScreen,
@@ -284,14 +286,13 @@ decCursorOffScreen (pScreen, x, y)
     extern Bool PointerConfinedToScreen();
 
     if (PointerConfinedToScreen()) return TRUE;
-#if 0 /* XXX */
     /*
      * Active Zaphod implementation:
      *    increment or decrement the current screen
      *    if the x is to the right or the left of
      *    the current screen.
      */
-    if (sunActiveZaphod &&
+    if (decActiveZaphod &&
 	screenInfo.numScreens > 1 && (*x >= (*pScreen)->width || *x < 0)) {
 	index = (*pScreen)->myNum;
 	if (*x < 0) {
@@ -305,7 +306,6 @@ decCursorOffScreen (pScreen, x, y)
 	}
 	ret = TRUE;
     }
-#endif /* 0 XXX */
     return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: decWsMouse.c,v 1.1 2001/09/18 20:02:52 ad Exp $	*/
+/*	$NetBSD: decMouse.c,v 1.1 2002/02/22 15:46:33 ad Exp $	*/
 
 /* XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp */
 /*-
@@ -57,13 +57,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "dec.h"
 #include <stdio.h>
 
-#if 0 /* XXX */
-Bool decActiveZaphod = TRUE;
-#endif /* 0 XXX */
-
 /*-
  *-----------------------------------------------------------------------
- * decWsMouseCtrl --
+ * decMouseCtrl --
  *	Alter the control parameters for the mouse. Since acceleration
  *	etc. is done from the PtrCtrl record in the mouse's device record,
  *	there's nothing to do here.
@@ -78,7 +74,7 @@ Bool decActiveZaphod = TRUE;
  */
 /*ARGSUSED*/
 static 
-void decWsMouseCtrl (device, ctrl)
+void decMouseCtrl (device, ctrl)
     DeviceIntPtr    device;
     PtrCtrl*	    ctrl;
 {
@@ -86,7 +82,7 @@ void decWsMouseCtrl (device, ctrl)
 
 /*-
  *-----------------------------------------------------------------------
- * decWsMouseProc --
+ * decMouseProc --
  *	Handle the initialization, etc. of a mouse
  *
  * Results:
@@ -96,7 +92,7 @@ void decWsMouseCtrl (device, ctrl)
  *
  *-----------------------------------------------------------------------
  */
-int decWsMouseProc (device, what)
+int decMouseProc (device, what)
     DeviceIntPtr  device;   	/* Mouse to play with */
     int	    	  what;	    	/* What to do with it */
 {
@@ -121,18 +117,18 @@ int decWsMouseProc (device, what)
 	    map[3] = 3;
 	    InitPointerDeviceStruct(
 		pMouse, map, 3, miPointerGetMotionEvents,
- 		decWsMouseCtrl, miPointerGetMotionBufferSize());
+ 		decMouseCtrl, miPointerGetMotionBufferSize());
 	    break;
 
 	case DEVICE_ON:
 #if 0		/* XXX -- deal with this rcd */
 	    if (ioctl (decPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		Error ("decWsMouseProc ioctl VUIDGFORMAT");
+		Error ("decMouseProc ioctl VUIDGFORMAT");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (decPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
-		Error ("decWsMouseProc ioctl VUIDSFORMAT");
+		Error ("decMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
 	    decPtrPriv.bmask = 0;
@@ -144,7 +140,7 @@ int decWsMouseProc (device, what)
 	case DEVICE_CLOSE:
 #if 0		/* XXX -- deal with this rcd */
 	    if (ioctl (decPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
-		Error ("decWsMouseProc ioctl VUIDSFORMAT");
+		Error ("decMouseProc ioctl VUIDSFORMAT");
 #endif
 	    break;
 
@@ -158,7 +154,7 @@ int decWsMouseProc (device, what)
     
 /*-
  *-----------------------------------------------------------------------
- * decWsMouseGetEvents --
+ * decMouseGetEvents --
  *	Return the events waiting in the wings for the given mouse.
  *
  * Results:
@@ -171,7 +167,7 @@ int decWsMouseProc (device, what)
  *-----------------------------------------------------------------------
  */
 
-struct wscons_event* decWsMouseGetEvents (fd, pNumEvents, pAgain)
+struct wscons_event* decMouseGetEvents (fd, pNumEvents, pAgain)
     int		fd;
     int*	pNumEvents;
     Bool*	pAgain;
@@ -184,7 +180,7 @@ struct wscons_event* decWsMouseGetEvents (fd, pNumEvents, pAgain)
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    Error ("decWsMouseGetEvents read");
+	    Error ("decMouseGetEvents read");
 	    FatalError ("Could not read from mouse");
 	}
     } else {
@@ -197,7 +193,7 @@ struct wscons_event* decWsMouseGetEvents (fd, pNumEvents, pAgain)
 
 /*-
  *-----------------------------------------------------------------------
- * decWsMouseAccelerate --
+ * decMouseAccelerate --
  *	Given a delta and a mouse, return the acceleration of the delta.
  *
  * Results:
@@ -209,7 +205,7 @@ struct wscons_event* decWsMouseGetEvents (fd, pNumEvents, pAgain)
  *-----------------------------------------------------------------------
  */
 static short
-decWsMouseAccelerate (device, delta)
+decMouseAccelerate (device, delta)
     DeviceIntPtr  device;
     int	    	  delta;
 {
@@ -232,7 +228,7 @@ decWsMouseAccelerate (device, delta)
 
 /*-
  *-----------------------------------------------------------------------
- * decWsMouseEnqueueEvent --
+ * decMouseEnqueueEvent --
  *	Given a Firm_event for a mouse, pass it off the the dix layer
  *	properly converted...
  *
@@ -245,7 +241,7 @@ decWsMouseAccelerate (device, delta)
  *-----------------------------------------------------------------------
  */
 
-void decWsMouseEnqueueEvent (device, fe)
+void decMouseEnqueueEvent (device, fe)
     DeviceIntPtr  device;   	/* Mouse from which the event came */
     struct wscons_event *fe;
 {
@@ -289,7 +285,7 @@ void decWsMouseEnqueueEvent (device, fe)
 	mieqEnqueue (&xE);
 	break;
     case WSCONS_EVENT_MOUSE_DELTA_X:
-	miPointerDeltaCursor (decWsMouseAccelerate(device,fe->value),0,time);
+	miPointerDeltaCursor (decMouseAccelerate(device,fe->value),0,time);
 	break;
     case WSCONS_EVENT_MOUSE_DELTA_Y:
 	/*
@@ -297,7 +293,7 @@ void decWsMouseEnqueueEvent (device, fe)
 	 * and motion down a negative delta, so we must subtract
 	 * here instead of add...
 	 */
-	miPointerDeltaCursor (0,-decWsMouseAccelerate(device,fe->value),time);
+	miPointerDeltaCursor (0,-decMouseAccelerate(device,fe->value),time);
 	break;
     case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 	miPointerPosition (&x, &y);
@@ -308,7 +304,7 @@ void decWsMouseEnqueueEvent (device, fe)
 	miPointerAbsoluteCursor (x, fe->value, time);
 	break;
     default:
-	FatalError ("decWsMouseEnqueueEvent: unrecognized id\n");
+	FatalError ("decMouseEnqueueEvent: unrecognized id\n");
 	break;
     }
 }
