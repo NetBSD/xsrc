@@ -32,16 +32,42 @@
  * 1.0 by Torrey T. Lyons, October 30, 2000
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/xfIOKitCursor.c,v 1.3 2001/08/01 05:34:05 torrey Exp $ */
+/*
+ * Copyright (c) 2001-2002 Torrey T. Lyons. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the sale,
+ * use or other dealings in this Software without prior written authorization.
+ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/xfIOKitCursor.c,v 1.6 2002/12/10 00:00:39 torrey Exp $ */
 
 #include "scrnintstr.h"
 #include "cursorstr.h"
+#include "mipointrst.h"
 #include "micmap.h"
 #define NO_CFPLUGIN
 #include <IOKit/graphics/IOGraphicsLib.h>
 #include <IOKit/hidsystem/IOHIDLib.h>
 #include "darwin.h"
-#include "mipointrst.h"
+#include "xfIOKit.h"
 
 #define DUMP_DARWIN_CURSOR FALSE
 
@@ -417,7 +443,8 @@ XFIOKitSetCursor(
 {
     kern_return_t               kr;
     DarwinFramebufferPtr        dfb = SCREEN_PRIV(pScreen);
-    StdFBShmem_t                *cshmem = dfb->cursorShmem;
+    XFIOKitScreenPtr            iokitScreen = XFIOKIT_SCREEN_PRIV(pScreen);
+    StdFBShmem_t                *cshmem = iokitScreen->cursorShmem;
     XFIOKitCursorScreenPtr      ScreenPriv = CURSOR_PRIV(pScreen);
 
     // are we supposed to remove the cursor?
@@ -428,7 +455,7 @@ XFIOKitSetCursor(
             if (!cshmem->cursorShow) {
                 cshmem->cursorShow++;
                 if (cshmem->hardwareCursorActive) {
-                    kr = IOFBSetCursorVisible(dfb->fbService, FALSE);
+                    kr = IOFBSetCursorVisible(iokitScreen->fbService, FALSE);
                     kern_assert( kr );
                 }
             }
@@ -476,7 +503,7 @@ XFIOKitSetCursor(
 
         // try to use a hardware cursor
         if (ScreenPriv->canHWCursor) {
-            kr = IOFBSetNewCursor(dfb->fbService, 0, 0, 0);
+            kr = IOFBSetNewCursor(iokitScreen->fbService, 0, 0, 0);
             // FIXME: this is a fatal error without the kernel cursor
             kern_assert( kr );
 #if 0
@@ -492,7 +519,7 @@ XFIOKitSetCursor(
             cshmem->cursorShow--;
 
         if (!cshmem->cursorShow && ScreenPriv->canHWCursor) {
-            kr = IOFBSetCursorVisible(dfb->fbService, TRUE);
+            kr = IOFBSetCursorVisible(iokitScreen->fbService, TRUE);
             // FIXME: this is a fatal error without the kernel cursor
             kern_assert( kr );
 #if 0
@@ -579,7 +606,7 @@ XFIOKitWarpCursor(
 {
     kern_return_t           kr;
 
-    kr = IOHIDSetMouseLocation( hid.connect, x, y );
+    kr = IOHIDSetMouseLocation( xfIOKitInputConnect, x, y );
     if (kr != KERN_SUCCESS) {
         ErrorF("Could not set cursor position with kernel return 0x%x.\n", kr);
     }
@@ -590,6 +617,8 @@ static miPointerScreenFuncRec darwinScreenFuncsRec = {
   XFIOKitCursorOffScreen,
   XFIOKitCrossScreen,
   XFIOKitWarpCursor,
+  DarwinEQPointerPost,
+  DarwinEQSwitchScreen
 };
 
 
@@ -630,15 +659,15 @@ Bool
 XFIOKitInitCursor(
     ScreenPtr	pScreen)
 {
-    DarwinFramebufferPtr    dfb = SCREEN_PRIV(pScreen);
+    XFIOKitScreenPtr        iokitScreen = XFIOKIT_SCREEN_PRIV(pScreen);
     XFIOKitCursorScreenPtr  ScreenPriv;
     miPointerScreenPtr	    PointPriv;
     kern_return_t           kr;
 
     // start with no cursor displayed
-    if (!dfb->cursorShmem->cursorShow++) {
-        if (dfb->cursorShmem->hardwareCursorActive) {
-            kr = IOFBSetCursorVisible(dfb->fbService, FALSE);
+    if (!iokitScreen->cursorShmem->cursorShow++) {
+        if (iokitScreen->cursorShmem->hardwareCursorActive) {
+            kr = IOFBSetCursorVisible(iokitScreen->fbService, FALSE);
             kern_assert( kr );
         }
     }
@@ -661,23 +690,23 @@ XFIOKitInitCursor(
     pScreen->devPrivates[darwinCursorScreenIndex].ptr = (pointer) ScreenPriv;
 
     // check if a hardware cursor is supported
-    if (!dfb->cursorShmem->hardwareCursorCapable) {
+    if (!iokitScreen->cursorShmem->hardwareCursorCapable) {
         ScreenPriv->canHWCursor = FALSE;
         ErrorF("Hardware cursor not supported.\n");
     } else {
         // we need to make sure that the hardware cursor really works
         ScreenPriv->canHWCursor = TRUE;
-        kr = IOFBSetNewCursor(dfb->fbService, 0, 0, 0);
+        kr = IOFBSetNewCursor(iokitScreen->fbService, 0, 0, 0);
         if (kr != KERN_SUCCESS) {
             ErrorF("Could not set hardware cursor with kernel return 0x%x.\n", kr);
             ScreenPriv->canHWCursor = FALSE;
         }
-        kr = IOFBSetCursorVisible(dfb->fbService, TRUE);
+        kr = IOFBSetCursorVisible(iokitScreen->fbService, TRUE);
         if (kr != KERN_SUCCESS) {
             ErrorF("Couldn't set hardware cursor visible with kernel return 0x%x.\n", kr);
             ScreenPriv->canHWCursor = FALSE;
         }
-        IOFBSetCursorVisible(dfb->fbService, FALSE);
+        IOFBSetCursorVisible(iokitScreen->fbService, FALSE);
     }
 
     ScreenPriv->cursorMode = 0;

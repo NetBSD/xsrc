@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.12 2002/01/09 18:07:23 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.15 2002/10/12 00:32:43 torrey Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -6,11 +6,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.12 2002/01/09 18:07:
 LinkSourceFile(XFree86.man,../xfree86)
 
 SRCS =	darwin.c \
+        darwinEvents.c \
         darwinKeyboard.c \
         xfIOKit.c \
         xfIOKitCursor.c
 
 OBJS =	darwin.o \
+        darwinEvents.o \
         darwinKeyboard.o \
         xfIOKit.o \
         xfIOKitCursor.o
@@ -19,20 +21,33 @@ INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/fb -I$(EXTINCSRC) \
            -I$(SERVERSRC)/render -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
            -I$(SERVERSRC)/os -I$(INCLUDESRC) -I$(FONTINCSRC)
 
+OSNAME = OSName
+OSVENDOR = OSVendor
+OSNAMEDEF = -DOSNAME='" $(OSNAME)"' -DOSVENDOR='" $(OSVENDOR)"'
 #if defined(XFree86CustomVersion)
 CUSTOMVERSION = XFree86CustomVersion
-CUSTOMVERDEF =  -DXF86_CUSTOM_VERSION='$(CUSTOMVERSION)'
+CUSTOMVERDEF = -DXF86_CUSTOM_VERSION='$(CUSTOMVERSION)'
+#endif
+#if defined(BuilderString)
+BUILDERSTRING = BuilderString
+BUILDERMSG = -DBUILDERSTRING='$(BUILDERSTRING)'
 #endif
 
 #if DarwinQuartzSupport
-SUBDIRS = bundle utils
+# if HasNSCarbonWindow
+SUBDIRS = bundle quartz utils
+# else
+SUBDIRS = bundle quartz_1.3 utils
+# endif
 QUARTZDEF = -DDARWIN_WITH_QUARTZ
 #else
 SUBDIRS = utils
 #endif
 
-DEFINES = $(CUSTOMVERDEF) $(QUARTZDEF)
+DEFINES = $(QUARTZDEF)
 EXTRAMANDEFS = $(QUARTZDEF) -D__logdir__=$(LOGDIRECTORY)
+
+SpecialCObjectRule(darwin,$(ICONFIGFILES),$(OSNAMEDEF) $(BUILDERMSG) $(CUSTOMVERDEF))
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(darwin,$(OBJS))

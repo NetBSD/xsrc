@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcImg.c,v 1.4 2000/09/26 15:57:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcImg.c,v 1.5 2003/02/18 21:29:59 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -30,23 +30,6 @@
 #include "scrnintstr.h"
 #include "servermd.h"
 
-/* GETBITSPERPIXEL -- Find out how many bits per pixel are supported at
- * this depth -- another helper function
- */
-static int
-GetBitsPerPixel
-(
-    int	depth
-)
-{
-    register int     i ;
-
-    for ( i = screenInfo.numPixmapFormats ; i-- ; ) 
-	if ( screenInfo.formats[i].depth == depth ) 
-		return screenInfo.formats[i].bitsPerPixel ;
-    return 1 ;
-}
-
 /* Was MIGETIMAGE -- public entry for the GetImage Request
  * We're getting the image into a memory buffer. While we have to use GetSpans
  * to read a line from the device ( since we don't know what that looks like ) ,
@@ -73,6 +56,7 @@ xf4bppGetImage( pDraw, sx, sy, w, h, format, planeMask, pdstLine )
     unsigned long planeMask ;
     char *	     pdstLine ;
 {
+#if 1
     int	    depth, i, linelength, width ;
     DDXPointRec	pt ;
     char *pbits ;
@@ -80,11 +64,6 @@ xf4bppGetImage( pDraw, sx, sy, w, h, format, planeMask, pdstLine )
     PixmapPtr	pPixmap = (PixmapPtr) NULL ;
     GCPtr	pGC ;
     char *pDst = pdstLine ;
-
-#if 0
-	miGetImage( pDraw, sx, sy, w, h, format, planeMask, pdstLine ) ;
-        return;
-#endif
 
     depth = pDraw->depth ;
     if ( format == ZPixmap ) {
@@ -134,7 +113,6 @@ xf4bppGetImage( pDraw, sx, sy, w, h, format, planeMask, pdstLine )
 	}
     }
     else
+#endif
        miGetImage( pDraw, sx, sy, w, h, format, planeMask, pdstLine ) ;
-
-    return ;
 }

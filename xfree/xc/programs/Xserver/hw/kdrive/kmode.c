@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/kmode.c,v 1.6 2001/03/30 02:15:20 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/kmode.c,v 1.8 2002/10/18 06:08:10 keithp Exp $
  *
  * Copyright 1999 SuSE, Inc.
  *
@@ -30,12 +30,12 @@ const KdMonitorTiming  kdMonitorTimings[] = {
 		/*  FP	    BP	    BLANK   POLARITY */
     /* Other VESA modes */
     {	640,	350,	85,	31500,			    /* VESA */
-		    32,	    96,	    192,    KdSyncPositive, /* 37.861 */
-		    32,	    60,	    95,	    KdSyncNegative, /* 85.080 */
+		    32,	    96,	    192,    KdSyncPositive, /* 26.413 */
+		    32,	    60,	    95,	    KdSyncNegative, /* 59.354 */
     },
-    {	640,	400,	85,	31500,			    /* VESA */
-		    32,	    96,	    192,    KdSyncNegative, /* 37.861 */
-		    1,	    41,	    45,	    KdSyncPositive, /* 85.080 */
+    {	640,	400,	60,	31500,			    /* VESA */
+		    32,	    96,	    192,    KdSyncNegative, /* 26.413 */
+		    1,	    41,	    45,	    KdSyncPositive, /* 59.354 */
     },
     {	720,	400,	85,	35500,			    /* VESA */
 		    36,	    108,    216,    KdSyncNegative, /* 37.927 */
@@ -321,3 +321,64 @@ KdTuneMode (KdScreenInfo    *screen,
     }
     return TRUE;
 }
+
+#ifdef RANDR
+Bool
+KdRandRGetInfo (ScreenPtr pScreen,
+		int randr,
+		Bool (*supported) (ScreenPtr pScreen, 
+				   const KdMonitorTiming *))
+{
+    KdScreenPriv(pScreen);
+    KdScreenInfo	    *screen = pScreenPriv->screen;
+    int			    i;
+    const KdMonitorTiming   *t;
+    
+    for (i = 0, t = kdMonitorTimings; i < NUM_MONITOR_TIMINGS; i++, t++)
+    {
+	if ((*supported) (pScreen, t))
+	{
+	    RRScreenSizePtr pSize;
+
+	    pSize = RRRegisterSize (pScreen,
+				    t->horizontal,
+				    t->vertical,
+				    screen->width_mm,
+				    screen->height_mm);
+	    if (!pSize)
+		return FALSE;
+	    if (!RRRegisterRate (pScreen, pSize, t->rate))
+		return FALSE;
+	    if (t->horizontal == screen->width &&
+		t->vertical == screen->height &&
+		t->rate == screen->rate)
+		RRSetCurrentConfig (pScreen, randr, t->rate, pSize);
+	}
+    }
+    
+    return TRUE;
+}
+
+const KdMonitorTiming *
+KdRandRGetTiming (ScreenPtr	    pScreen,
+		  Bool		    (*supported) (ScreenPtr pScreen, 
+						  const KdMonitorTiming *),
+		  int		    rate,
+		  RRScreenSizePtr   pSize)
+{
+    KdScreenPriv(pScreen);
+    KdScreenInfo	    *screen = pScreenPriv->screen;
+    int			    i;
+    const KdMonitorTiming   *t;
+    
+    for (i = 0, t = kdMonitorTimings; i < NUM_MONITOR_TIMINGS; i++, t++)
+    {
+	if (t->horizontal == pSize->width &&
+	    t->vertical == pSize->height &&
+	    t->rate == rate &&
+	    (*supported) (pScreen, t))
+	    return t;
+    }
+    return 0;
+}
+#endif

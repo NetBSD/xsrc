@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/Imakefile,v 1.13 2000/11/14 18:20:37 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/Imakefile,v 1.15 2002/10/17 02:22:46 dawes Exp $
 
 #include <Server.tmpl>
 

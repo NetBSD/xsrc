@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.33.2.2 2002/05/29 23:03:19 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.36 2002/04/03 19:51:11 herrb Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -38,6 +38,7 @@ in this Software without prior written authorization from The Open Group.
 #include <shm.h>
 #endif
 #include <unistd.h>
+#include <sys/stat.h>
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"
@@ -62,12 +63,6 @@ in this Software without prior written authorization from The Open Group.
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
-#endif
-
-#if defined(SVR4) || defined(__linux__) || defined(CSRG_BASED)
-#define HAS_SAVED_IDS_AND_SETEUID
-#else
-#include <sys/stat.h>
 #endif
 
 typedef struct _ShmDesc {
@@ -361,35 +356,38 @@ ProcShmQueryVersion(client)
     return (client->noClientException);
 }
 
-#ifndef HAS_SAVED_IDS_AND_SETEUID
 /*
  * Simulate the access() system call for a shared memory segement,
- * using the real user and group id of the process
+ * using the credentials from the client if available
  */
 static int
-shm_access(uid_t uid, gid_t gid, struct ipc_perm *perm, int readonly)
+shm_access(ClientPtr client, struct ipc_perm *perm, int readonly)
 {
+    int uid, gid;
     mode_t mask;
 
-    /* User id 0 always gets access */
-    if (uid == 0) {
-	return 0;
-    }
-    /* Check the owner */
-    if (perm->uid == uid || perm->cuid == uid) {
-	mask = S_IRUSR;
-	if (!readonly) {
-	    mask |= S_IWUSR;
+    if (LocalClientCred(client, &uid, &gid) != -1) {
+	
+	/* User id 0 always gets access */
+	if (uid == 0) {
+	    return 0;
 	}
-	return (perm->mode & mask) == mask ? 0 : -1;
-    }
-    /* Check the group */
-    if (perm->gid == gid || perm->cgid == gid) {
-	mask = S_IRGRP;
-	if (!readonly) {
-	    mask |= S_IWGRP;
+	/* Check the owner */
+	if (perm->uid == uid || perm->cuid == uid) {
+	    mask = S_IRUSR;
+	    if (!readonly) {
+		mask |= S_IWUSR;
+	    }
+	    return (perm->mode & mask) == mask ? 0 : -1;
 	}
-	return (perm->mode & mask) == mask ? 0 : -1;
+	/* Check the group */
+	if (perm->gid == gid || perm->cgid == gid) {
+	    mask = S_IRGRP;
+	    if (!readonly) {
+		mask |= S_IWGRP;
+	    }
+	    return (perm->mode & mask) == mask ? 0 : -1;
+	}
     }
     /* Otherwise, check everyone else */
     mask = S_IROTH;
@@ -398,7 +396,6 @@ shm_access(uid_t uid, gid_t gid, struct ipc_perm *perm, int readonly)
     }
     return (perm->mode & mask) == mask ? 0 : -1;
 }
-#endif
 
 static int
 ProcShmAttach(client)
@@ -407,12 +404,6 @@ ProcShmAttach(client)
     struct shmid_ds buf;
     ShmDescPtr shmdesc;
     REQUEST(xShmAttachReq);
-    uid_t ruid;
-    gid_t rgid;
-#ifdef HAS_SAVED_IDS_AND_SETEUID
-    uid_t euid;
-    gid_t egid;
-#endif
 
     REQUEST_SIZE_MATCH(xShmAttachReq);
     LEGAL_NEW_RESOURCE(stuff->shmseg, client);
@@ -436,44 +427,25 @@ ProcShmAttach(client)
 	shmdesc = (ShmDescPtr) xalloc(sizeof(ShmDescRec));
 	if (!shmdesc)
 	    return BadAlloc;
-	ruid = getuid();
-	rgid = getgid();
-#ifdef HAS_SAVED_IDS_AND_SETEUID
-	euid = geteuid();
-	egid = getegid();
-
-	if (euid != ruid || egid != rgid) {
-	    /* Temporarly switch back to real ids */
-	    if (seteuid(ruid) == -1 || setegid(rgid) == -1) {
-		return BadAccess;
-	    }
-	}
-#endif
 	shmdesc->addr = shmat(stuff->shmid, 0,
 			      stuff->readOnly ? SHM_RDONLY : 0);
-#ifdef HAS_SAVED_IDS_AND_SETEUID
-	if (euid != ruid || egid != rgid) {
-	    /* Switch back to root privs */
-	    if (seteuid(euid) == -1 || setegid(egid) == -1) {
-		return BadAccess;
-	    }
-	} 
-#endif
 	if ((shmdesc->addr == ((char *)-1)) ||
 	    shmctl(stuff->shmid, IPC_STAT, &buf))
 	{
 	    xfree(shmdesc);
 	    return BadAccess;
 	}
-#ifndef HAS_SAVED_IDS_AND_SETEUID
+
 	/* The attach was performed with root privs. We must
-	 * do manual checking of access rights for the real uid/gid */
-	if (shm_access(ruid, rgid, &(buf.shm_perm), stuff->readOnly) == -1) {
+	 * do manual checking of access rights for the credentials 
+	 * of the client */
+
+	if (shm_access(client, &(buf.shm_perm), stuff->readOnly) == -1) {
 	    shmdt(shmdesc->addr);
 	    xfree(shmdesc);
 	    return BadAccess;
 	}
-#endif	
+
 	shmdesc->shmid = stuff->shmid;
 	shmdesc->refcnt = 1;
 	shmdesc->writable = !stuff->readOnly;

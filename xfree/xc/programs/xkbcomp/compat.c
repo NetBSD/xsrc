@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/compat.c,v 3.3 2001/01/17 23:45:43 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/compat.c,v 3.4 2002/06/05 00:00:37 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include "xkbcomp.h"
@@ -78,13 +78,7 @@ typedef struct _CompatInfo {
 /***====================================================================***/
 
 static char *
-#if NeedFunctionPrototypes
 siText(SymInterpInfo *	si,CompatInfo *	info)
-#else
-siText(si,info)
-    SymInterpInfo *	si;
-    CompatInfo *	info;
-#endif
 {
 static char buf[128];
 
@@ -100,13 +94,7 @@ static char buf[128];
 }
 
 static void
-#if NeedFunctionPrototypes
 InitCompatInfo(CompatInfo *info,XkbDescPtr xkb)
-#else
-InitCompatInfo(info,xkb)
-    CompatInfo *	info;
-    XkbDescPtr		xkb;
-#endif
 {
 register int i;
 
@@ -137,13 +125,7 @@ register int i;
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearCompatInfo(CompatInfo *info,XkbDescPtr xkb)
-#else
-ClearCompatInfo(info,xkb)
-    CompatInfo *	info;
-    XkbDescPtr		xkb;
-#endif
 {
 register int i;
 
@@ -169,12 +151,7 @@ register int i;
 }
 
 static SymInterpInfo *
-#if NeedFunctionPrototypes
 NextInterp(CompatInfo *info)
-#else
-NextInterp(info)
-    CompatInfo *	info;
-#endif
 {
 SymInterpInfo *	si;
 
@@ -189,13 +166,7 @@ SymInterpInfo *	si;
 }
 
 static SymInterpInfo *
-#if NeedFunctionPrototypes
 FindMatchingInterp(CompatInfo *info,SymInterpInfo *new)
-#else
-FindMatchingInterp(info,new)
-    CompatInfo *	info;
-    SymInterpInfo *	new;
-#endif
 {
 SymInterpInfo *	old;
 
@@ -210,13 +181,7 @@ SymInterpInfo *	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddInterp(CompatInfo *info,SymInterpInfo *new)
-#else
-AddInterp(info,new)
-    CompatInfo *	info;
-    SymInterpInfo *	new;
-#endif
 {
 unsigned		collide;
 SymInterpInfo	*	old;
@@ -274,14 +239,7 @@ SymInterpInfo	*	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddGroupCompat(CompatInfo *info,unsigned group,GroupCompatInfo *newGC)
-#else
-AddGroupCompat(info,group,newGC)
-    CompatInfo *	info;
-    unsigned		group;
-    GroupCompatInfo *	newGC;
-#endif
 {
 GroupCompatInfo *	gc;
 unsigned		merge;
@@ -304,18 +262,10 @@ unsigned		merge;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 ResolveStateAndPredicate(	ExprDef *	expr,
 				unsigned *	pred_rtrn,
 				unsigned *	mods_rtrn,
 				CompatInfo *	info)
-#else
-ResolveStateAndPredicate(expr,pred_rtrn,mods_rtrn,info)
-    ExprDef *		expr;
-    unsigned *		pred_rtrn;
-    unsigned *		mods_rtrn;
-    CompatInfo *	info;
-#endif
 {
 ExprResult	result;
 
@@ -364,16 +314,9 @@ ExprResult	result;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 MergeIncludedCompatMaps(	CompatInfo *	into,
 				CompatInfo *	from,
 				unsigned	merge)
-#else
-MergeIncludedCompatMaps(into,from,merge)
-    CompatInfo *	into;
-    CompatInfo *	from;
-    unsigned		merge;
-#endif
 {
 SymInterpInfo * 	si;
 LEDInfo *		led,*rtrn,*next;
@@ -413,27 +356,17 @@ register int		i;
 }
 
 typedef void	(*FileHandler)(
-#if NeedFunctionPrototypes
 	XkbFile *	/* rtrn */,
 	XkbDescPtr	/* xkb */,
 	unsigned	/* merge */,
 	CompatInfo *	/* info */
-#endif
 );
 
 static Bool
-#if NeedFunctionPrototypes
 HandleIncludeCompatMap(	IncludeStmt *	  stmt,
 			XkbDescPtr	  xkb,
 			CompatInfo *	  info,
 			FileHandler	  hndlr)
-#else
-HandleIncludeCompatMap(stmt,xkb,info,hndlr)
-    IncludeStmt	*	stmt;
-    XkbDescPtr		xkb;
-    CompatInfo *	info;
-    FileHandler		hndlr;
-#endif
 {
 unsigned 	newMerge;
 XkbFile	*	rtrn;
@@ -515,22 +448,12 @@ static LookupEntry useModMapValues[] = {
 };
 
 static int
-#if NeedFunctionPrototypes
 SetInterpField(	SymInterpInfo *	si,
 		XkbDescPtr	xkb,
 		char *		field,
 		ExprDef *	arrayNdx,
 		ExprDef *	value,
 		CompatInfo *	info)
-#else
-SetInterpField(si,xkb,field,arrayNdx,value,info)
-    SymInterpInfo *	si;
-    XkbDescPtr		xkb;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    CompatInfo *	info;
-#endif
 {
 int 		ok= 1;
 ExprResult	tmp;
@@ -608,14 +531,7 @@ LookupEntry groupNames[]= {
 };
 
 static int
-#if NeedFunctionPrototypes
 HandleInterpVar(VarDef *stmt,XkbDescPtr xkb,CompatInfo *info)
-#else
-HandleInterpVar(stmt,xkb,info)
-    VarDef *		stmt;
-    XkbDescPtr		xkb;
-    CompatInfo *	info;
-#endif
 {
 ExprResult	elem,field;
 ExprDef *	ndx;
@@ -632,15 +548,7 @@ ExprDef *	ndx;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleInterpBody(VarDef *def,XkbDescPtr xkb,SymInterpInfo *si,CompatInfo *info)
-#else
-HandleInterpBody(def,xkb,si,info)
-    VarDef *		def;
-    XkbDescPtr		xkb;
-    SymInterpInfo *	si;
-    CompatInfo *	info;
-#endif
 {
 int		ok= 1;
 ExprResult	tmp,field;
@@ -659,15 +567,7 @@ ExprDef *	arrayNdx;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleInterpDef(InterpDef *def,XkbDescPtr xkb,unsigned merge,CompatInfo *info)
-#else
-HandleInterpDef(def,xkb,merge,info)
-    InterpDef *		def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    CompatInfo *	info;
-#endif
 {
 unsigned		pred,mods;
 SymInterpInfo		si;
@@ -698,18 +598,10 @@ SymInterpInfo		si;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleGroupCompatDef(	GroupCompatDef *	def,
 			XkbDescPtr		xkb,
 			unsigned 		merge,
 			CompatInfo *		info)
-#else
-HandleGroupCompatDef(def,xkb,merge,info)
-    GroupCompatDef *	def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    CompatInfo *	info;
-#endif
 {
 ExprResult	val;
 GroupCompatInfo	tmp;
@@ -734,18 +626,10 @@ GroupCompatInfo	tmp;
 }
 
 static void
-#if NeedFunctionPrototypes
 HandleCompatMapFile(	XkbFile	*	file,
 			XkbDescPtr 	 xkb,
 			unsigned	 merge,
 			CompatInfo *	info)
-#else
-HandleCompatMapFile(file,xkb,merge,info)
-    XkbFile		*file;
-    XkbDescPtr	 	 xkb;
-    unsigned		 merge;
-    CompatInfo	*info;
-#endif
 {
 ParseCommon	*stmt;
 
@@ -810,18 +694,10 @@ ParseCommon	*stmt;
 }
 
 static void
-#if NeedFunctionPrototypes
 CopyInterps(	CompatInfo *	info,
 		XkbCompatMapPtr	compat,
 		Bool		needSymbol,
 		unsigned	pred)
-#else
-CopyInterps(info,compat,needSymbol,pred)
-    CompatInfo *	info;
-    XkbCompatMapPtr	compat;
-    Bool		needSymbol;
-    unsigned		pred;
-#endif
 {
 SymInterpInfo *		si;
 
@@ -841,18 +717,10 @@ SymInterpInfo *		si;
 }
 
 Bool
-#if NeedFunctionPrototypes
 CompileCompatMap(	XkbFile *	file,
 			XkbFileInfo *	result,
 			unsigned	merge,
 			LEDInfo **	unboundLEDs)
-#else
-CompileCompatMap(file,result,merge,unboundLEDs)
-    XkbFile *		file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-    LEDInfo **		unboundLEDs;
-#endif
 {
 int			i;
 CompatInfo		info;

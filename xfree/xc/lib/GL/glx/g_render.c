@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/g_render.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/g_render.c,v 1.4 2002/02/22 21:32:53 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -3394,5 +3394,69 @@ void glMultiTexCoord4svARB(GLenum target, const GLshort *v)
 	__GLX_PUT_SHORT(12,v[2]);
 	__GLX_PUT_SHORT(14,v[3]);
 	__GLX_END(16);
+}
+
+void glLoadTransposeMatrixfARB(const GLfloat *m)
+{
+	__GLX_DECLARE_VARIABLES();
+        GLfloat t[16];
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            for (j = 0; j < 4; j++) {
+                t[i*4+j] = m[j*4+i];
+             }
+         }
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_LoadMatrixf,68);
+	__GLX_PUT_FLOAT_ARRAY(4,t,16);
+	__GLX_END(68);
+}
+
+void glMultTransposeMatrixfARB(const GLfloat *m)
+{
+	__GLX_DECLARE_VARIABLES();
+        GLfloat t[16];
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            for (j = 0; j < 4; j++) {
+                t[i*4+j] = m[j*4+i];
+             }
+         }
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultMatrixf,68);
+	__GLX_PUT_FLOAT_ARRAY(4,t,16);
+	__GLX_END(68);
+}
+
+void glLoadTransposeMatrixdARB(const GLdouble *m)
+{
+	__GLX_DECLARE_VARIABLES();
+        GLdouble t[16];
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            for (j = 0; j < 4; j++) {
+                t[i*4+j] = m[j*4+i];
+             }
+         }
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_LoadMatrixd,132);
+	__GLX_PUT_DOUBLE_ARRAY(4,t,16);
+	__GLX_END(132);
+}
+
+void glMultTransposeMatrixdARB(const GLdouble *m)
+{
+	__GLX_DECLARE_VARIABLES();
+        GLdouble t[16];
+        int i, j;
+        for (i = 0; i < 4; i++) {
+            for (j = 0; j < 4; j++) {
+                t[i*4+j] = m[j*4+i];
+             }
+         }
+	__GLX_LOAD_VARIABLES();
+	__GLX_BEGIN(X_GLrop_MultMatrixd,132);
+	__GLX_PUT_DOUBLE_ARRAY(4,t,16);
+	__GLX_END(132);
 }
 

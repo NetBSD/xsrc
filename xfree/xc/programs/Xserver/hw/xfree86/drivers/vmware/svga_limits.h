@@ -1,12 +1,12 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/svga_limits.h,v 1.1 2001/04/05 19:29:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/svga_limits.h,v 1.2 2002/10/16 22:12:53 alanh Exp $ */
 /* **********************************************************
  * Copyright (C) 1998-2001 VMware, Inc.
  * All Rights Reserved
- * Id: svga_limits.h,v 1.8 2001/01/26 23:32:15 yoel Exp $
+ * $Id: svga_limits.h,v 1.1.1.2 2003/02/28 13:20:17 tron Exp $
  * **********************************************************/
 
 /*
- * svga_reg.h --
+ * svga_limits.h --
  *
  * SVGA limits
  */
@@ -19,9 +19,9 @@
 #include "includeCheck.h"
 
 /*
- * Location and size of SVGA frame buffer.
+ * Location and size of SVGA frame buffer and the FIFO.
  */
-#define SVGA_FB_MAX_SIZE       (16*1024*1024)
+#define SVGA_VRAM_SIZE         (16*1024*1024)
 #define SVGA_MEM_SIZE          (256*1024)
 
 /*

@@ -1,5 +1,5 @@
 .\" Copyright (c) 1996  The XFree86 Project
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86DGA.man,v 3.8 2001/02/07 22:35:22 tsi Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86DGA.man,v 3.9 2002/12/22 00:46:53 dawes Exp $
 .\" $TOG: XF86DGA.man /main/9 1997/11/11 12:08:52 kaleb $
 .\" 
 .de ZN
@@ -195,7 +195,7 @@ The function
 returns the lowest numbered error and event values
 assigned to the extension.
 .SH SEE ALSO
-XFree86(1), XF86Config(4/5)
+XFree86(1), XF86Config(__filemansuffix__)
 .SH AUTHORS
 Jon Tombs, Harm Hanemaayer, Mark Vojkovich.
 

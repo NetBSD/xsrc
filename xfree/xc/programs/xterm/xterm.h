@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.78 2002/01/07 21:02:44 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.87 2003/02/25 23:36:55 dickey Exp $ */
 
 /************************************************************
 
@@ -46,12 +46,18 @@ authorization.
 #endif
 
 #ifndef GCC_UNUSED
-#define GCC_UNUSED /* nothing */
+#define GCC_UNUSED		/* nothing */
+#endif
+
+#ifndef GCC_NORETURN
+#define GCC_NORETURN		/* nothing */
 #endif
 
 #include <X11/Xos.h>
 
 #ifndef HAVE_CONFIG_H
+
+#define HAVE_LIB_XAW 1
 
 #ifdef CSRG_BASED
 /* Get definition of BSD */
@@ -84,7 +90,7 @@ authorization.
 #endif
 
 #if defined(hpux) && !defined(__hpux)
-#define __hpux 1	/* HPUX 11.0 does not define this */
+#define __hpux 1		/* HPUX 11.0 does not define this */
 #endif
 
 #ifdef USE_POSIX_TERMIOS
@@ -92,7 +98,7 @@ authorization.
 #define HAVE_TCGETATTR 1
 #endif
 
-#if defined(__EMX__) || defined(__CYGWIN__) || defined(SCO) || defined(sco)
+#if defined(__UNIXOS2__) || defined(SCO) || defined(sco)
 #define USE_TERMCAP 1
 #endif
 
@@ -127,7 +133,7 @@ authorization.
 #define USE_LASTLOG
 #endif
 
-#if defined(AMOEBA) || defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(__QNX__) || defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(__CYGWIN__)
+#if defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(__QNX__) || defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(__CYGWIN__)
 #define USE_POSIX_WAIT
 #endif
 
@@ -206,6 +212,10 @@ extern int errno;
 #undef HAVE_WAITPID
 #endif
 
+#ifndef OPT_WIDE_CHARS
+#define OPT_WIDE_CHARS 0
+#endif
+
 #if OPT_WIDE_CHARS
 #define HIDDEN_HI 0xff
 #define HIDDEN_LO 0xff
@@ -244,7 +254,7 @@ extern int errno;
 #include <sys/types.h>
 
 #if defined(USE_XPOLL_H) && defined(AIXV3) && defined(NFDBITS)
-#undef NFDBITS	/* conflict between X11/Xpoll.h and sys/select.h */
+#undef NFDBITS			/* conflict between X11/Xpoll.h and sys/select.h */
 #endif
 
 #include <sys/select.h>
@@ -256,6 +266,7 @@ extern int errno;
 /***====================================================================***/
 
 #define XtNallowSendEvents	"allowSendEvents"
+#define XtNallowWindowOps	"allowWindowOps"
 #define XtNalwaysHighlight	"alwaysHighlight"
 #define XtNalwaysUseMods	"alwaysUseMods"
 #define XtNanswerbackString	"answerbackString"
@@ -272,6 +283,7 @@ extern int errno;
 #define XtNc132			"c132"
 #define XtNcacheDoublesize	"cacheDoublesize"
 #define XtNcharClass		"charClass"
+#define XtNcjkWidth		"cjkWidth"
 #define XtNcolorAttrMode	"colorAttrMode"
 #define XtNcolorBDMode		"colorBDMode"
 #define XtNcolorBLMode		"colorBLMode"
@@ -306,6 +318,8 @@ extern int errno;
 #define XtNjumpScroll		"jumpScroll"
 #define XtNkeyboardDialect	"keyboardDialect"
 #define XtNlimitResize		"limitResize"
+#define XtNlocale		"locale"
+#define XtNlocaleFilter		"localeFilter"
 #define XtNlogFile		"logFile"
 #define XtNlogInhibit		"logInhibit"
 #define XtNlogging		"logging"
@@ -314,6 +328,7 @@ extern int errno;
 #define XtNmenuBar		"menuBar"
 #define XtNmenuHeight		"menuHeight"
 #define XtNmetaSendsEscape	"metaSendsEscape"
+#define XtNmodifyCursorKeys	"modifyCursorKeys"
 #define XtNmultiClickTime	"multiClickTime"
 #define XtNmultiScroll		"multiScroll"
 #define XtNnMarginBell		"nMarginBell"
@@ -349,7 +364,9 @@ extern int errno;
 #define XtNtrimSelection	"trimSelection"
 #define XtNunderLine		"underLine"
 #define XtNutf8			"utf8"
+#define XtNveryBoldColors	"veryBoldColors"
 #define XtNvisualBell		"visualBell"
+#define XtNvt100Graphics	"vt100Graphics"
 #define XtNwideBoldFont		"wideBoldFont"
 #define XtNwideChars		"wideChars"
 #define XtNwideFont		"wideFont"
@@ -360,6 +377,7 @@ extern int errno;
 #define XtNxmcMoveSGR		"xmcMoveSGR"
 
 #define XtCAllowSendEvents	"AllowSendEvents"
+#define XtCAllowWindowOps	"AllowWindowOps"
 #define XtCAlwaysHighlight	"AlwaysHighlight"
 #define XtCAlwaysUseMods	"AlwaysUseMods"
 #define XtCAnswerbackString	"AnswerbackString"
@@ -375,6 +393,7 @@ extern int errno;
 #define XtCC132			"C132"
 #define XtCCacheDoublesize	"CacheDoublesize"
 #define XtCCharClass		"CharClass"
+#define XtCCjkWidth 		"CjkWidth"
 #define XtCColorMode		"ColorMode"
 #define XtCColumn		"Column"
 #define XtCCtrlFKeys		"CtrlFKeys"
@@ -400,6 +419,8 @@ extern int errno;
 #define XtCJumpScroll		"JumpScroll"
 #define XtCKeyboardDialect	"KeyboardDialect"
 #define XtCLimitResize		"LimitResize"
+#define XtCLocale		"Locale"
+#define XtCLocaleFilter		"LocaleFilter"
 #define XtCLogInhibit		"LogInhibit"
 #define XtCLogfile		"Logfile"
 #define XtCLogging		"Logging"
@@ -408,6 +429,7 @@ extern int errno;
 #define XtCMenuBar		"MenuBar"
 #define XtCMenuHeight		"MenuHeight"
 #define XtCMetaSendsEscape	"MetaSendsEscape"
+#define XtCModifyCursorKeys	"ModifyCursorKeys"
 #define XtCMultiClickTime	"MultiClickTime"
 #define XtCMultiScroll		"MultiScroll"
 #define XtCNumLock		"NumLock"
@@ -437,6 +459,7 @@ extern int errno;
 #define XtCTrimSelection	"TrimSelection"
 #define XtCUnderLine		"UnderLine"
 #define XtCUtf8			"Utf8"
+#define XtCVT100Graphics	"VT100Graphics"
 #define XtCVisualBell		"VisualBell"
 #define XtCWideBoldFont		"WideBoldFont"
 #define XtCWideChars		"WideChars"
@@ -447,7 +470,7 @@ extern int errno;
 #define XtCXmcInline		"XmcInline"
 #define XtCXmcMoveSGR		"XmcMoveSGR"
 
-#ifdef NO_ACTIVE_ICON
+#if defined(NO_ACTIVE_ICON) && !defined(XtNgeometry)
 #define XtNgeometry		"geometry"
 #define XtCGeometry		"Geometry"
 #endif
@@ -464,7 +487,7 @@ extern int errno;
 
 /***====================================================================***/
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -498,6 +521,7 @@ extern void HandleSelectExtend        PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectSet           PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectStart         PROTO_XT_ACTIONS_ARGS;
 extern void HandleStartExtend         PROTO_XT_ACTIONS_ARGS;
+extern void ReadLineButton            PROTO_XT_ACTIONS_ARGS;
 extern void ResizeSelection (TScreen *screen, int rows, int cols);
 extern void ScrollSelection (TScreen* screen, int amount);
 extern void TrackMouse (int func, int startrow, int startcol, int firstrow, int lastrow);
@@ -588,12 +612,13 @@ extern int convertFromUTF8(unsigned long c, Char *strbuf);
 #endif
 
 /* main.c */
-#ifndef __EMX__
-extern int main (int argc, char **argv);
+#ifndef __UNIXOS2__
+#define ENVP_ARG /**/
 #else
-extern int main (int argc, char **argv,char **envp);
+#define ENVP_ARG , char **envp
 #endif
 
+extern int main (int argc, char **argv ENVP_ARG);
 extern int GetBytesAvailable (int fd);
 extern int kill_process_group (int pid, int sig);
 extern int nonblocking_wait (void);
@@ -603,12 +628,19 @@ extern void first_map_occurred (void);
 extern SIGNAL_T Exit (int n);
 #endif
 
+#if OPT_WIDE_CHARS
+extern int (*my_wcwidth)(wchar_t);
+#endif
+
 /* menu.c */
 extern void do_hangup          PROTO_XT_CALLBACK_ARGS;
 extern void show_8bit_control  (Bool value);
 
 /* misc.c */
 extern Cursor make_colored_cursor (unsigned cursorindex, unsigned long fg, unsigned long bg);
+extern OptionHelp * sortedOpts(OptionHelp *, XrmOptionDescRec *, Cardinal);
+extern Window WMFrameWindow(XtermWidget termw);
+extern XrmOptionDescRec * sortedOptDescs(XrmOptionDescRec *, Cardinal);
 extern char *SysErrorMsg (int n);
 extern char *udk_lookup (int keycode, int *len);
 extern int XStrCmp (char *s1, char *s2);
@@ -621,7 +653,6 @@ extern void ChangeXprop (char *name);
 extern void Changename (char *name);
 extern void Changetitle (char *name);
 extern void Cleanup (int code);
-extern void Error (int i);
 extern void HandleBellPropertyChange PROTO_XT_EV_HANDLER_ARGS;
 extern void HandleEightBitKeyPressed PROTO_XT_ACTIONS_ARGS;
 extern void HandleEnterWindow        PROTO_XT_EV_HANDLER_ARGS;
@@ -633,7 +664,7 @@ extern void HandleStringEvent        PROTO_XT_ACTIONS_ARGS;
 extern void Panic (char *s, int a);
 extern void Redraw (void);
 extern void ReverseOldColors (void);
-extern void SysError (int i);
+extern void SysError (int i) GCC_NORETURN;
 extern void VisualBell (void);
 extern void do_dcs (Char *buf, size_t len);
 extern void do_osc (Char *buf, int len, int final);
@@ -669,7 +700,9 @@ extern void FlushLog (TScreen *screen);
 #endif
 
 /* print.c */
+extern Boolean xtermHasPrinter (void);
 extern int xtermPrinterControl (int chr);
+extern void setPrinterControlMode (int mode);
 extern void xtermAutoPrint (int chr);
 extern void xtermMediaControl (int param, int private_seq);
 extern void xtermPrintScreen (Boolean use_DECPEX);
@@ -733,7 +766,7 @@ extern int TabPrev (Tabs tabs, int col);
 extern void TabClear (Tabs tabs, int col);
 extern void TabReset (Tabs tabs);
 extern void TabSet (Tabs tabs, int col);
-extern void TabZonk (Tabs	tabs);
+extern void TabZonk (Tabs tabs);
 
 /* util.c */
 extern GC updatedXtermGC (TScreen *screen, int flags, int fg_bg, Bool hilite);
@@ -802,6 +835,19 @@ extern Pixel xtermGetColorRes(ColorRes *res);
 #define ExtractBackground(color) (color & 0xf)
 #endif
 
+#define checkVeryBoldAttr(flags, fg, code, attr) \
+	if ((flags & FG_COLOR) != 0 \
+	 && (screen->veryBoldColors & attr) == 0 \
+	 && (flags & attr) != 0 \
+	 && (fg == code)) \
+		 flags &= ~(attr)
+
+#define checkVeryBoldColors(flags, fg) \
+	checkVeryBoldAttr(flags, fg, COLOR_RV, INVERSE); \
+	checkVeryBoldAttr(flags, fg, COLOR_UL, UNDERLINE); \
+	checkVeryBoldAttr(flags, fg, COLOR_BD, BOLD); \
+	checkVeryBoldAttr(flags, fg, COLOR_BL, BLINK)
+
 #else /* !OPT_ISO_COLORS */
 
 #define ClearCurBackground(screen, top, left, height, width) \
@@ -816,6 +862,8 @@ extern Pixel xtermGetColorRes(ColorRes *res);
 #define getXtermForeground(flags, color) term->screen.foreground
 #define makeColorPair(fg, bg) 0
 #define xtermColorPair() 0
+
+#define checkVeryBoldColors(flags, fg) /* nothing */
 
 #endif	/* OPT_ISO_COLORS */
 
@@ -832,7 +880,7 @@ extern Pixel xtermGetColorRes(ColorRes *res);
 extern unsigned getXtermCell (TScreen *screen, int row, int col);
 extern unsigned getXtermCellComb1 (TScreen *screen, int row, int col);
 extern unsigned getXtermCellComb2 (TScreen *screen, int row, int col);
-extern void addXtermCombining (TScreen *screen, int row, int col, int ch);
+extern void addXtermCombining (TScreen *screen, int row, int col, unsigned ch);
 extern void putXtermCell (TScreen *screen, int row, int col, int ch);
 #else
 #define getXtermCell(screen,row,col) SCRN_BUF_CHARS(screen, row)[col]
@@ -851,7 +899,7 @@ int visual_width(PAIRED_CHARS(Char *str, Char *str2), Cardinal len);
 #define visual_width(a, b) (b)
 #endif
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 	}
 #endif
 

@@ -29,7 +29,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.27 2002/01/16 20:30:19 dawes Exp $ */
+/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.28 2002/09/26 02:56:51 keithp Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -945,6 +945,10 @@ print_xrender_info(Display *dpy, char *extname)
   XVisualInfo	    *vip;		/* retured info */
   int		    nvi;		/* number of elements returned */
   int		    ndepths = 0, *depths = NULL;
+#if RENDER_MAJOR > 0 || RENDER_MINOR >= 6
+  XFilters	    *filters;
+  int		    f;
+#endif
 
   if (!XRenderQueryVersion (dpy, &major, &minor))
     return 0;
@@ -978,7 +982,33 @@ print_xrender_info(Display *dpy, char *extname)
       nvi = 0;
       viproto.screen = i;
       vip = XGetVisualInfo (dpy, VisualScreenMask, &viproto, &nvi);
-      printf ("    Screen %d\n", i);
+      printf ("    Screen %d", i);
+#if RENDER_MAJOR > 0 || RENDER_MINOR >= 6
+      switch (XRenderQuerySubpixelOrder (dpy, i)) {
+      case SubPixelUnknown: printf (" (sub-pixel order Unknown)"); break;
+      case SubPixelHorizontalRGB: printf (" (sub-pixel order Horizontal RGB)"); break;
+      case SubPixelHorizontalBGR: printf (" (sub-pixel order Horizontal BGR)"); break;
+      case SubPixelVerticalRGB: printf (" (sub-pixel order Vertical RGB)"); break;
+      case SubPixelVerticalBGR: printf (" (sub-pixel order Vertical BGR)"); break;
+      case SubPixelNone: printf (" (sub-pixel order None)"); break;
+      }
+      printf ("\n");
+      filters = XRenderQueryFilters (dpy, RootWindow (dpy, i));
+      if (filters)
+      {
+	printf ("      filters: ");
+	for (f = 0; f < filters->nfilter; f++)
+	{
+	  printf ("%s", filters->filter[f]);
+	  if (f < filters->nalias && filters->alias[f] != FilterAliasNone)
+	    printf ("(%s)", filters->filter[filters->alias[f]]);
+	  if (f < filters->nfilter - 1)
+	    printf (", ");
+	}
+	XFree (filters);
+      }
+#endif
+      printf ("\n");
       for (j = 0; j < nvi; j++)
       {
 	printf  ("      visual format:\n");

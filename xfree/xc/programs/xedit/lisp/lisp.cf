@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/xedit/lisp/lisp.cf,v 1.4 2001/10/28 03:34:31 tsi Exp $
+XCOMM $XFree86: xc/programs/xedit/lisp/lisp.cf,v 1.6 2002/11/08 08:00:57 paulo Exp $
 
 #if 0
 #ifndef BuildSharedLispModules

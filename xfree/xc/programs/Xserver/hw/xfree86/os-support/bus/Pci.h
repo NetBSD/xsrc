@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.h,v 1.21 2001/11/01 23:35:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.h,v 1.36 2002/12/23 15:37:26 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -54,18 +54,18 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation, and that the names of the above listed copyright holder(s)
- * not be used in advertising or publicity pertaining to distribution of 
+ * not be used in advertising or publicity pertaining to distribution of
  * the software without specific, written prior permission.  The above listed
- * copyright holder(s) make(s) no representations about the suitability of this 
- * software for any purpose.  It is provided "as is" without express or 
+ * copyright holder(s) make(s) no representations about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
- * THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM(S) ALL WARRANTIES WITH REGARD 
- * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE 
- * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY 
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER 
- * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING 
+ * THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM(S) ALL WARRANTIES WITH REGARD
+ * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE
+ * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
+ * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
@@ -76,36 +76,98 @@
  */
 #ifndef _PCI_H
 #define _PCI_H 1
+
 #include "Xarch.h"
 #include "Xfuncproto.h"
 #include "xf86Pci.h"
+#include "xf86PciInfo.h"
 
 /*
  * Global Definitions
  */
 #define MAX_PCI_DEVICES 64	/* Max number of devices accomodated */
 				/* by xf86scanpci		     */
-#if defined(i386) || defined(__i386__) || defined(__i386)
-/* Q&D stopgap to deal with mainboards whose PCI space is smaller */
-#define MAX_PCI_BUSES   128	/* Max number of PCI buses           */
+#if defined(sun) && defined(SVR4) && defined(sparc)
+# define MAX_PCI_BUSES   4096	/* Max number of PCI buses           */
+#elif defined(__alpha__) && defined (linux)
+# define MAX_PCI_DOMAINS	512
+# define PCI_DOM_MASK	0x01fful
+# define MAX_PCI_BUSES	(MAX_PCI_DOMAINS*256) /* 256 per domain      */
 #else
-#define MAX_PCI_BUSES   256	/* Max number of PCI buses           */
+# define MAX_PCI_BUSES   256	/* Max number of PCI buses           */
 #endif
 
 #define PCI_NOT_FOUND   0xffffffff
 
+#define DEVID(vendor, device) \
+    ((CARD32)((PCI_CHIP_##device << 16) | PCI_VENDOR_##vendor))
+
+#ifndef PCI_DOM_MASK
+# define PCI_DOM_MASK 0x0ffu
+#endif
+#define PCI_DOMBUS_MASK (((PCI_DOM_MASK) << 8) | 0x0ffu)
+
 /*
- *   
+ * "b" contains an optional domain number.
  */
-#define PCI_MAKE_TAG(b,d,f)  ((((b) & 0xff) << 16) | \
-			      (((d) & 0x1f) << 11) | \
-			      (((f) & 0x7) << 8))
+#define PCI_MAKE_TAG(b,d,f)  ((((b) & (PCI_DOMBUS_MASK)) << 16) | \
+			      (((d) & 0x00001fu) << 11) | \
+			      (((f) & 0x000007u) << 8))
 
-#define PCI_BUS_FROM_TAG(tag)  (((tag) & 0x00ff0000) >> 16)
-#define PCI_DEV_FROM_TAG(tag)  (((tag) & 0x0000f800) >> 11)
-#define PCI_FUNC_FROM_TAG(tag) (((tag) & 0x00000700) >> 8)
+#define PCI_MAKE_BUS(d,b)    ((((d) & (PCI_DOM_MASK)) << 8) | ((b) & 0xffu))
 
-#define PCI_DFN_FROM_TAG(tag) (((tag) & 0x0000ff00) >> 8)
+#define PCI_DOM_FROM_TAG(tag)  (((tag) >> 24) & (PCI_DOM_MASK))
+#define PCI_BUS_FROM_TAG(tag)  (((tag) >> 16) & (PCI_DOMBUS_MASK))
+#define PCI_DEV_FROM_TAG(tag)  (((tag) & 0x0000f800u) >> 11)
+#define PCI_FUNC_FROM_TAG(tag) (((tag) & 0x00000700u) >> 8)
+
+#define PCI_DFN_FROM_TAG(tag)  (((tag) & 0x0000ff00u) >> 8)
+#define PCI_BDEV_FROM_TAG(tag) ((tag) & 0x00fff800u)
+
+#define PCI_DOM_FROM_BUS(bus)  (((bus) >> 8) & (PCI_DOM_MASK))
+#define PCI_BUS_NO_DOMAIN(bus) ((bus) & 0xffu)
+#define PCI_TAG_NO_DOMAIN(tag) ((tag) & 0x00ffff00u)
+
+/*
+ * Macros for bus numbers found in P2P headers.
+ */
+#define PCI_PRIMARY_BUS_EXTRACT(x, tag)     \
+    ((((x) & PCI_PRIMARY_BUS_MASK    ) >>  0) | (PCI_DOM_FROM_TAG(tag) << 8))
+#define PCI_SECONDARY_BUS_EXTRACT(x, tag)   \
+    ((((x) & PCI_SECONDARY_BUS_MASK  ) >>  8) | (PCI_DOM_FROM_TAG(tag) << 8))
+#define PCI_SUBORDINATE_BUS_EXTRACT(x, tag) \
+    ((((x) & PCI_SUBORDINATE_BUS_MASK) >> 16) | (PCI_DOM_FROM_TAG(tag) << 8))
+
+#define PCI_PRIMARY_BUS_INSERT(x, y)     \
+    (((x) & ~PCI_PRIMARY_BUS_MASK    ) | (((y) & 0xffu) <<  0))
+#define PCI_SECONDARY_BUS_INSERT(x, y)   \
+    (((x) & ~PCI_SECONDARY_BUS_MASK  ) | (((y) & 0xffu) <<  8))
+#define PCI_SUBORDINATE_BUS_INSERT(x, y) \
+    (((x) & ~PCI_SUBORDINATE_BUS_MASK) | (((y) & 0xffu) << 16))
+
+/* Ditto for CardBus bridges */
+#define PCI_CB_PRIMARY_BUS_EXTRACT(x, tag)     \
+    PCI_PRIMARY_BUS_EXTRACT(x, tag)
+#define PCI_CB_CARDBUS_BUS_EXTRACT(x, tag)     \
+    PCI_SECONDARY_BUS_EXTRACT(x, tag)
+#define PCI_CB_SUBORDINATE_BUS_EXTRACT(x, tag) \
+    PCI_SUBORDINATE_BUS_EXTRACT(x, tag)
+
+#define PCI_CB_PRIMARY_BUS_INSERT(x, tag)     \
+    PCI_PRIMARY_BUS_INSERT(x, tag)
+#define PCI_CB_CARDBUS_BUS_INSERT(x, tag)     \
+    PCI_SECONDARY_BUS_INSERT(x, tag)
+#define PCI_CB_SUBORDINATE_BUS_INSERT(x, tag) \
+    PCI_SUBORDINATE_BUS_INSERT(x, tag)
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define PCI_CPU(val)	(((val >> 24) & 0x000000ff) |	\
+			 ((val >>  8) & 0x0000ff00) |	\
+			 ((val <<  8) & 0x00ff0000) |	\
+			 ((val << 24) & 0xff000000))
+#else
+#define PCI_CPU(val)	(val)
+#endif
 
 /*
  * Debug Macros/Definitions
@@ -135,46 +197,138 @@
 
 #define PCI_CFGMECH1_MAXDEV	32
 
-#define PCI_CFGMECH1_TYPE1_CFGADDR(b,d,f,o) (PCI_EN | PCI_MAKE_TAG(b,d,f) | ((o) & 0xff) | 1)
-#define PCI_CFGMECH1_TYPE0_CFGADDR(d,f,o) (PCI_EN | PCI_MAKE_TAG(0,d,f) | ((o) & 0xff))
-
 /*
  * Select architecture specific PCI init function
  */
-#if (defined(__powerpc__) || defined(__mips__) || defined(__sh__) || defined(__mc68000__) || defined(__arm__) || defined(__s390__) || defined(__hppa__)) && defined(linux)
-# define ARCH_PCI_INIT linuxPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__powerpc__) && defined(__OpenBSD__)
-# define  ARCH_PCI_INIT freebsdPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__powerpc__)
-# define ARCH_PCI_INIT ppcPciInit
-# if !defined(PowerMAX_OS)
+#if defined(__alpha__)
+# if defined(linux)
+#  define ARCH_PCI_INIT axpPciInit
 #  define INCLUDE_XF86_MAP_PCI_MEM
+# elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#  define ARCH_PCI_INIT freebsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# elif defined(__NetBSD__)
+#  define ARCH_PCI_INIT netbsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
 # endif
-#elif defined(__sparc__) && (defined(linux) || defined(sun))
-# define ARCH_PCI_INIT sparcPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__alpha__) && defined(linux)
-# define ARCH_PCI_INIT axpPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__i386__) && defined(linux)
+#elif defined(__arm__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__hppa__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__ia64__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+# define XF86SCANPCI_WRAPPER ia64ScanPCIWrapper
+#elif defined(__i386__)
 # define ARCH_PCI_INIT ix86PciInit
-# define ARCH_PCI_OS_INIT linuxPciInit
+# define ARCH_PCI_HOST_BRIDGE ix86PciHostBridge
 # define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__ia64__) && defined(linux)
-# define ARCH_PCI_INIT linuxPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#elif defined(__alpha__) && defined(__FreeBSD__)
-# define ARCH_PCI_INIT freebsdPciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-#else
+# define INCLUDE_XF86_NO_DOMAIN
+# if defined(linux)
+#  define ARCH_PCI_OS_INIT linuxPciInit
+# endif
+#elif defined(__mc68000__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__mips__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__powerpc__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN	/* Needs kernel work to remove */
+# elif defined(__OpenBSD__)
+#  define  ARCH_PCI_INIT freebsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# elif defined(__NetBSD__)
+#  define ARCH_PCI_INIT netbsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# elif defined(PowerMAX_OS)		/* This port is broken */
+#  define ARCH_PCI_INIT ppcPciInit
+# else
+#  define ARCH_PCI_INIT ppcPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__s390__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__sh__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+#elif defined(__sparc__)
+# if defined(linux)
+#  define ARCH_PCI_INIT linuxPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+# elif defined(sun)
+#  define ARCH_PCI_INIT sparcPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+# elif defined(__OpenBSD__) && defined(__sparc64__)
+#  define  ARCH_PCI_INIT freebsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+# endif
+# define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
+#elif defined(__x86_64__)
 # define ARCH_PCI_INIT ix86PciInit
 # define INCLUDE_XF86_MAP_PCI_MEM
+# define INCLUDE_XF86_NO_DOMAIN
+# if defined(linux)
+#  define ARCH_PCI_OS_INIT linuxPciInit
+# endif
 #endif
+
+#ifndef ARCH_PCI_INIT
+#error No PCI support available for this architecture/OS combination
+#endif
+
 extern void ARCH_PCI_INIT(void);
 #if defined(ARCH_PCI_OS_INIT)
 extern void ARCH_PCI_OS_INIT(void);
+#endif
+
+#if defined(ARCH_PCI_HOST_BRIDGE)
+extern void ARCH_PCI_HOST_BRIDGE(pciConfigPtr pPCI);
+#endif
+
+#if defined(ARCH_PCI_PCI_BRIDGE)
+extern void ARCH_PCI_PCI_BRIDGE(pciConfigPtr pPCI);
+#endif
+
+#if defined(XF86SCANPCI_WRAPPER)
+typedef enum {
+    SCANPCI_INIT,
+    SCANPCI_TERM
+} scanpciWrapperOpt;
+extern void XF86SCANPCI_WRAPPER(scanpciWrapperOpt flags);
 #endif
 
 /*
@@ -184,24 +338,37 @@ extern void ARCH_PCI_OS_INIT(void);
 typedef struct pci_bus_funcs {
 	CARD32  (*pciReadLong)(PCITAG, int);
 	void    (*pciWriteLong)(PCITAG, int, CARD32);
-        void    (*pciSetBitsLong)(PCITAG, int, CARD32, CARD32);
+	void    (*pciSetBitsLong)(PCITAG, int, CARD32, CARD32);
 	ADDRESS (*pciAddrHostToBus)(PCITAG, PciAddrType, ADDRESS);
 	ADDRESS (*pciAddrBusToHost)(PCITAG, PciAddrType, ADDRESS);
-} pciBusFuncs_t;
+	/*
+	 * The next three are optional.  If NULL, the corresponding function is
+	 * to be performed generically.
+	 */
+	CARD16  (*pciControlBridge)(int, CARD16, CARD16);
+	void    (*pciGetBridgeBusses)(int, int *, int *, int *);
+	/* Use pointer's to avoid #include recursion */
+	void    (*pciGetBridgeResources)(int, pointer *, pointer *, pointer *);
+} pciBusFuncs_t, *pciBusFuncs_p;
 
 /*
- * pciBusInfo_t - One structure per defined PCI bus 
+ * pciBusInfo_t - One structure per defined PCI bus
  */
 typedef struct pci_bus_info {
 	unsigned char  configMech;   /* PCI config type to use      */
 	unsigned char  numDevices;   /* Range of valid devnums      */
 	unsigned char  secondary;    /* Boolean: bus is a secondary */
-	unsigned char  primary_bus;  /* Top level (primary) parent  */
+	int            primary_bus;  /* Parent bus                  */
+#ifdef PowerMAX_OS
 	unsigned long  ppc_io_base;  /* PowerPC I/O spc membase     */
 	unsigned long  ppc_io_size;  /* PowerPC I/O spc size        */
-	pciBusFuncs_t  funcs;        /* PCI access functions        */
+#endif
+	pciBusFuncs_p  funcs;        /* PCI access functions        */
 	void          *pciBusPriv;   /* Implementation private data */
+	pciConfigPtr   bridge;       /* bridge that opens this bus  */
 } pciBusInfo_t;
+
+#define HOST_NO_BUS ((pciBusInfo_t *)(-1))
 
 /* configMech values */
 #define PCI_CFG_MECH_UNKNOWN 0 /* Not yet known  */
@@ -218,17 +385,15 @@ void          pciCfgMech1SetBits(PCITAG tag, int offset, CARD32 mask,
 				 CARD32 val);
 CARD32        pciByteSwap(CARD32);
 Bool          pciMfDev(int, int);
-CARD32        pciReadLongNULL(PCITAG tag, int offset);
-void          pciWriteLongNULL(PCITAG tag, int offset, CARD32 val);
-void          pciSetBitsLongNULL(PCITAG tag, int offset, CARD32 mask,
-				 CARD32 val);
 ADDRESS       pciAddrNOOP(PCITAG tag, PciAddrType type, ADDRESS);
 
 extern PCITAG (*pciFindFirstFP)(void);
 extern PCITAG (*pciFindNextFP)(void);
 
-extern CARD32 pciDevid;    
+extern CARD32 pciDevid;
 extern CARD32 pciDevidMask;
+
+extern int    pciMaxBusNum;
 
 extern int    pciBusNum;
 extern int    pciDevNum;
@@ -236,7 +401,5 @@ extern int    pciFuncNum;
 extern PCITAG pciDeviceTag;
 
 extern pciBusInfo_t  *pciBusInfo[];
-
-extern pciBusFuncs_t pciNOOPFuncs;
 
 #endif /* _PCI_H */

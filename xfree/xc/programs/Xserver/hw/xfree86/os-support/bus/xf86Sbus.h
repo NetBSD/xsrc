@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Sbus.h,v 1.4 2001/10/28 03:34:01 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Sbus.h,v 1.5 2002/05/22 21:38:30 herrb Exp $ */
 
 #ifndef _XF86_SBUS_H
 #define _XF86_SBUS_H
@@ -32,6 +32,8 @@
 #elif defined(SVR4)
 #include <sys/fbio.h>
 #include <sys/openpromio.h>
+#elif defined(__OpenBSD__) && defined(__sparc64__)
+/* XXX */
 #elif defined(CSRG_BASED)
 #include <machine/fbio.h>
 #else

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ps2.c,v 1.6 2001/10/12 06:33:10 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ps2.c,v 1.7 2002/08/02 16:11:35 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -62,7 +62,7 @@ Ps2ReadBytes (int fd, char *buf, int len, int min)
 
 char	*Ps2Names[] = {
     "/dev/psaux",
-    "/dev/mouse",
+/*    "/dev/mouse", */
     "/dev/input/mice",
 };
 

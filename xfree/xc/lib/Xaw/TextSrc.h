@@ -48,7 +48,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/TextSrc.h,v 1.12 2001/12/14 19:54:45 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrc.h,v 1.13 2002/02/10 02:40:08 paulo Exp $ */
 
 #ifndef _XawTextSrc_h
 #define _XawTextSrc_h

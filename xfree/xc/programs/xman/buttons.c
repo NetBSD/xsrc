@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/buttons.c,v 1.3 2000/03/03 23:16:26 dawes Exp $ */
+/* $XFree86: xc/programs/xman/buttons.c,v 1.4 2003/01/19 04:44:45 paulo Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -123,6 +123,7 @@ MakeTopBox(void)
 
   man_globals = (ManpageGlobals*) XtMalloc( (Cardinal) sizeof(ManpageGlobals));
   man_globals->label = NULL;
+  man_globals->search_widget = NULL;
   man_globals->manpagewidgets.directory = NULL;
   man_globals->manpagewidgets.manpage = NULL;
   man_globals->manpagewidgets.box = NULL;
@@ -186,6 +187,7 @@ InitPsuedoGlobals(void)
   man_globals = (ManpageGlobals *) 
                 XtMalloc( (Cardinal) sizeof(ManpageGlobals));
 
+  man_globals->search_widget = NULL;
   man_globals->section_name = (char **) XtMalloc( (Cardinal) (sections *
 							      sizeof(char *)));
   man_globals->manpagewidgets.box = (Widget *) XtCalloc( (Cardinal) sections,

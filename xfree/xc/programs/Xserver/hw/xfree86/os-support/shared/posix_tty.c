@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.26 2001/02/15 19:46:03 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.28 2003/02/17 15:11:59 dawes Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc.
  *
@@ -413,8 +413,17 @@ int
 xf86ReadSerial (int fd, void *buf, int count)
 {
 	int r;
-
+#ifdef DEBUG
+	int i;
+#endif
 	SYSCALL (r = read (fd, buf, count));
+#ifdef DEBUG
+	ErrorF("ReadingSerial: 0x%x",
+	       (unsigned char)*(((unsigned char *)buf)));
+	for (i = 1; i < r; i++)
+	    ErrorF(", 0x%x",(unsigned char)*(((unsigned char *)buf) + i));
+	ErrorF("\n");
+#endif
 	return (r);
 }
 
@@ -422,7 +431,14 @@ int
 xf86WriteSerial (int fd, const void *buf, int count)
 {
 	int r;
+#ifdef DEBUG
+	int i;
 
+	ErrorF("WritingSerial: 0x%x",(unsigned char)*(((unsigned char *)buf)));
+	for (i = 1; i < count; i++)
+	    ErrorF(", 0x%x",(unsigned char)*(((unsigned char *)buf) + i));
+	ErrorF("\n");
+#endif
 	SYSCALL (r = write (fd, buf, count));
 	return (r);
 }
@@ -458,8 +474,7 @@ xf86WaitForInput (int fd, int timeout)
 	else {
 	    SYSCALL (r = select (FD_SETSIZE, NULL, NULL, NULL, &to));
 	}
-	if (xf86Verbose >= 9)
-		ErrorF ("select returned %d\n", r);
+	xf86ErrorFVerb (9,"select returned %d\n", r);
 	return (r);
 }
 
@@ -480,6 +495,9 @@ xf86FlushInput(int fd)
 	struct timeval timeout;
 	char c[4];
 
+#ifdef DEBUG
+	ErrorF("FlushingSerial\n");
+#endif
 	if (tcflush(fd, TCIFLUSH) == 0)
 		return 0;
 
@@ -488,7 +506,8 @@ xf86FlushInput(int fd)
 	FD_ZERO(&fds);
 	FD_SET(fd, &fds);
 	while (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
-		read(fd, &c, sizeof(c));
+		if (read(fd, &c, sizeof(c)) < 1)
+		    return 0;
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
 	}

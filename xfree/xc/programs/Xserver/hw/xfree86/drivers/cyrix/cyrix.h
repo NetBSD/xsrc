@@ -1,5 +1,6 @@
 /*
  * Copyright 2000 by Richard A. Hecker, California, United States
+ * Copyright 2002 by Red Hat Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,14 +20,24 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
+ * RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+ * EVENT SHALL RICHARD HECKER BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ *
  * Author:  Richard Hecker, hecker@cat.dfrc.nasa.gov
  *          Re-written for XFree86 v4.0
+ * Chunks re-written again for XFree86 v4.2
+ *	    Alan Cox <alan@redhat.com>
  * Previous driver (pre-XFree86 v4.0) by
  *          Annius V. Groenink (A.V.Groenink@zfc.nl, avg@cwi.nl),
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix.h,v 1.3 2001/05/04 19:05:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix.h,v 1.4 2002/11/06 11:38:59 alanh Exp $ */
 
 #ifndef _CYRIX_H_
 #define _CYRIX_H_
@@ -52,6 +63,7 @@ typedef struct {
     unsigned char cyrixRegsDAC[0x01];
     unsigned char cyrixRegsClock[0x03];
     unsigned char DacRegs[0x300];
+    unsigned int Colormap[0x100];	/* Actually 18bit values */
 } CYRIXRegRec, *CYRIXRegPtr;
 
 typedef struct {
@@ -59,6 +71,7 @@ typedef struct {
 	unsigned char VerticalTimingExtension;
 	unsigned char ExtendedAddressControl;
 	unsigned char ExtendedOffset;
+	unsigned char Offset;
 	unsigned char ExtendedColorControl;
 	unsigned char DisplayCompression;
 	unsigned char DriverControl;
@@ -113,9 +126,15 @@ typedef struct {
 	vgaHWRec		std;
 	prevExt			PrevExt;
 	Bool			HWCursor;
-	Bool			IsCyber;
-	Bool			NewClockCode;
+/*	Bool			IsCyber;
+	Bool			NewClockCode;*/
 	Bool			NoAccel;
+	Bool			NoCompress;
+	Bool			ShadowFB;
+	unsigned char *		ShadowPtr;
+	int			ShadowPitch;
+	int			Rotate;
+	void			(*PointerMoved)(int index, int x, int y);
 	OptionInfoPtr		Options;
     /* accel stuff */
         int bltBufWidth;
@@ -139,8 +158,12 @@ extern int	CyrixInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 extern void    	CyrixRestore(ScrnInfoPtr pScrn, CYRIXRegPtr cyrixReg);
 extern void *  	CyrixSave(ScrnInfoPtr pScrn, CYRIXRegPtr cyrixReg);
 
+/* Shadow routines */
+extern void	CYRIXRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
+extern void	CYRIXPointerMoved(int index, int x, int y);
+extern void	CYRIXRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
+extern void	CYRIXRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 
-/* externs in cyrix_asm.s */
 extern void CYRIXsetBlitBuffers(void);
 extern void CYRIXsetBlitBuffersOnOldChip(void);
 

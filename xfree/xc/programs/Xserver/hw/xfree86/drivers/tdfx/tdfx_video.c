@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.15 2001/08/01 00:44:54 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.16 2002/10/17 01:02:08 dawes Exp $ */
 
 #include "xf86.h"
 #include "tdfx.h"
@@ -712,6 +712,9 @@ TDFXPutImageTexture(
    int nbox;
    int format;
 
+   TDFXTRACE("TDFXPutImageTexture(src_x=%d, src_y=%d, drw_x=%d, drw_y=%d, .. sync=%d\n",
+		   src_x, src_y, drw_x, drw_y, sync);
+
    /* Check the source format */
    if (id == FOURCC_YV12)      format = SST_2D_FORMAT_YUYV;
    else if (id == FOURCC_UYVY) format = SST_2D_FORMAT_UYVY;
@@ -832,6 +835,10 @@ TDFXStopVideoOverlay(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
         xf86FreeOffscreenLinear(pTDFX->overlayBuffer);
         pTDFX->overlayBuffer = NULL;
      }
+     if(pTDFX->overlayBuffer2) {
+        xf86FreeOffscreenLinear(pTDFX->overlayBuffer2);
+        pTDFX->overlayBuffer2 = NULL;
+     }
      pPriv->videoStatus = 0;
   } else {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
@@ -841,6 +848,56 @@ TDFXStopVideoOverlay(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
   }
 }
 
+
+/* * * * * *
+
+Decoder...
+
+VIDPROCCFG:  0x5c:  Video Processor Configuration register
+
+#define VIDPROCCFGMASK          0xa2e3eb6c
+  3 2         1         0
+  10987654321098765432109876543210
+  10100010111000111110101101101100
+
+The "1" bits are the bits cleared to 0 in pTDFX->ModeReg.vidcfg
+
+
+Then we or in 0x320:
+
+      11
+      109876543210
+320 = 001100100000
+    
+bit 11=0: Do not bypass clut (colour lookup) for overlay
+bit 10=0: Do not bypass clut for desktop
+bit  9=1: use video-in buffer address as overlay start
+          address (auto-flipping)
+bit  8=1: fetch overlay surface
+bit  7=0: do not fetch the desktop surface (?)
+bit  6=0: chromakey not inverted
+bit  5=1: chromakey enabled
+bit  4=0: half-mode disabled
+bit  3=0: not interlaced (interlace doesn't work on Avenger)
+bit  2=0: overlay stereo disabled
+bit  1=0: Windows cursor mode
+bit  0=0: Video processor off, VGA mode on
+
+SST_VIDEO_2X_MODE_EN: bit26: means 2 pixels per screen clock mode is on
+
+VIDOVERLAYSTARTCOORDS: x&y coords of overlay on the screen
+VIDOVERLAYENDSCREENCOORDS: x&y coorder of bot-right of overlay on the screen
+VIDOVERLAYDUDX: step size in source per hoz step in screen space (x-mag)
+VIDOVERLAYDUDXOFFSETSRCWIDTH:
+VIDOVERLAYDVDY: step size in sourcxe per vertical step in screen (y-mag)
+VIDOVERLAYDVDYOFFSET: initial offset of DVDY
+VIDDESKTOPOVERLAYSTRIDE: desktop surface stride
+
+SST_3D_LEFTOVERLAYBUF: starting physical address of the overlay surface buffer
+VIDINADDR0: starting address of video-in buffer-0
+ [this is set, but this is for video _input_ as I understand docs...?]
+
+* * * * * */
 
 static void
 TDFXDisplayVideoOverlay(
@@ -889,8 +946,51 @@ TDFXDisplayVideoOverlay(
     pTDFX->writeLong(pTDFX, VIDDESKTOPOVERLAYSTRIDE, pTDFX->ModeReg.stride);
     pTDFX->writeLong(pTDFX, SST_3D_LEFTOVERLAYBUF, offset & ~3);
     pTDFX->writeLong(pTDFX, VIDINADDR0, offset & ~3);
+    TDFXTRACE("TDFXDisplayVideoOverlay: done, offset=0x%x\n");
 }
 
+
+#if 0
+
+/* * * * *
+
+TDFXSwapVideoOverlayBuffer tries to use the Avenger SWAPBUFFER
+capability to change frames without tearing.
+
+Use this in preference to TDFXDisplayVideoOverlay where all image
+parameters are the same as the previous frame - ie where only the
+SST_3D_LEFTOVERLAYBUF register would have been changed.
+
+NOTE: Work in progress - doesn't seem to sync to VSYNC, and only every
+other frame gets displayed...
+
+Seeing that the buffer swap initiated by DisplayVideoOverlay gets
+synced to VSYNC anyway, just adding double-buffering to PutImageOverlay
+appears to do the job.  Still - I leave this code in in case we can
+get it working later
+
+  -- Steve Davies 2002-10-04
+  -- <steve@daviesfam.org>
+
+* * * * * */
+
+static void
+TDFXSwapVideoOverlayBuffer(
+    ScrnInfoPtr pScrn,
+    int offset,
+    int left
+){
+    TDFXPtr pTDFX = TDFXPTR(pScrn);
+    offset += ((left >> 16) & ~1) << 1;
+    /* Write mew buffer address */
+    pTDFX->writeLong(pTDFX, SST_3D_LEFTOVERLAYBUF, offset & ~3);
+    /* Incremement the swap-pending counter */
+    pTDFX->writeLong(pTDFX, SST_3D_SWAPPENDING, 0);
+    /* write the swapbuffer command - triggered by (next) VSYNC */
+    pTDFX->writeLong(pTDFX, SST_3D_SWAPBUFFERCMD, 1);
+}
+
+#endif
 
 static int
 TDFXPutImageOverlay(
@@ -915,6 +1015,9 @@ TDFXPutImageOverlay(
    int top, left, npixels, nlines, bpp;
    BoxRec dstBox;
    CARD32 tmp;
+
+   TDFXTRACE("TDFXPutImageOverlay: src_x=%d, src_y=%d, drw_x=%d, drw_y=%d, src_w=%d, src_h=%d, drw_w=%d, drw_h=%d, id=%d, width=%d, height=%d, sync=%d\n",
+		   src_x, src_y, drw_x, drw_y, src_w, src_h, drw_w, drw_h, id, width, height, Sync);
 
    /*
     * s2offset, s3offset - byte offsets into U and V plane of the
@@ -973,13 +1076,26 @@ TDFXPutImageOverlay(
 
    if(!(pTDFX->overlayBuffer = TDFXAllocateMemoryLinear(pScrn, pTDFX->overlayBuffer, new_size)))
         return BadAlloc;
+   /* Second buffer for double-buffering (If we can't get the memory then we just don't double-buffer) */
+   if (!(pTDFX->overlayBuffer2 = TDFXAllocateMemoryLinear(pScrn, pTDFX->overlayBuffer2, new_size)))
+     pTDFX->whichOverlayBuffer = 0;
+   TDFXTRACE("TDFXPutImageOverlay: %s have a second overlay buffer for double-buffering\n",
+	     pTDFX->overlayBuffer2 ? "Do" : "Do not");
 
    /* copy data */
    top = ya >> 16;
    left = (xa >> 16) & ~1;
    npixels = ((((xb + 0xffff) >> 16) + 1) & ~1) - left;
 
-   offset = (pTDFX->overlayBuffer->offset * bpp) + (top * dstPitch) + pTDFX->fbOffset;
+   /* Get buffer offset */
+   if (pTDFX->whichOverlayBuffer == 0)
+     offset = (pTDFX->overlayBuffer->offset * bpp) + (top * dstPitch) + pTDFX->fbOffset;
+   else
+     offset = (pTDFX->overlayBuffer2->offset * bpp) + (top * dstPitch) + pTDFX->fbOffset;
+
+   /* Flip to other buffer for next time */
+   pTDFX->whichOverlayBuffer ^= 1;
+
    dst_start = pTDFX->FbBase + offset;
 
    switch(id) {
@@ -996,6 +1112,7 @@ TDFXPutImageOverlay(
            s3offset = tmp;
         }
         nlines = ((((yb + 0xffff) >> 16) + 1) & ~1) - top;
+	TDFXTRACE("TDFXPutImageOverlay: using copymungeddata\n");
         TDFXCopyMungedData(buf + (top * srcPitch) + left, buf + s2offset,
                            buf + s3offset, dst_start, srcPitch, srcPitch2,
                            dstPitch, nlines, npixels);
@@ -1007,6 +1124,7 @@ TDFXPutImageOverlay(
         buf += (top * srcPitch) + left;
         nlines = ((yb + 0xffff) >> 16) - top;
         dst_start += left;
+	TDFXTRACE("TDFXPutImageOverlay: using copydata\n");
         TDFXCopyData(buf, dst_start, srcPitch, dstPitch, nlines, npixels);
         break;
     }
@@ -1024,6 +1142,15 @@ TDFXPutImageOverlay(
     pPriv->videoStatus = CLIENT_VIDEO_ON;
 
     pTDFX->VideoTimerCallback = TDFXVideoTimerCallback;
+
+    /* Display some swap-buffer related info...: vidCurrOverlayStartAddr, fbiSwapHistory */
+    /* To give us some insight into workings or otherwise of swapbuffer stuff */
+    TDFXTRACE("TDFXPutImageOverlay: vidCurrOverlayStrtAdr=%x, fbiSwpHist=%x, whchBuf=%d, 3Dstus=%x\n",
+	      pTDFX->readLong(pTDFX, VIDCUROVERLAYSTARTADDR),
+	      pTDFX->readLong(pTDFX, SST_3D_FBISWAPHISTORY),
+	      pTDFX->whichOverlayBuffer,
+	      pTDFX->readLong(pTDFX, SST_3D_STATUS)
+    );
 
     return Success;
 }
@@ -1049,6 +1176,10 @@ TDFXVideoTimerCallback(ScrnInfoPtr pScrn, Time time)
                 if(pTDFX->overlayBuffer) {
                    xf86FreeOffscreenLinear(pTDFX->overlayBuffer);
                    pTDFX->overlayBuffer = NULL;
+                }
+                if(pTDFX->overlayBuffer2) {
+                   xf86FreeOffscreenLinear(pTDFX->overlayBuffer2);
+                   pTDFX->overlayBuffer2 = NULL;
                 }
                 pPriv->videoStatus = 0;
                 pTDFX->VideoTimerCallback = NULL;

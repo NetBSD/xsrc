@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/XTrap/xtrapdi.c,v 1.2 2001/11/08 04:00:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/XTrap/xtrapdi.c,v 1.5 2002/09/18 17:11:47 tsi Exp $ */
 /*****************************************************************************
 Copyright 1987, 1988, 1989, 1990, 1991 by Digital Equipment Corp., Maynard, MA
 X11R6 Changes Copyright (c) 1994 by Robert Chesler of Absol-Puter, Hudson, NH.
@@ -47,12 +47,16 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*-----------------*
  *  Include Files  *
  *-----------------*/
-#include <stdio.h>
-#include <errno.h>
 
 #define NEED_REPLIES
 #define NEED_EVENTS
+#ifndef EXTMODULE
+#include <stdio.h>
+#include <errno.h>
 #include <X11/Xos.h>
+#else
+#include "xf86_ansic.h"
+#endif
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include "input.h"              /* Server DevicePtr definitions */
@@ -72,6 +76,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/extensions/xtrapddmi.h>
 #include <X11/extensions/xtrapproto.h>
 #include "colormapst.h"
+#ifdef PANORAMIX
+#include "panoramiX.h"
+#include "panoramiXsrv.h"
+#include "cursor.h"
+#endif
+
 
 /*----------------------------*
  *  Global Data Declarations  *
@@ -181,7 +191,7 @@ static void GetSendColorPlanesRep (ClientPtr client , xResourceReq *req );
 int XETrapDestroyEnv(pointer value, XID id)
 {
     xXTrapReq request;
-    XETrapEnv *penv = XETenv[(int)value];
+    XETrapEnv *penv = XETenv[(long)value];
 
     XETrapReset(&request,penv->client);
     /* Free any memory malloc'd for a particular client here */
@@ -207,7 +217,7 @@ int XETrapDestroyEnv(pointer value, XID id)
 #endif
 
     Xfree(penv);
-    XETenv[(int)value] = NULL;
+    XETenv[(long)value] = NULL;
 
     return 0;
 }                       
@@ -227,7 +237,7 @@ int XETrapDestroyEnv(pointer value, XID id)
  */
 void XETrapCloseDown(ExtensionEntry *extEntry)
 {                                           
-    int i;
+    long i;
 
     for (i=0L; i<MAXCLIENTS; i++)
     {
@@ -490,7 +500,7 @@ int XETrapCreateEnv(ClientPtr client)
         penv->protocol = 31;    /* default to backwards compatibility */
         /* prep for client's departure (for memory dealloc, cleanup) */
         AddResource(FakeClientID(client->index),XETrapType,
-            (pointer)(client->index));
+            (pointer)(long)(client->index));
         if (XETrapRedirectDevices() == False)
         {
             status = XETrapErrorBase + BadDevices;
@@ -1542,6 +1552,21 @@ void XETrapStampAndMail(xEvent *x_event)
             penv->last_input_time = x_event->u.keyButtonPointer.time;
             /* Copy the event information into our local memory */
             (void)memcpy(&(data.u.event),x_event,sizeof(xEvent));
+
+#ifdef PANORAMIX
+	    if (!noPanoramiXExtension &&
+                (data.u.event.u.u.type == MotionNotify ||
+                data.u.event.u.u.type == ButtonPress ||
+                data.u.event.u.u.type == ButtonRelease ||
+                data.u.event.u.u.type == KeyPress ||
+                data.u.event.u.u.type == KeyRelease)) {
+		    int scr = XineramaGetCursorScreen();
+		    data.u.event.u.keyButtonPointer.rootX +=
+			panoramiXdataPtr[scr].x - panoramiXdataPtr[0].x;
+		    data.u.event.u.keyButtonPointer.rootY +=
+			panoramiXdataPtr[scr].y - panoramiXdataPtr[0].y;
+	    }
+#endif
 
             if (penv->client->swapped)
             {   /* 

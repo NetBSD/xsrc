@@ -2,7 +2,7 @@
 
                           The XFree86 Project, Inc
 
-                         Last modified 1 August 2001
+                        Last modified 2003 January 22
 
 NOTE: This is a DRAFT document, and the interfaces described here are subject
 to change without notice.
@@ -1509,8 +1509,6 @@ XF86Config file to the devices:
 
                SymTabPtr chipsets, PciChipsets *PCIchipsets,
 
-               GDevPtr *devList, int numDevs,
-
                GDevPtr *devList, int numDevs, DriverPtr drvp,
 
                int **foundEntities)
@@ -1666,17 +1664,27 @@ able at the driver level:
 Two helper functions are provided to aid configuring entities:
 
      ScrnInfoPtr xf86ConfigPciEntity(ScrnInfoPtr pScrn,
+
                int scrnFlag, int entityIndex,
+
                PciChipsets *p_chip,
+
                resList res, EntityProc init,
+
                EntityProc enter, EntityProc leave,
+
                pointer private)
+
      ScrnInfoPtr xf86ConfigIsaEntity(ScrnInfoPtr pScrn,
+
                int scrnFlag, int entityIndex,
+
                IsaChipsets *i_chip,
 
                resList res, EntityProc init,
+
                EntityProc enter, EntityProc leave,
+
                pointer private)
 
           These functions are used to register the non-relocatable
@@ -1694,8 +1702,8 @@ Two helper functions are provided to aid configuring entities:
                          pointer private)
 
           They are passed the entity index and a pointer to a pri-
-          vate scratch area.  This are can be set up during Probe()
-          and its address can be passed to xf86ConfigIsaEntity()
+          vate scratch area.  This can be set up during Probe() and
+          its address can be passed to xf86ConfigIsaEntity() and
           xf86ConfigPciEntity() as the last argument.
 
 These two helper functions make use of several core functions that are avail-
@@ -1724,12 +1732,12 @@ able at the driver level:
 
 9.3.2  PreInit Phase
 
-During this phase the remaining resource should be registered.  PreInit()
-should call xf86GetEntityInfo() To obtain a pointer to an EntityInfoRec for
+During this phase the remaining resources should be registered.  PreInit()
+should call xf86GetEntityInfo() to obtain a pointer to an EntityInfoRec for
 each entity it is able to drive and check if any resource are listed in its
 resources field.  If resources registered in the Probe phase have been
-rejected in the post-Probe phase (resources == NULL), then the driver should
-decide if it can continue without using these or if it should fail.
+rejected in the post-Probe phase (resources is non-NULL), then the driver
+should decide if it can continue without using these or if it should fail.
 
      EntityInfoPtr xf86GetEntityInfo(int entityIndex)
 
@@ -1742,10 +1750,8 @@ Several functions are provided to simplify resource registration:
      Bool xf86IsEntityPrimary(int entityIndex)
 
           This function returns TRUE if the entity referenced by
-          entityIndex is the display device that primary display
-          device (i.e., the one initialised at boot time and used
-          in text mode).
-
+          entityIndex is the primary display device (i.e., the one
+          initialised at boot time and used in text mode).
      Bool xf86IsScreenPrimary(int scrnIndex)
 
           This function returns TRUE if the primary entity is reg-
@@ -1784,10 +1790,11 @@ The primary function for registration of resources is:
      resPtr xf86ReallocatePciResources(int entityIndex, resPtr pRes)
 
           This function takes a list of PCI resources that need to
-          be reallocated and returns a list of the reallocated
-          resource.  This list needs to be passed to xf86Register-
-          Resources() again to be registered with the broker.  If
-          the reallocation fails, NULL is returned.
+          be reallocated and returns NULL when all relocations are
+          successful.  xf86RegisterResources() should be called
+          again to register the relocated resources with the bro-
+          ker.  If the reallocation fails, a list of the resources
+          that could not be relocated is returned.
 
 Two functions are provided to obtain a resource range of a given type:
 
@@ -1804,7 +1811,7 @@ Two functions are provided to obtain a resource range of a given type:
           avoided within the window can be supplied.  On failure a
           zero-length range of type ResEnd will be returned.
 
-     resRange xf86GetSparse(long type,  memType fixed_bits,
+     resRange xf86GetSparse(long type, memType fixed_bits,
 
                memType decode_mask, memType address_mask,
 
@@ -1835,14 +1842,14 @@ xf86FixPciResource() can be used to do this:
           parameter contains the number of the PCI base register
           that needs to be fixed (0-5, and 6 for the BIOS base reg-
           ister).  The size is specified by the alignment.  Since
-          PCI resources need to span an integral range of the size
-          2^n the alignment also specifies the number of addresses
-          that will be decoded.  If the driver specifies a type
-          mask it can override the default type for PCI resources
-          which is ResShared.  The resource broker needs to know
-          that to find a matching resource range.  This function
-          should be called before calling xf86RegisterResources().
-          The return value is TRUE when the function succeeds.
+          PCI resources need to span an integral range of size 2^n,
+          the alignment also specifies the number of addresses that
+          will be decoded.  If the driver specifies a type mask it
+          can override the default type for PCI resources which is
+          ResShared.  The resource broker needs to know that to
+          find a matching resource range.  This function should be
+          called before calling xf86RegisterResources().  The
+          return value is TRUE when the function succeeds.
 
      Bool xf86CheckPciMemBase(pciVideoPtr pPci, memType base)
 
@@ -1853,13 +1860,16 @@ xf86FixPciResource() can be used to do this:
           config file) matches an actual value allocated to a
           device.
 
-The driver may replace the generic access control functions for an entity by
-it's own ones.  This is done with the xf86SetAccessFuncs():
+The driver may replace the generic access control functions for an entity.
+This is done with the xf86SetAccessFuncs():
 
      void xf86SetAccessFuncs(EntityInfoPtr pEnt,
+
                xf86SetAccessFuncPtr funcs,
 
-               xf86SetAccessFuncPtr oldFuncs) with:
+               xf86SetAccessFuncPtr oldFuncs)
+
+          with:
 
                 typedef struct {
                     xf86AccessPtr mem;
@@ -1876,27 +1886,27 @@ it's own ones.  This is done with the xf86SetAccessFuncs():
           access functions are the same it is assumed that I/O can
           not be controlled independently.  If memory and I/O have
           to be controlled together all three values should be the
-          same.  If a non NULL value is passed as fifth argument it
+          same.  If a non NULL value is passed as third argument it
           is interpreted as an address where to store the old
-          access record.  If the fifth argument is NULL it will be
+          access record.  If the third argument is NULL it will be
           assumed that the generic access should be enabled before
           replacing the access functions.  Otherwise it will be
           disabled.  The driver may enable them itself using the
-          returned values.  It should do this from his replacement
+          returned values.  It should do this from its replacement
           access functions as the generic access may be disabled by
           the common level on certain occasions.  If replacement
           functions are specified they must control all resources
           of the specific type registered for the entity.
 
-To find out if specific resource range is conflicting with another resource
-the xf86ChkConflict() function may be used:
+To find out if a specific resource range conflicts with another resource the
+xf86ChkConflict() function may be used:
 
      memType xf86ChkConflict(resRange *rgp, int entityIndex)
 
           This function checks if the resource range rgp of for the
           specified entity conflicts with with another resource.
-          If it a conflict is found, the address of the start of
-          the conflict is returned.  The return value is zero when
+          If a conflict is found, the address of the start of the
+          conflict is returned.  The return value is zero when
           there is no conflict.
 
 The OPERATING state properties of previously registered fixed resources can
@@ -2049,42 +2059,42 @@ Next, the higher level functions that most drivers would use.
 
           The OptionInfoRec is defined as follows:
 
-                       typedef struct {
-                           double freq;
-                           int units;
-                       } OptFrequency;
+                     typedef struct {
+                         double freq;
+                         int units;
+                     } OptFrequency;
 
-                       typedef union {
-                           unsigned long       num;
-                           char *              str;
-                           double              realnum;
-                           Bool                bool;
-                           OptFrequency        freq;
-                       } ValueUnion;
+                     typedef union {
+                         unsigned long       num;
+                         char *              str;
+                         double              realnum;
+                         Bool                bool;
+                         OptFrequency        freq;
+                     } ValueUnion;
 
-                       typedef enum {
-                           OPTV_NONE = 0,
-                           OPTV_INTEGER,
-                           OPTV_STRING,     /* a non-empty string */
-                           OPTV_ANYSTR,     /* Any string, including an empty one */
-                           OPTV_REAL,
-                           OPTV_BOOLEAN,
-                           OPTV_FREQ
-                       } OptionValueType;
+                     typedef enum {
+                         OPTV_NONE = 0,
+                         OPTV_INTEGER,
+                         OPTV_STRING,  /* a non-empty string */
+                         OPTV_ANYSTR,  /* Any string, including an empty one */
+                         OPTV_REAL,
+                         OPTV_BOOLEAN,
+                         OPTV_FREQ
+                     } OptionValueType;
 
-                       typedef enum {
-                           OPTUNITS_HZ = 1,
-                           OPTUNITS_KHZ,
-                           OPTUNITS_MHZ
-                       } OptFreqUnits;
+                     typedef enum {
+                         OPTUNITS_HZ = 1,
+                         OPTUNITS_KHZ,
+                         OPTUNITS_MHZ
+                     } OptFreqUnits;
 
-                       typedef struct {
-                           int                 token;
-                           const char*         name;
-                           OptionValueType     type;
-                           ValueUnion          value;
-                           Bool                found;
-                       } OptionInfoRec, *OptionInfoPtr;
+                     typedef struct {
+                         int                 token;
+                         const char*         name;
+                         OptionValueType     type;
+                         ValueUnion          value;
+                         Bool                found;
+                     } OptionInfoRec, *OptionInfoPtr;
 
           OPTV_FREQ can be used for options values that are fre-
           quencies.  These values are a floating point number with
@@ -2112,8 +2122,9 @@ Next, the higher level functions that most drivers would use.
           ScreenInit() function, but only when serverGenera-
           tion == 1.
 
-     OptionInfoPtr xf86TokenToOptinfo(const OptionInfoRec *table, int
-     token)
+     OptionInfoPtr xf86TokenToOptinfo(const OptionInfoRec *table,
+
+               int token)
 
           Returns a pointer to the OptionInfoRec in table with a
           token field matching token.  Returns NULL if no match is
@@ -2443,7 +2454,7 @@ remove all removable FBArea allocations.
 
 Initialization of the XFree86 framebuffer manager is done via
 
-     Bool xf86InitFBManager(ScreenPtr pScreen,  BoxPtr FullBox)
+     Bool xf86InitFBManager(ScreenPtr pScreen, BoxPtr FullBox)
 
 FullBox represents the area of the framebuffer that the manager is allowed to
 manage.  This is typically a box with a width of pScrn->displayWidth and a
@@ -2529,7 +2540,7 @@ use the colormap layer, a driver calls the xf86HandleColormaps() function.
 
                LOCO *colors, VisualPtr pVisual)
 
-          LoadPalette() is a driver-provide function for loading a
+          LoadPalette() is a driver-provided function for loading a
           colormap into hardware.  colors is the array of RGB val-
           ues that represent the full colormap.  indices is a list
           of index values into the colors array.  These indices
@@ -2895,6 +2906,7 @@ passing a list of XF86VideoAdaptorPtr pointers to the following function:
      Bool xf86XVScreenInit(
 
                ScreenPtr pScreen,
+
                XF86VideoAdaptorPtr *adaptPtrs,
 
                int num)
@@ -3105,6 +3117,7 @@ The XF86VideoAdaptorRec:
           visible.
 
      typedef  int (* PutVideoFuncPtr)( ScrnInfoPtr pScrn,
+
                short vid_x, short vid_y, short drw_x, short drw_y,
 
                short vid_w, short vid_h, short drw_w, short drw_h,
@@ -3125,6 +3138,7 @@ The XF86VideoAdaptorRec:
           turn on the video.
 
      typedef  int (* PutStillFuncPtr)( ScrnInfoPtr pScrn,
+
                short vid_x, short vid_y, short drw_x, short drw_y,
 
                short vid_w, short vid_h, short drw_w, short drw_h,
@@ -3135,6 +3149,7 @@ The XF86VideoAdaptorRec:
           place only one frame from the stream on the screen.
 
      typedef int (* GetVideoFuncPtr)( ScrnInfoPtr pScrn,
+
                short vid_x, short vid_y, short drw_x, short drw_y,
 
                short vid_w, short vid_h, short drw_w, short drw_h,
@@ -3147,6 +3162,7 @@ The XF86VideoAdaptorRec:
           rect without reading from an area larger than requested.
 
      typedef int (* GetStillFuncPtr)( ScrnInfoPtr pScrn,
+
                short vid_x, short vid_y, short drw_x, short drw_y,
 
                short vid_w, short vid_h, short drw_w, short drw_h,
@@ -3158,6 +3174,7 @@ The XF86VideoAdaptorRec:
           put stream.
 
      typedef void (* StopVideoFuncPtr)(ScrnInfoPtr pScrn,
+
                pointer data, Bool cleanup)
 
           This indicates the driver should stop displaying the
@@ -3178,6 +3195,7 @@ The XF86VideoAdaptorRec:
                Atom attribute,INT32 value, pointer data)
 
      typedef int (* GetPortAttributeFuncPtr)(ScrnInfoPtr pScrn,
+
                Atom attribute,INT32 *value, pointer data)
 
           A port may have particular attributes such as hue, satu-
@@ -3214,6 +3232,7 @@ The XF86VideoAdaptorRec:
                Bool motion, short vid_w, short vid_h,
 
                short drw_w, short drw_h,
+
                unsigned int *p_w, unsigned int *p_h, pointer data)
 
           QueryBestSize provides the client with a way to query
@@ -3225,6 +3244,7 @@ The XF86VideoAdaptorRec:
           important that the driver provide this function.
 
      typedef  int (* PutImageFuncPtr)( ScrnInfoPtr pScrn,
+
                short src_x, short src_y, short drw_x, short drw_y,
 
                short src_w, short src_h, short drw_w, short drw_h,
@@ -3443,6 +3463,10 @@ unresolved symbols can be controlled by the caller of the loader.  Typically
 the caller identifies which symbols can safely remain unresolved and which
 cannot.
 
+NOTE:  Now that ISO-C allows pointers to functions and pointers to data to
+have different internal representations, some of the following interfaces
+will need to be revisited.
+
 17.2  Semi-private Loader Interface
 
 The following is the semi-private loader interface that is available to the
@@ -3601,8 +3625,7 @@ XFree86 common layer.
 
                An optional pointer to a variable holding the
                major part or the error code.  When provided,
-               it *errmaj is filled in when LoadModule()
-               fails.
+               *errmaj is filled in when LoadModule() fails.
 
           errmin
 
@@ -3615,7 +3638,8 @@ XFree86 common layer.
           dle mod.  All child modules are also unloaded recur-
           sively.  This function must not be used to directly
           unload modules that are child modules (i.e., those that
-          have been loaded with LoadSubModule()).
+          have been loaded with the LoadSubModule() described
+          below).
 
 17.3  Module Requirements
 
@@ -3851,7 +3875,7 @@ server, and may also be used from within modules.
 
           This function unloads the module with handle module.  If
           that module itself has children, they are also unloaded.
-          It is like LoadModule(), except that it is safe to use
+          It is like UnloadModule(), except that it is safe to use
           for unloading child modules.
 
      pointer LoaderSymbol(const char *symbol)
@@ -3904,7 +3928,9 @@ server, and may also be used from within modules.
           solved symbols with the loader.  When LoaderCheckUnre-
           solved() is run it won't generate warnings for symbols
           registered in this way unless they were also registered
-          as required symbols.
+          as required symbols.  The function takes one or more NULL
+          terminated lists of symbols.  The end of the argument
+          list is indicated by a NULL argument.
 
      void LoaderRefSymbols(const char *sym0, ...)
 
@@ -4063,6 +4089,11 @@ improve the consistency of driver behaviour.
 
                     No prefix.
 
+               X_NOT_IMPLEMENTED
+
+                    The message relates to functionality
+                    that is not yet implemented.
+
      xf86MsgVerb(MessageType type, int verb, const char *format, ...)
 
           Like xf86Msg(), but with the verbosity level given
@@ -4079,11 +4110,11 @@ improve the consistency of driver behaviour.
           If scrnIndex is negative, this function behaves exactly
           like xf86Msg().
           NOTE: This function can only be used after the ScrnIn-
-          foRec and its name field have been allocated.  That means
-          that it can not be used before the END of the ChipProbe()
-          function.  Prior to that, use xf86Msg(), providing the
-          driver's name explicitly.  No screen number can be sup-
-          plied at that point.
+          foRec and its name field have been allocated.  Normally,
+          this means that it can not be used before the END of the
+          ChipProbe() function.  Prior to that, use xf86Msg(), pro-
+          viding the driver's name explicitly.  No screen number
+          can be supplied at that point.
 
      xf86DrvMsgVerb(int scrnIndex, MessageType type, int verb,
 
@@ -4354,9 +4385,9 @@ the helpers.
 
           linePitches
 
-               List of supported line pitches supported by the
-               driver.  This is optional and should be NULL
-               when not used.
+               List of line pitches supported by the driver.
+               This is optional and should be NULL when not
+               used.
 
           minPitch
 
@@ -4662,11 +4693,11 @@ the helpers.
      void xf86PrintModes(ScrnInfoPtr scrp)
 
           This function prints out the virtual size setting, and
-          the line pitch being used.  It also prints out one line
-          for each mode being used, including its pixel clock, hor-
-          izontal sync rate, refresh rate, and whether it is inter-
-          laced or multiscan.
-
+          the line pitch being used.  It also prints out two lines
+          for each mode being used.  The first line includes the
+          mode's pixel clock, horizontal sync rate, refresh rate,
+          and whether it is interlaced, doublescanned and/or multi-
+          scanned.  The second line is the mode's Modeline.
           This function is normally called after calling
           xf86SetCrtcForModes().
 
@@ -4821,9 +4852,9 @@ pixel clock values on older hardware.
 
      Bool xf86IsUnblank(int mode)
 
-          Returns FALSE when the screen saver mode specified by
-          mode requires the screen be unblanked, and TRUE other-
-          wise.  The screen saver modes that require blanking are
+          Returns TRUE when the screen saver mode specified by mode
+          requires the screen be unblanked, and FALSE otherwise.
+          The screen saver modes that require blanking are
           SCREEN_SAVER_ON and SCREEN_SAVER_CYCLE, and the screen
           saver modes that require unblanking are SCREEN_SAVER_OFF
           and SCREEN_SAVER_FORCER.  Drivers may call this helper
@@ -4985,19 +5016,9 @@ WRec.  They are defined in vgaHW.h.
           must be called before attempting to write to those regis-
           ters.
 
-          A macro VGAHW_UNLOCK(base) is also available in vgaHW.h
-          that does the same thing, and this may be used when the
-          vgahw module is not loaded (for example, in the Chip-
-          Probe() function).
-
      void vgaHWLock(vgaHWPtr hwp)
 
           This function locks the VGA CRTC[0-7] registers.
-
-          A macro VGAHW_LOCK(base) is also available in vgaHW.h
-          that does the same thing, and this may be used when the
-          vgahw module is not loaded (for example, in the Chip-
-          Probe() function).
 
      void vgaHWEnable(vgaHWPtr hwp)
 
@@ -5039,12 +5060,12 @@ WRec.  They are defined in vgaHW.h.
           vgaHWSave() uses the three functions below in the order
           vgaHWSaveColormap(), vgaHWSaveMode(), vgaHWSaveFonts() to
           carry out the different save phases.  It is undecided at
-          this stage whether they will be part of the vgahw mod-
-          ule's public interface or not.
+          this stage whether they will remain part of the vgahw
+          module's public interface or not.
 
      void vgaHWSaveMode(ScrnInfoPtr pScrn, vgaRegPtr save)
 
-          This functions saves the VGA mode registers.  They are
+          This function saves the VGA mode registers.  They are
           saved to the vgaRegRec pointed to by save.  The registers
           saved are:
 
@@ -5058,13 +5079,15 @@ WRec.  They are defined in vgaHW.h.
 
                Sequencer[0-4]
 
+          The number of registers actually saved may be modified by
+          a prior call to vgaHWSetRegCounts().
+
      void vgaHWSaveFonts(ScrnInfoPtr pScrn, vgaRegPtr save)
 
-          This functions saves the text mode font and text data
-          held in the video memory.  If called while in a graphics
-          mode, no save is done.  The VGA memory window must be
-          mapped with vgaHWMapMem() before to calling this func-
-          tion.
+          This function saves the text mode font and text data held
+          in the video memory.  If called while in a graphics mode,
+          no save is done.  The VGA memory window must be mapped
+          with vgaHWMapMem() before to calling this function.
 
           On some platforms, one or more of the font/text plane
           saves may be no-ops.  This is the case when the plat-
@@ -5093,12 +5116,13 @@ WRec.  They are defined in vgaHW.h.
           order vgaHWRestoreFonts(), vgaHWRestoreMode(), vgaHWRe-
           storeColormap() to carry out the different restore
           phases.  It is undecided at this stage whether they will
-          be part of the vgahw module's public interface or not.
+          remain part of the vgahw module's public interface or
+          not.
 
      void vgaHWRestoreMode(ScrnInfoPtr pScrn, vgaRegPtr restore)
 
-          This functions restores the VGA mode registers.  They are
-          restore from the data in the vgaRegRec pointed to by
+          This function restores the VGA mode registers.  They are
+          restored from the data in the vgaRegRec pointed to by
           restore.  The registers restored are:
 
                MiscOut
@@ -5111,9 +5135,12 @@ WRec.  They are defined in vgaHW.h.
 
                Sequencer[0-4]
 
+          The number of registers actually restored may be modified
+          by a prior call to vgaHWSetRegCounts().
+
      void vgaHWRestoreFonts(ScrnInfoPtr pScrn, vgaRegPtr restore)
 
-          This functions restores the text mode font and text data
+          This function restores the text mode font and text data
           to the video memory.  The VGA memory window must be
           mapped with vgaHWMapMem() before to calling this func-
           tion.
@@ -5158,12 +5185,12 @@ WRec.  They are defined in vgaHW.h.
           This function blanks and unblanks the screen.  It is
           blanked when on is FALSE, and unblanked when on is TRUE.
           This function is provided for use in cases where the
-          ScrnInfoRec can't be derived from the ScreenRec, like
-          probing for clocks.
+          ScrnInfoRec can't be derived from the ScreenRec (while
+          probing for clocks, for example).
 
 19.3  VGA Colormap Functions
 
-The vgahw modules uses the standard colormap support (see the Colormap Han-
+The vgahw module uses the standard colormap support (see the Colormap Han-
 dling (section 13., page 1) section.  This is initialised with the following
 function:
 
@@ -5399,8 +5426,6 @@ Drivers must NOT include the following:
           #define ZZZ_MAJOR_VERSION <int>
           #define ZZZ_MINOR_VERSION <int>
           #define ZZZ_PATCHLEVEL    <int>
-
-     XXX Probably want to remove one of these version.
 
      NOTE: ZZZ_DRIVER_NAME should match the name of the driver module without
      things like the "lib" prefix, the "_drv" suffix or filename extensions.
@@ -6310,22 +6335,15 @@ pScreen->CloseScreen, and finishes by calling it.
 Define the SaveScreen() function (the screen blanking function).  When using
 the vgahw module, this will typically be:
 
-This function is mandatory. Before modifying any hardware register directly
-this function needs to make sure that the Xserver is active by checking if
-
-     pScrn
-
- is non-NULL and for
-
-     pScrn->vtSema == TRUE
-
-.
-
      static Bool
      ZZZSaveScreen(ScreenPtr pScreen, int mode)
      {
          return vgaHWSaveScreen(pScreen, mode);
      }
+
+This function is mandatory.  Before modifying any hardware register directly
+this function needs to make sure that the Xserver is active by checking if
+pScrn is non-NULL and for pScrn->vtSema == TRUE.
 
 20.3.16  FreeScreen
 
@@ -6346,7 +6364,7 @@ eScreen() function.
          ZZZFreeRec(xf86Screens[scrnIndex]);
      }
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.47 2002/01/16 20:38:44 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.52 2003/02/25 19:31:00 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/DESIGN,v 1.40 2002/01/16 20:51:01 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/DESIGN,v 1.47 2003/02/25 21:32:33 dawes Exp $

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.5 2001/11/01 23:35:26 dawes Exp $ */
+/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.6 2002/04/04 14:05:35 eich Exp $ */
 
 #ifndef	DPSCONFIG_H
 #define	DPSCONFIG_H
@@ -88,9 +88,10 @@
 
 #if defined(__alpha) || defined(__alpha__) || \
     defined(__ia64__) || defined(ia64) || \
-    defined(__s390x__)
+    defined(__s390x__) || \
+    defined(__x86_64__) || defined(x86_64)
 #define IEEEFLOAT 1
-#endif /* __alpha */
+#endif
 
 #ifdef __i386__
 #define IEEEFLOAT 1

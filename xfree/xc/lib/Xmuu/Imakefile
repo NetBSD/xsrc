@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xmuu/Imakefile,v 1.2 2001/05/11 08:16:54 alanh Exp $
+XCOMM $XFree86: xc/lib/Xmuu/Imakefile,v 1.3 2002/11/14 21:01:18 tsi Exp $
 XCOMM Mini Xmu library: pull out just those things that are used by apps 
 XCOMM that do not use Xt and Xaw in the core applications
 XCOMM 
@@ -8,7 +8,7 @@ XCOMM other than Xlib and the system C library
 
 #define DoNormalLib NormalLibXmuu
 #define DoSharedLib SharedLibXmuu
-#define DoExtraLib SharedLibXmuuc
+#define DoExtraLib SharedLibXmuu
 #define DoDebugLib DebugLibXmuu
 #define DoProfileLib ProfileLibXmuu
 #define LibName Xmuu

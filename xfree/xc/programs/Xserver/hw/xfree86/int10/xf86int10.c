@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.c,v 1.8 2001/10/01 13:44:13 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.c,v 1.10 2002/11/25 14:05:01 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -8,7 +8,6 @@
 #include "xf86.h"
 #include "xf86_ansic.h"
 #include "compiler.h"
-#include "xf86Pci.h"
 #define _INT10_PRIVATE
 #include "xf86int10.h"
 #include "int10Defines.h"
@@ -22,7 +21,7 @@ static int int1A_handler(xf86Int10InfoPtr pInt);
 static int int42_handler(xf86Int10InfoPtr pInt);
 #endif
 static int intE6_handler(xf86Int10InfoPtr pInt);
-static PCITAG findPci(unsigned short bx);
+static PCITAG findPci(xf86Int10InfoPtr pInt, unsigned short bx);
 static CARD32 pciSlotBX(pciVideoPtr pvp);
 
 int
@@ -82,8 +81,9 @@ int42_handler(xf86Int10InfoPtr pInt)
 	/* Leave:  Nothing                                    */
 	/* Implemented (except for clearing the screen)       */
 	{                                         /* Localise */
+	    IOADDRESS ioport;
 	    int i;
-	    CARD16 ioport, int1d, regvals, tmp;
+	    CARD16 int1d, regvals, tmp;
 	    CARD8 mode, cgamode, cgacolour;
 
 	    /*
@@ -169,6 +169,9 @@ int42_handler(xf86Int10InfoPtr pInt)
 	    /* Rows */
 	    MEM_WB(pInt, 0x0484, (25 - 1));
 
+	    /* Remap I/O port number into its domain */
+	    ioport += pInt->ioBase;
+
 	    /* Programme the mode */
 	    outb(ioport + 4, cgamode & 0x37);   /* Turn off screen */
 	    for (i = 0; i < 0x10; i++) {
@@ -188,7 +191,7 @@ int42_handler(xf86Int10InfoPtr pInt)
 	/* Leave:  Nothing                                    */
 	/* Implemented                                        */
 	{                                         /* Localise */
-	    CARD16 ioport = MEM_RW(pInt, 0x0463);
+	    IOADDRESS ioport = MEM_RW(pInt, 0x0463) + pInt->ioBase;
 
 	    MEM_WB(pInt, 0x0460, X86_CL);
 	    MEM_WB(pInt, 0x0461, X86_CH);
@@ -208,7 +211,8 @@ int42_handler(xf86Int10InfoPtr pInt)
 	/* Leave:  Nothing                                    */
 	/* Implemented                                        */
 	{                                         /* Localise */
-	    CARD16 offset, ioport;
+	    IOADDRESS ioport;
+	    CARD16 offset;
 
 	    MEM_WB(pInt, (X86_BH << 1) + 0x0450, X86_DL);
 	    MEM_WB(pInt, (X86_BH << 1) + 0x0451, X86_DH);
@@ -219,7 +223,7 @@ int42_handler(xf86Int10InfoPtr pInt)
 	    offset = (X86_DH * MEM_RW(pInt, 0x044A)) + X86_DL;
 	    offset += MEM_RW(pInt, 0x044E) << 1;
 
-	    ioport = MEM_RW(pInt, 0x0463);
+	    ioport = MEM_RW(pInt, 0x0463) + pInt->ioBase;
 	    outb(ioport, 0x0E);
 	    outb(ioport + 1, offset >> 8);
 	    outb(ioport, 0x0F);
@@ -269,7 +273,8 @@ int42_handler(xf86Int10InfoPtr pInt)
 	/* Leave:  Nothing                                    */
 	/* Implemented                                        */
 	{                                         /* Localise */
-	    CARD16 start, ioport = MEM_RW(pInt, 0x0463);
+	    IOADDRESS ioport = MEM_RW(pInt, 0x0463) + pInt->ioBase;
+	    CARD16 start;
 	    CARD8 x, y;
 
 	    /* Calculate new start address */
@@ -418,7 +423,7 @@ int42_handler(xf86Int10InfoPtr pInt)
 	/* Leave:  Nothing                                    */
 	/* Implemented                                        */
 	{                                         /* Localise */
-	    CARD16 ioport = MEM_RW(pInt, 0x0463) + 5;
+	    IOADDRESS ioport = MEM_RW(pInt, 0x0463) + 5 + pInt->ioBase;
 	    CARD8 cgacolour = MEM_RB(pInt, 0x0466);
 
 	    if (X86_BH) {
@@ -659,7 +664,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb108:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    X86_CL = pciReadByte(tag, X86_EDI);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -672,7 +677,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb109:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    X86_CX = pciReadWord(tag, X86_EDI);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -685,7 +690,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb10a:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    X86_ECX = pciReadLong(tag, X86_EDI);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -698,7 +703,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb10b:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    pciWriteByte(tag, X86_EDI, X86_CL);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -711,7 +716,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb10c:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    pciWriteWord(tag, X86_EDI, X86_CX);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -724,7 +729,7 @@ int1A_handler(xf86Int10InfoPtr pInt)
 #endif
 	return 1;
     case 0xb10d:
-	if ((tag = findPci(X86_EBX))) {
+	if ((tag = findPci(pInt, X86_EBX))) {
 	    pciWriteLong(tag, X86_EDI, X86_ECX);
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
@@ -747,9 +752,9 @@ int1A_handler(xf86Int10InfoPtr pInt)
 }
 
 static PCITAG
-findPci(unsigned short bx)
+findPci(xf86Int10InfoPtr pInt, unsigned short bx)
 {
-    int bus = (bx >> 8) & 0xFF;
+    int bus = ((pInt->Tag >> 16) & ~0x00FF) | ((bx >> 8) & 0x00FF);
     int dev = (bx >> 3) & 0x1F;
     int func = bx & 0x7;
     if (xf86IsPciDevPresent(bus, dev, func))
@@ -760,7 +765,7 @@ findPci(unsigned short bx)
 static CARD32
 pciSlotBX(pciVideoPtr pvp)
 {
-    return (pvp->bus << 8) | (pvp->device << 3) | (pvp->func);
+    return ((pvp->bus << 8) & 0x00FF00) | (pvp->device << 3) | (pvp->func);
 }
 
 /*

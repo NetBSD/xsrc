@@ -23,7 +23,7 @@
 
 /* Modified for FreeBSD by David Dawes <dawes@XFree86.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_jstk.c,v 3.7 1998/07/25 16:56:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_jstk.c,v 3.8 2002/08/06 13:20:47 herrb Exp $ */
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -96,7 +96,6 @@ xf86JoystickOn(char * name, int *timeout, int *centerX, int *centerY)
   if (*centerY < 0) {
     *centerY = js.y;
     xf86Msg(X_PROBED, "Joystick: CenterY set to %d\n", *centerY);
-    }
   }
 
   return status;

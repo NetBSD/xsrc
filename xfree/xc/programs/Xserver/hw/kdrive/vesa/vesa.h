@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vesa.h,v 1.12 2001/09/05 07:12:42 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vesa.h,v 1.14 2002/10/03 22:08:53 keithp Exp $ */
 
 #ifndef _VESA_H_
 #define _VESA_H_
@@ -95,7 +95,7 @@ typedef struct _VesaCardPriv {
 typedef struct _VesaScreenPriv {
     VesaModeRec	mode;
     Bool	shadow;
-    int		rotate;
+    Rotation	randr;
     int		mapping;
     int		origDepth;
     int		layerKind;
@@ -165,4 +165,4 @@ vesaGetColors (ScreenPtr pScreen, int fb, int n, xColorItem *pdefs);
 int
 vesaProcessArgument (int argc, char **argv, int i);
 
-#endif _VESA_H_
+#endif /* _VESA_H_ */

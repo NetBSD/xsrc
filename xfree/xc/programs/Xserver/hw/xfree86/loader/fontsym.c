@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.9 2001/11/17 16:05:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.11 2002/12/09 17:30:12 dawes Exp $ */
 
 #include "font.h"
 #include "sym.h"
@@ -11,6 +11,7 @@
 #include "fntfil.h"
 #include "fontutil.h"
 #include "fontxlfd.h"
+#define _FONTCACHE_SERVER_
 #include "fontcache.h"
 
 LOOKUP fontLookupTab[] = {
@@ -22,6 +23,7 @@ LOOKUP fontLookupTab[] = {
   SYMFUNC(BufFileWrite)
   SYMFUNC(CheckFSFormat)
   SYMFUNC(FontFileOpen)
+  SYMFUNC(FontFilePriorityRegisterRenderer)
   SYMFUNC(FontFileRegisterRenderer)
   SYMFUNC(FontParseXLFDName)
   SYMFUNC(FontFileCloseFont)

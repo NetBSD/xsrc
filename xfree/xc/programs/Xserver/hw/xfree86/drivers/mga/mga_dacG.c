@@ -2,7 +2,7 @@
  * MGA-1064, MGA-G100, MGA-G200, MGA-G400, MGA-G550 RAMDAC driver
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.49 2002/01/11 15:42:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.51 2002/09/16 18:05:55 eich Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -212,8 +212,8 @@ MGAGSetPCLK( ScrnInfoPtr pScrn, long f_out )
 	double f_pll;
 
 	if(MGAISGx50(pMga)) {
-		MGAG450SetPLLFreq(pScrn, f_out);
-		return;
+	    pReg->Clock = f_out;
+	    return;
 	}
 
 	/* Do the calculations for m, n, p and s */
@@ -285,7 +285,7 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    pReg->DacRegs[i] = initDAC[i]; 
 	}
 	);	/* MGA_NOT_HAL */
-
+	    
 	switch(pMga->Chipset)
 	{
 	case PCI_CHIP_MGA1064:
@@ -529,7 +529,7 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		OUTREG(MGAREG_ZORG, 0);
 	}
 
-	MGAGSetPCLK(pScrn, mode->Clock);
+  	MGAGSetPCLK(pScrn, mode->Clock);
 	);	/* MGA_NOT_HAL */
 
 	/* This disables the VGA memory aperture */
@@ -616,6 +616,7 @@ void MGAGLoadPalette(
 /*
  * MGAGRestorePalette
  */
+
 static void
 MGAGRestorePalette(ScrnInfoPtr pScrn, unsigned char* pntr)
 {
@@ -623,8 +624,8 @@ MGAGRestorePalette(ScrnInfoPtr pScrn, unsigned char* pntr)
     int i = 768;
 
     outMGAdreg(MGA1064_WADR_PAL, 0x00);
-    while(i--) 
-        outMGAdreg(MGA1064_COL_PAL, *(pntr++));
+    while(i--)
+	outMGAdreg(MGA1064_COL_PAL, *(pntr++));
 }
 
 /*
@@ -637,8 +638,8 @@ MGAGSavePalette(ScrnInfoPtr pScrn, unsigned char* pntr)
     int i = 768;
 
     outMGAdreg(MGA1064_RADR_PAL, 0x00);
-    while(i--)
-        *(pntr++) = inMGAdreg(MGA1064_COL_PAL);
+    while(i--) 
+	*(pntr++) = inMGAdreg(MGA1064_COL_PAL);
 }
 
 /*
@@ -655,7 +656,22 @@ MGAGRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 	MGAPtr pMga = MGAPTR(pScrn);
 	CARD32 optionMask;
 
+	/*
+	 * Pixel Clock needs to be restored regardless if we use
+	 * HALLib or not. HALlib doesn't do a good job restoring
+	 * VESA modes. MATROX: hint, hint.
+	 */
+	if (MGAISGx50(pMga) && mgaReg->Clock) {
+	    /* 
+	     * With HALlib program only when restoring to console!
+	     * To test this we check for Clock == 0.
+	     */
+	    MGAG450SetPLLFreq(pScrn, mgaReg->Clock);
+	    mgaReg->PIXPLLCSaved = FALSE;
+	}
+
         if(!pMga->SecondCrtc) {
+
 MGA_NOT_HAL(
 	   /*
 	    * Code is needed to get things back to bank zero.
@@ -673,7 +689,7 @@ MGA_NOT_HAL(
 		  (i == 0x1c) ||
 		  ((i >= 0x1f) && (i <= 0x29)) ||
 		  ((i >= 0x30) && (i <= 0x37)) ||
-		  (MGAISGx50(pMga) &&
+                  (MGAISGx50(pMga) && !mgaReg->PIXPLLCSaved &&
 		   ((i == 0x2c) || (i == 0x2d) || (i == 0x2e) ||
 		    (i == 0x4c) || (i == 0x4d) || (i == 0x4e))))
 		 continue; 
@@ -696,7 +712,21 @@ MGA_NOT_HAL(
 				mgaReg->Option3);
 	   }
 );	/* MGA_NOT_HAL */
-	
+#ifdef USEMGAHAL
+          /* 
+	   * Work around another bug in HALlib: it doesn't restore the
+	   * DAC width register correctly. MATROX: hint, hint.
+	   */
+           MGA_HAL(	 
+    	       outMGAdac(MGA1064_MUL_CTL,mgaReg->DacRegs[0]);
+  	       outMGAdac(MGA1064_MISC_CTL,mgaReg->DacRegs[1]); 
+	       if (!MGAISGx50(pMga)) {
+		   outMGAdac(MGA1064_PIX_PLLC_M,mgaReg->DacRegs[2]);
+		   outMGAdac(MGA1064_PIX_PLLC_N,mgaReg->DacRegs[3]);
+		   outMGAdac(MGA1064_PIX_PLLC_P,mgaReg->DacRegs[4]);
+	       } 
+	       ); 
+#endif
 	   /* restore CRTCEXT regs */
            for (i = 0; i < 6; i++)
 	      OUTREG16(0x1FDE, (mgaReg->ExtVga[i] << 8) | i);
@@ -706,7 +736,7 @@ MGA_NOT_HAL(
 	    */
 	   vgaHWRestore(pScrn, vgaReg,
 			VGA_SR_MODE | (restoreFonts ? VGA_SR_FONTS : 0));
-	   MGAGRestorePalette(pScrn, vgaReg->DAC);
+  	   MGAGRestorePalette(pScrn, vgaReg->DAC); 
 	   
 	   /*
 	    * this is needed to properly restore start address
@@ -751,6 +781,7 @@ MGA_NOT_HAL(
 	for (i=0; i<6; i++) ErrorF(" %02X", mgaReg->ExtVga[i]);
 	ErrorF("\n");
 #endif
+	
 }
 
 /*
@@ -764,6 +795,15 @@ MGAGSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 {
 	int i;
 	MGAPtr pMga = MGAPTR(pScrn);
+
+	/*
+	 * Pixel Clock needs to be restored regardless if we use
+	 * HALLib or not. HALlib doesn't do a good job restoring
+	 * VESA modes (s.o.). MATROX: hint, hint.
+	 */
+	if (MGAISGx50(pMga)) {
+	    mgaReg->Clock = MGAG450SavePLLFreq(pScrn);
+	}
 
 	if(pMga->SecondCrtc == TRUE) {
 	   for(i = 0x80; i < 0xa0; i++)
@@ -790,13 +830,37 @@ MGAGSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 	 */
 	vgaHWSave(pScrn, vgaReg, VGA_SR_MODE | (saveFonts ? VGA_SR_FONTS : 0));
 	MGAGSavePalette(pScrn, vgaReg->DAC);
+	/* 
+	 * Work around another bug in HALlib: it doesn't restore the
+	 * DAC width register correctly.
+	 */
 
+#ifdef USEMGAHAL
+	/* 
+	 * Work around another bug in HALlib: it doesn't restore the
+	 * DAC width register correctly (s.o.). MATROX: hint, hint.
+	 */
+  	MGA_HAL(
+  	    if (mgaReg->DacRegs == NULL) {
+  		mgaReg->DacRegs = xnfcalloc(MGAISGx50(pMga) ? 2 : 5, 1);
+  	    }
+    	    mgaReg->DacRegs[0] = inMGAdac(MGA1064_MUL_CTL);
+  	    mgaReg->DacRegs[1] = inMGAdac(MGA1064_MISC_CTL);
+	    if (!MGAISGx50(pMga)) {
+		mgaReg->DacRegs[2] = inMGAdac(MGA1064_PIX_PLLC_M);
+		mgaReg->DacRegs[3] = inMGAdac(MGA1064_PIX_PLLC_N);
+		mgaReg->DacRegs[4] = inMGAdac(MGA1064_PIX_PLLC_P);
+	    } 
+  	);
+#endif
 	MGA_NOT_HAL(
 	/*
 	 * The port I/O code necessary to read in the extended registers.
 	 */
 	for (i = 0; i < DACREGSIZE; i++)
 		mgaReg->DacRegs[i] = inMGAdac(i);
+
+        mgaReg->PIXPLLCSaved = TRUE;
 
 	mgaReg->Option = pciReadLong(pMga->PciTag, PCI_OPTION_REG);
 
@@ -876,7 +940,12 @@ MGAGSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     MGAPtr pMga = MGAPTR(pScrn);
     x += 64;
     y += 64;
-
+#ifdef USEMGAHAL
+    MGA_HAL(
+	    x += pMga->HALGranularityOffX;
+	    y += pMga->HALGranularityOffY;
+    );
+#endif
     /* cursor update must never occurs during a retrace period (pp 4-160) */
     while( INREG( MGAREG_Status ) & 0x08 );
     

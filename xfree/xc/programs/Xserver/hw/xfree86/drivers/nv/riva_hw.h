@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
 \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.15 2001/10/08 22:28:53 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.24 2003/02/10 23:42:51 mvojkovi Exp $ */
 #ifndef __RIVA_HW_H__
 #define __RIVA_HW_H__
 #define RIVA_SW_VERSION 0x00010003
@@ -225,74 +225,6 @@ typedef volatile struct
     U032 MonochromeData01E;
 } RivaBitmap;
 /*
- * 3D textured, Z buffered triangle.
- */
-typedef volatile struct
-{
-    U032 reserved00[4];
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    U032 FifoFree;
-#else
-    U016 FifoFree;
-    U016 Nop;
-#endif
-    U032 reserved01[0x0BC];
-    U032 TextureOffset;
-    U032 TextureFormat;
-    U032 TextureFilter;
-    U032 FogColor;
-/* This is a problem on LynxOS */
-#ifdef Control
-#undef Control
-#endif
-    U032 Control;
-    U032 AlphaTest;
-    U032 reserved02[0x339];
-    U032 FogAndIndex;
-    U032 Color;
-    float ScreenX;
-    float ScreenY;
-    float ScreenZ;
-    float EyeM;
-    float TextureS;
-    float TextureT;
-} RivaTexturedTriangle03;
-typedef volatile struct
-{
-    U032 reserved00[4];
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    U032 FifoFree;
-#else
-    U016 FifoFree;
-    U016 Nop;
-#endif
-    U032 reserved01[0x0BB];
-    U032 ColorKey;
-    U032 TextureOffset;
-    U032 TextureFormat;
-    U032 TextureFilter;
-    U032 Blend;
-/* This is a problem on LynxOS */
-#ifdef Control
-#undef Control
-#endif
-    U032 Control;
-    U032 FogColor;
-    U032 reserved02[0x39];
-    struct
-    {
-        float ScreenX;
-        float ScreenY;
-        float ScreenZ;
-        float EyeM;
-        U032 Color;
-        U032 Specular;
-        float TextureS;
-        float TextureT;
-    } Vertex[16];
-    U032 DrawTriangle3D;
-} RivaTexturedTriangle05;
-/*
  * 2D line.
  */
 typedef volatile struct
@@ -363,6 +295,9 @@ typedef volatile struct
 *                                                                           *
 \***************************************************************************/
 
+#define FP_ENABLE  1
+#define FP_DITHER  2
+
 struct _riva_hw_inst;
 struct _riva_hw_state;
 /*
@@ -375,6 +310,7 @@ typedef struct _riva_hw_inst
      */
     U032 Architecture;
     U032 Version;
+    U032 Chipset;
     U032 CrystalFreqKHz;
     U032 RamAmountKBytes;
     U032 MaxVClockFreqKHz;
@@ -385,11 +321,14 @@ typedef struct _riva_hw_inst
     U032 FifoFreeCount;
     U032 FifoEmptyCount;
     U032 CursorStart;
+    U032 flatPanel;
+    Bool twoHeads;
     /*
      * Non-FIFO registers.
      */
+    volatile U032 *PCRTC0;
     volatile U032 *PCRTC;
-    volatile U032 *PRAMDAC;
+    volatile U032 *PRAMDAC0;
     volatile U032 *PFB;
     volatile U032 *PFIFO;
     volatile U032 *PGRAPH;
@@ -399,12 +338,12 @@ typedef struct _riva_hw_inst
     volatile U032 *PRAMIN;
     volatile U032 *FIFO;
     volatile U032 *CURSOR;
-    volatile U032 *CURSORPOS;
-    volatile U032 *VBLANKENABLE;
-    volatile U032 *VBLANK;
+    volatile U008 *PCIO0;
     volatile U008 *PCIO;
     volatile U008 *PVIO;
+    volatile U008 *PDIO0;
     volatile U008 *PDIO;
+    volatile U032 *PRAMDAC;
     /*
      * Common chip functions.
      */
@@ -413,8 +352,6 @@ typedef struct _riva_hw_inst
     void (*LoadStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *);
     void (*UnloadStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *);
     void (*SetStartAddress)(struct _riva_hw_inst *,U032);
-    void (*SetSurfaces2D)(struct _riva_hw_inst *,U032,U032);
-    void (*SetSurfaces3D)(struct _riva_hw_inst *,U032,U032);
     int  (*ShowHideCursor)(struct _riva_hw_inst *,int);
     void (*LockUnlock)(struct _riva_hw_inst *, int);
     /*
@@ -431,8 +368,6 @@ typedef struct _riva_hw_inst
     RivaScreenBlt           *Blt;
     RivaBitmap              *Bitmap;
     RivaLine                *Line;
-    RivaTexturedTriangle03  *Tri03;
-    RivaTexturedTriangle05  *Tri05;
 } RIVA_HW_INST;
 /*
  * Extended mode state information.
@@ -446,26 +381,29 @@ typedef struct _riva_hw_state
     U032 repaint0;
     U032 repaint1;
     U032 screen;
+    U032 scale;
+    U032 dither;
     U032 extra;
     U032 pixel;
     U032 horiz;
     U032 arbitration0;
     U032 arbitration1;
     U032 vpll;
+    U032 vpll2;
+    U032 vpllB;
+    U032 vpll2B;
     U032 pllsel;
     U032 general;
+    U032 crtcOwner;
+    U032 head; 
+    U032 head2; 
     U032 config;
+    U032 cursorConfig;
     U032 cursor0;
     U032 cursor1;
     U032 cursor2;
-    U032 offset0;
-    U032 offset1;
-    U032 offset2;
-    U032 offset3;
-    U032 pitch0;
-    U032 pitch1;
-    U032 pitch2;
-    U032 pitch3;
+    U032 offset;
+    U032 pitch;
 } RIVA_HW_STATE;
 
 /*
@@ -475,6 +413,7 @@ typedef struct _riva_hw_state
 #define RIVA_FIFO_FREE(hwinst,hwptr,cnt)                           \
 {                                                                  \
    while ((hwinst).FifoFreeCount < (cnt)) {                          \
+        mem_barrier(); \
         mem_barrier(); \
 	(hwinst).FifoFreeCount = (hwinst).hwptr->FifoFree >> 2;        \
    } \

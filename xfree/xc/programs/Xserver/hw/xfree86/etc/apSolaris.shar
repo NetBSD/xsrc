@@ -1,74 +1,30 @@
 #!/bin/sh
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/apSolaris.shar,v 1.1 2001/10/28 03:33:55 tsi Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/apSolaris.shar,v 1.3 2002/10/04 19:45:33 tsi Exp $
 # This is a shell archive (produced by GNU sharutils 4.2c).
 # To extract the files from this archive, save it to some FILE, remove
 # everything before the `!/bin/sh' line above, then type `sh FILE'.
 #
-# Made on 2001-10-01 14:53 MDT by <tsi@xfree86.org>.
+# Made on 2002-10-04 13:41 MDT by <root@abcyxhiz>.
 # Source directory was `/archives'.
 #
 # Existing files will *not* be overwritten unless `-c' is specified.
+# This format requires very little intelligence at unshar time.
+# "if test", "echo", "mkdir", and "sed" may be needed.
 #
 # This shar contains:
 # length mode       name
 # ------ ---------- ------------------------------------------
-#   1609 -rw-r--r-- aperture/Makefile
+#   1521 -rw-r--r-- aperture/Makefile
 #   1659 -rw-r--r-- aperture/README
-#   7514 -rw-r--r-- aperture/aperture.c
+#   7557 -rw-r--r-- aperture/aperture.c
 #    450 -rw-r--r-- aperture/aperture.conf
 #     87 -rw-r--r-- aperture/devlink.tab
-#   1518 -rw-r--r-- aperture/Makefile.sun4u
+#   1062 -rw-r--r-- aperture/Makefile.sun4u
 #
-save_IFS="${IFS}"
-IFS="${IFS}:"
-gettext_dir=FAILED
-locale_dir=FAILED
-first_param="$1"
-for dir in $PATH
-do
-  if test "$gettext_dir" = FAILED && test -f $dir/gettext \
-     && ($dir/gettext --version >/dev/null 2>&1)
-  then
-    set `$dir/gettext --version 2>&1`
-    if test "$3" = GNU
-    then
-      gettext_dir=$dir
-    fi
-  fi
-  if test "$locale_dir" = FAILED && test -f $dir/shar \
-     && ($dir/shar --print-text-domain-dir >/dev/null 2>&1)
-  then
-    locale_dir=`$dir/shar --print-text-domain-dir`
-  fi
-done
-IFS="$save_IFS"
-if test "$locale_dir" = FAILED || test "$gettext_dir" = FAILED
-then
-  echo=echo
-else
-  TEXTDOMAINDIR=$locale_dir
-  export TEXTDOMAINDIR
-  TEXTDOMAIN=sharutils
-  export TEXTDOMAIN
-  echo="$gettext_dir/gettext -s"
-fi
-if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
-  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
-    shar_n= shar_c='
+echo=echo
+shar_tty= shar_n= shar_c='
 '
-  else
-    shar_n=-n shar_c=
-  fi
-else
-  shar_n= shar_c='\c'
-fi
-$echo $shar_n 'x -' 'lock directory' "\`_sh10724': "$shar_c
-if mkdir _sh10724; then
-  $echo 'created'
-else
-  $echo 'failed to create'
-  exit 1
-fi
+mkdir _sh09806 || ( echo 'failed to create locking directory' '_sh09806'; exit 1 )
 # ============= aperture/Makefile ==============
 if test ! -d 'aperture'; then
   $echo $echo_n 'x -' 'aperture: '$echo_c
@@ -87,24 +43,19 @@ X# Modified: David Holland (davidh@use.com)
 X#   Date: 2/23/94
 X#   - Changed name, and debugging structure
 X# Modified: Marc Aurele La France (tsi@xfree86.org)
-X#   Date: 2001.06-08
+X#   Date: 2001.06.08
 X#   - SPARC support, cleanup and turf aptest.
 X#
 X# >>NOTE<< Have a look at Makefile.sun4u for sun4u specifics.
 X#
 X# GNU gcc compiler
-X#CC=gcc
-X#CFLGS=-fno-builtin -W -Waggregate-return -Wbad-function-cast -Wcast-align \
-X#	-Wcast-qual -Wchar-subscripts -Wcomment -Wconversion -Wformat \
-X#	-Wimplicit -Wimport -Wmissing-declarations -Wmissing-prototypes \
-X#	-Wnested_externs -Wparentheses -Wpointer-arith -Wredundant-decls \
-X#	-Wreturn-type -Wshadow -Wstrict-prototypes -Wswitch -Wtraditional \
-X#	-Wtrigraphs -Wuninitialized
+XCC=gcc
+XCFLGS=-fno-builtin -Wall -O3
 X
 X#
 X# Proworks compiler
-XCC=/opt/SUNWspro/bin/cc
-XCFLGS=-Xa -xarch=v9 -xnolib -xO3
+X#CC=/opt/SUNWspro/bin/cc
+X#CFLGS=-Xa -xnolib -xO3
 X
 X#
 X# Debug error reporting
@@ -124,10 +75,15 @@ X# Make rules
 Xall: $(DRIVER)
 X
 X$(DRIVER): $(OBJS)
-X	ld -r -o $(DRIVER) $(OBJS)
+X	@if [ -f "Makefile.`uname -m`" ]; then \
+X		make -f Makefile.`uname -m` $(DRIVER); \
+X	else \
+X		rm -f $(DRIVER); \
+X		ld -r -o $(DRIVER) $(OBJS); \
+X	fi
 X
 Xinstall: $(DRIVER)
-X	if [ -f "Makefile.`uname -m`" ]; then \
+X	@if [ -f "Makefile.`uname -m`" ]; then \
 X		make -f Makefile.`uname -m` install; \
 X	else \
 X		cp aperture.conf /kernel/drv; \
@@ -135,10 +91,10 @@ X		cp $(DRIVER) /kernel/drv; \
 X	fi
 X
 Xadd_drv:
-X	if [ -f "Makefile.`uname -m`" ]; then \
+X	@if [ -f "Makefile.`uname -m`" ]; then \
 X		make -f Makefile.`uname -m` add_drv; \
 X	else \
-X		add_drv /kernel/drv/aperture;
+X		add_drv /kernel/drv/aperture; \
 X	fi
 X
 Xclean:
@@ -148,20 +104,16 @@ X.SUFFIXES: .i
 X
 X.c.i:
 X	$(CC) -E $(CFLAGS) $*.c > $@
+X
+X.c.o:
+X	@if [ -f "Makefile.`uname -m`" ]; then \
+X		make -f Makefile.`uname -m` $@; \
+X	else \
+X		rm -f $@; \
+X		$(CC) -c $(CFLAGS) $*.c -o $@; \
+X	fi
 SHAR_EOF
-  chmod 0644 'aperture/Makefile' ||
-  $echo 'restore of' 'aperture/Makefile' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/Makefile:' 'MD5 check failed'
-b441bb09109f0d3247890d1833ef6be1  aperture/Makefile
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/Makefile'`"
-    test 1609 -eq "$shar_count" ||
-    $echo 'aperture/Makefile:' 'original size' '1609,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/Makefile' 'failed'
 fi
 # ============= aperture/README ==============
 if test -f 'aperture/README' && test "$first_param" != -c; then
@@ -220,19 +172,7 @@ X	# init 6
 X
 XBug reports, questions, suggestions, etc can be sent to xfree86@xfree86.org.
 SHAR_EOF
-  chmod 0644 'aperture/README' ||
-  $echo 'restore of' 'aperture/README' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/README:' 'MD5 check failed'
-9a792c50901ed8099a7f60eecd43ef22  aperture/README
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/README'`"
-    test 1659 -eq "$shar_count" ||
-    $echo 'aperture/README:' 'original size' '1659,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/README' 'failed'
 fi
 # ============= aperture/aperture.c ==============
 if test -f 'aperture/aperture.c' && test "$first_param" != -c; then
@@ -359,7 +299,7 @@ X	cmn_err(CE_CONT, DEV_IDENT ":  entering mmap(0x%016lx)\n", off);
 X
 X#endif
 X
-X	pf = btop(off);
+X	pf = btop((unsigned long)off);
 X
 X	/* Deal with mmap(9E) interface limits */
 X	error = (int)pf;
@@ -524,7 +464,8 @@ X	}
 X	else
 X	{
 X		error = ddi_create_minor_node(dip, ddi_get_name(dip), S_IFCHR,
-X			ddi_get_instance(dip), NULL, NODESPECIFIC_DEV);
+X					      (minor_t)ddi_get_instance(dip),
+X					      NULL, NODESPECIFIC_DEV);
 X
 X		if (error == DDI_SUCCESS)
 X		{
@@ -713,19 +654,7 @@ X
 X	return error;
 X}
 SHAR_EOF
-  chmod 0644 'aperture/aperture.c' ||
-  $echo 'restore of' 'aperture/aperture.c' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/aperture.c:' 'MD5 check failed'
-6b1d5b5fd036811e56982b8f6350c4df  aperture/aperture.c
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/aperture.c'`"
-    test 7514 -eq "$shar_count" ||
-    $echo 'aperture/aperture.c:' 'original size' '7514,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/aperture.c' 'failed'
 fi
 # ============= aperture/aperture.conf ==============
 if test -f 'aperture/aperture.conf' && test "$first_param" != -c; then
@@ -750,19 +679,7 @@ X# Purpose:  This conf file is used by the aperture driver.
 X#
 Xname="aperture" parent="pseudo";
 SHAR_EOF
-  chmod 0644 'aperture/aperture.conf' ||
-  $echo 'restore of' 'aperture/aperture.conf' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/aperture.conf:' 'MD5 check failed'
-7898b8401e400ad797aa1eb4fb35d492  aperture/aperture.conf
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/aperture.conf'`"
-    test 450 -eq "$shar_count" ||
-    $echo 'aperture/aperture.conf:' 'original size' '450,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/aperture.conf' 'failed'
 fi
 # ============= aperture/devlink.tab ==============
 if test -f 'aperture/devlink.tab' && test "$first_param" != -c; then
@@ -773,19 +690,7 @@ else
 X# The following entry is for the aperture driver
 Xtype=ddi_pseudo;name=aperture	fbs/\M0
 SHAR_EOF
-  chmod 0644 'aperture/devlink.tab' ||
-  $echo 'restore of' 'aperture/devlink.tab' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/devlink.tab:' 'MD5 check failed'
-9711411e1d2caacb420cd58c817b4985  aperture/devlink.tab
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/devlink.tab'`"
-    test 87 -eq "$shar_count" ||
-    $echo 'aperture/devlink.tab:' 'original size' '87,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/devlink.tab' 'failed'
 fi
 # ============= aperture/Makefile.sun4u ==============
 if test -f 'aperture/Makefile.sun4u' && test "$first_param" != -c; then
@@ -801,27 +706,20 @@ X# Modified: David Holland (davidh@use.com)
 X#   Date: 2/23/94
 X#   - Changed name, and debugging structure
 X# Modified: Marc Aurele La France (tsi@xfree86.org)
-X#   Date: 2001.06-08
+X#   Date: 2001.06.08
 X#   - SPARC support, cleanup and turf aptest.
 X#
 X
 X#
-X# GNU gcc compiler, for when it can generate 64-bit binaries.  Apparently
-X# GCC 3.0 can, but it has not been tried...
+X# GNU gcc compiler, version 3.2 or later
 X#
-X#CC=gcc
-X#CFLGS=-fno-builtin -W -Waggregate-return -Wbad-function-cast -Wcast-align \
-X#	-Wcast-qual -Wchar-subscripts -Wcomment -Wconversion -Wformat \
-X#	-Wimplicit -Wimport -Wmissing-declarations -Wmissing-prototypes \
-X#	-Wnested_externs -Wparentheses -Wpointer-arith -Wredundant-decls \
-X#	-Wreturn-type -Wshadow -Wstrict-prototypes -Wswitch -Wtraditional \
-X#	-Wtrigraphs -Wuninitialized
-X#	(+ whatever is needed to generate 64-bit object)
+XCC=gcc
+XCFLGS=-fno-builtin -Wall -O3 -m64
 X
 X#
 X# Proworks compiler
-XCC=/opt/SUNWspro/bin/cc
-XCFLGS=-Xa -xarch=v9 -xnolib -xO3
+X#CC=/opt/SUNWspro/bin/cc
+X#CFLGS=-Xa -xarch=v9 -xnolib -xO3
 X
 X#
 X# Debug error reporting
@@ -841,6 +739,7 @@ X# Make rules
 Xall: $(DRIVER)
 X
 X$(DRIVER): $(OBJS)
+X	rm -f $(DRIVER)
 X	ld -r -o $(DRIVER) $(OBJS)
 X
 Xinstall: $(DRIVER)
@@ -858,22 +757,10 @@ X
 X.c.i:
 X	$(CC) -E $(CFLAGS) $*.c > $@
 SHAR_EOF
-  chmod 0644 'aperture/Makefile.sun4u' ||
-  $echo 'restore of' 'aperture/Makefile.sun4u' 'failed'
-  if ( md5sum --help </dev/null 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
-  && ( md5sum --version </dev/null 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
-    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
-    || $echo 'aperture/Makefile.sun4u:' 'MD5 check failed'
-4e5c934bd99816318d20972318a93ad0  aperture/Makefile.sun4u
-SHAR_EOF
-  else
-    shar_count="`LC_ALL=C wc -c < 'aperture/Makefile.sun4u'`"
-    test 1518 -eq "$shar_count" ||
-    $echo 'aperture/Makefile.sun4u:' 'original size' '1518,' 'current size' "$shar_count!"
-  fi
+  : || $echo 'restore of' 'aperture/Makefile.sun4u' 'failed'
 fi
-$echo $shar_n 'x -' 'lock directory' "\`_sh10724': " $shar_c
-if rm -fr _sh10724; then
+$echo $shar_n 'x -' 'lock directory' "\`_sh09806': " $shar_c
+if rm -fr _sh09806; then
   $echo 'removed'
 else
   $echo 'failed to remove'

@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.22 2001/12/14 19:54:08 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.23 2002/05/31 18:45:42 dawes Exp $ */
 
 
 /*
@@ -71,7 +71,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef X_WCHAR
 #include <stddef.h>
 #else
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #include <stdlib.h>
 #else
 /* replace this with #include or typedef appropriate for your system */

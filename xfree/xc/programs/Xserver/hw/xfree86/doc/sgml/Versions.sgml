@@ -7,10 +7,10 @@
 
 <title>XFree86 Version Numbering Schemes
 <author>The XFree86 Project, Inc
-<date>16 January 2002
+<date>23 February 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.2 2002/01/16 20:38:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.4 2003/02/24 03:41:23 dawes Exp $
 </ident>
 
 <abstract>
@@ -31,7 +31,7 @@ main development stream, where all new work and work for future releases
 is done.
 
 Second is the stable bugfix branch for the latest full release
-(&relvers;).  It is created around the time of the release.  The branch
+(&fullrelvers;).  It is created around the time of the release.  The branch
 for this one is called "<tt>&relbranchtag;</tt>".  Fixes for bugs found
 in the release will be added to this branch (as well as the trunk), and
 updates to this release (if any) will be cut from this branch.  Similar
@@ -44,19 +44,21 @@ security updates.  Relevant security updates in particular are usually
 back-ported to this branch.
 
 XFree86 is planning to make full releases from the main development
-stream approximately every six months, in late May and November of each
-year.  The feature freezes for these releases will be 1 April and 1
-October respectively.  These are target dates, not a binding commitment.
-How effectively these dates can be met will depend to a large degree on
-the resource available to XFree86.  Full releases consist of full source
+stream at regular intervals in the 6-12 month range.  The feature
+freezes for these releases will usually be 2-3 months before the release
+dates.  This general plan is a goal, not a binding commitment.  The
+actual release intervals and dates will depend to a large degree on the
+resource available to XFree86.  Full releases consist of full source
 code tarballs, plus full binary distributions for a range of supported
 platforms.  Update/bugfix releases will be made on an as-required basis,
-depending also on the availability of resources.  Update/bugfix releases
-will not be full releases, and will consist of source code patches, plus
-binary updates to be layered on top of the previous full release.
+depending also on the availability of resources, and will generally be
+limited to serious bug and security fixes.  New features will not usually
+be added in update releases.  Update/bugfix releases will not be full
+releases, and will consist of source code patches, plus binary updates
+to be layered on top of the previous full release.
 
-The next full release will be version &nextfullrelvers;, tentatively scheduled for late &nextfullreldate;.
-There is no scheduled update release.  If there is one, the version will be
+The next full release will be version &nextfullrelvers;.  There is no
+scheduled update release, but if one is needed, the version will be
 &nextupdrelvers;.
 
 <!--

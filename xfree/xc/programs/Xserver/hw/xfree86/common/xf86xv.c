@@ -6,7 +6,7 @@
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.32 2001/08/22 22:13:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.33 2002/11/09 01:18:11 keithp Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -72,7 +72,6 @@ static int xf86XVQueryImageAttributes(ClientPtr, XvPortPtr, XvImagePtr,
 
 /* ScreenRec fields */
 
-static Bool xf86XVCreateWindow(WindowPtr pWin);
 static Bool xf86XVDestroyWindow(WindowPtr pWin);
 static void xf86XVWindowExposures(WindowPtr pWin, RegionPtr r1, RegionPtr r2);
 static void xf86XVClipNotify(WindowPtr pWin, int dx, int dy);
@@ -190,7 +189,7 @@ xf86XVScreenInit(
 	XF86XVGeneration = serverGeneration;
   }
 
-  if(!AllocateWindowPrivate(pScreen,XF86XVWindowIndex,sizeof(XF86XVWindowRec)))
+  if(!AllocateWindowPrivate(pScreen,XF86XVWindowIndex,0))
         return FALSE;
 
   if(Success != (*XvScreenInitProc)(pScreen)) return FALSE;
@@ -220,7 +219,6 @@ xf86XVScreenInit(
 
   ScreenPriv->videoGC = NULL;  /* for the helper */
 
-  ScreenPriv->CreateWindow = pScreen->CreateWindow;
   ScreenPriv->DestroyWindow = pScreen->DestroyWindow;
   ScreenPriv->WindowExposures = pScreen->WindowExposures;
   ScreenPriv->ClipNotify = pScreen->ClipNotify;
@@ -228,7 +226,6 @@ xf86XVScreenInit(
   ScreenPriv->LeaveVT = pScrn->LeaveVT;
   ScreenPriv->AdjustFrame = pScrn->AdjustFrame;
 
-  pScreen->CreateWindow = xf86XVCreateWindow;
   pScreen->DestroyWindow = xf86XVDestroyWindow;
   pScreen->WindowExposures = xf86XVWindowExposures;
   pScreen->ClipNotify = xf86XVClipNotify;
@@ -960,24 +957,6 @@ xf86XVRemovePortFromWindow(WindowPtr pWin, XvPortRecPrivatePtr portPriv)
 
 /****  ScreenRec fields ****/
 
-
-static Bool
-xf86XVCreateWindow(WindowPtr pWin)
-{
-  ScreenPtr pScreen = pWin->drawable.pScreen;
-  XF86XVScreenPtr ScreenPriv = GET_XF86XV_SCREEN(pScreen);
-  int ret;
-
-  pScreen->CreateWindow = ScreenPriv->CreateWindow;
-  ret = (*pScreen->CreateWindow)(pWin);
-  pScreen->CreateWindow = xf86XVCreateWindow;
-
-  if(ret) pWin->devPrivates[XF86XVWindowIndex].ptr = NULL;
-
-  return ret;
-}
-
-
 static Bool
 xf86XVDestroyWindow(WindowPtr pWin)
 {
@@ -1150,7 +1129,6 @@ xf86XVCloseScreen(int i, ScreenPtr pScreen)
      ScreenPriv->videoGC = NULL;
   }
 
-  pScreen->CreateWindow = ScreenPriv->CreateWindow;
   pScreen->DestroyWindow = ScreenPriv->DestroyWindow;
   pScreen->WindowExposures = ScreenPriv->WindowExposures;
   pScreen->ClipNotify = ScreenPriv->ClipNotify;

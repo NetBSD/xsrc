@@ -24,7 +24,7 @@
  * or publicity pertaining to distribution of the software without specific,
  * written prior permission.
  */
-/* $XFree86: xc/programs/xmh/tsource.c,v 1.2 2001/10/28 03:34:40 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/tsource.c,v 1.4 2002/04/07 03:57:46 tsi Exp $ */
 
 /* File: tsource.c -- the code for a toc source */
 
@@ -50,9 +50,11 @@ static XtResource resources[] = {
 
 #undef Offset
 
-static void Initialize();
-static XawTextPosition Read(), Scan(), Search();
-static int Replace();
+static void Initialize(Widget, Widget, ArgList, Cardinal *num_args);
+static XawTextPosition Read(Widget, XawTextPosition, XawTextBlock *, int);
+static XawTextPosition Scan(Widget, XawTextPosition, XawTextScanType, XawTextScanDirection, int, Bool);
+static XawTextPosition Search(Widget, XawTextPosition, XawTextScanDirection, XawTextBlock *);
+static int Replace(Widget, XawTextPosition, XawTextPosition, XawTextBlock *);
 
 #define SuperClass		(&textSrcClassRec)
 TocSourceClassRec tocSourceClassRec = {
@@ -114,10 +116,10 @@ WidgetClass tocSourceWidgetClass = (WidgetClass)&tocSourceClassRec;
  *
  ************************************************************/
 
-Msg MsgFromPosition(toc, position, dir)
-  Toc toc;
-  XawTextPosition position;
-  XawTextScanDirection dir;
+Msg MsgFromPosition(
+    Toc toc,
+    XawTextPosition position,
+    XawTextScanDirection dir)
 {
     Msg msg;
     int     h, l, m;
@@ -143,20 +145,19 @@ Msg MsgFromPosition(toc, position, dir)
 }
 
 
-static XawTextPosition CoerceToLegalPosition(toc, position)
-  Toc toc;
-  XawTextPosition position;
+static XawTextPosition
+CoerceToLegalPosition(Toc toc, XawTextPosition position)
 {
     return (position < 0) ? 0 :
 		 ((position > toc->lastPos) ? toc->lastPos : position);
 }
 
 static XawTextPosition
-Read(w, position, block, length)
-Widget w;
-XawTextPosition position;
-XawTextBlock *block;
-int length;
+Read(
+    Widget w,
+    XawTextPosition position,
+    XawTextBlock *block,
+    int length)
 {
     TocSourceWidget source = (TocSourceWidget) w;
     Toc toc = source->toc_source.toc;
@@ -184,10 +185,11 @@ int length;
    and it can't cross between lines. */
 
 static int 
-Replace(w, startPos, endPos, block)
-Widget w;
-XawTextPosition startPos, endPos;
-XawTextBlock *block;
+Replace(
+    Widget w,
+    XawTextPosition startPos,
+    XawTextPosition endPos,
+    XawTextBlock *block)
 {
     TocSourceWidget source = (TocSourceWidget) w;
     Toc toc = source->toc_source.toc;
@@ -224,13 +226,13 @@ XawTextBlock *block;
 
 
 static XawTextPosition 
-Scan(w, position, sType, dir, count, include)
-Widget w;
-XawTextPosition position;
-XawTextScanType sType;
-XawTextScanDirection dir;
-int count;
-Boolean include;
+Scan(
+    Widget w,
+    XawTextPosition position,
+    XawTextScanType sType,
+    XawTextScanDirection dir,
+    int count,
+    Bool include)
 {
     TocSourceWidget source = (TocSourceWidget) w;
     Toc toc = source->toc_source.toc;
@@ -298,12 +300,13 @@ Boolean include;
     }
     return textindex;
 }
+
 /*ARGSUSED*/
-static XawTextPosition Search(w, position, direction, block)
-Widget			w;
-XawTextPosition		position;
-XawTextScanDirection	direction;
-XawTextBlock		*block;
+static XawTextPosition Search(
+    Widget			w,
+    XawTextPosition		position,
+    XawTextScanDirection	direction,
+    XawTextBlock		*block)
 {
     /* TocSourceWidget source = (TocSourceWidget) w;
      * Toc toc = source->toc_source.toc;
@@ -315,10 +318,11 @@ XawTextBlock		*block;
 /* Public definitions. */
 
 /* ARGSUSED*/
-static void Initialize(request, new, args, num_args)
-Widget request, new;
-ArgList args;
-Cardinal *num_args;
+static void Initialize(
+    Widget request,
+    Widget new,
+    ArgList args,
+    Cardinal *num_args)
 {
     Toc toc;
     TocSourceWidget source = (TocSourceWidget) new;
@@ -331,10 +335,8 @@ Cardinal *num_args;
     toc->left = toc->right = 0;
 }
 
-void TSourceInvalid(toc, position, length)
-    Toc toc;	
-    XawTextPosition position;
-    int length;
+void
+TSourceInvalid(Toc toc, XawTextPosition position, int length)
 {
   XawTextInvalidate(XtParent(toc->source), position, 
 		    (XawTextPosition) position+length-1);

@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/expr.h,v 3.3 2002/07/01 02:26:01 tsi Exp $ */
 
 #ifndef EXPR_H
 #define EXPR_H 1
@@ -35,33 +36,23 @@ typedef union _ExprResult  {
     XkbKeyNameRec	keyName;
 } ExprResult;
 
-_XFUNCPROTOBEGIN
-
 typedef	Bool	(*IdentLookupFunc)(
-#if NeedFunctionPrototypes
 	XPointer	/* priv */,
 	Atom		/* elem */,
 	Atom		/* field */,
 	unsigned	/* type */,
 	ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern	char *exprTypeText(
-#if NeedFunctionPrototypes
     unsigned 		/* type */
-#endif
 );
 
-_XFUNCPROTOEND
-
 extern	int ExprResolveLhs(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* elem_rtrn */,
     ExprResult *	/* field_rtrn */,
     ExprDef **		/* index_rtrn */
-#endif
 );
 
 typedef	struct _LookupPriv {
@@ -81,154 +72,118 @@ typedef struct _LookupTable {
     struct _LookupTable *	nextElement;
 } LookupTable;
 
-_XFUNCPROTOBEGIN
-
 
 extern char *exprOpText(
-#if NeedFunctionPrototypes
     unsigned 		/* type */
-#endif
 );
 
 extern int RadioLookup(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int SimpleLookup(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int TableLookup(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int LookupModIndex(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int LookupModMask(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int ExprResolveModIndex(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveModMask(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* priv */
-#endif
 );
 
 extern int ExprResolveBoolean(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveInteger(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveFloat(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveString(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveKeyName(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveEnum(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     LookupEntry	*	/* values */
-#endif
 );
 
 extern int ExprResolveMask(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
 
 extern int ExprResolveKeySym(
-#if NeedFunctionPrototypes
     ExprDef *		/* expr */,
     ExprResult *	/* val_rtrn */,
     IdentLookupFunc	/* lookup */,
     XPointer		/* lookupPriv */
-#endif
 );
-
-_XFUNCPROTOEND
 
 #endif /* EXPR_H */

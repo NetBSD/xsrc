@@ -25,6 +25,7 @@
  *	DESCRIPTION
  *		Sample Color Name Database
  *
+ * $XFree86: xc/lib/X11/Xcms.txt,v 3.2 2003/02/13 03:40:54 dawes Exp $
  */
 
 
@@ -38,24 +39,7 @@ version number of the format/syntax used in this file.  The color name is
 delimited from the color specification by one or more tabs.
 
 XCMS_COLORDB_START 0.1
-red			CIEXYZ:0.3811/0.2073/0.0213
-green			CIEXYZ:0.3203/0.6805/0.1430
-blue			CIEXYZ:0.2483/0.1122/1.2417
-aquamarine		CIEXYZ:0.5512/0.7909/0.9759
-cadet blue		CIEXYZ:0.2218/0.2815/0.4708
-cornflower blue		CIEXYZ:0.3400/0.3109/1.1067
-navy blue		CIEXYZ:0.0478/0.0216/0.2392
-navy			CIEXYZ:0.0478/0.0216/0.2392
-brown			CIEXYZ:0.1333/0.0772/0.0217
-gray0			TekHVC:0.0/0.0/0.0
-gray10			TekHVC:0.0/10.0/0.0
-gray20			TekHVC:0.0/20.0/0.0
-gray30			TekHVC:0.0/30.0/0.0
-gray40			TekHVC:0.0/40.0/0.0
-gray50			TekHVC:0.0/50.0/0.0
-gray60			TekHVC:0.0/60.0/0.0
-gray70			TekHVC:0.0/70.0/0.0
-gray80			TekHVC:0.0/80.0/0.0
-gray90			TekHVC:0.0/90.0/0.0
-gray100			TekHVC:0.0/100.0/0.0
+cms red			CIEXYZ:0.3811/0.2073/0.0213
+cms green		CIEXYZ:0.3203/0.6805/0.1430
+cms blue		CIEXYZ:0.2483/0.1122/1.2417
 XCMS_COLORDB_END

@@ -22,13 +22,13 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.15 2001/10/28 03:33:42 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.20 2003/01/12 03:55:48 tsi Exp $ */
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
  *
  * Authors:
- *   Jens Owen (jens@precisioninsight.com)
+ *   Jens Owen (jens@tungstengraphics.com)
  *   Kevin E. Martin (kevin@precisioninsight.com)
  *
  * Port to Xfree86 v.4.0
@@ -78,6 +78,7 @@ static void Neo2200SubsequentScanlineCPUToScreenColorExpandFill(
 							int w, int h,
 							int skipleft);
 static void Neo2200SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
+#if 0
 static void Neo2200SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 					       int patternx,
 					       int patterny,
@@ -90,7 +91,7 @@ static void Neo2200SubsequentMono8x8PatternFill(ScrnInfoPtr pScrn,
 						 int patterny, 
 						 int x, int y,
 						 int w, int h);
-
+#endif
 
 
 static unsigned int neo2200Rop[16] = {
@@ -120,8 +121,6 @@ Neo2200AccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     NEOPtr nPtr = NEOPTR(pScrn);
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
-    BoxRec AvailFBArea;
-    int lines;
 
     nPtr->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
@@ -213,7 +212,9 @@ Neo2200AccelInit(ScreenPtr pScreen)
         nAcl->PixelWidth = 2;
 	break;
     case 24:
-	if (nPtr->NeoChipset == NM2360) {
+	if (nPtr->noAccelSet || nPtr->NeoChipset == NM2230
+	    || nPtr->NeoChipset == NM2360
+	    || nPtr->NeoChipset == NM2380) {
 	    nAcl->BltModeFlags = NEO_MODE1_DEPTH24;
             nAcl->PixelWidth = 3;
 	} else
@@ -251,19 +252,6 @@ Neo2200AccelInit(ScreenPtr pScreen)
 	return FALSE;
     }
 
-    lines =  nAcl->cacheEnd /
-      (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
-    if(lines > 1024) lines = 1024;
-
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = lines;
-    xf86InitFBManager(pScreen, &AvailFBArea); 
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
-               "Using %i scanlines of offscreen memory for pixmap caching\n",
-                lines - pScrn->virtualY);
 
     return(XAAInit(pScreen, infoPtr));
 }
@@ -482,7 +470,7 @@ Neo2200SubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
     NEOPtr nPtr = NEOPTR(pScrn);
 
     WAIT_ENGINE_IDLE();
-    OUTREG(NEOREG_DSTSTARTOFF, (y<<16) | (x & 0xffff));
+    OUTREG(NEOREG_DSTSTARTOFF, (y <<16) | (x & 0xffff));
     OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
 }
 
@@ -553,7 +541,7 @@ Neo2200SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 #endif
     OUTREG(NEOREG_BLTCNTL, nAcl->tmpBltCntlFlags 
 	   | ((skipleft << 2) & 0x1C));
- #ifdef NEO_DO_CLIPPING
+#ifdef NEO_DO_CLIPPING
     OUTREG(NEOREG_CLIPLT, (y << 16) | (x + skipleft));
     OUTREG(NEOREG_CLIPRB, ((y + h) << 16) | (x + w));
 #endif
@@ -590,6 +578,7 @@ Neo2200SubsequentColorExpandScanline(ScrnInfoPtr pScrn,	int bufno)
 #endif
 }
 
+#if 0
 static void
 Neo2200SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 				     int patternx,
@@ -657,5 +646,4 @@ Neo2200SubsequentMono8x8PatternFill(ScrnInfoPtr pScrn,
     OUTREG(NEOREG_DSTSTARTOFF, (y<<16) | (x & 0xffff));
     OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
 }
-
-
+#endif

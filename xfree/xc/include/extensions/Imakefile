@@ -3,9 +3,9 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/18 04:05:44 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.47 2001/12/16 18:19:50 keithp Exp $
+XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.53 2002/12/16 16:18:49 dawes Exp $
 
-#if BuildScreenSaverExt || BuildScreenSaveLibrary
+#if BuildScreenSaverExt || BuildScreenSaverLibrary
 SCREENSAVERHEADERS = saver.h saverproto.h scrnsaver.h
 #endif
 
@@ -48,27 +48,36 @@ RANDRHEADERS = randr.h randrproto.h
 XTRAPHEADERS = xtrapbits.h xtrapddmi.h xtrapdi.h xtrapemacros.h xtraplib.h \
 	xtraplibp.h xtrapproto.h
 #endif
+#if BuildXResExt || BuildXResLibrary
+XRESHEADERS = XRes.h XResproto.h
+#endif
 
 EXTRAHEADERS = $(SCREENSAVERHEADERS) $(XF86MISCHEADERS) $(XF86BIGFONTHEADERS) \
 	       $(XF86VIDMODEHEADERS) $(XF86DGAHEADERS) $(XINERAMAHEADERS) \
 	       $(LBXHEADERS) $(XVHEADERS) $(XVMCHEADERS) $(XF86RUSHHEADERS) \
 	       $(FONTCACHEHEADERS) $(RENDERHEADERS) $(RANDRHEADERS) \
-	       $(XTRAPHEADERS)
+	       $(XTRAPHEADERS) $(XRESHEADERS)
 
 
 
-HEADERS = Xext.h multibuf.h shape.h sync.h XShm.h MITMisc.h \
+HEADERS = Xext.h \
+	xcmiscstr.h \
+	MITMisc.h mitmiscstr.h \
+	bigreqstr.h \
+	extutil.h \
 	XI.h XInput.h XIproto.h \
-	XTest.h xtestext1.h \
+	XTest.h xtestext1.h xteststr.h \
 	XIE.h XIEproto.h XIEprotost.h \
 	XKB.h XKBgeom.h XKBproto.h XKBstr.h XKBsrv.h \
 	Xdbe.h Xdbeproto.h \
 	Xag.h Xagstr.h Xagsrv.h \
+	XShm.h shmstr.h \
 	$(EXTRAHEADERS) \
+	multibuf.h multibufst.h \
 	record.h recordstr.h \
-        lbxbuf.h lbxbufstr.h lbxdeltastr.h lbximage.h \
-        lbxopts.h lbxstr.h lbxzlib.h \
 	security.h securstr.h \
+	shape.h shapestr.h \
+	sync.h syncstr.h \
 	Print.h Printstr.h \
 	Xcup.h Xcupstr.h \
 	dpms.h dpmsstr.h \

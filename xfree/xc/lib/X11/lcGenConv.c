@@ -35,7 +35,7 @@
  *  2000  
  *  Modifier: Ivan Pascal      The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.24 2001/12/19 23:07:00 tsi Exp $ */
+/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.27 2003/02/25 22:02:45 dawes Exp $ */
 
 /*
  * A generic locale loader for all kinds of ISO-2022 based codesets.
@@ -660,7 +660,7 @@ _XlcGetCodeSetFromCharSet(
             }
 
             if (glyph_index_tmp != *glyph_index) {
-		if (ctextseg->charset == charset) {
+		if (ctextseg && ctextseg->charset == charset) {
 		    goto end_loop;
                 }
             }
@@ -1001,7 +1001,7 @@ wcstombs_org(
 
     } /* end of while */
 
-    *from = (XPointer) ((const char *) *from + from_size);
+    *from = (XPointer) ((const wchar_t *) *from + from_size);
     *from_left = 0;
     *to = (XPointer) outbufptr;
 
@@ -1194,7 +1194,7 @@ wcstocts(
         *ext_seg_len   = i % 128 + 128;
     }
 
-    *from = (XPointer) ((const char *) *from + from_size);
+    *from = (XPointer) ((const wchar_t *) *from + from_size);
     *from_left = 0;
     *to = (XPointer) outbufptr;
 
@@ -2046,7 +2046,7 @@ wcstostr(
 
     } /* end of while */
 
-    *from = (XPointer) ((const char *) *from + from_size);
+    *from = (XPointer) ((const wchar_t *) *from + from_size);
     *from_left = 0;
     *to = (XPointer) outbufptr;
 
@@ -2164,7 +2164,7 @@ end:
 
      /* error end */
     if (unconv_num) {
-        *from = (XPointer) ((const char *) *from + from_size);
+        *from = (XPointer) ((const wchar_t *) *from + from_size);
         *from_left = 0;
         *to = (XPointer) outbufptr;
         return -1;
@@ -2219,7 +2219,7 @@ stdc_wctocs(
 end:
      /* error end */
     if (save_from == (XPointer) src) {
-        *from = (XPointer) ((const char *) *from + from_size);
+        *from = (XPointer) ((const wchar_t *) *from + from_size);
         *from_left = 0;
 	return -1;
     }
@@ -2279,6 +2279,8 @@ wcstocs(
     return(0);
 }
 
+#ifdef STDCVT
+
 static int
 stdc_wcstocs(
     XlcConv conv,
@@ -2326,6 +2328,8 @@ stdc_wcstocs(
 
     return(0);
 }
+
+#endif
 
 static int
 ctstombs(

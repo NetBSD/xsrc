@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3.h,v 1.14 2001/09/28 07:45:21 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3.h,v 1.16 2002/12/11 17:30:47 dawes Exp $ */
 
 
 #ifndef _S3_H
@@ -96,8 +96,8 @@ typedef struct _S3Rec {
         pciVideoPtr             PciInfo;
         PCITAG                  PciTag;
         EntityInfoPtr           pEnt;
-        CARD32                  IOAddress;
-        CARD32                  FBAddress; 
+        unsigned long           IOAddress;
+        unsigned long           FBAddress; 
         unsigned char *         FBBase;   
         unsigned char *         MMIOBase;
         unsigned long           videoRam;
@@ -196,7 +196,7 @@ void S3InitVideo(ScreenPtr pScreen);
 void S3InitStreams(ScrnInfoPtr pScrn, DisplayModePtr mode);
 
 /* IBMRGB */
-extern RamDacSupportedInfoRec IBMRamdacs[];
+extern RamDacSupportedInfoRec S3IBMRamdacs[];
 Bool S3ProbeIBMramdac(ScrnInfoPtr pScrn);
 void S3IBMRGB_PreInit(ScrnInfoPtr pScrn);
 void S3IBMRGB_Init(ScrnInfoPtr pScrn, DisplayModePtr mode);

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.30 2001/12/14 19:54:09 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.34 2003/02/18 05:15:27 dawes Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -38,7 +38,7 @@ from The Open Group.
 #include "Xlibint.h"
 #include <X11/Xpoll.h>
 #include <X11/Xtrans.h>
-#include "xcmiscstr.h"
+#include <X11/extensions/xcmiscstr.h>
 #include <stdio.h>
 
 #ifdef XTHREADS
@@ -104,7 +104,7 @@ xthread_t (*_Xthread_self_fn)() = NULL;
 #define ECHECK(err) (WSAGetLastError() == err)
 #define ESET(val) WSASetLastError(val)
 #else
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define ECHECK(err) (errno == err)
 #define ESET(val)
 #else
@@ -129,7 +129,7 @@ xthread_t (*_Xthread_self_fn)() = NULL;
 #endif
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define select(n,r,w,x,t) os2ClientSelect(n,r,w,x,t)
 #include <limits.h>
 #define MAX_PATH _POSIX_PATH_MAX
@@ -778,7 +778,12 @@ _XEventsQueued (dpy, mode)
 #endif /* XCONN_CHECK_FREQ */
 	if (!(len = pend)) {
 	    /* _XFlush can enqueue events */
-	    UnlockNextEventReader(dpy);
+#ifdef XTHREADS
+	    if (cvl)
+#endif
+	    {
+		UnlockNextEventReader(dpy);
+	    }
 	    return(dpy->qlen);
 	}
       /* Force a read if there is not enough data.  Otherwise,
@@ -822,7 +827,9 @@ _XEventsQueued (dpy, mode)
 		if (read_buf != (char *)dpy->lock->reply_awaiters->buf)
 		    memcpy(dpy->lock->reply_awaiters->buf, read_buf,
 			   len);
-		UnlockNextEventReader(dpy);
+		if (cvl) {
+		    UnlockNextEventReader(dpy);
+		}
 		return(dpy->qlen); /* we read, so we can return */
 	    } else if (read_buf != buf.buf)
 		memcpy(buf.buf, read_buf, len);
@@ -846,7 +853,12 @@ _XEventsQueued (dpy, mode)
 	    }
 	} ENDITERATE
 
-	UnlockNextEventReader(dpy);
+#ifdef XTHREADS
+	if (cvl)
+#endif
+	{
+	    UnlockNextEventReader(dpy);
+	}
 	return(dpy->qlen);
 }
 
@@ -3300,7 +3312,7 @@ static int AccessFile (path, pathbuf, len_pathbuf, pathret)
 
     /* try the places set in the environment */
     drive = getenv ("_XBASEDRIVE");
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     if (!drive)
 	drive = getenv ("X11ROOT");
 #endif
@@ -3316,7 +3328,7 @@ static int AccessFile (path, pathbuf, len_pathbuf, pathret)
 	return 1;
     }
 
-#ifndef __EMX__ 
+#ifndef __UNIXOS2__ 
     /* one last place to look */
     drive = getenv ("HOMEDRIVE");
     if (drive) {

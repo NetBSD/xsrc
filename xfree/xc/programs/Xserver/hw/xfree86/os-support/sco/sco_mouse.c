@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.12 2001/06/30 22:41:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.13 2002/11/20 23:07:50 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -92,7 +92,6 @@ OsMouseProc (DeviceIntPtr pPointer, int what)
   MouseDevPtr pMse;
   unsigned char map[9];
   dmask_t dmask;
-  struct devinfo *di;
   MessageType from = X_CONFIG;
   int evi;
 
@@ -114,23 +113,10 @@ OsMouseProc (DeviceIntPtr pPointer, int what)
       FatalError ("OsMouseProc: DEVICE_INIT failed (%s)\n", evtErrStr(pInfo->fd));
     }
 
-    /*
-     * We need to loop here since we will accept either relative device
-     * types (mice) or absolute ones (bitpads / lightpens).
-     */
-    di = (struct devinfo *)0;
-    di = ev_getdev(D_REL|D_BUTTON, di);
-    if (di == (struct devinfo *)0) {
-      FatalError ("OsMouseProc: Could not extract mouse device info\n");
-    }
     pMse->buttons = xf86SetIntOption (pInfo->options, "Buttons", 0);
     if (pMse->buttons == 0) {
-      pMse->buttons = (int)di->buttons;
-      from = X_PROBED;
-      if (pMse->buttons <= 0) {
-        pMse->buttons = MSE_DFLTBUTTONS;
-        from = X_DEFAULT;
-      }
+      pMse->buttons = 8;
+      from = X_DEFAULT;
     }
     xf86Msg (from, "%s: Buttons: %d\n", pInfo->name, pMse->buttons);
 
@@ -194,7 +180,19 @@ OsMouseReadInput (InputInfoPtr pInfo)
   pMse = pInfo->private;
 
   while ((evp = ev_read()) != (EVENT *)0) {
-    pMse->PostEvent (pInfo, EV_BUTTONS(*evp), EV_DX(*evp), -(EV_DY(*evp)),0,0);
+    int buttons = EV_BUTTONS(*evp);
+    int dx = EV_DX(*evp), dy = -(EV_DY(*evp)), dz = 0, dw = 0;
+
+    if (EV_TAG(*evp) & T_WHEEL) {
+      dz = (dy & 0x08) ? (dy & 0x0f) - 16 : (dy & 0x0f);
+      dx = dy = 0;
+      pMse->PostEvent (pInfo, buttons, dx, dy, dz, dw);
+      /* Simulate button release */
+      dz = 0;
+      buttons &= ~(WHEEL_FWD | WHEEL_BACK);
+    }
+
+    pMse->PostEvent (pInfo, buttons, dx, dy, dz, dw);
     ev_pop();
   }
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.53 2001/09/18 21:23:23 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.57 2003/02/24 21:29:36 tsi Exp $ */
 
 /*
  *
@@ -1439,11 +1439,13 @@ vgaHWHBlankKGA(DisplayModePtr mode, vgaRegPtr regp, int nBits,
 	int i = (regp->CRTC[3] & 0x1F) 
 	    | ((regp->CRTC[5] & 0x80) >> 2)
 	    | ExtBits;
-	if ((Flags & KGA_ENABLE_ON_ZERO) 
-	    && (i-- > (((mode->CrtcHBlankStart >> 3) - 1) 
+	if (Flags & KGA_ENABLE_ON_ZERO) {
+	    if ((i-- > (((mode->CrtcHBlankStart >> 3) - 1) 
 		       & (0x3F | ExtBitMask)))
 	    && (mode->CrtcHBlankEnd == mode->CrtcHTotal))
 	    i = 0;
+	} else if (Flags & KGA_BE_TOT_DEC)
+	    i--;
 	regp->CRTC[3] = (regp->CRTC[3] & ~0x1F) | (i & 0x1F);
 	regp->CRTC[5] = (regp->CRTC[5] & ~0x80) | ((i << 2) & 0x80);
 	ExtBits = i & ExtBitMask;
@@ -1476,14 +1478,17 @@ vgaHWVBlankKGA(DisplayModePtr mode, vgaRegPtr regp, int nBits,
       /* Null top overscan */
     {
 	int i = regp->CRTC[22] | ExtBits;
-	if ((Flags & KGA_ENABLE_ON_ZERO) 
-	    && ((BitMask && ((i & BitMask) > (VBlankStart & BitMask)))
+	if (Flags & KGA_ENABLE_ON_ZERO) {
+	    if (((BitMask && ((i & BitMask) > (VBlankStart & BitMask)))
 	     || ((i > VBlankStart)  &&  		/* 8-bit case */
 	    ((i & 0x7F) > (VBlankStart & 0x7F)))) &&	/* 7-bit case */
 	    !(regp->CRTC[9] & 0x9F))			/* 1 scanline/row */
 	    i = 0;
 	else
 	    i = (i - 1);
+	} else if (Flags & KGA_BE_TOT_DEC)
+	    i = (i - 1);
+
 	regp->CRTC[22] = i & 0xFF;
 	ExtBits = i & 0xFF00;
     }
@@ -1652,6 +1657,7 @@ vgaHWGetHWRec(ScrnInfoPtr scrp)
 {
     vgaRegPtr regp;
     vgaHWPtr hwp;
+    pciVideoPtr pvp;
     int i;
     
     /*
@@ -1736,6 +1742,10 @@ vgaHWGetHWRec(ScrnInfoPtr scrp)
     /* Initialise the function pointers with the standard VGA versions */
     vgaHWSetStdFuncs(hwp);
 
+    hwp->PIOOffset = scrp->domainIOBase;
+    if ((pvp = xf86GetPciInfoForEntity(scrp->entityList[0])))
+	hwp->Tag = pciTag(pvp->bus, pvp->device, pvp->func);
+
     return TRUE;
 }
 
@@ -1786,8 +1796,8 @@ vgaHWMapMem(ScrnInfoPtr scrp)
 #ifdef DEBUG
     ErrorF("Mapping VGAMem\n");
 #endif
-    hwp->Base = xf86MapVidMem(scr_index, VIDMEM_MMIO_32BIT,
-			      hwp->MapPhys, hwp->MapSize);
+    hwp->Base = xf86MapDomainMemory(scr_index, VIDMEM_MMIO_32BIT, hwp->Tag,
+				    hwp->MapPhys, hwp->MapSize);
     return hwp->Base != NULL;
 }
 
@@ -1821,7 +1831,7 @@ vgaHWGetIOBase(vgaHWPtr hwp)
     hwp->IOBase = (hwp->readMiscOut(hwp) & 0x01) ?
 				VGA_IOBASE_COLOR : VGA_IOBASE_MONO;
     xf86DrvMsgVerb(hwp->pScrn->scrnIndex, X_INFO, 3,
-	"vgaHWGetIOBase: hwp->IOBase is 0x%04x, hwp->PIOOffset is 0x%04x\n",
+	"vgaHWGetIOBase: hwp->IOBase is 0x%04x, hwp->PIOOffset is 0x%04lx\n",
 	hwp->IOBase, hwp->PIOOffset);
 }
 
@@ -1830,14 +1840,14 @@ void
 vgaHWLock(vgaHWPtr hwp)
 {
     /* Protect CRTC[0-7] */
-    hwp->writeCrtc(hwp, 0x11, hwp->readCrtc(hwp, 0x11) & ~0x80);
+    hwp->writeCrtc(hwp, 0x11, hwp->readCrtc(hwp, 0x11) | 0x80);
 }
 
 void
 vgaHWUnlock(vgaHWPtr hwp)
 {
     /* Unprotect CRTC[0-7] */
-     hwp->writeCrtc(hwp, 0x11, hwp->readCrtc(hwp, 0x11) | 0x80);
+     hwp->writeCrtc(hwp, 0x11, hwp->readCrtc(hwp, 0x11) & ~0x80);
 }
 
 
@@ -2009,4 +2019,3 @@ vgaHWddc1SetSpeed(ScrnInfoPtr pScrn, xf86ddcSpeed speed)
 	break;
     }
 }
-

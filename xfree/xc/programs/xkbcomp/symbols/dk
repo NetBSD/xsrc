@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/dk,v 3.6 2001/01/17 23:45:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/dk,v 3.7 2002/12/19 01:07:54 dawes Exp $
 
 partial alphanumeric_keys 
 xkb_symbols "basic" {
@@ -75,7 +75,9 @@ xkb_symbols "basic" {
                  	[      dead_tilde,      dead_caron      ]};
 
 
-    // End alphanumeric section
+    // End alphanumeric section, begin "Keypad"
+    key <KPDL> {	[  KP_Delete,	KP_Separator	]	};
+    // End "Keypad" section
 
     // begin modifier mappings
     

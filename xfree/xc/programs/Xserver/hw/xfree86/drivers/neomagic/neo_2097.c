@@ -22,14 +22,14 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2097.c,v 1.8 2001/10/01 13:44:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2097.c,v 1.12 2002/12/10 17:36:29 dawes Exp $ */
 
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
  *
  * Authors:
- *   Jens Owen (jens@precisioninsight.com)
+ *   Jens Owen (jens@tungstengraphics.com)
  *   Kevin E. Martin (kevin@precisioninsight.com)
  *
  * Port to Xfree86 v.4.0
@@ -77,6 +77,7 @@ static void Neo2097SubsequentScanlineCPUToScreenColorExpandFill(
 							int w, int h,
 							int skipleft);
 static void Neo2097SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
+#if 0
 static void Neo2097SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 					      int patternx,
 					      int patterny,
@@ -87,6 +88,7 @@ static void Neo2097SubsequentMono8x8PatternFill(ScrnInfoPtr pScrn,
 						int patterny, 
 						int x, int y,
 						int w, int h);
+#endif
 static void Neo2097SetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
                                 unsigned int planemask,
                                 int transparency_color, int bpp, int depth);
@@ -123,8 +125,6 @@ Neo2097AccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     NEOPtr nPtr = NEOPTR(pScrn);
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
-    int lines;
-    BoxRec AvailFBArea;
 
     nPtr->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
@@ -192,7 +192,7 @@ Neo2097AccelInit(ScreenPtr pScreen)
 	Neo2097SubsequentMono8x8PatternFill;
 #endif
 
-    if (nPtr->strangeLockups) {
+    if (!nPtr->strangeLockups) {
 	/* image writes */
 	infoPtr->ScanlineImageWriteFlags =  ( CPU_TRANSFER_PAD_DWORD |
 					      SCANLINE_PAD_DWORD |
@@ -245,21 +245,7 @@ Neo2097AccelInit(ScreenPtr pScreen)
     default:
 	return FALSE;
     }
-
-    lines =  nAcl->cacheEnd /
-      (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
-    if(lines > 1024) lines = 1024;
-
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = lines;
-    xf86InitFBManager(pScreen, &AvailFBArea); 
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
-               "Using %i scanlines of offscreen memory for pixmap caching\n",
-	        lines - pScrn->virtualY);
-
+    
     return(XAAInit(pScreen, infoPtr));
 }
 
@@ -454,6 +440,7 @@ Neo2097SubsequentColorExpandScanline(ScrnInfoPtr pScrn,	int bufno)
 #endif
 }
 
+#if 0
 static void
 Neo2097SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 				     int patternx,
@@ -513,7 +500,7 @@ Neo2097SubsequentMono8x8PatternFill(ScrnInfoPtr pScrn,
     OUTREG(NEOREG_DSTSTARTOFF, (y<<16) | (x & 0xffff));
     OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
 }
-
+#endif
 
 static void 
 Neo2097SetupForScanlineImageWrite(        
@@ -555,5 +542,3 @@ Neo2097SubsequentImageWriteScanline(
 ){
     /* should I be checking for fifo slots here ? */
 }
-
-

@@ -27,7 +27,7 @@
  *
  * Much code taken from X11R3 String and Disk Sources.
  */
-/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.24.2.1 2002/07/04 17:07:09 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.29 2002/12/06 16:19:57 paulo Exp $ */
 
 /*
 
@@ -297,6 +297,9 @@ XawMultiSrcInitialize(Widget request, Widget cnew,
     src->text_src.changed = False;
 #endif
     src->multi_src.allocated_string = False;
+
+    if (src->multi_src.use_string_in_place && src->multi_src.string == NULL)
+	src->multi_src.use_string_in_place = False;
 
     file = InitStringOrFile(src, src->multi_src.type == XawAsciiFile);
     LoadPieces(src, file, NULL);
@@ -1167,7 +1170,6 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
     const char *fdopen_mode = NULL;
     int fd;
     FILE *file;
-    char fileName[TMPSIZ];
     Display *d = XtDisplayOfObject((Widget)src);
 
     if (src->multi_src.type == XawAsciiString) {
@@ -1221,13 +1223,8 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
 	case XawtextAppend:
 	case XawtextEdit:
 	    if (src->multi_src.string == NULL) {
-		src->multi_src.allocated_string = False;
-		src->multi_src.string = fileName;
-
-		(void)tmpnam((char *)src->multi_src.string);
+		src->multi_src.string = "*multi-src*";
 		src->multi_src.is_tempfile = True;
-		open_mode = O_WRONLY | O_CREAT | O_EXCL;
-		fdopen_mode = "w";
 	    }
 	    else {
 /* O_NOFOLLOW is a BSD & Linux extension */
@@ -1245,10 +1242,8 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
 		       "Read, Append or Edit.", NULL, NULL);
     }
 
-    /* Allocate new memory for the temp filename, because it is held in
-     * a stack memory buffer.  We must verify that all routines that set
-     * .string first check .allocated_string and free it - plumbing Sheeran.
-     */
+    /* If is_tempfile, allocate a private copy of the text
+     * Unlikely to be changed, just to set allocated_string */
     if (newString || src->multi_src.is_tempfile) {
 	String temp = XtNewString((char *)src->multi_src.string);
 
@@ -1259,7 +1254,7 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
     }
     
     if (!src->multi_src.is_tempfile) {
-	if ((fd = open((char *)src->multi_src.string, open_mode, 0666)) != 0) {
+	if ((fd = open((char *)src->multi_src.string, open_mode, 0666)) != -1) {
 	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
 		(void)fseek(file, 0, SEEK_END);
 		src->multi_src.length = (XawTextPosition)ftell(file);

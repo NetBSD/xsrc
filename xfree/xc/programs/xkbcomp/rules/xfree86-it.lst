@@ -4,7 +4,7 @@
 //  Elenco dei modelli e dei lingauggi
 //  Copyright 1996 by Joseph Moss
 //
-// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.6 2001/05/18 23:35:34 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.7 2002/11/25 14:05:06 eich Exp $
 
 ! model
   microsoft       Microsoft Natural
@@ -37,6 +37,7 @@
   fr_CH           Francese Svizzero
   gb              Regno Unito
   hu              Ungherese
+  hu_qwerty       Ungherese (qwerty)
   it              Italiano
   jp              Giapponese
   no              Norvegese

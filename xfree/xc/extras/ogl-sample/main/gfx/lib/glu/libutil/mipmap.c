@@ -31,10 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2002/01/19 15:27:25 $ $Revision: 1.1.1.2 $
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libutil/Attic/mipmap.c,v 1.1.1.2 2002/01/19 15:27:25 tron Exp $
 */
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libutil/mipmap.c,v 1.4 2001/10/28 03:32:23 tsi Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libutil/mipmap.c,v 1.5 2002/02/22 21:32:49 dawes Exp $ */
 
 #include "gluos.h"
 #include <assert.h>

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/miext/shadow/Imakefile,v 1.6 2001/07/20 19:25:02 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/miext/shadow/Imakefile,v 1.7 2002/05/31 18:46:05 dawes Exp $
 XCOMM 
 XCOMM 
 
@@ -60,9 +60,7 @@ NormalLintTarget($(SRCS))
 
 InstallLibraryModule(shadow,$(MODULEDIR),.)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif
 
 InstallDriverSDKLibraryModule(shadow,$(DRIVERSDKMODULEDIR),.)
 InstallDriverSDKNonExecFile(shadow.h,$(DRIVERSDKINCLUDEDIR))

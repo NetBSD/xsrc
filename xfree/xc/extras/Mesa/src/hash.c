@@ -1,20 +1,20 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -63,7 +63,11 @@ struct _mesa_HashTable {
  */
 struct _mesa_HashTable *_mesa_NewHashTable(void)
 {
-   return CALLOC_STRUCT(_mesa_HashTable);
+   struct _mesa_HashTable *table = CALLOC_STRUCT(_mesa_HashTable);
+   if (table) {
+      _glthread_INIT_MUTEX(table->Mutex);
+   }
+   return table;
 }
 
 
@@ -100,6 +104,7 @@ void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
    const struct HashEntry *entry;
 
    assert(table);
+   assert(key);
 
    pos = key & (TABLE_SIZE-1);
    entry = table->Table[pos];
@@ -128,6 +133,7 @@ void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    struct HashEntry *entry;
 
    assert(table);
+   assert(key);
 
    _glthread_LOCK_MUTEX(table->Mutex);
 
@@ -169,6 +175,7 @@ void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
    struct HashEntry *entry, *prev;
 
    assert(table);
+   assert(key);
 
    _glthread_LOCK_MUTEX(table->Mutex);
 

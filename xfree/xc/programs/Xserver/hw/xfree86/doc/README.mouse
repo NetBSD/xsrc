@@ -2,11 +2,11 @@
 
                                Kazutaka Yokota
 
-                               9 February 2000
+                              17 December 2002
 
 1.  Introduction
 
-This document describes mouse support in XFree86 4.2.1.
+This document describes mouse support in XFree86 4.3.0.
 
 Mouse configuration has often been mysterious task for novice users.  How-
 ever, once you learn several basics, it is straightforward to write the mouse
@@ -311,7 +311,7 @@ the guidelines below.
 
                o IntelliMouse
 
-               o Logictech
+               o Logitech
 
                o Microsoft
 
@@ -451,6 +451,33 @@ inch, if possible:
 Not all mice and OSs can support this option.  This option can be set in the
 XF86Setup program.
 
+5.4  Drag Lock Buttons
+
+Some people find it difficult or inconvenient to hold a trackball button
+down, while at the same time moving the ball. Drag lock buttons simulate the
+holding down of another button. When a drag lock button is  first pressed,
+its target buttons is "locked" down until the second time the lock button is
+released, or until the button itself is pressed and released. This allows the
+starting of a drag, the movement of the trackball, and the ending of the drag
+to be separate operations.
+
+          Option    "DragLockButtons"   "W X Y Z"
+
+This option consists of pairs of buttons. Each lock button number is followed
+by the number of the button that it locks. In the above, button number "W" is
+a drag lock button for button "X" and button number "Y" is a drag lock button
+for button "Z".
+
+It may not be desirable to use multiple buttons as drag locks.  Instead, a
+"master drag lock button" may be defined. A master drag lock button acts as a
+"META" key. After a master lock button is released, the next button pressed
+is "locked" and not released until the second time the real button is
+released.
+
+          Option    "DragLockButtons"   "M"
+
+Since button "M" is unpaired it is a master drag lock button.
+
 6.  Mouse Gallery
 
 In all of the examples below, it is assumed that /dev/mouse is a link to the
@@ -520,10 +547,10 @@ detection:
 
           Option    "Protocol"     "Auto"
 
-6.3  Kensington Thinking Mouse (serial, PS/2)
+6.3  Kensington Thinking Mouse and Kensington Expert Mouse (serial, PS/2)
 
-This mouse has four buttons.  Thinking Mouse supports the PnP COM device
-specification.
+These mice have four buttons.  The Kensington Expert Mouse is really a track-
+ball.  Both Thinking mice  support the PnP COM device specification.
 
 To use this mouse as a serial device:
 
@@ -925,7 +952,40 @@ have the following InputDevice section.
 The movement of the first wheel is mapped to the button 4 and 5.  The second
 wheel's movement will be reported as the buttons 6 and 7.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.11 2000/03/01 00:25:23 dawes Exp $
+The Kensington Expert mouse is really a trackball. It has 4 buttons arranged
+in a rectangle around the ball.
+
+     Section "InputDevice"
+          Identifier  "DLB"
+          Driver      "mouse"
+          Option      "Protocol" "ThinkingMousePS/2"
+          Option      "Buttons" "3"
+          Option      "Emulate3Buttons"
+          Option      "Device" "/dev/mouse"
+          Option      "DragLockButtons" "2 1 4 3"
+     EndSection
+
+In this example, button 2 is a drag lock button for button number 1, and but-
+ton 4 is a drag lock button for button 3.  Since button 2 is above button 1
+and button 4 is above button 3 in the layout of this trackball, this is rea-
+sonable.
+
+Because button 2 is being used as a drag lock, it can not be used as an ordi-
+nary button. However, it can be activated by using the "Emulate3Buttons" fea-
+ture. However, some people my be unable to press two buttons at the same
+time. They may prefer the following InputDevice section which defines button
+4 as a master drag lock button, and leaves button 2 free for ordinary use.
+
+     Section "InputDevice"
+          Identifier  "MasterDLB"
+          Driver      "mouse"
+          Option      "Protocol" "ThinkingMousePS/2"
+          Option      "Buttons" "3"
+          Option      "Device" "/dev/mouse"
+          Option      "DragLockButtons" "4"
+     EndSection
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.13 2002/12/17 20:55:22 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.13.4.1 2002/09/04 03:39:35 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.20 2003/02/24 04:03:24 dawes Exp $

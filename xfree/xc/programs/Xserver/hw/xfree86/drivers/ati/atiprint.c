@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiprint.c,v 1.23 2002/01/16 16:22:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiprint.c,v 1.25 2003/01/01 19:16:33 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -499,12 +499,10 @@ ATIPrintRegisters
     {
         lcd_gen_ctrl = inr(LCD_GEN_CTRL);
 
-        outr(LCD_GEN_CTRL, lcd_gen_ctrl &
-            ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN));
+        outr(LCD_GEN_CTRL, lcd_gen_ctrl & ~(SHADOW_EN | SHADOW_RW_EN));
         ATIPrintMach64Registers(pATI, &crtc, "non-shadow");
 
-        outr(LCD_GEN_CTRL, (lcd_gen_ctrl & ~CRTC_RW_SELECT) |
-            (SHADOW_EN | SHADOW_RW_EN));
+        outr(LCD_GEN_CTRL, lcd_gen_ctrl | (SHADOW_EN | SHADOW_RW_EN));
         ATIPrintMach64Registers(pATI, &crtc, "shadow");
 
         outr(LCD_GEN_CTRL, lcd_gen_ctrl);

@@ -22,14 +22,14 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_i2c.c,v 1.3 2000/11/03 18:46:11 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_i2c.c,v 1.5 2002/10/30 12:52:22 alanh Exp $ */
 
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
  *
  * Authors:
- *   Jens Owen (jens@precisioninsight.com)
+ *   Jens Owen (jens@tungstengraphics.com)
  *   Kevin E. Martin (kevin@precisioninsight.com)
  *
  * Port to Xfree86 v.4.0
@@ -79,8 +79,8 @@ neo_I2CInit(ScrnInfoPtr pScrn)
     NEOPtr pNeo = NEOPTR(pScrn);
     I2CBusPtr I2CPtr;
 
-
     I2CPtr = xf86CreateI2CBusRec();
+
     if(!I2CPtr) return FALSE;
 
     pNeo->I2C = I2CPtr;

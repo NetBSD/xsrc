@@ -154,7 +154,7 @@
 <sect> Authors
 
 <p>
-   Jens Owen <it>jens@precisioninsight.com</it>
+   Jens Owen <it>jens@tungstengraphics.com</it>
    Kevin E. Martin <it>kevin@precisioninsight.com</it>
 
    This driver was donated to The XFree86 Project by 
@@ -165,6 +165,6 @@
 	    url="http://www.precisioninsight.com">
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/neomagic.sgml,v 1.1 1999/08/23 06:59:39 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/neomagic.sgml,v 1.2 2002/10/30 12:52:10 alanh Exp $
 </verb>
 </article>

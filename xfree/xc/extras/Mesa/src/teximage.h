@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  4.0.4
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 #define TEXIMAGE_H
 
 
-#include "types.h"
+#include "mtypes.h"
 
 
 /*** Internal functions ***/
@@ -46,31 +46,27 @@ extern void
 _mesa_free_texture_image( struct gl_texture_image *teximage );
 
 
-extern GLuint
-_mesa_compressed_image_size(GLcontext *ctx,
-                            GLenum internalFormat,
-                            GLint numDimensions,
-                            GLint width, GLint height, GLint depth);
+extern void
+_mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
+                           struct gl_texture_image *img,
+                           GLsizei width, GLsizei height, GLsizei depth,
+                           GLint border, GLenum internalFormat);
+
+
+extern void
+_mesa_set_tex_image(struct gl_texture_object *tObj,
+                    GLenum target, GLint level,
+                    struct gl_texture_image *texImage);
 
 
 extern struct gl_texture_object *
-_mesa_select_tex_object(GLcontext *ctx, struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target);
 
 
 extern struct gl_texture_image *
 _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                        GLenum target, GLint level);
-
-
-extern void
-_mesa_get_teximage_from_driver(GLcontext *ctx, GLenum target, GLint level,
-                               const struct gl_texture_object *texObj);
-
-
-extern GLboolean
-_mesa_get_teximages_from_driver(GLcontext *ctx,
-                                struct gl_texture_object *texObj);
 
 
 
@@ -90,7 +86,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
 
 
 extern void
-_mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
+_mesa_TexImage3D( GLenum target, GLint level, GLenum internalformat,
                   GLsizei width, GLsizei height, GLsizei depth, GLint border,
                   GLenum format, GLenum type, const GLvoid *pixels );
 

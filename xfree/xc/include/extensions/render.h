@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/render.h,v 1.4 2001/08/16 08:03:25 keithp Exp $
+ * $XFree86: xc/include/extensions/render.h,v 1.11 2002/11/23 02:34:45 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -33,11 +33,11 @@ typedef unsigned long	PictFormat;
 
 #define RENDER_NAME	"RENDER"
 #define RENDER_MAJOR	0
-#define RENDER_MINOR	2
+#define RENDER_MINOR	8
 
 #define X_RenderQueryVersion		    0
 #define X_RenderQueryPictFormats	    1
-#define X_RenderQueryPictIndexValues	    2
+#define X_RenderQueryPictIndexValues	    2	/* 0.7 */
 #define X_RenderQueryDithers		    3
 #define X_RenderCreatePicture		    4
 #define X_RenderChangePicture		    5
@@ -51,7 +51,7 @@ typedef unsigned long	PictFormat;
 #define X_RenderTriFan			    13
 #define X_RenderColorTrapezoids		    14
 #define X_RenderColorTriangles		    15
-#define X_RenderTransform		    16
+/* #define X_RenderTransform		    16 */
 #define X_RenderCreateGlyphSet		    17
 #define X_RenderReferenceGlyphSet	    18
 #define X_RenderFreeGlyphSet		    19
@@ -62,6 +62,14 @@ typedef unsigned long	PictFormat;
 #define X_RenderCompositeGlyphs16	    24
 #define X_RenderCompositeGlyphs32	    25
 #define X_RenderFillRectangles		    26
+/* 0.5 */
+#define X_RenderCreateCursor		    27
+/* 0.6 */
+#define X_RenderSetPictureTransform	    28
+#define X_RenderQueryFilters		    29
+#define X_RenderSetPictureFilter	    30
+#define X_RenderCreateAnimCursor	    31
+#define RenderNumberRequests		    (X_RenderCreateAnimCursor+1)
 
 #define BadPictFormat			    0
 #define BadPicture			    1
@@ -143,5 +151,23 @@ typedef unsigned long	PictFormat;
 #define CPDither			    (1 << 11)
 #define CPComponentAlpha		    (1 << 12)
 #define CPLastBit			    11
+
+/* Filters included in 0.6 */
+#define FilterNearest			    "nearest"
+#define FilterBilinear			    "bilinear"
+
+#define FilterFast			    "fast"
+#define FilterGood			    "good"
+#define FilterBest			    "best"
+
+#define FilterAliasNone			    -1
+
+/* Subpixel orders included in 0.6 */
+#define SubPixelUnknown			    0
+#define SubPixelHorizontalRGB		    1
+#define SubPixelHorizontalBGR		    2
+#define SubPixelVerticalRGB		    3
+#define SubPixelVerticalBGR		    4
+#define SubPixelNone			    5
 
 #endif	/* _RENDER_H_ */

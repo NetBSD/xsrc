@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xauth/process.c,v 3.12 2001/12/14 20:01:15 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/process.c,v 3.18 2003/02/13 02:50:22 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -764,6 +764,11 @@ auth_initialize(char *authfilename)
     n = strlen (authfilename);
     xauth_filename = malloc (n + 1);
     if (xauth_filename) strcpy (xauth_filename, authfilename);
+    else {
+	fprintf(stderr,"cannot allocate memory\n");
+	return -1;
+    }
+    
     xauth_modified = False;
 
     if (verbose) {
@@ -802,16 +807,20 @@ write_auth_file(char *tmp_nam)
      */
     for (list = xauth_head; list; list = list->next) {
 	if (list->auth->name_length == 18
-	    && strncmp(list->auth->name, "MIT-MAGIC-COOKIE-1", 18) == 0)
-	{
-	    XauWriteAuth (fp, list->auth);
+	    && strncmp(list->auth->name, "MIT-MAGIC-COOKIE-1", 18) == 0) {
+	    if (!XauWriteAuth(fp, list->auth)) {
+		(void) fclose(fp);
+		return -1;
+	    }
 	}
     }
     for (list = xauth_head; list; list = list->next) {
 	if (list->auth->name_length != 18
-	    || strncmp(list->auth->name, "MIT-MAGIC-COOKIE-1", 18) != 0)
-	{
-	    XauWriteAuth (fp, list->auth);
+	    || strncmp(list->auth->name, "MIT-MAGIC-COOKIE-1", 18) != 0) {
+	    if (!XauWriteAuth(fp, list->auth)) {
+		(void) fclose(fp);
+		return -1;
+	    }
 	}
     }
 
@@ -859,7 +868,7 @@ auth_finalize(void)
 			 ProgramName, temp_name);
 	    } else {
 		(void) unlink (xauth_filename);
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
 		if (rename(temp_name, xauth_filename) == -1)
 #else
 		if (link (temp_name, xauth_filename) == -1)
@@ -1453,8 +1462,8 @@ do_add(char *inputfilename, int lineno, int argc, char **argv)
     auth = (Xauth *) malloc (sizeof (Xauth));
     if (!auth) {
 	prefix (inputfilename, lineno);
-	fprintf (stderr, "unable to allocate %d bytes for Xauth structure\n",
-		 sizeof (Xauth));
+	fprintf (stderr, "unable to allocate %ld bytes for Xauth structure\n",
+		 (unsigned long)sizeof (Xauth));
 	free (key);
 	return 1;
     }
@@ -1490,8 +1499,8 @@ do_add(char *inputfilename, int lineno, int argc, char **argv)
     list = (AuthList *) malloc (sizeof (AuthList));
     if (!list) {
 	prefix (inputfilename, lineno);
-	fprintf (stderr, "unable to allocate %d bytes for auth list\n",
-		 sizeof (AuthList));
+	fprintf (stderr, "unable to allocate %ld bytes for auth list\n",
+		 (unsigned long)sizeof (AuthList));
 	free (auth);
 	free (key);
 	free (auth->name);

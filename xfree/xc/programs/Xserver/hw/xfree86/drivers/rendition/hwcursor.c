@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/hwcursor.c,v 1.7 2000/03/31 20:13:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/hwcursor.c,v 1.8 2002/04/04 14:05:45 eich Exp $ */
 /*
  * includes
  */
@@ -96,9 +96,9 @@ RenditionHWCursorInit(int scrnIndex, ScreenPtr pScreen)
 #endif
 
     infoPtr->Flags = HARDWARE_CURSOR_BIT_ORDER_MSBFIRST  |
-                     HARDWARE_CURSOR_TRUECOLOR_AT_8BPP   |
-                     HARDWARE_CURSOR_AND_SOURCE_WITH_MASK|
-                     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_8;
+	HARDWARE_CURSOR_TRUECOLOR_AT_8BPP   | 
+	HARDWARE_CURSOR_AND_SOURCE_WITH_MASK|
+	HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_8;
 
 
     infoPtr->SetCursorColors      = RENDITIONSetCursorColors;

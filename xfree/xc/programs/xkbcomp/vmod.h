@@ -24,6 +24,8 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/vmod.h,v 1.3 2002/07/01 02:26:01 tsi Exp $ */
+
 #ifndef VMOD_H
 #define VMOD_H 1
 
@@ -36,66 +38,50 @@ typedef struct _VModInfo {
 } VModInfo;
 
 extern void	InitVModInfo(
-#if NeedFunctionPrototypes
     VModInfo *	/* info */,
     XkbDescPtr	/* xkb */
-#endif
 );
 
 extern void	ClearVModInfo(
-#if NeedFunctionPrototypes
     VModInfo *	/* info */,
     XkbDescPtr	/* xkb */
-#endif
 );
 
 extern Bool	HandleVModDef(
-#if NeedFunctionPrototypes
     VModDef *	/* stmt */,
     unsigned	/* mergeMode */,
     VModInfo *	/* info */
-#endif
 );
 
 extern Bool	ApplyVModDefs(
-#if NeedFunctionPrototypes
     VModInfo *	/* info */,
     XkbDescPtr	/* xkb */
-#endif
 );
 
 extern int	LookupVModIndex(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int	LookupVModMask(
-#if NeedFunctionPrototypes
     XPointer 		/* priv */,
     Atom		/* elem */,
     Atom		/* field */,
     unsigned		/* type */,
     ExprResult *	/* val_rtrn */
-#endif
 );
 
 extern int	FindKeypadVMod(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */
-#endif
 );
 
 extern Bool	ResolveVirtualModifier(
-#if NeedFunctionPrototypes
     ExprDef *		/* def */,
     ExprResult *	/* value_rtrn */,
     VModInfo *		/* info */
-#endif
 );
 
 #endif /* VMOD_H */

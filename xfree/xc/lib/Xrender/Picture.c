@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Picture.c,v 1.8 2001/12/16 18:27:55 keithp Exp $
+ * $XFree86: xc/lib/Xrender/Picture.c,v 1.9 2002/09/26 02:56:52 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -194,6 +194,34 @@ XRenderSetPictureClipRegion (Display	    *dpy,
     UnlockDisplay(dpy);
     SyncHandle();
 }    
+
+void
+XRenderSetPictureTransform (Display	*dpy,
+			    Picture	picture,
+			    XTransform	*transform)
+{
+    XExtDisplayInfo		    *info = XRenderFindDisplay (dpy);
+    xRenderSetPictureTransformReq   *req;
+    
+    RenderSimpleCheckExtension (dpy, info);
+    LockDisplay (dpy);
+    GetReq(RenderSetPictureTransform, req);
+    req->reqType = info->codes->major_opcode;
+    req->renderReqType = X_RenderSetPictureTransform;
+    req->picture = picture;
+    req->transform.matrix11 = transform->matrix[0][0];
+    req->transform.matrix12 = transform->matrix[0][1];
+    req->transform.matrix13 = transform->matrix[0][2];
+    req->transform.matrix21 = transform->matrix[1][0];
+    req->transform.matrix22 = transform->matrix[1][1];
+    req->transform.matrix23 = transform->matrix[1][2];
+    req->transform.matrix31 = transform->matrix[2][0];
+    req->transform.matrix32 = transform->matrix[2][1];
+    req->transform.matrix33 = transform->matrix[2][2];
+    UnlockDisplay(dpy);
+    SyncHandle();
+    
+}
 
 void
 XRenderFreePicture (Display                   *dpy,

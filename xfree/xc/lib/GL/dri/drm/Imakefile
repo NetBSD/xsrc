@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/dri/drm/Imakefile,v 1.18 2001/10/04 18:28:21 alanh Exp $
+XCOMM $XFree86: xc/lib/GL/dri/drm/Imakefile,v 1.20 2002/10/30 12:51:25 alanh Exp $
 
 #if GlxUseBuiltInDRIDriver
 #define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
@@ -24,10 +24,8 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 		-I$(XF86OSSRC)/$(OS_SUBDIR)/drm/kernel \
 		-I$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel \
 		-I$(XF86OSSRC)
-         SRCS = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c \
-		xf86drmMga.c xf86drmR128.c xf86drmRadeon.c
-         OBJS = xf86drm.o xf86drmHash.o xf86drmRandom.o xf86drmSL.o \
-		xf86drmMga.o xf86drmR128.o xf86drmRadeon.o
+         SRCS = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c
+         OBJS = xf86drm.o xf86drmHash.o xf86drmRandom.o xf86drmSL.o
 
 #if defined(LinuxArchitecture)
 OS_SUBDIR = linux
@@ -43,17 +41,8 @@ LinkSourceFile(xf86drm.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 LinkSourceFile(xf86drmHash.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 LinkSourceFile(xf86drmRandom.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 LinkSourceFile(xf86drmSL.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
-LinkSourceFile(xf86drmMga.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
-LinkSourceFile(xf86drmR128.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
-LinkSourceFile(xf86drmRadeon.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 
 LinkSourceFile(drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(i810_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(i830_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(mga_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(r128_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(radeon_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
-LinkSourceFile(sis_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
 
 #include <Library.tmpl>
 

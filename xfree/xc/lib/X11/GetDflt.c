@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.19 2001/12/14 19:54:00 dawes Exp $ */
+/* $XFree86: xc/lib/X11/GetDflt.c,v 3.21 2002/05/31 18:45:41 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>
@@ -112,7 +112,9 @@ static char *GetHomeDir (dest, len)
     else
 	*dest = '\0';
 #else
+#ifdef X_NEEDS_PWPARAMS
     _Xgetpwparams pwparams;
+#endif
     struct passwd *pw;
     register char *ptr;
 
@@ -208,7 +210,7 @@ char *XGetDefault(dpy, prog, name)
 #ifdef WIN32
 	char *progname2;
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	char *progname2;
 	char *dotpos;
 #endif
@@ -222,7 +224,7 @@ char *XGetDefault(dpy, prog, name)
 	if (progname2 && (!progname || progname < progname2))
 	    progname = progname2;
 #endif
-#ifdef __EMX__  /* Very similar to WIN32 */
+#ifdef __UNIXOS2__  /* Very similar to WIN32 */
 	progname2 = strrchr (prog, '\\');
 	if (progname2 && (!progname || progname < progname2))
 	    progname = progname2;

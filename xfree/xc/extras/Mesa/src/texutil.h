@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@
 #ifndef TEXUTIL_H
 #define TEXUTIL_H
 
-#include "types.h"
+#include "mtypes.h"
 #include "texformat.h"
 
 extern GLboolean
@@ -59,29 +59,14 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
 			     const struct gl_pixelstore_attrib *packing,
 			     const GLvoid *srcImage, GLvoid *dstImage );
 
-/* Deprecated in 3.5:
- */
-extern void
-_mesa_unconvert_teximage1d( GLint mesaFormat, GLenum format, GLint width,
-			    const GLvoid *srcImage, GLvoid *dstImage );
-
-extern void
-_mesa_unconvert_teximage2d( GLint mesaFormat, GLenum format,
-			    GLint width, GLint height,
-			    const GLvoid *srcImage, GLvoid *dstImage );
-
-extern void
-_mesa_unconvert_teximage3d( GLint mesaFormat, GLenum format,
-			    GLint width, GLint height, GLint depth,
-			    const GLvoid *srcImage, GLvoid *dstImage );
-
 /* Nearest filtering only (for broken hardware that can't support
  * all aspect ratios).  FIXME: Make this a subimage update as well...
  */
 extern void
-_mesa_rescale_teximage2d( GLint texelBytes,
+_mesa_rescale_teximage2d( GLuint bytesPerPixel, GLuint dstRowStride,
 			  GLint srcWidth, GLint srcHeight,
 			  GLint dstWidth, GLint dstHeight,
 			  const GLvoid *srcImage, GLvoid *dstImage );
+
 
 #endif

@@ -30,7 +30,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/X11/imLcPrs.c,v 1.7 2001/10/28 03:32:34 tsi Exp $ */
+/* $XFree86: xc/lib/X11/imLcPrs.c,v 1.8 2003/01/15 02:59:33 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xmd.h>
@@ -518,13 +518,13 @@ _XimParseStringFile(fp, ptop)
     FILE *fp;
     DefTree **ptop;
 {
-    char tb[65535];
+    char tb[8192];
     char* tbp;
     struct stat st;
 
     if (fstat (fileno (fp), &st) != -1) {
 	unsigned long size = (unsigned long) st.st_size;
-	if (size < sizeof tb) tbp = tb;
+	if (size <= sizeof tb) tbp = tb;
 	else tbp = malloc (size);
 
 	if (tbp != NULL) {

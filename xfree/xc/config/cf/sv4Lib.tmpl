@@ -4,7 +4,7 @@ XCOMM $Xorg: sv4Lib.tmpl,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
  * SVR4 shared library template
  */
 
-XCOMM $XFree86: xc/config/cf/sv4Lib.tmpl,v 3.5 2001/01/17 16:38:50 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sv4Lib.tmpl,v 3.6 2002/11/22 22:55:56 tsi Exp $
 
 /* SVR4 shared libraries are deficient in link semantics */
 XMULIBONLY = -lXmu
@@ -75,3 +75,11 @@ DYNLIBSYSLIB = -ldl
 # define IafSysLib	-liaf
 #endif
 IAFSYSLIB = IafSysLib
+
+#ifndef SharedGLUReqs
+# if HasGcc2ForCplusplus
+#  define SharedGLUReqs $(LDPRELIBS) $(XLIB) $(GLXLIB) -lstdc++
+# else
+#  define SharedGLUReqs $(LDPRELIBS) $(XLIB) $(GLXLIB)
+# endif
+#endif

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: util.c /main/42 1996/01/14 16:51:55 kaleb $
- * $XFree86: xc/programs/xmh/util.c,v 3.6 2001/10/31 22:50:31 tsi Exp $
+ * $XFree86: xc/programs/xmh/util.c,v 3.7 2002/04/05 21:06:29 dickey Exp $
  *
  *
  *			  COPYRIGHT 1987
@@ -39,8 +39,7 @@
 #define abs(x)		((x) < 0 ? (-(x)) : (x))
 #endif
 
-static char *SysErrorMsg (n)
-    int n;
+static char *SysErrorMsg (int n)
 {
     char *s = strerror(n);
 
@@ -49,8 +48,7 @@ static char *SysErrorMsg (n)
 
 /* Something went wrong; panic and quit. */
 
-void Punt(str)
-  char *str;
+void Punt(char *str)
 {
     (void) fprintf( stderr, "%s: %s\nerrno = %d; %s\007\n",
 		    progName, str, errno, SysErrorMsg(errno) );
@@ -67,9 +65,7 @@ void Punt(str)
 }
 
 
-int myopen(path, flags, mode)
-char *path;
-int flags, mode;
+int myopen(char *path, int flags, int mode)
 {
     int fid;
     fid = open(path, flags, mode);
@@ -78,8 +74,7 @@ int flags, mode;
 }
 
 
-FILE *myfopen(path, mode)
-char *path, *mode;
+FILE *myfopen(char *path, char *mode)
 {
     FILE *result;
     result = fopen(path, mode);
@@ -89,15 +84,14 @@ char *path, *mode;
 
 
 
-void myclose(fid)
+void myclose(int fid)
 {
     if (close(fid) < 0) Punt("Error in myclose!");
     DEBUG1( "# %d : <Closed>\n", fid)
 }
 
 
-void myfclose(file)
-FILE *file;
+void myfclose(FILE *file)
 {
     int fid = fileno(file);
     if (fclose(file) < 0) Punt("Error in myfclose!");
@@ -108,7 +102,7 @@ FILE *file;
 
 /* Return a unique file name. */
 
-char *MakeNewTempFileName()
+char *MakeNewTempFileName(void)
 {
     static char name[60];
     static int  uniqueid = 0;
@@ -122,8 +116,7 @@ char *MakeNewTempFileName()
 
 /* Make an array of string pointers big enough to hold n+1 entries. */
 
-char **MakeArgv(n)
-  int n;
+char **MakeArgv(int n)
 {
     char **result;
     result = ((char **) XtMalloc((unsigned) (n+1) * sizeof(char *)));
@@ -132,9 +125,7 @@ char **MakeArgv(n)
 }
 
 
-char **ResizeArgv(argv, n)
-  char **argv;
-  int n;
+char **ResizeArgv(char **argv, int n)
 {
     argv = ((char **) XtRealloc((char *) argv, (unsigned) (n+1) * sizeof(char *)));
     argv[n] = 0;
@@ -143,8 +134,7 @@ char **ResizeArgv(argv, n)
 
 /* Open a file, and punt if we can't. */
 
-FILEPTR FOpenAndCheck(name, mode)
-  char *name, *mode;
+FILEPTR FOpenAndCheck(char *name, char *mode)
 {
     FILEPTR result;
     result = myfopen(name, mode);
@@ -160,9 +150,7 @@ FILEPTR FOpenAndCheck(name, mode)
 
 /* Read one line from a file. */
 
-static char *DoReadLine(fid, lastchar)
-  FILEPTR fid;
-  char lastchar;
+static char *DoReadLine(FILEPTR fid, char lastchar)
 {
     static char *buf;
     static int  maxlength = 0;
@@ -190,8 +178,7 @@ static char *DoReadLine(fid, lastchar)
 }
 
 
-char *ReadLine(fid)
-  FILEPTR fid;
+char *ReadLine(FILEPTR fid)
 {
     return DoReadLine(fid, 0);
 }
@@ -199,8 +186,7 @@ char *ReadLine(fid)
 
 /* Read a line, and keep the CR at the end. */
 
-char *ReadLineWithCR(fid)
-  FILEPTR fid;
+char *ReadLineWithCR(FILEPTR fid)
 {
     return DoReadLine(fid, '\n');
 }
@@ -209,8 +195,7 @@ char *ReadLineWithCR(fid)
 
 /* Delete a file, and Punt if it fails. */
 
-void DeleteFileAndCheck(name)
-  char *name;
+void DeleteFileAndCheck(char *name)
 {
     if (strcmp(name, "/dev/null") != 0 && unlink(name) == -1) {
 	char str[500];
@@ -220,8 +205,7 @@ void DeleteFileAndCheck(name)
     }
 }
 
-void CopyFileAndCheck(from, to)
-  char *from, *to;
+void CopyFileAndCheck(char *from, char *to)
 {
     int fromfid, tofid, n;
     char buf[512];
@@ -241,8 +225,7 @@ void CopyFileAndCheck(from, to)
 }
 
 
-void RenameAndCheck(from, to)
-  char *from, *to;
+void RenameAndCheck(char *from, char *to)
 {
     if (rename(from, to) == -1) {
 	if (errno != EXDEV) {
@@ -257,9 +240,7 @@ void RenameAndCheck(from, to)
 }
 
 
-char *CreateGeometry(gbits, x, y, width, height)
-  int gbits;
-  int x, y, width, height;
+char *CreateGeometry(int gbits, int x, int y, int width, int height)
 {
     char   *result, str1[10], str2[10], str3[10], str4[10];
     if (gbits & WidthValue)
@@ -283,46 +264,38 @@ char *CreateGeometry(gbits, x, y, width, height)
     return result;
 }
 
-int FileExists(file)
-  char *file;
+int FileExists(char *file)
 {
     return (access(file, F_OK) == 0);
 }
 
-long LastModifyDate(file)
-  char *file;
+long LastModifyDate(char *file)
 {
     struct stat buf;
     if (stat(file, &buf)) return -1;
     return buf.st_mtime;
 }
 
-int GetFileLength(file)
-char *file;
+int GetFileLength(char *file)
 {
     struct stat buf;
     if (stat(file, &buf)) return -1;
     return buf.st_size;
 }
 
-Boolean	IsSubfolder(foldername)
-    char	*foldername;
+Boolean IsSubfolder(char *foldername)
 {
     return (strchr(foldername, '/')) ? True : False;
 }
 
-void SetCurrentFolderName(scrn, foldername)
-    Scrn	scrn;
-    char	*foldername;
+void SetCurrentFolderName(Scrn scrn, char *foldername)
 {
     scrn->curfolder = foldername;
     ChangeLabel((Widget) scrn->folderlabel, foldername);
 }
 
 
-void ChangeLabel(widget, str)
-Widget widget;
-char *str;
+void ChangeLabel(Widget widget, char *str)
 {
     static Arg arglist[] = {{XtNlabel, (XtArgVal)NULL}};
     arglist[0].value = (XtArgVal) str;
@@ -330,11 +303,11 @@ char *str;
 }
 
 
-Widget CreateTextSW(scrn, name, args, num_args)
-Scrn scrn;
-char *name;
-ArgList	args;
-Cardinal num_args;
+Widget CreateTextSW(
+    Scrn scrn,
+    char *name,
+    ArgList args,
+    Cardinal num_args)
 {
     /* most text widget options are set in the application defaults file */
 
@@ -343,9 +316,7 @@ Cardinal num_args;
 }
 
 
-Widget CreateTitleBar(scrn, name)
-Scrn scrn;
-char *name;
+Widget CreateTitleBar(Scrn scrn, char *name)
 {
     Widget result;
     int height;
@@ -360,10 +331,7 @@ char *name;
     return result;
 }
 
-void Feep(type,volume,win)
-    int		type;
-    int		volume;
-    Window	win;
+void Feep(int type, int volume, Window win)
 {
 #ifdef XKB
     XkbStdBell(theDisplay, win, volume, type);
@@ -373,8 +341,7 @@ void Feep(type,volume,win)
 }
 
 
-MsgList CurMsgListOrCurMsg(toc)
-  Toc toc;
+MsgList CurMsgListOrCurMsg(Toc toc)
 {
     MsgList result;
     Msg curmsg;
@@ -387,8 +354,7 @@ MsgList CurMsgListOrCurMsg(toc)
 }
 
 
-int GetHeight(w)
-   Widget w;
+int GetHeight(Widget w)
 {
     Dimension height;
     Arg args[1];
@@ -399,8 +365,7 @@ int GetHeight(w)
 }
 
 
-int GetWidth(w)
-   Widget w;
+int GetWidth(Widget w)
 {
     Dimension width;
     Arg args[1];
@@ -411,8 +376,7 @@ int GetWidth(w)
 }
 
 
-Toc SelectedToc(scrn)
-Scrn scrn;
+Toc SelectedToc(Scrn scrn)
 {
     Toc	toc;
 
@@ -424,8 +388,7 @@ Scrn scrn;
 }
 
 
-Toc CurrentToc(scrn)
-    Scrn	scrn;
+Toc CurrentToc(Scrn scrn)
 {
     /* return the toc currently being viewed */
 
@@ -433,9 +396,7 @@ Toc CurrentToc(scrn)
 }
 
 
-int strncmpIgnoringCase(str1, str2, length)
-char *str1, *str2;
-int length;
+int strncmpIgnoringCase(char *str1, char *str2, int length)
 {
     int i, diff;
     for (i=0 ; i<length ; i++, str1++, str2++) {
@@ -447,9 +408,7 @@ int length;
 }
 
 
-void StoreWindowName(scrn, str)
-Scrn scrn;
-char *str;
+void StoreWindowName(Scrn scrn, char *str)
 {
     static Arg arglist[] = {
 	{XtNiconName,	(XtArgVal) NULL},
@@ -462,8 +421,7 @@ char *str;
 
 /* Create an input-only window with a busy-wait cursor. */
 
-void InitBusyCursor(scrn)
-    Scrn	scrn;
+void InitBusyCursor(Scrn scrn)
 {
     unsigned long		valuemask;
     XSetWindowAttributes	attributes;
@@ -490,7 +448,7 @@ void InitBusyCursor(scrn)
 		      InputOnly, CopyFromParent, valuemask, &attributes);
 }
 
-void ShowBusyCursor()
+void ShowBusyCursor(void)
 {
     register int	i;
 
@@ -499,7 +457,7 @@ void ShowBusyCursor()
 	    XMapWindow(theDisplay, scrnList[i]->wait_window);
 }
 
-void UnshowBusyCursor()
+void UnshowBusyCursor(void)
 {
     register int	i;
     
@@ -509,10 +467,10 @@ void UnshowBusyCursor()
 }
 
 
-void SetCursorColor(widget, cursor, foreground)
-    Widget		widget;
-    Cursor		cursor;
-    unsigned long	foreground;
+void SetCursorColor(
+    Widget		widget,
+    Cursor		cursor,
+    unsigned long	foreground)
 {
     XColor	colors[2];
     Arg		args[2];
@@ -525,4 +483,3 @@ void SetCursorColor(widget, cursor, foreground)
     XQueryColors(XtDisplay(widget), cmap, colors, 2);
     XRecolorCursor(XtDisplay(widget), cursor, &colors[0], &colors[1]);
 }
-

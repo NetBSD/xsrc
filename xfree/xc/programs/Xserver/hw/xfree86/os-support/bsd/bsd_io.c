@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.19 2001/11/08 21:49:44 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.23 2002/10/21 20:38:04 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -34,9 +34,17 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
+#ifdef WSCONS_SUPPORT
+#define KBD_FD(i) ((i).kbdFd != -1 ? (i).kbdFd : (i).consoleFd)
+#endif
+
 void
 xf86SoundKbdBell(int loudness, int pitch, int duration)
 {
+#ifdef WSCONS_SUPPORT
+	struct wskbd_bell_data wsb;
+#endif
+
     	if (loudness && pitch)
 	{
 #ifdef PCCONS_SUPPORT
@@ -60,6 +68,16 @@ xf86SoundKbdBell(int loudness, int pitch, int duration)
 			      (((unsigned long)duration*loudness/50)<<16));
 			break;
 #endif
+#if defined (WSCONS_SUPPORT)
+		case WSCONS:
+			wsb.which = WSKBD_BELL_DOALL;
+			wsb.pitch = pitch;
+			wsb.period = duration;
+			wsb.volume = loudness;
+			ioctl(KBD_FD(xf86Info), WSKBDIO_COMPLEXBELL, 
+				      &wsb);
+			break;
+#endif
 	    	}
 	}
 }
@@ -75,6 +93,11 @@ xf86SetKbdLeds(int leds)
 	case SYSCONS:
 	case PCVT:
 		ioctl(xf86Info.consoleFd, KDSETLED, leds);
+		break;
+#endif
+#if defined(WSCONS_SUPPORT)
+	case WSCONS:
+		ioctl(KBD_FD(xf86Info), WSKBDIO_SETLEDS, &leds);
 		break;
 #endif
 	}
@@ -94,6 +117,11 @@ xf86GetKbdLeds()
 	case PCVT:
 		ioctl(xf86Info.consoleFd, KDGETLED, &leds);
 		break;
+#endif
+#if defined(WSCONS_SUPPORT)
+	  case WSCONS:
+		  ioctl(KBD_FD(xf86Info), WSKBDIO_GETLEDS, &leds);
+		  break;
 #endif
 	}
 	return(leds);
@@ -115,7 +143,9 @@ xf86SetKbdRepeat(char rad)
 	}
 }
 
+#if defined(SYSCONS_SUPPORT) || defined(PCCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 static struct termio kbdtty;
+#endif
 
 void
 xf86KbdInit()
@@ -131,7 +161,10 @@ xf86KbdInit()
 #endif
 #if defined WSCONS_SUPPORT
 	case WSCONS:
-		xf86FlushInput(xf86Info.kbdFd);
+		if (xf86Info.kbdFd != -1) 
+			xf86FlushInput(xf86Info.kbdFd);
+		else
+			tcgetattr(xf86Info.consoleFd, &kbdtty);
 		break;
 #endif
 	}
@@ -141,6 +174,10 @@ int
 xf86KbdOn()
 {
 	struct termios nTty;
+#ifdef WSCONS_SUPPORT
+	int option;
+#endif
+
 
 	switch (xf86Info.consType) {
 
@@ -166,7 +203,29 @@ xf86KbdOn()
 #endif
 #ifdef WSCONS_SUPPORT
 	case WSCONS:
-		return xf86Info.kbdFd;
+		if (xf86Info.kbdFd == -1) {
+			nTty = kbdtty;
+			nTty.c_iflag = IGNPAR | IGNBRK;
+			nTty.c_oflag = 0;
+			nTty.c_cflag = CREAD | CS8;
+			nTty.c_lflag = 0;
+			nTty.c_cc[VTIME] = 0;
+			nTty.c_cc[VMIN] = 1;
+			cfsetispeed(&nTty, 9600);
+			cfsetospeed(&nTty, 9600);
+			tcsetattr(xf86Info.consoleFd, TCSANOW, &nTty);
+			option = WSKBD_RAW;
+			if (ioctl(xf86Info.consoleFd, WSKBDIO_SETMODE,
+					&option) == -1)
+				FatalError("can't switch keyboard to raw mode. "
+					"Enable support for it in the kernel\n"
+					"or use for example:\n\n"
+					"Option \"Protocol\" \"wskbd\"\n"
+					"Option \"Device\" \"/dev/wskbd0\"\n"
+					"\nin your XF86Config(5) file\n");
+		} else {
+			return xf86Info.kbdFd;
+		}
 #endif
 	}
 	return(xf86Info.consoleFd);
@@ -175,6 +234,10 @@ xf86KbdOn()
 int
 xf86KbdOff()
 {
+#ifdef WSCONS_SUPPORT
+	int option;
+#endif
+
 	switch (xf86Info.consType) {
 
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
@@ -188,7 +251,18 @@ xf86KbdOff()
 		tcsetattr(xf86Info.consoleFd, TCSANOW, &kbdtty);
 		break;
 #endif
-	}
+#ifdef WSCONS_SUPPORT
+	case WSCONS:
+		if (xf86Info.kbdFd != -1) {
+			return xf86Info.kbdFd;
+		} else {
+			option = WSKBD_TRANSLATED;
+			ioctl(xf86Info.consoleFd, WSKBDIO_SETMODE, &option);
+			tcsetattr(xf86Info.consoleFd, TCSANOW, &kbdtty);
+		}
+		break;
+#endif
+	}	
 	return(xf86Info.consoleFd);
 }
 

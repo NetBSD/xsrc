@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.16 2001/07/25 15:05:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.17 2002/05/31 18:46:04 dawes Exp $ */
 
 /*
  *  Functions to manipulate card database.
@@ -54,7 +54,7 @@ getnextline(FILE *f, char *l)
 {
 	if (fgets(l, 128, f) == NULL)
 		return -1;
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	{
 		char *p = strchr(l,'\r');
 		if (p) {
@@ -107,7 +107,7 @@ int parse_database() {
 	int i, lineno;
 	char filename[128];
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	strcpy(filename, CARD_DATABASE_FILE);
 #else
 	strcpy(filename, (char*)__XOS2RedirRoot(CARD_DATABASE_FILE));

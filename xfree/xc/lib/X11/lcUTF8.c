@@ -24,7 +24,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.14 2001/11/16 00:52:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.15 2002/10/08 23:31:36 dawes Exp $ */
 
 /*
  * This file contains:
@@ -183,6 +183,7 @@ typedef struct _Utf8ConvRec {
 #include "lcUniConv/iso8859_8.h"
 #include "lcUniConv/iso8859_9.h"
 #include "lcUniConv/iso8859_10.h"
+#include "lcUniConv/iso8859_11.h"
 #include "lcUniConv/iso8859_13.h"
 #include "lcUniConv/iso8859_14.h"
 #include "lcUniConv/iso8859_15.h"
@@ -253,6 +254,9 @@ static Utf8ConvRec all_charsets[] = {
     },
     { "ISO8859-10", NULLQUARK,
 	iso8859_10_mbtowc, iso8859_10_wctomb
+    },
+    { "ISO8859-11", NULLQUARK,
+	iso8859_11_mbtowc, iso8859_11_wctomb
     },
     { "ISO8859-13", NULLQUARK,
 	iso8859_13_mbtowc, iso8859_13_wctomb

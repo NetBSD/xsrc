@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.32 2001/07/23 13:15:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.35 2003/02/13 10:49:38 eich Exp $ */
 /* $XConsortium: xf86Cursor.c /main/10 1996/10/19 17:58:23 kaleb $ */
 
 #define NEED_EVENTS
@@ -165,13 +165,83 @@ xf86LockZoom(ScreenPtr pScreen, Bool lock)
   XF86SCRNINFO(pScreen)->zoomLocked = lock;
 }
 
+/*
+ * xf86SwitchMode --
+ *	This is called by both keyboard processing and the VidMode extension to
+ *	set a new mode.
+ */
+
 Bool
-xf86ZoomLocked(ScreenPtr pScreen)
+xf86SwitchMode(ScreenPtr pScreen, DisplayModePtr mode)
 {
-  if (xf86Info.dontZoom || XF86SCRNINFO(pScreen)->zoomLocked)
-    return TRUE;
-  else
+  ScrnInfoPtr pScr = XF86SCRNINFO(pScreen);
+  ScreenPtr   pCursorScreen;
+  Bool        Switched;
+  int         px, py;
+
+  if (!pScr->vtSema || !mode || !pScr->SwitchMode)
     return FALSE;
+
+#ifdef XFreeXDGA
+  if (DGAActive(pScr->scrnIndex))
+    return FALSE;
+#endif
+
+  if (mode == pScr->currentMode)
+    return TRUE;
+
+  if (mode->HDisplay > pScreen->width || mode->VDisplay > pScreen->height)
+    return FALSE;
+
+  pCursorScreen = miPointerCurrentScreen();
+  if (pScreen == pCursorScreen)
+    miPointerPosition(&px, &py);
+
+  xf86EnterServerState(SETUP);
+  Switched = (*pScr->SwitchMode)(pScr->scrnIndex, mode, 0);
+  xf86EnterServerState(OPERATING);
+  if (Switched) {
+    pScr->currentMode = mode;
+
+    /*
+     * Adjust frame for new display size.
+     */
+    if (pScreen == pCursorScreen)
+      pScr->frameX0 = px - (mode->HDisplay / 2) + 1;
+    else
+      pScr->frameX0 = (pScr->frameX0 + pScr->frameX1 + 1 - mode->HDisplay) / 2;
+
+    if (pScr->frameX0 < 0)
+      pScr->frameX0 = 0;
+
+    pScr->frameX1 = pScr->frameX0 + mode->HDisplay - 1;
+    if (pScr->frameX1 >= pScr->virtualX) {
+      pScr->frameX0 = pScr->virtualX - mode->HDisplay;
+      pScr->frameX1 = pScr->virtualX - 1;
+    }
+
+    if (pScreen == pCursorScreen)
+      pScr->frameY0 = py - (mode->VDisplay / 2) + 1;
+    else
+      pScr->frameY0 = (pScr->frameY0 + pScr->frameY1 + 1 - mode->VDisplay) / 2;
+
+    if (pScr->frameY0 < 0)
+      pScr->frameY0 = 0;
+
+    pScr->frameY1 = pScr->frameY0 + mode->VDisplay - 1;
+    if (pScr->frameY1 >= pScr->virtualY) {
+      pScr->frameY0 = pScr->virtualY - mode->VDisplay;
+      pScr->frameY1 = pScr->virtualY - 1;
+    }
+  }
+
+  if (pScr->AdjustFrame)
+    (*pScr->AdjustFrame)(pScr->scrnIndex, pScr->frameX0, pScr->frameY0, 0);
+
+  if (pScreen == pCursorScreen)
+    xf86WarpCursor(pScreen, px, py);
+
+  return Switched;
 }
     
 /*
@@ -180,79 +250,23 @@ xf86ZoomLocked(ScreenPtr pScreen)
  */
 
 void
-xf86ZoomViewport (ScreenPtr pScreen, int zoom)
+xf86ZoomViewport(ScreenPtr pScreen, int zoom)
 {
-  ScrnInfoPtr pScr = XF86SCRNINFO(pScreen);
-  ScreenPtr   pCursorScreen;
-  Bool        tmp;
-  int         px, py;
-  
-  if (pScr->zoomLocked)
+  ScrnInfoPtr    pScr = XF86SCRNINFO(pScreen);
+  DisplayModePtr mode;
+
+  if (pScr->zoomLocked || !(mode = pScr->currentMode))
     return;
 
-#ifdef XFreeXDGA
-  if (DGAActive(pScr->scrnIndex))
-    return;
-#endif
+  do {
+    if (zoom > 0)
+      mode = mode->next;
+    else
+      mode = mode->prev;
+  } while (mode != pScr->currentMode && !(mode->type & M_T_USERDEF));
 
-  pCursorScreen = miPointerCurrentScreen();
-  if (pScreen == pCursorScreen)
-    miPointerPosition(&px, &py);
-
-  if (pScr->SwitchMode != NULL &&
-      pScr->currentMode != pScr->currentMode->next) {
-    pScr->currentMode = zoom > 0 ? pScr->currentMode->next
-				 : pScr->currentMode->prev;
-
-    xf86EnterServerState(SETUP);
-    tmp = (*pScr->SwitchMode)(pScr->scrnIndex, pScr->currentMode, 0);
-    xf86EnterServerState(OPERATING);
-    if (tmp) {
-      /* 
-       * adjust new frame for the displaysize
-       */
-      if (pScreen == pCursorScreen)
-	pScr->frameX0 = px - (pScr->currentMode->HDisplay / 2) + 1;
-      else
-	pScr->frameX0 = (pScr->frameX1 + pScr->frameX0 + 1 -
-			 pScr->currentMode->HDisplay) / 2;
-      pScr->frameX1 = pScr->frameX0 + pScr->currentMode->HDisplay - 1;
-
-      if (pScr->frameX0 < 0) {
-	  pScr->frameX0 = 0;
-	  pScr->frameX1 = pScr->currentMode->HDisplay - 1;
-      } else if (pScr->frameX1 >= pScr->virtualX) {
-	  pScr->frameX0 = pScr->virtualX - pScr->currentMode->HDisplay;
-	  pScr->frameX1 = pScr->virtualX - 1;
-      }
-      
-      if (pScreen == pCursorScreen)
-	pScr->frameY0 = py - (pScr->currentMode->VDisplay / 2) + 1;
-      else
-	pScr->frameY0 = (pScr->frameY1 + pScr->frameY0 + 1 -
-			 pScr->currentMode->VDisplay) / 2;
-      pScr->frameY1 = pScr->frameY0 + pScr->currentMode->VDisplay - 1;
-
-      if (pScr->frameY0 < 0) {
-	  pScr->frameY0 = 0;
-	  pScr->frameY1 = pScr->currentMode->VDisplay - 1;
-      } else if (pScr->frameY1 >= pScr->virtualY) {
-	  pScr->frameY0 = pScr->virtualY - pScr->currentMode->VDisplay;
-	  pScr->frameY1 = pScr->virtualY - 1;
-      }
-    }
-    else /* switch failed, so go back to old mode */
-      pScr->currentMode = zoom > 0 ? pScr->currentMode->prev
-				   : pScr->currentMode->next;
-  }
-
-  if (pScr->AdjustFrame != NULL)
-    (*pScr->AdjustFrame)(pScr->scrnIndex, pScr->frameX0, pScr->frameY0, 0);
-
-  if (pScreen == pCursorScreen)
-    xf86WarpCursor(pScreen, px, py);
+  (void)xf86SwitchMode(pScreen, mode);
 }
-
 
 
 static xf86EdgePtr
@@ -717,3 +731,22 @@ xf86InitOrigins(void)
 	}
     }
 }
+
+void
+xf86ReconfigureLayout(void)
+{
+    int i;
+
+    for (i = 0; i < MAXSCREENS; i++) {
+	xf86ScreenLayoutPtr sl = &xf86ScreenLayout[i];
+	/* we don't have to zero these, xf86InitOrigins() takes care of that */
+	if (sl->left) xfree(sl->left);
+	if (sl->right) xfree(sl->right);
+	if (sl->up) xfree(sl->up);
+	if (sl->down) xfree(sl->down);
+    }
+
+    xf86InitOrigins();
+}
+
+	

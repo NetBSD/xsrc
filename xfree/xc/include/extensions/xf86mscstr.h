@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.10 2001/08/15 16:25:20 paulo Exp $ */
+/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.12 2002/11/20 04:04:56 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -14,7 +14,7 @@
 #define XF86MISCNAME		"XFree86-Misc"
 
 #define XF86MISC_MAJOR_VERSION	0	/* current version numbers */
-#define XF86MISC_MINOR_VERSION	5
+#define XF86MISC_MINOR_VERSION	7
 
 typedef struct _XF86MiscQueryVersion {
     CARD8	reqType;		/* always XF86MiscReqCode */
@@ -134,7 +134,7 @@ typedef struct _XF86MiscSetMouseSettings {
     CARD32	buttons B32;
     BOOL	emulate3buttons;
     BOOL	chordmiddle;
-    CARD16	pad2 B16;
+    CARD16	devnamelen B16;
     CARD32	emulate3timeout B32;
     CARD32	flags B32;
 } xXF86MiscSetMouseSettingsReq;
@@ -176,5 +176,37 @@ typedef struct {
     CARD32	pad6 B32;
 } xXF86MiscSetGrabKeysStateReply;
 #define sz_xXF86MiscSetGrabKeysStateReply	32
+
+typedef struct _XF86MiscSetClientVersion {
+    CARD8	reqType;		/* always XF86MiscReqCode */
+    CARD8	xf86miscReqType;
+    CARD16	length B16;
+    CARD16	major B16;
+    CARD16	minor B16;
+} xXF86MiscSetClientVersionReq;
+#define sz_xXF86MiscSetClientVersionReq	8
+
+typedef struct _XF86MiscGetFilePaths {
+    CARD8	reqType;		/* always XF86MiscReqCode */
+    CARD8	xf86miscReqType;	/* always X_XF86MiscGetFilePaths */
+    CARD16	length B16;
+} xXF86MiscGetFilePathsReq;
+#define sz_xXF86MiscGetFilePathsReq	4
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    BOOL	pad1;
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD16	configlen B16;
+    CARD16	modulelen B16;
+    CARD16	loglen B16;
+    CARD16	pad2 B16;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xXF86MiscGetFilePathsReply;
+#define sz_xXF86MiscGetFilePathsReply	32
 
 #endif /* _XF86MISCSTR_H_ */

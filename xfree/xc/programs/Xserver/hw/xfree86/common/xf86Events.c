@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.124 2001/11/30 12:11:54 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.146 2003/02/20 04:20:52 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -26,6 +26,7 @@
 /* [JCH-96/01/21] Extended std reverse map to four buttons. */
 
 #include "X.h"
+#include "Xpoll.h"
 #include "Xproto.h"
 #include "misc.h"
 
@@ -35,7 +36,6 @@
 #include "xf86Priv.h"
 #define XF86_OS_PRIVS
 #include "xf86_OSlib.h"
-#include "Xpoll.h"
 #include "atKeynames.h"
 
 
@@ -46,11 +46,12 @@
 #ifdef XINPUT
 #include "XI.h"
 #include "XIproto.h"
-#include "xf86Xinput.h"
 #else
 #include "inputstr.h"
 #endif
+#include "xf86Xinput.h"
 
+#include "mi.h"
 #include "mipointer.h"
 
 #ifdef XF86BIGFONT
@@ -103,13 +104,13 @@ extern void  XTestStealMotionData();
 #endif
 
 /*
- * The first of many hack's to get VT switching to work under
+ * The first of many hacks to get VT switching to work under
  * Solaris 2.1 for x86. The basic problem is that Solaris is supposed
  * to be SVR4. It is for the most part, except where the video interface
  * is concerned.  These hacks work around those problems.
- * See the comments for Linux, and SCO. 
+ * See the comments for Linux, and SCO.
  *
- * This is a toggleling variable:
+ * This is a toggling variable:
  *  FALSE = No VT switching keys have been pressed last time around
  *  TRUE  = Possible VT switch Pending
  * (DWH - 12/2/93)
@@ -118,9 +119,9 @@ extern void  XTestStealMotionData();
  */
 
 #ifdef USE_VT_SYSREQ
-static Bool VTSysreqToggle = FALSE;
+Bool VTSysreqToggle = FALSE;
 #endif /* !USE_VT_SYSREQ */
-static Bool VTSwitchEnabled = TRUE;   /* Allows run-time disabling for
+Bool VTSwitchEnabled = TRUE;		/* Allows run-time disabling for
                                          *BSD and for avoiding VT
                                          switches when using the DRI
                                          automatic full screen mode.*/
@@ -253,6 +254,103 @@ xf86GrabServerCallback(CallbackListPtr *callbacks, pointer data, pointer args)
 }
 
 /*
+ * Handle keyboard events that cause some kind of "action"
+ * (i.e., server termination, video mode changes, VT switches, etc.)
+ */
+void
+xf86ProcessActionEvent(ActionEvent action, void *arg)
+{
+#ifdef DEBUG
+    ErrorF("ProcessActionEvent(%d,%x)\n", (int) action, arg);
+#endif
+    switch (action) {
+    case ACTION_TERMINATE:
+	if (!xf86Info.dontZap) {
+#ifdef XFreeXDGA
+	    DGAShutdown();
+#endif
+	    GiveUp(0);
+	}
+	break;
+    case ACTION_NEXT_MODE:
+	if (!xf86Info.dontZoom)
+	    xf86ZoomViewport(xf86Info.currentScreen,  1);
+	break;
+    case ACTION_PREV_MODE:
+	if (!xf86Info.dontZoom)
+	    xf86ZoomViewport(xf86Info.currentScreen, -1);
+	break;
+    case ACTION_DISABLEGRAB:
+	if (!xf86Info.grabInfo.disabled && xf86Info.grabInfo.allowDeactivate) {
+	  if (inputInfo.pointer && inputInfo.pointer->grab != NULL &&
+	      inputInfo.pointer->DeactivateGrab)
+	    inputInfo.pointer->DeactivateGrab(inputInfo.pointer);
+	  if (inputInfo.keyboard && inputInfo.keyboard->grab != NULL &&
+	      inputInfo.keyboard->DeactivateGrab)
+	    inputInfo.keyboard->DeactivateGrab(inputInfo.keyboard);
+	}
+	break;
+    case ACTION_CLOSECLIENT:
+	if (!xf86Info.grabInfo.disabled && xf86Info.grabInfo.allowClosedown) {
+	  ClientPtr pointer, keyboard, server;
+
+	  pointer = keyboard = server = NULL;
+	  if (inputInfo.pointer && inputInfo.pointer->grab != NULL)
+	    pointer = clients[CLIENT_ID(inputInfo.pointer->grab->resource)];
+	  if (inputInfo.keyboard && inputInfo.keyboard->grab != NULL) {
+	    keyboard = clients[CLIENT_ID(inputInfo.keyboard->grab->resource)];
+	    if (keyboard == pointer)
+	      keyboard = NULL;
+	  }
+	  if ((xf86Info.grabInfo.server.grabstate == SERVER_GRABBED) &&
+	      (((server = xf86Info.grabInfo.server.client) == pointer) ||
+	       (server == keyboard)))
+	      server = NULL;
+
+	  if (pointer)
+	    CloseDownClient(pointer);
+	  if (keyboard)
+	    CloseDownClient(keyboard);
+	  if (server)
+	    CloseDownClient(server);
+	}
+	break;
+#if !defined(__SOL8__) && (!defined(sun) || defined(i386))
+    case ACTION_SWITCHSCREEN:
+	if (VTSwitchEnabled && !xf86Info.dontVTSwitch && arg) {
+	    int vtno = *((int *) arg);
+#if defined(QNX4)
+	    xf86Info.vtRequestsPending = vtno;
+#else
+	    if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, vtno) < 0)
+		ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+#endif
+	}
+	break;
+    case ACTION_SWITCHSCREEN_NEXT:
+	if (VTSwitchEnabled && !xf86Info.dontVTSwitch) {
+	    if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno + 1) < 0)
+#if defined(SCO) || (defined(sun) && defined (i386) && defined (SVR4))
+		if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 0) < 0)
+#else
+		if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 1) < 0)
+#endif
+		    ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	}
+	break;
+    case ACTION_SWITCHSCREEN_PREV:
+	if (VTSwitchEnabled && !xf86Info.dontVTSwitch) {
+	    if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno - 1) < 0)
+		ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	}
+	break;
+#endif
+    default:
+	break;
+    }
+}
+
+/*
  * xf86PostKbdEvent --
  *	Translate the raw hardware KbdEvent into an XEvent, and tell DIX
  *	about it. Scancode preprocessing and so on is done ...
@@ -266,7 +364,7 @@ xf86GrabServerCallback(CallbackListPtr *callbacks, pointer data, pointer args)
 extern u_char SpecialServerMap[];
 #endif
 
-#if !defined(__EMX__) && \
+#if !defined(__UNIXOS2__) && \
     !defined(__SOL8__) && \
     (!defined(sun) || defined(i386)) 
 void
@@ -289,6 +387,9 @@ xf86PostKbdEvent(unsigned key)
 #if defined(__sparc__)
   static int  kbdSun = -1;
 #endif
+  /* Disable any keyboard processing while in suspend */
+  if (xf86inSuspend)
+      return;
 
 #if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
   if (first_time)
@@ -347,7 +448,11 @@ xf86PostKbdEvent(unsigned key)
     case KEY_Prefix1:
 #if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
       if (xf86Info.consType == PCCONS || xf86Info.consType == SYSCONS
-	  || xf86Info.consType == PCVT) {
+	  || xf86Info.consType == PCVT
+#ifdef WSCONS_SUPPORT
+	  || (xf86Info.consType == WSCONS && xf86Info.kbdEvents != xf86WSKbdEvents)
+#endif
+      ) {
 #endif
         xf86Info.scanPrefix = scanCode;  /* special prefixes */
         return;
@@ -361,7 +466,12 @@ xf86PostKbdEvent(unsigned key)
   else if (
 #ifdef CSRG_BASED
            (xf86Info.consType == PCCONS || xf86Info.consType == SYSCONS
-	    || xf86Info.consType == PCVT) &&
+	    || xf86Info.consType == PCVT
+#ifdef WSCONS_SUPPORT
+	      || (xf86Info.consType == WSCONS && xf86Info.kbdEvents !=
+	      xf86WSKbdEvents)
+#endif
+	      ) &&
 #endif
            (xf86Info.scanPrefix == KEY_Prefix0)) {
     xf86Info.scanPrefix = 0;
@@ -494,77 +604,42 @@ special:
   }
 #endif /* defined (__sparc__) */
 
-  if ((ModifierDown(ControlMask | AltMask)) ||
-      (ModifierDown(ControlMask | AltLangMask)))
+#ifdef XKB
+  if ((xf86Info.ddxSpecialKeys == SKWhenNeeded &&
+       !xf86Info.ActionKeyBindingsSet) ||
+      noXkbExtension || xf86Info.ddxSpecialKeys == SKAlways) {
+#endif
+  if (!(ModifierDown(ShiftMask)) &&
+      ((ModifierDown(ControlMask | AltMask)) ||
+       (ModifierDown(ControlMask | AltLangMask))))
     {
-      
       switch (specialkey) {
 	
       case KEY_BackSpace:
-	if (!xf86Info.dontZap) {
-#ifdef XFreeXDGA
-	 DGAShutdown();
-#endif
-	 GiveUp(0);
-        }
+	xf86ProcessActionEvent(ACTION_TERMINATE, NULL);
 	break;
 
       /*
        * Check grabs
        */
       case KEY_KP_Divide:
-	if (!xf86Info.grabInfo.disabled && xf86Info.grabInfo.allowDeactivate) {
-	  if (inputInfo.pointer && inputInfo.pointer->grab != NULL &&
-	      inputInfo.pointer->DeactivateGrab)
-	    inputInfo.pointer->DeactivateGrab(inputInfo.pointer);
-	  if (inputInfo.keyboard && inputInfo.keyboard->grab != NULL &&
-	      inputInfo.keyboard->DeactivateGrab)
-	    inputInfo.keyboard->DeactivateGrab(inputInfo.keyboard);
-	}
+	xf86ProcessActionEvent(ACTION_DISABLEGRAB, NULL);
 	break;
       case KEY_KP_Multiply:
-	if (!xf86Info.grabInfo.disabled && xf86Info.grabInfo.allowClosedown) {
-	  ClientPtr pointer, keyboard, server;
-
-	  pointer = keyboard = server = NULL;
-	  if (inputInfo.pointer && inputInfo.pointer->grab != NULL)
-	    pointer = clients[CLIENT_ID(inputInfo.pointer->grab->resource)];
-	  if (inputInfo.keyboard && inputInfo.keyboard->grab != NULL) {
-	    keyboard = clients[CLIENT_ID(inputInfo.keyboard->grab->resource)];
-	    if (keyboard == pointer)
-	      keyboard = NULL;
-	  }
-	  if ((xf86Info.grabInfo.server.grabstate == SERVER_GRABBED) &&
-	      (((server = xf86Info.grabInfo.server.client) == pointer) ||
-	       (server == keyboard)))
-	      server = NULL;
-
-	  if (pointer)
-	    CloseDownClient(pointer);
-	  if (keyboard)
-	    CloseDownClient(keyboard);
-	  if (server)
-	    CloseDownClient(server);
-	}
+	xf86ProcessActionEvent(ACTION_CLOSECLIENT, NULL);
 	break;
-	
-	/*
-	 * The idea here is to pass the scancode down to a list of
-	 * registered routines. There should be some standard conventions
-	 * for processing certain keys.
-	 */
+
+      /*
+       * Video mode switches
+       */
       case KEY_KP_Minus:   /* Keypad - */
-	if (!xf86Info.dontZoom) {
-	  if (down) xf86ZoomViewport(xf86Info.currentScreen, -1);
-	  return;
-	}
+	if (down) xf86ProcessActionEvent(ACTION_PREV_MODE, NULL);
+	if (!xf86Info.dontZoom) return;
 	break;
 	
       case KEY_KP_Plus:   /* Keypad + */
-	if (!xf86Info.dontZoom) {
-	  if (down) xf86ZoomViewport(xf86Info.currentScreen,  1);
-	  return;
-	}
+	if (down) xf86ProcessActionEvent(ACTION_NEXT_MODE, NULL);
+	if (!xf86Info.dontZoom) return;
 	break;
 
 	/* Under QNX4, we set the vtPending flag for VT switching and 
@@ -581,12 +656,14 @@ special:
       case KEY_7:
       case KEY_8:
       case KEY_9:
-		if (down){
-			xf86Info.vtRequestsPending = 
-				specialkey - KEY_1 + 1;
-			return;
-			}
-		break;
+	if (VTSwitchEnabled && !xf86Info.dontVTSwitch) {
+	  if (down) {
+	    int vtno = specialkey - KEY_1 + 1;
+	    xf86ProcessActionEvent(ACTION_SWITCHSCREEN, (void *) &vtno);
+	  }
+	  return;
+	}
+	break;
 #endif
 
 #if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT))) || defined(SCO)
@@ -605,37 +682,23 @@ special:
       case KEY_F8:
       case KEY_F9:
       case KEY_F10:
-        if (VTSwitchEnabled && !xf86Info.vtSysreq
-#if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)))
-	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT)
-#endif
-	    )
-        {
-	  if (down)
-#ifdef SCO325
-            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F1);
-#else
-            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F1 + 1);
-#endif
-          return;
-        }
-	break;
       case KEY_F11:
       case KEY_F12:
-        if (VTSwitchEnabled && !xf86Info.vtSysreq
+	if ((VTSwitchEnabled && !xf86Info.vtSysreq && !xf86Info.dontVTSwitch)
 #if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)))
 	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT)
 #endif
-	    )
-        {
-	  if (down)
+	   ) {
+	    int vtno = specialkey - KEY_F1 + 1;
+	    if (specialkey == KEY_F11 || specialkey == KEY_F12)
+		vtno = specialkey - KEY_F11 + 11;
 #ifdef SCO325
-            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F11 + 10);
-#else
-            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F11 + 11);
+	    vtno--;
 #endif
-          return;
-        }
+	    if (down)
+		xf86ProcessActionEvent(ACTION_SWITCHSCREEN, (void *) &vtno);
+	    return;
+	}
 	break;
 #endif /* linux || BSD with VTs */
 
@@ -655,7 +718,7 @@ special:
      */
 
 #ifdef USE_VT_SYSREQ
-    if (VTSwitchEnabled && xf86Info.vtSysreq)
+    if (VTSwitchEnabled && xf86Info.vtSysreq && !xf86Info.dontVTSwitch)
     {
       switch (specialkey)
       {
@@ -667,7 +730,7 @@ special:
       case KEY_H: 
 	if (VTSysreqToggle && down)
         {
-          ioctl(xf86Info.consoleFd, VT_ACTIVATE, 0);
+	  xf86ProcessActionEvent(ACTION_SWITCHSCREEN, NULL);
           VTSysreqToggle = 0;
           return; 
         }
@@ -682,8 +745,7 @@ special:
       case KEY_N:
 	if (VTSysreqToggle && down)
 	{
-          if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno - 1 ) < 0)
-            ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	  xf86ProcessActionEvent(ACTION_SWITCHSCREEN_NEXT, NULL);
           VTSysreqToggle = FALSE;
           return;
         }
@@ -692,9 +754,7 @@ special:
       case KEY_P:
 	if (VTSysreqToggle && down)
 	{
-          if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno + 1 ) < 0)
-            if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 0) < 0)
-              ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	  xf86ProcessActionEvent(ACTION_SWITCHSCREEN_NEXT, NULL);
           VTSysreqToggle = FALSE;
           return;
         }
@@ -711,21 +771,13 @@ special:
       case KEY_F8:
       case KEY_F9:
       case KEY_F10:
-	if (VTSysreqToggle && down)
-	{
-          if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey-KEY_F1 + 1) < 0)
-            ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
-          VTSysreqToggle = FALSE;
-          return;
-        }
-	break;
-
       case KEY_F11:
       case KEY_F12:
 	if (VTSysreqToggle && down)
-	{
-          if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey-KEY_F11 + 11) < 0)
-            ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	{ int vtno = specialkey - KEY_F1 + 1;
+	  if (specialkey == KEY_F11 || specialkey == KEY_F12)
+	    vtno = specialkey - KEY_F11 + 11;
+	  xf86ProcessActionEvent(ACTION_SWITCHSCREEN, (void *) &vtno);
           VTSysreqToggle = FALSE;
           return;
         }
@@ -768,13 +820,25 @@ special:
      */
     if (specialkey == KEY_Print && ModifierDown(ControlMask)) {
       if (down)
-        if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, xf86Info.vtno + 1) < 0)
-          if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, 0) < 0)
-            ErrorF("Failed to switch consoles (%s)\n", strerror(errno));
+	xf86ProcessActionEvent(ACTION_SWITCHSCREEN_NEXT, NULL);
       return;
     }
 #endif /* SCO */
+#ifdef XKB
+    }
+#endif
 
+  /*
+   * PC keyboards generate separate key codes for
+   * Alt+Print and Control+Pause but in the X keyboard model
+   * they need to get the same key code as the base key on the same
+   * physical keyboard key.
+   */
+  if (scanCode == KEY_SysReqest)
+    scanCode = KEY_Print;
+  else if (scanCode == KEY_Break)
+    scanCode = KEY_Pause;
+  
   /*
    * Now map the scancodes to real X-keycodes ...
    */
@@ -890,7 +954,7 @@ special:
 #endif /* !CSRG_BASED && ... */
     }
   }
-  if (updateLeds) xf86KbdLeds();
+  if (updateLeds) xf86UpdateKbdLeds();
 #ifdef XKB
   }
 #endif
@@ -929,8 +993,49 @@ special:
       ENQUEUE(&kevent, keycode, (down ? KeyPress : KeyRelease), XE_KEYBOARD);
     }
 }
-#endif /* !__EMX__ */
+#endif /* !__UNIXOS2__ */
 
+#define ModifierIsSet(k) ((modifiers & (k)) == (k))
+
+Bool
+xf86CommonSpecialKey(int key, Bool down, int modifiers)
+{
+  if ((ModifierIsSet(ControlMask | AltMask)) ||
+      (ModifierIsSet(ControlMask | AltLangMask))) {
+      switch (key) {
+	
+      case KEY_BackSpace:
+	xf86ProcessActionEvent(ACTION_TERMINATE, NULL);
+	break;
+
+      /*
+       * Check grabs
+       */
+      case KEY_KP_Divide:
+	xf86ProcessActionEvent(ACTION_DISABLEGRAB, NULL);
+	break;
+      case KEY_KP_Multiply:
+	xf86ProcessActionEvent(ACTION_CLOSECLIENT, NULL);
+	break;
+	
+	/*
+	 * The idea here is to pass the scancode down to a list of
+	 * registered routines. There should be some standard conventions
+	 * for processing certain keys.
+	 */
+      case KEY_KP_Minus:   /* Keypad - */
+	if (down) xf86ProcessActionEvent(ACTION_PREV_MODE, NULL);
+	if (!xf86Info.dontZoom) return TRUE;
+	break;
+	
+      case KEY_KP_Plus:   /* Keypad + */
+	if (down) xf86ProcessActionEvent(ACTION_NEXT_MODE, NULL);
+	if (!xf86Info.dontZoom) return TRUE;
+	break;
+      }
+  }
+  return FALSE;
+}
 
 /*
  * xf86Wakeup --
@@ -941,7 +1046,7 @@ special:
 void
 xf86Wakeup(pointer blockData, int err, pointer pReadmask)
 {
-#if !defined(__EMX__) && !defined(__QNX__)
+#if !defined(__UNIXOS2__) && !defined(__QNX__)
     fd_set* LastSelectMask = (fd_set*)pReadmask;
     fd_set devicesWithInput;
     InputInfoPtr pInfo;
@@ -950,7 +1055,8 @@ xf86Wakeup(pointer blockData, int err, pointer pReadmask)
 
 	XFD_ANDSET(&devicesWithInput, LastSelectMask, &EnabledDevices);
 	if (XFD_ANYSET(&devicesWithInput)) {
-	    (xf86Info.kbdEvents)();
+	    if (xf86Info.kbdEvents)
+	    	(xf86Info.kbdEvents)();
 	    pInfo = xf86InputDevs;
 	    while (pInfo) {
 		if (pInfo->read_input && pInfo->fd >= 0 &&
@@ -969,7 +1075,7 @@ xf86Wakeup(pointer blockData, int err, pointer pReadmask)
 	    }
 	}
     }
-#else   /* __EMX__ and __QNX__ */
+#else   /* __UNIXOS2__ and __QNX__ */
 
     InputInfoPtr pInfo;
 
@@ -991,7 +1097,7 @@ xf86Wakeup(pointer blockData, int err, pointer pReadmask)
 		pInfo = pInfo->next;
     }
 
-#endif  /* __EMX__ and __QNX__ */
+#endif  /* __UNIXOS2__ and __QNX__ */
 
     if (err >= 0) { /* we don't want the handlers called if select() */
 	IHPtr ih;   /* returned with an error condition, do we?      */
@@ -1081,9 +1187,22 @@ xf86SigHandler(int signo)
 #if defined(XFree86LOADER)
   if (xf86Initialising)
       LoaderCheckUnresolved(LD_RESOLV_IFDONE);
+  ErrorF("\n"
+	 "   *** If unresolved symbols were reported above, they might not\n"
+	 "   *** be the reason for the server aborting.\n");
 #endif
   FatalError("Caught signal %d.  Server aborting\n", signo);
 }
+
+#ifdef MEMDEBUG
+void
+xf86SigMemDebug(int signo)
+{
+    CheckMemory();
+    (void) signal(signo, xf86SigMemDebug);
+    return;
+}
+#endif
 
 /*
  * xf86VTSwitch --
@@ -1092,14 +1211,14 @@ xf86SigHandler(int signo)
 static void
 xf86VTSwitch()
 {
-  int i;
+  int i, prevSIGIO;
   InputInfoPtr pInfo;
   IHPtr ih;
 
 #ifdef DEBUG
   ErrorF("xf86VTSwitch()\n");
 #endif
-
+  
 #ifdef XFreeXDGA
   if(!DGAVTSwitch())
 	return;
@@ -1120,7 +1239,7 @@ xf86VTSwitch()
 	if (xf86Screens[i]->EnableDisableFBAccess)
 	  (*xf86Screens[i]->EnableDisableFBAccess) (i, FALSE);
     }
-#if !defined(__EMX__)
+#if !defined(__UNIXOS2__)
 
     /* 
      * Keep the order: Disable Device > LeaveVT
@@ -1132,7 +1251,7 @@ xf86VTSwitch()
       DisableDevice(pInfo->dev);
       pInfo = pInfo->next;
     }
-#endif /* !__EMX__ */
+#endif /* !__UNIXOS2__ */
     xf86EnterServerState(SETUP);
     for (i = 0; i < xf86NumScreens; i++) {
       xf86Screens[i]->LeaveVT(i, 0);
@@ -1150,6 +1269,7 @@ xf86VTSwitch()
 #ifdef DEBUG
       ErrorF("xf86VTSwitch: Leave failed\n");
 #endif
+      prevSIGIO = xf86BlockSIGIO();
       xf86AccessEnter();
       xf86EnterServerState(SETUP);
       for (i = 0; i < xf86NumScreens; i++) {
@@ -1165,16 +1285,18 @@ xf86VTSwitch()
       }
       SaveScreens(SCREEN_SAVER_FORCER, ScreenSaverReset);
 
-#if !defined(__EMX__)
+#if !defined(__UNIXOS2__)
       EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
       pInfo = xf86InputDevs;
       while (pInfo) {
 	EnableDevice(pInfo->dev);
 	pInfo = pInfo->next;
       }
-#endif /* !__EMX__ */
-    for (ih = InputHandlers; ih; ih = ih->next)
-      xf86EnableInputHandler(ih);
+#endif /* !__UNIXOS2__ */
+      for (ih = InputHandlers; ih; ih = ih->next)
+        xf86EnableInputHandler(ih);
+
+      xf86UnblockSIGIO(prevSIGIO);
 
     } else {
 	  if (xf86OSPMClose)
@@ -1193,10 +1315,13 @@ xf86VTSwitch()
       xf86DisableIO();
     }
   } else {
+
 #ifdef DEBUG
     ErrorF("xf86VTSwitch: Entering\n");
 #endif
     if (!xf86VTSwitchTo()) return;
+
+    prevSIGIO = xf86BlockSIGIO();
     xf86OSPMClose = xf86OSPMOpen();
 
     xf86EnableIO();
@@ -1216,17 +1341,19 @@ xf86VTSwitch()
     /* Turn screen saver off when switching back */
     SaveScreens(SCREEN_SAVER_FORCER,ScreenSaverReset);
 
-#if !defined(__EMX__)
+#if !defined(__UNIXOS2__)
     EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
     pInfo = xf86InputDevs;
     while (pInfo) {
       EnableDevice(pInfo->dev);
       pInfo = pInfo->next;
     }
-#endif /* !__EMX__ */
+#endif /* !__UNIXOS2__ */
     
     for (ih = InputHandlers; ih; ih = ih->next)
       xf86EnableInputHandler(ih);
+
+    xf86UnblockSIGIO(prevSIGIO);
   }
 }
 
@@ -1389,16 +1516,19 @@ xf86PostWSKbdEvent(struct wscons_event *event)
 {
   int type = event->type;
   int value = event->value;
-  Bool down = (type == WSCONS_EVENT_KEY_DOWN ? TRUE : FALSE);
   unsigned int keycode;
   int blocked;
   
-  /* map the scancodes to standard XFree86 scancode */  
-  keycode = WSKbdToKeycode(value);
-  if (!down) keycode |= 0x80;
-  /* It seems better to block SIGIO there */
-  blocked = xf86BlockSIGIO();
-  xf86PostKbdEvent(keycode);
-  xf86UnblockSIGIO(blocked);
+  if (type == WSCONS_EVENT_KEY_UP || type == WSCONS_EVENT_KEY_DOWN) {
+    Bool down = (type == WSCONS_EVENT_KEY_DOWN ? TRUE : FALSE);
+
+    /* map the scancodes to standard XFree86 scancode */  	
+    keycode = WSKbdToKeycode(value);
+    if (!down) keycode |= 0x80;
+    /* It seems better to block SIGIO there */
+    blocked = xf86BlockSIGIO();
+    xf86PostKbdEvent(keycode);
+    xf86UnblockSIGIO(blocked);
+  }
 }
 #endif /* WSCONS_SUPPORT */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.29 2001/07/02 15:38:34 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.30 2002/09/16 18:06:16 eich Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -43,6 +43,7 @@ typedef struct
 	char *file_logfile;
 	char *file_rgbpath;
 	char *file_modulepath;
+	char *file_inputdevs;
 	char *file_fontpath;
 	char *file_comment;
 }

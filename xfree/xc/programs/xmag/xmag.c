@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmag/xmag.c,v 1.10 2001/12/14 20:02:11 dawes Exp $ */
+/* $XFree86: xc/programs/xmag/xmag.c,v 1.11 2003/01/19 04:44:45 paulo Exp $ */
 
 
 #include <stdlib.h>		/* for exit() and abs() */
@@ -403,17 +403,12 @@ PopdownPixelAP(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
   int n;
   Arg wargs[3];
-  hlPtr data;
+  hlPtr data = NULL;
   
   n = 0;
   XtSetArg(wargs[0], XtNuserData, &data); n++;
   XtGetValues(w, wargs, n);
-/* 
- * When the mouse button is released inside the popup window, this
- * function is called twice, presumably once for the main window and
- * once for the popup window.  In the latter case, data turns out to
- * be a null pointer.  This probably isn't the best fix, but it works.
- */
+
   if (data)
     XtPopdown(data->pixShell);
 }

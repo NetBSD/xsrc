@@ -22,10 +22,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.h,v 1.8 2001/04/10 16:07:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.h,v 1.11 2002/10/30 12:51:36 alanh Exp $ */
 
 #ifndef MGA_IOCTL_H
 #define MGA_IOCTL_H
@@ -33,13 +33,7 @@
 #include "mgacontext.h"
 #include "mga_xmesa.h"
 
-GLbitfield mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-		     GLint cx, GLint cy, GLint cw, GLint ch );
-
-
-void mgaSwapBuffers( mgaContextPtr mmesa );
-
-
+void mgaSwapBuffers( Display *dpy, void *drawablePrivate );
 
 GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords );
 
@@ -56,22 +50,8 @@ void mgaWaitAge( mgaContextPtr mmesa, int age );
 
 void mgaFlushVertices( mgaContextPtr mmesa );
 void mgaFlushVerticesLocked( mgaContextPtr mmesa );
-
-
-void mgaFireEltsLocked( mgaContextPtr mmesa,
-			GLuint start,
-			GLuint end,
-			GLuint discard );
-
-void mgaGetEltBufLocked( mgaContextPtr mmesa );
 void mgaReleaseBufLocked( mgaContextPtr mmesa, drmBufPtr buffer );
-
-void mgaFlushEltsLocked( mgaContextPtr mmesa );
-void mgaFlushElts( mgaContextPtr mmesa ) ;
-
-
-/* upload texture
- */
+int mgaFlushDMA( int fd, drmLockFlags flags );
 
 void mgaDDFlush( GLcontext *ctx );
 void mgaDDFinish( GLcontext *ctx );
@@ -82,23 +62,23 @@ void mgaDDInitIoctlFuncs( GLcontext *ctx );
         if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)  				\
               fprintf(stderr, "FLUSH_BATCH in %s\n", __FUNCTION__);	\
 	if (mmesa->vertex_dma_buffer) mgaFlushVertices(mmesa);		\
-	else if (mmesa->next_elt != mmesa->first_elt) mgaFlushElts(mmesa);	        	\
 } while (0)
+
+#define MGA_STATECHANGE(mmesa, flag) do {	\
+   FLUSH_BATCH(mmesa);				\
+   mmesa->dirty |= flag;			\
+} while (0)
+
 
 extern drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa );
 
 static __inline
-GLuint *mgaAllocVertexDwordsInline( mgaContextPtr mmesa, int dwords )
+GLuint *mgaAllocDmaLow( mgaContextPtr mmesa, int bytes )
 {
-   int bytes = dwords * 4;
    GLuint *head;
 
    if (!mmesa->vertex_dma_buffer) {
       LOCK_HARDWARE( mmesa );
-
-      if (mmesa->first_elt != mmesa->next_elt)
-	 mgaFlushEltsLocked(mmesa);
-
       mmesa->vertex_dma_buffer = mga_get_buffer_ioctl( mmesa );
       UNLOCK_HARDWARE( mmesa );
    } else if (mmesa->vertex_dma_buffer->used + bytes >
@@ -119,11 +99,11 @@ GLuint *mgaAllocVertexDwordsInline( mgaContextPtr mmesa, int dwords )
 
 #define UPDATE_LOCK( mmesa, flags )					\
 do {									\
-   GLint ret = drmMGAFlushDMA( mmesa->driFd, flags );			\
+   GLint ret = mgaFlushDMA( mmesa->driFd, flags );			\
    if ( ret < 0 ) {							\
-      drmMGAEngineReset( mmesa->driFd );				\
+      drmCommandNone( mmesa->driFd, DRM_MGA_RESET );			\
       UNLOCK_HARDWARE( mmesa );						\
-      fprintf( stderr, __FUNCTION__ ": flush ret=%d\n", ret );		\
+      fprintf( stderr, "%s: flush ret=%d\n", __FUNCTION__, ret );	\
       /*fprintf( stderr, "drmMGAFlushDMA: return = %d\n", ret );*/	\
       exit( 1 );							\
    }									\

@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/beforelight/b4light.c,v 3.5 2001/07/25 15:05:12 dawes Exp $ */
+/* $XFree86: xc/programs/beforelight/b4light.c,v 3.6 2003/02/17 23:43:25 herrb Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
@@ -290,6 +290,11 @@ main(int argc, char *argv[])
     XID			    kill_id;
     Atom		    kill_type;
     int			    i;
+    int			    (*oldHandler)();
+    Window 		    r;
+    int			    x, y;
+    unsigned int	    w, h, b, d;
+    Status		    s;
 
 #if !defined(X_NOT_POSIX)
     srand((int)time((time_t *)NULL));
@@ -324,9 +329,17 @@ main(int argc, char *argv[])
 			    &wm_delete_window, 1);
     
 #endif
-    if (XScreenSaverGetRegistered (display, screen, &kill_id, &kill_type))
-	XKillClient (display, kill_id);
-
+    oldHandler = XSetErrorHandler (ignoreError);
+    if (XScreenSaverGetRegistered (display, screen, &kill_id, &kill_type)) {
+	s = XGetGeometry(display, kill_id, &r, &x, &y, &w, &h, &b, &d);
+	if (s == True && r == root && w == 1 && h == 1 && d == 1) {
+	    /* Try to clean up existing saver & resources */
+	    XKillClient (display, kill_id);
+	    XScreenSaverUnregister(display, screen);
+	}
+    }
+    XSync(display, FALSE);
+    XSetErrorHandler(oldHandler);
     XScreenSaverSelectInput (display, root, ScreenSaverNotifyMask);
 #ifdef NOTDEF
     cmap = XCreateColormap (display, root, DefaultVisual (display, screen), AllocNone);

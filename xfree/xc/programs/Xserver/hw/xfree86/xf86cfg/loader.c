@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.18 2001/11/03 20:32:31 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.c,v 1.19 2002/06/06 21:03:32 paulo Exp $
  */
 
 #include "config.h"
@@ -54,7 +54,6 @@ int sig_handler(int);
 
 static Bool EnumDatabase(XrmDatabase*, XrmBindingList, XrmQuarkList,
 			 XrmRepresentation*, XrmValue*, XPointer);
-extern void CheckChipsets(xf86cfgModuleOptions*, int*);
 
 static sigjmp_buf jmp;
 int signal_caught;

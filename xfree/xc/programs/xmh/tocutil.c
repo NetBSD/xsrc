@@ -1,6 +1,6 @@
 /*
  * $XConsortium: tocutil.c,v 2.60 95/01/09 16:52:53 swick Exp $
- * $XFree86: xc/programs/xmh/tocutil.c,v 3.3 2001/10/28 03:34:40 tsi Exp $
+ * $XFree86: xc/programs/xmh/tocutil.c,v 3.4 2002/04/05 21:06:29 dickey Exp $
  *
  *
  *			COPYRIGHT 1987, 1989
@@ -37,7 +37,7 @@
 extern long lseek();
 #endif
 
-Toc TUMalloc()
+Toc TUMalloc(void)
 {
     Toc toc;
     toc = XtNew(TocRec);
@@ -51,8 +51,7 @@ Toc TUMalloc()
 
 /* Returns TRUE if the scan file for the given toc is out of date. */
 
-int TUScanFileOutOfDate(toc)
-  Toc toc;
+int TUScanFileOutOfDate(Toc toc)
 {
     return LastModifyDate(toc->path) > toc->lastreaddate;
 }
@@ -62,14 +61,14 @@ int TUScanFileOutOfDate(toc)
  * for this toc.
  */
 
-void TUCheckSequenceMenu(toc)
-    Toc		toc;
+void TUCheckSequenceMenu(Toc toc)
 {
     Scrn	scrn;
     register int i, n;
     Arg		query_args[2];
     char 	*name;
-    int		j, numChildren;
+    Cardinal	j;
+    int		numChildren;
     Widget	menu, item;
     Button	button;
     WidgetList	children;
@@ -127,8 +126,7 @@ void TUCheckSequenceMenu(toc)
 }
 
 
-void TUScanFileForToc(toc)
-  Toc toc;
+void TUScanFileForToc(Toc toc)
 {
     Scrn scrn;
     char  **argv, str[100];
@@ -159,9 +157,7 @@ void TUScanFileForToc(toc)
 
 
 
-int TUGetMsgPosition(toc, msg)
-  Toc toc;
-  Msg msg;
+int TUGetMsgPosition(Toc toc, Msg msg)
 {
     int msgid, h = 0, l, m;
     char str[100];
@@ -192,8 +188,7 @@ int TUGetMsgPosition(toc, msg)
 }
 
 
-void TUResetTocLabel(scrn)
-  Scrn scrn;
+void TUResetTocLabel(Scrn scrn)
 {
     char str[500];
     Toc toc;
@@ -218,8 +213,7 @@ void TUResetTocLabel(scrn)
 /* A major toc change has occured; redisplay it.  (This also should work even
    if we now have a new source to display stuff from.) */
 
-void TURedisplayToc(scrn)
-  Scrn scrn;
+void TURedisplayToc(Scrn scrn)
 {
     Toc toc;
     Widget source;
@@ -248,8 +242,7 @@ void TURedisplayToc(scrn)
 }
 
 
-void TULoadSeqLists(toc)
-  Toc toc;
+void TULoadSeqLists(Toc toc)
 {
     Sequence seq;
     FILEPTR fid;
@@ -310,12 +303,12 @@ void TULoadSeqLists(toc)
 
 /* Refigure what messages are visible. */
 
-void TURefigureWhatsVisible(toc)
-Toc toc;
+void TURefigureWhatsVisible(Toc toc)
 {
     MsgList mlist;
     Msg msg, oldcurmsg;
-    int     i, w, changed, newval, msgid;
+    int i;
+    int	w, changed, newval, msgid;
     Sequence seq = toc->viewedseq;
     mlist = seq->mlist;
     oldcurmsg = toc->curmsg;
@@ -361,8 +354,7 @@ Toc toc;
 				    ((msg1)->temporary || (msg2)->temporary ||\
 				     strcmp((msg1)->buf, (msg2)->buf) == 0))
 
-void TULoadTocFile(toc)
-  Toc toc;
+void TULoadTocFile(Toc toc)
 {
     int maxmsgs, l, orignummsgs, i, j, origcurmsgid;
     FILEPTR fid;
@@ -403,7 +395,7 @@ void TULoadTocFile(toc)
 	    msg->msgid = atoi(ptr);
 	    do 
 		ptr = fgets(buf, bufsiz, fid);
-	    while (ptr && strlen(ptr) == app_resources.toc_width
+	    while (ptr && (int) strlen(ptr) == app_resources.toc_width
 		   && buf[bufsiz-2] != '\n');
 	} else {
 	    msg->buf = strcpy(XtMalloc((Cardinal) ++l), ptr);
@@ -471,8 +463,7 @@ void TULoadTocFile(toc)
 }
 
 
-void TUSaveTocFile(toc)
-  Toc toc;
+void TUSaveTocFile(Toc toc)
 {
     Msg msg;
     int fid;
@@ -515,8 +506,8 @@ void TUSaveTocFile(toc)
 }
 
 
-static Boolean UpdateScanFile(client_data)
-  XtPointer client_data;	/* Toc */
+static Boolean UpdateScanFile(
+  XtPointer client_data)	/* Toc */
 {
     Toc toc = (Toc)client_data;
     int i;
@@ -535,9 +526,7 @@ static Boolean UpdateScanFile(client_data)
 }
 
 
-void TUEnsureScanIsValidAndOpen(toc, delay)
-  Toc toc;
-  Boolean delay;
+void TUEnsureScanIsValidAndOpen(Toc toc, Boolean delay)
 {
     if (toc) {
 	TUGetFullFolderInfo(toc);
@@ -565,8 +554,7 @@ void TUEnsureScanIsValidAndOpen(toc, delay)
 
 /* Refigure all the positions, based on which lines are visible. */
 
-void TURefigureTocPositions(toc)
-  Toc toc;
+void TURefigureTocPositions(Toc toc)
 {
     int i;
     Msg msg;
@@ -587,8 +575,7 @@ void TURefigureTocPositions(toc)
 /* Make sure we've loaded ALL the folder info for this toc, including its
    path and sequence lists. */
 
-void TUGetFullFolderInfo(toc)
-  Toc toc;
+void TUGetFullFolderInfo(Toc toc)
 {
     char str[500];
     if (! toc->scanfile) {
@@ -614,9 +601,7 @@ void TUGetFullFolderInfo(toc)
    routine will figure out the message number, and change the scan line
    accordingly. */
 
-Msg TUAppendToc(toc, ptr)
-  Toc toc;
-  char *ptr;
+Msg TUAppendToc(Toc toc, char *ptr)
 {
     Msg msg;
     int msgid;

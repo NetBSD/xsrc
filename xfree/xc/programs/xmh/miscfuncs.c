@@ -1,5 +1,7 @@
 /* $XConsortium: miscfuncs.c,v 1.7 94/12/01 17:15:05 kaleb Exp $ */
-/* $XFree86: xc/programs/xmh/miscfuncs.c,v 3.6 2001/10/28 03:34:39 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/miscfuncs.c,v 3.7 2002/04/05 21:06:28 dickey Exp $ */
+
+#include "xmh.h"
 
 #include <X11/Xos.h>
 
@@ -22,8 +24,6 @@
 
 #include <stdlib.h>
 
-
-
 #if defined(SYSV) && (defined(i386) || defined(MOTOROLA))
 
 /* These systems don't have the ftruncate() system call, so we emulate it.
@@ -39,10 +39,10 @@
 
 #define CHUNKSIZE 1024
 
-int ftruncate_emu(fd, length, name)
-    int fd;
-    off_t length;
-    char *name;
+int ftruncate_emu(
+    int fd,
+    off_t length,
+    char *name)
 {
     char            tmp_file[15];
     int             new_fid, bytes_left, i;
@@ -112,17 +112,16 @@ typedef struct dirent	 ENTRY;
 /* Initial guess at directory size. */
 #define INITIAL_SIZE	20
 
-static int StrCmp(a, b)
-    char **a, **b;
+static int StrCmp(char **a, char **b)
 {
     return strcmp(*a, *b);
 }
 
 int
-ScanDir(Name, List, Selector)
-    char		  *Name;
-    char		***List;
-    int			 (*Selector)();
+ScanDir(
+    char		  *Name,
+    char		***List,
+    int			 (*Selector)(char *))
 {
     register char	 **names;
     register ENTRY	  *E;

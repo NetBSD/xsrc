@@ -1,4 +1,6 @@
-#include "assyntax.h"
+/* $XFree86: xc/extras/Mesa/src/X86/x86_vertex.S,v 1.2 2002/03/05 20:27:24 dawes Exp $ */
+
+#include "matypes.h"
 
 
 	SEG_TEXT
@@ -14,14 +16,23 @@
 #define FP_ONE		1065353216
 #define FP_ZERO		0
 
-#define S(i)		REGOFF(i * 4, ESI)
-#define D(i)		REGOFF(i * 4, EDI)
-#define M(i)		REGOFF(i * 4, EDX)
+#define S0		REGOFF(0, ESI)
+#define S1		REGOFF(4, ESI)
+#define S2		REGOFF(8, ESI)
+#define S3		REGOFF(12, ESI)
+#define D0		REGOFF(0, EDI)
+#define D1		REGOFF(4, EDI)
+#define D2		REGOFF(8, EDI)
+#define D3		REGOFF(12, EDI)
+#define M0		REGOFF(0, EDX)
+#define M1		REGOFF(4, EDX)
+#define M2		REGOFF(8, EDX)
+#define M3		REGOFF(12, EDX)
 
 
 
 /*
- * void gl_v16_x86_general_xform (	GLfloat *dest,
+ * void _mesa_v16_x86_general_xform (	GLfloat *dest,
  *				const GLfloat *m,
  *				const GLfloat *src,
  *                              GLuint src_stride,
@@ -33,8 +44,8 @@
  * routines hacked to match the above.
  */
 ALIGNTEXT16
-GLOBL GLNAME( gl_v16_x86_general_xform )
-GLNAME( gl_v16_x86_general_xform ):
+GLOBL GLNAME( _mesa_v16_x86_general_xform )
+GLNAME( _mesa_v16_x86_general_xform ):
 
 
 	PUSH_L ( EDI )
@@ -65,11 +76,11 @@ LLBL(v16x86_loop):
         FLD_S   ( REGOFF( 0x4, EDX ) )
         FMUL_S  ( REGOFF( 0x1c, ESI ) )
         FXCH    ( ST(3) )
-        FADDP   ( ST(0),ST(7) )
+        FADDP   ( ST0,ST(7) )
         FXCH    ( ST(1) )
-        FADDP   ( ST(0),ST(5) )
-        FADDP   ( ST(0),ST(3) )
-        FADDP   ( ST(0),ST(1) )
+        FADDP   ( ST0,ST(5) )
+        FADDP   ( ST0,ST(3) )
+        FADDP   ( ST0,ST(1) )
         FLD_S   ( REGOFF( 0x8, EDX ) )
         FMUL_S  ( REGOFF( 0x20, ESI ) )
         FLD_S   ( REGOFF( 0x8, EDX ) )
@@ -79,11 +90,11 @@ LLBL(v16x86_loop):
         FLD_S   ( REGOFF( 0x8, EDX ) )
         FMUL_S  ( REGOFF( 0x2c, ESI ) )
         FXCH    ( ST(3) )
-        FADDP   ( ST(0),ST(7) )
+        FADDP   ( ST0,ST(7) )
         FXCH    ( ST(1) )
-        FADDP   ( ST(0),ST(5) )
-        FADDP   ( ST(0),ST(3) )
-        FADDP   ( ST(0),ST(1) )
+        FADDP   ( ST0,ST(5) )
+        FADDP   ( ST0,ST(3) )
+        FADDP   ( ST0,ST(1) )
         FXCH    ( ST(3) )
         FADD_S  ( REGOFF( 0x30, ESI ) )
         FXCH    ( ST(2) )
@@ -111,13 +122,13 @@ LLBL(v16x86_loop):
 /*
  * Table for clip test.
  *
- * 	bit6 = S(3) < 0
- * 	bit5 = S(2) < 0
- * 	bit4 = abs(S(2)) > abs(S(3))
- * 	bit3 = S(1) < 0
- * 	bit2 = abs(S(1)) > abs(S(3))
- * 	bit1 = S(0) < 0
- * 	bit0 = abs(S(0)) > abs(S(3))
+ * 	bit6 = S3 < 0
+ * 	bit5 = S2 < 0
+ * 	bit4 = abs(S2) > abs(S3)
+ * 	bit3 = S1 < 0
+ * 	bit2 = abs(S1) > abs(S3)
+ * 	bit1 = S0 < 0
+ * 	bit0 = abs(S0) > abs(S3)
  */
 
 
@@ -147,7 +158,7 @@ clip_table:
 /*
 ########################################
 ##
-## gl_v16_x86_cliptest_points4
+## _mesa_v16_x86_cliptest_points4
 ##
 ## Performs cliptesting equivalent to that done by cliptest_v16()
 ## in vertices.c
@@ -176,10 +187,10 @@ clip_table:
 #define ELFPIC
 #endif
 
-	GLOBL GLNAME(gl_v16_x86_cliptest_points4)
+	GLOBL GLNAME(_mesa_v16_x86_cliptest_points4)
 	ALIGNTEXT4
 
-GLNAME(gl_v16_x86_cliptest_points4):
+GLNAME(_mesa_v16_x86_cliptest_points4):
 #ifdef ELFPIC
 #define V16_FRAME_OFFSET 20
 #else
@@ -223,36 +234,36 @@ LLBL(v16_ctp4_clip_table_ready):
 LLBL(v16_ctp4_top):
 #if 0
 	FLD1 	/* F0 */
-	FDIV_S( S(3) )
+	FDIV_S( S3 )
 #endif
 
-	MOV_L( S(3), EBP )
-	MOV_L( S(2), EBX )
+	MOV_L( S3, EBP )
+	MOV_L( S2, EBX )
 
 	XOR_L( ECX, ECX )
-	ADD_L( EBP, EBP )	/* ebp = abs(S(3))*2 ; carry = sign of S(3) */
+	ADD_L( EBP, EBP )	/* ebp = abs(S3)*2 ; carry = sign of S3 */
 
 	ADC_L( ECX, ECX )
-	ADD_L( EBX, EBX )	/* ebx = abs(S(2))*2 ; carry = sign of S(2) */
+	ADD_L( EBX, EBX )	/* ebx = abs(S2)*2 ; carry = sign of S2 */
 
 	ADC_L( ECX, ECX )
-	CMP_L( EBX, EBP )	/* carry = abs(S(2))*2 > abs(S(3))*2 */
+	CMP_L( EBX, EBP )	/* carry = abs(S2)*2 > abs(S3)*2 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( S(1), EBX )
+	MOV_L( S1, EBX )
 
-	ADD_L( EBX, EBX )	/* ebx = abs(S(1))*2 ; carry = sign of S(1) */
-
-	ADC_L( ECX, ECX )
-	CMP_L( EBX, EBP )	/* carry = abs(S(1))*2 > abs(S(3))*2 */
+	ADD_L( EBX, EBX )	/* ebx = abs(S1)*2 ; carry = sign of S1 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( S(0), EBX )
-
-	ADD_L( EBX, EBX )	/* ebx = abs(S(0))*2 ; carry = sign of S(0) */
+	CMP_L( EBX, EBP )	/* carry = abs(S1)*2 > abs(S3)*2 */
 
 	ADC_L( ECX, ECX )
-	CMP_L( EBX, EBP )	/* carry = abs(S(0))*2 > abs(S(3))*2 */
+	MOV_L( S0, EBX )
+
+	ADD_L( EBX, EBX )	/* ebx = abs(S0)*2 ; carry = sign of S0 */
+
+	ADC_L( ECX, ECX )
+	CMP_L( EBX, EBP )	/* carry = abs(S0)*2 > abs(S3)*2 */
 
 	ADC_L( ECX, ECX )
 
@@ -271,7 +282,7 @@ LLBL(v16_ctp4_top):
 	INC_L( EDI )                 /* next clipmask */
 
 #if 0
-	FSTP_S( S(8)   ) 	/* */ 	/* GR_VERTEX_OOW_OFFSET */
+	FSTP_S( S8   ) 	/* */ 	/* GR_VERTEX_OOW_OFFSET */
 #endif
 
 	ADD_L( CONST(64), ESI )      /* next fxVertex  */

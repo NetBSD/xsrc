@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kinput.c,v 1.23 2002/01/18 16:25:19 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kinput.c,v 1.30 2002/11/13 16:37:39 keithp Exp $ */
 
 #include "kdrive.h"
 #include "inputstr.h"
@@ -80,7 +80,7 @@ typedef struct _kdInputFd {
     int	    type;
     int	    fd;
     void    (*read) (int fd, void *closure);
-    void    (*enable) (int fd, void *closure);
+    int	    (*enable) (int fd, void *closure);
     void    (*disable) (int fd, void *closure);
     void    *closure;
 } KdInputFd;
@@ -215,7 +215,7 @@ KdRegisterFd (int type, int fd, void (*read) (int fd, void *closure), void *clos
 
 void
 KdRegisterFdEnableDisable (int fd, 
-			   void (*enable) (int fd, void *closure),
+			   int (*enable) (int fd, void *closure),
 			   void (*disable) (int fd, void *closure))
 {
     int	i;
@@ -274,9 +274,9 @@ KdEnableInput (void)
     kdInputEnabled = TRUE;
     for (i = 0; i < kdNumInputFds; i++)
     {
-	KdAddFd (kdInputFds[i].fd);
 	if (kdInputFds[i].enable)
-	    (*kdInputFds[i].enable) (kdInputFds[i].fd, kdInputFds[i].closure);
+	    kdInputFds[i].fd = (*kdInputFds[i].enable) (kdInputFds[i].fd, kdInputFds[i].closure);
+	KdAddFd (kdInputFds[i].fd);
     }
     
     /* reset screen saver */
@@ -309,12 +309,12 @@ KdMouseProc(DeviceIntPtr pDevice, int onoff)
     case DEVICE_ON:
 	pDev->on = TRUE;
 	pKdPointer = pDevice;
-	if (kdMouseFuncs)
-	    (*kdMouseFuncs->Init) ();
 #ifdef TOUCHSCREEN
 	if (kdTsFuncs)
 	    (*kdTsFuncs->Init) ();
 #endif
+	if (kdMouseFuncs)
+	    (*kdMouseFuncs->Init) ();
 	break;
     case DEVICE_OFF:
     case DEVICE_CLOSE:
@@ -325,7 +325,7 @@ KdMouseProc(DeviceIntPtr pDevice, int onoff)
 	    if (kdMouseFuncs)
 		(*kdMouseFuncs->Fini) ();
 #ifdef TOUCHSCREEN
-	    if (kdTsFuncs >= 0)
+	    if (kdTsFuncs)
 		(*kdTsFuncs->Fini) ();
 #endif
 	}
@@ -367,6 +367,45 @@ void
 KdSetMouseMatrix (KdMouseMatrix *matrix)
 {
     kdMouseMatrix = *matrix;
+}
+
+void
+KdComputeMouseMatrix (KdMouseMatrix *m, Rotation randr, int width, int height)
+{
+    int		    x_dir = 1, y_dir = 1;
+    int		    i, j;
+    int		    size[2];
+
+    size[0] = width; size[1] = height;
+    if (randr & RR_Reflect_X)
+	x_dir = -1;
+    if (randr & RR_Reflect_Y)
+	y_dir = -1;
+    switch (randr & (RR_Rotate_All)) {
+    case RR_Rotate_0:
+	m->matrix[0][0] = x_dir; m->matrix[0][1] = 0;
+	m->matrix[1][0] = 0; m->matrix[1][1] = y_dir;
+	break;
+    case RR_Rotate_90:
+	m->matrix[0][0] = 0; m->matrix[0][1] = -x_dir;
+	m->matrix[1][0] = y_dir; m->matrix[1][1] = 0;
+	break;
+    case RR_Rotate_180:
+	m->matrix[0][0] = -x_dir; m->matrix[0][1] = 0;
+	m->matrix[1][0] = 0; m->matrix[1][1] = -y_dir;
+	break;
+    case RR_Rotate_270:
+	m->matrix[0][0] = 0; m->matrix[0][1] = x_dir;
+	m->matrix[1][0] = -y_dir; m->matrix[1][1] = 0;
+	break;
+    }
+    for (i = 0; i < 2; i++)
+    {
+	m->matrix[i][2] = 0;
+	for (j = 0 ; j < 2; j++)
+	    if (m->matrix[i][j] < 0)
+		m->matrix[i][2] = size[j] - 1;
+    }
 }
 
 static void
@@ -1538,7 +1577,8 @@ KdCrossScreen(ScreenPtr pScreen, Bool entering)
 
 #ifdef TOUCHSCREEN
 /* HACK! */
-extern int TsScreen;
+int KdTsCurScreen;	/* current event screen */
+int KdTsPhyScreen = -1;	/* screen associated with touch screen */
 #endif
 
 static void
@@ -1546,7 +1586,7 @@ KdWarpCursor (ScreenPtr pScreen, int x, int y)
 {
     KdBlockSigio ();
 #ifdef TOUCHSCREEN
-    TsScreen = pScreen->myNum;
+    KdTsCurScreen = pScreen->myNum;
 #endif
     miPointerWarpCursor (pScreen, x, y);
     KdUnblockSigio ();

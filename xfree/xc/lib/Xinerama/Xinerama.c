@@ -23,17 +23,17 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/lib/Xinerama/Xinerama.c,v 1.2 2001/07/23 17:20:28 dawes Exp $ */
+/* $XFree86: xc/lib/Xinerama/Xinerama.c,v 1.3 2002/10/16 00:37:31 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-#include "Xext.h"			/* in ../include */
-#include "extutil.h"			/* in ../include */
-#include "panoramiXext.h"
-#include "panoramiXproto.h"		/* in ../include */
-#include "Xinerama.h"
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/panoramiXext.h>
+#include <X11/extensions/panoramiXproto.h>
+#include <X11/extensions/Xinerama.h>
 
 
 static XExtensionInfo _panoramiX_ext_info_data;

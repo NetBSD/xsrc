@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcfread.c,v 1.18 2001/12/14 19:56:47 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/pcfread.c,v 1.20 2003/01/12 03:55:46 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -49,24 +49,24 @@ from The Open Group.
 void
 #if NeedVarargsPrototypes
 pcfError(char* message, ...)
-      #else
-      pcfError (message, va_alist)
-          char* message;
-          va_dcl
-      #endif
-      {
-                  va_list args;
-              
-                  #if NeedVarargsPrototypes
-                          va_start (args, message);
-              #else
-                          va_start (args);
-              #endif
-                      
-                          fprintf(stderr, "PCF Error: ");
-                  vfprintf(stderr, message, args);
-                  va_end (args);
-              }
+#else
+pcfError (message, va_alist)
+    char* message;
+    va_dcl
+#endif
+{
+    va_list args;
+
+#if NeedVarargsPrototypes
+    va_start(args, message);
+#else
+    va_start(args);
+#endif
+
+    fprintf(stderr, "PCF Error: ");
+    vfprintf(stderr, message, args);
+    va_end(args);
+}
                               
 /* Read PCF font files */
 
@@ -400,6 +400,7 @@ pcfReadFont(FontPtr pFont, FontFilePtr file,
     CARD32     *offsets = 0;
     Bool	hasBDFAccelerators;
 
+    pFont->info.nprops = 0;
     pFont->info.props = 0;
     if (!(tables = pcfReadTOC(file, &ntables)))
 	goto Bail;
@@ -660,6 +661,7 @@ Bail:
     xfree(bitmaps);
     xfree(metrics);
     xfree(pFont->info.props);
+    pFont->info.nprops = 0;
     pFont->info.props = 0;
     xfree (pFont->info.isStringProp);
     xfree(bitmapFont);
@@ -680,6 +682,7 @@ pcfReadFontInfo(FontInfoPtr pFontInfo, FontFilePtr file)
 
     pFontInfo->isStringProp = NULL;
     pFontInfo->props = NULL;
+    pFontInfo->nprops = 0;
 
     if (!(tables = pcfReadTOC(file, &ntables)))
 	goto Bail;
@@ -731,6 +734,7 @@ pcfReadFontInfo(FontInfoPtr pFontInfo, FontFilePtr file)
     xfree(tables);
     return Successful;
 Bail:
+    pFontInfo->nprops = 0;
     xfree (pFontInfo->props);
     xfree (pFontInfo->isStringProp);
     xfree(tables);
@@ -782,6 +786,7 @@ pmfReadFont(FontPtr pFont, FontFilePtr file,
     Bool	hasBDFAccelerators;
     CharInfoPtr pci;
 
+    pFont->info.nprops = 0;
     pFont->info.props = 0;
 
     if (!(tables = pcfReadTOC(file, &ntables)))
@@ -988,6 +993,7 @@ Bail:
     xfree(bitmaps);
     xfree(metrics);
     xfree(pFont->info.props);
+    pFont->info.nprops = 0;
     pFont->info.props = 0;
     xfree (pFont->info.isStringProp);
     xfree(bitmapFont);

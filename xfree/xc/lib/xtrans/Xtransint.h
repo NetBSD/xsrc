@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.31 2001/12/14 19:57:05 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.35 2002/11/26 01:12:30 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -72,10 +72,12 @@ from The Open Group.
  * message.
  */
 
-#ifndef __EMX__
+#ifndef XTRANSDEBUG
+# ifndef __UNIXOS2__
 #  define XTRANSDEBUG 1
-#else
-#define XTRANSDEBUG 1
+# else
+#  define XTRANSDEBUG 1
+# endif
 #endif
 
 #ifdef WIN32
@@ -98,7 +100,7 @@ from The Open Group.
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #include <sys/ioctl.h>
 #endif
 
@@ -144,7 +146,7 @@ from The Open Group.
 #ifdef NOFILE
 #define OPEN_MAX NOFILE
 #else
-#if !defined(__EMX__) && !defined(__QNX__)
+#if !defined(__UNIXOS2__) && !defined(__QNX__)
 #define OPEN_MAX NOFILES_MAX
 #else
 #define OPEN_MAX 256
@@ -166,7 +168,7 @@ from The Open Group.
 
 #endif /* TRANS_OPEN_MAX */
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define ESET(val)
 #else
 #define ESET(val) errno = val
@@ -366,14 +368,17 @@ typedef struct _Xtransport_table {
 #define TRANS_LOCAL	(1<<1)	/* local transport */
 #define TRANS_DISABLED	(1<<2)	/* Don't open this one */
 #define TRANS_NOLISTEN  (1<<3)  /* Don't listen on this one */
+#define TRANS_NOUNLINK	(1<<4)	/* Dont unlink transport endpoints */
 
+/* Flags to preserve when setting others */
+#define TRANS_KEEPFLAGS	(TRANS_NOUNLINK)
 
 /*
  * readv() and writev() don't exist or don't work correctly on some
  * systems, so they may be emulated.
  */
 
-#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
+#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__UNIXOS2__)
 
 #define READV(ciptr, iov, iovcnt)	TRANS(ReadV)(ciptr, iov, iovcnt)
 
@@ -390,7 +395,7 @@ static	int TRANS(ReadV)(
 #endif /* CRAY || (SYSV && i386) || WIN32 || __sxg__ || */
 
 
-#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
+#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__UNIXOS2__)
 
 #define WRITEV(ciptr, iov, iovcnt)	TRANS(WriteV)(ciptr, iov, iovcnt)
 

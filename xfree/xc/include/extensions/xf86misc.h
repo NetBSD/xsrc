@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86misc.h,v 3.14 2001/08/15 16:25:20 paulo Exp $ */
+/* $XFree86: xc/include/extensions/xf86misc.h,v 3.16 2002/11/20 04:04:56 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -21,6 +21,8 @@
 #define X_XF86MiscSetMouseSettings	5
 #define X_XF86MiscSetKbdSettings	6
 #define X_XF86MiscSetGrabKeysState	7
+#define X_XF86MiscSetClientVersion      8
+#define X_XF86MiscGetFilePaths		9
 
 #define XF86MiscNumberEvents		0
 
@@ -32,7 +34,7 @@
 #define XF86MiscModInDevDisabled	5
 #define XF86MiscModInDevClientNotLocal	6
 #define XF86MiscNoModule                7
-#define XF86MiscNumberErrors		(XF86MiscModInDevClientNotLocal + 1)
+#define XF86MiscNumberErrors		(XF86MiscNoModule + 1)
 
 /* Never renumber these */
 #define MTYPE_MICROSOFT		0
@@ -102,6 +104,12 @@ typedef struct {
     Bool	servnumlock;
 } XF86MiscKbdSettings;
 
+typedef struct {
+    char*	configfile;
+    char*	modulepath;
+    char*	logfile;
+} XF86MiscFilePaths;
+
 Bool XF86MiscQueryVersion(
     Display*		/* dpy */,
     int*		/* majorVersion */,
@@ -112,6 +120,10 @@ Bool XF86MiscQueryExtension(
     Display*		/* dpy */,
     int*		/* event_base */,
     int*		/* error_base */
+);
+
+Bool XF86MiscSetClientVersion(
+    Display *dpy	/* dpy */
 );
 
 Status XF86MiscGetMouseSettings(
@@ -137,6 +149,11 @@ Status XF86MiscSetKbdSettings(
 int XF86MiscSetGrabKeysState(
     Display*			/* dpy */,
     Bool			/* enabled */
+);
+
+Status XF86MiscGetFilePaths(
+    Display*			/* dpy */,
+    XF86MiscFilePaths*		/* file paths/locations */
 );
 
 _XFUNCPROTOEND

@@ -1,11 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_dga.c,v 1.9 2001/01/06 21:29:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_dga.c,v 1.10 2002/01/25 21:55:54 tsi Exp $ */
 /*
  * file: apm_dga.c
  * ported from s3virge, ported from mga
  *
  */
 
-#define COMPILER_H_EXTRAS
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -324,8 +323,8 @@ ApmSetViewport(
 	else {
 	    tmp = (RDXB_IOP(0xDB) & 0xF4) |  0x0A;
 	    WRXB_IOP(0xDB, tmp);
-	    wrinx(0x3C4, 0x1B, 0x20);
-	    wrinx(0x3C4, 0x1C, 0x2F);
+	    wrinx(pApm->xport, 0x1B, 0x20);
+	    wrinx(pApm->xport, 0x1C, 0x2F);
 	}
 	pApm->apmLock = FALSE;
     }
@@ -337,8 +336,8 @@ ApmSetViewport(
     }
     else {
 	/* Wait until vertical retrace is in progress. */
-	while (inb(0x3DA) & 0x08);
-	while (!(inb(0x3DA) & 0x08));            
+	while (inb(pApm->iobase + 0x3DA) & 0x08);
+	while (!(inb(pApm->iobase + 0x3DA) & 0x08));            
     }
 }
 

@@ -23,15 +23,16 @@
  * or publicity pertaining to distribution of the software without specific,
  * written prior permission.
  */
+/* $XFree86: xc/programs/xmh/mlist.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _mlist_h
 #define _mlist_h
 
-extern MsgList MakeNullMsgList();
-extern void AppendMsgList();
-extern void DeleteMsgFromMsgList();
-extern MsgList MakeSingleMsgList();
-extern void FreeMsgList();
-extern MsgList StringToMsgList();
+extern MsgList MakeNullMsgList(void);
+extern void AppendMsgList(MsgList, Msg);
+extern void DeleteMsgFromMsgList(MsgList, Msg);
+extern MsgList MakeSingleMsgList(Msg);
+extern void FreeMsgList(MsgList);
+extern MsgList StringToMsgList(Toc, char *);
 
 #endif /* _mlist_h */

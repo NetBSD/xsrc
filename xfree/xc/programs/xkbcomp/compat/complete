@@ -5,5 +5,6 @@ default xkb_compatibility "complete"  {
     augment "mousekeys"
     augment "accessx(full)"
     augment "misc"
+    augment "xfree86"
 };
 

@@ -6,11 +6,12 @@
 // uses the punctuation keys configurations common on PC 
 // keyboards (e.g. key <ABO9> is { [ period greater ] })
 
-// $XFree86: xc/programs/xkbcomp/symbols/dvorak,v 3.6 2001/04/23 20:31:09 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/dvorak,v 3.9 2003/02/04 02:32:48 dawes Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
 
+    include "srvr_ctrl(xfree86)"
 
     name[Group1]= "Dvorak";
     key <ESC>  {	[ Escape			]	};
@@ -34,7 +35,10 @@ xkb_symbols "basic" {
     key <AE11> {	[ bracketleft,	braceleft	]	};
     key <AE12> {	[ bracketright,	braceright	],
 			[  dead_tilde			]	};
-    key <BKSP> {	[   BackSpace			]	};
+    key <BKSP> {
+	type="CTRL+ALT",
+	symbols[Group1]= [ BackSpace,	Terminate_Server ]
+    };
 
     key  <TAB> {	[ 	  Tab,	ISO_Left_Tab	]	};
     key <AD01> {	[  apostrophe,	quotedbl	],
@@ -172,3 +176,44 @@ xkb_symbols "no" {
 			[	   bar,	backslash	]	};
 
 };
+
+// Swedish Dvorak
+partial alphanumeric_keys 
+xkb_symbols "se" {
+    include "dvorak(no)"
+
+    key <TLDE> {	[     section,	onehalf		]	};
+
+    key <AE04> {	[	    4,	currency	],
+			[      dollar,  onequarter	]	};
+    key <AE11> {	[        plus,	question	],
+			[   backslash,  questiondown	]	};
+    key <AE12> {	[  dead_acute,  dead_grave	],
+			[  backslash,	grave		]	};
+
+    key <AD01> {	[  odiaeresis,  Odiaeresis	],
+			[  braceright,  bracketright	]	};
+    key <AD02> {	[       aring,	Aring    	]	};
+    key <AD03> {	[  adiaeresis,	Adiaeresis	]	};
+    key <AD11> {	[           q,	Q       	]	};
+    key <AD12> {	[ dead_diaeresis, dead_circumflex],
+			[ dead_tilde, asciicircum	]	};
+
+    key <AB01> {	[     comma,    semicolon	],
+			[ dead_cedilla, cedilla		]	};
+    key <AB02> {	[    period,    colon		],
+			[ periodcentered		]	};
+
+    key <BKSL> {	[      less,	greater		],
+			[       bar,    brokenbar	]	};
+
+    key <LSGT> {	[ apostrophe,   asterisk	],
+			[       bar,    backslash	]	};
+
+};
+// Swedish Dvorak alias
+partial alphanumeric_keys 
+xkb_symbols "sv" {
+    include "dvorak(se)"
+};
+

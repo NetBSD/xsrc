@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,10 @@ extern struct _glapi_table *_glapi_Dispatch;
 
 
 extern void
+_glapi_noop_enable_warnings(GLboolean enable);
+
+
+extern void
 _glapi_check_multithread(void);
 
 
@@ -56,6 +60,18 @@ _glapi_set_dispatch(struct _glapi_table *dispatch);
 
 extern struct _glapi_table *
 _glapi_get_dispatch(void);
+
+
+extern int
+_glapi_begin_dispatch_override(struct _glapi_table *override);
+
+
+extern void
+_glapi_end_dispatch_override(int layer);
+
+
+struct _glapi_table *
+_glapi_get_override_dispatch(int layer);
 
 
 extern GLuint

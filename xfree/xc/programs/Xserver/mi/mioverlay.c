@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mioverlay.c,v 3.12 2001/11/10 21:12:31 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mioverlay.c,v 3.14 2002/10/18 00:07:13 mvojkovi Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"
@@ -535,6 +535,8 @@ miOverlayComputeClips(
 		
 			tChild->pWin->drawable.serialNumber = 
 							 NEXT_SERIAL_NUMBER;
+                        if (pScreen->ClipNotify)
+                            (* pScreen->ClipNotify) (tChild->pWin, dx, dy);
 		    }
 		    if (tChild->valdata) {
 			REGION_INIT(pScreen, &tChild->valdata->borderExposed,
@@ -653,6 +655,9 @@ miOverlayComputeClips(
     }
 
     pParent->drawable.serialNumber = NEXT_SERIAL_NUMBER;
+
+    if (pScreen->ClipNotify)
+        (* pScreen->ClipNotify) (pParent, dx, dy);
 }
 
 
@@ -1761,6 +1766,7 @@ miOverlayClearToBackground(
     RegionRec reg;
     RegionPtr pBSReg = NullRegion;
     ScreenPtr pScreen = pWin->drawable.pScreen;
+    miOverlayScreenPtr pScreenPriv = MIOVERLAY_GET_SCREEN_PRIVATE(pScreen);
     RegionPtr clipList;
     BoxPtr  extents;
     int     x1, y1, x2, y2;
@@ -1776,7 +1782,8 @@ miOverlayClearToBackground(
     else
         y2 = y1 + (int) pWin->drawable.height - (int) y;
 
-    clipList = (pTree) ? &pTree->clipList : &pWin->clipList;
+    clipList = ((*pScreenPriv->InOverlay)(pWin)) ? &pWin->clipList :
+                                                 &pTree->clipList;
 
     extents = REGION_EXTENTS(pScreen, clipList);
     

@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/msg.c,v 1.3 2001/10/28 03:34:39 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/msg.c,v 1.4 2002/04/05 21:06:28 dickey Exp $ */
 
 /* msgs.c -- handle operations on messages. */
 
@@ -32,8 +32,9 @@
 
 #include "xmh.h"
 #include "tocintrnl.h"
+#include "actions.h"
 
-static int SetScrn();
+static int SetScrn(Msg, Scrn, Boolean, XtCallbackList, XtCallbackList);
 
 /*	Function Name: SetEditable
  *	Description: Sets the editable flag for this message.
@@ -43,9 +44,7 @@ static int SetScrn();
  */
 
 static void
-SetEditable(msg, edit)
-Msg msg;
-Boolean edit;
+SetEditable(Msg msg, Boolean edit)
 {
   Arg args[1];
 
@@ -64,8 +63,7 @@ Boolean edit;
  */
 
 static Boolean
-IsEditable(msg)
-Msg msg;
+IsEditable(Msg msg)
 {
   Arg args[1];
   XawTextEditType type;
@@ -78,8 +76,7 @@ Msg msg;
 
 /* Return the user-viewable name of the given message. */
 
-char *MsgName(msg)
-Msg msg;
+char *MsgName(Msg msg)
 {
     static char result[100];
     (void) sprintf(result, "%s:%d", msg->toc->foldername, msg->msgid);
@@ -89,8 +86,7 @@ Msg msg;
 
 /* Update the message titlebar in the given scrn. */
 
-static void ResetMsgLabel(scrn)
-Scrn scrn;
+static void ResetMsgLabel(Scrn scrn)
 {
     Msg msg;
     char str[200];
@@ -124,8 +120,7 @@ routine arranges to hide boring headers, and also will set the text
 insertion point to the proper place if this is a composition and we're
 viewing it for the first time. */
 
-static void RedisplayMsg(scrn)
-Scrn scrn;
+static void RedisplayMsg(Scrn scrn)
 {
     Msg msg;
     XawTextPosition startPos, lastPos, nextPos;
@@ -177,7 +172,7 @@ static char tempDraftFile[100] = "";
 /* Temporarily move the draftfile somewhere else, so we can exec an mh
    command that affects it. */
 
-static void TempMoveDraft()
+static void TempMoveDraft(void)
 {
     char *ptr;
     if (FileExists(draftFile)) {
@@ -194,7 +189,7 @@ static void TempMoveDraft()
 
 /* Restore the draftfile from its temporary hiding place. */
 
-static void RestoreDraft()
+static void RestoreDraft(void)
 {
     if (*tempDraftFile) {
 	RenameAndCheck(tempDraftFile, draftFile);
@@ -209,8 +204,7 @@ static void RestoreDraft()
 
 /* Given a message, return the corresponding filename. */
 
-char *MsgFileName(msg)
-Msg msg;
+char *MsgFileName(Msg msg)
 {
     static char result[500];
     (void) sprintf(result, "%s/%d", msg->toc->path, msg->msgid);
@@ -222,8 +216,7 @@ Msg msg;
 /* Save any changes to a message.  Also calls the toc routine to update the
    scanline for this msg.  Returns True if saved, false otherwise. */
 
-int MsgSaveChanges(msg)
-Msg msg;
+int MsgSaveChanges(Msg msg)
 {
     int i;
     Window w;
@@ -259,10 +252,10 @@ Msg msg;
 
 
 /*ARGSUSED*/
-static void ConfirmedNoScrn(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+static void ConfirmedNoScrn(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Msg		msg = (Msg) client_data;
     register int i;
@@ -273,8 +266,7 @@ static void ConfirmedNoScrn(widget, client_data, call_data)
 }
 
 
-static void RemoveMsgConfirmed(scrn)
-    Scrn	scrn;
+static void RemoveMsgConfirmed(Scrn scrn)
 {
     if (scrn->kind == STtocAndView && MsgChanged(scrn->msg)) {
 	Arg	args[1];
@@ -294,9 +286,9 @@ static void RemoveMsgConfirmed(scrn)
 }
 
 
-static void SetScrnNewMsg(msg, scrn)
-    Msg		msg;
-    Scrn	scrn;
+static void SetScrnNewMsg(
+    Msg		msg,
+    Scrn	scrn)
 {
    scrn->msg = msg;
    if (msg == NULL) {
@@ -329,10 +321,10 @@ typedef struct _MsgAndScrn {
 } MsgAndScrnRec, *MsgAndScrn;
 
 /*ARGSUSED*/
-static void ConfirmedWithScrn(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+static void ConfirmedWithScrn(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     MsgAndScrn	mas = (MsgAndScrn) client_data;
     RemoveMsgConfirmed(mas->scrn);
@@ -341,12 +333,12 @@ static void ConfirmedWithScrn(widget, client_data, call_data)
 }
     
     
-static int SetScrn(msg, scrn, force, confirms, cancels)
-    Msg		msg;
-    Scrn	scrn;
-    Boolean	force;			/* if true, force msg set scrn */
-    XtCallbackList	confirms;	/* callbacks upon confirmation */
-    XtCallbackList	cancels;	/* callbacks upon cancellation */
+static int SetScrn(
+    Msg		msg,
+    Scrn	scrn,
+    Boolean	force,			/* if true, force msg set scrn */
+    XtCallbackList	confirms,	/* callbacks upon confirmation */
+    XtCallbackList	cancels)	/* callbacks upon cancellation */
 {
     register int i, num_scrns;
     static XtCallbackRec yes_callbacks[] = {
@@ -413,11 +405,11 @@ static int SetScrn(msg, scrn, force, confirms, cancels)
 
 /* Associate the given msg and scrn, asking for confirmation if necessary. */
 
-int MsgSetScrn(msg, scrn, confirms, cancels)
-Msg msg;
-Scrn scrn;
-XtCallbackList	confirms;
-XtCallbackList	cancels;
+int MsgSetScrn(
+    Msg msg,
+    Scrn scrn,
+    XtCallbackList confirms,
+    XtCallbackList cancels)
 {
     return SetScrn(msg, scrn, FALSE, confirms, cancels);
 }
@@ -426,9 +418,7 @@ XtCallbackList	cancels;
 /* Same as above, but with the extra information that the message is actually
    a composition.  (Nothing currently takes advantage of that extra fact.) */
 
-void MsgSetScrnForComp(msg, scrn)
-Msg msg;
-Scrn scrn;
+void MsgSetScrnForComp(Msg msg, Scrn scrn)
 {
     (void) SetScrn(msg, scrn, FALSE, (XtCallbackList) NULL, 
 		   (XtCallbackList) NULL);
@@ -438,9 +428,7 @@ Scrn scrn;
 /* Associate the given msg and scrn, even if it means losing some unsaved
    changes. */
 
-void MsgSetScrnForce(msg, scrn)
-Msg msg;
-Scrn scrn;
+void MsgSetScrnForce(Msg msg, Scrn scrn)
 {
     (void) SetScrn(msg, scrn, TRUE, (XtCallbackList) NULL,
 		   (XtCallbackList) NULL);
@@ -450,10 +438,7 @@ Scrn scrn;
 
 /* Set the fate of the given message. */
 
-void MsgSetFate(msg, fate, desttoc)
-  Msg msg;
-  FateType fate;
-  Toc desttoc;
+void MsgSetFate(Msg msg, FateType fate, Toc desttoc)
 {
     Toc toc = msg->toc;
     XawTextBlock block;
@@ -490,9 +475,7 @@ void MsgSetFate(msg, fate, desttoc)
 
 /* Get the fate of this message. */
 
-FateType MsgGetFate(msg, toc)
-Msg msg;
-Toc *toc;			/* RETURN */
+FateType MsgGetFate(Msg msg, Toc *toc)
 {
     if (toc) *toc = msg->desttoc;
     return msg->fate;
@@ -501,8 +484,7 @@ Toc *toc;			/* RETURN */
 
 /* Make this a temporary message. */
 
-void MsgSetTemporary(msg)
-Msg msg;
+void MsgSetTemporary(Msg msg)
 {
     int i;
     msg->temporary = TRUE;
@@ -513,8 +495,7 @@ Msg msg;
 
 /* Make this a permanent message. */
 
-void MsgSetPermanent(msg)
-Msg msg;
+void MsgSetPermanent(Msg msg)
 {
     int i;
     msg->temporary = FALSE;
@@ -526,8 +507,7 @@ Msg msg;
 
 /* Return the id# of this message. */
 
-int MsgGetId(msg)
-Msg msg;
+int MsgGetId(Msg msg)
 {
     return msg->msgid;
 }
@@ -535,8 +515,7 @@ Msg msg;
 
 /* Return the scanline for this message. */
 
-char *MsgGetScanLine(msg)
-Msg msg;
+char *MsgGetScanLine(Msg msg)
 {
     return msg->buf;
 }
@@ -545,8 +524,7 @@ Msg msg;
 
 /* Return the toc this message is in. */
 
-Toc MsgGetToc(msg)
-Msg msg;
+Toc MsgGetToc(Msg msg)
 {
     return msg->toc;
 }
@@ -554,8 +532,7 @@ Msg msg;
 
 /* Set the reapable flag for this msg. */
 
-void MsgSetReapable(msg)
-Msg msg;
+void MsgSetReapable(Msg msg)
 {
     int i;
     msg->reapable = TRUE;
@@ -567,8 +544,7 @@ Msg msg;
 
 /* Clear the reapable flag for this msg. */
 
-void MsgClearReapable(msg)
-Msg msg;
+void MsgClearReapable(Msg msg)
 {
     int i;
     msg->reapable = FALSE;
@@ -580,8 +556,7 @@ Msg msg;
 /* Get the reapable value for this msg.  Returns TRUE iff the reapable flag
    is set AND no changes have been made. */
 
-int MsgGetReapable(msg)
-Msg msg;
+int MsgGetReapable(Msg msg)
 {
     return msg == NULL || (msg->reapable &&
 			   (msg->source == NULL ||
@@ -590,8 +565,7 @@ Msg msg;
 
 
 /* Make it possible to edit the given msg. */
-void MsgSetEditable(msg)
-Msg msg;
+void MsgSetEditable(Msg msg)
 {
     int i;
     if (msg && msg->source) {
@@ -605,8 +579,7 @@ Msg msg;
 
 /* Turn off editing for the given msg. */
 
-void MsgClearEditable(msg)
-Msg msg;
+void MsgClearEditable(Msg msg)
 {
     int i;
     if (msg && msg->source) {
@@ -620,8 +593,7 @@ Msg msg;
 
 /* Get whether the msg is editable. */
 
-int MsgGetEditable(msg)
-Msg msg;
+int MsgGetEditable(Msg msg)
 {
     return msg && msg->source && IsEditable(msg);
 }
@@ -629,8 +601,7 @@ Msg msg;
 
 /* Get whether the msg has changed since last saved. */
 
-int MsgChanged(msg)
-Msg msg;
+int MsgChanged(Msg msg)
 {
     return msg && msg->source && XawAsciiSourceChanged(msg->source);
 }
@@ -638,10 +609,7 @@ Msg msg;
 /* Call the given function when the msg changes. */
 
 void 
-MsgSetCallOnChange(msg, func, param)
-Msg msg;
-void (*func)();
-XtPointer param;
+MsgSetCallOnChange(Msg msg, void (*func)(XMH_CB_ARGS), XtPointer param)
 {
   Arg args[1];
   static XtCallbackRec cb[] = { {NULL, NULL}, {NULL, NULL} };
@@ -666,8 +634,7 @@ XtPointer param;
    prefix.  Also, these should stay in an area private to the user for
    security.) */
 
-void MsgSend(msg)
-Msg msg;
+void MsgSend(Msg msg)
 {
     FILEPTR from;
     FILEPTR to;
@@ -749,8 +716,7 @@ Msg msg;
    so that the text insertion point will be placed at the end of the first
    line (which is usually the "To:" field). */
 
-void MsgLoadComposition(msg)
-Msg msg;
+void MsgLoadComposition(Msg msg)
 {
     static char *blankcomp = NULL; /* Array containing comp template */
     static int compsize = 0;
@@ -795,10 +761,11 @@ Msg msg;
    that the text insertion point will be placed at the beginning of the
    message body. */
 
-void MsgLoadReply(msg, frommsg, params, num_params)
-Msg msg, frommsg;
-String *params;
-Cardinal num_params;
+void MsgLoadReply(
+    Msg msg,
+    Msg frommsg,
+    String *params,
+    Cardinal num_params)
 {
     char **argv;
     char str[100];
@@ -832,12 +799,12 @@ Cardinal num_params;
    msg->startPos so that the text insertion point will be placed at the end
    of the first line (which is usually a "To:" field). */
 
-void MsgLoadForward(scrn, msg, mlist, params, num_params)
-  Scrn scrn;
-  Msg msg;
-  MsgList mlist;
-  String *params;
-  Cardinal num_params;
+void MsgLoadForward(
+  Scrn scrn,
+  Msg msg,
+  MsgList mlist,
+  String *params,
+  Cardinal num_params)
 {
     char  **argv, str[100];
     int     i;
@@ -868,8 +835,7 @@ void MsgLoadForward(scrn, msg, mlist, params, num_params)
 
 /* Load msg with a copy of frommsg. */
 
-void MsgLoadCopy(msg, frommsg)
-Msg msg, frommsg;
+void MsgLoadCopy(Msg msg, Msg frommsg)
 {
     char str[500];
     (void)strcpy(str, MsgFileName(msg));
@@ -879,8 +845,7 @@ Msg msg, frommsg;
 
 /* Checkpoint the given message if it contains unsaved edits. */
 
-void MsgCheckPoint(msg)
-Msg msg;
+void MsgCheckPoint(Msg msg)
 {
     int len;
     char file[500];
@@ -908,8 +873,7 @@ Msg msg;
 
 /* Free the storage being used by the given msg. */
 
-void MsgFree(msg)
-Msg msg;
+void MsgFree(Msg msg)
 {
     XtFree(msg->buf);
     XtFree((char *)msg);
@@ -918,11 +882,11 @@ Msg msg;
 /* Insert the associated message, if any, filtering it first */
 
 /*ARGSUSED*/
-void XmhInsert(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhInsert(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     Msg msg = scrn->msg;

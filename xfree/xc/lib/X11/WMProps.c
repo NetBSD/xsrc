@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/WMProps.c,v 3.6 2001/12/14 19:54:07 dawes Exp $ */
+/* $XFree86: xc/lib/X11/WMProps.c,v 3.7 2002/05/31 18:45:41 dawes Exp $ */
 
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca.,
@@ -121,7 +121,7 @@ void XSetWMProperties (dpy, w, windowName, iconName, argv, argc, sizeHints,
 		 * systems will have to change this.
 		 */
 		char *cp = strrchr (argv[0], '/');
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 		char *os2_cp = strrchr (argv[0],'\\');
 		char *dot_cp = strrchr (argv[0],'.');
 		if (os2_cp && (os2_cp > cp)) {

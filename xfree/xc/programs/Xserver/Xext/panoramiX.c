@@ -23,7 +23,7 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.31 2001/10/28 03:32:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.32 2002/08/01 00:30:34 mvojkovi Exp $ */
 
 #define NEED_REPLIES
 #include <stdio.h>
@@ -305,7 +305,19 @@ XineramaCopyGC (
     unsigned long   mask,
     GCPtr	    pGCDst
 ){
+    PanoramiXGCPtr pSrcPriv =
+                (PanoramiXGCPtr) pGCSrc->devPrivates[PanoramiXGCIndex].ptr;
     Xinerama_GC_FUNC_PROLOGUE (pGCDst);
+
+    if(mask & GCTileStipXOrigin)
+        pGCPriv->patOrg.x = pSrcPriv->patOrg.x;
+    if(mask & GCTileStipYOrigin)
+        pGCPriv->patOrg.y = pSrcPriv->patOrg.y;
+    if(mask & GCClipXOrigin)
+        pGCPriv->clipOrg.x = pSrcPriv->clipOrg.x;
+    if(mask & GCClipYOrigin)
+        pGCPriv->clipOrg.y = pSrcPriv->clipOrg.y;
+
     (*pGCDst->funcs->CopyGC) (pGCSrc, mask, pGCDst);
     Xinerama_GC_FUNC_EPILOGUE (pGCDst);
 }

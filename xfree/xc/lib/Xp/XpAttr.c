@@ -34,12 +34,12 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.6 2001/01/17 19:43:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.7 2002/10/16 00:37:31 dawes Exp $ */
 
 #define NEED_REPLIES
 
-#include "Printstr.h"
-#include "Xlibint.h"
+#include <X11/extensions/Printstr.h>
+#include <X11/Xlibint.h>
 #include "XpExtUtil.h"
 
 #define _XpPadOut(len) (((len) + 3) & ~3)

@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xclipboard/xclipboard.man,v 1.8 2001/12/14 20:01:16 dawes Exp $
+.\" $XFree86: xc/programs/xclipboard/xclipboard.man,v 1.9 2002/10/12 16:06:46 herrb Exp $
 .\"
 .TH XCLIPBOARD 1 __xorgversion__
 .SH NAME
@@ -142,7 +142,9 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
-<XRoot>/lib/X11/app-defaults/XClipboard - specifies required resources
+.TP
+.I __apploaddir__/XClipboard
+specifies required resources
 .SH AUTHOR
 Ralph R. Swick, DEC/MIT Project Athena
 .br

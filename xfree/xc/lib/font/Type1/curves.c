@@ -29,7 +29,7 @@
 /* CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT        */
 /* OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS           */
 /* SOFTWARE.                                                         */
-/* $XFree86: xc/lib/font/Type1/curves.c,v 1.7 2001/08/27 19:49:52 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/curves.c,v 1.8 2002/02/18 20:51:57 herrb Exp $ */
 
 /*
 :h1.CURVES Module - Stepping Beziers
@@ -216,7 +216,7 @@ StepBezier(struct region *R, /* Region under construction or NULL            */
  
        if ( TOOBIG(xB) || TOOBIG(yB) || TOOBIG(xC) || TOOBIG(yC)
             || TOOBIG(xD) || TOOBIG(yD) )
-               abort("Beziers this big not yet supported");
+               Abort("Beziers this big not yet supported");
  
        return(StepBezierRecurse(&Info,
                                 (fractpel) 0, (fractpel) 0, xB, yB, xC, yC, xD, yD));

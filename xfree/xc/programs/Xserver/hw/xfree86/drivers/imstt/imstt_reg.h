@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_reg.h,v 1.4 2000/08/02 21:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_reg.h,v 1.5 2002/08/06 19:57:30 herrb Exp $ */
 
 #ifndef _IMSTT_REG_H
 #define _IMSTT_REG_H
@@ -7,7 +7,7 @@
 
 #if defined(__powerpc__)
 
-static inline void regw(unsigned long base_addr, unsigned long regindex, unsigned long regdata)
+static __inline__ void regw(unsigned long base_addr, unsigned long regindex, unsigned long regdata)
 {
 	asm volatile ("stwbrx %1,%2,%3; eieio"
 		      : "=m" (*(volatile unsigned *)(base_addr+regindex))
@@ -15,7 +15,7 @@ static inline void regw(unsigned long base_addr, unsigned long regindex, unsigne
 }
 
 
-static inline unsigned long regr(unsigned long base_addr, unsigned long regindex)
+static __inline__ unsigned long regr(unsigned long base_addr, unsigned long regindex)
 {
 	register unsigned long val;
 

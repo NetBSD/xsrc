@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dispatch.h,v 3.2 2001/08/01 00:44:48 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.h,v 3.3 2002/02/19 11:09:21 alanh Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -33,74 +33,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef DISPATCH_H
 #define DISPATCH_H 1
 
-#ifdef LBX
-void IncrementClientCount(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-#endif
-
-void CloseDownClient(
-#if NeedFunctionPrototypes
-    ClientPtr client
-#endif
-);
-
-void Dispatch(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-void InitProcVectors(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-ClientPtr NextAvailableClient(
-#if NeedFunctionPrototypes
-    pointer ospriv
-#endif
-);
-
-int SendConnSetup(
-#if NeedFunctionPrototypes
-    ClientPtr /* client */,
-    char * /* reason */
-#endif
-);
-
-void SetInputCheck(
-#if NeedFunctionPrototypes
-    HWEventQueuePtr /* c0 */,
-    HWEventQueuePtr /* c1 */
-#endif
-);
-
-void ProcessWorkQueue(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-void ProcessWorkQueueZombies(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
 DISPATCH_PROC(InitClientPrivates);
 DISPATCH_PROC(ProcAllocColor);
 DISPATCH_PROC(ProcAllocColorCells);
 DISPATCH_PROC(ProcAllocColorPlanes);
 DISPATCH_PROC(ProcAllocNamedColor);
-DISPATCH_PROC(ProcAllowEvents);
-DISPATCH_PROC(ProcBadRequest);
 DISPATCH_PROC(ProcBell);
 DISPATCH_PROC(ProcChangeAccessControl);
-DISPATCH_PROC(ProcChangeActivePointerGrab);
 DISPATCH_PROC(ProcChangeCloseDownMode);
 DISPATCH_PROC(ProcChangeGC);
 DISPATCH_PROC(ProcChangeHosts);
@@ -140,7 +79,6 @@ DISPATCH_PROC(ProcGetAtomName);
 DISPATCH_PROC(ProcGetFontPath);
 DISPATCH_PROC(ProcGetGeometry);
 DISPATCH_PROC(ProcGetImage);
-DISPATCH_PROC(ProcGetInputFocus);
 DISPATCH_PROC(ProcGetKeyboardControl);
 DISPATCH_PROC(ProcGetKeyboardMapping);
 DISPATCH_PROC(ProcGetModifierMapping);
@@ -151,10 +89,6 @@ DISPATCH_PROC(ProcGetProperty);
 DISPATCH_PROC(ProcGetScreenSaver);
 DISPATCH_PROC(ProcGetSelectionOwner);
 DISPATCH_PROC(ProcGetWindowAttributes);
-DISPATCH_PROC(ProcGrabButton);
-DISPATCH_PROC(ProcGrabKey);
-DISPATCH_PROC(ProcGrabKeyboard);
-DISPATCH_PROC(ProcGrabPointer);
 DISPATCH_PROC(ProcGrabServer);
 DISPATCH_PROC(ProcImageText16);
 DISPATCH_PROC(ProcImageText8);
@@ -187,17 +121,13 @@ DISPATCH_PROC(ProcQueryColors);
 DISPATCH_PROC(ProcQueryExtension);
 DISPATCH_PROC(ProcQueryFont);
 DISPATCH_PROC(ProcQueryKeymap);
-DISPATCH_PROC(ProcQueryPointer);
 DISPATCH_PROC(ProcQueryTextExtents);
 DISPATCH_PROC(ProcQueryTree);
-DISPATCH_PROC(ProcRecolorCursor);
 DISPATCH_PROC(ProcReparentWindow);
 DISPATCH_PROC(ProcRotateProperties);
-DISPATCH_PROC(ProcSendEvent);
 DISPATCH_PROC(ProcSetClipRectangles);
 DISPATCH_PROC(ProcSetDashes);
 DISPATCH_PROC(ProcSetFontPath);
-DISPATCH_PROC(ProcSetInputFocus);
 DISPATCH_PROC(ProcSetModifierMapping);
 DISPATCH_PROC(ProcSetPointerMapping);
 DISPATCH_PROC(ProcSetScreenSaver);
@@ -205,14 +135,9 @@ DISPATCH_PROC(ProcSetSelectionOwner);
 DISPATCH_PROC(ProcStoreColors);
 DISPATCH_PROC(ProcStoreNamedColor);
 DISPATCH_PROC(ProcTranslateCoords);
-DISPATCH_PROC(ProcUngrabButton);
-DISPATCH_PROC(ProcUngrabKey);
-DISPATCH_PROC(ProcUngrabKeyboard);
-DISPATCH_PROC(ProcUngrabPointer);
 DISPATCH_PROC(ProcUngrabServer);
 DISPATCH_PROC(ProcUninstallColormap);
 DISPATCH_PROC(ProcUnmapSubwindows);
 DISPATCH_PROC(ProcUnmapWindow);
-DISPATCH_PROC(ProcWarpPointer);
 
 #endif /* DISPATCH_H */

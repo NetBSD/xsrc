@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaSolid.c,v 1.4 2001/08/01 00:44:56 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaSolid.c,v 1.5 2002/01/25 21:56:22 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -170,6 +170,7 @@ register const int y0 ;
 register int lx ;
 register const int ly ;		/* MUST BE > 0 !! */
 {
+IOADDRESS REGBASE;
 register volatile unsigned char *dst ;
 register int tmp ;
 register int tmp2 ;
@@ -242,6 +243,9 @@ switch ( alu ) {
 
 if ( !( planes &= VGA_ALLPLANES ) )
 	return ;
+
+REGBASE =
+    xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase + 0x300;
 
 /*
  * Set The Plane-Enable

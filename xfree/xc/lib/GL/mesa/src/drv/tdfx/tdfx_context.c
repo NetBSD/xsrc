@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.c,v 1.6 2001/12/13 00:34:21 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.c,v 1.11 2003/01/15 04:16:39 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -36,30 +36,23 @@
  */
 
 #include <dlfcn.h>
-#include "dri_glide.h"
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
 #include "tdfx_state.h"
 #include "tdfx_vb.h"
+#include "tdfx_tris.h"
 #include "tdfx_render.h"
-#include "tdfx_pipeline.h"
 #include "tdfx_span.h"
-#include "tdfx_tex.h"
 #include "tdfx_texman.h"
 #include "extensions.h"
 
-#ifndef TDFX_DEBUG
-int TDFX_DEBUG = (0
-/*  		  | DEBUG_ALWAYS_SYNC */
-/*		  | DEBUG_VERBOSE_API */
-/*		  | DEBUG_VERBOSE_MSG */
-/*		  | DEBUG_VERBOSE_LRU */
-/*  		  | DEBUG_VERBOSE_DRI */
-/*  		  | DEBUG_VERBOSE_IOCTL */
-/*   		  | DEBUG_VERBOSE_2D */
-/*   		  | DEBUG_VERBOSE_TEXTURE */
-   );
-#endif
+
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "array_cache/acache.h"
+
+#include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
 
 
 #if 0
@@ -79,27 +72,25 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
-   gl_extensions_disable( ctx, "GL_EXT_blend_logic_op" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_minmax" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_subtract" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_color" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_func_separate" );
-   gl_extensions_disable( ctx, "GL_EXT_point_parameters" );
-   gl_extensions_disable( ctx, "GL_EXT_shared_texture_palette" );
-   gl_extensions_disable( ctx, "GL_INGR_blend_func_separate" );
-   gl_extensions_enable( ctx, "GL_HP_occlusion_test" );
+   _mesa_enable_extension( ctx, "GL_HP_occlusion_test" );
+   _mesa_enable_extension( ctx, "GL_EXT_paletted_texture" );
+   _mesa_enable_extension( ctx, "GL_EXT_texture_lod_bias" );
 
-   if ( fxMesa->numTMUs == 1 ) {
-      gl_extensions_disable( ctx, "GL_EXT_texture_env_add" );
-      gl_extensions_disable( ctx, "GL_ARB_multitexture" );
+   if ( fxMesa->haveTwoTMUs ) {
+      _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
+      _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
    }
 
    if ( TDFX_IS_NAPALM( fxMesa ) ) {
-      gl_extensions_enable( ctx, "GL_EXT_texture_env_combine" );
+#if 0
+      _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
+      _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
+#endif
+      _mesa_enable_extension( ctx, "GL_EXT_texture_env_combine" );
    }
 
    if (fxMesa->haveHwStencil) {
-      gl_extensions_enable( ctx, "GL_EXT_stencil_wrap" );
+      _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
    }
 
    /* Example of hooking in an extension function.
@@ -124,22 +115,46 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 
 
 
-GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
-			     __DRIcontextPrivate *driContextPriv )
+static const struct gl_pipeline_stage *tdfx_pipeline[] = {
+   &_tnl_vertex_transform_stage, 
+   &_tnl_normal_transform_stage, 
+   &_tnl_lighting_stage,	/* REMOVE: fog coord stage */
+   &_tnl_texgen_stage, 
+   &_tnl_texture_transform_stage, 
+				/* REMOVE: point attenuation stage */
+   &_tnl_render_stage,		
+   0,
+};
+
+
+GLboolean tdfxCreateContext( Display *dpy, const __GLcontextModes *mesaVis,
+			     __DRIcontextPrivate *driContextPriv,
+                             void *sharedContextPrivate )
 {
    tdfxContextPtr fxMesa;
-   GLcontext *ctx = driContextPriv->mesaContext;
+   GLcontext *ctx, *shareCtx;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
-					      fxScreen->sarea_priv_offset);
+					      sizeof(XF86DRISAREARec));
 
 
-   fxMesa = (tdfxContextPtr) MALLOC( sizeof(tdfxContextRec) );
-   if ( !fxMesa ) {
+   /* Allocate tdfx context */
+   fxMesa = (tdfxContextPtr) CALLOC( sizeof(tdfxContextRec) );
+   if (!fxMesa)
+      return GL_FALSE;
+
+   /* Allocate the Mesa context */
+   if (sharedContextPrivate)
+      shareCtx = ((tdfxContextPtr) sharedContextPrivate)->glCtx;
+   else 
+      shareCtx = NULL;
+   fxMesa->glCtx = _mesa_create_context(mesaVis, shareCtx, fxMesa, GL_TRUE);
+   if (!fxMesa->glCtx) {
+      FREE(fxMesa);
       return GL_FALSE;
    }
-   BZERO(fxMesa, sizeof(tdfxContextRec));
+   driContextPriv->driverPrivate = fxMesa;
 
    /* Mirror some important DRI state
     */
@@ -152,25 +167,19 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
    fxMesa->fxScreen = fxScreen;
    fxMesa->sarea = saPriv;
 
-
-
    fxMesa->haveHwStencil = ( TDFX_IS_NAPALM( fxMesa ) &&
-			     mesaVis->StencilBits &&
-			     mesaVis->DepthBits == 24 );
+			     mesaVis->stencilBits &&
+			     mesaVis->depthBits == 24 );
 
    fxMesa->screen_width = fxScreen->width;
    fxMesa->screen_height = fxScreen->height;
 
+   fxMesa->new_gl_state = ~0;
    fxMesa->new_state = ~0;
    fxMesa->dirty = ~0;
 
-   fxMesa->vertexFormat = 0;
-
-   fxMesa->glCtx = driContextPriv->mesaContext;
-   fxMesa->glVis = mesaVis;
-
-   /* NOTE: This MUST be called before any Glide functions are called! */
-   if (!tdfxInitGlide(fxMesa)) {
+   /* NOTE: This must be here before any Glide calls! */
+   if (!tdfxInitGlide( fxMesa )) {
       FREE(fxMesa);
       return GL_FALSE;
    }
@@ -196,10 +205,16 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
    fxMesa->Glide.Initialized = GL_FALSE;
    fxMesa->Glide.Board = 0;
 
-   if ( getenv( "FX_EMULATE_SINGLE_TMU" ) || TDFX_IS_BANSHEE( fxMesa ) ) {
-      fxMesa->numTMUs = 1;
-   } else {
-      fxMesa->numTMUs = 2;
+
+   if (getenv("FX_EMULATE_SINGLE_TMU")) {
+      fxMesa->haveTwoTMUs = GL_FALSE;
+   }
+   else {
+      if ( TDFX_IS_BANSHEE( fxMesa ) ) {
+         fxMesa->haveTwoTMUs = GL_FALSE;
+      } else {
+         fxMesa->haveTwoTMUs = GL_TRUE;
+      }
    }
 
    fxMesa->stats.swapBuffer = 0;
@@ -209,60 +224,57 @@ GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
 
    fxMesa->tmuSrc = TDFX_TMU_NONE;
 
+   ctx = fxMesa->glCtx;
    if ( TDFX_IS_NAPALM( fxMesa ) ) {
       ctx->Const.MaxTextureLevels = 12;
-      ctx->Const.MaxTextureSize = 2048;
       ctx->Const.NumCompressedTextureFormats = 1;
    } else {
       ctx->Const.MaxTextureLevels = 9;
-      ctx->Const.MaxTextureSize = 256;
       ctx->Const.NumCompressedTextureFormats = 0;
    }
    ctx->Const.MaxTextureUnits = TDFX_IS_BANSHEE( fxMesa ) ? 1 : 2;
-   ctx->NewState |= NEW_DRVSTATE1;
 
+   /* No wide points.
+    */
+   ctx->Const.MinPointSize = 1.0;
+   ctx->Const.MinPointSizeAA = 1.0;
+   ctx->Const.MaxPointSize = 1.0;
+   ctx->Const.MaxPointSizeAA = 1.0;
 
-   ctx->DriverCtx = (void *) fxMesa;
+   /* Disable wide lines as we can't antialias them correctly in
+    * hardware.
+    */
+   ctx->Const.MinLineWidth = 1.0;
+   ctx->Const.MinLineWidthAA = 1.0;
+   ctx->Const.MaxLineWidth = 1.0;
+   ctx->Const.MaxLineWidthAA = 1.0;
+   ctx->Const.LineWidthGranularity = 1.0;
+
+   /* Initialize the software rasterizer and helper modules.
+    */
+   _swrast_CreateContext( ctx );
+   _ac_CreateContext( ctx );
+   _tnl_CreateContext( ctx );
+   _swsetup_CreateContext( ctx );
+
+   /* Install the customized pipeline:
+    */
+   _tnl_destroy_pipeline( ctx );
+   _tnl_install_pipeline( ctx, tdfx_pipeline );
+
+   /* Configure swrast to match hardware characteristics:
+    */
+   _swrast_allow_pixel_fog( ctx, GL_TRUE );
+   _swrast_allow_vertex_fog( ctx, GL_FALSE );
 
    tdfxDDInitExtensions( ctx );
-
    tdfxDDInitDriverFuncs( ctx );
    tdfxDDInitStateFuncs( ctx );
    tdfxDDInitRenderFuncs( ctx );
-   tdfxDDInitSpanFuncs( ctx );
-   tdfxDDInitTextureFuncs( ctx );
-
-   ctx->Driver.TriangleCaps = (DD_TRI_CULL |
-			       DD_TRI_LIGHT_TWOSIDE |
-			       DD_TRI_STIPPLE |
-			       DD_TRI_OFFSET);
-
-   if ( ctx->VB )
-      tdfxDDRegisterVB( ctx->VB );
-
-   if ( ctx->NrPipelineStages )
-      ctx->NrPipelineStages =
-	 tdfxDDRegisterPipelineStages( ctx->PipelineStage,
-				       ctx->PipelineStage,
-				       ctx->NrPipelineStages );
-
-   /* Run the config file */
-   gl_context_initialize( ctx );
-
-#if 0
-   /* HACK: Allocate buffer for vertex data.
-    */
-   if ( fxMesa->buffer ) {
-      ALIGN_FREE( fxMesa->buffer );
-   }
-   fxMesa->buffer = ALIGN_MALLOC( 2048, 32 );
-   fxMesa->buffer_total = 2048;
-   fxMesa->buffer_used = 0;
-#endif
-
+   tdfxDDInitSpanFuncs( ctx ); 
+   tdfxDDInitTriFuncs( ctx );
+   tdfxInitVB( ctx );
    tdfxInitState( fxMesa );
-
-   driContextPriv->driverPrivate = (void *) fxMesa;
 
    return GL_TRUE;
 }
@@ -284,26 +296,40 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
       }
    }
 
+   /* Tiny vertex format - 16 bytes.
+    */
+   fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
+   fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_XY,	TDFX_XY_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_TINY] );
+
+   /* Non textured vertex format - 24 bytes (Need w for table fog)
+    */
+   fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
+   fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_XY,	TDFX_XY_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_NOTEX] );
+
    /* Single textured vertex format - 32 bytes.
     */
    fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
-
    fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
    fxMesa->Glide.grVertexLayout( GR_PARAM_XY,	TDFX_XY_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
-#if 0
-   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
-#endif
-
+   /*grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );*/
    fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_SINGLE] );
 
    /* Multitextured vertex format - 40 bytes.
     */
    fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
-
    fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
    fxMesa->Glide.grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
@@ -311,29 +337,22 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
    fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
-#if 0
-   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
-#endif
-
+   /*fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );*/
    fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_MULTI] );
 
    /* Projected texture vertex format - 48 bytes.
     */
    fxMesa->Glide.grReset( GR_VERTEX_PARAMETER );
-
    fxMesa->Glide.grCoordinateSpace( GR_WINDOW_COORDS );
    fxMesa->Glide.grVertexLayout( GR_PARAM_XY, TDFX_XY_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Z, TDFX_Z_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Q, TDFX_Q_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_PARGB, TDFX_ARGB_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_ST0, TDFX_ST0_OFFSET, GR_PARAM_ENABLE );
-   fxMesa->Glide.grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Q0, TDFX_Q0_OFFSET, GR_PARAM_ENABLE );
+   fxMesa->Glide.grVertexLayout( GR_PARAM_ST1, TDFX_ST1_OFFSET, GR_PARAM_ENABLE );
    fxMesa->Glide.grVertexLayout( GR_PARAM_Q1, TDFX_Q1_OFFSET, GR_PARAM_ENABLE );
-#if 0
-   fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );
-#endif
-
+   /*fxMesa->Glide.grVertexLayout( GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET, GR_PARAM_ENABLE );*/
    fxMesa->Glide.grGlideGetVertexLayout( fxMesa->layout[TDFX_LAYOUT_PROJECT] );
 
    UNLOCK_HARDWARE( fxMesa );
@@ -345,8 +364,8 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
 /*
  * Initialize the state in an tdfxContextPtr struct.
  */
-GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
-			   tdfxContextPtr fxMesa )
+static GLboolean
+tdfxInitContext( __DRIdrawablePrivate *driDrawPriv, tdfxContextPtr fxMesa )
 {
    /* KW: Would be nice to make one of these a member of the other.
     */
@@ -397,7 +416,7 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
 
    LOCK_HARDWARE( fxMesa );
 
-   if ( fxMesa->glVis->DepthBits > 0 ) {
+   if ( fxMesa->glCtx->Visual.depthBits > 0 ) {
       fxMesa->Glide.grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
    } else {
       fxMesa->Glide.grDepthBufferMode(GR_DEPTHBUFFER_DISABLE);
@@ -444,6 +463,14 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
 
    UNLOCK_HARDWARE( fxMesa );
 
+   {
+      const char *debug = getenv("LIBGL_DEBUG");
+      if (debug && strstr(debug, "fallbacks")) {
+         fxMesa->debugFallbacks = GL_TRUE;
+      }
+   }
+
+
    fxMesa->numClipRects = 0;
    fxMesa->pClipRects = NULL;
    fxMesa->scissoredClipRects = GL_FALSE;
@@ -454,36 +481,222 @@ GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
 }
 
 
-void tdfxDestroyContext( tdfxContextPtr fxMesa )
+void
+tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
 {
+   tdfxContextPtr fxMesa = (tdfxContextPtr) driContextPriv->driverPrivate;
+
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, fxMesa );
    }
 
    if ( fxMesa ) {
-      GLcontext *ctx = fxMesa->glCtx;
-      struct gl_texture_object *tObj;
-
-      if ( ctx->Shared->RefCount == 1 && fxMesa->driDrawable ) {
+      if (fxMesa->glCtx->Shared->RefCount == 1 && fxMesa->driDrawable) {
          /* This share group is about to go away, free our private
           * texture object data.
           */
-	 LOCK_HARDWARE( fxMesa );
-         for ( tObj = ctx->Shared->TexObjectList ; tObj ; tObj = tObj->Next ) {
-            tdfxTMFreeTextureLocked( fxMesa, tObj );
+         struct gl_texture_object *tObj;
+         tObj = fxMesa->glCtx->Shared->TexObjectList;
+         while (tObj) {
+            tdfxTMFreeTexture(fxMesa, tObj);
+            tObj = tObj->Next;
          }
-	 UNLOCK_HARDWARE( fxMesa );
       }
 
-      tdfxTMClose( fxMesa );  /* free texture memory */
-      FREE( fxMesa );
-   }
+      tdfxTMClose(fxMesa);  /* free texture memory */
 
-#if 0
-   glx_fini_prof();
-#endif
+      _swsetup_DestroyContext( fxMesa->glCtx );
+      _tnl_DestroyContext( fxMesa->glCtx );
+      _ac_DestroyContext( fxMesa->glCtx );
+      _swrast_DestroyContext( fxMesa->glCtx );
+
+      tdfxFreeVB( fxMesa->glCtx );
+
+      /* Free Mesa context */
+      fxMesa->glCtx->DriverCtx = NULL;
+      _mesa_destroy_context(fxMesa->glCtx);
+
+      /* free the tdfx context */
+      XFree( fxMesa );
+   }
 }
 
+
+GLboolean
+tdfxUnbindContext( __DRIcontextPrivate *driContextPriv )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+
+   if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, driContextPriv );
+   }
+
+   if ( driContextPriv && (tdfxContextPtr) driContextPriv == fxMesa ) {
+      LOCK_HARDWARE(fxMesa);
+      fxMesa->Glide.grGlideGetState(fxMesa->Glide.State);
+      UNLOCK_HARDWARE(fxMesa);
+   }
+   return GL_TRUE;
+}
+
+
+GLboolean
+tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
+                 __DRIdrawablePrivate *driDrawPriv,
+                 __DRIdrawablePrivate *driReadPriv )
+{
+   if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, driContextPriv );
+   }
+
+   if ( driContextPriv ) {
+      tdfxContextPtr newFx = (tdfxContextPtr) driContextPriv->driverPrivate;
+      GLcontext *newCtx = newFx->glCtx;
+      GET_CURRENT_CONTEXT(curCtx);
+
+      if ( newFx->driDrawable != driDrawPriv ) {
+	 newFx->driDrawable = driDrawPriv;
+	 newFx->dirty = ~0;
+      }
+      else if (curCtx == newCtx) {
+         /* same drawable, same context -> no-op */
+         /* Need to call _mesa_make_current2() in order to make sure API
+          * dispatch is set correctly.
+          */
+         _mesa_make_current2( newCtx,
+                              (GLframebuffer *) driDrawPriv->driverPrivate,
+                              (GLframebuffer *) driReadPriv->driverPrivate );
+         return GL_TRUE;
+      }
+
+      if ( !newFx->Glide.Initialized ) {
+	 if ( !tdfxInitContext( driDrawPriv, newFx ) )
+	    return GL_FALSE;
+
+	 LOCK_HARDWARE( newFx );
+
+	 /* FIXME: Force loading of window information */
+	 newFx->width = 0;
+         tdfxUpdateClipping(newCtx);
+         tdfxUploadClipping(newFx);
+
+	 UNLOCK_HARDWARE( newFx );
+      } else {
+	 LOCK_HARDWARE( newFx );
+
+	 newFx->Glide.grSstSelect( newFx->Glide.Board );
+	 newFx->Glide.grGlideSetState( newFx->Glide.State );
+
+         tdfxUpdateClipping(newCtx);
+         tdfxUploadClipping(newFx);
+
+	 UNLOCK_HARDWARE( newFx );
+      }
+
+      _mesa_make_current2( newCtx,
+                           (GLframebuffer *) driDrawPriv->driverPrivate,
+                           (GLframebuffer *) driReadPriv->driverPrivate );
+
+      if ( !newCtx->Viewport.Width ) {
+	 _mesa_set_viewport( newCtx, 0, 0, driDrawPriv->w, driDrawPriv->h );
+      }
+   } else {
+      _mesa_make_current( 0, 0 );
+   }
+
+   return GL_TRUE;
+}
+
+
+/*
+ * Enable this to trace calls to various Glide functions.
+ */
+/*#define DEBUG_TRAP*/
+#ifdef DEBUG_TRAP
+static void (*real_grDrawTriangle)( const void *a, const void *b, const void *c );
+static void (*real_grDrawPoint)( const void *a );
+static void (*real_grDrawVertexArray)(FxU32 mode, FxU32 Count, void *pointers);
+static void (*real_grDrawVertexArrayContiguous)(FxU32 mode, FxU32 Count,
+                                       void *pointers, FxU32 stride);
+static void (*real_grClipWindow)( FxU32 minx, FxU32 miny, FxU32 maxx, FxU32 maxy );
+
+static void (*real_grVertexLayout)(FxU32 param, FxI32 offset, FxU32 mode);
+static void (*real_grGlideGetVertexLayout)( void *layout );
+static void (*real_grGlideSetVertexLayout)( const void *layout );
+
+static void (*real_grTexDownloadMipMapLevel)( GrChipID_t        tmu,
+                                     FxU32             startAddress,
+                                     GrLOD_t           thisLod,
+                                     GrLOD_t           largeLod,
+                                     GrAspectRatio_t   aspectRatio,
+                                     GrTextureFormat_t format,
+                                     FxU32             evenOdd,
+                                              void              *data );
+
+
+static void debug_grDrawTriangle( const void *a, const void *b, const void *c )
+{
+   printf("%s\n", __FUNCTION__);
+   (*real_grDrawTriangle)(a, b, c);
+}
+
+static void debug_grDrawPoint( const void *a )
+{
+   const float *f = (const float *) a;
+   printf("%s %g %g\n", __FUNCTION__, f[0], f[1]);
+   (*real_grDrawPoint)(a);
+}
+
+static void debug_grDrawVertexArray(FxU32 mode, FxU32 Count, void *pointers)
+{
+   printf("%s count=%d\n", __FUNCTION__, (int) Count);
+   (*real_grDrawVertexArray)(mode, Count, pointers);
+}
+
+static void debug_grDrawVertexArrayContiguous(FxU32 mode, FxU32 Count,
+                                       void *pointers, FxU32 stride)
+{
+   printf("%s mode=0x%x count=%d\n", __FUNCTION__, (int) mode, (int) Count);
+   (*real_grDrawVertexArrayContiguous)(mode, Count, pointers, stride);
+}
+
+static void debug_grClipWindow( FxU32 minx, FxU32 miny, FxU32 maxx, FxU32 maxy )
+{
+   printf("%s %d,%d .. %d,%d\n", __FUNCTION__,
+          (int) minx, (int) miny, (int) maxx, (int) maxy);
+   (*real_grClipWindow)(minx, miny, maxx, maxy);
+}
+
+static void debug_grVertexLayout(FxU32 param, FxI32 offset, FxU32 mode)
+{
+   (*real_grVertexLayout)(param, offset, mode);
+}
+
+static void debug_grGlideGetVertexLayout( void *layout )
+{
+   (*real_grGlideGetVertexLayout)(layout);
+}
+
+static void debug_grGlideSetVertexLayout( const void *layout )
+{
+   (*real_grGlideSetVertexLayout)(layout);
+}
+
+static void debug_grTexDownloadMipMapLevel( GrChipID_t        tmu,
+                                     FxU32             startAddress,
+                                     GrLOD_t           thisLod,
+                                     GrLOD_t           largeLod,
+                                     GrAspectRatio_t   aspectRatio,
+                                     GrTextureFormat_t format,
+                                     FxU32             evenOdd,
+                                     void              *data )
+{
+   (*real_grTexDownloadMipMapLevel)(tmu, startAddress, thisLod, largeLod,
+                                    aspectRatio, format, evenOdd, data);
+}
+
+#endif
 
 
 /*
@@ -513,10 +726,8 @@ GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
       break;
    default:
       {
-         char err[1000];
-         sprintf(err, "unrecognized 3dfx deviceID: 0x%x",
+         __driUtilMessage("unrecognized 3dfx deviceID: 0x%x",
                  tmesa->fxScreen->deviceID);
-         __driMesaMessage(err);
       }
       return GL_FALSE;
    }
@@ -528,13 +739,10 @@ GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
        */
       libHandle = dlopen(defaultGlide, RTLD_NOW); 
       if (!libHandle) {
-         char err[1000];
-         sprintf(err,
+         __driUtilMessage(
             "can't find Glide library, dlopen(%s) and dlopen(%s) both failed.",
             libName, defaultGlide);
-         __driMesaMessage(err);
-	 sprintf(err, "dlerror() message: %s", dlerror());
-	 __driMesaMessage(err);
+         __driUtilMessage("dlerror() message: %s", dlerror());
          return GL_FALSE;
       }
       libName = defaultGlide;
@@ -550,10 +758,8 @@ GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
 #define GET_FUNCTION(PTR, NAME)						\
    tmesa->Glide.PTR = dlsym(libHandle, NAME);				\
    if (!tmesa->Glide.PTR) {						\
-      char err[1000];							\
-      sprintf(err, "couldn't find Glide function %s in %s.",		\
+      __driUtilMessage("couldn't find Glide function %s in %s.",	\
               NAME, libName);						\
-      __driMesaMessage(err);						\
    }
 
    GET_FUNCTION(grDrawPoint, "grDrawPoint");
@@ -609,10 +815,8 @@ GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
    GET_FUNCTION(grDisable, "grDisable");
    GET_FUNCTION(grCoordinateSpace, "grCoordinateSpace");
    GET_FUNCTION(grDepthRange, "grDepthRange");
-#if defined(__linux__) || defined(__FreeBSD__) 
    GET_FUNCTION(grStippleMode, "grStippleMode");
    GET_FUNCTION(grStipplePattern, "grStipplePattern");
-#endif /* __linux__ || __FreeBSD__ */
    GET_FUNCTION(grViewport, "grViewport");
    GET_FUNCTION(grTexCalcMemRequired, "grTexCalcMemRequired");
    GET_FUNCTION(grTexTextureMemRequired, "grTexTextureMemRequired");
@@ -685,5 +889,35 @@ GLboolean tdfxInitGlide(tdfxContextPtr tmesa)
    tmesa->Glide.txImgDequantizeFXT1 = dlsym(libHandle, "_txImgDequantizeFXT1");
    tmesa->Glide.txErrorSetCallback = dlsym(libHandle, "txErrorSetCallback");
    
+#ifdef DEBUG_TRAP
+   /* wrap the drawing functions so we can trap them */
+   real_grDrawTriangle = tmesa->Glide.grDrawTriangle;
+   tmesa->Glide.grDrawTriangle = debug_grDrawTriangle;
+
+   real_grDrawPoint = tmesa->Glide.grDrawPoint;
+   tmesa->Glide.grDrawPoint = debug_grDrawPoint;
+
+   real_grDrawVertexArray = tmesa->Glide.grDrawVertexArray;
+   tmesa->Glide.grDrawVertexArray = debug_grDrawVertexArray;
+
+   real_grDrawVertexArrayContiguous = tmesa->Glide.grDrawVertexArrayContiguous;
+   tmesa->Glide.grDrawVertexArrayContiguous = debug_grDrawVertexArrayContiguous;
+
+   real_grClipWindow = tmesa->Glide.grClipWindow;
+   tmesa->Glide.grClipWindow = debug_grClipWindow;
+
+   real_grVertexLayout = tmesa->Glide.grVertexLayout;
+   tmesa->Glide.grVertexLayout = debug_grVertexLayout;
+
+   real_grGlideGetVertexLayout = tmesa->Glide.grGlideGetVertexLayout;
+   tmesa->Glide.grGlideGetVertexLayout = debug_grGlideGetVertexLayout;
+
+   real_grGlideSetVertexLayout = tmesa->Glide.grGlideSetVertexLayout;
+   tmesa->Glide.grGlideSetVertexLayout = debug_grGlideSetVertexLayout;
+
+   real_grTexDownloadMipMapLevel = tmesa->Glide.grTexDownloadMipMapLevel;
+   tmesa->Glide.grTexDownloadMipMapLevel = debug_grTexDownloadMipMapLevel;
+
+#endif
    return GL_TRUE;
 }

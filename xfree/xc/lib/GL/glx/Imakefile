@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.14 2001/04/03 02:29:32 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.18 2002/11/25 14:04:49 eich Exp $
 XCOMM The contents of this file are subject to the GLX Public License Version 1.0
 XCOMM (the "License"). You may not use this file except in compliance with the
 XCOMM License. You may obtain a copy of the License at Silicon Graphics, Inc.,
@@ -34,9 +34,14 @@ XCOMM 	glw
 # Files from Mesa
 
 LinkSourceFile(glapi.c, $(MESASRCDIR)/src)
-LinkSourceFile(glapinoop.c, $(MESASRCDIR)/src)
 LinkSourceFile(glthread.c, $(MESASRCDIR)/src)
+#ifdef i386Architecture
 LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
+#endif
+#ifdef SparcArchitecture
+LinkSourceFile(glapi_sparc.S, $(MESASRCDIR)/src/SPARC)
+#endif
+
 
 # Maybe some of these could come from
 # xc/extras/ogl-sample/main/glx/lib at some point.
@@ -50,7 +55,6 @@ LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
 		g_single.c \
 		g_vendpriv.c \
 		glapi.c \
-		glapinoop.c \
 		glthread.c \
 		glxcmds.c \
 		glxext.c \
@@ -73,7 +77,6 @@ LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
 		g_single.o \
 		g_vendpriv.o \
 		glapi.o \
-		glapinoop.o \
 		glthread.o \
 		glxcmds.o \
 		glxext.o \
@@ -89,18 +92,34 @@ LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
 
      GLX_DEFS = GlxDefines
 
+#ifdef i386Architecture
+      ASM_DIR = X86
+#endif
+#ifdef SparcArchitecture
+      ASM_DIR = SPARC
+#endif
+
 #if BuildXF86DRI
      DRI_INCS = -I$(GLXLIBSRC)/dri
-#if defined(i386Architecture)
+#if defined(i386Architecture) && MesaUseX86Asm
      ASM_SRCS = glapi_x86.S
      ASM_OBJS = glapi_x86.o
      ASM_DEFS = -DUSE_X86_ASM
+#endif
+#if defined(SparcArchitecture)
+     ASM_SRCS = glapi_sparc.S
+     ASM_OBJS = glapi_sparc.o
+     ASM_DEFS = -DUSE_SPARC_ASM
+#endif
+
+#if GlxBuiltInXMesa
+  XMESA_DEFINES = -DGLX_BUILT_IN_XMESA
 #endif
 #endif
 
          SRCS = $(GLX_SRCS) $(ASM_SRCS)
          OBJS = $(GLX_OBJS) $(ASM_OBJS)
-      DEFINES = $(GLX_DEFS) $(ASM_DEFS)
+      DEFINES = $(GLX_DEFS) $(ASM_DEFS) $(XMESA_DEFINES)
 
      INCLUDES = -I$(INCLUDESRC) \
 		-I$(XINCLUDESRC) \
@@ -108,8 +127,10 @@ LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
 		-I$(INCLUDESRC)/GL \
 		-I$(GLXLIBSRC)/glx \
 		-I$(MESASRCDIR)/src \
-		-I$(MESASRCDIR)/src/X86 \
+		-I$(MESASRCDIR)/src/X \
+		-I$(MESASRCDIR)/src/$(ASM_DIR) \
 		-I$(MESASRCDIR)/include \
+		-I$(GLXLIBSRC)/include \
 		$(DRI_INCS)
 
 #include <Library.tmpl>
@@ -118,6 +139,10 @@ LibraryObjectRule()
 
 #if BuildXF86DRI && defined(i386Architecture)
 ObjectFromAsmSource(glapi_x86, NullParameter)
+#endif
+#if BuildXF86DRI && defined(SparcArchitecture)
+STD_CPP_DEFINES = StandardDefines $(PROJECT_DEFINES)
+ObjectFromAsmSource(glapi_sparc, NullParameter)
 #endif
 
 SubdirLibraryRule($(OBJS))

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_macros.h,v 1.4 2000/06/17 00:02:56 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_macros.h,v 1.5 2002/02/22 21:33:02 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -55,6 +55,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define TURN_OFF_TEXTURES_NOT
 #define DO_VALIDATE
 
+#define GAMMA_DMA_BUFFER_SIZE 4096
+
 #if 0
 #define GAMMA_DMA_SEND_FLAGS    DRM_DMA_PRIORITY
 #define GAMMA_DMA_SEND_FLAGS    DRM_DMA_BLOCK
@@ -63,10 +65,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GAMMA_DMA_SEND_FLAGS    0
 #endif
 
+#if 0
 #define GAMMA_DMA_GET_FLAGS     \
     (DRM_DMA_SMALLER_OK | DRM_DMA_LARGER_OK | DRM_DMA_WAIT)
-
-#define GAMMA_DMA_BUFFER_SIZE   4096
+#else
+#define GAMMA_DMA_GET_FLAGS     DRM_DMA_WAIT
+#endif
 
 #if defined(DEBUG_DRMDMA) || defined(DEBUG_COMMANDS) || defined(DEBUG_VERBOSE)
 #include <stdio.h>
@@ -100,6 +104,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DEBUG_ERROR(s)
 #endif
 
+#define WRITEV(buf,val1,val2,val3,val4)                               \
+do {                                                                  \
+    buf++->i = 0x9C008300;                        \
+    buf++->f = val1;                                                   \
+    buf++->f = val2;                                                   \
+    buf++->f = val3;                                                   \
+    buf++->f = val4;                                                   \
+} while (0)
+
 #define WRITE(buf,reg,val)                                            \
 do {                                                                  \
     buf++->i = Glint##reg##Tag;                                       \
@@ -114,22 +127,29 @@ do {                                                                  \
     DEBUG_WRITE(("WRITEF(buf, %s, %f);\n", #reg, (float)val));        \
 } while (0)
 
-#define CHECK_DMA_BUFFER(gcc,gcp,n)                                   \
-do {                                                                  \
-    if ((gcp)->bufCount+(n<<1) >= (gcp)->bufSize)                     \
-	PROCESS_DMA_BUFFER(gcc,gcp);                                  \
-    (gcp)->bufCount += (n<<1);                                        \
-} while (0)
-
 #define CHECK_WC_DMA_BUFFER(gcp,n)                                    \
 do {                                                                  \
     (gcp)->WCbufCount += (n<<1);                                      \
 } while (0)
 
-#define FLUSH_DMA_BUFFER(gcc,gcp)                                     \
+#define CHECK_DMA_BUFFER(gcp,n)                                   \
 do {                                                                  \
-    if (gcp->bufCount)                                                \
-	PROCESS_DMA_BUFFER(gcc,gcp);                                  \
+    if ((gcp)->bufCount+(n<<1) >= (gcp)->bufSize)                     \
+	PROCESS_DMA_BUFFER(gcp);                                  \
+    (gcp)->bufCount += (n<<1);                                        \
+} while (0)
+
+#define CHECK_DMA_BUFFER2(gcp,n)                                   \
+do {                                                                  \
+    if ((gcp)->bufCount+n >= (gcp)->bufSize)                     \
+	PROCESS_DMA_BUFFER(gcp);                                  \
+    (gcp)->bufCount += n;                                        \
+} while (0)
+
+#define FLUSH_DMA_BUFFER(gcp)                                     \
+do {                                                                  \
+   if (gcp->bufCount)                                                \
+	PROCESS_DMA_BUFFER(gcp);                                  \
 } while (0)
 
 #ifdef DONT_SEND_DMA
@@ -205,64 +225,45 @@ do {                                                                       \
 
 #define PROCESS_DMA_BUFFER_TOP_HALF(gcp)                                   \
 do {                                                                       \
-    SEND_DMA((gcp)->gammaScrnPriv->driScrnPriv->fd,                        \
+    SEND_DMA((gcp)->driFd,                        \
 	     (gcp)->hHWContext, 1, &(gcp)->bufIndex, &(gcp)->bufCount);    \
 } while (0)
 
 #define PROCESS_DMA_BUFFER_BOTTOM_HALF(gcp)                                \
 do {                                                                       \
-    GET_DMA((gcp)->gammaScrnPriv->driScrnPriv->fd,                         \
+    GET_DMA((gcp)->driFd,                         \
 	    (gcp)->hHWContext, 1, &(gcp)->bufIndex, &(gcp)->bufSize);      \
                                                                            \
     (gcp)->buf =                                                           \
-	(dmaBuf)(gcp)->gammaScrnPriv->bufs->list[(gcp)->bufIndex].address; \
+	(dmaBuf)(gcp)->gammaScreen->bufs->list[(gcp)->bufIndex].address; \
 } while (0)
 
-#define PROCESS_DMA_BUFFER(gcc,gcp)                                        \
+#define PROCESS_DMA_BUFFER(gcp)                                        \
 do {                                                                       \
-    if (gcc) VALIDATE_DRAWABLE_INFO(gcc, gcp);                             \
+    VALIDATE_DRAWABLE_INFO(gcp);                             \
     PROCESS_DMA_BUFFER_TOP_HALF(gcp);                                      \
     PROCESS_DMA_BUFFER_BOTTOM_HALF(gcp);                                   \
 } while (0)
 
 #ifdef DO_VALIDATE
-#define VALIDATE_DRAWABLE_INFO_NO_LOCK(gcc,gcp)                            \
+#define VALIDATE_DRAWABLE_INFO_NO_LOCK(gcp)                            \
 do {                                                                       \
-    __DRIcontextPrivate *pcp = gcc;                                        \
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;                          \
-    __DRIdrawablePrivate *pdp = pcp->driDrawablePriv;                      \
+    __DRIscreenPrivate *psp = gcp->driScreen;                          \
+    __DRIdrawablePrivate *pdp = gcp->driDrawable;                      \
                                                                            \
     if (*(pdp->pStamp) != pdp->lastStamp) {                                \
 	int old_index = pdp->index;                                        \
 	while (*(pdp->pStamp) != pdp->lastStamp) {                         \
-	    DRI_MESA_VALIDATE_DRAWABLE_INFO(pcp->display, psp->myNum, pdp);\
+	    DRI_VALIDATE_DRAWABLE_INFO_ONCE(gcp->display, psp->myNum, pdp);\
         }                                                                  \
-                                                                           \
 	if (pdp->index != old_index) {                                     \
 	    gcp->Window &= ~W_GIDMask;                                     \
 	    gcp->Window |= (pdp->index << 5);                              \
 	    CHECK_WC_DMA_BUFFER(gcp, 1);                                   \
-	    WRITEF(gcp->WCbuf, GLINTWindow, gcp->Window);                  \
+	    WRITE(gcp->WCbuf, GLINTWindow, gcp->Window|(gcp->FrameCount<<9));\
 	}                                                                  \
-                                                                           \
-	if (pdp->x != gcp->x ||                                            \
-	    pdp->y != gcp->y) {                                            \
-	    GLfloat sx, sy, ox, oy;                                        \
-                                                                           \
-	    gcp->x = pdp->x;                                               \
-	    gcp->y = psp->fbHeight - (pdp->y+pdp->h);                      \
-                                                                           \
-	    sx = gcp->w/2.0f;                                              \
-	    sy = gcp->h/2.0f;                                              \
-	    ox = gcp->x + sx;                                              \
-	    oy = gcp->y + sy;                                              \
-                                                                           \
-	    CHECK_WC_DMA_BUFFER(gcp, 4);                                   \
-	    WRITEF(gcp->WCbuf, ViewPortOffsetX, ox);                       \
-	    WRITEF(gcp->WCbuf, ViewPortOffsetY, oy);                       \
-	    WRITEF(gcp->WCbuf, ViewPortScaleX,  sx);                       \
-	    WRITEF(gcp->WCbuf, ViewPortScaleY,  sy);                       \
-	}                                                                  \
+									\
+	gammaUpdateViewportOffset( gcp->glCtx);				\
                                                                            \
 	if (pdp->numClipRects == 1 &&                                      \
 	    pdp->pClipRects->x1 ==  pdp->x &&                              \
@@ -270,17 +271,17 @@ do {                                                                       \
 	    pdp->pClipRects->y1 ==  pdp->y &&                              \
 	    pdp->pClipRects->y2 == (pdp->y+pdp->h)) {                      \
 	    CHECK_WC_DMA_BUFFER(gcp, 1);                                   \
-	    WRITEF(gcp->WCbuf, Rectangle2DControl, 0);                     \
+	    WRITE(gcp->WCbuf, Rectangle2DControl, 0);                     \
 	    gcp->NotClipped = GL_TRUE;                                     \
 	} else {                                                           \
 	    CHECK_WC_DMA_BUFFER(gcp, 1);                                   \
-	    WRITEF(gcp->WCbuf, Rectangle2DControl, 1);                     \
+	    WRITE(gcp->WCbuf, Rectangle2DControl, 1);                     \
 	    gcp->NotClipped = GL_FALSE;                                    \
 	}                                                                  \
 	gcp->WindowChanged = GL_TRUE;                                      \
                                                                            \
 	if (gcp->WCbufCount) {                                             \
-	    SEND_DMA((gcp)->gammaScrnPriv->driScrnPriv->fd,                \
+	    SEND_DMA((gcp)->gammaScreen->driScreen->fd,                \
 		     (gcp)->hHWContext, 1, &(gcp)->WCbufIndex,             \
 		     &(gcp)->WCbufCount);                                  \
 	    (gcp)->WCbufIndex = -1;                                        \
@@ -288,31 +289,31 @@ do {                                                                       \
     }                                                                      \
 } while (0)
 
-#define VALIDATE_DRAWABLE_INFO_NO_LOCK_POST(gcc,gcp)                       \
+#define VALIDATE_DRAWABLE_INFO_NO_LOCK_POST(gcp)                       \
 do {                                                                       \
     if ((gcp)->WCbufIndex < 0) {                                           \
-	GET_DMA((gcp)->gammaScrnPriv->driScrnPriv->fd,                     \
+	GET_DMA((gcp)->gammaScreen->driScreen->fd,                     \
 		(gcp)->hHWContext, 1, &(gcp)->WCbufIndex,                  \
 		&(gcp)->WCbufSize);                                        \
                                                                            \
 	(gcp)->WCbuf =                                                     \
-	    (dmaBuf)(gcp)->gammaScrnPriv->bufs->                           \
+	    (dmaBuf)(gcp)->gammaScreen->bufs->                           \
 		list[(gcp)->WCbufIndex].address;                           \
     }                                                                      \
 } while (0)
 
-#define VALIDATE_DRAWABLE_INFO(gcc,gcp)                                    \
+#define VALIDATE_DRAWABLE_INFO(gcp)                                    \
 do {                                                                       \
-    __DRIcontextPrivate *pcp = gcc;                                        \
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;                          \
-                                                                           \
+    __DRIscreenPrivate *psp = gcp->driScreen;                          \
+if (gcp->driDrawable) { \
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);            \
-    VALIDATE_DRAWABLE_INFO_NO_LOCK(gcc,gcp);                               \
+    VALIDATE_DRAWABLE_INFO_NO_LOCK(gcp);                               \
     DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);          \
-    VALIDATE_DRAWABLE_INFO_NO_LOCK_POST(gcc,gcp);                          \
+    VALIDATE_DRAWABLE_INFO_NO_LOCK_POST(gcp);                          \
+} \
 } while (0)
 #else
-#define VALIDATE_DRAWABLE_INFO(gcc,gcp)
+#define VALIDATE_DRAWABLE_INFO(gcp)
 #endif
 
 #define CALC_LOG2(l2,s)                       \

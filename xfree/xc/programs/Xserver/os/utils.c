@@ -49,7 +49,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.81 2002/01/16 20:39:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.85 2002/12/24 17:43:00 tsi Exp $ */
 
 #ifdef __CYGWIN__
 #include <stdlib.h>
@@ -113,6 +113,10 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #ifdef XCSECURITY
 #define _SECURITY_SERVER
 #include "security.h"
+#endif
+
+#ifdef RENDER
+#include "picture.h"
 #endif
 
 #define X_INCLUDE_NETDB_H
@@ -189,23 +193,19 @@ OsSignal(sig, handler)
  * server at a time.  This keeps the servers from stomping on each other
  * if the user forgets to give them different display numbers.
  */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #define LOCK_DIR "/tmp"
+#endif
 #define LOCK_TMP_PREFIX "/.tX"
 #define LOCK_PREFIX "/.X"
 #define LOCK_SUFFIX "-lock"
-#else
-#define LOCK_TMP_PREFIX "/xf86$"
-#define LOCK_PREFIX "/xf86_"
-#define LOCK_SUFFIX ".lck"
-#endif
 
 #if defined(DGUX)
 #include <limits.h>
 #include <sys/param.h>
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define link rename
 #endif
 
@@ -246,7 +246,7 @@ LockServer()
   /*
    * Path names
    */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
   tmppath = LOCK_DIR;
 #else
   /* OS/2 uses TMP directory, must also prepare for 8.3 names */
@@ -293,7 +293,7 @@ LockServer()
     FatalError("Could not create lock file in %s\n", tmp);
   (void) sprintf(pid_str, "%10ld\n", (long)getpid());
   (void) write(lfd, pid_str, 11);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #ifndef USE_CHMOD
   (void) fchmod(lfd, 0444);
 #else
@@ -378,9 +378,9 @@ UnlockServer()
 
   if (!StillLocking){
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
   (void) chmod(LockFile,S_IREAD|S_IWRITE);
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
   (void) unlink(LockFile);
   }
 }
@@ -425,7 +425,7 @@ GiveUp(sig)
     errno = olderrno;
 }
 
-#if __GNUC__
+#ifdef __GNUC__
 static void AbortServer() __attribute__((noreturn));
 #endif
 
@@ -496,6 +496,7 @@ void UseMsg()
     ErrorF("-audit int             set audit trail level\n");	
     ErrorF("-auth file             select authorization file\n");	
     ErrorF("bc                     enable bug compatibility\n");
+    ErrorF("-br                    create root window with black background\n");
     ErrorF("+bs                    enable any backing store support\n");
     ErrorF("-bs                    disable any backing store support\n");
     ErrorF("-c                     turns off key-click\n");
@@ -540,6 +541,9 @@ void UseMsg()
     ErrorF("-nopn                  reject failure to listen on all ports\n");
     ErrorF("-r                     turns off auto-repeat\n");
     ErrorF("r                      turns on auto-repeat \n");
+#ifdef RENDER
+    ErrorF("-render [default|mono|gray|color] set render color alloc policy\n");
+#endif
     ErrorF("-s #                   screen-saver timeout (minutes)\n");
 #ifdef XCSECURITY
     ErrorF("-sp file               security policy file\n");
@@ -659,6 +663,8 @@ char	*argv[];
 	}
 	else if ( strcmp( argv[i], "bc") == 0)
 	    permitOldBugs = TRUE;
+	else if ( strcmp( argv[i], "-br") == 0)
+	    blackRoot = TRUE;
 	else if ( strcmp( argv[i], "+bs") == 0)
 	    enableBackingStore = TRUE;
 	else if ( strcmp( argv[i], "-bs") == 0)
@@ -791,7 +797,7 @@ char	*argv[];
 #ifdef SERVER_LOCK
 	else if ( strcmp ( argv[i], "-nolock") == 0)
 	{
-#if !defined(WIN32) && !defined(__EMX__) && !defined(__CYGWIN__)
+#if !defined(WIN32) && !defined(__UNIXOS2__) && !defined(__CYGWIN__)
 	  if (getuid() != 0)
 	    ErrorF("Warning: the -nolock option can only be used by root\n");
 	  else
@@ -960,6 +966,22 @@ char	*argv[];
 		UseMsg();
 	}
 #endif
+#ifdef RENDER
+	else if ( strcmp( argv[i], "-render" ) == 0)
+	{
+	    if (++i < argc)
+	    {
+		int policy = PictureParseCmapPolicy (argv[i]);
+
+		if (policy != PictureCmapPolicyInvalid)
+		    PictureCmapPolicy = policy;
+		else
+		    UseMsg ();
+	    }
+	    else
+		UseMsg ();
+	}
+#endif
  	else
  	{
 	    ErrorF("Unrecognized option: %s\n", argv[i]);
@@ -1068,7 +1090,7 @@ ExpandCommandLine(pargc, pargv)
 {
     int i;
 
-#if !defined(WIN32) && !defined(__EMX__) && !defined(__CYGWIN__)
+#if !defined(WIN32) && !defined(__UNIXOS2__) && !defined(__CYGWIN__)
     if (getuid() != geteuid())
 	return;
 #endif
@@ -1590,7 +1612,7 @@ OsReleaseSignals (void)
 #endif
 }
 
-#if !defined(WIN32) && !defined(__EMX__)
+#if !defined(WIN32) && !defined(__UNIXOS2__)
 /*
  * "safer" versions of system(3), popen(3) and pclose(3) which give up
  * all privs before running a command.
@@ -1760,7 +1782,7 @@ Pclose(iop)
     
     return pid == -1 ? -1 : pstat;
 }
-#endif /* !WIN32 && !__EMX__ */
+#endif /* !WIN32 && !__UNIXOS2__ */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.12 2002/01/14 18:16:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/elf.h,v 1.15 2002/10/30 17:50:19 alanh Exp $ */
 
 
 typedef unsigned int	Elf32_Addr;
@@ -141,6 +141,26 @@ extern Elf32_Dyn _DYNAMIC [];
 #define R_386_GOTPC	10
 #define R_386_NUM	11
 
+/* x86_64 Relocation Types */
+#define R_X86_64_NONE                   0
+#define R_X86_64_64                     1
+#define R_X86_64_PC32                   2
+#define R_X86_64_GOT32                  3
+#define R_X86_64_PLT32                  4
+#define R_X86_64_COPY                   5
+#define R_X86_64_GLOB_DAT               6
+#define R_X86_64_JUMP_SLOT              7
+#define R_X86_64_RELATIVE               8
+#define R_X86_64_GOTPCREL               9
+#define R_X86_64_32                    10
+#define R_X86_64_32S                   11
+#define R_X86_64_16                    12
+#define R_X86_64_PC16                  13
+#define R_X86_64_8                     14
+#define R_X86_64_PC8                   15
+#define R_X86_64_GNU_VTINHERIT         250
+#define R_X86_64_GNU_VTENTRY           251
+
 /* sparc Relocation Types */
 #define	R_SPARC_NONE		0
 #define	R_SPARC_8		1
@@ -245,7 +265,7 @@ extern Elf32_Dyn _DYNAMIC [];
 #define R_ALPHA_GPVALUE		16
 #define R_ALPHA_GPRELHIGH	17
 #define R_ALPHA_GPRELLOW	18
-#define R_ALPHA_IMMED_GP_16	19
+#define R_ALPHA_GPREL16		19
 #define R_ALPHA_IMMED_GP_HI32	20
 #define R_ALPHA_IMMED_SCN_HI32	21
 #define R_ALPHA_IMMED_BR_HI32	22
@@ -597,6 +617,8 @@ typedef struct
 #define SHT_HIPROC	0x7fffffff
 #define SHT_LOUSER	0x80000000
 #define SHT_HIUSER	0xffffffff
+
+#define SHT_IA_64_UNWIND	(SHT_LOPROC + 1) /* unwind bits */
 
 /* sh_flags */
 #define SHF_WRITE	0x1

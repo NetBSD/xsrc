@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,10 +36,92 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "config.h"
 #include "macros.h"
 #include "mem.h"
 #endif
 
+
+#if defined(WIN32) && defined(_DEBUG)
+
+/*
+ * N-byte aligned memory allocation functions.  Called via the ALIGN_MALLOC,
+ * ALIGN_CALLOC and ALIGN_FREE macros.  Debug versions?
+ * These functions allow dynamically allocated memory to be correctly
+ * aligned for improved cache utilization and specialized assembly
+ * support.
+ */
+
+/*
+ * Allocate N-byte aligned memory (uninitialized)
+ */
+void *
+_mesa_align_malloc_dbg(size_t bytes, unsigned long alignment, const char *_file, int _line )
+{
+   unsigned long ptr, buf;
+
+   ASSERT( alignment > 0 );
+
+   ptr = (unsigned long) _malloc_dbg( bytes + alignment, _NORMAL_BLOCK, _file, _line );
+
+   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+
+#ifdef DEBUG
+   /* mark the non-aligned area */
+   while ( ptr < buf - sizeof(void *) ) {
+      *(unsigned long *)ptr = 0xcdcdcdcd;
+      ptr += sizeof(unsigned long);
+   }
+#endif
+
+   return (void *)buf;
+}
+
+
+/*
+ * Allocate N-byte aligned memory and initialize to zero
+ */
+void *
+_mesa_align_calloc_dbg(size_t bytes, unsigned long alignment, const char *_file, int _line)
+{
+   unsigned long ptr, buf;
+
+   ASSERT( alignment > 0 );
+
+   ptr = (unsigned long) _calloc_dbg( 1, bytes + alignment, _NORMAL_BLOCK, _file, _line );
+
+   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+
+#ifdef DEBUG
+   /* mark the non-aligned area */
+   while ( ptr < buf - sizeof(void *) ) {
+      *(unsigned long *)ptr = 0xcdcdcdcd;
+      ptr += sizeof(unsigned long);
+   }
+#endif
+
+   return (void *)buf;
+}
+
+
+/*
+ * Free N-byte aligned memory
+ */
+void
+_mesa_align_free_dbg(void *ptr, const char *_file, int _line)
+{
+   /* The actuall address to free is stuffed in the word immediately
+    * before the address the client sees.
+    */
+   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+   void *realAddr = *cubbyHole;
+   _free_dbg(realAddr, _NORMAL_BLOCK );
+}
+
+
+#else  /* WIN32 && _DEBUG */
 
 
 /*
@@ -152,4 +234,18 @@ _mesa_align_free(void *ptr)
    void *realAddr = *cubbyHole;
    FREE(realAddr);
 #endif
+}
+
+
+#endif  /* WIN32 && _DEBUG */
+
+
+/*
+ * Set a block of GLushorts to a particular value.
+ */
+void
+_mesa_memset16( GLushort *dst, GLushort val, size_t n )
+{
+   while (n-- > 0)
+      *dst++ = val;
 }

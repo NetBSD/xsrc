@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKB.h,v 1.4 2001/01/17 17:53:17 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKB.h,v 1.5 2002/11/20 04:49:01 dawes Exp $ */
 
 #ifndef _XKB_H_
 #define	_XKB_H_
@@ -501,6 +501,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	XkbSA_DeviceValuator	0x14
 #define	XkbSA_LastAction	XkbSA_DeviceValuator
 #define	XkbSA_NumActions	(XkbSA_LastAction+1)
+
+#if defined(XF86DDXACTIONS) || defined(XFree86Server)
+#define	XkbSA_XFree86Private	0x86
+#endif
 
     /*
      * Specifies the key actions that clear latched groups or modifiers.

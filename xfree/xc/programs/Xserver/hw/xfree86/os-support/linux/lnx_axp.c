@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_axp.c,v 1.4 2001/02/15 19:46:03 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_axp.c,v 1.5 2002/11/25 14:05:04 eich Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -104,5 +104,93 @@ lnxGetAXP(void)
     } 
 	count++;
   } while (1);
+}
+
+/*
+ * pciconfig_iobase wrappers and dynamic i/o selection
+ */
+#include <linux/unistd.h>
+#include <asm/pci.h>
+#include <errno.h>
+
+/* glibc versions (single hose only) */
+extern void _outb(char val, unsigned long port);
+extern void _outw(short val, unsigned long port);
+extern void _outl(int val, unsigned long port);
+extern unsigned int _inb(unsigned long port);
+extern unsigned int _inw(unsigned long port);
+extern unsigned int _inl(unsigned long port);
+
+extern void _dense_outb(char, unsigned long);
+extern void _dense_outw(short, unsigned long);
+extern void _dense_outl(int, unsigned long);
+extern unsigned int _dense_inb(unsigned long);
+extern unsigned int _dense_inw(unsigned long);
+extern unsigned int _dense_inl(unsigned long);
+
+void (*_alpha_outb)(char, unsigned long) = _outb;
+void (*_alpha_outw)(short, unsigned long) = _outw;
+void (*_alpha_outl)(int, unsigned long) = _outl;
+unsigned int (*_alpha_inb)(unsigned long) = _inb;
+unsigned int (*_alpha_inw)(unsigned long) = _inw;
+unsigned int (*_alpha_inl)(unsigned long) = _inl;
+
+static long _alpha_iobase_query(unsigned, int, int, int);
+long (*_iobase)(unsigned, int, int, int) = _alpha_iobase_query;
+
+static long
+_alpha_iobase(unsigned flags, int hose, int bus, int devfn)
+{
+#ifdef __NR_pciconfig_iobase
+  if (bus < 0) {
+    bus = hose;
+    flags |= IOBASE_FROM_HOSE;
+  }
+
+  return syscall(__NR_pciconfig_iobase, flags, bus, devfn);
+#else
+  return -ENOSYS
+#endif
+}
+
+static long
+_alpha_iobase_legacy(unsigned flags, int hose, int bus, int devfn)
+{
+  if (hose > 0) return -ENODEV;
+  if (flags & IOBASE_DENSE_MEM) return _bus_base();
+  if (flags & IOBASE_SPARSE_MEM) return _bus_base_sparse();
+  return 0;
+}
+
+static long 
+_alpha_iobase_query(unsigned flags, int hose, int bus, int devfn)
+{
+  /*
+   * Only use iobase if the syscall is supported *and* it's
+   * a dense io system
+   */
+  if (_alpha_iobase(IOBASE_DENSE_IO, 0, 0, 0) > 0) {
+    /*
+     * The syscall worked and it's a dense io system - take over the
+     * io subsystem
+     */
+    _iobase = _alpha_iobase;
+
+#ifndef INCLUDE_XF86_NO_DOMAIN
+    /* 
+     * Only take over the inx/outx functions if this is a dense I/O
+     * system *and* addressing domains are being used. The dense I/O
+     * routines expect I/O to be mapped (as done in xf86MapDomainIO)
+     */
+    _alpha_outb = _dense_outb;
+    _alpha_outw = _dense_outw;
+    _alpha_outl = _dense_outl;
+    _alpha_inb = _dense_inb;
+    _alpha_inw = _dense_inw;
+    _alpha_inl = _dense_inl;
+#endif /* !INCLUDE_XF86_NO_DOMAIN */
+  } else _iobase = _alpha_iobase_legacy;
+
+  return _iobase(flags, hose, bus, devfn);
 }
 

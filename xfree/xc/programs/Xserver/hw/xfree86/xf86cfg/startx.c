@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/startx.c,v 1.7 2002/01/07 20:38:29 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/startx.c,v 1.8 2002/10/19 20:04:21 herrb Exp $
  */
 
 #include "config.h"
@@ -110,7 +110,7 @@ startx(void)
 	    else
 	        XmuSnprintf(path, sizeof(path), "%s/bin/XFree86", XFree86Dir);
 	    execl(path, "X", ":8", /*"+xinerama",*/ "+accessx","-allowMouseOpenFail",
-		  "-xf86config", XF86Config_path, NULL);
+		  "-xf86config", XF86Config_path, (void *)NULL);
 	    exit(-127);
 	}   break;
 	case -1:

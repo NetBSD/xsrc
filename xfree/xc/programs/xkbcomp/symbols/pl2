@@ -76,7 +76,7 @@ xkb_symbols "basic" {
 
     key <AB01> { [ y,			Y	 	]	};
     key <AB02> { [ x,			X	 	]	};
-    key <AB03> { [ C,			C	 	]	};
+    key <AB03> { [ c,			C	 	]	};
     key <AB04> { [ v,			V	 	],
 		 [ at					]	};
     key <AB05> { [ b,			B	 	],

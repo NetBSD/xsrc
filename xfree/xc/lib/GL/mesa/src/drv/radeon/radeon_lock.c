@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_lock.c,v 1.3 2001/04/10 16:07:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_lock.c,v 1.5 2002/10/30 12:51:55 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -37,11 +37,47 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 #include "radeon_lock.h"
 #include "radeon_tex.h"
+#include "radeon_state.h"
+#include "radeon_ioctl.h"
 
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
 int prevLockLine = 0;
 #endif
+
+/* Turn on/off page flipping according to the flags in the sarea:
+ */
+static void
+radeonUpdatePageFlipping( radeonContextPtr rmesa )
+{
+   int use_back;
+
+   if (rmesa->dri.drmMinor < 3)
+      return;
+
+   rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
+
+   use_back = (rmesa->glCtx->Color.DriverDrawBuffer == GL_BACK_LEFT);
+   use_back ^= (rmesa->sarea->pfCurrentPage == 1);
+
+   if ( RADEON_DEBUG & DEBUG_VERBOSE )
+      fprintf(stderr, "%s allow %d current %d\n", __FUNCTION__, 
+	      rmesa->doPageFlip,
+	      rmesa->sarea->pfCurrentPage );
+
+   if ( use_back ) {
+	 rmesa->state.color.drawOffset = rmesa->radeonScreen->backOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->backPitch;
+   } else {
+	 rmesa->state.color.drawOffset = rmesa->radeonScreen->frontOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
+   }
+
+   RADEON_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset;
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
+}
+
 
 
 /* Update the hardware state.  This is called if another context has
@@ -54,12 +90,12 @@ int prevLockLine = 0;
  */
 void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;
+   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIscreenPrivate *sPriv = rmesa->dri.screen;
    RADEONSAREAPrivPtr sarea = rmesa->sarea;
    int i;
 
-   drmGetLock( rmesa->driFd, rmesa->hHWContext, flags );
+   drmGetLock( rmesa->dri.fd, rmesa->dri.hwContext, flags );
 
    /* The window might have moved, so we might need to get new clip
     * rects.
@@ -69,27 +105,22 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
     * Since the hardware state depends on having the latest drawable
     * clip rects, all state checking must be done _after_ this call.
     */
-   XMESA_VALIDATE_DRAWABLE_INFO( rmesa->display, sPriv, dPriv );
+   DRI_VALIDATE_DRAWABLE_INFO( rmesa->dri.display, sPriv, dPriv );
 
-   if ( rmesa->lastStamp != *(dPriv->pStamp) ) {
-      rmesa->lastStamp = *(dPriv->pStamp);
-      rmesa->new_state |= RADEON_NEW_WINDOW | RADEON_NEW_CLIP;
-      rmesa->SetupDone = 0;
+   if ( rmesa->lastStamp != dPriv->lastStamp ) {
+      radeonUpdatePageFlipping( rmesa );
+      radeonSetCliprects( rmesa, rmesa->glCtx->Color.DriverDrawBuffer );
+      radeonUpdateViewportOffset( rmesa->glCtx );
+      rmesa->lastStamp = dPriv->lastStamp;
    }
 
-   rmesa->dirty |= RADEON_UPLOAD_CONTEXT | RADEON_UPLOAD_CLIPRECTS;
+   if ( sarea->ctxOwner != rmesa->dri.hwContext ) {
+      sarea->ctxOwner = rmesa->dri.hwContext;
 
-   rmesa->numClipRects = dPriv->numClipRects;
-   rmesa->pClipRects = dPriv->pClipRects;
-
-   if ( sarea->ctxOwner != rmesa->hHWContext ) {
-      sarea->ctxOwner = rmesa->hHWContext;
-      rmesa->dirty = RADEON_UPLOAD_ALL;
-   }
-
-   for ( i = 0 ; i < rmesa->lastTexHeap ; i++ ) {
-      if ( sarea->texAge[i] != rmesa->lastTexAge[i] ) {
-	 radeonAgeTextures( rmesa, i );
+      for ( i = 0 ; i < rmesa->texture.numHeaps ; i++ ) {
+	 if ( rmesa->texture.heap[i] && sarea->texAge[i] != rmesa->texture.age[i] ) {
+	    radeonAgeTextures( rmesa, i );
+	 }
       }
    }
 }

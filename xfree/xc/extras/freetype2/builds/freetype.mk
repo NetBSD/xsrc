@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2000 by
+# Copyright 1996-2000, 2002 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -130,7 +130,7 @@ PROJECT_LIBRARY := $(LIB_)$(LIBRARY).$A
 #                 in the `freetype/builds/<system>' directory, as these
 #                 files will override the default sources.
 #
-INCLUDES := $(BUILD) $(TOP)$(SEP)include
+INCLUDES := $(OBJ_DIR) $(BUILD) $(TOP)$(SEP)include
 
 INCLUDE_FLAGS = $(INCLUDES:%=$I%)
 
@@ -139,7 +139,10 @@ INCLUDE_FLAGS = $(INCLUDES:%=$I%)
 # least the paths for the `base' and `builds/<system>' directories;
 # debug/optimization/warning flags + ansi compliance if needed.
 #
-FT_CFLAGS  = $(CFLAGS) $(INCLUDE_FLAGS)
+# $(INCLUDE_FLAGS) should come before $(CFLAGS) to avoid problems with
+# old FreeType versions.
+#
+FT_CFLAGS  = $(INCLUDE_FLAGS) $(CFLAGS)
 FT_CC      = $(CC) $(FT_CFLAGS)
 FT_COMPILE = $(CC) $(ANSIFLAGS) $(FT_CFLAGS)
 
@@ -273,7 +276,7 @@ distclean_project_std: clean_project_std
 # The Dos command shell does not support very long list of arguments, so
 # we are stuck with wildcards.
 #
-# Don't break the command lines with; this prevents the "del" command from
+# Don't break the command lines with \; this prevents the "del" command from
 # working correctly on Win9x.
 #
 clean_project_dos:

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.c,v 1.22 2001/12/28 15:49:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.c,v 1.28 2003/02/07 20:41:14 martin Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -76,7 +76,7 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
     __GLXvisualConfig *pConfigs        = 0;
     R128ConfigPrivPtr pR128Configs     = 0;
     R128ConfigPrivPtr *pR128ConfigPtrs = 0;
-    int               i, accum, stencil;
+    int               i, accum, stencil, db;
 
     switch (info->CurrentLayout.pixel_code) {
     case 8:  /* 8bpp mode is not support */
@@ -89,11 +89,13 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 
 #define R128_USE_ACCUM   1
 #define R128_USE_STENCIL 1
+#define R128_USE_DB      1
 
     case 16:
 	numConfigs = 1;
 	if (R128_USE_ACCUM)   numConfigs *= 2;
 	if (R128_USE_STENCIL) numConfigs *= 2;
+	if (R128_USE_DB)      numConfigs *= 2;
 
 	if (!(pConfigs
 	      = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
@@ -115,7 +117,8 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 	}
 
 	i = 0;
-	for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
+	for (db = 0; db <= R128_USE_DB; db++) {
+	  for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
 	    for (stencil = 0; stencil <= R128_USE_STENCIL; stencil++) {
 		pR128ConfigPtrs[i] = &pR128Configs[i];
 
@@ -141,7 +144,10 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 		    pConfigs[i].accumBlueSize  = 0;
 		    pConfigs[i].accumAlphaSize = 0;
 		}
-		pConfigs[i].doubleBuffer       = TRUE;
+		if (db) 
+		    pConfigs[i].doubleBuffer       = TRUE;
+		else
+		    pConfigs[i].doubleBuffer       = FALSE;
 		pConfigs[i].stereo             = FALSE;
 		pConfigs[i].bufferSize         = 16;
 		pConfigs[i].depthSize          = 16;
@@ -164,6 +170,7 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 		pConfigs[i].transparentIndex   = 0;
 		i++;
 	    }
+	  }
 	}
 	break;
 
@@ -171,6 +178,7 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 	numConfigs = 1;
 	if (R128_USE_ACCUM)   numConfigs *= 2;
 	if (R128_USE_STENCIL) numConfigs *= 2;
+	if (R128_USE_DB)      numConfigs *= 2;
 
 	if (!(pConfigs
 	      = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
@@ -192,7 +200,8 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 	}
 
 	i = 0;
-	for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
+	for (db = 0; db <= R128_USE_DB; db++) {
+	  for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
 	    for (stencil = 0; stencil <= R128_USE_STENCIL; stencil++) {
 		pR128ConfigPtrs[i] = &pR128Configs[i];
 
@@ -218,7 +227,10 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 		    pConfigs[i].accumBlueSize  = 0;
 		    pConfigs[i].accumAlphaSize = 0;
 		}
-		pConfigs[i].doubleBuffer       = TRUE;
+		if (db)
+		    pConfigs[i].doubleBuffer       = TRUE;
+		else
+		    pConfigs[i].doubleBuffer       = FALSE;
 		pConfigs[i].stereo             = FALSE;
 		pConfigs[i].bufferSize         = 24;
 		if (stencil) {
@@ -243,6 +255,7 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 		pConfigs[i].transparentIndex   = 0;
 		i++;
 	    }
+	  }
 	}
 	break;
     }
@@ -300,14 +313,16 @@ static void R128LeaveServer(ScreenPtr pScreen)
     unsigned char *R128MMIO = info->MMIO;
 
     if (!info->directRenderingEnabled) {
-	if (!info->CCEInUse) {
-	    /* Save all hardware scissors */
-	    info->sc_left     = INREG(R128_SC_LEFT);
-	    info->sc_right    = INREG(R128_SC_RIGHT);
-	    info->sc_top      = INREG(R128_SC_TOP);
-	    info->sc_bottom   = INREG(R128_SC_BOTTOM);
-	    info->aux_sc_cntl = INREG(R128_SC_BOTTOM);
-	}
+	/* Save all hardware scissors */
+	info->sc_left     = INREG(R128_SC_LEFT);
+	info->sc_right    = INREG(R128_SC_RIGHT);
+	info->sc_top      = INREG(R128_SC_TOP);
+	info->sc_bottom   = INREG(R128_SC_BOTTOM);
+	info->aux_sc_cntl = INREG(R128_SC_BOTTOM);
+    } else if (info->CCEInUse) {
+	R128CCEReleaseIndirect(pScrn);
+
+	info->CCEInUse = FALSE;
     }
 }
 
@@ -418,6 +433,7 @@ static Bool R128DRIAgpInit(R128InfoPtr info, ScreenPtr pScreen)
     unsigned long cntl, chunk;
     int           s, l;
     int           flags;
+    unsigned long agpBase;
 
     if (drmAgpAcquire(info->drmFD) < 0) {
 	xf86DrvMsg(pScreen->myNum, X_WARNING, "[agp] AGP not available\n");
@@ -589,7 +605,8 @@ static Bool R128DRIAgpInit(R128InfoPtr info, ScreenPtr pScreen)
 		   info->agpSize*1024);
 	return FALSE;
     }
-    OUTREG(R128_AGP_BASE, info->ringHandle); /* Ring buf is at AGP offset 0 */
+    agpBase = drmAgpBase(info->drmFD);
+    OUTREG(R128_AGP_BASE, agpBase); 
     OUTREG(R128_AGP_CNTL, cntl);
 
 				/* Disable Rage 128's PCIGART registers */
@@ -600,8 +617,6 @@ static Bool R128DRIAgpInit(R128InfoPtr info, ScreenPtr pScreen)
     OUTREG(R128_BM_CHUNK_0_VAL, chunk);
 
     OUTREG(R128_PCI_GART_PAGE, 1); /* Ensure AGP GART is used (for now) */
-
-    xf86EnablePciBusMaster(info->PciInfo, TRUE);
 
     return TRUE;
 }
@@ -727,6 +742,40 @@ static Bool R128DRIPciInit(R128InfoPtr info, ScreenPtr pScreen)
     case PCI_CHIP_RAGE128TF:
     case PCI_CHIP_RAGE128TL:
     case PCI_CHIP_RAGE128TR:
+    /* FIXME: ATI documentation does not specify if the following chips are
+     * AGP or PCI, it just mentions their PCI IDs.  I'm assuming they're AGP
+     * until I get more correct information. <mharris@redhat.com>
+     */
+    case PCI_CHIP_RAGE128PA:
+    case PCI_CHIP_RAGE128PB:
+    case PCI_CHIP_RAGE128PC:
+    case PCI_CHIP_RAGE128PE:
+    case PCI_CHIP_RAGE128PG:
+    case PCI_CHIP_RAGE128PH:
+    case PCI_CHIP_RAGE128PI:
+    case PCI_CHIP_RAGE128PJ:
+    case PCI_CHIP_RAGE128PK:
+    case PCI_CHIP_RAGE128PL:
+    case PCI_CHIP_RAGE128PM:
+    case PCI_CHIP_RAGE128PN:
+    case PCI_CHIP_RAGE128PO:
+    case PCI_CHIP_RAGE128PQ:
+    case PCI_CHIP_RAGE128PS:
+    case PCI_CHIP_RAGE128PT:
+    case PCI_CHIP_RAGE128PU:
+    case PCI_CHIP_RAGE128PV:
+    case PCI_CHIP_RAGE128PW:
+    case PCI_CHIP_RAGE128PX:
+    case PCI_CHIP_RAGE128SE:
+    case PCI_CHIP_RAGE128SF:
+    case PCI_CHIP_RAGE128SG:
+    case PCI_CHIP_RAGE128SH:
+    case PCI_CHIP_RAGE128SK:
+    case PCI_CHIP_RAGE128SL:
+    case PCI_CHIP_RAGE128SN:
+    case PCI_CHIP_RAGE128TS:
+    case PCI_CHIP_RAGE128TT:
+    case PCI_CHIP_RAGE128TU:
     default:
 	/* This is really an AGP card, force PCI GART mode */
         chunk = INREG(R128_BM_CHUNK_0_VAL);
@@ -767,6 +816,9 @@ static int R128DRIKernelInit(R128InfoPtr info, ScreenPtr pScreen)
 {
     drmR128Init drmInfo;
 
+    memset( &drmInfo, 0, sizeof(drmR128Init) );
+
+    drmInfo.func                = DRM_R128_INIT_CCE;
     drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
     drmInfo.is_pci              = info->IsPCI;
     drmInfo.cce_mode            = info->CCEMode;
@@ -787,14 +839,16 @@ static int R128DRIKernelInit(R128InfoPtr info, ScreenPtr pScreen)
     drmInfo.depth_pitch         = info->depthPitch;
     drmInfo.span_offset         = info->spanOffset;
 
-    drmInfo.fb_offset           = info->LinearAddr;
+    drmInfo.fb_offset           = info->fbHandle;
     drmInfo.mmio_offset         = info->registerHandle;
     drmInfo.ring_offset         = info->ringHandle;
     drmInfo.ring_rptr_offset    = info->ringReadPtrHandle;
     drmInfo.buffers_offset      = info->bufHandle;
     drmInfo.agp_textures_offset = info->agpTexHandle;
 
-    if (drmR128InitCCE(info->drmFD, &drmInfo) < 0) return FALSE;
+    if (drmCommandWrite(info->drmFD, DRM_R128_INIT,
+                        &drmInfo, sizeof(drmR128Init)) < 0)
+        return FALSE;
 
     return TRUE;
 }
@@ -836,6 +890,35 @@ static Bool R128DRIBufInit(R128InfoPtr info, ScreenPtr pScreen)
 	       info->buffers->count);
 
     return TRUE;
+}
+
+static void R128DRIIrqInit(R128InfoPtr info, ScreenPtr pScreen)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+
+   if (!info->irq) {
+      info->irq = drmGetInterruptFromBusID(
+	 info->drmFD,
+	 ((pciConfigPtr)info->PciInfo->thisCard)->busnum,
+	 ((pciConfigPtr)info->PciInfo->thisCard)->devnum,
+	 ((pciConfigPtr)info->PciInfo->thisCard)->funcnum);
+
+      if((drmCtlInstHandler(info->drmFD, info->irq)) != 0) {
+	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		    "[drm] failure adding irq handler, "
+		    "there is a device already using that irq\n"
+		    "[drm] falling back to irq-free operation\n");
+	 info->irq = 0;
+      } else {
+          unsigned char *R128MMIO = info->MMIO;
+          info->gen_int_cntl = INREG( R128_GEN_INT_CNTL );
+      }
+   }
+
+   if (info->irq)
+      xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		 "[drm] dma control initialized, using IRQ %d\n",
+		 info->irq);
 }
 
 /* Initialize the CCE state, and start the CCE (if used by the X server) */
@@ -994,6 +1077,42 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
 	return FALSE;
     }
 
+    /* Check the DRM lib version.
+       drmGetLibVersion was not supported in version 1.0, so check for
+       symbol first to avoid possible crash or hang.
+     */
+    if (xf86LoaderCheckSymbol("drmGetLibVersion")) {
+        version = drmGetLibVersion(info->drmFD);
+    }
+    else {
+        /* drmlib version 1.0.0 didn't have the drmGetLibVersion
+           entry point.  Fake it by allocating a version record
+           via drmGetVersion and changing it to version 1.0.0
+         */
+        version = drmGetVersion(info->drmFD);
+        version->version_major      = 1;
+        version->version_minor      = 0;
+        version->version_patchlevel = 0;
+    }
+
+    if (version) {
+	if (version->version_major != 1 ||
+	    version->version_minor < 1) {
+            /* incompatible drm library version */
+            xf86DrvMsg(pScreen->myNum, X_ERROR,
+		"[dri] R128DRIScreenInit failed because of a version mismatch.\n"
+		"[dri] libdrm.a module version is %d.%d.%d but version 1.1.x is needed.\n"
+		"[dri] Disabling DRI.\n",
+                version->version_major,
+                version->version_minor,
+                version->version_patchlevel);
+            drmFreeVersion(version);
+	    R128DRICloseScreen(pScreen);
+            return FALSE;
+	}
+	drmFreeVersion(version);
+    }
+
     /* Check the r128 DRM version */
     version = drmGetVersion(info->drmFD);
     if (version) {
@@ -1035,6 +1154,18 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     if (!R128DRIMapInit(info, pScreen)) {
 	R128DRICloseScreen(pScreen);
 	return FALSE;
+    }
+
+				/* DRIScreenInit adds the frame buffer
+				   map, but we need it as well */
+    {
+	void *scratch_ptr;
+        int scratch_int;
+	
+	DRIGetDeviceInfo(pScreen, &info->fbHandle,
+                         &scratch_int, &scratch_int, 
+                         &scratch_int, &scratch_int,
+                         &scratch_ptr);
     }
 
 				/* FIXME: When are these mappings unmapped? */
@@ -1082,6 +1213,9 @@ Bool R128DRIFinishScreenInit(ScreenPtr pScreen)
 	return FALSE;
     }
 
+    /* Initialize IRQ */
+    R128DRIIrqInit(info, pScreen);
+
     /* Initialize and start the CCE if required */
     R128DRICCEInit(pScrn);
 
@@ -1128,10 +1262,16 @@ void R128DRICloseScreen(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     R128InfoPtr info = R128PTR(pScrn);
+    drmR128Init drmInfo;
 
 				/* Stop the CCE if it is still in use */
     if (info->directRenderingEnabled) {
 	R128CCE_STOP(pScrn, info);
+    }
+
+    if (info->irq) {
+	drmCtlUninstHandler(info->drmFD);
+	info->irq = 0;
     }
 
 				/* De-allocate vertex buffers */
@@ -1141,7 +1281,10 @@ void R128DRICloseScreen(ScreenPtr pScreen)
     }
 
 				/* De-allocate all kernel resources */
-    drmR128CleanupCCE(info->drmFD);
+    memset(&drmInfo, 0, sizeof(drmR128Init));
+    drmInfo.func = DRM_R128_CLEANUP_CCE;
+    drmCommandWrite(info->drmFD, DRM_R128_INIT,
+                    &drmInfo, sizeof(drmR128Init));
 
 				/* De-allocate all AGP resources */
     if (info->agpTex) {

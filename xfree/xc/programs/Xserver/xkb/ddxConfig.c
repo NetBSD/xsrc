@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.5 2001/08/23 14:33:25 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxConfig.c,v 3.8 2002/12/20 20:18:35 paulo Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1
@@ -142,7 +142,7 @@ XkbConfigRtrnPtr	rtrn;
         sprintf(buf,"X%s-config%s%s",display,(dName[0]?".":""),dName);
     }
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     strcpy(buf,(char*)__XOS2RedirRoot(buf));
 #endif
 #ifdef DEBUG
@@ -193,24 +193,29 @@ XkbConfigRtrnPtr	rtrn;
 	XkbSetRulesUsed(defs);
 
 	if (rtrn->keycodes!=NULL) {
+	    if (names->keycodes) _XkbFree(names->keycodes);
 	    names->keycodes= rtrn->keycodes;
 	    rtrn->keycodes= NULL;
 	}
 	if (rtrn->geometry!=NULL) {
+	    if (names->geometry) _XkbFree(names->geometry);
 	    names->geometry= rtrn->geometry;
 	    rtrn->geometry= NULL;
 	}
 	if (rtrn->symbols!=NULL) {
 	    if (rtrn->phys_symbols==NULL)
 		rtrn->phys_symbols= _XkbDupString(names->symbols);
+	    if (names->symbols) _XkbFree(names->symbols);
 	    names->symbols= rtrn->symbols;
 	    rtrn->symbols= NULL;
 	}
 	if (rtrn->types!=NULL) {
+	    if (names->types) _XkbFree(names->types);
 	    names->types= rtrn->types;
 	    rtrn->types= NULL;
 	}
 	if (rtrn->compat!=NULL) {
+	    if (names->compat) _XkbFree(names->compat);
 	    names->compat= rtrn->compat;
 	    rtrn->compat= NULL;
 	}

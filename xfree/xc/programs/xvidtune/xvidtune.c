@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.31 2001/12/08 18:53:17 herrb Exp $ */
+/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.33 2003/02/22 04:08:44 tsi Exp $ */
 
 /*
 
@@ -226,6 +226,14 @@ GetMonitor (Display* dpy, int scrn)
     return TRUE;
 }
 
+static Bool
+ModeSettable(void)
+{
+    if (AppRes.field[HTotal].val == 0 || AppRes.field[VTotal].val == 0)
+	return FALSE;
+    return TRUE;
+}
+
 static int hitError = 0;
 static int (*xtErrorfunc)(Display *, XErrorEvent *);
 
@@ -400,6 +408,9 @@ SetLabel(fields i)
 static void
 UpdateSyncRates(Bool dolabels)
 {
+    if (!ModeSettable())
+	return;
+    
     AppRes.field[HSyncRate].val = AppRes.field[PixelClock].val * 1000 /
 				  AppRes.field[HTotal].val;
     AppRes.field[VSyncRate].val = AppRes.field[HSyncRate].val * 1000 /
@@ -980,6 +991,17 @@ AckWarn (Widget w, XtPointer client, XtPointer call)
 }
 
 static void
+AckNoTune (Widget w, XtPointer client, XtPointer call)
+{
+    CleanUp(XtDisplay(w));
+#if XtSpecificationRelease < 6
+    exit (0);
+#else
+    XtAppSetExitFlag (XtWidgetToApplicationContext (w));
+#endif
+}
+
+static void
 displayWarning(Widget top)
 {
     Widget w, popup, popupBox;
@@ -1023,7 +1045,32 @@ displayWarning(Widget top)
     
 }
 
+static void
+displayNoTune(Widget top)
+{
+    Widget w, popup, popupBox;
 
+    popup = XtCreateWidget ("Notice", formWidgetClass, top, NULL, 0);
+    popupBox = XtVaCreateManagedWidget(
+               "WarningBox",
+               boxWidgetClass,
+               popup,
+               NULL);
+
+    w = XtVaCreateManagedWidget( "NoTuneLabel",
+                                     labelWidgetClass,
+				     popupBox,
+                                     NULL);
+
+    w = XtVaCreateManagedWidget( "NoTuneOK",
+                                     commandWidgetClass,
+				     popupBox,
+                                     NULL);
+
+    XtAddCallback (w, XtNcallback, AckNoTune, (XtPointer)popup);
+
+    XtManageChild (popup);
+}
 
 #if 0
 static void
@@ -1101,7 +1148,6 @@ CreateHierarchy(Widget top)
 	};
 
     form = XtCreateWidget ("form", formWidgetClass, top, NULL, 0);
-
     for (i = 0; i < 14; i++)
 	forms[i] = XtCreateWidget (form_names[i], formWidgetClass, 
 		form, NULL, 0);
@@ -1169,7 +1215,7 @@ CreateHierarchy(Widget top)
                                      forms[7],
                                      NULL);
     XtAddCallback (w, XtNcallback, AdjustCB, (XtPointer)-VTotal);
-   
+
     (void) sprintf (buf, "%04x", AppRes.field[Flags].val);
     wids[0] = XtCreateWidget ("Flags-label", labelWidgetClass,
 		forms[8], NULL, 0);
@@ -1447,7 +1493,8 @@ main (int argc, char** argv)
     Widget top;
     XtAppContext app;
     Display* dpy;
-
+    Bool modeSettable = TRUE;
+    
     static XtActionsRec actions[] = { { "xvidtune-quit", QuitAction },
 				      { "xvidtune-restore", RestoreAction },
 				      { "xvidtune-show", ShowAction },
@@ -1581,7 +1628,13 @@ main (int argc, char** argv)
 	<FocusIn>: focus-in()\n<FocusOut>: focus-out()\n\
 	<Btn1Down>: select-start()\n");
 
-    CreateHierarchy (top);
+    if (!ModeSettable()) {
+	printf("Video are not settable on this chip\n");
+	displayNoTune(top);
+	modeSettable = FALSE;
+    } else
+	CreateHierarchy (top);
+    
 
     XtAppAddActions (app, actions, XtNumber(actions));
 
@@ -1597,7 +1650,10 @@ main (int argc, char** argv)
     (void) XSetWMProtocols (dpy, XtWindow (top), &wm_delete_window, 1);
 
     XtMapWidget (top);
-    displayWarning(top);
+
+    if (modeSettable)
+	displayWarning(top);
+
     /* really we should run our own event dispatching here until the
      * warning has been read...
      */

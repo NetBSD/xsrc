@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/misc.c,v 3.4 2001/01/17 23:45:44 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/misc.c,v 3.6 2002/12/20 20:18:33 paulo Exp $ */
 
 #include "xkbcomp.h"
 #include "xkbpath.h"
@@ -39,18 +39,10 @@
 /***====================================================================***/
 
 Bool
-#if NeedFunctionPrototypes
 ProcessIncludeFile(	IncludeStmt	*	stmt,
 			unsigned		file_type,
 			XkbFile **		file_rtrn,
 			unsigned *		merge_rtrn)
-#else
-ProcessIncludeFile(stmt,file_type,file_rtrn,merge_rtrn)
-    IncludeStmt	*	stmt;
-    unsigned		file_type;
-    XkbFile **		file_rtrn;
-    unsigned *		merge_rtrn;
-#endif
 {
 FILE	*file;
 XkbFile	*rtrn,*mapToUse;
@@ -108,12 +100,8 @@ int	 oldLine = lineNum;
 	ACTION1("Include file \"%s\" ignored\n",stmt->file);
 	return False;
     }
-    if (mapToUse->compiled)  {
-	ERROR2("Map \"%s(%s)\" included more than once\n",stmt->file,
-								rtrn->name);
-	ACTION("Later inclusion ignored\n");
-	return False;
-    }
+    /* FIXME: we have to check recursive includes here (or somewhere) */
+
     mapToUse->compiled= True;
     *file_rtrn= mapToUse;
     *merge_rtrn= stmt->merge;
@@ -123,14 +111,7 @@ int	 oldLine = lineNum;
 /***====================================================================***/
 
 int
-#if NeedFunctionPrototypes
 ReportNotArray(char *type,char *field,char *name)
-#else
-ReportNotArray(type,field,name)
-    char *	type;
-    char *	field;
-    char *	name;
-#endif
 {
     ERROR2("The %s %s field is not an array\n",type,field);
     ACTION1("Ignoring illegal assignment in %s\n",name);
@@ -138,14 +119,7 @@ ReportNotArray(type,field,name)
 }
 
 int
-#if NeedFunctionPrototypes
 ReportShouldBeArray(char *type,char *field,char *name)
-#else
-ReportShouldBeArray(type,field,name)
-    char *	type;
-    char *	field;
-    char *	name;
-#endif
 {
     ERROR2("Missing subscript for %s %s\n",type,field);
     ACTION1("Ignoring illegal assignment in %s\n",name);
@@ -153,15 +127,7 @@ ReportShouldBeArray(type,field,name)
 }
 
 int
-#if NeedFunctionPrototypes
 ReportBadType(char *type,char *field,char *name,char *wanted)
-#else
-ReportBadType(type,field,name,wanted)
-    char *type;
-    char *field;
-    char *name;
-    char *wanted;
-#endif
 {
     ERROR3("The %s %s field must be a %s\n",type,field,wanted);
     ACTION1("Ignoring illegal assignment in %s\n",name);
@@ -169,15 +135,7 @@ ReportBadType(type,field,name,wanted)
 }
 
 int
-#if NeedFunctionPrototypes
 ReportBadIndexType(char *type,char *field,char *name,char *wanted)
-#else
-ReportBadIndexType(type,field,name,wanted)
-    char *type;
-    char *field;
-    char *name;
-    char *wanted;
-#endif
 {
     ERROR3("Index for the %s %s field must be a %s\n",type,field,wanted);
     ACTION1("Ignoring assignment to illegal field in %s\n",name);
@@ -185,14 +143,7 @@ ReportBadIndexType(type,field,name,wanted)
 }
 
 int
-#if NeedFunctionPrototypes
 ReportBadField(char *type,char *field,char *name)
-#else
-ReportBadField(type,field,name)
-    char *type;
-    char *field;
-    char *name;
-#endif
 {
     ERROR3("Unknown %s field %s in %s\n",type,field,name);
     ACTION1("Ignoring assignment to unknown field in %s\n",name);
@@ -200,14 +151,7 @@ ReportBadField(type,field,name)
 }
 
 int
-#if NeedFunctionPrototypes
 ReportMultipleDefs(char *type,char *field,char *name)
-#else
-ReportMultipleDefs(type,field,name)
-    char *type;
-    char *field;
-    char *name;
-#endif
 {
     WARN3("Multiple definitions of %s in %s \"%s\"\n",field,type,name);
     ACTION("Using last definition\n");
@@ -217,18 +161,10 @@ ReportMultipleDefs(type,field,name)
 /***====================================================================***/
 
 Bool	
-#if NeedFunctionPrototypes
 UseNewField(	unsigned	field,
 		CommonInfo *	oldDefs,
 		CommonInfo *	newDefs,
 		unsigned *	pCollide)
-#else
-UseNewField(field,oldDefs,newDefs,pCollide)
-    unsigned		field;
-    CommonInfo * 	oldDefs;
-    CommonInfo *	newDefs;
-    unsigned *		pCollide;
-#endif
 {
 Bool	useNew;
 
@@ -249,18 +185,10 @@ Bool	useNew;
 }
 
 Bool	
-#if NeedFunctionPrototypes
 MergeNewField(	unsigned	field,
 		CommonInfo * 	oldDefs,
 		CommonInfo *	newDefs,
 		unsigned *	pCollide)
-#else
-MergeNewField(field,oldDefs,newDefs,pCollide)
-    unsigned		field;
-    CommonInfo * 	oldDefs;
-    CommonInfo *	newDefs;
-    unsigned *		pCollide;
-#endif
 {
     if ((oldDefs->defined&field)&&(newDefs->defined&field)) {
 	if (((oldDefs->fileID==newDefs->fileID)&&(warningLevel>0))||
@@ -274,12 +202,7 @@ MergeNewField(field,oldDefs,newDefs,pCollide)
 }
 
 XPointer
-#if NeedFunctionPrototypes
 ClearCommonInfo(CommonInfo *cmn)
-#else
-ClearCommonInfo(cmn)
-    CommonInfo *	 cmn;
-#endif
 {
     if (cmn!=NULL) {
 	CommonInfo *this,*next;
@@ -292,13 +215,7 @@ ClearCommonInfo(cmn)
 }
 
 XPointer
-#if NeedFunctionPrototypes
 AddCommonInfo(CommonInfo *old,CommonInfo *new)
-#else
-AddCommonInfo(old,new)
-    CommonInfo *	old;
-    CommonInfo *	new;
-#endif
 {
 CommonInfo *	first;
 
@@ -433,12 +350,7 @@ KeyNameDesc dfltKeys[] = {
 };
 
 Status
-#if NeedFunctionPrototypes
 ComputeKbdDefaults(XkbDescPtr xkb)
-#else
-ComputeKbdDefaults(xkb)
-    XkbDescPtr		xkb;
-#endif
 {
 Status		rtrn;
 register int	i,tmp,nUnknown;
@@ -495,22 +407,12 @@ KeySym *	syms;
 }
 
 Bool
-#if NeedFunctionPrototypes
 FindNamedKey(	XkbDescPtr	xkb,
 		unsigned long	name,
 		unsigned int *	kc_rtrn,
 		Bool		use_aliases,
 		Bool		create,
 		int		start_from)
-#else
-FindNamedKey(xkb,name,kc_rtrn,use_aliases,create,start_from)
-    XkbDescPtr		xkb;
-    unsigned long	name;
-    unsigned int *	kc_rtrn;
-    Bool		use_aliases;
-    Bool		create;
-    int			start_from;
-#endif
 {
 register unsigned n;
 
@@ -566,14 +468,7 @@ register unsigned n;
 }
 
 Bool
-#if NeedFunctionPrototypes
 FindKeyNameForAlias(XkbDescPtr xkb,unsigned long lname,unsigned long *real_name)
-#else
-FindKeyNameForAlias(xkb,lname,real_name)
-    XkbDescPtr		xkb;
-    unsigned long	lname;
-    unsigned long *	real_name;
-#endif
 {
 register int	i;
 char		name[XkbKeyNameLength+1];

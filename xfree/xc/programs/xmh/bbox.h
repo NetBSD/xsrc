@@ -23,40 +23,41 @@
  * advertising or publicity pertaining to distribution of the software without
  * specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/bbox.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _bbox_h
 #define _bbox_h
 
 	/* for radio button boxes only */
 
-extern ButtonBox RadioBBoxCreate      (/*  Scrn, char *  */);
-extern void	 RadioBBoxAddButton   (/*  ButtonBox, char *, Boolean */);
-extern void	 RadioBBoxSet	      (/*  Button  */);
-extern char *	 RadioBBoxGetCurrent  (/*  ButtonBox  */);
-extern void	 RadioBBoxDeleteButton(/*  Button  */);
+extern ButtonBox RadioBBoxCreate      (Scrn, char *);
+extern void	 RadioBBoxAddButton   (ButtonBox, char *, Boolean);
+extern void	 RadioBBoxSet	      (Button);
+extern char *	 RadioBBoxGetCurrent  (ButtonBox);
+extern void	 RadioBBoxDeleteButton(Button);
 
 	/* for other kinds of button boxes */
 
-extern ButtonBox BBoxCreate	      (/*  Scrn, char *  */);
-extern void	 BBoxAddButton (/* ButtonBox, char *, WidgetClass, Boolean */);
-extern void	 BBoxDeleteButton     (/*  Button  */);
+extern ButtonBox BBoxCreate	      (Scrn, char *);
+extern void	 BBoxAddButton (ButtonBox, char *, WidgetClass, Boolean);
+extern void	 BBoxDeleteButton     (Button);
 
 	/* for all kinds of button boxes */
 
-extern void	 BBoxInit             (/*  void  */);
-extern void	 BBoxEnable	      (/*  Button  */);
-extern void	 BBoxDisable	      (/*  Button  */);
-extern Button	 BBoxFindButtonNamed  (/*  ButtonBox, char *  */);
-extern Button	 BBoxFindButton	      (/*  ButtonBox, Widget  */);
-extern Button	 BBoxButtonNumber     (/*  ButtonBox, int  */);
-extern int	 BBoxNumButtons	      (/*  ButtonBox  */);
-extern char *	 BBoxNameOfButton     (/*  Button  */);
-extern Widget	 BBoxMenuOfButton     (/*  Button  */);
-extern void	 BBoxLockSize	      (/*  ButtonBox  */);
-extern Boolean	 BBoxIsGrandparent    (/*  ButtonBox, Widget  */);
+extern void	 BBoxInit             (void);
+extern void	 BBoxEnable	      (Button);
+extern void	 BBoxDisable	      (Button);
+extern Button	 BBoxFindButtonNamed  (ButtonBox, char *);
+extern Button	 BBoxFindButton	      (ButtonBox, Widget);
+extern Button	 BBoxButtonNumber     (ButtonBox, int);
+extern int	 BBoxNumButtons	      (ButtonBox);
+extern char *	 BBoxNameOfButton     (Button);
+extern Widget	 BBoxMenuOfButton     (Button);
+extern void	 BBoxLockSize	      (ButtonBox);
+extern Boolean	 BBoxIsGrandparent    (ButtonBox, Widget);
 
 	/* operations upon folder buttons */
 
-extern void	BBoxMailFlag	      (/*  ButtonBox, char*, int  */);
+extern void	BBoxMailFlag	      (ButtonBox, char*, int);
 
 #endif /* _bbox_h */

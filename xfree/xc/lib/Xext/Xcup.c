@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xext/Xcup.c,v 1.6 2001/12/14 19:55:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/Xcup.c,v 1.8 2002/10/16 02:19:22 dawes Exp $ */
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
@@ -38,10 +38,10 @@ in this Software without prior written authorization from The Open Group.
 
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "Xcupstr.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xcupstr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 
 static XExtensionInfo _xcup_info_data;
 static XExtensionInfo *xcup_info = &_xcup_info_data;
@@ -53,7 +53,7 @@ static char *xcup_extension_name = XCUPNAME;
  *                                                                           *
  *****************************************************************************/
 
-static int close_display();
+static int close_display(Display *dpy, XExtCodes *codes);
 static /* const */ XExtensionHooks xcup_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vboard.c,v 1.13 2001/06/30 22:41:48 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vboard.c,v 1.16 2002/12/11 17:23:33 dawes Exp $ */
 /*
  * includes
  */
@@ -20,7 +20,7 @@
 #include "cscode.h"
 
 /* Global imported during compile-time */
-char MICROCODE_DIR [PATH_MAX] = MODULEDIR;
+static char MICROCODE_DIR [PATH_MAX] = MODULEDIR;
 
 /*
  * local function prototypes
@@ -33,97 +33,100 @@ char MICROCODE_DIR [PATH_MAX] = MODULEDIR;
 int
 verite_initboard(ScrnInfoPtr pScreenInfo)
 {
-  renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
+    renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
 
-  vu16 iob=pRendition->board.io_base;
-  vu8 *vmb;
-  vu32 offset;
-  vu8 memendian;
-  int c,pc;
+    IOADDRESS iob=pRendition->board.io_base;
+    vu8 *vmb;
+    vu32 offset;
+    vu8 memendian;
+    int c,pc;
 
-  /* write "monitor" program to memory */
-  v1k_stop(pScreenInfo);
-  pRendition->board.csucode_base=0x800;
-  memendian=verite_in8(iob+MEMENDIAN);
-  verite_out8(iob+MEMENDIAN, MEMENDIAN_NO);
-
-  /* Note that CS ucode must wait on address in csucode_base
-   * when initialized for later context switch code to work. */
-
-  ErrorF("Loading csucode @ 0x%x + 0x800\n", pRendition->board.vmem_base);
-  vmb=pRendition->board.vmem_base;
-  offset=pRendition->board.csucode_base;
-  for (c=0; c<sizeof(csrisc)/sizeof(vu32); c++, offset+=sizeof(vu32))
-    verite_write_memory32(vmb, offset, csrisc[c]);
-
-  /* Initialize the CS flip semaphore */
-  verite_write_memory32(vmb, 0x7f8, 0);
-  verite_write_memory32(vmb, 0x7fc, 0);
-
-  /* Run the code we just transfered to the boards memory */
-  /* ... and start accelerator */
-  v1k_flushicache(pScreenInfo);
-
-  verite_out8(iob + STATEINDEX, STATEINDEX_PC);
-  pc = verite_in32(iob + STATEDATA);
-  v1k_start(pScreenInfo, pRendition->board.csucode_base);
-
-  /* Get on loading the ucode */
-  verite_out8(iob + STATEINDEX, STATEINDEX_PC);
-
-  for (c = 0; c < 0xffffffL; c++){
+    /* write "monitor" program to memory */
     v1k_stop(pScreenInfo);
+    pRendition->board.csucode_base=0x800;
+    memendian=verite_in8(iob+MEMENDIAN);
+    verite_out8(iob+MEMENDIAN, MEMENDIAN_NO);
+
+    /* Note that CS ucode must wait on address in csucode_base
+     * when initialized for later context switch code to work. */
+
+    ErrorF("Loading csucode @ 0x%x + 0x800\n", pRendition->board.vmem_base);
+    vmb=pRendition->board.vmem_base;
+    offset=pRendition->board.csucode_base;
+    for (c=0; c<sizeof(csrisc)/sizeof(vu32); c++, offset+=sizeof(vu32))
+	verite_write_memory32(vmb, offset, csrisc[c]);
+
+    /* Initialize the CS flip semaphore */
+    verite_write_memory32(vmb, 0x7f8, 0);
+    verite_write_memory32(vmb, 0x7fc, 0);
+
+    /* Run the code we just transfered to the boards memory */
+    /* ... and start accelerator */
+    v1k_flushicache(pScreenInfo);
+
+    verite_out8(iob + STATEINDEX, STATEINDEX_PC);
     pc = verite_in32(iob + STATEDATA);
-    v1k_continue(pScreenInfo);
-    if (pc == pRendition->board.csucode_base)
-      break;
-  }
-  if (pc != pRendition->board.csucode_base){
-    xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-	       ("VERITE_INITBOARD -- PC != CSUCODEBASE\n"));
-    ErrorF ("RENDITION: PC == 0x%x   --  CSU == 0x%x\n",
-	    pc,pRendition->board.csucode_base);
-  }
+    v1k_start(pScreenInfo, pRendition->board.csucode_base);
 
-  /* reset memory endian */
-  verite_out8(iob+MEMENDIAN, memendian);
+    /* Get on loading the ucode */
+    verite_out8(iob + STATEINDEX, STATEINDEX_PC);
 
-  if (V1000_DEVICE == pRendition->board.chip){
-    c=verite_load_ucfile(pScreenInfo, strcat ((char *)MICROCODE_DIR,"v10002d.uc"));
-  }
-  else {
-    /* V2x00 chip */
-    c=verite_load_ucfile(pScreenInfo, strcat ((char *)MICROCODE_DIR,"v20002d.uc"));
-  }
+    for (c = 0; c < 0xffffffL; c++){
+	v1k_stop(pScreenInfo);
+	pc = verite_in32(iob + STATEDATA);
+	v1k_continue(pScreenInfo);
+	if (pc == pRendition->board.csucode_base)
+	    break;
+    }
+    if (pc != pRendition->board.csucode_base){
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
+		   ("VERITE_INITBOARD -- PC != CSUCODEBASE\n"));
+	ErrorF ("RENDITION: PC == 0x%x   --  CSU == 0x%x\n",
+		pc,pRendition->board.csucode_base);
+    }
 
-  if (c == -1) {
-    xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-	       ("Microcode loading failed !!!\n"));
-    return 1;
-  }
+    /* reset memory endian */
+    verite_out8(iob+MEMENDIAN, memendian);
 
-  pRendition->board.ucode_entry=c;
+    if (V1000_DEVICE == pRendition->board.chip){
+	c=verite_load_ucfile(pScreenInfo, strcat ((char *)MICROCODE_DIR,"v10002d.uc"));
+    }
+    else {
+	/* V2x00 chip */
+	c=verite_load_ucfile(pScreenInfo, strcat ((char *)MICROCODE_DIR,"v20002d.uc"));
+    }
+
+    if (c == -1) {
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
+		   ("Microcode loading failed !!!\n"));
+	return 1;
+    }
+
+    pRendition->board.ucode_entry=c;
 
 #ifdef DEBUG
-  ErrorF("UCode_Entry == 0x%x\n",pRendition->board.ucode_entry); */
+    ErrorF("UCode_Entry == 0x%x\n",pRendition->board.ucode_entry); */
 #endif
 
-  /* Everything's OK */
-  return 0;
+    /* Everything's OK */
+    return 0;
 }
 
 
 int
 verite_resetboard(ScrnInfoPtr pScreenInfo)
 {
-  /*
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-  */
-  v1k_softreset(pScreenInfo);
-  return 0;
+    vu16 iob=pRendition->board.io_base; 
+    vu8 memendian=verite_in8(iob+MEMENDIAN);
+    vu32 crtcctl = verite_in32(iob+CRTCCTL);
+
+    v1k_softreset(pScreenInfo);
+    verite_out8(iob+MEMENDIAN, memendian);
+    verite_out32(iob+CRTCCTL, crtcctl);
+
+    return 0;
 }
-
-
 
 int
 verite_getmemorysize(ScrnInfoPtr pScreenInfo)
@@ -186,7 +189,7 @@ verite_getmemorysize(ScrnInfoPtr pScreenInfo)
 	    pRendition->board.mem_size=offset;
 
     /* restore default byte swapping */
-    verite_out8(pRendition->board.io_base+MEMENDIAN, MEMENDIAN_NO);
+    verite_out8(pRendition->board.io_base+MEMENDIAN, memendian);
 
 #ifdef XSERVER
     verite_out8(pRendition->board.io_base+MODEREG, modereg);
@@ -201,7 +204,7 @@ void
 verite_check_csucode(ScrnInfoPtr pScreenInfo)
 {
   renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-  vu16 iob=pRendition->board.io_base;
+  IOADDRESS iob=pRendition->board.io_base;
   vu8 *vmb;
   vu32 offset;
   int c;
@@ -239,13 +242,6 @@ verite_check_csucode(ScrnInfoPtr pScreenInfo)
 
   verite_out8(iob+MEMENDIAN, memend);
 }
-
-
-/*
- * local functions
- */
-
-
 
 /*
  * end of file vboard.c

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbbresd.c,v 1.3 1999/06/06 08:48:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbbresd.c,v 1.4 2002/01/25 21:56:22 tsi Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -56,6 +56,7 @@ SOFTWARE.
 #include "maskbits.h"
 #include "miline.h"
 #include "wm3.h"
+#include "xf86.h"
 
 /* Dashed bresenham line */
 
@@ -74,10 +75,11 @@ SOFTWARE.
     }
 
 void
-xf4bppBresD(fgink, bgink,
+xf4bppBresD(pDrawable, fgink, bgink,
 	 pdashIndex, pDash, numInDashList, pdashOffset, isDoubleDash,
 	 addrlbase, nlwidth,
 	 signdx, signdy, axis, x1, y1, e, e1, e2, len)
+DrawablePtr pDrawable;
 int fgink, bgink;
 int *pdashIndex;	/* current dash */
 unsigned char *pDash;	/* dash list */
@@ -94,6 +96,8 @@ register int e1;	/* bresenham increments */
 int e2;
 int len;		/* length of line */
 {
+    IOADDRESS REGBASE =
+	xf86Screens[pDrawable->pScreen->myNum]->domainIOBase + 0x300;
     register int yinc;	/* increment to next scanline, in bytes */
     register PixelType *addrl;
     register int e3 = e2-e1;

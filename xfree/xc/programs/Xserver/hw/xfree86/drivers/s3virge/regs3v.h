@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/regs3v.h,v 1.8 2001/07/25 15:05:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/regs3v.h,v 1.9 2002/01/25 21:56:08 tsi Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -62,60 +62,6 @@ in this Software without prior written authorization from the XFree86 Project.
 #ifndef _REGS3V_H
 #define _REGS3V_H
 
-#if 0
-/* for OUT instructions */
-#include "compiler.h"
-
-/* for new trio64V+ and 968 mmio */
-#include "newmmio.h"
-
-
-/* S3 chipset definitions */
-
-
-#define UNLOCK_SYS_REGS	          do { \
-				   outb(vgaCRIndex, 0x39); \
-				   outb(vgaCRReg, 0xa5); } while (0)
-
-
-#ifndef MetroLink
-#define VerticalRetraceWait() do { \
-   outb(vgaCRIndex, 0x17); \
-   if ( inb(vgaCRReg) & 0x80 ) { \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
-       }\
-} while (0)
-#else
-#define SPIN_LIMIT 1000000
-#define VerticalRetraceWait() do { \
-   outb(vgaCRIndex, 0x17); \
-   if ( inb(vgaCRReg) & 0x80 ) { \
-	volatile unsigned long _spin_me; \
-	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
-	 _spin_me++) ; \
-	if (_spin_me > SPIN_LIMIT) \
-	    ErrorF("s3v: warning: VerticalRetraceWait timed out.\n"); \
-	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) && _spin_me <= SPIN_LIMIT; \
-	 _spin_me++) ; \
-	if (_spin_me > SPIN_LIMIT) \
-	    ErrorF("s3v: warning: VerticalRetraceWait timed out.\n"); \
-	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
-	 _spin_me++) ; \
-	if (_spin_me > SPIN_LIMIT) \
-	    ErrorF("s3v: warning: VerticalRetraceWait timed out.\n"); \
-   } \
-} while (0)
-#endif
-
-#endif /* 0 */
-
-
-
 #define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
 #define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2 || chip == S3_TRIO_3D_2X)
 #define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
@@ -135,16 +81,6 @@ in this Software without prior written authorization from the XFree86 Project.
 #define S3_ViRGE_MXP	 PCI_CHIP_VIRGE_MXP
 #define S3_TRIO_3D	PCI_CHIP_Trio3D
 #define S3_TRIO_3D_2X	PCI_CHIP_Trio3D_2X
-
-#if 0
-
-/* VESA Approved Register Definitions */
-#define	DAC_MASK	0x03c6
-#define	DAC_R_INDEX	0x03c7
-#define	DAC_W_INDEX	0x03c8
-#define	DAC_DATA	0x03c9
-
-#endif /* 0 */
 
 /* Subsystem Control Register */
 #define	GPCTRL_NC	0x0000

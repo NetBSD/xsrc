@@ -30,6 +30,7 @@
  *         Font Driver (FreeType/2).
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/contrib/ftos2/lib/ttmemory.c,v 1.2 2003/01/12 03:55:44 tsi Exp $ */
 
 #include "ttdebug.h"
 #include "ttmemory.h"
@@ -111,13 +112,13 @@ char* itohex4( long i, char* buffer )
   return buffer;
 }
 
-  #define  COPY(s)     strcpy(log, s)
-  #define  CAT(s)      strcat(log, s)
-  #define  CATI(v)     strcat(log, itoa10( (int)v, buf ))
-  #define  CATH(v)     strcat(log, itohex4( (long)v, buf ))
-  #define  CATW(v)     strcat(log, itohex2( (short)v, buf ))
-  #define  WRITE       DosWrite(MemLogHandle, log, strlen(log), &Written)
-  #define  ERRRET(e)   { COPY("Error at ");  \
+#   define  COPY(s)     strcpy(log, s)
+#   define  CAT(s)      strcat(log, s)
+#   define  CATI(v)     strcat(log, itoa10( (int)v, buf ))
+#   define  CATH(v)     strcat(log, itohex4( (long)v, buf ))
+#   define  CATW(v)     strcat(log, itohex2( (short)v, buf ))
+#   define  WRITE       DosWrite(MemLogHandle, log, strlen(log), &Written)
+#   define  ERRRET(e)   { COPY("Error at ");  \
                           CATI(__LINE__);    \
                           CAT("\r\n");       \
                           WRITE;             \
@@ -126,13 +127,13 @@ char* itohex4( long i, char* buffer )
 
 #else
 
-  #define  COPY(s)
-  #define  CAT(s)
-  #define  CATI(v)
-  #define  CATH(v)
-  #define  CATW(v)
-  #define  WRITE
-  #define  ERRRET(e)  return(e);
+#   define  COPY(s)
+#   define  CAT(s)
+#   define  CATI(v)
+#   define  CATH(v)
+#   define  CATW(v)
+#   define  WRITE
+#   define  ERRRET(e)  return(e);
 
 #endif /* DEBUG_MEM */
 
@@ -143,7 +144,7 @@ char* itohex4( long i, char* buffer )
 
 #ifdef TRACK_MEM
    /* name of shared memory used for memory usage reporting  */
-   #define MEM_NAME  "\\sharemem\\freetype"
+#  define MEM_NAME  "\\sharemem\\freetype"
 
    /* structure containing memory usage information */
    typedef struct _INFOSTRUCT {
@@ -199,11 +200,11 @@ char* itohex4( long i, char* buffer )
     }
     *head = size;
     base  = (void*)(head + 1);
-    #ifdef TRACK_MEM
+#   ifdef TRACK_MEM
        meminfo->used += size;
        if (meminfo->used > meminfo->maxused)
           meminfo->maxused = meminfo->used;
-    #endif
+#   endif
     return base;
   }
 
@@ -238,9 +239,9 @@ char* itohex4( long i, char* buffer )
       CAT ( "\r\n" );
       WRITE;
     }
-    #ifdef TRACK_MEM
+#   ifdef TRACK_MEM
        meminfo->used -= size;
-    #endif
+#   endif
     return rc;
   }
 
@@ -267,9 +268,9 @@ char* itohex4( long i, char* buffer )
     {
       *P = ft2_malloc( Size );
       if (!*P) {
-        #ifdef TRACK_MEM
+#       ifdef TRACK_MEM
            meminfo->num_err++;
-        #endif
+#       endif
         return TT_Err_Out_Of_Memory;
       }
 
@@ -302,9 +303,9 @@ char* itohex4( long i, char* buffer )
       return TT_Err_Ok;
 
     if (ft2_free( *P )) {
-        #ifdef TRACK_MEM
+#       ifdef TRACK_MEM
            meminfo->num_err++;
-        #endif
+#       endif
     }
     *P = NULL;
     return TT_Err_Ok;
@@ -325,7 +326,7 @@ char* itohex4( long i, char* buffer )
   {
     int  rc;
 
-    #ifdef DEBUG_MEM
+#   ifdef DEBUG_MEM
        ULONG  Action;
 
        DosOpen("C:\\FTMEM.LOG", &MemLogHandle, &Action, 0, FILE_NORMAL,
@@ -337,9 +338,9 @@ char* itohex4( long i, char* buffer )
        COPY("FTMEM Init.\r\n");
        WRITE;
 
-    #endif /* DEBUG */
+#   endif /* DEBUG */
 
-    #ifdef TRACK_MEM
+#   ifdef TRACK_MEM
     /* allocate named shared memory and global shared memory */
 
        SSAllocMem(&meminfo, 4096, 0);
@@ -348,7 +349,7 @@ char* itohex4( long i, char* buffer )
        meminfo->signature = 0x46524545;   /* 'FREE' */
        meminfo->maxused = 0;
        meminfo->used = 0;
-    #endif /* TRACK */
+#   endif /* TRACK */
 
     return TT_Err_Ok;
   }
@@ -369,15 +370,15 @@ char* itohex4( long i, char* buffer )
     /* Never called by the font driver (beats me why). We do not
        release the heaps */
 
-    #ifdef TRACK_MEM
+#   ifdef TRACK_MEM
        DosFreeMem(memptr);  /* free shared memory */
        SSFreeMem(meminfo);
-    #endif
-    #ifdef DEBUG_MEM
+#   endif
+#   ifdef DEBUG_MEM
        COPY("FTMEM Done.\r\n");
        WRITE;
        DosClose(MemLogHandle);
-    #endif
+#   endif
     return TT_Err_Ok;
   }
 

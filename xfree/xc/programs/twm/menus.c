@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/menus.c,v 1.12 2001/12/14 20:01:09 dawes Exp $ */
+/* $XFree86: xc/programs/twm/menus.c,v 1.16 2002/10/19 20:04:20 herrb Exp $ */
 /*****************************************************************************/
 /*
 
@@ -238,8 +238,8 @@ int CreateTitleButton (name, func, action, menuroot, rightside, append)
 
     if (!tb) {
 	fprintf (stderr,
-		 "%s:  unable to allocate %d bytes for title button\n",
-		 ProgramName, sizeof(TitleButton));
+		 "%s:  unable to allocate %ld bytes for title button\n",
+		 ProgramName, (unsigned long)sizeof(TitleButton));
 	return 0;
     }
 
@@ -2315,7 +2315,7 @@ ExecuteFunction(func, action, w, tmp_win, eventp, context, pulldown)
         }
 	break;
    case F_STARTWM:
-	execlp("/bin/sh", "sh", "-c", action, NULL);
+	execlp("/bin/sh", "sh", "-c", action, (void *)NULL);
 	fprintf (stderr, "%s:  unable to start:  %s\n", ProgramName, *Argv);
 	break;
 

@@ -27,7 +27,7 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winblock.c,v 1.4 2001/11/21 08:51:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winblock.c,v 1.6 2003/02/12 15:01:38 alanh Exp $ */
 
 #include "win.h"
 
@@ -41,9 +41,36 @@ winBlockHandler (int nScreen,
   winScreenPriv((ScreenPtr)pBlockData);
   MSG			msg;
 
-  /* Process all messages on our queue */
-  while (PeekMessage (&msg, pScreenPriv->hwndScreen, 0, 0, PM_REMOVE))
+  /* Signal threaded modules to begin */
+  if (pScreenPriv != NULL && !pScreenPriv->fServerStarted)
     {
-      DispatchMessage (&msg);
+      int		iReturn;
+      
+      ErrorF ("winBlockHandler - Releasing pmServerStarted\n");
+
+      /* Flag that modules are to be started */
+      pScreenPriv->fServerStarted = TRUE;
+
+      /* Unlock the mutex for threaded modules */
+      iReturn = pthread_mutex_unlock (&pScreenPriv->pmServerStarted);
+      if (iReturn != 0)
+	{
+	  ErrorF ("winBlockHandler - pthread_mutex_unlock () failed: %d\n",
+		  iReturn);
+	  goto winBlockHandler_ProcessMessages; 
+	}
+
+      ErrorF ("winBlockHandler - pthread_mutex_unlock () returned\n");
+    }
+
+winBlockHandler_ProcessMessages:
+
+  /* Process all messages on our queue */
+  while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+    {
+      if (g_hDlgDepthChange == 0 || !IsDialogMessage (g_hDlgDepthChange, &msg))
+	{
+	  DispatchMessage (&msg);
+	}
     }
 }

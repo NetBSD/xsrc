@@ -1,7 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <!--
  *****************************************************************************
- * Copyright 1996,1997,1998,1999,2000,2001,2002 by Thomas E. Dickey          *
+ * Copyright 1996-2002,2003 by Thomas E. Dickey                              *
  * All Rights Reserved.                                                      *
  *                                                                           *
  * Permission to use, copy, modify, and distribute this software and its     *
@@ -20,16 +20,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.79 2002/01/05 22:05:03 dickey Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.92 2003/02/25 23:36:55 dickey Exp $
   -->
 <HTML>
 <HEAD>
 <TITLE>XTERM - Change Log</TITLE>
 <LINK REV=MADE HREF="mailto:dickey@invisible-island.net">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 <BODY>
 <HR>
-Copyright 1997,1998,1999,2000,2001 by <A
+Copyright 1997-2002,2003 by <A
 HREF="mailto:dickey@invisible-island.net">Thomas E. Dickey</A>
 <HR>
 <H1>Contents</H1>
@@ -42,6 +43,15 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_174">Patch #174 - 2003/2/25 - XFree86 4.2.99.903</A>
+<LI><A HREF="#xterm_173">Patch #173 - 2003/2/6 - XFree86 4.2.99.902</A>
+<LI><A HREF="#xterm_172">Patch #172 - 2002/12/27 - XFree86 4.2.99.3</A>
+<LI><A HREF="#xterm_171">Patch #171 - 2002/12/12 - XFree86 4.2.99.3</A>
+<LI><A HREF="#xterm_170">Patch #170 - 2002/10/13 - XFree86 4.2.1</A>
+<LI><A HREF="#xterm_169">Patch #169 - 2002/10/5 - XFree86 4.2.1</A>
+<LI><A HREF="#xterm_168">Patch #168 - 2002/9/29 - XFree86 4.2.1</A>
+<LI><A HREF="#xterm_167">Patch #167 - 2002/8/24 - XFree86 4.2.0</A>
+<LI><A HREF="#xterm_166">Patch #166 - 2002/3/25 - XFree86 4.2.0</A>
 <LI><A HREF="#xterm_165">Patch #165 - 2002/1/5 - XFree86 4.1.0</A>
 <LI><A HREF="#xterm_164">Patch #164 - 2001/11/13 - XFree86 4.1.0</A>
 <LI><A HREF="#xterm_163">Patch #163 - 2001/11/04 - XFree86 4.1.0</A>
@@ -210,6 +220,367 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
 
+<H1><A NAME="xterm_174">Patch #174 - 2003/2/25 - XFree86 4.2.99.903</A></H1>
+<ul>
+	<li>work-around for XFree86 bug which made <code>XDefineCursor()</code>
+	    on a shell-window no longer work.  The tek4014 emulation used this. 
+	    Use the next lower window (report by Karl Rudolf Bauchspiess).
+
+	<li>add a resource setting to control whether the extended window
+	    operations should be allowed, e.g., resize, iconify, report
+	    window attributes.  This is to accommodate people who are not
+	    capable of using a pager to view log-files.
+</ul>
+
+<H1><A NAME="xterm_173">Patch #173 - 2003/2/6 - XFree86 4.2.99.902</A></H1>
+<ul>
+	<li>reset mouse mode to normal on a full reset.  This does not apply
+	    to mouse hilite tracking mode, of course (see ctlseqs.ms).
+
+	<li>add a time-delay at the point where mouse hilite tracking mode
+	    choses to not handle X events, to avoid runaway CPU usage
+	    (report by D Hugh Redelmeier).
+
+	<li>check for illegal character in DECUDK string, quit if detected.
+</ul>
+
+<H1><A NAME="xterm_172">Patch #172 - 2002/12/27 - XFree86 4.2.99.3</A></H1>
+<ul>
+	<li>fixes to make repainting of 256-color example work properly
+	  (reports by Abigail Brady and Scott A Crosby).
+	  <ul>
+	   <li>set flag in <code>AllocateAnsiColor()</code> to ensure the color
+	     is allocated once only.
+	   <li>fix check in <code>ScrnRefresh</code>, which was comparing
+	     background colors only if the ANSI foreground colors also were set.
+	  </ul>
+
+	<li>merge <code>Error()</code> calls and some <code>exit()</code> calls
+	  into <code>SysError()</code>, and change that to add the brief
+	  explanation for each error code which is provided in the manpage. 
+	  Change a few <code>SysError()</code>, calls to avoid using code 1, to
+	  avoid confusion with exit status from places that do not use
+	  <code>SysError()</code>.
+
+	<li>simplify logic used to open a debug logfile as the standard error.
+
+	<li>modify the <code>-e</code> option so that if it fails, xterm will
+	  check if only one argument follows, e.g., it was quoted, and then
+	  retry using <code>sh&nbsp;-c</code>.
+
+	<li>modify parsing of DECUDK string parameter to allow a comma between
+	  pairs of hexadecimal digits (Ray Neuman &lt;raymond@one.com.au&gt;
+	  reports that "real" terminals accept this; perhaps they simply
+	  ignore unexpected characters).
+
+	<li>fix a few problems with the <code>$TERMCAP</code> string generated
+	  by <code>resize</code>:
+	  <ul>
+	   <li>for Bourne shell, add an <code>export</code> command.
+	     This was missing as far back as X11R5.
+	   <li>escape exclamation marks, used in xterm's reset string.
+	   <li>translate literal <code>\177\</code> to "^?".
+	  </ul>
+
+	<li>improve configure check for <code>tgetent()</code> to work when
+	  <code>$TERMCAP</code> has been set to a specific entry.
+
+	<li>modify <code>minstall.sh</code> to use "%" rather than "@",
+	  to avoid problems with AFS (report by Zdenek Sekera).
+
+	<li>list fatal error codes from <code>error.h</code> in the manpage,
+	  remove unused codes in <code>error.h</code>.
+
+	<li>use more explicit wording for manpage list of color resources,
+	  since at least one user confused the generic names such as "black"
+	  with the names in rgb.txt (the latter are now used).
+
+	<li>minor fix to description of 1003 mouse mode in ctlseqs.ms
+	  (Larry Riedel).
+</ul>
+
+<H1><A NAME="xterm_171">Patch #171 - 2002/12/12 - XFree86 4.2.99.3</A></H1>
+<ul>
+	<li>modify parser tables to improve detection of malformed control
+	  sequences, making xterm behave more like a real DEC terminal
+	  (patch by Paul Williams).
+
+	<li>update comment in <code>input.c</code> to document
+	  <code>Meta</code> as a modifier for escape sequences (patch by D
+	  Roland Walker).
+
+	<li>add ifdef'd code for logging option which adds the hostname and a
+	  timestamp to the generated logfile name.  The ifdef's are setup
+	  with the configure script (patch by Nelson Beebe).
+
+	<li>remove <code>xevents()</code> call from the end of
+	  <code>BlinkCursor()</code>, to fix an occasional problem
+	  which caused xterm to pause until a key was pressed.
+	  The reason for this was that there was no check to ensure that
+	  there really were events for <code>xevents()</code> to process.
+	  (patch by Semen A Ustimenko &lt;semenu@FreeBSD.org&gt;).
+
+	<li>remove unused mode-params from <code>open()</code> calls that do
+	  not create a file.
+
+	<li>modify configure script to put new items first on
+	  <code>$CPPFLAGS</code> and <code>$CFLAGS</code> to avoid conflict
+	  with environment's <em>-I</em> and <em>-D</em> options.
+
+	<li>update config.guess, config.sub
+
+	<li>resync with XFree86 CVS:
+	<ul>
+	  <li>fix va_args glitches for xterm/libfontconfig:  0 == (void*)0
+	    isn't true for all platforms (Egbert Eich).
+	  <li>initialise ProgramName in xterm's main before referencing it
+	    (#5473, Peter Valchev).
+          <li>some cleanup of Imakefile ifdef's (Marc La France).
+	</ul>
+</ul>
+
+<H1><A NAME="xterm_170">Patch #170 - 2002/10/13 - XFree86 4.2.1</A></H1>
+<ul>
+	<li>correct an off-by-one allocating data for sorted help message.
+
+	<li>modify configure script to check for Xpm library, on which XFree86
+	  Xaw library depends.
+
+	<li>update config.guess, config.sub
+</ul>
+
+<H1><A NAME="xterm_169">Patch #169 - 2002/10/5 - XFree86 4.2.1</A></H1>
+<ul>
+	<li>modify wording of some options in help message to make them use
+	  <code>-/+</code> consistently with respect to "on/off" or "off/on".
+
+	<li>sort options list which is displayed in help- and syntax-messages
+	  at runtime to simplify maintenance.
+
+	<li>remove support for Amoeba and Minix (Juliusz Chroboczek noted it
+	  was removed from XFree86 server; there have been no users since
+	  1996).
+
+	<li>add configure script option <code>--disable-session-mgt</code>
+	  to control whether the session management code should be compiled-in
+	  (request by H Merijn Brand).
+
+	<li>ifdef'd the session-management changes with
+	  <code>OPT_SESSION_MGT</code>, to accommodate X11R5 which predates
+	  the related definitions.
+
+	<li>fix <code>decode_keyvalue()</code>, which did not properly parse
+	  multiple settings as needed for the <code>ttyModes</code> resource,
+	  since it did not skip over the parsed data.
+
+	<li>fix an option-parsing conflict between <code>-class</code> and
+	  <code>-cjk_width</code> (Nam SungHyun)
+
+	<li>add a missing null in <code>XtVaSetValues()</code> call used in
+	  <code>Cleanup()</code> (Nam SungHyun)
+</ul>
+
+<H1><A NAME="xterm_168">Patch #168 - 2002/9/29 - XFree86 4.2.1</A></H1>
+<ul>
+	<li>improve data reported for control sequence that requests window
+	  position by taking into account the window decorations, e.g.,
+	  border and title (patch by Jess Thrysoee &lt;jess@thrysoee.dk&gt;).
+
+	<li>add <code>-cjk_width</code> and corresponding resource
+	  <code>cjkWidth</code> (patch by Jungshik Shin
+	  &lt;jshin@mailaps.org&gt;).
+
+	<li>add <code>-into</code> option, for embedding xterm in a Tcl/Tk
+	  application (patch by George Peter Staplin &lt;georgeps@xmission.com&gt;).
+
+	<li>add simple session management (XSM) client capabilities to xterm. 
+	  So a session manager such as, e.g., xsm, should be able to respawn or
+	  kill xterms without the help of an SM proxy (like smproxy), which is
+	  a hack and almost always buggy (patch by David Madore).
+
+	<li>fix conflict between ifdef's for <code>OPT_DEC_LOCATOR</code> and
+	  <code>OPT_READLINE</code> in button.c (reported by Ilya Zakharevich).
+
+	<li>fix for inconsistent use of <code>struct utmp</code> versus
+	  <code>struct utmpx</code> introduced in patch #167 (patches by Paul
+	  Gilmartin, Marc La France).
+
+	<li>modify logic for <code>metaSendsEscape</code> to allow it to work
+	  in a setup where the Meta-key is not recognized as a modifier by
+	  the key-translations logic (from a discussion of eightBitInput
+	  with H.J.Lu, however Vincent Lefevre reported this in January).
+
+	<li>use null pointer values consistently, rather than literal "0", for
+	  ending variable-length argument lists, e.g., for
+	  <code>execlp()</code> (based on patch by Matthieu Herrb).
+
+	<li>correct logic of <code>ChangeAnsiColorRequest()</code>, which would
+	  do a screen repaint after replying to a request for information.
+
+	<li>improve scripts in vttests to work with systems whose shells support
+	  <code>echo -n</code> and have, as does Debian, an unrelated
+	  <code>print</code> utility.
+
+	<li>add vttests/acolors.sh to demonstrate OSC 4, which queries or
+	  sets ANSI colors.
+
+	<li>fixes for ctlseqs.ms (Pavel Roskin, Ilya Zakharevich).
+
+	<li>typos in xterm manpage (Jens Schweikhardt)
+
+	<li>remove a redundant GCC_UNUSED from InitPopup() (Nam SungHyun)
+</ul>
+
+<H1><A NAME="xterm_167">Patch #167 - 2002/8/24 - XFree86 4.2.0</A></H1>
+<ul>
+	<li>correct ifdef's for <code>USE_TERMCAP</code> to match cygwin
+	  configuration.
+
+	<li>fix several places in ctlseqs.ms which had no boxes around the
+	  literal text (report by Ilya Zakharevich).
+
+	<li>integrated patch from Ilya Zakharevich to extend mouse support for
+	  readline (ifdef'd with OPT_READLINE).
+
+	<li>modify terminfo description to match default for
+	  <code>modifyCursorKeys</code> resource.
+
+	<li>add <code>modifyCursorKeys</code> resource to control how the
+	  shift- and similar modifiers are used to make a cursor escape
+	  sequence.  The default makes a modified escape sequence always start
+	  with CSI and puts the modifier as the second parameter, to avoid
+	  confusing applications that would interpret the first parameter as a
+	  repeat count.  The original behavior can be obtained by setting the
+	  resource to 0 (from newsgroup discussion with Stephen J Turnbull
+	  and Jeffrey Altman).
+
+	<li>correct missing initializations for <code>appdefaultCursor</code>
+	  and <code>appdefaultKeypad</code> resources.
+
+	<li>add configure option <code>--enable-luit</code> and ifdef'd the
+	  luit-related code with OPT_LUIT_PROG.
+
+	<li>integrate patch by Tomohiro KUBOTA from
+	  http://www.xfree86.org/pipermail/i18n/2002-July/003378.html which
+	  modifies xterm to invoke luit.
+
+	<li>update wcwidth.c to match Markus Kuhn's 2002-05-18 version.
+
+	<li>correct limit-checking in <code>ComputeSelect()</code> to handle
+	  selections that extend off the visible area; rather
+	  than modify the parameters to <code>TrackText()</code>, use
+	  <code>ScrollSelection()</code> to update the highlighting limits.
+	  (reported by Yegappan Lakshmanan and Nelson Beebe,
+	   patch by Alexander V Lukyanov).
+
+	<li>correct manpage description of <code>tiXtraScroll</code> resource
+	  (reported by Tony Finch).
+
+	<li>changes from OpenBSD:
+	<ul>
+	   <li>Make xterm setgid utmp to be able to update utmp even
+	   with root privileges revoked.
+	   <li>If not updating utmp, revoke group privileges totally too.
+	</ul>
+
+	<li>changes from NetBSD:
+	<ul>
+	 <li>Check that the return value from ttyslot() is greater than 0
+	  before writing the utmp file.
+	  Fixes w's "w: Stale utmp entry: &lt;user&gt; &lt;tty&gt; &lt;pty&gt;" errors.
+	 <li>Use openpty() to deal with new pty naming scheme.
+	</ul>
+
+	<li>add <code>print-redir</code> action and menu entry to allow user to
+	  switch terminal in/out of printer controller mode.  It appears from
+	  the manual that a real vt220 would not switch back to normal mode, so
+	  another mechanism is used (addresses Debian #37517).
+
+	<li>check if <code>printerCommand</code> resource string is empty, use
+	  this to allow user to disable printer function.
+
+	<li>trim trailing blanks from resource strings.
+
+	<li>check return value from <code>ptsname()</code>, which may return
+	  null for example if someone has changed the permissions of /dev/pts
+	  to zero (Debian #121899).
+
+	<li>modify OS/2 version to use <code>__UNIXOS2__</code> definition
+	  rather than <code>__EMX__</code>, related cleanup (patch by Holger
+	  Veit).
+
+	<li>used modified indent 2.0
+	  (patch <a href="ftp://invisible-island.net/gnu-patches/">20020428</a>)
+	  to reformat most of the C source files, to simplify maintenance.
+
+	<li>fix a couple of places where there were leading tabs on
+	  symbol-definition lines in Imakefile (Marc La France from report by
+	  Tony Finch)
+
+	<li>add imake variable (TraceXTerm) to allow building debug version
+	  (Egbert Eich).
+</ul>
+
+<H1><A NAME="xterm_166">Patch #166 - 2002/03/25 - XFree86 4.2.0</A></H1>
+<ul>
+	<li>correct a bug in selection: double clicking on a word which
+	  was partly scrolled off the screen may select that text (report
+	  by Vincent Lefevre &lt;vincent@vinc17.org&gt;).
+
+	<li>implement <code>veryBoldColors</code> resource to control whether
+	  the corresponding video attribute such as <code>bold</code> is
+	  displayed when using <code>colorBDMode</code>, etc.  (request by Josh
+	  Howard &lt;jrh@vicor-nb.com&gt;).
+
+	<li>define escape sequences for function keys F21-F35 (patch by Steve Wall).
+
+	<li>change the colors for the 256-color model, making them less skewed
+	  toward black (patch by Steve Wall).
+
+	<li>add <code>vt100Graphics</code> resource
+	  (see <a href="#xterm_115">patch #115</a>,
+	  based on discussion with Glenn Maynard).
+
+	<li>ifdef'd Xaw/Xaw3d/neXtaw includes separately to avoid potential
+	  incompatibilities between these flavors of Athena widgets.
+
+	<li>add configure check for XFree86 4.x Xaw library, whose geometry
+	  management is broken, to avoid trying to use it for toolbar
+	  configuration.
+
+	<li>updates to configure script from vile and lynx to allow
+	  configure.in to be compiled with autoconf 2.5x
+
+	<li>add a check for null pointer return by <code>ptsname()</code>
+	  (newsgroup posting from Mike Silva &lt;mikesilva@lucent.com&gt;).
+
+	<li>fill in a few details needed to allow UTF-8 mode to switch on/off
+	  after startup.  This requires that <code>wideChars</code> resource be
+	  set.  (based on comments in 4 Aug 2001 by Alexey Marinichev
+	  &lt;lyosha@lyosha.2y.net&gt;).
+
+	<li>remove duplicate install rules that make directories, e.g., so installing
+	  manpage will not create app-defaults directory.
+
+	<li>add comment in in <code>do_osc()</code>, reserving cases 30 and 31
+	  for for Konsole (request by Stephan Binner
+	  &lt;Stephan.Binner@gmx.de&gt;).
+
+	<li>fixes for ctlseqs.ms and xterm.man
+	  (patch by Werner LEMBERG &lt;wl@gnu.org&gt;).
+
+	<li>add check for monochrome display, disabling colorMode in that
+	  case (fixes Debian #134130).
+
+	<li>resync with XFree86 CVS:
+	<ul>
+	   <li>Fix some xterm build warnings on *BSD (David Dawes).
+	   <li>Only use SA_RESTART in xterm when it's available (Frank Liu).
+	   <li>Fix incorrect code in signal handlers in most of the clients,
+	     xterm and xdm not done yet (Matthieu Herrb).
+	</ul>
+</ul>
+
 <H1><A NAME="xterm_165">Patch #165 - 2002/01/05 - XFree86 4.1.0</A></H1>
 <ul>
 	<li>modify <code>uxterm</code> script to strip encoding part from
@@ -333,7 +704,8 @@ xc/programs/Xserver/hw/xfree86).
 
 <H1><A NAME="xterm_160">Patch #160 - 2001/10/7 - XFree86 4.1.0</A></H1>
 <ul>
-	<li>modify logic in main.c (see patch #145) to avoid generating the
+	<li>modify logic in main.c
+	    (see <a href="#xterm_145">patch #145</a>) to avoid generating the
 	    same identifier, for example, for /dev/tty1 and /dev/pts/1, which
 	    is used to denote an entry in the utmp file (Debian bug report
 	    #84676),  A similar fix was also sent by Jerome Borsboom
@@ -1589,7 +1961,8 @@ xc/programs/Xserver/hw/xfree86).
 	  utmp exit status (reports by Dave Ellement, Jeremie Petit, Tomas
 	  Vanhala).
 
-	<li>amend treatment of ALT key (see patch #94) so that if ALT is used
+	<li>amend treatment of ALT key
+	  (see <a href="#xterm_94">patch #94</a>) so that if ALT is used
 	  as a modifier in key translations, then no parameter will be sent
 	  in escape sequences for Sun/PC function keys (request by Dr Werner Fink).
 
@@ -1665,7 +2038,7 @@ xc/programs/Xserver/hw/xfree86).
 	  redirect all their messages to one particular xterm:  it is more
 	  pleasant to do this with xterm resources than with explicit calls to
 	  the <code>mesg</code> program  (patch, description by David Madore
-	  &lt;madore@clipper.ens.fr&gt;).
+	  &lt;david.madore@ens.fr&gt;).
 </ul>
 
 <H1><A NAME="xterm_119">Patch #119 - 1999/10/16 - XFree86 3.9.16c</A></H1>
@@ -2403,7 +2776,7 @@ the Imakefile defines this).
 	  providing user applications a means of determining the version
 	  of xterm for feature comparison (request by Bram Moolenaar).
 
-	<li>make xterm respond to secondary DA when the decTerminalId
+	<li>make xterm respond to secondary DA when the decTerminalID
 	  is set for VT100.
 
 	<li>limit user-defined keys (DECUDK) to VT220-style keyboard
@@ -2420,7 +2793,7 @@ the Imakefile defines this).
 	  reflect the actual configuration, the terminfo kdch1 string is not
 	  (request by Dirk H Hohndel &lt;hohndel@suse.de&gt;)
 
-	<li>improve scripts in vttest to work with newer shells that do not
+	<li>improve scripts in vttests to work with newer shells that do not
 	  use 'echo -n'.
 
 	<li>add fonts.sh example script

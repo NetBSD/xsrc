@@ -26,7 +26,7 @@ Equipment Corporation.
 
 /* Massively rewritten by Mark Vojkovich <markv@valinux.com> */
 
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.31 2001/08/23 13:01:36 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.33 2002/04/10 21:38:53 mvojkovi Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -231,7 +231,6 @@ int PanoramiXChangeWindowAttributes(ClientPtr client)
 	if (cmap)
 	    *((CARD32 *) &stuff[1] + cmap_offset) = cmap->info[j].id;
         result = (*SavedProcVector[X_ChangeWindowAttributes])(client);
-        if(result != Success) break;
     }
 
     return (result);
@@ -2324,7 +2323,6 @@ int PanoramiXFreeColors(ClientPtr client)
     FOR_NSCREENS_BACKWARD(j) {
         stuff->cmap = cmap->info[j].id;
         result = (* SavedProcVector[X_FreeColors])(client);
-	if(result != Success) break;
     }
     return (result);
 }

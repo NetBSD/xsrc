@@ -3,11 +3,9 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:04 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/scripts/Imakefile,v 3.1 2001/01/17 23:45:04 dawes Exp $
+XCOMM $XFree86: xc/programs/scripts/Imakefile,v 3.2 2002/05/31 18:46:09 dawes Exp $
 
 all::
 
-#ifndef OS2Architecture
 InstallNamedProg(xon.sh,xon,$(BINDIR))
 InstallManPage(xon,$(MANDIR))
-#endif

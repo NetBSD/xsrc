@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.7 2001/12/14 20:00:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.8 2003/02/18 21:30:01 tsi Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -1218,7 +1218,7 @@ mfbValidateGC(pGC, changes, pDrawable)
 		    devPriv->FillArea = mfbSolidInvertArea;
 		    break;
 		  case RROP_NOP:
-		    devPriv->FillArea = (void (*)())NoopDDA;
+		    devPriv->FillArea = (mfbFillAreaProcPtr)NoopDDA;
 		    break;
 		}
 	    }
@@ -1236,7 +1236,7 @@ mfbValidateGC(pGC, changes, pDrawable)
 		    devPriv->FillArea = mfbStippleInvertArea;
 		    break;
 		  case RROP_NOP:
-		    devPriv->FillArea = (void (*)())NoopDDA;
+		    devPriv->FillArea = (mfbFillAreaProcPtr)NoopDDA;
 		    break;
 		}
 	    }
@@ -1349,7 +1349,7 @@ mfbValidateGC(pGC, changes, pDrawable)
 		    devPriv->FillArea = mfbSolidInvertArea;
 		    break;
 		  case RROP_NOP:
-		    devPriv->FillArea = (void (*)())NoopDDA;
+		    devPriv->FillArea = (mfbFillAreaProcPtr)NoopDDA;
 		    break;
 		}
 	    }
@@ -1367,7 +1367,7 @@ mfbValidateGC(pGC, changes, pDrawable)
 		    devPriv->FillArea = mfbStippleInvertArea;
 		    break;
 		  case RROP_NOP:
-		    devPriv->FillArea = (void (*)())NoopDDA;
+		    devPriv->FillArea = (mfbFillAreaProcPtr)NoopDDA;
 		    break;
 		}
 	    }

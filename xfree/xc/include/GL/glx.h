@@ -1,7 +1,7 @@
 #ifndef __GLX_glx_h__
 #define __GLX_glx_h__
 
-/* $XFree86: xc/include/GL/glx.h,v 1.8 2001/03/21 15:51:38 dawes Exp $ */
+/* $XFree86: xc/include/GL/glx.h,v 1.10 2002/10/30 08:52:36 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -108,14 +108,65 @@ extern int glXQueryContext (Display *dpy, GLXContext ctx, int attribute, int *va
 extern void glXSelectEvent (Display *dpy, GLXDrawable draw, unsigned long event_mask);
 extern void glXGetSelectedEvent (Display *dpy, GLXDrawable draw, unsigned long *event_mask);
 
-/*** SGI GLX extensions */
+/* GLX 1.4 and later */
+extern void (*glXGetProcAddress(const GLubyte *procname))(void);
+
+
+#ifndef GLX_GLXEXT_LEGACY
+
+#include <GL/glxext.h>
+
+#else
+
+/* GLX extensions */
+#define GLX_EXT_import_context	1
+#define GLX_EXT_visual_info	1
+#define GLX_EXT_visual_rating	1
+#define GLX_ARB_get_proc_address 1
 extern GLXContextID glXGetContextIDEXT (const GLXContext ctx);
-extern GLXDrawable glXGetCurrentDrawableEXT (void);
 extern GLXContext glXImportContextEXT (Display *dpy, GLXContextID contextID);
 extern void glXFreeContextEXT (Display *dpy, GLXContext ctx);
 extern int glXQueryContextInfoEXT (Display *dpy, GLXContext ctx, int attribute, int *value);
-
+extern Display * glXGetCurrentDisplayEXT (void);
 extern void (*glXGetProcAddressARB(const GLubyte *procName))( void );
+
+
+
+#endif /* GLX_GLXEXT_LEGACY */
+
+
+/**
+ ** The following aren't in glxext.h yet.
+ **/
+
+
+/*
+ * ???. GLX_NV_vertex_array_range
+ */
+#ifndef GLX_NV_vertex_array_range
+#define GLX_NV_vertex_array_range
+
+extern void *glXAllocateMemoryNV(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
+extern void glXFreeMemoryNV(GLvoid *pointer);
+typedef void * ( * PFNGLXALLOCATEMEMORYNVPROC) (GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
+typedef void ( * PFNGLXFREEMEMORYNVPROC) (GLvoid *pointer);
+
+#endif /* GLX_NV_vertex_array_range */
+
+
+
+/*
+ * ???. GLX_MESA_agp_offset
+ */ 
+#ifndef GLX_MESA_agp_offset
+#define GLX_MESA_agp_offset 1
+
+extern GLuint glXGetAGPOffsetMESA(const GLvoid *pointer);
+typedef GLuint (* PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *pointer);
+
+#endif /* GLX_MESA_agp_offset */
+
+
 
 /*** Should these go here, or in another header? */
 /*

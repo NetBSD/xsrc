@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.c,v 1.6 2001/10/31 22:50:25 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.c,v 1.7 2002/10/30 12:52:00 alanh Exp $ */
 
 /*
  * Authors:
@@ -1404,8 +1404,9 @@ sis_update_drawable_state (GLcontext * ctx)
 }
 
 void
-sis_GetBufferSize (GLcontext * ctx, GLuint * width, GLuint * height)
+sis_GetBufferSize (GLframebuffer *buffer, GLuint * width, GLuint * height)
 {
+  GET_CURRENT_CONTEXT(ctx);
   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
   __GLSiScontext *hwcx = (__GLSiScontext *) xmesa->private;
 

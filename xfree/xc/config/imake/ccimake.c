@@ -24,10 +24,10 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group .
 
 */
-/* $XFree86: xc/config/imake/ccimake.c,v 1.3 2001/12/14 19:53:18 dawes Exp $ */
+/* $XFree86: xc/config/imake/ccimake.c,v 1.4 2002/04/04 14:05:34 eich Exp $ */
 
 /* 
- * Warning:  This file must be kept as simple as posible so that it can 
+ * Warning:  This file must be kept as simple as possible so that it can 
  * compile without any special flags on all systems.  Do not touch it unless
  * you *really* know what you're doing.  Make changes in imakemdep.h, not here.
  */
@@ -36,12 +36,26 @@ in this Software without prior written authorization from The Open Group .
 #include "imakemdep.h"		/* things to set when porting imake */
 
 #ifndef imake_ccflags
-#define imake_ccflags "-O"
+# define imake_ccflags "-O"
 #endif
+
+#ifndef CROSSCOMPILEDIR
+# define CROSSCOMPILEDIR "" 
+#endif
+
+#define crosscompile_ccflags " -DCROSSCOMPILE "
+#define crosscompiledir_str "-DCROSSCOMPILEDIR="
 
 int
 main()
 {
+        if (CROSSCOMPILEDIR[0] != '\0') {
+	    write(1, crosscompiledir_str, sizeof(crosscompiledir_str) - 1);
+	    write(1,"\"",1);
+	    write(1, CROSSCOMPILEDIR, sizeof(CROSSCOMPILEDIR) - 1);
+	    write(1,"\"",1);
+	    write(1, crosscompile_ccflags, sizeof(crosscompile_ccflags) - 1);
+	}
 	write(1, imake_ccflags, sizeof(imake_ccflags) - 1);
 	return 0;
 }

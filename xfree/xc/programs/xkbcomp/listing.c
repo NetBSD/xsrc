@@ -70,7 +70,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.9 2001/12/14 20:01:57 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.10 2002/06/05 00:00:37 dawes Exp $ */
 
 
 #include <stdio.h>
@@ -162,12 +162,7 @@ static	Listing *	list= NULL;
 /***====================================================================***/
 
 int
-#if NeedFunctionPrototypes
 AddMapOnly(char *map)
-#else
-AddMapOnly(map)
-    char *map;
-#endif
 {
     if (nMapOnly>=szMapOnly) {
 	if (szMapOnly<1)	szMapOnly= 5;
@@ -183,13 +178,7 @@ AddMapOnly(map)
 }
 
 int
-#if NeedFunctionPrototypes
 AddListing(char *file,char *map)
-#else
-AddListing(file,map)
-    char *file;
-    char *map;
-#endif
 {
     if (nListed>=szListing) {
 	if (szListing<1)	szListing= 10;
@@ -213,14 +202,7 @@ AddListing(file,map)
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 ListFile(FILE *outFile,char *fileName,XkbFile *map)
-#else
-ListFile(outFile,fileName,map)
-FILE *		outFile;
-char *		fileName;
-XkbFile *	map;
-#endif
 {
 register unsigned	flags;
 char *			mapName;
@@ -268,15 +250,7 @@ char *			mapName;
 /***====================================================================***/
 
 static int
-#if NeedFunctionPrototypes
 AddDirectory(char *head,char *ptrn,char *rest,char *map)
-#else
-AddDirectory(head,ptrn,rest,map)
-    char *	head;
-    char *	ptrn;
-    char *	rest;
-    char *	map;
-#endif
 {
 #ifdef WIN32
     HANDLE		dirh;
@@ -358,12 +332,7 @@ AddDirectory(head,ptrn,rest,map)
 /***====================================================================***/
 
 Bool
-#if NeedFunctionPrototypes
 AddMatchingFiles(char *head_in)
-#else
-AddMatchingFiles(head_in)
-    char *	head_in;
-#endif
 {
 char 	*str,*head,*ptrn,*rest= NULL;
 
@@ -405,10 +374,8 @@ char 	*str,*head,*ptrn,*rest= NULL;
 
 /***====================================================================***/
 
-Bool
-MapMatches(mapToConsider,ptrn)
-    char *	mapToConsider;
-    char *	ptrn;
+static Bool
+MapMatches(char *mapToConsider, char *ptrn)
 {
 int	i;
 
@@ -424,12 +391,7 @@ int	i;
 }
 
 int
-#if NeedFunctionPrototypes
 GenerateListing(char *out_name)
-#else
-GenerateListing(out_name)
-    char *	out_name;
-#endif
 {
 int		i;
 FILE *		inputFile,*outFile;

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.13 2001/12/14 20:00:53 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.15 2002/12/09 04:10:58 tsi Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -273,7 +273,7 @@ void UseMsg()
 
 void
 ShowHelpAndExit (status)
-
+    int status;
 {
     UseMsg ();
     exit (status);
@@ -868,7 +868,7 @@ ClientIsAsleep (client)
     return FALSE;
 }
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 /* This code is duplicated from XLibInt.c, because the same problems with
  * the drive letter as in clients also exist in the server
  * Unfortunately the standalone servers don't link against libX11
@@ -921,7 +921,7 @@ LBXReadAtomsFile (server)
     server->atom_control = NULL;
     min_keep_prop_size = DEF_KEEP_PROP_SIZE;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     atomsFile = (char*)__XOS2RedirRoot(atomsFile);
 #endif
     if (!(f = fopen (atomsFile, "r"))) {

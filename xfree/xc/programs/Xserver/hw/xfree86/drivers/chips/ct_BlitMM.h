@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_BlitMM.h,v 1.4 1998/08/29 05:43:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_BlitMM.h,v 1.5 2002/11/25 14:04:58 eich Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* These are done using Memory Mapped IO, of the registers */
@@ -33,41 +33,40 @@
 /* Macros to do useful things with the C&T BitBLT engine */
 #define ctBLTWAIT \
   {HW_DEBUG(0x4); \
-   while(*(volatile unsigned int *)(cPtr->MMIOBase + MR(0x4)) & \
-   0x00100000){};}
+   while(MMIO_IN32(cPtr->MMIOBase, MR(0x4)) & 0x00100000){};}
 
 #define ctSETROP(op) \
-  {HW_DEBUG(0x4); *(unsigned int *)(cPtr->MMIOBase + MR(0x4)) = (op);}
+  {HW_DEBUG(0x4);   MMIO_OUT32(cPtr->MMIOBase, MR(0x4), op);}
 
 #define ctSETSRCADDR(srcAddr) \
   {HW_DEBUG(0x5); \
-   *(unsigned int *)(cPtr->MMIOBase + MR(0x5)) = (srcAddr)&0x7FFFFFL;}
+  MMIO_OUT32(cPtr->MMIOBase, MR(0x5),(srcAddr)&0x7FFFFFL);}
 
 #define ctSETDSTADDR(dstAddr) \
 {HW_DEBUG(0x6); \
-  *(unsigned int *)(cPtr->MMIOBase + MR(0x6)) = (dstAddr)&0x7FFFFFL;}
+  MMIO_OUT32(cPtr->MMIOBase, MR(0x6), (dstAddr)&0x7FFFFFL);}
 
 #define ctSETPITCH(srcPitch,dstPitch) \
 {HW_DEBUG(0x0); \
-  *(unsigned int *)(cPtr->MMIOBase + MR(0x0)) = (((dstPitch)&0xFFFF)<<16)| \
-      ((srcPitch)&0xFFFF);}
+  MMIO_OUT32(cPtr->MMIOBase, MR(0x0),(((dstPitch)&0xFFFF)<<16)| \
+      ((srcPitch)&0xFFFF));}
 
 #define ctSETHEIGHTWIDTHGO(Height,Width)\
 {HW_DEBUG(0x7); \
-  *(unsigned int *)(cPtr->MMIOBase + MR(0x7)) = (((Height)&0xFFFF)<<16)| \
-      ((Width)&0xFFFF);}
+  MMIO_OUT32(cPtr->MMIOBase, MR(0x7), (((Height)&0xFFFF)<<16)| \
+      ((Width)&0xFFFF));}
 
 #define ctSETPATSRCADDR(srcAddr)\
 {HW_DEBUG(0x1); \
-  *(unsigned int *)(cPtr->MMIOBase + MR(0x1)) = (srcAddr)&0x1FFFFFL;}
+  MMIO_OUT32(cPtr->MMIOBase, MR(0x1),(srcAddr)&0x1FFFFFL);}
 
 #define ctSETBGCOLOR8(c) {\
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x2)) = \
-	   ((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
-	   ((((c)&0xFF)<<8)|((c)&0xFF))); \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x2),\
+           ((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
+	   ((((c)&0xFF)<<8)|((c)&0xFF)))); \
     } \
 }
 
@@ -75,8 +74,8 @@
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x2)) = \
-	   ((((c)&0xFFFF)<<16)|((c)&0xFFFF)); \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x2), \
+             ((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
     } \
 }
 
@@ -86,7 +85,7 @@
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x2)) = ((c)&0xFFFFFF); \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x2),((c)&0xFFFFFF)); \
     } \
 }
 
@@ -94,9 +93,9 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x3)) = \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x3), \
            ((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
-	   ((((c)&0xFF)<<8)|((c)&0xFF))); \
+	   ((((c)&0xFF)<<8)|((c)&0xFF)))); \
     } \
 }
 
@@ -104,8 +103,8 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x3)) = \
-           ((((c)&0xFFFF)<<16)|((c)&0xFFFF)); \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x3), \
+           ((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
     } \
 }
 
@@ -115,7 +114,7 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	*(unsigned int *)(cPtr->MMIOBase + MR(0x3)) = ((c)&0xFFFFFF); \
+        MMIO_OUT32(cPtr->MMIOBase, MR(0x3),((c)&0xFFFFFF)); \
     } \
 }
 

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.16 2001/12/14 19:55:43 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.17 2002/12/03 18:07:59 paulo Exp $ */
 
 /*
  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium
@@ -817,7 +817,7 @@ FindChildren(Widget parent, Widget **children, Bool normal, Bool popup,
 	for (j = 0; j < num_extra; j++)
 	  if ((*children)[i] == extra_widgets[j])
 	    {
-	      memmove(&extra_widgets[i], &extra_widgets[i + 1],
+	      memmove(&extra_widgets[j], &extra_widgets[j + 1],
 		      (num_extra - j) * sizeof(Widget));
 	      --num_extra;
 	    }

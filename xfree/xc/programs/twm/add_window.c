@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.10 2001/12/14 20:01:06 dawes Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.12 2002/12/10 22:28:07 tsi Exp $ */
 /*****************************************************************************/
 /*
 
@@ -203,7 +203,7 @@ IconMgr *iconp;
     XGetWindowAttributes(dpy, tmp_win->w, &tmp_win->attr);
 
     if (!I18N_FetchName(dpy, tmp_win->w, &name))
-	name = NULL;
+      name = NULL;
     tmp_win->class = NoClass;
     XGetClassHint(dpy, tmp_win->w, &tmp_win->class);
     FetchWmProtocols (tmp_win);
@@ -1223,6 +1223,7 @@ void ComputeCommonTitleOffsets ()
 
 void ComputeWindowTitleOffsets (tmp_win, width, squeeze)
     TwmWindow *tmp_win;
+    int width;
     Bool squeeze;
 {
     tmp_win->highlightx = (Scr->TBInfo.titlex + tmp_win->name_width);

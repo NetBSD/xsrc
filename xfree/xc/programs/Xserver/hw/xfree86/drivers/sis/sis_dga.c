@@ -1,27 +1,33 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.5 2003/01/29 15:42:17 eich Exp $ */
 /*
  * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales, UK.
+ * Copyright 2002 by Thomas Winischhofer, Vienna, Austria
+ *
+ * Portions from radeon_dga.c which is
+ *          Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
+ *                         VA Linux Systems Inc., Fremont, California.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Alan Hourihane not be used in
+ * documentation, and that the name of the providers not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Alan Hourihane makes no representations
+ * specific, written prior permission.  The providers make no representations
  * about the suitability of this software for any purpose.  It is provided
  * "as is" without express or implied warranty.
  *
- * ALAN HOURIHANE DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * THE PROVIDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL ALAN HOURIHANE BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE PROVIDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
+ *           Thomas Winischhofer <thomas@winischhofer.net>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.3 2002/01/10 19:05:45 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -34,7 +40,6 @@
 #include "sis_regs.h"
 #include "dgaproc.h"
 
-Bool SISDGAInit(ScreenPtr pScreen);
 static Bool SIS_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
                     int *, int *, int *);
 static Bool SIS_SetMode(ScrnInfoPtr, DGAModePtr);
@@ -43,10 +48,8 @@ static int  SIS_GetViewport(ScrnInfoPtr);
 static void SIS_SetViewport(ScrnInfoPtr, int, int, int);
 static void SIS_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void SIS_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
-#if 0
-static void SIS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
+static void SIS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int,
                     unsigned long);
-#endif
 
 static
 DGAFunctionRec SISDGAFuncs = {
@@ -58,107 +61,200 @@ DGAFunctionRec SISDGAFuncs = {
    SIS_Sync,
    SIS_FillRect,
    SIS_BlitRect,
-#if 0
-   SIS_BlitTransRect,
-#else
    NULL
-#endif
 };
 
-Bool
-SISDGAInit(ScreenPtr pScreen)
-{   
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-   SISPtr pSIS = SISPTR(pScrn);
-   DGAModePtr modes = NULL, newmodes = NULL, currentMode;
+static
+DGAFunctionRec SISDGAFuncs3xx = {
+   SIS_OpenFramebuffer,
+   NULL,
+   SIS_SetMode,
+   SIS_SetViewport,
+   SIS_GetViewport,
+   SIS_Sync,
+   SIS_FillRect,
+   SIS_BlitRect,
+   SIS_BlitTransRect
+};
+
+static DGAModePtr
+SISSetupDGAMode(
+   ScrnInfoPtr pScrn,
+   DGAModePtr modes,
+   int *num,
+   int bitsPerPixel,
+   int depth,
+   Bool pixmap,
+   int secondPitch,
+   unsigned long red,
+   unsigned long green,
+   unsigned long blue,
+   short visualClass
+){
+   SISPtr pSiS = SISPTR(pScrn);
+   DGAModePtr newmodes = NULL, currentMode;
    DisplayModePtr pMode, firstMode;
-   int Bpp = pScrn->bitsPerPixel >> 3;
-   int num = 0;
+   int otherPitch, Bpp = bitsPerPixel >> 3;
    Bool oneMore;
 
    pMode = firstMode = pScrn->modes;
 
-   while(pMode) {
+   while (pMode) {
 
-#if 0
-    if(pScrn->displayWidth != pMode->HDisplay) {
-        newmodes = xrealloc(modes, (num + 2) * sizeof(DGAModeRec));
-        oneMore = TRUE;
-    } else {
-#endif
-        newmodes = xrealloc(modes, (num + 1) * sizeof(DGAModeRec));
-        oneMore = FALSE;
-    /* } */
+	otherPitch = secondPitch ? secondPitch : pMode->HDisplay;
 
-    if(!newmodes) {
-       xfree(modes);
-       return FALSE;
-    }
-    modes = newmodes;
+	if(pMode->HDisplay != otherPitch) {
+
+	    newmodes = xrealloc(modes, (*num + 2) * sizeof(DGAModeRec));
+	    oneMore  = TRUE;
+
+	} else {
+
+	    newmodes = xrealloc(modes, (*num + 1) * sizeof(DGAModeRec));
+	    oneMore  = FALSE;
+
+	}
+
+	if(!newmodes) {
+	    xfree(modes);
+	    return NULL;
+	}
+	modes = newmodes;
 
 SECOND_PASS:
 
-    currentMode = modes + num;
-    num++;
+	currentMode = modes + *num;
+	(*num)++;
 
-    currentMode->mode = pMode;
-    currentMode->flags = DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE;
-    currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
-    if(pMode->Flags & V_DBLSCAN)
-       currentMode->flags |= DGA_DOUBLESCAN;
-    if(pMode->Flags & V_INTERLACE)
-       currentMode->flags |= DGA_INTERLACED;
-    currentMode->byteOrder = pScrn->imageByteOrder;
-    currentMode->depth = pScrn->depth;
-    currentMode->bitsPerPixel = pScrn->bitsPerPixel;
-    currentMode->red_mask = pScrn->mask.red;
-    currentMode->green_mask = pScrn->mask.green;
-    currentMode->blue_mask = pScrn->mask.blue;
-    currentMode->visualClass = (Bpp == 1) ? PseudoColor : TrueColor;
-    currentMode->viewportWidth = pMode->HDisplay;
-    currentMode->viewportHeight = pMode->VDisplay;
-    currentMode->xViewportStep = 1;
-    currentMode->yViewportStep = 1;
-    currentMode->viewportFlags = DGA_FLIP_RETRACE;
-    currentMode->offset = 0;
-    currentMode->address = pSIS->FbBase;
+	currentMode->mode           = pMode;
+	currentMode->flags          = DGA_CONCURRENT_ACCESS;
+	if(pixmap)
+	    currentMode->flags     |= DGA_PIXMAP_AVAILABLE;
+	if(!pSiS->NoAccel) {
+	    currentMode->flags     |= DGA_FILL_RECT | DGA_BLIT_RECT;
+	    if((pSiS->VGAEngine == SIS_300_VGA) ||
+	       (pSiS->VGAEngine == SIS_315_VGA) ||
+	       (pSiS->VGAEngine == SIS_530_VGA)) {
+               currentMode->flags  |= DGA_BLIT_RECT_TRANS;
+            }
+	}
+	if (pMode->Flags & V_DBLSCAN)
+	    currentMode->flags     |= DGA_DOUBLESCAN;
+	if (pMode->Flags & V_INTERLACE)
+	    currentMode->flags     |= DGA_INTERLACED;
+	currentMode->byteOrder      = pScrn->imageByteOrder;
+	currentMode->depth          = depth;
+	currentMode->bitsPerPixel   = bitsPerPixel;
+	currentMode->red_mask       = red;
+	currentMode->green_mask     = green;
+	currentMode->blue_mask      = blue;
+	currentMode->visualClass    = visualClass;
+	currentMode->viewportWidth  = pMode->HDisplay;
+	currentMode->viewportHeight = pMode->VDisplay;
+	currentMode->xViewportStep  = 1;
+	currentMode->yViewportStep  = 1;
+	currentMode->viewportFlags  = DGA_FLIP_RETRACE;
+	currentMode->offset         = 0;
+	currentMode->address        = pSiS->FbBase;
 
-    if(oneMore) { /* first one is narrow width */
-        currentMode->bytesPerScanline = ((pMode->HDisplay * Bpp) + 3) & ~3L;
-        currentMode->imageWidth = pMode->HDisplay;
-        currentMode->imageHeight =  pMode->VDisplay;
-        currentMode->pixmapWidth = currentMode->imageWidth;
-        currentMode->pixmapHeight = currentMode->imageHeight;
-        currentMode->maxViewportX = currentMode->imageWidth - 
-                    currentMode->viewportWidth;
-        /* this might need to get clamped to some maximum */
-        currentMode->maxViewportY = currentMode->imageHeight -
-                    currentMode->viewportHeight;
-        oneMore = FALSE;
-        goto SECOND_PASS;
-    } else {
-        currentMode->bytesPerScanline = 
-            ((pScrn->displayWidth * Bpp) + 3) & ~3L;
-        currentMode->imageWidth = pScrn->displayWidth;
-        currentMode->imageHeight =  pMode->VDisplay;
-        currentMode->pixmapWidth = currentMode->imageWidth;
-        currentMode->pixmapHeight = currentMode->imageHeight;
-        currentMode->maxViewportX = currentMode->imageWidth - 
-                    currentMode->viewportWidth;
-        /* this might need to get clamped to some maximum */
-        currentMode->maxViewportY = currentMode->imageHeight -
-                    currentMode->viewportHeight;
-    }       
+	if(oneMore) {
 
-    pMode = pMode->next;
-    if(pMode == firstMode)
-       break;
+	    /* first one is narrow width */
+	    currentMode->bytesPerScanline = (((pMode->HDisplay * Bpp) + 3) & ~3L);
+	    currentMode->imageWidth   = pMode->HDisplay;
+	    currentMode->imageHeight  = pMode->VDisplay;
+	    currentMode->pixmapWidth  = currentMode->imageWidth;
+	    currentMode->pixmapHeight = currentMode->imageHeight;
+	    currentMode->maxViewportX = currentMode->imageWidth -
+					currentMode->viewportWidth;
+	    /* this might need to get clamped to some maximum */
+	    currentMode->maxViewportY = (currentMode->imageHeight -
+					 currentMode->viewportHeight);
+	    oneMore = FALSE;
+	    goto SECOND_PASS;
+
+	} else {
+
+	    currentMode->bytesPerScanline = ((otherPitch * Bpp) + 3) & ~3L;
+	    currentMode->imageWidth       = otherPitch;
+	    currentMode->imageHeight      = pMode->VDisplay;
+	    currentMode->pixmapWidth      = currentMode->imageWidth;
+	    currentMode->pixmapHeight     = currentMode->imageHeight;
+	    currentMode->maxViewportX     = (currentMode->imageWidth -
+					     currentMode->viewportWidth);
+            /* this might need to get clamped to some maximum */
+	    currentMode->maxViewportY     = (currentMode->imageHeight -
+					     currentMode->viewportHeight);
+	}
+
+	pMode = pMode->next;
+	if (pMode == firstMode)
+	    break;
+    }
+
+    return modes;
+}
+
+
+Bool
+SISDGAInit(ScreenPtr pScreen)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   SISPtr pSiS = SISPTR(pScrn);
+   DGAModePtr modes = NULL;
+   int num = 0;
+
+   /* 8 */
+#ifdef SISDUALHEAD
+   /* TW: We don't ever use 8bpp modes in dual head mode,
+          so don't offer them to DGA either
+    */
+   if(!pSiS->DualHeadMode) {
+#endif
+      modes = SISSetupDGAMode(pScrn, modes, &num, 8, 8,
+	 	              (pScrn->bitsPerPixel == 8),
+			      ((pScrn->bitsPerPixel != 8)
+			          ? 0 : pScrn->displayWidth),
+			      0, 0, 0, PseudoColor);
+#ifdef SISDUALHEAD
+   }
+#endif
+
+   /* 16 */
+   modes = SISSetupDGAMode(pScrn, modes, &num, 16, 16,
+			   (pScrn->bitsPerPixel == 16),
+			   ((pScrn->depth != 16)
+				? 0 : pScrn->displayWidth),
+			   0xf800, 0x07e0, 0x001f, TrueColor);
+
+   if((pSiS->VGAEngine == SIS_530_VGA) || (pSiS->VGAEngine == SIS_OLD_VGA)) {
+     /* 24 */
+     modes = SISSetupDGAMode(pScrn, modes, &num, 24, 24,
+	 		     (pScrn->bitsPerPixel == 24),
+			     ((pScrn->bitsPerPixel != 24)
+				? 0 : pScrn->displayWidth),
+			      0xff0000, 0x00ff00, 0x0000ff, TrueColor);
    }
 
-   pSIS->numDGAModes = num;
-   pSIS->DGAModes = modes;
+   if(pSiS->VGAEngine != SIS_OLD_VGA) {
+     /* 32 */
+     modes = SISSetupDGAMode(pScrn, modes, &num, 32, 24,
+			   (pScrn->bitsPerPixel == 32),
+			   ((pScrn->bitsPerPixel != 32)
+				? 0 : pScrn->displayWidth),
+			   0xff0000, 0x00ff00, 0x0000ff, TrueColor);
+   }
 
-   return DGAInit(pScreen, &SISDGAFuncs, modes, num);  
+   pSiS->numDGAModes = num;
+   pSiS->DGAModes = modes;
+
+   if((pSiS->VGAEngine == SIS_300_VGA) ||
+      (pSiS->VGAEngine == SIS_315_VGA) ||
+      (pSiS->VGAEngine == SIS_530_VGA)) {
+     return DGAInit(pScreen, &SISDGAFuncs3xx, modes, num);
+   } else {
+     return DGAInit(pScreen, &SISDGAFuncs, modes, num);
+   }
 }
 
 
@@ -167,27 +263,39 @@ SIS_SetMode(
    ScrnInfoPtr pScrn,
    DGAModePtr pMode
 ){
-   static int OldDisplayWidth[MAXSCREENS];
+   static SISFBLayout BackupLayouts[MAXSCREENS];
    int index = pScrn->pScreen->myNum;
-   SISPtr pSIS = SISPTR(pScrn);
+   SISPtr pSiS = SISPTR(pScrn);
 
     if(!pMode) { /* restore the original mode */
-        /* put the ScreenParameters back */
-        pScrn->displayWidth = OldDisplayWidth[index];
+
+        if(pSiS->DGAactive) {
+           /* put the ScreenParameters back */
+	   memcpy(&pSiS->CurrentLayout, &BackupLayouts[index], sizeof(SISFBLayout));
+        }
+
+	pScrn->currentMode = pSiS->CurrentLayout.mode;
 
         (*pScrn->SwitchMode)(index, pScrn->currentMode, 0);
-        pSIS->DGAactive = FALSE;
-    } else {
-        if(!pSIS->DGAactive) {  /* save the old parameters */
-            OldDisplayWidth[index] = pScrn->displayWidth;
+	(*pScrn->AdjustFrame)(index, pScrn->frameX0, pScrn->frameY0, 0);
+        pSiS->DGAactive = FALSE;
 
-            pSIS->DGAactive = TRUE;
+    } else {	/* set new mode */
+
+        if(!pSiS->DGAactive) {
+	    /* save the old parameters */
+            memcpy(&BackupLayouts[index], &pSiS->CurrentLayout, sizeof(SISFBLayout));
+            pSiS->DGAactive = TRUE;
     	}
 
-    	pScrn->displayWidth = pMode->bytesPerScanline /
-      				(pMode->bitsPerPixel >> 3);
+	pSiS->CurrentLayout.bitsPerPixel = pMode->bitsPerPixel;
+	pSiS->CurrentLayout.depth        = pMode->depth;
+	pSiS->CurrentLayout.displayWidth = pMode->bytesPerScanline / (pMode->bitsPerPixel >> 3);
 
     	(*pScrn->SwitchMode)(index, pMode->mode, 0);
+	/* TW: Adjust viewport to 0/0 after mode switch */
+	/* This should fix the vmware-in-dualhead problems */
+	(*pScrn->AdjustFrame)(index, 0, 0, 0);
     }
 
     return TRUE;
@@ -197,21 +305,21 @@ static int
 SIS_GetViewport(
   ScrnInfoPtr pScrn
 ){
-    SISPtr pSIS = SISPTR(pScrn);
+    SISPtr pSiS = SISPTR(pScrn);
 
-    return pSIS->DGAViewportStatus;
+    return pSiS->DGAViewportStatus;
 }
 
 static void 
 SIS_SetViewport(
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    int x, int y, 
    int flags
 ){
-   SISPtr pSIS = SISPTR(pScrn);
+   SISPtr pSiS = SISPTR(pScrn);
 
    (*pScrn->AdjustFrame)(pScrn->pScreen->myNum, x, y, flags);
-   pSIS->DGAViewportStatus = 0;  /* SISAdjustFrame loops until finished */
+   pSiS->DGAViewportStatus = 0;  /* There are never pending Adjusts */
 }
 
 static void 
@@ -220,12 +328,12 @@ SIS_FillRect (
    int x, int y, int w, int h, 
    unsigned long color
 ){
-    SISPtr pSIS = SISPTR(pScrn);
+    SISPtr pSiS = SISPTR(pScrn);
 
-    if(pSIS->AccelInfoPtr) {
-    (*pSIS->AccelInfoPtr->SetupForSolidFill)(pScrn, color, GXcopy, ~0);
-    (*pSIS->AccelInfoPtr->SubsequentSolidFillRect)(pScrn, x, y, w, h);
-    SET_SYNC_FLAG(pSIS->AccelInfoPtr);
+    if(pSiS->AccelInfoPtr) {
+      (*pSiS->AccelInfoPtr->SetupForSolidFill)(pScrn, color, GXcopy, ~0);
+      (*pSiS->AccelInfoPtr->SubsequentSolidFillRect)(pScrn, x, y, w, h);
+      SET_SYNC_FLAG(pSiS->AccelInfoPtr);
     }
 }
 
@@ -233,10 +341,10 @@ static void
 SIS_Sync(
    ScrnInfoPtr pScrn
 ){
-    SISPtr pSIS = SISPTR(pScrn);
+    SISPtr pSiS = SISPTR(pScrn);
 
-    if(pSIS->AccelInfoPtr) {
-    (*pSIS->AccelInfoPtr->Sync)(pScrn);
+    if(pSiS->AccelInfoPtr) {
+      (*pSiS->AccelInfoPtr->Sync)(pScrn);
     }
 }
 
@@ -247,22 +355,21 @@ SIS_BlitRect(
    int w, int h, 
    int dstx, int dsty
 ){
-    SISPtr pSIS = SISPTR(pScrn);
+    SISPtr pSiS = SISPTR(pScrn);
 
-    if(pSIS->AccelInfoPtr) {
-    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
-    int ydir = (srcy < dsty) ? -1 : 1;
+    if(pSiS->AccelInfoPtr) {
+      int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+      int ydir = (srcy < dsty) ? -1 : 1;
 
-    (*pSIS->AccelInfoPtr->SetupForScreenToScreenCopy)(
-        pScrn, xdir, ydir, GXcopy, ~0, -1);
-    (*pSIS->AccelInfoPtr->SubsequentScreenToScreenCopy)(
-        pScrn, srcx, srcy, dstx, dsty, w, h);
-    SET_SYNC_FLAG(pSIS->AccelInfoPtr);
+      (*pSiS->AccelInfoPtr->SetupForScreenToScreenCopy)(
+          pScrn, xdir, ydir, GXcopy, (CARD32)~0, -1);
+      (*pSiS->AccelInfoPtr->SubsequentScreenToScreenCopy)(
+          pScrn, srcx, srcy, dstx, dsty, w, h);
+      SET_SYNC_FLAG(pSiS->AccelInfoPtr);
     }
 }
 
-#if 0
-static void 
+static void
 SIS_BlitTransRect(
    ScrnInfoPtr pScrn, 
    int srcx, int srcy, 
@@ -270,25 +377,34 @@ SIS_BlitTransRect(
    int dstx, int dsty,
    unsigned long color
 ){
-  /* this one should be separate since the XAA function would
-     prohibit usage of ~0 as the key */
+    SISPtr pSiS = SISPTR(pScrn);
+
+    if(pSiS->AccelInfoPtr) {
+       int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+       int ydir = (srcy < dsty) ? -1 : 1;
+
+       (*pSiS->AccelInfoPtr->SetupForScreenToScreenCopy)(
+          pScrn, xdir, ydir, GXcopy, ~0, color);
+       (*pSiS->AccelInfoPtr->SubsequentScreenToScreenCopy)(
+          pScrn, srcx, srcy, dstx, dsty, w, h);
+       SET_SYNC_FLAG(pSiS->AccelInfoPtr);
+    }
 }
-#endif
 
 static Bool 
 SIS_OpenFramebuffer(
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    char **name,
    unsigned char **mem,
    int *size,
    int *offset,
    int *flags
 ){
-    SISPtr pSIS = SISPTR(pScrn);
+    SISPtr pSiS = SISPTR(pScrn);
 
     *name = NULL;       /* no special device */
-    *mem = (unsigned char*)pSIS->FbAddress;
-    *size = pSIS->maxxfbmem;
+    *mem = (unsigned char*)pSiS->FbAddress;
+    *size = pSiS->maxxfbmem;
     *offset = 0;
     *flags = DGA_NEED_ROOT;
 

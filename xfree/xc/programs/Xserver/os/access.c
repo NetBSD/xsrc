@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.39 2002/01/07 20:38:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.42 2002/07/07 20:11:52 herrb Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -138,6 +138,10 @@ SOFTWARE.
 #endif
 #endif
 
+#ifdef HAS_GETIFADDRS
+#include <ifaddrs.h>
+#endif
+
 #endif /* WIN32 */
 
 #ifndef PATH_MAX
@@ -175,29 +179,17 @@ Bool defeatAccessControl = FALSE;
 			  (length) == (host)->len &&\
 			  !acmp (address, (host)->addr, length))
 
-static int ConvertAddr(
-#if NeedFunctionPrototypes
-    struct sockaddr */*saddr*/,
-    int */*len*/,
-    pointer */*addr*/
-#endif
-);
+static int ConvertAddr(struct sockaddr */*saddr*/,
+		       int */*len*/,
+		       pointer */*addr*/);
 
-static int CheckAddr(
-#if NeedFunctionPrototypes
-    int /*family*/,
-    pointer /*pAddr*/,
-    unsigned /*length*/
-#endif
-);
+static int CheckAddr(int /*family*/,
+		     pointer /*pAddr*/,
+		     unsigned /*length*/);
 
-static Bool NewHost(
-#if NeedFunctionPrototypes
-    int /*family*/,
-    pointer /*addr*/,
-    int /*len*/
-#endif
-);
+static Bool NewHost(int /*family*/,
+		    pointer /*addr*/,
+		    int /*len*/);
 
 typedef struct _host {
 	short		family;
@@ -580,16 +572,24 @@ DefineSelf (int fd)
 #endif
 #endif
 
+#ifdef DEF_SELF_DEBUG
+#include <arpa/inet.h>
+#endif
+
 void
 DefineSelf (int fd)
 {
+#ifndef HAS_GETIFADDRS
     char		buf[2048], *cp, *cplim;
     struct ifconf	ifc;
+    register struct ifreq *ifr;
+#else 
+    struct ifaddrs *	ifap, *ifr;
+#endif
     int 		len;
     unsigned char *	addr;
     int 		family;
     register HOST 	*host;
-    register struct ifreq *ifr;
     
 #ifdef DNETCONN
     struct dn_naddr *dnaddr = getnodeadd();
@@ -619,7 +619,8 @@ DefineSelf (int fd)
 	    }
 	}
     }
-#endif
+#endif /* DNETCONN */
+#ifndef HAS_GETIFADDRS
     ifc.ifc_len = sizeof (buf);
     ifc.ifc_buf = buf;
     if (ifioctl (fd, SIOCGIFCONF, (pointer) &ifc) < 0)
@@ -629,7 +630,7 @@ DefineSelf (int fd)
 #define IFC_IFC_REQ (struct ifreq *) ifc.ifc_buf
 #else
 #define IFC_IFC_REQ ifc.ifc_req
-#endif
+#endif /* ISC */
 
     cplim = (char *) IFC_IFC_REQ + ifc.ifc_len;
     
@@ -651,7 +652,7 @@ DefineSelf (int fd)
 	if (family == FamilyInternet) 
 	    ErrorF("Xserver: DefineSelf(): ifname = %s, addr = %d.%d.%d.%d\n",
 		   ifr->ifr_name, addr[0], addr[1], addr[2], addr[3]);
-#endif
+#endif /* DEF_SELF_DEBUG */
         for (host = selfhosts;
  	     host && !addrEqual (family, addr, len, host);
 	     host = host->next)
@@ -709,16 +710,84 @@ DefineSelf (int fd)
 		else
 		    continue;
 	    }
-#endif
+#endif /* SIOCGIFBRDADDR */
 #ifdef DEF_SELF_DEBUG
 	    ErrorF("Xserver: DefineSelf(): ifname = %s, baddr = %s\n",
 		   ifr->ifr_name,
 	           inet_ntoa(((struct sockaddr_in *) &broad_addr)->sin_addr));
-#endif
+#endif /* DEF_SELF_DEBUG */
 	    XdmcpRegisterBroadcastAddress ((struct sockaddr_in *) &broad_addr);
 	}
-#endif
+#endif /* XDMCP */
     }
+#else /* HAS_GETIFADDRS */
+    if (getifaddrs(&ifap) < 0) {
+	ErrorF("Warning: getifaddrs returns %s\n", strerror(errno));
+	return;
+    }
+    for (ifr = ifap; ifr != NULL; ifr = ifr->ifa_next) {
+#ifdef DNETCONN
+	if (ifr->ifa_addr.sa_family == AF_DECnet) 
+	    continue;
+#endif /* DNETCONN */
+	family = ConvertAddr(ifr->ifa_addr, &len, (pointer *)&addr);
+	if (family == -1 || family == FamilyLocal) 
+	    continue;
+#ifdef DEF_SELF_DEBUG
+	if (family == FamilyInternet) 
+	    ErrorF("Xserver: DefineSelf(): ifname = %s, addr = %d.%d.%d.%d\n",
+		   ifr->ifa_name, addr[0], addr[1], addr[2], addr[3]);
+#endif /* DEF_SELF_DEBUG */
+	for (host = selfhosts; 
+	     host != NULL && !addrEqual(family, addr, len, host);
+	     host = host->next) 
+	    ;
+	if (host != NULL) 
+	    continue;
+	MakeHost(host, len);
+	if (host != NULL) {
+	    host->family = family;
+	    host->len = len;
+	    acopy(addr, host->addr, len);
+	    host->next = selfhosts;
+	    selfhosts = host;
+	}
+#ifdef XDMCP
+	{
+	    struct sockaddr broad_addr;
+	    /*
+	     * If this isn't an Internet Address, don't register it.
+	     */
+	    if (family != FamilyInternet) 
+		continue;
+	    /* 
+	     * ignore 'localhost' entries as they're not usefule
+	     * on the other end of the wire
+	     */
+	    if (len == 4 && 
+		addr[0] == 127 && addr[1] == 0 &&
+		addr[2] == 0 && addr[2] == 1) 
+		continue;
+	    XdmcpRegisterConnection(family, (char *)addr, len);
+	    if ((ifr->ifa_flags & IFF_BROADCAST) &&
+		(ifr->ifa_flags & IFF_UP))
+		broad_addr = *ifr->ifa_broadaddr;
+	    else
+		continue;
+#ifdef DEF_SELF_DEBUG
+	    ErrorF("Xserver: DefineSelf(): ifname = %s, baddr = %s\n",
+		   ifr->ifa_name,
+	           inet_ntoa(((struct sockaddr_in *) &broad_addr)->sin_addr));
+#endif /* DEF_SELF_DEBUG */
+	    XdmcpRegisterBroadcastAddress((struct sockaddr_in *)
+					  &broad_addr);
+	}
+#endif /* XDMCP */
+		
+    } /* for */
+    freeifaddrs(ifap);
+#endif /* HAS_GETIFADDRS */
+
     /*
      * add something of FamilyLocalHost
      */
@@ -818,21 +887,16 @@ ResetHosts (char *display)
         validhosts = host->next;
         FreeHost (host);
     }
-#ifndef __EMX__
 #define ETC_HOST_PREFIX "/etc/X"
 #define ETC_HOST_SUFFIX ".hosts"
-#else
-#define ETC_HOST_PREFIX "/XFree86/lib/X11/X"
-#define ETC_HOST_SUFFIX ".hosts"
-#endif /* __EMX__ */
     fnamelen = strlen(ETC_HOST_PREFIX) + strlen(ETC_HOST_SUFFIX) +
 		strlen(display) + 1;
     if (fnamelen > sizeof(fname))
 	FatalError("Display name `%s' is too long\n", display);
     sprintf(fname, ETC_HOST_PREFIX "%s" ETC_HOST_SUFFIX, display);
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     strcpy(fname, (char*)__XOS2RedirRoot(fname));
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
 
     if ((fd = fopen (fname, "r")) != 0)
     {
@@ -842,7 +906,7 @@ ResetHosts (char *display)
 	    continue;
     	if ((ptr = strchr(ohostname, '\n')) != 0)
     	    *ptr = 0;
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     	if ((ptr = strchr(ohostname, '\r')) != 0)
     	    *ptr = 0;
 #endif
@@ -1007,6 +1071,55 @@ Bool LocalClient(ClientPtr client)
     return FALSE;
 }
 
+/*
+ * Return the uid and gid of a connected local client
+ * or the uid/gid for nobody those ids cannot be determinded
+ * 
+ * Used by XShm to test access rights to shared memory segments
+ */
+int
+LocalClientCred(ClientPtr client, int *pUid, int *pGid)
+{
+    int fd;
+    XtransConnInfo ci;
+#ifdef HAS_GETPEEREID
+    uid_t uid;
+    gid_t gid;
+#elif defined(SO_PEERCRED)
+    struct ucred peercred;
+    socklen_t so_len = sizeof(peercred);
+#endif
+
+    if (client == NULL)
+	return -1;
+    ci = ((OsCommPtr)client->osPrivate)->trans_conn;
+    /* We can only determine peer credentials for Unix domain sockets */
+    if (!_XSERVTransIsLocal(ci)) {
+	return -1;
+    }
+    fd = _XSERVTransGetConnectionNumber(ci);
+#ifdef HAS_GETPEEREID
+    if (getpeereid(fd, &uid, &gid) == -1) 
+	    return -1;
+    if (pUid != NULL)
+	    *pUid = uid;
+    if (pGid != NULL)
+	    *pGid = gid;
+    return 0;
+#elif defined(SO_PEERCRED)
+    if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) == -1) 
+	    return -1;
+    if (pUid != NULL)
+	    *pUid = peercred.uid;
+    if (pGid != NULL)
+	    *pGid = peercred.gid;
+    return 0;
+#else
+    /* No system call available to get the credentials of the peer */
+    return -1;
+#endif
+}
+
 static Bool
 AuthorizedClient(ClientPtr client)
 {
@@ -1019,11 +1132,10 @@ AuthorizedClient(ClientPtr client)
  * called from the dispatcher */
 
 int
-AddHost (
-    ClientPtr		client,
-    int                 family,
-    unsigned            length,        /* of bytes in pAddr */
-    pointer             pAddr)
+AddHost (ClientPtr	client,
+	 int            family,
+	 unsigned       length,        /* of bytes in pAddr */
+	 pointer        pAddr)
 {
     int			len;
 
@@ -1065,23 +1177,12 @@ AddHost (
 }
 
 Bool
-#if NeedFunctionPrototypes
-ForEachHostInFamily (
-    int	    family,
-    Bool    (*func)(
-#if NeedNestedPrototypes
-            unsigned char * /* addr */,
-            short           /* len */,
-            pointer         /* closure */
-#endif
-            ),
-    pointer closure)
-#else
-ForEachHostInFamily (family, func, closure)
-    int	    family;
-    Bool    (*func)();
-    pointer closure;
-#endif
+ForEachHostInFamily (int	    family,
+		     Bool    (*func)(
+			 unsigned char * /* addr */,
+			 short           /* len */,
+			 pointer         /* closure */),
+		     pointer closure)
 {
     HOST    *host;
 
@@ -1094,10 +1195,9 @@ ForEachHostInFamily (family, func, closure)
 /* Add a host to the access control list. This is the internal interface 
  * called when starting or resetting the server */
 static Bool
-NewHost (
-    int		family,
-    pointer	addr,
-    int		len)
+NewHost (int		family,
+	 pointer	addr,
+	 int		len)
 {
     register HOST *host;
 

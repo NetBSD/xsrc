@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.23 2001/05/28 14:21:56 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.25 2002/04/04 14:05:51 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -7,7 +7,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
-#include "xf86Pci.h"
 #include "compiler.h"
 #define _INT10_PRIVATE
 #include "xf86int10.h"
@@ -32,6 +31,7 @@ typedef struct {
     int entries;
     void* base;
     void* vRam;
+    int highMemory;
     void* sysMem;
     char* alloc;
 } genericInt10Priv;
@@ -49,24 +49,36 @@ int10MemRec genericMem = {
 
 static void MapVRam(xf86Int10InfoPtr pInt);
 static void UnmapVRam(xf86Int10InfoPtr pInt);
+#ifdef _PC
+#define GET_HIGH_BASE(x) (((V_BIOS + size + getpagesize() - 1)/getpagesize()) \
+                             * getpagesize())
+#endif
 
 static void *sysMem = NULL;
-
 
 xf86Int10InfoPtr
 xf86InitInt10(int entityIndex)
 {
+    return xf86ExtendedInitInt10(entityIndex, 0);
+}
+
+xf86Int10InfoPtr
+xf86ExtendedInitInt10(int entityIndex, int Flags)
+{
     xf86Int10InfoPtr pInt;
-    int screen;
     void* base = 0;
     void* vbiosMem = 0;
     void* options = NULL;
+    pciVideoPtr pvp;
+    int screen;
     legacyVGARec vga;
     xf86int10BiosLocation bios;
     
 #ifdef _PC
+    int size;
     CARD32 cs;
 #endif
+
     screen = (xf86FindScreenForEntity(entityIndex))->scrnIndex;
 
     options = xf86HandleInt10Options(xf86Screens[screen],entityIndex);
@@ -86,6 +98,9 @@ xf86InitInt10(int entityIndex)
     pInt->scrnIndex = screen;
     base = INTPriv(pInt)->base = xnfalloc(SYS_BIOS);
 
+    pvp = xf86GetPciInfoForEntity(entityIndex);
+    if (pvp) pInt->Tag = ((pciConfigPtr)(pvp->thisCard))->tag;
+
     /*
      * we need to map video RAM MMIO as some chipsets map mmio
      * registers into this range.
@@ -93,7 +108,8 @@ xf86InitInt10(int entityIndex)
     MapVRam(pInt);
 #ifdef _PC
     if (!sysMem)
-	sysMem = xf86MapVidMem(screen, VIDMEM_FRAMEBUFFER, SYS_BIOS, BIOS_SIZE);
+	sysMem = xf86MapVidMem(screen, VIDMEM_FRAMEBUFFER, V_BIOS,
+			       BIOS_SIZE + SYS_BIOS - V_BIOS);
     INTPriv(pInt)->sysMem = sysMem;
 
     if (xf86ReadBIOS(0, 0, base, LOW_PAGE_SIZE) < 0) {
@@ -107,23 +123,33 @@ xf86InitInt10(int entityIndex)
      * 64kB at a time.
      */
     (void)memset((char *)base + V_BIOS, 0, SYS_BIOS - V_BIOS);
+#if 0
     for (cs = V_BIOS;  cs < SYS_BIOS;  cs += V_BIOS_SIZE)
 	if (xf86ReadBIOS(cs, 0, (unsigned char *)base + cs, V_BIOS_SIZE) <
 		V_BIOS_SIZE)
 	    xf86DrvMsg(screen, X_WARNING,
-		"Unable to retrieve all of segment 0x%06X.\n", cs);
-
+		       "Unable to retrieve all of segment 0x%06X.\n", cs);
+#endif
+    INTPriv(pInt)->highMemory = V_BIOS;
+    
     xf86int10ParseBiosLocation(options,&bios);
     
     if (xf86IsEntityPrimary(entityIndex) 
 	&& !(initPrimary(options))) {
-
+	
 	if (bios.bus == BUS_ISA && bios.location.legacy) {
 	    xf86DrvMsg(screen, X_CONFIG,
 			   "Overriding BIOS location: 0x%lx\n",
 		       bios.location.legacy);
 	    cs = bios.location.legacy >> 4;
-	    vbiosMem = (unsigned char *)base + (cs << 4);
+#define CHECK_V_SEGMENT_RANGE(x)   \
+               if ((x << 4) < V_BIOS) {\
+		   xf86DrvMsg(screen, X_ERROR, \
+		              "V_BIOS address 0x%x out of range\n",x << 4); \
+		    goto error1; \
+	       }
+	    CHECK_V_SEGMENT_RANGE(cs);
+	    vbiosMem = (unsigned char *)sysMem - V_BIOS + (cs << 4);
 	    if (!int10_check_bios(screen, cs, vbiosMem)) {
 		xf86DrvMsg(screen, X_ERROR,
 			   "No V_BIOS at specified address 0x%x\n",cs << 4);
@@ -139,14 +165,15 @@ xf86InitInt10(int entityIndex)
 	    }
 	    
 	    cs = MEM_RW(pInt,((0x10<<2)+2));
-
-	    vbiosMem = (unsigned char *)base + (cs << 4);
+	    CHECK_V_SEGMENT_RANGE(cs);
+	    vbiosMem = (unsigned char *)sysMem - V_BIOS + (cs << 4);
 	    if (!int10_check_bios(screen, cs, vbiosMem)) {
 		cs = MEM_RW(pInt, (0x42 << 2) + 2);
-		vbiosMem = (unsigned char *)base + (cs << 4);
+		CHECK_V_SEGMENT_RANGE(cs);
+		vbiosMem = (unsigned char *)sysMem - V_BIOS + (cs << 4);
 		if (!int10_check_bios(screen, cs, vbiosMem)) {
 		    cs = V_BIOS >> 4;
-		    vbiosMem = (unsigned char *)base + (cs << 4);
+		    vbiosMem = (unsigned char *)sysMem - V_BIOS + (cs << 4);
 		    if (!int10_check_bios(screen, cs, vbiosMem)) {
 			xf86DrvMsg(screen, X_ERROR, "No V_BIOS found\n");
 			goto error1;
@@ -159,6 +186,12 @@ xf86InitInt10(int entityIndex)
 
 	set_return_trap(pInt);
 	pInt->BIOSseg = cs;
+
+	pInt->Flags = Flags & (SET_BIOS_SCRATCH | RESTORE_BIOS_SCRATCH);
+	if (! (pInt->Flags & SET_BIOS_SCRATCH))
+	    pInt->Flags &= ~RESTORE_BIOS_SCRATCH;
+	xf86Int10SaveRestoreBIOSVars(pInt, TRUE);
+	
     } else {
 	BusType location_type;
 	int bios_location = V_BIOS;
@@ -190,22 +223,23 @@ xf86InitInt10(int entityIndex)
 	} else
 	    location_type = pEnt->location.type;
 	
-	vbiosMem = (unsigned char *)base + bios_location;
-	
 	switch (location_type) {
 	case BUS_PCI:
+	    vbiosMem = (unsigned char *)base + bios_location;
 	    if (bios.bus == BUS_PCI)
 		pci_entity = xf86GetPciEntity(bios.location.pci.bus,
 					      bios.location.pci.dev,
 					      bios.location.pci.func);
 	    else 
 		pci_entity = pInt->entityIndex;
-	    if (!mapPciRom(pci_entity,(unsigned char *)(vbiosMem))) {
+	    if (!(size = mapPciRom(pci_entity,(unsigned char *)(vbiosMem)))) {
 		xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (3)\n");
 		goto error1;
 	    }
+	    INTPriv(pInt)->highMemory = GET_HIGH_BASE(size);
 	    break;
 	case BUS_ISA:
+	    vbiosMem = (unsigned char *)sysMem + bios_location;
 #if 0
 	    (void)memset(vbiosMem, 0, V_BIOS_SIZE);
 	    if (xf86ReadBIOS(bios_location, 0, vbiosMem, V_BIOS_SIZE)
@@ -223,9 +257,9 @@ xf86InitInt10(int entityIndex)
 	xfree(pEnt);
 	pInt->BIOSseg = V_BIOS >> 4;
 	pInt->num = 0xe6;
-	LockLegacyVGA(screen, &vga);
+	LockLegacyVGA(pInt, &vga);
 	xf86ExecX86int10(pInt);
-	UnlockLegacyVGA(screen, &vga);
+	UnlockLegacyVGA(pInt, &vga);
     }
 #else
     if (!sysMem) {
@@ -243,12 +277,15 @@ xf86InitInt10(int entityIndex)
      */
     vbiosMem = (char *)base + V_BIOS;
     (void)memset(vbiosMem, 0, 2 * V_BIOS_SIZE);
-    if (xf86ReadBIOS(V_BIOS, 0, vbiosMem, V_BIOS_SIZE) < V_BIOS_SIZE)
+    if (xf86ReadDomainMemory(pInt->Tag, V_BIOS, V_BIOS_SIZE, vbiosMem) <
+	V_BIOS_SIZE)
 	xf86DrvMsg(screen, X_WARNING,
 	    "Unable to retrieve all of segment 0x0C0000.\n");
-    else if (((unsigned char *)vbiosMem)[2] > 0x80)
-    if (xf86ReadBIOS(V_BIOS + V_BIOS_SIZE, 0,
-	    (unsigned char *)vbiosMem + V_BIOS_SIZE, V_BIOS_SIZE) < V_BIOS_SIZE)
+    else if ((((unsigned char *)vbiosMem)[0] == 0x55) &&
+	     (((unsigned char *)vbiosMem)[1] == 0xAA) &&
+	     (((unsigned char *)vbiosMem)[2] > 0x80))
+    if (xf86ReadDomainMemory(pInt->Tag, V_BIOS + V_BIOS_SIZE, V_BIOS_SIZE,
+	    (unsigned char *)vbiosMem + V_BIOS_SIZE) < V_BIOS_SIZE)
 	xf86DrvMsg(screen, X_WARNING,
 	    "Unable to retrieve all of segment 0x0D0000.\n");
 
@@ -302,9 +339,9 @@ xf86InitInt10(int entityIndex)
 
     pInt->BIOSseg = V_BIOS >> 4;
     pInt->num = 0xe6;
-    LockLegacyVGA(screen, &vga);
+    LockLegacyVGA(pInt, &vga);
     xf86ExecX86int10(pInt);
-    UnlockLegacyVGA(screen, &vga);
+    UnlockLegacyVGA(pInt, &vga);
 #endif
     xfree(options);
     return pInt;
@@ -324,11 +361,13 @@ xf86InitInt10(int entityIndex)
 static void
 MapVRam(xf86Int10InfoPtr pInt)
 {
-    int screen = pInt->scrnIndex;
     int pagesize = getpagesize();
-    int size = ((VRAM_SIZE + pagesize - 1)/pagesize) * pagesize;
+    int size = ((VRAM_SIZE + pagesize - 1) / pagesize) * pagesize;
 
-    INTPriv(pInt)->vRam = xf86MapVidMem(screen, VIDMEM_MMIO, V_RAM, size);
+    INTPriv(pInt)->vRam = xf86MapDomainMemory(pInt->scrnIndex, VIDMEM_MMIO,
+					      pInt->Tag, V_RAM, size);
+
+    pInt->ioBase = xf86Screens[pInt->scrnIndex]->domainIOBase;
 }
 
 static void
@@ -353,6 +392,9 @@ xf86FreeInt10(xf86Int10InfoPtr pInt)
 {
     if (!pInt)
       return;
+#if defined (_PC)
+    xf86Int10SaveRestoreBIOSVars(pInt, FALSE);
+#endif
     if (Int10Current == pInt)
 	Int10Current = NULL;
     xfree(INTPriv(pInt)->base);
@@ -402,10 +444,15 @@ xf86Int10FreePages(xf86Int10InfoPtr pInt, void *pbase, int num)
 }
 
 #define OFF(addr) ((addr) & 0xffff)
-#define SYS(addr) ((addr) >= SYS_BIOS)
+#if defined _PC
+# define HIGH_OFFSET (INTPriv(pInt)->highMemory)
+#else
+# define HIGH_OFFSET SYS_BIOS
+#endif
+# define SYS(addr) ((addr) >= HIGH_OFFSET)
 #define V_ADDR(addr) \
-	  (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - SYS_BIOS) \
-	   : ((char*)(INTPriv(pInt)->base) + addr))
+	  (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - HIGH_OFFSET) \
+	   : (((char*)(INTPriv(pInt)->base) + addr)))
 #define VRAM_ADDR(addr) (addr - V_RAM)
 #define VRAM_BASE (INTPriv(pInt)->vRam)
 

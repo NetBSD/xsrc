@@ -1,17 +1,31 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.11 2002/01/10 21:51:47 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.16 2002/11/22 22:56:01 tsi Exp $
 
+#if DoLoadableServer
+#if !BuildModuleInSubdir
 #define IHaveModules
+#elif !defined(IHaveModules)
+#define IHaveSubdirs
+SUBDIRS = module
+#endif
+#endif
+
 #include <Server.tmpl>
 
-LinkSourceFile(xmesa1.c,$(MESASRCDIR)/src/X)
-LinkSourceFile(xmesa2.c,$(MESASRCDIR)/src/X)
-LinkSourceFile(xmesa3.c,$(MESASRCDIR)/src/X)
-LinkSourceFile(xmesa4.c,$(MESASRCDIR)/src/X)
+#define NeedAllMesaSrc
+#define NeedToLinkMesaSrc
+#define MesaXBuildDir /**/
+#define MesaInXServer
+#if !defined(IHaveModules) || !BuildModuleInSubdir
+#include "../../../../../../lib/GL/mesa/src/X/Imakefile.inc"
+#else
+#include "../../../../../../../lib/GL/mesa/src/X/Imakefile.inc"
+#endif
+
 
 LinkSourceFile(compsize.c,$(LIBSRC)/GL/glx)
 
-  DRIVER_SRCS = xmesa1.c xmesa2.c xmesa3.c xmesa4.c
-  DRIVER_OBJS = xmesa1.o xmesa2.o xmesa3.o xmesa4.o
+  DRIVER_SRCS = $(XMESA_SRCS)
+  DRIVER_OBJS = $(XMESA_OBJS)
 
 #ifndef XFree86Version
 
@@ -26,24 +40,36 @@ GLXSRV_DEFINES = -DXFree86Server
          SRCS = $(DRIVER_SRCS) $(GLX_SRCS)
          OBJS = $(DRIVER_OBJS) $(GLX_OBJS)
 
-     INCLUDES = -I. -I$(INCLUDESRC) -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+     INCLUDES = -I$(SERVERSRC)/GL/mesa/src/X -I$(INCLUDESRC) -I$(XINCLUDESRC) \
+		-I$(EXTINCSRC) \
 		-I$(MESASRCDIR)/src -I$(MESASRCDIR)/src/X \
 		-I$(MESASRCDIR)/include \
 		-I$(LIBSRC)/GL/glx -I$(LIBSRC)/GL/include \
 		-I$(SERVERSRC)/include -I$(SERVERSRC)/GL/include \
 		-I$(SERVERSRC)/GL/glx
 
-      DEFINES = $(GLX_DEFINES) $(GLXSRV_DEFINES) /*-DUSE_X86_ASM*/
+      DEFINES = $(GLX_DEFINES) $(GLXSRV_DEFINES) /*-DUSE_X86_ASM*/ /*-DUSE_SPARC_ASM*/
 
-#if DoLoadableServer
+#ifdef IHaveModules
 ModuleObjectRule()
-SubdirLibraryRule($(OBJS))
 #else
-NormalLibraryTarget(GLcoreX,$(OBJS))
 NormalLibraryObjectRule()
 #endif
+
+SubdirLibraryRule($(OBJS))
 
 LintLibraryTarget(dri,$(SRCS))
 NormalLintTarget($(SRCS))
 
 DependTarget()
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+#if defined(IHaveModules) && BuildModuleInSubdir
+LinkSourceFile(xf86glx.c,..)
+LinkSourceFile(xf86glx_util.c,..)
+#endif
+

@@ -30,59 +30,55 @@ tive owners.
 
 2.  Introduction
 
-This document describes how to download, compile and install the DRI project.
-The DRI provides 3D graphics hardware acceleration for the XFree86 project.
-This information is intended for experienced Linux developers.  Beginners are
+This document describes how to download, compile and install the DRI.  The
+DRI provides 3D graphics hardware acceleration for the XFree86 project.  This
+information is intended for experienced Linux developers.  Beginners are
 probably better off installing precompiled packages.
 
 Edits, corrections and updates to this document may be mailed to <brian@tung-
-stengrahpics.com>.
+stengraphics.com>.
+
+Last updated on 13 February 2002 by Brian Paul.
 
 3.  Prerequisites
 
 You'll need the following:
+
+   o An installation of XFree86 4.1 or later.  The DRI tree has been pruned
+     down to minimize its size.  But in order to build the DRI tree you need
+     to have recent X header files, etc. already installed.  If you don't
+     have XFree86 4.1 (or later) installed you can probably install it from
+     RPMs (or another package format).  Or, you can download XFree86 as
+     sources and compile/install it yourself.
 
    o At least 200MB of free disk space.  If you compile for debugging (the -g
      option) then you'll need about 600MB.
 
    o GCC compiler and related tools.
 
-   o ssh (secure shell) for registered developer downloading of the DRI
-     source tree
+   o ssh (secure shell) if you're a DRI developer and don't want to use
+     anonymous CVS download.
 
-   o A recent Linux Kernel.  See below for details.
+   o A 2.4.x Linux Kernel.  See below for details.
 
    o FreeBSD support is not currently being maintained and may not work.
 
 The DRI 3D drivers generally work on systems with Intel or AMD CPUs.  How-
-ever, there is limited support for Alpha and PowerPC support is underway.
+ever, limited support for Alpha and PowerPC support is underway.
 
-For 3dfx Voodoo3 hardware, you'll also need:
+For 3dfx Voodoo hardware, you'll also need the Glide3 runtime library
+(libglide3-v3.so for Voodoo3 or libglide3-v5.so for Voodoo4/5).  These can be
+downloaded from the DRI website.  You can compile them yourself, but it's
+often a painful process.
 
-   o Glide3 headers and runtime library if you want to use the 3dfx driver.
-     These can be obtained from linux.3dfx.com.
-
-   o A recent Linux 2.4.x kernel.  AGP support is not required.
-
-For Matrox G200/G400 hardware, you'll also need:
-
-   o A recent Linux 2.4.x kernel with AGP support.
-
-For Intel i810 hardware, you'll also need:
-
-   o A recent Linux 2.4.x kernel with AGP support.
-
-For ATI Rage 128 and Radeon hardware, you'll also need:
-
-   o A recent Linux 2.4.x kernel with AGP support.
+For Matrox G200/G400, Intel i810/i830 or ATI Rage128/Radeon hardware, you'll
+also need AGP support in your Linux kernel, either built-in or as a loadable
+module.
 
 4.  Linux Kernel Preparation
 
-The DRI project closely tracks Linux kernel development.  Since the internal
-Linux data structures might change in the 2.4 Linux kernel, it's important to
-use the most recent Linux kernel and not an old, intermediate development
-release.  As of this writing (Jan 2001), 2.4.0 is the most recent version of
-Linux which the DRI is synchronized to.
+Only the Linux 2.4.x kernels are currently supported by the DRI hardware
+drivers.  2.5.x kernels may work, but aren't tested.
 
 Most of the DRI drivers require AGP support and using Intel Pentium III SSE
 optimizations also requires an up-to-date Linux kernel.  Configuring your
@@ -188,10 +184,9 @@ should be used and enable them where appropriate.
 
 5.1  Intel Pentium III Features
 
-The Pentium III SSE (Katmai) instructions are used in optimized vertex trans-
-formation functions in the Mesa-based DRI drivers.  On Linux, SSE requires a
-recent kernel (such as 2.4.0-test11 or later) both at compile time and run-
-time.
+The Pentium III SSE instructions are used in optimized vertex transformation
+functions in the Mesa-based DRI drivers.  On Linux, SSE requires a recent
+kernel (such as 2.4.0-test11 or later) both at compile time and runtime.
 
 5.2  AMD 3DNow! Features
 
@@ -225,9 +220,8 @@ The host.def file is explained below.
 
 6.  Downloading the XFree86/DRI CVS Sources
 
-The DRI project is hosted by VA Linux Systems' SourceForge.  The DRI source
-code, which is a subset of the XFree86 source tree, is kept in a CVS reposi-
-tory there.
+The DRI project is hosted by SourceForge.  The DRI source code, which is a
+subset of the XFree86 source tree, is kept in a CVS repository there.
 
 The DRI CVS sources may be accessed either anonymously or as a registered
 SourceForge user.  It's recommended that you become a registered SourceForge
@@ -341,7 +335,6 @@ The default host.def file will look something like this:
                  #define LinuxDistribution LinuxRedHat
                  #define DefaultCCOptions -ansi GccWarningOptions -pipe
                  #define BuildXF86DRI YES
-                 #define HasGlide3 YES
                  /* Optionally turn these on for debugging */
                  /* #define GlxBuiltInTdfx YES */
                  /* #define GlxBuiltInMga YES */
@@ -351,23 +344,25 @@ The default host.def file will look something like this:
                  #define SharedLibFont NO
 
 The ProjectRoot variable specifies where the XFree86 files will be installed.
-You probably don't want to use /usr/X11R6/ because that would overwrite your
-default X files.  The following is recommended:
+We recommend installing the DRI files over your existing XFree86 installation
+- it's generally safe to do and less error-prone.  This policy is different
+than what we used to recommend.
 
-                 #define ProjectRoot /usr/X11R6-DRI
+If XFree86 4.x is not installed in /usr/X11R6/ you'll have to add the follow-
+ing to the host.def file:
 
-Especially note the XF86CardDrivers line to be sure your driver is listed.
+                 #define ProjectRoot pathToYourXFree86installation
 
-If you have 3dfx hardware be sure that the Glide 3x headers are installed in
-/usr/include/glide3/ and that the Glide 3x library is installed at
-/usr/lib/libglide3.so.
-
-If you do not have 3dfx hardware comment out the HasGlide3 line in host.def.
+Note the XF86CardDrivers line to be sure your card's driver is listed.
 
 If you want to enable 3DNow! optimizations in Mesa and the DRI drivers, you
 should add the following:
 
                  #define MesaUse3DNow YES
+
+You don't have to be using an AMD processor in order to enable this option.
+The DRI will look for 3DNow! support and runtime and only enable it if appli-
+cable.
 
 If you want to enable SSE optimizations in Mesa and the DRI drivers, you must
 upgrade to a Linux 2.4.x kernel.  Mesa will verify that SSE is supported by
@@ -377,20 +372,20 @@ you enable SSE optimizations with an earlier version of the Linux kernel in
 /usr/src/linux, Mesa will not compile.  You have been warned.  If you do have
 a 2.4.x kernel, you should add the following:
 
-                 #define MesaUseKatmai YES
+                 #define MesaUseSSE YES
 
 8.3  Compilation
 
 To compile the complete DRI tree:
 
                  cd ~/DRI-CVS/build/xc/
-                 make World >& World.LOG
+                 make World >& world.log
 
 Or if you want to watch the compilation progress:
 
                  cd ~/DRI-CVS/build/xc/
-                 make World >& World.LOG &
-                 tail -f World.LOG
+                 make World >& world.log &
+                 tail -f world.log
 
 With the default compilation flags it's normal to get a lot of warnings dur-
 ing compilation.
@@ -403,7 +398,7 @@ work with XFree86/DRI.
 
 8.4  Check for compilation errors
 
-Using your text editor, examine World.LOG for errors by searching for the
+Using your text editor, examine world.log for errors by searching for the
 pattern ***.
 
 Verify that the DRI kernel module(s) for your system were built:
@@ -435,7 +430,7 @@ first.
 
 8.5  DRI kernel module installation
 
-The DRI kernel modules are in ~/DRI-CVS/build/xc/pro-
+The DRI kernel modules will be in ~/DRI-CVS/build/xc/pro-
 grams/Xserver/hw/xfree86/os-support/linux/drm/kernel/.
 
 To load the appropriate DRM module in your running kernel you can either use
@@ -450,110 +445,54 @@ Note that some DRM modules require that the agpgart module be loaded first.
 
 9.  Normal Installation and Configuration
 
-Most users will want to install the new X server and use it instead of the
-original X server.  This section explains how to do that.  We assume that the
-user is upgrading from XFree86 3.3.x.
+Most users will want to install the new X server and use it in place of their
+old X server.  This section explains how to do that.
 
 Developers, on the other hand, may just want to test the X server without
 actually installing it as their default server.  If you want to do that, skip
 to the next section.
 
-9.1  X Installation
+9.1  Installation
 
-You'll need to run as root to do the following commands:
+Here are the installation commands:
 
                 su
-
-As mentioned above, the installation directory is specified by the Project-
-Root variable in the host.def file.  Create that directory now if it doesn't
-already exist, then run the install commands:
-
-                mkdir /usr/X11R6-DRI
                 cd ~/DRI-CVS/build/xc
                 make install
 
-9.2  Linker configuration
+9.2  Update the XF86Config File
 
-Edit your /etc/ld.so.conf file and put /usr/X11R6-DRI/lib as the first line.
-Then run:
+You may need to edit your XF86Config file to enable the DRI.  The config file
+is usually installed as /etc/X11/XF86Config-4.  See the DRI User Guide for
+details, but basically, you need to load the "glx" and "dri" modules and add
+a "DRI" section.
 
-                ldconfig
+On the DRI web site, in the resources section, you'll find example XF86Config
+files for a number of graphics cards.  These configuration files also setup
+DRI options so it's highly recommended that you look at these examples.
 
-This will ensure that you use the new X libraries when you run X programs.
-
-9.3  Update Locale Information
-
-To update your X locale information do the following:
-
-                  cd ~/DRI-CVS/build/xc/nls
-                  ../config/util/xmkmf -a
-                  make
-                  make install
-
-This will prevent a locale error message from being printed when you run Xlib
-programs.
-
-9.4  Setup Miscellaneous Files
-
-Issue the following commands:
-
-                  cd /usr/X11R6-DRI/lib/X11
-                  ln -s /usr/X11R6/lib/X11/rgb.txt .
-                  ln -s /usr/X11R6/lib/X11/fonts .
-                  ln -s /usr/X11R6/lib/X11/app-defaults .
-
-This will allow applications to use the fonts and resources that they used in
-the past.
-
-9.5  Disable the Old X Server and Enable the New One
-
-Assuming that an installation of XFree86 3.3.x is present, we need to disable
-the old 3.3.x X server and enable the new 4.0.x X server.
-
-Issue the following commands:
+The XFree86 4.x server can generate a basic configuration file itself.  Sim-
+ply do this:
 
                   cd /usr/X11R6/bin
-                  mv Xwrapper Xwrapper.old
-                  rm X
-                  ln -s /usr/X11R6-DRI/bin/XFree86  X
-
-This will cause the new X server to be used instead of the original one.
-
-9.6  Create the XF86Config File
-
-Configuration files for XFree86 3.3.x will not work with XFree86 4.0.x.
-
-The new 4.0.x server can generate a basic configuration file itself.  Simply
-do this:
-
-                  cd /usr/X11R6-DRI/bin
                   ./XFree86 -configure
 
 A file named /root/XF86Config.new will be created.  It should allow you to
 try your X server but you'll almost certainly have to edit it.  For example,
 you should add HorizSync and VertRefresh options to the Monitor section and
 Modes options to the Screen section.  Also, the ModulePath option in the
-Files section should be set to /usr/X11R6-DRI/lib/modules.
+Files section should be set to /usr/X11R6/lib/modules.
 
-On the DRI web site, in the resources section, you'll find example XF86Config
-files for a number of graphics cards.  These configuration files also setup
-DRI options so it's highly recommended that you look at these examples.
-
-In any case, your new XF86Config file should be placed in /etc/X11/XF86Con-
-fig-4.  This configuration file will be recognized by the 4.0.x server but
-not by 3.3.x servers.  You can instead name it /etc/X11/XF86Config but
-that'll overwrite your old config file, which you may want to preserve.
-
-9.7  Start the New X Server
+9.3  Start the New X Server
 
 The new X server should be ready to use now.  Start your X server in your
-usual manner.  Typically, the startx command is used:
+usual manner.  Often times the startx command is used:
 
                   startx
 
 10.  Testing the Server Without Installing It
 
-As mentioned at the start of section 8, developers may want to simply run the
+As mentioned at the start of section 9, developers may want to simply run the
 X server without installing it.  This can save some time and allow you to
 keep a number of X servers available for testing.
 
@@ -563,7 +502,7 @@ As described in the preceding section, you'll need to create a configuration
 file for the new server.  Put the XF86Config file in your ~/DRI-
 CVS/build/xc/programs/Xserver directory.
 
-Be sure the ModulePath option is set correctly.
+Be sure the ModulePath option in your XF86Config file is set correctly.
 
 10.2  A Startup Script
 
@@ -598,7 +537,7 @@ At this point your X server should be up and running with hardware-acceler-
 ated direct rendering.  Please read the DRI User Guide for information about
 trouble shooting and how to use the DRI-enabled X server for 3D applications.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.16 2002/01/07 22:05:57 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.19 2002/11/26 01:05:50 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.13 2002/01/07 22:07:16 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.16 2002/11/26 02:24:01 dawes Exp $

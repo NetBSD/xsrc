@@ -5,6 +5,10 @@
 <author>Holger Veit
 <date>Last modified March 8th, 2000
 
+<ident>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.2 2003/01/04 04:20:23 dawes Exp $
+</ident>
+
 <toc>
 
 <sect>Preface
@@ -27,11 +31,11 @@ have worked in earlier versions, may now no longer work, or work differently.
 Be aware that for OS/2, XFree86-4.0 is considered to be alpha software.
 
 If you want to join the XFree86 developer team, e.g. to add support for
-certain hardware, please send a request to BOD@XFree86.org. Please
-think about such a step carefully before, though, since much work is 
-involved. Please use the XFree86-4.0 source code as a test example how
-to compile the system. The ability to manage that is a basic requirement
-for becoming a developer.
+certain hardware, please send a request to <email>BOD@XFree86.org</email>.
+Please think about such a step carefully before, though, since much work
+is involved. Please use the XFree86-4.0 source code as a test example
+how to compile the system. The ability to manage that is a basic
+requirement for becoming a developer.
 
 
 <sect>Tools required
@@ -201,14 +205,5 @@ Well, you see, this was quite easy :-)
 
 
 
-<verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.1 2001/06/04 13:50:15 dawes Exp $
-
-
-
-
-
-$XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
-</verb>
 
 </article>

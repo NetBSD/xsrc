@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.36 2001/05/04 19:05:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.37 2002/04/04 14:05:49 eich Exp $ */
 
 
 
@@ -67,7 +67,8 @@ typedef enum {
     TYPE_ET4000W32I,
     TYPE_ET4000W32P,
     TYPE_ET6000,
-    TYPE_ET6100
+    TYPE_ET6100,
+    TYPE_TSENG
 } t_tseng_type;
 
 /* revision ID for W32 chips: currently used for W32i and W32p */

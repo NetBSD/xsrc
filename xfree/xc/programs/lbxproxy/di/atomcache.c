@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/programs/lbxproxy/di/atomcache.c,v 1.6 2001/12/14 20:00:50 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/atomcache.c,v 1.7 2002/10/15 02:16:26 dawes Exp $ */
 
 /*
  * atom cache for LBX
@@ -134,21 +134,34 @@ ResizeHashTable(server)
 }
 
 static Bool
-ResizeReverseMap(server)
+ResizeReverseMap(server, atom)
     XServerPtr	server;
+    Atom	atom;
 {
-    if (server->reverseMapSize == 0)
+    int oldMapSize = 0;
+
+    /* has the map already been initialized? */
+    if (server->reverseMapSize <= 0)
 	server->reverseMapSize = 1000;
     else
+	/* keep track of the map size before we resize it */
+	oldMapSize = server->reverseMapSize;
+
+    /* grow the map until it is big enough */
+    while (server->reverseMapSize < atom)
 	server->reverseMapSize *= 2;
 
-    server->reverseMap = (AtomListPtr *) xrealloc(server->reverseMap, 
+    /* resize the map */
+    server->reverseMap = (AtomListPtr *) xrealloc(server->reverseMap,
 		server->reverseMapSize * sizeof(AtomListPtr));
-    bzero((char *)server->reverseMap, 
-	  (server->reverseMapSize * sizeof(AtomListPtr)));
 
     if (!server->reverseMap)
+	/* memory allocation problem */
 	return FALSE;
+
+    /* zero out the new portion of the map */
+    bzero((char *) (server->reverseMap + oldMapSize),
+	  ((server->reverseMapSize - oldMapSize) * sizeof(AtomListPtr)));
 
     return TRUE;
 }
@@ -224,7 +237,7 @@ LbxMakeAtom(server, string, len, atom, makeit)
 	}
     }
     if (server->reverseMapSize <= a->atom)
-	ResizeReverseMap(server);
+	ResizeReverseMap(server, a->atom);
     server->reverseMap[a->atom] = a;
     return a->atom;
 }

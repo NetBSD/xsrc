@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.10 2001/10/04 18:28:20 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.11 2002/10/30 12:52:03 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <kevin@precisioninsight.com>
- *   Jens Owen <jens@precisioninsight.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *   Rickard E. (Rik) Faith <faith@valinux.com>
  *
  */

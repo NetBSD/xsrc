@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xtrap/xtrapreset.c,v 1.1 2001/11/02 23:29:34 dawes Exp $ */
+/* $XFree86: xc/programs/xtrap/xtrapreset.c,v 1.2 2002/09/18 17:11:57 tsi Exp $ */
 /*
  * @DEC_COPYRIGHT@
  */
@@ -51,6 +51,7 @@ SOFTWARE.
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/extensions/xtraplib.h>
 #include <X11/extensions/xtraplibp.h>
 

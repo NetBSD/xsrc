@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.5 2001/05/31 18:39:06 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.6 2003/02/08 23:11:49 dawes Exp $
 #
 
 Usage()
@@ -102,6 +102,9 @@ if [ $createlist = YES ]; then
   GenList
   exit 0;
 fi
+
+# Make sure all directories in $FROMDIR have permissions 755
+find $FROMDIR -type d | xargs chmod 755
 
 for d in $SUBDIRS; do
   if [ ! -d $TODIR/$d ]; then

@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.8 2001/12/14 19:54:45 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.9 2002/05/31 18:45:44 dawes Exp $ */
 
 /*
  * This is a copy of Xt/Vendor.c with an additional ClassInitialize
@@ -111,7 +111,7 @@ static XtResource resources[] = {
  *
  ***************************************************************************/
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 /* to fix the EditRes problem because of wrong linker semantics */
 extern WidgetClass vendorShellWidgetClass; /* from Xt/Vendor.c */
 extern VendorShellClassRec _XawVendorShellClassRec;
@@ -193,7 +193,7 @@ externaldef(vendorshellclassrec) VendorShellClassRec vendorShellClassRec = {
   }
 };
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 externaldef(vendorshellwidgetclass) WidgetClass vendorShellWidgetClass =
 	(WidgetClass) (&vendorShellClassRec);
 #endif
@@ -337,7 +337,7 @@ XawVendorShellClassPartInit(WidgetClass cclass)
     }
 }
 
-#if defined(__osf__) || defined(__EMX__)
+#if defined(__osf__) || defined(__UNIXOS2__)
 /* stupid OSF/1 shared libraries have the wrong semantics */
 /* symbols do not get resolved external to the shared library */
 void _XawFixupVendorShell()

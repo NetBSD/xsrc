@@ -25,7 +25,7 @@
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Pixmap.c,v 3.16.6.1 2002/07/04 17:07:10 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Pixmap.c,v 3.17 2002/05/18 02:05:39 paulo Exp $ */
 
 #include <string.h>
 #include <stdio.h>

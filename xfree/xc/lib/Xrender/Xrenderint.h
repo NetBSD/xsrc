@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Xrenderint.h,v 1.2 2000/08/28 02:43:13 tsi Exp $
+ * $XFree86: xc/lib/Xrender/Xrenderint.h,v 1.4 2002/11/05 23:22:35 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -35,6 +35,43 @@
 #include "Xrender.h"
 #include "renderproto.h"
 
+typedef struct {
+    Visual		*visual;
+    XRenderPictFormat	*format;
+} XRenderVisual;
+
+typedef struct {
+    int			depth;
+    int			nvisuals;
+    XRenderVisual	*visuals;
+} XRenderDepth;
+
+typedef struct {
+    XRenderDepth	*depths;
+    int			ndepths;
+    XRenderPictFormat	*fallback;
+    int			subpixel;
+} XRenderScreen;
+
+typedef struct _XRenderInfo {
+    int			major_version;
+    int			minor_version;
+    XRenderPictFormat	*format;
+    int			nformat;
+    XRenderScreen	*screen;
+    int			nscreen;
+    XRenderDepth	*depth;
+    int			ndepth;
+    XRenderVisual	*visual;
+    int			nvisual;
+    int			*subpixel;
+    int			nsubpixel;
+    char		**filter;
+    int			nfilter;
+    short    		*filter_alias;
+    int			nfilter_alias;
+} XRenderInfo;
+
 extern XExtensionInfo XRenderExtensionInfo;
 extern char XRenderExtensionName[];
 
@@ -46,5 +83,17 @@ extern char XRenderExtensionName[];
 
 XExtDisplayInfo *
 XRenderFindDisplay (Display *dpy);
+
+/*
+ * Xlib uses long for 32-bit values.  Xrender uses int.  This
+ * matters on alpha.  Note that this macro assumes that int is 32 bits
+ * except on WORD64 machines where it is 64 bits.
+ */
+
+#ifdef WORD64
+#define DataInt32(dpy,d,len)	Data32(dpy,(long *) (d),len)
+#else
+#define DataInt32(dpy,d,len)	Data(dpy,(char *) (d),len)
+#endif
 
 #endif /* _XRENDERINT_H_ */

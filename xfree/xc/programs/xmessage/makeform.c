@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xmessage/makeform.c,v 1.5 2000/10/20 14:59:09 alanh Exp $ */
+/* $XFree86: xc/programs/xmessage/makeform.c,v 1.6 2002/11/22 03:56:39 paulo Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -243,7 +243,6 @@ Widget make_queryform(parent, msgstr, msglen,
 	 XtNtop, XtChainTop,
 	 XtNbottom, XtChainBottom,
 	 XtNdisplayCaret, False,
-	 XtNuseStringInPlace, True,
 	 XtNlength, msglen,
 	 XtNstring, msgstr,
 	 NULL);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/compsize.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/compsize.c,v 1.4 2002/02/22 21:32:52 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -94,15 +94,18 @@ GLint __glDrawPixels_size(GLenum format, GLenum type, GLsizei w, GLsizei h)
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:
 	elements = 2;
 	break;
       case GL_RGB:
+      case GL_BGR:
 	elements = 3;
 	break;
       case GL_RGBA:
+      case GL_BGRA:
       case GL_ABGR_EXT:
 	elements = 4;
 	break;
@@ -219,6 +222,26 @@ GLint __glTexEnvfv_size(GLenum e)
 	return 1;
       case GL_TEXTURE_ENV_COLOR:
 	return 4;
+      /* GL_EXT_texture_env_combine */
+      case GL_COMBINE_RGB_EXT:
+      case GL_COMBINE_ALPHA_EXT:
+      case GL_SOURCE0_RGB_EXT:
+      case GL_SOURCE1_RGB_EXT:
+      case GL_SOURCE2_RGB_EXT:
+      case GL_SOURCE0_ALPHA_EXT:
+      case GL_SOURCE1_ALPHA_EXT:
+      case GL_SOURCE2_ALPHA_EXT:
+      case GL_OPERAND0_RGB_EXT:
+      case GL_OPERAND1_RGB_EXT:
+      case GL_OPERAND0_ALPHA_EXT:
+      case GL_OPERAND1_ALPHA_EXT:
+      case GL_OPERAND2_RGB_EXT:
+      case GL_OPERAND2_ALPHA_EXT:
+      case GL_RGB_SCALE_EXT:
+      case GL_ALPHA_SCALE:
+      /* GL_EXT_texture_lod */
+      case GL_TEXTURE_LOD_BIAS_EXT:
+        return 1;
       default:
 	return 0;
     }
@@ -243,15 +266,18 @@ GLint __glTexImage1D_size(GLenum format, GLenum type, GLsizei w)
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:
 	elements = 2;
 	break;
       case GL_RGB:
+      case GL_BGR:
 	elements = 3;
 	break;
       case GL_RGBA:
+      case GL_BGRA:
       case GL_ABGR_EXT:
 	elements = 4;
 	break;
@@ -320,15 +346,18 @@ GLint __glTexImage2D_size(GLenum format, GLenum type, GLsizei w, GLsizei h)
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:
 	elements = 2;
 	break;
       case GL_RGB:
+      case GL_BGR:
 	elements = 3;
 	break;
       case GL_RGBA:
+      case GL_BGRA:
       case GL_ABGR_EXT:
 	elements = 4;
 	break;
@@ -399,15 +428,18 @@ GLint __glTexImage3D_size(GLenum format, GLenum type, GLsizei w, GLsizei h,
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:
 	elements = 2;
 	break;
       case GL_RGB:
+      case GL_BGR:
 	elements = 3;
 	break;
       case GL_RGBA:
+      case GL_BGRA:
       case GL_ABGR_EXT:
 	elements = 4;
 	break;

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.25 2002/01/04 21:22:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.29 2003/02/17 16:08:28 dawes Exp $ */
 
 
 /* All drivers should typically include these */
@@ -217,6 +217,7 @@ static const char *i2cSymbols[] = {
     NULL
 };
 
+#ifdef XFree86LOADER
 /* XXX The vbe module isn't currently loaded. */
 static const char *vbeSymbols[] = {
     "VBEInit",
@@ -230,6 +231,7 @@ static const char *int10Symbols[] = {
     "xf86FreeInt10",
     NULL
 };
+#endif
 
 
 #ifdef XFree86LOADER
@@ -517,11 +519,12 @@ static Bool
 I128PreInit(ScrnInfoPtr pScrn, int flags)
 {
     I128Ptr pI128;
+    vgaHWPtr hwp;
     int i;
     int bytesPerPixel;
     ClockRangePtr clockRanges;
     MessageType from;
-    CARD32 iobase;
+    IOADDRESS iobase;
     char *ramdac = NULL;
     CARD32 tmpl, tmph, tmp;
     unsigned char n, m, p, mdc, df;
@@ -566,7 +569,8 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     if (!vgaHWGetHWRec(pScrn))
         return FALSE;
  
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
+    hwp = VGAHWPTR(pScrn);
+    vgaHWGetIOBase(hwp);
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -708,8 +712,15 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     xf86DrvMsg(pScrn->scrnIndex, from, "Chipset: \"%s\"\n", pScrn->chipset);
+    if (pI128->PciInfo->subsysVendor == 0x105D)
+        xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"Number Nine\"\n");
+    else if (pI128->PciInfo->subsysVendor == 0x10F0)
+        xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"Peritek\"\n");
+    else
+        xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"%x\"\n",
+    	    pI128->PciInfo->subsysVendor);
 
-    iobase = pI128->PciInfo->ioBase[5] & 0xFF00;
+    iobase = (pI128->PciInfo->ioBase[5] & 0xFFFFFF00) + hwp->PIOOffset;
     pI128->RegRec.iobase = iobase;
 
     pI128->io.rbase_g = inl(iobase)        & 0xFFFFFF00;
@@ -1067,7 +1078,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
      * Setup the ClockRanges, which describe what clock ranges are available,
      * and what sort of modes they can be used for.
      */
-    clockRanges = xnfalloc(sizeof(ClockRange));
+    clockRanges = xnfcalloc(sizeof(ClockRange),1);
     clockRanges->next = NULL;
     clockRanges->minClock = pI128->minClock;
     clockRanges->maxClock = pI128->maxClock;
@@ -1801,7 +1812,7 @@ I128DDC1Read(ScrnInfoPtr pScrn)
   I128Ptr pI128 = I128PTR(pScrn);
   unsigned char val;
   unsigned long tmp, ddc;
-  unsigned short iobase;
+  IOADDRESS iobase;
 
   iobase = pI128->RegRec.iobase;
   ddc = inl(iobase + 0x2C);
@@ -1836,7 +1847,7 @@ I128I2CGetBits(I2CBusPtr b, int *clock, int *data)
 {
   I128Ptr pI128 = I128PTR(xf86Screens[b->scrnIndex]);
   unsigned long ddc;
-  unsigned short iobase;
+  IOADDRESS iobase;
 #if 0
   static int lastclock = -1, lastdata = -1;
 #endif
@@ -1864,7 +1875,7 @@ I128I2CPutBits(I2CBusPtr b, int clock, int data)
   unsigned char drv, val;
   unsigned long ddc;
   unsigned long tmp;
-  unsigned short iobase;
+  IOADDRESS iobase;
 
   iobase = pI128->RegRec.iobase;
   ddc = inl(iobase + 0x2C);
@@ -1886,7 +1897,7 @@ I128I2CInit(ScrnInfoPtr pScrn)
 {       
     I128Ptr pI128 = I128PTR(pScrn);
     I2CBusPtr I2CPtr;
-    unsigned short iobase;
+    IOADDRESS iobase;
     unsigned long soft_sw, ddc;
      
     I2CPtr = xf86CreateI2CBusRec();
@@ -2095,7 +2106,7 @@ void
 I128DumpActiveRegisters(ScrnInfoPtr pScrn)
 {
     I128Ptr pI128 = I128PTR(pScrn);
-    unsigned short iobase;
+    IOADDRESS iobase;
     unsigned long rbase_g, rbase_w, rbase_a, rbase_b, rbase_i, rbase_e;
     unsigned long id, config1, config2, sgram, soft_sw, ddc, vga_ctl;
     volatile CARD32 *vrba, *vrbg, *vrbw;

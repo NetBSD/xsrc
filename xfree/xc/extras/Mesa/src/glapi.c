@@ -1,9 +1,9 @@
-/* $XFree86: xc/extras/Mesa/src/glapi.c,v 1.10 2001/12/19 15:44:34 tsi Exp $ */
+
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  4.0.1
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,44 +37,149 @@
  * based libGL.so, and perhaps the SGI SI.
  *
  * There are no dependencies on Mesa in this code.
+ *
+ * Versions (API changes):
+ *   2000/02/23  - original version for Mesa 3.3 and XFree86 4.0
+ *   2001/01/16  - added dispatch override feature for Mesa 3.5
  */
 
 
 
 #include "glheader.h"
 #include "glapi.h"
-#include "glapinoop.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
 #include "glthread.h"
 
+/***** BEGIN NO-OP DISPATCH *****/
 
-/* This is used when thread safety is disabled */
+static GLboolean WarnFlag = GL_FALSE;
+
+void
+_glapi_noop_enable_warnings(GLboolean enable)
+{
+   WarnFlag = enable;
+}
+
+static GLboolean
+warn(void)
+{
+   if (WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
+
+
+#define KEYWORD1 static
+#define KEYWORD2
+#define NAME(func)  NoOp##func
+
+#define F stderr
+
+#define DISPATCH(func, args, msg)			\
+   if (warn()) {					\
+      fprintf(stderr, "GL User Error: calling ");	\
+      fprintf msg;					\
+      fprintf(stderr, " without a current context\n");	\
+   }
+
+#define RETURN_DISPATCH(func, args, msg)		\
+   if (warn()) {					\
+      fprintf(stderr, "GL User Error: calling ");	\
+      fprintf msg;					\
+      fprintf(stderr, " without a current context\n");	\
+   }							\
+   return 0
+
+#define DISPATCH_TABLE_NAME __glapi_noop_table
+#define UNUSED_TABLE_NAME __usused_noop_functions
+
+#define TABLE_ENTRY(name) (void *) NoOp##name
+
+static int NoOpUnused(void)
+{
+   if (warn()) {
+      fprintf(stderr, "GL User Error: calling extension function without a current context\n");
+   }
+   return 0;
+}
+
+#include "glapitemp.h"
+
+/***** END NO-OP DISPATCH *****/
+
+
+
+/***** BEGIN THREAD-SAFE DISPATCH *****/
+/* if we support thread-safety, build a special dispatch table for use
+ * in thread-safety mode (ThreadSafe == GL_TRUE).  Each entry in the
+ * dispatch table will call _glthread_GetTSD() to get the actual dispatch
+ * table bound to the current thread, then jump through that table.
+ */
+
+#if defined(THREADS)
+
+static GLboolean ThreadSafe = GL_FALSE;  /* In thread-safe mode? */
+static _glthread_TSD DispatchTSD;        /* Per-thread dispatch pointer */
+static _glthread_TSD RealDispatchTSD;    /* only when using override */
+static _glthread_TSD ContextTSD;         /* Per-thread context pointer */
+
+
+#define KEYWORD1 static
+#define KEYWORD2 GLAPIENTRY
+#define NAME(func)  _ts_##func
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   struct _glapi_table *dispatch;					\
+   dispatch = (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);	\
+   if (!dispatch)							\
+      dispatch = (struct _glapi_table *) __glapi_noop_table;		\
+   (dispatch->FUNC) ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
+   struct _glapi_table *dispatch;					\
+   dispatch = (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);	\
+   if (!dispatch)							\
+      dispatch = (struct _glapi_table *) __glapi_noop_table;		\
+   return (dispatch->FUNC) ARGS
+
+#define DISPATCH_TABLE_NAME __glapi_threadsafe_table
+#define UNUSED_TABLE_NAME __usused_threadsafe_functions
+
+#define TABLE_ENTRY(name) (void *) _ts_##name
+
+static int _ts_Unused(void)
+{
+   return 0;
+}
+
+#include "glapitemp.h"
+
+#endif
+
+/***** END THREAD-SAFE DISPATCH *****/
+
+
+
 struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
+struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_table;
 
 /* Used when thread safety disabled */
 void *_glapi_Context = NULL;
 
 
-#if defined(THREADS)
-
-/* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_FALSE;
-
-static _glthread_TSD DispatchTSD;
-
-static _glthread_TSD ContextTSD;
-
-#endif
-
-
-
 static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *) - 1;
 static GLboolean GetSizeCalled = GL_FALSE;
 
-/* strdup is actually not a standard ANSI C or POSIX routine
-   Irix will not define it if ANSI mode is in effect. */
-static char *str_dup(const char *str)
+static GLboolean DispatchOverride = GL_FALSE;
+
+
+/* strdup() is actually not a standard ANSI C or POSIX routine.
+ * Irix will not define it if ANSI mode is in effect.
+ */
+static char *
+str_dup(const char *str)
 {
    char *copy;
    copy = (char*) malloc(strlen(str) + 1);
@@ -177,14 +282,29 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(THREADS)
-   _glthread_SetTSD(&DispatchTSD, (void*) dispatch);
-   if (ThreadSafe)
-      _glapi_Dispatch = NULL;
-   else
+   if (DispatchOverride) {
+      _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
+      if (ThreadSafe)
+         _glapi_RealDispatch = (struct _glapi_table*) __glapi_threadsafe_table;
+      else
+         _glapi_RealDispatch = dispatch;
+   }
+   else {
+      /* normal operation */
+      _glthread_SetTSD(&DispatchTSD, (void *) dispatch);
+      if (ThreadSafe)
+         _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
+      else
+         _glapi_Dispatch = dispatch;
+   }
+#else /*THREADS*/
+   if (DispatchOverride) {
+      _glapi_RealDispatch = dispatch;
+   }
+   else {
       _glapi_Dispatch = dispatch;
-#else
-   _glapi_Dispatch = dispatch;
-#endif
+   }
+#endif /*THREADS*/
 }
 
 
@@ -197,15 +317,107 @@ _glapi_get_dispatch(void)
 {
 #if defined(THREADS)
    if (ThreadSafe) {
-      return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+      if (DispatchOverride) {
+         return (struct _glapi_table *) _glthread_GetTSD(&RealDispatchTSD);
+      }
+      else {
+         return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+      }
    }
    else {
-      assert(_glapi_Dispatch);
-      return _glapi_Dispatch;
+      if (DispatchOverride) {
+         assert(_glapi_RealDispatch);
+         return _glapi_RealDispatch;
+      }
+      else {
+         assert(_glapi_Dispatch);
+         return _glapi_Dispatch;
+      }
    }
 #else
    return _glapi_Dispatch;
 #endif
+}
+
+
+/*
+ * Notes on dispatch overrride:
+ *
+ * Dispatch override allows an external agent to hook into the GL dispatch
+ * mechanism before execution goes into the core rendering library.  For
+ * example, a trace mechanism would insert itself as an overrider, print
+ * logging info for each GL function, then dispatch to the real GL function.
+ *
+ * libGLS (GL Stream library) is another agent that might use override.
+ *
+ * We don't allow more than one layer of overriding at this time.
+ * In the future we may allow nested/layered override.  In that case
+ * _glapi_begin_dispatch_override() will return an override layer,
+ * _glapi_end_dispatch_override(layer) will remove an override layer
+ * and _glapi_get_override_dispatch(layer) will return the dispatch
+ * table for a given override layer.  layer = 0 will be the "real"
+ * dispatch table.
+ */
+
+/*
+ * Return: dispatch override layer number.
+ */
+int
+_glapi_begin_dispatch_override(struct _glapi_table *override)
+{
+   struct _glapi_table *real = _glapi_get_dispatch();
+
+   assert(!DispatchOverride);  /* can't nest at this time */
+   DispatchOverride = GL_TRUE;
+
+   _glapi_set_dispatch(real);
+
+#if defined(THREADS)
+   _glthread_SetTSD(&DispatchTSD, (void *) override);
+   if (ThreadSafe)
+      _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
+   else
+      _glapi_Dispatch = override;
+#else
+   _glapi_Dispatch = override;
+#endif
+   return 1;
+}
+
+
+void
+_glapi_end_dispatch_override(int layer)
+{
+   struct _glapi_table *real = _glapi_get_dispatch();
+   (void) layer;
+   DispatchOverride = GL_FALSE;
+   _glapi_set_dispatch(real);
+   /* the rest of this isn't needed, just play it safe */
+#if defined(THREADS)
+   _glthread_SetTSD(&RealDispatchTSD, NULL);
+#endif
+   _glapi_RealDispatch = NULL;
+}
+
+
+struct _glapi_table *
+_glapi_get_override_dispatch(int layer)
+{
+   if (layer == 0) {
+      return _glapi_get_dispatch();
+   }
+   else {
+      if (DispatchOverride) {
+#if defined(THREADS)
+         return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+#else
+         return _glapi_Dispatch;
+#endif
+      }
+      else {
+         return NULL;
+      }
+   }
 }
 
 
@@ -230,7 +442,7 @@ _glapi_get_dispatch_table_size(void)
 const char *
 _glapi_get_version(void)
 {
-   return "20000223";  /* YYYYMMDD */
+   return "20010116";  /* YYYYMMDD */
 }
 
 
@@ -637,6 +849,63 @@ static struct name_address_offset static_functions[] = {
 	{ "glCopyTexSubImage3D", (GLvoid *) NAME(glCopyTexSubImage3D), _gloffset_CopyTexSubImage3D },
 #undef NAME
 
+	/* 1.3 */
+#ifdef GL_VERSION_1_3
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glActiveTexture", (GLvoid *) NAME(glActiveTexture), _gloffset_ActiveTextureARB },
+	{ "glClientActiveTexture", (GLvoid *) NAME(glClientActiveTexture), _gloffset_ClientActiveTextureARB },
+	{ "glCompressedTexImage1D", (GLvoid *) NAME(glCompressedTexImage1D), _gloffset_CompressedTexImage1DARB },
+	{ "glCompressedTexImage2D", (GLvoid *) NAME(glCompressedTexImage2D), _gloffset_CompressedTexImage2DARB },
+	{ "glCompressedTexImage3D", (GLvoid *) NAME(glCompressedTexImage3D), _gloffset_CompressedTexImage3DARB },
+	{ "glCompressedTexSubImage1D", (GLvoid *) NAME(glCompressedTexSubImage1D), _gloffset_CompressedTexSubImage1DARB },
+	{ "glCompressedTexSubImage2D", (GLvoid *) NAME(glCompressedTexSubImage2D), _gloffset_CompressedTexSubImage2DARB },
+	{ "glCompressedTexSubImage3D", (GLvoid *) NAME(glCompressedTexSubImage3D), _gloffset_CompressedTexSubImage3DARB },
+	{ "glGetCompressedTexImage", (GLvoid *) NAME(glGetCompressedTexImage), _gloffset_GetCompressedTexImageARB },
+	{ "glMultiTexCoord1d", (GLvoid *) NAME(glMultiTexCoord1d), _gloffset_MultiTexCoord1dARB },
+	{ "glMultiTexCoord1dv", (GLvoid *) NAME(glMultiTexCoord1dv), _gloffset_MultiTexCoord1dvARB },
+	{ "glMultiTexCoord1f", (GLvoid *) NAME(glMultiTexCoord1f), _gloffset_MultiTexCoord1fARB },
+	{ "glMultiTexCoord1fv", (GLvoid *) NAME(glMultiTexCoord1fv), _gloffset_MultiTexCoord1fvARB },
+	{ "glMultiTexCoord1i", (GLvoid *) NAME(glMultiTexCoord1i), _gloffset_MultiTexCoord1iARB },
+	{ "glMultiTexCoord1iv", (GLvoid *) NAME(glMultiTexCoord1iv), _gloffset_MultiTexCoord1ivARB },
+	{ "glMultiTexCoord1s", (GLvoid *) NAME(glMultiTexCoord1s), _gloffset_MultiTexCoord1sARB },
+	{ "glMultiTexCoord1sv", (GLvoid *) NAME(glMultiTexCoord1sv), _gloffset_MultiTexCoord1svARB },
+	{ "glMultiTexCoord2d", (GLvoid *) NAME(glMultiTexCoord2d), _gloffset_MultiTexCoord2dARB },
+	{ "glMultiTexCoord2dv", (GLvoid *) NAME(glMultiTexCoord2dv), _gloffset_MultiTexCoord2dvARB },
+	{ "glMultiTexCoord2f", (GLvoid *) NAME(glMultiTexCoord2f), _gloffset_MultiTexCoord2fARB },
+	{ "glMultiTexCoord2fv", (GLvoid *) NAME(glMultiTexCoord2fv), _gloffset_MultiTexCoord2fvARB },
+	{ "glMultiTexCoord2i", (GLvoid *) NAME(glMultiTexCoord2i), _gloffset_MultiTexCoord2iARB },
+	{ "glMultiTexCoord2iv", (GLvoid *) NAME(glMultiTexCoord2iv), _gloffset_MultiTexCoord2ivARB },
+	{ "glMultiTexCoord2s", (GLvoid *) NAME(glMultiTexCoord2s), _gloffset_MultiTexCoord2sARB },
+	{ "glMultiTexCoord2sv", (GLvoid *) NAME(glMultiTexCoord2sv), _gloffset_MultiTexCoord2svARB },
+	{ "glMultiTexCoord3d", (GLvoid *) NAME(glMultiTexCoord3d), _gloffset_MultiTexCoord3dARB },
+	{ "glMultiTexCoord3dv", (GLvoid *) NAME(glMultiTexCoord3dv), _gloffset_MultiTexCoord3dvARB },
+	{ "glMultiTexCoord3f", (GLvoid *) NAME(glMultiTexCoord3f), _gloffset_MultiTexCoord3fARB },
+	{ "glMultiTexCoord3fv", (GLvoid *) NAME(glMultiTexCoord3fv), _gloffset_MultiTexCoord3fvARB },
+	{ "glMultiTexCoord3i", (GLvoid *) NAME(glMultiTexCoord3i), _gloffset_MultiTexCoord3iARB },
+	{ "glMultiTexCoord3iv", (GLvoid *) NAME(glMultiTexCoord3iv), _gloffset_MultiTexCoord3ivARB },
+	{ "glMultiTexCoord3s", (GLvoid *) NAME(glMultiTexCoord3s), _gloffset_MultiTexCoord3sARB },
+	{ "glMultiTexCoord3sv", (GLvoid *) NAME(glMultiTexCoord3sv), _gloffset_MultiTexCoord3svARB },
+	{ "glMultiTexCoord4d", (GLvoid *) NAME(glMultiTexCoord4d), _gloffset_MultiTexCoord4dARB },
+	{ "glMultiTexCoord4dv", (GLvoid *) NAME(glMultiTexCoord4dv), _gloffset_MultiTexCoord4dvARB },
+	{ "glMultiTexCoord4f", (GLvoid *) NAME(glMultiTexCoord4f), _gloffset_MultiTexCoord4fARB },
+	{ "glMultiTexCoord4fv", (GLvoid *) NAME(glMultiTexCoord4fv), _gloffset_MultiTexCoord4fvARB },
+	{ "glMultiTexCoord4i", (GLvoid *) NAME(glMultiTexCoord4i), _gloffset_MultiTexCoord4iARB },
+	{ "glMultiTexCoord4iv", (GLvoid *) NAME(glMultiTexCoord4iv), _gloffset_MultiTexCoord4ivARB },
+	{ "glMultiTexCoord4s", (GLvoid *) NAME(glMultiTexCoord4s), _gloffset_MultiTexCoord4sARB },
+	{ "glMultiTexCoord4sv", (GLvoid *) NAME(glMultiTexCoord4sv), _gloffset_MultiTexCoord4svARB },
+	{ "glLoadTransposeMatrixd", (GLvoid *) NAME(glLoadTransposeMatrixd), _gloffset_LoadTransposeMatrixdARB },
+	{ "glLoadTransposeMatrixf", (GLvoid *) NAME(glLoadTransposeMatrixf), _gloffset_LoadTransposeMatrixfARB },
+	{ "glMultTransposeMatrixd", (GLvoid *) NAME(glMultTransposeMatrixd), _gloffset_MultTransposeMatrixdARB },
+	{ "glMultTransposeMatrixf", (GLvoid *) NAME(glMultTransposeMatrixf), _gloffset_MultTransposeMatrixfARB },
+	{ "glSampleCoverage", (GLvoid *) NAME(glSampleCoverage), _gloffset_SampleCoverageARB },
+#if 0
+	{ "glSamplePass", (GLvoid *) NAME(glSamplePass), _gloffset_SamplePassARB },
+#endif
+#undef NAME
+
 	/* ARB 1. GL_ARB_multitexture */
 #ifdef GL_ARB_multitexture
 #define NAME(X) (GLvoid *) X
@@ -691,32 +960,29 @@ static struct name_address_offset static_functions[] = {
 	{ "glMultTransposeMatrixfARB", (GLvoid *) NAME(glMultTransposeMatrixfARB), _gloffset_MultTransposeMatrixfARB },
 #undef NAME
 
-        /* ARB 5. GL_ARB_multisample */
+	/* ARB 5. GL_ARB_multisample */
 #ifdef GL_ARB_multisample
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSamplePassARB", NAME(glSamplePassARB), _gloffset_SamplePassARB },
-        { "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
+	{ "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
 #undef NAME
 
-        /* ARB 12. GL_ARB_texture_compression */
-#if 000
-#if defined(GL_ARB_texture_compression) && defined(_gloffset_CompressedTexImage3DARB)
+	/* ARB 12. GL_ARB_texture_compression */
+#ifdef GL_ARB_texture_compression
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glCompressedTexImage3DARB", NAME(glCompressedTexImage3DARB), _gloffset_CompressedTexImage3DARB },
-        { "glCompressedTexImage2DARB", NAME(glCompressedTexImage2DARB), _gloffset_CompressedTexImage2DARB },
-        { "glCompressedTexImage1DARB", NAME(glCompressedTexImage1DARB), _gloffset_CompressedTexImage1DARB },
-        { "glCompressedTexSubImage3DARB", NAME(glCompressedTexSubImage3DARB), _gloffset_CompressedTexSubImage3DARB },
-        { "glCompressedTexSubImage2DARB", NAME(glCompressedTexSubImage2DARB), _gloffset_CompressedTexSubImage2DARB },
-        { "glCompressedTexSubImage1DARB", NAME(glCompressedTexSubImage1DARB), _gloffset_CompressedTexSubImage1DARB },
-        { "glGetCompressedTexImageARB", NAME(glGetCompressedTexImageARB), _gloffset_GetCompressedTexImageARB },
+	{ "glCompressedTexImage3DARB", NAME(glCompressedTexImage3DARB), _gloffset_CompressedTexImage3DARB },
+	{ "glCompressedTexImage2DARB", NAME(glCompressedTexImage2DARB), _gloffset_CompressedTexImage2DARB },
+	{ "glCompressedTexImage1DARB", NAME(glCompressedTexImage1DARB), _gloffset_CompressedTexImage1DARB },
+	{ "glCompressedTexSubImage3DARB", NAME(glCompressedTexSubImage3DARB), _gloffset_CompressedTexSubImage3DARB },
+	{ "glCompressedTexSubImage2DARB", NAME(glCompressedTexSubImage2DARB), _gloffset_CompressedTexSubImage2DARB },
+	{ "glCompressedTexSubImage1DARB", NAME(glCompressedTexSubImage1DARB), _gloffset_CompressedTexSubImage1DARB },
+	{ "glGetCompressedTexImageARB", NAME(glGetCompressedTexImageARB), _gloffset_GetCompressedTexImageARB },
 #undef NAME
-#endif
 
 	/* 2. GL_EXT_blend_color */
 #ifdef GL_EXT_blend_color
@@ -778,7 +1044,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glCopyTexSubImage1DEXT", NAME(glCopyTexSubImage1DEXT), _gloffset_CopyTexSubImage1D },
 	{ "glCopyTexSubImage2DEXT", NAME(glCopyTexSubImage2DEXT), _gloffset_CopyTexSubImage2D },
 #undef NAME
-                              
+
 	/* 11. GL_EXT_histogram */
 #ifdef GL_EXT_histogram
 #define NAME(X) (GLvoid *) X
@@ -817,7 +1083,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glGetSeparableFilterEXT", NAME(glGetSeparableFilterEXT), _gloffset_GetSeparableFilterEXT },
 	{ "glSeparableFilter2DEXT", NAME(glSeparableFilter2DEXT), _gloffset_SeparableFilter2D },
 #undef NAME
-                    
+
 	/* 14. GL_SGI_color_table */
 #ifdef GL_SGI_color_table
 #define NAME(X) (GLvoid *) X
@@ -840,9 +1106,20 @@ static struct name_address_offset static_functions[] = {
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
 	{ "glPixelTexGenParameterfSGIS", NAME(glPixelTexGenParameterfSGIS), _gloffset_PixelTexGenParameterfSGIS },
+	{ "glPixelTexGenParameterfvSGIS", NAME(glPixelTexGenParameterfvSGIS), _gloffset_PixelTexGenParameterfvSGIS },
 	{ "glPixelTexGenParameteriSGIS", NAME(glPixelTexGenParameteriSGIS), _gloffset_PixelTexGenParameteriSGIS },
+	{ "glPixelTexGenParameterivSGIS", NAME(glPixelTexGenParameterivSGIS), _gloffset_PixelTexGenParameterivSGIS },
 	{ "glGetPixelTexGenParameterfvSGIS", NAME(glGetPixelTexGenParameterfvSGIS), _gloffset_GetPixelTexGenParameterfvSGIS },
 	{ "glGetPixelTexGenParameterivSGIS", NAME(glGetPixelTexGenParameterivSGIS), _gloffset_GetPixelTexGenParameterivSGIS },
+#undef NAME
+
+	/* 15a. GL_SGIX_pixel_texture */
+#ifdef GL_SGIX_pixel_texture
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glPixelTexGenSGIX", NAME(glPixelTexGenSGIX), _gloffset_PixelTexGenSGIX },
 #undef NAME
 
 	/* 16. GL_SGIS_texture4D */
@@ -972,7 +1249,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glFrameZoomSGIX", NAME(glFrameZoomSGIX), _gloffset_FrameZoomSGIX },
 #undef NAME
 
-        /* 58. GL_SGIX_tag_sample_buffer */
+	/* 58. GL_SGIX_tag_sample_buffer */
 #ifdef GL_SGIX_tag_sample_buffer
 #define NAME(X) (GLvoid *) X
 #else
@@ -1098,7 +1375,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glCullParameterdvEXT", NAME(glCullParameterdvEXT), _gloffset_CullParameterdvEXT },
 #undef NAME
 
-        /* 102. GL_SGIX_fragment_lighting */
+	/* 102. GL_SGIX_fragment_lighting */
 #ifdef GL_SGIX_fragment_lighting
 #define NAME(X) (GLvoid *) X
 #else
@@ -1124,90 +1401,83 @@ static struct name_address_offset static_functions[] = {
 	{ "glLightEnviSGIX", NAME(glLightEnviSGIX), _gloffset_LightEnviSGIX },
 #undef NAME
 
-        /* 112. GL_EXT_draw_range_elements */
+	/* 112. GL_EXT_draw_range_elements */
 #if 000
 #ifdef GL_EXT_draw_range_elements
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glDrawRangeElementsEXT", NAME(glDrawRangeElementsEXT), _gloffset_DrawRangeElementsEXT },
+	{ "glDrawRangeElementsEXT", NAME(glDrawRangeElementsEXT), _gloffset_DrawRangeElementsEXT },
 #undef NAME
 #endif
 
-        /* 117. GL_EXT_light_texture */
+	/* 117. GL_EXT_light_texture */
 #if 000
 #ifdef GL_EXT_light_texture
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glApplyTextureEXT", NAME(glApplyTextureEXT), _gloffset_ApplyTextureEXT },
-        { "glTextureLightEXT", NAME(glTextureLightEXT), _gloffset_TextureLightEXT },
-        { "glTextureMaterialEXT", NAME(glTextureMaterialEXT), _gloffset_TextureMaterialEXT },
+	{ "glApplyTextureEXT", NAME(glApplyTextureEXT), _gloffset_ApplyTextureEXT },
+	{ "glTextureLightEXT", NAME(glTextureLightEXT), _gloffset_TextureLightEXT },
+	{ "glTextureMaterialEXT", NAME(glTextureMaterialEXT), _gloffset_TextureMaterialEXT },
 #undef NAME
 
-        /* 135. GL_INTEL_texture_scissor */
+	/* 135. GL_INTEL_texture_scissor */
 #ifdef GL_INTEL_texture_scissor
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glTexScissorINTEL", NAME(glTexScissorINTEL), _gloffset_TexScissorINTEL },
-        { "glTexScissorFuncINTEL", NAME(glTexScissorFuncINTEL), _gloffset_glTexScissorFuncINTEL },
+	{ "glTexScissorINTEL", NAME(glTexScissorINTEL), _gloffset_TexScissorINTEL },
+	{ "glTexScissorFuncINTEL", NAME(glTexScissorFuncINTEL), _gloffset_glTexScissorFuncINTEL },
 #undef NAME
 
-        /* 136. GL_INTEL_parallel_arrays */
+	/* 136. GL_INTEL_parallel_arrays */
 #ifdef GL_INTEL_parallel_arrays
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glVertexPointervINTEL", NAME(glVertexPointervINTEL), _gloffset_VertexPointervINTEL },
-        { "glNormalPointervINTEL", NAME(glNormalPointervINTEL), _gloffset_NormalPointervINTEL },
-        { "glColorPointervINTEL", NAME(glColorPointervINTEL), _gloffset_ColorPointervINTEL },
-        { "glTexCoordPointervINTEL", NAME(glTexCoordPointervINTEL), _gloffset_glxCoordPointervINTEL },
+	{ "glVertexPointervINTEL", NAME(glVertexPointervINTEL), _gloffset_VertexPointervINTEL },
+	{ "glNormalPointervINTEL", NAME(glNormalPointervINTEL), _gloffset_NormalPointervINTEL },
+	{ "glColorPointervINTEL", NAME(glColorPointervINTEL), _gloffset_ColorPointervINTEL },
+	{ "glTexCoordPointervINTEL", NAME(glTexCoordPointervINTEL), _gloffset_glxCoordPointervINTEL },
 #undef NAME
 #endif
 
-        /* 138. GL_EXT_pixel_transform */
+	/* 138. GL_EXT_pixel_transform */
 #if 000
 #ifdef GL_EXT_pixel_transform
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glPixelTransformParameteriEXT", NAME(glPixelTransformParameteriEXT), _gloffset_PixelTransformParameteriEXT },
-        { "glPixelTransformParameterfEXT", NAME(glPixelTransformParameterfEXT), _gloffset_PixelTransformParameterfEXT },
-        { "glPixelTransformParameterivEXT", NAME(glPixelTransformParameterivEXT), _gloffset_PixelTransformParameterivEXT },
-        { "glPixelTransformParameterfvEXT", NAME(glPixelTransformParameterfvEXT), _gloffset_PixelTransformParameterfvEXT },
-        { "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
-        { "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
+	{ "glPixelTransformParameteriEXT", NAME(glPixelTransformParameteriEXT), _gloffset_PixelTransformParameteriEXT },
+	{ "glPixelTransformParameterfEXT", NAME(glPixelTransformParameterfEXT), _gloffset_PixelTransformParameterfEXT },
+	{ "glPixelTransformParameterivEXT", NAME(glPixelTransformParameterivEXT), _gloffset_PixelTransformParameterivEXT },
+	{ "glPixelTransformParameterfvEXT", NAME(glPixelTransformParameterfvEXT), _gloffset_PixelTransformParameterfvEXT },
+	{ "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
+	{ "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
 #undef NAME
+#endif
 
-        /* 145. GL_EXT_secondary_color */
+	/* 145. GL_EXT_secondary_color */
 #ifdef GL_EXT_secondary_color
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSecondaryColor3bEXT", NAME(glSecondaryColor3bEXT), _gloffset_SecondaryColor3bEXT },
-        { "glSecondaryColor3dEXT", NAME(glSecondaryColor3dEXT), _gloffset_SecondaryColor3dEXT },
-        { "glSecondaryColor3fEXT", NAME(glSecondaryColor3fEXT), _gloffset_SecondaryColor3fEXT },
-        { "glSecondaryColor3iEXT", NAME(glSecondaryColor3iEXT), _gloffset_SecondaryColor3iEXT },
-        { "glSecondaryColor3sEXT", NAME(glSecondaryColor3sEXT), _gloffset_SecondaryColor3sEXT },
-        { "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
-        { "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
-        { "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
-        { "glSecondaryColor4bEXT", NAME(glSecondaryColor4bEXT), _gloffset_SecondaryColor4bEXT },
-        { "glSecondaryColor4dEXT", NAME(glSecondaryColor4dEXT), _gloffset_SecondaryColor4dEXT },
-        { "glSecondaryColor4fEXT", NAME(glSecondaryColor4fEXT), _gloffset_SecondaryColor4fEXT },
-        { "glSecondaryColor4iEXT", NAME(glSecondaryColor4iEXT), _gloffset_SecondaryColor4iEXT },
-        { "glSecondaryColor4sEXT", NAME(glSecondaryColor4sEXT), _gloffset_SecondaryColor4sEXT },
-        { "glSecondaryColor4ubEXT", NAME(glSecondaryColor4ubEXT), _gloffset_SecondaryColor4ubEXT },
-        { "glSecondaryColor4uiEXT", NAME(glSecondaryColor4uiEXT), _gloffset_SecondaryColor4uiEXT },
-        { "glSecondaryColor4usEXT", NAME(glSecondaryColor4usEXT), _gloffset_SecondaryColor4usEXT },
-        { "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
+	{ "glSecondaryColor3bEXT", NAME(glSecondaryColor3bEXT), _gloffset_SecondaryColor3bEXT },
+	{ "glSecondaryColor3dEXT", NAME(glSecondaryColor3dEXT), _gloffset_SecondaryColor3dEXT },
+	{ "glSecondaryColor3fEXT", NAME(glSecondaryColor3fEXT), _gloffset_SecondaryColor3fEXT },
+	{ "glSecondaryColor3iEXT", NAME(glSecondaryColor3iEXT), _gloffset_SecondaryColor3iEXT },
+	{ "glSecondaryColor3sEXT", NAME(glSecondaryColor3sEXT), _gloffset_SecondaryColor3sEXT },
+	{ "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
+	{ "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
+	{ "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
+	{ "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
 	{ "glSecondaryColor3dvEXT", NAME(glSecondaryColor3dvEXT), _gloffset_SecondaryColor3dvEXT },
 	{ "glSecondaryColor3fvEXT", NAME(glSecondaryColor3fvEXT), _gloffset_SecondaryColor3fvEXT },
 	{ "glSecondaryColor3ivEXT", NAME(glSecondaryColor3ivEXT), _gloffset_SecondaryColor3ivEXT },
@@ -1215,18 +1485,11 @@ static struct name_address_offset static_functions[] = {
 	{ "glSecondaryColor3ubvEXT", NAME(glSecondaryColor3ubvEXT), _gloffset_SecondaryColor3ubvEXT },
 	{ "glSecondaryColor3uivEXT", NAME(glSecondaryColor3uivEXT), _gloffset_SecondaryColor3uivEXT },
 	{ "glSecondaryColor3usvEXT", NAME(glSecondaryColor3usvEXT), _gloffset_SecondaryColor3usvEXT },
-	{ "glSecondaryColor4bvEXT", NAME(glSecondaryColor4bvEXT), _gloffset_SecondaryColor4bvEXT },
-	{ "glSecondaryColor4dvEXT", NAME(glSecondaryColor4dvEXT), _gloffset_SecondaryColor4dvEXT },
-	{ "glSecondaryColor4fvEXT", NAME(glSecondaryColor4fvEXT), _gloffset_SecondaryColor4fvEXT },
-	{ "glSecondaryColor4ivEXT", NAME(glSecondaryColor4ivEXT), _gloffset_SecondaryColor4ivEXT },
-	{ "glSecondaryColor4svEXT", NAME(glSecondaryColor4svEXT), _gloffset_SecondaryColor4svEXT },
-	{ "glSecondaryColor4ubvEXT", NAME(glSecondaryColor4ubvEXT), _gloffset_SecondaryColor4ubvEXT },
-	{ "glSecondaryColor4uivEXT", NAME(glSecondaryColor4uivEXT), _gloffset_SecondaryColor4uivEXT },
-	{ "glSecondaryColor4usvEXT", NAME(glSecondaryColor4usvEXT), _gloffset_SecondaryColor4usvEXT },
 	{ "glSecondaryColorPointerEXT", NAME(glSecondaryColorPointerEXT), _gloffset_SecondaryColorPointerEXT },
 #undef NAME
 
 	/* 147. GL_EXT_texture_perturb_normal */
+#if 000
 #ifdef GL_EXT_texture_perturb_normal
 #define NAME(X) (GLvoid *) X
 #else
@@ -1234,8 +1497,10 @@ static struct name_address_offset static_functions[] = {
 #endif
 	{ "glTextureNormalEXT", NAME(glTextureNormalEXT), _gloffset_TextureNormalEXT },
 #undef NAME
+#endif
 
 	/* 148. GL_EXT_multi_draw_arrays */
+#if 000
 #ifdef GL_EXT_multi_draw_arrays
 #define NAME(X) (GLvoid *) X
 #else
@@ -1254,12 +1519,12 @@ static struct name_address_offset static_functions[] = {
 	{ "glFogCoordfEXT", NAME(glFogCoordfEXT), _gloffset_FogCoordfEXT },
 	{ "glFogCoordfvEXT", NAME(glFogCoordfvEXT), _gloffset_FogCoordfvEXT },
 	{ "glFogCoorddEXT", NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
-	{ "glFogCoorddEXT", NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
+	{ "glFogCoorddvEXT", NAME(glFogCoorddvEXT), _gloffset_FogCoorddvEXT },
 	{ "glFogCoordPointerEXT", NAME(glFogCoordPointerEXT), _gloffset_FogCoordPointerEXT },
 #undef NAME
 
-#if 000
 	/* 156. GL_EXT_coordinate_frame */
+#if 000
 #ifdef GL_EXT_coordinate_frame
 #define NAME(X) (GLvoid *) X
 #else
@@ -1288,8 +1553,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glTangentPointerEXT", NAME(glTangentPointerEXT), _gloffset_TangentPointerEXT },
 	{ "glBinormalPointerEXT", NAME(glBinormalPointerEXT), _gloffset_BinormalPointerEXT },
 #undef NAME
+#endif
 
 	/* 164. GL_SUN_global_alpha */
+#if 000
 #ifdef GL_SUN_global_alpha
 #define NAME(X) (GLvoid *) X
 #else
@@ -1304,8 +1571,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glGlobalAlphaFactorusSUN", NAME(glGlobalAlphaFactorusSUN), _gloffset_GlobalAlphaFactorusSUN },
 	{ "glGlobalAlphaFactoruiSUN", NAME(glGlobalAlphaFactoruiSUN), _gloffset_GlobalAlphaFactoruiSUN },
 #undef NAME
+#endif
 
 	/* 165. GL_SUN_triangle_list */
+#if 000
 #ifdef GL_SUN_triangle_list
 #define NAME(X) (GLvoid *) X
 #else
@@ -1319,8 +1588,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glReplacementCodeubvSUN", NAME(glReplacementCodeubvSUN), _gloffset_ReplacementCodeubvSUN },
 	{ "glReplacementCodePointerSUN", NAME(glReplacementCodePointerSUN), _gloffset_ReplacementCodePointerSUN },
 #undef NAME
+#endif
 
 	/* 166. GL_SUN_vertex */
+#if 000
 #ifdef GL_SUN_vertex
 #define NAME(X) (GLvoid *) X
 #else
@@ -1390,7 +1661,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glVertexWeightPointerEXT", NAME(glVertexWeightPointerEXT), _gloffset_VertexWeightPointerEXT },
 #undef NAME
 
-        /* 190. GL_NV_vertex_array_range */
+	/* 190. GL_NV_vertex_array_range */
 #ifdef GL_NV_vertex_array_range
 #define NAME(X) (GLvoid *) X
 #else
@@ -1436,17 +1707,40 @@ static struct name_address_offset static_functions[] = {
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
+        { "glWindowPos2iMESA", NAME(glWindowPos2iMESA), _gloffset_WindowPos2iMESA },
+        { "glWindowPos2sMESA", NAME(glWindowPos2sMESA), _gloffset_WindowPos2sMESA },
+	{ "glWindowPos2fMESA", NAME(glWindowPos2fMESA), _gloffset_WindowPos2fMESA },
+	{ "glWindowPos2dMESA", NAME(glWindowPos2dMESA), _gloffset_WindowPos2dMESA },
+	{ "glWindowPos2ivMESA", NAME(glWindowPos2ivMESA), _gloffset_WindowPos2ivMESA },
+	{ "glWindowPos2svMESA", NAME(glWindowPos2svMESA), _gloffset_WindowPos2svMESA },
+	{ "glWindowPos2fvMESA", NAME(glWindowPos2fvMESA), _gloffset_WindowPos2fvMESA },
+	{ "glWindowPos2dvMESA", NAME(glWindowPos2dvMESA), _gloffset_WindowPos2dvMESA },
+	{ "glWindowPos3iMESA", NAME(glWindowPos3iMESA), _gloffset_WindowPos3iMESA },
+	{ "glWindowPos3sMESA", NAME(glWindowPos3sMESA), _gloffset_WindowPos3sMESA },
+	{ "glWindowPos3fMESA", NAME(glWindowPos3fMESA), _gloffset_WindowPos3fMESA },
+	{ "glWindowPos3dMESA", NAME(glWindowPos3dMESA), _gloffset_WindowPos3dMESA },
+	{ "glWindowPos3ivMESA", NAME(glWindowPos3ivMESA), _gloffset_WindowPos3ivMESA },
+	{ "glWindowPos3svMESA", NAME(glWindowPos3svMESA), _gloffset_WindowPos3svMESA },
+	{ "glWindowPos3fvMESA", NAME(glWindowPos3fvMESA), _gloffset_WindowPos3fvMESA },
+	{ "glWindowPos3dvMESA", NAME(glWindowPos3dvMESA), _gloffset_WindowPos3dvMESA },
+	{ "glWindowPos4iMESA", NAME(glWindowPos4iMESA), _gloffset_WindowPos4iMESA },
+	{ "glWindowPos4sMESA", NAME(glWindowPos4sMESA), _gloffset_WindowPos4sMESA },
 	{ "glWindowPos4fMESA", NAME(glWindowPos4fMESA), _gloffset_WindowPos4fMESA },
+	{ "glWindowPos4dMESA", NAME(glWindowPos4dMESA), _gloffset_WindowPos4dMESA },
+	{ "glWindowPos4ivMESA", NAME(glWindowPos4ivMESA), _gloffset_WindowPos4ivMESA },
+	{ "glWindowPos4svMESA", NAME(glWindowPos4svMESA), _gloffset_WindowPos4svMESA },
+	{ "glWindowPos4fvMESA", NAME(glWindowPos4fvMESA), _gloffset_WindowPos4fvMESA },
+	{ "glWindowPos4dvMESA", NAME(glWindowPos4dvMESA), _gloffset_WindowPos4dvMESA },
 #undef NAME
 
-        /* 209. WGL_EXT_multisample */
+	/* 209. WGL_EXT_multisample */
 #ifdef WGL_EXT_multisample
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSampleMaskEXT", NAME(glSampleMaskEXT), _gloffset_SampleMaskSGIS },
-        { "glSamplePatternEXT", NAME(glSamplePatternEXT), _gloffset_SamplePatternSGIS },
+	{ "glSampleMaskEXT", NAME(glSampleMaskEXT), _gloffset_SampleMaskSGIS },
+	{ "glSamplePatternEXT", NAME(glSamplePatternEXT), _gloffset_SamplePatternSGIS },
 #undef NAME
 
 	{ NULL, NULL }  /* end of list marker */
@@ -1464,7 +1758,7 @@ get_static_proc_offset(const char *funcName)
    GLuint i;
    for (i = 0; static_functions[i].Name; i++) {
       if (strcmp(static_functions[i].Name, funcName) == 0) {
-         return static_functions[i].Offset;
+	 return static_functions[i].Offset;
       }
    }
    return -1;
@@ -1499,7 +1793,9 @@ get_static_proc_address(const char *funcName)
 static struct name_address_offset ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
-
+#ifdef USE_SPARC_ASM
+extern void __glapi_sparc_icache_flush(unsigned int *);
+#endif
 
 /*
  * Generate a dispatch function (entrypoint) which jumps through
@@ -1546,6 +1842,55 @@ generate_entrypoint(GLuint functionOffset)
       *(unsigned int *)(code + 0x16) = (unsigned int)functionOffset * 4;
    }
    return code;
+#elif defined(USE_SPARC_ASM)
+
+#ifdef __sparc_v9__
+   static const unsigned int insn_template[] = {
+	   0x05000000,	/* sethi	%uhi(_glapi_Dispatch), %g2	*/
+	   0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	*/
+	   0x8410a000,	/* or		%g2, %ulo(_glapi_Dispatch), %g2	*/
+	   0x82106000,	/* or		%g1, %lo(_glapi_Dispatch), %g1	*/
+	   0x8528b020,	/* sllx		%g2, 32, %g2			*/
+	   0xc2584002,	/* ldx		[%g1 + %g2], %g1		*/
+	   0x05000000,	/* sethi	%hi(8 * glapioffset), %g2	*/
+	   0x8410a000,	/* or		%g2, %lo(8 * glapioffset), %g2	*/
+	   0xc6584002,	/* ldx		[%g1 + %g2], %g3		*/
+	   0x81c0c000,	/* jmpl		%g3, %g0			*/
+	   0x01000000	/*  nop						*/
+   };
+#else
+   static const unsigned int insn_template[] = {
+	   0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	  */
+	   0xc2006000,	/* ld		[%g1 + %lo(_glapi_Dispatch)], %g1 */
+	   0xc6006000,	/* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
+	   0x81c0c000,	/* jmpl		%g3, %g0			  */
+	   0x01000000	/*  nop						  */
+   };
+#endif
+   unsigned int *code = malloc(sizeof(insn_template));
+   unsigned long glapi_addr = (unsigned long) &_glapi_Dispatch;
+   if (code) {
+      memcpy(code, insn_template, sizeof(insn_template));
+
+#ifdef __sparc_v9__
+      code[0] |= (glapi_addr >> (32 + 10));
+      code[1] |= ((glapi_addr & 0xffffffff) >> 10);
+      __glapi_sparc_icache_flush(&code[0]);
+      code[2] |= ((glapi_addr >> 32) & ((1 << 10) - 1));
+      code[3] |= (glapi_addr & ((1 << 10) - 1));
+      __glapi_sparc_icache_flush(&code[2]);
+      code[6] |= ((functionOffset * 8) >> 10);
+      code[7] |= ((functionOffset * 8) & ((1 << 10) - 1));
+      __glapi_sparc_icache_flush(&code[6]);
+#else
+      code[0] |= (glapi_addr >> 10);
+      code[1] |= (glapi_addr & ((1 << 10) - 1));
+      __glapi_sparc_icache_flush(&code[0]);
+      code[2] |= (functionOffset * 4);
+      __glapi_sparc_icache_flush(&code[2]);
+#endif
+   }
+   return code;
 #else
    return NULL;
 #endif
@@ -1564,15 +1909,8 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
    {
       GLint index = get_static_proc_offset(funcName);
       if (index >= 0) {
-         return (GLboolean) (index == (GLint) offset);  /* bad offset! */
+         return (GLboolean) ((GLuint) index == offset);  /* bad offset! */
       }
-   }
-
-   {
-      /* make sure this offset/name pair is legal */
-      const char *name = _glapi_get_proc_name(offset);
-      if (name && strcmp(name, funcName) != 0)
-         return GL_FALSE;  /* bad name! */
    }
 
    {
@@ -1733,7 +2071,7 @@ _glapi_get_proc_name(GLuint offset)
 
 /*
  * Make sure there are no NULL pointers in the given dispatch table.
- * Intented for debugging purposes.
+ * Intended for debugging purposes.
  */
 void
 _glapi_check_table(const struct _glapi_table *table)
@@ -1791,9 +2129,13 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(istextureOffset == _gloffset_IsTextureEXT);
       assert(istextureOffset == offset);
    }
+   {
+      GLuint secondaryColor3fOffset = _glapi_get_proc_offset("glSecondaryColor3fEXT");
+      char *secondaryColor3fFunc = (char*) &table->SecondaryColor3fEXT;
+      GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
+      assert(secondaryColor3fOffset == _gloffset_SecondaryColor3fEXT);
+      assert(secondaryColor3fOffset == offset);
+      assert(_glapi_get_proc_address("glSecondaryColor3fEXT") == (void *) &glSecondaryColor3fEXT);
+   }
 #endif
 }
-
-
-
-

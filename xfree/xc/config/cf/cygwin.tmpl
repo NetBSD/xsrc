@@ -1,5 +1,5 @@
 XCOMM $XConsortium: WinLib.tmpl,v 1.1 94/01/08 18:32:51 rws Exp $
-XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.9 2001/11/16 00:52:27 dawes Exp $
+XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.14 2003/01/12 02:44:25 dawes Exp $
 
 #if UseCygIPC
 #define SharedX11Reqs -lcygipc
@@ -33,7 +33,9 @@ XCOMM #define SharedXfontReqs $(LDPRELIB) $(XLIB)
 #define SharedXrenderReqs $(LDPRELIB) $(EXTENSIONLIB) $(XLIB)
 #define SharedpsresReqs $(LDPRELIB) $(SMLIB) $(ICELIB) $(XTOOLLIB) $(XLIB)
 #define SharedXmuuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
-#define SharedXrandrReqs $(LDPRELIB) $(XLIB)
+#define SharedXrandrReqs $(LDPRELIB) $(XRENDERLIB) $(XLIB)
+#define SharedXcursorReqs $(LDPRELIB) $(XRENDERLIB) $(XLIB) 
+
 
 #ifndef FixupLibReferences
 #define FixupLibReferences()						@@\
@@ -43,4 +45,21 @@ XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
 
 #ifndef XawClientLibs
 #define XawClientLibs $(XAWLIB) $(XMULIBONLY) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#endif
+
+
+/*
+ * Suffix for Windows resource source files
+ */
+
+#ifndef RCsuf
+#define RCsuf rc
+#endif
+
+/*
+ * Suffix for Windows resource compiled files
+ */
+
+#ifndef RESsuf
+#define RESsuf res
 #endif

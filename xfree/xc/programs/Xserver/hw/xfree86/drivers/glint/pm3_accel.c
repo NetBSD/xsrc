@@ -26,7 +26,7 @@
  * 
  * Permedia 3 accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_accel.c,v 1.29 2001/11/20 00:09:13 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_accel.c,v 1.31 2003/01/06 00:04:54 alanh Exp $ */
 
 #include "Xarch.h"
 #include "xf86.h"
@@ -139,7 +139,11 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
     /* Initialize the Accelerator Engine to defaults */
     TRACE_ENTER("Permedia3InitializeEngine");
 
+    if ((IS_J2000) && (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)) {
+	GLINT_SLOW_WRITE_REG(pGlint->MultiIndex, BroadcastMask);
+    }
     if (pGlint->MultiAperture) {
+	ErrorF("pm3_accel: SVEN : multiAperture set\n");
     	/* Only write the following register to the first PM3 */
     	GLINT_SLOW_WRITE_REG(1, BroadcastMask);
     	GLINT_SLOW_WRITE_REG(0x00000001,    ScanLineOwnership);
@@ -502,7 +506,6 @@ Permedia3EnableOffscreen (ScreenPtr pScreen)
     GLINTPtr pGlint = GLINTPTR(pScrn);
     BoxRec AvailFBArea;
 
-    if (xf86FBManagerRunning(pScreen)) return;
     /* Available Framebuffer Area for XAA. */
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
@@ -1041,6 +1044,10 @@ Permedia3SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 static void
 Permedia3RestoreAccelState(ScrnInfoPtr pScrn)
 {
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    if ((IS_J2000) && (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)) {
+	GLINT_SLOW_WRITE_REG(pGlint->MultiIndex, BroadcastMask);
+    }
     Permedia3Sync(pScrn);
 }
 

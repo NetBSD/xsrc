@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Command.c,v 1.14 2001/12/27 21:17:54 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Command.c,v 1.15 2002/07/04 17:04:20 paulo Exp $ */
 
 /*
  * Command.c - Command button widget
@@ -65,6 +65,7 @@ SOFTWARE.
 
 #define DEFAULT_HIGHLIGHT_THICKNESS 2
 #define DEFAULT_SHAPE_HIGHLIGHT 32767
+#define STR_EQUAL(str1, str2)	(str1 == str2 || strcmp(str1, str2) == 0)
 
 /*
  * Class Methods
@@ -76,6 +77,7 @@ static void XawCommandRealize(Widget, Mask*, XSetWindowAttributes*);
 static void XawCommandResize(Widget);
 static void XawCommandRedisplay(Widget, XEvent*, Region);
 static Boolean XawCommandSetValues(Widget, Widget, Widget, ArgList, Cardinal*);
+static void XawCommandGetValuesHook(Widget, ArgList, Cardinal*);
 static Bool ChangeSensitive(Widget);
 
 /*
@@ -186,7 +188,7 @@ CommandClassRec commandClassRec = {
     XawCommandSetValues,		/* set_values		  */
     NULL,				/* set_values_hook	  */
     XtInheritSetValuesAlmost,		/* set_values_almost	  */
-    NULL,				/* get_values_hook	  */
+    XawCommandGetValuesHook,		/* get_values_hook	  */
     NULL,				/* accept_focus		  */
     XtVersion,				/* version		  */
     NULL,				/* callback_private	  */
@@ -327,8 +329,8 @@ Set(Widget w, XEvent *event, String *params, Cardinal *num_params)
     if (cbw->command.set)
 	return;
 
-    cbw->command.set= True;
     XawCommandToggle(w);
+    cbw->command.set= True;
 }
 
 /*ARGSUSED*/
@@ -515,7 +517,23 @@ XawCommandSetValues(Widget current, Widget request, Widget cnew,
 	cbw->command.highlighted = HighlightNone;
 	redisplay = True;
     }
-  
+
+    if (cbw->command.set) {
+	unsigned int i;
+	Pixel foreground, background;
+
+	foreground = oldcbw->label.foreground;
+	background = oldcbw->core.background_pixel;
+	for (i = 0; i < *num_args; i++) {
+	    if (STR_EQUAL(args[i].name, XtNforeground))
+		background = cbw->label.foreground;
+	    else if (STR_EQUAL(args[i].name, XtNbackground))
+		foreground = cbw->core.background_pixel;
+	}
+	cbw->label.foreground = foreground;
+	cbw->core.background_pixel = background;
+    }
+
     if (oldcbw->label.foreground != cbw->label.foreground
 	|| oldcbw->core.background_pixel != cbw->core.background_pixel
 	|| oldcbw->command.highlight_thickness
@@ -539,6 +557,22 @@ XawCommandSetValues(Widget current, Widget request, Widget cnew,
 	cbw->command.shape_style = oldcbw->command.shape_style;
 
     return (redisplay);
+}
+
+static void
+XawCommandGetValuesHook(Widget w, ArgList args, Cardinal *num_args)
+{
+    CommandWidget cbw = (CommandWidget)w;
+    unsigned int i;
+
+    for (i = 0; i < *num_args; i++) {
+	if (STR_EQUAL(args[i].name, XtNforeground))
+	    *((String*)args[i].value) = cbw->command.set ?
+		(String)cbw->core.background_pixel : (String)cbw->label.foreground;
+	else if (STR_EQUAL(args[i].name, XtNbackground))
+	    *((String*)args[i].value) = cbw->command.set ?
+		(String)cbw->label.foreground : (String)cbw->core.background_pixel;
+    }
 }
 
 static void

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.c,v 1.11 2001/10/28 03:34:06 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.c,v 1.15 2003/02/15 05:37:58 paulo Exp $
  */
 
 #define CARDS_PRIVATE
@@ -83,22 +83,21 @@ int NumCardsEntry;
  * Implementation
  */
 #ifdef USE_MODULES
-pciVendorDeviceInfo *xf86PCIVendorInfo;
-SymTabPtr xf86PCIVendorNameInfo;
+const pciVendorInfo *xf86PCIVendorInfo;
 #endif
 
 #ifdef USE_MODULES
 void
 InitializePciInfo(void)
 {
-    xf86PCIVendorInfo = xf86PCIVendorInfoData;
-    xf86PCIVendorNameInfo = xf86PCIVendorNameInfoData;
+    xf86PCIVendorInfo = pciVendorInfoList;
 }
 
 void
 CheckChipsets(xf86cfgModuleOptions *opts, int *err)
 {
-    int i, j, ichk, ivnd, vendor = -1, device;
+    int i, j, ichk, ivnd = 0, vendor = -1, device;
+    const pciDeviceInfo **pDev;
     SymTabPtr chips = opts->chipsets;
     chipset_check *check = NULL;
     int num_check = 0;
@@ -127,11 +126,13 @@ CheckChipsets(xf86cfgModuleOptions *opts, int *err)
 	    ++num_check;
 	}
 
-	/* Search for vendor in xf86PCIVendorInfoData */
-	for (ivnd = 0; xf86PCIVendorInfoData[ivnd].VendorID; ivnd++)
-	    if (vendor == xf86PCIVendorInfoData[ivnd].VendorID)
-		break;
-	if (xf86PCIVendorInfoData[ivnd].VendorID) {
+	/* Search for vendor in xf86PCIVendorInfo */
+	if (xf86PCIVendorInfo) {
+	    for (ivnd = 0; xf86PCIVendorInfo[ivnd].VendorID; ivnd++)
+		if (vendor == xf86PCIVendorInfo[ivnd].VendorID)
+		    break;
+	}
+	if (xf86PCIVendorInfo && xf86PCIVendorInfo[ivnd].VendorID) {
 	    check[ichk].valid_vendor = 1;
 	    check[ichk].ivendor = ivnd;
 	}
@@ -144,31 +145,33 @@ CheckChipsets(xf86cfgModuleOptions *opts, int *err)
 	    continue;
 	}
 
-	if (check[ichk].chipsets == NULL) {
-	    for (j = 0; xf86PCIVendorInfoData[ivnd].Device[j].DeviceName; j++)
-		;
-	    check[ichk].chipsets = (char*)XtCalloc(1, j);
-	}
-	for (j = 0; xf86PCIVendorInfoData[ivnd].Device[j].DeviceName; j++) {
-	    if (device == xf86PCIVendorInfoData[ivnd].Device[j].DeviceID) {
-		if (strcmp(chips->name, xf86PCIVendorInfoData[ivnd].Device[j].DeviceName)) {
-		    CheckMsg(CHECKER_NOMATCH_CHIPSET_STRINGS,
-			     "WARNING chipset strings don't match: \"%s\" \"%s\" (0x%x)\n",
-			     chips->name, xf86PCIVendorInfoData[ivnd].Device[j].DeviceName,
-			     device);
-		    ++*err;
-		}
-		break;
+	if (xf86PCIVendorInfo &&
+	    (pDev = xf86PCIVendorInfo[ivnd].Device) != NULL) {
+	    if (check[ichk].chipsets == NULL) {
+		for (j = 0; pDev[j]; j++)
+		    ;
+		check[ichk].chipsets = (char*)XtCalloc(1, j);
 	    }
-	}
-	if (!xf86PCIVendorInfoData[ivnd].Device[j].DeviceName) {
-	    CheckMsg(CHECKER_CHIPSET_NOT_LISTED,
+	    for (j = 0; pDev[j]; j++) {
+		if (device == pDev[j]->DeviceID) {
+		    if (strcmp(chips->name, pDev[j]->DeviceName)) {
+			CheckMsg(CHECKER_NOMATCH_CHIPSET_STRINGS,
+			     "WARNING chipset strings don't match: \"%s\" \"%s\" (0x%x)\n",
+			     chips->name, xf86PCIVendorInfo[ivnd].Device[j]->DeviceName,
+			     device);
+			++*err;
+		    }
+		    break;
+		}
+	    }
+	    if (!pDev[j]) {
+		CheckMsg(CHECKER_CHIPSET_NOT_LISTED,
 		     "WARNING chipset \"%s\" (0x%x) not in list.\n", chips->name, device);
-	    ++*err;
+		++*err;
+	    }
+	    else
+		check[ichk].chipsets[j] = 1;
 	}
-	else
-	    check[ichk].chipsets[j] = 1;
-
 	++chips;
     }
 
@@ -179,11 +182,11 @@ CheckChipsets(xf86cfgModuleOptions *opts, int *err)
 	    ++*err;
 	}
 	for (j = 0; j < check[i].num_chipsets; j++) {
-	    if (!check[i].chipsets[j]) {
+	    if (xf86PCIVendorInfo && !check[i].chipsets[j]) {
 		CheckMsg(CHECKER_CHIPSET_NOT_SUPPORTED,
 			 "NOTICE chipset \"%s\" (0x%x) not listed as supported.\n",
-			 xf86PCIVendorInfoData[check[i].ivendor].Device[j].DeviceName,
-			 xf86PCIVendorInfoData[check[i].ivendor].Device[j].DeviceID);
+			 xf86PCIVendorInfo[check[i].ivendor].Device[j]->DeviceName,
+			 xf86PCIVendorInfo[check[i].ivendor].Device[j]->DeviceID);
 	    }
 	}
 	XtFree(check[i].chipsets);
@@ -203,6 +206,7 @@ ReadCardsDatabase(void)
 	_Xconst char *vendor, *device;
 	CardsEntry *entry = NULL, *tmp;
 	xf86cfgModuleOptions *opts = module_options;
+	const pciDeviceInfo **pDev;
 
 	/* Only list cards that have a driver installed */
 	while (opts) {
@@ -217,22 +221,21 @@ ReadCardsDatabase(void)
 		    if (ivendor == 0)
 			ivendor = opts->vendor;
 
-		    for (i = 0; xf86PCIVendorInfoData[i].VendorID; i++)
-			if (ivendor == xf86PCIVendorInfoData[i].VendorID)
-			    break;
-		    if (xf86PCIVendorInfoData[i].VendorID) {
-			for (j = 0; xf86PCIVendorNameInfoData[j].name; j++)
-			    if (xf86PCIVendorNameInfoData[j].token == ivendor) {
-				vendor = xf86PCIVendorNameInfoData[j].name;
+		    if (xf86PCIVendorInfo) {
+			for (i = 0; xf86PCIVendorInfo[i].VendorName; i++)
+			    if (ivendor == xf86PCIVendorInfo[i].VendorID) {
+				vendor = xf86PCIVendorInfo[i].VendorName;
 				break;
 			    }
-
-			for (j = 0; xf86PCIVendorInfoData[i].Device[j].DeviceName; j++)
-			    if (idevice == xf86PCIVendorInfoData[i].Device[j].DeviceID)
-				break;
-
-			if (xf86PCIVendorInfoData[i].Device[j].DeviceName)
-			    device = xf86PCIVendorInfoData[i].Device[j].DeviceName;
+			if (xf86PCIVendorInfo[i].VendorName) {
+			    if ((pDev = xf86PCIVendorInfo[i].Device)) {
+				for (j = 0; pDev[j]; j++)
+				    if (idevice == pDev[j]->DeviceID) {
+					device = pDev[j]->DeviceName;
+					break;
+				    }
+			    }
+			}
 		    }
 
 		    /* Since frequently there is more than one driver for a

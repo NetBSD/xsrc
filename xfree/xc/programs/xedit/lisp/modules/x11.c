@@ -27,48 +27,65 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/modules/x11.c,v 1.4 2001/10/15 07:05:53 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/modules/x11.c,v 1.10 2002/11/23 08:26:52 paulo Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
 #include "internal.h"
+#include "private.h"
 #include <X11/Xlib.h>
 
 /*
  * Prototypes
  */
-int x11LoadModule(LispMac*);
+int x11LoadModule(void);
 
-LispObj *Lisp_XOpenDisplay(LispMac*, LispObj*, char*);
-LispObj *Lisp_XCloseDisplay(LispMac*, LispObj*, char*);
-LispObj *Lisp_XDefaultRootWindow(LispMac*, LispObj*, char*);
-LispObj *Lisp_XDefaultScreenOfDisplay(LispMac*, LispObj*, char*);
-LispObj *Lisp_XBlackPixelOfScreen(LispMac*, LispObj*, char*);
-LispObj *Lisp_XWhitePixelOfScreen(LispMac*, LispObj*, char*);
-LispObj *Lisp_XDefaultGCOfScreen(LispMac*, LispObj*, char*);
-LispObj *Lisp_XCreateSimpleWindow(LispMac*, LispObj*, char*);
-LispObj *Lisp_XMapWindow(LispMac*, LispObj*, char*);
-LispObj *Lisp_XDestroyWindow(LispMac*, LispObj*, char*);
-LispObj *Lisp_XFlush(LispMac*, LispObj*, char*);
+LispObj *Lisp_XOpenDisplay(LispBuiltin *builtin);
+LispObj *Lisp_XCloseDisplay(LispBuiltin *builtin);
+LispObj *Lisp_XDefaultRootWindow(LispBuiltin *builtin);
+LispObj *Lisp_XDefaultScreen(LispBuiltin *builtin);
+LispObj *Lisp_XDefaultScreenOfDisplay(LispBuiltin *builtin);
+LispObj *Lisp_XBlackPixel(LispBuiltin *builtin);
+LispObj *Lisp_XBlackPixelOfScreen(LispBuiltin *builtin);
+LispObj *Lisp_XWidthOfScreen(LispBuiltin *builtin);
+LispObj *Lisp_XHeightOfScreen(LispBuiltin *builtin);
+LispObj *Lisp_XWhitePixel(LispBuiltin *builtin);
+LispObj *Lisp_XWhitePixelOfScreen(LispBuiltin *builtin);
+LispObj *Lisp_XDefaultGC(LispBuiltin *builtin);
+LispObj *Lisp_XDefaultGCOfScreen(LispBuiltin *builtin);
+LispObj *Lisp_XCreateSimpleWindow(LispBuiltin *builtin);
+LispObj *Lisp_XMapWindow(LispBuiltin *builtin);
+LispObj *Lisp_XDestroyWindow(LispBuiltin *builtin);
+LispObj *Lisp_XFlush(LispBuiltin *builtin);
+LispObj *Lisp_XRaiseWindow(LispBuiltin *builtin);
+LispObj *Lisp_XBell(LispBuiltin *builtin);
 
-LispObj *Lisp_XDrawLine(LispMac*, LispObj*, char*);
+LispObj *Lisp_XDrawLine(LispBuiltin *builtin);
 
 /*
  * Initialization
  */
 static LispBuiltin lispbuiltins[] = {
-    {"X-OPEN-DISPLAY",			Lisp_XOpenDisplay,		1,0,1,},
-    {"X-CLOSE-DISPLAY",			Lisp_XCloseDisplay,		1,1,1,},
-    {"X-DEFAULT-ROOT-WINDOW",		Lisp_XDefaultRootWindow,	1,1,1,},
-    {"X-DEFAULT-SCREEN-OF-DISPLAY",	Lisp_XDefaultScreenOfDisplay,	1,1,1,},
-    {"X-BLACK-PIXEL-OF-SCREEN",		Lisp_XBlackPixelOfScreen,	1,1,1,},
-    {"X-WHITE-PIXEL-OF-SCREEN",		Lisp_XWhitePixelOfScreen,	1,1,1,},
-    {"X-DEFAULT-GC-OF-SCREEN",		Lisp_XDefaultGCOfScreen,	1,1,1,},
-    {"X-CREATE-SIMPLE-WINDOW",		Lisp_XCreateSimpleWindow,	1,9,9,},
-    {"X-MAP-WINDOW",			Lisp_XMapWindow,		1,2,2,},
-    {"X-DESTROY-WINDOW",		Lisp_XDestroyWindow,		1,2,2,},
-    {"X-FLUSH",				Lisp_XFlush,			1,1,1,},
-    {"X-DRAW-LINE",			Lisp_XDrawLine,			1,7,7,},
+    {LispFunction, Lisp_XOpenDisplay, "x-open-display &optional display-name"},
+    {LispFunction, Lisp_XCloseDisplay, "x-close-display display"},
+    {LispFunction, Lisp_XDefaultRootWindow, "x-default-root-window display"},
+    {LispFunction, Lisp_XDefaultScreen, "x-default-screen display"},
+    {LispFunction, Lisp_XDefaultScreenOfDisplay, "x-default-screen-of-display display"},
+    {LispFunction, Lisp_XBlackPixel, "x-black-pixel display &optional screen"},
+    {LispFunction, Lisp_XBlackPixelOfScreen, "x-black-pixel-of-screen screen"},
+    {LispFunction, Lisp_XWhitePixel, "x-white-pixel display &optional screen"},
+    {LispFunction, Lisp_XWhitePixelOfScreen, "x-white-pixel-of-screen screen"},
+    {LispFunction, Lisp_XDefaultGC, "x-default-gc display &optional screen"},
+    {LispFunction, Lisp_XDefaultGCOfScreen, "x-default-gc-of-screen screen"},
+    {LispFunction, Lisp_XCreateSimpleWindow, "x-create-simple-window display parent x y width height &optional border-width border background"},
+    {LispFunction, Lisp_XMapWindow, "x-map-window display window"},
+    {LispFunction, Lisp_XDestroyWindow, "X-DESTROY-WINDOW"},
+    {LispFunction, Lisp_XFlush, "x-flush display"},
+    {LispFunction, Lisp_XDrawLine, "x-draw-line display drawable gc x1 y1 x2 y2"},
+    {LispFunction, Lisp_XBell, "x-bell display &optional percent"},
+    {LispFunction, Lisp_XRaiseWindow, "x-raise-window display window"},
+    {LispFunction, Lisp_XWidthOfScreen, "x-width-of-screen screen"},
+    {LispFunction, Lisp_XHeightOfScreen, "x-height-of-screen screen"},
 };
 
 LispModuleData x11LispModuleData = {
@@ -82,107 +99,270 @@ static int x11Display_t, x11Screen_t, x11Window_t, x11GC_t;
  * Implementation
  */
 int
-x11LoadModule(LispMac *mac)
+x11LoadModule(void)
 {
     int i;
 
-    x11Display_t = LispRegisterOpaqueType(mac, "Display*");
-    x11Screen_t = LispRegisterOpaqueType(mac, "Screen*");
-    x11Window_t = LispRegisterOpaqueType(mac, "Window");
-    x11GC_t = LispRegisterOpaqueType(mac, "GC");
+    x11Display_t = LispRegisterOpaqueType("Display*");
+    x11Screen_t = LispRegisterOpaqueType("Screen*");
+    x11Window_t = LispRegisterOpaqueType("Window");
+    x11GC_t = LispRegisterOpaqueType("GC");
 
     for (i = 0; i < sizeof(lispbuiltins) / sizeof(lispbuiltins[0]); i++)
-	LispAddBuiltinFunction(mac, &lispbuiltins[i]);
+	LispAddBuiltinFunction(&lispbuiltins[i]);
 
     return (1);
 }
 
 LispObj *
-Lisp_XOpenDisplay(LispMac *mac, LispObj *list, char *fname)
+Lisp_XOpenDisplay(LispBuiltin *builtin)
+/*
+x-open-display &optional display-name
+ */
 {
-    LispObj *nam;
+    LispObj *display_name;
     char *dname;
 
-    if (list == NIL)
+    display_name = ARGUMENT(0);
+
+    if (display_name == UNSPEC)
 	dname = NULL;
-    else if ((nam = CAR(list))->type == LispString_t)
-	dname = STRPTR(nam);
-    else
-	LispDestroy(mac, "%s is not a valid display name, at %s",
-		    LispStrObj(mac, nam), fname);
+    else {
+	CHECK_STRING(display_name);
+	dname = THESTR(display_name);
+    }
 
     return (OPAQUE(XOpenDisplay(dname), x11Display_t));
 }
 
 LispObj *
-Lisp_XCloseDisplay(LispMac *mac, LispObj *list, char *fname)
+Lisp_XCloseDisplay(LispBuiltin *builtin)
+/*
+ x-close-display display
+ */
 {
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    LispObj *display;
 
-    XCloseDisplay((Display*)(CAR(list)->data.opaque.data));
+    display = ARGUMENT(0);
+
+    if (!CHECKO(display, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(display));
+
+    XCloseDisplay((Display*)(display->data.opaque.data));
 
     return (NIL);
 }
 
 LispObj *
-Lisp_XDefaultRootWindow(LispMac *mac, LispObj *list, char *fname)
+Lisp_XDefaultRootWindow(LispBuiltin *builtin)
+/*
+ x-default-root-window display
+ */
 {
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    LispObj *display;
 
-    return (OPAQUE(XDefaultRootWindow((Display*)(CAR(list)->data.opaque.data)),
+    display = ARGUMENT(0);
+
+    if (!CHECKO(display, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(display));
+
+    return (OPAQUE(DefaultRootWindow((Display*)(display->data.opaque.data)),
 		   x11Window_t));
 }
 
 LispObj *
-Lisp_XDefaultScreenOfDisplay(LispMac *mac, LispObj *list, char *fname)
+Lisp_XDefaultScreen(LispBuiltin *builtin)
+/*
+ x-default-screen display
+ */
 {
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    LispObj *display;
 
-    return (OPAQUE(XDefaultScreenOfDisplay((Display*)(CAR(list)->data.opaque.data)),
+    display = ARGUMENT(0);
+
+    if (!CHECKO(display, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(display));
+
+    return (INTEGER(DefaultScreen((Display*)(display->data.opaque.data))));
+}
+
+LispObj *
+Lisp_XDefaultScreenOfDisplay(LispBuiltin *builtin)
+/*
+ x-default-screen-of-display display
+ */
+{
+    LispObj *display;
+
+    display = ARGUMENT(0);
+
+    if (!CHECKO(display, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(display));
+
+    return (OPAQUE(DefaultScreenOfDisplay((Display*)(display->data.opaque.data)),
 		   x11Screen_t));
 }
 
 LispObj *
-Lisp_XBlackPixelOfScreen(LispMac *mac, LispObj *list, char *fname)
+Lisp_XBlackPixel(LispBuiltin *builtin)
+/*
+ x-black-pixel display &optional screen
+ */
 {
-    if (!CHECKO(CAR(list), x11Screen_t))
-	LispDestroy(mac, "cannot convert %s to Screen*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    Display *display;
+    int screen;
 
-    return (REAL((double)
-		 XBlackPixelOfScreen((Screen*)(CAR(list)->data.opaque.data))));
+    LispObj *odisplay, *oscreen;
+
+    oscreen = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (oscreen == UNSPEC)
+	screen = DefaultScreen(display);
+    else
+	CHECK_INDEX(oscreen);
+    else
+	screen = FIXNUM_VALUE(oscreen);
+
+    if (screen >= ScreenCount(display))
+	LispDestroy("%s: screen index %d too large, %d screens available",
+		    STRFUN(builtin), screen, ScreenCount(display));
+
+    return (INTEGER(BlackPixel(display, screen)));
 }
 
 LispObj *
-Lisp_XWhitePixelOfScreen(LispMac *mac, LispObj *list, char *fname)
+Lisp_XBlackPixelOfScreen(LispBuiltin *builtin)
+/*
+ x-black-pixel-of-screen screen
+ */
 {
-    if (!CHECKO(CAR(list), x11Screen_t))
-	LispDestroy(mac, "cannot convert %s to Screen*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    LispObj *screen;
 
-    return (REAL((double)
-		 XWhitePixelOfScreen((Screen*)(CAR(list)->data.opaque.data))));
+    screen = ARGUMENT(0);
+
+    if (!CHECKO(screen, x11Screen_t))
+	LispDestroy("%s: cannot convert %s to Screen*",
+		    STRFUN(builtin), STROBJ(screen));
+
+    return (INTEGER(XBlackPixelOfScreen((Screen*)(screen->data.opaque.data))));
 }
 
 LispObj *
-Lisp_XDefaultGCOfScreen(LispMac *mac, LispObj *list, char *fname)
+Lisp_XWhitePixel(LispBuiltin *builtin)
+/*
+ x-white-pixel display &optional screen
+ */
 {
-    if (!CHECKO(CAR(list), x11Screen_t))
-	LispDestroy(mac, "cannot convert %s to Screen*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
+    Display *display;
+    int screen;
 
-    return (OPAQUE(XDefaultGCOfScreen((Screen*)(CAR(list)->data.opaque.data)),
+    LispObj *odisplay, *oscreen;
+
+    oscreen = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (oscreen == UNSPEC)
+	screen = DefaultScreen(display);
+    else
+	CHECK_FIXNUM(oscreen);
+    else
+	screen = FIXNUM_VALUE(oscreen);
+
+    if (screen >= ScreenCount(display))
+	LispDestroy("%s: screen index %d too large, %d screens available",
+		    STRFUN(builtin), screen, ScreenCount(display));
+
+    return (INTEGER(WhitePixel(display, screen)));
+}
+
+LispObj *
+Lisp_XWhitePixelOfScreen(LispBuiltin *builtin)
+/*
+ x-white-pixel-of-screen screen
+ */
+{
+    LispObj *screen;
+
+    screen = ARGUMENT(0);
+
+    if (!CHECKO(screen, x11Screen_t))
+	LispDestroy("%s: cannot convert %s to Screen*",
+		    STRFUN(builtin), STROBJ(screen));
+
+    return (INTEGER(WhitePixelOfScreen((Screen*)(screen->data.opaque.data))));
+}
+
+LispObj *
+Lisp_XDefaultGC(LispBuiltin *builtin)
+/*
+ x-default-gc display &optional screen
+ */
+{
+    Display *display;
+    int screen;
+
+    LispObj *odisplay, *oscreen;
+
+    oscreen = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (oscreen == UNSPEC)
+	screen = DefaultScreen(display);
+    else
+	CHECK_FIXNUM(oscreen);
+    else
+	screen = FIXNUM_VALUE(oscreen);
+
+    if (screen >= ScreenCount(display))
+	LispDestroy("%s: screen index %d too large, %d screens available",
+		    STRFUN(builtin), screen, ScreenCount(display));
+
+    return (OPAQUE(DefaultGC(display, screen), x11GC_t));
+}
+
+LispObj *
+Lisp_XDefaultGCOfScreen(LispBuiltin *builtin)
+/*
+ x-default-gc-of-screen screen
+ */
+{
+    LispObj *screen;
+
+    screen = ARGUMENT(0);
+
+    if (!CHECKO(screen, x11Screen_t))
+	LispDestroy("%s: cannot convert %s to Screen*",
+		    STRFUN(builtin), STROBJ(screen));
+
+    return (OPAQUE(DefaultGCOfScreen((Screen*)(screen->data.opaque.data)),
 		   x11GC_t));
 }
 
 LispObj *
-Lisp_XCreateSimpleWindow(LispMac *mac, LispObj *list, char *fname)
+Lisp_XCreateSimpleWindow(LispBuiltin *builtin)
+/*
+ x-create-simple-window display parent x y width height &optional border-width border background
+ */
 {
     Display *display;
     Window parent;
@@ -190,70 +370,62 @@ Lisp_XCreateSimpleWindow(LispMac *mac, LispObj *list, char *fname)
     unsigned int width, height, border_width;
     unsigned long border, background;
 
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    display = (Display*)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    LispObj *odisplay, *oparent, *ox, *oy, *owidth, *oheight,
+	    *oborder_width, *oborder, *obackground;
 
-    if (!CHECKO(CAR(list), x11Window_t))
-	LispDestroy(mac, "cannot convert %s to Window, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    parent = (Window)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    obackground = ARGUMENT(8);
+    oborder = ARGUMENT(7);
+    oborder_width = ARGUMENT(6);
+    oheight = ARGUMENT(5);
+    owidth = ARGUMENT(4);
+    oy = ARGUMENT(3);
+    ox = ARGUMENT(2);
+    oparent = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
 
-    if (CAR(list)->type != LispReal_t ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    x = (int)(CAR(list)->data.real);
-    list = CDR(list);
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
 
-    if (CAR(list)->type != LispReal_t ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    y = (int)(CAR(list)->data.real);
-    list = CDR(list);
+    if (!CHECKO(oparent, x11Window_t))
+	LispDestroy("%s: cannot convert %s to Window",
+		    STRFUN(builtin), STROBJ(oparent));
+    parent = (Window)(oparent->data.opaque.data);
 
-    if (CAR(list)->type != LispReal_t ||
-	CAR(list)->data.real < 0 ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to unsigned int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    width = (unsigned int)(CAR(list)->data.real);
-    list = CDR(list);
+    CHECK_FIXNUM(ox);
+    x = FIXNUM_VALUE(ox);
 
-    if (CAR(list)->type != LispReal_t ||
-	CAR(list)->data.real < 0 ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to unsigned int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    height = (unsigned int)(CAR(list)->data.real);
-    list = CDR(list);
+    CHECK_FIXNUM(oy);
+    y = FIXNUM_VALUE(oy);
 
-    if (CAR(list)->type != LispReal_t ||
-	CAR(list)->data.real < 0 ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to unsigned int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    border_width = (unsigned int)(CAR(list)->data.real);
-    list = CDR(list);
+    CHECK_INDEX(owidth);
+    width = FIXNUM_VALUE(owidth);
 
-    if (CAR(list)->type != LispReal_t ||
-	CAR(list)->data.real < 0 ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to unsigned long, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    border = (unsigned int)(CAR(list)->data.real);
-    list = CDR(list);
+    CHECK_INDEX(oheight);
+    height = FIXNUM_VALUE(oheight);
 
-    if (CAR(list)->type != LispReal_t ||
-	CAR(list)->data.real < 0 ||
-	(int)(CAR(list)->data.real) != CAR(list)->data.real)
-	LispDestroy(mac, "Cannot convert %s to unsigned long, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    background = (unsigned int)(CAR(list)->data.real);
+    /* check &OPTIONAL parameters */
+    if (oborder_width == UNSPEC)
+	border_width = 1;
+    else
+	CHECK_INDEX(oborder_width);
+    else
+	border_width = FIXNUM_VALUE(oborder_width);
+
+    if (oborder == UNSPEC)
+	border = BlackPixel(display, DefaultScreen(display));
+    else
+	CHECK_LONGINT(oborder);
+    else
+	border = LONGINT_VALUE(oborder);
+
+    if (obackground == UNSPEC)
+	background = WhitePixel(display, DefaultScreen(display));
+    else
+	CHECK_LONGINT(obackground);
+    else
+	background = LONGINT_VALUE(obackground);
 
     return (OPAQUE(
 	    XCreateSimpleWindow(display, parent, x, y, width, height,
@@ -262,43 +434,57 @@ Lisp_XCreateSimpleWindow(LispMac *mac, LispObj *list, char *fname)
 }
 
 LispObj *
-Lisp_XMapWindow(LispMac *mac, LispObj *list, char *fname)
+Lisp_XMapWindow(LispBuiltin *builtin)
+/*
+ x-map-window display window
+ */
 {
     Display *display;
     Window window;
 
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    display = (Display*)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    LispObj *odisplay, *owindow;
 
-    if (!CHECKO(CAR(list), x11Window_t))
-	LispDestroy(mac, "cannot convert %s to Window, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    window = (Window)(CAR(list)->data.opaque.data);
+    owindow = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (!CHECKO(owindow, x11Window_t))
+	LispDestroy("%s: cannot convert %s to Window",
+		    STRFUN(builtin), STROBJ(owindow));
+    window = (Window)(owindow->data.opaque.data);
 
     XMapWindow(display, window);
 
-    return (CAR(list));
+    return (owindow);
 }
 
 LispObj *
-Lisp_XDestroyWindow(LispMac *mac, LispObj *list, char *fname)
+Lisp_XDestroyWindow(LispBuiltin *builtin)
+/*
+ x-destroy-window display window
+ */
 {
     Display *display;
     Window window;
 
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    display = (Display*)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    LispObj *odisplay, *owindow;
 
-    if (!CHECKO(CAR(list), x11Window_t))
-	LispDestroy(mac, "cannot convert %s to Window, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    window = (Window)(CAR(list)->data.opaque.data);
+    owindow = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (!CHECKO(owindow, x11Window_t))
+	LispDestroy("%s: cannot convert %s to Window",
+		    STRFUN(builtin), STROBJ(owindow));
+    window = (Window)(owindow->data.opaque.data);
 
     XDestroyWindow(display, window);
 
@@ -306,68 +492,175 @@ Lisp_XDestroyWindow(LispMac *mac, LispObj *list, char *fname)
 }
 
 LispObj *
-Lisp_XFlush(LispMac *mac, LispObj *list, char *fname)
+Lisp_XFlush(LispBuiltin *builtin)
+/*
+ x-flush display
+ */
 {
     Display *display;
 
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    display = (Display*)(CAR(list)->data.opaque.data);
+    LispObj *odisplay;
+
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
 
     XFlush(display);
 
-    return (NIL);
+    return (odisplay);
 }
 
 LispObj *
-Lisp_XDrawLine(LispMac *mac, LispObj *list, char *fname)
+Lisp_XDrawLine(LispBuiltin *builtin)
+/*
+ x-draw-line display drawable gc x1 y1 x2 y2
+ */
 {
     Display *display;
-    Drawable window;
+    Drawable drawable;
     GC gc;
-    int x0, y0, x1, y1;
+    int x1, y1, x2, y2;
 
-    if (!CHECKO(CAR(list), x11Display_t))
-	LispDestroy(mac, "cannot convert %s to Display*, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    display = (Display*)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    LispObj *odisplay, *odrawable, *ogc, *ox1, *oy1, *ox2, *oy2;
 
-    if (!CHECKO(CAR(list), x11Window_t))
-	LispDestroy(mac, "cannot convert %s to Drawable, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    window = (Drawable)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    oy2 = ARGUMENT(6);
+    ox2 = ARGUMENT(5);
+    oy1 = ARGUMENT(4);
+    ox1 = ARGUMENT(3);
+    ogc = ARGUMENT(2);
+    odrawable = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
 
-    if (!CHECKO(CAR(list), x11GC_t))
-	LispDestroy(mac, "cannot convert %s to GC, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    gc = (GC)(CAR(list)->data.opaque.data);
-    list = CDR(list);
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
 
-    if (CAR(list)->type != LispReal_t)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    x0 = (int)(CAR(list)->data.real);
-    list = CDR(list);
-    if (CAR(list)->type != LispReal_t)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    y0 = (int)(CAR(list)->data.real);
-    list = CDR(list);
-    if (CAR(list)->type != LispReal_t)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    x1 = (int)(CAR(list)->data.real);
-    list = CDR(list);
-    if (CAR(list)->type != LispReal_t)
-	LispDestroy(mac, "Cannot convert %s to int, at %s",
-		    LispStrObj(mac, CAR(list)), fname);
-    y1 = (int)(CAR(list)->data.real);
-    list = CDR(list);
+    /* XXX correct check when drawing to pixmaps implemented */
+    if (!CHECKO(odrawable, x11Window_t))
+	LispDestroy("%s: cannot convert %s to Drawable",
+		    STRFUN(builtin), STROBJ(odrawable));
+    drawable = (Drawable)(odrawable->data.opaque.data);
 
-    XDrawLine(display, window, gc, x0, y0, x1, y1);
+    if (!CHECKO(ogc, x11GC_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(ogc));
+    gc = (GC)(ogc->data.opaque.data);
 
-    return (NIL);
+    CHECK_FIXNUM(ox1);
+    x1 = FIXNUM_VALUE(ox1);
+
+    CHECK_FIXNUM(oy1);
+    y1 = FIXNUM_VALUE(oy1);
+
+    CHECK_FIXNUM(ox2);
+    x2 = FIXNUM_VALUE(ox2);
+
+    CHECK_FIXNUM(oy2);
+    y2 = FIXNUM_VALUE(oy2);
+
+    XDrawLine(display, drawable, gc, x1, y1, x2, y2);
+
+    return (odrawable);
+}
+
+LispObj *
+Lisp_XBell(LispBuiltin *builtin)
+/*
+ x-bell &optional percent
+ */
+{
+    Display *display;
+    int percent;
+
+    LispObj *odisplay, *opercent;
+
+    opercent = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (opercent == UNSPEC)
+	percent = 0;
+    else
+	CHECK_FIXNUM(opercent);
+    else
+	percent = FIXNUM_VALUE(opercent);
+
+    if (percent < -100 || percent > 100)
+	LispDestroy("%s: percent value %d out of range -100 to 100",
+		    STRFUN(builtin), percent);
+
+    XBell(display, percent);
+
+    return (odisplay);
+}
+
+LispObj *
+Lisp_XRaiseWindow(LispBuiltin *builtin)
+/*
+ x-raise-window display window
+ */
+{
+    Display *display;
+    Window window;
+
+    LispObj *odisplay, *owindow;
+
+    owindow = ARGUMENT(1);
+    odisplay = ARGUMENT(0);
+
+    if (!CHECKO(odisplay, x11Display_t))
+	LispDestroy("%s: cannot convert %s to Display*",
+		    STRFUN(builtin), STROBJ(odisplay));
+    display = (Display*)(odisplay->data.opaque.data);
+
+    if (!CHECKO(owindow, x11Window_t))
+	LispDestroy("%s: cannot convert %s to Window",
+		    STRFUN(builtin), STROBJ(owindow));
+    window = (Window)(owindow->data.opaque.data);
+
+    XRaiseWindow(display, window);
+
+    return (owindow);
+}
+
+LispObj *
+Lisp_XWidthOfScreen(LispBuiltin *builtin)
+/*
+ x-width-of-screen screen
+ */
+{
+    LispObj *screen;
+
+    screen = ARGUMENT(0);
+
+    if (!CHECKO(screen, x11Screen_t))
+	LispDestroy("%s: cannot convert %s to Screen*",
+		    STRFUN(builtin), STROBJ(screen));
+
+    return (FIXNUM(WidthOfScreen((Screen*)(screen->data.opaque.data))));
+}
+
+LispObj *
+Lisp_XHeightOfScreen(LispBuiltin *builtin)
+/*
+ x-height-of-screen screen
+ */
+{
+    LispObj *screen;
+
+    screen = ARGUMENT(0);
+
+    if (!CHECKO(screen, x11Screen_t))
+	LispDestroy("%s: cannot convert %s to Screen*",
+		    STRFUN(builtin), STROBJ(screen));
+
+    return (FIXNUM(HeightOfScreen((Screen*)(screen->data.opaque.data))));
 }

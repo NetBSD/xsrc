@@ -24,12 +24,9 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.15 2001/12/11 19:42:01 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.31 2003/01/02 20:44:56 mvojkovi Exp $ */
 
 #include "nv_include.h"
-
-#include "nvreg.h"
-#include "nvvga.h"
 
 Bool
 NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
@@ -71,6 +68,15 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if(mode->Flags & V_INTERLACE) 
         vertTotal |= 1;
 
+    if(pNv->FlatPanel == 1) {
+       vertStart = vertTotal - 3;  
+       vertEnd = vertTotal - 2;
+       vertBlankStart = vertStart;
+       horizStart = horizTotal - 3;
+       horizEnd = horizTotal - 2;   
+       horizBlankEnd = horizTotal + 4;    
+    }
+
     pVga->CRTC[0x0]  = Set8Bits(horizTotal);
     pVga->CRTC[0x1]  = Set8Bits(horizDisplay);
     pVga->CRTC[0x2]  = Set8Bits(horizBlankStart);
@@ -97,6 +103,8 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pVga->CRTC[0x13] = ((pLayout->displayWidth/8)*(pLayout->bitsPerPixel/8));
     pVga->CRTC[0x15] = Set8Bits(vertBlankStart);
     pVga->CRTC[0x16] = Set8Bits(vertBlankEnd);
+
+    pVga->Attribute[0x10] = 0x01;
 
     nvReg->screen = SetBitField(horizBlankEnd,6:6,4:4)
                   | SetBitField(vertBlankStart,10:10,3:3)
@@ -147,6 +155,8 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if(pNv->riva.Architecture >= NV_ARCH_10)
 	pNv->riva.CURSOR = (U032 *)(pNv->FbStart + pNv->riva.CursorStart);
 
+    pNv->riva.LockUnlock(&pNv->riva, 0);
+
     pNv->riva.CalcStateExt(&pNv->riva, 
                            nvReg,
                            i,
@@ -156,21 +166,73 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                            mode->Clock,
 			   mode->Flags);
 
+    nvReg->scale = pNv->riva.PRAMDAC[0x00000848/4] & 0xfff000ff;
+    if(pNv->FlatPanel == 1) {
+       nvReg->pixel |= (1 << 7);
+       nvReg->scale |= (1 << 8) ;
+    }
+    if(pNv->SecondCRTC) {
+       nvReg->head  = pNv->riva.PCRTC0[0x00000860/4] & ~0x00001000;
+       nvReg->head2 = pNv->riva.PCRTC0[0x00002860/4] | 0x00001000;
+       nvReg->crtcOwner = 3;
+       nvReg->pllsel |= 0x20000800;
+       nvReg->vpll2 = nvReg->vpll;
+    } else 
+    if(pNv->riva.twoHeads) {
+       nvReg->head  =  pNv->riva.PCRTC0[0x00000860/4] | 0x00001000;
+       nvReg->head2 =  pNv->riva.PCRTC0[0x00002860/4] & ~0x00001000;
+       nvReg->crtcOwner = 0;
+       nvReg->vpll2 = pNv->riva.PRAMDAC0[0x00000520/4];
+    }
+
+    nvReg->cursorConfig = 0x00000100;
+    if(mode->Flags & V_DBLSCAN)
+       nvReg->cursorConfig |= (1 << 4);
+    if(pNv->alphaCursor) {
+        nvReg->cursorConfig |= 0x04011000;
+        nvReg->general |= (1 << 29);
+
+        if((pNv->Chipset & 0x0ff0) == 0x0110) {
+            nvReg->dither = pNv->riva.PRAMDAC[0x0528/4] & ~0x00010000;
+            if(pNv->riva.flatPanel & FP_DITHER)
+               nvReg->dither |= 0x00010000;
+            else
+               nvReg->cursorConfig |= (1 << 28);
+        } else 
+        if((pNv->riva.Chipset & 0x0ff0) >= 0x0170) {
+           nvReg->dither = pNv->riva.PRAMDAC[0x083C/4] & ~1;
+           nvReg->cursorConfig |= (1 << 28);
+           if(pNv->riva.flatPanel & FP_DITHER)
+              nvReg->dither |= 1;
+        } else {
+           nvReg->cursorConfig |= (1 << 28);
+        }
+    } else
+       nvReg->cursorConfig |= 0x02000000;
+
+    nvReg->vpllB = 0;
+    nvReg->vpll2B = 0;
+
     return (TRUE);
 }
 
 void 
 NVDACRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
-             Bool restoreFonts)
+             Bool primary)
 {
     NVPtr pNv = NVPTR(pScrn);
+    int restore = VGA_SR_MODE;
+
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVDACRestore\n"));
+
+    if(primary) restore |= VGA_SR_CMAP | VGA_SR_FONTS;
+    else if((pNv->Chipset & 0xffff) == 0x0018) 
+	restore |= VGA_SR_CMAP;
     pNv->riva.LoadStateExt(&pNv->riva, nvReg);
 #if defined(__powerpc__)
-    restoreFonts = FALSE;
+    restore &= ~VGA_SR_FONTS;
 #endif
-    vgaHWRestore(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | 
-			(restoreFonts? VGA_SR_FONTS : 0));
+    vgaHWRestore(pScrn, vgaReg, restore);
 }
 
 /*
@@ -184,8 +246,17 @@ NVDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
 {
     NVPtr pNv = NVPTR(pScrn);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVDACSave\n"));
-    vgaHWSave(pScrn, vgaReg, VGA_SR_MODE | (saveFonts? VGA_SR_FONTS : 0));
+
+#if defined(__powerpc__)
+    saveFonts = FALSE;
+#endif
+
+    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | 
+                             (saveFonts? VGA_SR_FONTS : 0));
     pNv->riva.UnloadStateExt(&pNv->riva, nvReg);
+
+    if((pNv->Chipset & 0x0ff0) == 0x0110) 
+       nvReg->crtcOwner = ((pNv->Chipset & 0x0fff) == 0x0112) ? 3 : 0;
 }
 
 #define DEPTH_SHIFT(val, w) ((val << (8 - w)) | (val >> ((w << 1) - 8)))
@@ -258,7 +329,7 @@ NV_ddc1Read(ScrnInfoPtr pScrn)
     while(!(VGA_RD08(pNv->riva.PCIO, 0x3da) & 0x08));
 
     /* Get the result */
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3e);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5);
     DEBUG(ErrorF("NV_ddc1Read(%p,...) returns %d\n",
                  pScrn, val));
@@ -272,7 +343,7 @@ NV_I2CGetBits(I2CBusPtr b, int *clock, int *data)
     unsigned char val;
 
     /* Get the result. */
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3e);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5);
 
     *clock = (val & DDC_SCL_READ_MASK) != 0;
@@ -287,7 +358,7 @@ NV_I2CPutBits(I2CBusPtr b, int clock, int data)
     NVPtr pNv = NVPTR(xf86Screens[b->scrnIndex]);
     unsigned char val;
 
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3f);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase + 1);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5) & 0xf0;
     if (clock)
         val |= DDC_SCL_WRITE_MASK;
@@ -299,7 +370,7 @@ NV_I2CPutBits(I2CBusPtr b, int clock, int data)
     else
         val &= ~DDC_SDA_WRITE_MASK;
 
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3f);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase + 1);
     VGA_WR08(pNv->riva.PCIO, 0x3d5, val | 0x1);
     
     DEBUG(ErrorF("NV_I2CPutBits(%p, %d, %d) val=0x%x\n", b, clock, data, val));

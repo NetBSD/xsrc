@@ -32,7 +32,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
  ***************************************************************************/
-/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.h,v 1.2 2001/12/18 04:23:56 dawes Exp $ */
+/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.h,v 1.4 2002/11/19 09:35:49 alanh Exp $ */
 
 
 #ifndef I810XVMC_H
@@ -41,8 +41,9 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* #define XVMC_DEBUG(x) do {x; }while(0); */
 #define XVMC_DEBUG(x)
 
-#include <xf86drm.h>
-#include <Xlibint.h>
+#include "xf86drm.h"
+#include "i810_common.h"
+#include <X11/Xlibint.h>
 
 
 /***************************************************************************
@@ -217,15 +218,6 @@ typedef struct _drm_i810_mc {
 #define I810_DEFAULT16_COLORKEY 31
 #define I810_DMA_BUF_NR 256
 
-/* IOCTL Numbers, these are defined in the kernel drm sources. */
-#define I810_IOCTL_OV0INFO  0x49
-#define I810_IOCTL_FSTATUS  0x4a
-#define I810_IOCTL_OV0FLIP  0x4b
-#define I810_IOCTL_MC       0x4c
-#define I810_IOCTL_RSTATUS  0x4d
-#define I810_IOCTL_FLUSH    0x43
-#define I810_IOCTL_GETBUF   0x45
-
 /* COMMANDS */
 #define CMD_FLUSH        ((4<<23) | 0x1)
 #define BOOLEAN_ENA_1    ((3<<29) | (3<<24) | (3<<2))
@@ -334,14 +326,13 @@ typedef struct _drm_i810_mc {
    }                                              \
  }while(0);
 
-/* IOCTLs */
-#define OVERLAY_INFO(c,i) ioctl(c->fd ,I810_IOCTL_OV0INFO, i)
-#define OVERLAY_FLIP(c) ioctl(c->fd , I810_IOCTL_OV0FLIP)
-#define GET_FSTATUS(c) ioctl(c->fd , I810_IOCTL_FSTATUS)
-#define I810_MC(c,mc) ioctl(c->fd, I810_IOCTL_MC, mc)
-#define GET_RSTATUS(c) ioctl(c->fd, I810_IOCTL_RSTATUS)
-#define GET_BUFFER(c,dma) ioctl(c->fd, I810_IOCTL_GETBUF ,dma)
-#define FLUSH(c) ioctl(c->fd, I810_IOCTL_FLUSH)
+#define OVERLAY_INFO(c,i) drmCommandRead(c->fd, DRM_I810_OV0INFO, &i, sizeof(i))
+#define OVERLAY_FLIP(c) drmCommandNone(c->fd, DRM_I810_OV0FLIP)
+#define GET_FSTATUS(c) drmCommandNone(c->fd, DRM_I810_FSTATUS)
+#define I810_MC(c,mc) drmCommandWrite(c->fd, DRM_I810_MC, &mc, sizeof(mc))
+#define GET_RSTATUS(c) drmCommandNone(c->fd, DRM_I810_RSTATUS)
+#define GET_BUFFER(c,dma) drmCommandWriteRead(c->fd, DRM_I810_GETBUF, &dma, sizeof(drmI810DMA))
+#define FLUSH(c) drmCommandNone(c->fd, DRM_I810_FLUSH)
 
 /*
   Definitions for temporary wire protocol hooks to be replaced

@@ -34,7 +34,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
     ------------------------------------------------------------------------ **/
-/* $XFree86: xc/programs/xwd/multiVis.c,v 1.7 2001/12/14 20:02:34 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/multiVis.c,v 1.8 2002/12/10 22:38:50 tsi Exp $ */
 
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -988,6 +988,7 @@ static void add_window_to_list( image_wins, w, xrr, yrr, x_vis, y_vis,
     int 	y_vis;
     int 	width;
     int 	height;
+    int		border_width;
     Visual	*vis;
     Colormap	cmap;
     Window	parent;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.c,v 1.6 2001/03/21 16:14:23 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.c,v 1.8 2002/10/30 12:51:39 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -29,7 +29,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Gareth Hughes <gareth@valinux.com>
- *   Keith Whitwell <keithw@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  *   Kevin E. Martin <martin@valinux.com>
  *
  */
@@ -38,8 +38,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_ioctl.h"
 #include "r128_state.h"
 #include "r128_span.h"
+#include "r128_tex.h"
 
-#include "pb.h"
+#include "swrast/s_pb.h"	/* for PB_SIZE */
 
 #define DBG 0
 
@@ -74,7 +75,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
 
-#define INIT_MONO_PIXEL( p )	p = rmesa->Color
 
 #define CLIPPIXEL( _x, _y )						\
    ((_x >= minx) && (_x < maxx) && (_y >= miny) && (_y < maxy))
@@ -125,6 +125,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = R128PACKCOLOR565( color[0], color[1], color[2] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
 					   (((int)g & 0xfc) << 3) |	\
@@ -153,6 +157,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = R128PACKCOLOR8888( color[0], color[1], color[2], color[3] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |			\
 					 (g <<  8) |			\
@@ -168,7 +176,7 @@ do {									\
    rgba[0] = (p >> 16) & 0xff;						\
    rgba[1] = (p >>  8) & 0xff;						\
    rgba[2] = (p >>  0) & 0xff;						\
-   rgba[3] = (p >> 24) & 0xff;						\
+   rgba[3] = 0xff;/*(p >> 24) & 0xff;*/						\
 } while (0)
 
 #define TAG(x) r128##x##_ARGB8888
@@ -176,6 +184,10 @@ do {									\
 
 
 /* 24 bit, RGB888 color spanline and pixel functions */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = R128PACKCOLOR888( color[0], color[1], color[2] )
+
 #define WRITE_RGBA(_x, _y, r, g, b, a)                                        \
     *(GLuint *)(buf + _x*3 + _y*pitch) = ((r << 16) |                         \
 					  (g << 8)  |                         \
@@ -364,59 +376,85 @@ do {									\
 #define WRITE_DEPTH(_x, _y, d)                                                \
     *(GLuint *)(buf + _x*4 + _y*pitch) = d
 
-void r128DDInitSpanFuncs( GLcontext *ctx )
+
+
+static void r128DDSetReadBuffer( GLcontext *ctx,
+				 GLframebuffer *colorBuffer,
+				 GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
+   switch ( mode ) {
+   case GL_FRONT_LEFT:
+      rmesa->readOffset = rmesa->r128Screen->frontOffset;
+      rmesa->readPitch  = rmesa->r128Screen->frontPitch;
+      break;
+   case GL_BACK_LEFT:
+      rmesa->readOffset = rmesa->r128Screen->backOffset;
+      rmesa->readPitch  = rmesa->r128Screen->backPitch;
+      break;
+   default:
+      break;
+   }
+}
+
+
+void r128DDInitSpanFuncs( GLcontext *ctx )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+
+   swdd->SetReadBuffer = r128DDSetReadBuffer;
+
    switch ( rmesa->r128Screen->cpp ) {
    case 2:
-      ctx->Driver.WriteRGBASpan		= r128WriteRGBASpan_RGB565;
-      ctx->Driver.WriteRGBSpan		= r128WriteRGBSpan_RGB565;
-      ctx->Driver.WriteMonoRGBASpan	= r128WriteMonoRGBASpan_RGB565;
-      ctx->Driver.WriteRGBAPixels	= r128WriteRGBAPixels_RGB565;
-      ctx->Driver.WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_RGB565;
-      ctx->Driver.ReadRGBASpan		= r128ReadRGBASpan_RGB565;
-      ctx->Driver.ReadRGBAPixels	= r128ReadRGBAPixels_RGB565;
+      swdd->WriteRGBASpan	= r128WriteRGBASpan_RGB565;
+      swdd->WriteRGBSpan	= r128WriteRGBSpan_RGB565;
+      swdd->WriteMonoRGBASpan	= r128WriteMonoRGBASpan_RGB565;
+      swdd->WriteRGBAPixels	= r128WriteRGBAPixels_RGB565;
+      swdd->WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_RGB565;
+      swdd->ReadRGBASpan	= r128ReadRGBASpan_RGB565;
+      swdd->ReadRGBAPixels	= r128ReadRGBAPixels_RGB565;
       break;
 
    case 4:
-      ctx->Driver.WriteRGBASpan		= r128WriteRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBSpan		= r128WriteRGBSpan_ARGB8888;
-      ctx->Driver.WriteMonoRGBASpan	= r128WriteMonoRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBAPixels	= r128WriteRGBAPixels_ARGB8888;
-      ctx->Driver.WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_ARGB8888;
-      ctx->Driver.ReadRGBASpan		= r128ReadRGBASpan_ARGB8888;
-      ctx->Driver.ReadRGBAPixels	= r128ReadRGBAPixels_ARGB8888;
+      swdd->WriteRGBASpan	= r128WriteRGBASpan_ARGB8888;
+      swdd->WriteRGBSpan	= r128WriteRGBSpan_ARGB8888;
+      swdd->WriteMonoRGBASpan	= r128WriteMonoRGBASpan_ARGB8888;
+      swdd->WriteRGBAPixels	= r128WriteRGBAPixels_ARGB8888;
+      swdd->WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_ARGB8888;
+      swdd->ReadRGBASpan	= r128ReadRGBASpan_ARGB8888;
+      swdd->ReadRGBAPixels	= r128ReadRGBAPixels_ARGB8888;
       break;
 
    default:
       break;
    }
 
-   switch ( rmesa->glCtx->Visual->DepthBits ) {
+   switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
-      ctx->Driver.ReadDepthSpan		= r128ReadDepthSpan_16;
-      ctx->Driver.WriteDepthSpan	= r128WriteDepthSpan_16;
-      ctx->Driver.ReadDepthPixels	= r128ReadDepthPixels_16;
-      ctx->Driver.WriteDepthPixels	= r128WriteDepthPixels_16;
+      swdd->ReadDepthSpan	= r128ReadDepthSpan_16;
+      swdd->WriteDepthSpan	= r128WriteDepthSpan_16;
+      swdd->ReadDepthPixels	= r128ReadDepthPixels_16;
+      swdd->WriteDepthPixels	= r128WriteDepthPixels_16;
       break;
 
    case 24:
-      ctx->Driver.ReadDepthSpan		= r128ReadDepthSpan_24_8;
-      ctx->Driver.WriteDepthSpan	= r128WriteDepthSpan_24_8;
-      ctx->Driver.ReadDepthPixels	= r128ReadDepthPixels_24_8;
-      ctx->Driver.WriteDepthPixels	= r128WriteDepthPixels_24_8;
+      swdd->ReadDepthSpan	= r128ReadDepthSpan_24_8;
+      swdd->WriteDepthSpan	= r128WriteDepthSpan_24_8;
+      swdd->ReadDepthPixels	= r128ReadDepthPixels_24_8;
+      swdd->WriteDepthPixels	= r128WriteDepthPixels_24_8;
       break;
 
    default:
       break;
    }
 
-   ctx->Driver.WriteCI8Span		= NULL;
-   ctx->Driver.WriteCI32Span		= NULL;
-   ctx->Driver.WriteMonoCISpan		= NULL;
-   ctx->Driver.WriteCI32Pixels		= NULL;
-   ctx->Driver.WriteMonoCIPixels	= NULL;
-   ctx->Driver.ReadCI32Span		= NULL;
-   ctx->Driver.ReadCI32Pixels		= NULL;
+   swdd->WriteCI8Span		= NULL;
+   swdd->WriteCI32Span		= NULL;
+   swdd->WriteMonoCISpan	= NULL;
+   swdd->WriteCI32Pixels	= NULL;
+   swdd->WriteMonoCIPixels	= NULL;
+   swdd->ReadCI32Span		= NULL;
+   swdd->ReadCI32Pixels		= NULL;
 }

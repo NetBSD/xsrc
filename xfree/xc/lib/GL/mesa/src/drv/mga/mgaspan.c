@@ -22,35 +22,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.8 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.11 2002/10/30 12:51:36 alanh Exp $ */
 
-#include "types.h"
+#include "mtypes.h"
 #include "mgadd.h"
 #include "mgacontext.h"
 #include "mgaspan.h"
 #include "mgaioctl.h"
+#include "swrast/swrast.h"
 
 #define DBG 0
 
 
-#define LOCAL_VARS							\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
-   GLuint pitch = mgaScreen->frontPitch;				\
-   GLuint height = dPriv->h;						\
-   char *read_buf = (char *)(sPriv->pFB +				\
-			mmesa->readOffset +				\
-			dPriv->x * mgaScreen->cpp +			\
-			dPriv->y * pitch);				\
-   char *buf = (char *)(sPriv->pFB +					\
-			mmesa->drawOffset +				\
-			dPriv->x * mgaScreen->cpp +			\
-			dPriv->y * pitch);				\
-   GLuint p = MGA_CONTEXT( ctx )->MonoColor;				\
+#define LOCAL_VARS					\
+   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;	\
+   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
+   __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
+   GLuint pitch = mgaScreen->frontPitch;		\
+   GLuint height = dPriv->h;				\
+   char *read_buf = (char *)(sPriv->pFB +		\
+			mmesa->readOffset +		\
+			dPriv->x * mgaScreen->cpp +	\
+			dPriv->y * pitch);		\
+   char *buf = (char *)(sPriv->pFB +			\
+			mmesa->drawOffset +		\
+			dPriv->x * mgaScreen->cpp +	\
+			dPriv->y * pitch);		\
+   GLuint p;						\
    (void) read_buf; (void) buf; (void) p
+   
 
 
 #define LOCAL_DEPTH_VARS						\
@@ -64,9 +66,7 @@
 			dPriv->x * mgaScreen->cpp +			\
 			dPriv->y * pitch)
 
-#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
-
-#define INIT_MONO_PIXEL(p)
+#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
@@ -113,6 +113,12 @@
 /* 16 bit, 565 rgb color spanline and pixel functions
  */
 #define Y_FLIP(_y) (height - _y - 1)
+
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = MGAPACKCOLOR565( color[0], color[1], color[2] )
+
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLushort *)(buf + _x*2 + _y*pitch)  = ( (((int)r & 0xf8) << 8) |	\
 		                             (((int)g & 0xfc) << 3) |	\
@@ -139,6 +145,12 @@ do {								\
 
 /* 32 bit, 8888 argb color spanline and pixel functions
  */
+
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = MGAPACKCOLOR8888( color[0], color[1], color[2], color[3] )
+
+
 #define WRITE_RGBA(_x, _y, r, g, b, a)			\
     *(GLuint *)(buf + _x*4 + _y*pitch) = ((r << 16) |	\
 					  (g << 8)  |	\
@@ -221,51 +233,70 @@ do {								\
 
 
 
+static void mgaDDSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer,
+			GLenum mode )
+{
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+
+   if (mode == GL_FRONT_LEFT) 
+   {
+      mmesa->readOffset = mmesa->mgaScreen->frontOffset;
+      mmesa->read_buffer = MGA_FRONT;
+   } 
+   else 
+   {
+      mmesa->readOffset = mmesa->mgaScreen->backOffset;
+      mmesa->read_buffer = MGA_BACK;
+   }
+}
 
 void mgaDDInitSpanFuncs( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+
+   swdd->SetReadBuffer = mgaDDSetReadBuffer;
 
    switch (mmesa->mgaScreen->cpp) {
    case 2:
-      ctx->Driver.WriteRGBASpan = mgaWriteRGBASpan_565;
-      ctx->Driver.WriteRGBSpan = mgaWriteRGBSpan_565;
-      ctx->Driver.WriteMonoRGBASpan = mgaWriteMonoRGBASpan_565;
-      ctx->Driver.WriteRGBAPixels = mgaWriteRGBAPixels_565;
-      ctx->Driver.WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_565;
-      ctx->Driver.ReadRGBASpan = mgaReadRGBASpan_565;
-      ctx->Driver.ReadRGBAPixels = mgaReadRGBAPixels_565;
+      swdd->WriteRGBASpan = mgaWriteRGBASpan_565;
+      swdd->WriteRGBSpan = mgaWriteRGBSpan_565;
+      swdd->WriteMonoRGBASpan = mgaWriteMonoRGBASpan_565;
+      swdd->WriteRGBAPixels = mgaWriteRGBAPixels_565;
+      swdd->WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_565;
+      swdd->ReadRGBASpan = mgaReadRGBASpan_565;
+      swdd->ReadRGBAPixels = mgaReadRGBAPixels_565;
 
-      ctx->Driver.ReadDepthSpan = mgaReadDepthSpan_16;
-      ctx->Driver.WriteDepthSpan = mgaWriteDepthSpan_16;
-      ctx->Driver.ReadDepthPixels = mgaReadDepthPixels_16;
-      ctx->Driver.WriteDepthPixels = mgaWriteDepthPixels_16;
+      swdd->ReadDepthSpan = mgaReadDepthSpan_16;
+      swdd->WriteDepthSpan = mgaWriteDepthSpan_16;
+      swdd->ReadDepthPixels = mgaReadDepthPixels_16;
+      swdd->WriteDepthPixels = mgaWriteDepthPixels_16;
       break;
 
    case 4:
-      ctx->Driver.WriteRGBASpan = mgaWriteRGBASpan_8888;
-      ctx->Driver.WriteRGBSpan = mgaWriteRGBSpan_8888;
-      ctx->Driver.WriteMonoRGBASpan = mgaWriteMonoRGBASpan_8888;
-      ctx->Driver.WriteRGBAPixels = mgaWriteRGBAPixels_8888;
-      ctx->Driver.WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_8888;
-      ctx->Driver.ReadRGBASpan = mgaReadRGBASpan_8888;
-      ctx->Driver.ReadRGBAPixels = mgaReadRGBAPixels_8888;
-
+      swdd->WriteRGBASpan = mgaWriteRGBASpan_8888;
+      swdd->WriteRGBSpan = mgaWriteRGBSpan_8888;
+      swdd->WriteMonoRGBASpan = mgaWriteMonoRGBASpan_8888;
+      swdd->WriteRGBAPixels = mgaWriteRGBAPixels_8888;
+      swdd->WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_8888;
+      swdd->ReadRGBASpan = mgaReadRGBASpan_8888;
+      swdd->ReadRGBAPixels = mgaReadRGBAPixels_8888;
+      
       if (!mmesa->hw_stencil) {
-	 ctx->Driver.ReadDepthSpan = mgaReadDepthSpan_32;
-	 ctx->Driver.WriteDepthSpan = mgaWriteDepthSpan_32;
-	 ctx->Driver.ReadDepthPixels = mgaReadDepthPixels_32;
-	 ctx->Driver.WriteDepthPixels = mgaWriteDepthPixels_32;
+	 swdd->ReadDepthSpan = mgaReadDepthSpan_32;
+	 swdd->WriteDepthSpan = mgaWriteDepthSpan_32;
+	 swdd->ReadDepthPixels = mgaReadDepthPixels_32;
+	 swdd->WriteDepthPixels = mgaWriteDepthPixels_32;
       } else {
-	 ctx->Driver.ReadDepthSpan = mgaReadDepthSpan_24_8;
-	 ctx->Driver.WriteDepthSpan = mgaWriteDepthSpan_24_8;
-	 ctx->Driver.ReadDepthPixels = mgaReadDepthPixels_24_8;
-	 ctx->Driver.WriteDepthPixels = mgaWriteDepthPixels_24_8;
+	 swdd->ReadDepthSpan = mgaReadDepthSpan_24_8;
+	 swdd->WriteDepthSpan = mgaWriteDepthSpan_24_8;
+	 swdd->ReadDepthPixels = mgaReadDepthPixels_24_8;
+	 swdd->WriteDepthPixels = mgaWriteDepthPixels_24_8;
 
-	 ctx->Driver.ReadStencilSpan = mgaReadStencilSpan_24_8;
-	 ctx->Driver.WriteStencilSpan = mgaWriteStencilSpan_24_8;
-	 ctx->Driver.ReadStencilPixels = mgaReadStencilPixels_24_8;
-	 ctx->Driver.WriteStencilPixels = mgaWriteStencilPixels_24_8;
+	 swdd->ReadStencilSpan = mgaReadStencilSpan_24_8;
+	 swdd->WriteStencilSpan = mgaWriteStencilSpan_24_8;
+	 swdd->ReadStencilPixels = mgaReadStencilPixels_24_8;
+	 swdd->WriteStencilPixels = mgaWriteStencilPixels_24_8;
       }
       break;
    }

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.18 2001/11/15 23:15:55 alanh Exp $
+XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.23 2002/12/28 17:32:00 alanh Exp $
 
 /*
  * Cygwin shared library rules (DLL versions)
@@ -7,9 +7,11 @@ XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.18 2001/11/15 23:15:55 alanh Exp $
 #define HasSharedLibraries	YES
 #define NeedLibInsideFlag	NO
 #define ForceNormalLib		NO
-#define SharedLibXaw		NO
-#define SharedLibXmu		NO 
+#define SharedLibXaw		NO /* For these we need new binutils */
+#define SharedLibXmu		NO
 #define SharedLibXt		NO
+#define SharedLibFont		NO
+#define SharedLibXaw6		NO
 #define SharedLibSM		YES
 #define SharedLibICE		YES
 #define SharedLibXext		YES
@@ -20,9 +22,6 @@ XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.18 2001/11/15 23:15:55 alanh Exp $
 #define SharedOldX		YES
 #define SharedLibXp		YES
 #define SharedLibGlx		YES
-#define SharedLibFont		NO
-#define SharedLibXaw6		NO
-#define SharedLibgetsurf	NO 
 #define SharedLibDps		YES
 #define SharedLibDpsTk		YES
 #define SharedLibGlu		YES
@@ -52,6 +51,14 @@ XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.18 2001/11/15 23:15:55 alanh Exp $
 #define UseExportLists YES
 #endif
 
+#define SharedLibraryName(libname, rev) \
+Concat3(cyg,libname,-$(shell echo rev|sed s=\\..*==).dll)    
+
+#define ImportLibraryName(libname, rev) \
+Concat3(lib,libname,-$(shell echo rev|sed s=\\..*==).dll.a)    
+
+#define ShortImportLibraryName(libname, rev) \
+Concat3(lib,libname,.dll.a)    
 
 /*
  * SharedDepLibraryTarget - generate rules to create a shared library.
@@ -75,22 +82,23 @@ XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.18 2001/11/15 23:15:55 alanh Exp $
  */
 
 #define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
-AllTarget(Concat3(lib,libname,.dll))                                    @@\
+AllTarget(SharedLibraryName(libname,rev))                             @@\
 									@@\
 CppFileTarget(libname.def,libname-def.cpp,-DLIBRARY_VERSION=rev,$(ICONFIGFILES)) @@\
 									@@\
                                                                         @@\
 									@@\
-Concat3(lib,libname,.dll): deplist libname.def				@@\
-	RemoveFile(LibraryTargetName(libname))				@@\
-	RemoveFile(Concat3(lib,libname,.dll))				@@\
-	MakeDLL(libname,solist)						@@\
-	LinkBuildLibrary(Concat3(lib,libname,.a))			@@\
-	LinkBuildDLL(Concat3(lib,libname,.dll))				@@\
+SharedLibraryName(libname,rev): deplist libname.def		        @@\
+	RemoveFile(ImportLibraryName(libname,rev))			@@\
+	RemoveFile(SharedLibraryName(libname,rev))			@@\
+	MakeDLL(libname,solist,rev)	                		@@\
+	LinkBuildLibrary(ImportLibraryName(libname,rev))		@@\
+	LinkImportLibrary(ImportLibraryName(libname,rev),LibraryTargetName(libname))	@@\
+	LinkBuildDLL(SharedLibraryName(libname,rev))			@@\
 									@@\
 clean::									@@\
-	RemoveFile(LibraryTargetName(libname))				@@\
-	RemoveFile(Concat3(lib,libname,.dll))				@@\
+	RemoveFile(ImportLibraryName(libname,rev))				@@\
+	RemoveFile(SharedLibraryName(libname,rev))			@@\
 
 #endif /* SharedDepLibraryTarget */
 
@@ -116,22 +124,23 @@ clean::									@@\
  */
 
 #define SharedDepCplusplusLibraryTarget(libname,rev,deplist,solist,down,up) @@\
-AllTarget(Concat3(lib,libname,.dll))                                        @@\
+AllTarget(SharedLibraryName(libname,rev))                             @@\
                                                                             @@\
 CppFileTarget(libname.def,libname-def.cpp,-DLIBRARY_VERSION=rev,$(ICONFIGFILES)) @@\
                                                                             @@\
                                                                             @@\
                                                                             @@\
-Concat3(lib,libname,.dll): deplist libname.def                              @@\
-	RemoveFile(LibraryTargetName(libname))                                  @@\
-	RemoveFile(Concat3(lib,libname,.dll))                                   @@\
-	MakeCplusplusDLL(libname,solist)                                        @@\
-	LinkBuildLibrary(Concat3(lib,libname,.a))                               @@\
-	LinkBuildDLL(Concat3(lib,libname,.dll))                                 @@\
-                                                                            @@\
-clean::                                                                     @@\
-	RemoveFile(LibraryTargetName(libname))                                  @@\
-	RemoveFile(Concat3(lib,libname,.dll))                                   @@\
+SharedLibraryName(libname,rev): deplist libname.def                     @@\
+	RemoveFile(ImportLibraryName(libname,rev))                      @@\
+	RemoveFile(SharedLibraryName(libname,rev))                      @@\
+	MakeCplusplusDLL(libname,solist,rev)                            @@\
+	LinkBuildLibrary(ImportLibraryName(libname,rev))                @@\
+	LinkImportLibrary(ImportLibraryName(libname,rev),LibraryTargetName(libname))	@@\
+	LinkBuildDLL(SharedLibraryName(libname,rev))                    @@\
+                                                                        @@\
+clean::                                                                 @@\
+	RemoveFile(ImportLibraryName(libname,rev))                      @@\
+	RemoveFile(SharedLibraryName(libname,rev))                      @@\
 
 #endif /* SharedDepCplusplusLibraryTarget */
 
@@ -173,22 +182,22 @@ clean::									@@\
  * MakeDllProg
  */ 
     
-#define MakeDLLProg(libname,solist,prog)			@@\
-	prog -shared -Wl,--out-implib=Concat3(lib,libname,.a) -Wl,--enable-auto-import --def libname.def -o Concat3(lib,libname,.dll) solist $(REQUIREDLIBS)
+#define MakeDLLProg(libname,solist,prog,rev)			        @@\
+	prog -shared -Wl,--out-implib=ImportLibraryName(libname,rev) -Wl,--enable-auto-import --def libname.def -Wl,--exclude-libs,ALL -o SharedLibraryName(libname,rev) solist $(REQUIREDLIBS)
     
 /*
  * MakeDll
  */
 
-#define MakeDLL(libname,solist)						@@\
-    MakeDLLProg(libname,solist,$(CC))
+#define MakeDLL(libname,solist,rev)					@@\
+    MakeDLLProg(libname,solist,$(CC),rev)
 
 /*
  * MakeCplusplusDll
  */
 
-#define MakeCplusplusDLL(libname,solist)						@@\
-    MakeDLLProg(libname,solist,$(CXX))
+#define MakeCplusplusDLL(libname,solist,rev)				@@\
+    MakeDLLProg(libname,solist,$(CXX),rev)
 
 
 
@@ -197,29 +206,42 @@ clean::									@@\
  */
 
 #define SharedLibraryTarget(libname,rev,solist,down,up)                 @@\
-AllTarget(Concat3(lib,libname,.dll))                                    @@\
+AllTarget(SharedLibraryName(libname,rev))                             @@\
 									@@\
 CppFileTarget(libname.def,libname-def.cpp,-DLIBRARY_VERSION=rev,$(ICONFIGFILES)) @@\
 									@@\
                                                                         @@\
-Concat3(lib,libname,.dll): solist libname.def				@@\
-	RemoveFile(LibraryTargetName(libname))				@@\
-	RemoveFile(Concat3(lib,libname,.dll))				@@\
-	MakeDLL(libname,solist)						@@\
-	LinkBuildLibrary(Concat3(lib,libname,.a))			@@\
-	LinkBuildDLL(Concat3(lib,libname,.dll))				@@\
-clean::									@@\
-	RemoveFile(LibraryTargetName(libname))				@@\
-	RemoveFile(Concat3(lib,libname,.dll))				@@\
+SharedLibraryName(libname,rev): solist libname.def	        	@@\
+	RemoveFile(ImportLibraryName(libname,rev))	               	@@\
+	RemoveFile(SharedLibraryName(libname,rev))	            	@@\
+	MakeDLL(libname,solist,rev)		        		@@\
+	LinkBuildLibrary(ImportLibraryName(libname,rev))       		@@\
+	LinkImportLibrary(ImportLibraryName(libname,rev),LibraryTargetName(libname))	@@\
+	LinkBuildDLL(SharedLibraryName(libname,rev))	      		@@\
+clean::							              	@@\
+	RemoveFile(ImportLibraryName(libname,rev))	                @@\
+	RemoveFile(SharedLibraryName(libname,rev))	                @@\
 
 
+/*
+ * InstallLink
+ */
+    
+#ifndef InstallLink
+#define InstallLink(step, file, link, dest)                             @@\
+step::                                                                  @@\
+	MakeDir($(DESTDIR)dest)                                         @@\
+	$(LN) -sf file $(DESTDIR)dest/link
+#endif   
+    
 /*
  * InstallSharedLibrary
  */
 
 #define InstallSharedLibrary(libname,rev,dest)                          @@\
-InstallTarget(install,LibraryTargetName(libname),$(INSTLIBFLAGS),$(USRLIBDIR)) @@\
-InstallTarget(install,Concat3(lib,libname,.dll),$(INSTLIBFLAGS),$(BINDIR))
+InstallTarget(install,ImportLibraryName(libname,rev),$(INSTLIBFLAGS),$(USRLIBDIR)) @@\
+InstallTarget(install,SharedLibraryName(libname,rev),$(INSTBINFLAGS),$(BINDIR)) @@\
+InstallLink(install,ImportLibraryName(libname,rev),ShortImportLibraryName(libname,rev),$(USRLIBDIR))    
 
 
 /*
@@ -264,6 +286,16 @@ InstallTarget(install,Concat3(lib,libname,.dll),$(INSTLIBFLAGS),$(BINDIR))
 	cd $(BUILDBINDIR) && $(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/lib .
 #endif
 
+#ifndef LinkImportLibrary
+#ifdef UseInstalled 
+#define LinkImportLibrary(lib, importlib) $(_NULLCMD_)
+#else
+#define LinkImportLibrary(lib, importlib) MakeDir($(BUILDLIBDIR))     @@\
+	RemoveFile($(BUILDLIBDIR)/importlib)                            @@\
+	cd $(BUILDLIBDIR) && $(LN) lib importlib
+#endif
+#endif /* LinkImportLibrary */
+
 
 /*
  * LinkBuildBinary - This rule normally creates a link in xc/exports/bin
@@ -286,7 +318,7 @@ InstallTarget(install,Concat3(lib,libname,.dll),$(INSTLIBFLAGS),$(BINDIR))
 all:: binary								@@\
 	MakeDir($(BUILDBINDIR))						@@\
 	RemoveFile($(BUILDBINDIR)/binary)				@@\
-	$(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/binary $(BUILDBINDIR)
+	cd $(BUILDBINDIR) && $(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/binary .
 #endif /* LinkBuildBinary */
 
 
@@ -305,6 +337,7 @@ clean::									@@\
 	RemoveFile(ProgramTargetName(program))
 
 
+#if CrossCompiling
 /*
  * ComplexProgramTarget_1 - Imake.rules doesn't wrap the program names
  * with ProgramTargetName(), so we need this rule for Cygwin.
@@ -326,6 +359,7 @@ LintTarget()								@@\
 									@@\
 clean::									@@\
 	RemoveFiles($(PROGS_EXE))
+#endif
 
 
 /*
@@ -429,3 +463,19 @@ $(IMAKE) $(IMAKE).Osuf:							@@\
 	echo "okay, continuing in $(CURRENT_DIR)")
 #endif /* UseInstalled */
 #endif /* ImakeDependency */
+
+
+/*
+ * ResourceObjectRule - Build a Windows resouce file (.res) into
+ * an object file (.o) that can be linked in with the executable
+ * or library being built.
+ */
+
+#ifndef ResourceObjectRule
+#define ResourceObjectRule(basename,depends,options) 			@@\
+AllTarget(basename.RESsuf)						@@\
+basename.RESsuf: basename.RCsuf depends					@@\
+	RemoveFile($@)							@@\
+	ClearmakeOSName \
+	WindresCmd basename.RCsuf options -O coff -o basename.RESsuf
+#endif /* ResourceObjectRule */

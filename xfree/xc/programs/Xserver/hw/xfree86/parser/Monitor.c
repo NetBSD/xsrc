@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.24 2001/08/06 20:51:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.27 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -454,7 +454,7 @@ xf86parseMonitorSection (void)
 						ptr->mon_n_hsync++;
 						goto HorizDone;
 				}
-				if (ptr->mon_n_hsync == CONF_MAX_HSYNC)
+				if (ptr->mon_n_hsync >= CONF_MAX_HSYNC)
 					Error ("Sorry. Too many horizontal sync intervals.", NULL);
 				ptr->mon_n_hsync++;
 			} while ((token = xf86getSubToken (&(ptr->mon_comment))) == NUMBER);
@@ -491,7 +491,7 @@ HorizDone:
 						ptr->mon_n_vrefresh++;
 						goto VertDone;
 				}
-				if (ptr->mon_n_vrefresh == CONF_MAX_VREFRESH)
+				if (ptr->mon_n_vrefresh >= CONF_MAX_VREFRESH)
 					Error ("Sorry. Too many vertical refresh intervals.", NULL);
 				ptr->mon_n_vrefresh++;
 			} while ((token = xf86getSubToken (&(ptr->mon_comment))) == NUMBER);

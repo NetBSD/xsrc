@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.27 2002/01/04 23:04:17 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.28 2002/09/08 02:29:47 paulo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -532,6 +532,7 @@ AsciiPreparePaint(Widget w, int y, int line,
     while (pos < to) {
 	paint = XtNew(XawTextPaintStruct);
 	paint->next = sink->text_sink.paint->paint;
+	sink->text_sink.paint->paint = paint;
 	paint->x = x;
 	paint->y = y + ascent;
 	paint->property = NULL;
@@ -623,22 +624,21 @@ AsciiPreparePaint(Widget w, int y, int line,
 			}
 		    }
 
+		    paint->width = segment.x2 - segment.x1;
 		    x = segment.x1 = segment.x2;
-		    paint->width = x - segment.x1;
 
 		    if (paint->length == 0) {
 			paint->x = x;
 			continue;
 		    }
 		    paint->text = XtRealloc(paint->text, paint->length);
-
-		    sink->text_sink.paint->paint = paint;
-
+		    property = paint->property;
 		    paint = XtNew(XawTextPaintStruct);
 		    paint->next = sink->text_sink.paint->paint;
+		    sink->text_sink.paint->paint = paint;
 		    paint->x = x;
 		    paint->y = y + ascent;
-		    paint->property = sink->text_sink.paint->paint->property;
+		    paint->property = property;
 		    paint->max_ascent = ascent;
 		    paint->max_descent = descent;
 		    paint->backtabs = NULL;
@@ -694,7 +694,6 @@ AsciiPreparePaint(Widget w, int y, int line,
 	}
 
 	paint->width = x - segment.x1;
-	sink->text_sink.paint->paint = paint;
     }
 
     xr = x;

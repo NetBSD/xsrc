@@ -35,7 +35,7 @@ of the copyright holder.
 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/kdrive/linux/agp.c,v 1.1 2001/03/30 02:18:41 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/linux/agp.c,v 1.2 2002/12/12 18:29:05 eich Exp $ */
 
 /*
  * Author: Pontus Lidman <pontus.lidman@nokia.com> (adaption to KDrive) and others
@@ -120,9 +120,16 @@ GARTInit()
 	KdReleaseGART(-1);
 
 #if defined(linux)
-	/* Should this look for version >= rather than version == ? */
-	if (agpinf.version.major != AGPGART_MAJOR_VERSION &&
-	    agpinf.version.minor != AGPGART_MINOR_VERSION) {
+	/* Per Dave Jones, every effort will be made to keep the
+	 * agpgart interface backwards compatible, so allow all
+	 * future versions.
+	 */
+	if (
+#if (AGPGART_MAJOR_VERSION > 0) /* quiet compiler */
+	    agpinf.version.major < AGPGART_MAJOR_VERSION ||
+#endif
+	    (agpinf.version.major == AGPGART_MAJOR_VERSION &&
+	     agpinf.version.minor < AGPGART_MINOR_VERSION)) {
             fprintf(stderr, 
                     "Kernel agpgart driver version is not current" 
                     " (%d.%d vs %d.%d)\n", 

@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcJis.c,v 1.8 2001/07/25 15:04:45 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcJis.c,v 1.10 2003/01/20 04:05:31 dawes Exp $ */
 
 /*
  * A Japanese JIS locale.
@@ -139,6 +139,8 @@ mbtocs(
 			case E_GR:
 			    charset = state->GR_charset;
 			    goto found;
+			default:
+			    break;
 		    }
 		}
 	    }
@@ -405,6 +407,8 @@ cstombs(
 		    state->GL_charset = charset;
 		else
 		    state->GR_charset = charset;
+		break;
+	    default:
 		break;
 	}
     }
@@ -929,6 +933,8 @@ _XlcJisLoader(
 #ifdef STDCVT
     }
 #endif
+
+    _XlcAddUtf8Converters(lcd);
 
     return lcd;
 }

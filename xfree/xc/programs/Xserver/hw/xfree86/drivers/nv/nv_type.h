@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.29 2001/12/07 00:09:56 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.39 2002/11/28 23:02:13 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -10,11 +10,14 @@
 #include "xf86Cursor.h"
 #include "xf86int10.h"
 
+
+#define BITMASK(t,b) (((unsigned)(1U << (((t)-(b)+1)))-1)  << (b))
+#define MASKEXPAND(mask) BITMASK(1?mask,0?mask)
+#define SetBF(mask,value) ((value) << (0?mask))
+#define GetBF(var,mask) (((unsigned)((var) & MASKEXPAND(mask))) >> (0?mask) )
 #define SetBitField(value,from,to) SetBF(to, GetBF(value,from))
 #define SetBit(n) (1<<(n))
 #define Set8Bits(value) ((value)&0xff)
-
-#define MAX_CURS            32
 
 typedef RIVA_HW_STATE* NVRegPtr;
 
@@ -32,7 +35,6 @@ typedef struct {
     void        (*SetCursorColors)(ScrnInfoPtr, int, int);
     long        maxPixelClock;
     void        (*LoadPalette)(ScrnInfoPtr, int, int*, LOCO*, VisualPtr);
-    void        (*PreInit)(ScrnInfoPtr);
     void        (*Save)(ScrnInfoPtr, vgaRegPtr, NVRegPtr, Bool);
     void        (*Restore)(ScrnInfoPtr, vgaRegPtr, NVRegPtr, Bool);
     Bool        (*ModeInit)(ScrnInfoPtr, DisplayModePtr);
@@ -80,7 +82,6 @@ typedef struct {
     int                 numDGAModes;
     Bool                DGAactive;
     int                 DGAViewportStatus;
-    void                (*PreInit)(ScrnInfoPtr pScrn);
     void                (*Save)(ScrnInfoPtr, vgaRegPtr, NVRegPtr, Bool);
     void                (*Restore)(ScrnInfoPtr, vgaRegPtr, NVRegPtr, Bool);
     Bool                (*ModeInit)(ScrnInfoPtr, DisplayModePtr);
@@ -89,7 +90,6 @@ typedef struct {
     CloseScreenProcPtr  CloseScreen;
     Bool                FBDev;
     /* Color expansion */
-    Bool                useFifo;
     unsigned char       *expandBuffer;
     unsigned char       *expandFifo;
     int                 expandWidth;
@@ -99,8 +99,8 @@ typedef struct {
     int			Rotate;
     NVFBLayout		CurrentLayout;
     /* Cursor */
-    unsigned short      curFg, curBg;
-    unsigned int        curImage[MAX_CURS*2];
+    CARD32              curFg, curBg;
+    CARD32              curImage[256];
     /* Misc flags */
     unsigned int        opaqueMonochrome;
     int                 currentRop;
@@ -113,8 +113,13 @@ typedef struct {
     void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
     XF86VideoAdaptorPtr	overlayAdaptor;
     int			videoKey;
-    Bool		FlatPanel;
+    int			FlatPanel;
+    Bool                FPDither;
+    Bool		SecondCRTC;
+    int			forceCRTC;
     OptionInfoPtr	Options;
+    Bool                alphaCursor;
+    unsigned char       DDCBase;
 } NVRec, *NVPtr;
 
 #define NVPTR(p) ((NVPtr)((p)->driverPrivate))
@@ -126,41 +131,5 @@ void NVRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void NVPointerMoved(int index, int x, int y);
 
 int RivaGetConfig(NVPtr);
-
-#define NV_CHIP_RIVA128    ((PCI_VENDOR_NVIDIA_SGS << 16)| PCI_CHIP_RIVA128)
-#define NV_CHIP_TNT        ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT)
-#define NV_CHIP_TNT2       ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2)
-#define NV_CHIP_UTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UTNT2)
-#define NV_CHIP_VTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_VTNT2)
-#define NV_CHIP_UVTNT2     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UVTNT2)
-#define NV_CHIP_ITNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_ITNT2)
-#define NV_CHIP_GEFORCE256 ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_GEFORCE256)
-#define NV_CHIP_GEFORCEDDR ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_GEFORCEDDR)
-#define NV_CHIP_QUADRO     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_QUADRO)
-#define NV_CHIP_GEFORCE2MX      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2MX)
-#define NV_CHIP_GEFORCE2MXDDR    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2MXDDR)
-#define NV_CHIP_IGEFORCE2    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_IGEFORCE2)
-#define NV_CHIP_0x0170    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0170)
-#define NV_CHIP_0x0171    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0171)
-#define NV_CHIP_0x0172    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0172)
-#define NV_CHIP_0x0173    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0173)
-#define NV_CHIP_0x0174    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0174)
-#define NV_CHIP_0x0175    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0175)
-#define NV_CHIP_0x0178    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0178)
-#define NV_CHIP_0x017A    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017A)
-#define NV_CHIP_0x017B    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017B)
-#define NV_CHIP_0x017C    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017C)
-#define NV_CHIP_QUADRO2MXR      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO2MXR)
-#define NV_CHIP_GEFORCE2GO      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GO)
-#define NV_CHIP_GEFORCE2GTS     ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GTS)
-#define NV_CHIP_GEFORCE2GTS_1   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GTS_1)
-#define NV_CHIP_GEFORCE2ULTRA   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2ULTRA)
-#define NV_CHIP_QUADRO2PRO      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO2PRO)
-#define NV_CHIP_GEFORCE3     ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3)
-#define NV_CHIP_GEFORCE3_1   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_1)
-#define NV_CHIP_GEFORCE3_2   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_2)
-#define NV_CHIP_QUADRO_DDC   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO_DDC)
-#define NV_CHIP_0x0250    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0250)
-#define NV_CHIP_0x0258    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0258)
 
 #endif /* __NV_STRUCT_H__ */

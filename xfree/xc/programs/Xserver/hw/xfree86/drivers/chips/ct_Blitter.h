@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_Blitter.h,v 1.3 1998/08/29 05:43:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_Blitter.h,v 1.4 2002/01/25 21:55:58 tsi Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* registers */
@@ -69,26 +69,26 @@
 /* Macros to do useful things with the C&T BitBLT engine */
 
 #define ctBLTWAIT \
-  {HW_DEBUG(0x4+2); while(inw(DR(0x4)+2)&0x10){};}
+  {HW_DEBUG(0x4+2); while(inw(cPtr->PIOBase+DR(0x4)+2)&0x10){};}
 
 #define ctSETROP(op) \
-  {HW_DEBUG(0x4); outl(DR(0x4),(op));}
+  {HW_DEBUG(0x4); outl(cPtr->PIOBase+DR(0x4),(op));}
 
 #define ctSETSRCADDR(srcAddr) \
-  {HW_DEBUG(0x5); outl(DR(0x5),((srcAddr)&0x1FFFFFL));}
+  {HW_DEBUG(0x5); outl(cPtr->PIOBase+DR(0x5),((srcAddr)&0x1FFFFFL));}
 
 #define ctSETDSTADDR(dstAddr) \
-  {HW_DEBUG(0x6); outl(DR(0x6),((dstAddr)&0x1FFFFFL));}
+  {HW_DEBUG(0x6); outl(cPtr->PIOBase+DR(0x6),((dstAddr)&0x1FFFFFL));}
 
 #define ctSETPITCH(srcPitch,dstPitch) \
-  {HW_DEBUG(0x0); outl(DR(0x0),(((dstPitch)<<16)|(srcPitch)));}
+  {HW_DEBUG(0x0); outl(cPtr->PIOBase+DR(0x0),(((dstPitch)<<16)|(srcPitch)));}
 
 /* Note that this command signal a blit to commence */
 #define ctSETHEIGHTWIDTHGO(Height,Width)\
-  {HW_DEBUG(0x7); outl(DR(0x7),(((Height)<<16)|(Width)));}
+  {HW_DEBUG(0x7); outl(cPtr->PIOBase+DR(0x7),(((Height)<<16)|(Width)));}
 
 #define ctSETPATSRCADDR(srcAddr)\
-  {HW_DEBUG(0x1); outl(DR(0x1),((srcAddr)&0x1FFFFFL));}
+  {HW_DEBUG(0x1); outl(cPtr->PIOBase+DR(0x1),((srcAddr)&0x1FFFFFL));}
 
 /* I can't help pointing out at this point that I'm not complaining
  * about the american spelling of Colour!! [DGB] */
@@ -97,7 +97,7 @@
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	outl(DR(0x2),((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
+	outl(cPtr->PIOBase+DR(0x2),((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
 	       ((((c)&0xFF)<<8)|((c)&0xFF)))); \
     } \
 }
@@ -106,7 +106,7 @@
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	outl(DR(0x2),((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
+	outl(cPtr->PIOBase+DR(0x2),((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
     } \
 }
 
@@ -115,7 +115,7 @@
     HW_DEBUG(0x2); \
     if ((cAcl->bgColor != (c)) || (cAcl->bgColor == -1)) { \
 	cAcl->bgColor = (c); \
-	outl(DR(0x2),(c)&0xFFFFFF); \
+	outl(cPtr->PIOBase+DR(0x2),(c)&0xFFFFFF); \
     } \
 }
 
@@ -123,7 +123,7 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	outl(DR(0x3),((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
+	outl(cPtr->PIOBase+DR(0x3),((((((c)&0xFF)<<8)|((c)&0xFF))<<16) | \
 	       ((((c)&0xFF)<<8)|((c)&0xFF)))); \
     } \
 }
@@ -132,7 +132,7 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	outl(DR(0x3),((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
+	outl(cPtr->PIOBase+DR(0x3),((((c)&0xFFFF)<<16)|((c)&0xFFFF))); \
     } \
 }
 
@@ -141,7 +141,7 @@
     HW_DEBUG(0x3); \
     if ((cAcl->fgColor != (c)) || (cAcl->fgColor == -1)) { \
 	cAcl->fgColor = (c); \
-	outl(DR(0x3),(c)&0xFFFFFF); \
+	outl(cPtr->PIOBase+DR(0x3),(c)&0xFFFFFF); \
     } \
 }
 

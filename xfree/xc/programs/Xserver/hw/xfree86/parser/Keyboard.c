@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.12 2001/08/06 20:51:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.15 2003/01/04 20:20:22 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -261,7 +261,7 @@ xf86parseKeyboardSection (void)
 		}
 	}
 
-    ptr->inp_identifier = xf86configStrdup(CONF_IMPLICIT_KEYBOARD);
+	ptr->inp_identifier = xf86configStrdup(CONF_IMPLICIT_KEYBOARD);
 	ptr->inp_driver = xf86configStrdup("keyboard");
 	ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 										xf86configStrdup("CoreKeyboard"), NULL);

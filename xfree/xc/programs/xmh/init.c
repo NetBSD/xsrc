@@ -25,7 +25,7 @@
  * without specific, written prior permission.
  *
  */
-/* $XFree86: xc/programs/xmh/init.c,v 1.5 2002/01/07 20:20:12 dawes Exp $ */
+/* $XFree86: xc/programs/xmh/init.c,v 1.6 2002/04/05 21:06:28 dickey Exp $ */
 
 /* Init.c - Handle start-up initialization. */
 
@@ -174,8 +174,7 @@ static XrmOptionDescRec table[] = {
 };
 
 /* Tell the user how to use this program. */
-static void Syntax(call)
-    char *call;
+static void Syntax(char *call)
 {
     (void) fprintf(stderr, "usage: %s [-path <path>] [-initial <folder>]\n",
 		   call);
@@ -183,9 +182,7 @@ static void Syntax(call)
 }
 
 
-static char *FixUpGeometry(geo, defwidth, defheight)
-char *geo;
-Dimension defwidth, defheight;
+static char *FixUpGeometry(char *geo, unsigned defwidth, unsigned defheight)
 {
     int gbits;
     int x, y;
@@ -205,8 +202,7 @@ Dimension defwidth, defheight;
 }
 
 
-static int _IOErrorHandler(dpy)
-    Display *dpy;
+static int _IOErrorHandler(Display *dpy)
 {
     (void) fprintf (stderr,
 	     "%s:\tfatal IO error after %lu requests (%lu known processed)\n",
@@ -225,11 +221,11 @@ static int _IOErrorHandler(dpy)
 }
 
 /*ARGSUSED*/
-static void PopupAppDefaultsWarning(w, closure, event, cont)
-    Widget w;
-    XtPointer closure;
-    XEvent *event;
-    Boolean *cont;
+static void PopupAppDefaultsWarning(
+    Widget w,
+    XtPointer closure,
+    XEvent *event,
+    Boolean *cont)
 {
     if (event->type == MapNotify) {
 	PopupError(w,
@@ -245,10 +241,10 @@ xmh man page for further information."
 
 
 /*ARGSUSED*/
-static void _Die(w, client_data, call_data)
-    Widget w;			/* == toplevel */
-    XtPointer client_data;	/* unused */
-    XtPointer call_data;	/* unused */
+static void _Die(
+    Widget w,			/* == toplevel */
+    XtPointer client_data,	/* unused */
+    XtPointer call_data)	/* unused */
 {
     int i;
 
@@ -263,11 +259,10 @@ static void _Die(w, client_data, call_data)
 
 /* All the start-up initialization goes here. */
 
-void InitializeWorld(argc, argv)
-int argc;
-char **argv;
+extern char** environ;	/* POSIX doesn't specify a .h for this */
+
+void InitializeWorld(int argc, char **argv)
 {
-    extern char** environ;	/* POSIX doesn't specify a .h for this */
     int l;
     FILEPTR fid;
     char str[500], str2[500], *ptr;

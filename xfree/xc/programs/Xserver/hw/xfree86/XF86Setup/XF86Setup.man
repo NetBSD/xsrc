@@ -1,5 +1,5 @@
 .\" $XConsortium: XF86Setup.man /main/3 1996/12/09 17:37:49 kaleb $
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/XF86Setup.man,v 3.5 2001/01/27 18:20:45 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/XF86Setup.man,v 3.6 2002/10/12 16:06:43 herrb Exp $
 .TH XF86Setup 1 __vendorversion__
 .SH NAME
 XF86Setup - Graphical configuration utility for XFree86
@@ -79,14 +79,15 @@ If set, indicates the parent directory of X bin and lib directories.
 .TP 14
 .B XF86SETUPLIB
 If set, overrides the default location of the library directory
-(normally <XRoot>/lib/X11/XF86Setup).
+(normally __projectroot__/lib/X11/XF86Setup).
 .TP 14
 .B TMPDIR
 Directory in which to store temporary files (defaults to /tmp)
 .SH FILES
-<XRoot>/lib/X11/XF86Config
+.I __projectroot__/lib/X11/XF86Config
 .br
-\fIor\fP /etc/XF86Config
+or
+.I /etc/XF86Config
 .RS 14
 Can optionally be read to set default values
 for configuration settings

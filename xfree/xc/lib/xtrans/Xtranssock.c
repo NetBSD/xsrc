@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.53 2001/12/14 19:57:06 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.56 2002/11/26 01:12:30 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -79,7 +79,7 @@ from The Open Group.
 #include <sys/stat.h>
 #endif
 
-#if defined(hpux) || defined(__EMX__) || (defined(MOTOROLA) && defined(SYSV))
+#if defined(hpux) || defined(__UNIXOS2__) || (defined(MOTOROLA) && defined(SYSV))
 #define NO_TCP_H
 #endif 
 
@@ -128,7 +128,7 @@ from The Open Group.
 #undef SO_DONTLINGER
 #endif
 
-#if defined(__EMX__)
+#if defined(__UNIXOS2__)
 #if defined(NOT_EMX09A)
 static int IBMsockInit = 0;
 #define SocketInitOnce()\
@@ -797,7 +797,7 @@ TRANS(SocketCreateListener) (XtransConnInfo ciptr,
 	
     /* Set a flag to indicate that this connection is a listener */
 
-    ciptr->flags = 1;
+    ciptr->flags = 1 | (ciptr->flags & TRANS_KEEPFLAGS);
 
     return 0;
 }
@@ -1714,11 +1714,11 @@ TRANS(SocketBytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
 #if (defined(i386) && defined(SYSV) && !defined(sco)) || (defined(_SEQUENT_) && _SOCKET_VERSION == 1)
     return ioctl (ciptr->fd, I_NREAD, (char *) pend);
 #else
-#if defined(__EMX__)
+#if defined(__UNIXOS2__)
     return ioctl (ciptr->fd, FIONREAD, (char*) pend, sizeof(int));
 #else
     return ioctl (ciptr->fd, FIONREAD, (char *) pend);
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
 #endif /* i386 && SYSV || _SEQUENT_ && _SOCKET_VERSION == 1 */
 #endif /* WIN32 */
 }
@@ -1730,7 +1730,7 @@ TRANS(SocketRead) (XtransConnInfo ciptr, char *buf, int size)
 {
     PRMSG (2,"SocketRead(%d,%x,%d)\n", ciptr->fd, buf, size);
 
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
     return recv ((SOCKET)ciptr->fd, buf, size, 0);
 #else
     return read (ciptr->fd, buf, size);
@@ -1744,7 +1744,7 @@ TRANS(SocketWrite) (XtransConnInfo ciptr, char *buf, int size)
 {
     PRMSG (2,"SocketWrite(%d,%x,%d)\n", ciptr->fd, buf, size);
 
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
     return send ((SOCKET)ciptr->fd, buf, size, 0);
 #else
     return write (ciptr->fd, buf, size);
@@ -1820,7 +1820,8 @@ TRANS(SocketUNIXClose) (XtransConnInfo ciptr)
     {
 	strncpy (path, sockname->sun_path,
 		ciptr->addrlen - sizeof (sockname->sun_family));
-	unlink (path);
+	if (!(ciptr->flags & TRANS_NOUNLINK))
+		unlink (path);
     }
 
     return ret;

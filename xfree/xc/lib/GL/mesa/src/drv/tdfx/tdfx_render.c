@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_render.c,v 1.3 2001/10/02 11:44:13 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_render.c,v 1.4 2002/02/22 21:45:03 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -35,91 +35,22 @@
  *
  */
 
-#include "dri_glide.h"
 #include "tdfx_context.h"
 #include "tdfx_render.h"
 #include "tdfx_state.h"
 #include "tdfx_texman.h"
+#include "swrast/swrast.h"
 
 /* Clear the color and/or depth buffers.
  */
-static GLbitfield tdfxDDClear( GLcontext *ctx,
-			       GLbitfield mask, GLboolean all,
-			       GLint x, GLint y, GLint width, GLint height )
+static void tdfxDDClear( GLcontext *ctx,
+			 GLbitfield mask, GLboolean all,
+			 GLint x, GLint y, GLint width, GLint height )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
-   const GLuint stencil_size = fxMesa->haveHwStencil ? fxMesa->glVis->StencilBits : 0;
-   GLbitfield softwareMask = 0;
-
-#if 0
-   GLuint flags;
-
-   FLUSH_BATCH( fxMesa );
-
-   if ( mask & DD_FRONT_LEFT_BIT ) {
-      flags |= TDFX_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
-   }
-
-   if ( mask & DD_BACK_LEFT_BIT ) {
-      flags |= TDFX_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
-   }
-
-   if ( (mask & DD_DEPTH_BIT) && ctx->Depth.Mask ) {
-      flags |= TDFX_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
-   }
-
-   if ( (mask & DD_STENCIL_BIT) && fxMesa->haveHwStencil ) {
-      clear.flags |= TDFX_STENCIL;
-      mask &= ~DD_STENCIL_BIT;
-   }
-
-   if ( !flags )
-      return mask;
-
-   LOCK_HARDWARE( fxMesa );
-
-
-   if ( flags & TDFX_FRONT ) {
-
-   }
-
-   if ( flags & TDFX_BACK ) {
-
-   }
-
-   if ( flags & TDFX_DEPTH ) {
-
-   }
-
-   if ( flags & TDFX_STENCIL ) {
-      fxMesa->Glide.grStencilMask( fxMesa->Stencil.WriteMask );
-      /* set stencil ref value = desired clear value */
-      fxMesa->Glide.grStencilFunc( GR_CMP_ALWAYS, fxMesa->Stencil.Clear, 0xff );
-      fxMesa->Glide.grStencilOp( GR_STENCILOP_REPLACE,
-                                 GR_STENCILOP_REPLACE,
-                                 GR_STENCILOP_REPLACE );
-      fxMesa->Glide.grEnable( GR_STENCIL_MODE_EXT );
-
-      if ( ctx->Stencil.Enabled ) {
-	 fxMesa->Glide.grStencilOp( fxMesa->Stencil.FailFunc,
-                                    fxMesa->Stencil.ZFailFunc,
-                                    fxMesa->Stencil.ZPassFunc );
-	 fxMesa->Glide.grStencilMask( fxMesa->Stencil.WriteMask );
-	 fxMesa->Glide.grStencilFunc( fxMesa->Stencil.Function,
-                                      fxMesa->Stencil.RefValue,
-                                      fxMesa->Stencil.ValueMask );
-	 fxMesa->Glide.grEnable_NoLock( GR_STENCIL_MODE_EXT );
-      } else {
-	 fxMesa->Glide.grDisable( GR_STENCIL_MODE_EXT );
-      }
-      
-   }
-   UNLOCK_HARDWARE( fxMesa );
-   
-#else
+   GLbitfield softwareMask = mask & (DD_ACCUM_BIT);
+   const GLuint stencil_size =
+      fxMesa->haveHwStencil ? fxMesa->glCtx->Visual.stencilBits : 0;
 
    if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %d, %d, %d, %d )\n",
@@ -133,10 +64,7 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
    }
 
    /* we can't clear accum buffers */
-   if (mask & DD_ACCUM_BIT) {
-      mask &= ~(DD_ACCUM_BIT);
-      softwareMask |= DD_ACCUM_BIT;
-   }
+   mask &= ~(DD_ACCUM_BIT);
 
    if (mask & DD_STENCIL_BIT) {
       if (!fxMesa->haveHwStencil || ctx->Stencil.WriteMask != 0xff) {
@@ -147,10 +75,10 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
       }
    }
 
-   if (fxMesa->glVis->RedBits != 8) {
+   if (fxMesa->glCtx->Visual.redBits != 8) {
       /* can only do color masking if running in 24/32bpp on Napalm */
-      if ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP]) ||
-          (ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP])) {
+      if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
+          ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]) {
          softwareMask |= (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
          mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
       }
@@ -166,7 +94,8 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
       if (mask & DD_STENCIL_BIT) {
 	 fxMesa->Glide.grStencilMask(/*ctx->Stencil.WriteMask*/ 0xff);
 	 /* set stencil ref value = desired clear value */
-	 fxMesa->Glide.grStencilFunc(GR_CMP_ALWAYS, ctx->Stencil.Clear, 0xff);
+	 fxMesa->Glide.grStencilFunc(GR_CMP_ALWAYS,
+                                     ctx->Stencil.Clear, 0xff);
 	 fxMesa->Glide.grStencilOp(GR_STENCILOP_REPLACE,
                                    GR_STENCILOP_REPLACE, GR_STENCILOP_REPLACE);
 	 fxMesa->Glide.grEnable(GR_STENCIL_MODE_EXT);
@@ -178,7 +107,8 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
    }
 
    /*
-    * FIXME: This is just plain ugly...
+    * This may be ugly, but it's needed in order to work around a number
+    * of Glide bugs.
     */
    BEGIN_CLIP_LOOP(fxMesa);
    {
@@ -277,8 +207,7 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
       case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
 	 /* front and back */
 	 fxMesa->Glide.grDepthMask(FXFALSE);
-	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-         FX_grColorMaskv_NoLock(ctx, true4);
+	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_BACKBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
@@ -288,7 +217,7 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
             fxMesa->Glide.grBufferClear(fxMesa->Color.ClearColor,
                                         fxMesa->Color.ClearAlpha,
                                         fxMesa->Depth.Clear);
-	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
@@ -306,7 +235,6 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
 	 /* clear front */
 	 fxMesa->Glide.grDepthMask(FXFALSE);
 	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-         FX_grColorMaskv_NoLock(ctx, true4);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
@@ -319,7 +247,7 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
 	 /* clear back and depth */
 	 fxMesa->Glide.grDepthMask(FXTRUE);
 	 fxMesa->Glide.grRenderBuffer(GR_BUFFER_BACKBUFFER);
-	 if (stencil_size > 0)
+         if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->Color.ClearColor,
                                            fxMesa->Color.ClearAlpha,
                                            fxMesa->Depth.Clear,
@@ -381,8 +309,8 @@ static GLbitfield tdfxDDClear( GLcontext *ctx,
       fxMesa->dirty |= TDFX_UPLOAD_STENCIL;
    }
 
-#endif
-   return softwareMask;
+   if (softwareMask)
+      _swrast_Clear( ctx, softwareMask, all, x, y, width, height );
 }
 
 
@@ -410,7 +338,7 @@ static void tdfxDDFlush( GLcontext *ctx )
 }
 
 
-
+#if 0
 static const char *texSource(int k)
 {
    switch (k) {
@@ -454,7 +382,9 @@ static const char *texSource(int k)
          return "";
    }
 }
+#endif
 
+#if 0
 static const char *texMode(int k)
 {
    switch (k) {
@@ -472,11 +402,14 @@ static const char *texMode(int k)
          return "";
    }
 }
+#endif
 
+#if 0
 static const char *texInvert(int k)
 {
    return k ? "FXTRUE" : "FXFALSE";
 }
+#endif
 
 static void uploadTextureEnv( tdfxContextPtr fxMesa )
 {
@@ -530,7 +463,7 @@ static void uploadTextureEnv( tdfxContextPtr fxMesa )
                                      fxMesa->TexCombineExt[unit].Alpha.Shift,
                                      fxMesa->TexCombineExt[unit].Alpha.Invert);
          fxMesa->Glide.grConstantColorValueExt(TDFX_TMU0 + unit,
-                                     fxMesa->TexCombineExt[unit].EnvColor);
+                                        fxMesa->TexCombineExt[unit].EnvColor);
       }
    }
    else {
@@ -598,13 +531,16 @@ static void uploadTextureImages( tdfxContextPtr fxMesa )
 {
    GLcontext *ctx = fxMesa->glCtx;
    int unit;
-   for ( unit = 0 ; unit < TDFX_NUM_TMU ; unit++ ) {
-      if ( ctx->Texture.Unit[unit].ReallyEnabled == TEXTURE0_2D ) {
-         struct gl_texture_object *tObj = ctx->Texture.Unit[unit].CurrentD[2];
-         tdfxTexObjPtr t = TDFX_TEXTURE_DATA(tObj);
-         if ( t && t->reloadImages ) {
-            tdfxTMDownloadTextureLocked( fxMesa, tObj );
-            t->reloadImages = GL_FALSE;
+   for (unit = 0; unit < TDFX_NUM_TMU; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled == TEXTURE0_2D) {
+         struct gl_texture_object *tObj = ctx->Texture.Unit[unit].Current2D;
+         tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
+         if (ti && ti->reloadImages && ti->whichTMU != TDFX_TMU_NONE) {
+            /*
+            printf("download texture image on unit %d\n", unit);
+            */
+            tdfxTMDownloadTexture(fxMesa, tObj);
+            ti->reloadImages = GL_FALSE;
          }
       }
    }
@@ -631,9 +567,9 @@ void tdfxUploadClipping( tdfxContextPtr fxMesa )
    }
    else if (fxMesa->numClipRects == 1) {
       fxMesa->Glide.grClipWindow(fxMesa->pClipRects[0].x1,
-                   fxMesa->screen_height - fxMesa->pClipRects[0].y2,
-                   fxMesa->pClipRects[0].x2,
-                   fxMesa->screen_height - fxMesa->pClipRects[0].y1);
+                            fxMesa->screen_height - fxMesa->pClipRects[0].y2,
+                            fxMesa->pClipRects[0].x2,
+                            fxMesa->screen_height - fxMesa->pClipRects[0].y1);
    }
    /* else, we'll do a cliprect loop around all drawing */
 
@@ -650,23 +586,23 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
    if ( fxMesa->dirty & TDFX_UPLOAD_COLOR_COMBINE ) {
       if (TDFX_IS_NAPALM(fxMesa)) {
          fxMesa->Glide.grColorCombineExt(fxMesa->ColorCombineExt.SourceA,
-                                  fxMesa->ColorCombineExt.ModeA,
-                                  fxMesa->ColorCombineExt.SourceB,
-                                  fxMesa->ColorCombineExt.ModeB,
-                                  fxMesa->ColorCombineExt.SourceC,
-                                  fxMesa->ColorCombineExt.InvertC,
-                                  fxMesa->ColorCombineExt.SourceD,
-                                  fxMesa->ColorCombineExt.InvertD,
-                                  fxMesa->ColorCombineExt.Shift,
-                                  fxMesa->ColorCombineExt.Invert);
+                                         fxMesa->ColorCombineExt.ModeA,
+                                         fxMesa->ColorCombineExt.SourceB,
+                                         fxMesa->ColorCombineExt.ModeB,
+                                         fxMesa->ColorCombineExt.SourceC,
+                                         fxMesa->ColorCombineExt.InvertC,
+                                         fxMesa->ColorCombineExt.SourceD,
+                                         fxMesa->ColorCombineExt.InvertD,
+                                         fxMesa->ColorCombineExt.Shift,
+                                         fxMesa->ColorCombineExt.Invert);
       }
       else {
          /* Voodoo 3 */
-         fxMesa->Glide.grColorCombine(fxMesa->ColorCombine.Function,
-                                      fxMesa->ColorCombine.Factor,
-                                      fxMesa->ColorCombine.Local,
-                                      fxMesa->ColorCombine.Other,
-                                      fxMesa->ColorCombine.Invert);
+         fxMesa->Glide.grColorCombine( fxMesa->ColorCombine.Function,
+                                       fxMesa->ColorCombine.Factor,
+                                       fxMesa->ColorCombine.Local,
+                                       fxMesa->ColorCombine.Other,
+                                       fxMesa->ColorCombine.Invert );
       }
       fxMesa->dirty &= ~TDFX_UPLOAD_COLOR_COMBINE;
    }
@@ -699,13 +635,11 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
       fxMesa->dirty &= ~TDFX_UPLOAD_RENDER_BUFFER;
    }
 
-#if defined(__linux__) || defined(__FreeBSD__)
    if ( fxMesa->dirty & TDFX_UPLOAD_STIPPLE) {
       fxMesa->Glide.grStipplePattern( fxMesa->Stipple.Pattern );
       fxMesa->Glide.grStippleMode( fxMesa->Stipple.Mode );
       fxMesa->dirty &= ~TDFX_UPLOAD_STIPPLE;
    }
-#endif /* __linux__ || __FreeBSD__ */
 
    if ( fxMesa->dirty & TDFX_UPLOAD_ALPHA_TEST ) {
       fxMesa->Glide.grAlphaTestFunction( fxMesa->Color.AlphaFunc );
@@ -779,7 +713,7 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
 
    if ( fxMesa->dirty & TDFX_UPLOAD_COLOR_MASK ) {
       if ( fxMesa->Glide.grColorMaskExt
-           && fxMesa->glCtx->Visual->RedBits == 8) {
+           && fxMesa->glCtx->Visual.redBits == 8) {
 	 fxMesa->Glide.grColorMaskExt( fxMesa->Color.ColorMask[RCOMP],
                                        fxMesa->Color.ColorMask[GCOMP],
                                        fxMesa->Color.ColorMask[BCOMP],
@@ -793,10 +727,10 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
       fxMesa->dirty &= ~TDFX_UPLOAD_COLOR_MASK;
    }
 
-   if ( fxMesa->dirty & TDFX_UPLOAD_CONSTANT_COLOR ) {
-      fxMesa->Glide.grConstantColorValue( fxMesa->Color.MonoColor );
-      fxMesa->dirty &= ~TDFX_UPLOAD_CONSTANT_COLOR;
-   }
+/*     if ( fxMesa->dirty & TDFX_UPLOAD_CONSTANT_COLOR ) { */
+/*        grConstantColorValue( fxMesa->Color.MonoColor ); */
+/*        fxMesa->dirty &= ~TDFX_UPLOAD_CONSTANT_COLOR; */
+/*     } */
 
    if ( fxMesa->dirty & TDFX_UPLOAD_LINE ) {
       if (fxMesa->glCtx->Line.SmoothFlag && fxMesa->glCtx->Line.Width == 1.0)

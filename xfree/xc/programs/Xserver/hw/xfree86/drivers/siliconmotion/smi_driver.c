@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from The XFree86 Project or Silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_driver.c,v 1.20 2002/01/04 21:22:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_driver.c,v 1.28 2003/02/05 17:45:29 eich Exp $ */
 
 #include "xf86Resources.h"
 #include "xf86RAC.h"
@@ -60,11 +60,11 @@ static void SMI_LeaveVT(int scrnIndex, int flags);
 static void SMI_Save (ScrnInfoPtr pScrn);
 static void SMI_WriteMode (ScrnInfoPtr pScrn, vgaRegPtr, SMIRegPtr);
 static Bool SMI_ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
-						   char **argv);
+                           char **argv);
 static int SMI_InternalScreenInit(int scrnIndex, ScreenPtr pScreen);
 static void SMI_PrintRegs(ScrnInfoPtr);
 static ModeStatus SMI_ValidMode(int scrnIndex, DisplayModePtr mode,
-								Bool verbose, int flags);
+                                Bool verbose, int flags);
 static void SMI_DisableVideo(ScrnInfoPtr pScrn);
 static void SMI_EnableVideo(ScrnInfoPtr pScrn);
 static Bool SMI_MapMem(ScrnInfoPtr pScrn);
@@ -73,9 +73,9 @@ static Bool SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static Bool SMI_CloseScreen(int scrnIndex, ScreenPtr pScreen);
 static Bool SMI_SaveScreen(ScreenPtr pScreen, int mode);
 static void SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
-							LOCO *colors, VisualPtr pVisual);
+                            LOCO *colors, VisualPtr pVisual);
 static void SMI_DisplayPowerManagementSet(ScrnInfoPtr pScrn,
-										  int PowerManagementMode, int flags);
+                                          int PowerManagementMode, int flags);
 static Bool SMI_ddc1(int scrnIndex);
 static unsigned int SMI_ddc1Read(ScrnInfoPtr pScrn);
 static void SMI_FreeScreen(int ScrnIndex, int flags);
@@ -83,15 +83,14 @@ static void SMI_ProbeDDC(ScrnInfoPtr pScrn, int index);
 
 
 #define SILICONMOTION_NAME          "Silicon Motion"
-#define SILICONMOTION_DRIVER_NAME	"siliconmotion"
+#define SILICONMOTION_DRIVER_NAME   "siliconmotion"
 #define SILICONMOTION_VERSION_NAME  "1.3.1"
-#define SILICONMOTION_VERSION_MAJOR	1
+#define SILICONMOTION_VERSION_MAJOR 1
 #define SILICONMOTION_VERSION_MINOR 3
 #define SILICONMOTION_PATCHLEVEL    1
-#define SILICONMOTION_DRIVER_VERSION	( (SILICONMOTION_VERSION_MAJOR << 24)  \
-										| (SILICONMOTION_VERSION_MINOR << 16)  \
-										| (SILICONMOTION_PATCHLEVEL)		   \
-										)
+#define SILICONMOTION_DRIVER_VERSION ((SILICONMOTION_VERSION_MAJOR << 24) | \
+                                      (SILICONMOTION_VERSION_MINOR << 16) | \
+                                      (SILICONMOTION_PATCHLEVEL))
 
 /*
  * This contains the functions needed by the server after loading the
@@ -256,6 +255,7 @@ static const char *i2cSymbols[] =
 	"xf86DestroyI2CDevRec",
 	"xf86I2CBusInit",
 	"xf86I2CDevInit",
+	"xf86I2CReadBytes",
 	"xf86I2CWriteByte",
 	NULL
 };
@@ -291,7 +291,6 @@ static const char *fbSymbols[] =
 	"cfbScreenInit",
 	"cfb16ScreenInit",
 	"cfb24ScreenInit",
-	"cfb24_32ScreenInit",
 	"cfb32ScreenInit",
 	"cfb16BresS",
 	"cfb24BresS",
@@ -518,7 +517,8 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	int mclk;
 	vgaHWPtr hwp;
 	int vgaCRIndex, vgaCRReg, vgaIOBase;
-
+	vbeInfoPtr pVbe = NULL;
+	
 	ENTER_PROC("SMI_PreInit");
 
 	if (flags & PROBE_DETECT)
@@ -764,9 +764,9 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 				pSmi->shadowFB ? "enabled" : "disabled");
 	}
 
-	#if 1 /* PDR#932 */
+#if 1 /* PDR#932 */
 	if ((pScrn->depth == 8) || (pScrn->depth == 16))
-	#endif /* PDR#932 */
+#endif /* PDR#932 */
 	if ((s = xf86GetOptValString(pSmi->Options, OPTION_ROTATE)))
 	{
 		if(!xf86NameCmp(s, "CW"))
@@ -859,17 +859,22 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 		LEAVE_PROC("SMI_PreInit");
 		return(FALSE);
 	}
+
+	if (xf86LoadSubModule(pScrn,"int10")) {
+	    xf86LoaderReqSymLists(int10Symbols,NULL);
+	    pSmi->pInt10 = xf86InitInt10(pEnt->index);
+	}
 	
-	if (xf86LoadSubModule(pScrn, "vbe"))
+	if (pSmi->pInt10 && xf86LoadSubModule(pScrn, "vbe"))
 	{
-		xf86LoaderReqSymLists(vbeSymbols, NULL);
-		pSmi->pVbe = VBEInit(NULL, pEnt->index);
+	    xf86LoaderReqSymLists(vbeSymbols, NULL);
+	    pVbe = VBEInit(pSmi->pInt10, pEnt->index);
 	}
 
 	pSmi->PciInfo = xf86GetPciInfoForEntity(pEnt->index);
 	xf86RegisterResources(pEnt->index, NULL, ResExclusive);
-/*	xf86SetOperatingState(RES_SHARED_VGA, pEnt->index, ResUnusedOpr);*/
-/*	xf86SetOperatingState(resVgaMemShared, pEnt->index, ResDisableOpr);*/
+/*	xf86SetOperatingState(resVgaIo, pEnt->index, ResUnusedOpr); */
+/*	xf86SetOperatingState(resVgaMem, pEnt->index, ResDisableOpr); */
 
 	/*
 	 * Set the Chipset and ChipRev, allowing config file entries to
@@ -939,6 +944,7 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	vgaIOBase  = hwp->IOBase;
 	vgaCRIndex = vgaIOBase + VGA_CRTC_INDEX_OFFSET;
 	vgaCRReg   = vgaIOBase + VGA_CRTC_DATA_OFFSET;
+	pSmi->PIOBase = hwp->PIOOffset;
 
 	xf86ErrorFVerb(VERBLEV, "\tSMI_PreInit vgaCRIndex=%x, vgaIOBase=%x, "
 			"MMIOBase=%x\n", vgaCRIndex, vgaIOBase, hwp->MMIOBase);
@@ -957,9 +963,9 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 
 		xf86LoaderReqSymLists(ddcSymbols, NULL);
 #if 1 /* PDR#579 */
-		if (pSmi->pVbe)
+		if (pVbe)
 		{
-			pMon = vbeDoEDID(pSmi->pVbe, NULL);
+			pMon = vbeDoEDID(pVbe, NULL);
 			if (pMon != NULL)
 			{
 				if (   (pMon->rawData[0] == 0x00)
@@ -981,8 +987,8 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 			}
 		}
 #else
-		if (   (pSmi->pVbe)
-			&& ((pMon = xf86PrintEDID(vbeDoEDID(pSmi->pVbe, NULL))) != NULL)
+		if (   (pVbe)
+			&& ((pMon = xf86PrintEDID(vbeDoEDID(pVbe, NULL))) != NULL)
 		)
 		{
 			xf86SetDDCproperties(pScrn, pMon);
@@ -998,11 +1004,10 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 			}
 		}
 	}
-	if (pSmi->pVbe)
-	{
-		vbeFree(pSmi->pVbe);
-		pSmi->pVbe = NULL;
-	}
+
+	vbeFree(pVbe);
+	xf86FreeInt10(pSmi->pInt10);
+	pSmi->pInt10 = NULL;
 
 	/*
 	 * If the driver can do gamma correction, it should call xf86SetGamma()
@@ -1129,15 +1134,14 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	 * Setup the ClockRanges, which describe what clock ranges are available,
 	 * and what sort of modes they can be used for.
 	 */
-	clockRanges = xnfalloc(sizeof(ClockRange));
+	clockRanges = xnfcalloc(sizeof(ClockRange),1);
 	clockRanges->next = NULL;
 	clockRanges->minClock = pSmi->minClock;
 	clockRanges->maxClock = pSmi->maxClock;
 	clockRanges->clockIndex = -1;
 	clockRanges->interlaceAllowed = FALSE;
 	clockRanges->doubleScanAllowed = FALSE;
-
-					
+		
 	i = xf86ValidateModes(
 			pScrn,						/* Screen pointer					  */
 			pScrn->monitor->Modes,		/* Available monitor modes			  */
@@ -1509,12 +1513,12 @@ SMI_Save(ScrnInfoPtr pScrn)
 		pSmi->ModeStructInit = TRUE;
 	}
 
-	if (pSmi->useBIOS && (pSmi->pVbe != NULL))
+	if (pSmi->useBIOS && (pSmi->pInt10 != NULL))
 	{
-		pSmi->pVbe->pInt10->num = 0x10;
-		pSmi->pVbe->pInt10->ax = 0x0F00;
-		xf86ExecX86int10(pSmi->pVbe->pInt10);
-		save->mode = pSmi->pVbe->pInt10->ax & 0x007F;
+		pSmi->pInt10->num = 0x10;
+		pSmi->pInt10->ax = 0x0F00;
+		xf86ExecX86int10(pSmi->pInt10);
+		save->mode = pSmi->pInt10->ax & 0x007F;
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Current mode 0x%02X.\n",
 				save->mode);
 	}
@@ -1554,19 +1558,19 @@ SMI_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
 	/* Wait for engine to become idle */
 	WaitIdle();
 
-	if (pSmi->useBIOS && (pSmi->pVbe->pInt10 != NULL)
+	if (pSmi->useBIOS && (pSmi->pInt10 != NULL)
 	    && (restore->mode != 0))
 	{
-		pSmi->pVbe->pInt10->num = 0x10;
-		pSmi->pVbe->pInt10->ax = restore->mode | 0x80;
+		pSmi->pInt10->num = 0x10;
+		pSmi->pInt10->ax = restore->mode | 0x80;
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Setting mode 0x%02X\n",
 				restore->mode);
-		xf86ExecX86int10(pSmi->pVbe->pInt10);
+		xf86ExecX86int10(pSmi->pInt10);
 
 		/* Enable linear mode. */
-		outb(VGA_SEQ_INDEX, 0x18);
-		tmp = inb(VGA_SEQ_DATA);
-		outb(VGA_SEQ_DATA, tmp | 0x01);
+		outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x18);
+		tmp = inb(pSmi->PIOBase + VGA_SEQ_DATA);
+		outb(pSmi->PIOBase + VGA_SEQ_DATA, tmp | 0x01);
 
 		/* Enable DPR/VPR registers. */
 		tmp = VGAIN8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x21);
@@ -1662,14 +1666,13 @@ SMI_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
 		}
 
 		/* Restore the standard VGA registers */
-		if (xf86IsPrimaryPci(pSmi->PciInfo))
-		{
-			vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_ALL);
-		}
-		else
-		{
-			vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_MODE);
-		}
+		if (xf86IsPrimaryPci(pSmi->PciInfo)) {
+		    vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_CMAP 
+				 | VGA_SR_FONTS);
+		} 
+
+		if (restore->modeInit)
+		    vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_MODE);
 
 		if (!SMI_LYNXM_SERIES(pSmi->Chipset))
 		{
@@ -1981,12 +1984,13 @@ SMI_ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 	pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 	
+	if (!pSmi->pInt10) {
+	    pSmi->pInt10 = xf86InitInt10(pEnt->index);
+	}
+
 	/* Save the chip/graphics state */
 	SMI_Save(pScrn);
 	
-	if (!pSmi->pVbe) {
-	    pSmi->pVbe = VBEInit(NULL, pEnt->index);
-	}
 	/* Zero the frame buffer, #258 */
 	memset(pSmi->FBBase, 0, pSmi->videoRAMBytes);
 
@@ -2336,7 +2340,7 @@ SMI_ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 
 	if (!pSmi->useBIOS || pSmi->lcd)
 	{
-		#if 1 /* PDR#983 */
+#if 1 /* PDR#983 */
 		if (pSmi->zoomOnLCD)
 		{
 			if (   (mode->HDisplay > pSmi->lcdWidth)
@@ -2348,7 +2352,7 @@ SMI_ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 			}
 		}
 		else
-		#endif
+#endif
 		{
 			if (   (mode->HDisplay != pSmi->lcdWidth)
 				|| (mode->VDisplay != pSmi->lcdHeight)
@@ -2361,7 +2365,7 @@ SMI_ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 
 	}
 
-	#if 1 /* PDR#944 */
+#if 1 /* PDR#944 */
 	if (pSmi->rotate)
 	{
 		if (   (mode->HDisplay != pSmi->lcdWidth)
@@ -2372,7 +2376,7 @@ SMI_ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 			return(MODE_PANEL);
 		}
 	}
-	#endif
+#endif
 
 	LEAVE_PROC("SMI_ValidMode");
 	return(MODE_OK);
@@ -2400,6 +2404,8 @@ SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		return(FALSE);
 	}
 
+	new->modeInit = TRUE;
+
 	if (pSmi->rotate)
 	{
 		pSmi->width  = pScrn->virtualY;
@@ -2412,8 +2418,8 @@ SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
 	pSmi->Bpp    = pScrn->bitsPerPixel / 8;
 
-	outb(VGA_SEQ_INDEX, 0x17);
-	tmp = inb(VGA_SEQ_DATA);
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x17);
+	tmp = inb(pSmi->PIOBase + VGA_SEQ_DATA);
 	if (pSmi->pci_burst)
 	{
 		new->SR17 = tmp | 0x20;
@@ -2423,17 +2429,17 @@ SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		new->SR17 = tmp & ~0x20;
 	}
 
-	outb(VGA_SEQ_INDEX, 0x18);
-	new->SR18 = inb(VGA_SEQ_DATA) | 0x11;
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x18);
+	new->SR18 = inb(pSmi->PIOBase + VGA_SEQ_DATA) | 0x11;
 
-	outb(VGA_SEQ_INDEX, 0x21);
-	new->SR21 = inb(VGA_SEQ_DATA) & ~0x03;
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x21);
+	new->SR21 = inb(pSmi->PIOBase + VGA_SEQ_DATA) & ~0x03;
 
-	outb(VGA_SEQ_INDEX, 0x31);
-	new->SR31 = inb(VGA_SEQ_DATA) & ~0xC0;
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x31);
+	new->SR31 = inb(pSmi->PIOBase + VGA_SEQ_DATA) & ~0xC0;
 
-	outb(VGA_SEQ_INDEX, 0x32);
-	new->SR32 = inb(VGA_SEQ_DATA) & ~0x07;
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x32);
+	new->SR32 = inb(pSmi->PIOBase + VGA_SEQ_DATA) & ~0x07;
 	if (SMI_LYNXM_SERIES(pSmi->Chipset))
 	{
 		new->SR32 |= 0x04;
@@ -2539,11 +2545,10 @@ SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		}
 	}
 
-
-    /* CZ 2.11.2001: for gamma correction (TODO: other chipsets?) */
-    new->CCR66 = VGAIN8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x66);
-    if (pSmi->Chipset == SMI_LYNX3DM) {
-        switch (pScrn->bitsPerPixel) {
+	/* CZ 2.11.2001: for gamma correction (TODO: other chipsets?) */
+	new->CCR66 = VGAIN8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x66);
+	if (pSmi->Chipset == SMI_LYNX3DM) {
+	    switch (pScrn->bitsPerPixel) {
 	    case 8:
 		new->CCR66 = (new->CCR66 & 0xF3) | 0x00; /* 6 bits-RAM */
 		break;
@@ -2558,12 +2563,11 @@ SMI_ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    default:
 		LEAVE_PROC("SMI_ModeInit");
 		return(FALSE);
-        }
-    }
-    /* end CZ */
+	    }
+	}
 
-	outb(VGA_SEQ_INDEX, 0x30);
-	if (inb(VGA_SEQ_DATA) & 0x01)
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x30);
+	if (inb(pSmi->PIOBase + VGA_SEQ_DATA) & 0x01)
 	{
 		new->SR21 = 0x00;
 	}
@@ -2755,7 +2759,7 @@ SMI_CloseScreen(int scrnIndex, ScreenPtr pScreen)
 	vgaRegPtr vgaSavePtr = &hwp->SavedReg;
 	SMIRegPtr SMISavePtr = &pSmi->SavedReg;
 	Bool ret;
-
+	
 	ENTER_PROC("SMI_CloseScreen");
 
 	if (pScrn->vtSema)
@@ -2777,10 +2781,10 @@ SMI_CloseScreen(int scrnIndex, ScreenPtr pScreen)
 	{
 		xfree(pSmi->DGAModes);
 	}
-	if (pSmi->pVbe != NULL)
+	if (pSmi->pInt10 != NULL)
 	{
-		vbeFree(pSmi->pVbe);
-		pSmi->pVbe = NULL;
+		xf86FreeInt10(pSmi->pInt10);
+		pSmi->pInt10 = NULL;
 	}
 #ifdef XvExtension
 	if (pSmi->ptrAdaptor != NULL)
@@ -2854,22 +2858,22 @@ SMI_AdjustFrame(int scrnIndex, int x, int y, int flags)
 	if (SMI_LYNX3D_SERIES(pSmi->Chipset))
 	{
 		Base = (Base + 15) & ~15;
-		#if 1 /* PDR#1058 */
+#if 1 /* PDR#1058 */
 		while ((Base % pSmi->Bpp) > 0)
 		{
 			Base -= 16;
 		}
-		#endif
+#endif
 	}
 	else
 	{
 		Base = (Base + 7) & ~7;
-		#if 1 /* PDR#1058 */
+#if 1 /* PDR#1058 */
 		while ((Base % pSmi->Bpp) > 0)
 		{
 			Base -= 8;
 		}
-		#endif
+#endif
 	}
 
 	WRITE_VPR(pSmi, 0x0C, Base >> 3);
@@ -2949,16 +2953,16 @@ SMI_EnableMmio(ScrnInfoPtr pScrn)
 	vgaHWSetStdFuncs(hwp);
 
 	/* Enable linear mode */
-	outb(VGA_SEQ_INDEX, 0x18);
-	tmp = inb(VGA_SEQ_DATA);
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x18);
+	tmp = inb(pSmi->PIOBase + VGA_SEQ_DATA);
 	pSmi->SR18Value = tmp;					/* PDR#521 */
-	outb(VGA_SEQ_DATA, tmp | 0x11);
+	outb(pSmi->PIOBase + VGA_SEQ_DATA, tmp | 0x11);
 
 	/* Enable 2D/3D Engine and Video Processor */
-	outb(VGA_SEQ_INDEX, 0x21);
-	tmp = inb(VGA_SEQ_DATA);
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x21);
+	tmp = inb(pSmi->PIOBase + VGA_SEQ_DATA);
 	pSmi->SR21Value = tmp;					/* PDR#521 */
-	outb(VGA_SEQ_DATA, tmp & ~0x03);
+	outb(pSmi->PIOBase + VGA_SEQ_DATA, tmp & ~0x03);
 
 	LEAVE_PROC("SMI_EnableMmio");
 }
@@ -2974,12 +2978,12 @@ SMI_DisableMmio(ScrnInfoPtr pScrn)
 	vgaHWSetStdFuncs(hwp);
 
 	/* Disable 2D/3D Engine and Video Processor */
-	outb(VGA_SEQ_INDEX, 0x21);
-	outb(VGA_SEQ_DATA, pSmi->SR21Value);	/* PDR#521 */
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x21);
+	outb(pSmi->PIOBase + VGA_SEQ_DATA, pSmi->SR21Value);	/* PDR#521 */
 
 	/* Disable linear mode */
-	outb(VGA_SEQ_INDEX, 0x18);
-	outb(VGA_SEQ_DATA, pSmi->SR18Value);	/* PDR#521 */
+	outb(pSmi->PIOBase + VGA_SEQ_INDEX, 0x18);
+	outb(pSmi->PIOBase + VGA_SEQ_DATA, pSmi->SR18Value);	/* PDR#521 */
 
 	LEAVE_PROC("SMI_DisableMmio");
 }
@@ -3093,47 +3097,47 @@ SMI_DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 		return;
 	}
 
-	#if 1 /* PDR#735 */
-	if (pSmi->pVbe->pInt10 != NULL)
+#if 1 /* PDR#735 */
+	if (pSmi->pInt10 != NULL)
 	{
-		pSmi->pVbe->pInt10->ax = 0x4F10;
+		pSmi->pInt10->ax = 0x4F10;
 		switch (PowerManagementMode)
 		{
 			case DPMSModeOn:
-				pSmi->pVbe->pInt10->bx = 0x0001;
+				pSmi->pInt10->bx = 0x0001;
 				break;
 
 			case DPMSModeStandby:
-				pSmi->pVbe->pInt10->bx = 0x0101;
+				pSmi->pInt10->bx = 0x0101;
 				break;
 
 			case DPMSModeSuspend:
-				pSmi->pVbe->pInt10->bx = 0x0201;
+				pSmi->pInt10->bx = 0x0201;
 				break;
 
 			case DPMSModeOff:
-				pSmi->pVbe->pInt10->bx = 0x0401;
+				pSmi->pInt10->bx = 0x0401;
 				break;
 		}
-		pSmi->pVbe->pInt10->cx = 0x0000;
-		pSmi->pVbe->pInt10->num = 0x10;
-		xf86ExecX86int10(pSmi->pVbe->pInt10);
-		if (pSmi->pVbe->pInt10->ax == 0x004F)
+		pSmi->pInt10->cx = 0x0000;
+		pSmi->pInt10->num = 0x10;
+		xf86ExecX86int10(pSmi->pInt10);
+		if (pSmi->pInt10->ax == 0x004F)
 		{
 			pSmi->CurrentDPMS = PowerManagementMode;
-			#if 1 /* PDR#835 */
+#if 1 /* PDR#835 */
 			if (PowerManagementMode == DPMSModeOn)
 			{
 				SR01 = VGAIN8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x01);
 				VGAOUT8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x01,
 						SR01 & ~0x20);
 			}
-			#endif
+#endif
 			LEAVE_PROC("SMI_DisplayPowerManagementSet");
 			return;
 		}
 	}
-	#endif
+#endif
 
 	/* Save the current SR registers */
 	if (pSmi->CurrentDPMS == DPMSModeOn)

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:55 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.40 2001/03/05 04:51:55 mvojkovi Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.42 2002/03/06 21:12:32 mvojkovi Exp $
 
 #include <Server.tmpl>
 
@@ -41,7 +41,7 @@ SUBDIRS = extmod
  VIDMODEOBJS = xf86vmode.o
 #endif
 
-#if BuildXF86MiscExt
+#if BuildXF86MiscExt && XF86Server
 XF86MISCSRCS = xf86misc.c
 XF86MISCOBJS = xf86misc.o
 #endif
@@ -62,6 +62,11 @@ XF86BIGFOBJS = xf86bigfont.o
 #if BuildXvExt
       XVSRCS = xvmain.c xvdisp.c xvmc.c
       XVOBJS = xvmain.o xvdisp.o xvmc.o
+#endif
+
+#if BuildXResExt
+ XRESSRCS = xres.c
+ XRESOBJS = xres.o
 #endif
 
 #if BuildAppgroup
@@ -102,14 +107,14 @@ XF86BIGFOBJS = xf86bigfont.o
 	      bigreq.c sync.c $(SCRNSAVSRC) xcmisc.c $(VIDMODESRCS) \
 	      $(XF86MISCSRCS) $(XF86BIGFSRCS) $(XF86DGASRCS) $(SECURITYSRCS) \
 	      $(APPGROUPSRCS) xprint.c $(CUPSRCS) $(PNRXSRCS) $(DPMSSRCS) \
-	      $(EVISRCS) $(XVSRCS) $(FONTCACHESRCS)
+	      $(EVISRCS) $(XVSRCS) $(FONTCACHESRCS) $(XRESSRCS)
 
        OBJS = shape.o $(SHMOBJS) $(MULTIBUFOBJ) \
               mitmisc.o xtest.o xtest1di.o xtest1dd.o sleepuntil.o \
               bigreq.o sync.o $(SCRNSAVOBJ) xcmisc.o $(VIDMODEOBJS) \
 	      $(XF86MISCOBJS) $(XF86BIGFOBJS) $(XF86DGAOBJS) $(SECURITYOBJS) \
 	      $(APPGROUPOBJS) xprint.o $(CUPOBJS) $(PNRXOBJS) $(DPMSOBJS) \
-	      $(EVIOBJS) $(XVOBJS) $(FONTCACHEOBJS)
+	      $(EVIOBJS) $(XVOBJS) $(FONTCACHEOBJS) $(XRESOBJS)
 
       SOBJS = $(SHMOBJS) $(APPGROUPOBJS) $(SECURITYOBJS) xprint.o \
 	      xtest.o xtest1di.o xtest1dd.o sleepuntil.o $(PNRXOBJS) \

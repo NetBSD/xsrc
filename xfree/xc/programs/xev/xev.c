@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xev/xev.c,v 1.5 2002/01/07 20:38:30 dawes Exp $ */
+/* $XFree86: xc/programs/xev/xev.c,v 1.7 2002/12/24 17:43:00 tsi Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -103,7 +103,7 @@ do_KeyPress (eventp)
     if (nbytes < 0) nbytes = 0;
     if (nbytes > 256) nbytes = 256;
     str[nbytes] = '\0';
-    printf ("    XLookupString gives %d characters:  \"%s\"\n", nbytes, str);
+    printf ("    XLookupString gives %d bytes:  \"%s\"\n", nbytes, str);
 }
 
 void
@@ -638,7 +638,8 @@ set_sizehints (hintp, min_width, min_height,
 }
 
 
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
 void usage () __attribute__((__noreturn__));
 #endif
 void

@@ -23,15 +23,16 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/main.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/main.c,v 1.3 2002/04/05 21:06:28 dickey Exp $ */
 
 #define MAIN 1			/* Makes global.h actually declare vars */
 #include "xmh.h"
+#include "actions.h"
 
 /*ARGSUSED*/
-static void NeedToCheckScans(client_data, id)
-    XtPointer client_data;
-    XtIntervalId *id;		/* unused */
+static void NeedToCheckScans(
+    XtPointer client_data,
+    XtIntervalId *id)		/* unused */
 {
     int i;
     if (!subProcessRunning) {
@@ -50,12 +51,10 @@ static void NeedToCheckScans(client_data, id)
 }
 
 /*ARGSUSED*/
-static void Checkpoint(client_data, id)
-    XtPointer client_data;
-    XtIntervalId *id;		/* unused */
+static void Checkpoint(
+    XtPointer client_data,
+    XtIntervalId *id)		/* unused */
 {
-    extern void XmhWMProtocols();
-
     if (!subProcessRunning) {
 	Cardinal n = 1;
 	String params = "wm_save_yourself";
@@ -69,12 +68,10 @@ static void Checkpoint(client_data, id)
 }
 
 /*ARGSUSED*/
-static void CheckMail(client_data, id)
-    XtPointer client_data;
-    XtIntervalId *id;		/* unused */
+static void CheckMail(
+    XtPointer client_data,
+    XtIntervalId *id)		/* unused */
 {
-    extern void XmhCheckForNewMail();
-
     if (!subProcessRunning) {
         DEBUG("(Checking for new mail...")
         XmhCheckForNewMail(NULL, NULL, NULL, NULL);
@@ -91,9 +88,7 @@ static void CheckMail(client_data, id)
 Boolean ExitLoop = FALSE;
 #endif
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
     XtAppContext appCtx;
 

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbbltone.c,v 1.12 2001/10/28 03:33:08 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbbltone.c,v 1.13 2002/02/23 00:42:07 keithp Exp $ */
 
 #include "fb.h"
 
@@ -505,12 +505,21 @@ const FbBits	fbStipple24Bits[3][1 << FbStip24Len] = {
 #endif
 
 #if BITMAP_BIT_ORDER == LSBFirst
-#define FbMergeStip24Bits(left, right, new) (((left) >> (new)) | \
-					     (right) << (FbStip24Len - (new)))
+
+#define FbMergeStip24Bits(left, right, new) \
+	(FbStipLeft (left, new) | FbStipRight ((right), (FbStip24Len - (new))))
+
+#define FbMergePartStip24Bits(left, right, llen, rlen) \
+	(left | FbStipRight(right, llen))
+
 #else
-#define FbMergeStip24Bits(left, right, new) (((left << new) & \
-					      ((1 << FbStip24Len) - 1)) | \
-					     right)
+
+#define FbMergeStip24Bits(left, right, new) \
+	((FbStipLeft (left, new) & ((1 << FbStip24Len) - 1)) | right)
+
+#define FbMergePartStip24Bits(left, right, llen, rlen) \
+	(FbStipLeft(left, rlen) | right)
+
 #endif
 
 #define fbFirstStipBits(len,stip) {\
@@ -521,7 +530,8 @@ const FbBits	fbStipple24Bits[3][1 << FbStip24Len] = {
 	stip = FbLeftStipBits(bits, remain); \
 	bits = *src++; \
 	__len = (len) - remain; \
-	stip |= FbStipRight(FbLeftStipBits(bits, __len), remain); \
+	stip = FbMergePartStip24Bits(stip, FbLeftStipBits(bits, __len), \
+				     remain, __len); \
 	remain = FB_STIP_UNIT; \
     } \
     bits = FbStipLeft (bits, __len); \

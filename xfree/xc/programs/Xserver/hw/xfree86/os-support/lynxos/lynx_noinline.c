@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_noinline.c,v 3.5 2000/07/31 23:25:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_noinline.c,v 3.6 2002/01/25 21:56:20 tsi Exp $ */
 /*
  * Copyright 1998 by Metro Link Incorporated
  *
@@ -24,6 +24,8 @@
  */
 
 #if /* NO_INLINE && */ defined(__powerpc__)
+
+#include "xf86Pci.h"
 
 extern volatile unsigned char *ioBase;
 
@@ -67,25 +69,25 @@ stw_brx(unsigned short val, volatile unsigned char *base, int ndx)
 }
 
 void
-outb(unsigned short port, unsigned char value)
+outb(IOADDRESS port, unsigned char value)
 {
 	*((volatile unsigned char *)(ioBase + port)) = value; eieio();
 }
 
 void
-outw(unsigned short port, unsigned short value)
+outw(IOADDRESS port, unsigned short value)
 {
 	stw_brx(value, ioBase, port); eieio();
 }
 
 void
-outl(unsigned short port, unsigned int value)
+outl(IOADDRESS port, unsigned int value)
 {
 	stl_brx(value, ioBase, port); eieio();
 }
 
 unsigned char
-inb(unsigned short port)
+inb(IOADDRESS port)
 {
 	unsigned char val;
 
@@ -94,7 +96,7 @@ inb(unsigned short port)
 }
 
 unsigned short
-inw(unsigned short port)
+inw(IOADDRESS port)
 {
 	unsigned short val;
 
@@ -103,7 +105,7 @@ inw(unsigned short port)
 }
 
 unsigned int
-inl(unsigned short port)
+inl(IOADDRESS port)
 {
 	unsigned int val;
 
@@ -167,89 +169,6 @@ void
 write_mem_barrier(void)
 {
    __asm__ __volatile__("eieio");
-}
-
-
-/*
- * rdinx - read the indexed byte port 'port', index 'ind', and return its value
- */
-unsigned char 
-rdinx(unsigned short int port, unsigned char ind)
-{
-	if (port == 0x3C0)		/* reset attribute flip-flop */
-		(void) inb(0x3DA);
-	outb(port, ind);
-	return(inb(port+1));
-}
-
-/*
- * wrinx - write 'val' to port 'port', index 'ind'
- */
-void 
-wrinx(unsigned short int port, unsigned char ind, unsigned char val)
-{
-	outb(port, ind);
-	outb(port+1, val);
-}
-
-/*
- * modinx - in register 'port', index 'ind', set the bits in 'mask' as in 'new';
- *	    the other bits are unchanged.
- */
-void
-modinx(unsigned short int port, unsigned char ind, 
-       unsigned char mask, unsigned char new)
-{
-	unsigned char tmp;
-
-	tmp = (rdinx(port, ind) & ~mask) | (new & mask);
-	wrinx(port, ind, tmp);
-}
-
-/*
- * tstrg - returns true iff the bits in 'mask' of register 'port' are
- *	   readable & writable.
- */
-int
-testrg(unsigned short int port, unsigned char mask)
-{
-	unsigned char old, new1, new2;
-
-	old = inb(port);
-	outb(port, old & ~mask);
-	new1 = inb(port) & mask;
-	outb(port, old | mask);
-	new2 = inb(port) & mask;
-	outb(port, old);
-	return((new1 == 0) && (new2 == mask));
-}
-
-/*
- * testinx2 - returns true iff the bits in 'mask' of register 'port', index
- *	      'ind' are readable & writable.
- */
-int
-testinx2(unsigned short int port, unsigned char ind, unsigned char mask)
-{
-	unsigned char old, new1, new2;
-
-	old = rdinx(port, ind);
-	wrinx(port, ind, old & ~mask);
-	new1 = rdinx(port, ind) & mask;
-	wrinx(port, ind, old | mask);
-	new2 = rdinx(port, ind) & mask;
-	wrinx(port, ind, old);
-	return((new1 == 0) && (new2 == mask));
-}
-
-/*
- * testinx - returns true iff all bits of register 'port', index 'ind' are 
- *     	     readable & writable.
- */
-int
-testinx(unsigned short int port, unsigned char ind)
-{
-	return(testinx2(port, ind, 0xFF));
 }
 
 #endif /* NO_INLINE && __powerpc__ */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.76 2002/01/15 01:56:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.80 2002/12/12 18:29:10 eich Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -57,6 +57,7 @@ extern Bool xf86ShowUnresolved;
 /* Other parameters */
 
 extern xf86InfoRec xf86Info;
+extern const char *xf86InputDeviceList;
 extern const char *xf86ModulePath;
 extern MessageType xf86ModPathFrom;
 extern const char *xf86LogFile;
@@ -155,6 +156,9 @@ void xf86PostKbdEvent(unsigned key);
 void xf86PostMseEvent(DeviceIntPtr device, int buttons, int dx, int dy);
 void xf86Wakeup(pointer blockData, int err, pointer pReadmask);
 void xf86SigHandler(int signo);
+#ifdef MEMDEBUG
+void xf86SigMemDebug(int signo);
+#endif
 void xf86HandlePMEvents(int fd, pointer data);
 extern int (*xf86PMGetEventFromOs)(int fd,pmEvent *events,int num);
 extern pmWait (*xf86PMConfirmEventToOs)(int fd,pmEvent event);
@@ -173,6 +177,7 @@ Bool xf86LoadModules(char **list, pointer *optlist);
 void xf86KbdBell(int percent, DeviceIntPtr pKeyboard, pointer ctrl,
 		 int unused);
 void xf86KbdLeds(void);
+void xf86UpdateKbdLeds(void);
 void xf86KbdCtrl(DevicePtr pKeyboard, KeybdCtrl *ctrl); 
 void xf86InitKBD(Bool init);  
 int xf86KbdProc(DeviceIntPtr pKeyboard, int what);

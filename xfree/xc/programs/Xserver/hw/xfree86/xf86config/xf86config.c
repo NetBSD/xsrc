@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.59 2001/10/28 03:34:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.69 2003/02/20 04:05:15 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -53,6 +53,7 @@
  *	     of /usr/X11R6/lib/X11.
  *	   Add RAMDAC and Clockchip menu.
  * 27Mar99 Modified for XFree86 4.0 config file format
+ * 06Sep02 Write comment block about 'DontVTSwitch'.
  *
  * Possible enhancements:
  * - Add more standard mode timings (also applies to README.Config). Missing
@@ -76,6 +77,22 @@
  *  New 'Configuration of XKB' section.
  *  Author: Ivan Pascal      The XFree86 Project.
  */
+/*
+ *  Nov2002
+ *  Some enhancements:
+ *  - Add new PS/2 mouse protocol.
+ *    "IMPS/2","ExplorerPS/2","ThinkingMousePS/2","MouseManPlusPS/2",
+ *    "GlidePointPS/2","NetMousePS/2" and "NetScrollPS/2".
+ *  - Add mouse-speed setting for PS/2 mouse.
+ *  - Fix seg.fault problem on Solaris.
+ *  - Add modestring "1400x1050"(for ATI Mobile-Rage).
+ *  - Add videomemory 8192, 16384, 32768, 65536, 131072 and 262144.
+ *  - Load "speedo" module.
+ *  - Ready to DRI.
+ *  - Load xtt module instead of freetype module.
+ *  - Add font path "/fonts/TrueType/" and "/fonts/freefont/".
+ *  Chisato Yamauchi(cyamauch@phyas.aichi-edu.ac.jp)
+ */
 /* $XConsortium: xf86config.c /main/21 1996/10/28 05:43:57 kaleb $ */
 
 #include <stdlib.h>
@@ -86,6 +103,13 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+/* hv: fix a few EMX problems, will disappear with real UnixOS/2 */
+#ifdef __UNIXOS2__
+#define sync() /*nothing*/
+static int getuid() { return 0; }
+#endif
+
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XKBstr.h>
@@ -107,13 +131,8 @@
  * when the program is told to probe clocks (which can only happen for
  * root).
  */
-#ifndef __EMX__
 #define TEMPORARY_XF86CONFIG_DIR_PREFIX "/tmp/.xf86config"
 #define TEMPORARY_XF86CONFIG_FILENAME "XF86Config.tmp"
-#else
-/* put in root dir, would have to find TMP dir first else */
-#define TEMPORARY_XF86CONFIG_FILENAME "\\XConfig.tmp"
-#endif
 
 /*
  * Define this to have /etc/X11/XF86Config prompted for as the default
@@ -133,15 +152,12 @@
 
 #define MAX_CLOCKS_LINES 16
 
-/* (hv) make a number of filenames defines, because I want OS/2 to need just
- * 8.3 names here
- */
-#ifdef __EMX__
-#define DUMBCONFIG2 "\\dconfig.2"
-#define DUMBCONFIG3 "\\dconfig.3"
-#else
 #define DUMBCONFIG2 "dumbconfig.2"
 #define DUMBCONFIG3 "dumbconfig.3"
+#ifndef __UNIXOS2__
+#define XSERVERNAME_FOR_PROBE "X"
+#else
+#define XSERVERNAME_FOR_PROBE "/usr/X11R6/bin/XFree86"
 #endif
 
 /* some more vars to make path names in texts more flexible. OS/2 users
@@ -150,17 +166,10 @@
 #ifndef PROJECTROOT
 #define PROJECTROOT		"/usr/X11R6"
 #endif
-#ifndef __EMX__
 #define TREEROOT		PROJECTROOT
 #define TREEROOTLX		TREEROOT "/lib/X11"
 #define TREEROOTCFG		TREEROOT "/etc/X11"
 #define MODULEPATH		TREEROOT "/lib/modules"
-#else
-#define TREEROOT		"/XFree86"
-#define TREEROOTLX		TREEROOT "/lib/X11"
-#define TREEROOTCFG		TREEROOT "/lib/X11"
-#define MODULEPATH		TREEROOT "/lib/modules"
-#endif
 
 #ifndef XCONFIGFILE
 #define XCONFIGFILE		"XF86Config"
@@ -297,7 +306,6 @@ Strdup(const char *s){
 
 static void 
 createtmpdir(void) {
-#ifndef __EMX__
        /* length of prefix + 20 (digits in 2**64) + 1 (slash) + 1 */
        temp_dir = Malloc(strlen(TEMPORARY_XF86CONFIG_DIR_PREFIX) + 22);
        sprintf(temp_dir, "%s%ld", TEMPORARY_XF86CONFIG_DIR_PREFIX,
@@ -308,7 +316,6 @@ createtmpdir(void) {
        }
        /* append a slash */
        strcat(temp_dir, "/");
-#endif
 }
 
 
@@ -343,7 +350,8 @@ static void
 getstring(char *s)
 {
 	char *cp;
-	fgets(s, 80, stdin);
+	if (fgets(s, 80, stdin) == NULL)
+		exit(1);
 	cp = strchr(s, '\n');
 	if (cp)
 		*cp=0;
@@ -352,48 +360,114 @@ getstring(char *s)
 /*
  * Mouse configuration.
  *
- * (hv) OS/2 (__EMX__) only has an OS supported mouse, so user has no options
+ * (hv) OS/2 (__UNIXOS2__) only has an OS supported mouse, so user has no options
  * the server will enable a third button automatically if there is one
  * We also do the same for QNX4, since we use the OS mouse drivers.
  */
 
-static char *mousetype_identifier[] = {
-	"Microsoft",
-	"MouseSystems",
-	"Busmouse",
-	"PS/2",
-	"Logitech",
-	"MouseMan",
-	"MMSeries",
-	"MMHitTab",
-	"IntelliMouse",
-#if defined(__EMX__) || defined(QNX4)
-	"OSMOUSE",
+int	M_OSMOUSE,	M_WSMOUSE,		M_AUTO,
+	M_SYSMOUSE,	M_MOUSESYSTEMS, 	M_PS2,
+	M_MICROSOFT,	M_BUSMOUSE,		M_IMPS2,
+	M_EXPLORER_PS2, M_GLIDEPOINT_PS2,	M_MOUSEMANPLUS_PS2,
+	M_NETMOUSE_PS2, M_NETSCROLL_PS2,	M_THINKINGMOUSE_PS2,
+	M_ACECAD,	M_GLIDEPOINT,		M_INTELLIMOUSE,
+	M_LOGITECH,	M_MMHITTAB,		M_MMSERIES,
+	M_MOUSEMAN,	M_THINKINGMOUSE;
+
+struct {
+	char *name;
+	int *ident;
+	char *desc;
+} mouse_info[] = {
+#if defined(__UNIXOS2__) || defined(QNX4)
+#define DEF_PROTO_STRING	"OSMOUSE"
+	{"OSMOUSE",		&M_OSMOUSE,
+	 "OSMOUSE"
+	},
 #endif
 #ifdef WSCONS_SUPPORT
-    	"wsmouse",
+#define WS_MOUSE_STRING		"wsmouse"
+#define DEF_PROTO_STRING	WS_MOUSE_STRING
+	{WS_MOUSE_STRING,	&M_WSMOUSE,
+	 "wsmouse protocol"
+	},
 #endif
+#ifndef DEF_PROTO_STRING
+#define DEF_PROTO_STRING	"Auto"
+#endif
+	{"Auto",		&M_AUTO,
+	 "Auto detect"
+	},
+	{"SysMouse",		&M_SYSMOUSE,
+	 "SysMouse"
+	},
+#define M_MOUSESYSTEMS_STRING	"MouseSystems"
+	{M_MOUSESYSTEMS_STRING,	&M_MOUSESYSTEMS,
+	 "Mouse Systems (3-button protocol)"
+	},
+	{"PS/2",		&M_PS2,
+	 "PS/2 Mouse"
+	},
+#define M_MICROSOFT_STRING	"Microsoft"
+	{M_MICROSOFT_STRING,	&M_MICROSOFT,
+	 "Microsoft compatible (2-button protocol)"
+	},
+	{"Busmouse",		&M_BUSMOUSE,
+	 "Bus Mouse"
+	},
+#ifndef __FreeBSD__
+	{"IMPS/2",		&M_IMPS2,
+	 "IntelliMouse PS/2"
+	},
+	{"ExplorerPS/2",	&M_EXPLORER_PS2,
+	 "Explorer PS/2"
+	},
+	{"GlidePointPS/2",	&M_GLIDEPOINT_PS2,
+	 "GlidePoint PS/2"
+	},
+	{"MouseManPlusPS/2",	&M_MOUSEMANPLUS_PS2,
+	 "MouseManPlus PS/2"
+	},
+	{"NetMousePS/2",	&M_NETMOUSE_PS2,
+	 "NetMouse PS/2"
+	},
+	{"NetScrollPS/2",	&M_NETSCROLL_PS2,
+	 "NetScroll PS/2"
+	},
+	{"ThinkingMousePS/2",	&M_THINKINGMOUSE_PS2,
+	 "ThinkingMouse PS/2"
+	},
+#endif
+	{"AceCad",		&M_ACECAD,
+	 "AceCad"
+	},
+	{"GlidePoint",		&M_GLIDEPOINT,
+	 "GlidePoint"
+	},
+	{"IntelliMouse",	&M_INTELLIMOUSE,
+	 "Microsoft IntelliMouse"
+	},
+	{"Logitech",		&M_LOGITECH,
+	 "Logitech Mouse (serial, old type, Logitech protocol)"
+	},
+	{"MMHitTab",		&M_MMHITTAB,
+	 "MM HitTablet"
+	},
+	{"MMSeries",		&M_MMSERIES,
+	 "MM Series"	/* XXXX These descriptions should be improved. */
+	},
+	{"MouseMan",		&M_MOUSEMAN,
+	 "Logitech MouseMan (Microsoft compatible)"
+	},
+	{"ThinkingMouse",	&M_THINKINGMOUSE,
+	 "ThinkingMouse"
+	},
 };
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 static char *mouseintro_text =
 "First specify a mouse protocol type. Choose one from the following list:\n"
 "\n";
-
-static char *mousetype_name[] = {
-	"Microsoft compatible (2-button protocol)",
-	"Mouse Systems (3-button protocol)",
-	"Bus Mouse",
-	"PS/2 Mouse",
-	"Logitech Mouse (serial, old type, Logitech protocol)",
-	"Logitech MouseMan (Microsoft compatible)",
-	"MM Series",	/* XXXX These descriptions should be improved. */
-	"MM HitTablet",
-	"Microsoft IntelliMouse",
-#ifdef WSCONS_SUPPORT
-        "wsmouse protocol",
-#endif
-};
 
 static char *mousedev_text =
 "Now give the full device name that the mouse is connected to, for example\n"
@@ -401,19 +475,19 @@ static char *mousedev_text =
 #ifdef WSCONS_SUPPORT
 "On systems with wscons, the default is /dev/wsmouse.\n"
 #endif
+#ifdef __FreeBSD__
+"On FreeBSD, the default is /dev/sysmouse.\n"
+#endif
 "\n";
 
 static char *mousecomment_text =
-"If you have a two-button mouse, it is most likely of type 1, and if you have\n"
-"a three-button mouse, it can probably support both protocol 1 and 2. There are\n"
-"two main varieties of the latter type: mice with a switch to select the\n"
-"protocol, and mice that default to 1 and require a button to be held at\n"
-"boot-time to select protocol 2. Some mice can be convinced to do 2 by sending\n"
-"a special sequence to the serial port (see the ClearDTR/ClearRTS options).\n"
+"The recommended protocol is " DEF_PROTO_STRING ". If you have a very old mouse\n"
+"or don't want OS support or auto detection, and you have a two-button\n"
+"or three-button serial mouse, it is most likely of type " M_MICROSOFT_STRING ".\n"
 #ifdef WSCONS_SUPPORT
 "\n"
-"If your system uses the wscons console driver, with a PS/2 type mouse, select\n"
-"10.\n"
+"If your system uses the wscons console driver, with a PS/2 type mouse,\n"
+"select " WS_MOUSE_STRING ".\n"
 #endif
 "\n";
 
@@ -447,32 +521,41 @@ static char *mousemancomment_text =
 "You have selected a Logitech MouseMan type mouse. You might want to enable\n"
 "ChordMiddle which could cause the third button to work.\n";
 
-#endif /* !__EMX__ */
+#endif /* !__UNIXOS2__ */
 
 static void 
 mouse_configuration(void) {
 
-#if !defined(__EMX__) && !defined(QNX4)
-	int i;
+#if !defined(__UNIXOS2__) && !defined(QNX4)
+	int i, j;
 	char s[80];
-	printf("%s", mouseintro_text);
-	
-	for (i = 0; i < sizeof(mousetype_name)/sizeof(char *); i++)
-		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
+#define MOUSETYPE_COUNT sizeof(mouse_info)/sizeof(mouse_info[0])
+	for (i = 0; i < MOUSETYPE_COUNT; i++)
+		*(mouse_info[i].ident) = i;
+
+	for (i=0;;) {
+		emptylines();
+		printf("%s", mouseintro_text);
+		for (j = i; j < i + 14 && j < MOUSETYPE_COUNT; j++)
+			printf("%2d.  %s\n", j + 1, mouse_info[j].name);
+		printf("\n");
+		printf("%s", mousecomment_text);
+		printf("Enter a protocol number: ");
+		getstring(s);
+		if (strlen(s) == 0) {
+			i += 14;
+			if (i >= MOUSETYPE_COUNT)
+				i = 0;
+			continue;
+		}
+		config_mousetype = atoi(s) - 1;
+		if (config_mousetype >= 0 && config_mousetype < MOUSETYPE_COUNT)
+			break;
+	}
 	printf("\n");
 
-	printf("%s", mousecomment_text);
-	
-	printf("Enter a protocol number: ");
-	getstring(s);
-	config_mousetype = atoi(s) - 1;
-	if (config_mousetype < 0)
-		config_mousetype = 0;
-
-	printf("\n");
-
-	if (config_mousetype == 4) {
+	if (config_mousetype == M_LOGITECH) {
 		/* Logitech. */
 		printf("%s", logitechmousecomment_text);
 		printf("\n");
@@ -480,14 +563,14 @@ mouse_configuration(void) {
 		printf("Are you sure it's really not a Microsoft compatible one? ");
 		getstring(s);
 		if (!answerisyes(s))
-			config_mousetype = 0;
+			config_mousetype = M_MICROSOFT;
 		printf("\n");
 	}
 
 	config_chordmiddle = 0;
-	if (config_mousetype == 0 || config_mousetype == 5) {
+	if (config_mousetype == M_MICROSOFT || config_mousetype == M_MOUSEMAN) {
 		/* Microsoft or MouseMan. */
-		if (config_mousetype == 0)
+		if (config_mousetype == M_MICROSOFT)
 			printf("%s", microsoftmousecomment_text);
 		else
 			printf("%s", mousemancomment_text);
@@ -501,7 +584,7 @@ mouse_configuration(void) {
 	}
 
 	config_cleardtrrts = 0;
-	if (config_mousetype == 1) {
+	if (config_mousetype == M_MOUSESYSTEMS) {
 		/* Mouse Systems. */
 		printf("%s", mousesystemscomment_text);
 		printf("\n");
@@ -513,20 +596,18 @@ mouse_configuration(void) {
 		printf("\n");
 	}
 
-	switch (config_mousetype) {
-	case 0 : /* Microsoft compatible */
+	if (config_mousetype == M_MICROSOFT) {
 		if (config_chordmiddle)
 			printf("%s", threebuttonmousecomment_text);
 		else
 			printf("%s", twobuttonmousecomment_text);
-		break;
-	case 1 : /* Mouse Systems. */
-	case 8 : /* IntelliMouse */
+	}
+	else if (config_mousetype == M_MOUSESYSTEMS ||
+		 config_mousetype == M_INTELLIMOUSE) {
 		printf("%s", threebuttonmousecomment_text);
-		break;
-	default :
+	}
+	else {
 		printf("%s", unknownbuttonsmousecomment_text);
-		break;
 	}
 
 	printf("\n");
@@ -544,10 +625,12 @@ mouse_configuration(void) {
 	printf("Mouse device: ");
 	getstring(s);
 	if (strlen(s) == 0)
-#ifndef WSCONS_SUPPORT
-		config_pointerdevice = "/dev/mouse";
-#else
+#ifdef WSCONS_SUPPORT
 		config_pointerdevice = "/dev/wsmouse";
+#elif defined(__FreeBSD__)
+		config_pointerdevice = "/dev/sysmouse";
+#else
+		config_pointerdevice = "/dev/mouse";
 #endif
 	else {
 		config_pointerdevice = Malloc(strlen(s) + 1);
@@ -555,9 +638,9 @@ mouse_configuration(void) {
        }
        printf("\n");
 
-#else /* __EMX__ */
+#else /* __UNIXOS2__ */
        	/* set some reasonable defaults for OS/2 */
-       	config_mousetype = 9;
+       	config_mousetype = M_OSMOUSE;
 	config_chordmiddle = 0;       
 	config_cleardtrrts = 0;
 	config_emulate3buttons = 0;
@@ -566,7 +649,7 @@ mouse_configuration(void) {
 #else
 	config_pointerdevice = "QNXMOUSE";
 #endif
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
 }
 
 
@@ -636,19 +719,27 @@ keyboard_configuration(void)
             return;
         }
 
-	printf(xkbmodeltext);
-	for (i=0; i < rules->models.num_desc; i++) {
-	    printf("%3d  %-50s\n", i+1, rules->models.desc[i].desc);
+	number = -1;
+	for (i=0;;) {
+		emptylines();
+		printf(xkbmodeltext);
+		for (j = i; j < i + 16 && j < rules->models.num_desc; j++)
+		    printf("%3d  %-50s\n", j+1, rules->models.desc[j].desc);
+		printf("\nEnter a number to choose the keyboard.\n\n");
+		if (rules->models.num_desc >= 16)
+			printf("Press enter for the next page\n");
+		getstring(s);
+		if (strlen(s) == 0) {
+			i += 16;
+			if (i > rules->models.num_desc)
+				i = 0;
+			continue;
+		}
+		number = atoi(s) - 1;
+		if (number >= 0 && number < rules->models.num_desc)
+			break;
 	}
-	
-	printf("\nEnter a number to choose the keyboard.\n\n");
-	getstring(s);
-	if (strlen(s) == 0)
-	    number = 0;
-	else {
-	    i = atoi(s)-1;
-	    number = (i < 0 || i > rules->models.num_desc) ? 0 : i;
-	}
+
 	i = strlen(rules->models.desc[number].name) + 1;
 	config_xkbmodel = Malloc(i);
 	sprintf(config_xkbmodel,"%s", rules->models.desc[number].name);
@@ -952,10 +1043,14 @@ carddb_configuration(void) {
 	for (;;) {
 		int j;
 		emptylines();
-		for (j = i; j < i + 18 && j <= lastcard; j++)
+		for (j = i; j < i + 18 && j <= lastcard; j++) {
+			char *name = card[j].name,
+			     *chipset = card[j].chipset;
+
 			printf("%3d  %-50s%s\n", j,
-				card[j].name,
-				card[j].chipset);
+				name ? name : "-",
+				chipset ? chipset : "-");
+		}
 		printf("\n");
 		printf("Enter a number to choose the corresponding card definition.\n");
 		printf("Press enter for the next page, q to continue configuration.\n");
@@ -978,9 +1073,12 @@ carddb_configuration(void) {
 	 * Look at the selected card.
 	 */
 	if (card_selected != -1) {
+		char *name = card[card_selected].name,
+		     *chipset = card[card_selected].chipset;
+
 		printf("\nYour selected card definition:\n\n");
-		printf("Identifier: %s\n", card[card_selected].name);
-		printf("Chipset:    %s\n", card[card_selected].chipset);
+		printf("Identifier: %s\n", name ? name : "-");
+		printf("Chipset:    %s\n", chipset ? chipset : "-");
 		if (!card[card_selected].driver)
 			card[card_selected].driver = "unknown";
 		printf("Driver:     %s\n", card[card_selected].driver);
@@ -1016,12 +1114,10 @@ static char *deviceintro_text =
 "\n";
 
 static char *videomemoryintro_text =
-"You must indicate how much video memory you have. It is probably a good\n"
-"idea to use the same approximate amount as that detected by the server you\n"
-"intend to use. If you encounter problems that are due to the used server\n"
-"not supporting the amount memory you have (e.g. ATI Mach64 is limited to\n"
-"1024K with the SVGA server), specify the maximum amount supported by the\n"
-"server.\n"
+"It is probably a good idea to use the same approximate amount as that detected\n"
+"by the server you intend to use. If you encounter problems that are due to the\n"
+"used server not supporting the amount memory you have, specify the maximum\n"
+"amount supported by the server.\n"
 "\n"
 "How much video memory do you have on your video card:\n"
 "\n";
@@ -1179,10 +1275,14 @@ static char *virtual_text =
 "differently-sized virtual screen\n"
 "\n";
 
-static int videomemory[5] = {
-	256, 512, 1024, 2048, 4096
+static int videomemory[] = {
+	256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144
 };
 
+/* Is this required? */
+#if XFREE86_VERSION >= 400
+#define NU_MODESTRINGS 13
+#else
 #if XFREE86_VERSION >= 330
 #define NU_MODESTRINGS 12
 #else
@@ -1190,6 +1290,7 @@ static int videomemory[5] = {
 #define NU_MODESTRINGS 8
 #else
 #define NU_MODESTRINGS 5
+#endif
 #endif
 #endif
 
@@ -1209,6 +1310,9 @@ static char *modestring[NU_MODESTRINGS] = {
 	"\"1600x1200\"",
 	"\"1800x1400\"",
 	"\"512x384\""
+#endif
+#if XFREE86_VERSION >= 400
+	,"\"1400x1050\""
 #endif
 };
 
@@ -1263,18 +1367,16 @@ screen_configuration(void) {
 
 	printf("%s", videomemoryintro_text);
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < sizeof(videomemory) / sizeof(videomemory[0]); i++)
 		printf("%2d  %dK\n", i + 1, videomemory[i]);
-	printf(" 6  Other\n\n");
+	printf("%2d  Other\n\n", i + 1);
 
 	printf("Enter your choice: ");
 	getstring(s);
 	printf("\n");
 
 	c = atoi(s) - 1;
-	if (c < 0)
-		c = 0;
-	if (c < 5)
+	if (c >= 0 && c < sizeof(videomemory) / sizeof(videomemory[0]))
 		config_videomemory = videomemory[c];
 	else {
 		printf("Amount of video memory in Kbytes: ");
@@ -1338,9 +1440,10 @@ screen_configuration(void) {
 			config_virtualy24bpp = 1024;
 		}
 		/* Add 1600x1280 */
-		config_modesline8bpp = "\"640x480\" \"800x600\" \"1024x768\" \"1280x1024\"";
-		config_modesline16bpp = "\"640x480\" \"800x600\" \"1024x768\" \"1280x1024\"";
-		config_modesline24bpp = "\"640x480\" \"800x600\" \"1024x768\" \"1280x1024\"";
+		config_modesline8bpp = "\"1280x1024\" \"1024x768\" \"800x600\" \"640x480\"";
+		config_modesline16bpp = "\"1280x1024\" \"1024x768\" \"800x600\" \"640x480\"";
+		config_modesline24bpp = "\"1280x1024\" \"1024x768\" \"800x600\" \"640x480\"";
+
 	}
 	else
 	if (config_videomemory >= 2048) {
@@ -1371,12 +1474,12 @@ screen_configuration(void) {
 			config_virtualx24bpp = 1024;
 			config_virtualy24bpp = 768;
 		}
-		config_modesline8bpp = "\"640x480\" \"800x600\" \"1024x768\" \"1280x1024\"";
-		config_modesline16bpp = "\"640x480\" \"800x600\" \"1024x768\"";
+		config_modesline8bpp = "\"1280x1024\" \"1024x768\" \"800x600\" \"640x480\"";
+		config_modesline16bpp = "\"1024x768\" \"800x600\" \"640x480\"";
 		if (config_videomemory >= 2048 + 256)
-			config_modesline24bpp = "\"640x480\" \"800x600\" \"1024x768\"";
+			config_modesline24bpp = "\"1024x768\" \"800x600\" \"640x480\"";
 		else
-			config_modesline24bpp = "\"640x480\" \"800x600\"";
+			config_modesline24bpp = "\"800x600\" \"640x480\"";
 	}
 	else
 	if (config_videomemory >= 1024) {
@@ -1396,15 +1499,15 @@ screen_configuration(void) {
 		config_virtualy16bpp = 600; /* it's small enough as it is. */
 		config_virtualx24bpp = 640;
 		config_virtualy24bpp = 480;
-		config_modesline8bpp = "\"640x480\" \"800x600\" \"1024x768\"";
-		config_modesline16bpp = "\"640x480\" \"800x600\"";
+		config_modesline8bpp = "\"1024x768\" \"800x600\" \"640x480\"";
+		config_modesline16bpp = "\"800x600\" \"640x480\"";
 		config_modesline24bpp = "\"640x480\"";
 	}
 	else
 	if (config_videomemory >= 512) {
 		config_virtualx8bpp = 800;
 		config_virtualy8bpp = 600;
-		config_modesline8bpp = "\"640x480\" \"800x600\"";
+		config_modesline8bpp = "\"800x600\" \"640x480\"";
 		config_modesline16bpp = "\"640x400\"";
 	}
 	else
@@ -1802,10 +1905,14 @@ static char *XF86Config_firstchunk_text =
 "\n"
 "# This loads the Type1 and FreeType font modules\n"
 "    Load        \"type1\"\n"
-"    Load        \"freetype\"\n"
+"    Load        \"speedo\"\n"
+"#    Load        \"freetype\"\n"
+"#    Load        \"xtt\"\n"
 "\n"
 "# This loads the GLX module\n"
 "#    Load       \"glx\"\n"
+"# This loads the DRI module\n"
+"#    Load       \"dri\"\n"
 "\n"
 "EndSection\n"
 "\n"
@@ -1838,8 +1945,10 @@ static char *XF86Config_fontpaths[] =
 	"/fonts/misc/",
 	"/fonts/75dpi/:unscaled",
 	"/fonts/100dpi/:unscaled",
-	"/fonts/Type1/",
 	"/fonts/Speedo/",
+	"/fonts/Type1/",
+	"/fonts/TrueType/",
+	"/fonts/freefont/",
 	"/fonts/75dpi/",
 	"/fonts/100dpi/",
 	0 /* end of fontpaths */
@@ -1865,6 +1974,12 @@ static char *XF86Config_fontpathchunk_text =
 "# provide a better stack trace in the core dump to aid in debugging\n"
 "\n"
 "#    Option \"NoTrapSignals\"\n"
+"\n"
+"# Uncomment this to disable the <Crtl><Alt><Fn> VT switch sequence\n"
+"# (where n is 1 through 12).  This allows clients to receive these key\n"
+"# events.\n"
+"\n"
+"#    Option \"DontVTSwitch\"\n"
 "\n"
 "# Uncomment this to disable the <Crtl><Alt><BS> server abort sequence\n"
 "# This allows clients to receive this key event.\n"
@@ -1911,6 +2026,7 @@ static char *XF86Config_fontpathchunk_text =
 "\n"
 "    Identifier	\"Keyboard1\"\n"
 "    Driver	\"Keyboard\"\n"
+"\n"
 "# For most OSs the protocol can be omitted (it defaults to \"Standard\").\n"
 "# When using XQUEUE (only for SVR3 and SVR4, but not Solaris),\n"
 "# uncomment the following line.\n"
@@ -1973,6 +2089,10 @@ static char *pointersection_text1 =
 ;
 
 static char *pointersection_text2 =
+"\n"
+"# Mouse-speed setting for PS/2 mouse.\n"
+"\n"
+"#    Option \"Resolution\"	\"256\"\n"
 "\n"
 "# When using XQUEUE, comment out the above two lines, and uncomment\n"
 "# the following line.\n"
@@ -2312,6 +2432,10 @@ static char *serverlayout_section_text2 =
 "    InputDevice \"Keyboard1\" \"CoreKeyboard\"\n"
 "\n"
 "EndSection\n"
+"\n"
+"# Section \"DRI\"\n"
+"#    Mode 0666\n"
+"# EndSection\n"
 "\n";
 
 static void 
@@ -2406,8 +2530,8 @@ write_XF86Config(char *filename)
 	 */
 	fprintf(f, "%s", pointersection_text1);
 	fprintf(f, "    Option \"Protocol\"    \"%s\"\n",
-		mousetype_identifier[config_mousetype]);
-#if !defined(__EMX__) && !defined(QNX4)
+		mouse_info[config_mousetype].name);
+#if !defined(__UNIXOS2__) && !defined(QNX4)
 	fprintf(f, "    Option \"Device\"      \"%s\"\n", config_pointerdevice);
 #endif
 	fprintf(f, "%s", pointersection_text2);
@@ -2661,7 +2785,7 @@ static char *notinstalled_text =
 "libraries, configuration files and a server that you want to use.\n"
 "\n";
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 static char *oldxfree86_text =
 "The directory '/usr/X386/bin' exists. You probably have an old version of\n"
 "XFree86 installed (XFree86 3.1 installs in '" TREEROOT "' instead of\n"
@@ -2698,7 +2822,7 @@ path_check(void) {
 		printf("\n");
 	}
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	ok = exists_dir("/usr/X386/bin");
 	if (!ok)
 		return;
@@ -2716,7 +2840,6 @@ static void
 configdir_check(void)
 {
 	/* /etc/X11 may not exist on some systems */
-#ifndef __EMX__
 	if (getuid() == 0) {
 		struct stat buf;
 		if (stat("/etc/X11", &buf) == -1 && errno == ENOENT)
@@ -2724,7 +2847,6 @@ configdir_check(void)
 		if (stat(TREEROOTCFG, &buf) == -1 && errno == ENOENT)
 			mkdir(TREEROOTCFG, 0777);
 	}
-#endif
 }
 
 

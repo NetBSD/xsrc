@@ -36,7 +36,7 @@
  *  Modifier: Ivan Pascal     The XFree86 Project
  *  Modifier: Bruno Haible    The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcCT.c,v 3.26 2001/10/28 03:32:34 tsi Exp $ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.27 2002/10/08 23:31:35 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -72,13 +72,16 @@ static CTDataRec default_ct_data[] =
     { "ISO8859-8:GR",       /* ISO-8859-8          138   */  "\033-H" },
     { "ISO8859-9:GR",       /* ISO-8859-9          148   */  "\033-M" },
     { "ISO8859-10:GR",      /* ISO-8859-10         157   */  "\033-V" },
+    { "ISO8859-11:GR",      /* ISO-8859-11         166   */  "\033-T" },
     { "ISO8859-13:GR",      /* ISO-8859-13         179   */  "\033-Y" },
     { "ISO8859-14:GR",      /* ISO-8859-14         199   */  "\033-_" },
     { "ISO8859-15:GR",      /* ISO-8859-15         203   */  "\033-b" },
     { "ISO8859-16:GR",      /* ISO-8859-16         226   */  "\033-f" },
     { "JISX0201.1976-0:GL", /* ISO-646-JP           14   */  "\033(J" },
     { "JISX0201.1976-0:GR",                                  "\033)I" },
+#if 0
     { "TIS620-0:GR",        /* TIS-620             166   */  "\033-T" },
+#endif
 
     /* Registered character sets with two byte per character */
     { "GB2312.1980-0:GL",   /* GB_2312-80           58   */ "\033$(A" },

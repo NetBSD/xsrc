@@ -22,14 +22,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.11 2001/05/31 08:29:42 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.13 2002/10/30 12:51:36 alanh Exp $ */
 
 #include <stdio.h>
 
-#include "types.h"
-#include "pb.h"
+#include "mtypes.h"
 #include "dd.h"
 
 #include "mm.h"
@@ -39,8 +38,16 @@
 #include "mgatex.h"
 #include "mgavb.h"
 #include "mgatris.h"
+#include "mgaioctl.h"
 #include "mgaregs.h"
 #include "mgabuffers.h"
+
+#include "swrast/swrast.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+#include "swrast_setup/swrast_setup.h"
+
+
 
 /* Some outstanding problems with accelerating logic ops...
  */
@@ -200,6 +207,7 @@ static void mgaDDClearDepth(GLcontext *ctx, GLclampd d)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
+   /* KW: should the ~ be there? */
    switch (mmesa->setup.maccess & ~MA_zwidth_MASK) {
    case MA_zwidth_16: mmesa->ClearDepth = d * 0x0000ffff; break;
    case MA_zwidth_24: mmesa->ClearDepth = d * 0xffffff00; break;
@@ -261,7 +269,7 @@ static void mgaUpdateZMode(const GLcontext *ctx)
 }
 
 
-static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
+static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLchan ref)
 {
    FLUSH_BATCH( MGA_CONTEXT(ctx) );
    MGA_CONTEXT(ctx)->new_state |= MGA_NEW_ALPHA;
@@ -273,11 +281,12 @@ static void mgaDDBlendEquation(GLcontext *ctx, GLenum mode)
    FLUSH_BATCH( MGA_CONTEXT(ctx) );
    MGA_CONTEXT(ctx)->new_state |= MGA_NEW_ALPHA;
 
-   if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
-      MGA_CONTEXT(ctx)->Fallback |= MGA_FALLBACK_LOGICOP;
-   else
-      MGA_CONTEXT(ctx)->Fallback &= ~MGA_FALLBACK_LOGICOP;
-
+   /* BlendEquation sets ColorLogicOpEnabled in an unexpected 
+    * manner.  
+    */
+   FALLBACK( ctx, MGA_FALLBACK_LOGICOP,
+	     (ctx->Color.ColorLogicOpEnabled && 
+	      ctx->Color.LogicOp != GL_COPY));
 }
 
 static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
@@ -317,10 +326,6 @@ static void mgaDDDepthFunc(GLcontext *ctx, GLenum func)
 {
    FLUSH_BATCH( MGA_CONTEXT(ctx) );
    MGA_CONTEXT(ctx)->new_state |= MGA_NEW_DEPTH;
-   if (func == GL_NEVER && ctx->Depth.Test)
-      MGA_CONTEXT(ctx)->Fallback |= MGA_FALLBACK_DEPTH;
-   else
-      MGA_CONTEXT(ctx)->Fallback &= ~MGA_FALLBACK_DEPTH;
 }
 
 static void mgaDDDepthMask(GLcontext *ctx, GLboolean flag)
@@ -338,42 +343,26 @@ static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 #else
 static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 {
-   if (ctx->Color.ColorLogicOpEnabled) {
-      FLUSH_BATCH( MGA_CONTEXT(ctx) );
-
-      if (opcode == GL_COPY)
-	 MGA_CONTEXT(ctx)->Fallback &= ~MGA_FALLBACK_LOGICOP;
-      else
-	 MGA_CONTEXT(ctx)->Fallback |= MGA_FALLBACK_LOGICOP;
-   }
-   else
-      MGA_CONTEXT(ctx)->Fallback &= ~MGA_FALLBACK_LOGICOP;
+   FLUSH_BATCH( MGA_CONTEXT(ctx) );
+   FALLBACK( ctx, MGA_FALLBACK_LOGICOP, 
+	     (ctx->Color.ColorLogicOpEnabled && opcode != GL_COPY) );
 }
 #endif
 
 
-static void mgaUpdateFogAttrib( GLcontext *ctx )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   GLuint color = MGAPACKCOLOR888((GLubyte)(ctx->Fog.Color[0]*255.0F),
-				  (GLubyte)(ctx->Fog.Color[1]*255.0F),
-				  (GLubyte)(ctx->Fog.Color[2]*255.0F));
-
-   if (color != mmesa->setup.fogcolor)
-      mmesa->setup.fogcolor = color;
-
-   mmesa->setup.maccess &= ~MA_fogen_enable;
-   if (ctx->FogMode == FOG_FRAGMENT)
-      mmesa->setup.maccess |= MA_fogen_enable;
-
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-}
 
 static void mgaDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 {
-   FLUSH_BATCH( MGA_CONTEXT(ctx) );
-   MGA_CONTEXT(ctx)->new_state |= MGA_NEW_FOG;
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+
+   if (pname == GL_FOG_COLOR) {
+      GLuint color = MGAPACKCOLOR888((GLubyte)(ctx->Fog.Color[0]*255.0F), 
+				     (GLubyte)(ctx->Fog.Color[1]*255.0F), 
+				     (GLubyte)(ctx->Fog.Color[2]*255.0F));
+
+      MGA_STATECHANGE(mmesa, MGA_UPLOAD_CONTEXT);   
+      mmesa->setup.fogcolor = color;
+   }
 }
 
 
@@ -391,7 +380,7 @@ static void mgaUpdateAlphaMode(GLcontext *ctx)
    int a = 0;
 
    /* determine source of alpha for blending and testing */
-   if ( !ctx->Texture.ReallyEnabled ) {
+   if ( !ctx->Texture._ReallyEnabled ) {
       a |= AC_alphasel_diffused;
    }
    else {
@@ -487,7 +476,7 @@ static void mgaUpdateAlphaMode(GLcontext *ctx)
 	    a |= AC_src_zero;
 	 break;
       case GL_SRC_ALPHA_SATURATE:
-         if (ctx->Visual->AlphaBits > 0)
+         if (ctx->Visual.alphaBits > 0)
             a |= AC_src_src_alpha_sat;
          else
             a |= AC_src_zero;
@@ -585,34 +574,14 @@ static void mgaDDScissor( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-/* ======================================================================
- * New stuff for DRI state.
- */
-
-static void mgaDDDither(GLcontext *ctx, GLboolean enable)
-{
-}
-
-
-
-
-static void mgaDDSetColor(GLcontext *ctx,
-			  GLubyte r, GLubyte g,
-			  GLubyte b, GLubyte a )
+static void mgaDDClearColor(GLcontext *ctx, 
+			    const GLchan color[4] )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
-   mmesa->MonoColor = mgaPackColor( mmesa->mgaScreen->cpp, r, g, b, a );
-}
-
-
-static void mgaDDClearColor(GLcontext *ctx,
-			    GLubyte r, GLubyte g,
-			    GLubyte b, GLubyte a )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   mmesa->ClearColor = mgaPackColor( mmesa->mgaScreen->cpp, r, g, b, a );
+   mmesa->ClearColor = mgaPackColor( mmesa->mgaScreen->cpp,
+				     color[0], color[1], 
+				     color[2], color[3]);
 }
 
 
@@ -625,22 +594,22 @@ static void mgaDDClearColor(GLcontext *ctx,
 #define _CULL_POSITIVE (1<<11)
 
 
-static void mgaUpdateCull( GLcontext *ctx )
+void mgaUpdateCull( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint mode = _CULL_DISABLE;
 
-   if (ctx->Polygon.CullFlag &&
-       ctx->PB->primitive == GL_POLYGON &&
-       ctx->Polygon.CullFaceMode != GL_FRONT_AND_BACK)
+   if (ctx->Polygon.CullFlag && 
+       mmesa->raster_primitive == GL_TRIANGLES &&       
+       ctx->Polygon.CullFaceMode != GL_FRONT_AND_BACK) 
    {
       mode = _CULL_NEGATIVE;
       if (ctx->Polygon.CullFaceMode == GL_FRONT)
 	 mode ^= (_CULL_POSITIVE ^ _CULL_NEGATIVE);
       if (ctx->Polygon.FrontFace != GL_CCW)
 	 mode ^= (_CULL_POSITIVE ^ _CULL_NEGATIVE);
-      if (mmesa->warp_pipe & MGA_TEX1_BIT)
-	 mode ^= (_CULL_POSITIVE ^ _CULL_NEGATIVE); /* why??? */
+      if (ctx->Texture._ReallyEnabled == (TEXTURE0_2D|TEXTURE1_2D)) 
+	 mode ^= (_CULL_POSITIVE ^ _CULL_NEGATIVE); /* warp bug? */
    }
 
    mmesa->setup.wflag = mode;
@@ -661,11 +630,9 @@ static void mgaDDCullFaceFrontFace(GLcontext *ctx, GLenum mode)
  * Color masks
  */
 
-/* Mesa calls this from the wrong place:
- */
-static GLboolean mgaDDColorMask(GLcontext *ctx,
-				GLboolean r, GLboolean g,
-				GLboolean b, GLboolean a )
+static void mgaDDColorMask(GLcontext *ctx, 
+			   GLboolean r, GLboolean g, 
+			   GLboolean b, GLboolean a )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;
@@ -681,13 +648,9 @@ static GLboolean mgaDDColorMask(GLcontext *ctx,
       mask = mask | (mask << 16);
 
    if (mmesa->setup.plnwt != mask) {
-      FLUSH_BATCH( MGA_CONTEXT(ctx) );
-      mmesa->setup.plnwt = mask;
-      MGA_CONTEXT(ctx)->new_state |= MGA_NEW_MASK;
-      mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
+      mmesa->setup.plnwt = mask;      
    }
-
-   return 0;  /* Kind of a hack */
 }
 
 /* =============================================================
@@ -724,16 +687,12 @@ static void mgaDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
    const GLubyte *m = mask;
    GLubyte p[4];
    int i,j,k;
-   int active = (ctx->Polygon.StippleFlag && ctx->PB->primitive == GL_POLYGON);
+   int active = (ctx->Polygon.StippleFlag && 
+		 mmesa->raster_primitive == GL_TRIANGLES);
    GLuint stipple;
 
    FLUSH_BATCH(mmesa);
-
-   /* Turn off flags.  We'll turn them on below if this stipple pattern
-    * works in h/w.
-    */
-   ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-   mmesa->canDoStipple = GL_FALSE;
+   mmesa->haveHwStipple = 0;
 
    if (active) {
       mmesa->dirty |= MGA_UPLOAD_CONTEXT;
@@ -760,19 +719,13 @@ static void mgaDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
    for (i = 0 ; i < 16 ; i++)
       if (mgaStipples[i] == stipple) {
 	 mmesa->poly_stipple = i<<20;
+	 mmesa->haveHwStipple = 1;
 	 break;
       }
-
-   if (i == 16) {
-      return;
-   }
-
-   mmesa->canDoStipple = GL_TRUE;
-
+   
    if (active) {
       mmesa->setup.dwgctl &= ~(0xf<<20);
       mmesa->setup.dwgctl |= mmesa->poly_stipple;
-      ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
    }
 }
 
@@ -833,8 +786,12 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
       mmesa->dirty |= MGA_UPLOAD_TEX1|MGA_UPLOAD_TEX0;
    }
 
-   mmesa->sarea->WarpPipe = mmesa->warp_pipe;
-   mmesa->sarea->vertsize = mmesa->vertsize;
+   if (mmesa->dirty & MGA_UPLOAD_PIPE) {
+/*        mmesa->sarea->wacceptseq = mmesa->hw_primitive; */
+      mmesa->sarea->WarpPipe = mmesa->vertex_format;
+      mmesa->sarea->vertsize = mmesa->vertex_size;
+   }
+
    mmesa->sarea->dirty |= mmesa->dirty;
 
    mmesa->dirty &= (MGA_UPLOAD_CLIPRECTS|MGA_WAIT_AGE);
@@ -842,7 +799,7 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
    /* This is a bit of a hack but seems to be the best place to ensure
     * that separate specular is disabled when not needed.
     */
-   if (mmesa->glCtx->Texture.ReallyEnabled == 0 ||
+   if (mmesa->glCtx->Texture._ReallyEnabled == 0 ||
        !mmesa->glCtx->Light.Enabled ||
        mmesa->glCtx->Light.Model.ColorControl == GL_SINGLE_COLOR) {
       sarea->TexState[0].texctl2 &= ~TMC_specen_enable;
@@ -850,7 +807,47 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
    }
 }
 
+/* Fallback to swrast for select and feedback.
+ */
+static void mgaRenderMode( GLcontext *ctx, GLenum mode )
+{
+   FALLBACK( ctx, MGA_FALLBACK_RENDERMODE, (mode != GL_RENDER) );
+}
 
+
+/* =============================================================
+ */
+
+void mgaCalcViewport( GLcontext *ctx )
+{
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   GLfloat *m = mmesa->hw_viewport;
+
+   /* See also mga_translate_vertex.
+    */
+   m[MAT_SX] =   v[MAT_SX];
+   m[MAT_TX] =   v[MAT_TX] + mmesa->drawX + SUBPIXEL_X;
+   m[MAT_SY] = - v[MAT_SY];
+   m[MAT_TY] = - v[MAT_TY] + mmesa->driDrawable->h + mmesa->drawY + SUBPIXEL_Y;
+   m[MAT_SZ] =   v[MAT_SZ] * mmesa->depth_scale;
+   m[MAT_TZ] =   v[MAT_TZ] * mmesa->depth_scale;
+
+   mmesa->SetupNewInputs = ~0;
+}
+
+static void mgaViewport( GLcontext *ctx, 
+			  GLint x, GLint y, 
+			  GLsizei width, GLsizei height )
+{
+   mgaCalcViewport( ctx );
+}
+
+static void mgaDepthRange( GLcontext *ctx, 
+			    GLclampd nearval, GLclampd farval )
+{
+   mgaCalcViewport( ctx );
+}
 
 /* =============================================================
  */
@@ -870,18 +867,15 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 
       /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
        */
-      if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
-	 mmesa->Fallback |= MGA_FALLBACK_LOGICOP;
-      else
-	 mmesa->Fallback &= ~MGA_FALLBACK_LOGICOP;
+      FALLBACK( ctx, MGA_FALLBACK_LOGICOP,
+		(ctx->Color.ColorLogicOpEnabled && 
+		 ctx->Color.LogicOp != GL_COPY));
       break;
    case GL_DEPTH_TEST:
       FLUSH_BATCH( mmesa );
       mmesa->new_state |= MGA_NEW_DEPTH;
-      if (ctx->Depth.Func == GL_NEVER && ctx->Depth.Test)
-         mmesa->Fallback |= MGA_FALLBACK_DEPTH;
-      else
-         mmesa->Fallback &= ~MGA_FALLBACK_DEPTH;
+      FALLBACK (ctx, MGA_FALLBACK_DEPTH,
+		ctx->Depth.Func == GL_NEVER && ctx->Depth.Test);
       break;
    case GL_SCISSOR_TEST:
       FLUSH_BATCH( mmesa );
@@ -889,8 +883,11 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       mmesa->new_state |= MGA_NEW_CLIP;
       break;
    case GL_FOG:
-      FLUSH_BATCH( mmesa );
-      mmesa->new_state |= MGA_NEW_FOG;
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
+      if (ctx->Fog.Enabled) 
+	 mmesa->setup.maccess |= MA_fogen_enable;
+      else
+	 mmesa->setup.maccess &= ~MA_fogen_enable;
       break;
    case GL_CULL_FACE:
       FLUSH_BATCH( mmesa );
@@ -903,28 +900,19 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       mmesa->new_state |= (MGA_NEW_TEXTURE|MGA_NEW_ALPHA);
       break;
    case GL_POLYGON_STIPPLE:
-      FLUSH_BATCH(mmesa);
-      mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-      mmesa->setup.dwgctl &= ~(0xf<<20);
-      if (state) {
-         if (mmesa->canDoStipple && ctx->PB->primitive == GL_POLYGON) {
+      if (mmesa->haveHwStipple && mmesa->raster_primitive == GL_TRIANGLES) {
+	 FLUSH_BATCH(mmesa);
+	 mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+	 mmesa->setup.dwgctl &= ~(0xf<<20);
+	 if (state)
 	    mmesa->setup.dwgctl |= mmesa->poly_stipple;
-            ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
-         }
-         else {
-            ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-         }
-      }
-      else {
-         ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
       }
       break;
    case GL_COLOR_LOGIC_OP:
       FLUSH_BATCH( mmesa );
 #if !defined(ACCEL_ROP)
-      mmesa->Fallback &= ~MGA_FALLBACK_LOGICOP;
-      if (state && ctx->Color.LogicOp != GL_COPY)
-	 mmesa->Fallback |= MGA_FALLBACK_LOGICOP;
+      FALLBACK( ctx, MGA_FALLBACK_LOGICOP, 
+		(state && ctx->Color.LogicOp != GL_COPY));
 #else
       mmesa->new_state |= MGA_NEW_DEPTH;
 #endif
@@ -933,10 +921,8 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       FLUSH_BATCH( mmesa );
       if (mmesa->hw_stencil)
 	 mmesa->new_state |= MGA_NEW_STENCIL;
-      else if (state)
-	 mmesa->Fallback |= MGA_FALLBACK_STENCIL;
       else
-	 mmesa->Fallback &= ~MGA_FALLBACK_STENCIL;
+	 FALLBACK( ctx, MGA_FALLBACK_STENCIL, state );
    default:
       break;
    }
@@ -946,30 +932,6 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 /* =============================================================
  */
 
-/* Just need to note that it has changed - the kernel will do the
- * upload the next time we fire a dma buffer.
- */
-static void mgaWarpUpdateState( GLcontext *ctx )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   int index = mmesa->setupindex;
-
-   index &= ~(MGA_WIN_BIT|MGA_TEX0_BIT|MGA_RGBA_BIT);
-   index |= (MGA_ALPHA_BIT |
-	     MGA_SPEC_BIT |
-	     MGA_FOG_BIT |
-/*  	     MGA_TEX1_BIT | */
-	     0);
-
-   if (index != mmesa->warp_pipe)
-   {
-      FLUSH_BATCH(mmesa);
-      mmesa->warp_pipe = index;
-      mmesa->new_state |= MGA_NEW_WARP;
-      mmesa->dirty |= MGA_UPLOAD_PIPE;
-   }
-}
-
 
 
 /* =============================================================
@@ -977,14 +939,12 @@ static void mgaWarpUpdateState( GLcontext *ctx )
 
 static void mgaDDPrintState( const char *msg, GLuint state )
 {
-   fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s%s%s\n",
+   fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & MGA_NEW_DEPTH)   ? "depth, " : "",
 	   (state & MGA_NEW_ALPHA)   ? "alpha, " : "",
-	   (state & MGA_NEW_FOG)     ? "fog, " : "",
 	   (state & MGA_NEW_CLIP)    ? "clip, " : "",
-	   (state & MGA_NEW_MASK)    ? "colormask, " : "",
 	   (state & MGA_NEW_CULL)    ? "cull, " : "",
 	   (state & MGA_NEW_TEXTURE) ? "texture, " : "",
 	   (state & MGA_NEW_CONTEXT) ? "context, " : "");
@@ -1010,9 +970,6 @@ void mgaDDUpdateHwState( GLcontext *ctx )
       if (new_state & MGA_NEW_ALPHA)
 	 mgaUpdateAlphaMode(ctx);
 
-      if (new_state & MGA_NEW_FOG)
-	 mgaUpdateFogAttrib(ctx);
-
       if (new_state & MGA_NEW_CLIP)
 	 mgaUpdateClipping(ctx);
 
@@ -1028,59 +985,13 @@ void mgaDDUpdateHwState( GLcontext *ctx )
 }
 
 
-void mgaDDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
+static void mgaDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   FLUSH_BATCH( mmesa );
-   mgaUpdateCull(ctx);
-
-   if (ctx->Polygon.StippleFlag) {
-      mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-      mmesa->setup.dwgctl &= ~(0xf<<20);
-      ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-      if (ctx->PB->primitive == GL_POLYGON && mmesa->canDoStipple) {
-	 mmesa->setup.dwgctl |= mmesa->poly_stipple;
-         ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
-      }
-   }
-   else {
-      ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-   }
-}
-
-
-#define INTERESTED (~(NEW_MODELVIEW|NEW_PROJECTION|\
-                      NEW_TEXTURE_MATRIX|\
-                      NEW_USER_CLIP|NEW_CLIENT_STATE))
-
-void mgaDDUpdateState( GLcontext *ctx )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-
-   if (ctx->NewState & INTERESTED) {
-      mgaDDChooseRenderState(ctx);
-      mgaChooseRasterSetupFunc(ctx);
-      mgaWarpUpdateState(ctx);
-   }
-
-   /* Have to do this here to detect texture fallbacks in time:
-    */
-   if (mmesa->new_state & MGA_NEW_TEXTURE)
-      mgaDDUpdateHwState( ctx );
-
-   if (!mmesa->Fallback) {
-      ctx->IndirectTriangles &= ~DD_SW_RASTERIZE;
-      ctx->IndirectTriangles |= mmesa->IndirectTriangles;
-
-      ctx->Driver.PointsFunc=mmesa->PointsFunc;
-      ctx->Driver.LineFunc=mmesa->LineFunc;
-      ctx->Driver.TriangleFunc=mmesa->TriangleFunc;
-      ctx->Driver.QuadFunc=mmesa->QuadFunc;
-   }
-   else {
-      ctx->IndirectTriangles |= mmesa->IndirectTriangles;
-   }
+   _swrast_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
+   MGA_CONTEXT(ctx)->new_gl_state |= new_state;
 }
 
 
@@ -1123,7 +1034,7 @@ void mgaInitState( mgaContextPtr mmesa )
       exit( 1 );
    }
 
-   switch (mmesa->glCtx->Visual->DepthBits) {
+   switch (mmesa->glCtx->Visual.depthBits) {
    case 16:
       mmesa->setup.maccess |= MA_zwidth_16;
       break;
@@ -1175,7 +1086,7 @@ void mgaInitState( mgaContextPtr mmesa )
 
 void mgaDDInitStateFuncs( GLcontext *ctx )
 {
-   ctx->Driver.UpdateState = mgaDDUpdateState;
+   ctx->Driver.UpdateState = mgaDDInvalidateState;
    ctx->Driver.Enable = mgaDDEnable;
    ctx->Driver.LightModelfv = mgaDDLightModelfv;
    ctx->Driver.AlphaFunc = mgaDDAlphaFunc;
@@ -1190,16 +1101,10 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.CullFace = mgaDDCullFaceFrontFace;
    ctx->Driver.FrontFace = mgaDDCullFaceFrontFace;
    ctx->Driver.ColorMask = mgaDDColorMask;
-   ctx->Driver.ReducedPrimitiveChange = mgaDDReducedPrimitiveChange;
-   ctx->Driver.RenderStart = mgaDDUpdateHwState;
-   ctx->Driver.RenderFinish = 0;
 
    ctx->Driver.SetDrawBuffer = mgaDDSetDrawBuffer;
-   ctx->Driver.SetReadBuffer = mgaDDSetReadBuffer;
-   ctx->Driver.Color = mgaDDSetColor;
    ctx->Driver.ClearColor = mgaDDClearColor;
    ctx->Driver.ClearDepth = mgaDDClearDepth;
-   ctx->Driver.Dither = mgaDDDither;
    ctx->Driver.LogicOpcode = mgaDDLogicOp;
 
    ctx->Driver.PolygonStipple = mgaDDPolygonStipple;
@@ -1208,7 +1113,17 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.StencilMask = mgaDDStencilMask;
    ctx->Driver.StencilOp = mgaDDStencilOp;
 
-   ctx->Driver.Index = 0;
+   ctx->Driver.DepthRange = mgaDepthRange;
+   ctx->Driver.Viewport = mgaViewport;
+   ctx->Driver.RenderMode = mgaRenderMode;
+
    ctx->Driver.ClearIndex = 0;
    ctx->Driver.IndexMask = 0;
+
+   /* Swrast hooks for imaging extensions:
+    */
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }

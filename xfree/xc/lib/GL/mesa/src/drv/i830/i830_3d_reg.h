@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_3d_reg.h,v 1.2 2001/10/04 18:31:38 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_3d_reg.h,v 1.4 2002/12/10 01:26:53 dawes Exp $ */
 #define I830_SET_FIELD( var, mask, value ) (var &= ~(mask), var |= value)
 
 #define CMD_3D (0x3<<29)
@@ -325,163 +325,8 @@
 
 /* STATE3D_MAP_CUBE, p168 TODO */
 
-/* STATE3D_MAP_FILTER, p169 */
-#define STATE3D_MAP_FILTER_CMD		(CMD_3D|(0x1c<<24)|(0x02<<19))
-#define ENABLE_CHROMA_KEY_PARAMS	(1<<15)
-#define ENABLE_TEXCOLOR_KEY		(1<<14)
-#define ENABLE_TEXCHROMA_KEY		(1<<13)
-#define ENABLE_TEXKILLPIX_KEY		(1<<12)
-#define KEYFILTER_KILL_ON_ANY_MATCH	0
-#define KEYFILTER_KILL_ON_ANY_MISMATCH	(1<<11)
-#define KEYFILTER_REPLACE_BLACK 	0
-#define KEYFILTER_REPLACE_NEAREST	(1<<11)
-#define ENABLE_MIP_MODE_FILTER		(1<<9)
-#define MIPFILTER_NONE			0
-#define MIPFILTER_NEAREST		(1<<6)
-#define MIPFILTER_LINEAR		(3<<6)
-#define ENABLE_MAG_MODE_FILTER		(1<<5)
-#define ENABLE_MIN_MODE_FILTER		(1<<2)
-#define MAG_FILTER(x)			((x)<<3)
-#define MIN_FILTER(x)			(x)
-#define MIP_FILTER_MASK             	(0x3<<6)
-#define MAG_FILTER_MASK             	(0x3<<3)
-#define MIN_FILTER_MASK             	(0x3<<0)
 
-#define FILTER_NEAREST			0
-#define FILTER_LINEAR			1
-#define FILTER_ANISOTROPIC		2
 
-/* STATE3D_MAP_INFO, p172 */
-#define STATE3D_MAP_INFO_NOCOLR_CMD	(CMD_3D|(0x1d<<24)|3)
-
-#define STATE3D_MAP_INFO_COLR_CMD	(CMD_3D|(0x1d<<24)|4)
-
-/* Dword 1 */
-#define MAP_INFO_TEX(unit)		((unit)<<28)
-#define MAP_INFO_MASK			(3<<28)
-
-#define MI_FORMAT_MASK			((1<<26)|(1<<25)|(1<<24)|(1<<23)|(1<<22)|(1<<21))
-
-#define MAPSURF_8BIT_INDEXED		0
-#define MAPSURF_8BIT			(1<<24)
-#define MAPSURF_16BIT			(2<<24)
-#define MAPSURF_32BIT			(3<<24)
-#define MAPSURF_411			(4<<24)
-#define MAPSURF_422			(5<<24)
-#define MAPSURF_COMPRESSED		(6<<24)
-#define MAPSURF_4BIT_INDEXED		(7<<24)
-
-/* Texel formats */
-/* MAPSURF_4BIT_INDEXED */
-#define MT_4BIT_IDX_ARGB8888		(7<<21)
-
-/* MAPSURF_8BIT_INDEXED */
-#define MT_8BIT_IDX_RGB565		0
-#define MT_8BIT_IDX_ARGB1555		(1<<21)
-#define MT_8BIT_IDX_ARGB4444		(2<<21)
-#define MT_8BIT_IDX_AY88		(3<<21)
-#define MT_8BIT_IDX_ABGR8888		(4<<21)
-#define MT_8BIT_IDX_BUMP_88DVDU 	(5<<21)
-#define MT_8BIT_IDX_BUMP_655LDVDU	(6<<21)
-#define MT_8BIT_IDX_ARGB8888		(7<<21)
-
-/* MAPSURF_8BIT */
-#define MT_8BIT_I8			0
-#define MT_8BIT_L8			(1<<21)
-
-/* MAPSURF_16BIT */
-#define MT_16BIT_RGB565 		0
-#define MT_16BIT_ARGB1555		(1<<21)
-#define MT_16BIT_ARGB4444		(2<<21)
-#define MT_16BIT_AY88			(3<<21)
-#define MT_16BIT_DIB_ARGB1555_8888	(4<<21)
-#define MT_16BIT_BUMP_88DVDU		(5<<21)
-#define MT_16BIT_BUMP_655LDVDU		(6<<21)
-#define MT_16BIT_DIB_RGB565_8888	(7<<21)
-
-/* MAPSURF_32BIT */
-#define MT_32BIT_ARGB8888		0
-#define MT_32BIT_ABGR8888		(1<<21)
-#define MT_32BIT_BUMP_XLDVDU_8888	(6<<21)
-#define MT_32BIT_DIB_8888		(7<<21)
-
-/* MAPSURF_411 */
-#define MT_411_YUV411			0
-
-/* MAPSURF_422 */
-#define MT_422_YCRCB_SWAPY		0
-#define MT_422_YCRCB_NORMAL		(1<<21)
-#define MT_422_YCRCB_SWAPUV		(2<<21)
-#define MT_422_YCRCB_SWAPUVY		(3<<21)
-
-/* MAPSURF_COMPRESSED */
-#define MT_COMPRESS_DXT1		0
-#define MT_COMPRESS_DXT2_3		(1<<21)
-#define MT_COMPRESS_DXT4_5		(2<<21)
-#define MT_COMPRESS_FXT1		(3<<21)
-
-#define MAP_INFO_OUTMUX_F0F1F2F3	0
-#define MAP_INFO_OUTMUX_XXF0XXF3	(1<<19)
-#define MAP_INFO_OUTMUX_XXF2XXF3	(2<<19)
-
-#define ENABLE_TEX_COLORSPACE_CONV	(1<<18)
-#define MAP_INFO_VERTLINESTRIDE_0	0
-#define MAP_INFO_VERTLINESTRIDE_1	(1<<17)
-#define MAP_INFO_VERTLINESTRIDEOFS_0	0
-#define MAP_INFO_VERTLINESTRIDEOFS_1	(1<<16)
-#define MAP_INFO_FORMAT_2D		0
-#define MAP_INFO_FORMAT_3D		(1<<11)
-#define MAP_INFO_USE_FENCE		(1<<10)
-#define MAP_INFO_IS_TILED		(1<<9)
-#define MAP_INFO_IS_LINEAR		0
-#define MAP_INFO_TILEWALK_XMAJOR	0
-#define MAP_INFO_TILEWALK_YMAJOR	(1<<8)
-#define MAP_INFO_USE_PALETTE_0		0
-#define MAP_INFO_USE_PALETTE_1		(1<<4)
-#define MAP_INFO_USE_PALETTE_N(x)	((x<<4) & (1<<4))
-
-/* Dword 2 */
-#define MAP_INFO_HEIGHT(x)		((x)<<16)
-#define MAP_INFO_WIDTH(x)		(x)
-
-/* Dword 3 */
-#define MAP_INFO_BASEADDR(x)		((x)&0x3)
-
-/* Dword 4 */
-#define MAP_INFO_DWORD_PITCH(x) 	((x)<<2)
-
-/* Dword 5 */
-#define MAP_INFO_DFLT_COLR(x)		(x)
-
-/* STATE3D_MAP_LOD_CONTROL, p180 */
-#define STATE3D_MAP_LOD_CNTL_CMD	(CMD_3D|(0x1c<<24)|(0x04<<19))
-#define ENABLE_TEXLOD_BIAS		(1<<7)
-#define MAP_LOD_MASK 			(0x7f)
-#define MAP_LOD_BIAS(x) 		(x)
-
-/* STATE3D_MAP_LOD_LIMITS, p181 */
-#define STATE3D_MAP_LOD_LIMITS_CMD	(CMD_3D|(0x1c<<24)|(0x03<<19))
-#define ENABLE_MAX_MIP_LVL		(1<<13)
-#define ENABLE_MIN_MIP_LVL		(1<<4)
-#define LOD_MAX(x)		((x)<<5)
-#define LOD_MIN(x)		(x)
-#define LOD_MAX_MASK		(0x1fe0)
-#define LOD_MIN_MASK		(0xf)
-
-/* STATE3D_MAP_PALETTE_LOAD, p183 TODO */
-/* STATE3D_MAP_PALETTE_LOAD_32, p184 TODO */
-/* STATE3D_MAP_STREAM_MODIFIER, p186 TODO */
-
-/* STATE3D_MAP_TEXEL_STREAM, p188 */
-#define STATE3D_MAP_TEX_STREAM_CMD	(CMD_3D|(0x1c<<24)|(0x05<<19))
-#define DISABLE_TEX_STREAM_BUMP 	(1<<12)
-#define ENABLE_TEX_STREAM_BUMP		((1<<12)|(1<<11))
-#define TEX_MODIFY_UNIT_0		0
-#define TEX_MODIFY_UNIT_1		(1<<8)
-#define ENABLE_TEX_STREAM_COORD_SET	(1<<7)
-#define TEX_STREAM_COORD_SET(x) 	((x)<<4)
-#define ENABLE_TEX_STREAM_MAP_IDX	(1<<3)
-#define TEX_STREAM_MAP_IDX(x)		(x)
 
 /* STATE3D_MODES_1, p190 */
 #define STATE3D_MODES_1_CMD		(CMD_3D|(0x08<<24))
@@ -683,6 +528,11 @@
 #define TEXCOORDFMT_4D			2
 #define TEXCOORDFMT_1D			3
 
+/*New stuff picked up along the way */
+
+#define MLC_LOD_BIAS_MASK ((1<<7)-1)
+
+
 /* STATE3D_VERTEX_TRANSFORM, p207 */
 #define STATE3D_VERTEX_TRANS_CMD	(CMD_3D|(0x1d<<24)|(0x8b<<16)|0)
 #define STATE3D_VERTEX_TRANS_MTX_CMD	(CMD_3D|(0x1d<<24)|(0x8b<<16)|6)
@@ -717,62 +567,111 @@
 #define I830PACKCOLOR8888(r,g,b,a) \
   ((a<<24) | (r<<16) | (g<<8) | b)
 
-#if 0
-/* We wont ever use this format, since we will never be using
- * more then 4 texture coords.  It is here for reference.
+
+/* Stipple command, carried over from the i810, apparently:
  */
+#define GFX_OP_STIPPLE           ((0x3<<29)|(0x1d<<24)|(0x83<<16))
+#define ST1_ENABLE               (1<<16)
+#define ST1_MASK                 (0xffff)
 
-typedef struct {
-   float x;
-   float y;
-   float z;
-   float z_bias;
-   union {
-      float w;
-      float rhw;
-   } w;
-   float point_width;
-   unsigned int argb;
-   unsigned int fog_spec_rgb;
 
-   float tu0;
-   float tv0;
-   float tq0;
-   float t_4_0;
 
-   float tu1;
-   float tv1;
-   float tq1;
-   float t_4_1;
+#define STATE3D_LOAD_STATE_IMMEDIATE_2      ((0x3<<29)|(0x1d<<24)|(0x03<<16))
+#define LOAD_TEXTURE_MAP0                   (1<<11)
 
-   float tu2;
-   float tv2;
-   float tq2;
-   float t_4_2;
+#define TM0S0_ADDRESS_MASK              0xfffffffc
+#define TM0S0_USE_FENCE                 (1<<1)
 
-   float tu3;
-   float tv3;
-   float tq3;
-   float t_4_3;
+#define TM0S1_HEIGHT_SHIFT              21
+#define TM0S1_WIDTH_SHIFT               10
+#define TM0S1_PALETTE_SELECT            (1<<9)
+#define TM0S1_MAPSURF_FORMAT_MASK       (0x7 << 6)
+#define TM0S1_MAPSURF_FORMAT_SHIFT      6
+#define    MAPSURF_8BIT_INDEXED		   (0<<6)
+#define    MAPSURF_8BIT		 	   (1<<6)
+#define    MAPSURF_16BIT		   (2<<6)
+#define    MAPSURF_32BIT		   (3<<6)
+#define    MAPSURF_411			   (4<<6)
+#define    MAPSURF_422			   (5<<6)
+#define    MAPSURF_COMPRESSED		   (6<<6)
+#define    MAPSURF_4BIT_INDEXED		   (7<<6)
+#define TM0S1_MT_FORMAT_MASK         (0x7 << 3)
+#define TM0S1_MT_FORMAT_SHIFT        3
+#define    MT_4BIT_IDX_ARGB8888	           (7<<3) /* SURFACE_4BIT_INDEXED */
+#define    MT_8BIT_IDX_RGB565	           (0<<3) /* SURFACE_8BIT_INDEXED */
+#define    MT_8BIT_IDX_ARGB1555	           (1<<3)
+#define    MT_8BIT_IDX_ARGB4444	           (2<<3)
+#define    MT_8BIT_IDX_AY88		   (3<<3)
+#define    MT_8BIT_IDX_ABGR8888	           (4<<3)
+#define    MT_8BIT_IDX_BUMP_88DVDU 	   (5<<3)
+#define    MT_8BIT_IDX_BUMP_655LDVDU	   (6<<3)
+#define    MT_8BIT_IDX_ARGB8888	           (7<<3)
+#define    MT_8BIT_I8		           (0<<3) /* SURFACE_8BIT */
+#define    MT_8BIT_L8		           (1<<3)
+#define    MT_16BIT_RGB565 		   (0<<3) /* SURFACE_16BIT */
+#define    MT_16BIT_ARGB1555		   (1<<3)
+#define    MT_16BIT_ARGB4444		   (2<<3)
+#define    MT_16BIT_AY88		   (3<<3)
+#define    MT_16BIT_DIB_ARGB1555_8888      (4<<3)
+#define    MT_16BIT_BUMP_88DVDU	           (5<<3)
+#define    MT_16BIT_BUMP_655LDVDU	   (6<<3)
+#define    MT_16BIT_DIB_RGB565_8888	   (7<<3)
+#define    MT_32BIT_ARGB8888		   (0<<3) /* SURFACE_32BIT */
+#define    MT_32BIT_ABGR8888		   (1<<3)
+#define    MT_32BIT_BUMP_XLDVDU_8888	   (6<<3)
+#define    MT_32BIT_DIB_8888		   (7<<3)
+#define    MT_411_YUV411		   (0<<3) /* SURFACE_411 */
+#define    MT_422_YCRCB_SWAPY	           (0<<3) /* SURFACE_422 */
+#define    MT_422_YCRCB_NORMAL	           (1<<3)
+#define    MT_422_YCRCB_SWAPUV	           (2<<3)
+#define    MT_422_YCRCB_SWAPUVY	           (3<<3)
+#define    MT_COMPRESS_DXT1		   (0<<3) /* SURFACE_COMPRESSED */
+#define    MT_COMPRESS_DXT2_3	           (1<<3)
+#define    MT_COMPRESS_DXT4_5	           (2<<3)
+#define    MT_COMPRESS_FXT1		   (3<<3)
+#define TM0S1_COLORSPACE_CONVERSION     (1 << 2)
+#define TM0S1_TILED_SURFACE             (1 << 1)
+#define TM0S1_TILE_WALK                 (1 << 0)
 
-   float tu4;
-   float tv4;
-   float tq4;
-   float t_4_4;
+#define TM0S2_PITCH_SHIFT               21
+#define TM0S2_CUBE_FACE_ENA_SHIFT       15
+#define TM0S2_MAP_FORMAT                (1<<14)
+#define TM0S2_VERTICAL_LINE_STRIDE      (1<<13)
+#define TM0S2_VERITCAL_LINE_STRIDE_OFF  (1<<12)
+#define TM0S2_OUTPUT_CHAN_SHIFT         10
+#define TM0S2_OUTPUT_CHAN_MASK          (3<<10)
 
-   float tu5;
-   float tv5;
-   float tq5;
-   float t_4_5;
+#define TM0S3_MIP_FILTER_MASK           (0x3<<30)
+#define TM0S3_MIP_FILTER_SHIFT          30
+#define MIPFILTER_NONE		0
+#define MIPFILTER_NEAREST	1
+#define MIPFILTER_LINEAR	3
+#define TM0S3_MAG_FILTER_MASK           (0x3<<28)
+#define TM0S3_MAG_FILTER_SHIFT          28
+#define TM0S3_MIN_FILTER_MASK           (0x3<<26)
+#define TM0S3_MIN_FILTER_SHIFT          26
+#define FILTER_NEAREST		0
+#define FILTER_LINEAR		1
+#define FILTER_ANISOTROPIC	2
 
-   float tu6;
-   float tv6;
-   float tq6;
-   float t_4_6;
+#define TM0S3_LOD_BIAS_SHIFT		17
+#define TM0S3_LOD_BIAS_MASK		(0x1ff<<17)
+#define TM0S3_MAX_MIP_SHIFT		9
+#define TM0S3_MAX_MIP_MASK		(0xff<<9)
+#define TM0S3_MIN_MIP_SHIFT		3
+#define TM0S3_MIN_MIP_MASK		(0x3f<<3)
+#define TM0S3_KILL_PIXEL		(1<<2)
+#define TM0S3_KEYED_FILTER		(1<<1)
+#define TM0S3_CHROMA_KEY		(1<<0)
 
-   float tu7;
-   float tv7;
-   float tq7;
-   float t_4_7;
-} i830_full_vertex;
-#endif
+
+/* STATE3D_MAP_TEXEL_STREAM, p188 */
+#define STATE3D_MAP_TEX_STREAM_CMD	(CMD_3D|(0x1c<<24)|(0x05<<19))
+#define DISABLE_TEX_STREAM_BUMP 	(1<<12)
+#define ENABLE_TEX_STREAM_BUMP		((1<<12)|(1<<11))
+#define TEX_MODIFY_UNIT_0		0
+#define TEX_MODIFY_UNIT_1		(1<<8)
+#define ENABLE_TEX_STREAM_COORD_SET	(1<<7)
+#define TEX_STREAM_COORD_SET(x) 	((x)<<4)
+#define ENABLE_TEX_STREAM_MAP_IDX	(1<<3)
+#define TEX_STREAM_MAP_IDX(x)		(x)

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.34 2001/04/16 21:08:24 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.35 2002/10/11 01:40:31 dawes Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h
@@ -160,6 +160,8 @@ void xf86PostButtonEvent(DeviceIntPtr device, int is_absolute, int button,
 void xf86PostKeyEvent(DeviceIntPtr device, unsigned int key_code, int is_down,
 		      int is_absolute, int first_valuator, int num_valuators,
 		      ...);
+void xf86PostKeyboardEvent(DeviceIntPtr device, unsigned int key_code,
+                           int is_down);
 void xf86MotionHistoryAllocate(LocalDevicePtr local);
 int xf86GetMotionEvents(DeviceIntPtr dev, xTimecoord *buff,
 			unsigned long start, unsigned long stop,

@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.12 2001/12/14 20:01:33 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.13 2002/10/15 01:45:02 dawes Exp $ */
 
 #include	<stdlib.h>
 #include	"dispatch.h"
@@ -165,7 +165,7 @@ Dispatch(void)
 	if (dispatchException) {
 	    /* re-read the config file */
 	    if (dispatchException & DE_RECONFIG) {
-		NoticeF("Re-reading config file\n");
+		NoticeF("re-reading config file\n");
 		if (ReadConfigFile(configfilename) != FSSuccess)
 		    ErrorF("couldn't parse config file\n");
 		SetConfigValues();
@@ -186,6 +186,8 @@ Dispatch(void)
 	    if (dispatchException & DE_TERMINATE) {
 		NoticeF("terminating\n");
 		kill_all_clients();
+		CloseSockets();
+		CloseErrors();
 		exit(0);
 		break;
 	    }

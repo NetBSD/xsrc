@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.10 2001/12/14 19:59:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.11 2002/03/06 21:14:04 mvojkovi Exp $ */
 
 #ifndef RESOURCE_H
 #define RESOURCE_H 1
@@ -137,6 +137,15 @@ typedef void (*FindResType)(
 #endif
 );
 
+typedef void (*FindAllRes)(
+#if NeedNestedPrototypes
+    pointer /*value*/,
+    XID /*id*/,
+    RESTYPE /*type*/,
+    pointer /*cdata*/
+#endif
+);
+
 typedef Bool (*FindComplexResType)(
 #if NeedNestedPrototypes
     pointer /*value*/,
@@ -210,6 +219,14 @@ extern void FindClientResourcesByType(
     ClientPtr /*client*/,
     RESTYPE /*type*/,
     FindResType /*func*/,
+    pointer /*cdata*/
+#endif
+);
+
+extern void FindAllClientResources(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    FindAllRes /*func*/,
     pointer /*cdata*/
 #endif
 );
@@ -321,6 +338,14 @@ extern unsigned int GetXIDList(
     XID * /*pids*/
 #endif
 );
+
+extern RESTYPE lastResourceType;
+extern RESTYPE TypeMask;
+
+#ifdef XResExtension
+extern Atom *ResourceNames;
+void RegisterResourceName(RESTYPE type, char* name);
+#endif
 
 #endif /* RESOURCE_H */
 

@@ -51,7 +51,7 @@ do
 			paths=$path
 			for filename
 			do
-				if [ "$filename" != "." ]; then
+				if [ -n "$filename" -a "$filename" != "." ]; then
 					path=$path/$filename
 					paths=$paths$newline$path
 				fi

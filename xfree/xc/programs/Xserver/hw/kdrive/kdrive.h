@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.21 2001/10/12 06:33:07 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.29 2002/11/13 16:37:39 keithp Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -42,6 +42,7 @@
 #include "fb.h"
 #include "fboverlay.h"
 #include "shadow.h"
+#include "randrstr.h"
 
 extern WindowPtr    *WindowTable;
 
@@ -97,17 +98,21 @@ typedef struct _KdFrameBuffer {
     void	*closure;
 } KdFrameBuffer;
 
+#define RR_Rotate_All	(RR_Rotate_0|RR_Rotate_90|RR_Rotate_180|RR_Rotate_270)
+#define RR_Reflect_All	(RR_Reflect_X|RR_Reflect_Y)
+
 typedef struct _KdScreenInfo {
     struct _KdScreenInfo    *next;
     KdCardInfo	*card;
     ScreenPtr	pScreen;
     void	*driver;
-    int		rotation;
+    Rotation	randr;	/* rotation and reflection */
     int		width;
     int		height;
     int		rate;
     int		width_mm;
     int		height_mm;
+    int		subpixel_order;
     Bool        dumb;
     Bool        softCursor;
     int		mynum;
@@ -198,9 +203,20 @@ typedef struct _KdMouseInfo {
     xEvent		heldEvent;
     unsigned char	buttonState;
     int			emulationDx, emulationDy;
+    int			inputType;
 } KdMouseInfo;
 
 extern KdMouseInfo	*kdMouseInfo;
+
+#ifdef TOUCHSCREEN
+/* 
+ * HACK! Send absolute events when touch screen is current,
+ * else send relative events.  Used to drive pointers on
+ * alternate screens with the touch screen
+ */
+extern int KdTsCurScreen;
+extern int KdTsPhyScreen;
+#endif
 
 KdMouseInfo *KdMouseInfoAdd (void);
 void	    KdParseMouse (char *);
@@ -303,6 +319,7 @@ extern Bool		kdEnabled;
 extern Bool		kdSwitchPending;
 extern Bool		kdEmulateMiddleButton;
 extern Bool		kdDisableZaphod;
+extern int		kdVirtualTerminal;
 extern KdOsFuncs	*kdOsFuncs;
 
 #define KdGetScreenPriv(pScreen) ((KdPrivScreenPtr) \
@@ -512,6 +529,12 @@ KdResume (void);
 void
 KdProcessSwitch (void);
 
+Rotation
+KdAddRotation (Rotation a, Rotation b);
+
+Rotation
+KdSubRotation (Rotation a, Rotation b);
+
 void
 KdParseScreen (KdScreenInfo *screen,
 	       char	    *arg);
@@ -560,6 +583,9 @@ void
 KdInitOutput (ScreenInfo *pScreenInfo,
 	      int argc, char **argv);
  
+void
+KdSetSubpixelOrder (ScreenPtr pScreen, Rotation randr);
+    
 /* kinfo.c */
 KdCardInfo *
 KdCardInfoAdd (KdCardFuncs  *funcs,
@@ -588,6 +614,11 @@ KdAllocInputType (void);
 
 Bool
 KdRegisterFd (int type, int fd, void (*read) (int fd, void *closure), void *closure);
+
+void
+KdRegisterFdEnableDisable (int fd, 
+			   int (*enable) (int fd, void *closure),
+			   void (*disable) (int fd, void *closure));
 
 void
 KdUnregisterFds (int type, Bool do_close);
@@ -623,6 +654,9 @@ KdSetLed (int led, Bool on);
 void
 KdSetMouseMatrix (KdMouseMatrix *matrix);
 
+void
+KdComputeMouseMatrix (KdMouseMatrix *matrix, Rotation randr, int width, int height);
+    
 void
 KdBlockHandler (int		screen,
 		pointer		blockData,
@@ -686,6 +720,21 @@ KdTuneMode (KdScreenInfo    *screen,
 	    Bool	    (*usable) (KdScreenInfo *),
 	    Bool	    (*supported) (KdScreenInfo *,
 					  const KdMonitorTiming *));
+
+#ifdef RANDR
+Bool
+KdRandRGetInfo (ScreenPtr pScreen, 
+		int randr,
+		Bool (*supported) (ScreenPtr pScreen, 
+				   const KdMonitorTiming *));
+
+const KdMonitorTiming *
+KdRandRGetTiming (ScreenPtr	    pScreen,
+		  Bool		    (*supported) (ScreenPtr pScreen, 
+						  const KdMonitorTiming *),
+		  int		    rate,
+		  RRScreenSizePtr   pSize);
+#endif
 
 /* kpict.c */
 void

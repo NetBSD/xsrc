@@ -74,7 +74,7 @@ Sun Microsystems, Inc. or its licensors is granted.
  *   Modifier: Masayoshi Shimamura      FUJITSU LIMITED 
  *
  */
-/* $XFree86: xc/lib/X11/lcInit.c,v 3.9 2001/11/16 00:52:27 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcInit.c,v 3.10 2002/11/01 13:43:31 alanh Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -133,6 +133,45 @@ _XlcInitLoader()
 
 #ifdef USE_DYNAMIC_LOADER
     _XlcAddLoader(_XlcDynamicLoader, XlcHead);
+#endif
+
+#endif /* USE_DYNAMIC_LC */
+}
+
+void
+_XlcDeInitLoader()
+{
+
+#ifdef USE_DYNAMIC_LC
+    _XlcRemoveLoader(_XlcDynamicLoad);
+#else /* USE_DYNAMIC_LC */
+
+#ifdef USE_GENERIC_LOADER
+    _XlcRemoveLoader(_XlcGenericLoader);
+#endif
+
+#ifdef USE_DEFAULT_LOADER
+    _XlcRemoveLoader(_XlcDefaultLoader);
+#endif
+
+#ifdef USE_UTF8_LOADER
+    _XlcRemoveLoader(_XlcUtf8Loader);
+#endif
+
+#ifdef USE_EUC_LOADER
+    _XlcRemoveLoader(_XlcEucLoader);
+#endif
+
+#ifdef USE_SJIS_LOADER
+   _XlcRemoveLoader(_XlcSjisLoader);
+#endif
+
+#ifdef USE_JIS_LOADER
+    _XlcRemoveLoader(_XlcJisLoader);
+#endif
+
+#ifdef USE_DYNAMIC_LOADER
+    _XlcRemoveLoader(_XlcDynamicLoader);
 #endif
 
 #endif /* USE_DYNAMIC_LC */

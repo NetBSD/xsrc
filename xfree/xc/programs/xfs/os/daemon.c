@@ -27,29 +27,35 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.8 2001/11/16 16:47:58 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.12 2002/10/20 21:42:50 tsi Exp $ */
 
 #include <X11/Xos.h>
-#include <stdio.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <stdlib.h>
 
-#if defined(SVR4) || defined(USG)
-#include <termios.h>
-#else
-#include <sys/ioctl.h>
+#ifndef __GLIBC__
+# if defined(__osf__) || \
+     defined(__GNU__) || \
+     defined(__CYGWIN__) || \
+     defined(linux)
+#  define setpgrp setpgid
+# endif
 #endif
-#if defined(__osf__) || defined(linux) || defined(__GNU__) || defined(__CYGWIN__)
-#define setpgrp setpgid
+
+#if defined(SVR4) || defined(USG) || defined(__GLIBC__)
+# include <termios.h>
+#else
+# include <sys/ioctl.h>
 #endif
 #ifdef hpux
-#include <sys/ptyio.h>
+# include <sys/ptyio.h>
 #endif
-#include <errno.h>
-#include <sys/types.h>
+
 #ifdef X_NOT_POSIX
-#define Pid_t int
+# define Pid_t int
 #else
-#define Pid_t pid_t
+# define Pid_t pid_t
 #endif
 
 #include "os.h"
@@ -58,8 +64,8 @@ void
 BecomeOrphan ()
 {
     Pid_t child_id;
-    int stat;
 
+    chdir("/");
     /*
      * fork so that the process goes into the background automatically. Also
      * has a nice side effect of having the child process get inherited by
@@ -76,27 +82,35 @@ BecomeOrphan ()
 	break;
     case -1:
 	/* error */
-	FatalError("daemon fork failed, errno = %d\n", errno);
+	FatalError("daemon fork failed, %s\n", strerror(errno));
 	break;
 
     default:
 	/* parent */
 
-#if !defined(CSRG_BASED) && !defined(__QNXNTO__)
-#if defined(SVR4)
-	stat = setpgid(child_id, child_id);
-	/* This gets error EPERM.  Why? */
-#else
-#if defined(SYSV)
-	stat = 0;	/* don't know how to set child's process group */
-#else
-	stat = setpgrp(child_id, child_id);
-	if (stat != 0)
-	    FatalError("setting process grp for daemon failed, errno = %d\n",
-		     errno);
-#endif
-#endif
-#endif /* !CSRG_BASED */
+#if defined(CSRG_BASED) || \
+    defined(SYSV) || \
+    defined(SVR4) || \
+    defined(__QNXNTO__) || \
+    defined(__GLIBC__) || \
+    defined(linux)
+	{
+	    int stat;
+# if defined(SVR4) || defined(__QNXNTO__)
+	    /* This gets error EPERM.  Why? */
+	    stat = setpgid (child_id, child_id);
+# elif defined(SYSV)
+	    stat = 0;	/* don't know how to set child's process group */
+# elif defined(__GLIBC__)
+	    stat = setpgrp ();
+# else
+	    stat = setpgrp (child_id, child_id);
+# endif
+	    if (stat != 0)
+		FatalError("setting process group for daemon failed: %s\n",
+			   strerror(errno));
+	}
+#endif /* ! (CSRG_BASED || SYSV || SVR4 || __QNXNTO__ || __GLIBC__) */
 	exit (0);
     }
 }
@@ -104,43 +118,44 @@ BecomeOrphan ()
 void
 BecomeDaemon ()
 {
-    register int i;
-
     /*
-     * Close standard file descriptors and get rid of controlling tty
+     * Close standard file descriptors and get rid of controlling tty.
      */
 
-#if defined(CSRG_BASED) || defined(__QNXNTO__)
+    /* If our C library has the daemon() function, just use it. */
+#if defined(__GLIBC__) || defined(CSRG_BASED)
     daemon (0, 0);
 #else
-#if defined(SYSV) || defined(SVR4)
-    setpgrp ();
-#else
-    setpgrp (0, getpid());
-#endif
+    register int i;
 
-    close (0); 
+# if defined(SYSV) || defined(SVR4) || defined(__QNXNTO__)
+    setpgrp ();
+# else
+    setpgrp (0, getpid());
+# endif
+
+    close (0);
     close (1);
     close (2);
 
-#if !defined(__EMX__) && !defined(__CYGWIN__)
-#if !((defined(SYSV) || defined(SVR4)) && defined(i386))
+# if !defined(__UNIXOS2__) && !defined(__CYGWIN__)
+#  if !((defined(SYSV) || defined(SVR4)) && defined(i386))
     if ((i = open ("/dev/tty", O_RDWR)) >= 0) {	/* did open succeed? */
-#if defined(USG) && defined(TCCLRCTTY)
+#   if defined(USG) && defined(TCCLRCTTY)
 	int zero = 0;
 	(void) ioctl (i, TCCLRCTTY, &zero);
-#else
-#if (defined(SYSV) || defined(SVR4)) && defined(TIOCTTY)
+#   else
+#    if (defined(SYSV) || defined(SVR4)) && defined(TIOCTTY)
 	int zero = 0;
 	(void) ioctl (i, TIOCTTY, &zero);
-#else
+#    else
 	(void) ioctl (i, TIOCNOTTY, (char *) 0);    /* detach, BSD style */
-#endif
-#endif
+#    endif
+#   endif
 	(void) close (i);
     }
-#endif /* !((SYSV || SVR4) && i386) */
-#endif /* !__EMX__ */
+#  endif /* !((SYSV || SVR4) && i386) */
+# endif /* !__UNIXOS2__ && !__CYGWIN__ */
 
     /*
      * Set up the standard file descriptors.
@@ -148,37 +163,5 @@ BecomeDaemon ()
     (void) open ("/", O_RDONLY);	/* root inode already in core */
     (void) dup2 (0, 1);
     (void) dup2 (0, 2);
-#endif /* CSRG_BASED */
-}
-
-#if defined(linux) || defined(CSRG_BASED) || defined(__QNXNTO__)
-FILE *pidFilePtr;
-static int pidFd;
-char *pidFile = "/var/run/xfs.pid";
 #endif
-
-int
-StorePid ()
-{
-#if defined(linux) || defined(CSRG_BASED) || defined(__QNXNTO__)
-    int         oldpid;
-
-    if (pidFile[0] != '\0') {
-        pidFd = open (pidFile, 2);
-        if (pidFd == -1 && errno == ENOENT)
-            pidFd = open (pidFile, O_RDWR|O_CREAT, 0666);
-        if (pidFd == -1 || !(pidFilePtr = fdopen (pidFd, "r+")))
-        {
-            ErrorF ("process-id file %s cannot be opened\n",
-                      pidFile);
-            return -1;
-        }
-        if (fscanf (pidFilePtr, "%d\n", &oldpid) != 1)
-            oldpid = -1;
-        fseek (pidFilePtr, 0l, 0);
-        fprintf (pidFilePtr, "%5d\n", getpid ());
-        (void) fflush (pidFilePtr);
-    }
-#endif
-    return 0;
 }

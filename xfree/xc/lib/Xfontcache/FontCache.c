@@ -27,15 +27,16 @@
  *
  *	Id: FontCache.c,v 1.8 1999/01/31 12:52:49 akiyama Exp $
  */
+/* $XFree86: xc/lib/Xfontcache/FontCache.c,v 1.3 2002/10/16 00:37:28 dawes Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "fontcachstr.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/fontcachstr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 
 static XExtensionInfo _fontcache_info_data;
 static XExtensionInfo *fontcache_info = &_fontcache_info_data;

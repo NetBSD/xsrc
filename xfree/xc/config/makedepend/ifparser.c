@@ -36,6 +36,7 @@
  *     VALUE		:=	'('  EXPRESSION  ')'
  * 			 |	'!'  VALUE
  * 			 |	'-'  VALUE
+ * 			 |	'+'  VALUE
  *			 |	'~'  VALUE
  * 			 |	'defined'  '('  variable  ')'
  * 			 |	'defined'  variable
@@ -58,7 +59,7 @@
  * 
  *     ParseIfExpression		parse a string for #if
  */
-/* $XFree86: xc/config/makedepend/ifparser.c,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/ifparser.c,v 3.11 2002/09/23 01:48:08 tsi Exp $ */
 
 #include "ifparser.h"
 #include <ctype.h>
@@ -170,7 +171,7 @@ parse_character (IfParser *g, const char *cp, long *valp)
 static const char *
 parse_value (IfParser *g, const char *cp, long *valp)
 {
-    const char *var;
+    const char *var, *varend;
 
     *valp = 0;
 
@@ -195,6 +196,10 @@ parse_value (IfParser *g, const char *cp, long *valp)
       case '-':
 	DO (cp = parse_value (g, cp + 1, valp));
 	*valp = -(*valp);
+	return cp;
+
+      case '+':
+	DO (cp = parse_value (g, cp + 1, valp));
 	return cp;
 
       case '~':
@@ -250,7 +255,24 @@ parse_value (IfParser *g, const char *cp, long *valp)
 	return CALLFUNC(g, handle_error) (g, cp, "variable or number");
     else {
 	DO (cp = parse_variable (g, cp, &var));
-	*valp = (*(g->funcs.eval_variable)) (g, var, cp - var);
+	varend = cp;
+	SKIPSPACE(cp);
+	if (*cp != '(') {
+	    *valp = (*(g->funcs.eval_variable)) (g, var, varend - var);
+	} else {
+	    do {
+		long dummy;
+		DO (cp = ParseIfExpression (g, cp + 1, &dummy));
+		SKIPSPACE(cp);
+		if (*cp == ')')
+		    break;
+		if (*cp != ',')
+		    return CALLFUNC(g, handle_error) (g, cp, ",");
+	    } while (1);
+
+	    *valp = 1;	/* XXX */
+	    cp++;
+	}
     }
     
     return cp;

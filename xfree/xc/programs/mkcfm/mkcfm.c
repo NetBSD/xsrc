@@ -16,7 +16,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.11 2001/08/13 21:46:51 dawes Exp $ */
+/* $XFree86: xc/programs/mkcfm/mkcfm.c,v 1.12 2002/12/09 17:30:12 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -221,6 +221,10 @@ Xfree(pointer p)
  
 void 
 FontDefaultFormat(int *bit, int *byte, int *glyph, int *scan) { ; }
+ 
+Bool 
+FontFilePriorityRegisterRenderer(FontRendererPtr renderer, int priority) 
+{ return TRUE; }
  
 Bool 
 FontFileRegisterRenderer(FontRendererPtr renderer) { return TRUE; }

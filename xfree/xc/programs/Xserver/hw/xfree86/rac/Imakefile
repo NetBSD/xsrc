@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/rac/Imakefile,v 1.5 1999/08/14 10:50:07 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/rac/Imakefile,v 1.6 2002/09/16 18:06:18 eich Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -12,7 +12,8 @@ SRCS = xf86RAC.c $(MODSRC)
 OBJS = xf86RAC.o $(MODOBJ)
 
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
-           -I$(SERVERSRC)/include -I$(SERVERSRC)/mi -I$(XINCLUDESRC)
+           -I$(SERVERSRC)/include -I$(SERVERSRC)/mi -I$(SERVERSRC)/render \
+	   -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 ModuleObjectRule()
 

@@ -24,7 +24,7 @@
 !! dealings in this Software without prior written authorization from the
 !! XFree86 Project.
 !!
-!! $XFree86: xc/programs/Xserver/hw/xfree86/Options,v 1.8 2001/12/17 20:52:29 dawes Exp $
+!! $XFree86: xc/programs/Xserver/hw/xfree86/Options,v 1.10 2003/02/15 06:46:30 paulo Exp $
 
 !! XAA options
 xaa.XaaNoCPUToScreenColorExpandFill:\
@@ -265,6 +265,77 @@ Default: determined using BIOS.
 r128.UseFBDev:\
 Enable or disable use of on OS-specific fb interface (and is not supported \
 on all OSs). See fbdevhw(4) for further information. Default: off.
+
+r128.DMAForXv:\
+Try or don't try to use DMA for Xv image transfers. This will reduce CPU \
+usage when playing big videos like DVDs, but may cause instabilities. \
+Default: off.
+
+
+!! Radeon options
+
+radeon.SWcursor:\
+Selects software cursor. Default: off.
+
+radeon.NoAccel:\
+Disables all hardware acceleration. Default: off.
+
+radeon.Dac6Bit:\
+Enables or disables the use of 6 bits per color component when in 8 bpp \
+mode (emulates VGA mode). Default: off.
+
+radeon.VideoKey:\
+This overrides the default pixel value for the YUV video overlay key. \
+Default: undefined.
+
+radeon.UseFBDev:\
+Enable or disable use of an OS-specific framebuffer device interface \
+(which is not supported on all OSs). Default: off.
+
+radeon.AGPMode:\
+Set AGP data transfer rate. (used only when DRI is enabled) \
+Valid choices: 1 (default), 2 and 4
+
+radeon.AGPFastWrite:\
+Enable AGP fast write. (used only when DRI is enabled) \
+Default: off.
+
+radeon.ForcePCIMode:\
+Force to use PCI GART for DRI acceleration. (used only when DRI is enabled) \
+Default: off.
+
+radeon.DDCMode:\
+Force to use the modes queried from the connected monitor. Default: off.
+
+radeon.CloneDisplay:\
+This option is only used for dual-head cards with only single screen section \
+specified in the configuration file. Valid choices: \
+0 - disable (one CRTC used for both heads) \
+1 - auto-detect (default) \
+2 - force on \
+3 - auto-detect + 2nd head overlay \
+4 - force on + 2nd head overlay \
+
+radeon.CloneMode:\
+Set the first mode for the secondary head. It can be different from the modes \
+used for the primary head. If you don't have this line while clone is on, the \
+modes specified for the primary head will be used for the secondary head.
+
+radeon.CloneHSync:\
+Set the horizontal sync range for the secondary monitor. It is not required if \
+a DDC capable monitor is connected. Default: undefined.
+
+radeon.CloneVRefresh:\
+Set the vertical refresh range for the secondary monitor. It is not required \
+if a DDC capable monitor is connected. Default: undefined.
+
+radeon.PanelOff:\
+Disable panel output. Only used when clone is enabled. Default: off.
+
+radeon.EnablePageFlip:\
+Enable page flipping for 3D acceleration. This will increase performance but \
+not work correctly in some rare cases. Default: off.
+
 
 !! NeoMagic options
 

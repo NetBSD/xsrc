@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.3 2001/08/06 21:13:19 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.5 2002/12/17 20:55:21 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH MOUSE __drivermansuffix__ __vendorversion__
@@ -156,7 +156,28 @@ and
 Default: no mapping.
 .TP 7
 .BI "Option \*qFlipXY\*q \*q" boolean \*q
-Enable/disable swapping the X and Y axes.  Default: off.
+Enable/disable swapping the X and Y axes.  This transformation is applied
+after the
+.BR InvX ,
+.B InvY
+and
+.BR AngleOffset
+transformations.  Default: off.
+.TP 7
+.BI "Option \*qInvX\*q \*q" boolean \*q
+Invert the X axis.  Default: off.
+.TP 7
+.BI "Option \*qInvY\*q \*q" boolean \*q
+Invert the Y axis.  Default: off.
+.TP 7
+.BI "Option \*qAngleOffset\*q \*q" integer \*q
+Specify a clockwise angular offset (in degrees) to apply to the pointer
+motion.  This transformation is applied before the
+.BR FlipXY ,
+.B InvX
+and
+.B InvY
+transformations.  Default: 0.
 .TP 7
 .BI "Option \*qSampleRate\*q \*q" integer \*q
 Sets the number of motion/button events the mouse sends per second.  Setting
@@ -168,6 +189,18 @@ already set to.
 Sets the resolution of the device in counts per inch.  Setting this is
 only supported for some mice, including some PS/2 mice on some platforms.
 Default: whatever the mouse is already set to.
+.TP 7
+.BI "Option \*qDragLockButtons\*q \*q" "L1 B2 L3 B4" \*q
+Sets \*qdrag lock buttons\*q that simulate holding a button down, so
+that low dexterity people do not have to hold a buttton down at the
+same time they move a mouse cursor. Button numbers occur in pairs,
+with the lock button number occurring first, followed by the button
+number that is the target of the lock button.
+.TP 7
+.BI "Option \*qDragLockButtons\*q \*q" "M1" \*q
+Sets a \*qmaster drag lock button\*q that acts as a \*qMeta Key\*q
+indicating that the next button pressed is to be 
+\*qdrag locked\*q.
 .TP 7
 .BI "Option \*qClearDTR\*q \*q" boolean \*q
 Enable/disable clearing the DTR line on the serial port used by the mouse.

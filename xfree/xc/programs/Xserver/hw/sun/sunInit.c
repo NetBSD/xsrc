@@ -15,7 +15,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.11 2001/08/17 22:08:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.12 2002/12/06 02:11:44 tsi Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -342,17 +342,22 @@ static int OpenFrameBuffer(device, screen)
 		Error("unable to get frame buffer attributes");
 		(void) close(sunFbs[screen].fd);
 		sunFbs[screen].fd = -1;
-		ret = FALSE; 
+		return FALSE; 
 	    }
 	}
 	if (ret) {
 	    devFbUsed = TRUE;
-	    if (fbattr)
+	    if (fbattr) {
+		if (fbattr->fbtype.fb_type >= XFBTYPE_LASTPLUSONE) {
+		    ErrorF ("%s is an unknown framebuffer type\n", device);
+		    (void) close(sunFbs[screen].fd);
+		    sunFbs[screen].fd = -1;
+		    return FALSE;
+		}
 		sunFbs[screen].info = fbattr->fbtype;
+	    }
 	    sunFbs[screen].fbPriv = (pointer) fbattr;
-	    if (fbattr && 
-		fbattr->fbtype.fb_type < XFBTYPE_LASTPLUSONE && 
-		!sunFbData[fbattr->fbtype.fb_type].init) {
+	    if (fbattr && !sunFbData[fbattr->fbtype.fb_type].init) {
 		int _i;
 		ret = FALSE;
 		for (_i = 0; _i < FB_ATTR_NEMUTYPES; _i++) {

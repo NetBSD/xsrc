@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/ico/ico.c,v 1.5 2001/08/29 11:09:44 alanh Exp $ */
+/* $XFree86: xc/programs/ico/ico.c,v 1.9 2002/12/24 17:43:00 tsi Exp $ */
 
 /******************************************************************************
  * Description
@@ -166,7 +166,7 @@ Atom wm_delete_window;
  * any additional threads are created
  */
 
-const char *Primaries[] = {
+char *Primaries[] = {
     "red", "green", "blue", "yellow", "cyan", "magenta"
 };
 #define NumberPrimaries 6
@@ -211,7 +211,7 @@ const char *ProgramName;	/* argv[0] */
 const char *geom = NULL;	/* -geometry: window geometry */
 int useRoot = 0;		/* -r */
 int dash = 0;			/* -d: dashed line pattern */
-const char **colornames;	/* -colors (points into argv) */
+char **colornames;		/* -colors (points into argv) */
 #ifdef MULTIBUFFER
 int update_action = MultibufferUpdateActionBackground;
 #endif
@@ -245,8 +245,9 @@ xcondition_rec count_cond;	/* Xthreads doesn't define an equivalent to
  *	Error handling
  *****************************************************************************/
 
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-void icoFatal () __attribute__((__noreturn__));
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
+void icoFatal (const char *fmt, const char *a0) __attribute__((__noreturn__));
 #endif
 void
 icoFatal(fmt,a0)
@@ -265,9 +266,8 @@ icoFatal(fmt,a0)
  *	Memory allocation
  *****************************************************************************/
 
-char *
-xalloc(nbytes)
-    unsigned int nbytes;
+static char *
+xalloc(unsigned int nbytes)
 {
         char *p;
 
@@ -285,9 +285,8 @@ xalloc(nbytes)
  *	Sleep a certain number of milliseconds
  *****************************************************************************/
 
-void
-msleep(msecs)
-    unsigned int msecs;
+static void
+msleep(unsigned int msecs)
 {
 	struct timeval timeout;
 
@@ -304,9 +303,8 @@ msleep(msecs)
  *	*m		Formatted identity matrix
  *****************************************************************************/
 
-void
-IdentMat(m)
-    Transform3D m;
+static void
+IdentMat(Transform3D m)
 {
 	int i;
 	int j;
@@ -331,11 +329,8 @@ IdentMat(m)
  *	*m		Result matrix
  *****************************************************************************/
 
-void
-ConcatMat(l, r, m)
-    const Transform3D l;
-    const Transform3D r;
-    Transform3D m;
+static void
+ConcatMat(Transform3D l, Transform3D r, Transform3D m)
 {
 	int i;
 	int j;
@@ -365,11 +360,8 @@ ConcatMat(l, r, m)
  *	*m		Formatted rotation matrix
  *****************************************************************************/
 
-void
-FormatRotateMat(axis, angle, m)
-    char axis;
-    double angle;
-    Transform3D m;
+static void
+FormatRotateMat(char axis, double angle, Transform3D m)
 {
 	double s, c;
 
@@ -416,12 +408,8 @@ FormatRotateMat(axis, angle, m)
  *	*out		array of transformed non-homogeneous output points
  *****************************************************************************/
 
-void
-PartialNonHomTransform(n, m, in, out)
-    int n;
-    const Transform3D m;
-    const Point3D *in;
-    Point3D *out;
+static void
+PartialNonHomTransform(int n, Transform3D m, const Point3D *in, Point3D *out)
 {
 	for (; n > 0; --n, ++in, ++out) {
 		out->x = in->x * m[0][0] + in->y * m[1][0] + in->z * m[2][0];
@@ -438,10 +426,8 @@ PartialNonHomTransform(n, m, in, out)
  * Xlib had some kind of XWindowAnyEvent and XCheckWindowEvent. -- Casantos.
  */
 
-Bool predicate(display, event, args)
-    Display * display;
-    XEvent * event;
-    XPointer args;
+static Bool
+predicate(Display *display, XEvent *event, XPointer args)
 {
     Window w = (Window) args;
     return event->xany.window == w;
@@ -452,10 +438,8 @@ Bool predicate(display, event, args)
  *	Icosahedron animator.
  *****************************************************************************/
 
-void
-icoClearArea(closure,x,y,w,h)
-    struct closure *closure;
-    int x,y,w,h;
+static void
+icoClearArea(struct closure *closure, int x, int y, int w, int h)
 {
 	if (multibufext && dblbuf)
 		return;
@@ -474,11 +458,8 @@ icoClearArea(closure,x,y,w,h)
 
 /* Set up points, transforms, etc.  */
 
-void
-initPoly(closure, poly, icoW, icoH)
-    struct closure *closure;
-    const Polyinfo *poly;
-    int icoW, icoH;
+static void
+initPoly(struct closure *closure, const Polyinfo *poly, int icoW, int icoH)
 {
     Point3D *vertices = poly->v;
     int NV = poly->numverts;
@@ -496,10 +477,8 @@ initPoly(closure, poly, icoW, icoH)
     closure->ho2 = icoH / 2.0;
 }
 
-void
-setDrawBuf (closure, n)
-    struct closure *closure;
-    int n;
+static void
+setDrawBuf (struct closure *closure, int n)
 {
     XGCValues xgcv;
     unsigned long mask;
@@ -522,13 +501,10 @@ setDrawBuf (closure, n)
     XChangeGC(dpy, closure->gcontext, mask, &xgcv);
 }
 
-void
-setDisplayBuf(closure, n, firsttime)
-    struct closure *closure;
-    int n;
-    int firsttime;
+static void
+setDisplayBuf(struct closure *closure, int n, int firsttime)
 {
-#if MULTIBUFFER
+#ifdef MULTIBUFFER
 	if (multibufext && dblbuf) {
 		XmbufDisplayBuffers (dpy, 1, &closure->multibuffers[n], msleepcount, 0);
 		if (!firsttime)
@@ -541,11 +517,8 @@ setDisplayBuf(closure, n, firsttime)
 	    XStoreColors(dpy,closure->cmap,closure->dpybuf->colors,closure->totalpixels);
 }
 
-void
-setBufColor(closure, n,color)
-    struct closure *closure;
-    int n;		/* color index */
-    XColor *color;	/* color to set */
+static void
+setBufColor(struct closure *closure, int n, XColor *color)
 {
 	int i,j,cx;
 	DBufInfo *b;
@@ -576,13 +549,9 @@ setBufColor(closure, n,color)
  *	prevX, prevY	position of previous bounding-box
  *****************************************************************************/
 
-void
-drawPoly(closure, poly, gc, icoX, icoY, icoW, icoH, prevX, prevY)
-    struct closure *closure;
-    Polyinfo *poly;
-    GC gc;
-    int icoX, icoY, icoW, icoH;
-    int prevX, prevY;
+static void
+drawPoly(struct closure *closure, Polyinfo *poly, GC gc,
+	 int icoX, int icoY, int icoW, int icoH, int prevX, int prevY)
 {
 	int *f = poly->f;
 	int NV = poly->numverts;
@@ -740,11 +709,8 @@ drawPoly(closure, poly, gc, icoX, icoY, icoW, icoH, prevX, prevY)
 		msleep(msleepcount);
 }
 
-void
-initDBufs(closure, fg,bg,planesperbuf)
-    struct closure *closure;
-    int fg,bg;
-    int planesperbuf;
+static void
+initDBufs(struct closure *closure, int fg, int bg, int planesperbuf)
 {
 	int i,j,jj,j0,j1,k,m,t;
 	DBufInfo *b, *otherb;
@@ -776,7 +742,7 @@ initDBufs(closure, fg,bg,planesperbuf)
 		    closure->plane_masks,closure->totalplanes, closure->pixels,1);
 			    /* allocate color planes */
 	    if (t==0) {
-		    icoFatal("can't allocate enough color planes");
+		    icoFatal("can't allocate enough color planes", NULL);
 	    }
 	}
 
@@ -827,11 +793,8 @@ initDBufs(closure, fg,bg,planesperbuf)
 	}
 }
 
-void
-setBufColname(closure, n,colname)
-    struct closure *closure;
-    int n;
-    char *colname;
+static void
+setBufColname(struct closure *closure, int n, char *colname)
 {
 	int t;
 	XColor dcolor, color;
@@ -845,9 +808,8 @@ setBufColname(closure, n,colname)
 
 
 /* function to create and run an ico window */
-void *
-do_ico_window(closure)
-    struct closure *closure;
+static void *
+do_ico_window(void *ptr)
 {
 	int fg, bg;
 	XSetWindowAttributes xswa;
@@ -865,6 +827,7 @@ do_ico_window(closure)
 	KeySym ksym;
 	Bool do_it = True;
 	char buf[20];
+	struct closure *closure = ptr;
 #ifdef MULTITHREAD           
 	int len;
 #endif
@@ -874,7 +837,7 @@ do_ico_window(closure)
 #endif
 	closure->cmap = XDefaultColormap(dpy,DefaultScreen(dpy));
 	if (!closure->cmap) {
-		icoFatal("no default colormap!");
+		icoFatal("no default colormap!", NULL);
 	}
 
 	fg = WhitePixel(dpy, DefaultScreen(dpy));
@@ -957,7 +920,7 @@ do_ico_window(closure)
 		printf("thread %x got Expose\n", xthread_self());
 #endif
 		if (XGetWindowAttributes(dpy,closure->draw_window,&xwa)==0) {
-			icoFatal("cannot get window attributes (size)");
+			icoFatal("cannot get window attributes (size)", NULL);
 		}
 		closure->winW = xwa.width;
 		closure->winH = xwa.height;
@@ -994,7 +957,7 @@ do_ico_window(closure)
 			   0, 0, closure->winW, closure->winH, 0, 0);
 		closure->win = closure->multibuffers[1];
 	    } else 
-	      icoFatal ("unable to obtain 2 buffers");
+	      icoFatal ("unable to obtain 2 buffers", NULL);
 	}
 #endif /* MULTIBUFFER */
 	if (closure->win == None) closure->win = closure->draw_window;
@@ -1149,8 +1112,8 @@ do_ico_window(closure)
  *	box inside the window.  Call DrawIco() to redraw the icosahedron.
  *****************************************************************************/
 
-void
-giveObjHelp()
+static void
+giveObjHelp(void)
 {
 	int i;
 	Polyinfo *poly;
@@ -1166,9 +1129,8 @@ giveObjHelp()
 	}
 }
 
-Polyinfo *
-findpoly(name)
-    const char *name;
+static Polyinfo *
+findpoly(const char *name)
 {
 	int i;
         Polyinfo *poly;
@@ -1183,7 +1145,7 @@ findpoly(name)
 
 int main(argc, argv)
     int argc;
-    const char **argv;
+    char **argv;
 {
 	const char *display = NULL;
 #ifdef MULTIBUFFER
@@ -1316,7 +1278,7 @@ int main(argc, argv)
 	}
 
 	if (!dofaces && !doedges)
-		icoFatal("nothing to draw");
+		icoFatal("nothing to draw", NULL);
 
 #ifdef MULTITHREAD
 	XInitThreads();

@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/indicators.h,v 1.3 2002/07/01 02:26:01 tsi Exp $ */
 
 #ifndef INDICATORS_H
 #define INDICATORS_H 1
@@ -52,55 +53,43 @@ typedef struct _LEDInfo {
 } LEDInfo;
 
 extern	void	ClearIndicatorMapInfo(
-#if NeedFunctionPrototypes
     Display *		/* dpy */,
     LEDInfo *		/* info */
-#endif
 );
 
 
 extern LEDInfo *AddIndicatorMap(
-#if NeedFunctionPrototypes
     LEDInfo *		/* oldLEDs */,
     LEDInfo *		/* newLED */
-#endif
 );
 
 extern int	SetIndicatorMapField(
-#if NeedFunctionPrototypes
     LEDInfo *		/* led */,
     XkbDescPtr		/* xkb */,
     char *		/* field */,
     ExprDef *		/* arrayNdx */,
     ExprDef *		/* value */
-#endif
 );
 
 extern LEDInfo *HandleIndicatorMapDef(
-#if NeedFunctionPrototypes
     IndicatorMapDef *	/* stmt */,
     XkbDescPtr		/* xkb */,
     LEDInfo *		/* dflt */,
     LEDInfo *		/* oldLEDs */,
     unsigned 		/* mergeMode */
-#endif
 );
 
 extern Bool CopyIndicatorMapDefs(
-#if NeedFunctionPrototypes
     XkbFileInfo *	/* result */,
     LEDInfo *		/* leds */,
     LEDInfo **		/* unboundRtrn */
-#endif
 );
 
 extern Bool BindIndicators(
-#if NeedFunctionPrototypes
     XkbFileInfo *	/* result */,
     Bool		/* force */,
     LEDInfo *		/* unbound */,
     LEDInfo **		/* unboundRtrn */
-#endif
 );
 
 #endif /* INDICATORS_H */

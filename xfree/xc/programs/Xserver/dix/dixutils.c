@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.9 2001/12/14 19:59:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.13 2003/01/12 02:44:26 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -398,7 +398,7 @@ DeleteWindowFromAnySaveSet(pWin)
  * procedure to call than to check if there's a procedure 
  */
 void
-NoopDDA(void* f, ...)
+NoopDDA(void)
 {
 }
 
@@ -553,7 +553,7 @@ WorkQueuePtr		workQueue;
 static WorkQueuePtr	*workQueueLast = &workQueue;
 
 void
-ProcessWorkQueue()
+ProcessWorkQueue(void)
 {
     WorkQueuePtr    q, *p;
 
@@ -581,7 +581,7 @@ ProcessWorkQueue()
 }
 
 void
-ProcessWorkQueueZombies()
+ProcessWorkQueueZombies(void)
 {
     WorkQueuePtr    q, *p;
 

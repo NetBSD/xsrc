@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.18 2001/10/21 12:30:38 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.20 2002/05/22 21:38:27 herrb Exp $ */
 /*
  * Derived from xf86Kbd.c by S_ren Schmidt (sos@login.dkuug.dk)
  * which is Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -1057,6 +1057,139 @@ static CARD8 wsAdbMap[] = {
 	/* 223 */ KEY_NOTUSED,
 };
 
+static CARD8 wsSunMap[] = {
+	/* 0x00 */ KEY_NOTUSED,
+	/* 0x01 */ KEY_NOTUSED,		/* stop */
+	/* 0x02 */ KEY_NOTUSED,		/* BrightnessDown / S-VolumeDown */
+	/* 0x03 */ KEY_NOTUSED,		/* again */
+	/* 0x04 */ KEY_NOTUSED,		/* BridgtnessUp / S-VolumeUp */
+	/* 0x05 */ KEY_F1,
+	/* 0x06 */ KEY_F2,
+	/* 0x07 */ KEY_F10,
+	/* 0x08 */ KEY_F3,
+	/* 0x09 */ KEY_F11,
+	/* 0x0a */ KEY_F4,
+	/* 0x0b */ KEY_F12,
+	/* 0x0c */ KEY_F5,
+	/* 0x0d */ KEY_AltLang,
+	/* 0x0e */ KEY_F6,
+	/* 0x0f */ KEY_NOTUSED,
+	/* 0x10 */ KEY_F7,
+	/* 0x11 */ KEY_F8,
+	/* 0x12 */ KEY_F9,
+	/* 0x13 */ KEY_Alt,
+	/* 0x14 */ KEY_Up,
+	/* 0x15 */ KEY_Pause,
+	/* 0x16 */ KEY_Print,
+	/* 0x17 */ KEY_NOTUSED,		/* props */
+	/* 0x18 */ KEY_Left,
+	/* 0x19 */ KEY_ScrollLock,
+	/* 0x1a */ KEY_NOTUSED,		/* undo */
+	/* 0x1b */ KEY_Down,
+	/* 0x1c */ KEY_Right,
+	/* 0x1d */ KEY_Escape,
+	/* 0x1e */ KEY_1,
+	/* 0x1f */ KEY_2,
+	/* 0x20 */ KEY_3,
+	/* 0x21 */ KEY_4,
+	/* 0x22 */ KEY_5,
+	/* 0x23 */ KEY_6,
+	/* 0x24 */ KEY_7,
+	/* 0x25 */ KEY_8,
+	/* 0x26 */ KEY_9,
+	/* 0x27 */ KEY_0,
+	/* 0x28 */ KEY_Minus,
+	/* 0x29 */ KEY_Equal,
+	/* 0x2a */ KEY_Tilde,
+	/* 0x2b */ KEY_BackSpace,
+	/* 0x2c */ KEY_Insert,
+	/* 0x2d */ KEY_KP_Equal,
+	/* 0x2e */ KEY_KP_Divide,
+	/* 0x2f */ KEY_KP_Multiply,
+	/* 0x30 */ KEY_NOTUSED,
+	/* 0x31 */ KEY_NOTUSED,		/* front */
+	/* 0x32 */ KEY_KP_Decimal,
+	/* 0x33 */ KEY_NOTUSED,		/* copy */
+	/* 0x34 */ KEY_Home,
+	/* 0x35 */ KEY_Tab,
+	/* 0x36 */ KEY_Q,
+	/* 0x37 */ KEY_W,
+	/* 0x38 */ KEY_E,
+	/* 0x39 */ KEY_R,
+	/* 0x3a */ KEY_T,
+	/* 0x3b */ KEY_Y,
+	/* 0x3c */ KEY_U,
+	/* 0x3d */ KEY_I,
+	/* 0x3e */ KEY_O,
+	/* 0x3f */ KEY_P,
+	/* 0x40 */ KEY_LBrace,
+	/* 0x41 */ KEY_RBrace,
+	/* 0x42 */ KEY_Delete,
+	/* 0x43 */ KEY_NOTUSED,		/* compose */
+	/* 0x44 */ KEY_KP_7,
+	/* 0x45 */ KEY_KP_8,
+	/* 0x46 */ KEY_KP_9,
+	/* 0x47 */ KEY_KP_Minus,
+	/* 0x48 */ KEY_NOTUSED,		/* open */
+	/* 0x49 */ KEY_NOTUSED,		/* paste */
+	/* 0x4a */ KEY_End,
+	/* 0x4b */ KEY_NOTUSED,
+	/* 0x4c */ KEY_LCtrl,
+	/* 0x4d */ KEY_A,
+	/* 0x4e */ KEY_S,
+	/* 0x4f */ KEY_D,
+	/* 0x50 */ KEY_F,
+	/* 0x51 */ KEY_G,
+	/* 0x52 */ KEY_H,
+	/* 0x53 */ KEY_J,
+	/* 0x54 */ KEY_K,
+	/* 0x55 */ KEY_L,
+	/* 0x56 */ KEY_SemiColon,
+	/* 0x57 */ KEY_Quote,
+	/* 0x58 */ KEY_BSlash,
+	/* 0x59 */ KEY_Enter,
+	/* 0x5a */ KEY_KP_Enter,
+	/* 0x5b */ KEY_KP_4,
+	/* 0x5c */ KEY_KP_5,
+	/* 0x5d */ KEY_KP_6,
+	/* 0x5e */ KEY_KP_0,
+	/* 0x5f */ KEY_NOTUSED,		/* find */
+	/* 0x60 */ KEY_PgUp,
+	/* 0x61 */ KEY_NOTUSED,		/* cut */
+	/* 0x62 */ KEY_NumLock,
+	/* 0x63 */ KEY_ShiftL,
+	/* 0x64 */ KEY_Z,
+	/* 0x65 */ KEY_X,
+	/* 0x66 */ KEY_C,
+	/* 0x67 */ KEY_V,
+	/* 0x68 */ KEY_B,
+	/* 0x69 */ KEY_N,
+	/* 0x6a */ KEY_M,
+	/* 0x6b */ KEY_Comma,
+	/* 0x6c */ KEY_Period,
+	/* 0x6d */ KEY_Slash,
+	/* 0x6e */ KEY_ShiftR,
+	/* 0x6f */ KEY_NOTUSED,		/* linefeed */
+	/* 0x70 */ KEY_KP_1,
+	/* 0x71 */ KEY_KP_2,
+	/* 0x72 */ KEY_KP_3,
+	/* 0x73 */ KEY_NOTUSED,
+	/* 0x74 */ KEY_NOTUSED,
+	/* 0x75 */ KEY_NOTUSED,
+	/* 0x76 */ KEY_NOTUSED,		/* help */
+	/* 0x77 */ KEY_CapsLock,
+	/* 0x78 */ KEY_LMeta,
+	/* 0x79 */ KEY_Space,
+	/* 0x7a */ KEY_RMeta,
+	/* 0x7b */ KEY_PgDown,
+	/* 0x7c */ KEY_NOTUSED,
+	/* 0x7d */ KEY_KP_Plus,
+	/* 0x7e */ KEY_NOTUSED,
+	/* 0x7f */ KEY_NOTUSED
+};
+
+#define WS_SUN_MAP_SIZE (sizeof(wsSunMap)/sizeof(unsigned char))
+
 
 #define WS_ADB_MAP_SIZE (sizeof(wsAdbMap)/sizeof(unsigned char))
 
@@ -1084,8 +1217,15 @@ WSKbdToKeycode(int keycode)
 		else 
 			return wsAdbMap[keycode];
 #endif
+#ifdef WSKBD_TYPE_SUN
+	case WSKBD_TYPE_SUN:
+		if (keycode < 0 || keycode >= WS_SUN_MAP_SIZE)
+			return KEY_UNKNOWN;
+		else
+			return wsSunMap[keycode];
+#endif
 	default:
-		ErrorF("Unkown wskbd type %d\n", xf86Info.wsKbdType);
+		ErrorF("Unknown wskbd type %d\n", xf86Info.wsKbdType);
 		return KEY_UNKNOWN;
 	}
 }

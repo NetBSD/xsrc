@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.7 2001/12/14 20:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.8 2002/05/31 18:46:06 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -225,7 +225,7 @@ OsInitColors()
 
   if (!was_here)
     {
-#ifndef __EMX__
+#ifndef __UNIXOS2__
       path = (char*)ALLOCATE_LOCAL(strlen(rgbPath) +5);
       strcpy(path, rgbPath);
       strcat(path, ".txt");
@@ -245,7 +245,7 @@ OsInitColors()
       while(fgets(line, sizeof(line), rgb))
 	{
 	  lineno++;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	  if (sscanf(line,"%d %d %d %[^\n]\n", &red, &green, &blue, name) == 4)
 #else
 	  if (sscanf(line,"%d %d %d %[^\n\r]\n", &red, &green, &blue, name) == 4)

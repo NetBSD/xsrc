@@ -27,7 +27,7 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winengine.c,v 1.1 2001/11/11 23:07:40 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winengine.c,v 1.4 2003/02/12 15:01:38 alanh Exp $ */
 
 #include "win.h"
 
@@ -37,19 +37,16 @@
  * DirectDraw version and hardware
  */
 
-Bool
-winDetectSupportedEngines (ScreenPtr pScreen)
+void
+winDetectSupportedEngines ()
 {
-  winScreenPriv(pScreen);
-  winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   OSVERSIONINFO		osvi;
-  HMODULE		hmodDirectDraw = NULL;
 
   /* Initialize the engine support flags */
-  pScreenInfo->dwEnginesSupported = WIN_SERVER_SHADOW_GDI;
+  g_dwEnginesSupported = WIN_SERVER_SHADOW_GDI;
 
 #if WIN_NATIVE_GDI_SUPPORT
-  pScreenInfo->dwEnginesSupported |= WIN_SERVER_NATIVE_GDI;
+  g_dwEnginesSupported |= WIN_SERVER_NATIVE_GDI;
 #endif
 
   /* Get operating system version information */
@@ -62,59 +59,51 @@ winDetectSupportedEngines (ScreenPtr pScreen)
     {
     case VER_PLATFORM_WIN32_NT:
       /* Engine 4 is supported on NT only */
-      ErrorF ("winDetectSupportedEngines () - Windows NT/2000\n");
+      ErrorF ("winDetectSupportedEngines - Windows NT/2000/XP\n");
       break;
 
     case VER_PLATFORM_WIN32_WINDOWS:
       /* Engine 4 is supported on NT only */
-      ErrorF ("winDetectSupportedEngines () - Windows 95/98/Me\n");
+      ErrorF ("winDetectSupportedEngines - Windows 95/98/Me\n");
       break;
     }
 
-  /* Determine if DirectDraw is installed */
-  hmodDirectDraw = LoadLibraryEx ("ddraw.dll", NULL, 0);
-
   /* Do we have DirectDraw? */
-  if (hmodDirectDraw != NULL)
+  if (g_hmodDirectDraw != NULL)
     {
-      FARPROC		fpDirectDrawCreate = NULL;
       LPDIRECTDRAW	lpdd = NULL;
       LPDIRECTDRAW4	lpdd4 = NULL;
       HRESULT		ddrval;
 
-      /* Try to get the DirectDrawCreate address */
-      fpDirectDrawCreate = GetProcAddress (hmodDirectDraw,
-					   "DirectDrawCreate");
-      
-      /* Did the proc name exist? */
-      if (fpDirectDrawCreate == NULL)
+      /* Was the DirectDrawCreate function found? */
+      if (g_fpDirectDrawCreate == NULL)
 	{
 	  /* No DirectDraw support */
-	  return TRUE;
+	  return;
 	}
 
       /* DirectDrawCreate exists, try to call it */
       /* Create a DirectDraw object, store the address at lpdd */
-      ddrval = (*fpDirectDrawCreate) (NULL,
-				      (void**) &lpdd,
-				      NULL);
+      ddrval = (*g_fpDirectDrawCreate) (NULL,
+					(void**) &lpdd,
+					NULL);
       if (FAILED (ddrval))
 	{
 	  /* No DirectDraw support */
-	  ErrorF ("winDetectSupportedEngines () - DirectDraw not installed\n");
-	  return TRUE;
+	  ErrorF ("winDetectSupportedEngines - DirectDraw not installed\n");
+	  return;
 	}
       else
 	{
 	  /* We have DirectDraw */
-	  ErrorF ("winDetectSupportedEngines () - DirectDraw installed\n");
-	  pScreenInfo->dwEnginesSupported |= WIN_SERVER_SHADOW_DD;
+	  ErrorF ("winDetectSupportedEngines - DirectDraw installed\n");
+	  g_dwEnginesSupported |= WIN_SERVER_SHADOW_DD;
 
 	  /* Allow PrimaryDD engine if NT */
 	  if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT)
 	    {
-	      pScreenInfo->dwEnginesSupported |= WIN_SERVER_PRIMARY_DD;
-	      ErrorF ("winDetectSupportedEngines () - Allowing PrimaryDD\n");
+	      g_dwEnginesSupported |= WIN_SERVER_PRIMARY_DD;
+	      ErrorF ("winDetectSupportedEngines - Allowing PrimaryDD\n");
 	    }
 	}
       
@@ -125,8 +114,8 @@ winDetectSupportedEngines (ScreenPtr pScreen)
       if (SUCCEEDED (ddrval))
 	{
 	  /* We have DirectDraw4 */
-	  ErrorF ("winDetectSupportedEngines () - DirectDraw4 installed\n");
-	  pScreenInfo->dwEnginesSupported |= WIN_SERVER_SHADOW_DDNL;
+	  ErrorF ("winDetectSupportedEngines - DirectDraw4 installed\n");
+	  g_dwEnginesSupported |= WIN_SERVER_SHADOW_DDNL;
 	}
 
       /* Cleanup DirectDraw interfaces */
@@ -134,16 +123,10 @@ winDetectSupportedEngines (ScreenPtr pScreen)
 	IDirectDraw_Release (lpdd4);
       if (lpdd != NULL)
 	IDirectDraw_Release (lpdd);
-
-      /* Unload the DirectDraw library */
-      FreeLibrary (hmodDirectDraw);
-      hmodDirectDraw = NULL;
     }
 
-  ErrorF ("winDetectSupportedEngines () - Returning, supported engines %08x\n",
-	  pScreenInfo->dwEnginesSupported);
-
-  return TRUE;
+  ErrorF ("winDetectSupportedEngines - Returning, supported engines %08x\n",
+	  g_dwEnginesSupported);
 }
 
 
@@ -159,31 +142,42 @@ winSetEngine (ScreenPtr pScreen)
   winScreenPriv(pScreen);
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   HDC			hdc;
-  DWORD			dwDepth;
+  DWORD			dwBPP;
 
   /* Get a DC */
   hdc = GetDC (NULL);
   if (hdc == NULL)
     {
-      ErrorF ("winSetEngine () - Couldn't get an HDC\n");
+      ErrorF ("winSetEngine - Couldn't get an HDC\n");
       return FALSE;
     }
 
   /*
-   * pScreenInfo->dwDepth may be 0 to indicate that the current screen
+   * pScreenInfo->dwBPP may be 0 to indicate that the current screen
    * depth is to be used.  Thus, we must query for the current display
    * depth here.
    */
-  dwDepth = GetDeviceCaps (hdc, BITSPIXEL);
+  dwBPP = GetDeviceCaps (hdc, BITSPIXEL);
 
   /* Release the DC */
   ReleaseDC (NULL, hdc);
   hdc = NULL;
 
   /* ShadowGDI is the only engine that supports windowed PseudoColor */
-  if (dwDepth == 8 && !pScreenInfo->fFullScreen)
+  if (dwBPP == 8 && !pScreenInfo->fFullScreen)
     {
-      ErrorF ("winSetEngine () - Windowed && PseudoColor => ShadowGDI\n");
+      ErrorF ("winSetEngine - Windowed && PseudoColor => ShadowGDI\n");
+      pScreenInfo->dwEngine = WIN_SERVER_SHADOW_GDI;
+
+      /* Set engine function pointers */
+      winSetEngineFunctionsShadowGDI (pScreen);
+      return TRUE;
+    }
+
+  /* ShadowGDI is the only engine that supports Multi Window Mode */
+  if (pScreenInfo->fMultiWindow)
+    {
+      ErrorF ("winSetEngine - Multi Window => ShadowGDI\n");
       pScreenInfo->dwEngine = WIN_SERVER_SHADOW_GDI;
 
       /* Set engine function pointers */
@@ -192,9 +186,9 @@ winSetEngine (ScreenPtr pScreen)
     }
 
   /* If the user's choice is supported, we'll use that */
-  if (pScreenInfo->dwEnginesSupported & pScreenInfo->dwEnginePreferred)
+  if (g_dwEnginesSupported & pScreenInfo->dwEnginePreferred)
     {
-      ErrorF ("winSetEngine () - Using user's preference: %d\n",
+      ErrorF ("winSetEngine - Using user's preference: %d\n",
 	      pScreenInfo->dwEnginePreferred);
       pScreenInfo->dwEngine = pScreenInfo->dwEnginePreferred;
 
@@ -217,15 +211,15 @@ winSetEngine (ScreenPtr pScreen)
 	  winSetEngineFunctionsNativeGDI (pScreen);
 	  break;
 	default:
-	  FatalError ("winSetEngine () - Invalid engine type\n");
+	  FatalError ("winSetEngine - Invalid engine type\n");
 	}
       return TRUE;
     }
 
   /* ShadowDDNL has good performance, so why not */
-  if (pScreenInfo->dwEnginesSupported & WIN_SERVER_SHADOW_DDNL)
+  if (g_dwEnginesSupported & WIN_SERVER_SHADOW_DDNL)
     {
-      ErrorF ("winSetEngine () - Using Shadow DirectDraw NonLocking\n");
+      ErrorF ("winSetEngine - Using Shadow DirectDraw NonLocking\n");
       pScreenInfo->dwEngine = WIN_SERVER_SHADOW_DDNL;
 
       /* Set engine function pointers */
@@ -234,9 +228,9 @@ winSetEngine (ScreenPtr pScreen)
     }
 
   /* ShadowDD is next in line */
-  if (pScreenInfo->dwEnginesSupported & WIN_SERVER_SHADOW_DD)
+  if (g_dwEnginesSupported & WIN_SERVER_SHADOW_DD)
     {
-      ErrorF ("winSetEngine () - Using Shadow DirectDraw\n");
+      ErrorF ("winSetEngine - Using Shadow DirectDraw\n");
       pScreenInfo->dwEngine = WIN_SERVER_SHADOW_DD;
 
       /* Set engine function pointers */
@@ -245,9 +239,9 @@ winSetEngine (ScreenPtr pScreen)
     }
 
   /* ShadowGDI is next in line */
-  if (pScreenInfo->dwEnginesSupported & WIN_SERVER_SHADOW_GDI)
+  if (g_dwEnginesSupported & WIN_SERVER_SHADOW_GDI)
     {
-      ErrorF ("winSetEngine () - Using Shadow GDI DIB\n");
+      ErrorF ("winSetEngine - Using Shadow GDI DIB\n");
       pScreenInfo->dwEngine = WIN_SERVER_SHADOW_GDI;
 
       /* Set engine function pointers */
@@ -256,4 +250,60 @@ winSetEngine (ScreenPtr pScreen)
     }
 
   return TRUE;
+}
+
+
+/*
+ * Get procedure addresses for DirectDrawCreate and DirectDrawCreateClipper
+ */
+
+Bool
+winGetDDProcAddresses ()
+{
+  Bool			fReturn = TRUE;
+  
+  /* Load the DirectDraw library */
+  g_hmodDirectDraw = LoadLibraryEx ("ddraw.dll", NULL, 0);
+  if (g_hmodDirectDraw == NULL)
+    {
+      ErrorF ("winGetDDProcAddresses - Could not load ddraw.dll\n");
+      fReturn = TRUE;
+      goto winGetDDProcAddresses_Exit;
+    }
+
+  /* Try to get the DirectDrawCreate address */
+  g_fpDirectDrawCreate = GetProcAddress (g_hmodDirectDraw,
+					 "DirectDrawCreate");
+  if (g_fpDirectDrawCreate == NULL)
+    {
+      ErrorF ("winGetDDProcAddresses - Could not get DirectDrawCreate "
+	      "address\n");
+      fReturn = TRUE;
+      goto winGetDDProcAddresses_Exit;
+    }
+
+  /* Try to get the DirectDrawCreateClipper address */
+  g_fpDirectDrawCreateClipper = GetProcAddress (g_hmodDirectDraw,
+						"DirectDrawCreateClipper");
+  if (g_fpDirectDrawCreateClipper == NULL)
+    {
+      ErrorF ("winGetDDProcAddresses - Could not get "
+	      "DirectDrawCreateClipper address\n");
+      fReturn = FALSE;
+      goto winGetDDProcAddresses_Exit;
+    }
+
+  /*
+   * Note: Do not unload ddraw.dll here.  Do it in GiveUp
+   */
+
+ winGetDDProcAddresses_Exit:
+  /* Unload the DirectDraw library if we failed to initialize */
+  if (!fReturn && g_hmodDirectDraw != NULL)
+    {
+      FreeLibrary (g_hmodDirectDraw);
+      g_hmodDirectDraw = NULL;
+    }
+  
+  return fReturn;
 }

@@ -22,9 +22,9 @@
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  *
  * Modified from IBM.c to support TI RAMDAC routines 
- *   by Jens Owen, <jens@precisioninsight.com>.
+ *   by Jens Owen, <jens@tungstengraphics.com>.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/TI.c,v 1.5 2000/05/02 21:04:46 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/TI.c,v 1.7 2003/02/17 16:08:29 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -585,7 +585,7 @@ TIramdac3030SetBpp(ScrnInfoPtr pScrn, RamDacRegRecPtr ramdacReg)
     }
 }
 
-void 
+static void 
 TIramdacShowCursor(ScrnInfoPtr pScrn)
 {
     RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -594,7 +594,7 @@ TIramdacShowCursor(ScrnInfoPtr pScrn)
     (*ramdacPtr->WriteDAC)(pScrn, TIDAC_ind_curs_ctrl, 0, 0x03);
 }
 
-void
+static void
 TIramdacHideCursor(ScrnInfoPtr pScrn)
 {
     RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -603,7 +603,7 @@ TIramdacHideCursor(ScrnInfoPtr pScrn)
     (*ramdacPtr->WriteDAC)(pScrn, TIDAC_ind_curs_ctrl, 0, 0x00);
 }
 
-void
+static void
 TIramdacSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 {
     RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -617,7 +617,7 @@ TIramdacSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     (*ramdacPtr->WriteDAC)(pScrn, TIDAC_CURS_YHIGH, 0, (y >> 8) & 0x0f);
 }
 
-void
+static void
 TIramdacSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
     RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -635,7 +635,7 @@ TIramdacSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     (*ramdacPtr->WriteDAC)(pScrn, TIDAC_CURS_COLOR, 0,  (fg&0x000000ff)       );
 }
 
-void 
+static void 
 TIramdacLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 {
     RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.23 2001/05/04 19:05:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Option.c,v 1.25 2002/09/10 17:39:28 dawes Exp $ */
 
 /*
  * Copyright (c) 1998 by The XFree86 Project, Inc.
@@ -224,8 +224,9 @@ pointer
 xf86AddNewOption(pointer head, char *name, char *val)
 {
     char *tmp = strdup(val);
-                                                                               
-    return xf86addNewOption(head, name, tmp);
+    char *tmp_name = strdup(name);
+
+    return xf86addNewOption(head, tmp_name, tmp);
 }
 
 
@@ -576,6 +577,11 @@ OptionInfoPtr
 xf86TokenToOptinfo(const OptionInfoRec *table, int token)
 {
     const OptionInfoRec *p;
+
+    if (!table) {
+	ErrorF("xf86TokenToOptinfo: table is NULL\n");
+	return NULL;
+    }
 
     for (p = table; p->token >= 0 && p->token != token; p++)
 	;

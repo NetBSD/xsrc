@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwd/xwd.c,v 3.10 2001/12/14 20:02:34 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/xwd.c,v 3.12 2002/09/19 00:19:56 dawes Exp $ */
 
 /*
  * xwd.c MIT Project Athena, X Window system window raster image dumper.
@@ -201,17 +201,19 @@ main(argc, argv)
      */
     if (!target_win) {
 	target_win = Select_Window(dpy);
-	if (target_win != None && !frame_only) {
-	    Window root;
-	    int dummyi;
-	    unsigned int dummy;
+    }
+    
+    if (target_win != None && !frame_only) {
+        Window root;
+        int dummyi;
+        unsigned int dummy;
 
-	    if (XGetGeometry (dpy, target_win, &root, &dummyi, &dummyi,
+        if (XGetGeometry (dpy, target_win, &root, &dummyi, &dummyi,
 			      &dummy, &dummy, &dummy, &dummy) &&
-		target_win != root)
+                              target_win != root) {
 	      target_win = XmuClientWindow (dpy, target_win);
 	}
-  }
+    }
 
 
     /*
@@ -461,7 +463,7 @@ Window_Dump(window, out)
     if (*(char *) &swaptest) {
 	_swaplong((char *) &header, sizeof(header));
 	for (i = 0; i < ncolors; i++) {
-	    _swaplong((char *) &colors[i].pixel, sizeof(long));
+	    _swaplong((char *) &colors[i].pixel, sizeof(CARD32));
 	    _swapshort((char *) &colors[i].red, 3 * sizeof(short));
 	}
     }

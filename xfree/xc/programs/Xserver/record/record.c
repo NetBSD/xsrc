@@ -32,7 +32,7 @@ This work benefited from earlier work done by Martha Zimet of NCD
 and Jim Haggerty of Metheus.
 
 */
-/* $XFree86: xc/programs/Xserver/record/record.c,v 1.9 2001/12/14 20:00:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/record/record.c,v 1.10 2002/09/17 01:15:14 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "dixstruct.h"
@@ -46,6 +46,13 @@ and Jim Haggerty of Metheus.
 #include <assert.h>
 #else
 #include "xf86_ansic.h"
+#endif
+
+#ifdef PANORAMIX
+#include "globals.h"
+#include "panoramiX.h"
+#include "panoramiXsrv.h"
+#include "cursor.h"
 #endif
 
 static RESTYPE RTContext;   /* internal resource type for Record contexts */
@@ -870,11 +877,31 @@ RecordADeviceEvent(pcbl, nulldata, calldata)
 		    {
 		        xEvent swappedEvent;
 		        xEvent *pEvToRecord = pev;
+#ifdef PANORAMIX
+		        xEvent shiftedEvent;
+
+			if (!noPanoramiXExtension &&
+			    (pev->u.u.type == MotionNotify ||
+			     pev->u.u.type == ButtonPress ||
+			     pev->u.u.type == ButtonRelease ||
+			     pev->u.u.type == KeyPress ||
+			     pev->u.u.type == KeyRelease)) {
+				int scr = XineramaGetCursorScreen();
+				memcpy(&shiftedEvent, pev, sizeof(xEvent));
+				shiftedEvent.u.keyButtonPointer.rootX +=
+				    panoramiXdataPtr[scr].x - 
+					panoramiXdataPtr[0].x;
+				shiftedEvent.u.keyButtonPointer.rootY +=
+				    panoramiXdataPtr[scr].y -
+					panoramiXdataPtr[0].y;
+				pEvToRecord = &shiftedEvent;
+			}
+#endif /* PANORAMIX */
 
 			if (pContext->pRecordingClient->swapped)
 			{
-			    (*EventSwapVector[pev->u.u.type & 0177])
-				(pev, &swappedEvent);
+			    (*EventSwapVector[pEvToRecord->u.u.type & 0177])
+				(pEvToRecord, &swappedEvent);
 			    pEvToRecord = &swappedEvent;
 			}
 

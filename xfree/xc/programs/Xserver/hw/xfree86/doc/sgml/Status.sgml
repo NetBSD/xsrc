@@ -6,10 +6,10 @@
 
 <title>Driver Status for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>16 January 2002
+<date>23 February 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.37 2002/01/16 20:38:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.43 2003/02/25 16:32:41 dawes Exp $
 </ident>
 
 <abstract>
@@ -17,8 +17,7 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.37 2002/01/16 
 This document provides information about the status of the driver and
 hardware support in XFree86 &relvers; compared with that in XFree86
 &legacyvers;.  Please send updates for this document to
-<email>fixes@xfree86.org</email>.  Please do not send requests for
-information or support to that address (they will not be answered).
+<email>XFree86@XFree86.org</email>.
 
 </abstract>
 
@@ -369,17 +368,21 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 	than 1MB of video memory.
 
 <tag>&relvers;:</tag>
-	Support (accelerated) for the Intel i740 is provided by the "i740"
-	driver, and support for the Intel i810 (including i810-dc100 and
-	i810e), i815, and i830 is provided by the "i810" driver.  The
-	"i810" driver is currently supported only on Linux and FreeBSD (4.1
-	and later), and requires AGP GART kernel support.
+	Support (accelerated) for the Intel i740 is provided by the
+	"i740" driver, and support for the Intel integrated graphics
+	chipsets i810, i810-dc100, i810e, i815, 830M, 845G, 852GM, 855GM
+	and 865G is provided by the "i810" driver.  The i810 and i815
+	chipsets require kernel-level AGP GART support (available on
+	Linux, FreeBSD, and some other BSDs).  The 830M and later can
+	be used without AGP GART support, but it is required for full
+	functionality.
 
 <tag>Summary:</tag>
 	The i740 and and original i810 are supported in both versions, but
-	the i810 is supported only on Linux/x86 and recent FreeBSD/i386
-	platforms at present.  Support for later versions of the i810
-	chipset, such as the i815, exists only in &relvers;.
+	the i810/i815 is supported only on Linux, FreeBSD, and some recent
+	NetBSD/OpenBSD versions at present.  platforms at present.
+	Support for later versions of the i810 chipset, such as the
+	i815, and for the 830M and later exists only in &relvers;.
 
 </descrip>
 
@@ -417,6 +420,15 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 
 <tag>Summary:</tag>
 	No MX chips are supported in &relvers;.
+
+</descrip>
+
+<sect>National Semiconductor
+<p>
+<descrip>
+<tag>&relvers;:</tag>
+	Support for the SC1x00, GX1, and GX2 is provided by the "nsc"
+	driver.
 
 </descrip>
 
@@ -624,14 +636,15 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 	by the XF86_SVGA server with the sis driver.
 
 <tag>&relvers;:</tag>
-	Support (accelerated) for the SiS <!-- 86C205, 86C215, 86C225, -->
-	<!-- 5597, 5598, --> 530, 620, 6326 is provided by the "sis" driver.
-	The 630, 300, and 540 are also supported, but this code is new and
-	there are some problems with it in this version.
+	Support (accelerated) for the SiS 5597, 5598, 6326, 530, 620,
+	300, 540, 630, 730, 315, 550, 650, 651 and 740 is provided by
+	the "sis" driver. The Xabre (SiS 330) might be supported by this
+	is completely untested.
 
 <tag>Summary:</tag>
-	Support for the 86C201, 86C202, 86C205, 86C215, 86C225, 5597 and 5598
-	is currently only available in &legacyvers;.
+	Support for the 86C201, 86C202, 86C205, 86C215 and 86C225 is
+	currently only available in &legacyvers;.  Support for some
+	newer chipsets is only available in &relvers;.
 
 </descrip>
 
@@ -702,9 +715,7 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 
 <tag>Summary:</tag>
 	The following (older) chipsets are supported in &legacyvers; and
-	not in &relvers;: TVGA8200LX, TVGA8800CS, TVGA8900B, TVGA8900C,
-	TVGA8900CL, TVGA9000, TVGA9000i, TVGA9100B, TVGA9200CXr,
-	TGUI9400CXi, TGUI9420, and TGUI9430DGi.
+	not in &relvers;: TVGA8200LX, TVGA8800CS, TGUI9420, TGUI9430DGi.
 
 	The TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000, TVGA9000i,
 	TVGA9100B, TVGA9200CXr, TGUI9400CXi, TGUI9440AGi, TGUI9660,

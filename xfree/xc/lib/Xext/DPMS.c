@@ -26,19 +26,19 @@ dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xext/DPMS.c,v 3.4 2001/01/17 19:42:46 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/DPMS.c,v 3.6 2002/10/16 02:19:22 dawes Exp $ */
 
 /*
  * HISTORY
  */
 
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "dpms.h"
-#include "dpmsstr.h"
-#include "Xext.h"
-#include "extutil.h"
-#include "stdio.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/dpms.h>
+#include <X11/extensions/dpmsstr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <stdio.h>
 
 static XExtensionInfo _dpms_info_data;
 static XExtensionInfo *dpms_info = &_dpms_info_data;
@@ -53,7 +53,7 @@ static char *dpms_extension_name = DPMSExtensionName;
  *                                                                           *
  *****************************************************************************/
 
-static int close_display();
+static int close_display(Display *dpy, XExtCodes *codes);
 static /* const */ XExtensionHooks dpms_extension_hooks = {
     NULL,                               /* create_gc */
     NULL,                               /* copy_gc */

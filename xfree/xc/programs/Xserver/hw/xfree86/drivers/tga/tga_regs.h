@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_regs.h,v 1.11 2000/10/20 12:57:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_regs.h,v 1.12 2002/05/13 05:22:37 keithp Exp $ */
 
 /* TGA hardware description (minimal)
  *
@@ -151,7 +151,7 @@ do {\
 #define		BPP24			(0x03 << 8)
 #define		CAP_ENDS		0x8000
 #define		X11			0x0000
-#define		WIN32			0x2000
+#define		MODE_WIN32		0x2000
  /* copy mode */
 #define         COPY                    0x07
  /* opaque fill mode */

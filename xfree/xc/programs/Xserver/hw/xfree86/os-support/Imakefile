@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.52 2001/12/27 20:07:05 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.56 2003/02/17 17:06:45 dawes Exp $
 
 
 
@@ -13,9 +13,12 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 #if defined(i386Architecture) || defined(ia64Architecture) || \
 	(defined(SunArchitecture) && defined(SparcArchitecture)) || \
 	(defined(FreeBSDArchitecture) && defined(AlphaArchitecture)) || \
-	(defined(OpenBSDArchitecture) && defined(PpcArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(AlphaArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(PpcArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(SparcArchitecture)) || \
+	defined(OpenBSDArchitecture) || \
 	(defined(LynxOSArchitecture) && defined(PpcArchitecture)) || \
-	defined(LinuxArchitecture)
+	defined(x86_64Architecture) || defined(LinuxArchitecture)
 BUS_SUBDIR = bus
 #endif
 
@@ -84,18 +87,14 @@ DRM_OBJ = $(OS_SUBDIR)/drm/?*.o
 DRM_DONES = $(OS_SUBDIR)/drm/DONE
 #endif
 
-VBE_SRC = vbe/?*.c
-VBE_OBJ = vbe/?*.o
-VBE_DONES = vbe/DONE
-
 #endif
 
-SUBDIRS = $(OS_SUBDIR) $(BUS_SUBDIR) misc vbe
+SUBDIRS = $(OS_SUBDIR) $(BUS_SUBDIR) misc
 
-SRCS = $(OS_SUBDIR)/?*.c $(BUS_SUBDIR)/?*.c misc/?*.c $(VBE_SRC) $(DRM_SRC)
-OBJS = $(OS_SUBDIR)/?*.o $(BUS_SUBDIR)/?*.o misc/?*.o $(VBE_OBJ) $(DRM_OBJ)
+SRCS = $(OS_SUBDIR)/?*.c $(BUS_SUBDIR)/?*.c misc/?*.c $(DRM_SRC)
+OBJS = $(OS_SUBDIR)/?*.o $(BUS_SUBDIR)/?*.o misc/?*.o $(DRM_OBJ)
 
-DONES = $(OS_SUBDIR)/DONE $(BUS_SUBDIR)/DONE misc/DONE $(VBE_DONES) $(DRM_DONES)
+DONES = $(OS_SUBDIR)/DONE $(BUS_SUBDIR)/DONE misc/DONE $(DRM_DONES)
 
 #if HasParallelMake
 MakeMutex($(SUBDIRS) $(OBJS) $(DONES))

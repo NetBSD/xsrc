@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.31 2001/12/08 16:01:52 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.36 2003/01/12 03:55:47 tsi Exp $ */
 
 /*
  * glint register file 
@@ -32,7 +32,6 @@
 #define PCI_CHIP_3DLABS_PERMEDIA4				0x0C
 #define PCI_CHIP_3DLABS_R4					0x0D
 #define PCI_CHIP_3DLABS_GAMMA2					0x0E
-#define PCI_CHIP_TI_PERMEDIA 	  				0x3d04
 
 /* The boards we know */
 #define IS_GLORIAXXL	((pGlint->PciInfo->subsysVendor == 0x1048) && \
@@ -192,47 +191,47 @@
 #define PMRomControl							0x1040
 #define PMBootAddress							0x1080
 #define PMMemConfig							0x10C0
-    #define RowCharge8    1 << 10
-    #define TimeRCD8      1 <<  7
-    #define TimeRC8       0x6 << 3
-    #define TimeRP8       1
-    #define CAS3Latency8  0 << 16
-    #define BootAdress8   0x10
-    #define NumberBanks8  0x3 << 29
-    #define RefreshCount8 0x41 << 21
-    #define TimeRASMin8   1 << 13
-    #define DeadCycle8    1 << 17
-    #define BankDelay8    0 << 18
-    #define Burst1Cycle8  1 << 31
-    #define SDRAM8        0 << 4
+#    define RowCharge8    1 << 10
+#    define TimeRCD8      1 <<  7
+#    define TimeRC8       0x6 << 3
+#    define TimeRP8       1
+#    define CAS3Latency8  0 << 16
+#    define BootAdress8   0x10
+#    define NumberBanks8  0x3 << 29
+#    define RefreshCount8 0x41 << 21
+#    define TimeRASMin8   1 << 13
+#    define DeadCycle8    1 << 17
+#    define BankDelay8    0 << 18
+#    define Burst1Cycle8  1 << 31
+#    define SDRAM8        0 << 4
 
-    #define RowCharge6    1 << 10
-    #define TimeRCD6      1 <<  7
-    #define TimeRC6       0x6 << 3
-    #define TimeRP6       0x2
-    #define CAS3Latency6  1 << 16
-    #define BootAdress6   0x60
-    #define NumberBanks6  0x2 << 29
-    #define RefreshCount6 0x41 << 21
-    #define TimeRASMin6   1 << 13
-    #define DeadCycle6    1 << 17
-    #define BankDelay6    0 << 18
-    #define Burst1Cycle6  1 << 31
-    #define SDRAM6        0 << 4
+#    define RowCharge6    1 << 10
+#    define TimeRCD6      1 <<  7
+#    define TimeRC6       0x6 << 3
+#    define TimeRP6       0x2
+#    define CAS3Latency6  1 << 16
+#    define BootAdress6   0x60
+#    define NumberBanks6  0x2 << 29
+#    define RefreshCount6 0x41 << 21
+#    define TimeRASMin6   1 << 13
+#    define DeadCycle6    1 << 17
+#    define BankDelay6    0 << 18
+#    define Burst1Cycle6  1 << 31
+#    define SDRAM6        0 << 4
 
-    #define RowCharge4    0 << 10
-    #define TimeRCD4      0 <<  7
-    #define TimeRC4       0x4 << 3
-    #define TimeRP4       1 
-    #define CAS3Latency4  0 << 16
-    #define BootAdress4   0x10
-    #define NumberBanks4  1 << 29
-    #define RefreshCount4 0x30 << 21
-    #define TimeRASMin4   1 << 13
-    #define DeadCycle4    0 << 17
-    #define BankDelay4    0 << 18
-    #define Burst1Cycle4  1 << 31
-    #define SDRAM4        0 << 4
+#    define RowCharge4    0 << 10
+#    define TimeRCD4      0 <<  7
+#    define TimeRC4       0x4 << 3
+#    define TimeRP4       1 
+#    define CAS3Latency4  0 << 16
+#    define BootAdress4   0x10
+#    define NumberBanks4  1 << 29
+#    define RefreshCount4 0x30 << 21
+#    define TimeRASMin4   1 << 13
+#    define DeadCycle4    0 << 17
+#    define BankDelay4    0 << 18
+#    define Burst1Cycle4  1 << 31
+#    define SDRAM4        0 << 4
 
 /* Permedia 2 Control */
 #define MemControl							0x1040
@@ -510,6 +509,7 @@
 
 #define GCSRAperture							0x0878
 #define   GCSRSecondaryGLINTMapEn	1 << 0
+#define   GCSRBitSwap			1 << 1
 
 #define GPageTableAddr							0x0c00
 #define GPageTableLength						0x0c08
@@ -547,26 +547,26 @@
 #define dY									GLINT_TAG_ADDR(0x00,0x05)
 #define GLINTCount							GLINT_TAG_ADDR(0x00,0x06)
 #define Render								GLINT_TAG_ADDR(0x00,0x07)
-	#define AreaStippleEnable					0x00001
-	#define LineStippleEnable					0x00002
-	#define ResetLineStipple					0x00004
-	#define FastFillEnable						0x00008
-	#define PrimitiveLine						0
-	#define PrimitiveTrapezoid					0x00040
-	#define PrimitivePoint						0x00080
-	#define PrimitiveRectangle					0x000C0
-	#define AntialiasEnable         				0x00100
-	#define AntialiasingQuality     				0x00200
-	#define UsePointTable						0x00400
-	#define SyncOnBitMask						0x00800
-	#define SyncOnHostData						0x01000
-	#define TextureEnable           				0x02000
-	#define FogEnable               				0x04000
-	#define CoverageEnable						0x08000
-	#define SubPixelCorrectionEnable				0x10000
-	#define SpanOperation						0x40000
-	#define XPositive			1<<21
-	#define YPositive			1<<22
+#	define AreaStippleEnable					0x00001
+#	define LineStippleEnable					0x00002
+#	define ResetLineStipple					0x00004
+#	define FastFillEnable						0x00008
+#	define PrimitiveLine						0
+#	define PrimitiveTrapezoid					0x00040
+#	define PrimitivePoint						0x00080
+#	define PrimitiveRectangle					0x000C0
+#	define AntialiasEnable         				0x00100
+#	define AntialiasingQuality     				0x00200
+#	define UsePointTable						0x00400
+#	define SyncOnBitMask						0x00800
+#	define SyncOnHostData						0x01000
+#	define TextureEnable           				0x02000
+#	define FogEnable               				0x04000
+#	define CoverageEnable						0x08000
+#	define SubPixelCorrectionEnable				0x10000
+#	define SpanOperation						0x40000
+#	define XPositive			1<<21
+#	define YPositive			1<<22
 
 
 #define ContinueNewLine							GLINT_TAG_ADDR(0x00,0x08)
@@ -597,9 +597,9 @@
 #define PackedDataLimits						GLINT_TAG_ADDR(0x02,0x0a) /* PM only */
 
 #define ScissorMode							GLINT_TAG_ADDR(0x03,0x00)
-        #define                                    	        SCI_USER          0x01
-        #define                                                 SCI_SCREEN        0x02
-        #define                                                 SCI_USERANDSCREEN 0x03
+#	define                                    	        SCI_USER          0x01
+#	define                                                 SCI_SCREEN        0x02
+#	define                                                 SCI_USERANDSCREEN 0x03
 
 #define ScissorMinXY						GLINT_TAG_ADDR(0x03,0x01)
 #define ScissorMaxXY						GLINT_TAG_ADDR(0x03,0x02)
@@ -613,17 +613,17 @@
 	/* XAddress_1bit		*/
 	/* UNIT_DISABLE			*/
 
-	#define ASM_XAddress_2bit					1 << 1
-	#define ASM_XAddress_3bit					2 << 1
-	#define ASM_XAddress_4bit					3 << 1
-	#define ASM_XAddress_5bit					4 << 1
-	#define ASM_YAddress_2bit					1 << 4
-	#define ASM_YAddress_3bit					2 << 4
-	#define ASM_YAddress_4bit					3 << 4
-	#define ASM_YAddress_5bit					4 << 4
-	#define ASM_InvertPattern					1 << 17
-	#define ASM_MirrorX						1 << 18
-	#define ASM_MirrorY						1 << 19
+#	define ASM_XAddress_2bit					1 << 1
+#	define ASM_XAddress_3bit					2 << 1
+#	define ASM_XAddress_4bit					3 << 1
+#	define ASM_XAddress_5bit					4 << 1
+#	define ASM_YAddress_2bit					1 << 4
+#	define ASM_YAddress_3bit					2 << 4
+#	define ASM_YAddress_4bit					3 << 4
+#	define ASM_YAddress_5bit					4 << 4
+#	define ASM_InvertPattern					1 << 17
+#	define ASM_MirrorX						1 << 18
+#	define ASM_MirrorY						1 << 19
 
 #define LineStippleMode						GLINT_TAG_ADDR(0x03,0x05)
 #define LoadLineStippleCounters					GLINT_TAG_ADDR(0x03,0x06)
@@ -657,12 +657,12 @@
 
 #define TextureReadMode						GLINT_TAG_ADDR(0x09,0x00)
 #define TextureFormat						GLINT_TAG_ADDR(0x09,0x01)
-  #define Texture_4_Components 3 << 3
-  #define Texture_Texel        0
+#  define Texture_4_Components 3 << 3
+#  define Texture_Texel        0
 
 #define TextureCacheControl					GLINT_TAG_ADDR(0x09,0x02)
-  #define TextureCacheControlEnable     2
-  #define TextureCacheControlInvalidate 1
+#  define TextureCacheControlEnable     2
+#  define TextureCacheControlInvalidate 1
 
 #define GLINTBorderColor					GLINT_TAG_ADDR(0x09,0x05)
 
@@ -709,10 +709,10 @@
 #define TexelLUTMode						GLINT_TAG_ADDR(0x0c,0x0f)
 
 #define TextureColorMode					GLINT_TAG_ADDR(0x0d,0x00)
-  #define TextureTypeOpenGL 0
-  #define TextureTypeApple  1 << 4
-  #define TextureKsDDA      1 << 5 /* only Apple-Mode */
-  #define TextureKdDDA      1 << 6 /* only Apple-Mode */
+#  define TextureTypeOpenGL 0
+#  define TextureTypeApple  1 << 4
+#  define TextureKsDDA      1 << 5 /* only Apple-Mode */
+#  define TextureKdDDA      1 << 6 /* only Apple-Mode */
 
 #define TextureEnvColor						GLINT_TAG_ADDR(0x0d,0x01)
 #define FogMode							GLINT_TAG_ADDR(0x0d,0x02)
@@ -720,7 +720,7 @@
 	/* FOG RGBA			*/
 	/* UNIT_DISABLE			*/
 
-	#define FOG_CI							0x0002
+#	define FOG_CI							0x0002
 
 #define FogColor							GLINT_TAG_ADDR(0x0d,0x03)
 #define FStart								GLINT_TAG_ADDR(0x0d,0x04)
@@ -747,9 +747,9 @@
 #define dAdyDom								GLINT_TAG_ADDR(0x0f,0x0b)
 #define ColorDDAMode							GLINT_TAG_ADDR(0x0f,0x0c)
 	/* 0:					*/
-	#define CDDA_FlatShading			                0
+#	define CDDA_FlatShading			                0
 	/* UNIT_DISABLE			*/
-	#define CDDA_GouraudShading					0x0002
+#	define CDDA_GouraudShading					0x0002
         
 
 #define ConstantColor						GLINT_TAG_ADDR(0x0f,0x0d)
@@ -767,36 +767,36 @@
 	/* DstFBData				*/
 	/* UNIT_DISABLE				*/
 
-	#define ABM_SrcONE					1 << 1
-	#define ABM_SrcDST_COLOR				2 << 1
-	#define ABM_SrcONE_MINUS_DST_COLOR			3 << 1
-	#define ABM_SrcSRC_ALPHA				4 << 1
-	#define ABM_SrcONE_MINUS_SRC_ALPHA			5 << 1
-	#define ABM_SrcDST_ALPHA				6 << 1
-	#define ABM_SrcONE_MINUS_DST_ALPHA			7 << 1
-	#define ABM_SrcSRC_ALPHA_SATURATE			8 << 1
-	#define ABM_DstONE					1 << 5
-	#define ABM_DstSRC_COLOR				2 << 5
-	#define ABM_DstONE_MINUS_SRC_COLOR			3 << 5
-	#define ABM_DstSRC_ALPHA				4 << 5
-	#define ABM_DstONE_MINUS_SRC_ALPHA			5 << 5
-	#define ABM_DstDST_ALPHA				6 << 5
-	#define ABM_DstONE_MINUS_DST_ALPHA			7 << 5
-	#define ABM_ColorFormat5555				1 << 8
-	#define ABM_ColorFormat4444				2 << 8
-	#define ABM_ColorFormat4444_Front			3 << 8
-	#define ABM_ColorFormat4444_Back			4 << 8
-	#define ABM_ColorFormat332_Front			5 << 8
-	#define ABM_ColorFormat332_Back				6 << 8
-	#define ABM_ColorFormat121_Front			7 << 8
-	#define ABM_ColorFormat121_Back				8 << 8
-	#define ABM_ColorFormat555_Back				13 << 8
-	#define ABM_ColorFormat_CI8				14 << 8
-	#define ABM_ColorFormat_CI4				15 << 8
-	#define ABM_NoAlphaBuffer				0x1000
-	#define ABM_ColorOrderRGB				0x2000
-	#define ABM_TypeQuickDraw3D				0x4000
-	#define ABM_DstFBSourceData				0x8000
+#	define ABM_SrcONE					1 << 1
+#	define ABM_SrcDST_COLOR				2 << 1
+#	define ABM_SrcONE_MINUS_DST_COLOR			3 << 1
+#	define ABM_SrcSRC_ALPHA				4 << 1
+#	define ABM_SrcONE_MINUS_SRC_ALPHA			5 << 1
+#	define ABM_SrcDST_ALPHA				6 << 1
+#	define ABM_SrcONE_MINUS_DST_ALPHA			7 << 1
+#	define ABM_SrcSRC_ALPHA_SATURATE			8 << 1
+#	define ABM_DstONE					1 << 5
+#	define ABM_DstSRC_COLOR				2 << 5
+#	define ABM_DstONE_MINUS_SRC_COLOR			3 << 5
+#	define ABM_DstSRC_ALPHA				4 << 5
+#	define ABM_DstONE_MINUS_SRC_ALPHA			5 << 5
+#	define ABM_DstDST_ALPHA				6 << 5
+#	define ABM_DstONE_MINUS_DST_ALPHA			7 << 5
+#	define ABM_ColorFormat5555				1 << 8
+#	define ABM_ColorFormat4444				2 << 8
+#	define ABM_ColorFormat4444_Front			3 << 8
+#	define ABM_ColorFormat4444_Back			4 << 8
+#	define ABM_ColorFormat332_Front			5 << 8
+#	define ABM_ColorFormat332_Back				6 << 8
+#	define ABM_ColorFormat121_Front			7 << 8
+#	define ABM_ColorFormat121_Back				8 << 8
+#	define ABM_ColorFormat555_Back				13 << 8
+#	define ABM_ColorFormat_CI8				14 << 8
+#	define ABM_ColorFormat_CI4				15 << 8
+#	define ABM_NoAlphaBuffer				0x1000
+#	define ABM_ColorOrderRGB				0x2000
+#	define ABM_TypeQuickDraw3D				0x4000
+#	define ABM_DstFBSourceData				0x8000
 
 #define DitherMode						GLINT_TAG_ADDR(0x10,0x03)
 	/* 0:					*/
@@ -807,31 +807,31 @@
 	/* DitherDisable		*/
 	/* UNIT_DISABLE			*/
 
-	#define DTM_DitherEnable				1 << 1
-	#define DTM_ColorFormat5555				1 << 2
-	#define DTM_ColorFormat4444				2 << 2
-	#define DTM_ColorFormat4444_Front			3 << 2
-	#define DTM_ColorFormat4444_Back			4 << 2
-	#define DTM_ColorFormat332_Front			5 << 2
-	#define DTM_ColorFormat332_Back				6 << 2
-	#define DTM_ColorFormat121_Front			7 << 2
-	#define DTM_ColorFormat121_Back				8 << 2
-	#define DTM_ColorFormat555_Back				13 << 2
-	#define DTM_ColorFormat_CI8				14 << 2
-	#define DTM_ColorFormat_CI4				15 << 2
-	#define DTM_ColorOrderRGB				1 << 10
-	#define DTM_NoAlphaDither				1 << 14
-	#define DTM_RoundMode					1 << 15
+#	define DTM_DitherEnable				1 << 1
+#	define DTM_ColorFormat5555				1 << 2
+#	define DTM_ColorFormat4444				2 << 2
+#	define DTM_ColorFormat4444_Front			3 << 2
+#	define DTM_ColorFormat4444_Back			4 << 2
+#	define DTM_ColorFormat332_Front			5 << 2
+#	define DTM_ColorFormat332_Back				6 << 2
+#	define DTM_ColorFormat121_Front			7 << 2
+#	define DTM_ColorFormat121_Back				8 << 2
+#	define DTM_ColorFormat555_Back				13 << 2
+#	define DTM_ColorFormat_CI8				14 << 2
+#	define DTM_ColorFormat_CI4				15 << 2
+#	define DTM_ColorOrderRGB				1 << 10
+#	define DTM_NoAlphaDither				1 << 14
+#	define DTM_RoundMode					1 << 15
 
 #define FBSoftwareWriteMask					GLINT_TAG_ADDR(0x10,0x04)
 #define LogicalOpMode						GLINT_TAG_ADDR(0x10,0x05)
-        #define Use_ConstantFBWriteData 0x40
+#	define Use_ConstantFBWriteData 0x40
 
 
 #define FBWriteData						GLINT_TAG_ADDR(0x10,0x06)
 #define RouterMode						GLINT_TAG_ADDR(0x10,0x08)
-        #define ROUTER_Depth_Texture 1
-        #define ROUTER_Texture_Depth 0
+#	define ROUTER_Depth_Texture 1
+#	define ROUTER_Texture_Depth 0
 
 
 #define LBReadMode						GLINT_TAG_ADDR(0x11,0x00)
@@ -843,60 +843,60 @@
 	/* NoPatch			*/
 	/* ScanlineInterval1 		*/
 
-	#define LBRM_SrcEnable						1 << 9
-	#define LBRM_DstEnable						1 << 10
-	#define LBRM_DataLBStencil					1 << 16
-	#define LBRM_DataLBDepth					2 << 16
-	#define LBRM_WinBottomLeft					1 << 18
-	#define LBRM_DoPatch						1 << 19
+#	define LBRM_SrcEnable						1 << 9
+#	define LBRM_DstEnable						1 << 10
+#	define LBRM_DataLBStencil					1 << 16
+#	define LBRM_DataLBDepth					2 << 16
+#	define LBRM_WinBottomLeft					1 << 18
+#	define LBRM_DoPatch						1 << 19
 
-	#define LBRM_ScanlineInt2					1 << 20
-	#define LBRM_ScanlineInt4					2 << 20
-	#define LBRM_ScanlineInt8					3 << 20
+#	define LBRM_ScanlineInt2					1 << 20
+#	define LBRM_ScanlineInt4					2 << 20
+#	define LBRM_ScanlineInt8					3 << 20
 
 
 #define LBReadFormat						GLINT_TAG_ADDR(0x11,0x01)
-        #define LBRF_DepthWidth15   0x03  /* only permedia */
-        #define LBRF_DepthWidth16   0x00
-        #define LBRF_DepthWidth24   0x01
-        #define LBRF_DepthWidth32   0x02
+#	define LBRF_DepthWidth15   0x03  /* only permedia */
+#	define LBRF_DepthWidth16   0x00
+#	define LBRF_DepthWidth24   0x01
+#	define LBRF_DepthWidth32   0x02
 
-        #define LBRF_StencilWidth0  (0 << 2)
-        #define LBRF_StencilWidth4  (1 << 2)
-        #define LBRF_StencilWidth8  (2 << 2)
+#	define LBRF_StencilWidth0  (0 << 2)
+#	define LBRF_StencilWidth4  (1 << 2)
+#	define LBRF_StencilWidth8  (2 << 2)
 
-        #define LBRF_StencilPos16   (0 << 4)
-        #define LBRF_StencilPos20   (1 << 4)
-        #define LBRF_StencilPos24   (2 << 4)
-        #define LBRF_StencilPos28   (3 << 4)
-        #define LBRF_StencilPos32   (4 << 4)
+#	define LBRF_StencilPos16   (0 << 4)
+#	define LBRF_StencilPos20   (1 << 4)
+#	define LBRF_StencilPos24   (2 << 4)
+#	define LBRF_StencilPos28   (3 << 4)
+#	define LBRF_StencilPos32   (4 << 4)
 
-        #define LBRF_FrameCount0    (0 << 7)
-        #define LBRF_FrameCount4    (1 << 7)
-        #define LBRF_FrameCount8    (2 << 7)
+#	define LBRF_FrameCount0    (0 << 7)
+#	define LBRF_FrameCount4    (1 << 7)
+#	define LBRF_FrameCount8    (2 << 7)
 
-        #define LBRF_FrameCountPos16  (0 << 9)
-        #define LBRF_FrameCountPos20  (1 << 9)
-        #define LBRF_FrameCountPos24  (2 << 9)
-        #define LBRF_FrameCountPos28  (3 << 9)
-        #define LBRF_FrameCountPos32  (4 << 9)
-        #define LBRF_FrameCountPos36  (5 << 9)
-        #define LBRF_FrameCountPos40  (6 << 9)
+#	define LBRF_FrameCountPos16  (0 << 9)
+#	define LBRF_FrameCountPos20  (1 << 9)
+#	define LBRF_FrameCountPos24  (2 << 9)
+#	define LBRF_FrameCountPos28  (3 << 9)
+#	define LBRF_FrameCountPos32  (4 << 9)
+#	define LBRF_FrameCountPos36  (5 << 9)
+#	define LBRF_FrameCountPos40  (6 << 9)
 
-        #define LBRF_GIDWidth0 (0 << 12)
-        #define LBRF_GIDWidth4 (1 << 12)
+#	define LBRF_GIDWidth0 (0 << 12)
+#	define LBRF_GIDWidth4 (1 << 12)
 
-        #define LBRF_GIDPos16  (0 << 13)
-        #define LBRF_GIDPos20  (1 << 13)
-        #define LBRF_GIDPos24  (2 << 13)
-        #define LBRF_GIDPos28  (3 << 13)
-        #define LBRF_GIDPos32  (4 << 13)
-        #define LBRF_GIDPos36  (5 << 13)
-        #define LBRF_GIDPos40  (6 << 13)
-        #define LBRF_GIDPos44  (7 << 13)
-        #define LBRF_GIDPos48  (8 << 13)
+#	define LBRF_GIDPos16  (0 << 13)
+#	define LBRF_GIDPos20  (1 << 13)
+#	define LBRF_GIDPos24  (2 << 13)
+#	define LBRF_GIDPos28  (3 << 13)
+#	define LBRF_GIDPos32  (4 << 13)
+#	define LBRF_GIDPos36  (5 << 13)
+#	define LBRF_GIDPos40  (6 << 13)
+#	define LBRF_GIDPos44  (7 << 13)
+#	define LBRF_GIDPos48  (8 << 13)
 
-        #define LBRF_Compact32  (1 << 17)
+#	define LBRF_Compact32  (1 << 17)
 
 
 
@@ -905,9 +905,9 @@
 #define LBDepth							GLINT_TAG_ADDR(0x11,0x06)
 #define LBWindowBase						GLINT_TAG_ADDR(0x11,0x07)
 #define LBWriteMode						GLINT_TAG_ADDR(0x11,0x08)
-	#define LBWM_WriteEnable				0x1
-	#define LBWM_UpLoad_LBDepth				0x2
-	#define LBWM_UpLoad_LBStencil				0x4
+#	define LBWM_WriteEnable				0x1
+#	define LBWM_UpLoad_LBDepth				0x2
+#	define LBWM_UpLoad_LBStencil				0x4
 
 #define LBWriteFormat						GLINT_TAG_ADDR(0x11,0x09)
 
@@ -917,16 +917,16 @@
 #define LBWindowOffset						GLINT_TAG_ADDR(0x11,0x0f)
 
 #define GLINTWindow						GLINT_TAG_ADDR(0x13,0x00)
-        #define GWIN_UnitEnable          (1 << 0)
-        #define GWIN_ForceLBUpdate       (1 << 3)
-        #define GWIN_LBUpdateSourceREG   (1 << 4)
-        #define GWIN_LBUpdateSourceLB    (0 << 4)
-        #define GWIN_StencilFCP          (1 << 17)
-        #define GWIN_DepthFCP            (1 << 18)
-        #define GWIN_OverrideWriteFilter (1 << 19)
+#	define GWIN_UnitEnable          (1 << 0)
+#	define GWIN_ForceLBUpdate       (1 << 3)
+#	define GWIN_LBUpdateSourceREG   (1 << 4)
+#	define GWIN_LBUpdateSourceLB    (0 << 4)
+#	define GWIN_StencilFCP          (1 << 17)
+#	define GWIN_DepthFCP            (1 << 18)
+#	define GWIN_OverrideWriteFilter (1 << 19)
 
 	/* ??? is this needed, set by permedia (2) modules */
-        #define GWIN_DisableLBUpdate    0x40000 
+#	define GWIN_DisableLBUpdate    0x40000 
 
 #define StencilMode						GLINT_TAG_ADDR(0x13,0x01)
 #define StencilData						GLINT_TAG_ADDR(0x13,0x02)
@@ -938,17 +938,17 @@
 	/* CompFuncNEVER		*/
 	/* UNIT_DISABLE			*/
 
-	#define DPM_WriteEnable					1 << 1
-	#define DPM_SrcCompLBData				1 << 2
-	#define DPM_SrcCompDregister				2 << 2
-	#define DPM_SrcCompLBSourceData				3 << 2
-	#define DPM_CompFuncLESS				1 << 4
-	#define DPM_CompFuncEQUAL				2 << 4
-	#define DPM_CompFuncLESS_OR_EQ				3 << 4
-	#define DPM_CompFuncGREATER				4 << 4
-	#define DPM_CompFuncNOT_EQ				5 << 4
-	#define DPM_CompFuncGREATER_OR_EQ			6 << 4
-	#define DPM_CompFuncALWAYS				7 << 4
+#	define DPM_WriteEnable					1 << 1
+#	define DPM_SrcCompLBData				1 << 2
+#	define DPM_SrcCompDregister				2 << 2
+#	define DPM_SrcCompLBSourceData				3 << 2
+#	define DPM_CompFuncLESS				1 << 4
+#	define DPM_CompFuncEQUAL				2 << 4
+#	define DPM_CompFuncLESS_OR_EQ				3 << 4
+#	define DPM_CompFuncGREATER				4 << 4
+#	define DPM_CompFuncNOT_EQ				5 << 4
+#	define DPM_CompFuncGREATER_OR_EQ			6 << 4
+#	define DPM_CompFuncALWAYS				7 << 4
 
 #define GLINTDepth						GLINT_TAG_ADDR(0x13,0x05)
 #define ZStartU							GLINT_TAG_ADDR(0x13,0x06)
@@ -967,14 +967,14 @@
 	/* WinTopLeft			*/
 	/* ScanlineInterval1 		*/
 
-	#define FBRM_SrcEnable					1 << 9
-	#define FBRM_DstEnable					1 << 10
-	#define FBRM_DataFBColor				1 << 15
-	#define FBRM_WinBottomLeft				1 << 16
-	#define FBRM_Packed					1 << 19
-	#define FBRM_ScanlineInt2				1 << 23
-	#define FBRM_ScanlineInt4				2 << 23
-	#define FBRM_ScanlineInt8				3 << 23
+#	define FBRM_SrcEnable					1 << 9
+#	define FBRM_DstEnable					1 << 10
+#	define FBRM_DataFBColor				1 << 15
+#	define FBRM_WinBottomLeft				1 << 16
+#	define FBRM_Packed					1 << 19
+#	define FBRM_ScanlineInt2				1 << 23
+#	define FBRM_ScanlineInt4				2 << 23
+#	define FBRM_ScanlineInt8				3 << 23
 
 
 #define FBSourceOffset						GLINT_TAG_ADDR(0x15,0x01)
@@ -988,10 +988,10 @@
 	/* 0:			*/
 	/* FBWM_NoColorUpload	*/
 	/* FBWM_WriteDisable	*/
-	#define FBWM_WriteEnable				1
-	#define FBWM_UploadColor				1 << 3
+#	define FBWM_WriteEnable				1
+#	define FBWM_UploadColor				1 << 3
 /* Permedia3 extensions */
-	#define FBWM_Enable0					1 << 12
+#	define FBWM_Enable0					1 << 12
 
 #define FBHardwareWriteMask					GLINT_TAG_ADDR(0x15,0x08)
 #define FBBlockColor						GLINT_TAG_ADDR(0x15,0x09)
@@ -1020,16 +1020,16 @@
 	/* CullStatisticTag		*/
 	/* CullStatisticData		*/
 
-	#define FM_PassDepthTags					0x0010
-	#define FM_PassDepthData					0x0020
-	#define FM_PassStencilTags					0x0040
-	#define FM_PassStencilData					0x0080
-	#define FM_PassColorTag						0x0100
-	#define FM_PassColorData					0x0200
-	#define FM_PassSyncTag						0x0400
-	#define FM_PassSyncData						0x0800
-	#define FM_PassStatisticTag					0x1000
-	#define FM_PassStatisticData					0x2000
+#	define FM_PassDepthTags					0x0010
+#	define FM_PassDepthData					0x0020
+#	define FM_PassStencilTags					0x0040
+#	define FM_PassStencilData					0x0080
+#	define FM_PassColorTag						0x0100
+#	define FM_PassColorData					0x0200
+#	define FM_PassSyncTag						0x0400
+#	define FM_PassSyncData						0x0800
+#	define FM_PassStatisticTag					0x1000
+#	define FM_PassStatisticData					0x2000
 
 #define	Sync_tag							0x0188
 
@@ -1141,43 +1141,43 @@
 	/* GLINT_300SX			*/
 
 	/* DeltaMode Register Bit Field Assignments */
-	#define DM_GLINT_300SX					0x0000
-	#define DM_GLINT_500TX					0x0001
-	#define DM_PERMEDIA					0x0002
-	#define DM_Depth_16BPP					(1 << 2)
-	#define DM_Depth_24BPP					(2 << 2)
-	#define DM_Depth_32BPP					(3 << 2)
-	#define DM_FogEnable					0x0010
-	#define DM_TextureEnable				0x0020
-	#define DM_SmoothShadingEnable				0x0040
-	#define DM_DepthEnable					0x0080
-	#define DM_SpecularTextureEnable			0x0100
-	#define DM_DiffuseTextureEnable				0x0200
-	#define DM_SubPixelCorrectionEnable			0x0400
-	#define DM_DiamondExit					0x0800
-	#define DM_NoDraw					0x1000
-	#define DM_ClampEnable					0x2000
-	#define DM_ClampedTexParMode				0x4000 
-	#define DM_NormalizedTexParMode				0xC000 
+#	define DM_GLINT_300SX					0x0000
+#	define DM_GLINT_500TX					0x0001
+#	define DM_PERMEDIA					0x0002
+#	define DM_Depth_16BPP					(1 << 2)
+#	define DM_Depth_24BPP					(2 << 2)
+#	define DM_Depth_32BPP					(3 << 2)
+#	define DM_FogEnable					0x0010
+#	define DM_TextureEnable				0x0020
+#	define DM_SmoothShadingEnable				0x0040
+#	define DM_DepthEnable					0x0080
+#	define DM_SpecularTextureEnable			0x0100
+#	define DM_DiffuseTextureEnable				0x0200
+#	define DM_SubPixelCorrectionEnable			0x0400
+#	define DM_DiamondExit					0x0800
+#	define DM_NoDraw					0x1000
+#	define DM_ClampEnable					0x2000
+#	define DM_ClampedTexParMode				0x4000 
+#	define DM_NormalizedTexParMode				0xC000 
 
 
-        #define DDCMD_AreaStrippleEnable                        0x0001
-	#define DDCMD_LineStrippleEnable                        0x0002
-	#define DDCMD_ResetLineStripple                         1 << 2
-        #define DDCMD_FastFillEnable                            1 << 3
+#	define DDCMD_AreaStrippleEnable                        0x0001
+#	define DDCMD_LineStrippleEnable                        0x0002
+#	define DDCMD_ResetLineStripple                         1 << 2
+#	define DDCMD_FastFillEnable                            1 << 3
         /*  2 Bits reserved */
-	#define DDCMD_PrimitiveType_Point                       2 << 6
-	#define DDCMD_PrimitiveType_Line                        0 << 6
-	#define DDCMD_PrimitiveType_Trapezoid                   1 << 6
-	#define DDCMD_AntialiasEnable				1 << 8
-     	#define DDCMD_AntialiasingQuality			1 << 9
-        #define DDCMD_UsePointTable                             1 << 10
-	#define DDCMD_SyncOnBitMask                             1 << 11
-	#define DDCMD_SyncOnHostDate                            1 << 12
-     	#define DDCMD_TextureEnable			        1 << 13
-	#define DDCMD_FogEnable                                 1 << 14
-	#define DDCMD_CoverageEnable                            1 << 15
-	#define DDCMD_SubPixelCorrectionEnable                  1 << 16
+#	define DDCMD_PrimitiveType_Point                       2 << 6
+#	define DDCMD_PrimitiveType_Line                        0 << 6
+#	define DDCMD_PrimitiveType_Trapezoid                   1 << 6
+#	define DDCMD_AntialiasEnable				1 << 8
+#	define DDCMD_AntialiasingQuality			1 << 9
+#	define DDCMD_UsePointTable                             1 << 10
+#	define DDCMD_SyncOnBitMask                             1 << 11
+#	define DDCMD_SyncOnHostDate                            1 << 12
+#	define DDCMD_TextureEnable			        1 << 13
+#	define DDCMD_FogEnable                                 1 << 14
+#	define DDCMD_CoverageEnable                            1 << 15
+#	define DDCMD_SubPixelCorrectionEnable                  1 << 16
 
 
 
@@ -1258,7 +1258,7 @@ do{								\
 #define GLINT_SLOW_WRITE_REG(v,r)				\
 do{								\
 	mem_barrier();						\
-	GLINT_WAIT(pGlint->FIFOSize);	     			\
+	GLINT_WAIT(pGlint->FIFOSize);		     		\
 	mem_barrier();						\
         GLINT_WRITE_REG(v,r);					\
 }while(0)

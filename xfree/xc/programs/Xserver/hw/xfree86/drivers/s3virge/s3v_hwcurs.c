@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_hwcurs.c,v 1.6 2000/02/08 17:19:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_hwcurs.c,v 1.7 2003/02/04 02:20:50 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -132,7 +132,10 @@ S3VSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
       y = 0;
    }
 
-   /* This is the recomended order to move the cursor */
+   /* Double y position for a doublescan mode */
+   if(pScrn->currentMode->Flags & V_DBLSCAN) y <<= 1;
+
+   /* This is the recommended order to move the cursor */
 
    outCRReg( 0x46, (x & 0xff00)>>8 );
    outCRReg( 0x47, (x & 0xff) );

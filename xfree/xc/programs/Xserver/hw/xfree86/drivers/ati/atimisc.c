@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimisc.c,v 1.4 2002/01/16 16:22:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimisc.c,v 1.6 2003/01/01 19:16:32 tsi Exp $ */
 /*
- * Copyright 2000 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,6 +24,7 @@
 #ifdef XFree86LOADER
 
 #include "ati.h"
+#include "atiload.h"
 #include "ativersion.h"
 
 /* Module loader interface for subsidiary driver module */
@@ -63,6 +64,28 @@ ATISetup
         /* Ensure main driver module is loaded, but not as a submodule */
         if (!xf86ServerIsOnlyDetecting() && !LoaderSymbol(ATI_NAME))
             xf86LoadOneModule(ATI_DRIVER_NAME, Options);
+
+        /*
+         * Tell loader about symbols from other modules that this module might
+         * refer to.
+         */
+        xf86LoaderRefSymLists(
+            ATIint10Symbols,
+            ATIddcSymbols,
+            ATIvbeSymbols,
+
+#ifndef AVOID_CPIO
+
+            ATIxf1bppSymbols,
+            ATIxf4bppSymbols,
+
+#endif /* AVOID_CPIO */
+
+            ATIfbSymbols,
+            ATIshadowfbSymbols,
+            ATIxaaSymbols,
+            ATIramdacSymbols,
+            NULL);
 
         Inited = TRUE;
     }

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.9 2001/08/27 19:49:53 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.10 2002/02/18 20:51:57 herrb Exp $ */
  /* SPACES   CWEB         V0021 ********                             */
 /*
 :h1 id=spaces.SPACES Module - Handles Coordinate Spaces
@@ -215,7 +215,7 @@ FindDeviceContext(pointer device) /* device token                            */
        int rc = -1;          /* return code for QueryDeviceState             */
  
        if (rc != 0)          /* we only bother with this check once          */
-               abort("Context:  QueryDeviceState didn't work");
+               Abort("Context:  QueryDeviceState didn't work");
  
        M[0][0] = M[1][0] = M[0][1] = M[1][1] = 0.0;
  
@@ -233,7 +233,7 @@ FindDeviceContext(pointer device) /* device token                            */
                M[1][0] = -Yres;  M[0][1] = -Xres;
                break;
            default:
-               abort("QueryDeviceState returned invalid orientation");
+               Abort("QueryDeviceState returned invalid orientation");
        }
        return(FindContext(M));
 }
@@ -257,7 +257,7 @@ FindContext(double M[2][2])  /* array to search for                          */
  
        if (i >= nextcontext) {
                if (i >= MAXCONTEXTS)
-                       abort("Context:  out of them");
+                       Abort("Context:  out of them");
                LONGCOPY(contexts[i].normal, M, sizeof(contexts[i].normal));
                MatrixInvert(M, contexts[i].inverse);
                nextcontext++;
@@ -896,7 +896,7 @@ MatrixInvert(double M[2][2],      /* input matrix                            */
  
        D = M[1][1] * M[0][0] - M[1][0] * M[0][1];
        if (D == 0.0)
-               abort("MatrixInvert:  can't");
+               Abort("MatrixInvert:  can't");
  
        Mprime[0][0] = tyy / D;
        Mprime[1][0] = -txy / D;

@@ -1,23 +1,25 @@
 # Configure paths for FreeType2
 # Marcelo Magallon 2001-10-26, based on gtk.m4 by Owen Taylor
 
-dnl AM_CHECK_FT2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl AC_CHECK_FT2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for FreeType2, and define FT2_CFLAGS and FT2_LIBS
 dnl
 AC_DEFUN(AC_CHECK_FT2,
 [dnl
 dnl Get the cflags and libraries from the freetype-config script
 dnl
-AC_ARG_WITH(freetype-prefix,
-[  --with-ft-prefix=PFX      Prefix where FreeType is installed (optional)],
+AC_ARG_WITH(ft-prefix,
+[  --with-ft-prefix=PREFIX
+                          Prefix where FreeType is installed (optional)],
             ft_config_prefix="$withval", ft_config_prefix="")
-AC_ARG_WITH(freetype-exec-prefix,
-[  --with-ft-exec-prefix=PFX Exec prefix where FreeType is installed (optional)],
+AC_ARG_WITH(ft-exec-prefix,
+[  --with-ft-exec-prefix=PREFIX
+                          Exec prefix where FreeType is installed (optional)],
             ft_config_exec_prefix="$withval", ft_config_exec_prefix="")
 AC_ARG_ENABLE(freetypetest,
-[  --disable-freetypetest    Do not try to compile and run
-                            a test FreeType program],
-            [], enable_fttest=yes)
+[  --disable-freetypetest  Do not try to compile and run
+                          a test FreeType program],
+              [], enable_fttest=yes)
 
 if test x$ft_config_exec_prefix != x ; then
   ft_config_args="$ft_config_args --exec-prefix=$ft_config_exec_prefix"
@@ -53,8 +55,8 @@ else
          sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
   ft_min_micro_version=`echo $min_ft_version | \
          sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
-  if test "x$enable_fttest" = "xyes" ; then
-    ft_config_is_lt=no
+  if test x$enable_fttest = xyes ; then
+    ft_config_is_lt=""
     if test $ft_config_major_version -lt $ft_min_major_version ; then
       ft_config_is_lt=yes
     else
@@ -70,8 +72,8 @@ else
         fi
       fi
     fi
-    if test "x$ft_config_is_lt" = "xyes" ; then
-      ifelse([$3], , :, [$3])
+    if test x$ft_config_is_lt = xyes ; then
+      no_ft=yes
     else
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"
@@ -106,9 +108,9 @@ main()
       CFLAGS="$ac_save_CFLAGS"
       LIBS="$ac_save_LIBS"
     fi             # test $ft_config_version -lt $ft_min_version
-  fi               # test "x$enable_fttest" = "xyes"
+  fi               # test x$enable_fttest = xyes
 fi                 # test "$FT2_CONFIG" = "no"
-if test "x$no_ft" = x ; then
+if test x$no_ft = x ; then
    AC_MSG_RESULT(yes)
    ifelse([$2], , :, [$2])
 else
@@ -119,10 +121,18 @@ else
      echo "*** your path, or set the FT2_CONFIG environment variable to the"
      echo "*** full path to freetype-config."
    else
-     echo "*** The FreeType test program failed to run.  If your system uses"
-     echo "*** shared libraries and they are installed outside the normal"
-     echo "*** system library path, make sure the variable LD_LIBRARY_PATH"
-     echo "*** (or whatever is appropiate for your system) is correctly set."
+     if test x$ft_config_is_lt = xyes ; then
+       echo "*** Your installed version of the FreeType 2 library is too old."
+       echo "*** If you have different versions of FreeType 2, make sure that"
+       echo "*** correct values for --with-ft-prefix or --with-ft-exec-prefix"
+       echo "*** are used, or set the FT2_CONFIG environment variable to the"
+       echo "*** full path to freetype-config."
+     else
+       echo "*** The FreeType test program failed to run.  If your system uses"
+       echo "*** shared libraries and they are installed outside the normal"
+       echo "*** system library path, make sure the variable LD_LIBRARY_PATH"
+       echo "*** (or whatever is appropiate for your system) is correctly set."
+     fi
    fi
    FT2_CFLAGS=""
    FT2_LIBS=""

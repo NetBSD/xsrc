@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/Imakefile,v 1.6 2000/08/15 16:05:39 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/Imakefile,v 1.8 2002/10/17 02:22:48 dawes Exp $
 
 #include <Server.tmpl>
 

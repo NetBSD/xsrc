@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.4 2000/12/12 13:00:42 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/nls/Imakefile,v 1.9 2001/11/16 00:52:30 dawes Exp $
+XCOMM $XFree86: xc/nls/Imakefile,v 1.10 2002/05/31 18:45:52 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -28,7 +28,6 @@ all::
 #endif
 
 #ifndef Win32Architecture
-#ifndef OS2Architecture
 #if R63Compat
 # define LTarget(name)							@@\
 CppFileTarget(name.l1,name,$(DEFINES),NullParameter)			@@\
@@ -51,20 +50,6 @@ InstallNamedNonExec(name.lt,name,$(XLOCALEDIR))				@@\
 									@@\
 clean::									@@\
 	RemoveFiles(name.l1 name.l2 name.lt)
-#else
-# define LTarget(name)							@@\
-CppFileTarget(name.lt,name,$(DEFINES),NullParameter)			@@\
-									@@\
-AllTarget(name.lt)							@@\
-	MakeDir($(BUILDLIBDIR)/locale)					@@\
-	RemoveFile($(BUILDLIBDIR)/locale/name)				@@\
-	cd $(BUILDLIBDIR)/locale && $(LN) $(BUILDLIBTOP)/../$(CURRENT_DIR)/name.lt name @@\
-									@@\
-InstallNamedNonExec(name.lt,name,$(XLOCALEDIR))				@@\
-									@@\
-clean::									@@\
-	RemoveFile(name.lt)
-#endif
 #else
 # define LTarget(name)							@@\
 CppFileTarget(name.lt,name,$(DEFINES),NullParameter)			@@\

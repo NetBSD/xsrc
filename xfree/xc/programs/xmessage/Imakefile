@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile,v 1.2 94/04/11 14:39:17 gildea Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xmessage/Imakefile,v 1.1 2000/02/13 03:26:33 dawes Exp $
+XCOMM $XFree86: xc/programs/xmessage/Imakefile,v 1.2 2002/10/15 02:26:12 dawes Exp $
 
 
 
@@ -17,3 +17,4 @@ LOCAL_LIBRARIES = XawClientLibs
 
 ComplexProgramTarget(xmessage)
 InstallAppDefaults(Xmessage)
+InstallAppDefaults(Xmessage-color)

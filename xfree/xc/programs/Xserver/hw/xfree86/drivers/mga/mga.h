@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.79 2002/01/11 15:42:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.85 2002/12/16 16:19:17 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -51,6 +51,45 @@
 #include "client.h"
 #endif
 #include "mga_bios.h"
+
+typedef enum {
+    OPTION_SW_CURSOR,
+    OPTION_HW_CURSOR,
+    OPTION_PCI_RETRY,
+    OPTION_SYNC_ON_GREEN,
+    OPTION_NOACCEL,
+    OPTION_SHOWCACHE,
+    OPTION_OVERLAY,
+    OPTION_MGA_SDRAM,
+    OPTION_SHADOW_FB,
+    OPTION_FBDEV,
+    OPTION_COLOR_KEY,
+    OPTION_SET_MCLK,
+    OPTION_OVERCLOCK_MEM,
+    OPTION_VIDEO_KEY,
+    OPTION_ROTATE,
+    OPTION_TEXTURED_VIDEO,
+    OPTION_CRTC2HALF,
+    OPTION_CRTC2RAM,
+    OPTION_INT10,
+    OPTION_AGP_MODE,
+    OPTION_AGP_SIZE,
+    OPTION_DIGITAL1,
+    OPTION_DIGITAL2,
+    OPTION_TV,
+    OPTION_TVSTANDARD,
+    OPTION_CABLETYPE,
+    OPTION_USEIRQZERO,
+    OPTION_NOHAL,
+    OPTION_SWAPPED_HEAD,
+    OPTION_DRI,
+    OPTION_MERGEDFB,
+    OPTION_HSYNC2,
+    OPTION_VREFRESH2,
+    OPTION_MONITOR2POS,
+    OPTION_METAMODES
+} MGAOpts;
+
 
 #if !defined(EXTRADEBUG)
 #define INREG8(addr) MMIO_IN8(pMga->IOBase, addr)
@@ -120,6 +159,8 @@ typedef struct {
     CARD32		Option;
     CARD32		Option2;
     CARD32		Option3;
+    long                Clock;
+    Bool                PIXPLLCSaved;
 } MGARegRec, *MGARegPtr;
 
 /* For programming the second CRTC */
@@ -198,10 +239,11 @@ typedef struct {
 
 #define MGAPTR(p) ((MGAPtr)((p)->driverPrivate))
 
-#define ISDIGITAL1(p) ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL)
-#define ISDIGITAL2(p) ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL)
-#define ISTV1(p) ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_TV)
-#define ISTV2(p) ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_TV)
+/*avoids segfault by returning false if pMgaHwInfo not defined*/
+#define ISDIGITAL1(p) (p->pMgaHwInfo && ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL))
+#define ISDIGITAL2(p) (p->pMgaHwInfo && ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_DIGITAL))
+#define ISTV1(p) (p->pMgaHwInfo && ((p->pMgaHwInfo->ulCapsFirstOutput) & MGAHWINFOCAPS_OUTPUT_TV))
+#define ISTV2(p) (p->pMgaHwInfo && ((p->pMgaHwInfo->ulCapsSecondOutput) & MGAHWINFOCAPS_OUTPUT_TV))
 
 #ifdef DISABLE_VGA_IO
 typedef struct mgaSave {
@@ -209,6 +251,15 @@ typedef struct mgaSave {
     Bool enable;
 } MgaSave, *MgaSavePtr;
 #endif
+
+
+typedef enum {
+    mgaLeftOf,
+    mgaRightOf,
+    mgaAbove,
+    mgaBelow,
+    mgaClone
+} MgaScrn2Rel;
 
 typedef struct {
     int			lastInstance;
@@ -350,9 +401,13 @@ typedef struct {
     void		(*GetQuiescence)(ScrnInfoPtr pScrn);
 
     int 		agpMode;
+    int                 agpSize;
 
+    int                 irq;
+    CARD32              reg_ien;
 #endif
     XF86VideoAdaptorPtr adaptor;
+    Bool		DualHeadEnabled;
     Bool		SecondCrtc;
     Bool                SecondOutput;
     GDevPtr		device;
@@ -376,6 +431,21 @@ typedef struct {
     Bool                HALLoaded;
 #endif
     OptionInfoPtr	Options;
+/* Merged Framebuffer data */
+    Bool                MergedFB;
+
+    /* Real values specific to monitor1, since the original ones are replaced */
+    DisplayModePtr	M1modes;	 /* list of actual modes */
+    DisplayModePtr	M1currentMode; /* current mode */
+    int			M1frameX0;	/* viewport position */
+    int			M1frameY0;
+    int			M1frameX1;
+    int			M1frameY1;
+    
+    ScrnInfoPtr       pScrn2; /*pointer to second CRTC screeninforec,
+                                       if in merged mode */
+/* End of Merged Framebuffer Data */
+  int			HALGranularityOffX, HALGranularityOffY;
 } MGARec, *MGAPtr;
 
 extern CARD32 MGAAtype[16];
@@ -403,6 +473,20 @@ extern CARD32 MGAAtypeNoBLK[16];
 
 void MGAAdjustFrame(int scrnIndex, int x, int y, int flags);
 Bool MGASwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+void MGAFillModeInfoStruct(ScrnInfoPtr pScrn, DisplayModePtr mode);
+Bool MGAGetRec(ScrnInfoPtr pScrn);
+void MGAProbeDDC(ScrnInfoPtr pScrn, int index);
+void MGASoftReset(ScrnInfoPtr pScrn);
+void MGAFreeRec(ScrnInfoPtr pScrn);
+void MGAReadBios(ScrnInfoPtr pScrn);
+void MGADisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
+				  int flags);
+void MGAAdjustFrameCrtc2(int scrnIndex, int x, int y, int flags);
+void MGADisplayPowerManagementSetCrtc2(ScrnInfoPtr pScrn,
+					     int PowerManagementMode,
+					     int flags);
+void MGAAdjustGranularity(ScrnInfoPtr pScrn, int* x, int* y); 
+
 
 void MGA2064SetupFuncs(ScrnInfoPtr pScrn);
 void MGAGSetupFuncs(ScrnInfoPtr pScrn);
@@ -493,8 +577,12 @@ void MGACRTC2SetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 bas
 void MGACRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo);
 void MGACRTC2GetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
 void MGACRTC2GetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
- 
+
 double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
+#ifdef DEBUG
+void MGAG450PrintPLL(ScrnInfoPtr pScrn);
+#endif
+long MGAG450SavePLLFreq(ScrnInfoPtr pScrn);
 void MGAprintDac(ScrnInfoPtr pScrn);
 
 #ifdef USEMGAHAL
@@ -513,7 +601,7 @@ extern LPMGAMODEINFO pMgaModeInfo[2];
 extern MGAMODEINFO   TmpMgaModeInfo[2];
 
 extern void MGAExecuteEscCmd(ScrnInfoPtr pScrn, char *cmdline , char *sResult, DisplayModePtr pMode);
-void FillDisplayModeStruct(DisplayModePtr pMode, LPMGAMODEINFO pModeInfo);
+void MGAFillDisplayModeStruct(DisplayModePtr pMode, LPMGAMODEINFO pModeInfo);
 /************************************************/
 #endif
 

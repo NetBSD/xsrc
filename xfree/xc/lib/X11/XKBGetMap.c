@@ -25,7 +25,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.6 2001/01/17 19:41:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.7 2003/02/04 03:49:33 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -974,6 +974,7 @@ XkbGetMapChanges(dpy,xkb,changes)
 	UnlockDisplay(dpy);
 	return status;
     }
+    UnlockDisplay(dpy);
     return Success;
 }
 

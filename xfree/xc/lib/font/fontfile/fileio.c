@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fileio.c,v 3.9 2001/12/14 19:56:51 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fileio.c,v 3.10 2002/05/31 18:45:50 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -54,7 +54,7 @@ FontFileOpen (const char *name)
 	return 0;
     }
     len = strlen (name);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if (len > 2 && !strcmp (name + len - 2, ".Z")) {
 #else
     if (len > 2 && (!strcmp (name + len - 4, ".pcz") || 

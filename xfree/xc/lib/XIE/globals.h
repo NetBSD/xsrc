@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/globals.h,v 1.5 2001/12/14 19:54:33 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/globals.h,v 1.6 2002/05/31 18:45:43 dawes Exp $ */
 
 extern void _XieElemImportClientLUT		(char **, XiePhotoElement *);
 extern void _XieElemImportClientPhoto		(char **, XiePhotoElement *);
@@ -113,7 +113,7 @@ void (*(_XieElemFuncs[]))(char **, XiePhotoElement *) =
 };
 
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 XieTechFuncRec *_XieTechFuncs[xieValMaxTechGroup];
 #else
 XieTechFuncRec *_XieTechFuncs[xieValMaxTechGroup] = {0};

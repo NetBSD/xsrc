@@ -27,7 +27,7 @@
 ;; Author: Paulo César Pereira de Andrade
 ;;
 ;;
-;; $XFree86: xc/programs/xedit/lisp/test/widgets.lsp,v 1.2 2001/09/29 04:46:06 paulo Exp $
+;; $XFree86: xc/programs/xedit/lisp/test/widgets.lsp,v 1.3 2002/11/08 08:01:01 paulo Exp $
 ;;
 (require "xaw")
 (require "xt")

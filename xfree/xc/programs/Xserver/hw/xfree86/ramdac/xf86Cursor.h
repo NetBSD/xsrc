@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.h,v 1.7 2001/05/18 20:22:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.h,v 1.11 2003/02/15 03:14:47 tsi Exp $ */
 
 #ifndef _XF86CURSOR_H
 #define _XF86CURSOR_H
@@ -19,23 +19,17 @@ typedef struct _xf86CursorInfoRec {
     unsigned char* (*RealizeCursor)(struct _xf86CursorInfoRec *, CursorPtr);
     Bool (*UseHWCursor)(ScreenPtr, CursorPtr);
 
+#ifdef ARGB_CURSOR
+    Bool (*UseHWCursorARGB) (ScreenPtr, CursorPtr);
+    void (*LoadCursorARGB) (ScrnInfoPtr, CursorPtr);
+#endif
+
 } xf86CursorInfoRec, *xf86CursorInfoPtr;
 
-Bool xf86InitCursor(
-   ScreenPtr pScreen, 
-   xf86CursorInfoPtr infoPtr
-);
-
+Bool xf86InitCursor(ScreenPtr pScreen, xf86CursorInfoPtr infoPtr);
 xf86CursorInfoPtr xf86CreateCursorInfoRec(void);
 void xf86DestroyCursorInfoRec(xf86CursorInfoPtr);
-
-
-void xf86SetCursor(ScreenPtr pScreen, CursorPtr pCurs, int x, int y);
-void xf86MoveCursor(ScreenPtr pScreen, int x, int y);
-void xf86RecolorCursor(ScreenPtr pScreen, CursorPtr pCurs, Bool displayed);
-Bool xf86InitHardwareCursor(ScreenPtr pScreen, xf86CursorInfoPtr infoPtr);
-
-extern int xf86CursorScreenIndex;
+void xf86ForceHWCursor (ScreenPtr pScreen, Bool on);
 
 #define HARDWARE_CURSOR_INVERT_MASK 			0x00000001
 #define HARDWARE_CURSOR_AND_SOURCE_WITH_MASK		0x00000002

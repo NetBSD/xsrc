@@ -24,7 +24,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/include/extensions/security.h,v 1.3 2001/12/14 19:53:29 dawes Exp $ */
+/* $XFree86: xc/include/extensions/security.h,v 1.4 2002/11/08 00:46:27 alanh Exp $ */
 
 #ifndef _SECURITY_H
 #define _SECURITY_H
@@ -110,6 +110,8 @@ typedef struct {
 
 #include "input.h"    /* for DeviceIntPtr */
 #include "property.h" /* for PropertyPtr */
+#include "pixmap.h"   /* for DrawablePtr */
+#include "resource.h" /* for RESTYPE */
 
 /* resource type to pass in LookupIDByType for authorizations */
 extern RESTYPE SecurityAuthorizationResType;

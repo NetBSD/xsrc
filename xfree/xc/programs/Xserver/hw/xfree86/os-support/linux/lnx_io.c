@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.22 2001/11/08 04:00:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.24 2002/10/20 21:45:27 tsi Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -51,15 +51,15 @@ xf86SoundKbdBell(int loudness, int pitch, int duration)
 void
 xf86SetKbdLeds(int leds)
 {
-	ioctl(xf86Info.consoleFd, KDSETLED, leds);
+ 	ioctl(xf86Info.consoleFd, KDSETLED, leds);
 }
 
 int
 xf86GetKbdLeds()
 {
-	int leds;
+	int leds = 0;
 
-	ioctl(xf86Info.consoleFd, KDGETLED, &leds);
+ 	ioctl(xf86Info.consoleFd, KDGETLED, &leds);
 	return(leds);
 }
 
@@ -70,6 +70,13 @@ xf86GetKbdLeds()
 #ifdef __sparc__
 #include <asm/param.h>
 #include <asm/kbio.h>
+#endif
+
+/* Deal with spurious kernel header change */
+#if defined(LINUX_VERSION_CODE) && defined(KERNEL_VERSION)
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,42)
+#  define rate period
+# endif
 #endif
 
 static int
@@ -133,6 +140,7 @@ KIOCSRATE_ioctl_ok(int rate, int delay) {
 #endif /* KIOCSRATE */
 }
 
+#undef rate
 
 #if NeedFunctionPrototypes
 void xf86SetKbdRepeat(char rad)

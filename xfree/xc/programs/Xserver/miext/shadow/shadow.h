@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.5 2001/07/20 19:25:02 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.7 2002/12/02 20:37:24 tsi Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -25,14 +25,16 @@
 #ifndef _SHADOW_H_
 #define _SHADOW_H_
 
+#include "scrnintstr.h"
+
 #ifdef RENDER
 #include "picturestr.h"
 #endif
 
 typedef struct _shadowBuf   *shadowBufPtr;
 
-typedef void (*ShadowUpdateProc) (ScreenPtr pScreen, 
-				  shadowBufPtr	pBuf);
+typedef void (*ShadowUpdateProc) (ScreenPtr pScreen,
+				  shadowBufPtr pBuf);
 
 #define SHADOW_WINDOW_RELOCATE 1
 #define SHADOW_WINDOW_READ 2
@@ -52,8 +54,19 @@ typedef struct _shadowBuf {
     RegionRec		damage;
     PixmapPtr		pPixmap;
     void		*closure;
-    int			rotate;
+    int			randr;
 } shadowBufRec;
+
+/* Match defines from randr extension */
+#define SHADOW_ROTATE_0	    1
+#define SHADOW_ROTATE_90    2
+#define SHADOW_ROTATE_180   4
+#define SHADOW_ROTATE_270   8
+#define SHADOW_ROTATE_ALL   (SHADOW_ROTATE_0|SHADOW_ROTATE_90|\
+			     SHADOW_ROTATE_180|SHADOW_ROTATE_270)
+#define SHADOW_REFLECT_X    16
+#define SHADOW_REFLECT_Y    32
+#define SHADOW_REFLECT_ALL  (SHADOW_REFLECT_X|SHADOW_REFLECT_Y)
 
 typedef struct _shadowScrPriv {
     PaintWindowBackgroundProcPtr PaintWindowBackground;
@@ -65,8 +78,9 @@ typedef struct _shadowScrPriv {
 #ifdef RENDER
     CompositeProcPtr		Composite;
     GlyphsProcPtr		Glyphs;
-#endif    
+#endif
     shadowBufPtr		pBuf;
+    BSFuncRec			BackingStoreFuncs;
 } shadowScrPrivRec, *shadowScrPrivPtr;
 
 extern int shadowScrPrivateIndex;
@@ -76,13 +90,13 @@ extern int shadowScrPrivateIndex;
 
 Bool
 shadowSetup (ScreenPtr pScreen);
-    
+
 Bool
 shadowAdd (ScreenPtr	    pScreen,
 	   PixmapPtr	    pPixmap,
 	   ShadowUpdateProc update,
 	   ShadowWindowProc window,
-	   int		    rotate,
+	   int		    randr,
 	   void		    *closure);
 
 void
@@ -90,7 +104,7 @@ shadowRemove (ScreenPtr pScreen, PixmapPtr pPixmap);
 
 shadowBufPtr
 shadowFindBuf (WindowPtr pWindow);
-    
+
 Bool
 shadowInit (ScreenPtr pScreen, ShadowUpdateProc update, ShadowWindowProc window);
 
@@ -154,5 +168,5 @@ shadowWrapGC (GCPtr pGC);
 
 void
 shadowUnwrapGC (GCPtr pGC);
-    
+
 #endif /* _SHADOW_H_ */

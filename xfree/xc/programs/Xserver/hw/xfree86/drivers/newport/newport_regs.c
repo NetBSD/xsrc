@@ -1,7 +1,7 @@
 /*
  * Id: newport_regs.c,v 1.3 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.c,v 1.6 2001/12/21 15:37:23 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.c,v 1.7 2002/12/10 04:03:00 dawes Exp $ */
 
 #include "newport.h"
 
@@ -26,6 +26,57 @@ NewportVc2Get(NewportRegsPtr pNewportRegs, unsigned char vc2Ireg)
 	return pNewportRegs->set.dcbdata0.hwords.s1;
 }
 
+void 
+NewportBackupVc2( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	pNewport->txt_vc2ctrl = NewportVc2Get( pNewportRegs, VC2_IREG_CONTROL );
+	pNewport->txt_vc2cur_x = NewportVc2Get( pNewportRegs, VC2_IREG_CURSX );
+	pNewport->txt_vc2cur_y = NewportVc2Get( pNewportRegs, VC2_IREG_CURSY );
+}
+
+void 
+NewportRestoreVc2( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->txt_vc2ctrl );
+	NewportVc2Set( pNewportRegs, VC2_IREG_CURSX, pNewport->txt_vc2cur_x );
+	NewportVc2Set( pNewportRegs, VC2_IREG_CURSY, pNewport->txt_vc2cur_y );
+}
+
+void
+NewportRestoreVc2Cursor( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportLoadCursorImage( pScrn, (CARD8*)pNewport->txt_vc2cur_data);
+}
+
+void
+NewportBackupVc2Cursor( ScrnInfoPtr pScrn)
+{
+	int i;
+	CARD16 tmp, *data;
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	data = (CARD16*)pNewport->txt_vc2cur_data;
+	/* address of cursor data in vc2's ram */
+        tmp = NewportVc2Get( pNewportRegs, VC2_IREG_CENTRY);
+ 	/* this is where we want to write to: */
+        NewportVc2Set( pNewportRegs, VC2_IREG_RADDR, tmp);
+        pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_RAM |
+                               		NPORT_DMODE_W2 | VC2_PROTOCOL);
+	/* read cursor data */
+        for (i = 0; i < 128; i++) {
+		NewportBfwait(pNewportRegs);
+		*data = pNewportRegs->set.dcbdata0.hwords.s1;
+		data++;
+        }
+}
 
 /* Sometimes we just have to wait until we can do anything */
 void
@@ -148,6 +199,10 @@ void NewportBackupXmap9s( ScrnInfoPtr pScrn)
 	pNewport->txt_xmap9_mi = pNewportRegs->set.dcbdata0.bytes.b3; 
 	/* mode register 0 of xmap 0 */
 	pNewport->txt_xmap9_mod0 = NewportXmap9GetModeRegister(pNewportRegs, 0, 0);
+	/* cursor cmap msb */
+	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
+			XM9_CRS_CURS_CMAP_MSB | NPORT_DMODE_W1 );
+	pNewport->txt_xmap9_ccmsb = pNewportRegs->set.dcbdata0.bytes.b3;
 }
 
 void NewportRestoreXmap9s( ScrnInfoPtr pScrn)
@@ -172,5 +227,9 @@ void NewportRestoreXmap9s( ScrnInfoPtr pScrn)
 	pNewportRegs->set.dcbmode = (DCB_XMAP1 | W_DCB_XMAP9_PROTOCOL |
 				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
 	pNewportRegs->set.dcbdata0.bytes.b3 = pNewport->txt_xmap9_cfg1;
+	/* cursor cmap msb */
+	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
+			XM9_CRS_CURS_CMAP_MSB | NPORT_DMODE_W1 );
+	pNewportRegs->set.dcbdata0.bytes.b3 = pNewport->txt_xmap9_ccmsb;
 }
 

@@ -23,7 +23,7 @@
  *
  * IBM RAMDAC routines.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.11 2001/04/09 00:04:12 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.12 2003/02/17 16:08:29 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -460,7 +460,7 @@ IBMramdac640SetBpp(ScrnInfoPtr pScrn, RamDacRegRecPtr ramdacReg)
     }
 }
 
-void 
+static void 
 IBMramdac526ShowCursor(ScrnInfoPtr pScrn)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -469,7 +469,7 @@ IBMramdac526ShowCursor(ScrnInfoPtr pScrn)
    (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00, 0x07);
 }
 
-void 
+static void 
 IBMramdac640ShowCursor(ScrnInfoPtr pScrn)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -479,7 +479,7 @@ IBMramdac640ShowCursor(ScrnInfoPtr pScrn)
    (*ramdacPtr->WriteDAC)(pScrn, RGB640_CROSSHAIR_CONTROL, 0x00, 0x00);
 }
 
-void
+static void
 IBMramdac526HideCursor(ScrnInfoPtr pScrn)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -488,7 +488,7 @@ IBMramdac526HideCursor(ScrnInfoPtr pScrn)
    (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs, 0x00, 0x24);
 }
 
-void
+static void
 IBMramdac640HideCursor(ScrnInfoPtr pScrn)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -497,7 +497,7 @@ IBMramdac640HideCursor(ScrnInfoPtr pScrn)
    (*ramdacPtr->WriteDAC)(pScrn, RGB640_CURSOR_CONTROL, 0x00, 0x08);
 }
 
-void
+static void
 IBMramdac526SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -513,7 +513,7 @@ IBMramdac526SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
    (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs_yh, 0x00, (y>>8) & 0xf);
 }
 
-void
+static void
 IBMramdac640SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -529,7 +529,7 @@ IBMramdac640SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
    (*ramdacPtr->WriteDAC)(pScrn, RGB640_CURS_Y_HIGH, 0x00, (y>>8) & 0xf);
 }
 
-void
+static void
 IBMramdac526SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -542,7 +542,7 @@ IBMramdac526SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
    (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs_col2_b, 0x00, fg);
 }
 
-void
+static void
 IBMramdac640SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -562,7 +562,7 @@ IBMramdac640SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
    (*ramdacPtr->WriteData)(pScrn, bg);
 }
 
-void 
+static void 
 IBMramdac526LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);
@@ -575,7 +575,7 @@ IBMramdac526LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
       (*ramdacPtr->WriteDAC)(pScrn, IBMRGB_curs_array + i, 0x00, (*src++));
 }
 
-void 
+static void 
 IBMramdac640LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 {
    RamDacRecPtr ramdacPtr = RAMDACSCRPTR(pScrn);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/bits2pixels.c,v 1.1 2001/04/05 19:29:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/bits2pixels.c,v 1.2 2002/12/11 17:07:58 dawes Exp $ */
 /* **********************************************************
  * Copyright (C) 1999-2001 VMware, Inc.
  * All Rights Reserved
@@ -23,19 +23,19 @@ char rcsId_bits2pixels[] = "Id: bits2pixels.c,v 1.6 2001/01/26 23:32:15 yoel Exp
  *  Local functions
  */
 
-void RasterBitsToPixels8(uint8 *bits, uint32 bits_increment,
+static void RasterBitsToPixels8(uint8 *bits, uint32 bits_increment,
 			 uint8 *pix, uint32 pix_increment,
 			 uint32 width, uint32 height, uint32 fg, uint32 bg);
 
-void RasterBitsToPixels16(uint8 *bits, uint32 bits_increment,
+static void RasterBitsToPixels16(uint8 *bits, uint32 bits_increment,
 			  uint8 *pix, uint32 pix_increment,
 			  uint32 width, uint32 height, uint32 fg, uint32 bg);
 
-void RasterBitsToPixels24(uint8 *bits, uint32 bits_increment,
+static void RasterBitsToPixels24(uint8 *bits, uint32 bits_increment,
 			  uint8 *pix, uint32 pix_increment,
 			  uint32 width, uint32 height, uint32 fg, uint32 bg);
 
-void RasterBitsToPixels32(uint8 *bits, uint32 bits_increment,
+static void RasterBitsToPixels32(uint8 *bits, uint32 bits_increment,
 			  uint8 *pix, uint32 pix_increment,
 			  uint32 width, uint32 height, uint32 fg, uint32 bg);
 
@@ -43,7 +43,7 @@ void RasterBitsToPixels32(uint8 *bits, uint32 bits_increment,
 /*
  *----------------------------------------------------------------------
  *
- * Raster_BitsToPixels --
+ * vmwareRaster_BitsToPixels --
  *
  *	Convert a bitmap to a pixmap, converting 1 bits to the foreground
  *      color (fg) and 0 bits to the background color (bg).
@@ -58,7 +58,7 @@ void RasterBitsToPixels32(uint8 *bits, uint32 bits_increment,
  */
 
 void
-Raster_BitsToPixels(uint8 *bits, uint32 bits_increment,
+vmwareRaster_BitsToPixels(uint8 *bits, uint32 bits_increment,
 		    uint8 *pix, uint32 pix_increment, int bytes_per_pixel,
 		    uint32 width, uint32 height, uint32 fg, uint32 bg)
 {

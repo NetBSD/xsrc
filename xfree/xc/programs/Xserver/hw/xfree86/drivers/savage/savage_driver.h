@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.11 2001/08/09 19:14:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.16 2003/01/18 15:22:30 eich Exp $ */
 
 #ifndef SAVAGE_VGAHWMMIO_H
 #define SAVAGE_VGAHWMMIO_H
@@ -35,6 +35,9 @@
 #define INREG16(addr) MMIO_IN16(psav->MapBase, addr)
 #define OUTREG16(addr,val) MMIO_OUT16(psav->MapBase, addr, val)
 
+#define SAVAGE_CRT_ON	1
+#define SAVAGE_LCD_ON	2
+#define SAVAGE_TV_ON	4
 
 typedef struct _S3VMODEENTRY {
    unsigned short Width;
@@ -54,7 +57,7 @@ typedef struct _S3VMODETABLE {
 typedef struct {
     unsigned int mode, refresh;
     unsigned char SR08, SR0E, SR0F;
-    unsigned char SR10, SR11, SR12, SR13, SR15, SR18, SR29, SR30;
+    unsigned char SR10, SR11, SR12, SR13, SR15, SR18, SR1B, SR29, SR30;
     unsigned char SR54[8];
     unsigned char Clock;
     unsigned char CR31, CR32, CR33, CR34, CR36, CR3A, CR3B, CR3C;
@@ -115,14 +118,37 @@ typedef struct _Savage {
     Bool		fifo_moderate;
     Bool		fifo_aggressive;
     Bool		hwcursor;
+    Bool		hwc_on;
     Bool		NoAccel;
     Bool		shadowFB;
     Bool		UseBIOS;
     int			rotate;
     double		LCDClock;
     Bool		ShadowStatus;
-    int			PanelX;
-    int			PanelY;
+    Bool		CrtOnly;
+    Bool		TvOn;
+    Bool		PAL;
+    Bool		ForceInit;
+    int			iDevInfo;
+    int			iDevInfoPrim;
+
+    int			PanelX;		/* panel width */
+    int			PanelY;		/* panel height */
+    int			iResX;		/* crtc X display */
+    int			iResY;		/* crtc Y display */
+    int			XFactor;	/* overlay X factor */
+    int			YFactor;	/* overlay Y factor */
+    int			displayXoffset;	/* overlay X offset */
+    int			displayYoffset;	/* overlay Y offset */
+    int			XExpansion;	/* expansion factor in x */
+    int			XExp1;
+    int			XExp2;
+    int			YExpansion;	/* expansion factor in x */
+    int			YExp1;
+    int			YExp2;
+    int			cxScreen;
+    int			TVSizeX;
+    int			TVSizeY;
 
     CloseScreenProcPtr	CloseScreen;
     pciVideoPtr		PciInfo;
@@ -133,6 +159,7 @@ typedef struct _Savage {
     vbeInfoPtr		pVbe;
     int			EntityIndex;
     int			ShadowCounter;
+    int			vgaIOBase;	/* 3b0 or 3d0 */
 
     /* The various Savage wait handlers. */
     int			(*WaitQueue)(struct _Savage *, int);
@@ -176,6 +203,7 @@ typedef struct _Savage {
     XF86VideoAdaptorPtr	adaptor;
     int			VideoZoomMax;
     int			dwBCIWait2DIdle;
+    XF86OffscreenImagePtr offscreenImages;
 
 } SavageRec, *SavagePtr;
 
@@ -184,6 +212,15 @@ typedef struct _Savage {
 #define VF_STREAMS_ON	0x0001
 
 #define SAVPTR(p)	((SavagePtr)((p)->driverPrivate))
+
+/* Make the names of these externals driver-unique */
+#define gpScrn savagegpScrn
+#define myOUTREG savageOUTREG
+#define readdw savagereaddw
+#define readfb savagereadfb
+#define writedw savagewritedw
+#define writefb savagewritefb
+#define writescan savagewritescan
 
 /* Prototypes. */
 

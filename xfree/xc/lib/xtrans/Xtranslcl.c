@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.37 2001/12/14 19:57:05 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.39 2002/11/26 01:12:30 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -836,12 +836,15 @@ TRANS(NAMEDAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 
 
 #ifndef sun
+
+/* SCO doesnt use the ISC transport type - it causes problems */
+#ifndef SCO325
+
 /*
- * connect_spipe is used by both the SCO and ISC connection types.
+ * connect_spipe is used by the ISC connection type.
  */
 static int
 connect_spipe(int fd1, int fd2)
-
 {
     long temp;
     struct strfdinsert sbuf;
@@ -863,7 +866,7 @@ connect_spipe(int fd1, int fd2)
 }
 
 /*
- * connect_spipe is used by both the SCO and ISC connection types.
+ * named_spipe is used by ISC connection type.
  */
 
 static int
@@ -885,7 +888,7 @@ named_spipe(int fd, char *path)
     } else {
 	ret = fd;
     }
-    
+
     return(ret);
 }
 
@@ -907,9 +910,9 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
     mode_t 	spmode;
     struct stat 	filestat;
 #endif
-    
+
     PRMSG(2,"ISCOpenClient(%s)\n", port, 0,0 );
-    
+
 #if !defined(ISCDEVNODENAME)
     PRMSG(1,"ISCOpenClient: Protocol is not supported by a ISC connection\n", 0,0,0);
     return -1;
@@ -934,7 +937,7 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
 	    }
 	}
     }
-    
+
     if (server < 0) {
 	/* try the alternate path */
 	if (stat(server_dev_path, &filestat) != -1) {
@@ -946,7 +949,7 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
 	    }
 	}
     }
-    
+
     if (server < 0) {
 	PRMSG(1,"ISCOpenClient: can't open either device %s or %s\n",
 	      server_path, server_dev_path, 0 );
@@ -976,7 +979,7 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
     buf.offset = 0;
     buf.fildes = fd;
     buf.flags = 0;
-    
+
     if (ioctl(fds, I_FDINSERT, &buf) < 0 ||
 	ioctl(server, I_SENDFD, fds) < 0) {
 	PRMSG(1,"ISCOpenClient: ioctl(I_FDINSERT or I_SENDFD) failed\n",
@@ -990,7 +993,7 @@ TRANS(ISCOpenClient)(XtransConnInfo ciptr, char *port)
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
+
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
     {
 	PRMSG(1,"ISCOpenClient: failed to fill in addr info\n",
@@ -1018,16 +1021,16 @@ TRANS(ISCOpenServer)(XtransConnInfo ciptr, char *port)
     char	server_path[64],server_unix_path[64];
     unsigned int mode = 0;
 #endif
-    
+
     PRMSG(2,"ISCOpenServer(%s)\n", port, 0,0 );
-    
+
 #if !defined(ISCDEVNODENAME)
     PRMSG(1,"ISCOpenServer: Protocol is not supported by a ISC connection\n", 0,0,0);
     return -1;
 #else
     (void) sprintf(server_path, ISCDEVNODENAME, port);
     (void) sprintf(server_unix_path, ISCTMPNODENAME, port);
-    
+
 #ifdef HAS_STICKY_DIR_BIT
     mode = 01777;
 #else
@@ -1046,15 +1049,15 @@ TRANS(ISCOpenServer)(XtransConnInfo ciptr, char *port)
 	       X_ISC_DIR, errno, 0);
 	return(-1);
     }
-    
+
     unlink(server_path);
-    
+
     if( ((fds=open(DEV_SPX, O_RDWR)) < 0) ||
        ((fd =open(DEV_SPX, O_RDWR)) < 0)) {
 	PRMSG(1,"ISCOpenServer: failed to open %s\n", DEV_SPX, 0,0 );
 	return -1;
     }
-    
+
     if( (connect_spipe(fds, fd) < 0) ||
        (named_spipe(fds, server_path) < 0)) {
 	PRMSG(1,"ISCOpenServer: failed connect pipes\n", 0,0,0 );
@@ -1062,22 +1065,22 @@ TRANS(ISCOpenServer)(XtransConnInfo ciptr, char *port)
 	close(fds);
 	return -1;
     }
-    
+
 #if !defined(UNIXCONN)
     /*
      * If the UNIX Domain socket transport is not being used, then link this
      * device to the path /tmp/.X11-unix/X path.
      */
 #define X_UNIX_DIR	"/tmp/.X11-unix"
-    
+
     if (trans_mkdir(X_UNIX_DIR, mode) == -1) {
 	PRMSG (1, "ISCOpenServer: mkdir(%s) failed, errno = %d\n",
 	       X_UNIX_DIR, errno, 0);
 	return(-1);
     }
-    
+
     unlink(server_unix_path);
-    
+
 #ifdef SVR4
     /* we prefer symbolic links because hard links can't cross file systems */
     if( symlink(server_path, server_unix_path) < 0 )
@@ -1104,11 +1107,11 @@ TRANS(ISCOpenServer)(XtransConnInfo ciptr, char *port)
      */
 #endif /* SVR4 */
 #endif /* !UNIXCONN */
-    
+
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
+
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
     {
 	PRMSG(1,"ISCOpenServer: failed to fill in addr info\n",
@@ -1127,9 +1130,9 @@ TRANS(ISCAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 
 {
     struct strrecvfd str;
-    
+
     PRMSG(2,"ISCAccept(%d)\n", ciptr->fd, 0,0 );
-    
+
     while (ioctl(ciptr->fd, I_RECVFD, &str) < 0) {
 	if (errno != EAGAIN) {
 	    PRMSG(1,"ISCAccept: Can't read fildes", 0,0,0 );
@@ -1137,11 +1140,11 @@ TRANS(ISCAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 	    return(-1);
 	}
     }
-    
+
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
+
     newciptr->addrlen=ciptr->addrlen;
     if( (newciptr->addr=(char *)xalloc(newciptr->addrlen)) == NULL ) {
 	PRMSG(1,
@@ -1151,9 +1154,9 @@ TRANS(ISCAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 	*status = TRANS_ACCEPT_BAD_MALLOC;
 	return -1;
     }
-    
+
     memcpy(newciptr->addr,ciptr->addr,newciptr->addrlen);
-    
+
     newciptr->peeraddrlen=newciptr->addrlen;
     if( (newciptr->peeraddr=(char *)xalloc(newciptr->peeraddrlen)) == NULL ) {
 	PRMSG(1,
@@ -1164,25 +1167,33 @@ TRANS(ISCAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 	*status = TRANS_ACCEPT_BAD_MALLOC;
 	return -1;
     }
-    
+
     memcpy(newciptr->peeraddr,newciptr->addr,newciptr->peeraddrlen);
-    
+
     *status = 0;
 
     return(str.fd);
 }
 
 #endif /* TRANS_SERVER */
-
+#endif /* !SCO325 */
 
 
 /* SCO */
+
+/*
+ * 2002-11-09 (jkj@sco.com)
+ *
+ * This code has been modified to match what is in the actual SCO X server.
+ * This greatly helps inter-operability between X11R6 and X11R5 (the native
+ * SCO server). Mainly, it relies on streams nodes existing in /dev, not
+ * creating them or unlinking them, which breaks the native X server.
+ */
 
 #ifdef TRANS_CLIENT
 
 static int
 TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
-
 {
 #ifdef SCORNODENAME
     int			fd, server, fl, ret;
@@ -1193,60 +1204,61 @@ TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
     long		temp;
     extern int	getmsg(), putmsg();
 #endif
-    
+
     PRMSG(2,"SCOOpenClient(%s)\n", port, 0,0 );
-    
+
 #if !defined(SCORNODENAME)
     PRMSG(1,"SCOOpenClient: Protocol is not supported by a SCO connection\n", 0,0,0);
     return -1;
 #else
     (void) sprintf(server_path, SCORNODENAME, port);
-    
+
     if ((server = open(server_path, O_RDWR)) < 0) {
 	PRMSG(1,"SCOOpenClient: failed to open %s\n", server_path, 0,0 );
 	return -1;
     }
-    
+
     if ((fd = open(DEV_SPX, O_RDWR)) < 0) {
 	PRMSG(1,"SCOOpenClient: failed to open %s\n", DEV_SPX, 0,0 );
 	close(server);
 	return -1;
     }
-    
+
     (void) write(server, &server, 1);
     ctlbuf.len = 0;
     ctlbuf.maxlen = sizeof(long);
     ctlbuf.buf = (caddr_t)&temp;
     fl = 0;
-    
+
     savef = signal(SIGALRM, _dummy);
     alarm_time = alarm(10);
-    
+
     ret = getmsg(server, &ctlbuf, 0, &fl);
-    
+
     (void) alarm(alarm_time);
     (void) signal(SIGALRM, savef);
-    
+
     if (ret < 0) {
 	PRMSG(1,"SCOOpenClient: error from getmsg\n", 0,0,0 );
 	close(fd);
 	close(server);
 	return -1;
     }
-    
+
     /* The msg we got via getmsg is the result of an
      * I_FDINSERT, so if we do a putmsg with whatever
      * we recieved, we're doing another I_FDINSERT ...
      */
     (void) putmsg(fd, &ctlbuf, 0, 0);
     (void) fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NDELAY);
-    
+
     (void) close(server);
-    
+
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
+
+    ciptr->flags |= TRANS_NOUNLINK;
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
     {
 	PRMSG(1,"SCOOpenClient: failed to fill addr info\n",
@@ -1254,7 +1266,7 @@ TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
 	close(fd);
 	return -1;
     }
-    
+
     return(fd);
 
 #endif  /* !SCORNODENAME */
@@ -1267,57 +1279,82 @@ TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
 
 static int
 TRANS(SCOOpenServer)(XtransConnInfo ciptr, char *port)
-
 {
 #ifdef SCORNODENAME
     char		serverR_path[64];
     char		serverS_path[64];
-    int	fdr = -1;
-    int	fds = -1;
+    struct flock	mylock;
+    int			fdr = -1;
+    int			fds = -1;
+    long		temp;
+    struct strfdinsert	sbuf;
 #endif
-    
+
     PRMSG(2,"SCOOpenServer(%s)\n", port, 0,0 );
-    
+
 #if !defined(SCORNODENAME)
     PRMSG(1,"SCOOpenServer: Protocol is not supported by a SCO connection\n", 0,0,0);
     return -1;
 #else
     (void) sprintf(serverR_path, SCORNODENAME, port);
     (void) sprintf(serverS_path, SCOSNODENAME, port);
-    
-    unlink(serverR_path);
-    unlink(serverS_path);
-    
-    if ((fds = open(DEV_SPX, O_RDWR)) < 0 ||
-	(fdr = open(DEV_SPX, O_RDWR)) < 0 ) {
-	PRMSG(2,"SCOOpenServer: failed to open %s\n", DEV_SPX, 0,0 );
+
+    fds = open (serverS_path, O_RDWR | O_NDELAY);
+    if (fds < 0) {
+	PRMSG(1,"SCOOpenServer: failed to open %s", serverS_path, 0, 0);
 	return -1;
     }
-    
-    if (connect_spipe(fds, fdr) != -1 &&
-	named_spipe(fds, serverS_path) != -1 &&
-	named_spipe(fdr, serverR_path) != -1) {
-	PRMSG(2,"SCOOpenServer: connect pipes\n", 0,0,0 );
-	} else {
-	PRMSG(2,"SCOOpenServer: failed to connect pipes\n", 0,0,0 );
-	close(fds);
-	close(fdr);
+
+    /*
+     * Lock the connection device for the duration of the server.
+     * This resolves multiple server starts especially on SMP machines.
+     */
+    mylock.l_type	= F_WRLCK;
+    mylock.l_whence	= 0;
+    mylock.l_start	= 0;
+    mylock.l_len	= 0;
+    if (fcntl (fds, F_SETLK, &mylock) < 0) {
+	PRMSG(1,"SCOOpenServer: failed to lock %s", serverS_path, 0, 0);
+	close (fds);
 	return -1;
     }
-    
+
+    fdr = open (serverR_path, O_RDWR | O_NDELAY);
+    if (fds < 0) {
+	PRMSG(1,"SCOOpenServer: failed to open %s", serverR_path, 0, 0);
+	close (fds);
+	return -1;
+    }
+
+    sbuf.databuf.maxlen = 0;
+    sbuf.databuf.len = -1;
+    sbuf.databuf.buf = NULL;
+    sbuf.ctlbuf.maxlen = sizeof(long);
+    sbuf.ctlbuf.len = sizeof(long);
+    sbuf.ctlbuf.buf = (caddr_t)&temp;
+    sbuf.offset = 0;
+    sbuf.flags = 0;
+    sbuf.fildes = fdr;
+
+    if (ioctl(fds, I_FDINSERT, &sbuf) < 0) {
+	PRMSG(1,"SCOOpenServer: ioctl(I_FDINSERT) failed on %s", serverS_path, 0, 0);
+	close (fdr);
+	close (fds);
+	return -1;
+    }
+
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
-    if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0)
-    {
-	PRMSG(1,"SCOOpenServer: failed to fill in addr info\n",
-	      0,0,0);
+
+    ciptr->flags |= TRANS_NOUNLINK;
+    if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0) {
+	PRMSG(1,"SCOOpenServer: failed to fill in addr info\n", 0,0,0);
 	close(fds);
 	close(fdr);
 	return -1;
     }
-    
+
     return(fds);
 
 #endif /* !SCORNODENAME */
@@ -1325,36 +1362,47 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, char *port)
 
 static int
 TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
-
 {
-    char	c;
-    int	fd;
-    
+    char		c;
+    int			fd;
+    long		temp;
+    struct strfdinsert	sbuf;
+
     PRMSG(2,"SCOAccept(%d)\n", ciptr->fd, 0,0 );
-    
+
     if (read(ciptr->fd, &c, 1) < 0) {
 	PRMSG(1,"SCOAccept: can't read from client",0,0,0);
 	*status = TRANS_ACCEPT_MISC_ERROR;
 	return(-1);
     }
-    
+
     if( (fd = open(DEV_SPX, O_RDWR)) < 0 ) {
 	PRMSG(1,"SCOAccept: can't open \"%s\"",DEV_SPX, 0,0 );
 	*status = TRANS_ACCEPT_MISC_ERROR;
 	return(-1);
     }
-    
-    if (connect_spipe(ciptr->fd, fd) < 0) {
-	PRMSG(1,"SCOAccept: can't connect pipes", 0,0,0 );
-	(void) close(fd);
+
+    sbuf.databuf.maxlen = 0;
+    sbuf.databuf.len = -1;
+    sbuf.databuf.buf = NULL;
+    sbuf.ctlbuf.maxlen = sizeof(long);
+    sbuf.ctlbuf.len = sizeof(long);
+    sbuf.ctlbuf.buf = (caddr_t)&temp;
+    sbuf.offset = 0;
+    sbuf.flags = 0;
+    sbuf.fildes = fd;
+
+    if (ioctl(ciptr->fd, I_FDINSERT, &sbuf) < 0) {
+	PRMSG(1,"SCOAccept: ioctl(I_FDINSERT) failed", 0, 0, 0);
+	close (fd);
 	*status = TRANS_ACCEPT_MISC_ERROR;
-	return(-1);
+	return -1;
     }
-    
+
     /*
      * Everything looks good: fill in the XtransConnInfo structure.
      */
-    
+
     newciptr->addrlen=ciptr->addrlen;
     if( (newciptr->addr=(char *)xalloc(newciptr->addrlen)) == NULL ) {
 	PRMSG(1,
@@ -1364,9 +1412,10 @@ TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 	*status = TRANS_ACCEPT_BAD_MALLOC;
 	return -1;
     }
-    
+
     memcpy(newciptr->addr,ciptr->addr,newciptr->addrlen);
-    
+    newciptr->flags |= TRANS_NOUNLINK;
+
     newciptr->peeraddrlen=newciptr->addrlen;
     if( (newciptr->peeraddr=(char *)xalloc(newciptr->peeraddrlen)) == NULL ) {
 	PRMSG(1,
@@ -1377,9 +1426,9 @@ TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 	*status = TRANS_ACCEPT_BAD_MALLOC;
 	return -1;
     }
-    
+
     memcpy(newciptr->peeraddr,newciptr->addr,newciptr->peeraddrlen);
-    
+
     *status = 0;
 
     return(fd);
@@ -1468,7 +1517,7 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 }
 
 #ifndef sun
-
+#ifndef SCO325
 static int
 TRANS(ISCReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 
@@ -1476,9 +1525,9 @@ TRANS(ISCReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #ifdef ISCDEVNODENAME
     char server_path[64], server_unix_path[64];
 #endif
-    
+
     PRMSG(2,"ISCReopenServer(%s)\n", port, 0,0 );
-    
+
 #if !defined(ISCDEVNODENAME)
     PRMSG(1,"ISCReopenServer: Protocol is not supported by a ISC connection\n", 0,0,0);
     return 0;
@@ -1491,12 +1540,12 @@ TRANS(ISCReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 	PRMSG(1, "ISCReopenServer: failed to fill in addr info\n", 0,0,0);
 	return 0;
     }
-    
+
     return 1;
 
 #endif /* !ISCDEVNODENAME */
 }
-
+#endif /* !SCO325 */
 
 static int
 TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
@@ -1505,9 +1554,9 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #ifdef SCORNODENAME
     char serverR_path[64], serverS_path[64];
 #endif
-    
+
     PRMSG(2,"SCOReopenServer(%s)\n", port, 0,0 );
-    
+
 #if !defined(SCORNODENAME)
     PRMSG(1,"SCOReopenServer: Protocol is not supported by a SCO connection\n", 0,0,0);
     return 0;
@@ -1515,12 +1564,13 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
     (void) sprintf(serverR_path, SCORNODENAME, port);
     (void) sprintf(serverS_path, SCOSNODENAME, port);
 
+    ciptr->flags |= TRANS_NOUNLINK;
     if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0)
     {
 	PRMSG(1, "SCOReopenServer: failed to fill in addr info\n", 0,0,0);
 	return 0;
     }
-    
+
     return 1;
 
 #endif /* SCORNODENAME */
@@ -1736,6 +1786,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 #endif /* SVR4 */
 
 #ifndef sun
+#ifndef SCO325
 {"isc",
 #ifdef TRANS_CLIENT
      TRANS(ISCOpenClient),
@@ -1757,6 +1808,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
      TRANS(ISCAccept)
 #endif /* TRANS_SERVER */
 },
+#endif /* !SCO325 */
 
 {"sco",
 #ifdef TRANS_CLIENT
@@ -1783,13 +1835,13 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 };
 
 #define NUMTRANSPORTS	(sizeof(LOCALtrans2devtab)/sizeof(LOCALtrans2dev))
-    
+
 static	char	*XLOCAL=NULL;
 static	char	*workingXLOCAL=NULL;
 static	char	*freeXLOCAL=NULL;
 
-#ifdef sco
-#define DEF_XLOCAL "UNIX:SCO:PTS:NAMED:ISC"
+#ifdef SCO325
+#define DEF_XLOCAL "SCO:UNIX:PTS"
 #else
 #define DEF_XLOCAL "UNIX:PTS:NAMED:ISC:SCO"
 #endif
@@ -1799,7 +1851,7 @@ TRANS(LocalInitTransports)(char *protocol)
 
 {
     PRMSG(3,"LocalInitTransports(%s)\n", protocol, 0,0 );
-    
+
     if( strcmp(protocol,"local") && strcmp(protocol,"LOCAL") )
     {
 	workingXLOCAL=freeXLOCAL=(char *)xalloc (strlen (protocol) + 1);
@@ -1836,17 +1888,17 @@ TRANS(LocalGetNextTransport)(void)
     char	*typetocheck;
     char	typebuf[TYPEBUFSIZE];
     PRMSG(3,"LocalGetNextTransport()\n", 0,0,0 );
-    
+
     while(1)
     {
 	if( workingXLOCAL == NULL || *workingXLOCAL == '\0' )
 	    return NULL;
-	
+
 	typetocheck=workingXLOCAL;
 	workingXLOCAL=strchr(workingXLOCAL,':');
 	if(workingXLOCAL && *workingXLOCAL)
 	    *workingXLOCAL++='\0';
-	
+
 	for(i=0;i<NUMTRANSPORTS;i++)
 	{
 	    /*
@@ -1857,7 +1909,7 @@ TRANS(LocalGetNextTransport)(void)
 	    for(j=0;j<TYPEBUFSIZE;j++)
 		if (isupper(typebuf[j]))
 		    typebuf[j]=tolower(typebuf[j]);
-	    
+
 	    /* Now, see if they match */
 	    if(!strcmp(LOCALtrans2devtab[i].transname,typebuf))
 		return &LOCALtrans2devtab[i];
@@ -1916,7 +1968,7 @@ TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
     int index;
 
     PRMSG(3,"LocalOpenClient()\n", 0,0,0 );
-    
+
     /*
      * Make sure 'host' is really local.  If not, we return failure.
      * The reason we make this check is because a process may advertise
@@ -1945,18 +1997,18 @@ TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
      * we don't have to do anything special.
      */
 #endif /* X11_t */
-    
+
     if( (ciptr=(XtransConnInfo)xcalloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {
 	PRMSG(1,"LocalOpenClient: calloc(1,%d) failed\n",
 	      sizeof(struct _XtransConnInfo),0,0 );
 	return NULL;
     }
-    
+
     ciptr->fd = -1;
-    
+
     TRANS(LocalInitTransports)(protocol);
-    
+
     index = 0;
     for(transptr=TRANS(LocalGetNextTransport)();
 	transptr!=NULL;transptr=TRANS(LocalGetNextTransport)(), index++)
@@ -1983,18 +2035,18 @@ TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
 	if( ciptr->fd >= 0 )
 	    break;
     }
-    
+
     TRANS(LocalEndTransports)();
-    
+
     if( ciptr->fd < 0 )
     {
 	xfree(ciptr);
 	return NULL;
     }
-    
+
     ciptr->priv=(char *)transptr;
     ciptr->index = index;
-    
+
     return ciptr;
 }
 
@@ -2009,9 +2061,9 @@ TRANS(LocalOpenServer)(int type, char *protocol, char *host, char *port)
 {
     int	i;
     XtransConnInfo ciptr;
-    
+
     PRMSG(2,"LocalOpenServer(%d,%s,%s)\n", type, protocol, port);
-    
+
 #if defined(X11_t)
     /*
      * For X11, the port will be in the format xserverN where N is the
@@ -2020,14 +2072,14 @@ TRANS(LocalOpenServer)(int type, char *protocol, char *host, char *port)
      * the port. This just truncates port to the display portion.
      */
 #endif /* X11_t */
-    
+
     if( (ciptr=(XtransConnInfo)xcalloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {
 	PRMSG(1,"LocalOpenServer: calloc(1,%d) failed\n",
 	      sizeof(struct _XtransConnInfo),0,0 );
 	return NULL;
     }
-    
+
     for(i=1;i<NUMTRANSPORTS;i++)
     {
 	if( strcmp(protocol,LOCALtrans2devtab[i].transname) != 0 )
@@ -2053,11 +2105,11 @@ TRANS(LocalOpenServer)(int type, char *protocol, char *host, char *port)
 	if( ciptr->fd >= 0 ) {
 	    ciptr->priv=(char *)&LOCALtrans2devtab[i];
 	    ciptr->index=i;
-	    ciptr->flags=1;
+	    ciptr->flags = 1 | (ciptr->flags & TRANS_KEEPFLAGS);
 	    return ciptr;
 	}
     }
-    
+
     xfree(ciptr);
     return NULL;
 }
@@ -2073,16 +2125,16 @@ TRANS(LocalReopenServer)(int type, int index, int fd, char *port)
 {
     XtransConnInfo ciptr;
     int stat = 0;
-    
+
     PRMSG(2,"LocalReopenServer(%d,%d,%d)\n", type, index, fd);
-    
+
     if( (ciptr=(XtransConnInfo)xcalloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {
 	PRMSG(1,"LocalReopenServer: calloc(1,%d) failed\n",
 	      sizeof(struct _XtransConnInfo),0,0 );
 	return NULL;
     }
-    
+
     ciptr->fd = fd;
 
     switch( type )
@@ -2101,10 +2153,10 @@ TRANS(LocalReopenServer)(int type, int index, int fd, char *port)
     if( stat > 0 ) {
 	ciptr->priv=(char *)&LOCALtrans2devtab[index];
 	ciptr->index=index;
-	ciptr->flags=1;
+	ciptr->flags = 1 | (ciptr->flags & TRANS_KEEPFLAGS);
 	return ciptr;
     }
-    
+
     xfree(ciptr);
     return NULL;
 }
@@ -2125,7 +2177,7 @@ TRANS(LocalOpenCOTSClient)(Xtransport *thistrans, char *protocol,
 
 {
     PRMSG(2,"LocalOpenCOTSClient(%s,%s,%s)\n",protocol,host,port);
-    
+
     return TRANS(LocalOpenClient)(XTRANS_OPEN_COTS_CLIENT, protocol, host, port);
 }
 
@@ -2163,7 +2215,7 @@ TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, char *protocol,
 	typetocheck = workingXLOCAL;
     }
     TRANS(LocalEndTransports)();
-    
+
     if (!found) {
 	PRMSG(3,"LocalOpenCOTSServer: disabling %s\n",thistrans->TransName,0,0);
 	thistrans->flags |= TRANS_DISABLED;
@@ -2184,7 +2236,7 @@ TRANS(LocalOpenCLTSClient)(Xtransport *thistrans, char *protocol,
 
 {
     PRMSG(2,"LocalOpenCLTSClient(%s,%s,%s)\n",protocol,host,port);
-    
+
     return TRANS(LocalOpenClient)(XTRANS_OPEN_CLTS_CLIENT, protocol, host, port);
 }
 
@@ -2199,7 +2251,7 @@ TRANS(LocalOpenCLTSServer)(Xtransport *thistrans, char *protocol,
 
 {
     PRMSG(2,"LocalOpenCLTSServer(%s,%s,%s)\n",protocol,host,port);
-    
+
     return TRANS(LocalOpenServer)(XTRANS_OPEN_CLTS_SERVER, protocol, host, port);
 }
 
@@ -2215,14 +2267,14 @@ TRANS(LocalReopenCOTSServer)(Xtransport *thistrans, int fd, char *port)
     int index;
 
     PRMSG(2,"LocalReopenCOTSServer(%d,%s)\n", fd, port, 0);
-    
+
     for(index=1;index<NUMTRANSPORTS;index++)
     {
 	if( strcmp(thistrans->TransName,
 	    LOCALtrans2devtab[index].transname) == 0 )
 	    break;
     }
-    
+
     if (index >= NUMTRANSPORTS)
     {
 	return (NULL);
@@ -2239,14 +2291,14 @@ TRANS(LocalReopenCLTSServer)(Xtransport *thistrans, int fd, char *port)
     int index;
 
     PRMSG(2,"LocalReopenCLTSServer(%d,%s)\n", fd, port, 0);
-    
+
     for(index=1;index<NUMTRANSPORTS;index++)
     {
 	if( strcmp(thistrans->TransName,
 	    LOCALtrans2devtab[index].transname) == 0 )
 	    break;
     }
-    
+
     if (index >= NUMTRANSPORTS)
     {
 	return (NULL);
@@ -2265,7 +2317,7 @@ TRANS(LocalSetOption)(XtransConnInfo ciptr, int option, int arg)
 
 {
     PRMSG(2,"LocalSetOption(%d,%d,%d)\n",ciptr->fd,option,arg);
-    
+
     return -1;
 }
 
@@ -2277,7 +2329,7 @@ TRANS(LocalCreateListener)(XtransConnInfo ciptr, char *port)
 
 {
     PRMSG(2,"LocalCreateListener(%x->%d,%s)\n",ciptr,ciptr->fd,port);
-    
+
     return 0;
 }
 
@@ -2287,11 +2339,11 @@ TRANS(LocalAccept)(XtransConnInfo ciptr, int *status)
 {
     XtransConnInfo	newciptr;
     LOCALtrans2dev	*transptr;
-    
+
     PRMSG(2,"LocalAccept(%x->%d)\n", ciptr, ciptr->fd,0);
-    
+
     transptr=(LOCALtrans2dev *)ciptr->priv;
-    
+
     if( (newciptr=(XtransConnInfo)xcalloc(1,sizeof(struct _XtransConnInfo)))==NULL )
     {
 	PRMSG(1,"LocalAccept: calloc(1,%d) failed\n",
@@ -2299,18 +2351,18 @@ TRANS(LocalAccept)(XtransConnInfo ciptr, int *status)
 	*status = TRANS_ACCEPT_BAD_MALLOC;
 	return NULL;
     }
-    
+
     newciptr->fd=transptr->devaccept(ciptr,newciptr,status);
-    
+
     if( newciptr->fd < 0 )
     {
 	xfree(newciptr);
 	return NULL;
     }
-    
+
     newciptr->priv=(char *)transptr;
     newciptr->index = ciptr->index;
-    
+
     *status = 0;
 
     return newciptr;
@@ -2326,7 +2378,7 @@ TRANS(LocalConnect)(XtransConnInfo ciptr, char *host, char *port)
 
 {
     PRMSG(2,"LocalConnect(%x->%d,%s)\n", ciptr, ciptr->fd, port);
-    
+
     return 0;
 }
 
@@ -2351,7 +2403,7 @@ TRANS(LocalRead)(XtransConnInfo ciptr, char *buf, int size)
 
 {
     PRMSG(2,"LocalRead(%d,%x,%d)\n", ciptr->fd, buf, size );
-    
+
     return read(ciptr->fd,buf,size);
 }
 
@@ -2360,7 +2412,7 @@ TRANS(LocalWrite)(XtransConnInfo ciptr, char *buf, int size)
 
 {
     PRMSG(2,"LocalWrite(%d,%x,%d)\n", ciptr->fd, buf, size );
-    
+
     return write(ciptr->fd,buf,size);
 }
 
@@ -2369,7 +2421,7 @@ TRANS(LocalReadv)(XtransConnInfo ciptr, struct iovec *buf, int size)
 
 {
     PRMSG(2,"LocalReadv(%d,%x,%d)\n", ciptr->fd, buf, size );
-    
+
     return READV(ciptr,buf,size);
 }
 
@@ -2378,7 +2430,7 @@ TRANS(LocalWritev)(XtransConnInfo ciptr, struct iovec *buf, int size)
 
 {
     PRMSG(2,"LocalWritev(%d,%x,%d)\n", ciptr->fd, buf, size );
-    
+
     return WRITEV(ciptr,buf,size);
 }
 
@@ -2387,7 +2439,7 @@ TRANS(LocalDisconnect)(XtransConnInfo ciptr)
 
 {
     PRMSG(2,"LocalDisconnect(%x->%d)\n", ciptr, ciptr->fd, 0);
-    
+
     return 0;
 }
 
@@ -2398,11 +2450,11 @@ TRANS(LocalClose)(XtransConnInfo ciptr)
     struct sockaddr_un      *sockname=(struct sockaddr_un *) ciptr->addr;
     char    path[200]; /* > sizeof sun_path +1 */
     int	ret;
-    
+
     PRMSG(2,"LocalClose(%x->%d)\n", ciptr, ciptr->fd ,0);
-    
+
     ret=close(ciptr->fd);
-    
+
     if(ciptr->flags
        && sockname
        && sockname->sun_family == AF_UNIX
@@ -2410,9 +2462,10 @@ TRANS(LocalClose)(XtransConnInfo ciptr)
     {
 	strncpy(path,sockname->sun_path,
 		ciptr->addrlen-sizeof(sockname->sun_family));
-	unlink(path);
+	if (!(ciptr->flags & TRANS_NOUNLINK))
+	    unlink(path);
     }
-    
+
     return ret;
 }
 
@@ -2423,11 +2476,11 @@ TRANS(LocalCloseForCloning)(XtransConnInfo ciptr)
     int ret;
 
     PRMSG(2,"LocalCloseForCloning(%x->%d)\n", ciptr, ciptr->fd ,0);
-    
+
     /* Don't unlink path */
 
     ret=close(ciptr->fd);
-    
+
     return ret;
 }
 
@@ -2564,7 +2617,7 @@ Xtransport	TRANS(NAMEDFuncs) = {
 };
 
 #ifndef sun
-
+#ifndef SCO325
 Xtransport	TRANS(ISCFuncs) = {
 	/* Local Interface */
 	"isc",
@@ -2603,6 +2656,7 @@ Xtransport	TRANS(ISCFuncs) = {
 	TRANS(LocalClose),
 	TRANS(LocalCloseForCloning),
 };
+#endif /* !SCO325 */
 Xtransport	TRANS(SCOFuncs) = {
 	/* Local Interface */
 	"sco",

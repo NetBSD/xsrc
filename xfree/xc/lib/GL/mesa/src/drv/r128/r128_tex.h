@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.h,v 1.6 2001/04/10 17:53:07 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.h,v 1.7 2002/02/22 21:44:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -40,10 +40,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r128UpdateTextureState( GLcontext *ctx );
 
-extern int r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
+extern void r128SwapOutTexObj( r128ContextPtr rmesa, r128TexObjPtr t );
+
+extern void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
 
 extern void r128AgeTextures( r128ContextPtr rmesa, int heap );
 extern void r128DestroyTexObj( r128ContextPtr rmesa, r128TexObjPtr t );
+
+extern void r128UpdateTexLRU( r128ContextPtr rmesa, r128TexObjPtr t );
 
 extern void r128PrintLocalLRU( r128ContextPtr rmesa, int heap );
 extern void r128PrintGlobalLRU( r128ContextPtr rmesa, int heap );
@@ -73,24 +77,6 @@ extern void r128DDInitTextureFuncs( GLcontext *ctx );
 
 #define R128PACKCOLOR4444( r, g, b, a )					\
    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#include "X11/Xarch.h"
-#if X_BYTE_ORDER == X_LITTLE_ENDIAN
-#define R128PACKCOLORS565( r0, g0, b0, r1, g1, b1 )			\
-		((R128PACKCOLOR565( r0, g0, b0 )) |			\
-		 (R128PACKCOLOR565( r1, g1, b1 ) << 16))
-#define R128PACKCOLORS4444( r0, g0, b0, a0, r1, g1, b1, a1 )		\
-		((R128PACKCOLOR4444( r0, g0, b0, a0 )) |		\
-		 (R128PACKCOLOR4444( r1, g1, b1, a1 ) << 16))
-#else
-#define R128PACKCOLORS565( r0, g0, b0, r1, g1, b1 )			\
-		((R128PACKCOLOR565( r1, g1, b1 )) |			\
-		 (R128PACKCOLOR565( r0, g0, b0 ) << 16))
-#define R128PACKCOLORS4444( r0, g0, b0, a0, r1, g1, b1, a1 )		\
-		((R128PACKCOLOR4444( r1, g1, b1, a1 )) |		\
-		 (R128PACKCOLOR4444( r0, g0, b0, a0 ) << 16))
-
-#endif
 
 static __inline__ CARD32 r128PackColor( GLuint cpp,
 					GLubyte r, GLubyte g,

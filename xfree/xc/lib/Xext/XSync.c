@@ -50,15 +50,15 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xext/XSync.c,v 1.5 2001/12/14 19:55:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XSync.c,v 1.7 2002/10/16 02:19:22 dawes Exp $ */
 
 #include <stdio.h>
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "Xext.h"
-#include "extutil.h"
-#include "syncstr.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/syncstr.h>
 
 static XExtensionInfo _sync_info_data;
 static XExtensionInfo *sync_info = &_sync_info_data;
@@ -69,10 +69,11 @@ static char    *sync_extension_name = SYNC_NAME;
 #define SyncSimpleCheckExtension(dpy,i) \
 		XextSimpleCheckExtension(dpy, i, sync_extension_name)
 
-static int      close_display();
-static Bool     wire_to_event();
-static Status   event_to_wire();
-static char    *error_string();
+static int      close_display(Display *dpy, XExtCodes *codes);
+static Bool wire_to_event(Display *dpy, XEvent *event, xEvent *wire);
+static Status event_to_wire(Display *dpy, XEvent *event, xEvent *wire);
+static char    *error_string(Display *dpy, int code, XExtCodes *codes,
+			     char *buf, int n);
 
 static XExtensionHooks sync_extension_hooks = {
     NULL,			/* create_gc */
@@ -108,10 +109,7 @@ XEXT_GENERATE_ERROR_STRING(error_string, sync_extension_name,
 
 
 static Bool     
-wire_to_event(dpy, event, wire)
-    Display        *dpy;
-    XEvent         *event;
-    xEvent         *wire;
+wire_to_event(Display *dpy, XEvent *event, xEvent *wire)
 {
     XExtDisplayInfo *info = find_display(dpy);
     XSyncCounterNotifyEvent *aevent;
@@ -166,10 +164,7 @@ wire_to_event(dpy, event, wire)
 }
 
 static Status 
-event_to_wire(dpy, event, wire)
-    Display        *dpy;
-    XEvent         *event;
-    xEvent         *wire;
+event_to_wire(Display *dpy, XEvent *event, xEvent *wire)
 {
     XExtDisplayInfo *info = find_display(dpy);
     XSyncCounterNotifyEvent *aevent;
@@ -514,11 +509,9 @@ XSyncAwait(dpy, wait_list, n_conditions)
 }
 
 static void
-_XProcessAlarmAttributes(dpy, req, valuemask, attributes)
-    Display        *dpy;
-    xSyncChangeAlarmReq *req;
-    unsigned long   valuemask;
-    XSyncAlarmAttributes *attributes;
+_XProcessAlarmAttributes(Display *dpy, xSyncChangeAlarmReq *req,
+			 unsigned long valuemask,
+			 XSyncAlarmAttributes *attributes)
 {
 
     unsigned long  values[32];

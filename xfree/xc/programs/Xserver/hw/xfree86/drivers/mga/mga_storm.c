@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_storm.c,v 1.96 2001/12/06 15:54:52 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_storm.c,v 1.98 2003/01/16 16:09:10 eich Exp $ */
 
 
 /* All drivers should typically include these */
@@ -609,8 +609,7 @@ MGANAME(AccelInit)(ScreenPtr pScreen)
 	/* fallthrough */
     case PCI_CHIP_MGAG200:
     case PCI_CHIP_MGAG200_PCI:
-	if (pMga->SecondCrtc == FALSE)
-	    doRender = TRUE;
+	doRender = FALSE;
         pMga->AccelFlags = TRANSC_SOLID_FILL |
 			   TWO_PASS_COLOR_EXPAND;
 
@@ -1170,6 +1169,7 @@ MGAStormEngineInit(ScrnInfoPtr pScrn)
     case PCI_CHIP_MGAG400:
     case PCI_CHIP_MGAG200:
     case PCI_CHIP_MGAG200_PCI:
+	pMga->SrcOrg = 0;
 	OUTREG(MGAREG_SRCORG, pMga->realSrcOrg);
 	OUTREG(MGAREG_DSTORG, pMga->DstOrg);
 	break;

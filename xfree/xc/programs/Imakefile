@@ -2,7 +2,7 @@ XCOMM $Xorg: Imakefile,v 1.4 2000/08/17 19:47:01 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Imakefile,v 3.49 2001/11/02 23:29:28 dawes Exp $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.53 2002/11/20 04:43:50 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -64,6 +64,10 @@ XFINDPROXYSRCDIR = xfindproxy
      MKCFMSRCDIR = mkcfm
 #endif
 
+#if (HasFreetype2 || BuildFreetype2Library) && BuildFontEncLib
+  MKFONTSCALEDIR = mkfontscale
+#endif
+
 #if BuildXIElib
    XIECLIENTDIRS = xieperf
 #endif
@@ -87,11 +91,8 @@ XTRAPCLIENTDIRS = xtrap
 #endif
 
    XPMCLIENTDIRS = cxpm sxpm
-#if UseFreetype2
-     XFTCACHEDIR = xftcache
-#endif
 
-#if BuildGLXLibrary && BuildGLULibrary
+#if BuildGLXLibrary
       GLXCLIENTDIRS = glxinfo glxgears
 #endif
 
@@ -103,6 +104,10 @@ XTRAPCLIENTDIRS = xtrap
        XRANDRDIR = xrandr
 #endif
 
+#if BuildXcursorgen
+   XCURSORGENDIR = xcursorgen
+#endif
+
 #if BuildServersOnly || !BuildClients
 SUBDIRS = $(XSSRCDIR)
 #else
@@ -112,8 +117,8 @@ SUBDIRS = \
 	ico listres luit \
 	$(MAKEPSRESDIR) $(DPSCLIENTDIRS) \
 	$(MKCFMSRCDIR) \
-	mkfontdir oclock $(PROXYMGRSRCDIR) $(RGBSRCDIR) $(RSTARTSRCDIR) \
-	showfont \
+	mkfontdir $(MKFONTSCALEDIR) oclock $(PROXYMGRSRCDIR) \
+	$(RGBSRCDIR) $(RSTARTSRCDIR) showfont \
 	$(SMPROXYSRCDIR) $(TWMSRCDIR) viewres x11perf xauth xbiff xcalc \
 	xclipboard xclock \
 	xcmsdb $(XCONSOLESRCDIR) xditview $(XDMSRCDIR) xdpyinfo \
@@ -127,7 +132,7 @@ SUBDIRS = \
 	$(XTERMSRCDIR) $(XTRAPCLIENTDIRS) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
 	$(XPMCLIENTDIRS) $(XVINFOSRCDIR) \
 	$(XSSRCDIR) $(XASSRCDIR) $(LBXPROXYSRCDIR) $(SCRIPTSDIR) \
-	$(GLXCLIENTDIRS) $(XFTCACHEDIR) $(XRANDRDIR)
+	$(GLXCLIENTDIRS) $(XRANDRDIR) $(XCURSORGENDIR)
 #endif
 
 MakeSubdirs($(SUBDIRS))

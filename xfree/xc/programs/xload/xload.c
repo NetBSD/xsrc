@@ -1,5 +1,5 @@
 /* $XConsortium: xload.c,v 1.37 94/04/17 20:43:44 converse Exp $ */
-/* $XFree86: xc/programs/xload/xload.c,v 1.6 2001/08/27 23:35:14 dawes Exp $ */
+/* $XFree86: xc/programs/xload/xload.c,v 1.7 2002/09/18 17:11:57 tsi Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -36,6 +36,7 @@ from the X Consortium.
 
 
 #include <stdio.h> 
+#include <stdlib.h>
 #include <unistd.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xatom.h>

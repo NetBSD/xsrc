@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/rgb/showrgb.c,v 3.8 2001/12/14 20:01:04 dawes Exp $ */
+/* $XFree86: xc/programs/rgb/showrgb.c,v 3.9 2002/05/31 18:46:08 dawes Exp $ */
 
 #ifndef USE_RGB_TXT
 #ifdef NDBM
@@ -130,7 +130,7 @@ dumprgb (filename)
     int lineno = 0;
     int red, green, blue;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     char *root = (char*)getenv("X11ROOT");
     sprintf(line,"%s%s.txt",root,filename);
     path = (char *)malloc(strlen(line) + 1);
@@ -150,7 +150,7 @@ dumprgb (filename)
 
     while(fgets(line, sizeof(line), rgb)) {
 	lineno++;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	if (sscanf(line, "%d %d %d %[^\n]\n", &red, &green, &blue, name) == 4) {
 #else
 	if (sscanf(line, "%d %d %d %[^\n\r]\n", &red, &green, &blue, name) == 4) {

@@ -22,7 +22,7 @@
  * Authors: Alan Hourihane, alanh@fairlite.demon.co.uk
  *          Sven Luther <luther@dpt-info.u-strasbg.fr>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.8 2001/10/28 03:33:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.11 2002/05/22 08:12:02 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -604,8 +604,8 @@ HWCopyFlat(ScrnInfoPtr pScrn, CARD8 *src, int w, int h)
 	    GLINT_MoveDWORDS(
 		(CARD32*)((char*)pGlint->IOBase + OutputFIFO + 4),
 	 	(CARD32*)src, pGlint->FIFOSize - 1);
-	    dwords -= pGlint->FIFOSize - 1;
-	    src += pGlint->FIFOSize - 1;
+	    dwords -= (pGlint->FIFOSize - 1);
+	    src += (pGlint->FIFOSize << 2) - 4;
     	}
     	if(dwords) {
 	    GLINT_WAIT(dwords + 1);
@@ -625,8 +625,8 @@ HWCopyFlat(ScrnInfoPtr pScrn, CARD8 *src, int w, int h)
 		GLINT_MoveDWORDS(
 			(CARD32*)((char*)pGlint->IOBase + OutputFIFO + 4),
 	 		(CARD32*)src, pGlint->FIFOSize - 1);
-		dwords -= pGlint->FIFOSize - 1;
-		src += pGlint->FIFOSize - 1;
+		dwords -= (pGlint->FIFOSize - 1);
+		src += (pGlint->FIFOSize << 2) - 4;
     	    }
     	    if(dwords) {
 		GLINT_WAIT(dwords + 1);
@@ -943,12 +943,12 @@ Permedia3PutImage(
     }
 
     HWCopySetup(pScrn, pPriv->area[pPriv->buffer]->box.x1, 
-		       pPriv->area[pPriv->buffer]->box.y1, w_bpp, src_h);
+		       pPriv->area[pPriv->buffer]->box.y1, w_bpp, height);
 
     if (copy_flat) 
-	HWCopyFlat(pScrn, buf, src_w, src_h);
+	HWCopyFlat(pScrn, buf, width, height);
     else 
-	HWCopyYV12(pScrn, buf, src_w, src_h);
+	HWCopyYV12(pScrn, buf, width, height);
 
     /* paint the color key */
     if(pPriv->autopaintColorKey && !RegionsEqual(&pPriv->clip, clipBoxes)) {

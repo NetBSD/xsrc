@@ -30,7 +30,7 @@ tive owners.
 
 2.  Introduction
 
-With XFree86 4.0 and the Direct Rendering Interface (DRI), hardware acceler-
+With XFree86 4.x and the Direct Rendering Interface (DRI), hardware acceler-
 ated 3D graphics can be considered a standard feature on Linux workstations.
 Support for other operating systems, such as FreeBSD, is underway.
 
@@ -39,9 +39,9 @@ which may occur.  Readers should have a basic understanding of Linux, X and
 OpenGL.  See the resources section at the end for more documentation and
 software downloads.
 
-This document does not cover compilation or installation of XFree86 4.0.  It
+This document does not cover compilation or installation of XFree86 4.x.  It
 is assumed that you've already installed a Linux distribution which includes
-XFree86 4.0 or that you're an experienced Linux developer who has compiled
+XFree86 4.x or that you're an experienced Linux developer who has compiled
 the DRI for himself.  DRI download, compilation and installation instructions
 can be found at http://dri.sourceforge.net/DRIcompile.html
 
@@ -72,7 +72,7 @@ performance.  See the DRI Compilation Guide for details.
 
 3.2  Graphics Hardware
 
-XFree86 4.0 (or later versions) includes 3D acceleration for the following
+XFree86 4.2 (or later versions) includes 3D acceleration for the following
 graphics hardware:
 
    o 3dfx, supported on Intel x86, AMD and Alpha:
@@ -104,13 +104,17 @@ graphics hardware:
 
         o Matrox G400
 
-   o Intel i810 (motherboard chipset)
+   o Intel i810/i815/i830 (motherboard chipsets)
 
         o i810
 
         o i810-dc100
 
         o i810e
+
+        o i815
+
+        o i830
 
    o ATI Rage 128, supported on Intel x86, AMD and Alpha:
 
@@ -138,6 +142,16 @@ graphics hardware:
         o Radeon DDR AGP
 
         o Radeon 32MB SDR PCI (Alpha-based systems)
+
+        o Radeon 7000, M6 (RV100)
+
+        o Radeon 7200 (R100)
+
+        o Radeon 7500, M7 (RV200)
+
+        o Radeon 8500, 9100 (R200)
+
+        o Radeon 9000, M9 (RV250)
 
    o 3Dlabs, supported on Intel x86 and AMD:
 
@@ -271,10 +285,10 @@ that you are in fact using 3D acceleration.
 8.1  libGL.so
 
 Your OpenGL program must link with the libGL.so.1.2 library provided by
-XFree86 4.0.  The libGL.so.1.2 library contains a GLX protocol encoder for
-indirect/remote rendering and DRI code for accessing hardware drivers.  In
-particular, be sure you're not using libGL.so from another source such as
-Mesa or the Utah GLX project.
+XFree86.  The libGL.so.1.2 library contains a GLX protocol encoder for indi-
+rect/remote rendering and DRI code for accessing hardware drivers.  In par-
+ticular, be sure you're not using libGL.so from another source such as Mesa
+or the Utah GLX project.
 
 Unless it was built in a special way, the libGL.so library does not contain
 any 3D hardware driver code.  Instead, libGL.so dynamically loads the appro-
@@ -1237,7 +1251,7 @@ demo programs is available from http://dri.sourceforge.net/res.phtml
    o In the future there may be IHV and Linux vendor support resources for
      the DRI.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.27 2002/01/07 22:05:57 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.29 2003/02/17 03:57:29 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.19 2002/01/07 22:07:16 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.21 2003/02/17 04:04:07 dawes Exp $

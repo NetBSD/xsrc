@@ -31,12 +31,13 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/slicer.cc,v 1.2 2003/01/12 03:55:45 tsi Exp $ */
 
 /*
  * slicer.c++
  *
- * $Date: 2001/06/09 15:20:53 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/slicer.cc,v 1.1.1.1 2001/06/09 15:20:53 tron Exp $
+ * $Date: 2003/02/28 13:19:17 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/slicer.cc,v 1.1.1.2 2003/02/28 13:19:17 tron Exp $
  */
 
 #include <stdlib.h>
@@ -60,7 +61,7 @@
 /*USE_OPTTT is initiated in trimvertex.h*/
 
 #ifdef USE_OPTTT
-	#include <GL/gl.h>
+#	include <GL/gl.h>
 #endif
 
 //#define USE_READ_FLAG //whether to use new or old tesselator

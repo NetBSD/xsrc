@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.13.4.1 2002/08/14 17:36:16 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.15 2002/12/16 16:19:11 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -48,7 +48,9 @@
 #ifndef _R128_REG_H_
 #define _R128_REG_H_
 
+#ifdef XFree86Module
 #include "xf86_ansic.h"
+#endif
 #include "compiler.h"
 
 				/* Memory mapped register access macros */

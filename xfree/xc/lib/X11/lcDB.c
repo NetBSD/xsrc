@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.14 2001/08/09 19:14:06 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.15 2002/05/31 18:45:42 dawes Exp $ */
 
 
 
@@ -346,7 +346,7 @@ read_line(
 
 	cur += len;
 	str[cur] = '\0';
-#ifdef __EMX__  /* Take out carriage returns under OS/2 */
+#ifdef __UNIXOS2__  /* Take out carriage returns under OS/2 */
 	if (cur>1) {
 	   if (str[cur-2] == '\r' && str[cur-1] == '\n') {
 	      str[cur-2] = '\n';
@@ -1251,7 +1251,7 @@ _XlcCreateLocaleDataBase(
     if (name == NULL)
 	return (XPointer)NULL;
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     name_q = XrmStringToQuark(name);
 #else
     name_q = XrmStringToQuark((char*)__XOS2RedirRoot(name));

@@ -35,7 +35,7 @@
  *
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/cslibext.c,v 1.3 2001/10/28 03:32:42 tsi Exp $ */
+/* $XFree86: xc/lib/dps/cslibext.c,v 1.4 2002/09/18 17:11:44 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -245,7 +245,7 @@ skip_read:
         {
 	/* Fine, we downgrade the client */
 	char qbuf[256];
-	sprintf(qbuf, "NX: server version %ld older than expected %d, client will downgrade", reply.good.serverVersion, DPSPROTOCOLVERSION);
+	sprintf(qbuf, "NX: server version %ld older than expected %d, client will downgrade", (long)reply.good.serverVersion, DPSPROTOCOLVERSION);
 	DPSWarnProc(NULL, qbuf);
 	}
     my->dpscapVersion = reply.good.dpscapVersion;

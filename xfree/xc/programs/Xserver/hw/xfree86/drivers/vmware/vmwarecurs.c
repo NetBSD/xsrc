@@ -4,436 +4,442 @@
  * **********************************************************/
 #ifdef VMX86_DEVEL
 char rcsId_vmwarecurs[] =
-
     "Id: vmwarecurs.c,v 1.5 2001/01/30 23:33:02 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.3 2001/09/13 08:36:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.11 2003/02/05 12:47:42 dawes Exp $ */
 
 #include "vmware.h"
-#include "cursorstr.h"
 #include "bits2pixels.h"
 
-typedef struct _VMwareCursPriv {
-    uint8 *bSource;
-    uint8 *bMask;
-    uint8 *pSource;
-    uint8 *pMask;
-} VMwareCursPriv;
+static void VMWAREGetImage(DrawablePtr src, int x, int y, int w, int h,
+                           unsigned int format, unsigned long planeMask,
+                           char *pBinImage);
+static void VMWARECopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg,
+                             RegionPtr prgnSrc);
 
-static int vmwareCursGeneration = -1;
-static CursorPtr vmwareSaveCursors[MAXSCREENS];
-
-static miPointerSpriteFuncRec vmwarePointerSpriteFuncs = {
-    vmwareRealizeCursor,
-    vmwareUnrealizeCursor,
-    vmwareSetCursor,
-    vmwareMoveCursor,
-};
-
-Bool
-vmwareCursorInit(char *pm, 
-		 ScreenPtr pScr)
-{
-    TRACEPOINT
-    if (vmwareCursGeneration != serverGeneration) {
-	miPointerScreenFuncPtr xf86scrn = xf86GetPointerScreenFuncs();
-	
-	pScr->QueryBestSize = vmwareQueryBestSize;
-	if (!(miPointerInitialize(pScr, &vmwarePointerSpriteFuncs,
-	    xf86scrn, FALSE)))
-	    return FALSE;
-
-	pScr->RecolorCursor = vmwareRecolorCursor;
-	vmwareCursGeneration = serverGeneration;
-    }
-    return TRUE;
-}
-
-static void ZeroBits(uint8 *buf, int preserveBits, int totalBits) {
-    while (preserveBits > 8) {
-	buf++;
-	preserveBits -= 8;
-	totalBits -= 8;
-    }
-    *buf &= ~(~0 << preserveBits);
-    buf++;
-    preserveBits -= 8;
-    totalBits -= 8;
-    while (totalBits > 0) {
-	*buf++ = 0;
-	totalBits -= 8;
-    }
-}
-
-Bool
-vmwareRealizeCursor(ScreenPtr pScr, 
-		    CursorPtr pCurs)
-{
-    pointer *pPriv = &pCurs->bits->devPriv[pScr->myNum];
-    VMwareCursPriv *cursPriv;
-    int i;
-    uint8 *bits;
-    VMWAREPtr pVMWARE;
-
-    TRACEPOINT
-    if (pCurs->bits->refcnt > 1)
-	return TRUE;
-    cursPriv = (VMwareCursPriv *) xcalloc(1, sizeof(VMwareCursPriv));
-    if (!cursPriv)
-	return FALSE;
-    cursPriv->bSource = (uint8 *) xcalloc(1, PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height);
-    if (!cursPriv->bSource) {
-	xfree(cursPriv);
-	return FALSE;
-    }
-    pVMWARE = VMWAREPTR(infoFromScreen(pScr));
-
-    memcpy(cursPriv->bSource, pCurs->bits->source, PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height);
-    bits = cursPriv->bSource;
-    /* Handle cursors that do not have zero bits beyond the right edge of each scanline */
-    for (i = 0; i < pCurs->bits->height; i++) {
-	ZeroBits(bits, pCurs->bits->width, PixmapBytePad(pCurs->bits->width, 1) * 8);
-	bits += PixmapBytePad(pCurs->bits->width, 1);
-    }
-    /* Raster_BitsToPixels expects most significant bit first */
-    for (i = 0; i < PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height; i++) {
-	cursPriv->bSource[i] = 
-	    (cursPriv->bSource[i] & 0x01) << 7 |
-	    (cursPriv->bSource[i] & 0x02) << 5 |
-	    (cursPriv->bSource[i] & 0x04) << 3 |
-	    (cursPriv->bSource[i] & 0x08) << 1 |
-	    (cursPriv->bSource[i] & 0x10) >> 1 |
-	    (cursPriv->bSource[i] & 0x20) >> 3 |
-	    (cursPriv->bSource[i] & 0x40) >> 5 |
-	    (cursPriv->bSource[i] & 0x80) >> 7;
-    }
-    cursPriv->bMask = (uint8 *) xcalloc(1, PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height);
-    if (!cursPriv->bMask) {
-	xfree(cursPriv->bSource);
-	xfree(cursPriv);
-	return FALSE;
-    }
-    memcpy(cursPriv->bMask, pCurs->bits->mask, PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height);
-    bits = cursPriv->bMask;
-    /* Handle cursors that do not have zero bits beyond the right edge of each scanline */
-    for (i = 0; i < pCurs->bits->height; i++) {
-	ZeroBits(bits, pCurs->bits->width, PixmapBytePad(pCurs->bits->width, 1) * 8);
-	bits += PixmapBytePad(pCurs->bits->width, 1);
-    }
-    for (i = 0; i < PixmapBytePad(pCurs->bits->width, 1) * pCurs->bits->height; i++) {
-	cursPriv->bMask[i] =
-	    (cursPriv->bMask[i] & 0x01) << 7 |
-	    (cursPriv->bMask[i] & 0x02) << 5 |
-	    (cursPriv->bMask[i] & 0x04) << 3 |
-	    (cursPriv->bMask[i] & 0x08) << 1 |
-	    (cursPriv->bMask[i] & 0x10) >> 1 |
-	    (cursPriv->bMask[i] & 0x20) >> 3 |
-	    (cursPriv->bMask[i] & 0x40) >> 5 |
-	    (cursPriv->bMask[i] & 0x80) >> 7;
-    }
-    cursPriv->pSource = (uint8 *) xcalloc(4, SVGA_PIXMAP_SIZE(pCurs->bits->width, pCurs->bits->height, pVMWARE->bitsPerPixel));
-    if (!cursPriv->pSource) {
-	xfree(cursPriv->bMask);
-	xfree(cursPriv->bSource);
-	xfree(cursPriv);
-	return FALSE;
-    }
-    cursPriv->pMask = (uint8 *) xcalloc(4, SVGA_PIXMAP_SIZE(pCurs->bits->width, pCurs->bits->height, pVMWARE->bitsPerPixel));
-    if (!cursPriv->pMask) {
-	xfree(cursPriv->pSource);
-	xfree(cursPriv->bMask);
-	xfree(cursPriv->bSource);
-	xfree(cursPriv);
-	return FALSE;
-    }
-    Raster_BitsToPixels(cursPriv->bMask, PixmapBytePad(pCurs->bits->width, 1),
-			cursPriv->pMask, 4 * SVGA_PIXMAP_SCANLINE_SIZE(pCurs->bits->width, pVMWARE->bitsPerPixel),
-			pVMWARE->bitsPerPixel / 8, 
-			pCurs->bits->width, pCurs->bits->height, 0, ~0);
-    *pPriv = (pointer) cursPriv;
-    return TRUE;
-}
-
-Bool
-vmwareUnrealizeCursor(ScreenPtr pScr, 
-		      CursorPtr pCurs)
-{
-    VMwareCursPriv *cursPriv;
-
-    TRACEPOINT
-    if (pCurs->bits->refcnt <= 1 &&
-	(cursPriv = pCurs->bits->devPriv[pScr->myNum])) {
-	xfree(cursPriv->pMask);
-	xfree(cursPriv->pSource);
-	xfree(cursPriv->bMask);
-	xfree(cursPriv->bSource);
-	xfree(cursPriv);
-    }
-    return TRUE;
-}
+#ifdef RENDER
+static void VMWAREComposite(CARD8 op, PicturePtr pSrc, PicturePtr pMask,
+			    PicturePtr pDst, INT16 xSrc, INT16 ySrc,
+			    INT16 xMask, INT16 yMask, INT16 xDst, INT16 yDst,
+			    CARD16 width, CARD16 height);
+#endif /* RENDER */
 
 static void
-vmwareLoadCursor(ScreenPtr pScr, 
-		 CursorPtr pCurs, 
-		 int x, 
-		 int y)
+RedefineCursor(VMWAREPtr pVMWARE)
 {
-    VMWAREPtr pVMWARE;
-
-    TRACEPOINT
-
-    if (!pCurs)
-	return;
-
-    pVMWARE = VMWAREPTR(infoFromScreen(pScr));
-
-    pVMWARE->Mouse.Width = pCurs->bits->width;
-    pVMWARE->Mouse.Height = pCurs->bits->height;
-    pVMWARE->Mouse.XHot = pCurs->bits->xhot;
-    pVMWARE->Mouse.YHot = pCurs->bits->yhot;
-    vmwareRecolorCursor(pScr, pCurs, TRUE);
-    vmwareMoveCursor(pScr, x, y);
-
-    if (!(pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS)) {
-	vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DISPLAY_CURSOR);
-	vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
-	vmwareWriteWordToFIFO(pVMWARE, 1);
-    }
-}
-
-void
-vmwareSetCursor(ScreenPtr pScr, 
-		CursorPtr pCurs, 
-		int x, 
-		int y)
-{
-    int index = pScr->myNum;
-
-    TRACEPOINT
-    
-    if (!pCurs)
-	return;
-
-    vmwareSaveCursors[index] = pCurs;
-    vmwareLoadCursor(pScr, pCurs, x, y);
-}
-
-void
-vmwareRestoreCursor(ScreenPtr pScr)
-{
-    int index = pScr->myNum;
-    int x, y;
-
-    TRACEPOINT
-    
-    miPointerPosition(&x, &y);
-    vmwareLoadCursor(pScr, vmwareSaveCursors[index], x, y);
-}
-
-void
-vmwareMoveCursor(ScreenPtr pScr,
-		 int x, 
-		 int y)
-{
-    VMWAREPtr pVMWARE;
-    
-    TRACEPOINT
-
-    pVMWARE = VMWAREPTR(infoFromScreen(pScr));
-
-    pVMWARE->Mouse.Box.x1 = x - pVMWARE->Mouse.XHot;
-    if (pVMWARE->Mouse.Box.x1 < 0) pVMWARE->Mouse.Box.x1 = 0;
-    pVMWARE->Mouse.Box.y1 = y - pVMWARE->Mouse.YHot;
-    if (pVMWARE->Mouse.Box.y1 < 0) pVMWARE->Mouse.Box.y1 = 0;
-
-    pVMWARE->Mouse.Box.x2 = pVMWARE->Mouse.Box.x1 + pVMWARE->Mouse.Width;
-    pVMWARE->Mouse.Box.y2 = pVMWARE->Mouse.Box.y1 + pVMWARE->Mouse.Height;
-
-    if (pVMWARE->cursorDefined && !pVMWARE->mouseHidden) {
-	if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) {
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_X, x);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_Y, y);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, SVGA_CURSOR_ON_SHOW);
-	} else {
-	    vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_MOVE_CURSOR);
-	    vmwareWriteWordToFIFO(pVMWARE, x);
-	    vmwareWriteWordToFIFO(pVMWARE, y);
-	    UPDATE_ACCEL_AREA(pVMWARE, pVMWARE->Mouse.Box);
-	}
-    }
-}
-
-void
-vmwareRecolorCursor(ScreenPtr pScr, 
-		    CursorPtr pCurs, 
-		    Bool displayed)
-{
-    xColorItem	sourceColor;
-    xColorItem	maskColor;
-    VMwareCursPriv *cursPriv = pCurs->bits->devPriv[pScr->myNum];
-    uint32 *b1, *b2;
     int i;
-    VMWAREPtr pVMWARE;
 
-    TRACEPOINT
+    VmwareLog(("RedefineCursor\n"));
 
-    if (!displayed)
-	return;
-
-    pVMWARE = VMWAREPTR(infoFromScreen(pScr));
-
-    sourceColor.red = pCurs->foreRed;
-    sourceColor.green = pCurs->foreGreen;
-    sourceColor.blue = pCurs->foreBlue;
-
-    maskColor.red = pCurs->backRed;
-    maskColor.green = pCurs->backGreen;
-    maskColor.blue = pCurs->backBlue;
-
-    if (pScr->rootDepth > 8) 
-    {
-	sourceColor.pixel = (sourceColor.red >> (16 - pVMWARE->weight.red)) << pVMWARE->offset.red |
-	    (sourceColor.green >> (16 - pVMWARE->weight.green)) << pVMWARE->offset.green |
-	    (sourceColor.blue >> (16 - pVMWARE->weight.blue)) << pVMWARE->offset.blue;
-	maskColor.pixel = (maskColor.red >> (16 - pVMWARE->weight.red)) << pVMWARE->offset.red |
-	    (maskColor.green >> (16 - pVMWARE->weight.green)) << pVMWARE->offset.green |
-	    (maskColor.blue >> (16 - pVMWARE->weight.blue)) << pVMWARE->offset.blue;
-    } 
-    else
-    {
-	ColormapPtr	pmap;
-
-	pmap = miInstalledMaps[pScr->myNum];
-    
-	FakeAllocColor(pmap, &sourceColor);
-	FakeAllocColor(pmap, &maskColor);
-
-	FakeFreeColor(pmap, sourceColor.pixel);
-	FakeFreeColor(pmap, maskColor.pixel);
-
-	maskColor.red = maskColor.red >> 8;
-	maskColor.green = maskColor.green >> 8;
-	maskColor.blue = maskColor.blue >> 8;
-
-	sourceColor.red = sourceColor.red >> 8;
-	sourceColor.green = sourceColor.green >> 8;
-	sourceColor.blue = sourceColor.blue >> 8;
-    }
-
-    /* Calculate XOR mask */
-    Raster_BitsToPixels(cursPriv->bSource, PixmapBytePad(pCurs->bits->width, 1),
-			cursPriv->pSource, 
-			4 * SVGA_PIXMAP_SCANLINE_SIZE(pCurs->bits->width, pVMWARE->bitsPerPixel), 
-			pVMWARE->bitsPerPixel / 8,
-			pCurs->bits->width, pCurs->bits->height, sourceColor.pixel, maskColor.pixel);
-    b1 = (uint32 *) cursPriv->pSource;
-    b2 = (uint32 *) cursPriv->pMask;
-    for (i = 0; i < SVGA_PIXMAP_SIZE(pCurs->bits->width, pCurs->bits->height, pVMWARE->bitsPerPixel); i++) {
-	*b1++ &= ~*b2++;
-    }
+    pVMWARE->cursorDefined = FALSE;
 
     /* Define cursor */
     vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DEFINE_CURSOR);
     vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
-    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->xhot);
-    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->yhot);
-    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->width);
-    vmwareWriteWordToFIFO(pVMWARE, pCurs->bits->height);
+    vmwareWriteWordToFIFO(pVMWARE, 0);          /* HotX/HotY seem to be zero? */
+    vmwareWriteWordToFIFO(pVMWARE, 0);          /* HotX/HotY seem to be zero? */
+    vmwareWriteWordToFIFO(pVMWARE, pVMWARE->CursorInfoRec->MaxWidth);
+    vmwareWriteWordToFIFO(pVMWARE, pVMWARE->CursorInfoRec->MaxHeight);
+    vmwareWriteWordToFIFO(pVMWARE, 1);
     vmwareWriteWordToFIFO(pVMWARE, pVMWARE->bitsPerPixel);
-    vmwareWriteWordToFIFO(pVMWARE, pVMWARE->bitsPerPixel);
-    b1 = (uint32 *) cursPriv->pSource;
-    b2 = (uint32 *) cursPriv->pMask;
-    for (i = 0; i < SVGA_PIXMAP_SIZE(pCurs->bits->width, pCurs->bits->height, pVMWARE->bitsPerPixel); i++) {
-	vmwareWriteWordToFIFO(pVMWARE, *b2++);
+
+    /*
+     * Since we have AND and XOR masks rather than 'source' and 'mask',
+     * color expand 'mask' with all zero as its foreground and all one as
+     * its background.  This makes 'image & 0 ^ 'source' = source.  We
+     * arange for 'image' & 1 ^ 'source' = 'image' below when we clip
+     * 'source' below.
+     */
+    vmwareRaster_BitsToPixels((uint8 *) pVMWARE->hwcur.mask,
+                        SVGA_BITMAP_INCREMENT(pVMWARE->CursorInfoRec->MaxWidth),
+                        (uint8 *) pVMWARE->hwcur.maskPixmap,
+                        SVGA_PIXMAP_INCREMENT(pVMWARE->CursorInfoRec->MaxWidth,
+                                              pVMWARE->bitsPerPixel),
+                        pVMWARE->bitsPerPixel / 8,
+                        pVMWARE->CursorInfoRec->MaxWidth,
+                        pVMWARE->CursorInfoRec->MaxHeight, 0, ~0);
+    for (i = 0; i < SVGA_BITMAP_SIZE(pVMWARE->CursorInfoRec->MaxWidth,
+                                     pVMWARE->CursorInfoRec->MaxHeight); i++) {
+        vmwareWriteWordToFIFO(pVMWARE, ~pVMWARE->hwcur.mask[i]);
     }
-    for (i = 0; i < SVGA_PIXMAP_SIZE(pCurs->bits->width, pCurs->bits->height, pVMWARE->bitsPerPixel); i++) {
-      vmwareWriteWordToFIFO(pVMWARE, *b1++);
-	/*	vmwareWriteWordToFIFO(~0); */
+    
+    vmwareRaster_BitsToPixels((uint8 *) pVMWARE->hwcur.source,
+                        SVGA_BITMAP_INCREMENT(pVMWARE->CursorInfoRec->MaxWidth),
+                        (uint8 *) pVMWARE->hwcur.sourcePixmap,
+                        SVGA_PIXMAP_INCREMENT(pVMWARE->CursorInfoRec->MaxWidth,
+                                              pVMWARE->bitsPerPixel),
+                        pVMWARE->bitsPerPixel / 8,
+                        pVMWARE->CursorInfoRec->MaxWidth,
+                        pVMWARE->CursorInfoRec->MaxHeight,
+                        pVMWARE->hwcur.fg, pVMWARE->hwcur.bg);
+    /*
+     * As pointed out above, we need to clip the expanded 'source' against
+     * the expanded 'mask' since we actually have AND and XOR masks in the
+     * virtual hardware.  Effectively, 'source' becomes a three color fg/bg/0
+     * pixmap that XORs appropriately.
+     */
+    for (i = 0; i < SVGA_PIXMAP_SIZE(pVMWARE->CursorInfoRec->MaxWidth,
+                                     pVMWARE->CursorInfoRec->MaxHeight,
+                                     pVMWARE->bitsPerPixel); i++) {
+        pVMWARE->hwcur.sourcePixmap[i] &= ~pVMWARE->hwcur.maskPixmap[i];
+	vmwareWriteWordToFIFO(pVMWARE, pVMWARE->hwcur.sourcePixmap[i]);
     }
-    pVMWARE->checkCursorColor = FALSE;
 
     /* Sync the FIFO, so that the definition preceeds any use of the cursor */
-    UPDATE_ACCEL_AREA(pVMWARE, pVMWARE->Mouse.Box);
     vmwareWaitForFB(pVMWARE);
     pVMWARE->cursorDefined = TRUE;
 }
 
-void
-vmwareRenewCursorColor(ScreenPtr pScr)
+static void
+vmwareSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
     TRACEPOINT
 
-    if (vmwareSaveCursors[pScr->myNum])
-	vmwareRecolorCursor(pScr, vmwareSaveCursors[pScr->myNum], TRUE);
-}
-
-void
-vmwareBlockHandler(i, blockData, pTimeout, pReadmask)
-    int i;
-    pointer blockData;
-    pointer pTimeout;
-    pointer pReadmask;
-{
-    VMWAREPtr pVMWARE;
-
-    TRACEPOINT
-
-    pVMWARE = VMWAREPTR(xf86Screens[i]);
-    if (pVMWARE->checkCursorColor)
-	vmwareRenewCursorColor(screenInfo.screens[i]);
-}
-
-void
-vmwareQueryBestSize(class, pwidth, pheight, pScr)
-    int class;
-    unsigned short *pwidth;
-    unsigned short *pheight;
-    ScreenPtr pScr;
-{
-    TRACEPOINT
-
-    if (*pwidth > 0) {
-
-	switch (class) {
-
-	case CursorShape:
-	    if (*pwidth > 64)
-		*pwidth = 64;
-	    if (*pheight > 64)
-		*pheight = 64;
-	    break;
-	default:
-	    fbQueryBestSize(class, pwidth, pheight, pScr);
-	    break;
-	}
+    if (pVMWARE->hwcur.fg != fg || pVMWARE->hwcur.bg != bg) {
+        VmwareLog(("SetCursorColors(0x%08x, 0x%08x)\n", bg, fg));
+        pVMWARE->hwcur.fg = fg;
+        pVMWARE->hwcur.bg = bg;
+        RedefineCursor(pVMWARE);
     }
 }
 
-void
-vmwareCursorOff(VMWAREPtr pVMWARE)
+static void
+vmwareLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src )
 {
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+    const int imageSize = SVGA_BITMAP_SIZE(pVMWARE->CursorInfoRec->MaxWidth,
+                                           pVMWARE->CursorInfoRec->MaxHeight);
     TRACEPOINT
 
+    memcpy(pVMWARE->hwcur.source, src, imageSize * sizeof(uint32));
+    memcpy(pVMWARE->hwcur.mask,
+           src + imageSize * sizeof(uint32), imageSize * sizeof(uint32));
+    RedefineCursor(pVMWARE);
+}
+
+#ifdef ARGB_CURSOR
+#include "cursorstr.h"
+
+static Bool
+vmwareUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs)
+{
+    ScrnInfoPtr pScrn = infoFromScreen(pScreen);
+    return pCurs->bits->height <= MAX_CURS &&
+           pCurs->bits->width <= MAX_CURS &&
+           pScrn->bitsPerPixel > 8;
+}
+
+static void
+vmwareLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
+{
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+    CARD32 width = pCurs->bits->width;
+    CARD32 height = pCurs->bits->height;
+    CARD32* image = pCurs->bits->argb;
+    CARD32* imageEnd = image + (width * height);
+
+    pVMWARE->cursorDefined = FALSE;
+
+    vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DEFINE_ALPHA_CURSOR);
+    vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
+    vmwareWriteWordToFIFO(pVMWARE, 0);
+    vmwareWriteWordToFIFO(pVMWARE, 0);
+    vmwareWriteWordToFIFO(pVMWARE, width);
+    vmwareWriteWordToFIFO(pVMWARE, height);
+
+    while (image != imageEnd) {
+        vmwareWriteWordToFIFO(pVMWARE, *image++);
+    }
+
+    vmwareWaitForFB(pVMWARE);
+
+    pVMWARE->cursorDefined = TRUE;
+}
+#endif
+
+void
+vmwareWriteCursorRegs(VMWAREPtr pVMWARE, Bool visible, Bool force)
+{
+    int enableVal;
+
+    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
+    if (visible) {
+        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_X, pVMWARE->hwcur.x);
+        vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_Y, pVMWARE->hwcur.y);
+    }
+    
+    if (force) {
+        enableVal = visible ? SVGA_CURSOR_ON_SHOW : SVGA_CURSOR_ON_HIDE;
+    } else {
+        enableVal = visible ? pVMWARE->cursorRestoreToFB :
+            pVMWARE->cursorRemoveFromFB;
+    }
+    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, enableVal);
+}
+
+/* disabled by default to reduce spew in DEBUG_LOGGING mode. */
+/* #define DEBUG_LOG_MOUSE_HIDE_SHOW */
+
+static void
+vmwareShowCursor(ScrnInfoPtr pScrn)
+{
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+#ifdef DEBUG_LOG_MOUSE_HIDE_SHOW
+    VmwareLog(("Show: %d %d %d\n", pVMWARE->cursorSema, pVMWARE->cursorDefined,
+	       pVMWARE->cursorShouldBeHidden));
+#endif
+    pVMWARE->cursorShouldBeHidden = FALSE;
+    if (pVMWARE->cursorSema == 0 && pVMWARE->cursorDefined) {
+        vmwareWriteCursorRegs(pVMWARE, TRUE, TRUE);
+    }
+}
+
+static void
+vmwareHideCursor(ScrnInfoPtr pScrn)
+{
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+#ifdef DEBUG_LOG_MOUSE_HIDE_SHOW
+    VmwareLog(("Hide: %d %d %d\n", pVMWARE->cursorSema, pVMWARE->cursorDefined,
+	       pVMWARE->cursorShouldBeHidden));
+#endif
     if (pVMWARE->cursorDefined) {
-	if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) {
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, SVGA_CURSOR_ON_HIDE);
-	} else {
-	    vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DISPLAY_CURSOR);
-	    vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);
-	    vmwareWriteWordToFIFO(pVMWARE, 0);
-	    UPDATE_ACCEL_AREA(pVMWARE, pVMWARE->Mouse.Box);
-	}
+        vmwareWriteCursorRegs(pVMWARE, FALSE, TRUE);
     }
+    pVMWARE->cursorShouldBeHidden = TRUE;
+}
+
+/* disabled by default to reduce spew in DEBUG_LOGGING mode. */
+/* #define DEBUG_LOG_MOUSE_MOVE */
+
+static void
+vmwareSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
+{
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+#ifdef DEBUG_LOG_MOUSE_MOVE
+    VmwareLog(("Move: %d %d %d\n", pVMWARE->cursorSema, pVMWARE->cursorDefined,
+	       pVMWARE->cursorShouldBeHidden));
+#endif
+    /*
+     * We're bad people.  We have no concept of a frame (VMWAREAdjustFrame()
+     * is a NOP).  The hwcursor code expects us to be frame aware though, so
+     * we have to do this.  I'm open to suggestions.  I tried not even
+     * hooking AdjustFrame and it didn't help.
+     */
+    pVMWARE->hwcur.x = x + pScrn->frameX0;
+    pVMWARE->hwcur.y = y + pScrn->frameY0;
+    pVMWARE->hwcur.box.x1 = pVMWARE->hwcur.x;
+    pVMWARE->hwcur.box.x2 = pVMWARE->hwcur.x + pVMWARE->CursorInfoRec->MaxWidth;
+    pVMWARE->hwcur.box.y1 = pVMWARE->hwcur.y;
+    pVMWARE->hwcur.box.y2 = pVMWARE->hwcur.y + pVMWARE->CursorInfoRec->MaxHeight;
+
+    vmwareShowCursor(pScrn);
 }
 
 void
-vmwareClearSavedCursor(int scr_index)
+vmwareCursorModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
-    TRACEPOINT
-
-    vmwareSaveCursors[scr_index] = NULL;
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+    
+    if (pVMWARE->cursorDefined) {
+        vmwareWriteCursorRegs(pVMWARE, !pVMWARE->cursorShouldBeHidden, TRUE);
+    }
 }
 
+Bool
+vmwareCursorInit(ScreenPtr pScreen)
+{
+    xf86CursorInfoPtr infoPtr;
+    VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(pScreen));
+    Bool ret;
 
+    TRACEPOINT
+
+    /* Require cursor bypass for hwcursor.  Ignore deprecated FIFO hwcursor */
+    if (!(pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS)) {
+        return FALSE;
+    }
+
+    infoPtr = xf86CreateCursorInfoRec();
+    if (!infoPtr) 
+        return FALSE;
+
+    pVMWARE->CursorInfoRec = infoPtr;
+
+    infoPtr->MaxWidth = MAX_CURS;
+    infoPtr->MaxHeight = MAX_CURS;
+    infoPtr->Flags = HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+                     HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED;
+    infoPtr->SetCursorColors = vmwareSetCursorColors;
+    infoPtr->SetCursorPosition = vmwareSetCursorPosition;
+    infoPtr->LoadCursorImage = vmwareLoadCursorImage;
+    infoPtr->HideCursor = vmwareHideCursor;
+    infoPtr->ShowCursor = vmwareShowCursor;
+
+#ifdef ARGB_CURSOR
+    if (pVMWARE->vmwareCapability & SVGA_CAP_ALPHA_CURSOR) {
+        infoPtr->UseHWCursorARGB = vmwareUseHWCursorARGB;
+        infoPtr->LoadCursorARGB = vmwareLoadCursorARGB;
+    }
+#endif
+
+    ret = xf86InitCursor(pScreen, infoPtr);
+    if (!ret) {
+        xf86DestroyCursorInfoRec(infoPtr);
+        pVMWARE->CursorInfoRec = NULL;
+    }
+    return ret;
+}
+
+void
+vmwareCursorCloseScreen(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = infoFromScreen(pScreen);
+    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+#ifdef RENDER
+    PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
+#endif
+    
+    pScreen->GetImage = pVMWARE->ScrnFuncs.GetImage;
+    pScreen->CopyWindow = pVMWARE->ScrnFuncs.CopyWindow;
+#ifdef RENDER
+    if (ps) {
+        ps->Composite = pVMWARE->Composite;
+    }
+#endif /* RENDER */
+
+    vmwareHideCursor(pScrn);
+    xf86DestroyCursorInfoRec(pVMWARE->CursorInfoRec);
+}
+
+/***  Wrap functions that read from the framebuffer ***/
+
+void
+vmwareCursorHookWrappers(ScreenPtr pScreen)
+{
+    VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(pScreen));
+#ifdef RENDER
+    PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
+#endif
+
+    TRACEPOINT
+
+    pVMWARE->ScrnFuncs.GetImage = pScreen->GetImage;
+    pVMWARE->ScrnFuncs.CopyWindow = pScreen->CopyWindow;
+    pScreen->GetImage = VMWAREGetImage;
+    pScreen->CopyWindow = VMWARECopyWindow;
+
+#ifdef RENDER
+    if (ps) {
+        pVMWARE->Composite = ps->Composite;
+        ps->Composite = VMWAREComposite;
+    }
+#endif /* RENDER */
+
+}
+
+static void
+VMWAREGetImage(DrawablePtr src, int x, int y, int w, int h,
+               unsigned int format, unsigned long planeMask, char *pBinImage)
+{
+    ScreenPtr pScreen = src->pScreen;
+    VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(src->pScreen));
+    BoxRec box;
+    Bool hidden = FALSE;
+    
+    VmwareLog(("VMWAREGetImage(%p, %d, %d, %d, %d, %d, %d, %p)\n",
+               src, x, y, w, h, format, planeMask, pBinImage));
+
+    box.x1 = src->x + x;
+    box.y1 = src->y + y;
+    box.x2 = box.x1 + w;
+    box.y2 = box.y1 + h;
+
+    if (BOX_INTERSECT(box, pVMWARE->hwcur.box)) {
+        PRE_OP_HIDE_CURSOR();
+        hidden = TRUE;
+    }
+
+    pScreen->GetImage = pVMWARE->ScrnFuncs.GetImage;
+    (*pScreen->GetImage)(src, x, y, w, h, format, planeMask, pBinImage);
+    pScreen->GetImage = VMWAREGetImage;
+
+    if (hidden) {
+        POST_OP_SHOW_CURSOR();
+    }
+}
+
+static void
+VMWARECopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
+{
+    ScreenPtr pScreen = pWin->drawable.pScreen;
+    VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(pWin->drawable.pScreen));
+    BoxPtr pBB;
+    Bool hidden = FALSE;
+    
+    /*
+     * We only worry about the source region here, since shadowfb will
+     * take care of the destination region.
+     */
+    pBB = REGION_EXTENTS(pWin->drawable.pScreen, prgnSrc);
+
+    VmwareLog(("VMWARECopyWindow(%p, (%d, %d), (%d, %d - %d, %d)\n",
+               pWin, ptOldOrg.x, ptOldOrg.y,
+               pBB->x1, pBB->y1, pBB->x2, pBB->y2));
+    
+    if (BOX_INTERSECT(*pBB, pVMWARE->hwcur.box)) {
+        PRE_OP_HIDE_CURSOR();
+        hidden = TRUE;
+    }
+
+    pScreen->CopyWindow = pVMWARE->ScrnFuncs.CopyWindow;
+    (*pScreen->CopyWindow)(pWin, ptOldOrg, prgnSrc);
+    pScreen->CopyWindow = VMWARECopyWindow;
+    
+    if (hidden) {
+        POST_OP_SHOW_CURSOR();
+    }
+}
+
+#ifdef RENDER
+static void
+VMWAREComposite(CARD8 op, PicturePtr pSrc, PicturePtr pMask,
+		PicturePtr pDst, INT16 xSrc, INT16 ySrc,
+		INT16 xMask, INT16 yMask, INT16 xDst, INT16 yDst,
+		CARD16 width, CARD16 height)
+{
+    ScreenPtr pScreen = pDst->pDrawable->pScreen;
+    VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(pScreen));
+    PictureScreenPtr ps = GetPictureScreen(pScreen);
+    BoxRec box;
+    Bool hidden = FALSE;
+    
+    VmwareLog(("VMWAREComposite op = %d, pSrc = %p, pMask = %p, pDst = %p,"
+               " src = (%d, %d), mask = (%d, %d), dst = (%d, %d), w = %d,"
+               " h = %d\n", op, pSrc, pMask, pDst, xSrc, ySrc, xMask, yMask,
+               xDst, yDst, width, height));
+
+    /*
+     * We only worry about the source region here, since shadowfb or XAA will
+     * take care of the destination region.
+     */
+    box.x1 = pSrc->pDrawable->x + xSrc;
+    box.y1 = pSrc->pDrawable->y + ySrc;
+    box.x2 = box.x1 + width;
+    box.y2 = box.y1 + height;
+
+    if (BOX_INTERSECT(box, pVMWARE->hwcur.box)) {
+        PRE_OP_HIDE_CURSOR();
+        hidden = TRUE;
+    }
+    
+    ps->Composite = pVMWARE->Composite;
+    (*ps->Composite)(op, pSrc, pMask, pDst, xSrc, ySrc,
+		     xMask, yMask, xDst, yDst, width, height);
+    ps->Composite = VMWAREComposite;
+
+    if (hidden) {
+        POST_OP_SHOW_CURSOR();
+    }
+}
+#endif /* RENDER */

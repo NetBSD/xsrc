@@ -2,7 +2,7 @@
  *  video4linux Xv Driver 
  *  based on Michael Schimek's permedia 2 driver.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/v4l.c,v 1.29 2001/10/31 22:50:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/v4l.c,v 1.30 2002/05/14 20:19:53 alanh Exp $ */
 
 #include "videodev.h"
 #include "xf86.h"
@@ -132,7 +132,7 @@ typedef struct _PortPrivRec {
     XF86OffscreenImagePtr       format;   /* list */
     int                         nformat;  /* # if list entries */
     XF86OffscreenImagePtr       myfmt;    /* which one is YUY2 (packed) */
-    int                         have_yuv;
+    int                         yuv_format;
 
     int                         yuv_width,yuv_height;
     XF86SurfacePtr              surface;
@@ -286,7 +286,7 @@ V4lPutVideo(ScrnInfoPtr pScrn,
 	    return Success;
     }
 
-    if (pPPriv->have_yuv) {
+    if (0 != pPPriv->yuv_format) {
 	DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv/PV yuv\n"));
 	width  = pPPriv->enc[pPPriv->cenc].width;
         height = pPPriv->enc[pPPriv->cenc].height/2; /* no interlace */
@@ -338,7 +338,7 @@ V4lPutVideo(ScrnInfoPtr pScrn,
 	    perror("ioctl VIDIOCSFBUF");
 	if (-1 == ioctl(V4L_FD,VIDIOCGPICT,&pPPriv->pict))
 	    perror("ioctl VIDIOCGPICT");
-	pPPriv->pict.palette = VIDEO_PALETTE_YUV422;
+	pPPriv->pict.palette = pPPriv->yuv_format;
 	pPPriv->pict.depth   = 16;
 	if (-1 == ioctl(V4L_FD,VIDIOCSPICT,&pPPriv->pict))
 	    perror("ioctl VIDIOCSPICT");
@@ -585,7 +585,7 @@ V4lSetPortAttribute(ScrnInfoPtr pScrn,
     } else if (attribute == xvFreq) {
 	if (-1 == ioctl(V4L_FD,VIDIOCSFREQ,&value))
 	    perror("ioctl VIDIOCSFREQ");
-    } else if (pPPriv->have_yuv &&
+    } else if (0 != pPPriv->yuv_format &&
 	       pPPriv->myfmt->setAttribute) {
 	/* not mine -> pass to yuv scaler driver */
 	ret = pPPriv->myfmt->setAttribute(pScrn, attribute, value);
@@ -636,7 +636,7 @@ V4lGetPortAttribute(ScrnInfoPtr pScrn,
 	}
     } else if (attribute == xvFreq) {
 	ioctl(V4L_FD,VIDIOCGFREQ,value);
-    } else if (pPPriv->have_yuv &&
+    } else if (0 != pPPriv->yuv_format &&
 	       pPPriv->myfmt->getAttribute) {
 	/* not mine -> pass to yuv scaler driver */
 	ret = pPPriv->myfmt->getAttribute(pScrn, attribute, value);
@@ -660,7 +660,7 @@ V4lQueryBestSize(ScrnInfoPtr pScrn, Bool motion,
     int maxx = pPPriv->enc[pPPriv->cenc].width;
     int maxy = pPPriv->enc[pPPriv->cenc].height;
 
-    if (pPPriv->have_yuv) {
+    if (0 != pPPriv->yuv_format) {
 	*p_w = pPPriv->myfmt->max_width;
 	*p_h = pPPriv->myfmt->max_height;
     } else {
@@ -838,10 +838,54 @@ v4l_add_attr(XF86AttributeRec **list, int *count,
     (*count)++;
 }
 
+/* setup yuv overlay + hw scaling: look if we find some common video
+   format which both v4l driver and the X-Server can handle */
+static void v4l_check_yuv(ScrnInfoPtr pScrn, PortPrivPtr pPPriv,
+			  char *dev, int fd)
+{
+    static const struct {
+	unsigned int  v4l_palette;
+	unsigned int  v4l_depth;
+	unsigned int  xv_id;
+	unsigned int  xv_format;
+    } yuvlist[] = {
+	{ VIDEO_PALETTE_YUV422, 16, 0x32595559, XvPacked },
+	{ VIDEO_PALETTE_UYVY,   16, 0x59565955, XvPacked },
+	{ 0 /* end of list */ },
+    };
+    ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
+    int fmt,i;
+
+    pPPriv->format = xf86XVQueryOffscreenImages(pScreen,&pPPriv->nformat);
+    for (fmt = 0; yuvlist[fmt].v4l_palette != 0; fmt++) {
+	/* check v4l ... */
+	ioctl(fd,VIDIOCGPICT,&pPPriv->pict);
+	pPPriv->pict.palette = yuvlist[fmt].v4l_palette;
+	pPPriv->pict.depth   = yuvlist[fmt].v4l_depth;
+	if (-1 == ioctl(fd,VIDIOCSPICT,&pPPriv->pict))
+	    continue;
+	ioctl(fd,VIDIOCGPICT,&pPPriv->pict);
+	if (pPPriv->pict.palette != yuvlist[fmt].v4l_palette)
+	    continue;
+	/* ... works, check available offscreen image formats now ... */
+	for (i = 0; i < pPPriv->nformat; i++) {
+	    if (pPPriv->format[i].image->id     == yuvlist[fmt].xv_id &&
+		pPPriv->format[i].image->format == yuvlist[fmt].xv_format) {
+		/* ... match found, good. */
+		pPPriv->yuv_format = yuvlist[fmt].v4l_palette;
+		pPPriv->myfmt = pPPriv->format+i;
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "v4l[%s]: using hw video scaling [%4.4s].\n",
+			   dev,(char*)&(pPPriv->format[i].image->id));
+		return;
+	    }
+	}
+    }
+}
+
 static int
 V4LInit(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr **adaptors)
 {
-    ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
     PortPrivPtr pPPriv;
     DevUnion *Private;
     XF86VideoAdaptorPtr *VAR = NULL;
@@ -880,35 +924,7 @@ V4LInit(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr **adaptors)
 	V4LBuildEncodings(pPPriv,fd,pPPriv->cap.channels);
 	if (NULL == pPPriv->enc)
 	    return FALSE;
-
-#if 1
-	/* test v4l device for yuv support:  check if the driver
-	   accepts VIDEO_PALETTE_YUV422 */
-	ioctl(fd,VIDIOCGPICT,&pPPriv->pict);
-	pPPriv->pict.palette = VIDEO_PALETTE_YUV422;
-	pPPriv->pict.depth   = 16;
-	if (0 == ioctl(fd,VIDIOCSPICT,&pPPriv->pict)) {
-	    ioctl(fd,VIDIOCGPICT,&pPPriv->pict);    
-	    if (VIDEO_PALETTE_YUV422 == pPPriv->pict.palette) {
-		/* works, check screen capabilities */
-		DEBUG(xf86Msg(X_INFO, "v4l: kernel driver supports yuv422.\n"));
-		pPPriv->format = xf86XVQueryOffscreenImages
-		    (pScreen,&pPPriv->nformat);
-		DEBUG(xf86Msg(X_INFO, "v4l: screen driver supports %d yuv formats (%p)\n",
-			      pPPriv->nformat,pPPriv->format));
-		for (j = 0; j < pPPriv->nformat; j++) {
-		    DEBUG(xf86Msg(X_INFO, "v4l: yuv format: %4.4s\n",
-				  (char*)&(pPPriv->format[j].image->id)));
-		    if (pPPriv->format[j].image->id     == 0x32595559 &&
-			pPPriv->format[j].image->format == XvPacked) {
-			pPPriv->have_yuv = 1;
-			pPPriv->myfmt = pPPriv->format+j;
-			DEBUG(xf86Msg(X_INFO,  "v4l: matching format found, offscreen yuv enabled.\n"));
-		    }
-		}
-	    }
-	}
-#endif
+	v4l_check_yuv(pScrn,pPPriv,dev,fd);
 	
 	/* alloc VideoAdaptorRec */
 	VAR = xrealloc(VAR,sizeof(XF86VideoAdaptorPtr)*(i+1));
@@ -938,7 +954,7 @@ V4LInit(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr **adaptors)
 	    v4l_add_attr(&VAR[i]->pAttributes, &VAR[i]->nAttributes,
 			 &FreqAttr);
 	}
-	if (pPPriv->have_yuv) {
+	if (0 != pPPriv->yuv_format) {
 	    /* pass throuth scaler attributes */
 	    for (j = 0; j < pPPriv->myfmt->num_attributes; j++) {
 		v4l_add_attr(&VAR[i]->pAttributes, &VAR[i]->nAttributes,

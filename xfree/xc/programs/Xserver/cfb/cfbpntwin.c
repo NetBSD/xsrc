@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.6 2001/12/14 19:59:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.7 2002/09/16 18:05:31 eich Exp $ */
 
 #include "X.h"
 
@@ -293,7 +293,8 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
 	      break;
 	    case 1:
 	      while(h--){
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
 		*pdst   = piQxelArray[2];
 		pdst -=2;
@@ -302,7 +303,8 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
 	      break;
 	    case 2:
 	      while(h--){
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
 		*pdst-- = piQxelArray[2];
 		pdst += widthDst;
 	      }
@@ -321,24 +323,29 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
 	      while(h--){
 		*pdst++ = piQxelArray[0];
 		*pdst++ = piQxelArray[1];
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst--;
 		pdst += widthDst;
 	      }
 	      break;
 	    case 1:
 	      while(h--){
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst--;
 		pdst += widthDst;
 	      }
 	      break;
 	    case 2:
 	      while(h--){
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst += widthDst;
 	      }
 	      break;
@@ -347,12 +354,14 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
 	  case 2:
 	    while(h--){
 	      if(leftIndex){
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 	      }
 	      else{
 		*pdst++ = piQxelArray[0];
 	      }
-		*pdst-- = ((*pdst) & 0xFFFF0000) | (piQxelArray[1] & 0xFFFF);
+		*pdst = ((*pdst) & 0xFFFF0000) | (piQxelArray[1] & 0xFFFF);
+		pdst--;
 		pdst += widthDst;
 	    }
 	    break;
@@ -376,16 +385,19 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
 	      case 0:
 		break;
 	      case 1:
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
 		*pdst++ = piQxelArray[2];
 	        break;
 	      case 2:
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
 		*pdst++ = piQxelArray[2];
 	        break;
 	      case 3:
-		*pdst++ = ((*pdst) & 0xFF) | (piQxelArray[2] & 0xFFFFFF00);
+		*pdst = ((*pdst) & 0xFF) | (piQxelArray[2] & 0xFFFFFF00);
+		pdst++;
 	        break;
 	      }
 	      while(nmiddle--){
@@ -544,7 +556,8 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	    case 1:
 	      while(h--){
 		  StepTile
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
 		*pdst   = piQxelArray[2];
 		pdst-=2;
@@ -554,7 +567,8 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	    case 2:
 	      while(h--){
 		  StepTile
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
 		*pdst--   = piQxelArray[2];
 		pdst += widthDst;
 	      }
@@ -575,7 +589,8 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 		  StepTile
 		*pdst++ = piQxelArray[0];
 		*pdst++ = piQxelArray[1];
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst--;
 		pdst += widthDst;
 	      }
@@ -583,9 +598,11 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	    case 1:
 	      while(h--){
 		  StepTile
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst--;
 		pdst += widthDst;
 	      }
@@ -593,8 +610,10 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	    case 2:
 	      while(h--){
 		  StepTile
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
-		*pdst-- = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
+		*pdst = ((*pdst) & 0xFFFFFF00) | (piQxelArray[2] & 0xFF);
+		pdst--;
 		pdst += widthDst;
 	      }
 	      break;
@@ -604,12 +623,14 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	    while(h--){
 		  StepTile
 	      if(leftIndex){
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 	      }
 	      else{
 		*pdst++ = piQxelArray[0];
 	      }
-		*pdst-- = ((*pdst) & 0xFFFF0000) | (piQxelArray[1] & 0xFFFF);
+		*pdst = ((*pdst) & 0xFFFF0000) | (piQxelArray[1] & 0xFFFF);
+		pdst--;
 		pdst += widthDst;
 	    }
 	    break;
@@ -635,16 +656,19 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
 	      case 0:
 		break;
 	      case 1:
-		*pdst++ = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		*pdst = ((*pdst) & 0xFFFFFF) | (piQxelArray[0] & 0xFF000000);
+		pdst++;
 		*pdst++ = piQxelArray[1];
 		*pdst++ = piQxelArray[2];
 	        break;
 	      case 2:
-		*pdst++ = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		*pdst = ((*pdst) & 0xFFFF) | (piQxelArray[1] & 0xFFFF0000);
+		pdst++;
 		*pdst++ = piQxelArray[2];
 	        break;
 	      case 3:
-		*pdst++ = ((*pdst) & 0xFF) | (piQxelArray[2] & 0xFFFFFF00);
+		*pdst = ((*pdst) & 0xFF) | (piQxelArray[2] & 0xFFFFFF00);
+		pdst++;
 	        break;
 	      }
 	      while(nmiddle--){

@@ -50,7 +50,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.11 2001/12/14 19:56:45 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.12 2002/09/10 16:14:34 tsi Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>
@@ -602,6 +602,7 @@ bdfReadProperties(FontFilePtr file, FontPtr pFont, bdfFileState *pState)
     }
     pFont->info.isStringProp = NULL;
     pFont->info.props = NULL;
+    pFont->info.nprops = 0;
 
     stringProps = (char *) xalloc((nProps + BDF_GENPROPS) * sizeof(char));
     pFont->info.isStringProp = stringProps;

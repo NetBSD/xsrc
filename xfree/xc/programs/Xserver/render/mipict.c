@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.10 2001/07/19 04:42:10 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.14 2002/11/06 22:45:36 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -268,8 +268,8 @@ miClipPictureReg (RegionPtr	pRegion,
 	    pRbox->y1 = BOUND(v);
 	if (pRbox->y2 > (v = pCbox->y2 + dy))
 	    pRbox->y2 = BOUND(v);
-	if (pRbox->x1 > pRbox->x2 ||
-	    pRbox->y1 > pRbox->y2)
+	if (pRbox->x1 >= pRbox->x2 ||
+	    pRbox->y1 >= pRbox->y2)
 	{
 	    REGION_EMPTY(pScreen, pRegion);
 	}
@@ -290,6 +290,9 @@ miClipPictureSrc (RegionPtr	pRegion,
 		  int		dx,
 		  int		dy)
 {
+    /* XXX what to do with clipping from transformed pictures? */
+    if (pPicture->transform)
+	return TRUE;
     if (pPicture->repeat)
     {
 	if (pPicture->clientClipType != CT_NONE)
@@ -338,6 +341,13 @@ miComputeCompositeRegion (RegionPtr	pRegion,
     v = yDst + height;
     pRegion->extents.y2 = BOUND(v);
     pRegion->data = 0;
+    /* Check for empty operation */
+    if (pRegion->extents.x1 >= pRegion->extents.x2 ||
+	pRegion->extents.y1 >= pRegion->extents.y2)
+    {
+	REGION_EMPTY (pDst->pDrawable->pScreen, pRegion);
+	return TRUE;
+    }
     /* clip against src */
     if (!miClipPictureSrc (pRegion, pSrc, xDst - xSrc, yDst - ySrc))
     {
@@ -412,7 +422,7 @@ miRenderColorToPixel (PictFormatPtr format,
 	*pixel = r|g|b|a;
 	break;
     case PictTypeIndexed:
-	pIndexed = (miIndexedPtr) (format->indexed);
+	pIndexed = (miIndexedPtr) (format->index.devPrivate);
 	if (pIndexed->color)
 	{
 	    r = color->red >> 11;
@@ -462,7 +472,7 @@ miRenderPixelToColor (PictFormatPtr format,
 	color->alpha = miFillColor (r, Ones (format->direct.alphaMask));
 	break;
     case PictTypeIndexed:
-	pIndexed = (miIndexedPtr) (format->indexed);
+	pIndexed = (miIndexedPtr) (format->index.devPrivate);
 	pixel = pIndexed->rgba[pixel & (MI_MAX_INDEXED-1)];
 	r = (pixel >> 16) & 0xff;
 	g = (pixel >>  8) & 0xff;
@@ -492,5 +502,15 @@ miPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
     ps->InitIndexed = miInitIndexed;
     ps->CloseIndexed = miCloseIndexed;
     ps->UpdateIndexed = miUpdateIndexed;
+
+    /* MI rendering routines */
+    ps->Composite	= 0;			/* requires DDX support */
+    ps->Glyphs		= miGlyphs;
+    ps->CompositeRects	= miCompositeRects;
+    ps->Trapezoids	= miTrapezoids;
+    ps->Triangles	= miTriangles;
+    ps->TriStrip	= miTriStrip;
+    ps->TriFan		= miTriFan;
+    
     return TRUE;
 }

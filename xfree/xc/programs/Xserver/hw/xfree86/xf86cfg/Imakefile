@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.20 2001/07/09 23:45:24 paulo Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.22 2003/02/26 20:08:03 dawes Exp $
 
 XCOMM CDEBUGFLAGS=-g -Wall -ansi -pedantic
 
@@ -82,7 +82,7 @@ AllTarget(ProgramTargetName($(PROG)))
 #if DoLoadableServer
 LOADERLIB      = -L../loader -lxloader -L../dummylib -ldummy
 MODULEDEFINES  = -DUSE_MODULES
-INCLUDES       = -I../common -I../loader -I$(XF86OSSRC) \
+INCLUDES       = -I../common -I../scanpci -I../loader -I$(XF86OSSRC) \
 		 -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
 		 -I$(FONTLIBSRC)/include
 #if !HasSnprintf
@@ -96,11 +96,16 @@ CURSESLIB = NCursesLibName
 CURSESDEFINES  = -DHAS_NCURSES
 #endif
 
+#if HasGlibc21Sigsetjmp
+SETJMPDEFINES = -DHAS_GLIBC_SIGSETJMP=1
+#endif
+
 XF86CONFIGFILE = XConfigFile
 XF86CONFIGDIR = XConfigDir
 
 DEFINES        = -DXF86CONFIG=\"$(XF86CONFIGFILE)\" $(MODULEDEFINES) \
-		 $(CURSESDEFINES) -DPROJECT_ROOT=\"$(PROJECTROOT)\" \
+		 $(CURSESDEFINES) $(SETJMPDEFINES) \
+		 -DPROJECT_ROOT=\"$(PROJECTROOT)\" \
 		 -DXF86CONFIGDIR=\"$(XF86CONFIGDIR)\" XFree86ConsoleDefines
 
 #if HasDlopen

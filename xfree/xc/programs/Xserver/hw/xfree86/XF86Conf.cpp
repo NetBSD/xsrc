@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.44 2001/12/17 20:52:29 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.45 2003/02/20 04:05:12 dawes Exp $
 XCOMM
 XCOMM Copyright (c) 1994-1998 by The XFree86 Project, Inc.
 XCOMM
@@ -106,6 +106,12 @@ XCOMM received.  This may leave the console in an unusable state, but may
 XCOMM provide a better stack trace in the core dump to aid in debugging
 
 XCOMM    Option	"NoTrapSignals"
+
+XCOMM Uncomment this to disable the <Crtl><Alt><Fn> VT switch sequence
+XCOMM (where n is 1 through 12).  This allows clients to receive these key
+XCOMM events.
+
+XCOMM    Option	"DontVTSwitch"
 
 XCOMM Uncomment this to disable the <Crtl><Alt><BS> server abort sequence
 XCOMM This allows clients to receive this key event.

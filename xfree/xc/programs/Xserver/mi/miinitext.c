@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.63 2001/12/14 20:00:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.68 2003/01/15 02:34:14 torrey Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -76,26 +76,30 @@ typedef void (*InitExtension)(INITARGS);
 #include "loaderProcs.h"
 #endif
 
-#include <X11/Xlib.h>
 #ifdef MITSHM
+#define _XSHM_SERVER_
 #include "shmstr.h"
 #endif
 #ifdef XTEST
+#define _XTEST_SERVER_
 #include "XTest.h"
 #endif
 #ifdef XKB
 #include "XKB.h"
 #endif
 #ifdef LBX
+#define _XLBX_SERVER_
 #include "lbxstr.h"
 #endif
 #ifdef XPRINT
 #include "Print.h"
 #endif
 #ifdef XAPPGROUP
+#define _XAG_SERVER_
 #include "Xagstr.h"
 #endif
 #ifdef XCSECURITY
+#define _SECURITY_SERVER
 #include "securstr.h"
 #endif
 #ifdef PANORAMIX
@@ -103,6 +107,9 @@ typedef void (*InitExtension)(INITARGS);
 #endif
 #ifdef XF86BIGFONT
 #include "xf86bigfstr.h"
+#endif
+#ifdef RES
+#include "XResproto.h"
 #endif
 
 /* FIXME: this whole block of externs should be from the appropriate headers */
@@ -198,8 +205,13 @@ extern void XFree86MiscExtensionInit(INITARGS);
 extern void XFree86DGAExtensionInit(INITARGS);
 #endif
 #ifdef GLXEXT
+#ifndef __DARWIN__
 extern void GlxExtensionInit(INITARGS);
 extern void GlxWrapInitVisuals(miInitVisualsProcPtr *);
+#else
+extern void DarwinGlxExtensionInit(INITARGS);
+extern void DarwinGlxWrapInitVisuals(miInitVisualsProcPtr *);
+#endif
 #endif
 #ifdef XF86DRI
 extern void XFree86DRIExtensionInit(INITARGS);
@@ -221,6 +233,9 @@ extern void RenderExtensionInit(INITARGS);
 #endif
 #ifdef RANDR
 extern void RRExtensionInit(INITARGS);
+#endif
+#ifdef RES
+extern void ResExtensionInit(INITARGS);
 #endif
 
 #ifndef XFree86LOADER
@@ -340,7 +355,11 @@ InitExtensions(argc, argv)
 #endif
 #ifdef GLXEXT
 #ifndef XPRINT	/* we don't want Glx in the Xprint server */
+#ifndef __DARWIN__
     GlxExtensionInit();
+#else
+    DarwinGlxExtensionInit();
+#endif
 #endif
 #endif
 #ifdef DPSEXT
@@ -354,6 +373,9 @@ InitExtensions(argc, argv)
 #ifdef RANDR
     RRExtensionInit();
 #endif
+#ifdef RES
+    ResExtensionInit();
+#endif
 }
 
 void
@@ -362,7 +384,11 @@ InitVisualWrap()
     miResetInitVisuals();
 #ifdef GLXEXT
 #ifndef XPRINT
+#ifndef __DARWIN__
     GlxWrapInitVisuals(&miInitVisualsProc);
+#else
+    DarwinGlxWrapInitVisuals(&miInitVisualsProc);
+#endif
 #endif
 #endif
 }
@@ -421,6 +447,7 @@ ExtensionModule extension[] =
     { NULL, "FontCache", NULL, NULL },
     { NULL, "RENDER", NULL, NULL },
     { NULL, "RANDR", NULL, NULL },
+    { NULL, "X-Resource", NULL, NULL },
     { NULL, NULL, NULL, NULL }
 };
 #endif

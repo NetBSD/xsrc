@@ -31,13 +31,13 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * 
- * $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_client.h,v 1.2 2000/02/23 04:46:41 martin Exp $
+ * $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_client.h,v 1.3 2002/02/22 21:33:00 dawes Exp $
  * 
  */
 
 #define AreaStippleEnable          0x00001
 #define LineStippleEnable          0x00002
-#define ResetLineStipple           0x00004
+#define GResetLineStipple          0x00004
 #define FastFillEnable             0x00008
 #define PrimitiveLine              0x00000
 #define PrimitiveTrapezoid         0x00040

@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+/* $XFree86: xc/programs/luit/iso2022.h,v 1.5 2002/10/17 01:06:09 dawes Exp $ */
 
 #define ESC 0x1B
 #define CSI 0x9B
@@ -49,6 +50,7 @@ THE SOFTWARE.
 #define IF_SS 1
 #define IF_LS 2
 #define IF_EIGHTBIT 4
+#define IF_SSGR 8
 
 #define OF_SS 1
 #define OF_LS 2
@@ -58,6 +60,7 @@ THE SOFTWARE.
 typedef struct _Iso2022 {
     CharsetPtr *glp, *grp;
     CharsetPtr g[4];
+    CharsetPtr other;
     int parserState;
     int shiftState;
     int inputFlags;
@@ -76,12 +79,13 @@ typedef struct _Iso2022 {
 #define G1(i) ((i)->g[1])
 #define G2(i) ((i)->g[2])
 #define G3(i) ((i)->g[3])
+#define OTHER(i) ((i)->other)
 
 #define BUFFER_SIZE 512
 
 Iso2022Ptr allocIso2022(void);
 void destroyIso2022(Iso2022Ptr);
-int initIso2022(char *locale, Iso2022Ptr);
+int initIso2022(char *, char *, Iso2022Ptr);
 int mergeIso2022(Iso2022Ptr, Iso2022Ptr);
 void reportIso2022(Iso2022Ptr);
 void terminate(Iso2022Ptr, int);

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuLock.c,v 3.5 2001/12/14 19:54:36 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuLock.c,v 3.6 2002/05/31 18:45:43 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>
@@ -42,7 +42,7 @@ extern unsigned	sleep ();
 #define link rename
 #endif
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define link rename
 #endif
 

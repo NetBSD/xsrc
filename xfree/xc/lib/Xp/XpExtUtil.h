@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xp/XpExtUtil.h,v 1.2 2001/08/01 00:44:40 tsi Exp $ */
+/* $XFree86: xc/lib/Xp/XpExtUtil.h,v 1.3 2002/10/16 00:37:31 dawes Exp $ */
 /*
  * Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -29,7 +29,7 @@
 #define _XPEXTUTIL_H 1
 
 #include <X11/Xfuncproto.h>
-#include "extutil.h"
+#include <X11/extensions/extutil.h>
 
 extern XEXT_FIND_DISPLAY_PROTO(xp_find_display);
 

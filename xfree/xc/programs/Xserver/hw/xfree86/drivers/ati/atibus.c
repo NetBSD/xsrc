@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.16 2002/01/16 16:22:25 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.18 2003/01/22 21:44:10 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -136,10 +136,14 @@ ATIClaimResources
 #endif /* AVOID_CPIO */
 
     /* Register unshared relocatable resources for inactive adapters */
-    pResources = xf86RegisterResources(pATI->iEntity, NULL, ResExclusive);
-    pResources = xf86ReallocatePciResources(pATI->iEntity, pResources);
-    if (!pResources)
-        return;
+    do
+    {
+        pResources = xf86RegisterResources(pATI->iEntity, NULL, ResExclusive);
+        if (!pResources)
+            return;
+
+        pResources = xf86ReallocatePciResources(pATI->iEntity, pResources);
+    } while (!pResources);
 
     xf86Msg(X_WARNING,
         ATI_NAME ":  Unable to register the following resources for inactive"

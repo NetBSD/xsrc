@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -27,10 +27,9 @@
 #ifndef XFONTS_H
 #define XFONTS_H
 
-#ifdef VMS
-#include <vms_x_fix.h>
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
 #endif
-
 
 #include <X11/Xlib.h>
 

@@ -32,6 +32,8 @@
 # 	make TREE=/usr/my-kernel-tree/include
 #
 
+SHELL=/bin/sh
+
 .SUFFIXES:
 
 # *** Setup
@@ -44,7 +46,8 @@ LIBS =
 DRMTEMPLATES =	drm_auth.h drm_bufs.h drm_context.h drm_dma.h drm_drawable.h \
 		drm_drv.h drm_fops.h drm_init.h drm_ioctl.h drm_lists.h \
 		drm_lock.h drm_memory.h drm_proc.h drm_stub.h drm_vm.h
-DRMHEADERS =	drm.h drmP.h
+DRMSHARED =	drm_sarea.h
+DRMHEADERS =	drm.h drmP.h $(DRMSHARED)
 
 GAMMAOBJS =	gamma_drv.o gamma_dma.o
 GAMMAHEADERS =	gamma_drv.h $(DRMHEADERS) $(DRMTEMPLATES)
@@ -52,12 +55,16 @@ GAMMAHEADERS =	gamma_drv.h $(DRMHEADERS) $(DRMTEMPLATES)
 TDFXOBJS =	tdfx_drv.o
 TDFXHEADERS =	tdfx.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-R128OBJS =	r128_drv.o r128_cce.o r128_state.o
+R128OBJS =	r128_drv.o r128_cce.o r128_state.o r128_irq.o
 R128HEADERS =	r128.h r128_drv.h r128_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
+R128SHARED =	r128.h r128_drv.h r128_drm.h r128_cce.c r128_state.c r128_irq.c
 
-RADEONOBJS =	radeon_drv.o radeon_cp.o radeon_state.o
+RADEONOBJS =	radeon_drv.o radeon_cp.o radeon_state.o radeon_mem.o \
+		radeon_irq.o
 RADEONHEADERS =	radeon.h radeon_drv.h radeon_drm.h $(DRMHEADERS) \
 		$(DRMTEMPLATES)
+RADEONSHARED =	radeon.h radeon_drv.h radeon_drm.h radeon_cp.c radeon_irq.c \
+		radeon_mem.c radeon_state.c
 
 INC =		/usr/include
 
@@ -66,7 +73,7 @@ WARNINGS =	-Wall -Wwrite-strings -Wpointer-arith -Wcast-align \
 		-Wstrict-prototypes -Wnested-externs \
 		-Wpointer-arith
 # -Wshadow -Winline -- make output too noisy
-MODCFLAGS =	$(CFLAGS) -D__KERNEL__ -DMODULE -fomit-frame-pointer
+MODCFLAGS =	$(CFLAGS) -D__KERNEL__ -DMODULE -fomit-frame-pointer -fno-strict-aliasing
 PRGCFLAGS =	$(CFLAGS) -g -ansi -pedantic -DPOSIX_C_SOURCE=199309L \
 		-D_POSIX_SOURCE -D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE \
 		-I../../../../../../include -I../../../../../../../../include \
@@ -81,6 +88,9 @@ PRGLIBS =
 # This may not be correct, but it is the best assumption we can make.
 
 VERSION := $(shell uname -r)
+# For Red Hat...
+RHVERS := $(shell uname -r)custom
+
 A := /lib/modules/$(VERSION)/build/include
 B := /usr/src/linux-$(VERSION)/include
 C := /usr/src/linux/include
@@ -91,22 +101,30 @@ V := $(shell gcc -E -nostdinc -I$A picker.c 2>/dev/null \
 ifeq ($(V),"$(VERSION)")
 TREE := $A
 else
+ifeq ($(V),"$(RHVERS)")
+  TREE := $A
+else
   V := $(shell gcc -E -nostdinc -I$B picker.c 2>/dev/null \
         | grep -s 'RELEASE = ' | cut -d' ' -f3)
 ifeq ($(V),"$(VERSION)")
-  TREE := $B
+    TREE := $B
 else
-    V := $(shell gcc -E -nostdinc -I$C picker.c 2>/dev/null \
+ifeq ($(V),"$(RHVERS)")
+      TREE := $B
+else
+      V := $(shell gcc -E -nostdinc -I$C picker.c 2>/dev/null \
           | grep -s 'RELEASE = ' | cut -d' ' -f3)
 ifeq ($(V),"$(VERSION)")
-  TREE := $C
+        TREE := $C
 else
-    V := $(shell gcc -E -nostdinc -I$D picker.c 2>/dev/null \
+        V := $(shell gcc -E -nostdinc -I$D picker.c 2>/dev/null \
           | grep -s 'RELEASE = ' | cut -d' ' -f3)
 ifeq ($(V),"$(VERSION)")
-    TREE := $D
+          TREE := $D
 else
-    TREE := 0
+          TREE := 0
+endif
+endif
 endif
 endif
 endif
@@ -124,11 +142,16 @@ MODVERSIONS := $(shell gcc -E -nostdinc -I$(TREE) picker.c 2>/dev/null \
 AGP := $(shell gcc -E -nostdinc -I$(TREE) picker.c 2>/dev/null \
 	| grep -s 'AGP = ' | cut -d' ' -f3)
 MACHINE := $(shell echo `uname -m`)
+# Red Hat's kernels have 4 args to do_munmap()
+DOMUNMAP := $(shell grep do_munmap $(TREE)/linux/mm.h | grep -c acct)
 ifeq ($(AGP),0)
 AGP := $(shell gcc -E -nostdinc -I$(TREE) picker.c 2>/dev/null \
 	| grep -s 'AGP_MODULE = ' | cut -d' ' -f3)
 endif
 
+ifeq ($(DOMUNMAP),1)
+MODCFLAGS += -DDO_MUNMAP_4_ARGS
+endif
 ifeq ($(AGP),1)
 MODCFLAGS += -DCONFIG_AGP -DCONFIG_AGP_MODULE
 DRMTEMPLATES += drm_agpsupport.h
@@ -142,13 +165,15 @@ MODS += i810.o
 MODS += i830.o
 endif
 
-MGAOBJS =	mga_drv.o mga_dma.o mga_state.o mga_warp.o
+MGAOBJS =	mga_drv.o mga_dma.o mga_state.o mga_warp.o mga_irq.o
 MGAHEADERS =	mga.h mga_drv.h mga_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
+MGASHARED =	mga.h mga_dma.c mga_drm.h mga_drv.h mga_state.c \
+		mga_ucode.h mga_warp.c
 
 I810OBJS =	i810_drv.o i810_dma.o
 I810HEADERS =	i810.h i810_drv.h i810_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
 
-I830OBJS =	i830_drv.o i830_dma.o
+I830OBJS =	i830_drv.o i830_dma.o i830_irq.o
 I830HEADERS =	i830.h i830_drv.h i830_drm.h $(DRMHEADERS) $(DRMTEMPLATES)
 
 endif
@@ -156,6 +181,10 @@ endif
 ifeq ($(MACHINE),alpha)
 MODCFLAGS+=      -ffixed-8 -mno-fp-regs -mcpu=ev56 -Wa,-mev6 
 endif
+ifeq ($(MACHINE),x86_64)
+MODCFLAGS+=      -mcmodel=kernel
+endif
+
 
 MODS += sis.o
 
@@ -191,6 +220,15 @@ MODCFLAGS += -DMODVERSIONS -include $(TREE)/linux/modversions.h
 endif
 
 # **** End of configuration
+
+# Link in shared headers if needed
+
+SHAREDSRC = $(DRMSHARED) $(MGASHARED) $(R128SHARED) $(RADEONSHARED)
+SHAREDDIR = ../../../shared/drm/kernel
+
+$(SHAREDSRC):
+	@if [ ! -r $@ ]; then (rm -f $@; set -x; ln -s $(SHAREDDIR)/$@ .); fi
+
 
 dristat: dristat.c
 	$(CC) $(PRGCFLAGS) $< -o $@
@@ -254,13 +292,17 @@ ChangeLog:
 
 $(GAMMAOBJS): $(GAMMAHEADERS)
 $(TDFXOBJS): $(TDFXHEADERS)
+$(R128OBJS): $(R128HEADERS)
+$(RADEONOBJS): $(RADEONHEADERS)
 ifeq ($(AGP),1)
 $(MGAOBJS): $(MGAHEADERS)
 $(I810OBJS): $(I810HEADERS)
 $(I830OBJS): $(I830HEADERS)
-$(R128OBJS): $(R128HEADERS)
-$(RADEONOBJS): $(RADEONHEADERS)
 endif
 
 clean cleandir::
 	rm -f *.o *.a *~ core
+	@for i in $(SHAREDSRC); do \
+		if [ -L $$i ]; then (set -x; rm -f $$i); fi; \
+	done
+

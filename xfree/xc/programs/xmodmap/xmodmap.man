@@ -24,7 +24,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.10 2001/12/14 20:02:13 dawes Exp $
+.\" $XFree86: xc/programs/xmodmap/xmodmap.man,v 1.11 2002/10/12 16:06:48 herrb Exp $
 .\" 
 .de EX		\"Begin example
 .ne 5
@@ -122,9 +122,13 @@ conflicts.
 .B keycode \fINUMBER\fP = \fIKEYSYMNAME ...\fP
 The list of keysyms is assigned to the indicated keycode 
 (which may be specified in decimal, hex or octal and can be determined by 
-running the 
-.I xev 
-program.
+running the
+.I xev
+program.  Up to eight keysyms may be attached to a key, however the last four
+are not used in any major X server implementation.  The first keysym is used
+when no modifier key is pressed in conjunction with this key, the second with
+Shift, the third when the Mode_Switch key is used with this key and the fourth
+when both the Mode_Switch and Shift keys are used.
 .TP 8
 .B keycode any = \fIKEYSYMNAME ...\fP
 If no existing key has the specified list of keysyms assigned to it,
@@ -136,10 +140,9 @@ The \fIKEYSYMNAME\fP on the left hand side is translated into matching keycodes
 used to perform the corresponding set of \fBkeycode\fP expressions.
 The list of keysym names may be
 found in the header file \fI<X11/keysymdef.h>\fP (without the \fIXK_\fP prefix)
-or the keysym database \fI<XRoot>/lib/X11/XKeysymDB\fP, where <XRoot> refers
-to the root of the X11 install tree.
-Note that if the same keysym is bound to multiple keys, the expression is
-executed for each matching keycode.
+or the keysym database \fI__projectroot__/lib/X11/XKeysymDB\fP.  Note that
+if the same keysym is bound to multiple keys, the expression is executed
+for each matching keycode.
 .TP 8
 .B clear \fIMODIFIERNAME\fP
 This removes all entries in the modifier map for the given modifier, where 

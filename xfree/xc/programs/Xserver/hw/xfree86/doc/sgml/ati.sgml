@@ -8,14 +8,14 @@
 
 <title>ATI Adapters README file
 <author>Marc Aurele La France
-<date>2001 April 10
+<date>2002 February 12
 
 
 
 
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.39 2002/01/16 16:25:54 tsi Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.43 2003/02/25 19:31:02 dawes Exp $
 </ident>
 
 <abstract>
@@ -50,6 +50,10 @@ in the system, but also, on what the user specifies in the XF86Config file.
 See the <bf>``XF86Config specifications''</bf> section below for details.<p>
 If none of the above conditions are met, the ATI driver will essentially
 disable itself to allow other drivers to examine the system.<p>
+Note that I am currently considering removing the driver's support for generic
+VGA.
+If you have any concerns about this, please contact me at
+<email>tsi@xfree86.org</email>.
 <sect>A note on acceleration<p>
 The meaning of ``acceleration'', as used in this document, needs to be
 clarified.
@@ -366,7 +370,7 @@ Other clock generators that have been used on ATI adapters (which can all be
 said to be clones of one of the above) might generate non-zero frequencies for
 those that are zero above, or vice-versa.<p>
 The order of the clocks <it>is</it> very important, although the driver will
-reorder the clocks if it deems it appropriate to do so.
+reorder the specified clocks if it deems it appropriate to do so.
 Mach32 and Mach64 owners should note that this order is different than what
 they would use for previous XFree86 accelerated servers.<p>
 <sect2>Clocks for non-ATI adapters<p>
@@ -376,12 +380,20 @@ The first clock will typically be 25.175 MHz, but there are exceptions.
 You can include up to four clock frequencies in your XF86Config to specify the
 actual values used by the adapter.
 Any more will be ignored.<p>
-<sect1>Option <it>``crt_screen''</it><p>
+<sect1>Option <it>``nopanel_display''</it><p>
 This specification is only effective when the driver detects that the adapter's
 BIOS has initialised both the digital flat panel and CRT interfaces.
 In such a situation, the driver will normally drive both the panel and the CRT.
 This specification causes the driver to disable the digital flat panel and
-display the screen image on the CRT instead.<p>
+display the screen image on the CRT instead, which could potentially allow for
+larger physical resolutions than the panel can handle.<p>
+<sect1>Option <it>``crt_display''</it><p>
+This specification is only effective when the driver detects that the adapter's
+BIOS has initialised the digital flat panel interface, but has disabled the
+CRT interface.
+In such a situation the driver will normally drive only the panel.
+This specification causes the driver to instead display the same image on both
+the panel and the CRT.<p>
 <sect1>Option <it>``noaccel''</it><p>
 By default, the driver will accelerate draw operations if a Mach64 CRTC is used
 to drive the display.
@@ -398,13 +410,14 @@ option is ignored.<p>
 <sect1>Option <it>``HWCursor''</it> and Option <it>``SWCursor''</it><p>
 Option <it>``HWCursor''</it>, which is the default, specifies that hardware
 facilities are to be used to paint the mouse pointer on the screen.
-Option <it>``SWCursor''</it> specifies that the mouse pointer is to by drawn by
+Option <it>``SWCursor''</it> specifies that the mouse pointer is to be drawn by
 software, which is much slower.
 If both options are specified, option <it>``SWCursor''</it> prevails.
 Currently, these options are only acted upon for 256-colour or higher depth
 modes, if a Mach64 accelerator CRTC, or a Mach64 integrated controller is being
 used.
-In all other situations, a software cursor will be used.<p>
+In all other situations, a software cursor will be used, regardless of what
+these options specify.<p>
 <sect1>Option <it>``SilkenMouse''</it><p>
 This option is only acted upon when a hardware cursor is being used.
 It specifies that the cursor's position on the screen is to be updated as
@@ -478,10 +491,6 @@ Should no mode names be specified (or those specified do not yield a usable
 mode), the server will automatically select as a default resolution the largest
 usable mode, whether or not the chosen mode is specified in the corresponding
 ``Monitor'' section.<p>
-For a CRT monitor, you should still specify horizontal sync and vertical
-refresh rates in the corresponding ``Monitor'' section.
-Otherwise, the server will default these to those of a VGA monitor, which will
-limit resolutions to not much more than 640x480 at 72 Hz.
 For a digital flat panel, any sync tolerances should be removed from the
 corresponding ``Monitor'' section.
 The driver will automatically calculate these from the mode that is active on
@@ -493,17 +502,6 @@ There are several known problems or limitations related to the XFree86 ATI
 driver.
 They include:<p>
 <itemize>
-<item>A number of system lockups and blank screens have been reported when
-using PCI Mach64 adapters.
-The great majority of these problems have been found to be due to system
-aspects that are unrelated to this driver.
-As of this writing, these problems can be divided into two general areas:<p>
-Improper mouse protocol specification with some recent mice.
-Try different protocol specifications or another mouse.<p>
-A system conflict with APM.
-This problem is Linux-specific.
-There is a bug in kernels 2.0.31 or earlier that prevents proper APM operation.
-Upgrade to a more recent kernel or disable APM support in the kernel.<p>
 <item>When using a Mach64's accelerator CRTC, the virtual resolution must be
 less than 8192 pixels wide.
 The VGA CRTC further limits the virtual resolution width to less than 4096
@@ -536,7 +534,8 @@ mode.
 In the first case, the workaround is to use some other means of restoring the
 text font.
 On Linux, this can be accomplished with the kbd or svgalib packages.
-In the second case, xrefresh(1) will usually clean up the image.
+In the second case, <htmlurl name="xrefresh(1)" url="xrefresh.1.html">
+will usually clean up the image.
 No complete solution to this problem is currently known.
 It appears this corruption occurs due to either video memory bandwidth or
 RAMDAC limitations, and so the driver will limit mode clocks to 40MHz.
@@ -549,7 +548,19 @@ through the DACSpeed specification in XF86Config.
 Be aware however that doing so is untested and might damage the adapter.
 <item>Except as in the previous items, clocks are limited to 80MHz on most
 adapters, although many are capable of higher frequencies.
-This will be fixed in a future release.
+This will eventually be fixed in a future release.
+<item>The use of a laptop's hot-keys to switch displays while this driver is
+active can cause lockups and/or other woes, and is therefore not recommended.
+It is not currently possible to solve this problem.<p>
+<item>In situations where the driver is to simultaneously display on both a
+panel and a CRT, the same image will be seen on both.
+In particular, this means the CRT must be able to synchronise with the timings
+of the panel's native resolution.
+This is quite evident when the panel has ``odd-ball'' dimensions, such as
+1400x1050, a resolution not commonly possible on CRTs or projection
+equipment.<p>
+Also, the display of independent images on the panel and CRT is not currently
+implemented, and might never be, pending resolution of the previous item.<p>
 </itemize>
 Support for the following will be added in a future release:
 <itemize>
@@ -574,13 +585,9 @@ Check the server's log (usually found in /var/log/XFree86.0.log) and <htmlurl
 name="ftp://ftp.xfree86.org/pub/XFree86"
 url="ftp://ftp.xfree86.org/pub/XFree86"> if you are uncertain.<p>
 Secondly, please check XFree86's doc directory for additional information.<p>
-<!--
-Thirdly, do not forget to read <htmlurl name="http://www.xfree86.org/FAQ"
-url="http://www.xfree86.org/FAQ">.<p>
--->
 Thirdly, a scan through the comp.windows.x.i386unix and comp.os.linux.x
-newsgroups using your favourite archiving service can also prove useful in
-resolving problems.<p>
+newsgroups and the xfree86 mailing list using your favourite archiving
+service can also prove useful in resolving problems.<p>
 If you are still experiencing problems, you can send me <it>non-HTMLised</it>
 e-mail at <email>tsi@xfree86.org</email>.
 Please be as specific as possible when describing the problem(s), and include
@@ -592,11 +599,10 @@ Apparently, Per Lindqvist first got a driver working with an early ATI adapter
 under X386 1.1a.
 This original driver might have actually been based on a non-functional ATI
 driver written by Thomas Roell (currently of Xi Graphics).<p>
-Then Doug Evans (<it>dje@cygnus.com</it>) added support for the ATI VGA Wonder
-XL, trying in the process to make the driver work with all other ATI adapters
-available at the time.<p>
-Rik Faith (<it>faith@precisioninsight.com</it>) obtained the X11R4 driver from
-Doug Evans in the summer of 1992 and ported the code to the X386 part of X11R5.
+Then Doug Evans added support for the ATI VGA Wonder XL, trying in the process
+to make the driver work with all other ATI adapters available at the time.<p>
+Rik Faith obtained the X11R4 driver from Doug Evans in the summer of 1992 and
+ported the code to the X386 part of X11R5.
 This subsequently became part of XFree86.<p>
 I (Marc Aurele La France) took over development and maintenance of the driver
 in the fall of 1993 after Rik got rid of his VGA Wonder adapter.<p>

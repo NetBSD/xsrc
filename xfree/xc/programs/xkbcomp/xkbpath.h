@@ -24,66 +24,56 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/xkbpath.h,v 1.4 2002/11/15 03:14:12 dawes Exp $ */
 
 #ifndef _XKBPATH_H_
 #define _XKBPATH_H_ 1
 
 extern	Bool	XkbInitIncludePath(
-#if NeedFunctionPrototypes
 	void
-#endif
 );
 
 extern	void	XkbClearIncludePath(
-#if NeedFunctionPrototypes
 	void
-#endif
+);
+
+extern	void	XkbAddDefaultDirectoriesToPath(
+	void
 );
 
 extern	Bool	XkbAddDirectoryToPath(
-#if NeedFunctionPrototypes
 	char *	/* dir */
-#endif
 );
 
 extern char *	XkbDirectoryForInclude(
-#if NeedFunctionPrototypes
     unsigned	/* type */
-#endif
 );
 
 extern	FILE	*XkbFindFileInPath(
-#if NeedFunctionPrototypes
     char *	/* name */,
     unsigned	/* type */,
     char **	/* pathRtrn */
-#endif
 );
 
 extern	void *	XkbAddFileToCache(
-#if NeedFunctionPrototypes
     char *	/* name */,
     unsigned	/* type */,
     char *	/* path */,
     void *	/* data */
-#endif
 );
 
 extern	void *	XkbFindFileInCache(
-#if NeedFunctionPrototypes
     char *	/* name */,
     unsigned	/* type */,
     char **	/* pathRtrn */
-#endif
 );
 
 extern Bool	XkbParseIncludeMap(
-#if NeedFunctionPrototypes
     char **	/* str_inout */,
     char **	/* file_rtrn */,
     char **	/* map_rtrn */,
-    char *	/* nextop_rtrn */
-#endif
+    char *	/* nextop_rtrn */,
+    char **     /* extra_data */
 );
 
 #endif /* _XKBPATH_H_ */

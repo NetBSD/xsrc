@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/Imakefile,v 1.4 2001/04/18 14:52:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/Imakefile,v 1.7 2002/12/16 16:19:27 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -17,3 +17,26 @@ all::
 
 clean::
 	$(MAKE) -f Makefile.linux clean
+
+LinkSourceFile(drm_sarea.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_dma.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_drm.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_drv.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_irq.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_state.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_ucode.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(mga_warp.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128_cce.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128_drm.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128_drv.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128_irq.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(r128_state.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_cp.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_drm.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_drv.h,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_state.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_mem.c,$(XF86OSSRC)/shared/drm/kernel)
+LinkSourceFile(radeon_irq.c,$(XF86OSSRC)/shared/drm/kernel)

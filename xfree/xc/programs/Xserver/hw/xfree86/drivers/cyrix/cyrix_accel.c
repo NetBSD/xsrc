@@ -26,7 +26,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_accel.c,v 1.4 2002/01/07 18:46:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_accel.c,v 1.5 2002/11/06 11:38:59 alanh Exp $ */
 
 #include "vgaHW.h"
 #include "xf86.h"
@@ -54,9 +54,6 @@ static const int windowsROPsrcMask[16] = { 0x22, 0xA2, 0x62, 0xE2,
                                            0x2A, 0xAA, 0x6A, 0xEA,
                                            0x26, 0xA6, 0x66, 0xE6,
                                            0x2E, 0xAE, 0x6E, 0xEE };
-
-#if 0
-#endif
 
 /* Forward declaration of functions used in the driver */
 void CYRIXAccelSync(ScrnInfoPtr pScrn);

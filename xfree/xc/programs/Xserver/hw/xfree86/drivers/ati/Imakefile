@@ -1,6 +1,6 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/Imakefile,v 1.36 2002/01/16 16:22:25 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/Imakefile,v 1.45 2003/02/17 17:06:41 dawes Exp $
 XCOMM
-XCOMM Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+XCOMM Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
 XCOMM
 XCOMM Permission to use, copy, modify, distribute, and sell this software and
 XCOMM its documentation for any purpose is hereby granted without fee, provided
@@ -83,6 +83,7 @@ DRIDEFINES  = $(GLX_DEFINES)
  */
 #if defined(i386Architecture) || \
     defined(ia64Architecture) || \
+    defined(x86_64Architecture) || \
     defined(AlphaArchitecture)
 # ifndef ATIAvoidCPIO
 #  define ATIAvoidCPIO NO
@@ -130,7 +131,7 @@ CPIOOBJS2 = atibank.o ativga.o atiwonder.o atiwonderio.o
 #endif
 
 #ifndef ATIAvoidDGA
-#define ATIAVoidDGA NO
+#define ATIAvoidDGA NO
 #endif
 
 #if ATIAvoidDGA
@@ -177,7 +178,7 @@ OBJS = $(OBJS1) $(OBJS2) $(OBJS3) $(OBJS4)
 INCLUDES = -I. -I../../include
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86SRC) \
-           -I$(XF86OSSRC)/vbe -I$(XF86SRC)/int10 \
+           -I$(XF86SRC)/vbe -I$(XF86SRC)/int10 \
            -I$(XF86SRC)/ddc -I$(XF86SRC)/i2c \
            -I$(XF86SRC)/rac -I$(XF86SRC)/ramdac \
            -I$(XF86SRC)/shadowfb -I$(XF86SRC)/xaa -I$(XF86SRC)/xf24_32bpp \
@@ -185,6 +186,7 @@ INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86SRC) \
            -I$(XF86SRC)/vgahw -I$(XF86SRC)/fbdevhw \
            -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb \
            -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/miext/shadow \
            -I$(SERVERSRC)/render -I$(SERVERSRC)/Xext -I$(SERVERSRC)/include \
            $(DRIINCLUDES) -I$(FONTINCSRC) -I$(EXTINCSRC) -I$(XINCLUDESRC)
 #endif
@@ -210,6 +212,8 @@ InstallModuleManPage(ati)
 #endif
 
 InstallModuleManPage(r128)
+
+InstallModuleManPage(radeon)
 
 DependTarget()
 
@@ -309,6 +313,7 @@ InstallDriverSDKNonExecFile(r128_reg.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(r128_sarea.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(r128_version.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(r128_video.c,$(DRIVERSDKDIR)/drivers/ati)
+InstallDriverSDKNonExecFile(r128_common.h,$(DRIVERSDKDIR)/drivers/ati)
 
 InstallDriverSDKNonExecFile(radeon.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_accel.c,$(DRIVERSDKDIR)/drivers/ati)
@@ -318,6 +323,7 @@ InstallDriverSDKNonExecFile(radeon_dri.c,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_dri.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_dripriv.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_driver.c,$(DRIVERSDKDIR)/drivers/ati)
+InstallDriverSDKNonExecFile(radeon_macros.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_misc.c,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_probe.c,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_probe.h,$(DRIVERSDKDIR)/drivers/ati)
@@ -325,6 +331,7 @@ InstallDriverSDKNonExecFile(radeon_reg.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_sarea.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_version.h,$(DRIVERSDKDIR)/drivers/ati)
 InstallDriverSDKNonExecFile(radeon_video.c,$(DRIVERSDKDIR)/drivers/ati)
+InstallDriverSDKNonExecFile(radeon_common.h,$(DRIVERSDKDIR)/drivers/ati)
 
 InstallDriverSDKObjectModule(ati,$(DRIVERSDKMODULEDIR),drivers)
 InstallDriverSDKObjectModule(atimisc,$(DRIVERSDKMODULEDIR),drivers)

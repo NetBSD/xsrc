@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/doc/man/X11/Imakefile,v 1.4 2001/12/17 03:04:40 dawes Exp $
+XCOMM $XFree86: xc/doc/man/X11/Imakefile,v 1.5 2003/02/15 17:48:39 dawes Exp $
 
 MANDIR = $(LIBMANDIR)
 MANSUFFIX = $(LIBMANSUFFIX)
@@ -157,7 +157,7 @@ InstallManPageAliases(XListFonts,$(MANDIR),XFreeFontNames XListFontsWithInfo XFr
 InstallManPageLong(XLoadFont,$(MANDIR),XLoadFont)
 InstallManPageAliases(XLoadFont,$(MANDIR),XQueryFont XLoadQueryFont XFreeFont XGetFontProperty XUnloadFont XCharStruct XFontProp XChar2b XFontStruct)
 InstallManPageLong(XLookKsym,$(MANDIR),XLookupKeysym)
-InstallManPageAliases(XLookupKeysym,$(MANDIR),XRefreshKeyboardMapping XLookupString XRebindKeySym)
+InstallManPageAliases(XLookupKeysym,$(MANDIR),XRefreshKeyboardMapping XLookupString XRebindKeysym)
 InstallManPageLong(XMDBases,$(MANDIR),XrmMergeDatabases)
 InstallManPageAliases(XrmMergeDatabases,$(MANDIR),XrmCombineDatabase XrmCombineFileDatabase)
 InstallManPageLong(XMEvent,$(MANDIR),XMapEvent)

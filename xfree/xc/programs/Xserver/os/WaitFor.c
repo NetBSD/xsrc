@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.37 2001/12/14 20:00:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/WaitFor.c,v 3.38 2002/05/31 18:46:05 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -65,7 +65,7 @@ SOFTWARE.
 #include "X.h"
 #include "misc.h"
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
 #include "osdep.h"

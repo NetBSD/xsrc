@@ -96,5 +96,50 @@ XctCreate
 XctFree
 XctNextItem
 XctReset
+XmuCvtGravityToString
+XmuCvtBackingStoreToString
+_XA_ATOM_PAIR
+_XA_CHARACTER_POSITION
+_XA_CLASS
+_XA_CLIENT_WINDOW
+_XA_CLIPBOARD
+_XA_COMPOUND_TEXT
+_XA_DECNET_ADDRESS
+_XA_DELETE
+_XA_FILENAME
+_XA_HOSTNAME
+_XA_IP_ADDRESS
+_XA_LENGTH
+_XA_LIST_LENGTH
+_XA_NAME
+_XA_NET_ADDRESS
+_XA_NULL
+_XA_OWNER_OS
+_XA_SPAN
+_XA_TARGETS
+_XA_TEXT
+_XA_TIMESTAMP
+_XA_USER
+_XA_UTF8_STRING
+XmuNewArea
+XmuDestroyScanlineList
+XmuCvtWidgetToString
+XmuOptimizeScanline
+XmuAreaOrXor
+XmuScanlineXor
+XmuDestroySegmentList
+XmuCvtJustifyToString
+XmuSnprintf
+XmuNewScanline
+XmuNCopyISOLatin1Lowered
+XmuNCopyISOLatin1Uppered
+XmuCvtShapeStyleToString
+XmuCvtOrientationToString
+XmuScanlineOrSegment
+#ifdef __UNIXOS2__
+XmuScanlineNot
+XmuScanlineAnd
+XmuScanlineOr
+#endif
 
-/* $XFree86: xc/lib/Xmu/Xmu-def.cpp,v 1.1 2000/08/09 23:40:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Xmu-def.cpp,v 1.2 2002/05/31 18:45:45 dawes Exp $ */

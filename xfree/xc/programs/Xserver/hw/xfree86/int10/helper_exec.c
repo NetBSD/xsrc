@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_exec.c,v 1.16 2001/04/30 14:34:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_exec.c,v 1.24 2002/11/25 21:05:49 tsi Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -14,11 +14,11 @@
  * in xf86EnableIO(). Otherwise we won't trap
  * on PIO.
  */
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
 #include "compiler.h"
-#include "xf86Pci.h"
 #define _INT10_PRIVATE
 #include "int10Defines.h"
 #include "xf86int10.h"
@@ -26,6 +26,9 @@
 #if !defined (_PC) && !defined (_PC_PCI)
 static int pciCfg1in(CARD16 addr, CARD32 *val);
 static int pciCfg1out(CARD16 addr, CARD32 val);
+#endif
+#if defined (_PC)
+static void SetResetBIOSVars(xf86Int10InfoPtr pInt, Bool set);
 #endif
 
 #define REG pInt
@@ -52,7 +55,10 @@ setup_int(xf86Int10InfoPtr pInt)
     X86_FS = 0;
     X86_GS = 0;
     X86_EFLAGS = X86_IF_MASK | X86_IOPL_MASK;
-
+#if defined (_PC)
+    if (pInt->flags & SET_BIOS_SCRATCH)
+	SetResetBIOSVars(pInt, TRUE);
+#endif
     return xf86BlockSIGIO();
 }
 
@@ -60,15 +66,19 @@ void
 finish_int(xf86Int10InfoPtr pInt, int sig)
 {
     xf86UnblockSIGIO(sig);
-    pInt->ax = (CARD16) X86_EAX;
-    pInt->bx = (CARD16) X86_EBX;
-    pInt->cx = (CARD16) X86_ECX;
-    pInt->dx = (CARD16) X86_EDX;
-    pInt->si = (CARD16) X86_ESI;
-    pInt->di = (CARD16) X86_EDI;
+    pInt->ax = (CARD32) X86_EAX;
+    pInt->bx = (CARD32) X86_EBX;
+    pInt->cx = (CARD32) X86_ECX;
+    pInt->dx = (CARD32) X86_EDX;
+    pInt->si = (CARD32) X86_ESI;
+    pInt->di = (CARD32) X86_EDI;
     pInt->es = (CARD16) X86_ES;
-    pInt->bp = (CARD16) X86_EBP;
-    pInt->flags = (CARD16) X86_FLAGS;
+    pInt->bp = (CARD32) X86_EBP;
+    pInt->flags = (CARD32) X86_FLAGS;
+#if defined (_PC)
+    if (pInt->flags & RESTORE_BIOS_SCRATCH)
+	SetResetBIOSVars(pInt, FALSE);
+#endif
 }
 
 /* general software interrupt handler */
@@ -92,8 +102,23 @@ run_bios_int(int num, xf86Int10InfoPtr pInt)
 #ifndef _PC
     /* check if bios vector is initialized */
     if (MEM_RW(pInt, (num << 2) + 2) == (SYS_BIOS >> 4)) { /* SYS_BIOS_SEG ?*/
-	ErrorF("Card BIOS on non-PC like platform not loaded\n");
-	return 0;
+
+	if (num == 21 && X86_AH == 0x4e) {
+ 	    xf86DrvMsg(pInt->scrnIndex, X_NOTICE,
+		       "Failing Find-Matching-File on non-PC"
+			" (int 21, func 4e)\n");
+ 	    X86_AX = 2;
+ 	    SET_FLAG(F_CF);
+ 	    return 1;
+ 	} else {
+	    xf86DrvMsgVerb(pInt->scrnIndex, X_NOT_IMPLEMENTED, 2,
+			   "Ignoring int 0x%02x call\n", num);
+	    if (xf86GetVerbosity() > 3) {
+		dump_registers(pInt);
+		stack_trace(pInt);
+	    }
+	    return 1;
+	}
     }
 #endif
 #ifdef PRINT_INT
@@ -293,7 +318,7 @@ x_inb(CARD16 port)
 	}
 #endif /* __NOT_YET__ */
     } else {
-	val = inb(port);
+	val = inb(Int10Current->ioBase + port);
 #ifdef PRINT_PORT
 	ErrorF(" inb(%#x) = %2.2x\n", port, val);
 #endif
@@ -315,7 +340,7 @@ x_inw(CARD16 port)
 	(void)getsecs(&sec, &usec);
 	val = (CARD16)(usec / 3);
     } else {
-	val = inw(port);
+	val = inw(Int10Current->ioBase + port);
     }
 #ifdef PRINT_PORT
     ErrorF(" inw(%#x) = %4.4x\n", port, val);
@@ -352,7 +377,7 @@ x_outb(CARD16 port, CARD8 val)
 #ifdef PRINT_PORT
 	ErrorF(" outb(%#x, %2.2x)\n", port, val);
 #endif
-	outb(port, val);
+	outb(Int10Current->ioBase + port, val);
     }
 }
 
@@ -363,7 +388,7 @@ x_outw(CARD16 port, CARD16 val)
     ErrorF(" outw(%#x, %4.4x)\n", port, val);
 #endif
 
-    outw(port, val);
+    outw(Int10Current->ioBase + port, val);
 }
 
 CARD32
@@ -374,7 +399,7 @@ x_inl(CARD16 port)
 #if !defined(_PC) && !defined(_PC_PCI)
     if (!pciCfg1in(port, &val))
 #endif
-    val = inl(port);
+    val = inl(Int10Current->ioBase + port);
 
 #ifdef PRINT_PORT
     ErrorF(" inl(%#x) = %8.8x\n", port, val);
@@ -392,41 +417,41 @@ x_outl(CARD16 port, CARD32 val)
 #if !defined(_PC) && !defined(_PC_PCI)
     if (!pciCfg1out(port, val))
 #endif
-    outl(port, val);
+    outl(Int10Current->ioBase + port, val);
 }
 
 CARD8
-Mem_rb(int addr)
+Mem_rb(CARD32 addr)
 {
     return (*Int10Current->mem->rb)(Int10Current, addr);
 }
 
 CARD16
-Mem_rw(int addr)
+Mem_rw(CARD32 addr)
 {
     return (*Int10Current->mem->rw)(Int10Current, addr);
 }
 
 CARD32
-Mem_rl(int addr)
+Mem_rl(CARD32 addr)
 {
     return (*Int10Current->mem->rl)(Int10Current, addr);
 }
 
 void
-Mem_wb(int addr, CARD8 val)
+Mem_wb(CARD32 addr, CARD8 val)
 {
     (*Int10Current->mem->wb)(Int10Current, addr, val);
 }
 
 void
-Mem_ww(int addr, CARD16 val)
+Mem_ww(CARD32 addr, CARD16 val)
 {
     (*Int10Current->mem->ww)(Int10Current, addr, val);
 }
 
 void
-Mem_wl(int addr, CARD32 val)
+Mem_wl(CARD32 addr, CARD32 val)
 {
     (*Int10Current->mem->wl)(Int10Current, addr, val);
 }
@@ -495,27 +520,84 @@ bios_checksum(CARD8 *start, int size)
  * doing int10.
  */
 void
-LockLegacyVGA(int screenIndex,legacyVGAPtr vga)
+LockLegacyVGA(xf86Int10InfoPtr pInt, legacyVGAPtr vga)
 {
-    xf86SetCurrentAccess(FALSE, xf86Screens[screenIndex]);
-    vga->save_msr = inb(0x3CC);
-    vga->save_vse = inb(0x3C3);
-    vga->save_46e8 = inb(0x46e8);
-    vga->save_pos102 = inb(0x102);
-    outb(0x3C2, ~(CARD8)0x03 & vga->save_msr);
-    outb(0x3C3, ~(CARD8)0x01 & vga->save_vse);
-    outb(0x46e8, ~(CARD8)0x08 & vga->save_46e8);
-    outb(0x102, ~(CARD8)0x01 & vga->save_pos102);
-    xf86SetCurrentAccess(TRUE, xf86Screens[screenIndex]);
+    xf86SetCurrentAccess(FALSE, xf86Screens[pInt->scrnIndex]);
+    vga->save_msr    = inb(pInt->ioBase + 0x03CC);
+    vga->save_vse    = inb(pInt->ioBase + 0x03C3);
+#ifndef __ia64__
+    vga->save_46e8   = inb(pInt->ioBase + 0x46E8);
+#endif
+    vga->save_pos102 = inb(pInt->ioBase + 0x0102);
+    outb(pInt->ioBase + 0x03C2, ~(CARD8)0x03 & vga->save_msr);
+    outb(pInt->ioBase + 0x03C3, ~(CARD8)0x01 & vga->save_vse);
+#ifndef __ia64__
+    outb(pInt->ioBase + 0x46E8, ~(CARD8)0x08 & vga->save_46e8);
+#endif
+    outb(pInt->ioBase + 0x0102, ~(CARD8)0x01 & vga->save_pos102);
+    xf86SetCurrentAccess(TRUE, xf86Screens[pInt->scrnIndex]);
 }
 
 void
-UnlockLegacyVGA(int screenIndex, legacyVGAPtr vga)
+UnlockLegacyVGA(xf86Int10InfoPtr pInt, legacyVGAPtr vga)
 {
-    xf86SetCurrentAccess(FALSE, xf86Screens[screenIndex]);
-    outb(0x102, vga->save_pos102);
-    outb(0x46e8, vga->save_46e8);
-    outb(0x3C3, vga->save_vse);
-    outb(0x3C2, vga->save_msr);
-    xf86SetCurrentAccess(TRUE, xf86Screens[screenIndex]);
+    xf86SetCurrentAccess(FALSE, xf86Screens[pInt->scrnIndex]);
+    outb(pInt->ioBase + 0x0102, vga->save_pos102);
+#ifndef __ia64__
+    outb(pInt->ioBase + 0x46E8, vga->save_46e8);
+#endif
+    outb(pInt->ioBase + 0x03C3, vga->save_vse);
+    outb(pInt->ioBase + 0x03C2, vga->save_msr);
+    xf86SetCurrentAccess(TRUE, xf86Screens[pInt->scrnIndex]);
 }
+
+#if defined (_PC)
+static void
+SetResetBIOSVars(xf86Int10InfoPtr pInt, Bool set)
+{
+    int pagesize = getpagesize();
+    unsigned char* base = xf86MapVidMem(pInt->scrnIndex,
+					VIDMEM_MMIO, 0, pagesize);
+    int i;
+
+    if (set) {
+	for (i = BIOS_SCRATCH_OFF; i < BIOS_SCRATCH_END; i++)
+	    MEM_WW(pInt, i, *(base + i));
+    } else {
+	for (i = BIOS_SCRATCH_OFF; i < BIOS_SCRATCH_END; i++)
+	    *(base + i) = MEM_RW(pInt, i);
+    }
+    
+    xf86UnMapVidMem(pInt->scrnIndex,base,pagesize);
+}
+
+void
+xf86Int10SaveRestoreBIOSVars(xf86Int10InfoPtr pInt, Bool save)
+{
+    int pagesize = getpagesize();
+    unsigned char* base;
+    int i;
+
+    if (!xf86IsEntityPrimary(pInt->entityIndex)
+	|| (!save && !pInt->BIOSScratch))
+	return;
+    
+    base = xf86MapVidMem(pInt->scrnIndex, VIDMEM_MMIO, 0, pagesize);
+    base += BIOS_SCRATCH_OFF;
+    if (save) {
+	if ((pInt->BIOSScratch
+	     = xnfalloc(BIOS_SCRATCH_LEN)))
+	    for (i = 0; i < BIOS_SCRATCH_LEN; i++)
+		*(((char*)pInt->BIOSScratch + i)) = *(base + i);	
+    } else {
+	if (pInt->BIOSScratch) {
+	    for (i = 0; i < BIOS_SCRATCH_LEN; i++)
+		*(base + i) = *(pInt->BIOSScratch + i); 
+	    xfree(pInt->BIOSScratch);
+	    pInt->BIOSScratch = NULL;
+	}
+    }
+    
+    xf86UnMapVidMem(pInt->scrnIndex,base - BIOS_SCRATCH_OFF ,pagesize);
+}
+#endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/dispatch.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/dispatch.c,v 1.4 2002/02/22 21:32:53 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -37,15 +37,21 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glapitable.h"
 
 
+/*
+ * NOTE: this file implements C-based dispatch of the OpenGL entrypoints
+ * (glAccum, glBegin, etc).
+ * This code IS NOT USED if we're compiling on an x86 system and using
+ * the glapi_x86.S assembly code.
+ */
+
+
+#if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
+
 #define KEYWORD1
 
 #define KEYWORD2
 
-#if defined(USE_X86_ASM)
-#define NAME(func) _glapi_fallback_##func
-#else
 #define NAME(func) gl##func
-#endif
 
 #define DISPATCH(func, args, msg)					\
    const struct _glapi_table *dispatch;					\
@@ -60,7 +66,4 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "glapitemp.h"
 
-
-
-
-
+#endif /* USE_X86_ASM */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.51 2001/12/31 18:13:37 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.56 2003/02/22 06:00:39 dawes Exp $ */
 
 
 
@@ -71,7 +71,7 @@ struct xf86stat {
 typedef int xf86key_t;
 
 /* setjmp/longjmp */
-typedef int xf86jmp_buf[20];
+typedef int xf86jmp_buf[1024];
 
 /* for setvbuf */
 #define XF86_IONBF    1
@@ -92,6 +92,7 @@ typedef int xf86jmp_buf[20];
 #define XF86_MAP_FIXED		0x0001
 #define XF86_MAP_SHARED		0x0002
 #define XF86_MAP_PRIVATE	0x0004
+#define XF86_MAP_32BIT	        0x0040
 #define XF86_MAP_FAILED		((void *)-1)
 
 /* for fseek */
@@ -399,6 +400,7 @@ typedef int xf86jmp_buf[20];
 #undef hypot
 #define hypot(x,y)		xf86hypot(x,y)
 
+#undef qsort
 #define qsort(b, n, s, f)	xf86qsort(b, n, s, f)
 
 /* non-ANSI C functions */
@@ -438,12 +440,14 @@ typedef int xf86jmp_buf[20];
 #define mkdir(a,b)              xf86mkdir(a,b)
 #undef getpagesize
 #define getpagesize		xf86getpagesize
+#undef shmget
 #define shmget(a,b,c)		xf86shmget(a,b,c)
+#undef shmat
 #define shmat(a,b,c)		xf86shmat(a,b,c)
+#undef shmdt
 #define shmdt(a)		xf86shmdt(a)
+#undef shmctl
 #define shmctl(a,b,c)		xf86shmctl(a,b,c)
-#define setjmp(a)               xf86setjmp(a)
-#define longjmp(a,b)            xf86longjmp(a,b) 
 
 #undef S_ISUID
 #define S_ISUID XF86_S_ISUID
@@ -499,9 +503,11 @@ typedef int xf86jmp_buf[20];
 #define uid_t                   xf86uid_t
 #undef gid_t
 #define gid_t                   xf86gid_t
-#undef jmp_buf
-#define jmp_buf                 xf86jmp_buf
+#undef stat_t
 #define stat_t			struct xf86stat
+
+#undef ulong
+#define ulong			unsigned long
 
 /*
  * There should be no need to #undef any of these.  If they are already
@@ -569,10 +575,8 @@ typedef int xf86jmp_buf[20];
 #define X_OK                    XF86_X_OK
 #undef F_OK
 #define F_OK                    XF86_F_OK
-#ifndef __EMX__
 #undef errno
 #define errno			xf86errno
-#endif
 #undef putchar
 #define putchar(i)		xf86fputc(i, xf86stdout)
 #undef puts
@@ -653,6 +657,16 @@ typedef int xf86jmp_buf[20];
 #undef FILENAME_MAX
 #define FILENAME_MAX		1024
 
-#endif /* XFree86LOADER */
+#endif /* XFree86LOADER  && !DONT_DEFINE_WRAPPERS */
+
+#if defined(XFree86LOADER) && \
+    (!defined(DONT_DEFINE_WRAPPERS) || defined(DEFINE_SETJMP_WRAPPERS))
+#undef setjmp
+#define setjmp(a)               xf86setjmp_macro(a)
+#undef longjmp
+#define longjmp(a,b)            xf86longjmp(a,b) 
+#undef jmp_buf
+#define jmp_buf                 xf86jmp_buf
+#endif
 
 #endif /* XF86_LIBC_H */

@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.56 2001/12/14 19:53:19 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.68 2002/12/24 17:42:58 tsi Exp $ */
 
 
 /* 
@@ -86,7 +86,6 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif
 #endif
-
 #ifdef _CRAY
 #define imake_ccflags "-DSYSV -DUSG"
 #endif
@@ -175,8 +174,8 @@ in this Software without prior written authorization from The Open Group.
 #define imake_ccflags "-DNOSTDHDRS"
 #endif
 
-/* this is for OS/2 under EMX. This won't work with DOS */
-#if defined(__EMX__)
+/* this is for OS/2 under UNIXOS2. This won't work with DOS */
+#if defined(__UNIXOS2__)
 #define imake_ccflags "-DBSD43"
 #endif
 
@@ -204,14 +203,14 @@ in this Software without prior written authorization from The Open Group.
 
 /*
  * Step 3:  FIXUP_CPP_WHITESPACE
- *     If your cpp collapses tabs macro expansions into a single space and
+ *     If your cpp collapses tabs in macro expansions into a single space and
  *     replaces escaped newlines with a space, define this symbol.  This will
  *     cause imake to attempt to patch up the generated Makefile by looking
  *     for lines that have colons in them (this is why the rules file escapes
  *     all colons).  One way to tell if you need this is to see whether or not
  *     your Makefiles have no tabs in them and lots of @@ strings.
  */
-#if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(sco) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi)
+#if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(sco) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi) || defined(__UNIXOS2__)
 #define FIXUP_CPP_WHITESPACE
 #endif
 #ifdef WIN32
@@ -238,8 +237,11 @@ in this Software without prior written authorization from The Open Group.
  *     If use cc -E but want a different compiler, define DEFAULT_CC.
  *     If the cpp you need is not in /lib/cpp, define DEFAULT_CPP.
  */
+#if !defined (CROSSCOMPILE) || defined (CROSSCOMPILE_CPP) 
+
 #if defined(__APPLE__)
 #define DEFAULT_CPP "/usr/bin/cpp"
+#define DEFAULT_CC "cc"
 #endif
 #if defined(Lynx) || defined(__Lynx__)
 #define DEFAULT_CC "gcc"
@@ -291,7 +293,7 @@ in this Software without prior written authorization from The Open Group.
 #ifdef __minix_vmd
 #define DEFAULT_CPP "/usr/lib/cpp"
 #endif
-#if defined(__EMX__)
+#if defined(__UNIXOS2__)
 /* expects cpp in PATH */
 #define DEFAULT_CPP "cpp"
 #endif
@@ -306,6 +308,14 @@ in this Software without prior written authorization from The Open Group.
 #define DEFAULT_CPP "/usr/X11R6/bin/cpp"
 #endif
 #endif
+#if defined(__GNUC__) && !defined(USE_CC_E)
+#define USE_CC_E
+#ifndef DEFAULT_CC
+#define DEFAULT_CC "gcc"
+#endif
+#endif
+
+#endif /* !defined (CROSSCOMPILE) || defined (CROSSCOMPILE_CPP) */
 /*
  * Step 5:  cpp_argv
  *     The following table contains the flags that should be passed
@@ -313,7 +323,7 @@ in this Software without prior written authorization from The Open Group.
  *     doesn't predefine any unique symbols, choose one and add it to the
  *     end of this table.  Then, do the following:
  * 
- *         a.  Use this symbol in Imake.tmpl when setting MacroFile.
+ *         a.  Use this symbol in Imake.cf when setting MacroFile.
  *         b.  Put this symbol in the definition of BootstrapCFlags in your
  *             <platform>.cf file.
  *         c.  When doing a make World, always add "BOOTSTRAPCFLAGS=-Dsymbol" 
@@ -324,6 +334,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #define	ARGUMENTS 50	/* number of arguments in various arrays */
+#if !defined (CROSSCOMPILE) || defined (CROSSCOMPILE_CPP) 
 char *cpp_argv[ARGUMENTS] = {
 	"cc",		/* replaced by the actual program to exec */
 	"-I.",		/* add current directory to include path */
@@ -332,9 +343,14 @@ char *cpp_argv[ARGUMENTS] = {
 	"-Uunix",	/* remove unix symbol so that filename unix.c okay */
 #endif
 #endif
-#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(MACH) || defined(linux) || defined(__GNU__) || defined(__bsdi__)
+#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+    defined(__FreeBSD__) || defined(MACH) || defined(linux) || \
+    defined(__GNU__) || defined(__bsdi__) || defined(__GNUC__)
 # ifdef __i386__
 	"-D__i386__",
+#  if defined(__GNUC__) && (__GNUC__ >= 3)
+	"-m32",
+#  endif
 # endif
 # ifdef __i486__
 	"-D__i486__",
@@ -350,6 +366,9 @@ char *cpp_argv[ARGUMENTS] = {
 # endif
 # ifdef __ia64__
 	"-D__ia64__",
+# endif
+# ifdef __x86_64__
+	"-D__x86_64__",
 # endif
 # ifdef __s390__
 	"-D__s390__",
@@ -641,7 +660,7 @@ char *cpp_argv[ARGUMENTS] = {
 	"-Dminix",
 #endif
 
-#if defined(__EMX__)
+#if defined(__UNIXOS2__)
 	"-traditional",
 	"-Demxos2",
 #endif
@@ -689,14 +708,14 @@ char *cpp_argv[ARGUMENTS] = {
         "-D__i386__",
 # endif
 #endif
-
 };
+#endif /* CROSSCOMPILE */
 
 
 /*
  * Step 6: DEFAULT_OS_MAJOR_REV, DEFAULT_OS_MINOR_REV, DEFAULT_OS_TEENY_REV,
  *	and DEFAULT_OS_NAME.
- *	If your systems provides a way to generate the default major,
+ *	If your system provides a way to generate the default major,
  *	minor, teeny, or system names at runtime add commands below.
  *	The syntax of the _REV strings is 'f fmt' where 'f' is an argument
  *	you would give to uname, and "fmt" is a scanf() format string.
@@ -708,74 +727,91 @@ char *cpp_argv[ARGUMENTS] = {
  *	DEFAULT_OS_TEENY_REV_FROB, and DEFAULT_OS_NAME_FROB can be used to
  *	modify the results of the use of the various strings.
  */
-#if defined(aix)
+#if !defined CROSSCOMPILE || defined CROSSCOMPILE_CPP
+# if defined(aix)
 /* uname -v returns "x" (e.g. "4"), and uname -r returns "y" (e.g. "1") */
-# define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %[0-9]"
 /* No information available to generate default OSTeenyVersion value. */
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(sun) || defined(sgi) || defined(ultrix) || defined(__uxp__) || defined(sony)
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(sun) || defined(sgi) || defined(ultrix) || defined(__uxp__) || defined(sony)
 /* uname -r returns "x.y[.z]", e.g. "5.4" or "4.1.3" */
-# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(hpux)
+#  define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(hpux)
 /* uname -r returns "W.x.yz", e.g. "B.10.01" */
-# define DEFAULT_OS_MAJOR_REV	"r %*[^.].%[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*[^.].%*d.%1s"
-# define DEFAULT_OS_TEENY_REV	"r %*[^.].%*d.%*c%[0-9]"
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(USL) || defined(__USLC__)
+#  define DEFAULT_OS_MAJOR_REV	"r %*[^.].%[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*[^.].%*d.%1s"
+#  define DEFAULT_OS_TEENY_REV	"r %*[^.].%*d.%*c%[0-9]"
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(USL) || defined(__USLC__)
 /* uname -v returns "x.yz" or "x.y.z", e.g. "2.02" or "2.1.2". */
-# define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"v %*d.%1s"
-# define DEFAULT_OS_TEENY_REV	"v %*d.%*c%[.0-9]"
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(__APPLE__)
+#  define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"v %*d.%1s"
+#  define DEFAULT_OS_TEENY_REV	"v %*d.%*c%[.0-9]"
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(__APPLE__)
 /* uname -v returns "x.yz" or "x.y.z", e.g. "2.02" or "2.1.2". */
-# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]" /* this will just get 0 */
-# define DEFAULT_OS_NAME	"s %[^\n]"
-#elif defined(__osf__)
+#  define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]" /* this will just get 0 */
+#  define DEFAULT_OS_NAME	"s %[^\n]"
+# elif defined(__osf__)
 /* uname -r returns "Wx.y", e.g. "V3.2" or "T4.0" */
-# define DEFAULT_OS_MAJOR_REV	"r %*[^0-9]%[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*[^.].%[0-9]"
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(__uxp__)
+#  define DEFAULT_OS_MAJOR_REV	"r %*[^0-9]%[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*[^.].%[0-9]"
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(__uxp__)
 /* NOTE: "x.y[.z]" above handles UXP/DF.  This is a sample alternative. */
 /* uname -v returns "VxLy Yzzzzz ....", e.g. "V20L10 Y95021 Increment 5 ..." */
-# define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
-# define DEFAULT_OS_MINOR_REV	"v V%*dL%[0-9]"
-# define DEFAULT_OS_NAME	"srvm %[^\n]"
-#elif defined(linux) || defined(__bsdi__)
-# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
-# define DEFAULT_OS_NAME	"srm %[^\n]"
-#elif defined(__GNU__)
-# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
-# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
-# define DEFAULT_OS_NAME	"srm %[^\n]"
-#elif defined(ISC)
+#  define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"v V%*dL%[0-9]"
+#  define DEFAULT_OS_NAME	"srvm %[^\n]"
+# elif defined(linux) || defined(__bsdi__)
+#  define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
+#  define DEFAULT_OS_NAME	"srm %[^\n]"
+#  if defined(linux) && defined  (CROSSCOMPILE_CPP)
+#   define CROSS_UTS_SYSNAME "Linux"
+#   include <linux/version.h>
+#   define CROSS_UTS_RELEASE UTS_RELEASE
+# endif
+# elif defined(__CYGWIN__)
+#  define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
+#  define DEFAULT_OS_NAME	"srm %[^\n]"
+#  if defined(__CYGWIN__) && defined  (CROSSCOMPILE_CPP)
+#   define CROSS_UTS_SYSNAME "Cygwin"
+#   include <cygwin/version.h>
+#   define CROSS_UTS_RELEASE "1.3.12"
+#  endif
+# elif defined(__GNU__)
+#  define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+#  define DEFAULT_OS_NAME	"srm %[^\n]"
+# elif defined(ISC)
 /* ISC all Versions ? */
 /* uname -r returns "x.y", e.g. "3.2" ,uname -v returns "x" e.g. "2" */
-# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
-# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV   "v %[0-9]" 
+#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV   "v %[0-9]" 
 /* # define DEFAULT_OS_NAME        "srm %[^\n]" */ /* Not useful on ISC */
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+# elif defined(__FreeBSD__) || defined(__OpenBSD__)
 /* BSD/OS too? */
 /* uname -r returns "x.y[.z]-mumble", e.g. "2.1.5-RELEASE" or "2.2-0801SNAP" */
-# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
-# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
-# define DEFAULT_OS_NAME        "srm %[^\n]"
-# if defined(__FreeBSD__)
+#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
+#  define DEFAULT_OS_NAME        "srm %[^\n]"
+#  if defined(__FreeBSD__)
 /* Use an alternate way to find the teeny version for -STABLE, -SNAP versions */
-#  define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
-    do {								\
+#   ifndef CROSSCOMPILE_CPP
+#    define DEFAULT_OS_TEENY_REV_FROB(buf, size)			\
+      do {								\
 	if (*buf == 0) {						\
 		int __mib[2];						\
 		size_t __len;						\
@@ -799,12 +835,13 @@ char *cpp_argv[ARGUMENTS] = {
 		}							\
 		buf[1] = 0;						\
 	}								\
-    } while (0)
-# else
+     } while (0)
+#   endif
+#  else
    /* OpenBSD - Add DEFAULT_MACHINE_ARCHITECTURE */
-#  define DEFAULT_MACHINE_ARCHITECTURE "m %[^\n]"
-# endif
-#elif defined(__NetBSD__)
+#   define DEFAULT_MACHINE_ARCHITECTURE "m %[^\n]"
+#  endif
+# elif defined(__NetBSD__)
 /*
  * uname -r returns "x.y([ABCD...]|_mumble)", e.g.:
  *	1.2	1.2_BETA	1.2A	1.2B
@@ -817,38 +854,115 @@ char *cpp_argv[ARGUMENTS] = {
  * 'standard' NetBSD name for the version, e.g. "NetBSD/i386 1.2B" for
  * NetBSD 1.2B on an i386.
  */
-# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
-# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
-# define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
+#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
+#  define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
     do {								\
-	if (*(buf) >= 'A' && *(buf) <= 'Z') /* sanity check */		\
-		snprintf((buf), (size), "%d", *(buf) - 'A' + 1);	\
-	else								\
-	    *(buf) = '\0';						\
+	int	teeny = 0;						\
+	char	*ptr = (buf);						\
+									\
+	while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */		\
+	    teeny = teeny * 26 + (int)(*ptr++ - 'A');			\
+									\
+	snprintf((buf), (size), "%d", teeny + 1);			\
     } while (0)
-# define DEFAULT_OS_NAME        "smr %[^\n]"
-# define DEFAULT_OS_NAME_FROB(buf, size)				\
+#  define DEFAULT_OS_NAME        "smr %[^\n]"
+#  define DEFAULT_OS_NAME_FROB(buf, size)				\
     do {								\
 	char *__sp;							\
 	if ((__sp = strchr((buf), ' ')) != NULL)			\
 		*__sp = '/';						\
     } while (0)
-#elif defined(__Lynx__) || defined(Lynx)
+# elif defined(__Lynx__) || defined(Lynx)
 /* Lynx 2.4.0 /bin/cc doesn't like #elif */
-# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
-# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
-# define DEFAULT_OS_NAME        "srm %[^\n]"
-#elif defined(_SEQUENT_)
+#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
+#  define DEFAULT_OS_NAME        "srm %[^\n]"
+# elif defined(_SEQUENT_)
 /* uname -v returns 'Vx.y.z', e.g. 'V4.4.2' */
-# define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
-# define DEFAULT_OS_MINOR_REV	"v V%*d.%[0-9]"
-# define DEFAULT_OS_TEENY_REV	"v V%*d.%*d.%[0-9]"
-# define DEFAULT_OS_NAME	"s %[^\n]"
-#endif
+#  define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
+#  define DEFAULT_OS_MINOR_REV	"v V%*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV	"v V%*d.%*d.%[0-9]"
+#  define DEFAULT_OS_NAME	"s %[^\n]"
+# endif
+#endif /* !defined CROSSCOMPILE || defined CROSSCOMPILE_CPP */
+
+# if defined (CROSSCOMPILE_CPP) 
+#  ifndef CROSS_UTS_SYSNAME
+char *cross_uts_sysname = "";
+#  else
+char *cross_uts_sysname = CROSS_UTS_SYSNAME;
+#  endif
+#  ifndef CROSS_UTS_RELEASE
+char* cross_uts_release = "";
+#  else
+char* cross_uts_release = CROSS_UTS_RELEASE;
+#  endif
+#  ifndef CROSS_UTS_MACHINE
+char *cross_uts_machine = "";
+#  else
+char *cross_uts_machine = CROSS_UTS_MACHINE;
+#  endif
+#  ifndef CROSS_UTS_VERSION
+char * cross_uts_version = "";
+#  else
+char * cross_uts_version = CROSS_UTS_VERSION;
+#  endif
+#  ifdef DEFAULT_OS_NAME
+char *defaultOsName = DEFAULT_OS_NAME;
+#  else 
+char *defaultOsName = NULL;
+# endif
+#  ifdef DEFAULT_OS_MAJOR_REV
+char *defaultOsMajorRev = DEFAULT_OS_MAJOR_REV;
+#  else 
+char *defaultOsMajorRev = NULL;
+# endif
+#  ifdef DEFAULT_OS_MINOR_REV
+char *defaultOsMinorRev = DEFAULT_OS_MINOR_REV;
+#  else 
+char *defaultOsMinorRev = NULL;
+#  endif
+#  ifdef DEFAULT_OS_TEENY_REV
+char *defaultOsTeenyRev = DEFAULT_OS_TEENY_REV;
+#  else 
+char *defaultOsTeenyRev = NULL;
+#  endif
+#  ifdef DEFAULT_MACHINE_ARCHITECTURE
+char *defaultMachineArchitecture = DEFAULT_MACHINE_ARCHITECTURE;
+#  else 
+char *defaultMachineArchitecture = NULL;
+#  endif
+# ifdef DEFAULT_OS_NAME_FROB
+void defaultOsNameFrob(char *buf, int size)
+{DEFAULT_OS_NAME_FROB(buf,size)}
+# else
+void (*defaultOsNameFrob)(char *buf, int size) = NULL;
+# endif
+# ifdef DEFAULT_OS_MAJOR_REV_FROB
+void defaultOsMajorRevFrob(char *buf, int size)
+{DEFAULT_OS_MAJOR_REV_FROB(buf,size)}
+# else
+void (*defaultOsMajorRevFrob)(char *buf, int size) = NULL;
+# endif
+# ifdef DEFAULT_OS_MINOR_REV_FROB
+void defaultOsMinorRevFrob(char *buf, int size)
+{DEFAULT_OS_MINOR_REV_FROB(buf,size)}
+# else
+void (*defaultOsMinorRevFrob)(char *buf, int size) = NULL;
+# endif
+# ifdef DEFAULT_OS_TEENY_REV_FROB
+void defaultOsTeenyRevFrob(char *buf, int size)
+{DEFAULT_OS_TEENY_REV_FROB(buf,size)}
+# else
+void (*defaultOsTeenyRevFrob)(char *buf, int size) = NULL;
+# endif
+# endif /* CROSSCOMPILE_CPP */
 
 #else /* else MAKEDEPEND */
+#if !defined (CROSSCOMPILE) || defined (CROSSCOMPILE_CPP) 
 /*
  * Step 7:  predefs
  *     If your compiler and/or preprocessor define any specific symbols, add
@@ -943,15 +1057,23 @@ struct symtab	predefs[] = {
 #ifdef __GNUC__
 # if __GNUC__ == 1
 	{"__GNUC__", "1"},
-# else
+# elif __GNUC__ == 2
 	{"__GNUC__", "2"},
+# elif __GNUC__ == 3
+	{"__GNUC__", "3"},
 # endif
 #endif
 #ifdef __STRICT_ANSI__
 	{"__STRICT_ANSI__", "1"},
 #endif
-#if __STDC__
+#ifdef __STDC__
+# if __STDC__ == 0
+	{"__STDC__", "0"},
+# elif __STDC__ == 1
 	{"__STDC__", "1"},
+# elif __STDC__ == 2
+	{"__STDC__", "2"},
+# endif
 #endif
 #ifdef __HIGHC__
 	{"__HIGHC__", "1"},
@@ -1095,8 +1217,8 @@ struct symtab	predefs[] = {
 #ifdef __ELF__
 	{"__ELF__", "1"},
 #endif
-#ifdef __EMX__
-	{"__EMX__", "1"},
+#ifdef __UNIXOS2__
+	{"__UNIXOS2__", "1"},
 #endif
 #if defined(__QNX__)
         {"__QNX__", "1"},
@@ -1115,6 +1237,12 @@ struct symtab	predefs[] = {
 # endif
 # ifdef __ia64__
 	{"__ia64__", "1"},
+# endif
+# ifdef x86_64
+	{"x86_64", "1"},
+# endif
+# ifdef __x86_64__
+	{"__x86_64__", "1"},
 # endif
 # ifdef __i386__
 	{"__i386__", "1"},
@@ -1145,6 +1273,12 @@ struct symtab	predefs[] = {
 # endif
 # ifdef k6
 	{"k6", "1"},
+# endif
+# ifdef sparc
+	{"sparc", "1"},
+# endif
+# ifdef __sparc__
+	{"__sparc__", "1"},
 # endif
 # ifdef __s390__
 	{"__s390__", "1"},
@@ -1178,6 +1312,87 @@ struct symtab	predefs[] = {
 	/* add any additional symbols before this line */
 	{NULL, NULL}
 };
-
+#endif /* CROSSCOMPILE */
 #endif /* MAKEDEPEND */
+
+# ifndef MAKEDEPEND
+#  if  defined (CROSSCOMPILE_CPP) 
+#   ifdef USE_CC_E
+boolean crosscompile_use_cc_e = TRUE;
+#    ifdef DEFAULT_CC
+char* crosscompile_cpp = DEFAULT_CC;
+#    else
+char* crosscompile_cpp = "cc";
+#    endif
+#   else
+boolean crosscompile_use_cc_e = FALSE;
+#    ifdef DEFAULT_CPP
+char* crosscompile_cpp = DEFAULT_CPP;
+#    else
+char* crosscompile_cpp = "cpp";
+#    endif
+#   endif
+#   ifdef FIXUP_CPP_WHITESPACE
+boolean fixup_whitespace = TRUE;
+#   else
+boolean fixup_whitespace = FALSE;
+#   endif
+#   ifdef REMOVE_CPP_LEADSPACE
+boolean remove_cpp_leadspace = TRUE;
+#   else
+boolean remove_cpp_leadspace = FALSE;
+#   endif
+#   ifdef INLINE_SYNTAX
+boolean inline_syntax = TRUE;
+#   else
+boolean inline_syntax = FALSE;
+#   endif
+#   ifdef MAGIC_MAKE_VARS
+boolean magic_make_vars = TRUE;
+#   else
+boolean magic_make_vars = FALSE;
+#   endif
+
+typedef enum {
+  unknown,
+  freeBSD,
+  netBSD,
+  LinuX,
+  emx,
+  win32
+} System;
+
+#   ifdef linux
+System sys = LinuX;
+#   elif defined __FreeBSD__
+System sys = freebsd;
+#   elif defined __NetBSD__
+System sys = netBSD;
+#   elif defined __EMX__
+System sys = emx;
+#   elif defined WIN32
+System sys = win32;
+#   else
+System sys = unknown;
+#   endif
+
+#   if defined __GNUC__
+int gnu_c = __GNUC__;
+int gnu_c_minor = __GNUC_MINOR__;
+#   else 
+int gnu_c = 0;
+int gnu_c_minor = -1;
+#   endif
+#   if defined linux
+#    include <features.h>
+int glibc_major = __GLIBC__ + 4;
+int glibc_minor = __GLIBC_MINOR__;
+#   else
+int glibc_major = 0;
+int glibc_minor = -1;
+#   endif
+#  endif /* !CROSSCOMPILE || CROSSCOMPILE_CPP */
+
+# endif /* MAKEDEPEND */
+
 #endif /* CCIMAKE */

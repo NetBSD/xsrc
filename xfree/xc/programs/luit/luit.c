@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/luit/luit.c,v 1.4 2002/01/09 16:14:19 dawes Exp $ */
+/* $XFree86: xc/programs/luit/luit.c,v 1.10 2003/02/24 01:10:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +38,10 @@ THE SOFTWARE.
 #include <stropts.h>
 #endif
 
+#include <X11/fonts/fontenc.h>
 #include "luit.h"
 #include "sys.h"
+#include "other.h"
 #include "charset.h"
 #include "iso2022.h"
 
@@ -51,6 +53,7 @@ int ilog = -1;
 int olog = -1;
 int verbose = 0;
 int converter = 0;
+int exitOnChild = 0;
 
 volatile int sigwinch_queued = 0;
 volatile int sigchld_queued = 0;
@@ -87,18 +90,19 @@ help(void)
             "  [ -gl gn ] [-gr gk] "
             "[ -g0 set ] [ -g1 set ] "
             "[ -g2 set ] [ -g3 set ]\n"
-            "  [ +oss ] [ +ols ] [ +osl ] [ +ot ]\n"
+            "  [ -encoding encoding ] "
+            "[ +oss ] [ +ols ] [ +osl ] [ +ot ]\n"
             "  [ -kgl gn ] [-kgr gk] "
             "[ -kg0 set ] [ -kg1 set ] "
             "[ -kg2 set ] [ -kg3 set ]\n"
-            "  [ -k7 ] [ +kss ] [ -kls ]\n"
-            "  [ -c ] [ -ilog filename ] [ -olog filename ] [ -- ]\n"
+            "  [ -k7 ] [ +kss ] [ +kssgr ] [ -kls ]\n"
+            "  [ -c ] [ -x ] [ -ilog filename ] [ -olog filename ] [ -- ]\n"
             "  [ program [ args ] ]\n");
 
 }
             
 
-int
+static int
 parseOptions(int argc, char **argv)
 {
     int i = 1;
@@ -134,6 +138,9 @@ parseOptions(int argc, char **argv)
             i++;
         } else if(!strcmp(argv[i], "+kss")) {
             inputState->inputFlags &= ~IF_SS;
+            i++;
+        } else if(!strcmp(argv[1], "+kssgr")) {
+            inputState->inputFlags &= ~IF_SSGR;
             i++;
         } else if(!strcmp(argv[i], "-kls")) {
             inputState->inputFlags |= IF_LS;
@@ -249,6 +256,9 @@ parseOptions(int argc, char **argv)
                 FatalError("-argv0 requires an argument\n");
             child_argv0 = argv[i + 1];
             i += 2;
+        } else if(!strcmp(argv[i], "-x")) {
+            exitOnChild = 1;
+            i++;
         } else if(!strcmp(argv[i], "-c")) {
             converter = 1;
             i++;
@@ -270,6 +280,14 @@ parseOptions(int argc, char **argv)
                 exit(1);
             }
             i += 2;
+        } else if(!strcmp(argv[i], "-encoding")) {
+            int rc;
+            if(i + 1 >= argc)
+                FatalError("-encoding requires an argument\n");
+            rc = initIso2022(NULL, argv[i + 1], outputState);
+            if(rc < 0)
+                FatalError("Couldn't init output state\n");
+            i += 2;
         } else {
             FatalError("Unknown option %s\n", argv[i]);
         }
@@ -277,7 +295,7 @@ parseOptions(int argc, char **argv)
     return i;
 }
 
-int
+static int
 parseArgs(int argc, char **argv, char *argv0,
           char **path_return, char ***argv_return)
 {
@@ -359,16 +377,20 @@ main(int argc, char **argv)
         locale_name = setlocale(LC_CTYPE, NULL);
     } else {
         locale_name = getenv("LC_ALL");
-        if(locale_name == NULL)
+        if(locale_name == NULL) {
             locale_name = getenv("LC_CTYPE");
+            if(locale_name == NULL) {
+                locale_name = getenv("LANG");
+            }
+        }
     }
 
     if(locale_name == NULL) {
-        ErrorF("Couln't get locale name -- using C");
+        ErrorF("Couldn't get locale name -- using C\n");
         locale_name = "C";
     }
 
-    rc = initIso2022(locale_name, outputState);
+    rc = initIso2022(locale_name, NULL, outputState);
     if(rc < 0)
         FatalError("Couldn't init output state\n");
 
@@ -383,11 +405,11 @@ main(int argc, char **argv)
     if(converter)
         return convert(0, 1);
     else
-        return condom(argc - i, argv + 1);
+        return condom(argc - i, argv + i);
 }
 
 static int
-convert(ifd, ofd)
+convert(int ifd, int ofd)
 {
     int rc, i;
     unsigned char buf[BUFFER_SIZE];
@@ -546,9 +568,8 @@ parent(int pid, int pty)
             setWindowSize(0, pty);
         }
 
-        if(sigchld_queued) {
-            /* quitting now would be a race condition */
-        }
+        if(sigchld_queued && exitOnChild)
+            break;
 
         if(rc > 0) {
             if(rc & 2) {

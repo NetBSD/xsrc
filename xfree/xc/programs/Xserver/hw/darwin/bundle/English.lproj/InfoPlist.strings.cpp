@@ -1,5 +1,5 @@
-/* English localized versions of Info.plist keys. */
+/* English versions of the Info.plist keys; used by most localizations. */
 /* Most of these are set in the target application settings. */
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/English.lproj/InfoPlist.strings.cpp,v 1.2.4.2 2002/08/20 22:10:51 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/English.lproj/InfoPlist.strings.cpp,v 1.4 2003/01/15 02:34:04 torrey Exp $ */
 
-NSHumanReadableCopyright = __quote__XFree86 XF86_VERSION\nCopyright 2002 XFree86 Project, Inc.__quote__;
+NSHumanReadableCopyright = __quote__XFree86 XF86_VERSION\nCopyright 2003 XFree86 Project, Inc.__quote__;

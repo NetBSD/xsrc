@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_span.c,v 1.1 2000/06/20 05:08:39 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_span.c,v 1.2 2002/02/22 21:32:59 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller
@@ -25,11 +25,13 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "types.h"
+#include "mtypes.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_context.h"
 #include "ffb_lock.h"
+
+#include "swrast/swrast.h"
 
 #define DBG 0
 
@@ -45,10 +47,14 @@
 #define LOCAL_VARS						\
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;	\
 	GLuint height = dPriv->h;				\
-	char *buf
+        GLuint p;						\
+	char *buf; 						\
+        (void) p
 
-#define INIT_MONO_PIXEL(p)		\
-	GLuint p = fmesa->MonoColor;
+#define INIT_MONO_PIXEL(p, color)		\
+        p = ((color[0] <<  0) |			\
+	     (color[1] << 8) |			\
+	     (color[2] << 16))
 
 /* We use WID clipping, so this test always passes. */
 #define CLIPPIXEL(__x, __y)	(1)
@@ -112,22 +118,25 @@ do {	GLuint p = *(GLuint *)(buf + ((__x)<<2) + ((__y)<<13));	\
 
 void ffbDDInitSpanFuncs(GLcontext *ctx)
 {
-	ctx->Driver.WriteRGBASpan	= ffbWriteRGBASpan_888;
-	ctx->Driver.WriteRGBSpan	= ffbWriteRGBSpan_888;
-	ctx->Driver.WriteRGBAPixels	= ffbWriteRGBAPixels_888;
-	ctx->Driver.WriteMonoRGBASpan	= ffbWriteMonoRGBASpan_888;
-	ctx->Driver.WriteMonoRGBAPixels	= ffbWriteMonoRGBAPixels_888;
-	ctx->Driver.ReadRGBASpan	= ffbReadRGBASpan_888;
-	ctx->Driver.ReadRGBAPixels	= ffbReadRGBAPixels_888;
+	struct swrast_device_driver *swdd = 
+		_swrast_GetDeviceDriverReference(ctx);
+   
+	swdd->WriteRGBASpan	= ffbWriteRGBASpan_888;
+	swdd->WriteRGBSpan	= ffbWriteRGBSpan_888;
+	swdd->WriteRGBAPixels	= ffbWriteRGBAPixels_888;
+	swdd->WriteMonoRGBASpan	= ffbWriteMonoRGBASpan_888;
+	swdd->WriteMonoRGBAPixels	= ffbWriteMonoRGBAPixels_888;
+	swdd->ReadRGBASpan	= ffbReadRGBASpan_888;
+	swdd->ReadRGBAPixels	= ffbReadRGBAPixels_888;
 
 	/* We don't support color index mode yet, but it will be
 	 * very easy to do. -DaveM
 	 */
-	ctx->Driver.WriteCI8Span        = NULL;
-	ctx->Driver.WriteCI32Span       = NULL;
-	ctx->Driver.WriteMonoCISpan     = NULL;
-	ctx->Driver.WriteCI32Pixels     = NULL;
-	ctx->Driver.WriteMonoCIPixels   = NULL;
-	ctx->Driver.ReadCI32Span        = NULL;
-	ctx->Driver.ReadCI32Pixels      = NULL;
+	swdd->WriteCI8Span        = NULL;
+	swdd->WriteCI32Span       = NULL;
+	swdd->WriteMonoCISpan     = NULL;
+	swdd->WriteCI32Pixels     = NULL;
+	swdd->WriteMonoCIPixels   = NULL;
+	swdd->ReadCI32Span        = NULL;
+	swdd->ReadCI32Pixels      = NULL;
 }

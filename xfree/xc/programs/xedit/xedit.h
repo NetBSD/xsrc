@@ -26,7 +26,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/xedit.h,v 1.13 2001/09/11 06:42:54 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/xedit.h,v 1.18 2002/11/10 23:21:57 paulo Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
@@ -60,6 +60,8 @@ typedef struct _xedit_hints {
 
 typedef enum {NO_READ, READ_OK, WRITE_OK} FileAccess;
 
+typedef struct _XeditLispData XeditLispData;
+
 #define CHANGED_BIT	0x01
 #define EXISTS_BIT	0x02
 #define WRAP_BIT	0x10
@@ -73,6 +75,7 @@ typedef struct _xedit_flist_item {
     int mode;
     XawTextPropertyList *properties;
     XawTextWrapMode wrap;
+    XeditLispData *xldata;
 } xedit_flist_item;
 
 extern struct _xedit_flist {
@@ -98,13 +101,12 @@ extern struct _app_resources {
 extern Widget topwindow, textwindow, labelwindow, filenamewindow, messwidget;
 extern Widget dirlabel, dirwindow;
 extern Boolean international;
+extern Boolean line_edit;
 
 /*	externals in xedit.c 	*/
-
 void Feep(void);
 
 /*	externals in util.c 	*/
-
 void XeditPrintf(char*);
 Widget MakeCommandButton(Widget, char*, XtCallbackProc);
 Widget MakeStringBox(Widget, String, String);
@@ -125,7 +127,6 @@ void SwitchDirWindow(Bool);
 void DirWindow(Widget, XEvent*, String*, Cardinal*);
 
 /*	externs in commands.c 	*/
-
 void DoQuit(Widget, XtPointer, XtPointer);
 void QuitAction(Widget, XEvent*, String*, Cardinal*);
 void DoSave(Widget, XtPointer, XtPointer);
@@ -140,30 +141,29 @@ void DirWindowCB(Widget, XtPointer, XtPointer);
 void SourceChanged(Widget, XtPointer, XtPointer);
 
 /*	externs in ispell.c	*/
-
 void IspellAction(Widget, XEvent*, String*, Cardinal*);
 void IspellCallback(Widget, XtPointer, XtPointer);
 
 /*	externs in options.c	*/
-
 void CreateEditPopup(void);
 void SetEditMenu(void);
-void SetTextProperties(xedit_flist_item*, Bool);
-void UpdateTextProperties(void);
+void UpdateTextProperties(int);
 
 /*	externs in hook.c	*/
 Bool StartHooks(XtAppContext);
+void LineEditAction(Widget, XEvent*, String*, Cardinal*);
+void LineEdit(Widget);
 
 /*	externs in lisp.c	*/
+void XeditLispInitialize(void);
 void XeditLispEval(Widget, XEvent*, String*, Cardinal*);
 void XeditPrintLispEval(Widget, XEvent*, String*, Cardinal*);
 void XeditKeyboardReset(Widget, XEvent*, String*, Cardinal*);
 void XeditLispCleanUp(void);
-
-/*	externs in proto.c	*/
-#define PROTOPREFFIX	'\033'
-#define PROTOMAXSIZE	1024
-Bool XeditProto(char*, char**);
+void SetTextProperties(xedit_flist_item*);
+void UnsetTextProperties(xedit_flist_item*);
+void CreateEditModePopup(Widget);
+void SetEditModeMenu(void);
 
 /*	externs for system replacement functions */
 #ifdef NEED_STRCASECMP

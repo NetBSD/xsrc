@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:00 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/Imakefile,v 3.58 2001/11/02 23:29:26 dawes Exp $
+XCOMM $XFree86: xc/lib/Imakefile,v 3.73 2003/01/28 22:07:30 alanh Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -73,6 +73,10 @@ XVMCLIBDIR = XvMC
 XINERAMADIR=Xinerama
 #endif
 
+#if BuildXResLibrary
+XRESLIBDIR = XRes
+#endif
+
 #if BuildGLXLibrary
 GLXLIBDIR = GL
 #endif
@@ -101,16 +105,32 @@ PSRESLIBDIR = psres
 RENDERLIBDIR = Xrender
 #endif
 
-#if BuildXftLibrary
-XFTLIBDIR = Xft
+#if BuildExpatLibrary
+EXPATBUILDDIR = expat
 #endif
 
 #if BuildFreetype2Library
 FREETYPE2BUILDDIR = freetype2
 #endif
 
+#if BuildFontconfigLibrary
+FONTCONFIGBUILDDIR = fontconfig
+#endif
+
+#if BuildXftLibrary
+XFTLIBDIR = Xft
+#endif
+
+#if BuildXft1Library
+XFT1LIBDIR = Xft1
+#endif
+
 #if BuildRandRLibrary
 RANDRLIBDIR = Xrandr
+#endif
+
+#if BuildXcursorLibrary
+XCURSORLIBDIR = Xcursor
 #endif
 
 #if BuildXTrapLibrary
@@ -181,19 +201,21 @@ FSLIBDIR = FS
 
 
 LINTSUBDIRS = $(XAULIBDIR) $(XDMCPLIBDIR) $(THRSTUBLIBDIR) $(X11LIBDIR) \
-	     $(OLDXLIBDIR) $(ICELIBDIR) $(SMLIBDIR) $(XEXTLIBDIR) $(XTLIBDIR) \
-	     $(SSLIBDIR) $(XF86MISCLIBDIR) $(XF86VMLIBDIR) $(XF86DGALIBDIR) \
-	     $(XF86RUSHLIBDIR) $(XMULIBDIR) $(XMUULIBDIR) $(XPMLIBDIR) \
-	     $(XAWLIBDIR) $(XAW6LIBDIR) $(XIELIBDIR) $(XINPUTLIBDIR) \
-	     $(XTSTLIBDIR) $(FSLIBDIR) $(PEX5LIBDIR) $(XKBLIBDIR) \
-	     $(XKBUILIBDIR) $(LBXUTILDIR) $(XALIBDIR) $(XPRINTLIBDIR) \
-	     $(XVLIBDIR) $(GLXLIBDIR) $(GLULIBDIR) $(GLWLIBDIR) \
-	     $(DPSLIBDIR) $(DPSTKLIBDIR) $(PSRESLIBDIR) $(XINERAMADIR) \
-	     $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) $(FREETYPE2BUILDDIR) \
-	     $(XFTLIBDIR) $(XVMCLIBDIR) $(RANDRLIBDIR) $(XTRAPLIBDIR)
+             $(OLDXLIBDIR) $(ICELIBDIR) $(SMLIBDIR) $(XEXTLIBDIR) $(XTLIBDIR) \
+             $(SSLIBDIR) $(XF86MISCLIBDIR) $(XF86VMLIBDIR) $(XF86DGALIBDIR) \
+             $(XF86RUSHLIBDIR) $(XMULIBDIR) $(XMUULIBDIR) $(XPMLIBDIR) \
+             $(XAW6LIBDIR) $(XAWLIBDIR) $(XIELIBDIR) $(XINPUTLIBDIR) \
+             $(XTSTLIBDIR) $(FSLIBDIR) $(PEX5LIBDIR) $(XKBLIBDIR) \
+             $(XKBUILIBDIR) $(LBXUTILDIR) $(XALIBDIR) $(XPRINTLIBDIR) \
+             $(XVLIBDIR) $(GLXLIBDIR) $(GLULIBDIR) $(GLWLIBDIR) \
+             $(DPSLIBDIR) $(DPSTKLIBDIR) $(PSRESLIBDIR) $(XINERAMADIR) \
+             $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) $(FREETYPE2BUILDDIR) \
+             $(LIBXML2BUILDDIR) $(EXPATBUILDDIR) $(FONTCONFIGBUILDDIR) \
+             $(XFT1LIBDIR) $(XFTLIBDIR) $(XVMCLIBDIR) $(RANDRLIBDIR) \
+             $(XTRAPLIBDIR) $(XRESLIBDIR) $(XCURSORLIBDIR)
 
 SUBDIRS = $(BERKDIR) xtrans $(LINTSUBDIRS) $(FONTSUBDIR) $(FONTENCSUBDIR) \
-	  $(FONTCACHELIBDIR)
+          $(FONTCACHELIBDIR)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

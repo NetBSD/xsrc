@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/coffloader.c,v 1.17 2001/12/17 20:00:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/coffloader.c,v 1.18 2002/09/16 18:06:10 eich Exp $ */
 
 /*
  *
@@ -1139,7 +1139,7 @@ COFFModulePtr	cofffile;
 		   ".stab.", strlen(".stab.") ) == 0 ) {
 	    continue;
 	}
-	ErrorF("Not loading %s\n", cofffile->sections[i].s_name );
+	ErrorF("COFF: Not loading %s\n", cofffile->sections[i].s_name );
     }
 }
 

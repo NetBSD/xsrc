@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.4 2001/10/01 13:44:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.5 2002/04/04 14:05:44 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -43,8 +43,10 @@ static int  NEO_GetViewport(ScrnInfoPtr);
 static void NEO_SetViewport(ScrnInfoPtr, int, int, int);
 static void NEO_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void NEO_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#if 0
 static void NEO_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
 					unsigned long);
+#endif
 
 static
 DGAFunctionRec NEODGAFuncs = {
@@ -76,7 +78,7 @@ NEODGAInit(ScreenPtr pScreen)
    imlines =  (pScrn->videoRam * 1024) /
       (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
 
-   pixlines = (imlines > 1024 && !pNEO->noAccel)  ? 1024 : imlines;
+   pixlines =  (imlines > 1024 && !pNEO->noAccel)  ? 1024 : imlines;
 
    pMode = firstMode = pScrn->modes;
 
@@ -184,7 +186,7 @@ NEO_SetViewport(
 ){
    NEOPtr pNEO = NEOPTR(pScrn);
    vgaHWPtr hwp = VGAHWPTR(pScrn);
-
+   
    NEOAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
    /* wait for retrace */
    while((hwp->readST01(hwp) & 0x08));
@@ -240,7 +242,7 @@ NEO_BlitRect(
     }
 }
 
-
+#if 0
 static void 
 NEO_BlitTransRect(
    ScrnInfoPtr pScrn, 
@@ -252,7 +254,7 @@ NEO_BlitTransRect(
   /* this one should be separate since the XAA function would
      prohibit usage of ~0 as the key */
 }
-
+#endif
 
 static Bool 
 NEO_OpenFramebuffer(

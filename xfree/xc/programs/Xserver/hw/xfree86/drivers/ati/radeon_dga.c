@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.8 2001/12/04 17:30:46 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.11 2002/09/18 18:14:58 martin Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -29,7 +29,7 @@
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
+ *   Kevin E. Martin <martin@xfree86.org>
  *
  * Credits:
  *
@@ -73,11 +73,14 @@ static DGAModePtr RADEONSetupDGAMode(ScrnInfoPtr pScrn,
 				     unsigned long blue,
 				     short visualClass)
 {
-    RADEONInfoPtr  info            = RADEONPTR(pScrn);
-    DGAModePtr     newmodes        = NULL, currentMode;
-    DisplayModePtr pMode, firstMode;
-    unsigned int   size;
-    int            pitch, Bpp = bitsPerPixel >> 3;
+    RADEONInfoPtr   info     = RADEONPTR(pScrn);
+    DGAModePtr      newmodes = NULL;
+    DGAModePtr      currentMode;
+    DisplayModePtr  pMode;
+    DisplayModePtr  firstMode;
+    unsigned int    size;
+    int             pitch;
+    int             Bpp      = bitsPerPixel >> 3;
 
 SECOND_PASS:
 
@@ -95,8 +98,8 @@ SECOND_PASS:
 
 	    if (!(newmodes = xrealloc(modes, (*num + 1) * sizeof(DGAModeRec))))
 	        break;
-	   
-	    modes = newmodes;
+
+	    modes       = newmodes;
 	    currentMode = modes + *num;
 
 	    currentMode->mode           = pMode;
@@ -108,19 +111,20 @@ SECOND_PASS:
 	    if (info->accel) {
 	      if (info->accel->SetupForSolidFill &&
 		  info->accel->SubsequentSolidFillRect)
-		 currentMode->flags     |= DGA_FILL_RECT;
+		 currentMode->flags    |= DGA_FILL_RECT;
 	      if (info->accel->SetupForScreenToScreenCopy &&
 		  info->accel->SubsequentScreenToScreenCopy)
-		 currentMode->flags     |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
+		 currentMode->flags    |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
 	      if (currentMode->flags &
 		  (DGA_PIXMAP_AVAILABLE | DGA_FILL_RECT |
 		   DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS))
-		  currentMode->flags &= ~DGA_CONCURRENT_ACCESS;
+		  currentMode->flags   &= ~DGA_CONCURRENT_ACCESS;
 	    }
 	    if (pMode->Flags & V_DBLSCAN)
 		currentMode->flags     |= DGA_DOUBLESCAN;
 	    if (pMode->Flags & V_INTERLACE)
 	        currentMode->flags     |= DGA_INTERLACED;
+
 	    currentMode->byteOrder      = pScrn->imageByteOrder;
 	    currentMode->depth          = depth;
 	    currentMode->bitsPerPixel   = bitsPerPixel;
@@ -136,15 +140,16 @@ SECOND_PASS:
 	    currentMode->offset         = 0;
 	    currentMode->address        = (unsigned char*)info->LinearAddr;
 	    currentMode->bytesPerScanline = pitch * Bpp;
-	    currentMode->imageWidth   = pitch;
-	    currentMode->imageHeight  = info->FbMapSize / currentMode->bytesPerScanline;
-	    currentMode->pixmapWidth  = currentMode->imageWidth;
-	    currentMode->pixmapHeight = currentMode->imageHeight;
-	    currentMode->maxViewportX = currentMode->imageWidth -
-					currentMode->viewportWidth;
+	    currentMode->imageWidth     = pitch;
+	    currentMode->imageHeight    = (info->FbMapSize
+					   / currentMode->bytesPerScanline);
+	    currentMode->pixmapWidth    = currentMode->imageWidth;
+	    currentMode->pixmapHeight   = currentMode->imageHeight;
+	    currentMode->maxViewportX   = (currentMode->imageWidth
+					   - currentMode->viewportWidth);
 	    /* this might need to get clamped to some maximum */
-	    currentMode->maxViewportY = (currentMode->imageHeight -
-					 currentMode->viewportHeight);
+	    currentMode->maxViewportY   = (currentMode->imageHeight
+					   - currentMode->viewportHeight);
 	    (*num)++;
 	}
 
@@ -163,10 +168,10 @@ SECOND_PASS:
 
 Bool RADEONDGAInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr   pScrn = xf86Screens[pScreen->myNum];
-    RADEONInfoPtr info  = RADEONPTR(pScrn);
-    DGAModePtr    modes = NULL;
-    int           num   = 0;
+    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    RADEONInfoPtr  info  = RADEONPTR(pScrn);
+    DGAModePtr     modes = NULL;
+    int            num   = 0;
 
     /* 8 */
     modes = RADEONSetupDGAMode(pScrn, modes, &num, 8, 8,
@@ -229,7 +234,7 @@ Bool RADEONDGAInit(ScreenPtr pScreen)
     info->DGAFuncs.BlitTransRect         = NULL;
 
     if (info->accel) {
-	info->DGAFuncs.Sync              = RADEONWaitForIdle;
+	info->DGAFuncs.Sync              = info->accel->Sync;
 	if (info->accel->SetupForSolidFill &&
 	    info->accel->SubsequentSolidFillRect)
 	    info->DGAFuncs.FillRect      = RADEON_FillRect;
@@ -245,9 +250,9 @@ Bool RADEONDGAInit(ScreenPtr pScreen)
 
 static Bool RADEON_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
 {
-    static RADEONFBLayout SavedLayouts[MAXSCREENS];
-    int                   indx = pScrn->pScreen->myNum;
-    RADEONInfoPtr         info = RADEONPTR(pScrn);
+    static RADEONFBLayout  SavedLayouts[MAXSCREENS];
+    int                    indx = pScrn->pScreen->myNum;
+    RADEONInfoPtr          info = RADEONPTR(pScrn);
 
     if (!pMode) { /* restore the original mode */
 	/* put the ScreenParameters back */
@@ -258,6 +263,18 @@ static Bool RADEON_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
 	pScrn->currentMode = info->CurrentLayout.mode;
 
 	RADEONSwitchMode(indx, pScrn->currentMode, 0);
+#ifdef XF86DRI
+    	if (info->directRenderingEnabled) {
+	    RADEONCP_STOP(pScrn, info);
+    	}
+#endif
+	if (info->accelOn)
+	    RADEONEngineInit(pScrn);
+#ifdef XF86DRI
+    	if (info->directRenderingEnabled) {
+	    RADEONCP_START(pScrn, info);
+    	}
+#endif
 	RADEONAdjustFrame(indx, 0, 0, 0);
 	info->DGAactive = FALSE;
     } else {
@@ -278,6 +295,19 @@ static Bool RADEON_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
 	/* RADEONModeInit() will set the mode field */
 
 	RADEONSwitchMode(indx, pMode->mode, 0);
+
+#ifdef XF86DRI
+    	if (info->directRenderingEnabled) {
+	    RADEONCP_STOP(pScrn, info);
+    	}
+#endif
+	if (info->accelOn)
+	    RADEONEngineInit(pScrn);
+#ifdef XF86DRI
+    	if (info->directRenderingEnabled) {
+	    RADEONCP_START(pScrn, info);
+    	}
+#endif
     }
 
     return TRUE;
@@ -285,14 +315,14 @@ static Bool RADEON_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
 
 static int RADEON_GetViewport(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
 
     return info->DGAViewportStatus;
 }
 
 static void RADEON_SetViewport(ScrnInfoPtr pScrn, int x, int y, int flags)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
 
     RADEONAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
     info->DGAViewportStatus = 0;  /* FIXME */
@@ -302,7 +332,7 @@ static void RADEON_FillRect(ScrnInfoPtr pScrn,
 			    int x, int y, int w, int h,
 			    unsigned long color)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
 
     (*info->accel->SetupForSolidFill)(pScrn, color, GXcopy, (CARD32)(~0));
     (*info->accel->SubsequentSolidFillRect)(pScrn, x, y, w, h);
@@ -315,9 +345,9 @@ static void RADEON_BlitRect(ScrnInfoPtr pScrn,
 			    int srcx, int srcy, int w, int h,
 			    int dstx, int dsty)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
-    int ydir = (srcy < dsty) ? -1 : 1;
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
+    int            xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int            ydir = (srcy < dsty) ? -1 : 1;
 
     (*info->accel->SetupForScreenToScreenCopy)(pScrn, xdir, ydir,
 					       GXcopy, (CARD32)(~0), -1);
@@ -332,9 +362,9 @@ static void RADEON_BlitTransRect(ScrnInfoPtr pScrn,
 				 int srcx, int srcy, int w, int h,
 				 int dstx, int dsty, unsigned long color)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
-    int ydir = (srcy < dsty) ? -1 : 1;
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
+    int            xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int            ydir = (srcy < dsty) ? -1 : 1;
 
     info->XAAForceTransBlit = TRUE;
 
@@ -355,7 +385,7 @@ static Bool RADEON_OpenFramebuffer(ScrnInfoPtr pScrn,
 				   unsigned char **mem,
 				   int *size, int *offset, int *flags)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
 
     *name   = NULL;             /* no special device */
     *mem    = (unsigned char*)info->LinearAddr;

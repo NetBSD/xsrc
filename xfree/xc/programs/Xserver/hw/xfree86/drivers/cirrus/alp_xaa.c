@@ -1,6 +1,6 @@
 /* (c) Itai Nahshon */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.7 2001/10/01 13:44:05 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.8 2002/01/25 21:56:00 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -16,8 +16,10 @@
 #define _ALP_PRIVATE_
 #include "alp.h"
 
-#define WAIT   outb(0x3CE,0x31); while(inb(0x3CF) & pCir->chip.alp->waitMsk){};
-#define WAIT_1 outb(0x3CE,0x31); while(inb(0x3CF) & 0x1){};
+#define WAIT	outb(pCir->PIOReg, 0x31); \
+		while(inb(pCir->PIOReg + 1) & pCir->chip.alp->waitMsk){};
+#define WAIT_1	outb(pCir->PIOReg, 0x31); \
+		while(inb(pCir->PIOReg + 1) & 0x1){};
 
 static const CARD16 translated_rop[] =
 {
@@ -40,13 +42,15 @@ static const CARD16 translated_rop[] =
 };
 
 #if 1
-#define SetupForRop(rop) outw(0x3CE, translated_rop[rop])
+#define SetupForRop(rop) outw(pCir->PIOReg, translated_rop[rop])
 #else
-#define SetupForRop(rop) outw(0x3CE, 0x0D32)
+#define SetupForRop(rop) outw(pCir->PIOReg, 0x0D32)
 #endif
 
 static void AlpSync(ScrnInfoPtr pScrn)
 {
+	CirPtr pCir = CIRPTR(pScrn);
+
 #ifdef ALP_DEBUG
 	ErrorF("AlpSync\n");
 #endif
@@ -69,11 +73,11 @@ AlpSetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir,
 	WAIT;
 	SetupForRop(rop);
 	/* Set dest pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x24);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x25);
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x24);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x25);
 	/* Set source pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x26);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x27);
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x26);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x27);
 }
 
 static void
@@ -98,27 +102,27 @@ AlpSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 
 	WAIT;
 
-	outw(0x3CE, decrement | 0x30);
+	outw(pCir->PIOReg, decrement | 0x30);
 
 	/* Width */
-	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);
-	outw(0x3CE, ((ww) & 0x1f00) | 0x21);
+	outw(pCir->PIOReg, ((ww << 8) & 0xff00) | 0x20);
+	outw(pCir->PIOReg, ((ww) & 0x1f00) | 0x21);
 	/* Height */
-	outw(0x3CE, ((hh << 8) & 0xff00) | 0x22);
-	outw(0x3CE, ((hh) & 0x0700) | 0x23);
+	outw(pCir->PIOReg, ((hh << 8) & 0xff00) | 0x22);
+	outw(pCir->PIOReg, ((hh) & 0x0700) | 0x23);
 
 
 	/* source */
-	outw(0x3CE, ((source << 8) & 0xff00) | 0x2C);
-	outw(0x3CE, ((source) & 0xff00) | 0x2D);
-	outw(0x3CE, ((source >> 8) & 0x3f00)| 0x2E);
+	outw(pCir->PIOReg, ((source << 8) & 0xff00) | 0x2C);
+	outw(pCir->PIOReg, ((source) & 0xff00) | 0x2D);
+	outw(pCir->PIOReg, ((source >> 8) & 0x3f00)| 0x2E);
 
 	/* dest */
-	outw(0x3CE, ((dest  << 8) & 0xff00) | 0x28);
-	outw(0x3CE, ((dest) & 0xff00) | 0x29);
-	outw(0x3CE, ((dest >> 8) & 0x3f00) | 0x2A);
+	outw(pCir->PIOReg, ((dest  << 8) & 0xff00) | 0x28);
+	outw(pCir->PIOReg, ((dest) & 0xff00) | 0x29);
+	outw(pCir->PIOReg, ((dest >> 8) & 0x3f00) | 0x2A);
 	if (!pCir->chip.alp->autoStart)
-	  outw(0x3CE,0x0231);
+	  outw(pCir->PIOReg, 0x0231);
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpSubsequentScreenToScreenCopy x1=%d y1=%d x2=%d y2=%d w=%d h=%d\n",
@@ -155,9 +159,9 @@ AlpSetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 	  {
 	    int source = pAlp->monoPattern8x8;
 	    /* source = 8x8 solid mono pattern */
-	    outw(0x3CE, ((source << 8) & 0xff00) | 0x2C);
-	    outw(0x3CE, ((source) & 0xff00) | 0x2D);
-	    outw(0x3CE, ((source >> 8) & 0x3f00) | 0x2E);
+	    outw(pCir->PIOReg, ((source << 8) & 0xff00) | 0x2C);
+	    outw(pCir->PIOReg, ((source) & 0xff00) | 0x2D);
+	    outw(pCir->PIOReg, ((source >> 8) & 0x3f00) | 0x2E);
 	    /* memset() may not be the fastest */
 	    memset(pCir->FbBase + pAlp->monoPattern8x8, 0xFF, 8);
 	    write_mem_barrier();
@@ -165,21 +169,21 @@ AlpSetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 	  }
         default:
           /* GR33 = 0x04 => does not exist on GD7548 */
-	  outw(0x3CE, 0x0433);
+	  outw(pCir->PIOReg, 0x0433);
 	}
 
         /* GR30 = color expansion, pattern copy */
 	/* Choses 8bpp / 16bpp color expansion */
-	outw(0x3CE, 0xC030 |((pScrn->bitsPerPixel - 8) << 9));
+	outw(pCir->PIOReg, 0xC030 |((pScrn->bitsPerPixel - 8) << 9));
 
-	outw(0x3CE, ((color << 8) & 0xff00) | 0x01);
-	outw(0x3CE, ((color) & 0xff00) | 0x11);
-	outw(0x3CE, ((color >> 8) & 0xff00) | 0x13);
-	outw(0x3CE, 0x15);
+	outw(pCir->PIOReg, ((color << 8) & 0xff00) | 0x01);
+	outw(pCir->PIOReg, ((color) & 0xff00) | 0x11);
+	outw(pCir->PIOReg, ((color >> 8) & 0xff00) | 0x13);
+	outw(pCir->PIOReg, 0x15);
 
 	/* Set dest pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x24);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x25);
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x24);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x25);
 }
 
 static void
@@ -197,18 +201,18 @@ AlpSubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
 	WAIT;
 
 	/* Width */
-	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);
-	outw(0x3CE, ((ww) & 0x1f00) | 0x21);
+	outw(pCir->PIOReg, ((ww << 8) & 0xff00) | 0x20);
+	outw(pCir->PIOReg, ((ww) & 0x1f00) | 0x21);
 	/* Height */
-	outw(0x3CE, ((hh << 8) & 0xff00) | 0x22);
-	outw(0x3CE, ((hh) & 0x0700) | 0x23);
+	outw(pCir->PIOReg, ((hh << 8) & 0xff00) | 0x22);
+	outw(pCir->PIOReg, ((hh) & 0x0700) | 0x23);
 
 	/* dest */
-	outw(0x3CE, ((dest << 8) & 0xff00) | 0x28);
-	outw(0x3CE, ((dest) & 0xff00) | 0x29);
-	outw(0x3CE, ((dest >> 8) & 0x3f00) | 0x2A);
+	outw(pCir->PIOReg, ((dest << 8) & 0xff00) | 0x28);
+	outw(pCir->PIOReg, ((dest) & 0xff00) | 0x29);
+	outw(pCir->PIOReg, ((dest >> 8) & 0x3f00) | 0x2A);
 	if (!pCir->chip.alp->autoStart)
-	  outw(0x3CE,0x0231);
+	  outw(pCir->PIOReg, 0x0231);
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpSubsequentSolidFillRect x=%d y=%d w=%d h=%d\n",
@@ -239,40 +243,40 @@ AlpSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 	{
 	  int source = pAlp->monoPattern8x8;
 	  /* source = 8x8 solid mono pattern */
-	  outw(0x3CE, ((source << 8) & 0xff00) | 0x2C);
-	  outw(0x3CE, ((source) & 0xff00) | 0x2D);
-	  outw(0x3CE, ((source >> 8) & 0x3f00) | 0x2E);
+	  outw(pCir->PIOReg, ((source << 8) & 0xff00) | 0x2C);
+	  outw(pCir->PIOReg, ((source) & 0xff00) | 0x2D);
+	  outw(pCir->PIOReg, ((source >> 8) & 0x3f00) | 0x2E);
 	}
 
         /* GR30 = color expansion, pattern copy */
 	/* Choses 8bpp / 16bpp color expansion */
 	if (bg == -1)
 	{ /* transparency requested */
-	  outw(0x3CE, 0xC830 |((pScrn->bitsPerPixel - 8) << 9));
+	  outw(pCir->PIOReg, 0xC830 |((pScrn->bitsPerPixel - 8) << 9));
 
 	  bg = ~fg;
 	  /* transparent color compare */
-	  outw(0x3CE, ((bg << 8) & 0xff00) | 0x34);
-	  outw(0x3CE, ((bg) & 0xff00) | 0x35);
+	  outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x34);
+	  outw(pCir->PIOReg, ((bg) & 0xff00) | 0x35);
 
 	  /* transparent color mask = 0 (all bits matters) */
-	  outw(0x3CE, 0x38);
-	  outw(0x3CE, 0x39);
+	  outw(pCir->PIOReg, 0x38);
+	  outw(pCir->PIOReg, 0x39);
 	}
 	else
 	{
-	  outw(0x3CE, 0xC030 |((pScrn->bitsPerPixel - 8) << 9));
+	  outw(pCir->PIOReg, 0xC030 |((pScrn->bitsPerPixel - 8) << 9));
 	}
 
-	outw(0x3CE, ((fg << 8) & 0xff00) | 0x01);
-	outw(0x3CE, ((fg) & 0xff00) | 0x11);
+	outw(pCir->PIOReg, ((fg << 8) & 0xff00) | 0x01);
+	outw(pCir->PIOReg, ((fg) & 0xff00) | 0x11);
 
-	outw(0x3CE, ((bg << 8) & 0xff00) | 0x00);
-	outw(0x3CE, ((bg) & 0xff00) | 0x10);
+	outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x00);
+	outw(pCir->PIOReg, ((bg) & 0xff00) | 0x10);
 
 	/* Set dest pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x24);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x25);
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x24);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x25);
 }
 
 static void
@@ -296,18 +300,18 @@ AlpSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
 	write_mem_barrier();
 
 	/* Width */
-	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);
-	outw(0x3CE, ((ww) & 0x1f00) | 0x21);
+	outw(pCir->PIOReg, ((ww << 8) & 0xff00) | 0x20);
+	outw(pCir->PIOReg, ((ww) & 0x1f00) | 0x21);
 	/* Height */
-	outw(0x3CE, ((hh << 8) & 0xff00) | 0x22);
-	outw(0x3CE, ((hh) & 0x0700) | 0x23);
+	outw(pCir->PIOReg, ((hh << 8) & 0xff00) | 0x22);
+	outw(pCir->PIOReg, ((hh) & 0x0700) | 0x23);
 
 	/* dest */
-	outw(0x3CE, ((dest << 8) & 0xff00) | 0x28);
-	outw(0x3CE, ((dest) & 0xff00) | 0x29);
-	outw(0x3CE, ((dest >> 8) & 0x3f00) | 0x2A);
+	outw(pCir->PIOReg, ((dest << 8) & 0xff00) | 0x28);
+	outw(pCir->PIOReg, ((dest) & 0xff00) | 0x29);
+	outw(pCir->PIOReg, ((dest >> 8) & 0x3f00) | 0x2A);
 	if (!pCir->chip.alp->autoStart)
-	  outw(0x3CE,0x0231);
+	  outw(pCir->PIOReg, 0x0231);
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpSubsequent8x8PatternFill x=%d y=%d w=%d h=%d\n",
@@ -342,31 +346,31 @@ AlpSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	/* Choses 8bpp / 16bpp color expansion */
 	if (bg == -1)
 	{ /* transparency requested */
-	  outw(0x3CE, 0x8C30 |((pScrn->bitsPerPixel - 8) << 9));
+	  outw(pCir->PIOReg, 0x8C30 |((pScrn->bitsPerPixel - 8) << 9));
 
 	  bg = ~fg;
 	  /* transparent color compare */
-	  outw(0x3CE, ((bg << 8) & 0xff00) | 0x34);
-	  outw(0x3CE, ((bg) & 0xff00) | 0x35);
+	  outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x34);
+	  outw(pCir->PIOReg, ((bg) & 0xff00) | 0x35);
 
 	  /* transparent color mask = 0 (all bits matters) */
-	  outw(0x3CE, 0x38);
-	  outw(0x3CE, 0x39);
+	  outw(pCir->PIOReg, 0x38);
+	  outw(pCir->PIOReg, 0x39);
 	}
 	else
 	{
-	  outw(0x3CE, 0x8430 |((pScrn->bitsPerPixel - 8) << 9));
+	  outw(pCir->PIOReg, 0x8430 |((pScrn->bitsPerPixel - 8) << 9));
 	}
 
-	outw(0x3CE, ((bg << 8) & 0xff00) | 0x00);
-	outw(0x3CE, ((bg) & 0xff00) | 0x10);
+	outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x00);
+	outw(pCir->PIOReg, ((bg) & 0xff00) | 0x10);
 
-	outw(0x3CE, ((fg << 8) & 0xff00) | 0x01);
-	outw(0x3CE, ((fg) & 0xff00) | 0x11);
+	outw(pCir->PIOReg, ((fg << 8) & 0xff00) | 0x01);
+	outw(pCir->PIOReg, ((fg) & 0xff00) | 0x11);
 
 	/* Set dest pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x24);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x25);  
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x24);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x25);  
 }
 
 static void
@@ -387,25 +391,25 @@ AlpSubsequentCPUToScreenColorExpandFill(
 	WAIT;
 
 	/* Width */
-	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);
-	outw(0x3CE, ((ww) & 0x1f00) | 0x21);
+	outw(pCir->PIOReg, ((ww << 8) & 0xff00) | 0x20);
+	outw(pCir->PIOReg, ((ww) & 0x1f00) | 0x21);
 	/* Height */
-	outw(0x3CE, ((hh << 8) & 0xff00) | 0x22);
-	outw(0x3CE, ((hh) & 0x0700) | 0x23);
+	outw(pCir->PIOReg, ((hh << 8) & 0xff00) | 0x22);
+	outw(pCir->PIOReg, ((hh) & 0x0700) | 0x23);
 
 	/* source = CPU ; description of bit 2 of GR30 in the 7548 manual
 	   says that if we do color expansion we must zero the source
 	   adress registers (GR2C, GR2D, GR2E) */
-	outw(0x3CE, 0x2C);
-	outw(0x3CE, 0x2D);
-	outw(0x3CE, 0x2E);
+	outw(pCir->PIOReg, 0x2C);
+	outw(pCir->PIOReg, 0x2D);
+	outw(pCir->PIOReg, 0x2E);
 
 	/* dest */
-	outw(0x3CE, ((dest << 8) & 0xff00) | 0x28);
-	outw(0x3CE, ((dest) & 0xff00) | 0x29);
-	outw(0x3CE, ((dest >> 8) & 0x3f00) | 0x2A);
+	outw(pCir->PIOReg, ((dest << 8) & 0xff00) | 0x28);
+	outw(pCir->PIOReg, ((dest) & 0xff00) | 0x29);
+	outw(pCir->PIOReg, ((dest >> 8) & 0x3f00) | 0x2A);
 	if (!pCir->chip.alp->autoStart)
-	  outw(0x3CE,0x0231);
+	  outw(pCir->PIOReg, 0x0231);
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpSubsequentCPUToScreenColorExpandFill x=%d y=%d w=%d h=%d\n",
@@ -439,40 +443,40 @@ AlpSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	{ /* transparency requested */
 	  if (pScrn->bitsPerPixel > 8) /* 16 bpp */
 	  {
-	    outw(0x3CE, 0x9C30);
+	    outw(pCir->PIOReg, 0x9C30);
 
 	    bg = ~fg;
 	    /* transparent color compare */
-	    outw(0x3CE, ((bg << 8) & 0xff00) | 0x34);
-	    outw(0x3CE, ((bg) & 0xff00) | 0x35);
+	    outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x34);
+	    outw(pCir->PIOReg, ((bg) & 0xff00) | 0x35);
 	  } else /* 8 bpp */
 	  {
-	    outw(0x3CE, 0x8C30);
+	    outw(pCir->PIOReg, 0x8C30);
 
 	    bg = ~fg;
 	    /* transparent color compare */
-	    outw(0x3CE, ((bg << 8) & 0xff00) | 0x34);
-	    outw(0x3CE, ((bg << 8) & 0xff00) | 0x35);
+	    outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x34);
+	    outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x35);
 	  }
 
 	  /* transparent color mask = 0 (all bits matters) */
-	  outw(0x3CE, 0x38);
-	  outw(0x3CE, 0x39);
+	  outw(pCir->PIOReg, 0x38);
+	  outw(pCir->PIOReg, 0x39);
 	}
 	else
 	{
-	  outw(0x3CE, 0x8430 |((pScrn->bitsPerPixel - 8) << 9));
+	  outw(pCir->PIOReg, 0x8430 |((pScrn->bitsPerPixel - 8) << 9));
 	}
 
-	outw(0x3CE, ((bg << 8) & 0xff00) | 0x00);
-	outw(0x3CE, ((bg) & 0xff00) | 0x10);
+	outw(pCir->PIOReg, ((bg << 8) & 0xff00) | 0x00);
+	outw(pCir->PIOReg, ((bg) & 0xff00) | 0x10);
 
-	outw(0x3CE, ((fg << 8) & 0xff00) | 0x01);
-	outw(0x3CE, ((fg) & 0xff00) | 0x11);
+	outw(pCir->PIOReg, ((fg << 8) & 0xff00) | 0x01);
+	outw(pCir->PIOReg, ((fg) & 0xff00) | 0x11);
 
 	/* Set dest pitch */
-	outw(0x3CE, ((pitch << 8) & 0xff00) | 0x24);
-	outw(0x3CE, ((pitch) & 0x1f00) | 0x25);  
+	outw(pCir->PIOReg, ((pitch << 8) & 0xff00) | 0x24);
+	outw(pCir->PIOReg, ((pitch) & 0x1f00) | 0x25);  
 }
 
 static void
@@ -523,32 +527,32 @@ AlpSubsequentColorExpandScanline(
 	WAIT_1;
 
 	/* Width */
-	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);
-	outw(0x3CE, ((ww) & 0x1f00) | 0x21);
+	outw(pCir->PIOReg, ((ww << 8) & 0xff00) | 0x20);
+	outw(pCir->PIOReg, ((ww) & 0x1f00) | 0x21);
 
 	/* Height = 1 */
-	outw(0x3CE, 0x22);
-	outw(0x3CE, 0x23);
+	outw(pCir->PIOReg, 0x22);
+	outw(pCir->PIOReg, 0x23);
 
 	/* source = CPU ; description of bit 2 of GR30 in the 7548 manual
 	   says that if we do color expansion we must zero the source
 	   adress registers (GR2C, GR2D, GR2E) */
-	outw(0x3CE, 0x2C);
-	outw(0x3CE, 0x2D);
-	outw(0x3CE, 0x2E);
+	outw(pCir->PIOReg, 0x2C);
+	outw(pCir->PIOReg, 0x2D);
+	outw(pCir->PIOReg, 0x2E);
 
 	/* dest */
-	outw(0x3CE, ((dest << 8) & 0xff00) | 0x28);
-	outw(0x3CE, ((dest) & 0xff00) | 0x29);
+	outw(pCir->PIOReg, ((dest << 8) & 0xff00) | 0x28);
+	outw(pCir->PIOReg, ((dest) & 0xff00) | 0x29);
 	write_mem_barrier();
 
 #ifdef ALP_DEBUG
 	ErrorF("AlpSubsequentColorExpandScanline (2)\n");
 #endif
 
-	outw(0x3CE, ((dest >> 8) & 0x3f00) | 0x2A);
+	outw(pCir->PIOReg, ((dest >> 8) & 0x3f00) | 0x2A);
 	if (!pCir->chip.alp->autoStart)
-	  outw(0x3CE,0x0231);
+	  outw(pCir->PIOReg, 0x0231);
 
 	{
 	  int i;
@@ -568,10 +572,10 @@ AlpAccelEngineInit(ScrnInfoPtr pScrn)
 {
     CirPtr pCir = CIRPTR(pScrn);
 
-    outw(0x3CE, 0x200E); /* enable writes to gr33 */
+    outw(pCir->PIOReg, 0x200E); /* enable writes to gr33 */
     /* Setup things for autostart */
     if (pCir->properties & ACCEL_AUTOSTART) {
-        outw(0x3CE, 0x8031); /* enable autostart */
+        outw(pCir->PIOReg, 0x8031); /* enable autostart */
 	pCir->chip.alp->waitMsk = 0x10;
 	pCir->chip.alp->autoStart = TRUE;
     } else {

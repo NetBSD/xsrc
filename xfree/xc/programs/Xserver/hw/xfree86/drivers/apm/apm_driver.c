@@ -1,6 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.56 2002/01/04 21:22:25 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.61 2002/10/16 21:13:46 dawes Exp $ */
 
-#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "xf86cmap.h"
 #include "shadowfb.h"
@@ -53,7 +52,7 @@ static void	ApmProbeDDC(ScrnInfoPtr pScrn, int index);
 
 
 int ApmPixmapIndex = -1;
-static int ApmGeneration = -1;
+static unsigned long ApmGeneration = 0;
 
 DriverRec APM = {
 	VERSION,
@@ -92,6 +91,10 @@ typedef enum {
     OPTION_NOACCEL,
     OPTION_SHADOW_FB,
     OPTION_PCI_BURST,
+    OPTION_REMAP_DPMS_ON,
+    OPTION_REMAP_DPMS_STANDBY,
+    OPTION_REMAP_DPMS_SUSPEND,
+    OPTION_REMAP_DPMS_OFF,
     OPTION_PCI_RETRY
 } ApmOpts;
 
@@ -102,7 +105,7 @@ static const OptionInfoRec ApmOptions[] =
     {OPTION_SW_CURSOR, "SWcursor", OPTV_BOOLEAN,
 	{0}, FALSE},
     {OPTION_HW_CURSOR, "HWcursor", OPTV_BOOLEAN,
-	{0}, FALSE},
+	{0}, TRUE},
     {OPTION_NOLINEAR, "NoLinear", OPTV_BOOLEAN,
 	{0}, FALSE},
     {OPTION_NOACCEL, "NoAccel", OPTV_BOOLEAN,
@@ -110,6 +113,14 @@ static const OptionInfoRec ApmOptions[] =
     {OPTION_SHADOW_FB, "ShadowFB", OPTV_BOOLEAN,
 	{0}, FALSE},
     {OPTION_PCI_BURST, "pci_burst", OPTV_BOOLEAN,
+	{0}, FALSE},
+    {OPTION_REMAP_DPMS_ON, "Remap_DPMS_On", OPTV_ANYSTR,
+	{0}, FALSE},
+    {OPTION_REMAP_DPMS_STANDBY, "Remap_DPMS_Standby", OPTV_ANYSTR,
+	{0}, FALSE},
+    {OPTION_REMAP_DPMS_SUSPEND, "Remap_DPMS_Suspend", OPTV_ANYSTR,
+	{0}, FALSE},
+    {OPTION_REMAP_DPMS_OFF, "Remap_DPMS_Off", OPTV_ANYSTR,
 	{0}, FALSE},
     {OPTION_PCI_RETRY, "PciRetry", OPTV_BOOLEAN,
 	{0}, FALSE},
@@ -283,7 +294,7 @@ ApmUnlock(ApmPtr pApm)
     if (pApm->Chipset >= AT3D && !pApm->noLinear)
 	ApmWriteSeq(0x10, 0x12);
     else
-	wrinx(0x3C4, 0x10, 0x12);
+	wrinx(pApm->xport, 0x10, 0x12);
 }
 
 /* lock Alliance registers */
@@ -293,7 +304,7 @@ ApmLock(ApmPtr pApm)
     if (pApm->Chipset >= AT3D && !pApm->noLinear)
 	ApmWriteSeq(0x10, pApm->savedSR10 ? 0 : 0x12);
     else
-	wrinx(0x3C4, 0x10, pApm->savedSR10 ? 0 : 0x12);
+	wrinx(pApm->xport, 0x10, pApm->savedSR10 ? 0 : 0x12);
 }
 
 static void
@@ -500,8 +511,9 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 {
     APMDECL(pScrn);
     EntityInfoPtr	pEnt;
+    vgaHWPtr		hwp;
     MessageType		from;
-    char		*mod = NULL, *req = NULL;
+    char		*mod = NULL, *req = NULL, *s;
     ClockRangePtr	clockRanges;
     int			i;
     xf86MonPtr		MonInfo = NULL;
@@ -559,11 +571,15 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     if (!vgaHWGetHWRec(pScrn))
 	return FALSE;
 
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
+    hwp = VGAHWPTR(pScrn);
+    vgaHWGetIOBase(hwp);
+    pApm->iobase = hwp->PIOOffset;
+    pApm->xport = hwp->PIOOffset + 0x3C4;
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
 
+    /* XXX: Access funcs */
     /*
      * The first thing we should figure out is the depth, bpp, etc.
      */
@@ -586,6 +602,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	    return FALSE;
 	}
     }
+    xf86PrintDepthBpp(pScrn);
 
     /*
      * This must happen after pScrn->display has been set because
@@ -673,6 +690,70 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	else
 	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "\"pci_retry\" option requires pci_burst \"on\".\n");
+    }
+    pApm->DPMSMask[DPMSModeOn]		= DPMSModeOn;
+    pApm->DPMSMask[DPMSModeStandby]	= DPMSModeStandby;
+    pApm->DPMSMask[DPMSModeSuspend]	= DPMSModeSuspend;
+    pApm->DPMSMask[DPMSModeOff]		= DPMSModeOff;
+    if ((s = xf86GetOptValString(pApm->Options, OPTION_REMAP_DPMS_ON))) {
+	if (!strcmp(s, "on"))
+	    pApm->DPMSMask[DPMSModeOn] = DPMSModeOn;
+	else if (!strcmp(s, "standby"))
+	    pApm->DPMSMask[DPMSModeOn] = DPMSModeStandby;
+	else if (!strcmp(s, "suspend"))
+	    pApm->DPMSMask[DPMSModeOn] = DPMSModeSuspend;
+	else if (!strcmp(s, "off"))
+	    pApm->DPMSMask[DPMSModeOn] = DPMSModeOff;
+	else if (s[0] >= '0' && s[0] <= '9') {
+	    pApm->DPMSMask[DPMSModeOn] = strtol(s, NULL, 0);
+	    if (pApm->DPMSMask[DPMSModeOn] > (sizeof pApm->DPMSMask)-1)
+		pApm->DPMSMask[DPMSModeOn] = (sizeof pApm->DPMSMask) - 1;
+	}
+    }
+    if ((s = xf86GetOptValString(pApm->Options, OPTION_REMAP_DPMS_STANDBY))) {
+	if (!strcmp(s, "on"))
+	    pApm->DPMSMask[DPMSModeStandby] = DPMSModeOn;
+	else if (!strcmp(s, "standby"))
+	    pApm->DPMSMask[DPMSModeStandby] = DPMSModeStandby;
+	else if (!strcmp(s, "suspend"))
+	    pApm->DPMSMask[DPMSModeStandby] = DPMSModeSuspend;
+	else if (!strcmp(s, "off"))
+	    pApm->DPMSMask[DPMSModeStandby] = DPMSModeOff;
+	else if (s[0] >= '0' && s[0] <= '9') {
+	    pApm->DPMSMask[DPMSModeStandby] = strtol(s, NULL, 0);
+	    if (pApm->DPMSMask[DPMSModeStandby] > (sizeof pApm->DPMSMask)-1)
+		pApm->DPMSMask[DPMSModeStandby] = (sizeof pApm->DPMSMask) - 1;
+	}
+    }
+    if ((s = xf86GetOptValString(pApm->Options, OPTION_REMAP_DPMS_SUSPEND))) {
+	if (!strcmp(s, "on"))
+	    pApm->DPMSMask[DPMSModeSuspend] = DPMSModeOn;
+	else if (!strcmp(s, "standby"))
+	    pApm->DPMSMask[DPMSModeSuspend] = DPMSModeStandby;
+	else if (!strcmp(s, "suspend"))
+	    pApm->DPMSMask[DPMSModeSuspend] = DPMSModeSuspend;
+	else if (!strcmp(s, "off"))
+	    pApm->DPMSMask[DPMSModeSuspend] = DPMSModeOff;
+	else if (s[0] >= '0' && s[0] <= '9') {
+	    pApm->DPMSMask[DPMSModeSuspend] = strtol(s, NULL, 0);
+	    if (pApm->DPMSMask[DPMSModeSuspend] > (sizeof pApm->DPMSMask)-1)
+		pApm->DPMSMask[DPMSModeSuspend] = (sizeof pApm->DPMSMask) - 1;
+	}
+    }
+    if ((s = xf86GetOptValString(pApm->Options, OPTION_REMAP_DPMS_OFF))) {
+	if (!strcmp(s, "on"))
+	    pApm->DPMSMask[DPMSModeOff] = DPMSModeOn;
+	else if (!strcmp(s, "standby"))
+	    pApm->DPMSMask[DPMSModeOff] = DPMSModeStandby;
+	else if (!strcmp(s, "suspend"))
+	    pApm->DPMSMask[DPMSModeOff] = DPMSModeSuspend;
+	else if (!strcmp(s, "off"))
+	    pApm->DPMSMask[DPMSModeOff] = DPMSModeOff;
+	else if (s[0] >= '0' && s[0] <= '9') {
+	    pApm->DPMSMask[DPMSModeOff] = strtol(s, NULL, 0);
+	    if (pApm->DPMSMask[DPMSModeOff] > (sizeof pApm->DPMSMask)-1)
+		pApm->DPMSMask[DPMSModeOff] = (sizeof pApm->DPMSMask) - 1;
+	}
     }
 
     /*
@@ -783,7 +864,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     xf86RegisterResources(pEnt->index, NULL, ResNone);
-    xf86SetOperatingState(RES_SHARED_VGA, pEnt->index, ResDisableOpr);
+    xf86SetOperatingState(resVga, pEnt->index, ResDisableOpr);
     pScrn->racMemFlags = 0;	/* For noLinear, access to 0xA0000 */
     if (pApm->VGAMap)
 	pScrn->racIoFlags = 0;
@@ -831,11 +912,13 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 
 	save = pciReadLong(pApm->PciTag, PCI_CMD_STAT_REG);
 	pciWriteLong(pApm->PciTag, PCI_CMD_STAT_REG, save | PCI_CMD_IO_ENABLE);*/
-	pApm->savedSR10 = rdinx(0x3C4, 0x10);
-	wrinx(0x3C4, 0x10, 0x12);
-	pScrn->videoRam = rdinx(0x3C4, 0x20) * 64;
-	pApm->xbase = (rdinx(0x3C4, 0x1F) << 8) | rdinx(0x3C4, 0x1E);
-	wrinx(0x3C4, 0x10, pApm->savedSR10 ? 0 : 0x12);
+	pApm->savedSR10 = rdinx(pApm->xport, 0x10);
+	wrinx(pApm->xport, 0x10, 0x12);
+	pScrn->videoRam = rdinx(pApm->xport, 0x20) * 64;
+	pApm->xbase = rdinx(pApm->xport, 0x1F) << 8;
+	pApm->xbase |= rdinx(pApm->xport, 0x1E);
+	pApm->xbase += pApm->iobase;
+	wrinx(pApm->xport, 0x10, pApm->savedSR10 ? 0 : 0x12);
 	/*pciWriteLong(pApm->PciTag, PCI_CMD_STAT_REG, save);*/
 	from = X_PROBED;
     }
@@ -846,8 +929,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
                pScrn->videoRam);
 
     if (!xf86IsPc98()) {
-	vgaHWGetIOBase(VGAHWPTR(pScrn));
-	VGAHWPTR(pScrn)->MapSize = 0x10000;
+	hwp->MapSize = 0x10000;
 	vgaHWMapMem(pScrn);
 	if (pApm->I2C) {
 	    if (!ApmI2CInit(pScrn)) {
@@ -857,7 +939,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 		MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pApm->I2CPtr);
 	    }
 	}
-	if (!MonInfo)
+	if (0 && !MonInfo)
 	    MonInfo = xf86DoEDID_DDC1(pScrn->scrnIndex,vgaHWddc1SetSpeed,ddc1Read);
 	if (MonInfo)
 	    xf86PrintEDID(MonInfo);
@@ -1232,7 +1314,7 @@ ApmSave(ScrnInfoPtr pScrn)
 {
     APMDECL(pScrn);
     ApmRegPtr	ApmReg = &pApm->SavedReg;
-    vgaHWPtr	vgaHWP = VGAHWPTR(pScrn);
+    vgaHWPtr	hwp    = VGAHWPTR(pScrn);
 
     if (pApm->VGAMap) {
 	ApmReg->SEQ[0x1B] = ApmReadSeq(0x1B);
@@ -1241,7 +1323,7 @@ ApmSave(ScrnInfoPtr pScrn)
 	/*
 	 * Save fonts
 	 */
-	if (!(vgaHWP->SavedReg.Attribute[0x10] & 1)) {
+	if (!(hwp->SavedReg.Attribute[0x10] & 1)) {
 	    if (pApm->FontInfo || (pApm->FontInfo = (pointer)xalloc(TEXT_AMOUNT))) {
 		int locked;
 
@@ -1259,7 +1341,7 @@ ApmSave(ScrnInfoPtr pScrn)
 	 * This function will handle creating the data structure and filling
 	 * in the generic VGA portion.
 	 */
-	vgaHWSave(pScrn, &vgaHWP->SavedReg, VGA_SR_MODE | VGA_SR_CMAP);
+	vgaHWSave(pScrn, &hwp->SavedReg, VGA_SR_MODE | VGA_SR_CMAP);
 
 	/* Hardware cursor registers. */
 	ApmReg->EX[XR140] = RDXL(0x140);
@@ -1288,10 +1370,10 @@ ApmSave(ScrnInfoPtr pScrn)
 	 * This function will handle creating the data structure and filling
 	 * in the generic VGA portion.
 	 */
-	vgaHWSave(pScrn, &vgaHWP->SavedReg, VGA_SR_ALL);
+	vgaHWSave(pScrn, &hwp->SavedReg, VGA_SR_ALL);
 
-	ApmReg->SEQ[0x1B] = rdinx(0x3C4, 0x1B);
-	ApmReg->SEQ[0x1C] = rdinx(0x3C4, 0x1C);
+	ApmReg->SEQ[0x1B] = rdinx(pApm->xport, 0x1B);
+	ApmReg->SEQ[0x1C] = rdinx(pApm->xport, 0x1C);
 
 	/* Hardware cursor registers. */
 	if (pApm->noLinear) {
@@ -1307,12 +1389,12 @@ ApmSave(ScrnInfoPtr pScrn)
 	    ApmReg->EX[XR14C] = RDXW(0x14C);
 	}
 
-	ApmReg->CRT[0x19] = rdinx(0x3D4, 0x19);
-	ApmReg->CRT[0x1A] = rdinx(0x3D4, 0x1A);
-	ApmReg->CRT[0x1B] = rdinx(0x3D4, 0x1B);
-	ApmReg->CRT[0x1C] = rdinx(0x3D4, 0x1C);
-	ApmReg->CRT[0x1D] = rdinx(0x3D4, 0x1D);
-	ApmReg->CRT[0x1E] = rdinx(0x3D4, 0x1E);
+	ApmReg->CRT[0x19] = rdinx(pApm->iobase + 0x3D4, 0x19);
+	ApmReg->CRT[0x1A] = rdinx(pApm->iobase + 0x3D4, 0x1A);
+	ApmReg->CRT[0x1B] = rdinx(pApm->iobase + 0x3D4, 0x1B);
+	ApmReg->CRT[0x1C] = rdinx(pApm->iobase + 0x3D4, 0x1C);
+	ApmReg->CRT[0x1D] = rdinx(pApm->iobase + 0x3D4, 0x1D);
+	ApmReg->CRT[0x1E] = rdinx(pApm->iobase + 0x3D4, 0x1E);
 
 	if (pApm->noLinear) {
 	    /* RAMDAC registers. */
@@ -1671,8 +1753,8 @@ ApmRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, ApmRegPtr ApmReg)
 	/*
 	 * Write the extended registers first
 	 */
-	wrinx(0x3C4, 0x1B, ApmReg->SEQ[0x1B]);
-	wrinx(0x3C4, 0x1C, ApmReg->SEQ[0x1C]);
+	wrinx(pApm->xport, 0x1B, ApmReg->SEQ[0x1B]);
+	wrinx(pApm->xport, 0x1C, ApmReg->SEQ[0x1C]);
 
 	/* Hardware cursor registers. */
 	if (pApm->noLinear) {
@@ -1688,12 +1770,12 @@ ApmRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, ApmRegPtr ApmReg)
 	    WRXW(0x14C, ApmReg->EX[XR14C]);
 	}
 
-	wrinx(0x3D4, 0x19, ApmReg->CRT[0x19]);
-	wrinx(0x3D4, 0x1A, ApmReg->CRT[0x1A]);
-	wrinx(0x3D4, 0x1B, ApmReg->CRT[0x1B]);
-	wrinx(0x3D4, 0x1C, ApmReg->CRT[0x1C]);
-	wrinx(0x3D4, 0x1D, ApmReg->CRT[0x1D]);
-	wrinx(0x3D4, 0x1E, ApmReg->CRT[0x1E]);
+	wrinx(pApm->iobase + 0x3D4, 0x19, ApmReg->CRT[0x19]);
+	wrinx(pApm->iobase + 0x3D4, 0x1A, ApmReg->CRT[0x1A]);
+	wrinx(pApm->iobase + 0x3D4, 0x1B, ApmReg->CRT[0x1B]);
+	wrinx(pApm->iobase + 0x3D4, 0x1C, ApmReg->CRT[0x1C]);
+	wrinx(pApm->iobase + 0x3D4, 0x1D, ApmReg->CRT[0x1D]);
+	wrinx(pApm->iobase + 0x3D4, 0x1E, ApmReg->CRT[0x1E]);
 
 	/* RAMDAC registers. */
 	if (pApm->noLinear) {
@@ -1951,6 +2033,9 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pApm->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = ApmCloseScreen;
 
+    pScrn->memPhysBase = pApm->LinAddress;
+    pScrn->fbOffset = (((char *)pApm->FbBase) - ((char *)pApm->LinMap));
+
     /* Report any unused options (only for the first generation) */
     if (serverGeneration == 1) {
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
@@ -1992,11 +2077,11 @@ ApmLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors,
 	for (i = 0; i < numColors; i++) {
 	    index = indices[i];
 	    if (index != last) 
-		outb(0x3C8, index);
+		outb(pApm->iobase + 0x3C8, index);
 	    last = index + 1;
-	    outb(0x3C9, colors[index].red);
-	    outb(0x3C9, colors[index].green);
-	    outb(0x3C9, colors[index].blue);
+	    outb(pApm->iobase + 0x3C9, colors[index].red);
+	    outb(pApm->iobase + 0x3C9, colors[index].green);
+	    outb(pApm->iobase + 0x3C9, colors[index].blue);
 	}
     }
 }
@@ -2037,14 +2122,14 @@ ApmAdjustFrame(int scrnIndex, int x, int y, int flags)
 	ApmWriteCrtc(0x1C, (ApmReadCrtc(0x1C) & 0xF0) | ((Base & 0x0F0000) >> 16));
     }
     else {
-	outw(0x3D4, (Base & 0x00FF00) | 0x0C);
-	outw(0x3D4, ((Base & 0x00FF) << 8) | 0x0D);
+	outw(pApm->iobase + 0x3D4, (Base & 0x00FF00) | 0x0C);
+	outw(pApm->iobase + 0x3D4, ((Base & 0x00FF) << 8) | 0x0D);
 
 	/*
 	 * Here the high-order bits are masked and shifted, and put into
 	 * the appropriate extended registers.
 	 */
-	modinx(0x3D4, 0x1C, 0x0F, (Base & 0x0F0000) >> 16);
+	modinx(pApm->iobase + 0x3D4, 0x1C, 0x0F, (Base & 0x0F0000) >> 16);
     }
 }
 
@@ -2097,12 +2182,12 @@ ApmLeaveVT(int scrnIndex, int flags)
     APMDECL(pScrn);
     vgaHWPtr	hwp = VGAHWPTR(pScrn);
 
-    ApmRestore(pScrn, &VGAHWPTR(pScrn)->SavedReg, &pApm->SavedReg);
+    ApmRestore(pScrn, &hwp->SavedReg, &pApm->SavedReg);
     /*
      * Reset color mode
      */
-    hwp->writeMiscOut(hwp, pApm->MiscOut);
-    vgaHWLock(VGAHWPTR(pScrn));
+    (*hwp->writeMiscOut)(hwp, pApm->MiscOut);
+    vgaHWLock(hwp);
     ApmLock(pApm);
     if (pApm->Chipset >= AT3D) {
 	if (!pApm->noLinear) {
@@ -2134,7 +2219,7 @@ ApmCloseScreen(int scrnIndex, ScreenPtr pScreen)
     APMDECL(pScrn);
 
     if (pScrn->vtSema) {
-	ApmRestore(pScrn, &VGAHWPTR(pScrn)->SavedReg, &pApm->SavedReg);
+	ApmRestore(pScrn, &hwp->SavedReg, &pApm->SavedReg);
 	vgaHWLock(hwp);
 	ApmUnmapMem(pScrn);
     }
@@ -2198,6 +2283,9 @@ ApmDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
     APMDECL(pScrn);
     unsigned char dpmsreg, tmp;
 
+    if (PowerManagementMode < sizeof pApm->DPMSMask &&
+	    PowerManagementMode >= 0)
+	PowerManagementMode = pApm->DPMSMask[PowerManagementMode];
     switch (PowerManagementMode)
     {
     case DPMSModeOn:

@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,9 @@
 #ifndef __3DNOW_H__
 #define __3DNOW_H__
 
-void gl_init_3dnow_transform_asm( void );
-void gl_init_3dnow_shade_asm( void );
-void gl_init_3dnow_vertex_asm( void );
+#include "math/m_xform.h"
+
+void _mesa_init_3dnow_transform_asm( void );
+void _mesa_init_3dnow_vertex_asm( void );
 
 #endif

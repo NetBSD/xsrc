@@ -1,7 +1,7 @@
 #
-# Id: README,v 1.13 2001/10/29 18:54:35 mleisher Exp $
+# Id: README,v 1.19 2002/11/22 23:11:31 mleisher Exp $
 #
-# Copyright 2001 Computing Research Lab, New Mexico State University
+# Copyright 2002 Computing Research Lab, New Mexico State University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -22,14 +22,16 @@
 # THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-Version: 1.8
-29 October 2001
+Version: 1.9
+22 November 2002
 
 This set of fonts provides a 12pt, 100dpi proportional font with many of
 the glyphs needed for Unicode text.  I call the typeface "ClearlyU" and
 it was influenced by Donald Knuth's Computer Modern.
 
-The fonts together contain 8669 glyphs at the moment.
+The fonts together contain 9538 glyphs at the moment.  This does not include
+cuarabic12.bdf and cudevnag12.bdf which contain glyphs from cu12.bdf and and
+cu-pua12.bdf.
 
 Information about this font and samples, are located at:
 
@@ -46,12 +48,70 @@ cleanup of the Thai glyphs, particularly the vowel and tone marks.
 Thanks to Ahmed Abdelali <ahmed@crl.nmsu.edu> for his help in improving the
 Arabic glyphs.
 
+Thanks to Séamus Ó Ciardhuáin <seoc@cnds.ucd.ie> for a much cleaner version
+of the Ogham glyphs.
+
+Thanks go to Daniel Yacob <yacob@ethiopiaonline.net> for a major cleanup of
+the Ethiopic block glyphs!
+
 AUTHOR
 ======
 Mark Leisher <mleisher@crl.nmsu.edu>
 
 CHANGES
 =======
+
+CHANGES FROM 1.8
+----------------
+  o  Adjusted positioning of several math symbols.
+
+  o  Fixed the Hebrew FB39 glyph.
+
+  o  Added Hangul Jamo and Hangul Compatibility Jamo glyphs.
+
+  o  Changed the apostrophe and double quotes to the straight versions, and
+     fixed the grave accent to look right.
+
+  o  Added Koranic marks.
+
+  o  Made the Geometric Shapes a bit larger.
+
+  o  Cleaned up Control Pictures.
+
+  o  Added Miscellaneous Technical symbols.
+
+  o  Fixed a couple currency symbols.
+
+  o  Added Runes.
+
+  o  Added Ogham.
+
+  o  Adjusted the positioning of the Arabic decimal and thousands separator.
+
+  o  Changed some of the Greek glyphs to represent the trailing
+     ypogegrammeni.
+
+  o  Swapped the Greek phi letter and symbol glyphs.
+
+  o  Cleaned up Cherokee a bit.
+
+  o  Fixed the non-spacing Dhivehi vowels.
+
+  o  Adjusted some of the UCAS shapes.
+
+  o  Replaced Ogham glyphs with better version.
+
+  o  Major cleanup of Ethiopic glyphs.
+
+  o  Added some glyphs to the Cyrillic block.
+
+  o  Added a couple missing Arabic glyphs.
+
+  o  Minor adjustment to U+1EF5.
+
+  o  Added a Devanagari-only font.
+
+  o  Added the Braille block.
 
 CHANGES FROM 1.7
 ----------------

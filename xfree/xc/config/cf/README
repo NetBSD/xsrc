@@ -3,7 +3,7 @@ $Xorg: README,v 1.4 2000/08/18 04:03:58 coskrey Exp $
 
 
 
-$XFree86: xc/config/cf/README,v 1.15 2001/09/29 17:38:41 herrb Exp $
+$XFree86: xc/config/cf/README,v 1.19 2003/01/04 02:48:24 dawes Exp $
 
 The easiest way to write an Imakefile is to find another one that does
 something similar and copy/modify it!
@@ -90,6 +90,8 @@ Imake.tmpl provides defaults for the following variables:
 	HasVFork		boolean for system has vfork()
 	HasVoidSignalReturn	boolean for POSIX signal() procs
 	HasZlib			boolean for system has libz
+	IncludeSharedObjectInNormalLib define for static libs to include
+				       -fPIC objects on relevant archs
 	IncRoot			parent of X11 include directory
 	InstBinFlags		install flags for binaries
 	InstDatFlags		install flags for data files
@@ -213,6 +215,7 @@ X11.tmpl provides defaults for the following variables:
 	DebugLibXtst		build libXtst_d.a
 	DebugLibXag		build libXag_d.a
 	DebugOldX		build liboldX_d.a
+	DefaultCursorTheme      name of default cursor theme
 	DefaultFSConfigFile	default font server config file
 	DefaultFontPath		default server font path
 	DefaultRGBDatabase	default server rgb color database
@@ -659,6 +662,8 @@ Lower level rules, often used with NormalProgramTarget
 InstallProgram		install a program.
 
 InstallManPage		install a manual page.
+
+InstallDirectory	install a directory.
 
 DependTarget()		include once at end of Imakefile with
 			NormalProgramTarget rules or that uses Library.tmpl.

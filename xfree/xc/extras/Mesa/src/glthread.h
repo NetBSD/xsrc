@@ -1,20 +1,20 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -22,7 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/src/glthread.h,v 1.3 2001/10/28 03:32:06 tsi Exp $ */
+/* $XFree86: xc/extras/Mesa/src/glthread.h,v 1.4 2002/02/22 19:25:32 dawes Exp $ */
 
 /*
  * Thread support for gl dispatch.
@@ -56,11 +56,10 @@
  */
 
 /*
- * If this file is accidentally included by a non-threaded build, 
+ * If this file is accidentally included by a non-threaded build,
  * it should not cause the build to fail, or otherwise cause problems.
  * In general, it should only be included when needed however.
  */
-
 
 #ifndef GLTHREAD_H
 #define GLTHREAD_H
@@ -70,7 +69,9 @@
 #define THREADS
 #endif
 
-
+#ifdef VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 /*
  * POSIX threads. This should be your choice in the Unix world
@@ -111,9 +112,9 @@ typedef pthread_mutex_t _glthread_Mutex;
 
 
 /*
- * Solaris threads. Use only up to Solaris 2.4. 
+ * Solaris threads. Use only up to Solaris 2.4.
  * Solaris 2.5 and higher provide POSIX threads.
- * Be sure to compile with -mt on the Solaris compilers, or 
+ * Be sure to compile with -mt on the Solaris compilers, or
  * use -D_REENTRANT if using gcc.
  */
 #ifdef SOLARIS_THREADS
@@ -141,7 +142,7 @@ typedef mutex_t _glthread_Mutex;
 
 
 /*
- * Windows threads. Should work with Windows NT and 95. 
+ * Windows threads. Should work with Windows NT and 95.
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
@@ -231,7 +232,7 @@ typedef GLuint _glthread_Mutex;
 
 
 /*
- * Platform independent thread specific data API. 
+ * Platform independent thread specific data API.
  */
 
 extern unsigned long
@@ -252,4 +253,3 @@ _glthread_SetTSD(_glthread_TSD *, void *);
 
 
 #endif /* THREADS_H */
-

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.14 2001/06/03 19:47:59 mvojkovi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPict.c,v 1.17 2002/12/10 04:17:21 dawes Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -207,6 +207,12 @@ XAADoComposite (
         IS_OFFSCREEN_PIXMAP(pSrc->pDrawable))
 	return FALSE;
 
+    if (pSrc->transform || (pMask && pMask->transform))
+	return FALSE;
+
+    if (pDst->alphaMap || pSrc->alphaMap || (pMask && pMask->alphaMap))
+	return FALSE;
+	
     xDst += pDst->pDrawable->x;
     yDst += pDst->pDrawable->y;
     xSrc += pSrc->pDrawable->x;
@@ -231,7 +237,7 @@ XAADoComposite (
 	       (op == PictOpOver) && infoRec->WriteBitmap && !pMask->repeat &&
 	       !(infoRec->WriteBitmapFlags & NO_TRANSPARENCY) &&
 	       (!(infoRec->WriteBitmapFlags & RGB_EQUAL) || 
-	         (red == green == blue)))
+	         ((red == green) && (green == blue))))
 	   {
 	        PixmapPtr pPix = (PixmapPtr)(pMask->pDrawable);
 		int skipleft;
@@ -425,8 +431,13 @@ XAAComposite (CARD8      op,
        !(*infoRec->Composite)(op, pSrc, pMask, pDst,
                        xSrc, ySrc, xMask, yMask, xDst, yDst,
                        width, height))
-    { 
-        SYNC_CHECK(pDst->pDrawable);
+    {
+        if(pSrc->pDrawable->type == DRAWABLE_WINDOW ||
+           pDst->pDrawable->type == DRAWABLE_WINDOW ||
+           IS_OFFSCREEN_PIXMAP(pSrc->pDrawable) ||
+           IS_OFFSCREEN_PIXMAP(pDst->pDrawable)) {
+            SYNC_CHECK(pDst->pDrawable);
+        }
         (*GetPictureScreen(pScreen)->Composite) (op,
 		       pSrc,
 		       pMask,
@@ -495,7 +506,7 @@ XAADoGlyphs (CARD8         op,
 
 	XAAGetPixelFromRGBA(&pixel, red, green, blue, 0, pDst->format);
 
-	if((infoRec->WriteBitmapFlags & RGB_EQUAL) && !(red == green == blue))
+	if((infoRec->WriteBitmapFlags & RGB_EQUAL) && !((red == green) && (green == blue)))
 	   return FALSE;
 
 	x = pDst->pDrawable->x;
@@ -617,7 +628,22 @@ XAADoGlyphs (CARD8         op,
 	return TRUE;
     }
 
-    return FALSE;
+    /*
+     * If it looks like we have a chance of being able to draw these
+     * glyphs with an accelerated Composite, do that now to avoid
+     * unneeded and costly syncs.
+     */
+    if(maskFormat) {
+        if(!infoRec->CPUToScreenAlphaTextureFormats)
+            return FALSE;
+    } else {
+        if(!infoRec->CPUToScreenTextureFormats)
+            return FALSE;
+    }
+
+    miGlyphs(op, pSrc, pDst, maskFormat, xSrc, ySrc, nlist, list, glyphs);
+
+    return TRUE;
 }	   
 	 
 	
@@ -640,7 +666,12 @@ XAAGlyphs (CARD8         op,
        !(*infoRec->Glyphs)(op, pSrc, pDst, maskFormat,
                                           xSrc, ySrc, nlist, list, glyphs))
     {
-       SYNC_CHECK(pDst->pDrawable);
+       if((pSrc->pDrawable->type == DRAWABLE_WINDOW) ||
+          (pDst->pDrawable->type == DRAWABLE_WINDOW) ||
+          IS_OFFSCREEN_PIXMAP(pSrc->pDrawable) ||
+          IS_OFFSCREEN_PIXMAP(pDst->pDrawable)) {
+           SYNC_CHECK(pDst->pDrawable);
+       }
        (*GetPictureScreen(pScreen)->Glyphs) (op, pSrc, pDst, maskFormat,
 					  xSrc, ySrc, nlist, list, glyphs);
     }

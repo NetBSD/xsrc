@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.19 2001/07/23 13:15:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.24 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -72,9 +72,10 @@ static char *configBuf, *configRBuf;	/* buffer for lines */
 static char *configPath;		/* path to config file */
 static char *configSection = NULL;	/* name of current section being parsed */
 static int pushToken = LOCK_TOKEN;
+static int eol_seen = 0;		/* private state to handle comments */
 LexRec val;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 extern char *__XOS2RedirRoot(char *path);
 #endif
 
@@ -144,6 +145,10 @@ xf86getToken (xf86ConfigSymTabRec * tab)
 		return (EOF_TOKEN);
 	else if (pushToken == LOCK_TOKEN)
 	{
+		/*
+		 * eol_seen is only set for the first token after a newline.
+		 */
+		eol_seen = 0;
 
 		c = configBuf[configPos];
 
@@ -161,6 +166,7 @@ again:
 			}
 			configLineNo++;
 			configStart = configPos = 0;
+			eol_seen = 1;
 		}
 
 		i = 0;
@@ -186,13 +192,8 @@ again:
 			do
 			{
 				configRBuf[i++] = (c = configBuf[configPos++]);
-#ifndef __EMX__
-			}
-			while ((c != '\n') && (c != '\0'));
-#else
 			}
 			while ((c != '\n') && (c != '\r') && (c != '\0'));
-#endif
 			configRBuf[i] = '\0';
 			/* XXX no private copy.
 			 * Use xf86addComment when setting a comment.
@@ -253,13 +254,8 @@ again:
 			do
 			{
 				configRBuf[++i] = (c = configBuf[configPos++]);
-#ifndef __EMX__
-			}
-			while ((c != '\"') && (c != '\n') && (c != '\0'));
-#else
 			}
 			while ((c != '\"') && (c != '\n') && (c != '\r') && (c != '\0'));
-#endif
 			configRBuf[i] = '\0';
 			val.str = xf86confmalloc (strlen (configRBuf) + 1);
 			strcpy (val.str, configRBuf);	/* private copy ! */
@@ -277,13 +273,9 @@ again:
 			do
 			{
 				configRBuf[++i] = (c = configBuf[configPos++]);;
-#ifndef __EMX__
 			}
-			while ((c != ' ') && (c != '\t') && (c != '\n') && (c != '\0'));
-#else
-			}
-			while ((c != ' ') && (c != '\t') && (c != '\n') && (c != '\r') && (c != '\0'));
-#endif
+			while ((c != ' ') && (c != '\t') && (c != '\n') && (c != '\r') && (c != '\0') && (c != '#'));
+			--configPos;
 			configRBuf[i] = '\0';
 			i = 0;
 		}
@@ -373,7 +365,7 @@ xf86pathIsAbsolute(const char *path)
 {
 	if (path && path[0] == '/')
 		return 1;
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	if (path && (path[0] == '\\' || (path[1] == ':')))
 		return 0;
 #endif
@@ -421,7 +413,7 @@ xf86pathIsSafe(const char *path)
  *    %P    projroot
  *    %M    major version number
  *    %%    %
- *    %&    EMX only: prepend X11ROOT env var
+ *    %&    UNIXOS2 only: prepend X11ROOT env var
  */
 
 #ifndef XCONFIGFILE
@@ -474,7 +466,7 @@ DoSubstitution(const char *template, const char *cmdline, const char *projroot,
 	static const char *env = NULL, *home = NULL;
 	static char *hostname = NULL;
 	static char majorvers[3] = "";
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	static char *x11root = NULL;
 #endif
 
@@ -593,7 +585,7 @@ DoSubstitution(const char *template, const char *cmdline, const char *projroot,
 				result[l++] = '%';
 				CHECK_LENGTH;
 				break;
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 			case '&':
 				if (!x11root)
 					x11root = getenv("X11ROOT");
@@ -764,7 +756,7 @@ xf86openConfigFile (char *filename)
 		/* 
 		 * Check if XF86CONFIG is set.
 		 */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 		if (getuid () == 0
 			&& (xconfig = getenv ("XF86CONFIG")) != 0
 			&& strchr (xconfig, '/'))
@@ -782,7 +774,7 @@ xf86openConfigFile (char *filename)
 				return 0;
 		}
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 		/* 
 		 * ~/XF86Config ...
 		 */
@@ -823,13 +815,13 @@ xf86openConfigFile (char *filename)
 					 MAXHOSTNAMELEN);
 		if ((configFile = fopen (configPaths[pcount], "r")) != 0)
 			break;
-#endif /* !__EMX__  */
+#endif /* !__UNIXOS2__  */
 
 		/* 
 		 * $(XCONFIGDIR)/XF86Config
 		 */
 		configPaths[++pcount] = xf86confmalloc (PATH_MAX);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 		if (getuid () == 0 && xwinhome)
 			sprintf (configPaths[pcount], "%s/lib/X11/" XCONFIGFILE, xwinhome);
 		else
@@ -965,10 +957,10 @@ xf86validationError (char *format,...)
 void
 xf86setSection (char *section)
 {
-  if (configSection)
-      xf86conffree(configSection);
-  configSection = xf86confmalloc(strlen (section) + 1);
-  strcpy (configSection, section);
+	if (configSection)
+		xf86conffree(configSection);
+	configSection = xf86confmalloc(strlen (section) + 1);
+	strcpy (configSection, section);
 }
 
 /* 
@@ -1046,6 +1038,7 @@ xf86addComment(char *cur, char *add)
 		curlen = strlen(cur);
 		if (curlen)
 		    hasnewline = cur[curlen - 1] == '\n';
+		eol_seen = 0;
 	}
 	else
 		curlen = 0;
@@ -1061,14 +1054,14 @@ xf86addComment(char *cur, char *add)
 
 	len = strlen(add);
 	endnewline = add[len - 1] == '\n';
-	len +=  1 + iscomment + (!hasnewline) + (!endnewline);
+	len +=  1 + iscomment + (!hasnewline) + (!endnewline) + eol_seen;
 
 	if ((str = xf86confrealloc(cur, len + curlen)) == NULL)
 		return (cur);
 
 	cur = str;
 
-	if (curlen && !hasnewline)
+	if (eol_seen || (curlen && !hasnewline))
 		cur[curlen++] = '\n';
 	if (!iscomment)
 		cur[curlen++] = '#';

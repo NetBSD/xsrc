@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/XTrap/xtrapddmi.c,v 1.1 2001/11/02 23:29:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XTrap/xtrapddmi.c,v 1.2 2002/01/23 03:31:39 dawes Exp $ */
 /*****************************************************************************
 Copyright 1987, 1988, 1989, 1990, 1991 by Digital Equipment Corp., Maynard, MA
 
@@ -38,12 +38,16 @@ SOFTWARE.
  *
  */
 
+#ifndef EXTMODULE
 #include <errno.h>
 #include <X11/Xos.h>
 #ifdef PC
 # include "fcntl.h"
 # include "io.h"
 # define O_NDELAY 0L
+#endif
+#else
+#include "xf86_ansic.h"
 #endif
 
 #define NEED_REPLIES

@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.18 2001/11/01 23:35:33 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.30 2003/02/23 20:26:49 tsi Exp $
 
 #include <Server.tmpl>
 
@@ -14,10 +14,18 @@ XCOMM Alpha (Linux) PCI driver
 PCIDRVRSRC = axpPci.c
 PCIDRVROBJ = axpPci.o
 
-#elif (defined(LinuxArchitecture) || defined(SunArchitecture)) && \
-      defined(SparcArchitecture)
+#elif defined(LinuxArchitecture) && defined(SparcArchitecture)
 
-XCOMM Sparc PCI driver
+XCOMM Sparc SBUS driver and generic Linux PCI driver
+
+PCIDRVRSRC = linuxPci.c
+PCIDRVROBJ = linuxPci.o
+SBUSDRVSRC = Sbus.c
+SBUSDRVOBJ = Sbus.o
+
+#elif defined(SunArchitecture) && defined(SparcArchitecture)
+
+XCOMM Sparc SBUS & PCI drivers
 
 PCIDRVRSRC = sparcPci.c
 PCIDRVROBJ = sparcPci.o
@@ -40,12 +48,22 @@ XCOMM generic linux PCI driver (using /proc/bus/pci, requires kernel 2.2)
 PCIDRVRSRC = linuxPci.c
 PCIDRVROBJ = linuxPci.o
 
-#elif defined(OpenBSDArchitecture) && defined(PpcArchitecture)
+#elif defined(OpenBSDArchitecture) && \
+	(defined(PpcArchitecture) || \
+	defined(AlphaArchitecture) || \
+	defined(Sparc64Architecture))
 
-XCOMM OpenBSD/powerpc
+XCOMM OpenBSD/alpha, OpenBSD/powerpc and OpenBSD/sparc64
 
 PCIDRVRSRC = freebsdPci.c
 PCIDRVROBJ = freebsdPci.o
+
+#elif defined(NetBSDArchitecture) && defined(PpcArchitecture)
+
+XCOMM NetBSD/powerpc
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
 
 #elif defined(PpcArchitecture)
 
@@ -54,7 +72,8 @@ XCOMM PowerPC PCI drivers
 PCIDRVRSRC = ppcPci.c
 PCIDRVROBJ = ppcPci.o
 
-#elif defined(LinuxArchitecture) && (defined(i386Architecture))
+#elif defined(LinuxArchitecture) && \
+     (defined(i386Architecture) || defined(x86_64Architecture))
 
 XCOMM ix86 PCI driver with OS fallback for Linux
 
@@ -69,7 +88,16 @@ XCOMM generic FreeBSD PCI driver (using /dev/pci)
 PCIDRVRSRC = freebsdPci.c
 PCIDRVROBJ = freebsdPci.o
 
-#elif defined(i386Architecture) || defined(ia64Architecture)
+#elif defined(NetBSDArchitecture) && defined(AlphaArchitecture)
+
+XCOMM Alpha (NetBSD) PCI driver
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
+
+#elif defined(i386Architecture) || \
+      defined(ia64Architecture) || \
+      defined(x86_64Architecture)
 
 XCOMM ix86 PCI driver
 
@@ -82,8 +110,18 @@ XCOMM PCIDRVROBJ = linuxPci.o
 XCOMM no PCI driver -- shouldn't get here
 #endif
 
-SRCS = Pci.c $(PCIDRVRSRC) $(SBUSDRVSRC)
-OBJS = Pci.o $(PCIDRVROBJ) $(SBUSDRVOBJ)
+#if defined(SparcArchitecture)
+# if !defined(SunArchitecture)
+PCIARCHSRC = sparcPci.c
+PCIARCHOBJ = sparcPci.o
+# endif
+#elif defined(ia64Architecture)
+PCIARCHSRC = ia64Pci.c 460gxPCI.c e8870PCI.c zx1PCI.c
+PCIARCHOBJ = ia64Pci.o 460gxPCI.o e8870PCI.o zx1PCI.o
+#endif
+
+SRCS = Pci.c $(PCIDRVRSRC) $(SBUSDRVSRC) $(PCIARCHSRC)
+OBJS = Pci.o $(PCIDRVROBJ) $(SBUSDRVOBJ) $(PCIARCHOBJ)
 
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
 	   -I$(SERVERSRC)/include -I$(XINCLUDESRC)
@@ -99,5 +137,12 @@ SubdirLibraryRule($(OBJS))
 SpecialCObjectRule(Pci,NullParameter,-O0)
 #endif
 
-DependTarget()
+#if defined(SunArchitecture) && defined(SparcArchitecture)
 
+LFS_DEFINES = `getconf LFS_CFLAGS`
+
+SpecialCObjectRule(sparcPci,NullParameter,$(LFS_DEFINES))
+
+#endif
+
+DependTarget()

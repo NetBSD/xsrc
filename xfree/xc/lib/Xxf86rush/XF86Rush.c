@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86rush/XF86Rush.c,v 1.5 2000/09/26 15:56:59 tsi Exp $ */
+/* $XFree86: xc/lib/Xxf86rush/XF86Rush.c,v 1.6 2002/10/16 00:37:34 dawes Exp $ */
 /*
 
 Copyright (c) 1998 Daryll Strauss
@@ -9,10 +9,10 @@ Copyright (c) 1998 Daryll Strauss
 
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "xf86rushstr.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/xf86rushstr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 
 static XExtensionInfo _xf86rush_info_data;
 static XExtensionInfo *xf86rush_info = &_xf86rush_info_data;

@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/general/X.man,v 1.7 2001/10/01 13:43:56 eich Exp $
+.\" $XFree86: xc/doc/man/general/X.man,v 1.8 2002/10/12 16:06:41 herrb Exp $
 .\"
 .TH X __miscmansuffix__ __vendorversion__
 .SH NAME
@@ -505,8 +505,7 @@ implementation dependent.
 If the name is not found, the color is looked up in the
 X server's database.
 The text form of this database is commonly stored in the file
-\fI<XRoot>/lib/X11/rgb.txt\fP, where <XRoot> is replaced by the 
-root of the X11 install tree.
+\fI__projectroot__/lib/X11/rgb.txt\fP.
 .PP
 A numerical color specification
 consists of a color space name and a set of values in the following syntax:
@@ -877,11 +876,11 @@ in RESOURCE_MANAGER or SCREEN_RESOURCES, as appropriate.
 Directories named by the environment variable XUSERFILESEARCHPATH
 or the environment variable XAPPLRESDIR (which names a single
 directory and should end with a '/' on POSIX systems), plus directories in a
-standard place (usually under <XRoot>/lib/X11/,
+standard place (usually under __projectroot__/lib/X11/,
 but this can be overridden with the XFILESEARCHPATH environment variable)
 are searched for for application-specific resources.
 For example, application default resources are usually kept in
-<XRoot>/lib/X11/app-defaults/.
+__projectroot__/lib/X11/app-defaults/.
 See the \fIX Toolkit Intrinsics - C Language Interface\fP manual for
 details.
 .TP 8
@@ -1017,12 +1016,12 @@ to enable a particular input method. See
 .B XLOCALEDIR
 This must point to a directory containing the locale.alias file and
 Compose and XLC_LOCALE file hierarchies for all locales. The default value
-is \fI<XRoot>/lib/X11/locale\fP, i.e. normally /usr/X11R6/lib/X11/locale.
+is \fI__projectroot__/lib/X11/locale\fP.
 .TP
 .SM
 .B XENVIRONMENT
 This must point to a file containing X resources. The default is
-\fI$HOME/.Xdefaults-<hostname>\fP. Unlike \fI<XRoot>/lib/X11/Xresources\fP,
+\fI$HOME/.Xdefaults-<hostname>\fP. Unlike \fI__projectroot__/lib/X11/Xresources\fP,
 it is consulted each time an X application starts.
 .TP
 .SM
@@ -1031,23 +1030,12 @@ This must contain a colon separated list of path templates, where libXt
 will search for resource files. The default value consists of
 .sp
 .nf
-    <XRoot>/lib/X11/%L/%T/%N%C%S:\\
-    <XRoot>/lib/X11/%l/%T/%N%C%S:\\
-    <XRoot>/lib/X11/%T/%N%C%S:\\
-    <XRoot>/lib/X11/%L/%T/%N%S:\\
-    <XRoot>/lib/X11/%l/%T/%N%S:\\
-    <XRoot>/lib/X11/%T/%N%S
-.fi
-.sp
-i.e. normally
-.sp
-.nf
-    /usr/X11R6/lib/X11/%L/%T/%N%C%S:\\
-    /usr/X11R6/lib/X11/%l/%T/%N%C%S:\\
-    /usr/X11R6/lib/X11/%T/%N%C%S:\\
-    /usr/X11R6/lib/X11/%L/%T/%N%S:\\
-    /usr/X11R6/lib/X11/%l/%T/%N%S:\\
-    /usr/X11R6/lib/X11/%T/%N%S
+    __projectroot__/lib/X11/%L/%T/%N%C%S:\\
+    __projectroot__/lib/X11/%l/%T/%N%C%S:\\
+    __projectroot__/lib/X11/%T/%N%C%S:\\
+    __projectroot__/lib/X11/%L/%T/%N%S:\\
+    __projectroot__/lib/X11/%l/%T/%N%S:\\
+    __projectroot__/lib/X11/%T/%N%S
 .fi
 .sp
 A path template is transformed to a pathname by substituting:
@@ -1106,19 +1094,17 @@ XUSERFILESEARCHPATH is not set.
 .SM
 .B XKEYSYMDB
 This must point to a file containing nonstandard keysym definitions.
-The default value is \fI<XRoot>/lib/X11/XKeysymDB\fP, i.e. normally
-/usr/X11R6/lib/X11/XKeysymDB.
+The default value is \fI__projectroot__/lib/X11/XKeysymDB\fP.
 .TP
 .SM
 .B XCMSDB
 This must point to a color name database file. The default value is
-\fI<XRoot>/lib/X11/Xcms.txt\fP, i.e. normally /usr/X11R6/lib/X11/Xcms.txt.
+\fI__projectroot__/lib/X11/Xcms.txt\fP.
 .TP
 .SM
 .B XFT_CONFIG
 This must point to a configuration file for the Xft library. The default
-value is \fI<XRoot>/lib/X11/XftConfig\fP, i.e. normally
-/usr/X11R6/lib/X11/XftConfig.
+value is \fI__projectroot__/lib/X11/XftConfig\fP.
 .TP
 .SM
 .B RESOURCE_NAME
@@ -1199,8 +1185,9 @@ please refer to that command's manual page.
 A wide variety of error messages are generated from various programs.
 The default error handler in \fIXlib\fP (also used by many toolkits) uses
 standard resources to construct diagnostic messages when errors occur.  The
-defaults for these messages are usually stored in \fI<XRoot>/lib/X11/XErrorDB\fP.
-If this file is not present, error messages will be rather terse and cryptic.
+defaults for these messages are usually stored in
+\fI__projectroot__/lib/X11/XErrorDB\fP.  If this file is not present,
+error messages will be rather terse and cryptic.
 .PP
 When the X Toolkit Intrinsics encounter errors converting resource strings to
 the

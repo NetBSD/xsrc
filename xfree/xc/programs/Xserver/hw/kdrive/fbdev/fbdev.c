@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.c,v 1.28 2001/07/24 19:06:03 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.c,v 1.32 2002/11/05 05:28:05 keithp Exp $ */
 
 #include "fbdev.h"
 
@@ -186,7 +186,7 @@ fbdevScreenInitialize (KdScreenInfo *screen, FbdevScrPriv *scrpriv)
 	break;
     }
     screen->rate = 72;
-    scrpriv->rotation = screen->rotation;
+    scrpriv->randr = screen->randr;
     
 #ifdef FAKE24_ON_16
     if (screen->fb[0].depth == 24 && screen->fb[0].bitsPerPixel == 24 &&
@@ -348,43 +348,36 @@ fbdevLayerCreate (ScreenPtr pScreen)
     int			kind;
     KdMouseMatrix	m;
 
-    switch (scrpriv->rotation) {
-    case 0:
+#ifdef FAKE24_ON_16
+    if (fake24)
+    {
+	scrpriv->randr = RR_Rotate_0;
+	scrpriv->shadow = TRUE;
+    }
+    else
+#endif /* FAKE24_ON_16 */
+    {
+	if (scrpriv->randr != RR_Rotate_0)
+	    scrpriv->shadow = TRUE;
+	else
+	    scrpriv->shadow = FALSE;
+    }
+    
+    KdComputeMouseMatrix (&m, scrpriv->randr, screen->width, screen->height);
+    
+    if (m.matrix[0][0])
+    {
 	pScreen->width = screen->width;
 	pScreen->height = screen->height;
 	pScreen->mmWidth = screen->width_mm;
 	pScreen->mmHeight = screen->height_mm;
-	scrpriv->shadow = FALSE;
-	m.matrix[0][0] = 1; m.matrix[0][1] = 0; m.matrix[0][2] = 0;
-	m.matrix[1][0] = 0; m.matrix[1][1] = 1; m.matrix[1][2] = 0;
-	break;
-    case 90:
+    }
+    else
+    {
 	pScreen->width = screen->height;
 	pScreen->height = screen->width;
 	pScreen->mmWidth = screen->height_mm;
 	pScreen->mmHeight = screen->width_mm;
-	scrpriv->shadow = TRUE;
-	m.matrix[0][0] = 0; m.matrix[0][1] = -1; m.matrix[0][2] = screen->height - 1;
-	m.matrix[1][0] = 1; m.matrix[1][1] = 0; m.matrix[1][2] = 0;
-	break;
-    case 180:
-	pScreen->width = screen->width;
-	pScreen->height = screen->height;
-	pScreen->mmWidth = screen->width_mm;
-	pScreen->mmHeight = screen->height_mm;
-	scrpriv->shadow = TRUE;
-	m.matrix[0][0] = -1; m.matrix[0][1] = 0; m.matrix[0][2] = screen->width - 1;
-	m.matrix[1][0] = 0; m.matrix[1][1] = -1; m.matrix[1][2] = screen->height - 1;
-	break;
-    case 270:
-	pScreen->width = screen->height;
-	pScreen->height = screen->width;
-	pScreen->mmWidth = screen->height_mm;
-	pScreen->mmHeight = screen->width_mm;
-	scrpriv->shadow = TRUE;
-	m.matrix[0][0] = 0; m.matrix[0][1] = 1; m.matrix[0][2] = 0;
-	m.matrix[1][0] = -1; m.matrix[1][1] = 0; m.matrix[1][2] = screen->width - 1;
-	break;
     }
     KdSetMouseMatrix (&m);
     
@@ -400,7 +393,7 @@ fbdevLayerCreate (ScreenPtr pScreen)
 	else
 #endif /* FAKE24_ON_16 */
 	{
-	    if (scrpriv->rotation)
+	    if (scrpriv->randr)
 		update = shadowUpdateRotatePacked;
 	    else
 		update = shadowUpdatePacked;
@@ -417,8 +410,9 @@ fbdevLayerCreate (ScreenPtr pScreen)
 	update = 0;
 	window = 0;
     }
+    
     return LayerCreate (pScreen, kind, screen->fb[0].depth, 
-			pPixmap, update, window, scrpriv->rotation, 0);
+			pPixmap, update, window, scrpriv->randr, 0);
 }
 
 
@@ -430,14 +424,11 @@ fbdevRandRGetInfo (ScreenPtr pScreen, Rotation *rotations)
     FbdevPriv		    *priv = pScreenPriv->card->driver;
     KdScreenInfo	    *screen = pScreenPriv->screen;
     FbdevScrPriv	    *scrpriv = screen->driver;
-    RRVisualGroupPtr	    pVisualGroup;
-    RRGroupOfVisualGroupPtr pGroupOfVisualGroup;
     RRScreenSizePtr	    pSize;
-    Rotation		    rotateKind;
-    int			    rotation;
+    Rotation		    randr;
     int			    n;
     
-    *rotations = RR_Rotate_0|RR_Rotate_90|RR_Rotate_180|RR_Rotate_270;
+    *rotations = RR_Rotate_All|RR_Reflect_All;
     
     for (n = 0; n < pScreen->numDepths; n++)
 	if (pScreen->allowedDepths[n].numVids)
@@ -445,64 +436,15 @@ fbdevRandRGetInfo (ScreenPtr pScreen, Rotation *rotations)
     if (n == pScreen->numDepths)
 	return FALSE;
     
-    pVisualGroup = RRCreateVisualGroup (pScreen);
-    if (!pVisualGroup)
-	return FALSE;
-    if (!RRAddDepthToVisualGroup (pScreen,
-				pVisualGroup,
-				&pScreen->allowedDepths[n]))
-    {
-	RRDestroyVisualGroup (pScreen, pVisualGroup);
-	return FALSE;
-    }
-
-    pVisualGroup = RRRegisterVisualGroup (pScreen, pVisualGroup);
-    if (!pVisualGroup)
-	return FALSE;
-    
-    pGroupOfVisualGroup = RRCreateGroupOfVisualGroup (pScreen);
-
-    if (!RRAddVisualGroupToGroupOfVisualGroup (pScreen,
-					 pGroupOfVisualGroup,
-					 pVisualGroup))
-    {
-	RRDestroyGroupOfVisualGroup (pScreen, pGroupOfVisualGroup);
-	/* pVisualGroup left until screen closed */
-	return FALSE;
-    }
-
-    pGroupOfVisualGroup = RRRegisterGroupOfVisualGroup (pScreen, pGroupOfVisualGroup);
-    if (!pGroupOfVisualGroup)
-	return FALSE;
-    
     pSize = RRRegisterSize (pScreen,
 			    screen->width,
 			    screen->height,
 			    screen->width_mm,
-			    screen->height_mm,
-			    pGroupOfVisualGroup);
+			    screen->height_mm);
     
-    rotation = scrpriv->rotation - screen->rotation;
-    if (rotation < 0)
-	rotation += 360;
-
-    switch (rotation)
-    {
-    case 0:
-	rotateKind = RR_Rotate_0;
-	break;
-    case 90:
-	rotateKind = RR_Rotate_90;
-	break;
-    case 180:
-	rotateKind = RR_Rotate_180;
-	break;
-    case 270:
-	rotateKind = RR_Rotate_270;
-	break;
-    }
-
-    RRSetCurrentConfig (pScreen, rotateKind, pSize, pVisualGroup);
+    randr = KdSubRotation (scrpriv->randr, screen->randr);
+    
+    RRSetCurrentConfig (pScreen, randr, 0, pSize);
     
     return TRUE;
 }
@@ -531,43 +473,28 @@ fbdevLayerRemove (WindowPtr pWin, pointer value)
 }
 
 fbdevRandRSetConfig (ScreenPtr		pScreen,
-		     Rotation		rotateKind,
-		     RRScreenSizePtr	pSize,
-		     RRVisualGroupPtr	pVisualGroup)
+		     Rotation		randr,
+		     int		rate,
+		     RRScreenSizePtr	pSize)
 {
     KdScreenPriv(pScreen);
     KdScreenInfo	*screen = pScreenPriv->screen;
     FbdevPriv		*priv = pScreenPriv->card->driver;
     FbdevScrPriv	*scrpriv = screen->driver;
-    int			rotation;
+    int			rotate;
+    int			reflect;
     Bool		wasEnabled = pScreenPriv->enabled;
 
     /*
      * The only thing that can change is rotation
      */
-    switch (rotateKind)
-    {
-    case RR_Rotate_0:
-	rotation = screen->rotation;
-	break;
-    case RR_Rotate_90:
-	rotation = screen->rotation + 90;
-	break;
-    case RR_Rotate_180:
-	rotation = screen->rotation + 180;
-	break;
-    case RR_Rotate_270:
-	rotation = screen->rotation + 270;
-	break;
-    }
-    if (rotation >= 360)
-	rotation -= 360;
+    randr = KdAddRotation (randr, screen->randr);
 
-    if (scrpriv->rotation != rotation)
+    if (scrpriv->randr != randr)
     {
 	LayerPtr	pNewLayer;
 	int		kind;
-	int		oldrotation = scrpriv->rotation;
+	int		oldrandr = scrpriv->randr;
 	int		oldshadow = scrpriv->shadow;
 	int		oldwidth = pScreen->width;
 	int		oldheight = pScreen->height;
@@ -576,18 +503,18 @@ fbdevRandRSetConfig (ScreenPtr		pScreen,
 	if (wasEnabled)
 	    KdDisableScreen (pScreen);
 	
-	scrpriv->rotation = rotation;
+	scrpriv->randr = randr;
 	pNewLayer = fbdevLayerCreate (pScreen);
 	if (!pNewLayer)
 	{
 	    scrpriv->shadow = oldshadow;
-	    scrpriv->rotation = oldrotation;
+	    scrpriv->randr = oldrandr;
 	}
 	if (WalkTree (pScreen, fbdevLayerAdd, (pointer) pNewLayer) == WT_STOPWALKING)
 	{
 	    WalkTree (pScreen, fbdevLayerRemove, (pointer) pNewLayer);
 	    LayerDestroy (pScreen, pNewLayer);
-	    scrpriv->rotation = oldrotation;
+	    scrpriv->randr = oldrandr;
 	    scrpriv->shadow = oldshadow;
 	    pScreen->width = oldwidth;
 	    pScreen->height = oldheight;
@@ -598,6 +525,7 @@ fbdevRandRSetConfig (ScreenPtr		pScreen,
         WalkTree (pScreen, fbdevLayerRemove, (pointer) scrpriv->pLayer);
 	LayerDestroy (pScreen, scrpriv->pLayer);
 	scrpriv->pLayer = pNewLayer;
+	KdSetSubpixelOrder (pScreen, scrpriv->randr);
 	if (wasEnabled)
 	    KdEnableScreen (pScreen);
     }
@@ -653,10 +581,6 @@ fbdevCreateColormap (ColormapPtr pmap)
     }
 }
 
-#ifdef TOUCHSCREEN
-int TsFbdev = -1;
-#endif
-
 Bool
 fbdevInitScreen (ScreenPtr pScreen)
 {
@@ -667,7 +591,7 @@ fbdevInitScreen (ScreenPtr pScreen)
     ShadowWindowProc	window;
 
 #ifdef TOUCHSCREEN
-    TsFbdev = pScreen->myNum;
+    KdTsPhyScreen = pScreen->myNum;
 #endif
 
     pScreen->CreateColormap = fbdevCreateColormap;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.6 2001/02/16 14:45:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.8 2002/05/22 21:38:29 herrb Exp $ */
 
 /* Resource information code */
 
@@ -11,11 +11,14 @@
 #define NEED_OS_RAC_PROTOS
 #include "xf86_OSlib.h"
 
-#ifdef __alpha__
-
-#include <sys/sysctl.h>
+/* Avoid Imakefile changes */
+#include "bus/Pci.h"
 
 resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
+
+#ifdef INCLUDE_XF86_NO_DOMAIN
+
+#if defined(__alpha__) || defined(__sparc64__)
 
 resPtr
 xf86BusAccWindowsFromOS(void)
@@ -52,6 +55,8 @@ xf86PciBusAccWindowsFromOS(void)
     return ret;
 }
 
+#ifdef INCLUDE_UNUSED
+
 resPtr
 xf86IsaBusAccWindowsFromOS(void)
 {
@@ -65,6 +70,8 @@ xf86IsaBusAccWindowsFromOS(void)
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
+
+#endif /* INCLUDE_UNUSED */
 
 resPtr
 xf86AccResFromOS(resPtr ret)
@@ -107,8 +114,6 @@ xf86AccResFromOS(resPtr ret)
 
 #elif defined(__powerpc__)
 
-resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
-
 resPtr
 xf86BusAccWindowsFromOS(void)
 {
@@ -137,6 +142,8 @@ xf86PciBusAccWindowsFromOS(void)
     return ret;
 }
 
+#ifdef INCLUDE_UNUSED
+
 resPtr
 xf86IsaBusAccWindowsFromOS(void)
 {
@@ -150,6 +157,8 @@ xf86IsaBusAccWindowsFromOS(void)
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
+
+#endif /* INCLUDE_UNUSED */
 
 resPtr
 xf86AccResFromOS(resPtr ret)
@@ -177,3 +186,5 @@ xf86AccResFromOS(resPtr ret)
 #error : Put your platform dependent code here!!
 
 #endif
+
+#endif /* INCLUDE_XF86_NO_DOMAIN */

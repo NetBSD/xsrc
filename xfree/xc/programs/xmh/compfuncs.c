@@ -24,21 +24,21 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/compfuncs.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/compfuncs.c,v 1.3 2002/04/05 21:06:28 dickey Exp $ */
 
 /* comp.c -- action procedures to handle composition buttons. */
 
 #include "xmh.h"
-
+#include "actions.h"
 
 /* Reset this composition widget to be one with just a blank message
    template. */
 
 /*ARGSUSED*/
-void DoResetCompose(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoResetCompose(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn	scrn = (Scrn) client_data;
     Msg		msg;
@@ -61,11 +61,11 @@ void DoResetCompose(widget, client_data, call_data)
 }
 
 /*ARGSUSED*/
-void XmhResetCompose(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhResetCompose(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     DoResetCompose(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -77,11 +77,11 @@ void XmhResetCompose(w, event, params, num_params)
    sending the same message twice, but it doesn't hurt to be safe here.) */
 
 /*ARGSUSED*/
-void XmhSend(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhSend(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (scrn->msg == NULL) return;
@@ -95,11 +95,11 @@ void XmhSend(w, event, params, num_params)
 /* Save any changes to the message.  This also makes this message permanent. */
 
 /*ARGSUSED*/
-void XmhSave(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhSave(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     DEBUG("XmhSave\n")
@@ -113,10 +113,10 @@ void XmhSave(w, event, params, num_params)
 /* Utility routine; creates a composition screen containing a forward message
    of the messages in the given msglist. */
 
-void CreateForward(mlist, params, num_params)
-  MsgList mlist;
-  String *params;
-  Cardinal num_params;
+void CreateForward(
+  MsgList mlist,
+  String *params,
+  Cardinal num_params)
 {
     Scrn scrn;
     Msg msg;

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_screen.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_screen.h,v 1.2 2002/02/22 21:45:03 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -38,8 +38,6 @@
 #define __TDFX_SCREEN_H__
 
 #ifdef GLX_DIRECT_RENDERING
-
-#include "dri_mesaint.h"
 
 typedef struct {
    drmHandle handle;
@@ -70,9 +68,6 @@ typedef struct {
    unsigned int sarea_priv_offset;
 } tdfxScreenPrivate;
 
-
-extern GLboolean tdfxCreateScreen( __DRIscreenPrivate *driScrnPriv );
-extern void tdfxDestroyScreen( __DRIscreenPrivate *driScrnPriv );
 
 #endif
 #endif

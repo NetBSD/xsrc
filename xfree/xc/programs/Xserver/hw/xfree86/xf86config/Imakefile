@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Imakefile,v 3.13 2001/04/23 17:15:57 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Imakefile,v 3.14 2002/05/31 18:46:04 dawes Exp $
 
 
 
@@ -20,16 +20,11 @@ XVERS = XFree86Version
 		   -DXCONFIGFILE=\"$(XCONFIGFILE)\" \
 		   -DXVERSION="$(XVERS)" XFree86ConsoleDefines
 
-#if !defined(OS2Architecture)
 AllTarget(ProgramTargetName(xf86config))
 
 NormalProgramTarget(xf86config,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),NullParameter)
 InstallProgram(xf86config,$(BINDIR))
-#else
-all::
 
-InstallNamedProg(xf86config.cmd,xf86config.cmd,$(BINDIR))
-#endif
 DependTarget()
 
 InstallNonExecFile(Cards,$(LIBDIR))

@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xlogo/xlogo.man,v 1.8 2001/12/14 20:02:07 dawes Exp $
+.\" $XFree86: xc/programs/xlogo/xlogo.man,v 1.10 2002/10/12 16:06:48 herrb Exp $
 .\"
 .TH XLOGO 1 __xorgversion__
 .SH NAME
@@ -37,6 +37,12 @@ The \fIxlogo\fP program displays the X Window System logo.
 .I Xlogo
 accepts all of the standard X Toolkit command line options, as well as the
 following:
+.TP 8
+.B \-render
+This option indicates that the logo should be drawn with anti-aliased edges using the RENDER extension.
+.TP 8
+.B \-shape
+If -render is also specified, this forces the edges to be rendered in sharp mode, (ie. 1-bit alpha channel).
 .TP 8
 .B \-shape
 This option indicates that the logo window should be shaped rather than
@@ -76,7 +82,9 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
-<XRoot>/lib/X11/app-defaults/XLogo - specifies required resources
+.TP
+.I __apploaddir__/XLogo
+specifies required resources
 .SH SEE ALSO
 X(__miscmansuffix__), xrdb(1)
 .SH AUTHORS

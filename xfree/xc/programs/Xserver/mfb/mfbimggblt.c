@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbimggblt.c,v 3.4 2001/12/14 20:00:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbimggblt.c,v 3.5 2003/02/18 21:30:01 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -139,7 +139,8 @@ MFBIMAGEGLYPHBLT(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     register PixelType endmask;
 
     register int nFirst;/* bits of glyph in current longword */
-    void (* oldFillArea)();
+    mfbPrivGC *pPrivGC;
+    mfbFillAreaProcPtr oldFillArea;
 			/* we might temporarily usurp this
 			   field in devPriv */
 
@@ -181,23 +182,20 @@ MFBIMAGEGLYPHBLT(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
        but that is usually not a cheap thing to do.
     */
 
-    oldFillArea = ((mfbPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->FillArea;
+    pPrivGC = pGC->devPrivates[mfbGCPrivateIndex].ptr;
+    oldFillArea = pPrivGC->FillArea;
 
-/* pcc doesn't like this.  why?
-    ((mfbPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->FillArea = 
-			((pGC->bgPixel & 1) ? mfbSolidWhiteArea : mfbSolidBlackArea);
-*/
     if (pGC->bgPixel & 1)
-        ((mfbPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->FillArea = mfbSolidWhiteArea;
+        pPrivGC->FillArea = mfbSolidWhiteArea;
     else
-        ((mfbPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->FillArea = mfbSolidBlackArea;
+        pPrivGC->FillArea = mfbSolidBlackArea;
 
 #ifndef LOWMEMFTPT
     mfbPolyFillRect(pDrawable, pGC, 1, &backrect);
 #else
     miPolyFillRect(pDrawable, pGC, 1, &backrect);
 #endif
-    ((mfbPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->FillArea = oldFillArea;
+    pPrivGC->FillArea = oldFillArea;
 
     /* the faint-hearted can open their eyes now */
     switch (RECT_IN_REGION(pGC->pScreen, pGC->pCompositeClip, &bbox))

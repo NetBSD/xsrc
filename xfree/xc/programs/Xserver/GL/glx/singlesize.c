@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/singlesize.c,v 1.3 2001/03/21 16:29:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/singlesize.c,v 1.4 2002/02/22 21:45:07 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -63,6 +63,7 @@ GLint __glReadPixels_size(GLenum format, GLenum type, GLint w, GLint h)
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:
@@ -149,6 +150,25 @@ GLint __glGetTexEnvfv_size(GLenum pname)
 	return 1;
       case GL_TEXTURE_ENV_COLOR:
 	return 4;
+      case GL_TEXTURE_LOD_BIAS_EXT:
+	return 1;
+      case GL_COMBINE_RGB_ARB:
+      case GL_COMBINE_ALPHA_ARB:
+      case GL_SOURCE0_RGB_ARB:
+      case GL_SOURCE1_RGB_ARB:
+      case GL_SOURCE2_RGB_ARB:
+      case GL_SOURCE0_ALPHA_ARB:
+      case GL_SOURCE1_ALPHA_ARB:
+      case GL_SOURCE2_ALPHA_ARB:
+      case GL_OPERAND0_RGB_ARB:
+      case GL_OPERAND1_RGB_ARB:
+      case GL_OPERAND2_RGB_ARB:
+      case GL_OPERAND0_ALPHA_ARB:
+      case GL_OPERAND1_ALPHA_ARB:
+      case GL_OPERAND2_ALPHA_ARB:
+      case GL_RGB_SCALE_ARB:
+      case GL_ALPHA_SCALE:
+	return 1;
       default:
 	return -1;
     }
@@ -876,6 +896,9 @@ GLint __glGet_size(GLenum sq)
 	return 1;
       case GL_RESCALE_NORMAL:
 	return 1;
+      case GL_MAX_ELEMENTS_INDICES:
+      case GL_MAX_ELEMENTS_VERTICES:
+         return 1;
       case GL_ACTIVE_TEXTURE_ARB:
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
       case GL_MAX_TEXTURE_UNITS_ARB:
@@ -883,6 +906,10 @@ GLint __glGet_size(GLenum sq)
       case GL_MAX_COLOR_MATRIX_STACK_DEPTH:
       case GL_MAX_CONVOLUTION_WIDTH:
       case GL_MAX_CONVOLUTION_HEIGHT:
+	return 1;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
 	return 1;
       default:
 	return -1;
@@ -955,6 +982,7 @@ GLint __glGetTexImage_size(GLenum target, GLint level, GLenum format,
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	elements = 1;
 	break;
       case GL_LUMINANCE_ALPHA:

@@ -1,10 +1,10 @@
-XCOMM $XFree86: xc/config/cf/cross.rules,v 1.6 2001/11/15 23:15:55 alanh Exp $
+XCOMM $XFree86: xc/config/cf/cross.rules,v 1.8 2002/07/14 17:08:15 alanh Exp $
 
 #ifndef HostCcCmd
 #define HostCcCmd cc
 #endif
 
-#define HostLinkRule(target, flags, src, libs)  HostCcCmd -I$(BUILDINCDIR) -o target src libs
+#define HostLinkRule(target,flags,objs,libs)  HostCcCmd -I$(BUILDINCDIR) -o target flags objs libs
 
 /* ComplexHostProgramTarget - Compile a program such that we can run
  * it on this host, i.e., don't use the default cross compiler.
@@ -13,7 +13,8 @@ XCOMM $XFree86: xc/config/cf/cross.rules,v 1.6 2001/11/15 23:15:55 alanh Exp $
 #define	ComplexHostProgramTarget(program)				@@\
               CC=HostCcCmd							@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\
@@ -38,7 +39,8 @@ clean::									@@\
 									@@\
               CC=HostCcCmd					@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\
@@ -60,9 +62,10 @@ clean::									@@\
 #define SimpleHostProgramTarget_1(program)				@@\
            SRCS = program.c						@@\
 									@@\
-              CC=cc							@@\
+              CC=HostCcCmd						@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\
@@ -84,9 +87,10 @@ clean::									@@\
 #define SimpleHostProgramTarget_2(program)				@@\
            SRCS = program.c						@@\
 									@@\
-              CC=cc							@@\
+              CC=HostCcCmd						@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\
@@ -104,9 +108,10 @@ clean::									@@\
 #define SimpleHostProgramTarget_3(program)				@@\
            SRCS = program.c						@@\
 									@@\
-              CC=cc							@@\
+              CC=HostCcCmd						@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\
@@ -124,9 +129,10 @@ clean::									@@\
 #define SimpleHostProgramTarget_4(program)				@@\
            SRCS = program.c						@@\
 									@@\
-              CC=cc							@@\
+              CC=HostCcCmd						@@\
     STD_INCLUDES=							@@\
-          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)\	@@\
+		$(CROSSCOMPILEDEFINES) $(CROSSCOMPILEBOOTSTRAPDEFINES)	@@\
 EXTRA_LOAD_FLAGS=							@@\
         PROGRAM = program						@@\
 									@@\

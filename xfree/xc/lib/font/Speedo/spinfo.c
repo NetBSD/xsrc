@@ -49,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.12 2001/12/14 19:56:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.13 2002/09/10 16:14:33 tsi Exp $ */
 
 #include "fntfilst.h"
 #include "fontutil.h"
@@ -359,6 +359,7 @@ sp_compute_props(
 	pinfo->isStringProp = (char *) 0;
 	xfree(pinfo->props);
 	pinfo->props = (FontPropPtr) 0;
+	pinfo->nprops = 0;
 	return;
     }
     bzero(pinfo->isStringProp, (sizeof(char) * nprops));

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.40 2001/12/14 19:59:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.43 2002/12/24 17:42:59 tsi Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -487,7 +487,8 @@ extern void FatalError(
     ...
 #endif
 )
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 4)))
 __attribute((noreturn))
 #endif
 ;
@@ -570,7 +571,7 @@ void OsReleaseSignals (
 #endif		     
 		     );
 
-#if !defined(WIN32) && !defined(__EMX__)
+#if !defined(WIN32) && !defined(__UNIXOS2__)
 extern int System(char *);
 extern pointer Popen(char *, char *);
 extern int Pclose(pointer);
@@ -638,6 +639,8 @@ extern int LocalClient(
     ClientPtr /* client */
 #endif
 );
+
+extern int LocalClientCred(ClientPtr, int *, int *);
 
 extern int ChangeAccessControl(
 #if NeedFunctionPrototypes

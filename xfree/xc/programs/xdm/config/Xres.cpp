@@ -3,7 +3,7 @@
 !
 !
 !
-! $XFree86: xc/programs/xdm/config/Xres.cpp,v 1.4 2001/01/22 22:32:34 dawes Exp $
+! $XFree86: xc/programs/xdm/config/Xres.cpp,v 1.6 2003/01/04 03:11:31 dawes Exp $
 !
 #define BS \ /* cpp can be trickier than m4 */
 #define NLBS \n\ /* don't remove these comments */
@@ -14,7 +14,7 @@ xlogin*login.translations: #override BS
 	<Key>Left: move-backward-character()NLBS
 	<Key>Right: move-forward-character()NLBS
 	<Key>Home: move-to-begining()NLBS
-	<Key>End: move-to-end()NLBS\
+	<Key>End: move-to-end()NLBS
 	Ctrl<Key>KP_Enter: set-session-argument(failsafe) finish-field()NLBS
 	<Key>KP_Enter: set-session-argument() finish-field()NLBS
 	Ctrl<Key>Return: set-session-argument(failsafe) finish-field()NLBS
@@ -30,13 +30,13 @@ xlogin*fail: Login incorrect
 #ifdef XPM
 /**/#if WIDTH > 800
 xlogin*greetFont: -adobe-helvetica-bold-o-normal--24-240-75-75-p-138-iso8859-1
-xlogin*font: -adobe-helvetica-medium-r-normal--18-180-75-75-p-103-iso8859-1
+xlogin*font: -adobe-helvetica-medium-r-normal--18-180-75-75-p-98-iso8859-1
 xlogin*promptFont: -adobe-helvetica-bold-r-normal--18-180-75-75-p-103-iso8859-1
 xlogin*failFont: -adobe-helvetica-bold-r-normal--18-180-75-75-p-103-iso8859-1
 /**/#else
 xlogin*greetFont: -adobe-helvetica-bold-o-normal--17-120-100-100-p-92-iso8859-1
-xlogin*font: -adobe-helvetica-medium-r-normal--12-120-75-75-p-69-iso8859-1
-xlogin*promptFont: -adobe-helvetica-bold-r-normal--12-120-75-75-p-69-iso8859-1
+xlogin*font: -adobe-helvetica-medium-r-normal--12-120-75-75-p-67-iso8859-1
+xlogin*promptFont: -adobe-helvetica-bold-r-normal--12-120-75-75-p-70-iso8859-1
 xlogin*failFont: -adobe-helvetica-bold-o-normal--14-140-75-75-p-82-iso8859-1
 /**/#endif
 #endif /* XPM */

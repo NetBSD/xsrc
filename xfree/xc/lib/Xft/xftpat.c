@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftpat.c,v 1.6 2001/03/30 18:50:18 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftpat.c,v 1.7 2002/02/15 07:36:11 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -26,12 +26,12 @@
 #include <string.h>
 #include "xftint.h"
 
-XftPattern *
+FcPattern *
 XftPatternCreate (void)
 {
-    XftPattern	*p;
+    FcPattern	*p;
 
-    p = (XftPattern *) malloc (sizeof (XftPattern));
+    p = (FcPattern *) malloc (sizeof (FcPattern));
     if (!p)
 	return 0;
     p->num = 0;
@@ -41,145 +41,27 @@ XftPatternCreate (void)
 }
 
 void
-XftValueDestroy (XftValue v)
-{
-    if (v.type == XftTypeString)
-	free (v.u.s);
-    if( v.type == XftTypeMatrix)
-	free (v.u.m);
-}
+XftValueDestroy (FcValue v)
+{ FcValueDestroy (v); }
 
 void
 XftValueListDestroy (XftValueList *l)
-{
-    XftValueList    *next;
-    for (; l; l = next)
-    {
-	if (l->value.type == XftTypeString)
-	    free (l->value.u.s);
-	if (l->value.type == XftTypeMatrix)
-	    free (l->value.u.m);
-	next = l->next;
-	free (l);
-    }
-}
+{ FcValueListDestroy (l); }
 
 void
-XftPatternDestroy (XftPattern *p)
-{
-    int		    i;
-    
-    for (i = 0; i < p->num; i++)
-	XftValueListDestroy (p->elts[i].values);
-
-    if (p->elts)
-    {
-	free (p->elts);
-	p->elts = 0;
-    }
-    p->num = p->size = 0;
-    free (p);
-}
+XftPatternDestroy (FcPattern *p)
+{ FcPatternDestroy (p); }
 
 XftPatternElt *
-XftPatternFind (XftPattern *p, const char *object, Bool insert)
-{
-    int		    i;
-    int		    s;
-    XftPatternElt   *e;
-    
-    /* match existing */
-    for (i = 0; i < p->num; i++)
-    {
-	if (!_XftStrCmpIgnoreCase (object, p->elts[i].object))
-	    return &p->elts[i];
-    }
-
-    if (!insert)
-	return 0;
-
-    /* grow array */
-    if (i == p->size)
-    {
-	s = p->size + 16;
-	if (p->elts)
-	    e = (XftPatternElt *) realloc (p->elts, s * sizeof (XftPatternElt));
-	else
-	    e = (XftPatternElt *) malloc (s * sizeof (XftPatternElt));
-	if (!e)
-	    return False;
-	p->elts = e;
-	while (p->size < s)
-	{
-	    p->elts[p->size].object = 0;
-	    p->elts[p->size].values = 0;
-	    p->size++;
-	}
-    }
-    
-    /* bump count */
-    p->num++;
-    
-    return &p->elts[i];
-}
+XftPatternFind (FcPattern *p, const char *object, Bool insert)
+{ return FcPatternFind (p, object, insert); }
 
 Bool
-XftPatternAdd (XftPattern *p, const char *object, XftValue value, Bool append)
-{
-    XftPatternElt   *e;
-    XftValueList    *new, **prev;
-
-    new = (XftValueList *) malloc (sizeof (XftValueList));
-    if (!new)
-	goto bail0;
-
-    /* dup string */
-    if (value.type == XftTypeString)
-    {
-	value.u.s = _XftSaveString (value.u.s);
-	if (!value.u.s)
-	    goto bail1;
-    }
-    else if (value.type == XftTypeMatrix)
-    {
-	value.u.m = _XftSaveMatrix (value.u.m);
-	if (!value.u.m)
-	    goto bail1;
-    }
-    new->value = value;
-    new->next = 0;
-    
-    e = XftPatternFind (p, object, True);
-    if (!e)
-	goto bail2;
-    
-    e->object = object;
-    if (append)
-    {
-	for (prev = &e->values; *prev; prev = &(*prev)->next);
-	*prev = new;
-    }
-    else
-    {
-	new->next = e->values;
-	e->values = new;
-    }
-    
-    return True;
-
-bail2:    
-    if (value.type == XftTypeString)
-        free (value.u.s);
-    else if (value.type == XftTypeMatrix)
-	free (value.u.m);
-bail1:
-    free (new);
-bail0:
-    return False;
-}
+XftPatternAdd (FcPattern *p, const char *object, FcValue value, Bool append)
+{ return FcPatternAdd (p, object, value, append); }
 
 Bool
-XftPatternDel (XftPattern *p, const char *object)
+XftPatternDel (FcPattern *p, const char *object)
 {
     XftPatternElt   *e;
     int		    i;
@@ -202,59 +84,59 @@ XftPatternDel (XftPattern *p, const char *object)
 }
 
 Bool
-XftPatternAddInteger (XftPattern *p, const char *object, int i)
+XftPatternAddInteger (FcPattern *p, const char *object, int i)
 {
-    XftValue	v;
+    FcValue	v;
 
-    v.type = XftTypeInteger;
+    v.type = FcTypeInteger;
     v.u.i = i;
     return XftPatternAdd (p, object, v, True);
 }
 
 Bool
-XftPatternAddDouble (XftPattern *p, const char *object, double d)
+XftPatternAddDouble (FcPattern *p, const char *object, double d)
 {
-    XftValue	v;
+    FcValue	v;
 
-    v.type = XftTypeDouble;
+    v.type = FcTypeDouble;
     v.u.d = d;
     return XftPatternAdd (p, object, v, True);
 }
 
 
 Bool
-XftPatternAddString (XftPattern *p, const char *object, const char *s)
+XftPatternAddString (FcPattern *p, const char *object, const char *s)
 {
-    XftValue	v;
+    FcValue	v;
 
-    v.type = XftTypeString;
+    v.type = FcTypeString;
     v.u.s = (char *) s;
     return XftPatternAdd (p, object, v, True);
 }
 
 Bool
-XftPatternAddMatrix (XftPattern *p, const char *object, const XftMatrix *s)
+XftPatternAddMatrix (FcPattern *p, const char *object, const XftMatrix *s)
 {
-    XftValue	v;
+    FcValue	v;
 
-    v.type = XftTypeMatrix;
+    v.type = FcTypeMatrix;
     v.u.m = (XftMatrix *) s;
     return XftPatternAdd (p, object, v, True);
 }
 
 
 Bool
-XftPatternAddBool (XftPattern *p, const char *object, Bool b)
+XftPatternAddBool (FcPattern *p, const char *object, Bool b)
 {
-    XftValue	v;
+    FcValue	v;
 
-    v.type = XftTypeBool;
+    v.type = FcTypeBool;
     v.u.b = b;
     return XftPatternAdd (p, object, v, True);
 }
 
 XftResult
-XftPatternGet (XftPattern *p, const char *object, int id, XftValue *v)
+XftPatternGet (FcPattern *p, const char *object, int id, FcValue *v)
 {
     XftPatternElt   *e;
     XftValueList    *l;
@@ -275,19 +157,19 @@ XftPatternGet (XftPattern *p, const char *object, int id, XftValue *v)
 }
 
 XftResult
-XftPatternGetInteger (XftPattern *p, const char *object, int id, int *i)
+XftPatternGetInteger (FcPattern *p, const char *object, int id, int *i)
 {
-    XftValue	v;
+    FcValue	v;
     XftResult	r;
 
     r = XftPatternGet (p, object, id, &v);
     if (r != XftResultMatch)
 	return r;
     switch (v.type) {
-    case XftTypeDouble:
+    case FcTypeDouble:
 	*i = (int) v.u.d;
 	break;
-    case XftTypeInteger:
+    case FcTypeInteger:
 	*i = v.u.i;
 	break;
     default:
@@ -297,19 +179,19 @@ XftPatternGetInteger (XftPattern *p, const char *object, int id, int *i)
 }
 
 XftResult
-XftPatternGetDouble (XftPattern *p, const char *object, int id, double *d)
+XftPatternGetDouble (FcPattern *p, const char *object, int id, double *d)
 {
-    XftValue	v;
+    FcValue	v;
     XftResult	r;
 
     r = XftPatternGet (p, object, id, &v);
     if (r != XftResultMatch)
 	return r;
     switch (v.type) {
-    case XftTypeDouble:
+    case FcTypeDouble:
 	*d = v.u.d;
 	break;
-    case XftTypeInteger:
+    case FcTypeInteger:
 	*d = (double) v.u.i;
 	break;
     default:
@@ -319,30 +201,30 @@ XftPatternGetDouble (XftPattern *p, const char *object, int id, double *d)
 }
 
 XftResult
-XftPatternGetString (XftPattern *p, const char *object, int id, char **s)
+XftPatternGetString (FcPattern *p, const char *object, int id, char **s)
 {
-    XftValue	v;
+    FcValue	v;
     XftResult	r;
 
     r = XftPatternGet (p, object, id, &v);
     if (r != XftResultMatch)
 	return r;
-    if (v.type != XftTypeString)
+    if (v.type != FcTypeString)
         return XftResultTypeMismatch;
     *s = v.u.s;
     return XftResultMatch;
 }
 
 XftResult
-XftPatternGetMatrix (XftPattern *p, const char *object, int id, XftMatrix **m)
+XftPatternGetMatrix (FcPattern *p, const char *object, int id, XftMatrix **m)
 {
-    XftValue	v;
+    FcValue	v;
     XftResult	r;
 
     r = XftPatternGet (p, object, id, &v);
     if (r != XftResultMatch)
 	return r;
-    if (v.type != XftTypeMatrix)
+    if (v.type != FcTypeMatrix)
         return XftResultTypeMismatch;
     *m = v.u.m;
     return XftResultMatch;
@@ -350,24 +232,24 @@ XftPatternGetMatrix (XftPattern *p, const char *object, int id, XftMatrix **m)
 
 
 XftResult
-XftPatternGetBool (XftPattern *p, const char *object, int id, Bool *b)
+XftPatternGetBool (FcPattern *p, const char *object, int id, Bool *b)
 {
-    XftValue	v;
+    FcValue	v;
     XftResult	r;
 
     r = XftPatternGet (p, object, id, &v);
     if (r != XftResultMatch)
 	return r;
-    if (v.type != XftTypeBool)
+    if (v.type != FcTypeBool)
         return XftResultTypeMismatch;
     *b = v.u.b;
     return XftResultMatch;
 }
 
-XftPattern *
-XftPatternDuplicate (XftPattern *orig)
+FcPattern *
+XftPatternDuplicate (FcPattern *orig)
 {
-    XftPattern	    *new;
+    FcPattern	    *new;
     int		    i;
     XftValueList    *l;
 
@@ -390,17 +272,17 @@ bail0:
     return 0;
 }
 
-XftPattern *
-XftPatternVaBuild (XftPattern *orig, va_list va)
+FcPattern *
+XftPatternVaBuild (FcPattern *orig, va_list va)
 {
-    XftPattern	*ret;
+    FcPattern	*ret;
     
     _XftPatternVapBuild (ret, orig, va);
     return ret;
 }
 
-XftPattern *
-XftPatternBuild (XftPattern *orig, ...)
+FcPattern *
+XftPatternBuild (FcPattern *orig, ...)
 {
     va_list	va;
     

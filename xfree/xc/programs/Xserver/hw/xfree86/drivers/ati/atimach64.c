@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64.c,v 1.45 2002/01/16 16:22:26 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64.c,v 1.51 2003/02/24 20:46:54 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -111,6 +111,13 @@ ATIMach64PreInit
         pATIHW->crtc_off_pitch = SetBits(pATI->displayWidth >> 3, CRTC_PITCH);
     }
 
+    if ((pATI->LockData.crtc_gen_cntl & CRTC_CSYNC_EN) && !pATI->OptionCSync)
+    {
+        xf86DrvMsg(pScreenInfo->scrnIndex, X_NOTICE,
+            "Using composite sync to match input timing.\n");
+        pATI->OptionCSync = TRUE;
+    }
+
     pATIHW->bus_cntl = bus_cntl = inr(BUS_CNTL);
     if (pATI->Chip < ATI_CHIP_264VT4)
         pATIHW->bus_cntl = (pATIHW->bus_cntl & ~BUS_HOST_ERR_INT_EN) |
@@ -149,6 +156,8 @@ ATIMach64PreInit
 
     pATIHW->dac_cntl = inr(DAC_CNTL) &
         ~(DAC1_CLK_SEL | DAC_PALETTE_ACCESS_CNTL | DAC_8BIT_EN);
+    if (pATI->Chip >= ATI_CHIP_264CT)
+        pATIHW->dac_cntl &= ~DAC_FEA_CON_EN;
     if (pATI->rgbBits == 8)
         pATIHW->dac_cntl |= DAC_8BIT_EN;
 
@@ -204,6 +213,20 @@ ATIMach64PreInit
                     CTL_MEM_UPPER_APER_ENDIAN);
                 break;
         }
+
+        pATIHW->mpp_config = inr(MPP_CONFIG);
+        pATIHW->mpp_config &=
+            ~(MPP_PRESCALE | MPP_NSTATES | MPP_FORMAT | MPP_WAIT_STATE |
+              MPP_INSERT_WAIT | MPP_TRISTATE_ADDR | MPP_AUTO_INC_EN |
+              MPP_CHKREQ_EN | MPP_BUFFER_SIZE | MPP_BUFFER_MODE | MPP_BUSY);
+        pATIHW->mpp_config |=
+            (MPP_NSTATES_8 | MPP_FORMAT_DA8 | SetBits(4, MPP_WAIT_STATE) |
+             MPP_CHKRDY_EN | MPP_READ_EARLY | MPP_RW_MODE | MPP_EN);
+        pATIHW->mpp_strobe_seq = inr(MPP_STROBE_SEQ);
+        pATIHW->mpp_strobe_seq &= ~(MPP_STB0_SEQ | MPP_STB1_SEQ);
+        pATIHW->mpp_strobe_seq |=
+            SetBits(0x0087U, MPP_STB0_SEQ) | SetBits(0x0083U, MPP_STB1_SEQ);
+        pATIHW->tvo_cntl = 0;
     }
 
     /* Draw engine setup */
@@ -358,10 +381,15 @@ ATIMach64Save
 
     pATIHW->config_cntl = inr(CONFIG_CNTL);
 
-    pATIHW->gen_test_cntl = inr(GEN_TEST_CNTL);
+    pATIHW->gen_test_cntl = inr(GEN_TEST_CNTL) & ~GEN_CUR_EN;
 
     if (pATI->Chip >= ATI_CHIP_264VTB)
+    {
         pATIHW->mem_cntl = inr(MEM_CNTL);
+        pATIHW->mpp_config = inr(MPP_CONFIG);
+        pATIHW->mpp_strobe_seq = inr(MPP_STROBE_SEQ);
+        pATIHW->tvo_cntl = inr(TVO_CNTL);
+    }
 
     /* Save draw engine state */
     if (pATI->OptionAccel && (pATIHW == &pATI->OldHW))
@@ -500,7 +528,7 @@ ATIMach64Calculate
     {
         pMode->Flags &= ~(V_PHSYNC | V_NHSYNC | V_PVSYNC | V_NVSYNC);
 
-        if (!pATI->OptionCRT && (pATI->LCDPanelID >= 0))
+        if (pATI->OptionPanelDisplay && (pATI->LCDPanelID >= 0))
             VDisplay = pATI->LCDVertical;
         else
             VDisplay = pMode->CrtcVDisplay;
@@ -553,7 +581,7 @@ ATIMach64Calculate
         ~(CRTC_DBL_SCAN_EN | CRTC_INTERLACE_EN |
           CRTC_HSYNC_DIS | CRTC_VSYNC_DIS | CRTC_CSYNC_EN |
           CRTC_PIX_BY_2_EN | CRTC_DISPLAY_DIS | CRTC_VGA_XOVERSCAN |
-          CRTC_PIX_WIDTH | CRTC_BYTE_PIX_ORDER | CRTC_FIFO_LWM |
+          CRTC_PIX_WIDTH | CRTC_BYTE_PIX_ORDER |
           CRTC_VGA_128KAP_PAGING | CRTC_VFC_SYNC_TRISTATE |
           CRTC_LOCK_REGS |              /* Already off, but ... */
           CRTC_SYNC_TRISTATE | CRTC_DISP_REQ_EN |
@@ -805,7 +833,12 @@ ATIMach64Set
     outr(BUS_CNTL, pATIHW->bus_cntl);
 
     if (pATI->Chip >= ATI_CHIP_264VTB)
+    {
         outr(MEM_CNTL, pATIHW->mem_cntl);
+        outr(MPP_CONFIG, pATIHW->mpp_config);
+        outr(MPP_STROBE_SEQ, pATIHW->mpp_strobe_seq);
+        outr(TVO_CNTL, pATIHW->tvo_cntl);
+    }
 }
 
 /*
@@ -881,7 +914,7 @@ ATIMach64SetDPMSMode
 
     outr(CRTC_GEN_CNTL, crtc_gen_cntl);
 
-    if ((pATI->LCDPanelID >= 0) && !pATI->OptionCRT)
+    if (pATI->OptionPanelDisplay && (pATI->LCDPanelID >= 0))
     {
         CARD32 lcd_index = 0;
 

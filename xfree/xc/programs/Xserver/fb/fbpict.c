@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.12 2001/07/16 05:04:05 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.16 2002/12/14 01:46:02 dawes Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -671,7 +671,7 @@ fbCompositeSrcAdd_8000x8000 (CARD8	op,
     CARD8	*dstLine, *dst;
     CARD8	*srcLine, *src;
     FbStride	dstStride, srcStride;
-    CARD8	w;
+    CARD16	w;
     CARD8	s, d;
     CARD16	t;
     
@@ -689,13 +689,17 @@ fbCompositeSrcAdd_8000x8000 (CARD8	op,
 	while (w--)
 	{
 	    s = *src++;
-	    if (s != 0xff)
+	    if (s)
 	    {
-		d = *dst;
-		t = d + s;
-		s = t | (0 - (t >> 8));
+		if (s != 0xff)
+		{
+		    d = *dst;
+		    t = d + s;
+		    s = t | (0 - (t >> 8));
+		}
+		*dst = s;
 	    }
-	    *dst++ = s;
+	    dst++;
 	}
     }
 }
@@ -736,19 +740,23 @@ fbCompositeSrcAdd_8888x8888 (CARD8	op,
 	while (w--)
 	{
 	    s = *src++;
-	    if (s != 0xffffffff)
+	    if (s)
 	    {
-		d = *dst;
-		if (d)
+		if (s != 0xffffffff)
 		{
-		    m = FbAdd(s,d,0,t);
-		    n = FbAdd(s,d,8,t);
-		    o = FbAdd(s,d,16,t);
-		    p = FbAdd(s,d,24,t);
-		    s = m|n|o|p;
+		    d = *dst;
+		    if (d)
+		    {
+			m = FbAdd(s,d,0,t);
+			n = FbAdd(s,d,8,t);
+			o = FbAdd(s,d,16,t);
+			p = FbAdd(s,d,24,t);
+			s = m|n|o|p;
+		    }
 		}
+		*dst = s;
 	    }
-	    *dst++ = s;
+	    dst++;
 	}
     }
 }
@@ -820,6 +828,13 @@ fbCompositeSolidMask_nx1xn (CARD8      op,
     
     fbComposeGetSolid(pSrc, src);
 
+    if ((src & 0xff000000) != 0xff000000)
+    {
+	fbCompositeGeneral  (op, pSrc, pMask, pDst,
+			     xSrc, ySrc, xMask, yMask, xDst, yDst, 
+			     width, height);
+	return;
+    }
     fbGetStipDrawable (pMask->pDrawable, maskBits, maskStride, maskBpp, maskXoff, maskYoff);
     fbGetDrawable (pDst->pDrawable, dstBits, dstStride, dstBpp, dstXoff, dstYoff);
 
@@ -908,6 +923,7 @@ fbComposite (CARD8      op,
 	return;
 				   
     func = fbCompositeGeneral;
+    if (!pSrc->transform && !(pMask && pMask->transform))
     if (!maskAlphaMap && !srcAlphaMap && !dstAlphaMap)
     switch (op) {
     case PictOpOver:
@@ -1143,6 +1159,7 @@ fbPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
     ps->Composite = fbComposite;
     ps->Glyphs = miGlyphs;
     ps->CompositeRects = miCompositeRects;
+    ps->RasterizeTrapezoid = fbRasterizeTrapezoid;
 
 #endif /* RENDER */
 

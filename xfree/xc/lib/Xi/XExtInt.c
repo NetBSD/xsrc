@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.6 2001/12/14 19:55:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.7 2002/10/16 00:37:28 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -56,11 +56,11 @@ SOFTWARE.
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <stdio.h>
-#include "XI.h"
-#include "XIproto.h"
-#include "Xlibint.h"
-#include "XInput.h"
-#include "extutil.h"
+#include <X11/extensions/XI.h>
+#include <X11/extensions/XIproto.h>
+#include <X11/Xlibint.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/extutil.h>
 #include "XIint.h"
 
 #define ENQUEUE_EVENT	True

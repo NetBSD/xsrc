@@ -1,6 +1,6 @@
 /* Copyright 1996, The XFree86 Project, Inc */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.8 2001/07/25 15:05:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.9 2002/05/31 18:45:57 dawes Exp $ */
 
 /*
  * This is for publicly released beta server binaries.
@@ -152,10 +152,8 @@ xf86CheckBeta(int extraDays, char *key)
 
 #if 0
     /* This doesn't work when the server is started by xinit */
-#ifndef __EMX__
     /* See if /dev/tty can be opened */
     m = fopen("/dev/tty", "r+");
-#endif
 #endif
 
     if (m)
@@ -221,7 +219,7 @@ xf86CheckBeta(int extraDays, char *key)
     }
 
   if (writefile) {
-#if !defined(__EMX__)
+#if !defined(__UNIXOS2__)
 #if defined(SYSV) || defined(linux)
     /* Need to fork to change to ruid without loosing euid */
     if (getuid() != 0) {
@@ -254,9 +252,9 @@ xf86CheckBeta(int extraDays, char *key)
 #endif
     }
 #endif /* SYSV || linux */
-#else /* __EMX__ */
+#else /* __UNIXOS2__ */
     WRITE_BETA_FILE
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
   }
   if (filename) {
     DEALLOCATE_LOCAL(filename);

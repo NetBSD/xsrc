@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.6 2001/12/14 19:57:05 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransdnet.c,v 3.7 2002/11/26 01:12:30 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -377,7 +377,7 @@ TRANS(DNETCreateListener) (XtransConnInfo ciptr, char *port)
 
     /* Set a flag to indicate that this connection is a listener */
 
-    ciptr->flags = 1;
+    ciptr->flags = 1 | (ciptr->flags & TRANS_KEEPFLAGS);
 
     return 0;
 }

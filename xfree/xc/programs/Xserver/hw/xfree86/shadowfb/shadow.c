@@ -2,9 +2,11 @@
    Copyright (C) 1999.  The XFree86 Project Inc.
 
    Written by Mark Vojkovich (mvojkovi@ucsd.edu)
+
+   Pre-fb-write callbacks and RENDER support - Nolan Leake (nolan@vmware.com)
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.10 2000/02/08 13:13:33 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.18 2003/02/21 15:06:19 eich Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -22,6 +24,12 @@
 #include "xf86str.h"
 #include "shadowfb.h"
 
+#ifdef RENDER
+# include "picturestr.h"
+#endif
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 static Bool ShadowCloseScreen (int i, ScreenPtr pScreen);
 static void ShadowRestoreAreas (    
@@ -54,12 +62,29 @@ static Bool ShadowModifyPixmapHeader(
 
 static Bool ShadowEnterVT(int index, int flags);
 static void ShadowLeaveVT(int index, int flags);
-static void ShadowEnableDisableFBAccess(int index, Bool enable);
+
+#ifdef RENDER
+static void ShadowComposite(
+    CARD8 op,
+    PicturePtr pSrc,
+    PicturePtr pMask,
+    PicturePtr pDst,
+    INT16 xSrc,
+    INT16 ySrc,
+    INT16 xMask,
+    INT16 yMask,
+    INT16 xDst,
+    INT16 yDst,
+    CARD16 width,
+    CARD16 height
+);
+#endif /* RENDER */
 
 
 typedef struct {
   ScrnInfoPtr 				pScrn;
-  RefreshAreaFuncPtr			refresh;
+  RefreshAreaFuncPtr			preRefresh;
+  RefreshAreaFuncPtr                    postRefresh;
   CloseScreenProcPtr			CloseScreen;
   PaintWindowBackgroundProcPtr		PaintWindowBackground;
   PaintWindowBorderProcPtr		PaintWindowBorder;
@@ -67,9 +92,11 @@ typedef struct {
   CreateGCProcPtr			CreateGC;
   BackingStoreRestoreAreasProcPtr	RestoreAreas;  
   ModifyPixmapHeaderProcPtr		ModifyPixmapHeader;
+#ifdef RENDER
+  CompositeProcPtr Composite;
+#endif /* RENDER */
   Bool				(*EnterVT)(int, int);
   void				(*LeaveVT)(int, int);
-  void				(*EnableDisableFBAccess)(int, Bool);
   Bool				vtSema;
 } ShadowScreenRec, *ShadowScreenPtr;
 
@@ -144,14 +171,18 @@ static unsigned long ShadowGeneration = 0;
 
 
 Bool
-ShadowFBInit (
+ShadowFBInit2 (
     ScreenPtr		pScreen,
-    RefreshAreaFuncPtr  refreshArea
+    RefreshAreaFuncPtr  preRefreshArea,
+    RefreshAreaFuncPtr  postRefreshArea
 ){
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     ShadowScreenPtr pPriv;
+#ifdef RENDER
+    PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
+#endif /* RENDER */
 
-    if(!refreshArea) return FALSE;
+    if(!preRefreshArea && !postRefreshArea) return FALSE;
     
     if (ShadowGeneration != serverGeneration) {
 	if(((ShadowScreenIndex = AllocateScreenPrivateIndex ()) < 0) ||
@@ -169,7 +200,8 @@ ShadowFBInit (
     pScreen->devPrivates[ShadowScreenIndex].ptr = (pointer)pPriv;  
 
     pPriv->pScrn = pScrn;
-    pPriv->refresh = refreshArea;
+    pPriv->preRefresh = preRefreshArea;
+    pPriv->postRefresh = postRefreshArea;
     pPriv->vtSema = TRUE;
 
     pPriv->CloseScreen = pScreen->CloseScreen;
@@ -182,7 +214,6 @@ ShadowFBInit (
 
     pPriv->EnterVT = pScrn->EnterVT;
     pPriv->LeaveVT = pScrn->LeaveVT;
-    pPriv->EnableDisableFBAccess = pScrn->EnableDisableFBAccess;
 
     pScreen->CloseScreen = ShadowCloseScreen;
     pScreen->PaintWindowBackground = ShadowPaintWindow;
@@ -194,9 +225,23 @@ ShadowFBInit (
 
     pScrn->EnterVT = ShadowEnterVT;
     pScrn->LeaveVT = ShadowLeaveVT;
-    pScrn->EnableDisableFBAccess = ShadowEnableDisableFBAccess;
+
+#ifdef RENDER
+    if(ps) {
+      pPriv->Composite = ps->Composite;
+      ps->Composite = ShadowComposite;
+    }
+#endif /* RENDER */
 
     return TRUE;
+}
+
+Bool
+ShadowFBInit (
+    ScreenPtr		pScreen,
+    RefreshAreaFuncPtr  refreshArea
+){
+    return ShadowFBInit2(pScreen, NULL, refreshArea);
 }
 
 /**********************************************************/
@@ -206,17 +251,9 @@ ShadowEnterVT(int index, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[index];
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScrn->pScreen);
-    BoxRec box;
 
     if((*pPriv->EnterVT)(index, flags)) {
 	pPriv->vtSema = TRUE;
-
-	box.x1 = box.y1 = 0;
-	box.x2 = pScrn->pScreen->width;
-	box.y2 = pScrn->pScreen->height;
-
-	(*pPriv->refresh)(pScrn, 1, &box);
-
         return TRUE;
     }
 
@@ -233,13 +270,6 @@ ShadowLeaveVT(int index, int flags)
     (*pPriv->LeaveVT)(index, flags);
 }
 
-static void
-ShadowEnableDisableFBAccess(int index, Bool enable)
-{
-    /* nothing happens here; nothing touches the real frame buffer */
-}
-
-
 /**********************************************************/
 
 
@@ -248,6 +278,9 @@ ShadowCloseScreen (int i, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
+#ifdef RENDER
+    PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
+#endif /* RENDER */
 
     pScreen->CloseScreen = pPriv->CloseScreen;
     pScreen->PaintWindowBackground = pPriv->PaintWindowBackground;
@@ -259,7 +292,12 @@ ShadowCloseScreen (int i, ScreenPtr pScreen)
 
     pScrn->EnterVT = pPriv->EnterVT;
     pScrn->LeaveVT = pPriv->LeaveVT;
-    pScrn->EnableDisableFBAccess = pPriv->EnableDisableFBAccess;
+
+#ifdef RENDER
+    if(ps) {
+        ps->Composite = pPriv->Composite;
+    }
+#endif /* RENDER */
 
     xfree((pointer)pPriv);
 
@@ -277,15 +315,19 @@ ShadowRestoreAreas (
 ){
     ScreenPtr pScreen = pWin->drawable.pScreen;
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
-    int num;
+    int num = 0;
+
+    if(pPriv->vtSema && (num = REGION_NUM_RECTS(prgn)))
+        if(pPriv->preRefresh)
+            (*pPriv->preRefresh)(pPriv->pScrn, num, REGION_RECTS(prgn));
 
     pScreen->BackingStoreFuncs.RestoreAreas = pPriv->RestoreAreas;
     (*pScreen->BackingStoreFuncs.RestoreAreas) (
                 pPixmap, prgn, xorg, yorg, pWin);
     pScreen->BackingStoreFuncs.RestoreAreas = ShadowRestoreAreas;
 
-    if(pPriv->vtSema && (num = REGION_NUM_RECTS(prgn)))
-	(*pPriv->refresh)(pPriv->pScrn, num, REGION_RECTS(prgn));
+    if(num && pPriv->postRefresh)
+	(*pPriv->postRefresh)(pPriv->pScrn, num, REGION_RECTS(prgn));
 }
 
 
@@ -297,7 +339,11 @@ ShadowPaintWindow(
 ){
     ScreenPtr pScreen = pWin->drawable.pScreen;
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
-    int num;
+    int num = 0;
+
+    if(pPriv->vtSema && (num = REGION_NUM_RECTS(prgn)))
+        if(pPriv->preRefresh)
+            (*pPriv->preRefresh)(pPriv->pScrn, num, REGION_RECTS(prgn));
 
     if(what == PW_BACKGROUND) {
 	pScreen->PaintWindowBackground = pPriv->PaintWindowBackground;
@@ -309,8 +355,8 @@ ShadowPaintWindow(
 	pScreen->PaintWindowBorder = ShadowPaintWindow;
     }
 
-    if(pPriv->vtSema && (num = REGION_NUM_RECTS(prgn)))
-	(*pPriv->refresh)(pPriv->pScrn, num, REGION_RECTS(prgn));    
+    if(num && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, num, REGION_RECTS(prgn));    
 }
 
 
@@ -322,21 +368,34 @@ ShadowCopyWindow(
 ){
     ScreenPtr pScreen = pWin->drawable.pScreen;
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
-    int num;
+    int num = 0;
+    RegionRec rgnDst;
 
+    if (pPriv->vtSema) {
+        REGION_INIT(pWin->drawable.pScreen, &rgnDst, NullBox, 0);
+	REGION_COPY(pWin->drawable.pScreen, &rgnDst, prgn);
+        
+        REGION_TRANSLATE(pWin->drawable.pScreen, &rgnDst,
+                         pWin->drawable.x - ptOldOrg.x,
+                         pWin->drawable.y - ptOldOrg.y);
+        REGION_INTERSECT(pScreen, &rgnDst, &pWin->borderClip, &rgnDst);
+        if ((num = REGION_NUM_RECTS(&rgnDst))) {
+            if(pPriv->preRefresh)
+                (*pPriv->preRefresh)(pPriv->pScrn, num, REGION_RECTS(&rgnDst));
+        } else {
+            REGION_UNINIT(pWin->drawable.pScreen, &rgnDst);
+        }
+    }
+    
     pScreen->CopyWindow = pPriv->CopyWindow;
     (*pScreen->CopyWindow) (pWin, ptOldOrg, prgn);
     pScreen->CopyWindow = ShadowCopyWindow;
-
-    if (pPriv->vtSema) {
-	/* This is sortof cheating. We rely on the fact that
-	   cfb translated prgn for us */
-
-	REGION_INTERSECT(pScreen, prgn, &pWin->borderClip, prgn);
-	if((num = REGION_NUM_RECTS(prgn)))
-	    (*pPriv->refresh)(pPriv->pScrn, num, REGION_RECTS(prgn));    
+    
+    if (num) {
+        if (pPriv->postRefresh)
+            (*pPriv->postRefresh)(pPriv->pScrn, num, REGION_RECTS(&rgnDst));
+        REGION_UNINIT(pWin->drawable.pScreen, &rgnDst);
     }
-
 }
 
 static Bool
@@ -381,6 +440,51 @@ ShadowModifyPixmapHeader(
     }
     return retval;
 }
+
+#ifdef RENDER
+static void
+ShadowComposite(
+    CARD8 op,
+    PicturePtr pSrc,
+    PicturePtr pMask,
+    PicturePtr pDst,
+    INT16 xSrc,
+    INT16 ySrc,
+    INT16 xMask,
+    INT16 yMask,
+    INT16 xDst,
+    INT16 yDst,
+    CARD16 width,
+    CARD16 height
+){
+    ScreenPtr pScreen = pDst->pDrawable->pScreen;
+    ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
+    PictureScreenPtr ps = GetPictureScreen(pScreen);
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+
+    box.x1 = pDst->pDrawable->x + xDst;
+    box.y1 = pDst->pDrawable->y + yDst;
+    box.x2 = box.x1 + width;
+    box.y2 = box.y1 + height;
+
+    if (pPriv->vtSema
+	&& pDst->pDrawable->type == DRAWABLE_WINDOW && BOX_NOT_EMPTY(box)) {
+        if (pPriv->preRefresh)
+            (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+        boxNotEmpty = TRUE;
+    }
+    
+    ps->Composite = pPriv->Composite;
+    (*ps->Composite)(op, pSrc, pMask, pDst, xSrc, ySrc,
+		     xMask, yMask, xDst, yDst, width, height);
+    ps->Composite = ShadowComposite;
+
+    if (pPriv->postRefresh && boxNotEmpty) {
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    }
+}
+#endif /* RENDER */
 
 /**********************************************************/
 
@@ -515,6 +619,7 @@ ShadowFillSpans(
 	int *pwidth = pwidthInit;
 	int i = nInit;
 	BoxRec box;
+        Bool boxNotEmpty = FALSE;
 
 	box.x1 = ppt->x;
 	box.x2 = box.x1 + *pwidth;
@@ -522,7 +627,7 @@ ShadowFillSpans(
 
 	while(--i) {
 	   ppt++;
-	   pwidthInit++;
+	   pwidth++;
 	   if(box.x1 > ppt->x) box.x1 = ppt->x;
 	   if(box.x2 < (ppt->x + *pwidth)) 
 		box.x2 = ppt->x + *pwidth;
@@ -531,12 +636,18 @@ ShadowFillSpans(
 	}
 
 	box.y2++;
+	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
+
+	if(BOX_NOT_EMPTY(box)) {
+            if(pPriv->preRefresh)
+                (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+            boxNotEmpty = TRUE;
+        }
 
 	(*pGC->ops->FillSpans)(pDraw, pGC, nInit, pptInit, pwidthInit, fSorted);
 
-	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+        if(boxNotEmpty && pPriv->postRefresh)
+	   (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
     } else
 	(*pGC->ops->FillSpans)(pDraw, pGC, nInit, pptInit, pwidthInit, fSorted);
 
@@ -560,6 +671,7 @@ ShadowSetSpans(
 	int *pwidth = pwidthInit;
 	int i = nspans;
 	BoxRec box;
+        Bool boxNotEmpty = FALSE;
 
 	box.x1 = ppt->x;
 	box.x2 = box.x1 + *pwidth;
@@ -576,13 +688,19 @@ ShadowSetSpans(
 	}
 
 	box.y2++;
+	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
+
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
 
 	(*pGC->ops->SetSpans)(pDraw, pGC, pcharsrc, pptInit, 
 				pwidthInit, nspans, fSorted);
 
-	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(boxNotEmpty && pPriv->postRefresh)
+	   (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
     } else
 	(*pGC->ops->SetSpans)(pDraw, pGC, pcharsrc, pptInit, 
 				pwidthInit, nspans, fSorted);
@@ -600,23 +718,33 @@ ShadowPutImage(
     int		format,
     char 	*pImage 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PutImage)(pDraw, pGC, depth, x, y, w, h, 
-		leftPad, format, pImage);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDraw)) {
-	BoxRec box;
-
 	box.x1 = x + pDraw->x;
 	box.x2 = box.x1 + w;
 	box.y1 = y + pDraw->y;
 	box.y2 = box.y1 + h;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+
+    (*pGC->ops->PutImage)(pDraw, pGC, depth, x, y, w, h, 
+		leftPad, format, pImage);
+                
+    if(boxNotEmpty && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
+
 }
 
 static RegionPtr
@@ -629,23 +757,32 @@ ShadowCopyArea(
     int dstx, int dsty 
 ){
     RegionPtr ret;
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    ret = (*pGC->ops->CopyArea)(pSrc, pDst,
-            pGC, srcx, srcy, width, height, dstx, dsty);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDst)) {
-	BoxRec box;
-
 	box.x1 = dstx + pDst->x;
 	box.x2 = box.x1 + width;
 	box.y1 = dsty + pDst->y;
 	box.y2 = box.y1 + height;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    ret = (*pGC->ops->CopyArea)(pSrc, pDst,
+            pGC, srcx, srcy, width, height, dstx, dsty);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
 
     return ret;
 }
@@ -661,23 +798,32 @@ ShadowCopyPlane(
     unsigned long bitPlane 
 ){
     RegionPtr ret;
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    ret = (*pGC->ops->CopyPlane)(pSrc, pDst,
-	       pGC, srcx, srcy, width, height, dstx, dsty, bitPlane);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDst)) {
-	BoxRec box;
-
 	box.x1 = dstx + pDst->x;
 	box.x2 = box.x1 + width;
 	box.y1 = dsty + pDst->y;
 	box.y2 = box.y1 + height;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    ret = (*pGC->ops->CopyPlane)(pSrc, pDst,
+	       pGC, srcx, srcy, width, height, dstx, dsty, bitPlane);
+    
+    if(boxNotEmpty && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
 
     return ret;
 }
@@ -687,15 +833,17 @@ ShadowPolyPoint(
     DrawablePtr pDraw,
     GCPtr pGC,
     int mode,
-    int npt,
+    int nptInit,
     xPoint *pptInit 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolyPoint)(pDraw, pGC, mode, npt, pptInit);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && npt) {
-	BoxRec box;
+    if(IS_VISIBLE(pDraw) && nptInit) {
+        xPoint *ppt = pptInit;
+        int npt = nptInit;
 
 	box.x2 = box.x1 = pptInit->x;
 	box.y2 = box.y1 = pptInit->y;
@@ -703,20 +851,30 @@ ShadowPolyPoint(
 	/* this could be slow if the points were spread out */
 
 	while(--npt) {
-	   pptInit++;
-	   if(box.x1 > pptInit->x) box.x1 = pptInit->x;
-	   else if(box.x2 < pptInit->x) box.x2 = pptInit->x;
-	   if(box.y1 > pptInit->y) box.y1 = pptInit->y;
-	   else if(box.y2 < pptInit->y) box.y2 = pptInit->y;
+	   ppt++;
+	   if(box.x1 > ppt->x) box.x1 = ppt->x;
+	   else if(box.x2 < ppt->x) box.x2 = ppt->x;
+	   if(box.y1 > ppt->y) box.y1 = ppt->y;
+	   else if(box.y2 < ppt->y) box.y2 = ppt->y;
 	}
 
 	box.x2++;
 	box.y2++;
 
 	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->PolyPoint)(pDraw, pGC, mode, nptInit, pptInit);
+    
+    if(boxNotEmpty && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 static void
@@ -724,16 +882,17 @@ ShadowPolylines(
     DrawablePtr pDraw,
     GCPtr	pGC,
     int		mode,		
-    int		npt,		
+    int		nptInit,		
     DDXPointPtr pptInit 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->Polylines)(pDraw, pGC, mode, npt, pptInit);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-
-    if(IS_VISIBLE(pDraw) && npt) {
-	BoxRec box;
+    if(IS_VISIBLE(pDraw) && nptInit) {
+        DDXPointPtr ppt = pptInit;
+        int npt = nptInit;
 	int extra = pGC->lineWidth >> 1;
 
 	box.x2 = box.x1 = pptInit->x;
@@ -750,9 +909,9 @@ ShadowPolylines(
 	   int x = box.x1;
 	   int y = box.y1;
 	   while(--npt) {
-		pptInit++;
-		x += pptInit->x;
-		y += pptInit->y;
+		ppt++;
+		x += ppt->x;
+		y += ppt->y;
 		if(box.x1 > x) box.x1 = x;
 		else if(box.x2 < x) box.x2 = x;
 		if(box.y1 > y) box.y1 = y;
@@ -760,11 +919,11 @@ ShadowPolylines(
 	    }
 	} else {
 	   while(--npt) {
-		pptInit++;
-		if(box.x1 > pptInit->x) box.x1 = pptInit->x;
-		else if(box.x2 < pptInit->x) box.x2 = pptInit->x;
-		if(box.y1 > pptInit->y) box.y1 = pptInit->y;
-		else if(box.y2 < pptInit->y) box.y2 = pptInit->y;
+		ppt++;
+		if(box.x1 > ppt->x) box.x1 = ppt->x;
+		else if(box.x2 < ppt->x) box.x2 = ppt->x;
+		if(box.y1 > ppt->y) box.y1 = ppt->y;
+		else if(box.y2 < ppt->y) box.y2 = ppt->y;
 	    }
 	}
 
@@ -779,25 +938,37 @@ ShadowPolylines(
         }
 
 	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+	      (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->Polylines)(pDraw, pGC, mode, nptInit, pptInit);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 static void 
 ShadowPolySegment(
     DrawablePtr	pDraw,
     GCPtr	pGC,
-    int		nseg,
-    xSegment	*pSeg 
+    int		nsegInit,
+    xSegment	*pSegInit 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+   
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolySegment)(pDraw, pGC, nseg, pSeg);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && nseg) {
-	BoxRec box;
+    if(IS_VISIBLE(pDraw) && nsegInit) {
 	int extra = pGC->lineWidth;
+        xSegment *pSeg = pSegInit;
+        int nseg = nsegInit;
 
         if(pGC->capStyle != CapProjecting)	
 	   extra >>= 1;
@@ -847,26 +1018,41 @@ ShadowPolySegment(
         }
 
 	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->PolySegment)(pDraw, pGC, nsegInit, pSegInit);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 static void
 ShadowPolyRectangle(
     DrawablePtr  pDraw,
     GCPtr        pGC,
-    int	         nRects,
-    xRectangle  *pRects 
+    int	         nRectsInit,
+    xRectangle  *pRectsInit 
 ){
+    BoxRec box;
+    BoxPtr pBoxInit = NULL;
+    Bool boxNotEmpty = FALSE;
+    int num = 0;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolyRectangle)(pDraw, pGC, nRects, pRects);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && nRects) {
+    if(IS_VISIBLE(pDraw) && nRectsInit) {
+        xRectangle *pRects = pRectsInit;
+        int nRects = nRectsInit;
+
 	if(nRects >= 32) {
 	    int extra = pGC->lineWidth >> 1;
-	    BoxRec box;
 
 	    box.x1 = pRects->x;
 	    box.x2 = box.x1 + pRects->width;
@@ -894,12 +1080,14 @@ ShadowPolyRectangle(
 	    box.y2++;
 
 	    TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	    if(BOX_NOT_EMPTY(box))
-		(*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	    if(BOX_NOT_EMPTY(box)) {
+                if(pPriv->preRefresh)
+                   (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+                boxNotEmpty = TRUE;
+            }
 	} else {
-	    BoxPtr pbox, pBoxInit;
+	    BoxPtr pbox;
 	    int offset1, offset2, offset3;
-	    int num = 0;
 
 	    offset2 = pGC->lineWidth;
 	    if(!offset2) offset2 = 1;
@@ -953,28 +1141,45 @@ ShadowPolyRectangle(
 		pRects++;
 	    }
 	    
-	    if(num)
-		(*pPriv->refresh)(pPriv->pScrn, num, pBoxInit);
-
-	    DEALLOCATE_LOCAL(pBoxInit);
+	    if(num) {
+                if(pPriv->preRefresh)
+                    (*pPriv->preRefresh)(pPriv->pScrn, num, pBoxInit);
+            } else {
+                DEALLOCATE_LOCAL(pBoxInit);
+            }                
 	}
     }
- }
+
+    (*pGC->ops->PolyRectangle)(pDraw, pGC, nRectsInit, pRectsInit);
+
+    if(boxNotEmpty && pPriv->postRefresh) {
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    } else if(num) {
+       if(pPriv->postRefresh)
+          (*pPriv->postRefresh)(pPriv->pScrn, num, pBoxInit);
+       DEALLOCATE_LOCAL(pBoxInit);
+    }
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
+
+}
 
 static void
 ShadowPolyArc(
     DrawablePtr	pDraw,
     GCPtr	pGC,
-    int		narcs,
-    xArc	*parcs 
+    int		narcsInit,
+    xArc	*parcsInit 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+   
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolyArc)(pDraw, pGC, narcs, parcs);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && narcs) {
-	int extra = pGC->lineWidth >> 1;
-	BoxRec box;
+    if(IS_VISIBLE(pDraw) && narcsInit) {
+        int narcs = narcsInit;
+        xArc *parcs = parcsInit;
+        int extra = pGC->lineWidth >> 1;
 
 	box.x1 = parcs->x;
 	box.x2 = box.x1 + parcs->width;
@@ -1004,9 +1209,20 @@ ShadowPolyArc(
 	box.y2++;
 
 	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->PolyArc)(pDraw, pGC, narcsInit, parcsInit);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
+
 }
 
 static void
@@ -1024,6 +1240,7 @@ ShadowFillPolygon(
 	DDXPointPtr ppt = pptInit;
 	int i = count;
 	BoxRec box;
+        Bool boxNotEmpty = FALSE;
 
 	box.x2 = box.x1 = ppt->x;
 	box.y2 = box.y1 = ppt->y;
@@ -1053,11 +1270,17 @@ ShadowFillPolygon(
 	box.x2++;
 	box.y2++;
 
+	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
+
 	(*pGC->ops->FillPolygon)(pDraw, pGC, shape, mode, count, pptInit);
 
-	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+        if(boxNotEmpty && pPriv->postRefresh)
+           (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);        
     } else
 	(*pGC->ops->FillPolygon)(pDraw, pGC, shape, mode, count, pptInit);
 
@@ -1076,6 +1299,7 @@ ShadowPolyFillRect(
 
     if(IS_VISIBLE(pDraw) && nRectsInit) {
 	BoxRec box;
+        Bool boxNotEmpty = FALSE;
 	xRectangle *pRects = pRectsInit;
 	int nRects = nRectsInit;
 
@@ -1097,11 +1321,17 @@ ShadowPolyFillRect(
 	/* cfb messes with the pRectsInit so we have to do our
 	   calculations first */
 
+	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
+	if(BOX_NOT_EMPTY(box)) {
+            if(pPriv->preRefresh)
+                (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+            boxNotEmpty = TRUE;
+        }
+
 	(*pGC->ops->PolyFillRect)(pDraw, pGC, nRectsInit, pRectsInit);
 
-	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	    (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+        if(boxNotEmpty && pPriv->postRefresh)
+            (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
     } else
 	(*pGC->ops->PolyFillRect)(pDraw, pGC, nRectsInit, pRectsInit);
 
@@ -1113,15 +1343,17 @@ static void
 ShadowPolyFillArc(
     DrawablePtr	pDraw,
     GCPtr	pGC,
-    int		narcs,
-    xArc	*parcs 
+    int		narcsInit,
+    xArc	*parcsInit 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+   
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolyFillArc)(pDraw, pGC, narcs, parcs);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && narcs) {
-	BoxRec box;
+    if(IS_VISIBLE(pDraw) && narcsInit) {
+        xArc *parcs = parcsInit;
+        int narcs = narcsInit;
 
 	box.x1 = parcs->x;
 	box.x2 = box.x1 + parcs->width;
@@ -1141,10 +1373,103 @@ ShadowPolyFillArc(
         }
 
 	TRIM_AND_TRANSLATE_BOX(box, pDraw, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
 
+    (*pGC->ops->PolyFillArc)(pDraw, pGC, narcsInit, parcsInit);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);       
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
+}
+
+static void
+ShadowTextExtent(FontPtr pFont, int count, char* chars,
+                 FontEncoding fontEncoding, BoxPtr box)
+{
+    unsigned long n, i;
+    int w;
+    CharInfoPtr charinfo[255];	/* encoding only has 1 byte for count */
+
+    GetGlyphs(pFont, (unsigned long)count, (unsigned char *)chars,
+	      fontEncoding, &n, charinfo);
+    w = 0;
+    for (i=0; i < n; i++) {
+        w += charinfo[i]->metrics.characterWidth;
+    }
+    if (i) {
+    	w += charinfo[i - 1]->metrics.rightSideBearing;
+    }
+    
+    box->x1 = 0;
+    if (n) {
+	if (charinfo[0]->metrics.leftSideBearing < 0) {
+            box->x1 = charinfo[0]->metrics.leftSideBearing;
+        }
+    }
+    box->x2 = w;
+    box->y1 = -FONTMAXBOUNDS(pFont,ascent);
+    box->y2 = FONTMAXBOUNDS(pFont,descent);
+}
+
+
+
+static void
+ShadowFontToBox(BoxPtr BB, DrawablePtr pDrawable, GCPtr pGC, int x, int y,
+                int count, char *chars, int wide)
+{
+    FontPtr pFont;
+
+    pFont = pGC->font;
+    if (pFont->info.constantWidth) {
+        int ascent, descent, left, right = 0;
+
+	ascent = MAX(pFont->info.fontAscent, pFont->info.maxbounds.ascent);
+	descent = MAX(pFont->info.fontDescent, pFont->info.maxbounds.descent);
+	left = pFont->info.maxbounds.leftSideBearing;
+	if (count > 0) {
+	    right = (count - 1) * pFont->info.maxbounds.characterWidth;
+	}
+	right += pFont->info.maxbounds.rightSideBearing;
+	BB->x1 =
+	    MAX(pDrawable->x + x - left, (REGION_EXTENTS(pGC->pScreen,
+		&((WindowPtr) pDrawable)->winSize))->x1);
+	BB->y1 =
+	    MAX(pDrawable->y + y - ascent,
+	    (REGION_EXTENTS(pGC->pScreen,
+             &((WindowPtr) pDrawable)->winSize))->y1);
+	BB->x2 =
+	    MIN(pDrawable->x + x + right,
+	    (REGION_EXTENTS(pGC->pScreen,
+             &((WindowPtr) pDrawable)->winSize))->x2);
+	BB->y2 =
+	    MIN(pDrawable->y + y + descent,
+	    (REGION_EXTENTS(pGC->pScreen,
+             &((WindowPtr) pDrawable)->winSize))->y2);
+    } else {
+    	ShadowTextExtent(pFont, count, chars, wide ? (FONTLASTROW(pFont) == 0)
+                         ? Linear16Bit : TwoD16Bit : Linear8Bit, BB);
+	BB->x1 =
+	    MAX(pDrawable->x + x + BB->x1, (REGION_EXTENTS(pGC->pScreen,
+		&((WindowPtr) pDrawable)->winSize))->x1);
+	BB->y1 =
+	    MAX(pDrawable->y + y + BB->y1,
+	    (REGION_EXTENTS(pGC->pScreen,
+             &((WindowPtr) pDrawable)->winSize))->y1);
+	BB->x2 =
+	    MIN(pDrawable->x + x + BB->x2,
+	    (REGION_EXTENTS(pGC->pScreen,
+	     &((WindowPtr) pDrawable)->winSize))->x2);
+	BB->y2 =
+	    MIN(pDrawable->y + y + BB->y2,
+	    (REGION_EXTENTS(pGC->pScreen, 
+	     &((WindowPtr) pDrawable)->winSize))->y2);
+    }
 }
 
 static int
@@ -1157,34 +1482,30 @@ ShadowPolyText8(
     char	*chars 
 ){
     int width;
-
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
+
+    if(IS_VISIBLE(pDraw)) {
+        ShadowFontToBox(&box, pDraw, pGC, x, y, count, chars, 0);
+       
+        TRIM_BOX(box, pGC);
+        if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
+    }
+    
     width = (*pGC->ops->PolyText8)(pDraw, pGC, x, y, count, chars);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
     SHADOW_GC_OP_EPILOGUE(pGC);
 
-    width -= x;
-
-    if(IS_VISIBLE(pDraw) && (width > 0)) {
-	BoxRec box;
-
-	/* ugh */
-	box.x1 = pDraw->x + x + FONTMINBOUNDS(pGC->font, leftSideBearing);
-	box.x2 = pDraw->x + x + FONTMAXBOUNDS(pGC->font, rightSideBearing);
-
-	if(count > 1) {
-	   if(width > 0) box.x2 += width;
-	   else box.x1 += width;
-	}
-
-	box.y1 = pDraw->y + y - FONTMAXBOUNDS(pGC->font, ascent);
-	box.y2 = pDraw->y + y + FONTMAXBOUNDS(pGC->font, descent);
-
-	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
-    }
-
-    return (width + x);
+    return width;
 }
 
 static int
@@ -1197,34 +1518,30 @@ ShadowPolyText16(
     unsigned short *chars 
 ){
     int width;
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
 
     SHADOW_GC_OP_PROLOGUE(pGC);
-    width = (*pGC->ops->PolyText16)(pDraw, pGC, x, y, count, chars);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    width -= x;
-
-    if(IS_VISIBLE(pDraw) && (width > 0)) {
-	BoxRec box;
-
-	/* ugh */
-	box.x1 = pDraw->x + x + FONTMINBOUNDS(pGC->font, leftSideBearing);
-	box.x2 = pDraw->x + x + FONTMAXBOUNDS(pGC->font, rightSideBearing);
-
-	if(count > 1) {
-	   if(width > 0) box.x2 += width;
-	   else box.x1 += width;
-	}
-
-	box.y1 = pDraw->y + y - FONTMAXBOUNDS(pGC->font, ascent);
-	box.y2 = pDraw->y + y + FONTMAXBOUNDS(pGC->font, descent);
-
-	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+    if(IS_VISIBLE(pDraw)) {
+        ShadowFontToBox(&box, pDraw, pGC, x, y, count, (char*)chars, 1);
+       
+        TRIM_BOX(box, pGC);
+        if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
 
-    return (width + x);
+    width = (*pGC->ops->PolyText16)(pDraw, pGC, x, y, count, chars);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
+
+    return width;
 }
 
 static void
@@ -1236,13 +1553,12 @@ ShadowImageText8(
     int 	count,
     char	*chars 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->ImageText8)(pDraw, pGC, x, y, count, chars);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDraw) && count) {
 	int top, bot, Min, Max;
-	BoxRec box;
 
 	top = max(FONTMAXBOUNDS(pGC->font, ascent), FONTASCENT(pGC->font));
 	bot = max(FONTMAXBOUNDS(pGC->font, descent), FONTDESCENT(pGC->font));
@@ -1262,9 +1578,19 @@ ShadowImageText8(
 	box.y2 = pDraw->y + y + bot;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+            if(pPriv->preRefresh) 
+               (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+            boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->ImageText8)(pDraw, pGC, x, y, count, chars);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+        (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 static void
 ShadowImageText16(
@@ -1275,13 +1601,12 @@ ShadowImageText16(
     int 	count,
     unsigned short *chars 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->ImageText16)(pDraw, pGC, x, y, count, chars);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDraw) && count) {
 	int top, bot, Min, Max;
-	BoxRec box;
 
 	top = max(FONTMAXBOUNDS(pGC->font, ascent), FONTASCENT(pGC->font));
 	bot = max(FONTMAXBOUNDS(pGC->font, descent), FONTDESCENT(pGC->font));
@@ -1301,9 +1626,19 @@ ShadowImageText16(
 	box.y2 = pDraw->y + y + bot;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->ImageText16)(pDraw, pGC, x, y, count, chars);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);   
+    
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 
@@ -1312,18 +1647,18 @@ ShadowImageGlyphBlt(
     DrawablePtr pDraw,
     GCPtr pGC,
     int x, int y,
-    unsigned int nglyph,
-    CharInfoPtr *ppci,
+    unsigned int nglyphInit,
+    CharInfoPtr *ppciInit,
     pointer pglyphBase 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->ImageGlyphBlt)(pDraw, pGC, x, y, nglyph, 
-					ppci, pglyphBase);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
-    if(IS_VISIBLE(pDraw) && nglyph) {
+    if(IS_VISIBLE(pDraw) && nglyphInit) {
+        CharInfoPtr *ppci = ppciInit;
+        unsigned int nglyph = nglyphInit;
 	int top, bot, width = 0;
-	BoxRec box;
 
 	top = max(FONTMAXBOUNDS(pGC->font, ascent), FONTASCENT(pGC->font));
 	bot = max(FONTMAXBOUNDS(pGC->font, descent), FONTDESCENT(pGC->font));
@@ -1351,9 +1686,20 @@ ShadowImageGlyphBlt(
 	box.y2 = pDraw->y + y + bot;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+
+    (*pGC->ops->ImageGlyphBlt)(pDraw, pGC, x, y, nglyphInit, 
+					ppciInit, pglyphBase);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 static void
@@ -1361,17 +1707,18 @@ ShadowPolyGlyphBlt(
     DrawablePtr pDraw,
     GCPtr pGC,
     int x, int y,
-    unsigned int nglyph,
-    CharInfoPtr *ppci,
+    unsigned int nglyphInit,
+    CharInfoPtr *ppciInit,
     pointer pglyphBase 
 ){
-    SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PolyGlyphBlt)(pDraw, pGC, x, y, nglyph, 
-				ppci, pglyphBase);
-    SHADOW_GC_OP_EPILOGUE(pGC);
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
 
-    if(IS_VISIBLE(pDraw) && nglyph) {
-	BoxRec box;
+    SHADOW_GC_OP_PROLOGUE(pGC);
+
+    if(IS_VISIBLE(pDraw) && nglyphInit) {
+        CharInfoPtr *ppci = ppciInit;
+        unsigned int nglyph = nglyphInit;
 
 	/* ugh */
 	box.x1 = pDraw->x + x + ppci[0]->metrics.leftSideBearing;
@@ -1393,9 +1740,20 @@ ShadowPolyGlyphBlt(
 	box.y2 = pDraw->y + y + FONTMAXBOUNDS(pGC->font, descent);
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+    
+    (*pGC->ops->PolyGlyphBlt)(pDraw, pGC, x, y, nglyphInit, 
+				ppciInit, pglyphBase);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 static void
@@ -1405,22 +1763,31 @@ ShadowPushPixels(
     DrawablePtr pDraw,
     int	dx, int dy, int xOrg, int yOrg 
 ){
+    BoxRec box;
+    Bool boxNotEmpty = FALSE;
+    
     SHADOW_GC_OP_PROLOGUE(pGC);
-    (*pGC->ops->PushPixels)(pGC, pBitMap, pDraw, dx, dy, xOrg, yOrg);
-    SHADOW_GC_OP_EPILOGUE(pGC);
 
     if(IS_VISIBLE(pDraw)) {
-	BoxRec box;
-
 	box.x1 = xOrg + pDraw->x;
 	box.x2 = box.x1 + dx;
 	box.y1 = yOrg + pDraw->y;
 	box.y2 = box.y1 + dy;
 
 	TRIM_BOX(box, pGC);
-	if(BOX_NOT_EMPTY(box))
-	   (*pPriv->refresh)(pPriv->pScrn, 1, &box);
+	if(BOX_NOT_EMPTY(box)) {
+           if(pPriv->preRefresh)
+              (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+           boxNotEmpty = TRUE;
+        }
     }
+
+    (*pGC->ops->PushPixels)(pGC, pBitMap, pDraw, dx, dy, xOrg, yOrg);
+
+    if(boxNotEmpty && pPriv->postRefresh)
+       (*pPriv->postRefresh)(pPriv->pScrn, 1, &box);
+
+    SHADOW_GC_OP_EPILOGUE(pGC);
 }
 
 

@@ -32,19 +32,19 @@ THE SOFTWARE.
 #include <ft2build.h>
 
 
-  void
+  static void
   BitOrderInvert( unsigned char*  buf,
                   int             nbytes);
 
-  void
+  static void
   TwoByteSwap( unsigned char*  buf,
                int             nbytes);
 
-  void
+  static void
   FourByteSwap( unsigned char*  buf,
                 int             nbytes);
 
-  int
+  static int
   RepadBitmap( char*           pSrc,
                char*           pDst,
                unsigned int    srcPad,

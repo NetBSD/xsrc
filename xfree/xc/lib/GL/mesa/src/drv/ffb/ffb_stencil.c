@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_stencil.c,v 1.1 2000/06/20 05:08:39 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_stencil.c,v 1.2 2002/02/22 21:32:59 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller
@@ -25,17 +25,25 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "types.h"
+#include "mtypes.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_context.h"
 #include "ffb_stencil.h"
 #include "ffb_lock.h"
 
+#include "swrast/swrast.h"
+
+#undef STENCIL_TRACE
+
 static void 
 FFBWriteStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
 		    const GLstencil stencil[], const GLubyte mask[])
 {
+#ifdef STENCIL_TRACE
+	fprintf(stderr, "FFBWriteStencilSpan: n(%d) x(%d) y(%d)\n",
+		(int) n, x, y);
+#endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -75,6 +83,9 @@ static void
 FFBWriteStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 		      const GLstencil stencil[], const GLubyte mask[])
 {
+#ifdef STENCIL_TRACE
+	fprintf(stderr, "FFBWriteStencilPixels: n(%d)\n", (int) n);
+#endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -121,6 +132,10 @@ FFBReadStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLstencil stencil
 	GLuint *zptr;
 	GLuint i;
 
+#ifdef STENCIL_TRACE
+	fprintf(stderr, "FFBReadStencilSpan: n(%d) x(%d) y(%d)\n",
+		(int) n, x, y);
+#endif
 	if (!fmesa->hw_locked)
 		LOCK_HARDWARE(fmesa);
 	FFBFifo(fmesa, 1);
@@ -155,6 +170,9 @@ FFBReadStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 	char *zbase;
 	GLuint i;
 
+#ifdef STENCIL_TRACE
+	fprintf(stderr, "FFBReadStencilPixels: n(%d)\n", (int) n);
+#endif
 	if (!fmesa->hw_locked)
 		LOCK_HARDWARE(fmesa);
 	FFBFifo(fmesa, 1);
@@ -186,15 +204,18 @@ void ffbDDInitStencilFuncs(GLcontext *ctx)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
+	struct swrast_device_driver *swdd = 
+		_swrast_GetDeviceDriverReference(ctx);
+
 	if (fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS) {
-		ctx->Driver.WriteStencilSpan	= FFBWriteStencilSpan;
-		ctx->Driver.ReadStencilSpan	= FFBReadStencilSpan;
-		ctx->Driver.WriteStencilPixels	= FFBWriteStencilPixels;
-		ctx->Driver.ReadStencilPixels	= FFBReadStencilPixels;
+		swdd->WriteStencilSpan	 = FFBWriteStencilSpan;
+		swdd->ReadStencilSpan	 = FFBReadStencilSpan;
+		swdd->WriteStencilPixels = FFBWriteStencilPixels;
+		swdd->ReadStencilPixels	 = FFBReadStencilPixels;
 	} else {
-		ctx->Driver.WriteStencilSpan	= NULL;
-		ctx->Driver.ReadStencilSpan	= NULL;
-		ctx->Driver.WriteStencilPixels	= NULL;
-		ctx->Driver.ReadStencilPixels	= NULL;
+		swdd->WriteStencilSpan	 = NULL;
+		swdd->ReadStencilSpan	 = NULL;
+		swdd->WriteStencilPixels = NULL;
+		swdd->ReadStencilPixels	 = NULL;
 	}
 }

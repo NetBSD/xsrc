@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_accel.c,v 1.6 2001/12/20 21:35:38 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_accel.c,v 1.7 2003/01/12 03:55:49 tsi Exp $ */
 
 #include "smi.h"
 
@@ -207,14 +207,14 @@ SMI_AccelInit(ScreenPtr pScreen)
 	}
 	else
 	{
-		#if defined(XvExtension) && SMI_USE_VIDEO
+#if defined(XvExtension) && SMI_USE_VIDEO
 		numLines = ((pSmi->FBReserved - pSmi->width * pSmi->Bpp * pSmi->height)
 				 * 25 / 100 + pSmi->width * pSmi->Bpp - 1)
 				 / (pSmi->width * pSmi->Bpp);
 		numLines += pSmi->height;
-		#else
+#else
 		numLines = maxLines;
-		#endif
+#endif
 	}
 
 	AvailFBArea.x1 = 0;

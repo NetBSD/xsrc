@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.7 2001/10/28 03:34:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.8 2003/02/18 21:29:59 tsi Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -96,7 +96,8 @@ static GCFuncs vgaGCFuncs = {
 	xf4bppDestroyGC,
 	xf4bppChangeClip,
 	xf4bppDestroyClip,
-	xf4bppCopyClip
+	xf4bppCopyClip,
+	{ NULL }
 };
 
 
@@ -105,7 +106,7 @@ static ppcPrivGC vgaPrototypeGCPriv = {
 	0,	/* unsigned char	ropOpStip */
 	0,	/* unsigned char	ropFillArea */
 	{0, },	/* unsigned char	unused[sizeof(long) - 3] */
-	xf4bppAreaFill,	/* void 	(* FillArea)() */
+	NULL,	/* mfbFillAreaProcPtr  	FillArea */
 		{
 		    VGA_ALLPLANES,	/* unsigned long	planemask */
 		    1,			/* unsigned long	fgPixel */
@@ -136,7 +137,7 @@ static GCOps vgaGCOps = {
 	miPolyText16,		/*  int (* PolyText16)() */
 	miImageText8,		/*  void (* ImageText8)() */
 	miImageText16,		/*  void (* ImageText16)() */
-	(void (*)())xf4bppImageGlyphBlt,	/*  GJA -- void (* ImageGlyphBlt)() */
+	xf4bppImageGlyphBlt,	/*  GJA -- void (* ImageGlyphBlt)() */
 	miPolyGlyphBlt,		/*  GJA -- void (* PolyGlyphBlt)() */
 	miPushPixels,		/*  void (* PushPixels)() */
 #ifdef NEED_LINEHELPER

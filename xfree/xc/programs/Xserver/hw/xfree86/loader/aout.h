@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aout.h,v 1.6 1999/04/29 09:13:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/aout.h,v 1.7 2002/05/31 18:46:00 dawes Exp $ */
 
 /*
  * Borrowed from NetBSD's exec_aout.h
@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 /* OS/2 EMX has ntohl in this file */
-#ifdef __EMX__ 
+#ifdef __UNIXOS2__ 
 #include <sys/param.h> 
 #endif
 

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/transport.c,v 3.8 2001/12/14 19:57:07 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/transport.c,v 3.9 2002/05/31 18:45:51 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -68,9 +68,6 @@ from The Open Group.
 #endif
 #ifdef LOCALCONN
 #include "Xtranslcl.c"
-#endif
-#ifdef OS2PIPECONN
-#include "Xtransos2.c"
 #endif
 #if defined(TCPCONN) || defined(UNIXCONN)
 #include "Xtranssock.c"

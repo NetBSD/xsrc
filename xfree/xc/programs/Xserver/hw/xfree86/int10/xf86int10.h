@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.h,v 1.21 2001/05/15 10:19:41 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10.h,v 1.24 2002/07/23 14:22:46 tsi Exp $ */
 
 /*
  *                   XFree86 int10 module
@@ -11,9 +11,13 @@
 
 #include "Xmd.h"
 #include "Xdefs.h"
+#include "xf86Pci.h"
 
 #define SEG_ADDR(x) (((x) >> 4) & 0x00F000)
 #define SEG_OFF(x) ((x) & 0x0FFFF)
+
+#define SET_BIOS_SCRATCH     0x1
+#define RESTORE_BIOS_SCRATCH 0x2
 
 /* int10 info structure */
 typedef struct {
@@ -22,6 +26,8 @@ typedef struct {
     pointer cpuRegs;
     CARD16  BIOSseg;
     CARD16  inb40time;
+    char * BIOSScratch;
+    int Flags;
     pointer private;
     struct _int10Mem* mem;
     int num;
@@ -35,6 +41,8 @@ typedef struct {
     int bp;
     int flags;
     int stackseg;
+    PCITAG Tag;
+    IOADDRESS ioBase;
 } xf86Int10InfoRec, *xf86Int10InfoPtr;
 
 typedef struct _int10Mem {
@@ -67,6 +75,7 @@ typedef struct {
     
 /* OS dependent functions */
 xf86Int10InfoPtr xf86InitInt10(int entityIndex);
+xf86Int10InfoPtr xf86ExtendedInitInt10(int entityIndex, int Flags);
 void xf86FreeInt10(xf86Int10InfoPtr pInt);
 void *xf86Int10AllocPages(xf86Int10InfoPtr pInt, int num, int *off);
 void xf86Int10FreePages(xf86Int10InfoPtr pInt, void *pbase, int num);
@@ -90,6 +99,9 @@ void xf86ExecX86int10(xf86Int10InfoPtr pInt);
 #define VRAM_SIZE 0x20000
 #define V_BIOS_SIZE 0x10000
 #define V_BIOS 0xC0000
+#define BIOS_SCRATCH_OFF 0x449
+#define BIOS_SCRATCH_END 0x466
+#define BIOS_SCRATCH_LEN (BIOS_SCRATCH_END - BIOS_SCRATCH_OFF + 1)
 #define HIGH_MEM V_BIOS
 #define HIGH_MEM_SIZE (SYS_BIOS - HIGH_MEM)
 #define SEG_ADR(type, seg, reg)  type((seg << 4) + (X86_##reg))
@@ -132,8 +144,11 @@ void dump_registers(xf86Int10InfoPtr pInt);
 void stack_trace(xf86Int10InfoPtr pInt);
 xf86Int10InfoPtr getInt10Rec(int entityIndex);
 CARD8 bios_checksum(CARD8 *start, int size);
-void LockLegacyVGA(int screenIndex, legacyVGAPtr vga);
-void UnlockLegacyVGA(int screenIndex, legacyVGAPtr vga);
+void LockLegacyVGA(xf86Int10InfoPtr pInt, legacyVGAPtr vga);
+void UnlockLegacyVGA(xf86Int10InfoPtr pInt, legacyVGAPtr vga);
+#if defined (_PC)
+void xf86Int10SaveRestoreBIOSVars(xf86Int10InfoPtr pInt, Bool save);
+#endif
 int port_rep_inb(xf86Int10InfoPtr pInt,
 		 CARD16 port, CARD32 base, int d_f, CARD32 count);
 int port_rep_inw(xf86Int10InfoPtr pInt,
@@ -154,12 +169,12 @@ void x_outw(CARD16 port, CARD16 val);
 CARD32 x_inl(CARD16 port);
 void x_outl(CARD16 port, CARD32 val);
 
-CARD8 Mem_rb(int addr);
-CARD16 Mem_rw(int addr);
-CARD32 Mem_rl(int addr);
-void Mem_wb(int addr, CARD8 val);
-void Mem_ww(int addr, CARD16 val);
-void Mem_wl(int addr, CARD32 val);
+CARD8 Mem_rb(CARD32 addr);
+CARD16 Mem_rw(CARD32 addr);
+CARD32 Mem_rl(CARD32 addr);
+void Mem_wb(CARD32 addr, CARD8 val);
+void Mem_ww(CARD32 addr, CARD16 val);
+void Mem_wl(CARD32 addr, CARD32 val);
 
 /* helper_mem.c */
 void setup_int_vect(xf86Int10InfoPtr pInt);

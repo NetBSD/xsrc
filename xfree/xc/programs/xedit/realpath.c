@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $XFree86: xc/programs/xedit/realpath.c,v 1.4 2000/02/12 20:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/realpath.c,v 1.6 2002/02/10 02:50:05 paulo Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)realpath.c	8.1 (Berkeley) 2/16/94";
@@ -49,7 +49,9 @@ static char sccsid[] = "@(#)realpath.c	8.1 (Berkeley) 2/16/94";
 #include <string.h>
 #include <unistd.h>
 
+#ifndef LISP
 #include "xedit.h"
+#endif
 
 #if defined(__Lynx__)
 #define NO_FCHDIR

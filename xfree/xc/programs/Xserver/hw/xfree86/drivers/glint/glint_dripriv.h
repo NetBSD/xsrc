@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dripriv.h,v 1.5 2000/06/17 10:00:13 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dripriv.h,v 1.6 2002/10/30 12:52:16 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -29,7 +29,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Author:
- *   Jens Owen <jens@precisioninsight.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *
  */
 

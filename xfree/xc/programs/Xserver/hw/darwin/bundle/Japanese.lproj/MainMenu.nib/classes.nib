@@ -46,14 +46,16 @@
                 startFullScreen = id; 
                 startRootless = id; 
             }; 
-            CLASS = Xserver; 
+            CLASS = XServer; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                helpWindow = id; 
-                modeWindow = id; 
-                startupHelpButton = id; 
-                startupModeButton = id; 
-                switchWindow = id; 
+                helpWindow = NSWindow; 
+                modeWindow = NSWindow; 
+                startFullScreenButton = NSButton; 
+                startRootlessButton = NSButton; 
+                startupHelpButton = NSButton; 
+                startupModeButton = NSButton; 
+                switchWindow = NSPanel; 
             }; 
             SUPERCLASS = NSObject; 
         }

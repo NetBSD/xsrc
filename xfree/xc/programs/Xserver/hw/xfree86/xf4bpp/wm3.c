@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/wm3.c,v 1.3 1999/06/06 08:49:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/wm3.c,v 1.4 2002/01/25 21:56:23 tsi Exp $ */
 
 
 
@@ -10,6 +10,7 @@
 #include "OScompiler.h"
 #include "wm3.h"
 #include "vgaVideo.h"
+#include "xf86.h"
 
 /* Ferraro is wrong. GJA */
 #define COPY (0 << 3)
@@ -22,6 +23,7 @@ wm3_set_regs(pGC)
 GC *pGC;
 {
 #ifndef	PC98_EGC
+    IOADDRESS REGBASE = xf86Screens[pGC->pScreen->myNum]->domainIOBase + 0x300;
     int post_invert = 0;
     int ALU;
 

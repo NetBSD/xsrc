@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/keycodes.h,v 1.3 2002/07/01 02:26:01 tsi Exp $ */
 
 #ifndef KEYCODES_H
 #define KEYCODES_H 1
@@ -31,17 +32,13 @@
 #define	KeyNameToLong(n)	((((unsigned long)n[0])<<24)|(((unsigned long)n[1])<<16)|(((unsigned long)n[2])<<8)|n[3])
 
 extern char * longText(
-#if NeedFunctionPrototypes
     unsigned long 	/* val */,
     unsigned		/* format */
-#endif
 );
 
 extern void LongToKeyName(
-#if NeedFunctionPrototypes
 	unsigned long	/* val */,
 	char *		/* name_rtrn */
-#endif
 );
 
 #endif /* KEYCODES_H */

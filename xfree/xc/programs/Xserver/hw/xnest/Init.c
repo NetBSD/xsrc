@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.23 2001/08/01 00:44:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.24 2003/01/15 02:34:14 torrey Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -121,6 +121,22 @@ void ddxGiveUp()
 void
 DarwinHandleGUI(int argc, char *argv[])
 {
+}
+
+void GlxExtensionInit();
+void GlxWrapInitVisuals(void *procPtr);
+
+void
+DarwinGlxExtensionInit()
+{
+    GlxExtensionInit();
+}
+
+void
+DarwinGlxWrapInitVisuals(
+    void *procPtr)
+{
+    GlxWrapInitVisuals(procPtr);
 }
 #endif
 

@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_Trio64DAC.c,v 1.4 2001/10/28 03:33:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_Trio64DAC.c,v 1.5 2003/02/17 16:45:24 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -216,7 +216,7 @@ S3TrioCalcClock(long freq, int min_m, int min_n1, int max_n1, int min_n2,
 }
 
 
-void S3TrioSetPLL(ScrnInfoPtr pScrn, int clk, unsigned char m,
+static void S3TrioSetPLL(ScrnInfoPtr pScrn, int clk, unsigned char m,
 		  unsigned char n)
 {
 	unsigned char tmp;
@@ -266,7 +266,7 @@ void S3TrioSetPLL(ScrnInfoPtr pScrn, int clk, unsigned char m,
 }
 
 
-void S3TrioSetClock(ScrnInfoPtr pScrn, long freq, int clk, int min_m,
+static void S3TrioSetClock(ScrnInfoPtr pScrn, long freq, int clk, int min_m,
 		    int min_n1, int max_n1, int min_n2, int max_n2,
 		    int pll_type, long freq_min, long freq_max)
 {

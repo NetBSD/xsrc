@@ -25,7 +25,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/externs.h,v 1.4 2001/10/28 03:34:38 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/externs.h,v 1.5 2002/04/05 21:06:28 dickey Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <errno.h>
@@ -42,18 +42,18 @@ extern char *	DoCommandToString	(char **);
 
 	/* from compfuncs.c */
 
-extern void 	DoResetCompose		(Widget, XtPointer, XtPointer);
+extern void 	DoResetCompose		(XMH_CB_ARGS);
 extern void	CreateForward		(MsgList, String *, Cardinal);
 
 	/* from folder.c */
 
-extern void	DoClose			(Widget, XtPointer, XtPointer);
-extern void	DoComposeMessage	(Widget, XtPointer, XtPointer);
-extern void	DoOpenFolder		(Widget, XtPointer, XtPointer);
-extern void 	DoOpenFolderInNewWindow	(Widget, XtPointer, XtPointer);
-extern void	DoCreateFolder		(Widget, XtPointer, XtPointer);
-extern void 	DoDeleteFolder		(Widget, XtPointer, XtPointer);
-extern void	DoSaveYourself		(Widget, XtPointer, XtPointer);
+extern void	DoClose			(XMH_CB_ARGS);
+extern void	DoComposeMessage	(XMH_CB_ARGS);
+extern void	DoOpenFolder		(XMH_CB_ARGS);
+extern void 	DoOpenFolderInNewWindow	(XMH_CB_ARGS);
+extern void	DoCreateFolder		(XMH_CB_ARGS);
+extern void 	DoDeleteFolder		(XMH_CB_ARGS);
+extern void	DoSaveYourself		(XMH_CB_ARGS);
 extern void	Push			(Stack *, char *);
 extern char *	Pop			(Stack *);
 
@@ -65,7 +65,7 @@ extern void	InitializeWorld		(int, char **);
 
 extern void	AttachMenuToButton	(Button, Widget, char *);
 extern void 	AddMenuEntry		(Widget, char *, ...);
-extern void	DoRememberMenuSelection (Widget, XtPointer, XtPointer);
+extern void	DoRememberMenuSelection (XMH_CB_ARGS);
 extern void	SendMenuEntryEnableMsg	(Button, char *, int);
 extern void	ToggleMenuItem		(Widget, Boolean);
 
@@ -85,14 +85,14 @@ extern void	AddPick			(Scrn, Toc, char *, char *);
 
 	/* from popup.c */
 
-extern void	DestroyPopup		(Widget, XtPointer, XtPointer);
+extern void	DestroyPopup		(XMH_CB_ARGS);
 extern void	WMDeletePopup		(Widget, XEvent*);
 extern void	PopupPrompt		(Widget, String, XtCallbackProc);
 extern void	PopupConfirm		(Widget, String,
 					 XtCallbackList, XtCallbackList);
 extern void	PopupNotice		(char *, XtCallbackProc, XtPointer);
 extern void 	PopupError		(Widget, String);
-extern void	PopupWarningHandler();	/* for Xt to call */
+extern void	PopupWarningHandler(String, String, String, String, String *, Cardinal *);
 
 	/* from screen.c */
 
@@ -113,29 +113,29 @@ extern Boolean	TocHasChanges		(Toc);
 	/* from tocfuncs.c */
 
 extern Boolean	UserWantsAction		(Widget, Scrn);
-extern void 	DoIncorporateNewMail	(Widget, XtPointer, XtPointer);
-extern void 	DoCommit		(Widget, XtPointer, XtPointer);
-extern void	DoPack			(Widget, XtPointer, XtPointer);
-extern void	DoSort			(Widget, XtPointer, XtPointer);
-extern void 	DoForceRescan		(Widget, XtPointer, XtPointer);
-extern void 	DoReverseReadOrder	(Widget, XtPointer, XtPointer);
-extern void	DoNextView		(Widget, XtPointer, XtPointer);
-extern void	DoPrevView		(Widget, XtPointer, XtPointer);
-extern void	DoDelete		(Widget, XtPointer, XtPointer);
-extern void	DoMove			(Widget, XtPointer, XtPointer);
-extern void	DoCopy			(Widget, XtPointer, XtPointer);
-extern void	DoUnmark		(Widget, XtPointer, XtPointer);
-extern void	DoViewNew		(Widget, XtPointer, XtPointer);
-extern void	DoReply			(Widget, XtPointer, XtPointer);
-extern void	DoForward		(Widget, XtPointer, XtPointer);
-extern void	DoTocUseAsComp		(Widget, XtPointer, XtPointer);
-extern void	DoPrint			(Widget, XtPointer, XtPointer);
-extern void	DoPickMessages		(Widget, XtPointer, XtPointer);
-extern void	DoSelectSequence	(Widget, XtPointer, XtPointer);
-extern void	DoOpenSeq		(Widget, XtPointer, XtPointer);
-extern void 	DoAddToSeq		(Widget, XtPointer, XtPointer);
-extern void 	DoRemoveFromSeq		(Widget, XtPointer, XtPointer);
-extern void	DoDeleteSeq		(Widget, XtPointer, XtPointer);
+extern void 	DoIncorporateNewMail	(XMH_CB_ARGS);
+extern void 	DoCommit		(XMH_CB_ARGS);
+extern void	DoPack			(XMH_CB_ARGS);
+extern void	DoSort			(XMH_CB_ARGS);
+extern void 	DoForceRescan		(XMH_CB_ARGS);
+extern void 	DoReverseReadOrder	(XMH_CB_ARGS);
+extern void	DoNextView		(XMH_CB_ARGS);
+extern void	DoPrevView		(XMH_CB_ARGS);
+extern void	DoDelete		(XMH_CB_ARGS);
+extern void	DoMove			(XMH_CB_ARGS);
+extern void	DoCopy			(XMH_CB_ARGS);
+extern void	DoUnmark		(XMH_CB_ARGS);
+extern void	DoViewNew		(XMH_CB_ARGS);
+extern void	DoReply			(XMH_CB_ARGS);
+extern void	DoForward		(XMH_CB_ARGS);
+extern void	DoTocUseAsComp		(XMH_CB_ARGS);
+extern void	DoPrint			(XMH_CB_ARGS);
+extern void	DoPickMessages		(XMH_CB_ARGS);
+extern void	DoSelectSequence	(XMH_CB_ARGS);
+extern void	DoOpenSeq		(XMH_CB_ARGS);
+extern void 	DoAddToSeq		(XMH_CB_ARGS);
+extern void 	DoRemoveFromSeq		(XMH_CB_ARGS);
+extern void	DoDeleteSeq		(XMH_CB_ARGS);
 
 	/* from util.c */
 
@@ -168,7 +168,7 @@ extern int	GetWidth		(Widget);
 extern int	GetHeight		(Widget);
 extern Toc	SelectedToc		(Scrn);
 extern Toc	CurrentToc		(Scrn);
-extern int	strncmpIgnoringCase();
+extern int	strncmpIgnoringCase(char *, char *, int);
 extern void 	StoreWindowName		(Scrn, char *);
 extern void	InitBusyCursor		(Scrn);
 extern void	ShowBusyCursor		(void);
@@ -177,10 +177,10 @@ extern void 	SetCursorColor		(Widget, Cursor, unsigned long);
 
 	/* from viewfuncs.c */
 
-extern void	DoCloseView		(Widget, XtPointer, XtPointer);
-extern void	DoViewReply		(Widget, XtPointer, XtPointer);
-extern void 	DoViewForward		(Widget, XtPointer, XtPointer);
-extern void	DoViewUseAsComposition	(Widget, XtPointer, XtPointer);
-extern void	DoEditView		(Widget, XtPointer, XtPointer);
-extern void	DoSaveView		(Widget, XtPointer, XtPointer);
-extern void	DoPrintView		(Widget, XtPointer, XtPointer);
+extern void	DoCloseView		(XMH_CB_ARGS);
+extern void	DoViewReply		(XMH_CB_ARGS);
+extern void 	DoViewForward		(XMH_CB_ARGS);
+extern void	DoViewUseAsComposition	(XMH_CB_ARGS);
+extern void	DoEditView		(XMH_CB_ARGS);
+extern void	DoSaveView		(XMH_CB_ARGS);
+extern void	DoPrintView		(XMH_CB_ARGS);

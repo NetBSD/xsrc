@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.7 2001/12/14 19:57:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.9 2002/09/16 18:05:28 eich Exp $ */
 
 #ifndef MISTRUCT_H
 #define MISTRUCT_H
@@ -66,7 +66,8 @@ typedef struct {
 	/* do the following to pad to 64 bit alignment for alpha and ia64 */
 #if defined(__alpha) || defined(__alpha__) || \
     defined(ia64) || defined(__ia64__) || \
-    defined(__s390x__)
+    defined(__s390x__) || \
+    defined(x86_64) || defined (__x86_64__)
 	ddUSHORT		unused0;
 	ddUSHORT		unused1;
 #endif

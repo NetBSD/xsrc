@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.18 2001/06/13 23:10:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.19 2002/07/30 18:36:18 dawes Exp $ */
 
 /*
  *
@@ -45,6 +45,7 @@ typedef struct module_desc {
 	ModuleTearDownProc TearDownProc;
 	void *TearDownData; /* returned from SetupProc */
 	const char *path;
+	const XF86ModuleVersionInfo *VersionInfo;
 } ModuleDesc, *ModuleDescPtr;
 
 
@@ -82,6 +83,7 @@ void LoaderVRefSymbols(const char *, va_list args);
 void LoaderShowStack(void);
 void *LoaderSymbolHandle(const char *, int);
 int LoaderUnload(int);
+unsigned long LoaderGetModuleVersion(ModuleDescPtr mod);
 
 void LoaderResetOptions(void);
 void LoaderSetOptions(unsigned long);

@@ -67,7 +67,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.23 2001/12/14 20:01:41 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.25 2002/10/15 01:45:03 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdlib.h>
@@ -78,7 +78,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef Lynx
 #include	<sys/param.h>
 #include	<sys/socket.h>
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #include	<sys/uio.h>
 #endif
 #else
@@ -98,7 +98,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"dispatch.h"
 #include	"fsevents.h"
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define _NFILE OPEN_MAX
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
@@ -187,7 +187,7 @@ CreateSockets(int old_listen_count, OldListenRec *old_listen)
 #ifdef _SC_OPEN_MAX
     lastfdesc = sysconf(_SC_OPEN_MAX) - 1;
 #else
-#if defined(hpux) || defined(__EMX__)
+#if defined(hpux) || defined(__UNIXOS2__)
     lastfdesc = _NFILE - 1;
 #else
     lastfdesc = getdtablesize() - 1;
@@ -228,7 +228,7 @@ CreateSockets(int old_listen_count, OldListenRec *old_listen)
 		ListenTransFds[ListenTransCount] = old_listen[i].fd;
 		FD_SET (old_listen[i].fd, &WellKnownConnections);
 
-		NoticeF("Reusing existing file descriptor %d\n",
+		NoticeF("reusing existing file descriptor %d\n",
 		    old_listen[i].fd);
 
 		ListenTransCount++;
@@ -254,11 +254,10 @@ CreateSockets(int old_listen_count, OldListenRec *old_listen)
 		FD_SET (fd, &WellKnownConnections);
 	    }
 	}
-	NoticeF("listening on port %s\n", port);
     }
 
     if (! XFD_ANYSET(&WellKnownConnections))
-	FatalError("Cannot establish any listening sockets\n");
+	FatalError("cannot establish any listening sockets\n");
 
     /* set up all the signal handlers */
     signal(SIGPIPE, SIG_IGN);
@@ -364,7 +363,7 @@ MakeNewConnections(void)
     }
 }
 
-#define	NOROOM	"Maximum number of clients reached"
+#define	NOROOM	"maximum number of clients reached"
 
 static void
 error_conn_max(XtransConnInfo trans_conn)
@@ -542,7 +541,7 @@ ReapAnyOldClients(void)
     ClientPtr   client;
 
 #ifdef DEBUG
-    fprintf(stderr, "Looking for clients to reap\n");
+    fprintf(stderr, "looking for clients to reap\n");
 #endif
 
     for (i = MINCLIENT; i < currentMaxClients; i++) {

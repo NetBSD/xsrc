@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxcmds.c,v 1.8 2001/05/02 15:06:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxcmds.c,v 1.9 2002/12/14 01:36:09 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -761,7 +761,7 @@ int __glXGetVisualConfigs(__GLXclientState *cl, GLbyte *pc)
     int i, p;
 
     screen = req->screen;
-    if (screen > screenInfo.numScreens) {
+    if (screen >= screenInfo.numScreens) {
 	/* The client library must send a valid screen number. */
 	client->errorValue = screen;
 	return BadValue;
@@ -1466,7 +1466,7 @@ int __glXQueryExtensionsString(__GLXclientState *cl, GLbyte *pc)
     ClientPtr client = cl->client;
     xGLXQueryExtensionsStringReq *req = (xGLXQueryExtensionsStringReq *) pc;
     xGLXQueryExtensionsStringReply reply;
-    GLint screen;
+    GLuint screen;
     size_t n, length;
     const char *ptr;
     char *buf;
@@ -1475,7 +1475,7 @@ int __glXQueryExtensionsString(__GLXclientState *cl, GLbyte *pc)
     /*
     ** Check if screen exists.
     */
-    if ((screen < 0) || (screen >= screenInfo.numScreens)) {
+    if (screen >= screenInfo.numScreens) {
 	client->errorValue = screen;
 	return BadValue;
     }
@@ -1511,7 +1511,7 @@ int __glXQueryServerString(__GLXclientState *cl, GLbyte *pc)
     xGLXQueryServerStringReq *req = (xGLXQueryServerStringReq *) pc;
     xGLXQueryServerStringReply reply;
     int name;
-    GLint screen;
+    GLuint screen;
     size_t n, length;
     const char *ptr;
     char *buf;
@@ -1521,7 +1521,7 @@ int __glXQueryServerString(__GLXclientState *cl, GLbyte *pc)
     /*
     ** Check if screen exists.
     */
-    if ((screen < 0) || (screen >= screenInfo.numScreens)) {
+    if (screen >= screenInfo.numScreens) {
 	client->errorValue = screen;
 	return BadValue;
     }

@@ -48,7 +48,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.10 2001/12/14 20:00:50 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.11 2002/05/31 18:46:07 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"
@@ -244,7 +244,7 @@ InitColors()
       return TRUE;
   if (!have_rgb_db)
     {
-#ifdef __EMX__
+#ifdef __UNIXOS2__
       rgbPath = (char*)__XOS2RedirRoot(rgbPath);
 #endif
       path = (char*)ALLOCATE_LOCAL(strlen(rgbPath) +5);

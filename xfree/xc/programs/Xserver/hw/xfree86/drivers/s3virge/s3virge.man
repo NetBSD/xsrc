@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3virge.man,v 1.3 2001/11/21 22:43:00 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3virge.man,v 1.4 2003/02/13 03:21:33 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH s3virge __drivermansuffix__ __vendorversion__
@@ -24,7 +24,11 @@ is an XFree86 driver for S3 based video cards.  The driver is fully
 accelerated, and provides support for the following framebuffer depths:
 8, 15, 16, and 24.  All
 visual types are supported for depth 8, and TrueColor
-visuals are supported for the other depths.
+visuals are supported for the other depths.  XVideo hardware up scaling
+is supported in depth 16 and 24 on the DX, GX, GX2, MX, MX+, and
+Trio3D/2X.  Doublescan modes are supported and tested in depth 8
+and 16 on DX, but disable XVideo.  Doublescan modes on other chipsets
+are untested.
 .SH SUPPORTED HARDWARE
 The
 .B s3virge
@@ -218,6 +222,11 @@ Enable or disable a cr3a fix added for ViRGE MX.  Default: on.
 
 .SH SEE ALSO
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__)
+
+.SH KNOWN BUGS
+The VideoRam generic driver parameter is presently ignored by the
+s3virge driver.  On PPC this is reported to cause problems for 2M
+cards, because they may autodetect as 4M.
 
 .SH SUPPORT
 For assistance with this driver, or XFree86 in general, check the XFree86 web

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_accel.c,v 1.23 2001/11/24 14:38:19 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_accel.c,v 1.32 2003/01/17 19:54:03 martin Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -29,9 +29,9 @@
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
+ *   Kevin E. Martin <martin@xfree86.org>
  *   Rickard E. Faith <faith@valinux.com>
- *   Alan Hourihane <ahourihane@valinux.com>
+ *   Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
  * Credits:
  *
@@ -72,6 +72,7 @@
 
 				/* Driver data structures */
 #include "radeon.h"
+#include "radeon_macros.h"
 #include "radeon_probe.h"
 #include "radeon_reg.h"
 #include "radeon_version.h"
@@ -111,13 +112,14 @@ static struct {
 
 extern int gRADEONEntityIndex;
 
-/* The FIFO has 64 slots.  This routines waits until at least `entries' of
-   these slots are empty. */
+/* The FIFO has 64 slots.  This routines waits until at least `entries'
+ * of these slots are empty.
+ */
 void RADEONWaitForFifoFunction(ScrnInfoPtr pScrn, int entries)
 {
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    int           i;
+    int            i;
 
     for (;;) {
 	for (i = 0; i < RADEON_TIMEOUT; i++) {
@@ -133,116 +135,63 @@ void RADEONWaitForFifoFunction(ScrnInfoPtr pScrn, int entries)
 	RADEONEngineReset(pScrn);
 	RADEONEngineRestore(pScrn);
 #ifdef XF86DRI
-	RADEONCP_RESET(pScrn, info);
 	if (info->directRenderingEnabled) {
+	    RADEONCP_RESET(pScrn, info);
 	    RADEONCP_START(pScrn, info);
 	}
 #endif
     }
 }
 
-/* Wait for the graphics engine to be completely idle: the FIFO has
-   drained, the Pixel Cache is flushed, and the engine is idle.  This is a
-   standard "sync" function that will make the hardware "quiescent". */
-void RADEONWaitForIdle(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-    int           i;
-
-    RADEONTRACE(("WaitForIdle (entering): %d entries, stat=0x%08x\n",
-		     INREG(RADEON_RBBM_STATUS) & RADEON_RBBM_FIFOCNT_MASK,
-		     INREG(RADEON_RBBM_STATUS)));
-
-    RADEONWaitForFifoFunction(pScrn, 64);
-
-    for (;;) {
-	for (i = 0; i < RADEON_TIMEOUT; i++) {
-	    if (!(INREG(RADEON_RBBM_STATUS) & RADEON_RBBM_ACTIVE)) {
-		RADEONEngineFlush(pScrn);
-		return;
-	    }
-	}
-	RADEONTRACE(("Idle timed out: %d entries, stat=0x%08x\n",
-		     INREG(RADEON_RBBM_STATUS) & RADEON_RBBM_FIFOCNT_MASK,
-		     INREG(RADEON_RBBM_STATUS)));
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "Idle timed out, resetting engine...\n");
-	RADEONEngineReset(pScrn);
-	RADEONEngineRestore(pScrn);
-#ifdef XF86DRI
-	RADEONCP_RESET(pScrn, info);
-	if (info->directRenderingEnabled) {
-	    RADEONCP_START(pScrn, info);
-	}
-#endif
-    }
-}
-
-#ifdef XF86DRI
-/* Wait until the CP is completely idle: the FIFO has drained and the
- * CP is idle.
- */
-static void RADEONCPWaitForIdle(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    int         ret;
-    int         i    = 0;
-
-    FLUSH_RING();
-
-    for (;;) {
-	do {
-	    ret = drmRadeonWaitForIdleCP(info->drmFD);
-	    if (ret && ret != -EBUSY) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "%s: CP idle %d\n", __FUNCTION__, ret);
-	    }
-	} while ((ret == -EBUSY) && (i++ < RADEON_TIMEOUT));
-
-	if (ret == 0) return;
-
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "Idle timed out, resetting engine...\n");
-	RADEONEngineReset(pScrn);
-	RADEONEngineRestore(pScrn);
-
-	/* Always restart the engine when doing CP 2D acceleration */
-	RADEONCP_RESET(pScrn, info);
-	RADEONCP_START(pScrn, info);
-    }
-}
-#endif
-
-/* Flush all dirty data in the Pixel Cache to memory. */
+/* Flush all dirty data in the Pixel Cache to memory */
 void RADEONEngineFlush(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    int           i;
+    int            i;
 
-    OUTREGP(RADEON_RB2D_DSTCACHE_CTLSTAT, RADEON_RB2D_DC_FLUSH_ALL,
-						~RADEON_RB2D_DC_FLUSH_ALL);
+    OUTREGP(RADEON_RB2D_DSTCACHE_CTLSTAT,
+	    RADEON_RB2D_DC_FLUSH_ALL,
+	    ~RADEON_RB2D_DC_FLUSH_ALL);
     for (i = 0; i < RADEON_TIMEOUT; i++) {
-	if (!(INREG(RADEON_RB2D_DSTCACHE_CTLSTAT) & RADEON_RB2D_DC_BUSY)) break;
+	if (!(INREG(RADEON_RB2D_DSTCACHE_CTLSTAT) & RADEON_RB2D_DC_BUSY))
+	    break;
     }
 }
 
-/* Reset graphics card to known state. */
+/* Reset graphics card to known state */
 void RADEONEngineReset(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    CARD32        clock_cntl_index;
-    CARD32        mclk_cntl;
-    CARD32        rbbm_soft_reset;
-    CARD32        host_path_cntl;
+    CARD32         clock_cntl_index;
+    CARD32         mclk_cntl;
+    CARD32         rbbm_soft_reset;
+    CARD32         host_path_cntl;
 
     RADEONEngineFlush(pScrn);
 
     clock_cntl_index = INREG(RADEON_CLOCK_CNTL_INDEX);
-    mclk_cntl        = INPLL(pScrn, RADEON_MCLK_CNTL);
+    if (info->R300CGWorkaround) R300CGWorkaround(pScrn);
 
+    /* Some ASICs have bugs with dynamic-on feature, which are
+     * ASIC-version dependent, so we force all blocks on for now
+     */
+    if (info->HasCRTC2) {
+	CARD32 tmp;
+
+	tmp = INPLL(pScrn, RADEON_SCLK_CNTL);
+	OUTPLL(RADEON_SCLK_CNTL, ((tmp & ~RADEON_DYN_STOP_LAT_MASK) |
+				  RADEON_CP_MAX_DYN_STOP_LAT |
+				  RADEON_SCLK_FORCEON_MASK));
+
+	if (info->ChipFamily == CHIP_FAMILY_RV200) {
+	    tmp = INPLL(pScrn, RADEON_SCLK_MORE_CNTL);
+	    OUTPLL(RADEON_SCLK_MORE_CNTL, tmp | RADEON_SCLK_MORE_FORCEON);
+	}
+    }
+
+    mclk_cntl = INPLL(pScrn, RADEON_MCLK_CNTL);
     OUTPLL(RADEON_MCLK_CNTL, (mclk_cntl |
 			      RADEON_FORCEON_MCLKA |
 			      RADEON_FORCEON_MCLKB |
@@ -251,73 +200,96 @@ void RADEONEngineReset(ScrnInfoPtr pScrn)
 			      RADEON_FORCEON_MC |
 			      RADEON_FORCEON_AIC));
 
-    /*Soft resetting HDP thru RBBM_SOFT_RESET register can
-      cause some unexpected behaviour on some machines.
-      Here we use RADEON_HOST_PATH_CNTL to reset it.*/ 
-    host_path_cntl   = INREG(RADEON_HOST_PATH_CNTL);
+    /* Soft resetting HDP thru RBBM_SOFT_RESET register can cause some
+     * unexpected behaviour on some machines.  Here we use
+     * RADEON_HOST_PATH_CNTL to reset it.
+     */
+    host_path_cntl = INREG(RADEON_HOST_PATH_CNTL);
+    rbbm_soft_reset = INREG(RADEON_RBBM_SOFT_RESET);
 
-    rbbm_soft_reset   = INREG(RADEON_RBBM_SOFT_RESET);
+    if (info->ChipFamily == CHIP_FAMILY_R300) {
+	CARD32 tmp;
 
-    OUTREG(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset |
-				   RADEON_SOFT_RESET_CP |
-				   RADEON_SOFT_RESET_HI |
-				   RADEON_SOFT_RESET_SE |
-				   RADEON_SOFT_RESET_RE |
-				   RADEON_SOFT_RESET_PP |
-				   RADEON_SOFT_RESET_E2 |
-				   RADEON_SOFT_RESET_RB );
-    INREG(RADEON_RBBM_SOFT_RESET);
-    OUTREG(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset & (CARD32)
-				 ~(RADEON_SOFT_RESET_CP |
-				   RADEON_SOFT_RESET_HI |
-				   RADEON_SOFT_RESET_SE |
-				   RADEON_SOFT_RESET_RE |
-				   RADEON_SOFT_RESET_PP |
-				   RADEON_SOFT_RESET_E2 |
-				   RADEON_SOFT_RESET_RB ));
-    INREG(RADEON_RBBM_SOFT_RESET);
+	OUTREG(RADEON_RBBM_SOFT_RESET, (rbbm_soft_reset |
+					RADEON_SOFT_RESET_CP |
+					RADEON_SOFT_RESET_HI |
+					RADEON_SOFT_RESET_E2));
+	INREG(RADEON_RBBM_SOFT_RESET);
+	OUTREG(RADEON_RBBM_SOFT_RESET, 0);
+	tmp = INREG(RADEON_RB2D_DSTCACHE_MODE);
+	OUTREG(RADEON_RB2D_DSTCACHE_MODE, tmp | (1 << 17)); /* FIXME */
+    } else {
+	OUTREG(RADEON_RBBM_SOFT_RESET, (rbbm_soft_reset |
+					RADEON_SOFT_RESET_CP |
+					RADEON_SOFT_RESET_HI |
+					RADEON_SOFT_RESET_SE |
+					RADEON_SOFT_RESET_RE |
+					RADEON_SOFT_RESET_PP |
+					RADEON_SOFT_RESET_E2 |
+					RADEON_SOFT_RESET_RB));
+	INREG(RADEON_RBBM_SOFT_RESET);
+	OUTREG(RADEON_RBBM_SOFT_RESET, (rbbm_soft_reset & (CARD32)
+					~(RADEON_SOFT_RESET_CP |
+					  RADEON_SOFT_RESET_HI |
+					  RADEON_SOFT_RESET_SE |
+					  RADEON_SOFT_RESET_RE |
+					  RADEON_SOFT_RESET_PP |
+					  RADEON_SOFT_RESET_E2 |
+					  RADEON_SOFT_RESET_RB)));
+	INREG(RADEON_RBBM_SOFT_RESET);
+    }
 
     OUTREG(RADEON_HOST_PATH_CNTL, host_path_cntl | RADEON_HDP_SOFT_RESET);
     INREG(RADEON_HOST_PATH_CNTL);
     OUTREG(RADEON_HOST_PATH_CNTL, host_path_cntl);
 
-    OUTREG(RADEON_RBBM_SOFT_RESET,  rbbm_soft_reset);
+    if (info->ChipFamily != CHIP_FAMILY_R300)
+	OUTREG(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset);
 
     OUTREG(RADEON_CLOCK_CNTL_INDEX, clock_cntl_index);
-    OUTPLL(RADEON_MCLK_CNTL,        mclk_cntl);
-
+    OUTPLL(RADEON_MCLK_CNTL, mclk_cntl);
+    if (info->R300CGWorkaround) R300CGWorkaround(pScrn);
 }
 
-/* Restore the acceleration hardware to its previous state. */
+/* Restore the acceleration hardware to its previous state */
 void RADEONEngineRestore(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    int           pitch64;
+    int            pitch64;
 
     RADEONTRACE(("EngineRestore (%d/%d)\n",
 		 info->CurrentLayout.pixel_code,
 		 info->CurrentLayout.bitsPerPixel));
 
     RADEONWaitForFifo(pScrn, 1);
-    /* turn of all automatic flushing - we'll do it all */
-    OUTREG(RADEON_RB2D_DSTCACHE_MODE, 0);
+
+    /* NOTE: The following RB2D_DSTCACHE_MODE setting will cause the
+     * R300 to hang.  ATI does not see a reason to change it from the
+     * default BIOS settings (even on non-R300 cards).  This setting
+     * might be removed in future versions of the Radeon driver.
+     */
+
+    /* Turn of all automatic flushing - we'll do it all */
+    if (info->ChipFamily != CHIP_FAMILY_R300)
+	OUTREG(RADEON_RB2D_DSTCACHE_MODE, 0);
 
     pitch64 = ((pScrn->displayWidth * (pScrn->bitsPerPixel / 8) + 0x3f)) >> 6;
 
     RADEONWaitForFifo(pScrn, 1);
-    OUTREG(RADEON_DEFAULT_OFFSET, (INREG(RADEON_DEFAULT_OFFSET) & 0xC0000000) |
-				  (pitch64 << 22));
+    OUTREG(RADEON_DEFAULT_OFFSET, ((INREG(RADEON_DEFAULT_OFFSET) & 0xC0000000)
+				   | (pitch64 << 22)));
 
     RADEONWaitForFifo(pScrn, 1);
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     OUTREGP(RADEON_DP_DATATYPE,
-	    RADEON_HOST_BIG_ENDIAN_EN, ~RADEON_HOST_BIG_ENDIAN_EN);
+	    RADEON_HOST_BIG_ENDIAN_EN,
+	    ~RADEON_HOST_BIG_ENDIAN_EN);
 #else
     OUTREGP(RADEON_DP_DATATYPE, 0, ~RADEON_HOST_BIG_ENDIAN_EN);
 #endif
 
-    /* restore SURFACE_CNTL */
+    /* Restore SURFACE_CNTL */
     OUTREG(RADEON_SURFACE_CNTL, info->ModeReg.surface_cntl);
 
     RADEONWaitForFifo(pScrn, 1);
@@ -337,71 +309,13 @@ void RADEONEngineRestore(ScrnInfoPtr pScrn)
     OUTREG(RADEON_DP_SRC_BKGD_CLR,   0x00000000);
     OUTREG(RADEON_DP_WRITE_MASK,     0xffffffff);
 
-    RADEONWaitForIdle(pScrn);
+    RADEONWaitForIdleMMIO(pScrn);
 }
 
-/* This callback is required for multiheader cards using XAA */
-static
-void RADEONRestoreAccelState(ScrnInfoPtr pScrn)
+/* Initialize the acceleration hardware */
+void RADEONEngineInit(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-    CARD32 pitch64;
-    RADEONEntPtr pRADEONEnt;
-    DevUnion* pPriv;
-
-    pPriv = xf86GetEntityPrivate(pScrn->entityList[0],
-            gRADEONEntityIndex);
-    pRADEONEnt = pPriv->ptr;
-    if(pRADEONEnt->IsDRIEnabled)
-    {
-        /*not working yet*/
-        /*
-        RADEONInfoPtr info0 = RADEONPTR(pRADEONEnt->pPrimaryScrn);
-        RADEONCP_TO_MMIO(pRADEONEnt->pPrimaryScrn, info0);
-        */
-    }
-    pitch64 = ((pScrn->displayWidth * (pScrn->bitsPerPixel / 8) + 0x3f)) >> 6;
-
-    OUTREG(RADEON_DEFAULT_OFFSET, (pScrn->fbOffset>>10) |
-				  (pitch64 << 22));
-
-    /* FIXME: May need to restore other things, 
-       like BKGD_CLK FG_CLK...*/
-
-    RADEONWaitForIdle(pScrn);
-
-}
-
-/* This callback is required for multiheader cards using XAA */
-#ifdef XF86DRI
-static
-void RADEONRestoreCPAccelState(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-    /*xf86DrvMsg(pScrn->scrnIndex, X_INFO, "===>RestoreCP\n");*/
-
-    RADEONWaitForFifo(pScrn, 1);
-    OUTREG( RADEON_DEFAULT_OFFSET, info->frontPitchOffset);
-
-    RADEONWaitForIdle(pScrn);
-
-    /*Not working yet*/
-    /*
-    RADEONMMIO_TO_CP(pScrn, info);
-    */
-   
-    /* FIXME: May need to restore other things, 
-       like BKGD_CLK FG_CLK...*/
-
-}
-#endif 
-
-/* Initialize the acceleration hardware. */
-static void RADEONEngineInit(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
     RADEONTRACE(("EngineInit (%d/%d)\n",
@@ -411,13 +325,14 @@ static void RADEONEngineInit(ScrnInfoPtr pScrn)
     OUTREG(RADEON_RB3D_CNTL, 0);
 #if defined(__powerpc__)
 #if defined(XF86_DRI)
-    if(!info->directRenderinEnabled)
+    if(!info->directRenderingEnabled)
 #endif
     {
 	OUTREG(RADEON_MC_FB_LOCATION, 0xffff0000);
     	OUTREG(RADEON_MC_AGP_LOCATION, 0xfffff000);
     }
 #endif
+
     RADEONEngineReset(pScrn);
 
     switch (info->CurrentLayout.pixel_code) {
@@ -457,1313 +372,236 @@ static void RADEONEngineInit(ScrnInfoPtr pScrn)
     RADEONEngineRestore(pScrn);
 }
 
-/* Setup for XAA SolidFill. */
-static void RADEONSetupForSolidFill(ScrnInfoPtr pScrn,
-				    int color, int rop, unsigned int planemask)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
+#define ACCEL_MMIO
+#define ACCEL_PREAMBLE()        unsigned char *RADEONMMIO = info->MMIO
+#define BEGIN_ACCEL(n)          RADEONWaitForFifo(pScrn, (n))
+#define OUT_ACCEL_REG(reg, val) OUTREG(reg, val)
+#define FINISH_ACCEL()
+
+#include "radeon_accelfuncs.c"
+
+#undef ACCEL_MMIO
+#undef ACCEL_PREAMBLE
+#undef BEGIN_ACCEL
+#undef OUT_ACCEL_REG
+#undef FINISH_ACCEL
 
-    RADEONWaitForFifo(pScrn, 4);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_BRUSH_SOLID_COLOR
-				       | RADEON_GMC_SRC_DATATYPE_COLOR
-				       | RADEON_ROP[rop].pattern));
-    OUTREG(RADEON_DP_BRUSH_FRGD_CLR,  color);
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_DP_CNTL,            (RADEON_DST_X_LEFT_TO_RIGHT
-				       | RADEON_DST_Y_TOP_TO_BOTTOM));
-}
-
-/* Subsequent XAA SolidFillRect.
-
-   Tests: xtest CH06/fllrctngl, xterm
-*/
-static void  RADEONSubsequentSolidFillRect(ScrnInfoPtr pScrn,
-					   int x, int y, int w, int h)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 2);
-    OUTREG(RADEON_DST_Y_X,          (y << 16) | x);
-    OUTREG(RADEON_DST_WIDTH_HEIGHT, (w << 16) | h);
-}
-
-/* Setup for XAA solid lines. */
-
-/* unlike r128, Radeon don't have the Last-Pel controlling bit in DP_CNTL_XDIR_YDIR_YMAJOR
-   for line drawing, so we have to do it using our own extrapolation routine*/
-static void LastLinePel(int *X1, int *Y1, int *X2, int *Y2)
-{
-	int tg, deltax, deltay;
-	int xa = *X1, ya = *Y1, xb = *X2, yb = *Y2;
-
-	deltax = xb - xa;
-	deltay = yb - ya;
-
-    	if(deltax == 0) 
-		tg = 40;
-       	else
-		tg = labs((deltay<<4) / deltax);
-
-	if((tg >= 7) && (tg <= 39))
-	{
-		if(deltax > 0)xb++;
-		else xb--;
-		if(deltay > 0)yb++;
-		else yb--;
-	}
-	else
-	{
-		if(labs(deltax) > labs(deltay))
-		{
-			if(deltax > 0) xb++;
-			else xb--;
-		}
-		else
-		{
-			if(deltay > 0) yb++;
-			else yb--;
-		}
-		   
-	}
-}
-
-
-/* Setup for XAA solid lines. */
-static void RADEONSetupForSolidLine(ScrnInfoPtr pScrn,
-				    int color, int rop, unsigned int planemask)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 3);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_BRUSH_SOLID_COLOR
-				       | RADEON_GMC_SRC_DATATYPE_COLOR
-				       | RADEON_ROP[rop].pattern));
-    OUTREG(RADEON_DP_BRUSH_FRGD_CLR,  color);
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-}
-
-
-/* Subsequent XAA solid TwoPointLine line.
-
-   Tests: xtest CH06/drwln, ico, Mark Vojkovich's linetest program
-
-   [See http://www.xfree86.org/devel/archives/devel/1999-Jun/0102.shtml for
-   Mark Vojkovich's linetest program, posted 2Jun99 to devel@xfree86.org.]
-*/
-static void RADEONSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
-					      int xa, int ya, int xb, int yb,
-					      int flags)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    if (!(flags & OMIT_LAST))
-		LastLinePel(&xa, &ya, &xb, &yb);
-
-    RADEONWaitForFifo(pScrn, 2);
-    OUTREG(RADEON_DST_LINE_START,           (ya << 16) | xa);
-    OUTREG(RADEON_DST_LINE_END,             (yb << 16) | xb);
-
-}
-
-/* Subsequent XAA solid horizontal and vertical lines */
-static void RADEONSubsequentSolidHorVertLine(ScrnInfoPtr pScrn,
-					     int x, int y, int len, int dir )
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 1);
-    OUTREG(RADEON_DP_CNTL, (RADEON_DST_X_LEFT_TO_RIGHT
-			    | RADEON_DST_Y_TOP_TO_BOTTOM));
-
-    if (dir == DEGREES_0) {
-	RADEONSubsequentSolidFillRect(pScrn, x, y, len, 1);
-    } else {
-	RADEONSubsequentSolidFillRect(pScrn, x, y, 1, len);
-    }
-}
-
-/* Setup for XAA dashed lines.
-
-   Tests: xtest CH05/stdshs, XFree86/drwln
-
-   NOTE: Since we can only accelerate lines with power-of-2 patterns of
-   length <= 32.
-*/
-static void RADEONSetupForDashedLine(ScrnInfoPtr pScrn,
-				     int fg, int bg,
-				     int rop, unsigned int planemask,
-				     int length, unsigned char *pattern)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-    CARD32        pat         = *(CARD32 *)(pointer)pattern;
-
-    switch (length) {
-    case  2: pat |= pat <<  2;  /* fall through */
-    case  4: pat |= pat <<  4;  /* fall through */
-    case  8: pat |= pat <<  8;  /* fall through */
-    case 16: pat |= pat << 16;
-    }
-
-    RADEONWaitForFifo(pScrn, 5);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | (bg == -1
-					  ? RADEON_GMC_BRUSH_32x1_MONO_FG_LA
-					  : RADEON_GMC_BRUSH_32x1_MONO_FG_BG)
-				       | RADEON_ROP[rop].pattern
-				       | RADEON_GMC_BYTE_LSB_TO_MSB));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_DP_BRUSH_FRGD_CLR,  fg);
-    OUTREG(RADEON_DP_BRUSH_BKGD_CLR,  bg);
-    OUTREG(RADEON_BRUSH_DATA0,        pat);
-}
-
-/* Subsequent XAA dashed line. */
-static void RADEONSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
-					       int xa, int ya,
-					       int xb, int yb,
-					       int flags,
-					       int phase)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 3);
-    if (!(flags & OMIT_LAST))
-		LastLinePel(&xa, &ya, &xb, &yb);
-
-    OUTREG(RADEON_DST_LINE_START,   (ya << 16) | xa);
-	OUTREG(RADEON_DST_LINE_PATCOUNT, phase);
-    OUTREG(RADEON_DST_LINE_END,     (yb << 16) | xb);
-}
-
-/* Setup for XAA screen-to-screen copy.
-
-   Tests: xtest CH06/fllrctngl (also tests transparency).
-*/
-static void RADEONSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
-					     int xdir, int ydir, int rop,
-					     unsigned int planemask,
-					     int trans_color)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    info->xdir = xdir;
-    info->ydir = ydir;
-    RADEONWaitForFifo(pScrn, 3);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_BRUSH_NONE
-				       | RADEON_GMC_SRC_DATATYPE_COLOR
-				       | RADEON_ROP[rop].rop
-				       | RADEON_DP_SRC_SOURCE_MEMORY));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_DP_CNTL,            ((xdir >= 0
-					? RADEON_DST_X_LEFT_TO_RIGHT
-					: 0)
-				       | (ydir >= 0
-					  ? RADEON_DST_Y_TOP_TO_BOTTOM
-					  : 0)));
-
-    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
-				/* Set up for transparency */
-	RADEONWaitForFifo(pScrn, 3);
-	OUTREG(RADEON_CLR_CMP_CLR_SRC, trans_color);
-	OUTREG(RADEON_CLR_CMP_MASK,    RADEON_CLR_CMP_MSK);
-	/* Mmmm, Seems as though the transparency compare is opposite to r128
-	 * It should only draw when source != trans_color,
-	 * this is the opposite of that. */
-	OUTREG(RADEON_CLR_CMP_CNTL,    (RADEON_SRC_CMP_EQ_COLOR
-					| RADEON_CLR_CMP_SRC_SOURCE));
-    }
-}
-
-/* Subsequent XAA screen-to-screen copy. */
-static void RADEONSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
-					       int xa, int ya,
-					       int xb, int yb,
-					       int w, int h)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    if (info->xdir < 0) xa += w - 1, xb += w - 1;
-    if (info->ydir < 0) ya += h - 1, yb += h - 1;
-
-    RADEONWaitForFifo(pScrn, 3);
-    OUTREG(RADEON_SRC_Y_X,          (ya << 16) | xa);
-    OUTREG(RADEON_DST_Y_X,          (yb << 16) | xb);
-    OUTREG(RADEON_DST_HEIGHT_WIDTH, (h << 16) | w);
-}
-
-/* Setup for XAA mono 8x8 pattern color expansion.  Patterns with
-   transparency use `bg == -1'.  This routine is only used if the XAA
-   pixmap cache is turned on.
-
-   Tests: xtest XFree86/fllrctngl (no other test will test this routine with
-                                   both transparency and non-transparency)
-*/
-static void RADEONSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
-					     int patternx, int patterny,
-					     int fg, int bg, int rop,
-					     unsigned int planemask)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 6);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | (bg == -1
-					  ? RADEON_GMC_BRUSH_8X8_MONO_FG_LA
-					  : RADEON_GMC_BRUSH_8X8_MONO_FG_BG)
-				       | RADEON_ROP[rop].pattern
-				       | RADEON_GMC_BYTE_LSB_TO_MSB));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_DP_BRUSH_FRGD_CLR,  fg);
-    OUTREG(RADEON_DP_BRUSH_BKGD_CLR,  bg);
-    OUTREG(RADEON_BRUSH_DATA0,        patternx);
-    OUTREG(RADEON_BRUSH_DATA1,        patterny);
-}
-
-/* Subsequent XAA 8x8 pattern color expansion.  Because they are used in
-   the setup function, `patternx' and `patterny' are not used here. */
-static void RADEONSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
-						   int patternx, int patterny,
-						   int x, int y, int w, int h)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 3);
-    OUTREG(RADEON_BRUSH_Y_X,        (patterny << 8) | patternx);
-    OUTREG(RADEON_DST_Y_X,          (y << 16) | x);
-    OUTREG(RADEON_DST_HEIGHT_WIDTH, (h << 16) | w);
-}
-
-#if 0
-/* Setup for XAA color 8x8 pattern fill.
-
-   Tests: xtest XFree86/fllrctngl (with Mono8x8PatternFill off)
-*/
-static void RADEONSetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
-					      int patx, int paty,
-					      int rop, unsigned int planemask,
-					      int trans_color)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    ErrorF("Color8x8 %d %d %d\n", trans_color, patx, paty);
-
-    RADEONWaitForFifo(pScrn, 3);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_BRUSH_8x8_COLOR
-				       | RADEON_GMC_SRC_DATATYPE_COLOR
-				       | RADEON_ROP[rop].pattern
-				       | RADEON_DP_SRC_SOURCE_MEMORY));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_SRC_Y_X, (paty << 16) | patx);
-
-    if (trans_color != -1) {
-				/* Set up for transparency */
-	RADEONWaitForFifo(pScrn, 3);
-	OUTREG(RADEON_CLR_CMP_CLR_SRC, trans_color);
-	OUTREG(RADEON_CLR_CMP_MASK,    RADEON_CLR_CMP_MSK);
-	/* Mmmm, Seems as though the transparency compare is opposite to r128
-	 * It should only draw when source != trans_color,
-	 * this is the opposite of that. */
-	OUTREG(RADEON_CLR_CMP_CNTL,    (RADEON_SRC_CMP_EQ_COLOR
-					| RADEON_CLR_CMP_SRC_SOURCE));
-    }
-}
-
-/* Subsequent XAA 8x8 pattern color expansion. */
-static void RADEONSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
-						    int patx, int paty,
-						    int x, int y, int w, int h)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    ErrorF("Color8x8 %d,%d %d,%d %d %d\n", patx, paty, x, y, w, h);
-
-    RADEONWaitForFifo(pScrn, 4);
-    OUTREG(RADEON_BRUSH_Y_X, (paty << 16) | patx);
-    OUTREG(RADEON_DST_Y_X, (y << 16) | x);
-    OUTREG(RADEON_DST_HEIGHT_WIDTH, (h << 16) | w);
-}
-#endif
-
-/* Setup for XAA indirect CPU-to-screen color expansion (indirect).
-   Because of how the scratch buffer is initialized, this is really a
-   mainstore-to-screen color expansion.  Transparency is supported when `bg
-   == -1'.
-   Implementing the hybrid indirect/direct scheme improved performance in a
-   few areas:
-*/
-static void RADEONSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
-							     int fg, int bg,
-							     int rop,
-							     unsigned int
-							     planemask)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    RADEONWaitForFifo(pScrn, 4);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_DST_CLIPPING
-				       | RADEON_GMC_BRUSH_NONE
-				       | (bg == -1
-					  ? RADEON_GMC_SRC_DATATYPE_MONO_FG_LA
-					  : RADEON_GMC_SRC_DATATYPE_MONO_FG_BG)
-				       | RADEON_ROP[rop].rop
-				       | RADEON_GMC_BYTE_LSB_TO_MSB
-				       | RADEON_DP_SRC_SOURCE_HOST_DATA));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-    OUTREG(RADEON_DP_SRC_FRGD_CLR,    fg);
-    OUTREG(RADEON_DP_SRC_BKGD_CLR,    bg);
-}
-
-/* Subsequent XAA indirect CPU-to-screen color expansion.  This is only
-   called once for each rectangle. */
-static void RADEONSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr
-							       pScrn,
-							       int x, int y,
-							       int w, int h,
-							       int skipleft)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    info->scanline_h      = h;
-    info->scanline_words  = (w + 31) >> 5;
-
-#ifdef __alpha__
-    /* always use indirect for Alpha */
-    if (0)
-#else
-    if ((info->scanline_words * h) <= 9)
-#endif
-    {
-	/* Turn on direct for less than 9 dword colour expansion */
-	info->scratch_buffer[0]
-	    = (unsigned char *)(ADDRREG(RADEON_HOST_DATA_LAST)
-				- (info->scanline_words - 1));
-	info->scanline_direct = 1;
-    } else {
-	/* Use indirect for anything else */
-	info->scratch_buffer[0]            = info->scratch_save;
-	info->scanline_direct = 0;
-    }
-
-    RADEONWaitForFifo(pScrn, 4 + (info->scanline_direct ?
-					(info->scanline_words * h) : 0) );
-    OUTREG(RADEON_SC_TOP_LEFT,      (y << 16)       | ((x+skipleft) & 0xffff));
-    /* MMmm, we don't need the -1 on both y+h or x+w, why ? */
-    OUTREG(RADEON_SC_BOTTOM_RIGHT,  ((y+h) << 16)   | ((x+w) & 0xffff));
-    OUTREG(RADEON_DST_Y_X,          (y << 16)       | (x & 0xffff));
-    /* Have to pad the width here and use clipping engine */
-    OUTREG(RADEON_DST_HEIGHT_WIDTH, (h << 16)       | ((w + 31) & ~31));
-}
-
-/* Subsequent XAA indirect CPU-to-screen color expansion.  This is called
-   once for each scanline. */
-static void RADEONSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
-{
-    RADEONInfoPtr   info        = RADEONPTR(pScrn);
-    unsigned char   *RADEONMMIO = info->MMIO;
-    CARD32          *p          = (pointer)info->scratch_buffer[bufno];
-    int             i;
-    int             left        = info->scanline_words;
-    volatile CARD32 *d;
-
-    if (info->scanline_direct) return;
-    --info->scanline_h;
-    while (left) {
-	write_mem_barrier();
-	if (left <= 8) {
-	  /* Last scanline - finish write to DATA_LAST */
-	  if (info->scanline_h == 0) {
-	    RADEONWaitForFifo(pScrn, left);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA_LAST) - (left - 1); left; --left)
-		*d++ = *p++;
-	    return;
-	  } else {
-	    RADEONWaitForFifo(pScrn, left);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA7) - (left - 1); left; --left)
-		*d++ = *p++;
-	  }
-	} else {
-	    RADEONWaitForFifo(pScrn, 8);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA0), i = 0; i < 8; i++)
-		*d++ = *p++;
-	    left -= 8;
-	}
-    }
-}
-
-/* Setup for XAA indirect image write. */
-static void RADEONSetupForScanlineImageWrite(ScrnInfoPtr pScrn,
-					     int rop,
-					     unsigned int planemask,
-					     int trans_color,
-					     int bpp,
-					     int depth)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-
-    info->scanline_bpp = bpp;
-
-    RADEONWaitForFifo(pScrn, 2);
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-				       | RADEON_GMC_DST_CLIPPING
-				       | RADEON_GMC_BRUSH_NONE
-				       | RADEON_GMC_SRC_DATATYPE_COLOR
-				       | RADEON_ROP[rop].rop
-				       | RADEON_GMC_BYTE_LSB_TO_MSB
-				       | RADEON_DP_SRC_SOURCE_HOST_DATA));
-    OUTREG(RADEON_DP_WRITE_MASK,      planemask);
-
-    if (trans_color != -1) {
-				/* Set up for transparency */
-	RADEONWaitForFifo(pScrn, 3);
-	OUTREG(RADEON_CLR_CMP_CLR_SRC, trans_color);
-	OUTREG(RADEON_CLR_CMP_MASK,    RADEON_CLR_CMP_MSK);
-	/* Mmmm, Seems as though the transparency compare is opposite to r128
-	 * It should only draw when source != trans_color,
-	 * this is the opposite of that. */
-	OUTREG(RADEON_CLR_CMP_CNTL,    (RADEON_SRC_CMP_EQ_COLOR
-					| RADEON_CLR_CMP_SRC_SOURCE));
-    }
-}
-
-/* Subsequent XAA indirect image write. This is only called once for each
-   rectangle. */
-static void RADEONSubsequentScanlineImageWriteRect(ScrnInfoPtr pScrn,
-						   int x, int y,
-						   int w, int h,
-						   int skipleft)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    unsigned char *RADEONMMIO = info->MMIO;
-    int           shift       = 0; /* 32bpp */
-
-    if (pScrn->bitsPerPixel == 8) shift = 3;
-    else if (pScrn->bitsPerPixel == 16) shift = 1;
-
-    info->scanline_h      = h;
-    info->scanline_words  = (w * info->scanline_bpp + 31) >> 5;
-
-#ifdef __alpha__
-    /* always use indirect for Alpha */
-    if (0)
-#else
-    if ((info->scanline_words * h) <= 9)
-#endif
-    {
-	/* Turn on direct for less than 9 dword colour expansion */
-	info->scratch_buffer[0]
-	    = (unsigned char *)(ADDRREG(RADEON_HOST_DATA_LAST)
-				- (info->scanline_words - 1));
-	info->scanline_direct = 1;
-    } else {
-	/* Use indirect for anything else */
-	info->scratch_buffer[0]            = info->scratch_save;
-	info->scanline_direct = 0;
-    }
-
-    RADEONWaitForFifo(pScrn, 4 + (info->scanline_direct ?
-					(info->scanline_words * h) : 0) );
-    OUTREG(RADEON_SC_TOP_LEFT,      (y << 16)       | ((x+skipleft) & 0xffff));
-    /* MMmm, we don't need the -1 on both y+h or x+w, why ? */
-    OUTREG(RADEON_SC_BOTTOM_RIGHT,  ((y+h) << 16)   | ((x+w) & 0xffff));
-    OUTREG(RADEON_DST_Y_X,          (y << 16)       | (x & 0xffff));
-    /* Have to pad the width here and use clipping engine */
-    OUTREG(RADEON_DST_HEIGHT_WIDTH, (h << 16)       | ((w + shift) & ~shift));
-}
-
-/* Subsequent XAA indirect image write.  This is called once for each
-   scanline. */
-static void RADEONSubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
-{
-    RADEONInfoPtr   info        = RADEONPTR(pScrn);
-    unsigned char   *RADEONMMIO = info->MMIO;
-    CARD32          *p          = (pointer)info->scratch_buffer[bufno];
-    int             i;
-    int             left        = info->scanline_words;
-    volatile CARD32 *d;
-
-    if (info->scanline_direct) return;
-    --info->scanline_h;
-    while (left) {
-	write_mem_barrier();
-	if (left <= 8) {
-	  /* Last scanline - finish write to DATA_LAST */
-	  if (info->scanline_h == 0) {
-	    RADEONWaitForFifo(pScrn, left);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA_LAST) - (left - 1); left; --left)
-		*d++ = *p++;
-	    return;
-	  } else {
-	    RADEONWaitForFifo(pScrn, left);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA7) - (left - 1); left; --left)
-		*d++ = *p++;
-	  }
-	} else {
-	    RADEONWaitForFifo(pScrn, 8);
-				/* Unrolling doesn't improve performance */
-	    for (d = ADDRREG(RADEON_HOST_DATA0), i = 0; i < 8; i++)
-		*d++ = *p++;
-	    left -= 8;
-	}
-    }
-}
-
-static void RADEONSetClippingRectangle(ScrnInfoPtr pScrn,
-							  int xa, int ya, int xb, int yb)
-{
-	RADEONInfoPtr   info        = RADEONPTR(pScrn);
-	unsigned char *RADEONMMIO = info->MMIO;
-	unsigned long tmp = 0;
-
-	if(xa < 0)
-	{
-		tmp = -xa;
-		tmp |= RADEON_SC_SIGN_MASK_LO;
-	}
-	else tmp = xa;
-
-	if(ya < 0)
-	{
-		tmp |= ((-ya) << 16);
-		tmp |= RADEON_SC_SIGN_MASK_HI;
-	}
-	else tmp |= (ya << 16);
-
-	OUTREG(RADEON_SC_TOP_LEFT, tmp);
-
-	if(xb < 0)
-	{
-		tmp = -xb;
-		tmp |= RADEON_SC_SIGN_MASK_LO;
-	}
-	else tmp = xb;
-
-	if(yb < 0)
-	{
-		tmp |= ((-yb) << 16);
-		tmp |= RADEON_SC_SIGN_MASK_HI;
-	}
-	else tmp |= (yb << 16);
-    OUTREG(RADEON_SC_BOTTOM_RIGHT, tmp);
-
-    OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl | RADEON_GMC_DST_CLIPPING));
-
-}
-
-static void
-RADEONDisableClipping(ScrnInfoPtr pScrn)
-{
-	RADEONInfoPtr   info        = RADEONPTR(pScrn);
-	unsigned char *RADEONMMIO = info->MMIO;
-
-	OUTREG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl & ~(CARD32)RADEON_GMC_DST_CLIPPING));
-
-	OUTREG(RADEON_SC_TOP_LEFT, 0);
-	OUTREG(RADEON_SC_BOTTOM_RIGHT, INREG(RADEON_DEFAULT_SC_BOTTOM_RIGHT));
-
-}
-
-
-
-/* ================================================================
- * CP-based 2D acceleration
- */
 #ifdef XF86DRI
 
-/* Setup for XAA SolidFill. */
-static void RADEONCPSetupForSolidFill(ScrnInfoPtr pScrn,
-				      int color, int rop,
-				      unsigned int planemask)
+#define ACCEL_CP
+#define ACCEL_PREAMBLE()						\
+    RING_LOCALS;							\
+    RADEONCP_REFRESH(pScrn, info)
+#define BEGIN_ACCEL(n)          BEGIN_RING(2*(n))
+#define OUT_ACCEL_REG(reg, val) OUT_RING_REG(reg, val)
+#define FINISH_ACCEL()          ADVANCE_RING()
+
+#include "radeon_accelfuncs.c"
+
+#undef ACCEL_CP
+#undef ACCEL_PREAMBLE
+#undef BEGIN_ACCEL
+#undef OUT_ACCEL_REG
+#undef FINISH_ACCEL
+
+/* Stop the CP */
+int RADEONCPStop(ScrnInfoPtr pScrn, RADEONInfoPtr info)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    RING_LOCALS;
+    drmRadeonCPStop  stop;
+    int              ret, i;
 
-    RADEONCP_REFRESH( pScrn, info );
+    stop.flush = 1;
+    stop.idle  = 1;
 
-    BEGIN_RING( 8 );
+    ret = drmCommandWrite(info->drmFD, DRM_RADEON_CP_STOP, &stop, 
+			  sizeof(drmRadeonCPStop));
 
-    OUT_RING_REG( RADEON_DP_GUI_MASTER_CNTL,
-		  (info->dp_gui_master_cntl
-		   | RADEON_GMC_BRUSH_SOLID_COLOR
-		   | RADEON_GMC_SRC_DATATYPE_COLOR
-		   | RADEON_ROP[rop].pattern) );
+    if (ret == 0) {
+	return 0;
+    } else if (errno != EBUSY) {
+	return -errno;
+    }
 
-    OUT_RING_REG( RADEON_DP_BRUSH_FRGD_CLR,  color );
-    OUT_RING_REG( RADEON_DP_WRITE_MASK,	     planemask );
-    OUT_RING_REG( RADEON_DP_CNTL,	     (RADEON_DST_X_LEFT_TO_RIGHT |
-					      RADEON_DST_Y_TOP_TO_BOTTOM) );
-    ADVANCE_RING();
-}
+    stop.flush = 0;
+ 
+    i = 0;
+    do {
+	ret = drmCommandWrite(info->drmFD, DRM_RADEON_CP_STOP, &stop, 
+			      sizeof(drmRadeonCPStop));
+    } while (ret && errno == EBUSY && i++ < RADEON_IDLE_RETRY);
 
-/* Subsequent XAA SolidFillRect.
+    if (ret == 0) {
+	return 0;
+    } else if (errno != EBUSY) {
+	return -errno;
+    }
 
-   Tests: xtest CH06/fllrctngl, xterm
-*/
-static void RADEONCPSubsequentSolidFillRect(ScrnInfoPtr pScrn,
-					    int x, int y, int w, int h)
-{
-    RADEONInfoPtr info  = RADEONPTR(pScrn);
-    RING_LOCALS;
+    stop.idle = 0;
 
-    RADEONCP_REFRESH( pScrn, info );
-
-    BEGIN_RING( 4 );
-
-    OUT_RING_REG( RADEON_DST_Y_X,          (y << 16) | x );
-    OUT_RING_REG( RADEON_DST_WIDTH_HEIGHT, (w << 16) | h );
-
-    ADVANCE_RING();
-}
-
-/* Setup for XAA screen-to-screen copy.
-
-   Tests: xtest CH06/fllrctngl (also tests transparency).
-*/
-static void RADEONCPSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
-					       int xdir, int ydir, int rop,
-					       unsigned int planemask,
-					       int trans_color)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    RING_LOCALS;
-
-    RADEONCP_REFRESH( pScrn, info );
-
-    info->xdir = xdir;
-    info->ydir = ydir;
-
-    BEGIN_RING( 6 );
-
-    OUT_RING_REG( RADEON_DP_GUI_MASTER_CNTL,
-		  (info->dp_gui_master_cntl
-		   | RADEON_GMC_BRUSH_NONE
-		   | RADEON_GMC_SRC_DATATYPE_COLOR
-		   | RADEON_ROP[rop].rop
-		   | RADEON_DP_SRC_SOURCE_MEMORY) );
-
-    OUT_RING_REG( RADEON_DP_WRITE_MASK, planemask );
-    OUT_RING_REG( RADEON_DP_CNTL,
-		  ((xdir >= 0 ? RADEON_DST_X_LEFT_TO_RIGHT : 0) |
-		   (ydir >= 0 ? RADEON_DST_Y_TOP_TO_BOTTOM : 0)) );
-
-    ADVANCE_RING();
-
-    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
-	BEGIN_RING( 6 );
-
-	OUT_RING_REG( RADEON_CLR_CMP_CLR_SRC, trans_color );
-	OUT_RING_REG( RADEON_CLR_CMP_MASK,    RADEON_CLR_CMP_MSK );
-	/* Mmmm, Seems as though the transparency compare is opposite to r128
-	 * It should only draw when source != trans_color,
-	 * this is the opposite of that. */
-	OUT_RING_REG( RADEON_CLR_CMP_CNTL,    (RADEON_SRC_CMP_EQ_COLOR |
-					       RADEON_CLR_CMP_SRC_SOURCE) );
-
-	ADVANCE_RING();
+    if (drmCommandWrite(info->drmFD, DRM_RADEON_CP_STOP,
+			&stop, sizeof(drmRadeonCPStop))) {
+	return -errno;
+    } else {
+	return 0;
     }
 }
 
-/* Subsequent XAA screen-to-screen copy. */
-static void RADEONCPSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
-						 int xa, int ya,
-						 int xb, int yb,
-						 int w, int h)
+/* Get an indirect buffer for the CP 2D acceleration commands  */
+drmBufPtr RADEONCPGetBuffer(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    RING_LOCALS;
-
-    RADEONCP_REFRESH( pScrn, info );
-
-    if (info->xdir < 0) xa += w - 1, xb += w - 1;
-    if (info->ydir < 0) ya += h - 1, yb += h - 1;
-
-    BEGIN_RING( 6 );
-
-    OUT_RING_REG( RADEON_SRC_Y_X,          (ya << 16) | xa );
-    OUT_RING_REG( RADEON_DST_Y_X,          (yb << 16) | xb );
-    OUT_RING_REG( RADEON_DST_HEIGHT_WIDTH, (h << 16) | w );
-
-    ADVANCE_RING();
-}
-
-/* Setup for XAA solid lines. */
-static void RADEONCPSetupForSolidLine(ScrnInfoPtr pScrn,
-				    int color, int rop, unsigned int planemask)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-
-    RING_LOCALS;
-    BEGIN_RING( 6 );
-    OUT_RING_REG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-										   | RADEON_GMC_BRUSH_SOLID_COLOR
-										   | RADEON_GMC_SRC_DATATYPE_COLOR
-										   | RADEON_ROP[rop].pattern));
-    OUT_RING_REG(RADEON_DP_BRUSH_FRGD_CLR,  color);
-    OUT_RING_REG(RADEON_DP_WRITE_MASK,      planemask);
-
-    ADVANCE_RING();
-
-}
-
-
-/* Subsequent XAA solid TwoPointLine line.
-
-   Tests: xtest CH06/drwln, ico, Mark Vojkovich's linetest program
-
-   [See http://www.xfree86.org/devel/archives/devel/1999-Jun/0102.shtml for
-   Mark Vojkovich's linetest program, posted 2Jun99 to devel@xfree86.org.]
-*/
-static void RADEONCPSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
-					      int xa, int ya, int xb, int yb,
-					      int flags)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-
-    RING_LOCALS;
-    BEGIN_RING( 4 );
-
-    if (!(flags & OMIT_LAST))
-	{
-		LastLinePel(&xa, &ya, &xb, &yb);
-	}
-
-	OUT_RING_REG(RADEON_DST_LINE_START,           (ya << 16) | xa);
-	OUT_RING_REG(RADEON_DST_LINE_END,             (yb << 16) | xb);
-
-	ADVANCE_RING();
-
-}
-
-/* Subsequent XAA solid horizontal and vertical lines */
-static void RADEONCPSubsequentSolidHorVertLine(ScrnInfoPtr pScrn,
-					     int x, int y, int len, int dir )
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-
-    RING_LOCALS;
-    BEGIN_RING( 6 );
-
-    OUT_RING_REG(RADEON_DP_CNTL, (RADEON_DST_X_LEFT_TO_RIGHT
-			    | RADEON_DST_Y_TOP_TO_BOTTOM));
-	
-    if (dir == DEGREES_0) 
-	{
-		OUT_RING_REG( RADEON_DST_Y_X,          (y << 16) | x );
-		OUT_RING_REG( RADEON_DST_WIDTH_HEIGHT, (len << 16) | 1 );		
-    } 
-	else 
-	{
-		OUT_RING_REG( RADEON_DST_Y_X,          (y << 16) | x );
-		OUT_RING_REG( RADEON_DST_WIDTH_HEIGHT, (1 << 16) | len );		
-    }
-    ADVANCE_RING();
-}
-
-
-/* Setup for XAA dashed lines.
-
-   Tests: xtest CH05/stdshs, XFree86/drwln
-
-   NOTE: Since we can only accelerate lines with power-of-2 patterns of
-   length <= 32.
-*/
-static void RADEONCPSetupForDashedLine(ScrnInfoPtr pScrn,
-				     int fg, int bg,
-				     int rop, unsigned int planemask,
-				     int length, unsigned char *pattern)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-    CARD32        pat         = *(CARD32 *)(pointer)pattern;
-
-    RING_LOCALS;
-
-    switch (length) {
-    case  2: pat |= pat <<  2;  /* fall through */
-    case  4: pat |= pat <<  4;  /* fall through */
-    case  8: pat |= pat <<  8;  /* fall through */
-    case 16: pat |= pat << 16;
-    }
-
-    BEGIN_RING( 12 );
-    OUT_RING_REG(RADEON_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
-									 | (bg == -1
-										? RADEON_GMC_BRUSH_32x1_MONO_FG_LA
-										: RADEON_GMC_BRUSH_32x1_MONO_FG_BG)
-									 | RADEON_ROP[rop].pattern
-									 | RADEON_GMC_BYTE_LSB_TO_MSB));
-    OUT_RING_REG(RADEON_DP_WRITE_MASK,      planemask);
-    OUT_RING_REG(RADEON_DP_BRUSH_FRGD_CLR,  fg);
-    if(bg != -1) OUT_RING_REG(RADEON_DP_BRUSH_BKGD_CLR,  bg);
-    OUT_RING_REG(RADEON_BRUSH_DATA0, pat);
-	ADVANCE_RING();
-
-}
-
-/* Subsequent XAA dashed line. */
-static void RADEONCPSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
-					       int xa, int ya,
-					       int xb, int yb,
-					       int flags,
-					       int phase)
-{
-    RADEONInfoPtr info        = RADEONPTR(pScrn);
-
-    RING_LOCALS;
-
-    if (!(flags & OMIT_LAST))
-	{
-		LastLinePel(&xa, &ya, &xb, &yb);
-	}
-
-	BEGIN_RING(6);
-    OUT_RING_REG(RADEON_DST_LINE_START,   (ya << 16) | xa);
-	OUT_RING_REG(RADEON_DST_LINE_PATCOUNT, phase);
-    OUT_RING_REG(RADEON_DST_LINE_END,     (yb << 16) | xb);
-	ADVANCE_RING();
-}
-
-
-static void RADEONCPSetClippingRectangle(ScrnInfoPtr pScrn,
-							  int xa, int ya, int xb, int yb)
-{
-	RADEONInfoPtr   info        = RADEONPTR(pScrn);
-	unsigned long tmp1 = 0, tmp2 = 0;
-
-	if(xa < 0)
-	{
-		tmp1 = -xa;
-		tmp1 |= RADEON_SC_SIGN_MASK_LO;
-	}
-	else tmp1 = xa;
-
-	if(ya < 0)
-	{
-		tmp1 |= ((-ya) << 16);
-		tmp1 |= RADEON_SC_SIGN_MASK_HI;
-	}
-	else tmp1 |= (ya << 16);
-
-	if(xb < 0)
-	{
-		tmp2 = -xb;
-		tmp2 |= RADEON_SC_SIGN_MASK_LO;
-	}
-	else tmp2 = xb;
-
-	if(yb < 0)
-	{
-		tmp2 |= ((-yb) << 16);
-		tmp2 |= RADEON_SC_SIGN_MASK_HI;
-	}
-	else tmp2 |= (yb << 16);
-
-	{
-	
-	RING_LOCALS;
-	BEGIN_RING( 3 );
-	OUT_RING_REG(RADEON_SC_TOP_LEFT, tmp1);
-	OUT_RING_REG(RADEON_SC_BOTTOM_RIGHT, tmp2);
-	OUT_RING_REG(RADEON_DP_GUI_MASTER_CNTL, 
-				 (info->dp_gui_master_cntl | RADEON_GMC_DST_CLIPPING));
-
-	ADVANCE_RING();
-	}
-}
-
-static void
-RADEONCPDisableClipping(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr   info        = RADEONPTR(pScrn);
-	/* unsigned char *RADEONMMIO = info->MMIO;*/
-    RING_LOCALS;
-    BEGIN_RING( 3 );
-    OUT_RING_REG(RADEON_DP_GUI_MASTER_CNTL, 
-					 (info->dp_gui_master_cntl & ~(CARD32)(RADEON_GMC_DST_CLIPPING)));
-	OUT_RING_REG(RADEON_SC_TOP_LEFT, 0);
-    OUT_RING_REG(RADEON_SC_BOTTOM_RIGHT, (RADEON_DEFAULT_SC_RIGHT_MAX
-					    | RADEON_DEFAULT_SC_BOTTOM_MAX));
-
-	ADVANCE_RING();
-
-}
-
-
-/* Point the DST_PITCH_OFFSET register at the current buffer.  This
- * allows us to interact with the back and depth buffers.  All CP 2D
- * acceleration commands use the DST_PITCH_OFFSET register.
- */
-void RADEONSelectBuffer(ScrnInfoPtr pScrn, int buffer)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    RING_LOCALS;
-
-    switch (buffer) {
-    case RADEON_BACK:
-	info->dst_pitch_offset = info->backPitchOffset;
-	break;
-    case RADEON_DEPTH:
-	info->dst_pitch_offset = info->depthPitchOffset;
-	break;
-    default:
-    case RADEON_FRONT:
-	info->dst_pitch_offset = info->frontPitchOffset;
-	break;
-    }
-
-    BEGIN_RING( 2 );
-
-    OUT_RING_REG( RADEON_DEFAULT_OFFSET, info->dst_pitch_offset );
-
-    ADVANCE_RING();
-}
-
-/* Get an indirect buffer for the CP 2D acceleration commands.
- */
-drmBufPtr RADEONCPGetBuffer( ScrnInfoPtr pScrn )
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    drmDMAReq dma;
-    drmBufPtr buf = NULL;
-    int indx = 0;
-    int size = 0;
-    int ret, i = 0;
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
+    drmDMAReq      dma;
+    drmBufPtr      buf = NULL;
+    int            indx = 0;
+    int            size = 0;
+    int            i = 0;
+    int            ret;
 
 #if 0
     /* FIXME: pScrn->pScreen has not been initialized when this is first
-       called from RADEONSelectBuffer via RADEONDRICPInit.  We could use
-       the screen index from pScrn, which is initialized, and then get
-       the screen from screenInfo.screens[index], but that is a hack. */
+     * called from RADEONSelectBuffer via RADEONDRICPInit.  We could use
+     * the screen index from pScrn, which is initialized, and then get
+     * the screen from screenInfo.screens[index], but that is a hack.
+     */
     dma.context = DRIGetContext(pScrn->pScreen);
 #else
-    dma.context = 0x00000001; /* This is the X server's context */
+    /* This is the X server's context */
+    dma.context = 0x00000001;
 #endif
-    dma.send_count = 0;
-    dma.send_list = NULL;
-    dma.send_sizes = NULL;
-    dma.flags = 0;
+
+    dma.send_count    = 0;
+    dma.send_list     = NULL;
+    dma.send_sizes    = NULL;
+    dma.flags         = 0;
     dma.request_count = 1;
-    dma.request_size = RADEON_BUFFER_SIZE;
-    dma.request_list = &indx;
+    dma.request_size  = RADEON_BUFFER_SIZE;
+    dma.request_list  = &indx;
     dma.request_sizes = &size;
     dma.granted_count = 0;
 
-    while ( 1 ) {
+    while (1) {
 	do {
-	    ret = drmDMA( info->drmFD, &dma );
-	    if ( ret && ret != -EBUSY ) {
-		xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
-			    "%s: CP GetBuffer %d\n", __FUNCTION__, ret );
+	    ret = drmDMA(info->drmFD, &dma);
+	    if (ret && ret != -EBUSY) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "%s: CP GetBuffer %d\n", __FUNCTION__, ret);
 	    }
-	} while ( ( ret == -EBUSY ) && ( i++ < RADEON_TIMEOUT ) );
+	} while ((ret == -EBUSY) && (i++ < RADEON_TIMEOUT));
 
-	if ( ret == 0 ) {
+	if (ret == 0) {
 	    buf = &info->buffers->list[indx];
 	    buf->used = 0;
-	    if ( RADEON_VERBOSE ) {
-		xf86DrvMsg( pScrn->scrnIndex, X_INFO,
-			    "   GetBuffer returning %d\n", buf->idx );
+	    if (RADEON_VERBOSE) {
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "   GetBuffer returning %d %08x\n",
+			   buf->idx, buf->address);
 	    }
 	    return buf;
 	}
 
-	xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
-		    "GetBuffer timed out, resetting engine...\n");
-	RADEONEngineReset( pScrn );
-	RADEONEngineRestore( pScrn );
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "GetBuffer timed out, resetting engine...\n");
+	RADEONEngineReset(pScrn);
+	RADEONEngineRestore(pScrn);
 
 	/* Always restart the engine when doing CP 2D acceleration */
-	RADEONCP_RESET( pScrn, info );
-	RADEONCP_START( pScrn, info );
+	RADEONCP_RESET(pScrn, info);
+	RADEONCP_START(pScrn, info);
     }
 }
 
-/* Flush the indirect buffer to the kernel for submission to the card.
- */
-void RADEONCPFlushIndirect( ScrnInfoPtr pScrn )
+/* Flush the indirect buffer to the kernel for submission to the card */
+void RADEONCPFlushIndirect(ScrnInfoPtr pScrn, int discard)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    drmBufPtr buffer = info->indirectBuffer;
-    int start = info->indirectStart;
-    int discard;
+    RADEONInfoPtr      info   = RADEONPTR(pScrn);
+    drmBufPtr          buffer = info->indirectBuffer;
+    int                start  = info->indirectStart;
+    drmRadeonIndirect  indirect;
 
-    if ( !buffer )
-	return;
+    if (!buffer) return;
+    if (start == buffer->used && !discard) return;
 
-    if ( start == buffer->used )
-	return;
+    if (RADEON_VERBOSE) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Flushing buffer %d\n",
+		   buffer->idx);
+    }
 
-    discard = ( buffer->used + RING_THRESHOLD > buffer->total );
+    indirect.idx     = buffer->idx;
+    indirect.start   = start;
+    indirect.end     = buffer->used;
+    indirect.discard = discard;
 
-    drmRadeonFlushIndirectBuffer( info->drmFD, buffer->idx,
-				  start, buffer->used, discard );
+    drmCommandWriteRead(info->drmFD, DRM_RADEON_INDIRECT,
+			&indirect, sizeof(drmRadeonIndirect));
 
-    if ( discard ) {
-	info->indirectBuffer = RADEONCPGetBuffer( pScrn );
-	info->indirectStart = 0;
+    if (discard) {
+	info->indirectBuffer = RADEONCPGetBuffer(pScrn);
+	info->indirectStart  = 0;
     } else {
-	info->indirectStart = buffer->used;
+	/* Start on a double word boundary */
+	info->indirectStart  = buffer->used = (buffer->used + 7) & ~7;
+	if (RADEON_VERBOSE) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "   Starting at %d\n",
+		       info->indirectStart);
+	}
     }
 }
 
-/* Flush and release the indirect buffer.
- */
-void RADEONCPReleaseIndirect( ScrnInfoPtr pScrn )
+/* Flush and release the indirect buffer */
+void RADEONCPReleaseIndirect(ScrnInfoPtr pScrn)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-    drmBufPtr buffer = info->indirectBuffer;
-    int start = info->indirectStart;
+    RADEONInfoPtr      info   = RADEONPTR(pScrn);
+    drmBufPtr          buffer = info->indirectBuffer;
+    int                start  = info->indirectStart;
+    drmRadeonIndirect  indirect;
 
     info->indirectBuffer = NULL;
-    info->indirectStart = 0;
+    info->indirectStart  = 0;
 
-    if ( !buffer )
-	return;
+    if (!buffer) return;
 
-    drmRadeonFlushIndirectBuffer( info->drmFD, buffer->idx,
-				  start, buffer->used, 1 );
-}
-
-static void RADEONCPAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-
-#if 1
-    a->Flags                            = (PIXMAP_CACHE
-					   | OFFSCREEN_PIXMAPS
-					   | LINEAR_FRAMEBUFFER);
-#else
-    a->Flags                            = 0; /* GH: Do we really need this? */
-#endif
-
-				/* Sync */
-    a->Sync                             = RADEONCPWaitForIdle;
-
-    /* If direct rendering is disabled, then do not enable any CP
-       acceleration routines */
-    if (!info->directRenderingEnabled) return;
-
-				/* Solid Filled Rectangle */
-    a->PolyFillRectSolidFlags           = 0;
-    a->SetupForSolidFill                = RADEONCPSetupForSolidFill;
-    a->SubsequentSolidFillRect          = RADEONCPSubsequentSolidFillRect;
-
-				/* Screen-to-screen Copy */
-    a->ScreenToScreenCopyFlags          = 0;
-    a->SetupForScreenToScreenCopy       = RADEONCPSetupForScreenToScreenCopy;
-    a->SubsequentScreenToScreenCopy     = RADEONCPSubsequentScreenToScreenCopy;
-
-
-    a->SetupForDashedLine              = RADEONCPSetupForDashedLine;
-    a->SubsequentDashedTwoPointLine    = RADEONCPSubsequentDashedTwoPointLine;
-    a->DashPatternMaxLength            = 32;
-	/*ROP3 doesn't seem to work properly for dashedline with GXinvert*/
-    a->DashedLineFlags                 = (LINE_PATTERN_LSBFIRST_LSBJUSTIFIED
-										  | LINE_PATTERN_POWER_OF_2_ONLY 
-										  | ROP_NEEDS_SOURCE); 
-
-
-	a->SolidLineFlags 		= 0;
-    a->SetupForSolidLine               = RADEONCPSetupForSolidLine;
-    a->SubsequentSolidTwoPointLine     = RADEONCPSubsequentSolidTwoPointLine;
-    a->SubsequentSolidHorVertLine      = RADEONCPSubsequentSolidHorVertLine;
-    a->SubsequentSolidBresenhamLine 	= NULL;
-
-    /* clipping */
-    a->SetClippingRectangle = RADEONCPSetClippingRectangle;
-    a->DisableClipping = RADEONCPDisableClipping;
-    a->ClippingFlags = 	HARDWARE_CLIP_SOLID_LINE  |
-		HARDWARE_CLIP_DASHED_LINE |
-		/*HARDWARE_CLIP_SOLID_FILL  |*/ /* seems very slow with this on ???*/
-		HARDWARE_CLIP_MONO_8x8_FILL |
-		HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY;
-
-    if(!info->IsSecondary && xf86IsEntityShared(pScrn->entityList[0]))
-        a->RestoreAccelState           = RADEONRestoreCPAccelState;
-
-}
-#endif
-
-static void RADEONMMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-
-    a->Flags                            = (PIXMAP_CACHE
-					   | OFFSCREEN_PIXMAPS
-					   | LINEAR_FRAMEBUFFER);
-
-				/* Sync */
-    a->Sync                             = RADEONWaitForIdle;
-
-				/* Solid Filled Rectangle */
-    a->PolyFillRectSolidFlags           = 0;
-    a->SetupForSolidFill                = RADEONSetupForSolidFill;
-    a->SubsequentSolidFillRect          = RADEONSubsequentSolidFillRect;
-
-				/* Screen-to-screen Copy */
-    a->ScreenToScreenCopyFlags          = 0;
-    a->SetupForScreenToScreenCopy       = RADEONSetupForScreenToScreenCopy;
-    a->SubsequentScreenToScreenCopy     = RADEONSubsequentScreenToScreenCopy;
-
-				/* Mono 8x8 Pattern Fill (Color Expand) */
-    a->SetupForMono8x8PatternFill
-	= RADEONSetupForMono8x8PatternFill;
-    a->SubsequentMono8x8PatternFillRect
-	= RADEONSubsequentMono8x8PatternFillRect;
-    a->Mono8x8PatternFillFlags          = (HARDWARE_PATTERN_PROGRAMMED_BITS
-					   | HARDWARE_PATTERN_PROGRAMMED_ORIGIN
-					   | HARDWARE_PATTERN_SCREEN_ORIGIN
-					   | BIT_ORDER_IN_BYTE_LSBFIRST);
-
-				/* Indirect CPU-To-Screen Color Expand */
-#if X_BYTE_ORDER == X_LITTLE_ENDIAN
-    a->ScanlineCPUToScreenColorExpandFillFlags = LEFT_EDGE_CLIPPING
-		/* RADEON gets upset, when using HOST provided data
-		 * without a source rop. To show run 'xtest's drwarc */
-					       | ROP_NEEDS_SOURCE
-					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
-#else
-    a->ScanlineCPUToScreenColorExpandFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST
-		/* RADEON gets upset, when using HOST provided data
-		 * without a source rop. To show run 'xtest's drwarc */
-					       | ROP_NEEDS_SOURCE
-					       | LEFT_EDGE_CLIPPING
-					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
-#endif
-    a->NumScanlineColorExpandBuffers   = 1;
-    a->ScanlineColorExpandBuffers      = info->scratch_buffer;
-    info->scratch_save                 = xalloc(((pScrn->virtualX+31)/32*4)
-					    + (pScrn->virtualX
-					    * info->CurrentLayout.pixel_bytes));
-    info->scratch_buffer[0]            = info->scratch_save;
-    a->SetupForScanlineCPUToScreenColorExpandFill
-	= RADEONSetupForScanlineCPUToScreenColorExpandFill;
-    a->SubsequentScanlineCPUToScreenColorExpandFill
-	= RADEONSubsequentScanlineCPUToScreenColorExpandFill;
-    a->SubsequentColorExpandScanline   = RADEONSubsequentColorExpandScanline;
-
-    a->SetupForSolidLine               = RADEONSetupForSolidLine;
-    a->SubsequentSolidTwoPointLine     = RADEONSubsequentSolidTwoPointLine;
-    a->SubsequentSolidHorVertLine      = RADEONSubsequentSolidHorVertLine;
-
-    a->SetupForDashedLine              = RADEONSetupForDashedLine;
-    a->SubsequentDashedTwoPointLine    = RADEONSubsequentDashedTwoPointLine;
-    a->DashPatternMaxLength            = 32;
-	/*ROP3 doesn't seem to work properly for dashedline with GXinvert*/
-    a->DashedLineFlags                 = (LINE_PATTERN_LSBFIRST_LSBJUSTIFIED
-										  | LINE_PATTERN_POWER_OF_2_ONLY 
-										  | ROP_NEEDS_SOURCE); 
-
-    /* clipping, note without this, 
-       all line accelerations will not be called */
-    a->SetClippingRectangle = RADEONSetClippingRectangle;
-    a->DisableClipping = RADEONDisableClipping;
-    a->ClippingFlags = 	HARDWARE_CLIP_SOLID_LINE  |
-		HARDWARE_CLIP_DASHED_LINE |
-		/*HARDWARE_CLIP_SOLID_FILL  |*/ /* seems very slow with this on ???*/
-		HARDWARE_CLIP_MONO_8x8_FILL |
-		HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY;
-
-
-    if(xf86IsEntityShared(pScrn->entityList[0]))
-    {
-        DevUnion* pPriv;
-        RADEONEntPtr pRADEONEnt;
-        pPriv = xf86GetEntityPrivate(pScrn->entityList[0],
-                gRADEONEntityIndex);
-        pRADEONEnt = pPriv->ptr;
-        
-        /*if there are more than one devices sharing this entity, we
-          have to assign this call back, otherwise the XAA will be
-          disabled */
-        if(pRADEONEnt->HasSecondary || pRADEONEnt->BypassSecondary)
-           a->RestoreAccelState           = RADEONRestoreAccelState;
+    if (RADEON_VERBOSE) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Releasing buffer %d\n",
+		   buffer->idx);
     }
 
-				/* ImageWrite */
-    a->NumScanlineImageWriteBuffers    = 1;
-    a->ScanlineImageWriteBuffers       = info->scratch_buffer;
-    info->scratch_buffer[0]            = info->scratch_save;
-    a->SetupForScanlineImageWrite      = RADEONSetupForScanlineImageWrite;
-    a->SubsequentScanlineImageWriteRect
-	= RADEONSubsequentScanlineImageWriteRect;
-    a->SubsequentImageWriteScanline    = RADEONSubsequentImageWriteScanline;
-    a->ScanlineImageWriteFlags           = CPU_TRANSFER_PAD_DWORD
-		/* Performance tests show that we shouldn't use GXcopy for
-		 * uploads as a memcpy is faster */
-					 | NO_GXCOPY
-		/* RADEON gets upset, when using HOST provided data
-		 * without a source rop. To show run 'xtest's ptimg */
-					 | ROP_NEEDS_SOURCE
-					 | SCANLINE_PAD_DWORD
-					 | LEFT_EDGE_CLIPPING
-					 | LEFT_EDGE_CLIPPING_NEGATIVE_X;
+    indirect.idx     = buffer->idx;
+    indirect.start   = start;
+    indirect.end     = buffer->used;
+    indirect.discard = 1;
 
-#if 0
-				/* Color 8x8 Pattern Fill */
-    a->SetupForColor8x8PatternFill
-	= RADEONSetupForColor8x8PatternFill;
-    a->SubsequentColor8x8PatternFillRect
-	= RADEONSubsequentColor8x8PatternFillRect;
-    a->Color8x8PatternFillFlags          =
-					    HARDWARE_PATTERN_PROGRAMMED_ORIGIN
-					   | HARDWARE_PATTERN_SCREEN_ORIGIN
-					   | BIT_ORDER_IN_BYTE_LSBFIRST;
-#endif
+    drmCommandWriteRead(info->drmFD, DRM_RADEON_INDIRECT,
+			&indirect, sizeof(drmRadeonIndirect));
 }
+#endif
 
 /* Initialize XAA for supported acceleration and also initialize the
-   graphics hardware for acceleration. */
+ * graphics hardware for acceleration
+ */
 Bool RADEONAccelInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr   pScrn = xf86Screens[pScreen->myNum];
-    RADEONInfoPtr info  = RADEONPTR(pScrn);
-    XAAInfoRecPtr a;
+    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    RADEONInfoPtr  info  = RADEONPTR(pScrn);
+    XAAInfoRecPtr  a;
 
-    if (!(a = info->accel = XAACreateInfoRec())) 
-    {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
-            "XAACreateInfoRec Error\n");
-        return FALSE;
+    if (!(a = info->accel = XAACreateInfoRec())) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "XAACreateInfoRec Error\n");
+	return FALSE;
     }
+
 #ifdef XF86DRI
     if (info->directRenderingEnabled)
-	RADEONCPAccelInit(pScrn, a);
+	RADEONAccelInitCP(pScreen, a);
     else
 #endif
-	RADEONMMIOAccelInit(pScrn, a);
+	RADEONAccelInitMMIO(pScreen, a);
 
     RADEONEngineInit(pScrn);
-    
-    if(!XAAInit(pScreen, a))
-    {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
-            "XAAInit Error\n");
-        return FALSE;
-    }    
+
+    if (!XAAInit(pScreen, a)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "XAAInit Error\n");
+	return FALSE;
+    }
+
     return TRUE;
 }

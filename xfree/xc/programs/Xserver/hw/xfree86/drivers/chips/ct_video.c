@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.9 2001/10/01 13:44:04 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.12 2002/11/25 14:04:58 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -60,8 +60,7 @@ CHIPSInitVideo(ScreenPtr pScreen)
     int num_adaptors;
 	
     if (!(cPtr->Flags & ChipsOverlay8plus16) &&
-       (cPtr->Flags & ChipsVideoSupport)
-       && (cPtr->Flags & ChipsAccelSupport)) {
+       (cPtr->Flags & ChipsVideoSupport)) {
 	newAdaptor = CHIPSSetupImageVideo(pScreen);
 	CHIPSInitOffscreenImages(pScreen);
     }
@@ -131,7 +130,7 @@ static XF86ImageRec Images[NUM_IMAGES] =
 	16,
 	XvPacked,
 	1,
-	15, 0x001F, 0x03E0, 0x7C00,
+	15, 0x7C00, 0x03E0, 0x001F,
 	0, 0, 0,
 	0, 0, 0,
 	0, 0, 0,
@@ -148,7 +147,7 @@ static XF86ImageRec Images[NUM_IMAGES] =
 	16,
 	XvPacked,
 	1,
-	16, 0x001F, 0x07E0, 0xF800,
+	16, 0xF800, 0x07E0, 0x001F,
 	0, 0, 0,
 	0, 0, 0,
 	0, 0, 0,
@@ -184,7 +183,9 @@ CHIPSResetVideo(ScrnInfoPtr pScrn)
     unsigned char mr3c;
     int red, green, blue;
     
-    CHIPSHiQVSync(pScrn);
+    if (cPtr->Flags & ChipsAccelSupport) 
+	CHIPSHiQVSync(pScrn);
+
     mr3c = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (mr3c | 0x6));
     switch (pScrn->depth) {
@@ -414,7 +415,8 @@ CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shadow)
   unsigned char mr3c, tmp;
 
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
-  CHIPSHiQVSync(pScrn);
+  if (cPtr->Flags & ChipsAccelSupport) 
+      CHIPSHiQVSync(pScrn);
   if(shadow) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
 	mr3c = cPtr->readMR(cPtr, 0x3C);
@@ -446,7 +448,8 @@ CHIPSSetPortAttribute(
   CHIPSPortPrivPtr pPriv = (CHIPSPortPrivPtr)data;
   CHIPSPtr cPtr = CHIPSPTR(pScrn);
 
-  CHIPSHiQVSync(pScrn);
+  if (cPtr->Flags & ChipsAccelSupport) 
+      CHIPSHiQVSync(pScrn);
   if(attribute == xvColorKey) {
 	int red, green, blue;
 	pPriv->colorKey = value;
@@ -654,7 +657,8 @@ CHIPSDisplayVideo(
     unsigned char tmp, m1f, m1e;
     int buffer = pPriv->currentBuffer;
 
-    CHIPSHiQVSync(pScrn);
+    if (cPtr->Flags & ChipsAccelSupport) 
+	CHIPSHiQVSync(pScrn);
 
     tmp = cPtr->readXR(cPtr, 0xD0);
     cPtr->writeXR(cPtr, 0xD0, (tmp | 0x10));
@@ -744,7 +748,7 @@ CHIPSDisplayVideo(
 
     /* Vertical Zoom */
     if (drw_h > src_h) {
-        m1f = m1f | 0xc0;
+        m1f = m1f | 0x80;
 	m1e = m1e | 0x08; /* set V-interpolation */
 	tmp = cPtr->VideoZoomMax * src_h / drw_h ;
 	cPtr->writeMR(cPtr, 0x33, tmp);
@@ -754,7 +758,8 @@ CHIPSDisplayVideo(
 
     tmp = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (tmp | 0x7));
-    CHIPSHiQVSync(pScrn);
+    if (cPtr->Flags & ChipsAccelSupport) 
+	CHIPSHiQVSync(pScrn);
 }
 
 static int 
@@ -865,10 +870,7 @@ CHIPSPutImage(
    /* update cliplist */
    if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
 	REGION_COPY(pScreen, &pPriv->clip, clipBoxes);
-	/* draw these */
-	XAAFillSolidRects(pScrn, pPriv->colorKey, GXcopy, ~0, 
-					REGION_NUM_RECTS(clipBoxes),
-					REGION_RECTS(clipBoxes));
+        xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
    }
 
    offset += top * dstPitch;   
@@ -933,7 +935,8 @@ CHIPSVideoTimerCallback(ScrnInfoPtr pScrn, Time time)
     if(pPriv->videoStatus & TIMER_MASK) {
 	if(pPriv->videoStatus & OFF_TIMER) {
 	    if(pPriv->offTime < time) {
-		CHIPSHiQVSync(pScrn);
+		if (cPtr->Flags & ChipsAccelSupport) 
+		    CHIPSHiQVSync(pScrn);
 		mr3c = cPtr->readMR(cPtr, 0x3C);
 		cPtr->writeMR(cPtr, 0x3C, (mr3c & 0xFE));
 		pPriv->videoStatus = FREE_TIMER;
@@ -1116,10 +1119,7 @@ CHIPSDisplaySurface(
     CHIPSDisplayVideo(pScrn, surface->id, surface->offsets[0], 
 	     surface->width, surface->height, surface->pitches[0],
 	     x1, y1, x2, y2, &dstBox, src_w, src_h, drw_w, drw_h, FALSE);
-
-    XAAFillSolidRects(pScrn, portPriv->colorKey, GXcopy, ~0, 
-                                        REGION_NUM_RECTS(clipBoxes),
-                                        REGION_RECTS(clipBoxes));
+    xf86XVFillKeyHelper(pScrn->pScreen, portPriv->colorKey, clipBoxes);
 
     pPriv->isOn = TRUE;
     if(portPriv->videoStatus & CLIENT_VIDEO_ON) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dac.c,v 1.3 1999/03/29 12:17:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dac.c,v 1.4 2003/02/04 02:20:50 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
@@ -44,11 +44,13 @@ in this Software without prior written authorization from the XFree86 Project.
 
 	/* function */
 void
-S3VCommonCalcClock(long freq, int min_m, int min_n1, int max_n1, int min_n2, int max_n2, 
-		long freq_min, long freq_max,
-		unsigned char * mdiv, unsigned char * ndiv)
+S3VCommonCalcClock(ScrnInfoPtr pScrn, DisplayModePtr mode,
+		   long freq, int min_m, int min_n1, 
+		   int max_n1, int min_n2, int max_n2, 
+		   long freq_min, long freq_max,
+		   unsigned char * mdiv, unsigned char * ndiv)
 {
-   double ffreq, ffreq_min, ffreq_max;
+   double ffreq, ffreq_min, ffreq_max, ffreq_min_warn;
    double div, diff, best_diff;
    unsigned int m;
    unsigned char n1, n2;
@@ -58,14 +60,24 @@ S3VCommonCalcClock(long freq, int min_m, int min_n1, int max_n1, int min_n2, int
    ffreq_min = freq_min / 1000.0 / BASE_FREQ;
    ffreq_max = freq_max / 1000.0 / BASE_FREQ;
 
-   if (ffreq < ffreq_min / (1<<max_n2)) {
-      ErrorF("invalid frequency %1.3f MHz  [freq >= %1.3f MHz]\n", 
-	     ffreq*BASE_FREQ, ffreq_min*BASE_FREQ / (1<<max_n2));
-      ffreq = ffreq_min / (1<<max_n2);
+   /* Doublescan modes can run at half the min frequency */
+   /* But only use that value for warning and changing */
+   /* ffreq, don't change the actual min used for clock calcs below. */
+   if(mode->Flags & V_DBLSCAN && ffreq_min)
+     ffreq_min_warn = ffreq_min / 2;
+   else
+     ffreq_min_warn = ffreq_min;
+
+   if (ffreq < ffreq_min_warn / (1<<max_n2)) {
+      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		 "invalid frequency %1.3f MHz  [freq <= %1.3f MHz]\n", 
+		 ffreq*BASE_FREQ, ffreq_min_warn*BASE_FREQ / (1<<max_n2));
+      ffreq = ffreq_min_warn / (1<<max_n2);
    }
    if (ffreq > ffreq_max / (1<<min_n2)) {
-      ErrorF("invalid frequency %1.3f MHz  [freq <= %1.3f MHz]\n", 
-	     ffreq*BASE_FREQ, ffreq_max*BASE_FREQ / (1<<min_n2));
+      xf86DrvMsg(pScrn->scrnIndex, X_ERROR,      
+		 "invalid frequency %1.3f MHz  [freq >= %1.3f MHz]\n", 
+		 ffreq*BASE_FREQ, ffreq_max*BASE_FREQ / (1<<min_n2));
       ffreq = ffreq_max / (1<<min_n2);
    }
 

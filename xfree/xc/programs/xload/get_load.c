@@ -1,5 +1,5 @@
 /* $XConsortium: get_load.c /main/37 1996/03/09 09:38:04 kaleb $ */
-/* $XFree86: xc/programs/xload/get_load.c,v 1.15 2002/01/07 20:38:31 dawes Exp $ */
+/* $XFree86: xc/programs/xload/get_load.c,v 1.18 2002/09/18 17:11:57 tsi Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,6 +43,7 @@ from the X Consortium.
 #include <X11/Intrinsic.h>
 #include <X11/Xlocale.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "xload.h"
 
 #if !defined(DGUX)
@@ -53,7 +54,7 @@ from the X Consortium.
 #ifndef macII
 #ifndef apollo
 #ifndef LOADSTUB
-#if !defined(linux) && !defined(__EMX__) && !defined(__GNU__)
+#if !defined(linux) && !defined(__UNIXOS2__) && !defined(__GNU__)
 #include <nlist.h>
 #endif /* !linux && ... */
 #endif /* LOADSTUB */
@@ -613,6 +614,7 @@ void GetLoadPoint(w, closure, call_data)
 
 #else /* not __bsdi__ */
 #if defined(BSD) && (BSD >= 199306)
+#include <stdlib.h>
 
 void InitLoadPoint()
 {

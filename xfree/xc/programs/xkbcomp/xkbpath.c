@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbpath.c,v 3.5 2001/07/25 15:05:24 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbpath.c,v 3.8 2002/11/15 03:14:12 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -46,22 +46,15 @@
 
 #define	PATH_CHUNK	8
 
+static	Bool	 noDefaultPath = False;
 static	int	 longestPath;
 static	int	 szPath;
 static	int	 nPathEntries;
 static	char **	 includePath;
 
 Bool
-#if NeedFunctionPrototypes
 XkbParseIncludeMap(char **str_inout,char **file_rtrn,char **map_rtrn,
-							char *nextop_rtrn)
-#else
-XkbParseIncludeMap(str_inout,file_rtrn,map_rtrn,nextop_rtrn)
-    char **	str_inout;
-    char **	file_rtrn;
-    char **	map_rtrn;
-    char *	nextop_rtrn;
-#endif
+				char *nextop_rtrn, char **extra_data)
 {
 char *tmp,*str,*next;
 
@@ -86,12 +79,21 @@ char *tmp,*str,*next;
 	    *nextop_rtrn= '\0';
 	    next= NULL;
 	}
+	tmp= strchr(str,':');
+	if (tmp != NULL) {
+	   *tmp++ = '\0';
+	   *extra_data = uStringDup(tmp);
+	}
+	else {
+	   *extra_data = NULL;
+	}
 	tmp= strchr(str,'(');
 	if (tmp==NULL) {
 	    *file_rtrn= uStringDup(str);
 	    *map_rtrn= NULL;
 	}
 	else if (str[0]=='(') {
+	    uFree(*extra_data);
 	    return False;
 	}
 	else {
@@ -101,6 +103,7 @@ char *tmp,*str,*next;
 	    tmp= strchr(str,')');
 	    if ((tmp==NULL)||(tmp[1]!='\0')) {
 		uFree(*file_rtrn);
+		uFree(*extra_data);
 		return False;
 	    }
 	    *tmp++= '\0';
@@ -116,27 +119,26 @@ char *tmp,*str,*next;
 }
 
 Bool
-#if NeedFunctionPrototypes
 XkbInitIncludePath(void)
-#else
-XkbInitIncludePath()
-#endif
 {
     szPath= PATH_CHUNK;
     includePath=  (char **)calloc(szPath,sizeof(char *));
     if (includePath==NULL)
 	return False;
-    XkbAddDirectoryToPath(".");
-    XkbAddDirectoryToPath(DFLT_XKB_CONFIG_ROOT);
     return True;
 }
 
 void
-#if NeedFunctionPrototypes
+XkbAddDefaultDirectoriesToPath(void)
+{
+    if (noDefaultPath)
+	return;
+    XkbAddDirectoryToPath(".");
+    XkbAddDirectoryToPath(DFLT_XKB_CONFIG_ROOT);
+}
+
+void
 XkbClearIncludePath(void)
-#else
-XkbClearIncludePath()
-#endif
 {
 register int i;
 
@@ -150,23 +152,19 @@ register int i;
 	nPathEntries= 0;
 	longestPath= 0;
     }
+    noDefaultPath = True;
     return;
 }
 
 Bool
-#if NeedFunctionPrototypes
 XkbAddDirectoryToPath(char *dir)
-#else
-XkbAddDirectoryToPath(dir)
-    char	*dir;
-#endif
 {
 int	len;
     if ((dir==NULL)||(dir[0]=='\0')) {
 	XkbClearIncludePath();
 	return True;
     }
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     dir = (char*)__XOS2RedirRoot(dir);
 #endif
     len= strlen(dir);
@@ -197,12 +195,7 @@ int	len;
 /***====================================================================***/
 
 char *
-#if NeedFunctionPrototypes
 XkbDirectoryForInclude(unsigned type)
-#else
-XkbDirectoryForInclude(type)
-    unsigned	type;
-#endif
 {
 static char buf[32];
 
@@ -251,15 +244,7 @@ typedef struct _FileCacheEntry {
 static FileCacheEntry	*fileCache;
 
 void *
-#if NeedFunctionPrototypes
 XkbAddFileToCache(char *name,unsigned type,char *path,void *data)
-#else
-XkbAddFileToCache(name,type,path,data)
-    char *	name;
-    unsigned	type;
-    char *	path;
-    void *	data;
-#endif
 {
 FileCacheEntry	*entry;
 
@@ -285,14 +270,7 @@ FileCacheEntry	*entry;
 }
 
 void *
-#if NeedFunctionPrototypes
 XkbFindFileInCache(char *name,unsigned type,char **pathRtrn)
-#else
-XkbFindFileInCache(name,type,pathRtrn)
-    char *	name;
-    unsigned	type;
-    char **	pathRtrn;
-#endif
 {
 FileCacheEntry	*entry;
 
@@ -308,14 +286,7 @@ FileCacheEntry	*entry;
 /***====================================================================***/
 
 FILE *
-#if NeedFunctionPrototypes
 XkbFindFileInPath(char *name,unsigned type,char **pathRtrn)
-#else
-XkbFindFileInPath(name,type,pathRtrn)
-    char *	name;
-    unsigned	type;
-    char **	pathRtrn;
-#endif
 {
 register int i;
 FILE	*file= NULL;

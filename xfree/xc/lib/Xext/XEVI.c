@@ -21,13 +21,14 @@ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
+/* $XFree86: xc/lib/Xext/XEVI.c,v 1.7 2002/10/16 00:37:27 dawes Exp $ */
 #define NEED_EVENTS
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "XEVI.h"
-#include "XEVIstr.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/XEVI.h>
+#include <X11/extensions/XEVIstr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 #include <X11/Xutil.h>
 static XExtensionInfo *xevi_info;/* needs to move to globals.c */
 static /* const */ char *xevi_extension_name = EVINAME;

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/regions.c,v 3.7 2001/08/27 19:49:53 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/regions.c,v 3.8 2002/02/18 20:51:57 herrb Exp $ */
  /* REGIONS  CWEB         V0023 LOTS                                 */
 /*
 :h1 id=regions.REGIONS Module - Regions Operator Handler
@@ -234,7 +234,7 @@ KillRegion(struct region *area)  /* area to free                             */
         register struct edgelist *next;  /* loop variable                    */
  
         if (area->references < 0)
-               abort("KillRegion:  negative reference count");
+               Abort("KillRegion:  negative reference count");
         if ( (--(area->references) > 1) ||
            ( (area->references == 1) && !ISPERMANENT(area->flag) ) )
             return;
@@ -300,7 +300,7 @@ NewEdge(pel xmin, pel xmax,  /* X extent of edge                             */
        IfTrace2((RegionDebug),"....new edge: ymin=%d, ymax=%d ",
                                               (long)ymin, (long) ymax);
        if (ymin >= ymax)
-               abort("newedge: height not positive");
+               Abort("newedge: height not positive");
 /*
 We are going to copy the xvalues into a newly allocated area.  It
 helps performance if the values are all "long" aligned.  We can test
@@ -366,7 +366,7 @@ discard(struct edgelist *left,  /* all edges between here exclusive          */
  
        for (p = beg; p != right; p = p->link) {
                if (p->link == NULL && right != NULL)
-                       abort("discard():  ran off end");
+                       Abort("discard():  ran off end");
                IfTrace1((RegionDebug > 0),"discarding %x\n", p);
                p->ymin = p->ymax = 32767;
                end = p;
@@ -426,7 +426,7 @@ Unwind(struct edgelist *area)   /* input area modified in place              */
                } while (area != NULL && area->ymin == y);
  
                if (count != 0)
-                       abort("Unwind:  uneven edges");
+                       Abort("Unwind:  uneven edges");
        }
 }
 /*
@@ -651,7 +651,7 @@ MOVETYPE at the end of the path, if it isn't closed:
                        break;
  
                    default:
-                       abort("Interior: path type error");
+                       Abort("Interior: path type error");
                }
 /*
 We're done with this segment.  Advance to the next path segment in
@@ -730,7 +730,7 @@ ChangeDirection(int type,    /* CD_FIRST, CD_CONTINUE, or CD_LAST            */
                }
  
                if (ymax < ymin)
-                       abort("negative sized edge?");
+                       Abort("negative sized edge?");
  
  
                (*R->newedgefcn)(R, R->edgexmin, R->edgexmax, ymin, ymax,
@@ -974,9 +974,9 @@ splitedge(struct edgelist *list, /* area to split                            */
                if (y < list->ymin)
                        break;
                if (y >= list->ymax)
-                       abort("splitedge: above top of list");
+                       Abort("splitedge: above top of list");
                if (y == list->ymin)
-                       abort("splitedge: would be null");
+                       Abort("splitedge: would be null");
  
                r = (struct edgelist *)Allocate(sizeof(struct edgelist), list, 0);
 /*
@@ -1016,7 +1016,7 @@ list at 'lastlist', and add the broken off part to the end of 'new'.
 Then, we return the caller a pointer to 'new':
 */
        if (new == NULL)
-               abort("null splitedge");
+               Abort("null splitedge");
        lastlist->link = NULL;
        last->link = list;
        IfTrace1((RegionDebug > 1),"yields %x\n", new);
@@ -1033,7 +1033,7 @@ static void vertjoin(top, bottom)
        register struct edgelist *bottom;  /* bottommost region               */
 {
        if (BOTTOM(top) > TOP(bottom))
-               abort("vertjoin not disjoint");
+               Abort("vertjoin not disjoint");
  
        for (; top->link != NULL; top=top->link) { ; }
  
@@ -1141,7 +1141,7 @@ SwathUnion(struct edgelist *before0,   /* edge before the swath              */
  
        h0 = h = edge->ymax - edge->ymin;
        if (h <= 0)
-               abort("SwathUnion:  0 height swath?");
+               Abort("SwathUnion:  0 height swath?");
  
        before = before0;
        after = before->link;
@@ -1446,7 +1446,7 @@ UnJumble(struct region *region) /* region to sort                            */
  
        for (edge=region->anchor; VALIDEDGE(edge); edge=next) {
                if (edge->link == NULL)
-                       abort("UnJumble:  unpaired edge?");
+                       Abort("UnJumble:  unpaired edge?");
                next = edge->link->link;
                edge->link->link = NULL;
                anchor = SortSwath(anchor, edge, t1_SwathUnion);
@@ -1484,9 +1484,9 @@ OptimizeRegion(struct region *R) /* region to optimize                       */
                if (xmin != xmax || (xmin != R->xmin && xmax != R->xmax))
                        R->flag &= ~ISRECTANGULAR(ON);
                if (xmin < e->xmin || xmax > e->xmax)
-                       abort("Tighten: existing edge bound was bad");
+                       Abort("Tighten: existing edge bound was bad");
                if (xmin < R->xmin || xmax > R->xmax)
-                       abort("Tighten: existing region bound was bad");
+                       Abort("Tighten: existing region bound was bad");
                e->xmin = xmin;
                e->xmax = xmax;
        }
@@ -1675,13 +1675,13 @@ static void
 edgecheck(struct edgelist *edge, int oldmin, int oldmax)
 {
        if (edge->type != EDGETYPE)
-               abort("EDGE ERROR: non EDGETYPE in list");
+               Abort("EDGE ERROR: non EDGETYPE in list");
 /*
 The following check is not valid if the region is jumbled so I took it
 out:
 */
 /*     if (edge->ymin < oldmax && edge->ymin != oldmin)
-               abort("EDGE ERROR: overlapping swaths"); */
+               Abort("EDGE ERROR: overlapping swaths"); */
 }
  
 static pel RegionDebugYMin = MINPEL;

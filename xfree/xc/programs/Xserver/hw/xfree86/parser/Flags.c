@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.18 2001/09/05 21:36:57 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Flags.c,v 1.22 2003/01/04 20:20:22 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -72,8 +72,8 @@ xf86parseFlagsSection (void)
 		switch (token)
 		{
 		case COMMENT:
-		    ptr->flg_comment = xf86addComment(ptr->flg_comment, val.str);
-		    break;
+			ptr->flg_comment = xf86addComment(ptr->flg_comment, val.str);
+			break;
 			/* 
 			 * these old keywords are turned into standard generic options.
 			 * we fall through here on purpose
@@ -108,15 +108,15 @@ xf86parseFlagsSection (void)
 						{
 							tokentype = xf86getSubToken(&(ptr->flg_comment));
 							if (strvalue) {
-							    if (tokentype != STRING)
-								Error (QUOTE_MSG, tmp);
-							    valstr = val.str;
+								if (tokentype != STRING)
+									Error (QUOTE_MSG, tmp);
+								valstr = val.str;
 							} else {
-							    if (tokentype != NUMBER)
-								Error (NUMBER_MSG, tmp);
-							    valstr = xf86confmalloc(16);
-							    if (valstr)
-								sprintf(valstr, "%d", val.num);
+								if (tokentype != NUMBER)
+									Error (NUMBER_MSG, tmp);
+								valstr = xf86confmalloc(16);
+								if (valstr)
+									sprintf(valstr, "%d", val.num);
 							}
 						}
 						ptr->flg_option_lst = xf86addNewOption
@@ -158,7 +158,7 @@ xf86printServerFlagsSection (FILE * f, XF86ConfFlagsPtr flags)
 	p = flags->flg_option_lst;
 	fprintf (f, "Section \"ServerFlags\"\n");
 	if (flags->flg_comment)
-	    fprintf (f, "%s", flags->flg_comment);
+		fprintf (f, "%s", flags->flg_comment);
 	xf86printOptionList(f, p, 1);
 	fprintf (f, "EndSection\n\n");
 }
@@ -166,24 +166,23 @@ xf86printServerFlagsSection (FILE * f, XF86ConfFlagsPtr flags)
 static XF86OptionPtr
 addNewOption2 (XF86OptionPtr head, char *name, char *val, int used)
 {
-        XF86OptionPtr new, old = NULL;
+	XF86OptionPtr new, old = NULL;
 
 	/* Don't allow duplicates */
  	if (head != NULL && (old = xf86findOption(head, name)) != NULL)
- 	    new = old;
+ 		new = old;
  	else {
-	    new = xf86confcalloc (1, sizeof (XF86OptionRec));
- 	    new->list.next = NULL;
+		new = xf86confcalloc (1, sizeof (XF86OptionRec));
+ 		new->list.next = NULL;
  	}
- 	
  	new->opt_name = name;
  	new->opt_val = val;
  	new->opt_used = used;
 	
   	if (old == NULL)
-	    return ((XF86OptionPtr) xf86addListItem ((glp) head, (glp) new));
+		return ((XF86OptionPtr) xf86addListItem ((glp) head, (glp) new));
  	else 
- 	    return head;
+ 		return head;
 }
 
 XF86OptionPtr
@@ -209,7 +208,8 @@ xf86optionListDup (XF86OptionPtr opt)
 
 	while (opt)
 	{
-		newopt = xf86addNewOption(newopt, opt->opt_name, opt->opt_val);
+		newopt = xf86addNewOption(newopt, xf86configStrdup(opt->opt_name), 
+					  xf86configStrdup(opt->opt_val));
 		newopt->opt_used = opt->opt_used;
 		if (opt->opt_comment)
 			newopt->opt_comment = xf86configStrdup(opt->opt_comment);
@@ -237,42 +237,42 @@ xf86optionListFree (XF86OptionPtr opt)
 char *
 xf86optionName(XF86OptionPtr opt)
 {
-    if (opt)
-	return opt->opt_name;
-    return 0;
+	if (opt)
+		return opt->opt_name;
+	return 0;
 }
 
 char *
 xf86optionValue(XF86OptionPtr opt)
 {
-    if (opt)
-	return opt->opt_val;
-    return 0;
+	if (opt)
+		return opt->opt_val;
+	return 0;
 }
 
 XF86OptionPtr
 xf86newOption(char *name, char *value)
 {
-    XF86OptionPtr opt;
+	XF86OptionPtr opt;
 
-    opt = xf86confcalloc(1, sizeof (XF86OptionRec));
-    if (!opt)
-	return NULL;
+	opt = xf86confcalloc(1, sizeof (XF86OptionRec));
+	if (!opt)
+		return NULL;
 
-    opt->opt_used = 0;
-    opt->list.next = 0;
-    opt->opt_name = name;
-    opt->opt_val = value;
+	opt->opt_used = 0;
+	opt->list.next = 0;
+	opt->opt_name = name;
+	opt->opt_val = value;
 
-    return opt;
+	return opt;
 }
 
 XF86OptionPtr
 xf86nextOption(XF86OptionPtr list)
 {
-    if (!list)
-	return NULL;
-    return list->list.next;
+	if (!list)
+		return NULL;
+	return list->list.next;
 }
 
 /*
@@ -348,66 +348,52 @@ xf86optionListCreate( const char **options, int count, int used )
 }
 
 /* the 2 given lists are merged. If an option with the same name is present in
- * both, the option from the user list is used. The end result is a single
- * valid list of options. Duplicates are freed, and the original lists are no
- * longer guaranteed to be complete.
+ * both, the option from the user list - specified in the second argument -
+ * is used. The end result is a single valid list of options. Duplicates
+ * are freed, and the original lists are no longer guaranteed to be complete.
  */
 XF86OptionPtr
 xf86optionListMerge (XF86OptionPtr head, XF86OptionPtr tail)
 {
-	XF86OptionPtr a, b, ap = NULL, bp = NULL, f = NULL;
+	XF86OptionPtr a, b, ap = NULL, bp = NULL;
 
-	a = head;
-	while (a)
-	{
-		bp = NULL;
-		b = tail;
-		while (b)
-		{
-			if (xf86nameCompare (a->opt_name, b->opt_name) == 0)
-			{
-				if ((a == head) && (b == tail))
-				{
-					head = b;
-					tail = b->list.next;
-					b->list.next = a->list.next;
-					bp = tail;
-				}
-				else if (a == head)
-				{
-					head = b;
-					bp->list.next = b->list.next;
-					b->list.next = a->list.next;
-				}
-				else if (b == tail)
-				{
-					tail = b->list.next;
-					ap->list.next = b;
-					b->list.next = a->list.next;
-					bp = tail;
-				}
-				else
-				{
-					ap->list.next = b;
-					bp->list.next = b->list.next;
-					b->list.next = a->list.next;
-				}
-				a->list.next = f;
-				f = a;
-				a = b;
-				b = bp;
-				continue;
+	a = tail;
+	b = head;
+	while (tail && b) {
+		if (xf86nameCompare (a->opt_name, b->opt_name) == 0) {
+			if (b == head)
+				head = a;
+			else
+				bp->list.next = a;
+			if (a == tail)
+				tail = a->list.next;
+			else
+				ap->list.next = a->list.next;
+			a->list.next = b->list.next;
+			b->list.next = NULL;
+			xf86optionListFree (b);
+			b = a->list.next;
+			bp = a;
+			a = tail;
+			ap = NULL;
+		} else {
+			ap = a;
+			if (!(a = a->list.next)) {
+				a = tail;
+				bp = b;
+				b = b->list.next;
+				ap = NULL;
 			}
-			bp = b;
-			b = b->list.next;
 		}
-		ap = a;
-		a = a->list.next;
 	}
 
-	ap->list.next = tail;
+	if (head) {
+		for (a = head; a->list.next; a = a->list.next)
+			;
+		a->list.next = tail;
+	} else 
+		head = tail;
 
-	xf86optionListFree (f);
 	return (head);
 }
 
@@ -415,7 +401,7 @@ char *
 xf86uLongToString(unsigned long i)
 {
 	char *s;
-    int l;
+	int l;
 
 	l = (int)(ceil(log10((double)i) + 2.5));
 	s = xf86confmalloc(l);
@@ -428,10 +414,10 @@ xf86uLongToString(unsigned long i)
 void
 xf86debugListOptions(XF86OptionPtr Options)
 {
-    while (Options) {
-	ErrorF("Option: %s Value: %s\n",Options->opt_name,Options->opt_val);
-	Options = Options->list.next;
-    }
+	while (Options) {
+		ErrorF("Option: %s Value: %s\n",Options->opt_name,Options->opt_val);
+		Options = Options->list.next;
+	}
 }
 
 XF86OptionPtr
@@ -466,7 +452,7 @@ xf86parseOption(XF86OptionPtr head)
 			xf86unGetToken(token);
 	}
 
-        old = NULL;
+	old = NULL;
 
 	/* Don't allow duplicates */
 	if (head != NULL && (old = xf86findOption(head, name)) != NULL) {

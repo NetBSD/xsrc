@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.c,v 1.17 2001/11/30 12:12:04 eich Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.c,v 1.22 2003/01/01 19:22:24 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -134,23 +134,24 @@ KeyboardConfig(XtPointer config)
 	    xkb_infos[num_xkb_infos++] = xkb_info;
 
 	    xkb_info->conf = keyboard;
+	    bzero((char*)&(xkb_info->defs), sizeof(XkbRF_VarDefsRec));
 	    while (timeout > 0) {
 		xkb_info->xkb =
 		    XkbGetKeyboard(XtDisplay(configp),
 				   XkbGBN_AllComponentsMask, XkbUseCoreKbd);
-		if (xkb_info->xkb == NULL || xkb_info->xkb->geom == NULL)
-		    sleep(timeout -= 1);
+		if (xkb_info->xkb == NULL) {
+		    timeout -= 1;
+		    sleep(1);
+		}		    
 		else
 		    break;
 	    }
 	    if (timeout <= 0) {
 		fprintf(stderr, "Couldn't get keyboard\n");
-		exit(1);
 	    }
-	    if (xkb_info->xkb->names->geometry == 0)
+	    if (xkb_info->xkb && xkb_info->xkb->names && xkb_info->xkb->geom &&
+		xkb_info->xkb->names->geometry == 0)
 		xkb_info->xkb->names->geometry = xkb_info->xkb->geom->name;
-
-	    bzero((char*)&(xkb_info->defs), sizeof(XkbRF_VarDefsRec));
 	}
 
 	/* check for removed devices */
@@ -294,6 +295,7 @@ KeyboardConfig(XtPointer config)
 		XtFree(option->opt_val);
 		option->opt_val = XtNewString(rules);
 		XtFree(option->opt_comment);
+		option->opt_comment = NULL;
 	    }
 	    else
 		keyboard->inp_option_lst =
@@ -305,6 +307,7 @@ KeyboardConfig(XtPointer config)
 		XtFree(option->opt_val);
 		option->opt_val = XtNewString(model);
 		XtFree(option->opt_comment);
+		option->opt_comment = NULL;
 	    }
 	    else
 		keyboard->inp_option_lst =
@@ -451,11 +454,12 @@ InitializeKeyboard(void)
     xkb_infos = (XkbInfo**)XtCalloc(1, sizeof(XkbInfo*));
     num_xkb_infos = 1;
     xkb_infos[0] = xkb_info;
+    bzero((char*)&(xkb_info->defs), sizeof(XkbRF_VarDefsRec));
 
     while (timeout > 0) {
 	xkb_info->xkb =
 	    XkbGetKeyboard(DPY, XkbGBN_AllComponentsMask, XkbUseCoreKbd);
-	if (xkb_info->xkb == NULL || xkb_info->xkb->geom == NULL) {
+	if (xkb_info->xkb == NULL) {
 	    timeout -= 1;
 	    sleep(1);
 	}
@@ -464,12 +468,10 @@ InitializeKeyboard(void)
     }
     if (timeout <= 0) {
 	fprintf(stderr, "Couldn't get keyboard\n");
-	exit(1);
     }
-    if (xkb_info->xkb->names->geometry == 0)
+    if (xkb_info->xkb && xkb_info->xkb->names && xkb_info->xkb->geom &&
+	xkb_info->xkb->names->geometry == 0)
 	xkb_info->xkb->names->geometry = xkb_info->xkb->geom->name;
-
-    bzero((char*)&(xkb_info->defs), sizeof(XkbRF_VarDefsRec));
 
     /* Load configuration */
     XmuSnprintf(name, sizeof(name), "%s%s", XkbConfigDir, XkbConfigFile);
@@ -565,6 +567,17 @@ InitializeKeyboard(void)
 	xkb_info->defs.options = option->opt_val;
     else
 	xkb_info->defs.options = NULL;
+
+    if (xkb_info->xkb == NULL) {
+	/* Try again */
+	XkbComponentNamesRec comps;
+
+	bzero((char*)&comps, sizeof(XkbComponentNamesRec));
+	XkbRF_GetComponents(xkb_rules->list, &(xkb_info->defs), &comps);
+
+	xkb_info->xkb = XkbGetKeyboardByName(DPY, XkbUseCoreKbd, &comps,
+					     XkbGBN_AllComponentsMask, 0, 0);
+    }
 }
 
 static XF86XkbRulesDescInfo *
@@ -857,8 +870,9 @@ UpdateKeyboard(Bool load)
 	fprintf(stderr, "Couldn't get keyboard\n");
 	return (False);
     }
-    if (xkb->names->geometry == 0)
-	xkb->names->geometry = xkb->geom->name;
+    if (xkb_info->xkb && xkb_info->xkb->names && xkb_info->xkb->geom &&
+	xkb_info->xkb->names->geometry == 0)
+	xkb_info->xkb->names->geometry = xkb_info->xkb->geom->name;
 
     XkbFreeKeyboard(xkb_info->xkb, 0, False);
 
@@ -1084,8 +1098,6 @@ KeyboardOptionsCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
     Arg args[1];
     int i;
-    char *oldval = xkb_info->defs.options ?
-	XtNewString(xkb_info->defs.options) : XtNewString("");
 
     for (i = 0; i < xkb_rules->option.nelem; i++)
 	if (strcmp(XtName(w), xkb_rules->option.name[i]) == 0)
@@ -1136,18 +1148,15 @@ KeyboardOptionsCallback(Widget w, XtPointer user_data, XtPointer call_data)
     if (options == NULL)
 	options = XtNewString("");
 
-    xkb_info->defs.options = *options ? options : NULL;
+    xkb_info->defs.options = options;
     if (!UpdateKeyboard(False)) {
-	XtFree(options);
-	xkb_info->defs.options = *oldval ? oldval : NULL;
+	*options = '\0';
+	xkb_info->defs.options = NULL;
     }
-    else {
-	XtFree(oldval);
-	XtSetArg(args[0], XtNlabel, options);
-	XtSetValues(optionsb, args, 1);
-	XtSetArg(args[0], XtNtip, options);
-	XtSetValues(optionsb, args, 1);
-    }
+    XtSetArg(args[0], XtNlabel, options);
+    XtSetValues(optionsb, args, 1);
+    XtSetArg(args[0], XtNtip, options);
+    XtSetValues(optionsb, args, 1);
 }
 
 /*ARGSUSED*/

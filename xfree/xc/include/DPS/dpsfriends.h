@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsfriends.h,v 1.4 2001/08/01 00:44:34 tsi Exp $ */
+/* $XFree86: xc/include/DPS/dpsfriends.h,v 1.5 2002/08/20 09:48:18 herrb Exp $ */
 
 #ifndef	DPSFRIENDS_H
 #define	DPSFRIENDS_H
@@ -392,7 +392,7 @@ typedef struct {
 
 #ifndef NeXTSTEP
 #define DPSSYNCHOOK(ctxt) \
-	if ((ctxt)->contextFlags && DPS_FLAG_SYNC) DPSWaitContext(ctxt);
+	if ((ctxt)->contextFlags & DPS_FLAG_SYNC) DPSWaitContext(ctxt);
 #endif /* NeXT */
 
 /*=== PROCEDURES ===*/

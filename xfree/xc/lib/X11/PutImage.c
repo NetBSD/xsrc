@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/PutImage.c,v 3.9 2001/12/14 19:54:03 dawes Exp $ */
+/* $XFree86: xc/lib/X11/PutImage.c,v 3.11 2002/12/09 04:10:56 tsi Exp $ */
 
 #include "Xlibint.h"
 #include "Xutil.h"
@@ -343,6 +343,7 @@ SwapBitsAndTwoBytes (src, dest, srclen, srcinc, destinc, height, half_order)
     register unsigned char *src, *dest;
     long srclen, srcinc, destinc;
     unsigned int height;
+    int half_order;
 {
     long length = ROUNDUP(srclen, 2);
     register long h, n;
@@ -906,6 +907,13 @@ PutSubImage (dpy, d, gc, image, req_xoffset, req_yoffset, x, y,
 
 extern void _XInitImageFuncPtrs();
 
+#ifdef USE_DYNAMIC_XCURSOR
+void
+_XNoticePutBitmap (Display	*dpy,
+		   Drawable	draw,
+		   XImage	*image);
+#endif
+    
 int
 XPutImage (dpy, d, gc, image, req_xoffset, req_yoffset, x, y, req_width,
 							      req_height)
@@ -996,5 +1004,15 @@ XPutImage (dpy, d, gc, image, req_xoffset, req_yoffset, x, y, req_width,
 
     UnlockDisplay(dpy);
     SyncHandle();
+#ifdef USE_DYNAMIC_XCURSOR
+    if (image->bits_per_pixel == 1 &&
+	x == 0 && y == 0 &&
+	width == image->width && height == image->height &&
+	gc->values.function == GXcopy &&
+	(gc->values.plane_mask & 1))
+    {
+	_XNoticePutBitmap (dpy, d, image);
+    }
+#endif
     return 0;
 }

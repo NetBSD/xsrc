@@ -1,6 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.20 2001/12/15 00:59:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.25 2003/01/29 15:42:17 eich Exp $ */
 
-/* modified from tdfx_dri.c, mga_dri.c */
+/*
+ *  DRI wrapper for 300, 540, 630, 730
+ *  (310/325 series experimental and incomplete)
+ *
+ * taken and modified from tdfx_dri.c, mga_dri.c
+ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -15,13 +20,27 @@
 
 #include "sis.h"
 #include "sis_dri.h"
-#include "xf86drmSiS.h"
+#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+#include "xf86drmCompat.h"
+#endif
 
+/* TW: Idle function for 300 series */
 #define BR(x)   (0x8200 | (x) << 2)
 #define SiSIdle \
   while((MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   while((MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   MMIO_IN16(pSiS->IOBase, 0x8240);
+
+/* TW: Idle function for 310/325 series */
+#define Q_STATUS 0x85CC
+#define SiS310Idle \
+  { \
+  while( (MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000){}; \
+  while( (MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000){}; \
+  while( (MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000){}; \
+  MMIO_IN16(pSiS->IOBase, Q_STATUS); \
+  }
+
 
 extern void GlxSetVisualConfigs(
     int nconfigs,
@@ -52,6 +71,10 @@ static void SISDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
 static void SISDRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 index);
 static void SISDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg, 
                    RegionPtr prgnSrc, CARD32 index);
+
+#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+extern Bool drmSiSAgpInit(int driSubFD, int offset, int size);
+#endif
 
 static Bool
 SISInitVisualConfigs(ScreenPtr pScreen)
@@ -222,11 +245,22 @@ Bool SISDRIScreenInit(ScreenPtr pScreen)
   pDRIInfo->ddxDriverMajorVersion = 0;
   pDRIInfo->ddxDriverMinorVersion = 1;
   pDRIInfo->ddxDriverPatchVersion = 0;
-  pDRIInfo->frameBufferPhysicalAddress = pSIS->FbAddress;
-  pDRIInfo->frameBufferSize = pSIS->FbMapSize;  
   
-  /* ?? */
+  pDRIInfo->frameBufferPhysicalAddress = pSIS->FbAddress;
+
+  /* TW: This was FbMapSize which is wrong as we must not
+   *     ever overwrite HWCursor and TQ area. On the other
+   *     hand, using availMem here causes MTRR allocation
+   *     to fail ("base is not aligned to size"). Since
+   *     DRI memory management is done via framebuffer
+   *     device, I assume that the size given here
+   *     is NOT used for eventual memory management.
+   */
+  pDRIInfo->frameBufferSize = pSIS->FbMapSize;   /* availMem; */
+  
+  /* TW: scrnOffset is being calulated in sis_vga.c */
   pDRIInfo->frameBufferStride = pSIS->scrnOffset;
+  
   pDRIInfo->ddxDrawableTableEntry = SIS_MAX_DRAWABLES;
 
   if (SAREA_MAX_DRAWABLES < SIS_MAX_DRAWABLES)
@@ -235,11 +269,12 @@ Bool SISDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->maxDrawableTableEntry = SIS_MAX_DRAWABLES;
 
 #ifdef NOT_DONE
-  /* FIXME need to extend DRI protocol to pass this size back to client 
+  /* FIXME need to extend DRI protocol to pass this size back to client
    * for SAREA mapping that includes a device private record
    */
-  pDRIInfo->SAREASize = 
-    ((sizeof(XF86DRISAREARec) + 0xfff) & 0x1000); /* round to page */
+  pDRIInfo->SAREASize =
+    ((sizeof(XF86DRISAREARec) + getpagesize() - 1) & getpagesize()); /* round to page */
+    /* ((sizeof(XF86DRISAREARec) + 0xfff) & 0x1000); */ /* round to page */
   /* + shared memory device private rec */
 #else
   /* For now the mapping works by using a fixed size defined
@@ -492,8 +527,15 @@ SISDRIFinishScreenInit(ScreenPtr pScreen)
 
     /* frame control */
     saPriv->FrameCount = 0;
-    *(unsigned long *)(pSiS->IOBase+0x8a2c) = 0;
-    SiSIdle
+    if (pSiS->VGAEngine == SIS_315_VGA) {	/* 310/325 series */
+#if 0
+       *(unsigned long *)(pSiS->IOBase+0x8a2c) = 0;	/* FIXME: Where is this on the 310 series ? */
+#endif
+       SiS310Idle
+    } else {					/* 300 series (and below) */
+       *(unsigned long *)(pSiS->IOBase+0x8a2c) = 0;
+       SiSIdle
+    }
   }
   
   return DRIFinishScreenInit(pScreen);
@@ -505,7 +547,7 @@ SISDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
            DRIContextType newContextType, void *newContext)
 {
   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-  SISPtr pSIS = SISPTR(pScrn);
+  SISPtr pSiS = SISPTR(pScrn);
 
 #if 0
   if ((syncType==DRI_3D_SYNC) && (oldContextType==DRI_2D_CONTEXT) &&
@@ -522,10 +564,16 @@ SISDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
   /* 
    * TODO: do this only if X-Server get lock. If kernel supports delayed
    * signal, needless to do this
-   */ 
-  *(pSIS->IOBase + 0X8B50) = 0xff;
-  *(unsigned int *)(pSIS->IOBase + 0x8B60) = -1;
-    
+   */
+  if (pSiS->VGAEngine == SIS_315_VGA) {
+#if 0
+        *(pSiS->IOBase + 0x8B50) = 0xff;		/* FIXME: Where is this on 310 series */
+  	*(unsigned int *)(pSiS->IOBase + 0x8B60) = -1;  /* FIXME: Where is this on 310 series */
+#endif
+  } else {
+  	*(pSiS->IOBase + 0x8B50) = 0xff;
+  	*(unsigned int *)(pSiS->IOBase + 0x8B60) = -1;
+  }
 }
 
 static void
@@ -535,7 +583,11 @@ SISDRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 index)
   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
   SISPtr pSiS = SISPTR(pScrn);
 
-  SiSIdle  
+  if (pSiS->VGAEngine == SIS_315_VGA) {
+  	SiS310Idle		/* 310/325 series */
+  } else {
+    	SiSIdle			/* 300 series */
+  }
 }
 
 static void
@@ -546,7 +598,11 @@ SISDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
   SISPtr pSiS = SISPTR(pScrn);
 
-  SiSIdle  
+  if (pSiS->VGAEngine == SIS_315_VGA) {
+  	SiS310Idle		/* 310/325 series */
+  } else {
+  	SiSIdle			/* 300 series and below */
+  }
 }
 
 #if 0

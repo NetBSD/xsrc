@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/include/extensions/XLbx.h,v 1.2 2001/08/01 00:44:35 tsi Exp $ */
+/* $XFree86: xc/include/extensions/XLbx.h,v 1.3 2002/10/16 01:59:55 dawes Exp $ */
  
 #ifndef _XLBX_H_
 #define _XLBX_H_
@@ -149,6 +149,8 @@ Bool XLbxQueryVersion(
     int*		/* minorVersion */
 #endif
 );
+
+int XLbxGetEventBase(Display *dpy);
 
 _XFUNCPROTOEND
 

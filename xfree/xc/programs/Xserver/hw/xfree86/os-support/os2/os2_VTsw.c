@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.10 2000/04/05 18:13:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.11 2002/05/31 18:46:01 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Modified 1996 by Sebastien Marineau <marineau@genie.uottawa.ca>
@@ -24,12 +24,12 @@
  */
 /* $XConsortium: os2_VTsw.c /main/7 1996/05/13 16:37:55 kaleb $ */
 
+#define I_NEED_OS2_H
 #define NEED_EVENTS
 #include "X.h"
 #include "input.h"
 #include "scrnintstr.h"
 
-#define I_NEED_OS2_H
 #define INCL_WINSWITCHLIST
 #define INCL_VIO
 #define INCL_KBD

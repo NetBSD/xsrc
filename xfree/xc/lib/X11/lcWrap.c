@@ -53,7 +53,7 @@ from The Open Group.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
-/* $XFree86: xc/lib/X11/lcWrap.c,v 3.13 2001/12/14 19:54:10 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.14 2002/11/01 13:43:31 alanh Exp $ */
 
 #include <stdlib.h>
 #include "Xlibint.h"
@@ -333,6 +333,11 @@ _XCloseLC(
 	    }
 	    break;
 	}
+    }
+
+    if(loader_list) {
+	_XlcDeInitLoader();
+	loader_list = NULL;
     }
 }
 

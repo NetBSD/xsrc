@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.9 2001/03/02 22:39:27 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/accessx.c,v 1.10 2002/12/05 19:31:18 paulo Exp $
  */
 
 #include "config.h"
@@ -96,21 +96,23 @@ startaccessx(void)
 {
     InitializeKeyboard();
 
-    XkbGetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
-    if (xkb_info->xkb->ctrls == NULL)
-	xkb_info->xkb->ctrls = (XkbControlsPtr)
-	    XtCalloc(1, sizeof(XkbControlsRec));
+    if (xkb_info->xkb) {
+	XkbGetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
+	if (xkb_info->xkb->ctrls == NULL)
+	    xkb_info->xkb->ctrls = (XkbControlsPtr)
+		XtCalloc(1, sizeof(XkbControlsRec));
 
-    xkb_info->xkb->ctrls->enabled_ctrls |= XkbMouseKeysMask |
-					   XkbMouseKeysAccelMask;
-    xkb_info->xkb->ctrls->mk_delay = 40;
-    xkb_info->xkb->ctrls->mk_interval = 10;
-    xkb_info->xkb->ctrls->mk_time_to_max = 1000;
-    xkb_info->xkb->ctrls->mk_max_speed = 500;
-    xkb_info->xkb->ctrls->mk_curve = 0;
-    XkbSetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
-    (void)UpdateKeyboard(True);
-    CreateAccessXHelpDialog();
+	xkb_info->xkb->ctrls->enabled_ctrls |= XkbMouseKeysMask |
+					       XkbMouseKeysAccelMask;
+	xkb_info->xkb->ctrls->mk_delay = 40;
+	xkb_info->xkb->ctrls->mk_interval = 10;
+	xkb_info->xkb->ctrls->mk_time_to_max = 1000;
+	xkb_info->xkb->ctrls->mk_max_speed = 500;
+	xkb_info->xkb->ctrls->mk_curve = 0;
+	XkbSetControls(DPY, XkbAllControlsMask, xkb_info->xkb);
+	(void)UpdateKeyboard(True);
+	CreateAccessXHelpDialog();
+    }
 }
 
 void
