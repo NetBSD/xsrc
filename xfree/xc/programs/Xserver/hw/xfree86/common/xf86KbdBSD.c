@@ -1219,6 +1219,7 @@ WSKbdToKeycode(int keycode)
 #endif
 #ifdef WSKBD_TYPE_SUN
 	case WSKBD_TYPE_SUN:
+	case WSKBD_TYPE_SUN5:
 		if (keycode < 0 || keycode >= WS_SUN_MAP_SIZE)
 			return KEY_UNKNOWN;
 		else
