@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.21 2003/11/10 18:22:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.22 2004/03/30 10:34:07 eich Exp $ */
 
 #include "xf86.h"
 #include "tdfx.h"
@@ -796,7 +796,7 @@ TDFXDisplayVideoOverlay(
     int dudx, dvdy;
 
     dudx = (src_w << 20) / drw_w;
-    /* subract 1 to eliminate garbage on last line */
+    /* subtract 1 to eliminate garbage on last line */
     dvdy = (( src_h - 1 )<< 20) / drw_h; 
 
     offset += ((left >> 16) & ~1) << 1;

@@ -21,7 +21,7 @@
   THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/fttools.c,v 1.7 2003/11/20 22:36:37 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/fttools.c,v 1.8 2004/10/23 15:29:26 dawes Exp $ */
 
 #include "fontmisc.h"
 #ifndef FONTMODULE
@@ -104,7 +104,6 @@ FTGetName(FT_Face face, int nid, int pid, int eid, FT_SfntName *name_return)
             case TT_PLATFORM_MICROSOFT:
                 if(name.language_id != TT_MS_LANGID_ENGLISH_UNITED_STATES &&
                    name.language_id != TT_MS_LANGID_ENGLISH_UNITED_KINGDOM)
-                    break;
                     continue;
                 break;
             default:

@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/fonttosfnt/util.c,v 1.11 2003/12/19 02:16:36 dawes Exp $ */
+/* $XFree86: xc/programs/fonttosfnt/util.c,v 1.13 2005/02/07 01:01:16 tsi Exp $ */
 
 #include <time.h>
 #include <string.h>
@@ -40,6 +40,10 @@ THE SOFTWARE.
 #include "fonttosfnt.h"
 
 #ifdef NEED_SNPRINTF
+#define NO_SNPRINTF
+/* In case a non-standard implementation is provided */
+#undef vsnprintf
+#define vsnprintf myvsnprintf
 #undef SCOPE
 #define SCOPE static
 #include "snprintf.c"
@@ -55,7 +59,7 @@ THE SOFTWARE.
 #define GMTOFFMEMBER tm_gmtoff
 #endif
 
-#ifdef SCO
+#ifdef __SCO__
 #define HAVE_TM_GMTOFF
 #define GMTOFFMEMBER tm_tzadj
 #endif

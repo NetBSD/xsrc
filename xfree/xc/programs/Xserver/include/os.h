@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.54 2003/10/30 21:21:06 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.63 2005/02/03 02:01:14 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -46,7 +46,52 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: os.h,v 1.4 2001/02/09 02:05:15 xorgcvs Exp $ */
+/*
+ * Copyright (c) 1996-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef OS_H
 #define OS_H
@@ -75,6 +120,14 @@ SOFTWARE.
 #define MAX_BIG_REQUEST_SIZE 4194303
 #endif
 
+/*
+ * Verbosity level used for log functions where the verbosity isn't
+ * specified explicitly.
+ */
+#ifndef X_LOG_DEFAULT_VERB
+#define X_LOG_DEFAULT_VERB 1
+#endif
+
 typedef pointer	FID;
 typedef struct _FontPathRec *FontPathPtr;
 typedef struct _NewClientRec *NewClientPtr;
@@ -90,10 +143,11 @@ typedef struct _NewClientRec *NewClientPtr;
 #define xfree(ptr) Xfree((pointer)(ptr))
 #define xstrdup(s) Xstrdup(s)
 #define xnfstrdup(s) XNFstrdup(s)
+#define xasprintf Xasprintf
 #endif
 
 #ifndef IN_MODULE
-#ifdef SCO
+#ifdef __SCO__
 #include <stdio.h>
 #endif
 #include <string.h>
@@ -243,6 +297,11 @@ extern int set_font_authorizations(
 extern pointer Xalloc(unsigned long /*amount*/);
 extern pointer Xcalloc(unsigned long /*amount*/);
 extern pointer Xrealloc(pointer /*ptr*/, unsigned long /*amount*/);
+#if !defined(WORD64) && !defined(LONG64)
+extern pointer Xllalloc(unsigned long long /*amount*/);
+extern pointer Xllrealloc(pointer, unsigned long long /*amount*/);
+extern pointer Xllcalloc(unsigned long long /*amount*/);
+#endif
 extern void Xfree(pointer /*ptr*/);
 #endif
 
@@ -280,6 +339,7 @@ extern void OsCleanup(Bool);
 
 extern void OsVendorFatalError(void);
 
+extern void OsVendorPreInit(void);
 extern void OsVendorInit(void);
 
 extern int OsInitColors(void);
@@ -496,16 +556,13 @@ typedef enum {
 } MessageType;
 
 /* XXX Need to check which GCC versions have the format(printf) attribute. */
-#if defined(__GNUC__) && \
+#if (!defined(printf) || defined(printf_is_xf86printf)) && \
+    defined(__GNUC__) && \
     ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 4)))
-#define _printf_attribute(a,b) __attribute((format(printf,a,b)))
+# define _printf_attribute(a,b) __attribute((format(printf,a,b)))
+# undef printf
 #else
-#define _printf_attribute(a,b) /**/
-#endif
-
-#ifdef printf
-#define printf_defined
-#undef printf
+# define _printf_attribute(a,b) /**/
 #endif
 
 extern const char *LogInit(const char *fname, const char *backup);
@@ -532,17 +589,28 @@ __attribute((noreturn))
 extern void VErrorF(const char *f, va_list args);
 extern void ErrorF(const char *f, ...) _printf_attribute(1,2);
 extern void Error(char *str);
+extern const char *LogTypeToTxt(MessageType type);
 extern void LogPrintMarkers(void);
 
-#if defined(NEED_SNPRINTF) && !defined(IN_MODULE)
+#ifndef IN_MODULE
+#if defined(NEED_SNPRINTF)
 extern int snprintf(char *str, size_t size, const char *format, ...)
 	_printf_attribute(3,4);
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
+#if defined(NEED_STRLCAT)
+extern size_t strlcat(char *dst, const char *src, size_t size);
+extern size_t strlcpy(char *dst, const char *src, size_t size);
+#endif
+#endif
 
-#ifdef printf_defined
+/* utils.c */
+extern int Xasprintf(char **ret, const char *format, ...)
+	_printf_attribute(2,3);
+
+#undef _printf_attribute
+#if defined(printf_is_xf86printf) && !defined(printf)
 #define printf xf86printf
-#undef printf_defined
 #endif
 
 #endif /* OS_H */

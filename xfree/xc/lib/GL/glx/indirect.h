@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect.h,v 1.6 2004/01/28 18:11:41 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect.h,v 1.8 2004/12/10 16:06:56 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -32,78 +32,401 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifndef _INDIRECT_H_
-#define _INDIRECT_H_
+#if !defined( _INDIRECT_H_ ) || defined( GENERATE_GLX_PROTOCOL_FUNCTIONS )
 
-#include "indirect_wrap.h"
+# if !defined( _INDIRECT_H_ ) 
+#  if defined( GENERATE_GLX_PROTOCOL_FUNCTIONS )
+#   error "indirect.h must be included once without GENERATE_GLX_PROTOCOL_FUNCTIONS defined!"
+#  endif
 
-/* NOTE: This file could be automatically generated */
+#  define _INDIRECT_H_
+#  include "indirect_wrap.h"
 
-void __indirect_glAccum(GLenum op, GLfloat value);
-void __indirect_glAlphaFunc(GLenum func, GLclampf ref);
+#  define glxproto_void(name, rop) \
+   extern void __indirect_gl ## name ( void );
+#  define glxproto_Cv(name, rop, type, count) \
+   extern void __indirect_gl ## name (const type * v);
+#  define glxproto_Cv_transpose(name, rop, type, w) \
+   extern void __indirect_gl ## name (const type * v);
+#  define glxproto_1s(name, rop, type) \
+   extern void __indirect_gl ## name (type v1);
+#  define glxproto_2s(name, rop, type) \
+   extern void __indirect_gl ## name (type v1, type v2);
+#  define glxproto_3s(name, rop, type) \
+   extern void __indirect_gl ## name (type v1, type v2, type v3);
+#  define glxproto_4s(name, rop, type) \
+   extern void __indirect_gl ## name (type v1, type v2, type v3, type v4);
+#  define glxproto_6s(name, rop, type) \
+   void __indirect_gl ## name (type v1, type v2, type v3, type v4, type v5, type v6);
+#  define glxproto_enum1_1s(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, type v1);
+#  define glxproto_enum1_1v(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, const type * v);
+#  define glxproto_enum1_2s(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, type v1, type v2);
+#  define glxproto_enum1_2v(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, const type * v);
+#  define glxproto_enum1_3s(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, type v1, type v2, type v3);
+#  define glxproto_enum1_3v(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, const type * v);
+#  define glxproto_enum1_4s(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, type v1, type v2, type v3, type v4);
+#  define glxproto_enum1_4v(name, rop, type) \
+   void __indirect_gl ## name (GLenum e, const type * v);
+#  define glxproto_enum1_Vv(name, rop, type) \
+   void __indirect_gl ## name (GLenum pname, const type * v);
+#  define glxproto_enum2_1s(name, rop, type) \
+   void __indirect_gl ## name (GLenum target, GLenum pname, type v1);
+#define glxproto_enum2_Vv(name, rop, type) \
+   void __indirect_gl ## name (GLenum target, GLenum pname, const type * v);
+
+# endif /* !defined( _INDIRECT_H_ ) */
+
+#define glxproto_1(name, rop, type) \
+   glxproto_1s(name,      rop, type) \
+   glxproto_Cv(name ## v, rop, type, 1)
+
+#define glxvendr_1(name, rop, type, VEN) \
+   glxproto_1s(name ## VEN,      rop, type) \
+   glxproto_Cv(name ## v ## VEN, rop, type, 1)
+
+#define glxproto_2(name, rop, type) \
+   glxproto_2s(name,      rop, type) \
+   glxproto_Cv(name ## v, rop, type, 2)
+
+#define glxvendr_2(name, rop, type, VEN) \
+   glxproto_2s(name ## VEN,      rop, type) \
+   glxproto_Cv(name ## v ## VEN, rop, type, 2)
+
+#define glxproto_3(name, rop, type) \
+   glxproto_3s(name,      rop, type) \
+   glxproto_Cv(name ## v, rop, type, 3)
+
+#define glxvendr_3(name, rop, type, VEN) \
+   glxproto_3s(name ## VEN,      rop, type) \
+   glxproto_Cv(name ## v ## VEN, rop, type, 3)
+
+#define glxproto_4(name, rop, type) \
+   glxproto_4s(name,      rop, type) \
+   glxproto_Cv(name ## v, rop, type, 4)
+
+#define glxproto_enum1_1(name, rop, type) \
+   glxproto_enum1_1s(name,      rop, type) \
+   glxproto_enum1_1v(name ## v, rop, type)
+
+#define glxvendr_enum1_1(name, rop, type, VEN) \
+   glxproto_enum1_1s(name ## VEN,      rop, type) \
+   glxproto_enum1_1v(name ## v ## VEN, rop, type)
+
+#define glxproto_enum1_2(name, rop, type) \
+   glxproto_enum1_2s(name,      rop, type) \
+   glxproto_enum1_2v(name ## v, rop, type)
+
+#define glxvendr_enum1_2(name, rop, type, VEN) \
+   glxproto_enum1_2s(name ## VEN,      rop, type) \
+   glxproto_enum1_2v(name ## v ## VEN, rop, type)
+
+#define glxproto_enum1_3(name, rop, type) \
+   glxproto_enum1_3s(name,      rop, type) \
+   glxproto_enum1_3v(name ## v, rop, type)
+
+#define glxvendr_enum1_3(name, rop, type, VEN) \
+   glxproto_enum1_3s(name ## VEN,      rop, type) \
+   glxproto_enum1_3v(name ## v ## VEN, rop, type)
+
+#define glxproto_enum1_4(name, rop, type) \
+   glxproto_enum1_4s(name,      rop, type) \
+   glxproto_enum1_4v(name ## v, rop, type)
+
+#define glxvendr_enum1_4(name, rop, type, VEN) \
+   glxproto_enum1_4s(name ## VEN,      rop, type) \
+   glxproto_enum1_4v(name ## v ## VEN, rop, type)
+
+#define glxproto_enum1_V(name, rop, type) \
+   glxproto_enum1_1s(name,      rop,      type) \
+   glxproto_enum1_Vv(name ## v, rop ## v, type)
+
+#define glxvendr_enum1_V(name, rop, type, VEN) \
+   glxproto_enum1_1s(name ## VEN,      rop ## VEN,      type) \
+   glxproto_enum1_Vv(name ## v ## VEN, rop ## v ## VEN, type)
+
+#define glxproto_enum2_V(name, rop, type) \
+   glxproto_enum2_1s(name,      rop,      type) \
+   glxproto_enum2_Vv(name ## v, rop ## v, type)
+
+#define glxvendr_enum2_V(name, rop, type, VEN) \
+   glxproto_enum2_1s(name ## VEN,      rop ## VEN,      type) \
+   glxproto_enum2_Vv(name ## v ## VEN, rop ## v ## VEN, type)
+
+glxproto_1s(CallList, X_GLrop_CallList, GLuint)
+glxproto_1s(ListBase, X_GLrop_ListBase, GLuint)
+glxproto_1s(Begin,    X_GLrop_Begin,    GLenum)
+
+glxproto_3(Color3b,  X_GLrop_Color3bv,  GLbyte)
+glxproto_3(Color3s,  X_GLrop_Color3sv,  GLshort)
+glxproto_3(Color3i,  X_GLrop_Color3iv,  GLint)
+glxproto_3(Color3ub, X_GLrop_Color3ubv, GLubyte)
+glxproto_3(Color3us, X_GLrop_Color3usv, GLushort)
+glxproto_3(Color3ui, X_GLrop_Color3uiv, GLuint)
+glxproto_3(Color3f,  X_GLrop_Color3fv,  GLfloat)
+glxproto_3(Color3d,  X_GLrop_Color3dv,  GLdouble)
+
+glxproto_4(Color4b,  X_GLrop_Color4bv,  GLbyte)
+glxproto_4(Color4s,  X_GLrop_Color4sv,  GLshort)
+glxproto_4(Color4i,  X_GLrop_Color4iv,  GLint)
+glxproto_4(Color4ub, X_GLrop_Color4ubv, GLubyte)
+glxproto_4(Color4us, X_GLrop_Color4usv, GLushort)
+glxproto_4(Color4ui, X_GLrop_Color4uiv, GLuint)
+glxproto_4(Color4f,  X_GLrop_Color4fv,  GLfloat)
+glxproto_4(Color4d,  X_GLrop_Color4dv,  GLdouble)
+
+glxproto_1(FogCoordf, X_GLrop_FogCoordfv, GLfloat)
+glxproto_1(FogCoordd, X_GLrop_FogCoorddv, GLdouble)
+
+glxproto_3(SecondaryColor3b,  X_GLrop_SecondaryColor3bv,  GLbyte)
+glxproto_3(SecondaryColor3s,  X_GLrop_SecondaryColor3sv,  GLshort)
+glxproto_3(SecondaryColor3i,  X_GLrop_SecondaryColor3iv,  GLint)
+glxproto_3(SecondaryColor3ub, X_GLrop_SecondaryColor3ubv, GLubyte)
+glxproto_3(SecondaryColor3us, X_GLrop_SecondaryColor3usv, GLushort)
+glxproto_3(SecondaryColor3ui, X_GLrop_SecondaryColor3uiv, GLuint)
+glxproto_3(SecondaryColor3f,  X_GLrop_SecondaryColor3fv,  GLfloat)
+glxproto_3(SecondaryColor3d,  X_GLrop_SecondaryColor3dv,  GLdouble)
+
+glxproto_1(EdgeFlag, X_GLrop_EdgeFlagv, GLboolean)
+
+glxproto_1(Indexd,  X_GLrop_Indexdv,  GLdouble)
+glxproto_1(Indexf,  X_GLrop_Indexfv,  GLfloat)
+glxproto_1(Indexi,  X_GLrop_Indexiv,  GLint)
+glxproto_1(Indexs,  X_GLrop_Indexsv,  GLshort)
+glxproto_1(Indexub, X_GLrop_Indexubv, GLubyte)
+
+glxproto_void(End, X_GLrop_End)
+
+glxproto_3(Normal3b, X_GLrop_Normal3bv, GLbyte)
+glxproto_3(Normal3s, X_GLrop_Normal3sv, GLshort)
+glxproto_3(Normal3i, X_GLrop_Normal3iv, GLint)
+glxproto_3(Normal3f, X_GLrop_Normal3fv, GLfloat)
+glxproto_3(Normal3d, X_GLrop_Normal3dv, GLdouble)
+
+glxproto_2(RasterPos2s, X_GLrop_RasterPos2sv, GLshort)
+glxproto_2(RasterPos2i, X_GLrop_RasterPos2iv, GLint)
+glxproto_2(RasterPos2f, X_GLrop_RasterPos2fv, GLfloat)
+glxproto_2(RasterPos2d, X_GLrop_RasterPos2dv, GLdouble)
+glxproto_3(RasterPos3s, X_GLrop_RasterPos3sv, GLshort)
+glxproto_3(RasterPos3i, X_GLrop_RasterPos3iv, GLint)
+glxproto_3(RasterPos3f, X_GLrop_RasterPos3fv, GLfloat)
+glxproto_3(RasterPos3d, X_GLrop_RasterPos3dv, GLdouble)
+glxproto_4(RasterPos4s, X_GLrop_RasterPos4sv, GLshort)
+glxproto_4(RasterPos4i, X_GLrop_RasterPos4iv, GLint)
+glxproto_4(RasterPos4f, X_GLrop_RasterPos4fv, GLfloat)
+glxproto_4(RasterPos4d, X_GLrop_RasterPos4dv, GLdouble)
+
+glxproto_1(TexCoord1s, X_GLrop_TexCoord1sv, GLshort)
+glxproto_1(TexCoord1i, X_GLrop_TexCoord1iv, GLint)
+glxproto_1(TexCoord1f, X_GLrop_TexCoord1fv, GLfloat)
+glxproto_1(TexCoord1d, X_GLrop_TexCoord1dv, GLdouble)
+glxproto_2(TexCoord2s, X_GLrop_TexCoord2sv, GLshort)
+glxproto_2(TexCoord2i, X_GLrop_TexCoord2iv, GLint)
+glxproto_2(TexCoord2f, X_GLrop_TexCoord2fv, GLfloat)
+glxproto_2(TexCoord2d, X_GLrop_TexCoord2dv, GLdouble)
+glxproto_3(TexCoord3s, X_GLrop_TexCoord3sv, GLshort)
+glxproto_3(TexCoord3i, X_GLrop_TexCoord3iv, GLint)
+glxproto_3(TexCoord3f, X_GLrop_TexCoord3fv, GLfloat)
+glxproto_3(TexCoord3d, X_GLrop_TexCoord3dv, GLdouble)
+glxproto_4(TexCoord4s, X_GLrop_TexCoord4sv, GLshort)
+glxproto_4(TexCoord4i, X_GLrop_TexCoord4iv, GLint)
+glxproto_4(TexCoord4f, X_GLrop_TexCoord4fv, GLfloat)
+glxproto_4(TexCoord4d, X_GLrop_TexCoord4dv, GLdouble)
+
+glxproto_2(Vertex2s, X_GLrop_Vertex2sv, GLshort)
+glxproto_2(Vertex2i, X_GLrop_Vertex2iv, GLint)
+glxproto_2(Vertex2f, X_GLrop_Vertex2fv, GLfloat)
+glxproto_2(Vertex2d, X_GLrop_Vertex2dv, GLdouble)
+glxproto_3(Vertex3s, X_GLrop_Vertex3sv, GLshort)
+glxproto_3(Vertex3i, X_GLrop_Vertex3iv, GLint)
+glxproto_3(Vertex3f, X_GLrop_Vertex3fv, GLfloat)
+glxproto_3(Vertex3d, X_GLrop_Vertex3dv, GLdouble)
+glxproto_4(Vertex4s, X_GLrop_Vertex4sv, GLshort)
+glxproto_4(Vertex4i, X_GLrop_Vertex4iv, GLint)
+glxproto_4(Vertex4f, X_GLrop_Vertex4fv, GLfloat)
+glxproto_4(Vertex4d, X_GLrop_Vertex4dv, GLdouble)
+
+glxproto_enum1_4v(ClipPlane, X_GLrop_ClipPlane, GLdouble)
+
+glxproto_2s(ColorMaterial, X_GLrop_ColorMaterial, GLenum)
+
+glxproto_1s(CullFace, X_GLrop_CullFace, GLenum)
+
+glxproto_enum1_V(Fogi, X_GLrop_Fogi, GLint)
+glxproto_enum1_V(Fogf, X_GLrop_Fogf, GLfloat)
+
+glxproto_1s(FrontFace, X_GLrop_FrontFace, GLenum)
+glxproto_2s(Hint,      X_GLrop_Hint,      GLenum)
+
+glxproto_enum2_V(Lighti,      X_GLrop_Lighti,      GLint)
+glxproto_enum2_V(Lightf,      X_GLrop_Lightf,      GLfloat)
+
+glxproto_enum1_V(LightModeli, X_GLrop_LightModeli, GLint)
+glxproto_enum1_V(LightModelf, X_GLrop_LightModelf, GLfloat)
+
+glxproto_1s(LineWidth, X_GLrop_LineWidth, GLfloat)
+
+glxproto_enum2_V(Materiali, X_GLrop_Materiali, GLint)
+glxproto_enum2_V(Materialf, X_GLrop_Materialf, GLfloat)
+
+glxproto_1s(PointSize, X_GLrop_PointSize, GLfloat)
+
+glxproto_2s(PolygonMode, X_GLrop_PolygonMode, GLenum)
+
+glxproto_1s(ShadeModel, X_GLrop_ShadeModel, GLenum)
+
+glxproto_enum2_V(TexParameteri, X_GLrop_TexParameteri, GLint)
+glxproto_enum2_V(TexParameterf, X_GLrop_TexParameterf, GLfloat)
+
+glxproto_enum2_V(TexEnvi, X_GLrop_TexEnvi, GLint)
+glxproto_enum2_V(TexEnvf, X_GLrop_TexEnvf, GLfloat)
+glxproto_enum2_V(TexGeni, X_GLrop_TexGeni, GLint)
+glxproto_enum2_V(TexGenf, X_GLrop_TexGenf, GLfloat)
+glxproto_enum2_V(TexGend, X_GLrop_TexGend, GLdouble)
+
+glxproto_void(InitNames, X_GLrop_InitNames)
+glxproto_1s(LoadName, X_GLrop_LoadName, GLuint)
+glxproto_1s(PassThrough, X_GLrop_PassThrough, GLfloat)
+glxproto_void(PopName, X_GLrop_PopName)
+glxproto_1s(PushName, X_GLrop_PushName, GLuint)
+
+glxproto_1s(DrawBuffer, X_GLrop_DrawBuffer, GLenum)
+glxproto_1s(Clear, X_GLrop_Clear, GLbitfield)
+
+glxproto_4s(ClearAccum,   X_GLrop_ClearAccum,   GLfloat)
+glxproto_1s(ClearIndex,   X_GLrop_ClearIndex,   GLfloat)
+glxproto_4s(ClearColor,   X_GLrop_ClearColor,   GLclampf)
+glxproto_1s(ClearStencil, X_GLrop_ClearStencil, GLint)
+glxproto_1s(ClearDepth,   X_GLrop_ClearDepth,   GLclampd)
+
+glxproto_1s(StencilMask,  X_GLrop_StencilMask,  GLuint)
+glxproto_4s(ColorMask,    X_GLrop_ColorMask,    GLboolean)
+glxproto_1s(DepthMask,    X_GLrop_DepthMask,    GLboolean)
+glxproto_1s(IndexMask,    X_GLrop_IndexMask,    GLuint)
+
+glxproto_enum1_1s(Accum, X_GLrop_Accum, GLfloat)
+
+glxproto_void(PopAttrib, X_GLrop_PopAttrib)
+glxproto_1s(PushAttrib,  X_GLrop_PushAttrib, GLbitfield)
+
+glxproto_1(EvalCoord1f, X_GLrop_EvalCoord1fv, GLfloat)
+glxproto_1(EvalCoord1d, X_GLrop_EvalCoord1dv, GLdouble)
+glxproto_2(EvalCoord2f, X_GLrop_EvalCoord2fv, GLfloat)
+glxproto_2(EvalCoord2d, X_GLrop_EvalCoord2dv, GLdouble)
+glxproto_enum1_2s(EvalMesh1, X_GLrop_EvalMesh1, GLint)
+glxproto_enum1_4s(EvalMesh2, X_GLrop_EvalMesh2, GLint)
+glxproto_1s(EvalPoint1, X_GLrop_EvalPoint1, GLint)
+glxproto_2s(EvalPoint2, X_GLrop_EvalPoint2, GLint)
+
+glxproto_enum1_1s(AlphaFunc, X_GLrop_AlphaFunc, GLclampf)
+
+glxproto_2s(BlendFunc,         X_GLrop_BlendFunc,         GLenum)
+glxproto_4s(BlendFuncSeparate, X_GLrop_BlendFuncSeparate, GLenum)
+
+glxproto_1s(LogicOp, X_GLrop_LogicOp, GLenum)
+
+glxproto_3s(StencilOp, X_GLrop_StencilOp, GLenum)
+glxproto_1s(DepthFunc, X_GLrop_DepthFunc, GLenum)
+
+glxproto_2s(PixelZoom, X_GLrop_PixelZoom, GLfloat)
+
+glxproto_enum1_1s(PixelTransferf, X_GLrop_PixelTransferf, GLfloat)
+glxproto_enum1_1s(PixelTransferi, X_GLrop_PixelTransferi, GLint)
+
+glxproto_1s(ReadBuffer, X_GLrop_ReadBuffer, GLenum)
+
+glxproto_2s(DepthRange, X_GLrop_DepthRange, GLclampd)
+
+glxproto_6s(Frustum, X_GLrop_Frustum, GLdouble)
+
+glxproto_void(LoadIdentity, X_GLrop_LoadIdentity)
+glxproto_1s(MatrixMode, X_GLrop_MatrixMode, GLenum)
+glxproto_Cv(LoadMatrixf, X_GLrop_LoadMatrixf, GLfloat, 16)
+glxproto_Cv(MultMatrixf, X_GLrop_MultMatrixf, GLfloat, 16)
+glxproto_Cv(LoadMatrixd, X_GLrop_LoadMatrixd, GLdouble, 16)
+glxproto_Cv(MultMatrixd, X_GLrop_MultMatrixd, GLdouble, 16)
+glxproto_Cv_transpose(LoadTransposeMatrixfARB, X_GLrop_LoadMatrixf, GLfloat, 4)
+glxproto_Cv_transpose(MultTransposeMatrixfARB, X_GLrop_MultMatrixf, GLfloat, 4)
+glxproto_Cv_transpose(LoadTransposeMatrixdARB, X_GLrop_LoadMatrixd, GLdouble, 4)
+glxproto_Cv_transpose(MultTransposeMatrixdARB, X_GLrop_MultMatrixd, GLdouble, 4)
+
+glxproto_6s(Ortho, X_GLrop_Ortho, GLdouble)
+
+glxproto_void(PushMatrix, X_GLrop_PushMatrix)
+glxproto_void(PopMatrix,  X_GLrop_PopMatrix)
+
+glxproto_4s(Rotatef,    X_GLrop_Rotatef,    GLfloat)
+glxproto_3s(Scalef,     X_GLrop_Scalef,     GLfloat)
+glxproto_3s(Translatef, X_GLrop_Translatef, GLfloat)
+glxproto_4s(Rotated,    X_GLrop_Rotated,    GLdouble)
+glxproto_3s(Scaled,     X_GLrop_Scaled,     GLdouble)
+glxproto_3s(Translated, X_GLrop_Translated, GLdouble)
+
+glxproto_2s(PolygonOffset, X_GLrop_PolygonOffset, GLfloat)
+
+glxproto_enum1_1s(BindTexture, X_GLrop_BindTexture, GLuint)
+
+glxproto_4s(BlendColor,    X_GLrop_BlendColor,    GLclampf)
+glxproto_1s(BlendEquation, X_GLrop_BlendEquation, GLenum)
+
+glxproto_enum2_Vv(ColorTableParameteriv, X_GLrop_ColorTableParameteriv, GLint)
+glxproto_enum2_Vv(ColorTableParameterfv, X_GLrop_ColorTableParameterfv, GLfloat)
+
+glxproto_enum2_V(ConvolutionParameteri, X_GLrop_ConvolutionParameteri, GLint)
+glxproto_enum2_V(ConvolutionParameterf, X_GLrop_ConvolutionParameterf, GLfloat)
+
+glxproto_enum2_1s(Minmax, X_GLrop_Minmax, GLboolean)
+
+glxproto_1s(ResetHistogram, X_GLrop_ResetHistogram, GLenum)
+glxproto_1s(ResetMinmax,    X_GLrop_ResetMinmax,    GLenum)
+
+glxproto_1s(     ActiveTextureARB, X_GLrop_ActiveTextureARB,    GLenum)
+glxvendr_enum1_1(MultiTexCoord1s,  X_GLrop_MultiTexCoord1svARB, GLshort,  ARB)
+glxvendr_enum1_1(MultiTexCoord1i,  X_GLrop_MultiTexCoord1ivARB, GLint,    ARB)
+glxvendr_enum1_1(MultiTexCoord1f,  X_GLrop_MultiTexCoord1fvARB, GLfloat,  ARB)
+glxvendr_enum1_1(MultiTexCoord1d,  X_GLrop_MultiTexCoord1dvARB, GLdouble, ARB)
+glxvendr_enum1_2(MultiTexCoord2s,  X_GLrop_MultiTexCoord2svARB, GLshort,  ARB)
+glxvendr_enum1_2(MultiTexCoord2i,  X_GLrop_MultiTexCoord2ivARB, GLint,    ARB)
+glxvendr_enum1_2(MultiTexCoord2f,  X_GLrop_MultiTexCoord2fvARB, GLfloat,  ARB)
+glxvendr_enum1_2(MultiTexCoord2d,  X_GLrop_MultiTexCoord2dvARB, GLdouble, ARB)
+glxvendr_enum1_3(MultiTexCoord3s,  X_GLrop_MultiTexCoord3svARB, GLshort,  ARB)
+glxvendr_enum1_3(MultiTexCoord3i,  X_GLrop_MultiTexCoord3ivARB, GLint,    ARB)
+glxvendr_enum1_3(MultiTexCoord3f,  X_GLrop_MultiTexCoord3fvARB, GLfloat,  ARB)
+glxvendr_enum1_3(MultiTexCoord3d,  X_GLrop_MultiTexCoord3dvARB, GLdouble, ARB)
+glxvendr_enum1_4(MultiTexCoord4s,  X_GLrop_MultiTexCoord4svARB, GLshort,  ARB)
+glxvendr_enum1_4(MultiTexCoord4i,  X_GLrop_MultiTexCoord4ivARB, GLint,    ARB)
+glxvendr_enum1_4(MultiTexCoord4f,  X_GLrop_MultiTexCoord4fvARB, GLfloat,  ARB)
+glxvendr_enum1_4(MultiTexCoord4d,  X_GLrop_MultiTexCoord4dvARB, GLdouble, ARB)
+
+glxvendr_enum1_V(PointParameterf, X_GLrop_PointParameterf, GLfloat, ARB)
+glxproto_enum1_V(PointParameteri, X_GLrop_PointParameteri, GLint)
+
+glxvendr_3(WindowPos3f, X_GLrop_WindowPos3fARB, GLfloat, ARB)
+
+glxproto_1s(ActiveStencilFaceEXT, X_GLrop_ActiveStencilFaceEXT, GLenum)
+
+glxproto_4s(Rects, X_GLrop_Rectsv, GLshort)
+glxproto_4s(Recti, X_GLrop_Rectiv, GLint)
+glxproto_4s(Rectf, X_GLrop_Rectfv, GLfloat)
+glxproto_4s(Rectd, X_GLrop_Rectdv, GLdouble)
+
+#if !defined( GENERATE_GLX_PROTOCOL_FUNCTIONS )
 GLboolean __indirect_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences);
 GLboolean __indirect_glAreTexturesResidentEXT(GLsizei n, const GLuint *textures, GLboolean *residences);
 void __indirect_glArrayElement(GLint i);
-void __indirect_glBegin(GLenum mode);
-void __indirect_glBindTexture(GLenum target, GLuint texture);
 void __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap);
-void __indirect_glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-void __indirect_glBlendEquation(GLenum mode);
-void __indirect_glBlendFunc(GLenum sfactor, GLenum dfactor);
-void __indirect_glCallList(GLuint list);
 void __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid *lists);
-void __indirect_glClear(GLbitfield mask);
-void __indirect_glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-void __indirect_glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-void __indirect_glClearDepth(GLclampd depth);
-void __indirect_glClearIndex(GLfloat c);
-void __indirect_glClearStencil(GLint s);
-void __indirect_glClipPlane(GLenum plane, const GLdouble *equation);
-void __indirect_glColor3b(GLbyte red, GLbyte green, GLbyte blue);
-void __indirect_glColor3bv(const GLbyte *v);
-void __indirect_glColor3d(GLdouble red, GLdouble green, GLdouble blue);
-void __indirect_glColor3dv(const GLdouble *v);
-void __indirect_glColor3f(GLfloat red, GLfloat green, GLfloat blue);
-void __indirect_glColor3fv(const GLfloat *v);
-void __indirect_glColor3i(GLint red, GLint green, GLint blue);
-void __indirect_glColor3iv(const GLint *v);
-void __indirect_glColor3s(GLshort red, GLshort green, GLshort blue);
-void __indirect_glColor3sv(const GLshort *v);
-void __indirect_glColor3ub(GLubyte red, GLubyte green, GLubyte blue);
-void __indirect_glColor3ubv(const GLubyte *v);
-void __indirect_glColor3ui(GLuint red, GLuint green, GLuint blue);
-void __indirect_glColor3uiv(const GLuint *v);
-void __indirect_glColor3us(GLushort red, GLushort green, GLushort blue);
-void __indirect_glColor3usv(const GLushort *v);
-void __indirect_glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha);
-void __indirect_glColor4bv(const GLbyte *v);
-void __indirect_glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha);
-void __indirect_glColor4dv(const GLdouble *v);
-void __indirect_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-void __indirect_glColor4fv(const GLfloat *v);
-void __indirect_glColor4i(GLint red, GLint green, GLint blue, GLint alpha);
-void __indirect_glColor4iv(const GLint *v);
-void __indirect_glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha);
-void __indirect_glColor4sv(const GLshort *v);
-void __indirect_glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
-void __indirect_glColor4ubv(const GLubyte *v);
-void __indirect_glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha);
-void __indirect_glColor4uiv(const GLuint *v);
-void __indirect_glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha);
-void __indirect_glColor4usv(const GLushort *v);
-void __indirect_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
-void __indirect_glColorMaterial(GLenum face, GLenum mode);
 void __indirect_glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 void __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *table);
 void __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table);
-void __indirect_glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params);
-void __indirect_glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params);
 void __indirect_glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image);
-void __indirect_glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params);
-void __indirect_glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params);
-void __indirect_glConvolutionParameteri(GLenum target, GLenum pname, GLint params);
-void __indirect_glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params);
 void __indirect_glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width);
 void __indirect_glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height);
 void __indirect_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width);
@@ -114,48 +437,22 @@ void __indirect_glCopyTexImage2D(GLenum target, GLint level, GLenum internalform
 void __indirect_glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
 void __indirect_glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 void __indirect_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height);
-void __indirect_glCullFace(GLenum mode);
 void __indirect_glDeleteLists(GLuint list, GLsizei range);
 void __indirect_glDeleteTextures(GLsizei n, const GLuint *textures);
 void __indirect_glDeleteTexturesEXT(GLsizei n, const GLuint *textures);
-void __indirect_glDepthFunc(GLenum func);
-void __indirect_glDepthMask(GLboolean flag);
-void __indirect_glDepthRange(GLclampd zNear, GLclampd zFar);
 void __indirect_glDisable(GLenum cap);
 void __indirect_glDisableClientState(GLenum array);
 void __indirect_glDrawArrays(GLenum mode, GLint first, GLsizei count);
-void __indirect_glDrawBuffer(GLenum mode);
 void __indirect_glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 void __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
-void __indirect_glEdgeFlag(GLboolean flag);
 void __indirect_glEdgeFlagPointer(GLsizei stride, const GLvoid *pointer);
-void __indirect_glEdgeFlagv(const GLboolean *flag);
 void __indirect_glEnable(GLenum cap);
 void __indirect_glEnableClientState(GLenum array);
-void __indirect_glEnd(void);
 void __indirect_glEndList(void);
-void __indirect_glEvalCoord1d(GLdouble u);
-void __indirect_glEvalCoord1dv(const GLdouble *u);
-void __indirect_glEvalCoord1f(GLfloat u);
-void __indirect_glEvalCoord1fv(const GLfloat *u);
-void __indirect_glEvalCoord2d(GLdouble u, GLdouble v);
-void __indirect_glEvalCoord2dv(const GLdouble *u);
-void __indirect_glEvalCoord2f(GLfloat u, GLfloat v);
-void __indirect_glEvalCoord2fv(const GLfloat *u);
-void __indirect_glEvalMesh1(GLenum mode, GLint i1, GLint i2);
-void __indirect_glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2);
-void __indirect_glEvalPoint1(GLint i);
-void __indirect_glEvalPoint2(GLint i, GLint j);
 void __indirect_glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer);
 void __indirect_glFinish(void);
 void __indirect_glFlush(void);
-void __indirect_glFogf(GLenum pname, GLfloat param);
-void __indirect_glFogfv(GLenum pname, const GLfloat *params);
-void __indirect_glFogi(GLenum pname, GLint param);
-void __indirect_glFogiv(GLenum pname, const GLint *params);
-void __indirect_glFrontFace(GLenum mode);
-void __indirect_glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
 GLuint __indirect_glGenLists(GLsizei range);
 void __indirect_glGenTextures(GLsizei n, GLuint *textures);
 void __indirect_glGenTexturesEXT(GLsizei n, GLuint *textures);
@@ -201,42 +498,14 @@ void __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pnam
 void __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params);
 void __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params);
 void __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint *params);
-void __indirect_glHint(GLenum target, GLenum mode);
 void __indirect_glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink);
-void __indirect_glIndexMask(GLuint mask);
 void __indirect_glIndexPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
-void __indirect_glIndexd(GLdouble c);
-void __indirect_glIndexdv(const GLdouble *c);
-void __indirect_glIndexf(GLfloat c);
-void __indirect_glIndexfv(const GLfloat *c);
-void __indirect_glIndexi(GLint c);
-void __indirect_glIndexiv(const GLint *c);
-void __indirect_glIndexs(GLshort c);
-void __indirect_glIndexsv(const GLshort *c);
-void __indirect_glIndexub(GLubyte c);
-void __indirect_glIndexubv(const GLubyte *c);
-void __indirect_glInitNames(void);
 void __indirect_glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
 GLboolean __indirect_glIsEnabled(GLenum cap);
 GLboolean __indirect_glIsList(GLuint list);
 GLboolean __indirect_glIsTexture(GLuint texture);
 GLboolean __indirect_glIsTextureEXT(GLuint texture);
-void __indirect_glLightModelf(GLenum pname, GLfloat param);
-void __indirect_glLightModelfv(GLenum pname, const GLfloat *params);
-void __indirect_glLightModeli(GLenum pname, GLint param);
-void __indirect_glLightModeliv(GLenum pname, const GLint *params);
-void __indirect_glLightf(GLenum light, GLenum pname, GLfloat param);
-void __indirect_glLightfv(GLenum light, GLenum pname, const GLfloat *params);
-void __indirect_glLighti(GLenum light, GLenum pname, GLint param);
-void __indirect_glLightiv(GLenum light, GLenum pname, const GLint *params);
 void __indirect_glLineStipple(GLint factor, GLushort pattern);
-void __indirect_glLineWidth(GLfloat width);
-void __indirect_glListBase(GLuint base);
-void __indirect_glLoadIdentity(void);
-void __indirect_glLoadMatrixd(const GLdouble *m);
-void __indirect_glLoadMatrixf(const GLfloat *m);
-void __indirect_glLoadName(GLuint name);
-void __indirect_glLogicOp(GLenum opcode);
 void __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *pnts);
 void __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *pnts);
 void __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr, GLint uord, GLdouble v1, GLdouble v2, GLint vstr, GLint vord, const GLdouble *pnts);
@@ -245,229 +514,40 @@ void __indirect_glMapGrid1d(GLint un, GLdouble u1, GLdouble u2);
 void __indirect_glMapGrid1f(GLint un, GLfloat u1, GLfloat u2);
 void __indirect_glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2);
 void __indirect_glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2);
-void __indirect_glMaterialf(GLenum face, GLenum pname, GLfloat param);
-void __indirect_glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
-void __indirect_glMateriali(GLenum face, GLenum pname, GLint param);
-void __indirect_glMaterialiv(GLenum face, GLenum pname, const GLint *params);
-void __indirect_glMatrixMode(GLenum mode);
-void __indirect_glMinmax(GLenum target, GLenum internalformat, GLboolean sink);
-void __indirect_glMultMatrixd(const GLdouble *m);
-void __indirect_glMultMatrixf(const GLfloat *m);
 void __indirect_glNewList(GLuint list, GLenum mode);
-void __indirect_glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz);
-void __indirect_glNormal3bv(const GLbyte *v);
-void __indirect_glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz);
-void __indirect_glNormal3dv(const GLdouble *v);
-void __indirect_glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
-void __indirect_glNormal3fv(const GLfloat *v);
-void __indirect_glNormal3i(GLint nx, GLint ny, GLint nz);
-void __indirect_glNormal3iv(const GLint *v);
-void __indirect_glNormal3s(GLshort nx, GLshort ny, GLshort nz);
-void __indirect_glNormal3sv(const GLshort *v);
 void __indirect_glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
-void __indirect_glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
-void __indirect_glPassThrough(GLfloat token);
 void __indirect_glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values);
 void __indirect_glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values);
 void __indirect_glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values);
 void __indirect_glPixelStoref(GLenum pname, GLfloat param);
 void __indirect_glPixelStorei(GLenum pname, GLint param);
-void __indirect_glPixelTransferf(GLenum pname, GLfloat param);
-void __indirect_glPixelTransferi(GLenum pname, GLint param);
-void __indirect_glPixelZoom(GLfloat xfactor, GLfloat yfactor);
-void __indirect_glPointSize(GLfloat size);
-void __indirect_glPolygonMode(GLenum face, GLenum mode);
-void __indirect_glPolygonOffset(GLfloat factor, GLfloat units);
 void __indirect_glPolygonStipple(const GLubyte *mask);
-void __indirect_glPopAttrib(void);
 void __indirect_glPopClientAttrib(void);
-void __indirect_glPopMatrix(void);
-void __indirect_glPopName(void);
 void __indirect_glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities);
-void __indirect_glPushAttrib(GLbitfield mask);
 void __indirect_glPushClientAttrib(GLuint mask);
-void __indirect_glPushMatrix(void);
-void __indirect_glPushName(GLuint name);
-void __indirect_glRasterPos2d(GLdouble x, GLdouble y);
-void __indirect_glRasterPos2dv(const GLdouble *v);
-void __indirect_glRasterPos2f(GLfloat x, GLfloat y);
-void __indirect_glRasterPos2fv(const GLfloat *v);
-void __indirect_glRasterPos2i(GLint x, GLint y);
-void __indirect_glRasterPos2iv(const GLint *v);
-void __indirect_glRasterPos2s(GLshort x, GLshort y);
-void __indirect_glRasterPos2sv(const GLshort *v);
-void __indirect_glRasterPos3d(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glRasterPos3dv(const GLdouble *v);
-void __indirect_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z);
-void __indirect_glRasterPos3fv(const GLfloat *v);
-void __indirect_glRasterPos3i(GLint x, GLint y, GLint z);
-void __indirect_glRasterPos3iv(const GLint *v);
-void __indirect_glRasterPos3s(GLshort x, GLshort y, GLshort z);
-void __indirect_glRasterPos3sv(const GLshort *v);
-void __indirect_glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-void __indirect_glRasterPos4dv(const GLdouble *v);
-void __indirect_glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-void __indirect_glRasterPos4fv(const GLfloat *v);
-void __indirect_glRasterPos4i(GLint x, GLint y, GLint z, GLint w);
-void __indirect_glRasterPos4iv(const GLint *v);
-void __indirect_glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w);
-void __indirect_glRasterPos4sv(const GLshort *v);
-void __indirect_glReadBuffer(GLenum mode);
 void __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
-void __indirect_glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2);
 void __indirect_glRectdv(const GLdouble *v1, const GLdouble *v2);
-void __indirect_glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
 void __indirect_glRectfv(const GLfloat *v1, const GLfloat *v2);
-void __indirect_glRecti(GLint x1, GLint y1, GLint x2, GLint y2);
 void __indirect_glRectiv(const GLint *v1, const GLint *v2);
-void __indirect_glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2);
 void __indirect_glRectsv(const GLshort *v1, const GLshort *v2);
 GLint __indirect_glRenderMode(GLenum mode);
-void __indirect_glResetHistogram(GLenum target);
-void __indirect_glResetMinmax(GLenum target);
-void __indirect_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
-void __indirect_glScaled(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glScalef(GLfloat x, GLfloat y, GLfloat z);
 void __indirect_glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 void __indirect_glSelectBuffer(GLsizei numnames, GLuint *buffer);
 void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column);
-void __indirect_glShadeModel(GLenum mode);
 void __indirect_glStencilFunc(GLenum func, GLint ref, GLuint mask);
-void __indirect_glStencilMask(GLuint mask);
-void __indirect_glStencilOp(GLenum fail, GLenum zfail, GLenum zpass);
-void __indirect_glTexCoord1d(GLdouble s);
-void __indirect_glTexCoord1dv(const GLdouble *v);
-void __indirect_glTexCoord1f(GLfloat s);
-void __indirect_glTexCoord1fv(const GLfloat *v);
-void __indirect_glTexCoord1i(GLint s);
-void __indirect_glTexCoord1iv(const GLint *v);
-void __indirect_glTexCoord1s(GLshort s);
-void __indirect_glTexCoord1sv(const GLshort *v);
-void __indirect_glTexCoord2d(GLdouble s, GLdouble t);
-void __indirect_glTexCoord2dv(const GLdouble *v);
-void __indirect_glTexCoord2f(GLfloat s, GLfloat t);
-void __indirect_glTexCoord2fv(const GLfloat *v);
-void __indirect_glTexCoord2i(GLint s, GLint t);
-void __indirect_glTexCoord2iv(const GLint *v);
-void __indirect_glTexCoord2s(GLshort s, GLshort t);
-void __indirect_glTexCoord2sv(const GLshort *v);
-void __indirect_glTexCoord3d(GLdouble s, GLdouble t, GLdouble r);
-void __indirect_glTexCoord3dv(const GLdouble *v);
-void __indirect_glTexCoord3f(GLfloat s, GLfloat t, GLfloat r);
-void __indirect_glTexCoord3fv(const GLfloat *v);
-void __indirect_glTexCoord3i(GLint s, GLint t, GLint r);
-void __indirect_glTexCoord3iv(const GLint *v);
-void __indirect_glTexCoord3s(GLshort s, GLshort t, GLshort r);
-void __indirect_glTexCoord3sv(const GLshort *v);
-void __indirect_glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q);
-void __indirect_glTexCoord4dv(const GLdouble *v);
-void __indirect_glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-void __indirect_glTexCoord4fv(const GLfloat *v);
-void __indirect_glTexCoord4i(GLint s, GLint t, GLint r, GLint q);
-void __indirect_glTexCoord4iv(const GLint *v);
-void __indirect_glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q);
-void __indirect_glTexCoord4sv(const GLshort *v);
 void __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-void __indirect_glTexEnvf(GLenum target, GLenum pname, GLfloat param);
-void __indirect_glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
-void __indirect_glTexEnvi(GLenum target, GLenum pname, GLint param);
-void __indirect_glTexEnviv(GLenum target, GLenum pname, const GLint *params);
-void __indirect_glTexGend(GLenum coord, GLenum pname, GLdouble param);
-void __indirect_glTexGendv(GLenum coord, GLenum pname, const GLdouble *params);
-void __indirect_glTexGenf(GLenum coord, GLenum pname, GLfloat param);
-void __indirect_glTexGenfv(GLenum coord, GLenum pname, const GLfloat *params);
-void __indirect_glTexGeni(GLenum coord, GLenum pname, GLint param);
-void __indirect_glTexGeniv(GLenum coord, GLenum pname, const GLint *params);
 void __indirect_glTexImage1D(GLenum target, GLint level, GLint components, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexImage2D(GLenum target, GLint level, GLint components, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *image);
-void __indirect_glTexParameterf(GLenum target, GLenum pname, GLfloat param);
-void __indirect_glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params);
-void __indirect_glTexParameteri(GLenum target, GLenum pname, GLint param);
-void __indirect_glTexParameteriv(GLenum target, GLenum pname, const GLint *params);
 void __indirect_glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *image);
-void __indirect_glTranslated(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glTranslatef(GLfloat x, GLfloat y, GLfloat z);
-void __indirect_glVertex2d(GLdouble x, GLdouble y);
-void __indirect_glVertex2dv(const GLdouble *v);
-void __indirect_glVertex2f(GLfloat x, GLfloat y);
-void __indirect_glVertex2fv(const GLfloat *v);
-void __indirect_glVertex2i(GLint x, GLint y);
-void __indirect_glVertex2iv(const GLint *v);
-void __indirect_glVertex2s(GLshort x, GLshort y);
-void __indirect_glVertex2sv(const GLshort *v);
-void __indirect_glVertex3d(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glVertex3dv(const GLdouble *v);
-void __indirect_glVertex3f(GLfloat x, GLfloat y, GLfloat z);
-void __indirect_glVertex3fv(const GLfloat *v);
-void __indirect_glVertex3i(GLint x, GLint y, GLint z);
-void __indirect_glVertex3iv(const GLint *v);
-void __indirect_glVertex3s(GLshort x, GLshort y, GLshort z);
-void __indirect_glVertex3sv(const GLshort *v);
-void __indirect_glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-void __indirect_glVertex4dv(const GLdouble *v);
-void __indirect_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-void __indirect_glVertex4fv(const GLfloat *v);
-void __indirect_glVertex4i(GLint x, GLint y, GLint z, GLint w);
-void __indirect_glVertex4iv(const GLint *v);
-void __indirect_glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w);
-void __indirect_glVertex4sv(const GLshort *v);
 void __indirect_glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 void __indirect_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
-
-void __indirect_glActiveTextureARB(GLenum texture);
 void __indirect_glClientActiveTextureARB(GLenum texture);
-void __indirect_glMultiTexCoord1dARB(GLenum target, GLdouble s);
-void __indirect_glMultiTexCoord1dvARB(GLenum target, const GLdouble *v);
-void __indirect_glMultiTexCoord1fARB(GLenum target, GLfloat s);
-void __indirect_glMultiTexCoord1fvARB(GLenum target, const GLfloat *v);
-void __indirect_glMultiTexCoord1iARB(GLenum target, GLint s);
-void __indirect_glMultiTexCoord1ivARB(GLenum target, const GLint *v);
-void __indirect_glMultiTexCoord1sARB(GLenum target, GLshort s);
-void __indirect_glMultiTexCoord1svARB(GLenum target, const GLshort *v);
-void __indirect_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t);
-void __indirect_glMultiTexCoord2dvARB(GLenum target, const GLdouble *v);
-void __indirect_glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t);
-void __indirect_glMultiTexCoord2fvARB(GLenum target, const GLfloat *v);
-void __indirect_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t);
-void __indirect_glMultiTexCoord2ivARB(GLenum target, const GLint *v);
-void __indirect_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t);
-void __indirect_glMultiTexCoord2svARB(GLenum target, const GLshort *v);
-void __indirect_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r);
-void __indirect_glMultiTexCoord3dvARB(GLenum target, const GLdouble *v);
-void __indirect_glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r);
-void __indirect_glMultiTexCoord3fvARB(GLenum target, const GLfloat *v);
-void __indirect_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r);
-void __indirect_glMultiTexCoord3ivARB(GLenum target, const GLint *v);
-void __indirect_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r);
-void __indirect_glMultiTexCoord3svARB(GLenum target, const GLshort *v);
-void __indirect_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q);
-void __indirect_glMultiTexCoord4dvARB(GLenum target, const GLdouble *v);
-void __indirect_glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-void __indirect_glMultiTexCoord4fvARB(GLenum target, const GLfloat *v);
-void __indirect_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q);
-void __indirect_glMultiTexCoord4ivARB(GLenum target, const GLint *v);
-void __indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q);
-void __indirect_glMultiTexCoord4svARB(GLenum target, const GLshort *v);
-
-
-void __indirect_glLoadTransposeMatrixfARB(const GLfloat *m);
-void __indirect_glMultTransposeMatrixfARB(const GLfloat *m);
-void __indirect_glLoadTransposeMatrixdARB(const GLdouble *m);
-void __indirect_glMultTransposeMatrixdARB(const GLdouble *m);
 
 void __indirect_glSampleCoverageARB( GLfloat value, GLboolean invert );
-
-void __indirect_glPointParameterfARB(GLenum pname, GLfloat param);
-void __indirect_glPointParameterfvARB(GLenum pname, const GLfloat *params);
-void __indirect_glPointParameteri(GLenum, GLint);
-void __indirect_glPointParameteriv(GLenum, const GLint *);
-
-void __indirect_glActiveStencilFaceEXT(GLenum mode);
 
 void __indirect_glWindowPos2dARB(GLdouble x, GLdouble y);
 void __indirect_glWindowPos2iARB(GLint x, GLint y);
@@ -478,47 +558,90 @@ void __indirect_glWindowPos2fvARB(const GLfloat * p);
 void __indirect_glWindowPos2ivARB(const GLint * p);
 void __indirect_glWindowPos2svARB(const GLshort * p);
 void __indirect_glWindowPos3dARB(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glWindowPos3fARB(GLfloat x, GLfloat y, GLfloat z);
 void __indirect_glWindowPos3iARB(GLint x, GLint y, GLint z);
 void __indirect_glWindowPos3sARB(GLshort x, GLshort y, GLshort z);
 void __indirect_glWindowPos3dvARB(const GLdouble * p);
-void __indirect_glWindowPos3fvARB(const GLfloat * p);
 void __indirect_glWindowPos3ivARB(const GLint * p);
 void __indirect_glWindowPos3svARB(const GLshort * p);
 
 void __indirect_glMultiDrawArrays(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
 void __indirect_glMultiDrawElements(GLenum mode, const GLsizei *count, GLenum type, const GLvoid ** indices, GLsizei primcount);
-void __indirect_glBlendFuncSeparate(GLenum, GLenum, GLenum, GLenum);
 
 void __indirect_glSampleMaskSGIS( GLfloat value, GLboolean invert );
 void __indirect_glSamplePatternSGIS( GLenum pass );
 
+/* ARB 12. GL_ARB_texture_compression / GL 1.3 */
+
+void __indirect_glGetCompressedTexImage( GLenum target, GLint level,
+    GLvoid * img );
+void __indirect_glCompressedTexImage1D( GLenum target, GLint level,
+    GLenum internalformat, GLsizei width,
+    GLint border, GLsizei image_size, const GLvoid *data );
+void __indirect_glCompressedTexImage2D( GLenum target, GLint level,
+    GLenum internalformat, GLsizei width, GLsizei height,
+    GLint border, GLsizei image_size, const GLvoid *data );
+void __indirect_glCompressedTexImage3D( GLenum target, GLint level,
+    GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth,
+    GLint border, GLsizei image_size, const GLvoid *data );
+void __indirect_glCompressedTexSubImage1D( GLenum target, GLint level,
+    GLint xoffset,
+    GLsizei width,
+    GLenum format, GLsizei image_size, const GLvoid *data );
+void __indirect_glCompressedTexSubImage2D( GLenum target, GLint level,
+    GLint xoffset, GLint yoffset,
+    GLsizei width, GLsizei height,
+    GLenum format, GLsizei image_size, const GLvoid *data );
+void __indirect_glCompressedTexSubImage3D( GLenum target, GLint level,
+    GLint xoffset, GLint yoffset, GLint zoffset,
+    GLsizei width, GLsizei height, GLsizei depth,
+    GLenum format, GLsizei image_size, const GLvoid *data );
+
 /* 145. GL_EXT_secondary_color / GL 1.4 */
 
 void __indirect_glSecondaryColorPointer (GLint, GLenum, GLsizei, const GLvoid *);
-void __indirect_glSecondaryColor3b(GLbyte red, GLbyte green, GLbyte blue);
-void __indirect_glSecondaryColor3bv(const GLbyte *v);
-void __indirect_glSecondaryColor3d(GLdouble red, GLdouble green, GLdouble blue);
-void __indirect_glSecondaryColor3dv(const GLdouble *v);
-void __indirect_glSecondaryColor3f(GLfloat red, GLfloat green, GLfloat blue);
-void __indirect_glSecondaryColor3fv(const GLfloat *v);
-void __indirect_glSecondaryColor3i(GLint red, GLint green, GLint blue);
-void __indirect_glSecondaryColor3iv(const GLint *v);
-void __indirect_glSecondaryColor3s(GLshort red, GLshort green, GLshort blue);
-void __indirect_glSecondaryColor3sv(const GLshort *v);
-void __indirect_glSecondaryColor3ub(GLubyte red, GLubyte green, GLubyte blue);
-void __indirect_glSecondaryColor3ubv(const GLubyte *v);
-void __indirect_glSecondaryColor3ui(GLuint red, GLuint green, GLuint blue);
-void __indirect_glSecondaryColor3uiv(const GLuint *v);
-void __indirect_glSecondaryColor3us(GLushort red, GLushort green, GLushort blue);
-void __indirect_glSecondaryColor3usv(const GLushort *v);
 
 /* 149. GL_EXT_fog_coord / GL 1.4 */
 
 void __indirect_glFogCoordPointer (GLenum, GLsizei, const GLvoid *);
-void __indirect_glFogCoordd(GLdouble f);
-void __indirect_glFogCoorddv(const GLdouble *v);
-void __indirect_glFogCoordf(GLfloat f);
-void __indirect_glFogCoordfv(const GLfloat *v);
+
+# undef glxproto_void
+# undef glxproto_Cv
+# undef glxproto_Cv_transpose
+# undef glxproto_1s
+# undef glxproto_2s
+# undef glxproto_3s
+# undef glxproto_4s
+# undef glxproto_6s
+# undef glxproto_enum1_1s
+# undef glxproto_enum1_1v
+# undef glxproto_enum1_2s
+# undef glxproto_enum1_2v
+# undef glxproto_enum1_3s
+# undef glxproto_enum1_3v
+# undef glxproto_enum1_4s
+# undef glxproto_enum1_4v
+# undef glxproto_enum1_Vv
+# undef glxproto_enum2_1s
+# undef glxproto_enum2_Vv
+# undef glxproto_1
+# undef glxvendr_1
+# undef glxproto_2
+# undef glxvendr_2
+# undef glxproto_3
+# undef glxvendr_3
+# undef glxproto_4
+# undef glxproto_enum1_1
+# undef glxvendr_enum1_1
+# undef glxproto_enum1_2
+# undef glxvendr_enum1_2
+# undef glxproto_enum1_3
+# undef glxvendr_enum1_3
+# undef glxproto_enum1_4
+# undef glxvendr_enum1_4
+# undef glxproto_enum1_V
+# undef glxvendr_enum1_V
+# undef glxproto_enum2_V
+# undef glxvendr_enum2_V
+#endif /* !defined( GENERATE_GLX_PROTOCOL_FUNCTIONS ) */
 
 #endif /* _INDIRECT_H_ */

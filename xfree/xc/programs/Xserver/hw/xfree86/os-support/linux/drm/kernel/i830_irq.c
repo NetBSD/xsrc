@@ -140,7 +140,7 @@ int i830_irq_emit( struct inode *inode, struct file *filp, unsigned int cmd,
 		return -EINVAL;
 	}
 
-	if (copy_from_user( &emit, (drm_i830_irq_emit_t *)arg, sizeof(emit) ))
+	if (copy_from_user( &emit, (drm_i830_irq_emit_t __user *)arg, sizeof(emit) ))
 		return -EFAULT;
 
 	result = i830_emit_irq( dev );
@@ -169,7 +169,7 @@ int i830_irq_wait( struct inode *inode, struct file *filp, unsigned int cmd,
 		return -EINVAL;
 	}
 
-	if (copy_from_user( &irqwait, (drm_i830_irq_wait_t *)arg, 
+	if (copy_from_user( &irqwait, (drm_i830_irq_wait_t __user *)arg, 
 			    sizeof(irqwait) ))
 		return -EFAULT;
 

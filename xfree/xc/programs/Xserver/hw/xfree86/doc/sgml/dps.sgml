@@ -4,11 +4,11 @@
 
 <article>
 
-<title>XFree86 and DPS
-<author>Juliusz Chroboczek, <email/jch@xfree86.org/
+<title>XFree86&reg; and DPS
+<author>Juliusz Chroboczek, <email/jch@pps.jussieu.fr/
 <date>27 February 2001</date>
 
-<ident>$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.2 2003/01/20 03:43:07 dawes Exp $</ident>
+<ident>$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.5 2005/03/04 03:23:52 dawes Exp $</ident>
 
 <toc>
 
@@ -21,11 +21,11 @@ Thus, a DPS client does not request that a line should be rendered;
 instead, it uploads code to the server which, when executed, causes a
 line to be drawn.
 
-<p>This document does not aim at teaching programming with DPS; it is
-only a summary description of the DPS support code included with
+<p>This document does not aim at teaching programming with DPS; as it
+is only a summary description of the DPS support code included with
 XFree86.  More information about DPS, including a DPS bibliography, is
-available from
-<url url="http://dps.sourceforge.net" name="the DPS extension site">.
+available from <url url="http://dps.sourceforge.net" name="the DPS
+extension site">.
 
 <tscreen>
 <it>Note: Adobe, PostScript and Display PostScript are trademarks of
@@ -33,7 +33,7 @@ Adobe Systems Incorporated which may be registered in certain
 jurisdictions.</it>
 </tscreen>
 
-As all X11 extensions, DPS consists of client-side and server-side
+As with all X11 extensions, DPS consists of client-side and server-side
 components.  The DPS client side consists of a number of libraries and
 a number of tools for programming and configuration.  The DPS server
 side may consist either of an X server extension, or of a client-side
@@ -136,7 +136,7 @@ all rendering; for more information, please see
 
 <sect>The DPS server side <label id="sec:server-side">
 
-<p>In order to use DPS clients, you need to install a DPS server side,
+<p>To use DPS clients, you need to install a DPS server side,
 which can be either a server extension (a ``DPS/X extension''), or a
 separate process (referred to, variously, either as a ``DPS/NX agent''
 or, rather confusingly, as ``Client-Side DPS'' (CSDPS).

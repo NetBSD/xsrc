@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.13 2003/10/21 17:41:44 tsi Exp $
+XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.14 2004/03/31 23:02:16 tsi Exp $
 
     SRCS = include.c main.c parse.c pr.c cppsetup.c ifparser.c
     OBJS = include.o main.o parse.o pr.o cppsetup.o ifparser.o
@@ -14,14 +14,20 @@ XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
         LDPRELIBS =
 
 #if HasGcc && !defined(PreIncDir)
+#if !CrossCompiling
 #define PreIncDir /usr/local/lib/gcc-include
+#endif
 #endif
 #ifdef PreIncDir
 PREINCDIR = PreIncDir
 PREINC_DEFINES = -DPREINCDIR=\"$(PREINCDIR)\"
 #endif
 #ifndef StdIncDir
+#if CrossCompiling
+#define StdIncDir Concat(CrossCompileDir,/../include)
+#else
 #define StdIncDir /usr/include
+#endif
 #endif
 STDINCDIR = StdIncDir
 STDINC_DEFINES = -DINCLUDEDIR=\"$(STDINCDIR)\"

@@ -26,7 +26,7 @@
 .\"
 .\" Author: Paulo César Pereira de Andrade
 .\"
-.\" $XFree86: xc/lib/Xaw/Xaw.man,v 1.8 2003/05/29 21:48:05 herrb Exp $
+.\" $XFree86: xc/lib/Xaw/Xaw.man,v 1.9 2004/12/31 02:39:24 tsi Exp $
 .\"
 .de TQ
 .br
@@ -90,8 +90,8 @@ variable.  Any number of variable-value tuples may be specified.  Example:
 Here is a sample translation to make a label widget behave like a button:
 .PP
 .nf
-<Map>:      get-values(1, $fg, foreground, $bg, background)\\n\\
-<Btn1Down>: set-values(1, foreground, yellow, background, gray30)\\n\\
+<Map>:      get-values(1, $fg, foreground, $bg, background)\\n\\\&
+<Btn1Down>: set-values(1, foreground, yellow, background, gray30)\\n\\\&
 <Btn1Up>:   set-values(1, foreground, $fg, background, $bg)
 .fi
 .SH DISPLAY LISTS
@@ -398,9 +398,9 @@ Requires no arguments.
 .PP
 Example for drawing a shadow effect in a widget:
 .nf
-foreground gray30;\\
-draw-lines +1,-1,-1,-1,-1,+1;\\
-foreground gray85;\\
+foreground gray30;\\\&
+draw-lines +1,-1,-1,-1,-1,+1;\\\&
+foreground gray85;\\\&
 draw-lines -1,+0,+0,+0,+0,-1
 .fi
 .SH PIXMAPS

@@ -51,7 +51,7 @@
  * All Rights Reserved
  */
 
-/* $XFree86: xc/lib/misc/snprintf.c,v 3.1 1999/04/28 15:04:51 dawes Exp $ */
+/* $XFree86: xc/lib/misc/snprintf.c,v 3.2 2005/02/07 01:01:16 tsi Exp $ */
 
 
 /*
@@ -161,6 +161,9 @@ typedef enum { NO = 0, YES = 1 } boolean_e ;
 
 static char *conv_10(wide_int num, bool_int is_unsigned,
 			bool_int * is_negative, char *buf_end, int *len);
+
+#ifndef NO_SNPRINTF
+
 SCOPE int vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
 
 /*
@@ -182,6 +185,8 @@ snprintf(char *str, size_t size, const char *fmt, ...)
     va_end(ap);
     return cc;
 }
+
+#endif /* NO_SNPRINTF */
 
 /*
  * Convert a floating point number to a string formats 'f', 'e' or 'E'.

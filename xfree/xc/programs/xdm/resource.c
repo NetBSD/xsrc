@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/resource.c,v 3.12 2003/09/17 05:48:32 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/resource.c,v 3.13 2004/03/28 08:30:57 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -236,7 +236,7 @@ struct dmResources {
 #if !defined(ARC4_RANDOM)
 { "randomFile",	"RandomFile",	DM_STRING,	&randomFile,
 				DEF_RANDOM_FILE} ,
-{ "prgndSocket", "PrngdSocket", DM_STRING,	&prngdSocket, 
+{ "prngdSocket", "PrngdSocket", DM_STRING,	&prngdSocket, 
 				DEF_PRNGD_SOCKET},
 { "prngdPort", "PrngdPort",	DM_INT,		(char **) &prngdPort,
 				DEF_PRNGD_PORT},

@@ -1,7 +1,7 @@
 .\"
-.\" $XFree86: xc/programs/setxkbmap/setxkbmap.man,v 3.7 2003/05/29 22:16:23 herrb Exp $
+.\" $XFree86: xc/programs/setxkbmap/setxkbmap.man,v 3.8 2005/02/11 03:03:15 dawes Exp $
 .\"
-.TH SETXKBMAP 1 __xorgversion__
+.TH SETXKBMAP 1 __vendorversion__
 .SH NAME
 setxkbmap
 \- set the keyboard using the X Keyboard Extension

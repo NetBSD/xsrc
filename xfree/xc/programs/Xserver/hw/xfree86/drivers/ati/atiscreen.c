@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.c,v 1.31 2004/01/05 16:42:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiscreen.c,v 1.34 2004/12/31 16:07:07 tsi Exp $ */
 /*
- * Copyright 1999 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1999 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -214,11 +214,19 @@ ATIScreenInit
 
 #endif /* AVOID_CPIO */
 
-        else if (!fbPictureInit(pScreen, NULL, 0) &&
-                 (serverGeneration == 1))
+        else if (!fbPictureInit(pScreen, NULL, 0))
         {
-            xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
-                "RENDER extension initialisation failed.\n");
+            if (serverGeneration == 1)
+                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    "RENDER extension initialisation failed.\n");
+        }
+        else if (pATI->OptionPanelDisplay && (pATI->LCDPanelID >= 0) &&
+                 !fbPictureSetSubpixelOrder(pScreen, SubPixelHorizontalRGB))
+        {
+            if (serverGeneration == 1)
+                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    "RENDER extension did not set sub-pixel order to"
+                    " HorizontalRGB.\n");
         }
     }
 
@@ -238,12 +246,8 @@ ATIScreenInit
     if (!ATIInitializeAcceleration(pScreen, pScreenInfo, pATI))
         return FALSE;
 
-#ifndef AVOID_DGA
-
     /* Initialise DGA support */
     (void)ATIDGAInit(pScreen, pScreenInfo, pATI);
-
-#endif /* AVOID_DGA */
 
     /* Initialise backing store */
     miInitializeBackingStore(pScreen);

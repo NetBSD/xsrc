@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.12 2004/02/13 23:58:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.13 2004/06/01 01:23:49 dawes Exp $ */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -46,6 +46,51 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Automatic configuration support is
+ * Copyright 2003, 2004 by X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
 
 /*
  * This file contains the DPMS functions required by the extension.
@@ -61,6 +106,7 @@
 #include "extensions/dpms.h"
 #include "dpmsproc.h"
 #endif
+#include "edid.h"
 
 
 #ifdef DPMSExtension
@@ -78,6 +124,7 @@ xf86DPMSInit(ScreenPtr pScreen, DPMSSetProcPtr set, int flags)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     DPMSPtr pDPMS;
     pointer DPMSOpt;
+    MessageType DPMSFrom = X_DEFAULT;
 
     if (serverGeneration != DPMSGeneration) {
 	if ((DPMSIndex = AllocateScreenPrivateIndex()) < 0)
@@ -85,30 +132,60 @@ xf86DPMSInit(ScreenPtr pScreen, DPMSSetProcPtr set, int flags)
 	DPMSGeneration = serverGeneration;
     }
 
-    if (DPMSDisabledSwitch)
-	DPMSEnabled = FALSE;
+    /*
+     * The logic here is as follows:
+     *
+     * DPMS can be enabled or disabled per-screen.  This can be done
+     * in the following order of preference:
+     *    1. The "dpms" option (enable or disable)
+     *    2. The global 'dpms' command line option (enable)
+     *    3. The probed EDID data showing DPMS capabilities (enable or disable)
+     *    4. Default (disabled).
+     *
+     * In addition to that, the initial global DPMS enable/disable state
+     * can be set as follows, in the following order of preference:
+     *    1. The '-dpms' command line option (disable)
+     *    2. At least one screen with DPMS enabled. (enable)
+     *    3. Default (disabled).
+     */
+
     if (!(pScreen->devPrivates[DPMSIndex].ptr = xcalloc(sizeof(DPMSRec), 1)))
 	return FALSE;
 
     pDPMS = (DPMSPtr)pScreen->devPrivates[DPMSIndex].ptr;
     pScrn->DPMSSet = set;
     pDPMS->Flags = flags;
+
+    /* Per-screen setting. */
     DPMSOpt = xf86FindOption(pScrn->options, "dpms");
     if (DPMSOpt) {
-	if ((pDPMS->Enabled
-	    = xf86SetBoolOption(pScrn->options, "dpms", FALSE))
-	    && !DPMSDisabledSwitch)
-	    DPMSEnabled = TRUE;
+	pDPMS->Enabled = xf86SetBoolOption(pScrn->options, "dpms", FALSE);
 	xf86MarkOptionUsed(DPMSOpt);
-	xf86DrvMsg(pScreen->myNum, X_CONFIG, "DPMS enabled\n");
+	DPMSFrom = X_CONFIG;
     } else if (DPMSEnabledSwitch) {
-	if (!DPMSDisabledSwitch)
-	    DPMSEnabled = TRUE;
 	pDPMS->Enabled = TRUE;
-    }  
-    else {
+	DPMSFrom = X_CMDLINE;
+    } else if (pScrn->monitor->DDC) {
+	xf86MonPtr DDC = (xf86MonPtr)(pScrn->monitor->DDC);
+	if (DDC->features.dpms) {
+	    pDPMS->Enabled = TRUE;
+	}
+	DPMSFrom = X_PROBED;
+    } else {
 	pDPMS->Enabled = FALSE;
     }
+
+    /* Initial global state. */
+    if (DPMSDisabledSwitch) {
+	DPMSEnabled = FALSE;
+    } else if (pDPMS->Enabled) {
+	DPMSEnabled = TRUE;
+    }
+
+    xf86DrvMsg(pScreen->myNum, DPMSFrom, "DPMS %s%s\n",
+	       pDPMS->Enabled ?  "enabled" : "disabled",
+	       DPMSDisabledSwitch ? " (disabled globally)" : "");
+
     pDPMS->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = DPMSClose;
     DPMSCount++;

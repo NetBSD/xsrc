@@ -25,7 +25,7 @@
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Converters.c,v 3.14 1999/06/20 08:40:59 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Converters.c,v 3.15 2004/10/23 15:29:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -261,7 +261,7 @@ _XawCvtBooleanToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 	      *(Boolean *)fromVal->addr ? XtEtrue : XtEfalse);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -280,7 +280,7 @@ _XawCvtBoolToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 	      *(Bool *)fromVal->addr ? XtEtrue : XtEfalse);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -298,7 +298,7 @@ _XawCvtPositionToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "%d", *(Position *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -316,7 +316,7 @@ _XawCvtShortToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "%d", *(short *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -334,7 +334,7 @@ _XawCvtDimensionToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "%u", *(Dimension *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -352,7 +352,7 @@ _XawCvtCARD32ToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "0x%08hx", *(int *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -370,7 +370,7 @@ _XawCvtIntToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "%d", *(int *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -388,7 +388,7 @@ _XawCvtCardinalToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   XmuSnprintf(buffer, sizeof(buffer), "%u", *(Cardinal *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -421,7 +421,7 @@ _XawCvtAtomToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -457,7 +457,7 @@ _XawCvtPixelToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 	      color.red, color.green, color.blue);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -494,7 +494,7 @@ _XawCvtFontStructToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   if (size)
     {
       ++size;
-    string_done(buffer);
+    string_done(buffer)
     }
 
   XawTypeToStringWarning(dpy, XtRFontStruct);
@@ -518,7 +518,7 @@ _XawCvtUnsignedCharToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 	      *(unsigned char *)fromVal->addr);
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -561,7 +561,7 @@ _XawCvtStringToDisplayList(Display *dpy, XrmValue *args, Cardinal *num_args,
       return (False);
     }
 
-  done(XawDisplayList*, dlist);
+  done(XawDisplayList*, dlist)
 }
 
 /*ARGSUSED*/
@@ -579,7 +579,7 @@ _XawCvtDisplayListToString(Display *dpy, XrmValue *args, Cardinal *num_args,
   buffer = XawDisplayListString(*(XawDisplayList **)(fromVal[0].addr));
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 /*ARGSUSED*/
@@ -633,7 +633,7 @@ _XawCvtStringToPixmap(Display *dpy, XrmValue *args, Cardinal *num_args,
 	pixmap = xaw_pixmap->pixmap;
     }
 
-  done(Pixmap, pixmap);
+  done(Pixmap, pixmap)
 }
 
 /*ARGSUSED*/
@@ -692,7 +692,7 @@ _XawCvtPixmapToString(Display *dpy, XrmValue *args, Cardinal *num_args,
 
   size = strlen(buffer) + 1;
 
-  string_done(buffer);
+  string_done(buffer)
 }
 
 #endif /* OLDXAW */

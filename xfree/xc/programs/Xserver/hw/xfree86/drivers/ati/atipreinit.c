@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atipreinit.c,v 1.75 2004/01/05 16:42:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atipreinit.c,v 1.81 2005/02/10 15:26:37 tsi Exp $ */
 /*
- * Copyright 1999 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1999 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1065,11 +1065,9 @@ ATIPreInit
                 ((FrequencyTable + 0x20U) <= BIOSSize))
             {
                 for (i = 0;  i < 16;  i++)
-                {
-                    pATI->BIOSClocks[i] = BIOSWord(FrequencyTable);
-                    FrequencyTable += 2;
-                }
+                    pATI->BIOSClocks[i] = BIOSWord(FrequencyTable + (i * 2));
             }
+
             pATI->ProgrammableClock = BIOSByte(ClockTable);
             pATI->ClockNumberToProgramme = BIOSByte(ClockTable + 0x06U);
             switch (BIOSWord(ClockTable + 0x08U) / 10)
@@ -1810,7 +1808,7 @@ ATIPreInit
                 if (((pATIHW->crtc_h_sync_strt_wid ^
                       pATIHW->shadow_h_sync_strt_wid) &
                      (CRTC_H_SYNC_STRT | CRTC_H_SYNC_STRT_HI |
-                      CRTC_H_SYNC_WID)))
+                      CRTC_H_SYNC_END_VGA)))
                 {
                     xf86DrvMsgVerb(pScreenInfo->scrnIndex, X_NOTICE, 0,
                         "Invalid horizontal sync pulse timing detected in mode"
@@ -1870,7 +1868,7 @@ ATIPreInit
 
                 /*
                  * Decipher input timing.  This is complicated by the fact that
-                 * the full width of all timing parameters, except for the
+                 * the full width of most timing parameters, except for the
                  * blanking pulses, is only available through the accelerator
                  * registers, not the VGA ones.  Blanking pulse boundaries must
                  * then be interpolated.
@@ -1884,10 +1882,10 @@ ATIPreInit
                         CRTC_H_SYNC_STRT_HI) *
                      (MaxBits(CRTC_H_SYNC_STRT) + 1)) |
                     GetBits(pATIHW->crtc_h_sync_strt_wid, CRTC_H_SYNC_STRT);
-                HSyncEnd = (HSyncStart & ~MaxBits(CRTC_H_SYNC_WID)) |
-                    GetBits(pATIHW->crtc_h_sync_strt_wid, CRTC_H_SYNC_WID);
+                HSyncEnd = (HSyncStart & ~MaxBits(CRTC_H_SYNC_END_VGA)) |
+                    GetBits(pATIHW->crtc_h_sync_strt_wid, CRTC_H_SYNC_END_VGA);
                 if (HSyncStart >= HSyncEnd)
-                    HSyncEnd += MaxBits(CRTC_H_SYNC_WID) + 1;
+                    HSyncEnd += MaxBits(CRTC_H_SYNC_END_VGA) + 1;
                 HTotal = GetBits(pATIHW->crtc_h_total_disp, CRTC_H_TOTAL);
 
                 HBlankStart = (HDisplay & ~0xFFU) | pATIHW->crt[2];
@@ -1902,10 +1900,10 @@ ATIPreInit
                 VDisplay = GetBits(pATIHW->crtc_v_total_disp, CRTC_V_DISP);
                 VSyncStart =
                     GetBits(pATIHW->crtc_v_sync_strt_wid, CRTC_V_SYNC_STRT);
-                VSyncEnd = (VSyncStart & ~MaxBits(CRTC_V_SYNC_WID)) |
-                    GetBits(pATIHW->crtc_v_sync_strt_wid, CRTC_V_SYNC_WID);
+                VSyncEnd = (VSyncStart & ~MaxBits(CRTC_V_SYNC_END_VGA)) |
+                    GetBits(pATIHW->crtc_v_sync_strt_wid, CRTC_V_SYNC_END_VGA);
                 if (VSyncStart > VSyncEnd)
-                    VSyncEnd += MaxBits(CRTC_V_SYNC_WID) + 1;
+                    VSyncEnd += MaxBits(CRTC_V_SYNC_END_VGA) + 1;
                 VTotal = GetBits(pATIHW->crtc_v_total_disp, CRTC_V_TOTAL);
 
                 VBlankStart = (VDisplay & ~0x03FFU) |
@@ -1918,11 +1916,11 @@ ATIPreInit
                    VBlankEnd += 0x0100U;
 
                 pATI->LCDHBlankWidth = HBlankEnd - HBlankStart;
-                pATI->LCDHSyncStart = HSyncStart - HBlankStart - 1;
+                pATI->LCDHSyncStart = HSyncStart - HBlankStart;
                 pATI->LCDHSyncWidth = HSyncEnd - HSyncStart;
 
                 pATI->LCDVBlankWidth = VBlankEnd - VBlankStart;
-                pATI->LCDVSyncStart = VSyncStart - VBlankStart - 1;
+                pATI->LCDVSyncStart = VSyncStart - VBlankStart;
                 pATI->LCDVSyncWidth = VSyncEnd - VSyncStart;
 
                 HDisplay = HTotal + 5 - pATI->LCDHBlankWidth;
@@ -2177,7 +2175,7 @@ ATIPreInit
                 if ((pATIHW->horz_stretching &
                     (HORZ_STRETCH_EN | AUTO_HORZ_RATIO)) !=
                     (HORZ_STRETCH_EN | AUTO_HORZ_RATIO))
-                    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    xf86DrvMsgVerb(pScreenInfo->scrnIndex, X_WARNING, 4,
                         "Inconsistent panel horizontal dimension:"
                         "  %d and %d.\n", pATI->LCDHorizontal, HDisplay);
                 HDisplay = pATI->LCDHorizontal;
@@ -2193,7 +2191,7 @@ ATIPreInit
             {
                 if (!(pATIHW->vert_stretching & VERT_STRETCH_EN) ||
                     !(pATIHW->ext_vert_stretch & AUTO_VERT_RATIO))
-                    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                    xf86DrvMsgVerb(pScreenInfo->scrnIndex, X_WARNING, 4,
                         "Inconsistent panel vertical dimension:  %d and %d.\n",
                         pATI->LCDVertical, VDisplay);
                 VDisplay = pATI->LCDVertical;
@@ -2517,7 +2515,7 @@ ATIPreInit
 #endif /* AVOID_CPIO */
 
                 {
-                    CARD32 PageSize = getpagesize() >> 10;
+                    CARD32 PageSize = (getpagesize() + 1023) >> 10;
 
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
 

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.26 2004/01/07 04:28:06 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.27 2004/03/30 17:22:46 tsi Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -261,12 +261,15 @@ all_query_respond (
     if (debugLevel > 0) {
 #if defined(IPv6) && defined(AF_INET6) 
 	void *ipaddr;
-	if (family == AF_INET6) {
+	int af_type;
+	if (family == FamilyInternet6) {
 	    ipaddr = & ((struct sockaddr_in6 *) from)->sin6_addr;
+	    af_type = AF_INET6;
 	} else {
 	    ipaddr = & ((struct sockaddr_in *) from)->sin_addr;
+	    af_type = AF_INET;
 	}
-	addrstring = inet_ntop(family, ipaddr, addrbuf, sizeof(addrbuf));
+	addrstring = inet_ntop(af_type, ipaddr, addrbuf, sizeof(addrbuf));
 #else
 	addrstring = inet_ntoa(((struct sockaddr_in *)from)->sin_addr);
 #endif
@@ -1388,7 +1391,7 @@ NetworkAddressToHostname (
     CARD16	connectionType,
     ARRAY8Ptr   connectionAddress)
 {
-    char    *name = 0;
+    char    *name = NULL;
 
     switch (connectionType)
     {
@@ -1425,7 +1428,7 @@ NetworkAddressToHostname (
 			if ((af_type == nai->ai_family) &&
 			  (connectionAddress->length == nai->ai_addrlen) &&
 			  (memcmp(connectionAddress->data,nai->ai_addr,
-			    nai->ai_addrlen) != 0) ) {
+			    nai->ai_addrlen) == 0) ) {
 			    break;
 			}
 		    }

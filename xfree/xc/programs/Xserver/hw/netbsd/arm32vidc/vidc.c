@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.4.6.1 2005/04/06 20:00:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -90,6 +90,7 @@
 
 /* We want these funcitons to do nothing */
 NULL_FUNC(mouse_cross_screen);
+NULL_FUNC(OsVendorPreInit);
 NULL_FUNC(OsVendorInit);
 
 struct _private private;

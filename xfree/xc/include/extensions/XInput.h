@@ -1,5 +1,3 @@
-/* $Xorg: XInput.h,v 1.4 2001/02/09 02:03:23 xorgcvs Exp $ */
-
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -45,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XInput.h,v 1.4 2003/11/17 22:20:02 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XInput.h,v 1.5 2005/01/27 02:28:58 dawes Exp $ */
 
 /* Definitions used by the library and client */
 
@@ -1119,6 +1117,13 @@ extern void	XFreeDeviceMotionEvents(
 extern void	XFreeDeviceControl(
     XDeviceControl*	/* control */
 );
+
+extern void _xibaddevice(Display *dpy, int *error);
+extern void _xibadclass(Display *dpy, int *error);
+extern void _xibadevent(Display *dpy, int *error);
+extern void _xibadmode(Display *dpy, int *error);
+extern void _xidevicebusy(Display *dpy, int *error);
+
 
 _XFUNCPROTOEND
 

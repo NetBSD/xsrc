@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.25 2004/02/13 23:58:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.27 2005/02/17 01:41:27 dawes Exp $ */
 /*
  * Copyright (c) 1999-2003 by The XFree86 Project, Inc.
  * All rights reserved.
@@ -189,11 +189,12 @@ extern OSMouseInfoPtr xf86OSMouseInit(int flags);
  *
  *  1.0.0 - Everything up to when versioning was started.
  *  1.1.0 - FindDevice and GuessProtocol added to OSMouseInfoRec
+ *  1.2.0 - xisbscale added to MouseDevRec
  *
  */
 
 #define OS_MOUSE_VERSION_MAJOR 1
-#define OS_MOUSE_VERSION_MINOR 1
+#define OS_MOUSE_VERSION_MINOR 2
 #define OS_MOUSE_VERSION_PATCH 0
 
 #define OS_MOUSE_VERSION_CURRENT					\
@@ -232,7 +233,6 @@ typedef struct _MouseDevRec {
     const char *	protocol;
     MouseProtocolID	protocolID;
     MouseProtocolID	oldProtocolID; /* hack */
-    int			xisbscale;	/* buffer size for 1 event */
     int			class;
     int			mseModel;
     int			baudRate;
@@ -288,6 +288,7 @@ typedef struct _MouseDevRec {
     dataGoodProc	dataGood;
     int			angleOffset;
     pointer		pDragLock;	/* drag lock area */
+    int			xisbscale;	/* buffer size for 1 event */
 } MouseDevRec, *MouseDevPtr;
 
 /* Z axis mapping */
@@ -300,7 +301,7 @@ typedef struct _MouseDevRec {
 /* Generalize for other axes. */
 #define MSE_NOAXISMAP	MSE_NOZMAP
 
-#define MSE_MAXBUTTONS	12
+#define MSE_MAXBUTTONS	24
 #define MSE_DFLTBUTTONS	 3
 
 #endif /* _XF86OSMOUSE_H_ */

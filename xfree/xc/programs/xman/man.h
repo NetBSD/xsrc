@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.h,v 1.4 2001/07/25 15:05:27 dawes Exp $ */
+/* $XFree86: xc/programs/xman/man.h,v 1.6 2004/07/01 10:19:09 alanh Exp $ */
 
 
 /* X toolkit header files */
@@ -71,7 +71,7 @@ from the X Consortium.
 #include "version.h"
 #include "defs.h"
 
-/* 
+/*
  * Assigning values here allows the user of Bitwise Or.
  */
 
@@ -114,14 +114,14 @@ typedef struct tManual {
   int nalloc;			/* how much space allocated */
   int flags;			/* suffix, fold */
 } Manual;
-   
-/* psuedo Globals that are specific to each manpage created. */
+
+/* pseudo Globals that are specific to each manpage created. */
 
 typedef struct _ManpageGlobals{
-  int current_directory;	/* The directory currently being shown 
+  int current_directory;	/* The directory currently being shown
 				   on this manpage. */
   Boolean dir_shown,		/* True if the directory is then current
-				   visable screen */
+				   visible screen */
     both_shown;			/* If true then both the manpage and
 				   the directory are to be shown.*/
   Widget label,			/* The label widget at the top of the page. */
@@ -139,8 +139,10 @@ typedef struct _ManpageGlobals{
     version_entry, quit_entry;
 
   char manpage_title[80];       /* The label to use for the current manpage. */
+  char *manpage_file;		/* corresponding filename */
+  Boolean manpage_show_file;	/* true if we show filename */
 
-  char save_file[80];		/* the name of the file to save fomatted 
+  char save_file[80];		/* the name of the file to save formatted
 				   page into. */
   char tempfile[80];		/* the name of the file to copy the formatted
 				   page from. */
@@ -150,7 +152,7 @@ typedef struct _ManpageGlobals{
 
   ManPageWidgets manpagewidgets; /* The manpage widgets. */
 
-  /* Things to remember when cleaning up whne killing manpage. */
+  /* Things to remember when cleaning up when killing manpage. */
 
   Widget This_Manpage;		/* a pointer to the root of
 				   this manpage. */
@@ -170,17 +172,18 @@ typedef struct _Xman_Resources {
   Boolean top_box_active;	/* Put up the Top Box. */
   Boolean clear_search_string;	/* clear the search string each time it
 				   is popped down? */
-  int directory_height;	        /* The default height of directory in 
+  int directory_height;	        /* The default height of directory in
 				   both_shown mode. */
   char * help_file;		/* The name of the help file. */
+  char * format_cmd;		/* command to use to format manpages */
   char * title;	    	        /* The title for topBox */
   Boolean iconic;		/* Should topBox come up in an iconic state */
 } Xman_Resources;
 
 /************************************************************
  *
- * Function Defintions 
- * 
+ * Function Defintions
+ *
  ************************************************************/
 
 /*
@@ -208,6 +211,8 @@ void DirPopupCallback(Widget w, XtPointer pointer, XtPointer junk);
 void DirectoryHandler(Widget w, XtPointer global_pointer, XtPointer ret_val);
 void OptionCallback(Widget w, XtPointer pointer, XtPointer junk);
 void Popup(Widget w, XtGrabKind grab_kind);
+void ShowManTitle(ManpageGlobals *man_globals);
+void ShowDirTitle(ManpageGlobals *man_globals, int number);
 
 /* Action Routines. */
 
@@ -231,7 +236,6 @@ Bool ReadManConfig(char manpath[]);
 int Man(void);
 
 /* misc.c */
-FILE * DoSearch(ManpageGlobals * man_globals, int type);
 FILE * FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num);
 ManpageGlobals * GetGlobals(Widget w);
 void AddCursor(Widget w, Cursor cursor);
@@ -247,6 +251,7 @@ FILE * Format(ManpageGlobals * man_globals, char * entry);
 
 /* search */
 void MakeSearchWidget(ManpageGlobals * man_globals, Widget parent);
+FILE * DoSearch(ManpageGlobals * man_globals, int type);
 
 /* tkfunctions.c */
 

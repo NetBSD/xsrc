@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Destroy.c,v 1.3 2001/12/14 19:56:11 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Destroy.c,v 1.4 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -67,11 +67,9 @@ struct _DestroyRec {
     Widget widget;
 };
 
-static void Recursive(widget, proc)
-    Widget       widget;
-    XtWidgetProc proc;
+static void Recursive(Widget widget, XtWidgetProc proc)
 {
-    register int    i;
+    register Cardinal i;
     CompositePart   *cwp;
 
     /* Recurse down normal children */
@@ -90,11 +88,10 @@ static void Recursive(widget, proc)
     }
 
     /* Finally, apply procedure to this widget */
-    (*proc) (widget);  
+    (*proc) (widget);
 } /* Recursive */
 
-static void Phase1Destroy (widget)
-    Widget    widget;
+static void Phase1Destroy (Widget widget)
 {
     Widget hookobj = XtHooksOfDisplay(XtDisplayOfObject(widget));
 
@@ -104,14 +101,13 @@ static void Phase1Destroy (widget)
 
 	call_data.type = XtHdestroy;
 	call_data.widget = widget;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.destroyhook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.destroyhook_callbacks,
 		(XtPointer) &call_data);
     }
 } /* Phase1Destroy */
 
-static void Phase2Callbacks(widget)
-    Widget    widget;
+static void Phase2Callbacks(Widget widget)
 {
     if (widget->core.destroy_callbacks != NULL) {
 	XtCallCallbackList(widget,
@@ -119,8 +115,7 @@ static void Phase2Callbacks(widget)
     }
 } /* Phase2Callbacks */
 
-static void Phase2Destroy(widget)
-    register Widget widget;
+static void Phase2Destroy(register Widget widget)
 {
     register WidgetClass	    class;
     register ConstraintWidgetClass  cwClass;
@@ -149,7 +144,7 @@ static void Phase2Destroy(widget)
     /* Call widget destroy procedures */
     LOCK_PROCESS;
     for (class = widget->core.widget_class;
-	 class != NULL; 
+	 class != NULL;
 	 class = class->core_class.superclass) {
 	XtWidgetProc destroy;
 
@@ -162,9 +157,9 @@ static void Phase2Destroy(widget)
 
     /* Call widget deallocate procedure */
     ext = (ObjectClassExtension)
-	XtGetClassExtension(widget->core.widget_class, 
+	XtGetClassExtension(widget->core.widget_class,
 			    XtOffsetOf(CoreClassPart, extension),
-			    NULLQUARK, XtObjectExtensionVersion, 
+			    NULLQUARK, XtObjectExtensionVersion,
 			    sizeof(ObjectClassExtensionRec));
     if (ext && ext->deallocate) {
 	XtDeallocateProc deallocate;
@@ -177,8 +172,7 @@ static void Phase2Destroy(widget)
     }
 } /* Phase2Destroy */
 
-static Boolean IsDescendant(widget, root)
-    register Widget widget, root;
+static Boolean IsDescendant(Widget widget, Widget root)
 {
     while ((widget = XtParent(widget)) != root) {
 	if (widget == NULL) return False;
@@ -186,8 +180,7 @@ static Boolean IsDescendant(widget, root)
     return True;
 }
 
-static void XtPhase2Destroy (widget)
-    register Widget widget;
+static void XtPhase2Destroy (Widget widget)
 {
     Display	    *display = NULL;
     Window	    window;
@@ -203,7 +196,7 @@ static void XtPhase2Destroy (widget)
     parent = widget->core.parent;
 
     if (parent && XtIsWidget(parent) && parent->core.num_popups) {
-	int i;
+	Cardinal i;
 	for (i = 0; i < parent->core.num_popups; i++) {
 	    if (parent->core.popup_list[i] == widget) {
 		isPopup = True;
@@ -274,7 +267,7 @@ static void XtPhase2Destroy (widget)
     app->in_phase2_destroy = outerInPhase2Destroy;
 
     if (isPopup) {
-	int i;
+	Cardinal i;
 	for (i = 0; i < parent->core.num_popups; i++)
 	    if (parent->core.popup_list[i] == widget) {
 		parent->core.num_popups--;
@@ -295,9 +288,7 @@ static void XtPhase2Destroy (widget)
 } /* XtPhase2Destroy */
 
 
-void _XtDoPhase2Destroy(app, dispatch_level)
-    XtAppContext app;
-    int dispatch_level;
+void _XtDoPhase2Destroy(XtAppContext app, int dispatch_level)
 {
     /* Phase 2 must occur in fifo order.  List is not necessarily
      * contiguous in dispatch_level.
@@ -324,8 +315,7 @@ void _XtDoPhase2Destroy(app, dispatch_level)
 }
 
 
-void XtDestroyWidget (widget)
-    Widget    widget;
+void XtDestroyWidget (Widget widget)
 {
     XtAppContext app;
     DestroyRec *dr, *dr2;
@@ -377,5 +367,5 @@ void XtDestroyWidget (widget)
 	app->dispatch_level = 0;
     }
     UNLOCK_APP(app);
-	
+
 } /* XtDestroyWidget */

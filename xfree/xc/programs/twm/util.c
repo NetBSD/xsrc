@@ -48,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/util.c,v 1.13 2002/09/24 21:00:28 tsi Exp $ */
+/* $XFree86: xc/programs/twm/util.c,v 1.14 2004/06/08 01:17:02 dawes Exp $ */
 
 
 /***********************************************************************
@@ -70,6 +70,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <X11/Xmu/Drawing.h>
 #include <X11/Xmu/CharSet.h>
+#include <X11/xpm.h>
 
 static Pixmap CreateXLogoPixmap ( unsigned int *widthp, 
 				  unsigned int *heightp );
@@ -292,12 +293,14 @@ char *name;
 
     if (name[0] != '~') return name;
 
-    asprintf(&newname, "%s/%s", Home, &name[1]);
+    newname = (char *) malloc (HomeLen + strlen(name) + 2);
     if (!newname) {
 	fprintf (stderr, 
 		 "%s:  unable to allocate %ld bytes to expand filename %s/%s\n",
 		 ProgramName, HomeLen + (unsigned long)strlen(name) + 2,
 		 Home, &name[1]);
+    } else {
+	(void) sprintf (newname, "%s/%s", Home, &name[1]);
     }
 
     return newname;
@@ -394,20 +397,53 @@ FindBitmap (name, widthp, heightp)
     pm = XmuLocateBitmapFile (ScreenOfDisplay(dpy, Scr->screen), bigname, NULL,
 			      0, (int *)widthp, (int *)heightp, &HotX, &HotY);
     if (pm == None && Scr->IconDirectory && bigname[0] != '/') {
+	int ret;
 	if (bigname != name) free (bigname);
 	/*
 	 * Attempt to find icon in old IconDirectory (now obsolete)
 	 */
-	asprintf(&bigname, "%s/%s", Scr->IconDirectory, name);
+	bigname = (char *) malloc (strlen(name) + strlen(Scr->IconDirectory) +
+				   2);
 	if (!bigname) {
 	    fprintf (stderr,
 		     "%s:  unable to allocate memory for \"%s/%s\"\n",
 		     ProgramName, Scr->IconDirectory, name);
 	    return None;
 	}
-	if (XReadBitmapFile (dpy, Scr->Root, bigname, widthp, heightp, &pm,
-			     &HotX, &HotY) != BitmapSuccess) {
+	(void) sprintf (bigname, "%s/%s", Scr->IconDirectory, name);
+	ret = XReadBitmapFile (dpy, Scr->Root, bigname, widthp, heightp, &pm,
+			       &HotX, &HotY);
+	if (ret != BitmapSuccess) {
 	    pm = None;
+	    if (ret == BitmapFileInvalid) {
+		/*
+		 * Try another filetype
+		 */
+		int res;
+		Pixmap picture, shape;
+
+		res = XpmReadFileToPixmap(dpy, Scr->Root, bigname, &picture, &shape, NULL);
+		switch (res) {
+		case XpmOpenFailed:
+		    fprintf (stderr, "%s:  Unable to open xpm file `%s'",
+			     ProgramName, bigname);
+		    break;
+
+		case XpmFileInvalid:
+		    fprintf (stderr, "%s:  Xpm file `%s' is invalid",
+			     ProgramName, bigname);
+		    break;
+
+		case XpmNoMemory:
+		    fprintf (stderr, "%s:  No memory for open xpm file `%s'",
+			     ProgramName, bigname);
+		    break;
+
+		default:
+		    pm = picture;
+		    break;
+		}
+	    }
 	}
     }
     if (bigname != name) free (bigname);
@@ -442,7 +478,7 @@ InsertRGBColormap (a, maps, nmaps, replace)
     }
 
     if (!sc) {				/* no existing, allocate new */
-	sc = (StdCmap *) malloc(sizeof (StdCmap));
+	sc = (StdCmap *) malloc (sizeof (StdCmap));
 	if (!sc) {
 	    fprintf (stderr, "%s:  unable to allocate %ld bytes for StdCmap\n",
 		     ProgramName, (unsigned long)sizeof (StdCmap));
@@ -653,9 +689,9 @@ MyFont *font;
 	    XFreeFontSet(dpy, font->fontset);
 	}
 
-	asprintf(&basename2, "%s,*", font->name);
-	if (!basename2)
-	    basename2 = font->name;
+	basename2 = (char *)malloc(strlen(font->name) + 3);
+	if (basename2) sprintf(basename2, "%s,*", font->name);
+	else basename2 = font->name;
 	if( (font->fontset = XCreateFontSet(dpy, basename2,
 					    &missing_charset_list_return,
 					    &missing_charset_count_return,

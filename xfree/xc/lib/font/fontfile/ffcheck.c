@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/ffcheck.c,v 1.16 2003/05/27 22:26:49 tsi Exp $ */
+/* $XFree86: xc/lib/font/fontfile/ffcheck.c,v 1.17 2004/05/01 01:30:02 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -136,9 +136,6 @@ FontFileCheckRegisterFpeFunctions (void)
 #endif
 #ifdef BUILD_FREETYPE
     FreeTypeRegisterFontFileFunctions();
-#endif
-#ifdef BUILD_XTRUETYPE
-    XTrueTypeRegisterFontFileFunctions();
 #endif
 
 #endif /* ifndef LOWMEMFTPT */

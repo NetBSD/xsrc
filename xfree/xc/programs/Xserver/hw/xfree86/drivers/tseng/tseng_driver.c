@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.98 2003/11/03 05:11:44 tsi Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.99 2004/11/26 13:45:05 tsi Exp $ 
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -2455,6 +2455,7 @@ TsengModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     /* prepare standard VGA register contents */
     hwp = VGAHWPTR(pScrn);
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScrn, mode))
 	return (FALSE);
     pScrn->vtSema = TRUE;
@@ -2485,7 +2486,7 @@ TsengModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     new->ExtCRTC[0x35] = (mode->Flags & V_INTERLACE ? 0x80 : 0x00)
 	| 0x10
-	| ((mode->CrtcVSyncStart & 0x400) >> 7)
+	| (((mode->CrtcVSyncStart - 1) & 0x400) >> 7)
 	| (((mode->CrtcVDisplay - 1) & 0x400) >> 8)
 	| (((mode->CrtcVTotal - 2) & 0x400) >> 9)
 	| (((mode->CrtcVBlankStart - 1) & 0x400) >> 10);
@@ -2705,7 +2706,7 @@ TsengModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     new->ExtCRTC[0x3F] = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8)
 	| ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7)
 	| ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 6)
-	| (((mode->CrtcHSyncStart >> 3) & 0x100) >> 4)
+	| ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 4)
 	| ((row_offset & 0x200) >> 3)
 	| ((row_offset & 0x100) >> 1);
 

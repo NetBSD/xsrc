@@ -1,7 +1,7 @@
 #ifndef _GLX_screens_h_
 #define _GLX_screens_h_
 
-/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.h,v 1.5 2002/02/22 21:45:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.h,v 1.6 2004/12/10 16:06:59 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -70,7 +70,11 @@ typedef struct {
     */
     void (*createBuffer)(__GLXdrawablePrivate *glxPriv);
 
-    __GLXvisualConfig *pGlxVisual;
+    /**
+     * Linked list of valid context modes for this screen.
+     */
+    __GLcontextModes *modes;
+
     void **pVisualPriv;
     GLint numVisuals;
     GLint numUsableVisuals;

@@ -6,9 +6,9 @@
 
                                   Abstract
 
-     This guide is aimed to relieve one's labour to create a new (inter-
-     nationalized) keyboard layout. Unlike other documents this guide
-     accents the keymap developer's point of view.
+      This guide is aimed to relieve one's labour to create a new
+     (internationalized) keyboard layout. Unlike other documents this
+     guide accents the keymap developer's point of view.
 
 1.  Overview
 
@@ -270,8 +270,8 @@ The most used schemes are:
             fourth level.
 
       FOUR_LEVEL_ALPHABETIC
-            Is similar to FOUR_LEVEL but also defines shift-cancels-caps
-            behaviour as in ALPHABETIC. If Lock+LevelThree apply the symbol
+            Is similar to FOUR_LEVEL but also defines shift-cancels-caps be-
+            haviour as in ALPHABETIC. If Lock+LevelThree apply the symbol
             from the third level is taken and the capitalization rules are
             applied.  If Lock+Shift+LevelThree apply the symbol from the
             third level is taken and no capitalization rules are applied.
@@ -317,8 +317,8 @@ Besides that, there are several schemes for special purposes:
             from the first level is chosen. Only if both Alt+Shift modifiers
             apply the symbol from the second level is chosen.
 
-If needed, special caps schemes may be used. They redefine the standard
-behaviour of all *ALPHABETIC types. The layouts (maps of symbols) with keys
+If needed, special caps schemes may be used. They redefine the standard be-
+haviour of all *ALPHABETIC types. The layouts (maps of symbols) with keys
 defined in respective types then automatically change their behaviour accord-
 ingly. Possible redefinitions are:
 
@@ -505,7 +505,7 @@ rules file described above the .lst file could look like:
 
 And that should be it. Enjoy creating your own xkb mapping.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/XKB-Enhancing.sgml,v 1.2 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/XKB-Enhancing.sgml,v 1.3 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.XKB-Enhancing,v 1.4 2003/10/19 19:57:13 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.XKB-Enhancing,v 1.7 2005/02/15 01:47:38 dawes Exp $

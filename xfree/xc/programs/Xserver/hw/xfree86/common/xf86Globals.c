@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.43 2004/02/13 23:58:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.45 2005/03/04 21:59:13 tsi Exp $ */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -45,6 +45,51 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright © 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
  */
 
 /*
@@ -184,22 +229,39 @@ xf86InfoRec xf86Info = {
 	FALSE,		/* pc98 */
 #endif
 	TRUE,		/* pmFlag */
-	LogNone,	/* syncLog */
 	0,		/* estimateSizesAggressively */
 	FALSE,		/* kbdCustomKeycodes */
 	FALSE,		/* disableRandR */
-	X_DEFAULT	/* randRFrom */
+	X_DEFAULT,	/* randRFrom */
+	{ FALSE, NULL, FALSE, FALSE, },	/* grabInfo */
+	NULL,		/* config */
+	NULL,		/* serverLayout */
+	NULL,		/* configFiles */
+	NULL,		/* configFlags */
+	NULL		/* configModules */
 };
 const char *xf86ConfigFile = NULL;
-const char *xf86InputDeviceList = NULL;
-const char *xf86ModulePath = DEFAULT_MODULE_PATH;
-MessageType xf86ModPathFrom = X_DEFAULT;
-const char *xf86LogFile = DEFAULT_LOGPREFIX;
-MessageType xf86LogFileFrom = X_DEFAULT;
 Bool xf86LogFileWasOpened = FALSE;
-serverLayoutRec xf86ConfigLayout = {NULL, };
 confDRIRec xf86ConfigDRI = {0, };
-XF86ConfigPtr xf86configptr = NULL;
+confFilesRec xf86FileDefaults = {
+	NULL, "<defaults>",
+	DEFAULT_LOGPREFIX, X_DEFAULT,
+	NULL, X_NONE,
+	DEFAULT_MODULE_PATH, X_DEFAULT,
+	NULL, X_NONE,
+	NULL, X_NONE,
+	NULL
+};
+confFilesRec xf86FileCmdline = {
+	NULL, "<commandline>",
+	NULL, X_NONE,
+	NULL, X_NONE,
+	NULL, X_NONE,
+	NULL, X_NONE,
+	NULL, X_NONE,
+	NULL
+};
+confFilesPtr xf86FilePaths = NULL;
 Bool xf86Resetting = FALSE;
 Bool xf86Initialising = FALSE;
 Bool xf86ProbeFailed = FALSE;
@@ -226,8 +288,6 @@ const char *xf86VisualNames[] = {
 
 /* Parameters set only from the command line */
 char *xf86ServerName = "no-name";
-Bool xf86fpFlag = FALSE;
-Bool xf86coFlag = FALSE;
 Bool xf86sFlag = FALSE;
 Bool xf86bsEnableFlag = FALSE;
 Bool xf86bsDisableFlag = FALSE;

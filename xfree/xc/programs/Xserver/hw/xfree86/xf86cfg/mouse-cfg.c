@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.12 2003/11/03 05:11:58 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.13 2004/04/03 22:26:25 dawes Exp $
  */
 
 #include "xf86config.h"
@@ -58,7 +58,7 @@ static struct MouseProtocol {
 #ifdef __UNIXOS2__
     {"OS2Mouse",		MTYPE_AUTOMOUSE},
 #endif
-#ifdef SCO
+#ifdef __SCO__
     {"OsMouse",			MTYPE_AUTOMOUSE},
 #endif
 #ifdef WSCONS_SUPPORT

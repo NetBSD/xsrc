@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.28 2003/11/17 22:20:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.29 2004/03/30 10:34:05 eich Exp $ */
 
 #ifndef _XLIBINT_H_
 #define _XLIBINT_H_ 1
@@ -386,6 +386,7 @@ extern LockInfoPtr _Xglobal_lock;
 #define XlibDisplayReadEvents	(1L << 5) /* in _XReadEvents */
 #define XlibDisplayReply	(1L << 5) /* in _XReply */
 #define XlibDisplayWriting	(1L << 6) /* in _XFlushInt, _XSend */
+#define XlibDisplayDfltRMDB     (1L << 7) /* mark if RM db from XGetDefault */
 
 /*
  * X Protocol packetizing macros.

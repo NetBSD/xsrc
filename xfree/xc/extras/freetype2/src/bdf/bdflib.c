@@ -1,6 +1,6 @@
 /*
  * Copyright 2000 Computing Research Labs, New Mexico State University
- * Copyright 2001, 2002 Francesco Zappa Nardelli
+ * Copyright 2001, 2002, 2003, 2004 Francesco Zappa Nardelli
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/freetype2/src/bdf/bdflib.c,v 1.3 2003/05/29 02:13:04 dawes Exp $ */
+/* $XFree86: xc/extras/freetype2/src/bdf/bdflib.c,v 1.4 2004/04/26 16:15:54 dawes Exp $ */
 
   /*************************************************************************/
   /*                                                                       */
@@ -164,7 +164,7 @@
     { (char *)"_MULE_RELATIVE_COMPOSE",  BDF_INTEGER,  1, { 0 } },
   };
 
-  static unsigned long
+  static const unsigned long
   _num_bdf_properties = sizeof ( _bdf_properties ) /
                         sizeof ( _bdf_properties[0] );
 
@@ -184,10 +184,10 @@
   (*hash_free_func)( hashnode  node );
 
   static hashnode*
-  hash_bucket( char*       key,
-               hashtable*  ht )
+  hash_bucket( const char*  key,
+               hashtable*   ht )
   {
-    char*          kp  = key;
+    const char*    kp  = key;
     unsigned long  res = 0;
     hashnode*      bp  = ht->table, *ndp;
 
@@ -318,7 +318,7 @@
 
 
   static hashnode
-  hash_lookup( char*       key,
+  hash_lookup( const char* key,
                hashtable*  ht )
   {
     hashnode *np = hash_bucket( key, ht );
@@ -392,7 +392,7 @@
 
   /* An empty string for empty fields. */
 
-  static char  empty[1] = { 0 };   /* XXX eliminate this */
+  static const char  empty[1] = { 0 };      /* XXX eliminate this */
 
 
   /* Assume the line is NULL-terminated and that the `list' parameter */
@@ -469,7 +469,7 @@
       }
 
       /* Assign the field appropriately. */
-      list->field[list->used++] = ( ep > sp ) ? sp : empty;
+      list->field[list->used++] = ( ep > sp ) ? sp : (char*)empty;
 
       sp = ep;
 
@@ -512,7 +512,7 @@
     }
 
     if ( final_empty )
-      list->field[list->used++] = empty;
+      list->field[list->used++] = (char*)empty;
 
     if ( list->used == list->size )
     {
@@ -697,7 +697,7 @@
           le -= n;
           n   = pe - pp;
 
-          FT_MEM_COPY( buf, pp, n );
+          FT_MEM_MOVE( buf, pp, n );
 
           pp     = buf + n;
           bytes  = 65536L - n;
@@ -1451,10 +1451,11 @@
     FT_Memory          memory;
     FT_Error           error = BDF_Err_Ok;
 
+    FT_UNUSED( call_data );
     FT_UNUSED( lineno );        /* only used in debug mode */
 
 
-    p    = (_bdf_parse_t *)    client_data;
+    p = (_bdf_parse_t *)client_data;
 
     font   = p->font;
     memory = font->memory;
@@ -1770,14 +1771,14 @@
 
       /* Determine the overall font bounding box as the characters are */
       /* loaded so corrections can be done later if indicated.         */
-      p->maxas    = (short)MAX( glyph->bbx.ascent, p->maxas );
-      p->maxds    = (short)MAX( glyph->bbx.descent, p->maxds );
+      p->maxas    = (short)FT_MAX( glyph->bbx.ascent, p->maxas );
+      p->maxds    = (short)FT_MAX( glyph->bbx.descent, p->maxds );
 
       p->rbearing = (short)( glyph->bbx.width + glyph->bbx.x_offset );
 
-      p->maxrb    = (short)MAX( p->rbearing, p->maxrb );
-      p->minlb    = (short)MIN( glyph->bbx.x_offset, p->minlb );
-      p->maxlb    = (short)MAX( glyph->bbx.x_offset, p->maxlb );
+      p->maxrb    = (short)FT_MAX( p->rbearing, p->maxrb );
+      p->minlb    = (short)FT_MIN( glyph->bbx.x_offset, p->minlb );
+      p->maxlb    = (short)FT_MAX( glyph->bbx.x_offset, p->maxlb );
 
       if ( !( p->flags & _BDF_DWIDTH ) )
       {
@@ -1882,7 +1883,7 @@
       /*                                                                  */
       /* This is *always* done regardless of the options, because X11     */
       /* requires these two fields to compile fonts.                      */
-      if ( bdf_get_font_property( p->font, (char *)"FONT_ASCENT" ) == 0 )
+      if ( bdf_get_font_property( p->font, "FONT_ASCENT" ) == 0 )
       {
         p->font->font_ascent = p->font->bbx.ascent;
         ft_sprintf( nbuf, "%hd", p->font->bbx.ascent );
@@ -1894,7 +1895,7 @@
         p->font->modified = 1;
       }
 
-      if ( bdf_get_font_property( p->font, (char *)"FONT_DESCENT" ) == 0 )
+      if ( bdf_get_font_property( p->font, "FONT_DESCENT" ) == 0 )
       {
         p->font->font_descent = p->font->bbx.descent;
         ft_sprintf( nbuf, "%hd", p->font->bbx.descent );
@@ -2418,7 +2419,7 @@
 
   FT_LOCAL_DEF( bdf_property_t * )
   bdf_get_font_property( bdf_font_t*  font,
-                         char*        name )
+                         const char*  name )
   {
     hashnode  hn;
 

@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_dga.c,v 1.1 2001/07/02 10:46:04 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_dga.c,v 1.2 2004/12/07 15:59:20 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -44,8 +44,9 @@ static void S3_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 static void S3_BltRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w, int h,
 		       int dstx, int dsty);
 static Bool S3_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
-			       unsigned char **mem, int *size, int *offset,
-			       int *flags);
+			       unsigned int *mem, unsigned int *size,
+			       unsigned int *offset,
+			       unsigned int *flags);
 static void S3_Sync(ScrnInfoPtr pScrn);
 
 
@@ -297,13 +298,13 @@ static void S3_BltRect(ScrnInfoPtr pScrn, int srcx, int srcy, int w, int h,
 
 
 static Bool S3_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
-			       unsigned char **mem, int *size, int *offset,
-			       int *flags)
+			       unsigned int *mem, unsigned int *size,
+			       unsigned int *offset, unsigned int *flags)
 {
 	S3Ptr pS3 = S3PTR(pScrn);
 
 	*name = NULL;
-	*mem = (unsigned char*)pS3->FBAddress;
+	*mem = pS3->FBAddress;
 	*size = (pScrn->videoRam * 1024);
 	*offset = 0;
 	*flags = 0;

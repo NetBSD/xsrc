@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/packrender.h,v 1.8 2003/10/23 15:30:09 tsi Exp $ */
+/* $XFree86: xc/lib/GL/glx/packrender.h,v 1.10 2004/04/22 13:58:39 tsi Exp $ */
 #ifndef __GLX_packrender_h__
 #define __GLX_packrender_h__
 

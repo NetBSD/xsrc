@@ -46,6 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/tags.c,v 1.6 2004/04/03 22:38:54 tsi Exp $ */
 
 #include	"misc.h"
 #include	"util.h"
@@ -84,11 +85,11 @@ FreeTags()
 
 /* ARGSUSED */
 static void
-cache_free(id, client, data, reason)
-    CacheID     id;
-    ClientPtr	client;
-    pointer     data;
-    int         reason;
+cache_free(
+    CacheID     id,
+    ClientPtr	client,
+    pointer     data,
+    int         reason)
 {
     TagData     tag = (TagData) data;
 

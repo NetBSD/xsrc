@@ -34,7 +34,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/texteroids/texteroids.c,v 1.5 2001/08/01 00:45:02 tsi Exp $ */
+/* $XFree86: xc/programs/texteroids/texteroids.c,v 1.6 2004/04/03 22:38:55 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -121,30 +121,32 @@ int count, total;
 
 float invctm[6];
 
-void ITransform(x, y, ux, uy)
-    int x, y;
-    float *ux, *uy;
+static void ITransform(
+    int x,
+    int y,
+    float *ux,
+    float *uy)
 {
     *ux = invctm[0] * x + invctm[2] * y + invctm[4];
     *uy = invctm[1] * x + invctm[3] * y + invctm[5];
 }
 
-void CheckHit(w, event, params, num)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *num;
+static void CheckHit(
+    Widget w,
+    XEvent *event,
+    String *params,
+    Cardinal *num)
 {
     if (event->type != ButtonPress) return;
     ITransform(event->xbutton.x, event->xbutton.y - height,
 	       &hitx, &hity);
 }
 
-void MaybePause(w, event, params, num)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *num;
+static void MaybePause(
+    Widget w,
+    XEvent *event,
+    String *params,
+    Cardinal *num)
 {
     switch (event->type) {
 	case VisibilityNotify:
@@ -154,11 +156,11 @@ void MaybePause(w, event, params, num)
     }
 }
 
-void MapHandler(w, client_data, event, cont)
-    Widget w;
-    XtPointer client_data;
-    XEvent *event;
-    Boolean *cont;
+static void MapHandler(
+    Widget w,
+    XtPointer client_data,
+    XEvent *event,
+    Boolean *cont)
 {
     switch (event->type) {
 	case UnmapNotify:
@@ -170,11 +172,11 @@ void MapHandler(w, client_data, event, cont)
     }
 }
 
-void NewSize(w, event, params, num)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *num;
+static void NewSize(
+    Widget w,
+    XEvent *event,
+    String *params,
+    Cardinal *num)
 {
     if (event->type != ConfigureNotify) return;
     if (event->xconfigure.width == width && event->xconfigure.height == height)
@@ -195,9 +197,9 @@ XtActionsRec actions[] = {
      {"NewSize", NewSize}
 };
 
-int main(argc, argv)
-    int argc;
-    char **argv;
+int main(
+    int argc,
+    char **argv)
 {
     Widget shell;
     Arg args[10];

@@ -32,6 +32,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/drm_ioctl.h,v 1.14 2005/03/01 03:48:55 dawes Exp $ */
 
 #define __NO_VERSION__
 #include "drmP.h"
@@ -55,15 +56,16 @@ int DRM(getunique)(struct inode *inode, struct file *filp,
 	drm_file_t	 *priv	 = filp->private_data;
 	drm_device_t	 *dev	 = priv->dev;
 	drm_unique_t	 u;
+	drm_unique_t	 __user *argp = (void __user *)arg;
 
-	if (copy_from_user(&u, (drm_unique_t *)arg, sizeof(u)))
+	if (copy_from_user(&u, argp, sizeof(u)))
 		return -EFAULT;
 	if (u.unique_len >= dev->unique_len) {
 		if (copy_to_user(u.unique, dev->unique, dev->unique_len))
 			return -EFAULT;
 	}
 	u.unique_len = dev->unique_len;
-	if (copy_to_user((drm_unique_t *)arg, &u, sizeof(u)))
+	if (copy_to_user(argp, &u, sizeof(u)))
 		return -EFAULT;
 	return 0;
 }
@@ -88,11 +90,11 @@ int DRM(setunique)(struct inode *inode, struct file *filp,
 	drm_file_t	 *priv	 = filp->private_data;
 	drm_device_t	 *dev	 = priv->dev;
 	drm_unique_t	 u;
-	int		 domain, bus, slot, func, ret;
+	int		 domain, bus = -1, slot = -1, func = -1, ret;
 
 	if (dev->unique_len || dev->unique) return -EBUSY;
 
-	if (copy_from_user(&u, (drm_unique_t *)arg, sizeof(u))) return -EFAULT;
+	if (copy_from_user(&u, (drm_unique_t __user *)arg, sizeof(u))) return -EFAULT;
 
 	if (!u.unique_len || u.unique_len > 1024) return -EINVAL;
 
@@ -111,12 +113,48 @@ int DRM(setunique)(struct inode *inode, struct file *filp,
 
 	sprintf(dev->devname, "%s@%s", dev->name, dev->unique);
 
+#if !NO_SSCANF
 	/* Return error if the busid submitted doesn't match the device's actual
 	 * busid.
 	 */
 	ret = sscanf(dev->unique, "PCI:%d:%d:%d", &bus, &slot, &func);
 	if (ret != 3)
 		return DRM_ERR(EINVAL);
+#else
+	if (strncmp(dev->unique, "PCI:", 4) != 0)
+		return DRM_ERR(EINVAL);
+	{
+		char *p = dev->unique + 4;
+		int i, val;
+		for (i = 0; i++; i < 3) {
+			val = 0;
+			for (;; p++) {
+				if (*p >= '0' && *p <= '9')
+					val = 10 * val + (*p - '0');
+				else
+					break;
+			}
+			if (i < 2 && *p != ':')
+				return DRM_ERR(EINVAL);
+			p++;
+			switch (i) {
+			case 0:
+				bus = val;
+				break;
+			case 1:
+				slot = val;
+				break;
+			case 2:
+				func = val;
+				break;
+			}
+		}
+	}
+#endif
+	/* Sanity check. */
+	if (bus < 0 || slot < 0 || func < 0)
+		return DRM_ERR(EINVAL);
+
 	domain = bus >> 8;
 	bus &= 0xff;
 	
@@ -170,8 +208,9 @@ int DRM(getmap)( struct inode *inode, struct file *filp,
 	struct list_head *list;
 	int          idx;
 	int	     i;
+	drm_map_t    __user *argp = (void __user *)arg;
 
-	if (copy_from_user(&map, (drm_map_t *)arg, sizeof(map)))
+	if (copy_from_user(&map, argp, sizeof(map)))
 		return -EFAULT;
 	idx = map.offset;
 
@@ -202,7 +241,7 @@ int DRM(getmap)( struct inode *inode, struct file *filp,
 	map.mtrr   = r_list->map->mtrr;
 	up(&dev->struct_sem);
 
-	if (copy_to_user((drm_map_t *)arg, &map, sizeof(map))) return -EFAULT;
+	if (copy_to_user(argp, &map, sizeof(map))) return -EFAULT;
 	return 0;
 }
 
@@ -228,8 +267,9 @@ int DRM(getclient)( struct inode *inode, struct file *filp,
 	drm_file_t   *pt;
 	int          idx;
 	int          i;
+	drm_client_t __user *argp = (void __user *)arg;
 
-	if (copy_from_user(&client, (drm_client_t *)arg, sizeof(client)))
+	if (copy_from_user(&client, argp, sizeof(client)))
 		return -EFAULT;
 	idx = client.idx;
 	down(&dev->struct_sem);
@@ -247,7 +287,7 @@ int DRM(getclient)( struct inode *inode, struct file *filp,
 	client.iocs  = pt->ioctl_count;
 	up(&dev->struct_sem);
 
-	if (copy_to_user((drm_client_t *)arg, &client, sizeof(client)))
+	if (copy_to_user(argp, &client, sizeof(client)))
 		return -EFAULT;
 	return 0;
 }
@@ -288,7 +328,7 @@ int DRM(getstats)( struct inode *inode, struct file *filp,
 
 	up(&dev->struct_sem);
 
-	if (copy_to_user((drm_stats_t *)arg, &stats, sizeof(stats)))
+	if (copy_to_user((drm_stats_t __user *)arg, &stats, sizeof(stats)))
 		return -EFAULT;
 	return 0;
 }
@@ -302,15 +342,16 @@ int DRM(setversion)(DRM_IOCTL_ARGS)
 	drm_set_version_t sv;
 	drm_set_version_t retv;
 	int if_version;
+	drm_set_version_t __user *argp = (void __user *)data;
 
-	DRM_COPY_FROM_USER_IOCTL(sv, (drm_set_version_t *)data, sizeof(sv));
+	DRM_COPY_FROM_USER_IOCTL(sv, argp, sizeof(sv));
 
 	retv.drm_di_major = DRM_IF_MAJOR;
 	retv.drm_di_minor = DRM_IF_MINOR;
 	retv.drm_dd_major = DRIVER_MAJOR;
 	retv.drm_dd_minor = DRIVER_MINOR;
 
-	DRM_COPY_TO_USER_IOCTL((drm_set_version_t *)data, retv, sizeof(sv));
+	DRM_COPY_TO_USER_IOCTL(argp, retv, sizeof(sv));
 
 	if (sv.drm_di_major != -1) {
 		if (sv.drm_di_major != DRM_IF_MAJOR ||

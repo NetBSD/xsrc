@@ -3,6 +3,7 @@
  */
 /*
 Copyright (c) 2002 Torrey T. Lyons. All Rights Reserved.
+Copyright 2004 Kaleb S. KEITHLEY. All Rights Reserved.
 
 This file is based on mieq.c by Keith Packard,
 which contains the following copyright:
@@ -28,7 +29,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwinEvents.c,v 1.5 2003/11/03 05:36:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwinEvents.c,v 1.6 2004/03/31 22:29:09 torrey Exp $ */
 
 #define NEED_EVENTS
 #include   "X.h"
@@ -50,24 +51,24 @@ in this Software without prior written authorization from The Open Group.
 #include <IOKit/hidsystem/IOLLEvent.h>
 
 /* Fake button press/release for scroll wheel move. */
-#define SCROLLWHEELUPFAKE	4
-#define SCROLLWHEELDOWNFAKE	5
+#define SCROLLWHEELUPFAKE   4
+#define SCROLLWHEELDOWNFAKE 5
 
 #define QUEUE_SIZE 256
 
 typedef struct _Event {
-    xEvent	event;
-    ScreenPtr	pScreen;
+    xEvent      event;
+    ScreenPtr   pScreen;
 } EventRec, *EventPtr;
 
 typedef struct _EventQueue {
-    HWEventQueueType	head, tail; /* long for SetInputCheck */
-    CARD32	lastEventTime;      /* to avoid time running backwards */
-    Bool	lastMotion;
-    EventRec	events[QUEUE_SIZE]; /* static allocation for signals */
-    DevicePtr	pKbd, pPtr;         /* device pointer, to get funcs */
-    ScreenPtr	pEnqueueScreen;     /* screen events are being delivered to */
-    ScreenPtr	pDequeueScreen;     /* screen events are being dispatched to */
+    HWEventQueueType    head, tail; /* long for SetInputCheck */
+    CARD32      lastEventTime;      /* to avoid time running backwards */
+    Bool        lastMotion;
+    EventRec    events[QUEUE_SIZE]; /* static allocation for signals */
+    DevicePtr   pKbd, pPtr;         /* device pointer, to get funcs */
+    ScreenPtr   pEnqueueScreen;     /* screen events are being delivered to */
+    ScreenPtr   pDequeueScreen;     /* screen events are being dispatched to */
 } EventQueueRec, *EventQueuePtr;
 
 static EventQueueRec darwinEventQueue;
@@ -78,7 +79,7 @@ static EventQueueRec darwinEventQueue;
  *  Press or release the given modifier key, specified by its mask.
  */
 static void DarwinPressModifierMask(
-    xEvent *xe,      // must already have type, time and mouse location
+    xEvent *xe,     // must already have type, time and mouse location
     int mask)       // one of NX_*MASK constants
 {
     int key = DarwinModifierNXMaskToNXKey(mask);
@@ -93,6 +94,29 @@ static void DarwinPressModifierMask(
     }
 }
 
+#ifdef NX_DEVICELCTLKEYMASK
+#define CONTROL_MASK(flags) (flags & (NX_DEVICELCTLKEYMASK|NX_DEVICERCTLKEYMASK))
+#else
+#define CONTROL_MASK(flags) (NX_CONTROLMASK)
+#endif /* NX_DEVICELCTLKEYMASK */
+
+#ifdef NX_DEVICELSHIFTKEYMASK
+#define SHIFT_MASK(flags) (flags & (NX_DEVICELSHIFTKEYMASK|NX_DEVICERSHIFTKEYMASK))
+#else
+#define SHIFT_MASK(flags) (NX_SHIFTMASK)
+#endif /* NX_DEVICELSHIFTKEYMASK */
+
+#ifdef NX_DEVICELCMDKEYMASK
+#define COMMAND_MASK(flags) (flags & (NX_DEVICELCMDKEYMASK|NX_DEVICERCMDKEYMASK))
+#else
+#define COMMAND_MASK(flags) (NX_COMMANDMASK)
+#endif /* NX_DEVICELCMDKEYMASK */
+
+#ifdef NX_DEVICELALTKEYMASK
+#define ALTERNATE_MASK(flags) (flags & (NX_DEVICELALTKEYMASK|NX_DEVICERALTKEYMASK))
+#else
+#define ALTERNATE_MASK(flags) (NX_ALTERNATEMASK)
+#endif /* NX_DEVICELALTKEYMASK */
 
 /*
  * DarwinUpdateModifiers
@@ -108,16 +132,16 @@ static void DarwinUpdateModifiers(
         DarwinPressModifierMask(xe, NX_ALPHASHIFTMASK);
     }
     if (flags & NX_COMMANDMASK) {
-        DarwinPressModifierMask(xe, NX_COMMANDMASK);
+        DarwinPressModifierMask(xe, COMMAND_MASK(flags));
     }
     if (flags & NX_CONTROLMASK) {
-        DarwinPressModifierMask(xe, NX_CONTROLMASK);
+        DarwinPressModifierMask(xe, CONTROL_MASK(flags));
     }
     if (flags & NX_ALTERNATEMASK) {
-        DarwinPressModifierMask(xe, NX_ALTERNATEMASK);
+        DarwinPressModifierMask(xe, ALTERNATE_MASK(flags));
     }
     if (flags & NX_SHIFTMASK) {
-        DarwinPressModifierMask(xe, NX_SHIFTMASK);
+        DarwinPressModifierMask(xe, SHIFT_MASK(flags));
     }
     if (flags & NX_SECONDARYFNMASK) {
         DarwinPressModifierMask(xe, NX_SECONDARYFNMASK);
@@ -201,10 +225,10 @@ DarwinEQEnqueue(
      * is "unnecessary", but very useful
      */
     if (e->u.keyButtonPointer.time < darwinEventQueue.lastEventTime &&
-	darwinEventQueue.lastEventTime - e->u.keyButtonPointer.time < 10000)
+        darwinEventQueue.lastEventTime - e->u.keyButtonPointer.time < 10000)
     {
-	darwinEventQueue.events[oldtail].event.u.keyButtonPointer.time =
-	    darwinEventQueue.lastEventTime;
+        darwinEventQueue.events[oldtail].event.u.keyButtonPointer.time =
+        darwinEventQueue.lastEventTime;
     }
     darwinEventQueue.events[oldtail].pScreen = darwinEventQueue.pEnqueueScreen;
 
@@ -236,7 +260,7 @@ DarwinEQSwitchScreen(
 {
     darwinEventQueue.pEnqueueScreen = pScreen;
     if (fromDIX)
-	darwinEventQueue.pDequeueScreen = pScreen;
+        darwinEventQueue.pDequeueScreen = pScreen;
 }
 
 
@@ -246,10 +270,10 @@ DarwinEQSwitchScreen(
  */
 void ProcessInputEvents(void)
 {
-    EventRec	*e;
-    int		x, y;
-    xEvent	xe;
-    static int  old_flags = 0;	// last known modifier state
+    EventRec *e;
+    int     x, y;
+    xEvent  xe;
+    static int  old_flags = 0;  // last known modifier state
     // button number and modifier mask of currently pressed fake button
     static int darwinFakeMouseButtonDown = 0;
     static int darwinFakeMouseButtonMask = 0;
@@ -262,10 +286,10 @@ void ProcessInputEvents(void)
 
     while (darwinEventQueue.head != darwinEventQueue.tail)
     {
-	if (screenIsSaved == SCREEN_SAVER_ON)
-	    SaveScreens (SCREEN_SAVER_OFF, ScreenSaverReset);
+        if (screenIsSaved == SCREEN_SAVER_ON)
+            SaveScreens (SCREEN_SAVER_OFF, ScreenSaverReset);
 
-	e = &darwinEventQueue.events[darwinEventQueue.head];
+        e = &darwinEventQueue.events[darwinEventQueue.head];
         xe = e->event;
 
         // Shift from global screen coordinates to coordinates relative to
@@ -275,36 +299,36 @@ void ProcessInputEvents(void)
         xe.u.keyButtonPointer.rootY -= darwinMainScreenY +
                 dixScreenOrigins[miPointerCurrentScreen()->myNum].y;
 
-	/*
-	 * Assumption - screen switching can only occur on motion events
-	 */
-	if (e->pScreen != darwinEventQueue.pDequeueScreen)
-	{
-	    darwinEventQueue.pDequeueScreen = e->pScreen;
-	    x = xe.u.keyButtonPointer.rootX;
-	    y = xe.u.keyButtonPointer.rootY;
-	    if (darwinEventQueue.head == QUEUE_SIZE - 1)
-	    	darwinEventQueue.head = 0;
-	    else
-	    	++darwinEventQueue.head;
-	    NewCurrentScreen (darwinEventQueue.pDequeueScreen, x, y);
-	}
-	else
-	{
-	    if (darwinEventQueue.head == QUEUE_SIZE - 1)
-	    	darwinEventQueue.head = 0;
-	    else
-	    	++darwinEventQueue.head;
-	    switch (xe.u.u.type) 
-	    {
-	    case KeyPress:
-	    case KeyRelease:
+        /*
+         * Assumption - screen switching can only occur on motion events
+         */
+        if (e->pScreen != darwinEventQueue.pDequeueScreen)
+        {
+            darwinEventQueue.pDequeueScreen = e->pScreen;
+            x = xe.u.keyButtonPointer.rootX;
+            y = xe.u.keyButtonPointer.rootY;
+            if (darwinEventQueue.head == QUEUE_SIZE - 1)
+                darwinEventQueue.head = 0;
+            else
+                ++darwinEventQueue.head;
+            NewCurrentScreen (darwinEventQueue.pDequeueScreen, x, y);
+        }
+        else
+        {
+            if (darwinEventQueue.head == QUEUE_SIZE - 1)
+                darwinEventQueue.head = 0;
+            else
+                ++darwinEventQueue.head;
+            switch (xe.u.u.type)
+            {
+            case KeyPress:
+            case KeyRelease:
                 xe.u.u.detail += MIN_KEYCODE;
-	    	(*darwinEventQueue.pKbd->processInputProc)
-				(&xe, (DeviceIntPtr)darwinEventQueue.pKbd, 1);
-	    	break;
+                (*darwinEventQueue.pKbd->processInputProc)
+                    (&xe, (DeviceIntPtr)darwinEventQueue.pKbd, 1);
+                break;
 
-	    case ButtonPress:
+            case ButtonPress:
                 miPointerAbsoluteCursor(xe.u.keyButtonPointer.rootX,
                                         xe.u.keyButtonPointer.rootY,
                                         xe.u.keyButtonPointer.time);
@@ -362,7 +386,7 @@ void ProcessInputEvents(void)
                 miPointerAbsoluteCursor(xe.u.keyButtonPointer.rootX,
                                         xe.u.keyButtonPointer.rootY,
                                         xe.u.keyButtonPointer.time);
-	    	break;
+                break;
 
             case kXDarwinUpdateModifiers:
             {
@@ -400,7 +424,7 @@ void ProcessInputEvents(void)
                             xe.u.u.type = ButtonRelease;
                         }
                         (*darwinEventQueue.pPtr->processInputProc)
-				(&xe, (DeviceIntPtr)darwinEventQueue.pPtr, 1);
+                    (&xe, (DeviceIntPtr)darwinEventQueue.pPtr, 1);
                     }
                 }
                 break;
@@ -431,8 +455,8 @@ void ProcessInputEvents(void)
             default:
                 // Check for mode specific event
                 DarwinModeProcessEvent(&xe);
-	    }
-	}
+            }
+        }
     }
 
     miPointerUpdate();

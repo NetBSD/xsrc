@@ -1,3 +1,5 @@
+/* $XTermId: charclass.c,v 1.9 2005/01/11 00:06:05 tom Exp $ */
+
 /*
  * Compact and efficient reimplementation of the
  * xterm character class mechanism for large character sets
@@ -20,22 +22,22 @@
  * but merging in new intervals is significantly more hassle and
  * not worth the effort here.
  */
-/* $XFree86: xc/programs/xterm/charclass.c,v 1.3 2002/04/28 19:04:19 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/charclass.c,v 1.5 2005/01/14 01:50:02 dickey Exp $ */
 
 #include <xterm.h>
 #include <charclass.h>
 
 #if OPT_WIDE_CHARS
 
-struct classentry {
-    int class;
+static struct classentry {
+    int cclass;
     int first;
     int last;
 } *classtab;
 
 /*
  * Special convention for classtab[0]:
- * - classtab[0].class is the allocated number of entries in classtab
+ * - classtab[0].cclass is the allocated number of entries in classtab
  * - classtab[0].first = 1 (first used entry in classtab)
  * - classtab[0].last is the last used entry in classtab
  */
@@ -47,10 +49,9 @@ SetCharacterClassRange(int low, int high, int value)
 	return -1;		/* nothing to do */
 
     /* make sure we have at least one free entry left at table end */
-    if (classtab[0].last > classtab[0].class - 2) {
-	classtab[0].class += 5 + classtab[0].class / 4;
-	classtab = realloc(classtab,
-			   classtab[0].class * sizeof(struct classentry));
+    if (classtab[0].last > classtab[0].cclass - 2) {
+	classtab[0].cclass += 5 + classtab[0].cclass / 4;
+	classtab = TypeRealloc(struct classentry, classtab[0].cclass, classtab);
 	if (!classtab)
 	    abort();
     }
@@ -59,7 +60,7 @@ SetCharacterClassRange(int low, int high, int value)
     classtab[0].last++;
     classtab[classtab[0].last].first = low;
     classtab[classtab[0].last].last = high;
-    classtab[classtab[0].last].class = value;
+    classtab[classtab[0].last].cclass = value;
 
     return 0;
 }
@@ -69,10 +70,10 @@ init_classtab(void)
 {
     const int size = 50;
 
-    classtab = (struct classentry *) malloc(size * sizeof(struct classentry));
+    classtab = TypeMallocN(struct classentry, size);
     if (!classtab)
 	abort();
-    classtab[0].class = size;
+    classtab[0].cclass = size;
     classtab[0].first = 1;
     classtab[0].last = 0;
 
@@ -126,16 +127,16 @@ init_classtab(void)
 int
 CharacterClass(int c)
 {
-    int i, class = -1;
+    int i, cclass = -1;
 
     for (i = classtab[0].first; i <= classtab[0].last; i++)
 	if (classtab[i].first <= c && classtab[i].last >= c)
-	    class = classtab[i].class;
+	    cclass = classtab[i].cclass;
 
-    if (class < 0)
-	class = c;
+    if (cclass < 0)
+	cclass = c;
 
-    return class;
+    return cclass;
 }
 
-#endif
+#endif /* OPT_WIDE_CHARS */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_bios.c,v 1.11 2004/02/20 21:50:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_bios.c,v 1.12 2004/10/23 15:29:30 dawes Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -766,7 +766,6 @@ Bool VIASensorDVI(VIABIOSInfoPtr pBIOSInfo)
             break;
         default:
             return ret;
-            break;
     }
 
     if (xf86I2CProbeAddress(pBIOSInfo->I2C_Port2, SlaveAddr)) {
@@ -11668,7 +11667,6 @@ Bool VIASetModeForMHS(VIABIOSInfoPtr pBIOSInfo)
                 break;
 			case VIA_FS454:
 				return FALSE;
-				break;
         }
     }
 

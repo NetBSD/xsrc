@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.84 2004/02/13 23:58:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.89 2005/01/28 02:11:19 dawes Exp $ */
 
 /*
- * Copyright (c) 1997-2002 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -48,6 +48,51 @@
  */
 
 /*
+ * Copyright © 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
+
+/*
  * This file contains declarations for private XFree86 functions and variables,
  * and definitions of private macros.
  *
@@ -74,8 +119,6 @@ extern Bool xf86VidModeAllowNonLocal;
 extern Bool xf86MiscModInDevDisabled;
 extern Bool xf86MiscModInDevAllowNonLocal;
 #endif 
-extern Bool xf86fpFlag;
-extern Bool xf86coFlag;
 extern Bool xf86sFlag;
 extern Bool xf86bsEnableFlag;
 extern Bool xf86bsDisableFlag;
@@ -100,13 +143,10 @@ extern Bool xf86ShowUnresolved;
 /* Other parameters */
 
 extern xf86InfoRec xf86Info;
-extern const char *xf86InputDeviceList;
-extern const char *xf86ModulePath;
-extern MessageType xf86ModPathFrom;
-extern const char *xf86LogFile;
-extern MessageType xf86LogFileFrom;
+extern confFilesPtr xf86FilePaths;
+extern confFilesRec xf86FileCmdline;
+extern confFilesRec xf86FileDefaults;
 extern Bool xf86LogFileWasOpened;
-extern serverLayoutRec xf86ConfigLayout;
 extern Pix24Flags xf86ConfigPix24;
 
 extern unsigned short xf86MouseCflags[];
@@ -177,6 +217,13 @@ extern void xf86PostScreenInit(void);
 extern memType getValidBIOSBase(PCITAG tag, int num);
 extern int pciTestMultiDeviceCard(int bus, int dev, int func, PCITAG** pTag);
 
+extern Bool xf86LocateMemoryArea(int entityIndex,
+				 char **devName,
+				 unsigned int *devOffset,
+				 unsigned int *fbSize,
+				 unsigned int *fbOffset,
+				 unsigned int *flags);
+
 /* xf86Config.c */
 
 Bool xf86PathIsAbsolute(const char *path);
@@ -212,9 +259,10 @@ void xf86GrabServerCallback(CallbackListPtr *, pointer, pointer);
 /* xf86Helper.c */
 void xf86LogInit(void);
 void xf86CloseLog(void);
+void xf86DoDeferredUnloads(void);
 
 /* xf86Init.c */
-Bool xf86LoadModules(char **list, pointer *optlist);
+Bool xf86LoadModules(const char **list, pointer *optlist);
 int xf86SetVerbosity(int verb);
 int xf86SetLogVerbosity(int verb);
 

@@ -72,7 +72,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-
+/* $XFree86: xc/programs/lbxproxy/di/resource.c,v 1.6 2004/04/03 22:38:54 tsi Exp $ */
 
 #include <stdio.h>
 #include "misc.h"
@@ -82,7 +82,8 @@ SOFTWARE.
 #include "colormap.h"
 #include "wire.h"
 
-static void RebuildTable();
+static void RebuildTable(
+    int client);
 
 #define INITBUCKETS 64
 #define INITHASHSIZE 6
@@ -167,9 +168,9 @@ FinishInitClientResources(client, ridBase, ridMask)
 }
 
 static int
-Hash(client, id)
-    int client;
-    register XID id;
+Hash(
+    int client,
+    register XID id)
 {
     id &= clients[client]->ridMask;
     switch (clients[client]->server->clientTable[client].hashsize)
@@ -191,9 +192,11 @@ Hash(client, id)
 }
 
 static XID
-AvailableID(client, id, maxid, goodid)
-    register int client;
-    register XID id, maxid, goodid;
+AvailableID(
+    register int client,
+    register XID id,
+    register XID maxid,
+    register XID goodid)
 {
     register ResourcePtr res;
 
@@ -299,8 +302,8 @@ AddResource(pclient, id, type, value)
 }
 
 static void
-RebuildTable(client)
-    int client;
+RebuildTable(
+    int client)
 {
     register int j;
     register ResourcePtr res, next;

@@ -1,4 +1,3 @@
-/* $Xorg: XEVI.c,v 1.3 2000/08/17 19:45:51 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1997 by Silicon Graphics Computer Systems, Inc.
 Permission to use, copy, modify, and distribute this
@@ -21,7 +20,7 @@ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
-/* $XFree86: xc/lib/Xext/XEVI.c,v 1.7 2002/10/16 00:37:27 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XEVI.c,v 1.8 2005/01/27 02:28:58 dawes Exp $ */
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
@@ -55,8 +54,8 @@ static /* const */ XExtensionHooks xevi_extension_hooks = {
 static XEXT_GENERATE_FIND_DISPLAY (find_display, xevi_info,
                                    xevi_extension_name,
                                    &xevi_extension_hooks, 0, NULL)
-Bool XeviQueryExtension (dpy)
-    Display *dpy;
+Bool
+XeviQueryExtension(Display *dpy)
 {
     XExtDisplayInfo *info = find_display (dpy);
     if (XextHasExtension(info)) {
@@ -65,9 +64,8 @@ Bool XeviQueryExtension (dpy)
 	return False;
     }
 }
-Bool XeviQueryVersion(dpy, majorVersion, minorVersion)
-    Display *dpy;
-    int	    *majorVersion, *minorVersion;
+Bool
+XeviQueryVersion(Display *dpy, int *majorVersion, int *minorVersion)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xEVIQueryVersionReply rep;
@@ -88,7 +86,8 @@ Bool XeviQueryVersion(dpy, majorVersion, minorVersion)
     SyncHandle();
     return True;
 }
-static Bool notInList(VisualID32 *visual, int sz_visual, VisualID newVisualid)
+static Bool
+notInList(VisualID32 *visual, int sz_visual, VisualID newVisualid)
 {
     while  (sz_visual-- > 0)  {
 	if (*visual == newVisualid)
@@ -97,12 +96,9 @@ static Bool notInList(VisualID32 *visual, int sz_visual, VisualID newVisualid)
     }
     return True;
 }
-Status XeviGetVisualInfo(dpy, visual, n_visual, evi_return, n_info_return)
-    register Display *dpy;
-    VisualID *visual;
-    int n_visual;
-    ExtendedVisualInfo **evi_return;
-    int *n_info_return;
+Status
+XeviGetVisualInfo(Display *dpy, VisualID *visual, int n_visual,
+		  ExtendedVisualInfo **evi_return, int *n_info_return)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xEVIGetVisualInfoReq *req;

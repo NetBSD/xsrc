@@ -4,7 +4,7 @@
  *  npupp.h Revision: 1.37
  *  function call mecahnics needed by platform specific glue code.
  */
-
+/* $XFree86: xc/programs/xrx/plugin/include/npupp.h,v 1.2 2004/04/03 22:38:56 tsi Exp $ */
 
 #ifndef _NPUPP_H_
 #define _NPUPP_H_
@@ -965,6 +965,8 @@ extern "C" {
 
 NPError WINAPI NP_GetEntryPoints(NPPluginFuncs* pFuncs);
 
+NPError WINAPI NP_GetValue(void *future, NPPVariable variable, void *value);
+
 NPError WINAPI NP_Initialize(NPNetscapeFuncs* pFuncs);
 
 NPError WINAPI NP_Shutdown();
@@ -984,6 +986,7 @@ extern "C" {
 /* plugin meta member functions */
 
 char*	NP_GetMIMEDescription(void);
+NPError NP_GetValue(void *future, NPPVariable variable, void *value);
 NPError	NP_Initialize(NPNetscapeFuncs*, NPPluginFuncs*);
 NPError	NP_Shutdown(void);
 

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.103 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.108 2004/11/23 02:25:44 dawes Exp $ */
 /*
- * Copyright 1997-2003 by The XFree86 Project, Inc.
+ * Copyright 1997-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -77,11 +77,9 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #ifdef __UNIXOS2__
-#define NO_MMAP
 #include <sys/param.h>
 #endif
 #ifdef HAS_SVR3_MMAPDRV
-#define NO_MMAP
 #ifdef SELF_CONTAINED_WRAPPER
 #include <sys/at_ansi.h>
 #include <sys/kd.h>
@@ -98,12 +96,6 @@ extern struct kd_memloc MapDSC;
 extern int mmapFd;
 #endif
 #endif
-#ifndef NO_MMAP
-#include <sys/mman.h>
-#ifndef MAP_FAILED
-#define MAP_FAILED ((caddr_t)-1)
-#endif
-#endif
 #if !defined(ISC)
 #include <stdlib.h>
 #endif
@@ -112,6 +104,13 @@ extern int mmapFd;
 #define NEED_XF86_PROTOTYPES
 #define DONT_DEFINE_WRAPPERS
 #include "xf86_ansic.h"
+
+#if HAVE_MMAP
+#include <sys/mman.h>
+#ifndef MAP_FAILED
+#define MAP_FAILED ((caddr_t)-1)
+#endif
+#endif
 
 #ifndef SELF_CONTAINED_WRAPPER
 #include "xf86.h"
@@ -185,7 +184,7 @@ typedef struct dirent DIRENTRY;
 #ifdef XNO_SYSCONF
 #undef _SC_PAGESIZE
 #endif
-#ifdef HAVE_SYSV_IPC
+#if HAVE_SYSV_IPC
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif
@@ -391,10 +390,10 @@ xf86bzero(void* s, unsigned int n)
   
 #ifdef HAVE_VSSCANF
 int
-xf86sscanf(char *s, const char *format, ...)
+xf86sscanf(const char *s, const char *format, ...)
 #else
 int
-xf86sscanf(char *s, const char *format, char *a0, char *a1, char *a2,
+xf86sscanf(const char *s, const char *format, char *a0, char *a1, char *a2,
 	   char *a3, char *a4, char *a5, char *a6, char *a7, char *a8,
 	   char *a9) /* limit of ten args */
 #endif
@@ -512,7 +511,7 @@ void*
 xf86mmap(void *start, xf86size_t length, int prot,
 	 int flags, int fd, xf86size_t /* off_t */ offset)
 {
-#ifndef NO_MMAP
+#if HAVE_MMAP
     int p=0, f=0;
     void *rc;
 
@@ -568,7 +567,7 @@ xf86mmap(void *start, xf86size_t length, int prot,
 int
 xf86munmap(void *start, xf86size_t length)
 {
-#ifndef NO_MMAP
+#if HAVE_MMAP
     int rc = munmap(start,(size_t)length);
 
     xf86errno = xf86GetErrno();
@@ -908,7 +907,7 @@ xf86ftell(XF86FILE* f)
 	return ftell(fp->filehnd);
 }
 
-#define mapnum(e) case (xf86_##e): err = e; break;
+#define mapnum(e) case (xf86_##e): err = e; break
 
 char*
 xf86strerror(int n)
@@ -1901,7 +1900,7 @@ xf86GetErrno ()
 
 
 
-#ifdef HAVE_SYSV_IPC
+#if HAVE_SYSV_IPC
 
 int
 xf86shmget(xf86key_t key, int size, int xf86shmflg)
@@ -2034,6 +2033,8 @@ int
 xf86setjmp1(xf86jmp_buf env, int arg2)
 {
     FatalError("setjmp: type 1 called instead of type %d", xf86getjmptype());
+    /* NOTREACHED */
+    return 0;
 }
 
 #endif  /* HAS_GLIBC_SIGSETJMP */
@@ -2049,5 +2050,7 @@ xf86setjmperror(xf86jmp_buf env)
 {
     FatalError("setjmp: don't know how to handle setjmp() type %d",
 	       xf86getjmptype());
+    /* NOTREACHED */
+    return 0;
 }
 

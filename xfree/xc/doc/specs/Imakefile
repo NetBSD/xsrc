@@ -1,9 +1,4 @@
-XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:06 cpqbld Exp $
-
-
-
-
-XCOMM $XFree86: xc/doc/specs/Imakefile,v 1.11 2003/12/06 19:11:52 dawes Exp $
+XCOMM $XFree86: xc/doc/specs/Imakefile,v 1.13 2005/01/15 04:34:12 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -16,10 +11,16 @@ SUBDIRS = BDF CTEXT FSProtocol GL ICCCM ICE PM Render SM X11 XDMCP \
           i18n programs rstart test xfs xterm xtrans
 #endif
 
-all::
+AllTarget(specindex.html)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
+
+#if defined(AvoidGroffHtmlBug) && AvoidGroffHtmlBug
+SPECINDEXDEFS = -DICE_PDF_ONLY -DICCCM_PDF_ONLY
+#endif
+
+CppRawFileTarget(specindex.html,specindex.cpp,$(SPECINDEXDEFS),NullParameter)
 
 InstallDoc(specindex,specindex.html)
 

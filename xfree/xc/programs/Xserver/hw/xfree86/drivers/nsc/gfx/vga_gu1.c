@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/gfx/vga_gu1.c,v 1.1 2002/12/10 15:12:27 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/gfx/vga_gu1.c,v 1.2 2004/04/22 13:54:07 tsi Exp $ */
 /*
  * $Workfile: vga_gu1.c $
  *
@@ -668,8 +668,10 @@ gfx_vga_mode_switch(int active)
    /* vertical blank to validate the hardware state. */
 
    if ((!active) && (!(gu1_detect_vsa2()))) {
+      int cnt = 256;
+
       OUTB(crtcindex, 0x33);
-      while (INB(crtcdata) & 0x80) ;
+      while (--cnt && (INB(crtcdata) & 0x80));
    }
 
    /* LOCK EXTENDED CRTC REGISTERS */

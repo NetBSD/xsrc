@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.24 2003/04/23 21:51:40 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo.h,v 1.25 2004/03/29 16:25:17 tsi Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -45,7 +45,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "compiler.h"
 
 #include "xaa.h"
-#include "xaalocal.h"		/* XAA internals as we replace some of XAA */
 #include "xf86Cursor.h"
 
 #include "shadowfb.h"

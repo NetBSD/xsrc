@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.38 2003/11/03 05:11:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.39 2004/03/29 16:25:22 tsi Exp $ */
 
 
 
@@ -44,7 +44,6 @@
 
 /* Drivers using the XAA interface ... */
 #include "xaa.h"
-#include "xaalocal.h"
 #include "xf86Cursor.h"
 #include "xf86fbman.h"
 

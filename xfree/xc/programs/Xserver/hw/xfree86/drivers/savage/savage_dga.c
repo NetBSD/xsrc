@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_dga.c,v 1.7 2004/02/13 23:58:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_dga.c,v 1.9 2004/12/07 15:59:20 tsi Exp $ */
 
 /*
  * Copyright (C) 1994-2000 The XFree86 Project, Inc.
@@ -55,14 +55,14 @@
  */
 
 
-#include "xaalocal.h"
 #include "savage_driver.h"
 #include "dgaproc.h"
 
 
 Bool SavageDGAInit(ScreenPtr pScreen);
-static Bool Savage_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-		int *, int *, int *);
+static Bool Savage_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				   unsigned int *, unsigned int *,
+				   unsigned int *);
 static Bool Savage_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  Savage_GetViewport(ScrnInfoPtr);
 static void Savage_SetViewport(ScrnInfoPtr, int, int, int);
@@ -402,18 +402,18 @@ static Bool
 Savage_OpenFramebuffer(
     ScrnInfoPtr pScrn, 
     char **name,
-    unsigned char **mem,
-    int *size,
-    int *offset,
-    int *flags
+    unsigned int *mem,
+    unsigned int *size,
+    unsigned int *offset,
+    unsigned int *flags
 ){
     SavagePtr psav = SAVPTR(pScrn);
 
     *name = NULL;	 /* no special device */
-    *mem = (unsigned char*)psav->FrameBufferBase;
+    *mem = psav->FrameBufferBase;
     *size = psav->videoRambytes;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

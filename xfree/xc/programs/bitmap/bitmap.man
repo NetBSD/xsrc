@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/bitmap/bitmap.man,v 1.8 2002/10/12 16:06:44 herrb Exp $
+.\" $XFree86: xc/programs/bitmap/bitmap.man,v 1.9 2005/02/11 03:03:12 dawes Exp $
 .\"
-.TH BITMAP 1 __xorgversion__
+.TH BITMAP 1 __vendorversion__
 .SH NAME
 bitmap, bmtoa, atobm \- bitmap editor and converter utilities for the X Window System
 .SH SYNOPSIS

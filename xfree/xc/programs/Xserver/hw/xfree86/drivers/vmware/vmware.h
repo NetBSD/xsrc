@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Id: vmware.h,v 1.6 2001/01/30 18:13:47 bennett Exp $
  * **********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.12 2003/11/17 22:20:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.13 2004/07/25 20:49:16 dawes Exp $ */
 
 #ifndef VMWARE_H
 #define VMWARE_H
@@ -18,6 +18,7 @@
 #include "xf86PciInfo.h"	/* pci vendor id */
 #include "xf86Pci.h"		/* pci */
 #include "xf86Cursor.h"		/* hw cursor */
+#include "cursorstr.h"          /* xhot/yhot */
 
 #include "vgaHW.h"		/* VGA hardware */
 #include "fb.h"
@@ -46,6 +47,8 @@ typedef struct {
     CARD32 svga_reg_cursor_id;
 
     Bool svga_fifo_enabled;
+
+    CARD32 svga_reg_id;
 } VMWARERegRec, *VMWARERegPtr;
 
 typedef struct {
@@ -99,6 +102,7 @@ typedef struct {
     xf86CursorInfoPtr CursorInfoRec;
     struct {
         int bg, fg, x, y;
+        int hotX, hotY;
         BoxRec box;
 
         uint32 mask[SVGA_BITMAP_SIZE(MAX_CURS, MAX_CURS)];

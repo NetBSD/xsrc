@@ -1,4 +1,4 @@
-/* $NetBSD: Wraphelp.c,v 1.1 2001/04/10 12:03:30 tron Exp $ */
+/* $NetBSD: Wraphelp.c,v 1.1.8.1 2005/04/06 20:00:16 tron Exp $ */
 
 /* Export of this software from the United States of America is assumed
  * to require a specific license from the United States Government.
@@ -385,6 +385,7 @@ bits_to_bytes (bits, bytes)
 # include   "Wrap.h"
 
 /*ARGSUSED*/
+void
 _XdmcpAuthSetup (key, schedule)
     auth_cblock		key;
     auth_wrapper_schedule	schedule;
@@ -396,6 +397,7 @@ _XdmcpAuthSetup (key, schedule)
 }
 
 /*ARGSUSED*/
+void
 _XdmcpAuthDoIt (input, output, schedule, edflag)
     auth_cblock		input, output;
     auth_wrapper_schedule	schedule;

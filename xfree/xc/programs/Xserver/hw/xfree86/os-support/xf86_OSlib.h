@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.95 2003/11/17 22:20:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.98 2005/01/24 21:27:10 tsi Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -105,7 +105,7 @@ typedef signed long xf86ssize_t;
     !defined(DGUX) && !defined(sgi) && \
     !defined(__SOL8__) && \
     (!defined(sun) || defined(i386))
-# ifdef SCO325
+# ifdef __SCO__
 #  ifndef _SVID3
 #   define _SVID3
 #  endif
@@ -118,7 +118,7 @@ typedef signed long xf86ssize_t;
 # include <termio.h>
 # include <sys/stat.h>
 # include <sys/types.h>
-# if defined(SCO) || defined(ISC)
+# if defined(__SCO__) || defined(ISC)
 # include <sys/param.h>
 # endif
 
@@ -173,7 +173,7 @@ typedef signed long xf86ssize_t;
 # if !defined(sun)
 #  include <sys/emap.h>
 # endif
-# if defined(SCO)
+# if defined(__SCO__)
 #  include <sys/vtkd.h>
 #  include <sys/console.h>
 #  include <sys/scankbd.h>
@@ -185,25 +185,25 @@ typedef signed long xf86ssize_t;
 #  include <sys/at_ansi.h>
 #  include <sys/kd.h>
 #  include <sys/vt.h>
-# endif /* SCO */
+# endif /* __SCO__ */
 
 # if !defined(VT_ACKACQ)
 #  define VT_ACKACQ 2
 # endif /* !VT_ACKACQ */
 
-# if defined(SCO)
+# if defined(__SCO__)
 #  include <sys/sysmacros.h>
 #  define POSIX_TTY
-# endif /* SCO */
+# endif /* __SCO__ */
 
-# if defined(SVR4) || defined(SCO325)
+# if defined(SVR4) || defined(__SCO__)
 #  include <sys/mman.h>
 #  if !(defined(sun) && defined (i386) && defined (SVR4))
 #    define DEV_MEM "/dev/pmem"
 #  elif defined(PowerMAX_OS)
 #    define DEV_MEM "/dev/iomem"
 #  endif
-#  ifdef SCO325
+#  ifdef __SCO__
 #   undef DEV_MEM
 #   define DEV_MEM "/dev/mem"
 #  endif
@@ -225,7 +225,7 @@ typedef signed long xf86ssize_t;
 #  define i386 /* not defined in ANSI C mode */
 # endif /* ATT && !i386 */
 
-# if (defined(ATT) || defined(SVR4)) && !defined(sun) && !defined(SCO325)
+# if (defined(ATT) || defined(SVR4)) && !defined(sun) && !defined(__SCO__)
 #  ifndef XQUEUE
 #   define XQUEUE
 #  endif
@@ -256,6 +256,7 @@ typedef signed long xf86ssize_t;
 # include <sys/fbio.h>
 # include <sys/kbd.h>
 # include <sys/kbio.h>
+# include <sys/ioctl.h>
 
 # define LED_CAP LED_CAPS_LOCK
 # define LED_NUM LED_NUM_LOCK
@@ -532,7 +533,7 @@ extern int errno;
 # endif
 # endif /* __bsdi__ */
 
-#ifdef USE_I386_IOPL
+#if defined(USE_I386_IOPL) || defined(USE_AMD64_IOPL)
 #include <machine/sysarch.h>
 #endif
 

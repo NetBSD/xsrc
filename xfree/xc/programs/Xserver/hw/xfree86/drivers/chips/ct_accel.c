@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.41 2003/11/03 05:11:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.42 2004/03/29 16:25:16 tsi Exp $ */
 /*
  * Copyright 1996, 1997, 1998 by David Bateman <dbateman@ee.uts.edu.au>
  *   Modified 1997, 1998 by Nozomi Ytow
@@ -48,6 +48,9 @@
 #include "xf86PciInfo.h"
 
 /* Drivers that use XAA need this */
+#ifndef CHIPS_HIQV
+# include "xaalocal.h"
+#endif
 #include "xf86fbman.h"
 
 /* Our driver specific include file */

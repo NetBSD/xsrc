@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo.h,v 1.4 2001/05/04 19:05:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo.h,v 1.5 2004/12/05 23:06:38 tsi Exp $ */
 
 #ifndef LEO_H
 #define LEO_H
@@ -99,10 +99,14 @@ extern int  LeoWindowPrivateIndex;
 
 #define LeoGetWindowPrivate(w)						\
 ((LeoStipplePtr) (w)->devPrivates[LeoWindowPrivateIndex].ptr)
-                            
-#define LeoSetWindowPrivate(w,p) 					\
+
+#define LeoSetWindowPrivate(w,p)					\
 ((w)->devPrivates[LeoWindowPrivateIndex].ptr = (pointer) p)
 
 extern int leoRopTable[];
+
+extern Bool LeoAccelInit(ScreenPtr pScreen, LeoPtr pLeo);
+extern Bool LeoHWCursorInit(ScreenPtr pScreen);
+extern void LeoVtChange(ScreenPtr pScreen, int enter);
 
 #endif /* LEO_H */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_driver.h,v 1.13 2004/02/08 17:57:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_driver.h,v 1.16 2004/12/10 16:07:03 alanh Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -98,7 +98,14 @@
 #define INREG16(addr)       MMIO_IN16(pVia->MapBase, addr)
 #define OUTREG16(addr, val) MMIO_OUT16(pVia->MapBase, addr, val)
 
+
+#define VIA_MAX_ACCEL_X         (2047)
+#define VIA_MAX_ACCEL_Y         (2047)
+#ifdef XFREE86_44
+#define VIA_PIXMAP_CACHE_SIZE   (4 * (VIA_MAX_ACCEL_X + 1) * (VIA_MAX_ACCEL_Y +1))
+#else
 #define VIA_PIXMAP_CACHE_SIZE   (256 * 1024)
+#endif /* XFREE86_44 */
 #define VIA_CURSOR_SIZE         (4 * 1024)
 #define VIA_VQ_SIZE             (256 * 1024)
 
@@ -219,7 +226,7 @@ typedef struct _VIA {
     VIARegRec           ModeReg;
     xf86CursorInfoPtr   CursorInfoRec;
     Bool                ModeStructInit;
-    int                 Bpp, Bpl, ScissB;
+    int                 Bpp, Bpl;
     unsigned            PlaneMask;
 
     unsigned long       videoRambytes;
@@ -260,7 +267,6 @@ typedef struct _VIA {
     Bool                hwcursor;
     Bool                NoAccel;
     Bool                shadowFB;
-    Bool                NoDDCValue;
     int                 rotate;
 
     CloseScreenProcPtr  CloseScreen;
@@ -336,6 +342,8 @@ typedef struct _VIA {
     Bool 		IsPCI;
     Bool 		drixinerama;
 #endif
+    Bool		DRIIrqEnable;
+
     unsigned char	ActiveDevice;	/* if SAMM, non-equal pBIOSInfo->ActiveDevice */
     unsigned char       *CursorImage;
     CARD32		CursorFG;
@@ -405,7 +413,6 @@ void VIAHideCursor(ScrnInfoPtr);
 Bool VIAInitAccel(ScreenPtr);
 void VIAInitialize2DEngine(ScrnInfoPtr);
 void VIAAccelSync(ScrnInfoPtr);
-void VIAInitLinear(ScreenPtr pScreen);
 
 
 /* In via_shadow.c */
@@ -461,7 +468,7 @@ void viaOverlayGetV3Format(VIAPtr pVia, unsigned long dwVideoFlag,LPDDPIXELFORMA
 /* In via_memory.c */
 void VIAFreeLinear(VIAMemPtr);
 unsigned long VIAAllocLinear(VIAMemPtr, ScrnInfoPtr, unsigned long);
-void VIAInitPool(VIAPtr, unsigned long, unsigned long);
+void VIAInitLinear(ScreenPtr pScreen);
 
 /* In via_tuner.c */
 void ViaTunerStandard(ViaTunerPtr, int);

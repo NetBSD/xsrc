@@ -1,11 +1,52 @@
 XCOMM ----------------------------------------------------------------------
 XCOMM X Window System Build Parameters and Rules
-XCOMM $Xorg: X11.tmpl,v 1.6 2000/08/17 19:41:46 cpqbld Exp $
-XCOMM
-XCOMM
-XCOMM
-XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.249 2004/02/16 18:14:33 dawes Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.277 2005/03/01 03:48:45 dawes Exp $
+/*
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -39,27 +80,20 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.249 2004/02/16 18:14:33 dawes Exp $
  * MakeXkbDir			(basedir,subdir)
  */
 
-/* X.Org release string */
-#ifndef XOrgReleaseString
-#define XOrgReleaseString	Release 6.6
+#ifndef XVendorString
+# define XVendorString  "The XFree86 Project, Inc"
 #endif
 
-#ifndef XOrgManNameString
-#define XOrgManNameString	X Version 11
+#ifndef XVendorRelease
+# define XVendorRelease 40400000
 #endif
 
-XORGRELSTRING = XOrgReleaseString
-XORGMANNAME = XOrgManNameString
-
-#ifndef XOrgManDefs
-#define XOrgManDefs -D__xorgversion__='"$(XORGRELSTRING)" "$(XORGMANNAME)"'
+#ifndef XVendorManVersionString
+#define XVendorManVersionString 4.x
 #endif
 
 #ifndef XVendorManNameString
-#define XVendorManNameString XOrgManNameString
-#endif
-#ifndef XVendorManVersionString
-#define XVendorManVersionString XOrgReleaseString
+#define XVendorManNameString XFree86
 #endif
 
 VENDORMANNAME = XVendorManNameString
@@ -95,14 +129,27 @@ VENDORMANVERSION = XVendorManVersionString
 #ifndef BuildDocs
 #define BuildDocs		!BuildServersOnly
 #endif
+#ifndef BuildDmx
+#define BuildDmx		YES
+#endif
+#ifndef XdmxServer
+#define XdmxServer		BuildDmx && BuildServer
+#endif
+#ifndef BuildLibrariesForDmx
+#define BuildLibrariesForDmx	XdmxServer
+#endif
 #ifndef BuildLibraries
-#define BuildLibraries		(!BuildServersOnly || BuildClients)
+#define BuildLibraries		(!BuildServersOnly || BuildClients || \
+				 BuildLibrariesForDmx)
 #endif
 #ifndef BuildLibrariesForXServers
 #define BuildLibrariesForXServers	BuildServer
 #endif
 #ifndef BuildFontServer
 #define BuildFontServer		YES
+#endif
+#ifndef OmitSnfSupport
+#define OmitSnfSupport		NO
 #endif
 #ifndef XserverStaticFontLib
 #define XserverStaticFontLib	YES
@@ -121,9 +168,6 @@ VENDORMANVERSION = XVendorManVersionString
 #endif
 #ifndef BuildXTrueType
 #define BuildXTrueType		NO
-#endif
-#ifndef XTTInLibFont
-#define XTTInLibFont		NO
 #endif
 #ifndef BuildBuiltinFonts
 #define BuildBuiltinFonts	NO
@@ -248,18 +292,6 @@ VENDORMANVERSION = XVendorManVersionString
 #ifndef MakeLocalFontDir
 #define MakeLocalFontDir	YES
 #endif
-#ifndef HasXAudio
-#define HasXAudio		NO
-#endif
-#ifndef BuildXAudio
-#define BuildXAudio		(HasXAudio & HasCplusplus)
-#endif
-#ifndef HasXAServer
-#define HasXAServer		NO
-#endif
-#ifndef BuildXAServer
-#define BuildXAServer		(HasXAServer & HasCplusplus)
-#endif
 #ifndef BuildX11Lib
 #define BuildX11Lib		BuildLibraries
 #endif
@@ -315,7 +347,9 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXInputExt		NO
 #endif
 #ifndef BuildXInputLib
-#define BuildXInputLib		(BuildXInputExt && !BuildServersOnly)
+#define BuildXInputLib		(BuildXInputExt && \
+				 BuildLibraries && \
+				 (!BuildServersOnly || BuildLibrariesForDmx))
 #endif
 #ifndef BuildEVI
 #define BuildEVI		YES
@@ -339,14 +373,16 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildFontLib		(BuildLibraries || \
 				 (BuildServer && !DoLoadableServer) || \
 				 XnestServer || XVirtualFramebufferServer || \
-				 XprtServer || KDriveXServer)
+				 XprtServer || XdmxServer || \
+				 (defined(TinyXServer) && TinyXServer))
 #endif
 #endif
 #ifndef BuildFontCache
 #define BuildFontCache		YES
 #endif
 #ifndef BuildFontCacheLib
-#define BuildFontCacheLib	(BuildFontCache && !BuildServersOnly)
+#define BuildFontCacheLib	(BuildFontCache && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildFontEncLib
 #define BuildFontEncLib		BuildLibraries
@@ -367,6 +403,45 @@ VENDORMANVERSION = XVendorManVersionString
 #ifndef BuildLowMem
 #define BuildLowMem		NO
 #endif
+
+#ifndef BuildTinyDIX
+#if (defined(TinyXServer) && TinyXServer) && \
+	!(defined(XF86Server) && XF86Server)
+#define BuildTinyDIX		YES
+#else
+#define BuildTinyDIX		NO
+#endif
+#endif
+#ifndef BuildSeparateTinyDIX
+#if (defined(TinyXServer) && TinyXServer) && !BuildTinyDIX
+#define BuildSeparateTinyDIX	YES
+#else
+#define BuildSeparateTinyDIX	NO
+#endif
+#endif
+#ifndef TinyXExcludedExtensions
+#define TinyXExcludedExtensions	-UXKB -UXINPUT -ULBX -UXAPPGROUP -UXCSECURITY \
+				-UDPMSExtension -UPANORAMIX -UGLXEXT \
+				-UXF86VIDMODE -UXF86MISC -UXFreeXDGA \
+				-UXF86DRI -UEVI -UXRECORD -USCREENSAVER \
+				-URES -UXV -UXPRINT -UDBE -UXTRAP -UFONTCACHE \
+				-UXF86BIGFONT -UXSYNC -UTOGCUP
+#endif
+#ifndef TinyXFontDefines
+#define TinyXFontDefines	/**/
+#endif
+#ifndef TinyXFontServerAccess
+#define TinyXFontServerAccess	NO
+#endif
+#if !TinyXFontServerAccess
+#define TinyXFontServerDefines	-DNOFONTSERVERACCESS
+#else
+#define TinyXFontServerDefines	/**/
+#endif
+#ifndef TinyDIXDefines
+#define TinyDIXDefines		TinyXExcludedExtensions TinyXFontServerDefines
+#endif
+
 #ifndef BuildLBX
 #define BuildLBX		YES
 #endif
@@ -374,19 +449,23 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXKB		YES
 #endif
 #ifndef BuildXKBlib
-#define BuildXKBlib		(BuildXKB && !BuildServersOnly)
+#define BuildXKBlib		(BuildXKB && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXKBuilib
-#define BuildXKBuilib		(BuildXKB && !BuildServersOnly)
+#define BuildXKBuilib		(BuildXKB && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXKBfilelib
-#define BuildXKBfilelib		(BuildXKB && !BuildServersOnly)
+#define BuildXKBfilelib		(BuildXKB && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXTrap
 #define BuildXTrap		YES
 #endif
 #ifndef BuildXTrapLibrary
-#define BuildXTrapLibrary	(BuildXTrap && !BuildServersOnly)
+#define BuildXTrapLibrary	(BuildXTrap && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 
 	/*
@@ -410,7 +489,16 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXinerama		NO
 #endif
 #ifndef BuildXineramaLibrary
-#define BuildXineramaLibrary	(BuildXinerama && !BuildServersOnly)
+#define BuildXineramaLibrary	(BuildXinerama && !BuildServersOnly && \
+				 BuildLibraries)
+#endif
+#ifndef BuildDmxDevelTools
+#define BuildDmxDevelTools	NO
+#endif
+#ifndef BuildDmxLibrary
+#define BuildDmxLibrary		(BuildDmx && \
+				 (BuildDmxDevelTools || \
+				  (!BuildServersOnly && BuildLibraries)))
 #endif
 #ifndef BuildXCSecurity
 #define BuildXCSecurity		YES
@@ -437,26 +525,44 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXprint		NO
 #endif
 #endif
+#if BuildXprint
+#ifndef XpRasterDDX
+#define XpRasterDDX		YES
+#endif
+#ifndef XpColorPclDDX
+#define XpColorPclDDX		YES
+#endif
+#ifndef XpMonoPclDDX
+#define XpMonoPclDDX		NO
+#endif
+#ifndef XpPostScriptDDX
+#define XpPostScriptDDX		YES
+#endif
+#endif
 #ifndef BuildXprintLib
-#define BuildXprintLib		(BuildXprint && !BuildServersOnly)
+#define BuildXprintLib		(BuildXprint && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildScreenSaverExt
 #define BuildScreenSaverExt	NO
 #endif
 #ifndef BuildScreenSaverLibrary
-#define BuildScreenSaverLibrary	(BuildScreenSaverExt && !BuildServersOnly)
+#define BuildScreenSaverLibrary	(BuildScreenSaverExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXF86VidModeExt
 #define BuildXF86VidModeExt	NO
 #endif
 #ifndef BuildXF86VidModeLibrary
-#define BuildXF86VidModeLibrary (BuildXF86VidModeExt && !BuildServersOnly)
+#define BuildXF86VidModeLibrary (BuildXF86VidModeExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXF86MiscExt
 #define BuildXF86MiscExt	NO
 #endif
 #ifndef BuildXF86MiscLibrary
-#define BuildXF86MiscLibrary	(BuildXF86MiscExt && !BuildServersOnly)
+#define BuildXF86MiscLibrary	(BuildXF86MiscExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXF86BigfontExt
 #define BuildXF86BigfontExt	NO
@@ -465,40 +571,47 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXF86DGA		NO
 #endif
 #ifndef BuildXF86DGALibrary
-#define BuildXF86DGALibrary	(BuildXF86DGA && !BuildServersOnly)
+#define BuildXF86DGALibrary	(BuildXF86DGA && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXResExt
 #define BuildXResExt            NO
 #endif
 #ifndef BuildXResLibrary
-#define BuildXResLibrary        (BuildXResExt && !BuildServersOnly)
+#define BuildXResLibrary        (BuildXResExt && \
+				 (BuildDmxDevelTools || \
+				  (!BuildServersOnly && BuildLibraries)))
 #endif
 #ifndef BuildXvExt
 #define BuildXvExt		NO
 #endif
 #ifndef BuildXvLibrary
-#define BuildXvLibrary		(BuildXvExt && !BuildServersOnly)
+#define BuildXvLibrary		(BuildXvExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildXvMCExt
 #define BuildXvMCExt		NO
 #endif
 #ifndef BuildXvMCLibrary
-#define BuildXvMCLibrary	(BuildXvMCExt && !BuildServersOnly)
+#define BuildXvMCLibrary	(BuildXvMCExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildGlxExt
 #define BuildGlxExt		NO
 #else
 #if     BuildGlxExt && !defined(XFree86Version)
 #undef  BuildXF86DRI
-#undef  BuildXF86DRM
 #undef  BuildXF86DRIDriverSupport
 #define BuildXF86DRI			NO
-#define BuildXF86DRM			NO
 #define BuildXF86DRIDriverSupport	NO
 #endif
 #endif
 #ifndef BuildGLXLibrary
-#define BuildGLXLibrary		(BuildGlxExt && !BuildServersOnly)
+#define BuildGLXLibrary		(BuildGlxExt && !BuildServersOnly && \
+				 BuildLibraries)
+#endif
+#ifndef BuildGlxInDmx
+#define BuildGlxInDmx		(XdmxServer && BuildGlxExt)
 #endif
 #ifndef BuildOSMesaLib
 #define BuildOSMesaLib		BuildGlxExt
@@ -514,10 +627,11 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildXF86RushExt	NO
 #endif
 #ifndef BuildXF86RushLibrary
-#define BuildXF86RushLibrary	(BuildXF86RushExt && !BuildServersOnly)
+#define BuildXF86RushLibrary	(BuildXF86RushExt && !BuildServersOnly && \
+				 BuildLibraries)
 #endif
 #ifndef BuildDPSLibraries
-#define BuildDPSLibraries	!BuildServersOnly
+#define BuildDPSLibraries	(!BuildServersOnly && BuildLibraries)
 #endif
 #ifndef BuildDPSLibrary
 #define BuildDPSLibrary		BuildDPSLibraries
@@ -535,7 +649,8 @@ VENDORMANVERSION = XVendorManVersionString
 #define BuildRender		YES
 #endif
 #ifndef BuildRenderLibrary
-#define BuildRenderLibrary	!BuildServersOnly
+#define BuildRenderLibrary	(XdmxServer || \
+				 (!BuildServersOnly && BuildLibraries))
 #endif
 #ifndef BuildXftLibrary
 #define BuildXftLibrary		BuildRenderLibrary
@@ -557,7 +672,8 @@ VENDORMANVERSION = XVendorManVersionString
 #define HasExpat		NO
 #endif
 #ifndef UseExpat
-#define UseExpat		(UseFontconfig)
+#define UseExpat		(UseFontconfig || \
+				 (BuildXF86DRI && BuildGLXLibrary))
 #endif
 #ifndef BuildExpatLibrary
 #define BuildExpatLibrary	(UseExpat && !HasExpat)
@@ -568,16 +684,15 @@ VENDORMANVERSION = XVendorManVersionString
 #ifndef Freetype2BuildDefines
 #define Freetype2BuildDefines	/**/
 #endif
-/* For FreeType 1.x */
-#ifndef Freetype1BuildDefines
-#define Freetype1BuildDefines	Freetype2BuildDefines
+#ifndef UseMkfontscaleForMkfontdir
+#define UseMkfontscaleForMkfontdir	NO
 #endif
 
 #ifndef BuildRandR
 #define BuildRandR		YES
 #endif
 #ifndef BuildRandRLibrary
-#define BuildRandRLibrary	!BuildServersOnly
+#define BuildRandRLibrary	(!BuildServersOnly && BuildLibraries)
 #endif
 
 #ifndef BuildXcursorLibrary
@@ -679,7 +794,7 @@ VENDORMANVERSION = XVendorManVersionString
 #define HasWChar32		SystemV4
 #endif
 #ifndef HasXdmAuth
-#define HasXdmAuth		NO	/* if you can not use XDM-AUTH* */
+#define HasXdmAuth		YES
 #endif
 #ifndef PrimaryScreenResolution
 #define PrimaryScreenResolution 72		/* a common resolution */
@@ -867,6 +982,9 @@ FCHOWN_DEFINES = -DHAS_FCHOWN
 #else
 #define GlxDefines /**/
 #endif
+#endif
+#ifndef DRMIncludesDir
+#define DRMIncludesDir $(XF86OSSRC)/shared/drm/kernel
 #endif
 #ifndef MesaSrcDir
 #define MesaSrcDir $(TOP)/extras/Mesa
@@ -1206,8 +1324,15 @@ FCHOWN_DEFINES = -DHAS_FCHOWN
 #define ServerSnprintfDefines /**/
 #endif
 #endif
+#ifndef ServerStrlcatDefines
+#if !HasStrlcat
+#define ServerStrlcatDefines -DNEED_STRLCAT
+#else
+#define ServerStrlcatDefines /**/
+#endif
+#endif
 #ifndef ServerDefines
-#define ServerDefines StandardDefines PervasiveExtensionDefines ServerExtraDefines ServerAssertDefines ServerSnprintfDefines
+#define ServerDefines StandardDefines PervasiveExtensionDefines ServerExtraDefines ServerAssertDefines ServerSnprintfDefines ServerStrlcatDefines
 #endif
 
 #ifndef MesaUseX86Asm
@@ -1585,7 +1710,11 @@ XCOMM X Window System make variables; these need to be coordinated with rules
 # if !CrossCompiling
             FONTC = $(CLIENTENVSETUP) $(PRELOADFONTSETUP) $(XBUILDBINDIR)/bdftopcf
       MKFONTSCALE = $(CLIENTENVSETUP) $(PRELOADFREETYPESETUP) $(XBUILDBINDIR)/mkfontscale
+#if UseMkfontscaleForMkfontdir
         MKFONTDIR = $(MKFONTSCALE) -b -s -l
+#else
+        MKFONTDIR = $(CLIENTENVSETUP) $(PRELOADFONTSETUP) $(XBUILDBINDIR)/mkfontdir
+#endif
        XCURSORGEN = $(CLIENTENVSETUP) $(PRELOADSETUP) $(XBUILDBINDIR)/xcursorgen
 # elif UseInstalledOnCrossCompile
         MKFONTDIR = $(BINDIR)/mkfontdir
@@ -1629,6 +1758,7 @@ XCOMM X Window System make variables; these need to be coordinated with rules
       FTSOURCEDIR = FreeTypeSrcDir
      XTTSOURCEDIR = XTrueTypeSrcDir
        MESASRCDIR = MesaSrcDir
+   DRMINCLUDESDIR = DRMIncludesDir
   OGLSAMPLESRCDIR = OglSampleSrcDir
         PSWRAPSRC = $(XTOP)/config/pswrap
      TRANSCOMMSRC = $(LIBSRC)/xtrans
@@ -1638,7 +1768,6 @@ XCOMM X Window System make variables; these need to be coordinated with rules
      XPROJECTROOT = X11ProjectRoot
 #endif
 
-      XORGMANDEFS = XOrgManDefs
     VENDORMANDEFS = VendorManDefs
 
 #if HasSharedLibraries
@@ -1689,6 +1818,9 @@ XCOMM X Window System make variables; these need to be coordinated with rules
 #ifndef SharedLibX11
 #define SharedLibX11 HasSharedLibraries
 #endif
+#ifndef ExtraLibX11
+#define ExtraLibX11 SharedLibX11
+#endif
 #ifndef NormalLibX11
 #define NormalLibX11 (!SharedLibX11 | ForceNormalLib)
 #endif
@@ -1715,6 +1847,9 @@ ProjectUnsharedLibReferences(XONLY,X11,$(XLIBSRC),XBuildLibDir)
 #ifndef SharedLibXThrStub
 #define SharedLibXThrStub	YES
 #endif
+#ifndef ExtraLibXThrStub
+#define ExtraLibXThrStub	SharedLibXThrStub
+#endif
 #ifndef NormalLibXThrStub
 #define NormalLibXThrStub	NO
 #endif
@@ -1736,6 +1871,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXThrStub
 #define SharedLibXThrStub	NO
+#undef  ExtraLibXThrStub
+#define ExtraLibXThrStub	NO
 #undef  NormalLibXThrStub
 #define NormalLibXThrStub	NO
 #undef  DebugLibXThrStub
@@ -1747,6 +1884,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildScreenSaverLibrary
 #ifndef SharedLibXss
 #define SharedLibXss	HasSharedLibraries
+#endif
+#ifndef ExtraLibXss
+#define ExtraLibXss	SharedLibXss
 #endif
 #ifndef NormalLibXss
 #define NormalLibXss	(!SharedLibXss || ForceNormalLib)
@@ -1760,6 +1900,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXss
 #define SharedLibXss	NO
+#undef  ExtraLibXss
+#define ExtraLibXss	NO
 #undef  NormalLibXss
 #define NormalLibXss	NO
 #undef  DebugLibXss
@@ -1771,6 +1913,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXF86MiscLibrary
 #ifndef SharedLibXxf86misc
 #define SharedLibXxf86misc	HasSharedLibraries
+#endif
+#ifndef ExtraLibXxf86misc
+#define ExtraLibXxf86misc	SharedLibXxf86misc
 #endif
 #ifndef NormalLibXxf86misc
 #define NormalLibXxf86misc	(!SharedLibXxf86misc || ForceNormalLib)
@@ -1784,6 +1929,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXxf86misc
 #define SharedLibXxf86misc	NO
+#undef  ExtraLibXxf86misc
+#define ExtraLibXxf86misc	NO
 #undef  NormalLibXxf86misc
 #define NormalLibXxf86misc	NO
 #undef  DebugLibXxf86misc
@@ -1795,6 +1942,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXF86VidModeLibrary
 #ifndef SharedLibXxf86vm
 #define SharedLibXxf86vm	HasSharedLibraries
+#endif
+#ifndef ExtraLibXxf86vm
+#define ExtraLibXxf86vm		SharedLibXxf86vm
 #endif
 #ifndef NormalLibXxf86vm
 #define NormalLibXxf86vm	(!SharedLibXxf86vm || ForceNormalLib)
@@ -1808,6 +1958,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXxf86vm
 #define SharedLibXxf86vm	NO
+#undef  ExtraLibXxf86vm
+#define ExtraLibXxf86vm	NO
 #undef  NormalLibXxf86vm
 #define NormalLibXxf86vm	NO
 #undef  DebugLibXxf86vm
@@ -1819,6 +1971,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXF86DGALibrary
 #ifndef SharedLibXxf86dga
 #define SharedLibXxf86dga	HasSharedLibraries
+#endif
+#ifndef ExtraLibXxf86dga
+#define ExtraLibXxf86dga	SharedLibXxf86dga
 #endif
 #ifndef NormalLibXxf86dga
 #define NormalLibXxf86dga	(!SharedLibXxf86dga || ForceNormalLib)
@@ -1832,6 +1987,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXxf86dga
 #define SharedLibXxf86dga	NO
+#undef  ExtraLibXxf86dga
+#define ExtraLibXxf86dga	NO
 #undef  NormalLibXxf86dga
 #define NormalLibXxf86dga	NO
 #undef  DebugLibXxf86dga
@@ -1843,6 +2000,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXF86RushLibrary
 #ifndef SharedLibXxf86rush
 #define SharedLibXxf86rush	HasSharedLibraries
+#endif
+#ifndef ExtraLibXxf86rush
+#define ExtraLibXxf86rush	SharedLibXxf86rush
 #endif
 #ifndef NormalLibXxf86rush
 #define NormalLibXxf86rush	(!SharedLibXxf86rush || ForceNormalLib)
@@ -1856,6 +2016,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXxf86rush
 #define SharedLibXxf86rush	NO
+#undef  ExtraLibXxf86rush
+#define ExtraLibXxf86rush	NO
 #undef  NormalLibXxf86rush
 #define NormalLibXxf86rush	NO
 #undef  DebugLibXxf86rush
@@ -1867,6 +2029,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXvLibrary
 #ifndef SharedLibXv
 #define SharedLibXv		HasSharedLibraries
+#endif
+#ifndef ExtraLibXv
+#define ExtraLibXv		SharedLibXv
 #endif
 #ifndef NormalLibXv
 #define NormalLibXv		(!SharedLibXv || ForceNormalLib)
@@ -1880,6 +2045,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXv
 #define SharedLibXv		NO
+#undef  ExtraLibXv
+#define ExtraLibXv		NO
 #undef  NormalLibXv
 #define NormalLibXv		NO
 #undef  DebugLibXv
@@ -1891,6 +2058,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXvMCLibrary
 #ifndef SharedLibXvMC
 #define SharedLibXvMC		HasSharedLibraries
+#endif
+#ifndef ExtraLibXvMC
+#define ExtraLibXvMC		SharedLibXvMC
 #endif
 #ifndef NormalLibXvMC
 #define NormalLibXvMC		(!SharedLibXvMC || ForceNormalLib)
@@ -1904,6 +2074,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXvMC
 #define SharedLibXvMC		NO
+#undef  ExtraLibXvMC
+#define ExtraLibXvMC		NO
 #undef  NormalLibXvMC
 #define NormalLibXvMC		NO
 #undef  DebugLibXvMC
@@ -1915,6 +2087,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXineramaLibrary
 #ifndef SharedLibXinerama
 #define SharedLibXinerama	HasSharedLibraries
+#endif
+#ifndef ExtraLibXinerama
+#define ExtraLibXinerama	SharedLibXinerama
 #endif
 #ifndef NormalLibXinerama
 #define NormalLibXinerama	(!SharedLibXinerama || ForceNormalLib)
@@ -1928,6 +2103,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXinerama
 #define SharedLibXinerama	NO
+#undef  ExtraLibXinerama
+#define ExtraLibXinerama	NO
 #undef  NormalLibXinerama
 #define NormalLibXinerama	NO
 #undef  DebugLibXinerama
@@ -1938,20 +2115,25 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 
 #if BuildXResLibrary
 #ifndef SharedLibXRes
-#define SharedLibXRes           HasSharedLibraries
+#define SharedLibXRes		HasSharedLibraries
+#endif
+#ifndef ExtraLibXRes
+#define ExtraLibXRes		SharedLibXRes
 #endif
 #ifndef NormalLibXRes
-#define NormalLibXRes           (!SharedLibXRes || ForceNormalLib)
+#define NormalLibXRes		(!SharedLibXRes || ForceNormalLib)
 #endif
 #ifndef DebugLibXRes
-#define DebugLibXRes            NO
+#define DebugLibXRes		NO
 #endif
 #ifndef ProfileLibXRes
-#define ProfileLibXRes          NO
+#define ProfileLibXRes		NO
 #endif
 #else
 #undef  SharedLibXRes
 #define SharedLibXRes		NO
+#undef  ExtraLibXRes
+#define ExtraLibXRes		NO
 #undef  NormalLibXRes
 #define NormalLibXRes		NO
 #undef  DebugLibXRes
@@ -1963,6 +2145,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildDPSLibrary
 #ifndef SharedLibDps
 #define SharedLibDps		HasSharedLibraries
+#endif
+#ifndef ExtraLibDps
+#define ExtraLibDps		SharedLibDps
 #endif
 #ifndef NormalLibDps
 #define NormalLibDps		(!SharedLibDps || ForceNormalLib)
@@ -1976,6 +2161,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibDps
 #define SharedLibDps		NO
+#undef  ExtraLibDps
+#define ExtraLibDps		NO
 #undef  NormalLibDps
 #define NormalLibDps		NO
 #undef  DebugLibDps
@@ -1987,6 +2174,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildDPSTkLibrary
 #ifndef SharedLibDpsTk
 #define SharedLibDpsTk		HasSharedLibraries
+#endif
+#ifndef ExtraLibDpsTk
+#define ExtraLibDpsTk		SharedLibDpsTk
 #endif
 #ifndef NormalLibDpsTk
 #define NormalLibDpsTk		(!SharedLibDpsTk || ForceNormalLib)
@@ -2000,6 +2190,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibDpsTk
 #define SharedLibDpsTk		NO
+#undef  ExtraLibDpsTk
+#define ExtraLibDpsTk		NO
 #undef  NormalLibDpsTk
 #define NormalLibDpsTk		NO
 #undef  DebugLibDpsTk
@@ -2011,6 +2203,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildPSResLibrary
 #ifndef SharedLibPSRes
 #define SharedLibPSRes		HasSharedLibraries
+#endif
+#ifndef ExtraLibPSRes
+#define ExtraLibPSRes		SharedLibPSRes
 #endif
 #ifndef NormalLibPSRes
 #define NormalLibPSRes		(!SharedLibPSRes || ForceNormalLib)
@@ -2024,6 +2219,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibPSRes
 #define SharedLibPSRes		NO
+#undef  ExtraLibPSRes
+#define ExtraLibPSRes		NO
 #undef  NormalLibPSRes
 #define NormalLibPSRes		NO
 #undef  DebugLibPSRes
@@ -2035,6 +2232,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildRenderLibrary
 #ifndef SharedLibXrender
 #define SharedLibXrender	HasSharedLibraries
+#endif
+#ifndef ExtraLibXrender
+#define ExtraLibXrender		SharedLibXrender
 #endif
 #ifndef NormalLibXrender
 #define NormalLibXrender	(!SharedLibXrender || ForceNormalLib)
@@ -2048,6 +2248,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXrender
 #define SharedLibXrender	NO
+#undef  ExtraLibXrender
+#define ExtraLibXrender		NO
 #undef  NormalLibXrender
 #define NormalLibXrender	NO
 #undef  DebugLibXrender
@@ -2059,6 +2261,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildRandRLibrary
 #ifndef SharedLibXrandr
 #define SharedLibXrandr		HasSharedLibraries
+#endif
+#ifndef ExtraLibXrandr
+#define ExtraLibXrandr		SharedLibXrandr
 #endif
 #ifndef NormalLibXrandr
 #define NormalLibXrandr		(!SharedLibXrandr || ForceNormalLib)
@@ -2072,6 +2277,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXrandr
 #define SharedLibXrandr		NO
+#undef  ExtraLibXrandr
+#define ExtraLibXrandr		NO
 #undef  NormalLibXrandr
 #define NormalLibXrandr		NO
 #undef  DebugLibXrandr
@@ -2083,6 +2290,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildXcursorLibrary
 #ifndef SharedLibXcursor
 #define SharedLibXcursor	HasSharedLibraries
+#endif
+#ifndef ExtraLibXcursor
+#define ExtraLibXcursor		SharedLibXcursor
 #endif
 #ifndef NormalLibXcursor
 #define NormalLibXcursor	(!SharedLibXcursor || ForceNormalLib)
@@ -2096,6 +2306,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibXcursor
 #define SharedLibXcursor	NO
+#undef  ExtraLibXcursor
+#define ExtraLibXcursor		NO
 #undef  NormalLibXcursor
 #define NormalLibXcursor	NO
 #undef  DebugLibXcursor
@@ -2107,6 +2319,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildAppleWMLibrary
 #ifndef SharedLibAppleWM
 #define SharedLibAppleWM	HasSharedLibraries
+#endif
+#ifndef ExtraLibAppleWM
+#define ExtraLibAppleWM		SharedLibAppleWM
 #endif
 #ifndef NormalLibAppleWM
 #define NormalLibAppleWM	(!SharedLibAppleWM || ForceNormalLib)
@@ -2120,6 +2335,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibAppleWM
 #define SharedLibAppleWM	NO
+#undef  ExtraLibAppleWM
+#define ExtraLibAppleWM		NO
 #undef  NormalLibAppleWM
 #define NormalLibAppleWM	NO
 #undef  DebugLibAppleWM
@@ -2131,6 +2348,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildWindowsWMLibrary
 #ifndef SharedLibWindowsWM
 #define SharedLibWindowsWM	HasSharedLibraries
+#endif
+#ifndef ExtraLibWindowsWM
+#define ExtraLibWindowsWM	SharedLibWindowsWM
 #endif
 #ifndef NormalLibWindowsWM
 #define NormalLibWindowsWM	(!SharedLibWindowsWM || ForceNormalLib)
@@ -2144,6 +2364,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibWindowsWM
 #define SharedLibWindowsWM	NO
+#undef  ExtraLibWindowsWM
+#define ExtraLibWindowsWM	NO
 #undef  NormalLibWindowsWM
 #define NormalLibWindowsWM	NO
 #undef  DebugLibWindowsWM
@@ -2155,6 +2377,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildGLULibrary
 #ifndef SharedLibGlu
 #define SharedLibGlu		HasSharedLibraries
+#endif
+#ifndef ExtraLibGlu
+#define ExtraLibGlu		SharedLibGlu
 #endif
 #ifndef NormalLibGlu
 #define NormalLibGlu		(!SharedLibX11 | ForceNormalLib)
@@ -2168,6 +2393,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibGlu
 #define SharedLibGlu		NO
+#undef  ExtraLibGlu
+#define ExtraLibGlu		NO
 #undef  NormalLibGlu
 #define NormalLibGlu		NO
 #undef  DebugLibGlu
@@ -2179,6 +2406,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildGLXLibrary
 #ifndef SharedLibGlx
 #define SharedLibGlx		HasSharedLibraries
+#endif
+#ifndef ExtraLibGlx
+#define ExtraLibGlx		SharedLibGlx
 #endif
 #ifndef NormalLibGlx
 #define NormalLibGlx		(!SharedLibX11 | ForceNormalLib)
@@ -2214,6 +2444,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibGlx
 #define SharedLibGlx		NO
+#undef  ExtraLibGlx
+#define ExtraLibGlx		NO
 #undef  NormalLibGlx
 #define NormalLibGlx		NO
 #undef  DebugLibGlx
@@ -2228,6 +2460,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #if BuildGLwLibrary
 #ifndef SharedLibGLw
 #define SharedLibGLw		HasSharedLibraries && HasWeakSymbols
+#endif
+#ifndef ExtraLibGLw
+#define ExtraLibGLw		SharedLibGLw
 #endif
 #ifndef NormalLibGLw
 #define NormalLibGLw		(!SharedLibGLw || ForceNormalLib)
@@ -2245,6 +2480,8 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #else
 #undef  SharedLibGLw
 #define SharedLibGLw		NO
+#undef  ExtraLibGLw
+#define ExtraLibGLw		NO
 #undef  NormalLibGLw
 #define NormalLibGLw		NO
 #undef  DebugLibGLw
@@ -2255,6 +2492,9 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 
 #ifndef SharedLibXext
 #define SharedLibXext HasSharedLibraries
+#endif
+#ifndef ExtraLibXext
+#define ExtraLibXext SharedLibXext
 #endif
 #ifndef NormalLibXext
 #define NormalLibXext (!SharedLibXext | ForceNormalLib)
@@ -2312,13 +2552,46 @@ ProjectUnsharedLibReferences(XXF86VM,Xxf86vm,$(XXF86VMLIBSRC),XBuildLibDir)
     XXF86DGALIBSRC = $(LIBSRC)/Xxf86dga
 #if SharedLibXxf86dga
 #ifndef SharedXxf86dgaRev
-#define SharedXxf86dgaRev 1.0
+#define SharedXxf86dgaRev 1.1
 #endif
 SharedLibReferences(XXF86DGA,Xxf86dga,$(XXF86DGALIBSRC),SOXXF86DGAREV,SharedXxf86dgaRev)
 #else
 ProjectUnsharedLibReferences(XXF86DGA,Xxf86dga,$(XXF86DGALIBSRC),XBuildLibDir)
 #endif
 
+#if BuildDmxLibrary
+#ifndef SharedLibDmx
+#define SharedLibDmx		HasSharedLibraries
+#endif
+#ifndef ExtraLibDmx
+#define ExtraLibDmx		SharedLibDmx
+#endif
+#ifndef NormalLibDmx
+#define NormalLibDmx		YES
+#endif
+#ifndef DebugLibDmx
+#define DebugLibDmx		NO
+#endif
+#ifndef ProfileLibDmx
+#define ProfileLibDmx		NO
+#endif
+#else
+#ifndef SharedLibDmx
+#define SharedLibDmx		NO
+#endif
+#ifndef ExtraLibDmx
+#define ExtraLibDmx		NO
+#endif
+#ifndef NormalLibDmx
+#define NormalLibDmx		NO
+#endif
+#ifndef DebugLibDmx
+#define DebugLibDmx		NO
+#endif
+#ifndef ProfileLibDmx
+#define ProfileLibDmx		NO
+#endif
+#endif
 
     XXF86RUSHLIBSRC = $(LIBSRC)/Xxf86rush
 #if SharedLibXxf86rush
@@ -2372,6 +2645,15 @@ SharedLibReferences(XRES,XRes,$(XRESLIBSRC),SOXRESREV,SharedXResRev)
 ProjectUnsharedLibReferences(XRES,XRes,$(XRESLIBSRC),XBuildLibDir)
 #endif
 
+    DMXLIBSRC = $(LIBSRC)/dmx
+#if SharedLibDmx
+#ifndef SharedDmxRev
+#define SharedDmxRev 1.0
+#endif
+SharedLibReferences(DMX,dmx,$(DMXLIBSRC),SODMXREV,SharedDmxRev)
+#else
+ProjectUnsharedLibReferences(DMX,dmx,$(DMXLIBSRC),XBuildLibDir)
+#endif
 
     DPSLIBSRC = $(LIBSRC)/dps
 #if SharedLibDps
@@ -2485,6 +2767,9 @@ ProjectUnsharedLibReferences(WINDOWSWM,WindowsWM,$(WINDOWSWMLIBSRC),XBuildLibDir
 # ifndef SharedLibXfontcache
 #  define SharedLibXfontcache	HasSharedLibraries
 # endif
+# ifndef ExtraLibXfontcache
+#  define ExtraLibXfontcache	SharedLibXfontcache
+# endif
 # ifndef NormalLibXfontcache
 #  define NormalLibXfontcache	(!SharedLibXfontcache || ForceNormalLib)
 # endif
@@ -2507,6 +2792,9 @@ ProjectUnsharedLibReferences(XFONTCACHE,Xfontcache,$(XFONTCACHELIBSRC),XBuildLib
 
 #ifndef SharedLibXau
 #define SharedLibXau		NO
+#endif
+#ifndef ExtraLibXau
+#define ExtraLibXau		SharedLibXau
 #endif
 #ifndef NormalLibXau
 #define NormalLibXau (!SharedLibXau | ForceNormalLib)
@@ -2534,6 +2822,9 @@ ProjectUnsharedLibReferences(XAUTH,Xau,$(XAUTHSRC),$(USRLIBDIR))
 #ifndef SharedLibXdmcp
 #define SharedLibXdmcp		NO
 #endif
+#ifndef ExtraLibXdmcp
+#define ExtraLibXdmcp		SharedLibXdmcp
+#endif
 #ifndef NormalLibXdmcp
 #define NormalLibXdmcp (!SharedLibXdmcp | ForceNormalLib)
 #endif
@@ -2560,6 +2851,9 @@ ProjectUnsharedLibReferences(XDMCP,Xdmcp,$(XDMCPLIBSRC),$(USRLIBDIR))
 #ifndef SharedLibXmu
 #define SharedLibXmu HasSharedLibraries
 #endif
+#ifndef ExtraLibXmu
+#define ExtraLibXmu SharedLibXmu
+#endif
 #ifndef NormalLibXmu
 #define NormalLibXmu (!SharedLibXmu | ForceNormalLib)
 #endif
@@ -2581,6 +2875,9 @@ ProjectUnsharedLibReferences(XMU,Xmu,$(XMUSRC),XBuildLibDir)
 
 #ifndef SharedLibXmuu
 #define SharedLibXmuu HasSharedLibraries
+#endif
+#ifndef ExtraLibXmuu
+#define ExtraLibXmuu SharedLibXmuu
 #endif
 #ifndef NormalLibXmuu
 #define NormalLibXmuu		(!SharedLibXmuu | ForceNormalLib)
@@ -2604,6 +2901,9 @@ ProjectUnsharedLibReferences(XMUU,Xmuu,$(XMUUSRC),XBuildLibDir)
 #ifndef SharedOldX
 #define SharedOldX HasSharedLibraries
 #endif
+#ifndef ExtraOldX
+#define ExtraOldX SharedOldX
+#endif
 #ifndef NormalOldX
 #define NormalOldX (!SharedOldX | ForceNormalLib)
 #endif
@@ -2625,6 +2925,9 @@ ProjectUnsharedLibReferences(OLDX,oldX,$(OLDXLIBSRC),XBuildLibDir)
 
 #ifndef SharedLibXp
 #define SharedLibXp HasSharedLibraries
+#endif
+#ifndef ExtraLibXp
+#define ExtraLibXp SharedLibXp
 #endif
 #ifndef NormalLibXp
 #define NormalLibXp (!SharedLibXp | ForceNormalLib)
@@ -2648,6 +2951,9 @@ ProjectUnsharedLibReferences(XP,Xp,$(XPLIBSRC),XBuildLibDir)
 #ifndef SharedLibXt
 #define SharedLibXt HasSharedLibraries
 #endif
+#ifndef ExtraLibXt
+#define ExtraLibXt SharedLibXt
+#endif
 #ifndef NormalLibXt
 #define NormalLibXt (!SharedLibXt | ForceNormalLib)
 #endif
@@ -2670,31 +2976,11 @@ ProjectUnsharedLibReferences(XTOOLONLY,Xt,$(TOOLKITSRC),XBuildLibDir)
          XTOOLLIB = $(XTOOLONLYLIB) $(SMLIB) $(ICELIB)
      LINTXTOOLLIB = $(LINTXTOOLONLYLIB)
 
-#ifndef SharedLibXa
-#define SharedLibXa	(HasSharedLibraries & HasCplusplus)
-#endif
-#ifndef NormalLibXa
-/* #define NormalLibXa	((!SharedLibXa | ForceNormalLib) & HasCplusplus) */
-#define NormalLibXa	YES /* needed for current tests, will correct later */
-#endif
-#ifndef DebugLibXa
-#define DebugLibXa	NO	/* debugged audio library */
-#endif
-#ifndef ProfileLibXa
-#define ProfileLibXa	NO	/* profiled audio library */
-#endif
-       XALIBSRC = $(LIBSRC)/Xa
-#if SharedLibXa
-#ifndef SharedXaRev
-#define SharedXaRev 1.0
-#endif
-SharedLibReferences(XA,Xa,$(XALIBSRC),SOXAREV,SharedXaRev)
-#else
-UnsharedLibReferences(XA,Xa,$(XALIBSRC))
-#endif
-
 #ifndef SharedLibXaw
 #define SharedLibXaw HasSharedLibraries
+#endif
+#ifndef ExtraLibXaw
+#define ExtraLibXaw SharedLibXaw
 #endif
 #ifndef NormalLibXaw
 #define NormalLibXaw (!SharedLibXaw | ForceNormalLib)
@@ -2723,6 +3009,9 @@ ProjectUnsharedLibReferences(XAW,Xaw,$(AWIDGETSRC),XBuildLibDir)
 #ifndef SharedLibXaw6
 #define SharedLibXaw6 HasSharedLibraries
 #endif
+#ifndef ExtraLibXaw6
+#define ExtraLibXaw6 SharedLibXaw6
+#endif
 #ifndef NormalLibXaw6
 #define NormalLibXaw6		NO
 #endif
@@ -2746,6 +3035,9 @@ ProjectUnsharedLibReferences(XAW6,Xaw,$(AWIDGET6SRC),XBuildLibDir)
 #ifndef SharedLibXi
 #define SharedLibXi HasSharedLibraries
 #endif
+#ifndef ExtraLibXi
+#define ExtraLibXi SharedLibXi
+#endif
 #ifndef NormalLibXi
 #define NormalLibXi (!SharedLibXi | ForceNormalLib)
 #endif
@@ -2767,6 +3059,9 @@ ProjectUnsharedLibReferences(XI,Xi,$(XILIBSRC),XBuildLibDir)
 
 #ifndef SharedLibXtst
 #define SharedLibXtst HasSharedLibraries
+#endif
+#ifndef ExtraLibXtst
+#define ExtraLibXtst SharedLibXtst
 #endif
 #ifndef NormalLibXtst
 #define NormalLibXtst (!SharedLibXtst | ForceNormalLib)
@@ -2792,6 +3087,9 @@ ProjectUnsharedLibReferences(XBSD,Xbsd,$(LIBSRC)/Xbsd,XBuildLibDir)
 #ifndef SharedLibICE
 #define SharedLibICE HasSharedLibraries
 #endif
+#ifndef ExtraLibICE
+#define ExtraLibICE SharedLibICE
+#endif
 #ifndef NormalLibICE
 #define NormalLibICE (!SharedLibICE | ForceNormalLib)
 #endif
@@ -2813,6 +3111,9 @@ ProjectUnsharedLibReferences(ICE,ICE,$(ICESRC),XBuildLibDir)
 
 #ifndef SharedLibSM
 #define SharedLibSM HasSharedLibraries
+#endif
+#ifndef ExtraLibSM
+#define ExtraLibSM SharedLibSM
 #endif
 #ifndef NormalLibSM
 #define NormalLibSM (!SharedLibSM | ForceNormalLib)
@@ -2836,6 +3137,9 @@ ProjectUnsharedLibReferences(SM,SM,$(SMSRC),XBuildLibDir)
 #ifndef SharedLibXkey
 #define SharedLibXkey HasSharedLibraries
 #endif
+#ifndef ExtraLibXkey
+#define ExtraLibXkey SharedLibXkey
+#endif
 #ifndef NormalLibXkey
 #define NormalLibXkey (!SharedLibXkey | ForceNormalLib)
 #endif
@@ -2858,6 +3162,9 @@ ProjectUnsharedLibReferences(XKEY,Xkey,$(XKEYSRC),XBuildLibDir)
 #ifndef SharedLibFS
 #define SharedLibFS		HasSharedLibraries
 #endif
+#ifndef ExtraLibFS
+#define ExtraLibFS		SharedLibFS
+#endif
 #ifndef NormalLibFS
 #define NormalLibFS (!SharedLibFS | ForceNormalLib)
 #endif
@@ -2879,6 +3186,9 @@ ProjectUnsharedLibReferences(FS,FS,$(FSLIBSRC),XBuildLibDir)
 
 #ifndef SharedLibFont
 #define SharedLibFont HasSharedLibraries
+#endif
+#ifndef ExtraLibFont
+#define ExtraLibFont SharedLibFont
 #endif
 #ifndef NormalLibFont
 #define NormalLibFont (!SharedLibFont | ForceNormalLib | XserverStaticFontLib)
@@ -2910,6 +3220,9 @@ ProjectUnsharedLibReferences(FONTSTUB,fntstubs,$(FONTSUBLIBSRC),XBuildLibDir)
 #ifndef SharedLibFontEnc
 #define SharedLibFontEnc	HasSharedLibraries
 #endif
+#ifndef ExtraLibFontEnc
+#define ExtraLibFontEnc		SharedLibFontEnc
+#endif
 #ifndef NormalLibFontEnc
 #define NormalLibFontEnc (!SharedLibFontEnc | ForceNormalLib)
 #endif
@@ -2931,6 +3244,9 @@ ProjectUnsharedLibReferences(XFONTENC,fontenc,$(FONTENCLIBSRC),XBuildLibDir)
 
 #ifndef SharedLibXpm
 #define SharedLibXpm HasSharedLibraries
+#endif
+#ifndef ExtraLibXpm
+#define ExtraLibXpm SharedLibXpm
 #endif
 #ifndef NormalLibXpm
 #define NormalLibXpm (!SharedLibXpm | ForceNormalLib)
@@ -2958,6 +3274,9 @@ ProjectUnsharedLibReferences(XPM,Xpm,$(XPMLIBSRC),XBuildLibDir)
 #ifndef SharedLibFreetype2
 #define SharedLibFreetype2 HasSharedLibraries
 #endif
+#ifndef ExtraLibFreetype2
+#define ExtraLibFreetype2 SharedLibFreetype2
+#endif
 #ifndef NormalLibFreetype2
 #define NormalLibFreetype2 (!SharedLibFreetype2 | ForceNormalLib)
 #endif
@@ -2970,24 +3289,24 @@ ProjectUnsharedLibReferences(XPM,Xpm,$(XPMLIBSRC),XBuildLibDir)
           FREETYPE2LIBSRC = $(LIBSRC)/freetype2
 
 /*
- * FreeType 2.1.4
+ * FreeType 2.1.8
  *
  * Get the library version information from version_info in
  * in xc/extras/freetype2/builds/unix/configure.ac.
  *
- * current:revision:age = 9:3:3
+ * current:revision:age = 9:6:3
  *
  * The LibtoolMinorVersions revision is "(current - age).age".
  * The !LibtoolMinorVersions revision is "current.0".
  * Freetype2Version should be set to "current.revision.age"
  */
 #ifndef Freetype2Version
-#define Freetype2Version 9.3.3
+#define Freetype2Version 9.6.3
 #endif
 
 #if SharedLibFreetype2
 #ifndef SharedLibtoolFreetype2Rev
-#define SharedLibtoolFreetype2Rev	9:3:3
+#define SharedLibtoolFreetype2Rev	9:6:3
 #endif
 #ifndef SharedFreetype2Rev
 #if LibtoolMinorVersions
@@ -3068,6 +3387,9 @@ FREETYPE2DEFINES = -DFREETYPE2
 
 #ifndef SharedLibExpat
 #define SharedLibExpat HasSharedLibraries
+#endif
+#ifndef ExtraLibExpat
+#define ExtraLibExpat SharedLibExpat
 #endif
 #ifndef NormalLibExpat
 #define NormalLibExpat (!SharedLibExpat | ForceNormalLib)
@@ -3174,6 +3496,9 @@ EXPATDEFINES = -DEXPAT
 #ifndef SharedLibXft1
 #define SharedLibXft1 HasSharedLibraries
 #endif
+#ifndef ExtraLibXft1
+#define ExtraLibXft1 SharedLibXft1
+#endif
 #ifndef NormalLibXft1
 #define NormalLibXft1		NO
 #endif
@@ -3211,6 +3536,9 @@ ProjectUnsharedLibReferences(XFT1,Xft,$(XFT1LIBSRC),XBuildLibDir)
 #ifndef SharedLibXft
 #define SharedLibXft HasSharedLibraries
 #endif
+#ifndef ExtraLibXft
+#define ExtraLibXft SharedLibXft
+#endif
 #ifndef NormalLibXft
 #define NormalLibXft (!SharedLibXft | ForceNormalLib)
 #endif
@@ -3243,6 +3571,9 @@ ProjectUnsharedLibReferences(XFT,Xft,$(XFTLIBSRC),XBuildLibDir)
 
 #ifndef SharedLibFontconfig
 #define SharedLibFontconfig HasSharedLibraries
+#endif
+#ifndef ExtraLibFontconfig
+#define ExtraLibFontconfig SharedLibFontconfig
 #endif
 #ifndef NormalLibFontconfig
 #define NormalLibFontconfig (!SharedLibFontconfig | ForceNormalLib)
@@ -3435,6 +3766,9 @@ LIBPNGLIB = -L$(LIBPNGLIBDIR) -lpng
 # ifndef SharedLibxkbfile
 #  define SharedLibxkbfile	HasSharedLibraries
 # endif
+# ifndef ExtraLibxkbfile
+#  define ExtraLibxkbfile	SharedLibxkbfile
+# endif
 # ifndef NormalLibxkbfile
 #  define NormalLibxkbfile	(!SharedLibxkbfile | ForceNormalLib)
 # endif
@@ -3507,6 +3841,9 @@ ProjectUnsharedLibReferences(XKBFILE,xkbfile,$(XKBFILELIBSRC),XBuildLibDir)
 # ifndef SharedLibxkbui
 #  define SharedLibxkbui	HasSharedLibraries
 # endif
+# ifndef ExtraLibxkbui
+#  define ExtraLibxkbui		SharedLibxkbui
+# endif
 # ifndef NormalLibxkbui
 #  define NormalLibxkbui	(!SharedLibxkbui || ForceNormalLib)
 # endif
@@ -3556,6 +3893,9 @@ ProjectUnsharedLibReferences(XKBUI,xkbui,$(XKBUILIBSRC),XBuildLibDir)
 
 #ifndef SharedLibXTrap
 #define SharedLibXTrap HasSharedLibraries
+#endif
+#ifndef ExtraLibXTrap
+#define ExtraLibXTrap SharedLibXTrap
 #endif
 #ifndef NormalLibXTrap
 #define NormalLibXTrap (!SharedLibXTrap | ForceNormalLib)
@@ -3643,9 +3983,9 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 
 # ifndef MakeFcCache
 #  define MakeFcCache(deplist)						@@\
-all:: fonts.cache							@@\
+all:: fonts.cache-1							@@\
 									@@\
-fonts.cache: deplist							@@\
+fonts.cache-1: deplist							@@\
 	RunProgram(FCCACHE, $(FCCACHEOPTS) .)				@@\
 									@@\
 clean::									@@\
@@ -3724,13 +4064,17 @@ all::  $(OBJS)								@@\
 MakeFontsDir($(OBJS))							@@\
 									@@\
 clean::									@@\
-	RemoveFiles(*.pcf *.pcf.Z *.pcf.gz)
+	RemoveFiles(*.pcf)						@@\
+	RemoveFiles(*.pcf.Z)						@@\
+	RemoveFiles(*.pcf.gz)
 # else
 #  define MakeFonts()							@@\
 MakeFontsDir($(OBJS))							@@\
 									@@\
 clean::									@@\
-	RemoveFiles(*.pcf *.pcf.Z *.pcf.gz)
+	RemoveFiles(*.pcf)						@@\
+	RemoveFiles(*.pcf.Z)						@@\
+	RemoveFiles(*.pcf.gz)
 # endif
 #endif /* MakeFonts */
 
@@ -3832,11 +4176,17 @@ FontBaseObj(tname):  FontSrc(sname)					@@\
 #  if GzipFontCompression
 #   define CompressedFontTargetLong(sname,tname)			@@\
 FontBaseObj(tname).gz:  FontSrc(sname)					@@\
-	RunProgram(FONTC,$(FONTCFLAGS) $?) | $(GZIPCMD) > $@
+	RunProgram(FONTC,$(FONTCFLAGS) $?) | $(GZIPCMD) > $@		@@\
+									@@\
+clean::									@@\
+	RemoveFile(FontBaseObj(tname).gz)
 #  else
 #   define CompressedFontTargetLong(sname,tname)			@@\
 FontBaseObj(tname).Z:  FontSrc(sname)					@@\
-	RunProgram(FONTC,$(FONTCFLAGS) $?) | $(COMPRESS) > $@
+	RunProgram(FONTC,$(FONTCFLAGS) $?) | $(COMPRESS) > $@		@@\
+									@@\
+clean::									@@\
+	RemoveFile(FontBaseObj(tname).Z)
 #  endif
 # endif /* CompressedFontTargetLong */
 #else
@@ -4091,9 +4441,13 @@ file.html: srcs								@@\
 #ifdef HTMLroffCmd
 #define MakeEqnHtmlDoc(file,srcs)					@@\
 file.html: srcs								@@\
-	$(TBL) $(XDOCMACROS) srcs | $(EQN) | $(HTMLROFF) $(MSMACROS) Concat(-P-I,file) \ @@\
+	@if [ X$(NOHTML) = X ]; then \					@@\
+	  (set -x; \							@@\
+	    $(TBL) $(XDOCMACROS) srcs | \				@@\
+		$(EQN) | $(HTMLROFF) $(MSMACROS) Concat(-P-I,file) \	@@\
 		2> index.raw > file.nhtml \				@@\
-	  && PostProcessTroffHTML(file.nhtml,$@)
+	      && PostProcessTroffHTML(file.nhtml,$@)); else \		@@\
+		: > file.html; fi
 #else
 #define MakeEqnHtmlDoc(file,srcs) /**/
 #endif
@@ -4223,7 +4577,7 @@ file.ps: src								@@\
 
 #ifndef InstallDoc
 #define InstallDoc(name,deps)						@@\
-install:: deps								@@\
+install::								@@\
 	MakeDir($(DESTDIR)$(DOCPSDIR))					@@\
 	@if [ -f name.ps -a X$(NOPS) = X ]; then set -x; \		@@\
 	  $(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) name.ps \		@@\

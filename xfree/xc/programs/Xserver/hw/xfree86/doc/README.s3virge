@@ -6,18 +6,17 @@
 
 1.  Supported hardware
 
-The s3virge driver in XFree86 4.4.0 supports the S3 ViRGE, ViRGE DX, GX, GX2,
+The s3virge driver in XFree86 4.5.0 supports the S3 ViRGE, ViRGE DX, GX, GX2,
 MX, MX+, and VX chipsets.  It also supports Trio3D and Trio3D/2x chips.  A
 majority of testing is done on ViRGE DX chips, making them the most stable to
 date.  This release has added support for doublescan modes on DX.
 
-This driver is moderately stable, however please use caution with any new
-install.  Please report any problems to <XFree86@XFree86.org> using the
-appropriate bug report sheet.
+This driver is stable Please report any and all problems to
+<XFree86@XFree86.org> using the appropriate bug report sheet.
 
 2.  Features:
 
-   o Fully accelerated support for S3 ViRGE family video adapters
+   o fully accelerated support for S3 ViRGE family video adapters
 
    o uses linear frame buffer
 
@@ -34,20 +33,20 @@ appropriate bug report sheet.
 
 3.  Configuration:
 
-The driver auto-detects RAM size, RAMDAC and ClockChip. Do not bother putting
-these in your "Device" section.
+The driver auto-detects RAM size, RAMDAC and ClockChip, so do not bother
+putting these in your "Device" section.
 
 4.  Documentation:
 
 The driver has several supported options which are documented in the s3virge
-man page.  Please refer to it for additional details about XF86Config
-options.
+man page, and wo which you should refer for additional details about XF86Con-
+fig options.
 
 5.  Support:
 
-For support with XFree86 video drivers please refer to our web site at
-XFree86 <URL:http://www.XFree86.org>.  For problems not addressed in the web
-page please contact our support email address  <XFree86@XFree86.org>
+For support with XFree86 video drivers refer to our web site at XFree86
+<URL:http://www.XFree86.org>.  For problems not addressed in the web page
+please contact our support email address  <XFree86@XFree86.org>
 
 6.  Authors
 
@@ -61,7 +60,7 @@ page please contact our support email address  <XFree86@XFree86.org>
 
    o Kevin Brosius <cobra@compuserve.com>
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/s3virge.sgml,v 1.6 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/s3virge.sgml,v 1.7 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.s3virge,v 1.22 2004/02/24 03:49:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.s3virge,v 1.27 2005/03/17 01:11:55 dawes Exp $

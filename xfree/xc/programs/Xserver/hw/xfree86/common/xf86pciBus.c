@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86pciBus.c,v 3.78 2004/02/13 23:58:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86pciBus.c,v 3.83 2005/01/20 17:28:10 tsi Exp $ */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -128,11 +128,11 @@ static PciBusPtr xf86PciBus = NULL;
 #define MIN(x,y) ((x<y)?x:y)
 
 #define B2M(tag,base) pciBusAddrToHostAddr(tag,PCI_MEM,base)
-#define B2I(tag,base) (base)
+#define B2I(tag,base) pciBusAddrToHostAddr(tag,PCI_IO,base)
 #define B2H(tag,base,type) (((type & ResPhysMask) == ResMem) ? \
 			B2M(tag, base) : B2I(tag, base))
-#define M2B(tag,base) pciHostAddrToBusAddr(tag,PCI_IO,base)
-#define I2B(tag,base) (base)
+#define M2B(tag,base) pciHostAddrToBusAddr(tag,PCI_MEM,base)
+#define I2B(tag,base) pciHostAddrToBusAddr(tag,PCI_IO,base)
 #define H2B(tag,base,type) (((type & ResPhysMask) == ResMem) ? \
 			M2B(tag, base) : I2B(tag, base))
 #define TAG(pvp) (pciTag(pvp->bus,pvp->device,pvp->func))
@@ -170,6 +170,7 @@ static PciBusPtr xf86PciBus = NULL;
 static void getPciClassFlags(pciConfigPtr *pcrpp);
 static void pciConvertListToHost(int bus, int dev, int func, resPtr list);
 static PciBusPtr xf86GetPciBridgeInfo(void);
+static int FindDiscardedPciSlot(int bus, int device, int func);
 
 void
 xf86FormatPciBusNumber(int busnum, char *buffer)
@@ -202,7 +203,6 @@ FindPCIVideoInfo(void)
     int i = 0, j, k;
     int num = 0;
     pciVideoPtr info;
-    Bool mem64 = FALSE;
 
     pcrpp = xf86PciInfo = xf86scanpci(0);
     getPciClassFlags(pcrpp);
@@ -316,120 +316,40 @@ FindPCIVideoInfo(void)
 	     * 64-bit base addresses are checked for and avoided on 32-bit
 	     * platforms.
 	     */
-	    if (pcrp->pci_base0) {
-		if (pcrp->pci_base0 & PCI_MAP_IO) {
-		    info->ioBase[0] = (memType)PCIGETIO(pcrp->pci_base0);
-		    info->type[0] = pcrp->pci_base0 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[0] = pcrp->pci_base0 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[0] = (memType)PCIGETMEMORY(pcrp->pci_base0);
-		    if (PCI_MAP_IS64BITMEM(pcrp->pci_base0)) {
-			mem64 = TRUE;
-#if defined(LONG64) || defined(WORD64)
-			  info->memBase[0] |= 
-			    (memType)PCIGETMEMORY64HIGH(pcrp->pci_base1) << 32;
-#else
-			if (pcrp->pci_base1)
-			  info->memBase[0] = 0;
-#endif
-		    } 
+	    for (j = 0; j < 6; j++) {
+		CARD32 bar = (&pcrp->pci_base0)[j];
+
+		if (bar == 0)
+		    continue;
+
+		if (bar & PCI_MAP_IO) {
+		    info->ioBase[j] = (memType)PCIGETIO(bar);
+		    info->type[j] = bar & PCI_MAP_IO_ATTR_MASK;
+		    continue;
 		}
+
+		info->type[j] = bar & PCI_MAP_MEMORY_ATTR_MASK;
+		info->memBase[j] = (memType)PCIGETMEMORY(bar);
+		if (!PCI_MAP_IS64BITMEM(bar))
+		    continue;
+
+		if (j == 5) {
+		    xf86MsgVerb(X_WARNING, 0,
+			"Ignoring 64-bit BAR 5 for PCI device %d:%d:%d\n",
+			info->bus, info->device, info->func);
+		    info->memBase[j] = 0;
+		    break;
+		}
+
+		bar = (&pcrp->pci_base1)[j];
+#if defined(LONG64) || defined(WORD64)
+		info->memBase[j] |= (memType)bar << 32;
+#else
+		if (bar != 0)
+		    info->memBase[j] = 0;
+#endif
+		j++;	/* Step over the next BAR */
 	    }
-
-	    if (pcrp->pci_base1 && !mem64) {
-		if (pcrp->pci_base1 & PCI_MAP_IO) {
-		    info->ioBase[1] = (memType)PCIGETIO(pcrp->pci_base1);
-		    info->type[1] = pcrp->pci_base1 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[1] = pcrp->pci_base1 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[1] = (memType)PCIGETMEMORY(pcrp->pci_base1);
-		    if (PCI_MAP_IS64BITMEM(pcrp->pci_base1)) {
-			mem64 = TRUE;
-#if defined(LONG64) || defined(WORD64)
-			  info->memBase[1] |= 
-			    (memType)PCIGETMEMORY64HIGH(pcrp->pci_base2) << 32;
-#else
-			if (pcrp->pci_base2)
-			  info->memBase[1] = 0;
-#endif
-		    }
-		}
-	    } else
-		mem64 = FALSE;
-
-	    if (pcrp->pci_base2 && !mem64) {
-		if (pcrp->pci_base2 & PCI_MAP_IO) {
-		    info->ioBase[2] = (memType)PCIGETIO(pcrp->pci_base2);
-		    info->type[2] = pcrp->pci_base2 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[2] = pcrp->pci_base2 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[2] = (memType)PCIGETMEMORY(pcrp->pci_base2);
-		    if (PCI_MAP_IS64BITMEM(pcrp->pci_base2)) {
-			mem64 = TRUE;
-#if defined(LONG64) || defined(WORD64)
-			info->memBase[2] |= 
-			    (memType)PCIGETMEMORY64HIGH(pcrp->pci_base3) << 32;
-#else
-			if (pcrp->pci_base3)
-			  info->memBase[2] = 0;
-#endif
-		    }
-		}
-	    } else
-		mem64 = FALSE;
-
-	    if (pcrp->pci_base3 && !mem64) {
-		if (pcrp->pci_base3 & PCI_MAP_IO) {
-		    info->ioBase[3] = (memType)PCIGETIO(pcrp->pci_base3);
-		    info->type[3] = pcrp->pci_base3 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[3] = pcrp->pci_base3 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[3] = (memType)PCIGETMEMORY(pcrp->pci_base3);
-		    if (PCI_MAP_IS64BITMEM(pcrp->pci_base3)) {
-			mem64 = TRUE;
-#if defined(LONG64) || defined(WORD64)
-			  info->memBase[3] |= 
-			    (memType)PCIGETMEMORY64HIGH(pcrp->pci_base4) << 32;
-#else
-			if (pcrp->pci_base4)
-			  info->memBase[3] = 0;
-#endif
-		    }
-		}
-	    } else
-		mem64 = FALSE;
-
-	    if (pcrp->pci_base4 && !mem64) {
-		if (pcrp->pci_base4 & PCI_MAP_IO) {
-		    info->ioBase[4] = (memType)PCIGETIO(pcrp->pci_base4);
-		    info->type[4] = pcrp->pci_base4 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[4] = pcrp->pci_base4 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[4] = (memType)PCIGETMEMORY(pcrp->pci_base4);
-		    if (PCI_MAP_IS64BITMEM(pcrp->pci_base4)) {
-			mem64 = TRUE;
-#if defined(LONG64) || defined(WORD64)
-			  info->memBase[4] |= 
-			    (memType)PCIGETMEMORY64HIGH(pcrp->pci_base5) << 32;
-#else
-			if (pcrp->pci_base5)
-			  info->memBase[4] = 0;
-#endif
-		    }
-		}
-	    } else
-		mem64 = FALSE;
-
-	    if (pcrp->pci_base5 && !mem64) {
-		if (pcrp->pci_base5 & PCI_MAP_IO) {
-		    info->ioBase[5] = (memType)PCIGETIO(pcrp->pci_base5);
-		    info->type[5] = pcrp->pci_base5 & PCI_MAP_IO_ATTR_MASK;
-		} else {
-		    info->type[5] = pcrp->pci_base5 & PCI_MAP_MEMORY_ATTR_MASK;
-		    info->memBase[5] = (memType)PCIGETMEMORY(pcrp->pci_base5);
-		}
-	    } else
-		mem64 = FALSE;
 	    info->listed_class = pcrp->listed_class;
 	}
 	i++;
@@ -770,8 +690,8 @@ savePciState(PCITAG tag, pciSavePtr ptr)
      
     ptr->command = pciReadLong(tag, PCI_CMD_STAT_REG);
     for (i=0; i < 6; i++) 
-        ptr->base[i] = pciReadLong(tag, PCI_CMD_BASE_REG + i*4);
-    ptr->biosBase = pciReadLong(tag, PCI_CMD_BIOS_REG);
+        ptr->base[i] = pciReadLong(tag, PCI_MAP_REG_START + (i * 4));
+    ptr->biosBase = pciReadLong(tag, PCI_MAP_ROM_REG);
 }
 
 /* move to OS layer */
@@ -783,9 +703,9 @@ restorePciState(PCITAG tag, pciSavePtr ptr)
     /* disable card before setting anything */
     pciSetBitsLong(tag, PCI_CMD_STAT_REG,
 		   PCI_CMD_MEM_ENABLE | PCI_CMD_IO_ENABLE , 0);
-    pciWriteLong(tag,PCI_CMD_BIOS_REG, ptr->biosBase);
+    pciWriteLong(tag, PCI_MAP_ROM_REG, ptr->biosBase);
     for (i=0; i<6; i++)
-        pciWriteLong(tag, PCI_CMD_BASE_REG + i*4, ptr->base[i]);        
+        pciWriteLong(tag, PCI_MAP_REG_START + (i * 4), ptr->base[i]);        
     pciWriteLong(tag, PCI_CMD_STAT_REG, ptr->command);
 }
 
@@ -850,7 +770,7 @@ restorePciDrvBusState(BusAccPtr ptr)
 static void
 disablePciBios(PCITAG tag)
 {
-    pciSetBitsLong(tag, PCI_CMD_BIOS_REG, PCI_CMD_BIOS_ENABLE, 0);
+    pciSetBitsLong(tag, PCI_MAP_ROM_REG, PCI_MAP_ROM_DECODE_ENABLE, 0);
 }
 
 /* ????? */
@@ -930,10 +850,15 @@ removeOverlapsWithBridges(int busIndex, resPtr target)
 {
     PciBusPtr pbp;
     resPtr tmp,bridgeRes = NULL;
-    resRange range = target->val;
+    resRange range;
 
+    if (!target)
+	return;
+    
     if (!ResCanOverlap(&target->val))
 	return;
+
+    range = target->val;
     
     for (pbp=xf86PciBus; pbp; pbp = pbp->next) {
 	if (pbp->primary == busIndex) {
@@ -1495,25 +1420,26 @@ fixPciResource(int prt, memType alignment, pciVideoPtr pvp, unsigned long type)
 	    pvp->ioBase[prt] = range.rBegin;
 	((CARD32 *)(&(pcp->pci_base0)))[res_n] =
 	    (CARD32)(*p_base) | (CARD32)(p_type);
-	pciWriteLong(tag, PCI_CMD_BASE_REG + res_n * sizeof(CARD32),
+	pciWriteLong(tag, PCI_MAP_REG_START + (res_n * sizeof(CARD32)),
 		     ((CARD32 *)(&(pcp->pci_base0)))[res_n]);
 	if (PCI_MAP_IS64BITMEM(p_type)) {
 #if defined(LONG64) || defined(WORD64)
 	    ((CARD32 *)(&(pcp->pci_base0)))[res_n + 1] =
 		(CARD32)(*p_base >> 32);
-	    pciWriteLong(tag, PCI_CMD_BASE_REG + (res_n + 1) * sizeof(CARD32),
+	    pciWriteLong(tag, PCI_MAP_REG_START + ((res_n + 1) * sizeof(CARD32)),
 	    		 ((CARD32 *)(&(pcp->pci_base0)))[res_n + 1]);
 #else
 	    ((CARD32 *)(&(pcp->pci_base0)))[res_n + 1] = 0;
-	    pciWriteLong(tag, PCI_CMD_BASE_REG + (res_n + 1) * sizeof(CARD32),
+	    pciWriteLong(tag, PCI_MAP_REG_START + ((res_n + 1) * sizeof(CARD32)),
 			 0);
 #endif
 	}
     } else {
 	pvp->biosBase = range.rBegin;
-	pcp->pci_baserom = (pciReadLong(tag,PCI_CMD_BIOS_REG) & 0x01) |
+	pcp->pci_baserom =
+	    (pciReadLong(tag, PCI_MAP_ROM_REG) & PCI_MAP_ROM_DECODE_ENABLE) |
 	    (CARD32)(*p_base);
-	pciWriteLong(tag, PCI_CMD_BIOS_REG, pcp->pci_baserom);
+	pciWriteLong(tag, PCI_MAP_ROM_REG, pcp->pci_baserom);
     }
     /* @@@ fake BIOS allocated resource */
     range.type |= ResBios;
@@ -2213,7 +2139,7 @@ xf86GetPciBridgeInfo(void)
 	}
     }
     for (i = 0; i <= MaxBus; i++) { /* find PCI buses not attached to bridge */
-	if (!pciBusInfo[i])
+	if (!pciBusInfo[i] || (pciBusInfo[i]->numDevices == 0))
 	    continue;
 	for (PciBus = PciBusBase; PciBus; PciBus = PciBus->next)
 	    if (PciBus->secondary == i) break;
@@ -2919,7 +2845,8 @@ xf86ClaimPciSlot(int bus, int device, int func, DriverPtr drvp,
     int num;
     
     if (xf86CheckPciSlot(bus, device, func)) {
-	num = xf86AllocateEntity();
+	if ((num = FindDiscardedPciSlot(bus, device, func)) < 0)
+	    num = xf86AllocateEntity();
 	p = xf86Entities[num];
 	p->driver = drvp;
 	p->chipset = chipset;
@@ -3303,6 +3230,8 @@ xf86CheckPciSlot(int bus, int device, int func)
 
     for (i = 0; i < xf86NumEntities; i++) {
 	p = xf86Entities[i];
+	if (!p->driver)
+	    continue;
 	/* Check if this PCI slot is taken */
 	if (p->busType == BUS_PCI && p->pciBusId.bus == bus &&
 	    p->pciBusId.device == device && p->pciBusId.func == func)
@@ -3312,6 +3241,22 @@ xf86CheckPciSlot(int bus, int device, int func)
     return TRUE;
 }
 
+static int
+FindDiscardedPciSlot(int bus, int device, int func)
+{
+    int i;
+    EntityPtr p;
+
+    for (i = 0; i < xf86NumEntities; i++) {
+	p = xf86Entities[i];
+	if (!p->driver && 
+	    p->busType == BUS_PCI && p->pciBusId.bus == bus &&
+	    p->pciBusId.device == device && p->pciBusId.func == func) {
+	    return i;
+	}
+    }
+    return -1;
+}
 
 /*
  * This used to load the scanpci module.  The pcidata module is now used

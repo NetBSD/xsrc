@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.38 2004/02/13 23:58:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.41 2005/01/26 05:31:48 dawes Exp $ */
 /*
- * Copyright (c) 1994-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1994-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -46,7 +46,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $XConsortium: xf86Cursor.c /main/10 1996/10/19 17:58:23 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -315,7 +314,9 @@ xf86ZoomViewport(ScreenPtr pScreen, int zoom)
       mode = mode->next;
     else
       mode = mode->prev;
-  } while (mode != pScr->currentMode && !(mode->type & M_T_USERDEF));
+  } while (mode != pScr->currentMode && (!(mode->type & M_T_USERDEF) ||
+					 mode->HDisplay > pScreen->width ||
+					 mode->VDisplay > pScreen->height));
 
   (void)xf86SwitchMode(pScreen, mode);
 }
@@ -584,7 +585,7 @@ xf86InitOrigins(void)
 	for(mask = screensLeft, i = 0; mask; mask >>= 1, i++) {
 	    if(!(mask & 1L)) continue;
 
-	    screen = &xf86ConfigLayout.screens[i];
+	    screen = xf86Info.serverLayout->screenLayouts[i];
 
 	    switch(screen->where) {
 	    case PosObsolete:
@@ -682,7 +683,7 @@ xf86InitOrigins(void)
 	    i = 0;
 	    while(!((1 << i) & screensLeft)){ i++; }
 
-	    ref = xf86ConfigLayout.screens[i].refscreen->screennum;
+	    ref = xf86Info.serverLayout->screenLayouts[i]->refscreen->screennum;
 	    dixScreenOrigins[ref].x = dixScreenOrigins[ref].y = 0;
 	    screensLeft &= ~(1 << ref);
 	}

@@ -1,4 +1,50 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.man,v 1.1 2003/11/12 04:52:15 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/getconfig/getconfig.man,v 1.3 2005/02/09 20:55:57 dawes Exp $
+.\"
+.\" Copyright © 2003-2005 David H. Dawes.
+.\" Copyright © 2003-2005 X-Oz Technologies.
+.\" All rights reserved.
+.\"
+.\" Permission is hereby granted, free of charge, to any person obtaining a
+.\" copy of this software and associated documentation files (the "Software"),
+.\" to deal in the Software without restriction, including without limitation
+.\" the rights to use, copy, modify, merge, publish, distribute, sublicense,
+.\" and/or sell copies of the Software, and to permit persons to whom the
+.\" Software is furnished to do so, subject to the following conditions:
+.\" 
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions, and the following disclaimer.
+.\"
+.\"  2. Redistributions in binary form must reproduce the above
+.\"     copyright notice, this list of conditions and the following
+.\"     disclaimer in the documentation and/or other materials provided
+.\"     with the distribution.
+.\" 
+.\"  3. The end-user documentation included with the redistribution,
+.\"     if any, must include the following acknowledgment: "This product
+.\"     includes software developed by X-Oz Technologies
+.\"     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+.\"     appear in the software itself, if and wherever such third-party
+.\"     acknowledgments normally appear.
+.\"
+.\"  4. Except as contained in this notice, the name of X-Oz
+.\"     Technologies shall not be used in advertising or otherwise to
+.\"     promote the sale, use or other dealings in this Software without
+.\"     prior written authorization from X-Oz Technologies.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+.\" OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+.\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\" Author: David Dawes <dawes@x-oz.com>.
+.\"
 .TH getconfig 1 __vendorversion__
 .SH NAME
 getconfig - get configuration information for the XFree86 server
@@ -8,7 +54,7 @@ getconfig - get configuration information for the XFree86 server
 .IR ... ]
 .SH DESCRIPTION
 .B getconfig
-is a programatic interface that is used by the
+is a programmatic interface that is used by the
 .B XFree86
 server to get configuration information about video hardware when
 operating without an
@@ -54,7 +100,7 @@ Specify the PCI subsystem ID of the video device.
 Specify the PCI class of the video device.
 .TP 8
 .BI \-d " device-id"
-Specify the PCI devide ID of the video device.
+Specify the PCI device ID of the video device.
 .TP 8
 .BI \-r " revision"
 Specify the PCI revision of the video device.
@@ -64,6 +110,9 @@ Specify the PCI subsystem vendor ID of the video device.
 .TP 8
 .BI \-v " vendor-id"
 Specify the PCI vendor ID of the video device.
+.TP 8
+.BI \-S " sbus-path"
+Specify the SBUS path of the video device.
 .SH FILES
 .I .cfg
 files located in the search path.  The search path typically specified

@@ -30,10 +30,11 @@ SPARC SunOS (aka Solaris)
   This also chimes into a long-standing XFree86 policy to not save/restore
   video memory contents if the mode on entry is found to be non-VGA, a
   policy several existing drivers comply with.
-- The SBUS drivers (sunbw2, suncg14, suncg3, suncg6, sunffb, sunleo and
-  suntcx), the common layer's SBUS code and the fbdev driver have all
-  only been compile tested.  There are likely to be Linux'isms within
-  them that remain to be dealt with.
+- Many SBUS adapters do not work.  The main problem is that, in general,
+  different OS'es require different offsets to mmap() SBUS framebuffers
+  and/or registers.  This has a number of implications not only for the
+  SBUS drivers (sunbw2, suncg14, suncg3, suncg6, sunffb, sunleo and
+  suntcx), but for the fbdev driver as well.
 - It still needs to be verified whether or not this work adversely
   affected support for ix86 Solaris.
 
@@ -73,19 +74,12 @@ Other OS's
   remainder of the PCI code (which is OS-independent) can handle either
   scheme.
 - Required entry points are xf86GetPciDomain(), xf86MapDomainMemory(),
-  xf86MapDomainIO() and xf86ReadDomainMemory().  Replacements for
-  xf86BusAccWindowsFromOS(), xf86PciBusAccWindowsFromOS() and
-  xf86AccResFromOS() might also be required.
+  xf86MapDomainIO(), xf86ReadDomainMemory() and xf86LocatePciMemoryArea().
+  Replacements for xf86BusAccWindowsFromOS(), xf86PciBusAccWindowsFromOS()
+  and xf86AccResFromOS() might also be required.
 - Development of these changes has detected the fact that the XFree86 port
   to the PowerMax OS is broken, and has been for some time, i.e. since
   shortly after its introduction, back in the 3.9* days.
-
-SPARC PCI (OS-independent)
---------------------------
-- The "Simba" PCI-to-PCI bridge used in SPARC's does not implement VGA
-  routing, as defined in the PCI specs.  Fortunately, OpenPROM seems to
-  always route VGA resources to the bus with PCI connectors, but this also
-  causes the common layer to not mark any PCI adapter as primary.
 
 Multiple PCI domains (architecture- and OS-independent)
 -------------------------------------------------------
@@ -108,11 +102,6 @@ Multiple PCI domains (architecture- and OS-independent)
   related comments in linuxPci.c.  Suffice it to say here that I see the
   eventual implementation of host bridge drivers within XFree86 as
   unavoidable at this point.
-- DGA is broken on multi-domain platforms.  The information passed to the
-  client to locate the framebuffer still needs to be revised.  The best way
-  to deal with this is to change all drivers' OpenFramebuffer() function to
-  call a common layer routine to set the device name and displacements to be
-  returned to the DGA client.
 
 Output drivers
 --------------
@@ -132,9 +121,9 @@ Most drivers currently used on ix86 need(ed) source code changes.
   actually a pointer that has been recasted to an unsigned long, but the
   common layer "hides" this fact from the driver ABI, which means that I/O
   port numbers, as seen by drivers, remain as integers rather than
-  addresses.  Aside from the ati and atimisc modules, s3, sis and tseng
-  are the only modules left whose I/O still needs to be converted (I've
-  temporarily run out of steam).
+  addresses.  Aside from the ati and atimisc modules, s3 and tseng are the
+  only modules left whose I/O still needs to be converted (I've temporarily
+  run out of steam).
 - Note that these conversions are not necessarily sufficient to produce
   drivers that will work on any given multi-domain architecture.  A driver
   that, for example, had endianness problems, still does.  But, at least,
@@ -156,4 +145,4 @@ Most drivers currently used on ix86 need(ed) source code changes.
   multi-domain architectures, and support for Mach64 variants as
   non-primary heads is not yet available.
 
-$XFree86: xc/programs/Xserver/hw/xfree86/Domain.note,v 1.2 2002/01/25 21:55:49 tsi Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/Domain.note,v 1.4 2004/12/31 03:30:40 tsi Exp $

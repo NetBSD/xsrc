@@ -1,7 +1,7 @@
 /*
  * Written by Frank Liu Oct 10, 2001
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_mouse.c,v 1.2 2003/11/17 22:20:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_mouse.c,v 1.3 2005/02/03 03:32:54 dawes Exp $ */
 
 
 #include "X.h"
@@ -171,6 +171,7 @@ OsMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
         else {
             xf86Msg(X_ERROR, "%s: cannot open input device\n", pInfo->name);
             xfree(pMse);
+	    pInfo->private = NULL;
             return FALSE;
         }
     }

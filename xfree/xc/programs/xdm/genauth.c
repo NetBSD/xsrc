@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.24 2003/12/21 15:07:06 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.25 2004/06/24 02:21:16 tsi Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -376,7 +376,7 @@ InitXdmcpWrapper (void)
 #endif    
     /*  Try some pseudo-random number genrator daemon next */
     if (prngdSocket != NULL || prngdPort != 0) {
-	    if (get_prngd_bytes(tmpkey, sizeof(tmpkey), prngdPort, 
+	    if (get_prngd_bytes((void *)tmpkey, sizeof(tmpkey), prngdPort, 
 		    prngdSocket) == 0) {
 		    tmpkey[0] = 0;
 		    _XdmcpWrapperToOddParity(tmpkey, key);

@@ -1365,7 +1365,7 @@ int radeon_cp_init( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( init, (drm_radeon_init_t *)data, sizeof(init) );
+	DRM_COPY_FROM_USER_IOCTL( init, (drm_radeon_init_t __user *)data, sizeof(init) );
 
 	switch ( init.func ) {
 	case RADEON_INIT_CP:
@@ -1414,7 +1414,7 @@ int radeon_cp_stop( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( stop, (drm_radeon_cp_stop_t *)data, sizeof(stop) );
+	DRM_COPY_FROM_USER_IOCTL( stop, (drm_radeon_cp_stop_t __user *)data, sizeof(stop) );
 
 	if (!dev_priv->cp_running)
 		return 0;
@@ -1720,10 +1720,11 @@ int radeon_cp_buffers( DRM_IOCTL_ARGS )
 	drm_device_dma_t *dma = dev->dma;
 	int ret = 0;
 	drm_dma_t d;
+	drm_dma_t __user *argp = (void __user *)data;
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( d, (drm_dma_t *)data, sizeof(d) );
+	DRM_COPY_FROM_USER_IOCTL( d, argp, sizeof(d) );
 
 	/* Please don't send us buffers.
 	 */
@@ -1747,7 +1748,7 @@ int radeon_cp_buffers( DRM_IOCTL_ARGS )
 		ret = radeon_cp_get_buffers( filp, dev, &d );
 	}
 
-	DRM_COPY_TO_USER_IOCTL( (drm_dma_t *)data, d, sizeof(d) );
+	DRM_COPY_TO_USER_IOCTL( argp, d, sizeof(d) );
 
 	return ret;
 }

@@ -2,7 +2,7 @@
 // using the group(switch) map, the right alt key temporarily chooses 
 // the second keyboard group (until it is released).
 //
-// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.9 2003/12/30 13:26:25 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.10 2004/05/08 07:26:54 pascal Exp $
 partial modifier_keys 
 xkb_symbols "switch" {
     key <RALT>	{ 	
@@ -60,6 +60,15 @@ xkb_symbols "rwin_switch" {
   key <RWIN> {
     symbols[Group1] = [ Mode_switch, Multi_key ],
     virtualMods= AltGr
+    };
+};
+
+// Right Ctrl key temporary chooses the second keyboard group.
+// Needed mainly for Canadian keyboard
+partial modifier_keys
+xkb_symbols "rctrl_switch" {
+    key <RCTL>  {
+        symbols[Group1]= [ Mode_switch ]
     };
 };
 

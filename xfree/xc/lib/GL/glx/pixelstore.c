@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/pixelstore.c,v 1.5 2004/01/28 21:18:48 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/pixelstore.c,v 1.6 2004/04/08 10:07:33 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -34,8 +34,8 @@
 **
 */
 
+#define NEED_GL_FUNCS_WRAPPED
 #include "glxclient.h"
-#include "indirect.h"
 #include "indirect_wrap.h"
 
 /*

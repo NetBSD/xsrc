@@ -35,7 +35,7 @@
   *   - Make dectection work after restart of X
   */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/dmc/xf86DMC.c,v 1.3 2003/06/25 18:06:25 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/dmc/xf86DMC.c,v 1.4 2004/10/23 15:29:30 dawes Exp $ */
 
 #define _DMC_C_
 
@@ -667,12 +667,10 @@ DMCGetPacket (DMCPrivatePtr priv)
 			priv->packet[4] = (unsigned char) c;
 			priv->lex_mode = DMC_byte0;
 			return (Success);
-			break;
 
 		case DMC_Response0:
 			priv->packet[0] = (unsigned char) c;
 			return (Success);
-			break;
 
 		}
 	}

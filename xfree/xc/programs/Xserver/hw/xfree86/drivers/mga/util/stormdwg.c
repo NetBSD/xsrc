@@ -2,10 +2,10 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/util/stormdwg.c,v 1.1 1997/04/12 14:11:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/util/stormdwg.c,v 1.2 2004/11/28 03:37:42 tsi Exp $ */
 
 #include <stdio.h>
-/* #include <stdlib.h> */
+#include <stdlib.h>
 
 char *opcodes[] = {
 	"line_open",		/* 0000 */
@@ -95,6 +95,7 @@ char *bitmod[] = {
 	"BU24RGB - source is color, or for ILOAD, it's in 24 bpp RGB"		/* 1111 */
 };
 
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -105,11 +106,11 @@ char *argv[];
 	{
 		fprintf(stderr, "usage: %s hexval\n", argv[0]);
 		return 1;
-	}	
+	}
 
 	val = strtoul(argv[1], NULL, 16);
 
-	printf("the val is : %d\n", val);
+	printf("the val is : %ld\n", val);
 
 	/* opcode */
 
@@ -122,7 +123,7 @@ char *argv[];
 	printf("atype: %s\n", atype[tmp]);
 
 
-	if ( val & 128 ) 
+	if ( val & 128 )
 		printf("xy bitblt\n");
 	else
 		printf("linear bitblt\n");
@@ -155,7 +156,7 @@ char *argv[];
 		printf("shift is not affected\n");
 
 
-	tmp = (val>>16) & 0x0f; 
+	tmp = (val>>16) & 0x0f;
 
 	if ( ((val >> 4) & 7) == 4 && tmp != 0x0c )
 		printf("Error! Block (BLK) atype and non-source binary op chosen. Replace (S) bop will be used.\n");

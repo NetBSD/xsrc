@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.42 2003/12/18 10:15:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.43 2004/09/25 18:06:20 tsi Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -585,7 +585,7 @@ ProcPanoramiXShmPutImage(register ClientPtr client)
     orig_y = stuff->dstY;
     sendEvent = stuff->sendEvent;
     stuff->sendEvent = 0;
-    FOR_NSCREENS(j) {
+    FOR_NSCREENS_BACKWARD(j) {
 	if(!j) stuff->sendEvent = sendEvent;
 	stuff->drawable = draw->info[j].id;
 	stuff->gc = gc->info[j].id;
@@ -1124,7 +1124,7 @@ ProcShmDispatch (client)
         if ( !noPanoramiXExtension )
 	   return ProcPanoramiXShmCreatePixmap(client);
 #endif
-	   return ProcShmCreatePixmap(client);
+	return ProcShmCreatePixmap(client);
     default:
 	return BadRequest;
     }
@@ -1199,6 +1199,10 @@ SProcShmPutImage(client)
     swaps(&stuff->dstY, n);
     swapl(&stuff->shmseg, n);
     swapl(&stuff->offset, n);
+#ifdef PANORAMIX
+    if ( !noPanoramiXExtension )
+	return ProcPanoramiXShmPutImage(client);
+#endif
     return ProcShmPutImage(client);
 }
 
@@ -1218,6 +1222,10 @@ SProcShmGetImage(client)
     swapl(&stuff->planeMask, n);
     swapl(&stuff->shmseg, n);
     swapl(&stuff->offset, n);
+#ifdef PANORAMIX
+    if ( !noPanoramiXExtension )
+	return ProcPanoramiXShmGetImage(client);
+#endif
     return ProcShmGetImage(client);
 }
 
@@ -1234,6 +1242,10 @@ SProcShmCreatePixmap(client)
     swaps(&stuff->height, n);
     swapl(&stuff->shmseg, n);
     swapl(&stuff->offset, n);
+#ifdef PANORAMIX
+    if ( !noPanoramiXExtension )
+	return ProcPanoramiXShmCreatePixmap(client);
+#endif
     return ProcShmCreatePixmap(client);
 }
 

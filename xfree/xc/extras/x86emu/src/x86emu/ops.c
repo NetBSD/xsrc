@@ -70,7 +70,7 @@
 *
 ****************************************************************************/
 
-/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.9 2003/10/22 20:03:06 tsi Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/ops.c,v 1.11 2004/11/10 04:08:27 dawes Exp $ */
 
 #include "x86emu/x86emui.h"
 
@@ -9546,7 +9546,7 @@ static void x86emuOp_in_byte_AL_IMM(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     DECODE_PRINTF("IN\t");
-	port = (u8) fetch_byte_imm();
+    port = (u8) fetch_byte_imm();
     DECODE_PRINTF2("%x,AL\n", port);
     TRACE_AND_STEP();
     M.x86.R_AL = (*sys_inb)(port);
@@ -9564,7 +9564,7 @@ static void x86emuOp_in_word_AX_IMM(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     DECODE_PRINTF("IN\t");
-	port = (u8) fetch_byte_imm();
+    port = (u8) fetch_byte_imm();
     if (M.x86.mode & SYSMODE_PREFIX_DATA) {
         DECODE_PRINTF2("EAX,%x\n", port);
     } else {
@@ -9590,7 +9590,7 @@ static void x86emuOp_out_byte_IMM_AL(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     DECODE_PRINTF("OUT\t");
-	port = (u8) fetch_byte_imm();
+    port = (u8) fetch_byte_imm();
     DECODE_PRINTF2("%x,AL\n", port);
     TRACE_AND_STEP();
     (*sys_outb)(port, M.x86.R_AL);
@@ -9608,7 +9608,7 @@ static void x86emuOp_out_word_IMM_AX(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     DECODE_PRINTF("OUT\t");
-	port = (u8) fetch_byte_imm();
+    port = (u8) fetch_byte_imm();
     if (M.x86.mode & SYSMODE_PREFIX_DATA) {
         DECODE_PRINTF2("%x,EAX\n", port);
     } else {
@@ -9630,17 +9630,22 @@ Handles opcode 0xe8
 ****************************************************************************/
 static void x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
 {
-    s16 ip;
+    int ip;
 
     START_OF_INSTR();
-	DECODE_PRINTF("CALL\t");
-	ip = (s16) fetch_word_imm();
-	ip += (s16) M.x86.R_IP;    /* CHECK SIGN */
-	DECODE_PRINTF2("%04x\n", (u16)ip);
-	CALL_TRACE(M.x86.saved_cs, M.x86.saved_ip, M.x86.R_CS, ip, "");
+    DECODE_PRINTF("CALL\t");
+    if (M.x86.mode & SYSMODE_PREFIX_DATA) {
+	ip = (s32)fetch_long_imm();
+	ip += (s16)M.x86.R_IP;
+    } else {
+	ip = (s16)fetch_word_imm();
+	ip += (s16)M.x86.R_IP;
+    }
+    DECODE_PRINTF2("%04x\n", (u16)ip);
+    CALL_TRACE(M.x86.saved_cs, M.x86.saved_ip, M.x86.R_CS, ip, "");
     TRACE_AND_STEP();
     push_word(M.x86.R_IP);
-    M.x86.R_IP = ip;
+    M.x86.R_IP = (u16)ip;
     DECODE_CLEAR_SEGOVR();
     END_OF_INSTR();
 }
@@ -9655,8 +9660,13 @@ static void x86emuOp_jump_near_IMM(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     DECODE_PRINTF("JMP\t");
-    ip = (s16)fetch_word_imm();
-    ip += (s16)M.x86.R_IP;
+    if (M.x86.mode & SYSMODE_PREFIX_DATA) {
+	ip = (s32)fetch_long_imm();
+	ip += (s16)M.x86.R_IP;
+    } else {
+	ip = (s16)fetch_word_imm();
+	ip += (s16)M.x86.R_IP;
+    }
     DECODE_PRINTF2("%04x\n", (u16)ip);
     TRACE_AND_STEP();
     M.x86.R_IP = (u16)ip;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_type.h,v 1.1 2003/07/31 20:24:31 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_type.h,v 1.2 2004/11/26 11:48:48 tsi Exp $ */
 
 #ifndef __Riva_STRUCT_H__
 #define __Riva_STRUCT_H__
@@ -20,25 +20,6 @@
 #define Set8Bits(value) ((value)&0xff)
 
 typedef RIVA_HW_STATE* RivaRegPtr;
-
-typedef struct {
-    Bool        isHwCursor;
-    int         CursorMaxWidth;
-    int         CursorMaxHeight;
-    int         CursorFlags;
-    int         CursorOffscreenMemSize;
-    Bool        (*UseHWCursor)(ScreenPtr, CursorPtr);
-    void        (*LoadCursorImage)(ScrnInfoPtr, unsigned char*);
-    void        (*ShowCursor)(ScrnInfoPtr);
-    void        (*HideCursor)(ScrnInfoPtr);
-    void        (*SetCursorPosition)(ScrnInfoPtr, int, int);
-    void        (*SetCursorColors)(ScrnInfoPtr, int, int);
-    long        maxPixelClock;
-    void        (*LoadPalette)(ScrnInfoPtr, int, int*, LOCO*, VisualPtr);
-    void        (*Save)(ScrnInfoPtr, vgaRegPtr, RivaRegPtr, Bool);
-    void        (*Restore)(ScrnInfoPtr, vgaRegPtr, RivaRegPtr, Bool);
-    Bool        (*ModeInit)(ScrnInfoPtr, DisplayModePtr);
-} RivaRamdacRec, *RivaRamdacPtr;
 
 typedef struct {
     int bitsPerPixel;
@@ -66,7 +47,6 @@ typedef struct {
     unsigned char *     FbStart;
     long                FbMapSize;
     long                FbUsableSize;
-    RivaRamdacRec         Dac;
     Bool                NoAccel;
     Bool                HWCursor;
     Bool                ShowCache;
@@ -81,9 +61,6 @@ typedef struct {
     int                 numDGAModes;
     Bool                DGAactive;
     int                 DGAViewportStatus;
-    void                (*Save)(ScrnInfoPtr, vgaRegPtr, RivaRegPtr, Bool);
-    void                (*Restore)(ScrnInfoPtr, vgaRegPtr, RivaRegPtr, Bool);
-    Bool                (*ModeInit)(ScrnInfoPtr, DisplayModePtr);
     void		(*PointerMoved)(int index, int x, int y);
     CloseScreenProcPtr  CloseScreen;
     Bool                FBDev;
@@ -95,7 +72,7 @@ typedef struct {
     CARD32		FgColor;
     CARD32		BgColor;
     int			Rotate;
-    RivaFBLayout		CurrentLayout;
+    RivaFBLayout	CurrentLayout;
     /* Cursor */
     CARD32              curFg, curBg;
     CARD32              curImage[64];

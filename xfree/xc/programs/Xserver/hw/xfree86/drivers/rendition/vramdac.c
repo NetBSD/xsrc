@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vramdac.c,v 1.19 2003/09/24 02:43:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vramdac.c,v 1.20 2004/10/23 15:29:29 dawes Exp $ */
 /*
  * includes
  */
@@ -236,7 +236,6 @@ verite_initdac(ScrnInfoPtr pScreenInfo, vu8 bpp, vu8 doubleclock)
             xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
 			"Color depth not supported (%d bpp)\n", bpp);
             return -1;
-            break;
     }
 
     verite_out8(iob+BT485_WRITE_ADDR, BT485_COMMAND_REG_3);

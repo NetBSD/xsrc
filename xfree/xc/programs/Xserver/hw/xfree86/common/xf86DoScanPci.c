@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.16 2004/02/13 23:58:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.17 2005/01/26 05:31:48 dawes Exp $ */
 /*
- * Copyright (c) 1999-2002 by The XFree86 Project, Inc.
+ * Copyright (c) 1999-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -115,7 +115,7 @@ void DoScanPci(int argc, char **argv, int i)
   /* Initialise the loader */
   LoaderInit();
   /* Tell the loader the default module search path */
-  LoaderSetPath(xf86ModulePath);
+  LoaderSetPath(xf86FileCmdline.modulePath);
 
   if (!LoadModule("scanpci", NULL, NULL, NULL, NULL, NULL,
                   &errmaj, &errmin)) {

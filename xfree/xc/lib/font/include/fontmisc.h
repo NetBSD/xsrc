@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.17 2003/09/13 21:33:02 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.20 2005/01/27 22:50:40 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -47,8 +47,8 @@ extern int close();
 
 #endif /* FONTMODULE */
 
-#include "X11/Xdefs.h"
-
+#include <X11/Xdefs.h>
+#include <X11/Xmd.h>
 
 #ifndef LSBFirst
 #define LSBFirst	0
@@ -68,21 +68,37 @@ extern Atom MakeAtom ( char *string, unsigned len, int makeit );
 extern int ValidAtom ( Atom atom );
 extern char *NameForAtom (Atom atom);
 
+extern int f_strcasecmp(const char *s1, const char *s2);
+
 #ifndef _HAVE_XALLOC_DECLS
 #define _HAVE_XALLOC_DECLS
 extern pointer Xalloc(unsigned long);
 extern pointer Xrealloc(pointer, unsigned long);
-extern void Xfree(pointer);
 extern pointer Xcalloc(unsigned long);
+#if !defined(WORD64) && !defined(LONG64)
+extern pointer Xllalloc(unsigned long long);
+extern pointer Xllrealloc(pointer, unsigned long long);
+extern pointer Xllcalloc(unsigned long long);
 #endif
-extern int f_strcasecmp(const char *s1, const char *s2);
+extern void Xfree(pointer);
+#endif
 
 #ifndef xalloc
-#define xalloc(n)   Xalloc ((unsigned) n)
-#define xfree(p)    Xfree ((pointer) p)
-#define xrealloc(p,n)	Xrealloc ((pointer)p,n)
-#define xcalloc(n,s)    Xcalloc((unsigned) n * (unsigned) s)
+/* Note:  It's important here that we cast "n", not "(n)";  ditto for "s" */
+#if defined(WORD64) || defined(LONG64)
+#define xalloc(n)     Xalloc((unsigned long)n)
+#define xrealloc(p,n) Xrealloc((pointer)p, (unsigned long)n)
+#define xcalloc(n,s)  Xcalloc(((unsigned long)n) * \
+                              ((unsigned long)s))
+#else
+#define xalloc(n)     Xllalloc((unsigned long long)n)
+#define xrealloc(p,n) Xllrealloc((pointer)p, (unsigned long long)n)
+#define xcalloc(n,s)  Xllcalloc(((unsigned long long)n) * \
+                                 ((unsigned long long)s))
 #endif
+#define xfree(p)      Xfree((pointer)p)
+#endif
+
 #define lowbit(x) ((x) & (~(x) + 1))
 
 #undef assert

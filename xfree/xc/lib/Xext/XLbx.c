@@ -1,6 +1,4 @@
 /*
- * $Xorg: XLbx.c,v 1.3 2000/08/17 19:45:51 cpqbld Exp $
- *
  * Copyright 1992 Network Computing Devices
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -22,7 +20,7 @@
  *
  * Author:  Keith Packard, Network Computing Devices
  */
-/* $XFree86: xc/lib/Xext/XLbx.c,v 1.5 2002/10/16 02:19:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XLbx.c,v 1.6 2005/01/27 02:28:58 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -70,9 +68,9 @@ static XEXT_GENERATE_ERROR_STRING (error_string, lbx_extension_name,
 				   LbxNumberErrors, lbx_error_list)
 
 
-Bool XLbxQueryExtension (dpy, requestp, event_basep, error_basep)
-    Display *dpy;
-    int *requestp, *event_basep, *error_basep;
+Bool
+XLbxQueryExtension(Display *dpy, int *requestp, int *event_basep,
+		   int *error_basep)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -87,7 +85,8 @@ Bool XLbxQueryExtension (dpy, requestp, event_basep, error_basep)
 }
 
 
-int XLbxGetEventBase(Display *dpy)
+int
+XLbxGetEventBase(Display *dpy)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -99,9 +98,8 @@ int XLbxGetEventBase(Display *dpy)
 }
 
 
-Bool XLbxQueryVersion(dpy, majorVersion, minorVersion)
-    Display *dpy;
-    int	    *majorVersion, *minorVersion;
+Bool
+XLbxQueryVersion(Display *dpy, int *majorVersion, int *minorVersion)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xLbxQueryVersionReply rep;

@@ -1,6 +1,4 @@
 /*
- * $Xorg: XShm.c,v 1.4 2001/02/09 02:03:49 xorgcvs Exp $
- *
 Copyright 1989, 1998  The Open Group
 
 Permission to use, copy, modify, distribute, and sell this software and its
@@ -25,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Bob Scheifler and Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xext/XShm.c,v 1.7 2003/04/15 22:33:55 paulo Exp $ */
+/* $XFree86: xc/lib/Xext/XShm.c,v 1.8 2005/01/27 02:28:58 dawes Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 
@@ -85,7 +83,7 @@ static XEXT_GENERATE_ERROR_STRING (error_string, shm_extension_name,
 
 
 static Bool
-wire_to_event (Display *dpy, XEvent *re, xEvent *event)
+wire_to_event(Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShmCompletionEvent	*se;
@@ -112,7 +110,7 @@ wire_to_event (Display *dpy, XEvent *re, xEvent *event)
 }
 
 static Status
-event_to_wire (Display *dpy, XEvent *re, xEvent *event)
+event_to_wire(Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShmCompletionEvent	*se;
@@ -142,9 +140,8 @@ event_to_wire (Display *dpy, XEvent *re, xEvent *event)
  *                                                                           *
  *****************************************************************************/
 
-Bool XShmQueryExtension (dpy /* event_basep, error_basep */)
-    Display *dpy;
-/*  int *event_basep, *error_basep; */
+Bool
+XShmQueryExtension(Display *dpy /*, int *event_basep, int *error_basep */)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -158,8 +155,8 @@ Bool XShmQueryExtension (dpy /* event_basep, error_basep */)
 }
 
 
-int XShmGetEventBase(dpy)
-    Display *dpy;
+int
+XShmGetEventBase(Display *dpy)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -171,14 +168,13 @@ int XShmGetEventBase(dpy)
 }
 
 
-Bool XShmQueryVersion(dpy, majorVersion, minorVersion, sharedPixmaps)
-    Display *dpy;
-    int	    *majorVersion, *minorVersion;
-    Bool    *sharedPixmaps;
+Bool
+XShmQueryVersion(Display *dpy, int *majorVersion, int *minorVersion,
+		 Bool *sharedPixmaps)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xShmQueryVersionReply rep;
-    register xShmQueryVersionReq *req;
+    xShmQueryVersionReq *req;
 
     ShmCheckExtension (dpy, info, False);
 
@@ -200,12 +196,12 @@ Bool XShmQueryVersion(dpy, majorVersion, minorVersion, sharedPixmaps)
 }
 
 
-int XShmPixmapFormat(dpy)
-    Display *dpy;
+int
+XShmPixmapFormat(Display *dpy)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xShmQueryVersionReply rep;
-    register xShmQueryVersionReq *req;
+    xShmQueryVersionReq *req;
 
     ShmCheckExtension (dpy, info, False);
 
@@ -227,12 +223,11 @@ int XShmPixmapFormat(dpy)
 }
 
 
-Status XShmAttach(dpy, shminfo)
-    Display *dpy;
-    XShmSegmentInfo *shminfo;
+Status
+XShmAttach(Display *dpy, XShmSegmentInfo *shminfo)
 {
     XExtDisplayInfo *info = find_display (dpy);
-    register xShmAttachReq *req;
+    xShmAttachReq *req;
 
     ShmCheckExtension (dpy, info, 0);
 
@@ -250,12 +245,11 @@ Status XShmAttach(dpy, shminfo)
 }
 
 
-Status XShmDetach(dpy, shminfo)
-    Display *dpy;
-    XShmSegmentInfo *shminfo;
+Status
+XShmDetach(Display *dpy, XShmSegmentInfo *shminfo)
 {
     XExtDisplayInfo *info = find_display (dpy);
-    register xShmDetachReq *req;
+    xShmDetachReq *req;
 
     ShmCheckExtension (dpy, info, 0);
 
@@ -269,9 +263,8 @@ Status XShmDetach(dpy, shminfo)
     return 1;
 }
 
-static int _XShmDestroyImage (ximage)
-    XImage *ximage;
-
+static int
+_XShmDestroyImage(XImage *ximage)
 {
 	Xfree((char *)ximage);
 	return 1;
@@ -279,18 +272,12 @@ static int _XShmDestroyImage (ximage)
 
 #define ROUNDUP(nbytes, pad) ((((nbytes) + ((pad) - 1)) / (pad)) * (pad))
 
-XImage *XShmCreateImage (dpy, visual, depth, format, data, shminfo,
-			 width, height)
-    register Display *dpy;
-    register Visual *visual;
-    unsigned int depth;
-    int format;
-    char *data;
-    XShmSegmentInfo *shminfo;
-    unsigned int width;
-    unsigned int height;
+XImage *
+XShmCreateImage(Display *dpy, Visual *visual, unsigned int depth, int format,
+		char *data, XShmSegmentInfo *shminfo, unsigned int width,
+		unsigned int height)
 {
-    register XImage *image;
+    XImage *image;
 
     image = (XImage *)Xcalloc(1, (unsigned)sizeof(XImage));
     if (!image)
@@ -324,19 +311,14 @@ XImage *XShmCreateImage (dpy, visual, depth, format, data, shminfo,
     return image;
 }
 
-Status XShmPutImage (dpy, d, gc, image, src_x, src_y, dst_x, dst_y,
-		     src_width, src_height, send_event)
-    register Display *dpy;
-    Drawable d;
-    GC gc;
-    register XImage *image;
-    int src_x, src_y, dst_x, dst_y;
-    unsigned int src_width, src_height;
-    Bool send_event;
+Status
+XShmPutImage(Display *dpy, Drawable d, GC gc, XImage *image,
+	     int src_x, int src_y, int dst_x, int dst_y,
+	     unsigned int src_width, unsigned int src_height, Bool send_event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShmSegmentInfo *shminfo = (XShmSegmentInfo *)image->obdata;
-    register xShmPutImageReq *req;
+    xShmPutImageReq *req;
 
     ShmCheckExtension (dpy, info, 0);
     if (!shminfo) return 0;
@@ -367,18 +349,15 @@ Status XShmPutImage (dpy, d, gc, image, src_x, src_y, dst_x, dst_y,
 }
 
 
-Status XShmGetImage(dpy, d, image, x, y, plane_mask)
-    register Display *dpy;
-    Drawable d;
-    XImage *image;
-    int x, y;
-    unsigned long plane_mask;
+Status
+XShmGetImage(Display *dpy, Drawable d, XImage *image, int x, int y,
+	     unsigned long plane_mask)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShmSegmentInfo *shminfo = (XShmSegmentInfo *)image->obdata;
-    register xShmGetImageReq *req;
+    xShmGetImageReq *req;
     xShmGetImageReply rep;
-    register Visual *visual;
+    Visual *visual;
 
     ShmCheckExtension (dpy, info, 0);
     if (!shminfo) return 0;
@@ -414,16 +393,14 @@ Status XShmGetImage(dpy, d, image, x, y, plane_mask)
     return 1;
 }
 
-Pixmap XShmCreatePixmap (dpy, d, data, shminfo, width, height, depth)
-    register Display *dpy;
-    Drawable d;
-    char *data;
-    XShmSegmentInfo *shminfo;
-    unsigned int width, height, depth;
+Pixmap
+XShmCreatePixmap(Display *dpy, Drawable d, char *data,
+		 XShmSegmentInfo *shminfo, unsigned int width,
+		 unsigned int height, unsigned int depth)
 {
     XExtDisplayInfo *info = find_display (dpy);
     Pixmap pid;
-    register xShmCreatePixmapReq *req;
+    xShmCreatePixmapReq *req;
 
     ShmCheckExtension (dpy, info, 0);
 

@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/difsutils.c,v 1.7 2001/12/14 20:01:33 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/difsutils.c,v 1.8 2005/01/22 16:38:41 tsi Exp $ */
 
 #define	XK_LATIN1
 
@@ -630,6 +630,31 @@ Xcalloc(unsigned long n)
 	bzero(ret, n);
     return ret;
 }
+
+#if !defined(LONG64) && !defined(WORD64)
+
+pointer
+Xllalloc(unsigned long long m)
+{
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xalloc(m);
+}
+
+pointer
+Xllrealloc(pointer n, unsigned long long m)
+{
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xrealloc(n, m);
+}
+
+pointer
+Xllcalloc(unsigned long long m)
+{
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xcalloc(m);
+}
+
+#endif
 
 int
 set_font_authorizations(char **authorizations, int *authlen, ClientPtr client)

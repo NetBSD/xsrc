@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/compsize.c,v 1.7 2004/01/28 21:18:48 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/compsize.c,v 1.8 2004/04/08 10:07:33 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -298,6 +298,10 @@ GLint __glTexParameterfv_size(GLenum e)
       /* GL_EXT_texture_filter_anisotropic */
       case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 
+      /* GL_NV_texture_expand_normal */
+      case GL_TEXTURE_UNSIGNED_REMAP_MODE_NV:
+	return 1;
+
       /* GL_SGIX_clipmap */
       case GL_TEXTURE_CLIPMAP_CENTER_SGIX:
       case GL_TEXTURE_CLIPMAP_OFFSET_SGIX:
@@ -351,7 +355,7 @@ GLint __glTexEnvfv_size(GLenum e)
       case GL_TEXTURE_LOD_BIAS:
 
       /* GL_ARB_point_sprite / GL_NV_point_sprite */
-      case GL_COORD_REPLACE_NV:
+      case GL_COORD_REPLACE_ARB:
 
       /* GL_NV_texture_env_combine4 */
       case GL_SOURCE3_RGB_NV:

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.18 2003/11/17 22:20:48 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.19 2004/04/03 22:38:54 tsi Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -78,30 +78,14 @@ static void VErrorF(const char*, va_list);
 #endif
 
 #include "util.h"
+#include "utils.h"
 #include "wire.h"
 #include "atomcache.h"
 #include "proxyopts.h"
+#include "lbxfuncs.h"
+#include "dispatch.h"
 
 #include <stdlib.h>
-
-/*
- * External declarations not in header files
- */
-extern Bool PartialNetwork;
-extern int lbxDebug;
-
-extern char protocolMode;
-extern Bool reconnectAfterCloseServer;
-extern Bool resetAfterLastClient;
-extern Bool terminateAfterLastClient;
-extern int  lbxTagCacheSize;
-extern Bool lbxUseLbx;
-extern Bool lbxUseTags;
-extern Bool lbxDoSquishing;
-extern Bool lbxCompressImages;
-extern Bool lbxDoAtomShortCircuiting;
-extern Bool lbxDoLbxGfx;
-extern Bool compStats;
 
 /*
  * Static vars
@@ -208,7 +192,7 @@ GiveUp(sig)
 }
 
 static void
-AbortServer()
+AbortServer(void)
 {
     fflush(stderr);
     if (CoreDump)
@@ -268,24 +252,29 @@ void UseMsg()
     ErrorF("-cheatevents           cheat on events and errors for better performance\n");
 }
 
+static
 void
-ShowHelpAndExit (status)
-    int status;
+ShowHelpAndExit (
+    int status)
 {
     UseMsg ();
     exit (status);
 }
 
 static int
-proxyProcessArgument (argc, argv, i)
-    int argc;
-    char    **argv;
-    int i;
+proxyProcessArgument (
+    int argc,
+    char    **argv,
+    int i)
 {
     if (strcmp (argv[i], "-debug") == 0)
     {
 	if (++i < argc)
+        {
+#ifdef LBX_DEBUG
 	    lbxDebug = atoi(argv[i]);
+#endif
+        }
 	else
 	    ShowHelpAndExit (1);
 	return 2;
@@ -707,20 +696,17 @@ strnalloc(str, len)
 
 typedef struct _WorkQueue {
     struct _WorkQueue *next;
-    Bool        (*function) (
-		ClientPtr	/* pClient */,
-		pointer		/* closure */
-);
+    Bool        (*function) (ClientPtr /* pClient */, pointer /* closure */);
     ClientPtr   client;
     pointer     closure;
-}           WorkQueueRec;
+} WorkQueueRec;
 
 WorkQueuePtr		workQueue;
 static WorkQueuePtr	*workQueueLast = &workQueue;
 
 /* ARGSUSED */
 void
-ProcessWorkQueue()
+ProcessWorkQueue(void)
 {
     WorkQueuePtr    q, n, p;
 
@@ -758,10 +744,10 @@ ProcessWorkQueue()
 }
 
 Bool
-QueueWorkProc (function, client, closure)
-    Bool	(*function)();
-    ClientPtr	client;
-    pointer	closure;
+QueueWorkProc (
+    Bool	(*function)(ClientPtr /* pClient */, pointer /* closure */),
+    ClientPtr	client,
+    pointer	closure)
 {
     WorkQueuePtr    q;
 
@@ -788,17 +774,17 @@ QueueWorkProc (function, client, closure)
 typedef struct _SleepQueue {
     struct _SleepQueue	*next;
     ClientPtr		client;
-    Bool		(*function)();
+    Bool		(*function)(ClientPtr /* pClient */, pointer /* closure */);
     pointer		closure;
 } SleepQueueRec, *SleepQueuePtr;
 
 static SleepQueuePtr	sleepQueue = NULL;
 
 Bool
-ClientSleep (client, function, closure)
-    ClientPtr	client;
-    Bool	(*function)();
-    pointer	closure;
+ClientSleep (
+    ClientPtr	client,
+    Bool	(*function)(ClientPtr /* pClient */, pointer /* closure */),
+    pointer	closure)
 {
     SleepQueuePtr   q;
 

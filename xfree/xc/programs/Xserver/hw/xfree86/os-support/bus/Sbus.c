@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Sbus.c,v 1.4 2003/10/02 13:30:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Sbus.c,v 1.6 2004/12/07 21:53:46 tsi Exp $ */
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -54,6 +54,7 @@ struct sbus_devtable sbusDeviceTable[] = {
     { SBUS_DEVICE_BW2, FBTYPE_SUN2BW, "bwtwo", "Sun Monochrome (bwtwo)" },
     { SBUS_DEVICE_CG2, FBTYPE_SUN2COLOR, "cgtwo", "Sun Color2 (cgtwo)" },
     { SBUS_DEVICE_CG3, FBTYPE_SUN3COLOR, "cgthree", "Sun Color3 (cgthree)" },
+    { SBUS_DEVICE_CG3, FBTYPE_SUN3COLOR, "cgRDI", "Sun Color3 RDI (cgthree)" },
     { SBUS_DEVICE_CG4, FBTYPE_SUN4COLOR, "cgfour", "Sun Color4 (cgfour)" },
     { SBUS_DEVICE_CG6, FBTYPE_SUNFAST_COLOR, "cgsix", "Sun GX" },
     { SBUS_DEVICE_CG8, FBTYPE_MEMCOLOR, "cgeight", "Sun CG8/RasterOps" },
@@ -65,44 +66,49 @@ struct sbus_devtable sbusDeviceTable[] = {
     { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "Sun TCX" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "Sun FFB" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "Sun Elite3D" },
-    { 0, 0, NULL }
+    { 0, 0, NULL, NULL }
 };
 
 int
 promGetSibling(int node)
 {
-    promOpio->oprom_size = sizeof(int);
+    if (node == -1)
+	return 0;
 
-    if (node == -1) return 0;
+    promOpio->oprom_size = sizeof(int);
     *(int *)promOpio->oprom_array = node;
     if (ioctl(promFd, OPROMNEXT, promOpio) < 0)
 	return 0;
+
     promCurrentNode = *(int *)promOpio->oprom_array;
-    return *(int *)promOpio->oprom_array;
+    return promCurrentNode;
 }
 
 int
 promGetChild(int node)
 {
-    promOpio->oprom_size = sizeof(int);
+    if (!node || (node == -1))
+	return 0;
 
-    if (!node || node == -1) return 0;
+    promOpio->oprom_size = sizeof(int);
     *(int *)promOpio->oprom_array = node;
     if (ioctl(promFd, OPROMCHILD, promOpio) < 0)
 	return 0;
+
     promCurrentNode = *(int *)promOpio->oprom_array;
-    return *(int *)promOpio->oprom_array;
+    return promCurrentNode;
 }
 
 char *
 promGetProperty(const char *prop, int *lenp)
 {
     promOpio->oprom_size = MAX_VAL;
-
     strcpy(promOpio->oprom_array, prop);
     if (ioctl(promFd, OPROMGETPROP, promOpio) < 0)
 	return 0;
-    if (lenp) *lenp = promOpio->oprom_size;
+
+    if (lenp)
+	*lenp = promOpio->oprom_size;
     return promOpio->oprom_array;
 }
 
@@ -110,8 +116,8 @@ int
 promGetBool(const char *prop)
 {
     promOpio->oprom_size = 0;
-
     *(int *)promOpio->oprom_array = 0;
+
     for (;;) {
 	promOpio->oprom_size = MAX_PROP;
 	if (ioctl(promFd, OPROMNXTPROP, promOpio) < 0)
@@ -128,20 +134,24 @@ promGetBool(const char *prop)
 #define PROM_NODE_SBUS    0x04
 #define PROM_NODE_EBUS    0x08
 #define PROM_NODE_PCI     0x10
+#define PROM_NODE_FREE    0x20
 
 static int
 promSetNode(sbusPromNodePtr pnode)
 {
     int node;
 
-    if (!pnode->node || pnode->node == -1)
+    if (!pnode->node || (pnode->node == -1))
 	return -1;
+
     if (pnode->cookie[0] & PROM_NODE_SIBLING)
 	node = promGetSibling(pnode->cookie[1]);
     else
 	node = promGetChild(pnode->cookie[1]);
+
     if (pnode->node != node)
 	return -1;
+
     return 0;
 }
 
@@ -155,16 +165,19 @@ promIsP1275(void)
     if (promP1275 != -1)
 	return;
     promP1275 = 0;
-    f = fopen("/proc/cpuinfo","r");
+    f = fopen("/proc/cpuinfo", "r");
     if (!f) return;
     while (fgets(buffer, 1024, f) != NULL)
-	if (!strncmp (buffer, "type", 4) && strstr (buffer, "sun4u")) {
+	if (!strncmp(buffer, "type", 4) && strstr(buffer, "sun4u")) {
 	    promP1275 = 1;
 	    break;
 	}
     fclose(f);
 #elif defined(sun)
     struct utsname buffer;
+
+    if (promP1275 != -1)
+	return;
 
     if ((uname(&buffer) == 0) && !strcmp(buffer.machine, "sun4u"))
 	promP1275 = TRUE;
@@ -184,14 +197,17 @@ sparcPromClose(void)
 	promOpenCount--;
 	return;
     }
+
     if (promFd != -1) {
 	close(promFd);
 	promFd = -1;
     }
+
     if (promOpio) {
 	xfree(promOpio);
 	promOpio = NULL;
     }
+
     promOpenCount = 0;
 }
 
@@ -202,19 +218,23 @@ sparcPromInit(void)
 	promOpenCount++;
 	return 0;
     }
+
     promFd = open("/dev/openprom", O_RDONLY, 0);
     if (promFd == -1)
 	return -1;
+
     promOpio = (struct openpromio *)xalloc(4096);
     if (!promOpio) {
 	sparcPromClose();
 	return -1;
     }
+
     promRootNode = promGetSibling(0);
     if (!promRootNode) {
 	sparcPromClose();
 	return -1;
     }
+
     promIsP1275();
     promOpenCount++;
 
@@ -226,6 +246,7 @@ sparcPromGetProperty(sbusPromNodePtr pnode, const char *prop, int *lenp)
 {
     if (promSetNode(pnode))
 	return NULL;
+
     return promGetProperty(prop, lenp);
 }
 
@@ -234,89 +255,128 @@ sparcPromGetBool(sbusPromNodePtr pnode, const char *prop)
 {
     if (promSetNode(pnode))
 	return 0;
+
     return promGetBool(prop);
 }
 
 static void
-promWalkAssignNodes(int node, int oldnode, int flags, sbusDevicePtr *devicePtrs)
+promWalkAssignNodes(sbusPromNode *pCurrent, sbusPromParentPtr pParent,
+		    sbusDevicePtr *devicePtrs)
 {
-    int nextnode;
-    int len, sbus = flags & PROM_NODE_SBUS;
+    int len, sbus;
     char *prop;
     int devId, i, j;
-    sbusPromNode pNode, pNode2;
+    sbusPromNode Node, Node2, newNode;
+    sbusPromParentPtr Parent, Parent2;
+
+    newNode = *pCurrent;
+
+    sbus = newNode.cookie[0] & PROM_NODE_SBUS;
 
     prop = promGetProperty("device_type", &len);
-    if (prop && (len > 0)) do {
-	if (!strcmp(prop, "display")) {
-	    prop = promGetProperty("name", &len);
-	    if (!prop || len <= 0)
+    do {
+	if (!prop || (len < 7) || (len > 8) || strcmp(prop, "display"))
+	    break;
+
+	prop = promGetProperty("name", &len);
+	if (!prop || (len <= 0))
+	    break;
+
+	while (((*prop >= 'A') && (*prop <= 'Z')) || (*prop == ','))
+	    prop++;
+
+	for (i = 0; sbusDeviceTable[i].devId; i++)
+	    if (!strcmp(prop, sbusDeviceTable[i].promName))
 		break;
-	    while ((*prop >= 'A' && *prop <= 'Z') || *prop == ',')
-		prop++;
-	    for (i = 0; sbusDeviceTable[i].devId; i++)
-		if (!strcmp(prop, sbusDeviceTable[i].promName))
-		    break;
-	    devId = sbusDeviceTable[i].devId;
-	    if (!devId)
+
+	devId = sbusDeviceTable[i].devId;
+	if (!devId)
+	    break;
+
+	if (!sbus) {
+	    if (devId == SBUS_DEVICE_FFB) {
+		/*
+		 * All /SUNW,ffb outside of SBUS tree come before all
+		 * /SUNW,afb outside of SBUS tree.
+		 */
+		if (!strcmp(prop, "afb"))
+		    newNode.cookie[0] |= PROM_NODE_PREF;
+	    } else if (devId != SBUS_DEVICE_CG14)
 		break;
-	    if (!sbus) {
-		if (devId == SBUS_DEVICE_FFB) {
-		    /*
-		     * All /SUNW,ffb outside of SBUS tree come before all
-		     * /SUNW,afb outside of SBUS tree in Linux.
-		     */
-		    if (!strcmp(prop, "afb"))
-			flags |= PROM_NODE_PREF;
-		} else if (devId != SBUS_DEVICE_CG14)
-		    break;
-	    }
-	    for (i = 0; i < 32; i++) {
-		if (!devicePtrs[i] || devicePtrs[i]->devId != devId)
+	}
+
+	for (i = 0; i < 32; i++) {
+	    if (!devicePtrs[i] || (devicePtrs[i]->devId != devId))
+		continue;
+
+	    if (devicePtrs[i]->node.node) {
+		if ((devicePtrs[i]->node.cookie[0] & ~PROM_NODE_SIBLING) <=
+		    (newNode.cookie[0] & ~PROM_NODE_SIBLING))
 		    continue;
-		if (devicePtrs[i]->node.node) {
-		    if ((devicePtrs[i]->node.cookie[0] & ~PROM_NODE_SIBLING) <=
-			(flags & ~PROM_NODE_SIBLING))
+
+		Node = devicePtrs[i]->node;
+		Parent = devicePtrs[i]->parent;
+		for (j = i; ++j < 32; ) {
+		    if (!devicePtrs[j] || (devicePtrs[j]->devId != devId))
 			continue;
-		    for (j = i + 1, pNode = devicePtrs[i]->node; j < 32; j++) {
-			if (!devicePtrs[j] || devicePtrs[j]->devId != devId)
-			    continue;
-			pNode2 = devicePtrs[j]->node;
-			devicePtrs[j]->node = pNode;
-			pNode = pNode2;
-		    }
+
+		    Node2 = devicePtrs[j]->node;
+		    Parent2 = devicePtrs[j]->parent;
+		    devicePtrs[j]->node = Node;
+		    devicePtrs[j]->parent = Parent;
+		    Node = Node2;
+		    Parent = Parent2;
 		}
-		devicePtrs[i]->node.node = node;
-		devicePtrs[i]->node.cookie[0] = flags;
-		devicePtrs[i]->node.cookie[1] = oldnode;
-		break;
 	    }
+	    devicePtrs[i]->node = newNode;
+	    devicePtrs[i]->parent = pParent;
+
+	    for (Parent = pParent;
+		 Parent && (Parent->node.cookie[0] & PROM_NODE_FREE);
+		 Parent = Parent->parent)
+		Parent->node.cookie[0] &= ~PROM_NODE_FREE;
 	    break;
 	}
     } while (0);
 
     prop = promGetProperty("name", &len);
-    if (prop && len > 0) {
-	if (!strcmp(prop, "sbus") || !strcmp(prop, "sbi"))
-	    sbus = PROM_NODE_SBUS;
+    if (prop && (len >= 3) && (len <= 5) &&
+	(!strcmp(prop, "sbus") || !strcmp(prop, "sbi")))
+	sbus = PROM_NODE_SBUS;
+
+    newNode.cookie[1] = newNode.node;
+    if ((newNode.node = promGetChild(newNode.cookie[1]))) {
+	newNode.cookie[0] = sbus;
+
+	Parent = xnfalloc(sizeof(*Parent));
+	Parent->node = *pCurrent;
+	Parent->node.cookie[0] |= PROM_NODE_FREE;
+	Parent->parent = pParent;
+
+	promWalkAssignNodes(&newNode, Parent, devicePtrs);
+
+	if (Parent->node.cookie[0] & PROM_NODE_FREE)
+	    xfree(Parent);
     }
 
-    nextnode = promGetChild(node);
-    if (nextnode)
-	promWalkAssignNodes(nextnode, node, sbus, devicePtrs);
+    if ((newNode.node = promGetSibling(newNode.cookie[1]))) {
+	newNode.cookie[0] = sbus | PROM_NODE_SIBLING;
 
-    nextnode = promGetSibling(node);
-    if (nextnode)
-	promWalkAssignNodes(nextnode, node, PROM_NODE_SIBLING | sbus, devicePtrs);
+	promWalkAssignNodes(&newNode, pParent, devicePtrs);
+    }
 }
 
 void
 sparcPromAssignNodes(void)
 {
     sbusDevicePtr psdp, *psdpp;
+    sbusDevicePtr devicePtrs[32];
+    sbusPromNode root;
+
+#if defined(linux)
+
     int n, holes = 0, i, j;
     FILE *f;
-    sbusDevicePtr devicePtrs[32];
 
     (void)memset(devicePtrs, 0, sizeof(devicePtrs));
     for (psdpp = xf86SbusInfo, n = 0; (psdp = *psdpp); psdpp++, n++) {
@@ -324,59 +384,89 @@ sparcPromAssignNodes(void)
 	    holes = 1;
 	devicePtrs[psdp->fbNum] = psdp;
     }
+
     if (holes && (f = fopen("/proc/fb", "r")) != NULL) {
-	/* We could not open one of fb devices, check /proc/fb to see what
-	 * were the types of the cards missed. */
+	/*
+	 * We could not open one of fb devices, check /proc/fb to see what
+	 * were the types of the cards missed.
+	 */
 	char buffer[64];
 	int fbNum, devId;
 	static struct {
 	    int devId;
 	    char *prefix;
+	    char *descr;
 	} procFbPrefixes[] = {
-	    { SBUS_DEVICE_BW2, "BWtwo" },
-	    { SBUS_DEVICE_CG14, "CGfourteen" },
-	    { SBUS_DEVICE_CG6, "CGsix" },
-	    { SBUS_DEVICE_CG3, "CGthree" },
-	    { SBUS_DEVICE_FFB, "Creator" },
-	    { SBUS_DEVICE_FFB, "Elite 3D" },
-	    { SBUS_DEVICE_LEO, "Leo" },
-	    { SBUS_DEVICE_TCX, "TCX" },
-	    { 0, NULL },
+	    { SBUS_DEVICE_BW2, "BWtwo", "Sun Monochrome (bwtwo)" },
+	    { SBUS_DEVICE_CG14, "CGfourteen", "Sun SX" },
+	    { SBUS_DEVICE_CG6, "CGsix", "Sun GX" },
+	    { SBUS_DEVICE_CG3, "CGthree", "Sun Color3 (cgthree)" },
+	    { SBUS_DEVICE_FFB, "Creator", "Sun FFB" },
+	    { SBUS_DEVICE_FFB, "Elite 3D", "Sun Elite3D" },
+	    { SBUS_DEVICE_LEO, "Leo", "Sun ZX or Turbo ZX" },
+	    { SBUS_DEVICE_TCX, "TCX", "Sun TCX" },
+	    { 0, NULL, NULL },
 	};
 
 	while (fscanf(f, "%d %63s\n", &fbNum, buffer) == 2) {
 	    for (i = 0; procFbPrefixes[i].devId; i++)
-		if (! strncmp(procFbPrefixes[i].prefix, buffer,
-		      strlen(procFbPrefixes[i].prefix)))
+		if (!strncmp(procFbPrefixes[i].prefix, buffer,
+		     strlen(procFbPrefixes[i].prefix)))
 		    break;
+
 	    devId = procFbPrefixes[i].devId;
-	    if (! devId) continue;
+	    if (!devId)
+		continue;
+
 	    if (devicePtrs[fbNum]) {
 		if (devicePtrs[fbNum]->devId != devId)
 		    xf86ErrorF("Inconsistent /proc/fb with FBIOGATTR\n");
-	    } else if (!devicePtrs[fbNum]) {
-		devicePtrs[fbNum] = psdp = xnfcalloc(sizeof (sbusDevice), 1);
+	    } else {
+		devicePtrs[fbNum] = psdp = xnfcalloc(sizeof(sbusDevice), 1);
 		psdp->devId = devId;
 		psdp->fbNum = fbNum;
 		psdp->fd = -2;
+		psdp->descr = procFbPrefixes[i].descr;
 	    }
 	}
+
 	fclose(f);
     }
-    promGetSibling(0);
-    promWalkAssignNodes(promRootNode, 0, PROM_NODE_PREF, devicePtrs);
-    for (i = 0, j = 0; i < 32; i++)
-	if (devicePtrs[i] && devicePtrs[i]->fbNum == -1)
+
+#else
+
+    (void)memset(devicePtrs, 0, sizeof(devicePtrs));
+    for (psdpp = xf86SbusInfo; (psdp = *psdpp); psdpp++) 
+	devicePtrs[psdp->fbNum] = psdp;
+
+#endif
+
+    root.node = promGetSibling(0);
+    root.cookie[0] = PROM_NODE_SIBLING | PROM_NODE_PREF;
+    root.cookie[1] = 0;
+    promWalkAssignNodes(&root, NULL, devicePtrs);
+
+#if defined(linux)
+
+    j = 0;
+    for (i = 0; i < 32; i++)
+	if (devicePtrs[i] && (devicePtrs[i]->fbNum == -1))
 	    j++;
+
     xf86SbusInfo = xnfrealloc(xf86SbusInfo, sizeof(psdp) * (n + j + 1));
-    for (i = 0, psdpp = xf86SbusInfo; i < 32; i++)
+    for (i = 0, psdpp = xf86SbusInfo; i < 32; i++) {
 	if (devicePtrs[i]) {
 	    if (devicePtrs[i]->fbNum == -1) {
 		memmove(psdpp + 1, psdpp, sizeof(psdpp) * (n + 1));
 		*psdpp = devicePtrs[i];
-	    } else
+	    } else {
 		n--;
+	    }
 	}
+    }
+
+#endif
+
 }
 
 static char *
@@ -388,33 +478,41 @@ promGetReg(int type)
 
     regstr[0] = 0;
     prop = promGetProperty("reg", &len);
-    if (prop && len >= 4) {
+    if (prop && (len >= 4)) {
 	unsigned int *reg = (unsigned int *)prop;
-	if (!promP1275 || (type == PROM_NODE_SBUS) || (type == PROM_NODE_EBUS))
-	    sprintf (regstr, "@%x,%x", reg[0], reg[1]);
-	else if (type == PROM_NODE_PCI) {
+
+	if (!promP1275 ||
+	    (type == PROM_NODE_SBUS) ||
+	    (type == PROM_NODE_EBUS)) {
+	    sprintf(regstr, "@%x,%x", reg[0], reg[1]);
+	} else if (type == PROM_NODE_PCI) {
 	    if ((reg[0] >> 8) & 7)
-		sprintf (regstr, "@%x,%x", (reg[0] >> 11) & 0x1f, (reg[0] >> 8) & 7);
+		sprintf(regstr, "@%x,%x",
+			(reg[0] >> 11) & 0x1f, (reg[0] >> 8) & 7);
 	    else
-		sprintf (regstr, "@%x", (reg[0] >> 11) & 0x1f);
-	} else if (len == 4)
-	    sprintf (regstr, "@%x", reg[0]);
-	else {
+		sprintf(regstr, "@%x", (reg[0] >> 11) & 0x1f);
+	} else if (len == 4) {
+	    sprintf(regstr, "@%x", reg[0]);
+	} else {
 	    unsigned int regs[2];
 
-	    /* Things get more complicated on UPA. If upa-portid exists,
-	       then address is @upa-portid,second-int-in-reg, otherwise
-	       it is @first-int-in-reg/16,second-int-in-reg (well, probably
-	       upa-portid always exists, but just to be safe). */
-	    memcpy (regs, reg, sizeof(regs));
+	    /*
+	     * Things get more complicated on UPA.  If upa-portid exists, then
+	     * address is @upa-portid,second-int-in-reg, otherwise it is
+	     * @first-int-in-reg/16,second-int-in-reg (well, probably
+	     * upa-portid always exists, but just to be safe).
+	     */
+	    memcpy(regs, reg, sizeof(regs));
 	    prop = promGetProperty("upa-portid", &len);
-	    if (prop && len == 4) {
+	    if (prop && (len == 4)) {
 		reg = (unsigned int *)prop;
-		sprintf (regstr, "@%x,%x", reg[0], regs[1]);
-	    } else
-		sprintf (regstr, "@%x,%x", regs[0] >> 4, regs[1]);
+		sprintf(regstr, "@%x,%x", reg[0], regs[1]);
+	    } else {
+		sprintf(regstr, "@%x,%x", regs[0] >> 4, regs[1]);
+	    }
 	}
     }
+
     return regstr;
 }
 
@@ -427,28 +525,36 @@ promWalkNode2Pathname(char *path, int parent, int node, int searchNode, int type
 
     prop = promGetProperty("name", &len);
     *path = '/';
-    if (!prop || len <= 0)
+
+    if (!prop || (len <= 0))
 	return 0;
-    if ((!strcmp(prop, "sbus") || !strcmp(prop, "sbi")) && !type)
+
+    if (!type && (!strcmp(prop, "sbus") || !strcmp(prop, "sbi")))
 	ntype = PROM_NODE_SBUS;
-    else if (!strcmp(prop, "ebus") && type == PROM_NODE_PCI)
+    else if ((type == PROM_NODE_PCI) && !strcmp(prop, "ebus"))
 	ntype = PROM_NODE_EBUS;
-    else if (!strcmp(prop, "pci") && !type)
+    else if (!type && !strcmp(prop, "pci"))
 	ntype = PROM_NODE_PCI;
-    strcpy (path + 1, prop);
+
+    strcpy(path + 1, prop);
+
     p = promGetReg(type);
     if (*p)
-	strcat (path, p);
+	strcat(path, p);
+
     if (node == searchNode)
 	return 1;
+
     nextnode = promGetChild(node);
     if (nextnode &&
 	promWalkNode2Pathname(strchr(path, 0), node, nextnode, searchNode, ntype))
 	return 1;
+
     nextnode = promGetSibling(node);
     if (nextnode &&
 	promWalkNode2Pathname(path, parent, nextnode, searchNode, type))
 	return 1;
+
     return 0;
 }
 
@@ -457,11 +563,16 @@ sparcPromNode2Pathname(sbusPromNodePtr pnode)
 {
     char *ret;
 
-    if (!pnode->node) return NULL;
+    if (!pnode->node)
+	return NULL;
+
     ret = xalloc(4096);
-    if (!ret) return NULL;
+    if (!ret)
+	return NULL;
+
     if (promWalkNode2Pathname(ret, promRootNode, promGetChild(promRootNode), pnode->node, 0))
 	return ret;
+
     xfree(ret);
     return NULL;
 }
@@ -474,49 +585,62 @@ promWalkPathname2Node(char *name, char *regstr, int parent, int type)
 
     for (;;) {
 	prop = promGetProperty("name", &len);
-	if (!prop || len <= 0)
+	if (!prop || (len <= 0))
 	    return 0;
-	if ((!strcmp(prop, "sbus") || !strcmp(prop, "sbi")) && !type)
+
+	if (!type && (!strcmp(prop, "sbus") || !strcmp(prop, "sbi")))
 	    type = PROM_NODE_SBUS;
-	else if (!strcmp(prop, "ebus") && type == PROM_NODE_PCI)
+	else if ((type == PROM_NODE_PCI) && !strcmp(prop, "ebus"))
 	    type = PROM_NODE_EBUS;
-	else if (!strcmp(prop, "pci") && !type)
+	else if (!type && !strcmp(prop, "pci"))
 	    type = PROM_NODE_PCI;
 	for (node = promGetChild(parent); node; node = promGetSibling(node)) {
 	    prop = promGetProperty("name", &len);
-	    if (!prop || len <= 0)
+	    if (!prop || (len <= 0))
 		continue;
+
 	    if (*name && strcmp(name, prop))
 		continue;
+
 	    if (*regstr) {
 		p = promGetReg(type);
-		if (! *p || strcmp(p + 1, regstr))
+		if (!*p || strcmp(p + 1, regstr))
 		    continue;
 	    }
+
 	    break;
 	}
 	if (!node) {
-	    for (node = promGetChild(parent); node; node = promGetSibling(node)) {
+	    for (node = promGetChild(parent);
+		 node;
+		 node = promGetSibling(node)) {
 		ret = promWalkPathname2Node(name, regstr, node, type);
-		if (ret) return ret;
+		if (ret)
+		    return ret;
 	    }
+
 	    return 0;
 	}
+
 	name = strchr(regstr, 0) + 1;
-	if (! *name)
+	if (!*name)
 	    return node;
+
 	p = strchr(name, '/');
 	if (p)
 	    *p = 0;
 	else
 	    p = strchr(name, 0);
+
 	regstr = strchr(name, '@');
 	if (regstr)
 	    *regstr++ = 0;
 	else
 	    regstr = p;
+
 	if (name == regstr)
 	    return 0;
+
 	parent = node;
     }
 }
@@ -529,23 +653,29 @@ sparcPromPathname2Node(const char *pathName)
 
     i = strlen(pathName);
     name = xalloc(i + 2);
-    if (! name) return 0;
-    strcpy (name, pathName);
+    if (!name)
+	return 0;
+
+    strcpy(name, pathName);
     name [i + 1] = 0;
     if (name[0] != '/')
 	return 0;
+
     p = strchr(name + 1, '/');
     if (p)
 	*p = 0;
     else
 	p = strchr(name, 0);
+
     regstr = strchr(name, '@');
     if (regstr)
 	*regstr++ = 0;
     else
 	regstr = p;
+
     if (name + 1 == regstr)
 	return 0;
+
     promGetSibling(0);
     i = promWalkPathname2Node(name + 1, regstr, promRootNode, 0);
     xfree(name);
@@ -556,25 +686,31 @@ pointer
 xf86MapSbusMem(sbusDevicePtr psdp, unsigned long offset, unsigned long size)
 {
     pointer ret;
-    unsigned long pagemask = xf86getpagesize() - 1;
-    unsigned long off = offset & ~pagemask;
-    unsigned long len = ((offset + size + pagemask) & ~pagemask) - off;
+    unsigned long pagemask, off, len;
+
+    if (!psdp || !size)
+	return NULL;
 
     if (psdp->fd == -1) {
 	psdp->fd = open(psdp->device, O_RDWR);
 	if (psdp->fd == -1)
 	    return NULL;
-    } else if (psdp->fd < 0)
+    } else if (psdp->fd < 0) {
 	return NULL;
-
-    ret = (pointer) mmap (NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE,
-			  psdp->fd, off);
-    if (ret == (pointer) -1) {
-	ret = (pointer) mmap (NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED,
-			      psdp->fd, off);
     }
-    if (ret == (pointer) -1)
-	return NULL;
+
+    pagemask = xf86getpagesize() - 1;
+    off = offset & ~pagemask;
+    len = ((offset + size + pagemask) & ~pagemask) - off;
+
+    ret = (pointer) mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+			 psdp->fd, off);
+    if (ret == (pointer) -1) {
+	ret = (pointer) mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED,
+			     psdp->fd, off);
+	if (ret == (pointer) -1)
+	    return NULL;
+    }
 
     return (char *)ret + (offset - off);
 }
@@ -586,7 +722,7 @@ xf86UnmapSbusMem(sbusDevicePtr psdp, pointer addr, unsigned long size)
     unsigned long base = (unsigned long)addr & ~mask;
     unsigned long len = (((unsigned long)addr + size + mask) & ~mask) - base;
 
-    munmap ((pointer)base, len);
+    munmap((pointer)base, len);
 }
 
 /* Tell OS that we are driving the HW cursor ourselves. */

@@ -34,7 +34,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_driver.c,v 1.20 2003/11/03 05:11:28 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_driver.c,v 1.27 2005/03/15 21:39:20 tsi Exp $ */
 
 
 #include "xf86.h"
@@ -171,26 +171,15 @@ static OptionInfoRec S3Options[] = {
 RamDacSupportedInfoRec S3IBMRamdacs[] = {
 	{ IBM524_RAMDAC },
 	{ IBM524A_RAMDAC },
+	{ IBM525_RAMDAC },
 	{ -1 }
 };
 
-#define S3_USEFB
-
-#ifdef S3_USEFB
 static const char *fbSymbols[] = {
     "fbPictureInit",
     "fbScreenInit",
     NULL
 };
-#else
-static const char *cfbSymbols[] = {
-	"cfbScreenInit",
-	"cfb16ScreenInit",
-	"cfb24ScreenInit",
-	"cfb32ScreenInit",
-	NULL
-};
-#endif
 
 static const char *vgaHWSymbols[] = {
         "vgaHWGetHWRec",
@@ -205,6 +194,7 @@ static const char *vgaHWSymbols[] = {
         "vgaHWLock",
 	"vgaHWInit",
 	"vgaHWDPMSSet",
+	"vgaHWHBlankKGA",
         NULL
 };
 
@@ -276,12 +266,7 @@ pointer S3Setup (pointer module, pointer opts, int *errmaj, int *errmin)
                 xf86AddDriver(&S3, module, 0);
                 LoaderRefSymLists(vgaHWSymbols,
 				  vbeSymbols, int10Symbols, ramdacSymbols,
-#ifdef S3_USEFB
-				  fbSymbols,
-#else
-				  cfbSymbols,
-#endif
-				  xaaSymbols,
+				  fbSymbols, xaaSymbols,
 				  NULL);
                 return (pointer) 1;
         } else {
@@ -408,7 +393,6 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
                 case 15:
                 case 16:
                 case 24:
-                case 32:
       	               /* OK */
                        break;
                 default:
@@ -650,7 +634,7 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 			pS3->LoadPalette = S3TiLoadPalette;
 		else
 			pS3->LoadPalette = S3GenericLoadPalette;
-	}
+	} else
 	if (S3ProbeIBMramdac(pScrn)) {
 		pS3->DacPreInit = S3IBMRGB_PreInit;
 		pS3->DacInit = S3IBMRGB_Init;
@@ -661,7 +645,7 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 		pS3->MaxClock = 170000;
 		pScrn->rgbBits = 8;
 		pS3->LoadPalette = S3GenericLoadPalette;
-	}
+	} else
 	if (S3Trio64DACProbe(pScrn)) {
 		pS3->DacPreInit = S3Trio64DAC_PreInit;
 		pS3->DacInit = S3Trio64DAC_Init;
@@ -710,7 +694,7 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 	clockRanges->minClock = 15600;
 	clockRanges->maxClock = pS3->MaxClock;
 	clockRanges->clockIndex = -1;
-	clockRanges->interlaceAllowed = FALSE;	/* not yet */
+	clockRanges->interlaceAllowed = TRUE;	/* not yet */
 	clockRanges->doubleScanAllowed = TRUE;	/* not yet */
 	
         i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
@@ -741,31 +725,8 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
         xf86PrintModes(pScrn);
         xf86SetDpi(pScrn, 0, 0);
  
-#ifdef S3_USEFB
         xf86LoadSubModule(pScrn, "fb");
         xf86LoaderReqSymLists(fbSymbols, NULL);
-#else
-	{
-		switch (pScrn->bitsPerPixel) {
-		case 8:
-		        xf86LoadSubModule(pScrn, "cfb");
-	     		xf86LoaderReqSymbols("cfbScreenInit", NULL);
-			break;
-		case 16:
-		        xf86LoadSubModule(pScrn, "cfb16");
-	     		xf86LoaderReqSymbols("cfb16ScreenInit", NULL);
-			break;
-		case 24:
-		        xf86LoadSubModule(pScrn, "cfb24");
-	     		xf86LoaderReqSymbols("cfb24ScreenInit", NULL);
-			break;
-		case 32:
-		        xf86LoadSubModule(pScrn, "cfb32");
-	     		xf86LoaderReqSymbols("cfb32ScreenInit", NULL);
-			break;
-		}
-	}
-#endif
 
 	if (!xf86LoadSubModule(pScrn, "xaa"))
 		return FALSE;
@@ -814,45 +775,10 @@ static Bool S3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
         
         miSetPixmapDepths ();
 
-#ifdef S3_USEFB
         if (!fbScreenInit(pScreen, pS3->FBBase, pScrn->virtualX,
                           pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
                           pScrn->displayWidth, pScrn->bitsPerPixel))
                 return FALSE;
-#else
-	{
-		int ret;
-
-		switch(pScrn->bitsPerPixel) {
-		case 8:
-			ret = cfbScreenInit(pScreen, pS3->FBBase,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->xDpi, pScrn->yDpi,
-				pScrn->displayWidth);
-			break;
-		case 16:
-			ret = cfb16ScreenInit(pScreen, pS3->FBBase,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->xDpi, pScrn->yDpi,
-				pScrn->displayWidth);
-			break;
-		case 24:
-			ret = cfb24ScreenInit(pScreen, pS3->FBBase,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->xDpi, pScrn->yDpi,
-				pScrn->displayWidth);
-			break;
-		case 32:
-			ret = cfb32ScreenInit(pScreen, pS3->FBBase,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->xDpi, pScrn->yDpi,
-				pScrn->displayWidth);
-			break;
-		}
-		if (!ret)
-			return FALSE;
-	}
-#endif
         
         xf86SetBlackWhitePixels(pScreen);
                         
@@ -871,9 +797,9 @@ static Bool S3ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
                         }
                 } 
         }
-#ifdef S3_USEFB
+
 	fbPictureInit (pScreen, 0, 0);
-#endif
+
 	S3DGAInit(pScreen);
 
         miInitializeBackingStore(pScreen);
@@ -1147,6 +1073,8 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         vgaRegPtr pVga = &hwp->ModeReg;
         int vgaCRIndex = pS3->vgaCRIndex, vgaCRReg = pS3->vgaCRReg;
 	int vgaIOBase = hwp->IOBase;
+	int interlacedived = mode->Flags & V_INTERLACE ? 1 : 0;
+	CARD32 HBlankEnd; 
 	int r, n, m;
 	unsigned char tmp;
 
@@ -1169,6 +1097,8 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 			mode->CrtcHSyncStart >>= pS3->pixMuxShift;
 			mode->CrtcHSyncEnd >>= pS3->pixMuxShift;
 			mode->CrtcHSkew >>= pS3->pixMuxShift;
+			mode->CrtcHBlankStart >>= pS3->pixMuxShift;
+			mode->CrtcHBlankEnd >>= pS3->pixMuxShift;
 		} else if (pS3->pixMuxShift < 0) {
 /* 			mode->Flags |= V_PIXMUX; */
 
@@ -1177,13 +1107,31 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 			mode->CrtcHSyncStart <<= -pS3->pixMuxShift;
 			mode->CrtcHSyncEnd <<= -pS3->pixMuxShift;
 			mode->CrtcHSkew <<= -pS3->pixMuxShift;
+			mode->CrtcHBlankStart <<= -pS3->pixMuxShift;
+			mode->CrtcHBlankEnd <<= -pS3->pixMuxShift;
 		}
 	}
 
-        if (!vgaHWInit(pScrn, mode))
-                return FALSE;
+	/* This shouldn't be needed -- they should be set by vgaHWInit() */
+	if (!mode->CrtcVAdjusted) {
+		mode->CrtcVTotal >>= interlacedived;
+		mode->CrtcVDisplay >>= interlacedived;
+		mode->CrtcVSyncStart >>= interlacedived;
+		mode->CrtcVSyncEnd >>= interlacedived;
+		mode->CrtcVBlankStart >>= interlacedived;
+		mode->CrtcVBlankEnd >>= interlacedived;
+		mode->CrtcVAdjusted = TRUE;
+	}
 
+	hwp->Flags |= VGA_FIX_SYNC_PULSES;
+	if (!vgaHWInit(pScrn, mode))
+		return FALSE;
 
+	/*
+	 * We have horizontal blank end extension bits, so redo KGA workaround.
+	 */
+	HBlankEnd = vgaHWHBlankKGA(mode, pVga, 7,
+				   KGA_FIX_OVERSCAN | KGA_ENABLE_ON_ZERO);
 
 	pVga->MiscOutReg |= 0x0c;
 	pVga->Sequencer[0] = 0x03;
@@ -1199,7 +1147,6 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	/* ok i give up also, i'm writing in here */
 
 	vgaHWProtect(pScrn, TRUE);
-
 
 	if (pS3->RamDac->RamDacType == TI3025_RAMDAC) {
 		outb(vgaCRIndex, 0x5c);
@@ -1217,7 +1164,6 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		outw(0x3c4, (pVga->Sequencer[r] << 8) | r);
 	}
 
-	/* We need to set this first - S3 *is* broken */
 	outw(vgaCRIndex, (pVga->CRTC[17] << 8) | 17);
 	for(r=0; r<25; r++)
 		outw(vgaCRIndex, (pVga->CRTC[r] << 8) | r);
@@ -1264,13 +1210,7 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	outb(vgaCRIndex, 0x3a);
 	outb(vgaCRReg, new->cr3a);
 
-	if (pS3->Chipset != PCI_CHIP_AURORA64VP) {
-		new->cr3b = (pVga->CRTC[0] + pVga->CRTC[4] + 1) / 2;
-		outb(vgaCRIndex, 0x3b);
-		outb(vgaCRReg, new->cr3b);
-	}
-
-	new->cr3c = pVga->CRTC[0] / 2;
+	new->cr3c = ((mode->CrtcHTotal >> 3) - 5) >> 1;
 	outb(vgaCRIndex, 0x3c);
 	outb(vgaCRReg, new->cr3c);
 
@@ -1289,6 +1229,7 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	case 16:
 		if ((pS3->RamDac->RamDacType == IBM524_RAMDAC) ||
 		    (pS3->RamDac->RamDacType == IBM524A_RAMDAC) ||
+		    (pS3->RamDac->RamDacType == IBM525_RAMDAC) ||
 		    (pS3->RamDac->RamDacType == TI3025_RAMDAC))
 			new->cr43 = 0x10;
 		else if (pS3->RamDac->RamDacType == TRIO64_RAMDAC)
@@ -1393,53 +1334,36 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	new->cr55 = (inb(vgaCRReg) & 0x08) | 0x40;
 	outb(vgaCRReg, new->cr55);
 
-	outb(vgaCRIndex, 0x5e);
-	new->cr5e = (((mode->CrtcVTotal - 2) & 0x400) >> 10)	|
-		    (((mode->CrtcVDisplay - 1) & 0x400) >> 9)	|
-		    (((mode->CrtcVSyncStart) & 0x400) >> 8)	|
-		    (((mode->CrtcVSyncStart) & 0x400) >> 6)	| 0x40;
-	outb(vgaCRReg, new->cr5e);
+	outb(vgaCRIndex, 0x5d);
+	new->cr5d = (inb(vgaCRReg) & 0x80) |
+		    ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) |
+		    ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) |
+		    ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 6) |
+		    (HBlankEnd << 3) |
+		    ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 4) |
+		    ((((mode->CrtcHSyncEnd >> 3) - 1) & 0x040) >> 1);
 
-	{
-		int i;
-		unsigned int j;
+	if (pS3->Chipset == PCI_CHIP_AURORA64VP) {
+		new->cr3b = 0;
+	} else {
+		unsigned i = (mode->CrtcHTotal >> 3) - 10;
 
-		i = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8) 	|
-		    ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7) 	|
-		    ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6)	|
-		    ((mode->CrtcHSyncStart & 0x800) >> 7);
-		if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 64)
-			i |= 0x08;
-		if ((mode->CrtcHSyncEnd >> 3) - (mode->CrtcHSyncStart >> 3) > 32)
-			i |= 0x20;
-
-		outb(vgaCRIndex, 0x3b);
-		j = ((pVga->CRTC[0] + ((i & 0x01) << 8) +
-		      pVga->CRTC[4] + ((i & 0x10) << 4) + 1) / 2);
-	
-            	if (j - (pVga->CRTC[4] + ((i & 0x10) << 4)) < 4) {
-                	if (pVga->CRTC[4] + ((i & 0x10) << 4) + 4 <= pVga->CRTC[0] + ((i & 0x01) << 8))
-                    		j = pVga->CRTC[4] + ((i & 0x10) << 4) + 4;
-                	else
-                    		j = pVga->CRTC[0] + ((i & 0x01) << 8) + 1;
-		}
-		if (pS3->Chipset == PCI_CHIP_AURORA64VP) {
-			outb(vgaCRReg, 0x00);
-			i &= ~0x40;
-		} else {
-			new->cr3b = j & 0xff;
-			outb(vgaCRReg, new->cr3b);
-			i |= (j & 0x100) >> 2;
-		}
-
-		outb(vgaCRIndex, 0x3c);
-		new->cr3c = (pVga->CRTC[0] + ((i & 0x01) << 8)) / 2;
-		outb(vgaCRReg, new->cr3c);
-
-		outb(vgaCRIndex, 0x5d);
-		new->cr5d = (inb(vgaCRReg) & 0x80) | i;	
-		outb(vgaCRReg, new->cr5d);
+		new->cr3b = i & 0x0ff;
+		new->cr5d |= (i & 0x100) >> 2;
 	}
+
+	outb(vgaCRReg, new->cr5d);
+
+	outb(vgaCRIndex, 0x3b);
+	outb(vgaCRReg, new->cr3b);
+
+	outb(vgaCRIndex, 0x5e);
+	new->cr5e = (inb(vgaCRReg) & 0xa8) |
+		    (((mode->CrtcVTotal - 2) & 0x400) >> 10) |
+		    (((mode->CrtcVDisplay - 1) & 0x400) >> 9) |
+		    (((mode->CrtcVBlankStart - 1) & 0x400) >> 8) |
+		    (((mode->CrtcVSyncStart - 1) & 0x400) >> 6)	| 0x40;
+	outb(vgaCRReg, new->cr5e);
 
 	{
 		int i;
@@ -1458,9 +1382,15 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		outb(vgaCRReg, new->cr62);
 	}
 
-	outb(vgaCRIndex, 0x42);
-	new->cr42 = inb(vgaCRReg) & ~0x20;
-	outb(vgaCRReg, new->cr42);
+	if (mode->Flags & V_INTERLACE) {
+		outb(vgaCRIndex, 0x42);
+		new->cr42 = inb(vgaCRReg) | 0x20;
+		outb(vgaCRReg, new->cr42);
+	} else {
+		outb(vgaCRIndex, 0x42);
+		new->cr42 = inb(vgaCRReg) & ~0x20;
+		outb(vgaCRReg, new->cr42);
+	}
 
 	if (pS3->Chipset == PCI_CHIP_968) {
 		unsigned char a;
@@ -1489,7 +1419,7 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		outb(vgaCRIndex, 0x6d);
 		outb(vgaCRReg, 0x00);
 	}
-
+	else
 	if ((pS3->Chipset == PCI_CHIP_964_0) ||
 	    (pS3->Chipset == PCI_CHIP_964_1)) {
 		unsigned char bdelay;

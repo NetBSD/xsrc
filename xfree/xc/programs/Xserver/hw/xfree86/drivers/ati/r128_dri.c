@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.c,v 1.32 2003/11/10 18:41:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.c,v 1.33 2004/12/10 16:07:00 alanh Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -40,6 +40,7 @@
 				/* Driver data structures */
 #include "r128.h"
 #include "r128_dri.h"
+#include "r128_common.h"
 #include "r128_reg.h"
 #include "r128_sarea.h"
 #include "r128_version.h"
@@ -55,15 +56,7 @@
 #include "GL/glxtokens.h"
 #include "sarea.h"
 
-/* ?? HACK - for now, put this here... */
-/* ?? Alpha - this may need to be a variable to handle UP1x00 vs TITAN */
-#if defined(__alpha__)
-# define DRM_PAGE_SIZE 8192
-#elif defined(__ia64__)
-# define DRM_PAGE_SIZE getpagesize()
-#else
-# define DRM_PAGE_SIZE 4096
-#endif
+static size_t r128_drm_page_size;
 
 static void R128DRITransitionTo2d(ScreenPtr pScreen);
 static void R128DRITransitionTo3d(ScreenPtr pScreen);
@@ -277,7 +270,7 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 
 /* Create the Rage 128-specific context information */
 static Bool R128CreateContext(ScreenPtr pScreen, VisualPtr visual,
-			      drmContext hwContext, void *pVisualConfigPriv,
+			      drm_context_t hwContext, void *pVisualConfigPriv,
 			      DRIContextType contextStore)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -288,7 +281,7 @@ static Bool R128CreateContext(ScreenPtr pScreen, VisualPtr visual,
 }
 
 /* Destroy the Rage 128-specific context information */
-static void R128DestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void R128DestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 			       DRIContextType contextStore)
 {
     /* Nothing yet */
@@ -501,11 +494,11 @@ static Bool R128DRIAgpInit(R128InfoPtr info, ScreenPtr pScreen)
 
 				/* Initialize the CCE ring buffer data */
     info->ringStart       = info->agpOffset;
-    info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+    info->ringMapSize     = info->ringSize*1024*1024 + r128_drm_page_size;
     info->ringSizeLog2QW  = R128MinBits(info->ringSize*1024*1024/8) - 1;
 
     info->ringReadOffset  = info->ringStart + info->ringMapSize;
-    info->ringReadMapSize = DRM_PAGE_SIZE;
+    info->ringReadMapSize = r128_drm_page_size;
 
 				/* Reserve space for vertex/indirect buffers */
     info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
@@ -654,11 +647,11 @@ static Bool R128DRIPciInit(R128InfoPtr info, ScreenPtr pScreen)
 
 				/* Initialize the CCE ring buffer data */
     info->ringStart       = info->agpOffset;
-    info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+    info->ringMapSize     = info->ringSize*1024*1024 + r128_drm_page_size;
     info->ringSizeLog2QW  = R128MinBits(info->ringSize*1024*1024/8) - 1;
 
     info->ringReadOffset  = info->ringStart + info->ringMapSize;
-    info->ringReadMapSize = DRM_PAGE_SIZE;
+    info->ringReadMapSize = r128_drm_page_size;
 
 				/* Reserve space for vertex/indirect buffers */
     info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
@@ -1015,6 +1008,8 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
 	break;
     }
 
+    r128_drm_page_size = getpagesize();
+
     /* Create the DRI data structure, and fill it in before calling the
        DRIScreenInit(). */
     if (!(pDRIInfo = DRICreateInfoRec())) return FALSE;
@@ -1022,12 +1017,16 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     info->pDRIInfo                       = pDRIInfo;
     pDRIInfo->drmDriverName              = R128_DRIVER_NAME;
     pDRIInfo->clientDriverName           = R128_DRIVER_NAME;
-    pDRIInfo->busIdString                = xalloc(64);
-    sprintf(pDRIInfo->busIdString,
-	    "PCI:%d:%d:%d",
-	    info->PciInfo->bus,
-	    info->PciInfo->device,
-	    info->PciInfo->func);
+    if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+	pDRIInfo->busIdString = DRICreatePCIBusID(info->PciInfo);
+    } else {
+	pDRIInfo->busIdString            = xalloc(64);
+	sprintf(pDRIInfo->busIdString,
+		"PCI:%d:%d:%d",
+		info->PciInfo->bus,
+		info->PciInfo->device,
+		info->PciInfo->func);
+    }
     pDRIInfo->ddxDriverMajorVersion      = R128_VERSION_MAJOR;
     pDRIInfo->ddxDriverMinorVersion      = R128_VERSION_MINOR;
     pDRIInfo->ddxDriverPatchVersion      = R128_VERSION_PATCH;
@@ -1472,6 +1471,10 @@ static void R128DRITransitionTo2d(ScreenPtr pScreen)
     ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
     R128InfoPtr         info       = R128PTR(pScrn);
     R128SAREAPrivPtr    pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+
+    /* Try flipping back to the front page if necessary */
+    if (pSAREAPriv->pfCurrentPage == 1)
+	drmCommandNone(info->drmFD, DRM_R128_FLIP);
 
     /* Shut down shadowing if we've made it back to the front page */
     if (pSAREAPriv->pfCurrentPage == 0) {

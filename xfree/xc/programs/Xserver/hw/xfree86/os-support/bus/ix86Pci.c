@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ix86Pci.c,v 1.26 2004/02/13 23:58:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ix86Pci.c,v 1.27 2004/10/15 03:08:32 tsi Exp $ */
 /*
  * ix86Pci.c - x86 PCI driver
  *
@@ -300,7 +300,8 @@ void ix86PciSelectCfgmech(void)
 #ifdef DEBUGPCI
       if (xf86Verbose > 2) {
 	ErrorF("Checking config type 1:\n"
-		"\tinitial value of MODE1_ADDR_REG is 0x%08x\n", oldVal1);
+		"\tinitial value of MODE1_ADDR_REG is 0x%08lx\n",
+		(unsigned long)oldVal1);
 	ErrorF("\tChecking that all bits in mask 0x7f000000 are clear\n");
       }
 #endif
@@ -337,8 +338,8 @@ void ix86PciSelectCfgmech(void)
 
 #ifdef DEBUGPCI
 	if (xf86Verbose > 2) {
-	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08x\n",
-			mode1Res1);
+	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08lx\n",
+		   (unsigned long)mode1Res1);
 	    ErrorF("\tRestoring original contents of MODE1_ADDR_REG\n");
 	}
 #endif
@@ -392,8 +393,8 @@ void ix86PciSelectCfgmech(void)
 
 #ifdef DEBUGPCI
 	if (xf86Verbose > 2) {
-	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08x\n",
-			mode1Res2);
+	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08lx\n",
+		   (unsigned long)mode1Res2);
 	    ErrorF("\tRestoring original contents of MODE1_ADDR_REG\n");
 	}
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.17 2003/04/23 14:18:37 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.18 2004/09/01 23:57:57 dawes Exp $ */
 
 #ifndef SAVAGE_VGAHWMMIO_H
 #define SAVAGE_VGAHWMMIO_H
@@ -129,6 +129,7 @@ typedef struct _Savage {
     Bool		TvOn;
     Bool		PAL;
     Bool		ForceInit;
+    Bool		UseBIOSForDPMS;
     int			iDevInfo;
     int			iDevInfoPrim;
 
@@ -259,6 +260,8 @@ void SavageRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 
 void SavageSetTextMode( SavagePtr psav );
 void SavageSetVESAMode( SavagePtr psav, int n, int Refresh );
+void SavageLCDOn( SavagePtr psav );
+void SavageLCDOff( SavagePtr psav );
 void SavageFreeBIOSModeTable( SavagePtr psav, SavageModeTablePtr* ppTable );
 SavageModeTablePtr SavageGetBIOSModeTable( SavagePtr psav, int iDepth );
 

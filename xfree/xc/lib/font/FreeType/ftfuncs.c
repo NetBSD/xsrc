@@ -5,7 +5,7 @@ Copyright (c) 1998 Go Watanabe, All rights reserved.
 Copyright (c) 1998 Kazushi (Jam) Marukawa, All rights reserved.
 Copyright (c) 1998 Takuya SHIOZAKI, All rights reserved.
 Copyright (c) 1998 X-TrueType Server Project, All rights reserved.
-Copyright (c) 2003 After X-TT Project, All rights reserved.
+Copyright (c) 2003-2004 After X-TT Project, All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/ftfuncs.c,v 1.44 2004/02/24 01:13:04 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftfuncs.c,v 1.45 2004/04/14 15:32:43 dawes Exp $ */
 
 #include "fontmisc.h"
 
@@ -51,7 +51,9 @@ THE SOFTWARE.
 #include FT_XFREE86_H
 #include FT_BBOX_H
 #include FT_INTERNAL_TRUETYPE_TYPES_H
-#include "ttobjs.h"
+#include FT_TRUETYPE_TAGS_H
+#include FT_INTERNAL_SFNT_H
+#include FT_INTERNAL_STREAM_H
 /*
  *  If you want to use FT_Outline_Get_CBox instead of 
  *  FT_Outline_Get_BBox, define here.
@@ -453,6 +455,33 @@ FreeTypeOpenInstance(FTInstancePtr *instance_return, FTFacePtr face,
         FT_Done_Size(instance->size);
         xfree(instance);
         return FTtoXReturnCode(ftrc);
+    }
+
+    if( FT_IS_SFNT( face->face ) ) {
+	/* See Set_Char_Sizes() in ttdriver.c */
+	FT_Error err;
+	TT_Face tt_face;
+	FT_Long tt_dim_x, tt_dim_y;
+	FT_UShort tt_x_ppem, tt_y_ppem;
+	FT_F26Dot6  tt_char_width, tt_char_height;
+	SFNT_Service sfnt;
+	tt_face=(TT_Face)face->face;
+	tt_char_width  = (int)(trans->scale*(1<<6) + 0.5);
+	tt_char_height = (int)(trans->scale*(1<<6) + 0.5);
+	if ( ( tt_face->header.Flags & 8 ) != 0 ) {
+	    tt_dim_x = ( ( tt_char_width  * trans->xres + (36+32*72) ) / 72 ) & -64;
+	    tt_dim_y = ( ( tt_char_height * trans->yres + (36+32*72) ) / 72 ) & -64;
+	}
+	else{
+	    tt_dim_x = ( ( tt_char_width  * trans->xres + 36 ) / 72 );
+	    tt_dim_y = ( ( tt_char_height * trans->yres + 36 ) / 72 );
+	}
+	tt_x_ppem  = (FT_UShort)( tt_dim_x >> 6 );
+	tt_y_ppem  = (FT_UShort)( tt_dim_y >> 6 );
+	/* See Reset_SBit_Size() in ttobjs.c */
+	sfnt   = (SFNT_Service)tt_face->sfnt;
+	err = sfnt->set_sbit_strike(tt_face,tt_x_ppem,tt_y_ppem,&instance->strike_index);
+	if ( err ) instance->strike_index=0xFFFFU;
     }
 
     /* maintain a linked list of instances */
@@ -872,20 +901,88 @@ ft_get_very_lazy_bbox( FT_UInt index,
     return -1;
 }
 
+static FT_Error
+FT_Do_SBit_Metrics( FT_Face ft_face, FT_Size ft_size, FT_ULong strike_index,
+		    FT_UShort glyph_index, FT_Glyph_Metrics *metrics_return )
+{
+    SFNT_Service       sfnt;
+    TT_Face            face;
+    FT_Error           error;
+    FT_Stream          stream;
+    TT_SBit_Strike     strike;
+    TT_SBit_Range      range;
+    TT_SBit_MetricsRec elem_metrics;
+    FT_ULong           ebdt_pos;
+    FT_ULong           glyph_offset;
+    ;
+
+    if ( ! FT_IS_SFNT( ft_face ) )
+    {
+        error=-1;
+        goto Exit;
+    }
+
+    face = (TT_Face)ft_face;
+    sfnt   = (SFNT_Service)face->sfnt;
+
+    if ( strike_index != 0xFFFFU && sfnt->load_sbits ) {
+        /* Check whether there is a glyph sbit for the current index */
+        error = sfnt->find_sbit_image( face, glyph_index, strike_index,
+                                       &range, &strike, &glyph_offset );
+    }
+    else error=-1;
+    if ( error ) goto Exit;
+
+    if ( metrics_return == NULL ) goto Exit;
+
+    stream = face->root.stream;
+
+    /* now, find the location of the `EBDT' table in */
+    /* the font file                                 */
+    error = face->goto_table( face, TTAG_EBDT, stream, 0 );
+    if ( error )
+      error = face->goto_table( face, TTAG_bdat, stream, 0 );
+    if (error)
+      goto Exit;
+
+    ebdt_pos = FT_STREAM_POS();
+
+    /* place stream at beginning of glyph data and read metrics */
+    if ( FT_STREAM_SEEK( ebdt_pos + glyph_offset ) )
+      goto Exit;
+
+    error = sfnt->load_sbit_metrics( stream, range, &elem_metrics );
+    if ( error )
+      goto Exit;
+
+    metrics_return->width  = (FT_Pos)elem_metrics.width  << 6;
+    metrics_return->height = (FT_Pos)elem_metrics.height << 6;
+
+    metrics_return->horiBearingX = (FT_Pos)elem_metrics.horiBearingX << 6;
+    metrics_return->horiBearingY = (FT_Pos)elem_metrics.horiBearingY << 6;
+    metrics_return->horiAdvance  = (FT_Pos)elem_metrics.horiAdvance  << 6;
+    
+    metrics_return->vertBearingX = (FT_Pos)elem_metrics.vertBearingX << 6;
+    metrics_return->vertBearingY = (FT_Pos)elem_metrics.vertBearingY << 6;
+    metrics_return->vertAdvance  = (FT_Pos)elem_metrics.vertAdvance  << 6;
+
+  Exit:
+      return error;
+}
+
 int
 FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
 		       FTInstancePtr instance, int hasMetrics)
 {
     FTFacePtr face;
-    FT_Bitmap *bitmap;
     FT_BBox bbox;
-    FT_Long outline_hori_advance;
-    FT_Long outline_vert_advance;
-    char *raster = NULL;
-    FT_Glyph_Metrics *metrics = NULL;
+    FT_Long outline_hori_advance, outline_vert_advance;
+    FT_Glyph_Metrics sbit_metrics;
+    FT_Glyph_Metrics *bitmap_metrics=NULL, *metrics = NULL;
+    char *raster;
     int wd, ht, bpr;            /* width, height, bytes per row */
     int wd_actual, ht_actual;
-    int ftrc, is_outline, b_shift=0, correct=0;
+    int ftrc, is_outline, correct, b_shift=0;
     int dx, dy;
     int leftSideBearing, rightSideBearing, characterWidth, rawCharacterWidth,
         ascent, descent;
@@ -895,23 +992,7 @@ FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
 
     FreeTypeActivateInstance(instance);
 
-    bitmap = &face->face->glyph->bitmap;
-
     if(!tgp) return AllocError;
-
-    if( instance->spacing == FT_CHARCELL ) correct=1;
-    else if( flags & FT_FORCE_CONSTANT_SPACING ) correct=1;
-    else if( instance->ttcap.flags & TTCAP_IS_VERY_LAZY ){
-	if( hasMetrics || (!hasMetrics && (flags & FT_GET_GLYPH_METRICS_ONLY)) ){
-	    /* If sbit is available, we don't use very lazy method. */
-	    /* See TT_Load_Glyph */
-	    if( FT_IS_SFNT( face->face ) ) {
-		TT_Size tt_size = (TT_Size)instance->size;
-		if( !( !(instance->load_flags & FT_LOAD_NO_BITMAP) 
-		       && tt_size->strike_index != 0xFFFFU ) ) correct=1;
-	    }
-	}
-    }
 
     /*
      * PREPARE METRICS
@@ -930,34 +1011,42 @@ FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
 	}
 	/* mono or prop. */
 	else{
-	    int new_width, try_very_lazy=correct;
+	    int new_width;
 	    double ratio;
 
-	    if( try_very_lazy ) {
-		if( ft_get_very_lazy_bbox( idx, face->face, instance->size, 
-					   instance->ttcap.vl_slant,
-					   &instance->transformation.matrix,
-					   &bbox, &outline_hori_advance, 
-					   &outline_vert_advance ) == 0 ) {
-		    goto bbox_ok;	/* skip exact calculation */
+	    if( ! (instance->load_flags & FT_LOAD_NO_BITMAP) ) {
+		if( FT_Do_SBit_Metrics(face->face,instance->size,instance->strike_index,
+				       idx,&sbit_metrics)==0 ) {
+		    bitmap_metrics = &sbit_metrics;
+		}
+	    }
+	    if( bitmap_metrics == NULL ) {
+		if ( instance->ttcap.flags & TTCAP_IS_VERY_LAZY ) {
+		    if( ft_get_very_lazy_bbox( idx, face->face, instance->size, 
+					       instance->ttcap.vl_slant,
+					       &instance->transformation.matrix,
+					       &bbox, &outline_hori_advance, 
+					       &outline_vert_advance ) == 0 ) {
+			goto bbox_ok;	/* skip exact calculation */
+		    }
+		}
+		ftrc = FT_Load_Glyph(instance->face->face, idx, 
+				     instance->load_flags);
+		if(ftrc != 0) return FTtoXReturnCode(ftrc);
+		metrics = &face->face->glyph->metrics;
+		if( face->face->glyph->format == FT_GLYPH_FORMAT_BITMAP ) {
+		    bitmap_metrics = metrics;
 		}
 	    }
 
-	    ftrc = FT_Load_Glyph(instance->face->face, idx, 
-				 instance->load_flags);
-	    metrics = &face->face->glyph->metrics;
-
-	    if(ftrc != 0) return FTtoXReturnCode(ftrc);
-
-	    if( face->face->glyph->format == FT_GLYPH_FORMAT_BITMAP ) {
-		/* bitmap, embedded bitmap */
-		leftSideBearing = metrics->horiBearingX / 64;
-		rightSideBearing = (metrics->width + metrics->horiBearingX) / 64;
-		bbox_center_raw = (2.0 * metrics->horiBearingX + metrics->width)/2.0/64.0;
-		characterWidth = (int)floor(metrics->horiAdvance 
+	    if( bitmap_metrics ) {
+		leftSideBearing = bitmap_metrics->horiBearingX / 64;
+		rightSideBearing = (bitmap_metrics->width + bitmap_metrics->horiBearingX) / 64;
+		bbox_center_raw = (2.0 * bitmap_metrics->horiBearingX + bitmap_metrics->width)/2.0/64.0;
+		characterWidth = (int)floor(bitmap_metrics->horiAdvance 
 					    * instance->ttcap.scaleBBoxWidth / 64.0 + .5);
-		ascent = metrics->horiBearingY / 64;
-		descent = (metrics->height - metrics->horiBearingY) / 64 ;
+		ascent = bitmap_metrics->horiBearingY / 64;
+		descent = (bitmap_metrics->height - bitmap_metrics->horiBearingY) / 64 ;
 		/* */
 		new_width = characterWidth;
 		if( instance->ttcap.flags & TTCAP_DOUBLE_STRIKE_CORRECT_B_BOX_WIDTH )
@@ -974,7 +1063,7 @@ FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
 		leftSideBearing  += instance->ttcap.lsbShiftOfBitmapAutoItalic;
 		/* */
 		rawCharacterWidth =
-		    (unsigned short)(short)(floor(1000 * metrics->horiAdvance 
+		    (unsigned short)(short)(floor(1000 * bitmap_metrics->horiAdvance 
 						  * instance->ttcap.scaleBBoxWidth * ratio / 64.
 						  / instance->pixel_size));
 	    }
@@ -1056,6 +1145,28 @@ FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
     }
 
     if( flags & FT_GET_GLYPH_METRICS_ONLY ) return Successful;
+
+    /*
+     * CHECK THE NECESSITY OF BITMAP POSITION'S CORRECTION
+     */
+
+    correct=0;
+    if( instance->spacing == FT_CHARCELL ) correct=1;
+    else if( flags & FT_FORCE_CONSTANT_SPACING ) correct=1;
+    else{
+	int sbit_available=0;
+	if( !(instance->load_flags & FT_LOAD_NO_BITMAP) ) {
+	    if( FT_Do_SBit_Metrics(face->face,instance->size,
+				   instance->strike_index,idx,NULL)==0 ) {
+		sbit_available=1;
+	    }
+	}
+	if( sbit_available == 0 ) {
+	    if ( instance->ttcap.flags & TTCAP_IS_VERY_LAZY ) {
+		if( FT_IS_SFNT(face->face) ) correct=1;
+	    }
+	}
+    }
 
     /*
      * RENDER AND ALLOCATE BUFFER
@@ -1199,11 +1310,13 @@ FreeTypeRasteriseGlyph(unsigned idx, int flags, CharInfoPtr tgp,
      */
 
     {
+	FT_Bitmap *bitmap;
 	int i, j;
 	unsigned char *current_raster;
 	unsigned char *current_buffer;
 	int mod_dx0,mod_dx1;
 	int div_dx;
+	bitmap = &face->face->glyph->bitmap;
 	if( 0 <= dx ){
 	    div_dx = dx / 8;
 	    mod_dx0 = dx % 8;

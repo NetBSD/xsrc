@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/Imakefile,v 1.44 2003/09/28 20:14:58 alanh Exp $
+XCOMM $XFree86: xc/lib/GL/Imakefile,v 1.46 2004/12/10 16:06:55 alanh Exp $
 
 XCOMM
 XCOMM Imake tokens which are significant to building libGL:
@@ -71,7 +71,7 @@ LIBGLBUILDDIR = GL
 #if BuildOSMesaLib || \
     (BuildXF86DRI && \
      (defined(DriDrivers) || GlxDriverUsesMesa || GlxBuiltInXMesa))
-     MESADIRS = mesa/src
+     MESADIRS = mesa
 #endif
 
 /*
@@ -79,7 +79,7 @@ LIBGLBUILDDIR = GL
  *   BuildOSMesaLib
  */
 #if BuildOSMesaLib
-   OSMESADIRS = mesa/src/OSmesa
+   OSMESADIRS = mesa/drivers/osmesa
 #endif
 
 /*
@@ -87,7 +87,7 @@ LIBGLBUILDDIR = GL
  *   BuildXF86DRI
  */
 #if BuildXF86DRI
-      DRIDIRS = dri
+      DRIDIRS = dri/drm
 #endif
 
 /*
@@ -95,7 +95,7 @@ LIBGLBUILDDIR = GL
  *   BuildXF86DRI && defined(DriDrivers)
  */
 #if BuildXF86DRI && defined(DriDrivers)
-   DRIVERDIRS = mesa/src/drv
+   DRIVERDIRS = mesa/drivers/dri
 #endif
 
 #if defined(DarwinArchitecture) && BuildAppleDRI

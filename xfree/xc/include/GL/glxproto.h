@@ -1,7 +1,7 @@
 #ifndef _GLX_glxproto_h_
 #define _GLX_glxproto_h_
 
-/* $XFree86: xc/include/GL/glxproto.h,v 1.7 2004/01/28 18:11:37 alanh Exp $ */
+/* $XFree86: xc/include/GL/glxproto.h,v 1.9 2004/06/30 20:21:36 martin Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -74,9 +74,15 @@
 
 #define __GLX_MAX_CONTEXT_PROPS 3
 
+#ifndef GLX_VENDOR
 #define GLX_VENDOR		0x1
+#endif
+#ifndef GLX_VERSION
 #define GLX_VERSION		0x2
+#endif
+#ifndef GLX_EXTENSIONS
 #define GLX_EXTENSIONS		0x3
+#endif
 
 /*****************************************************************************/
 
@@ -956,6 +962,20 @@ typedef struct GLXMakeCurrentReadSGI {
 } xGLXMakeCurrentReadSGIReq;
 #define sz_xGLXMakeCurrentReadSGIReq 24
 
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    GLXContextTag contextTag B32;
+    CARD32	writeVid B32;
+    CARD32	writeType B32;
+    CARD32	readVid B32;
+    CARD32	readType B32;
+    CARD32	pad6 B32;
+} xGLXMakeCurrentReadSGIReply;
+#define sz_xGLXMakeCurrentReadSGIReply 32
+
 /*
 ** glXGetFBConfigsSGIX request
 */
@@ -1006,6 +1026,61 @@ typedef struct GLXCreateGLXPixmapWithConfigSGIX {
     GLXPixmap	glxpixmap B32;
 } xGLXCreateGLXPixmapWithConfigSGIXReq;
 #define sz_xGLXCreateGLXPixmapWithConfigSGIXReq 28
+
+/*
+** glXJoinSwapGroupSGIX request
+*/
+typedef struct GLXJoinSwapGroupSGIX {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	vendorCode B32;		/* vendor-specific opcode */
+    CARD32 	unused B32;		/* corresponds to contextTag in hdr */
+    GLXDrawable	drawable B32;
+    GLXDrawable	member B32;
+} xGLXJoinSwapGroupSGIXReq;
+#define sz_xGLXJoinSwapGroupSGIXReq 20
+
+/*
+** glXBindSwapBarrierSGIX request
+*/
+typedef struct GLXBindSwapBarrierSGIX {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	vendorCode B32;		/* vendor-specific opcode */
+    CARD32 	unused B32;		/* corresponds to contextTag in hdr */
+    GLXDrawable	drawable B32;
+    CARD32	barrier B32;
+} xGLXBindSwapBarrierSGIXReq;
+#define sz_xGLXBindSwapBarrierSGIXReq 20
+
+/*
+** glXQueryMaxSwapBarriersSGIX request
+*/
+typedef struct GLXQueryMaxSwapBarriersSGIX {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	vendorCode B32;		/* vendor-specific opcode */
+    CARD32 	unused B32;		/* corresponds to contextTag in hdr */
+    CARD32	screen B32;
+} xGLXQueryMaxSwapBarriersSGIXReq;
+#define sz_xGLXQueryMaxSwapBarriersSGIXReq 16
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	max B32;
+    CARD32	size B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXQueryMaxSwapBarriersSGIXReply;
+#define sz_xGLXQueryMaxSwapBarriersSGIXReply 32
 
 /************************************************************************/
 
@@ -1699,6 +1774,12 @@ typedef struct {
     __GLX_COLOR_SUBTABLE_HDR;
 } __GLXdispatchColorSubTableHeader;
 
+#define GLX_WINDOW_TYPE		1
+#define GLX_PIXMAP_TYPE		2
+#define GLX_VIDEO_SOURCE_TYPE	3
+#define GLX_PBUFFER_TYPE	4
+/* 5 is for DM_PBUFFER */
+#define GLX_GLXWINDOW_TYPE	6	
 
 /*****************************************************************************/
 
@@ -2095,6 +2176,17 @@ typedef struct {
 
 /* Opcodes for Vendor Private commands */
 
+
+#define X_GLvop_GetConvolutionFilterEXT        1
+#define X_GLvop_GetConvolutionParameterfvEXT   2
+#define X_GLvop_GetConvolutionParameterivEXT   3
+#define X_GLvop_GetSeparableFilterEXT          4
+#define X_GLvop_GetHistogramEXT                5
+#define X_GLvop_GetHistogramParameterfvEXT     6
+#define X_GLvop_GetHistogramParameterivEXT     7
+#define X_GLvop_GetMinmaxEXT                   8
+#define X_GLvop_GetMinmaxParameterfvEXT        9
+#define X_GLvop_GetMinmaxParameterivEXT        10
 #define X_GLvop_AreTexturesResidentEXT         11
 #define X_GLvop_DeleteTexturesEXT              12
 #define X_GLvop_GenTexturesEXT                 13
@@ -2130,7 +2222,16 @@ typedef struct {
 #define X_GLvop_GetProgramNamedParameter4dvNV  1311
 #define X_GLvop_SampleMaskSGIS                 2048
 #define X_GLvop_SamplePatternSGIS              2049
-
+#define X_GLvop_GetDetailTexFuncSGIS           4096
+#define X_GLvop_GetSharpenTexFuncSGIS          4097
+#define X_GLvop_GetColorTableSGI               4098
+#define X_GLvop_GetColorTableParameterfvSGI    4099
+#define X_GLvop_GetColorTableParameterivSGI    4100
+#define X_GLvop_GetTexFilterFuncSGIS           4101
+#define X_GLvop_GetInstrumentsSGIX             4102
+#define X_GLvop_InstrumentsBufferSGIX          4103
+#define X_GLvop_PollInstrumentsSGIX            4104
+#define X_GLvop_FlushRasterSGIX                4105
 
 /* Opcodes for GLX vendor private commands */
 

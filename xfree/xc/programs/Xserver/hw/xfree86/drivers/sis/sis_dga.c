@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.13 2004/01/04 18:08:00 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.16 2004/12/07 15:59:20 tsi Exp $ */
+/* $XdotOrg$ */
 /*
  * SiS DGA handling
  *
@@ -39,13 +40,17 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "sis.h"
 #include "sis_regs.h"
 #include "dgaproc.h"
 
+#ifndef NEW_DGAOPENFRAMEBUFFER
 static Bool SIS_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-                    int *, int *, int *);
+                                int *, int *, int *);
+#else
+static Bool SIS_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+                                unsigned int *, unsigned int *, unsigned int *);
+#endif
 static Bool SIS_SetMode(ScrnInfoPtr, DGAModePtr);
 static void SIS_Sync(ScrnInfoPtr);
 static int  SIS_GetViewport(ScrnInfoPtr);
@@ -53,7 +58,7 @@ static void SIS_SetViewport(ScrnInfoPtr, int, int, int);
 static void SIS_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void SIS_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 static void SIS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int,
-                    unsigned long);
+                              unsigned long);
 
 static
 DGAFunctionRec SISDGAFuncs = {
@@ -405,18 +410,29 @@ static Bool
 SIS_OpenFramebuffer(
    ScrnInfoPtr pScrn,
    char **name,
+#ifndef NEW_DGAOPENFRAMEBUFFER
    unsigned char **mem,
    int *size,
    int *offset,
    int *flags
+#else
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
+#endif
 ){
     SISPtr pSiS = SISPTR(pScrn);
 
     *name = NULL;       /* no special device */
-    *mem = (unsigned char*)pSiS->FbAddress;
+#ifndef NEW_DGAOPENFRAMEBUFFER
+    *mem = (unsigned char *)pSiS->FbAddress;
+#else
+    *mem = pSiS->FbAddress;
+#endif
     *size = pSiS->maxxfbmem;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

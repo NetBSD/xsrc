@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.5 2002/11/25 14:04:58 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.7 2004/12/07 15:59:18 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -6,13 +6,13 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "ct_driver.h"
 #include "dgaproc.h"
 
 
-static Bool CHIPS_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-					int *, int *, int *);
+static Bool CHIPS_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				  unsigned int *, unsigned int *,
+				  unsigned int *);
 static Bool CHIPS_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  CHIPS_GetViewport(ScrnInfoPtr);
 static void CHIPS_SetViewport(ScrnInfoPtr, int, int, int);
@@ -20,7 +20,7 @@ static void CHIPS_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void CHIPS_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 #if 0
 static void CHIPS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
-					unsigned long);
+				unsigned long);
 #endif
 
 static
@@ -299,18 +299,18 @@ static Bool
 CHIPS_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)cPtr->FbAddress;
+    *mem = cPtr->FbAddress;
     *size = cPtr->FbMapSize;
     *offset = 0;
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

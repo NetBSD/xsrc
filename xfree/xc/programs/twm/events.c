@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/events.c,v 1.13 2003/04/21 11:46:13 herrb Exp $ */
+/* $XFree86: xc/programs/twm/events.c,v 1.14 2004/06/08 01:17:02 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -285,7 +285,9 @@ Window WindowOfEvent (e)
  *
  ***********************************************************************
  */
-Bool DispatchEvent2 ()
+
+Bool
+DispatchEvent2()
 {
     Window w = Event.xany.window;
     StashEventTime (&Event);
@@ -309,6 +311,8 @@ Bool DispatchEvent2 ()
     return True;
 }
 
+
+
 /***********************************************************************
  *
  *  Procedure:
@@ -316,7 +320,9 @@ Bool DispatchEvent2 ()
  *
  ***********************************************************************
  */
-Bool DispatchEvent ()
+
+Bool
+DispatchEvent()
 {
     Window w = Event.xany.window;
     StashEventTime (&Event);
@@ -791,9 +797,6 @@ HandlePropertyNotify()
 
     if (!Tmp_win) return;		/* unknown window */
 
-#define MAX_NAME_LEN 200L		/* truncate to this many */
-#define MAX_ICON_NAME_LEN 200L		/* ditto */
-
     switch (Event.xproperty.atom) {
       case XA_WM_NAME:
 	if (!I18N_FetchName(dpy, Tmp_win->w, &name)) return;
@@ -827,6 +830,7 @@ HandlePropertyNotify()
       case XA_WM_ICON_NAME:
 	if (!I18N_GetIconName(dpy, Tmp_win->w, &name)) return;
 	free_window_names (Tmp_win, False, False, True);
+
 	Tmp_win->icon_name = strdup(name ? name : NoName);
 	if (name) free(name);
 
@@ -970,34 +974,18 @@ HandlePropertyNotify()
 /***********************************************************************
  *
  *  Procedure:
- *	RedoIconName - procedure to re-position the icon window and name
+ *	RedoIconSize - procedure to re-calculate the icon size
  *
  ***********************************************************************
  */
+
 void
-RedoIconName()
+RedoIconSize(TwmWindow *Tmp_win)
 {
-    int x, y;
-
-    if (Tmp_win->list)
-    {
-	/* let the expose event cause the repaint */
-	XClearArea(dpy, Tmp_win->list->w, 0,0,0,0, True);
-
-	if (Scr->SortIconMgr)
-	    SortIconManager(Tmp_win->list->iconmgr);
-    }
-
-    if (Tmp_win->icon_w == (Window) 0)
-	return;
-
-    if (Tmp_win->icon_not_ours)
-	return;
-
     Tmp_win->icon_w_width = MyFont_TextWidth(&Scr->IconFont,
 	Tmp_win->icon_name, strlen(Tmp_win->icon_name));
 
-    Tmp_win->icon_w_width += 6;
+    Tmp_win->icon_w_width += 8;
     if (Tmp_win->icon_w_width < Tmp_win->icon_width)
     {
 	Tmp_win->icon_x = (Tmp_win->icon_width - Tmp_win->icon_w_width)/2;
@@ -1009,15 +997,51 @@ RedoIconName()
 	Tmp_win->icon_x = 3;
     }
 
-    if (Tmp_win->icon_w_width == Tmp_win->icon_width)
-	x = 0;
-    else
-	x = (Tmp_win->icon_w_width - Tmp_win->icon_width)/2;
-
-    y = 0;
+    if (Tmp_win->icon_w_width > Scr->IconMaxWidth)
+	Tmp_win->icon_w_width = Scr->IconMaxWidth;
 
     Tmp_win->icon_w_height = Tmp_win->icon_height + Scr->IconFont.height + 4;
     Tmp_win->icon_y = Tmp_win->icon_height + Scr->IconFont.height;
+}
+
+
+
+/***********************************************************************
+ *
+ *  Procedure:
+ *	RedoIconName - procedure to re-position the icon window and name
+ *
+ ***********************************************************************
+ */
+
+void
+RedoIconName()
+{
+    int x, y;
+
+    if (Tmp_win->list)
+    {
+	/* let the expose event cause the repaint */
+	XClearArea(dpy, Tmp_win->list->w, 0, 0, 0, 0, True);
+
+	if (Scr->SortIconMgr)
+	    SortIconManager(Tmp_win->list->iconmgr);
+    }
+
+    if (Tmp_win->icon_w == (Window) 0)
+	return;
+
+    if (Tmp_win->icon_not_ours)
+	return;
+
+    RedoIconSize(Tmp_win);
+
+    if (Tmp_win->icon_w_width == Tmp_win->icon_width)
+	x = 0;
+    else
+	x = (Tmp_win->icon_w_width - Tmp_win->icon_width) / 2;
+
+    y = 0;
 
     XResizeWindow(dpy, Tmp_win->icon_w, Tmp_win->icon_w_width,
 	Tmp_win->icon_w_height);
@@ -1075,6 +1099,7 @@ HandleClientMessage()
  *
  ***********************************************************************
  */
+
 void
 HandleExpose()
 {
@@ -1107,27 +1132,69 @@ HandleExpose()
     } 
     else if (Tmp_win != NULL)
     {
+	Region new_region;
+	XGCValues values;
+	unsigned long valuemask;
+	int buttonwidth = (Scr->TBInfo.width + 2 * Scr->TBInfo.pad);
+
 	if (Event.xany.window == Tmp_win->title_w)
 	{
+	    XRectangle rect;
+
+	    rect.x = 0;
+	    rect.y = 0;
+	    rect.width = Tmp_win->title_width - buttonwidth - Scr->BorderWidth;
+	    rect.height = Tmp_win->title_height;
+
 	    MyFont_ChangeGC(Tmp_win->title.fore, Tmp_win->title.back,
 		&Scr->TitleBarFont);
+
+	    new_region = XCreateRegion();
+	    XUnionRectWithRegion(&rect, new_region, new_region);
+	    XSetRegion(dpy, Scr->NormalGC, new_region);
+	    XDestroyRegion(new_region);
 
 	    MyFont_DrawString (dpy, Tmp_win->title_w, &Scr->TitleBarFont,
 		Scr->NormalGC, Scr->TBInfo.titlex, Scr->TitleBarFont.y, 
 		Tmp_win->name, strlen(Tmp_win->name));
+
+	    valuemask = GCClipMask;
+	    values.clip_mask = None;
+	    XChangeGC(dpy, Scr->NormalGC, valuemask, &values);
+
 	    flush_expose (Event.xany.window);
+	    return;
 	}
 	else if (Event.xany.window == Tmp_win->icon_w)
 	{
+	    XRectangle rect;
+
+	    rect.x = 4;
+	    rect.y = 0;
+	    rect.width = Tmp_win->icon_w_width - 8;
+	    rect.height = Tmp_win->icon_w_height;
+
 	    MyFont_ChangeGC(Tmp_win->iconc.fore, Tmp_win->iconc.back,
 		&Scr->IconFont);
+
+	    new_region = XCreateRegion();
+	    XUnionRectWithRegion(&rect, new_region, new_region);
+	    XSetRegion(dpy, Scr->NormalGC, new_region);
+	    XDestroyRegion(new_region);
 
 	    MyFont_DrawString (dpy, Tmp_win->icon_w, &Scr->IconFont,
 		Scr->NormalGC, Tmp_win->icon_x, Tmp_win->icon_y,
 		Tmp_win->icon_name, strlen(Tmp_win->icon_name));
+
+	    valuemask = GCClipMask;
+	    values.clip_mask = None;
+	    XChangeGC(dpy, Scr->NormalGC, valuemask, &values);
+
 	    flush_expose (Event.xany.window);
 	    return;
-	} else if (Tmp_win->titlebuttons) {
+	}
+	else if (Tmp_win->titlebuttons)
+	{
 	    int i;
 	    Window w = Event.xany.window;
 	    register TBWindow *tbw;
@@ -1146,7 +1213,9 @@ HandleExpose()
 		}
 	    }
 	}
-	if (Tmp_win->list) {
+
+	if (Tmp_win->list)
+	{
 	    if (Event.xany.window == Tmp_win->list->w)
 	    {
 		MyFont_ChangeGC(Tmp_win->list->fore, Tmp_win->list->back,
@@ -1159,7 +1228,7 @@ HandleExpose()
 		flush_expose (Event.xany.window);
 		return;
 	    }
-	    if (Event.xany.window == Tmp_win->list->icon)
+	    else if (Event.xany.window == Tmp_win->list->icon)
 	    {
 		FB(Tmp_win->list->fore, Tmp_win->list->back);
 		XCopyPlane(dpy, Scr->siconifyPm, Tmp_win->list->icon,
@@ -1555,6 +1624,7 @@ HandleMotionNotify()
  *
  ***********************************************************************
  */
+
 void
 HandleButtonRelease()
 {
@@ -1765,6 +1835,7 @@ do_menu (menu, w)
  *
  ***********************************************************************
  */
+
 void
 HandleButtonPress()
 {
@@ -2464,6 +2535,7 @@ HandleConfigureRequest()
  *
  ***********************************************************************
  */
+
 void
 HandleShapeNotify ()
 {
@@ -2584,6 +2656,7 @@ static void flush_expose (w)
  *
  ***********************************************************************
  */
+
 void
 InstallWindowColormaps (type, tmp)
     int type;
@@ -2694,6 +2767,7 @@ InstallWindowColormaps (type, tmp)
  *	   other colormap list would potentially be loaded anyway.
  ***********************************************************************
  */
+
 void
 InstallRootColormap()
 {

@@ -1,4 +1,7 @@
-/* $XFree86: xc/programs/Xserver/Xext/appgroup.h,v 1.1 2003/07/16 01:38:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/appgroup.h,v 1.2 2004/06/25 15:44:42 tsi Exp $ */
+
+#ifndef APPGROUP_H
+#define APPGROUP_H 1
 
 void XagClientStateChange(
     CallbackListPtr* pcbl,
@@ -8,3 +11,5 @@ int ProcXagCreate (
     register ClientPtr client);
 int ProcXagDestroy(
     register ClientPtr client);
+
+#endif

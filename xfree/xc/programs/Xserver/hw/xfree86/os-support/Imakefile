@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.62 2003/11/24 02:02:29 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.63 2004/06/23 19:40:17 tsi Exp $
 
 
 
@@ -121,5 +121,4 @@ InstallDriverSDKNonExecFile(xf86_OSlib.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xf86_ansic.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xf86_libc.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xf86drm.h,$(DRIVERSDKINCLUDEDIR))
-InstallDriverSDKNonExecFile(xf86drmCompat.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(assyntax.h,$(DRIVERSDKINCLUDEDIR))

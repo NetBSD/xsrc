@@ -15,7 +15,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.13 2003/11/17 22:20:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.14 2004/06/02 22:43:00 dawes Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -509,6 +509,12 @@ static void getKbdType()
 	}
     }
     FatalError ("Unsupported keyboard type %d\n", sunKbdPriv.type);
+}
+
+void OsVendorPreInit(
+    void
+)
+{
 }
 
 void OsVendorInit(

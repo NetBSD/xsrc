@@ -1,8 +1,8 @@
 .\" $XConsortium: xev.man,v 1.10 94/04/17 20:45:20 gildea Exp $
 .\"
-.\" $XFree86: xc/programs/xev/xev.man,v 1.4 2003/05/24 15:49:02 herrb Exp $
+.\" $XFree86: xc/programs/xev/xev.man,v 1.5 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH XEV 1 __xorgversion__
+.TH XEV 1 __vendorversion__
 .SH NAME
 xev - print contents of X events
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-MANIFEST for xterm, version xterm-184
+MANIFEST for xterm, version xterm-200
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 256colres.h                     resource-definitions for 256-color mode
@@ -10,6 +10,7 @@ INSTALL                         configure script: options and related install in
 Imakefile                       imake template for Makefile
 Makefile.in                     configure script template for Makefile
 README                          overview & caveats for 'xterm'
+README.i18n                     i18n readme:
 README.os390                    overview for os390 (EBCDIC) port of 'xterm'
 TekPrsTbl.c                     Tek4014 parser state tables
 Tekparse.def                    template for generating Tekparse.h
@@ -30,6 +31,7 @@ charproc.c                      VT100 parser functions
 charsets.c                      module to translate character-sets
 config.guess                    configure script: guess the system type
 config.sub                      configure script: validate system type
+configure                       generated
 configure.in                    template for generating configure script
 configure                       Configuration script for UNIX
 ctlseqs.ms                      documentation: Xterm Control Sequences
@@ -40,6 +42,7 @@ doublechr.c                     VT100 double-size character support
 error.h                         error-code definitions for 'xterm'
 fontutils.c                     xterm functions for (re)loading fonts
 fontutils.h                     interface of fontutils.c
+gen-pc-fkeys.pl                 script to generate extended function-key terminfo
 input.c                         VT100 key-symbol and function-key translation
 install.sh                      configure script: fallback install script
 keysym2ucs.c                    lookup-table for UTF-8 to keysyms
@@ -84,12 +87,14 @@ xstrings.c                      a few common string functions
 xstrings.h                      interface of xstrings.c
 xterm.dat                       application defaults for VMS port of 'xterm'
 xterm.h                         common includes, definitions and prototypes for 'xterm'
+xterm.log.html                  changelog for xterm
 xterm.man                       manual page for 'xterm'
 xterm_axp.opt                   linker options file for VMS port of 'xterm'
 xterm_io.h                      split-out definitions of termio/termios/sgtty and winsize from main.c, os2main.c, screen.c and resize.c
 xtermcfg.hin                    configure script: template for xtermcfg.h
 xutf8.c                         JC's cleanup of UTF8
 xutf8.h                         JC's cleanup of UTF8
+tektests                        subdirectory
 tektests/aitest.tek             tek4014 demo: draw a globe
 tektests/dmerc.tek              tek4014 demo: draws a Mercator projection with orbit
 tektests/fotest.tek             tek4014 demo: draw a scatterplot on log scale
@@ -97,12 +102,14 @@ tektests/imtest.tek             tek4014 demo: draw a test pattern
 tektests/imtesth.tek            tek4014 demo: draw a test pattern
 tektests/ocpred.tek             tek4014 demo: an occultation prediction
 tektests/usmap.tek              tek4014 demo: a US map
+unicode                         subdirectory
 unicode/README                  description of files in ./unicode
 unicode/convmap.pl              perl script for generating the lookup table for UTF-8 to keysym
 unicode/keysym.map              keysym mapping from UTF-8
 unicode/make-precompose.sh      make precompose.c
 unicode/precompose.c.head       header of precompose.c
 unicode/precompose.c.tail       tail of precompose.c
+vttests                         subdirectory
 vttests/16colors.sh             test-script to show 16-colors
 vttests/256colors.pl            script to illustrate 256-colors
 vttests/256colors2.pl           fancy test-script for 256-colors
@@ -113,5 +120,7 @@ vttests/acolors.sh              demonstrate changing the ANSI colors
 vttests/doublechars.sh          test script to demonstrate doublesize chars
 vttests/dynamic.sh              script to illustrate the dynamic colors control sequence
 vttests/fonts.sh                script to demonstrate font-switching sequences
+vttests/resize.pl               translated resize.sh to perl since it is easy to test, and I needed
 vttests/resize.sh               script to demonstrate resizing
+vttests/tcapquery.pl            script to test tcap-query option
 vttests/title.sh                test-script to show title of xterm in action

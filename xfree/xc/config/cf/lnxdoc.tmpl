@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.12 2003/04/23 15:43:29 tsi Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.13 2005/03/07 16:39:16 tsi Exp $
 XCOMM
 
 #ifndef HasSgmlFmt
@@ -66,8 +66,8 @@ XCOMM
 
 XCOMM Some extra things to clean
 
-#ifdef ExtraFilesToClean
-#undef ExtraFilesToClean
+#ifdef DocFilesToClean
+#undef DocFilesToClean
 #endif
-#define ExtraFilesToClean *.aux *.dvi *.log *.tex *.toc *.html *.ps *.latin1
+#define DocFilesToClean *.aux *.dvi *.log *.tex *.toc *.html *.ps *.latin1
 

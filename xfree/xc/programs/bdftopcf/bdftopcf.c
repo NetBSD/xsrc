@@ -27,7 +27,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/bdftopcf/bdftopcf.c,v 1.5 2001/12/14 20:00:39 dawes Exp $ */
+/* $XFree86: xc/programs/bdftopcf/bdftopcf.c,v 1.6 2004/12/16 20:26:24 dawes Exp $ */
 
 #include <X11/X.h>
 #include <X11/Xproto.h>
@@ -144,7 +144,7 @@ main (int argc, char *argv[])
 		fprintf(stderr,
 			"       where # for -p is 1, 2, 4, or 8\n");
 		fprintf(stderr,
-			"       and   # for -s is 1, 2, or 4\n");
+			"       and   # for -u is 1, 2, or 4\n");
 		exit(1);
 	    }
 	    input_name = argv[0];

@@ -1,8 +1,7 @@
-/* $DHD: xc/programs/Xserver/hw/xfree86/common/xf86AutoConfig.c,v 1.15 2003/09/24 19:39:36 dawes Exp $ */
 
 /*
- * Copyright 2003 by David H. Dawes.
- * Copyright 2003 by X-Oz Technologies.
+ * Copyright © 2003, 2004, 2005 David H. Dawes.
+ * Copyright © 2003, 2004, 2005 X-Oz Technologies.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -44,10 +43,10 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
- * Author: David Dawes <dawes@XFree86.Org>.
+ * Author: David Dawes <dawes@x-oz.com>.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AutoConfig.c,v 1.3 2003/12/12 00:39:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AutoConfig.c,v 1.8 2005/02/19 01:02:34 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86Parser.h"
@@ -55,6 +54,11 @@
 #include "xf86Config.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
+#include "xf86Bus.h"
+
+#if defined(__sparc__) && !defined(__OpenBSD__)
+#define SBUS_SUPPORT
+#endif
 
 /*
  * Sections for the default built-in configuration.
@@ -62,6 +66,7 @@
 
 #define BUILTIN_MODULE_SECTION \
 	"Section \"Module\"\n" \
+	"\tIdentifier\t\"Builtin Default Modules\"\n" \
 	"\tLoad\t\"extmod\"\n" \
 	"\tLoad\t\"dbe\"\n" \
 	"\tLoad\t\"glx\"\n" \
@@ -190,45 +195,82 @@ xf86AutoConfig(void)
     pciVideoPtr *pciptr, info = NULL;
     char *driver = NULL;
     FILE *gp = NULL;
-    ConfigStatus ret;
+    XF86ConfigPtr pConfig;
+    Bool foundDev = FALSE;
+#ifdef SBUS_SUPPORT
+    char *promPath;
+#endif
 
     /* Find the primary device, and get some information about it. */
     if (xf86PciVideoInfo) {
 	for (pciptr = xf86PciVideoInfo; (info = *pciptr); pciptr++) {
 	    if (xf86IsPrimaryPci(info)) {
+		foundDev = TRUE;
 		break;
 	    }
 	}
 	if (!info) {
-	    ErrorF("Primary device is not PCI\n");
+	    xf86MsgVerb(X_INFO, 3, "AutoConfig: Primary device is not PCI.\n");
 	}
     } else {
-	ErrorF("xf86PciVideoInfo is not set\n");
+	xf86MsgVerb(X_INFO, 3, "AutoConfig: xf86PciVideoInfo is not set.\n");
     }
+#ifdef SBUS_SUPPORT
+    if (!foundDev) {
+	sbusDevicePtr psdp, *psdpp;
+	Bool useProm = FALSE;
 
-    if (info) {
+	if (xf86SbusInfo) {
+	    if (sparcPromInit() >= 0)
+		useProm = TRUE;
+	    for (psdpp = xf86SbusInfo; (psdp = *psdpp); psdpp++) {
+		if (psdp->fd == -2)
+		    continue;
+		foundDev = TRUE;
+		if (useProm && psdp->node.node)
+		    promPath = sparcPromNode2Pathname(&psdp->node);
+		else
+		    xasprintf(&promPath, "fb%d", psdp->fbNum);
+		break;
+	    }
+	    if (useProm)
+		sparcPromClose();
+	} else {
+	    xf86MsgVerb(X_INFO, 3, "AutoConfig: xf86SbusInfo is not set.\n");
+	}
+    }
+#endif
+
+    if (!foundDev)
+	xf86Msg(X_WARNING,
+		"AutoConfig: Cannot detect the primary video device.\n");
+
+    if (foundDev) {
 	char *tmp;
 	char *path = NULL, *a, *b;
 	char *searchPath = NULL;
 
 	/*
-	 * Look for the getconfig program first in the xf86ModulePath
-	 * directories, then in BINDIR.  If it isn't found in any of those
-	 * locations, just use the normal search path.
+	 * Look for the getconfig program first in the
+	 * xf86FilePaths->modulePath directories, then in BINDIR.
+	 * If it isn't found in any of those locations, just use the normal
+	 * search path.
 	 */
 
-	if (xf86ModulePath) {
-	    a = xnfstrdup(xf86ModulePath);
+	a = xstrdup(xf86FilePaths->modulePath);
+	if (a) {
 	    b = strtok(a, ",");
 	    while (b) {
-		path = xnfrealloc(path,
-				  strlen(b) + 1 + strlen(GET_CONFIG_CMD) + 1);
-		sprintf(path, "%s/%s", b, GET_CONFIG_CMD);
-		if (access(path, X_OK) == 0)
+		if (path) {
+		    xfree(path);
+		    path = NULL;
+		}
+		xasprintf(&path, "%s/%s", b, GET_CONFIG_CMD);
+		if (path && access(path, X_OK) == 0)
 		    break;
 		b = strtok(NULL, ",");
 	    }
-	    if (!b) {
+	    if (!b && path) {
 		xfree(path);
 		path = NULL;
 	    }
@@ -253,26 +295,36 @@ xf86AutoConfig(void)
 	 *
 	 * /etc/X11
 	 * PROJECTROOT/etc/X11
-	 * xf86ModulePath
+	 * xf86FilePaths->modulePath
 	 * PROJECTROOT/lib/X11/getconfig  (GETCONFIG_DIR)
 	 */
 
 	searchPath = xnfalloc(strlen("/etc/X11") + 1 +
 			      strlen(PROJECTROOT "/etc/X11") + 1 +
-			      (xf86ModulePath ? strlen(xf86ModulePath) : 0)
+			      (xf86FilePaths->modulePath ?
+				    strlen(xf86FilePaths->modulePath) : 0)
 				+ 1 +
 			      strlen(GETCONFIG_DIR) + 1);
 	strcpy(searchPath, "/etc/X11," PROJECTROOT "/etc/X11,");
-	if (xf86ModulePath && *xf86ModulePath) {
-	    strcat(searchPath, xf86ModulePath);
+	if (xf86FilePaths->modulePath && *xf86FilePaths->modulePath) {
+	    strcat(searchPath, xf86FilePaths->modulePath);
 	    strcat(searchPath, ",");
 	}
 	strcat(searchPath, GETCONFIG_DIR);
 
-	ErrorF("xf86AutoConfig: Primary PCI is %d:%d:%d\n",
-	       info->bus, info->device, info->func);
+	if (info) {
+	    xf86MsgVerb(X_INFO, 3, "AutoConfig: Primary PCI is %d:%d:%d\n",
+			info->bus, info->device, info->func);
+	}
+#ifdef SBUS_SUPPORT
+	else if (promPath) {
+	    xf86MsgVerb(X_INFO, 3, "AutoConfig: Primary SBUS is %s\n",
+			promPath);
+	}
+#endif
 
-	snprintf(buf, sizeof(buf), "%s"
+	if (info) {
+	    snprintf(buf, sizeof(buf), "%s"
 #ifdef DEBUG
 		 " -D"
 #endif
@@ -286,7 +338,24 @@ xf86AutoConfig(void)
 		 info->vendor, info->chipType, info->chipRev,
 		 info->subsysVendor, info->subsysCard,
 		 info->class << 8 | info->subclass);
-	ErrorF("Running \"%s\"\n", buf);
+	}
+#ifdef SBUS_SUPPORT
+	else if (promPath) {
+	    snprintf(buf, sizeof(buf), "%s"
+#ifdef DEBUG
+		 " -D"
+#endif
+		 " -X %d"
+		 " -I %s"
+		 " -S %s",
+		 path,
+		 (unsigned int)xf86GetVersion(),
+		 searchPath,
+		 promPath);
+	    xfree(promPath);
+	}
+#endif
+	xf86MsgVerb(X_INFO, 3, "AutoConfig: Running \"%s\".\n", buf);
 	gp = Popen(buf, "r");
 	if (gp) {
 	    if (fgets(buf, sizeof(buf) - 1, gp)) {
@@ -307,11 +376,12 @@ xf86AutoConfig(void)
 	snprintf(buf, sizeof(buf), BUILTIN_DEVICE_SECTION_PRE,
 		 driver, 0, driver);
 	AppendToConfig(buf);
-	ErrorF("New driver is \"%s\"\n", driver);
+	xf86MsgVerb(X_INFO, 3, "AutoConfig: New driver is \"%s\".\n", driver);
 	buf[0] = '\t';
 	while (fgets(buf + 1, sizeof(buf) - 2, gp)) {
 	    AppendToConfig(buf);
-	    ErrorF("Extra line: %s", buf);
+	    xf86MsgVerb(X_INFO, 3, "AutoConfig: Extra line: '%.*s'.\n",
+			(int)strlen(buf) - 2, buf + 1);
 	}
 	AppendToConfig(BUILTIN_DEVICE_SECTION_POST);
 	snprintf(buf, sizeof(buf), BUILTIN_SCREEN_SECTION,
@@ -357,14 +427,13 @@ xf86AutoConfig(void)
     xf86MsgVerb(X_DEFAULT, 3, "--- End of built-in configuration ---\n");
     
     xf86setBuiltinConfig(builtinConfig);
-    ret = xf86HandleConfigFile(TRUE);
+    pConfig = (XF86ConfigPtr)(xf86Info.config);
+    xf86Info.config = xf86parseConfigFile(pConfig);
     FreeConfig();
-    switch(ret) {
-    case CONFIG_OK:
-	return TRUE;
-    default:
+    if (!xf86Info.config) {
 	xf86Msg(X_ERROR, "Error parsing the built-in default configuration.\n");
 	return FALSE;
     }
+    return TRUE;
 }
 

@@ -1,4 +1,4 @@
-XCOMM  $XFree86: xc/nls/XLC_LOCALE/georgian-ps,v 1.2 2000/12/01 17:43:02 dawes Exp $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/georgian-ps,v 1.3 2005/02/02 14:33:23 pascal Exp $
 XCOMM  XLocale Database Sample for georgian-ps
 XCOMM 
 
@@ -20,6 +20,11 @@ XCOMM 	fs1 class
 fs1	{
 	charset         GEORGIAN-PS:GR
 	font            GEORGIAN-PS:GR
+}
+XCOMM 	fs2 class 
+fs2	{
+	charset         GEORGIAN-PS:GL
+	font            GEORGIAN-PS:GL
 }
 END XLC_FONTSET
 

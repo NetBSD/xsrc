@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/GCManager.c,v 1.6 2001/12/14 19:56:14 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/GCManager.c,v 1.7 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -110,12 +110,12 @@ static Bool Matches(
     checkMask = readOnlyMask & ~ptr->unused_mask;
     CHECK(GCForeground, foreground, 0);
     CHECK(GCBackground, background, 1);
-    CHECK(GCFont, font, ~0L);
+    CHECK(GCFont, font, ~0UL);
     CHECK(GCFillStyle, fill_style, FillSolid);
     CHECK(GCLineWidth, line_width, 0);
     CHECK(GCFunction, function, GXcopy);
     CHECK(GCGraphicsExposures, graphics_exposures, True);
-    CHECK(GCTile, tile, ~0L);
+    CHECK(GCTile, tile, ~0UL);
     CHECK(GCSubwindowMode, subwindow_mode, ClipByChildren);
     CHECK(GCPlaneMask, plane_mask, AllPlanes);
     CHECK(GCLineStyle, line_style, LineSolid);
@@ -123,7 +123,7 @@ static Bool Matches(
     CHECK(GCJoinStyle, join_style, JoinMiter);
     CHECK(GCFillRule, fill_rule, EvenOddRule);
     CHECK(GCArcMode, arc_mode, ArcPieSlice);
-    CHECK(GCStipple, stipple, ~0L);
+    CHECK(GCStipple, stipple, ~0UL);
     CHECK(GCTileStipXOrigin, ts_x_origin, 0);
     CHECK(GCTileStipYOrigin, ts_y_origin, 0);
     CHECK(GCClipXOrigin, clip_x_origin, 0);
@@ -147,9 +147,9 @@ static Bool Matches(
 } /* Matches */
 
 /* Called by CloseDisplay to free the per-display GC list */
-void _XtGClistFree(dpy, pd)
-    Display *dpy;
-    register XtPerDisplay pd;
+void _XtGClistFree(
+    Display *dpy,
+    register XtPerDisplay pd)
 {
     register GCptr GClist, next;
     register int i;
@@ -170,17 +170,17 @@ void _XtGClistFree(dpy, pd)
 }
 
 
-/* 
+/*
  * Return a GC with the given values and characteristics.
  */
 
-GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
-    register Widget widget;
-    Cardinal	    depth;
-    XtGCMask        valueMask;
-    XGCValues       *values;
-    XtGCMask        dynamicMask;
-    XtGCMask        unusedMask;
+GC XtAllocateGC(
+    register Widget widget,
+    Cardinal	    depth,
+    XtGCMask        valueMask,
+    XGCValues       *values,
+    XtGCMask        dynamicMask,
+    XtGCMask        unusedMask)
 {
     register GCptr *prev;
     register GCptr cur;
@@ -234,7 +234,7 @@ GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
     drawable = 0;
     if (depth == widget->core.depth)
 	drawable = XtWindow(widget);
-    if (!drawable && depth == DefaultDepthOfScreen(screen))
+    if (!drawable && depth == (Cardinal) DefaultDepthOfScreen(screen))
 	drawable = RootWindowOfScreen(screen);
     if (!drawable) {
 	if (!pd->pixmap_tab) {
@@ -274,21 +274,21 @@ GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
     return retval;
 } /* XtAllocateGC */
 
-/* 
- * Return a read-only GC with the given values.  
+/*
+ * Return a read-only GC with the given values.
  */
 
-GC XtGetGC(widget, valueMask, values)
-    register Widget widget;
-    XtGCMask        valueMask;
-    XGCValues       *values;
+GC XtGetGC(
+    register Widget widget,
+    XtGCMask        valueMask,
+    XGCValues       *values)
 {
     return XtAllocateGC(widget, 0, valueMask, values, 0, 0);
 } /* XtGetGC */
 
-void  XtReleaseGC(widget, gc)
-    Widget      widget;
-    register GC gc;
+void  XtReleaseGC(
+    Widget      widget,
+    register GC gc)
 {
     register GCptr cur, *prev;
     Display* dpy;
@@ -299,7 +299,7 @@ void  XtReleaseGC(widget, gc)
     LOCK_PROCESS;
     dpy = XtDisplayOfObject(widget);
     pd = _XtGetPerDisplay(dpy);
-    
+
     for (prev = &pd->GClist; (cur = *prev); prev = &cur->next) {
 	if (cur->gc == gc) {
 	    if (--(cur->ref_count) == 0) {
@@ -319,8 +319,7 @@ void  XtReleaseGC(widget, gc)
  *  is exactly 1 Display created by the application.
  */
 
-void XtDestroyGC(gc)
-    register GC gc;
+void XtDestroyGC(register GC gc)
 {
     GCptr cur, *prev;
     XtAppContext app;

@@ -1,3 +1,5 @@
+(The version is actually 2.1.0.)
+
 			Fontconfig
 	Font configuration and customization library
 		      Version 1.0.1
@@ -13,3 +15,7 @@ rasterization library on the application.  The X-specific library
 
 Keith Packard
 keithp@keithp.com
+
+
+$XFree86: xc/extras/fontconfig/README,v 1.5 2005/02/25 16:48:31 tsi Exp $
+

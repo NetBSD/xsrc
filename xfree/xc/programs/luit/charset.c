@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/luit/charset.c,v 1.9 2004/01/27 02:30:30 dawes Exp $ */
+/* $XFree86: xc/programs/luit/charset.c,v 1.11 2004/10/27 23:03:54 dickey Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -76,13 +76,13 @@ NullReverse(unsigned int n, CharsetPtr self)
 }
 
 CharsetRec Unknown94Charset = 
-{ "Unknown (94)", T_94, 0, IdentityRecode, NullReverse, 0, 0};
+{ "Unknown (94)", T_94, 0, IdentityRecode, NullReverse, 0, 0, 0, 0, 0, 0};
 CharsetRec Unknown96Charset = 
-{ "Unknown (96)", T_96, 0, IdentityRecode, NullReverse, 0, 0};
+{ "Unknown (96)", T_96, 0, IdentityRecode, NullReverse, 0, 0, 0, 0, 0, 0};
 CharsetRec Unknown9494Charset = 
-{ "Unknown (94x94)", T_9494, 0, IdentityRecode, NullReverse, 0, 0};
+{ "Unknown (94x94)", T_9494, 0, IdentityRecode, NullReverse, 0, 0, 0, 0, 0, 0};
 CharsetRec Unknown9696Charset = 
-{ "Unknown (96x96)", T_9696, 0, IdentityRecode, NullReverse, 0, 0};
+{ "Unknown (96x96)", T_9696, 0, IdentityRecode, NullReverse, 0, 0, 0, 0, 0, 0};
 
 typedef struct _FontencCharset {
     char *name;
@@ -200,7 +200,6 @@ FontencCharsetReverse(unsigned int i, CharsetPtr self)
     switch(self->type) {
     case T_94: case T_96:
         if (IS_GL(n)) return n; else return -1;
-        break;
     case T_128:
         if (n < 0x80) return n; else return -1;
     case T_9494: case T_9696:
@@ -208,13 +207,11 @@ FontencCharsetReverse(unsigned int i, CharsetPtr self)
             return n;
         else
             return -1;
-        break;
     case T_94192:
         if(IS_GL(n>>8) && IS_GL(n&0x7F))
             return n;
         else
             return -1;
-        break;
     default:
         abort();
     }
@@ -422,7 +419,7 @@ LocaleCharsetRec localeCharsets[] = {
     { "SJIS", 0, 1, NULL, NULL, NULL, NULL, "SJIS"},
     { "Big5-HKSCS", 0, 1, NULL, NULL, NULL, NULL, "BIG5-HKSCS"},
     { "gb18030", 0, 1, NULL, NULL, NULL, NULL, "GB18030"},
-    { 0, 0, 0, 0, 0, 0, 0}
+    { 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 void

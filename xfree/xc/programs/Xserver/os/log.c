@@ -50,7 +50,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -96,7 +96,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $XFree86: xc/programs/Xserver/os/log.c,v 1.7 2004/02/13 23:58:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/log.c,v 1.12 2005/03/02 19:17:43 dawes Exp $ */
 
 #include "Xos.h"
 #include <stdio.h>
@@ -108,7 +108,6 @@ OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "site.h"
 #include "opaque.h"
-
 
 #ifdef DDXOSVERRORF
 void (*OsVendorVErrorFProc)(const char *, va_list args) = NULL;
@@ -281,7 +280,7 @@ LogVWrite(int verb, const char *f, va_list args)
     if ((verb < 0 || logFileVerbosity >= verb) && len > 0) {
 	if (logFile) {
 	    fwrite(tmpBuffer, len, 1, logFile);
-	    if (logFlush) {
+	    if (logFlush || logSync) {
 		fflush(logFile);
 		if (logSync)
 		    fsync(fileno(logFile));
@@ -393,22 +392,22 @@ LogMessageVerb(MessageType type, int verb, const char *format, ...)
     va_end(ap);
 }
 
-/* Log a message with the standard verbosity level of 1. */
+/* Log a message with the standard verbosity level of X_LOG_DEFAULT_VERB. */
 void
 LogMessage(MessageType type, const char *format, ...)
 {
     va_list ap;
 
     va_start(ap, format);
-    LogVMessageVerb(type, 1, format, ap);
+    LogVMessageVerb(type, X_LOG_DEFAULT_VERB, format, ap);
     va_end(ap);
 }
 
 #ifdef __GNUC__
-static void AbortServer(void) __attribute__((noreturn));
+void AbortServer(void) __attribute__((noreturn));
 #endif
 
-static void
+void
 AbortServer(void)
 {
     OsCleanup(TRUE);
@@ -611,20 +610,47 @@ Error(char *str)
 	LogWrite(-1, strerror(saveErrno));
 }
 
+const char *
+LogTypeToTxt(MessageType type)
+{
+    switch (type) {
+    case X_PROBED:
+	return "probed";
+    case X_CONFIG:
+	return "from config file";
+    case X_DEFAULT:
+	return "default setting";
+    case X_CMDLINE:
+	return "from command line";
+    case X_NOTICE:
+	return "notice";
+    case X_INFO:
+	return "informational";
+    case X_WARNING:
+	return "warning";
+    case X_ERROR:
+	return "error";
+    case X_NOT_IMPLEMENTED:
+	return "not implemented";
+    case X_UNKNOWN:
+	return "unknown";
+    case X_NONE:
+	return "none";
+    }
+    return "";
+}
+
+#define LINEBREAK(i) (((i) == X_DEFAULT || (i) == X_WARNING) ? "\n\t" : " ")
+
 void
 LogPrintMarkers()
 {
+    MessageType i;
     /* Show what the message marker symbols mean. */
     ErrorF("Markers: ");
-    LogMessageVerb(X_PROBED, -1, "probed, ");
-    LogMessageVerb(X_CONFIG, -1, "from config file, ");
-    LogMessageVerb(X_DEFAULT, -1, "default setting,\n\t");
-    LogMessageVerb(X_CMDLINE, -1, "from command line, ");
-    LogMessageVerb(X_NOTICE, -1, "notice, ");
-    LogMessageVerb(X_INFO, -1, "informational,\n\t");
-    LogMessageVerb(X_WARNING, -1, "warning, ");
-    LogMessageVerb(X_ERROR, -1, "error, ");
-    LogMessageVerb(X_NOT_IMPLEMENTED, -1, "not implemented, ");
+    for (i = X_PROBED; i <= X_NOT_IMPLEMENTED; i++)
+	if (i != X_NONE)
+	    LogMessageVerb(i, -1, "%s,%s", LogTypeToTxt(i), LINEBREAK(i));
     LogMessageVerb(X_UNKNOWN, -1, "unknown.\n");
 }
 

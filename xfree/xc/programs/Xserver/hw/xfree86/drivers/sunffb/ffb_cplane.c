@@ -22,7 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_cplane.c,v 1.3 2003/07/19 13:22:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_cplane.c,v 1.5 2004/12/05 23:06:37 tsi Exp $ */
 
 #include "ffb.h"
 #include "ffb_regs.h"
@@ -38,6 +38,7 @@
 #include "cfb32.h"
 
 #include "cfbmskbits.h"
+#include "cfbtab.h"
 #include "mi.h"
 
 /* Blatantly stolen from mach64 driver. */
@@ -60,13 +61,13 @@
 	bits = 0; \
 	while (nBits--) { \
 		bits |= ((*psrc++ >> bitPos) & 1) << curBit; \
-		StepBit (curBit, 1); \
+		StepBit(curBit, 1); \
 	} \
 }
 
 static void
-CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int rop, RegionPtr prgnDst, 
-		       DDXPointPtr pptSrc, unsigned long planemask, unsigned long bitPlane)
+CreatorCopyPlane32to1(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int rop, RegionPtr prgnDst,
+		      DDXPointPtr pptSrc, unsigned long planemask, unsigned long bitPlane)
 {
 	int			srcx, srcy, dstx, dsty, width, height;
 	unsigned long		*psrcBase;
@@ -88,18 +89,15 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 	BoxPtr			pbox;
 	int result;
 
-	extern int starttab[32], endtab[32];
-	extern unsigned int partmasks[32][32];
-
 	if (!(planemask & 1))
 		return;
 
 	/* must explicitly ask for "int" widths, as code below expects it */
 	/* on some machines (Sparc64), "long" and "int" are not the same size */
-	cfbGetTypedWidthAndPointer (pSrcDrawable, widthSrc, psrcBase, int, unsigned long)
-	cfbGetTypedWidthAndPointer (pDstDrawable, widthDst, pdstBase, int, unsigned long)
+	cfbGetTypedWidthAndPointer(pSrcDrawable, widthSrc, psrcBase, int, unsigned long)
+	cfbGetTypedWidthAndPointer(pDstDrawable, widthDst, pdstBase, int, unsigned long)
 
-	bitPos = ffs (bitPlane) - 1;
+	bitPos = ffs(bitPlane) - 1;
 
 	nbox = REGION_NUM_RECTS(prgnDst);
 	pbox = REGION_RECTS(prgnDst);
@@ -119,12 +117,12 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 			nlMiddle = 0;
 			endmask = 0;
 		} else {
-			mfbmaskbits (dstx, width, startmask, endmask, nlMiddle);
+			mfbmaskbits(dstx, width, startmask, endmask, nlMiddle);
 		}
 		if (startmask) {
 			niStart = 32 - (dstx & 0x1f);
 			bitStart = LeftMost;
-			StepBit (bitStart, (dstx & 0x1f));
+			StepBit(bitStart, (dstx & 0x1f));
 		}
 		if (endmask) {
 			niEnd = (dstx + width) & 0x1f;
@@ -139,23 +137,23 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 				if (startmask) {
 					i = niStart;
 					curBit = bitStart;
-					GetBits (psrc, i, curBit, bitPos, bits);
-				
+					GetBits(psrc, i, curBit, bitPos, bits);
+
 					*pdst = (*pdst & ~startmask) | bits;
 					pdst++;
 				}
 				nl = nlMiddle;
-				
+
 				while (nl--) {
 					i = 32;
 					curBit = LeftMost;
-					GetBits (psrc, i, curBit, bitPos, bits);
+					GetBits(psrc, i, curBit, bitPos, bits);
 					*pdst++ = bits;
 				}
 				if (endmask) {
 					i = niEnd;
 					curBit = bitEnd;
-					GetBits (psrc, i, curBit, bitPos, bits);
+					GetBits(psrc, i, curBit, bitPos, bits);
 
 					*pdst = (*pdst & ~endmask) | bits;
 				}
@@ -169,9 +167,9 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 				if (startmask) {
 					i = niStart;
 					curBit = bitStart;
-					GetBits (psrc, i, curBit, bitPos, bits);
-					DoRop (result, rop, bits, *pdst);
-				
+					GetBits(psrc, i, curBit, bitPos, bits);
+					DoRop(result, rop, bits, *pdst);
+
 					*pdst = (*pdst & ~startmask) | (result & startmask);
 					pdst++;
 				}
@@ -179,17 +177,17 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 				while (nl--) {
 					i = 32;
 					curBit = LeftMost;
-					GetBits (psrc, i, curBit, bitPos, bits);
-					DoRop (result, rop, bits, *pdst);
+					GetBits(psrc, i, curBit, bitPos, bits);
+					DoRop(result, rop, bits, *pdst);
 					*pdst = result;
 					++pdst;
 				}
 				if (endmask) {
 					i = niEnd;
 					curBit = bitEnd;
-					GetBits (psrc, i, curBit, bitPos, bits);
-					DoRop (result, rop, bits, *pdst);
-				
+					GetBits(psrc, i, curBit, bitPos, bits);
+					DoRop(result, rop, bits, *pdst);
+
 					*pdst = (*pdst & ~endmask) | (result & endmask);
 				}
 			}
@@ -200,9 +198,9 @@ CreatorCopyPlane32to1 (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int r
 static unsigned int copyPlaneFG, copyPlaneBG;
 
 static void
-CreatorCopyPlane1toFbBpp (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int alu, RegionPtr prgnDst, DDXPointPtr pptSrc, unsigned long planemask, unsigned long bitPlane)
+CreatorCopyPlane1toFbBpp(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int alu, RegionPtr prgnDst, DDXPointPtr pptSrc, unsigned long planemask, unsigned long bitPlane)
 {
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN (pDstDrawable->pScreen);
+	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pDstDrawable->pScreen);
 	WindowPtr pWin = (WindowPtr) pDstDrawable;
 	ffb_fbcPtr ffb = pFfb->regs;
 	int srcx, srcy, dstx, dsty, width, height;
@@ -246,7 +244,7 @@ CreatorCopyPlane1toFbBpp (DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, in
 		}
 	}
 
-	cfbGetTypedWidthAndPointer (pSrcDrawable, widthSrc, psrcBase, unsigned int, unsigned int)
+	cfbGetTypedWidthAndPointer(pSrcDrawable, widthSrc, psrcBase, unsigned int, unsigned int)
 
 	nbox = REGION_NUM_RECTS(prgnDst);
 	pbox = REGION_RECTS(prgnDst);
@@ -306,7 +304,7 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 			   GCPtr pGC, int srcx, int srcy, int width, int height,
 			   int dstx, int dsty, unsigned long bitPlane)
 {
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN (pSrcDrawable->pScreen);
+	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pSrcDrawable->pScreen);
 	WindowPtr pWin = (WindowPtr) pDstDrawable;
 	ffb_fbcPtr ffb = pFfb->regs;
 	RegionPtr ret;
@@ -319,17 +317,16 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 		if (bitPlane == 1) {
 			copyPlaneFG = pGC->fgPixel;
 			copyPlaneBG = pGC->bgPixel;
-			ret = cfbCopyPlaneReduce (pSrcDrawable, pDstDrawable,
-						  pGC, srcx, srcy,
-						  width, height, dstx, dsty,
-						  CreatorCopyPlane1toFbBpp,
-						  bitPlane);
+			ret = cfbCopyPlaneReduce(pSrcDrawable, pDstDrawable,
+						 pGC, srcx, srcy,
+						 width, height, dstx, dsty,
+						 CreatorCopyPlane1toFbBpp,
+						 bitPlane);
 		} else
-			ret = miHandleExposures (pSrcDrawable, pDstDrawable,
-						 pGC, srcx, srcy, width, height, dstx, dsty, bitPlane);
+			ret = miHandleExposures(pSrcDrawable, pDstDrawable,
+						pGC, srcx, srcy, width, height, dstx, dsty, bitPlane);
 	} else if ((pSrcDrawable->bitsPerPixel == 32 || pSrcDrawable->bitsPerPixel == 8)
 		   && pDstDrawable->bitsPerPixel == 1) {
-		extern int InverseAlu[16];
 		int oldalu;
 
 		oldalu = pGC->alu;
@@ -340,16 +337,16 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 		FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
 		FFBWait(pFfb, ffb);
 		if (pSrcDrawable->bitsPerPixel == 32) {
-			ret = cfbCopyPlaneReduce (pSrcDrawable, pDstDrawable,
-						  pGC, srcx, srcy,
-						  width, height, dstx, dsty,
-						  CreatorCopyPlane32to1,
-						  bitPlane);
+			ret = cfbCopyPlaneReduce(pSrcDrawable, pDstDrawable,
+						 pGC, srcx, srcy,
+						 width, height, dstx, dsty,
+						 CreatorCopyPlane32to1,
+						 bitPlane);
 		} else {
-			ret = cfbCopyPlaneReduce (pSrcDrawable, pDstDrawable,
-						  pGC, srcx, srcy,
-						  width, height, dstx, dsty,
-						  cfbCopyPlane8to1, bitPlane);
+			ret = cfbCopyPlaneReduce(pSrcDrawable, pDstDrawable,
+						 pGC, srcx, srcy,
+						 width, height, dstx, dsty,
+						 cfbCopyPlane8to1, bitPlane);
 		}
 		pGC->alu = oldalu;
 	} else {
@@ -357,12 +354,12 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 		ScreenPtr pScreen = pSrcDrawable->pScreen;
 		GCPtr pGC1;
 
-		pBitmap = (*pScreen->CreatePixmap) (pScreen, width, height, 1);
+		pBitmap = (*pScreen->CreatePixmap)(pScreen, width, height, 1);
 		if (!pBitmap)
 			return NULL;
-		pGC1 = GetScratchGC (1, pScreen);
+		pGC1 = GetScratchGC(1, pScreen);
 		if (!pGC1) {
-			(*pScreen->DestroyPixmap) (pBitmap);
+			(*pScreen->DestroyPixmap)(pBitmap);
 			return NULL;
 		}
 		/*
@@ -370,32 +367,32 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 		 * ignores pixel values, expecting the rop to "do the
 		 * right thing", which GXcopy will.
 		 */
-		ValidateGC ((DrawablePtr) pBitmap, pGC1);
+		ValidateGC((DrawablePtr) pBitmap, pGC1);
 		/* no exposures here, scratch GC's don't get graphics expose */
 		FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
 		FFBWait(pFfb, ffb);
 		if (pSrcDrawable->bitsPerPixel == 32) {
-			cfbCopyPlaneReduce (pSrcDrawable, (DrawablePtr) pBitmap,
-					    pGC1, srcx, srcy, width, height,
-					    0, 0, CreatorCopyPlane32to1,
-					    bitPlane);
+			cfbCopyPlaneReduce(pSrcDrawable, (DrawablePtr) pBitmap,
+					   pGC1, srcx, srcy, width, height,
+					   0, 0, CreatorCopyPlane32to1,
+					   bitPlane);
 		} else {
-			cfbCopyPlaneReduce (pSrcDrawable, (DrawablePtr) pBitmap,
-					    pGC1, srcx, srcy, width, height,
-					    0, 0, cfbCopyPlane8to1,
-					    bitPlane);
+			cfbCopyPlaneReduce(pSrcDrawable, (DrawablePtr) pBitmap,
+					   pGC1, srcx, srcy, width, height,
+					   0, 0, cfbCopyPlane8to1,
+					   bitPlane);
 		}
 		copyPlaneFG = pGC->fgPixel;
 		copyPlaneBG = pGC->bgPixel;
-		cfbCopyPlaneReduce ((DrawablePtr) pBitmap, pDstDrawable, pGC,
-				    0, 0, width, height, dstx, dsty,
-				    CreatorCopyPlane1toFbBpp, 1);
-		FreeScratchGC (pGC1);
-		(*pScreen->DestroyPixmap) (pBitmap);
+		cfbCopyPlaneReduce((DrawablePtr) pBitmap, pDstDrawable, pGC,
+				   0, 0, width, height, dstx, dsty,
+				   CreatorCopyPlane1toFbBpp, 1);
+		FreeScratchGC(pGC1);
+		(*pScreen->DestroyPixmap)(pBitmap);
 		/* compute resultant exposures */
-		ret = miHandleExposures (pSrcDrawable, pDstDrawable, pGC,
-					 srcx, srcy, width, height,
-					 dstx, dsty, bitPlane);
+		ret = miHandleExposures(pSrcDrawable, pDstDrawable, pGC,
+					srcx, srcy, width, height,
+					dstx, dsty, bitPlane);
 	}
 	return ret;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xi/XIint.h,v 3.3 2003/11/17 22:20:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XIint.h,v 3.4 2005/01/27 02:28:59 dawes Exp $ */
 
 /*
  *	XIint.h - Header definition and support file for the internal
@@ -21,5 +21,8 @@ extern XExtensionVersion * _XiGetExtensionVersion(
 	Display*,
 	_Xconst char*
 );
+
+extern Status _XiEventToWire(Display *dpy, XEvent *re, xEvent **event,
+			     int *count);
 
 #endif

@@ -1652,11 +1652,20 @@ u16 shld_word (u16 d, u16 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
-	if (s < 16) {
-		cnt = s % 16;
+	if (s < 32) {
+		cnt = s % 32;
 		if (cnt > 0) {
-			res = (d << cnt) | (fill >> (16-cnt));
-			cf = d & (1 << (16 - cnt));
+			if (cnt > 15) {
+				res = (unsigned int)fill << (cnt - 16);
+				if (cnt == 16)
+					cf = d & 0x1;
+				else
+					cf = res & 0x10000;
+			}
+			else {
+				res = (d << cnt) | (fill >> (16-cnt));
+				cf = d & (1 << (16 - cnt));
+			}
 			CONDITIONAL_SET_FLAG(cf, F_CF);
 			CONDITIONAL_SET_FLAG((res & 0xffff) == 0, F_ZF);
 			CONDITIONAL_SET_FLAG(res & 0x8000, F_SF);
@@ -1726,11 +1735,19 @@ u16 shrd_word (u16 d, u16 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
-	if (s < 16) {
-		cnt = s % 16;
+	if (s < 32) {
+		cnt = s % 32;
 		if (cnt > 0) {
-			cf = d & (1 << (cnt - 1));
-			res = (d >> cnt) | (fill << (16 - cnt));
+			if (cnt > 15) {
+				if (cnt == 16)
+					cf = d & 0x8000;
+				else
+					cf = fill & (1 << (cnt - 17));
+				res = fill >> (cnt - 16);
+			} else {
+				cf = d & (1 << (cnt - 1));
+				res = (d >> cnt) | (fill << (16 - cnt));
+			}
 			CONDITIONAL_SET_FLAG(cf, F_CF);
 			CONDITIONAL_SET_FLAG((res & 0xffff) == 0, F_ZF);
 			CONDITIONAL_SET_FLAG(res & 0x8000, F_SF);
@@ -1741,9 +1758,9 @@ u16 shrd_word (u16 d, u16 fill, u8 s)
 
 		if (cnt == 1) {
 			CONDITIONAL_SET_FLAG(XOR2(res >> 14), F_OF);
-        } else {
+		} else {
 			CLEAR_FLAG(F_OF);
-        }
+		}
 	} else {
 		res = 0;
 		CLEAR_FLAG(F_CF);
@@ -1751,7 +1768,7 @@ u16 shrd_word (u16 d, u16 fill, u8 s)
 		SET_FLAG(F_ZF);
 		CLEAR_FLAG(F_SF);
 		CLEAR_FLAG(F_PF);
-    }
+	}
 	return (u16)res;
 }
 

@@ -1,8 +1,8 @@
-XCOMM $XFree86: xc/lib/Xft/Imakefile,v 1.29 2003/11/29 01:31:20 dawes Exp $
+XCOMM $XFree86: xc/lib/Xft/Imakefile,v 1.30 2004/04/05 02:33:12 dawes Exp $
 
 #define DoNormalLib NormalLibXft
 #define DoSharedLib SharedLibXft
-#define DoExtraLib SharedLibXft
+#define DoExtraLib ExtraLibXft
 #define DoDebugLib DebugLibXft
 #define DoProfileLib ProfileLibXft
 

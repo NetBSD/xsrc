@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/fonttosfnt/fonttosfnt.man,v 1.3 2003/07/08 15:39:49 tsi Exp $
+.\" $XFree86: xc/programs/fonttosfnt/fonttosfnt.man,v 1.4 2005/02/09 17:06:55 dawes Exp $
 .TH FONTTOSFNT 1 __vendorversion__
 .SH NAME
 fonttosfnt \- Wrap a bitmap font in a sfnt (TrueType) wrapper
@@ -72,5 +72,5 @@ X(7), Xserver(1), Xft(3x).
 .I Fonts in XFree86.
 .SH AUTHOR
 .B Fonttosfnt
-was written by Juliusz Chroboczek <jch@xfree86.org> for the XFree86
+was written by Juliusz Chroboczek <jch@pps.jussieu.fr> for the XFree86
 project.

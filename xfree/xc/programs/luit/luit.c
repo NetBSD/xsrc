@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/luit/luit.c,v 1.11 2003/09/08 14:25:30 eich Exp $ */
+/* $XFree86: xc/programs/luit/luit.c,v 1.13 2004/10/27 23:03:54 dickey Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +45,8 @@ THE SOFTWARE.
 #include "charset.h"
 #include "iso2022.h"
 
+static int p2c_waitpipe[2];
+static int c2p_waitpipe[2];
 static Iso2022Ptr inputState = NULL, outputState = NULL;
 
 static char *child_argv0 = NULL;
@@ -84,7 +86,7 @@ FatalError(char *f, ...)
 static void
 help(void)
 {
-    fprintf(stderr, 
+    fprintf(stderr,
             "luit\n"
             "  [ -h ] [ -list ] [ -v ] [ -argv0 name ]\n"
             "  [ -gl gn ] [-gr gk] "
@@ -100,7 +102,7 @@ help(void)
             "  [ program [ args ] ]\n");
 
 }
-            
+
 
 static int
 parseOptions(int argc, char **argv)
@@ -173,7 +175,7 @@ parseOptions(int argc, char **argv)
             if(strlen(argv[i + 1]) != 2 ||
                argv[i + 1][0] != 'g')
                 j = -1;
-            else 
+            else
                 j = argv[i + 1][1] - '0';
             if(j < 0 || j > 3)
                 FatalError("The argument of -gl "
@@ -189,7 +191,7 @@ parseOptions(int argc, char **argv)
             if(strlen(argv[i + 1]) != 2 ||
                argv[i + 1][0] != 'g')
                 j = -1;
-            else 
+            else
                 j = argv[i + 1][1] - '0';
             if(j < 0 || j > 3)
                 FatalError("The argument of -gl "
@@ -226,7 +228,7 @@ parseOptions(int argc, char **argv)
             if(strlen(argv[i + 1]) != 2 ||
                argv[i + 1][0] != 'g')
                 j = -1;
-            else 
+            else
                 j = argv[i + 1][1] - '0';
             if(j < 0 || j > 3)
                 FatalError("The argument of -kgl "
@@ -242,7 +244,7 @@ parseOptions(int argc, char **argv)
             if(strlen(argv[i + 1]) != 2 ||
                argv[i + 1][0] != 'g')
                 j = -1;
-            else 
+            else
                 j = argv[i + 1][1] - '0';
             if(j < 0 || j > 3)
                 FatalError("The argument of -kgl "
@@ -352,7 +354,7 @@ parseArgs(int argc, char **argv, char *argv0,
         free(argv);
     return -1;
 }
-        
+
 
 int
 main(int argc, char **argv)
@@ -368,11 +370,11 @@ main(int argc, char **argv)
     inputState = allocIso2022();
     if(!inputState)
         FatalError("Couldn't create input state\n");
-        
+
     outputState = allocIso2022();
     if(!outputState)
         FatalError("Couldn't create output state\n");
-    
+
     if(l) {
         locale_name = setlocale(LC_CTYPE, NULL);
     } else {
@@ -433,7 +435,17 @@ convert(int ifd, int ofd)
     }
     return 0;
 }
-        
+
+static void
+sigwinchHandler(int sig) {
+    sigwinch_queued = 1;
+}
+
+static void
+sigchldHandler(int sig)
+{
+    sigchld_queued = 1;
+}
 
 static int
 condom(int argc, char **argv)
@@ -444,6 +456,7 @@ condom(int argc, char **argv)
     char *path;
     char **child_argv;
     int rc;
+    int val;
 
     rc = parseArgs(argc, argv, child_argv0,
                    &path, &child_argv);
@@ -461,85 +474,6 @@ condom(int argc, char **argv)
         perror("Couldn't drop priviledges");
         exit(1);
     }
-
-    pid = fork();
-    if(pid < 0) {
-        perror("Couldn't fork");
-        exit(1);
-    }
-
-    if(pid == 0) {
-        close(pty);
-        child(line, path, child_argv);
-    } else {
-        free(child_argv);
-        free(path);
-        free(line);
-        parent(pid, pty);
-    }
-
-    return 0;
-}
-
-void
-child(char *line, char *path, char **argv)
-{
-    int tty;
-    int pgrp;
-
-    close(0);
-    close(1);
-    close(2);
-    pgrp = setsid();
-    if(pgrp < 0) {
-        kill(getppid(), SIGABRT);
-        exit(1);
-    }
-
-    tty = openTty(line);
-    if(tty < 0) {
-        kill(getppid(), SIGABRT);
-        exit(1);
-    }
-    
-    if(tty != 0)
-        dup2(tty, 0);
-    if(tty != 1)
-        dup2(tty, 1);
-    if(tty != 2)
-        dup2(tty, 2);
-
-    if(tty > 2)
-        close(tty);
-    
-    execvp(path, argv);
-    perror("Couldn't exec");
-    exit(1);
-}
-
-static void
-sigwinchHandler(int sig) {
-    sigwinch_queued = 1;
-}
-
-static void
-sigchldHandler(int sig)
-{
-    sigchld_queued = 1;
-}
-
-void
-parent(int pid, int pty)
-{
-    unsigned char buf[BUFFER_SIZE];
-    int i;
-    int val;
-    int rc;
-
-    if(verbose) {
-        reportIso2022(outputState);
-    }
-
 #ifdef SIGWINCH
     installHandler(SIGWINCH, sigwinchHandler);
 #endif
@@ -564,6 +498,93 @@ parent(int pid, int pty)
 
     setWindowSize(0, pty);
 
+    pipe(p2c_waitpipe);
+    pipe(c2p_waitpipe);
+    pid = fork();
+    if(pid < 0) {
+        perror("Couldn't fork");
+        exit(1);
+    }
+
+    if(pid == 0) {
+        close(pty);
+        close(p2c_waitpipe[1]);
+        close(c2p_waitpipe[0]);
+#ifdef SIGWINCH
+        installHandler(SIGWINCH, SIG_DFL);
+#endif
+        installHandler(SIGCHLD, SIG_DFL);
+        child(line, path, child_argv);
+    } else {
+        close(p2c_waitpipe[0]);
+        close(c2p_waitpipe[1]);
+        free(child_argv);
+        free(path);
+        free(line);
+        parent(pid, pty);
+    }
+
+    return 0;
+}
+
+void
+child(char *line, char *path, char **argv)
+{
+    int tty;
+    int pgrp;
+    char tmp[10];
+
+    close(0);
+    close(1);
+    close(2);
+
+    pgrp = setsid();
+    if(pgrp < 0) {
+        kill(getppid(), SIGABRT);
+        exit(1);
+    }
+
+    tty = openTty(line);
+    if(tty < 0) {
+        kill(getppid(), SIGABRT);
+        exit(1);
+    }
+    write(c2p_waitpipe[1],"1",1);
+
+    if(tty != 0)
+        dup2(tty, 0);
+    if(tty != 1)
+        dup2(tty, 1);
+    if(tty != 2)
+        dup2(tty, 2);
+
+    if(tty > 2)
+        close(tty);
+
+    read(p2c_waitpipe[0],tmp,1);
+    close(c2p_waitpipe[1]);
+    close(p2c_waitpipe[0]);
+    execvp(path, argv);
+    perror("Couldn't exec");
+    exit(1);
+}
+
+void
+parent(int pid, int pty)
+{
+    unsigned char buf[BUFFER_SIZE];
+    int i;
+    int rc;
+    char tmp[10];
+
+    read(c2p_waitpipe[0],tmp,1);
+    if(verbose) {
+        reportIso2022(outputState);
+    }
+
+    write(p2c_waitpipe[1],"1",1);
+    close(c2p_waitpipe[0]);
+    close(p2c_waitpipe[1]);
     for(;;) {
         rc = waitForInput(0, pty);
 

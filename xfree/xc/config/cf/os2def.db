@@ -9,7 +9,7 @@
 ; be TAB, not a nice looking number of spaces! Don't try to beautify this
 ; file!!!!
 ;
-; $XFree86: xc/config/cf/os2def.db,v 1.8 2004/02/20 21:41:40 dawes Exp $
+; $XFree86: xc/config/cf/os2def.db,v 1.10 2005/02/07 01:38:23 tsi Exp $
 ;
 LIBRARY	PEX5 PEX5
 PEX5	PEXAccumulateState	1
@@ -2421,6 +2421,7 @@ Xpm	XpmCreateXpmImageFromBuffer	32
 Xpm	XpmCreateBufferFromXpmImage	33
 ; 4.x exports starting from 40
 Xpm	XpmFree	40
+Xpm	s_popen	41
 LIBRARY Xss Xss
 Xss	XScreenSaverQueryExtension	1
 Xss	XScreenSaverQueryVersion	2
@@ -4773,6 +4774,7 @@ Xft	XftDrawPicture	39
 Xft	XftDrawSrcPicture	40
 Xft	XftCharExists	41
 Xft	XftDrawCharSpec	42
+Xft	XftCharIndex	43
 LIBRARY Xmuu Xmuu
 Xmuu	XmuClientWindow	1
 Xmuu	XmuCursorNameToIndex	2
@@ -5121,6 +5123,7 @@ freetype	FT_Activate_Size	158
 freetype	FT_Get_X11_Font_Format	159
 freetype	FT_Get_BDF_Charset_ID	160
 freetype	FT_Get_Postscript_Name	161
+freetype	FT_Stream_Seek		162
 LIBRARY	XTrap	XTrap
 XTrap	XEAddEventCB	1
 XTrap	XEAddEventCBs	2
@@ -5715,3 +5718,22 @@ Xfontcache	FontCacheGetCacheSettings	2
 Xfontcache	FontCacheGetCacheStatistics	3
 Xfontcache	FontCacheQueryExtension	4
 Xfontcache	FontCacheQueryVersion	5
+LIBRARY dmx dmx
+dmx	DMXQueryExtension	1
+dmx	DMXQueryVersion	2
+dmx	DMXSync	3
+dmx	DMXForceWindowCreation	4
+dmx	DMXGetScreenCount	5
+dmx	DMXGetScreenAttributes	6
+dmx	DMXChangeScreensAttributes	7
+dmx	DMXAddScreen	8
+dmx	DMXRemoveScreen	9
+dmx	DMXGetWindowAttributes	10
+dmx	DMXGetDesktopAttributes	11
+dmx	DMXChangeDesktopAttributes	12
+dmx	DMXGetInputCount	13
+dmx	DMXGetInputAttributes	14
+dmx	DMXAddInput	15
+dmx	DMXAddBackendInput	16
+dmx	DMXAddConsoleInput	17
+dmx	DMXRemoveInput	18

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.18 2004/02/13 23:58:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.20 2004/10/26 22:17:38 tsi Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -115,18 +115,6 @@ static xf86ConfigSymTabRec KeyboardTab[] =
 	{-1, ""},
 };
 
-/* Obsolete */
-static xf86ConfigSymTabRec KeyMapTab[] =
-{
-	{CONF_KM_META, "meta"},
-	{CONF_KM_COMPOSE, "compose"},
-	{CONF_KM_MODESHIFT, "modeshift"},
-	{CONF_KM_MODELOCK, "modelock"},
-	{CONF_KM_SCROLLLOCK, "scrolllock"},
-	{CONF_KM_CONTROL, "control"},
-	{-1, ""},
-};
-
 #define CLEANUP xf86freeInputList
 
 XF86ConfInputPtr
@@ -134,7 +122,7 @@ xf86parseKeyboardSection (void)
 {
 	char *s, *s1, *s2;
 	int l;
-	int token, ntoken;
+	int token;
 	parsePrologue (XF86ConfInputPtr, XF86ConfInputRec)
 
 	while ((token = xf86getToken (KeyboardTab)) != ENDSECTION)
@@ -190,20 +178,6 @@ xf86parseKeyboardSection (void)
 		case SCROLLLOCK_TOK:
 		case RIGHTCTL:
 			xf86parseWarning(OBSOLETE_MSG, xf86tokenString());
-				break;
-			ntoken = xf86getToken (KeyMapTab);
-			switch (ntoken)
-			{
-			case EOF_TOKEN:
-				xf86parseError (UNEXPECTED_EOF_MSG);
-				CLEANUP (ptr);
-				return (NULL);
-				break;
-
-			default:
-				Error (INVALID_KEYWORD_MSG, xf86tokenString ());
-				break;
-			}
 			break;
 		case VTINIT:
 			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)

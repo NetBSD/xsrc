@@ -2,7 +2,7 @@
  * cfb copy area
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.20 2003/11/10 18:21:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.21 2004/04/11 20:33:48 tsi Exp $ */
 
 /*
 
@@ -53,7 +53,9 @@ Author: Keith Packard
 #define cfbCopyPlane1toN cfbCopyPlane1to8
 #define cfbCopyPlaneNto1 cfbCopyPlane8to1
 #else
+#if IMAGE_BYTE_ORDER == LSBFirst
 static unsigned int FgPixel, BgPixel;
+#endif
 # if PSZ == 16
 #define cfbCopyPlane1toN cfbCopyPlane1to16
 #define cfbCopyPlaneNto1 cfbCopyPlane16to1
@@ -998,6 +1000,8 @@ cfbCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask)
 
 /******************************************************************/
 
+#if IMAGE_BYTE_ORDER == LSBFirst
+
 static void
 #if PSZ == 16
 cfbCopyPlane1to16
@@ -1336,6 +1340,8 @@ cfbCopyPlane1to32
         }
     }
 }
+
+#endif  /* IMAGE_BYTE_ORDER == LSBFirst */
 
 #endif  /* PSZ == 8 */
 

@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_driver.h,v 1.38 2004/02/25 17:45:13 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_driver.h,v 1.41 2005/02/19 01:03:23 dawes Exp $ */
+/* $XdotOrg$ */
 /*
  * Global data and definitions
  *
@@ -75,6 +76,7 @@ static const struct _sis_vrate {
 	{7,  800,  600, 120, FALSE}, {8,  800,  600, 160, FALSE},
 	{1,  848,  480,  39,  TRUE}, {2,  848,  480,  60,  TRUE},
 	{1,  856,  480,  39,  TRUE}, {2,  856,  480,  60,  TRUE},
+	{1,  960,  540,  60,  TRUE},
 	{1, 1024,  576,  60,  TRUE}, {2, 1024,  576,  75,  TRUE}, {3, 1024,  576,  85,  TRUE},
 	{1, 1024,  600,  60,  TRUE},
 	{1, 1024,  768,  43,  TRUE}, {2, 1024,  768,  60,  TRUE}, {3, 1024,  768,  70, FALSE},
@@ -94,6 +96,7 @@ static const struct _sis_vrate {
 	{4, 1600, 1200,  75,  TRUE}, {5, 1600, 1200,  85,  TRUE}, {6, 1600, 1200, 100,  TRUE},
 	{7, 1600, 1200, 120,  TRUE},
 	{1, 1680, 1050,  60,  TRUE},
+	{1, 1920, 1080,  30,  TRUE},
 	{1, 1920, 1440,  60,  TRUE}, {2, 1920, 1440,  65,  TRUE}, {3, 1920, 1440,  70,  TRUE},
 	{4, 1920, 1440,  75,  TRUE}, {5, 1920, 1440,  85,  TRUE}, {6, 1920, 1440, 100,  TRUE},
 	{1, 2048, 1536,  60,  TRUE}, {2, 2048, 1536,  65,  TRUE}, {3, 2048, 1536,  70,  TRUE}, 
@@ -124,7 +127,7 @@ static const chswtable mychswtable[] = {
 
 /*     These machines require special timing/handling
  */
-const customttable mycustomttable[] = {
+const customttable SiS_mycustomttable[] = {
         { SIS_630, "2.00.07", "09/27/2002-13:38:25",
 	  0x3240A8,
 	  { 0x220, 0x227, 0x228, 0x229, 0x0ee },
@@ -1283,6 +1286,10 @@ static ModeStatus SISValidMode(int scrnIndex, DisplayModePtr mode,
 /* Internally used functions */
 static Bool    SISMapMem(ScrnInfoPtr pScrn);
 static Bool    SISUnmapMem(ScrnInfoPtr pScrn);
+#ifdef SIS_NEED_MAP_IOP
+static Bool    SISMapIOPMem(ScrnInfoPtr pScrn);
+static Bool    SISUnmapIOPMem(ScrnInfoPtr pScrn);
+#endif
 static void    SISSave(ScrnInfoPtr pScrn);
 static void    SISRestore(ScrnInfoPtr pScrn);
 static void    SISVESARestore(ScrnInfoPtr pScrn);
@@ -1302,18 +1309,21 @@ static void    SISWaitVBRetrace(ScrnInfoPtr pScrn);
 void           SISWaitRetraceCRT1(ScrnInfoPtr pScrn);
 void           SISWaitRetraceCRT2(ScrnInfoPtr pScrn);
 static Bool    InRegion(int x, int y, region r);
+static USHORT  SiS_CheckModeCRT1(ScrnInfoPtr pScrn, DisplayModePtr mode,
+				 unsigned long VBFlags, BOOLEAN hcm);
+static USHORT  SiS_CheckModeCRT2(ScrnInfoPtr pScrn, DisplayModePtr mode,
+				 unsigned long VBFlags, BOOLEAN hcm);				 
 #ifdef SISMERGED
 static void    SISMergePointerMoved(int scrnIndex, int x, int y);
 #endif
 BOOLEAN        SiSBridgeIsInSlaveMode(ScrnInfoPtr pScrn);
-USHORT 	       SiS_CalcModeIndex(ScrnInfoPtr pScrn, DisplayModePtr mode,
-				 unsigned long VBFlags, BOOLEAN hcm);
-USHORT         SiS_CheckCalcModeIndex(ScrnInfoPtr pScrn, DisplayModePtr mode,
-				 unsigned long VBFlags, BOOLEAN hcm);
+USHORT	       SiS_GetModeNumber(ScrnInfoPtr pScrn, DisplayModePtr mode, unsigned long VBFlags);
 unsigned char  SiS_GetSetBIOSScratch(ScrnInfoPtr pScrn, USHORT offset, unsigned char value);
 #ifdef DEBUG
 static void    SiSDumpModeInfo(ScrnInfoPtr pScrn, DisplayModePtr mode);
 #endif
+void           SISDetermineLCDACap(ScrnInfoPtr pScrn);
+void           SISSaveDetectedDevices(ScrnInfoPtr pScrn);
 
 extern USHORT   SiS_GetModeID(int VGAEngine, ULONG VBFlags, int HDisplay, int VDisplay,
 				  int Depth, BOOL FSTN, int LCDwith, int LCDheight);

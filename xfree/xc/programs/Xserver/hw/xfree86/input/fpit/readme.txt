@@ -30,7 +30,7 @@ History and Contributors:
    project into the XFree86 4.0.2 Elographics driver by Patrick Lecoanet.
 -  John Apfelbaum continuted the work to produce a working XFree86 4.0.x driver for the
    Stylistic 1200.  
-
+-  David Clay added support for Stylistic 3400 passive pen.
 
 Please visit http://linuxslate.com for the latest information.
 
@@ -93,6 +93,34 @@ EndSection
    tracks the pen correctly.
 
 
+New for Ver 4.5.0
+
+ * supports Stylistic 3400 (and possibly other passive-pen systems)
+ * Fixed processing of all packets
+ * Fixed hover-mode pointer movement
+ * Added Passive parameter for passive displays
+ * Added switch 3 for "right" mouse button
+
+Try this serial configuration for the 3400:
+
+setserial /dev/ttyS3 autoconfig
+setserial /dev/ttyS3 uart 16450 irq 5 port 0xfd68
+
+Try this config for the 3400:
+Section "InputDevice"
+    Identifier "mouse0"
+    Driver     "fpit"
+    Option     "Device"   "/dev/ttyS3"
+    Option     "BaudRate" "9600"
+    Option     "Passive"
+    Option     "MaximumXPosition" "4070"
+    Option     "MaximumYPosition" "4020"
+    Option     "MinimumXPosition" "0"
+    Option     "MinimumYPosition" "0"
+    Option     "SendCoreEvents"
+EndSection
+
+
 Hints if you are having problems (Thanks to Aron Hsiao):
 
 Problem 1:  Side switch being reported as wild button numbers
@@ -138,4 +166,4 @@ calibration program !
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/readme.txt,v 1.2 2002/11/22 03:37:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/fpit/readme.txt,v 1.3 2005/02/02 04:34:24 dawes Exp $ */

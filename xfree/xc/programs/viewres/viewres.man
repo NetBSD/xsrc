@@ -25,9 +25,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/viewres/viewres.man,v 1.4 2003/03/19 01:49:28 dawes Exp $
+.\" $XFree86: xc/programs/viewres/viewres.man,v 1.5 2005/02/11 03:03:16 dawes Exp $
 .\"
-.TH VIEWRES 1 __xorgversion__
+.TH VIEWRES 1 __vendorversion__
 .SH NAME
 viewres - graphical class browser for Xt
 .SH SYNOPSIS

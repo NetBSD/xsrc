@@ -13,7 +13,7 @@
  @end
 
 ***************************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/HALlib/binding.h,v 1.5 2000/12/06 20:39:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/HALlib/binding.h,v 1.6 2004/03/31 16:37:09 tsi Exp $ */
 
 #ifndef _BINDING
 #define _BINDING
@@ -243,6 +243,7 @@ ULONG MGAOpenLibrary(LPBOARDHANDLE pBoard, LPVOID lpClient, ULONG ulClientSize);
 ULONG MGAGetBOARDHANDLESize(void);
 ULONG MGASetTVStandard(LPBOARDHANDLE pBoard, ULONG ulTVStandard);
 ULONG MGASetTVCableType(LPBOARDHANDLE pBoard, ULONG ulCableType);
+ULONG MGASetDisplayStart(LPBOARDHANDLE pBoard, ULONG ulX, ULONG ulY, ULONG ulCrtc);
 
 #if defined(__cplusplus)
     }

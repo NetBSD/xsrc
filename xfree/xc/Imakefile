@@ -3,12 +3,10 @@ XCOMM $Xorg: Imakefile,v 1.5 2000/08/17 19:41:44 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/Imakefile,v 3.30 2003/08/24 20:31:43 tsi Exp $
+XCOMM $XFree86: xc/Imakefile,v 3.32 2004/06/23 17:04:13 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
-
-RELEASE = XOrgReleaseString
 
 #ifdef XFree86VersionString
 VERSTRING = " "version XFree86VersionString "("XFree86DateString")"
@@ -56,10 +54,17 @@ VerifyOS::
 	@echo ""
 	@echo Building XFree86 version XFree86VersionString "("XFree86DateString")."
 #endif
+#ifdef OSRelVersion
 VerifyOS::
 	@echo ""
-	@echo Building on OSName "("OSMajorVersion"."OSMinorVersion"."OSTeenyVersion")."
+	@echo Building on OSName "("OSMajorVersion"."OSMinorVersion"."OSTeenyVersion") ("OSRelVersion")"
 	@echo ""
+#else
+VerifyOS::
+	@echo ""
+	@echo Building on OSName "("OSMajorVersion"."OSMinorVersion"."OSTeenyVersion")"
+	@echo ""
+#endif
 #ifdef LinuxArchitecture
 VerifyOS::
 	@echo Linux Distribution: LinuxDistName

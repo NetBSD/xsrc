@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.31 2004/02/13 23:58:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.33 2004/10/18 00:02:32 tsi Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -27,7 +27,7 @@
  * 
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -493,25 +493,28 @@ xf86pathIsSafe(const char *path)
 #endif
 #endif
 
-#define BAIL_OUT		do {									\
-							xf86conffree(result);				\
-							return NULL;						\
-						} while (0)
+#define BAIL_OUT		\
+    do {			\
+	xf86conffree(result);	\
+	return NULL;		\
+    } while (0)
 
-#define CHECK_LENGTH	do {									\
-							if (l > PATH_MAX) {					\
-								BAIL_OUT;						\
-							}									\
-						} while (0)
+#define CHECK_LENGTH		\
+    do {			\
+	if (l > PATH_MAX) {	\
+	    BAIL_OUT;		\
+	}			\
+    } while (0)
 
-#define APPEND_STR(s)	do {									\
-							if (strlen(s) + l > PATH_MAX) {		\
-								BAIL_OUT;						\
-							} else {							\
-								strcpy(result + l, s);			\
-								l += strlen(s);					\
-							}									\
-						} while (0)
+#define APPEND_STR(s)			\
+    do {				\
+	if (strlen(s) + l > PATH_MAX) {	\
+	    BAIL_OUT;			\
+	} else {			\
+	    strcpy(result + l, s);	\
+	    l += strlen(s);		\
+	}				\
+    } while (0)
 
 static char *
 DoSubstitution(const char *template, const char *cmdline, const char *projroot,
@@ -770,12 +773,17 @@ xf86closeConfigFile (void)
 void
 xf86setBuiltinConfig(const char *config[])
 {
+	/* Reset counters, etc. */
+	pushToken = LOCK_TOKEN;
+	configPos = 0;
+	configLineNo = 0;
+	configFile = NULL;
+
 	builtinConfig = config;
 	configPath = xf86configStrdup("<builtin configuration>");
 	configBuf = xf86confmalloc (CONFIG_BUF_LEN);
 	configRBuf = xf86confmalloc (CONFIG_BUF_LEN);
 	configBuf[0] = '\0';		/* sanity ... */
-
 }
 
 void

@@ -24,102 +24,115 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_gc.h,v 1.2 2000/05/23 04:47:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_gc.h,v 1.3 2004/12/05 23:06:37 tsi Exp $ */
 
 #ifndef FFBGC_H
 #define FFBGC_H
 
-extern void CreatorDoBitblt(DrawablePtr pSrc, DrawablePtr pDst, int alu, RegionPtr prgnDst,
-			    DDXPointPtr pptSrc, unsigned long planemask);
+extern Bool CreatorCreateGC(GCPtr pGC);
 
-extern void CreatorDoVertBitblt(DrawablePtr pSrc, DrawablePtr pDst, int alu, RegionPtr prgnDst,
-				DDXPointPtr pptSrc, unsigned long planemask);
+extern void CreatorDoBitblt(DrawablePtr pSrc, DrawablePtr pDst, int alu,
+			    RegionPtr prgnDst, DDXPointPtr pptSrc,
+			    unsigned long planemask);
 
-extern RegionPtr CreatorCopyArea(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
-				 GCPtr pGC, int srcx, int srcy, int width, int height,
+extern void CreatorDoVertBitblt(DrawablePtr pSrc, DrawablePtr pDst, int alu,
+				RegionPtr prgnDst, DDXPointPtr pptSrc,
+				unsigned long planemask);
+
+extern RegionPtr CreatorCopyArea(DrawablePtr pSrcDrawable,
+				 DrawablePtr pDstDrawable,
+				 GCPtr pGC, int srcx, int srcy,
+				 int width, int height,
 				 int dstx, int dsty);
 
-extern RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
-				  GCPtr pGC, int srcx, int srcy, int width, int height,
+extern RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable,
+				  DrawablePtr pDstDrawable,
+				  GCPtr pGC, int srcx, int srcy,
+				  int width, int height,
 				  int dstx, int dsty, unsigned long bitPlane);
 
-extern void CreatorFillBoxSolid (DrawablePtr pDrawable, int nBox,
-				 BoxPtr pBox, unsigned long pixel);
+extern void CreatorFillBoxSolid(DrawablePtr pDrawable, int nBox,
+				BoxPtr pBox, unsigned long pixel);
 
-extern void CreatorFillBoxStipple (DrawablePtr pDrawable,
-				   int nBox, BoxPtr pBox, CreatorStipplePtr stipple);
+extern void CreatorFillBoxStipple(DrawablePtr pDrawable, int nBox, BoxPtr pBox,
+				  CreatorStipplePtr stipple);
 
 extern void CreatorPolyFillRect(DrawablePtr pDrawable, GCPtr pGC,
 				int nrectFill, xRectangle *prectInit);
 
-extern void CreatorFillSpans (DrawablePtr pDrawable, GCPtr pGC,
-			      int n, DDXPointPtr ppt,
-			      int *pwidth, int fSorted);
+extern void CreatorFillSpans(DrawablePtr pDrawable, GCPtr pGC,
+			     int n, DDXPointPtr ppt,
+			     int *pwidth, int fSorted);
 
 extern void CreatorPolyPoint(DrawablePtr pDrawable, GCPtr pGC, int mode,
 			     int npt, xPoint *pptInit);
 
-extern void CreatorPolySegment (DrawablePtr pDrawable, GCPtr pGC,
-				int nseg, xSegment *pSeg);
+extern void CreatorPolySegment(DrawablePtr pDrawable, GCPtr pGC,
+			       int nseg, xSegment *pSeg);
 
-extern void CreatorFillPolygon (DrawablePtr pDrawable, GCPtr pGC,
-				int shape, int mode, int count, DDXPointPtr ppt);
+extern void CreatorFillPolygon(DrawablePtr pDrawable, GCPtr pGC,
+			       int shape, int mode, int count,
+			       DDXPointPtr ppt);
 
-extern void CreatorPolylines (DrawablePtr pDrawable, GCPtr pGC,
-			      int mode, int npt, DDXPointPtr ppt);
+extern void CreatorPolylines(DrawablePtr pDrawable, GCPtr pGC,
+			     int mode, int npt, DDXPointPtr ppt);
 
-extern void CreatorPolyGlyphBlt (DrawablePtr pDrawable, GCPtr pGC, int x, int y,
-				 unsigned int nglyph, CharInfoPtr *ppci, pointer pGlyphBase);
+extern void CreatorPolyGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
+				unsigned int nglyph, CharInfoPtr *ppci,
+				pointer pGlyphBase);
 
-extern void CreatorTEGlyphBlt (DrawablePtr pDrawable, GCPtr pGC, int x, int y,
-			       unsigned int nglyph, CharInfoPtr *ppci, pointer pGlyphBase);
+extern void CreatorTEGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
+			      unsigned int nglyph, CharInfoPtr *ppci,
+			      pointer pGlyphBase);
 
-extern void CreatorPolyTEGlyphBlt (DrawablePtr pDrawable, GCPtr pGC, int x, int y,
-				   unsigned int nglyph, CharInfoPtr *ppci, pointer pGlyphBase);
+extern void CreatorPolyTEGlyphBlt(DrawablePtr pDrawable, GCPtr pGC,
+				  int x, int y, unsigned int nglyph,
+				  CharInfoPtr *ppci, pointer pGlyphBase);
 
-extern void CreatorPolyFillArcSolid (DrawablePtr pDrawable, GCPtr pGC,
+extern void CreatorPolyFillArcSolid(DrawablePtr pDrawable, GCPtr pGC,
 				    int narcs, xArc *parcs);
 
 extern void CreatorZeroPolyArc(DrawablePtr pDrawable, GCPtr pGC,
 			       int narcs, xArc *parcs);
 
-extern int CreatorCheckTile (PixmapPtr pPixmap, CreatorStipplePtr stipple,
-			     int ox, int oy, int ph);
+extern int CreatorCheckTile(PixmapPtr pPixmap, CreatorStipplePtr stipple,
+			    int ox, int oy, int ph);
 
-extern int CreatorCheckStipple (PixmapPtr pPixmap, CreatorStipplePtr stipple,
-				int ox, int oy, int ph);
+extern int CreatorCheckStipple(PixmapPtr pPixmap, CreatorStipplePtr stipple,
+			       int ox, int oy, int ph);
 
 extern int CreatorCheckLinePattern(GCPtr pGC, CreatorPrivGCPtr gcPriv);
 
-extern int CreatorCheckFill (GCPtr pGC, DrawablePtr pDrawable);
+extern int CreatorCheckFill(GCPtr pGC, DrawablePtr pDrawable);
 
 extern void CreatorSetSpans(DrawablePtr pDrawable, GCPtr pGC, char *pcharsrc,
-			    DDXPointPtr ppt, int *pwidth, int nspans, int fSorted);
+			    DDXPointPtr ppt, int *pwidth, int nspans,
+			    int fSorted);
 
 /* Stuff still not accelerated fully. */
-extern void CreatorSegmentSSStub (DrawablePtr pDrawable, GCPtr pGC,
-				  int nseg, xSegment *pSeg);
+extern void CreatorSegmentSSStub(DrawablePtr pDrawable, GCPtr pGC,
+				 int nseg, xSegment *pSeg);
 
-extern void CreatorLineSSStub (DrawablePtr pDrawable, GCPtr pGC,
-			       int mode, int npt, DDXPointPtr ppt);
+extern void CreatorLineSSStub(DrawablePtr pDrawable, GCPtr pGC,
+			      int mode, int npt, DDXPointPtr ppt);
 
-extern void CreatorSegmentSDStub (DrawablePtr pDrawable, GCPtr pGC,
-				  int nseg, xSegment *pSeg);
+extern void CreatorSegmentSDStub(DrawablePtr pDrawable, GCPtr pGC,
+				 int nseg, xSegment *pSeg);
 
-extern void CreatorLineSDStub (DrawablePtr pDrawable, GCPtr pGC,
-			       int mode, int npt, DDXPointPtr ppt);
+extern void CreatorLineSDStub(DrawablePtr pDrawable, GCPtr pGC,
+			      int mode, int npt, DDXPointPtr ppt);
 
-extern void CreatorSolidSpansGeneralStub (DrawablePtr pDrawable, GCPtr pGC,
-					  int nInit, DDXPointPtr pptInit,
-					  int *pwidthInit, int fSorted);
+extern void CreatorSolidSpansGeneralStub(DrawablePtr pDrawable, GCPtr pGC,
+					 int nInit, DDXPointPtr pptInit,
+					 int *pwidthInit, int fSorted);
 
-extern void CreatorPolyGlyphBlt8Stub (DrawablePtr pDrawable, GCPtr pGC,
-				      int x, int y, unsigned int nglyph, CharInfoPtr *ppci,
-				      pointer pglyphBase);
+extern void CreatorPolyGlyphBlt8Stub(DrawablePtr pDrawable, GCPtr pGC,
+				     int x, int y, unsigned int nglyph,
+				     CharInfoPtr *ppci, pointer pglyphBase);
 
-extern void CreatorImageGlyphBlt8Stub (DrawablePtr pDrawable, GCPtr pGC,
-				       int x, int y, unsigned int nglyph,
-				       CharInfoPtr *ppci, pointer pglyphBase);
+extern void CreatorImageGlyphBlt8Stub(DrawablePtr pDrawable, GCPtr pGC,
+				      int x, int y, unsigned int nglyph,
+				      CharInfoPtr *ppci, pointer pglyphBase);
 
 extern void CreatorTile32FSCopyStub(DrawablePtr pDrawable, GCPtr pGC,
 				    int nInit, DDXPointPtr pptInit,

@@ -1,6 +1,6 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/Imakefile,v 1.53 2004/02/24 16:51:20 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/Imakefile,v 1.58 2005/03/01 03:48:52 dawes Exp $
 XCOMM
-XCOMM Copyright 1997 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+XCOMM Copyright 1997 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
 XCOMM
 XCOMM Permission to use, copy, modify, distribute, and sell this software and
 XCOMM its documentation for any purpose is hereby granted without fee, provided
@@ -50,7 +50,8 @@ DRISRCS4 = radeon_dri.c
 DRIOBJS3 = r128_dri.o
 DRIOBJS4 = radeon_dri.o
 
-DRIINCLUDES = -I$(SERVERSRC)/GL/dri -I$(LIBSRC)/GL/dri -I$(TOP)/include
+DRIINCLUDES = -I$(SERVERSRC)/GL/dri -I$(LIBSRC)/GL/dri -I$(TOP)/include \
+	      -I$(DRMINCLUDESDIR)
 DRIDEFINES  = $(GLX_DEFINES)
 
 #endif
@@ -119,40 +120,17 @@ CPIOOBJS2 = atibank.o ativga.o atiwonder.o atiwonderio.o
 
 #endif
 
-/*
- * For now, disable DGA on SPARC.
- */
-#if defined(SparcArchitecture)
-# undef ATIAvoidDGA
-# define ATIAvoidDGA YES
-#endif
-
-#ifndef ATIAvoidDGA
-#define ATIAvoidDGA NO
-#endif
-
-#if ATIAvoidDGA
-
-DGADEFINES = -DAVOID_DGA
-
-#else
-
-DGASRCS2 = atidga.c
-DGAOBJS2 = atidga.o
-
-#endif
-
-DEFINES = $(CPIODEFINES) $(DGADEFINES) $(NONPCIDEFINES) $(DRIDEFINES)
+DEFINES = $(CPIODEFINES) $(NONPCIDEFINES) $(DRIDEFINES)
 
 SRCS1 = ati.c atiadapter.c atibus.c atichip.c atiident.c atioption.c \
         atiprobe.c atividmem.c $(CPIOSRCS1) $(MODSRCS1) \
         radeon_probe.c r128_probe.c
 SRCS2 = atiaccel.c atiadjust.c atiaudio.c aticlock.c aticonfig.c aticonsole.c \
-        aticursor.c atidac.c atidecoder.c atidsp.c atii2c.c atilock.c \
-        atimach64.c atimach64accel.c atimach64cursor.c atimach64i2c.c \
-        atimach64io.c atimach64xv.c atimode.c atipreinit.c atiprint.c \
-        atirgb514.c atiscreen.c atituner.c atiutil.c ativalid.c \
-        atixv.c $(CPIOSRCS2) $(DGASRCS2) $(MODSRCS2)
+        aticursor.c atidac.c atidecoder.c atidga.c atidsp.c atii2c.c \
+        atilock.c atimach64.c atimach64accel.c atimach64cursor.c \
+        atimach64i2c.c atimach64io.c atimach64xv.c atimode.c atipreinit.c \
+        atiprint.c atirgb514.c atiscreen.c atituner.c atiutil.c ativalid.c \
+        atixv.c $(CPIOSRCS2) $(MODSRCS2)
 SRCS3 = r128_accel.c r128_cursor.c r128_dga.c r128_driver.c \
         r128_video.c $(DRISRCS3) $(MODSRCS3)
 SRCS4 = radeon_accel.c radeon_cursor.c radeon_dga.c radeon_driver.c \
@@ -162,11 +140,11 @@ OBJS1 = ati.o atiadapter.o atibus.o atichip.o atiident.o atioption.o \
         atiprobe.o atividmem.o $(CPIOOBJS1) $(MODOBJS1) \
         radeon_probe.o r128_probe.o
 OBJS2 = atiaccel.o atiadjust.o atiaudio.o aticlock.o aticonfig.o aticonsole.o \
-        aticursor.o atidac.o atidecoder.o atidsp.o atii2c.o atilock.o \
-        atimach64.o atimach64accel.o atimach64cursor.o atimach64i2c.o \
-        atimach64io.o atimach64xv.o atimode.o atipreinit.o atiprint.o \
-        atirgb514.o atiscreen.o atituner.o atiutil.o ativalid.o \
-        atixv.o $(CPIOOBJS2) $(DGAOBJS2) $(MODOBJS2)
+        aticursor.o atidac.o atidecoder.o atidga.o atidsp.o atii2c.o \
+        atilock.o atimach64.o atimach64accel.o atimach64cursor.o \
+        atimach64i2c.o atimach64io.o atimach64xv.o atimode.o atipreinit.o \
+        atiprint.o atirgb514.o atiscreen.o atituner.o atiutil.o ativalid.o \
+        atixv.o $(CPIOOBJS2) $(MODOBJS2)
 OBJS3 = r128_accel.o r128_cursor.o r128_dga.o r128_driver.o \
         r128_video.o $(DRIOBJS3) $(MODOBJS3)
 OBJS4 = radeon_accel.o radeon_cursor.o radeon_dga.o radeon_driver.o \
@@ -197,10 +175,10 @@ SubdirLibraryRule($(OBJS))
 
 ModuleObjectRule()
 
-ObjectModuleTarget(ati,$(OBJS1))
-ObjectModuleTarget(atimisc,$(OBJS2))
-ObjectModuleTarget(r128,$(OBJS3))
-ObjectModuleTarget(radeon,$(OBJS4))
+ObjectModuleTarget(ati,$(OBJS1),drivers)
+ObjectModuleTarget(atimisc,$(OBJS2),drivers)
+ObjectModuleTarget(r128,$(OBJS3),drivers)
+ObjectModuleTarget(radeon,$(OBJS4),drivers)
 
 InstallObjectModule(ati,$(MODULEDIR),drivers)
 InstallObjectModule(atimisc,$(MODULEDIR),drivers)
@@ -367,8 +345,10 @@ InstallDriverSDKObjectModule(radeon,$(DRIVERSDKMODULEDIR),drivers)
 # define ATI2DriverModuleName ati2_drv.o
 #endif
 
+#if 0
 all::
 	RemoveFile($(BUILDMODULEDIR)/drivers/ATI2DriverModuleName)
+#endif
 
 install::
 	RemoveFile($(DESTDIR)$(MODULEDIR)/drivers/ATI2DriverModuleName)

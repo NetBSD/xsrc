@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xclock/Clock.c,v 3.26 2003/10/25 00:52:37 dawes Exp $ */
+/* $XFree86: xc/programs/xclock/Clock.c,v 3.27 2004/10/23 15:29:32 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/StringDefs.h>
@@ -329,7 +329,7 @@ XmuCvtStringToXftColor(Display *dpy,
 			     &xftColor))
 	return False;
     
-    donestr (XftColor, xftColor, XtRXftColor);
+    donestr (XftColor, xftColor, XtRXftColor)
 }
 
 static void
@@ -383,7 +383,7 @@ XmuCvtStringToXftFont(Display *dpy,
 			    name);
     if (font)
     {
-	donestr (XftFont *, font, XtRXftFont);
+	donestr (XftFont *, font, XtRXftFont)
     }
     XtDisplayStringConversionWarning(dpy, (char *) fromVal->addr, XtRXftFont);
     return False;

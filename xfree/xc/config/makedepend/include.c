@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/include.c,v 3.7 2001/12/14 19:53:20 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/include.c,v 3.8 2004/06/09 19:00:09 tsi Exp $ */
 
 
 #include "def.h"
@@ -196,22 +196,12 @@ included_by(struct inclist *ip, struct inclist *newfile)
 		for (i=0; i<ip->i_listlen; i++)
 			if (ip->i_list[ i ] == newfile) {
 			    i = strlen(newfile->i_file);
-			    if (!(ip->i_flags & INCLUDED_SYM) &&
-				!(i > 2 &&
-				  newfile->i_file[i-1] == 'c' &&
-				  newfile->i_file[i-2] == '.'))
-			    {
-				/* only bitch if ip has */
-				/* no #include SYMBOL lines  */
-				/* and is not a .c file */
-				if (warn_multiple)
-				{
-					warning("%s includes %s more than once!\n",
-						ip->i_file, newfile->i_file);
-					warning1("Already have\n");
-					for (i=0; i<ip->i_listlen; i++)
-						warning1("\t%s\n", ip->i_list[i]->i_file);
-				}
+			    if (warn_multiple) {
+				warning("%s includes %s more than once!\n",
+					ip->i_file, newfile->i_file);
+				warning1("Already have\n");
+				for (i=0; i<ip->i_listlen; i++)
+					warning1("\t%s\n", ip->i_list[i]->i_file);
 			    }
 			    return;
 			}
@@ -251,8 +241,7 @@ inc_path(char *file, char *include, int type)
 	ip = inclistnext;
 
 	for (; ip->i_file; ip++) {
-		if ((strcmp(ip->i_incstring, include) == 0) &&
-		    !(ip->i_flags & INCLUDED_SYM)) {
+		if (strcmp(ip->i_incstring, include) == 0) {
 			inclistnext = ip + 1;
 			return ip;
 		}

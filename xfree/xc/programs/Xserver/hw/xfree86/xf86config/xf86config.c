@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.70 2003/11/14 02:40:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.72 2004/10/25 21:23:58 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -838,8 +838,7 @@ static char *monitorintro_text =
 "which is the rate at which scanlines are displayed.\n"
 "\n"
 "The valid range for horizontal sync and vertical sync should be documented\n"
-"in the manual of your monitor. If in doubt, check the monitor database\n"
-TREEROOTLX "/doc/Monitors to see if your monitor is there.\n"
+"in the manual of your monitor.\n"
 "\n";
 
 static char *hsyncintro_text =
@@ -2561,10 +2560,12 @@ write_XF86Config(char *filename)
 	fprintf(f, "    Identifier  \"%s\"\n", config_monitoridentifier);
 	fprintf(f, "\n");
 	fprintf(f, "%s", monitorsection_text2);
-	fprintf(f, "    HorizSync   %s\n", config_hsyncrange);
+	if (config_hsyncrange && *config_hsyncrange)
+	    fprintf(f, "    HorizSync   %s\n", config_hsyncrange);
 	fprintf(f, "\n");
 	fprintf(f, "%s", monitorsection_text3);
-	fprintf(f, "    VertRefresh %s\n", config_vsyncrange);
+	if (config_vsyncrange && *config_vsyncrange)
+	    fprintf(f, "    VertRefresh %s\n", config_vsyncrange);
 	fprintf(f, "\n");
 #if 0
 	fprintf(f, "%s", monitorsection_text4);

@@ -45,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/main.c,v 1.9 2001/12/14 20:00:51 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/main.c,v 1.10 2004/04/03 22:38:54 tsi Exp $ */
 
 #include <stdlib.h>
 #include "lbx.h"
@@ -58,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include "resource.h"
 #include "pm.h"
 #include "misc.h"
+#include "io.h"
 
 int LbxWhoAmI = 0;		/*
 				 * for lbx zlib library to know who we are
@@ -73,12 +74,12 @@ char 		*display;
 
 int		lbxMaxServers = DEFAULT_MAXSERVERS;
 
-static void InitializeGlobals ();
+static void InitializeGlobals (void);
 
 int
-main (argc, argv)
-    int	    argc;
-    char    **argv;
+main (
+    int	    argc,
+    char    **argv)
 {
     display = "63";
 
@@ -141,7 +142,7 @@ main (argc, argv)
  * to a display server.
  */
 static void
-InitializeGlobals ()
+InitializeGlobals (void)
 {
     int		i;
     ClientPtr	tmp;
@@ -180,7 +181,7 @@ InitializeGlobals ()
 
 /* ARGSUSED */
 void
-MarkClientException (client)
-    ClientPtr	client;
+MarkClientException (
+    ClientPtr	client)
 {
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.45 2004/01/06 22:47:07 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.50 2004/12/09 00:21:05 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -13,6 +13,7 @@
 #define NV_ARCH_10  0x10
 #define NV_ARCH_20  0x20
 #define NV_ARCH_30  0x30
+#define NV_ARCH_40  0x40
 
 
 #define BITMASK(t,b) (((unsigned)(1U << (((t)-(b)+1)))-1)  << (b))
@@ -43,6 +44,7 @@ typedef struct _riva_hw_state
     U032 scale;
     U032 dither;
     U032 extra;
+    U032 fifo;
     U032 pixel;
     U032 horiz;
     U032 arbitration0;
@@ -65,6 +67,8 @@ typedef struct _riva_hw_state
     U032 cursor2;
     U032 timingH;
     U032 timingV;
+    U032 displayV;
+    U032 crtcSync;
 } RIVA_HW_STATE, *NVRegPtr;
 
 
@@ -90,6 +94,7 @@ typedef struct {
     CARD32              ScratchBufferStart;
     Bool                NoAccel;
     Bool                HWCursor;
+    Bool                FpScale;
     Bool                ShadowFB;
     unsigned char *     ShadowPtr;
     int                 ShadowPitch;
@@ -153,6 +158,9 @@ typedef struct {
     Bool                fpScaler;
     int                 fpWidth;
     int                 fpHeight;
+    CARD32              fpSyncs;
+    Bool                usePanelTweak;
+    int                 PanelTweak;
 
     CARD32              dmaPut;
     CARD32              dmaCurrent;
@@ -161,6 +169,8 @@ typedef struct {
     CARD32              *dmaBase;
 
     CARD32              currentRop;
+    Bool                WaitVSyncPossible;
+    Bool                BlendingPossible;
 } NVRec, *NVPtr;
 
 #define NVPTR(p) ((NVPtr)((p)->driverPrivate))

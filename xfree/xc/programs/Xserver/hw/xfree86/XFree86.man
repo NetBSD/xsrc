@@ -1,4 +1,96 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.65 2003/11/12 19:06:46 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.73 2005/03/16 15:31:32 dawes Exp $
+.\"
+.\" Copyright (c) 1994-2005 by The XFree86 Project, Inc.
+.\" All rights reserved.
+.\"
+.\" Permission is hereby granted, free of charge, to any person obtaining
+.\" a copy of this software and associated documentation files (the
+.\" "Software"), to deal in the Software without restriction, including
+.\" without limitation the rights to use, copy, modify, merge, publish,
+.\" distribute, sublicense, and/or sell copies of the Software, and to
+.\" permit persons to whom the Software is furnished to do so, subject
+.\" to the following conditions:
+.\"
+.\"   1.  Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions, and the following disclaimer.
+.\"
+.\"   2.  Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer
+.\"       in the documentation and/or other materials provided with the
+.\"       distribution, and in the same place and form as other copyright,
+.\"       license and disclaimer information.
+.\"
+.\"   3.  The end-user documentation included with the redistribution,
+.\"       if any, must include the following acknowledgment: "This product
+.\"       includes software developed by The XFree86 Project, Inc
+.\"       (http://www.xfree86.org/) and its contributors", in the same
+.\"       place and form as other third-party acknowledgments.  Alternately,
+.\"       this acknowledgment may appear in the software itself, in the
+.\"       same form and location as other such third-party acknowledgments.
+.\"
+.\"   4.  Except as contained in this notice, the name of The XFree86
+.\"       Project, Inc shall not be used in advertising or otherwise to
+.\"       promote the sale, use or other dealings in this Software without
+.\"       prior written authorization from The XFree86 Project, Inc.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+.\" WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+.\" OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+.\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Information related to automatic configuration is:
+.\"
+.\" Copyright © 2003, 2004, 2005 David H. Dawes.
+.\" Copyright © 2003, 2004, 2005 X-Oz Technologies.
+.\" All rights reserved.
+.\"
+.\" Permission is hereby granted, free of charge, to any person obtaining a
+.\" copy of this software and associated documentation files (the "Software"),
+.\" to deal in the Software without restriction, including without limitation
+.\" the rights to use, copy, modify, merge, publish, distribute, sublicense,
+.\" and/or sell copies of the Software, and to permit persons to whom the
+.\" Software is furnished to do so, subject to the following conditions:
+.\" 
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions, and the following disclaimer.
+.\"
+.\"  2. Redistributions in binary form must reproduce the above
+.\"     copyright notice, this list of conditions and the following
+.\"     disclaimer in the documentation and/or other materials provided
+.\"     with the distribution.
+.\" 
+.\"  3. The end-user documentation included with the redistribution,
+.\"     if any, must include the following acknowledgment: "This product
+.\"     includes software developed by X-Oz Technologies
+.\"     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+.\"     appear in the software itself, if and wherever such third-party
+.\"     acknowledgments normally appear.
+.\"
+.\"  4. Except as contained in this notice, the name of X-Oz
+.\"     Technologies shall not be used in advertising or otherwise to
+.\"     promote the sale, use or other dealings in this Software without
+.\"     prior written authorization from X-Oz Technologies.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+.\" OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+.\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\"
 .TH XFree86 1 __vendorversion__
 .SH NAME
 XFree86 - X11R6 X server
@@ -145,7 +237,7 @@ will use.  Without this option,
 will pick the first available Virtual Terminal that it can locate.  This
 option applies only to platforms such as Linux, BSD, SVR3 and SVR4, that
 have virtual terminal support.
-.TP
+.TP 8
 .B \-allowMouseOpenFail
 Allow the server to start up even if the mouse device can't be opened
 or initialised.  This is equivalent to the
@@ -166,6 +258,22 @@ to the
 .B AllowNonLocalXvidtune
 XF86Config(__filemansuffix__) file option.  By default non-local
 connections are not allowed.
+.TP 8
+.B \-appendauto
+Append the automatic XFree86 server configuration data to an existing
+configuration file.  By default this is only done when an existing
+configuration file does not contain any
+.B ServerLayout
+sections or any
+.B Screen
+sections.  This can be useful for providing configuration details for
+things not currently handled by the automatic configuration mechanism,
+such as input devices, font paths, etc.
+.TP 8
+.B \-autoconfig
+Use automatic XFree86 server configuration, even if a configuration file
+is available.  By default automatic configuration is only used when a
+configuration file cannot be found.
 .TP 8
 .BI \-bgamma " value"
 Set the blue gamma correction.
@@ -275,19 +383,19 @@ Use the XF86Config(__filemansuffix__) file
 section called
 .I keyboard-name
 as the core keyboard.  This option is ignored when the
-.B Layout
-section specifies a core keyboard.  In the absence of both a Layout
+.B ServerLayout
+section specifies a core keyboard.  In the absence of both a ServerLayout
 section and this option, the first relevant
 .B InputDevice
 section is used for the core keyboard.
 .TP 8
 .BI \-layout " layout-name"
 Use the XF86Config(__filemansuffix__) file
-.B Layout
+.B ServerLayout
 section called
 .IR layout-name .
 By default the first
-.B Layout
+.B ServerLayout
 section is used.
 .TP 8
 .BI \-logfile " filename"
@@ -325,6 +433,10 @@ is a comma separated list of directories to search for
 server modules.  This option is only available when the server is run
 as root (i.e, with real-uid 0).
 .TP 8
+.B \-noappendauto
+Disable appending the automatic XFree86 server configuration to a partial
+static configuration.
+.TP 8
 .B \-nosilk
 Disable Silken Mouse support.
 .TP 8
@@ -349,8 +461,8 @@ Use the XF86Config(__filemansuffix__) file
 section called
 .I pointer-name
 as the core pointer.  This option is ignored when the
-.B Layout
-section specifies a core pointer.  In the absence of both a Layout
+.B ServerLayout
+section specifies a core pointer.  In the absence of both a ServerLayout
 section and this option, the first relevant
 .B InputDevice
 section is used for the core pointer.
@@ -387,11 +499,11 @@ Use the XF86Config(__filemansuffix__) file
 section called
 .IR screen-name .
 By default the screens referenced by the default
-.B Layout
+.B ServerLayout
 section are used, or the first
 .B Screen
 section when there are no
-.B Layout
+.B ServerLayout
 sections.
 .TP 8
 .B \-showconfig
@@ -632,16 +744,15 @@ README.mouse
 README.DRI
 .IR <http://www.xfree86.org/current/DRI.html> ,
 .br
-Status
-.IR <http://www.xfree86.org/current/Status.html> ,
-.br
 Install
 .IR <http://www.xfree86.org/current/Install.html> .
 
 .SH AUTHORS
-XFree86 has many contributors world wide.  The names of most of them
-can be found in the documentation, CHANGELOG files in the source tree,
-and in the actual source code.
+XFree86 has many contributors world wide.  The names of most of them can
+be found in the documentation, CHANGELOG files in the source tree, and
+in the actual source code.  The names of the contributors to the current
+release can be found in the release notes
+.IR <http://www.xfree86.org/current/RELNOTES.html> .
 .PP
 XFree86 was originally based on \fIX386 1.2\fP by Thomas Roell, which
 was contributed to the then X Consortium's X11R5 distribution by SGCS.
@@ -653,55 +764,424 @@ XFree86 was later integrated in the then X Consortium's X11R6 release
 by a group of dedicated XFree86 developers, including the following:
 .PP
 .RS 4
-.nf
-Stuart Anderson    \fIanderson@metrolink.com\fP
-Doug Anson         \fIdanson@lgc.com\fP
-Gertjan Akkerman   \fIakkerman@dutiba.twi.tudelft.nl\fP
-Mike Bernson       \fImike@mbsun.mlb.org\fP
-Robin Cutshaw      \fIrobin@XFree86.org\fP
-David Dawes        \fIdawes@XFree86.org\fP
-Marc Evans         \fImarc@XFree86.org\fP
-Pascal Haible      \fIhaible@izfm.uni-stuttgart.de\fP
-Matthieu Herrb     \fIMatthieu.Herrb@laas.fr\fP
-Dirk Hohndel       \fIhohndel@XFree86.org\fP
-David Holland      \fIdavidh@use.com\fP
-Alan Hourihane     \fIalanh@fairlite.demon.co.uk\fP
-Jeffrey Hsu        \fIhsu@soda.berkeley.edu\fP
-Glenn Lai          \fIglenn@cs.utexas.edu\fP
-Ted Lemon          \fImellon@ncd.com\fP
-Rich Murphey       \fIrich@XFree86.org\fP
-Hans Nasten        \fInasten@everyware.se\fP
-Mark Snitily       \fImark@sgcs.com\fP
-Randy Terbush      \fIrandyt@cse.unl.edu\fP
-Jon Tombs          \fItombs@XFree86.org\fP
-Kees Verstoep      \fIversto@cs.vu.nl\fP
-Paul Vixie         \fIpaul@vix.com\fP
-Mark Weaver        \fIMark_Weaver@brown.edu\fP
-David Wexelblat    \fIdwex@XFree86.org\fP
-Philip Wheatley    \fIPhilip.Wheatley@ColumbiaSC.NCR.COM\fP
-Thomas Wolfram     \fIwolf@prz.tu-berlin.de\fP
-Orest Zborowski    \fIorestz@eskimo.com\fP
-.fi
+Stuart Anderson,
+Doug Anson,
+Gertjan Akkerman,
+Mike Bernson,
+Robin Cutshaw,
+David Dawes,
+Marc Evans,
+Pascal Haible,
+Matthieu Herrb,
+Dirk Hohndel,
+David Holland,
+Alan Hourihane,
+Jeffrey Hsu,
+Glenn Lai,
+Ted Lemon,
+Rich Murphey,
+Hans Nasten,
+Mark Snitily,
+Randy Terbush,
+Jon Tombs,
+Kees Verstoep,
+Paul Vixie,
+Mark Weaver,
+David Wexelblat,
+Philip Wheatley,
+Thomas Wolfram,
+Orest Zborowski.
 .RE
 .PP
-The current XFree86 core team consists of:
+Contributors to XFree86 4.4.0 include:
 .PP
 .RS 4
-.nf
-David Dawes        \fIdawes@xfree86.org\fP
-Egbert Eich        \fIeich@xfree86.org\fP
-Marc Evans         \fImarc@xfree86.org\fP
-Matthieu Herrb     \fIherrb@xfree86.org\fP
-Alan Hourihane     \fIalanh@xfree86.org\fP
-Marc La France     \fItsi@xfree86.org\fP
-Kevin Martin       \fImartin@xfree86.org\fP
-Rich Murphey       \fIrich@xfree86.org\fP
-Mark Vojkovich     \fImarkv@xfree86.org\fP
-David Wexelblat    \fIdwex@xfree86.org\fP
-.fi
+Roi a Torkilsheyggi,
+Dave Airlie,
+Andrew Aitchison,
+Marco Antonio Alvarez,
+Alexandr Andreev,
+Jack Angel,
+Eric Anholt,
+Ani,
+Juuso \(oAberg,
+Sergey Babkin,
+Alexey Baj,
+Bang Jun-Young,
+Uberto Barbini,
+Kyle Bateman,
+Matthew W. S. Bell,
+Vano Beridze,
+Hiroyuki Bessho,
+Andrew Bevitt,
+Christian Biere,
+Martin Birgmeier,
+Jakub Bogusz,
+Le Hong Boi,
+Paul Bolle,
+Charl Botha,
+Stanislav Brabec,
+Eric Branlund,
+Rob Braun,
+Peter Breitenlohner,
+Michael Breuer,
+Kevin Brosius,
+Frederick Bruckman,
+Oswald Buddenhagen,
+Nilg\(:un Belma Bug\(:uner,
+Julian Cable,
+Yukun Chen,
+Ping Cheng,
+Juliusz Chroboczek,
+Fred Clift,
+Alan Coopersmith,
+Martin Costabel,
+Alan Cox,
+Michel D\(:anzer,
+David Dawes,
+Leif Delgass,
+Richard Dengler,
+John Dennis,
+Thomas Dickey,
+Randy Dunlap,
+Chris Edgington,
+Paul Eggert,
+Paul Elliott,
+Emmanuel,
+Visanu Euarchukiati,
+Mike Fabian,
+Rik Faith,
+Brian Feldman,
+Wu Jian Feng,
+Kevin P. Fleming,
+Jose Fonseca,
+Hugues Fournier,
+Miguel Freitas,
+Quentin Garnier,
+B\(/orre Gaup,
+Michael Geddes,
+Frank Giessler,
+Hansruedi Glauser,
+Wolfram Gloger,
+Alexander Gottwald,
+Guido Guenther,
+Ralf Habacker,
+Bruno Haible,
+Lindsay Haigh,
+John Harper,
+James Harris,
+Mike A. Harris,
+Bryan W. Headley,
+John Heasley,
+Thomas Hellstr\(:om,
+Matthieu Herrb,
+Jonathan Hough,
+Alan Hourihane,
+Joel Ray Holveck,
+Harold L Hunt II,
+Ricardo Y. Igarashi,
+Mutsumi ISHIKAWA ,
+Tsuyoshi ITO,
+Kean Johnston,
+Nicolas JOLY,
+Phil Jones,
+Roman Kagan,
+Theppitak Karoonboonyanan,
+Etsushi Kato,
+Koike Kazuhiko,
+Aidan Kehoe,
+Juergen Keil,
+Andreas Kies,
+Thomas Klausner,
+Mario Klebsch,
+Egmont Koblinger,
+Vlatko Kosturjak,
+Kusanagi Kouichi,
+Mel Kravitz,
+Peter Kunzmann,
+Nick Kurshev,
+Mashrab Kuvatov,
+Marc La France,
+Radics Laszlo,
+Zarick Lau,
+Nolan Leake,
+Michel Lespinasse,
+Noah Levitt,
+Dave Love,
+H.J. Lu,
+Lubos Lunak,
+Sven Luther,
+Torrey T. Lyons,
+Calum Mackay,
+Paul Mackerras,
+Roland Mainz,
+Kevin Martin,
+Michal Maruska,
+Kensuke Matsuzaki,
+maxim,
+Stephen McCamant,
+Ferris McCormick,
+Luke Mewburn,
+Nicholas Miell,
+Robert Millan,
+Hisashi MIYASHITA,
+Gregory Mokhin,
+Patrik Montgomery,
+Joe Moss,
+Josselin Mouette,
+Frank Murphy,
+Reiko Nakajima,
+Paul Nasrat,
+Dan Nelson,
+Bastien Nocera,
+Alexandre Oliva,
+Hideki ONO,
+Peter Osterlund,
+Sergey V. Oudaltsov,
+S\('eamus \('O Ciardhu\('ain,
+Bob Paauwe,
+Paul Pacheco,
+Tom Pala,
+Ivan Pascal,
+T. M. Pederson,
+Earle F. Philhower III,
+Nils Philippsen,
+Manfred Pohler,
+Alexander Pohoyda,
+Alain Poirier,
+Arnaud Quette,
+Jim Radford,
+Dale Rahn,
+Lucas Correia Villa Real,
+Ren\('e Rebe,
+Tyler Retzlaff,
+Sebastian Rittau,
+Tim Roberts,
+Alastair M. Robinson,
+Branden Robinson,
+Daniel Rock,
+Ian Romanick,
+Bernhard Rosenkraenzer,
+M\(oans Rullg\(oard,
+Andriy Rysin,
+Supphachoke Santiwichaya,
+Pablo Saratxaga,
+Matthias Scheler,
+Jens Schweikhardt,
+Danilo Segan,
+Shantonu Sen,
+Stas Sergeev,
+Jungshik Shin,
+Nikola Smolenski,
+Andreas Stenglein,
+Paul Stewart,
+Alexander Stohr,
+Alan Strohm,
+Will Styles,
+James Su,
+Mike Sulivan,
+Ville Syrjala,
+Slava Sysoltsev,
+Akira TAGOH,
+Toshimitsu Tanaka,
+Akira Taniguchi,
+Owen Taylor,
+Neil Terry,
+Jonathan Thambidurai,
+John Tillman,
+Adam Tlalka,
+Linus Torvalds,
+Christian Tosta,
+Warren Turkal,
+Stephen J. Turnbull,
+Ted Unangst,
+Mike Urban,
+Simon Vallet,
+Thuraiappah Vaseeharan,
+Luc Verhaegen,
+Yann Vernier,
+Michail Vidiassov,
+Sebastiano Vigna,
+Mark Vojkovich,
+Stephane Voltz,
+Boris Weissman,
+Keith Whitwell,
+Thomas Winischhofer,
+Eric Wittry,
+Kim Woelders,
+Roy Wood,
+Jason L. Wright,
+Joerg Wunsch,
+Chisato Yamauchi,
+Hui Yu.
 .RE
 .PP
-
+Contributors to XFree86 4.5.0 include:
+.PP
+.RS 4
+Szilveszter Adam,
+Tim Adye,
+Taneem Ahmed,
+Andrew Aitchison,
+Raoul Arranz,
+Zaeem Arshad,
+Dwayne Bailey,
+Ilyas Bakirov,
+Denis Barbier,
+Kyle Bateman,
+J. Scott Berg,
+Thomas Biege,
+Dmitry Bolkhovityanov,
+H Merijn Brand,
+Peter Breitenlohner,
+Benjamin Burke,
+Dale L Busacker,
+busmanus,
+Julian Cable,
+Mike Castle,
+David M. Clay,
+Philip Clayton,
+Alan Coopersmith,
+Ricardo Cruz,
+Michel D\(:anzer,
+J. D. Darling,
+David Dawes,
+Michael Dawes,
+Rafael \('Avila de Esp\('indola,
+Rick De Laet,
+Josip Deanovic,
+Angelus Dei,
+Laurent Deniel,
+Thomas Dickey,
+Stefan Dirsch,
+Charles Dobson,
+DRI Project,
+Emmanuel Dreyfus,
+Boris Dusek,
+Georgina O. Economou,
+Egbert Eich,
+Bernd Ernesti,
+Chris Evans,
+Rik Faith,
+Adrian Fiechter,
+Matthew Fischer,
+FreeType Team,
+Terry R. Frienrichsen,
+Christopher Fynn,
+Hubert Gburzynski,
+Nicolas George,
+Frank Giessler,
+Fred Gleason,
+Dmitry Golubev,
+Alexander Gottwald,
+Herbert Graeber,
+Miroslav Halas,
+John Harper,
+Harshula,
+John Heasley,
+Matthieu Herrb,
+David Holl,
+Alex Holland,
+Peng Hongbo,
+Alan Hourihane,
+Harold L Hunt II,
+Alan Iwi,
+Timur Jamakeev,
+Paul Jarc,
+Kean Johnston,
+Nicolas Joly,
+Mark Kandianis,
+Kaleb Keithley,
+Chamath Keppitiyagama,
+Jung-uk Kim,
+Satoshi Kimura,
+Michael Knudsen,
+Vlatko Kosturjak,
+Alexei Kosut,
+Anton Kovalenko,
+Joachim Kuebart,
+Marc La France,
+David Laight,
+Zarick Lau,
+Pierre Lalet,
+Michael Lampe,
+Lanka Linux User Group,
+Nolan Leake,
+Werner Lemberg,
+Dejan Lesjak,
+Noah Levitt,
+Greg Lewis,
+Bernhard R Link,
+Jonas Lund,
+S. Lussos,
+Torrey T. Lyons,
+Roland Mainz,
+N Marci,
+Kevin Martin,
+Stephen McCamant,
+Mesa Developers,
+Luke Mewburn,
+Petr Mladek,
+Bram Moolenaar,
+Steve Murphy,
+Ishikawa MUTSUMI,
+Radu Octavian,
+Lee Olsen,
+Greg Parker,
+Ivan Pascal,
+Alexander E. Patrakov,
+Mike Pechkin,
+So\('os P\('eter,
+Zvezdan Petkovic,
+Alexander Pohoyda,
+Xie Qian,
+Bill Randle,
+Adam J. Richter,
+Tim Roberts,
+Bernhard Rosenkraenzer,
+Andreas R\(:uden,
+Steve Rumble,
+Oleg Safiullin,
+Ty Sarna,
+Leo Savernik,
+Barry Scott,
+Shantonu Sen,
+Yu Shao,
+Andreas Schwab,
+Matthias Scheler,
+Dan Shearer,
+Michael Shell,
+Paul Shupak,
+Alexander Stohr,
+Marius Strobl,
+Mikko Markus Torni,
+Jess Thrysoee,
+Izumi Tsutsui,
+Tungsten Graphics,
+Ryan Underwood,
+Tristan Van Berkom,
+Michael van Elst,
+Phillip Vandry,
+Roman Vasylyev,
+Luc Verhaegen,
+Rodion Vshevtsov,
+Mark Vojkovich,
+Edi Werner,
+Keith Whitwell,
+Scot Wilcoxon,
+Dave Williss,
+Thomas Winischhofer,
+Kuang-che Wu,
+X-Oz Technologies,
+Chisato Yamauchi,
+Michael Yaroslavtsev,
+David Yerger,
+Su Yong,
+Hui Yu,
+Sagi Zeevi,
+Christian Zietz
+.RE
+.PP
 XFree86 source is available from the FTP server
 \fI<ftp://ftp.XFree86.org/pub/XFree86/>\fP, and from the XFree86 CVS
 server \fI<http://www.xfree86.org/cvs/>\fP.  Documentation and other
@@ -720,5 +1200,5 @@ at
 .IR <http://www.xfree86.org/current/LICENSE.html> .
 Refer to the source code for specific copyright notices.
 .PP
-.B XFree86(TM)
-is a trademark of The XFree86 Project, Inc.
+.B XFree86(R)
+is a registered trademark of The XFree86 Project, Inc.

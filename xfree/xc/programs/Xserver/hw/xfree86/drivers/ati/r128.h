@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.27 2003/11/10 18:41:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.28 2004/12/10 16:07:00 alanh Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -289,19 +289,19 @@ typedef struct {
     Bool              directRenderingEnabled;
     DRIInfoPtr        pDRIInfo;
     int               drmFD;
-    drmContext        drmCtx;
+    drm_context_t     drmCtx;
     int               numVisualConfigs;
     __GLXvisualConfig *pVisualConfigs;
     R128ConfigPrivPtr pVisualConfigsPriv;
 
-    drmHandle         fbHandle;
+    drm_handle_t      fbHandle;
 
     drmSize           registerSize;
-    drmHandle         registerHandle;
+    drm_handle_t      registerHandle;
 
     Bool              IsPCI;            /* Current card is a PCI card */
     drmSize           pciSize;
-    drmHandle         pciMemHandle;
+    drm_handle_t      pciMemHandle;
     unsigned char     *PCI;             /* Map */
 
     Bool              allowPageFlip;    /* Enable 3d page flipping */
@@ -309,7 +309,7 @@ typedef struct {
     int               drmMinor;
 
     drmSize           agpSize;
-    drmHandle         agpMemHandle;     /* Handle from drmAgpAlloc */
+    drm_handle_t      agpMemHandle;     /* Handle from drmAgpAlloc */
     unsigned long     agpOffset;
     unsigned char     *AGP;             /* Map */
     int               agpMode;
@@ -322,20 +322,20 @@ typedef struct {
 
 				/* CCE ring buffer data */
     unsigned long     ringStart;        /* Offset into AGP space */
-    drmHandle         ringHandle;       /* Handle from drmAddMap */
+    drm_handle_t      ringHandle;       /* Handle from drmAddMap */
     drmSize           ringMapSize;      /* Size of map */
     int               ringSize;         /* Size of ring (in MB) */
     unsigned char     *ring;            /* Map */
     int               ringSizeLog2QW;
 
     unsigned long     ringReadOffset;   /* Offset into AGP space */
-    drmHandle         ringReadPtrHandle; /* Handle from drmAddMap */
+    drm_handle_t      ringReadPtrHandle; /* Handle from drmAddMap */
     drmSize           ringReadMapSize;  /* Size of map */
     unsigned char     *ringReadPtr;     /* Map */
 
 				/* CCE vertex/indirect buffer data */
     unsigned long     bufStart;        /* Offset into AGP space */
-    drmHandle         bufHandle;       /* Handle from drmAddMap */
+    drm_handle_t      bufHandle;       /* Handle from drmAddMap */
     drmSize           bufMapSize;      /* Size of map */
     int               bufSize;         /* Size of buffers (in MB) */
     unsigned char     *buf;            /* Map */
@@ -344,7 +344,7 @@ typedef struct {
 
 				/* CCE AGP Texture data */
     unsigned long     agpTexStart;      /* Offset into AGP space */
-    drmHandle         agpTexHandle;     /* Handle from drmAddMap */
+    drm_handle_t      agpTexHandle;     /* Handle from drmAddMap */
     drmSize           agpTexMapSize;    /* Size of map */
     int               agpTexSize;       /* Size of AGP tex space (in MB) */
     unsigned char     *agpTex;          /* Map */

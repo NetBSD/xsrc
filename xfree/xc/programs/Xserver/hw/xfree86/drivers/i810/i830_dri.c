@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.c,v 1.16 2003/09/28 20:15:58 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.c,v 1.21 2005/02/01 19:49:40 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2001 VA Linux Systems Inc., Fremont, California.
@@ -73,16 +73,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "i830.h"
 #include "i830_dri.h"
-#include "i830_3d_reg.h"
 
-static char I830KernelDriverName[] = "i830";
-static char I830ClientDriverName[] = "i830";
+static char I830KernelDriverName[] = "i915";
+static char I830ClientDriverName[] = "i915";
 
 static Bool I830InitVisualConfigs(ScreenPtr pScreen);
 static Bool I830CreateContext(ScreenPtr pScreen, VisualPtr visual,
-			      drmContext hwContext, void *pVisualConfigPriv,
+			      drm_context_t hwContext, void *pVisualConfigPriv,
 			      DRIContextType contextStore);
-static void I830DestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void I830DestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 			       DRIContextType contextStore);
 static void I830DRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
 			       DRIContextType readContextType,
@@ -128,7 +127,7 @@ static Bool
 I830InitDma(ScrnInfoPtr pScrn)
 {
    I830Ptr pI830 = I830PTR(pScrn);
-   I830RingBuffer *ring = &(pI830->LpRing);
+   I830RingBuffer *ring = pI830->LpRing;
    I830DRIPtr pI830DRI = (I830DRIPtr) pI830->pDRIInfo->devPrivate;
    drmI830Init info;
 
@@ -140,7 +139,6 @@ I830InitDma(ScrnInfoPtr pScrn)
    info.ring_size = ring->mem.Size;
 
    info.mmio_offset = (unsigned int)pI830DRI->regs;
-   info.buffers_offset = (unsigned int)pI830->buffer_map;
 
    info.sarea_priv_offset = sizeof(XF86DRISAREARec);
 
@@ -149,16 +147,33 @@ I830InitDma(ScrnInfoPtr pScrn)
    info.depth_offset = pI830->DepthBuffer.Start;
    info.w = pScrn->virtualX;
    info.h = pScrn->virtualY;
-   info.pitch = pI830->auxPitch;
-   info.pitch_bits = pI830->auxPitchBits;
-   info.back_pitch = pI830->auxPitch;
-   info.depth_pitch = pI830->auxPitch;
+   info.pitch = pI830->backPitch;
+   info.back_pitch = pI830->backPitch;
+   info.depth_pitch = pI830->backPitch;
    info.cpp = pI830->cpp;
 
    if (drmCommandWrite(pI830->drmSubFD, DRM_I830_INIT,
 		       &info, sizeof(drmI830Init))) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		 "I830 Dma Initialization Failed\n");
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+static Bool
+I830ResumeDma(ScrnInfoPtr pScrn)
+{
+   I830Ptr pI830 = I830PTR(pScrn);
+   drmI830Init info;
+
+   memset(&info, 0, sizeof(drmI830Init));
+   info.func = I830_RESUME_DMA;
+
+   if (drmCommandWrite(pI830->drmSubFD, DRM_I830_INIT,
+		       &info, sizeof(drmI830Init))) {
+      xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "I830 Dma Resume Failed\n");
       return FALSE;
    }
 
@@ -241,6 +256,7 @@ I830InitVisualConfigs(ScreenPtr pScreen)
 	       pConfigs[i].redSize = 5;
 	       pConfigs[i].greenSize = 6;
 	       pConfigs[i].blueSize = 5;
+	       pConfigs[i].alphaSize = 0;
 	       pConfigs[i].redMask = 0x0000F800;
 	       pConfigs[i].greenMask = 0x000007E0;
 	       pConfigs[i].blueMask = 0x0000001F;
@@ -270,10 +286,10 @@ I830InitVisualConfigs(ScreenPtr pScreen)
 	       pConfigs[i].auxBuffers = 0;
 	       pConfigs[i].level = 0;
 	       if (stencil || accum)
-		  pConfigs[i].visualRating = GLX_SLOW_CONFIG;
+		  pConfigs[i].visualRating = GLX_SLOW_VISUAL_EXT;
 	       else
-		  pConfigs[i].visualRating = GLX_NONE;
-	       pConfigs[i].transparentPixel = GLX_NONE;
+		  pConfigs[i].visualRating = GLX_NONE_EXT;
+	       pConfigs[i].transparentPixel = GLX_NONE_EXT;
 	       pConfigs[i].transparentRed = 0;
 	       pConfigs[i].transparentGreen = 0;
 	       pConfigs[i].transparentBlue = 0;
@@ -328,7 +344,7 @@ I830InitVisualConfigs(ScreenPtr pScreen)
 	       pConfigs[i].redMask = 0x00FF0000;
 	       pConfigs[i].greenMask = 0x0000FF00;
 	       pConfigs[i].blueMask = 0x000000FF;
-	       pConfigs[i].alphaMask = 0xFF000000;;
+	       pConfigs[i].alphaMask = 0xFF000000;
 	       if (accum) {
 		  pConfigs[i].accumRedSize = 16;
 		  pConfigs[i].accumGreenSize = 16;
@@ -357,11 +373,11 @@ I830InitVisualConfigs(ScreenPtr pScreen)
 	       pConfigs[i].auxBuffers = 0;
 	       pConfigs[i].level = 0;
 	       if (accum) {
-		  pConfigs[i].visualRating = GLX_SLOW_CONFIG;
+		  pConfigs[i].visualRating = GLX_SLOW_VISUAL_EXT;
 	       } else {
-		  pConfigs[i].visualRating = GLX_NONE;
+		  pConfigs[i].visualRating = GLX_NONE_EXT;
 	       }
-	       pConfigs[i].transparentPixel = GLX_NONE;
+	       pConfigs[i].transparentPixel = GLX_NONE_EXT;
 	       pConfigs[i].transparentRed = 0;
 	       pConfigs[i].transparentGreen = 0;
 	       pConfigs[i].transparentBlue = 0;
@@ -444,12 +460,15 @@ I830DRIScreenInit(ScreenPtr pScreen)
 
    pDRIInfo->drmDriverName = I830KernelDriverName;
    pDRIInfo->clientDriverName = I830ClientDriverName;
-   pDRIInfo->busIdString = xalloc(64);
-
-   sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
-	   ((pciConfigPtr) pI830->PciInfo->thisCard)->busnum,
-	   ((pciConfigPtr) pI830->PciInfo->thisCard)->devnum,
-	   ((pciConfigPtr) pI830->PciInfo->thisCard)->funcnum);
+   if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+      pDRIInfo->busIdString = DRICreatePCIBusID(pI830->PciInfo);
+   } else {
+      pDRIInfo->busIdString = xalloc(64);
+      sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
+	      ((pciConfigPtr) pI830->PciInfo->thisCard)->busnum,
+	      ((pciConfigPtr) pI830->PciInfo->thisCard)->devnum,
+	      ((pciConfigPtr) pI830->PciInfo->thisCard)->funcnum);
+   }
    pDRIInfo->ddxDriverMajorVersion = I830_MAJOR_VERSION;
    pDRIInfo->ddxDriverMinorVersion = I830_MINOR_VERSION;
    pDRIInfo->ddxDriverPatchVersion = I830_PATCHLEVEL;
@@ -465,7 +484,7 @@ I830DRIScreenInit(ScreenPtr pScreen)
    else
       pDRIInfo->maxDrawableTableEntry = I830_MAX_DRAWABLES;
 
-   if (sizeof(XF86DRISAREARec) + sizeof(I830SAREARec) > SAREA_MAX) {
+   if (sizeof(XF86DRISAREARec) + sizeof(drmI830Sarea) > SAREA_MAX) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
 		 "[dri] Data does not fit in SAREA\n");
       return FALSE;
@@ -509,7 +528,7 @@ I830DRIScreenInit(ScreenPtr pScreen)
       return FALSE;
    }
 
-   /* Check the i830 DRM versioning */
+   /* Check the i915 DRM versioning */
    {
       drmVersionPtr version;
 
@@ -551,14 +570,14 @@ I830DRIScreenInit(ScreenPtr pScreen)
 	 drmFreeVersion(version);
       }
 
-      /* Check the i830 DRM version */
+      /* Check the i915 DRM version */
       version = drmGetVersion(pI830->drmSubFD);
       if (version) {
-	 if (version->version_major != 1 || version->version_minor < 3) {
+	 if (version->version_major != 1 || version->version_minor < 1) {
 	    /* incompatible drm version */
 	    xf86DrvMsg(pScreen->myNum, X_ERROR,
 		       "[dri] %s failed because of a version mismatch.\n"
-		       "[dri] i830.o kernel module version is %d.%d.%d but version 1.3 or greater is needed.\n"
+		       "[dri] i915 kernel module version is %d.%d.%d but version 1.1 or greater is needed.\n"
 		       "[dri] Disabling DRI.\n",
 		       "I830DRIScreenInit",
 		       version->version_major,
@@ -567,10 +586,21 @@ I830DRIScreenInit(ScreenPtr pScreen)
 	    drmFreeVersion(version);
 	    return FALSE;
 	 }
+	 if (strncmp(version->name, I830KernelDriverName, strlen(I830KernelDriverName))) {
+	    xf86DrvMsg(pScreen->myNum, X_WARNING, 
+			"i830 Kernel module detected, Use the i915 Kernel module instead, aborting DRI init.\n");
+	    I830DRICloseScreen(pScreen);
+	    drmFreeVersion(version);
+	    return FALSE;
+	 }
+	 if (version->version_minor < 2)
+	    xf86DrvMsg(pScreen->myNum, X_WARNING, 
+			"Resume functionality not available with DRM < 1.2\n");
 	 pI830->drmMinor = version->version_minor;
 	 drmFreeVersion(version);
       }
    }
+
    return TRUE;
 }
 
@@ -581,11 +611,10 @@ I830DRIDoMappings(ScreenPtr pScreen)
    I830Ptr pI830 = I830PTR(pScrn);
    DRIInfoPtr pDRIInfo = pI830->pDRIInfo;
    I830DRIPtr pI830DRI = pDRIInfo->devPrivate;
-   int bufs;
 
    DPRINTF(PFX, "I830DRIDoMappings\n");
    pI830DRI->regsSize = I830_REG_SIZE;
-   if (drmAddMap(pI830->drmSubFD, (drmHandle)pI830->MMIOAddr,
+   if (drmAddMap(pI830->drmSubFD, (drm_handle_t)pI830->MMIOAddr,
 		 pI830DRI->regsSize, DRM_REGISTERS, 0, &pI830DRI->regs) < 0) {
       xf86DrvMsg(pScreen->myNum, X_ERROR, "[drm] drmAddMap(regs) failed\n");
       DRICloseScreen(pScreen);
@@ -598,13 +627,12 @@ I830DRIDoMappings(ScreenPtr pScreen)
     * The tile setup is now initiated from I830BIOSScreenInit().
     */
 
-   pI830->auxPitch = pScrn->displayWidth;
-   pI830->auxPitchBits = 0;
+   pI830->backPitch = pScrn->displayWidth;
 
    pI830DRI->backbufferSize = pI830->BackBuffer.Size;
 
    if (drmAddMap(pI830->drmSubFD,
-		 (drmHandle)pI830->BackBuffer.Start + pI830->LinearAddr,
+		 (drm_handle_t)pI830->BackBuffer.Start + pI830->LinearAddr,
 		 pI830->BackBuffer.Size, DRM_AGP, 0,
 		 &pI830DRI->backbuffer) < 0) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -617,7 +645,7 @@ I830DRIDoMappings(ScreenPtr pScreen)
 
    pI830DRI->depthbufferSize = pI830->DepthBuffer.Size;
    if (drmAddMap(pI830->drmSubFD,
-		 (drmHandle)pI830->DepthBuffer.Start + pI830->LinearAddr,
+		 (drm_handle_t)pI830->DepthBuffer.Start + pI830->LinearAddr,
 		 pI830->DepthBuffer.Size, DRM_AGP, 0,
 		 &pI830DRI->depthbuffer) < 0) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -628,24 +656,10 @@ I830DRIDoMappings(ScreenPtr pScreen)
    xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] Depth Buffer = 0x%08lx\n",
 	      pI830DRI->depthbuffer);
 
-   if (drmAddMap(pI830->drmSubFD,
-		 (drmHandle)pI830->BufferMem.Start + pI830->LinearAddr,
-		 pI830->BufferMem.Size, DRM_AGP, 0,
-		 &pI830->buffer_map) < 0) {
-      xf86DrvMsg(pScreen->myNum, X_ERROR,
-		 "[drm] drmAddMap(buffer_map) failed. Disabling DRI\n");
-      DRICloseScreen(pScreen);
-      return FALSE;
-   }
-   xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] DMA Buffers = 0x%08lx\n",
-	      pI830->buffer_map);
-
-   pI830DRI->agp_buffers = pI830->buffer_map;
-   pI830DRI->agp_buf_size = pI830->BufferMem.Size;
 
    if (drmAddMap(pI830->drmSubFD,
-		 (drmHandle)pI830->LpRing.mem.Start + pI830->LinearAddr,
-		 pI830->LpRing.mem.Size, DRM_AGP, 0,
+		 (drm_handle_t)pI830->LpRing->mem.Start + pI830->LinearAddr,
+		 pI830->LpRing->mem.Size, DRM_AGP, 0,
 		 &pI830->ring_map) < 0) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
 		 "[drm] drmAddMap(ring_map) failed. Disabling DRI\n");
@@ -659,7 +673,7 @@ I830DRIDoMappings(ScreenPtr pScreen)
    pI830DRI->logTextureGranularity = pI830->TexGranularity;
 
    if (drmAddMap(pI830->drmSubFD,
-		 (drmHandle)pI830->TexMem.Start + pI830->LinearAddr,
+		 (drm_handle_t)pI830->TexMem.Start + pI830->LinearAddr,
 		 pI830->TexMem.Size, DRM_AGP, 0,
 		 &pI830DRI->textures) < 0) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -670,21 +684,10 @@ I830DRIDoMappings(ScreenPtr pScreen)
    xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] textures = 0x%08lx\n",
 	      pI830DRI->textures);
 
-   if ((bufs = drmAddBufs(pI830->drmSubFD,
-			  I830_DMA_BUF_NR,
-			  I830_DMA_BUF_SZ,
-			  DRM_AGP_BUFFER, pI830DRI->agp_buffers)) <= 0) {
-      xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-		 "[drm] failure adding %d %d byte DMA buffers\n",
-		 I830_DMA_BUF_NR, I830_DMA_BUF_SZ);
+   if (!I830InitDma(pScrn)) {
       DRICloseScreen(pScreen);
       return FALSE;
    }
-
-   xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	      "[drm] added %d %d byte DMA buffers\n", bufs, I830_DMA_BUF_SZ);
-
-   I830InitDma(pScrn);
 
    if (pI830->PciInfo->chipType != PCI_CHIP_845_G &&
        pI830->PciInfo->chipType != PCI_CHIP_I830_M) {
@@ -692,7 +695,7 @@ I830DRIDoMappings(ScreenPtr pScreen)
    }
 
    /* Okay now initialize the dma engine */
-   if (!pI830DRI->irq) {
+   {
       pI830DRI->irq = drmGetInterruptFromBusID(pI830->drmSubFD,
 					       ((pciConfigPtr) pI830->
 						PciInfo->thisCard)->busnum,
@@ -700,20 +703,42 @@ I830DRIDoMappings(ScreenPtr pScreen)
 						PciInfo->thisCard)->devnum,
 					       ((pciConfigPtr) pI830->
 						PciInfo->thisCard)->funcnum);
-#if 1
-      if ((drmCtlInstHandler(pI830->drmSubFD, pI830DRI->irq)) != 0) {
-	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-		    "[drm] failure adding irq handler, there is a device already using that irq\n"
-		    "[drm] Consider rearranging your PCI cards\n");
+
+      if (drmCtlInstHandler(pI830->drmSubFD, pI830DRI->irq)) {
+	 xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		    "[drm] failure adding irq handler\n");
+	 pI830DRI->irq = 0;
 	 DRICloseScreen(pScreen);
 	 return FALSE;
       }
-#endif
+      else
+	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		    "[drm] dma control initialized, using IRQ %d\n",
+		    pI830DRI->irq);
+   }
+
+   /* Start up the simple memory manager for agp space */
+   {
+      drmI830MemInitHeap drmHeap;
+      drmHeap.region = I830_MEM_REGION_AGP;
+      drmHeap.start  = 0;
+      drmHeap.size   = pI830DRI->textureSize;
+      
+      if (drmCommandWrite(pI830->drmSubFD, DRM_I830_INIT_HEAP,
+			  &drmHeap, sizeof(drmHeap))) {
+	 xf86DrvMsg(pScreen->myNum, X_ERROR,
+		    "[drm] Failed to initialized agp heap manager\n");
+      } else {
+	 xf86DrvMsg(pScreen->myNum, X_INFO,
+		    "[drm] Initialized kernel agp heap manager, %d\n",
+		    pI830DRI->textureSize);
+
+	 I830SetParam(pScrn, I830_SETPARAM_TEX_LRU_LOG_GRANULARITY, 
+		      pI830->TexGranularity);
+      }
    }
 
 
-   xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	      "[drm] dma control initialized, using IRQ %d\n", pI830DRI->irq);
 
    pI830DRI = (I830DRIPtr) pI830->pDRIInfo->devPrivate;
    pI830DRI->deviceID = pI830->PciInfo->chipType;
@@ -723,7 +748,7 @@ I830DRIDoMappings(ScreenPtr pScreen)
    pI830DRI->cpp = pI830->cpp;
 
    pI830DRI->fbOffset = pI830->FrontBuffer.Start;
-   pI830DRI->fbStride = pI830->auxPitch;
+   pI830DRI->fbStride = pI830->backPitch;
 
    pI830DRI->bitsPerPixel = pScrn->bitsPerPixel;
 
@@ -732,11 +757,8 @@ I830DRIDoMappings(ScreenPtr pScreen)
    pI830DRI->backOffset = pI830->BackBuffer.Start;
    pI830DRI->depthOffset = pI830->DepthBuffer.Start;
 
-   pI830DRI->ringOffset = pI830->LpRing.mem.Start;
-   pI830DRI->ringSize = pI830->LpRing.mem.Size;
-
-   pI830DRI->auxPitch = pI830->auxPitch;
-   pI830DRI->auxPitchBits = pI830->auxPitchBits;
+   pI830DRI->backPitch = pI830->backPitch;
+   pI830DRI->depthPitch = pI830->backPitch;
    pI830DRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
 
    if (!(I830InitVisualConfigs(pScreen))) {
@@ -750,6 +772,41 @@ I830DRIDoMappings(ScreenPtr pScreen)
    pI830->pDRIInfo->driverSwapMethod = DRI_HIDE_X_CONTEXT;
 
    return TRUE;
+}
+
+Bool
+I830DRIResume(ScreenPtr pScreen)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   I830Ptr pI830 = I830PTR(pScrn);
+   I830DRIPtr pI830DRI = (I830DRIPtr) pI830->pDRIInfo->devPrivate;
+
+   DPRINTF(PFX, "I830DRIResume\n");
+
+   I830ResumeDma(pScrn);
+
+   {
+      pI830DRI->irq = drmGetInterruptFromBusID(pI830->drmSubFD,
+					       ((pciConfigPtr) pI830->
+						PciInfo->thisCard)->busnum,
+					       ((pciConfigPtr) pI830->
+						PciInfo->thisCard)->devnum,
+					       ((pciConfigPtr) pI830->
+						PciInfo->thisCard)->funcnum);
+
+      if (drmCtlInstHandler(pI830->drmSubFD, pI830DRI->irq)) {
+	 xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		    "[drm] failure adding irq handler\n");
+	 pI830DRI->irq = 0;
+	 return FALSE;
+      }
+      else
+	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		    "[drm] dma control initialized, using IRQ %d\n",
+		    pI830DRI->irq);
+   }
+
+   return FALSE;
 }
 
 void
@@ -786,14 +843,14 @@ I830DRICloseScreen(ScreenPtr pScreen)
 
 static Bool
 I830CreateContext(ScreenPtr pScreen, VisualPtr visual,
-		  drmContext hwContext, void *pVisualConfigPriv,
+		  drm_context_t hwContext, void *pVisualConfigPriv,
 		  DRIContextType contextStore)
 {
    return TRUE;
 }
 
 static void
-I830DestroyContext(ScreenPtr pScreen, drmContext hwContext,
+I830DestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 		   DRIContextType contextStore)
 {
 }
@@ -801,7 +858,7 @@ I830DestroyContext(ScreenPtr pScreen, drmContext hwContext,
 Bool
 I830DRIFinishScreenInit(ScreenPtr pScreen)
 {
-   I830SAREARec *sPriv = (I830SAREARec *) DRIGetSAREAPrivate(pScreen);
+   drmI830Sarea *sPriv = (drmI830Sarea *) DRIGetSAREAPrivate(pScreen);
    ScrnInfoPtr        pScrn = xf86Screens[pScreen->myNum];
    I830Ptr pI830 = I830PTR(pScrn);
 
@@ -811,7 +868,7 @@ I830DRIFinishScreenInit(ScreenPtr pScreen)
 
    /* Have shadow run only while there is 3d active.
     */
-   if (pI830->allowPageFlip && pI830->drmMinor >= 3) {
+   if (pI830->allowPageFlip && pI830->drmMinor >= 1) {
       shadowSetup(pScreen);
       shadowAdd(pScreen, 0, I830DRIShadowUpdate, 0, 0, 0);
    }
@@ -829,9 +886,6 @@ I830DRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    I830Ptr pI830 = I830PTR(pScrn);
 
-   if (!pScrn->vtSema)
-      return;
-
    if (syncType == DRI_3D_SYNC &&
        oldContextType == DRI_2D_CONTEXT && newContextType == DRI_2D_CONTEXT) {
       ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -839,6 +893,8 @@ I830DRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
       if (I810_DEBUG & DEBUG_VERBOSE_DRI)
 	 ErrorF("i830DRISwapContext (in)\n");
 
+      if (!pScrn->vtSema)
+     	 return;
       pI830->LockHeld = 1;
       I830RefreshRing(pScrn);
    } else if (syncType == DRI_2D_SYNC &&
@@ -1054,445 +1110,26 @@ I830DRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
    pI830->AccelInfoRec->NeedToSync = TRUE;
 }
 
-/* Completely Initialize the first context */
+/* Initialize the first context */
 void
 I830EmitInvarientState(ScrnInfoPtr pScrn)
 {
    I830Ptr pI830 = I830PTR(pScrn);
-   I830DRIPtr pI830DRI = (I830DRIPtr) pI830->pDRIInfo->devPrivate;
-   CARD32 ctx_addr, temp;
+   CARD32 ctx_addr;
 
-   BEGIN_LP_RING(128-2);
 
    ctx_addr = pI830->ContextMem.Start;
    /* Align to a 2k boundry */
    ctx_addr = ((ctx_addr + 2048 - 1) / 2048) * 2048;
 
-   OUT_RING(MI_SET_CONTEXT);
-   OUT_RING(ctx_addr |
-	    CTXT_NO_RESTORE |
-	    CTXT_PALETTE_SAVE_DISABLE | CTXT_PALETTE_RESTORE_DISABLE);
-
-   OUT_RING(STATE3D_AA_CMD |
-	    AA_LINE_ECAAR_WIDTH_ENABLE |
-	    AA_LINE_ECAAR_WIDTH_1_0 |
-	    AA_LINE_REGION_WIDTH_ENABLE |
-	    AA_LINE_REGION_WIDTH_1_0 | AA_LINE_DISABLE);
-
-   OUT_RING(STATE3D_BUF_INFO_CMD);
-   OUT_RING(BUF_3D_ID_COLOR_BACK |
-	    BUF_3D_USE_FENCE |
-	    BUF_3D_PITCH((pI830->cpp * pScrn->displayWidth) / 4));
-   OUT_RING(BUF_3D_ADDR(pI830DRI->backOffset));
-
-   OUT_RING(STATE3D_BUF_INFO_CMD);
-   OUT_RING(BUF_3D_ID_DEPTH |
-	    BUF_3D_USE_FENCE |
-	    BUF_3D_PITCH((pI830->cpp * pScrn->displayWidth) / 4));
-   OUT_RING(BUF_3D_ADDR(pI830DRI->depthOffset));
-
-   OUT_RING(STATE3D_COLOR_FACTOR);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_COLOR_FACTOR_CMD(0));
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_COLOR_FACTOR_CMD(1));
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_COLOR_FACTOR_CMD(2));
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_COLOR_FACTOR_CMD(3));
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_CONST_BLEND_COLOR_CMD);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_DFLT_DIFFUSE_CMD);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_DFLT_SPEC_CMD);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_DFLT_Z_CMD);
-   OUT_RING(0);
-
-   switch (pScrn->bitsPerPixel) {
-   case 15:
-      temp = DEPTH_FRMT_16_FIXED | COLR_BUF_RGB555;
-      break;
-   case 16:
-      temp = DEPTH_FRMT_16_FIXED | COLR_BUF_RGB565;
-      break;
-   case 32:
-      temp = DEPTH_FRMT_24_FIXED_8_OTHER | COLR_BUF_ARGB8888;
-      break;
-   default:
-      temp = DEPTH_FRMT_16_FIXED | COLR_BUF_RGB565;
-      break;
+   {
+      BEGIN_LP_RING(2);
+      OUT_RING(MI_SET_CONTEXT);
+      OUT_RING(ctx_addr |
+	       CTXT_NO_RESTORE |
+	       CTXT_PALETTE_SAVE_DISABLE | CTXT_PALETTE_RESTORE_DISABLE);
+      ADVANCE_LP_RING();
    }
-
-   OUT_RING(STATE3D_DST_BUF_VARS_CMD);
-   OUT_RING(DSTORG_HORT_BIAS(0x8) |
-	    DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z | temp);
-
-   OUT_RING(STATE3D_DRAW_RECT_CMD);
-   OUT_RING(DRAW_RECT_DIS_DEPTH_OFS);
-   OUT_RING(0);
-   OUT_RING((pI830DRI->height << 16) | pI830DRI->width);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_ENABLES_1_CMD |
-	    DISABLE_LOGIC_OP |
-	    DISABLE_STENCIL_TEST |
-	    DISABLE_DEPTH_BIAS |
-	    DISABLE_SPEC_ADD |
-	    I830_DISABLE_FOG |
-	    DISABLE_ALPHA_TEST | DISABLE_COLOR_BLEND | DISABLE_DEPTH_TEST);
-
-   OUT_RING(STATE3D_ENABLES_2_CMD |
-	    DISABLE_STENCIL_WRITE |
-	    ENABLE_TEX_CACHE |
-	    ENABLE_DITHER |
-	    ENABLE_COLOR_MASK | ENABLE_COLOR_WRITE | ENABLE_DEPTH_WRITE);
-
-   OUT_RING(STATE3D_FOG_COLOR_CMD |
-	    FOG_COLOR_RED(0) | FOG_COLOR_GREEN(0) | FOG_COLOR_BLUE(0));
-
-   OUT_RING(STATE3D_FOG_MODE);
-   OUT_RING(FOG_MODE_VERTEX |
-	    ENABLE_FOG_CONST | ENABLE_FOG_SOURCE | ENABLE_FOG_DENSITY);
-   OUT_RING(0);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_INDPT_ALPHA_BLEND_CMD |
-	    DISABLE_INDPT_ALPHA_BLEND |
-	    ENABLE_ALPHA_BLENDFUNC |
-	    ABLENDFUNC_ADD |
-	    ENABLE_SRC_ABLEND_FACTOR |
-	    SRC_ABLEND_FACT(BLENDFACT_ONE) |
-	    ENABLE_DST_ABLEND_FACTOR | SRC_ABLEND_FACT(BLENDFACT_ZERO));
-
-   /* I need to come back to texture state */
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(0) |
-	    TEXPIPE_COLOR |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(1) |
-	    TEXPIPE_COLOR |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(2) |
-	    TEXPIPE_COLOR |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(3) |
-	    TEXPIPE_COLOR |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(0) |
-	    TEXPIPE_ALPHA |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(1) |
-	    TEXPIPE_ALPHA |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(2) |
-	    TEXPIPE_ALPHA |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-   OUT_RING(STATE3D_MAP_BLEND_ARG_CMD(3) |
-	    TEXPIPE_ALPHA |
-	    TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_DIFFUSE);
-
-   OUT_RING(STATE3D_MAP_BLEND_OP_CMD(0) |
-	    TEXPIPE_COLOR |
-	    ENABLE_TEXOUTPUT_WRT_SEL |
-	    TEXOP_OUTPUT_CURRENT |
-	    DISABLE_TEX_CNTRL_STAGE |
-	    TEXOP_SCALE_1X |
-	    TEXOP_MODIFY_PARMS | TEXOP_LAST_STAGE | TEXBLENDOP_ARG1);
-   OUT_RING(STATE3D_MAP_BLEND_OP_CMD(0) |
-	    TEXPIPE_ALPHA |
-	    ENABLE_TEXOUTPUT_WRT_SEL |
-	    TEXOP_OUTPUT_CURRENT |
-	    TEXOP_SCALE_1X | TEXOP_MODIFY_PARMS | TEXBLENDOP_ARG1);
-
-   OUT_RING(STATE3D_MAP_COORD_SETBIND_CMD);
-   OUT_RING(TEXBIND_SET3(TEXCOORDSRC_DEFAULT) |
-	    TEXBIND_SET2(TEXCOORDSRC_DEFAULT) |
-	    TEXBIND_SET1(TEXCOORDSRC_DEFAULT) |
-	    TEXBIND_SET0(TEXCOORDSRC_DEFAULT));
-
-   OUT_RING(STATE3D_MAP_COORD_SET_CMD |
-	    MAP_UNIT(0) |
-	    TEXCOORDS_ARE_IN_TEXELUNITS |
-	    TEXCOORDTYPE_CARTESIAN |
-	    ENABLE_ADDR_V_CNTL |
-	    ENABLE_ADDR_U_CNTL |
-	    TEXCOORD_ADDR_V_MODE(TEXCOORDMODE_CLAMP) |
-	    TEXCOORD_ADDR_U_MODE(TEXCOORDMODE_CLAMP));
-   OUT_RING(STATE3D_MAP_COORD_SET_CMD |
-	    MAP_UNIT(1) |
-	    TEXCOORDS_ARE_IN_TEXELUNITS |
-	    TEXCOORDTYPE_CARTESIAN |
-	    ENABLE_ADDR_V_CNTL |
-	    ENABLE_ADDR_U_CNTL |
-	    TEXCOORD_ADDR_V_MODE(TEXCOORDMODE_CLAMP) |
-	    TEXCOORD_ADDR_U_MODE(TEXCOORDMODE_CLAMP));
-   OUT_RING(STATE3D_MAP_COORD_SET_CMD |
-	    MAP_UNIT(2) |
-	    TEXCOORDS_ARE_IN_TEXELUNITS |
-	    TEXCOORDTYPE_CARTESIAN |
-	    ENABLE_ADDR_V_CNTL |
-	    ENABLE_ADDR_U_CNTL |
-	    TEXCOORD_ADDR_V_MODE(TEXCOORDMODE_CLAMP) |
-	    TEXCOORD_ADDR_U_MODE(TEXCOORDMODE_CLAMP));
-   OUT_RING(STATE3D_MAP_COORD_SET_CMD |
-	    MAP_UNIT(3) |
-	    TEXCOORDS_ARE_IN_TEXELUNITS |
-	    TEXCOORDTYPE_CARTESIAN |
-	    ENABLE_ADDR_V_CNTL |
-	    ENABLE_ADDR_U_CNTL |
-	    TEXCOORD_ADDR_V_MODE(TEXCOORDMODE_CLAMP) |
-	    TEXCOORD_ADDR_U_MODE(TEXCOORDMODE_CLAMP));
-
-   OUT_RING(STATE3D_MAP_TEX_STREAM_CMD |
-	    MAP_UNIT(0) |
-	    DISABLE_TEX_STREAM_BUMP |
-	    ENABLE_TEX_STREAM_COORD_SET |
-	    TEX_STREAM_COORD_SET(0) |
-	    ENABLE_TEX_STREAM_MAP_IDX | TEX_STREAM_MAP_IDX(0));
-   OUT_RING(STATE3D_MAP_TEX_STREAM_CMD |
-	    MAP_UNIT(1) |
-	    DISABLE_TEX_STREAM_BUMP |
-	    ENABLE_TEX_STREAM_COORD_SET |
-	    TEX_STREAM_COORD_SET(1) |
-	    ENABLE_TEX_STREAM_MAP_IDX | TEX_STREAM_MAP_IDX(1));
-   OUT_RING(STATE3D_MAP_TEX_STREAM_CMD |
-	    MAP_UNIT(2) |
-	    DISABLE_TEX_STREAM_BUMP |
-	    ENABLE_TEX_STREAM_COORD_SET |
-	    TEX_STREAM_COORD_SET(2) |
-	    ENABLE_TEX_STREAM_MAP_IDX | TEX_STREAM_MAP_IDX(2));
-   OUT_RING(STATE3D_MAP_TEX_STREAM_CMD |
-	    MAP_UNIT(3) |
-	    DISABLE_TEX_STREAM_BUMP |
-	    ENABLE_TEX_STREAM_COORD_SET |
-	    TEX_STREAM_COORD_SET(3) |
-	    ENABLE_TEX_STREAM_MAP_IDX | TEX_STREAM_MAP_IDX(3));
-
-#if 0
-   OUT_RING(STATE3D_MAP_FILTER_CMD |
-	    MAP_UNIT(0) |
-	    ENABLE_CHROMA_KEY_PARAMS |
-	    ENABLE_MIP_MODE_FILTER |
-	    MIPFILTER_NEAREST |
-	    ENABLE_MAG_MODE_FILTER |
-	    ENABLE_MIN_MODE_FILTER |
-	    MAG_FILTER(FILTER_NEAREST) | MIN_FILTER(FILTER_NEAREST));
-   OUT_RING(STATE3D_MAP_FILTER_CMD |
-	    MAP_UNIT(1) |
-	    ENABLE_CHROMA_KEY_PARAMS |
-	    ENABLE_MIP_MODE_FILTER |
-	    MIPFILTER_NEAREST |
-	    ENABLE_MAG_MODE_FILTER |
-	    ENABLE_MIN_MODE_FILTER |
-	    MAG_FILTER(FILTER_NEAREST) | MIN_FILTER(FILTER_NEAREST));
-   OUT_RING(STATE3D_MAP_FILTER_CMD |
-	    MAP_UNIT(2) |
-	    ENABLE_CHROMA_KEY_PARAMS |
-	    ENABLE_MIP_MODE_FILTER |
-	    MIPFILTER_NEAREST |
-	    ENABLE_MAG_MODE_FILTER |
-	    ENABLE_MIN_MODE_FILTER |
-	    MAG_FILTER(FILTER_NEAREST) | MIN_FILTER(FILTER_NEAREST));
-   OUT_RING(STATE3D_MAP_FILTER_CMD |
-	    MAP_UNIT(3) |
-	    ENABLE_CHROMA_KEY_PARAMS |
-	    ENABLE_MIP_MODE_FILTER |
-	    MIPFILTER_NEAREST |
-	    ENABLE_MAG_MODE_FILTER |
-	    ENABLE_MIN_MODE_FILTER |
-	    MAG_FILTER(FILTER_NEAREST) | MIN_FILTER(FILTER_NEAREST));
-
-   OUT_RING(STATE3D_MAP_INFO_COLR_CMD);
-   OUT_RING(MAP_INFO_TEX(0) |
-	    MAPSURF_32BIT |
-	    MT_32BIT_ARGB8888 |
-	    MAP_INFO_OUTMUX_F0F1F2F3 |
-	    MAP_INFO_VERTLINESTRIDEOFS_0 |
-	    MAP_INFO_FORMAT_2D | MAP_INFO_USE_FENCE);
-   OUT_RING(MAP_INFO_HEIGHT(0) | MAP_INFO_WIDTH(0));
-   OUT_RING(MAP_INFO_BASEADDR(pI830->TexMem.Start));
-   OUT_RING(MAP_INFO_DWORD_PITCH(31));
-   OUT_RING(MAP_INFO_DFLT_COLR(0));
-
-   OUT_RING(STATE3D_MAP_INFO_COLR_CMD);
-   OUT_RING(MAP_INFO_TEX(1) |
-	    MAPSURF_32BIT |
-	    MT_32BIT_ARGB8888 |
-	    MAP_INFO_OUTMUX_F0F1F2F3 |
-	    MAP_INFO_VERTLINESTRIDEOFS_0 |
-	    MAP_INFO_FORMAT_2D | MAP_INFO_USE_FENCE);
-   OUT_RING(MAP_INFO_HEIGHT(0) | MAP_INFO_WIDTH(0));
-   OUT_RING(MAP_INFO_BASEADDR(pI830->TexMem.Start));
-   OUT_RING(MAP_INFO_DWORD_PITCH(31));
-   OUT_RING(MAP_INFO_DFLT_COLR(0));
-
-   OUT_RING(STATE3D_MAP_INFO_COLR_CMD);
-   OUT_RING(MAP_INFO_TEX(2) |
-	    MAPSURF_32BIT |
-	    MT_32BIT_ARGB8888 |
-	    MAP_INFO_OUTMUX_F0F1F2F3 |
-	    MAP_INFO_VERTLINESTRIDEOFS_0 |
-	    MAP_INFO_FORMAT_2D | MAP_INFO_USE_FENCE);
-   OUT_RING(MAP_INFO_HEIGHT(0) | MAP_INFO_WIDTH(0));
-   OUT_RING(MAP_INFO_BASEADDR(pI830->TexMem.Start));
-   OUT_RING(MAP_INFO_DWORD_PITCH(31));
-   OUT_RING(MAP_INFO_DFLT_COLR(0));
-
-   OUT_RING(STATE3D_MAP_INFO_COLR_CMD);
-   OUT_RING(MAP_INFO_TEX(3) |
-	    MAPSURF_32BIT |
-	    MT_32BIT_ARGB8888 |
-	    MAP_INFO_OUTMUX_F0F1F2F3 |
-	    MAP_INFO_VERTLINESTRIDEOFS_0 |
-	    MAP_INFO_FORMAT_2D | MAP_INFO_USE_FENCE);
-   OUT_RING(MAP_INFO_HEIGHT(0) | MAP_INFO_WIDTH(0));
-   OUT_RING(MAP_INFO_BASEADDR(pI830->TexMem.Start));
-   OUT_RING(MAP_INFO_DWORD_PITCH(31));
-   OUT_RING(MAP_INFO_DFLT_COLR(0));
-
-   OUT_RING(STATE3D_MAP_LOD_CNTL_CMD |
-	    MAP_UNIT(0) | ENABLE_TEXLOD_BIAS | MAP_LOD_BIAS(0));
-   OUT_RING(STATE3D_MAP_LOD_CNTL_CMD |
-	    MAP_UNIT(1) | ENABLE_TEXLOD_BIAS | MAP_LOD_BIAS(0));
-   OUT_RING(STATE3D_MAP_LOD_CNTL_CMD |
-	    MAP_UNIT(2) | ENABLE_TEXLOD_BIAS | MAP_LOD_BIAS(0));
-   OUT_RING(STATE3D_MAP_LOD_CNTL_CMD |
-	    MAP_UNIT(3) | ENABLE_TEXLOD_BIAS | MAP_LOD_BIAS(0));
-
-   OUT_RING(STATE3D_MAP_LOD_LIMITS_CMD |
-	    MAP_UNIT(0) |
-	    ENABLE_MAX_MIP_LVL |
-	    ENABLE_MIN_MIP_LVL | LOD_MAX(0) | LOD_MIN(0));
-   OUT_RING(STATE3D_MAP_LOD_LIMITS_CMD |
-	    MAP_UNIT(1) |
-	    ENABLE_MAX_MIP_LVL |
-	    ENABLE_MIN_MIP_LVL | LOD_MAX(0) | LOD_MIN(0));
-   OUT_RING(STATE3D_MAP_LOD_LIMITS_CMD |
-	    MAP_UNIT(2) |
-	    ENABLE_MAX_MIP_LVL |
-	    ENABLE_MIN_MIP_LVL | LOD_MAX(0) | LOD_MIN(0));
-   OUT_RING(STATE3D_MAP_LOD_LIMITS_CMD |
-	    MAP_UNIT(3) |
-	    ENABLE_MAX_MIP_LVL |
-	    ENABLE_MIN_MIP_LVL | LOD_MAX(0) | LOD_MIN(0));
-#endif 
-
-   OUT_RING(STATE3D_MAP_COORD_TRANSFORM);
-   OUT_RING(DISABLE_TEX_TRANSFORM | TEXTURE_SET(0));
-   OUT_RING(STATE3D_MAP_COORD_TRANSFORM);
-   OUT_RING(DISABLE_TEX_TRANSFORM | TEXTURE_SET(1));
-   OUT_RING(STATE3D_MAP_COORD_TRANSFORM);
-   OUT_RING(DISABLE_TEX_TRANSFORM | TEXTURE_SET(2));
-   OUT_RING(STATE3D_MAP_COORD_TRANSFORM);
-   OUT_RING(DISABLE_TEX_TRANSFORM | TEXTURE_SET(3));
-
-   /* End texture state */
-
-   OUT_RING(STATE3D_MODES_1_CMD |
-	    ENABLE_COLR_BLND_FUNC |
-	    BLENDFUNC_ADD |
-	    ENABLE_SRC_BLND_FACTOR |
-	    ENABLE_DST_BLND_FACTOR |
-	    SRC_BLND_FACT(BLENDFACT_ONE) | DST_BLND_FACT(BLENDFACT_ZERO));
-
-   OUT_RING(STATE3D_MODES_2_CMD |
-	    ENABLE_GLOBAL_DEPTH_BIAS |
-	    GLOBAL_DEPTH_BIAS(0) |
-	    ENABLE_ALPHA_TEST_FUNC |
-	    ALPHA_TEST_FUNC(COMPAREFUNC_ALWAYS) | ALPHA_REF_VALUE(0));
-
-   OUT_RING(STATE3D_MODES_3_CMD |
-	    ENABLE_DEPTH_TEST_FUNC |
-	    DEPTH_TEST_FUNC(COMPAREFUNC_LESS) |
-	    ENABLE_ALPHA_SHADE_MODE |
-	    ALPHA_SHADE_MODE(SHADE_MODE_LINEAR) |
-	    ENABLE_FOG_SHADE_MODE |
-	    FOG_SHADE_MODE(SHADE_MODE_LINEAR) |
-	    ENABLE_SPEC_SHADE_MODE |
-	    SPEC_SHADE_MODE(SHADE_MODE_LINEAR) |
-	    ENABLE_COLOR_SHADE_MODE |
-	    COLOR_SHADE_MODE(SHADE_MODE_LINEAR) |
-	    ENABLE_CULL_MODE | CULLMODE_NONE);
-
-   OUT_RING(STATE3D_MODES_4_CMD |
-	    ENABLE_LOGIC_OP_FUNC |
-	    LOGIC_OP_FUNC(LOGICOP_COPY) |
-	    ENABLE_STENCIL_TEST_MASK |
-	    STENCIL_TEST_MASK(0xff) |
-	    ENABLE_STENCIL_WRITE_MASK | STENCIL_WRITE_MASK(0xff));
-
-   OUT_RING(STATE3D_MODES_5_CMD |
-	    ENABLE_SPRITE_POINT_TEX |
-	    SPRITE_POINT_TEX_OFF |
-	    FLUSH_RENDER_CACHE |
-	    FLUSH_TEXTURE_CACHE |
-	    ENABLE_FIXED_LINE_WIDTH |
-	    FIXED_LINE_WIDTH(0x2) |
-	    ENABLE_FIXED_POINT_WIDTH | FIXED_POINT_WIDTH(1));
-
-   OUT_RING(STATE3D_RASTER_RULES_CMD |
-	    ENABLE_POINT_RASTER_RULE |
-	    OGL_POINT_RASTER_RULE |
-	    ENABLE_LINE_STRIP_PROVOKE_VRTX |
-	    ENABLE_TRI_FAN_PROVOKE_VRTX |
-	    ENABLE_TRI_STRIP_PROVOKE_VRTX |
-	    LINE_STRIP_PROVOKE_VRTX(1) |
-	    TRI_FAN_PROVOKE_VRTX(2) | TRI_STRIP_PROVOKE_VRTX(2));
-
-   OUT_RING(STATE3D_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
-
-   OUT_RING(STATE3D_SCISSOR_RECT_0_CMD);
-   OUT_RING(0);
-   OUT_RING(0);
-
-   OUT_RING(STATE3D_STENCIL_TEST_CMD |
-	    ENABLE_STENCIL_PARMS |
-	    STENCIL_FAIL_OP(STENCILOP_KEEP) |
-	    STENCIL_PASS_DEPTH_FAIL_OP(STENCILOP_KEEP) |
-	    STENCIL_PASS_DEPTH_PASS_OP(STENCILOP_KEEP) |
-	    ENABLE_STENCIL_TEST_FUNC |
-	    STENCIL_TEST_FUNC(COMPAREFUNC_ALWAYS) |
-	    ENABLE_STENCIL_REF_VALUE | STENCIL_REF_VALUE(0));
-
-   OUT_RING(STATE3D_VERTEX_FORMAT_CMD |
-	    VRTX_TEX_COORD_COUNT(1) |
-	    VRTX_HAS_SPEC |
-	    VRTX_HAS_DIFFUSE |
-	    VRTX_HAS_XYZW);
-
-   OUT_RING(STATE3D_VERTEX_FORMAT_2_CMD |
-	    VRTX_TEX_SET_0_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_1_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_2_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_3_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_4_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_5_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_6_FMT(TEXCOORDFMT_2D) |
-	    VRTX_TEX_SET_7_FMT(TEXCOORDFMT_2D));
-
-   OUT_RING(STATE3D_VERTEX_TRANSFORM);
-   OUT_RING(DISABLE_VIEWPORT_TRANSFORM | DISABLE_PERSPECTIVE_DIVIDE);
-
-   OUT_RING(STATE3D_W_STATE_CMD);
-   OUT_RING(MAGIC_W_STATE_DWORD1);
-   OUT_RING(0x3f800000 /* 1.0 in IEEE float */ );
-
-#define GFX_OP_STIPPLE           ((0x3<<29)|(0x1d<<24)|(0x83<<16))
-
-   OUT_RING(GFX_OP_STIPPLE);
-   OUT_RING(0);
-
-   ADVANCE_LP_RING();
 }
 
 /* Fullscreen hooks.  The DRI fullscreen mode can probably be removed
@@ -1548,7 +1185,7 @@ I830DRIShadowUpdate (ScreenPtr pScreen, shadowBufPtr pBuf)
    RegionPtr damage = &pBuf->damage;
    int i, num =  REGION_NUM_RECTS(damage);
    BoxPtr pbox = REGION_RECTS(damage);
-   I830SAREARec *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+   drmI830Sarea *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
    int cmd, br13;
 
    /* Don't want to do this when no 3d is active and pages are
@@ -1588,7 +1225,7 @@ I830EnablePageFlip(ScreenPtr pScreen)
 {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    I830Ptr pI830 = I830PTR(pScrn);
-   I830SAREARec *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+   drmI830Sarea *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
 
    pSAREAPriv->pf_enabled = pI830->allowPageFlip;
    pSAREAPriv->pf_active = 0;
@@ -1622,7 +1259,7 @@ I830EnablePageFlip(ScreenPtr pScreen)
 static void
 I830DisablePageFlip(ScreenPtr pScreen)
 {
-   I830SAREARec *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+   drmI830Sarea *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
 
    pSAREAPriv->pf_active = 0;
 }
@@ -1663,7 +1300,11 @@ I830DRITransitionTo2d(ScreenPtr pScreen)
 {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    I830Ptr pI830 = I830PTR(pScrn);
-   I830SAREARec *sPriv = (I830SAREARec *) DRIGetSAREAPrivate(pScreen);
+   drmI830Sarea *sPriv = (drmI830Sarea *) DRIGetSAREAPrivate(pScreen);
+
+   /* Try flipping back to the front page if necessary */
+   if (sPriv->pf_current_page == 1)
+      drmCommandNone(pI830->drmSubFD, DRM_I830_FLIP);
 
    /* Shut down shadowing if we've made it back to the front page:
     */

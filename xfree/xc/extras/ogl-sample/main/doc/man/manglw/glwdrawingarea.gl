@@ -10,6 +10,7 @@
 .\" **      Maynard, MA.  All Rights Reserved.
 .\" **
 .\" **
+.\" $XFree86: xc/extras/ogl-sample/main/doc/man/manglw/glwdrawingarea.gl,v 1.2 2004/03/10 18:26:06 tsi Exp $
 .TH GLwDrawingArea 3X "" "" "" ""
 .SH NAME
 \fBGLwDrawingArea, GLwMDrawingArea \(em OpenGL drawing widgets.\fP
@@ -398,8 +399,8 @@ the appropriate callbacks.
 .sp
 .nf
 \f(CW
-   #include <stdlib.h>
-   #include <X11/GLw/GLwDrawA.h>
+\&   #include <stdlib.h>
+\&   #include <X11/GLw/GLwDrawA.h>
    static GLXContext glx_context;  /* assume only one context */
    . . .
 

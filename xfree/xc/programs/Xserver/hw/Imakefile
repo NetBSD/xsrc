@@ -14,7 +14,11 @@ XNESTDIR = xnest
 XVFBDIR = vfb
 #endif
 
-SUBDIRS= $(XNESTDIR) $(XVFBDIR)
+#if XdmxServer
+XDMXDIR = xdmx
+#endif
+
+SUBDIRS= $(XNESTDIR) $(XVFBDIR) $(XDMXDIR)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

@@ -11,20 +11,20 @@
 
 <article>
 
-<title>README for XFree86&tm; &relvers;
+<title>README for XFree86&reg; &relvers;
 <author>The XFree86 Project, Inc
-<date>23 February 2004
+<date>16 March 2005
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.141 2004/02/26 17:11:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.148 2005/03/17 01:11:56 dawes Exp $
 </ident>
 
 <abstract>
 
-XFree86 is an Open Source version of the X Window System that supports
+XFree86(R) is an Open Source version of the X Window System that supports
 many UNIX(R) and UNIX-like operating systems (such as Linux, FreeBSD,
-NetBSD, OpenBSD and Solaris x86) on Intel and other platforms.  This
-version is compatible with X11R6.6.
+NetBSD, OpenBSD and Solaris) on Intel and other platforms.  This version
+is compatible with X11R6.6.
 
 </abstract>
 
@@ -58,7 +58,7 @@ XFree86 &relvers; is a pre-release snapshot of XFree86 &fullrelvers;.
 This snapshot is release candidate &rcnum; for version &fullrelvers;.
 ]]>
 Pre-release snapshots are provided for beta testing.  You should only install
-snapshots if you're comfortable dealing with possibly unstable beta-level
+snapshots if you are comfortable dealing with possibly unstable beta-level
 software.  If you find problems with this snapshot, you are encouraged
 to report your findings to the public XFree86 mailing list:
 <email>devel@XFree86.org</email>.
@@ -82,16 +82,16 @@ Specific release enhancements can be viewed in the
 
 Most modern PC video hardware is supported in XFree86 &relvers;, and
 most PC video hardware that isn't supported explicitly can be used with
-the "vesa" driver.  The <htmlurl name="Releaes Notes" url="RELNOTES3.html">
+the "vesa" driver.  The <htmlurl name="Release Notes" url="RELNOTES4.html">
 has a table showing the drivers provided with XFree86 &relvers;, and links
 to related documentation.
 
-XFree86&trade; is produced by The XFree86 Project, Inc through the work
+XFree86&reg; is produced by The XFree86 Project, Inc through the work
 of a group of volunteer independent developers.  The XFree86 Project is
 a non-commercial organisation and XFree86 would not exist without the
 invaluable development contributions of volunteers from around the world.
-This release is dedicated to the greater XFree86 community, developers
-and users alike.
+
+XFree86 is a registered trademark of The XFree86 Project, Inc.
 
 <![ %snapshot [
 <sect>Redistribution of Snapshots
@@ -134,13 +134,14 @@ in that document, please contact us with details at
 <sect>Pointers to additional information
 <p>
 
+<![ %docsonline [
 The documentation for this release can be found online at the <url
 name="XFree86 web site" url="http://www.xfree86.org/&relvers;/">.
+]]>
 Documentation for the latest release version can always be found <url
-name="here" url="http://www.xfree86.org/current/">, and documentation
-for the latest pre-release snapshot can be found <url name="here"
-url="http://www.xfree86.org/snapshot/">.  Checking those last two links
-is a good way of finding out the latest available versions of XFree86.
+name="here" url="http://www.xfree86.org/current/"><![ %docsonline [, and
+documentation for the latest pre-release snapshot can be found <url
+name="here" url="http://www.xfree86.org/snapshot/">]]>.
 
 Information about binary distributions and the attendant installation
 instructions can be found in the <htmlurl name="Installation Document"
@@ -152,12 +153,12 @@ can be found in the <htmlurl name="Versions Document" url="Versions.html">.
 Additional information may be available at the <url
 name="XFree86 web site" url="http://www.xfree86.org/">, and pointers to
 other information are available at the <url name="XFree86 support page"
-url="http://www.xfree86.org/support.html">.
+url="http://www.xfree86.org/sos/">.
 
 <sect>The Public Mailing Lists
 <p>
 Current information about the XFree86 public mailing lists can be found
-at our <url name="web site" url="http://www.xfree86.org/lists.html">.
+at our <url name="web site" url="http://www.xfree86.org/sos/lists.html">.
 
 <sect1>CVS Commit
 <p>
@@ -188,19 +189,22 @@ technologies, their future, and for inter-project communication.
 If you have any new work or enhancements/bug fixes for existing work,
 please submit them to <email>patch@XFree86.org</email> or to our <url
 name="bug tracking system" url="http://bugs.xfree86.org/">.  This will
-ensure that they are included in future releases.  New works should be
-discussed on our <email>devel@XFree86.org</email> list prior to submission.
+ensure that they are reviewed for inclusion in future releases.  New
+works should be discussed on our <email>devel@XFree86.org</email> list
+prior to submission.
 
 Current information about the XFree86 development process can be found
-at our <url name="web site" url="http://www.xfree86.org/developer.html">.
+at our <url name="web site" url="http://www.xfree86.org/developer/">.
 
 <sect>How to get XFree86 &relvers;
 <p>
 <![ %snapshot; [
+<![ %havebindist; [
 XFree86 &relvers; can be found at the <url name="XFree86 ftp server"
 url="ftp://ftp.xfree86.org/pub/XFree86/snapshots/&relvers;/">, and at
 mirrors of this server.  This snapshot is available primarily in binary
 form for several popular platforms.
+]]>
 ]]>
 
 <![ %release; [

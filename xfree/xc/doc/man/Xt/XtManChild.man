@@ -26,7 +26,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtManChild.man,v 1.3 2003/04/28 22:18:19 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtManChild.man,v 1.5 2005/02/11 03:03:05 dawes Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -127,7 +127,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtManageChildren 3Xt __xorgversion__ "XT FUNCTIONS"
+.TH XtManageChildren 3Xt __vendorversion__ "XT FUNCTIONS"
 .SH NAME
 XtManageChildren, XtManageChild, XtUnmanageChildren, XtUnmanageChild, XtChangeManagedSet, XtIsManaged \- manage and unmanage children
 .SH SYNTAX
@@ -142,10 +142,10 @@ void XtUnmanageChildren(WidgetList \fIchildren\fP, Cardinal
 .HP
 void XtUnmanageChild(Widget \fIchild\fP); 
 .HP
-void XtChangeManagedSet(WidgetList \fIunmanage_children\fP, Cardinal
-\fInum_unmanage_children\fP, WidgetList \fImanage_children\fP, Cardinal
-\fInum_manage_children\fP, XtCSMProc \fIpost_unmanage_pre_manage_hook\fP,
-XtPointer \fIclient_data\fP); 
+void XtChangeManagedSet(WidgetList \fIunmanage_children\fP, 
+Cardinal \fInum_unmanage_children\fP, XtDoChangeProc \fIdo_change_proc\fP,
+XtPointer \fIclient_data\fP, WidgetList \fImanage_children\fP, 
+Cardinal \fInum_manage_children\fP); 
 .HP
 Boolean XtIsManaged(Widget \fIwidget\fP); 
 .SH ARGUMENTS
@@ -165,7 +165,7 @@ Specifies the number of entries in the manage_children list.
 Specifies the list of widget children to remove from the managed set.
 .IP \fInum_unmanage_children\fP 1i
 Specifies the number of entries in the unmanage_children list.
-.IP \fIpost_unmanage_pre_manage_hook\fP 1i
+.IP \fIdo_change_proc\fP 1i
 Specifies the post unmanage, pre manage hook procedure to invoke.
 .IP \fIclient_data\fP 1i
 Specifies the client data to be passed to the hook precedure.
@@ -280,7 +280,7 @@ value of
 .ZN False ,
 and
 .ZN XtChangeManagedSet 
-was invoked with a non-NULL \fIpost_unmanage_pre_manage_hook\fP procedure 
+was invoked with a non-NULL \fIdo_change_proc\fP procedure 
 then
 .ZN XtChangeManagedSet
 performs the following:
@@ -290,7 +290,7 @@ Calls
 .ZN XtUnmanageChildren
 (\fIunmanage_children\fP, \fInum_unmanage_children\fP).
 .IP \- 5
-Calls the \fIpost_unmanage_pre_manage_hook\fP specified.
+Calls the \fIdo_change_proc\fP specified.
 .IP \- 5
 Calls
 .ZN XtManageChildren
@@ -306,7 +306,7 @@ or if no
 .ZN CompositeClassExtension
 is defined, and
 .ZN XtChangeManagedSet was invoked with a NULL 
-\fIpost_unmanage_pre_manage_hook\fP procedure, then the following is
+\fIdo_change_proc\fP procedure, then the following is
 performed:
 .RS
 .IP \- 5
@@ -315,7 +315,7 @@ already unmanaged or is being destroyed it is ignored, otherwise it
 is marked as being unmanaged and if it is realized it is made nonvisible
 by being unmapped.
 .IP \- 5
-If the \fIpost_unmanage_pre_manage_hook\fP procdedure is non-NULL then
+If the \fIdo_change_proc\fP procdedure is non-NULL then
 it is invoked as specified.
 .IP \- 5
 For each child on the \fImanage_children\fP list; if the child is

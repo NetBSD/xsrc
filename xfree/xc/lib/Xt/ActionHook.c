@@ -8,13 +8,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -60,9 +60,9 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/ActionHook.c,v 1.3 2001/12/14 19:56:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/ActionHook.c,v 1.4 2004/05/05 00:07:02 dickey Exp $ */
 
-/* 
+/*
  * Contains XtAppAddActionHook, XtRemoveActionHook
  */
 
@@ -84,10 +84,10 @@ static void FreeActionHookList(
 }
 
 
-XtActionHookId XtAppAddActionHook( app, proc, closure )
-    XtAppContext app;
-    XtActionHookProc proc;
-    XtPointer closure;
+XtActionHookId XtAppAddActionHook(
+    XtAppContext app,
+    XtActionHookProc proc,
+    XtPointer closure)
 {
     ActionHook hook = XtNew(ActionHookRec);
     LOCK_APP(app);
@@ -107,8 +107,8 @@ XtActionHookId XtAppAddActionHook( app, proc, closure )
 }
 
 
-void XtRemoveActionHook( id )
-    XtActionHookId id;
+void XtRemoveActionHook(
+    XtActionHookId id)
 {
     ActionHook *p, hook = (ActionHook)id;
     XtAppContext app = hook->app;

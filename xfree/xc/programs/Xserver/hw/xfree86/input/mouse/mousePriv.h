@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mousePriv.h,v 1.12 2004/02/13 23:58:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mousePriv.h,v 1.13 2005/01/27 22:24:08 dawes Exp $ */
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
  * All rights reserved.
@@ -107,6 +107,7 @@ typedef struct {
     int		acc;
     CARD32	pnpLast;
     Bool	disablePnPauto;
+    Bool	noPnP;
 } mousePrivRec, *mousePrivPtr;
 
 /* mouse proto flags */

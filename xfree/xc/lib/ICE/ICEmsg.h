@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/ICEmsg.h,v 1.5 2003/11/17 22:20:05 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/ICEmsg.h,v 1.7 2004/10/26 22:10:17 tsi Exp $ */
 
 #ifndef _ICEMSG_H_
 #define _ICEMSG_H_
@@ -101,6 +101,8 @@ extern void _IceErrorBadValue (
  * Macros for writing messages.
  */
 
+#define HDRMAXSIZE (((unsigned int)(-1)) >> 3)
+
 #define IceGetHeader(_iceConn, _major, _minor, _headerSize, _msgType, _pMsg) \
     if ((_iceConn->outbufptr + _headerSize) > _iceConn->outbufmax) \
         IceFlush (_iceConn); \
@@ -112,8 +114,9 @@ extern void _IceErrorBadValue (
     _iceConn->send_sequence++
 
 #define IceGetHeaderExtra(_iceConn, _major, _minor, _headerSize, _extra, _msgType, _pMsg, _pData) \
-    if ((_iceConn->outbufptr + \
-	_headerSize + ((_extra) << 3)) > _iceConn->outbufmax) \
+    if (((unsigned int)(_extra) > (HDRMAXSIZE - (_headerSize >> 3))) || \
+        ((_iceConn->outbufptr + _headerSize + ((_extra) << 3)) > \
+	 _iceConn->outbufmax)) \
         IceFlush (_iceConn); \
     _pMsg = (_msgType *) _iceConn->outbufptr; \
     if ((_iceConn->outbufptr + \

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/session.c,v 3.37 2004/01/07 04:28:06 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.39 2004/07/25 20:17:04 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -54,7 +54,11 @@ from The Open Group.
 #ifdef SECURE_RPC
 # include <rpc/rpc.h>
 # include <rpc/key_prot.h>
+#ifdef FREEBSD_OLD_RPC
+extern int key_setnet(struct netstarg *arg);
+#else
 extern int key_setnet(struct key_netstarg *arg);
+#endif
 #endif
 #ifdef K5AUTH
 # include <krb5/krb5.h>
@@ -643,7 +647,11 @@ StartClient (
 	    char    netname[MAXNETNAMELEN+1], secretkey[HEXKEYBYTES+1];
 	    int	    nameret, keyret;
 	    int	    len;
+#ifdef FREEBSD_OLD_RPC
+	    struct  netstarg netst;
+#else
 	    struct  key_netstarg netst;
+#endif
 	    int     key_set_ok = 0;
 
 	    nameret = getnetname (netname);
@@ -910,7 +918,7 @@ systemEnv (struct display *d, char *user, char *home)
     return env;
 }
 
-#if (defined(Lynx) && !defined(HAS_CRYPT)) || defined(SCO) && !defined(SCO_USA) && !defined(_SCO_DS)
+#if defined(Lynx) && !defined(HAS_CRYPT)
 char *crypt(char *s1, char *s2)
 {
 	return(s2);
