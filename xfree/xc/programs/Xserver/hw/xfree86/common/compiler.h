@@ -139,6 +139,7 @@ extern int ffs(unsigned long);
 # if defined(NO_INLINE) || defined(DO_PROTOTYPES)
 
 #  if !defined(__sparc__) && !defined(__arm32__) \
+      && !defined(__arm__) \
       && !(defined(__alpha__) && defined(linux))
 
 extern void outb(unsigned short, unsigned char);
@@ -148,7 +149,7 @@ extern unsigned int inb(unsigned short);
 extern unsigned int inw(unsigned short);
 extern unsigned int inl(unsigned short);
 
-#  else /* __sparc__,  __arm32__, __alpha__*/
+#  else /* __sparc__,  __arm32__, __arm__, __alpha__*/
 
 extern void outb(unsigned long, unsigned char);
 extern void outw(unsigned long, unsigned short);
@@ -157,7 +158,7 @@ extern unsigned int inb(unsigned long);
 extern unsigned int inw(unsigned long);
 extern unsigned int inl(unsigned long);
 
-#  endif /* __sparc__,  __arm32__, __alpha__ */
+#  endif /* __sparc__,  __arm32__, __arm__, __alpha__ */
 
 extern unsigned long ldq_u(unsigned long *);
 extern unsigned long ldl_u(unsigned int *);
@@ -914,14 +915,12 @@ static __inline__ void stw_u(unsigned long val, unsigned short *p)
 #    define write_mem_barrier()   /* XXX: nop for now */
 
 #   elif defined(__mips__) || defined(__arm32__) || defined(__arm__) || defined(__sh__)
-#if defined(__NetBSD__)
+#if defined(__sh__)
 #define PORT_SIZE int
-#else
-#if defined(__arm32__)
+#elif defined(__arm32__) || defined(__arm__)
 #define PORT_SIZE long
 #else
 #define PORT_SIZE short
-#endif
 #endif
 
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
