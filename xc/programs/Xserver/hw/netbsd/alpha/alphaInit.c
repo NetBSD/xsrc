@@ -1,3 +1,4 @@
+/* $NetBSD: alphaInit.c,v 1.13 2000/08/24 16:25:16 elric Exp $ */
 
 #include    "alpha.h"
 #include    "gcstruct.h"
@@ -131,7 +132,6 @@ static int OpenFrameBuffer(device, screen)
 	}
 	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GINFO,
 	    &info) == -1) {
-fprintf(stderr, "Huh?\n");
 		Error("unable to get frame buffer info");
 		(void) close(alphaFbs[screen].fd);
 		alphaFbs[screen].fd = -1;
@@ -158,7 +158,6 @@ fprintf(stderr, "Huh?\n");
 	if (ret) {
 	    if (alphaFbs[screen].info.fb_type >= FBTYPE_LASTPLUSONE || 
 		!alphaFbData[alphaFbs[screen].info.fb_type].init) {
-fprintf(stderr, "Huh2?\n");
 		    Error("frame buffer type not supported");
 		    (void) close(alphaFbs[screen].fd);
 		    alphaFbs[screen].fd = -1;
@@ -168,7 +167,6 @@ fprintf(stderr, "Huh2?\n");
     }
     if (!ret)
 	alphaFbs[screen].fd = -1;
-fprintf(stderr, "open frame buffer (%s), ret = %d\n", device, ret);
     return ret;
 }
 
@@ -334,8 +332,6 @@ void InitOutput(pScreenInfo, argc, argv)
 	if (alphaFbs[scr].fd != -1) {
 	    (void) AddScreen (alphaFbData[alphaFbs[scr].info.fb_type].init, 
 			      argc, argv);
-		fprintf(stderr, "alphaFbs[scr].info.fb_type = %d\n",
-		    alphaFbs[scr].info.fb_type);
 	}
     (void) OsSignal(SIGWINCH, SIG_IGN);
 }
