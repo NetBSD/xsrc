@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/CrDatFrI.c,v 1.2 2001/10/28 03:32:09 tsi Exp $ */
+/* $XFree86$ */
 
 #include "XpmI.h"
 
@@ -124,6 +124,8 @@ XpmCreateDataFromXpmImage(data_return, image, info)
      */
     header_nlines = 1 + image->ncolors;
     header_size = sizeof(char *) * header_nlines;
+    if (header_size >= SIZE_MAX / sizeof(char *))
+	return (XpmNoMemory);
     header = (char **) XpmCalloc(header_size, sizeof(char *));
     if (!header)
 	return (XpmNoMemory);
