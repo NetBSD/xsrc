@@ -1109,6 +1109,7 @@ Process(scrno, doScreen, execute)
     int fd;
 #endif
 
+    defines.val[defines_base] = '\0';
     buffer.used = 0;
     InitEntries(&newDB);
     DoScreenDefines(dpy, scrno, &defines);
