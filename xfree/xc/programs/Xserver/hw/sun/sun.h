@@ -113,7 +113,7 @@ extern int getpagesize();
 #  endif
 #  ifdef __NetBSD__
 #   include <dev/sun/fbio.h>
-#   include <sparc/kbd.h>
+#   include <machine/kbd.h>
 #   include <dev/sun/kbio.h>	   /* also <sparc/kbio.h> -wsr */
 #   include <dev/sun/vuid_event.h> /* also <sparc/vud_event.h> -wsr */
 #  endif
