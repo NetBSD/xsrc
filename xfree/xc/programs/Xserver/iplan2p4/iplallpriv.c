@@ -48,6 +48,7 @@ interleaved planes */
 int iplWindowPrivateIndex;
 int iplGCPrivateIndex;
 #ifdef CFB_NEED_SCREEN_PRIVATE
+#include "iplmap.h"
 int iplScreenPrivateIndex;
 #endif
 

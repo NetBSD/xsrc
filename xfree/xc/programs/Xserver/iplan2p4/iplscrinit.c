@@ -210,7 +210,7 @@ iplGetScreenPixmap(pScreen)
 #ifdef CFB_NEED_SCREEN_PRIVATE
     return (PixmapPtr)(pScreen->devPrivates[iplScreenPrivateIndex].ptr);
 #else
-    return (PixmapPtr)(pScreen->devPrivate.ptr);
+    return (PixmapPtr)(pScreen->devPrivate);
 #endif
 }
 
@@ -224,6 +224,6 @@ iplSetScreenPixmap(pPix)
 	    (pointer)pPix;
 #else
     if (pPix)
-	pPix->drawable.pScreen->devPrivate.ptr = (pointer)pPix;
+	pPix->drawable.pScreen->devPrivate = (pointer)pPix;
 #endif
 }
