@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.55 1999/05/24 17:31:13 jwise Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.56 1999/05/24 17:43:12 jwise Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -352,8 +352,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define StripInstalledPrograms	YES
 #define CompressAllFonts	YES
 #define GzipFontCompression	YES
-#define DefaultUserPath		/bin:/usr/bin:/usr/local/bin:$(BINDIR)
-#define DefaultSystemPath	/sbin:/usr/sbin:/bin:/usr/bin:$(BINDIR)
+#define DefaultUserPath		/usr/bin:/bin:/usr/pkg/bin:$(BINDIR):/usr/local/bin
+#define DefaultSystemPath	/usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:$(BINDIR):/usr/local/bin:/usr/local/sbin
 
 #define InstPgmFlags		-s -m 0555 -o root -g wheel
 #define InstBinFlags		-m 0555 -o root -g wheel
