@@ -71,6 +71,8 @@ in this Software without prior written authorization from The Open Group.
 #define RROP_DECLARE	register CfbBits	rrop_xor;
 #define RROP_SOLID(dst)	    (*(dst) = (rrop_xor))
 #define RROP_SOLID_MASK(dst,mask) (*(dst) = (*(dst) & ~(mask)) | ((rrop_xor) & (mask)))
+#define RROP_SOLID_lu(dst)	    stl_u(rrop_xor, dst)
+#define RROP_SOLID_MASK_lu(dst,mask) stl_u((ldl_u(dst) & ~(mask)) | ((rrop_xor) & (mask)), dst)
 #endif
 #define RROP_NAME(prefix)   RROP_NAME_CAT(prefix,Copy)
 #endif /* GXcopy */
@@ -268,6 +270,7 @@ in this Software without prior written authorization from The Open Group.
 #define RROP_UNROLL_CASE4(p,i)    RROP_UNROLL_CASE2(p,(i)+2) RROP_UNROLL_CASE2(p,i)
 #define RROP_UNROLL_CASE8(p,i)    RROP_UNROLL_CASE4(p,(i)+4) RROP_UNROLL_CASE4(p,i)
 #define RROP_UNROLL_CASE16(p,i)   RROP_UNROLL_CASE8(p,(i)+8) RROP_UNROLL_CASE8(p,i)
+#define RROP_UNROLL_CASE32(p,i)   RROP_UNROLL_CASE16(p,(i)+16) RROP_UNROLL_CASE16(p,i)
 #define RROP_UNROLL_CASE3(p)	RROP_UNROLL_CASE2(p,2) RROP_UNROLL_CASE1(p,1)
 #define RROP_UNROLL_CASE7(p)	RROP_UNROLL_CASE4(p,4) RROP_UNROLL_CASE3(p)
 #define RROP_UNROLL_CASE15(p)	RROP_UNROLL_CASE8(p,8) RROP_UNROLL_CASE7(p)
@@ -317,6 +320,11 @@ in this Software without prior written authorization from The Open Group.
     while (--(nmiddle) >= 0) { \
 	RROP_SOLID((CfbBits *) (pdst)); \
 	(pdst) += sizeof (CfbBits) / sizeof (*pdst); \
+    }
+#define RROP_SPAN_lu(pdst,nmiddle) \
+    while (--(nmiddle) >= 0) { \
+	RROP_SOLID_lu((unsigned long *) (pdst)); \
+	(pdst) += sizeof (unsigned long) / sizeof (*pdst); \
     }
 #endif
 

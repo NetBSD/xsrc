@@ -156,9 +156,6 @@ typedef unsigned short	*glyphPointer;
 
 #if GLYPHPADBYTES == 4
 typedef unsigned int	*glyphPointer;
-#if (BITMAP_BIT_ORDER == MSBFirst) && (PGSZ == 64)
-#define USE_LEFTBITS
-#endif
 #endif
 
 #ifdef USE_LEFTBITS

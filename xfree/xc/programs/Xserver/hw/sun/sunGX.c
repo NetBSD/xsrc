@@ -450,7 +450,7 @@ sunGXCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask,
     register int	nl, nlMiddle;
     int			nbox;
     BoxPtr		pbox;
-    register int	r;
+    register long	r;
 
     GXDrawInit (gx, copyPlaneFG, 
 		gx_opaque_stipple_rop_table[rop]|GX_PATTERN_ONES,
@@ -462,7 +462,7 @@ sunGXCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask,
 
     nbox = REGION_NUM_RECTS(prgnDst);
     pbox = REGION_RECTS(prgnDst);
-    gx->incx = 32;
+    gx->incx = BITMAP_SCANLINE_UNIT;
     gx->incy = 0;
     while (nbox--)
     {
@@ -477,14 +477,14 @@ sunGXCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask,
 	pptSrc++;
 	if (!width)
 	    continue;
-	psrc = psrcBase + srcy * widthSrc + (srcx >> 5);
+	psrc = psrcBase + srcy * widthSrc + (srcx >> LOG2_BITMAP_PAD);
 	dstLastx--;
-	dstRightx = dstx + 31;
-	nlMiddle = (width + 31) >> 5;
-	widthLast = width & 31;
-	xoffSrc = srcx & 0x1f;
+	dstRightx = dstx + BITMAP_SCANLINE_UNIT - 1;
+	nlMiddle = (width + BITMAP_SCANLINE_UNIT - 1) >> LOG2_BITMAP_PAD;
+	widthLast = width & (BITMAP_SCANLINE_UNIT - 1);
+	xoffSrc = srcx & ((1 << LOG2_BITMAP_PAD) - 1);
 	leftShift = xoffSrc;
-	rightShift = 32 - leftShift;
+	rightShift = BITMAP_SCANLINE_UNIT - leftShift;
 	widthRest = widthSrc - nlMiddle;
 	if (widthLast)
 	    nlMiddle--;
@@ -501,7 +501,11 @@ sunGXCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask,
 	    	if (widthLast) 
 	    	{
 		    gx->x1 = dstLastx;
+#if BITMAP_SCANLINE_UNIT == 64
+		    gx->font = (int)((*psrc++)>>32);
+#else
 		    gx->font = *psrc++;
+#endif
 	    	}
 		psrc += widthRest;
 	    }
@@ -1531,7 +1535,7 @@ sunGXPolyGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     int		    h;
     int		    w;
     CharInfoPtr	    pci;
-    unsigned long   *bits;
+    unsigned int    *bits;
     register int    r;
     RegionPtr	    clip;
     BoxPtr	    extents;
@@ -1588,7 +1592,7 @@ sunGXPolyGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	gx->x1 = (x + pci->metrics.rightSideBearing) - 1;
 	gx->y0 = y - pci->metrics.ascent;
 	h = pci->metrics.ascent + pci->metrics.descent;
-	bits = (unsigned long *) pci->bits;
+	bits = (unsigned int *) pci->bits;
 	while (h--) {
 	    gx->font = *bits++;
 	}
@@ -1612,7 +1616,7 @@ sunGXTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     int		    h, hTmp;
     FontPtr	    pfont = pGC->font;
     register int    r;
-    unsigned long   *char1, *char2, *char3, *char4;
+    unsigned int   *char1, *char2, *char3, *char4;
     int		    widthGlyphs, widthGlyph;
     BoxRec	    bbox;
     BoxPtr	    extents;
@@ -1676,10 +1680,10 @@ sunGXTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     {
 	widthGlyphs = widthGlyph << 2;
 	LoopIt(4, widthGlyphs,
-	    char1 = (unsigned long *) (*ppci++)->bits;
-	    char2 = (unsigned long *) (*ppci++)->bits;
-	    char3 = (unsigned long *) (*ppci++)->bits;
-	    char4 = (unsigned long *) (*ppci++)->bits;,
+	    char1 = (unsigned int *) (*ppci++)->bits;
+	    char2 = (unsigned int *) (*ppci++)->bits;
+	    char3 = (unsigned int *) (*ppci++)->bits;
+	    char4 = (unsigned int *) (*ppci++)->bits;,
 	    (*char1++ | ((*char2++ | ((*char3++ | (*char4++
 		    >> widthGlyph))
 		    >> widthGlyph))
@@ -1689,17 +1693,17 @@ sunGXTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     {
 	widthGlyphs = (widthGlyph << 1) + widthGlyph;
 	LoopIt(3, widthGlyphs,
-	    char1 = (unsigned long *) (*ppci++)->bits;
-	    char2 = (unsigned long *) (*ppci++)->bits;
-	    char3 = (unsigned long *) (*ppci++)->bits;,
+	    char1 = (unsigned int *) (*ppci++)->bits;
+	    char2 = (unsigned int *) (*ppci++)->bits;
+	    char3 = (unsigned int *) (*ppci++)->bits;,
 	    (*char1++ | ((*char2++ | (*char3++ >> widthGlyph)) >> widthGlyph)))
     }
     else if (widthGlyph <= 16)
     {
 	widthGlyphs = widthGlyph << 1;
 	LoopIt(2, widthGlyphs,
-	    char1 = (unsigned long *) (*ppci++)->bits;
-	    char2 = (unsigned long *) (*ppci++)->bits;,
+	    char1 = (unsigned int *) (*ppci++)->bits;
+	    char2 = (unsigned int *) (*ppci++)->bits;,
 	    (*char1++ | (*char2++ >> widthGlyph)))
     }
     while (nglyph--) {
@@ -1708,7 +1712,7 @@ sunGXTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	gx->x0 = x;
 	gx->x1 = (x += widthGlyph) - 1;
 	gx->y0 = y;
-	char1 = (unsigned long *) (*ppci++)->bits;
+	char1 = (unsigned int *) (*ppci++)->bits;
 	hTmp = h;
 	while (hTmp--)
 	    gx->font = *char1++;
@@ -1848,7 +1852,7 @@ sunGXCheckStipple (pPixmap, stipple)
     sunGXStipplePtr stipple;
 {
     unsigned short  *sbits;
-    unsigned long   *stippleBits;
+    unsigned int   *stippleBits;
     unsigned long   sbit, mask;
     int		    h, w;
     int		    y;
@@ -1861,7 +1865,7 @@ sunGXCheckStipple (pPixmap, stipple)
     if (w > 16 || (w & (w - 1)))
 	return FALSE;
     sbits = (unsigned short *) stipple->bits;
-    stippleBits = (unsigned long *) pPixmap->devPrivate.ptr;
+    stippleBits = (unsigned int *) pPixmap->devPrivate.ptr;
     mask = ((1 << w) - 1) << (16 - w);
     for (y = 0; y < h; y++) {
 	sbit = (*stippleBits++ >> 16) & mask;
@@ -2649,7 +2653,7 @@ sunGXChangeWindowAttributes (pWin, mask)
 		xfree (stipple);
 		sunGXSetWindowPrivate(pWin,0);
 	    }	    
- 	    if (((width = (pWin->background.pixmap->drawable.width * PSZ)) <= 32) &&
+ 	    if (((width = (pWin->background.pixmap->drawable.width * PSZ)) <= BITMAP_SCANLINE_UNIT) &&
 		       !(width & (width - 1)))
 	    {
 		cfbCopyRotatePixmap(pWin->background.pixmap,
@@ -2677,7 +2681,7 @@ sunGXChangeWindowAttributes (pWin, mask)
 
 	case CWBorderPixmap:
 	    /* don't bother with accelerator for border tiles (just lazy) */
-	    if (((width = (pWin->border.pixmap->drawable.width * PSZ)) <= 32) &&
+	    if (((width = (pWin->border.pixmap->drawable.width * PSZ)) <= BITMAP_SCANLINE_UNIT) &&
 		!(width & (width - 1)))
 	    {
 		for (pBgWin = pWin;

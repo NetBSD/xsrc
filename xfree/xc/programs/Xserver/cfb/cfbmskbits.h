@@ -317,8 +317,8 @@ getleftbits(psrc, w, dst)
 */
 
 #if	(BITMAP_BIT_ORDER == MSBFirst)
-#define BitRight(lw,n)	((lw) >> (n))
-#define BitLeft(lw,n)	((lw) << (n))
+#define BitRight(lw,n)	((PixelGroup)(lw) >> (n))
+#define BitLeft(lw,n)	((PixelGroup)(lw) << (n))
 #else	/* (BITMAP_BIT_ORDER == LSBFirst) */
 #define BitRight(lw,n)	((lw) << (n))
 #define BitLeft(lw,n)	((lw) >> (n))
@@ -727,6 +727,70 @@ if ((x) + (w) <= PPW) {\
     putbitsmroplong(src,x,w,pdst); \
 }
 
+#if     (BITMAP_BIT_ORDER == MSBFirst)
+#if GETLEFTBITS_ALIGNMENT == 1
+#if PGSZ == 64
+#define sh64(x)		BitLeft((x), 32)
+#else
+#define sh64(x)		(x)
+#endif
+#define getleftbits(psrc, w, dst)	 dst = sh64(*((unsigned int *) psrc))
+#define getleftbits24(psrc, w, dst, idx){	\
+	regiseter int index; \
+	switch(index = ((idx)&3)<<1){ \
+	case 0: \
+	dst = sh64((*((unsigned int *) psrc))&cfbmask[index]; \
+	break; \
+	case 2: \
+	case 4: \
+	dst = BitLeft((sh64(*((unsigned int *) psrc))&cfbmask[index]), cfb24Shift[index]); \
+	dst |= BitRight((sh64(*((unsigned int *) psrc)+1)&cfbmask[index]), cfb4Shift[index]); \
+	break; \
+	case 6: \
+	dst = BitLeft(sh64(*((unsigned int *) psrc)),cfb24Shift[index]); \
+	break; \
+	}; \
+}
+#endif /* GETLEFTBITS_ALIGNMENT == 1 */
+
+#if PGSZ == 64
+#define getglyphbits(psrc, x, w, dst) \
+{ \
+    dst = BitLeft((unsigned) *(psrc), (x)+32); \
+    if ( ((x) + (w)) > 32) \
+	dst |= (BitLeft((unsigned) *((psrc)+1), 32-(x))); \
+}
+#else /* PGSZ == 64 */
+#define getglyphbits(psrc, x, w, dst) \
+{ \
+    dst = BitLeft((unsigned) *(psrc), (x)); \
+    if ( ((x) + (w)) > 32) \
+	dst |= (BitRight((unsigned) *((psrc)+1), 32-(x))); \
+}
+#endif /* PGSZ == 64 */
+
+#if GETLEFTBITS_ALIGNMENT == 2
+#define getleftbits(psrc, w, dst) \
+    { \
+	if ( ((int)(psrc)) & 0x01 ) \
+		getglyphbits( ((unsigned int *)(((char *)(psrc))-1)), 8, (w), (dst) ); \
+	else \
+		dst = sh64(*((unsigned int *) psrc); \
+    }
+#endif /* GETLEFTBITS_ALIGNMENT == 2 */
+
+#if GETLEFTBITS_ALIGNMENT == 4
+#define getleftbits(psrc, w, dst) \
+    { \
+	int off, off_b; \
+	off_b = (off = ( ((int)(psrc)) & (PGSZB-1))) << 3; \
+	getglyphbits( \
+		(unsigned PixelType *)( ((char *)(psrc)) - off), \
+		(off_b), (w), (dst) \
+	       ); \
+    }
+#endif /* GETLEFTBITS_ALIGNMENT == 4 */
+#else /* (BITMAP_BIT_ORDER == MSBFirst) */
 #if GETLEFTBITS_ALIGNMENT == 1
 #define getleftbits(psrc, w, dst)	dst = *((unsigned int *) psrc)
 #define getleftbits24(psrc, w, dst, idx){	\
@@ -774,6 +838,7 @@ if ((x) + (w) <= PPW) {\
 	       ); \
     }
 #endif /* GETLEFTBITS_ALIGNMENT == 4 */
+#endif /* (BITMAP_BIT_ORDER == MSBFirst) */
 
 /*
  * getstipplepixels( psrcstip, x, w, ones, psrcpix, destpix )

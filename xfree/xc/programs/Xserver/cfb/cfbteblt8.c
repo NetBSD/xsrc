@@ -69,7 +69,8 @@ in this Software without prior written authorization from The Open Group.
  * boundaries) we can use some magic to avoid the expense of getleftbits
  */
 
-#if ((BITMAP_BIT_ORDER == LSBFirst && NGLYPHS >= 4) || GLYPHPADBYTES == 4)
+#if ((BITMAP_BIT_ORDER == LSBFirst && NGLYPHS >= 4) || \
+    ((GLYPHPADBYTES == 4) && (PGSZ != 64)))
 
 #if GLYPHPADBYTES == 1
 typedef unsigned char	*glyphPointer;
