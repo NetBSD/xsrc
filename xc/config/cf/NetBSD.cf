@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.70 2000/05/23 12:16:33 shin Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.71 2000/05/26 11:31:45 shin Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -220,9 +220,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /*
  * On mips, all libs are compiled with ABIcalls, not just sharedlibs.
+ * Disable MIPS specific code which was not used and tested.
  */
 #if defined(MipsArchitecture)
 # define SeparateSharedCompile NO
+# undef MipsArchitecture
 #endif
 
 /*
