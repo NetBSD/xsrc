@@ -168,10 +168,8 @@ miInitIndexed (ScreenPtr	pScreen,
     {
 	if (pFormat->pVisual->vid == pScreen->rootVisual)
 	{
-	    if (num > 100)
-		num = num - 10;
-	    else
-		num = num / 2;
+	    if (num > 7)
+		num = num / 4;
 	}
 	if (!miBuildRenderColormap (pFormat->pColormap, num, &first, &last))
 	{
