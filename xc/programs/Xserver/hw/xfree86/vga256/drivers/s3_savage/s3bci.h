@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bci.h,v 1.1.2.2 1999/12/01 12:49:33 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bci.h,v 1.1.2.1 1999/07/30 11:21:28 hohndel Exp $ */
 
 #ifndef _S3BCI_H_
 #define _S3BCI_H_
@@ -10,10 +10,11 @@
     dword |= (temp & 0xFF0000) >> 8; \
     dword |= (temp & 0xFF000000) >> 24; }
 
-#define BCI_GET_PTR unsigned int * bci_ptr = s3vPriv.BciMem
+#define BCI_GET_PTR volatile unsigned int * bci_ptr = s3vPriv.BciMem
+#define BCI_RESET bci_ptr = s3vPriv.BciMem
 
 #if 1
-#define BCI_SEND(dw)   ((*(unsigned int*)(bci_ptr++)) = (unsigned int)(dw))
+#define BCI_SEND(dw)   (*bci_ptr++ = (unsigned int)(dw))
 #else
 __inline__ void BCI_SEND_DEBUG(unsigned int * bci_base,
     unsigned int * bci_ptr, unsigned int dw)
@@ -49,7 +50,7 @@ __inline__ void BCI_SEND_DEBUG(unsigned int * bci_base,
 #define BCI_CMD_DEST_SBD             0x00001000
 #define BCI_CMD_DEST_SBD_NEW         0x00001400
 
-#define BCI_CMD_SRC_TRANSPARENT      0x00000100
+#define BCI_CMD_SRC_TRANSPARENT      0x00000200
 #define BCI_CMD_SRC_SOLID            0x00000000
 #define BCI_CMD_SRC_GBD              0x00000020
 #define BCI_CMD_SRC_COLOR            0x00000040

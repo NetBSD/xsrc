@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/newmmio.h,v 1.1.2.2 1999/12/01 12:49:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/newmmio.h,v 1.1.2.1 1999/07/30 11:21:27 hohndel Exp $ */
 
 /* Copied over from accel/s3_virge */
 
@@ -409,9 +409,9 @@ typedef struct {
  */
 #define IN_SUBSYS_STAT() 	((((mmtr)s3savMmioMem)->subsys_regs.regs.subsystem_csr))
 #define SET_SUBSYS_CRTL(val) 	do { write_mem_barrier(); ((((mmtr)s3savMmioMem)->subsys_regs.regs.subsystem_csr)) = (val); write_mem_barrier(); } while (0)
-#define STATUS_WORD0            (*(volatile unsigned int*)(((char*)s3savMmioMem) + 0x48C00))
+#define STATUS_WORD0            S3_IN32(0x48C00)
 /* Savage4 Rev B only: */
-#define ALT_STATUS_WORD0        (*(volatile unsigned int*)(((char*)s3savMmioMem) + 0x48C60))
+#define ALT_STATUS_WORD0        S3_IN32(0x48C60)
 
 
 #define SET_DAC_W_INDEX(index)  outb(DAC_W_INDEX, index)

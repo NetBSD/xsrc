@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_misc.c,v 1.1.2.3 1999/12/20 14:36:28 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_misc.c,v 1.1.2.1 1999/07/30 11:21:35 hohndel Exp $ */
 
 /*
  *
@@ -48,9 +48,25 @@
 #include "regs3sav.h"
 #include "s3sav_driver.h"
 
+/** Why isn't all of this included in s3sav_driver.c? **/
+
 extern vgaPCIInformation *vgaPCIInfo;
 extern SymTabRec s3savChipTable[];
 extern S3VPRIV s3vPriv;
+
+static S3PCIInformation Mappings[] = {
+    { PCI_SAVAGE3D,	S3_SAVAGE3D },
+    { PCI_SAVAGE3D_MV,	S3_SAVAGE3D_MV },
+    { PCI_SAVAGE4,	S3_SAVAGE4 },
+    { PCI_SAVAGE2000,	S3_SAVAGE2000 },
+    { PCI_SAVAGE_MX_MV,	S3_SAVAGE_MX },
+    { PCI_SAVAGE_MX,	S3_SAVAGE_MX },
+    { PCI_SAVAGE_IX_MV,	S3_SAVAGE_MX },
+    { PCI_SAVAGE_IX,	S3_SAVAGE_MX },
+    { PCI_SAVAGE_370,	S3_SAVAGE_370 },
+};
+
+#define NMAPPINGS	(sizeof(Mappings)/sizeof(Mappings[0]))
 
 
 /*
@@ -68,42 +84,45 @@ S3SAVGetPCIInfo()
 
    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
       while (pcrp = vgaPCIInfo->AllCards[i]) {
-         if (pcrp->_vendor == PCI_S3_VENDOR_ID &&
-	     (pcrp->_base_class == PCI_CLASS_DISPLAY) &&
-	     (pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA) &&
-	     pcrp->_command != 0) {
+         if((pcrp->_vendor == PCI_S3_VENDOR_ID) && 
+	    (pcrp->_base_class == PCI_CLASS_DISPLAY) &&
+	    (pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA) &&
+	    (pcrp->_command != 0)
+	 ) {
 	    int ChipId = pcrp->_device;
+	    int j;
 	    if (vga256InfoRec.chipID) {
 	      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%04x instead of 0x%04x\n",
 		  XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.chipID, ChipId);
 	      ChipId = vga256InfoRec.chipID;
 	    }
 	    found = TRUE;
+	
+	    for( j = 0; j < NMAPPINGS; j++ )
+	    {
+		if( ChipId == Mappings[j].DevID ) {
+		    info.ChipType = Mappings[j].ChipType;
+		    break;
+		}
+	    }
 
-	    switch (ChipId) {
-	    case PCI_SAVAGE3D:
-	       info.ChipType = S3_SAVAGE3D;
-	       break;
-	    case PCI_SAVAGE3D_MV:
-	       info.ChipType = S3_SAVAGE3D_MV;
-	       break;
-	    case PCI_SAVAGE4:
-	       info.ChipType = S3_SAVAGE4;
-	       break;
-	    case PCI_SAVAGE2000:
-	       info.ChipType = S3_SAVAGE2000;
-	       break;
-	    default:
-	       info.ChipType = S3_UNKNOWN;
-	       info.DevID = pcrp->_device;
-	       break;
+	    if( j >= NMAPPINGS )
+	    {
+		info.ChipType = S3_UNKNOWN;
+		info.DevID = pcrp->_device;
 	    }
+
 	    info.ChipRev = pcrp->_rev_id;
-	    if( (ChipId == PCI_SAVAGE4) || (ChipId == PCI_SAVAGE2000) ) {
-	       info.MemBase = pcrp->_base0 & 0xFFFFFFF0;
-	       info.MemBase1 = pcrp->_base1 & 0xFFFFFFF0;
+
+	    info.MemBase = pcrp->_base0 & 0xFFFFFFF0;
+
+	    if(
+		(ChipId == PCI_SAVAGE4) ||
+		(ChipId == PCI_SAVAGE2000) ||
+		(ChipId == PCI_SAVAGE_370)
+	    ) {
+		info.MemBase1 = pcrp->_base1 & 0xFFFFFFF0;
 	    }
-	    else info.MemBase = pcrp->_base0 & 0xFFFFFFF0;
 	    break;
          }
       i++;

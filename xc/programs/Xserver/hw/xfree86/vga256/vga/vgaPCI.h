@@ -288,6 +288,11 @@
 #define PCI_CHIP_SAVAGE3D_M	0x8A21
 #define PCI_CHIP_SAVAGE4	0x8A22
 #define PCI_CHIP_SAVAGE2000	0x9102
+#define PCI_CHIP_SAVAGE_MX_MV	0x8C10
+#define PCI_CHIP_SAVAGE_MX	0x8C11
+#define PCI_CHIP_SAVAGE_IX_MV	0x8C12
+#define PCI_CHIP_SAVAGE_IX	0x8C13
+#define PCI_CHIP_SAVAGE_370	0x8A25
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -589,6 +594,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_SAVAGE3D_M,	"Savage3D (Macrovision Support)"},
 				{PCI_CHIP_SAVAGE4,	"Savage4"},
 				{PCI_CHIP_SAVAGE2000,	"Savage2000"},
+				{PCI_CHIP_SAVAGE_MX_MV,	"Savage/MX-MV"},
+				{PCI_CHIP_SAVAGE_MX,	"Savage/MX"},
+				{PCI_CHIP_SAVAGE_IX_MV,	"Savage/IX-MV"},
+				{PCI_CHIP_SAVAGE_IX,	"Savage/IX"},
+				{PCI_CHIP_SAVAGE_370,	"Savage/NB"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},

@@ -194,6 +194,26 @@ int *Chipset;
 			        PCIProbed = TRUE;
 				*Chipset = CHIP_S3_Savage2000;
 				break;
+			case PCI_CHIP_SAVAGE_MX_MV:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_SavageMX_MV;
+				break;
+			case PCI_CHIP_SAVAGE_MX:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_SavageMX;
+				break;
+			case PCI_CHIP_SAVAGE_IX_MV:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_SavageIX_MV;
+				break;
+			case PCI_CHIP_SAVAGE_IX:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_SavageIX;
+				break;
+			case PCI_CHIP_SAVAGE_NB:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_SavageNB;
+				break;
 #if 0  /* use port probing then... */
 			default:
 			        PCIProbed = TRUE;
@@ -428,6 +448,21 @@ int *Chipset;
                            case PCI_CHIP_SAVAGE2000:
                               *Chipset = CHIP_S3_Savage2000;
 			      break;
+                           case PCI_CHIP_SAVAGE_MX_MV:
+                              *Chipset = CHIP_S3_SavageMX_MV;
+			      break;
+                           case PCI_CHIP_SAVAGE_MX:
+                              *Chipset = CHIP_S3_SavageMX;
+			      break;
+                           case PCI_CHIP_SAVAGE_IX_MV:
+                              *Chipset = CHIP_S3_SavageIX_MV;
+			      break;
+                           case PCI_CHIP_SAVAGE_IX:
+                              *Chipset = CHIP_S3_SavageIX;
+			      break;
+                           case PCI_CHIP_SAVAGE_NB:
+                              *Chipset = CHIP_S3_SavageNB;
+			      break;
 			   default:
 			     Chip_data = rev;
 			     Chip_data = (Chip_data << 16) | chip_id;
@@ -547,6 +582,19 @@ int Chipset;
 			else if (Chipset == CHIP_S3_Savage2000)
 			{  
 			  int memsize[] = { 2, 4, 8, 12, 16, 32, 64, 32 };
+			  int sel = (config & 0xE0) >> 5;
+			  Mem = memsize[sel] * 1024;
+			}
+			else if (Chipset == CHIP_S3_SavageMX_MV || Chipset == CHIP_S3_SavageMX ||
+				 Chipset == CHIP_S3_SavageIX_MV || Chipset == CHIP_S3_SavageIX)
+			{  
+			  int memsize[] = { 2, 8, 4, 16, 8, 16, 4, 16 };
+			  int sel = (config & 0x0E) >> 1;
+			  Mem = memsize[sel] * 1024;
+			}
+			else if (Chipset == CHIP_S3_SavageNB)
+			{  
+			  int memsize[] = { 0, 2, 4, 8, 16, 32, 2, 2 };
 			  int sel = (config & 0xE0) >> 5;
 			  Mem = memsize[sel] * 1024;
 			}
