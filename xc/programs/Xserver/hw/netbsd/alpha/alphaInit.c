@@ -85,12 +85,14 @@ fbFd alphaFbs[MAXSCREENS];
 Bool alphaTgaAccelerate = 1;
 
 static PixmapFormatRec	formats[] = {
+    { 1, 1, BITMAP_SCANLINE_PAD},
     { 8, 8, BITMAP_SCANLINE_PAD},	/* 8-bit deep */
     { 24, 32, BITMAP_SCANLINE_PAD}	/* 32-bit deep */
 };
 #define NUMFORMATS	(sizeof formats)/(sizeof formats[0])
 
 static PixmapFormatRec	formats32[] = {
+    { 1, 1, BITMAP_SCANLINE_PAD},
     { 24, 32, BITMAP_SCANLINE_PAD}	/* 32-bit deep */
 };
 #define NUMFORMATS32	(sizeof formats32)/(sizeof formats32[0])
