@@ -190,6 +190,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
+ * No shared libstdc++ on this platform.
+ */
+#if defined(x86_64Architecture)
+# define SharedLibGlu NO
+#endif
+
+/*
  * Dynamic loading supported starting in 1.0 on a.out platforms,
  * and on all ELF platforms.
  *
@@ -243,11 +250,17 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME 
 # elif defined(PpcArchitecture)
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
+# elif defined(x86_64Architecture)
+#  undef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags	-O
+#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # else
 #  define ServerOSDefines 	/**/
 # endif
 # if defined(AlphaArchitecture)
 #  define ServerExtraSysLibs	-lalpha
+# elif defined(x86_64Architecture)
+#  define ServerExtraSysLibs	-lx86_64
 # else
 #  define ServerExtraSysLibs	/**/
 # endif
@@ -291,6 +304,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerExtraDefines	GccGasOption XFree86ServerDefines
 #  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
+#  endif
+#elif defined(x86_64Architecture)
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
+#  ifndef XFree86ConsoleDefines
+#    define XFree86ConsoleDefines -DWSCONS_SUPPORT
 #  endif
 #else
 #  define ServerExtraDefines GccGasOption
@@ -412,6 +430,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  endif
 # endif /* MTRRBuiltin */
 #endif /* i386Architecture */
+
+#if defined(x86_64Architecture)
+# define HasMTRRBuiltin       YES
+# define XF86AFB              YES
+#endif
 
 /*
  * agpgart support (NetBSD 1.5Y and up)
@@ -590,7 +613,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 /* Always build the XInput library, regardless of server support on this plattform */
 #define BuildXInputLib          YES
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture)
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture) || defined(x86_64Architecture)
 # include <xfree86.cf>
 #endif
 

@@ -843,6 +843,9 @@ DoConfigure()
 #if defined(SCO) || defined(SCO325)
 #define PATH_MAX 1024
 #endif
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
         const char* configfile = XF86CONFIGFILE".new";
     	char homebuf[PATH_MAX];
     	/* getenv might return R/O memory, as with OS/2 */

@@ -114,7 +114,7 @@ KMODSRC = kmod_noop.c
 KMODOBJ = kmod_noop.o
 #endif
 
-#if defined(i386Architecture) || defined(ia64Architecture)
+#if defined(i386Architecture) || defined(ia64Architecture) || defined(x86_64Architecture)
 RES_SRC=stdResource.c
 RES_OBJ=stdResource.o
 #else
@@ -139,7 +139,7 @@ AGP_SRC=agp_noop.c
 AGP_OBJ=agp_noop.o
 #endif
 
-#if defined(i386Architecture)
+#if defined(i386Architecture) || defined(x86_64Architecture)
 VIDEO_SRC = i386_video.c
 VIDEO_OBJ = i386_video.o
 #elif defined(AlphaArchitecture)
