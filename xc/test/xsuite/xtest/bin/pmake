@@ -1,0 +1,44 @@
+
+# 
+#  Copyright 1990, 1991 by the Massachusetts Institute of Technology and
+#  UniSoft Group Limited.
+#  
+#  Permission to use, copy, modify, distribute, and sell this software and
+#  its documentation for any purpose is hereby granted without fee,
+#  provided that the above copyright notice appear in all copies and that
+#  both that copyright notice and this permission notice appear in
+#  supporting documentation, and that the names of MIT and UniSoft not be
+#  used in advertising or publicity pertaining to distribution of the
+#  software without specific, written prior permission.  MIT and UniSoft
+#  make no representations about the suitability of this software for any
+#  purpose.  It is provided "as is" without express or implied warranty.
+# 
+# $XConsortium: pmake,v 1.7 92/06/11 18:01:33 rws Exp $
+#
+
+
+# If there is no Makefile then make it first
+if [ ! -f Makefile ]; then
+	mmkf -o Makefile *.m
+	if [ ! -f Makefile ]; then
+		echo Could not make Makefile
+		exit 1
+	fi
+fi
+
+TMP=/tmp/xm$$
+trap 'rm -f $TMP; exit ${EXIT_STATUS}' 0 1 2 3 15
+
+BCONFIG=${TET_BUILDCONFIG-${TET_ROOT}/xtest/tetbuild.cfg}
+
+cat $BCONFIG Makefile > $TMP
+# cat $TMP
+#. $TMP
+#$TET_BUILD_TOOL $TET_BUILD_FILE "$@"
+if [ $# = 0 ]; then
+	make -f $TMP
+	EXIT_STATUS=$?
+else
+	make -f $TMP "$@"
+	EXIT_STATUS=$?
+fi

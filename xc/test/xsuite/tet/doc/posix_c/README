@@ -1,0 +1,6 @@
+Files in this directory:
+
+rel_note.mm - release notes for this version of the TET (1.9)
+rpt.1 - man page for rpt command (use man macros)
+tcc.1 - man page for tcc
+tet_ins.1 - man page for tet_ins

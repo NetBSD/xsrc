@@ -1,0 +1,17 @@
+# test im action file for interactive test of xim
+VERSION 11.0
+X_RELEASE 3200
+PREEDIT_STYLE	NONE
+STATUS_STYLE	NONE	
+
+ACTION {
+	KEY 0x42
+	KEY 0x44
+	KEY 0x42
+   KEY 0x0a
+	KEY 0x42
+	KEY 0x46
+   KEY 0x0d
+	MB_RESET
+}
+

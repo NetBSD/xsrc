@@ -1,0 +1,104 @@
+
+#
+# $XConsortium: pt,v 1.2 92/06/30 17:32:56 rws Exp $
+#
+# Flags accepted.
+#  -v XT_VARIABLE_NAME=Value       Add a variable setting
+#  -d display                      Set the display
+#  -i <IC's>                       List of IC's to do
+#  -p                              Do pixmaps only.
+#  -w                              Do windows only.
+#  -P                              Pause after each drawing.
+#  -D                              Do default depth of screen only.
+#  -x <lev>                        Set debug level
+#  -g                              Generate pixmaps.
+#  -m                              Use macro version of function.
+
+# The display defaults to $DISPLAY
+#
+
+trap "rm -f CONFIG" 0
+
+PROG=./Test
+if [ ! -f $PROG ]; then
+	# If there isn't a ./Test then try for the space saving name.
+	THISDIR=`pwd`
+	PROG=./`basename $THISDIR`
+fi
+
+ICS=
+echo > CONFIG
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+	-v)
+		echo $2 >> CONFIG
+		shift
+		;;
+	-d)
+		echo "XT_DISPLAY=$2" >> CONFIG
+		shift
+		;;
+	-i)
+		ICS=$2
+		shift
+		;;
+	-x)
+		echo "XT_DEBUG=$2" >> CONFIG
+		shift
+		;;
+	-p)
+		echo "XT_DEBUG_PIXMAP_ONLY=YES" >> CONFIG
+		;;
+	-w)
+		echo "XT_DEBUG_WINDOW_ONLY=YES" >> CONFIG
+		;;
+	-P)
+		echo "XT_DEBUG_PAUSE_AFTER=YES" >> CONFIG
+		;;
+	-D)
+		echo "XT_DEBUG_DEFAULT_DEPTHS=YES" >> CONFIG
+		;;
+	-g)
+		PROG=./pvgen
+		;;
+	-m)
+		PROG=./MTest
+		;;
+	esac
+	shift
+done
+
+# If the display variable is not set on the command line then
+# this will cause the display in DISPLAY to be used.
+
+if [ "$DISPLAY" != "" ]; then
+	echo "XT_DISPLAY=$DISPLAY" >> CONFIG
+fi
+
+# config=${TET_CONFIG:-$TET_ROOT/xtest/tetexec.cfg}
+# Since :- is not universal, and I really want that functionality.
+if [ x"$TET_CONFIG" = x"" ]; then
+	config=$TET_ROOT/xtest/tetexec.cfg
+else
+	config=$TET_CONFIG
+fi
+
+cat $config >> CONFIG
+echo "junk=junk" >> CONFIG	# TEMP
+
+# set TET_CONFIG to our modified file.
+TET_CONFIG=CONFIG
+export TET_CONFIG
+
+#TET_CODE=${TET_CODE:-$TET_ROOT/xtest/tet_code}
+if [ x"$TET_CODE" = x"" ]; then
+	TET_CODE=$TET_ROOT/xtest/tet_code
+fi
+export TET_CODE
+
+rm -f Err*.err
+
+$PROG $ICS
+

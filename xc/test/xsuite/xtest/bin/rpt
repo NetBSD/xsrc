@@ -1,0 +1,331 @@
+
+# 
+# Copyright (c) 1990, 1991  X Consortium
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+# Except as contained in this notice, the name of the X Consortium shall not be
+# used in advertising or otherwise to promote the sale, use or other dealings
+# in this Software without prior written authorization from the X Consortium.
+#
+#  Copyright 1990, 1991 UniSoft Group Limited.
+#  
+#  Permission to use, copy, modify, distribute, and sell this software and
+#  its documentation for any purpose is hereby granted without fee,
+#  provided that the above copyright notice appear in all copies and that
+#  both that copyright notice and this permission notice appear in
+#  supporting documentation, and that the name of UniSoft not be
+#  used in advertising or publicity pertaining to distribution of the
+#  software without specific, written prior permission.  UniSoft
+#  makes no representations about the suitability of this software for any
+#  purpose.  It is provided "as is" without express or implied warranty.
+# 
+# $XConsortium: rpt,v 1.11 94/04/17 21:14:33 rws Exp $
+#
+
+# A simple report generator for development use
+# There is much information in the journal file that can be
+# used to check that all went well, for example matching the number
+# of tests in the IC with the number that actually are reported.
+#
+# This prototype report generator only provides a very simple
+# formating function, rather than a validation one.
+
+DODEBUG=0
+DOTRACE=0
+DOPASS=1
+DOSUM=1
+DOGLOBAL=0
+
+usefile=
+number=
+
+
+while test $# -gt 0
+do
+	case $1 in
+	-d)
+		DODEBUG=1
+		DOTRACE=1
+		;;
+	-t)
+		DOTRACE=1
+		;;
+	-p)
+		# Report only on failures.
+		DOPASS=0
+		;;
+	-s)
+		DOSUM=0
+		;;
+	-S)
+		DOGLOBAL=1
+		;;
+	-f)
+		usefile=$2
+		shift
+		;;
+	-T)
+		case $2 in
+		[0-9]*)
+			number=$2
+			shift
+		esac
+		;;
+	esac
+	shift
+done
+
+if [ "$usefile" != "" ]; then
+	file=$usefile
+else
+	# Default for file.
+	if [ `basename $0` = prp ]; then
+		file=tet_xres
+	elif [ "$number" != "" ]; then
+		# Use the user supplied number.
+		ntmp=`echo 0000$number | sed -e 's/.*\(....\)/\1/'`
+		file=$TET_ROOT/xtest/results/${ntmp}*/journal
+	else
+		# Take the highest numbered journal with an 'e' in it
+		file=`ls -r $TET_ROOT/xtest/results/*e*/journal |\
+		sed -e '1{
+			s/[bce]*//
+			q
+			}'`
+	fi
+fi
+
+if [ ! -f $file ]; then
+	echo "Could not find file $file"
+	exit 1
+fi
+
+(
+	cat $file
+	echo '520|0 0 0 0 0|TRACE:NAME:'
+) | awk -F\| '
+
+BEGIN {
+	dotrace='$DOTRACE';
+	dodebug='$DODEBUG';
+	dopass='$DOPASS';
+	dosumm='$DOSUM';
+	doglobal='$DOGLOBAL';
+	firsttime = 1;
+
+	PASS = 0
+	FAIL = 1
+	UNRESOLVED = 2
+	NOTINUSE = 3
+	UNSUPPORTED = 4
+	UNTESTED = 5
+	UNINITIATED = 6
+	NORESULT = 7
+
+
+}
+
+# The begining of a test case is recognised by the NAME keyword in a
+# trace line.
+/TRACE:NAME:/ {
+	if (firsttime == 0 && dosumm) {
+		print ""
+		line = "Summary of Results for " name
+		print line
+		print substr("------------------------------------------------------------------------------------------------", 1, length(line));
+		printf "%-12s %d\n", "PASS", result[PASS]
+		printf "%-12s %d\n", "FAIL", result[FAIL]
+		if (result[UNRESOLVED] != 0)
+			printf "%-12s %d\n", "UNRESOLVED", result[UNRESOLVED]
+		if (result[NOTINUSE] != 0)
+			printf "%-12s %d\n", "NOTINUSE", result[NOTINUSE]
+		if (result[UNSUPPORTED] != 0)
+			printf "%-12s %d\n", "UNSUPPORTED", result[UNSUPPORTED]
+		if (result[UNTESTED] != 0)
+			printf "%-12s %d\n", "UNTESTED", result[UNTESTED]
+		if (result[UNINITIATED] != 0)
+			printf "%-12s %d\n", "UNINITIATED", result[UNINITIATED]
+		if (result[NORESULT] != 0)
+			printf "%-12s %d\n", "NORESULT", result[NORESULT]
+	}
+	n = split($3, dat, " ");
+	name = dat[2];
+
+	if (firsttime == 0 && name != "")
+		printf "\n\n\n"
+	if (name != "")
+		printf "Tests for %s\n", name;
+	for (i = 0; i < 8; i++)
+		result[i] = 0;
+
+	# Reset all the information indexes.
+	#
+	infoind = 0;
+	failnum = 0;
+
+	firsttime = 0;
+	next;
+}
+
+# An IC start message.
+$1 == 400 {
+	n = split($2, dat, " ");
+	ic = dat[2];
+	nics = dat[3];
+}
+
+# A TP Start message
+$1 == 200 {
+	split($2, dat, " ");
+	tp = dat[2];
+	if (donefirst == 0 && infoind > 0) {
+		print "Non specific error messages:"
+		for (i = 0; i < infoind; i++)
+			printf "  %s\n",  infoline[i];
+	}
+	donefirst = 1;
+
+	infoind = 0;
+	failnum = 0;
+}
+
+# A infomation line
+$1 == 520 {
+
+	# Not that the message field may legally contain the field separator.
+	# So we have to extract the message from $0 with a substr expression.
+	if ($3 ~ /^REPORT:/) {
+		infoline[infoind++] = substr($0, length($1)+1+length($2)+1+8, 512);
+		failnum++;
+	}
+	if ($3 ~ /^TRACE:/ && dotrace) {
+		infoline[infoind++] = substr($0, length($1)+1+length($2)+1, 512);
+	}
+	if ($3 ~ /^TRACE:/ && dotrace == 0 && substr($3, 7, 3) == "---") {
+		infoline[infoind++] = substr($0, length($1)+1+length($2)+1+7, 512);
+	}
+	if ($3 ~ /^DEBUG:/ && dodebug) {
+		infoline[infoind++] = substr($0, length($1)+1+length($2)+1, 512);
+	}
+	if ($3 ~ /^CHECK:/) {
+		# Ignore this for the time being
+	}
+	if ($3 !~ /^[A-Z][A-Z][A-Z][A-Z]*:/) {
+		# This was probably entered by the TCM on a signal or other error.
+		infoline[infoind++] = "TCM:" substr($0, length($1)+1+length($2)+1, 512);
+		failnum++;
+	}
+}
+
+# A TP Result message
+$1 == 220 {
+
+	split($2, dat, " ");
+	res = dat[3];
+
+	# Quick consistancy check - ensure that if the
+	# result is pass then there are no infoline.
+	#
+	if (res == PASS && failnum != 0) {
+		printf "ERROR: Failure reason given for PASS result\n";
+	}
+
+	# Get the result code.
+	# NORESULT seems to appear as -1 for some reason ???
+	#
+	if (res == -1)
+		res = NORESULT;
+
+	#
+	# Increment the count of this class of result.
+	#
+	result[res]++;
+	gresult[res]++;
+
+	if (res == PASS || res == UNTESTED || res == UNSUPPORTED || res == NOTINUSE) {
+		# The test did not fail.
+		nofailtype = 1;
+	} else {
+		nofailtype = 0;
+	}
+
+	if (dopass == 0 && nofailtype == 1)
+		next
+
+	printf "Test %3d:  %s\n", tp, $3
+
+	if (infoind > 0 && res != NOTINUSE) {
+		numprint = infoind;
+		for (i = 0; i < infoind; i++) {
+			if (nofailtype && infoline[i] ~ /^--/) {
+				numprint--;
+				continue;
+			}
+			printf "  %s\n", infoline[i];
+		}
+		if (numprint)
+			print ""
+	}
+	if (nofailtype == 0 && failnum == 0)
+		print "	Warning: No reasons given for result"
+
+}
+
+# A TCM start line
+$1 == 15 {
+	donefirst = 0;
+}
+
+
+END {
+	if (doglobal) {
+		print ""
+		print ""
+		print ""
+		line = "Overall Summary of Results"
+		print line
+		print substr("------------------------------", 1, length(line));
+		total = 0
+		printf "%-12s %d\n", "PASS", gresult[PASS]
+		total += gresult[PASS]
+		printf "%-12s %d\n", "FAIL", gresult[FAIL]
+		total += gresult[FAIL]
+		if (gresult[UNRESOLVED] != 0)
+			printf "%-12s %d\n", "UNRESOLVED", gresult[UNRESOLVED]
+		total += gresult[UNRESOLVED]
+		if (gresult[NOTINUSE] != 0)
+			printf "%-12s %d\n", "NOTINUSE", gresult[NOTINUSE]
+		total += gresult[NOTINUSE]
+		if (gresult[UNSUPPORTED] != 0)
+			printf "%-12s %d\n", "UNSUPPORTED", gresult[UNSUPPORTED]
+		total += gresult[UNSUPPORTED]
+		if (gresult[UNTESTED] != 0)
+			printf "%-12s %d\n", "UNTESTED", gresult[UNTESTED]
+		total += gresult[UNTESTED]
+		if (gresult[UNINITIATED] != 0)
+			printf "%-12s %d\n", "UNINITIATED", gresult[UNINITIATED]
+		total += gresult[UNINITIATED]
+		if (gresult[NORESULT] != 0)
+			printf "%-12s %d\n", "NORESULT", gresult[NORESULT]
+		total += gresult[NORESULT]
+		printf "%-12s %d\n\n", "Total", total
+	}	
+}
+
+'

@@ -1,0 +1,46 @@
+The files in this directory constitute release 1.9 of the Test Environment
+Toolkit (TET) Application Programming Interface (API), C language binding.
+
+The Makefile contains some system dependent commands (e.g. for building an
+object library) in variables which should be configured correctly before
+running make.
+
+The source is written to POSIX.1-1990 using common 'C', although prototypes
+for the API library functions are provided in a header file for use with
+ANSI 'C' compilers.  One extension to POSIX.1 is required: the symbol NSIG.
+Many UNIX systems define NSIG in <signal.h> as an extension to POSIX.1, in
+which case it could be made available by compiling with another feature
+test macro defined in addition to _POSIX_SOURCE.  Otherwise, the symbol
+should be defined by adding -DNSIG=<value> to the compiler options in the
+Makefile.  The value of NSIG should be one greater than the highest signal
+number supported by the system.
+
+After running "make all" the following files are available for use with
+applications:
+
+	tet_api.h	Header containing useful symbol definitions and
+			declarations/prototypes for all API interfaces.
+
+	tcm.o		Test Case Manager main() routine.  For processes
+			to be executed by the Test Case Controller (TCC).
+
+	tcmchild.o	Executed processes main() routine.  For processes
+			to be executed by tet_exec().
+
+	libapi.a	Library of API interfaces.
+
+	llib-ltcm.c  )	Lint libraries defining the API interfaces.  Use 
+	llib-ltcmc.c )	the one which corresponds to the object file in
+			which main() is defined (tcm.o or tcmchild.o).
+			They can be used directly or turned into libraries
+			for use with "lint -l" by doing a "make LINTLIB"
+			and installing the ".ln" files on the system.
+
+There is also a make "INSTALL" target (the default) which copies the
+object files to $(TET_ROOT)/lib/posix_c and the header file to
+$(TET_ROOT)/inc/posix_c.
+
+This release does not have any support for internationalisation.
+
+--
+End of README.
