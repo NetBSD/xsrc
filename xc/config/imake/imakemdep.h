@@ -291,6 +291,12 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef __i386__
 	"-D__i386__",
 # endif
+# ifdef __sparc__
+	"-D__sparc__",
+# endif
+# ifdef __m68k__
+	"-D__m68k__",
+# endif
 # ifdef __GNUC__
 	"-traditional",
 # endif
@@ -654,6 +660,9 @@ struct symtab	predefs[] = {
 #endif
 #ifdef m68k
         {"m68k", "1"},
+#endif
+#ifdef __m68k__
+	{"__m68k__", "1"},
 #endif
 #ifdef m88k
         {"m88k", "1"},
