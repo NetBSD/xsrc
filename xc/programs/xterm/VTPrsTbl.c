@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: VTPrsTbl.c,v 1.10 95/06/09 22:17:06 gildea Exp $
- *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.10 1997/01/08 20:52:20 dawes Exp $
+ *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.10.2.1 1998/02/15 16:09:56 hohndel Exp $
  */
 
 /*
@@ -26,10 +26,15 @@
  * SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
+
 #include "VTparse.h"
 
-/* FIXME: there should be a single config.h */
+#ifndef OPT_VT52_MODE
 #define OPT_VT52_MODE   1 /* true if xterm supports VT52 emulation */
+#endif
 
 /*
  * Stupid Apollo C preprocessor can't handle long lines.  So... To keep
@@ -1466,7 +1471,7 @@ CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 /*	h		i		j		k	*/
 CASE_DECSET,
-CASE_GROUND_STATE,
+CASE_DEC_MC,
 CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 /*	l		m		n		o	*/
@@ -3990,11 +3995,11 @@ CASE_ESC_IGNORE,
 CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 CASE_GROUND_STATE,
-CASE_GROUND_STATE,
+CASE_DECDHL,
 /*	4		5		6		7	*/
-CASE_GROUND_STATE,
-CASE_GROUND_STATE,
-CASE_GROUND_STATE,
+CASE_DECDHL,
+CASE_DECSWL,
+CASE_DECDWL,
 CASE_GROUND_STATE,
 /*	8		9		:		;	*/
 CASE_DECALN,
@@ -5304,8 +5309,8 @@ CASE_IGNORE,
 CASE_IGNORE,
 /*	<		=		>		?	*/
 CASE_ANSI_LEVEL_1,
-CASE_IGNORE,
-CASE_IGNORE,
+CASE_DECKPAM,
+CASE_DECKPNM,
 CASE_IGNORE, 
 /*	@		A		B		C	*/
 CASE_IGNORE,

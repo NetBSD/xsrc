@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.c,v 1.12 95/04/05 19:58:47 kaleb Exp $
- *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.1 1997/05/23 09:24:37 dawes Exp $
+ *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.2 1998/02/15 16:10:03 hohndel Exp $
  */
 
 /*
@@ -31,13 +31,13 @@
 #endif
 
 #include "ptyx.h"		/* gets Xt stuff, too */
-
-#if XtSpecificationRelease >= 6
-#include <X11/Xpoll.h>
-#endif
-
 #include "data.h"
+
 #include <setjmp.h>
+
+#if OPT_TEK4014
+TekWidget tekWidget;
+TekLink *TekRefresh;
 
 XPoint T_boxlarge[NBOX] = {
 	{0, 0},
@@ -71,10 +71,11 @@ jmp_buf Tekend;
 int Tbcnt = 0;
 Char *Tbuffer;
 Char *Tbptr;
-TekLink *TekRefresh;
 Char *Tpushb;
 Char *Tpushback;
 int Ttoggled = 0;
+#endif
+
 int bcnt = 0;
 Char buffer[BUF_SIZE];
 Char *bptr = buffer;
@@ -95,8 +96,12 @@ XtAppContext app_con;
 XtermWidget term;		/* master data structure for client */
 char *xterm_name;	/* argv[0] */
 Boolean sunFunctionKeys;
+#if OPT_SUNPC_KBD
+Boolean sunKeyboard;
+#endif
 
 int am_slave = 0;	/* set to 1 if running as a slave process */
+int done_setuid = 0;	/* set to 1 after resetting setuid */
 int max_plus1;
 fd_set Select_mask;
 fd_set X_mask;
@@ -104,7 +109,7 @@ fd_set pty_mask;
 char *ptydev;
 char *ttydev;
 #ifdef ALLOWLOGGING
-char log_def_name[] = "XtermLog.XXXXX";
+char log_def_name[] = "XtermLog.XXXXXX";
 #endif
 int T_lastx = -1;
 int T_lasty = -1;
@@ -116,5 +121,3 @@ GC visualBellGC;
 
 int VTgcFontMask = GCFont;
 int TEKgcFontMask = GCFont;
-
-TekWidget tekWidget;

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Tekproc.c /main/120 1996/11/29 10:33:20 swick $
- * $XFree86: xc/programs/xterm/Tekproc.c,v 3.13.2.1 1997/05/23 09:24:30 dawes Exp $
+ * $XFree86: xc/programs/xterm/Tekproc.c,v 3.13.2.2 1998/02/15 16:09:55 hohndel Exp $
  *
  * Warning, there be crufty dragons here.
  */
@@ -123,8 +123,6 @@ extern long time();		/* included in <time.h> by Xos.h */
 
 #include "xterm.h"
 
-#define TekColormap DefaultColormap( screen->display, \
-				    DefaultScreen(screen->display) )
 #define DefaultGCID XGContextFromGC(DefaultGC(screen->display, DefaultScreen(screen->display)))
 
 /* Tek defines */
@@ -682,7 +680,7 @@ static void Tekparse()
 				int c2, len = 0;
 				while ((c2 = Tinput()) != BEL) {
 					if (!isprint(c2 & 0x7f)
-					 || len+2 >= sizeof(buf2))
+					 || len+2 >= (int) sizeof(buf2))
 						break;
 					buf2[len++] = c2;
 				}
@@ -865,9 +863,9 @@ static void TekConfigure(w)
 /*ARGSUSED*/
 void
 TekExpose(w, event, region)
-    Widget w;
-    XEvent *event;
-    Region region;
+    Widget w GCC_UNUSED;
+    XEvent *event GCC_UNUSED;
+    Region region GCC_UNUSED;
 {
 	register TScreen *screen = &term->screen;
 
@@ -1269,9 +1267,10 @@ static unsigned char *dashes[TEKNUMLINES] = {
  */
 
 static void TekInitialize(request, new, args, num_args)
-    Widget request, new;
-    ArgList args;
-    Cardinal *num_args;
+    Widget request GCC_UNUSED;
+    Widget new GCC_UNUSED;
+    ArgList args GCC_UNUSED;
+    Cardinal *num_args GCC_UNUSED;
 {
     /* look for focus related events on the shell, because we need
      * to care about the shell's border being part of our focus.

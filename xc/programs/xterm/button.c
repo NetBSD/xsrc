@@ -1,5 +1,4 @@
-/* $XConsortium: button.c /main/75 1996/11/29 10:33:33 swick $ */
-/* $XFree86: xc/programs/xterm/button.c,v 3.11.2.1 1997/05/23 09:24:33 dawes Exp $ */
+/* $TOG: button.c /main/76 1997/07/30 16:56:19 kaleb $ */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
@@ -22,6 +21,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
+/* $XFree86: xc/programs/xterm/button.c,v 3.11.2.2 1998/02/15 16:09:58 hohndel Exp $ */
 
 /*
 button.c	Handles button events in the terminal emulator.
@@ -73,9 +73,8 @@ extern char *malloc();
 #define SHIFTS 8		/* three keys, so eight combinations */
 #define	Coordinate(r,c)		((r) * (term->screen.max_col+1) + (c))
 
+
 extern char *xterm_name;
-
-
 extern XtermWidget term;
 
 /* Selection/extension variables */
@@ -139,7 +138,12 @@ Boolean SendMousePosition(w, event)
 Widget w;
 XEvent* event;
 {
-    register TScreen *screen = &((XtermWidget)w)->screen;
+    register TScreen *screen;
+
+    if (!IsXtermWidget(w))
+    	return False;
+
+    screen = &((XtermWidget)w)->screen;
     
     if (screen->send_mouse_pos == 0) return False;
 
@@ -193,10 +197,10 @@ XEvent* event;
 
 void
 DiredButton(w, event, params, num_params)
-Widget w;
+Widget w GCC_UNUSED;
 XEvent *event;			/* must be XButtonEvent */
-String *params;			/* selections */
-Cardinal *num_params;
+String *params GCC_UNUSED;	/* selections */
+Cardinal *num_params GCC_UNUSED;
 {	/* ^XM-G<line+' '><col+' '> */
 	register TScreen *screen = &term->screen;
 	int pty = screen->respond;
@@ -208,8 +212,7 @@ Cardinal *num_params;
     strcpy( Line, "\030\033G  " );
 
 	line = ( event->xbutton.y - screen->border ) / FontHeight( screen );
-	col = (event->xbutton.x - screen->border - Scrollbar(screen))
-	 / FontWidth(screen);
+	col  = ( event->xbutton.x - OriginX(screen)) / FontWidth( screen );
 	Line[3] = ' ' + col;
 	Line[4] = ' ' + line;
 	v_write(pty, Line, 5 );
@@ -217,10 +220,10 @@ Cardinal *num_params;
 
 void
 ViButton(w, event, params, num_params)
-Widget w;
+Widget w GCC_UNUSED;
 XEvent *event;			/* must be XButtonEvent */
-String *params;			/* selections */
-Cardinal *num_params;
+String *params GCC_UNUSED;	/* selections */
+Cardinal *num_params GCC_UNUSED;
 {	/* ^XM-G<line+' '><col+' '> */
 	register TScreen *screen = &term->screen;
 	int pty = screen->respond;
@@ -252,12 +255,16 @@ Cardinal *num_params;
 void HandleSelectExtend(w, event, params, num_params)
 Widget w;
 XEvent *event;			/* must be XMotionEvent */
-String *params;			/* unused */
-Cardinal *num_params;		/* unused */
+String *params GCC_UNUSED;
+Cardinal *num_params GCC_UNUSED;
 {
-	register TScreen *screen = &((XtermWidget)w)->screen;
+	register TScreen *screen;
 	int row, col;
 
+	if (!IsXtermWidget(w))
+		return;
+
+	screen = &((XtermWidget)w)->screen;
 	screen->selection_time = event->xmotion.time;
 	switch (eventMode) {
 		case LEFTEXTENSION :
@@ -279,6 +286,9 @@ String *params;			/* selections */
 Cardinal *num_params;
 Bool use_cursor_loc;
 {
+	if (!IsXtermWidget(w))
+		return;
+
 	((XtermWidget)w)->screen.selection_time = event->xbutton.time;
 	switch (eventMode) {
 		case NORMAL :
@@ -343,12 +353,11 @@ Cardinal num_params;
       default:	       cutbuffer = -1;
     }
     if (cutbuffer >= 0) {
-	register TScreen *screen = &((XtermWidget)w)->screen;
 	int inbytes;
 	unsigned long nbytes;
 	int fmt8 = 8;
 	Atom type = XA_STRING;
-	char *line = XFetchBuffer(screen->display, &inbytes, cutbuffer);
+	char *line = XFetchBuffer(XtDisplay(w), &inbytes, cutbuffer);
 	nbytes = (unsigned long) inbytes;
 	if (nbytes > 0)
 	    SelectionReceived(w, NULL, &selection, &type, (XtPointer)line,
@@ -375,15 +384,19 @@ static void SelectionReceived(w, client_data, selection, type,
 			      value, length, format)
 Widget w;
 XtPointer client_data;
-Atom *selection, *type;
+Atom *selection GCC_UNUSED, *type;
 XtPointer value;
 unsigned long *length;
-int *format;
+int *format GCC_UNUSED;
 {
-    int pty = ((XtermWidget)w)->screen.respond;	/* file descriptor of pty */
+    int pty;
     register char *lag, *cp, *end;
     char *line = (char*)value;
-				  
+
+    if (!IsXtermWidget(w))
+	return;
+
+    pty = ((XtermWidget)w)->screen.respond;	/* file descriptor of pty */
     if (*type == 0 /*XT_CONVERT_FAIL*/ || *length == 0 || value == NULL) {
 	/* could not get this selection, so see if there are more to try */
 	struct _SelectionList* list = (struct _SelectionList*)client_data;
@@ -466,12 +479,16 @@ void
 HandleSelectStart(w, event, params, num_params)
 Widget w;
 XEvent *event;			/* must be XButtonEvent* */
-String *params;			/* unused */
-Cardinal *num_params;		/* unused */
+String *params GCC_UNUSED;
+Cardinal *num_params GCC_UNUSED;
 {
-	register TScreen *screen = &((XtermWidget)w)->screen;
+	register TScreen *screen;
 	int startrow, startcol;
 
+	if (!IsXtermWidget(w))
+		return;
+
+	screen = &((XtermWidget)w)->screen;
 	firstValidRow = 0;
 	lastValidRow  = screen->max_row;
 	PointToRowCol(event->xbutton.y, event->xbutton.x, &startrow, &startcol);
@@ -484,11 +501,15 @@ void
 HandleKeyboardSelectStart(w, event, params, num_params)
 Widget w;
 XEvent *event;			/* must be XButtonEvent* */
-String *params;			/* unused */
-Cardinal *num_params;		/* unused */
+String *params GCC_UNUSED;
+Cardinal *num_params GCC_UNUSED;
 {
-	register TScreen *screen = &((XtermWidget)w)->screen;
+	register TScreen *screen;
 
+	if (!IsXtermWidget(w))
+		return;
+
+	screen = &((XtermWidget)w)->screen;
 	do_select_start (w, event, screen->cursor_row, screen->cursor_col);
 }
 
@@ -542,6 +563,7 @@ StartSelect(startrow, startcol)
 {
 	TScreen *screen = &term->screen;
 
+	TRACE(("StartSelect row=%d, col=%d\n", startrow, startcol))
 	if (screen->cursor_state)
 	    HideCursor ();
 	if (numberOfClicks == 1) {
@@ -634,8 +656,8 @@ HandleSelectSet(w, event, params, num_params)
 /* ARGSUSED */
 static void
 SelectSet (w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
+    Widget	w GCC_UNUSED;
+    XEvent	*event GCC_UNUSED;
     String	*params;
     Cardinal    num_params;
 {
@@ -653,13 +675,17 @@ SelectSet (w, event, params, num_params)
 static void do_start_extend (w, event, params, num_params, use_cursor_loc)
 Widget w;
 XEvent *event;			/* must be XButtonEvent* */
-String *params;			/* unused */
-Cardinal *num_params;		/* unused */
+String *params GCC_UNUSED;
+Cardinal *num_params GCC_UNUSED;
 Bool use_cursor_loc;
 {
-	TScreen *screen = &((XtermWidget)w)->screen;
+	TScreen *screen;
 	int row, col, coord;
 
+	if (!IsXtermWidget(w))
+		return;
+
+	screen = &((XtermWidget)w)->screen;
 	if (SendMousePosition(w, event)) return;
 	firstValidRow = 0;
 	lastValidRow  = screen->max_row;
@@ -711,6 +737,7 @@ ExtendExtend (row, col)
 {
 	int coord = Coordinate(row, col);
 	
+	TRACE(("ExtendExtend row=%d, col=%d\n", row, col))
 	if (eventMode == LEFTEXTENSION 
 	 && (coord + (selectUnit!=SELECTCHAR)) > Coordinate(endSRow, endSCol)) {
 		/* Whoops, he's changed his mind.  Do RIGHTEXTENSION */
@@ -791,7 +818,7 @@ register int amount;
 /*ARGSUSED*/
 void
 ResizeSelection (screen, rows, cols)
-    TScreen *screen;
+    TScreen *screen GCC_UNUSED;
     int rows, cols;
 {
     rows--;				/* decr to get 0-max */
@@ -827,7 +854,7 @@ PointToRowCol(y, x, r, c)
 		row = firstValidRow;
 	else if(row > lastValidRow)
 		row = lastValidRow;
-	col = (x - screen->border - Scrollbar(screen)) / FontWidth(screen);
+	col = (x - OriginX(screen)) / FontWidth(screen);
 	if(col < 0)
 		col = 0;
 	else if(col > screen->max_col+1) {
@@ -1178,6 +1205,7 @@ SaltTextAway(crow, ccol, row, col, params, num_params)
 	}
 	*lp = '\0';		/* make sure we have end marked */
 	
+	TRACE(("Salted TEXT:%.*s\n", lp - line, line))
 	screen->selection_length = (lp - line);
 	_OwnSelection(term, params, num_params);
 }
@@ -1191,16 +1219,20 @@ unsigned long *length;
 int *format;
 {
     Display* d = XtDisplay(w);
-    XtermWidget xterm = (XtermWidget)w;
+    TScreen *screen;
 
-    if (xterm->screen.selection == NULL) return False; /* can this happen? */
+    if (!IsXtermWidget(w))
+	return False;
+
+    screen = &((XtermWidget)w)->screen;
+    if (screen->selection == NULL) return False; /* can this happen? */
 
     if (*target == XA_TARGETS(d)) {
 	Atom* targetP;
 	Atom* std_targets;
 	unsigned long std_length;
 	XmuConvertStandardSelection(
-		    w, xterm->screen.selection_time, selection,
+		    w, screen->selection_time, selection,
 		    target, type, (caddr_t*)&std_targets, &std_length, format
 		   );
 	*length = std_length + 5;
@@ -1221,12 +1253,21 @@ int *format;
     if (*target == XA_STRING ||
 	*target == XA_TEXT(d) ||
 	*target == XA_COMPOUND_TEXT(d)) {
-	if (*target == XA_COMPOUND_TEXT(d))
+	if (*target == XA_COMPOUND_TEXT(d)) {
+	    XTextProperty textprop;
+
+	    *value = (XtPointer) screen->selection;
+	    if (XmbTextListToTextProperty (d, (char**)value, 1,
+					   XCompoundTextStyle, &textprop)
+			< Success) return False;
+	    *value = (XtPointer) textprop.value;
+	    *length = textprop.nitems;
 	    *type = *target;
-	else
+	} else {
 	    *type = XA_STRING;
-	*value = xterm->screen.selection;
-	*length = xterm->screen.selection_length;
+	    *value = screen->selection;
+	    *length = screen->selection_length;
+	}
 	*format = 8;
 	return True;
     }
@@ -1246,9 +1287,9 @@ int *format;
     if (*target == XA_LENGTH(d)) {
 	*value = XtMalloc(4);
 	if (sizeof(long) == 4)
-	    *(long*)*value = xterm->screen.selection_length;
+	    *(long*)*value = screen->selection_length;
 	else {
-	    long temp = xterm->screen.selection_length;
+	    long temp = screen->selection_length;
 	    memcpy ( (char*)*value, ((char*)&temp)+sizeof(long)-4, 4);
 	}
 	*type = XA_INTEGER;
@@ -1256,7 +1297,7 @@ int *format;
 	*format = 32;
 	return True;
     }
-    if (XmuConvertStandardSelection(w, xterm->screen.selection_time, selection,
+    if (XmuConvertStandardSelection(w, screen->selection_time, selection,
 				    target, type,
 				    (caddr_t *)value, length, format))
 	return True;
@@ -1271,9 +1312,14 @@ static void LoseSelection(w, selection)
   Widget w;
   Atom *selection;
 {
-    register TScreen* screen = &((XtermWidget)w)->screen;
+    register TScreen* screen;
     register Atom* atomP;
     Cardinal i;
+
+    if (!IsXtermWidget(w))
+	return;
+
+    screen = &((XtermWidget)w)->screen;
     for (i = 0, atomP = screen->selection_atoms;
 	 i < screen->selection_count; i++, atomP++)
     {
@@ -1310,8 +1356,8 @@ static void LoseSelection(w, selection)
 
 /* ARGSUSED */
 static void SelectionDone(w, selection, target)
-Widget w;
-Atom *selection, *target;
+Widget w GCC_UNUSED;
+Atom *selection GCC_UNUSED, *target GCC_UNUSED;
 {
     /* empty proc so Intrinsics know we want to keep storage */
 }
@@ -1406,7 +1452,7 @@ DisownSelection(termw)
 static int
 Length(screen, row, scol, ecol)
     register int row, scol, ecol;
-    register TScreen *screen;
+    register TScreen *screen GCC_UNUSED;
 {
         register int lastcol = LastTextCol(row);
 
@@ -1426,23 +1472,17 @@ SaveText(screen, row, scol, ecol, lp, eol)
 {
 	register int i = 0;
 	register Char *ch = SCRN_BUF_CHARS(screen, row + screen->topline);
-	Char attr;
 	register int c;
 
-	*eol = 0;
 	i = Length(screen, row, scol, ecol);
 	ecol = scol + i;
-	if (*eol == 0) {
-		if(ScrnGetAttributes(screen, row + screen->topline, 0, &attr, 1) == 1) {
-			*eol = (attr & LINEWRAPPED) ? 0 : 1;
-		} else {
-			/* If we can't get the attributes, assume no wrap */
-			/* CANTHAPPEN */
-			(void)fprintf(stderr, "%s: no attributes for %d, %d\n",
-				xterm_name, row, ecol - 1);
-			*eol = 1;
-		}
+#if OPT_DEC_CHRSET
+	if (CSET_DOUBLE(SCRN_BUF_CSETS(screen, row + screen->topline)[0])) {
+		scol = (scol + 0) / 2;
+		ecol = (ecol + 1) / 2;
 	}
+#endif
+	*eol = !ScrnTstWrapped(screen, row);
 	for (i = scol; i < ecol; i++) {
 	        c = ch[i];
 		if (c == 0)
@@ -1471,10 +1511,8 @@ EditorButton(event)
 
 	button = event->button - 1; 
 
-	row = (event->y - screen->border) 
-	 / FontHeight(screen);
-	col = (event->x - screen->border - Scrollbar(screen))
-	 / FontWidth(screen);
+	row = (event->y - screen->border) / FontHeight(screen);
+	col = (event->x - OriginX(screen)) / FontWidth(screen);
 	if (screen->control_eight_bits) {
 		line[count++] = CSI;
 	} else {
@@ -1495,9 +1533,10 @@ EditorButton(event)
 
 
 /*ARGSUSED*/
+#if OPT_TEK4014
 void HandleGINInput (w, event, param_list, nparamsp)
-    Widget w;
-    XEvent *event;
+    Widget w GCC_UNUSED;
+    XEvent *event GCC_UNUSED;
     String *param_list;
     Cardinal *nparamsp;
 {
@@ -1517,14 +1556,15 @@ void HandleGINInput (w, event, param_list, nparamsp)
 	Bell (XkbBI_MinorError,0);
     }
 }
+#endif /* OPT_TEK4014 */
 
 
 /* ARGSUSED */
 void HandleSecure(w, event, params, param_count)
-    Widget w;
+    Widget w GCC_UNUSED;
     XEvent *event;		/* unused */
-    String *params;		/* [0] = volume */
-    Cardinal *param_count;	/* 0 or 1 */
+    String *params GCC_UNUSED;		/* [0] = volume */
+    Cardinal *param_count GCC_UNUSED;	/* 0 or 1 */
 {
     Time ev_time = CurrentTime;
 
