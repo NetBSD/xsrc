@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.86 2001/03/06 10:48:58 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.87 2001/03/06 14:52:13 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -429,7 +429,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #define StandardDefines	-DCSRG_BASED
+
+/* Citrus mb locale were added in 1.5P */
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 5) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 5 && OSTeenyVersion >= 15))
+#define XawI18nDefines	-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
+#else
 #define XawI18nDefines	-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#endif
 
 #ifndef ExtraLibraries
 #define ExtraLibraries		/**/
