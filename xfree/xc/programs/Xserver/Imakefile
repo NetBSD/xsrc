@@ -675,6 +675,22 @@ ServerDriverSDKTarget(XFree86)
 #define ServerToInstall XFree86
 #endif
 #endif        /* XF86Server */
+  
+#if XmacppcServer
+XCOMM
+XCOMM NetBSD/macppc server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+MACPPCDDXDIR  = hw/netbsd/macppc
+MACPPCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(MACPPCDDXDIR) $(DEPDIRS)
+MACPPCOBJS = hw/netbsd/macppc/macppcInit.o
+MACPPCLIBS = hw/netbsd/macppc/libmacppc.a CFB8Libs
+ServerTarget(Xmacppc,$(MACPPCDIRS),$(MACPPCOBJS),$(MACPPCLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xmacppc
+#endif
+#endif /* XmacppcServer */
 
 #if defined(KDriveXServer) && KDriveXServer
 XCOMM
@@ -1355,6 +1371,7 @@ CFBDIRS = $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR)
 MIEXTDIRS = $(SHADOWDIR) $(LAYERDIR)
 IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
 DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
+	  $(MACPPCDDXDIR) \
 	  $(HPDDXDIR) $(XFREE86DDXDIR) $(XWINDDXDIR) $(DARWINDDXDIR) \
 	  $(XVFBDDXDIR) $(XNESTDDXDIR)
 SUBDIRS = $(STDDIRS) $(MFBDIR) $(CFBDIRS) $(IPLANDIRS) $(ILBMDIR) $(AFBDIR) \
