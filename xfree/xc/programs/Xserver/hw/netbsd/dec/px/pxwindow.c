@@ -1,4 +1,4 @@
-/*	$NetBSD: pxwindow.c,v 1.2 2004/03/12 21:54:00 matt Exp $	*/
+/*	$NetBSD: pxwindow.c,v 1.2.2.1 2004/11/12 05:36:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ pxCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 	sp = pWin->drawable.pScreen->devPrivates[pxScreenPrivateIndex].ptr;
 	pwinRoot = WindowTable[pWin->drawable.pScreen->myNum];
 
-	REGION_INIT(pWin->drawable.pScreen, &rgnDst, NullBox, 0);
+	REGION_NULL(pWin->drawable.pScreen, &rgnDst);
 
 	dx = ptOldOrg.x - pWin->drawable.x;
 	dy = ptOldOrg.y - pWin->drawable.y;
