@@ -28,13 +28,18 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: contrib/programs/xmessage/readfile.c,v 1.1.1.3.2.2 1997/05/17 13:49:15 dawes Exp $ */
+/* $XFree86: contrib/programs/xmessage/readfile.c,v 1.1.1.3.2.4 1998/01/23 14:04:30 robin Exp $ */
 
 #include <X11/Xos.h>			/* for types.h */
 #include <sys/stat.h>
 #include <stdio.h>
 
+#ifdef X_NOT_STDC_ENV
 extern char *malloc();
+#else
+#include <stdlib.h>
+#endif
+
 
 /*
  * get_data_from_file - read data from a file into a single buffer; meant 
