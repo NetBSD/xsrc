@@ -436,6 +436,9 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #define HasSnprintf		YES
 #define HasMkstemp		YES
 #endif
+#ifndef HasGetresuid
+#define HasGetresuid		YES
+#endif
 #if OSMajorVersion >= 2
 #define HasUsableFileMmap	YES
 #endif

@@ -371,6 +371,12 @@ XCOMM the platform-specific parameters - edit site.def to change
 #ifndef HasDlopen
 #define HasDlopen		NO	/* assume not */
 #endif
+#ifndef HasIssetugid
+#define HasIssetugid		NO	/* assume not */
+#endif
+#ifndef HasGetresuid
+#define HasGetresuid		NO	/* assume not */
+#endif
 #ifndef HasMkstemp
 #define HasMkstemp		NO	/* assume not */
 #endif

@@ -244,6 +244,14 @@ VENDORMANVERSION = XVendorManVersionString
 #ifndef BuildLoadableXlibI18n
 #define BuildLoadableXlibI18n	(HasDlopen && SharedLibX11)
 #endif
+/*
+ * This disables XLOCALEDIR.  Set it if you're using BuildLoadableXlibI18n,
+ * don't have either issetugid() or getresuid(), and you need to protect
+ * clients that are setgid or setuid to an id other than 0.
+ */
+#ifndef DisableXLocaleDirEnv
+#define DisableXLocaleDirEnv	NO
+#endif
 #ifndef BuildXextLib
 #define BuildXextLib		(BuildLibraries || (BuildLibrariesForXServers && XnestServer))
 #endif
