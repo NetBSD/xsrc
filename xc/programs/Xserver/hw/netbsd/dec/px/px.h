@@ -1,4 +1,4 @@
-/*	$NetBSD: px.h,v 1.3 2002/02/22 16:06:51 ad Exp $	*/
+/*	$NetBSD: px.h,v 1.4 2002/07/24 14:16:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -373,22 +373,14 @@ void	pxGetScanlineRaw(pxScreenPrivPtr, int, int, int, pxImgBufPtr);
 /*
  * pxglyph.c
  */
-void	pxPolyTEGlyphBltN(DrawablePtr, GCPtr, int, int, unsigned int,
+void	pxPolyTEGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
+			 CharInfoPtr *, pointer);
+void	pxImageTEGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 			  CharInfoPtr *, pointer);
-void	pxPolyTEGlyphBlt16(DrawablePtr, GCPtr, int, int, unsigned int,
-			   CharInfoPtr *, pointer);
-void	pxImageTEGlyphBltN(DrawablePtr, GCPtr, int, int, unsigned int,
-			   CharInfoPtr *, pointer);
-void	pxImageTEGlyphBlt16(DrawablePtr, GCPtr, int, int, unsigned int,
-			    CharInfoPtr *, pointer);
-void	pxPolyGlyphBltN(DrawablePtr, GCPtr, int, int, unsigned int,
+void	pxPolyGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
+		       CharInfoPtr *, pointer);
+void	pxImageGlyphBlt(DrawablePtr, GCPtr, int, int, unsigned int,
 			CharInfoPtr *, pointer);
-void	pxPolyGlyphBlt16(DrawablePtr, GCPtr, int, int, unsigned int,
-			 CharInfoPtr *, pointer);
-void	pxImageGlyphBltN(DrawablePtr, GCPtr, int, int, unsigned int,
-			 CharInfoPtr *, pointer);
-void	pxImageGlyphBlt16(DrawablePtr, GCPtr, int, int, unsigned int,
-			  CharInfoPtr *, pointer);
 
 /*
  * pximage.c
