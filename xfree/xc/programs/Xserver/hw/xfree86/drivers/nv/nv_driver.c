@@ -575,9 +575,12 @@ static Bool
 NVEnterVT(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    NVPtr pNv = NVPTR(pScrn);
 
     DEBUG(xf86DrvMsg(scrnIndex, X_INFO, "NVEnterVT\n"));
 
+    pNv->riva.LockUnlock(&pNv->riva, 0);
+    NVSave(pScrn);
     if (!NVModeInit(pScrn, pScrn->currentMode))
         return FALSE;
     NVAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
