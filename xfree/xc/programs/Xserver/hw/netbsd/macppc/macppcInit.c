@@ -369,3 +369,34 @@ fflush(stderr);
 	}
     }
 }
+
+/*#ifdef DDXOSFATALERROR*/
+void OsVendorFatalError(void)
+{
+}
+/*#endif*/
+
+#ifdef DPMSExtension
+/**************************************************************
+ * DPMSSet(), DPMSGet(), DPMSSupported()
+ *
+ * stubs
+ *
+ ***************************************************************/
+
+void DPMSSet (level)
+    int level;
+{
+}
+
+int DPMSGet (level)
+    int* level;
+{
+    return -1;
+}
+
+Bool DPMSSupported ()
+{
+    return FALSE;
+}
+#endif
