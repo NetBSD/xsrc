@@ -42,7 +42,7 @@
 #include "Xproto.h"
 #include "dipex.h"
 
-#ifdef vax			/* probably not good enough yet */
+#if defined(vax) || defined(__vax__)	/* probably not good enough yet */
 #define MyFloatType DEC_F_Floating
 #else
 #define MyFloatType Ieee_754_32
