@@ -1,0 +1,35 @@
+XCOMM $TOG: Imakefile /main/11 1997/12/11 11:54:43 barstow $
+XCOMM $XFree86: xc/programs/lbxproxy/os/Imakefile,v 1.6 1998/12/20 22:19:00 dawes Exp $
+
+#include <Server.tmpl>
+
+ DEFINES = $(CONNECTION_FLAGS) $(RPC_DEFINES) \
+                AllocateLocalDefines ServerOSDefines $(SIGNAL_DEFINES)
+DEPEND_DEFINES = $(TRANS_INCLUDES) 
+
+INCLUDES = -I../include -I$(TOP)/include -I$(EXTINCSRC) \
+           -I../../../include/extensions
+
+    SRCS = connection.c io.c WaitFor.c osinit.c transport.c
+
+    OBJS = connection.o io.o WaitFor.o osinit.o transport.o
+
+CONN_DEFINES = -DLBXPROXY_t -DTRANS_SERVER
+
+#if HasBSD44Sockets
+SOCK_DEFINES = -DBSD44SOCKETS
+#endif
+
+NormalLibraryObjectRule()
+NormalLibraryTarget(os,$(OBJS))
+LintLibraryTarget(os,$(SRCS))
+NormalLintTarget($(SRCS))
+
+LinkSourceFile(transport.c,$(TRANSCOMMSRC))
+
+SpecialCObjectRule(io,$(ICONFIGFILES),$(CONN_DEFINES) $(EXT_DEFINES))
+SpecialCObjectRule(connection,$(ICONFIGFILES),$(CONN_DEFINES) $(SOCK_DEFINES))
+SpecialCObjectRule(transport,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES))
+
+DependTarget()
+

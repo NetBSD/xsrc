@@ -1,0 +1,12 @@
+XCOMM $TOG: Imakefile /main/10 1998/02/26 17:08:56 kaleb $
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+#if BuildPlugin && !VendorHasX11R6_3libXext
+LIBXPLUGINDIR = libxplugin
+#endif
+
+      SUBDIRS = $(LIBXPLUGINDIR) plugin
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

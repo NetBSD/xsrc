@@ -1,0 +1,48 @@
+// symbols definition for a very simple Romanian Keyboard layout.
+//
+// We basically override some modifier_keys so that using the Right Alt
+// and the corresponing letter we are able to generate the romanian characters
+//
+// Created by Cristian Gafton, <gafton@redhat.com> (C) 2000
+// 
+// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.1 2000/08/15 16:51:32 dawes Exp $
+
+partial hidden alphanumeric_keys modifier_keys
+xkb_symbols "basic" {
+    name[Group1]= "Romanian";
+
+    key <TLDE> { [], [ acircumflex,     acircumflex	] };
+    key <AC01> { [], [ atilde,		acircumflex	] };   
+    key <AC02> { [], [ scedilla,	Scedilla	] };
+    key <AD05> { [], [ thorn,		Thorn		] };
+    key <AD08> { [], [ icircumflex,	Icircumflex	] };
+};
+
+default
+xkb_symbols "pc101" {
+    key <RALT> { [ Mode_switch,  Multi_key ] };
+
+    include "ro(basic)"
+
+    modifier_map Mod3 { Mode_switch };
+};
+
+xkb_symbols "pc104" {
+    key <RALT> { [ Mode_switch ] };
+    key <RWIN> { [ Multi_key ] };
+
+    include "ro(basic)"
+
+    modifier_map Mod3 { Mode_switch };
+};
+
+xkb_symbols "alt_is_meta" {
+    key <LALT> {  [  Meta_L ]  };
+    key <LWIN> {  [  Alt_L  ]  };
+
+    include "ro(pc104)"
+
+    // modifier mappings
+    modifier_map Mod1   { Meta_L, Meta_R };
+    modifier_map Mod4   { Alt_L,  Alt_R  };
+};

@@ -1,0 +1,43 @@
+XCOMM $XConsortium: Imakefile /main/1 1996/02/01 00:56:19 gildea $
+
+XCOMM Format the documentation about the release as a whole.
+XCOMM The files generated here are shipped in the top-level
+XCOMM xc/ directory.
+
+XCOMM $XFree86: xc/doc/misc/Imakefile,v 1.2 1998/12/20 11:56:37 dawes Exp $
+
+MakeSimpleDoc(RELNOTES,RELNOTES.ms)
+
+MakeSimpleDoc(INSTALL,INSTALL.ms)
+
+/* the rules should be updated to generate .TXT extensions normally */
+
+RELNOTES.TXT: RELNOTES.txt
+	$(MV) RELNOTES.txt RELNOTES.TXT
+
+INSTALL.TXT: INSTALL.txt
+	$(MV) INSTALL.txt INSTALL.TXT
+
+clean::
+	$(RM) RELNOTES.TXT INSTALL.TXT
+
+
+  TARGETS = RELNOTES.PS RELNOTES.TXT INSTALL.PS INSTALL.TXT
+
+AllTarget($(TARGETS))
+
+#ifndef UpdateDocsInSource
+#define UpdateDocsInSource NO
+#endif
+
+#if UpdateDocsInSource
+SOURCETARGET = install
+#else
+SOURCETARGET = update
+#endif
+
+$(SOURCETARGET):: $(TARGETS)
+	$(CP) $(TARGETS) $(TOP)
+
+InstallRoffDoc(INSTALL)
+InstallRoffDoc(RELNOTES)

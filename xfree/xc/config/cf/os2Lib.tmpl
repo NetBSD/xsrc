@@ -1,0 +1,202 @@
+XCOMM $XConsortium: os2Lib.tmpl /main/1 1996/10/31 14:47:31 kaleb $
+
+
+
+XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.10 2000/08/09 02:57:20 tsi Exp $
+
+/*
+ * OS2/EMX shared library template
+ */
+#ifndef __EMX__
+#error You must edit os2Lib.tmpl for your (non-EMX) OS/2 dev system
+#endif
+
+/* note these are special because of linking with link386 */
+#ifdef NOT_EMX
+#define SharedX11Libs $(LDPRELIB) $(SHM)
+#define SharedXtReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXaw6Reqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedSMReqs $(LDPRELIB) $(ICELIB)
+#define SharedXextReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs $(LDPRELIB) $(XLIB)
+#define SharedXieReqs $(LDPRELIB) $(XLIB)
+#define SharedXtstReqs $(LDPRELIB) $(XLIB)
+#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedPexReqs $(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXpReqs $(LDPRELIBS) $(XLIB)
+#define SharedXvReqs $(LDPRELIBS) $(XLIB)
+#define SharedGLReqs $(LDPRELIBS) $(XLIB)
+#define SharedXfontReqs $(LDPRELIBS) $(XLIB)
+#define SharedXpmReqs $(LDPRELIBS) $(XLIB)
+#define SharedDPSReqs $(LDPRELIBS) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedDPSTKReqs $(LDPRELIBS) $(DPSLIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#else
+#define SharedX11Reqs shm
+#define SharedXtReqs ..\\..\\exports\\lib\\ ICE SM X11
+#define SharedXawReqs ..\\..\\exports\\lib\\ Xmu Xt Xpm X11 Xext
+#define SharedXaw6Reqs ..\\..\\exports\\lib\\ Xmu Xt Xpm X11 Xext
+#define SharedXmuReqs ..\\..\\exports\\lib\\ Xt X11 Xext
+#define SharedSMReqs ..\\..\\exports\\lib\\ ICE
+#define SharedXextReqs ..\\..\\exports\\lib\\ X11
+#define SharedXiReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXieReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXtstReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedOldXReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedPexReqs ..\\..\\exports\\lib\\ X11 m
+#define SharedXpReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXvReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedGLReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXfontReqs ..\\..\\exports\\lib\\ X11
+#define SharedXpmReqs ..\\..\\exports\\lib\\ X11
+#define SharedDPSReqs ..\\..\\exports\\lib\\ Xmu Xt X11
+#define SharedDPSTKReqs ..\\..\\exports\\lib\\ DPS Xmu Xt X11
+#endif
+
+/* library revisions, these are typically empty! */
+#define SharedX11Rev /**/
+#define SharedXThrStubRev /**/
+#define SharedXextRev /**/
+#define SharedXssRev /**/
+#define SharedXxf86miscRev /**/
+#define SharedXxf86vmRev /**/
+#define SharedXxf86dgaRev /**/
+#define SharedXxf86rushRev /**/
+#define SharedXvRev /**/
+#define SharedXineramaRev /**/
+#define SharedDpsRev /**/
+#define SharedDpsTkRev /**/
+#define SharedPSResRev /**/
+#define SharedGlxRev /**/
+#define SharedXfontcacheRev /**/
+#define SharedXauRev /**/
+#define SharedXdmcpRev /**/
+#define SharedXmuRev /**/
+#define SharedOldXRev /**/
+#define SharedXpRev /**/
+#define SharedXtRev /**/
+#define SharedXaRev /**/
+#define SharedXawRev /**/
+#define SharedXaw6Rev 6
+#define SharedXiRev /**/
+#define SharedXtstRev /**/
+#define SharedPexRev /**/
+#define SharedXieRev /**/
+#define SharedPhigsRev /**/
+#define SharedICERev /**/
+#define SharedSMRev /**/
+#define SharedXkeyRev /**/
+#define SharedFSRev /**/
+#define SharedFontRev /**/
+#define SharedXpmRev /**/
+
+/*
+ * By setting this in your Imakefile, you can force using static libraries
+ * to be linked with you app, rather than DLLs
+ */
+#ifndef LinkStatically
+#define LinkStatically NO
+#endif
+
+#if LinkStatically
+#define SDlibX11 -lX11_s
+#define SDlibXExt -lXExt_s
+#define SDlibXmu -lXmu_s
+#define SDlibXt -lXt_s
+#define SDlibXaw -lXaw_s
+#define SDlibXaw6 -lXaw_s
+#define SDlibXi -lXi_s
+#define SDlibXIE -lXIE_s
+#define SDlibXtst -lXtst_s
+#define SDlibPEX5 -lPEX5_s
+#define SDlibXp -lXp_s
+#define SDlibXv -lXv_s
+#define SDlibGL -lGL_s
+#define SDlibDPS -lDPS_s
+#define SDlibDPSTK -lDPSTK_s
+#else
+#define SDlibX11 -lX11
+#define SDlibXExt -lXExt
+#define SDlibXmu -lXmu
+#define SDlibXt -lXt
+#define SDlibXaw -lXaw
+#define SDlibXaw6 -lXaw
+#define SDlibXi -lXi
+#define SDlibXIE -lXIE
+#define SDlibXtst -lXtst
+#define SDlibPEX5 -lPEX5
+#define SDlibXp -lXp
+#define SDlibXv -lXv
+#define SDlibGL -lGL
+#define SDlibDPS -lDPS
+#define SDlibDPSTK -lDPSTK
+#endif
+
+/*
+ * and now a little bit of magic for using imake without source tree; if we
+ * are using shared libraries, we really do not need to depend on anything
+ */
+#if SharedLibXext
+ DEPEXTENSIONLIB = 
+    EXTENSIONLIB = _Use(SDlibXExt,-L$(EXTENSIONSRC)/lib SDlibXExt)
+#endif
+#if SharedLibX11
+         DEPXLIB = 
+            XLIB = $(EXTENSIONLIB) _Use(SDlibX11,-L$(XLIBSRC) SDlibX11)
+#endif
+#if SharedLibXmu
+       DEPXMULIB = 
+          XMULIB = _Use(SDlibXmu,-L$(XMUSRC) SDlibXmu) $(XLIB)
+#ifndef XawClientLibs
+#define XawClientLibs $(XAWLIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#endif
+#endif
+#if SharedOldX
+      DEPOLDXLIB = 
+         OLDXLIB = _Use(-loldX,-L$(OLDXLIBSRC) -loldX)
+#endif
+#if SharedLibXt
+     DEPXTOOLLIB = 
+        XTOOLLIB = _Use(SDlibXt,-L$(TOOLKITSRC) SDlibXt)
+#endif
+#if SharedLibXaw
+       DEPXAWLIB = 
+          XAWLIB = _Use(SDlibXaw,-L$(AWIDGETSRC) SDlibXaw)
+#endif
+#if SharedLibXaw6
+      DEPXAW6LIB = 
+         XAW6LIB = _Use(SDlibXaw6,-L$(AWIDGETSRC) SDlibXaw6)
+#endif
+#if SharedLibXi
+        DEPXILIB = 
+           XILIB = _Use(SDlibXi,-L$(XILIBSRC) SDlibXi)
+#endif
+#if SharedLibXTest
+    DEPXTESTLIB = 
+       XTESTLIB = _Use(SDlibXtst,-L$(EXTENSIONSRC)/lib/xtest SDlibXtst)
+#endif
+#if SharedLibPex
+      DEPPEXLIB = 
+         PEXLIB = _Use(SDlibPEX5,-L$(PEXLIBSRC) SDlibPEX5)
+#endif
+#if SharedLibXp
+       DEPXPLIB = 
+          XPLIB = _Use(SDlibXp,-L$(EXTENSIONSRC)/lib SDlibXp)
+#endif
+#if SharedLibXv
+       DEPXVLIB = 
+          XVLIB = _Use(SDlibXv,-L$(EXTENSIONSRC)/lib SDlibXv)
+#endif
+#if SharedLibGL
+       DEPGLLIB = 
+          GLLIB = _Use(SDlibGL,-L$(EXTENSIONSRC)/lib SDlibGL)
+#endif
+#if SharedLibDPS
+      DEPDPSLIB = 
+         DPSLIB = _Use(SDlibDPS,-L$(EXTENSIONSRC)/lib SDlibDPS)
+#endif
+#if SharedLibDPSTK
+    DEPDPSTKLIB = 
+       DPSTKLIB = _Use(SDlibDPSTK,-L$(EXTENSIONSRC)/lib SDlibDPSTK)
+#endif

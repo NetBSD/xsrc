@@ -1,0 +1,83 @@
+// $XConsortium: gr /main/3 1997/12/18 12:40:12 rch $
+//
+// $XFree86: xc/programs/xkbcomp/symbols/gr,v 1.2 2000/10/28 00:34:06 dawes Exp $
+
+partial default alphanumeric_keys 
+xkb_symbols "basic" {
+
+    // Describes the differences between a very simple en_US
+    // keyboard and a very simple Greek keyboard
+
+    name[Group1]= "US/ASCII";
+    name[Group2]= "Greek";
+
+    key	<LSGT> {	[	     less,	   greater	],
+			[	      bar,	 brokenbar	]	};
+
+    key <AD01> {        [         q,    Q               ],
+			[ semicolon,	colon		]       };
+    key <AD02> {        [         w,    W               ],
+			[ Greek_finalsmallsigma, dead_circumflex ]};
+    key <AD03> {        [         e,    E               ],
+			[ Greek_epsilon, Greek_EPSILON	]       };
+    key <AD04> {        [         r,    R               ],
+			[ Greek_rho, Greek_rho		]	};
+    key <AD05> {        [         t,    T               ],
+			[ Greek_tau, Greek_TAU		]       };
+    key <AD06> {        [         y,    Y               ],
+			[ Greek_upsilon, Greek_UPSILON	]       };
+    key <AD07> {        [         u,    U               ],
+			[ Greek_theta, Greek_THETA	]       };
+    key <AD08> {        [         i,    I               ],
+			[ Greek_iota, Greek_IOTA	]       };
+    key <AD09> {        [         o,    O               ],
+			[ Greek_omicron, Greek_OMICRON	]       };
+    key <AD10> {        [         p,    P               ],
+			[ Greek_pi, Greek_PI		]       };
+
+    key <AC01> {        [         a,    A               ],
+			[ Greek_alpha, Greek_ALPHA	]       };
+    key <AC02> {        [         s,    S               ],
+			[ Greek_sigma, Greek_SIGMA	]       };
+    key <AC03> {        [         d,    D               ],
+			[ Greek_delta, Greek_DELTA	]       };
+    key <AC04> {        [         f,    F               ],
+			[ Greek_phi, Greek_PHI		]       };
+    key <AC05> {        [         g,    G               ],
+			[ Greek_gamma, Greek_GAMMA	]       };
+    key <AC06> {        [         h,    H               ],
+			[ Greek_eta, Greek_ETA		]       };
+    key <AC07> {        [         j,    J               ],
+			[ Greek_xi, Greek_XI		]       };
+    key <AC08> {        [         k,    K               ],
+			[ Greek_kappa, Greek_KAPPA	]       };
+    key <AC09> {        [         l,    L               ],
+			[ Greek_lamda, Greek_LAMDA	]       };
+    key <AC10> {        [ semicolon,    colon           ],
+			[ dead_acute,  dead_diaeresis	]       };
+    key <AC11> {        [ apostrophe,   quotedbl        ]       };
+
+    key <AB01> {        [         z,    Z               ],
+			[ Greek_zeta, Greek_ZETA	]       };
+    key <AB02> {        [         x,    X               ],
+			[ Greek_chi, Greek_CHI		]       };
+    key <AB03> {        [         c,    C               ],
+			[ Greek_psi, Greek_PSI		]       };
+    key <AB04> {        [         v,    V               ],
+			[ Greek_omega, Greek_OMEGA	]       };
+    key <AB05> {        [         b,    B               ],
+			[ Greek_beta, Greek_BETA	]       };
+    key <AB06> {        [         n,    N               ],
+			[ Greek_nu, Greek_NU		]       };
+    key <AB07> {        [         m,    M               ],
+			[ Greek_mu, Greek_MU		]       };
+    
+    // Begin modifier mappings 
+
+    modifier_map Shift  { Shift_L };
+    modifier_map Lock   { Caps_Lock, ISO_Lock };
+    modifier_map Control{ Control_L };
+    modifier_map Mod3   { Mode_switch };
+};
+
+

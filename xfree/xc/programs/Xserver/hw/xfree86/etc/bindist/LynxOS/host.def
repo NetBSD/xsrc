@@ -1,0 +1,8 @@
+/*
+ * host.def for building LynxOS binary dists
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/LynxOS/host.def,v 1.3 2000/03/03 20:02:16 dawes Exp $
+ */
+
+#define HasLibCrypt		YES 
+#define HasMTRRSupport		YES

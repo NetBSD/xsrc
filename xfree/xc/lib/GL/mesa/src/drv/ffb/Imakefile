@@ -1,0 +1,234 @@
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/ffb/Imakefile,v 1.6 2000/10/20 12:57:22 alanh Exp $
+
+#include <Threads.tmpl>
+
+#define DoNormalLib NormalLibGlx
+#define DoSharedLib SharedLibGlx
+#define DoExtraLib SharedLibGlx
+#define DoDebugLib DebugLibGlx
+#define DoProfileLib ProfileLibGlx
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+#if BuildXF86DRI
+  DRI_DEFINES = GlxDefines -DDRIVERTS
+ DRI_INCLUDES = -I../../../../dri -I../../../../glx \
+		-I$(TOP)/include -I$(TOP)/include/GL \
+		-I$(XF86OSSRC) -I$(SERVERSRC)/GL/dri \
+		-I$(XF86DRIVERSRC)/sunffb \
+		-I../../../include -I../.. -I../../X -I../common \
+		-I../../../dri
+#endif
+
+MESA_INCLUDES = -I. -I.. -I../../include \
+		-I../../../../dri/drm
+
+
+      DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) $(MESA_INCLUDES) $(DRI_INCLUDES)
+
+      DRISRCS = ../../../dri/dri_mesa.c \
+		../../../../dri/dri_tmm.c
+
+      DRIOBJS = ../../../dri/dri_mesa.o \
+		../../../../dri/dri_tmm.o
+
+      DRMSRCS = ../../../../dri/drm/xf86drm.c \
+		../../../../dri/drm/xf86drmHash.c \
+		../../../../dri/drm/xf86drmRandom.c \
+		../../../../dri/drm/xf86drmSL.c
+
+      DRMOBJS = ../../../../dri/drm/xf86drm.o \
+		../../../../dri/drm/xf86drmHash.o \
+		../../../../dri/drm/xf86drmRandom.o \
+		../../../../dri/drm/xf86drmSL.o
+
+     MESASRCS = ../../aatriangle.c \
+		../../accum.c \
+		../../alpha.c \
+		../../alphabuf.c \
+		../../attrib.c \
+		../../bbox.c \
+		../../bitmap.c \
+		../../blend.c \
+		../../buffers.c \
+		../../clip.c \
+		../../colortab.c \
+		../../config.c \
+		../../context.c \
+		../../copypix.c \
+		../../cva.c \
+		../../debug_xform.c \
+		../../depth.c \
+		../../dlist.c \
+		../../drawpix.c \
+		../../enable.c \
+		../../enums.c \
+		../../eval.c \
+		../../extensions.c \
+		../../feedback.c \
+		../../fog.c \
+		../../get.c \
+		../../glapi.c \
+		../../glapinoop.c \
+		../../glthread.c \
+		../../hash.c \
+		../../image.c \
+		../../imaging.c \
+		../../light.c \
+		../../lines.c \
+		../../logic.c \
+		../../masking.c \
+		../../matrix.c \
+		../../mem.c \
+		../../mmath.c \
+		../../pb.c \
+		../../pipeline.c \
+		../../pixel.c \
+		../../pixeltex.c \
+		../../points.c \
+		../../polygon.c \
+		../../quads.c \
+		../../rastpos.c \
+		../../readpix.c \
+		../../rect.c \
+		../../scissor.c \
+		../../shade.c \
+		../../span.c \
+		../../stages.c \
+		../../state.c \
+		../../stencil.c \
+		../../teximage.c \
+		../../texobj.c \
+		../../texstate.c \
+		../../texture.c \
+		../../texutil.c \
+		../../translate.c \
+		../../triangle.c \
+		../../varray.c \
+		../../vb.c \
+		../../vbcull.c \
+		../../vbfill.c \
+		../../vbindirect.c \
+		../../vbrender.c \
+		../../vbxform.c \
+		../../vector.c \
+		../../vertices.c \
+		../../winpos.c \
+		../../xform.c \
+		../../zoom.c
+
+     MESAOBJS = ../../aatriangle.o \
+		../../accum.o \
+		../../alpha.o \
+		../../alphabuf.o \
+		../../attrib.o \
+		../../bbox.o \
+		../../bitmap.o \
+		../../blend.o \
+		../../buffers.o \
+		../../clip.o \
+		../../colortab.o \
+		../../config.o \
+		../../context.o \
+		../../copypix.o \
+		../../cva.o \
+		../../debug_xform.o \
+		../../depth.o \
+		../../dlist.o \
+		../../drawpix.o \
+		../../enable.o \
+		../../enums.o \
+		../../eval.o \
+		../../extensions.o \
+		../../feedback.o \
+		../../fog.o \
+		../../get.o \
+		../../hash.o \
+		../../hint.o \
+		../../image.o \
+		../../imaging.o \
+		../../light.o \
+		../../lines.o \
+		../../logic.o \
+		../../masking.o \
+		../../matrix.o \
+		../../mem.o \
+		../../mmath.o \
+		../../pb.o \
+		../../pipeline.o \
+		../../pixel.o \
+		../../pixeltex.o \
+		../../points.o \
+		../../polygon.o \
+		../../quads.o \
+		../../rastpos.o \
+		../../readpix.o \
+		../../rect.o \
+		../../scissor.o \
+		../../shade.o \
+		../../span.o \
+		../../stages.o \
+		../../state.o \
+		../../stencil.o \
+		../../teximage.o \
+		../../texobj.o \
+		../../texstate.o \
+		../../texture.o \
+		../../texutil.o \
+		../../translate.o \
+		../../triangle.o \
+		../../varray.o \
+		../../vb.o \
+		../../vbcull.o \
+		../../vbfill.o \
+		../../vbindirect.o \
+		../../vbrender.o \
+		../../vbxform.o \
+		../../vector.o \
+		../../vertices.o \
+		../../winpos.o \
+		../../xform.o \
+		../../zoom.o
+
+      FFBSRCS = ffb_dd.c ffb_span.c ffb_depth.c ffb_state.c ffb_clear.c ffb_vb.c \
+		ffb_lines.c ffb_points.c ffb_tris.c ffb_pipeline.c \
+		ffb_stencil.c ffb_xmesa.c
+
+      FFBOBJS = ffb_dd.o ffb_span.o ffb_depth.o ffb_state.o ffb_clear.o ffb_vb.o \
+		ffb_lines.o ffb_points.o ffb_tris.o ffb_pipeline.o \
+		ffb_stencil.o ffb_xmesa.o
+
+	 SRCS = $(FFBSRCS) $(DRISRCS) $(DRMSRCS) $(MESASRCS)
+	 OBJS = $(FFBOBJS) $(DRIOBJS) $(DRMOBJS) $(MESAOBJS)
+
+REQUIREDLIBS += MathLibrary
+#if !GlxBuiltInFfb
+REQUIREDLIBS += -L../../../.. -lGL
+#endif
+
+#if !GlxUseBuiltInDRIDriver
+#undef DoNormalLib NormalLibGlx
+#undef DoExtraLib SharedLibGlx
+#undef DoDebugLib DebugLibGlx
+#undef DoProfileLib ProfileLibGlx
+#endif
+
+#include <Library.tmpl>
+
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+#if !GlxUseBuiltInDRIDriver
+LIBNAME = ffb_dri.so
+ALL_OBJS = $(OBJS)
+ALL_DEPS = DONE
+SharedDepModuleTarget($(LIBNAME),$(ALL_DEPS),$(ALL_OBJS))
+InstallDynamicModule($(LIBNAME),$(MODULEDIR),dri)
+#endif
+
+DependTarget()

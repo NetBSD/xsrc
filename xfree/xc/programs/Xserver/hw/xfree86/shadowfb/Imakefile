@@ -1,0 +1,32 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/Imakefile,v 1.3 1999/08/14 10:50:09 dawes Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+
+#if DoLoadableServer
+XFMODSRC = sfbmodule.c
+XFMODOBJ = sfbmodule.o
+#endif
+
+SRCS = 	shadow.c $(XFMODSRC)
+
+
+OBJS = 	shadow.o $(XFMODOBJ)
+
+INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
+	   -I$(XF86OSSRC) -I$(XF86COMSRC) -I$(XINCLUDESRC) -I$(FONTINCSRC)
+
+
+ModuleObjectRule()
+LibraryModuleTarget(shadowfb,$(OBJS))
+LintLibraryTarget(shadowfb,$(SRCS))
+NormalLintTarget($(LINTDEFS) $(SRCS))
+
+InstallLibraryModule(shadowfb,$(MODULEDIR),.)
+
+DependTarget()
+
+InstallDriverSDKLibraryModule(shadowfb,$(DRIVERSDKMODULEDIR),.)
+
+InstallDriverSDKNonExecFile(shadowfb.h,$(DRIVERSDKINCLUDEDIR))

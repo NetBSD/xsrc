@@ -1,0 +1,16 @@
+LIBRARY XXF86VM
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/Xxf86vm/Xxf86vmos2.def,v 3.2 1999/04/29 09:13:36 dawes Exp $"
+CODE
+	PRELOAD
+DATA
+	MULTIPLE NONSHARED
+STACKSIZE 4096
+EXPORTS
+	XF86VidModeQueryExtension @ 1
+	XF86VidModeQueryVersion @ 2
+	XF86VidModeGetModeLine @ 3
+	XF86VidModeModModeLine @ 4
+	XF86VidModeSwitchMode @ 5
+	XF86VidModeLockModeSwitch @ 6
+	XF86VidModeGetMonitor @ 7
+

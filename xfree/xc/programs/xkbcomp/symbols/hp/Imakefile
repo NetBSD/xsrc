@@ -1,0 +1,8 @@
+XCOMM $TOG: Imakefile /main/1 1997/10/24 14:30:52 kaleb $
+
+     DATAFILES = us
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/hp)
+DependTarget()

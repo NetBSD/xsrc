@@ -1,0 +1,24 @@
+XCOMM $XConsortium: Imakefile,v 1.1 94/02/10 20:32:47 rws Exp $
+XCOMM $XFree86: xc/doc/Imakefile,v 1.3 2000/12/14 18:23:09 dawes Exp $
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+#if BuildMiscDocs
+MISCDIR = misc
+#endif
+
+#if BuildSpecsDocs
+SPECSDIR = specs
+#endif
+
+#if InstallHardcopyDocs
+HARDCOPYDIR = hardcopy
+#endif
+
+SUBDIRS = man $(MISCDIR) $(SPECSDIR) $(HARDCOPYDIR)
+
+all::
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

@@ -1,0 +1,51 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/Imakefile,v 1.7 2000/10/10 16:38:43 alanh Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#if DoLoadableServer
+MSRC = drmmodule.c
+MOBJ = drmmodule.o
+#endif
+
+#if BuildXF86DRI
+#if HasMTRRSupport
+MTRR_DEFINES = -DHAS_MTRR_SUPPORT
+#endif
+
+SRCS = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c xf86drmI810.c xf86drmMga.c xf86drmR128.c xf86drmSiS.c $(MSRC)
+OBJS = xf86drm.o xf86drmHash.o xf86drmRandom.o xf86drmSL.o xf86drmI810.o xf86drmMga.o xf86drmR128.o xf86drmSiS.o $(MOBJ)
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(EXTINCSRC) -I../.. -Ikernel
+
+DEFINES = $(MTRR_DEFINES) $(GLX_DEFINES)
+
+#if DoLoadableServer
+
+ModuleObjectRule()
+LibraryModuleTarget(drm,$(OBJS))
+NormalLintTarget($(SRCS))
+
+#ifdef LinuxArchitecture
+InstallLibraryModule(drm,$(MODULEDIR),linux)
+#endif
+
+#else
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+
+#endif
+
+
+#define IHaveSubdirs
+SUBDIRS = kernel
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+
+
+InstallDriverSDKLibraryModule(drm,$(DRIVERSDKMODULEDIR),linux)

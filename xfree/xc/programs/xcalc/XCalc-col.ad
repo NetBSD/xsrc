@@ -1,0 +1,40 @@
+#include "XCalc"
+
+XCalc*ti.Command.background:	gray50
+XCalc*ti.Command.foreground:	white
+
+XCalc*ti.button20.background:	black
+XCalc*ti.button20.foreground:	white
+XCalc*ti.button25.background:	black
+XCalc*ti.button25.foreground:	white
+XCalc*ti.button30.background:	black
+XCalc*ti.button30.foreground:	white
+XCalc*ti.button35.background:	black
+XCalc*ti.button35.foreground:	white
+XCalc*ti.button40.background:	black
+XCalc*ti.button40.foreground:	white
+
+XCalc*ti.button22.background:	white
+XCalc*ti.button22.foreground:	black
+XCalc*ti.button23.background:	white
+XCalc*ti.button23.foreground:	black
+XCalc*ti.button24.background:	white
+XCalc*ti.button24.foreground:	black
+XCalc*ti.button27.background:	white
+XCalc*ti.button27.foreground:	black
+XCalc*ti.button28.background:	white
+XCalc*ti.button28.foreground:	black
+XCalc*ti.button29.background:	white
+XCalc*ti.button29.foreground:	black
+XCalc*ti.button32.background:	white
+XCalc*ti.button32.foreground:	black
+XCalc*ti.button33.background:	white
+XCalc*ti.button33.foreground:	black
+XCalc*ti.button34.background:	white
+XCalc*ti.button34.foreground:	black
+XCalc*ti.button37.background:	white
+XCalc*ti.button37.foreground:	black
+XCalc*ti.button38.background:	white
+XCalc*ti.button38.foreground:	black
+XCalc*ti.button39.background:	white
+XCalc*ti.button39.foreground:	black

@@ -1,0 +1,10 @@
+XCOMM $XConsortium: Imakefile,v 1.9 92/11/20 13:24:14 rws Exp $
+        DEPLIBS = $(DEPXMULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XMULIB) $(XLIB)
+           SRCS = xwininfo.c dsimple.c
+           OBJS = xwininfo.o dsimple.o
+
+LinkSourceFile(dsimple.c,../xlsfonts)
+LinkSourceFile(dsimple.h,../xlsfonts)
+
+ComplexProgramTarget(xwininfo)

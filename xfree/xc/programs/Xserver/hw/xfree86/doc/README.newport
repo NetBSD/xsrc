@@ -1,0 +1,44 @@
+                        Information for newport Users
+
+                               Guido Guenther
+
+                                1 August 2000
+
+1.  Supported Hardware
+
+This is an unaccelerated driver for the SGI Indy's newport cards. Both the
+8bit and 24bit versions are tested and working with some limitations(see
+below).  The 24bit newport additionally works in 8bit mode only.
+
+2.  Notes
+
+   o X -configure does not generate a XF86Config file
+
+3.  Configuration
+
+The following Section "Device" options are supported by the newport driver:
+
+   o Option "bitplanes" "x" Gives the maximum number of bitplanes your card
+     supports (8 or 24).
+
+4.  Authors
+
+   o Guido Guenther <guido.guenther@gmx.net>
+
+5.  Acknowledgements
+
+   o Gleb O. Raiko <raiko@niisi.msk.ru> for getting the beast to build
+
+   o Ralf Baechle <ralf@oss.sgi.com> for his patience...
+
+   o Ulf Carlsson <ulfc@calypso.engr.sgi.com> for comments and the dynamic
+     loader code
+
+   o Nina A. Podolskaya <nap@niisi.msk.ru> for dynamic loader code
+
+   o all the guys who wrote the newport_con linux kernel code
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.2 2000/12/12 18:54:29 dawes Exp $
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.newport,v 1.2 2000/12/12 19:04:03 dawes Exp $

@@ -1,0 +1,81 @@
+XCOMM $TOG: Imakefile /main/50 1997/11/24 16:47:55 kaleb $
+XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.36 2000/08/26 16:15:52 keithp Exp $
+
+#if BuildScreenSaverLibrary
+SCREENSAVERHEADERS = saver.h saverproto.h scrnsaver.h
+#endif
+
+#if BuildXF86MiscLibrary
+XF86MISCHEADERS = xf86misc.h xf86mscstr.h
+#endif
+#if BuildXF86BigfontExt
+XF86BIGFONTHEADERS = xf86bigfont.h xf86bigfstr.h
+#endif
+#if BuildXF86VidModeLibrary
+XF86VIDMODEHEADERS = xf86vmode.h xf86vmstr.h
+#endif
+#if BuildXF86DGALibrary
+XF86DGAHEADERS = xf86dga.h xf86dgastr.h xf86dga1.h xf86dga1str.h
+#endif
+#if BuildLBX
+LBXHEADERS = lbxbuf.h lbxbufstr.h lbxdeltastr.h lbximage.h lbxopts.h lbxstr.h lbxzlib.h
+#endif
+#if BuildXvLibrary
+XVHEADERS = Xv.h Xvlib.h Xvproto.h
+#endif
+#if BuildXF86RushLibrary
+XF86RUSHHEADERS = xf86rush.h xf86rushstr.h
+#endif
+#if BuildFontCache
+FONTCACHEHEADERS = fontcache.h fontcacheP.h fontcachstr.h
+#endif
+#if BuildXinerama
+XINERAMAHEADERS = panoramiXext.h panoramiXproto.h Xinerama.h
+#endif
+#if BuildRenderLibrary
+RENDERHEADERS = render.h renderproto.h
+#endif
+
+EXTRAHEADERS = $(SCREENSAVERHEADERS) $(XF86MISCHEADERS) $(XF86BIGFONTHEADERS) \
+	       $(XF86VIDMODEHEADERS) $(XF86DGAHEADERS) $(XINERAMAHEADERS) \
+	       $(LBXHEADERS) $(XVHEADERS) $(XF86RUSHHEADERS) \
+	       $(FONTCACHEHEADERS) $(RENDERHEADERS)
+
+
+
+HEADERS = Xext.h multibuf.h shape.h sync.h XShm.h MITMisc.h \
+	XI.h XInput.h XIproto.h \
+	XTest.h xtestext1.h \
+	XIE.h XIEproto.h XIEprotost.h \
+	XKB.h XKBgeom.h XKBproto.h XKBstr.h XKBsrv.h \
+	Xdbe.h Xdbeproto.h \
+	Xag.h Xagstr.h Xagsrv.h \
+	$(EXTRAHEADERS) \
+	record.h recordstr.h \
+        lbxbuf.h lbxbufstr.h lbxdeltastr.h lbximage.h \
+        lbxopts.h lbxstr.h lbxzlib.h \
+	security.h securstr.h \
+	Print.h Printstr.h \
+	Xcup.h Xcupstr.h \
+	dpms.h dpmsstr.h \
+	XEVI.h XEVIstr.h
+
+all::
+
+BuildIncludes($(HEADERS),X11/extensions,../..)
+InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/extensions,$(INSTINCFLAGS))
+
+InstallDriverSDKNonExecFile(XI.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(XIproto.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(Xv.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(Xvproto.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(dpms.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(xf86dga1str.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86dgastr.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(xf86rush.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86rushstr.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(Xv.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(Xvlib.h,$(DRIVERSDKINCLUDEDIR)/extensions)
+InstallDriverSDKNonExecFile(Xv.h,$(DRIVERSDKINCLUDEDIR)/X11/extensions)
+InstallDriverSDKNonExecFile(Xvlib.h,$(DRIVERSDKINCLUDEDIR)/X11/extensions)
+

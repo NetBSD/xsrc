@@ -1,0 +1,312 @@
+XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.2 2000/08/23 21:06:18 dawes Exp $
+
+#define CPPOnlyAsm(basename,options) RemoveFile(basename.i)		@@\
+	$(CPP) AsmDefines $(DEFINES) $(INCLUDES) options  basename.S | grep -v '^\#' > basename.i
+	
+
+
+/*
+ * Cygwin shared library rules (DLL versions)
+ */
+#define HasSharedLibraries YES
+#define NeedLibInsideFlag YES
+#define ForceNormalLib NO
+#define SharedLibXaw NO
+#define SharedLibXmu NO 
+#define SharedLibXt NO
+#define SharedLibSM YES
+#define SharedLibICE YES
+#define SharedLibXext YES
+#define SharedLibXie YES
+#define SharedLibXi YES
+#define SharedLibPex YES
+#define SharedLibXtst YES
+#define SharedOldX YES
+#define SharedLibXp YES
+#define SharedLibGL YES
+#define SharedLibXpm YES
+#define SharedLibFont NO
+#define SharedLibXaw6 NO
+#define SharedLibgetsurf NO 
+#define SharedLibDps	YES
+#define SharedLibDpsTk	YES
+
+
+#ifndef SharedDataSeparation
+#define SharedDataSeparation NO
+#endif
+#ifndef SharedCodeDef
+#define SharedCodeDef /**/
+#endif
+#ifndef SharedLibraryDef
+#define SharedLibraryDef /**/
+#endif
+#ifndef ShLibIncludeFile
+#define ShLibIncludeFile <cygwin.tmpl>
+#endif
+#ifndef SharedLibraryLoadFlags
+#define SharedLibraryLoadFlags -dll /**/
+#endif
+#ifndef PositionIndependentCFlags
+#define PositionIndependentCFlags -D_DLL
+#endif
+#ifndef PositionIndependentCplusplusFlags
+#define PositionIndependentCplusplusFlags -D_DLL
+#endif
+#ifndef UseExportLists
+#define UseExportLists YES
+#endif
+
+/*
+ * SharedDepLibraryTarget - generate rules to create a shared library.
+ */
+#ifndef SharedDepLibraryTarget
+#ifdef UseInstalled
+#ifndef LinkBuildSonameLibrary
+#define LinkBuildSonameLibrary(lib)
+#endif
+#else
+#ifndef LinkBuildSonameLibrary
+#define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
+	cd $(BUILDLIBDIR); $(LN) $(BUILDINCTOP)/$(CURRENT_DIR)/lib .)
+#endif
+#endif
+
+#define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
+SharedLibraryTarget(libname,rev,solist,down,up)
+#endif /* SharedDepLibraryTarget */
+
+#ifndef SharedDepModuleTarget
+#define SharedDepModuleTarget(name,deps,solist)				@@\
+AllTarget(name)								@@\
+									@@\
+name: deps								@@\
+	$(CC) -o $@ $(SHLIBLDFLAGS) solist $(REQUIREDLIBS) BaseShLibReqs @@\
+									@@\
+clean::									@@\
+	RemoveFile(name)
+#endif /* SharedDepModuleTarget */
+
+/*
+ * SharedLibraryDataTarget - generate rules to create shared data file
+ */
+#ifndef SharedLibraryDataTarget
+#define SharedLibraryDataTarget(libname,rev,salist)
+#endif
+/*
+ * InstallSharedLibraryData - generate rules to install the shared library data
+ */
+#ifndef InstallSharedLibraryData
+#define InstallSharedLibraryData(libname,rev,dest)
+#endif /* InstallSharedLibraryData */
+
+BASE_COUNTER=/tmp/DLL_BASE_COUNTER
+
+#define MakeDLL(libname,solist)					@@\
+	if [ -f $(BASE_COUNTER) ]; then true; \			@@\
+	else echo 0x67000000 > $(BASE_COUNTER); fi		@@\
+	dllwrap -s --def libname.def --output-lib Concat3(lib,libname,.a) -o Concat3(lib,libname,.dll) solist junk.o $(REQUIREDLIBS) -image-base `cat $(BASE_COUNTER)` 	@@\
+	IMAGE_LENGTH=`objdump -x Concat3(lib,libname,.dll) |awk '/SizeOfImage/ {print "0x"$$2}'`; \ @@\
+	export IMAGE_LENGTH=`expr '(' \`printf %u $$IMAGE_LENGTH\` / 65536 + 1 ')' '*' 65536` ; \ @@\
+	export IMAGE_BASE=`cat $(BASE_COUNTER)`; \			@@\
+	printf 0x%x `expr \`printf %u $$IMAGE_BASE\` + $$IMAGE_LENGTH` > $(BASE_COUNTER)
+
+
+#define SharedLibraryTarget(libname,rev,solist,down,up)                 @@\
+AllTarget(Concat3(lib,libname,.dll))                                    @@\
+									@@\
+CppFileTarget(libname.def,libname-def.cpp,-DLIBRARY_VERSION=rev,$(ICONFIGFILES)) @@\
+									@@\
+                                                                        @@\
+junk.c:                                                                                 @@\
+	echo "#include <cygwin/cygwin_dll.h>"		>junk.c		@@\
+	echo "/*DECLARE_CYGWIN_DLL(dll_main);*/"		>>junk.c	@@\
+	echo "int WINAPI dll_main(HANDLE a, DWORD reason, void *q)" >>junk.c  @@\
+	echo "{ return 1; }"				>>junk.c	@@\
+Concat3(lib,libname,.dll): solist junk.o libname.def			@@\
+	RemoveFile(LibraryTargetName(libname))				@@\
+	RemoveFile(Concat3(lib,libname,.dll))				@@\
+	MakeDLL(libname,solist)						@@\
+	LinkBuildLibrary(Concat3(lib,libname,.a))			@@\
+	LinkBuildDLL(Concat3(lib,libname,.dll))			@@\
+clean::									@@\
+	RemoveFile(LibraryTargetName(libname))				@@\
+	RemoveFile(Concat3(lib,libname,.dll))				@@\
+	RemoveFile(junk.o)						@@\
+	RemoveFile(junk.c)						@@\
+	RemoveFile($(BASE_COUNTER))
+
+#define InstallSharedLibrary(libname,rev,dest)                          @@\
+InstallTarget(install,LibraryTargetName(libname),$(INSTLIBFLAGS),$(USRLIBDIR)) @@\
+InstallTarget(install,Concat3(lib,libname,.dll),$(INSTLIBFLAGS),$(BINDIR))
+
+#define ProgramTargetName(target)target.exe
+
+/*
+ * LinkBuildBinary - export a *.exe to exports/bin.
+ */
+#define LinkBuildBinary(program)					@@\
+all:: $(BUILDBINDIR)/program program					@@\
+	$(BUILDBINDIR)/program: program					 @@\
+	RemoveFile$(@)				@@\
+	cd $(BUILDBINDIR) && $(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/program .
+
+/*
+ * LinkBuildDLL - export a .dll to exports/bin.
+ */
+#ifdef UseInstalled
+#define LinkBuildDLL(lib) $(_NULLCMD_)
+#else
+#define LinkBuildDLL(lib) MakeDir($(BUILDBINDIR))			@@\
+	RemoveFile($(BUILDBINDIR)/lib)					@@\
+	cd $(BUILDBINDIR) && $(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/lib .
+#endif
+
+/*
+ * LinkBuildBinary - export an .exe to exports/bin.
+ */
+
+
+#ifndef LinkBuildBinary
+#define LinkBuildBinary
+all:: $(BUILDBINDIR)/ProgramTargetName(binary) ProgramTargetName(binary) @@\
+									@@\
+$(BUILDBINDIR)/ProgramTargetName(binary): ProgramTargetName(binary)	@@\
+	MakeDir($(BUILDBINDIR))					@@\
+	RemoveFile($(BUILDBINDIR)/ProgramTargetName(binary)))	@@\
+	cd $(BUILDBINDIR) && $(LN) $(BUILDBINTOP)/$(CURRENT_DIR)/ProgramTargetName(binary) .
+#endif /* LinkBuildBinary */
+
+/* This is to replace an ugly hack in /xc/nls/XLC_LOCALE */
+/* the corresponding Imake.rules rule would be:
+   define LinkFileSpecial(gotodir,tofile,fromfile)	@@\
+        @MakeFlagsToShellFlags(i,set +e); \		@@\
+	cd dir && (set -x; RemoveFile(tofile); $(LN) fromfile tofile)
+ */
+
+/* And this replaces a similarlry ugly hack in InstallDynamicModule */
+
+#ifndef LinkBuildModule
+#ifdef UseInstalled
+#define LinkBuildModule(module,subdir) $(_NULLCMD_)
+#else
+#define LinkBuildModule(module,subdir) 					@@\
+	MakeDir($(BUILDMODULEDIR)/subdir) 			 	@@\
+	RemoveFile($(BUILDMODULEDIR)/subdir/module)                            @@\
+	$(LN) $(BUILDMODULETOP)/$(CURRENT_DIR)/module $(BUILDMODULEDIR)/subdir/module
+#endif
+#endif /* LinkBuildModule */
+
+#ifndef LinkBuildNamedModule
+#define LinkBuildNamedModule(module,name) MakeDir($(BUILDMODULEDIR))    @@\
+	RemoveFile($(BUILDMODULEDIR)/module)                            @@\
+	$(BUILDMODULEDIR) $(BUILDMODULETOP)/$(CURRENT_DIR)/module name
+#endif /* LinkBuildNamedModule */
+
+#define NormalProgramTarget(program,objects,deplibs,locallibs,syslibs)  @@\
+AllTarget(ProgramTargetName(program))					@@\
+ProgramTargetName(program): objects deplibs				@@\
+	RemoveTargetProgram($@)						@@\
+	LinkRule($@,$(LDOPTIONS),objects,locallibs $(LDLIBS) syslibs)	@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
+
+#define ProgramTargetHelper(program,srcs,objs,deplib,locallib,syslib)	@@\
+ProgramTargetName(program): $(objs) $(deplib)				@@\
+	RemoveTargetProgram($@)						@@\
+	LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)	@@\
+									@@\
+InstallProgram(program,$(BINDIR))					@@\
+InstallManPage(program,$(MANDIR))
+
+#define ComplexProgramTarget(program)					@@\
+AllTarget(ProgramTargetName(program))					@@\
+									@@\
+ProgramTargetHelper(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
+									@@\
+DependTarget()								@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
+
+#define ComplexProgramTarget_1(program,locallib,syslib)			@@\
+        OBJS = $(OBJS1) $(OBJS2) $(OBJS3)				@@\
+        SRCS = $(SRCS1) $(SRCS2) $(SRCS3)				@@\
+        PROGRAM1 = ProgramTargetName(program)				@@\
+									@@\
+AllTarget($(PROGRAM1) $(PROGRAM2) $(PROGRAM3))				@@\
+									@@\
+ProgramTargetHelper(program,SRCS1,OBJS1,DEPLIBS1,locallib,syslib)	@@\
+									@@\
+DependTarget()								@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	for i in $(PROGRAMS); do $(RM) ProgramTargetName($$i); done
+
+#define ComplexProgramTarget_2(program,locallib,syslib)			@@\
+        PROGRAM2 = ProgramTargetName(program)				@@\
+									@@\
+ProgramTargetHelper(program,SRCS2,OBJS2,DEPLIBS2,locallib,syslib)
+
+#define ComplexProgramTarget_3(program,locallib,syslib)			@@\
+        PROGRAM3 = ProgramTargetName(program)				@@\
+									@@\
+ProgramTargetHelper(program,SRCS3,OBJS3,DEPLIBS3,locallib,syslib)
+
+#define ServerTargetWithFlags(server,subdirs,objects,libs,syslibs,flags) @@\
+AllTarget(ProgramTargetName(server))					@@\
+ProgramTargetName(server): subdirs objects libs				@@\
+	MoveToBakFile($@)						@@\
+	LinkRule($@,$(LDOPTIONS),objects,libs $(LDLIBS) syslibs)	@@\
+									@@\
+Concat(load,server):							@@\
+	MoveToBakFile(ProgramTargetName(server))			@@\
+	LinkRule(ProgramTargetName(server),$(LDOPTIONS),objects,libs $(LDLIBS) syslibs) @@\
+									@@\
+loadX:: Concat(load,server)						@@\
+									@@\
+SentinelProgramTarget(server,subdirs objects libs,objects libs $(LDLIBS) syslibs) @@\
+SentinelLinkTarget(Concat(load,server),server,objects libs $(LDLIBS) syslibs) @@\
+PurifyProgramTarget(server,subdirs objects libs,objects libs $(LDLIBS) syslibs) @@\
+PurifyLinkTarget(Concat(load,server),server,objects libs $(LDLIBS) syslibs) @@\
+ProofProgramTarget(server,subdirs objects libs,objects libs $(LDLIBS) syslibs) @@\
+ProofLinkTarget(Concat(load,server),server,objects libs $(LDLIBS) syslibs) @@\
+									@@\
+InstallProgramWithFlags(server,$(BINDIR),flags)				@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(server))
+
+/*
+ * ProfiledRelocatableTarget - generate rules to produce a profiled relocatable
+ * object file instead of a library.
+ */
+#ifndef ProfiledRelocatableTarget
+#define	ProfiledRelocatableTarget(objname,objlist)			@@\
+AllTarget(Concat(objname,_p.Osuf))					@@\
+									@@\
+Concat(objname,_p.Osuf): objlist $(EXTRALIBRARYDEPS)			@@\
+	RemoveFile($@)							@@\
+	$(LD) -X -r --oformat pe-i386 objlist -o $@
+
+#endif /* ProfiledRelocatableTarget */
+
+
+/*
+ * DebuggedRelocatableTarget - generate rules to produce a debuggable 
+ * relocatable object file instead of a library.
+ */
+#ifndef DebuggedRelocatableTarget
+#define	DebuggedRelocatableTarget(objname,objlist)			@@\
+AllTarget(Concat(objname,_d.Osuf))					@@\
+									@@\
+Concat(objname,_d.Osuf): objlist $(EXTRALIBRARYDEPS)			@@\
+	RemoveFile($@)							@@\
+	$(LD) -X -r --oformat pe-i386 objlist -o $@
+
+#endif /* DebuggedRelocatableTarget */
+
+

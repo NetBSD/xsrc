@@ -1,0 +1,153 @@
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.2.0, 12/13/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+- When restoring from VESAFB graphics mode, the screen did not update with the
+  UseBIOS switch on.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.9, 11/30/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#581 - Need Linux driver to support zooming via ctrl+alt++ &  ctrl+alt+-.
+#670 - Screen broken occurs when switch back to the Xwindow during in Rotation
+       mode.
+#671 - Very slow to pop up the Exit menu from X windows during in Rotation mode.
+#672 - It doesn't redraw properly in X windows during in Rotation mode.
+#689 - Screen broken when toggle between terminal and desktop during playing in
+       MPEG.
+#705 - Linux CRT only 800x600 or 1024x768 there is no display.
+#864 - Lockup when video is playing and switching to full-screen command shell.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.8, 11/27/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#640 - X Windows shift to the right when start X Windows or apply Rotation.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.7, 11/17/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#676 - Green color only shown in window when run Xlive in Linux.
+#835 - Screen black after DPMS on.
+
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.6, 11/03/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#687 - Blue rectangle appears when video is clipped on thr right edge of screen.
+#735 - When resume from sleep, X Windows does not wake up.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.5, 10/06/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#578 - Don't check for CRT-only when validating modes.
+#579 - Corrected DPI issue when DDC monitor is not attached.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.4, 09/20/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#521 - Screen corruption after return from X Server when vesafb is used.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.3, 09/18/2000
+--------------------------------------------------------------------------------
+
+New features:
+
+- Added live video capture.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.2, 09/14/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#486 - Video scaling wrong on SM720.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.1, 08/23/2000
+--------------------------------------------------------------------------------
+
+New features:
+
+- Added support for overlays.
+
+--------------------------------------------------------------------------------
+                     Silicon Motion Driver for XFree86 4.0.1
+                         Alpha Release 1.1.0, 08/11/2000
+--------------------------------------------------------------------------------
+
+New features:
+
+- Added support for XFree86 4.0.1 server. This implies that support for the 4.0
+  server has gone. Hence the change in the alpha version number from 1.0.x to
+  1.1.x.
+
+--------------------------------------------------------------------------------
+                      Silicon Motion Driver for XFree86 4.0
+                         Alpha Release 1.0.2, 08/02/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#161, Corruption when moving windows with a wallpaper background.
+
+--------------------------------------------------------------------------------
+                      Silicon Motion Driver for XFree86 4.0
+                         Alpha Release 1.0.1, 07/27/2000
+--------------------------------------------------------------------------------
+
+Fixed bugs:
+
+#160, Mouse pointer sometimes in bad location.
+#258, Temporary corruption starting X.
+
+--------------------------------------------------------------------------------
+                      Silicon Motion Driver for XFree86 4.0
+                         Alpha Release 1.0.0, 06/05/2000
+--------------------------------------------------------------------------------
+
+This is alpha version 1.0.0 of the Silicon Motion drivers for the XFree86 4.0
+server. See the README file for general information.
+
+This ALPHA version has the following known problems:
+
+- During mode initialization, the screen shows temporary garbage.
+- Image Transfers are disabled in the hardware for now.
+
+This driver has been tested on the LynxEM+ 712 chip under 16-bit mode. Any other
+mode might still show lock-ups and/or garbage. Please report any problems to
+frido@siliconmotion.com.
+
+Header:   //Mercury/Projects/archives/XFree86/4.0/Release.txt-arc   1.30   30 Nov 2000 17:00:58   Frido  $
+
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/Release.txt,v 1.3 2000/12/14 01:05:43 dawes Exp $

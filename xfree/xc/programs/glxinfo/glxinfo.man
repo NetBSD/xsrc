@@ -1,0 +1,62 @@
+.\" $TOG: xdpyinfo.man /main/22 1998/02/09 13:57:10 kaleb $
+.\" Copyright 1988, 1989, 1994, 1998  The Open Group
+.\" 
+.\" All Rights Reserved.
+.\" 
+.\" The above copyright notice and this permission notice shall be included
+.\" in all copies or substantial portions of the Software.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+.\" IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
+.\" OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+.\" ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+.\" OTHER DEALINGS IN THE SOFTWARE.
+.\" 
+.\" Except as contained in this notice, the name of The Open Group shall
+.\" not be used in advertising or otherwise to promote the sale, use or
+.\" other dealings in this Software without prior written authorization
+.\" from The Open Group.
+.\"
+.\" $XFree86: xc/programs/glxinfo/glxinfo.man,v 1.1 2000/09/22 11:35:46 alanh Exp $
+.\"
+.TH GLXINFO 1 "Release 6.4" "X Version 11"
+.SH NAME
+glxinfo \- display info about a GLX extension and OpenGL renderer.
+.SH SYNOPSIS
+.B "glxinfo"
+[\-t]
+[\-v]
+[\-display \fIdisplayname\fP]
+.SH DESCRIPTION
+.PP
+.I glxinfo
+lists information about the GLX extension, OpenGL capable visuals, and the
+OpenGL renderer on an X server. The GLX and renderer info includes the version
+and extension attributes. The visual info lists the GLX visual attributes 
+available for each OpenGL capable visual (e.g. whether the visual is double
+buffered, the component sizes, Z-buffering depth, etc).
+.PP
+Command line options include:
+.PP
+\fB-t\fP By default the visual info is presented in a conccise 80 character wide
+tabular format. The -t option directs glxinfo to produce a wider, more readable
+tabular format.
+.PP
+\fB-v\fP Directs glxinfo to generate a verbose format output style for
+the visual list similar to the info of xdpyinfo.
+.PP
+     \fB-display displayName\fP Specify the display to query.
+.PP
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+To get the default host, display number, and screen.
+.SH "SEE ALSO"
+xdpyinfo(1)
+.SH AUTHOR
+Brian Paul
+.br
+Modifications for XFree86 added by Mark Paton

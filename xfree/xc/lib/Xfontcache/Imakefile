@@ -1,0 +1,33 @@
+XCOMM Id: Imakefile,v 1.3 1999/01/31 12:54:33 akiyama Exp $
+
+#define DoNormalLib NormalLibXfontcache
+#define DoSharedLib SharedLibXfontcache
+#define DoExtraLib SharedLibXfontcache
+#define DoDebugLib DebugLibXfontcache
+#define DoProfileLib ProfileLibXfontcache
+#define LibName Xfontcache
+#define SoRev SOXFONTCACHEREV
+#define LibHeaders NO
+
+#include <Threads.tmpl>
+
+#ifdef SharedXfontcacheReqs
+ REQUIREDLIBS = SharedXfontcacheReqs
+#endif
+
+ FONTCACHESRCS = FontCache.c
+ FONTCACHEOBJS = FontCache.o
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+      DEFINES = $(ALLOC_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
+         SRCS = $(FONTCACHESRCS)
+         OBJS = $(FONTCACHEOBJS)
+     LINTLIBS = $(LINTXLIB)
+
+#include <Library.tmpl>
+
+DependTarget()

@@ -1,0 +1,41 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/Imakefile,v 1.3 2000/10/27 16:59:40 dawes Exp $
+
+#include <Server.tmpl>
+
+LinkSourceFile(xf86drm.c,..)
+LinkSourceFile(xf86drmHash.c,..)
+LinkSourceFile(xf86drmRandom.c,..)
+LinkSourceFile(xf86drmSL.c,..)
+LinkSourceFile(xf86drm.h,$(XF86OSSRC))
+LinkSourceFile(xf86_OSproc.h,$(XF86OSSRC))
+LinkSourceFile(sigio.c,$(XF86OSSRC)/shared)
+
+XCOMM Try to use the Linux version of the DRM headers.  This avoids skew
+XCOMM and missing headers.  If there's a need to break them out, they
+XCOMM can be re-added later.  If not, they can be moved to somewhere more
+XCOMM OS-independent and referenced from there.
+LinkSourceFile(drm.h,$(XF86OSSRC)/linux/drm/kernel)
+LinkSourceFile(i810_drm.h,$(XF86OSSRC)/linux/drm/kernel)
+LinkSourceFile(mga_drm.h,$(XF86OSSRC)/linux/drm/kernel)
+LinkSourceFile(r128_drm.h,$(XF86OSSRC)/linux/drm/kernel)
+LinkSourceFile(sis_drm.h,$(XF86OSSRC)/linux/drm/kernel)
+
+
+XCOMM This is a kludge until we determine how best to build the
+XCOMM kernel-specific device driver.  This allows us to continue
+XCOMM to maintain the single Makefile.bsd with kernel-specific
+XCOMM support.  Later, we can move to a different Imakefile.
+
+#if BuildXF86DRI && BuildXF86DRM
+all::
+	$(MAKE) -f Makefile.bsd
+
+install::
+	$(MAKE) -f Makefile.bsd install
+#else
+all::
+	echo 'Use "make -f Makefile.bsd" to manually build drm.o'
+#endif
+
+clean::
+	$(MAKE) -f Makefile.bsd clean

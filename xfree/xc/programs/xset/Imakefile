@@ -1,0 +1,19 @@
+XCOMM $XConsortium: Imakefile,v 1.7 91/12/20 11:29:16 rws Exp $
+XCOMM $XFree86: xc/programs/xset/Imakefile,v 3.9 2000/08/28 16:35:04 dawes Exp $
+
+        DEFINES = ExtensionDefines DPMSDefines \
+		  FontCacheExtensionDefines \
+		  XkbDefines
+        DEPLIBS = $(DEPXMULIB) $(DEPXLIB) $(DEPXF86LIBS) $(DEPFONTLIBS)
+LOCAL_LIBRARIES = $(XMULIB) $(XF86LIBS) $(FONTLIBS) $(XLIB)
+
+#if BuildXF86MiscLibrary
+       DEPXF86LIBS = $(DEPXXF86MISCLIB)
+          XF86LIBS = $(XXF86MISCLIB)
+#endif
+#if BuildFontCacheLib
+      DEPFONTLIBS = $(DEPXFONTCACHELIB)
+         FONTLIBS = $(XFONTCACHELIB)
+#endif
+
+SimpleProgramTarget(xset)

@@ -1,0 +1,8 @@
+XCOMM $TOG: Imakefile /main/2 1997/06/10 06:54:34 kaleb $
+
+     DATAFILES = indy indigo O2
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/geometry/sgi)
+DependTarget()

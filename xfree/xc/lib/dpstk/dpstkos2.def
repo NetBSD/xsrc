@@ -1,0 +1,69 @@
+LIBRARY DPSTK
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/dpstk/dpstkos2.def,v 1.1 2000/04/05 18:13:23 dawes Exp $"
+CODE
+	PRELOAD
+DATA
+	MULTIPLE NONSHARED
+STACKSIZE 32768
+EXPORTS
+	XDPSSetFileFunctions @ 1
+	XDPSFileRewindFunc @ 2
+	XDPSFileGetsFunc @ 3
+	XDPSEmbeddedEPSFRewindFunc @ 4
+	XDPSEmbeddedGetsFunc @ 5
+	XDPSCreatePixmapForEPSF @ 6
+	XDPSPixelsPerPoint @ 7
+	XDPSSetImagingTimeout @ 8
+	XDPSCheckImagingResults @ 9
+	XDPSImageFileIntoDrawable  10
+	_DPSPSetMatrix @ 11
+	_DPSPClearArea @ 12
+	_DPSPSetMaskTransfer @ 13
+	_DPSPDefineExecFunction @ 14
+	_DPSPSaveBeforeExec @ 15
+	_DPSPCheckForError @ 16
+	_XDPSSetComponentInitialized @ 17
+	_XDPSTestComponentInitialized @ 18
+	XDPSSetContextDepth @ 19
+	XDPSSetContextDrawable @ 20
+	XDPSSetContextRGBMap @ 21
+	XDPSSetContextGrayMap @ 22
+	XDPSSetContextParameters @ 23
+	XDPSPushContextParameters @ 24
+	XDPSPopContextParameters @ 25
+	XDPSCaptureContextGState @ 26
+	XDPSUpdateContextGState @ 27
+	XDPSFreeContextGState @ 28
+	XDPSSetContextGState @ 29
+	XDPSPushContextGState @ 30
+	XDPSPopContextGState @ 31
+	XDPSRegisterContext @ 32
+	XDPSGetSharedContext @ 33
+	XDPSDestroySharedContext @ 34
+	XDPSUnregisterContext @ 35
+	XDPSFreeDisplayInfo @ 36
+	XDPSChainTextContext @ 37
+	XDPSExtensionPresent @ 38
+	PSDefineAsUserObj @ 39
+	PSRedefineUserObj @ 40
+	PSUndefineUserObj @ 41
+	DPSDefineAsUserObj @ 42
+	DPSRedefineUserObj @ 43
+	DPSUndefineUserObj @ 44
+	PSReserveUserObjIndices @ 45
+	DPSReserveUserObjIndices @ 46
+	PSReturnUserObjIndices @ 47
+	DPSReturnUserObjIndices @ 48
+	_DPSSSetContextParameters @ 49
+	_DPSSSetContextDrawable @ 50
+	_DPSSInstallDPSlibDict @ 51
+	_DPSSCaptureGState @ 52
+	_DPSSUpdateGState @ 53
+	_DPSSRestoreGState @ 54
+	_DPSSDefineUserObject @ 55
+	_DPSSUndefineUserObject @ 56
+	PSDoUserPath @ 57
+	DPSDoUserPath @ 58
+	PSHitUserPath @ 59
+	DPSHitUserPath @ 60
+	

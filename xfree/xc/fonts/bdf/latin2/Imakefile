@@ -1,0 +1,15 @@
+XCOMM $XFree86: xc/fonts/bdf/latin2/Imakefile,v 1.1 1997/04/17 12:55:44 dawes Exp $
+#define IHaveSubdirs
+#define PassCDebugFlags /* as nothing */
+
+#if Build75DpiFonts
+DPI75DIR = 75dpi
+#endif
+#if Build100DpiFonts
+DPI100DIR = 100dpi
+#endif
+
+        SUBDIRS = $(DPI75DIR) $(DPI100DIR)
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

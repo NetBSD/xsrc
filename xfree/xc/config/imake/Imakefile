@@ -1,0 +1,54 @@
+XCOMM $TOG: Imakefile /main/10 1997/04/30 15:39:17 kaleb $
+XCOMM
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/config/imake/Imakefile,v 3.9 1999/08/14 10:49:01 dawes Exp $
+
+XCOMM Some compilers generate fatal errors if an -L directory does
+XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
+         LDPRELIB =
+        LDPRELIBS =
+
+DEPLIBS = 
+
+INCLUDES = -I$(TOP)/include $(TOP_X_INCLUDES)/X11
+CPP_PROGRAM = CppCmd
+CPP_DEFINES = -DCPP_PROGRAM="\"$(CPP_PROGRAM)\""
+DEFINES = $(SIGNAL_DEFINES) $(BOOTSTRAPCFLAGS) $(CPP_DEFINES)
+
+#if defined(MacIIArchitecture) || defined(SequentArchitecture) || defined(i386ScoArchitecture)
+XBSDLIB = /**/
+#endif
+
+#if !defined(OS2Architecture)
+#undef ImakeDependency
+#define ImakeDependency(dummy) @@\
+Makefile::  ProgramTargetName(imake)
+
+#if CrossCompiling
+SimpleHostProgramTarget(imake)
+#else
+SimpleProgramTarget(imake)
+#endif
+InstallDriverSDKNamedProg(imake,imake,$(DRIVERSDKDIR)/config/imake)
+#else /* OS2Architecture */
+all::
+
+CCOPTIONS = -Zsysv-signals
+EXTRA_LIBRARIES = /*nothing*/
+SimpleProgramTarget(imake)
+InstallDriverSDKNamedProg(imake,imake,$(DRIVERSDKDIR)/config/imake)
+InstallNamedProg(imakesvc.cmd,imakesvc.cmd,$(BINDIR))
+InstallDriverSDKNamedProg(imakesvc.cmd,imakesvc.cmd,$(DRIVERSDKTDIR)/config/imake)
+#endif
+
+#if HasClearmake
+bootstrapdepend: depend
+#else
+bootstrapdepend:
+#endif
+
+clean::
+	RemoveFile(ProgramTargetName(ccimake))
+	$(RM) -r bootstrap

@@ -1,0 +1,105 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/README.pm3,v 1.6 2000/12/12 17:02:43 dawes Exp $ */
+  
+STATUS as of Mon, 16 Oct 2000 21:24:51 +0200
+  
+Working :
+  * Unaccelerated : Depth 8, 15, 16 and 24 are ok. I tested them upto
+    1280x1024 only as my monitor don't support higher modes.
+  * Untested on big endian systems, i had some reports of endianess problems
+    with a Permedia4 though, so i suppose things are broken for Permedia3
+    also. If you encounter problems, please contact me or try with
+    acceleration disabled.
+  * HW cursor.
+  * ShadowFb works.
+  * Full 2D Accels.
+    - Sync.
+    - Pixmap cache.
+    - Offscreen pixmaps.
+    - Clipping.
+    - Screen to screen copy. 
+    - Solid fills.
+    - HorVert Solid Lines .
+    - 8x8 Mono Pattern Fills.
+    - Color Expansion Fills.
+    - Images Writes.
+    - Bitmap Writes using direct FIFO writes with or without FIFO Disconnect.
+    - Pixmap Writes using direct FIFO writes with or without FIFO Disconnect.
+  * Appian J2000 second head initialization.
+  * Dual head : The console fonts will get trashed, but dual head works.
+  * DRI : 
+    - Gamma, if available, get's claimed with the UseGamma option.
+Not Working :
+  * 2D Accel :
+    - Solid & Dashed Lines are not possible on glint hardware.
+    - 8x8 Color Pattern Fill is almost never used.
+    - Clipping needs cleaning up.
+    - Seems broken on big endian systems, cannot test it though. 
+  * 2D Accel hooks for the Rendering extension ?
+    - Render extension initialization.
+    - CPUToScreenTexture.
+    - CPUToScreenAlphaTexture.
+  * Video Overlay.
+  * DRI.
+  
+Known Problem :
+
+  * Console gets broken when using dual headed mode. The culprit seems to be
+    the vga graphics index & port (GraphicsIndexReg : 0x63ce, GraphicsPort :
+    0x3cf). I had to use IO acces for both these two, because if not, console
+    fonts would get trashed even in mono headed mode.
+    [FIX] Well, if you really need the console and are running linux, just use
+    vesafb, it will be a bit slower, but the fonts will no more become
+    corrupt. Maybe i will even try writting a specific fbdev for the pm3,
+    which will be much faster and have more functionality.
+  * R-B inversion. Sometimes, all of a sudden, it seems as the RGB order
+    gets changed. going to console and back solves this.
+  * [TRIGGERED IN ENLIGTHENMENT ONLY] When moving a window around a lot
+    quicly, the video outputs dies. I have to switch to a console and back
+    to have it restored. Is it possible that the accel engine gets
+    overloaded or something such ?  Don't think so, it happens even when
+    PCIRetry is used too ...
+  * Sometimes there are blue transparent garbage in the form of small
+    horizontal bands, few pixels high, and more pixels width, maybe 64pixels ?
+
+Video Overlay [NOTHING DONE YET] : 
+
+  * I have not done anything yet here.
+
+DRI/3D Accels [NOTHING DONE YET] :
+
+  * First approach would be to use the gamma for one head only (most probably
+    the first head, it could be configurable though).
+  * Sharing the gamma between both driver instances would need a setup similar
+    of what was done for the Matrox dualheaded G400 (mga driver).
+  * Alternatively it could be possible to use DRI with the gamma on one head,
+    and DRI with the pm3 alone on the second head. This would need writing a 
+    pm3 drm kernel driver as well as a pm3 OpenGL driver. Could be useful for 
+    boards without gamma chips though.
+
+  * Claiming the Gamma (in the one head only approach) :
+    - The first possibility is the use of the UseGamma Option in the driver
+      section. The UseGamma option then tries to claim a gamma chip, if
+      available, on the same device. This enable the use of the gamma on
+      either head, in a two head setup.
+    - The second possibility is the automatic claiming of a gamma chip if
+      available. This works ok in single headed mode, but in dual head setup,
+      only the first head will be accelerated.
+  * Using the Gamma :
+    - A first try of using the Gamma (for 2D only) gave me a system freeze.
+      This is probably due to bad initialization since i only set the IOBase
+      to the Gamma registers, and did nothing more to initialize the Gamma.
+      I need more info on initialization of the Gamma chip, especially on how
+      to tell it which Permedia3 to use.
+    - A Second try, after initializing MultiGLINTAperture and MultiGLINT1 did
+      end in the same way.
+    - Once that is done, i need to write a pm3_dri.c file, inspired on the
+      glint_dri.c file, which does the dri setup, and the 2d/3d state saving.
+  * Changes to the 2D driver when using the Gamma :
+    - Well, there could be some changes, but in particular, the Gamma has only
+      a 32 entries deep Input FIFO, and not a 120 entries deep one like
+      permedia3.
+    - Another idea, is to use Gamma bypass when doing 2D accels. This way, we
+      don't have to worry about the Gamma smaller input Fifo. But we need to
+      sync the gamma also when doing syncs. Not sure where the right place for
+      this is though. Maybe when switching between 2D and 3D ?
+

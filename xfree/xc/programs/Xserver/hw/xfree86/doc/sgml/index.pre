@@ -1,0 +1,19 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN"[
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+<!ENTITY % mdefs SYSTEM "mdefs.ent"> %mdefs;
+]>
+ 
+<article>
+
+<!-- Title information -->
+<title>Documentation for XFree86&trade; version &relvers;
+<author>The XFree86 Project, Inc
+<date>18 December 2000
+
+<!--
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/index.pre,v 1.11 2000/12/17 23:01:10 dawes Exp $ 
+-->
+
+<p>
+<itemize>
+

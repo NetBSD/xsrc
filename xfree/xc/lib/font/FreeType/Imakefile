@@ -1,0 +1,57 @@
+XCOMM $XFree86: xc/lib/font/FreeType/Imakefile,v 1.16 2000/09/19 12:46:06 eich Exp $
+
+XCOMM Imakefile created for the Freetype TrueType renderer.
+XCOMM Mark Leisher <mleisher@crl.nmsu.edu>
+XCOMM Juliusz Chroboczek <jec@dcs.ed.ac.uk>
+
+#if BuildServer && DoLoadableServer
+#define IHaveSubdirs
+#define NoLibSubdirs
+#define PassCDebugFlags
+SUBDIRS = module
+#endif
+
+/*
+ * The variable `HasUsableFileMmap' should be set to YES if mmap(2) can
+ * reliably be used to access regular files.  This should be done in
+ * the platform-specific `*.cf' files.
+ *
+ * mmap(2) use is optional in FreeType, so no harm is done if we miss
+ * a few architectures.
+ */
+#if HasUsableFileMmap
+MMAPDEFINES = -DHAVE_MMAP=1
+#endif
+
+DEFINES = ServerExtraDefines \
+	  -DTT_MAKE_OPTION_SINGLE_OBJECT=1 $(MMAPDEFINES) StrcasecmpDefines
+	  
+
+/* Much of the source is simply #included by freetype.c */
+INCLUDES = -I. -I$(FONTINCSRC) -I../include -I$(SERVERSRC)/include \
+           -I$(FTSOURCEDIR)/lib -I$(FTSOURCEDIR)/lib/extend \
+           -I$(FTSOURCEDIR)/lib/arch/unix -I$(XTOP)/include
+
+SRCS = ftfuncs.c ftenc.c ftutil.c freetype.c ftxcmap.c
+OBJS = ftfuncs.o ftenc.o ftutil.o freetype.o ftxcmap.o
+
+#define DoNormalLib NormalLibFont
+#define DoSharedLib SharedLibFont
+#define DoDebugLib DebugLibFont
+#define DoProfileLib ProfileLibFont
+#include <Library.tmpl>
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+LinkSourceFile(freetype.c,$(FTSOURCEDIR)/lib/arch/unix)
+LinkSourceFile(ftxcmap.c,$(FTSOURCEDIR)/lib/extend)
+
+#if BuildServer && DoLoadableServer
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+DependTarget()
+

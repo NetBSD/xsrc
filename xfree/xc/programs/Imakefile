@@ -1,0 +1,96 @@
+XCOMM $TOG: Imakefile /main/85 1998/02/26 17:14:44 kaleb $
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/Imakefile,v 3.31 2000/09/22 11:35:41 alanh Exp $
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+#if BuildServer
+       RGBSRCDIR = rgb
+        XSSRCDIR = Xserver
+#endif
+#ifndef Win32Architecture
+#if HasXServer
+     XINITSRCDIR = xinit
+#endif
+#if BuildFontServer
+       XFSSRCDIR = xfs
+#endif
+#if BuildXKBlib
+      XKBSRCDIRS = xkbcomp xkbevd xkbprint xkbutils
+#endif
+#if BuildScreenSaverExt
+SCREENSAVESRCDIR = beforelight
+#endif
+#if BuildXF86VidModeExt
+  XVIDTUNESRCDIR = xvidtune
+#endif
+#if BuildXF86DGA
+   XF86DGASRCDIR = xf86dga
+#endif
+#if BuildXAServer
+       XASSRCDIR = Xaserver
+#endif
+#if BuildLBX
+  LBXPROXYSRCDIR = lbxproxy
+#endif
+  PROXYMGRSRCDIR = proxymngr
+    RSTARTSRCDIR = rstart
+   SMPROXYSRCDIR = smproxy
+       TWMSRCDIR = twm
+  XCONSOLESRCDIR = xconsole
+       XDMSRCDIR = xdm
+XFINDPROXYSRCDIR = xfindproxy
+      XFWPSRCDIR = xfwp
+#if BuildXF86VidModeExt
+    XGAMMASRCDIR = xgamma
+#endif
+#if BuildXvExt
+    XVINFOSRCDIR = xvinfo
+#endif
+     XHOSTSRCDIR = xhost
+#if BuildPlugin
+       XRXSRCDIR = xrx
+#endif
+       XSMSRCDIR = xsm
+     XTERMSRCDIR = xterm
+      SCRIPTSDIR = scripts
+#endif
+#if BuildCID
+     MKCFMSRCDIR = mkcfm
+#endif
+
+#if BuildDPSLibraries
+    MAKEPSRESDIR = makepsres
+#endif
+
+   XPMCLIENTDIRS = cxpm sxpm
+
+#if BuildServersOnly
+SUBDIRS = $(XSSRCDIR)
+#else
+SUBDIRS = \
+	appres bdftopcf bitmap \
+	$(SCREENSAVESRCDIR) editres fsinfo fslsfonts fstobdf iceauth \
+	ico listres \
+	$(MAKEPSRESDIR) $(MKCFMSRCDIR) \
+	mkfontdir oclock $(PROXYMGRSRCDIR) $(RGBSRCDIR) $(RSTARTSRCDIR) \
+	setxkbmap showfont \
+	$(SMPROXYSRCDIR) $(TWMSRCDIR) viewres x11perf xauth xbiff xcalc \
+	xclipboard xclock \
+	xcmsdb $(XCONSOLESRCDIR) xditview $(XDMSRCDIR) xdpyinfo \
+	$(XF86DGASRCDIR) xedit xev xeyes xfd xfontsel $(XFSSRCDIR) \
+	$(XFINDPROXYSRCDIR) $(XFWPSRCDIR) $(XGAMMASRCDIR) xgc $(XHOSTSRCDIR) \
+	xieperf $(XINITSRCDIR) $(XKBSRCDIRS) xkill xload xlogo xlsatoms \
+	xlsclients xlsfonts xmag xman xmessage xmodmap xprop xrdb \
+	xrefresh $(XRXSRCDIR) xset \
+	xsetroot $(XSMSRCDIR) xstdcmap xsetmode xsetpointer \
+	$(XTERMSRCDIR) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
+	$(XPMCLIENTDIRS) $(XVINFOSRCDIR) \
+	$(XSSRCDIR) $(XASSRCDIR) $(LBXPROXYSRCDIR) $(SCRIPTSDIR) \
+	glxinfo
+#endif
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

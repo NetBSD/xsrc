@@ -1,0 +1,36 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.4 2000/12/11 20:29:38 dawes Exp $
+
+#include <Server.tmpl>
+#define IHaveSubdirs
+
+SUBDIRS = utils
+
+SRCS =	darwin.c \
+        darwinCursor.c \
+        darwinKeyboard.c
+
+OBJS =	darwin.o \
+        darwinCursor.o \
+        darwinKeyboard.o
+
+INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/mfb -I$(SERVERSRC)/cfb \
+           -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(SERVERSRC)/os \
+           -I$(INCLUDESRC) -I$(FONTINCSRC)
+
+#if defined(XFree86CustomVersion)
+CUSTOMVERSION = XFree86CustomVersion
+CUSTOMVERDEF =  -DXF86_CUSTOM_VERSION='$(CUSTOMVERSION)'
+#endif
+
+DEFINES = $(CUSTOMVERDEF)
+
+NormalLibraryObjectRule()
+NormalLibraryTarget(darwin,$(OBJS))
+
+CppManTarget(Xdarwin,)
+InstallManPage(Xdarwin,$(MANDIR))
+
+DependTarget()
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

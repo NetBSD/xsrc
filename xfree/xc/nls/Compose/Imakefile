@@ -1,0 +1,62 @@
+XCOMM $TOG: Imakefile /main/9 1998/06/29 09:17:20 kaleb $
+XCOMM $XFree86: xc/nls/Compose/Imakefile,v 1.12 2000/12/06 22:00:43 dawes Exp $
+
+#ifndef Win32Architecture
+#ifndef OS2Architecture
+# define ComposeTarget(name)						@@\
+all:: name								@@\
+	MakeDir($(BUILDLIBDIR)/locale/name)				@@\
+	RemoveFile($(BUILDLIBDIR)/locale/name/Compose)			@@\
+	cd $(BUILDLIBDIR)/locale/name && $(LN) $(BUILDLIBTOP)/../../$(CURRENT_DIR)/name Compose @@\
+InstallNamedNonExec(name,Compose,$(XLOCALEDIR)/name)
+#else
+# define ComposeTarget(name)						@@\
+all:: name								@@\
+	MakeDir($(BUILDLIBDIR)/locale/name)				@@\
+	LinkFileSpecial($(BUILDLIBDIR)/locale/name,XLC_LOCALE,$(BUILDLIBTOP)/../../$(CURRENT_DIR)/name) @@\
+									@@\
+InstallNamedNonExec(name,Compose,$(XLOCALEDIR)/name)
+#endif
+#else
+# define ComposeTarget(name)						@@\
+all:: name								@@\
+	MakeDir(Concat($(BUILDLIBDIR:/=\)\locale\,name))		@@\
+	RemoveFile(Concat($(BUILDLIBDIR:/=\)\locale\,name\Compose))	@@\
+	cd Concat($(BUILDLIBDIR:/=\)\locale\,name) && $(LN) Concat($(BUILDLIBTOP:/=\)\..\..\$(CURRENT_DIR:/=\)\,name) Compose @@\
+InstallNamedNonExec(name,Compose,$(XLOCALEDIR)/name)
+#endif
+
+ComposeTarget(armscii-8)
+ComposeTarget(georgian-academy)
+ComposeTarget(georgian-ps)
+ComposeTarget(ibm-cp1133)
+ComposeTarget(iso8859-1)
+ComposeTarget(iso8859-2)
+ComposeTarget(iso8859-3)
+ComposeTarget(iso8859-4)
+ComposeTarget(iso8859-5)
+ComposeTarget(iso8859-6)
+ComposeTarget(iso8859-7)
+ComposeTarget(iso8859-8)
+ComposeTarget(iso8859-9)
+ComposeTarget(iso8859-10)
+ComposeTarget(iso8859-13)
+ComposeTarget(iso8859-14)
+ComposeTarget(iso8859-15)
+ComposeTarget(iso8859-9e)
+ComposeTarget(ja)
+ComposeTarget(ja.JIS)
+ComposeTarget(ja.SJIS)
+ComposeTarget(ko)
+ComposeTarget(koi8-r)
+ComposeTarget(koi8-u)
+ComposeTarget(koi8-c)
+ComposeTarget(mk_MK.UTF-8)
+ComposeTarget(mulelao-1)
+ComposeTarget(th_TH.TACTIS)
+ComposeTarget(vi_VN.tcvn)
+ComposeTarget(vi_VN.viscii)
+ComposeTarget(zh)
+ComposeTarget(zh_TW)
+ComposeTarget(zh_TW.big5)
+

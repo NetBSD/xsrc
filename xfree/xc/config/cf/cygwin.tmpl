@@ -1,0 +1,39 @@
+XCOMM $XConsortium: WinLib.tmpl,v 1.1 94/01/08 18:32:51 rws Exp $
+XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.2 2000/12/04 18:49:13 dawes Exp $
+
+#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXtReqs $(LDPRELIB) $(SMLIB) $(ICELIB) $(XLIBONLY)
+#define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#define SharedXaw6Reqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs $(LDPRELIB) $(XLIB)
+#define SharedPexReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXtstReqs $(LDPRELIB) $(XLIB)
+#define SharedXieReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedSMReqs $(LDPRELIB) $(ICELIB)
+#define SharedXpReqs $(LDPRELIB) $(XAUTHLIB) $(EXTENSIONLIB) $(XLIBONLY)
+#define SharedXvReqs $(LDPRELIB) $(XLIB)
+#define SharedGLReqs	$(LDPRELIB) $(XLIB)
+XCOMM #define SharedXfontReqs $(LDPRELIB) $(XLIB)
+#define SharedXxf86vmReqs $(LDPRELIB) $(XLIB) 
+#define SharedXxf86miscReqs $(LDPRELIB) $(XLIB)
+#define SharedXpmReqs $(LDPRELIB) $(XLIB)
+#define SharedXxf86dgaReqs $(LDPRELIB) $(XLIB)
+#define SharedXssReqs $(LDPRELIB) $(XLIB) $(EXTENSIONLIB) $(XTOOLLIB)
+#define SharedDPSReqs $(LDPRELIB) $(SMLIB) $(ICELIB) $(XTOOLLIB) $(XLIB)
+#define SharedDPSTKReqs  $(LDPRELIB) $(SMLIB) $(ICELIB) $(XTOOLLIB) $(DPSLIB) $(XLIB)
+#define SharedXrenderReqs $(LDPRELIB) $(EXTENSIONLIB) $(XLIB)
+#define SharedpsresReqs $(LDPRELIB) $(SMLIB) $(ICELIB) $(XTOOLLIB) $(XLIB)
+
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
+#ifndef XawClientLibs
+#define XawClientLibs $(XAWLIB) $(XMULIBONLY) $(XTOOLLIB) $(XLIB) $(XPMLIB)
+#endif
+

@@ -1,0 +1,327 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN" [
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+<!ENTITY % onediff 'IGNORE'>	 <!-- patch is a single diff file -->
+<!ENTITY % twodiffs 'IGNORE'>	 <!-- patch is split into two diff files -->
+<!ENTITY % threediffs 'IGNORE'> <!-- patch is split into three diff files -->
+<!ENTITY % fourdiffs 'INCLUDE'> <!-- patch is split into four diff files -->
+<!ENTITY % difftar 'INCLUDE'> <!-- patch also contains a tarball -->
+]>
+
+
+<article>
+
+<title>README for XFree86&tm; &relvers;
+<author>The XFree86 Project, Inc
+<date>15 December 2000
+
+<ident>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.110 2000/12/15 16:11:57 dawes Exp $
+</ident>
+
+<abstract>
+
+XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
+operating systems on Intel and other platforms.
+
+</abstract>
+
+<toc>
+
+<sect>What is XFree86 &relvers;?
+<p>
+
+XFree86 &relvers; is the third full release in the <![ %earlyrel; [new]]>
+XFree86 4 series.
+
+<p>
+XFree86 release 4 is a major re-design of the basic architectural
+underpinnings of XFree86's implementation of the original X Consortium's
+X Server.  This re-design allows for a modular interaction between the
+hardware drivers and the XFree86 core X server.  With 4.x, upgrades to
+the X server with new and unsupported hardware can be easily done and
+installed without undergoing the previous process of rebuilding an X
+server.  All that is required is installing the new driver module and
+updating the configuration file.
+
+The road to XFree86 release 4 began as an architectural concept in mid
+1997, with the serious framework being implemented in code the beginning
+of 1998.  There were several snapshots on the road to 4.0 which are now
+part of the 4.0 base release.  The &relvers; version is an upgrade to
+&prevrelvers;, which include more hardware ports, code enhancements and
+bug fixes.
+
+Release 4 also included the long-awaited integration of the DRI (Direct
+Rendering Infrastructure).  This upgrade into the code base  gives
+XFree86 the abilities of accelerated direct 3-D graphics rendering, used
+widely in games and other visualization programs.
+
+While some driver available in the old 3.3.x release series have not
+been converted over to the 4.x series, those required for most modern
+video hardware are available.  Please check the <htmlurl name="Driver
+Status document" url="Status.html"> first to see whether your hardware
+is supported before upgrading to the 4.x series.
+
+Specific release enhancements can be viewed in the
+<htmlurl name="Release Notes" url="RELNOTES.html">.
+
+Information about binary distributions and the attendant installation
+instructions can be found in the <htmlurl name="Installation Document"
+url="Install.html">.
+
+Copyright and Licensing information for this release and all XFree86
+releases can be found in the <htmlurl name="License Document"
+url="LICENSE.html">.
+
+<![ %snapshot [
+<sect>Redistribution of the Snapshots
+<p>
+
+While the XFree86 <htmlurl name="License" url="LICENSE.html"> doesn't
+prohibit vendors and others redistributing binaries of this release, we
+don't recommend it.  We ask that if you do distribute such binaries,
+you make it clear that people using then should contact you for support
+and not XFree86.
+]]>
+
+<sect>Joining The Team
+<sect1> Development
+<p>
+
+If you would like to work on the development of XFree86 4, either by
+helping with the conversion of our older drivers to the new 4.x design,
+or assisting in the addition of new drivers or platforms to the code base
+then send a request to <url name="join the XFree86 development team"
+url="http://www.xfree86.org:/developer.html">.  This will give you direct
+access to the latest XFree86 related development topics and discussions.
+Include in your note, your name, email address, reason for joining (what
+you will work on) and, level of expertise (coder, DRI, core, specific
+driver) and area of interest.
+
+</sect1>
+
+
+<sect1> Documentation
+<p>
+If instead your interests are on the Documentation side of the Project,
+or you want to contribute and are not ready for plunging into the code,
+you can join the Documentation Team (those hardy souls responsible for
+the content you are reading :-).  Amongst the Doc Team's activities are
+converting our SGML based documentation into an XML based one and updating
+and creating technical documentation used by staff and public.  If this
+sounds interesting then please send a request to <url name="join the
+XFree86 documentation team" url="mailto:signup@xfree86.org">.
+Include in your note, you name, email address, reason for joining (what
+you will work on) and level of expertise and whether you are interested
+in the tools or content side of the group.
+
+</sect1>
+</sect> 
+
+<sect> The Public Mailing Lists
+<sect1>  Newbie
+<p> 
+For those who are new to XFree86  and want to learn more about our
+Project we recommend that you join our Newbie list, located at <url name
+= "Public Mailing Lists" url = "http://www.xfree86.org/mailman/listinfo">,
+where this and other discussions occur with our senior all-volunteer
+staff.  This is great forum to get introduced to XFree86 and ask for
+help on how to set up the XServer or whether your hardware is supported,
+and why not?,  and make suggestions for future releases of XFree86.
+This list is supported by our volunteer staff who needs to know how you
+are using and interacting with XFree86 and what is wrong and could be
+better.  Tell them, they want to know!
+
+</sect1>
+
+<sect1> Announce
+<p>
+For those who just want to know  the release schedule 
+this is a good list  to join.
+
+<sect1> CVS Commit
+<p>
+For those who want to see what has been committed recently to our CVS
+repository this is the list that will show you those updates.  This list
+is updated dynamically every time the repository is updated after the
+the commit happens.
+
+<!--
+<p>
+A followup to the commit list is the soon to be public, patch archives.
+This archive will be available on our web-site and will show what patches
+have been submitted and will soon be committed.  This is helpful for
+people who are interested in a specific area and want to know what work
+is happening there.  When this goes public we will announce it
+on our web site and our Announce mailing list, so keep watching.
+-->
+
+
+<sect1>  Xpert
+<p>
+If instead you are the lone developer who is improving XFree86 on an
+ad hoc basis for your particular environment (I want to get my mouse or
+video card to work), and need a specific question asked then you should
+go over to our Xpert list where such questions are raised and answered
+by our technical development staff.  Remember you do not have to be a
+member to write fixes to our code base and if your changes are discrete
+and self-contained the volume of developer mail may just be too noisy.
+
+
+Once your work is finished (coded, debugged and documented) please send
+your fix to <email>fixes@XFree86.org</email>.  This will ensure that
+they are included in future releases. And thanks!  You make this truly
+an Open group.
+
+</sect1>
+</sect>
+
+<sect>How to get XFree86 &relvers;
+<p>
+<![ %snapshot; [
+XFree86 &relvers; can be found at the <url name="XFree86 ftp server"
+url="ftp://ftp.xfree86.org/pub/XFree86/snapshots/&relvers;/">, and at
+mirrors of this server.  This snapshot is available primarily in source
+form.  Binaries for some platforms may be made available at a later
+time.
+]]>
+
+<![ %release; [
+XFree86 &relvers; can be found at the <url name="XFree86 ftp server"
+url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/">,
+and at mirrors of this server.  Information about obtaining and installing
+binary distributions of this release can be found in the
+<htmlurl name="Installation Document" url="Install.html">.  Information about
+obtaining the release in source form is given below.
+]]>
+
+The source for version &relvers; is split into three tarballs:
+<tt>X&srcvers;src-1.tgz</tt>, <tt>X&srcvers;src-2.tgz</tt>,
+<tt>X&srcvers;src-3.tgz</tt>.  The first contains everything except the
+fonts and general X11 documentation.  It is sufficient for building
+XFree86 is you already have a set of fonts.  The second contains the
+fonts and the source for the general X11 documentation.  The third
+contains the general X11 documentation in hardcopy format.
+
+<![ %onediff; [
+A source patch relative to version &prevrelvers; is also available.
+The patch file is <tt>&prevrelvers;-&relvers;.diff.gz</tt>.
+<![ %difftar; [
+There is also a tarball that contains some files that have components that
+can't be included in a diff.  It is <tt>&relvers;.tgz</tt>.
+]]>
+The patch
+should be applied to a clean &prevrelvers; source tree, working from
+the directory containing the <tt>xc/</tt> directory.  The patch should
+be applied by running:
+
+<tscreen><verb>
+gzip -d &lt; &prevrelvers;-&relvers;.diff.gz | patch -p0 -E
+</verb></tscreen>
+<![ %difftar; [
+<tscreen><verb>
+gzip -d &lt; &relvers;.tgz | tar vxf -
+</verb></tscreen>
+]]>
+]]>
+
+<![ %twodiffs; [
+A source patch relative to version &prevrelvers; is also available.
+Because of its size, it is split into two parts.
+The patch files are <tt>&prevrelvers;-&relvers;.diff1.gz</tt> and
+<tt>&prevrelvers;-&relvers;.diff2.gz</tt>.
+<![ %difftar; [
+There is also a tarball that contains some files that have components that
+can't be included in a diff.  It is <tt>&relvers;.tgz</tt>.
+]]>
+These patches should
+be applied to a clean &prevrelvers; source tree, working from the directory
+containing the <tt>xc/</tt> directory.  The patches should be applied by
+running:
+
+<tscreen><verb>
+gzip -d &lt; &prevrelvers;-&relvers;.diff1.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff2.gz | patch -p0 -E
+</verb></tscreen>
+<![ %difftar; [
+<tscreen><verb>
+gzip -d &lt; &relvers;.tgz | tar vxf -
+</verb></tscreen>
+]]>
+]]>
+
+<![ %threediffs; [
+A source patch relative to version &prevrelvers; is also available.
+Because of its size, it is split into three parts.
+The patch files are <tt>&prevrelvers;-&relvers;.diff1.gz</tt>,
+<tt>&prevrelvers;-&relvers;.diff2.gz</tt> and
+<tt>&prevrelvers;-&relvers;.diff3.gz</tt>.
+<![ %difftar; [
+There is also a tarball that contains some files that have components that
+can't be included in a diff.  It is <tt>&relvers;.tgz</tt>.
+]]>
+These patches should
+be applied to a clean &prevrelvers; source tree, working from the directory
+containing the <tt>xc/</tt> directory.  The patches should be applied by
+running:
+
+<tscreen><verb>
+gzip -d &lt; &prevrelvers;-&relvers;.diff1.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff2.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff3.gz | patch -p0 -E
+</verb></tscreen>
+<![ %difftar; [
+<tscreen><verb>
+gzip -d &lt; &relvers;.tgz | tar vxf -
+</verb></tscreen>
+]]>
+]]>
+
+<![ %fourdiffs; [
+A source patch relative to version &prevrelvers; is also available.
+Because of its size, it is split into four parts.
+The patch files are <tt>&prevrelvers;-&relvers;.diff1.gz</tt>,
+<tt>&prevrelvers;-&relvers;.diff2.gz</tt>,
+<tt>&prevrelvers;-&relvers;.diff3.gz</tt> and
+<tt>&prevrelvers;-&relvers;.diff4.gz</tt>.
+<![ %difftar; [
+There is also a tarball that contains some files that have components that
+can't be included in a diff.  It is <tt>&relvers;.tgz</tt>.
+]]>
+These patches should
+be applied to a clean &prevrelvers; source tree, working from the directory
+containing the <tt>xc/</tt> directory.  The patches should be applied by
+running:
+
+<tscreen><verb>
+gzip -d &lt; &prevrelvers;-&relvers;.diff1.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff2.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff3.gz | patch -p0 -E
+gzip -d &lt; &prevrelvers;-&relvers;.diff4.gz | patch -p0 -E
+</verb></tscreen>
+<![ %difftar; [
+<tscreen><verb>
+gzip -d &lt; &relvers;.tgz | tar vxf -
+</verb></tscreen>
+]]>
+]]>
+
+The contrib part of the distribution has been folded into the main
+source tree, so a separate contrib tarball is no longer required.
+
+To format the XFree86 documentation use the latest version of our doctools
+package available as <tt>doctools-&doctoolsvers;.tgz</tt>.
+
+<sect>Reporting Bugs
+<p>
+
+Bugs should be reported to <email>XFree86@XFree86.org</email>.  Before
+reporting bugs, please check the X server log file, which can be found
+at <tt>/var/log/XFree86.0.log</tt> on most platforms.  If you can't
+resolve the problem yourself, send the entire log file with your bug
+report but not the operating system core dump.  Do not edit  the log
+file as our developers use it to reproduce and debug your problem.
+
+
+
+</article>

@@ -1,0 +1,9 @@
+XCOMM $XConsortium: Imakefile /main/1 1996/01/23 06:59:52 kaleb $
+XCOMM $XFree86: xc/programs/xkbcomp/symbols/sun/Imakefile,v 1.4 1999/01/03 03:58:58 dawes Exp $
+
+     DATAFILES = se us
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/sun)
+DependTarget()

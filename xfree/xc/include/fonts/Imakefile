@@ -1,0 +1,15 @@
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 16:32:27 rws $
+XCOMM $XFree86: xc/include/fonts/Imakefile,v 3.6 1999/08/28 09:00:23 dawes Exp $
+
+    HEADERS = FS.h FSproto.h fsmasks.h
+
+all::
+    
+BuildIncludes($(HEADERS),X11/fonts,../..)
+InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/fonts,$(INSTINCFLAGS))
+
+
+InstallDriverSDKNonExecFile(font.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(fontproto.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(fontstruct.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(fsmasks.h,$(DRIVERSDKINCLUDEDIR))

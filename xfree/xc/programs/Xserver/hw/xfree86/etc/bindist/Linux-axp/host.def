@@ -1,0 +1,16 @@
+/*
+ * Host.def for building Linux/alpha bindists
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/Linux-axp/host.def,v 1.5 2000/12/18 14:34:58 dawes Exp $
+ */
+
+#define InstallEmptyHostDef
+
+/* Need to have glide 3 installed, where available */
+
+#if LinuxCLibMajorVersion > 5
+#define HasGlide3 YES
+#endif
+
+#define BuildXF86DRI YES
+

@@ -1,0 +1,119 @@
+// $XFree86: xc/programs/xkbcomp/symbols/tr,v 1.1 2000/12/06 20:18:08 eich Exp $
+default partial alphanumeric_keys 
+xkb_symbols "basic" {
+
+    // Describes the differences between a very simple US/ASCII
+    // keyboard and a very simple Turkish Q keyboard Togan Muftuoglu
+    // toganm@yahoo.com 23 November 2000 
+
+    // Alphanumeric section
+    name[Group1]= "Turkish";
+    key <TLDE> {	[ quotedbl,	eacute	],
+			[   notsign 			]	};
+    key <AE02> {	[  2,	apostrophe	],
+			[ twosuperior			]	};
+    key <AE03> {	[  3,	asciicircum	],
+			[ numbersign	]	};
+    key <AE04> {	[  4,	plus		],
+			[ dollar	]	};
+    key <AE05> {	[  5,	percent		],
+			[   onehalf			]	};
+    key <AE06> {	[  6,	ampersand	],
+			[ threequarters			]	};
+    key <AE07> {	[  7,	slash		],
+			[ braceleft			]	};
+    key <AE08> {	[  8,	parenleft	],
+			[ bracketleft			]	};
+    key <AE09> {	[  9,	parenright	],
+			[ bracketright,	plusminus	]	};
+    key <AE10> {	[  0,	equal		],
+			[ braceright,	degree		]	};
+    key <AE11> {	[    asterisk,	question	],
+			[ backslash,	questiondown	]	};
+    key <AE12> {	[ minus,		underscore	]		};
+
+    key <AD01> {	[  q,	Q 		],
+			[	 at			]	};
+    key <AD03> {	[  e,	E		],
+			[  EuroSign			]	};
+    key <AD05> {	[  t,	T		]	};
+    key <AD07> {	[  u,	U		]	};
+    key <AD08> {	[  yacute,	I		]	};
+    key <AD11> {	[ eth,	Eth	],
+			[ dead_diaeresis 		]	};
+    key <AD12> {	[ udiaeresis,	Udiaeresis	],
+			[ asciitilde,	dead_macron	]	};
+    key <AC10> {	[ thorn,	Thorn	],
+			[ acute			]	};
+    key <AC11> {	[ i,	Yacute	],
+			[ dead_circumflex		]	};
+    key <BKSL> {	[ comma,	semicolon	],
+			[ grave			]	};
+
+    key <LSGT> {	[      less,	greater		],
+			[       bar			]	};
+    key <AB07> {	[	  m,	M		],
+			[	 mu			]	};
+    key <AB08> {	[     odiaeresis,	Odiaeresis	]	};
+    key <AB09> {	[    ccedilla,	Ccedilla		],
+			[ periodcentered, division	]	};
+    key <AB10> {	[     period,	colon	],
+    			[slash		]		};
+    key <RALT> {	[ Mode_switch,	Multi_key	]	};
+
+    // End alphanumeric section, begin "Keypad"
+    key <KPDL> {	[  KP_Delete,	KP_Separator	]	};
+    // End "Keypad" section
+
+    // begin modifier mappings
+    modifier_map Shift  { Shift_L };
+    modifier_map Lock   { Caps_Lock };
+    modifier_map Control{ Control_L };
+    modifier_map Mod3	{ Mode_switch };
+};
+
+partial alphanumeric_keys 
+xkb_symbols "Sundeadkeys" {
+    // modify the default Turkish Q layout to use Sun dead keys
+    include "tr(basic)"
+    key <TLDE> {	[ quotedbl,	eacute		],
+			[   notsign 			]	};
+    key <AE12> {	[ minus,		underscore	]		};
+    key <AD11> {	[ eth,	Eth	],
+			[ SunFA_Diaeresis		]	};
+    key <AD12> {	[      udiaeresis,	Udiaeresis	],
+			[ SunFA_Tilde,	dead_macron	]	};
+    key <AC10> {	[ thorn,	Thorn	],
+			[ SunFA_Acute			]	};
+    key <AC11> {	[ i,	Yacute	],
+			[ SunFA_Circum			]	};
+
+    key <BKSL> {	[ comma,	semicolon		],
+			[ SunFA_Grave			]	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "sundeadkeys" {
+    include "tr(Sundeadkeys)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "nodeadkeys" {
+    // modify the default Turkish Q layout to not have any dead keys
+    include "tr(basic)"
+    key <TLDE> {	[ quotedbl,	eacute		],
+			[   notsign 			]	};
+    key <AE12> {	[ minus,		underscore		]	};
+    key <AD11> {	[ eth,	Eth	],
+			[ diaeresis 			]	};
+    key <AD12> {	[      udiaeresis,	Udiaeresis	],
+			[ asciitilde,	macron		]	};
+    key <AC10> {	[ thorn,	Thorn	],
+			[ acute				]	};
+    key <AC11> {	[ i,	Yacute	],
+			[ asciicircum			]	};
+
+    key <BKSL> {	[ comma,	semicolon	],
+			[ grave				]	};
+};
+

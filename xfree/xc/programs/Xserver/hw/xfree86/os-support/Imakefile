@@ -1,0 +1,133 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.43 2000/11/06 19:24:08 dawes Exp $
+
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
+
+#include <Server.tmpl>
+
+#define IHaveSubdirs
+
+#if defined(i386Architecture) || defined(ia64Architecture) || \
+	(defined(LinuxArchitecture) && defined(AlphaArchitecture)) || \
+	(defined(FreeBSDArchitecture) && defined(AlphaArchitecture)) || \
+	defined(PpcArchitecture) || defined(SparcArchitecture) || \
+	(defined(LinuxArchitecture) && defined(MipsArchitecture))
+BUS_SUBDIR = bus
+#endif
+
+#if defined(QNX4Architecture)
+OS_SUBDIR = qnx4
+#endif
+
+#if defined(NTOArchitecture)
+OS_SUBDIR = nto
+#endif
+
+#if defined(SVR3Architecture) 
+# if defined(i386ScoArchitecture)
+OS_SUBDIR = sco
+# else
+OS_SUBDIR = sysv
+# endif
+#endif
+
+#if defined(cygwinArchitecture)
+OS_SUBDIR = cygwin
+#endif
+
+#if defined(SVR4Architecture) 
+# if defined(SunArchitecture)
+#  if OSMinorVersion < 8
+OS_SUBDIR = solx86
+#  else
+OS_SUBDIR = sol8_x86
+#  endif
+# elif defined(PmaxOSArchitecture)
+OS_SUBDIR = pmax
+# elif defined(DguxArchitecture)
+OS_SUBDIR = dgux
+# else
+OS_SUBDIR = sysv
+# endif
+#endif
+
+#if defined(LinuxArchitecture)
+OS_SUBDIR = linux
+#endif
+
+#if defined(LynxOSArchitecture)
+OS_SUBDIR = lynxos
+#endif
+
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture) || \
+    defined(OpenBSDArchitecture)
+OS_SUBDIR = bsd
+#endif
+
+#if defined(BSDOSArchitecture)
+OS_SUBDIR = bsdi
+#endif
+
+#if defined(i386MachArchitecture) || defined(OsfArchitecture)
+#if defined(GNUMachArchitecture)
+OS_SUBDIR = hurd
+#else
+OS_SUBDIR = mach
+#endif
+#endif
+
+#if defined(AmoebaArchitecture)
+OS_SUBDIR = amoeba
+#endif
+
+#if defined(MinixArchitecture)
+OS_SUBDIR = minix
+#endif
+
+#if defined(OS2Architecture)
+OS_SUBDIR = os2
+#endif
+
+#if defined(i386Sco325Architecture)
+OS_SUBDIR = sco
+#endif
+
+#if BuildXF86DRI && !DoLoadableServer
+DRM_SRC = $(OS_SUBDIR)/drm/?*.c
+DRM_OBJ = $(OS_SUBDIR)/drm/?*.o
+DRM_DONES = $(OS_SUBDIR)/drm/DONE
+#endif
+
+SUBDIRS = $(OS_SUBDIR) $(BUS_SUBDIR) misc vbe
+
+SRCS = $(OS_SUBDIR)/?*.c $(BUS_SUBDIR)/?*.c misc/?*.c vbe/?*.c $(DRM_SRC)
+OBJS = $(OS_SUBDIR)/?*.o $(BUS_SUBDIR)/?*.o misc/?*.o vbe/?*.o $(DRM_OBJ)
+
+DONES = $(OS_SUBDIR)/DONE $(BUS_SUBDIR)/DONE misc/DONE vbe/DONE $(DRM_DONES)
+
+#if HasParallelMake
+MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
+#endif
+
+#if HasGnuMake || HasBsdMake 
+$(DONES): $(SUBDIRS)
+#endif
+
+NormalDepLibraryTarget(xf86_os,$(SUBDIRS) $(DONES),$(OBJS))
+
+#if !HasSnprintf
+LinkSourceFile(snprintf.c,$(LIBSRC)/misc)
+#endif
+
+ForceSubdirs($(SUBDIRS))
+
+DependSubdirs($(SUBDIRS))
+
+InstallDriverSDKNonExecFile(xf86_OSproc.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86_OSlib.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86_ansic.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86_libc.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86drm.h,$(DRIVERSDKINCLUDEDIR))

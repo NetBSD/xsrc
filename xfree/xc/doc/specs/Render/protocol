@@ -1,0 +1,964 @@
+			The X Rendering Extension
+			      Version 0.0.15
+			        2000-11-19
+			      Keith Packard
+			    keithp@xfree86.org
+
+1. Introduction
+
+The X Rendering Extension (Render) introduces digital image composition as
+the foundation of a new rendering model within the X Window System.
+Rendering geometric figures is accomplished by client-side tesselation into
+either triangles or trapezoids.  Text is drawn by loading glyphs into the
+server and rendering sets of them.
+
+2. Acknowledgments
+
+This extension was the work of many people, in particular:
+
+ +	Thomas Porter and Tom Duff for their formal description
+	of image compositing.
+
+ +	Rob Pike and Russ Cox who designed the Plan 9 window system from
+	which the compositing model was lifted.
+
+ +	Juliusz Chroboczek and Raph Levien whose proposal for client-side
+	glyph management eliminated font handling from the X server.
+
+ +	Jon Leech, Brad Grantham and Allen Akin for patiently explaining
+	how OpenGL works.
+
+3. Rendering Model
+
+Render provides a single rendering operation which can be used in a variety of
+ways to generate images:
+
+	dest = (source IN mask) OP dest
+
+Where 'IN' is the Porter/Duff operator of that name and 'OP' is any of the
+list of compositing operators described below, among which can be found all
+of the Porter/Duff binary operators.
+
+To use this operator several additional values are required:
+
+ +	The destination rectangle.  This is a subset of the destination
+ 	within which the rendering is performed.
+
+ +	The source location. This identifies the coordinate in the
+ 	source aligned with the upper left corner of the
+	destination rectangle.
+
+ +	The mask location. This identifies the coordinate in the
+ 	mask aligned with the upper left corner of the
+	destination rectangle.
+
+ +	A clip list.  This limits the rendering to the intersection of the
+ 	destination rectangle with this clip list.
+
+ +	The OP to use
+
+ +	Whether the source should be repeated to cover the destination
+   	rectangle or whether rendering should be clipped by the source
+
+ +	Whether the mask should be repeated to cover the destination
+ 	rectangle or whether rendering should be clipped by the mask
+
+ +	Whether the mask has a single alpha value for all four channels or
+ 	whether each mask channel should affect the associated source/dest
+	channels.
+	
+These parameters are variously attached to the operands or included in each
+rendering request.
+
+4. Data types
+
+The core protocol rendering system uses a pixel model and applies color only
+in the final generation of the video signal.  A compositing model operates
+on colors, not pixel values so a new datatype is needed to interpret data as
+color instead of just bits.
+
+The "PictFormat" object holds information needed to translate pixel values
+into red, green, blue and alpha channels.  The server has a list of picture
+formats corresponding to the various visuals on the screen.  There are two
+classes of formats, Indexed and Direct.  Indexed PictFormats hold a list of
+pixel values and RGBA values while Direct PictFormats hold bit masks for each
+of R, G, B and A.
+
+The "Picture" object contains a Drawable, a PictFormat and some
+rendering state.  More than one Picture can refer to the same Drawable.
+
+5. Errors
+
+Errors are sent using core X error reports.
+
+PictFormat
+	A value for a PICTFORMAT argument does not name a defined PICTFORMAT.
+
+Picture
+	A value for a PICTURE argument does not name a defined PICTURE.
+
+PictOp
+	A value for a PICTOP argument does not name a defined PICTOP.
+
+GlyphSet
+	A value for a GLYPHSET argument does not name a defined GLYPHSET.
+
+Glyph
+	A value for a GLYPH argument does not name a defined GLYPH in the
+	glyphset.
+
+6. Protocol Types
+
+PICTURE		32-bit value (top three bits guaranteed to be zero)
+PICTFORMAT	32-bit value (top three bits guaranteed to be zero)
+PICTTYPE	{ Indexed, Direct }
+PICTOP		{ Clear, Src, Dst, Over, OverReverse, In, InReverse,
+		  Out, OutReverse, Atop, AtopReverse, Xor, Add, Saturate }
+COLOR		[	
+			red, green, blue, alpha: CARD16
+		]
+CHANNELMASK	[
+			shift, mask: CARD16
+		]
+DIRECTFORMAT	[
+			red, green, blue, alpha: CHANNELMASK 
+		]
+INDEXVALUE	[ 
+			pixel: Pixel; 
+			red, green, blue, alpha: CARD16 
+		]
+PICTFORMINFO	[
+			id:		PICTFORMAT
+			type:		PICTTYPE
+			depth:		CARD8
+			direct:		DIRECTFORMAT
+			colormap:	COLORMAP or None
+		]
+
+PICTVISUAL	[
+			visual:		VISUALID or None
+			format:		PICTFORMAT
+		]
+
+PICTDEPTH	[
+			depth:		CARD8
+			visuals:	LISTofPICTVISUAL
+		]
+
+PICTSCREEN	LISTofPICTDEPTH
+
+DITHERINFO	[
+			name:		ATOM
+			format:		PICTFORMAT
+			width:		CARD16
+			height:		CARD16
+		]
+
+FIXED		32-bit value (top 24 are integer portion, bottom 8 are fraction)
+POINTFIX	[
+			x, y: FIXED
+		]
+POLYEDGE	{ Sharp, Smooth }
+POLYMODE	{ Precise, Imprecise }
+COLORPOINT	[
+			point:		POINTFIX
+			color:		COLOR
+		]
+SPANFIX		[
+			left, right, y: FIXED
+		]
+COLORSPANFIX	[
+			left, right, y: FIXED
+			left_color:	COLOR
+			right_color:	COLOR
+QUAD		[
+			p1, p2, p3, p4:	POINTFIX
+		]
+TRIANGLE	[
+			p1, p2, p3:	POINTFIX
+		]
+TRAP		[
+			top, bottom:	SPANFIX
+		]
+COLORTRIANGLE	[
+			p1, p2, p3:	COLORPOINT
+		]
+COLORTRAP	[
+			top, bottom:	COLORSPANFIX
+		]
+GLYPHSET	32-bit value (top three bits guaranteed to be zero)
+GLYPH		32-bit value
+GLYPHINFO	[
+			width, height:	CARD16
+			x, y:		INT16
+			off-x, off-y:	INT16
+		]
+PICTGLYPH	[
+			info:		GLYPHINFO
+			x, y:		INT16
+		]
+GLYPHABLE	GLYPHSET or FONTABLE
+GLYPHELT8	[
+			dx, dy:		INT16
+			glyphs:		LISTofCARD8
+		]
+GLYPHITEM8	GLYPHELT8 or GLYPHABLE
+GLYPHELT16	[
+			dx, dy:		INT16
+			glyphs:		LISTofCARD16
+		]
+GLYPHITEM16	GLYPHELT16 or GLYPHABLE
+GLYPHELT32	[
+			dx, dy:		INT16
+			glyphs:		LISTofCARD32
+		]
+GLYPHITEM32	GLYPHELT32 or GLYPHABLE
+
+7. Standard PictFormats
+
+The server must support a Direct PictFormat with 8 bits each of red, green,
+blue and alpha as well as a Direct PictFormat with 8 bits of red, green and
+blue and 0 bits of alpha.  The server must also support Direct PictFormats
+with 1, 4 and 8 bits of alpha and 0 bits of r, g and b.
+
+Pixel component values lie in the close range [0,1].  These values are
+encoded in a varying number of bits.  Values are encoded in a straight
+forward manner.  For a component encoded in m bits, a binary encoding b
+is equal to a component value of b/(2^m-1).
+
+A Direct PictFormat with zero bits of alpha component is declared to have
+alpha == 1 everywhere.  A Direct PictFormat with zero bits of red, green and
+blue is declared to have red, green, blue == 0 everywhere.  If any of red,
+green or blue components are of zero size, all are of zero size.  Direct
+PictFormats never have colormaps and are therefore screen independent.
+
+Indexed PictFormats never have alpha channels and the direct component is all
+zeros.  Indexed PictFormats always have a colormap in which the specified
+colors are allocated read-only and are therefore screen dependent.
+
+8. Compositing Operators
+
+For each pixel, the four channels of the image are computed with:
+
+	C = Ca * Fa + Cb * Fb
+
+where C, Ca, Cb are the values of the respective channels and Fa and Fb
+come from the following table:
+
+	PictOp		Fa			Fb
+	------------------------------------------
+	Clear		0			0
+	Src		1			0
+	Dst		0			1
+	Over		1			1-Aa
+	OverReverse	1-Ab			1
+	In		Ab			0
+	InReverse	0			Aa
+	Out		1-Ab			0
+	OutReverse	0			1-Aa
+	Atop		Ab			1-Aa
+	AtopReverse	1-Ab			Aa
+	Xor		1-Ab			1-Aa
+	Add		1			1
+	Saturate	min(1,(1-Ab)/Aa)	1
+
+---
+
+Saturate matches GL with FUNC_ADD, SRC_ALPHA_SATURATE, ONE, except
+that it uses premultiplied alphas while GL uses non-premultiplied alphas.
+
+Remember the idea is to apply (src In mask) Saturate Dst so that
+computing (src In mask) effectively applies alpha values of 'mask' to
+src; the server could 'short circuit' that computation by only multiplying
+the alpha channel and then applying the regular GL SRC_ALPHA_SATURATE
+operator.
+
+---
+
+The result of any compositing operator is always limited to the range
+[0,1] for each component.  Components whose value would be greater than 1
+are set to 1.
+
+When the mask contains separate alpha values for each channel, the
+alpha value resulting from the combination of that value with the source
+alpha channel is used in the final image composition.
+
+9. Polygon Rasterization
+
+All polygons must be convex.  Rendering of concave polygons is unspecified
+except that the result must obey the clipping rules.
+
+Each polygon request fills the region closed by the specified path.  The
+path is automatically closed if the last point does not coincide with the
+first point.
+
+A point is infinitely small and the path is an infinitely thin line.  A
+pixel is inside if the center point of the pixel is inside and the center
+point is not on the boundary.  If the center point is on the boundary, the
+pixel is inside if and only if the polygon interior is immediately to its
+right (x increasing direction).  Pixels with centers along a horizontal edge
+are a special case and are inside if and only if the polygon interior is
+immediately below (y increasing direction).  A polygon contains a pixel if
+the pixel is inside the polygon.
+
+Polygons are rasterized by implicit generating an alpha mask and using that
+in the general compositing operator along with a supplied source image:
+
+	tmp = Rasterize (polygon)
+	Composite (op, dst, src, tmp)
+
+When rasterized with Sharp edges, the mask is generated by setting pixels
+inside the polygon to 1 and pixels outside the mask to 0.
+
+When rasterized with Smooth edges, the mask is generated by creating a square
+around each pixel coordinate and computing the amount of that square covered
+by the polygon.  Yes, this ignores sampling theory but it provides a precise
+definition which is close to the right answer.  This value is truncated to
+the alpha width in the fallback format before application of the compositing
+operator.
+
+When rasterized in Precise mode, the pixelization will match this
+specification exactly.
+
+When rasterized in Imprecise mode, the pixelization may deviate from this
+specification by up to 1/2 pixel along any edge subject to the following
+constraints:
+
+ +	Abutting edges must match precisely.  When specifying two polygons
+	abutting along a common edge, if that edge is specified with the
+	same coordinates in each polygon then the sum of alpha values for
+	pixels inside the union of the two polygons must be precisely one.
+
+ +	Translationally invarient.  The pixelization of the polygon must
+	be the same when either the polygon or the target drawable
+	are translated by any whole number of pixels in any direction.
+
+ +	Sharp edges are honored.  When the polygon is rasterized with Sharp
+	edges, the implicit alpha mask will contain only 1 or 0 for
+	each pixel.
+
+ +	Order independent. Two identical polygons specified with vertices
+	in different orders must generate identical results.
+
+Polygons can also be specified with colors for each vertex.  These color
+values are interpolated along the edges and across each scanline.
+
+When rasterized in Precise mode, the interpolated colors are exact.
+
+When rasterized in Imprecise mode, the color of each pixel may optionally be
+interpolated from a triangle containing the pixel which is formed from any
+three polygon vertices.  Any interpolated color value can err up to 1 lsb in
+each channel.
+
+10. Glyph Rendering
+
+Glyphs are small alpha masks which can be stored in the X server and
+rendered by referring to them by name.  A set of glyphs can be rendered in a
+single request.  Glyphs are positioned by subtracting the x, y elements of
+the GLYPHINFO from the requested rendering position.  The next glyph
+rendering position is set to the current rendering position plus the off-x
+and off-y elements.
+
+Glyphs are stored in GlyphSets and are named within the GlyphSet with
+client-specified 32-bit numbers.
+
+Glyphs can be stored in any PictFormat supported by the server.  All glyphs
+in a GlyphSet are stored in the same format.
+
+11. Dithering
+
+Each screen supports a list of dithers.  There are several standard dithers
+with defined pixelization, the server is free to offer others as well.  The
+width and height of the dither are a hint about the size of the matrix used
+if the dither is ordered.  An unordered dither will have zero in these
+fields.
+
+The standard dithers are:
+
+	"Standard2x2"
+	"Standard4x4"
+	"Standard128x128"
+
+---
+
+Need a notation for specifying pixelization of dithers.
+
+---
+
+12. Extension Initialization
+
+The client must negotiate the version of the extension before executing
+extension requests.  Behavior of the server is undefined otherwise.
+
+QueryVersion
+
+	client-major-version:		CARD32
+	client-minor-version:		CARD32
+
+	->
+
+	major-version:			CARD32
+	minor-version:			CARD32
+
+	The client sends the highest supported version to the server and
+	the server sends the highest version it supports, but no higher than
+	the requested version.  Major versions changes can introduce
+	incompatibilities in existing functionality, minor version
+	changes introduce only backward compatible changes.  It is
+	the clients responsibility to ensure that the server supports
+	a version which is compatible with its expectations.
+
+QueryPictFormats
+
+	->
+
+	fallback:	PICTFORMAT
+	formats:	LISTofPICTFORMINFO
+	screens:	LISTofPICTSCREEN
+
+	The server responds with a list of supported PictFormats and
+	a list of which PictFormat goes with each visual on each screen.
+	Every PictFormat must match a supported depth, but not every
+	PictFormat need have a matching visual.
+
+	The fallback format is used as an intermediate representation
+	in cases where there is no ideal choice.
+
+QueryPictIndexValues
+
+	format:		PICTFORMAT
+
+	->
+
+	values:		LISTofINDEXVALUE
+
+	Errors:
+		PictFormat, Match
+
+	Returns the mapping from pixel values to RGBA values for the
+	specified Indexed PictFormat.  If 'format' does not refer to
+	an Indexed PictFormat a Match error is generated.
+
+QueryDithers
+
+	drawable:	DRAWABLE
+
+	->
+
+	dithers:	LISTofDITHERINFO
+
+	Returns all of the supported dithers on the screen specified by
+	drawable.
+
+13. Extension Requests
+
+CreatePicture
+
+	pid:		PICTURE
+	drawable:	DRAWABLE
+	format:		PICTFORMAT
+	value-mask:	BITMASK
+	value-list:	LISTofVALUE
+
+	Errors:
+		Alloc, Drawable, IDChoice, Match, Pixmap, Picture,
+		PictFormat, Value
+
+	This request creates a Picture object associated with the specified
+	drawable and assigns the identifier pid to it.  Pixel data in the
+	image are interpreted according to 'format'.  It is a Match error
+	to specify a format with a different depth than the drawable.  If
+	the drawable is a Window then the Red, Green and Blue masks must
+	match those in the visual for the window else a Match error is
+	generated.
+
+	The value-mask and value-list specify attributes of the picture that
+	are to be explicitly initialized.  The possible values are:
+	
+	repeat:			BOOL
+	alpha-map:		PICTURE or None
+	alpha-x-origin:		INT16
+	alpha-y-origin:		INT16
+	clip-x-origin:		INT16
+	clip-y-origin:		INT16
+	clip-mask:		PIXMAP or None
+	graphics-exposures:	BOOL
+	subwindow-mode:		{ ClipByChildren, IncludeInferiors }
+	poly-edge:		POLYEDGE
+	poly-mode:		POLYMODE
+	dither:			ATOM or None
+	component-alpha:	BOOL
+	
+	The repeat value controls whether the image is replicated
+	when used as the source or mask in a rendering operation.  When
+	True, the contents are tiled over the destination instead of clipping
+	to the geometry of the drawable.
+
+	The alpha channel of alpha-map is used in place of any alpha channel
+	contained within the drawable for all rendering operations.  The
+	alpha-mask origin is interpreted relative to the origin of drawable.
+	Rendering is additionally clipped by the geometry of alpha-map.
+	Exposures to the window do not affect the contents of alpha-map.
+	Alpha-map must refer to a picture containing a Pixmap, not a Window
+	(or a Match error results).
+
+	The clip-mask restricts reads and writes to drawable.  Only pixels
+	where the clip-mask has bits set to 1 are read or written.  Pixels
+	are not accessed outside the area covered by the clip-mask or where
+	the clip-mask has bits set to 0.  The clip-mask affects all graphics
+	requests, including sources.  The clip-mask origin is interpreted
+	relative to the origin of drawable.  If a pixmap is specified as the
+	clip-mask, it must have depth 1 and have the same root as the
+	drawable (or a Match error results).  If clip-mask is None, then
+	pixels are always drawn, regardless of the clip origin.  The
+	clip-mask can also be set with the SetPictureClipRectangles request.
+	
+	For ClipByChildren, both source and destination windows are
+	additionally clipped by all viewable InputOutput children.  For
+	IncludeInferiors , neither source nor destination window is clipped
+	by inferiors.  This will result in including subwindow contents in
+	the source and drawing through subwindow boundaries of the
+	destination.  The use of IncludeInferiors with a source or
+	destination window of one depth with mapped inferiors of differing
+	depth is not illegal, but the semantics are undefined by this
+	extension.
+
+	The graphics-exposures flag controls GraphicsExposure event
+	generation for Composite and Transform requests (and any similar
+	requests defined by additional extensions).
+
+	Poly-edge and poly-mode control the rasterization of polygons
+	as described above.
+
+	Dither selects which of the available dither patterns should
+	be used.  If dither is None, no dithering will be done.
+
+	Component-alpha indicates whether each image component is
+	intended as a separate alpha value when the picture is used
+	as a mask operand.
+
+	The default component values are
+
+		Component		Default
+		-------------------------------
+		op			Over
+		repeat			False
+		clip-x-origin        	0
+		clip-y-origin          	0
+		clip-mask		None
+		graphics-exposures	True
+		subwindow-mode		ClipByChildren
+		poly-edge		Smooth
+		poly-mode		Precise
+		dither			None
+		component-alpha		False
+
+ChangePicture
+
+	pid:		PICTURE
+	value-mask:     BITMASK
+	value-list:     LISTofVALUE
+
+	Errors:
+		Picture, Alloc, Pixmap, PictOp, Value
+
+	The value-mask and value-list specify which attributes are to be
+	changed.  The values and restrictions are the same as for 
+	CreatePicture.
+
+SetPictureClipRectangles
+
+	picture:	PICTURE
+	clip-x-origin:	INT16
+	clip-y-origin:	INT16
+	rectangles:	LISTofRECTANGLE
+
+	Errors:
+		Alloc, Picture
+
+	This request changes clip-mask in picture to the specified list of
+	rectangles and sets the clip origin.  Input and output will be
+	clipped to remain contained within the rectangles.  The clip origin
+	is interpreted relative to the origin of the drawable associated
+	with picture.  The rectangle coordinates are interpreted relative to
+	the clip origin.  Note that the list of rectangles can be empty,
+	which effectively disables output.  This is the opposite of passing
+	None as the clip-mask in CreatePicture and ChangePicture.
+	
+	Note that output is clipped to the union of all of the rectangles
+	and that no particular ordering among the rectangles is required.
+
+FreePicture
+
+	pid:		PICTURE
+
+	Errors:
+		Picture
+
+	This request deletes the association between the resource ID and the
+	picture and destroys the picture.
+
+Composite
+
+	op:		PICTOP
+	src:		PICTURE
+	mask:		PICTURE or None
+	dst:		PICTURE
+	src-x, src-y:	INT16
+	mask-x, mask-y:	INT16
+	dst-x, dst-y:	INT16
+	width, height:	CARD16
+
+	This request combines the specified rectangle of src and mask with
+	the specified rectangle of dst using op as the compositing
+	operator.  The coordinates are relative their respective drawable's
+	origin.  Rendering is clipped to the geometry of the dst drawable
+	and then to the dst clip-list, the src clip-list and the mask
+	clip-list.
+
+	If the specified rectangle extends beyond src, then if src has
+	the repeat attribute set, the src picture will be tiled to
+	fill the specified rectangle, otherwise rendering is clipped to
+	the src geometry.
+
+        If the specified rectangle extends beyond mask, then if mask has
+	the repeat attribute set, the mask picture will be tiled to
+	fill the specified rectangle, otherwise rendering is clipped to
+	the mask geometry.
+	
+	If src, mask and dst are not in the same format, and one of their
+	formats can hold all without loss of precision, they are converted
+	to that format.  Alternatively, the server will convert each
+	operand to the fallback format.
+
+	If mask is None, it is replaced by a constant alpha value of 1.
+
+	When dst has clip-notify set, a NoExpose event is sent if the
+	rendering operation was not clipped by either src or mask, otherwise
+	a sequence of GraphicsExpose events are sent covering areas in dst
+	where rendering was clipped by src or mask.
+
+Scale
+
+	color-scale:	CARD32
+	alpha-scale:	CARD32
+        src:            PICTURE
+        dst:            PICTURE
+        src-x, src-y:   INT16
+        dst-x, dst-y:   INT16
+        width, height:  CARD16
+
+	This request replaces the specified rectangle in dst with
+	the specified rectangle of src with the components multiplied
+	in the following fashion:
+
+		dst-red   = src-red   * color-scale / 65536
+		dst-green = src-green * color-scale / 65536
+		dst-blue  = src-blue  * color-scale / 65536
+		dst-alpha = src-alpha * alpha-scale / 65536
+
+	The coordinates are relative their respective drawable's
+        origin.  Rendering is clipped to the geometry of the dst drawable
+        and then to the dst clip-list, the src clip-list and the mask
+        clip-list.
+
+        If the specified rectangle extends beyond src, then if src has
+        the repeat attribute set, the src picture will be tiled to
+        fill the specified rectangle, otherwise rendering is clipped to
+        the src geometry.
+
+FillRectangles
+
+	op:		PICTOP
+	dst:		PICTURE
+	color:		COLOR
+	rects:		LISTofRECTANGLE
+
+	This request combines color with the destination drawable in the
+	area specified by rects.  Each rectangle is combined separately;
+	overlapping areas will be rendered multiple times.  The effect is
+	equivalent to compositing with a repeating source picture filled with
+	the specified color.
+
+Trapezoids
+
+	op:		PICTOP
+	src:		PICTURE
+	src-x, src-y:   INT16
+	dst:		PICTURE
+	traps:		LISTofTRAP
+
+	This request rasterizes the list of trapezoids.  For each span, the
+	left coordinate must be less than or equal to the right coordinate.
+	The y coordinate of the top span must be less than or equal to the 
+	y coordinate of the bottom span.  Results are undefined otherwise.
+
+Triangles
+
+	op:		PICTOP
+	src:		PICTURE
+	src-x, src-y:   INT16
+	dst:		PICTURE
+	traps:		LISTofTRIANGLE
+
+	This request rasterizes the list of triangles in the order they
+	occur in the list.
+
+TriStrip
+
+	op:		PICTOP
+	src:		PICTURE
+	src-x, src-y:   INT16
+	dst:		PICTURE
+	points:		LISTofPOINTFIX
+
+	Triangles are formed by initially using the first three points and
+	then by eliminating the first point and appending the next point in
+	the list. If fewer than three points are provided, this request does
+	nothing.
+
+TriFan
+	op:		PICTOP
+	src:		PICTURE
+	src-x, src-y:   INT16
+	dst:		PICTURE
+	points:		LISTofPOINTFIX
+
+	Triangles are formed by initially using the first three points and
+	then by eliminating the second point and appending the next point
+	int the list. If fewer than three points are provided, this request
+	does nothing.
+
+???
+
+Should I bother with these two compressed triangle representations?
+
+???
+
+ColorTrapezoids
+
+	op:		PICTOP
+	dst:		PICTURE
+	triangles:	LISTofCOLORTRAP
+
+	The geometry of the trapezoids must meet the same requirements as
+	for the Trapezoids request.  The trapezoids are filled in the order
+	they occur in the list.
+
+ColorTriangles
+
+	op:		PICTOP
+	dst:		PICTURE
+	triangles:	LISTofCOLORTRIANGLE
+
+	The colored triangles are rasterized in the order they occur in the
+	list.
+
+???
+
+Should I included compressed triangle representations here?
+
+???
+
+Transform
+
+	op:		PICTOP
+	src:            PICTURE
+	dst:            PICTURE
+	src-quad:	QUAD
+	dst-quad:	QUAD
+	filter:		{ Nearest, ... }
+
+	Errors:
+		Picture, Value
+
+	This request combines the specified quadrilateral of src with the
+	specified quadrilateral of dst using op as the compositing operator.
+	The coordinates are relative their respective drawable's origin.
+	Rendering is clipped to the geometry of the dst drawable and then to
+	the dst clip-list and the src clip-list.
+
+	If the specified rectangle extends beyond src, then if src has
+	the repeat attribute set, the src picture will be tiled to
+	fill the specified rectangle, otherwise rendering is clipped to
+	the src geometry.
+
+        If the specified rectangle extends beyond mask, then if mask has
+	the repeat attribute set, the mask picture will be tiled to
+	fill the specified rectangle, otherwise rendering is clipped to
+	the mask geometry.
+	
+	The effect of this request is:
+
+		tmp_image = affine-transform (src, src-quad * dst-quad)
+		tmp_mask = render (dst-quad)
+		Composite (op, dst, tmp_image, tmp_mask)
+
+	That is, the entire transformed source image is masked by an
+	image of the destination quadrilateral and rendered using the Composite
+	operator.
+
+	If the specified quadrilateral extends beyond src, then if src has
+	the repeat attribute set, the src picture will be tiled to
+	fill the specified rectangle, otherwise rendering is clipped to
+	the src geometry.
+	
+	It is a Value error to specify a self intersecting quadrilateral for
+	either src-quad or dst-quad.
+	
+	If src and dst are not in the same format, and one of their formats
+	can hold both without loss of precision, they are converted to that
+	format.  Alternatively, the server will convert each operand to the
+	fallback format.
+
+	The compositing operator from the src picture is used to merge the
+	images together.
+
+	If filter is Nearest, then the nearest (converted) pixel values to
+	each destination pixel is used without averaging.
+
+	When dst has clip-notify set, a NoExpose event is sent if the
+	rendering operation was not clipped by src, otherwise a sequence of
+	GraphicsExpose events are sent covering areas in dst where rendering
+	was clipped by src.
+
+???
+
+	What (small) set of filters should be included
+
+???
+
+---
+
+	Need to describe in more detail the semantics here
+
+	Looks like the geometric extension needs to be tied to the
+	compositing extension (sigh).
+
+---
+
+
+CreateGlyphSet
+
+	gsid:		GLYPHSET
+	format:		PICTFORMAT
+
+	Errors:
+		Alloc, IDChoice, PictFormat, Match
+
+	This request creates a container for glyphs.  The glyphset and
+	all contained glyphs are destroyed when gsid and any other names
+	for the glyphset are freed.  Format must be a Direct format, when
+	it contains RGB values, the glyphs are composited using
+	component-alpha True, otherwise they are composited using
+	component-alpha False.
+
+ReferenceGlyphSet
+
+	gsid:		GLYPHSET
+	existing:	GLYPHSET
+
+	Errors:
+		Alloc, IDChoice, GlyphSet
+
+	This request creates an additional name for the existing glyphset.
+	The glyphset will not be freed until all references to it are
+	destroyed.
+
+FreeGlyphSet
+
+	glyphset:	GLYPHSET
+
+	Errors:
+		GlyphSet
+
+	This request frees the name for the glyphset.  When all names have
+	been freed, the glyphset and all contained glyphs are freed.
+
+AddGlyphs
+	glyphset:	GLYPHSET
+	glyphids:	LISTofCARD32
+	glyphs:		LISTofGLYPHINFO
+	data:		LISTofBYTE
+
+	Errors:
+		GlyphSet, Alloc
+
+	This request adds glyphs to glyphset.  The image for the glyphs
+	are stored with each glyph in a separate Z-format image padded to a
+	32-bit boundary.  Existing glyphs with the same names are replaced.
+
+AddGlyphsFromPicture
+
+	glyphset:	GLYPHSET
+	src:		PICTURE
+	glyphs:		LISTofPICTGLYPH
+
+	Errors:
+		GlyphSet, Alloc
+
+	This request adds glyphs to glyphset by copying them from src from
+	the locations included in glyphs.  Existing glyphs with the same
+	names are replaced.  Src may be in a different PictFormat than
+	glyphset, in which case the images are converted to the glyphset
+	format.
+	
+FreeGlyphs
+
+	glyphset:	GLYPHSET
+	glyphs:		LISTofGLYPH
+
+	Errors:
+		GlyphSet, Match
+
+	This request removes glyphs from glyphset.  Each glyph must exist
+	in glyphset (else a Match error results).
+
+CompositeGlyphs8
+CompositeGlyphs16
+CompositeGlyphs32
+
+	op:		PICTOP
+	src:		PICTURE
+	dst:		PICTURE
+	mask-format:	PICTFORMAT or None
+	glyphset:	GLYPHABLE
+	src-x, src-y:	INT16
+	dst-x, dst-y:	INT16
+	glyphcmds:	LISTofGLYPHITEM8	CompositeGlyphs8
+	glyphcmds:	LISTofGLYPHITEM16	CompositeGlyphs16
+	glyphcmds:	LISTofGLYPHITEM32	CompositeGlyphs32
+
+	Errors:
+		Picture, PictOp, PictFormat, GlyphSet, Glyph
+
+	The dst-x and dst-y coordinates are relative to the drawable's
+	origin and specify the baseline starting position (the initial glyph
+	origin).  Each glyph item is processed in turn.  A glyphset item
+	causes the glyhpset to be used for subsequent glyphs.  Switching
+	among glyphsets does not affect the next glyph origin.  A glyph
+	element delta-x and delta-y specify additional changes in the
+	position along the x and y axes before the string is drawn; the
+	deltas are always added to the glyph origin.
+
+	All contained GLYPHSETs are always transmitted most significant byte
+	first.  
+	
+	If a GlyphSet error is generated for an item, the previous items may
+	have been drawn.
+	
+	When mask-format is not None, glyphs are rendered in the following
+	way with the effective mask computed in mask-format:
+
+		tmp = temporary alpha picture
+		Combine (Zero, tmp, tmp, None)
+		for each glyph
+			Combine (Add, tmp, glyph, None)
+		Combine (op, dst, source, tmp)
+
+	When mask-format is None, glyphs are rendered in the order specified
+	directly to the destination:
+
+		for each glyph
+			Combine (op, dst, source, glyph)
+

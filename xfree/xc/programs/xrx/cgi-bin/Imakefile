@@ -1,0 +1,33 @@
+XCOMM $TOG: Imakefile /main/12 1997/07/15 15:31:02 kaleb $
+
+#ifndef CgiBinDir
+#define CgiBinDir /files/web/cgi-bin
+#endif
+#ifndef ProxyManager
+#define ProxyManager tcp/www.x.org:6500
+#endif
+#ifndef WinCenterHost
+#define WinCenterHost windy.osf.org
+#endif
+
+    CGIBINDIR = CgiBinDir
+    PROXYMNGR = ProxyManager
+    WINCENTERHOST = WinCenterHost
+
+#define PerlTarget(name)						@@\
+all:: name.pl								@@\
+									@@\
+name.pl: name								@@\
+	m4 -DCGIBINDIR="$(CGIBINDIR)" -DXPROJECT_ROOT="$(PROJECTROOT)" -DXPROXYMNGR="$(PROXYMNGR)" -DWINCENTERHOST="$(WINCENTERHOST)" name >$@ @@\
+InstallProgramWithFlags(name.pl,CgiBinDir,$(INSTBINFLAGS))
+
+PerlTarget(bitmap)
+PerlTarget(dtcm)
+PerlTarget(excel)
+PerlTarget(xclock)
+PerlTarget(xload)
+
+InstallProgramWithFlags(dtcm.sh,CgiBinDir,$(INSTBINFLAGS))
+
+clean::
+	$(RM) *.pl

@@ -1,0 +1,93 @@
+XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.15 2000/12/01 00:24:35 dawes Exp $
+
+#include <Server.tmpl>
+
+#if defined(LinuxArchitecture) && defined(AlphaArchitecture)
+
+XCOMM Alpha (Linux) PCI driver
+
+PCIDRVRSRC = axpPci.c
+PCIDRVROBJ = axpPci.o
+
+#elif defined(LinuxArchitecture) && defined(SparcArchitecture)
+
+XCOMM Sparc (Linux) PCI driver
+
+PCIDRVRSRC = sparcPci.c
+PCIDRVROBJ = sparcPci.o
+SBUSDRVSRC = linuxSbus.c
+SBUSDRVOBJ = linuxSbus.o
+
+#elif defined(LinuxArchitecture) && (defined(PpcArchitecture) || defined(MipsArchitecture) || defined(ia64Architecture))
+
+XCOMM generic linux PCI driver (using /proc/bus/pci, requires kernel 2.2)
+
+PCIDRVRSRC = linuxPci.c
+PCIDRVROBJ = linuxPci.o
+
+#elif defined(OpenBSDArchitecture) && defined(PpcArchitecture)
+
+XCOMM OpenBSD/powerpc
+
+PCIDRVRSRC = freebsdPci.c
+PCIDRVROBJ = freebsdPci.o
+
+#elif defined(PpcArchitecture)
+
+XCOMM PowerPC PCI drivers
+
+PCIDRVRSRC = ppcPci.c
+PCIDRVROBJ = ppcPci.o
+
+#elif defined(LinuxArchitecture) && (defined(i386Architecture))
+
+XCOMM ix86 PCI driver with OS fallback for Linux
+
+PCIDRVRSRC = ix86Pci.c linuxPci.c
+PCIDRVROBJ = ix86Pci.o linuxPci.o
+
+#elif defined(FreeBSDArchitecture) && defined(AlphaArchitecture)
+
+
+XCOMM generic FreeBSD PCI driver (using /dev/pci)
+
+PCIDRVRSRC = freebsdPci.c
+PCIDRVROBJ = freebsdPci.o
+
+#elif defined(i386Architecture) || defined(ia64Architecture)
+
+XCOMM ix86 PCI driver
+
+PCIDRVRSRC = ix86Pci.c
+PCIDRVROBJ = ix86Pci.o
+XCOMM PCIDRVRSRC = linuxPci.c
+XCOMM PCIDRVROBJ = linuxPci.o
+
+#else
+XCOMM no PCI driver -- shouldn't get here
+#endif
+
+SRCS = Pci.c $(PCIDRVRSRC) $(SBUSDRVSRC)
+OBJS = Pci.o $(PCIDRVROBJ) $(SBUSDRVOBJ)
+
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
+	   -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+
+NormalLibraryObjectRule()
+SubdirLibraryRule($(OBJS))
+
+/*
+ * egcs 1.1.2 as provided with some Linux distributions has an optimisation
+ * bug that results in bad code for this file.
+ */
+#if Egcs112Bug
+SpecialCObjectRule(Pci,NullParameter,-O0)
+#endif
+
+DependTarget()
+

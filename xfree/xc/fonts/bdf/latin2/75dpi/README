@@ -1,0 +1,43 @@
+                       Proportional ISO8859-2 fonts
+                       ============================
+
+   In the packages times{75,100}dpi.tar.{gz,Z} there are 24 Adobe Times
+Roman fonts, in the packages all{75,100}dpi.tar.gz there are 178 fonts
+(172 for 100dpi) from the distribution of the X11R6 translated to
+ISO8859-2.
+
+                             Installation
+
+Unpack the archive:
+
+    gunzip < all100dpi.tar.gz | tar xvf -
+
+you will get directory 100dpi or 75dpi. Do 'cd' to this directory.
+
+On IRIX, Linux or other systems which have X11R6 or X11R5 and use fonts
+in .pcf.Z format in /usr/lib/X11/fonts/{75,100}dpi just run ./install
+script. If you ran it from X, it may be necessary to use
+
+    xset fp rehash
+
+to tell X server there are new fonts.
+
+On Solaris 2.x (SunOS 5.x) or ULTRIX you can check whether the script
+is correct and run it too. On other systems it would be necessary to do
+some script modifications, eg. if your X server use snf then add an
+option which will run bdftosnf instead of bdftopcf to the script (and
+remove compress).
+
+I don't know how to install the fonts on SunOS 4.x. Maybe somebody
+helps...
+
+If you want to use fonts in Netscape, start new Nestcape after fonts
+installation and set
+
+Options->Document Encoding->Central European (Latin-2)
+Options->General Preferences->Fonts->For the Encoding->
+  ->Central European (iso-8859-2)
+Options->General Preferences->Fonts->Use the Proportional Font->
+  ->Times (Adobe)
+
+                                               Petr.Kolar@vslib.cz

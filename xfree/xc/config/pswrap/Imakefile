@@ -1,0 +1,30 @@
+XCOMM $XFree86: xc/config/pswrap/Imakefile,v 1.6 2000/06/07 21:58:25 tsi Exp $
+
+   FRIENDSDEF = -DFRIENDSFILE='"<DPS/dpsclient.h>"'
+      DEFINES = -DXENVIRONMENT
+      DEPLIBS =
+       YFLAGS = -d
+
+SRCS = main.c pswdict.c pswfile.c \
+	systemnames.c psw.c pswstring.c pswsemantics.c
+
+OBJS = main.o pswparser.o lexer.o pswdict.o pswfile.o \
+	systemnames.o psw.o pswstring.o pswsemantics.o
+
+#if CrossCompiling
+ComplexHostProgramTarget(pswrap)
+#else
+ComplexProgramTarget(pswrap)
+#endif
+
+SpecialObjectRule(pswfile.o,pswfile.c,$(FRIENDSDEF))
+
+LexFile(lexer)
+
+YaccFile(pswparser,$(YFLAGS))
+
+#ifdef OS2Architecture
+all::
+	$(CP) ProgramTargetName(pswrap) /
+#endif
+

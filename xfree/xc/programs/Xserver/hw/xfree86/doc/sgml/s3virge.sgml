@@ -1,0 +1,62 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN" [
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+]>
+
+<article>
+<title> Information for S3 ViRGE Users
+<author>The XFree86 Project Inc.
+<date>10 Jul 1999
+
+<ident>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/s3virge.sgml,v 1.3 2000/11/28 20:59:17 dawes Exp $
+</ident>
+
+<toc>
+
+<sect> Supported hardware
+<p>
+The s3virge driver in XFree86 &relvers; supports the S3 ViRGE, ViRGE DX, GX, MX, MX+, and VX chipsets.  A majority of testing is done on ViRGE DX chips, making them the most stable to date.  This release has improved support for ViRGE GX2 stability, XVideo support for ViRGE DX (tested) and ViRGE (untested) in depth 16 and 24, conversion to fb framebuffer rendering, and support for the new Render extension (untested).
+
+This driver is moderately stable, however please use caution with any new install.  Please report any problems to
+<email>XFree86@Xfree86.org</email>
+using the appropriate bug report sheet. 
+
+<sect>Features:
+<p>
+
+<itemize>
+<item>Fully accelerated support for S3 ViRGE family video adapters
+<item>uses linear frame buffer
+<item>supports resolutions up to 2048x2048
+<item>supports color depths of 8, 15, 16, 24.
+<item>full use of video card memory for acceleration caching when visible framebuffer leaves extra memory
+</itemize>
+
+<sect>Configuration:
+<p>
+
+The driver auto-detects RAM size, RAMDAC and ClockChip. Do not bother putting 
+these in your "Device" section. 
+
+<sect>Documentation:
+<p>
+
+The driver has several supported options which are documented in the s3virge man
+page.  Please refer to it for additional details about XF86Config options.
+
+<sect>Support:
+<p>
+For support with XFree86 video drivers please refer to our web site at <url name="XFree86" url="http://www.XFree86.org">.  The web page has a FAQ and bug reporting form available.  For problems not addressed in the web page please contact our support email address  <email>XFree86@Xfree86.org</email>
+
+<sect>Authors
+<p>
+
+<itemize>
+<item>Mark Vojkovich <email>mvojkovi@ucsd.edu</email>
+<item>Sebastien Marineau
+<item>Harald Koenig <email>koenig@tat.physik.uni-tuebingen.de</email>
+<item>Matt Grossman <email>mattg@oz.net</email>
+<item>Kevin Brosius <email>Cobra@compuserve.com</email>
+</itemize>
+
+</article>
