@@ -203,7 +203,6 @@ static void
 wsconsReadInput(InputInfoPtr pInfo)
 {
     MouseDevPtr pMse;
-    static int lastButtons = 0;
     static struct wscons_event eventList[NUMEVENTS];
     int n, c; 
     struct wscons_event *event = eventList;
@@ -223,7 +222,7 @@ wsconsReadInput(InputInfoPtr pInfo)
 
     n /= sizeof(struct wscons_event);
     while( n-- ) {
-	int buttons = lastButtons;
+	int buttons = pMse->lastButtons;
 	int dx = 0, dy = 0, dz = 0, dw = 0;
 	switch (event->type) {
 	case WSCONS_EVENT_MOUSE_UP:
@@ -249,8 +248,6 @@ wsconsReadInput(InputInfoPtr pInfo)
 		    event->type);
 	    continue;
 	}
-
-	lastButtons = buttons;
 
 	pMse->PostEvent(pInfo, buttons, dx, dy, dz, dw);
 	++event;
