@@ -1274,8 +1274,7 @@ WSKbdToKeycode(int keycode)
 			return wsSunMap[keycode];
 #endif
 	default:
-		ErrorF("Unknown wskbd type %d\n", xf86Info.wsKbdType);
-		return KEY_UNKNOWN;
+		return keycode;
 	}
 }
 

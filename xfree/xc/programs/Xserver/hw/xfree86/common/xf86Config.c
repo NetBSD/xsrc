@@ -1186,10 +1186,9 @@ configInputKbd(IDevPtr inputp)
 	     break;
 #endif
      default:
-	     xf86ConfigError("Unsupported wskbd type \"%d\"", 
-			     xf86Info.wsKbdType);
-	     close(xf86Info.kbdFd);
-	     return FALSE;
+	     xf86Msg(X_PROBED, "Keyboard type: unknown (%d)\n",
+		 xf86Info.wsKbdType);
+	     break;
      }
 #endif
   } else {
