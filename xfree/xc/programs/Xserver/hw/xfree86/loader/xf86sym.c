@@ -205,6 +205,8 @@ extern long __umodsi3(long, long);
 #endif
 
 #if defined(__arm__) && defined(__NetBSD__)
+extern unsigned int IOPortBase;
+
 /* pull in the softfloat functions */
 extern float __addsf3 (float, float);
 extern double __adddf3 (double, double);
@@ -232,6 +234,7 @@ extern int __gedf2(double, double);
 extern int __gtdf2(double, double);
 extern double __negdf2(double);
 
+#pragma weak IOPortBase
 #pragma weak __addsf3
 #pragma weak __adddf3
 #pragma weak __subsf3
@@ -1171,6 +1174,7 @@ LOOKUP xfree86LookupTab[] = {
 
 #if defined(__NetBSD__)
 #if defined(__arm__)
+    SYMFUNC(IOPortBase)
     SYMFUNC(__addsf3)
     SYMFUNC(__adddf3)
     SYMFUNC(__subsf3)
