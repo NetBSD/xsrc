@@ -41,7 +41,7 @@ interest in or to any trademark, service mark, logo or trade name of
 Sun Microsystems, Inc. or its licensors is granted.
 
 */
-/* $XFree86: xc/lib/X11/XlcDL.c,v 1.6 2002/06/03 21:50:32 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlcDL.c,v 1.3.4.2 2002/09/04 02:38:09 dawes Exp $ */
 
 #include <stdio.h>
 #if defined(hpux)
@@ -242,7 +242,7 @@ const char *lc_dir;
      * reject this for possible security issue
      */
     if (strstr (dl_name, "../"))
-      return NULL;
+	return NULL;
 
 #if defined(_LP64) && !defined(__NetBSD__)
     len = (lc_dir ? strlen(lc_dir) : 0 ) +
@@ -399,10 +399,36 @@ _XlcDynamicLoad(lc_name)
     for (; count-- > 0; objects_list++) {
         if (objects_list->type != XLC_OBJECT ||
 	    strcmp(objects_list->locale_name, lc_name)) continue;
-	if (!open_object (objects_list, lc_dir))
-	    continue;
+	if (!objects_list->dl_module) {
+	  path = __lc_path(objects_list->dl_name, lc_dir);
+	  if (!path)
+	      continue;
+#if defined(hpux)
+	  objects_list->dl_module = shl_load(path, BIND_DEFERRED, 0L);
+#else
+	  objects_list->dl_module = dlopen(path, RTLD_LAZY);
+#endif
+	  Xfree(path);
+	  if (!objects_list->dl_module) continue;
+	}
+#if defined(hpux)
+	getsyms_cnt = shl_getsymbols(objects_list->dl_module, TYPE_PROCEDURE,
+		EXPORT_SYMBOLS, malloc, &symbols);
 
-	lc_loader = (XLCd(*)())fetch_symbol (objects_list, objects_list->open);
+	for(i=0; i<getsyms_cnt; i++) {
+	    if(!strcmp(symbols[i].name, objects_list->open)) {
+		lc_loader = symbols[i].value;
+		break;
+	    }
+	}
+
+	if(getsyms_cnt > 0) {
+	    free(symbols);
+	}
+#else
+	lc_loader = (XLCd(*)())try_both_dlsym(objects_list->dl_module,
+					      objects_list->open);
+#endif
 	if (!lc_loader) continue;
 	lcd = (*lc_loader)(lc_name);
 	if (lcd != (XLCd)NULL) {
@@ -441,11 +467,31 @@ char *res_name, *res_class;
   for (; count-- > 0; objects_list++) {
     if (objects_list->type != XIM_OBJECT ||
 	strcmp(objects_list->locale_name, lc_name)) continue;
+    if (!objects_list->dl_module) {
+      path = __lc_path(objects_list->dl_name, lc_dir);
+      if (!path)
+	  continue;
+#if defined(hpux)
+      objects_list->dl_module = shl_load(path, BIND_DEFERRED, 0L);
+#else
+      objects_list->dl_module = dlopen(path, RTLD_LAZY);
+#endif
+      Xfree(path);
+      if (!objects_list->dl_module) continue;
+    }
+#if defined(hpux)
+    getsyms_cnt = shl_getsymbols(objects_list->dl_module, TYPE_PROCEDURE,
+	EXPORT_SYMBOLS, malloc, &symbols);
 
     if (!open_object (objects_list, lc_dir))
         continue;
 
-    im_openIM = (XIM(*)())fetch_symbol(objects_list, objects_list->open);
+    if(getsyms_cnt > 0) {
+	free(symbols);
+    }
+#else
+    im_openIM = (XIM(*)())try_both_dlsym(objects_list->dl_module,
+					 objects_list->open);
     if (!im_openIM) continue;
     im = (*im_openIM)(lcd, display, rdb, res_name, res_class);
     if (im != (XIM)NULL) {
@@ -487,11 +533,35 @@ XPointer	*client_data;
   for (; count-- > 0; objects_list++) {
     if (objects_list->type != XIM_OBJECT ||
 	strcmp(objects_list->locale_name, lc_name)) continue;
+    if (!objects_list->dl_module) {
+      path = __lc_path(objects_list->dl_name, lc_dir);
+      if (!path)
+	  continue;
+#if defined(hpux)
+      objects_list->dl_module = shl_load(path, BIND_DEFERRED, 0L);
+#else
+      objects_list->dl_module = dlopen(path, RTLD_LAZY);
+#endif
+      Xfree(path);
+      if (!objects_list->dl_module) continue;
+    }
+#if defined(hpux)
+    getsyms_cnt = shl_getsymbols(objects_list->dl_module, TYPE_PROCEDURE,
+	EXPORT_SYMBOLS, malloc, &symbols);
 
-    if (!open_object (objects_list, lc_dir))
-        continue;
-    im_registerIM = (Bool(*)())fetch_symbol(objects_list,
-					    objects_list->im_register);
+    for(i=0; i<getsyms_cnt; i++) {
+	if(!strcmp(symbols[i].name, objects_list->open)) {
+	    im_registerIM = symbols[i].value;
+	    break;
+	}
+     }
+
+    if(getsyms_cnt > 0) {
+	free(symbols);
+    }
+#else
+    im_registerIM = (Bool(*)())try_both_dlsym(objects_list->dl_module,
+					      objects_list->im_register);
     if (!im_registerIM) continue;
     ret_flag = (*im_registerIM)(lcd, display, rdb,
 				res_name, res_class,
@@ -532,12 +602,31 @@ XPointer	*client_data;
   for (; count-- > 0; objects_list++) {
     if (objects_list->type != XIM_OBJECT ||
 	strcmp(objects_list->locale_name, lc_name)) continue;
+    if (!objects_list->dl_module) {
+      path = __lc_path(objects_list->dl_name, lc_dir);
+      if (!path)
+	  continue;
+#if defined(hpux)
+      objects_list->dl_module = shl_load(path, BIND_DEFERRED, 0L);
+#else
+      objects_list->dl_module = dlopen(path, RTLD_LAZY);
+#endif
+      Xfree(path);
+      if (!objects_list->dl_module) continue;
+    }
+#if defined(hpux)
+    getsyms_cnt = shl_getsymbols(objects_list->dl_module, TYPE_PROCEDURE,
+	EXPORT_SYMBOLS, malloc, &symbols);
 
     if (!objects_list->refcount) /* Must already be opened */
         continue;
 
-    im_unregisterIM = (Bool(*)())fetch_symbol(objects_list,
-					      objects_list->im_unregister);
+    if(getsyms_cnt > 0) {
+	free(symbols);
+    }
+#else
+    im_unregisterIM = (Bool(*)())try_both_dlsym(objects_list->dl_module,
+						objects_list->im_unregister);
 
     if (!im_unregisterIM) continue;
     ret_flag = (*im_unregisterIM)(lcd, display, rdb,
@@ -599,10 +688,35 @@ char *res_class;
   for (; count-- > 0; objects_list++) {
     if (objects_list->type != XOM_OBJECT ||
 	strcmp(objects_list->locale_name, lc_name)) continue;
-    if (!open_object (objects_list, lc_dir))
-        continue;
-    
-    om_openOM = (XOM(*)())fetch_symbol(objects_list, objects_list->open);
+    if (!objects_list->dl_module) {
+      path = __lc_path(objects_list->dl_name, lc_dir);
+      if (!path)
+	  continue;
+#if defined(hpux)
+      objects_list->dl_module = shl_load(path, BIND_DEFERRED, 0L);
+#else
+      objects_list->dl_module = dlopen(path, RTLD_LAZY);
+#endif
+      Xfree(path);
+      if (!objects_list->dl_module) continue;
+    }
+#if defined(hpux)
+    getsyms_cnt = shl_getsymbols(objects_list->dl_module, TYPE_PROCEDURE,
+	EXPORT_SYMBOLS, malloc, &symbols);
+
+    for(i=0; i<getsyms_cnt; i++) {
+	if(!strcmp(symbols[i].name, objects_list->open)) {
+	    om_openOM = symbols[i].value;
+	    break;
+	}
+     }
+
+    if(getsyms_cnt > 0) {
+	free(symbols);
+    }
+#else
+    om_openOM = (XOM(*)())try_both_dlsym(objects_list->dl_module,
+					 objects_list->open);
     if (!om_openOM) continue;
     om = (*om_openOM)(lcd, display, rdb, res_name, res_class);
     if (om != (XOM)NULL) {
