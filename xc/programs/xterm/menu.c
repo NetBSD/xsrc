@@ -1,5 +1,5 @@
 /* $XConsortium: menu.c /main/66 1996/12/01 23:46:59 swick $ */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.32 2000/03/03 20:02:33 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.33 2000/03/31 20:13:45 dawes Exp $ */
 /*
 
 Copyright 1999-2000 by Thomas E. Dickey <dickey@clark.net>
@@ -765,7 +765,10 @@ static void do_delete_del (
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    term->screen.delete_is_del = ! term->screen.delete_is_del;
+    if (xtermDeleteIsDEL())
+	term->screen.delete_is_del = False;
+    else
+	term->screen.delete_is_del = True;
     update_delete_del();
 }
 
