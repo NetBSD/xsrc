@@ -1066,7 +1066,8 @@ KbdGetMapping (InputInfoPtr pInfo, KeySymsPtr pKeySyms, CARD8 *pModMap)
                     break;
 #endif
 	       default:
-		    ErrorF("Unknown wskbd type %d\n", pKbd->wsKbdType);
+                    pKbd->RemapScanCode = ATScancode;
+                    break;
            }
       break;
 #endif
