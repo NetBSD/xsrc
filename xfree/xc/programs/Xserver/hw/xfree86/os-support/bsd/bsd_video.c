@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.40 2000/12/13 07:02:45 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.39 2000/12/05 21:18:38 dawes Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -78,6 +78,7 @@
 #include <machine/sysarch.h>
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
+#include "xf86Axp.h"
 #endif
 #endif
 
@@ -129,6 +130,12 @@ struct memAccess ioMemInfo = { CONSOLE_GET_IO_INFO, NULL, NULL,
 #ifdef __alpha__
 #ifdef __FreeBSD__
 extern unsigned long dense_base(void);
+
+static int axpSystem = -1;
+static unsigned long hae_thresh;
+static unsigned long hae_mask;
+static unsigned long bus_base;
+static unsigned long sparse_size;
 
 static unsigned long
 memory_base(void)
@@ -363,6 +370,11 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 	    xf86Msg(X_INFO,"Machine needs sparse mapping\n");
 	    pVidMem->mapMem = mapVidMemSparse;
 	    pVidMem->unmapMem = unmapVidMemSparse;
+	    if (axpSystem == -1)
+                axpSystem = bsdGetAXP(); 
+	    hae_thresh = xf86AXPParams[axpSystem].hae_thresh;
+            hae_mask = xf86AXPParams[axpSystem].hae_mask;
+            sparse_size = xf86AXPParams[axpSystem].size;
 	}
 #elif defined(__arm32__)
 	pVidMem->mapMem = armMapVidMem;
@@ -1577,8 +1589,8 @@ readSparse8(pointer Base, register unsigned long Offset)
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
     shift = (Offset & 0x3) << 3;
-      if (Offset >= (1UL << 24)) {
-        msb = Offset & 0xf8000000UL;
+      if (Offset >= (hae_thresh)) {
+        msb = Offset & hae_mask;
         Offset -= msb;
 	if (msb_set != msb) {
 	sethae(msb);
@@ -1599,8 +1611,8 @@ readSparse16(pointer Base, register unsigned long Offset)
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
     shift = (Offset & 0x2) << 3;
-    if (Offset >= (1UL << 24)) {
-        msb = Offset & 0xf8000000UL;
+    if (Offset >= (hae_thresh)) {
+        msb = Offset & hae_mask;
         Offset -= msb;
       if (msb_set != msb) {
 	sethae(msb);
@@ -1625,8 +1637,8 @@ writeSparse8(int Value, pointer Base, register unsigned long Offset)
     register unsigned int b = Value & 0xffU;
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
-    if (Offset >= (1UL << 24)) {
-      msb = Offset & 0xf8000000;
+    if (Offset >= (hae_thresh)) {
+      msb = Offset & hae_mask;
       Offset -= msb;
       if (msb_set != msb) {
 	sethae(msb);
@@ -1644,8 +1656,8 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset)
     register unsigned int w = Value & 0xffffU;
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
-    if (Offset >= (1UL << 24)) {
-      msb = Offset & 0xf8000000;
+    if (Offset >= (hae_thresh)) {
+      msb = Offset & hae_mask;
       Offset -= msb;
       if (msb_set != msb) {
 	sethae(msb);
@@ -1673,8 +1685,8 @@ writeSparseNB8(int Value, pointer Base, register unsigned long Offset)
     register unsigned int b = Value & 0xffU;
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
-    if (Offset >= (1UL << 24)) {
-      msb = Offset & 0xf8000000;
+    if (Offset >= (hae_thresh)) {
+      msb = Offset & hae_mask;
       Offset -= msb;
       if (msb_set != msb) {
 	sethae(msb);
@@ -1691,8 +1703,8 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
     register unsigned int w = Value & 0xffffU;
 
     Offset += (unsigned long)Base - (unsigned long)memBase;
-    if (Offset >= (1UL << 24)) {
-      msb = Offset & 0xf8000000;
+    if (Offset >= (hae_thresh)) {
+      msb = Offset & hae_mask ;
       Offset -= msb;
       if (msb_set != msb) {
 	sethae(msb);

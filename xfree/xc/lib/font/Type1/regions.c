@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/regions.c,v 3.4 2000/04/28 18:19:20 eich Exp $ */
+/* $XFree86: xc/lib/font/Type1/regions.c,v 3.2 1999/08/21 13:47:45 dawes Exp $ */
  /* REGIONS  CWEB         V0023 LOTS                                 */
 /*
 :h1 id=regions.REGIONS Module - Regions Operator Handler
