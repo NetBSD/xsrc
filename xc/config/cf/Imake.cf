@@ -134,10 +134,6 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 #   define ArcArchitecture
 #   undef mips
 # endif
-# ifdef __alpha__
-#   define AlphaArchitecture
-#   undef __alpha__
-# endif
 # ifdef mc68000
 #   define Mc68020Architecture
 # endif
