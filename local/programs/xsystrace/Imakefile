@@ -9,7 +9,6 @@ PIXMAPS= pixmaps/deny-always.xpm \
 
         DEPLIBS = XawClientDepLibs XkbClientDepLibs
 LOCAL_LIBRARIES = XawClientLibs XkbClientLibs
-EXTRA_LIBRARIES = -lpthread
            SRCS = callbacks.c interface.c main.c
            OBJS = callbacks.o interface.o main.o
         HEADERS = callbacks.h interface.h
