@@ -242,6 +242,7 @@ static PatternRec stdPatterns[] = {
     {"^lib(.*)\\.so$",},
     {"^lib(.*)\\.a$",},
     {"(.*)_drv\\.so$",},
+    {"^lib(.*)_drv\\.so$",},
     {"(.*)_drv\\.o$",},
     {"(.*)\\.so$",},
     {"(.*)\\.a$",},
