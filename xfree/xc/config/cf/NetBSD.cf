@@ -261,7 +261,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  */
 #if UseElfFormat
 # if (OSMajorVersion > 0 && defined(i386Architecture)) || \
-      defined(PpcArchitecture)
+      defined(PpcArchitecture) || defined(Sparc64Architecture)
 #  ifndef  DoLoadableServer
 #   define DoLoadableServer	YES
 #  endif
