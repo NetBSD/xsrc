@@ -673,12 +673,14 @@ extern XID GenerateAuthorization(
 #endif
 );
 
+#ifdef ThisIsASecurityProblem   /* This will be removed in the next XFree/TOG release */
 extern void ExpandCommandLine(
 #if NeedFunctionPrototypes
     int * /*pargc*/,
     char *** /*pargv*/
 #endif
 );
+#endif
 
 extern int ddxProcessArgument(
 #if NeedFunctionPrototypes

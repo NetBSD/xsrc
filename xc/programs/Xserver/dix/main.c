@@ -250,7 +250,9 @@ main(argc, argv)
     else
 	restart = 1;
 
+#ifdef ThisIsASecurityProblem	/* This will be removed in the next XFree/TOG release */
     ExpandCommandLine(&argc, &argv);
+#endif
 
     /* These are needed by some routines which are called from interrupt
      * handlers, thus have no direct calling path back to main and thus
