@@ -2214,8 +2214,12 @@ IceReplyWaitInfo 	*replyWait;
     pData = pStart;
     pEnd = pStart + (length << 3);
 
-    SKIP_STRING (pData, swap, pEnd);				     /* vendor */
-    SKIP_STRING (pData, swap, pEnd);				     /* release */
+    SKIP_STRING (pData, swap, pEnd,
+		 BAIL_STRING(iceConn, ICE_ProtocolReply,
+		             pStart));				/* vendor */
+    SKIP_STRING (pData, swap, pEnd,
+		 BAIL_STRING(iceConn, ICE_ProtocolReply,
+		            pStart));				/* release */
 
     CHECK_COMPLETE_SIZE (iceConn, ICE_ProtocolReply,
 	length, pData - pStart + SIZEOF (iceProtocolReplyMsg),
