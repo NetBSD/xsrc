@@ -1805,6 +1805,8 @@ NetBSDundoWC(int screenNum, pointer list)
 	struct mtrr *mtrrp = (struct mtrr *)list;
 	int n;
 
+	if (mtrrp == NULL)
+		return;
 	n = 1;
 	mtrrp->flags &= ~MTRR_VALID;
 	i386_set_mtrr(mtrrp, &n);
