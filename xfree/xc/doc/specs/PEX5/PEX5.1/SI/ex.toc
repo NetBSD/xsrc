@@ -1,5 +1,5 @@
 \."
-\." $XConsortium: ex.toc,v 5.3 94/04/17 20:05:31 rws Exp $
+\." $Xorg: ex.toc,v 1.3 2000/08/17 19:42:13 cpqbld Exp $
 \."
 \." 
 $XMCOPY

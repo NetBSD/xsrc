@@ -1,4 +1,4 @@
-.\" $TOG: protocol.ms /main/21 1997/11/04 18:02:08 kaleb $
+.\" $Xorg: protocol.ms,v 1.3 2000/08/17 19:42:07 cpqbld Exp $
 .\" Use tbl, -ms, and macros.t
 .EH ''''
 .OH ''''

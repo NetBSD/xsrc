@@ -2,30 +2,107 @@
 #
 # ucs2any.pl -- Markus Kuhn <mkuhn@acm.org>
 #
-# $XFree86$
-#
 # This Perl script allows you to generate from an ISO10646-1 encoded
 # BDF font other BDF fonts in any possible encoding. This way, you can
 # derive from a single ISO10646-1 master font a whole set of 8-bit
-# fonts in all ISO 8859 and various other encodings. (Note that
-# a future XFree86 release (probably 4.1) will have a similar
-# facility built into the server, which can reencode ISO10646-1
-# on the fly, because storing the same fonts in many different
-# encodings is clearly a waste of storage capacity).
+# fonts in all ISO 8859 and various other encodings. (Hopefully
+# a future XFree86 release will have a similar facility built into
+# the server, which can reencode ISO10646-1 on the fly, because
+# storing the same fonts in many different encodings is clearly
+# a waste of storage capacity).
 #
-# Id: ucs2any.pl,v 1.9 2000-06-26 14:15:13+01 mgk25 Rel mgk25 $
+# Id: ucs2any.pl,v 1.12 2001-02-17 15:21:05+00 mgk25 Rel
+# $XFree86: xc/fonts/util/ucs2any.pl,v 1.4 2001/03/01 00:37:06 dawes Exp $
+
+use strict 'subs';
+
+# DEC VT100 graphics characters in the range 1-31 (as expected by
+# some old xterm versions and a few other applications)
+%decmap = ( 0x01 => 0x25C6, # BLACK DIAMOND
+	    0x02 => 0x2592, # MEDIUM SHADE
+	    0x03 => 0x2409, # SYMBOL FOR HORIZONTAL TABULATION
+	    0x04 => 0x240C, # SYMBOL FOR FORM FEED
+	    0x05 => 0x240D, # SYMBOL FOR CARRIAGE RETURN
+	    0x06 => 0x240A, # SYMBOL FOR LINE FEED
+	    0x07 => 0x00B0, # DEGREE SIGN
+	    0x08 => 0x00B1, # PLUS-MINUS SIGN
+	    0x09 => 0x2424, # SYMBOL FOR NEWLINE
+	    0x0A => 0x240B, # SYMBOL FOR VERTICAL TABULATION
+	    0x0B => 0x2518, # BOX DRAWINGS LIGHT UP AND LEFT
+	    0x0C => 0x2510, # BOX DRAWINGS LIGHT DOWN AND LEFT
+	    0x0D => 0x250C, # BOX DRAWINGS LIGHT DOWN AND RIGHT
+	    0x0E => 0x2514, # BOX DRAWINGS LIGHT UP AND RIGHT
+	    0x0F => 0x253C, # BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+	    0x10 => 0x23BA, # HORIZONTAL SCAN LINE-1 (Unicode 3.2 draft)
+	    0x11 => 0x23BB, # HORIZONTAL SCAN LINE-3 (Unicode 3.2 draft)
+	    0x12 => 0x2500, # BOX DRAWINGS LIGHT HORIZONTAL
+	    0x13 => 0x23BC, # HORIZONTAL SCAN LINE-7 (Unicode 3.2 draft)
+	    0x14 => 0x23BD, # HORIZONTAL SCAN LINE-9 (Unicode 3.2 draft)
+	    0x15 => 0x251C, # BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+	    0x16 => 0x2524, # BOX DRAWINGS LIGHT VERTICAL AND LEFT
+	    0x17 => 0x2534, # BOX DRAWINGS LIGHT UP AND HORIZONTAL
+	    0x18 => 0x252C, # BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+	    0x19 => 0x2502, # BOX DRAWINGS LIGHT VERTICAL
+	    0x1A => 0x2264, # LESS-THAN OR EQUAL TO
+	    0x1B => 0x2265, # GREATER-THAN OR EQUAL TO
+	    0x1C => 0x03C0, # GREEK SMALL LETTER PI
+	    0x1D => 0x2260, # NOT EQUAL TO
+	    0x1E => 0x00A3, # POUND SIGN
+	    0x1F => 0x00B7  # MIDDLE DOT
+	  );
+
+sub is_control {
+    my ($ucs) = @_;
+
+    return (($ucs >= 0x00 && $ucs <= 0x1f) ||
+	    ($ucs >= 0x7f && $ucs <= 0x9f));
+}
+
+sub is_blockgraphics {
+    my ($ucs) = @_;
+
+    return $ucs >= 0x2500 && $ucs <= 0x25FF;
+}
+
+# calculate the bounding box that covers both provided bounding boxes
+sub combine_bbx {
+    my ($awidth, $aheight, $axoff, $ayoff,
+        $cwidth, $cheight, $cxoff, $cyoff) = @_;
+
+    if ($axoff < $cxoff) {
+        $cwidth += $cxoff - $axoff;
+        $cxoff = $axoff;
+    }
+    if ($ayoff < $cyoff) {
+        $cheight += $cyoff - $ayoff;
+        $cyoff = $ayoff;
+    }
+    if ($awidth + $axoff > $cwidth + $cxoff) {
+        $cwidth = $awidth + $axoff - $cxoff;
+    }
+    if ($aheight + $ayoff > $cheight + $cyoff) {
+        $cheight = $aheight + $ayoff - $cyoff;
+    }
+
+    return ($cwidth, $cheight, $cxoff, $cyoff);
+}
 
 print <<End if $#ARGV < 0;
 
-Usage: ucs2any.pl <source-name> { <mapping-file> <registry-encoding> }
+Usage: ucs2any.pl [+d|-d] <source-name> { <mapping-file> <registry-encoding> }
 
 where
+
+   +d                   put DEC VT100 graphics characters in the C0 range
+                        (default for upright charcell fonts)
+
+   -d                   do not put DEC VT100 graphics characters in the
+                        C0 range (default for all other font types)
 
    <source-name>        is the name of an ISO10646-1 encoded BDF file
 
    <mapping-file>       is the name of a character set table like those on
-                        <ftp://ftp.unicode.org/Public/MAPPINGS/> or
-                        <ftp://dkuug.dk/i18n/WG15-collection/charmaps/>
+                        <ftp://ftp.unicode.org/Public/MAPPINGS/>
 
    <registry-encoding>  are the CHARSET_REGISTRY and CHARSET_ENCODING
                         field values for the font name (XLFD) of the
@@ -41,12 +118,22 @@ End
 
 exit if $#ARGV < 0;
 
+# check options
+if ($ARGV[0] eq '+d') {
+    shift @ARGV;
+    $dec_chars = 1;
+} elsif ($ARGV[0] eq '-d') {
+    shift @ARGV;
+    $dec_chars = 0;
+}
+
 # open and read source file
 $fsource = $ARGV[0];
 open(FSOURCE,  "<$fsource")  || die ("Can't read file '$fsource': $!\n");
 
 # read header
 $properties = 0;
+$default_char = 0;
 while (<FSOURCE>) {
     last if /^CHARS\s/;
     if (/^STARTFONT/) {
@@ -77,6 +164,9 @@ while (<FSOURCE>) {
         } elsif (/^SLANT\s+"(.*)"\s*$/) {
 	    $slant = $1;
 	    $slant =~ tr/a-z/A-Z/;
+	} elsif (/^SPACING\s+"(.*)"\s*$/) {
+	    $spacing = $1;
+	    $spacing =~ tr/a-z/A-Z/;
 	}
 	s/^COMMENT\s+\"(.*)\"$/COMMENT $1/;
 	s/^COMMENT\s+\$[I]d: (.*)\$\s*$/COMMENT Derived from $1\n/;
@@ -110,8 +200,7 @@ while (<FSOURCE>) {
 close FSOURCE;
 delete $char{-1};
 
-
-shift(@ARGV);
+shift @ARGV;
 while ($#ARGV > 0) {
     $fmap = $ARGV[0];
     if ($ARGV[1] =~ /^([^-]+)-([^-]+)$/) {
@@ -121,31 +210,34 @@ while ($#ARGV > 0) {
 	die("Argument registry-encoding '$ARGV[1]' not in expected format!\n");
     }
 
-    shift(@ARGV);
-    shift(@ARGV);
+    shift @ARGV;
+    shift @ARGV;
 
     # open and read source file
     open(FMAP,  "<$fmap")
 	|| die ("Can't read mapping file '$fmap': $!\n");
     %map = ();
     while (<FMAP>) {
-        next if /^\s*\#/;
-        if (/^\s*(0[xX])?([0-9A-Fa-f]{2})\s+(0[xX]|U\+|U-)?([0-9A-Fa-f]{4})\s*/ ||
-	    /^<(.*)>\s+\/x([0-9A-Fa-f]{2})\s+<U()([0-9A-Fa-f]{4})>/) {
+        next if /^\s*(\#.*)?$/;
+        if (/^\s*(0[xX])?([0-9A-Fa-f]{2})\s+(0[xX]|U\+|U-)?([0-9A-Fa-f]{4})/) {
 	    $target = hex($2);
 	    $ucs = hex($4);
-	    if ($startchar{$ucs}) {
-		$map{$target} = $ucs;
-	    } else {
-		printf STDERR "No glyph for character U+%04X " .
-		    "(0x%02x) available.\n", $ucs, $target
-			unless $ucs < 32 || ($ucs >= 127 && $ucs < 160) ||
-			   ($ucs >= 0x2500 && $ucs <= 0x25FF && $slant ne "R");
+	    if (!is_control($ucs)) {
+		if ($startchar{$ucs}) {
+		    $map{$target} = $ucs;
+		} else {
+		    printf STDERR "No glyph for character U+%04X " .
+			"(0x%02x) available.\n", $ucs, $target
+			    unless (is_blockgraphics($ucs) && $slant ne "R") ||
+				   ($ucs >= 0x200e && $ucs <= 0x200f);
+		}
 	    }
+	} else {
+	    printf STDERR "Unrecognized line in '$fmap':\n$_";
 	}
     }
     close FMAP;
-
+    
     # add default character
     if (!(defined($map{0}) && $startchar{$map{0}})) {
 	if (defined($default_char) && $startchar{$default_char}) {
@@ -155,16 +247,44 @@ while ($#ARGV > 0) {
 	    printf STDERR "No default character defined.\n";
 	}
     }
-    # pass through C0 DEC VT100 characters if they happen to be present
-    # in the source font
-    for ($i = 0; $i < 32; $i++) {
-	if ($startchar{$i} && !$map{$i}) {
-	    $map{$i} = $i;
-	    $startchar{$i} = "STARTCHAR char$i\n";
+    
+    if ($dec_chars ||
+	((!(defined $dec_chars) && $slant eq 'R' && $spacing eq 'C'))) {
+	# add DEC VT100 graphics characters in the range 1-31
+	# (as expected by some old xterm versions)
+	for $i (keys(%decmap)) {
+	    if ($startchar{$decmap{$i}}) {
+		$map{$i} = $decmap{$i};
+	    } else {
+		#printf STDERR "No glyph for character U+%04X " .
+		#    "(0x%02x) available.\n", $decmap{$i}, $i;
+	    }
 	}
     }
 
-    @chars = sort {$a <=> $b;} keys(%map);
+    # list of characters that will be written out
+    @chars = sort {$a <=> $b} keys(%map);
+    if ($#chars < 0) {
+	print STDERR "No characters found for $registry-$encoding.\n";
+	next;
+    };
+
+    # find overal font bounding box
+    undef @bbx;
+    for $target (@chars) {
+	$ucs = $map{$target};
+	if ($char{$ucs} =~ /^BBX\s+(\d+)\s+(\d+)\s+(-?\d+)\s+(-?\d+)\s*$/m) {
+	    if (defined @bbx) {
+		@bbx = combine_bbx(@bbx, $1, $2, $3, $4);
+	    } else {
+		@bbx = ($1, $2, $3, $4);
+	    }
+	} else {
+	    printf STDERR "Warning: No BBX found for U+%04X!\n", $ucs;
+	}
+    }
+
+    # generate output file name
     if ($fsource =~ /^(.*).bdf$/i) {
 	$fout = $1 . "-$registry-$encoding.bdf";
     } else {
@@ -185,11 +305,17 @@ while ($#ARGV > 0) {
     print FOUT "COMMENT ucs2any.pl by Markus Kuhn <mkuhn\@acm.org>, 2000.\n";
     $newheader = $header;
     $newheader =~
-	s/\nFONT\s+(.*-)[^-\s]+-\S*\n/\nFONT $1$registry-$encoding\n/;
+	s/^FONTBOUNDINGBOX\s+.*$/FONTBOUNDINGBOX @bbx/m
+	    || print STDERR "Warning: FONTBOUNDINGBOX not fixed!\n";
     $newheader =~
-	s/\nCHARSET_REGISTRY\s+.*\n/\nCHARSET_REGISTRY "$registry"\n/;
+	s/^FONT\s+(.*)-\w+-\w+\s*$/FONT $1-$registry-$encoding/m
+	    || print STDERR "Warning: FONT property not fixed!\n";
     $newheader =~
-	s/\nCHARSET_ENCODING\s+.*\n/\nCHARSET_ENCODING "$encoding"\n/;
+	s/^CHARSET_REGISTRY\s+.*$/CHARSET_REGISTRY "$registry"/m
+	    || print STDERR "Warning: CHARSET_REGISTRY not fixed!\n";
+    $newheader =~
+	s/^CHARSET_ENCODING\s+.*$/CHARSET_ENCODING "$encoding"/m
+	    || print STDERR "Warning: CHARSET_ENCODING not fixed!\n";
     print FOUT $newheader;
     printf FOUT "CHARS %d\n", $#chars + 1;
 

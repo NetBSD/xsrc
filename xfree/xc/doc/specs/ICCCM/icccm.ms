@@ -1,6 +1,9 @@
-.\" $TOG: icccm.ms /main/27 1997/11/04 18:06:31 kaleb $
+.\" $Xorg: icccm.ms,v 1.3 2000/08/17 19:42:08 cpqbld Exp $
 .\"
-.\" $XFree86$
+.\"
+.\"
+.\"
+.\" $XFree86: xc/doc/specs/ICCCM/icccm.ms,v 1.3 2001/01/17 16:57:41 dawes Exp $
 .\"
 .\" Use tbl, eqn, -ms, and macros.t
 .\" @(#)icccm.ms	1.50	16 Apr 1994	14:13:55

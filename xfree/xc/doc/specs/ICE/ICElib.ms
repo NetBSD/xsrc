@@ -1,4 +1,4 @@
-.\" $TOG: ICElib.ms /main/27 1997/11/04 18:08:39 kaleb $
+.\" $Xorg: ICElib.ms,v 1.3 2000/08/17 19:42:09 cpqbld Exp $
 .\" 
 .\" Use tbl, -ms, and macros.t
 .\" 
