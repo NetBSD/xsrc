@@ -1,4 +1,4 @@
-/* $OpenBSD: interface.h,v 1.1 2002/06/04 21:23:41 matthieu Exp $ */
+/* $OpenBSD: interface.h,v 1.2 2002/09/29 21:30:34 matthieu Exp $ */
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * All rights reserved.
@@ -30,8 +30,8 @@
 
 extern XtAppContext appContext;
 extern Atom wm_delete_window;
-extern Widget errorCodeMenu, errorCodeText, filter, timeline, pName, pId,
-	policyName, syscallName, status;
+extern Widget errorCodeMenu, errorCodeText, filter, wizardButton, timeline, 
+	pName, pId, policyName, syscallName, status, reviewButton;
 extern volatile Boolean done;
 
 extern Widget makeForm(Widget);

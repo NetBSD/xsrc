@@ -1,4 +1,4 @@
-/* $OpenBSD: callbacks.c,v 1.3 2002/06/06 18:24:47 matthieu Exp $ */
+/* $OpenBSD: callbacks.c,v 1.7 2002/09/29 21:30:34 matthieu Exp $ */
 /*
  * Copyright (c) 2002 Matthieu Herrb and Niels Provos
  * All rights reserved.
@@ -35,8 +35,10 @@
 #include <X11/Xaw/Command.h>
 #include <X11/Xaw/Form.h>
 #include <X11/Xaw/Label.h>
+#include <X11/Xaw/List.h>
 #include <X11/Shell.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -48,19 +50,25 @@
 #include "callbacks.h"
 #include "interface.h"
 
+#define MAX_WIZARDS 100
+
 typedef enum {
 	WAIT_SYSCALL,
 	WAIT_POLICY,
 	WAIT_ACK,
+	WAIT_WIZARD,
 } notificatition_state_t;
 
 static notificatition_state_t state = WAIT_SYSCALL;
-static Widget policyText;
+static Widget policyText, wizardText;
 static char *errorcode;
+static String templateList[MAX_WIZARDS];
+static int nTemplates = 0;
 
 static void TextAppend(Widget, char *, int);
 static void TextReplace(Widget, int, int, XawTextBlock *);
-static long  TextLength(Widget);
+static long TextLength(Widget);
+static void make_wizard(Widget);
 
 XtInputId inputId;
 
@@ -119,6 +127,7 @@ getInput(XtPointer clientData, int *file, XtInputId *inputId)
 
 	switch (state) {
 	case WAIT_POLICY:
+		/* Reading policy for current syscall */
 		if (strcmp(line, "WRONG") == 0) {
 			state = WAIT_ACK;
 			return;
@@ -127,7 +136,23 @@ getInput(XtPointer clientData, int *file, XtInputId *inputId)
 		TextAppend(policyText, "\n", 1);
 		return;
 
+	case WAIT_WIZARD:
+		/* Reading template list */
+		if (strcmp(line, "WRONG") == 0) {
+			if (nTemplates != 0) {
+				make_wizard(wizardButton);
+			}
+			state = WAIT_ACK;
+			return;
+		}
+		if (!isdigit(line[0])) {
+			return;
+		}
+		templateList[nTemplates++] = XtNewString(line);
+		return;
+
 	case WAIT_ACK:
+		/* Waiting for user action on current syscall */
 		if (strcmp(line, "OKAY") == 0) {
 			XtUnmapWidget((Widget)clientData);
 			state = WAIT_SYSCALL;
@@ -140,6 +165,7 @@ getInput(XtPointer clientData, int *file, XtInputId *inputId)
 		return;
 
 	case WAIT_SYSCALL:
+		/* Waiting for next syscall */
 		p = line;
 		name = strsep(&p, ",");
 		if (p == NULL || *p == '\0')
@@ -176,7 +202,17 @@ getInput(XtPointer clientData, int *file, XtInputId *inputId)
 		XtVaSetValues(policyName, XtNlabel, polname, NULL);
 		XtVaSetValues(syscallName, XtNlabel, p, NULL);
 		XtVaSetValues(status, XtNlabel, "", NULL);
-		
+		if (nfilters) {
+			XtVaSetValues(wizardButton, XtNsensitive, FALSE, 
+				      NULL);
+			XtVaSetValues(reviewButton, XtNsensitive, TRUE, 
+				      NULL);
+		} else {
+			XtVaSetValues(wizardButton, XtNsensitive, TRUE, 
+				      NULL);
+			XtVaSetValues(reviewButton, XtNsensitive, FALSE, 
+				      NULL);
+		}
 		curtime = time(NULL);
 		snprintf(line, sizeof(line), "%.25s", ctime(&curtime));
 		XtVaSetValues(timeline, XtNlabel, line, NULL);
@@ -321,6 +357,7 @@ TextAppend(Widget w, char *s, int len)
 		XawTextSetInsertionPoint (w, last + block.length);
 }
 
+
 void
 on_reviewbutton_clicked(Widget w, XtPointer closure, XtPointer clientData)
 {
@@ -328,6 +365,7 @@ on_reviewbutton_clicked(Widget w, XtPointer closure, XtPointer clientData)
 
 	printf("review\n");
 	
+	XtVaSetValues(reviewButton, XtNsensitive, FALSE, NULL);
 	shell = XtVaCreatePopupShell("Review", transientShellWidgetClass,
 				     w, NULL, 0);
 	form = XtCreateManagedWidget("review-form", formWidgetClass, shell,
@@ -351,8 +389,95 @@ on_done_button(Widget w, XtPointer closure, XtPointer clientData)
 {
 	Widget shell = (Widget)closure;
 
+	XtVaSetValues(reviewButton, XtNsensitive, TRUE, NULL);
 	XtPopdown(shell);
 	XtDestroyWidget(shell);
+}
+
+static void
+make_wizard(Widget w)
+{
+	Widget shell, top, form, ok, cancel;
+
+	XtVaSetValues(wizardButton, XtNsensitive, FALSE, NULL);
+
+	shell = XtVaCreatePopupShell("Systrace - Wizard", 
+				     transientShellWidgetClass,
+				     w, NULL, 0);
+	top  = XtCreateManagedWidget("wizard-top", formWidgetClass,
+				     shell, NULL, 0);
+	form = XtCreateManagedWidget("wizard-help-form", formWidgetClass, 
+				     top, NULL, 0);
+	XtCreateManagedWidget("wizard-help-label", labelWidgetClass, form,
+			      NULL, 0);
+	XtCreateManagedWidget("wizard-help-text", labelWidgetClass, form,
+			      NULL, 0);
+	form = XtCreateManagedWidget("wizard-form", formWidgetClass, top,
+				     NULL, 0);
+	XtCreateManagedWidget("wizard-label", labelWidgetClass, form,
+			      NULL, 0);
+	wizardText = XtCreateManagedWidget("wizard-text", listWidgetClass,
+				     form, NULL, 0);
+	XawListChange(wizardText, templateList,
+		      nTemplates, 0, True);
+	XawListHighlight(wizardText, nTemplates-1);
+	ok = XtCreateManagedWidget("wizard-ok-button", commandWidgetClass, 
+				   form, NULL, 0);
+	cancel = XtCreateManagedWidget("wizard-cancel-button", 
+				       commandWidgetClass, form, NULL, 0);
+	XtAddCallback(ok, XtNcallback, on_wizard_ok_clicked, (XtPointer)shell);
+	XtAddCallback(cancel, XtNcallback, on_wizard_cancel_clicked,
+		      (XtPointer)shell);
+	XtRealizeWidget(shell);
+	XSetWMProtocols(XtDisplay(shell), XtWindow(shell), 
+			&wm_delete_window, 1);
+	XtPopup(shell, XtGrabNone);
+}
+
+void
+on_wizard_clicked(Widget w, XtPointer closure, XtPointer clientData)
+{
+
+	nTemplates = 0;
+	printf("templates\n");
+       	state = WAIT_WIZARD;
+}
+
+static void
+wizard_cleanup(Widget w)
+{
+	int i;
+
+	for (i = 0; i < nTemplates; i++) {
+		XtFree(templateList[i]);
+	}
+	nTemplates = 0;
+
+	XtVaSetValues(wizardButton, XtNsensitive, TRUE, NULL);
+
+	XtPopdown(w);
+	XtDestroyWidget(w);
+}
+
+void
+on_wizard_ok_clicked(Widget w, XtPointer closure, XtPointer clientData)
+{
+	Widget shell = (Widget)closure;
+	XawListReturnStruct *lr;
+	
+	lr = XawListShowCurrent(wizardText);
+	if (lr != NULL && lr->list_index != XAW_LIST_NONE) {
+		printf("template %d\n", lr->list_index + 1);
+	}
+	wizard_cleanup(shell);
+}
+
+void
+on_wizard_cancel_clicked(Widget w, XtPointer closure, XtPointer clientData)
+{
+	Widget shell = (Widget)closure;
+
+	wizard_cleanup(shell);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.2 2002/06/06 18:24:47 matthieu Exp $ */
+/* $OpenBSD: main.c,v 1.3 2002/09/29 21:30:34 matthieu Exp $ */
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * All rights reserved.
@@ -140,8 +140,7 @@ main(int argc, char *argv[])
 	XtRealizeWidget(top);
 	/* do WM_DELETE_WINDOW */
 	XSetWMProtocols(XtDisplay(top), XtWindow(top), &wm_delete_window, 1);
-	
-	
+		
 	/* Register timeout */
 	if (nres.timeout_secs) 
 		XtAppAddTimeOut(appContext, 1000*nres.timeout_secs, 
