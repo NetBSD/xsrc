@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.97 2003/05/21 22:59:14 dickey Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.92 2003/02/25 23:36:55 dickey Exp $
   -->
 <HTML>
 <HEAD>
@@ -43,11 +43,6 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
-<LI><A HREF="#xterm_179">Patch #179 - 2003/5/21 - XFree86 4.3.99.5</A>
-<LI><A HREF="#xterm_178">Patch #178 - 2003/5/18 - XFree86 4.3.99.5</A>
-<LI><A HREF="#xterm_177">Patch #177 - 2003/3/23 - XFree86 4.3.0</A>
-<LI><A HREF="#xterm_176">Patch #176 - 2003/3/22 - XFree86 4.3.0</A>
-<LI><A HREF="#xterm_175">Patch #175 - 2003/3/9 - XFree86 4.3.0</A>
 <LI><A HREF="#xterm_174">Patch #174 - 2003/2/25 - XFree86 4.2.99.903</A>
 <LI><A HREF="#xterm_173">Patch #173 - 2003/2/6 - XFree86 4.2.99.902</A>
 <LI><A HREF="#xterm_172">Patch #172 - 2002/12/27 - XFree86 4.2.99.3</A>
@@ -224,195 +219,6 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
-
-<H1><A NAME="xterm_179">Patch #179 - 2003/5/21 - XFree86 4.3.99.5</A></H1>
-<ul>
-	<li>modify ifdef's for WTMPX_FILE to allow building on cygwin again.
-
-	<li>change the default of pty-handshaking configure option (and related
-	    default for imake) to assume this feature is needed.
-
-	<li>add ifdef's so configure option for XawPlus library works (patch
-	    by Pavel Roskin).
-
-	<li>add <code>$(MAIN_DEFINES)</code> to the variables checked by the
-	    configure script that may contain information set by imake.  This
-	    allows xterm to build/run properly using the configure script on
-	    IRIX64.
-
-	<li>add configure check for ".exe" suffix on cygwin.
-</ul>
-
-<H1><A NAME="xterm_178">Patch #178 - 2003/5/18 - XFree86 4.3.99.5</A></H1>
-<ul>
-	<li>modify default for configure <code>--enable-pty-handshake</code>
-	    option to enable it for Solaris (report by Nelson Beebe).
-
-	<li>modify <code>in_put()</code> function to call
-	    <code>PreeditPosition()</code> only when the cursor's position has
-	    changed.  This addresses report by Stefan Baums of high CPU usage
-	    while xterm with chinput are running in the background (patch by
-	    Yong Li &lt;rigel863@yahoo.com&gt;).
-
-	<li>improved explanation of <code>-ls</code> conflict with
-	    <code>-e</code> option in xterm manpage (adapted from comments by
-	    Henning Makholm).
-
-	<li>correct comment in terminfo file regarding modifier used for
-	    <code>kDC</code> (Debian #189764, report by Henning Makholm).
-
-	<li>correct/extend some of the keypad description in ctlseqs.ms
-	    (report by Henning Makholm).
-
-	<li>correct keypad-mapping table in input.c so <code>XK_KP_Equal</code> 
-	    works (report by Henning Makholm &lt;henning@makholm.net&gt;).
-
-	<li>modified to work with CJK double-width (bi-width/monospace) fonts. 
-	    They're similar to Roman Czbora and David Starner's gnuunifonts in
-	    that Latin letters and numbers have all the same width which is
-	    exactly the half of the width of East Asian characters.  (patch by
-	    Jungshik Shin &lt;jshin@mailaps.org&gt;).
-
-	<li>add configure option <code>--enable-broken-osc</code> and resource
-	    <code>brokenLinuxOSC</code> to accommodate scripts which do not
-	    distinguish between running in the Linux console and running in X.
-	    Linux console recognizes malformed control strings which start
-	    with an <code>OSC</code>, but are fixed-length, with no terminator.
-
-	<li>add configure option <code>--enable-broken-st</code> and resource
-	    <code>brokenStringTerm</code> to allow
-	    user to revert one part of the parsing table corrections from
-	    <a href="#xterm_171">patch #171</a>.  (reports by
-	    Matthias Scheler &lt;tron@zhadum.de&gt;
-	    Kirill Ponomarew &lt;ponomarew@oberon.net&gt; indicate that someone's
-	    network firmware sends an <code>&lt;escape&gt;X</code>).
-
-	<li>modify configure <code>--disable-imake</code> to provide values
-	    for <code>OSMAJORVERSION</code>, <code>OSMINORVERSION</code>,
-	    <code>FUNCPROTO</code> and <code>NARROWPROTO</code> (report by
-	    Heiko Schlichting &lt;heiko@FU-Berlin.DE&gt;).
-
-	<li>correct <code>vttests/16colors.sh</code>, which omitted the
-	    <code>$SUF</code> variable in output strings (patch by Paul
-	    Gilmartin).
-
-	<li>modify shell scripts in <code>vttests</code> directory to attempt
-	    to use named signals in the <code>trap</code> statement, making
-	    this portable to OS/390 (report by Paul Gilmartin).  Tested on
-	    SunOS 4.1.4, which implements only numbers.
-</ul>
-
-<H1><A NAME="xterm_177">Patch #177 - 2003/3/23 - XFree86 4.3.0</A></H1>
-<ul>
-	<li>fix definition of <code>USE_HANDSHAKE</code>, must be numeric
-	    (reported by Jens Schleusener).
-</ul>
-
-<H1><A NAME="xterm_176">Patch #176 - 2003/3/22 - XFree86 4.3.0</A></H1>
-<ul>
-	<li>add configure option <code>--enable-pty-handshake</code> to allow
-	    one to compile-in support for the pty handshaking logic, and
-	    resource <code>ptyHandshake</code> to enable or disable it
-	    (suggested by Ian Collier).
-
-	<li>restore <code>USE_HANDSHAKE</code> ifdef removed in
-	    <a href="#xterm_159">patch #159</a>
-	    to address Debian #39964.
-
-	<li>move ifdef's for ttysize/winsize into xterm_io.h
-
-	<li>simplify loop on <code>tgetent</code>, check if the successive
-	    entries in the lookup table are the same.  That makes xterm do
-	    one less lookup if there is no "xterm" entry in the termcap file
-	    (report by Derek Martin).
-
-	<li>correct manpage discussion of <code>$TERM</code> and
-	    <code>$TERMCAP</code> variables, which omitted the Tektronix
-	    emulation and a note of the final "dumb" fallback.
-
-	<li>broaden ifdef for <code>XRegisterIMInstantiateCallback()</code>
-	    from <a href="#xterm_175">patch #175</a> (XIM fix) to exclude
-	    non-XFree86 (report by Nelson Beebe indicates this breaks for
-	    Solaris, IRIX and OSF/1).
-
-	<li>correct resource-size for <code>iconFont</code> (this was added
-	    by X11R6.3).
-
-	<li>improve configure check for XKB bell extension, to work around
-	    inconsistent implementation of this feature (reports by Nelson
-	    Beebe, Kriston Rehberg and David Ellement).
-
-	<li>modify configure-check for <code>tty</code> group to be less
-	    strict in batch mode (report by Nelson Beebe).
-
-	<li>modify to allow building with g++, to use its compiler warnings
-	    (suggested by Nelson Beebe).
-
-	<li>modify <code>dec2ucs[]</code> table to reflect newer codes
-	    available for scanlines 1, 3, 7, 9 (report by Michael Schroeder).
-
-	<li>add configure option for XawPlus library.
-</ul>
-
-<H1><A NAME="xterm_175">Patch #175 - 2003/3/9 - XFree86 4.3.0</A></H1>
-<ul>
-	<li>fix a SIGSEGV which could occur if xterm is connecting to XIM
-	    server, and the XIM server is destroyed (patch by Nam SungHyun).
-
-	<li>modify to use built-in line-drawing characters for Xft fonts
-	    (patch by Andrew Tipton &lt;andrew@cadre5.com&gt;).
-
-	<li>make menu reflect the state of the <code>tekInhibit</code>
-	    resource.
-
-	<li>make <code>signalInhibit</code> resource work, i.e., disable the
-	    menu entries that would send signals to, or exit xterm.  This was
-	    probably broken in X11R5 when logging was disabled (report by Sven
-	    Mascheck).
-
-	<li>changed classes of <code>colorBDMode</code> and similar
-	    resources that override colors when a video attribute is
-	    set to <code>ColorAttrMode</code>, to make them distinct
-	    from <code>ColorMode</code>.  This avoids an unexpected
-	    rendering of reverse video, for example (report by Paul Fox). 
-
-	<li>changed class of <code>veryBoldColors</code> to
-	    <code>VeryBoldColors</code>, since 
-	    <code>ColorMode</code> is associated with boolean resources.
-
-	<li>add option <code>-k8</code> and resource
-	    <code>allowC1Printable</code> to allow users of non-VTxxx
-	    character sets such as KOI-8 to treat the C1 control area
-	    (character codes 128-159) as printable rather than control
-	    characters.
-
-	<li>add a null-pointer check for return-value of <code>ptsname()</code>
-	    in HPUX-specific code (report by David Ellement).
-
-	<li>revise the ifdef's used for <code>XKB</code> bell support.  The
-	    code was using a nonstandard call <code>XkbStdBell()</code>.
-	    Changed to use <code>XkbBell()</code> (based on patch by
-	    &lt;derek@signalmarketing.com&gt;).
-
-	<li>add a null-pointer check in <code>xtermLoadFont()</code> in case
-	    there is no wide-bold font (Nam SungHyun).
-
-	<li>change <code>Makefile.in</code> to use autoconf's
-	    <code>bindir</code>, <code>libdir</code> and <code>mandir</code>
-	    variables (report by Nam SungHyun).
-
-	<li>add <code>le</code> to termcap <code>xterm-basic</code> entry.
-	    Though missing from older termcaps for xterm, some applications
-	    check for it (report by Matthias Buelow).
-
-	<li>modify <code>uxterm</code> script to strip modifiers such as "@euro"
-	    from the locale setting before adding ".UTF-8" (Debian #179929).
-
-	<li>modify the remaining places where tek4014 emulation uses 
-	    <code>XDefineCursor()</code>, to make it work as originally
-	    implemented, e.g., when switching back to alpha mode.
-	    Added test-screen in vttest to test this feature properly.
-</ul>
 
 <H1><A NAME="xterm_174">Patch #174 - 2003/2/25 - XFree86 4.2.99.903</A></H1>
 <ul>
@@ -596,8 +402,8 @@ xc/programs/Xserver/hw/xfree86).
 	  <code>OPT_READLINE</code> in button.c (reported by Ilya Zakharevich).
 
 	<li>fix for inconsistent use of <code>struct utmp</code> versus
-	  <code>struct utmpx</code> introduced in <a href="#xterm_167">patch #167</a>
-	  (patches by Paul Gilmartin, Marc La France).
+	  <code>struct utmpx</code> introduced in patch #167 (patches by Paul
+	  Gilmartin, Marc La France).
 
 	<li>modify logic for <code>metaSendsEscape</code> to allow it to work
 	  in a setup where the Meta-key is not recognized as a modifier by
@@ -842,8 +648,8 @@ xc/programs/Xserver/hw/xfree86).
 <ul>
 	<li>correct ifdef's for <code>__QNX__</code> and
 	  <code>USE_SYSV_PGRP</code> in main.c call to <code>tcsetpgrp</code>,
-	  which broke bash behavior around <a href="#xterm_140">patch #140</a>
-	  (report/patch by Frank Liu &lt;fliu@mail.vipstage.com&gt;).
+	  which broke bash behavior around patch #140 (report/patch by Frank
+	  Liu &lt;fliu@mail.vipstage.com&gt;).
 
 	<li>modify trace.c to fix missing definition of GCC_UNUSED for
 	  compilers other than gcc when configured for trace code (report/patch
@@ -1130,8 +936,7 @@ xc/programs/Xserver/hw/xfree86).
 	  and 2001/4/18, respectively from
 		http://www.cl.cam.ac.uk/~mgk25/ucs/
 
-	<li>correction to change from <a href="#xterm_90">patch #90</a>,
-	  which was intended to
+	<li>correction to change from patch #90, which was intended to
 	  reset the saved cursor position for normal/alternate screens
 	  on a soft reset, but actually wiped out all of the saved cursor
 	  information.  Just reset the saved position for the current screen
@@ -1177,8 +982,8 @@ xc/programs/Xserver/hw/xfree86).
 
 <H1><A NAME="xterm_155">Patch #155 - 2001/4/20 - XFree86 4.0.3</A></H1>
 <ul>
-	<li>correct return type of in_put() from <a href="#xterm_155">patch #153</a>
-	  changes, which left it not wide enough for UTF-8 (patch by Bruno Haible).
+	<li>correct return type of in_put() from patch #153 changes, which
+	  left it not wide enough for UTF-8 (patch by Bruno Haible).
 </ul>
 
 <H1><A NAME="xterm_154">Patch #154 - 2001/4/11 - XFree86 4.0.3</A></H1>

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86: xc/programs/xterm/vttests/resize.sh,v 1.5 2003/05/19 00:52:30 dickey Exp $
+# $XFree86: xc/programs/xterm/vttests/resize.sh,v 1.4 2002/09/30 00:39:08 dickey Exp $
 #
 # -- Thomas Dickey (1999/3/27)
 # Obtain the current screen size, then resize the terminal to the nominal
@@ -45,13 +45,7 @@ original=${ESC}[8\;${high}\;${wide}t${SUF}
 test $maxwide = 0 && maxwide=`expr $wide \* 2`
 test $maxhigh = 0 && maxhigh=`expr $high \* 2`
 
-if ( trap "echo exit" EXIT 2>/dev/null ) >/dev/null
-then
-    trap '$CMD $OPT "$original" >/dev/tty; exit' EXIT HUP INT TRAP TERM
-else
-    trap '$CMD $OPT "$original" >/dev/tty; exit' 0    1   2   5    15
-fi
-
+trap '$CMD $OPT "$original" >/dev/tty; exit' 0 1 2 5 15
 w=$wide
 h=$high
 a=1

@@ -2,7 +2,7 @@
  *	$Xorg: misc.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/misc.c,v 3.77 2003/03/23 02:01:40 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/misc.c,v 3.75 2003/02/06 23:09:43 dickey Exp $ */
 
 /*
  *
@@ -505,15 +505,14 @@ Bell(int which GCC_UNUSED, int percent)
 	lastBellTime = now_msecs;
     }
 
-    if (screen->visualbell) {
+    if (screen->visualbell)
 	VisualBell();
-    } else {
-#if defined(HAVE_XKBBELL)
-	XkbBell(screen->display, VShellWindow, percent, which);
+    else
+#ifdef XKB
+	XkbStdBell(screen->display, TWindow(screen), percent, which);
 #else
 	XBell(screen->display, percent);
 #endif
-    }
 
     if (screen->poponbell)
 	XRaiseWindow(screen->display, VShellWindow);
@@ -1200,14 +1199,14 @@ find_closest_color(Display * display, Colormap cmap, XColor * def)
     double tmp, distance, closestDistance;
     int i, closest, numFound, cmap_size;
     XColor *colortable;
-    XVisualInfo myTemplate, *visInfoPtr;
+    XVisualInfo template, *visInfoPtr;
     char *found;
     int attempts;
 
-    myTemplate.visualid = XVisualIDFromVisual(DefaultVisual(display,
-							    XDefaultScreen(display)));
+    template.visualid = XVisualIDFromVisual(DefaultVisual(display,
+							  XDefaultScreen(display)));
     visInfoPtr = XGetVisualInfo(display, (long) VisualIDMask,
-				&myTemplate, &numFound);
+				&template, &numFound);
     if (numFound < 1) {
 	/* FindClosestColor couldn't lookup visual */
 	return FALSE;
@@ -1815,7 +1814,7 @@ static void
 ChangeGroup(String attribute, char *value)
 {
     Arg args[1];
-    const char *name = (value != 0) ? (char *) value : "";
+    char *name = (value != 0) ? (char *) value : "";
 
     TRACE(("ChangeGroup(attribute=%s, value=%s)\n", attribute, name));
 #if OPT_SAME_NAME
@@ -2099,9 +2098,8 @@ Panic(char *s GCC_UNUSED, int a GCC_UNUSED)
 char *
 SysErrorMsg(int n)
 {
-    static char unknown[] = "unknown error";
-    char *s = strerror(n);
-    return s ? s : unknown;
+    register char *s = strerror(n);
+    return s ? s : "unknown error";
 }
 
 void
