@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/4 1996/01/26 14:30:19 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/Imakefile,v 3.4 1996/02/04 09:14:10 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:30:19 rws $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/Imakefile,v 3.5 1996/12/23 06:58:21 dawes Exp $
 #include <Server.tmpl>
 
 SRCS = s3_driver.c s3_bank.s
@@ -11,7 +16,7 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I../../vga -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 #endif
 
 #if MakeHasPosixVariableSubstitutions

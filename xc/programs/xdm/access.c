@@ -1,6 +1,6 @@
 /*
  * $XConsortium: access.c,v 1.15 94/04/17 20:03:32 hersh Exp $
- * $XFree86: xc/programs/xdm/access.c,v 3.1 1996/09/14 13:14:53 dawes Exp $
+ * $XFree86: xc/programs/xdm/access.c,v 3.2 1997/01/18 07:02:17 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -45,7 +45,11 @@ in this Software without prior written authorization from the X Consortium.
 #ifndef MINIX
 # include   <netinet/in.h>
 # include   <netdb.h>
+#ifndef Lynx
 # include   <sys/socket.h>
+#else
+# include   <socket.h>
+#endif
 #else /* MINIX */
 # include   <net/gen/netdb.h>
 #endif /* !MINIX */

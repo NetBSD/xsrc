@@ -1,4 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.2 1996/10/17 15:14:24 dawes Exp $ */
+/* $XConsortium: sunLyInit.c /main/1 1996/10/31 14:20:50 kaleb $ */
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyInit.c,v 3.3.2.1 1997/05/12 12:52:14 hohndel Exp $ */
 
 /*
  * This is sunInit.c modified for LynxOS
@@ -554,7 +558,7 @@ void InitInput(argc, argv)
     int     	  argc;
     char    	  **argv;
 {
-    DeviceIntPtr p, k;
+    DevicePtr p, k;
     extern Bool mieqInit();
 
     k = AddInputDevice(sunKbdProc, TRUE);

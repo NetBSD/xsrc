@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/bios_V4mmap.c,v 3.3 1996/02/04 09:10:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/bios_V4mmap.c,v 3.4 1996/12/23 06:51:24 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bios_V4mmap.c /main/3 1995/11/13 06:21:44 kaleb $ */
+/* $XConsortium: bios_V4mmap.c /main/4 1996/02/21 17:54:27 kaleb $ */
 
 #include "X.h"
 #include "input.h"

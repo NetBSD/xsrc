@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.17 1996/09/29 13:41:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.23.2.4 1997/05/09 09:31:44 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: vga.h /main/7 1995/12/02 09:07:16 kaleb $ */
+/* $XConsortium: vga.h /main/12 1996/10/25 10:34:19 kaleb $ */
 
 #ifndef _XF86_VGA_H_
 #define _XF86_VGA_H_
@@ -37,6 +37,11 @@
 #include "input.h"
 #include "scrnintstr.h"
 #include "colormapst.h"
+
+#ifdef DPMSExtension
+#include "opaque.h"
+#include "extensions/dpms.h"
+#endif
 
 #if !defined(MONOVGA) && !defined(XF86VGA16)
 extern void    vgaBitBlt(
@@ -96,20 +101,79 @@ extern int    vga256ValidTokens[];
  * structure for accessing the video chip`s functions
  */
 typedef struct {
-  Bool (* ChipProbe)();
-  char * (* ChipIdent)();
-  void (* ChipEnterLeave)();
-  Bool (* ChipInit)();
-  int (* ChipValidMode)();
-  void * (* ChipSave)();
-  void (* ChipRestore)();
-  void (* ChipAdjust)();
-  void (* ChipSaveScreen)();
-  void (* ChipGetMode)();
-  void (* ChipFbInit)();
-  void (* ChipSetRead)();
-  void (* ChipSetWrite)();
-  void (* ChipSetReadWrite)();
+  Bool (* ChipProbe)(
+#if NeedNestedPrototypes
+	void
+#endif
+	);
+  char * (* ChipIdent)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
+  void (* ChipEnterLeave)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
+  Bool (* ChipInit)(
+#if NeedNestedPrototypes
+	DisplayModePtr
+#endif
+	);
+  int (* ChipValidMode)(
+#if NeedNestedPrototypes
+	DisplayModePtr,
+	Bool,
+	int
+#endif
+	);
+  void * (* ChipSave)(
+#if NeedNestedPrototypes
+	void *
+#endif
+	);
+  void (* ChipRestore)(
+#if NeedNestedPrototypes
+	void *
+#endif
+	);
+  void (* ChipAdjust)(
+#if NeedNestedPrototypes
+	int,
+	int
+#endif
+	);
+  void (* ChipSaveScreen)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
+  void (* ChipGetMode)(
+#if NeedNestedPrototypes
+	DisplayModePtr
+#endif
+	);
+  void (* ChipFbInit)(
+#if NeedNestedPrototypes
+	void
+#endif
+	);
+  void (* ChipSetRead)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
+  void (* ChipSetWrite)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
+  void (* ChipSetReadWrite)(
+#if NeedNestedPrototypes
+	int
+#endif
+	);
   int ChipMapSize;
   int ChipSegmentSize;
   int ChipSegmentShift;
@@ -133,17 +197,39 @@ typedef struct {
   Bool ChipHas24bpp;		    /* Driver supports 24bpp */
   Bool ChipHas32bpp;		    /* Driver supports 32bpp */
   DisplayModePtr ChipBuiltinModes;  /* Pointer to builtin mode list */
-  int ChipClockScaleFactor;	    /* Factor to divide raw clocks by */
+  int ChipClockMulFactor;	    /* Factor to multiply pixel clock by, to get RAMDAC clock */
+  int ChipClockDivFactor;	    /* Factor to divide pixel clock by, to get RAMDAC clock */
 } vgaVideoChipRec, *vgaVideoChipPtr;
 
 /* Tables in vgatables.c */
 extern unsigned char byte_reversed[256];
 
-/* All each driver to set a display pitch other than virtualX */
-void vgaSetPitchAdjustHook(int (* ChipPitchAdjust)());
+/* Allow each driver to set a display pitch other than virtualX */
+void vgaSetPitchAdjustHook(int (* ChipPitchAdjust)(
+#if NeedNestedPrototypes
+	void
+#endif
+	));
+
+/* Allow each driver to set an offset into the linear frame buffer */
+void vgaSetLinearOffsetHook(int (* ChipLinearOffset)(
+#if NeedNestedPrototypes
+	void
+#endif
+	));
 
 /* Allow each driver to hook the ScreenInit function */
-void vgaSetScreenInitHook(Bool (* ChipScrInit)());
+void vgaSetScreenInitHook(Bool (* ChipScrInit)(
+#if NeedNestedPrototypes
+	ScreenPtr	/* pScreen */,
+	pointer		/* base */,
+	int		/* x */,
+	int		/* y */,
+	int		/* resx */,
+	int		/* resy */,
+	int		/* width */
+#endif
+	));
 
 /*
  * hooks for communicating with the VideoChip on the VGA
@@ -156,7 +242,8 @@ extern Bool (* vgaInitFunc)(
 extern int (* vgaValidModeFunc)(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 );
 extern void (* vgaEnterLeaveFunc)(
@@ -219,7 +306,6 @@ extern pointer vgaNewVideoState;
 extern pointer vgaBase;              /* the framebuffer himself */
 extern pointer vgaLinearBase;
 
-
 typedef struct {
   unsigned char MiscOutReg;     /* */
   unsigned char CRTC[25];       /* Crtc Controller */
@@ -235,10 +321,32 @@ typedef struct {
 
 typedef struct {
   Bool Initialized;
-  void (*Init)();
-  void (*Restore)();
-  void (*Warp)();
-  void (*QueryBestSize)();
+  Bool (*Init)(
+#if NeedNestedPrototypes
+	char * ,
+	ScreenPtr
+#endif
+	);
+  void (*Restore)(
+#if NeedNestedPrototypes
+	ScreenPtr
+#endif
+	);
+  void (*Warp)(
+#if NeedNestedPrototypes
+	ScreenPtr ,
+	int ,
+	int
+#endif
+	);
+  void (*QueryBestSize)( /* QueryBestSizeProcPtr */
+#if NeedNestedPrototypes
+	int  ,
+	unsigned short *  ,
+	unsigned short *  ,
+	ScreenPtr  
+#endif
+	);
 } vgaHWCursorRec, *vgaHWCursorPtr;
 
 #define OVERSCAN 0x11		/* Index of OverScan register */
@@ -340,23 +448,15 @@ Bool vgaHWInit(
 void vgaGetClocks(
 #if NeedFunctionPrototypes
     int num,
-    Bool (*ClockFunc)()
+#if NeedNestedPrototypes
+    Bool (*ClockFunc)(int)
+#else
+    Bool (*ClockFunc)())
+#endif
 #endif
 );
 
 /* vga.c */
-void NoopVGA(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-void vgaRestore(
-#if NeedFunctionPrototypes
-    pointer mode
-#endif
-);
-
 void vgaPrintIdent(
 #if NeedFunctionPrototypes
     void
@@ -381,7 +481,8 @@ Bool vgaScreenInit(
 int vgaValidMode(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 );
 
@@ -409,6 +510,12 @@ void vgaAdjustFrame(
 Bool vgaSwitchMode(
 #if NeedFunctionPrototypes
     DisplayModePtr mode
+#endif
+);
+
+void vgaDPMSSet(
+#if NeedFunctionPrototypes
+    int PowerManagementMode
 #endif
 );
 

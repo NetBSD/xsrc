@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Linux.c,v 3.6 1996/08/20 12:26:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Linux.c,v 3.10.2.1 1997/05/06 13:24:15 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Orest Zborowski <orestz@eskimo.com>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: OS_Linux.c /main/4 1995/11/13 11:12:42 kaleb $ */
+/* $XConsortium: OS_Linux.c /main/8 1996/10/19 17:47:14 kaleb $ */
 
 #include "Probe.h"
 
@@ -37,10 +37,28 @@
 #include <sys/mman.h>
 
 #ifdef __alpha__
-extern unsigned long _bus_base(void) __attribute__((const));
-#define BUS_BASE _bus_base()
+/*
+ * The Jensen lacks dense memory, thus we have to address the bus via
+ * the sparse addressing scheme.
+ *
+ * Martin Ostermann (ost@comnets.rwth-aachen.de) - Apr.-Sep. 1996
+ */
+
+#ifdef TEST_JENSEN_CODE /* define to test the Sparse addressing on a non-Jensen */
+#define isJensen (1)
+#define SPARSE (5)
+#define WORD_CODING (0x08)
+#else
+#define isJensen (!_bus_base())
+#define SPARSE (7)
+#define WORD_CODING (0x20)
+#endif
+
+#define BUS_BASE (isJensen ? _bus_base_sparse() : _bus_base())
+#define JENSEN_SHIFT(x) (isJensen ? ((long)x<<SPARSE) : (long)x)
 #else
 #define BUS_BASE 0
+#define JENSEN_SHIFT(x) (x)
 #endif
 
 static int VT_fd = -1;
@@ -64,7 +82,7 @@ int OpenVideo()
 	if (geteuid() != 0)
 	{
 		fprintf(stderr,
-			"%s: Must be run as root or installed suid-root\n",
+			"%s: Must be run as root\n",
 			MyName);
 		return(-1);
 	}
@@ -158,16 +176,30 @@ void CloseVideo()
  */
 Byte *MapVGA()
 {
+	return( MapMem(0xA0000,0x10000) );
+}
+
+Byte *MapMem(address, size)
+	unsigned long address;
+	unsigned long size;
+{
 	int fd;
 	Byte *base;
 
+#ifdef __alpha__
+	if(isJensen){
+		fprintf(stderr, "%s: MemProbe not supported on Jensen\n", MyName);
+		return((Byte *)0);
+	}
+#endif
+	
 	if ((fd = open("/dev/mem", O_RDWR)) < 0)
 	{
 		fprintf(stderr, "%s: Failed to open /dev/mem\n", MyName);
 		return((Byte *)0);
 	}
-	base = (Byte *)mmap((caddr_t)0, 0x10000, PROT_READ|PROT_WRITE,
-			    MAP_SHARED, fd, (off_t)0xA0000 + BUS_BASE);
+	base = (Byte *)mmap((caddr_t)0, size, PROT_READ|PROT_WRITE,
+			    MAP_SHARED, fd, (off_t)address + BUS_BASE);
 	close(fd);
 	if ((long)base == -1)
 	{
@@ -183,11 +215,38 @@ Byte *MapVGA()
  * Unmap the VGA memory window.
  */
 void UnMapVGA(base)
-Byte *base;
+	Byte *base;
+{
+	UnMapMem(base,0x10000);
+	return;
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
 {
 	munmap((caddr_t)base, 0x10000);
 	return;
 }
+
+#ifdef __alpha__
+SlowBCopyFromBus(src, dst, count)
+     unsigned char *src, *dst;
+     int count;
+{
+  unsigned long addr;
+  long result;
+  
+  addr = (unsigned long) src;
+  while( count ){
+    result = *(volatile int *) addr;
+    result >>= ((addr>>SPARSE) & 3) * 8;
+    *dst++ = (unsigned char) (0xffUL & result);
+    addr += 1<<SPARSE;
+    count--;
+  }
+}
+#endif
 
 /*
  * ReadBIOS --
@@ -220,9 +279,9 @@ int Len;
 		Base = (Byte *)((off_t)Base & 0xF8000);
 
 	mysize = myoffset + Len;
-	mybase = (unsigned char *)mmap((caddr_t)0, mysize, PROT_READ,
+	mybase = (unsigned char *)mmap((caddr_t)0, JENSEN_SHIFT(mysize), PROT_READ,
 				       MAP_SHARED, BIOS_fd,
-				       (off_t)Base + BUS_BASE);
+				       (off_t)JENSEN_SHIFT(Base) + BUS_BASE);
 
 	if (mybase == (unsigned char *)-1UL) {
 		fprintf(stderr, "%s: Failed to mmap /dev/mem (%d)\n",
@@ -235,7 +294,17 @@ int Len;
 		/*
 	 	 * Sanity check...
 	 	 */
+	  if (isJensen)
+	  {
+	      tmp = *(volatile int *) (mybase + WORD_CODING);
+	      tmp >>= ((long)Base & 3) * 8;
+	      tmp &=  0xffffUL;
+	  }
+	  else
+	  {
 		tmp = *(Word *)mybase;
+	  }
+
 		if (tmp != (Word)0xAA55)
 		{
 			fprintf(stderr,
@@ -245,9 +314,12 @@ int Len;
 		}
 	}
 
-	memcpy(Buffer, &mybase[myoffset], Len);
+	if (isJensen)
+	   SlowBCopyFromBus(&mybase[JENSEN_SHIFT(myoffset)], Buffer, Len);
+	else
+	   memcpy(Buffer, &mybase[myoffset], Len);
 
-	munmap((caddr_t)mybase, mysize);
+	munmap((caddr_t)((off_t)JENSEN_SHIFT(Base) | BUS_BASE), mysize);
 
 #else /* __alpha__ */
 

@@ -1,11 +1,14 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
  
-<title> README for XFree86 3.1.2 on BSD/OS 2.0
-<author> Hans Nasten
-<date> 24 July 1995
+<title>README for XFree86 3.1.2 on BSD/OS 2.0
+<author>Hans Nasten
+<date>24 July 1995
 <toc>
+
+<p>
+<bf>THIS DOCUMENT IS OUT OF DATE</bf>
 
 <sect> What and Where is XFree86? <p>
 XFree86 3.1.2 is a port of X11R6 that supports several versions of
@@ -17,14 +20,14 @@ well as binary distributions for many architectures.
 
 The sources for XFree86 are available by anonymous ftp from:
 <p>
-<url
-    name="ftp.XFree86.org:/pub/XFree86/current"
+<htmlurl
+    name="ftp://ftp.XFree86.org/pub/XFree86/current"
     url="ftp://ftp.XFree86.org/pub/XFree86/current">
 <p>
 Binaries for BSD/OS 2.0 will be available from:
 <p>
-<url
-    name="ftp.XFree86.org:/pub/XFree86/current/binaries/Bsdi"
+<htmlurl
+    name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Bsdi"
     url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Bsdi">
 <p>
 If you're running a earlier version of BSD/OS, you'll have to build the
@@ -39,12 +42,12 @@ If you build the distribution from source using a gcc compiler built using
 the generic gcc source code, you may run into problems using the binaries
 on a 386/486 not equipped with a math coprocessor.
 
-<sect> Bug Reports for This Document <p>
+<sect>Bug Reports for This Document <p>
 Send email to <it>nasten@Everyware.SE</it> (Hans Nasten)
 or <it>XFree86@XFree86.org</it>
 if you have comments or suggestions about this file and we'll revise it.
 
-<sect> Installing the Binaries <p>
+<sect>Installing the Binaries <p>
 The binary distribution is composed of a number of gzipped tar archives
 which contains the executables, servers, fonts, libraries, include files,
 man pages, config files, and the server link kit. All tar archives should
@@ -96,7 +99,7 @@ bin, fonts lib and one X server.
 
 To unpack and install the archives:
 <enum>
-<item> create some destination directory in which you'd like the
+ <item>create some destination directory in which you'd like the
        X distribution to live.  <tt>/usr/X11R6</tt> is recommended,
        but if that partition is full (as it is on my machine), then just
        create an alternate directory, and sym-link <tt>/usr/X11R6</tt>
@@ -110,7 +113,7 @@ To unpack and install the archives:
     % ln -s /usr/local/X11R6 /usr/X11R6
 </verb>
 
-<item>  You must be logged in as root to unpack the archives and use a
+  <item>You must be logged in as root to unpack the archives and use a
 	`<tt>umask</tt>' value of 022.  Typing `<tt>umask 022</tt>' sets it.
         Caution:
 	If you do not extract the files as user `<tt>root</tt>' with the
@@ -119,7 +122,7 @@ To unpack and install the archives:
 	root user. You must also cd to <tt>/</tt> before extracting the
         archives.
 
-<item>  Create a symbolic link in <tt>/usr/X11R6/bin</tt> named `X' that
+  <item>Create a symbolic link in <tt>/usr/X11R6/bin</tt> named `X' that
 	points to 
 	the server that matches your video card: See the XF86_* man pages
 	for hardware details. For example, if you have an ET4000 based SVGA 
@@ -136,7 +139,7 @@ If you want to uncompress them anyway, don't forget to run
 `<tt>mkfontdir</tt>'  in each directory after that.
 
 
-<sect> Installing Xdm, the display manager <p>
+<sect>Installing Xdm, the display manager <p>
 The display manager makes your PC look like an X terminal.  That is, it
 presents you with a login screen that runs under X.
 To start the display manager, log in as root on the console and type
@@ -157,7 +160,7 @@ in the console entry in <tt>/etc/ttys</tt>:
 console "/usr/libexec/getty std.9600"   ibmpc3  off secure
 </verb>
 
-<sect> Configuring X for Your Hardware <p>
+<sect>Configuring X for Your Hardware <p>
 The <tt>XF86Config</tt> file tells the X server what kind of monitor, video
 card and mouse you have.
 You <em>must</em> create it to tell the server what specific hardware you have.
@@ -183,9 +186,9 @@ or <tt>/usr/X11R6/lib/X11/XF86Config</tt>.
 
 You'll need info on your hardware:
 <itemize>
-<item> Your mouse type, baud rate and its /dev entry.
-<item> The video card's chipset (e.g. ET4000, S3, etc).
-<item> Your monitor's sync frequencies.
+ <item>Your mouse type, baud rate and its /dev entry.
+ <item>The video card's chipset (e.g. ET4000, S3, etc).
+ <item>Your monitor's sync frequencies.
 </itemize>
 The easiest way to find which device your mouse is plugged into is to use
 `<tt>cat</tt>' or `<tt>kermit</tt>' to look at the output of the mouse.
@@ -205,7 +208,7 @@ to get a list of devices that were detected upon booting:
 If you plan to fine tune the screen size or position on your monitor you'll
 need the specs for sync frequencies from your monitor's manual.
 
-<sect> Running X <p>
+<sect>Running X <p>
 8mb of memory is a recommended minimum for running X.  The server,
 window manager and an xterm take about 4 Mb of memory themselves. On
 a 4Mb system that would leave nothing left over for the kernel and
@@ -221,7 +224,7 @@ customize your X by creating <tt>.xinitrc</tt>, <tt>.xserverrc</tt>,
 and <tt>.twmrc</tt> files in your home directory as described in the xinit and
 startx man pages.
 
-<sect> Rebuilding the XFree86 Distribution <p>
+<sect>Rebuilding the XFree86 Distribution <p>
 The server link kit allows you to rebuild just the X server with a
 minimum amount of disk space.  Just unpack it, make the appropriate
 changes to the site.def, type `<tt>./mkmf</tt>' and `<tt>make</tt>' to link
@@ -240,7 +243,7 @@ before compiling.  To compile the sources, invoke
 </verb>
 in the xc directory.
 
-<sect> Building New X Clients <p>
+<sect>Building New X Clients <p>
 The easiest way to build a new client (X application) is to use
 <tt>xmkmf</tt> if an Imakefile is included in the sources.  
 Type `<tt>xmkmf</tt>' to create the Makefiles,
@@ -274,7 +277,7 @@ For code that really is specific to a particular i386 BSD port, use
 <tt>__386BSD__</tt> for 386BSD, and <tt>__bsdi__</tt> for BSD/OS.
 
 
-<sect> Linear access to the frame buffer using BSD/386 1.1<p>
+<sect>Linear access to the frame buffer using BSD/386 1.1<p>
 The stock BSD/386 1.1 kernel has problems when trying to mmap the frame
 buffer as a linear ( unbanked ) memory area in high memory. This patch
 removes the check in <tt>/sys/i386/isa/vga.c</tt> that disables mmapping the
@@ -313,13 +316,13 @@ BSD/OS 2.0.
 </verb>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Bsdi.sgml,v 3.17 1996/10/16 14:41:10 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Bsdi.sgml,v 3.21 1997/01/25 04:19:19 dawes Exp $ 
 
 
 
 
 
-$XConsortium: Bsdi.sgml /main/5 1995/11/12 19:59:15 kaleb $
+$XConsortium: Bsdi.sgml /main/8 1996/10/27 11:05:51 kaleb $
 </verb>
 
 </article>

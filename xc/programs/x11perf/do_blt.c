@@ -21,6 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
+/* $XFree86: xc/programs/x11perf/do_blt.c,v 1.3 1997/01/18 07:19:01 dawes Exp $ */
 
 #include "x11perf.h"
 #include <stdio.h>
@@ -365,8 +366,13 @@ void DoPutImage(xp, p, reps)
 #ifdef MITSHM
 
 #include <sys/types.h>
+#ifndef Lynx
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#else
+#include <ipc.h>
+#include <shm.h>
+#endif
 #include <X11/extensions/XShm.h>
 
 static XImage		shm_image;

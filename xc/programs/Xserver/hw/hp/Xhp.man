@@ -1,4 +1,4 @@
-.\" $XConsortium: Xhp.man /main/3 1995/12/15 14:03:58 gildea $
+.\" $XConsortium: Xhp.man /main/4 1996/12/09 17:32:35 kaleb $
 .\" Copyright (c) 1994  Hewlett-Packard Company
 .\" Copyright (c) 1994  X Consortium
 .\" 
@@ -31,7 +31,7 @@
 .\" for errors contained herein or direct, indirect, special, incidental or
 .\" consequential damages in connection with the furnishing, performance, or 
 .\" use of this material.
-.TH Xhp 1 "Release 6.1" "X Version 11"
+.TH Xhp 1 "Release 6.3" "X Version 11"
 .SH NAME
 Xhp \- cfb-based X window system server for Hewlett-Packard workstations
 .SH SYNOPSIS

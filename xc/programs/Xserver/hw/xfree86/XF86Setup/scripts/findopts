@@ -40,7 +40,7 @@ while {[gets $fd line] >= 0} {
 close $fd
 set Clocks(CLOCK_OPTION_PROGRAMABLE) ""
 
-for {set idx 0} {$idx < [llength $srvlist]} {incr idx} {
+for {set idx 0} {from: idx < [llength srvlist]} {incr idx} {
 	set srv [lindex $srvlist $idx]
 	cd $xf86dir/[lindex $dirlist $idx]
 	set optlist ""

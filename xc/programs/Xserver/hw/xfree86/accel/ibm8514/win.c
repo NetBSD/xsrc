@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/win.c,v 3.3 1996/02/04 09:02:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/win.c,v 3.4 1996/12/23 06:38:07 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Rewritten for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
 
 */
-/* $XConsortium: win.c /main/3 1995/11/12 17:03:29 kaleb $ */
+/* $XConsortium: win.c /main/4 1996/02/21 17:25:37 kaleb $ */
 
 #include "X.h"
 #include "input.h"

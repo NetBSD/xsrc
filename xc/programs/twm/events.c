@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/twm/events.c,v 1.1.1.4.2.1 1997/05/11 05:04:28 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -53,7 +54,7 @@ in this Software without prior written authorization from the X Consortium.
 
 /***********************************************************************
  *
- * $XConsortium: events.c /main/142 1996/01/14 16:50:10 kaleb $
+ * $XConsortium: events.c /main/144 1996/12/02 08:19:17 swick $
  *
  * twm event handling
  *
@@ -717,11 +718,9 @@ static void free_window_names (tmp, nukefull, nukename, nukeicon)
     if (tmp->name == tmp->full_name) nukefull = False;
     if (tmp->icon_name == tmp->name) nukename = False;
 
-#define isokay(v) ((v) && (v) != NoName)
-    if (nukefull && isokay(tmp->full_name)) XFree (tmp->full_name);
-    if (nukename && isokay(tmp->name)) XFree (tmp->name);
-    if (nukeicon && isokay(tmp->icon_name)) XFree (tmp->icon_name);
-#undef isokay
+    if (nukefull && tmp->full_name) free (tmp->full_name);
+    if (nukename && tmp->name) free (tmp->name);
+    if (nukeicon && tmp->icon_name) free (tmp->icon_name);
     return;
 }
 
@@ -808,11 +807,12 @@ HandlePropertyNotify()
 				(unsigned char **) &prop) != Success ||
 	    actual == None)
 	  return;
-	if (!prop) prop = NoName;
 	free_window_names (Tmp_win, True, True, False);
 
-	Tmp_win->full_name = prop;
-	Tmp_win->name = prop;
+	Tmp_win->full_name = strdup(prop ? prop : NoName);
+	Tmp_win->name = strdup(prop ? prop : NoName);
+	if (prop)
+	    XFree(prop);
 
 	Tmp_win->nameChanged = 1;
 
@@ -842,9 +842,10 @@ HandlePropertyNotify()
 				(unsigned char **) &prop) != Success ||
 	    actual == None)
 	  return;
-	if (!prop) prop = NoName;
 	free_window_names (Tmp_win, False, False, True);
-	Tmp_win->icon_name = prop;
+	Tmp_win->icon_name = strdup(prop ? prop : NoName);
+	if (prop)
+	    XFree(prop);
 
 	RedoIconName();
 	break;
@@ -855,6 +856,21 @@ HandlePropertyNotify()
 
 	if (Tmp_win->wmhints && (Tmp_win->wmhints->flags & WindowGroupHint))
 	  Tmp_win->group = Tmp_win->wmhints->window_group;
+
+	if (Tmp_win->icon_not_ours && Tmp_win->wmhints &&
+	    !(Tmp_win->wmhints->flags & IconWindowHint)) {
+	    /* IconWindowHint was formerly on, now off; revert
+	    // to a default icon */
+	    int icon_x = 0, icon_y = 0;
+	    XGetGeometry (dpy, Tmp_win->icon_w, &JunkRoot,
+			  &icon_x, &icon_y,
+			  &JunkWidth, &JunkHeight, &JunkBW, &JunkDepth);
+	    XSelectInput (dpy, Tmp_win->icon_w, None);
+	    XDeleteContext (dpy, Tmp_win->icon_w, TwmContext);
+	    XDeleteContext (dpy, Tmp_win->icon_w, ScreenContext);
+	    CreateIconWindow(Tmp_win, icon_x, icon_y);
+	    break;
+	}
 
 	if (!Tmp_win->forced && Tmp_win->wmhints &&
 	    Tmp_win->wmhints->flags & IconWindowHint) {
@@ -890,6 +906,9 @@ HandlePropertyNotify()
 			XUnmapWindow(dpy, Tmp_win->icon_w);
 		} else
 		    XDestroyWindow(dpy, Tmp_win->icon_w);
+
+		XDeleteContext(dpy, Tmp_win->icon_w, TwmContext);
+		XDeleteContext(dpy, Tmp_win->icon_w, ScreenContext);
 
 		/*
 		 * The new icon window isn't our window, so note that fact

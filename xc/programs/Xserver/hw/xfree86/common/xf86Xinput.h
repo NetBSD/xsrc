@@ -1,4 +1,4 @@
-/* $XConsortium: xf86Xinput.h /main/3 1996/01/14 19:01:46 kaleb $ */
+/* $XConsortium: xf86Xinput.h /main/11 1996/10/27 11:05:29 kaleb $ */
 /*
  * Copyright 1995,1996 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>
  *                                                                            
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.11 1996/10/16 14:40:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.1 1997/05/12 12:52:29 hohndel Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h
@@ -39,6 +39,7 @@
 
 #define XI86_NO_OPEN_ON_INIT    1 /* open the device only when needed */
 #define XI86_CONFIGURED         2 /* the device has been configured */
+#define XI86_ALWAYS_CORE	4 /* the device always controls the pointer */
 
 #ifdef PRIVATE
 #undef PRIVATE
@@ -101,6 +102,7 @@ typedef struct _LocalDeviceRec {
     unsigned int	first;
     unsigned int	last;
     char		*type_name;
+    IntegerFeedbackPtr	always_core_feedback;
 } LocalDeviceRec, *LocalDevicePtr;
 
 typedef struct _DeviceAssocRec 
@@ -133,6 +135,14 @@ extern int
 xf86IsCoreKeyboard(
 #if NeedFunctionPrototypes
 	       DeviceIntPtr /*dev*/
+#endif
+);
+
+extern void
+xf86AlwaysCore(
+#if NeedFunctionPrototypes
+	       LocalDevicePtr	/*local*/,
+	       Bool		/*always*/
 #endif
 );
 
@@ -249,6 +259,21 @@ xf86GetMotionEvents(
 		    unsigned long	start,
 		    unsigned long	stop,
 		    ScreenPtr		pScreen
+#endif
+);
+
+void
+xf86XinputFinalizeInit(
+#if NeedFunctionPrototypes
+		       DeviceIntPtr	dev
+#endif
+);
+
+Bool
+xf86CheckButton(
+#if NeedFunctionPrototypes
+		int	button,
+		int	down
 #endif
 );
 

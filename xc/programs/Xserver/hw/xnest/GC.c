@@ -1,5 +1,5 @@
-/* $XConsortium: GC.c,v 1.7 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/GC.c,v 3.2 1996/01/24 22:04:12 dawes Exp $ */
+/* $XConsortium: GC.c /main/8 1996/12/02 10:21:19 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/GC.c,v 3.3 1996/12/23 07:09:13 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -26,18 +26,10 @@ is" without express or implied warranty.
 #include "Xnest.h"
 
 #include "Display.h"
-#ifdef __EMX__
-#include "os2GC.h"
-#else
-#include "GC.h" 
-#endif
+#include "XNGC.h" 
 #include "GCOps.h"
 #include "Drawable.h"
-#ifdef __EMX__
-#include "os2Font.h"
-#else
-#include "Font.h"
-#endif
+#include "XNFont.h"
 #include "Color.h"
 
 int xnestGCPrivateIndex;

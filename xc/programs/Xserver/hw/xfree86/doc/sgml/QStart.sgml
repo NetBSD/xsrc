@@ -1,11 +1,11 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
  <article>
 
- <title>	Quick-Start Guide to XFree86 Setup
+ <title>Quick-Start Guide to XFree86 Setup
 
- <author> Joe Moss
- <date> 26 August 1996
+ <author>Joe Moss
+ <date>26 August 1996
 
  <abstract>
 	Current releases of XFree86 include several tools that can help
@@ -644,7 +644,7 @@ This guide is for them.
 <!-- Lots of things still need to be added -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.2 1996/08/27 03:21:12 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4 1997/01/25 03:22:04 dawes Exp $
 </verb>
 
 </article>

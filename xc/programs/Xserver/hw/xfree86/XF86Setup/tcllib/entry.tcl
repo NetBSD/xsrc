@@ -1,3 +1,10 @@
+# $XConsortium: entry.tcl /main/1 1996/09/21 14:15:21 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/entry.tcl,v 3.1 1996/12/27 06:54:56 dawes Exp $
+#
 # entry.tcl --
 #
 # This file defines the default bindings for Tk entry widgets and provides

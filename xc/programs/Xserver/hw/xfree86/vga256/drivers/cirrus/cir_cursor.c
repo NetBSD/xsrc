@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_cursor.c,v 3.19 1996/10/06 13:17:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_cursor.c,v 3.20.2.4 1997/05/31 13:34:43 dawes Exp $ */
 /*
  *
  * Copyright 1993-94 by Simon P. Cooper, New Brunswick, New Jersey, USA.
@@ -23,7 +23,7 @@
  *
  * Author:  Simon P. Cooper, <scooper@vizlab.rutgers.edu>
  */
-/* $XConsortium: cir_cursor.c /main/8 1995/11/13 08:20:54 kaleb $ */
+/* $XConsortium: cir_cursor.c /main/14 1996/10/25 14:12:25 kaleb $ */
 
 /*
 #define CIRRUS_DEBUG_CURSOR
@@ -75,14 +75,14 @@ cirrusCursorInit(pm, pScr)
      char *pm;
      ScreenPtr pScr;
 {
-  cirrusCur.hotX = 0;
-  cirrusCur.hotY = 0;
-
   if (cirrusCursGeneration != serverGeneration)
     {
       if (!(miPointerInitialize(pScr, &cirrusPointerSpriteFuncs,
 				&xf86PointerScreenFuncs, FALSE)))
 	return FALSE;
+
+      cirrusCur.hotX = 0;
+      cirrusCur.hotY = 0;
       pScr->RecolorCursor = cirrusRecolorCursor;
       cirrusCursGeneration = serverGeneration;
     }
@@ -312,12 +312,19 @@ cirrusUnrealizeCursor(pScr, pCurs)
 }
 
 
+/*
+   cirrusFindLastTile() find the first tile in the last line of the frame
+   buffer.  This function works only with the Laguna family of Cirrus chips,
+   which use Rambus memory.
+   */
 cirrusFindLastTile(int *x, int *y, long unsigned *curAddr, 
 		   long unsigned *hiddenAddr)
 {
   int videoRam = vga256InfoRec.videoRam; /* in K */
   int tileHeight = 
     cirrusTilesPerLineTab[cirrusTilesPerLineIndex].width?8:16;
+  int tileWidth = 
+    cirrusTilesPerLineTab[cirrusTilesPerLineIndex].width?256:128;
   int tilesPerLine = 
     cirrusTilesPerLineTab[cirrusTilesPerLineIndex].tilesPerLine;
   int filledOutTileLines, leftoverMem;
@@ -334,48 +341,106 @@ cirrusFindLastTile(int *x, int *y, long unsigned *curAddr,
        tile in the last line */
     yTile = filledOutTileLines - 1;
   }
-  xTile = 0;
+  xTile = 0;   /* Always use the first tile in the determined tile row */
 
   if (x)
-    *x = xTile;   /* Always use the first tile in the determined tile row */
+    *x = xTile * tileWidth;
   if (y)
     *y = yTile * tileHeight;
 
   if (curAddr) {
-    switch (cirrusMemoryInterleave) {
-    case 0x00: /* no interleaving */
-      *curAddr = (yTile * tilesPerLine) * 2048;
-      break;
+    if (cirrusChip == CLGD5465) {
+      /* The Where's The Cursor formula changed for the 5465.  It's really 
+ 	 kinda wierd now. */
+      unsigned long page, bank;
+      unsigned int nX, nY;
+      unsigned int nIL;  /* Interleaving */
       
-    case 0x40: /* 2-way interleaving */
-      tileNumber = (tilesPerLine*2) * (yTile/2) + yTile % 2;
-      *curAddr = tileNumber * 2048;
-      break;
+      nX = xTile * tileWidth;
+      nY = yTile * tileHeight;
+      nIL = cirrusMemoryInterleave==0x00 ? 1 : 
+      (cirrusMemoryInterleave==0x40 ? 2 : 4);
+      
+      page = (nY / (tileHeight * nIL)) * tilesPerLine + nX / tileWidth;
+      bank = (nX/tileWidth + nY/tileHeight) % nIL + page/(512*nIL);
+      page = page & 0x1FF;
+      *curAddr = bank*1024*1024L + page*2048 + (nY%tileHeight)*tileWidth;
+      
+    } else {
+#if 1
+      switch (cirrusMemoryInterleave) {
+      case 0x00: /* no interleaving */
+	*curAddr = (yTile * tilesPerLine) * 2048;
+	break;
+      
+      case 0x40: /* 2-way interleaving */
+	tileNumber = (tilesPerLine*2) * (yTile/2) + yTile % 2;
+	*curAddr = tileNumber * 2048;
+	break;
 
-    case 0x80: /* 4-way interleaving */
-      tileNumber = (tilesPerLine*4) * (yTile/4) + yTile % 4;
-      *curAddr = tileNumber * 2048;
-      break;
+      case 0x80: /* 4-way interleaving */
+	tileNumber = (tilesPerLine*4) * (yTile/4) + yTile % 4;
+	*curAddr = tileNumber * 2048;
+	break;
+      }
+#else
+       unsigned nIL;  /* Interleaving */
+       nIL = cirrusMemoryInterleave==0x00? 1 : 
+       (cirrusMemoryInterleave==0x40 ? 2 : 4);
+ 
+       tileNumber = (tilesPerLine*nIL) * (yTile/nIL) + yTile % nIL;
+       *curAddr = tileNumber * 2048;
+ #endif
     }
   }
+
   if (hiddenAddr) {
     xTile++;
-    switch (cirrusMemoryInterleave) {
-    case 0x00: /* no interleaving */
-      *hiddenAddr = (yTile * tilesPerLine + xTile) * 2048;
-      break;
-      
-    case 0x40: /* 2-way interleaving */
-      tileNumber = (tilesPerLine*2) * (yTile/2) + (xTile*2) +
-	(yTile+xTile) % 2;
-      *hiddenAddr = tileNumber * 2048;
-      break;
 
-    case 0x80: /* 4-way interleaving */
-      tileNumber = (tilesPerLine*4) * (yTile/4) + (xTile*4) + 
-	(yTile+xTile) % 4;
+    if (cirrusChip == CLGD5465) {
+      /* The Where's The Cursor formula changed for the 5465.  It's really 
+ 	 kinda wierd now. */
+      unsigned long page, bank;
+      unsigned nX, nY;
+      unsigned nIL;  /* Interleaving */
+ 
+      nX = xTile * tileWidth;
+      nY = yTile * tileHeight;
+      nIL = cirrusMemoryInterleave==0x00? 1 : 
+      (cirrusMemoryInterleave==0x40 ? 2 : 4);
+ 
+      page = (nY / (tileHeight * nIL)) * tilesPerLine + nX / tileWidth;
+      bank = (nX/tileWidth + nY/tileHeight) % nIL + page/(512*nIL);
+      page = page & 0x1FF;
+      *hiddenAddr = bank*1024*1024L + page*2048 + (nY%tileHeight)*tileWidth;
+    } else {
+#if 1
+      switch (cirrusMemoryInterleave) {
+      case 0x00: /* no interleaving */
+	*hiddenAddr = (yTile * tilesPerLine + xTile) * 2048;
+	break;
+	
+      case 0x40: /* 2-way interleaving */
+	tileNumber = (tilesPerLine*2) * (yTile/2) + (xTile*2) +
+	  (yTile+xTile) % 2;
+	*hiddenAddr = tileNumber * 2048;
+	break;
+	
+      case 0x80: /* 4-way interleaving */
+	tileNumber = (tilesPerLine*4) * (yTile/4) + (xTile*4) + 
+	  (yTile+xTile) % 4;
+	*hiddenAddr = tileNumber * 2048;
+	break;
+      }
+#else
+      unsigned nIL;  /* Interleaving */
+      nIL = cirrusMemoryInterleave==0x00? 1 : 
+      (cirrusMemoryInterleave==0x40 ? 2 : 4);
+  
+      tileNumber = (tilesPerLine*nIL) * (yTile/nIL) + xTile*nIL +
+ 	(yTile+xTile) % nIL;
       *hiddenAddr = tileNumber * 2048;
-      break;
+#endif
     }
   }
   
@@ -834,7 +899,7 @@ cirrusMoveCursor(pScr, x, y)
   if (XF86SCRNINFO(pScr)->modes->Flags & V_DBLSCAN)
       y *= 2;
 
-  if (XF86SCRNINFO(pScr)->modes->CrtcHAdjusted) {
+  if (cirrusChip == CLGD5434 && XF86SCRNINFO(pScr)->modes->CrtcHAdjusted) {
       /* 5434 palette-clock doubling mode; cursor is squashed but */
       /* get at least the position right. */
       x /= 2;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaImages.c,v 3.5 1996/02/20 14:35:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaImages.c,v 3.6 1996/12/23 06:53:25 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
 */
-/* $XConsortium: vgaImages.c /main/4 1996/01/10 11:12:19 kaleb $ */
+/* $XConsortium: vgaImages.c /main/5 1996/02/21 17:58:58 kaleb $ */
 
 #include "X.h"
 

@@ -1,3 +1,4 @@
+/* $XConsortium: ct_FillRct.c /main/4 1996/10/27 11:49:12 kaleb $ */
 /*
  * 
  * Copyright (c) 1989  X Consortium
@@ -27,7 +28,7 @@
 /* Modified for Cirrus by Harm Hanemaayer, <hhanemaa@cs.ruu.nl> */
 /* Modified for Chips by David Bateman, <dbateman@ee.uts.edu.au> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_FillRct.c,v 3.2 1996/10/17 15:20:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_FillRct.c,v 3.4 1997/01/12 10:42:26 dawes Exp $ */
 
 /*
  * This file contains the high level PolyFillRect function.
@@ -188,28 +189,20 @@ ctcfbPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
 	break;
 #if (PPW == 4)
     case FillStippled:
-#ifdef CT_POST_312F_ACCL
 	if ((!((cfbPrivGCPtr) pGC->devPrivates[cfbGCPrivateIndex].ptr)->
 		pRotatedPixmap) || ctAvoidImageBLT)
 	    BoxFill = vga2568FillRectStippledUnnatural;
 	else {
 	    BoxFill = ctcfbFillRectTransparentStippled32;
 	}
-#else
-	    BoxFill = vga2568FillRectStippledUnnatural;
-#endif
 	break;
     case FillOpaqueStippled:
-#ifdef CT_POST_312F_ACCL
 	if (!((cfbPrivGCPtr) pGC->devPrivates[cfbGCPrivateIndex].ptr)->
 							pRotatedPixmap)
 	    BoxFill = vga2568FillRectStippledUnnatural;
 	else {
 	    BoxFill = ctcfbFillRectOpaqueStippled32;
 	}
-#else
-	    BoxFill = vga2568FillRectStippledUnnatural;
-#endif
 	break;
 #endif
     }

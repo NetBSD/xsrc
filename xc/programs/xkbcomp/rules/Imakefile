@@ -1,7 +1,7 @@
-XCOMM $XConsortium: Imakefile /main/10 1996/02/02 14:22:19 kaleb $
+XCOMM $XConsortium: Imakefile /main/3 1996/09/13 10:59:07 kaleb $
 
     DATAFILES = sgi xfree86
-    LISTFILES = sgi.lst xfree86.lst
+    LISTFILES = sgi.lst xfree86.lst xfree86-it.lst
 
 all::
 

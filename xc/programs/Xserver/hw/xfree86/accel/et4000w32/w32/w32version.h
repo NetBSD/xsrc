@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32version.h,v 3.2 1996/02/04 09:00:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32version.h,v 3.3 1996/12/23 06:35:29 dawes Exp $ */
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -26,7 +26,7 @@ Austin, Tx 78765
 glenn@cs.utexas.edu)
 4/6/94
 *******************************************************************************/
-/* $XConsortium: w32version.h /main/3 1995/11/12 16:37:59 kaleb $ */
+/* $XConsortium: w32version.h /main/4 1996/02/21 17:22:44 kaleb $ */
 
 #ifndef W32_VERSION_H
 #define W32_VERSION_H

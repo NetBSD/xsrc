@@ -1,5 +1,4 @@
-/* $XConsortium: mx_bank.s,v 1.2 95/06/19 19:16:47 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mx/mx_bank.s,v 3.1 1996/02/04 09:13:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mx/mx_bank.s,v 3.2 1996/12/23 06:57:42 dawes Exp $ */
 /*
  * Driver Stubs Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,6 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: mx_bank.s /main/3 1996/02/21 18:05:36 kaleb $ */
 
 
 #include "assyntax.h"

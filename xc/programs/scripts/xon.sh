@@ -28,7 +28,14 @@ unix:*)
 esac
 case $DISPLAY in
 :*)
-	fullname=`hostname`
+	case `uname` in
+	Linux*)
+		fullname=`hostname -f`
+		;;
+	*)
+		fullname=`hostname`
+		;;
+	esac
 	hostname=`echo $fullname | sed 's/\..*$//'`
 	if [ $hostname = $target ] || [ $fullname = $target ]; then
 		DISPLAY=$DISPLAY

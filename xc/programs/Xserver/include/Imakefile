@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.2 95/01/13 20:28:14 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/include/Imakefile,v 3.5 1996/09/24 13:59:26 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/include/Imakefile,v 3.5.4.1 1997/05/12 12:52:39 hohndel Exp $
 
 all::
 
@@ -11,11 +11,13 @@ InstallLinkKitNonExecFile(cursorstr.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(dix.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(dixfont.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(dixfontstr.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(dixstruct.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(extension.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(extnsionst.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(gc.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(gcstruct.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(input.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(inputstr.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(misc.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(miscstruct.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(opaque.h,$(LINKKITDIR)/include)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.22 1996/10/18 15:00:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.2 1997/05/16 11:35:15 hohndel Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -22,7 +22,7 @@
  * Rewritten for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  *
  */
-/* $XConsortium: mach64init.c /main/9 1996/01/28 07:59:08 kaleb $ */
+/* $XConsortium: mach64init.c /main/18 1996/10/27 18:06:34 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -97,7 +97,11 @@ static unsigned long old_CRTC_H_TOTAL_DISP;
 static unsigned long old_CRTC_V_SYNC_STRT_WID;
 static unsigned long old_CRTC_V_TOTAL_DISP;
 
+static unsigned long old_DSP_CONFIG;
+static unsigned long old_DSP_ON_OFF;
+
 static int oldClockFreq;
+static unsigned char old_PLL[16];
 
 static unsigned char old_ATI68860[4];
 static unsigned char old_ATI68875[3];
@@ -1051,33 +1055,31 @@ void mach64SetDSPRegs(crtcRegs)
 {
     int color_depth, t, fifo_size, page_size;
     float x, fifo_on, fifo_off, z;
-    unsigned short loop_latency, y, temp;
+    unsigned short loop_latency, y, temp, dsp_on, dsp_off, dsp_xclks_per_qw;
 
     switch (crtcRegs->color_depth) {
-    case CRTC_PIX_WIDTH_8BPP : color_depth = 8 ; break;
+    case CRTC_PIX_WIDTH_8BPP:  color_depth =  8; break;
     case CRTC_PIX_WIDTH_15BPP: color_depth = 16; break;
     case CRTC_PIX_WIDTH_16BPP: color_depth = 16; break;
     case CRTC_PIX_WIDTH_24BPP: color_depth = 24; break;
     case CRTC_PIX_WIDTH_32BPP: color_depth = 32; break;
-    default                  : color_depth =  4; break;
+    default:                   color_depth =  4; break;
     }
 
-    x = ((float)mach64VRAMMemClk * 64.0) / ((float)crtcRegs->dot_clock * (float)color_depth);
+    x = ((float)mach64VRAMMemClk * 64.0) /
+	((float)crtcRegs->dot_clock * (float)color_depth);
     t = 0;
-    y = (unsigned short)(x * 24.0);
+    y = (unsigned short)(x * 24.0) + 1;
 
     while (y) {
 	y >>= 1;
 	t++;
     }
-
-    if (t > 29) fifo_size = t - 5;
-    else        fifo_size = 24;
-
+    fifo_size = 24;
     fifo_off = x * (fifo_size - 1) + 1;
 
     if (mach64MemorySize > MEM_SIZE_1M) {
-	if (mach64MemType == GraphicsDRAMx16) {
+	if (mach64MemType >= SDRAM) {
 	    loop_latency = 8;
 	    page_size    = 8;
 	} else {
@@ -1085,7 +1087,7 @@ void mach64SetDSPRegs(crtcRegs)
 	    page_size    = 9;
 	}
     } else {
-	if (mach64MemType == GraphicsDRAMx16) {
+	if (mach64MemType >= SDRAM) {
 	    loop_latency = 9;
 	    page_size    = 10;
 	} else {
@@ -1094,20 +1096,26 @@ void mach64SetDSPRegs(crtcRegs)
 	}
     }
 
-    if (x >= page_size) fifo_on = 2 * page_size + (int)x + 1;
+    if (x >= page_size) fifo_on = 2 * page_size + 1 + (int)x;
     else                fifo_on = 3 * page_size;
 
-    /* DSP_ON_OFF is 0xfc24  -- from ATI's nobios code
-     * DSP_CONFIG is 0xfc20
-     * I have no programming info on these regs and I don't know how/why they
-     * use 0xfc00 as their base address.
-     */
-#if 0
-    outw(0xfc26, (unsigned short)(fifo_on  * pow(2, 6.0 - (t - 5.0))) & 0x07ff);
-    outw(0xfc24, (unsigned short)(fifo_off * pow(2, 6.0 - (t - 5.0))) & 0x07ff);
-    outw(0xfc20, (unsigned short)(x * pow(2, 11.0 - (t - 5.0))) & 0x3fff);
-    outb(0xfc22, (unsigned char)(t - 5)<<4 | loop_latency);
+    dsp_on  = (unsigned short)fifo_on  << (6 - (t - 5));
+    dsp_off = (unsigned short)fifo_off << (6 - (t - 5));
+    dsp_xclks_per_qw = x * (1 << (11 - (t - 5)));
+
+#ifdef DEBUG
+    ErrorF("dsp_on  = %d, fifo_on  = %f\n", dsp_on, fifo_on);
+    ErrorF("dsp_off = %d, fifo_off = %f\n", dsp_off, fifo_off);
+    ErrorF("dsp_xclks_per_qw = %d, x = %f, t = %d\n", dsp_xclks_per_qw, x, t);
 #endif
+
+    regw(DSP_ON_OFF,
+	 ((dsp_on << 16) & DSP_ON) |
+	 (dsp_off & DSP_OFF));
+    regw(DSP_CONFIG,
+	 (((t - 5) << 20) & DSP_PRECISION) |
+	 ((loop_latency << 16) & DSP_LOOP_LATENCY) |
+	 (dsp_xclks_per_qw & DSP_XCLKS_PER_QW));
 }
 
 /*
@@ -1195,11 +1203,9 @@ void mach64SetCRTCRegs(crtcRegs)
     }
 
     if (mach64ChipType == MACH64_CT && mach64ChipRev == 0x0a) { /* CT-D only */
-	/* The 0xfc00 IO block is supposed to be located at offset 26,27
-	 * in the BIOS ROM.
-	 */
-	CTD_sharedCntl = inb(0xfc3b) & 0xfe;
-	outb(0xfc3b, CTD_sharedCntl | ((crtcRegs->fifo_v1 & 0x10) >> 4));
+	CTD_sharedCntl = regrb(SHARED_CNTL+3) & ~(CTD_FIFO5 >> 24);
+	regwb(SHARED_CNTL+3,
+	      CTD_sharedCntl | ((crtcRegs->fifo_v1 & 0x10) >> 4));
     }
 
     /* Display control register -- this one turns on the display */
@@ -1330,16 +1336,18 @@ void mach64ResetEngine()
     temp = regr(GEN_TEST_CNTL);
     regw(GEN_TEST_CNTL, temp & ~GUI_ENGINE_ENABLE);
 
-    /* Block write mode _should_ be correctly initialized by the BIOS
-     * at boot time, but this may not be the case.  If it is not, then
-     * allow the user to explicitly turn on or turn off block write
-     * mode via the "block_write" and "no_block_write" option in their
-     * XF86Config file.
-     */
-    if (OFLG_ISSET(OPTION_BLOCK_WRITE, &mach64InfoRec.options)) {
-	temp |= BLOCK_WRITE_ENABLE;
-    } else if (OFLG_ISSET(OPTION_NO_BLOCK_WRITE, &mach64InfoRec.options)) {
-	temp &= ~BLOCK_WRITE_ENABLE;
+    if (!mach64IntegratedController) {
+	/* Block write mode _should_ be correctly initialized by the BIOS
+	 * at boot time, but this may not be the case.  If it is not, then
+	 * allow the user to explicitly turn on or turn off block write
+	 * mode via the "block_write" and "no_block_write" option in their
+	 * XF86Config file.
+	 */
+	if (OFLG_ISSET(OPTION_BLOCK_WRITE, &mach64InfoRec.options)) {
+	    temp |= BLOCK_WRITE_ENABLE;
+	} else if (OFLG_ISSET(OPTION_NO_BLOCK_WRITE, &mach64InfoRec.options)) {
+	    temp &= ~BLOCK_WRITE_ENABLE;
+	}
     }
 
     regw(GEN_TEST_CNTL, temp | GUI_ENGINE_ENABLE);
@@ -2121,7 +2129,7 @@ void mach64SetRamdac(colorDepth, AccelMode, dotClock)
 void mach64InitDisplay(screen_idx)
      int screen_idx;
 {
-    int temp;
+    int temp, i;
     char old_crtc_ext_disp;
 
     if (mach64Inited)
@@ -2236,6 +2244,18 @@ void mach64InitDisplay(screen_idx)
 
     if (mach64IntegratedController) {
 	oldClockFreq = mach64GetCTClock(mach64CXClk);
+
+	for (i = 0; i < 16; i++) {
+	    outb(ioCLOCK_CNTL+1, i << 2);
+	    old_PLL[i] = inb(ioCLOCK_CNTL+2);
+	}
+
+	if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
+	    (mach64ChipRev & 0x01)) {
+	    old_DSP_CONFIG = regr(DSP_CONFIG);
+	    old_DSP_ON_OFF = regr(DSP_ON_OFF);
+	}
+
 #ifdef DEBUG
 	ErrorF("oldClockFreq = %d\n", oldClockFreq);
 #endif
@@ -2296,7 +2316,7 @@ void mach64InitDisplay(screen_idx)
  */
 void mach64CleanUp()
 {
-    int temp;
+    int temp, i;
     char old_crtc_ext_disp;
 
     if (!mach64Inited)
@@ -2304,8 +2324,20 @@ void mach64CleanUp()
 
     WaitIdleEmpty();
 
-    if (mach64IntegratedController)
+    if (mach64IntegratedController) {
     	mach64ProgramClk(mach64CXClk, oldClockFreq);
+
+	for (i = 0; i < 16; i++) {
+	    outb(ioCLOCK_CNTL+1, (i << 2) | PLL_WR_EN);
+	    outb(ioCLOCK_CNTL+2, old_PLL[i]);
+	}
+
+	if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
+	    (mach64ChipRev & 0x01)) {
+	    regw(DSP_CONFIG, old_DSP_CONFIG);
+	    regw(DSP_ON_OFF, old_DSP_ON_OFF);
+	}
+    }
 
     mach64SetRamdac(CRTC_PIX_WIDTH_8BPP, FALSE, 5035);
 

@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: osinit.c,v 1.49 95/01/17 14:12:18 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.10 1995/03/11 14:19:58 dawes Exp $ */
+/* $XConsortium: osinit.c /main/45 1996/12/02 10:23:13 lehors $ */
+/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.12 1997/01/18 06:58:02 dawes Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -62,7 +62,7 @@ SOFTWARE.
 #endif
 #endif
 
-#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX)
+#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx)
 #include <sys/resource.h>
 #endif
 
@@ -115,7 +115,7 @@ OsInit()
 		dup2 (fileno (err), 2);
 		fclose (err);
 	    }
-#if defined(SYSV) || defined(SVR4) || defined(MINIX) || defined(__EMX__)
+#if defined(SYSV) || defined(SVR4) || defined(MINIX) || defined(__EMX__) || defined(WIN32)
 	    {
 	    static char buf[BUFSIZ];
 	    setvbuf (stderr, buf, _IOLBF, BUFSIZ);
@@ -129,7 +129,7 @@ OsInit()
 	if (getpgrp () == 0)
 	    setpgid (0, 0);
 #else
-#ifndef SYSV
+#if !defined(SYSV) && !defined(WIN32)
 	if (getpgrp (0) == 0)
 	    setpgrp (0, getpid ());
 #endif

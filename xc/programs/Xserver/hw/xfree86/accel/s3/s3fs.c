@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3fs.c,v 3.9 1996/09/22 05:03:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3fs.c,v 3.10 1996/12/23 06:41:46 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -65,7 +65,7 @@ PERFORMANCE OF THIS SOFTWARE.
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3fs.c /main/5 1995/11/12 19:06:27 kaleb $ */
+/* $XConsortium: s3fs.c /main/8 1996/10/24 07:11:16 kaleb $ */
 
 
 #include "X.h"

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_VGA16.c,v 3.6 1996/02/04 09:05:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_VGA16.c,v 3.7 1996/12/23 06:43:11 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: XF86_VGA16.c /main/3 1995/11/12 19:20:54 kaleb $ */
+/* $XConsortium: XF86_VGA16.c /main/4 1996/02/21 17:37:22 kaleb $ */
 
 #include "X.h"
 #include "os.h"

@@ -1,5 +1,5 @@
-/* $XConsortium: miscrinit.c,v 5.11 94/07/28 14:16:48 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.1 1996/01/05 13:19:52 dawes Exp $ */
+/* $XConsortium: miscrinit.c /main/13 1996/08/12 21:51:16 dpw $ */
+/* $XFree86: xc/programs/Xserver/mi/miscrinit.c,v 3.2 1996/12/23 07:09:46 dawes Exp $ */
 /*
 
 Copyright (c) 1990  X Consortium
@@ -300,5 +300,6 @@ miSetZeroLineBias(pScreen, bias)
 	miZeroLineScreenIndex = AllocateScreenPrivateIndex();
 	miZeroLineGeneration = serverGeneration;
     }
-    pScreen->devPrivates[miZeroLineScreenIndex].uval = bias;
+    if (miZeroLineScreenIndex >= 0)
+	pScreen->devPrivates[miZeroLineScreenIndex].uval = bias;
 }

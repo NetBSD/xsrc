@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64orect.c,v 3.3 1996/02/04 09:03:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64orect.c,v 3.4 1996/12/23 06:39:23 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
 and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
 Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
 
 ******************************************************************/
-/* $XConsortium: mach64orect.c /main/3 1995/11/12 17:39:19 kaleb $ */
+/* $XConsortium: mach64orect.c /main/4 1996/02/21 17:28:59 kaleb $ */
 
 #include "X.h"
 #include "gcstruct.h"

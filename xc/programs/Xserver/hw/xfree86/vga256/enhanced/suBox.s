@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBox.s,v 3.1 1996/02/04 09:14:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBox.s,v 3.2 1996/12/23 06:59:10 dawes Exp $ */
 /*******************************************************************************
 			Copyright 1992 by Glenn G. Lai 
 
@@ -26,7 +26,7 @@ Austin, Tx 78765
 (glenn@cs.utexas.edu)
 7/27/92
 *******************************************************************************/
-/* $XConsortium: suBox.s /main/4 1995/11/13 08:46:17 kaleb $ */
+/* $XConsortium: suBox.s /main/5 1996/02/21 18:09:14 kaleb $ */
 
 #include "assyntax.h"
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBlt.c,v 3.16 1996/02/04 08:57:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBlt.c,v 3.17 1996/12/23 06:32:31 dawes Exp $ */
 /*
 Copyright 1989 by the Massachusetts Institute of Technology
 Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -32,7 +32,7 @@ Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the AGX    by Henry A. Worth  (haw30@eng.amdahl.com)
 
  */
-/* $XConsortium: agxBlt.c /main/6 1995/11/13 10:06:18 kaleb $ */
+/* $XConsortium: agxBlt.c /main/7 1996/02/21 17:16:37 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000pntwin.c,v 3.1 1996/02/04 09:04:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000pntwin.c,v 3.2 1996/12/23 06:40:50 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: p9000pntwin.c /main/2 1995/11/12 18:19:26 kaleb $ */
+/* $XConsortium: p9000pntwin.c /main/3 1996/02/21 17:32:59 kaleb $ */
 
 #include "X.h"
 

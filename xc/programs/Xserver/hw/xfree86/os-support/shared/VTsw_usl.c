@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/VTsw_usl.c,v 1.1.1.2 1996/01/03 07:20:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/VTsw_usl.c,v 3.1 1996/12/23 06:50:57 dawes Exp $ */
 /*
- * Copyright 1993 by David Wexelblat <dwex@goblin.org>
+ * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: VTsw_usl.c /main/2 1995/11/13 06:15:00 kaleb $ */
+/* $XConsortium: VTsw_usl.c /main/3 1996/02/21 17:53:28 kaleb $ */
 
 #include "X.h"
 #include "input.h"

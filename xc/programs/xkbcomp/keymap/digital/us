@@ -1,4 +1,4 @@
-// $XConsortium: us /main/1 1996/02/02 14:21:15 kaleb $
+// $XConsortium: us /main/2 1996/08/31 12:17:33 kaleb $
 //
 //Copyright (c) 1996  Digital Equipment Corporation
 //
@@ -28,9 +28,9 @@
 //
 // HISTORY
 // Log: us,v 
-# Revision 1.3  1996/06/18  09:14:51  erik
-# use flags correctly, assorted cleanups and consortium fixes
-#
+// Revision 1.3  1996/06/18  09:14:51  erik
+// use flags correctly, assorted cleanups and consortium fixes
+//
 // Revision 1.1.6.2  1995/10/25  21:00:53  William_Walker
 // 	Add pc104-key support
 // 	[1995/10/23  15:46:24  William_Walker]

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8seg.c,v 3.4 1996/02/04 09:03:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8seg.c,v 3.5 1996/12/23 06:40:10 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -54,7 +54,7 @@ Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
 Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
 
 */
-/* $XConsortium: mach8seg.c /main/5 1996/01/11 12:27:08 kaleb $ */
+/* $XConsortium: mach8seg.c /main/6 1996/02/21 17:31:15 kaleb $ */
 
 #include "X.h"
 

@@ -2,7 +2,7 @@
  * Fill odd tiled rectangles and spans.
  * no depth dependencies.
  */
-/* $XConsortium: cfbtileodd.c /main/2 1995/11/12 16:17:59 kaleb $ */
+/* $XConsortium: cfbtileodd.c /main/3 1996/02/21 17:21:00 kaleb $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -29,7 +29,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbtileodd.c,v 3.2 1996/02/04 08:59:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbtileodd.c,v 3.3 1996/12/23 06:34:55 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

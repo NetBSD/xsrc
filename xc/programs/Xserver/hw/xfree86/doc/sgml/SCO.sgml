@@ -1,12 +1,11 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- TitleS information -->
 
 <title>Information for SCO Users
-<author>David McCullough (davidm@stallion.com),
-J. Kean Johnston (hug@netecom.com)
-<date>14 December 1994
+<author>J. Kean Johnston (hug@netcom.com)
+<date>30 November 1996
 
 
 <!-- Table of contents -->
@@ -48,9 +47,6 @@ The following files are provided in the binary distribution:
 <tag/X312pex.tgz/           All files relating to PEX including libraries
                             and header files.  The LinkKit is required to
                             obtain servers capable of running PEX.
-<tag/dmmap-1_0.btz/         The binary distribution of the ``dmmap'' driver
-			    for allowing access to strange video ram addresses
-			    by XFree86.
 </descrip></quote>
 
 To obtain a minimum XFree86 installation you will require the archives
@@ -63,21 +59,21 @@ program.<p>
 
 To install the XFree86 binaries just follow these steps.
 <enum>
-<item> Obtain the files you require.<p>   
+<item>Obtain the files you require.<p>   
       The rest of this procedure must be done as root.  If you do not run
       the extraction as root the permissions on the files will not be
       correct.  For example,  the `X' server is s-bit root and will not
       function correctly if extracted as an ordinary user.  <p>
-<item> create a directory <tt>/usr/X11R6</tt>, permissions <tt>755</tt>
+<item>create a directory <tt>/usr/X11R6</tt>, permissions <tt>755</tt>
  should do nicely.
-<item> cd <tt>/usr/X11R6</tt>
-<item> extract the archives, for example:
+<item>cd <tt>/usr/X11R6</tt>
+<item>extract the archives, for example:
 <verb>
-            gunzip < X312bin.tgz | tar xvf -
+            gunzip < X312bin.tgz | tar xvpf -
 </verb>    
-<item> if you have installed man pages see the later section on
+<item>if you have installed man pages see the later section on
        setting up man pages.
-<item> Look through <tt>/usr/X11R6/lib/X11/doc/INSTALL</tt>, 
+<item>Look through <tt>/usr/X11R6/lib/X11/doc/INSTALL</tt>, 
 	especially section 2
        on configuring and using XFree86.   This should allow you to get
        a server up and running.  Before starting the server check in
@@ -92,6 +88,15 @@ To install the XFree86 binaries just follow these steps.
 The SCO port comes as part of the standard XFree86 distribution.  Consult
 the XFree86 <tt>README</tt> for more information on the location of sources.
 
+Please note that as of XFree86 3.2, Only SCO Open Server Release 5 and
+onwards are supported.  If you are using a previous version of SCO UNIX
+and you want to use XFree86, use the 3.1 series, or be prepared for build
+failures.
+
+For people who want and need to look around the source, there
+are now two files in ``<tt>xc/config/cf</tt>''. Firstly, ``<tt>sco.cf</tt>'' is
+the old original SCO configuration file, and ``<tt>sco5.cf</tt>'', which is
+the currently used configuration file. 
 
 <sect>Before Running XFree86<p><label id="sec-runxf86">
 
@@ -109,27 +114,17 @@ serial mouse,
 especially if you are having trouble getting your mouse to work using the
 XFree86 mouse drivers.<p>
 
-If you are using an Accelerated Localbus/EISA card you may wish to install
-the "<tt>dmmap</tt>" driver.  This driver allows the server to use a linear 
-address
-mapping in high memory when accessing the card. The dmmap driver comes in
-two forms, a binary archive which is supplied with the full binary
-distribution and a source archive which is located in 
-<tt>/usr/X11R6/lib/X11/etc</tt>.
-Both distributions provide instructions for installation/removal within the
-<tt>README file</tt>. <p>
-
 If you do not have the SCO TCP/IP package installed do not panic.
 XFree86 will work fine without TCP/IP but you will most likely have to do
 some or all of these things:
 <itemize>           
-      <item> Do not worry about errors from the X server complaining about
+      <item>Do not worry about errors from the X server complaining about
         ``/dev/socksys''.  The X server is configured to run on systems with
         and without TCP/IP.  This error is just pointing out that you do
         not have TCP/IP and that this method of connecting to the server
         has been disabled.
   
-      <item> Do worry about errors involving ``/dev/spx'' or the ``sco''
+      <item>Do worry about errors involving ``/dev/spx'' or the ``sco''
 	connection
         type.  This means something is wrong with the streams pipes that
         are used for connections on the local machine.  First be sure that
@@ -149,15 +144,15 @@ some or all of these things:
 	</verb></quote>
         is not.
      
-      <item> you may have to install streams into the kernel with
+      <item>you may have to install streams into the kernel with
         ``mkdev streams''
         Check the SCO Manuals for more information on this.
       
-      <item> you may have to configure some devices in /dev,  check in the
+      <item>you may have to configure some devices in /dev,  check in the
         "Trouble Shooting" section of this document for the entry which
         comments on ``/dev/spx'' and ``Xsco''.
         
-      <item> Your streams resources may be configured too low.  You should check
+      <item>Your streams resources may be configured too low.  You should check
         your streams parameters against the following values,  if the are
         higher then you do not need to changes them.  To check these
         values, login as root, change directory to ``/etc/conf/cf.d'' and
@@ -187,30 +182,19 @@ some or all of these things:
         do have to change some,  configure will confirm that you want to
         save the changes before exiting,  and will give you further
         instructions on rebuilding the unix kernel. 
-  
-      <item> Under SCO 3.2.4,  without TCP/IP installed the Screen Saver  
-        extension behaves badly.  If your screen flickers between black and
-        the correct screen as you move the mouse or type,  then you will
-        have to turn the screen saver off.  To do this add a line like:
-                   
-	<quote><verb>
-                    xset s off  
-	</verb></quote>
-                   
-        To your startup script (ie., .startxrc, .xinitrc, ...).  This will
-        turn the screen saver off and prevent the bug from occurring.
 </itemize>
-                   
-
 
 <sect>Switching Consoles<p>
 
 XFree86 uses similar console switching keys as the SCO R4 and R5
 servers.  That is, <tt>Ctrl-PrntScr</tt> takes you to the next console along
 from the one X is running on.  If this is the last console it will take
-you to console 1.  Those interested in modifying the console switching
+you to console 1. <tt>Ctrl-Alt-FXX</tt>, where <tt>XX</tt> is a function
+key between <tt>F1</tt> and <tt>F12</tt> will switch you to the console
+number assigned to that function key. <tt>F1</tt> corresponds to
+<tt>tty01</tt> (or console 1), <tt>F2</tt> corresponds to <tt>tty02</tt>
+(or console 2) etc.  Those interested in modifying the console switching
 should look in <tt>xc/programs/Xserver/hw/xfree86/common/xf86Events.c</tt>.
-
 
 <sect>Setting up Man Pages<p>
 
@@ -226,15 +210,11 @@ This allows all users to view the X man pages.  You may change your own
 <tt>MANPATH</tt> environment variable if you do not want everyone to access the
 man pages.<p>
 
-By default the man pages are compressed using "<tt>pack</tt>" under 3.2.2 and
-"<tt>compress</tt>" under 3.2.4 to conserve space.  If you do not want to 
-compress
-the man pages change <tt>CompressManPages</tt> to <tt>NO</tt> in your 
-<tt>xf86site.def</tt>.  Those
-using the binary distribution can use "<tt>unpack</tt>" or 
-"<tt>uncompress</tt>" as appropriate
+By default the man pages are compressed using ``<tt>compress</tt>'' to
+conserve space.  If you do not want to compress the man pages change
+<tt>CompressManPages</tt> to <tt>NO</tt> in your ``<tt>xf86site.def</tt>''
+file.  Those using the binary distribution can use ``<tt>uncompress</tt>''
 to uncompress the man pages.
-
 
 <sect>Using SCO binaries/servers.<p>
 
@@ -243,161 +223,10 @@ SCO R5 server will also accept connections from XFree86 binaries. This
 means you may mix and match the two if you have ODT.  For example you may
 still use the Motif window manager (mwm) if you prefer.
 
-
-<sect>Compiling XFree86 under 3.2.2<p>
-
-Currently XFree86 is configured to install under <tt>/usr/X11R6</tt>. 
-The binary
-distribution will be configured to go into this directory.  If you are
-compiling your own XFree86 there is no reason why this cannot be changed.
-Check in the X11 <tt>config/README</tt> on how to change your 
-<tt>ProjectRoot</tt>.
-
-The defaults are set such that you should only require minimal changes to
-the <tt>site.def</tt> or the <tt>xf86site.def</tt> file.  
-The <tt>BOOTSTRAPCFLAGS</tt> do most of the
-work for you. The defaults will use gcc 2 or above and they also compile
-for shared libraries and setup formatted man pages using compression. The
-most likely Parameters you will be interested in changing are:
-<enum>
-<item>  What Fonts etc get compiled.
-<item>  What gets installed (<tt>XdmConfig, FSConfig</tt>, &hellip)
-</enum>
-Use gcc, preferably 2.5.8 or later but an earlier version may still do the job.
-Configure it with "<tt>./configure i386-*-sco</tt>".<p>
-
-Make sure you do the fixincludes for gcc.<p>
-
-In order to compile the current XFree86 version for SCO you will have to
-create the following header files in the appropriate places.<p>
-<enum>
-<item> create a <tt>/usr/include/sys/uio.h</tt> containing the following:
-<verb>
-    #ifndef _XFREE86_UIO_
-    #define _XFREE86_UIO_ 1
-
-    #ifndef __IOVEC__
-    #define __IOVEC__ 1
-    typedef struct iovec {
-        caddr_t iov_base;
-        int iov_len;
-    } iovec_t;
-    #endif /* __IOVEC__ */
-
-    #endif /* _XFREE86_UIO_ */
-</verb>
-</enum>
-<p>
-You also need to obtain a copy of <tt>libcrypt</tt> or the international crypt
-supplement from SCO.  The supplement is available on the SCO ftp site,
-<em/sosco.sco.com/ (The name may have changed) as an SLS, lng225.  This is
-required for the correct compilation of "xdm".<p>
-
-To compile from here, follow the XFree86 <tt>README</tt>, basically after
-obtaining X11R6, applying the XFree86 patches and completing the above
-changes you should only need to run:
-<tscreen><verb>
-    make BOOTSTRAPCFLAGS="-DSYSV -Di386 -DSCO" World
-</verb></tscreen>
-The install script <tt>mit/util/scripts/bsdinst.sh</tt> will not set 's' bit
-permissions when installing over the top of a previously installed
-XFree86. To fix this apply the following patch from the directory
-containing the '<tt>mit</tt>' directory.  This is personal taste only, if you
-are installing through symbolic links then leave this one alone.
-<verb>
-----------8<-----------------8<------------------------------------
-*** mit/util/scripts/bsdinst.sh%	Tue Mar  2 14:27:16 1993
---- mit/util/scripts/bsdinst.sh	Tue Mar  2 14:27:17 1993
-***************
-*** 150,154 ****
-  # This rm is commented out because some people want to be able to
-  # install through symbolic links.  Uncomment it if it offends you.
-! # rm -f $dst/$srcbase
-  (cd $srcdir ; $installcmd -f $dst $flags $src)
-  
---- 150,154 ----
-  # This rm is commented out because some people want to be able to
-  # install through symbolic links.  Uncomment it if it offends you.
-! rm -f $dst/$srcbase
-  (cd $srcdir ; $installcmd -f $dst $flags $src)
-----------8<-----------------8<------------------------------------
-</verb>
-
-<sect>Compiling XFree86 under 3.2.4<p>
-
-Compiling gcc2.5.8 is accomplished after doing the following.
-<tscreen><verb>
-    ./configure i386-*-sco3.2v4.2
-</verb></tscreen>
-<bf/DO NOT USE/ "<tt>./configure i386-*-sco</tt>" it will not work.<p>
-
-Make sure you run the "<tt>make fix-includes</tt>" after you have installed.<p>
-
-It is recommended that you use a gcc compiled without any changes to the
-value of <tt>__STDC__</tt>.  Some people may have compiled gcc by 
-adding the define
-"<tt>-DSTDC_VALUE=0</tt>" to their <tt>CPP_PREDEFINES</tt> flag.  
-If you have done this and
-are able to recompile gcc without this change then you should.  Otherwise
-refer to the end of this section for instructions on how to fix the XFree86
-tree so that it will still compile.<p>
-
-
-Compiling XFree86,
-<enum>
-<item> Check that you have a "<tt>sys/uio.h</tt>" as there have been reports of
-    systems which have it and systems which don't!  If you already have
-    one it need not be changed.  Otherwise see the 3.2.2 section above on
-	how to create one.
-
-<item> Check the paragraph on <tt>site.def/xf86site.def</tt> in the compiling for
-    3.2.2 section.
-
-<item> Add a <tt>-DSCO324</tt> to the <tt>BOOTSTRAPCFLAGS</tt> when you do the make World.
-<verb>
-        make BOOTSTRAPCFLAGS="-DSYSV -Di386 -DSCO -DSCO324" World
-</verb>
-    Under 3.2.4 several different options become activated.
-<itemize>
-<item>Compress is used instead of pack for compressing the man pages.
-<item>The default compile line will contain <tt>-D_NO_PROTOTYPE</tt> instead
-      of <tt>-DNO_PROTOTYPE</tt> as this is what 3.2.4 expects.
-</itemize>
-</enum>
-<sect>Compiling with __STDC__=0<p>
-
-<bf>DO NOT</bf> make these changes unless you have gcc configured 
-with <tt>STDC_VALUE=0</tt>.
-You can test for this by compiling this small program.  If it prints out
-<tt>STDC_VALUE=1</tt> do not make these changes.  If it prints out 
-<tt>STDC_VALUE=0</tt> then
-you will have to make the following changes.
-<tscreen><verb>
-    main() { printf("STDC_VALUE=%d\n", __STDC__); }
-</verb></tscreen>
-So now you have a gcc compiled with <tt>STDC_VALUE=0</tt> which 
-cannot be recompiled
-with a <tt>STDC_VALUE=</tt>1. To compile XFree86 with this compiler 
-you will have to
-edit <tt>mit/config/x386.cf</tt>.  Look for the pattern
-<tt>GCC_STDC_VALUE</tt> and replace the
-1 by a 0.  For example the line
-<tscreen><verb>
-    #define GCC_STDC_VALUE 1
-</verb></tscreen>
-should become,
-<tscreen><verb>
-    #define GCC_STDC_VALUE 0
-</verb></tscreen>
-It is recommended to use gcc compiled without the 
-<tt>STDC_VALUE=0</tt> for building
-XFree86.  It is, however, possible with the above changes.  These changes may
-become obsolete or invalid in a later version of XFree86.<p>
-
 <sect>Compiling XFree86 under Open Server 5<p>
 
 As of GCC version 2.8.0, Open Server is supported. Configure it by
-using the following.
+using the following:
 <tscreen><verb>
     ./configure i486-sco3.2v5.0
 </verb></tscreen><p>
@@ -405,22 +234,38 @@ using the following.
 There is no reason to modify gcc in any way.  It compiles cleanly on
 Open Server 5.<p>
 
+SCO Open Server 5.0 is recognised automatically by XFree86. You do not
+need to specify any <tt>BOOTSTRAPCFLAGS</tt> parameters when doing a
+<tt>make World</tt>. You can ignore the warning message about
+<tt>BOOTSTRAPCFLAGS</tt> at the very beginning of a <tt>make World</tt>.
+
 <enum>
-<item> Check the paragraph on <tt>site.def/xf86site.def</tt> in the
-compiling for 3.2.2 section.
+<item>Fine tune ``<tt>site.def/xf86site.def</tt>''<p>
+Use GCC if you can. XFree should compile with the DevSys cc, but GCC has
+better optimizations, and is guaranteed to work.
 
-<item> Add a <tt>-DSCO325</tt> to the <tt>BOOTSTRAPCFLAGS</tt> when
-you do the make World.
-<verb>
-        make BOOTSTRAPCFLAGS="-DSYSV -Di386 -DSCO -DSCO324 -DSCO325" World
-</verb>
+<item>SCO Open Server comes with Visual
+TCL, which is an old (and incompatible) version of TCL. If you want to
+use XF86Setup you will have to compile Tcl and Tk yourself. Both are
+supported well on SCO Open Server 5. Tcl 7.6 and Tk 4.2 are available
+from <tt>ftp://ftp.smli.com/pub/tcl</tt>.
 
-Under Open Server 5 things are very different to previous versions of
-SCO UNIX.
-<itemize>
-<item>All programs are compiled in ELF mode to reduce size
-<item>Both ELF and COFF libraries are generated
-</itemize>
+<item>You may want to disable dynamic loading support. Several users have
+reported trouble with this. XIE and PEX5 definitely do not work. If
+you want to experiment, try enabling this. Please report successes or
+failures to me.
+
+<item>Do <bf>not</bf> enable the <tt>HasSVR3mmapDrv</tt> as you may have done
+in older versions of SCO. Open Server 5 has full mmap() support, and
+this is used for direct frame buffer access.
+
+<item>If you know you will not ever be using COFF binaries, and you are
+short of space, set <tt>ForceNormalLib</tt> to <tt>NO</tt>. Doing this
+will cause only the ELF versions of the libraries to be built.
+``<tt>sco5.cf</tt>'' sets this to <tt>YES</tt> by default, so you must
+explicitly set it to <tt>NO</tt> in ``<tt>xf86site.def</tt>''.
+All binaries are compiled in ELF mode to reduce space.
+
 </enum>
 
 <sect>Relevant Documentation<p>
@@ -444,8 +289,6 @@ input to the shell.  This is due to some unprocessed scancodes and is
 of no concern.  This will be fixed in a future release.<p>
 <item>Not all of the applications in <tt>/usr/X11R6/bin</tt> have 
 been debugged.<p>
-<item>Shared libraries are not implemented in XFree86 3.1 yet.  This means
-the binaries use a log of disk space and a lot of memory<p>
 </itemize>
 
 <sect>Trouble Shooting<p>
@@ -486,12 +329,12 @@ the binaries use a log of disk space and a lot of memory<p>
            anything on the screen.  Try these things,  usually in the order
            given:
 	<itemize>
-                 <item>  log out of the login where you started ``X'' and then 
+                 <item>log out of the login where you started ``X'' and then 
                     change consoles.  This will cause the SCO screen
                     switching code to try to reset the card.
-                 <item>  run ``vidi v80x25'',  this command will also try to set
+                 <item>run ``vidi v80x25'',  this command will also try to set
                     your card into a viewable mode.
-                 <item>  shutdown the machine cleanly with ``shutdown'' and try
+                 <item>shutdown the machine cleanly with ``shutdown'' and try
                     again.
 	</itemize>
            When first trying to get XFree86 to run,  be sure to use a simple
@@ -515,7 +358,7 @@ the binaries use a log of disk space and a lot of memory<p>
 <tag/Causes:/
 <quote>
 <enum>
-	<item> Your system does not have the correct
+	<item>Your system does not have the correct
               /etc/conf/pack.d/cn/class.h, You can confirm this by
               editing the file and looking for the string "SVGA", if it
               is not there then you should re-install this file from
@@ -524,11 +367,6 @@ the binaries use a log of disk space and a lot of memory<p>
               driver from the distribution may allow the server to
               operate correctly.
 
-	<item> You are using a server that requires special access to the
-              video memory on your card.  The only way to fix this is to
-              install the "dmmap" memory mapping driver for SCO.  The source
-              for this driver is provided in /usr/X11R6/lib/X11/etc/dmmap.shar.
-              For example, the ET4000W32 server will require this.
 </enum>
 </quote>
 <tag/Problem:/
@@ -557,27 +395,16 @@ the binaries use a log of disk space and a lot of memory<p>
 </quote>
 <tag/Problem:/
 <enum>
-<item> Can only run a limited number of xterms.
-<item> <tt>xterm</tt> does not work but other programs like 
+<item>Can only run a limited number of xterms.
+<item><tt>xterm</tt> does not work but other programs like 
 <tt>xclock</tt> do work.
 </enum>
 
 <tag/Causes:/
 <quote>
     Not enough or no pseudo ttys devices are present on your system.
-    Depending on which version of SCO you are using you will have to do
-    different things.<p>
-<descrip>
-<tag/3.2.2/   <tt>cd /etc/conf/cf.d; ./configure</tt> and increase 
-            the number of
-            pseudo ttys.  Rebuild the kernel.
-            "<tt>ls -al /dev/ttyp0 /dev/ptyp0</tt>" to 
-            get the major numbers for the
-            slave and master drivers.  Use <tt>mknod</tt> to create the extra
-            devices using the naming schemes ttyp&lsqb;0-9a-f&rsqb;
-            and ptyp&lsqb;0-9a-f&rsqb;.
-<tag/3.2.4/   Run "<tt>mkdev ptty</tt>" and increase the number of ptty's.
-</descrip></quote>
+    Run "<tt>mkdev ptty</tt>" and increase the number of ptty's.
+</quote>
 <tag/Problem:/
 <quote>
     When running curses/termcap applications in an <tt>xterm</tt>
@@ -587,7 +414,7 @@ the binaries use a log of disk space and a lot of memory<p>
 <tag/Causes:/
 <enum>
 <item>You are running an original 1.3 distribution of XFree86.  Update
-       to the latest version (3.1 or greater).
+       to the latest version (3.2 or greater).
 <item>You have resized the window and not ran "<tt>eval `resize`</tt>" 
       before using
        your application.  The SCO operating system does not support dynamic
@@ -603,27 +430,14 @@ the binaries use a log of disk space and a lot of memory<p>
 </enum>
 <tag/Causes:/
 <enum>
-<item> You do not have the binaries installed in the correct directory.
+<item>You do not have the binaries installed in the correct directory.
        Check that they are in <tt>/usr/X11R6</tt>
-<item> You have upgraded to a new binary distribution which has a new
+<item>You have upgraded to a new binary distribution which has a new
        version of the shared libraries which are not compatible with your
        old binaries.  To fix this you will need to re-install the old
        shared libraries or recompile your application against the new
        libraries.
 </enum>
-<tag/Problem:/
-<quote>    
-    My SCO 3.2.4 system fails to build <tt>libXext.a</tt> for shared libraries.
-</quote>
-<tag/Causes:/
-<quote>    
-    This behaviour was observed when compiling with a 
-    <tt>STDC_VALUE=0</tt> for gcc.
-    mkshlib was core dumping on building the shared library in this case.
-    Using a new gcc without the <tt>STDC_VALUE=0</tt> or using a 
-    3.2.2 mkshlib
-    appears to fix this problem.
-</quote>
 <tag/Problem:/
 <quote>    
     When linking against the SCO motif library I get an unresolved external
@@ -653,9 +467,9 @@ the binaries use a log of disk space and a lot of memory<p>
     All SCO unix installations appear to have the Streams pseudo tty driver
     installed, but not all the devices are present.<p>
 <enum>
-<item> there should be a <tt>/etc/conf/pack.d/sp</tt> directory,
-<item> <tt>/etc/conf/sdevice.d/sp</tt> should have a '<tt>Y</tt>' in it.
-<item> You need a file in <tt>/etc/conf/node.d</tt>
+<item>there should be a <tt>/etc/conf/pack.d/sp</tt> directory,
+<item><tt>/etc/conf/sdevice.d/sp</tt> should have a '<tt>Y</tt>' in it.
+<item>You need a file in <tt>/etc/conf/node.d</tt>
        which contains something like:
 <verb>
         clone	spx		c	sp
@@ -711,12 +525,12 @@ for providing an
 ftp site for the binary distribution.
 
 <verb>  
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.12 1996/09/01 04:16:08 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.16 1997/01/25 03:22:12 dawes Exp $
 
 
 
 
 
-$XConsortium: SCO.sgml /main/7 1995/11/12 20:00:04 kaleb $
+$XConsortium: SCO.sgml /main/11 1996/10/23 11:45:55 kaleb $
 </verb>
 </article>

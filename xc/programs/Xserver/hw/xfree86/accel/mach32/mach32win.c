@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32win.c,v 3.6 1996/02/04 09:02:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32win.c,v 3.7 1996/12/23 06:38:50 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -54,7 +54,7 @@ Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
 Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 
 */
-/* $XConsortium: mach32win.c /main/4 1995/11/12 17:25:34 kaleb $ */
+/* $XConsortium: mach32win.c /main/5 1996/02/21 17:27:40 kaleb $ */
 
 #include "X.h"
 #include "scrnintstr.h"

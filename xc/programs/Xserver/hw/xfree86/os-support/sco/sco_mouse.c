@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.7 1996/09/01 04:47:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.8 1996/12/23 06:50:50 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: sco_mouse.c /main/3 1995/11/13 06:08:44 kaleb $ */
+/* $XConsortium: sco_mouse.c /main/6 1996/10/23 11:46:17 kaleb $ */
 
 /******************************************************************************/
 

@@ -1,10 +1,10 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Makefile.std,v 3.10 1996/10/16 14:39:13 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Makefile.std,v 3.11.2.3 1997/05/06 13:24:08 dawes Exp $
 
 
 
 
 
-# $XConsortium: Makefile.std /main/6 1995/11/13 11:12:31 kaleb $
+# $XConsortium: Makefile.std /main/8 1996/10/27 11:04:00 kaleb $
 #
 # Installation parameters
 #
@@ -85,12 +85,14 @@ BASE_SRC = MDA.c Herc.c CGA.c VGA.c RamDac.c MemProbe.c PCI.c
 BASE_OBJ = MDA.o Herc.o CGA.o VGA.o RamDac.o MemProbe.o PCI.o
 SVGA_SRC = Tseng.c WD.c ChipsTech.c Video7.c Genoa.c Trident.c Oak.c \
 	   Cirrus.c Ahead.c ATI.c S3.c AL.c Yamaha.c NCR.c MX.c \
-	   RealTek.c Primus.c Compaq.c HMC.c UMC.c Weitek.c SiS.c
+	   RealTek.c Primus.c Compaq.c HMC.c UMC.c Weitek.c SiS.c \
+	   ARK.c Alliance.c Matrox.c SigmaDesigns.c
 SVGA_OBJ = Tseng.o WD.o ChipsTech.o Video7.o Genoa.o Trident.o Oak.o \
 	   Cirrus.o Ahead.o ATI.o S3.o AL.o Yamaha.o NCR.o MX.o \
-	   RealTek.o Primus.o Compaq.o HMC.o UMC.o Weitek.o SiS.o
-COPROC_SRC = 8514.c ATIMach.c I128.c
-COPROC_OBJ = 8514.o ATIMach.o I128.o
+	   RealTek.o Primus.o Compaq.o HMC.o UMC.o Weitek.o SiS.o \
+	   ARK.o Alliance.o Matrox.o SigmaDesigns.o
+COPROC_SRC = 8514.c ATIMach.c I128.c GLINT.c
+COPROC_OBJ = 8514.o ATIMach.o I128.o GLINT.o
 SRCS = Main.c $(SVGA_SRC) $(COPROC_SRC) $(BASE_SRC) Print.c \
        Utils.c $(OS_SRC) $(IO_SRC)
 OBJS = Main.o $(SVGA_OBJ) $(COPROC_OBJ) $(BASE_OBJ) Print.o \

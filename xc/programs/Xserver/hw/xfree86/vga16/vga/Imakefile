@@ -1,11 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/4 1996/01/12 12:03:40 kaleb $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:26:10 rws $
 
 
 
 
 
-
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga16/vga/Imakefile,v 3.4 1996/02/04 09:11:49 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga16/vga/Imakefile,v 3.5 1996/12/23 06:54:05 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -15,7 +14,7 @@ OBJS = 	vgaHW.o vga.o vgaCmap.o vgaBank.o vgaPCI.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
 	   -I$(XF86SRC)/vga256/vga -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
-	   -I$(SERVERSRC)/cfb -I$(SERVERSRC)/include -I$(INCLUDESRC)
+	   -I$(SERVERSRC)/cfb -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()

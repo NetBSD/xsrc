@@ -1,10 +1,10 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/Imakefile,v 3.2 1996/02/04 09:09:40 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/Imakefile,v 3.3 1996/12/23 06:48:45 dawes Exp $
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/2 1995/11/12 20:21:58 kaleb $
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:23:19 rws $
 
 #include <Server.tmpl>
 
@@ -14,7 +14,7 @@ OBJS = 	mono.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/mfb \
 	   -I../mfb.banked -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-	   -I$(INCLUDESRC)
+	   -I$(XINCLUDESRC)
 
 #if DirtyStartup
 STARTUPDEFINES = -DDIRTY_STARTUP

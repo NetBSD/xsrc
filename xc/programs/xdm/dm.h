@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xdm/dm.h,v 3.11 1996/01/05 13:21:00 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.12 1996/12/09 11:57:14 dawes Exp $ */
 /* $XConsortium: dm.h,v 1.66 95/07/10 21:18:07 gildea Exp $ */
 /*
 
@@ -85,6 +85,10 @@ from the X Consortium.
 #include <sys/wait.h>
 #else
 #define _POSIX_SOURCE
+#ifdef SCO325
+#include <sys/procset.h>
+#include <sys/siginfo.h>
+#endif
 #include <sys/wait.h>
 #undef _POSIX_SOURCE
 #endif

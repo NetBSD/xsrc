@@ -1,4 +1,4 @@
-/* $XConsortium: i128misc.c /main/1 1995/12/09 15:31:47 kaleb $ */
+/* $XConsortium: i128misc.c /main/2 1996/02/21 17:23:21 kaleb $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.1 1996/02/04 09:01:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.1 1997/05/22 14:00:37 dawes Exp $ */
 
 #include "servermd.h"
 
@@ -41,6 +41,7 @@
 #include "xf86_HWlib.h"
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
+#include "xf86scrin.h"
 
 extern miPointerScreenFuncRec xf86PointerScreenFuncs;
 
@@ -49,7 +50,6 @@ static PixmapPtr ppix = NULL;
 extern int i128DisplayWidth;
 extern pointer vgaBase;
 extern pointer i128VideoMem;
-extern Bool i128PowerSaver;
 extern struct i128mem i128mem;
 
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed, xf86Verbose;
@@ -73,6 +73,7 @@ i128Initialize(scr_index, pScreen, argc, argv)
 {
    int displayResolution = 75;	/* default to 75dpi */
    extern int monitorResolution;
+   Bool (*ScreenInitFunc)(register ScreenPtr, pointer, int, int, int, int, int);
 
  /*
   * Initialize the screen, saving the original state for Save/Restore
@@ -95,12 +96,24 @@ i128Initialize(scr_index, pScreen, argc, argv)
    if (monitorResolution)
       displayResolution = monitorResolution;
 
-   if (!i128ScreenInit(pScreen,
-		     (pointer) i128VideoMem,
-		     i128InfoRec.virtualX, i128InfoRec.virtualY,
-		     displayResolution, displayResolution,
-		     i128DisplayWidth))
-      return (FALSE);
+   if (OFLG_ISSET(OPTION_NOACCEL, &i128InfoRec.options))
+	ScreenInitFunc = &i128ScreenInit;
+   else {
+	i128AccelInit();
+        if (i128InfoRec.bitsPerPixel == 8)
+		ScreenInitFunc = &xf86XAAScreenInit8bpp;
+        else if (i128InfoRec.bitsPerPixel == 16)
+		ScreenInitFunc = &xf86XAAScreenInit16bpp;
+	else
+		ScreenInitFunc = &xf86XAAScreenInit32bpp;
+   }
+
+   if (!ScreenInitFunc(pScreen,
+	     (pointer) i128VideoMem,
+	     i128InfoRec.virtualX, i128InfoRec.virtualY,
+	     displayResolution, displayResolution,
+	     i128DisplayWidth))
+	return (FALSE);
 
    pScreen->CloseScreen = i128CloseScreen;
    pScreen->SaveScreen = i128SaveScreen;
@@ -204,6 +217,9 @@ i128EnterLeaveVT(enter, screen_idx)
 	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
 	 }
       }
+
+      xf86InvalidatePixmapCache();
+
       if (AlreadyInited) {
 	  i128CleanUp();
 	  AlreadyInited = FALSE;

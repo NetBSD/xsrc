@@ -1,5 +1,5 @@
-/* $XConsortium: xkbEvents.c /main/17 1996/03/01 14:31:28 kaleb $ */
-/* $XFree86: xc/programs/Xserver/xkb/xkbEvents.c,v 3.2 1996/10/13 11:32:26 dawes Exp $ */
+/* $XConsortium: xkbEvents.c /main/20 1996/09/28 17:16:09 rws $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbEvents.c,v 3.3 1996/12/23 07:10:12 dawes Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,5 +1,4 @@
-/* $XConsortium: s3_bank.s,v 1.2 95/06/19 19:19:50 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3_bank.s,v 3.1 1996/02/04 09:14:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3_bank.s,v 3.2 1996/12/23 06:58:22 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,8 +22,8 @@
  *
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
- * Header: /proj/X11/mit/server/ddx/x386/drivers/et4000/RCS/bank.s,v 1.1 1991/06/02 22:37:04 root Exp
  */
+/* $XConsortium: s3_bank.s /main/3 1996/02/21 18:07:13 kaleb $ */
 
 
 /*

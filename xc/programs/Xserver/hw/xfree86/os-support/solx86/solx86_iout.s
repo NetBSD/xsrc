@@ -1,9 +1,9 @@
-/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_iout.s,v 1.1.1.2 1996/01/03 07:21:04 dawes Exp $
+/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_iout.s,v 3.1 1996/12/23 06:51:18 dawes Exp $
 /
 /
 /
 /
-/ $XConsortium: solx86_iout.s /main/3 1995/11/13 06:18:34 kaleb $
+/ $XConsortium: solx86_iout.s /main/4 1996/02/21 17:54:14 kaleb $
 /
 / File: solx86_iout.s
 /
@@ -20,7 +20,6 @@
 /          extern void outb(int port, unsigned char value);
 /          extern void outw(int port, unsigned short value);
 /          extern void outl(int port, unsigned long value);
-/
 
 
 .file "solx86_iout.s"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.48 1996/10/24 14:25:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.11 1997/05/28 13:12:53 dawes Exp $ */
 /*
  * Copyright 1992 by Alan Hourihane, Wigan, England.
  *
@@ -47,8 +47,11 @@
  *	    Alan Hourihane, rewrote to support all cards with appropriate 
  * 			    speedups. Linear access, hw cursor etc... v4.0
  *			    Needs more work yet though !
+ * 
+ *	    Massimiliano Ghilardi, max@Linuz.sns.it, some fixes to the
+ *				   clockchip programming code.
  */
-/* $XConsortium: t89_driver.c /main/19 1996/01/26 14:29:55 kaleb $ */
+/* $XConsortium: t89_driver.c /main/33 1996/10/28 05:31:03 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -64,7 +67,9 @@
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 #include "vga.h"
+#define INITIALIZE_LIMITS
 #include "t89_driver.h"
+#include "tgui_ger.h"
 #include "vgaPCI.h"
 
 #ifdef XFreeXDGA
@@ -82,6 +87,7 @@
 
 #ifndef MONOVGA
 #include "tgui_drv.h"
+#include "tgui_mmio.h"
 #include "vga256.h"
 extern vgaHWCursorRec vgaHWCursor;
 #endif
@@ -95,11 +101,11 @@ typedef struct {
 	unsigned char NewMode1;		/* For write bank select 	*/
 	unsigned char CRTCModuleTest;	/* For interlace mode 		*/
 	unsigned char LinearAddReg;	/* For Linear Register TGUI	*/
-	unsigned char MCLK_A;		/* For MCLK (low byte)		*/
-	unsigned char MCLK_B;		/* For MCLK (high byte)		*/
 	unsigned char VCLK_O;		/* For MiscOutReg		*/
 	unsigned char VCLK_A;		/* For Programmable Clock (low) */
 	unsigned char VCLK_B;		/* For Programmable Clock (hi)  */
+	unsigned char MCLK_A;		/* For Programmable MCLK	*/
+	unsigned char MCLK_B;		/* For Programmable MCLK	*/
 	unsigned char VLBusReg;		/* For VL Bus and 32bit mode 	*/
 	unsigned char MiscExtFunc;	/* For Misc. Ext. Functions     */
 	unsigned char GraphEngReg;	/* For Graphic Engine Control   */
@@ -113,9 +119,13 @@ typedef struct {
 	unsigned char AltClock;		/* For Alternate Clock Selection*/
 	unsigned char CurConReg;	/* For HW Cursor Control	*/
 	unsigned char CursorRegs[16];	/* For Cursor Registers 	*/
-#ifdef CYBER938X_SUPPORT
-	unsigned char Cyber;		/* For Cyber 938x		*/
-#endif
+	unsigned char CyberCont;	/* For Cyber Control LCD	*/
+	unsigned char CyberVExp;	/* For Cyber VDisplay Control   */
+	unsigned char CyberHExp;	/* For Cyber HDisplay Control   */
+	unsigned char CyberEnhance;	/* For Cyber Enhancement	*/
+	unsigned char DRAMTiming;	/* For 9400/9420/9430 DRAM 	*/
+	unsigned char FIFOControl;	/* For 9400/9420/9430 FIFO 	*/
+	unsigned char Performance;	/* For 968x FIFO		*/
 } vgaTVGA8900Rec, *vgaTVGA8900Ptr;
 
 static Bool TVGA8900ClockSelect();
@@ -131,9 +141,11 @@ static void TVGA8900Adjust();
 extern void TVGA8900SetRead();
 extern void TVGA8900SetWrite();
 extern void TVGA8900SetReadWrite();
+static void TVGA8900DisplayPowerManagementSet();
 extern void TGUISetRead();
 extern void TGUISetWrite();
 extern void TGUISetReadWrite();
+static int  TGUIPitchAdjust();
 
 vgaVideoChipRec TVGA8900 = {
   TVGA8900Probe,
@@ -167,7 +179,8 @@ vgaVideoChipRec TVGA8900 = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,            /* ChipClockMulFactor */
+  1             /* ChipClockDivFactor */
 };
 
 #define new ((vgaTVGA8900Ptr)vgaNewVideoState)
@@ -175,33 +188,74 @@ vgaVideoChipRec TVGA8900 = {
 int TVGAchipset;
 static int numClocks;
 int tridentHWCursorType = 0;
-static int tridentReprogrammedMCLK = 0;
 int tridentDisplayWidth;
 int tridentDACtype = -1;
+int GE_OP;
+Bool tridentHasAcceleration = FALSE;
 Bool tridentUseLinear = FALSE;
 Bool tridentTGUIProgrammableClocks = FALSE;
 Bool tridentIsTGUI = FALSE;
 Bool tridentLinearOK = FALSE;
-#ifdef CYBER938X_SUPPORT
 Bool IsCyber = FALSE;
-#endif
+static int CyberLCDHeight, CyberLCDWidth;
 static unsigned char DRAMspeed;
 static int TridentDisplayableMemory;
+unsigned char *tguiMMIOBase = NULL;
 
-static unsigned TGUI_ExtPorts[] = {0x43C8, 0x43C9,};
+static unsigned TGUI_ExtPorts[] = {
+	0x210A, 0x210C, 0x210D, 0x210E, 0x210F,		/* For Old GE */
+	0x211A, 0x211C, 0x211D, 0x211E, 0x211F,
+	0x212A, 0x212C, 0x212D, 0x212E, 0x212F,
+	0x213A, 0x213C, 0x213D, 0x213E, 0x213F,
+	0x2120, 0x2122, 0x2124, 0x2127, 0x2128,		/* For New GE */
+	0x212C, 0x2130, 0x2134, 0x2138, 0x213A,
+	0x213C, 0x213E, 0x2140, 0x2142, 0x2148,
+	0x214A, 0x214C, 0x214E,
+	0x43C6, 0x43C7, 0x43C8, 0x43C9,};		/* For MCLK/VCLK */
+
 static int Num_TGUI_ExtPorts =
 	(sizeof(TGUI_ExtPorts)/sizeof(TGUI_ExtPorts[0]));
 
-static TGUI_Bpp_Clocks[] = {
-	/* 8bpp, 16bpp, 24bpp, 32bpp */
-	75000, 31500, 0, 25175, 	/* 80ns DRAM */
-	80000, 40000, 0, 25175, 	/* 70ns DRAM */
-	108000, 45000,0, 25175,		/* 45ns DRAM */
+int TGUIRops_alu[16] = {
+	TGUIROP_0,
+	TGUIROP_AND,
+	TGUIROP_SRC_AND_NOT_DST,
+	TGUIROP_SRC,
+	TGUIROP_NOT_SRC_AND_DST,
+	TGUIROP_DST,
+	TGUIROP_XOR,
+	TGUIROP_OR,
+	TGUIROP_NOR,
+	TGUIROP_XNOR,
+	TGUIROP_NOT_DST,
+	TGUIROP_SRC_OR_NOT_DST,
+	TGUIROP_NOT_SRC,
+	TGUIROP_NOT_SRC_OR_DST,
+	TGUIROP_NAND,
+	TGUIROP_1
+};
+
+int TGUIRops_Pixalu[16] = {
+	TGUIROP_0,
+	TGUIROP_AND_PAT,
+	TGUIROP_PAT_AND_NOT_DST,
+	TGUIROP_PAT,
+	TGUIROP_NOT_PAT_AND_DST,
+	TGUIROP_DST,
+	TGUIROP_XOR_PAT,
+	TGUIROP_OR_PAT,
+	TGUIROP_NOR_PAT,
+	TGUIROP_XNOR_PAT,
+	TGUIROP_NOT_DST,
+	TGUIROP_PAT_OR_NOT_DST,
+	TGUIROP_NOT_PAT,
+	TGUIROP_NOT_PAT_OR_DST,
+	TGUIROP_NAND_PAT,
+	TGUIROP_1
 };
 
 #ifdef PC98_TGUI
 #include "pc98_tgui.h"
-extern pointer mmioBase;
 extern Bool BoardInit(void);
 extern PC98TGUiTable *pc98TGUi;
 #endif
@@ -213,7 +267,7 @@ static
 TGUISetClock(no)
 	int no;
 {
-	int clock_diff = 500;
+	int clock_diff = 750;
 	int freq, ffreq;
 	int m, n, k;
 	int p, q, r, s; 
@@ -223,7 +277,6 @@ TGUISetClock(no)
 
 	p = q = r = s = 0;
 
-#ifdef CYBER938X_SUPPORT
 	if (IsCyber)
 	{
 		startn = 64;
@@ -231,7 +284,6 @@ TGUISetClock(no)
 		endm = 64;
 	}
 	else
-#endif
 	{
 		startn = 1;
 		endn = 122;
@@ -240,9 +292,11 @@ TGUISetClock(no)
 
 	freq = vga256InfoRec.clock[no];
 
-	if (vgaBitsPerPixel == 16)
-		freq *= 2;
+	if ((vgaBitsPerPixel == 16) && (TVGAchipset <= TGUI9440AGi))
+		freq *= 2; 
 	if (vgaBitsPerPixel == 32)
+		freq *= 2;
+	if (vgaBitsPerPixel == 24)
 		freq *= 3;
 
 	for (k=1;k<3;k++)
@@ -252,7 +306,10 @@ TGUISetClock(no)
 		ffreq = ((( (n + 8) * 14.31818) / ((m + 2) * k)) * 1000);
 		if ((ffreq > freq - clock_diff) && (ffreq < freq + clock_diff)) 
 		{
+			if ( (n+8)*100/(m+2) < 978 && (n+8)*100/(m+2) > 349 ) {
+				clock_diff = (freq > ffreq) ? freq - ffreq : ffreq - freq;
 				p = n; q = m; r = k; s = ffreq;
+			}
 		}
 	    }
 
@@ -267,14 +324,12 @@ TGUISetClock(no)
 
 	temp = inb(0x3CC);
 	new->VCLK_O = (temp & 0xF3) | 0x08;
-#ifdef CYBER938X_SUPPORT
 	if (IsCyber)
 	{
 		new->VCLK_A = p;
 		new->VCLK_B = (q & 0x2F) | ((r - 1) << 6);
 	}
 	else
-#endif
 	{
 		new->VCLK_A = ((1 & q) << 7) | p;
 		new->VCLK_B = (((q & 0xFE) >> 1) | ((r - 1) << 4));
@@ -295,11 +350,8 @@ TVGA8900Ident(n)
 				   "tvga9200cxr", "tgui9320lcd",
 				   "tgui9400cxi", "tgui9420",
 				   "tgui9420dgi", "tgui9430dgi",
-				   "tgui9440agi", "tgui9660xgi",
-				   "tgui9680",
-#ifdef CYBER938X_SUPPORT
+				   "tgui9440agi", "tgui96xx",
 				   "cyber938x",
-#endif
 				  };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
@@ -418,6 +470,7 @@ static Bool
 TVGA8900Probe()
 {
   	unsigned char temp;
+	char *REV, *LCD, *SIZE;
 	int i;
 
 #ifdef PC98_TGUI
@@ -475,16 +528,12 @@ TVGA8900Probe()
 		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(15)))
 			TVGAchipset = TGUI9440AGi;
 		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(16)))
-			TVGAchipset = TGUI9660XGi;
+			TVGAchipset = TGUI96xx;
 		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(17)))
-			TVGAchipset = TGUI9680;
-#ifdef CYBER938X_SUPPORT
-		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(18)))
 		{
-			TVGAchipset = TGUI9660XGi;
+			TVGAchipset = TGUI96xx;
 			IsCyber = TRUE;
 		}
-#endif
 		else
 			return(FALSE);
 		TVGA8900EnterLeave(ENTER);
@@ -590,10 +639,10 @@ TVGA8900Probe()
 			break;
 		case 0xA3:
 			TVGAchipset = TGUI9320LCD;
-			TVGAName = "TGUI9320LCD";
+			TVGAName = "Cyber9320";
 			break;
 		case 0xD3:
-			TVGAchipset = TGUI9660XGi;		
+			TVGAchipset = TGUI96xx;		
 			TVGAName = "TGUI96xx";
 			break;
 		case 0xE3:
@@ -630,6 +679,7 @@ TVGA8900Probe()
     	}
 
 	/* Enable Trident enhancements according to chipset */
+	outb(0x3C4, 0x09); temp = inb(0x3C5); /* Get Revision ID */
 
      	switch (TVGAchipset)
       	{
@@ -649,8 +699,13 @@ TVGA8900Probe()
 		tridentIsTGUI = TRUE;		/* Reports of this works */
 		tridentLinearOK = TRUE;
 		tridentDACtype = TGUIDAC;
+#ifndef MONOVGA
 		TVGA8900.ChipUse2Banks = TRUE;
+#endif
 		tridentTGUIProgrammableClocks = TRUE;
+#if 0
+		tridentHasAcceleration = TRUE;	/* NEEDS CHECKING ! */
+#endif
 		break;
 	case TGUI9400CXi:
 		tridentIsTGUI = TRUE;	
@@ -658,32 +713,146 @@ TVGA8900Probe()
 		tridentTGUIProgrammableClocks = FALSE;	/* Not programmable */
 		tridentDACtype = TKD8001;
 		TVGA8900.ChipHas16bpp = TRUE;
+#ifndef MONOVGA
 		TVGA8900.ChipUse2Banks = TRUE;
+#endif
 		break;
 	case TGUI9430DGi:
 		tridentHWCursorType = 2;		/* HW cursor */
 		/* Fall through to 9420 - it is the same apart from cursor */
 	case TGUI9420:					/* CHECK ME ! */
+		TVGAchipset = TGUI9420DGi;
 	case TGUI9420DGi:
 		tridentIsTGUI = TRUE;			
 		tridentLinearOK = TRUE;
 		tridentTGUIProgrammableClocks = FALSE;	/* Not programmable */
 		tridentDACtype = TKD8001;
+#if 0	/* Disabled for 3.3 */
+		tridentHasAcceleration = TRUE;
+#endif
 		TVGA8900.ChipHas16bpp = TRUE;
+#ifndef MONOVGA
 		TVGA8900.ChipUse2Banks = TRUE;
+#endif
 		break;
 	case TGUI9440AGi:
-	case TGUI9660XGi:
-	case TGUI9680:
 		tridentIsTGUI = TRUE;
 		tridentTGUIProgrammableClocks = TRUE;
 		tridentLinearOK = TRUE;
 		tridentHWCursorType = 1;
 		tridentDACtype = TGUIDAC;
+		if (vgaBitsPerPixel == 24)
+			tridentHasAcceleration = FALSE;
+		else
+			tridentHasAcceleration = TRUE;
 		TVGA8900.ChipHas16bpp = TRUE;
+		TVGA8900.ChipHas24bpp = TRUE;
+#ifndef MONOVGA
 		TVGA8900.ChipUse2Banks = TRUE;
+#endif
+		break;
+	case TGUI96xx:
+		/* We've found a 96xx graphics engine */
+		/* Let's probe furthur */
+		switch (temp) {
+			case 0x00:
+				REV = "9660";
+				break;
+			case 0x01:
+				REV = "9680";
+				break;
+			case 0x10:
+				REV = "ProVidia 9682";
+				break;
+			case 0x21:
+				REV = "ProVidia 9685";
+				break;
+			case 0x30:
+			case 0x33: /* Guessing */
+			case 0x34:
+			case 0xB3:
+				REV = "9385";
+				IsCyber = TRUE;
+				break;
+			case 0x38:
+				REV = "9385-1";
+				IsCyber = TRUE;
+				break;
+			case 0x40:
+			case 0x42: /* Guessing */
+				REV = "9382";
+				IsCyber = TRUE;
+				break;
+			case 0x50:
+				REV = "ProVidia 9692";
+				break;
+			default:
+				REV = "Unknown ID - Please report to trident@xfree86.org";
+				break;
+		}
+		ErrorF("%s %s: Detected a Trident %s.\n",
+			XCONFIG_PROBED, vga256InfoRec.name, REV);
+		tridentIsTGUI = TRUE;
+		tridentTGUIProgrammableClocks = TRUE;
+		tridentLinearOK = TRUE;
+		tridentHWCursorType = 1;
+		tridentDACtype = TGUIDAC;
+		tridentHasAcceleration = TRUE;
+		TVGA8900.ChipHas16bpp = TRUE;
+		TVGA8900.ChipHas32bpp = TRUE;
+#ifndef MONOVGA
+		TVGA8900.ChipUse2Banks = TRUE;
+#endif
+		if (IsCyber)
+		{
+			/* Allow stretch mode on LCD */
+			OFLG_SET(OPTION_LCD_STRETCH, &TVGA8900.ChipOptionFlags);
+			/* Allow LCD centering */
+			OFLG_SET(OPTION_LCD_CENTER, &TVGA8900.ChipOptionFlags);
+			outb(0x3CE, 0x42);
+			temp = inb(0x3CF);
+			if (temp & 0x80) 
+				LCD = "TFT";
+			else
+			{
+				outb(0x3CE, 0x43); temp = inb(0x3CF);
+				if (temp & 0x20)
+					LCD = "DSTN";
+				else
+					LCD = "STN";
+			}
+			outb(0x3CE, 0x52);
+			temp = inb(0x3CF);
+			switch ((temp & 0x30)>>4) {
+				case 1:
+					SIZE = " 640x480";
+					CyberLCDHeight = 480;
+					CyberLCDWidth = 640;
+					break;
+				case 3:
+					SIZE = " 800x600";
+					CyberLCDHeight = 600;
+					CyberLCDWidth = 800;
+					break;
+				case 2:
+					SIZE = " 1024x768";
+					CyberLCDHeight = 768;
+					CyberLCDWidth = 1024;
+					break;
+				case 0:
+					SIZE = " 1280x1024";
+					CyberLCDHeight = 1024;
+					CyberLCDWidth = 1280;
+					break;
+			}	
+			ErrorF("%s %s: Detected an %s %s Display\n",
+				XCONFIG_PROBED, vga256InfoRec.name, LCD, SIZE);
+		}
 		break;
       	}
+
+	ErrorF("%s %s: Revision %d.\n", XCONFIG_PROBED, vga256InfoRec.name,
+					temp);
 
 	/* 
 	 * Set up 2 bank registers 
@@ -714,8 +883,7 @@ TVGA8900Probe()
 			break;
 		case 1: 
 		case 5:	/* New TGUI's don't support less than 1MB */
-			if ( (TVGAchipset == TGUI9660XGi) || 
-			     (TVGAchipset == TGUI9680) )
+			if (TVGAchipset == TGUI96xx)
 				vga256InfoRec.videoRam = 4096;
 			else
 				vga256InfoRec.videoRam = 512; 
@@ -748,8 +916,22 @@ TVGA8900Probe()
 		}
 	}
 
+	if (tridentIsTGUI)
+	{
+		/* Enable extra IO ports for the TGUI */
+		xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_TGUI_ExtPorts,
+			       TGUI_ExtPorts);
+		TVGA8900EnterLeave(LEAVE); /* force update of IO ports */
+		TVGA8900EnterLeave(ENTER);
+	}
+
 	if (tridentTGUIProgrammableClocks) 
 	{
+		OFLG_SET(OPTION_TGUI_MCLK_66, &TVGA8900.ChipOptionFlags);
+		if (OFLG_ISSET(OPTION_TGUI_MCLK_66, &vga256InfoRec.options))
+			ErrorF("%s %s: Forcing MCLK to 66MHz\n", XCONFIG_GIVEN,
+				vga256InfoRec.name);
+
 		OFLG_SET(OPTION_NO_PROGRAM_CLOCKS, &TVGA8900.ChipOptionFlags);
 
 		/* Do some sanity checking first ! */
@@ -836,11 +1018,6 @@ TVGA8900Probe()
 	vga256InfoRec.chipset = TVGA8900Ident(TVGAchipset);
 	vga256InfoRec.bankedMono = TRUE;
 
-#ifndef MONOVGA
-	/* For 512k in 256 colour, the pixel clock is half the raw clock */
-	if ((vga256InfoRec.videoRam < 1024) && (!tridentIsTGUI))
-		TVGA8900.ChipClockScaleFactor = 2;
-#endif
 	/* Initialize option flags allowed for this driver */
 	if ((TVGAchipset == TVGA8900B) || (TVGAchipset == TVGA8900C))
 	{
@@ -848,65 +1025,47 @@ TVGA8900Probe()
 	}
 
 #ifndef MONOVGA
+	/* For 512k in 256 colour, the pixel clock is half the raw clock */
+	if ((vga256InfoRec.videoRam < 1024) && (!tridentIsTGUI))
+		TVGA8900.ChipClockMulFactor = 2;
+
 	if (tridentLinearOK)
 	{
 		OFLG_SET(OPTION_LINEAR, &TVGA8900.ChipOptionFlags);
 		OFLG_SET(OPTION_NOLINEAR_MODE, &TVGA8900.ChipOptionFlags);
 	}
 
+#if 0 /* Disabled for 3.3 */
 	if (tridentHWCursorType)
 	{
 		OFLG_SET(OPTION_HW_CURSOR, &TVGA8900.ChipOptionFlags);
 	}
+#endif
 
 #ifdef XFreeXDGA
 	/* We support Direct Video Access */
 	vga256InfoRec.directMode = XF86DGADirectPresent;
 #endif
-#endif /* MONOVGA */
 
-#ifdef MONOVGA
-	if ( (TVGAchipset == TVGA8900C) ||
-	     (TVGAchipset == TVGA8900B) ||
-	     (TVGAchipset == TVGA8800CS) ||
-	     (TVGAchipset == TVGA9000) ||
-	     (TVGAchipset == TVGA9000i) )
+	if (tridentHasAcceleration)
 	{
-		if (vga256InfoRec.displayWidth > 1152)
-		{
-			TVGA8900EnterLeave(LEAVE);
-			FatalError("%s %s: Chipset supports a max. width"
-				   " of 1152, Adjust Virtual in XF86Config.\n",
-				   XCONFIG_PROBED, vga256InfoRec.name);
-		}
-	}
-#endif
-
-	if (TVGAchipset >= TGUI9440AGi)
-	{
-#ifndef MONOVGA
 		/* TGUI Accelerator stuff */
-
-		if (vga256InfoRec.virtualX <= 8192)
-			tridentDisplayWidth = 8192;
-		if (vga256InfoRec.virtualX <= 4096)
-			tridentDisplayWidth = 4096;
-		if (vga256InfoRec.virtualX <= 2048)
-			tridentDisplayWidth = 2048;
-		if (vga256InfoRec.virtualX <= 1024)
-			tridentDisplayWidth = 1024;
-		if (vga256InfoRec.virtualX <= 512)
-			tridentDisplayWidth = 512;
-
-		OFLG_SET(OPTION_MMIO, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_NOACCEL, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_NO_MMIO, &TVGA8900.ChipOptionFlags);
+		if (TVGAchipset >= TGUI9440AGi)
+		    if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
+			vgaSetPitchAdjustHook(TGUIPitchAdjust);
+#ifdef __alpha__
+		OFLG_SET(OPTION_NO_MMIO, &vga256InfoRec.options);
 #endif
 	}
+#endif
 
 	if (vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT)
 	{
-		OFLG_SET(OPTION_TGUI_PCI_READ_OFF,
+		OFLG_SET(OPTION_TGUI_PCI_READ_ON,
 			&TVGA8900.ChipOptionFlags);
-		OFLG_SET(OPTION_TGUI_PCI_WRITE_OFF,
+		OFLG_SET(OPTION_TGUI_PCI_WRITE_ON,
 			&TVGA8900.ChipOptionFlags);
 	}
 
@@ -919,100 +1078,93 @@ TVGA8900Probe()
 			   vga256InfoRec.name);
 	}
 	
-	if (tridentIsTGUI)
-	{
-		OFLG_SET(OPTION_SLOW_DRAM, &TVGA8900.ChipOptionFlags);
-		OFLG_SET(OPTION_MED_DRAM, &TVGA8900.ChipOptionFlags);
-		OFLG_SET(OPTION_FAST_DRAM, &TVGA8900.ChipOptionFlags);
-		
-		/*
-		 * We set the Max Clock here, as 16 colour allows upto 108MHz
-		 * Then, it depends on the DRAM speed for >4Bpp.
-		 */
-		vga256InfoRec.maxClock = 108000;
-		DRAMspeed = 0;
-		/*
-		 * If DRAM speed isn't specified, assume lowest clock
-		 * available for 80ns DRAM, so we don't damage the videocard.
-		 */
-		if (OFLG_ISSET(OPTION_SLOW_DRAM, &vga256InfoRec.options)) 
-		{
-			if (TVGAchipset < TGUI9440AGi)
-				tridentReprogrammedMCLK = 0xFF50;
-			else
-				tridentReprogrammedMCLK = 0x02C6; /* 50MHz, 80ns */
-			DRAMspeed = 80;
-#ifndef MONOVGA
+#ifndef PC98_TGUI
+	switch (vgaBitsPerPixel) {
+		case 8:
 			vga256InfoRec.maxClock = 
-				TGUI_Bpp_Clocks[(vgaBitsPerPixel/8)-1];
-#endif
-		}
-		if (OFLG_ISSET(OPTION_MED_DRAM, &vga256InfoRec.options))
-		{
-			if (TVGAchipset < TGUI9440AGi)
-				tridentReprogrammedMCLK = 0xFF40;
-			else
-				tridentReprogrammedMCLK = 0x0307; /* 58MHz, 70ns */
-			DRAMspeed = 70;
-#ifndef MONOVGA
+				tridentClockLimit[TVGAchipset];
+			break;
+		case 16:
 			vga256InfoRec.maxClock = 
-				TGUI_Bpp_Clocks[3+(vgaBitsPerPixel/8)];
-#endif
-		}
-		if (OFLG_ISSET(OPTION_FAST_DRAM, &vga256InfoRec.options))
-		{
-			if (TVGAchipset < TGUI9440AGi)
-				tridentReprogrammedMCLK = 0xFF00;
-			else
-				tridentReprogrammedMCLK = 0x00AF; /* 80MHz, 45ns */
-			DRAMspeed = 45;
-#ifndef MONOVGA
-			vga256InfoRec.maxClock =
-				TGUI_Bpp_Clocks[7+(vgaBitsPerPixel/8)];
-#endif
-		}
-		/*
-		 * If DRAM speed isn't specified, assume lowest clock
-		 * available for 80ns DRAM, so we don't damage the videocard.
-		 */
-		if (DRAMspeed == 0) 
-		{
-#ifdef PC98_TGUI
-			DRAMspeed = pc98TGUi->DRAMspeed;
-			tridentReprogrammedMCLK = pc98TGUi->MCLK;
-			vga256InfoRec.maxClock =
-				pc98TGUi->Bpp_Clocks[(vgaBitsPerPixel/8)-1];
+				tridentClockLimit16bpp[TVGAchipset];
+			if (!tridentTGUIProgrammableClocks)
+			{
+				TVGA8900.ChipClockMulFactor = 2;
+				vga256InfoRec.maxClock *= 2;
+			}
+			break;
+		case 24:
+		case 32:
+			vga256InfoRec.maxClock = 
+				tridentClockLimit32bpp[TVGAchipset];
+			if (!tridentTGUIProgrammableClocks)
+			{
+				TVGA8900.ChipClockMulFactor = 3;
+				vga256InfoRec.maxClock *= 3;
+			}
+			break;
+	}
 #else
-			tridentReprogrammedMCLK = 0; /* Don't Reprogram */
-#ifndef MONOVGA
-			vga256InfoRec.maxClock =
-				TGUI_Bpp_Clocks[(vgaBitsPerPixel/8)-1];
-#endif
-#endif/*XF98_TGUI*/
-		}
-		/* Enable extra IO ports for the TGUI */
-		xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_TGUI_ExtPorts,
-			       TGUI_ExtPorts);
-		TVGA8900EnterLeave(LEAVE); /* force update of IO ports */
-		TVGA8900EnterLeave(ENTER);
+	switch (vgaBitsPerPixel) {
+			case 8:
+				vga256InfoRec.maxClock = 
+					pc98TGUi->Bpp_Clocks[0];
+				break;
+			case 16:
+				vga256InfoRec.maxClock = 
+					pc98TGUi->Bpp_Clocks[1];
+				break;
+			case 24:
+			case 32:
+				vga256InfoRec.maxClock = 
+					pc98TGUi->Bpp_Clocks[3];
+				break;
 	}
+#endif /* PC98_TGUI */
 
-	if (!tridentTGUIProgrammableClocks)
-	{
-		if (vgaBitsPerPixel == 16)
-		{
-			TVGA8900.ChipClockScaleFactor = 2;
-			vga256InfoRec.maxClock *= 2;
-		}
-		if (vgaBitsPerPixel == 32)
-		{
-			TVGA8900.ChipClockScaleFactor = 3;
-			vga256InfoRec.maxClock *= 3;
-		}
-	}
+#ifdef DPMSExtension
+	if (TVGAchipset >= TGUI9440AGi)
+		vga256InfoRec.DPMSSet = TVGA8900DisplayPowerManagementSet;
+#endif
 
     	return(TRUE);
 }
+
+/* 
+ * TVGA8900DisplayPowerManagementSet --
+ * 
+ * Sets VESA Display Power Management Signalling (DPMS) Mode.
+ */
+#ifdef DPMSExtension
+static void TVGA8900DisplayPowerManagementSet(PowerManagementMode)
+int PowerManagementMode;
+{
+	unsigned char Cont;
+	if (!xf86VTSema) return;
+	outb(0x3CE, 0x23); /* Read DPMS Control */
+	Cont = inb(0x3CF) & 0xFC;
+	switch (PowerManagementMode)
+	{
+	case DPMSModeOn:
+		/* Screen: On, HSync: On, VSync: On */
+		Cont |= 0x00;
+		break;
+	case DPMSModeStandby:
+		/* Screen: Off, HSync: Off, VSync: On */
+		Cont |= 0x01;
+		break;
+	case DPMSModeSuspend:
+		/* Screen: Off, HSync: On, VSync: Off */
+		Cont |= 0x02;
+		break;
+	case DPMSModeOff:
+		/* Screen: Off, HSync: Off, VSync: Off */
+		Cont |= 0x03;
+		break;
+	}
+	outb(0x3CF, Cont);
+}
+#endif
 
 /*
  * TVGA8900FbInit --
@@ -1073,14 +1225,6 @@ TVGA8900FbInit()
 	if (vga256InfoRec.MemBase != 0)
 		TVGA8900.ChipLinearBase = vga256InfoRec.MemBase & 0xFFE00000;
 
-	if (tridentIsTGUI)
-	  if (tridentReprogrammedMCLK > 0) 
-		ErrorF("%s %s: Using %dns DRAM\n", 
-			XCONFIG_GIVEN, vga256InfoRec.name, DRAMspeed);
-	  else
-		ErrorF("%s %s: No DRAM speed specified. Low Clocks Available!\n",
-			XCONFIG_PROBED, vga256InfoRec.name);
-
 	if (OFLG_ISSET(OPTION_NOLINEAR_MODE, &vga256InfoRec.options))
 		tridentUseLinear = FALSE;
 
@@ -1103,13 +1247,14 @@ TVGA8900FbInit()
 	offscreen_available = vga256InfoRec.videoRam * 1024 -
 				TridentDisplayableMemory;
 
+#if 0 /* Disabled for 3.3 */
 	if (tridentHWCursorType)
 	{
 	  if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options))
 	  {
-		if (offscreen_available < 1024)
+		if (offscreen_available < (IsCyber ? 4096 : 1024))
 			ErrorF("%s %s: Not enough off-screen video"
-				" memory for hardware cursor, using software cursor.\n",
+				" memory for hw cursor, using sw cursor.\n",
 				XCONFIG_PROBED, vga256InfoRec.name);
 		else {
 			TridentCursorWidth = 32;
@@ -1129,18 +1274,39 @@ TVGA8900FbInit()
 							vga256InfoRec.name);
 	  }
 	}
-
-	/* Acceleration features for the TGUI's */
-#if 0
-	if (tridentIsTGUI)
-	{
-		vga256InfoRec.speedup = 0;	/* Turn off all speedups */
-		if (vgaBitsPerPixel == 8)
-		{
-			vga256LowlevFuncs.doBitbltCopy = TridentDoBitbltCopy;
-		}
-	}
 #endif
+
+	if (tridentHasAcceleration)
+	{
+	   if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
+	   {
+		if (TVGAchipset >= TGUI9440AGi)
+		{
+		   if (!OFLG_ISSET(OPTION_NO_MMIO, &vga256InfoRec.options))
+			TGUIAccelInitMMIO();
+		   else
+			TGUIAccelInit();
+		}
+		else
+		{
+		   /* Should only get here for 9420/9430 boards */
+		   if (!OFLG_ISSET(OPTION_NO_MMIO, &vga256InfoRec.options))
+			OLDTGUIAccelInitMMIO();
+		   else
+			OLDTGUIAccelInit();
+		}
+		ErrorF("%s %s: Using Graphics Engine.\n",
+			XCONFIG_PROBED, vga256InfoRec.name);
+		ErrorF("%s %s: Using %d byte display width.\n",
+			XCONFIG_PROBED, vga256InfoRec.name,
+			vga256InfoRec.displayWidth);
+	   }
+	   else
+	   {
+		ErrorF("%s %s: Disabled Graphics Engine.\n",
+			XCONFIG_GIVEN, vga256InfoRec.name);
+	   }
+	}
 #endif /* MONOVGA */
 }
 
@@ -1193,6 +1359,8 @@ TVGA8900Restore(restore)
 {
 	unsigned char temp, tmp;
 	int i;
+
+	vgaProtect(TRUE);
 
 	/*
 	 * Go to Old Mode.
@@ -1264,10 +1432,8 @@ TVGA8900Restore(restore)
 			outb(0x3C7, restore->TRDReg); 
 #endif
 
-	/*
-	 * Now restore generic VGA Registers
-	 */
-	vgaHWRestore((vgaHWPtr)restore);
+	if (TVGAchipset < TGUI96xx)
+		vgaHWRestore((vgaHWPtr)restore);
 
 #ifndef MONOVGA
 	/* Do the DAC */
@@ -1279,8 +1445,19 @@ TVGA8900Restore(restore)
 		inb(0x3C8);
 	}
 #endif
+
 	if (tridentTGUIProgrammableClocks)
 	{
+		if (OFLG_ISSET(OPTION_TGUI_MCLK_66, &vga256InfoRec.options))
+		{
+			outb(0x43C6, restore->MCLK_A);
+			outb(0x43C7, restore->MCLK_B);
+		}
+		/* UGLY HACK for the 9320lcd chip 
+		 * This shouldn't be needed and if it isn't specified
+		 * then the programmable clock isn't set properly, but
+		 * mode switching is now screwed too. FIX ME!
+		 */
 		if (TVGAchipset != TGUI9320LCD)
 			outb(0x3C2, restore->VCLK_O);
 		outb(0x43C8, restore->VCLK_A);
@@ -1292,38 +1469,48 @@ TVGA8900Restore(restore)
 
 	if (tridentIsTGUI)
 	{
-#ifdef CYBER938X_SUPPORT
-		if (IsCyber) outw(0x3CE, ((restore->Cyber) << 8) | 0x30);
-#endif
+		if (IsCyber) 
+		{
+			outw(0x3CE, ((restore->CyberCont) << 8) | 0x30);
+			outw(0x3CE, ((restore->CyberVExp) << 8) | 0x52);
+			outw(0x3CE, ((restore->CyberHExp) << 8) | 0x53);
+			outw(0x3CE, ((restore->CyberEnhance) << 8) | 0x31);
+		}
 #ifndef MONOVGA
+
 		outw(0x3CE, ((restore->MiscExtFunc) << 8) | 0x0F);
 #endif
+
 		outw(vgaIOBase + 4, ((restore->VLBusReg) << 8) | 0x2A);
-		/*
-	 	* Set the MCLK values....
-	 	*/
-		if (tridentReprogrammedMCLK > 0) 
-		{
-			if (TVGAchipset < TGUI9440AGi)
-			{
-				outw(vgaIOBase + 4, ((restore->MCLK_A) << 8) | 0x2C);
-				outw(vgaIOBase + 4, ((restore->MCLK_B) << 8) | 0x2B);
-			}
-			else
-			{
-				outb(0x43C6, restore->MCLK_A);
-				outb(0x43C7, restore->MCLK_B);
-			}
-		}
 		
 #ifndef MONOVGA
 		if (TVGAchipset >= TGUI9440AGi)
 		{
-			if (vgaBitsPerPixel > 8)
-				outw(vgaIOBase + 4, 
-					((restore->PixelBusReg) << 8) | 0x38);
 			outw(vgaIOBase + 4, ((restore->GraphEngReg) << 8) | 0x36);
+			if (TVGAchipset >= TGUI96xx)
+				outw(vgaIOBase + 4, ((restore->Performance)<<8)
+						| 0x2F);
+			outw(vgaIOBase + 4, ((restore->PixelBusReg) << 8) | 0x38);
 			outw(0x3CE, ((restore->MiscIntContReg) << 8) | 0x2F);
+		}
+		else
+		{
+			outw(vgaIOBase + 4, ((restore->DRAMTiming)<<8)| 0x23);
+			outw(vgaIOBase + 4, ((restore->FIFOControl)<<8)| 0x20);
+			if (tridentHasAcceleration)
+			{
+			  /* This is only for 9420/9430 boards */
+			  outb(GER_INDEX, OLDGER_STATUS);
+			  outb(GER_BYTE0, restore->GraphEngReg); 
+			  if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))			{
+				if (!OFLG_ISSET(OPTION_NO_MMIO, 
+						&vga256InfoRec.options))
+				{
+					outb(GER_INDEX, MMIOBASE);
+					outl(GER_BYTE0, 0xBF000);
+				}
+			  }
+			}
 		}
 #endif
 	}
@@ -1332,6 +1519,11 @@ TVGA8900Restore(restore)
 		outw(vgaIOBase + 4, ((restore->PCIReg) << 8) | 0x39);
 
 	outw(0x3C4, ((restore->NewMode1 ^ 0x02) << 8) | 0x0E);
+
+	if (TVGAchipset >= TGUI96xx) 
+		vgaHWRestore((vgaHWPtr)restore);
+
+	vgaProtect(FALSE);
 }
 
 /*
@@ -1432,55 +1624,52 @@ TVGA8900Save(save)
 
 	if (tridentIsTGUI)
 	{
-#ifdef CYBER938X_SUPPORT
 		if (IsCyber) 
 		{
+			outb(0x3CE, 0x31);
+			save->CyberEnhance = inb(0x3CF);
 			outb(0x3CE, 0x30);
-			save->Cyber = inb(0x3CF);
+			save->CyberCont = inb(0x3CF);
+			outb(0x3CE, 0x52);
+			save->CyberVExp = inb(0x3CF);
+			outb(0x3CE, 0x53);
+			save->CyberHExp = inb(0x3CF);
 		}
-#endif
 #ifndef MONOVGA
 		outb(0x3CE, 0x0F); save->MiscExtFunc = inb(0x3CF);
 #endif
 		outb(vgaIOBase + 4, 0x2A); save->VLBusReg = inb(vgaIOBase + 5);
-		/*
-		 * Save the MCLK values....
-	 	 */
-		if (tridentReprogrammedMCLK > 0) 
-		{
-			if (TVGAchipset < TGUI9440AGi)
-			{
-				outb(vgaIOBase + 4, 0x2C);
-				save->MCLK_A = inb(vgaIOBase + 5);
-				outb(vgaIOBase + 4, 0x2B);
-				save->MCLK_B = inb(vgaIOBase + 5);
-			}	
-			else
-			{
-				save->MCLK_A = inb(0x43C6);
-				save->MCLK_B = inb(0x43C7);
-			}
-		}
 
 		if (tridentTGUIProgrammableClocks)
 		{
 			save->VCLK_O = inb(0x3CC);
 			save->VCLK_A = inb(0x43C8);
 			save->VCLK_B = inb(0x43C9);
+			save->MCLK_A = inb(0x43C6);
+			save->MCLK_B = inb(0x43C7);
 		}
 
 #ifndef MONOVGA
 		if (TVGAchipset >= TGUI9440AGi)
 		{
-			if (vgaBitsPerPixel > 8)
-			{
-				outb(vgaIOBase + 4, 0x38); 
-				save->PixelBusReg = inb(vgaIOBase + 5);
-			}
 			outb(vgaIOBase + 4, 0x36); 
 			save->GraphEngReg = inb(vgaIOBase + 5);
+			outb(vgaIOBase + 4, 0x38); 
+			save->PixelBusReg = inb(vgaIOBase + 5);
 			outb(0x3CE, 0x2F);
 			save->MiscIntContReg = inb(0x3CF);
+			if (TVGAchipset >= TGUI96xx) 
+			{
+				outb(vgaIOBase + 4, 0x2F);
+				save->Performance = inb(vgaIOBase + 5);
+			}
+		}
+		else
+		{
+			outb(vgaIOBase + 4, 0x23);
+			save->DRAMTiming = inb(vgaIOBase + 5);
+			outb(vgaIOBase + 4, 0x20);
+			save->FIFOControl = inb(vgaIOBase + 5);
 		}
 #endif
 	}
@@ -1566,6 +1755,8 @@ TVGA8900Init(mode)
 			offset = vga256InfoRec.displayWidth >> 3;
 			if (vgaBitsPerPixel == 16)
 			offset = vga256InfoRec.displayWidth >> 2;
+			if (vgaBitsPerPixel == 24)
+			offset = (vga256InfoRec.displayWidth * 3) >> 3;
 			if (vgaBitsPerPixel == 32)
 			offset = vga256InfoRec.displayWidth >> 1;
 			break;
@@ -1610,20 +1801,13 @@ TVGA8900Init(mode)
 				new->LinearAddReg |= 0x10;
 	}
 
-	if (tridentReprogrammedMCLK > 0) 
-	{
-		new->MCLK_A = tridentReprogrammedMCLK & 0x00FF;
-		if (TVGAchipset < TGUI9440AGi)
-			new->MCLK_B = 0x03;
-		else
-			new->MCLK_B = 
-				(tridentReprogrammedMCLK & 0xFF00) >> 8;
-	}
-
 	new->std.CRTC[19] = offset & 0xFF;
 	outb(vgaIOBase + 4, 0x29);
 	new->AddColReg = inb(vgaIOBase + 5) | ((offset & 0x100) >> 4);
- 	new->CRTHiOrd = ((mode->CrtcVSyncStart & 0x400) >> 4) |
+
+	/* Anything less than a 9440 doesn't have 10 CRTC address bits */
+	if (TVGAchipset >= TGUI9440AGi)
+ 		new->CRTHiOrd = ((mode->CrtcVSyncStart & 0x400) >> 4) |
  			(((mode->CrtcVTotal - 2) & 0x400) >> 3) |
  			((mode->CrtcVSyncStart & 0x400) >> 5) |
  			(((mode->CrtcVDisplay - 1) & 0x400) >> 6) |
@@ -1639,9 +1823,11 @@ TVGA8900Init(mode)
 	}
 	new->CommandReg = 0x00;		/* DAC Standard colourmap */
 
+#if 0 /* Disabled for 3.3 */
 	if (tridentHWCursorType)
 	  if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options))
 		new->std.Attribute[17] = 0x00; /* Black overscan */
+#endif
 
 	if ( (TVGAchipset == TVGA8900D) ||
 	     (TVGAchipset == TVGA9200CXr) ||
@@ -1669,6 +1855,44 @@ TVGA8900Init(mode)
 				new->CommandReg = 0xC0;
 			new->MiscExtFunc |= 0x08;
 		}
+		if ( (TVGAchipset == TGUI9400CXi) ||
+		     (TVGAchipset == TGUI9420DGi) ||
+		     (TVGAchipset == TGUI9430DGi) )
+		{
+			outb(vgaIOBase + 4, 0x23);
+			new->DRAMTiming = inb(vgaIOBase + 5) | 0x04;
+			outb(vgaIOBase + 4, 0x20);
+			new->FIFOControl = inb(vgaIOBase + 5) | 0x01;
+		}
+		if (tridentHasAcceleration)
+		{
+			/* Only for 9420/9430 boards */
+			new->GraphEngReg = 0x00;
+			if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
+			{
+				if (!OFLG_ISSET(OPTION_NO_MMIO, 
+						&vga256InfoRec.options))
+				{
+					/* Enable MMIO */
+					new->GraphEngReg |= 0x10;
+#ifdef __alpha__
+					tguiMMIOBase = xf86MapVidMemSparse(0,MMIO_REGION, (pointer)0xBF000, 0x1000);
+#else
+					tguiMMIOBase = xf86MapVidMem(0,MMIO_REGION, (pointer)0xBF000, 0x1000);
+#endif
+				}
+				switch (vgaBitsPerPixel) {
+					case 8:
+						GE_OP = 0x03;
+						break;
+					case 16:
+						GE_OP = 0x04;
+						break;
+				}
+				/* Enable the GE */
+				new->AddColReg |= 0x80;
+			}
+		}
 	}
 #endif
 
@@ -1676,55 +1900,171 @@ TVGA8900Init(mode)
 	{
 		outb(vgaIOBase + 4, 0x39);
 		new->PCIReg = inb(vgaIOBase + 5);
-		/* Turn PCI Burst Read and Write ON - By Default ! */
-		new->PCIReg |= 0x06;
-		if (OFLG_ISSET(OPTION_TGUI_PCI_READ_OFF,
+		/* Turn PCI Burst Read and Write OFF - By Default ! */
+		/* Otherwise the Graphics Engine flakes out !	    */
+		/* But we still allow it to be turned on, if poss.  */
+		new->PCIReg &= 0xF9;
+		if (OFLG_ISSET(OPTION_TGUI_PCI_READ_ON,
 					&vga256InfoRec.options))
-			new->PCIReg &= 0xFD;
-		if (OFLG_ISSET(OPTION_TGUI_PCI_WRITE_OFF,
+			new->PCIReg |= 0x02;
+		if (OFLG_ISSET(OPTION_TGUI_PCI_WRITE_ON,
 					&vga256InfoRec.options))
-			new->PCIReg &= 0xFB;
+			new->PCIReg |= 0x04;
 	}
 
 	if (TVGAchipset >= TGUI9440AGi)
 	{
-#ifdef CYBER938X_SUPPORT
-		if (IsCyber) new->Cyber = 0x00;
-#endif
-
-		if (TVGAchipset >= TGUI9660XGi)
-			new->AddColReg |= (offset & 0x200) >> 4;
-#ifndef MONOVGA
-		if (OFLG_ISSET(OPTION_MMIO, &vga256InfoRec.options))
+		if (IsCyber) 
 		{
-			new->GraphEngReg = 0x82; /* Enable MMIO, GER */
-			/* mmap MMIO address here ! */
+			outb(0x3CE, 0x31);
+			new->CyberEnhance = inb(0x3CF) & 0x8F;
+			if (mode->CrtcVDisplay > 768)
+				new->CyberEnhance |= 0x30;
+			else
+			if (mode->CrtcVDisplay > 600)
+				new->CyberEnhance |= 0x20;
+			else
+			if (mode->CrtcVDisplay > 480)
+				new->CyberEnhance |= 0x10;
+			outb(0x3CE, 0x30);
+			new->CyberCont = inb(0x3CF) & 0xEE;
+			outb(0x3CE, 0x52);
+			new->CyberVExp = inb(0x3CF);
+			outb(0x3CE, 0x53);
+			new->CyberHExp = inb(0x3CF);
+			/* turn off stretch: */
+			new->CyberVExp &= 0xFE; 
+			new->CyberHExp &= 0xFE;
+			if (!OFLG_ISSET(OPTION_LCD_STRETCH, &vga256InfoRec.options))
+			{
+				/* Stretch Width */
+				if (mode->CrtcHDisplay < CyberLCDWidth)
+					new->CyberVExp |= 0x01;
+				/* Stretch Height */
+				if (mode->CrtcVDisplay < CyberLCDHeight)
+					new->CyberHExp |= 0x01;
+			}
+			if (OFLG_ISSET(OPTION_LCD_CENTER, &vga256InfoRec.options))
+			{
+				/* Center */
+				new->CyberVExp |= 0x80;
+				new->CyberHExp |= 0x80;
+			}
+			else
+			{
+				/* Don't Center */
+				new->CyberVExp &= 0x7F;
+				new->CyberHExp &= 0x7F;
+			}
 		}
-		else
-			new->GraphEngReg = 0x80; /* Enable 0x21XX, GER */
+
+		if (TVGAchipset >= TGUI96xx)
+		{
+			new->AddColReg |= ((offset & 0x200) >> 4);
+			outb(vgaIOBase + 4, 0x2F);
+#ifndef PC98_TGUI
+			new->Performance = inb(vgaIOBase + 5) | 0x10;
+#else
+			new->Performance = inb(vgaIOBase + 5) & ~0x10;
+			/* disable 12depth FIFO */
+#endif
+		}
+
+		if (vgaBitsPerPixel >= 8) {
+		if ((!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options)) &&
+			tridentHasAcceleration)
+		{
+			if (!OFLG_ISSET(OPTION_NO_MMIO, &vga256InfoRec.options))
+			{
+#ifdef PC98_TGUI
+				new->GraphEngReg = 0x83; /* Enable MMIO, GER */
+				tguiMMIOBase = xf86MapVidMem(0,MMIO_REGION, (pointer)pc98TGUi->mmioBase, 0x1000);
+#else
+				new->GraphEngReg = 0x82; /* Enable MMIO, GER */
+#ifdef __alpha__
+				tguiMMIOBase = xf86MapVidMemSparse(0,MMIO_REGION, (pointer)0xBF000, 0x1000);
+#else
+				tguiMMIOBase = xf86MapVidMem(0,MMIO_REGION, (pointer)0xBF000, 0x1000);
+#endif
+				tguiMMIOBase += 0xF00;
+#endif /* PC98_TGUI */
+			}
+			else
+			{
+#ifdef PC98_TGUI
+				new->GraphEngReg = 0x83; /* Enable MMIO, GER */
+#else
+				new->GraphEngReg = 0x80; /* Enable 0x21XX, GER */
+#endif /* PC98_TGUI */
+			      }
+			GE_OP = 0x0000;		/* Use XY */
+			switch (vga256InfoRec.displayWidth * vgaBitsPerPixel / 8) {
+				case 512:
+					GE_OP |= 0x00;
+					break;
+				case 1024:
+					GE_OP |= 0x04;
+					break;
+				case 2048:
+					GE_OP |= 0x08;
+					break;
+				case 4096:
+					GE_OP |= 0x0C;
+					break;
+			}
+		}
 		outb(0x3CE, 0x2F);
 		new->MiscIntContReg = inb(0x3CF) | 0x04; /* double line width */
+		new->PixelBusReg = 0x00;
 		if (vgaBitsPerPixel == 16)
 		{
 			new->std.Attribute[17] = 0x00;
-			new->MiscExtFunc |= 0x08; /* Clock Division by 2 */
+			if (TVGAchipset <= TGUI9440AGi)
+				new->MiscExtFunc |= 0x08; /* Clock Div. by 2 */
 			new->CommandReg = 0x30;	 /* 16bpp */
-			new->PixelBusReg = 0x04;
+			new->PixelBusReg |= 0x04;
+			if (TVGAchipset >= TGUI96xx)
+				new->PixelBusReg |= 0x01; /* 16bit bus */
+			GE_OP |= 0x01; /* 16bpp in GE */
+		}
+		if (vgaBitsPerPixel == 24)
+		{
+			new->std.Attribute[17] = 0x00;
+			new->CommandReg = 0xD0; /* 24bpp */
+			new->MiscExtFunc |= 0x40; /* Clock Division by 3 */
+			new->PixelBusReg |= 0x08;
+			GE_OP |= 0x03; /* 24bpp in GE */
 		}
 		if (vgaBitsPerPixel == 32)
 		{
 			new->std.Attribute[17] = 0x00;
 			new->CommandReg = 0xD0; /* 32bpp */
-			new->MiscExtFunc |= 0x40; /* Clock Division by 3 */
-			new->PixelBusReg = 0x08;
+			new->MiscExtFunc |= 0x08; /* Clock Division by 2 */
+			new->PixelBusReg |= 0x09; /* 16bit bus */
+			GE_OP |= 0x02; /* 32bpp in GE */
 		}
-#endif
+		}
 	}
 
 	if (new->std.NoClock >= 0)
 	{
 		if (tridentTGUIProgrammableClocks)
+		{
 			TGUISetClock(new->std.NoClock);
+			if (OFLG_ISSET(OPTION_TGUI_MCLK_66, &vga256InfoRec.options))
+			{
+				if (IsCyber)
+				{
+					new->MCLK_A = 0xBD;
+					new->MCLK_B = 0x58;
+				}
+				else
+				{
+					new->MCLK_A = 0x8F;
+					new->MCLK_B = 0x00;
+				}
+			}
+		}
 		else
 		{
   			new->NewMode2 = (new->std.NoClock & 0x04) >> 2;
@@ -1736,6 +2076,7 @@ TVGA8900Init(mode)
 				new->OldMode1 = (new->std.NoClock & 0x08) << 1;
 		}
 	}
+
         return(TRUE);
 }
 
@@ -1748,31 +2089,35 @@ TVGA8900Adjust(x, y)
 	int x, y;
 {
 	unsigned char temp;
-	int base;
+	int base = y * vga256InfoRec.displayWidth + x;
 	int shift = 0;
 
-#ifndef MONOVGA
-	if (vgaBitsPerPixel == 16)
+	if (vgaBitsPerPixel >= 8) {
+	   if ((TVGAchipset >= TGUI96xx) && (vgaBitsPerPixel == 8))
+		base &= 0xFFFFFFF8;
+	   if (vgaBitsPerPixel == 16)
 		shift = 1;
-	if (vgaBitsPerPixel == 32)
+	   if (vgaBitsPerPixel == 24)
+		base = ((base + 1) & ~0x03) * 3;
+	   if (vgaBitsPerPixel == 32)
 		shift = 2;
 	/* 
 	 * Go see the comments in the Init function.
 	 */
-	if (tridentIsTGUI)
-		base = (y * vga256InfoRec.displayWidth + x) >> (2 - shift);
-	else
-	{
+	   if (tridentIsTGUI)
+		base >>= (2 - shift);
+	   else
+	   {
 		if (vga256InfoRec.videoRam < 1024) 
-			base = (y * vga256InfoRec.displayWidth + x + 1) 
+			base = (y * vga256InfoRec.displayWidth + x + 1)
 								>> (2 - shift);
 		else
 			base = (y * vga256InfoRec.displayWidth + x + 3) 
 								>> (3 - shift);
+	   }
+	} else {
+	   base = (y * vga256InfoRec.displayWidth + x + 3) >> 3;
 	}
-#else
-	base = (y * vga256InfoRec.displayWidth + x + 3) >> 3;
-#endif
 
   	outw(vgaIOBase + 4, (base & 0x00FF00) | 0x0C);
 	outw(vgaIOBase + 4, ((base & 0x00FF) << 8) | 0x0D);
@@ -1790,10 +2135,12 @@ TVGA8900Adjust(x, y)
 	outb(vgaIOBase + 5, temp);
 
 #ifdef XFreeXDGA
+	if (vgaBitsPerPixel >= 8) {
 	if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
 		/* Wait until vertical retrace is in progress. */
 		while (inb(vgaIOBase + 0xA) & 0x08);
 		while (!(inb(vgaIOBase + 0xA) & 0x08));
+	}
 	}
 #endif
 }
@@ -1803,11 +2150,12 @@ TVGA8900Adjust(x, y)
  *
  */
 static int
-TVGA8900ValidMode(mode, verbose)
+TVGA8900ValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
-#ifdef MONOVGA
+	if (vgaBitsPerPixel < 8) {
 	if ( (TVGAchipset == TVGA8900C) ||
 	     (TVGAchipset == TVGA8900B) ||
 	     (TVGAchipset == TVGA8800CS) ||
@@ -1823,7 +2171,19 @@ Bool verbose;
 		    return(MODE_BAD);
 		}
 	}
-#endif
+	}
+
+	if (IsCyber)
+	{
+		if (mode->VDisplay > 1024)
+		{
+		   if (verbose)
+			ErrorF("%s %s: Chipset supports a max. height"
+			       "of 1024, Adjust Modes in XF86Conig.\n",
+			       XCONFIG_PROBED, vga256InfoRec.name);
+		   return(MODE_BAD);
+		}
+	}
 
 	if ( (tridentDACtype == TKD8001) && (vgaBitsPerPixel > 8) )
 	{
@@ -1837,4 +2197,46 @@ Bool verbose;
 		}
 	}
 	return MODE_OK;
+}
+
+/*
+ * TGUIPitchAdjust
+ * 
+ * This function adjusts the display width (pitch) once the virtual
+ * width is known. It returns the display width.
+ */
+static int
+TGUIPitchAdjust()
+{
+	int pitch = 0;
+	int memory;
+	int X;
+
+	X = vga256InfoRec.virtualX;
+
+	if (X <= 4096)
+		pitch = 4096;
+	if (X <= 2048)
+		pitch = 2048;
+	if (X <= 1024)
+		pitch = 1024;
+	if (X <= 512)
+		pitch = 512;
+
+	memory = ((pitch * vga256InfoRec.virtualY) / 1024) * vgaBitsPerPixel/8;
+
+	if (memory > vga256InfoRec.videoRam)
+	{
+		TVGA8900EnterLeave(LEAVE);
+		FatalError("%s %s: Too Little VideoRam for Accelerator Engine\n"
+			   "%s %s: Required resolution with accelerator is %dx%d.\n"
+			   "%s %s: Reduce your Virtual X resolution to %d, or use Option \"noaccel\".\n",
+			XCONFIG_PROBED, vga256InfoRec.name,
+			XCONFIG_PROBED, vga256InfoRec.name,
+			pitch, vga256InfoRec.virtualY,
+			XCONFIG_PROBED, vga256InfoRec.name,
+			pitch/2);
+	}
+
+	return pitch;
 }

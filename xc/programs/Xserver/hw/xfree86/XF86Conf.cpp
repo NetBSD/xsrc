@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.28 1996/09/01 04:14:45 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.29 1996/12/23 06:30:30 dawes Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -25,7 +25,7 @@ XCOMM not be used in advertising or otherwise to promote the sale, use or other
 XCOMM dealings in this Software without prior written authorization from the
 XCOMM XFree86 Project.
 XCOMM
-XCOMM $XConsortium: XF86Conf.cpp /main/16 1996/01/31 10:03:57 kaleb $
+XCOMM $XConsortium: XF86Conf.cpp /main/22 1996/10/23 11:43:51 kaleb $
 
 XCOMM **********************************************************************
 XCOMM Refer to the XF86Config(4/5) man page for details about the format of 

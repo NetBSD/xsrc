@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcBStore.c,v 3.4 1996/02/04 09:11:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcBStore.c,v 3.5 1996/12/23 06:52:51 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -80,7 +80,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: ppcBStore.c /main/4 1995/11/13 07:04:44 kaleb $ */
+/* $XConsortium: ppcBStore.c /main/5 1996/02/21 17:57:06 kaleb $ */
 
 #include "X.h"
 #include "servermd.h"

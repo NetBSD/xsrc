@@ -85,10 +85,10 @@ reg: def. for graph. - description
 57,60,63 - not writable, zero (?)
 61	- fixed 85 (?)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hgc1280/HGC1280.info,v 3.2 1996/02/04 09:09:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hgc1280/HGC1280.info,v 3.3 1996/12/23 06:48:17 dawes Exp $
 
 
 
 
 
-$XConsortium: HGC1280.info /main/2 1995/11/12 20:20:20 kaleb $
+$XConsortium: HGC1280.info /main/3 1996/02/21 17:49:34 kaleb $

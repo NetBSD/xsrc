@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xdm/auth.c,v 3.15 1996/10/03 08:49:45 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.16 1997/01/18 07:02:18 dawes Exp $ */
 /* $XConsortium: auth.c /main/62 1995/12/19 16:44:07 mor $ */
 /*
 
@@ -50,7 +50,11 @@ extern int errno;
 #endif
 
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #endif
 #ifndef ESIX
 # include <sys/ioctl.h>

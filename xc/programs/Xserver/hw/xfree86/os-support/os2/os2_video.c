@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_video.c,v 3.7 1996/10/17 15:19:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_video.c,v 3.10 1997/01/27 06:58:08 dawes Exp $ */
 /*
  * (c) Copyright 1994 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -27,6 +27,7 @@
  * in this Software without prior written authorization from Holger Veit.
  *
  */
+/* $XConsortium: os2_video.c /main/8 1996/10/27 11:49:02 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -36,6 +37,7 @@
 #define INCL_DOSFILEMGR
 #include "xf86.h"
 #include "xf86Priv.h"
+#include "xf86_OSlib.h"
 
 /***************************************************************************/
 /* Video Memory Mapping helper functions                                   */
@@ -136,9 +138,9 @@ unsigned long Size;
 	if (mapdev == -1)
 		FatalError("xf86MapVidMem: install DEVICE=path\\XF86SUP.SYS!");
 
-	if (DosDevIOCtl(mapdev, (ULONG)0x76, (ULONG)0x44,
+	if ((rc=DosDevIOCtl(mapdev, (ULONG)0x76, (ULONG)0x44,
 	      (PVOID)&par, (ULONG)plen, (PULONG)&plen,
-	      (PVOID)&dta, (ULONG)dlen, (PULONG)&dlen) == 0) {
+	      (PVOID)&dta, (ULONG)dlen, (PULONG)&dlen)) == 0) {
 		ErrorF("xf86-OS/2: xf86MapVidMem succeeded: (ScreenNum= %d, Base= %p, Size= 0x%x\n",
 		ScreenNum, Base, Size);
 		if (dlen==sizeof(dta)) {

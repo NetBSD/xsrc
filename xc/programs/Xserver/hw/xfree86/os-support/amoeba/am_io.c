@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/amoeba/am_io.c,v 3.7 1996/08/20 12:29:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/amoeba/am_io.c,v 3.8 1996/12/23 06:49:12 dawes Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: am_io.c /main/4 1995/11/13 05:50:09 kaleb $ */
+/* $XConsortium: am_io.c /main/9 1996/10/19 18:05:55 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/ioctl_pc.h,v 3.1 1996/02/04 09:08:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/ioctl_pc.h,v 3.2 1996/12/23 06:47:12 dawes Exp $ */
 /*      Copyright 1992,1993 by Holger Veit
  *	May be freely used with Bill Jolitz's port of 
  *	386bsd and may be included in a 386bsd collection
@@ -54,7 +54,7 @@
  *	24-04-93	-hv-	revised parts of keymap structures
  */
 
-/* $XConsortium: ioctl_pc.h /main/3 1995/11/12 20:17:03 kaleb $ */
+/* $XConsortium: ioctl_pc.h /main/4 1996/02/21 17:47:41 kaleb $ */
 
 #ifndef	_IOCTL_PC_H_
 #define	_IOCTL_PC_H_

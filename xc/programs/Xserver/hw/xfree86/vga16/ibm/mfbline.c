@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/mfbline.c,v 3.2 1996/01/05 06:26:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/mfbline.c,v 3.3 1996/12/23 06:52:46 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -47,7 +47,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* GJA -- modified this file for vga16 */
-/* $XConsortium: mfbline.c /main/3 1995/11/13 07:04:30 kaleb $ */
+/* $XConsortium: mfbline.c /main/4 1996/02/21 17:56:48 kaleb $ */
 #include "X.h"
 
 #include "gcstruct.h"

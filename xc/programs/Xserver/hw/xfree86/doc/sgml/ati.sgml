@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- Title information -->
@@ -9,7 +9,8 @@
 <abstract>
 This is the README for the XFree86 ATI VGA driver used in the XF86_Mono,
 XF86_VGA16 and XF86_SVGA servers.
-Users of ATI adapters based on the Mach8, Mach32 or Mach64 accelerators should
+Users of ATI adapters based on the Mach8, Mach32 or Mach64 (including 3D Rage
+and 3D Rage II) accelerators should
 be using the accelerated servers (XF86_Mach8, XF86_Mach32 or XF86_Mach64).
 The unaccelerated servers (XF86_Mono, XF86_VGA16 and XF86_SVGA) should still
 work, but are a waste of capabilities.
@@ -201,13 +202,16 @@ This subsequently became part of XFree86.<p>
 I (<bf>Marc Aurele La France</bf>) took the driver over in the fall of 1993
 after Rik got rid of his VGA Wonder card.<p>
 <sect> Miscellaneous notes<p>
+In all cases, virtual resolutions must be less than 4096 pixels wide.
+For VGAWonder V3 adapters with 256kB of video memory, and for all 264xT
+adapters, the 256-colour server will further limit virtual resolutions to less
+than 2048 pixels wide.
+These are hardware limits that cannot be circumvented.<p>
 Dot clocks greater than 80MHz cannot be used on most adapters as a way still
 needs to be discovered to make the VGA Wonder controller do pixel
 multiplexing.<p>
 Support for more than 8bpp colour depth is pending proper RAMDAC handling and
 banked framebuffer code for >8bpp.<p>
-Video memory banking does not work in the 16-colour and monochrome servers on
-V3, V4 and V5 adapters.<p>
 Video memory corruption can still occur during mode switches on V3, V4 and V5
 adapters.
 Symptoms of this problem include garbled fonts on return to text mode, and
@@ -217,26 +221,42 @@ In the first case, the workaround is to use some other means of restoring the
 text font.
 On Linux, this can be done with the kbd or svgalib packages.
 In the second case, xrefresh will usually cleanup the image.<p>
+Video memory banking does not work in the 16-colour and monochrome servers on
+V3, V4 and V5 adapters (with 512kB of video memory).
+This appears to be a hardware limitation.
+The driver's default behaviour has been changed to take this into consideration
+by limiting video memory to 256kB.<p>
 Interlaced modes do not work in the monochrome server on 28800-x adapters when
-using a virtual resolution wider than 1024 pixels.<p>
-Some (particularly low resolution) interlaced modes do not work on 264xT
-adapters.<p>
+using a virtual resolution that is 2048 pixels or wider.
+This appears to be a hardware limitation.
+The driver has been changed to prune modes accordingly.<p>
 Support for virtual resolutions using more than 1MB of video memory is still
 incomplete.
 Specifically, such support works on Mach32 adapters, and on 264xT adapters,
-but not on any other Mach64 adapters.<p>
+but not on any other Mach64 adapters.
+On 88800GX and 88800CX adapters, this appears to be a hardware limitation.
+Consequently, the driver's default behaviour is to limit video memory to
+1MB.<p>
 There is some controversy over whether or not clocks higher than 135MHz should
 be allowed on 264xT adapters.
 For now, clocks will be limited to 135MHz by default.  
 This limit can only be increased (up to a driver-calculated absolute maximum)
 through the DACSpeed option in XF86Config.
 Be aware however that doing this is untested and might damage the adapter.<p>
+The default mode does not work on the more recent Mach64 adapters.
+This will be fixed in a future release by reading the programmable clock
+generator's registers.<p>
 Future development plans include addressing the above problems and using
 accelerated functionality.<p>
 Please e-mail any bug reports, comments, etc. to <bf>Marc Aurele La
 France</bf>, <it>tsi@ualberta.ca</it><p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.12 1996/05/10 06:58:31 dawes Exp $
-$XConsortium: ati.sgml /main/3 1995/11/12 20:00:33 kaleb $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.1 1997/06/01 12:33:36 dawes Exp $
+
+
+
+
+
+$XConsortium: ati.sgml /main/9 1996/10/19 18:03:54 kaleb $
 </verb>
 </article>

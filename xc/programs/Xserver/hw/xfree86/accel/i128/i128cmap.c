@@ -1,4 +1,4 @@
-/* $XConsortium: i128cmap.c /main/1 1995/12/09 15:34:00 kaleb $ */
+/* $XConsortium: i128cmap.c /main/2 1996/02/21 17:23:10 kaleb $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -24,7 +24,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.1 1996/02/04 09:01:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.2 1996/12/23 06:35:40 dawes Exp $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

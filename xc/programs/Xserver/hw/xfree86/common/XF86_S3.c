@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_S3.c,v 3.10 1996/02/04 09:05:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_S3.c,v 3.11 1996/12/23 06:43:09 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: XF86_S3.c /main/4 1995/11/12 19:20:49 kaleb $ */
+/* $XConsortium: XF86_S3.c /main/5 1996/02/21 17:37:15 kaleb $ */
 #include "X.h"
 #include "os.h"
 

@@ -1,5 +1,5 @@
 /* $XConsortium: access.c,v 1.11 94/04/17 19:56:02 kaleb Exp $ */
-/* $XFree86: xc/programs/xfs/os/access.c,v 3.0 1994/06/28 12:33:00 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/access.c,v 3.1 1997/01/18 07:02:45 dawes Exp $ */
 /*
  
 Copyright (c) 1990, 1991  X Consortium
@@ -48,8 +48,12 @@ in this Software without prior written authorization from the X Consortium.
 
 #include	<X11/Xos.h>
 #ifndef MINIX
+#ifndef Lynx
 #include        <sys/param.h>
 #include	<sys/socket.h>
+#else
+#include	<socket.h>
+#endif
 #include	<netdb.h>
 #include	<netinet/in.h>
 #else

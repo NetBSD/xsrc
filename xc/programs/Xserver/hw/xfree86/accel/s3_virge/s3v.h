@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3v.h,v 3.4 1996/10/18 15:01:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3v.h,v 3.7.2.4 1997/05/24 08:36:03 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
 */
-/* $XConsortium: s3.h /main/17 1996/01/31 10:04:41 kaleb $ */
+/* $XConsortium: s3v.h /main/8 1996/10/27 18:07:17 kaleb $ */
 
 
 #ifndef _S3V_H_
@@ -75,7 +75,7 @@
 #define S3_OUTL(p,n) /* MML(p) = (unsigned int)(n)   */
 
 #define outw32(p,n) \
-  if (s3InfoRec.bitsPerPixel == 32) { \
+  if (s3InfoRec.depth/*bitsPerPixel*/ == 32) { \
     outw(p,n); \
     outw(p,(n)>>16); \
   } \
@@ -83,7 +83,7 @@
     outw(p,n)
 
 #define S3_OUTW32(p,n) \
-  if (s3InfoRec.bitsPerPixel == 32) { \
+  if (s3InfoRec.depth/*bitsPerPixel*/ == 32) { \
     S3_OUTW(p,n); \
     S3_OUTW(p,(n)>>16); \
   } \
@@ -115,8 +115,8 @@ typedef struct {
 } s3VideoChipRec, *s3VideoChipPtr;
 
 extern ScrnInfoRec s3InfoRec;
-extern short s3ChipId;
-extern int s3ChipRev;
+extern unsigned short s3ChipId;
+extern unsigned int s3ChipRev;
 
 #if !defined(LINKKIT)
 _XFUNCPROTOBEGIN
@@ -141,7 +141,8 @@ extern int s3DisplayWidth;
 extern int s3ScissB;
 /* right scissor BL 0816150096 */
 extern int s3ScissR;
-extern int s3Bpp;    /* Bytes per pixel */
+extern int s3Bpp;    /* Bytes per pixel -- use with passed-down data */
+extern int realS3Bpp;    /* real Bytes per pixel, for 8/16/24 framebufer bpp */
 extern int s3BppDisplayWidth;
 extern int s3Weight;
 extern int s3alu[], s3alu_sp[], s3alu_pat[];
@@ -240,6 +241,7 @@ extern Pixel s3BppPMask;
 #define NUMBER_NINE_BIOS	 6
 #define HERCULES_BIOS		 7
 #define DIAMOND_BIOS		 8
+#define MELCO_BIOS		 9
 
 
 /* Function Prototypes */
@@ -301,6 +303,11 @@ Bool s3SaveScreen(
 Bool s3SwitchMode(
 #if NeedFunctionPrototypes
     DisplayModePtr
+#endif
+);
+void s3DPMSSet(
+#if NeedFunctionPrototypes
+    int PowerManagementMode
 #endif
 );
 void s3AdjustFrame(
@@ -459,6 +466,11 @@ void s3CleanUp(
 #endif
 );
 Bool s3Init(
+#if NeedFunctionPrototypes
+    DisplayModePtr
+#endif
+);
+void s3InitSTREAMS(
 #if NeedFunctionPrototypes
     DisplayModePtr
 #endif
@@ -1028,7 +1040,13 @@ void s3IBMRGBLoadCursor(
     int
 #endif
 );
-
+/* s3rop.c */
+int s3ConvertPlanemask(
+#if NeedFunctionPrototypes
+    GCPtr,
+    int *
+#endif
+);
 _XFUNCPROTOEND
 
 
@@ -1052,10 +1070,14 @@ static __inline__ int s3CheckLSPN(int w, int dir)
       else if (lspn <= 6*3)
 	 w += 3;
    }
+   if (w > 2048) 
+      w = 2048;
 
    if (dir && w >= s3bltbug_width1 && w <= s3bltbug_width2) {
       w = s3bltbug_width2 + 1;
    }
+   if (w > 2048) 
+      w = 2048;
 
    return w;
 }

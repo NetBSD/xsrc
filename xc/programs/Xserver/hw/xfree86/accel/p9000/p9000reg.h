@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000reg.h,v 3.9 1996/02/04 09:04:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000reg.h,v 3.10 1996/12/23 06:40:51 dawes Exp $ */
 /* p9000reg.h
  *
  * Copyright 1994, Erik Nygren (nygren@mit.edu)
@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: p9000reg.h /main/5 1995/11/12 18:19:29 kaleb $ */
+/* $XConsortium: p9000reg.h /main/6 1996/02/21 17:33:03 kaleb $ */
 
 #ifndef INC_P9000_REG_H
 #define INC_P9000_REG_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3gc16.c,v 3.8 1996/09/01 04:15:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3gc16.c,v 3.10 1997/01/08 20:33:48 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3gc16.c /main/3 1995/11/12 19:06:32 kaleb $ */
+/* $XConsortium: s3gc16.c /main/6 1996/10/23 11:44:52 kaleb $ */
 
 
 #include "X.h"
@@ -85,8 +85,22 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 
 #include "s3.h"
 
-static void s3ValidateGC(); 
+static void
+s3ValidateGC(
+#if NeedFunctionPrototypes
+    GCPtr	/* pGC */,
+    Mask	/* changes */,
+    DrawablePtr /* pDrawable */
+#endif
+);
 
+static GCOps *
+matchCommon(
+#if NeedFunctionPrototypes
+    GCPtr	/* pGC */,
+    cfbPrivGCPtr /* devPriv */
+#endif
+);
 
 static GCFuncs cfbFuncs =
 {
@@ -121,7 +135,7 @@ static GCOps s3Ops =
    miImageGlyphBlt,
    miPolyGlyphBlt,
    miPushPixels,
-   NULL,
+   { NULL },
 };
 
 static GCOps cfbTEOps1Rect =
@@ -146,7 +160,7 @@ static GCOps cfbTEOps1Rect =
    cfb16ImageGlyphBlt8,
    cfb16PolyGlyphBlt8,
    mfbPushPixels,
-   NULL,
+   { NULL },
 };
 
 static GCOps cfbTEOps =
@@ -171,7 +185,7 @@ static GCOps cfbTEOps =
    cfb16ImageGlyphBlt8,
    cfb16PolyGlyphBlt8,
    mfbPushPixels,
-   NULL,
+   { NULL },
 };
 
 #if 0 /* XXX defined but not used */
@@ -223,7 +237,7 @@ static GCOps cfbNonTEOps =
    cfb16ImageGlyphBlt8,
    cfb16PolyGlyphBlt8,
    mfbPushPixels,
-   NULL,
+   { NULL },
 };
 
 static GCOps *
@@ -328,7 +342,7 @@ s3ValidateGC(pGC, changes, pDrawable)
 {
    WindowPtr pWin;
    int   mask;			/* stateChanges */
-   int   index;			/* used for stepping through bitfields */
+   int   indx2;			/* used for stepping through bitfields */
    int   new_rrop;
    int   new_line, new_text, new_fillspans, new_fillarea;
    int   new_rotate;
@@ -464,8 +478,8 @@ s3ValidateGC(pGC, changes, pDrawable)
    }
    mask = changes;
    while (mask) {
-      index = lowbit(mask);
-      mask &= ~index;
+      indx2 = lowbit(mask);
+      mask &= ~indx2;
 
     /*
      * this switch acculmulates a list of which procedures might have to
@@ -475,7 +489,7 @@ s3ValidateGC(pGC, changes, pDrawable)
      * and the font have been changed, or any other pair of items that both
      * change the same thing.
      */
-      switch (index) {
+      switch (indx2) {
 	case GCFunction:
 	case GCForeground:
 	   new_rrop = TRUE;

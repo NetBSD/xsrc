@@ -1,4 +1,4 @@
-/* $XConsortium: hp7lc2k.c,v 1.1 94/05/28 14:32:42 dpw Exp $ */
+/* $XConsortium: hp7lc2k.c /main/2 1996/12/04 10:23:28 lehors $ */
 /************************************************************
 
 Copyright (c) 1993 by Hewlett-Packard Company, Palo Alto, California
@@ -74,15 +74,9 @@ typedef struct ps2_4  ps2_buffer_t;
  * and delay to 250 mSec.
  */
 
-#ifdef _NO_PROTO
-static int
-keybd_configure (fd)
-    int fd;
-#else
 static int
 keybd_configure (
     int fd)
-#endif
     {
     ps2_buffer_t kbdbuf;
 
@@ -126,15 +120,9 @@ keybd_configure (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2kconfigure (d)
-    HPInputDeviceHeader *d;
-#else
 static int
 hp7lc2kconfigure (
     HPInputDeviceHeader *d)
-#endif
     {
     int ret;
     ps2_buffer_t kbdbuf;
@@ -176,13 +164,8 @@ hp7lc2kconfigure (
  *
  */
 
-#ifdef _NO_PROTO
-static int get_more_data(fd)
-    int fd;
-#else
 static int get_more_data(
     int fd)
-#endif
     {
     int count;
 
@@ -224,17 +207,9 @@ static int get_more_data(
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2kread (fd, data, data_type, pending)
-    int fd;
-    unsigned char *data, *data_type;
-    int *pending;
-#else
 static int
 hp7lc2kread (
     int fd, unsigned char *data, unsigned char *data_type, int *pending)
-#endif
     {
     struct timeval timeout;
     unsigned short code, keycode;
@@ -303,16 +278,9 @@ hp7lc2kread (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2kwrite (fd, request, data)
-    int fd, request;
-    char *data;
-#else
 static int
 hp7lc2kwrite (
     int fd, int request, char *data)
-#endif
     {
     int i;
     HPKeyboardFeedbackControl *ctrl;
@@ -358,15 +326,9 @@ hp7lc2kwrite (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2kclose (fd)
-    int fd;
-#else
 static int
 hp7lc2kclose (
     int fd)
-#endif
     {
     close (fd);
     return (CLOSE_SUCCESS);
@@ -379,15 +341,9 @@ hp7lc2kclose (
  *
  */
 
-#ifdef _NO_PROTO
-int
-hp7lc2k_Init(serialproc)                     /* default entry point name */
-    SerialProcs *serialproc;
-#else
 int
 hp7lc2k_Init(
     SerialProcs *serialproc)
-#endif
     {
     serialproc->configure = hp7lc2kconfigure;/* routine to init device   */
     serialproc->read = hp7lc2kread;          /* routine to read from dev */

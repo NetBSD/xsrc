@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaVideo.h,v 3.3 1996/02/04 09:11:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaVideo.h,v 3.4 1996/12/23 06:53:29 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgaVideo.h /main/3 1995/11/13 07:06:19 kaleb $ */
+/* $XConsortium: vgaVideo.h /main/4 1996/02/21 17:59:14 kaleb $ */
 
 #include "misc.h"	/* GJA -- for pointer data type */
 #ifdef lint

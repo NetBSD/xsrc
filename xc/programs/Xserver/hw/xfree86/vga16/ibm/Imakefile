@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/6 1996/01/26 13:45:06 kaleb $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 17:25:44 rws $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/Imakefile,v 3.6 1996/02/04 09:11:00 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/Imakefile,v 3.7 1996/12/23 06:52:33 dawes Exp $
 #include <Server.tmpl>
 
 SRCS =	ppcArea.c ppcBitmap.c ppcBStore.c \
@@ -44,7 +44,7 @@ DEFINES = -DUSE_PORTABLE_FAST_LINES -DXF86VGA16
 INCLUDES = -I. -I$(SERVERSRC)/mi -I$(XF86SRC)/vga2/mfb.banked \
 		-I$(XF86SRC)/vga256/vga \
 		-I$(SERVERSRC)/mfb -I$(SERVERSRC)/include \
-		-I$(SERVERSRC)/cfb -I$(FONTINCSRC) -I$(INCLUDESRC) \
+		-I$(SERVERSRC)/cfb -I$(FONTINCSRC) -I$(XINCLUDESRC) \
 		-I$(XF86COMSRC)
 
 NormalLibraryObjectRule()

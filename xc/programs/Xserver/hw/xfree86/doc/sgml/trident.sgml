@@ -1,20 +1,20 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <title> Information for Trident Chipset Users
 <author> The XFree86 Project, Inc.
-<date> 16 February 1996
+<date> 20 May 1997
 <toc>
 
 <sect> Supported chipsets <p>
-The Trident driver has undergone major work for XFree86 3.1.2B.
+The Trident driver has undergone some more work for XFree86 3.3.
 Because of this work, all of the Trident SVGA chipsets, except
 the very first one, are supported by both the color and monochrome servers.
 <quote><bf>
 8800CS 8200LX
 8900B 8900C 8900CL/D 9000 9000i 9100B
 9200CXr 9320LCD 9400CXi 9420 9420DGi 9430DGi 9440AGi 9660XGi 9680
-Cyber9382 Cyber9385
+9682 9685 Cyber9382 Cyber9385 Cyber9385-1
 </bf></quote>
 It must be noted that the 9000i chipset is treated as a 9000 by the server.
 Additionally the 9100B is treated 
@@ -26,18 +26,19 @@ but should work in this way according to the chipset documentation.
 
 <bf> NOTES: </bf>
 <itemize>
-<item>The Cyber 9382/5 chips that have started to appear, have preliminary
-support in XFree86 3.2 and appear to work at 800x600 on the LCD.
-The server cannot yet detect the Cyber chips and therefore it is necessary
-to specify "Chipset 'cyber938x'" in your XF86Config file to support them.
-<item>The TGUI9440/9660/9680 are now fully supported by the SVGA server.
+<item>Acceleration is now supported for the 9440/96xx and Cyber938x chips.
+<item>24bpp is supported for the 9440, 32bpp is supported for the 96xx
+and Cyber938x based chips.
+<item>The Cyber 9382/5 chips that have started to appear, have much improved 
+support in XFree86 3.3 and appear to work at 800x600 on the LCD.
+<item>The TGUI9440 and TGUI96xx based cards are supported by the SVGA server.
 <item>16 bits per pixel is now supported for the 8900D, 9200CXr, 9400CXi,
-9420DGi, 9430DGi, 9440AGi, 9660XGi and 9680, but only the 9440AGi and 9400CXi
+9420DGi, 9430DGi, 9440AGi, 96xx, but only the 9440AGi and 9400CXi
 have been tested.
 <item>Linear access has been implemented for chipsets that support it.
 It is enabled by default for PCI cards, and disabled by default for other
 cards.
-Additionally Hardware cursor is implemented for the 9430, 9440, 9660 and 9680,
+Additionally Hardware cursor is implemented for the 9430, 9440, 96xx,
 although only the 9440 and 9660 have been tested with the hardware cursor.
 <item>The following options may be specified for the Trident driver:
 <descrip>
@@ -52,32 +53,39 @@ although only the 9440 and 9660 have been tested with the hardware cursor.
 	This option may be used to specify the start address of the linear
 	frame buffer. By default for VLBus/EISA cards it is at 60MB.
 	For the 8900CL/D, it is at 15MB.
-<tag>Option &dquot;fast_dram&dquot;</tag>
-	45ns DRAM
-<tag>Option &dquot;med_dram&dquot;</tag>
-	70ns DRAM
-<tag>Option &dquot;slow_dram&dquot;</tag>
-	80ns DRAM.  This is the default for TGUIs.
-	NOTE: The above settings allow for higher dot clocks. Choose
-	the one that matches your DRAM speed.
-<tag>Option &dquot;hw_cursor&dquot;</tag>
-	Turn on hardware cursor (NOTE: it is off by default)
-<tag>Option &dquot;tgui_pci_read_off&dquot;</tag>
-	Turn off PCI burst read mode.
-<tag>Option &dquot;tgui_pci_write_off&dquot;</tag>
-	Turn off PCI burst write mode.
-	NOTE: PCI Burst modes are now on by default.
-	If you suffer from screen corruption, you might like to try
-	and specify one or both of the PCI options above.
+<tag>Option &dquot;no_mmio&dquot;</tag>
+	This option turns off Memory Mapped IO support.  MMIO is enabled
+	by default when acceleration is enabled.  Acceleration doesn't work
+	well when MMIO is disabled.
+<tag>Option &dquot;tgui_pci_read_on&dquot;</tag>
+	Turn on PCI burst read mode.
+<tag>Option &dquot;tgui_pci_write_on&dquot;</tag>
+	Turn on PCI burst write mode.
+	NOTE: PCI Burst modes are now OFF by default. The reason for
+	this is the Graphics Accelerator gets upset, but we allow
+	you to turn it back on it may improve performance, or lock up
+	the chip with Timeouts displayed.
 <tag>ClockChip &dquot;tgui&dquot;</tag>
 	Turn on programmable clocks.  This is the default for TGUIs.
 <tag>Option &dquot;no_program_clocks&dquot;</tag>
 	Turn off programmable clock. Use fixed VGA clocks only.
 	Useful for fixed frequency monitors - usually used for VGA
 	monitors - not SVGA.
+<tag>Option &dquot;noaccel&dquot;</tag>
+	Turn off XAA acceleration.
+<tag>Option &dquot;xaa_no_color_exp&dquot;</tag>
+	Disable color expansion, which is needed for some 9440 cards
+	(and maybe others?).
+<tag>Option &dquot;no_stretch&dquot;</tag>
+	Disable LCD stretching on Cyber 938x based chips.
+<tag>Option &dquot;lcd_center&dquot;</tag>
+	Enable LCD centering on Cyber 938x based chips.
+<tag>Option &dquot;tgui_mclk_66&quot;</tag>
+	Pushes the Memory Clock from its default value to 66MHz.
+	Increases graphics speed dramatically, but use entirely
+	at your own risk, as it may damage the video card. 
+	If snow appears, disable.
 </descrip>
-<item>No acceleration features of the newer chipsets have been taken
-advantage of yet!
 </itemize>
 
 The original Trident chipset, 8800BR, cannot be supported as an SVGA chipset 
@@ -142,14 +150,14 @@ in the <tt>XF86Config</tt> file, these lockups are overcome. But it may
 be worth checking wait states etc. on the card and in the BIOS setup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.14 1996/10/19 15:15:46 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.1 1997/05/21 15:02:40 dawes Exp $
 
 
 
 
 
 
-$XConsortium: trident.sgml /main/7 1996/01/16 15:36:48 kaleb $
+$XConsortium: trident.sgml /main/11 1996/10/28 04:24:08 kaleb $
 </verb>
 
 </article>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/w32zerarc.c,v 3.3 1996/02/04 08:59:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/w32zerarc.c,v 3.4 1996/12/23 06:35:06 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
-/* $XConsortium: w32zerarc.c /main/3 1995/11/12 16:18:25 kaleb $ */
+/* $XConsortium: w32zerarc.c /main/4 1996/02/21 17:21:36 kaleb $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"

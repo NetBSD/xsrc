@@ -1,29 +1,33 @@
-XCOMM $XConsortium: Imakefile /main/7 1996/01/26 13:54:40 kaleb $
+XCOMM $XConsortium: Imakefile /main/13 1996/10/21 14:50:20 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/Imakefile,v 3.11 1996/02/04 09:12:24 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/Imakefile,v 3.13.2.1 1997/05/03 09:47:30 dawes Exp $
 #include <Server.tmpl>
 
 #define IHaveSubdirs
 
-SUBDIRS = vga drivers vgainit
+SUBDIRS = vga drivers
 
-SRCS = vga/?*.c vgainit/?*.c
+SRCS = vga/?*.c
 
-OBJS = vga/?*.o vgainit/?*.o
+OBJS = vga/?*.o
 
 DONES = vga/DONE
 
 INCLUDES = -Ivga -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 
 VGADRIVERS = XF86SvgaDrivers
 
 #if HasParallelMake
 MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
+#endif
+
+#if HasGnuMake
+$(DONES): $(SUBDIRS)
 #endif
 
 ConfigTargetNoDepend(vga256Conf,$(ICONFIGFILES),cvga256.SHsuf,$(VGADRIVERS))

@@ -1,3 +1,4 @@
+/* $XConsortium: cfbscrinit.c /main/1 1996/04/18 17:00:30 kaleb $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -26,8 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XConsortium: cfbscrinit.c,v 5.32 94/04/17 20:29:00 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbscrinit.c,v 3.0 1996/03/29 22:15:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbscrinit.c,v 3.1 1996/12/27 06:55:42 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

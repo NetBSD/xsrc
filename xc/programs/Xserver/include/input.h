@@ -1,5 +1,5 @@
-/* $XConsortium: input.h /main/21 1996/01/14 16:45:24 kaleb $ */
-/* $XFree86: xc/programs/Xserver/include/input.h,v 3.3 1996/04/15 11:34:32 dawes Exp $ */
+/* $XConsortium: input.h /main/22 1996/09/25 00:50:39 dpw $ */
+/* $XFree86: xc/programs/Xserver/include/input.h,v 3.4 1996/12/23 07:09:28 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1987  X Consortium
@@ -54,6 +54,7 @@ SOFTWARE.
 #include "screenint.h"
 #include "X11/Xmd.h"
 #include "X11/Xproto.h"
+#include "window.h"     /* for WindowPtr */
 
 #define DEVICE_INIT	0
 #define DEVICE_ON	1

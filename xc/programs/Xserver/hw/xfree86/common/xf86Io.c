@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.26 1996/08/13 11:30:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.28.2.1 1997/05/10 07:02:55 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Io.c /main/18 1996/02/02 15:34:12 kaleb $ */
+/* $XConsortium: xf86Io.c /main/27 1996/10/19 17:58:55 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -442,7 +442,7 @@ xf86MseProcAux(pPointer, what, mouse, fd, ctrl)
      int		*fd;
      PtrCtrlProcPtr	ctrl;
 {
-  unsigned char                map[5];
+  unsigned char                map[6];
   int                          nbuttons;
   int                          mousefd;
 
@@ -455,13 +455,19 @@ xf86MseProcAux(pPointer, what, mouse, fd, ctrl)
       map[2] = 2;
       map[3] = 3;
       map[4] = 4;
+      map[5] = 5;
 
       /*
        * [JCH-96/01/21] The ALPS GlidePoint pad, extends the MS protocol
        * with a fourth button activated by tapping the pad.
+       *
+       * [TVO-97/03/10] the wheel on the intellimouse is sending us button
+       * 4 and 5 events, hence we have 5 buttons.
        */
       if (mouse->mseType == P_MMHIT || mouse->mseType == P_GLIDEPOINT)
         nbuttons = 4;
+      else if (mouse->mseType == P_MSINTELLIMOUSE)
+	nbuttons = 5;
       else
         nbuttons = 3;
 
@@ -531,7 +537,7 @@ xf86MseEvents(mouse)
 }
 #endif
 
-#if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX)
+#if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX) && !defined(__mips__)
 /*
  * These are getting tossed in here until I can think of where
  * they really belong

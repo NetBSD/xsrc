@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Procs.h,v 3.9 1996/08/26 10:49:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Procs.h,v 3.10 1996/12/23 06:43:38 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Procs.h /main/3 1995/11/12 19:21:53 kaleb $ */
+/* $XConsortium: xf86Procs.h /main/9 1996/10/19 17:59:14 kaleb $ */
 
 #ifndef _XF86PROCS_H
 #define _XF86PROCS_H

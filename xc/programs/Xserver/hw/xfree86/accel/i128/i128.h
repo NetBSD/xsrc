@@ -1,4 +1,4 @@
-/* $XConsortium: i128.h /main/1 1995/12/09 15:31:25 kaleb $ */
+/* $XConsortium: i128.h /main/4 1996/10/19 17:52:08 kaleb $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.4 1996/08/13 11:29:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.5 1996/12/23 06:35:36 dawes Exp $ */
 
 #ifndef _I128_H_
 #define _I128_H_

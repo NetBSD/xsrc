@@ -1,4 +1,4 @@
-/* $XConsortium: Main.c /main/7 1996/01/26 13:30:11 kaleb $ */
+/* $XConsortium: Main.c /main/11 1996/10/25 11:33:16 kaleb $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.13 1996/10/03 08:32:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.4 1997/05/18 12:00:05 dawes Exp $ */
 
 #include "Probe.h"
 #include "PatchLevel.h"
@@ -57,6 +57,7 @@ static Chip_Descriptor *SVGA_Descriptors[] = {
     &UMC_Descriptor,
     &Trident_Descriptor,
     &SiS_Descriptor,
+    &Matrox_Descriptor,
     &ATI_Descriptor,
     &Ahead_Descriptor,
     &NCR_Descriptor,
@@ -74,6 +75,8 @@ static Chip_Descriptor *SVGA_Descriptors[] = {
     &HMC_Descriptor,
     &Weitek_Descriptor,
     &ARK_Descriptor,
+    &Alliance_Descriptor,
+    &SigmaDesigns_Descriptor,
     &CT_Descriptor, /* I think this is screwing people up, so put it last */
     NULL
 };
@@ -82,6 +85,7 @@ static Chip_Descriptor *CoProc_Descriptors[] = {
     &ATIMach_Descriptor,
     &IBM8514_Descriptor,	/* Make this the last 8514-type entry */
     &I128_Descriptor,
+    &GLINT_Descriptor,
     NULL
 };
 
@@ -226,13 +230,14 @@ int *Chipset;
     	    p1 = strchr(p1, ',');
     	    if (p1 != NULL)
     	    {
-    	    	(void)strncpy(name, p, (p1-p));
-		name[p1-p] = '\0';
+    	    	(void)strncpy(name, p, (p1-p) > sizeof(name) ? sizeof(name) : (p1-p));
+		name[sizeof(name)] = '\0';
 		p1++;
     	    }
 	    else
 	    {
-		(void)strcpy(name, p);
+		(void)strncpy(name, p, sizeof(name) - 1);
+		name[sizeof(name)] = '\0';
 	    }
 	    if (StrCaseCmp(name, chip_p->name) == 0)
 	    {
@@ -373,7 +378,8 @@ char *argv[];
     	p = argv[0];
     else
     	p++;
-    (void)strcpy(MyName, p);
+    (void)strncpy(MyName, p, sizeof(MyName) - 1);
+    MyName[sizeof(MyName)-1] = '\0';
 
     for (i=1; i < argc; i++)
     {
@@ -520,18 +526,10 @@ char *argv[];
     printf("\thaving been obtained.  Additional information obtained from\n");
     printf("\t'Programmer's Guide to the EGA and VGA, 2nd ed', by Richard\n");
     printf("\tFerraro, and from manufacturer's data books\n\n");
-#ifndef __EMX__
     printf("The author welcomes bug reports and other comments mailed to\n");
     printf("the electronic mail address above.  In particular, reports of\n");
     printf("chipsets that this program fails to correctly detect are\n");
     printf("appreciated.\n\n");
-#else
-/* this will be removed again in future. */
-    printf("This is a PRELIMINARY TEST VERSION for OS/2! Please send bug reports\n");
-    printf("and other comments, e.g. false detections of boards or chipsets to\n");
-    printf("Holger.Veit@gmd.de.\n");
-    printf("If necessary, they will be forwarded to the author of the program.\n\n");
-#endif
     printf("Before submitting a report, please make sure that you have the\n");
     printf("latest version of SuperProbe (see http://www.xfree86.org/FAQ).\n\n");
 {
@@ -874,7 +872,20 @@ char *argv[];
 	    Print_CoProc_Name(CoProc);
 	    if (MemCoProc > -1)
 	    {
-		printf("\t\tMemory:  %d Kbytes\n", MemCoProc);
+		if (MemCoProc > 0x00010000)
+		{
+		    /*
+		     * for some copros we store the local buffer in
+		     * the high order 16bits
+		     */
+		    
+		    printf("\t\tMemory:  %d Kbytes Framebuffer, %d Kbytes Localbuffer\n", 
+			MemCoProc & 0xffff, (MemCoProc & 0xffff0000)>>16);
+		}
+		else
+		{
+		    printf("\t\tMemory:  %d Kbytes\n", MemCoProc);
+		}
 	    }
 	}
     }

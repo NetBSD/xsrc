@@ -1,5 +1,5 @@
-/* $XConsortium: xkbcomp.h /main/10 1996/02/05 06:00:05 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.2 1996/08/26 14:44:15 dawes Exp $ */
+/* $XConsortium: xkbcomp.h /main/11 1996/08/31 12:16:02 kaleb $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.3 1996/12/23 07:11:41 dawes Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

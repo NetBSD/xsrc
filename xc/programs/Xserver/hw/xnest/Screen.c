@@ -1,5 +1,5 @@
-/* $XConsortium: Screen.c,v 1.5 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Screen.c,v 3.2 1996/01/24 22:04:17 dawes Exp $ */
+/* $XConsortium: Screen.c /main/8 1996/12/02 10:21:46 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Screen.c,v 3.3 1996/12/23 07:09:19 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -27,25 +27,22 @@ is" without express or implied warranty.
 #include "Display.h"
 #include "Screen.h"
 #include "Args.h"
-#ifdef __EMX__
-#include "os2GC.h"
-#include "os2Font.h"
-#else
-#include "GC.h"
-#include "Font.h"
-#endif
+#include "XNGC.h"
 #include "GCOps.h"
 #include "Drawable.h"
+#include "XNFont.h"
 #include "Color.h"
 #include "Cursor.h"
 #include "Visual.h"
 #include "Events.h"
 #include "Init.h"
+#include "Args.h"
 
 extern Bool miModifyPixmapHeader();
 extern Bool miCreateScreenResources();
 extern Bool miCloseScreen();
 extern Bool miScreenInit();
+extern Window xnestParentWindow;
 
 Window xnestDefaultWindows[MAXSCREENS];
 Window xnestScreenSaverWindows[MAXSCREENS];
@@ -55,7 +52,7 @@ ScreenPtr xnestScreen(window)
 {
   int i;
   
-  for (i = 0; i < screenInfo.numScreens; i++)
+  for (i = 0; i < xnestNumScreens; i++)
     if (xnestDefaultWindows[i] == window) 
       return screenInfo.screens[i];
 
@@ -118,6 +115,7 @@ Bool xnestOpenScreen(index, pScreen, argc, argv)
   int i, j, depthIndex;
   unsigned long valuemask;
   XSetWindowAttributes attributes;
+  XWindowAttributes gattributes;
   XSizeHints sizeHints;
 
   if (!(AllocateWindowPrivate(pScreen, xnestWindowPrivateIndex,
@@ -168,6 +166,12 @@ Bool xnestOpenScreen(index, pScreen, argc, argv)
     depths[depthIndex].numVids++;
     
     numVisuals++;
+  }
+
+  if (xnestParentWindow != 0) {
+    XGetWindowAttributes(xnestDisplay, xnestParentWindow, &gattributes);
+    xnestWidth = gattributes.width;
+    xnestHeight = gattributes.height;
   }
 
   /* myNum */
@@ -289,23 +293,28 @@ Bool xnestOpenScreen(index, pScreen, argc, argv)
 #define POSITION_OFFSET (pScreen->myNum * (xnestWidth + xnestHeight) / 32)
     
   if (xnestDoFullGeneration) {
+
     valuemask = CWBackPixel | CWEventMask | CWColormap;
     attributes.background_pixel = xnestWhitePixel;
     attributes.event_mask = xnestEventMask;
-    attributes.colormap = 
-      xnestDefaultVisualColormap(xnestDefaultVisual(pScreen));
+    attributes.colormap = xnestDefaultVisualColormap(xnestDefaultVisual(pScreen));
     
-    xnestDefaultWindows[pScreen->myNum] = 
-      XCreateWindow(xnestDisplay, 
-		    DefaultRootWindow(xnestDisplay),
-		    xnestX + POSITION_OFFSET,
-		    xnestY + POSITION_OFFSET,
-		    xnestWidth, xnestHeight,
-		    xnestBorderWidth,
-		    pScreen->rootDepth,
-		    InputOutput,
-		    xnestDefaultVisual(pScreen),
-		    valuemask, &attributes);
+    if (xnestParentWindow != 0) {
+      xnestDefaultWindows[pScreen->myNum] = xnestParentWindow;
+      XSelectInput (xnestDisplay, xnestDefaultWindows[pScreen->myNum],
+		    xnestEventMask);
+    } else
+      xnestDefaultWindows[pScreen->myNum] = 
+	XCreateWindow(xnestDisplay, 
+		      DefaultRootWindow(xnestDisplay),
+		      xnestX + POSITION_OFFSET,
+		      xnestY + POSITION_OFFSET,
+		      xnestWidth, xnestHeight,
+		      xnestBorderWidth,
+		      pScreen->rootDepth,
+		      InputOutput,
+		      xnestDefaultVisual(pScreen),
+		      valuemask, &attributes);
 
     if (!xnestWindowName)
       xnestWindowName = argv[0];

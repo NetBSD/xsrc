@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_colexp.s,v 3.1 1996/02/04 09:13:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_colexp.s,v 3.2 1996/12/23 06:57:53 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: oak_colexp.s /main/1 1995/11/13 08:31:24 kaleb $ */
+/* $XConsortium: oak_colexp.s /main/2 1996/02/21 18:06:02 kaleb $ */
 
 #include "assyntax.h"
 

@@ -1,4 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.1 1996/10/03 08:31:39 dawes Exp $ */
+/* $XConsortium: sunLyKbd.c /main/1 1996/10/31 14:20:55 kaleb $ */
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.2.2.1 1997/05/12 12:52:14 hohndel Exp $ */
 
 /*
  * This is sunKbd.c modified for LynxOS
@@ -70,6 +74,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "keysym.h"
 #include "Sunkeysym.h"
 #include "osdep.h"
+
+#include "Xpoll.h"
 
 #ifdef XKB
 #include <X11/extensions/XKB.h>
@@ -278,7 +284,7 @@ static void sunBell (percent, device, ctrl, unused)
     bell (pPriv->fd, kctrl->bell_duration * 1000);
 }
 
-static void EnqueueEvent (xE)
+static void sunEnqueueEvent (xE)
     xEvent* xE;
 {
     sigset_t holdmask;
@@ -967,9 +973,9 @@ void sunEnqueueAutoRepeat ()
      * hold off any more inputs while we get these safely queued up
      * further SIGIO are 
      */
-    EnqueueEvent (&autoRepeatEvent);
+    sunEnqueueEvent (&autoRepeatEvent);
     autoRepeatEvent.u.u.type = KeyPress;
-    EnqueueEvent (&autoRepeatEvent);
+    sunEnqueueEvent (&autoRepeatEvent);
     if (ctrl->click) bell (pPriv->fd, 0);
 
     /* Update time of last key down */
@@ -1085,16 +1091,16 @@ void sunWakeupHandler(nscreen, pbdata, err, pReadmask)
      * The solution (for now) is to use an additional WakeupHandler and
      * poll the mouse file descriptor.
      */
-    long devicesWithInput[mskcnt];
-    long device[mskcnt];
-    extern long EnabledDevices[];
+    struct fd_set devicesWithInput;
+    struct fd_set device;
+    extern struct fd_set EnabledDevices;
 
-    MASKANDSETBITS(devicesWithInput, ((FdMask*)pReadmask), EnabledDevices);
+    XFD_ANDSET(&devicesWithInput, ((struct fd_set *) pReadmask), &EnabledDevices);
 
-    CLEARBITS(device);
-    BITSET(device, sunPtrPriv.fd);
-    MASKANDSETBITS(device, device, devicesWithInput);
-    if (ANYSET(device)) {
+    FD_ZERO(&device);
+    FD_SET(sunPtrPriv.fd, &device);
+    XFD_ANDSET(&device, &device, &devicesWithInput);
+    if (XFD_ANYSET(&device)) {
         sigset_t newsigmask;
 
         (void) sigemptyset (&newsigmask);

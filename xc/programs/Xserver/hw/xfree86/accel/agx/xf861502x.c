@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/xf861502x.c,v 3.7 1996/02/04 08:58:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/xf861502x.c,v 3.9 1996/12/26 01:38:42 dawes Exp $ */
 /*
  * Copyright 1994 by Henry A. Worth, Sunnyvale, California.
  *
@@ -21,7 +21,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf861502x.c /main/5 1995/11/13 10:07:45 kaleb $ */
+/* $XConsortium: xf861502x.c /main/6 1996/02/21 17:18:54 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>
@@ -36,8 +36,8 @@
 #include "xf86.h"
 #include "inputstr.h"
 #include "xf86Priv.h"
-#include "xf86_Config.h"
 #include "xf86_OSlib.h"
+#include "xf86_Config.h"
 #include "xf86RamDac.h"
 #include "xf861502x.h"
 

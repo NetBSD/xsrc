@@ -34,7 +34,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/realtek/rt_driver.c,v 3.7 1996/10/16 14:43:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/realtek/rt_driver.c,v 3.9.2.2 1997/05/09 07:15:46 hohndel Exp $ */
 
 /*************************************************************************/
 
@@ -49,7 +49,7 @@
  * compile-time, use '#ifdef MONOVGA', etc.  For the VGA16 server, use
  * '#ifdef XF86VGA16'
  */
-/* $XConsortium: rt_driver.c /main/3 1996/01/12 12:18:42 kaleb $ */
+/* $XConsortium: rt_driver.c /main/9 1996/10/27 11:08:33 kaleb $ */
 
 /*************************************************************************/
 
@@ -296,7 +296,8 @@ vgaVideoChipRec REALTEK = {
 	 * to pixel clocks.  This is rarely used, and in most cases, set
 	 * it to 1.
 	 */
-	1,
+	1,       /* ClockMulFactor */
+	1        /* ClockDivFactor */
 };
 
 /*
@@ -632,9 +633,9 @@ RTVGAProbe()
 	}
 #endif
 	if (vgaBitsPerPixel == 16)
-	  REALTEK.ChipClockScaleFactor *= 2;
+	  REALTEK.ChipClockMulFactor *= 2;
 	if (vga256InfoRec.videoRam < 1024)
-	  REALTEK.ChipClockScaleFactor *= 2;
+	  REALTEK.ChipClockMulFactor *= 2;
 #ifndef MONOVGA
 #ifdef XFreeXDGA 
 	vga256InfoRec.directMode = XF86DGADirectPresent;
@@ -805,6 +806,8 @@ vgaRTVGAPtr restore;
    ErrorF ("RTVGARestore\n");
    print_rtk_mode (&restore->realtek);
 #endif   
+	vgaProtect(TRUE);
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
@@ -887,6 +890,8 @@ vgaRTVGAPtr restore;
    	outb (vgaIOBase+5, save);      /* lock registers again */
 
    	vgaHWRestore((vgaHWPtr)restore); /* quick-hack: Now restore the font-data */
+
+	vgaProtect(FALSE);
 }
 
 /*
@@ -1252,9 +1257,10 @@ RTVGAFbInit()
 #endif
 
 static int
-RTVGAValidMode(mode, verbose)
+RTVGAValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 	/*
 	 * Code to check if a mode is suitable for the selected chipset.

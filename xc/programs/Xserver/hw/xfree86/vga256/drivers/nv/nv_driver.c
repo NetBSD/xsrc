@@ -1,3 +1,4 @@
+/* $XConsortium: nv_driver.c /main/3 1996/10/28 05:13:37 kaleb $ */
 /*
  * Copyright 1996  David J. McKay
  *
@@ -20,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.2 1996/10/23 13:10:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.2 1997/05/09 07:15:44 hohndel Exp $ */
 
 #include <math.h>
 #include "X.h"
@@ -111,9 +112,9 @@ static Bool NVProbe(void);
 static char *NVIdent(int n);
 static void NVEnterLeave(Bool enter);
 static Bool NVInit(DisplayModePtr mode);
-static int NVValidMode(DisplayModePtr mode,Bool verbose);
-static void *NVSave(vgaNVPtr save);
-static void NVRestore(vgaNVPtr restore);
+static int NVValidMode(DisplayModePtr mode,Bool verbose, int flag);
+static void *NVSave(void *data);
+static void NVRestore(void *data);
 static void NVAdjust(int x,int y);
 
 
@@ -151,7 +152,8 @@ vgaVideoChipRec NV =
   FALSE, /* Support for 24 bpp */ 
   FALSE, /* Support for 32 bpp */	
   NULL,  /* Pointer to a list of builtin driver modes */   
-  1      /* Scale factor used to scale the raw clocks to pixel clocks */
+  1,     /* Scale factor used to multiply the raw clocks to pixel clocks */
+  1      /* Scale factor used to divide the raw clocks to pixel clocks */
 };
 
 /*
@@ -401,14 +403,17 @@ static void NVEnterLeave(Bool enter)
  * used when the server enters/changes video modes.  The mode definitions 
  * have previously been initialized by the Init() function, below.
  */
-static void NVRestore(vgaNVPtr restore)     
+static void NVRestore(void *data)     
 {
+  vgaNVPtr restore = data;
+  vgaProtect(TRUE);
+
   /*
    * This function handles restoring the generic VGA registers.
    */
   vgaHWRestore ((vgaHWPtr) restore);
-  /* Set the clock registers */
 
+  /* Set the clock registers */
   nvPort[NV_MEMORY_TRACE]=restore->memoryTrace;
   nvPort[NV_PRM_CONFIG_0]=restore->prmConfig0;
 
@@ -434,6 +439,8 @@ static void NVRestore(vgaNVPtr restore)
   nvPort[NV_PFB_VER_SYNC_WIDTH]=restore->verSyncWidth;
   nvPort[NV_PFB_VER_BACK_PORCH]=restore->verBackPorch;
   nvPort[NV_PFB_VER_DISP_WIDTH]=restore->verDispWidth;
+
+  vgaProtect(FALSE);
 }
 
 /*
@@ -443,8 +450,9 @@ static void NVRestore(vgaNVPtr restore)
  * into the vgaNVRec data structure.  There is in general no need to
  * mask out bits here - just read the registers.
  */
-static void *NVSave(vgaNVPtr save)
+static void *NVSave(void *data)
 {
+  vgaNVPtr save = data;
   /*
    * This function will handle creating the data structure and filling
    * in the generic VGA portion.
@@ -591,7 +599,7 @@ static void NVAdjust(int x, int y)
  
 }
 
-static int NVValidMode(DisplayModePtr mode,Bool verbose)
+static int NVValidMode(DisplayModePtr mode,Bool verbose, int flag)
 {
   return (MODE_OK);
 }

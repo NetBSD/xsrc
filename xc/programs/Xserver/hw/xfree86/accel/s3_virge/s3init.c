@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3init.c,v 3.8 1996/10/18 15:01:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3init.c,v 3.15.2.8 1997/05/24 14:31:32 dawes Exp $ */
 /*
  * Written by Jake Richter Copyright (c) 1989, 1990 Panacea Inc.,
  * Londonderry, NH - All Rights Reserved
@@ -22,7 +22,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3init.c /main/15 1996/01/31 10:04:46 kaleb $ */
+/* $XConsortium: s3init.c /main/9 1996/10/27 18:07:06 kaleb $ */
 
 
 #define USE_VGAHWINIT
@@ -43,18 +43,31 @@
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 
+/* void s3InitSTREAMS( int, int ); */
+
+#define VerticalRetraceWait() \
+{ \
+   outb(vgaCRIndex, 0x17); \
+   if ( inb(vgaCRReg) & 0x80 ) { \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       }\
+}
+
 typedef struct {
    vgaHWRec std;                /* good old IBM VGA */
    unsigned char Trio[14];      /* Trio32/64 ext. sequenzer (PLL) registers */
    unsigned char s3reg[11];     /* Video Atribute (CR30-34, CR38-3C) */
    unsigned char s3sysreg[46];  /* Video Atribute (CR40-6D)*/
    unsigned char ColorStack[8]; /* S3 hw cursor color stack CR4A/CR4B */
+   unsigned int  fifo[2];     /* MM8200 & MM8202 for streams FIFO control */
 }
 vgaS3Rec, *vgaS3Ptr;
 
-int   vgaIOBase = 0x3d0; /* These defaults are overriden in s3Probe() */
-int   vgaCRIndex = 0x3d4;
-int   vgaCRReg = 0x3d5;
+extern int   vgaIOBase; /* These defaults are overriden in s3Probe() */
+extern int   vgaCRIndex;
+extern int   vgaCRReg;
 int   s3InitCursorFlag = TRUE;
 int   s3HDisplay;
 extern xf86InfoRec xf86Info;
@@ -85,8 +98,8 @@ extern void crtswitch(short);
 
 #define new ((vgaHWPtr)vgaNewVideoState)
 
-short s3ChipId = 0;
-int  s3ChipRev = 0;
+unsigned short s3ChipId = 0;
+unsigned int  s3ChipRev = 0;
 
 #define	cebank() do {							\
 		unsigned char tmp;					\
@@ -117,6 +130,34 @@ s3CleanUp(void)
    outb(vgaCRIndex, 0x39);
    outb(vgaCRReg, 0xa5);
 
+   if (s3MmioMem != NULL ) {
+      WaitIdle();
+      VerticalRetraceWait();
+      ((mmtr)s3MmioMem)->memport_regs.regs.fifo_control = oldS3->fifo[0];
+      WaitIdle();                  /* Don't ask... */
+      ((mmtr)s3MmioMem)->memport_regs.regs.streams_timeout = oldS3->fifo[1];
+   }
+
+   #if 1			   
+   			/* This seems to help, but maybe a wait for */
+			/* VSYNC would be better than WaitIdleEmpty(). */
+   				/* STREAMS disable code, for 24 & 32 Bpp */
+   if ( ( s3InfoRec.bitsPerPixel == 32 || 
+          s3InfoRec.bitsPerPixel == 24 ) &&
+          s3MmioMem != NULL ) {
+	  			/* temp - KJB */
+       ((mmtr)s3MmioMem)->streams_regs.regs.prim_fbaddr0 = 0;
+	      /*  ((y * s3DisplayWidth + (x & ~3)) * s3Bpp) */ /* & ~3 */;
+	      			/* end temp */
+       
+       outb(vgaCRIndex, 0x67);
+       tmp = inb(vgaCRReg);
+       /* WaitIdleEmpty(); */
+ 				/* Disable STREAMS processor */
+       outb( vgaCRReg, tmp & ~0x0C );
+   }	
+   #endif
+
    vgaProtect(TRUE);
 
    if (s3NewMmio)	{
@@ -136,7 +177,6 @@ s3CleanUp(void)
       outb(vgaCRReg, 0x00);
    }
 
-
    /* Restore S3 Trio32/64 ext. sequenzer (PLL) registers */
    if (DAC_IS_TRIO)
    {
@@ -155,10 +195,10 @@ s3CleanUp(void)
       outb(0x3c4, 0x1a); outb(0x3c5, oldS3->Trio[12]);
       outb(0x3c4, 0x1b); outb(0x3c5, oldS3->Trio[13]);
       outb(0x3c4, 0x15);
-      tmp = inb(0x3c5);
-      outb(0x3c4, tmp & ~0x20);
-      outb(0x3c4, tmp |  0x20);
-      outb(0x3c4, tmp & ~0x20);
+      tmp = inb(0x3c5) & ~0x21;
+      outb(0x3c5, tmp | 0x03);
+      outb(0x3c5, tmp | 0x23);
+      outb(0x3c5, tmp | 0x03);
 
       outb(0x3c4, 0x15); outb(0x3c5, oldS3->Trio[6]);
       outb(0x3c4, 0x18); outb(0x3c5, oldS3->Trio[7]);
@@ -284,10 +324,15 @@ s3Init(mode)
 
       oldS3 = vgaHWSave((vgaHWPtr)oldS3, sizeof(vgaS3Rec));
 
+      outb(vgaCRIndex, 0x58);
+      s3SAM256 = inb(vgaCRReg) & 0x80;
       if (S3_ViRGE_VX_SERIES(s3ChipId))
-	 s3SAM256 = 0x40;
-      else
-	 s3SAM256 = 0x00;
+	 s3SAM256 |= 0x40;
+
+      if (OFLG_ISSET(OPTION_EARLY_RAS_PRECHARGE, &s3InfoRec.options))
+	 s3SAM256 |= 0x80;
+      if (OFLG_ISSET(OPTION_LATE_RAS_PRECHARGE, &s3InfoRec.options))
+	 s3SAM256 &= 0x7f;
 
       /* Save S3 Trio32/64 ext. sequenzer (PLL) registers */
       if (DAC_IS_TRIO) {
@@ -324,8 +369,9 @@ s3Init(mode)
       outb(vgaCRIndex, 0x36);
       oldS3->s3reg[10] = inb(vgaCRReg);
 
-      outb(vgaCRIndex, 0x11);	/* allow writting? */
-      outb(vgaCRReg, 0x00);
+      outb(vgaCRIndex, 0x11);	/* allow writing to CR0-7 */
+      tmp = inb(vgaCRReg);
+      outb(vgaCRReg, tmp & 0x7f);
       for (i = 0; i < 16; i++) {
 	 outb(vgaCRIndex, 0x40 + i);
 	 oldS3->s3sysreg[i] = inb(vgaCRReg);
@@ -368,19 +414,12 @@ s3Init(mode)
    else
       s3PixelMultiplexing = FALSE;
 
-   if (S3_ViRGE_SERIES(s3ChipId))
-      pixMuxShift = -(s3Bpp == 2);
-   else
+   if (S3_ViRGE_VX_SERIES(s3ChipId))
       pixMuxShift = 0;
+   else
+      pixMuxShift = -(s3Bpp == 2);
 
-   if (!mode->CrtcHAdjusted) {
-      if (s3Bpp == 3) {
-	 mode->CrtcHTotal     = (mode->CrtcHTotal     * 3) / 4;
-	 mode->CrtcHDisplay   = (mode->CrtcHDisplay   * 3) / 4;
-	 mode->CrtcHSyncStart = (mode->CrtcHSyncStart * 3) / 4;
-	 mode->CrtcHSyncEnd   = (mode->CrtcHSyncEnd   * 3) / 4;
-	 mode->CrtcHSkew      = (mode->CrtcHSkew      * 3) / 4;
-      }
+   if (!mode->CrtcHAdjusted) {	 
       if (pixMuxShift > 0) {
 	 /* now divide the horizontal timing parameters as required */
 	 mode->CrtcHTotal     >>= pixMuxShift;
@@ -430,16 +469,7 @@ s3Init(mode)
 	    changed = TRUE;
 	 }
       }
-      if (s3Bpp == 3) {
-	 /* for packed 24bpp CrtcHTotal must be multiple of 3*8... */
-	 if ((mode->CrtcHTotal >> 3) % 3 != 0) {
-	    mode->CrtcHTotal >>= 3;
-	    mode->CrtcHTotal += 3 - mode->CrtcHTotal % 3;
-	    mode->CrtcHTotal <<= 3;
-	    changed = TRUE;
-	    p24_fact = 3;
-	 }
-      }
+
       if (changed) {
 	 ErrorF("%s %s: mode line has to be modified ...\n",
 		XCONFIG_PROBED, s3InfoRec.name);
@@ -459,6 +489,31 @@ s3Init(mode)
    if (!vgaHWInit(mode, sizeof(vgaS3Rec)))
       return(FALSE);
 
+   if (s3MmioMem != NULL ) {
+      WaitIdle();
+      VerticalRetraceWait();
+      ((mmtr)s3MmioMem)->memport_regs.regs.fifo_control = 0x17000;
+      WaitIdle();                  /* Don't ask... */
+      ((mmtr)s3MmioMem)->memport_regs.regs.streams_timeout = 0x8000;
+   }
+
+   #if 1
+   			/* This seems to help, but maybe a wait for */
+			/* VSYNC would be better than WaitIdleEmpty(). */
+   				/* STREAMS disable code, for 24 & 32 Bpp */
+				/* Disable the STREAMS processor BEFORE */
+				/* any mode switching... */
+   if ( ( s3InfoRec.bitsPerPixel == 32 || 
+          s3InfoRec.bitsPerPixel == 24 ) &&
+          s3MmioMem != NULL ) {
+       outb(vgaCRIndex, 0x67);
+       tmp = inb(vgaCRReg);	   
+       /* WaitIdleEmpty(); *cep*/
+ 				/* Disable STREAMS processor */
+       outb( vgaCRReg, tmp & ~0x0C );
+   }	
+   #endif
+      
    new->MiscOutReg |= 0x0C;		/* enable CR42 clock selection */
    new->Sequencer[0] = 0x03;		/* XXXX shouldn't need this */
    new->CRTC[19] = s3BppDisplayWidth >> 3;
@@ -472,8 +527,8 @@ s3Init(mode)
       new->MiscOutReg &= 0xFE;
    else
       new->MiscOutReg |= 0x01;
-
-
+     
+      
    /* Don't change the clock bits when using an external clock program */
 
    if (new->NoClock < 0) {
@@ -486,7 +541,6 @@ s3Init(mode)
       else
          (void) (s3ClockSelectFunc)(mode->Clock);
    }
-
 
    if (DAC_IS_TRIO)
    {
@@ -573,7 +627,17 @@ s3Init(mode)
 	 outb(vgaCRReg, tmp);
       }
 
+      outb(vgaCRIndex, 0x67);	
+      		/* KJB - temp */
+      tmp = inb(vgaCRReg) & 0xf;
+      outb(vgaCRReg, 0x50 | tmp);  /* ask S3 why this is needed for ViRGE/VX ... */
+      #if 0
+      outb(vgaCRReg, 0x50);  /* ask S3 why this is needed for ViRGE/VX ... */
+	/* KJB - temp */
+      usleep(10000);
       outb(vgaCRIndex, 0x67);
+	/* KJB - temp */
+      #endif
       outb(vgaCRReg, pixmux | invert_vclk);    /* set S3 mux mode */
 
       outb(0x3c4, 0x15);
@@ -585,6 +649,15 @@ s3Init(mode)
 
       outb(0x3C4, 1);
       outb(0x3C5, tmp2);        /* unblank the screen */
+
+      if (s3InfoRec.MemClk > 0) {
+	 if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
+	    S3Trio64V2SetClock(s3InfoRec.MemClk, 10);
+	 else if (S3_ViRGE_VX_SERIES(s3ChipId))
+	    S3ViRGE_VXSetClock(s3InfoRec.MemClk, 10);
+	 else
+	    S3TrioSetClock(s3InfoRec.MemClk, 10);
+      }
    }
 
 
@@ -673,6 +746,7 @@ s3Init(mode)
 
    outb(vgaCRIndex, 0x45);
    i = inb(vgaCRReg) & 0xf2;
+
    /* hi/true cursor color enable */
    switch (s3InfoRec.bitsPerPixel) {
    case 24:
@@ -692,11 +766,14 @@ s3Init(mode)
       i |= 0x10;
       break;
    case 24:
+   case 32:			/* actually 24 bpp */
       i |= 0x20;
       break;
+#if 0
    case 32:
       i |= 0x30;
       break;
+#endif
    }
    switch (s3DisplayWidth) {
    case 640:
@@ -721,6 +798,9 @@ s3Init(mode)
 
    outb(vgaCRIndex, 0x51);
    s3Port51 = (inb(vgaCRReg) & 0xC0) | ((s3BppDisplayWidth >> 7) & 0x30);
+
+   /* ensure split vram xfer is enabled, per S3 doc -hu */
+   if (S3_ViRGE_VX_SERIES(s3ChipId)) s3Port51 &= ~0x40;
    outb(vgaCRReg, s3Port51);
 
    outb(vgaCRIndex, 0x58);	/* disable linear mode */
@@ -737,16 +817,11 @@ s3Init(mode)
    if (s3InfoRec.MemBase != 0) {
       s3Port59 = (s3InfoRec.MemBase >> 24) & 0xfc;
       s3Port5A = 0;
-      outb(vgaCRIndex, 0x59);
-      outb(vgaCRReg, s3Port59);
-      outb(vgaCRIndex, 0x5a);
-      outb(vgaCRReg, s3Port5A);
-   } else {
-      outb(vgaCRIndex, 0x59);
-      outb(vgaCRReg, s3Port59);
-      outb(vgaCRIndex, 0x5A);
-      outb(vgaCRReg, s3Port5A);
    }
+   outb(vgaCRIndex, 0x59);
+   outb(vgaCRReg, s3Port59);
+   outb(vgaCRIndex, 0x5A);
+   outb(vgaCRReg, s3Port5A);
 
    outb(vgaCRIndex, 0x53);	/* enable new mmio mode */
    outb(vgaCRReg, tmp | 0x08);
@@ -757,27 +832,23 @@ s3Init(mode)
    /* XXX m/n calculation should be adopted to EDO-DRAMs */
    n = 255;
    outb(vgaCRIndex, 0x54);
-   if (S3_ViRGE_SERIES(s3ChipId)) {
+   if (S3_ViRGE_VX_SERIES(s3ChipId)) 
+      m = 0;
+   else {
       int clock,mclk;
-      clock = s3InfoRec.clock[mode->Clock] * s3Bpp;
+      clock = s3InfoRec.clock[mode->Clock] * realS3Bpp /*s3Bpp*/;
       if (s3InfoRec.s3MClk > 0)
 	 mclk = s3InfoRec.s3MClk;
       else
 	 mclk = 60000;  /* 60 MHz, limit for 864 */
       m = (int)((mclk/1000.0*.72+16.867)*89.736/(clock/1000.0+39)-21.1543);
-      m -= s3InfoRec.s3Madjust;
-      if (m > 31) m = 31;
-      else if (m < 0) {
-	 m = 0;
-	 n = 16;
-      }
    }
-   else if (s3InfoRec.videoRam == 512 || mode->HDisplay > 1200) /* XXXX */
+   m -= s3InfoRec.s3Madjust;
+   if (m > 31) m = 31;
+   else if (m < 0) {
       m = 0;
-   else if (s3InfoRec.videoRam == 1024)
-      m = 2;
-   else
-      m = 20;
+      n = 16;
+   }
 
    s3Port54 = m << 3;
    outb(vgaCRReg, s3Port54);
@@ -841,7 +912,7 @@ s3Init(mode)
    outb(vgaCRReg, (tmp & 0x80) | i);
 
    if (s3InfoRec.videoRam > 1024)
-      i = mode->HDisplay * s3Bpp / 8 + 1;
+      i = mode->HDisplay * realS3Bpp /*s3Bpp*/ / 8 + 1;
 
    outb(vgaCRIndex, 0x61);
    outb(vgaCRReg, (i >> 8) | 0x80);
@@ -857,6 +928,15 @@ s3Init(mode)
       outb(vgaCRIndex, 0x42);
       tmp = inb(vgaCRReg);
       outb(vgaCRReg, ~0x20 & tmp);
+   }
+
+   if (S3_ViRGE_DXGX_SERIES(s3ChipId)) {
+      /* disable DAC power saving to avoid bright left edge */
+      outb(0x3d4,0x86);
+      outb(0x3d5,0x80);
+      /* disable the stream display fetch length control */
+      outb(0x3d4,0x90);
+      outb(0x3d5,0x00);
    }
 
    if (mode->Private) {
@@ -886,39 +966,35 @@ s3Init(mode)
       }
    }
 
-
    if (OFLG_ISSET(OPTION_FAST_VRAM, &s3InfoRec.options)) {
       outb(vgaCRIndex, 0x39);
       outb(vgaCRReg, 0xa5);
       outb(vgaCRIndex, 0x68);
       tmp = inb(vgaCRReg);
       /* -RAS low timing 3.5 MCLKs, -RAS precharge timing 2.5 MCLKs */
-      outb(vgaCRReg, tmp | 0xf0);
+      outb(vgaCRReg, tmp | 0x04 | 0x08);
    }
 
    if (OFLG_ISSET(OPTION_SLOW_VRAM, &s3InfoRec.options)) {
       /*
-       * some Diamond Stealth 64 VRAM cards have a problem with VRAM timing,
        * increase -RAS low timing from 3.5 MCLKs to 4.5 MCLKs
        */
       outb(vgaCRIndex, 0x39);
       outb(vgaCRReg, 0xa5);
       outb(vgaCRIndex, 0x68);
       tmp = inb(vgaCRReg);
-      if ((tmp & 0x30) == 0x30) 		/* 3.5 MCLKs */
-	 outb(vgaCRReg, tmp & 0xef);		/* 4.5 MCLKs */
+      outb(vgaCRReg, tmp & ~0x04);
    }
 
    if (OFLG_ISSET(OPTION_SLOW_DRAM, &s3InfoRec.options)) {
       /*
-       * fixes some pixel errors for a SPEA Trio64V+ card
        * increase -RAS precharge timing from 2.5 MCLKs to 3.5 MCLKs
        */
       outb(vgaCRIndex, 0x39);
       outb(vgaCRReg, 0xa5);
       outb(vgaCRIndex, 0x68);
       tmp = inb(vgaCRReg);
-      outb(vgaCRReg, tmp & 0xf7);		/* 3.5 MCLKs */
+      outb(vgaCRReg, tmp & ~0x08);
    }
 
    if (OFLG_ISSET(OPTION_SLOW_EDODRAM, &s3InfoRec.options)) {
@@ -936,9 +1012,22 @@ s3Init(mode)
 
    if (S3_ViRGE_VX_SERIES(s3ChipId)) {
       outb(vgaCRIndex, 0x36);            /* ViRGE/VX requires 1-cycle EDO */
-      tmp = inb(vgaCRReg);               /* for GE operations */
-      outb(vgaCRReg, tmp & ~0x08);
+      tmp = inb(vgaCRReg);               /* for GE operations (or FPM) */
+      if (OFLG_ISSET(OPTION_FPM_VRAM, &s3InfoRec.options))
+	 outb(vgaCRReg, tmp |  0x0c);
+      else
+	 outb(vgaCRReg, tmp & ~0x0c);
+
+      outb(vgaCRIndex, 0x67);
+      tmp = inb(vgaCRReg);
+      outb(vgaCRReg, 0x50);  /* ask S3 why this is needed for ViRGE/VX ... */
+      usleep(10000);
+      outb(vgaCRIndex, 0x67);
+      outb(vgaCRReg, tmp);
    }
+			/* Start the STREAMS processor, only active */
+			/* for 24 or 32 bpp modes. */
+   /* s3InitSTREAMS( mode->HDisplay, mode->VDisplay ); KJB */
 
    if (s3MmioMem != NULL)
       s3AdjustFrame(s3InfoRec.frameX0, s3InfoRec.frameY0);
@@ -951,7 +1040,6 @@ s3Init(mode)
   * all planes off
   */
    outb(DAC_MASK, 0x00);
-
 
    outb(DAC_MASK, 0xff);
 
@@ -1035,6 +1123,130 @@ InitLUT()
 }
 
 /*
+ * s3InitSTREAMS( mode )
+ *
+ * Enables and sets up the STREAMS processor for 24/32 bpp
+ */
+void
+s3InitSTREAMS( mode )
+   DisplayModePtr mode;
+#if 0
+   int	RequestWidth;
+   int	RequestHeight;
+#endif
+{
+
+   unsigned char tmp;
+
+   if (s3MmioMem != NULL && oldS3->fifo[0] == 0) {
+      WaitIdle();
+      VerticalRetraceWait();
+      oldS3->fifo[0] = ((mmtr)s3MmioMem)->memport_regs.regs.fifo_control;
+      WaitIdle();                  /* Don't ask... */
+      oldS3->fifo[1] = ((mmtr)s3MmioMem)->memport_regs.regs.streams_timeout;
+   }
+
+    				/* Only for 24 or 32 bpp!  Also needs */
+				/* s3MmioMem to be mapped . */
+    if (!( (s3InfoRec.bitsPerPixel == 32 || 
+            s3InfoRec.bitsPerPixel == 24 ) &&
+           s3MmioMem != NULL)) return;
+
+	   			/* Wait for VSYNC */
+       VerticalRetraceWait();
+       outb(vgaCRIndex, 0x67);
+       tmp = inb(vgaCRReg);
+ 				/* Enable full STREAMS processor */
+       outb( vgaCRReg, tmp | 0x0C );
+
+/* virge is packed 24 only  -hu
+       if ( s3InfoRec.bitsPerPixel == 24 ) {
+*/
+ 				/* data format 8.8.8 (24 bpp) */
+         ((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_cntl = 0x06000000;
+#if 0
+       } else {
+                                /* one more bit for X.8.8.8, 32 bpp */
+         ((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_cntl = 0x07000000;
+       }
+#endif
+ 				/* NO chroma keying... */
+       ((mmtr)s3MmioMem)->streams_regs.regs.col_chroma_key_cntl = 0x0;
+ 				/* Secondary stream format KRGB-16 */
+                                /* data book suggestion... */
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_stream_cntl = 0x03000000;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.chroma_key_upper_bound = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_stream_stretch = 0x0;
+				/* use 0x01000000 for primary over second. */
+				/* use 0x0 for second over prim. */ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.blend_cntl = 0x01000000;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.prim_fbaddr0 = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.prim_fbaddr1 = 0x0;
+ 
+                                /* Stride is 3 bytes for 24 bpp mode and */
+                                /* 4 bytes for 32 bpp. */
+/* virge is packed 24 only  -hu
+       if ( s3InfoRec.bitsPerPixel == 24 ) {
+*/
+         ((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_stride = s3InfoRec.virtualX * 3;
+         /*((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_stride = mode->HDisplay * 3;*/
+#if 0
+       } else {
+         ((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_stride = s3InfoRec.virtualX * 4;
+         /*((mmtr)s3MmioMem)->streams_regs.regs.prim_stream_stride = mode->HDisplay * 4;*/
+       }
+#endif
+ 				/* Choose fbaddr0 as stream source. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.double_buffer = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_fbaddr0 = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_fbaddr1 = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_stream_stride = 0x1;
+ 				/* Set primary stream on top of secondary */
+ 				/* stream. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.opaq_overlay_cntl = 0x40000000;
+ 				/* Vertical scale factor. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.k1 = 0x0;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.k2 = 0x0;
+ 				/* Vertical accum. initial value. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.dda_vert = 0x0;
+ 				/* X and Y start coords + 1. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.prim_start_coord =  0x00010001;
+/*         (s3InfoRec.frameX0 + 1) << 16 | (s3InfoRec.frameY0 + 1);  KJB - temp */
+ 				/* Specify window Width -1 and Height of */
+ 				/* stream. */
+ 				/* ScreenHeight ??? */
+				/* Set the STREAM source to the frame. */
+       ((mmtr)s3MmioMem)->streams_regs.regs.prim_window_size = 
+       #if 0  	/* temp - KJB */
+           (s3InfoRec.frameX1 - s3InfoRec.frameX0) << 16 | 
+           (s3InfoRec.frameY1 - s3InfoRec.frameY0 + 1);
+	   
+	   ( (RequestWidth << 16) | (RequestHeight + 1) );
+	#else
+	   (mode->HDisplay-1) << 16 | (mode->VDisplay);
+	#endif
+				/* Book says 0x07ff07ff. */ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_start_coord = 0x07ff07ff;
+ 
+       ((mmtr)s3MmioMem)->streams_regs.regs.second_window_size = 0x00010001;
+ 
+                                /* STREAMS enable after? */
+				/* NO, YOU DON't want to do this! */
+       /* outb( vgaCRReg, tmp | 0x0C ); */
+ 
+    /* end STREAMS processor. */
+ 
+} /*s3InitSTREAMS()*/
+
+/*
  * s3InitEnvironment()
  *
  * Initializes the drawing environment and clears the display.
@@ -1042,6 +1254,9 @@ InitLUT()
 void
 s3InitEnvironment()
 {
+		   /* Set up the STREAMS processor */
+   /* s3InitSTREAMS( s3InfoRec.width, s3InfoRec.height ); KJB */
+
    /* Current mixes, src, foreground active */
 
    if (s3MmioMem != NULL) {   /* wait until s3MmioMem is initialzied */
@@ -1049,12 +1264,12 @@ s3InitEnvironment()
 
       if (s3Bpp == 1) {
 	 s3_gcmd |= DST_8BPP;
-	 s3bltbug_width1 = 57;
+	 s3bltbug_width1 = 51;
 	 s3bltbug_width2 = 64;
       }
       else if (s3Bpp == 2) {
 	 s3_gcmd |= DST_16BPP;
-	 s3bltbug_width1 = 29;
+	 s3bltbug_width1 = 26;
 	 s3bltbug_width2 = 32;
       }
       else {
@@ -1066,7 +1281,19 @@ s3InitEnvironment()
       /* reset S3 graphics engine and disable all interrupts. */
       SET_SUBSYS_CRTL(GPCTRL_RESET);
       SET_SUBSYS_CRTL(GPCTRL_ENAB);
-      IN_SUBSYS_STAT();
+      usleep(10000);  /* wait a little bit... */
+
+      if (IN_SUBSYS_STAT() != 0x3000) {  /* 2nd try */
+	int tmp;
+	if (S3_ViRGE_VX_SERIES(s3ChipId))
+	   outb(vgaCRIndex, 0x63);
+	else 
+	   outb(vgaCRIndex, 0x66);
+	tmp = inb(vgaCRReg);
+	outb(vgaCRReg, tmp |  0x02);
+	outb(vgaCRReg, tmp & ~0x02);
+	usleep(10000);  /* wait a little bit... */
+      }
       WaitIdleEmpty();
 
       SETB_CMD_SET(CMD_NOP);
@@ -1104,7 +1331,7 @@ s3InitEnvironment()
       SETB_MONO_PAT1(~0);
       SETB_CMD_SET((s3_gcmd & ~CMD_HWCLIP) | CMD_BITBLT | MIX_MONO_PATT | INC_X | INC_Y | ROP_P);
 
-      WaitQueue(4);
+      WaitIdleEmpty();
 
       /* Reset current draw position */
       SETB_RSRC_XY(0,0);
@@ -1113,6 +1340,18 @@ s3InitEnvironment()
       /* Reset current colors, foreground is all on, background is 0. */
       SETB_PAT_FG_CLR(~0);
       SETB_PAT_BG_CLR(0);
+   }
+   else {
+      int tmp;
+      /* reset S3 graphics engine */
+      if (S3_ViRGE_VX_SERIES(s3ChipId))
+	 outb(vgaCRIndex, 0x63);
+      else 
+	 outb(vgaCRIndex, 0x66);
+      tmp = inb(vgaCRReg);
+      outb(vgaCRReg, tmp |  0x02);
+      outb(vgaCRReg, tmp & ~0x02);
+      usleep(10000);  /* wait a little bit... */
    }
 
    /* Load the LUT */
@@ -1140,7 +1379,8 @@ s3Unlock()
    outb(vgaCRReg, tmp & 0xf0);
    cebank();
 
-   outb(vgaCRIndex, 0x11);		/* allow writting? */
-   outb(vgaCRReg, 0x00);
+   outb(vgaCRIndex, 0x11);		/* allow writing to CR0-7 */
+   tmp = inb(vgaCRReg);
+   outb(vgaCRReg, tmp & 0x7f);
 
 }

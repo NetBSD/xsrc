@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.9 1996/08/20 12:29:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.13.2.1 1997/05/11 05:04:25 dawes Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: lnx_video.c /main/5 1995/12/17 08:30:27 kaleb $ */
+/* $XConsortium: lnx_video.c /main/9 1996/10/19 18:06:34 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -34,10 +34,27 @@
 #include "xf86_OSlib.h"
 
 #ifdef __alpha__
-extern unsigned long _bus_base(void) __attribute__((const));
-#define BUS_BASE _bus_base()
+
+/*
+ * The Jensen lacks dense memory, thus we have to address the bus via
+ * the sparse addressing scheme.
+ *
+ * Martin Ostermann (ost@comnets.rwth-aachen.de) - Apr.-Sep. 1996
+ */
+
+#ifdef TEST_JENSEN_CODE /* define to test the Sparse addressing on a non-Jensen */
+#define SPARSE (5)
+#define isJensen (1)
+#else
+#define isJensen (!_bus_base())
+#define SPARSE (7)
+#endif
+
+#define BUS_BASE (isJensen ? _bus_base_sparse() : _bus_base())
+#define JENSEN_SHIFT(x) (isJensen ? ((long)x<<SPARSE) : (long)x)
 #else
 #define BUS_BASE 0
+#define JENSEN_SHIFT(x) (x)
 #endif
 
 /***************************************************************************/
@@ -71,6 +88,9 @@ unsigned long Size;
       	int fd;
 
 #ifdef ONLY_MMAP_FIXED_WORKS
+#ifdef __alpha__
+	FatalError("xf86MapVidMem: Unexpected code for Alpha (pagesize=8k!)\n");
+#endif 
 	AllocAddress[ScreenNum][Region] = (pointer)xalloc(Size + 0x1000);
 	if (AllocAddress[ScreenNum][Region] == NULL)
 	{
@@ -92,8 +112,10 @@ unsigned long Size;
 			   strerror(errno));
 	}
 	/* This requirers linux-0.99.pl10 or above */
-	base = (pointer)mmap((caddr_t)0, Size, PROT_READ|PROT_WRITE,
-			     MAP_SHARED, fd, (off_t)Base + BUS_BASE);
+	base = (pointer)mmap((caddr_t)0, JENSEN_SHIFT(Size),
+			     PROT_READ|PROT_WRITE,
+			     MAP_SHARED, fd,
+			     (off_t)(JENSEN_SHIFT((off_t)Base) + BUS_BASE));
 #endif
 	close(fd);
 	if ((long)base == -1)
@@ -125,7 +147,7 @@ int Region;
 pointer Base;
 unsigned long Size;
 {
-    munmap((caddr_t)Base, Size);
+    munmap((caddr_t)JENSEN_SHIFT(Base), JENSEN_SHIFT(Size));
 #ifdef ONLY_MMAP_FIXED_WORKS
     xfree(AllocAddress[ScreenNum][Region]);
 #endif
@@ -188,9 +210,11 @@ int ScreenNum;
 	if (ExtendedEnabled)
 		return;
 
+#ifndef __mc68000__
 	if (iopl(3))
 		FatalError("%s: Failed to set IOPL for I/O\n",
 			   "xf86EnableIOPorts");
+#endif
 	ExtendedEnabled = TRUE;
 
 	return;
@@ -210,7 +234,9 @@ int ScreenNum;
 		if (ScreenEnabled[i])
 			return;
 
+#ifndef __mc68000__
 	iopl(0);
+#endif
 	ExtendedEnabled = FALSE;
 
 	return;
@@ -277,11 +303,13 @@ int ScreenNum;
 	{
 		if (ExtendedPorts[i] && (ScreenEnabled[i] || i == ScreenNum))
 		{
+#ifndef __mc68000__
 		    if (iopl(3))
 		    {
 			FatalError("%s: Failed to set IOPL for extended I/O\n",
 				   "xf86EnableIOPorts");
 		    }
+#endif
 		    ExtendedEnabled = TRUE;
 		    break;
 		}
@@ -289,7 +317,9 @@ int ScreenNum;
 	/* Extended I/O was used, but not any more */
 	if (ExtendedEnabled && i == MAXSCREENS)
 	{
+#ifndef __mc68000__
 		iopl(0);
+#endif
 		ExtendedEnabled = FALSE;
 	}
 	/*
@@ -334,7 +364,9 @@ int ScreenNum;
 	}
 	if (ExtendedEnabled && i == MAXSCREENS)
 	{
+#ifndef __mc68000__
 		iopl(0);
+#endif
 		ExtendedEnabled = FALSE;
 	}
 	for (i = 0; i < NumEnabledPorts[ScreenNum]; i++)
@@ -357,8 +389,10 @@ int ScreenNum;
 
 void xf86DisableIOPrivs()
 {
+#ifndef __mc68000__
 	if (ExtendedEnabled)
 		iopl(0);
+#endif
 	return;
 }
 
@@ -369,8 +403,10 @@ void xf86DisableIOPrivs()
 Bool xf86DisableInterrupts()
 {
 	if (!ExtendedEnabled)
+#ifndef __mc68000__
 		if (iopl(3))
 			return (FALSE);
+#endif
 #if defined(__alpha__) || defined(__mc68000__)
 #else
 #ifdef __GNUC__
@@ -379,16 +415,20 @@ Bool xf86DisableInterrupts()
 	asm("cli");
 #endif
 #endif
+#ifndef __mc68000__
 	if (!ExtendedEnabled)
 		iopl(0);
+#endif
 	return (TRUE);
 }
 
 void xf86EnableInterrupts()
 {
 	if (!ExtendedEnabled)
+#ifndef __mc68000__
 		if (iopl(3))
 			return;
+#endif
 #if defined(__alpha__) || defined(__mc68000__)
 #else
 #ifdef __GNUC__
@@ -397,7 +437,198 @@ void xf86EnableInterrupts()
 	asm("sti");
 #endif
 #endif
+#ifndef __mc68000__
 	if (!ExtendedEnabled)
 		iopl(0);
+#endif
 	return;
 }
+
+#if defined(__alpha__)
+
+static int xf86SparseShift = 5; /* default to all but JENSEN */
+
+pointer xf86MapVidMemSparse(ScreenNum, Region, Base, Size)
+int ScreenNum;
+int Region;
+pointer Base;
+unsigned long Size;
+{
+	pointer base;
+      	int fd;
+
+	if (!_bus_base()) xf86SparseShift = 7; /* Uh, oh, JENSEN... */
+
+	Size <<= xf86SparseShift;
+	Base = (pointer)((unsigned long)Base << xf86SparseShift);
+
+	if ((fd = open("/dev/mem", O_RDWR)) < 0)
+	{
+		FatalError("xf86MapVidMem: failed to open /dev/mem (%s)\n",
+			   strerror(errno));
+	}
+	/* This requirers linux-0.99.pl10 or above */
+	base = (pointer)mmap((caddr_t)0, Size,
+			     PROT_READ | PROT_WRITE,
+			     MAP_SHARED, fd,
+			     (off_t)Base + _bus_base_sparse());
+	close(fd);
+	if ((long)base == -1)
+	{
+		FatalError("xf86MapVidMem: Could not mmap framebuffer (%s)\n",
+			   strerror(errno));
+	}
+	return base;
+}
+
+void xf86UnMapVidMemSparse(ScreenNum, Region, Base, Size)
+int ScreenNum;
+int Region;
+pointer Base;
+unsigned long Size;
+{
+	Size <<= xf86SparseShift;
+
+	munmap((caddr_t)Base, Size);
+}
+
+#define vuip    volatile unsigned int *
+
+extern void sethae(unsigned long hae);
+
+int xf86ReadSparse8(Base, Offset)
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long result, shift;
+    unsigned long msb = 0;
+
+    shift = (Offset & 0x3) * 8;
+    if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000UL;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    result = *(vuip) ((unsigned long)Base + (Offset << xf86SparseShift));
+    if (msb)
+      sethae(0);
+    result >>= shift;
+    return 0xffUL & result;
+}
+
+int xf86ReadSparse16(Base, Offset)
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long result, shift;
+    unsigned long msb = 0;
+
+    shift = (Offset & 0x2) * 8;
+    if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000UL;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    result = *(vuip)((unsigned long)Base+(Offset<<xf86SparseShift)+(1<<(xf86SparseShift-2)));
+    if (msb)
+      sethae(0);
+    result >>= shift;
+    return 0xffffUL & result;
+}
+
+int xf86ReadSparse32(Base, Offset)
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long result;
+    unsigned long msb = 0;
+
+    if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000UL;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    result = *(vuip)((unsigned long)Base+(Offset<<xf86SparseShift)+(3<<(xf86SparseShift-2)));
+    if (msb)
+      sethae(0);
+    return result;
+}
+
+void xf86WriteSparse8(Value, Base, Offset)
+int Value;
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long msb = 0;
+    unsigned int b = Value & 0xffU;
+
+    if (xf86SparseShift != 7) { /* not JENSEN */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    *(vuip) ((unsigned long)Base + (Offset << xf86SparseShift)) = b * 0x01010101;
+    if (msb)
+      sethae(0);
+}
+
+void xf86WriteSparse16(Value, Base, Offset)
+int Value;
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long msb = 0;
+    unsigned int w = Value & 0xffffU;
+
+    if (xf86SparseShift != 7) { /* not JENSEN */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    *(vuip)((unsigned long)Base+(Offset<<xf86SparseShift)+(1<<(xf86SparseShift-2))) =
+      w * 0x00010001;
+    if (msb)
+      sethae(0);
+}
+
+void xf86WriteSparse32(Value, Base, Offset)
+int Value;
+pointer Base;
+unsigned long Offset;
+{
+    unsigned long msb = 0;
+
+    if (xf86SparseShift != 7) { /* not JENSEN */
+      if (Offset >= (1UL << 24)) {
+        msb = Offset & 0xf8000000;
+        Offset -= msb;
+        if (msb) {
+	  sethae(msb);
+        }
+      }
+    }
+    *(vuip)((unsigned long)Base+(Offset<<xf86SparseShift)+(3<<(xf86SparseShift-2))) = Value;
+    if (msb)
+      sethae(0);
+}
+#endif /* __alpha__ */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3gc16.c,v 3.1 1996/10/03 08:33:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3gc16.c,v 3.2 1996/12/27 07:02:34 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3gc16.c /main/3 1995/11/12 19:06:32 kaleb $ */
+/* $XConsortium: s3gc16.c /main/2 1996/10/25 11:34:52 kaleb $ */
 
 
 #include "X.h"

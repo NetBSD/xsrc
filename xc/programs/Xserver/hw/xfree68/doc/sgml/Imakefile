@@ -1,10 +1,15 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/Imakefile,v 3.1 1996/08/20 12:25:34 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/1 1996/09/21 11:17:58 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/Imakefile,v 3.3.2.3 1997/05/24 13:38:12 dawes Exp $
 
 #include <Server.tmpl>
 
 #include <lnxdoc.rules>
 
-#if defined(BSD386Architecture) || BuildAllDocs
+#if (defined(BSD386Architecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Bsdi)
 #endif
 #if defined(FreeBSDArchitecture) || BuildAllDocs
@@ -13,7 +18,10 @@ LinuxDocReadmeTarget(FreeBSD)
 #if defined(NetBSDArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(NetBSD)
 #endif
-#if defined(i386MachArchitecture) || BuildAllDocs
+#if defined(OpenBSDArchitecture) || BuildAllDocs
+LinuxDocReadmeTarget(OpenBSD)
+#endif
+#if (defined(i386MachArchitecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Mach)
 #endif
 #if defined(LinuxArchitecture) || BuildAllDocs
@@ -37,7 +45,7 @@ LinuxDocReadmeTarget(isc)
 # endif
 # if defined(OS2Architecture) || BuildAllDocs
 LinuxDocReadmeTarget(OS2)
-LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2.Notes)
+LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2Notes)
 # endif
 # if 0
 LinuxDocReadmeTarget(SVR3)
@@ -53,26 +61,33 @@ LinuxDocReadmeTarget(SVR4)
 #endif
 
 /* Hardware docs */
+LinuxDocReadmeTarget(DECtga)
+LinuxDocReadmeTarget(Mach32)
 LinuxDocReadmeTarget(Mach64)
+LinuxDocReadmeTarget(MGA)
+LinuxDocReadmeTarget(NV1)
 LinuxDocReadmeTarget(Oak)
 LinuxDocReadmeTarget(P9000)
 LinuxDocReadmeTarget(Video7)
 LinuxDocReadmeTarget(S3)
+LinuxDocReadmeTarget(S3V)
+LinuxDocReadmeTarget(SiS)
 LinuxDocReadmeTarget(W32)
 LinuxDocReadmeTarget(WstDig)
 LinuxDocReadmeTarget(agx)
+LinuxDocReadmeTarget(ark)
 LinuxDocReadmeTarget(ati)
 LinuxDocReadmeTarget(chips)
 LinuxDocReadmeTarget(cirrus)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
-LinuxDocReadmeTarget(ark)
+LinuxDocReadmeTarget(fbdev)
 
 /* Main docs */
 LinuxDocTargetLong(CPYRIGHT.sgml,COPYRIGHT,COPYRIGHT)
 LinuxDocTargetLong(RELNOTE.sgml,RELNOTES,RELNOTES)
 LinuxDocReadmeTarget(Config)
-LinuxDocTarget(INSTALL)
+LinuxDocTarget(BUILD)
 LinuxDocTarget(README)
 LinuxDocTargetLong(QStart.sgml,QuickStart.doc,QuickStart)
 LinuxDocTarget(DocIndex)
@@ -89,15 +104,19 @@ LinuxDocTargetLong(VGADriv.sgml,VGADriver.Doc,VGADriver)
 LinkSourceFile(Bsdi.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(CPYRIGHT.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Config.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(DECtga.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DocIndex.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(FreeBSD.sgml,$(XF86SRC)/doc/sgml)
-LinkSourceFile(INSTALL.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(BUILD.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LinkKit.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Linux.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LynxOS.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Mach.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(Mach32.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Mach64.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(MGA.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(NetBSD.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(NV1.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(OS2.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(OS2note.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Oak.sgml,$(XF86SRC)/doc/sgml)
@@ -106,9 +125,11 @@ LinkSourceFile(QStart.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(README.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(RELNOTE.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(S3.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(S3V.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SCO.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SOLX86.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SVR4.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(SiS.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(VGADriv.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(VidModes.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Video7.sgml,$(XF86SRC)/doc/sgml)
@@ -117,6 +138,7 @@ LinkSourceFile(WstDig.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(agx.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(ark.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(ati.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(chips.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(cirrus.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(clkprog.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(isc.sgml,$(XF86SRC)/doc/sgml)
@@ -127,3 +149,4 @@ LinkSourceFile(xinput.sgml,$(XF86SRC)/doc/sgml)
 InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))
 InstallLinkKitNonExecFile(VGADriver.Doc,$(LINKKITDIR)/VGADriverDoc)
 
+LinkFile(OpenBSD.sgml, NetBSD.sgml)

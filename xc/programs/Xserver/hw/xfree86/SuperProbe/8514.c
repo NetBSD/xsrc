@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/8514.c,v 3.3 1996/02/04 08:56:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/8514.c,v 3.4 1996/12/23 06:30:55 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: 8514.c /main/4 1995/11/13 11:11:35 kaleb $ */
+/* $XConsortium: 8514.c /main/5 1996/02/21 17:08:59 kaleb $ */
 
 #include "Probe.h"
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.11 1996/08/18 01:51:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.12 1996/12/23 06:43:31 dawes Exp $ */
 /*
  * Linux version of keymapping setup. The kernel (since 0.99.14) has support
  * for fully remapping the keyboard, but there are some differences between
@@ -28,7 +28,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86KbdLnx.c /main/3 1995/11/12 19:21:40 kaleb $ */
+/* $XConsortium: xf86KbdLnx.c /main/7 1996/10/19 17:59:00 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcRot.c,v 1.1.1.2 1996/01/03 07:22:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcRot.c,v 3.1 1996/12/23 06:53:14 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
 */
-/* $XConsortium: ppcRot.c /main/2 1995/11/13 07:05:39 kaleb $ */
+/* $XConsortium: ppcRot.c /main/3 1996/02/21 17:58:22 kaleb $ */
 
 /* ROTATE  and CLIP Z8 PixMaps
  * Demands that pixmaps be Z oriented, 8 bits per pixel

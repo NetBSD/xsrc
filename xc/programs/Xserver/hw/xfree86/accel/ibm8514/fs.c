@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/fs.c,v 3.3 1996/02/04 09:01:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/fs.c,v 3.4 1996/12/23 06:37:48 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -87,7 +87,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 Modified by Tiago Gons (tiago@comosjn.hobby.nl)
 
 ******************************************************************/
-/* $XConsortium: fs.c /main/3 1995/11/12 17:02:55 kaleb $ */
+/* $XConsortium: fs.c /main/4 1996/02/21 17:24:23 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

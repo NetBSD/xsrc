@@ -1,4 +1,4 @@
-/* $XConsortium: miwideline.c,v 1.57 94/07/25 13:45:31 kaleb Exp $ */
+/* $XConsortium: miwideline.c /main/58 1996/08/12 21:51:21 dpw $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -462,7 +462,7 @@ miLineJoin (pDrawable, pGC, pixel, spanData, pLeft, pRight)
     register LineFacePtr pLeft, pRight;
 {
     double	    mx, my;
-    int		    denom;
+    double	    denom;
     PolyVertexRec   vertices[4];
     PolySlopeRec    slopes[4];
     int		    edgecount;
@@ -478,7 +478,7 @@ miLineJoin (pDrawable, pGC, pixel, spanData, pLeft, pRight)
 	if (pLeft->dx >= 0 == pRight->dx <= 0)
 	    return;
 	if (joinStyle != JoinRound) {
-    	    denom = - pLeft->dx * pRight->dy + pRight->dx * pLeft->dy;
+    	    denom = - pLeft->dx * (double)pRight->dy + pRight->dx * (double)pLeft->dy;
     	    if (denom == 0)
 	    	return;	/* no join to draw */
 	}
@@ -494,8 +494,8 @@ miLineJoin (pDrawable, pGC, pixel, spanData, pLeft, pRight)
 		      (double)0.0, (double)0.0, TRUE);
 	    return;
     	}
-    	denom = - pLeft->dx * pRight->dy + pRight->dx * pLeft->dy;
-    	if (denom == 0)
+    	denom = - pLeft->dx * (double)pRight->dy + pRight->dx * (double)pLeft->dy;
+    	if (denom == 0.0)
 	    return;	/* no join to draw */
     }
 
@@ -535,7 +535,7 @@ miLineJoin (pDrawable, pGC, pixel, spanData, pLeft, pRight)
     {
     	my = (pLeft->dy  * (pRight->xa * pRight->dy - pRight->ya * pRight->dx) -
               pRight->dy * (pLeft->xa  * pLeft->dy  - pLeft->ya  * pLeft->dx )) /
-	      (double) denom;
+	      denom;
     	if (pLeft->dy != 0)
     	{
 	    mx = pLeft->xa + (my - pLeft->ya) *
@@ -910,9 +910,9 @@ miRoundJoinClip (pLeft, pRight, edge1, edge2, y1, y2, left1, left2)
     int		*y1, *y2;
     Bool	*left1, *left2;
 {
-    int	denom;
+    double	denom;
 
-    denom = - pLeft->dx * pRight->dy + pRight->dx * pLeft->dy;
+    denom = - pLeft->dx * (double)pRight->dy + pRight->dx * (double)pLeft->dy;
 
     if (denom >= 0)
     {

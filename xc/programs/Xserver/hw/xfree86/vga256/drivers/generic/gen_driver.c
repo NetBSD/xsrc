@@ -1,5 +1,4 @@
-/* $XConsortium: gen_driver.c /main/6 1996/01/12 12:17:12 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/generic/gen_driver.c,v 3.13 1996/10/16 14:42:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/generic/gen_driver.c,v 3.15.2.2 1997/05/09 07:15:40 hohndel Exp $ */
 /*
  * Stubs driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,6 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: gen_driver.c /main/11 1996/10/27 11:07:43 kaleb $ */
 
 /*
  * Generic VGA 320x200x256 driver developed from stub driver.
@@ -150,7 +150,8 @@ vgaVideoChipRec GENERIC = {
 	FALSE,
 	FALSE,
 	&Mode320x200,
-	1,
+	1,                         /* ChipClockMulFactor */
+	1                          /* ChipClockDivFactor */
 };
 
 /* These are the fixed 100% VGA compatible CRTC register values used. */
@@ -315,7 +316,9 @@ static void
 GenericRestore(restore)
 vgaGenericPtr restore;
 {
+	vgaProtect(TRUE);
 	vgaHWRestore((vgaHWPtr)restore);
+	vgaProtect(FALSE);
 }
 
 
@@ -382,9 +385,10 @@ int x, y;
  *
  */
 static int
-GenericValidMode(mode, verbose)
+GenericValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

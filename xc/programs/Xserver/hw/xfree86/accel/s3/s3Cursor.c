@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3Cursor.c,v 3.28 1996/09/22 05:03:15 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3Cursor.c,v 3.32 1997/01/08 20:33:41 dawes Exp $
  * 
  * Copyright 1991 MIPS Computer Systems, Inc.
  * 
@@ -25,7 +25,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3Cursor.c /main/8 1995/12/09 15:56:04 kaleb $ */
+/* $XConsortium: s3Cursor.c /main/13 1996/10/24 07:11:02 kaleb $ */
 
 /*
  * Device independent (?) part of HW cursor support
@@ -54,30 +54,44 @@
 #include "s3.h"
 #include "regs3.h"
 
-static Bool s3RealizeCursor();
-static Bool s3UnrealizeCursor();
-static void s3SetCursor();
-static void s3MoveCursor();
-extern Bool s3BtRealizeCursor();
-extern void s3BtCursorOn();
-extern void s3BtCursorOff();
-extern void s3BtLoadCursor();
-extern void s3BtMoveCursor();
-extern Bool s3TiRealizeCursor();
-extern void s3TiCursorOn();
-extern void s3TiCursorOff();
-extern void s3TiLoadCursor();
-extern void s3TiMoveCursor();
-extern Bool s3Ti3026RealizeCursor();
-extern void s3Ti3026CursorOn();
-extern void s3Ti3026CursorOff();
-extern void s3Ti3026LoadCursor();
-extern void s3Ti3026MoveCursor();
-extern Bool s3IBMRGBRealizeCursor();
-extern void s3IBMRGBCursorOn();
-extern void s3IBMRGBCursorOff();
-extern void s3IBMRGBLoadCursor();
-extern void s3IBMRGBMoveCursor();
+#define MAX_CURS 64
+
+static void 
+s3LoadCursor(
+#if NeedFunctionPrototypes
+     ScreenPtr	/* pScr */,
+     CursorPtr	/* pCurs */,
+     int	/* x */,
+     int	/* y */
+#endif
+);
+static Bool s3RealizeCursor(
+#if NeedFunctionPrototypes
+     ScreenPtr	/* pScr */,
+     CursorPtr	/* pCurs */
+#endif
+);
+static Bool s3UnrealizeCursor(
+#if NeedFunctionPrototypes
+     ScreenPtr	/* pScr */,
+     CursorPtr	/* pCurs */
+#endif
+);
+static void s3SetCursor(
+#if NeedFunctionPrototypes
+     ScreenPtr	/* pScr */,
+     CursorPtr	/* pCurs */,
+     int  	/* x */,
+     int  	/* y */
+#endif
+);
+static void s3MoveCursor(
+#if NeedFunctionPrototypes
+     ScreenPtr	/* pScr */,
+     int  	/* x */,
+     int  	/* y */
+#endif
+);
 
 static miPointerSpriteFuncRec s3PointerSpriteFuncs =
 {
@@ -126,14 +140,18 @@ extern unsigned char s3SwapBits[256];
 static int s3CursGeneration = -1;
 static CursorPtr s3SaveCursors[MAXSCREENS];
 static Bool useSWCursor = FALSE;
+extern Bool tmp_useSWCursor;
 
 extern int s3hotX, s3hotY;
 
 #define VerticalRetraceWait() \
 { \
-   while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
-   while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
-   while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+   outb(vgaCRIndex, 0x17); \
+   if ( inb(vgaCRReg) & 0x80 ) { \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       }\
 }
 
 Bool
@@ -147,9 +165,9 @@ s3CursorInit(pm, pScr)
    if (s3CursGeneration != serverGeneration) {
       s3hotX = 0;
       s3hotY = 0;
+      miDCInitialize (pScr, &xf86PointerScreenFuncs);
       if (OFLG_ISSET(OPTION_SW_CURSOR, &s3InfoRec.options)) {
 	 useSWCursor = TRUE;
-	 miDCInitialize (pScr, &xf86PointerScreenFuncs);
       } else if (OFLG_ISSET(OPTION_BT485_CURS, &s3InfoRec.options)) {
          if (!(miPointerInitialize(pScr, &s3BtPointerSpriteFuncs,
 				   &xf86PointerScreenFuncs, FALSE)))
@@ -169,7 +187,6 @@ s3CursorInit(pm, pScr)
       } else if (s3InfoRec.bitsPerPixel == 32 
 		 && S3_928_SERIES(s3ChipId) && !S3_x64_SERIES(s3ChipId)) {
 	 useSWCursor = TRUE;
-	 miDCInitialize (pScr, &xf86PointerScreenFuncs);
       } else {
          if (!(miPointerInitialize(pScr, &s3PointerSpriteFuncs,
 				   &xf86PointerScreenFuncs, FALSE)))
@@ -187,7 +204,7 @@ s3CursorInit(pm, pScr)
 void
 s3ShowCursor()
 {
-   if (useSWCursor) 
+   if (useSWCursor || tmp_useSWCursor) 
       return;
 
    if (OFLG_ISSET(OPTION_BT485_CURS, &s3InfoRec.options))
@@ -206,7 +223,7 @@ s3HideCursor()
 {
    unsigned char tmp;
 
-   if (useSWCursor) 
+   if (useSWCursor || tmp_useSWCursor) 
       return;
 
    if (OFLG_ISSET(OPTION_BT485_CURS, &s3InfoRec.options))
@@ -234,14 +251,19 @@ s3RealizeCursor(pScr, pCurs)
    register int i, j;
    unsigned short *pServMsk;
    unsigned short *pServSrc;
-   int   index = pScr->myNum;
-   pointer *pPriv = &pCurs->bits->devPriv[index];
+   int   indx2 = pScr->myNum;
+   pointer *pPriv = &pCurs->bits->devPriv[indx2];
    int   wsrc, h;
    unsigned short *ram;
    CursorBitsPtr bits = pCurs->bits;
 
-   if (useSWCursor) 
+   if (OFLG_ISSET(OPTION_SW_CURSOR, &s3InfoRec.options))
       return TRUE;
+
+   if (bits->height > MAX_CURS || bits->width > MAX_CURS) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      return (miSpritePointerFuncs.RealizeCursor)(pScr, pCurs);
+   }
 
    if (pCurs->bits->refcnt > 1)
       return TRUE;
@@ -254,8 +276,6 @@ s3RealizeCursor(pScr, pCurs)
 
    pServSrc = (unsigned short *)bits->source;
    pServMsk = (unsigned short *)bits->mask;
-
-#define MAX_CURS 64
 
    h = bits->height;
    if (h > MAX_CURS)
@@ -301,6 +321,11 @@ s3UnrealizeCursor(pScr, pCurs)
 {
    pointer priv;
 
+   if (pCurs->bits->height > MAX_CURS || pCurs->bits->width > MAX_CURS) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      return (miSpritePointerFuncs.UnrealizeCursor)(pScr, pCurs);
+   }
+
    if (pCurs->bits->refcnt <= 1 &&
        (priv = pCurs->bits->devPriv[pScr->myNum]))
       xfree(priv);
@@ -313,7 +338,7 @@ s3LoadCursor(pScr, pCurs, x, y)
      CursorPtr pCurs;
      int x, y;
 {
-   int   index = pScr->myNum;
+   int   indx2 = pScr->myNum;
    int   i;
    int   n, bytes_remaining, xpos, ypos, ram_loc;
    unsigned short *ram;
@@ -357,7 +382,7 @@ s3LoadCursor(pScr, pCurs, x, y)
    outb(vgaCRIndex, 0x4c);
    outb(vgaCRReg, (0xff00 & cpos) >> 8);
 
-   ram = (unsigned short *)pCurs->bits->devPriv[index];
+   ram = (unsigned short *)pCurs->bits->devPriv[indx2];
 
    BLOCK_CURSOR;
    /* s3 stuff */
@@ -424,14 +449,12 @@ s3LoadCursor(pScr, pCurs, x, y)
 }
 
 static void
-s3SetCursor(pScr, pCurs, x, y, generateEvent)
+s3SetCursor(pScr, pCurs, x, y)
      ScreenPtr pScr;
      CursorPtr pCurs;
      int   x, y;
-     Bool  generateEvent;
-
 {
-   int index = pScr->myNum;
+   int indx2 = pScr->myNum;
 
    if (!pCurs)
       return;
@@ -439,9 +462,23 @@ s3SetCursor(pScr, pCurs, x, y, generateEvent)
    if (useSWCursor) 
       return;
 
+   if (pCurs->bits->height > MAX_CURS || pCurs->bits->width > MAX_CURS) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      s3HideCursor();
+      tmp_useSWCursor = TRUE;
+      (miSpritePointerFuncs.SetCursor)(pScr, pCurs, x, y);
+      return;
+   }
+   if (tmp_useSWCursor) {  /* hide mi cursor */
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      (miSpritePointerFuncs.MoveCursor)(pScr, -9999, -9999);  /* XXX */
+      tmp_useSWCursor = FALSE;      
+      s3ShowCursor();
+   }
+
    s3hotX = pCurs->bits->xhot;
    s3hotY = pCurs->bits->yhot;
-   s3SaveCursors[index] = pCurs;
+   s3SaveCursors[indx2] = pCurs;
 
    if (!s3BlockCursor) {
       if (OFLG_ISSET(OPTION_BT485_CURS, &s3InfoRec.options))
@@ -462,24 +499,24 @@ void
 s3RestoreCursor(pScr)
      ScreenPtr pScr;
 {
-   int index = pScr->myNum;
+   int indx2 = pScr->myNum;
    int x, y;
 
-   if (useSWCursor) 
+   if (useSWCursor || tmp_useSWCursor) 
       return;
 
    s3ReloadCursor = FALSE;
    miPointerPosition(&x, &y);
    if (OFLG_ISSET(OPTION_BT485_CURS, &s3InfoRec.options))
-      s3BtLoadCursor(pScr, s3SaveCursors[index], x, y);
+      s3BtLoadCursor(pScr, s3SaveCursors[indx2], x, y);
    else if (OFLG_ISSET(OPTION_TI3020_CURS, &s3InfoRec.options))
-      s3TiLoadCursor(pScr, s3SaveCursors[index], x, y);
+      s3TiLoadCursor(pScr, s3SaveCursors[indx2], x, y);
    else if (OFLG_ISSET(OPTION_TI3026_CURS, &s3InfoRec.options))
-      s3Ti3026LoadCursor(pScr, s3SaveCursors[index], x, y);
+      s3Ti3026LoadCursor(pScr, s3SaveCursors[indx2], x, y);
    else if (OFLG_ISSET(OPTION_IBMRGB_CURS, &s3InfoRec.options))
-      s3IBMRGBLoadCursor(pScr, s3SaveCursors[index], x, y);
+      s3IBMRGBLoadCursor(pScr, s3SaveCursors[indx2], x, y);
    else
-      s3LoadCursor(pScr, s3SaveCursors[index], x, y);
+      s3LoadCursor(pScr, s3SaveCursors[indx2], x, y);
 }
 
 void
@@ -488,7 +525,7 @@ s3RepositionCursor(pScr)
 {
    int x, y;
 
-   if (useSWCursor) 
+   if (useSWCursor || tmp_useSWCursor)
       return;
 
    miPointerPosition(&x, &y);
@@ -520,6 +557,12 @@ s3MoveCursor(pScr, x, y)
 
    if (!xf86VTSema)
       return;
+
+   if (tmp_useSWCursor) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      (miSpritePointerFuncs.MoveCursor)(pScr, x, y);
+      return;
+   }
 
    if (s3BlockCursor)
       return;
@@ -615,7 +658,7 @@ s3RecolorCursor(pScr, pCurs, displayed)
    unsigned short packedcolfg, packedcolbg;
    xColorItem sourceColor, maskColor;
 
-   if (!xf86VTSema) {
+   if (!xf86VTSema || tmp_useSWCursor) {
       miRecolorCursor(pScr, pCurs, displayed);
       return;
    }

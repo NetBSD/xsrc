@@ -1,9 +1,9 @@
-XCOMM $XConsortium: Imakefile,v 1.1 95/05/31 13:19:27 dpw Exp $
+XCOMM $XConsortium: Imakefile /main/2 1996/09/28 17:06:40 rws $
 #include <Server.tmpl>
 
        SRCS = dbe.c midbe.c
        OBJS = dbe.o midbe.o
-   INCLUDES = -I../include -I$(INCLUDESRC) -I$(EXTINCSRC)
+   INCLUDES = -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC)
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
 
 NormalLibraryTarget(dbe,$(OBJS))

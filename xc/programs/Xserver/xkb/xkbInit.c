@@ -1,5 +1,4 @@
-/* $XConsortium: xkbInit.c /main/18 1996/05/24 14:51:19 kaleb $ */
-/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.10 1996/10/13 11:32:27 dawes Exp $ */
+/* $TOG: xkbInit.c /main/24 1997/05/20 11:42:06 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.12.2.1 1997/05/21 15:02:57 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +54,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	PHYS_LEDS	0x7f
 #define	LED_COMPOSE	8
 #else
-#if defined(ultrix) || defined(__osf__) || defined(__alpha)
+#if defined(ultrix) || defined(__osf__) || defined(__alpha) || defined(__alpha__)
 #define	LED_COMPOSE	2
 #define LED_CAPS	3
 #define	LED_SCROLL	4
@@ -142,7 +142,7 @@ char *
 #if NeedFunctionPrototypes
 XkbGetRulesDflts(XkbRF_VarDefsPtr defs)
 #else
-XkbGetRulesDflts(defs);
+XkbGetRulesDflts(defs)
 	XkbRF_VarDefsPtr defs;
 #endif
 {
@@ -188,7 +188,7 @@ char *			pval;
 	ErrorF("Atom error: %s not created\n",_XKB_RF_NAMES_PROP_ATOM);
 	return True;
     }
-    pval= ALLOCATE_LOCAL(len);
+    pval= (char*) ALLOCATE_LOCAL(len);
     if (!pval) {
 	ErrorF("Allocation error: %s proprerty not created\n",
 						_XKB_RF_NAMES_PROP_ATOM);
@@ -675,7 +675,7 @@ XkbInitKeyboardDeviceStruct( dev,names,pSymsIn,pModsIn,bellProc,ctrlProc )
 {
 XkbFileInfo		finfo;
 KeySymsRec		tmpSyms,*pSyms;
-CARD8			tmpMods[XkbMaxKeyCount],*pMods;
+CARD8			tmpMods[XkbMaxLegalKeyCode+1],*pMods;
 char			name[PATH_MAX],*rules;
 Bool			ok;
 XPointer		config;
@@ -973,16 +973,12 @@ XkbProcessArguments(argc,argv,i)
     }
     if (strcmp (argv[i], "-ar1") == 0) {	/* -ar1 int */
 	if (++i >= argc) UseMsg ();
-	XkbDfltRepeatDelay = 1000 * (long)atoi(argv[i]);
-	if (XkbDfltRepeatDelay > 1000000)
-	    XkbDfltRepeatDelay =  999000;
+	XkbDfltRepeatDelay = (long)atoi(argv[i]);
 	return 2;
     }
     if (strcmp (argv[i], "-ar2") == 0) {	/* -ar2 int */
 	if (++i >= argc) UseMsg ();
-	XkbDfltRepeatInterval = 1000 * (long)atoi(argv[i]);
-	if (XkbDfltRepeatInterval > 1000000)
-	    XkbDfltRepeatInterval =  999000;
+	XkbDfltRepeatInterval = (long)atoi(argv[i]);
 	return 2;
     }
     return 0;

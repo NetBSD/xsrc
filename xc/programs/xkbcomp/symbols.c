@@ -1,5 +1,5 @@
-/* $XConsortium: symbols.c /main/11 1996/03/01 14:32:31 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.3 1996/08/26 14:44:12 dawes Exp $ */
+/* $XConsortium: symbols.c /main/13 1996/12/27 21:17:07 kaleb $ */
+/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.5 1996/12/29 13:56:19 dawes Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -694,7 +694,7 @@ KeyInfo *	key;
 	}
 	from->modMap= NULL;
     }
-    if (!MergeAliases(&into->aliases,&from->aliases))
+    if (!MergeAliases(&into->aliases,&from->aliases,merge))
 	into->errorCount++;
     return;
 }

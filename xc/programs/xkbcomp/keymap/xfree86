@@ -1,4 +1,4 @@
-// $XConsortium: xfree86 /main/11 1996/03/07 13:42:13 kaleb $
+// $XConsortium: xfree86 /main/12 1996/08/31 12:17:30 kaleb $
 default xkb_keymap "us" {
     xkb_keycodes	{ include "xfree86"		};
     xkb_types		{ include "default"		};

@@ -1,5 +1,5 @@
 /* OS/2 REXX */
-/* $XFree86: xc/programs/xinit/xinitrc.cmd,v 3.3 1996/08/20 12:33:26 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinitrc.cmd,v 3.5 1997/01/27 08:26:14 dawes Exp $ */
 '@echo off'
 env = 'OS2ENVIRONMENT'
 x11root = VALUE('X11ROOT',,env)
@@ -36,12 +36,22 @@ IF exists(usermodmap) THEN
  * 'xsetroot -bitmap 'xbitmapdir'\xfree1'
  * 'xsetroot -bitmap 'xbitmapdir'\xfree2'
  */
-'start/min/k "X Clock" xclock -update 1 -geometry 100x100-1+1'
-'start/min/k "Login Xterm" xterm -sb -geometry 80x25+0+0 -name login'
+
+/****** WARNING! *********
+ * Below some programs are started minimized, some are started detached.
+ * In general, those that spawn other shells are minimized, others may be
+ * detached. You might be tempted to run the xterm's as well as detached.
+ * This works, but leaves you with an independent xterm/cmd pair, when the 
+ * server shuts down, which you can only see in watchcat, not the process list.
+ * If you start and stop x11 multiple times, this will let you run out of
+ * PTYs, and will lead to a large number of background sessions.
+ */
+'detach xclock -update 1 -geometry 100x100-1+1'
+'start/min/n "Login Xterm" xterm -sb -geometry 80x25+0+0 -name login'
 IF manpath \= '' THEN
-	'start/min/k "X Manual" xman -geometry 100x100-105+1'
-/* 'start/min/k "Xterm 1" xterm -sb -geometry 80x50+494+51' */
-/* 'start/min/k "Xterm 2" xterm -sb -geometry 80x20+494-0' */
+	'detach xman -geometry 100x100-105+1'
+/* 'startx/min/n "Xterm 1" xterm -sb -geometry 80x50+494+51' */
+/* 'startx/min/n "Xterm 2" xterm -sb -geometry 80x20+494-0' */
 'twm'
 
 EXIT

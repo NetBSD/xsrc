@@ -3,16 +3,17 @@
 
 <!-- Title information -->
 <!-- ....1.........2.........3.........4.........5.........6...... -->
-<title>ATI ボードの README
+<title>ATI アダプタの README
 <author>Marc Aurele La France
-<date>1995 年 5 月 8 日
+<date>1996 年 3 月 23 日
 <trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+
 <abstract>
-本書は XF86_Mono, XF86_VGA16 と XF86_SVGA サーバーで使用している 
+本書は XF86_Mono, XF86_VGA16 と XF86_SVGA サーバで使用している 
 XFree86 ATI VGA ドライバに関する README です。
 Mach8, Mach32 若くは Mach64 アクセラレータが搭載されている ATI グラ
-フィックボードの使用者はアクセラレータサーバー (XF86_Mach8,XF86_Mach32
-若くは XF86_Mach64) を使用するべきです。非アクセラレータサーバー 
+フィックボードの使用者はアクセラレータサーバ (XF86_Mach8,XF86_Mach32
+若くは XF86_Mach64) を使用するべきです。非アクセラレータサーバ 
 (XF86_Mono, XF86_VGA16 と XF86_SVGA) も稼働しますが、その能力を生かし
 切れません。
 </abstract>
@@ -25,7 +26,7 @@ Mach8, Mach32 若くは Mach64 アクセラレータが搭載されている ATI グラ
 <sect> ATI VGA ドライバとは何か ?<p>
  ATI VGA ドライバは XFree86 用の 256 色, 16 色と白黒のドライバです。
 このドライバは SuperVGA として働かないもの(いくつかの初期の Mach8 と
-Mach32) を除いた全ての ATI ビデオアダプタをサポートします。
+Mach32 アダプタ) を除いた全ての ATI ビデオアダプタをサポートします。
 次のおおよその (x/y = (1 + sqrt(5))/2 なる黄金分割比を基にした) 最大解
 像度はボードに搭載している使用可能なビデオメモリ（とモニターの能力）に
 依存します。:
@@ -34,9 +35,7 @@ Mach32) を除いた全ての ATI ビデオアダプタをサポートします。
     256k    640x409x256    896x585x16
     512k    896x585x256   1280x819x16
     1M     1280x819x256  1824x1149x16</verb>
-また、より高い解像度は 1M 以上のビデオメモリを搭載した（Mach64ではな
-く）Mach32 で表示可能です。<p>
-白黒サーバーは使用可能なビデオメモリの最大の 1/4 を使用するので、白黒
+白黒サーバは使用可能なビデオメモリの最大の 1/4 を使用するので、白黒
 での最大解像度は 16 色モードと同じなのです。<p>
 <sect> ATI VGA Wonder ドライバ では *出来ない事* は何か？<p>
 このドライバはピクセルあたり 8 ビット以上の深さを未だサポートしてませ
@@ -44,64 +43,104 @@ Mach32) を除いた全ての ATI ビデオアダプタをサポートします。
 お手元のマニュアルにグラフィックアダプタが 256 色以上のモードをサポー
 トしていると記載があっても、ATI VGA Wonder ドライバが 256 色以上のモー
 ドを使っていないのです。<p>
-ATI VGA ドライバはアクセラレータドライバではありません。お手元のボ
-ードが Mach8, Mach32 または Mach64 ビデオコントローラを搭載している場
-合、ドライバはグラフィックボードのアクセラレータ機能を使用しません。
+ATI VGA ドライバはアクセラレータドライバではありません。お手元の
+ドライバが Mach8, Mach32 または Mach64 ビデオコントローラを搭載している
+場合、ドライバはグラフィックボードのアクセラレータ機能を使用しません。
 (Mach32 用と Mach64 用のアクセラレータに統合されている) ドライバは VGA 
 ボードだけを使用します。この例は分かりにくいですが、何とか動作します。<p>
 <sect> どのようなビデオアダプタでドライバが動作するか？<p>
-以下の ATI ビデオコントローラチップを搭載しているほとんどのボードでこ
+次の ATI ビデオコントローラチップを搭載しているほとんどのドライバでこ
 のドライバは動作します。
 <verb>
-VGA Wonder シリーズ:  18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6
-    Mach32 シリーズ:  68800-3, 68800-6, 68800AX, 68800LX
-    Mach64 シリーズ:  88800CX, 88800GX</verb>
-いくつかの初期型の Mach32 ボードがこのドライバで動作しないのは、VGA 機
+VGA Wonder 系列:  18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6
+    Mach32 系列:  68800-3, 68800-6, 68800AX, 68800LX
+    Mach64 系列:  88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX,
+                    264CT, 264ET, 264VT, 264VT2, 264GT</verb>
+<!--
+    Mach64 series:  88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX,
+                    264CT, 264ET, 264VT, 264VT2, 264GT</verb>
+The 264xT series are integrated controllers, meaning that they include an
+internal RAMDAC and clock generator.
+Some early Mach32 adapters will not work with this driver because they do not
+provide VGA functionality.
+Also, early Mach8 adapters will not work for the same reason, unless the
+adapter also has a video controller from the VGA Wonder series (or is connected
+to one through the VGA passthrough connector).<p>
+These adapters are available with a variety of clock generators and RAMDACs.
+See the XF86Config section below for details.
+These adapters are available with or without a mouse.<p>
+VGA Wonder V3 adapters use a 18800 video controller and generate dot clocks
+with crystals.
+VGA Wonder V4 adapters have a 18800-1 and also use crystals.
+VGA Wonder V5 adapters also use a 18800-1, but have a 18810 clock generator.
+VGA Wonder+ adapters use a 28800-2 and a 18810.
+Other than these, ATI's adapter naming convention (if it can be said that one
+-->
+264xT シリーズは内蔵 RAMDAC とクロックジェネレータを搭載しているので統合
+コントローラです。
+いくつかの初期型の Mach32 アダプタがこのドライバで動作しないのは、VGA 機
 能を持っていないからです。
-また同様の理由で、 VGA Wonder シリーズからビデオコントローラを搭載して
+また同様の理由で、 VGA Wonder 系列からビデオコントローラを搭載して
 いるボード（または VGA パススルーコネクタから接続する場合）を除いて初
-期型の Mach8 ボードも動作しません。<p>
-これらのボードでは様々なクロックジェネレータと RAMDAC が使用可能です。
-詳細は XF86Config の節をご覧ください。
-これらのボードはマウスがあってもなくても使用可能です。（ISA ボードの場
-合だけですが）マウスが必要な場合、十分使える ATIXL バスマウスか、
-Logitech バスマウスプロトコルを使用しているマウスかどちらかを使ってく
-ださい。<p>
-VGA Wonder V3 ボードは 18800 ビデオコントローラを搭載し、水晶発振子に
+期型の Mach8 アダプタも動作しません。<p>
+これらのアダプタでは様々なクロックジェネレータと RAMDAC が使用可能です。
+詳細は以降の XF86Config の節をご覧ください。
+これらのアダプタはマウスがあってもなくても使用可能です。
+VGA Wonder V3 アダプタは 18800 ビデオコントローラを搭載し、水晶発振子に
 よってドットクロックを生成しています。
-VGA Wonder V4 ボードは 18800-1 と水晶発振子を搭載しています。
-VGA Wonder V5 ボードもまた 18800-1 を搭載していますが、18810 クロック
+VGA Wonder V4 アダプタは 18800-1 とこちらも水晶発振子を搭載しています。
+VGA Wonder V5 アダプタもまた 18800-1 を搭載していますが、18810 クロック
 ジェネレータを搭載しています。
-VGA Wonder+ ボードは 28800-2 と 18810 を搭載しています。
-その他の ATI のボードの名称の決め方の慣習（昔からあったもの）では名前
+VGA Wonder+ アダプタは 28800-2 と 18810 を搭載しています。
+その他の ATI のアダプタの名称の決め方の慣習（昔からあったもの）では名前
 の一部分を省略しています。<p>
-<!-- The VGA Wonder series was also available through ATI's OEM channel under the
+
+<!--
+ The VGA Wonder series was also available through ATI's OEM channel under the
 name VGA1024.
 Thus, the ATI VGA driver also supports VGA1024, VGA1024D, VGA1024XL,
-VGA1024DXL and VGA1024VLB boards, among others. -->
-VGA Wonder シリーズはまた、ATI の OEM 先から VGA1024 という名称で発売
+VGA1024DXL and VGA1024VLB boards, among others. 
+-->
+VGA Wonder 系列はまた、ATI の OEM 先から VGA1024 という名称で発売
 しています。
 従って、ATI VGA ドライバは VGA1024, VGA1024D, VGA1024XL, VGA1024DXL と 
 VGA1024VLB ボードやその類をサポートしています。<p>
 <sect>XF86Config ファイルに何を書いたら良いでしょう？<p>
 チップセットが構成を自動検出するでしょう。
-このドライバでのチップセットの名称は "vgawonder" です。
-これを "ati" だとか "mach64" と指定した場合、XF86Config にどんなクロッ
-クを指定しても無視します(この時、探査したクロックを使用する事になりま
-す）。
-以前のバージョンのドライバでサポートしていたクロックの値がこのバージョ
-ンでは当てはまらないことがありますのでこの方法で確認してください。<p>
-XF86Config に指定する clocks 行はボードが生成するドットクロックに依存
-したものになります。<p>
-全てのボードで、以下の内の一つのクロック（またはそれらの最初の部分）の
-設定はボードが生成するドットクロックに依存したものになります。:
+<!--
++The chipset name for this driver is "ati".
++The driver also recognizes "vgawonder", "mach8", "mach32" and "mach64" as
++chipset names.
++In this version of the driver, all names are equivalent.
++In some future version each name will have a different meaning to be
++documented at that time.<p>
++The clocks line to be specified in your XF86Config depends on what the adapter
++uses to generate dot clocks.<p>
++For all adapters, one of the following clocks specifications (or an initial
++subset thereof) can be used depending on what the adapter uses to generate dot
+-->
+このドライバでのチップセットの名称は "ati" です。
+また、ドライバは "vgawonder", "mach8", "mach32" と "mach64" のようなチップ
+セットの名称でも認識できます。このバージョンのドライバではすべての名称は
+同等です。将来のバージョンでそれぞれの名称は異なった意味を持つことを
+そのとき文書化するでしょう。<p>
+全てのアダプタで、次の内の一つのクロック（またはそれらの最初の部分）の
+設定はアダプタが生成するドットクロックに依存したものになります。:
+<!--
++Crystals (VGA Wonder V3 and V4 adapters only):
++
++  Clocks  50.000  56.644   0.000  44.900  44.900  50.000   0.000  36.000
++          25.000  28.322   0.000  22.450  22.450  25.000   0.000  18.000
++          16.667  18.881   0.000  14.967  14.967  16.667   0.000  12.000
++          12.500  14.161   0.000  11.225  11.225  12.500   0.000   9.000</verb>
+-->
 <verb>
-水晶発振子 (VGA Wonder V3 と V4 ボード のみ):
+水晶発振子 (VGA Wonder V3 と V4 アダプタ のみ):
 
-  Clocks  50.175  56.644   0.000  44.900  44.900  50.175   0.000  36.000
-          25.088  28.322   0.000  22.450  22.450  25.088   0.000  18.000
-          16.725  18.881   0.000  14.967  14.967  16.725   0.000  12.000
-          12.544  14.161   0.000  11.225  11.225  12.544   0.000   9.000</verb>
+  Clocks  50.000  56.644   0.000  44.900  44.900  50.000   0.000  36.000
+          25.000  28.322   0.000  22.450  22.450  25.000   0.000  18.000
+          16.667  18.881   0.000  14.967  14.967  16.667   0.000  12.000
+          12.500  14.161   0.000  11.225  11.225  12.500   0.000   9.000</verb>
 <verb>
 ATI 18810 クロックジェネレータ:
 
@@ -137,60 +176,113 @@ ATI 18811-1 と ATI 18811-2 クロックジェネレータ:
            9.978  11.225  18.750  16.250  12.588  14.160   0.000  11.225</verb>
 Mach32 と Mach64 を持っている人は最初の 32 個の周波数だけを指定してく
 ださい。<p>
-また、Mach64 ボードの場合に新しい ATI 18818 クロックジェネレータチップ
-を搭載している可能性があります。
-ブート時に、ビデオ BIOS の初期化は 18818 に２つの少々異なるドットクロッ
-クの組み合わせを設定します。
-この動作をドライバでそっくりまねする方法は未だ見つかっていません。
-もう少しすれば、次の内の一つのクロックの指定が使用可能になるでしょう。:
+<!--
++The oldest Mach64 adapters use one of the clock generators described above.
++The possibilities for Mach64 adapters also include programmable clock
++generators.
++At bootup, video BIOS initialization programmes an initial set of frequencies.
++Two of these are reserved to allow the setting of modes that do not use a
++frequency from this initial set.
++One of these reserved slots is used by the BIOS mode set routine, the other by
++the particular driver used (MS-Windows, AutoCAD, X, etc.).
++The clock numbers reserved in this way are dependent on the particular clock
++generator used on the adapter.<p>
++If the driver does not support the adapter's clock generator, it will try to
++match the clocks to one of the following specifications.  This matching will
++occur whether or not the user specifies the clocks in XF86Config.
++<verb>
++BIOS setting 1:
++
++  Clocks   0.000 110.000 126.000 135.000  50.350  56.640  63.000  72.000
++           0.000  80.000  75.000  65.000  40.000  44.900  49.500  50.000
++           0.000  55.000  63.000  67.500  25.180  28.320  31.500  36.000
+-->
+最も古い Mach64 アダプタは上記のクロックジェネレータの内の一つを使ってい
+ます。また、Mach64 アダプタはプログラマブルクロックジェネレータを使って
+いる可能性があります。
+ブート時に、ビデオ BIOS の初期化は周波数の最初の設定値を組み込みます。
+モードを設定する２つの周波数はこの最初の設定値で使わないように予約し
+てあります。予約した内の一つは BIOS モード設定で使用し、残りは特定の
+(MS-Windows, AutoCAD, X, 等) ドライバが使用します。
+この方法で予約しているクロックの数値はアダプタで使う特定のクロック
+ジェネレータに依存します。<p>
+ドライバがアダプタのクロックジェネレータをサポートしていない場合、次の
+設定値の中から適合するクロックを選んでください。この適合作業は
+XF86Config ファイルにクロックを設定してもしなくても発生します。
 <verb>
-ATI 18818 クロックジェネレータ (一次 BIOS の設定):
+BIOS の設定 1:
 
-  Clocks   0.000 110.000 126.000 135.000  50.350  56.644  63.000  72.000
+  Clocks   0.000 110.000 126.000 135.000  50.350  56.640  63.000  72.000
            0.000  80.000  75.000  65.000  40.000  44.900  49.500  50.000
-           0.000  55.000  63.000  67.500  25.175  28.322  31.500  36.000
+           0.000  55.000  63.000  67.500  25.180  28.320  31.500  36.000
+           0.000  40.000  37.500  32.500  20.000  22.450  24.750  25.000</verb>
+<!--
+<verb>
+BIOS setting 2:
+
+  Clocks   0.000 110.000 126.000 135.000  25.180  28.320  31.500  36.000
+           0.000  80.000  75.000  65.000  40.000  44.900  49.500  50.000
+           0.000  55.000  63.000  67.500  12.590  14.160  15.750  18.000
            0.000  40.000  37.500  32.500  20.000  22.450  24.750  25.000</verb>
 <verb>
-ATI 18818 クロックジェネレータ (二次 BIOS の設定):
+BIOS setting 3:
 
-  Clocks   0.000 110.000 126.000 135.000  25.175  28.322  31.500  36.000
+  Clocks   0.000   0.000   0.000   0.000  25.180  28.320   0.000   0.000
+           0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+           0.000   0.000   0.000   0.000  12.590  14.160   0.000   0.000
+           0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000</verb>
+If the driver matches the clocks to the third setting above, functionality will
+be *extremely* limited (assuming the driver works at all).<p>
+Other clock generators that have been used on ATI adapters (which can all be
+said to be clones of one of the above) might generate non-zero frequencies for
+those that are zero above, or vice-versa.<p>
+The order of the clocks *is* very important, although the driver will reorder
+the clocks if it deems it appropriate to do so.
+-->
+<verb>
+BIOS の設定 2:
+
+  Clocks   0.000 110.000 126.000 135.000  25.180  28.320  31.500  36.000
            0.000  80.000  75.000  65.000  40.000  44.900  49.500  50.000
-           0.000  55.000  63.000  67.500  12.588  14.161  15.750  18.000
+           0.000  55.000  63.000  67.500  12.590  14.160  15.750  18.000
            0.000  40.000  37.500  32.500  20.000  22.450  24.750  25.000</verb>
-ATI ボード（とそのソックリさん全て）に搭載しているその他のクロックジェ
+<verb>
+BIOS の設定 3:
+
+  Clocks   0.000   0.000   0.000   0.000  25.180  28.320   0.000   0.000
+           0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+           0.000   0.000   0.000   0.000  12.590  14.160   0.000   0.000
+           0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000</verb>
+ドライバが上の３番目の設定と一致した場合は(ドライバが完全に動作するには)
+機能的に *とても* 限定されます。
+ATI アダプタ（とそのソックリさん全て）に搭載しているその他のクロックジェ
 ネレータは上記でゼロになっている部分がゼロでない値になる（又はその逆）
 でしょう。<p>
-このクロックの順番は非常に *重要です*。
+このクロックの順番は非常に *重要* ですが、ドライバが的確になるように
+クロックの順序を変えるかもしれません。
 Mach32 と Mach64 を所有している人はクロックの順番がアクセラレータサー
 バ用に使うクロックの順番とは異なることに注意してください。<p>
-"X -probeonly" コマンドで探査したクロックはそのボードが上記のボードの
+<!--
++If the driver detects a supported programmable clock generator, it will ignore
++any XF86Config clock specification and programme the generator as needed by the
++modes to be used during the X session.<p>
++A clock probe, done with the command "X -probeonly", will help you decide which
++of the above to use for your particular adapter.
+-->
+ドライバがサポートしているプログラマブルクロックジェネレータを探知したら、
+XF86Config のクロック設定を無視して X セッションで使用するモードを
+組み込みます。<p>
+"X -probeonly" コマンドで探査したクロックはそのアダプタが上記のアダプタの
 うちのどれであるかを判定する助けになるでしょう。
-サーバーが一貫して知らないクロックジェネレータであると知らせてくる場合
+サーバが一貫して知らないクロックジェネレータであると知らせてくる場合
 は、標準エラー出力の内容を電子メールで送付してください。<p>
 モードは XFree86 の文書ディレクトリに入っている情報から引き出してきま
 しょう。
 XF86Config の該当するスクリーン (screen) セクションのディスプレイ
 (display) サブセクションに "modes" 行を指定しない場合にドライバーは標
 準値のモードを生成し、使用しようとします。
-標準モードの調整用数値は事実上サーバーが起動したモード（通常テキスト
+標準モードの調整用数値は事実上サーバが起動したモード（通常テキスト
 モード）の値から引き出してきます。<p>
-<sect> 他の版からのバージョンアップ <p>
-バージョン 2.1.1 より以前の XFree86 用か alpha Mach64 用の Xconfig を
-持っている場合は、このバージョンでそのファイルを使うには変更する必要が
-あります。
-特に、古い XFree86 で使っていた Xconfig から派生した XF86Config を使っ
-て、サーバーを -probeonly オプションを付けて実行してください。
-この方法でクロックを探査できます。
-この探査結果を用いて XF86Config の clocks の所を書き換えてください。
-そして、チップセットの指定を "vgawonder" と変更しましょう。<p>
-<!-- You should not need to change your mode definitions except for those that are
-already driving your monitor close to its tolerance limits.
-You might need to change the dot clock used to one with the next lower (or
-higher) frequency. -->
-すでにモニターが十分使用に耐える程度にドライバが動作してない場合はモー
-ド定義を変更する必要があります。
-隣の周波数より低い（又は高い）ドットクロックを使用している場合は変更の
-必要はありません。<p>
 <sect> ドライバの履歴は？<p>
 ドライバの完全な履歴はあまり定かではありません。
 次の記述は不完全かつ不正確かもしれません。<p>
@@ -206,31 +298,91 @@ XL ドライバを移植しました。<p>
 X11R4 用のドライバを 1992 年、夏に手にいれ、X11R5 の一部の X386 にプロ
 グラムを移植しました。
 これを XFree86 の一部へ引き継ぎました。<p>
-著者 (<bf>Marc La France</bf>) は Rik 氏の VGA Wander カード用のドライ
-バを引き継ぎました。<p>
+<!--
++I (<bf>Marc Aurele La France</bf>) took the driver over in the fall of 1993
++after Rik got rid of his VGA Wonder card.<p>
++<sect> Miscellaneous notes<p>
++Dot clocks greater than 80MHz cannot be used on most adapters as a way still
++needs to be discovered to make the VGA Wonder controller do pixel
++multiplexing.<p>
++Support for more than 8bpp colour depth is pending proper RAMDAC handling and
++banked framebuffer code for >8bpp.<p>
++Video memory banking does not work in the 16-colour and monochrome servers on
++V3, V4 and V5 adapters.<p>
++Video memory corruption can still occur during mode switches on V3, V4 and V5
++adapters.
++Symptoms of this problem include garbled fonts on return to text mode, and
++various effects (snow, dashed lines, etc) on initial entry into a graphics
++mode.
++In the first case, the workaround is to use some other means of restoring the
++text font.
++On Linux, this can be done with the kbd or svgalib packages.
++In the second case, xrefresh will usually cleanup the image.<p>
++Interlaced modes do not work in the monochrome server on 28800-x adapters when
++using a virtual resolution wider than 1024 pixels.<p>
++Some (particularly low resolution) interlaced modes do not work on 264xT
++adapters.<p>
++Support for virtual resolutions using more than 1MB of video memory is still
++incomplete.
++Specifically, such support works on Mach32 adapters, and on 264xT adapters,
++but not on any other Mach64 adapters.<p>
++There is some controversy over whether or not clocks higher than 135MHz should
++be allowed on 264xT adapters.
++For now, clocks will be limited to 135MHz by default.  
++This limit can only be increased (up to a driver-calculated absolute maximum)
++through the DACSpeed option in XF86Config.
++Be aware however that doing this is untested and might damage the adapter.<p>
++Future development plans include addressing the above problems and using
++accelerated functionality.<p>
+-->
+著者(<bf>Marc La France</bf>) は Rik 氏の VGA Wander カード用のドライ
+バを 1993 年秋に引き継ぎました。<p>
 <sect> 種々の注意事項<p>
-80MHz 以上のドットクロックは VGA Wonder コントローラがピクセル多重を行
-うようにしなければ使うことは出来ません。<p>
-8bpp 色以上の深さをサポートするには現状の RAMDAC の使い方を止めなけれ
-ばいけません。<p>
-ATI 18818 クロックジェネレータをサポートするには大掃除が必要です。<p>
+殆どのコントローラで 80MHz 以上のドットクロックを使うには VGA Wonder 
+コントローラがピクセル多重を行うようにしなければ出来ません。<p>
+8bpp 色以上の深さをサポートするには現状の RAMDAC の使い方を止めて、バンク化
+したフレームバッファプログラムが 8bpp 以上をサポートしなければいけません。<p>
+V3, V4 と V5 アダプタのビデオメモリのバンク化は 16 色と白黒サーバで動作
+しません。<p>
+V3, V4 と V5 アダプタのモード間の切り替えによってビデオメモリの堕落が未だ
+起きます。<p>
+この堕落現象はテキストモードに戻ったときの欠けたフォントとグラフィック
+モードに最初に入ったときの様々な反応(雪が降ったり、短い線が出たり等) 
+として現われます。
+最初の問題の場合は、対策は他の方法でテキストフォントを回復することです。
+Linux では kbd または svgalib パッケージと一緒に解決しました。
+二番目の問題の場合は、一般に xrefresh が画像をきれいにするでしょう。<p>
+1024 ピクセルより広い仮想画面の横幅を 28800-x アダプタ上の白黒サーバ
+ではインターレースモードは動作しません。<p>
+264xT アダプタ上ではいくつかの(特に低解像度) インターレースモードは
+動作しません。<p>
+1M バイト以上のビデオメモリを使用した仮想解像度は未だ完璧ではありませ
+んが、ほかの Mach64 アダプタではそうではないということです。<p>
+264xT アダプタで 135MHz より高いクロックが使えるか否かについて
+いくつか議論があります。
+現在では、標準で 135MHz が上限でしょう。
+この上限は XF86Config に DACSpeed オプションを付けることにより(ドライバ
+が計算出来る絶対的な最大値以上) 増加させることだけが出来ます。
+これはテストしていないこととアダプタに損傷を与えるかもしれないことを
+意識してください。<p>
+将来の開発計画は上記の問題に向けることとアクセラレータ機能を使うこと
+です。<p>
 バグレポートやコメントなどを
 <bf>Marc Aurele La France</bf>, <url url="mailto:tsi@ualberta.ca"
 name="&lt;<it>tsi@ualberta.ca</it>&gt;">まで電子メールを下さい。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/ati.sgml,v 3.2 1997/01/26 04:34:28 dawes Exp $
+</verb>
 <hrule>
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.5 
-1995/06/25 09:53:45   を、岡本  一幸 
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.12 1996/05/10 06:58:31   を、岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
 XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私
 に、電子メールで送って下さい。
-<verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/ati.sgml,v 3.1 1995/10/22 10:44:40 dawes Exp $
-</verb>
 <hrule>
 &lsqb;EOF&rsqb;
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.29 1996/10/13 11:20:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.32.2.1 1997/05/10 09:10:23 hohndel Exp $ */
 /*
  *
  * Copyright 1993 by Simon P. Cooper, New Brunswick, New Jersey, USA.
@@ -27,7 +27,7 @@
  *
  * cir_driver.h,v 1.8 1994/09/14 13:58:59 scooper Exp
  */
-/* $XConsortium: cir_driver.h /main/10 1996/01/13 13:14:55 kaleb $ */
+/* $XConsortium: cir_driver.h /main/16 1996/10/25 21:21:58 kaleb $ */
 
 #define CIRRUS_INCLUDE_COPYPLANE1TO8
 
@@ -145,6 +145,7 @@ extern void CirrusMMIOBLTBitBlt();
 extern void CirrusMMIOBLTWaitUntilFinished();
 #endif
 extern void CirrusInvalidateShadowVariables();
+extern void CirrusBLTWaitEmpty();
 /* In cir_im.c: */
 extern void CirrusBLTImageWrite();
 extern void CirrusMMIOBLTImageWrite();
@@ -189,6 +190,9 @@ extern Bool cirrusDoBackgroundBLT;
 extern Bool cirrusBLTisBusy;
 extern int cirrusBLTPatternAddress;
 
+int cirrusBufferSpaceAddr;
+int cirrusBufferSpaceSize;
+
 typedef struct {
   int tilesPerLine;  /* Number of tiles per line */
   int pitch;         /* Display pitch, in bytes */
@@ -232,12 +236,15 @@ enum {CLGD5420 = 0,
       CLGD5430,
       CLGD5436,
       CLGD5446,
+      CLGD5480,
       CLGD5462,
       CLGD5464,
+      CLGD5465,
       CLGD7541,
       CLGD7542,
       CLGD7543,
       CLGD7548,
+      CLGD7555,
       LASTCLGD
       };
 
@@ -283,6 +290,25 @@ enum {CLGD5420 = 0,
 #define LGROP_XOR		0x66	/*  S~=D */
 #define LGROP_XNOR		0x99	/*   S=D */
 
+
+/* The Laguna family also has special ROPs for patterns */
+#define LGPATROP_0		 0x00	/*     0 */
+#define LGPATROP_1		 0xFF	/*     1 */
+#define LGPATROP_SRC		 0xF0	/*     S */
+#define LGPATROP_DST		 0xAA	/*     D */
+#define LGPATROP_NOT_SRC	 0x33	/*    ~S */
+#define LGPATROP_NOT_DST	 0x0F	/*    ~D */
+#define LGPATROP_AND		 0xA0	/*   S.D */
+#define LGPATROP_SRC_AND_NOT_DST 0x0A	/*  S.~D */
+#define LGPATROP_NOT_SRC_AND_DST 0x30	/*  ~S.D */
+#define LGPATROP_NOR		 0x03	/* ~S.~D */
+#define LGPATROP_OR		 0xFA	/*   S+D */
+#define LGPATROP_SRC_OR_NOT_DST	 0xAF	/*  S+~D */
+#define LGPATROP_NOT_SRC_OR_DST	 0xF3	/*  ~S+D */
+#define LGPATROP_NAND		 0x3F	/* ~S+~D */
+#define LGPATROP_XOR		 0x3A	/*  S~=D */
+#define LGPATROP_XNOR		 0xA0	/*   S=D */
+
 /* Array that maps from alu to Cirrus ROP. */
 
 extern int cirrus_rop[];
@@ -307,24 +333,28 @@ typedef struct
   int skewed;
 } cirrusCurRec, *cirrusCurRecPtr;
 
-#ifdef TheOldWay
-#define HAVE543X() (cirrusChip >= CLGD5434)
-#else
 #define HAVE543X() (cirrusChip >= CLGD5434 && cirrusChip <= CLGD5436)
-#endif
 
-#define HAVE754X() (cirrusChip >= CLGD7541 && cirrusChip <= CLGD7543)
+#define HAVE75XX() (cirrusChip >= CLGD7541 && cirrusChip <= CLGD7555)
 
-#define HAVE546X() (cirrusChip == CLGD5462 || cirrusChip == CLGD5464)
+#define HAVE546X() (cirrusChip >= CLGD5462 && cirrusChip <= CLGD5465)
+
+/*
+ * The following macro is true for chips that have a more-or-less
+ * 543x based register achitecture (as opposed to 542x).
+ */
+#define HAVEALPINE() (HAVE543X() || cirrusChip == CLGD5446 || \
+    cirrusChip == CLGD5480 || cirrusChip == CLGD7548 || \
+    cirrusChip == CLGD7555)
 
 #define HAVEBITBLTENGINE() (cirrusUseBLTEngine)
 
 #define HAVEBLTWRITEMASK() (cirrusChip == CLGD5429 || \
 	cirrusChip == CLGD5430 || cirrusChip == CLGD5436 || \
-        cirrusChip == CLGD5446)
+        cirrusChip == CLGD5446 || cirrusChip == CLGD5480)
 
 #define HAVEBLTEXTENSIONS() (cirrusChip == CLGD5436 || \
-	cirrusChip == CLGD5446)
+	cirrusChip == CLGD5446 || cirrusChip == CLGD5480)
 
 #define SETWRITEMODE(n) \
 	if (n != cirrusWriteModeShadow) { \

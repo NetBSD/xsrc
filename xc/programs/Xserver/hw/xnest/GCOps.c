@@ -1,5 +1,5 @@
-/* $XConsortium: GCOps.c,v 1.8 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.2 1996/01/24 22:04:13 dawes Exp $ */
+/* $XConsortium: GCOps.c /main/10 1996/12/02 10:21:24 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.3 1996/12/23 07:09:14 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -28,13 +28,8 @@ is" without express or implied warranty.
 
 #include "Display.h"
 #include "Screen.h"
-#ifdef __EMX__
-#include "os2GC.h"
-#include "os2Font.h"
-#else
-#include "GC.h"
-#include "Font.h"
-#endif
+#include "XNGC.h"
+#include "XNFont.h"
 #include "GCOps.h"
 #include "Drawable.h"
 #include "Visual.h"
@@ -106,7 +101,7 @@ void xnestPutImage(pDrawable, pGC, depth, x, y, w, h, leftPad, format, pImage)
 			depth, format, leftPad, (char *)pImage, 
 			w, h, BitmapPad(xnestDisplay), 
 			(format == ZPixmap) ? 
-			    PixmapBytePad(w, depth) : BitmapBytePad(w));
+			   PixmapBytePad(w, depth) : BitmapBytePad(w+leftPad));
   
   if (ximage) {
       XPutImage(xnestDisplay, xnestDrawable(pDrawable), xnestGC(pGC), 

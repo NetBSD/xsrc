@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/gglbox.h,v 3.3 1996/02/04 09:00:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/gglbox.h,v 3.4 1996/12/23 06:35:16 dawes Exp $ */
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -26,7 +26,7 @@ Austin, Tx 78765
 glenn@cs.utexas.edu)
 4/6/94
 *******************************************************************************/
-/* $XConsortium: gglbox.h /main/4 1995/11/12 16:37:25 kaleb $ */
+/* $XConsortium: gglbox.h /main/5 1996/02/21 17:21:54 kaleb $ */
 
 {
     CARD32 ggl_cnt, ggl_ptr;

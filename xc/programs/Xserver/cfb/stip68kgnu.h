@@ -1,6 +1,6 @@
 /*
  * $XConsortium: stip68kgnu.h,v 1.3 94/04/17 20:29:08 dpw Exp $
- * $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.0 1996/08/13 11:27:36 dawes Exp $
+ * $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.0.4.1 1997/05/11 05:04:17 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -34,7 +34,7 @@ in this Software without prior written authorization from the X Consortium.
 
 #define STIPPLE(addr,stipple,value,width,count,shift) \
     __asm volatile ( \
-       "lea	0f,%/a1\n\
+       "lea	5f,%/a1\n\
 	moveq	#28,%/d2\n\
 	addl	%2,%/d2\n\
 	moveq	#28,%/d3\n\
@@ -57,51 +57,51 @@ in this Software without prior written authorization from the X Consortium.
 	lsll	#5,%/d0\n\
 	lsll	#4,%/d1\n\
 	jmp	%/a1@(%/d0:l)\n\
-0:\n\
+5:\n\
 	jne 2b ; dbra %1,1b ; jra 4f\n\
-	. = 0b + 0x20\n\
+	. = 5b + 0x20\n\
 	moveb	%5,%/a0@(3)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f\n\
-	. = 0b + 0x40\n\
+	. = 5b + 0x40\n\
 	moveb	%5,%/a0@(2)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f\n\
-	. = 0b + 0x60\n\
+	. = 5b + 0x60\n\
 	movew	%5,%/a0@(2)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f\n\
-	. = 0b + 0x80\n\
+	. = 5b + 0x80\n\
 	moveb	%5,%/a0@(1)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0xa0\n\
+	. = 5b + 0xa0\n\
 	moveb	%5,%/a0@(3) ; moveb	%5,%/a0@(1)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0xc0\n\
+	. = 5b + 0xc0\n\
 	movew	%5,%/a0@(1)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0xe0\n\
+	. = 5b + 0xe0\n\
 	movew	%5,%/a0@(2) ; moveb	%5,%/a0@(1)\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x100\n\
+	. = 5b + 0x100\n\
 	moveb	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x120\n\
+	. = 5b + 0x120\n\
 	moveb	%5,%/a0@(3) ; moveb	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x140\n\
+	. = 5b + 0x140\n\
 	moveb	%5,%/a0@(2) ; moveb	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x160\n\
+	. = 5b + 0x160\n\
 	movew	%5,%/a0@(2) ; moveb	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x180\n\
+	. = 5b + 0x180\n\
 	movew	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x1a0\n\
+	. = 5b + 0x1a0\n\
 	moveb	%5,%/a0@(3) ; movew	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x1c0\n\
+	. = 5b + 0x1c0\n\
 	moveb	%5,%/a0@(2) ; movew	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; dbra %1,1b ; jra 4f ;\n\
-	. = 0b + 0x1e0\n\
+	. = 5b + 0x1e0\n\
 	movel	%5,%/a0@\n\
 	andl	%/d1,%/d1 ; jne 2b ; \n\
 3: 	dbra %1,1b ; \n\

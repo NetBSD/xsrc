@@ -1,3 +1,4 @@
+/* $XConsortium: ct_alloc.c /main/2 1996/10/25 10:29:02 kaleb $ */
 /*
  * 
  * Copyright 1993 by H. Hanemaayer, Utrecht, The Netherlands
@@ -26,7 +27,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_alloc.c,v 3.1 1996/09/29 14:02:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_alloc.c,v 3.2 1996/12/27 07:05:05 dawes Exp $ */
 
 /*
  * This file implements functions a simple allocator of video memory for

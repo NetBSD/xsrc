@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3name.h,v 3.12 1996/08/20 12:27:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3name.h,v 3.14 1997/01/18 06:55:04 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: s3name.h /main/5 1995/12/02 08:23:54 kaleb $ */
+/* $XConsortium: s3name.h /main/7 1996/10/19 17:57:11 kaleb $ */
 
 #ifndef S3_NAME_H
 #define S3_NAME_H
@@ -48,6 +48,7 @@
 #define s3EnterLeaveVT CUSTOMNAME(_s3EnterLeaveVT)
 #define s3AdjustFrame CUSTOMNAME(_s3AdjustFrame)
 #define s3SwitchMode CUSTOMNAME(_s3SwitchMode)
+#define s3DPMSSet CUSTOMNAME(_s3DPMSSet)
 #define s3CloseScreen CUSTOMNAME(_s3CloseScreen)
 #define s3SaveScreen CUSTOMNAME(_s3SaveScreen)
 #define s3ListInstalledColormaps CUSTOMNAME(_s3ListInstalledColormaps)

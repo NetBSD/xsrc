@@ -1,3 +1,4 @@
+/* $XConsortium: tga.h /main/4 1996/10/27 11:47:29 kaleb $ */
 /*
  * Copyright 1995,96 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -21,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.h,v 3.2 1996/10/17 15:18:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.h,v 3.4 1997/01/18 06:55:24 dawes Exp $ */
 
 #ifndef _TGA_H_
 #define _TGA_H_
@@ -146,6 +147,11 @@ Bool tgaSaveScreen(
 Bool tgaSwitchMode(
 #if NeedFunctionPrototypes
     DisplayModePtr 
+#endif
+);
+void tgaDPMSSet(
+#if NeedFunctionPrototypes
+    int PowerManagementMode
 #endif
 );
 void tgaAdjustFrame(

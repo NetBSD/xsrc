@@ -1,3 +1,4 @@
+/* $XConsortium: ct_lline.c /main/1 1996/09/21 13:36:33 kaleb $ */
 /*
  * Copyright 1994  The XFree86 Project
  *
@@ -23,7 +24,7 @@
  * Modified by David Bateman (dbateman@ee.uts.edu.au) for CHIPS
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_lline.c,v 3.0 1996/08/11 13:02:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_lline.c,v 3.1 1996/12/27 07:05:10 dawes Exp $ */
 
 #include "cfb.h"
 #include "cfbmskbits.h"

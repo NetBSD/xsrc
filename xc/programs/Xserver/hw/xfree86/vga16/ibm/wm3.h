@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/wm3.h,v 3.1 1996/02/04 09:11:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/wm3.h,v 3.2 1996/12/23 06:53:32 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: wm3.h /main/3 1996/01/10 11:13:19 kaleb $ */
+/* $XConsortium: wm3.h /main/4 1996/02/21 17:59:24 kaleb $ */
 
 #include "vgaReg.h"
 

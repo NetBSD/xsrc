@@ -1,5 +1,5 @@
-.\" $XConsortium: xkbcomp.man /main/3 1995/12/15 14:04:17 gildea $
-.TH XKBCOMP 1 "Release 6.1" "X Version 11"
+.\" $XConsortium: xkbcomp.man /main/4 1996/12/09 17:09:27 kaleb $
+.TH XKBCOMP 1 "Release 6.3" "X Version 11"
 .SH NAME
 xkbcomp \- compile XKB keyboard description
 .SH SYNOPSIS

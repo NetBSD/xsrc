@@ -1,20 +1,27 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Imakefile,v 3.19 1996/10/18 15:02:56 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
 
-
-
-XCOMM $XConsortium: Imakefile /main/8 1995/11/12 19:30:15 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Imakefile,v 3.24 1997/01/05 11:58:22 dawes Exp $
 
 #include <Server.tmpl>
 
 #if defined(LinuxArchitecture) && defined(AlphaArchitecture)
-XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c
-XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
+#if !UseElfFormat  /* fix/replacement for broken libc-0.43 io.c */
+IOSRC=glibcAxpIo.c
+IOOBJ=glibcAxpIo.o
+#endif
+XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
+XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
+#else
+#if defined(ArcArchitecture)
+XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
+XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
 #else
 XSRCS = BUSmemcpy.s IODelay.s SlowBcopy.s
 XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
+#endif
 #endif
 
 SRCS = I2061Acal.c I2061Aset.c I2061Aalt.c xf86_ClkPr.c \
@@ -28,14 +35,14 @@ OBJS = I2061Acal.o I2061Aset.o I2061Aalt.o xf86_ClkPr.o \
        STG1703clk.o ICS1562.o $(XOBJS)
 
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
-	   -I$(SERVERSRC)/include -I$(INCLUDESRC) -I../accel/s3
+	   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I../accel/s3
 
 NormalLibraryObjectRule()
 NormalAsmObjectRule()
 
 NormalLibraryTarget(xf86_hw,$(OBJS))
 
-#if !(defined(LinuxArchitecture) && defined(AlphaArchitecture))
+#if !(defined(LinuxArchitecture) && defined(AlphaArchitecture)) && !defined(ArcArchitecture)
 ObjectFromAsmSource(BUSmemcpy,NullParameter)
 ObjectFromAsmSource(IODelay,NullParameter)
 ObjectFromAsmSource(SlowBcopy,NullParameter)

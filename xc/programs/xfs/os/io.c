@@ -1,5 +1,4 @@
-/* $XConsortium: io.c,v 1.17 95/04/05 19:58:20 kaleb Exp $ */
-/* $XFree86: xc/programs/xfs/os/io.c,v 3.4 1996/01/05 13:21:35 dawes Exp $ */
+/* $TOG: io.c /main/18 1997/05/28 14:09:25 barstow $ */
 /*
  * i/o functions
  */
@@ -48,15 +47,20 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/xfs/os/io.c,v 3.5.2.1 1997/05/29 14:01:08 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdio.h>
 #include	<errno.h>
 #include	<sys/types.h>
 #ifndef MINIX
+#ifndef Lynx
 #include	<sys/param.h>
 #ifndef __EMX__
 #include	<sys/uio.h>
+#endif
+#else
+#include	<uio.h>
 #endif
 #endif
 

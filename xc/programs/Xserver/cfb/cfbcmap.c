@@ -1,5 +1,5 @@
 /* $XConsortium: cfbcmap.c,v 4.19 94/04/17 20:28:46 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.1 1994/07/15 06:55:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.1.8.2 1997/05/11 05:04:17 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -35,6 +35,29 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "scrnintstr.h"
 #include "colormapst.h"
 #include "resource.h"
+
+#ifdef GLXEXT
+#ifdef GLX_MODULE
+Bool (*GlxInitVisualsPtr)(
+#else
+extern Bool GlxInitVisuals(
+#endif
+#if NeedFunctionPrototypes
+    VisualPtr *         /*visualp*/,
+    DepthPtr *          /*depthp*/,
+    int *               /*nvisualp*/,
+    int *               /*ndepthp*/,
+    int *               /*rootDepthp*/,
+    VisualID *          /*defaultVisp*/,
+    unsigned long       /*sizes*/,
+    int                 /*bitsPerRGB*/
+#endif
+#ifdef GLX_MODULE
+) = NULL;
+#else
+);
+#endif
+#endif
 
 #ifdef	STATIC_COLOR
 
@@ -540,5 +563,26 @@ cfbInitVisuals (visualp, depthp, nvisualp, ndepthp, rootDepthp, defaultVisp, siz
     }
     *rootDepthp = depth[i].depth;
     *defaultVisp = depth[i].vids[j];
+
+#ifdef GLXEXT
+#ifdef GLX_MODULE
+    if( GlxInitVisualsPtr != NULL ) 
+       return (*GlxInitVisualsPtr)
+#else
+    return GlxInitVisuals
+#endif
+	   (
+               visualp, 
+               depthp,
+               nvisualp,
+               ndepthp,
+               rootDepthp,
+               defaultVisp,
+               sizes,
+               bitsPerRGB
+           );
+#else
     return TRUE;
+#endif
+
 }

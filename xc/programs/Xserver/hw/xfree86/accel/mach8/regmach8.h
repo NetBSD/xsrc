@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/regmach8.h,v 1.1.1.2 1996/01/03 07:14:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/regmach8.h,v 3.1 1996/12/23 06:40:14 dawes Exp $ */
+
 /* REGMACH8.H
  *
  * Written by Jake Richter
@@ -22,7 +23,7 @@
  * Further modifications by Scott Laird (lair@kimbark.uchicago.edu)
  * and Tiago Gons (tiago@comosjn.hobby.nl)
  */
-/* $XConsortium: regmach8.h /main/2 1995/11/12 18:01:13 kaleb $ */
+/* $XConsortium: regmach8.h /main/3 1996/02/21 17:31:30 kaleb $ */
 
 #ifndef _REGMACH8_H_
 #define _REGMACH8_H_

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/Mach64.c,v 3.3 1996/02/04 09:05:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/Mach64.c,v 3.4 1996/12/23 06:43:02 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: Mach64.c /main/4 1995/11/12 19:20:34 kaleb $ */
+/* $XConsortium: Mach64.c /main/5 1996/02/21 17:36:50 kaleb $ */
 #include "X.h"
 #include "os.h"
 

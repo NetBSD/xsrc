@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000cmap.c,v 3.10 1996/10/17 15:42:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000cmap.c,v 3.11.2.1 1997/05/10 07:02:53 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -27,7 +27,7 @@
  * Modified for the P9000 by Erik Nygren (nygren@mit.edu)
  *
  */
-/* $XConsortium: p9000cmap.c /main/3 1995/11/12 18:18:46 kaleb $ */
+/* $XConsortium: p9000cmap.c /main/9 1996/10/27 11:46:45 kaleb $ */
 
 /* Note that the outb's and inb's in here should be changed to use the
  * p9000OutBtReg, etc routines.  It's not needed yet because
@@ -244,61 +244,3 @@ p9000UninstallColormap(pmap)
 
   (*pmap->pScreen->InstallColormap) (defColormap);
 }
-
-
-/* Restores a screen that the screen saver has been running on */
-void
-p9000UnblankScreen(pScreen)
-     ScreenPtr pScreen;
-{
-  if (xf86VTSema)
-    {
-#if 0
-      if (p9000InfoRec.bitsPerPixel == 8)
-	{
-	  Pixel       pix = 0;
-	  xrgb        rgb;
-
-	  if (InstalledMaps[pScreen->myNum] == NOMAPYET)
-	    return;
-	  QueryColors(InstalledMaps[pScreen->myNum], 1, &pix, &rgb);  
-	  outb(BT_WRITE_ADDR, 0);
-	  outb(BT_RAMDAC_DATA, rgb.red >> 8);
-	  outb(BT_RAMDAC_DATA, rgb.green >> 8);
-	  outb(BT_RAMDAC_DATA, rgb.blue >> 8);
-	  outw(BT_PIXEL_MASK, 0xff);
-	}
-#else
-      /* Power the RAMDAC back up. */
-      p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, 0x0 /* ~BT_CR0_POWERDOWN */);  
-#endif
-    }
-}
-  
-/* Blanks a screen temporarily for a screen saver */
-void
-p9000BlankScreen(pScreen)
-     ScreenPtr pScreen;
-{
-  if (xf86VTSema)
-    {
-#if 0
-      if (p9000InfoRec.bitsPerPixel == 8)
-	{
-	  outb(BT_WRITE_ADDR, 0);
-	  outb(BT_RAMDAC_DATA, 0);
-	  outb(BT_RAMDAC_DATA, 0);
-	  outb(BT_RAMDAC_DATA, 0);
-	  outw(BT_PIXEL_MASK, 0x00);
-	}
-#else
-      /* Power down the RAMDAC output to blank the screen.  No data
-       * will be lost and MPU reads and writes should continue to work.
-       * Will this cause powersaving monitors to do the right thing? */
-      p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, BT_CR0_POWERDOWN);	  
-#endif
-    }
-}
-
-
-

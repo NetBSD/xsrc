@@ -1,5 +1,4 @@
-/* $XConsortium: mx_driver.c /main/6 1996/01/12 12:18:24 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mx/mx_driver.c,v 3.16 1996/10/19 15:16:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mx/mx_driver.c,v 3.18.2.2 1997/05/09 07:15:42 hohndel Exp $ */
 /*
  *
  * Driver Stubs Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -22,6 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: mx_driver.c /main/13 1996/10/28 04:24:52 kaleb $ */
 
 
 /*************************************************************************/
@@ -197,7 +197,8 @@ vgaVideoChipRec MX = {
 	FALSE,
 	FALSE,
 	NULL,
-	1,
+	1,      /* ClockMulFactor */
+	1       /* ClockDivFactor */
 };
 
 /*
@@ -556,12 +557,16 @@ MXRestore(restore)
 vgaMXPtr restore;
 {
 	unsigned char temp;
+
+	vgaProtect(TRUE);
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
 	 * Save/Init was done.
 	 */
 	outw(0x3C4,0xC5);
+
 	/*
 	 * This function handles restoring the generic VGA registers.
 	 */
@@ -595,6 +600,8 @@ vgaMXPtr restore;
 	outb(0x3C5,temp);
 	outb(0x3C4,0xF3);
 	outb(0x3C5,restore->mxg);
+
+	vgaProtect(FALSE);
 }
 
 /*
@@ -755,9 +762,10 @@ unsigned char temp;
  *
  */
 static int
-MXValidMode(mode, verbose)
+MXValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

@@ -1,8 +1,8 @@
-.\" $XConsortium: XF68_FBDev.man,v 1.8 95/01/23 15:33:27 kaleb Exp $
-.\" $XFree86: xc/programs/Xserver/hw/xfree68/XF68_FBDev.man,v 3.1 1996/08/23 11:01:50 dawes Exp $
-.TH XF68_FBDev 1 "Version 3.1.2F"  "XFree86"
+.\" $XConsortium: XF68_FBDev.man /main/2 1996/12/09 17:32:57 kaleb $
+.\" $XFree86: xc/programs/Xserver/hw/xfree68/XF68_FBDev.man,v 3.4.2.1 1997/05/16 11:35:05 hohndel Exp $
+.TH XF68_FBDev 1 "Version 3.2A"  "XFree86"
 .SH NAME
-XF68_FBDev - X Window System servers for the Linux/m68k Frame Buffer Device
+XF68_FBDev - X Window System server for the Linux/m68k Frame Buffer Device
 .SH SYNOPSIS
 .B XF68_FBDev
 [:displaynumber] [ option ] ...
@@ -72,17 +72,23 @@ Server configuration file (secondary location)
 .TP 30
 /dev/fb*
 The files which represents framebuffers and their resolutions
+.TP 30
+<XRoot>/lib/X11/doc/README.fbdev
+Extra documentation about the Frame Buffer Device
 .LP
 Note: <XRoot> refers to the root of the X11 install tree.
 .SH "SEE ALSO"
-X(1), Xserver(1), XFree86(1), XF86Config(4/5), xf86config(1), xdm(1), xinit(1)
+X(1), Xserver(1), XFree86(1), XF86Config(4/5), xf86config(1), xdm(1), xinit(1),
+fbset(8)
+.LP
+Note: <linux> refers to the location of the Linux source tree.
 .SH AUTHORS
 .PP
 In addition to the authors of \fIXFree86\fP the following people contributed
 major work to this server:
 .PP
 .nf
-Martin Schaller,    \fIMartin_Schaller@r.maus.de\fP
+Martin Schaller
 .fi
 .RS 8
 Developed the concept of the Linux/m68k Frame Buffer Device and wrote the
@@ -97,7 +103,7 @@ Wrote the support for Amiga and created the generic server.
 .RE
 .PP
 .nf
-Martin Schaller,    \fIMartin_Schaller@r.maus.de\fP
+Martin Schaller
 Geert Uytterhoeven, \fIGeert.Uytterhoeven@cs.kuleuven.ac.be\fP
 Andreas Schwab,     \fIschwab@issan.informatik.uni-dortmund.de\fP
 Guenther Kelleter,  \fIguenther@Pool.Informatik.RWTH-Aachen.de\fP

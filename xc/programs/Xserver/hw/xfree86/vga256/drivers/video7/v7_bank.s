@@ -1,5 +1,4 @@
-/* $XConsortium: v7_bank.s,v 1.2 95/06/19 19:21:25 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/video7/v7_bank.s,v 3.2 1996/02/04 09:14:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/video7/v7_bank.s,v 3.3 1996/12/23 06:58:54 dawes Exp $ */
 /*
  * Stubs Driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,6 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: v7_bank.s /main/3 1996/02/21 18:08:26 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

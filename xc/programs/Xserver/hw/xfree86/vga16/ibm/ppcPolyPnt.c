@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcPolyPnt.c,v 3.3 1996/02/04 09:11:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcPolyPnt.c,v 3.4 1996/12/23 06:53:10 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -68,7 +68,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: ppcPolyPnt.c /main/4 1995/11/13 07:05:29 kaleb $ */
+/* $XConsortium: ppcPolyPnt.c /main/5 1996/02/21 17:58:07 kaleb $ */
 
 #include "X.h"
 #include "Xprotostr.h"

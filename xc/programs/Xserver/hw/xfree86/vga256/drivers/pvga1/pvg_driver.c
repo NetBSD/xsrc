@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvg_driver.c,v 3.27 1996/10/16 14:43:23 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvg_driver.c,v 3.31.2.4 1997/05/27 06:22:26 dawes Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  *
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  */
-/* $XConsortium: pvg_driver.c /main/8 1996/01/12 12:18:37 kaleb $ */
+/* $XConsortium: pvg_driver.c /main/14 1996/10/27 11:08:28 kaleb $ */
 
 /*
  * Accelerated support for 90C31 added by Mike Tierney <floyd@eng.umd.edu>
@@ -155,7 +155,8 @@ vgaVideoChipRec PVGA1 = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,                         /* ChipClockMulFactor */
+  1                          /* ChipClockDivFactor */
 };
 
 #define new ((vgaPVGA1Ptr)vgaNewVideoState)
@@ -204,6 +205,151 @@ static unsigned PVGA1_ExtPorts_WD90C33[] =    /* extra ports for WD90C33 */
 static int NumPVGA1_ExtPorts_WD90C33 =
              ( sizeof(PVGA1_ExtPorts_WD90C33)
             / sizeof(PVGA1_ExtPorts_WD90C33[0]) );
+
+/*
+ * PVGA1lcd24power(int)
+ * 
+ * Sets VESA Display Power Management Signaling (DPMS) Mode for monitor.
+ * Also Enable or disable LCD power for WD90c24 controlled LCD.
+ */
+#ifdef DPMSExtension
+static void
+PVGA1lcd24power(int PowerManagementMode)
+{
+  static unsigned char lcd_off = 0;
+  unsigned char lock_val, reg_val, seq1, sync2;
+  int crt_on; /* allow sync to turn off? */
+
+  if (!xf86VTSema) return;
+
+  /* Turn LCD on or off and blank/unblank screen */
+  switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+      /* Turn LCD on */
+      if (lcd_off) {
+	/* this is a wd90c24 LCD which we have turned off */
+	lcd_off = 0; /* Don't allow nested calls */
+
+	/* Unlock extended PR registers */
+	wrinx(0x3C4, 0x06, 0x48);
+
+	reg_val = rdinx(0x3C4, 0x19); /* PR57 */
+	/* PNLOFF low */
+	wrinx(0x3C4, 0x19, reg_val | 0x04); /* set bit 2 */
+
+	usleep(100000);
+	lock_val = rdinx(0x3CE, 0x0F);
+	/* Unlock PR0-PR4 */
+	wrinx(0x3CE, 0x0F, (0xF8 & lock_val) | 0x05);
+	reg_val = rdinx(0x3CE, 0x0E); /* PR4 */
+	/* Drive FP interface pins active */
+	wrinx(0x3CE, 0x0E, 0xDF & reg_val); /* clear bit 5 */
+	wrinx(0x3CE, 0x0F, lock_val); /* restore lock */
+      
+	usleep(100000);
+	lock_val = rdinx(vgaIOBase+0x04, 0x34);
+	/* Unlock FP Reg */
+	wrinx(vgaIOBase+0x04, 0x34, (0x0F & lock_val) | 0xA0);
+	reg_val = rdinx(vgaIOBase+0x04, 0x032);
+	/* Turn on LCD */
+	wrinx(vgaIOBase+0x04, 0x32, 0x10 | reg_val); /* set PR19, bit 4 */
+	wrinx(vgaIOBase+0x04, 0x34, lock_val); /* restore locks*/
+      }
+
+      /* Unblank Screen */
+      outw(0x3C4, 0x0100);	/* Synchronous Reset */
+      outb(0x3C4, 0x01);	/* Select SEQ1 */
+      seq1 = inb(0x3C5) & ~0x20;
+      outb(0x3C5, seq1);
+      outw(0x3C4, 0x0300);	/* End Reset */
+
+      usleep(10000);
+      break;
+
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
+    case DPMSModeOff:
+      /* Turn LCD off */
+      lock_val = rdinx(vgaIOBase+0x04, 0x34);
+      /* Unlock FP Reg */
+      wrinx(vgaIOBase+0x04, 0x34, (0x0F & lock_val) | 0xA0);
+      reg_val = rdinx(vgaIOBase+0x04, 0x032); /* PR19 */
+      crt_on = ((reg_val & 0x20) == 0x20); /* CRT on? */
+      if (reg_val & 0x10) {
+
+	/* this is a wd90c24 with LCD on */
+	lcd_off ++;
+	/* Turn off LCD */
+	wrinx(vgaIOBase+0x04, 0x32, 0xEF & reg_val); /* clear PR19, bit 4 */
+	wrinx(vgaIOBase+0x04, 0x34, lock_val); /* restore locks*/
+
+	lock_val = rdinx(0x3CE, 0x0F);
+	/* Unlock PR0-PR4 */
+	wrinx(0x3CE, 0x0F, (0xF8 & lock_val) | 0x05);
+	reg_val = rdinx(0x3CE, 0x0E); /* PR4 */
+	/* Tri-state FP interfacee pins */
+	wrinx(0x3CE, 0x0E, reg_val | 0x20); /* set bit 5 */
+	wrinx(0x3CE, 0x0F, lock_val); /* restore lock */
+
+	lock_val = rdinx(0x3C4, 0x06);
+	/* Unlock extended PR registers */
+	wrinx(0x3C4, 0x06, 0x48);
+	reg_val = rdinx(0x3C4, 0x19); /* PR57 */
+	/* PNLOFF high */
+	wrinx(0x3C4, 0x19, 0xFB & reg_val); /* clear bit 2 */
+      }
+      else {
+	wrinx(vgaIOBase+0x04, 0x34, lock_val); /* restore locks*/
+      }
+
+      /* Blank screen */
+      if (crt_on) {	/* blank only if monitor in use */
+	outw(0x3C4, 0x0100);	/* Synchronous Reset */
+	outb(0x3C4, 0x01);	/* Select SEQ1 */
+	seq1 = inb(0x3C5) | 0x20;
+	outb(0x3C5, seq1);
+	outw(0x3C4, 0x0300);	/* End Reset */
+
+	usleep(10000);
+      }
+
+      break;
+    }
+
+  /* Manipulate HSync and VSync */
+  switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+      /* Screen: On; HSync: On, VSync: On */
+      outb(vgaIOBase + 4, 0x17);
+      sync2 = inb(vgaIOBase + 5);
+      sync2 |= 0x80;			/* enable sync   */
+      usleep(10000);
+      outb(vgaIOBase + 5, sync2);
+      break;
+
+    case DPMSModeStandby:
+      /* Screen: Off; HSync: Off, VSync: On */
+      /* This may be supported later */
+      break;
+    case DPMSModeSuspend:
+      /* Screen: Off; HSync: On, VSync: Off */
+      /* This may be supported later */
+      break;
+    case DPMSModeOff:
+      /* Screen: Off; HSync: Off, VSync: Off */
+      if (crt_on) {	/* disable sync only if monitor in use */
+	outb(vgaIOBase + 4, 0x17);
+	sync2 = inb(vgaIOBase + 5);
+	sync2 &= ~0x80;			/* disable sync */
+	usleep(10000);
+	outb(vgaIOBase + 5, sync2);
+      }
+      break;
+    }
+}
+#endif
 
 /*
  * PVGA1Ident
@@ -524,6 +670,9 @@ PVGA1Probe()
 		    vga256InfoRec.virtualX = 640;
 		    vga256InfoRec.virtualY = 480;
 		}
+#ifdef DPMSExtension
+		vga256InfoRec.DPMSSet = PVGA1lcd24power;
+#endif
 	    }
 	}
 	break;
@@ -737,6 +886,23 @@ PVGA1EnterLeave(enter)
     }
   else
     {
+      /* the brain-dead Speedstar 24X BIOS brings up the board with a
+	 programmable clock used, but to a default value of 28.3 MHz.
+	 If now only the clock select lines were restored the timing has a 
+	 good chance of breaking -- why can't they just use clock 1 ? */
+      if (OFLG_ISSET(CLOCK_OPTION_ICD2061A, &vga256InfoRec.clockOptions) &&
+	  vga256InfoRec.clock[2] > 0) {	/* restore only if clock2 probed */
+	unsigned long freq = vga256InfoRec.clock[2];
+#ifdef DEBUG
+	ErrorF("Leave: Restoring F = %d kHz \n", freq);
+#endif
+	if (freq < 25000 || freq > 100000)
+	  freq = 28300;
+	AltICD2061SetClock(50500*1000, 3);	/* restore MCLK default */
+	AltICD2061SetClock(freq*1000, 2);
+	temp = inb(0x3cc);
+	outb(0x3c2, temp | 0xC);
+      }
       xf86DisableIOPorts(vga256InfoRec.scrnIndex);
     }
 }
@@ -753,6 +919,8 @@ PVGA1Restore(restore)
      vgaPVGA1Ptr restore;
 {
   unsigned char temp;
+
+  vgaProtect(TRUE);
 
   /*
    * First unlock all these special registers ...
@@ -875,6 +1043,10 @@ fprintf(stderr, "pr69 now = 0x%x\n", rdinx(0x3C4, 0x32));
       outb(0x3C5, (restore->MemoryInterface & mask) | (temp & ~mask));
     }
 
+  /* XXX ICD2061A should be re-programmed here, but to what freq ?
+     this requires a major rewrite of the whole XFree86 code because
+     that value may be part of a "standard" video state */
+
   /* This must be done AFTER the Memory width (MemoryInterface) is restored */
   vgaHWRestore((vgaHWPtr)restore);
 
@@ -899,6 +1071,8 @@ fprintf(stderr, "pr69 now = 0x%x\n", rdinx(0x3C4, 0x32));
      outw (EXT_REG_ACCESS_PORT, CURSOR_BLOCK);
      outw (EXT_REG_IO_PORT, restore->CursorCntl);
   }
+
+  vgaProtect(FALSE);
 }
 
 
@@ -1077,6 +1251,20 @@ PVGA1Init(mode)
 	      new->VideoSelect |= rdinx(0x3C4, 0x31) & 0x7; /* Fetch Mclk */
 	  }
       } else {
+	  if (OFLG_ISSET(CLOCK_OPTION_ICD2061A, &vga256InfoRec.clockOptions)) {
+		unsigned long freq = vga256InfoRec.clock[mode->Clock];
+		if (freq > 16000) 
+		  {
+		    AltICD2061SetClock(62000*1000, 3); /* increase MCLK */
+		    AltICD2061SetClock(freq*1000, 2);
+		    new->std.MiscOutReg = (new->std.MiscOutReg & 0xF3) | 8;
+		    outb(0x3c2, new->std.MiscOutReg);
+		    new->std.NoClock = 2;
+#ifdef DEBUG
+		    ErrorF("Freq = %d kHz selected\n", freq);
+#endif
+		  }
+	  }
 	  new->VideoSelect = ((new->std.NoClock & 0x4) >> 1) ^ save_cs2;
 	  new->MiscCtrl4 = ((new->std.NoClock & 0x8) >> 1) ^ 0x4;
       }
@@ -1212,9 +1400,10 @@ PVGA1Adjust(x, y)
  *
  */
 static int
-PVGA1ValidMode(mode, verbose)
+PVGA1ValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

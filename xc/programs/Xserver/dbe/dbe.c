@@ -1,5 +1,5 @@
-/* $XConsortium: dbe.c /main/3 1995/09/22 10:20:44 dpw $ */
-/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.1 1996/03/29 22:14:31 dawes Exp $ */
+/* $XConsortium: dbe.c /main/4 1996/08/01 19:24:47 dpw $ */
+/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.2 1996/12/23 06:29:29 dawes Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company
@@ -414,7 +414,8 @@ ProcDbeAllocateBackBufferName(client)
     REQUEST_SIZE_MATCH(xDbeAllocateBackBufferNameReq);
 
     /* The window must be valid. */
-    if (!(pWin = LookupWindow(stuff->window, client)))
+    if (!(pWin = SecurityLookupWindow(stuff->window, client,
+				      SecurityWriteAccess)))
     {
 	return(BadWindow);
     }
@@ -641,9 +642,10 @@ ProcDbeDeallocateBackBufferName(client)
     REQUEST_SIZE_MATCH(xDbeDeallocateBackBufferNameReq);
 
     /* Buffer name must be valid */
-    if (!(pDbeWindowPriv = (DbeWindowPrivPtr)LookupIDByType(stuff->buffer,
-                                                    dbeWindowPrivResType)) ||
-        !(LookupIDByType(stuff->buffer, dbeDrawableResType)))
+    if (!(pDbeWindowPriv = (DbeWindowPrivPtr)SecurityLookupIDByType(client,
+		stuff->buffer, dbeWindowPrivResType, SecurityDestroyAccess)) ||
+        !(SecurityLookupIDByType(client, stuff->buffer, dbeDrawableResType,
+				 SecurityDestroyAccess)))
     {
         client->errorValue = stuff->buffer;
         return(dbeErrorBase + DbeBadBuffer);
@@ -738,7 +740,8 @@ ProcDbeSwapBuffers(client)
         /* Check all windows to swap. */
 
         /* Each window must be a valid window - BadWindow. */
-        if (!(pWin = LookupWindow(dbeSwapInfo[i].window, client)))
+        if (!(pWin = SecurityLookupWindow(dbeSwapInfo[i].window, client,
+					  SecurityWriteAccess)))
         {
             DEALLOCATE_LOCAL(swapInfo);
 	    return(BadWindow);
@@ -899,8 +902,8 @@ ProcDbeGetVisualInfo(client)
 
         for (i = 0; i < stuff->n; i++)
         {
-            if (!(pDrawables[i] = (DrawablePtr)LookupDrawable(drawables[i],
-                                                              client)))
+            if (!(pDrawables[i] = (DrawablePtr)SecurityLookupDrawable(
+				drawables[i], client, SecurityReadAccess)))
             {
                 DEALLOCATE_LOCAL(pDrawables);
                 return(BadDrawable);
@@ -1057,8 +1060,8 @@ ProcDbeGetBackBufferAttributes(client)
 
     REQUEST_SIZE_MATCH(xDbeGetBackBufferAttributesReq);
 
-    if (!(pDbeWindowPriv = (DbeWindowPrivPtr)LookupIDByType(stuff->buffer,
-        dbeWindowPrivResType)))
+    if (!(pDbeWindowPriv = (DbeWindowPrivPtr)SecurityLookupIDByType(client,
+		stuff->buffer, dbeWindowPrivResType, SecurityReadAccess)))
     {
         rep.attributes = None;
     }

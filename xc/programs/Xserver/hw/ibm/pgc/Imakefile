@@ -1,11 +1,11 @@
-XCOMM $XConsortium: Imakefile,v 1.3 93/09/04 17:31:47 rws Exp $
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:12:59 rws $
 #include <Server.tmpl>
 
 SRCS = pgcGlobal.c pgcCmap.c pgcWindow.c  pgcCpArea.c pgcPntWin.c
 
 OBJS = pgcGlobal.o pgcCmap.o pgcWindow.o pgcCpArea.o pgcPntWin.o
 
-INCLUDES = -I../ -I../AIX -I../../../mfb -I../../../cfb -I../../../include -I$(INCLUDESRC) -I../common -I../../../mi
+INCLUDES = -I../ -I../AIX -I../../../mfb -I../../../cfb -I../../../include -I$(XINCLUDESRC) -I../common -I../../../mi
 
 NormalRelocatableTarget(pgc,$(OBJS))
 

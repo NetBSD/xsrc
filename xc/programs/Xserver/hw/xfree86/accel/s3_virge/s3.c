@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.6 1996/10/17 15:17:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.8 1997/06/01 12:33:31 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -30,7 +30,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3.c /main/28 1996/01/31 10:04:33 kaleb $ */
+/* $XConsortium: s3.c /main/9 1996/12/28 14:43:20 kaleb $ */
 
 #include "misc.h"
 #include "cfb.h"
@@ -70,7 +70,7 @@ extern int defaultColorVisualClass;
 
 static int s3ValidMode(
 #if NeedFunctionPrototypes
-    DisplayModePtr, Bool
+    DisplayModePtr, Bool, int
 #endif
 );
 
@@ -87,6 +87,7 @@ ScrnInfoRec s3InfoRec =
    (void (*)())NoopDDA,		/* void (* EnterLeaveCursor)() */
    (void (*)())NoopDDA,		/* void (* AdjustFrame)() */
    (Bool (*)())NoopDDA,		/* Bool (* SwitchMode)() */
+   s3DPMSSet,			/* void (* DPMSSet)() */
    s3PrintIdent,		/* void (* PrintIdent)() */
    8,				/* int depth */
    {5, 6, 5},			/* xrgb weight */
@@ -100,7 +101,8 @@ ScrnInfoRec s3InfoRec =
    {0, },              		/* OFlagSet xconfigFlag */
    NULL,			/* char *chipset */
    NULL,			/* char *ramdac */
-   0,				/* int dacSpeed */
+   {0, 0, 0, 0},		/* int dacSpeeds[MAXDACSPEEDS] */
+   0,				/* int dacSpeedBpp */
    0,				/* int clocks */
    {0,},			/* int clock[MAXCLOCKS] */
    0,				/* int maxClock */
@@ -114,7 +116,7 @@ ScrnInfoRec s3InfoRec =
    NULL,			/* char           *clockprog */
    -1,			        /* int textclock */
    FALSE,			/* Bool           bankedMono */
-   "S3",			/* char           *name */
+   "S3V",			/* char           *name */
    {0, },			/* xrgb blackColour */
    {0, },			/* xrgb whiteColour */
    s3ValidTokens,		/* int *validTokens */
@@ -127,17 +129,20 @@ ScrnInfoRec s3InfoRec =
    0,				/* int s3Madjust */
    0,				/* int s3Nadjust */
    0,				/* int s3MClk */
+   0,				/* int chipID */
+   0,				/* int chipRev */
    0,				/* unsigned long VGAbase */
    0,				/* int s3RefClk */
-   0,				/* int suspendTime */
-   0,				/* int offTime */
    -1,				/* int s3BlankDelay */
    0,				/* int textClockFreq */
+   NULL,                        /* char* DCConfig */
+   NULL,                        /* char* DCOptions */
+   0				/* int MemClk */
 #ifdef XFreeXDGA
-   0,				/* int directMode */
+   ,0,				/* int directMode */
    s3SetVidPage,		/* Set Vid Page */
    0,				/* unsigned long physBase */
-   0,				/* int physSize */
+   0				/* int physSize */
 #endif
 };
 
@@ -147,68 +152,6 @@ typedef struct S3PCIInformation {
    int ChipRev;
    unsigned long MemBase;
 } S3PCIInformation;
-
-int s3alu[16] =
-{
-   ROP_0,
-   ROP_DSa,
-   ROP_SDna,
-   ROP_S,
-   ROP_DSna,
-   ROP_D,
-   ROP_DSx,
-   ROP_DSo,
-   ROP_DSon,
-   ROP_DSxn,
-   ROP_Dn,
-   ROP_SDno,
-   ROP_Sn,
-   ROP_DSno,
-   ROP_DSan,
-   ROP_1
-};
-
-/* S -> P */
-int s3alu_sp[16] =
-{
-   ROP_0,
-   ROP_DPa,
-   ROP_PDna,
-   ROP_P,
-   ROP_DPna,
-   ROP_D,
-   ROP_DPx,
-   ROP_DPo,
-   ROP_DPon,
-   ROP_DPxn,
-   ROP_Dn,
-   ROP_PDno,
-   ROP_Pn,
-   ROP_DPno,
-   ROP_DPan,
-   ROP_1
-};
-
-/* ROP  ->  (ROP & P) | (D & ~P) */
-int s3alu_pat[16] =
-{
-   ROP_0PaDPnao,
-   ROP_DSaPaDPnao,
-   ROP_SDnaPaDPnao,
-   ROP_SPaDPnao,
-   ROP_DSnaPaDPnao,
-   ROP_DPaDPnao,
-   ROP_DSxPaDPnao,
-   ROP_DSoPaDPnao,
-   ROP_DSonPaDPnao,
-   ROP_DSxnPaDPnao,
-   ROP_DnPaDPnao,
-   ROP_SDnoPaDPnao,
-   ROP_SnPaDPnao,
-   ROP_DSnoPaDPnao,
-   ROP_DSanPaDPnao,
-   ROP_1PaDPnao
-};
 
 #if 0
 static unsigned S3_IOPorts[] = { };
@@ -225,6 +168,7 @@ static SymTabRec s3ChipTable[] = {
    { S3_UNKNOWN,	"unknown" },
    { S3_ViRGE,		"ViRGE" },
    { S3_ViRGE_VX,	"ViRGE/VX" },
+   { S3_ViRGE_DXGX,	"ViRGE/DX or /GX" },
    { -1,		"" },
 };
 
@@ -240,7 +184,6 @@ Bool  s3NewMmio = TRUE;
 Bool  s3PixelMultiplexing = FALSE;
 Bool  s3DAC8Bit = FALSE;
 Bool  s3DACSyncOnGreen = FALSE;
-Bool  s3PowerSaver = FALSE;
 unsigned char s3LinApOpt;
 unsigned char s3SAM256 = 0x00;
 int s3BankSize;
@@ -255,6 +198,7 @@ int s3_968_DashBug = 0;
 unsigned long s3MemBase = 0;
 int s3_gcmd = CMD_NOP;
 int s3bltbug_width1, s3bltbug_width2;
+Bool tmp_useSWCursor = FALSE;
 
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed;
 extern int  xf86Verbose;
@@ -341,6 +285,42 @@ s3PrintIdent()
 }
 
 
+static unsigned char *find_bios_string(int BIOSbase, char *match1, char *match2)
+{
+#define BIOS_BSIZE 1024
+#define BIOS_BASE  0xc0000
+
+   static unsigned char bios[BIOS_BSIZE];
+   static int init=0;
+   int i,j,l1,l2;
+
+   if (!init) {
+      init = 1;
+      if (xf86ReadBIOS(BIOSbase, 0, bios, BIOS_BSIZE) != BIOS_BSIZE)
+	 return NULL;
+      if ((bios[0] != 0x55) || (bios[1] != 0xaa))
+	 return NULL;
+   }
+   if (match1 == NULL)
+      return NULL;
+
+   l1 = strlen(match1);
+   if (match2 != NULL) 
+      l2 = strlen(match2);
+   else	/* for compiler-warnings */
+      l2 = 0;
+
+   for (i=0; i<BIOS_BSIZE-l1; i++)
+      if (bios[i] == match1[0] && !memcmp(&bios[i],match1,l1))
+	 if (match2 == NULL) 
+	    return &bios[i+l1];
+	 else
+	    for(j=i+l1; (j<BIOS_BSIZE-l2) && bios[j]; j++) 
+	       if (bios[j] == match2[0] && !memcmp(&bios[j],match2,l2))
+		  return &bios[j+l2];
+   return NULL;
+}
+
 
 /*
  * s3GetPCIInfo -- probe for PCI information
@@ -368,6 +348,9 @@ s3GetPCIInfo()
 	 case PCI_ViRGE_VX:
 	    info.ChipType = S3_ViRGE_VX;
 	    break;
+	 case PCI_ViRGE_DXGX:
+	    info.ChipType = S3_ViRGE_DXGX;
+	    break;
 	 default:
 	    info.ChipType = S3_UNKNOWN;
 	    info.DevID = pcrp->_device;
@@ -385,6 +368,7 @@ s3GetPCIInfo()
       }
       i++;
    }
+   if (pcrp == NULL) return NULL;
 
    /* for new mmio we have to ensure that the PCI base address is
     * 64MB aligned and that there are no address collitions within 64MB.
@@ -501,6 +485,7 @@ s3Probe()
    int card_id, max_pix_clock, max_mem_clock, hwconf;
    int lookupFlags;
    int MemOffScreen = 0;
+   unsigned char tmp;
 
    /*
     * These characterise a RAMDACs pixel multiplexing capabilities and
@@ -588,8 +573,9 @@ s3Probe()
    vgaCRIndex = vgaIOBase + 4;
    vgaCRReg = vgaIOBase + 5;
 
-   outb(vgaCRIndex, 0x11);	/* for register CR11, (Vertical Retrace End) */
-   outb(vgaCRReg, 0x00);		/* set to 0 */
+   outb(vgaCRIndex, 0x11);	/* for register CR11 */
+   tmp = inb(vgaCRReg);         /* enable CR0-7 and disable interrupts */
+   outb(vgaCRReg, tmp & 0x0f);
 
    outb(vgaCRIndex, 0x38);		/* check if we have an S3 */
    outb(vgaCRReg, 0x00);
@@ -622,10 +608,23 @@ s3Probe()
 
    s3ChipRev = s3ChipId & 0x0f;
    if (s3ChipId >= 0xe0) {
+      outb(vgaCRIndex, 0x2d);
+      s3ChipId = inb(vgaCRReg) << 8;
       outb(vgaCRIndex, 0x2e);
-      s3ChipId |= (inb(vgaCRReg) << 8);
+      s3ChipId |= inb(vgaCRReg);
       outb(vgaCRIndex, 0x2f);
-      s3ChipRev |= (inb(vgaCRReg) << 4);
+      s3ChipRev = inb(vgaCRReg);
+   }
+
+   if (s3InfoRec.chipID) {
+      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%02x instead of 0x%02x\n",
+	     XCONFIG_GIVEN, s3InfoRec.name, s3InfoRec.chipID, s3ChipId);
+      s3ChipId = s3InfoRec.chipID;
+   }
+   if (s3InfoRec.chipRev) {
+      ErrorF("%s %s: S3 chipset override, using chip_rev = %x instead of %x\n",
+	     XCONFIG_GIVEN, s3InfoRec.name, s3InfoRec.chipRev, s3ChipRev);
+      s3ChipRev = s3InfoRec.chipRev;
    }
 
    if (!S3_ANY_SERIES(s3ChipId)) {
@@ -665,12 +664,9 @@ s3Probe()
    }
 
    OFLG_ZERO(&validOptions);
-   OFLG_SET(OPTION_LEGEND, &validOptions);
    OFLG_SET(OPTION_CLKDIV2, &validOptions);
-   OFLG_SET(OPTION_NOLINEAR_MODE, &validOptions);
    OFLG_SET(OPTION_SW_CURSOR, &validOptions);
    OFLG_SET(OPTION_SHOWCACHE, &validOptions);
-   OFLG_SET(OPTION_FB_DEBUG, &validOptions);
    OFLG_SET(OPTION_NO_FONT_CACHE, &validOptions);
    OFLG_SET(OPTION_NO_PIXMAP_CACHE, &validOptions);
    OFLG_SET(OPTION_DAC_8_BIT, &validOptions);
@@ -694,6 +690,10 @@ s3Probe()
    OFLG_SET(OPTION_SLOW_VRAM, &validOptions);
    OFLG_SET(OPTION_SLOW_DRAM_REFRESH, &validOptions);
    OFLG_SET(OPTION_FAST_VRAM, &validOptions);
+   OFLG_SET(OPTION_FPM_VRAM, &validOptions);
+   OFLG_SET(OPTION_EDO_VRAM, &validOptions);
+   OFLG_SET(OPTION_EARLY_RAS_PRECHARGE, &validOptions);
+   OFLG_SET(OPTION_LATE_RAS_PRECHARGE, &validOptions);
    xf86VerifyOptions(&validOptions, &s3InfoRec);
 
 #ifdef PC98
@@ -703,31 +703,52 @@ s3Probe()
 #endif
 
 
-   /* LocalBus or EISA or PCI */
-   if (S3_ViRGE_VX_SERIES(s3ChipId))
-      s3Localbus = TRUE;
-   else {
-      s3Localbus = ((config & 0x03) <= 2);
+   /* ViRGE is always PCI (or VLB if ever?!),  ViRGE/VX is only PCI */
+   s3Localbus = TRUE;
 
-      if (xf86Verbose) {
-	 switch (config & 0x03) {
-	 case 1:
-	    ErrorF("%s %s: card type: 386/486 localbus\n",
-		   XCONFIG_PROBED, s3InfoRec.name);
-	    s3VLB = TRUE;
-	    break;
-	 case 2:
+   if (S3_ViRGE_SERIES(s3ChipId) && s3ChipRev < 0x06) {
+      if (config & 0x02) {
+	 if (xf86Verbose)
 	    ErrorF("%s %s: card type: PCI\n", XCONFIG_PROBED, s3InfoRec.name);
-	    break;
-	 default:
-	    ErrorF("%s %s: unknown bus type %d (please report)\n",
-		   XCONFIG_PROBED, s3InfoRec.name, config & 0x03);
-	 }
+      } else {
+	 if (xf86Verbose)
+	    ErrorF("%s %s: card type: VLB\n",
+		   XCONFIG_PROBED, s3InfoRec.name);
+	 s3VLB = TRUE;
       }
+   }
+
+   /* reset S3 graphics engine to avoid memory corruption */
+   if (!S3_ViRGE_VX_SERIES(s3ChipId)) {
+      outb(vgaCRIndex, 0x66);
+      i = inb(vgaCRReg);
+      outb(vgaCRReg, i |  0x02);
+      usleep(10000);  /* wait a little bit... */
+   }
+
+   if (find_bios_string(s3InfoRec.BIOSbase,"S3 86C325",
+			"MELCO WGP-VG VIDEO BIOS") != NULL) {
+      if (s3BiosVendor == UNKNOWN_BIOS)
+	 s3BiosVendor = MELCO_BIOS;
+      if (xf86Verbose)
+	 ErrorF("%s %s: MELCO BIOS found\n",
+		XCONFIG_PROBED, s3InfoRec.name);
+      if (s3InfoRec.MemClk <= 0)       s3InfoRec.MemClk       =  74000;
+      if (s3InfoRec.dacSpeeds[0] <= 0) s3InfoRec.dacSpeeds[0] = 191500;
+      if (s3InfoRec.dacSpeeds[1] <= 0) s3InfoRec.dacSpeeds[1] = 162500;
+      if (s3InfoRec.dacSpeeds[2] <= 0) s3InfoRec.dacSpeeds[2] = 111500;
+      if (s3InfoRec.dacSpeeds[3] <= 0) s3InfoRec.dacSpeeds[3] =  83500;
    }
 
    card_id = s3DetectELSA(s3InfoRec.BIOSbase, &card, &serno, &max_pix_clock,
 			  &max_mem_clock, &hwconf);
+
+   if (!S3_ViRGE_VX_SERIES(s3ChipId)) {
+      outb(vgaCRIndex, 0x66);
+      outb(vgaCRReg, i & ~0x02);  /* clear reset flag */
+      usleep(10000);  /* wait a little bit... */
+   }
+
    if (card_id > 0) {
       if (s3BiosVendor == UNKNOWN_BIOS)
 	 s3BiosVendor = ELSA_BIOS;
@@ -737,8 +758,8 @@ s3Probe()
       xfree(card);
       xfree(serno);
 
-      if (s3InfoRec.dacSpeed <= 0)
-	 s3InfoRec.dacSpeed = max_pix_clock;
+      if (s3InfoRec.dacSpeeds[0] <= 0)
+	 s3InfoRec.dacSpeeds[0] = max_pix_clock;
 
       do {
 	 switch (card_id) {
@@ -762,6 +783,15 @@ s3Probe()
 
       if (S3_ViRGE_SERIES(s3ChipId)) {
 	 chipname = "ViRGE";
+      }
+      else if (S3_ViRGE_DXGX_SERIES(s3ChipId)) {
+	 outb(vgaCRIndex, 0x39);
+	 outb(vgaCRReg, 0xa5);
+	 outb(vgaCRIndex, 0x6f);
+	 if (inb(vgaCRReg) & 1)
+	    chipname = "ViRGE/GX";
+	 else
+	    chipname = "ViRGE/DX";
       }
       else if (S3_ViRGE_VX_SERIES(s3ChipId)) {
 	 chipname = "ViRGE/VX";
@@ -811,6 +841,17 @@ s3Probe()
 	 case 4:
 	    s3InfoRec.videoRam = 2 * 1024;
 	    break;
+	 case 6:
+#if 0
+	    /*
+	     * normally this setting is illegal for older ViRGE
+	     * chips, but it is in fact used for example on the
+	     * Elsa Gloria L board
+	     */
+	    if (S3_ViRGE_DXGX_SERIES(s3ChipId))
+#endif
+	       s3InfoRec.videoRam = 1 * 1024;
+	    break;
 	 }
       }
 
@@ -844,6 +885,7 @@ s3Probe()
       xf86bpp = 16;
       s3Weight = RGB16_555;
       xf86weight.red = xf86weight.green = xf86weight.blue = 5;
+s3InfoRec.weight.red = s3InfoRec.weight.green = s3InfoRec.weight.blue = 5;
       s3InfoRec.bitsPerPixel = 16;
       if (s3InfoRec.defaultVisual < 0)
 	 s3InfoRec.defaultVisual = TrueColor;
@@ -854,10 +896,13 @@ s3Probe()
       if (xf86weight.red==5 && xf86weight.green==5 && xf86weight.blue==5) {
 	 s3Weight = RGB16_555;
 	 s3InfoRec.depth = 15;
+s3InfoRec.weight.red = s3InfoRec.weight.green = s3InfoRec.weight.blue = 5;
       }
       else if (xf86weight.red==5 && xf86weight.green==6 && xf86weight.blue==5) {
 	 s3Weight = RGB16_565;
 	 s3InfoRec.depth = 16;
+s3InfoRec.weight.red = s3InfoRec.weight.blue = 5;
+s3InfoRec.weight.green = 6;
       }
       else {
 	 ErrorF(
@@ -872,25 +917,19 @@ s3Probe()
       if (defaultColorVisualClass < 0)
 	 defaultColorVisualClass = s3InfoRec.defaultVisual;
       break;
-#if 0
    case 24:
-#ifdef NOT_YET
-      s3InfoRec.depth = 24;
-      s3InfoRec.bitsPerPixel = 32; /* Use packed 24 bpp (RGB) but this
-				      should be transparant for clients */
-      s3InfoRec.bitsPerPixel = 24; /* not not yet or not here ? HACK24 */
+   case 32:
+      xf86bpp = 32;
+      s3InfoRec.depth = 24;	   /* actually 24 bpp */
+      s3InfoRec.bitsPerPixel = 32; /* to work with things higher up */
       s3Weight = RGB32_888;
       /* s3MaxClock = S3_MAX_32BPP_CLOCK; */
       xf86weight.red =  xf86weight.green = xf86weight.blue = 8;
-      if (s3InfoRec.defaultVisual < 0)
-	 s3InfoRec.defaultVisual = TrueColor;
-      if (defaultColorVisualClass < 0)
-	 defaultColorVisualClass = s3InfoRec.defaultVisual;
+s3InfoRec.weight.red = s3InfoRec.weight.green = s3InfoRec.weight.blue = 8;
+      s3InfoRec.defaultVisual = TrueColor;
+      defaultColorVisualClass = s3InfoRec.defaultVisual;
       break;
-#else
-      xf86bpp = 32;
-      /* FALLTHROUGH */
-#endif
+   #if 0
    case 32:
       s3InfoRec.depth = 24;
       s3InfoRec.bitsPerPixel = 32; /* Use sparse 24 bpp (RGBX) */
@@ -902,10 +941,10 @@ s3Probe()
       if (defaultColorVisualClass < 0)
 	 defaultColorVisualClass = s3InfoRec.defaultVisual;
       break;
-#endif
+   #endif
    default:
       ErrorF(
-	"Invalid value for bpp.  Valid values are 8, 15, 16"
+	"Invalid value for bpp.  Valid values are 8, 15, 16, and 24/32"
 	/*", 24 and 32"*/
 	".\n");
       xf86DisableIOPorts(s3InfoRec.scrnIndex);
@@ -921,6 +960,8 @@ s3Probe()
    }
 
    s3Bpp = xf86bpp / 8;
+   realS3Bpp = s3Bpp;
+   if (s3Bpp == 4) realS3Bpp = 3;
 
    if (S3_ANY_ViRGE_SERIES(s3ChipId)) {
       if (s3RamdacType != UNKNOWN_DAC && !DAC_IS_TRIO) {
@@ -932,6 +973,24 @@ s3Probe()
 	 s3RamdacType = S3_TRIO64_DAC;
 	 s3InfoRec.ramdac = xf86TokenToString(s3DacTable, s3RamdacType);
       }
+      if (S3_ViRGE_DXGX_SERIES(s3ChipId)) {
+	 if ( OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions) &&
+	     !OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions) &&
+	     !OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions)) {
+	    ErrorF("%s %s: for ViRGE/DX/GX chips you shouldn't specify any Clockchip\n"
+		   "\t other than \"s3_trio64v2\" or maybe \"s3_trio64\"\n",
+		   XCONFIG_PROBED, s3InfoRec.name);
+	    /* Clear the other clock options */
+	    OFLG_ZERO(&s3InfoRec.clockOptions);
+	 }
+	 if (S3_ViRGE_DXGX_SERIES(s3ChipId) &&
+	     !OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions)) {
+	    OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions);
+	    OFLG_SET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions);
+	    clockchip_probed = XCONFIG_PROBED;
+	 }
+      }
+      else
       if ( OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions) &&
 	  !OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions)) {
 	 ErrorF("%s %s: for ViRGE chips you shouldn't specify a Clockchip\n",
@@ -939,7 +998,8 @@ s3Probe()
 	 /* Clear the other clock options */
 	 OFLG_ZERO(&s3InfoRec.clockOptions);
       }
-      if (!OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions)) {
+      if (!OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions) && 
+	  !OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions)) {
 	 OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions);
 	 OFLG_SET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions);
 	 clockchip_probed = XCONFIG_PROBED;
@@ -1010,25 +1070,50 @@ s3Probe()
    }
 
    /* Now check/set the DAC speed */
-   if (s3InfoRec.dacSpeed <= 0) {
-      switch (s3RamdacType) {
-      case S3_TRIO64_DAC:
-	 if (S3_ViRGE_VX_SERIES(s3ChipId))
-	    s3InfoRec.dacSpeed = 220000;
-	 else
-	    s3InfoRec.dacSpeed = 135000;
-	 break;
-      default:
-	 s3InfoRec.dacSpeed = 800000;
-	 break;
-      }
+
+   if (s3InfoRec.dacSpeeds[3] <= 0 && s3InfoRec.dacSpeeds[2] > 0) 
+      s3InfoRec.dacSpeeds[3] = s3InfoRec.dacSpeeds[2];
+
+   if (S3_ViRGE_VX_SERIES(s3ChipId)) {
+      if (s3InfoRec.dacSpeeds[0] <= 0) s3InfoRec.dacSpeeds[0] = 220000;
+      if (s3InfoRec.dacSpeeds[1] <= 0) s3InfoRec.dacSpeeds[1] = 220000;
+      if (s3InfoRec.dacSpeeds[2] <= 0) s3InfoRec.dacSpeeds[2] = 135000;
+      if (s3InfoRec.dacSpeeds[3] <= 0) s3InfoRec.dacSpeeds[3] = 135000;
+   }
+   else if (S3_ViRGE_DXGX_SERIES(s3ChipId)) {
+      if (s3InfoRec.dacSpeeds[0] <= 0) s3InfoRec.dacSpeeds[0] = 170000;
+      if (s3InfoRec.dacSpeeds[1] <= 0) s3InfoRec.dacSpeeds[1] = 170000;
+      if (s3InfoRec.dacSpeeds[2] <= 0) s3InfoRec.dacSpeeds[2] = 135000;
+      if (s3InfoRec.dacSpeeds[3] <= 0) s3InfoRec.dacSpeeds[3] = 135000;
+   }
+   else {
+      if (s3InfoRec.dacSpeeds[0] <= 0) s3InfoRec.dacSpeeds[0] = 135000;
+      if (s3InfoRec.dacSpeeds[1] <= 0) s3InfoRec.dacSpeeds[1] =  95000;
+      if (s3InfoRec.dacSpeeds[2] <= 0) s3InfoRec.dacSpeeds[2] =  57000;
+      if (s3InfoRec.dacSpeeds[3] <= 0) s3InfoRec.dacSpeeds[3] =  57000;
    }
 
+   if (s3InfoRec.dacSpeedBpp <= 0)
+/*
+      if (xf86bpp > 24 && s3InfoRec.dacSpeeds[3] > 0)
+	 s3InfoRec.dacSpeedBpp = s3InfoRec.dacSpeeds[3];
+*/
+      if (0) /* no real 32 bpp here */ ;
+      else if (xf86bpp >= 24 && s3InfoRec.dacSpeeds[2] > 0)
+	 s3InfoRec.dacSpeedBpp = s3InfoRec.dacSpeeds[2];
+      else if (xf86bpp > 8 && xf86bpp < 24 && s3InfoRec.dacSpeeds[1] > 0)
+	 s3InfoRec.dacSpeedBpp = s3InfoRec.dacSpeeds[1];
+      else if (xf86bpp <= 8 && s3InfoRec.dacSpeeds[0] > 0)
+	 s3InfoRec.dacSpeedBpp = s3InfoRec.dacSpeeds[0];
+
    if (xf86Verbose) {
-      ErrorF("%s %s: Ramdac speed: %d\n",
+      ErrorF("%s %s: Ramdac speed: %d MHz",
 	     OFLG_ISSET(XCONFIG_DACSPEED, &s3InfoRec.xconfigFlag) ?
 	     XCONFIG_GIVEN : XCONFIG_PROBED, s3InfoRec.name,
-	     s3InfoRec.dacSpeed / 1000);
+	     s3InfoRec.dacSpeeds[0] / 1000);
+      if (s3InfoRec.dacSpeedBpp != s3InfoRec.dacSpeeds[0])
+	 ErrorF("  (%d MHz for %d bpp)",s3InfoRec.dacSpeedBpp / 1000, xf86bpp);
+      ErrorF("\n");
    }
 
    /* Check when pixmux is supported */
@@ -1066,7 +1151,8 @@ s3Probe()
     * generation ramdacs will have a built in clock (i.e. TI 3025)
     */
 
-   if (OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions)) {
+   if (OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions) ||
+       OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions)) {
       unsigned char sr8;
       int m,n,n1,n2, mclk;
 
@@ -1101,6 +1187,19 @@ s3Probe()
       else {
 	 s3InfoRec.s3MClk = mclk;
       }
+      if (s3InfoRec.MemClk > 0) {
+	 /* some sanity checks */
+	 if (s3InfoRec.MemClk < 40000 || s3InfoRec.MemClk > 100000) {
+	    ErrorF("%s %s: MCLK %1.3f MHz too low/high, not changed!\n",
+		   OFLG_ISSET(XCONFIG_DACSPEED, &s3InfoRec.xconfigFlag) ?
+		   XCONFIG_GIVEN : XCONFIG_PROBED, s3InfoRec.name, 
+		   s3InfoRec.MemClk / 1000.0);
+	    s3InfoRec.MemClk = 0;
+	 }
+	 else if (xf86Verbose)
+	    ErrorF("%s %s: set MCLK to %1.3f MHz\n",
+		   XCONFIG_GIVEN, s3InfoRec.name, s3InfoRec.MemClk / 1000.0);
+      }
    } else {
       s3ClockSelectFunc = s3ClockSelect;
       numClocks = 16;
@@ -1115,11 +1214,14 @@ s3Probe()
    if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions)) {
       if (OFLG_ISSET(CLOCK_OPTION_ICD2061A, &s3InfoRec.clockOptions)) {
 	 maxRawClock = 120000;
-      } else if (OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions)) {
+      } else if (OFLG_ISSET(CLOCK_OPTION_S3TRIO, &s3InfoRec.clockOptions) ||
+		 OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions)) {
 	 if (S3_ViRGE_VX_SERIES(s3ChipId))
-	    maxRawClock = 220000;
+	    maxRawClock = s3InfoRec.dacSpeeds[0];
+	 else if (S3_ViRGE_DXGX_SERIES(s3ChipId))
+	    maxRawClock = s3InfoRec.dacSpeeds[0];
 	 else
-	    maxRawClock = 135000;
+	    maxRawClock = s3InfoRec.dacSpeeds[0];
       } else {
 	 /* Shouldn't get here */
 	 maxRawClock = 0;
@@ -1136,23 +1238,15 @@ s3Probe()
 
    switch (s3RamdacType) {
    case S3_TRIO64_DAC:
-      if (s3ATT498PixMux)
-	 s3InfoRec.maxClock = s3InfoRec.dacSpeed;
-      else if (s3Bpp < 4 && !S3_ViRGE_VX_SERIES(s3ChipId))
-	 s3InfoRec.maxClock = 80000;
-      else
-	 if (S3_ViRGE_VX_SERIES(s3ChipId))
-	    s3InfoRec.maxClock = 135000;
-	 else
-	    s3InfoRec.maxClock = 50000;
+      s3InfoRec.maxClock = s3InfoRec.dacSpeedBpp;
       break;
    default:
       /* For DACs we don't have special code for, keep this as a limit */
       s3InfoRec.maxClock = s3MaxClock;
    }
-   /* Check that maxClock is not higher than dacSpeed */
-   if (s3InfoRec.maxClock > s3InfoRec.dacSpeed)
-      s3InfoRec.maxClock = s3InfoRec.dacSpeed;
+   /* Check that maxClock is not higher than dacSpeeds[0] */
+   if (s3InfoRec.maxClock > s3InfoRec.dacSpeeds[0])
+      s3InfoRec.maxClock = s3InfoRec.dacSpeeds[0];
 
    /* Check if this exceeds the clock chip's limit */
    if (clockDoublingPossible)
@@ -1272,7 +1366,7 @@ redo_mode_lookup:
 	 ErrorF("%s %s: Height of mode \"%s\" is too large (max is %d)\n",
 		XCONFIG_PROBED, s3InfoRec.name, pMode->name, maxDisplayHeight);
 	 xf86DeleteMode(&s3InfoRec, pMode);
-      } else if ((pMode->HDisplay * (1 + pMode->VDisplay) * s3Bpp) >
+      } else if ((pMode->HDisplay * (1 + pMode->VDisplay) * realS3Bpp/*s3Bpp*/) >
 		 s3InfoRec.videoRam * 1024) {
 	 ErrorF("%s %s: Too little memory for mode \"%s\"\n", XCONFIG_PROBED,
 		s3InfoRec.name, pMode->name);
@@ -1571,7 +1665,7 @@ redo_mode_lookup:
 	 ErrorF("%s %s: Using 16 bpp.  Color weight: %1d%1d%1d\n",
 		XCONFIG_GIVEN, s3InfoRec.name, xf86weight.red,
 		xf86weight.green, xf86weight.blue);
-      else if (xf86bpp == 24)
+      else if (realS3Bpp == 3)
 	 ErrorF("%s %s: Using packed 24 bpp.  Color weight: %1d%1d%1d\n",
 		XCONFIG_GIVEN, s3InfoRec.name, xf86weight.red,
 		xf86weight.green, xf86weight.blue);
@@ -1615,18 +1709,18 @@ redo_mode_lookup:
 	 return (FALSE);
       }
    }
-   s3BppDisplayWidth = s3Bpp * s3DisplayWidth;
+   s3BppDisplayWidth = realS3Bpp /*s3Bpp*/ * s3DisplayWidth;
    /*
     * Work out where to locate S3's HW cursor storage.  It must be on a
-    * 1k boundary.  When using a RAMDAC cursor, set s3CursorStartY
-    * and s3CursorLines appropriately for the memory usage calculation below
+    * 1k boundary.  We now set the cursor at the top of video memory -1K
+    * to fix some problems on OS/2. SM[07/03/97]
     */
 
    if (OFLG_ISSET(OPTION_SW_CURSOR, &s3InfoRec.options)) {
       s3CursorStartY = s3InfoRec.virtualY;
       s3CursorLines = 0;
    } else {
-      int st_addr = (s3InfoRec.virtualY * s3BppDisplayWidth + 1023) & ~1023;
+      int st_addr = s3InfoRec.videoRam * 1024 - 1024;
       s3CursorStartX = st_addr % s3BppDisplayWidth;
       s3CursorStartY = st_addr / s3BppDisplayWidth;
       s3CursorLines = ((s3CursorStartX + 1023) / s3BppDisplayWidth) + 1;
@@ -1649,8 +1743,8 @@ redo_mode_lookup:
     * way it will require the recalculation of everything above.  This one
     * is in the too-hard basket.
     */
-   if ((s3BppDisplayWidth * (s3CursorStartY + s3CursorLines)) >
-       s3InfoRec.videoRam * 1024) { /* XXXX improve this message */
+   if ((s3BppDisplayWidth * s3InfoRec.virtualY) >
+       (s3InfoRec.videoRam * 1024 - 1024)) { /* XXXX improve this message */
       ErrorF("%s %s: Display size %dx%d is too large: ",
              OFLG_ISSET(XCONFIG_VIRTUAL,&s3InfoRec.xconfigFlag) ?
                  XCONFIG_GIVEN : XCONFIG_PROBED,
@@ -1667,8 +1761,12 @@ redo_mode_lookup:
 	     s3InfoRec.virtualX, s3InfoRec.virtualY);
    }
 
-   if (OFLG_ISSET(OPTION_POWER_SAVER, &s3InfoRec.options))
-      s3PowerSaver = TRUE;
+#ifdef DPMSExtension
+   if (DPMSEnabledSwitch ||
+       (OFLG_ISSET(OPTION_POWER_SAVER, &s3InfoRec.options) &&
+	!DPMSDisabledSwitch))
+      defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
 
    if (! (s3Port59 | s3Port5A)) { /* s3Port59/s3Port5A not yet initialized */
       if (s3InfoRec.MemBase != 0) {
@@ -1829,8 +1927,13 @@ s3GendacClockSelect(freq)
 #if defined(PC98_PW)
 	 (void) S3gendacSetClock(freq, 7);  /* PW805i can't use reg 2 */
 #else
-
-	 (void) S3TrioSetClock(freq, 2); /* can't fail */
+	 
+	 if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
+	    (void) S3Trio64V2SetClock(freq, 2); /* can't fail */
+	 else if (S3_ViRGE_VX_SERIES(s3ChipId))
+	    (void) S3ViRGE_VXSetClock(freq, 2); /* can't fail */
+	 else
+	    (void) S3TrioSetClock(freq, 2); /* can't fail */
 #endif
 	 outb(vgaCRIndex, 0x42);/* select the clock */
 #if defined(PC98_PW)
@@ -1852,7 +1955,7 @@ s3GendacClockSelect(freq)
  *			MArk (mvojkovi@ucsd.edu)
  */
 static int
-s3ValidMode(DisplayModePtr pMode, Bool verbose)
+s3ValidMode(DisplayModePtr pMode, Bool verbose, int flag)
 {
     Bool ModeCantPixmux = FALSE;
 
@@ -1870,7 +1973,7 @@ s3ValidMode(DisplayModePtr pMode, Bool verbose)
 	   ErrorF("%s %s: Height of mode \"%s\" is too large (max is %d)\n",
 		XCONFIG_PROBED, s3InfoRec.name, pMode->name, maxDisplayHeight);
 	return MODE_BAD;
-    } else if((pMode->HDisplay * (1 + pMode->VDisplay) * s3Bpp) >
+    } else if((pMode->HDisplay * (1 + pMode->VDisplay) * realS3Bpp/*s3Bpp*/) >
 		 s3InfoRec.videoRam * 1024) {
 	if(verbose)
 	   ErrorF("%s %s: Too little memory for mode \"%s\"\n", XCONFIG_PROBED,

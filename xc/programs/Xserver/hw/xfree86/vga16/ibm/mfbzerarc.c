@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/mfbzerarc.c,v 1.1.1.2 1996/01/03 07:21:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/mfbzerarc.c,v 3.1 1996/12/23 06:52:47 dawes Exp $ */
+
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +28,7 @@ in this Software without prior written authorization from the X Consortium.
 ********************************************************/
 /* GJA -- Took mfb code and modified it. */
 
-/* $XConsortium: mfbzerarc.c /main/3 1995/11/13 07:04:33 kaleb $ */
+/* $XConsortium: mfbzerarc.c /main/4 1996/02/21 17:56:52 kaleb $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"

@@ -1,5 +1,4 @@
-/* $XConsortium: hercules.c /main/5 1995/10/25 12:06:02 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hercules/hercules.c,v 3.5 1996/02/04 09:09:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hercules/hercules.c,v 3.7 1996/12/23 06:48:06 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -15,6 +14,7 @@
  * Pascal Haible 4/94 haible@IZFM.Uni-Stuttgart.DE
  *
  */
+/* $XConsortium: hercules.c /main/8 1996/10/22 10:35:33 kaleb $ */
 
 #define _NEED_SYSI86
 
@@ -252,6 +252,9 @@ HGA6845Probe()
 
     monoInfoRec.virtualX = HGA6845HDisplay;
     monoInfoRec.virtualY = HGA6845VDisplay;
+
+    /* Inform the code above that the framebuffer is banked. H.J. */
+    monoInfoRec.bankedMono = TRUE;
 
     return(TRUE);
 }

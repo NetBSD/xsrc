@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_video.c,v 3.3 1996/02/04 09:09:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_video.c,v 3.4 1996/12/23 06:49:51 dawes Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bsdi_video.c /main/3 1995/11/13 05:55:43 kaleb $ */
+/* $XConsortium: bsdi_video.c /main/4 1996/02/21 17:51:22 kaleb $ */
 
 #include "X.h"
 #include "input.h"

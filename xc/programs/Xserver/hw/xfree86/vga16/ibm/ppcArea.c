@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcArea.c,v 3.3 1996/02/04 09:11:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcArea.c,v 3.4 1996/12/23 06:52:50 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
 */
-/* $XConsortium: ppcArea.c /main/3 1995/11/13 07:04:41 kaleb $ */
+/* $XConsortium: ppcArea.c /main/4 1996/02/21 17:57:02 kaleb $ */
 
 /* 
  * ppc solid area fill

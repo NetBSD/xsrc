@@ -1,17 +1,16 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- Titles information -->
 
 <title>Information for SVR4 Users
 <author>The XFree86 Project, Inc
-<date>14 Oct 1996
+<date>1 June 1997
 
 <abstract>
-<bf>NOTE:</bf>
-       If you intend to use any of the accelerated servers, read section
-      10 and follow the instructions.  Otherwise the X server will crash
-      when exiting, restarting, or switching VTs.
+<bf>NOTE:</bf> If you intend to use any of the accelerated servers, read section
+10 and follow the instructions.  Otherwise the X server will crash
+when exiting, restarting, or switching VTs.
 </abstract>
 
 <!-- Table of contents -->
@@ -22,21 +21,21 @@
 <sect>SVR4 versions on which XFree86 has been tested<p>
   XFree86 has been tested on the following versions of <bf>SVR4.0</bf>:
 <itemize>
-<item>	Microport: 2.2, 3.1, 4.1, 4.2
-<item>	Esix: 4.0.3A, 4.0.4, 4.0.4.1
-<item>	Dell: 2.1, 2.2, 2.2.1
-<item>	UHC: 2.0, 3.6
-<item>	Consensys: 1.2
-<item>	MST: 4.0.3
-<item>	AT&amp;T: 2.1, 4.0
-<item>	ISC: 4.0.3
-<item>	NCR: MP-RAS
-<item>	PANIX: 5.0
+<item>Microport: 2.2, 3.1, 4.1, 4.2
+<item>Esix: 4.0.3A, 4.0.4, 4.0.4.1
+<item>Dell: 2.1, 2.2, 2.2.1
+<item>UHC: 2.0, 3.6
+<item>Consensys: 1.2
+<item>MST: 4.0.3
+<item>AT&amp;T: 2.1, 4.0
+<item>ISC: 4.0.3
+<item>NCR: MP-RAS
+<item>PANIX: 5.0
 </itemize>
 and the following versions of <bf>SVR4.2</bf>:
 <itemize>
-<item>	Consensys
-<item>	Novell UnixWare 1.x and 2.0
+<item>Consensys
+<item>Novell UnixWare 1.x and 2.0
 </itemize>
 Basically, we believe that XFree86 binaries will run unmodified on any
 ISA, EISA, or MCA platform version version of SVR4.0 (Solaris 2.x is an
@@ -183,6 +182,17 @@ compatibility.<p>
    running it.  (Note that mouseadmin will need to be rerun after
    rebuilding a kernel unless you add an appropriate entry to
    <tt>/etc/conf/node.d/gmse.</tt>)<p>
+
+   <bf>NOTE</bf>: Many of the accelerated server/drivers have problems
+   when using a HW cursor and Xqueue together.  If you have a serial mouse,
+   you can work around this by not using Xqueue.  Otherwise the only
+   workaround is to disable the HW cursor.  This is done by adding the line:
+<tscreen><verb>
+   Option "sw_cursor"
+</verb></tscreen>
+   to the Device section of your XF86Config file.  The S3 server is the
+   only one known to not have this problem.
+   <p>
    If you have problems with both Xqueue and your standard asy driver with
    SVR4, then you should install SAS.  When using SAS, set up <tt>XF86Config</tt> as
    you would for the standard driver.<p>
@@ -227,7 +237,7 @@ spelled out
    <tt>/etc/conf/cf.d/init.base</tt> or you will lose the changes when you next
    rebuild the kernel.<p>
 
-<item> If you want to change the number of VTs available on SVR4, just edit the
+<item>If you want to change the number of VTs available on SVR4, just edit the
    file <tt>/etc/default/workstations</tt> and change the number there.  
    The device
    nodes will be created/deleted next time you reboot.<p>
@@ -256,6 +266,7 @@ spelled out
    your <tt>/usr/X11R6/lib/xdm/Xsession</tt> script (when using xdm).<p>
 
 </enum>
+<!--
 <sect>Notes for running XFree86 on SVR4.2<p>
   In addition to the notes for SVR4.0, you need to be aware of a few
 problems with SVR4.2.  Basically, the base SVR4.2 code has broken
@@ -273,6 +284,7 @@ than <tt>UNIX</tt>.
 The mechanisms for doing this are described above.  This is not a problem
 for clients using the X11R6 X libraries because <tt>UNIX</tt> is no longer
 considered a local connection type.<p>
+-->
 
 <sect>Building non-core clients with SVR4<p>
 <enum>
@@ -296,17 +308,17 @@ a generic problem with the X client and X11R5/6; the others are to work
 with some things that are specific to the XFree86 servers.  Here are the
 things you need to do:
 <enum>
-<item> Set and export <tt>&dollar;XMERGE</tt> in your <tt>.xinitrc</tt>
+<item>Set and export <tt>&dollar;XMERGE</tt> in your <tt>.xinitrc</tt>
 	   and/or <tt>.xsession</tt> files.
 	   In general, you should set <tt>XMERGE=vga</tt>.<p>
-<item> You MUST use the "xqueue" driver instead of the server's native
+<item>You MUST use the "xqueue" driver instead of the server's native
 	   keyboard and mouse driver, if you intend to use the "zoom"
 	   feature of the `dos' client.  Otherwise the mouse will cease to
 	   function after the first time you "zoom" (because the `dos'
 	   client uses the native driver, and the server will not be able
 	   to access the mouse after the zoom ends).  The only other
 	   alternative is to use separate mice on separate devices.<p>
-<item> You need to install the `dos' client fonts in the XFree86 font
+<item>You need to install the `dos' client fonts in the XFree86 font
 	   directories.  Locate the BDF files (search for files with names
 	   matching the pattern `*pc???.bdf').  These will likely be
 	   <tt>/usr/lib/X11/fonts/misc</tt>.  
@@ -323,7 +335,7 @@ things you need to do:
 	# Do this only if the server is already running.
 	/usr/X11R6/bin/xset fp rehash
 </verb>
-<item> The `dos' client program uses a translation table to map from
+<item>The `dos' client program uses a translation table to map from
 	   an internal key representation to the X keymap.  It is likely
 	   that the table supplied with Merge 2.2 use the mapping for
 	   SCO's server.  A correct mapping table is available in
@@ -338,7 +350,7 @@ things you need to do:
 	   It will be obvious if this new code table is needed, as the
 	   arrow keys on the keypad will fail to function in the `dos'
 	   client if the wrong table is installed.<p>
-<item> For the "zoom" feature to work correctly, you must run `dos'
+<item>For the "zoom" feature to work correctly, you must run `dos'
 	   with &dollar;DISPLAY set to "unix:N" or "host_name:N".  If you use
 	   just ":0", the client will not function properly.  `dos' does
 	   not accept a `-display' parameter.  Hence it is probably a good
@@ -418,13 +430,22 @@ Thanks to John M. Sully of Microport for helping us find a simple
 workaround for this problem, and giving us permission to release the
 information.<p>
 
+<sect>Other problems<p>
+Some accelerated drivers may cause the machine to lockup when starting
+up the server on some versions of SVR4.0.  The problem seems to be
+related to the kernel checking for the presence of physical memory
+when mmaping /dev/pmem.  This can cause problems when mapping memory
+mapped registers.  This is known to be a problem with the MGA driver in
+the SVGA server.  Some other drivers may be affected too.  We currently
+have no workaround for this.
+
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.10 1996/10/16 14:41:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.1 1997/06/01 12:33:36 dawes Exp $
 
 
 
 
 
-$XConsortium: SVR4.sgml /main/4 1995/11/12 20:00:10 kaleb $
+$XConsortium: SVR4.sgml /main/8 1996/10/27 11:06:06 kaleb $
 </verb>
 </article>

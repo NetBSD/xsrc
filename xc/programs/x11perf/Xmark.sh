@@ -8,6 +8,9 @@
 # Usage: Xmark datafile
 #
 ############################################################
+# $XFree86: xc/programs/x11perf/Xmark.sh,v 1.2 1997/01/04 12:20:20 dawes Exp $
+#
+#
 # CHANGE HISTORY:
 #
 # X11perfcompDR  --  Creates a Digital Review compatible breakdown of 
@@ -587,10 +590,10 @@ cat > awkfile.$$ <<'EOS'
 	weight[name] = 0;			# clear to avoid double counting
 	sumofweights += thisweight;
 	printf("%d:",thisweight);		# output in new format
-	printf("%9.1f\n",rate);
+	printf("%.1f\n",rate);
     }
     END{
-	printf("sumof:%9.1f\n",sumofweights);
+	printf("sumof:%.1f\n",sumofweights);
     }
 EOS
 
@@ -600,7 +603,7 @@ rm -f awkfile.$$				# cleanup
 # calculate the weighted average 
 
 sumofweights=`grep sumof rates.$$ | awk -F: ' { print($2) }' - `
-if [ "$sumofweights" -ne "4566" ]
+if [ "$sumofweights" != "4566.0" ]
 then
     echo "ERROR: sum of weights =$sumofweights, not equal to 4566.0;"
     echo "ABORTING!"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgafillsp.c,v 3.2 1996/02/04 09:15:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgafillsp.c,v 3.4 1996/12/23 06:59:41 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -75,7 +75,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgafillsp.c /main/3 1995/11/13 09:26:31 kaleb $ */
+/* $XConsortium: vgafillsp.c /main/4 1996/02/21 18:10:53 kaleb $ */
 
 #include "vga256.h"
 #include "mergerop.h"
@@ -250,7 +250,7 @@ int fSorted;
 
     pStipple = pGC->stipple;
 
-    stwidth = pStipple->devKind >> 2;
+    stwidth = pStipple->devKind >> PWSH;
     stippleWidth = pStipple->drawable.width;
     stippleHeight = pStipple->drawable.height;
     psrcBase = (unsigned long *) pStipple->devPrivate.ptr;
@@ -309,7 +309,7 @@ int fSorted;
 	else
 	{
 	    maskbits (x, w, startmask, endmask, nlw);
-	    nextPartBits = (x & 0x3) + w;
+	    nextPartBits = (x & (PGSZB-1)) + w;
 	    if (nextPartBits < partBitsLeft)
 	    {
 		if (startmask)
@@ -463,7 +463,8 @@ vga2568Stipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	    maskbits (x, w, startmask, endmask, nlw);
 	}
 	bits = src[y % stippleHeight];
-	RotBitsLeft (bits, (x & (31 & ~3)));
+	RotBitsLeft (bits, (x & ((PGSZ-1) & ~PIM)));
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    SETRW(dst);
@@ -558,8 +559,9 @@ vga2568Stipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		    NextBitGroup (bits);
 		}
 	    }
-	  }
+	}
 	else
+#endif /* PPW == 4 */
 	{
 	    SETRW(dst);
 	    if (startmask)
@@ -681,6 +683,7 @@ vga2568OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	}
 	bits = src[y % stippleHeight];
 	RotBitsLeft (bits, (x & ((PGSZ-1) & ~PIM)));
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    SETRW(dst);
@@ -765,8 +768,9 @@ vga2568OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		    NextBitGroup (bits);
 		}
 	    }
-	  }
+	}
 	else
+#endif /* PPW == 4 */
 	{
 	    SETRW(dst);
 	    if (startmask)
@@ -774,13 +778,13 @@ vga2568OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 		xor = GetBitGroup(bits);
 		*dst = MaskRRopPixels(*dst, xor, startmask);
 		dst++; CHECKRWO(dst);
-		RotBitsLeft (bits, 4);
+		RotBitsLeft (bits, PGSZB);
 	    }
 	    while (nlw--)
 	    {
 		RRopBitGroup(dst, GetBitGroup(bits));
 		dst++; CHECKRWO(dst);
-		RotBitsLeft (bits, 4);
+		RotBitsLeft (bits, PGSZB);
 	    }
 	    if (endmask)
 	    {

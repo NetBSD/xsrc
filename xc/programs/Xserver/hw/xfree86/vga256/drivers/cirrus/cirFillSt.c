@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirFillSt.c,v 3.13 1996/09/29 13:39:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirFillSt.c,v 3.14.2.2 1997/05/21 15:02:43 dawes Exp $ */
 /*
  *
  * Copyright 1993 by H. Hanemaayer, Utrecht, The Netherlands
@@ -24,7 +24,7 @@
  * Author:  H. Hanemaayer, <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cirFillSt.c /main/2 1995/11/13 08:20:30 kaleb $ */
+/* $XConsortium: cirFillSt.c /main/6 1996/10/25 10:30:52 kaleb $ */
 
 /*
  * These are the functions for stipples and tiles, which call low-level
@@ -194,7 +194,7 @@ void CirrusFillRectTile(pDrawable, pGC, nBox, pBox)
 	pPix = pGC->tile.pixmap;
 	width = pPix->drawable.width;
 	height = pPix->drawable.height;
-	pixWidth = PixmapBytePad(width, pPix->drawable.depth);
+	pixWidth = PixmapBytePad(width, pPix->drawable.bitsPerPixel);
 
 	destPitch = (int)
 		(((PixmapPtr)(pDrawable->pScreen->devPrivate))->devKind);
@@ -211,19 +211,22 @@ void CirrusFillRectTile(pDrawable, pGC, nBox, pBox)
 		 * Always use BitBLT on the 543x.
 		 */
 		if (width == 16 && height == 16 && 
-		((!(HAVE543X() || HAVE754X() || cirrusChip == CLGD5446) &&
+		((!(HAVE543X() || HAVE75XX() || cirrusChip == CLGD5446
+		    || cirrusChip == CLGD5480) &&
 		vga256InfoRec.displayWidth < 2048) ||
-		((HAVE543X() || HAVE754X() || cirrusChip == CLGD5446) && 
+		((HAVE543X() || HAVE75XX() || cirrusChip == CLGD5446
+		  || cirrusChip == CLGD5480) && 
 		 vga256InfoRec.displayWidth < 4096)))
 			goto tile16x16;
 		if (width == 32 && height == 32 && 
-		(HAVE543X() || HAVE754X() || cirrusChip == 5446) &&
+		(HAVE543X() || HAVE75XX() || cirrusChip == 5446
+		 || cirrusChip == CLGD5480) &&
 		vga256InfoRec.displayWidth < 2048 && cirrusUseMMIO)
 			goto tile32x32;
 #if 0	/* broken. */
 		if (width * height >= 500 && (width != 32 || height > 32 ||
-		cirrusBusType == CIRRUS_SLOWBUS || HAVE543X() || HAVE754X() ||
-		cirrusChip == CLGD5446))
+		cirrusBusType == CIRRUS_SLOWBUS || HAVE543X() || HAVE755X() ||
+		cirrusChip == CLGD5446 || cirrusChip == CLGD5480))
 			goto tileblit;
 #endif			
 	}

@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 <title>		The Hitchhiker's Guide to X386/XFree86 Video Timing 
@@ -113,9 +113,9 @@ formulas and examples to help you use them.
 There are some fundamental things you need to know before hacking an Xconfig
 entry.  These are:
 <enum>
-<item> your monitor's horizontal and vertical sync frequency options
-<item> your video adapter's driving clock frequency, or "dot clock"
-<item> your monitor's bandwidth
+<item>your monitor's horizontal and vertical sync frequency options
+<item>your video adapter's driving clock frequency, or "dot clock"
+<item>your monitor's bandwidth
 </enum>
 
 The monitor sync frequencies:
@@ -788,11 +788,11 @@ a bad idea for X.
     A. In a nutshell:
 
 <enum>
-<item> for any fixed driving frequency, raising max resolution
+<item>for any fixed driving frequency, raising max resolution
 	    incurs the penalty of lowering refresh rate and thus
 	    introducing more flicker.
 
-<item> if high resolution is desirable and your monitor 
+<item>if high resolution is desirable and your monitor 
 	    supports it, try to get a SVGA card that provides
 	    a matching dot clock or DCF. The higher, the
 	    better!
@@ -1146,13 +1146,13 @@ Finally, remember that increasing either frame length will decrease your
 refresh rate, and vice-versa.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.8 1996/02/04 09:08:28 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.11 1997/01/25 03:22:17 dawes Exp $
 
 
 
 
 
-$XConsortium: VidModes.sgml /main/6 1995/11/12 20:00:16 kaleb $
+$XConsortium: VidModes.sgml /main/7 1996/02/21 17:46:17 kaleb $
 </verb>
 
 </article>

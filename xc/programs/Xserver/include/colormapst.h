@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: colormapst.h,v 1.7 94/04/17 20:25:33 jim Exp $ */
+/* $XConsortium: colormapst.h /main/4 1996/06/17 10:54:31 mor $ */
 #ifndef CMAPSTRUCT_H
 #define CMAPSTRUCT_H 1
 
@@ -114,6 +114,8 @@ typedef struct _ColormapRec
     Entry 	*green;
     Entry	*blue;
     pointer	devPriv;
+    DevUnion	*devPrivates;	/* dynamic devPrivates added after devPriv
+				   already existed - must keep devPriv */
 } ColormapRec;
 	      
 #endif /* COLORMAP_H */

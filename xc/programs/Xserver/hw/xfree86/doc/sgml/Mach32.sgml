@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- Title information -->
@@ -13,9 +13,9 @@
 <!-- Begin the document -->
 
 
-<sect> Supported Cards, RAMDACs, and Bits Per Pixel<p>
+<sect>Supported Cards, RAMDACs, and Bits Per Pixel<p>
 The base support in the Mach32 X server is for 8 bpp, with a dot clock
-of up to 80 MHz.  At present 16 bpp is supported on only three of the
+of up to 80 MHz.  At present 15/16 bpp is supported on only three of the
 many RAMDACs; however those three cover the most commonly sold cards.
 <p>
 <verb>
@@ -25,7 +25,7 @@ Default           80MHz       8      1280x1024i            2Mb
 Default           80MHz       8      1024x768              1Mb
 
 ATI68875         135MHz       8      1280x1024             2Mb
-ATI68875          67MHz      16      1024x768              2Mb
+ATI68875          80MHz      16      1024x768              2Mb
 
 AT&amp;T20C49x        80MHz       8      1024x768              1Mb
 AT&amp;T20C49x        40MHz      16       800x600              2Mb
@@ -90,32 +90,32 @@ almost certainly be set after first running the server with the
 		This entry specifies the RAMDAC type.  The following
 		values are valid for <it>type</it>:
 		<itemize>
-		<item> ati68830
-		<item> sc11483
-		<item> sc11486
-		<item> sc11488
-		<item> ims_g173
-		<item> mu9c4870
-		<item> ati68875*
-		<item> bt885
-		<item> tlc34075*
-		<item> bt476
-		<item> bt478
-		<item> inmos176
-		<item> inmos178
-		<item> bt481*
-		<item> bt482
-		<item> ims_g174
-		<item> mu9c1880
-		<item> mu9c4910
-		<item> sc15025
-		<item> sc15026
-		<item> att20c490*
-		<item> ati68860
-		<item> stg1700
-		<item> sc15021
-		<item> stg1702
-		<item> att21c498
+		<item>ati68830
+		<item>sc11483
+		<item>sc11486
+		<item>sc11488
+		<item>ims_g173
+		<item>mu9c4870
+		<item>ati68875*
+		<item>bt885
+		<item>tlc34075*
+		<item>bt476
+		<item>bt478
+		<item>inmos176
+		<item>inmos178
+		<item>bt481*
+		<item>bt482
+		<item>ims_g174
+		<item>mu9c1880
+		<item>mu9c4910
+		<item>sc15025
+		<item>sc15026
+		<item>att20c490*
+		<item>ati68860
+		<item>stg1700
+		<item>sc15021
+		<item>stg1702
+		<item>att21c498
 		</itemize>
                 Only the ones marked with &lsqb*&rsqb have an effect yet.
 </descrip>
@@ -124,10 +124,10 @@ almost certainly be set after first running the server with the
 There are several known problems with the current version of the
 Mach32 X server.  They include:
 <itemize>
-<item> Not all RAMDACs are supported at higher colour ranges, and not all
+<item>Not all RAMDACs are supported at higher colour ranges, and not all
        that are can be detected properly.  In fact most of the RAMDAC values
        above have no effect except to block higher bit modes.
-<item> Sixteen bit character support (e.g., Chinese and Japanese character
+<item>Sixteen bit character support (e.g., Chinese and Japanese character
        sets) has been known to lose parts of characters.  While this should
        be fixed, if it occurs try running the server with Option
        &dquot;no_linear&dquot;.
@@ -139,7 +139,12 @@ comp.windows.x.i386unix newsgroup.
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.2 1996/10/20 13:33:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.1 1997/05/26 14:36:18 dawes Exp $
+
+
+
+
+$XConsortium: Mach32.sgml /main/4 1996/10/28 04:47:43 kaleb $
 </verb>
 
 </article>

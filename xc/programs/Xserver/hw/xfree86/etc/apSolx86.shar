@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/apSolx86.shar,v 3.3 1996/02/04 09:08:50 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/apSolx86.shar,v 3.4 1996/12/23 06:47:07 dawes Exp $
 # This is a shell archive (produced by shar 3.49)
 # To extract the files from this archive, save it to a file, remove
 # everything above the "!/bin/sh" line above, and type "sh file_name".
@@ -7,7 +7,7 @@
 # made 09/25/1994 14:29 UTC by davidh@barite
 # Source directory /usr10/davidh/aperture
 #
-# $XConsortium: apSolx86.shar /main/3 1995/11/12 20:16:44 kaleb $
+# $XConsortium: apSolx86.shar /main/4 1996/02/21 17:47:22 kaleb $
 #
 # existing files will NOT be overwritten unless -c is specified
 #

@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/os-support/linux/Imakefile,v 3.1 1996/08/21 13:05:41 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/2 1996/10/19 19:10:59 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/os-support/linux/Imakefile,v 3.2 1996/12/27 06:52:58 dawes Exp $
 #include <Server.tmpl>
 
 #if BuildXInputExt
@@ -21,7 +26,7 @@ OBJS = lnx_init.o lnx_video.o IO_utils.o lnx_io.o bios_devmem.o mapVT_noop.o \
        VTsw_usl.o std_kbdEv.o posix_tty.o std_mouse.o std_mseEv.o $(JOYSTICK_OBJ)
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 
 INIT_DEFINES = -DUSE_DEV_FB
 

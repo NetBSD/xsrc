@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_LynxOS.c,v 3.2 1996/02/04 08:56:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_LynxOS.c,v 3.4.2.1 1997/05/06 13:24:17 dawes Exp $ */
 /*
  * Copyright 1993 by Thomas Mueller
  *
@@ -21,14 +21,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: OS_LynxOS.c /main/4 1995/12/09 16:05:12 kaleb $ */
+/* $XConsortium: OS_LynxOS.c /main/5 1996/02/21 17:11:07 kaleb $ */
 
 #include "Probe.h"
 
 #include <fcntl.h>
 #include <conf.h>
-#include <sys/kd.h>
-#include <sys/vt.h>
+#include <kd.h>
+#include <vt.h>
 #include <smem.h>
 
 #include <kernel.h>		/* for PHYSBASE */
@@ -50,7 +50,7 @@ int OpenVideo()
 	if (geteuid() != 0)
 	{
 		fprintf(stderr,
-			"%s: Must be run as root or installed suid-root\n",
+			"%s: Must be run as root\n",
 			MyName);
 		return(-1);
 	}
@@ -80,11 +80,18 @@ void CloseVideo()
  */
 Byte *MapVGA()
 {
+	return(MapMem(0xa0000,0x10000));
+}
+
+Byte *MapMem(address,size)
+	unsigned long address;
+	unsigned long size;
+{
 #define SMEM_NAME	"SuperProbe-VGA"
 	Byte *base;
 
-	base = (Byte *) smem_create(SMEM_NAME, (char *)0xA0000,
-		 0x10000, SM_READ|SM_WRITE);
+	base = (Byte *) smem_create(SMEM_NAME, (char *)address,
+		 size, SM_READ|SM_WRITE);
 	if ((long)base == -1)
 	{
                 fprintf(stderr, "%s: Failed to mmap framebuffer\n", MyName);
@@ -100,6 +107,14 @@ Byte *MapVGA()
  */
 void UnMapVGA(base)
 Byte *base;
+{
+	UnMapMem(base,0x10000);
+	return;
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
 {
 	smem_create(NULL, (char *)base, 0, SM_DETACH);
 	smem_remove(SMEM_NAME);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.0 1996/02/22 05:12:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.2 1996/12/23 06:50:51 dawes Exp $ */
 /*
  * Copyright 1993 by David McCullough <davidm@stallion.oz.au>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: sco_video.c /main/2 1995/11/13 06:08:46 kaleb $ */
+/* $XConsortium: sco_video.c /main/4 1996/02/22 10:46:34 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -85,6 +85,23 @@ unsigned long Size;
 	{
 		int		fd;
 
+#if defined(SVR4)
+		if ((fd = open(DEV_MEM, O_RDWR)) < 0)
+		{
+			FatalError("xf86MapVidMem: failed to open %s (%s)\n",
+				   DEV_MEM, strerror(errno));
+		}
+		base = (pointer)mmap((caddr_t)0, Size, PROT_READ|PROT_WRITE,
+			     MAP_SHARED, fd, (off_t)Base);
+		close(fd);
+		if ((long)base == -1)
+		{
+			FatalError("%s: Could not mmap framebuffer [s=%x,a=%x] (%s)\n",
+				   "xf86MapVidMem", Size, Base, strerror(errno));
+		}
+
+		return(base);
+#else
 		MapDSC[ScreenNum][Region].vaddr    = (char *) NULL;
 		MapDSC[ScreenNum][Region].physaddr = (char *) Base;
 		MapDSC[ScreenNum][Region].length   = Size;
@@ -106,7 +123,9 @@ unsigned long Size;
 		FatalError("xf86MapVidMem:No class map defined for (%x,%x)\n",
 			   Base, Size);
 		/* NOTREACHED */
+#endif
 	}
+
 	base = (pointer)ioctl(xf86Info.consoleFd, MAP_CLASS, class);
 	if ((int)base == -1)
 	{
@@ -129,6 +148,9 @@ unsigned long Size;
 {
 	int	fd;
 
+#if defined (SVR4)
+	munmap(Base, Size);
+#else /* SVR4 */
 	if (MapDSC[ScreenNum][Region].vaddr) {
 	    if ((fd = open("/dev/dmmap", O_RDWR)) < 0) {
 		if (ioctl(fd, KDUNMAPDISP, &MapDSC[ScreenNum][Region]) == -1)
@@ -141,6 +163,7 @@ unsigned long Size;
 	    MapDSC[ScreenNum][Region].length   = 0;
 	    MapDSC[ScreenNum][Region].ioflg    = 0;
 	}
+#endif
 	return;
 }
 
@@ -149,6 +172,9 @@ Bool xf86LinearVidMem()
 {
 	int		fd, ver;
 
+#ifdef SVR4
+	return TRUE;
+#else
 	if ((fd = open("/dev/dmmap", O_RDWR)) >= 0) {
 		ver = ioctl(fd, -1);
 		close(fd);
@@ -160,6 +186,7 @@ Bool xf86LinearVidMem()
 		}
 	}
 	return(FALSE);
+#endif
 }
 
 /***************************************************************************/

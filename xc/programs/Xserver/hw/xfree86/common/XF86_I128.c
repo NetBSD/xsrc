@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_I128.c,v 3.1 1996/02/04 09:05:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_I128.c,v 3.2 1996/12/23 06:43:06 dawes Exp $ */
 /*
  *
  * Copyright 1995 XFree86 Inc.
  *
  *
  */
-/* $XConsortium: XF86_I128.c /main/1 1995/12/02 08:52:12 kaleb $ */
+/* $XConsortium: XF86_I128.c /main/2 1996/02/21 17:37:04 kaleb $ */
 
 #include "X.h"
 #include "os.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000text.c,v 3.2 1996/02/04 09:04:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000text.c,v 3.3 1996/12/23 06:40:55 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -25,7 +25,7 @@
  * Modified for Mach32 By Mike Bernson (mike@mbsun.mlb.org) from mach8 version
  * Modified for the p9000 by chris mason (clmtch@osfmail.isc.rit.edu)
  */
-/* $XConsortium: p9000text.c /main/3 1995/11/12 18:19:37 kaleb $ */
+/* $XConsortium: p9000text.c /main/4 1996/02/21 17:33:15 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

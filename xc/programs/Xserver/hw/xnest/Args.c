@@ -1,4 +1,4 @@
-/* $XConsortium: Args.c,v 1.2 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Args.c /main/3 1996/08/20 11:31:52 kaleb $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -43,6 +43,7 @@ Bool xnestUserBorderWidth = False;
 char *xnestWindowName = NULL;        
 int xnestNumScreens = 0;
 Bool xnestDoDirectColormaps = False;
+Window xnestParentWindow = 0;
 
 int ddxProcessArgument (argc, argv, i)
     int	argc;
@@ -161,6 +162,12 @@ int ddxProcessArgument (argc, argv, i)
   if (!strcmp(argv[i], "-install")) {
     xnestDoDirectColormaps = True;
     return 1;
+  }
+  if (!strcmp(argv[i], "-parent")) {
+    if (++i < argc) {
+      xnestParentWindow = (XID) strtol (argv[i], (char**)NULL, 0);
+      return 2;
+    }
   }
   return 0;
 }

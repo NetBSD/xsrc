@@ -1,5 +1,5 @@
-/* $XConsortium: access.c /main/62 1995/12/07 17:53:09 kaleb $ */
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.15 1996/10/03 08:49:15 dawes Exp $ */
+/* $XConsortium: access.c /main/68 1996/12/15 22:57:09 rws $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.1 1997/05/11 05:04:27 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -48,6 +48,10 @@ SOFTWARE.
 
 ******************************************************************/
 
+#ifdef WIN32
+#include <X11/Xwinsock.h>
+#endif
+
 #include <stdio.h>
 #include <X11/Xtrans.h>
 #include <X11/Xauth.h>
@@ -56,11 +60,17 @@ SOFTWARE.
 #include "misc.h"
 #include "site.h"
 #include <errno.h>
+#include <sys/types.h>
+#ifndef WIN32
 #if !defined(AMOEBA) && !defined(MINIX)
 #ifdef ESIX
 #include <lan/socket.h>
 #else
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #endif
 #include <sys/ioctl.h>
 #else
@@ -150,8 +160,15 @@ SOFTWARE.
 #endif
 #endif
 
+#endif /* WIN32 */
+
 #include "dixstruct.h"
 #include "osdep.h"
+
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
 
 Bool defeatAccessControl = FALSE;
 
@@ -202,6 +219,7 @@ static int AccessEnabled = DEFAULT_ACCESS_CONTROL;
 static int LocalHostEnabled = FALSE;
 static int UsingXdmcp = FALSE;
 
+
 /*
  * called when authorization is not enabled to add the
  * local host to the access list
@@ -243,7 +261,7 @@ AccessUsingXdmcp ()
 }
 
 
-#if ((defined(SVR4) && !defined(sun) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
+#if ((defined(SVR4) && !defined(SCO325) && !defined(sun) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
 
 /* Deal with different SIOCGIFCONF ioctl semantics on these OSs */
 
@@ -338,7 +356,7 @@ DefineSelf (fd)
     int	family, len;
 
     if ((fd = open ("/dev/ip", O_RDWR, 0 )) < 0)
-        Error ("Getting interface configuration");
+        Error ("Getting interface configuration (1)");
 
     /* Indicate that we want to start at the begining */
     ifnet.ib_next = (struct ipb *) 1;
@@ -353,7 +371,7 @@ DefineSelf (fd)
 	if (ioctl (fd, (int) I_STR, (char *) &str) < 0)
 	{
 	    close (fd);
-	    Error ("Getting interface configuration");
+	    Error ("Getting interface configuration (2)");
 	}
 
 	ifaddr.ia_next = (struct in_ifaddr *) ifnet.if_addrlist;
@@ -365,7 +383,7 @@ DefineSelf (fd)
 	if (ioctl (fd, (int) I_STR, (char *) &str) < 0)
 	{
 	    close (fd);
-	    Error ("Getting interface configuration");
+	    Error ("Getting interface configuration (3)");
 	}
 
 	len = sizeof(struct sockaddr_in);
@@ -598,7 +616,7 @@ DefineSelf (fd)
     ifc.ifc_len = sizeof (buf);
     ifc.ifc_buf = buf;
     if (ifioctl (fd, (int) SIOCGIFCONF, (pointer) &ifc) < 0)
-        Error ("Getting interface configuration");
+        Error ("Getting interface configuration (4)");
 
 #ifdef ISC
 #define IFC_IFC_REQ (struct ifreq *) ifc.ifc_buf
@@ -927,8 +945,8 @@ ResetHosts (display)
     }
 }
 
-static Bool
-AuthorizedClient(client)
+/* Is client on the local host */
+Bool LocalClient(client)
     ClientPtr client;
 {
     int    		alen, family, notused;
@@ -936,8 +954,19 @@ AuthorizedClient(client)
     pointer		addr;
     register HOST	*host;
 
-    if (!client || defeatAccessControl)
-	return TRUE;
+#ifdef XCSECURITY
+    /* untrusted clients can't change host access */
+    if (client->trustLevel != XSecurityClientTrusted)
+    {
+	SecurityAudit("client %d attempted to change host access\n",
+		      client->index);
+	return FALSE;
+    }
+#endif
+#ifdef LBX
+    if (!((OsCommPtr)client->osPrivate)->trans_conn)
+	return FALSE;
+#endif
     if (!_XSERVTransGetPeerAddr (((OsCommPtr)client->osPrivate)->trans_conn,
 	&notused, &alen, &from))
     {
@@ -961,6 +990,15 @@ AuthorizedClient(client)
 	xfree ((char *) from);
     }
     return FALSE;
+}
+
+static Bool
+AuthorizedClient(client)
+    ClientPtr client;
+{
+    if (!client || defeatAccessControl)
+	return TRUE;
+    return LocalClient(client);
 }
 
 /* Add a host to the access control list.  This is the external interface
@@ -1322,3 +1360,11 @@ ChangeAccessControl(client, fEnabled)
     AccessEnabled = fEnabled;
     return Success;
 }
+
+/* returns FALSE if xhost + in effect, else TRUE */
+int
+GetAccessControl()
+{
+    return AccessEnabled;
+}
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.c,v 3.10 1996/10/24 14:24:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.c,v 3.11 1996/12/23 06:38:39 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -28,7 +28,7 @@
  *   Added outsw code.
  * Modified for the new cache by Mike Bernson (mike@mbsun.mlb.org)
  */
-/* $XConsortium: mach32im.c /main/8 1995/11/13 11:18:42 kaleb $ */
+/* $XConsortium: mach32im.c /main/10 1996/10/28 05:30:52 kaleb $ */
 
 #include "X.h"
 #include "misc.h"

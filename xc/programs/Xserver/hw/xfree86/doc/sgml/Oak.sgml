@@ -1,16 +1,16 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
 
 <!-- Title information -->
-<title> Information for Oak Technologies Inc. Chipset Users
-<author> Jorge F. Delgado Mendoza (<it>ernar@dit.upm.es</it>)
-<date> 12 March 1996
+<title>Information for Oak Technologies Inc. Chipset Users
+<author>Jorge F. Delgado Mendoza (<it>ernar@dit.upm.es</it>)
+<date>12 March 1996
 
 <!-- Table of contents -->
 <toc>
 
-<sect> Supported chipsets <p>
+<sect>Supported chipsets <p>
 
 The driver is used in the 8-bit / 256-color SVGA server and the mono
 server. The following chipsets for Oak Tech. Inc. are supported:
@@ -51,7 +51,7 @@ those made for the 077.
 Accelerated support is included only for OTI087 chipsets, also Mono
 server is only included for 067/077 chipsets.
 
-<sect> XF86Config options <p>
+<sect>XF86Config options <p>
 
 The following options are of particular interest to the Oak driver. Each
 of them must be specified in the 'svga' driver section of the
@@ -159,7 +159,7 @@ As a rule of thumb, use the option "no_wait", and if it doesn't
 result in corrupting text, lucky you. If not, try "first_wwait", and
 downwards. ISA card owners should not use these options.
 
-<sect> Mode issues <p>
+<sect>Mode issues <p>
 
     The use of very high dot-clocks has a REAL negative effect on the
     performance of the boards, due to its limited 80Mbit/sec, higher
@@ -175,7 +175,7 @@ downwards. ISA card owners should not use these options.
     with a 78 MHz dot clock, a standard OTI087 based card is a poor
     match anyway.
 
-<sect> Linear addressing<p>
+<sect>Linear addressing<p>
 
     Linear addressing is hardwired to 14 Mbytes for ISA boards 
     and 78 Mbytes for VLB boards, thus if you have more
@@ -192,13 +192,13 @@ downwards. ISA card owners should not use these options.
     GOOD LUCK!!!!
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.9 1996/05/12 12:36:33 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12 1997/01/25 03:22:02 dawes Exp $
 
 
 
 
 
-$XConsortium: Oak.sgml /main/4 1995/12/29 15:59:12 kaleb $
+$XConsortium: Oak.sgml /main/8 1996/05/12 20:58:00 kaleb $
 </verb>
 
 </article>

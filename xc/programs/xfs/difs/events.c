@@ -1,5 +1,4 @@
-/* $XConsortium: events.c,v 1.5 94/04/17 19:56:14 gildea Exp $ */
-/* $XFree86: xc/programs/xfs/difs/events.c,v 3.0 1995/06/02 10:32:40 dawes Exp $ */
+/* $TOG: events.c /main/6 1997/05/28 12:33:20 barstow $ */
 /*
  * event handling stuff
  */
@@ -48,6 +47,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/xfs/difs/events.c,v 3.0.6.1 1997/05/29 14:01:07 dawes Exp $ */
 
 #include	"clientstr.h"
 #include	"FSproto.h"
@@ -125,9 +125,10 @@ SendKeepAliveEvent(client)
 #endif
 
     if (client->swapped) {
-	fsKeepAliveEvent evTo;
-
-	SErrorEvent((fsError *) & ev, (fsError *) & evTo);
+	/* SErrorEvent requires two fsError pointers */
+	fsError evTo;
+	
+	SErrorEvent((fsError *) & ev, (fsError *) &evTo);
 	(void) WriteToClient(client, SIZEOF(fsKeepAliveEvent), (char *) &evTo);
     } else {
 	(void) WriteToClient(client, SIZEOF(fsKeepAliveEvent), (char *) &ev);

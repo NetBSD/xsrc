@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tkother.c,v 3.0 1996/08/24 12:51:04 dawes Exp $ */
+/* $XConsortium: tkother.c /main/2 1996/10/19 19:06:55 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tkother.c,v 3.1 1996/12/27 06:54:26 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *

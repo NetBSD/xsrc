@@ -1,14 +1,14 @@
-XCOMM $XConsortium: Imakefile /main/6 1996/01/16 15:35:18 kaleb $
+XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.22 1996/10/23 13:09:57 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.3 1997/05/24 11:35:36 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
 
-#if defined(BSD386Architecture) || BuildAllDocs
+#if (defined(BSD386Architecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Bsdi)
 #endif
 #if defined(FreeBSDArchitecture) || BuildAllDocs
@@ -20,7 +20,7 @@ LinuxDocReadmeTarget(NetBSD)
 #if defined(OpenBSDArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(OpenBSD)
 #endif
-#if defined(i386MachArchitecture) || BuildAllDocs
+#if (defined(i386MachArchitecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Mach)
 #endif
 #if defined(LinuxArchitecture) || BuildAllDocs
@@ -44,7 +44,7 @@ LinuxDocReadmeTarget(isc)
 # endif
 # if defined(OS2Architecture) || BuildAllDocs
 LinuxDocReadmeTarget(OS2)
-LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2.Notes)
+LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2Notes)
 # endif
 # if 0
 LinuxDocReadmeTarget(SVR3)
@@ -70,6 +70,7 @@ LinuxDocReadmeTarget(P9000)
 LinuxDocReadmeTarget(Video7)
 LinuxDocReadmeTarget(S3)
 LinuxDocReadmeTarget(S3V)
+LinuxDocReadmeTarget(SiS)
 LinuxDocReadmeTarget(W32)
 LinuxDocReadmeTarget(WstDig)
 LinuxDocReadmeTarget(ark)
@@ -79,12 +80,15 @@ LinuxDocReadmeTarget(chips)
 LinuxDocReadmeTarget(cirrus)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
+#if BuildAllDocs
+LinuxDocReadmeTarget(fbdev)
+#endif
 
 /* Main docs */
 LinuxDocTargetLong(CPYRIGHT.sgml,COPYRIGHT,COPYRIGHT)
 LinuxDocTargetLong(RELNOTE.sgml,RELNOTES,RELNOTES)
 LinuxDocReadmeTarget(Config)
-LinuxDocTarget(INSTALL)
+LinuxDocTarget(BUILD)
 LinuxDocTarget(README)
 LinuxDocTargetLong(QStart.sgml,QuickStart.doc,QuickStart)
 LinuxDocTarget(DocIndex)
@@ -102,3 +106,6 @@ InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))
 InstallLinkKitNonExecFile(VGADriver.Doc,$(LINKKITDIR)/VGADriverDoc)
 
 LinkFile(OpenBSD.sgml, NetBSD.sgml)
+#if BuildAllDocs
+LinkSourceFile(fbdev.sgml,$(XF68SRC)/doc/sgml)
+#endif

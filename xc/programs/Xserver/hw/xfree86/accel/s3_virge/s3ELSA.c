@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3ELSA.c,v 3.2 1996/10/06 13:15:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3ELSA.c,v 3.3 1996/12/27 07:02:20 dawes Exp $ */
 /*
  * s3ELSA.c
  *
@@ -10,7 +10,7 @@
  *
  *
  */
-/* $XConsortium: s3ELSA.c /main/6 1995/12/02 08:23:31 kaleb $ */
+/* $XConsortium: s3ELSA.c /main/3 1996/10/25 14:10:36 kaleb $ */
 
 #ifdef linux
 #include <stdlib.h>

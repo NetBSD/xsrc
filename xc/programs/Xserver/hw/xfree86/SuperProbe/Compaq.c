@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Compaq.c,v 3.4 1996/02/04 08:56:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Compaq.c,v 3.5 1996/12/23 06:31:08 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: Compaq.c /main/4 1995/11/13 11:12:06 kaleb $ */
+/* $XConsortium: Compaq.c /main/5 1996/02/21 17:09:58 kaleb $ */
 
 #include "Probe.h"
 

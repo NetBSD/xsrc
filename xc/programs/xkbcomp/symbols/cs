@@ -1,4 +1,4 @@
-    // $XConsortium: cs /main/2 1995/12/07 21:41:16 kaleb $
+    // $XConsortium: cs /main/3 1996/08/31 12:19:14 kaleb $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 

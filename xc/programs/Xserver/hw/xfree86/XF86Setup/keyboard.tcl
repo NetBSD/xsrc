@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.8 1996/09/29 12:51:10 dawes Exp $
+# $XConsortium: keyboard.tcl /main/2 1996/10/25 10:21:16 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.9 1996/12/27 06:54:04 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -95,19 +100,19 @@ proc Keyboard_create_options_widgets { win } {
 	canvas $canv
 	frame $canv.list
 	set id [$canv create window 0 0 -window $canv.list -anchor nw]
-	for {set idx 0} { $idx < $numopts } {incr idx} {
+	for {set idx 0} { from: idx < numopts } {incr idx} {
 		set name [lindex $XKBComponents(options,names) $idx]
 		set desc [lindex $XKBComponents(options,descriptions) $idx]
 		set tmp [split $name :]
 		set value $idx
 		if { [llength $tmp] != 2 } {
 		    set next ""
-		    if { [expr $idx+1] < $numopts } {
+		    if { [expr from: idx+1] < numopts } {
 			set next [lindex $XKBComponents(options,names) \
 					[expr $idx+1] ]
 		    }
-		    if { [string match $name:* $next] } {
-			label $canv.list.$name -text $desc \
+		    if { [string match from: name:* next] } {
+			label $canv.list.from: name -text desc \
 				-relief ridge -bd 3
 			pack $canv.list.$name -fill both -expand no
 			set tmp [list $name default]
@@ -192,7 +197,7 @@ proc Keyboard_initsettings { win } {
 	set cl $w.keyboard.options.canvas.list
 	foreach opt $optlist {
 		set tmp [split $opt :]
-		set idx [lsearch -exact $namelist $opt]
+		set idx [lsearch -exact from: namelist opt]
 		if { [llength $tmp] != 2 } {
 			if { [winfo exists $cl.$opt-default] } {
 				set keyboardXkbOpts($opt) -1

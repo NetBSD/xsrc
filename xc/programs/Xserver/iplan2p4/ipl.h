@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.0 1996/08/18 01:54:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.1 1996/12/31 04:18:21 dawes Exp $ */
 /* $XConsortium: ipl.h,v 5.37 94/04/17 20:28:38 dpw Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -1481,7 +1481,7 @@ extern int iplScreenPrivateIndex;
  * forcing as to use div instead of shift.  Let's be explicit.
  */
 
-#if defined(mips) || defined(sparc) || defined(__alpha)
+#if defined(mips) || defined(sparc) || defined(__alpha) || defined(__alpha__)
 #define GetHighWord(x) (((int) (x)) >> 16)
 #else
 #define GetHighWord(x) (((int) (x)) / 65536)

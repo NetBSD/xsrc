@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/man/Imakefile,v 3.0 1996/08/18 01:46:25 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/1 1996/09/21 11:17:54 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/man/Imakefile,v 3.1 1996/12/27 06:52:29 dawes Exp $
 
 MANDIR = $(LIBMANDIR)
 MANSUFFIX = $(LIBMANSUFFIX)

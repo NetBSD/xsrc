@@ -1,6 +1,6 @@
 /*
- * $XConsortium: gethost.c /main/23 1995/12/05 16:53:41 mor $
- * $XFree86: xc/programs/xauth/gethost.c,v 3.6 1996/08/21 13:07:19 dawes Exp $
+ * $XConsortium: gethost.c /main/25 1996/11/13 14:45:48 lehors $
+ * $XFree86: xc/programs/xauth/gethost.c,v 3.8 1997/01/18 07:02:10 dawes Exp $
  *
  * 
 Copyright (c) 1989  X Consortium
@@ -36,7 +36,7 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #ifdef WIN32
-#include <winsock.h>
+#include <X11/Xwinsock.h>
 #define EPROTOTYPE WSAEPROTOTYPE
 #endif
 #include "xauth.h"
@@ -51,7 +51,11 @@ in this Software without prior written authorization from the X Consortium.
 #ifndef WIN32
 #ifndef STREAMSCONN
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #include <netdb.h>
 #include <netinet/in.h>
 #ifdef SYSV

@@ -1,3 +1,4 @@
+/* $XConsortium: ct_FillSt.c /main/3 1996/10/25 10:28:55 kaleb $ */
 /*
  *
  * Copyright 1993 by H. Hanemaayer, Utrecht, The Netherlands
@@ -26,7 +27,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_FillSt.c,v 3.1 1996/09/29 13:39:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_FillSt.c,v 3.2.2.1 1997/05/21 15:02:43 dawes Exp $ */
 
 /*
  * These are the functions for tiles, which call low-level functions.
@@ -208,7 +209,7 @@ ctcfbFillRectTile(pDrawable, pGC, nBox, pBox)
     pPix = pGC->tile.pixmap;
     width = pPix->drawable.width;
     height = pPix->drawable.height;
-    pixWidth = PixmapBytePad(width, pPix->drawable.depth);
+    pixWidth = PixmapBytePad(width, pPix->drawable.bitsPerPixel);
 
     destPitch = (int)
 	(((PixmapPtr) (pDrawable->pScreen->devPrivate))->devKind);

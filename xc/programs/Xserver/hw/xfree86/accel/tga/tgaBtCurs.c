@@ -1,3 +1,4 @@
+/* $XConsortium: tgaBtCurs.c /main/4 1996/10/27 11:47:33 kaleb $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -24,7 +25,7 @@
  * Modified by Alan Hourihane (alanh@fairlite.demon.co.uk) for use with TGA
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgaBtCurs.c,v 3.2 1996/10/17 15:18:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgaBtCurs.c,v 3.3 1996/12/27 07:03:44 dawes Exp $ */
 
 #define NEED_EVENTS
 #include <X.h>

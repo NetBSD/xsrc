@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xdpyinfo.c /main/34 1995/12/08 12:09:32 dpw $
- * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.11 1996/10/20 13:35:49 dawes Exp $
+ * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.12 1997/01/18 07:02:33 dawes Exp $
  * 
  * xdpyinfo - print information about X display connecton
  *
@@ -687,18 +687,13 @@ print_XF86Misc_info(dpy, extname)
     Display *dpy;
     char *extname;
 {
-    int majorrev, minorrev, suspendTime, offTime;
+    int majorrev, minorrev;
     XF86MiscMouseSettings mouseinfo;
     XF86MiscKbdSettings kbdinfo;
 
     if (!XF86MiscQueryVersion(dpy, &majorrev, &minorrev))
 	return 0;
     print_standard_extension_info(dpy, extname, majorrev, minorrev);
-
-    if (!XF86MiscGetSaver(dpy, DefaultScreen(dpy), &suspendTime, &offTime))
-	return 0;
-    printf("  Powersaver Settings-  Suspend Time: %d, Off Time: %d\n",
-        suspendTime, offTime);
 
     if ((majorrev > 0) || (majorrev == 0 && minorrev > 0)) {
       if (!XF86MiscGetKbdSettings(dpy, &kbdinfo))

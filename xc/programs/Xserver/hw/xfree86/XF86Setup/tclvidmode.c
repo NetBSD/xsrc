@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.c,v 3.4 1996/08/24 12:51:02 dawes Exp $ */
+/* $XConsortium: tclvidmode.c /main/2 1996/10/19 19:06:29 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.c,v 3.6 1996/12/28 08:13:05 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -65,6 +71,86 @@ XErrorEvent *err;
 	return 0;
 }
 
+static int modeline2list(interp, mode_line)
+    Tcl_Interp	*interp;
+    XF86VidModeModeInfo	*mode_line;
+{
+	sprintf(interp->result, "%6.2f %d %d %d %d %d %d %d %d",
+	    mode_line->dotclock/1000.0,
+	    mode_line->hdisplay, mode_line->hsyncstart,
+	    mode_line->hsyncend, mode_line->htotal,
+	    mode_line->vdisplay, mode_line->vsyncstart,
+	    mode_line->vsyncend, mode_line->vtotal);
+#define chkflag(flg,string)	if (mode_line->flags & flg) \
+			    Tcl_AppendResult(interp, string, (char *) NULL)
+	chkflag(V_PHSYNC," +hsync");
+	chkflag(V_NHSYNC," -hsync");
+	chkflag(V_PVSYNC," +vsync");
+	chkflag(V_NVSYNC," -vsync");
+	chkflag(V_INTERLACE," interlace");
+	chkflag(V_CSYNC," composite");
+	chkflag(V_PCSYNC," +csync");
+	chkflag(V_NCSYNC," -csync");
+	chkflag(V_DBLSCAN," doublescan");
+#undef chkflag
+	return TCL_OK;
+}
+
+#define TclOkay(expr)	if ((expr) != TCL_OK) return TCL_ERROR
+
+static int list2modeline(interp, buf, mode_line)
+    Tcl_Interp	*interp;
+    char	*buf;
+    XF86VidModeModeInfo	*mode_line;
+{
+	char	**av;
+	int	ac, i, tmpint;
+	double	tmpdbl;
+
+	TclOkay(Tcl_SplitList(interp, buf, &ac, &av));
+	if (ac < 9) return TCL_ERROR;
+
+	TclOkay(Tcl_GetDouble(interp, av[0], &tmpdbl));
+	mode_line->dotclock = (int) (tmpdbl * 1000.0);
+
+	TclOkay(Tcl_GetInt(interp, av[1], &tmpint));
+	mode_line->hdisplay   = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[2], &tmpint));
+	mode_line->hsyncstart = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[3], &tmpint));
+	mode_line->hsyncend   = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[4], &tmpint));
+	mode_line->htotal     = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[5], &tmpint));
+	mode_line->vdisplay   = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[6], &tmpint));
+	mode_line->vsyncstart = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[7], &tmpint));
+	mode_line->vsyncend   = (unsigned short) tmpint;
+	TclOkay(Tcl_GetInt(interp, av[8], &tmpint));
+	mode_line->vtotal     = (unsigned short) tmpint;
+
+	mode_line->flags = 0;
+	for (i = 9; i < ac; i++) {
+	    if (!strcmp(av[i], "+hsync"))          mode_line->flags |= V_PHSYNC;
+	    else if (!strcmp(av[i], "-hsync"))     mode_line->flags |= V_NHSYNC;
+	    else if (!strcmp(av[i], "+vsync"))     mode_line->flags |= V_PVSYNC;
+	    else if (!strcmp(av[i], "-vsync"))     mode_line->flags |= V_NVSYNC;
+	    else if (!strcmp(av[i], "interlace"))  mode_line->flags |= V_INTERLACE;
+	    else if (!strcmp(av[i], "composite"))  mode_line->flags |= V_CSYNC;
+	    else if (!strcmp(av[i], "+csync"))     mode_line->flags |= V_PCSYNC;
+	    else if (!strcmp(av[i], "-csync"))     mode_line->flags |= V_NCSYNC;
+	    else if (!strcmp(av[i], "doublescan")) mode_line->flags |= V_DBLSCAN;
+	    else {
+	    	Tcl_SetResult(interp, "Invalid mode flag", TCL_STATIC);
+		return TCL_ERROR;
+	    }
+	}
+	mode_line->privsize = 0;
+	mode_line->private  = NULL;
+	return TCL_OK;
+}
+
 /*
    Adds all the vidmode specific commands to the Tcl interpreter
 */
@@ -81,6 +167,18 @@ XF86vid_Init(interp)
 	     TCL_XF86VidModeQueryExtension, (ClientData) NULL,
 	     (void (*)()) NULL);
 
+     Tcl_CreateCommand(interp, "xf86vid_addmodeline",
+	     TCL_XF86VidModeAddModeLine, (ClientData) NULL,
+	     (void (*)()) NULL);
+
+     Tcl_CreateCommand(interp, "xf86vid_checkmodeline",
+	     TCL_XF86VidModeValidateModeLine, (ClientData) NULL,
+	     (void (*)()) NULL);
+
+     Tcl_CreateCommand(interp, "xf86vid_deletemodeline",
+	     TCL_XF86VidModeDeleteModeLine, (ClientData) NULL,
+	     (void (*)()) NULL);
+
      Tcl_CreateCommand(interp, "xf86vid_getmodeline",
 	     TCL_XF86VidModeGetModeLine, (ClientData) NULL,
 	     (void (*)()) NULL);
@@ -95,6 +193,10 @@ XF86vid_Init(interp)
 
      Tcl_CreateCommand(interp, "xf86vid_switchmode",
 	     TCL_XF86VidModeSwitchMode, (ClientData) NULL,
+	     (void (*)()) NULL);
+
+     Tcl_CreateCommand(interp, "xf86vid_switchtomode",
+	     TCL_XF86VidModeSwitchToMode, (ClientData) NULL,
 	     (void (*)()) NULL);
 
      Tcl_CreateCommand(interp, "xf86vid_getmonitor",
@@ -181,9 +283,115 @@ TCL_XF86VidModeQueryExtension(clientData, interp, argc, argv)
 
 
 /*
+   Implements the xf86vid_addmodeline command which
+   adds a new mode to the list of video modes.
+   It returns zero for success.
+*/
+
+int
+TCL_XF86VidModeAddModeLine(clientData, interp, argc, argv)
+    ClientData	clientData;
+    Tcl_Interp	*interp;
+    int		argc;
+    char	*argv[];
+{
+	Tk_Window tkwin;
+	XF86VidModeModeInfo newmode, aftermode;
+
+        if (argc < 2 || argc > 3) {
+                Tcl_SetResult(interp,
+		    "Usage: xf86vid_addmodeline <new_mode> [<after_mode>]",
+			TCL_STATIC);
+                return TCL_ERROR;
+        }
+
+	if ((tkwin = Tk_MainWindow(interp)) == NULL)
+		return TCL_ERROR;
+	TclOkay(list2modeline(interp, argv[1], &newmode));
+	if (argc == 2) {
+	    if (!XF86VidModeAddModeLine(Tk_Display(tkwin),
+			Tk_ScreenNumber(tkwin), &newmode, NULL)) {
+		Tcl_SetResult(interp, "Unable to add mode line", TCL_STATIC);
+		return TCL_ERROR;
+	    }
+	} else {
+	    TclOkay(list2modeline(interp, argv[2], &aftermode));
+	    if (!XF86VidModeAddModeLine(Tk_Display(tkwin),
+			Tk_ScreenNumber(tkwin), &newmode, &aftermode)) {
+		Tcl_SetResult(interp, "Unable to add mode line", TCL_STATIC);
+		return TCL_ERROR;
+	    }
+	}
+	return TCL_OK;
+}
+
+/*
+   Implements the xf86vid_checkmodeline command which
+   returns checks that the specified mode is usable with
+   video driver and monitor.
+*/
+
+int
+TCL_XF86VidModeValidateModeLine(clientData, interp, argc, argv)
+    ClientData	clientData;
+    Tcl_Interp	*interp;
+    int		argc;
+    char	*argv[];
+{
+	Tk_Window tkwin;
+	XF86VidModeModeInfo mode_line;
+
+        if (argc != 2) {
+                Tcl_SetResult(interp,
+		    "Usage: xf86vid_checkmodeline <modeline>", TCL_STATIC);
+                return TCL_ERROR;
+        }
+
+	if ((tkwin = Tk_MainWindow(interp)) == NULL)
+		return TCL_ERROR;
+	TclOkay(list2modeline(interp, argv[1], &mode_line));
+	sprintf(interp->result, "%d",
+		XF86VidModeValidateModeLine(Tk_Display(tkwin),
+		    Tk_ScreenNumber(tkwin), &mode_line));
+	return TCL_OK;
+}
+
+/*
+   Implements the xf86vid_deletemodeline command which
+   removes the specified mode from the list of valid modes
+*/
+
+int
+TCL_XF86VidModeDeleteModeLine(clientData, interp, argc, argv)
+    ClientData	clientData;
+    Tcl_Interp	*interp;
+    int		argc;
+    char	*argv[];
+{
+	Tk_Window tkwin;
+	XF86VidModeModeInfo mode_line;
+
+        if (argc != 2) {
+                Tcl_SetResult(interp,
+		    "Usage: xf86vid_deletemodeline <modeline>", TCL_STATIC);
+                return TCL_ERROR;
+        }
+
+	if ((tkwin = Tk_MainWindow(interp)) == NULL)
+		return TCL_ERROR;
+	TclOkay(list2modeline(interp, argv[1], &mode_line));
+
+	sprintf(interp->result, "%d",
+		XF86VidModeDeleteModeLine(Tk_Display(tkwin),
+		    Tk_ScreenNumber(tkwin), &mode_line));
+	return TCL_OK;
+}
+
+/*
    Implements the xf86vid_getmodeline command which
    returns (in interp->result) a list containing the
    various video mode parameters (including any flags)
+   of the current mode
 */
 
 int
@@ -193,10 +401,10 @@ TCL_XF86VidModeGetModeLine(clientData, interp, argc, argv)
     int		argc;
     char	*argv[];
 {
-	int dot_clock, mode_flags;
+	int dot_clock;
 	Tk_Window tkwin;
 	XF86VidModeModeLine mode_line;
-	char tmpbuf[200];
+	XF86VidModeModeInfo mode_info;
 
         if (argc != 1) {
                 Tcl_SetResult(interp, "Usage: xf86vid_getmodeline", TCL_STATIC);
@@ -212,27 +420,19 @@ TCL_XF86VidModeGetModeLine(clientData, interp, argc, argv)
 			"Unable to get mode line information",
 			(char *) NULL);
 		return TCL_ERROR;
-	} else {
-		sprintf(tmpbuf, "%6.2f %d %d %d %d %d %d %d %d",
-		    dot_clock/1000.0,
-		    mode_line.hdisplay, mode_line.hsyncstart,
-		    mode_line.hsyncend, mode_line.htotal,
-		    mode_line.vdisplay, mode_line.vsyncstart,
-		    mode_line.vsyncend, mode_line.vtotal);
-		mode_flags = mode_line.flags;
-		if (mode_flags & V_PHSYNC)    strcat(tmpbuf, " +hsync");
-		if (mode_flags & V_NHSYNC)    strcat(tmpbuf, " -hsync");
-		if (mode_flags & V_PVSYNC)    strcat(tmpbuf, " +vsync");
-		if (mode_flags & V_NVSYNC)    strcat(tmpbuf, " -vsync");
-		if (mode_flags & V_INTERLACE) strcat(tmpbuf, " interlace");
-		if (mode_flags & V_CSYNC)     strcat(tmpbuf, " composite");
-		if (mode_flags & V_PCSYNC)    strcat(tmpbuf, " +csync");
-		if (mode_flags & V_PCSYNC)    strcat(tmpbuf, " -csync");
-		if (mode_flags & V_DBLSCAN)   strcat(tmpbuf, " doublescan");
-		Tcl_AppendResult(interp, tmpbuf, (char *) NULL);
-		XtFree((char *) mode_line.private);
-		return TCL_OK;
 	}
+	XtFree((char *) mode_line.private);
+	mode_info.dotclock =   dot_clock;
+	mode_info.hdisplay =   mode_line.hdisplay;
+	mode_info.hsyncstart = mode_line.hsyncstart;
+	mode_info.hsyncend =   mode_line.hsyncend;
+	mode_info.htotal =     mode_line.htotal;
+	mode_info.vdisplay =   mode_line.vdisplay;
+	mode_info.vsyncstart = mode_line.vsyncstart;
+	mode_info.vsyncend =   mode_line.vsyncend;
+	mode_info.vtotal =     mode_line.vtotal;
+	mode_info.flags =      mode_line.flags;
+	return modeline2list(interp, &mode_info);
 }
 
 /*
@@ -289,7 +489,7 @@ TCL_XF86VidModeGetAllModeLines(clientData, interp, argc, argv)
 		if (mode_flags & V_INTERLACE) strcat(tmpbuf, " interlace");
 		if (mode_flags & V_CSYNC)     strcat(tmpbuf, " composite");
 		if (mode_flags & V_PCSYNC)    strcat(tmpbuf, " +csync");
-		if (mode_flags & V_PCSYNC)    strcat(tmpbuf, " -csync");
+		if (mode_flags & V_NCSYNC)    strcat(tmpbuf, " -csync");
 		if (mode_flags & V_DBLSCAN)   strcat(tmpbuf, " doublescan");
 		Tcl_AppendElement(interp, tmpbuf);
 	    }
@@ -464,5 +664,36 @@ TCL_XF86VidModeSwitchMode(clientData, interp, argc, argv)
 	return TCL_OK;
 #undef PREV
 #undef NEXT
+}
+
+/*
+   Implements the xf86vid_switchtomode command which
+   attempts to make the specified video mode, the current display mode
+*/
+
+int
+TCL_XF86VidModeSwitchToMode(clientData, interp, argc, argv)
+    ClientData	clientData;
+    Tcl_Interp	*interp;
+    int		argc;
+    char	*argv[];
+{
+	Tk_Window tkwin;
+	XF86VidModeModeInfo mode_line;
+
+        if (argc != 2) {
+                Tcl_SetResult(interp,
+		    "Usage: xf86vid_switchtomode <modeline>", TCL_STATIC);
+                return TCL_ERROR;
+        }
+
+	if ((tkwin = Tk_MainWindow(interp)) == NULL)
+		return TCL_ERROR;
+	TclOkay(list2modeline(interp, argv[1], &mode_line));
+
+	sprintf(interp->result, "%d",
+		XF86VidModeSwitchToMode(Tk_Display(tkwin),
+		    Tk_ScreenNumber(tkwin), &mode_line));
+	return TCL_OK;
 }
 

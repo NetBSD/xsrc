@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/IBMRGB.c,v 3.4 1996/05/06 05:57:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/IBMRGB.c,v 3.6 1997/01/18 06:55:39 dawes Exp $ */
 /*
  * Copyright 1995 The XFree86 Project, Inc
  *
  * programming the on-chip clock on the IBM RGB52x
  * Harald Koenig <koenig@tat.physik.uni-tuebingen.de>
  */
-/* $XConsortium: IBMRGB.c /main/3 1995/11/12 19:30:00 kaleb $ */
+/* $XConsortium: IBMRGB.c /main/5 1996/05/07 17:13:25 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "compiler.h"
@@ -231,6 +231,11 @@ int s3IBMRGB_Probe()
       
       if (id == id2 && rev == rev2) {  /* IBM RGB52x found */
 	 ret = (id<<8) | rev;
+
+	 /* check for 128bit VRAM -> RGB528 */
+	 outb(IBMRGB_INDEX_LOW, IBMRGB_misc1);
+	 if ((inb(IBMRGB_INDEX_DATA) & 0x03) == 0x03)  /* 128bit DAC found */
+	    ret |= 1<<16;
       }
       else {
 	 outb(IBMRGB_INDEX_LOW, IBMRGB_rev);

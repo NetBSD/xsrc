@@ -1,5 +1,5 @@
-/* $XConsortium: sunInit.c /main/77 1995/10/05 07:36:49 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.2 1996/01/05 13:18:45 dawes Exp $ */
+/* $XConsortium: sunInit.c /main/78 1996/06/10 11:07:58 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.3 1996/12/23 06:30:15 dawes Exp $ */
 /*
  * sunInit.c --
  *	Initialization functions for screen/keyboard/mouse, etc.
@@ -76,6 +76,7 @@ extern Bool sunBW2Init(
 #define CG4I NULL
 #define CG6I NULL
 #define CG8I NULL
+#define TCXI NULL
 #else /* }{ */
 extern Bool sunCG3Init(
 #if NeedFunctionPrototypes
@@ -122,7 +123,21 @@ extern Bool sunCG6Init(
 #else /* }{ */
 #define CG6I NULL
 #endif /* } */
+#ifdef XFBTYPE_TCX  /* { */
+extern Bool sunTCXInit(
+#if NeedFunctionPrototypes
+    int /* screen */,
+    ScreenPtr /* pScreen */,
+    int /* argc */,
+    char** /* argv */
+#endif
+);
+#define TCXI sunTCXInit
+#else /* }{ */
+#define TCXI NULL
+#endif /* } */
 #if SUNMAXDEPTH > 8 /* { */
+#ifdef FBTYPE_MEMCOLOR /* { */
 extern Bool sunCG8Init(
 #if NeedFunctionPrototypes
     int /* screen */,
@@ -135,6 +150,10 @@ extern Bool sunCG8Init(
 #else /* }{ */
 #define CG8I NULL
 #endif /* } */
+#else /* }{ */
+#define CG8I NULL
+#endif /* } */
+
 #endif /* } */
 
 extern KeySymsRec sunKeySyms[];
@@ -169,7 +188,7 @@ sunPtrPrivRec sunPtrPriv = {
  * The name member in the following table corresponds to the 
  * FBTYPE_* macros defined in /usr/include/sun/fbio.h file
  */
-sunFbDataRec sunFbData[FBTYPE_LASTPLUSONE] = {
+sunFbDataRec sunFbData[XFBTYPE_LASTPLUSONE] = {
   { NULL, "SUN1BW        (bw1)" },
   { NULL, "SUN1COLOR     (cg1)" },
   { BW2I, "SUN2BW        (bw2)" },	
@@ -199,6 +218,9 @@ sunFbDataRec sunFbData[FBTYPE_LASTPLUSONE] = {
 #endif
 #ifdef FBTYPE_MDICOLOR
   { NULL, "MDICOLOR      (cgfourteen)" },
+#endif
+#ifdef XFBTYPE_TCX
+  { TCXI, "TCX           (tcx)" },
 #endif
 #endif /* } */
 };
@@ -240,6 +262,11 @@ static char *fallbackList[] = {
 #endif /* } */
 #if SUNMAXDEPTH > 8 /* { */
     CGEIGHT0DEV,
+#if 0
+#ifdef XFBTYPE_TCX
+    TCX0DEV,
+#endif
+#endif
 #endif /* } */
     "/dev/fb"
 };
@@ -313,7 +340,7 @@ static int OpenFrameBuffer(device, screen)
 		sunFbs[screen].info = fbattr->fbtype;
 	    sunFbs[screen].fbPriv = (pointer) fbattr;
 	    if (fbattr && 
-		fbattr->fbtype.fb_type < FBTYPE_LASTPLUSONE && 
+		fbattr->fbtype.fb_type < XFBTYPE_LASTPLUSONE && 
 		!sunFbData[fbattr->fbtype.fb_type].init) {
 		int _i;
 		ret = FALSE;
@@ -505,7 +532,11 @@ void OsVendorInit(
 	}
 #endif
 	sunKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
+	if (sunKbdPriv.fd < 0)
+	    FatalError ("Cannot open /dev/kbd, error %d\n", errno);
 	sunPtrPriv.fd = open ("/dev/mouse", O_RDWR, 0);
+	if (sunPtrPriv.fd < 0)
+	    FatalError ("Cannot open /dev/mouse, error %d\n", errno);
 	getKbdType ();
 	if (sunKbdPriv.type == KB_SUN4) {
 	    (void) ioctl (sunKbdPriv.fd, KIOCLAYOUT, &sunKbdPriv.layout);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3frect.c,v 3.11 1996/09/22 05:03:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3frect.c,v 3.12 1996/12/23 06:41:44 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,7 +43,7 @@ PERFORMANCE OF THIS SOFTWARE.
  * Snarfed Hans Nasten's simple pixmap expansion cache from Mach-8 server
  * -- David Wexelblat <dwex@xfree86.org>, July 12, 1994
  */
-/* $XConsortium: s3frect.c /main/5 1995/12/29 10:30:58 kaleb $ */
+/* $XConsortium: s3frect.c /main/9 1996/10/24 07:11:13 kaleb $ */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $XConsortium: record.c /main/7 1996/01/24 15:18:10 dpw $ */
+/* $TOG: record.c /main/8 1997/04/06 10:52:30 kaleb $ */
 
 /*
 
@@ -1116,6 +1116,8 @@ RecordUninstallHooks(pRCAP, oneclient)
 	 * and call RemoveBlockAndWakeupHandlers here passing
 	 * RecordFlushAllContexts.  Is this any better?
 	 */
+	/* Having deleted the callback, call it one last time. -gildea */
+	RecordFlushAllContexts(&FlushCallback, NULL, NULL);
     }
 } /* RecordUninstallHooks */
 

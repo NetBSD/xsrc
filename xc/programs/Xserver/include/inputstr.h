@@ -46,7 +46,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $XConsortium: inputstr.h /main/27 1996/01/14 16:45:28 kaleb $ */
+/* $XConsortium: inputstr.h /main/28 1996/09/25 00:51:24 dpw $ */
 
 #ifndef INPUTSTRUCT_H
 #define INPUTSTRUCT_H
@@ -300,6 +300,8 @@ typedef struct {
     DeviceIntPtr	keyboard;	/* the main one for the server */
     DeviceIntPtr	pointer;
 } InputInfo;
+
+extern InputInfo inputInfo;
 
 /* for keeping the events for devices grabbed synchronously */
 typedef struct _QdEvent *QdEventPtr;

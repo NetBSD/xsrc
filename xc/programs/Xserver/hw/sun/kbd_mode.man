@@ -1,4 +1,4 @@
-.\" $XConsortium: kbd_mode.man /main/11 1995/12/15 14:00:30 gildea $
+.\" $XConsortium: kbd_mode.man /main/12 1996/12/09 17:32:49 kaleb $
 .\" Copyright 1987 Sun Microsystems, Inc.
 .\" Copyright (c) 1993  X Consortium
 .\" 
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH KBD_MODE 1 "Release 6.1" "X Version 11"
+.TH KBD_MODE 1 "Release 6.3" "X Version 11"
 .SH NAME
 kbd_mode \- recover the Sun console keyboard
 .SH SYNOPSIS

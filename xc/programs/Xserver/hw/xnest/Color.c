@@ -1,4 +1,4 @@
-/* $XConsortium: Color.c,v 1.5 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Color.c /main/8 1996/12/02 10:20:51 lehors $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -27,7 +27,7 @@ is" without express or implied warranty.
 #include "Screen.h"
 #include "Color.h"
 #include "Visual.h"
-#include "Window.h"
+#include "XNWindow.h"
 #include "Args.h"
 
 #define lowbit(x) ((x) & (~(x) + 1))
@@ -189,6 +189,7 @@ void xnestSetInstalledColormapWindows(pScreen)
      ScreenPtr pScreen;
 {
   xnestInstalledColormapWindows icws;
+  int numWindows;
   
   icws.cmapIDs = (Colormap *)xalloc(pScreen->maxInstalledCmaps *
 				    sizeof(Colormap));
@@ -196,12 +197,16 @@ void xnestSetInstalledColormapWindows(pScreen)
   icws.numWindows = 0;
   WalkTree(pScreen, xnestCountInstalledColormapWindows, (pointer)&icws);
   if (icws.numWindows) {
-    icws.windows = (Window *)xalloc(icws.numWindows * sizeof(Window));
+    icws.windows = (Window *)xalloc((icws.numWindows + 1) * sizeof(Window));
     icws.index = 0;
     WalkTree(pScreen, xnestGetInstalledColormapWindows, (pointer)&icws);
+    icws.windows[icws.numWindows] = xnestDefaultWindows[pScreen->myNum];
+    numWindows = icws.numWindows + 1;
   }
-  else
+  else {
     icws.windows = NULL;
+    numWindows = 0;
+  }
   
   xfree(icws.cmapIDs);
   
@@ -212,18 +217,17 @@ void xnestSetInstalledColormapWindows(pScreen)
 #ifdef _XSERVER64
     {
       int i;
-      Window64 *windows = (Window64 *)xalloc(icws.numWindows * 
-				     sizeof(Window64));
+      Window64 *windows = (Window64 *)xalloc(numWindows * sizeof(Window64));
 
-      for(i = 0; i < icws.numWindows; ++i)
+      for(i = 0; i < numWindows; ++i)
 	  windows[i] = icws.windows[i];
       XSetWMColormapWindows(xnestDisplay, xnestDefaultWindows[pScreen->myNum],
-			    windows, icws.numWindows);
+			    windows, numWindows);
       xfree(windows);
     }
 #else
     XSetWMColormapWindows(xnestDisplay, xnestDefaultWindows[pScreen->myNum],
-			  icws.windows, icws.numWindows);
+			  icws.windows, numWindows);
 #endif
 
     xnestOldInstalledColormapWindows = icws.windows;

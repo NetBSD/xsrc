@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcPixmap.c,v 3.2 1996/02/04 09:11:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcPixmap.c,v 3.3 1996/12/23 06:53:06 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -69,7 +69,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: ppcPixmap.c /main/4 1995/11/13 07:05:24 kaleb $ */
+/* $XConsortium: ppcPixmap.c /main/5 1996/02/21 17:58:00 kaleb $ */
 
 #include "pixmapstr.h"
 #include "servermd.h"

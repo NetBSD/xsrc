@@ -35,9 +35,9 @@
 .\" no representations about the
 .\" suitability of this software for any purpose.  It is provided "as is"
 .\" without express or implied warranty.
-.\" $XConsortium: xfs.man /main/12 1995/12/15 14:03:46 gildea $
-.\" $XFree86: xc/programs/xfs/xfs.man,v 3.2 1996/01/11 10:38:30 dawes Exp $
-.TH XFS 1 "Release 6.1" "X Version 11"
+.\" $XConsortium: xfs.man /main/13 1996/12/09 17:08:59 kaleb $
+.\" $XFree86: xc/programs/xfs/xfs.man,v 3.3 1996/12/23 07:11:13 dawes Exp $
+.TH XFS 1 "Release 6.3" "X Version 11"
 .SH NAME
 xfs \- X font server
 .SH SYNOPSIS

@@ -1,27 +1,27 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 
-<title> Readme for the XFree86 3.2 LinkKit
-<author> The XFree86 Project, Inc.
-<date> 14 Oct 1996
+<title>Readme for the XFree86 3.3 LinkKit
+<author>The XFree86 Project, Inc.
+<date>16 May 1997
 
-<sect> Readme for the XFree86 3.2 LinkKit <p>
+<sect>Readme for the XFree86 3.3 LinkKit <p>
 <enum>
-<item> For systems which don't use gcc-2, you may need to install libgcc.a if
+<item>For systems which don't use gcc-2, you may need to install libgcc.a if
    the binary distribution you are using was built with gcc-2.
 
-<item> Make sure that you have the XFree86 3.2 libraries
+<item>Make sure that you have the XFree86 3.3 libraries
    installed under <tt>/usr/X11R6</tt> if you will be linking Xnest with
    the LinkKit.  The LinkKit is now self-contained for the other servers.
 
-<item> Edit the <tt/xf86site.def/ file to define which servers you want
+<item>Edit the <tt/xf86site.def/ file to define which servers you want
    to build, and the drivers and extensions you want included.
 
     <itemize>
-    <item> Set <tt>HasGcc</tt> and <tt>HasGcc2</tt> to match the compiler
+    <item>Set <tt>HasGcc</tt> and <tt>HasGcc2</tt> to match the compiler
       you are using if the defaults aren't correct.
-    <item> If the LinkKit was built with gcc-2.x and you are using some other
+    <item>If the LinkKit was built with gcc-2.x and you are using some other
       compiler, you must install libgcc.a and set <tt>NeedLibGcc</tt> to
       <tt>YES</tt>.
     <item>To build the 256 colour server:
@@ -83,13 +83,13 @@
         Xserver you want to be the default server (i.e., the one that
         the ``X'' sym-link points to).
 
-    <item> Set <tt>XF86SvgaDrivers</tt> to the list of drivers you want to
+    <item>Set <tt>XF86SvgaDrivers</tt> to the list of drivers you want to
 	include in the SVGA server.
-    <item> Set <tt>XF86Vga16Drivers</tt> to the list of drivers you want to
+    <item>Set <tt>XF86Vga16Drivers</tt> to the list of drivers you want to
 	include in the 16 colour server.
-    <item> Set <tt>XF86Vga2Drivers</tt> to the list of drivers you want to
+    <item>Set <tt>XF86Vga2Drivers</tt> to the list of drivers you want to
 	include in the monochrome vga server.
-    <item> Set<tt> XF86MonoDrivers</tt> to the list of non-vga mono drivers
+    <item>Set<tt> XF86MonoDrivers</tt> to the list of non-vga mono drivers
 	you want to include in the mono or VGA16 servers (when building
 	dual-headed servers).
     <item>Note: the ordering of drivers determines the order in which the
@@ -102,6 +102,8 @@
 	set <tt>BuildPexExt</tt> to <tt>YES</tt>.
     <item>To include the X Image Extension:
 	set <tt>BuildXIE</tt> to <tt>YES</tt>.
+    <item>To include the GLX Extension:
+	set <tt>BuildGlxExt</tt> to <tt>YES</tt>.
     <item>To exclude the Double Buffer Extension:
 	set <tt>BuildDBE</tt> to <tt>NO</tt>.
     <item>To exclude the Record Extension:
@@ -115,7 +117,7 @@
 
     </itemize>
 
-<item> If you are including a driver that it not part of the standard
+<item>If you are including a driver that it not part of the standard
    distribution, make a directory in <tt>drivers/vga256</tt>
    (<tt>drivers/vga2</tt> if it is for the VGA2 part of the Mono server,
     <tt>drivers/vga16</tt> if it is for the 16
@@ -125,31 +127,36 @@
    name of the driver (refer to the documentation in the <tt>VGADriverDoc</tt>
    directory for more details).
 
-<item> To build the Makefile, run
+<item>To build the Makefile, run
 <verb>
   ./mkmf
 </verb>
-<item> Run `<tt>make</tt>' to link the server(s) as configured.
+<item>Run `<tt>make</tt>' to link the server(s) as configured.
 
-<item> Run `<tt>make install</tt>' to install the new server(s).
+<item>Run `<tt>make install</tt>' to install the new server(s).
 
-<item> Run `<tt>make clean</tt>' to remove the files that were created by this
+<item>Run `<tt>make clean</tt>' to remove the files that were created by this
    procedure.
 
-<item> If you edit the <tt/xf86site.def/ file and change the selection
+<item>If you edit the <tt/xf86site.def/ file and change the selection
    of servers
    being built or the drivers included in them, repeat the above procedure.
    If changing the selection of Xserver extensions being included it is
    sufficient to run `<tt>make Makefile</tt>' instead of `<tt>./mkmf</tt>'.
 
-<item> It is possible to see which drivers are included in the Xserver by
+<item>It is possible to see which drivers are included in the Xserver by
    running it with the `<tt>-showconfig</tt>' flag.  To check which extensions
    are included, start the Xserver and run `<tt>xdpyinfo</tt>'.
 </enum>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.11 1996/10/16 14:41:12 dawes Exp $
-$XConsortium: LinkKit.sgml /main/4 1995/11/12 19:59:36 kaleb $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.1 1997/05/17 12:03:29 dawes Exp $
+
+
+
+
+
+$XConsortium: LinkKit.sgml /main/8 1996/10/27 11:05:58 kaleb $
 </verb>
 
 </article>

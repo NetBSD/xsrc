@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/s3_virge.c,v 3.1 1996/10/03 08:33:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/s3_virge.c,v 3.2 1996/12/27 07:03:37 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: s3_virge.c /main/4 1995/11/12 18:23:53 kaleb $ */
+/* $XConsortium: s3_virge.c /main/3 1996/10/25 11:35:48 kaleb $ */
 
 #include "s3v.h"
 

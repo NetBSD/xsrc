@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cl64xx/cl_bank.s,v 3.2 1996/02/04 09:13:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cl64xx/cl_bank.s,v 3.3 1996/12/23 06:57:05 dawes Exp $ */
 /*
  * Stubs driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -23,7 +23,7 @@
  * Cirrus Logic GD-64XX Notebook Graphics Controller extensions,
  * Copyright 1994 by Manfred Brands <mb@oceonics.nl>
  */
-/* $XConsortium: cl_bank.s /main/2 1995/11/13 08:23:12 kaleb $ */
+/* $XConsortium: cl_bank.s /main/3 1996/02/21 18:04:39 kaleb $ */
 
 /*
  * All XFree86 assembler-language files are written in a macroized assembler

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_kbdEv.c,v 3.11 1996/10/17 15:19:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_kbdEv.c,v 3.12.2.1 1997/05/12 12:52:34 hohndel Exp $ */
 /*
  * (c) Copyright 1994,1996 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -27,6 +27,7 @@
  * in this Software without prior written authorization from Holger Veit.
  *
  */
+/* $XConsortium: os2_kbdEv.c /main/10 1996/10/27 11:48:48 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -155,8 +156,6 @@ void xf86KbdEvents()
         if (requestData.ulData & 0x800000) {
            switch (scan) {
 
-
-
 /* BUG ALERT: IBM has in its keyboard driver a 122 key keyboard, which
  * uses the "server generated scancodes" from atKeynames.h as real scan codes.
  * We wait until some poor guy with such a keyboard will break the whole
@@ -182,6 +181,9 @@ void xf86KbdEvents()
 	    case 0x5b: scan = KEY_LMeta; break;
 	    case 0x5c: scan = KEY_RMeta; break;
 	    case 0x5d: scan = KEY_Menu; break;
+	    default:
+		/* virtual shifts: ignore */
+		scan = 0; break;
 	    }
 	}
 	
@@ -440,7 +442,7 @@ struct KeyPacket
 #pragma pack()
 
 /* The next function runs as a thread. It registers a monitor on the kbd
- * driver, and uses that to get keystrokes. This is because the standart
+ * driver, and uses that to get keystrokes. This is because the standard
  * OS/2 keyboard driver does not send keyboard release events. A queue
  * is used to communicate with the main thread to send keystrokes */
 
@@ -491,7 +493,7 @@ void *arg;
                 /*ErrorF("xf86-OS/2: wrote a char to queue, rc=%d\n",rc); */
                 print_flag=packet.ddflags & 0x1F;
  
-                /*ErrorF("Kbd Monitor: Key press %d, scan code %d, ddflags %d\n"
+                /*ErrorF("Kbd Monitor: Key press %d, scan code %d, ddflags %d\n",
                         packet.mnflags&0x8000,(packet.mnflags&0x7F00)>>8,packet.ddflags); */
 /* This line will swallow print-screen keypresses */
                 if(print_flag == 0x13 || print_flag == 0x14 || print_flag == 0x15 || print_flag == 0x16){ rc = 0; }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000gc.c,v 3.5 1996/02/04 09:04:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000gc.c,v 3.6 1996/12/23 06:40:41 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -50,7 +50,7 @@ Support for P9000 added by Erik Nygren <nygren@mit.edu>
 Additional P9000 work by Chris Mason <mason@mail.csh.rit.edu>
 
 ******************************************************************/
-/* $XConsortium: p9000gc.c /main/5 1995/11/12 18:18:58 kaleb $ */
+/* $XConsortium: p9000gc.c /main/6 1996/02/21 17:32:25 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,9 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/Imakefile,v 1.1.1.2 1996/01/03 07:20:42 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/Imakefile,v 3.1 1996/12/23 06:50:47 dawes Exp $
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/2 1995/11/13 06:08:31 kaleb $
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:24:25 rws $
 
 #include <Server.tmpl>
 
@@ -14,7 +14,7 @@ OBJS = sco_init.o sco_video.o sco_io.o bios_devmem.o mapVT_noop.o VTsw_sco.o \
        sysv_kbd.o std_kbdEv.o sysv_tty.o std_mseEv.o sco_mouse.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()
@@ -27,3 +27,4 @@ ObjectFromSpecialSource(sysv_tty,../shared/sysv_tty,/**/)
 ObjectFromSpecialSource(std_mseEv,../shared/std_mseEv,/**/)
 
 DependTarget()
+

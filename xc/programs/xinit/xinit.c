@@ -1,5 +1,5 @@
-/* $XConsortium: xinit.c,v 11.61 95/01/09 21:20:29 kaleb Exp $ */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.15 1996/10/17 15:23:48 dawes Exp $ */
+/* $XConsortium: xinit.c /main/58 1996/02/22 10:37:38 kaleb $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.17 1997/01/18 07:03:01 dawes Exp $ */
 
 /*
 
@@ -116,6 +116,7 @@ char *server_names[] = {
     "XF86_Mono   monochrome display on i386 PC",
     "XF86_VGA16  16 color VGA display on i386 PC",
     "XF86_S3     S3 color display on i386 PC",
+    "XF86_S3V    S3 ViRGE color display on i386 PC",
     "XF86_8514   IBM 8514/A color display on i386 PC",
     "XF86_Mach8  ATI Mach8 color display on i386 PC",
     "XF86_Mach32 ATI Mach32 color display on i386 PC",
@@ -157,7 +158,7 @@ char *displayNum;
 char *program;
 Display *xd;			/* server connection */
 #ifndef SYSV
-#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(CSRG_BASED) || defined(__EMX__)
+#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(CSRG_BASED) || defined(__EMX__) || defined(Lynx)
 int status;
 #else
 union wait	status;
@@ -467,7 +468,7 @@ processTimeout(timeout, string)
 			break;
 		alarm(0);
 #else /* SYSV */
-#if defined(SVR4) || defined(_POSIX_SOURCE)
+#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(Lynx)
 		if ((pidfound = waitpid(serverpid, &status, WNOHANG)) == serverpid)
 			break;
 #else

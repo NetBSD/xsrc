@@ -1,5 +1,4 @@
-/* $XConsortium: ncr_driver.c /main/6 1996/01/12 12:18:28 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ncr77c22/ncr_driver.c,v 3.16 1996/10/16 14:43:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ncr77c22/ncr_driver.c,v 3.18.2.2 1997/05/09 07:15:43 hohndel Exp $ */
 /* Copyright 1992 NCR Corporation - Dayton, Ohio, USA */
 
 
@@ -18,7 +17,7 @@
  * purpose.  It is provided "as is" without express or implied
  * warranty.
  *
- * NCR DISCLAIMs ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * NCR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
  * NO EVENT SHALL NCR BE LIABLE FOR ANY SPECIAL,
  * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
@@ -26,6 +25,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: ncr_driver.c /main/13 1996/10/27 11:08:16 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -135,7 +135,8 @@ vgaVideoChipRec NCR77C22 = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,            /* ClockMulFactor */
+  1             /* ClockDivFactor */
 };
 
 #define new ((vgaNCRPtr)vgaNewVideoState)
@@ -382,6 +383,8 @@ NCRRestore(restore)
 {
   unsigned char temp;
 
+  vgaProtect(TRUE);
+
   /*
    * First Enable the extended registers
    */
@@ -441,6 +444,7 @@ NCRRestore(restore)
   outw(0x3C4, 0x05|(restore->ExtModes<<8)); /* restore this last because it */
 					    /* may lock out the extended    */
 					    /* registers when set.          */
+  vgaProtect(FALSE);
 }
 
 
@@ -630,9 +634,10 @@ NCRAdjust(x, y)
  *     Check to see if the mode can be supported on this chip
  */
 static int
-NCRValidMode(mode, verbose)
+NCRValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 #if !defined(MONOVGA) && !defined(XF86VGA16)
 /*

@@ -1,4 +1,4 @@
-/* $XConsortium: server.c /main/13 1996/02/01 11:27:19 mor $ */
+/* $XConsortium: server.c /main/14 1996/12/09 17:58:29 kaleb $ */
 
 /************************************************************************/
 /* Copyright (c) 1993 Quarterdeck Office Systems			*/
@@ -124,7 +124,7 @@ char **argv;
 	setbuf(stdin, NULL);
 
 	printf(
-	    "%s: Ready: version 1.0, May 02 1994 X11R6.1\n",
+	    "%s: Ready: version 1.0, May 02 1994 X11R6.3\n",
 	    myname);
 	fflush(stdout);
 

@@ -20,8 +20,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: dixstruct.h /main/34 1996/03/01 14:30:42 kaleb $ */
-/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.6 1996/05/06 06:00:20 dawes Exp $ */
+/* $XConsortium: dixstruct.h /main/43 1996/12/15 21:25:06 rws $ */
+/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.8 1996/12/24 02:27:28 dawes Exp $ */
 
 #ifndef DIXSTRUCT_H
 #define DIXSTRUCT_H
@@ -38,11 +38,6 @@ SOFTWARE.
  *      translation from client ids to server addresses.
  */
 
-typedef struct _TimeStamp {
-    CARD32 months;	/* really ~49.7 days */
-    CARD32 milliseconds;
-}           TimeStamp;
-
 #ifdef DEBUG
 #define MAX_REQUEST_LOG 100
 #endif
@@ -54,12 +49,6 @@ typedef struct {
     xConnSetupPrefix 	*prefix; 
     xConnSetup  	*setup;
 } NewClientInfoRec;
-
-typedef enum {ClientStateInitial,
-	      ClientStateAuthenticating,
-	      ClientStateRunning,
-	      ClientStateRetained,
-	      ClientStateGone} ClientState;
 
 typedef void (*ReplySwapPtr) (
 #if NeedNestedPrototypes
@@ -77,7 +66,13 @@ extern void ReplyNotSwappd (
 #endif
 );
 
-extern	ReplySwapPtr ReplySwapVector[256];
+typedef enum {ClientStateInitial,
+	      ClientStateAuthenticating,
+	      ClientStateRunning,
+	      ClientStateRetained,
+	      ClientStateGone,
+	      ClientStateCheckingSecurity,
+	      ClientStateCheckedSecurity} ClientState;
 
 typedef struct _Client {
     int         index;
@@ -121,20 +116,36 @@ typedef struct _Client {
     unsigned char requestLog[MAX_REQUEST_LOG];
     int         requestLogIndex;
 #endif
-#if defined(LBX) || defined(LBX_COMPAT)
-    ClientPublicRec public;
-    int         lbxIndex;
-
-    char	*largeReqBuf;		/* When the server gets an
-					   LbxBeginLargeRequest, it allocates
-					   a large request buffer for the
-					   client */
-    CARD32	largeReqTotLen;		/* The total length (in 4 byte units)
-					   of the large request */
-    CARD32	largeReqLenRead;	/* The bytes read thus far (in 4
-					   byte units) */
+#ifdef LBX
+    int		(*readRequest)(
+#if NeedNestedPrototypes
+	ClientPtr /*client*/
+#endif
+);
 #endif
     unsigned long replyBytesRemaining;
+#ifdef XCSECURITY
+    XID		authId;
+    unsigned int trustLevel;
+    pointer (* CheckAccess)(
+#if NeedNestedPrototypes
+	    ClientPtr /*pClient*/,
+	    XID /*id*/,
+	    RESTYPE /*classes*/,
+	    Mask /*access_mode*/,
+	    pointer /*resourceval*/
+#endif
+);
+#endif
+#ifdef XAPPGROUP
+    struct _AppGroupRec*	appgroup;
+#endif
+    struct _FontResolution * (*fontResFunc) (    /* no need for font.h */
+#if NeedNestedPrototypes
+		ClientPtr	/* pClient */,
+		int *		/* num */
+#endif
+);
 }           ClientRec;
 
 /* This prototype is used pervasively in Xext, dix */
@@ -186,5 +197,41 @@ typedef struct _CallbackList {
   int numDeleted;
   CallbackPtr list;
 } CallbackListRec;
+
+/* proc vectors */
+
+extern int (* InitialVector[3]) (
+#if NeedNestedPrototypes
+    ClientPtr /*client*/
+#endif
+);
+
+extern int (* ProcVector[256]) (
+#if NeedNestedPrototypes
+    ClientPtr /*client*/
+#endif
+);
+
+extern int (* SwappedProcVector[256]) (
+#if NeedNestedPrototypes
+    ClientPtr /*client*/
+#endif
+);
+
+#ifdef K5AUTH
+extern int (*k5_Vector[256])() =
+#if NeedNestedPrototypes
+    ClientPtr /*client*/
+#endif
+);
+#endif
+
+extern void (* ReplySwapVector[256]) ();
+
+extern int ProcBadRequest(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/
+#endif
+);
 
 #endif				/* DIXSTRUCT_H */

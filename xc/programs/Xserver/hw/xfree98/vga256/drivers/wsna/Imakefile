@@ -1,20 +1,22 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/wsna/Imakefile,v 3.4 1996/10/08 12:45:25 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/wsna/Imakefile,v 3.6 1996/12/24 02:26:56 dawes Exp $
 #include <Server.tmpl>
 
 SRCS = cir_driver.c cir_fill.c cir_blt.c cir_bltC.c cir_im.c cir_bank.s \
        cir_imblt.s cir_colexp.c cirFillSt.c cir_teblt8.c \
        cirFillRct.c cir_blitter.c cir_textblt.s cir_cursor.c \
        cir_blitmm.c cir_immm.c cir_tebltmm.c cir_span.s cir_alloc.c \
-       cir_blt16.c cir_solid.c cir_line.c cir_seg.c cir_orect.c \
-       cir_orect16.c cir_orect32.c linearline.c cir_fillLG.c cir_blitLG.c \
+       /* cir_blt16.c */ cir_solid.c /* cir_line.c cir_seg.c cir_orect.c */ \
+       /* cir_orect16.c cir_orect32.c linearline.c cir_fillLG.c cir_blitLG.c */ \
+       cirrus_acl.c cirrus_aclm.c laguna_acl.c \
        cir_pc98.c 
 
 OBJS = cir_driver.o cir_fill.o cir_blt.o cir_bltC.o cir_im.o cir_bank.o \
        cir_imblt.o cir_colexp.o cirFillSt.o cir_teblt8.o \
        cirFillRct.o cir_blitter.o cir_textblt.o cir_cursor.o \
        cir_blitmm.o cir_immm.o cir_tebltmm.o cir_span.o cir_alloc.o \
-       cir_blt16.o cir_solid.o cir_line.o cir_seg.o cir_orect.o \
-       cir_orect16.o cir_orect32.o linearline.o cir_fillLG.o cir_blitLG.o \
+       /* cir_blt16.o */ cir_solid.o /* cir_line.o cir_seg.o cir_orect.o */ \
+       /* cir_orect16.o cir_orect32.o linearline.o cir_fillLG.o cir_blitLG.o */ \
+       cirrus_acl.o cirrus_aclm.o laguna_acl.o \
        cir_pc98.o
 
 DEFINES = -DPSZ=8 -DPC98 -DPC98_WSNA
@@ -24,8 +26,8 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
-           -I$(SERVERSRC)/cfb -I$(XF86SRC)/vga256/vga \
-           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(INCLUDESRC) \
+           -I$(SERVERSRC)/cfb -I$(XF86SRC)/vga256/vga -I$(XF86SRC)/xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
 	   -I../../wsna
 #endif
 
@@ -67,6 +69,8 @@ LinkSourceFile(cir_span.h,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(cir_span.s,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(cir_teblt8.c,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(cir_textblt.s,$(XF86SRC)/vga256/drivers/cirrus)
+LinkSourceFile(cirrus_acl.c,$(XF86SRC)/vga256/drivers/cirrus)
+LinkSourceFile(laguna_acl.c,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(linearline.c,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(linearline.h,$(XF86SRC)/vga256/drivers/cirrus)
 LinkSourceFile(cir_pc98.c,..)
@@ -78,6 +82,7 @@ ObjectFromSpecialSource(cir_tebltmm, cir_teblt8, -DCIRRUS_MMIO)
 ObjectFromSpecialSource(cir_seg, cir_line, -DPOLYSEGMENT)
 ObjectFromSpecialSource(cir_orect16, cir_orect, -DPSZ=16)
 ObjectFromSpecialSource(cir_orect32, cir_orect, -DPSZ=32)
+ObjectFromSpecialSource(cirrus_aclm, cirrus_acl, -DMMIO)
 
 InstallLinkKitNonExecFile(cir_driver.c,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(cir_driver.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
@@ -108,6 +113,8 @@ InstallLinkKitNonExecFile(cir_alloc.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(cirBlitMM.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(cir_blitLG.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(cir_inline.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
+InstallLinkKitNonExecFile(cirrus_acl.c,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
+InstallLinkKitNonExecFile(laguna_acl.c,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(Imakefile,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(linearline.c,$(XF98LINKKITDIR)/drivers98/vga256/wsna)
 InstallLinkKitNonExecFile(linearline.h,$(XF98LINKKITDIR)/drivers98/vga256/wsna)

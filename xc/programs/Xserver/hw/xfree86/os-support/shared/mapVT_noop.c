@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/mapVT_noop.c,v 1.1.1.2 1996/01/03 07:20:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/mapVT_noop.c,v 3.1 1996/12/23 06:51:00 dawes Exp $ */
 /*
- * Copyright 1993 by David Wexelblat <dwex@goblin.org>
+ * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mapVT_noop.c /main/2 1995/11/13 06:15:10 kaleb $ */
+/* $XConsortium: mapVT_noop.c /main/3 1996/02/21 17:53:42 kaleb $ */
 
 /*
  * These routines are currently only needed for OSs with true USL-style VTs.

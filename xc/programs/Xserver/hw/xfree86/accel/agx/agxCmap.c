@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxCmap.c,v 3.8 1996/10/17 15:42:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxCmap.c,v 3.9 1996/12/23 06:32:32 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1994    by Henry A. Worth, Sunnyvale, California.
@@ -25,7 +25,7 @@
  *  Rewritten for the AGX by Henry A Worth (haw30@eng.amdahl.com)
  *
  */
-/* $XConsortium: agxCmap.c /main/4 1995/11/13 10:06:22 kaleb $ */
+/* $XConsortium: agxCmap.c /main/9 1996/10/27 11:46:30 kaleb $ */
 
 #include "X.h"
 #include "Xproto.h"

@@ -1,4 +1,4 @@
-DATE:960928
+DATE:970526
                        XFree86 PC98 Server
                         Video System List
 
@@ -50,18 +50,23 @@ NEC
 +---------------------+---------+-------+--------+-+-------+-+
 |PC9821Xt             |MGA2     |       |        |4|   X   | |
 |PC9821Xt13           |MGA 2064 |       |        |4|   X   | |
+|PC9821Xt16           |MGA 2064 |       |        |4|   X   | |
 |PC9821St15           |MGA 2064 |       |        |4|   X   | |
+|PC9821St20           |MGA2064W |       |        |4|   X   | |
 |PC9821Xa             |MGA2     |       |        |2|   X   | |
 |PC9821Xa7/C,K        |TGUI9680 | B/I   |  B/I   |2|   o   | |
 |PC9821Xa9/C,K        |TGUI9680 | B/I   |  B/I   |2|  o?   | |
 |PC9821Xa10/C,K       |TGUI9680 | B/I   |  B/I   |2|  o?   | |
 |PC9821Xa12/C,K       |TGUI9680 | B/I   |  B/I   |2|  o?   | |
 |PC9821Xa13/C,K       |TGUI9680 | B/I   |  B/I   |2|  o?   | |
-|PC9821Xa13/W         |TGUI9682 | B/I   |  B/I   |2|   X   | |
+|PC9821Xa13/W         |TGUI9682 | B/I   |  B/I   |2|  o?   | |
 |PC9821Xa16/R         |TGUI9680 | B/I   |  B/I   |2|  o?   | |
-|PC9821Xa16/W         |TGUI9682 | B/I   |  B/I   |2|   X   | |
+|PC9821Xa16/W         |TGUI9682 | B/I   |  B/I   |2|  o?   | |
+|PC9821Xa20/W         |TGUI9682 | B/I   |  B/I   |2|  o?   | |
 |PC9821Xb10           |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Xc13/M,S       |TGUI9680 | B/I   |  B/I   |2|  o?   | |
+|PC9821Xc13/S5        |CLGD5446 | B/I   |  B/I   |1|  o?   |X|
+|PC9821Xc16/M,S       |CLGD5446 | B/I   |  B/I   |2|  o?   |X|
 |PC9821Xa7e           |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Xn             |S3-864   |S3-SDAC|        |2|   U   | |
 |PC9821Xf             |MGA2     |       |        |2|   X   | |
@@ -70,17 +75,21 @@ NEC
 |PC9821Xe             |CLGD5430 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Xe10           |CLGD5430 | B/I   |  B/I   |1|   O   |X|
 |PC9821Xv13/R         |TGUI9680 | B/I   |  B/I   |2|  o?   | |
-|PC9821Xv13/W         |Millenium|       |        |4|   X   | |
-|PC9821Xv20/W         |Millenium|       |        |4|   X   | |
+|PC9821Xv13/W         |MGA2064W |       |        |4|   X   | |
+|PC9821Xv20/W         |MGA2064W |       |        |4|   X   | |
 +---------------------+---------+-------+--------+-+-------+-+
 |PC9821V7/C           |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821V10/C,S        |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821V12/S          |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821V13/S          |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821V16/S          |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
+|PC9821V20/S7         |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821V13/M7         |TGUI9680 | B/I   |  B/I   |2|  o?   | |
 |PC9821V16/M7         |TGUI9680 | B/I   |  B/I   |2|  o?   | |
 |PC9821V20/M7         |TGUI9680 | B/I   |  B/I   |2|  o?   | |
+|PC9821V166/S         |MGA1064SG|       |        |2|   X   | |
+|PC9821V200/S         |MGA1064SG|       |        |2|   X   | |
+|PC9821V200/M         |MGA1064SG|       |        |4|   X   | |
 +---------------------+---------+-------+--------+-+-------+-+
 |PC9821Ce             |CLGD5428 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Ce2            |CLGD5428 | B/I   |  B/I   |1|  o?   |X|
@@ -97,8 +106,18 @@ NEC
 |PC9821Cu10/D         |CLGD5446 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Cr13           |CLGD5440 | B/I   |  B/I   |1|  o?   |X|
 |PC9821Ct16           |CLGD5446 | B/I   |  B/I   |2|   ?   |X|
+|PC9821Cu13/E,T       |TGUI9685 | B/I   |  B/I   |2|   ?   |X|
+|PC9821Cu16/H         |TGUI9685 | B/I   |  B/I   |2|   ?   |X|
+|PC9821Ct20/A         |TGUI9685 | B/I   |  B/I   |2|   ?   |X|
 +---------------------+---------+-------+--------+-+-------+-+
-|PC9821Ra20/C         |TGUI9682 | B/I   |  B/I   |2|   X   | |
+|PC9821Ra20/N         |TGUI9682 | B/I   |  B/I   |2|  o?   | |
++---------------------+---------+-------+--------+-+-------+-+
+|PC9821RaII23/N,W     |TGUI9682 | B/I   |  B/I   |2|  o?   | |
++---------------------+---------+-------+--------+-+-------+-+
+|PC9821Rs20/B20       |TGUI9682 | B/I   |  B/I   |2|  o?   | |
+|PC9821RsII26/B40     |TGUI9682 | B/I   |  B/I   |2|  o?   | |
++---------------------+---------+-------+--------+-+-------+-+
+|PC9821C200/C,V       |TGUI9685 | B/I   |  B/I   |2|   ?   | |
 +---------------------+---------+-------+--------+-+-------+-+
 |PC9821Ne2            |CLGD5428 | B/I   |  B/I   |1|   O   |X|
 |PC9821Np             |CLGD5428 | B/I   |  B/I   |1|  o?   |X|
@@ -118,10 +137,21 @@ NEC
 |PC9821Nb7/C,D        |CLGD7543 | B/I   |  B/I   |1|   X   | |
 |PC9821Nb10           |CLGD7548 | B/I   |  B/I   |1|   X   | |
 |PC9821Nx/3,C7        |Cyber9320| B/I   |  B/I   |1|   X   | |
+|PC9821Nr12           |CLGD7555 | B/I   |  B/I   |2|   X   | |
+|PC9821Nr15           |Cyber9385| B/I   |  B/I   |2|   X   | |
+|PC9821Nr150          |Cyber9385| B/I   |  B/I   |2|   X   | |
+|PC9821Nr166          |Cyber9385| B/I   |  B/I   |2|   X   | |
+|PC9821Nw133          |Cyber9385| B/I   |  B/I   |2|   X   | |
+|PC9821Nw150          |Cyber9385| B/I   |  B/I   |2|   X   | |
 +---------------------+---------+-------+--------+-+-------+-+
 |PC9821Lt2            |Cyber9320| B/I   |  B/I   |1|   X   | |
 |PC9821La7            |Cyber9320| B/I   |  B/I   |1|   X   | |
 |PC9821La10           |Cyber9320| B/I   |  B/I   |1|   X   | |
+|PC9821La13           |         | B/I   |  B/I   |2|   X   | |
++---------------------+---------+-------+--------+-+-------+-+
+|PC9821Ls12           |CLGD7555 | B/I   |  B/I   |2|   X   | |
+|PC9821Ls13           |CLGD7555 | B/I   |  B/I   |2|   X   | |
+|PC9821Ls150          |CLGD7555 | B/I   |  B/I   |2|   X   | |
 +---------------------+---------+-------+--------+-+-------+-+
 
 
@@ -235,8 +265,8 @@ IO DATA
 |GA-98NBI/C,SB16-GA98 |CLGD5434 |       |        |1|   O   |X|
 |GA-98NB II           |CLGD5434 |       |        |2|   O   |X|
 |GA-98NB IV           |CLGD5434 |       |        |4|   O   |X|
-|GA-DR2/98            |TGUI9660 |       |        |2|   X   | |
-|GA-DR4/98            |TGUI9660 |       |        |4|   X   | |
+|GA-DR2/98            |TGUI9660 |       |        |2|   o   |X|
+|GA-DR4/98            |TGUI9660 |       |        |4|  o?   |X|
 |GA-DR2/PCI           |TGUI9660 |       |        |2|   X   | |
 |GA-DR4/PCI           |TGUI9660 |       |        |4|   X   | |
 |GA-DRV2/98           |TGUI9680 |       |        |2|  o?   |X|
@@ -288,4 +318,4 @@ Sumitomo Kinzoku
 |MGA98-PCI/4          |MGA2     |       |        |4|   X   | |
 +---------------------+---------+-------+--------+-+-------+-+
 
-/* $XFree86: xc/programs/Xserver/hw/xfree98/doc/VideoBoard98,v 3.3 1996/10/08 12:42:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/doc/VideoBoard98,v 3.3.4.2 1997/05/26 14:36:25 dawes Exp $ */

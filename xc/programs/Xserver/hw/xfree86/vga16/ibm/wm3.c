@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/wm3.c,v 3.4 1996/02/04 09:11:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/wm3.c,v 3.5 1996/12/23 06:53:31 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: wm3.c /main/4 1996/01/10 11:13:15 kaleb $ */
+/* $XConsortium: wm3.c /main/5 1996/02/21 17:59:21 kaleb $ */
 
 #include <sys/types.h>
 #include "compiler.h"

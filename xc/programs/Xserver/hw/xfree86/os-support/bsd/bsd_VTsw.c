@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_VTsw.c,v 3.4 1996/02/04 09:09:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_VTsw.c,v 3.5 1996/12/23 06:49:35 dawes Exp $ */
 /*
  * Derived from VTsw_usl.c which is
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bsd_VTsw.c /main/3 1995/11/13 05:53:57 kaleb $ */
+/* $XConsortium: bsd_VTsw.c /main/4 1996/02/21 17:50:57 kaleb $ */
 
 #include "X.h"
 #include "input.h"

@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.3 1996/08/24 12:50:45 dawes Exp $
+# $XConsortium: filelist.tcl /main/2 1996/10/19 18:52:58 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4 1996/12/27 06:54:03 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

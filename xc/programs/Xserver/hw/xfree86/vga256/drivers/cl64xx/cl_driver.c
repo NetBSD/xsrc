@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cl64xx/cl_driver.c,v 3.12 1996/10/16 14:42:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cl64xx/cl_driver.c,v 3.14.2.2 1997/05/09 07:15:35 hohndel Exp $ */
 /*
  * Stubs driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -31,7 +31,7 @@
  * Copyright 1994 by Randy Hendry <randy@sgi.com>
  * Copyright 1994 by Jeff Kirk <jeff@bambam.dsd.ES.COM>
  */
-/* $XConsortium: cl_driver.c /main/5 1996/01/12 12:16:53 kaleb $ */
+/* $XConsortium: cl_driver.c /main/11 1996/10/27 11:07:27 kaleb $ */
 
 /*************************************************************************/
 
@@ -203,7 +203,8 @@ vgaVideoChipRec CL64XX = {
 	FALSE,
 	FALSE,
 	NULL,
-	1,
+	1,      /* ClockMulFactor */
+	1       /* ClockDivFactor */
 };
 
 /*
@@ -728,6 +729,8 @@ vgaCL64XXPtr restore;
 {
 	unsigned char	temp;
 
+	vgaProtect(TRUE);
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
@@ -822,6 +825,7 @@ vgaCL64XXPtr restore;
 	 * This function handles restoring the generic VGA registers.
 	 */
 	vgaHWRestore((vgaHWPtr)restore);
+	vgaProtect(FALSE);
 }
 
 /*
@@ -1150,9 +1154,10 @@ int x, y;
  *
  */
 static int
-CL64XXValidMode(mode, verbose)
+CL64XXValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

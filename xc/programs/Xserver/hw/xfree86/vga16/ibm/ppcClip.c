@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcClip.c,v 1.1.1.2 1996/01/03 07:22:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcClip.c,v 3.1 1996/12/23 06:52:55 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -68,7 +68,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: ppcClip.c /main/3 1995/11/13 07:04:54 kaleb $ */
+/* $XConsortium: ppcClip.c /main/4 1996/02/21 17:57:21 kaleb $ */
 
 #include "X.h"
 #include "Xproto.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3plypt.c,v 3.2 1996/10/08 13:12:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3plypt.c,v 3.6.2.3 1997/05/24 08:36:02 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -41,7 +41,7 @@ PERFORMANCE OF THIS SOFTWARE.
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3plypt.c /main/5 1995/11/12 19:07:05 kaleb $ */
+/* $XConsortium: s3plypt.c /main/3 1996/10/25 15:37:48 kaleb $ */
 
 
 #include "X.h"
@@ -80,10 +80,22 @@ s3PolyPoint(pDrawable, pGC, mode, npt, pptInit)
    int   off;
    cfbPrivGCPtr devPriv;
    xPoint *pptPrev;
+   int s3_clr, s3_rop = -1;
 
+   if (!pGC->planemask || pGC->alu == GXnoop)  /* for xgc "benchmarks" ;-) */
+      return;
 
-   if (1 || !xf86VTSema || ((pGC->planemask & s3BppPMask) != s3BppPMask))
-   {
+   devPriv = (cfbPrivGC *) (pGC->devPrivates[cfbGCPrivateIndex].ptr);
+
+   if (devPriv->rop == GXcopy) {
+      /* In this case the cfb routines are faster. This is caused
+       * by the WaitQueue(1) instructions in the for-loop.
+       */
+   } else {
+      s3_rop = s3ConvertPlanemask(pGC, &s3_clr);
+   }
+
+   if (!xf86VTSema /*|| (s3_rop == -1)*/) {
       if (xf86VTSema) WaitIdleEmpty();
       switch (s3InfoRec.bitsPerPixel) {
       case 8:
@@ -103,9 +115,6 @@ s3PolyPoint(pDrawable, pGC, mode, npt, pptInit)
       return;
    }
 
-   devPriv = (cfbPrivGC *) (pGC->devPrivates[cfbGCPrivateIndex].ptr);
-   if (pGC->alu == GXnoop)
-      return;
    cclip = devPriv->pCompositeClip;
    if ((mode == CoordModePrevious) && (npt > 1)) {
       for (pptPrev = pptInit + 1, i = npt - 1; --i >= 0; pptPrev++) {
@@ -117,29 +126,62 @@ s3PolyPoint(pDrawable, pGC, mode, npt, pptInit)
    off -= (off & 0x8000) << 1;
 
    BLOCK_CURSOR;
-   WaitQueue16_32(4,6);
-   SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
-   SET_WRT_MASK(pGC->planemask);
-   SET_FRGD_COLOR(pGC->fgPixel);
-   SET_MAJ_AXIS_PCNT(0);
 
-   for (nbox = REGION_NUM_RECTS(cclip), pbox = REGION_RECTS(cclip);
-	--nbox >= 0;
-	pbox++) {
-      c1 = *((int *)&pbox->x1) - off;
-      c2 = *((int *)&pbox->x2) - off - 0x00010001;
-      for (ppt = (int *)pptInit, i = npt; --i >= 0;) {
-	 pt = *ppt++;
-	 if (!isClipped(pt, c1, c2)) {
-	    WaitQueue(3);
-	    SET_CURPT((short)(intToX(pt) + pDrawable->x),
-	    		(short)(intToY(pt) + pDrawable->y));
-	    SET_CMD(CMD_LINE | DRAW | LINETYPE | PLANAR | WRTDATA);
-	 }
+   if (npt > 7) { /* 16 (fifo) - 7 (No. of cmds) - 2 (buffer in WaitQueue) */
+      int nwait=0;
+      WaitQueue(3);
+      SETB_PAT_FG_CLR(s3_clr);
+      SETB_CMD_SET(s3_gcmd | CMD_BITBLT | MIX_MONO_PATT | CMD_AUTOEXEC | s3_rop);
+      SETB_RWIDTH_HEIGHT(0,1);
+
+      for (nbox = REGION_NUM_RECTS(cclip), pbox = REGION_RECTS(cclip);
+           --nbox >= 0;
+           pbox++) {
+         c1 = *((int *)&pbox->x1) - off;
+         c2 = *((int *)&pbox->x2) - off - 0x00010001;
+         for (ppt = (int *)pptInit, i = npt; --i >= 0;) {
+            pt = *ppt++;
+            if (!isClipped(pt, c1, c2)) {
+	       if (nwait-- == 0) {
+		  nwait = 7;
+		  WaitQueue(8);
+	       }
+               SETB_RDEST_XY((short)intToX(pt) + pDrawable->x, (short)intToY(pt) + pDrawable->y);
+            }
+        }
+      }
+      WaitQueue(4);
+
+   } else {
+      /* Use only 1 WaitQueue for a small number of points. This speeds
+       * things up a bit.
+       */
+      WaitQueue(7 + npt);
+      SETB_PAT_FG_CLR(s3_clr);
+      SETB_CMD_SET(s3_gcmd | CMD_BITBLT | MIX_MONO_PATT | CMD_AUTOEXEC | s3_rop);
+      SETB_RWIDTH_HEIGHT(0,1);
+
+      for (nbox = REGION_NUM_RECTS(cclip), pbox = REGION_RECTS(cclip);
+           --nbox >= 0;
+           pbox++) {
+         c1 = *((int *)&pbox->x1) - off;
+         c2 = *((int *)&pbox->x2) - off - 0x00010001;
+         for (ppt = (int *)pptInit, i = npt; --i >= 0;) {
+            pt = *ppt++;
+            if (!isClipped(pt, c1, c2)) {
+               SETB_RDEST_XY((short)intToX(pt) + pDrawable->x, (short)intToY(pt) + pDrawable->y);
+            }
+         }
       }
    }
 
-   WaitQueue(2);
-   SET_MIX(FSS_FRGDCOL | ROP_S, BSS_BKGDCOL | ROP_S);
+   SETB_CMD_SET(CMD_NOP);
+
+   /* avoid system hangs again :-( */
+   SETB_RSRC_XY(0,0);
+   SETB_RDEST_XY(0,0);
+   SETB_CMD_SET(s3_gcmd | CMD_BITBLT | ROP_S);
+   WaitIdle();
+
    UNBLOCK_CURSOR;
 }

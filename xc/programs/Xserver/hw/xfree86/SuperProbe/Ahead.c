@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Ahead.c,v 3.3 1996/02/04 08:56:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Ahead.c,v 3.4 1996/12/23 06:31:01 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: Ahead.c /main/4 1995/11/13 11:11:47 kaleb $ */
+/* $XConsortium: Ahead.c /main/5 1996/02/21 17:09:18 kaleb $ */
 
 #include "Probe.h"
 

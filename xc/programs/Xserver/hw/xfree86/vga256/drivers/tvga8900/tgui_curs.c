@@ -1,4 +1,4 @@
-/* $XConsortium: tgui_curs.c /main/4 1996/01/12 12:18:52 kaleb $ */
+/* $XConsortium: tgui_curs.c /main/10 1996/10/25 15:39:18 kaleb $ */
 /*
  * Copyright 1994  The XFree86 Project
  *
@@ -26,7 +26,7 @@
  * accel/s3/s3Cursor.c, and ark/ark_cursor.c
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_curs.c,v 3.11 1996/10/08 12:38:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_curs.c,v 3.15.2.3 1997/05/31 13:34:46 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -46,7 +46,6 @@
 #include "t89_driver.h"
 #include "tgui_ger.h"
 
-extern int TVGAchipset;
 extern int tridentHWCursorType;
 
 extern Bool vgaUseLinearAddressing;
@@ -88,10 +87,6 @@ int TridentCursorWidth;	/* Must be set before calling TridentCursorInit. */
 int TridentCursorHeight;
 static CursorPtr TridentCursorpCurs;
 
-#ifdef PC98_TGUI
-extern pointer mmioBase;
-#endif
-
 /*
  * This is a high-level init function, called once; it passes a local
  * miPointerSpriteFuncRec with additional functions that we need to provide.
@@ -102,14 +97,13 @@ Bool TridentCursorInit(pm, pScr)
 	char *pm;
 	ScreenPtr pScr;
 {
-	TridentCursorHotX = 0;
-	TridentCursorHotY = 0;
-
 	if (TridentCursorGeneration != serverGeneration) {
 		if (!(miPointerInitialize(pScr, &TridentPointerSpriteFuncs,
 		&xf86PointerScreenFuncs, FALSE)))
 			return FALSE;
 
+		TridentCursorHotX = 0;
+		TridentCursorHotY = 0;
 		pScr->RecolorCursor = TridentRecolorCursor;
 		TridentCursorGeneration = serverGeneration;
 	}
@@ -123,7 +117,8 @@ Bool TridentCursorInit(pm, pScr)
 		TridentCursorControlMode |= 0x01;
 
 	/* Pop the cursor in the last 1KB aligned segment */
-	TridentCursorAddress = vga256InfoRec.videoRam * 1024 - 1024;
+	TridentCursorAddress = vga256InfoRec.videoRam * 1024 - 
+				(IsCyber ? 4096 : 1024);
 
 	return TRUE;
 }
@@ -190,7 +185,7 @@ static Bool TridentRealizeCursor(pScr, pCurs)
    if (pCurs->bits->refcnt > 1)
       return TRUE;
 
-   ram = (unsigned long *)xalloc(1024);
+   ram = (unsigned long *)xalloc((IsCyber ? 4096 : 1024));
 
    *pPriv = (pointer) ram;
 
@@ -272,12 +267,12 @@ static void TridentLoadCursorToCard(pScr, pCurs, x, y)
 
 	if (vgaUseLinearAddressing)
 		memcpy((unsigned char *)vgaLinearBase + TridentCursorAddress,
-			cursor_image, 1024);
+			cursor_image, (IsCyber ? 4096 : 1024));
 	else {
 		vgaSaveBank();
 		TGUISetWrite(TridentCursorAddress >> 16);
 		memcpy((unsigned char *)vgaBase + (TridentCursorAddress & 0xFFFF),
-			cursor_image, 1024);
+			cursor_image, (IsCyber ? 4096 : 1024));
 		vgaRestoreBank();
 	}
 }
@@ -507,14 +502,14 @@ TridentRecolorCursor(pScr, pCurs, displayed)
 	outb(GER_BYTE1, 0xFF);
    }
    else
-   if ((TVGAchipset == TGUI9660XGi) || (TVGAchipset == TGUI9680))
+   if (TVGAchipset == TGUI96xx)
    {
 	/* We've got specific colours now for the cursor */
 
 	wrinx(vgaIOBase + 4, 0x48, 0xFF);
-	wrinx(vgaIOBase + 4, 0x49, 0x00);
-	wrinx(vgaIOBase + 4, 0x4A, 0x00);
-	wrinx(vgaIOBase + 4, 0x4B, 0x00);
+	wrinx(vgaIOBase + 4, 0x49, 0xFF);
+	wrinx(vgaIOBase + 4, 0x4A, 0xFF);
+	wrinx(vgaIOBase + 4, 0x4B, 0xFF);
 	wrinx(vgaIOBase + 4, 0x4C, 0x00);
 	wrinx(vgaIOBase + 4, 0x4D, 0x00);
 	wrinx(vgaIOBase + 4, 0x4E, 0x00);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000Bt485.c,v 3.5 1996/02/04 09:04:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000Bt485.c,v 3.6 1996/12/23 06:40:31 dawes Exp $ */
 /*
  * Copyright 1993 By David Wexelblat <dwex@aib.com>
  *
@@ -26,7 +26,7 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * */
-/* $XConsortium: p9000Bt485.c /main/3 1995/11/12 18:18:34 kaleb $ */
+/* $XConsortium: p9000Bt485.c /main/4 1996/02/21 17:31:56 kaleb $ */
 
 #include "X.h"
 #include "input.h"

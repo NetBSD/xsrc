@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.4 1996/10/06 13:16:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5 1996/12/18 03:12:27 dawes Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -119,6 +119,7 @@ typedef struct
 #define BORDER		6
 #define DEBUG_LEVEL     7
 #define HISTORY_SIZE	8
+#define ALWAYS_CORE	9
 
 #if !defined(sun) || defined(i386)
 static SymTabRec SumTab[] = {
@@ -131,6 +132,7 @@ static SymTabRec SumTab[] = {
 	{BORDER,		"border"},
 	{DEBUG_LEVEL,		"debuglevel"},
 	{HISTORY_SIZE,		"historysize"},
+	{ ALWAYS_CORE,		"alwayscore" },
 	{-1,			""}
 };
 
@@ -321,6 +323,13 @@ xf86SumConfig(LocalDevicePtr *array, int inx, int max, LexPtr val)
 	    if (xf86Verbose)
 		ErrorF("%s SummaSketch Motion history size is %d\n", XCONFIG_GIVEN,
 		       dev->history_size);      
+	    break;
+
+	case ALWAYS_CORE:
+	    xf86AlwaysCore(dev, TRUE);
+	    if (xf86Verbose)
+		ErrorF("%s SummaSketch device always stays core pointer\n",
+		       XCONFIG_GIVEN);
 	    break;
 
 	case EOF:

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/bank.s,v 3.5 1996/02/04 09:13:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/bank.s,v 3.6 1996/12/23 06:57:25 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: bank.s /main/5 1995/11/13 08:27:44 kaleb $ */
+/* $XConsortium: bank.s /main/6 1996/02/21 18:05:10 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

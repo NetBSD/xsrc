@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3blt.c,v 3.6 1996/10/18 15:01:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3blt.c,v 3.8.2.2 1997/05/24 08:35:59 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,7 +43,7 @@ PERFORMANCE OF THIS SOFTWARE.
 /*
  * Modified by Amancio Hasty and Jon Tombs
  */
-/* $XConsortium: s3blt.c /main/7 1995/12/09 15:56:08 kaleb $ */
+/* $XConsortium: s3blt.c /main/7 1996/10/27 18:06:54 kaleb $ */
 
 
 #include	"X.h"
@@ -347,7 +347,7 @@ s3CopyArea(pSrcDrawable, pDstDrawable,
 	    }
 	 }
 
-	 WaitQueue(1);
+	 WaitIdle();
 	 SETB_CMD_SET(CMD_NOP);
 	 UNBLOCK_CURSOR;
 	 DEALLOCATE_LOCAL(ordering);

@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/17 1996/02/06 10:03:48 kaleb $
+XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.40 1996/10/23 13:09:39 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.1 1997/05/24 11:35:34 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -24,7 +24,7 @@ SUBDIRS = $(SGMLDIR) $(JAPANESEDIR) man
 #if !BuildLinuxDocText
 /* FreeBSD's README is handled separately because of name length limits */
 #ifdef BSD386Architecture
-OSREADME = README.Bsdi
+OSREADME = /* README.Bsdi */
 #endif
 #ifdef FreeBSDArchitecture
 OSREADME = README.FreeBSD
@@ -36,7 +36,7 @@ OSREADME = README.NetBSD
 OSREADME = README.OpenBSD
 #endif
 #ifdef i386MachArchitecture
-OSREADME = README.Mach
+OSREADME = /* README.Mach */
 #endif
 #ifdef LinuxArchitecture
 OSREADME = README.Linux
@@ -68,11 +68,10 @@ OSREADME = README.SOLX86
 OSREADME = README.SVR4
 # endif
 #endif
-#endif /* !BuildLinuxDocText */
-/* There is no .sgml version of README.OS2 yet */
 #ifdef OS2Architecture
 OSREADME = README.OS2
 #endif
+#endif /* !BuildLinuxDocText */
 
 #if XFree86Version % 10
 REPORTFORM = BetaReport
@@ -84,10 +83,11 @@ all::
 HWREADME =  README.ati README.trident README.tseng README.WstDig \
             README.DECtga \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
-            README.S3 README.S3V README.W32 README.Oak README.Mach32 \
+            README.S3 README.S3V README.SiS README.W32 README.Oak \
+            README.Mach32 \
             README.Mach64 README.ark README.MGA README.NV1
 
-MAINDOCS = COPYRIGHT README README.Config INSTALL RELNOTES
+MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
 OTHERDOCS = /*VideoModes.doc*/ QuickStart.doc README.clkprog xinput
 #endif
@@ -110,3 +110,4 @@ MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 #endif
 
+all::

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.3 1996/02/04 09:10:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.4.2.1 1997/05/21 15:02:42 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: solx86_vid.c /main/3 1995/11/13 06:18:39 kaleb $ */
+/* $XConsortium: solx86_vid.c /main/4 1996/02/21 17:54:20 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -40,6 +40,7 @@
 
 struct kd_memloc MapDSC[MAXSCREENS][NUM_REGIONS];
 pointer AllocAddress[MAXSCREENS][NUM_REGIONS];
+static char *apertureDevName;
 
 Bool xf86LinearVidMem()
 {
@@ -47,13 +48,19 @@ Bool xf86LinearVidMem()
 #ifdef HAS_APERTURE_DRV
 	int	mmapFd;
 
-	if((mmapFd = open("/dev/fbs/aperture", O_RDWR)) < 0)
+	apertureDevName = "/dev/xsvc";
+	if ((mmapFd = open(apertureDevName, O_RDWR)) < 0) 
 	{
-	    ErrorF("xf86LinearVidMem: failed to open /dev/fbs/aperture (%s)\n", 
-		   strerror(errno));
-	    ErrorF("xf86LinearVidMem: 'aperture' device driver required\n");
-	    ErrorF("xf86LinearVidMem: linear memory access disabled\n");
-	    return FALSE;
+	    apertureDevName = "/dev/fbs/aperture";
+	    if((mmapFd = open(apertureDevName, O_RDWR)) < 0)
+	    {
+		ErrorF("xf86LinearVidMem: failed to open "
+		       "%s (%s)\n", apertureDevName, strerror(errno));
+		ErrorF("xf86LinearVidMem: 'aperture'"
+		       " device driver required\n");
+		ErrorF("xf86LinearVidMem: linear memory access disabled\n");
+		return FALSE;
+	    } 
 	}
 	close(mmapFd);
 	return TRUE;
@@ -98,11 +105,11 @@ unsigned long Size;
 	else
 
 #ifdef HAS_APERTURE_DRV
-		sprintf(solx86_vtname, "/dev/fbs/aperture");
+		sprintf(solx86_vtname, apertureDevName);
 #else
 		FatalError("%s: Could not mmap framebuffer [s=%x,a=%x] (%s)\n",
 			   "xf86MapVidMem", Size, Base,
-			   "/dev/fbs/aperture driver unavailable");
+			   "aperture driver unavailable");
 #endif
 
 	if ((fd = open(solx86_vtname, O_RDWR,0)) < 0)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/mach/mach_init.c,v 3.3 1996/02/04 09:10:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/mach/mach_init.c,v 3.4 1996/12/23 06:50:10 dawes Exp $ */
 /*
  * Copyright 1992 by Robert Baron <Robert.Baron@ernst.mach.cs.cmu.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mach_init.c /main/3 1995/11/13 06:01:06 kaleb $ */
+/* $XConsortium: mach_init.c /main/4 1996/02/21 17:51:50 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

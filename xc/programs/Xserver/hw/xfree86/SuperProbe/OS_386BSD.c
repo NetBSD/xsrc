@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.9 1996/10/16 14:39:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.2 1997/05/06 13:24:12 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Dawes <dawes@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: OS_386BSD.c /main/6 1995/11/13 11:12:40 kaleb $ */
+/* $XConsortium: OS_386BSD.c /main/11 1996/10/27 11:04:03 kaleb $ */
 
 #include "Probe.h"
 
@@ -67,7 +67,7 @@
 #define MAP_FILE 0
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && !defined(__OpenBSD__)
 #  include <sys/param.h>
 #  ifdef NetBSD1_1
 #    include <machine/sysarch.h>
@@ -102,7 +102,7 @@ int OpenVideo()
 	if (geteuid() != 0)
 	{
 		fprintf(stderr, 
-			"%s: Must be run as root or installed suid-root\n", 
+			"%s: Must be run as root\n", 
 			MyName);
 		return(-1);
 	}
@@ -286,6 +286,13 @@ Byte *MapVGA()
 	return(base);
 }
 
+Byte *MapMem(address,size)
+	unsigned long address;
+	unsigned long size;
+{
+	return((Byte*)0);
+}
+
 /*
  * UnMapVGA --
  *
@@ -295,6 +302,13 @@ void UnMapVGA(base)
 Byte *base;
 {
 	munmap((caddr_t)base, 0x10000);
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
+{
+	return;
 }
 
 /*

@@ -1,3 +1,10 @@
+# $XConsortium: tk.tcl /main/1 1996/09/21 14:15:57 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tk.tcl,v 3.2 1996/12/27 06:55:09 dawes Exp $
+#
 # tk.tcl --
 #
 # Initialization script normally executed in the interpreter for each

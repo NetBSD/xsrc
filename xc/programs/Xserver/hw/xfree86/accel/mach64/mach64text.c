@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64text.c,v 3.3 1996/02/04 09:03:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64text.c,v 3.4 1996/12/23 06:39:28 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -24,7 +24,7 @@
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: mach64text.c /main/2 1995/11/12 17:39:32 kaleb $ */
+/* $XConsortium: mach64text.c /main/3 1996/02/21 17:29:16 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

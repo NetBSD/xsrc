@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/Imakefile,v 3.1 1996/08/20 12:25:32 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/1 1996/09/21 11:17:44 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/Imakefile,v 3.3.2.2 1997/05/24 13:38:12 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -9,12 +14,16 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/Imakefile,v 3.1 1996/08/20 12
 SGMLDIR = sgml
 #endif
 
-SUBDIRS = $(SGMLDIR) man
+#if InstallJapaneseDocs
+JAPANESEDIR = Japanese
+#endif
+
+SUBDIRS = $(SGMLDIR) $(JAPANESEDIR) man
 
 #if !BuildLinuxDocText
 /* FreeBSD's README is handled separately because of name length limits */
 #ifdef BSD386Architecture
-OSREADME = README.Bsdi
+OSREADME = /* README.Bsdi */
 #endif
 #ifdef FreeBSDArchitecture
 OSREADME = README.FreeBSD
@@ -22,8 +31,11 @@ OSREADME = README.FreeBSD
 #ifdef NetBSDArchitecture
 OSREADME = README.NetBSD
 #endif
+#ifdef OpenBSDArchitecture
+OSREADME = README.OpenBSD
+#endif
 #ifdef i386MachArchitecture
-OSREADME = README.Mach
+OSREADME = /* README.Mach */
 #endif
 #ifdef LinuxArchitecture
 OSREADME = README.Linux
@@ -55,11 +67,10 @@ OSREADME = README.SOLX86
 OSREADME = README.SVR4
 # endif
 #endif
-#endif /* !BuildLinuxDocText */
-/* There is no .sgml version of README.OS2 yet */
 #ifdef OS2Architecture
 OSREADME = README.OS2
 #endif
+#endif /* !BuildLinuxDocText */
 
 #if XFree86Version % 10
 REPORTFORM = BetaReport
@@ -69,60 +80,65 @@ all::
 
 #if !BuildLinuxDocText
 HWREADME =  README.ati README.trident README.tseng README.WstDig \
+	    README.DECtga \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
-            README.S3 README.W32 README.Oak README.Mach64 README.ark
+	    README.S3 README.S3V README.SiS README.W32 README.Oak \
+	    README.Mach32 \
+	    README.Mach64 README.ark README.MGA README.NV1 README.fbdev
 
-MAINDOCS = COPYRIGHT README README.Config INSTALL RELNOTES
+MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
 OTHERDOCS = /*VideoModes.doc*/ QuickStart.doc README.clkprog xinput
 #endif
 
-MISCDOCS = ServersOnly LbxproxyOnly $(REPORTFORM) README.DGA
+MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) README.DGA
 
 DATABASE = /*modeDB.txt*/ AccelCards Monitors Devices
 
 FILES = $(MAINDOCS) $(OSREADME) $(HWREADME) $(OTHERDOCS) $(MISCDOCS) $(DATABASE)
 
-EXTRAFILES = 
-
 InstallMultipleDest(install,$(FILES),$(XFREE86DOCDIR))
-#if 0
-InstallMultipleDest(install,$(EXTRAFILES),$(XFREE86DOCDIR))
-#endif
 
 LinkSourceFile(AccelCards,$(XF86SRC)/doc)
 LinkSourceFile(BetaReport,$(XF86SRC)/doc)
 LinkSourceFile(COPYRIGHT,$(XF86SRC)/doc)
 LinkSourceFile(Devices,$(XF86SRC)/doc)
-LinkSourceFile(INSTALL,$(XF86SRC)/doc)
+LinkSourceFile(BUILD,$(XF86SRC)/doc)
 LinkSourceFile(LbxproxyOnly,$(XF86SRC)/doc)
 LinkSourceFile(Monitors,$(XF86SRC)/doc)
 LinkSourceFile(OS2.Notes,$(XF86SRC)/doc)
 LinkSourceFile(QuickStart.doc,$(XF86SRC)/doc)
-LinkFile(README.FreeBSD,$(XF86SRC)/doc/READ.FreeBSD)
+LinkFile(README.Mach32,$(XF86SRC)/doc/READ.Mach32)
 LinkFile(README.Mach64,$(XF86SRC)/doc/READ.Mach64)
+LinkFile(README.FreeBSD,$(XF86SRC)/doc/READ.FreeBSD)
+LinkFile(README.OpenBSD,$(XF86SRC)/doc/README.NetBSD)
 LinkSourceFile(README,$(XF86SRC)/doc)
 LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
+LinkSourceFile(README.DECtga,$(XF86SRC)/doc)
 LinkSourceFile(README.DGA,$(XF86SRC)/doc)
-LinkSourceFile(README.chips,$(XF86SRC)/doc)
 LinkSourceFile(README.Linux,$(XF86SRC)/doc)
 LinkSourceFile(README.LynxOS,$(XF86SRC)/doc)
 LinkSourceFile(README.Mach,$(XF86SRC)/doc)
+LinkSourceFile(README.MGA,$(XF86SRC)/doc)
+LinkSourceFile(README.NV1,$(XF86SRC)/doc)
 LinkSourceFile(README.NetBSD,$(XF86SRC)/doc)
 LinkSourceFile(README.OS2,$(XF86SRC)/doc)
 LinkSourceFile(README.Oak,$(XF86SRC)/doc)
 LinkSourceFile(README.P9000,$(XF86SRC)/doc)
 LinkSourceFile(README.S3,$(XF86SRC)/doc)
+LinkSourceFile(README.S3V,$(XF86SRC)/doc)
 LinkSourceFile(README.SCO,$(XF86SRC)/doc)
 LinkSourceFile(README.SOLX86,$(XF86SRC)/doc)
 LinkSourceFile(README.SVR4,$(XF86SRC)/doc)
+LinkSourceFile(README.SiS,$(XF86SRC)/doc)
 LinkSourceFile(README.Video7,$(XF86SRC)/doc)
 LinkSourceFile(README.W32,$(XF86SRC)/doc)
 LinkSourceFile(README.WstDig,$(XF86SRC)/doc)
 LinkSourceFile(README.agx,$(XF86SRC)/doc)
 LinkSourceFile(README.ark,$(XF86SRC)/doc)
 LinkSourceFile(README.ati,$(XF86SRC)/doc)
+LinkSourceFile(README.chips,$(XF86SRC)/doc)
 LinkSourceFile(README.cirrus,$(XF86SRC)/doc)
 LinkSourceFile(README.clkprog,$(XF86SRC)/doc)
 LinkSourceFile(README.isc,$(XF86SRC)/doc)

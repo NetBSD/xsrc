@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile,v 1.1 94/04/01 17:54:31 dpw Exp $
+XCOMM $XConsortium: Imakefile /main/2 1996/09/28 17:13:18 rws $
 #include <Server.tmpl>
 
 SRCS1 =	sunAmInit.c \
@@ -31,7 +31,7 @@ OBJS = 	sunCfb.o \
 	sunAmProbe.o
 
    INCLUDES = -I. -I../sun -I../.. -I../../mi -I../../mfb -I../../cfb \
-	      -I../../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+	      -I../../include -I$(XINCLUDESRC) -I$(FONTINCSRC)
    LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
 	      ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln ../cfb/llib-lcfb.ln
 

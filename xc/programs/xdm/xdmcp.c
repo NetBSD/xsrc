@@ -1,5 +1,4 @@
-/* $XConsortium: xdmcp.c,v 1.15 94/09/19 20:16:38 converse Exp $ */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.3 1996/10/06 13:18:58 dawes Exp $ */
+/* $TOG: xdmcp.c /main/16 1997/02/27 11:05:56 kaleb $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -29,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.4.2.2 1997/05/10 07:03:04 hohndel Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -47,10 +47,18 @@ from the X Consortium.
 # include	<ctype.h>
 
 #ifndef MINIX
+#ifndef Lynx
 #include	<sys/socket.h>
+#else
+#include	<socket.h>
+#endif
 #include	<netinet/in.h>
 #ifndef X_NO_SYS_UN
+#ifndef Lynx
 #include	<sys/un.h>
+#else
+#include	<un.h>
+#endif
 #endif
 #include	<netdb.h>
 #else /* MINIX */
@@ -458,9 +466,11 @@ broadcast_respond (from, fromlen, length)
 /* computes an X display name */
 
 static char *
-NetworkAddressToName(connectionType, connectionAddress, displayNumber)
+NetworkAddressToName(connectionType, connectionAddress, originalAddress, 
+		     displayNumber)
     CARD16	connectionType;
     ARRAY8Ptr   connectionAddress;
+    struct sockaddr   *originalAddress;
     CARD16	displayNumber;
 {
     switch (connectionType)
@@ -471,10 +481,25 @@ NetworkAddressToName(connectionType, connectionAddress, displayNumber)
 	    struct hostent	*hostent;
 	    char		*name;
 	    char		*localhost, *localHostname();
+	    extern int		 sourceAddress;
+	    int			 multiHomed = 0;
 
 	    data = connectionAddress->data;
 	    hostent = gethostbyaddr ((char *)data,
 				     connectionAddress->length, AF_INET);
+	    if (sourceAddress && hostent) {
+#if defined(__SVR4) && defined(__sun)
+		/*
+		 * make sure we get the resolver's version of gethostbyname
+		 * otherwise we may not get all the addresses!
+		 */
+		hostent = (struct hostent *) res_gethostbyname(hostent->h_name);
+#else
+		hostent = gethostbyname(hostent->h_name);
+#endif
+		if (hostent)
+			multiHomed = hostent->h_addr_list[1] != NULL;
+	    }
 
 	    localhost = localHostname ();
 
@@ -482,7 +507,8 @@ NetworkAddressToName(connectionType, connectionAddress, displayNumber)
 	     * protect against bogus host names 
 	     */
 	    if (hostent && hostent->h_name && hostent->h_name[0]
-			&& (hostent->h_name[0] != '.'))
+			&& (hostent->h_name[0] != '.') 
+			&& !multiHomed)
 	    {
 		if (!strcmp (localhost, hostent->h_name))
 		{
@@ -522,6 +548,9 @@ NetworkAddressToName(connectionType, connectionAddress, displayNumber)
 	    {
 		if (!getString (name, 25))
 		    return 0;
+		if (multiHomed)
+		    data = (CARD8 *) &((struct sockaddr_in *)originalAddress)->
+				sin_addr.s_addr;
 		sprintf(name, "%d.%d.%d.%d:%d",
 			data[0], data[1], data[2], data[3], displayNumber);
 	    }
@@ -922,8 +951,8 @@ manage (from, fromlen, length)
     int			expectlen;
     struct protoDisplay	*pdpy;
     struct display	*d;
-    char		*name;
-    char		*class;
+    char		*name = NULL;
+    char		*class = NULL;
     XdmcpNetaddr	from_save;
     ARRAY8		clientAddress, clientPort;
     CARD16		connectionType;
@@ -970,6 +999,7 @@ manage (from, fromlen, length)
 	{
 	    name = NetworkAddressToName (pdpy->connectionType,
 					 &pdpy->connectionAddress,
+					 from,
 					 pdpy->displayNumber);
 	    Debug ("Computed display name: %s\n", name);
 	    if (!name)
@@ -997,7 +1027,10 @@ manage (from, fromlen, length)
 		class[displayClass.length] = '\0';
 	    }
 	    else
-		class = (char *) 0;
+	    {
+		free ((char *) class);
+		class = (char *) NULL;
+	    }
 	    from_save = (XdmcpNetaddr) malloc (fromlen);
 	    if (!from_save)
 	    {
@@ -1055,6 +1088,8 @@ manage (from, fromlen, length)
     }
 abort:
     XdmcpDisposeARRAY8 (&displayClass);
+    if (name) free ((char*) name);
+    if (class) free ((char*) class);
 }
 
 SendFailed (d, reason)

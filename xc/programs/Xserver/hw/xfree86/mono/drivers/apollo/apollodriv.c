@@ -1,5 +1,4 @@
-/* $XConsortium: apollodriv.c /main/3 1995/09/04 19:45:16 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/apollodriv.c,v 3.4 1996/02/20 14:34:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/apollodriv.c,v 3.5 1996/12/23 06:47:55 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -21,6 +20,7 @@
  *
  * see mono/COPYRIGHT for copyright and disclaimers.
  */
+/* $XConsortium: apollodriv.c /main/4 1996/02/21 17:49:23 kaleb $ */
 
 #include "X.h"
 #include "input.h"

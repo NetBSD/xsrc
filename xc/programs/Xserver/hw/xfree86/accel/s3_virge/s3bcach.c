@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3bcach.c,v 3.1 1996/10/03 08:33:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3bcach.c,v 3.2 1996/12/27 07:02:22 dawes Exp $ */
 /*
  * Copyright 1993 by Jon Tombs. Oxford University
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
  */
-/* $XConsortium: s3bcach.c /main/4 1995/11/13 11:26:41 kaleb $ */
+/* $XConsortium: s3bcach.c /main/2 1996/10/25 11:34:13 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

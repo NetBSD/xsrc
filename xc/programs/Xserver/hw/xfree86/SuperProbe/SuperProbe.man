@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SuperProbe.man,v 3.3 1996/02/04 08:57:09 dawes Exp $
-.TH SuperProbe 1 "Version 2.2" ""
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SuperProbe.man,v 3.4 1996/12/23 06:31:38 dawes Exp $
+.TH SuperProbe 1 "Release 6.3 (XFree86 3.2/SuperProbe 2.12)" "X Version 11"
 .SH NAME
 SuperProbe - probe for and identify installed video hardware.
 .SH SYNOPSIS
@@ -204,4 +204,4 @@ David E. Wexelblat <dwex@xfree86.org>
 .br
 with help from David Dawes <dawes@xfree86.org> and the XFree86 
 development team.
-.\" $XConsortium: SuperProbe.man /main/4 1995/11/13 11:13:20 kaleb $
+.\" $XConsortium: SuperProbe.man /main/6 1996/12/09 17:37:44 kaleb $

@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_kbd.c,v 1.1.1.2 1996/01/03 07:20:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_kbd.c,v 3.2 1996/12/23 06:51:07 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@XFree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: sysv_kbd.c /main/2 1995/11/13 06:15:21 kaleb $ */
+/* $XConsortium: sysv_kbd.c /main/3 1996/02/21 17:53:59 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -66,7 +66,7 @@ void xf86KbdInit()
 	ioctl (xf86Info.consoleFd, KDGKBMODE, &kbdtrans);
 #endif
 	ioctl (xf86Info.consoleFd, TCGETA, &kbdtty);
-#ifdef E_TABSZ
+#if defined(E_TABSZ) && !defined(SCO325)
 	kbdemap = (char *)xalloc(E_TABSZ);
 	if (ioctl(xf86Info.consoleFd, LDGMAP, kbdemap) < 0)
 	{

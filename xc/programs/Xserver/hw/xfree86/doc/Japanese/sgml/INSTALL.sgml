@@ -1,17 +1,18 @@
 <!doctype linuxdoc system>
 
 <article>
-<title>XFree86 3.1.2 インストールガイド
+<title>XFree86 3.2 インストールガイド
 <author>David Dawes
-<Date>1995 年 6 月 25 日
+<Date>1996 年 10 月 24 日
 <trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
 <abstract>
-  この文書ではソース配布物からどのように XFree86 を構築するかを説明して
-  います。配布物の全てのソースから構築する場合と同様に、X サーバーだけま
-  たは lbxproxy サーバーだけを構築するための切り詰めたソースから構築する
+  この文書では<bf>ソース</bf>配布物からどのように XFree86 を構築するかを説明して
+  います。配布物の全てのソースから構築する場合と同様に、X サーバー
+  だけを構築するための切り詰めたソースから構築する
   場合も説明しています。各々の OS に依存した README ファイルと関連させて
   使用するように構想しています。この文書では 導入方法やバイナリ配布物の
-  更新方法については説明していません。これらの情報は各々の OS に依存した 
+  更新方法については説明していません。これらの情報は
+  <htmlurl name=RELNOTES url=RELNOTE.html>, 各々の OS に依存した 
   README ファイル又は色々なバイナリ配布物に添付してある別文書に記載して
   います。
 </abstract>
@@ -31,8 +32,8 @@
 
   GCC-2 を使って XFree86 を作成する事を強くお勧めします。バージョン 
   2.6.0 又は 2.4.x 等 2.4.5 以前の物はバグのため作成や実行が失敗するので
-  使用しないで下さい。殆どの XFree86 3.1.2 バイナリキットは GCC 2.4.5, 
-  2.5.8 又は 2.6.3 を使用して作成されています。GCC の -m486 オプションを
+  使用しないで下さい。
+  GCC の -m486 オプションを
   使えば、486 で約 ５% 性能を向上させることができるでしょう。より大きな
   バイナリは別として、386 でも性能は悪くはなりません。（ gcc-2 は 
   prep.ai.mit.edu と他の GNU ソースを置いているサイトにあります。）
@@ -41,38 +42,30 @@
 <item>次の物が必要です:
 
     <itemize>
-    <item> fixes 01 から 12 のパッチを当てた X コンソーシアム X11R6 の配
-  付物。
+    <item> fix 01 のパッチを当てた X コンソーシアム X11R6.1 の配付物。
 
-    <item> <tt/XFree86-3.1.2.diff.gz/, <tt/cfont312.tgz/
+    <item> <tt/R6.1pl1-3.2.diff.gz/, <tt/cfont32.tgz/
 
-    <item> <tt/XFree86-contrib-3.1.2.diff.gz/ (いくつかの X コンソーシア
+    <item> 追加として X コンソーシアムの X11R6.1 寄贈 配布物。
+
+    <item> <tt/contrib-3.2.diff.gz/ (いくつかの X コンソーシア
     ムの ``寄贈'' 配付物への追加パッチ)
 
-    <item> XFree86 バージョン 3.1.1 から 更新する場合は、
-    <tt/3.1.1-3.1.2.diff.gz/ patch, <tt/cfont312.tgz/,
-    のパッチのみと <tt/contrib-3.1.1-3.1.2.diff.gz/ patch が任意で必要で
-    す。
-
-    <item> XFree86 X サーバーだけを構築したい場合は、X312servonly.tgz だ
+    <item> XFree86 X サーバーだけを構築したい場合は、X32servonly.tgz だ
     けが必要で、これは ``ServersOnly'' というソース配布物を切り詰
     めたものと同じものです。
 
-    <item> lbxproxy サーバーだけを構築したい場合は、X312lbxonly.tgz だけ
-    が必要で、これは ``LBXProxyOnly'' というソース配布物を切り詰
-    めたものと同じものです。
-
-    <item> 全ての XFree86 ソースから作成すると約110MB の空きディスク容量
+    <item> 全ての XFree86 ソースから作成すると約130MB の空きディスク容量
     が必要です。全部作成するには（ OS の共用ライブラリを使用しな
-    い時）110MB 追加容量が必要です。全ての配付物を導入するには
-    （共用ライブラリを使用した場合）約 45 から 55MBの空きディスク
+    い時）130MB 追加容量が必要です。全ての配付物を導入するには
+    （共用ライブラリを使用した場合）約 55 から 65MBの空きディスク
     容量が必要です。作成作業に重要でない部分を削除することで、そ
     れぞれ次のディスク容量を削減出来ます。:
 
 <tscreen><verb>
- xc/test                      13MB
- xc/doc/hardcopy               8MB
- xc/doc/specs                 11MB
+ xc/test                      16MB
+ xc/doc/hardcopy               11MB
+ xc/doc/specs                 27MB
 </verb></tscreen>
 
       フォントを作成する必要がない時は、<tt>xc/fonts</tt> を削除する
@@ -87,49 +80,43 @@
         すれば、もう数 MB 開放出来ます。
 
     <item> XFree86 サーバーの作成に限った場合、切り詰めたソースツリーを
-    構成することが出来ます。このソースツリーを作成するには 40 から 45MB 
-    のディスクに空きが必要です。サーバーのみを構築するために必要なフ
-    ァイルやディレクトリは <tt/ServersOnly/ファイルに一覧になっています
-    （<tt>xc/programs/Xserver/hw/XFree86/doc/</tt> に見つかるでしょ
-    う）。同じディレクトリにある <tt/LbxproxyOnly/ ファイルに lbxproxy 
-    サーバーのみを構築するために必要なファイルやディレクトリが一覧になっ
-    ています。
+    構成することが出来ます。このソースツリーを作成するには 50 から 55MB 
+    のディスクに空きが必要です。
 
-    <item> <tt/XFree86-3.1.2-contrib.diff.gz/ のパッチファイルは 
+    <item> <tt/contrib-3.2.diff.gz/ のパッチファイルは 
     X コンソーシアム
-    の寄贈配付物のごく一部へのパッチを提供します。これは X11R5 のコア
-    配付物のクライアントの殆どに適用しますが、X11R6 の寄贈配付物へ移
-    動するものです。このパッチファイルを適用すると、次の X コンソーシ
-    アムの寄贈版の(初版の contrib-0 バージョンではなく)最新版のファイ
+    の R6.1 寄贈配付物のごく一部へのパッチを提供します。
+    このパッチファイルを適用すると、次の X コンソーシ
+    アムの寄贈版の最新版のファイ
     ル/ディレクトリが必要になります。:
 
 <tscreen><verb>
           contrib/Imakefile
           contrib/programs/Imakefile
-          contrib/programs/ico/
-          contrib/programs/listres/
-          contrib/programs/showfont/
-          contrib/programs/viewres/
-          contrib/programs/xbiff/
-          contrib/programs/xcalc/
-          contrib/programs/xditview/
-          contrib/programs/xedit/
-          contrib/programs/xev/
-          contrib/programs/xeyes/
-          contrib/programs/xfontsel/
-          contrib/programs/xgc/
-          contrib/programs/xload/
-          contrib/programs/xman/
-          contrib/programs/xmessage/
+          contrib/programs/ico
+          contrib/programs/listres
+          contrib/programs/showfont
+          contrib/programs/viewres
+          contrib/programs/xbiff
+          contrib/programs/xcalc
+          contrib/programs/xditview
+          contrib/programs/xedit
+          contrib/programs/xev
+          contrib/programs/xeyes
+          contrib/programs/xfontsel
+          contrib/programs/xgc
+          contrib/programs/xload
+          contrib/programs/xman
+          contrib/programs/xmessage
 </verb></tscreen>
      </itemize>
         
-<item> 標準的な X コンソーシアムのパッチレベル 12 のソース配付物から始め
+<item> 標準的な X コンソーシアム R6.1 のパッチレベル 1 のソース配付物から始め
 る場合は、 <tt/xc/ ディレクトリに移動して次のコマンドを実行して下さい。:
 
 <tscreen><verb>
-      gzip -d < XFree86-3.1.2.diff.gz | patch -p -E
-      gzip -d < cfont312.tgz | tar vxf -
+      gzip -d < R6.1pl1-3.2.diff.gz | patch -p -E
+      gzip -d < cfont32.tgz | tar vxf -
 </verb></tscreen>
 
    変更していないソースからインストールする場合は、問題は何もないでしょ
@@ -138,8 +125,8 @@
    <tt/xf86site.def/ や <tt/site.def/)
    を変更した場合は、それらのファイル名を変えて、パッチする前の
    提供した状態に戻しましょう。 元のバックアップを持っていない場合は、
-   個々のファイルは <url url="ftp://ftp.x.org/pub/R6untarred"
-   name="ftp.x.org:/pub/R6untarred"> から容易に手に入れられるでしょう。
+   個々のファイルは <htmlurl url="ftp://ftp.x.org/pub/R6.1/xc"
+   name="ftp://ftp.x.org/pub/R6.1/xc"> から容易に手に入れられるでしょう。
 
    もし以前に使用していたソースにパッチを当てる場合は、差分ファイルを適
    用する前に <tt/xc/ ディレクトリから ``<tt/make clean/'' を忘れずに実
@@ -149,9 +136,9 @@
    次の操作を実行しましょう:
 
 <tscreen><verb>
-      gzip -d < XFree86-3.1.2-contrib.diff.gz | patch -p -E
+      gzip -d < contrib-3.2.diff.gz | patch -p -E
 </verb></tscreen>
-
+<!--
 <item> XFree86 3.1.1 ソース配付物から始めるならば、 <tt/xc/ ディレクトリ
 へ移動して、次の操作を実行しましょう:
 
@@ -181,19 +168,15 @@
 <tscreen><verb>
       gzip -d < contrib-3.1.1-3.1.2.diff.gz | patch -p -E
 </verb></tscreen>
-
+-->
 <item> <tt>config/cf/xf86site.def</tt>を通読してください。  自分の構成に
    合わせて様々なパラメータを設定しましょう。  初めての作成の場合は、
-   <bf/BuildFonts/, <bf/InstallXdmConfig/, <bf/InstallXinitConfig/ を 
-   <bf/YES/ に設定しましょう。（フォントサーバーを作成する場合は、同様に
-   <bf/InstallFSConfig/ を <bf/YES/ にしましょう） 
+   <bf/BuildFonts/を 
+   <bf/YES/ に設定しましょう。
 
    サーバーだけを作成するために切り詰めたソースツリーを使うときは
    <bf/BuildServersOnly/ を <bf/YES/ に設定し、<bf/XnestServer/ を 
    <bf/NO/ に設定しましょう。
-
-   lbxproxy サーバーだけを作成するために切り詰めたソースツリーを使うと
-   きは <bf/BuildLBXProxyOnly/ を <bf/YES/に設定しましょう。
 
    作成したいサーバーを指定するには、次の定義を設定しましょう:
 
@@ -203,18 +186,20 @@
  ET4000/W32 accelerated server (XF86_W32): XF86W32Server
  Monochrome server  (XF86_Mono):           XF86MonoServer
  S3 accelerated server (XF86_S3):          XF86S3Server
+ S3 ViRGE accelerated server (XF86_S3V):          XF86S3VServer
  8514/A accelerated server (XF86_8514):    XF86I8514Server
  Mach8 accelerated server (XF86_Mach8):    XF86Mach8Server
  Mach32 accelerated server (XF86_Mach32):  XF86Mach32Server
  Mach64 accelerated server (XF86_Mach64):  XF86Mach64Server
  P9000 accelerated server (XF86_P9000):    XF86P9000Server
  AGX accelerated server (XF86_AGX):        XF86AGXServer
+ I128 server (XF86_I128):                  XF86I128Server
 </verb></tscreen>
        
    双頭の Mono+VGA2 サーバーを作成するには,  <bf/XF86MonoDualServer/ を
    <bf/YES/にしましょう。
 
-   双頭の  Mono+VGA16 サーバーを作成するには,
+   双頭の Mono+VGA16 サーバーを作成するには,
    <bf/XF86VGA16DualServer/ を <bf/YES/にしましょう。
 
    <tt/X/ にリンクを張りたいサーバーを <bf/ServerToInstall/ に設定して下
@@ -239,9 +224,9 @@
 
 <item> （現在 LinuxDoc/SGML の下にある書式に）XFree86 のドキュメントを整
    形したい場合、
-   <url name="ftp.xfree86.org:/pub/XFree86/3.1.2/Linuxdoc"
-    url="ftp://ftp.xfree86.org/pub/XFree86/3.1.2/Linuxdoc">にある
-   linuxdoc-sgml-1.1.tar.gz とパッチ を手に入れて組み込んで下さい。
+   <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.2/Linuxdoc"
+    url="ftp://ftp.xfree86.org/pub/XFree86/3.2/Linuxdoc"> にある
+   linuxdoc-sgml-1.2.tar.gz とパッチ を手に入れて組み込んで下さい。
    <tt/xf86site.def/ ファイルを確認して 適切に Linuxdoc のオプションを編
    集してください。
    
@@ -263,8 +248,6 @@
    <tt/World.Log/ を確認してください。  全ソース配布物を使用するときは、 
    <tt/xc/ ディレクトリから組み込みを行います。  ServersOnly 配布物を使
    用するときは、 <tt>xc/programs/Xserver</tt> ディレクトリから組み込み
-   を行い、 LBXProxyOnly 配布物を使用するときは
-   <tt>xc/workInProgress/lbx/programs/lbxproxy</tt> ディレクトリから導入
    を行います。 組み込むには、 ``<tt/make install/'' と ``<tt/make 
    install.man/''を実行しましょう。 インストール出来るだけの十分な空き
    ディスク容量が、 <tt>/usr/X11R6</tt> にあることを確認しましょう。
@@ -285,7 +268,7 @@
    て下さい。 これがうまくいったら、 ``<tt/make install/'' と ``<tt/make 
    install.man/'' を実行してこれを組み込んでください。
 </enum>
-
+<!--
 <sect> XFree86 の使用法と構築
 <p>
 <enum>
@@ -310,7 +293,7 @@
    しない場合は、ゆっくりとサーバーが起動するでしょう、また最後のクライ
    アントが作業を終了する時にサーバーを終了しないようにしましょう。
 </enum>
-
+-->
 <sect> ソース配付物からのサーバーの再構築
 <p>
 色々なサーバー又は色々なドライバーの組み合わせのサーバーを作成する場合:
@@ -337,24 +320,24 @@
 <p>
   サーバーのバイナリリンクキットを組み込むと、サーバー内のドライバとサー
   バーの機能拡張の再構築が可能になります。再構築を如何に行うかの詳細は、
-  <url url="LinkKit.html" name="README.LinkKit"> ファイルを参照してくだ
+  <htmlurl url="LinkKit.html" name="README.LinkKit"> ファイルを参照してくだ
   さい。
 
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/INSTALL.sgml,v 3.2 1997/01/26 04:34:18 dawes Exp $
+</verb>
 <hrule>
 
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/INSTALL.sgml,v 3.12
- 1995/07/22 09:42:53   を、岡本  一幸 
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/INSTALL.sgml,v 3.17 1
+996/10/26 09:38:49   を、岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
 XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
 電子メールで送って下さい。
-<verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/INSTALL.sgml,v 3.1 1995/10/22 10:44:34 dawes Exp $
-</verb>
 <hrule>
 &lsqb;EOF&rsqb;
 </article>

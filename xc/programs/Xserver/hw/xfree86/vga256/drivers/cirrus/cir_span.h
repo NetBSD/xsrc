@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_span.h,v 3.2 1996/02/04 09:13:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_span.h,v 3.3 1996/12/23 06:56:54 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: cir_span.h /main/4 1995/11/13 08:21:24 kaleb $ */
+/* $XConsortium: cir_span.h /main/5 1996/02/21 18:04:10 kaleb $ */
 /*
  * Definitions for span functions in cir_span.s
  */

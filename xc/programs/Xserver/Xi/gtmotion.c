@@ -1,5 +1,9 @@
-/* $XConsortium: gtmotion.c,v 1.15 94/04/17 20:33:15 rws Exp $ */ /*ALLOC-FIX*/
-/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.2 1996/05/06 05:56:05 dawes Exp $ */
+/* $TOG: gtmotion.c /main/12 1997/04/04 09:10:45 barstow $ */ /*ALLOC-FIX*/
+
+
+
+
+/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.2.4.1 1997/05/03 09:44:56 dawes Exp $ */
 
 /************************************************************
 
@@ -98,7 +102,7 @@ int
 ProcXGetDeviceMotionEvents(client)
     ClientPtr client;
 {
-    INT32 *coords, *bufptr;
+    INT32 *coords = NULL, *bufptr;
     xGetDeviceMotionEventsReply rep;
     unsigned long i;
     int     num_events, axes, size, tsize;
@@ -151,6 +155,12 @@ ProcXGetDeviceMotionEvents(client)
 	size = sizeof(Time) + (axes * sizeof (INT32));
 	tsize = num_events * size;
 	coords = (INT32 *) ALLOCATE_LOCAL(tsize);
+	if (!coords)
+	    {
+	    SendErrorToClient(client, IReqCode, X_GetDeviceMotionEvents, 0, 
+	        BadAlloc);
+	    return Success;
+	    }
 	rep.nEvents = (v->GetMotionProc) (
 		dev, (xTimecoord *)coords, /* XXX */
 		start.milliseconds, stop.milliseconds, (ScreenPtr)NULL);
@@ -176,8 +186,9 @@ ProcXGetDeviceMotionEvents(client)
 		}
 	    }
 	WriteToClient(client, length * 4, (char *)coords);
-	DEALLOCATE_LOCAL(coords);
         }
+    if (coords)
+	DEALLOCATE_LOCAL(coords);
     return Success;
 }
 

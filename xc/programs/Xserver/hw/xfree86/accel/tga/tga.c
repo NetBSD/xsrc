@@ -1,3 +1,4 @@
+/* $XConsortium: tga.c /main/11 1996/10/28 04:23:31 kaleb $ */
 /*
  * Copyright 1995,96 by Alan Hourihane, Wigan, England.
  *
@@ -22,7 +23,7 @@
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.9 1996/10/19 15:15:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.6 1997/06/01 12:33:32 dawes Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -41,6 +42,8 @@
 #include "tga.h"
 #include "tga_presets.h"
 
+#include "xf86xaa.h"
+
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 
@@ -53,10 +56,16 @@
 #include "extensions/xf86dgastr.h"
 #endif
 
+#ifdef DPMSExtension
+#include "opaque.h"
+#include "extensions/dpms.h"
+#endif
+
 static int tgaValidMode(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 );
 
@@ -68,10 +77,11 @@ ScrnInfoRec tgaInfoRec = {
     tgaInitialize,	/* Bool (* Init)() */
     tgaValidMode,	/* Bool (* ValidMode)() */
     tgaEnterLeaveVT,	/* void (* EnterLeaveVT)() */
-    (void (*)())NoopDDA,		/* void (* EnterLeaveMonitor)() */
-    (void (*)())NoopDDA,		/* void (* EnterLeaveCursor)() */
+    (void (*)())NoopDDA,/* void (* EnterLeaveMonitor)() */
+    (void (*)())NoopDDA,/* void (* EnterLeaveCursor)() */
     tgaAdjustFrame,	/* void (* AdjustFrame)() */
     tgaSwitchMode,	/* Bool (* SwitchMode)() */
+    tgaDPMSSet,		/* void (* DPMSSet)() */
     tgaPrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {5, 6, 5},          /* xrgb weight */
@@ -85,7 +95,8 @@ ScrnInfoRec tgaInfoRec = {
     {0, },	       	/* OFlagSet xconfigFlag */
     NULL,	       	/* char *chipset */
     NULL,	       	/* char *ramdac */
-    0,			/* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -112,17 +123,20 @@ ScrnInfoRec tgaInfoRec = {
     0,			/* int s3Madjust */
     0,			/* int s3Nadjust */
     0,			/* int s3MClk */
+    0,			/* int chipID */
+    0,			/* int chipRev */
     0,			/* unsigned long VGAbase */
     0,			/* int s3RefClk */
-    0,			/* int suspendTime */
-    0,			/* int offTime */
     -1,			/* int s3BlankDelay */
     0,			/* int textClockFreq */
+    NULL,               /* char* DCConfig */
+    NULL,               /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
-    0,			/* int directMode */
+    ,0,			/* int directMode */
     NULL,		/* Set Vid Page */
     0,			/* unsigned long physBase */
-    0,			/* int physSize */
+    0			/* int physSize */
 #endif
 };
 
@@ -132,7 +146,6 @@ ScreenPtr savepScreen = NULL;
 Bool tgaDAC8Bit = FALSE;
 Bool tgaBt485PixMux = FALSE;
 Bool tgaReloadCursor, tgaBlockCursor;
-Bool tgaPowerSaver = FALSE;
 unsigned char tgaSwapBits[256];
 pointer tga_reg_base;
 int tgahotX, tgahotY;
@@ -329,6 +342,7 @@ tgaProbe()
 #endif
 
   OFLG_SET(OPTION_DAC_8_BIT, &validOptions);
+  OFLG_SET(OPTION_DAC_8_BIT, &tgaInfoRec.options); /* Set 8bit by default */
   OFLG_SET(OPTION_DAC_6_BIT, &validOptions);
   OFLG_SET(OPTION_POWER_SAVER, &validOptions);
 
@@ -336,7 +350,7 @@ tgaProbe()
   tgaInfoRec.chipset = "tga";
   xf86ProbeFailed = FALSE;
 
-  tgaInfoRec.dacSpeed = 135000; 	/* 135MHz for the Bt485 */
+  tgaInfoRec.dacSpeeds[0] = 135000; 	/* 135MHz for the Bt485 */
   tgaInfoRec.maxClock = 135000;		/* 135MHz for the Bt485 */
 
   /* Let's grab the basic mode lines */
@@ -413,25 +427,32 @@ tgaProbe()
 
   tgaInfoRec.displayWidth = tgaInfoRec.virtualX;
 
-  if (xf86bpp < 0)
-	xf86bpp = tgaInfoRec.depth;
-
-  switch (xf86bpp) {
-	case 8:
-		break;
-	default:
-		ErrorF("Invalid value for bpp. 8bpp is only supported.\n");
-		return(FALSE);
-  }
-
   if (OFLG_ISSET(OPTION_DAC_8_BIT, &tgaInfoRec.options))
 	tgaDAC8Bit = TRUE;
 
   if (OFLG_ISSET(OPTION_DAC_6_BIT, &tgaInfoRec.options))
 	tgaDAC8Bit = FALSE;
 
-  if (OFLG_ISSET(OPTION_POWER_SAVER, &tgaInfoRec.options))
-	tgaPowerSaver = TRUE;
+#ifdef DPMSExtension
+  if (DPMSEnabledSwitch ||
+      (OFLG_ISSET(OPTION_POWER_SAVER, &tgaInfoRec.options) &&
+       !DPMSDisabledSwitch))
+	defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
+
+  if (xf86bpp < 0)
+	xf86bpp = tgaInfoRec.depth;
+  if (xf86weight.red == 0 || xf86weight.green == 0 || xf86weight.blue == 0)
+	xf86weight = tgaInfoRec.weight;
+  switch (xf86bpp) {
+	case 8:
+		/* XAA uses this */
+		xf86weight.green = (tgaDAC8Bit ? 8 : 6);
+		break;
+	default:
+		ErrorF("Invalid value for bpp. 8bpp is only supported.\n");
+		return(FALSE);
+  }
 
 #ifdef XFreeXDGA
 #ifdef NOTYET
@@ -460,9 +481,6 @@ tgaInitialize (scr_index, pScreen, argc, argv)
 
 	/* Init the screen */
 	
-#ifdef TGA_ACCEL
-	tgaInitGC();
-#endif
 	tgaInitAperture(scr_index);
 	tgaInit(tgaInfoRec.modes);
 	tgaCalcCRTCRegs(&tgaCRTCRegs, tgaInfoRec.modes);
@@ -473,23 +491,29 @@ tgaInitialize (scr_index, pScreen, argc, argv)
 		tgaReorderSwapBits(i, tgaSwapBits[i]);
 	}
 
-	xf86InitCache(tgaCacheMoveBlock);
-	tgaFontCache8Init();
-	tgaImageInit();
-
 	/*
 	 * Take display resolution from the -dpi flag 
 	 */
 	if (monitorResolution)
 		displayResolution = monitorResolution;
 	
+#if 1
+	/* Let's use the new XAA Architecture.....*/
+ 	TGAAccelInit();
+
+	if (!xf86XAAScreenInit8bpp(pScreen,
+#else
 	if (!cfbScreenInit(pScreen,
-			tgaVideoMem,
+#endif
+			(pointer) tgaVideoMem,
 			tgaInfoRec.virtualX, tgaInfoRec.virtualY,
 			displayResolution, displayResolution,
 			tgaInfoRec.displayWidth))
 		return(FALSE);
 
+	pScreen->whitePixel = (Pixel) 1;
+	pScreen->blackPixel = (Pixel) 0;
+	XF86FLIP_PIXELS();
 	pScreen->CloseScreen = tgaCloseScreen;
 	pScreen->SaveScreen = tgaSaveScreen;
 
@@ -582,11 +606,6 @@ tgaEnterLeaveVT(enter, screen_idx)
 	    tgaAdjustFrame(pScr->frameX0, pScr->frameY0);
 	    tgaRestoreCursor(pScreen);
 
-#ifdef NOTYET
-	    tgaCacheInit(tgaInfoRec.virtualX, tgaInfoRec.virtualY);
-	    tgaFontCache8Init(tgaInfoRec.virtualX, tgaInfoRec.virtualY);
-#endif
-
 	    if (pspix->devPrivate.ptr != tgaVideoMem && ppix) {
 		pspix->devPrivate.ptr = tgaVideoMem;
 #if 1
@@ -607,9 +626,9 @@ tgaEnterLeaveVT(enter, screen_idx)
     } else {
 	xf86MapDisplay(screen_idx, LINEAR_REGION);
 	if (!xf86Exiting) {
-	    ppix = (pScreen->CreatePixmap)(pScreen,
-					   pScreen->width, pScreen->height,
-					   pScreen->rootDepth);
+	    ppix = (pScreen->CreatePixmap)(pScreen, tgaInfoRec.displayWidth,
+					    pScreen->height,
+					    pScreen->rootDepth);
 
 	    if (ppix) {
 #if 1
@@ -624,6 +643,8 @@ tgaEnterLeaveVT(enter, screen_idx)
 		pspix->devPrivate.ptr = ppix->devPrivate.ptr;
 	    }
 	}
+
+	xf86InvalidatePixmapCache();
 
 	if (!xf86Resetting) {
 #ifdef XFreeXDGA
@@ -680,93 +701,6 @@ tgaCloseScreen(screen_idx, pScreen)
     return(TRUE);
 }
 
-static OsTimerPtr suspendTimer = NULL, offTimer = NULL;
-extern CARD32 ScreenSaverTime;
-
-/*
- * tgaOffMode -- put the screen into power off mode.
- */
-
-static CARD32
-tgaOffMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-    Bool on = (Bool)((unsigned long)arg);
-
-    if (!tgaPowerSaver) return(0);
-
-    if (xf86VTSema) {
-	int crtcGenCntl = TGA_READ_REG(TGA_VALID_REG);
-	if (on) 
-	    crtcGenCntl |= 0x0001;	/* Video Enabled */
-	else 
-	    crtcGenCntl &= 0xFFFE;	/* Video Disabled */
-
-	usleep(10000);
-	TGA_WRITE_REG(crtcGenCntl, TGA_VALID_REG);
-   }
-   if (offTimer) {
-      TimerFree(offTimer);
-      offTimer = NULL;
-   }
-
-   return(0);
-}
-
-/*
- * tgaSuspendMode -- put the screen into suspend mode.
- */
-
-static CARD32
-tgaSuspendMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-    Bool on = (Bool)((unsigned long)arg);
-
-    if (!tgaPowerSaver) return(0);
-
-    if (xf86VTSema) {
-	int crtcGenCntl = TGA_READ_REG(TGA_VALID_REG);
-	if (on) {
-	    crtcGenCntl |= 0x0001;
-	} else {
-	    crtcGenCntl &= 0xFFFE;
-	}
-
-	usleep(10000);
-	TGA_WRITE_REG(crtcGenCntl, TGA_VALID_REG);
-
-	if (!on && tgaInfoRec.offTime != 0) {
-	    if (tgaInfoRec.offTime > tgaInfoRec.suspendTime &&
-		tgaInfoRec.offTime > ScreenSaverTime) {
-
-		int timeout;
-
-		/* Setup timeout for tgaOffMode() */
-		if (tgaInfoRec.suspendTime < ScreenSaverTime)
-		   timeout = tgaInfoRec.offTime - ScreenSaverTime;
-		else
-		   timeout = tgaInfoRec.offTime - tgaInfoRec.suspendTime;
-
-		offTimer = TimerSet(offTimer, 0, timeout,
-			        tgaOffMode, (pointer)FALSE);
-	    } else {
-		tgaOffMode(NULL, 0, (pointer)FALSE);
-	    }
-	}
-    }
-    if (suspendTimer) {
-      TimerFree(suspendTimer);
-      suspendTimer = NULL;
-   }
-
-   return(0);
-}
-
 /*
  * tgaSaveScreen --
  *      blank the screen.
@@ -780,12 +714,6 @@ tgaSaveScreen (pScreen, on)
 	SetTimeSinceLastInputEvent();
 
     if (xf86VTSema) {
-
-	/* Turn off Off and Suspend mode */
-	if (tgaPowerSaver && on) {
-	    tgaOffMode(NULL, 0, (pointer)TRUE);
-	    tgaSuspendMode(NULL, 0, (pointer)TRUE);
-	}
 
 #ifdef NOTYET
 	if (on) {
@@ -814,29 +742,45 @@ tgaSaveScreen (pScreen, on)
 		outb(ioDAC_REGS+2, 0x00);
 	}
 #endif
-	if (tgaPowerSaver && !on) {
-	    if (tgaInfoRec.suspendTime != 0) {
-		if (tgaInfoRec.suspendTime > ScreenSaverTime) {
-		    suspendTimer = TimerSet(suspendTimer, 0,
-					    tgaInfoRec.suspendTime -
-					    ScreenSaverTime,
-					    tgaSuspendMode, (pointer)FALSE);
-		} else {
-		    tgaSuspendMode(NULL, 0, (pointer)FALSE);
-		}
-	    } else if (tgaInfoRec.offTime != 0) {
-		if (tgaInfoRec.offTime > ScreenSaverTime) {
-		    offTimer = TimerSet(offTimer, 0,
-					tgaInfoRec.offTime - ScreenSaverTime,
-					tgaOffMode, (pointer)FALSE);
-		} else {
-		    tgaOffMode(NULL, 0, (pointer)FALSE);
-		}
-	    }
-	}
     }
 
     return(TRUE);
+}
+
+/*
+ * tgaDPMSSet -- Sets VESA Display Power Management Signaling (DPMS) Mode
+ *
+ * Only the Off and On modes are currently supported.
+ */
+
+void
+tgaDPMSSet(PowerManagementMode)
+    int PowerManagementMode;
+{
+#ifdef DPMSExtension
+    int crtcGenCntl;
+    if (!xf86VTSema) return;
+    crtcGenCntl = TGA_READ_REG(TGA_VALID_REG);
+    switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+	/* HSync: On, VSync: On */
+	crtcGenCntl |= 0x0001;
+	break;
+    case DPMSModeStandby:
+	/* HSync: Off, VSync: On -- Not Supported */
+	break;
+    case DPMSModeSuspend:
+	/* HSync: On, VSync: Off -- Not Supported */
+	break;
+    case DPMSModeOff:
+	/* HSync: Off, VSync: Off */
+	crtcGenCntl &= 0xFFFE;
+	break;
+    }
+    usleep(10000);
+    TGA_WRITE_REG(crtcGenCntl, TGA_VALID_REG);
+#endif
 }
 
 /*
@@ -869,9 +813,10 @@ tgaSwitchMode(mode)
  *
  */
 static int
-tgaValidMode(mode, verbose)
+tgaValidMode(mode, verbose, flag)
     DisplayModePtr mode;
     Bool verbose;
+    int flag;
 {
     if (mode->Flags & V_INTERLACE)
     {

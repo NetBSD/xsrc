@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/font.c,v 1.1.1.3 1996/01/03 07:12:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/font.c,v 3.1 1996/12/23 06:37:46 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -19,9 +19,8 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- *
  */
-/* $XConsortium: font.c /main/2 1995/11/12 16:54:10 kaleb $ */
+/* $XConsortium: font.c /main/3 1996/02/21 17:24:15 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

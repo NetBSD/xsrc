@@ -1,4 +1,4 @@
-// $XConsortium: se /main/1 1996/02/02 14:20:38 kaleb $
+// $XConsortium: se /main/2 1996/08/31 12:18:40 kaleb $
 default xkb_keymap "indy" {
     xkb_keycodes	{ include "sgi/indy(pc102)"	};
     xkb_types		{ include "default"		};

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64bstor.c,v 3.2 1996/02/04 09:03:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64bstor.c,v 3.3 1996/12/23 06:39:10 dawes Exp $ */
 /*-
  * mach64bstore.c --
  *	Functions required by the backing-store implementation in MI.
@@ -28,7 +28,7 @@
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: mach64bstor.c /main/2 1995/11/12 17:38:42 kaleb $ */
+/* $XConsortium: mach64bstor.c /main/3 1996/02/21 17:28:12 kaleb $ */
 
 #include    "X.h"
 #include    "cfb.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: t89_driver.h /main/2 1996/01/10 10:21:26 kaleb $ */
+/* $XConsortium: t89_driver.h /main/3 1996/02/21 18:08:07 kaleb $ */
 /*
  * Copyright 1995 by Alan Hourihane, Wigan, England.
  *
@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.3 1996/02/04 09:14:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.9.2.3 1997/05/18 12:00:20 dawes Exp $ */
 
 /*
  * Trident Chipset Definitions
@@ -44,8 +44,79 @@
 #define TGUI9420DGi	13
 #define TGUI9430DGi	14
 #define TGUI9440AGi	15
-#define TGUI9660XGi	16
-#define TGUI9680	17
+#define TGUI96xx	16
+#define CYBER938x	17
+
+#ifdef INITIALIZE_LIMITS
+/* Clock Limits */
+int tridentClockLimit[] = {
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	90000,
+	135000,
+};
+
+int tridentClockLimit16bpp[] = {
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	40000,
+	45000,
+	135000,
+}; 
+
+int tridentClockLimit32bpp[] = {
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	25180,
+	70000,
+};
+
+#else
+
+extern int tridentClockLimit[];
+extern int tridentClockLimit16bpp[];
+extern int tridentClockLimit32bpp[];
+
+#endif
+
 
 /*
  * Trident DAC's
@@ -54,11 +125,5 @@
 #define TKD8001		0
 #define TGUIDAC		1
 
-/*
- * Trident Bus types.
- */
-
-#define PCI		0
-#define VLBus		1
-#define ISA		2
-#define Unknown		3
+extern int TVGAchipset;
+extern Bool IsCyber;

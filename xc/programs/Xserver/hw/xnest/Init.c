@@ -1,5 +1,5 @@
-/* $XConsortium: Init.c /main/5 1996/01/15 21:05:07 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.7 1996/06/10 09:17:20 dawes Exp $ */
+/* $XConsortium: Init.c /main/7 1996/12/02 10:21:37 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.10 1997/01/12 10:48:33 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -32,13 +32,8 @@ is" without express or implied warranty.
 #include "Init.h"
 #include "Args.h"
 #include "Drawable.h"
-#ifdef __EMX__
-#include "os2GC.h"
-#include "os2Font.h"
-#else
-#include "GC.h"
-#include "Font.h"
-#endif
+#include "XNGC.h"
+#include "XNFont.h"
 
 Bool xnestDoFullGeneration = True;
 
@@ -122,3 +117,29 @@ void OsVendorInit()
     return;
 }
 
+void OsVendorFatalError()
+{
+    return;
+}
+
+#ifdef DPMSExtension
+#if NeedFunctionPrototypes
+void DPMSSet(CARD16 level)
+#else
+void DPMSSet(level)
+     CARD16 level;
+#endif
+{
+    return;
+}
+
+Bool DPMSSupported()
+{
+    return FALSE;
+}
+#endif
+
+/* this is just to get the server to link on AIX */
+#ifdef AIXV3
+int SelectWaitTime = 10000; /* usec */
+#endif

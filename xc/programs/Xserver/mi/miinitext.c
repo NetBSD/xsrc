@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: miinitext.c /main/38 1995/12/08 13:41:44 dpw $ */
-/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.12 1996/10/03 08:49:09 dawes Exp $ */
+/* $XConsortium: miinitext.c /main/41 1996/09/28 17:15:08 rws $ */
+/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.17.2.3 1997/05/22 14:00:46 dawes Exp $ */
 
 #include "misc.h"
 #include "extension.h"
@@ -137,11 +137,14 @@ extern void     LbxExtensionInit(INITARGS);
 #ifdef DBE
 extern void     DbeExtensionInit(INITARGS);
 #endif
-#ifdef XF86VIDMODE
-extern void	XF86VidModeExtensionInit(INITARGS);
+#ifdef XAPPGROUP
+extern void XagExtensionInit(INITARGS);
 #endif
-#ifdef XF86MISC
-extern void	XF86MiscExtensionInit(INITARGS);
+#ifdef XCSECURITY
+extern void SecurityExtensionInit(INITARGS);
+#endif
+#ifdef XPRINT
+extern void	XpExtensionInit(INITARGS);
 #endif
 #ifdef XF86VIDMODE
 extern void	XFree86VidModeExtensionInit(INITARGS);
@@ -151,6 +154,16 @@ extern void	XFree86MiscExtensionInit(INITARGS);
 #endif
 #ifdef XFreeXDGA
 extern void XFree86DGAExtensionInit(INITARGS);
+#endif
+#ifdef DPMSExtension
+extern void DPMSExtensionInit(INITARGS);
+#endif
+#ifdef GLXEXT
+#ifndef GLX_MODULE
+extern void GlxExtensionInit(INITARGS);
+#else
+InitExtension GlxExtensionInitPtr = NULL;
+#endif
 #endif
 
 /*ARGSUSED*/
@@ -177,8 +190,6 @@ InitExtensions(argc, argv)
 #else
     if (PexExtensionInitPtr != NULL) {
 	(*PexExtensionInitPtr)();
-    } else {
-	ErrorF("PEX extension module not loaded\n");
     }
 #endif
 #endif
@@ -215,8 +226,6 @@ InitExtensions(argc, argv)
 #else
     if (XieInitPtr != NULL) {
 	(*XieInitPtr)();
-    } else {
-	ErrorF("XIE extension module not loaded\n");
     }
 #endif
 #endif
@@ -238,13 +247,34 @@ InitExtensions(argc, argv)
 #ifdef DBE
     DbeExtensionInit();
 #endif
-#ifdef XF86VIDMODE
+#ifdef XAPPGROUP
+    XagExtensionInit();
+#endif
+#ifdef XCSECURITY
+    SecurityExtensionInit();
+#endif
+#ifdef XPRINT
+    XpExtensionInit();
+#endif
+#if defined(XF86VIDMODE) && !defined(PRINT_ONLY_SERVER)
     XFree86VidModeExtensionInit();
 #endif
-#ifdef XF86MISC
+#if defined(XF86MISC) && !defined(PRINT_ONLY_SERVER)
     XFree86MiscExtensionInit();
 #endif
-#ifdef XFreeXDGA
+#if defined(XFreeXDGA) && !defined(PRINT_ONLY_SERVER)
     XFree86DGAExtensionInit();
+#endif
+#if defined(DPMSExtension) && !defined(PRINT_ONLY_SERVER)
+    DPMSExtensionInit();
+#endif
+#ifdef GLXEXT
+#ifndef GLX_MODULE
+    GlxExtensionInit();
+#else
+    if (GlxExtensionInitPtr != NULL) {
+        (*GlxExtensionInitPtr)();
+    }
+#endif
 #endif
 }

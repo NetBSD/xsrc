@@ -1,8 +1,8 @@
-XCOMM $XConsortium: Imakefile.stub /main/3 1995/11/12 15:29:12 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/Imakefile.stub,v 3.2 1996/02/04 08:57:27 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/Imakefile.stub,v 3.4.2.1 1997/05/27 06:22:15 dawes Exp $
 XCOMM
 XCOMM This is an Imakefile for the stub driver.  
 XCOMM 
+XCOMM $XConsortium: Imakefile.stub /main/4 1996/02/21 17:13:36 kaleb $
 #include <Server.tmpl>
 
 SRCS = stub_driver.c stub_bank.s
@@ -10,7 +10,7 @@ SRCS = stub_driver.c stub_bank.s
 OBJS = stub_driver.o stub_bank.o
 
 #if XF86LinkKit
-INCLUDES = -I. -I../../../include -I../..
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 XCOMM
 XCOMM This define is for use under vga256/drivers; comment it out for vga2 or
@@ -18,13 +18,13 @@ XCOMM vga16
 XCOMM
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I../../cfb.banked -I../../vga -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 XCOMM
 XCOMM Use these lines instead for use under vga2/drivers or vga16/drivers
 XCOMM
 XCOMM INCLUDES = -I. -I$(XF86COMSRC) -I(XF86HWSRC) \
 XCOMM            -I$(XF86OSSRC) -I../../../vga256/vga \
-XCOMM            -I$(SERVERSRC)/include -I$(INCLUDESRC)
+XCOMM            -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 #endif
 
 XCOMM

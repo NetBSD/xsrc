@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8init.c,v 3.6 1996/08/10 13:05:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8init.c,v 3.7 1996/12/23 06:40:06 dawes Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -21,7 +21,7 @@
  * Further modifications by Scott Laird (lair@kimbark.uchicago.edu)
  * and Tiago Gons (tiago@comosjn.hobby.nl)
  */
-/* $XConsortium: mach8init.c /main/4 1995/11/12 18:00:52 kaleb $ */
+/* $XConsortium: mach8init.c /main/6 1996/10/19 17:54:13 kaleb $ */
 
 #include "X.h"
 #include "input.h"

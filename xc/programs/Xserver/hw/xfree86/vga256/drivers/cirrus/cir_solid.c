@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_solid.c,v 3.7 1996/09/29 13:39:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_solid.c,v 3.8 1996/12/23 06:56:53 dawes Exp $ */
 
 /*
 
@@ -94,7 +94,7 @@ Modified for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
 Modified for Cirrus by Harm Hanemaayer (hhanemaa@cs.ruu.nl)
 
 */
-/* $XConsortium: cir_solid.c /main/4 1995/11/13 08:21:21 kaleb $ */
+/* $XConsortium: cir_solid.c /main/7 1996/10/26 11:17:11 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

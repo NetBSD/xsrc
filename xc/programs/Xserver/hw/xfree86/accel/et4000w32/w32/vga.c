@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/vga.c,v 3.35 1996/10/13 11:19:26 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/vga.c,v 3.39.2.4 1997/05/16 11:35:12 hohndel Exp $ */ 
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: vga.c /main/14 1995/12/17 08:10:23 kaleb $ */
+/* $XConsortium: vga.c /main/22 1996/10/25 21:19:22 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -69,10 +69,11 @@ ScrnInfoRec vga256InfoRec = {
   vgaScreenInit,	/* Bool (* Init)() */
   vgaValidMode,		/* int (* ValidMode)() */
   vgaEnterLeaveVT,	/* void (* EnterLeaveVT)() */
-  (void (*)())NoopDDA,		/* void (* EnterLeaveMonitor)() */
-  (void (*)())NoopDDA,		/* void (* EnterLeaveCursor)() */
+  (void (*)())NoopDDA,	/* void (* EnterLeaveMonitor)() */
+  (void (*)())NoopDDA,	/* void (* EnterLeaveCursor)() */
   (void (*)())NoopDDA,	/* void (* AdjustFrame)() */
   vgaSwitchMode,	/* Bool (* SwitchMode)() */
+  vgaDPMSSet,		/* void (* DPMSSet)() */
   vgaPrintIdent,        /* void (* PrintIdent)() */
   8,			/* int depth */
   {0, 0, 0},            /* xrgb weight */
@@ -86,7 +87,8 @@ ScrnInfoRec vga256InfoRec = {
   {0, },                /* OFlagSet xconfigFlag */
   NULL,			/* char *chipset */
   NULL,			/* char *ramdac */
-  0,			/* int dacSpeed */
+  {0, 0, 0, 0},		/* int dacSpeeds[MAXDACSPEEDS] */
+  0,			/* int dacSpeedBpp */
   0,			/* int clocks */
   {0, },		/* int clock[MAXCLOCKS] */
   MAX_W32_CLOCK,	/* int maxClock */
@@ -113,17 +115,20 @@ ScrnInfoRec vga256InfoRec = {
   0,			/* int s3Madjust */
   0,			/* int s3Nadjust */
   0,			/* int s3MClk */
+  0,			/* int chipId */
+  0,			/* int chipRev */
   0,			/* unsigned long VGAbase */
   0,			/* int s3RefClk */
-  0,			/* int suspendTime */
-  0,			/* int offTime */
   -1,			/* int s3BlankDelay */
   0,			/* int textClockFreq */
+  NULL,                 /* char* DCConfig */
+  NULL,                 /* char* DCOptions */
+  0	                /* int MemClk */
 #ifdef XFreeXDGA
-  0,			/* int directMode */
+  ,0,			/* int directMode */
   NULL,			/* Set Vid Page */
   0,			/* unsigned long physBase */
-  0,			/* int physSize */
+  0			/* int physSize */
 #endif
 };
 
@@ -146,7 +151,8 @@ Bool (* vgaInitFunc)(
 Bool (* vgaValidModeFunc)(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 ) = (Bool (*)())NoopDDA;
 void * (* vgaSaveFunc)(
@@ -172,7 +178,6 @@ void *vgaWriteTop;
 
 int  vgaInterlaceType;
 OFlagSet vgaOptionFlags;
-extern Bool vgaPowerSaver;
 
 int vgaIOBase;
 
@@ -191,7 +196,7 @@ extern vgaVideoChipPtr Drivers[];
  *	Wrap the chip-level restore function in a protect/unprotect.
  */
 static w32_mode = FALSE;
-void
+static void
 vgaRestore(mode)
      pointer mode;
 {
@@ -314,9 +319,9 @@ vgaProbe()
 	  ErrorF("\n");
         }
 
-        /* dacSpeed option processing */
+        /* dacSpeeds option processing */
         
-        if (vga256InfoRec.dacSpeed <= 0) {
+        if (vga256InfoRec.dacSpeeds[0] <= 0) {
           switch(W32RamdacType) {
             case NORMAL_DAC:
             case ATT20C47xA_DAC:
@@ -326,16 +331,17 @@ vgaProbe()
             case ATT20C493_DAC:
             case ATT20C491_DAC:
             case ATT20C492_DAC:
-                                vga256InfoRec.dacSpeed = MAX_W32_CLOCK;
+                                vga256InfoRec.dacSpeeds[0] = MAX_W32_CLOCK;
                                 break;
             case GENDAC_DAC:
             case ICS5341_DAC:
+	    case STG1702_DAC:
             case STG1703_DAC:
             case ET6000_DAC:
-                                vga256InfoRec.dacSpeed = 135000;
+                                vga256InfoRec.dacSpeeds[0] = 135000;
                                 break;
             default:
-               vga256InfoRec.dacSpeed = MAX_W32_CLOCK;
+               vga256InfoRec.dacSpeeds[0] = MAX_W32_CLOCK;
           }
         }
 
@@ -343,15 +349,15 @@ vgaProbe()
           ErrorF("%s %s: Ramdac speed: %d\n",
                  OFLG_ISSET(XCONFIG_DACSPEED, &vga256InfoRec.xconfigFlag) ?
                  XCONFIG_GIVEN : XCONFIG_PROBED, vga256InfoRec.name,
-                 vga256InfoRec.dacSpeed / 1000);
+                 vga256InfoRec.dacSpeeds[0] / 1000);
         }
 
-        /* Check that maxClock is not higher than dacSpeed */
-        if (vga256InfoRec.maxClock > vga256InfoRec.dacSpeed)
-          vga256InfoRec.maxClock = vga256InfoRec.dacSpeed;
+        /* Check that maxClock is not higher than dacSpeeds */
+        if (vga256InfoRec.maxClock > vga256InfoRec.dacSpeeds[0])
+          vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[0];
 
-        /* maxClock  = dacSpeed , unless we use pixel multiplexing (?) */
-          vga256InfoRec.maxClock = vga256InfoRec.dacSpeed;
+        /* maxClock  = dacSpeeds , unless we use pixel multiplexing (?) */
+          vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[0];
 
         if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions)) {
           if (OFLG_ISSET(CLOCK_OPTION_ICS5341, &vga256InfoRec.clockOptions))
@@ -413,8 +419,10 @@ vgaProbe()
 
 	xf86VerifyOptions(&vgaOptionFlags, &vga256InfoRec);
 
+#ifdef DPMSExtension
 	if (OFLG_ISSET(OPTION_POWER_SAVER, &vga256InfoRec.options))
-	    vgaPowerSaver = TRUE;
+	    DPMSEnabled = TRUE;
+#endif
 
 	/* if Virtual given: is the virtual size too big? */
 	if (vga256InfoRec.virtualX > 0 &&
@@ -549,6 +557,7 @@ vgaProbe()
           do {
              switch(W32RamdacType) {
              case ICS5341_DAC:
+	     case STG1702_DAC:
              case STG1703_DAC:
                 /*
                  * This one depend on pixel multiplexing for 8bpp.
@@ -805,7 +814,7 @@ vgaEnterLeaveVT(enter, screen_idx)
        */
       if (!xf86Exiting)
       {
-        ppix = (pScreen->CreatePixmap)(pScreen, pScreen->width,
+        ppix = (pScreen->CreatePixmap)(pScreen, vga256InfoRec.displayWidth, 
                                         pScreen->height, pScreen->rootDepth);
         if (ppix)
         {
@@ -890,9 +899,9 @@ vgaSwitchMode(mode)
  *     to see if the mode can be supported.
  */
 int
-vgaValidMode(mode, verbose)
+vgaValidMode(mode, verbose, flag)
      DisplayModePtr mode;
      Bool verbose;
 {
-  return (vgaValidModeFunc)(mode, verbose);
+  return (vgaValidModeFunc)(mode, verbose, flag);
 }

@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: extension.c,v 1.55 95/02/27 16:43:20 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.4 1996/05/06 05:56:19 dawes Exp $ */
+/* $XConsortium: extension.c /main/36 1996/09/28 11:23:27 rws $ */
+/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.5 1996/12/23 06:29:44 dawes Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS
@@ -58,6 +58,10 @@ SOFTWARE.
 #include "gcstruct.h"
 #include "scrnintstr.h"
 #include "dispatch.h"
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
 
 #define EXTENSION_BASE  128
 #define EXTENSION_EVENT_BASE  64
@@ -67,8 +71,6 @@ SOFTWARE.
 ScreenProcEntry AuxillaryScreenProcs[MAXSCREENS];
 
 static ExtensionEntry **extensions = (ExtensionEntry **)NULL;
-extern int (* ProcVector[]) ();
-extern int (* SwappedProcVector[]) ();
 
 int lastEvent = EXTENSION_EVENT_BASE;
 static int lastError = FirstExtensionError;
@@ -145,6 +147,10 @@ ExtensionEntry *AddExtension(name, NumEvents, NumErrors, MainProc,
         ext->errorBase = 0;
         ext->errorLast = 0;
     }
+#ifdef XCSECURITY
+    ext->secure = FALSE;
+#endif
+
 #ifdef LBX
     (void) LbxAddExtension(name, ext->base, ext->eventBase, ext->errorBase);
 #endif
@@ -173,6 +179,57 @@ Bool AddExtensionAlias(alias, ext)
     return LbxAddExtensionAlias(ext->index, alias);
 #else
     return TRUE;
+#endif
+}
+
+static int
+FindExtension(extname, len)
+    char *extname;
+    int len;
+{
+    int i, j;
+
+    for (i=0; i<NumExtensions; i++)
+    {
+	if ((strlen(extensions[i]->name) == len) &&
+	    !strncmp(extname, extensions[i]->name, len))
+	    break;
+	for (j = extensions[i]->num_aliases; --j >= 0;)
+	{
+	    if ((strlen(extensions[i]->aliases[j]) == len) &&
+		!strncmp(extname, extensions[i]->aliases[j], len))
+		break;
+	}
+	if (j >= 0) break;
+    }
+    return ((i == NumExtensions) ? -1 : i);
+}
+
+void
+DeclareExtensionSecurity(extname, secure)
+    char *extname;
+    Bool secure;
+{
+#ifdef XCSECURITY
+    int i = FindExtension(extname, strlen(extname));
+    if (i >= 0)
+    {
+	int majorop = extensions[i]->base;
+	extensions[i]->secure = secure;
+	if (secure)
+	{
+	    UntrustedProcVector[majorop] = ProcVector[majorop];
+	    SwappedUntrustedProcVector[majorop] = SwappedProcVector[majorop];
+	}
+	else
+	{
+	    UntrustedProcVector[majorop]	= ProcBadRequest;
+	    SwappedUntrustedProcVector[majorop] = ProcBadRequest;
+	}
+    }
+#endif
+#ifdef LBX
+    LbxDeclareExtensionSecurity(extname, secure);
 #endif
 }
 
@@ -241,7 +298,7 @@ ProcQueryExtension(client)
     ClientPtr client;
 {
     xQueryExtensionReply reply;
-    int i, j;
+    int i;
     REQUEST(xQueryExtensionReq);
 
     REQUEST_FIXED_SIZE(xQueryExtensionReq, stuff->nbytes);
@@ -255,22 +312,14 @@ ProcQueryExtension(client)
         reply.present = xFalse;
     else
     {
-        for (i=0; i<NumExtensions; i++)
-	{
-            if ((strlen(extensions[i]->name) == stuff->nbytes) &&
-                 !strncmp((char *)&stuff[1], extensions[i]->name,
-			  (int)stuff->nbytes))
-                 break;
-	    for (j = extensions[i]->num_aliases; --j >= 0;)
-	    {
-		if ((strlen(extensions[i]->aliases[j]) == stuff->nbytes) &&
-		     !strncmp((char *)&stuff[1], extensions[i]->aliases[j],
-			      (int)stuff->nbytes))
-		     break;
-	    }
-	    if (j >= 0) break;
-	}
-        if (i == NumExtensions)
+	i = FindExtension((char *)&stuff[1], stuff->nbytes);
+        if (i < 0
+#ifdef XCSECURITY
+	    /* don't show insecure extensions to untrusted clients */
+	    || (client->trustLevel == XSecurityClientUntrusted &&
+		!extensions[i]->secure)
+#endif
+	    )
             reply.present = xFalse;
         else
         {            
@@ -295,7 +344,7 @@ ProcListExtensions(client)
     REQUEST_SIZE_MATCH(xReq);
 
     reply.type = X_Reply;
-    reply.nExtensions = NumExtensions;
+    reply.nExtensions = 0;
     reply.length = 0;
     reply.sequenceNumber = client->sequence;
     buffer = NULL;
@@ -306,8 +355,14 @@ ProcListExtensions(client)
 
         for (i=0;  i<NumExtensions; i++)
 	{
+#ifdef XCSECURITY
+	    /* don't show insecure extensions to untrusted clients */
+	    if (client->trustLevel == XSecurityClientUntrusted &&
+		!extensions[i]->secure)
+		continue;
+#endif
 	    total_length += strlen(extensions[i]->name) + 1;
-	    reply.nExtensions += extensions[i]->num_aliases;
+	    reply.nExtensions += 1 + extensions[i]->num_aliases;
 	    for (j = extensions[i]->num_aliases; --j >= 0;)
 		total_length += strlen(extensions[i]->aliases[j]) + 1;
 	}
@@ -318,6 +373,11 @@ ProcListExtensions(client)
         for (i=0;  i<NumExtensions; i++)
         {
 	    int len;
+#ifdef XCSECURITY
+	    if (client->trustLevel == XSecurityClientUntrusted &&
+		!extensions[i]->secure)
+		continue;
+#endif
             *bufptr++ = len = strlen(extensions[i]->name);
 	    memmove(bufptr, extensions[i]->name,  len);
 	    bufptr += len;

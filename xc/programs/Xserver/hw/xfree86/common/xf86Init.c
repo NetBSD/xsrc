@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.59 1996/09/14 13:10:01 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.1 1997/05/18 12:00:07 dawes Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: xf86Init.c /main/19 1996/01/30 15:14:54 kaleb $ */
+/* $XConsortium: xf86Init.c /main/37 1996/10/23 18:43:39 kaleb $ */
 
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -55,6 +55,8 @@ extern int atoi();
 #include "inputstr.h"
 #endif
 
+#include "opaque.h"
+
 #ifdef XTESTEXT1
 #include "atKeynames.h"
 extern int xtest_command_key;
@@ -83,6 +85,7 @@ Bool xf86MiscModInDevEnabled = TRUE;
 Bool xf86MiscModInDevAllowNonLocal = FALSE;
 #endif
 Bool xf86AllowMouseOpenFail = FALSE;
+PciProbeType xf86PCIFlags = PCIProbe1;
 Bool xf86ScreensOpen = FALSE;
 int xf86Verbose = 1;
 Bool xf86fpFlag = FALSE;
@@ -97,6 +100,15 @@ unsigned char xf86rGammaMap[256], xf86gGammaMap[256], xf86bGammaMap[256];
 char *xf86ServerName = NULL;
 Bool xf86BestRefresh = FALSE;
 
+int   vgaIOBase = 0x3d0;
+int   vgaCRIndex = 0x3d4;
+int   vgaCRReg = 0x3d5;
+
+static void xf86PrintBanner(
+#if NeedFunctionPrototypes
+	void
+#endif
+	);
 static void xf86PrintConfig(
 #if NeedFunctionPrototypes
 	void
@@ -159,6 +171,8 @@ InitOutput(pScreenInfo, argc, argv)
 #ifdef DO_CHECK_BETA
     xf86CheckBeta(extraDays, expKey);
 #endif
+
+    xf86PrintBanner();
 
     xf86PrintConfig();
 
@@ -401,6 +415,7 @@ InitInput(argc, argv)
 
   miRegisterPointerDevice(screenInfo.screens[0], xf86Info.pMouse);
 #ifdef XINPUT
+  xf86XinputFinalizeInit(xf86Info.pMouse);
   xf86eqInit ((DevicePtr)xf86Info.pKeyboard, (DevicePtr)xf86Info.pMouse);
 #else
   mieqInit (xf86Info.pKeyboard, xf86Info.pMouse);
@@ -413,6 +428,8 @@ InitInput(argc, argv)
  *      is called by dix before establishing the well known sockets.
  */
  
+extern Bool OsDelayInitColors;
+
 void
 OsVendorInit()
 {
@@ -430,6 +447,69 @@ OsVendorInit()
 #endif
   OsDelayInitColors = TRUE;
 }
+
+#ifdef DPMSExtension
+/*
+ * DPMSSet --
+ *	Device dependent DPMS mode setting hook.  This is called whenever
+ *	the DPMS mode is to be changed.
+ */
+void
+DPMSSet(CARD16 level)
+{
+    int i;
+
+    /* For each screen, set the power saver level */
+    for (i = 0; i < screenInfo.numScreens; i++) {
+	(XF86SCRNINFO(screenInfo.screens[i])->DPMSSet)(level);
+    }
+
+    DPMSPowerLevel = level;
+}
+
+#if 0
+/*
+ * DPMSGet --
+ *	Device dependent DPMS mode getting hook.  This returns the current
+ *	DPMS mode, or -1 if DPMS is not supported.
+ *
+ *	This should hook in to the appropriate driver-level function, which
+ *	will be added to the ScrnInfoRec.
+ *
+ *	NOTES:
+ *	 1. the calling interface should be changed to specify which
+ *	    screen to check.
+ *	 2. It isn't clear that this function is ever used.
+ */
+CARD16
+DPMSGet(CARD16 *level)
+{
+    int i;
+
+    /* For each screen, set the power saver level */
+    for (i = 0; i < screenInfo.numScreens; i++) {
+	 ;
+    }
+}
+#endif
+
+/*
+ * DPMSSupported --
+ *	Return TRUE if any screen supports DPMS.
+ */
+Bool
+DPMSSupported(void)
+{
+    int i;
+
+    /* For each screen, check if DPMS is supported */
+    for (i = 0; i < screenInfo.numScreens; i++) {
+	if (XF86SCRNINFO(screenInfo.screens[i])->DPMSSet != (void (*)())NoopDDA)
+	    return TRUE;
+    }
+    return FALSE;
+}
+#endif /* DPMSExtension */
 
 /*
  * ddxGiveUp --
@@ -499,7 +579,12 @@ AbortDDX()
   ddxGiveUp();
 }
 
-
+void
+OsVendorFatalError()
+{
+  ErrorF("\nWhen reporting a problem related to a server crash, please send\n"
+	 "the full server output, not just the last messages\n\n");
+}
 
 /*
  * ddxProcessArgument --
@@ -589,6 +674,7 @@ ddxProcessArgument (argc, argv, i)
   }
   if (!strcmp(argv[i],"-showconfig") || !strcmp(argv[i],"-version"))
   {
+    xf86PrintBanner();
     xf86PrintConfig();
     exit(0);
   }
@@ -721,10 +807,8 @@ ddxUseMsg()
 #endif
 
 static void
-xf86PrintConfig()
+xf86PrintBanner()
 {
-  int i;
-
   ErrorF("\nXFree86 Version%s/ X Window System\n",XF86_VERSION);
   ErrorF("(protocol Version %d, revision %d, vendor release %d)\n",
          X_PROTOCOL, X_PROTOCOL_REVISION, VENDOR_RELEASE );
@@ -735,6 +819,13 @@ xf86PrintConfig()
 	 "reporting\n"
 	 "\tproblems.  (see http://www.XFree86.Org/FAQ)\n");
   ErrorF("Operating System: %s %s\n", OSNAME, OSVENDOR);
+}
+
+static void
+xf86PrintConfig()
+{
+  int i;
+
   ErrorF("Configured drivers:\n");
   for (i = 0; i < xf86MaxScreens; i++)
     if (xf86Screens[i])

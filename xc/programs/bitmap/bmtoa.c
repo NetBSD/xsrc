@@ -1,5 +1,5 @@
 /* $XConsortium: bmtoa.c,v 1.6 94/04/17 20:23:49 rws Exp $ */
-/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.0 1996/06/10 09:17:37 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.0.4.1 1997/05/12 12:52:40 hohndel Exp $ */
 /*
 
 Copyright (c) 1988, 1993  X Consortium
@@ -47,7 +47,11 @@ extern char *malloc();
 #else
 #include <stdlib.h>
 #endif
+#ifndef HAS_MKSTEMP
 extern char *mktemp();
+#else
+#include <unistd.h>
+#endif
 
 char *ProgramName;
 
@@ -75,6 +79,7 @@ static char *copy_stdin ()
     FILE *fp;
     int nread, nwritten;
 
+#ifndef HAS_MKSTEMP
     if (mktemp (tmpfilename) == NULL) {
 	fprintf (stderr,
 		 "%s:  unable to genererate temporary file name for stdin.\n",
@@ -82,6 +87,17 @@ static char *copy_stdin ()
 	exit (1);
     }
     fp = fopen (tmpfilename, "w");
+#else
+    int fd;
+
+    if ((fd = mkstemp(tmpfilename)) < 0) {
+	fprintf (stderr,
+		 "%s:  unable to genererate temporary file name for stdin.\n",
+		 ProgramName);
+	exit (1);
+    }
+    fp = fdopen(fd, "w");
+#endif
     while (1) {
 	buf[0] = '\0';
 	nread = fread (buf, 1, sizeof buf, stdin);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxWin.c,v 3.5 1996/02/04 08:58:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxWin.c,v 3.6 1996/12/23 06:33:03 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -51,7 +51,7 @@ Rewritten for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Rewritten for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
 
 */
-/* $XConsortium: agxWin.c /main/4 1995/11/13 10:07:34 kaleb $ */
+/* $XConsortium: agxWin.c /main/5 1996/02/21 17:18:38 kaleb $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

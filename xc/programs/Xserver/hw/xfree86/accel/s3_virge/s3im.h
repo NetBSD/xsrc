@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.h,v 3.0 1996/09/22 13:25:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.h,v 3.1 1996/12/27 07:02:40 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3im.h /main/2 1995/11/12 19:06:47 kaleb $ */
+/* $XConsortium: s3im.h /main/1 1996/10/24 07:13:26 kaleb $ */
 
 
 #ifndef modulus

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 1.39 94/11/21 18:28:53 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/mfb/Imakefile,v 3.1 1995/01/28 16:15:43 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/42 1996/11/04 16:09:42 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/mfb/Imakefile,v 3.2 1996/12/23 07:09:36 dawes Exp $
 #include <Server.tmpl>
 
 SRCS1 =	 mfbgc.c mfbwindow.c mfbfont.c \
@@ -29,7 +29,7 @@ OBJS =   mfbgc.o mfbwindow.o mfbfont.o \
          mfbtewhite.o mfbteblack.o mfbmisc.o mfbbstore.o \
          mfbplywhite.o mfbplyblack.o mfbplyinv.o
 
-INCLUDES = -I. -I../mi -I../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+INCLUDES = -I. -I../mi -I../include -I$(XINCLUDESRC) -I$(FONTINCSRC)
 LINTDEFS = -DMFBPOLYGLYPHBLT=mfbPolyGlyphBltWhite \
 	   -DMFBIMAGEGLYPHBLT=mfbImageGlyphBltWhite \
 	   -DEQWHOLEWORD=MFB_EQWHOLEWORD_WHITE -DOPEQ=MFB_OPEQ_WHITE
@@ -82,6 +82,8 @@ ObjectFromSpecialSource(mfbbltG,mfbblt,-DMROP=0)
 ObjectFromSpecialSource(mfbtileC,mfbtile,-DMROP=Mcopy)
 
 ObjectFromSpecialSource(mfbtileG,mfbtile,-DMROP=0)
+
+SpecialCObjectRule(mfbpixmap,$(ICONFIGFILES),$(_NOOP_))
 
 InstallLinkKitLibrary(mfb,$(LINKKITDIR)/lib)
 InstallLinkKitNonExecFile(fastblt.h,$(LINKKITDIR)/include)

@@ -1,10 +1,10 @@
-COMMENT $XFree86: xc/programs/Xserver/hw/xfree86/etc/vga.bdf,v 3.1 1996/02/04 09:09:09 dawes Exp $
+COMMENT $XFree86: xc/programs/Xserver/hw/xfree86/etc/vga.bdf,v 3.2 1996/12/23 06:47:25 dawes Exp $
 COMMENT
 COMMENT
 COMMENT vga
 COMMENT
 COMMENT
-COMMENT $XConsortium: vga.bdf /main/3 1995/11/12 20:17:52 kaleb $
+COMMENT $XConsortium: vga.bdf /main/4 1996/02/21 17:48:43 kaleb $
 STARTFONT 2.1
 FONT vga
 SIZE 16 75 75

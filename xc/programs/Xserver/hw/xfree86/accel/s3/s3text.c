@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3text.c,v 3.16 1996/10/08 12:20:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3text.c,v 3.19 1997/01/08 20:34:06 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3text.c /main/4 1995/12/28 17:12:10 kaleb $ */
+/* $XConsortium: s3text.c /main/9 1996/10/25 15:36:58 kaleb $ */
 
 
 #include	"X.h"
@@ -68,7 +68,7 @@ unsigned char *pb;
 		  pix = 0;
 	       
 		  for (i = 0; i < width; i += 16) {
-		     getbuf = (getbuf << 8) | SWPBIT (pix++);
+		     getbuf = SWPBIT (pix++);
 		     getbuf = (getbuf << 8) | SWPBIT (pix++);
 		     SET_PIX_TRANS_W(getbuf);		  
 		  }
@@ -183,7 +183,7 @@ unsigned char *pb;
    WaitQueue16_32(1, 2);
    SET_WRT_MASK(id);
    WaitQueue16_32(6, 8);
-   SET_MIX(FSS_FRGDCOL | s3alu[GXcopy], BSS_BKGDCOL | s3alu[GXcopy]);
+   SET_MIX(FSS_FRGDCOL | MIX_SRC, BSS_BKGDCOL | MIX_SRC);
    SET_FRGD_COLOR(~0);
    SET_BKGD_COLOR(0);
    SET_PIX_CNTL(MIXSEL_EXPPC | COLCMPOP_F);
@@ -239,7 +239,7 @@ s3NoCPolyText(pDraw, pGC, x, y, count, chars, is8bit)
       ret_x += charinfo[i]->metrics.characterWidth;
    }
 
-   if (n == 0) {
+   if (n == 0 || pGC->alu == GXnoop) {
       DEALLOCATE_LOCAL(charinfo);
       return ret_x;
    }
@@ -274,7 +274,15 @@ s3NoCPolyText(pDraw, pGC, x, y, count, chars, is8bit)
    BLOCK_CURSOR;
    WaitQueue16_32(6,8);
    SET_WRT_MASK(pGC->planemask);   
-   SET_MIX(FSS_FRGDCOL | s3alu[pGC->alu], BSS_BKGDCOL | MIX_DST);
+   SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
+   if (s3_968_DashBug) {
+      SET_BKGD_COLOR(0);
+      SET_BKGD_MIX(BSS_BKGDCOL | MIX_OR);
+   }
+   else {
+      SET_BKGD_MIX(BSS_BKGDCOL | MIX_DST);
+   }
+
    SET_PIX_CNTL(MIXSEL_EXPPC | COLCMPOP_F);
    SET_FRGD_COLOR(pGC->fgPixel);
 
@@ -324,6 +332,9 @@ s3NoCImageText(pDraw, pGC, x, y, count, chars, is8bit)
    xRectangle backrect;
    CharInfoPtr *charinfo;
    unsigned long n;
+
+   if (pGC->alu == GXnoop)
+      return 0;
 
    if (!(charinfo = (CharInfoPtr *) ALLOCATE_LOCAL(count * sizeof(CharInfoPtr))))
       return 0;
@@ -407,7 +418,14 @@ s3NoCImageText(pDraw, pGC, x, y, count, chars, is8bit)
    BLOCK_CURSOR;
    WaitQueue16_32(6,8);
    SET_WRT_MASK(pGC->planemask);
-   SET_MIX(FSS_FRGDCOL | s3alu[pGC->alu], BSS_BKGDCOL | MIX_DST);
+   SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
+   if (s3_968_DashBug) {
+      SET_BKGD_COLOR(0);
+      SET_BKGD_MIX(BSS_BKGDCOL | MIX_OR);
+   }
+   else {
+      SET_BKGD_MIX(BSS_BKGDCOL | MIX_DST);
+   }
    SET_PIX_CNTL(MIXSEL_EXPPC | COLCMPOP_F);
    SET_FRGD_COLOR(pGC->fgPixel);
 

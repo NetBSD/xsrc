@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_io.c,v 3.8 1996/08/20 12:29:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_io.c,v 3.9 1996/12/23 06:50:19 dawes Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mnx_io.c /main/5 1995/11/13 06:04:21 kaleb $ */
+/* $XConsortium: mnx_io.c /main/10 1996/10/19 18:07:03 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

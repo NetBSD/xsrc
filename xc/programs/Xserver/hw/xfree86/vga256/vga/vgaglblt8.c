@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaglblt8.c,v 3.2 1996/02/04 09:15:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaglblt8.c,v 3.4 1996/12/23 06:59:48 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XConsortium: vgaglblt8.c /main/2 1995/11/13 09:26:42 kaleb $ */
+/* $XConsortium: vgaglblt8.c /main/3 1996/02/21 18:11:13 kaleb $ */
 
 /*
  * Poly glyph blt for 8 bit displays.  Accepts
@@ -51,7 +51,7 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifdef USE_LEFTBITS
 typedef	unsigned char	*glyphPointer;
-extern long endtab[];
+extern unsigned long endtab[];
 
 #define GlyphBits(bits,width,dst)	getleftbits(bits,width,dst); \
 					(dst) &= widthMask; \
@@ -59,7 +59,7 @@ extern long endtab[];
 #define GlyphBitsS(bits,width,dst,off)	GlyphBits(bits,width,dst); \
 					dst = BitRight (dst, off);
 #else
-typedef unsigned long	*glyphPointer;
+typedef CARD32	*glyphPointer;
 
 #define GlyphBits(bits,width,dst)	dst = *bits++;
 #define GlyphBitsS(bits,width,dst,off)	dst = BitRight(*bits++, off);
@@ -82,6 +82,12 @@ static void vga256PolyGlyphBlt8Clipped();
 
 #if defined(__GNUC__) && !defined(GLYPHROP) && (defined(mc68020) || defined(mc68000) || defined(__mc68000__)) && !defined(USE_LEFTBITS)
 #include    <stip68kgnu.h>
+#endif
+
+#if PSZ == 24
+#define DST_INC     3
+#else
+#define DST_INC     (PGSZB >> PWSH)
 #endif
 
 void
@@ -194,11 +200,11 @@ vga256PolyGlyphBlt8 (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	glyphBits = (glyphPointer) FONTGLYPHBITS(pglyphBase,pci);
 	xoff = x + pci->metrics.leftSideBearing;
 	dstLine = pdstBase +
-	          (y - pci->metrics.ascent) * widthDst + (xoff >> 2);
+	          (y - pci->metrics.ascent) * widthDst + (xoff >> PWSH);
 	x += pci->metrics.characterWidth;
 	if (hTmp = pci->metrics.descent + pci->metrics.ascent)
 	{
-	    xoff &= 0x3;
+	    xoff &= PIM;
 #ifdef STIPPLE
 	    STIPPLE(dstLine,glyphBits,pixel,bwidthDst,hTmp,xoff);
 #else
@@ -214,13 +220,13 @@ vga256PolyGlyphBlt8 (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	    	dstLine = (unsigned long *) (((char *) dstLine) + bwidthDst);
 	    	GlyphBits(glyphBits, w, c)
 	    	WriteBitGroup(dst, pixel, GetBitGroup(BitRight(c,xoff)));
-	    	dst++; CHECKRWO(dst);
+	    	dst+= DST_INC; CHECKRWO(dst);
 	    	c = BitLeft(c,PGSZB-xoff);
 	    	while (c)
 	    	{
 		    WriteBitGroup(dst, pixel, GetBitGroup(c));
 		    NextBitGroup(c);
-		    dst++; CHECKRWO(dst);
+		    dst+=DST_INC; CHECKRWO(dst);
 	    	}
 	    } while (--hTmp);
 #endif /* USE_STIPPLE_CODE else */
@@ -250,7 +256,7 @@ vga256PolyGlyphBlt8Clipped (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     FontPtr		pfont = pGC->font;
     unsigned long	*dstLine;
     unsigned long	*pdstBase;
-    unsigned long	*clips;
+    CARD32		*clips;
     int			maxAscent, maxDescent;
     int			minLeftBearing;
     int			hTmp;
@@ -266,7 +272,7 @@ vga256PolyGlyphBlt8Clipped (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     unsigned long	bits;
 #endif
 #ifdef USE_LEFTBITS
-    unsigned long	*cTmp;
+    CARD32		*cTmp;
     int			widthGlyph;
     unsigned long	widthMask;
 #endif
@@ -337,13 +343,13 @@ vga256PolyGlyphBlt8Clipped (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 		    if (c)
 		    {
 	    	    	WriteBitGroup(dst, pixel, GetBitGroup(BitRight(c,xoff)));
-	    	    	c = BitLeft(c,4 - xoff);
-	    	    	dst++; CHECKRWO(dst);
+	    	    	c = BitLeft(c,PGSZB - xoff);
+	    	    	dst+=DST_INC; CHECKRWO(dst);
 	    	    	while (c)
 	    	    	{
 		    	    WriteBitGroup(dst, pixel, GetBitGroup(c));
 		    	    NextBitGroup(c);
-		    	    dst++; CHECKRWO(dst);
+		    	    dst+=DST_INC; CHECKRWO(dst);
 	    	    	}
 		    }
 	    	} while (--hTmp);
@@ -385,24 +391,24 @@ vga256PolyGlyphBlt8Clipped (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 #ifndef GLYPHROP
 	    	    	WriteBitGroup(dst, pixel, GetBitGroup(BitRight(c,xoff)));
 	    	    	c = BitLeft(c,PGSZB - xoff);
-	    	    	dst++; CHECKRWO(dst);
+	    	    	dst+=DST_INC; CHECKRWO(dst);
 #else /* GLYPHROP */
                         if (bits = GetBitGroup(BitRight(c,xoff)))
 	    	    	  WriteBitGroup(dst, pixel, bits);
 	    	    	c = BitLeft(c,PGSZB - xoff);
-	    	    	dst++; CHECKRWO(dst);
+	    	    	dst+=DST_INC; CHECKRWO(dst);
 
 			while (c && ((bits = GetBitGroup(c)) == 0))
 		        {
 		    	    NextBitGroup(c);
-		    	    dst++; CHECKRWO(dst);
+		    	    dst+=DST_INC; CHECKRWO(dst);
                         } 
 #endif /* GLYPHROP */
 	    	    	while (c)
 	    	    	{
 		    	    WriteBitGroup(dst, pixel, GetBitGroup(c));
 		    	    NextBitGroup(c);
-		    	    dst++; CHECKRWO(dst);
+		    	    dst+=DST_INC; CHECKRWO(dst);
 	    	    	}
 		    }
 	    	} while (--hTmp);

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbAccessX.c /main/12 1996/02/02 14:14:32 kaleb $ */
+/* $XConsortium: xkbAccessX.c /main/13 1996/12/02 10:24:00 lehors $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.3 1997/01/18 07:18:41 dawes Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -33,8 +34,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/keysym.h>
 #include "inputstr.h"
 #include "XKBsrv.h"
-
+#if !defined(WIN32) && !defined(Lynx)
 #include <sys/time.h>
+#endif
 
 int	XkbDfltRepeatDelay=	660;
 int	XkbDfltRepeatInterval=	40;

@@ -16,7 +16,7 @@ XCOMM
 XCOMM Mark Moraes, University of Toronto <moraes@csri.toronto.edu>
 XCOMM Joel McCormack, DEC Western Research Lab <joel@decwrl.dec.com>
 XCOMM
-XCOMM $XConsortium: x11pcomp.cpp,v 1.6 91/08/22 11:43:57 rws Exp $
+XCOMM $TOG: x11pcomp.cpp /main/7 1997/04/14 09:15:45 barstow $
 
 PATH=LIBPATH:.:$PATH
 export PATH
@@ -48,7 +48,7 @@ case $1 in
 		awk '$2 == "reps" || $2 == "trep" { print $0; next; }' $file |
  		sed 's/^.*: //' |
  		sed 's/ /_/g' |
- 		awk 'NR > 1 	{ printf ("%s %s\n", prev, $0); }
+ 		awk 'NR > 1 	{ printf ("%s %s\n", prev, $0); } \
 				{ prev = $0; }'
 	done | tsort 2>/dev/null | sed 's/_/ /g' > $tmp/labels
 	;;
@@ -62,21 +62,21 @@ XCOMM then extract the rate field
 	base=`basename $i`
 	(echo "     $n  "
 	 echo '--------'
-	 awk '$2 == "reps" || $2 == "trep" {
-		line = $0;
-		next;
-	    }
-	    NF == 0 && line != "" {
-		print line;
-		line="";
-		next;
-	    }
+	 awk '$2 == "reps" || $2 == "trep" { \
+		line = $0; \
+		next; \
+	    } \
+	    NF == 0 && line != "" { \
+		print line; \
+		line=""; \
+		next; \
+	    } \
 	 ' $i > $tmp/$n.avg
 	 fillblnk $tmp/$n.avg $tmp/labels |
 	 sed 's/( *\([0-9]*\)/(\1/'   |
-	 awk '$2 == "reps" || $2 == "trep" {
-	 					n = substr($6,2,length($6)-7);
-						printf "%8s\n", n;
+	 awk '$2 == "reps" || $2 == "trep" { \
+	 					n = substr($6,2,length($6)-7); \
+						printf "%8s\n", n; \
     	 				   }'
 	) > $tmp/rates/$n
 	echo "$n: $i"

@@ -1,5 +1,4 @@
-/* $XConsortium: stub_driver.c /main/5 1995/09/04 19:45:46 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/stub_driver.c,v 3.16 1996/09/14 13:06:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/stub_driver.c,v 3.18.2.4 1997/05/27 06:22:16 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
@@ -21,6 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: stub_driver.c /main/8 1996/10/23 18:39:21 kaleb $ */
 
 /*************************************************************************/
 
@@ -56,11 +56,28 @@
 #include "vga.h"
 
 /*
+ * for PCI probing etc.
+ */
+#include "xf86_PCI.h"
+#include "vgaPCI.h"
+extern vgaPCIInformation *vgaPCIInfo;
+
+/*
  * If the driver makes use of XF86Config 'Option' flags, the following will be
  * required
  */
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
+
+/* DGA includes */
+#ifdef XFreeXDGA
+#include "X.h"
+#include "Xproto.h"
+#include "scrnintstr.h"
+#include "servermd.h"
+#define _XF86DGA_SERVER_
+#include "extensions/xf86dgastr.h"
+#endif
 
 /*
  * In many cases, this is sufficient for VGA16 support when VGA2 support is
@@ -237,11 +254,41 @@ vgaVideoChipRec STUB = {
 	 */
 	NULL,
 	/*
-	 * This is a factor that can be used to scale the raw clocks
-	 * to pixel clocks.  This is rarely used, and in most cases, set
-	 * it to 1.
+	 * ClockMulFactor can be used to scale the raw clocks to pixel
+	 * clocks. This is rarely used, and in most cases, set it to 1. The
+	 * "raw" pixel clock from the modeline is multiplied by this value,
+	 * and that value is used for clock selection.
 	 */
 	1,
+	/*
+	 * ClockDivFactor can be used to scale the raw clocks to pixel
+	 * clocks. This is rarely used, and in most cases, set it to 1. The
+	 * "raw" pixel clock from the modeline is divided by this value
+	 * (after having been multiplied by ClockMulFactor), and that value
+	 * is used for clock selection.
+	 *
+	 * When these values are set to a non-1 value, the server will
+	 * automatically scale pixel clocks (if a discrete clock generator
+	 * is used) and maximum allowed pixel clock. If e.g. a 16bpp mode
+	 * requires pixel clock multipled by 2 (to be able to transport data
+	 * over an 8-bit data bus), setting ClockMulFactor to 2 will
+	 * automatically scale the maximum allowed ramdac speed with the
+	 * same factor, and use a clock*2 for the pixel data transfer clock.
+	 *
+	 * ClockMulFactor and ClockDivFactor can only be used when the
+	 * "rules" don't change over time: dynamic changes of these
+	 * variables will cause inconsistent server behaviour (e.g. it will
+	 * report wrong pixel clocks and maximum pixel speeds. Pixel
+	 * multiplexing modes for example can mostly only be enabled if the
+	 * pixel clock is higher than a certain value, and these modes
+	 * cannot use ClockDivFactor (they don't need to: the maximum RAMDAC
+	 * speed remains the same, so there's no use in the server code
+	 * lowering it).
+	 *
+	 * For 24bpp modes over a 16-bit RAMDAC bus, one would set
+	 * ClockMulFactor to 3, and ClockDivFactor to 2.
+	 */
+	1
 };
 
 /*
@@ -406,12 +453,32 @@ STUBProbe()
     	}
   	else
 	{
+	       /*
+		* Start with PCI probing, this should get us quite far allready.
+		*/
+
+	       if (vgaPCIInfo)
+	       {
+		       if (vgaPCIInfo->Vendor!=PCI_VENDOR_SUPERDUPER)
+			       return(FALSE);
+
+		       switch(vgaPCIInfo->ChipType)
+		       {
+		       case PCI_CHIP_SUPERCHIP1:
+		       case PCI_CHIP_SUPERCHIP2:
+		       case PCI_CHIP_SUPERCHIP3:
+			       break;  /* ok, known chip */
+		       default:
+			       return(FALSE);
+		       }
+	       }
+
 		/*
-		 * OK.  We have to actually test the hardware.  The
-		 * EnterLeave() function (described below) unlocks access
-		 * to registers that may be locked, and for OSs that require
-		 * it, enables I/O access.  So we do this before we probe,
-		 * even though we don't know for sure that this chipset
+		 * If PCI probing isn't sufficient, we have to actually test
+		 * the hardware.  The EnterLeave() function (described below)
+		 * unlocks access to registers that may be locked, and for OSs
+		 * that require it, enables I/O access.  So we do this before
+		 * we probe, even though we don't know for sure that this chipset
 		 * is present.
 		 */
 		STUBEnterLeave(ENTER);
@@ -483,6 +550,14 @@ STUBProbe()
   	vga256InfoRec.chipset = STUBIdent(0);
   	vga256InfoRec.bankedMono = FALSE;
 	OFLG_SET(OPTION_FLG1, &STUB.ChipOptionFlags);
+
+
+	/* 
+	 * if your driver uses a programmable clockchip, you have
+	 * to set this option to avoid clock probing etc.
+	 */
+	OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
+
   	return(TRUE);
 }
 
@@ -553,6 +628,8 @@ static void
 STUBRestore(restore)
 vgaSTUBPtr restore;
 {
+	vgaProtect(TRUE);		/* Blank the screen */
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
@@ -576,6 +653,8 @@ vgaSTUBPtr restore;
 	 *	if (restore->std.NoClock >= 0)
 	 *		restore clock-select bits.
 	 */
+
+	vgaProtect(FALSE);		/* Turn on screen */
 }
 
 /*
@@ -806,9 +885,10 @@ STUBFbInit()
 }
 
 static int
-STUBValidMode(mode, verbose)
+STUBValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 	/*
 	 * Code to check if a mode is suitable for the selected chipset.

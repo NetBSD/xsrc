@@ -1,4 +1,4 @@
-/* $XConsortium: alias.h /main/2 1996/01/23 06:56:44 kaleb $ */
+/* $XConsortium: alias.h /main/3 1996/12/27 21:16:25 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -52,7 +52,8 @@ extern void ClearAliases(
 extern Bool MergeAliases(
 #if NeedFunctionPrototypes
 	AliasInfo **		/* into */,
-	AliasInfo **		/* merge */
+	AliasInfo **		/* merge */,
+	unsigned		/* how_merge */
 #endif
 );
 

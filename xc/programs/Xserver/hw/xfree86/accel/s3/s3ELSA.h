@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ELSA.h,v 3.8 1996/04/15 11:30:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ELSA.h,v 3.11 1997/01/14 22:16:54 dawes Exp $ */
 
 
 
 
 
 
-/* $XConsortium: s3ELSA.h /main/6 1995/12/02 08:23:34 kaleb $ */
+/* $XConsortium: s3ELSA.h /main/8 1996/04/18 16:45:18 kaleb $ */
 #ifndef _S3ELSA_H_
 #define _S3ELSA_H_
 
@@ -20,6 +20,7 @@
 #define  ELSA_WINNER_1000PRO_TRIO32 0x931
 #define  ELSA_WINNER_1000PRO_TRIO64 0x932
 #define  ELSA_WINNER_1000AVI	0x936
+#define  ELSA_WINNER_1000PRO_X	0x937
 #define  ELSA_WINNER_2000PRO	0x940   
 #define  ELSA_WINNER_2000PRO_X	0x942
 #define  ELSA_WINNER_2000AVI	0x943
@@ -116,7 +117,8 @@ extern int s3DetectELSA(
 			char **pserno,
 			int *max_pix_clock, 
 			int *max_mem_clock,
-			int *hwconf
+			int *hwconf,
+			char **modes
 #endif
 			);
 

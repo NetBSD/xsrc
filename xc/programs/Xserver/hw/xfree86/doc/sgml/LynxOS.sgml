@@ -1,42 +1,47 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 
-<title> README for XFree86 3.2 on LynxOS
+<title>README for XFree86 3.3 on LynxOS
 <author>Thomas Mueller
-<date>Last modified on: 21 October 1996
+<date>Last modified on: 26 May 1997
 <toc>
 
 <sect>What and Where is XFree86?<p>
-XFree86 is a port of X11R6.1 that supports several versions of
+XFree86 is a port of X11R6.3 that supports several versions of
 Intel-based Unix.  It is derived from X386 1.2, which was the X server
 distributed with X11R5.  This release consists of many new features
 and performance improvements as well as many bug fixes.  The release
-is available as source patches against the X Consortium X11R6.1 code, as
+is available as source patches against the X Consortium X11R6.3 code, as
 well as binary distributions for many architectures.
 
-See the Copyright Notice in <url url="COPYRIGHT.html" name="Copyright Notice">.
+See the Copyright Notice in <htmlurl url="COPYRIGHT.html"
+name="Copyright Notice">.
 
 The sources for XFree86 are available by anonymous ftp from:
 
-<url name="ftp.XFree86.org:/pub/XFree86/current"
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries for the 3.2 release on LynxOS AT are available from:
+Binaries of the 3.3 release for LynxOS AT are available from:
 
-<url name="ftp.XFree86.org:/pub/XFree86/current/binaries/LynxOS"
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
  
-The XFree86 LynxOS port was developed using `LynxOS AT 2.3.0 080695-A FCS'
-and later `LynxOS AT 2.4.0 042696'. XFree86 versions later than 3.1.2
-have not been tested on LynxOS versions earlier than 2.3.0. The binaries 
-are built on `LynxOS AT 2.4.0 042696'.
+The binaries are built on `LynxOS 2.5.0 012797-G i386'. These binaries
+don't run on earlier LynxOS versions because of the changes made to
+the networking code in LynxOS 2.5.0. This XFree86 version has never
+been tested on LynxOS versions earlier than 2.3.0.
 
 XFree86 supports LynxOS on the AT, on the microSPARC and
 on the PowerPC platform. X servers are currently available on
 the AT and microSPARC platform. Refer to section <ref id="others"
 name="Building on microSPARC and PowerPC"> for details on XFree86
 on the non-AT platforms.
+
+If you need binaries for other platforms than the one on the
+XFree86 FTP server contact me (<htmlurl name="tm@systrix.de"
+url="mailto:tm@systrix.de">).
 
 Send email to <it>tm@systrix.de</it> (Thomas Mueller) or
 <it>XFree86@XFree86.org</it> if you have comments or suggestions about
@@ -47,9 +52,9 @@ this file and we'll revise it.
 The binary distribution is composed of a number of  tar archives
 which are the executables, servers, fonts, libraries, include files,
 man pages, config files, and the server link kit.  The full distribution
-takes over 80MB of disk space.  
+takes over 95MB of disk space.  
 
-At a minimum you need to unpack the 'required' <tt/X32*.tgz/ archives
+At minimum you need to unpack the 'required' <tt/X33*.tgz/ archives
 plus at least one server that matches your vga card. If you will be
 using the new <tt/XF86Setup/ utility you will also need the VGA16
 server.  You'll need about 40Mb for the minimum required run-time
@@ -58,44 +63,49 @@ binaries only.
 <descrip>
 <tag/REQUIRED:/
     <descrip>
-    <tag/X32bin/	Clients, run-time libs, and app-defaults files
-    <tag/X32doc/	Documentation
-    <tag/X32fnts/	75dpi and misc fonts
-    <tag/X32lib/	Data files required at run-time
-    <tag/X32cfg/	sample config files for xinit, xdm
-    <tag/X32set/	XF86Setup utility
-    <tag/X32VG16/	16 colour VGA server (XF86Setup needs this server)
+    <tag/X33bin/	Clients, run-time libs, and app-defaults files
+    <tag/X33doc/	Documentation
+    <tag/X33fnts/	75dpi and misc fonts
+    <tag/X33lib/	Data files required at run-time
+    <tag/X33cfg/	sample config files for xinit, xdm
+    <tag/X33set/	XF86Setup utility
+    <tag/X33VG16/	16 colour VGA server (XF86Setup needs this server)
     </descrip>
 
     Choose at least one of the following server to match your hardware:
 
     <descrip>
-    <tag/X328514/	8514/A server
-    <tag/X32AGX/	AGX server
-    <tag/X32I128/	I128 server
-    <tag/X32Ma64/	Mach 64 server
-    <tag/X32Ma32/	Mach 32 server
-    <tag/X32Ma8/	Mach 8 server
-    <tag/X32Mono/	Monochrome server
-    <tag/X32P9K/	P9000 server
-    <tag/X32S3/		S3 server
-    <tag/X32S3V/	S3 ViRGE server
-    <tag/X32SVGA/	SVGA server
-    <tag/X32VG16/	16 colour VGA server
-    <tag/X32W32/	ET4000/W32, ET6000 server
+    <tag/X338514/	8514/A server
+    <tag/X33AGX/	AGX server
+    <tag/X33I128/	I128 server
+    <tag/X33Ma64/	Mach 64 server
+    <tag/X33Ma32/	Mach 32 server
+    <tag/X33Ma8/	Mach 8 server
+    <tag/X33Mono/	Monochrome server
+    <tag/X33P9K/	P9000 server
+    <tag/X33S3/		S3 server
+    <tag/X33S3V/	S3 ViRGE server
+    <tag/X33SVGA/	SVGA server
+    <tag/X33VG16/	16 colour VGA server
+    <tag/X33W32/	ET4000W32, ET6000 server
     </descrip>
 
 <tag/OPTIONAL:/
 
     <descrip>
-    <tag/X32f100/ 100dpi fonts
-    <tag/X32fcyr/ Cyrillic fonts
-    <tag/X32fnon/ Other fonts (Chinese, Japanese, Korean, Hebrew)
-    <tag/X32fscl/ Scalable fonts (Speedo and Type1)
-    <tag/X32fsrv/ Font server and config files
-    <tag/X32prog/ X header files, config files and compile-time libs
-    <tag/X32man/  Manual pages
-    <tag/X32nest/ Nested X server
+    <tag/X33f100/ 100dpi fonts
+    <tag/X33fcyr/ Cyrillic fonts
+    <tag/X33fnon/ Other fonts (Chinese, Japanese, Korean, Hebrew)
+    <tag/X33fscl/ Scalable fonts (Speedo and Type1)
+    <tag/X33fsrv/ Font server and config files
+    <tag/X33prog/ X header files, config files and compile-time libs
+    <tag/X33man/  Manual pages
+    <tag/X33nest/ Nested X server
+    <tag/X33prt/  X Print server
+    <tag/X33vfb/  Virtual frame buffer X server
+    <tag/X33lkit/ The server LinkKit
+    <tag/X33ps/   PostScript version of the documentation
+    <tag/X33html/ HTML version of the documentation
     </descrip>
 </descrip>
 
@@ -103,14 +113,27 @@ If this is your first time, then you can safely install all of the
 packages.  As a minimal install, you'll need doc, bin, fonts lib,
 config, and one X server.
 
+If you plan to install XF86Setup you'll have to install
+<tt/X33prog/ as well since XF86Setup checks for the existence of
+a certain file name pattern which is satisfied only if you install
+the library files from <tt/X33prog/. This restriction will be
+fixed in future XFree86 releases for LynxOS.
+
+It may be necessary to increase the process stack limit in order to
+run XFree86 on your system. Edit <tt>/etc/startab</tt> and reboot your
+system to make the changes active before you begin the installation.
+
+Also, be sure to include <tt>/usr/X11R6/bin</tt> in your PATH
+environment variable.
+
 <sect1>Full Install
 <p>
 <enum>
-<item> You must be logged in as root to unpack the archives because
+<item>You must be logged in as root to unpack the archives because
      several executables are set-user-id.  Otherwise the server may
      abort if you unpack it as an ordinary user.
 
-<item> If you have about 80Mb free in the <tt>/usr</tt> partition create
+<item>If you have about 80Mb free in the <tt>/usr</tt> partition create
      a directory <tt>/usr/X11R6</tt> and skip to no. 3.
      Otherwise, create a directory on another partition and sym link it into
      <tt>/usr</tt>:
@@ -121,13 +144,13 @@ config, and one X server.
  # ln -s /usr/local/X11R6 /usr/X11R6
 </verb></tscreen>
 
-<item> Unpack everything:
+<item>Unpack everything:
 
      If you are using bash:
 
 <tscreen><verb>
  # cd /usr/X11R6
- # for i in X32*.tgz; do
+ # for i in X33*.tgz; do
  #   gnutar -xzpPf $i
  # done
 </verb></tscreen>
@@ -135,12 +158,12 @@ config, and one X server.
      Else, if you are using csh:
 <tscreen><verb>
  % cd /usr/X11R6
- % foreach i (X32*.tgz)
+ % foreach i (X33*.tgz)
  %   gnutar -xzpPf $i
  % end
 </verb></tscreen>
 
-<item> Create a symbolic link ``<tt/X/'' that points to the server
+<item>Create a symbolic link ``<tt/X/'' that points to the server
      that matches your video card.  The <em/XF86_*/ man pages list which
      vga chip sets are supported by each server.  For example, if you
      have an ET4000 based card you will use the XF86_SVGA server:
@@ -150,14 +173,14 @@ config, and one X server.
 </verb></tscreen>
 </enum>
 
-<sect1>Minimal Install:
+<sect1>Minimal Install
 <p>
 First do numbers 1 and 2 above. Then unpack the required archives:
 
 <tscreen><verb>
  # cd /usr/X11R6
  # for i in bin fnts lib xicf; do
- #   gnutar -xzpPf  X32$i.tgz
+ #   gnutar -xzpPf  X33$i.tgz
  # done
 </verb></tscreen>
 
@@ -167,22 +190,27 @@ sets supported by each server.  For example, if you have an ET4000
 based card you will use the XF86_SVGA server:
 
 <tscreen><verb>
- # gnutar -xzpPf X32SVGA.tgz
+ # gnutar -xzpPf X33SVGA.tgz
  # cd /usr/X11R6/bin; rm -f X; ln -s XF86_SVGA X
 </verb></tscreen>
 
 <sect1>After either Full or Minimal Install above
 <p>
 
+Be sure to include <tt>/usr/X11R6/bin</tt> in your PATH environment
+variable. If you plan to use clients of the MetroLink X package with 
+the XFree86 X server make sure to remove <tt>/usr/bin/X11/X</tt>
+file or put <tt>/usr/bin/X11</tt> after <tt>/usr/X11R6/bin</tt> in 
+your PATH environment variable.
+
 If you had already configured <tt>X11R6/lib/X11/xinit/xinitrc</tt> or
 <tt>X11R6/lib/X11/xdm/*</tt> omit the <tt/xinit-config/ or
 <tt/xdm-config/ archive or unpack it separately and merge in your
 customizations.
 
-The <tt/fscl/ and <tt/f100/ archives are optional and can be omitted
-if you are short on space.  The optional <tt/link/ archive (not
-included in beta releases) allows you to reconfigure and customize a X
-server binary.
+The <tt/fscl/, <tt/fcyr/ and <tt/f100/ font archives are optional and 
+can be omitted if you are short on space.  The optional <tt/lkit/ archive 
+allows you to reconfigure and customize a X server binary.
 
 The optional <tt/prog/ archive is needed only for writing or compiling
 X applications. Before building programs check wether
@@ -198,20 +226,53 @@ LynxOS.
 <sect1>Disk space requirements<p>
 Currently there is no support for shared libraries in the LynxOS
 XFree86 port. A complete binary installation along with manual pages
-will require approximately 70-90 MBytes of disk space. To compile
+will require approximately 90-100 MBytes of disk space. To compile
 the system you will need at least 230 MBytes of free disk space.
 
-<sect1>Changes to system environment<p>
+<sect1>Changes to system environment (LynxOS AT)<p>
 Before compiling the XFree86 distribution you will have to make a
 few little adjustments to your system:
 
   <descrip>
+  <tag>LynxOS AT 2.5</tag>
+  <itemize>
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
+  <tscreen><verb>
+    #!/bin/sh
+    /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
+	      -traditional "$@"
+  </verb></tscreen>
+    On other platforms than the AT the paths for the compiler support
+    programs are different. You may use
+  <tscreen><verb>
+	gcc -v
+  </verb></tscreen>
+    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
+  <tscreen><verb>
+	# chown root /lib/cpp
+	# chmod 755 /lib/cpp
+  </verb></tscreen>
+  <item>Modify <tt>/lib/liblynx.a</tt>. The X servers need the 
+    <tt>smem_create()</tt> system call to map the frame buffer into their 
+    address space. The system call is in <tt>liblynx</tt> library along
+    with other Lynx proprietary calls which (unfortunately) overlap
+    with calls in <tt>libc</tt>. To reduce confusion you should modify
+    <tt>liblynx</tt> as follows:
+  <tscreen><verb>
+    # mv /lib/liblynx.a /lib/liblynx.a.ORG
+    # mkdir /tmp/xx; cd /tmp/xx
+    # ar xv /lib/liblynx.a.ORG
+    # ar rv /lib/liblynx.a *smem*
+    # ranlib /lib/liblynx.a
+  </verb></tscreen>
+
+  </itemize>
   <tag>LynxOS AT 2.3 and 2.4</tag>
   <itemize>
-  <item> Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 2.3.0 
+  <item>Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 2.3.0 
     and 2.4.0 you must execute the shell script <tt>/CYGNUS.bash</tt> to 
     apply the necessary changes to your environment.
-  <item> Create a shell script named /lib/cpp as follows:
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
   <tscreen><verb>
     #!/bin/sh
     /cygnus/94q4-lynxos-x86/lib/gcc-lib/i386-lynx/2.6-94q4/cpp \
@@ -222,20 +283,22 @@ few little adjustments to your system:
   <tscreen><verb>
 	gcc -v
   </verb></tscreen>
-    to find out the correct path. Set the file mode of /lib/cpp with
+    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
   <tscreen><verb>
-        # chown root /lib/cpp
+	# chown root /lib/cpp
 	# chmod 755 /lib/cpp
   </verb></tscreen>
   </itemize>
   <tag>LynxOS AT 2.2.1</tag>
+  This has actually never been tested, be prepared that the build will
+  fail somewhere!
   <itemize>
-  <item> Create a shell script named /lib/cpp as follows:
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
   <tscreen><verb>
     #!/bin/sh
     /usr/local/lib/gcc-cpp -traditional "$@"
   </verb></tscreen>
-  <item> The loader /bin/ld of LynxOS 2.2.1 does not support the -L option
+  <item>The loader /bin/ld of LynxOS 2.2.1 does not support the -L option
     which is heavily used by X11R6 makefiles. To work around this
     problem you must install a small wrapper program which replaces
     the original /bin/ld program. Use the following steps to install
@@ -248,7 +311,7 @@ few little adjustments to your system:
       # chmod 511 /bin/ld
       # chown root /bin/ld
   </verb></tscreen>
-  <item> Modify system header files as follows:
+  <item>Modify system header files as follows:
   <descrip>
     <tag><tt>/usr/include/uio.h</tt></tag> surrounded by
      <tscreen><verb>
@@ -275,8 +338,9 @@ few little adjustments to your system:
 <sect1> make World<p>
 
   Before you start compilation you must edit <tt>xc/config/cf/lynx.cf</tt> to
-  match your operating system version. Change the definitions of
-  OSMajorVersion, OSMinorVersion and OSTeenyVersion accordingly.
+  match your operating system version (defaults set up for 2.5.0). Change 
+  the definitions of OSMajorVersion, OSMinorVersion and OSTeenyVersion 
+  accordingly.
 
   You may now issue a
 
@@ -307,6 +371,10 @@ few little adjustments to your system:
   Refer to section <ref id="installman" name="Installing XFree86 manual pages"> 
   for manual page installation.
 
+  On LynxOS AT 2.5.0 you may encounter problems with <tt>make</tt> in
+  deeply nested subdirectories (eg core dumps, hangups). In this case
+  update to GNU make version 3.75 or higher.
+
 <sect>Running XFree86<p><label id="running">
 <sect1>System requirements<p>
   A minimum of 8MB of memory is required to run X. If you want to run
@@ -315,18 +383,24 @@ few little adjustments to your system:
 
 <sect1>System tuning<p>
 <sect2>Tunable parameters<p>
+  To reasonably run XFree86 you may have to adjust a few system parameters.
 
-  To run XFree86 reasonably you must adjust a few system parameters in
-  <tt>/usr/include/param.h</tt>:
-
+  On LynxOS 2.5.0 include a line
 <verb>
-  Tunable					        Old	New
-  USR_NFDS	number of open files per process	 20	 64
-  NPROC		number of tasks				 50	150
-  NFILES	number of open files in system		100	250
-  NINODES	number of incore inodes			(same value as NFILES)
-  QUANTUM	clock ticks until preemption		 64      20
-  CACHEBLKS	number of cache memory blocks		202	 >= 4096
+  #define X_WINDOWS
+</verb>
+
+  in <tt>/sys/lynx.os/uparam.h</tt>.
+
+  For earlier versions you'll have to edit <tt>/usr/include/param.h</tt>:
+<verb>
+  Tunable                                           Old     New
+  USR_NFDS      number of open files per process     20      64
+  NPROC         number of tasks                      50     150
+  NFILES        number of open files in system      100     250
+  NINODES       number of incore inodes             (same value as NFILES)
+  QUANTUM       clock ticks until preemption         64      20
+  CACHEBLKS     number of cache memory blocks       202      >= 4096
 </verb>
 
   The new values are those suggested by the LynxOS documentation for
@@ -352,10 +426,12 @@ few little adjustments to your system:
 
 <sect1>Bus mouse drivers<p>
 
-  Starting with LynxOS AT 2.4.4 LynxOS includes a PS/2 mouse driver.
-  Currently this driver is not supported by XFree86.
-  <tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> contains a port 
-  of the Linux drivers for those devices. To install the drivers
+  Starting with LynxOS AT 2.4.0 LynxOS includes a PS/2 mouse driver.
+  Currently this driver is not fully supported by XFree86 (you'll
+  probably have to specify a mouse type which doesn't match the
+  real mouse type and in some cases lose mouse buttons).
+  <tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> contains a LynxOS port 
+  of the Linux bus mouse drivers. To install the drivers
   unpack the shar archive
 
   <tscreen><verb>
@@ -368,7 +444,9 @@ few little adjustments to your system:
 
   The XFree86 PS/2 mouse driver works also with MetroLink X 2.3.3.1 as
   shipped with LynxOS AT 2.4.0 unless you have the LynxOS patch
-  000055-00 installed.  <sect1> ATC console driver and VT switching<p>
+  000055-00 installed.
+
+<sect1> ATC console driver and VT switching<p>
 
   The XFree86 servers will only run with the default LynxOS console
   driver, sorry for those of you who use the alternative vdt console
@@ -377,7 +455,7 @@ few little adjustments to your system:
 
   You will need a free console which the X server will use for
   keyboard input. You must disable login on at least one of the four
-  virtual terminals in /etc/ttys, e.g. /dev/atc3:
+  virtual terminals in <tt>/etc/ttys</tt>, e.g. <tt>/dev/atc3</tt>:
 
   <tscreen>
     change
@@ -406,8 +484,8 @@ few little adjustments to your system:
 
   LynxOS uses cat-able manual pages, and because a doc preparation
   system is definitely not a vital component of a real-time operating
-  system you must first install groff-1.09. Starting with LynxOS 2.3.0 it
-  compiles right out of the box (or better tar archive).
+  system you must first install groff-1.09 (or newer). Starting with 
+  LynxOS 2.3.0 it should compile right out of the box (or better tar archive).
 
   XFree86 manual pages may be installed using
 
@@ -438,7 +516,7 @@ few little adjustments to your system:
       bash:   <tt>MANPATH=&dollar;MANPATH:/usr/X11R6/man</tt>
   </tscreen>
 
-  The /bin/man command of LynxOS 2.2.1 does not support the MANPATH
+  The man command of LynxOS 2.2.1 does not support the MANPATH
   environment variable properly. The XFree86 manual pages must be
   copied (or linked) to the standard manual page locations
   (<tt>/usr/man/catx</tt>) in  order to be read the man command:
@@ -447,9 +525,9 @@ few little adjustments to your system:
       for i in 1 3 5
       do
         ln -s /usr/X11R6/man/cat$i/*.* /usr/man/cat$i
-	cat /usr/X11R6/man/cat$i/LIST$i >> /usr/man/cat$i/LIST$i
-	sort -o /usr/man/cat$i/LIST$i /usr/man/cat$i/LIST$i
-	cat /usr/X11R6/man/cat$i/whatis$i >> /usr/man/whatis
+        cat /usr/X11R6/man/cat$i/LIST$i >> /usr/man/cat$i/LIST$i
+        sort -o /usr/man/cat$i/LIST$i /usr/man/cat$i/LIST$i
+        cat /usr/X11R6/man/cat$i/whatis$i >> /usr/man/whatis
       done
   </verb></tscreen>
 
@@ -462,11 +540,12 @@ few little adjustments to your system:
 <sect1>Copy Motif files<p>
 
   You must create symbolic links for the Motif libraries and 
-  utilities in the /usr/X11R6 directory tree.
+  utilities in the <tt>/usr/X11R6</tt> directory tree.
   <tscreen><verb>
       ln -s /usr/bin/X11/uil /usr/X11R6/bin
       ln -s /usr/lib/libUil.a /usr/X11R6/lib
       ln -s /usr/lib/libMrm.a /usr/X11R6/lib
+      ln -s /usr/lib/libXm.a /usr/X11R6/lib
       ln -s /usr/lib/X11/uid /usr/X11R6/lib/X11
       ln -s /usr/include/Xm /usr/X11R6/include
       ln -s /usr/include/Mrm /usr/X11R6/include
@@ -474,16 +553,16 @@ few little adjustments to your system:
   </verb></tscreen>
 
   The Motif imake-configuration files are part of the LynxOS X Window
-  package. They must be copied to the /usr/X11R6 directory tree.
+  package. They must be copied to the <tt>/usr/X11R6</tt> directory tree.
   <tscreen><verb>
       cp /usr/lib/X11/config/Motif.* /usr/X11R6/lib/X11/config
   </verb></tscreen>
 
-<sect1>Motif library patch<p>
+<sect1>Motif library patch for LynxOS AT 2.3.0<p>
 
   The XFree86 libraries are compiled with the -mposix compiler option
   while the Motif libraries shipped with LynxOS AT 2.3.0 are not. This
-  incompatibility will cause Motif XmFileSelection widgets to be linked 
+  incompatibility will cause Motif <tt>XmFileSelection</tt> widgets to be linked 
   with the wrong (i.e. POSIX) directory routines. To circumvent this 
   problem apply the following patch to the library:
   <tscreen><verb>
@@ -495,8 +574,7 @@ few little adjustments to your system:
       ar r /usr/X11R6/lib/libXm.a Xmos.o
   </verb></tscreen>
   
-  This patch is not necessary for LynxOS 2.4.0 since POSIX support is
-  now the default for the CYGNUS compiler.
+  This patch is not necessary for LynxOS revisions after 2.3.0.
 
 <sect1>X11R6 config file patch<p>
 
@@ -531,17 +609,19 @@ few little adjustments to your system:
 
 <sect>Building on microSPARC and PowerPC<label id="others"><p>
 
-  XFree86 3.2 also compiles on LynxOS microSPARC and on LynxOS PPC. On the
+  XFree86 3.3 compiles on LynxOS microSPARC and on LynxOS PPC as well. On the
   microSPARC there is X server support for the colour frame buffers CG3 and CG6
   while on the PPC there is no X server available at this time. Before you 
-  start the build you must create a symbolic link from the CYGNUS gcc to a 
-  file named <tt>cc</tt> somewhere in a directory included in your PATH 
-  environment variable.
+  start the build (on versions earlier than 2.5.0) you must create a symbolic
+  link from the CYGNUS gcc to a file named <tt>cc</tt> somewhere in a 
+  directory included in your PATH environment variable.
 
 <sect1>Console driver patch for microSPARC<p>
 
   Before building on the microSPARC you should install the patch for the console
   driver supplied in <tt>xc/programs/Xserver/hw/sunLynx/patch.Console</tt>.
+  (<tt>xc/programs/Xserver/hw/sunLynx/patch.Console-2.4.0</tt> for LynxOS 
+  revisions earlier than 2.5.0).
   The patch fixes minor problems in the original LynxOS driver and adds 
   functionalities to detect the keyboard type and control the key click.
   To create a backup of the original driver and install the patch issue 
@@ -578,15 +658,15 @@ few little adjustments to your system:
   These effects should go away on the next server start.
 
   The server for monochrome cards builds properly if you enable it in
-  <tt>lynx.cf</tt> but it has never been tested.
+  <tt>lynx.cf</tt> but it has never been tested (reports are welcome).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.10 1996/10/23 13:09:58 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.2 1997/05/26 14:36:18 dawes Exp $
 
 
 
 
 
-$XConsortium: LynxOS.sgml /main/4 1995/12/29 15:58:36 kaleb $
+$XConsortium: LynxOS.sgml /main/10 1996/10/28 05:13:07 kaleb $
 </verb>
 </article>

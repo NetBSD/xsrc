@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Bt481.h,v 3.3 1996/02/04 08:57:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Bt481.h,v 3.4 1996/12/23 06:32:19 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Copyright 1994 by Henry A. Worth  <haw30@eng.amdahl.com>
@@ -25,7 +25,7 @@
  * Modified for the AGX and Bt481/2 by Henry. A. Worth
  *
  */
-/* $XConsortium: Bt481.h /main/3 1995/11/13 10:05:52 kaleb $ */
+/* $XConsortium: Bt481.h /main/4 1996/02/21 17:15:32 kaleb $ */
 
 #ifndef XF86_BT481_H
 #define XF86_BT481_H

@@ -1,4 +1,4 @@
-# $XConsortium: Cards /main/12 1996/01/14 19:04:24 kaleb $
+# $XConsortium: Cards /main/27 1996/10/28 05:43:53 kaleb $
 # This is the database of card definitions used by xf86config.
 # Each definition should have a NAME entry, CHIPSET (descriptive) and
 # SERVER (one of Mono, VGA16, SVGA, S3, 8514, Mach8, Mach32, Mach64, AGX,
@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.48 1996/10/26 09:42:23 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.8 1997/06/02 07:57:05 dawes Exp $
 
 #Chips & Technologies
 
@@ -35,27 +35,36 @@ LINE # Option "use_modeline"
 LINE # Option "fix_panel_size"
 LINE # videoram 512
 
-NAME Chips & Technologies CT65530
-CHIPSET ct65530
+NAME Chips & Technologies CT65525
+CHIPSET ct65525
 LINE # Option "nolinear"
 LINE # MemBase 0x03b00000
 SEE Chips & Technologies CT65520
 
+NAME Chips & Technologies CT65530
+CHIPSET ct65530
+SEE Chips & Technologies CT65525
+
+NAME Chips & Technologies CT65535
+CHIPSET ct65535
+NOCLOCKPROBE
+LINE # Option "hw_clocks"
+LINE # Textclockfreq 25.175
+SEE Chips & Technologies CT65530
+
 NAME Chips & Technologies CT65540
 CHIPSET ct65540
 NOCLOCKPROBE
-LINE # Option "ext_fram_buf"
-LINE # Option "hw_clocks"
 LINE # Option "use_18bit_bus"
-LINE # Textclockfreq 25.175
-SEE Chips & Technologies CT65530
+SEE Chips & Technologies CT65535
 
 NAME Chips & Technologies CT65545
 CHIPSET ct65545
 NOCLOCKPROBE
 LINE # Option "noaccel"
 LINE # Option "no_bitblt"
-LINE # Option "no_imageblt"
+LINE # Option "xaa_no_color_exp"
+LINE # Option "xaa_benchmark"
 LINE # Option "sw_cursor"
 LINE # Option "mmio"
 SEE Chips & Technologies CT65540
@@ -71,18 +80,40 @@ SEE Chips & Technologies CT65545
 NAME Chips & Technologies CT65550
 CHIPSET ct65550
 NOCLOCKPROBE
-LINE # Option "ext_fram_buf"
 LINE # Option "noaccel"
 LINE # Option "no_bitblt"
-LINE # Option "no_imageblt"
+LINE # Option "xaa_no_color_exp"
+LINE # Option "xaa_benchmark"
 LINE # Option "sw_cursor"
 LINE # Option "sync_on_green"
+LINE # Option "fast_dram"
+LINE # Option "use_vclk1"
 LINE # Textclockfreq 25.175
 SEE Chips & Technologies CT65530
 
 NAME Chips & Technologies CT65554
 CHIPSET ct65554
 SEE Chips & Technologies CT65550
+
+NAME Chips & Technologies CT64200
+CHIPSET ct64200
+SERVER SVGA
+LINE # Device section for C&T cards.
+LINE # videoram 1024
+
+NAME Chips & Technologies CT64300
+CHIPSET ct64300
+SERVER SVGA
+LINE # Option "noaccel"
+LINE # Option "no_bitblt"
+LINE # Option "xaa_no_color_exp"
+LINE # Option "xaa_benchmark"
+LINE # Option "sw_cursor"
+LINE # Option "nolinear"
+LINE # MemBase 0x03b00000
+LINE # Option "hw_clocks"
+LINE # Textclockfreq 25.175
+SEE Chips & Technologies CT64200
 
 # Cirrus Logic
 
@@ -136,6 +167,10 @@ CHIPSET CL-GD5462
 SEE Cirrus Logic GD5462
 
 NAME Creative Labs Graphics Blaster MA334
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME Creative Labs Graphics Blaster 3D
 CHIPSET CL-GD5464
 SEE Cirrus Logic GD5464
 
@@ -580,6 +615,28 @@ SEE S3 Trio64V+ (generic)
 NAME DSV3326
 SEE S3 Trio64V+ (generic)
 
+# S3 Trio64V2
+
+NAME S3 Trio64V2 (generic)
+CHIPSET S3 Trio64V2
+SERVER S3
+NOCLOCKPROBE
+
+NAME S3 Trio64V2/DX (generic)
+SEE S3 Trio64V2 (generic)
+
+NAME S3 Trio64V2/GX (generic)
+SEE S3 Trio64V2 (generic)
+
+NAME S3 86C775 (generic)
+SEE S3 Trio64V2/DX (generic)
+
+NAME S3 86C785 (generic)
+SEE S3 Trio64V2/GX (generic)
+
+NAME ELSA WINNER 1000/T2D
+SEE S3 Trio64V2/DX (generic)
+
 # S3 964/968
 
 NAME S3 964 (generic)
@@ -697,6 +754,11 @@ CHIPSET S3 964
 SERVER S3
 CLOCKCHIP ti3025
 
+NAME Miro Crystal 80SV
+CHIPSET S3 968
+SERVER S3
+NOCLOCKPROBE
+
 NAME Miro Video 20SV
 CHIPSET S3 968
 SERVER S3
@@ -734,6 +796,12 @@ SERVER S3
 LINE     #Option "sync_on_green"
 NOCLOCKPROBE
 
+NAME ELSA Winner 2000PRO/X-8
+CHIPSET S3 968
+SERVER S3
+LINE     #Option "sync_on_green"
+NOCLOCKPROBE
+
 NAME ELSA Winner 2000AVI
 CHIPSET S3 968
 SERVER S3
@@ -756,6 +824,22 @@ NAME VideoLogic GrafixStar 700
 CHIPSET S3 968
 SERVER S3
 NOCLOCKPROBE
+
+NAME LeadTek WinFast S430
+CHIPSET S3 968
+SERVER S3
+NOCLOCKPROBE
+
+NAME WinFast S430
+SEE LeadTek WinFast S430
+
+NAME LeadTek WinFast S510
+CHIPSET S3 968
+SERVER S3
+NOCLOCKPROBE
+
+NAME WinFast S510
+SEE LeadTek WinFast S510
 
 # S3 928
 
@@ -849,8 +933,8 @@ CHIPSET S3 911/924
 SERVER S3
 CLOCKCHIP icd2061a
 
-NAME Orchid Fahrenheit 1280
-SEE S3 911/924 (generic)
+#NAME Orchid Fahrenheit 1280
+#SEE S3 911/924 (generic)
 
 NAME S3 924 with SC1148 DAC
 CHIPSET S3 924
@@ -859,16 +943,61 @@ LINE     #Probable clocks:
 LINE     #Clocks 25.2 28.3 39.7 1.7 49.9 76.7 35.7 44
 LINE     #Clocks 130.2 119.5 79.4 31.2 110.0 65.2 74.9 71.3
 
-# S3 ViRGE and ViRGE/VX
+# S3 ViRGE,/DX,/GX and ViRGE/VX
+
+NAME S3 ViRGE (S3V server)
+CHIPSET S3 ViRGE
+SERVER S3V
+NOCLOCKPROBE
 
 NAME S3 ViRGE (generic)
 CHIPSET S3 ViRGE
-SERVER S3V
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+LINE      #Option "hw_cursor"
+
+NAME S3 ViRGE/DX (generic)
+CHIPSET S3 ViRGE/DX
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+LINE      #Option "hw_cursor"
+
+NAME S3 ViRGE/GX (generic)
+CHIPSET S3 ViRGE/GX
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+LINE      #Option "hw_cursor"
+
 
 NAME S3 86C325 (generic)
 SEE S3 ViRGE (generic)
 
+NAME S3 86C375 (generic)
+SEE S3 ViRGE/DX (generic)
+
+NAME S3 86C385 (generic)
+SEE S3 ViRGE/GX (generic)
+
+
 NAME ELSA Victory 3D
+SEE S3 ViRGE (generic)
+
+NAME ELSA Victory 3DX
+SEE S3 ViRGE/DX (generic)
+
+NAME ELSA Winner 3000-S
 SEE S3 ViRGE (generic)
 
 NAME Number Nine Visual 9FX Reality 332
@@ -879,6 +1008,15 @@ SEE S3 ViRGE (generic)
 
 NAME Diamond Stealth 3D 2000
 SEE S3 ViRGE (generic)
+
+NAME Diamond Stealth 3D 2000 PRO
+SEE S3 ViRGE/DX (generic)
+
+NAME Diamond Multimedia Stealth 3D 2000
+SEE S3 ViRGE (generic)
+
+NAME Diamond Multimedia Stealth 3D 2000 PRO
+SEE S3 ViRGE/DX (generic)
 
 NAME Canopus Co. Power Window 3DV
 SEE S3 ViRGE (generic)
@@ -892,14 +1030,17 @@ SEE S3 ViRGE (generic)
 NAME DSV3325
 SEE S3 ViRGE (generic)
 
-NAME Diamond Multimedia Stealth 3D 2000
-SEE S3 ViRGE (generic)
-
 NAME Hercules Terminator 64/3D
 SEE S3 ViRGE (generic)
 
+NAME Hercules Terminator 3D/DX
+SEE S3 ViRGE/DX (generic)
+
 NAME LeadTek WinFast 3D S600
 SEE S3 ViRGE (generic)
+
+NAME WinFast 3D S600
+SEE LeadTek WinFast 3D S600
 
 NAME miro miroMedia 3D
 SEE S3 ViRGE (generic)
@@ -910,16 +1051,53 @@ SEE S3 ViRGE (generic)
 NAME STB Systems Powergraph 3D
 SEE S3 ViRGE (generic)
 
+NAME STB Nitro 3D
+CHIPSET S3 ViRGE/GX
+SEE S3 ViRGE/GX (generic)
+
+NAME MELCO WGP-VG4S
+LINE      #DACSpeed  191 162 111 83
+LINE      #SetMClck  75
+SEE S3 ViRGE (generic)
+
+
 
 NAME S3 ViRGE/VX (generic)
 CHIPSET S3 ViRGE/VX
-SERVER S3V
+SERVER SVGA
+NOCLOCKPROBE
+LINE      #Option "xaa_benchmark"
+LINE      #Option "fifo_moderate"
+LINE      #Option "pci_burst_on"
+LINE      #Option "pci_retry"
+LINE      #Option "hw_cursor"
+
 
 NAME S3 86C988 (generic)
 SEE S3 ViRGE/VX (generic)
 
 NAME ELSA Winner 3000
 SEE S3 ViRGE/VX (generic)
+
+NAME ELSA Winner 3000-M-22
+SEE S3 ViRGE/VX (generic)
+
+NAME ELSA Winner 3000-L-42
+SEE S3 ViRGE/VX (generic)
+
+NAME ELSA Winner 2000AVI/3D
+SEE S3 ViRGE/VX (generic)
+
+NAME Diamond Stealth 3D 3000
+SEE S3 ViRGE/VX (generic)
+
+NAME STB Systems Velocity 3D
+SEE S3 ViRGE/VX (generic)
+
+NAME MELCO WGP-VX8
+SEE S3 ViRGE/VX (generic)
+
+
 
 
 
@@ -929,68 +1107,143 @@ NAME ET3000 (generic)
 CHIPSET ET3000
 SERVER SVGA
 
+NAME Genoa 5400
+SEE ET3000 (generic)
+
 NAME ET4000 (generic)
 CHIPSET ET4000
 SERVER SVGA
 
-NAME ET4000/W32, W32i, W32p (generic)
-CHIPSET ET4000/W32(i/p)
+NAME ET4000/W32 (generic)
+CHIPSET ET4000/W32
 SERVER W32
+
+NAME ET4000 W32i, W32p (generic)
+CHIPSET ET4000/W32(i/p)
+SERVER SVGA
+LINE     #Option "linear"       # for linear mode at 8bpp
+LINE     #Option "noaccel"      # when problems with accelerator
+LINE     #Option "power_saver"  # enable VESA DPMS
+LINE     #Option "fast_dram"
+LINE     #Option "pci_retry"    # faster, but problematic for ISA DMA
+LINE     #Option "hibit_high"   # see README.tseng -- most cards need this
+LINE     #Option "hibit_low"    # see README.tseng -- mostly for older ET4000 cards
+LINE     #MemBase 0x3C00000     # when automatic MemBase detection doesn't work
+LINE         # -- see README.tseng for more (important) information on MemBase
 
 NAME ET6000 (generic)
 CHIPSET ET6000
-SERVER W32
+SERVER SVGA
+NOCLOCKPROBE
+LINE     #videoram 2304         # 2.25 MB, when memory probe is incorrect
+LINE     #Option "linear"       # for linear mode at 8bpp
+LINE     #Option "noaccel"      # when problems with accelerator
+LINE     #Option "power_saver"  # enable VESA DPMS
+LINE     #Option "pci_retry"    # faster, but problematic for ISA DMA
+LINE     #Option "hw_cursor"    # Use hardware cursor (see docs for limitations)
+LINE     #Option "xaa_no_color_exp"  # When text (or bitmap) is not rendered correctly
 
 NAME Diamond Stealth 32
 CLOCKCHIP icd2061a
-SEE ET4000/W32, W32i, W32p (generic)
+NOCLOCKPROBE
+SEE ET4000 W32i, W32p (generic)
 
 NAME Cardex Cobra
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
 
 NAME Cardex Challenger (Pro)
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
+
+NAME Colorgraphic Dual Lightning
+SEE ET4000 W32i, W32p (generic)
+
+NAME Dell onboard ET4000
+SEE ET4000 (generic)
 
 NAME DFI-WG5000
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
 
 NAME Diamond SpeedStar (Plus)
-CHIPSET ET4000
-SERVER SVGA
+SEE ET4000 (generic)
+
+NAME Diamond SpeedStar 24
+SEE ET4000 (generic)
+
+NAME Diamond SpeedStar HiColor
+SEE ET4000 (generic)
 
 NAME Genoa 8900 Phantom 32i
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
+
+NAME Hercules Dynamite
+SEE ET4000/W32 (generic)
 
 NAME Hercules Dynamite Power
-CLOCKCHIP ics5341
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
 
 NAME Hercules Dynamite Pro
-CLOCKCHIP ics5341
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
+
+NAME Integral FlashPoint
+SEE ET4000 W32i, W32p (generic)
 
 NAME LeadTek WinFast S200
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
+
+NAME Matrox Comet
+SEE ET4000 W32i, W32p (generic)
+
+NAME Matrox Marvel II
+SEE ET4000 W32i, W32p (generic)
+
+NAME Miro MiroVideo 20TD
+SEE ET4000 W32i, W32p (generic)
+
+NAME WinFast S200
+SEE LeadTek WinFast S200
 
 NAME Sigma Concorde
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000/W32 (generic)
+
+NAME Sigma Legend
+SEE ET4000 (generic)
+
+NAME SPEA/V7 ShowTime Plus
+SEE ET4000 W32i, W32p (generic)
 
 NAME STB LightSpeed
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
+
+NAME STB MVP-2
+SEE ET4000 (generic)
+
+NAME STB MVP-2 PCI
+SEE ET4000 W32i, W32p (generic)
+
+NAME STB MVP-2X
+SEE ET4000 W32i, W32p (generic)
+
+NAME STB MVP-4 PCI
+SEE ET4000 W32i, W32p (generic)
+
+NAME STB MVP-4X
+SEE ET4000 W32i, W32p (generic)
 
 NAME TechWorks Thunderbolt
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000/W32 (generic)
 
 NAME ViewTop PCI
-SEE ET4000/W32, W32i, W32p (generic)
+SEE ET4000 W32i, W32p (generic)
 
 NAME SNI PC5H W32
 CLOCKCHIP stg1703
-SEE ET4000/W32, W32i, W32p (generic)
+NOCLOCKPROBE
+SEE ET4000 W32i, W32p (generic)
 
 NAME SNI Scenic W32
 CLOCKCHIP stg1703
-SEE ET4000/W32, W32i, W32p (generic)
+NOCLOCKPROBE
+SEE ET4000 W32i, W32p (generic)
 
 NAME Hercules Dynamite 128/Video
 SEE ET6000 (generic)
@@ -1003,6 +1256,37 @@ SEE ET6000 (generic)
 
 NAME Jazz Multimedia G-Force 128
 SEE ET6000 (generic)
+
+NAME Mirage Z-128
+SEE ET6000 (generic)
+
+NAME California Graphics SunTracer 6000
+SEE ET6000 (generic)
+
+NAME Binar Graphics AnyView
+SEE ET6000 (generic)
+
+NAME MediaVision Proaxcel 128
+SEE ET6000 (generic)
+
+NAME ATrend ATC-2165A
+SEE ET6000 (generic)
+
+NAME Interay PMC Viper
+SEE ET6000 (generic)
+
+2-the-Max MAXColor 6000
+SEE ET6000 (generic)
+
+Gainward Challenger EV
+SEE ET6000 (generic)
+
+MachSpeed VGA ET6000
+SEE ET6000 (generic)
+
+KouTech KeyVision 128 EV
+SEE ET6000 (generic)
+
 
 # ATI
 
@@ -1069,7 +1353,12 @@ CHIPSET ATI-Mach64
 SERVER Mach64
 NOCLOCKPROBE
 
-NAME ATI Mach64 GT (264GT), aka RAGE, Internal RAMDAC
+NAME ATI Mach64 GT (264GT), aka 3D RAGE, Internal RAMDAC
+CHIPSET ATI-Mach64
+SERVER Mach64
+NOCLOCKPROBE
+
+NAME ATI Mach64 3D RAGE II, Internal RAMDAC
 CHIPSET ATI-Mach64
 SERVER Mach64
 NOCLOCKPROBE
@@ -1093,7 +1382,13 @@ NAME ATI Video Xpression
 SEE ATI Mach64 VT (264VT), Internal RAMDAC
 
 NAME ATI 3D Xpression
-SEE ATI Mach64 GT (264GT), aka RAGE, Internal RAMDAC
+SEE ATI Mach64 GT (264GT), aka 3D RAGE, Internal RAMDAC
+
+NAME ATI 3D Xpression+ PC2TV
+SEE ATI Mach64 3D RAGE II, Internal RAMDAC
+
+NAME ATI 3D Pro Turbo
+SEE ATI Mach64 3D RAGE II, Internal RAMDAC
 
 NAME ATI Win Boost with STG1702 RAMDAC
 SEE ATI Mach64
@@ -1479,5 +1774,49 @@ NAME Diamond Edge 3D
 CHIPSET nv1
 SERVER SVGA
 NOCLOCKPROBE
+
+# Misc
+
+NAME Techworks Ultimate 3D
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME VideoLogic GrafixStar 550
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME Jaton Video-70P
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME Jaton Video-58P
+SEE ET6000 (generic)
+
+NAME Diamond Stealth Video 2500
+CHIPSET Alliance AT24 
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Matrox Mystique
+CHIPSET MGA1064SG
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Rendition Verite 1000
+CHIPSET Verite 1000
+SEE Unsupported VGA compatible
+
+NAME Creative Labs 3D Blaster PCI (Verite 1000)
+SEE Rendition Verite 1000
+
+NAME Canopus Total-3D
+SEE Rendition Verite 1000
+
+NAME Sierra Screaming 3D
+SEE Rendition Verite 1000
+
+NAME NeoMagic (laptop/notebook)
+CHIPSET NeoMagic 128/V/ZV
+SEE Unsupported VGA compatible
 
 END

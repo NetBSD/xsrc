@@ -1,5 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree68/common/XF68_FBDev.c,v 3.0 1996/08/21 13:05:22 dawes Exp $ */
-/* $XConsortium: XF86_Hga.c,v 1.1 94/03/28 21:21:40 dpw Exp $ */
+/* $XConsortium: XF68_FBDev.c /main/1 1996/09/21 11:17:40 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree68/common/XF68_FBDev.c,v 3.1 1996/12/27 06:52:00 dawes Exp $ */
 #include "X.h"
 #include "os.h"
 

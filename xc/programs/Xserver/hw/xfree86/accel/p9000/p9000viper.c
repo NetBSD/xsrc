@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000viper.c,v 3.10 1996/03/10 12:03:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000viper.c,v 3.11.2.2 1997/05/11 01:54:43 dawes Exp $ */
 /*
  * Copyright 1994, Erik Nygren (nygren@mit.edu)
  *
@@ -19,7 +19,7 @@
  * SOFTWARE.
  * 
  */
-/* $XConsortium: p9000viper.c /main/4 1995/11/12 18:19:42 kaleb $ */
+/* $XConsortium: p9000viper.c /main/6 1996/03/11 10:44:06 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -31,6 +31,7 @@
 #include "p9000.h"
 #include "p9000reg.h"
 #include "p9000Bt485.h"
+#include "xf86_PCI.h"
 #include "ICD2061A.h"
 #include "p9000viper.h"
 
@@ -335,27 +336,90 @@ void p9000ViperVlbDisable()
 
 /*
  * p9000ViperPciProbe --
- *    Determines whether a Dimaond Viper is available.
+ *    Determines whether a Diamond Viper is available.
  */
 Bool
 p9000ViperPciProbe()
 {
-  char bios_sig[100];
-  
-  if (-1 == xf86ReadBIOS(BIOS_BASE, VPR_PCI_BIOS_OFFSET,
-			 (unsigned char *)bios_sig, VPR_PCI_BIOS_LENGTH))
-    return FALSE; /* This OS can't probe the BIOS */
-  bios_sig[VPR_PCI_BIOS_LENGTH] = '\0';
-  if (0 == strncmp(bios_sig, VPR_PCI_BIOS_SIGNATURE,
-		   strlen(VPR_PCI_BIOS_SIGNATURE)))
-    {
-      if (xf86Verbose)
-	ErrorF("%s BIOS signature for Diamond Viper PCI found:\n\t<%s>\n",
-	       XCONFIG_PROBED, bios_sig);
-      return TRUE;
-    }
-  else
+  pciConfigPtr pcrp, *pcrpp;
+  int i = 0;
+
+  pcrpp = xf86scanpci(p9000InfoRec.scrnIndex);
+
+  if (!pcrpp)
     return FALSE;
+
+  while ((pcrp = pcrpp[i++]) != (pciConfigPtr)NULL)
+    if ((pcrp->_vendor == PCI_WEITEK_VENDOR_ID) &&
+        (pcrp->_device == PCI_P9000_DEVICE_ID))
+      break;
+
+  if (!pcrp)
+    return FALSE;
+  
+  p9000InfoRec.MemBase = 0;
+  p9000InfoRec.IObase = 0;
+
+  if (pcrp->_base0) {
+    if (pcrp->_base0 & 1)
+      p9000InfoRec.IObase = pcrp->_base0 & 0xFFFFFFFC;
+    else
+      p9000InfoRec.MemBase = pcrp->_base0 & 0xFFFFFFF0;
+  }
+  if (pcrp->_base1) {
+    if (pcrp->_base1 & 1) {
+      if (!p9000InfoRec.IObase)
+	p9000InfoRec.IObase = pcrp->_base1 & 0xFFFFFFFC;
+    } else
+      if (!p9000InfoRec.MemBase)
+	p9000InfoRec.MemBase = pcrp->_base1 & 0xFFFFFFF0;
+  }
+  if (pcrp->_base2) {
+    if (pcrp->_base2 & 1) {
+      if (!p9000InfoRec.IObase)
+	p9000InfoRec.IObase = pcrp->_base2 & 0xFFFFFFFC;
+    } else
+      if (!p9000InfoRec.MemBase)
+	p9000InfoRec.MemBase = pcrp->_base2 & 0xFFFFFFF0;
+  }
+  if (pcrp->_base3) {
+    if (pcrp->_base3 & 1) {
+      if (!p9000InfoRec.IObase)
+	p9000InfoRec.IObase = pcrp->_base3 & 0xFFFFFFFC;
+    } else
+      if (!p9000InfoRec.MemBase)
+	p9000InfoRec.MemBase = pcrp->_base3 & 0xFFFFFFF0;
+  }
+  if (pcrp->_base4) {
+    if (pcrp->_base4 & 1) {
+      if (!p9000InfoRec.IObase)
+	p9000InfoRec.IObase = pcrp->_base4 & 0xFFFFFFFC;
+    } else
+      if (!p9000InfoRec.MemBase)
+	p9000InfoRec.MemBase = pcrp->_base4 & 0xFFFFFFF0;
+  }
+  if (pcrp->_base5) {
+    if (pcrp->_base5 & 1) {
+      if (!p9000InfoRec.IObase)
+	p9000InfoRec.IObase = pcrp->_base5 & 0xFFFFFFFC;
+    } else
+      if (!p9000InfoRec.MemBase)
+	p9000InfoRec.MemBase = pcrp->_base5 & 0xFFFFFFF0;
+  }
+
+  if (xf86Verbose) {
+    ErrorF("%s %s: PCI: %s rev %x", XCONFIG_PROBED, p9000InfoRec.name, 
+	   "Weitek P9000", pcrp->_rev_id);
+    if (p9000InfoRec. MemBase)
+      ErrorF(", Memory @ 0x%08x\n", p9000InfoRec.MemBase);
+    if (p9000InfoRec.IObase)
+      ErrorF(", I/O @ 0x%04x\n", p9000InfoRec.IObase);
+    ErrorF("\n");
+  }
+
+  xf86cleanpci();
+
+  return TRUE;
 }
 
 /*

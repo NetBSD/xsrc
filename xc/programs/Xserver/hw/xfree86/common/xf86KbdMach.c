@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdMach.c,v 3.6 1996/02/04 09:06:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdMach.c,v 3.7 1996/12/23 06:43:32 dawes Exp $ */
 /*
  *****************************************************************************
  * HISTORY
@@ -35,7 +35,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86KbdMach.c /main/8 1995/11/12 19:21:43 kaleb $ */
+/* $XConsortium: xf86KbdMach.c /main/9 1996/02/21 17:38:43 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

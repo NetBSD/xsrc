@@ -50,6 +50,6 @@ in this Software without prior written authorization from the X Consortium.
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
 
-/* $XConsortium: version.c /main/12 1995/12/12 16:43:17 gildea $ */
-char *Version = "X Consortium, R6.1";
+/* $XConsortium: version.c /main/13 1996/12/09 17:55:43 kaleb $ */
+char *Version = "X Consortium, R6.3";
 

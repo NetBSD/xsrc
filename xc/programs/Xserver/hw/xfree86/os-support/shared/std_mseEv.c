@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/std_mseEv.c,v 3.0 1996/03/10 12:07:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/std_mseEv.c,v 3.1 1996/12/23 06:51:04 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: std_mseEv.c /main/2 1995/11/13 06:15:19 kaleb $ */
+/* $XConsortium: std_mseEv.c /main/4 1996/03/11 10:47:48 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
