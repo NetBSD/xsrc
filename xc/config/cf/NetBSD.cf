@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.91 2001/10/15 16:25:45 uch Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.92 2002/02/12 00:37:11 thorpej Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -19,7 +19,9 @@ XCOMM 		NetBSD/mac68k	client/server
 XCOMM 		NetBSD/pmax	client/server
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
-XCOMM		NetBSD/arm32	client/server
+XCOMM		NetBSD/acorn32	client/server
+XCOMM		NetBSD/cats	client
+XCOMM		NetBSD/shark	client/server
 XCOMM		NetBSD/atari	client/server
 XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
@@ -148,7 +150,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define CcCmd 			gcc
 #if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions 	/**/
-#elif defined(arm32Architecture)
+#elif defined(armArchitecture)
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
@@ -250,7 +252,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /*
  * XXX always build XKBuilib, override xfree86.cf
  */
-#if defined(arm32Architecture) || defined(i386Architecture) || defined(atariArchitecture)
+#if defined(sharkArchitecture) || defined(i386Architecture) || defined(atariArchitecture)
 # define BuildXKBuilib		YES
 #endif
 
@@ -305,7 +307,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XserverNeedsSetUID	YES
 #endif
 
-#if defined(arm32Architecture)
+#if defined(acorn32Architecture)
+# define BuildServer		YES
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
+#if defined(sharkArchitecture)
 # define BuildServer		YES
 # define ServerOSDefines	-DDDXOSINIT -DDDXTIME
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
@@ -429,6 +439,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XieDynamicModule	NO
 #endif
 
+#if defined(catsArchitecture)
+# define BuildServer		NO
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
 #if defined(playstation2Architecture)
 # define BuildServer		NO
 # define PexDynamicModule	NO
@@ -520,7 +536,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ExtraFilesToClean 	*.core
 #endif
 
-#ifdef arm32Architecture
+#ifdef armArchitecture
 /*
  * NetBSD's default .SUFFIXES target places .s at a higher priority
  * than .c.  This breaks architectures which use the .c versions of
@@ -656,7 +672,7 @@ install.man:: 								@@\
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-#if defined(i386Architecture) || defined(arm32Architecture) || \
+#if defined(i386Architecture) || defined(sharkArchitecture) || \
     defined(atariArchitecture)
 # include <xfree86.cf>
 
@@ -682,7 +698,7 @@ module: modlist								@@\
 clean::									@@\
 	RemoveFile(module)
 
-#endif /* i386Architecture || arm32Architecture || atariArchitecture */
+#endif /* i386Architecture || sharkArchitecture || atariArchitecture */
 
 /*
  * NetBSD always uses the XFree86 contrib distribution.
@@ -783,9 +799,9 @@ clean::									@@\
 #endif
 
 /*
- * Definitions for the NetBSD/arm32 VIDC20 X server.
+ * Definitions for the NetBSD/acorn32 VIDC20 X server.
  */
-#if defined(arm32Architecture)
+#if defined(acorn32Architecture)
 # define Xarm32VIDCServer	YES
 #endif
 

@@ -157,10 +157,10 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 
 /*
- * For arm32/SHARK platforms, the default is to build all X servers which
+ * For SHARK platforms, the default is to build all X servers which
  * are supported on this platform.
  */
-#ifdef arm32Architecture
+#ifdef sharkArchitecture
 #ifndef XF86SVGAServer
 #define XF86SVGAServer		YES
 #endif
@@ -489,7 +489,7 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #ifndef XF86SvgaDrivers
 # ifdef AlphaArchitecture
 #  define XF86SvgaDrivers	mga tvga8900 s3v
-# elifdef arm32Architecture
+# elifdef sharkArchitecture
 #  define XF86SvgaDrivers	chips igs generic
 # else
 #  if defined(LinuxArchitecture) || defined(FreeBSDArchitecture)
@@ -517,7 +517,7 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 
 #ifndef XF86Vga16Drivers
-# ifdef arm32Architecture
+# ifdef sharkArchitecture
 #  define XF86Vga16Drivers	igs generic
 # else
 #  define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 \
@@ -532,7 +532,7 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #ifndef XF86Vga2Drivers
 # ifdef AlphaArchitecture
 #  define XF86Vga2Drivers	generic
-# elifdef arm32Architecture
+# elifdef sharkArchitecture
 #  define XF86Vga2Drivers	igs generic
 # else
 #  define XF86Vga2Drivers	et4000 et3000 pvga1 gvga ati sis tvga8900 \
