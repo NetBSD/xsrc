@@ -600,10 +600,10 @@ MouseDevPtr mouse;
 	    }
 	}
 	break;
-#if defined(__atari__)
+#endif
+#if defined(__NetBSD__) && defined(__atari__)
       case P_SUN:
 	break;
-#endif
 #endif
 
 #ifdef USB_MOUSE
@@ -739,9 +739,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
 #endif
 #ifdef WSCONS_SUPPORT
 	mouse->mseType != P_WSMOUSE &&
-#if defined(__atari__)
-	mouse->mseType != P_SUN &&
 #endif
+#if defined(__NetBSD__) && defined(__atari__)
+	mouse->mseType != P_SUN &&
 #endif
 #ifdef USB_MOUSE
 	mouse->mseType != P_USB &&
@@ -1043,7 +1043,8 @@ xf86MouseProtocol(device, rBuf, nBytes)
       }
       break;
     }
-#ifdef __atari__
+#endif /* WSCONS_SUPPORT */
+#if defined(__NetBSD__) && defined(__atari__)
     case P_SUN: {
       Firm_event fe;
 
@@ -1072,8 +1073,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
       }
       break;
     }
-#endif /* __atari__ */
-#endif /* WSCONS_SUPPORT */
+#endif /* __NETBSD__ && __atari__ */
 
 #ifdef USB_MOUSE
     case P_USB:
