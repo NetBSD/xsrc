@@ -639,6 +639,8 @@ extern int LocalClient(
 #endif
 );
 
+extern int LocalClientCred(ClientPtr, int *, int *);
+
 extern int ChangeAccessControl(
 #if NeedFunctionPrototypes
     ClientPtr /*client*/,

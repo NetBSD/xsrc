@@ -191,6 +191,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasSetUserContext	YES
 #endif
 
+#if OSMajorVersion >= 5 || (OSMajorVersion == 4 && OSMinorVersion >= 6) 
+#define HasGetpeereid		YES
+#endif
+
 /* 3.3(?) and later has support for setting MTRRs */
 #ifndef HasMTRRSupport
 #if OSMajorVersion > 3 || (OSMajorVersion == 3 && OSMinorVersion >= 3)
