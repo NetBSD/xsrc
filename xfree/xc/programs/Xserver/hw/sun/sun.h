@@ -99,7 +99,7 @@ extern int getrlimit();
 extern int setrlimit();
 extern int getpagesize();
 # else
-#  if defined(CSRG_BASED) && !defined(__bsdi__)
+#  if defined(CSRG_BASED) && !defined(__bsdi__) && !defined(__NetBSD__)
 #   include <machine/fbio.h>
 #   include <machine/kbd.h>
 #   include <machine/kbio.h>
@@ -110,6 +110,12 @@ extern int getpagesize();
 #   include </sys/sparc/dev/kbd.h>
 #   include </sys/sparc/dev/kbio.h>
 #   include </sys/sparc/dev/vuid_event.h>
+#  endif
+#  ifdef __NetBSD__
+#   include <dev/sun/fbio.h>
+#   include <sparc/kbd.h>
+#   include <dev/sun/kbio.h>	   /* also <sparc/kbio.h> -wsr */
+#   include <dev/sun/vuid_event.h> /* also <sparc/vud_event.h> -wsr */
 #  endif
 # endif
 #endif
