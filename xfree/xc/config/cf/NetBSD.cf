@@ -133,6 +133,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ThreadsLibraries	-lpthread
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
+# if ((OSMajorVersion == 2 && OSMinorVersion == 99 && OSTeenyVersion < 11) || \
+      (OSMajorVersion == 2 && OSMinorVersion < 99) || \
+      (OSMajorVersion < 2))
+#  define LibraryMTDefines	-DUSE_NBSD_THREADLIB
+# endif
 #else 
 # define ThreadedX		NO
 #endif
