@@ -340,6 +340,7 @@
 #define PCI_CHIP_9750		0x9750
 #define PCI_CHIP_9850		0x9850
 #define PCI_CHIP_9880		0x9880
+#define PCI_CHIP_9910		0x9910
 
 /* ALI */
 #define PCI_CHIP_M1435		0x1435
@@ -919,6 +920,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_9750,		"3DImage975",0},
 				{PCI_CHIP_9850,		"3DImage985",0},
 				{PCI_CHIP_9880,		"Blade3D",0},
+				{PCI_CHIP_9910,		"CyberBlade",0},
 				{PCI_CHIP_8400,		"CyberBlade/i7",0},
 				{PCI_CHIP_8420,		"CyberBlade/DSTN/i7",0},
 				{PCI_CHIP_8500,		"CyberBlade/i1",0},
