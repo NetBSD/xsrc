@@ -3167,7 +3167,7 @@ AllTarget(name.$(MANNEWSUFFIX))						@@\
 									@@\
 name.$(MANNEWSUFFIX): name.$(MANSRCSUFFIX)				@@\
 	RemoveFile($@)							@@\
-	$(LN) name.$(MANSRCSUFFIX) $@					@@\
+	$(LN) `basename name.$(MANSRCSUFFIX)` $@			@@\
 									@@\
 clean::									@@\
 	RemoveFile(name.$(MANNEWSUFFIX))
