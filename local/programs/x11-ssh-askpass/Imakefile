@@ -38,15 +38,18 @@ OBJS = \@@\
  resources.o \@@\
  x11-ssh-askpass.o
 
-EXTRAS = \@@\
- ChangeLog \@@\
- Imakefile \@@\
- README \@@\
+APP_DEFAULT_EXAMPLES = \@@\
  $(CLASS)-1337.ad \@@\
  $(CLASS)-NeXTish.ad \@@\
  $(CLASS)-green.ad \@@\
  $(CLASS)-motif.ad \@@\
  $(CLASS)-default.ad
+
+EXTRAS = \@@\
+ ChangeLog \@@\
+ Imakefile \@@\
+ README \@@\
+ $(APP_DEFAULT_EXAMPLES)
  
 APP_DEFAULTS	= $(CLASS)-default.ad
 
@@ -96,4 +99,9 @@ tar: changelog
 	-$(MV) $(TARBALL) $(TARBALL).bak
 	$(TAR) -cvf - $(TARBALL_DIR) |$(GZIP) -9 -c >$(TARBALL)
 	-$(RM) -r $(TARBALL_DIR)
+
+install::
+	# XXX Should use X variables of some sort!
+	mkdir -p $(DESTDIR)/usr/X11R6/share/examples/ssh-askpass
+	$(INSTALL) $(INSTALLFLAGS) $(INSTAPPFLAGS) $(APP_DEFAULT_EXAMPLES) $(DESTDIR)/usr/X11R6/share/examples/ssh-askpass
 
