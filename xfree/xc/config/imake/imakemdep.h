@@ -392,6 +392,9 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef __sparc__
 	"-D__sparc__",
 # endif
+# ifdef __sparc64__
+	"-D__sparc64__",
+# endif
 # ifdef __m68k__
 	"-D__m68k__",
 # endif
@@ -1022,6 +1025,9 @@ struct symtab	predefs[] = {
 #endif
 #ifdef __sparc__
 	{"__sparc__", "1"},
+#endif
+#ifdef __sparc64__
+	{"__sparc64__", "1"},
 #endif
 #ifdef __sparcv9__
 	{"__sparcv9__", "1"},
