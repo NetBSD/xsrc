@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_ClkPr.c,v 3.8 1996/12/23 06:44:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_ClkPr.c,v 3.8.2.1 1998/12/22 11:23:26 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -43,7 +43,7 @@
 #include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
 
-#if defined(CSRG_BASED) || defined(MACH386)
+#if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)
 #include <sys/resource.h>
 #endif
 
@@ -74,7 +74,7 @@ xf86GetClocks(int num,
     /* First save registers that get written on */
     (*ClockFunc)(CLK_REG_SAVE);
 
-#if defined(CSRG_BASED) || defined(MACH386)
+#if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)
     saved_nice = getpriority(PRIO_PROCESS, 0);
     setpriority(PRIO_PROCESS, 0, -20);
 #endif
@@ -133,7 +133,7 @@ finish:
         (*SaveScreen)(NULL, TRUE);
     }
 
-#if defined(CSRG_BASED) || defined(MACH386)
+#if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)
     setpriority(PRIO_PROCESS, 0, saved_nice);
 #endif
 #if defined(SYSV) || defined(SVR4) || defined(linux)

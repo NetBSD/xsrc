@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.25 1998/11/16 05:37:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.29 1998/12/29 10:57:48 dawes Exp $ */
 /*
  * Copyright 1992 by Alan Hourihane, Wigan, England.
  *
@@ -895,8 +895,9 @@ TVGA8900Probe()
 	case CYBER9388:
 	case CYBER9397:
 	case CYBER9520:
-		if((TVGAchipset != CYBER9388) &&
-		   (TVGAchipset != CYBER9397))
+		if(((TVGAchipset != CYBER9388) &&
+		    (TVGAchipset != CYBER9397)) ||
+		   OFLG_ISSET(OPTION_ACCEL, &vga256InfoRec.options))
 			tridentHasAcceleration = TRUE;
 		TVGA8900.ChipHas16bpp = TRUE;
 		TVGA8900.ChipHas24bpp = TRUE;
@@ -1303,10 +1304,11 @@ TVGA8900Probe()
 
 	if (vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT)
 	{
-		OFLG_SET(OPTION_TGUI_PCI_READ_ON,
-			&TVGA8900.ChipOptionFlags);
-		OFLG_SET(OPTION_TGUI_PCI_WRITE_ON,
-			&TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_TGUI_PCI_READ_ON, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_TGUI_PCI_WRITE_ON, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_PCI_BURST_ON, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_PCI_BURST_OFF, &TVGA8900.ChipOptionFlags);
+		OFLG_SET(OPTION_ACCEL, &TVGA8900.ChipOptionFlags);
 	}
 
 	if ( (OFLG_ISSET(OPTION_NOLINEAR_MODE, &vga256InfoRec.options)) &&
@@ -2249,20 +2251,34 @@ TVGA8900Init(mode)
 	}
 #endif
 
-	if (vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT)
+	if ((vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT))
 	{
+		unsigned char burst = 0;
+
+		/*
+		 * Turn PCI Burst read and write on by default for all
+		 * chipsets except the 9440.  The 9440 graphics engine
+		 * often flakes out with these enabled.  Some other chipsets
+		 * lockup when burst read and write are not enabled.
+		 * We allow these defaults to be overriden.
+		 */
+		if (TVGAchipset != TGUI9440AGi)
+			burst =	0x06;
+		if (OFLG_ISSET(OPTION_TGUI_PCI_READ_ON,
+				&vga256InfoRec.options))
+			burst |= 0x02;
+		if (OFLG_ISSET(OPTION_TGUI_PCI_WRITE_ON,
+				&vga256InfoRec.options))
+			burst |= 0x04;
+		if (OFLG_ISSET(OPTION_PCI_BURST_ON, &vga256InfoRec.options))
+			burst |= 0x06;
+		if (OFLG_ISSET(OPTION_PCI_BURST_OFF, &vga256InfoRec.options))
+			burst &= ~0x06;
+
 		outb(vgaIOBase + 4, 0x39);
 		new->PCIReg = inb(vgaIOBase + 5);
-		/* Turn PCI Burst Read and Write OFF - By Default ! */
-		/* Otherwise the Graphics Engine flakes out !	    */
-		/* But we still allow it to be turned on, if poss.  */
-		new->PCIReg &= 0xF9;
-		if (OFLG_ISSET(OPTION_TGUI_PCI_READ_ON,
-					&vga256InfoRec.options))
-			new->PCIReg |= 0x02;
-		if (OFLG_ISSET(OPTION_TGUI_PCI_WRITE_ON,
-					&vga256InfoRec.options))
-			new->PCIReg |= 0x04;
+		new->PCIReg &= ~0x06;
+		new->PCIReg |= burst;
 	}
 
 	if (TVGAchipset >= TGUI9440AGi)

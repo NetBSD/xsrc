@@ -11,7 +11,7 @@
 
                            The XFree86 Project Inc.
 
-                                24 October 1998
+                               30 December 1998
 
 
 
@@ -74,7 +74,7 @@ Information for Matrox Users                                                  2
    o supports the XF86_DGA extension
 
    o Makes extensive use of the graphics accelerator.  This server is very well
-     accelerated, and is one of the fastest XFree86 3.3.3 Xservers.
+     accelerated, and is one of the fastest XFree86 X servers.
 
 
 3.  Configuration:
@@ -145,8 +145,8 @@ Information for Matrox Users                                                  3
 
    o Temporary loss of monitor sync when the cursor shape changes on Millennium
      and Millennium II.  The hardware cursor has been enabled by default in
-     3.3.3. This seems to cause some problems on a minority of systems.  If you
-     experience problems with this on your system, please put:
+     3.3.3.1. This seems to cause some problems on a minority of systems.  If
+     you experience problems with this on your system, please put:
 
                Option "sw_cursor"
 
@@ -163,7 +163,8 @@ Information for Matrox Users                                                  3
 
 
      in the Section "Device" of the XF86Config file to disable the hardware
-     cursor.
+     cursor. This should be fixed in XFree86 3.3.3.1 as in cases like this the
+     software cursor should be used automatically.
 
    o the driver doesn't support some values of HTotal parameter in Modelines in
      the XF86Config file. If you get flickering vertical stripes on the screen,
@@ -198,9 +199,19 @@ Information for Matrox Users                                                  3
 
 
 
-
 Information for Matrox Users                                                  4
 
+
+
+   o With virtual screens that use 8MB of memory or more (e.g., 2048x2048 at
+     16bpp) there can be cursor distortions when panning the screen vertically.
+     If that occurs, please put
+
+               Option "sw_cursor"
+
+
+     in the Section "Device" of the XF86Config file to disable the hardware
+     cursor.
 
 
 5.  Authors
@@ -233,18 +244,7 @@ and:
 
    o Doug Merritt, doug@netcom.com
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.14 1998/11/19 10:08:14 dawes Exp $
-
-
-
-
-
-
-
-
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.15 1998/12/30 09:14:45 hohndel Exp $
 
 
 
@@ -395,4 +395,4 @@ Information for Matrox Users                                                  5
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.MGA,v 3.6.2.14 1998/11/19 12:01:01 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.MGA,v 3.6.2.16 1998/12/30 10:09:42 dawes Exp $

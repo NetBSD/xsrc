@@ -1,9 +1,9 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
-<title>README for XFree86 3.3.3 on OS/2
+<title>README for XFree86 on OS/2
 <author>Holger Veit
-<Date>Last modified on: 04 October 1998
+<Date>Last modified on: December 29, 1998
 
 <toc>
 
@@ -643,7 +643,7 @@ port heavily relies on
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.7 1998/11/04 08:01:53 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.8 1998/12/29 07:54:29 hohndel Exp $
 
 
 

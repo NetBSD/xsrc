@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.5 1998/10/24 02:14:51 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.6 1998/12/19 15:40:52 robin Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -108,6 +108,7 @@ typedef union {
 #define I128_DEVICE_ID1		0x2309105D
 #define I128_DEVICE_ID2		0x2339105D
 #define I128_DEVICE_ID3		0x493D105D
+#define I128_DEVICE_ID4		0x5348105D
 
 #define I128_MEMORY_UNKNOWN	0x01
 #define I128_MEMORY_DRAM	0x02

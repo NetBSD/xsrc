@@ -254,6 +254,7 @@ the numeric keypad for mode switching.
 <p>
 
 <sect1> XF86_S3V server
+<p>
 Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
 <p>
 
@@ -280,7 +281,7 @@ and:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.8 1998/02/27 04:53:51 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.9 1998/12/04 01:36:48 dawes Exp $
 </verb>
 
 </article>

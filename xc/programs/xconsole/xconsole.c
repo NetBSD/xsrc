@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xconsole.c /main/22 1995/12/07 13:52:50 kaleb $
- * $XFree86: xc/programs/xconsole/xconsole.c,v 3.16.2.2 1997/05/26 14:36:27 dawes Exp $
+ * $XFree86: xc/programs/xconsole/xconsole.c,v 3.16.2.3 1998/12/18 11:56:36 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -157,6 +157,13 @@ static XrmOptionDescRec options[] = {
 #endif
 #endif
 
+#if defined(DGUX)
+#include <sys/stropts.h>             /* for I_PUSH */
+#include <sys/_int_pty_ioctl.h>
+#include <sys/stream.h>
+#include <sys/ptem.h>
+#endif /* DGUX */
+
 #if defined(TIOCCONS) || defined(SRIOCSREDIR) || defined(Lynx)
 #define USE_PTY
 static int  tty_fd, pty_fd;
@@ -164,12 +171,14 @@ static char ttydev[64], ptydev[64];
 #endif
 #endif
 
+#if !defined(DGUX) /* No /dev/osm in DG/ux */
 #if (defined(SVR4) && !defined(sun)) || (defined(SYSV) && defined(i386))
 #define USE_OSM
 #include <signal.h>
 FILE *osm_pipe();
 static int child_pid;
 #endif
+#endif /* !DGUX */
 
 static void inputReady ();
 
@@ -754,6 +763,67 @@ TextInsert (w, s, len)
 
 #include    "../xterm/ptyx.h"
 
+#if defined(DGUX)
+
+get_pty (pty, tty, ttydev, ptydev)
+    int     *pty, *tty;
+    char    *ttydev, *ptydev;
+{
+        int ptyffd;
+
+        if ((*pty = open ("/dev/ptmx", O_RDWR)) < 0)
+        {
+            printf("Couldnt open /dev/ptmx in get_pty(..)\n");
+            return 1;
+        }
+        strcpy(ttydev, (char *)ptsname(*pty));
+        setpgrp();
+        grantpt (*pty);
+        unlockpt (*pty);
+        if ((ptyffd = open (ttydev, O_RDWR)) < 0)
+        {
+            printf("Trying to obtain fildes for ttydev failed!\n");
+            if (*pty >= 0)
+            {
+               close (*pty);
+            }
+            return 1;
+        }
+        if (ioctl (ptyffd, I_PUSH, "ptem") < 0)
+        {
+            printf("Couldnt I_PUSH module ptem\n");
+            if (*pty >= 0)
+            {
+               close (*pty);
+            }
+            return 1;
+        }
+        if (ioctl (ptyffd, I_PUSH, "ldterm") < 0)
+        {
+            printf("Couldnt I_PUSH ldterm \n");
+            if (*pty >= 0)
+            {
+               close (*pty);
+            }
+            return 1;
+        }
+        if (ioctl (ptyffd, I_PUSH, "ttcompat") < 0)
+        {
+            printf("Couldnt I_PUSH ttcompat\n");
+        }
+
+        *tty = ptyffd;
+        return 0;
+
+
+}
+
+
+#else /* Other than DGUX */
+
+
+
+
 get_pty (pty, tty, ttydev, ptydev)
     int	    *pty, *tty;
     char    *ttydev, *ptydev;
@@ -858,6 +928,7 @@ get_pty (pty, tty, ttydev, ptydev)
 	return(1);
 }
 #endif
+#endif /* DGUX */
 
 #ifdef USE_OSM
 /*

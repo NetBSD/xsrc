@@ -4,14 +4,18 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.9 1998/10/31 14:40:54 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.10 1998/12/22 11:23:19 hohndel Exp $
 
 
 
 #include <Server.tmpl>
 
 #ifdef i386MachArchitecture
+#ifdef GNUMachArchitecture
+        KBD = xf86Kbd
+#else
         KBD = xf86KbdMach
+#endif /* GNUMachArchitecture */
 #else
 # ifdef i386BsdArchitecture
         KBD = xf86KbdBSD

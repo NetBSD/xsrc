@@ -4,15 +4,13 @@
  
 <title>Information for Linux Users
 <author>Orest Zborowski, Dirk Hohndel
-<date>November 7, 1998
+<date>December 23, 1998
 <toc>
 
 <sect>Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.32 and several 2.1.x kernels.
-It is known not to compile with kernel sources newer then somewhere around
-2.1.70, due to incompatibilities in the joystick driver. Except for the
-joystick driver, it works just fine with all 2.1.x kernels tested (including
-2.1.88). It should work with any version since 1.0 without change. The 
+XFree86 has been tested with Linux version 2.0.36 and several 2.1.x kernels.
+It works just fine with all 2.1.x kernels tested (including
+2.1.131). It should work with any version since 1.0 without change. The 
 binaries and libraries are based on the 5.3.12 Elf C libraries, and the 
 1.7.14 dynamic linker <tt>ld.so</tt>. You will at least need the 5.2.x Elf 
 C libraries to successfully use the servers.
@@ -140,91 +138,8 @@ Linux distribution that you use, so check the documentation provided there.
 The xdm binary provided should run with both shadow- and non-shadow password
 systems.
 
-<sect>xterm
-<p>
-The XFree86-3.3.3 binary release contains an xterm binary that has been linked
-statically against libtermcap. This was done to make sure that it will
-correctly work with all distributions, regardless whether they rely on
-libtermcap or libncurses. Contrary to the xterm binaries in some beta version
-following XFree86-3.1.2, this binary does not rely on a recent libncurses
-being installed on your system.
-
-<sect>Input devices
-<p>
-XFree86 now support the dynamic loading of drivers for external
-input devices using the <tt/XInput/ extension. Currently supported
-devices are:
-<itemize>
-<item>Joystick (<tt/xf86Jstk.so/)
-<item>Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
-<item>SummaSketch tablets (<tt/xf86Summa.so/)
-<item>Elographics touchscreen (<tt/xf86Elo.so/)
-<item>AceCad ADVANCEDigitizer (<tt/xf86AceCad.so/)
-<item>MicroTouch TouchPen (<tt/xf86MuTouch.so/)
-<item>SGI dial box (<tt/xf86Dial.so/)
-</itemize>
-
-To use a specific device, add the line
-<tscreen>
-<tt/load/ <tt/"/<em/module/<tt/"/
-</tscreen>
-in the <bf/Module/ section of <tt/XF86Config/, where <em/module/ is
-the name of the <tt/.so/ file corresponding to your device.
-You also need to set up a <bf/XInput/ section in <tt/XF86Config/. 
-Refer to the <em>XF86Config(5)</em> man page for detailed
-configuration instructions.
-<p>
-You can then change the device used to drive the X pointer with the
-<em/xsetpointer(1)/ command.
-<p>
-For joystick support, you'll need to install the joystick device
-driver in the kernel. 
-
-<sect1>Configuring PEX, XIE and GLX extensions
-<p>
-The PEX, XIE and GLX extensions are now supported as external modules.
-If you want to have access to these extensions, add the following
-lines to the <bf/Module/ section of <tt/XF86Config/:
-<tscreen><verb>
-   load    "pex5.so"
-   load    "xie.so"
-</verb></tscreen>
-For GLX you need to get the appropriate GLX modules, first. They are, at this
-time, not part of the XFree86 distribution.
-
-<sect> Compiling XFree86 <p>
-There are no special instructions required for compiling XFree86.
-This version was compiled with gcc-2.7.2.1, the 5.3.12 Elf libraries and the
-1.7.14 shared, dynamic linker ld.so. 
-The server has been
-compiled with <tt>-m486</tt>, which optimizes it for the 486 processor, but
-the binary will run on the 386 processor (there is a slight increase in
-binary size over using <tt>-m386</tt>, but no loss of performance).
-
-All extensions and clients have been ported and tested. By default,
-the servers are compiled without any extra extensions (PEX, XIE, etc),
-but libraries for those extensions are always generated. They can be loaded 
-at runtime, see the XFree86 man page for details. By modifying
-<tt>site.def</tt>, extra extensions can be compiled into the server.
-Alternately, the link kit can be used to craft modified servers.
-
-If an aout version of XFree86 is to be built and patches are applied which 
-significantly change the libraries,
-modified jump_xxx files will be needed. Those can be generated according to
-instructions given in the DLL tools package, and will be made available as
-XFree86 patches.
-
-The JUMP_xxx defines used to compile the X libraries can also be
-used to compile external X shared libraries, like Xaw3d. Detailed
-instructions are provided in <tt>/usr/X11R6/lib/X11/config/lnxLib.rules</tt>,
-where the X library definitions are provided, as an example.
-
-<sect>Bug Notification <p>
-Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
-to the <it>comp.windows.x.i386unix</it> newsgroup.
-
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.6 1998/11/08 09:06:39 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.7 1998/12/23 13:36:26 hohndel Exp $
 
 
 

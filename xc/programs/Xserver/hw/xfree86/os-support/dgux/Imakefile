@@ -1,0 +1,23 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/Imakefile,v 1.1.2.1 1998/12/18 11:56:27 dawes Exp $
+#include <Server.tmpl>
+
+BIOS_MOD = bios_DGmmap
+
+SRCS = dgux_init.c dgux_video.c IO_utils.c dgux_io.c $(BIOS_MOD).c VTsw_noop.c \
+       dgux_kbd.c dgux_kbdEv.c dgux_tty.c std_mouse.c std_mseEv.c
+
+OBJS = dgux_init.o dgux_video.o IO_utils.o dgux_io.o $(BIOS_MOD).o VTsw_noop.o \
+       dgux_kbd.o dgux_kbdEv.o dgux_tty.o std_mouse.o std_mseEv.o 
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(EXTINCSRC)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+
+ObjectFromSpecialSource(VTsw_noop,../shared/VTsw_noop,/**/)
+ObjectFromSpecialSource(IO_utils,../shared/IO_utils,/**/)
+ObjectFromSpecialSource(std_mouse,../shared/std_mouse,/**/)
+ObjectFromSpecialSource(std_mseEv,../shared/std_mseEv,/**/)
+
+DependTarget()

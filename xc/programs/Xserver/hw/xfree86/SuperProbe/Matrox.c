@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.4 1997/08/02 13:48:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.5 1998/12/22 11:23:14 hohndel Exp $ */
 /*
  * (c) Copyright 1997 Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -73,6 +73,21 @@ int *Chipset;
 				break;
 			case PCI_CHIP_MGA2085PX:
 				*Chipset = CHIP_MGA2085PX;
+				break;
+			case PCI_CHIP_MGA2164W_AGP:
+				*Chipset = CHIP_MGA2164WAGP;
+				break;
+			case PCI_CHIP_MGAG100_PCI:
+				*Chipset = CHIP_MGAG100PCI;
+				break;
+			case PCI_CHIP_MGAG100_AGP:
+				*Chipset = CHIP_MGAG100AGP;
+				break;
+			case PCI_CHIP_MGAG200_PCI:
+				*Chipset = CHIP_MGAG200PCI;
+				break;
+			case PCI_CHIP_MGAG200_AGP:
+				*Chipset = CHIP_MGAG200AGP;
 				break;
 			default:
 				Chip_data = chip;

@@ -1,0 +1,121 @@
+/*
+ * GNU/Hurd shared library rules
+ *
+ * $XFree86: xc/config/cf/gnuLib.rules,v 1.1.2.2 1998/12/22 12:27:32 hohndel Exp $
+ */
+
+#ifndef UseElfFormat
+#define UseElfFormat YES
+#endif
+
+/*
+ * GNU/Hurd shared library rules
+ * Cloned from NetBSD/FreeBSD (ELF) shared library rules
+ *
+ */
+
+#ifndef HasSharedLibraries
+#define HasSharedLibraries YES
+#endif
+#ifndef ForceNormalLib
+#define ForceNormalLib YES
+#endif
+
+#ifndef BaseShLibReqs
+#define BaseShLibReqs		/* -lc implied by $(CC) */
+#endif
+
+#ifndef SharedDataSeparation
+#define SharedDataSeparation NO
+#endif
+#ifndef SharedCodeDef
+#define SharedCodeDef /**/
+#endif
+#ifndef SharedLibraryDef
+#define SharedLibraryDef /**/
+#endif
+#ifndef ShLibIncludeFile
+#define ShLibIncludeFile <gnuLib.tmpl>
+#endif
+#ifndef SharedLibraryLoadFlags
+#define SharedLibraryLoadFlags -shared -Wl,-rpath=$(USRLIBDIR)
+#endif
+#ifndef PositionIndependentCFlags
+#define PositionIndependentCFlags -fPIC
+#endif
+#ifndef PositionIndependentCplusplusFlags
+#define PositionIndependentCplusplusFlags -fPIC
+#endif
+#ifndef ExtraLoadFlags
+#ifdef UseInstalled
+#define ExtraLoadFlags -Wl,-rpath=$(USRLIBDIRPATH)
+#else
+#define ExtraLoadFlags -Wl,-dynamic-linker=/lib/ld.so.1 -Wl,-rpath=/lib:$(USRLIBDIRPATH) -Wl,-rpath-link=$(BUILDLIBDIR)
+#endif
+#endif
+
+/*
+ * InstallSharedLibrary - generate rules to install the shared library.
+ * NOTE: file must be executable, hence "INSTBINFLAGS"
+ */
+#ifndef InstallSharedLibrary
+#define InstallSharedLibrary(libname,rev,dest)				@@\
+install:: Concat(lib,libname.so.rev) 					@@\
+	MakeDir($(DESTDIR)dest)						@@\
+	$(INSTALL) $(INSTALLFLAGS) $(INSTBINFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest @@\
+	(T=`echo Concat($(DESTDIR)dest/lib,libname.so.rev) | sed 's/\.[^\.]*$$//'`;\
+		$(RM) $$T && $(LN) Concat(lib,libname.so.rev) $$T)	@@\
+	(T=`echo Concat($(DESTDIR)dest/lib,libname.so.rev) | sed 's/\.so.*$$/.so/'`;\
+		$(RM) $$T && $(LN) Concat(lib,libname.so.rev) $$T)	@@\
+	$(RM) Concat($(DESTDIR)dest/lib,libname.so)			@@\
+	$(LN) Concat(lib,libname.so.rev) Concat($(DESTDIR)dest/lib,libname.so)
+#endif /* InstallSharedLibrary */
+
+/*
+ * InstallSharedLibraryData - generate rules to install the shared library data
+ */
+#ifndef InstallSharedLibraryData
+#define InstallSharedLibraryData(libname,rev,dest)
+#endif /* InstallSharedLibraryData */
+
+
+/*
+ * SharedLibraryTarget - generate rules to create a shared library;
+ * build it into a different name so that we do not hose people by having
+ * the library gone for long periods.
+ */
+#ifndef SharedLibraryTarget
+#ifdef UseInstalled  
+#define LinkBuildSonameLibrary(lib) true
+#else
+#define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
+	cd $(BUILDLIBDIR); $(LN) $(BUILDINCTOP)/$(CURRENT_DIR)/lib .)
+#endif
+
+#define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
+AllTarget(Concat(lib,libname.so.rev))					@@\
+									@@\
+Concat(lib,libname.so.rev):  solist					@@\
+	$(RM) $@~							@@\
+	SONAME=`echo $@ | sed 's/\.[^\.]*$$//'`; \			@@\
+		(cd down; $(CC) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
+		$(RM) $$SONAME; $(LN) $@ $$SONAME; \			@@\
+		LinkBuildSonameLibrary($$SONAME)			@@\
+	$(RM) $@							@@\
+	$(MV) $@~ $@							@@\
+	$(RM) Concat(lib,libname.so)					@@\
+	$(LN) $@ Concat(lib,libname.so)					@@\
+	LinkBuildLibrary($@)						@@\
+	LinkBuildLibrary(Concat(lib,libname.so))			@@\
+									@@\
+clean::									@@\
+	$(RM) Concat(lib,libname.so.rev)
+
+#endif /* SharedLibraryTarget */
+
+/*
+ * SharedLibraryDataTarget - generate rules to create shlib data file;
+ */
+#ifndef SharedLibraryDataTarget
+#define SharedLibraryDataTarget(libname,rev,salist)
+#endif /* SharedLibraryTarget */

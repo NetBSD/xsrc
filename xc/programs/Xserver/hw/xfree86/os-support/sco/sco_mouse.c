@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.8 1996/12/23 06:50:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.8.2.1 1998/12/06 05:40:40 dawes Exp $ */
 
 
 
@@ -116,6 +116,27 @@ xf86OsMouseProc(pPointer, what)
 			      miPointerGetMotionEvents, 
 			      (PtrCtrlProcPtr)xf86MseCtrl, 
 			      0);
+#ifdef XINPUT
+      InitValuatorAxisStruct(pPointer,
+			     0,
+			     0, /* min val */
+			     screenInfo.screens[0]->width, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      InitValuatorAxisStruct(pPointer,
+			     1,
+			     0, /* min val */
+			     screenInfo.screens[0]->height, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      /* Initialize valuator values in synch
+       * with dix/event.c DefineInitialRootWindow
+       */
+      *pPointer->valuator->axisVal = screenInfo.screens[0]->width / 2;
+      *(pPointer->valuator->axisVal+1) = screenInfo.screens[0]->height / 2;
+#endif
       xfree(map);
       ev_suspend(); /* suspend device until its turned on */
       break;

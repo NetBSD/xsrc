@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.5 1998/11/05 14:03:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.6 1998/12/18 11:56:32 dawes Exp $ */
 /*****************************************************************
  *  Stuff to create connections --- OS dependent
  *
@@ -91,6 +91,18 @@ extern int errno;
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
 #endif
+
+#if defined(DGUX)
+#include <sys/ioctl.h>
+#include <sys/utsname.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/param.h>
+#include <unistd.h>
+#endif
+
 
 #ifdef AIXV3
 #include <sys/ioctl.h>

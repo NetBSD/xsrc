@@ -1,13 +1,13 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
-<title>README for XFree86 3.3.3 on NetBSD
+<title>README for XFree86 on NetBSD
 <author>Rich  Murphey,
 David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 17 October 1998
+<Date>Last modified on: 29 December 1998
 
 <toc>
 
@@ -15,7 +15,7 @@ Matthieu Herrb
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 3.3.3 is a port of X11R6.3 that supports several versions of
+XFree86 is a port of X11R6.3 that supports several versions of
 Intel-based Unix.  It is derived from X386 1.2, which was the X server
 distributed with X11R5.  This release consists of many new features
 and performance improvements as well as many bug fixes.  The release
@@ -49,16 +49,16 @@ you're still running NetBSD 0.9, 1.0 or 1.1, you should think about
 upgrading to a newer version of NetBSD first.
 
 If you don't upgrade, you'll have to build XFree86 from the sources.
-XFree86 3.3.3 should compile cleanly under earlier versions of
+XFree86 should compile cleanly under earlier versions of
 NetBSD, although this has not been tested.
 
-XFree86 3.3.3 also builds on NetBSD/sparc. See section
+XFree86 also builds on NetBSD/sparc. See section
 <ref id="sparc" name="Building on other architectures"> for details.
 
 The client side of XFree86 also builds on NetBSD/alpha and many other 
 architecture supported by NetBSD. 
 
-XFree86 3.3.3 also supports NetBSD on PC98 machines. 
+XFree86 also supports NetBSD on PC98 machines. 
 
 
 <sect>Bug Reports for This Document
@@ -72,7 +72,7 @@ this file and we'll revise it.
 
 <p>
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-non-OS dependent new features in XFree86 3.3.3.
+non-OS dependent new features in XFree86 3.3.3.1.
 
 <sect>Installing the Binaries
 
@@ -374,7 +374,7 @@ sources, invoke ``<tt/make World/'' in the xc directory.
 
 
 <p>
-XFree86 3.3.3 has a configuration option to select the console
+XFree86 has a configuration option to select the console
 drivers to use in <tt/xf86site.def/:
 <itemize>
 <item> if you're using pccons put:
@@ -453,7 +453,7 @@ add the following line to <tt/host.def/:
 <sect1>Building on other architectures<label id="sparc">
 
 <p>
-XFree86 3.3.3 also compiles on NetBSD/sparc. The Sun server
+XFree86 also compiles on NetBSD/sparc. The Sun server
 patches from Dennis Ferguson and Matthew Green have been integrated in
 <tt>xc/programs/Xserver/hw/sun</tt>.  Small
 modifications to <tt/xf86site.def/ are needed:
@@ -544,7 +544,7 @@ and many others.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.9 1998/11/07 13:52:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.10 1998/12/29 07:54:28 hohndel Exp $
 
 
 

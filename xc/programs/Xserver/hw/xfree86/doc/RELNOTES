@@ -7,21 +7,21 @@
 
 
 
-                      Release Notes for XFree86[tm] 3.3.3
+                     Release Notes for XFree86[tm] 3.3.3.1
 
                            The XFree86 Project, Inc
 
-                               19 November 1998
+                               30 December 1998
 
 
 
                                    Abstract
 
      This document describes the bugs fixed and the features added in
-     XFree86 3.3.3 compared with the 3.3.2 release, It also includes
-     installation instructions for the binary distributions.  It is
-     strongly recommended that anyone using XFree86 update to version
-     3.3.3.
+     XFree86 3.3.3.1 compared with the 3.3.2 and 3.3.3 release, It also
+     includes installation instructions for the binary distributions.  It
+     is strongly recommended that anyone using XFree86 update to version
+     3.3.3.1.
 
 
 
@@ -53,21 +53,21 @@ free copyright used for the initial release of X11R6.4 back to the old free X
 Consortium style copyright.  Given the fact that our main development focus is
 on XFree86-4.0 and that the 3.3.3 release was intended mostly to fix some bugs
 and get out new drivers to the public, we opted not to include X11R6.4 in
-XFree86-3.3.3.
+XFree86-3.3.3.  Since XFree86-3.3.3.1 is merely a quick bug fix release to
+XFree86-3.3.3, the same applies here as well.
 
 XFree86-4.0 will be X11R6.4 based.
 
 
 
 
-
-Release Notes for XFree86[tm] 3.3.3                                           1
-
+Release Notes for XFree86[tm] 3.3.3.1                                         1
 
 
 
 
-Release Notes for XFree86[tm] 3.3.3                                           2
+
+Release Notes for XFree86[tm] 3.3.3.1                                         2
 
 
 
@@ -86,9 +86,63 @@ poses.
 
 
 
-4.  What's new in 3.3.3?
+4.  What's new in 3.3.3.1?
 
-4.1  Security fixes
+   o A system clock slowdown caused by 3Dlabs driver has been fixed.
+
+   o Drawing bugs with C&T HiQV chips have been fixed.
+
+   o Drawing problems in the Cyrix driver have been fixed.
+
+   o The Matrox G100/G200 PCI versions should now be fully supported.
+
+   o The Mach64 server now supports gamma correction.
+
+   o Open Source NVIDIA driver has been provided.
+
+   o I128 Rev IV support has been added.
+
+   o Another S3V lockup has been fixed.
+
+   o A drawing bug in cfb24 has been fixed.
+
+   o A problem causing lockups with some Trident cards has been fixed.
+
+   o Updates for SCO, FreeBSD, Linux glibc OS support.
+
+   o DG/ux support has been added.
+
+   o GNU/Hurd support has been added.
+
+   o Several XINPUT problems have been addressed.
+
+   o DGA relative mouse movement events when XINPUT is defined have been fixed,
+     as have DGA-related problems with the NVIDIA and S3V drivers.
+
+   o The X server now reads Xauthority files using the real user id.
+
+   o Several small fixes to core clients.
+
+   o A bug in Xlib's handling of KOI8-R has been fixed.
+
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         3
+
+
+
+   o PC98 cards database, sample config file and XKB handling have been fixed.
+
+
+5.  What's new in 3.3.3?
+
+5.1  Security fixes
 
    o Several buffer overrun problem discovered since the release of
      XFree86-3.3.2 have been fixed
@@ -99,7 +153,7 @@ poses.
      Note that this is only a short-term partial solution, and it is doesn't
      help at all for some SYSV based OSs (like Solaris 2.x).
 
-4.2  Bug fixes
+5.2  Bug fixes
 
    o Fix a serious LBX bug using uninitialized variables.
 
@@ -124,19 +178,6 @@ poses.
 
    o Fix some lockups with ViRGE chips.
 
-
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           3
-
-
-
    o Improved timing calculations for video FIFO in the Mach64 X server.
 
    o Fixed bug in font rendering code in the Mach64 X server.
@@ -148,6 +189,19 @@ Release Notes for XFree86[tm] 3.3.3                                           3
    o Fix wrong clock limits for S3 Trio64V+.
 
    o Fix some generic rendering errors in cfb and vga code.
+
+
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         4
+
+
 
    o Fix text restore problems and improve high res 32bpp modes in MGA driver;
      fix 24bpp and 32bpp display problems; disable probing for memory on some
@@ -180,7 +234,7 @@ Release Notes for XFree86[tm] 3.3.3                                           3
 
    o Fix VT switch problem with MGA server on Linux/98.
 
-4.3  New Features
+5.3  New Features
 
    o New driver for Cyrix MediaGX based motherboards.
 
@@ -189,19 +243,6 @@ Release Notes for XFree86[tm] 3.3.3                                           3
    o New driver for Weitek P9100 based cards.
 
    o New driver for SiS 5597/98 and SiS 6326; treat SiS 6215 and 6225 as 6205.
-
-
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           4
-
-
 
    o New server for 3Dlabs based cards using GLINT 500TX and MX (with IBM RAM-
      DAC), Permedia (with IBM RAMDAC), Permedia 2 and Permedia 2v.
@@ -215,6 +256,18 @@ Release Notes for XFree86[tm] 3.3.3                                           4
    o Support for EPSON SPC8110.
 
    o Support for NVidia Riva TNT.
+
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         5
+
+
 
    o Acceleration for Trident Image975, Image985, Cyber9397, Cyber9388.
 
@@ -238,7 +291,10 @@ Release Notes for XFree86[tm] 3.3.3                                           4
 
    o Add local font directory.
 
-4.4  Known Problems
+5.4  Known Problems
+
+The problems listed here are those known at the time of the release.  See the
+XFree86 FAQ for more up to date information.
 
    o There are problems with some Cirrus laptop chipsets (75xx).  The driver
      seems to work for some people, but not others.  Until someone with the
@@ -256,65 +312,35 @@ Release Notes for XFree86[tm] 3.3.3                                           4
    o SuperProbe command fails to detect some newly supported chips.  Currently,
      the probing result with Xserver itself with appropriate setting in
      XF86Config (and maybe option "-probeonly") can be more relied on than the
-     result from SuperProbe for newer chips.  If you are interested in
+     result from SuperProbe for newer chips.  If you are interested in improv-
+     ing the design of SuperProbe's code, let's come and join as the member of
+     the XFree86 ``developer team''.
 
 
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           5
-
-
-
-     improving the design of SuperProbe's code, let's come and join as the mem-
-     ber of the XFree86 ``developer team''.
-
-
-5.  XFree86 and Open Source Software
+6.  XFree86 and Open Source Software
 
 XFree86 public releases in general follow the Open Source Software definition
 as set forth at http://www.opensource.org/osd.html.  This definition is actu-
 ally a subset of our requirements.
 
-After we had finalized XFree86 3.3.3, and within hours of our planned release,
-NVIDIA insisted that we withdraw two source files from the driver that they had
-supplied to us and replace some other source files with versions that were
-partly run through the C preprocessor.  NVIDIA's stated reason for this was to
-remove some of the names that they thought might reveal intellectual property
-from NVIDIA. This resulted in somewhat unreadable and unmaintainable code.
 
 
-The XFree86 Project is strongly opposed to such obfuscated code.  Among other
-things, such code does not satisfy the Open Source definition of "Source Code",
-which states that
-
-     The source code must be the preferred form in which a programmer
-     would modify the program. Deliberately obfuscated source code is not
-     allowed.  Intermediate forms such as the output of a preprocessor or
-     translator are not allowed.
 
 
-Due to the extremely late date of this decision by NVIDIA, we decided to
-include the code as offered by NVIDIA.  All other options would have signifi-
-cantly delayed the release of XFree86-3.3.3.  Unless another solution can be
-found with NVIDIA, we will remove this code from future releases.
-
-The code affected by this is located in the directory:
-
-     xc/programs/Xserver/hw/xfree86/vga256/drivers/nv
 
 
-Specifically, the files: nv3arb.c, nv3cursor.c, nv3driver.c, nv3setup.c,
-nv4arb.c, nv4cursor.c, nv4driver.c, nv4setup.c.  All other code in XFree86
-3.3.3 satisfies the Open Source Software definition.
 
 
-6.  Installing the XFree86 3.3.3 Release
+Release Notes for XFree86[tm] 3.3.3.1                                         6
 
-The XFree86 3.3.3 binaries are distributed as a full release.
+
+
+All code in XFree86 3.3.3.1 satisfies the Open Source Software definition.
+
+
+7.  Installing the XFree86 3.3.3.1 Release
+
+The XFree86 3.3.3.1 binaries are distributed as a full release.
 
 NOTE: the X servers are no longer installed setuid root.  If you are starting
 your X servers with startx/xinit, or something similar, you will need a copy of
@@ -322,18 +348,6 @@ the setuid Xwrapper, and an updated xinit.  These can be found in Xbin.tgz.
 
 What follows is a list of the XFree86 3.3.3 components.  There may be some
 variations in this for some OSs.
-
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           6
-
-
 
 The following are required for all new installations, or when upgrading from a
 version older than 3.3:
@@ -374,6 +388,19 @@ ISO 8859-15 fonts.  If you want to upgrade the standard fonts you will also
 need:
 
 
+
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         7
+
+
+
           Xfnts.tgz       75dpi, misc and PEX fonts
 
 
@@ -389,21 +416,10 @@ prior to 3.2A cannot read gzipped fonts, so keep a copy of the old fonts if you
 wish to run older servers.
 
 The following X servers are for PC/AT based hardware (i.e., typical Intel ix86
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           7
-
-
-
 based PCs).  Choose at least one which matches your hardware, as well as the
 VGA16 server.  The VGA16 server is required by the new configuration utility
-(XF86Setup).
+(XF86Setup).  A list showing which X server is required for a range of video
+cards can be found at http://www.xfree86.org/cardlist.html.
 
 
           X3DL.tgz        3Dlabs server
@@ -439,32 +455,23 @@ The following X servers are available for Alpha hardware:
 The following X servers are for PC98 hardware. Note that PC98 is a Japanese
 computer standard and has nothing to do with Win98, or the Intel and Microsoft
 PC98 specification. If you have a PC98 machine, choose one which suits your
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         8
+
+
+
 hardware.  If you don't know what a PC98 machine is, you don't need any of
 these.  These servers will not run on "normal" PCs, so don't even try them if
-you don't have a Japanese PC98 machine.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           8
-
+you don't have a Japanese PC98 machine.  A list showing which X server is
+required for a range of PC98 video cards and computers can be found at
+http://www.xfree86.org/cardlist98.html.
 
 
           X9NS3.tgz       PC98 NEC(S3) server
@@ -514,26 +521,26 @@ extract the required .tgz files.  If you don't have enough space in /usr for
 this, create a directory elsewhere and create a symbolic link to it.  E.g., if
 you create a directory in /home:
 
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                         9
+
+
+
           mkdir /home/X11R6
           ln -s /home/X11R6 /usr
 
 The next step is to run the pre-installation script.  This script makes some
 preliminary checks of your system.  For some OSs, it may tell you to install
 new versions of some system components before proceeding with the installation.
-This script may also remove some outdated files and symbolic links from a
-
-
-
-
-
-
-
-
-Release Notes for XFree86[tm] 3.3.3                                           9
-
-
-
-previous installation that could cause problems.
+This script may also remove some outdated files and symbolic links from a pre-
+vious installation that could cause problems.
 
 For the purposes of these installation instructions, it is assumed that you
 have downloaded all the files to the /var/tmp directory.  If you've put them in
@@ -581,12 +588,23 @@ the installation.  The postinst.sh script should run ldconfig correctly for you
 if you are using Linux, FreeBSD, NetBSD or OpenBSD.  For other OSs that use
 ldconfig, check how it normally gets run at boot time.
 
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                        10
+
+
+
 Once the installation is complete, you should run the one of the configuration
 utilities (XF86Setup or xf86config) to configure the X server.  This is essen-
 tial for a new installation but optional for an existing installation.  Refer
 to the QuickStart document for configuration information.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.61 1998/11/19 11:27:57 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.68 1998/12/30 10:22:34 hohndel Exp $
 
 
 
@@ -595,7 +613,55 @@ to the QuickStart document for configuration information.
 
 
 
-Release Notes for XFree86[tm] 3.3.3                                          10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Release Notes for XFree86[tm] 3.3.3.1                                        11
 
 
 
@@ -675,17 +741,17 @@ Release Notes for XFree86[tm] 3.3.3                                          10
 
 3. OS issues ................................................................ 2
 
-4. What's new in 3.3.3? ..................................................... 2
-   4.1 Security fixes ....................................................... 2
-   4.2 Bug fixes ............................................................ 2
-   4.3 New Features ......................................................... 3
-   4.4 Known Problems ....................................................... 4
+4. What's new in 3.3.3.1? ................................................... 2
 
-5. XFree86 and Open Source Software ......................................... 5
+5. What's new in 3.3.3? ..................................................... 3
+   5.1 Security fixes ....................................................... 3
+   5.2 Bug fixes ............................................................ 3
+   5.3 New Features ......................................................... 4
+   5.4 Known Problems ....................................................... 5
 
-6. Installing the XFree86 3.3.3 Release ..................................... 5
+6. XFree86 and Open Source Software ......................................... 5
 
-
+7. Installing the XFree86 3.3.3.1 Release ................................... 6
 
 
 
@@ -725,4 +791,4 @@ Release Notes for XFree86[tm] 3.3.3                                          10
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.52.2.37 1998/11/19 12:01:02 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.52.2.44 1998/12/31 01:44:22 dawes Exp $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.16 1998/09/27 12:58:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.18 1998/12/29 10:57:45 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -106,6 +106,8 @@ typedef struct {
 #define OPTION_NO_PIXMAP_CACHE	67 /* Don't enable the pixmap cache */
 #define OPTION_TRIO32_FC_BUG	68 /* Workaround Trio32 font cache bug */
 #define OPTION_S3_968_DASH_BUG	69 /* Workaround S3 968 dashed line bug */
+#define OPTION_CURSOR_BUG	70 /* Workaround HW cursor bug */
+#define OPTION_ACCEL		71 /* Enable accel support */
 
 /* RAMDAC options */
 #define OPTION_BT485_CURS	80 /* Override Bt485 RAMDAC probe */
@@ -349,6 +351,8 @@ OptFlagRec xf86_OptionTab[] = {
   { "no_pixmap_cache",	OPTION_NO_PIXMAP_CACHE },
   { "trio32_fc_bug",	OPTION_TRIO32_FC_BUG },
   { "s3_968_dash_bug",	OPTION_S3_968_DASH_BUG },
+  { "cursor_bug",	OPTION_CURSOR_BUG },
+  { "accel",		OPTION_ACCEL },
 
   { "xaa_benchmark",	OPTION_XAA_BENCHMARK },
   { "xaa_no_color_exp", OPTION_XAA_NO_COL_EXP },

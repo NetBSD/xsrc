@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.5 1998/10/31 14:41:10 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.6 1998/12/26 00:12:42 dawes Exp $ */
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
  *
@@ -22,6 +22,8 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
+
+extern volatile unsigned char *tguiMMIOBase;
 
 /* Merge XY */
 #define XY_MERGE(x,y) \

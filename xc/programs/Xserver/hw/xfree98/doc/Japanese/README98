@@ -1,6 +1,6 @@
   XFree86 PC98 Dependent Information
   The XFree86 Project Inc. and X98 CORE TEAM 著
-  1998 年 11 月 10 日
+  1998 年 12 月 30 日
 
   このドキュメントでは、PC98 サーバ固有の事項について解説します。PC-AT
   と共通の事項については、共通のドキュメントを参照してください。このド
@@ -18,7 +18,7 @@
     ベンダー      カード名称                                      サーバ
     ------------- ----------------------------------------------- -------------
     MELCO         WAB-S, WAB-1000, WAB-2000, WSR-E, WSR-G         XF98_WABS
-    MELCO         WAP-2000, WAP-4000                              XF98_GANBWAP
+    MELCO         WAP-2000, WAP-4000, WGN-A2, WGN-A4              XF98_GANBWAP
     MELCO         WAB-EP                                          XF98_WABEP
     MELCO         WSN-A2F                                         XF98_WSNA
     IO Data       GA-98NB I/C,GA-98NB II, GA-98NB IV              XF98_GANBWAP
@@ -132,7 +132,8 @@
   3.3.  XF98_GANBWAP
 
   MELCO の WAP2000/4000, IO Data の GA-98NB I/C,II,IV で動作する VGA256
-  ベースのサーバです。ICM GI-5434-2M/4M でも動作します。
+  ベースのサーバです。ICM GI-5434-2M/4M や MELCO WGN-A2/4 でも動作しま
+  す。
 
   3.3.1.  XF86Config の設定
 
@@ -694,8 +695,9 @@
      起動しておく必要があります。一旦起動すれば電源を OFF にするまでは正
      常に動作します。ただし 8bpp は色がおかしくなります。
 
-  o  Linux/98 では、使用中にハングアップすることがあります。これを避ける
-     には、root 権限にて dmesg -n 1 を実行するといいようです。
+  o  Linux/98 では、beta 14 以降のカーネルでないと使用中にハングアップす
+     ることがあります。これを避けるには、root 権限にて dmesg -n 1 を実行
+     するといいようです。
 
   3.13.3.  その他
 
@@ -734,4 +736,6 @@
   3.14.4.  関連
 
   README.cirrus、XF86_SVGA man page
+
+  $XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/README98,v 3.6.2.6 1998/12/30 09:14:46 hohndel Exp $
 

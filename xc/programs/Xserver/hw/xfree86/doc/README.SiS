@@ -19,9 +19,9 @@
 
 This driver was primarily written for the SiS86c201.  It also works on the 202
 , 205 and 5597/5598 chips. Support for 6326 is currently enabled, but tested
-only on few cards. Also we added for 3.3.3 version some support for SiS86c215
-and 225. This support consist simply in identify it as 205, so probably 86c215
-won't work with acceleration (is a cheap 205 without some features).
+only on few cards.  Some support for SiS86c215 and 225 was added as well. This
+support consists simply in identify it as 205, so probably 86c215 won't work
+with acceleration (is a cheap 205 without some features).
 
 The driver supports many advanced features.  These include:
 
@@ -224,7 +224,7 @@ solve the problem.
      Updated October 12, 1998 by Juanjo Santamarta, covering changes for 5597 and 6326.
      Updated November 6, 1998 by Juanjo Santamarta, covering changes for 5597, 86c2x5 and 6326.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.5 1998/11/08 10:03:43 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.6 1998/12/29 07:54:30 hohndel Exp $
 
 
 
@@ -395,4 +395,4 @@ solve the problem.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5.2.6 1998/11/14 06:46:56 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5.2.7 1998/12/29 08:00:10 hohndel Exp $

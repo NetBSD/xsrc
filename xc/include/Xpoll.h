@@ -29,6 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/include/Xpoll.h,v 3.1.2.2 1998/12/20 12:08:42 hohndel Exp $ */
 
 #ifndef _XPOLL_H_
 #define _XPOLL_H_
@@ -38,12 +39,19 @@ from the X Consortium.
 #ifndef USE_POLL
 
 #include <X11/Xos.h>
+#if !defined(DGUX)
 #if (defined(SVR4) || defined(CRAY) || defined(AIXV3)) && !defined(FD_SETSIZE)
 #include <sys/select.h>
 #ifdef luna
 #include <sysent.h>
 #endif
 #endif
+#else /* DGUX  -- No sys/select in Intel DG/ux */
+#include <sys/time.h> 
+#include <sys/types.h>
+#include <sys/_int_unistd.h>
+#endif
+
 /* AIX 4.2 fubar-ed <sys/select.h>, so go to heroic measures to get it */
 #if defined(AIXV4) && !defined(NFDBITS)
 #include <sys/select.h>

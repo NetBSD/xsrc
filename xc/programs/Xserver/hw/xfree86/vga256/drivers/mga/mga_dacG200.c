@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.11 1998/11/01 07:51:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dacG200.c,v 1.1.2.12 1998/12/18 11:56:29 dawes Exp $ */
 /*
  * Millennium G200 RAMDAC driver
  */
@@ -530,6 +530,7 @@ MGAG200Save(save)
 vgaMGAPtr save;
 {
 	int i;
+	static Bool firstTime = TRUE;
 	
 	/*
 	 * Code is needed to get back to bank zero.
@@ -550,9 +551,11 @@ vgaMGAPtr save;
 		save->DACreg[i]	 = inMGAdac(i);
 
 	save->DAClong = pciReadLong(MGAPciTag, PCI_OPTION_REG);
-	if (xf86Verbose)
+	if (firstTime && xf86Verbose)
 	    ErrorF("%s %s: Read OPTION 0x%08x\n",
 		XCONFIG_PROBED, vga256InfoRec.name,save->DAClong);
+
+	firstTime = FALSE;
 
 	for (i = 0; i < 6; i++) {
 		outb(0x3DE, i);

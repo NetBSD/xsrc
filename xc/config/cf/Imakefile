@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/38 1996/11/07 14:43:46 kaleb $
-XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.2 1997/07/27 02:41:03 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.3 1998/12/22 11:23:01 hohndel Exp $
 
 XCOMM Some compilers generate fatal errors if an -L directory does
 XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
@@ -27,6 +27,7 @@ Win32.rules \
 X11.rules \
 bsdLib.rules \
 cde.rules \
+gnuLib.rules \
 hpLib.rules \
 ibmLib.rules \
 lnxLib.rules \
@@ -57,6 +58,7 @@ X11.tmpl \
 bsdLib.tmpl \
 cde.tmpl \
 hpLib.tmpl \
+gnuLib.tmpl \
 ibmLib.tmpl \
 lnxLib.tmpl \
 lnxdoc.tmpl \
@@ -86,6 +88,7 @@ convex.cf \
 cray.cf \
 fujitsu.cf \
 generic.cf \
+gnu.cf \
 hp.cf \
 ibm.cf \
 isc.cf \

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.9 1998/11/13 13:02:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.10 1998/12/04 01:39:16 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -84,7 +84,7 @@ HWREADME =  README.ati README.trident README.tseng README.WstDig \
             README.DECtga  README.apm README.rendition README.epson \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
             README.S3 README.S3V README.SiS README.W32 README.Oak \
-            README.Mach32 \
+            README.I128 README.Mach32 \
             README.Mach64 README.ark README.MGA README.NVIDIA README.mouse \
 	    README.neo README.rendition README.3DLabs README.cyrix
 

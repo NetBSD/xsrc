@@ -1,6 +1,6 @@
 /* 
  * $XConsortium: xset.c /main/71 1996/11/24 17:24:48 rws $ 
- * $XFree86: xc/programs/xset/xset.c,v 3.8.2.3 1997/06/29 08:43:39 dawes Exp $ 
+ * $XFree86: xc/programs/xset/xset.c,v 3.8.2.4 1998/12/18 11:56:40 dawes Exp $ 
  */
 
 /*
@@ -392,7 +392,7 @@ for (i = 1; i < argc; ) {
 	      DPMSEnable(dpy);
 	      DPMSSetTimeouts(dpy, standby_timeout, suspend_timeout, off_timeout);
 	  }
-	  else if (strcmp(arg, "force") == 0) {
+	  else if (i+1 < argc && strcmp(arg, "force") == 0) {
 	      i++;
 	      arg = argv[i];
 	      /*

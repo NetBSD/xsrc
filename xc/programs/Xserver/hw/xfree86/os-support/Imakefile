@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.14.2.2 1997/05/11 05:04:24 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.14.2.4 1998/12/22 11:23:27 hohndel Exp $
 
 
 
@@ -25,6 +25,8 @@ OS_SUBDIR = sysv
 #if defined(SVR4Architecture) 
 # if defined(SunArchitecture)
 OS_SUBDIR = solx86
+# elif defined(DguxArchitecture)
+OS_SUBDIR = dgux
 # else
 OS_SUBDIR = sysv
 # endif
@@ -47,7 +49,11 @@ OS_SUBDIR = bsd
 #endif
 
 #if defined(i386MachArchitecture) || defined(OsfArchitecture)
+#if defined(GNUMachArchitecture)
+OS_SUBDIR = hurd
+#else
 OS_SUBDIR = mach
+#endif
 #endif
 
 #if defined(AmoebaArchitecture)

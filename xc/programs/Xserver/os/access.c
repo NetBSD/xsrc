@@ -1,5 +1,5 @@
 /* $XConsortium: access.c /main/68 1996/12/15 22:57:09 rws $ */
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.4 1998/02/21 06:07:16 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.6 1998/12/22 11:23:30 hohndel Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -102,6 +102,23 @@ SOFTWARE.
 #include <netdnet/dnetdb.h>
 #endif
 
+
+#if defined(DGUX)
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/_int_if_ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <ctype.h>
+#include <sys/utsname.h>
+#include <sys/stream.h>
+#include <sys/_int_streams_ioctl.h>
+#include <sys/stropts.h>
+#include <sys/param.h>
+#include <sys/sockio.h>
+#endif
+
+
 #if !defined(AMOEBA)
 #ifdef hpux
 # include <sys/utsname.h>
@@ -109,7 +126,7 @@ SOFTWARE.
 #  include <net/if.h>
 # endif
 #else
-#if defined(SVR4) ||  (defined(SYSV) && defined(i386)) || defined(MINIX)
+#if defined(SVR4) ||  (defined(SYSV) && defined(i386)) || defined(MINIX) || defined(__GNU__)
 # include <sys/utsname.h>
 #endif
 #if defined(SYSV) &&  defined(i386)
@@ -122,9 +139,14 @@ SOFTWARE.
 #ifdef ESIX
 # include <lan/if.h>
 #else
+#ifdef __GNU__
+#undef SIOCGIFCONF
+#include <netdb.h>
+#else /*!__GNU__*/
 #ifndef MINIX
 # include <net/if.h>
 #endif
+#endif /*__GNU__ */
 #endif
 #endif /* hpux */
 #endif /* !AMOEBA */
@@ -280,7 +302,7 @@ AccessUsingXdmcp ()
 }
 
 
-#if ((defined(SVR4) && !defined(SCO325) && !defined(sun) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
+#if ((defined(SVR4) && !defined(DGUX) && !defined(SCO325) && !defined(sun) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
 
 /* Deal with different SIOCGIFCONF ioctl semantics on these OSs */
 
@@ -332,9 +354,9 @@ ifioctl (fd, cmd, arg)
 #endif
     return(ret);
 }
-#else /* ((SVR4 && !sun) || ISC) && SIOCGIFCONF */
+#else /* Case DGUX, sun, SCO325 NCR and others  */
 #define ifioctl ioctl
-#endif /* ((SVR4 && !sun) || ISC) && SIOCGIFCONF */
+#endif /* ((SVR4 && !DGUX !sun !SCO325 !NCR) || ISC) && SIOCGIFCONF */
 
 /*
  * DefineSelf (fd):
@@ -350,7 +372,17 @@ ifioctl (fd, cmd, arg)
 #include <tiuser.h>
 
 #include <sys/stream.h>
+
+#if defined(DGUX)
+#include <sys/_int_streams_ioctl.h>
+#endif
+
 #include <net/if.h>
+
+#if defined(DGUX)
+#include <sys/_int_if_ioctl.h>
+#endif
+
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in.h>

@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.1.1.2.2.3 1998/12/27 02:01:20 dawes Exp $ */
 
 /*
  * authorization hooks for the server
@@ -169,11 +170,23 @@ LoadAuthorization ()
     Xauth   *auth;
     int	    i;
     int	    count = 0;
+#if !defined(WIN32) && !defined(__EMX__)
+    char    *buf;
+#endif
 
     ShouldLoadAuth = FALSE;
     if (!authorization_file)
 	return 0;
+#if !defined(WIN32) && !defined(__EMX__)
+    buf = (char *)xalloc (strlen(authorization_file) + 5);
+    if (!buf)
+	return 0;
+    sprintf (buf, "cat %s", authorization_file);
+    f = Popen (buf, "r");
+    xfree (buf);
+#else
     f = fopen (authorization_file, "r");
+#endif
     if (!f)
 	return 0;
     while (auth = XauReadAuth (f)) {
@@ -189,7 +202,11 @@ LoadAuthorization ()
 	}
 	XauDisposeAuth (auth);
     }
+#if !defined(WIN32) && !defined(__EMX__)
+    Pclose (f);
+#else
     fclose (f);
+#endif
     return count;
 }
 

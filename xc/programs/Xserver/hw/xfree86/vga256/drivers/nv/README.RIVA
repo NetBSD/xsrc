@@ -1,0 +1,30 @@
+The RIVA family of graphics processors are supported in this patch release of
+XFree86.  The functionality is basically equivalent to the previous 3.3.3
+release, however the source has been totally rewritten and some minor bugs
+have been fixed.  Having multiple X servers running at different resolutions
+and color depths in separate VTerms should work fine now. The NV1 code has been
+left alone.  The RIVA code now shares common code for the XAA routines.  A new
+file, riva_hw.c, manages all the differences between RIVA 128 and RIVA TNT
+such that they look almost identical to the XAA code.  The one major
+difference is that RIVA 128 still uses the 6 bit DAC, whereas TNT uses the 8
+bit DAC.  RIVA 128 is also limited to 555 RGB so asking for a 16 BPP forces 15
+BPP.  RIVA 128 still has some video noise in 32 BPP mode.  I removed all
+bandwidth calculations trying to avoid this, because they didn't really seem
+to help.  You should try reducing your video refresh rate if you want to run
+32 BPP on your RIVA 128/ZX at high res.  Someday this will get fixed for good...
+
+If you are interested in supporting RIVA chips in another environment, all you
+need is the riva_hw.c and associated header files.  It should just compile as
+it is OS agnostic.  Look in riva_xaa.c for the usage.  It is assumed all VGA
+code is external to riva_hw.c.  Only SVGA and accelerated state
+initialization, save, and restore is handled in riva_hw.c. Not all the
+2D/3D functionality is used in riva_xaa.c yet.  Soon, though...
+
+
+  	Dave Schmenk
+	NVIDIA Corp.
+
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.RIVA,v 1.1.2.3 1998/12/23 13:36:27 hohndel Exp $

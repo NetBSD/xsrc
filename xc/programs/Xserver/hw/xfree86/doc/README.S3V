@@ -302,7 +302,7 @@ the numeric keypad for mode switching.
 
 4.1  XF86_S3V server
 
-Harald Koenig <koenig@tat.physik.uni-tuebingen.de>"
+Harald Koenig <koenig@tat.physik.uni-tuebingen.de>
 
 and:
 
@@ -339,7 +339,7 @@ and:
 
    o Kevin Brosius Cobra@compuserve.com
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.8 1998/02/27 04:53:51 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.9 1998/12/04 01:36:48 dawes Exp $
 
 
 
@@ -527,4 +527,4 @@ and:
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3V,v 3.5.2.9 1998/11/14 06:46:53 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3V,v 3.5.2.11 1998/12/29 07:54:24 hohndel Exp $

@@ -14,8 +14,9 @@
 
 This driver was primarily written for the SiS86c201.  It also works
 on the 202 , 205 and 5597/5598 chips. Support for 6326 is currently 
-enabled, but tested only on few cards. Also we added for 3.3.3 version
-some support for SiS86c215 and 225. This support consist simply in 
+enabled, but tested only on few cards. 
+Some support for SiS86c215 and 225 was added as well. This support consists
+simply in 
 identify it as 205, so probably 86c215 won't work with acceleration 
 (is a cheap 205 without some features).
 
@@ -172,6 +173,6 @@ Updated November 6, 1998 by Juanjo Santamarta, covering changes for 5597, 86c2x5
 </verb>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.5 1998/11/08 10:03:43 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.6 1998/12/29 07:54:30 hohndel Exp $
 </verb>
 </article>

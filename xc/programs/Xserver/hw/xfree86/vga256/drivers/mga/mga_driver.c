@@ -40,7 +40,7 @@
  *		Fixed 32bpp hires 8MB horizontal line glitch at middle right
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.35 1998/10/31 14:41:00 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.38 1998/12/27 13:10:17 dawes Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -92,6 +92,7 @@ int MGAinterleave;
 int MGABppShft;
 int MGAusefbitblt;
 int MGAydstorg;
+Bool MGACursorBug = FALSE;
 unsigned char* MGAMMIOBase = NULL;
 #ifdef __alpha__
 unsigned char* MGAMMIOBaseDENSE = NULL;
@@ -734,7 +735,7 @@ MGAProbe()
 	   if ( MGA_IS_2164(MGAchipset) || MGA_IS_G100(MGAchipset) ) {
 		vga256InfoRec.videoRam = 4096;
 		ErrorF("(!!) %s: Unable to probe for video memory size.  "
-			"Assuming 8 Meg.\tPlease specify the correct amount "
+			"Assuming 4 Meg.\tPlease specify the correct amount "
 			"in the XF86Config file.\tSee the file README.MGA "
 			"for details.\n", vga256InfoRec.name);
 	   } else if (MGA_IS_G200(MGAchipset)) {
@@ -788,6 +789,8 @@ MGAProbe()
 		break;
 	case PCI_CHIP_MGAG100:
 	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG100_PCI:
+	case PCI_CHIP_MGAG200_PCI:
 		MGAG200RamdacInit();
 		break;
 	}
@@ -815,6 +818,7 @@ MGAProbe()
 	OFLG_SET(OPTION_DAC_8_BIT, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_SW_CURSOR, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_HW_CURSOR, &MGA.ChipOptionFlags);
+	OFLG_SET(OPTION_CURSOR_BUG, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_PCI_RETRY, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_MGA_24BPP_FIX, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_MGA_SDRAM, &MGA.ChipOptionFlags);
@@ -1156,6 +1160,10 @@ MGAFbInit()
 			   XCONFIG_GIVEN, vga256InfoRec.name);
 #endif
 
+		if (MGA_IS_2164(MGAchipset) &&
+		    OFLG_ISSET(OPTION_CURSOR_BUG, &vga256InfoRec.options))
+		    MGACursorBug = TRUE;
+	
 		/*
 		 * now call the new acc interface
 		 */
