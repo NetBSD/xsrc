@@ -318,7 +318,7 @@ Xalloc (amount)
     }
 
     /* alignment check */
-#if defined(__alpha__) || defined(__sparc__) || defined(__mips__)
+#if defined(__alpha__) || defined(__sparc__) || defined(__mips__) || defined(__arm32__)
     amount = (amount + (sizeof(long)-1)) & ~(sizeof(long)-1);
 #endif
 
