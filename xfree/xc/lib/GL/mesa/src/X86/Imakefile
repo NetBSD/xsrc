@@ -10,7 +10,7 @@ XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.24 2002/11/25 12:58:55 tsi 
  * driver modules.
  */
 
-#if GlxDriverUsesMesa || GlxBuiltInXMesa || BuildOSMesaLib
+#if BuildXF86DRI && (GlxDriverUsesMesa || GlxBuiltInXMesa || BuildOSMesaLib)
 #define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
 #define DoSharedLib (SharedLibGlx && !SharedLibGlxWithoutPIC)
 #define DoExtraLib SharedLibGlx
