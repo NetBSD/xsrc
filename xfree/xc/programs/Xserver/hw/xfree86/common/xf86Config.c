@@ -1177,7 +1177,6 @@ configInputKbd(IDevPtr inputp)
 #endif
 #ifdef WSKBD_TYPE_SUN
      case WSKBD_TYPE_SUN:
-     case WSKBD_TYPE_SUN5:
 	     xf86Msg(X_PROBED, "Keyboard type: Sun\n");
 	     break;
 #endif

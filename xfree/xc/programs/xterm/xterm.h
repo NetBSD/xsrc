@@ -138,7 +138,11 @@ authorization.
 #define USE_LASTLOG
 #define HAVE_LASTLOG_H
 #elif defined(BSD) && (BSD >= 199103)
+#ifdef BSD_UTMPX
+#define USE_LASTLOGX
+#else
 #define USE_LASTLOG
+#endif
 #endif
 
 #if defined(SCO)
