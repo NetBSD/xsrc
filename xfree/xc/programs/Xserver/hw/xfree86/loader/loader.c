@@ -483,6 +483,9 @@ _LoaderFileToMem(int fd, unsigned long offset,int size, char *label)
 	ppc_flush_icache(ptr+size-1); 
     } 
 #endif
+#if defined(__NetBSD__) && defined(__powerpc__)
+    __syncicache(ptr,size);
+#endif
 
 #ifdef DEBUGMEM
     ErrorF("=%lx\n",ptr);
