@@ -652,8 +652,8 @@ SetUIDServerTarget(Xdreamcast,$(DREAMCASTDIRS),$(DREAMCASTOBJS), \
 XCOMM
 XCOMM NetBSD/macppc server
 XCOMM
-MFBDIR   = mfb
-CFB8DIR  = cfb
+MFBSUBDIR   = mfb
+CFB8SUBDIR  = cfb
 MACPPCDDXDIR  = hw/netbsd/macppc
 MACPPCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(MACPPCDDXDIR) $(DEPDIRS)
 MACPPCOBJS = hw/netbsd/macppc/macppcInit.o
@@ -670,9 +670,9 @@ ServerTarget(Xmacppc,$(MACPPCDIRS),$(MACPPCOBJS), \
 XCOMM
 XCOMM NetBSD/x68k server
 XCOMM
-MFBDIR	= mfb
-CFB8DIR	= cfb
-CFB16DIR = cfb16
+MFBSUBDIR   = mfb
+CFB8SUBDIR  = cfb
+CFB16SUBDIR = cfb16
 X68DDXDIR = hw/netbsd/x68k
 X68DIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(X68DDXDIR1) $(DEPDIRS)
 X68OBJS = hw/netbsd/x68k/x68kInit.o
@@ -1175,7 +1175,7 @@ Xnon: $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DEPDIRS)
 XCOMM
 XCOMM NetBSD/vax Monochrome server
 XCOMM
-MFBDIR  = mfb
+MFBSUBDIR  = mfb
 DDXDIR1 = hw/netbsd/vax
 VAXDIRS = $(STDDIRS) $(MFBDIR) $(DDXDIR1) $(DEPDIRS)
 VAXOBJS = hw/netbsd/vax/init.o hw/netbsd/vax/mono_io.o hw/netbsd/vax/lk201.o
@@ -1405,12 +1405,12 @@ BundleProgramTarget(glxMesa,XDarwinApp,GL,GL/glx/glxext.o,GL/glx/libglx.a \
 XCOMM
 XCOMM NetBSD/mac68k Xserver
 XCOMM
-MFBDIR = mfb
-CFB8DIR = cfb
+MFBSUBDIR = mfb
+CFB8SUBDIR = cfb
 #if 0
-CFB16DIR = cfb16
-CFB24DIR = cfb24
-CFB32DIR = cfb32
+CFB16SUBDIR = cfb16
+CFB24SUBDIR = cfb24
+CFB32SUBDIR = cfb32
 #endif
 MAC68KDDXDIR = hw/netbsd/mac68k
 MAC68KDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) \
