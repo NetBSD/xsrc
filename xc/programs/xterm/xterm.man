@@ -1,5 +1,4 @@
-.\" $TOG: xterm.man /main/86 1997/11/04 20:58:28 kaleb $
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.24 1998/03/27 23:24:03 hohndel Exp $
+.\" $XConsortium: xterm.man /main/85 1996/12/09 17:10:53 kaleb $
 .\" Copyright (c) 1989  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -26,8 +25,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.25 1998/04/05 02:29:21 dawes Exp $
+.\"
 .\" updated by Thomas Dickey <dickey@clark.net> for XFree86, July 1996.
-.TH XTERM 1 "Release 6.4" "X Version 11"
+.TH XTERM 1 "Release 6.3" "X Version 11"
 .SH NAME
 xterm \- terminal emulator for X
 .SH SYNOPSIS
@@ -374,6 +375,16 @@ gateways.
 .TP 8
 .B \+s
 This option indicates that \fIxterm\fP should scroll synchronously.
+.TP 8 
+.B \-samename 
+Doesn't send title and icon name change requests when the request 
+would have no effect: the name isn't changed.  This has the advantage 
+of preventing flicker and the disadvantage of requiring an extra 
+round trip to the server to find out the previous value.  In practice 
+this should never be a problem. 
+.TP 8 
+.B +samename 
+Always send title and icon name change requests. 
 .TP 8
 .B \-sb
 This option indicates that some number of lines that are scrolled off the top 
@@ -478,6 +489,15 @@ responsibility to catch subsequent terminal size changes.
 .B \+wf
 This option indicates that \fIxterm\fP show not wait before starting the
 subprocess.
+.TP 8 
+.B \-ziconbeep \fIpercent\fP 
+Same as zIconBeep resource. 
+If percent is non-zero, xterms that produce output while iconified 
+will cause an XBell sound at the given volume 
+and have "***" prepened to their icon titles. 
+Most window managers will detect this change immediately, showing you 
+which window has the output. 
+(A similar feature was in x10 xterm.) 
 .TP 8
 .B \-C
 This option indicates that this window should receive console output.  This
@@ -588,6 +608,14 @@ It is not necessarily obeyed by all window managers.
 .TP 8
 .B "iconName (\fPclass\fB IconName)"
 Specifies the icon name.  The default is the application name.
+.TP 8 
+.B "sameName (\fPclass\fB SameName)" 
+If the value of this resource is "true", xterm doesn't send 
+title and icon name change requests when the request 
+would have no effect: the name isn't changed.  This has the advantage 
+of preventing flicker and the disadvantage of requiring an extra 
+round trip to the server to find out the previous value.  In practice 
+this should never be a problem.  The default is "true". 
 .TP 8
 .B "sunFunctionKeys (\fPclass\fB SunFunctionKeys)"
 Specifies whether or not Sun Function Key escape codes should be generated for
@@ -629,6 +657,15 @@ in \fI/etc/utmp\fP.
 .B "waitForMap (\fPclass\fB WaitForMap)"
 Specifies whether or not \fIxterm\fP should wait for the initial window map
 before starting the subprocess.  The default is ``false.''
+.TP 8 
+.B "zIconBeep (\fPclass\fB ZIconBeep)" 
+Same as \-ziconbeep command line argument. 
+If the value of this resource is non-zero, xterms that produce output 
+while iconified will cause an XBell sound at the given volume 
+and have "***" prepened to their icon titles. 
+Most window managers will detect this change immediately, showing you 
+which window has the output. 
+(A similar feature was in x10 xterm.) 
 .\".in 11in
 .sp
 .PP
@@ -938,6 +975,16 @@ Specifies the background color of the pointer.  The default is
 .B "pointerShape (\fPclass\fB Cursor)"
 Specifies the name of the shape of the pointer.  The default is ``xterm.''
 .TP 8
+.B "printAttributes (\fPclass\fB PrintAttributes)"
+Specifies whether to print graphic attributes along with the text.
+A real DEC VTxxx terminal will print the underline, highlighting codes
+but your printer may not handle these.
+A ``0'' disables the attributes.
+A ``1'' prints the normal set of attributes (bold, underline, inverse and blink)
+as VT100-style control sequences.
+A ``2'' prints ANSI color attributes as well.
+The default is ``0.''
+.TP 8
 .B "printerControlMode (\fPclass\fB PrinterControlMode)"
 Specifies the printer control mode.
 A ``1'' selects autoprint mode, which causes
@@ -1106,6 +1153,9 @@ This entry invokes the \fBallow-send-events(toggle)\fP action.
 .TP 8
 .B "logging (\fPclass\fB SmeBSB)"
 This entry invokes the \fBlogging(toggle)\fP action.
+.TP 8
+.B "print (\fPclass\fB SmeBSB)"
+This entry invokes the \fBprint()\fP action.
 .TP 8
 .B "redraw (\fPclass\fB SmeBSB)"
 This entry invokes the \fBredraw()\fP action.
@@ -1660,6 +1710,10 @@ The name \fINone\fP restores the original translation table.
 This action displays the specified popup menu.  Valid names (case is 
 significant) include:  \fImainMenu\fP, \fIvtMenu\fP, \fIfontMenu\fP, 
 and \fItekMenu\fP.
+.TP 8
+.B "print()"
+This action prints the window and is also invoked by the
+\fIprint\fP entry in \fImainMenu\fP.
 .TP 8
 .B "quit()"
 This action sends a SIGHUP to the subprogram and exits.  It is also invoked

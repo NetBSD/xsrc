@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.2 1998/03/20 21:38:04 hohndel Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.3 1998/04/05 00:46:13 robin Exp $
   -->
 <HTML>
 <HEAD>
@@ -41,6 +41,10 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_74">Patch #74 - 1998/4/27 - XFree86 3.9Ag and 3.3.2</A>
+<LI><A HREF="#xterm_73">Patch #73 - 1998/4/25 - XFree86 3.9Ag and 3.3.2</A>
+<LI><A HREF="#xterm_72">Patch #72 - 1998/4/17 - XFree86 3.9Ag and 3.3.2</A>
+<LI><A HREF="#xterm_71">Patch #71 - 1998/4/12 - XFree86 3.9Ag and 3.3.2</A>
 <LI><A HREF="#xterm_70">Patch #70 - 1998/3/29 - XFree86 3.9Af and 3.3.2</A>
 <LI><A HREF="#xterm_69">Patch #69 - 1998/3/16 - XFree86 3.9Ad and 3.3.2</A>
 <LI><A HREF="#xterm_68">Patch #68 - 1998/3/4 - XFree86 3.9Ad and 3.3.1z</A>
@@ -112,6 +116,83 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_74">Patch #74 - 1998/4/27 - XFree86 3.9Ag and 3.3.2</A></H1>
+
+This corrects a couple of recent bugs and adds a new resource:
+<ul>
+	<li>modify definition of TRACE_CHILD so that it does not conflict with
+	  ifdef's for USE_USG_PTYS in main.c (reported by Vikas Agnihotri
+	  &lt;VikasA@att.com&gt; and Stefan Dalibor).
+
+	<li>correct ownership of file (actually pipe) written by the print
+	  controls.  When undoing the setuid changes in patch #69, I overlooked
+	  this.  Now xterm forks a process which resets setuid and routes the
+	  printer data as the real user.
+
+	<li>add a new resource, "printAttributes", which controls whether
+	  color attributes (or any attributes) are sent to the printer.
+</ul>
+
+<H1><A NAME="xterm_73">Patch #73 - 1998/4/25 - XFree86 3.9Ag and 3.3.2</A></H1>
+
+This patch does the following:
+<ul>
+	<li>implements a print-window facility for xterm.  Though useful in
+	  itself, I added it as part of some debugging which I am doing.
+	  (Occasionally during an exposure event xterm fails to restore the
+	  proper colors for highlighted text, and printing the screen will
+	  show the internal states nicely).
+<p>
+	  The print facility now also displays the color information.
+	  (I will probably make this a resource).
+
+	<li>modified the xterm-16color terminfo description to use the setaf and
+	  setab strings, which is a little more efficient (requested by Stephen
+	  Marley).
+
+	<li>reduced some clutter of the ifdef/includes (e.g., stdlib.h, unistd.h,
+	  errno) making the configure script test for these.
+<p>
+	  I removed the symbols Size_t and Time_t, since they no longer serve
+	  a useful purpose.
+
+	<li>added some debugging traces to show the initial screen size,
+	  and the success/failure of the ioctl calls pass handle window
+	  resizing events to the application (for Clint Olsen).
+<p>
+	  I also modified the trace code to produce two files since some
+	  of the information is produced by the child process.  So now
+	  they are Trace-parent.out and Trace-child.out
+
+	<li>updated configure test for ANSI compiler options to handle a
+	  special case for HP-UX 10.x (reported by Clint Olsen).
+</ul>
+
+<H1><A NAME="xterm_72">Patch #72 - 1998/4/17 - XFree86 3.9Ag and 3.3.2</A></H1>
+
+This is a patch from Chris Siebenmann &lt;cks@hawkwind.utcs.toronto.edu&gt;,
+which I have cleaned up a little, and integrated into the configure script.
+<p>
+From his description:
+<blockquote>
+ This set of patches is the latest incarnation of patches originally 
+written by Ian! D Allen, then of the University of Waterloo and now of 
+who knows where; I have been carrying them forward from xterm to xterm 
+ever since about X11R4.  What they do is add an option so that when an 
+iconified xterm receives output it prepends '*** ' to its icon title 
+and (optionally) beeps the bell; deiconifying the xterm removes the 
+'*** '. Over the years I've found this to be incredibly convenient for 
+monitoring all sorts of low-activity things. 
+</blockquote>
+
+<H1><A NAME="xterm_71">Patch #71 - 1998/4/12 - XFree86 3.9Ag and 3.3.2</A></H1>
+
+This patch is a slightly modified version of one by Richard Braakman, which
+prevents buffer overflow in the input-method and preedit-type parsing in xterm. 
+I changed a couple of details to make the code more maintainable, and looked
+for similar things - copying into a fixed-size buffer (found none, though I did
+spot an unused variable).
 
 <H1><A NAME="xterm_70">Patch #70 - 1998/3/29 - XFree86 3.9Af and 3.3.2</A></H1>
 
