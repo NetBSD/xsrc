@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.75 2000/06/07 12:52:40 tsutsui Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.76 2000/08/06 22:14:25 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -53,6 +53,13 @@ XCOMM
 #define	OSVendor		The NetBSD Foundation, Inc.
 #endif
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+
+/*
+ * Enable support for "xdmauth" authentification.
+ */
+#ifndef HasXdmAuth
+#define HasXdmAuth YES
+#endif
 
 /*
  * C library features
