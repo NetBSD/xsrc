@@ -46,13 +46,15 @@
 
 
 #define VerticalRetraceWait() \
-{ \
+{ unsigned char tmp; \
+   tmp = inb(vgaCRIndex); \
    outb(vgaCRIndex, 0x17); \
    if ( inb(vgaCRReg) & 0x80 ) { \
        while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
        while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
        while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
        }\
+   outb(vgaCRIndex, tmp); \
 }
 
 #if 0 /* currently not used at all */
