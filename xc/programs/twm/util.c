@@ -284,13 +284,11 @@ char *name;
 
     if (name[0] != '~') return name;
 
-    newname = (char *) malloc (HomeLen + strlen(name) + 2);
+    asnprintf(&newname, "%s/%s", Home, &name[1]);
     if (!newname) {
 	fprintf (stderr, 
 		 "%s:  unable to allocate %d bytes to expand filename %s/%s\n",
 		 ProgramName, HomeLen + strlen(name) + 2, Home, &name[1]);
-    } else {
-	(void) sprintf (newname, "%s/%s", Home, &name[1]);
     }
 
     return newname;
@@ -390,15 +388,13 @@ Pixmap FindBitmap (name, widthp, heightp)
 	/*
 	 * Attempt to find icon in old IconDirectory (now obsolete)
 	 */
-	bigname = (char *) malloc (strlen(name) + strlen(Scr->IconDirectory) +
-				   2);
+	asnprintf(&bigname, "%s/%s", Scr->IconDirectory, name);
 	if (!bigname) {
 	    fprintf (stderr,
 		     "%s:  unable to allocate memory for \"%s/%s\"\n",
 		     ProgramName, Scr->IconDirectory, name);
 	    return None;
 	}
-	(void) sprintf (bigname, "%s/%s", Scr->IconDirectory, name);
 	if (XReadBitmapFile (dpy, Scr->Root, bigname, widthp, heightp, &pm,
 			     &HotX, &HotY) != BitmapSuccess) {
 	    pm = None;

@@ -555,7 +555,7 @@ int height;
         dheight /= tmp_win->hints.height_inc;
     }
 
-    (void) sprintf (str, " %4d x %-4d ", dwidth, dheight);
+    (void) snprintf (str, sizeof(str), " %4d x %-4d ", dwidth, dheight);
     XRaiseWindow(dpy, Scr->SizeWindow);
     FBF(Scr->DefaultC.fore, Scr->DefaultC.back, Scr->SizeFont.font->fid);
     XDrawImageString (dpy, Scr->SizeWindow, Scr->NormalGC,
