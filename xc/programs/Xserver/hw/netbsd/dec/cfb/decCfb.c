@@ -1,4 +1,4 @@
-/* $NetBSD: decCfb.c,v 1.4 2002/09/13 17:34:02 ad Exp $ */
+/* $NetBSD: decCfb.c,v 1.5 2002/09/13 17:35:39 ad Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -114,10 +114,14 @@ Bool decCFBInit (screen, pScreen, argc, argv)
 	        decFbs[screen].fb = fb;
 	}
 
-	if (decFbs[screen].type == WSDISPLAY_TYPE_MFB)
+	switch (decFbs[screen].type) {
+	case WSDISPLAY_TYPE_MFB:
 	    stride = 2048;
-	else
+	    break;
+	default:
 	    stride = decFbs[screen].width;
+	    break;
+	}
 
 	if (!decCfbScreenInit(pScreen, fb,
 	    decFbs[screen].width,
