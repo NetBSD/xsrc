@@ -53,14 +53,25 @@
 # include	<X11/Xos.h>
 # include	<X11/Xfuncs.h>
 # include	<stdio.h>
-# include	<utmp.h>
-
-#if defined(SYSV) || defined(SVR4) || defined(Lynx) || defined(__QNX__) || defined(__DARWIN__) || defined(_SEQUENT_)
-#define NO_LASTLOG
-#endif
 
 #ifdef CSRG_BASED
 #include <sys/param.h>
+#if __NetBSD_Version__ >= 106030000     /* 1.6C */
+#define BSD_UTMPX 1
+#endif
+#endif
+
+#ifdef BSD_UTMPX
+# include <utmpx.h>
+# define UTMP_STR utmpx
+# define ut_time ut_tv.tv_sec
+#else
+# include <utmp.h>
+# define UTMP_STR utmp
+#endif
+
+#if defined(SYSV) || defined(SVR4) || defined(Lynx) || defined(__QNX__) || defined(__DARWIN__) || defined(_SEQUENT_)
+#define NO_LASTLOG
 #endif
 
 #ifndef NO_LASTLOG
@@ -79,32 +90,44 @@
 #endif
 
 #ifdef CSRG_BASED
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
 /* *BSD doesn't like a ':0' type entry in utmp */
 #define NO_UTMP
 #endif
 #endif
 
 #ifndef WTMP_FILE
+# ifdef _PATH_WTMPX
+#  define WTMP_FILE	_PATH_WTMPX
+# else
 # ifdef _PATH_WTMP
 #  define WTMP_FILE	_PATH_WTMP
 # else
 #  define WTMP_FILE	"/usr/adm/wtmp"
 # endif
+# endif
 #endif
 #ifndef UTMP_FILE
+# ifdef _PATH_UTMPX
+#  define UTMP_FILE	_PATH_UTMPX
+# else
 # ifdef _PATH_UTMP
 #  define UTMP_FILE	_PATH_UTMP
 # else
 #  define UTMP_FILE	"/etc/utmp"
 # endif
+# endif
 #endif
 #ifndef NO_LASTLOG
 # ifndef LLOG_FILE
+#  ifdef _PATH_LASTLOGX
+#   define LLOG_FILE	_PATH_LASTLOGX
+#  else
 #  ifdef _PATH_LASTLOG
 #   define LLOG_FILE	_PATH_LASTLOG
 #  else
 #   define LLOG_FILE	"/usr/adm/lastlog"
+#  endif
 #  endif
 # endif
 #endif
@@ -121,7 +144,7 @@ extern long	lseek ();
 extern char	*ttyname ();
 #endif
 
-static void set_utmp (struct utmp *u, char *line, char *user, char *host, Time_t date, int addp);
+static void set_utmp (struct UTMP_STR *u, char *line, char *user, char *host, Time_t date, int addp);
 
 int	wflag, uflag, lflag;
 char	*wtmp_file, *utmp_file, *line;
@@ -143,7 +166,7 @@ int	llog_none, Lflag;
 
 char	*program_name;
 
-#ifndef SYSV
+#if !defined(SYSV) && !defined(BSD_UTMPX)
 static int findslot (char *line_name, char *host_name, int addp, int slot);
 static int Xslot (char *ttys_file, char *servers_file, char *tty_line,
 		  char *host_name, int addp);
@@ -210,7 +233,7 @@ main (int argc, char **argv)
 	char		*line_tmp;
 	int		wtmp;
 	Time_t		current_time;
-	struct utmp	utmp_entry;
+	struct UTMP_STR	utmp_entry;
 
 	program_name = argv[0];
 	while (*++argv && **argv == '-') {
@@ -278,7 +301,7 @@ main (int argc, char **argv)
 	if (!Lflag)
 		llog_file = LLOG_FILE;
 #endif
-#if !defined(SYSV) && !defined(linux) && !defined(__QNX__)
+#if !defined(SYSV) && !defined(linux) && !defined(__QNX__) && !defined(BSD_UTMPX)
 	if (!tflag)
 		ttys_file = TTYS_FILE;
 	if (!sflag && !utmp_none) {
@@ -306,6 +329,13 @@ main (int argc, char **argv)
 		pututline (&utmp_entry);
 		endutent ();
 #else
+# ifdef BSD_UTMPX
+		utmpxname (utmp_file);
+		setutxent ();
+		(void) getutxid (&utmp_entry);
+		pututxline (&utmp_entry);
+		endutxent ();
+# else
 		utmp = open (utmp_file, O_RDWR);
 		if (utmp != -1) {
 			syserr ((int) lseek (utmp, (long) slot_number * sizeof (struct utmp), 0), "lseek");
@@ -313,6 +343,7 @@ main (int argc, char **argv)
 				        == sizeof (utmp_entry), "write utmp entry");
 			close (utmp);
 		}
+# endif
 #endif
 	}
 	if (!wtmp_none) {
@@ -329,6 +360,18 @@ main (int argc, char **argv)
 	        struct passwd *pwd = getpwnam(user_name);
 
 	        sysnerr( pwd != NULL, "get user id");
+# ifdef BSD_UTMPX
+		if (llog != -1) {
+			struct lastlogx ll;
+
+			bzero((char *)&ll, sizeof(ll));
+			ll.ll_tv.tv_sec = current_time;
+			if (line)
+			 (void) strncpy (ll.ll_line, line, sizeof (ll.ll_line));			if (host_name)
+			 (void) strncpy (ll.ll_host, host_name, sizeof (ll.ll_host));
+			updlastlogx(llog_file, pwd->pw_uid, &ll);
+		}
+# else
 	        llog = open (llog_file, O_RDWR);
 
 		if (llog != -1) {
@@ -347,6 +390,7 @@ main (int argc, char **argv)
 				        == sizeof (ll), "write lastlog entry");
 			close (llog);
 		}
+# endif
 	}
 #endif
 	return 0;
@@ -357,7 +401,7 @@ main (int argc, char **argv)
  */
 
 static void
-set_utmp (struct utmp *u, char *line, char *user, char *host, Time_t date, int addp)
+set_utmp (struct UTMP_STR *u, char *line, char *user, char *host, Time_t date, int addp)
 {
 	if (line)
 		(void) strncpy (u->ut_line, line, sizeof (u->ut_line));
@@ -367,7 +411,7 @@ set_utmp (struct utmp *u, char *line, char *user, char *host, Time_t date, int a
 		(void) strncpy (u->ut_name, user, sizeof (u->ut_name));
 	else
 		bzero (u->ut_name, sizeof (u->ut_name));
-#ifdef SYSV
+#if defined(SYSV) || defined(BSD_UTMPX)
 	if (line) {
 		int	i;
 		/*
@@ -402,7 +446,7 @@ set_utmp (struct utmp *u, char *line, char *user, char *host, Time_t date, int a
 	u->ut_time = date;
 }
 
-#ifndef SYSV
+#if !defined(SYSV) && !defined(BSD_UTMPX)
 /*
  * compute the slot-number for an X display.  This is computed
  * by counting the lines in /etc/ttys and adding the line-number
