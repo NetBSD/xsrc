@@ -337,14 +337,26 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  endif
 # endif
 
+/*
+ * Builtin MTRR support (NetBSD 1.5Y and up)
+ */
+# if ((OSMajorVersion > 1) || \
+      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+      (OSMajorVersion == 1 && OSMinorVersion == 5 && \
+       OSTeenyVersion >= 25))
+#  define HasMTRRBuiltin        YES
+
+# else
+
  /*
   * MTRR support is provided by the Aperture driver
   */
-# if HasNetBSDApertureDriver
-#  ifndef HasMTRRSupport
-#   define HasMTRRSupport	YES
+#  if HasNetBSDApertureDriver
+#   ifndef HasMTRRSupport
+#    define HasMTRRSupport	YES
+#   endif
 #  endif
-# endif
+# endif /* MTRRBuiltin */
 #endif /* i386Architecture */
 
 #ifndef HasCookieMaker
