@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/cout.c,v 3.4 1997/10/26 13:24:56 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/cout.c,v 3.3 1997/06/22 10:16:54 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

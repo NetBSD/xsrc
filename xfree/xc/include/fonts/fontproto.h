@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/fonts/fontproto.h,v 1.2 1999/09/04 09:14:08 dawes Exp $ */
+/* $XFree86: xc/include/fonts/fontproto.h,v 1.1 1999/08/21 13:47:34 dawes Exp $ */
 
 /***********************************************************
 

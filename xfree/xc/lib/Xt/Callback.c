@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Callback.c,v 1.5 1998/12/20 22:18:57 dawes Exp $ */
+/* $XFree86$ */
 
 #include "IntrinsicI.h"
 

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/DrRndRect.c,v 1.5 1998/10/03 09:06:26 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/DrRndRect.c,v 1.4 1998/09/05 06:36:13 dawes Exp $ */
 
 /*
  * XmuDrawRoundedRectangle, XmuFillRoundedRectangle

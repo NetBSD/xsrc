@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaStipple.c,v 1.10 2000/09/01 05:49:45 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaStipple.c,v 1.9 2000/06/13 02:51:25 mvojkovi Exp $ */
 
 #include "xaa.h"
 #include "xaalocal.h"

@@ -20,7 +20,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.8 2000/06/15 22:10:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.7 2000/06/13 23:15:52 dawes Exp $ */
 
 #include "X.h"
 #include "os.h"

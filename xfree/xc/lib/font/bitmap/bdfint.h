@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfint.h,v 1.3 1999/07/17 08:55:10 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfint.h,v 1.2 1999/07/17 05:30:29 dawes Exp $ */
 
 #ifndef BDFINT_H
 #define BDFINT_H

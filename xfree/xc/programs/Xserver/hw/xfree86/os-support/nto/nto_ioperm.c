@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_ioperm.c,v 1.2 1999/12/27 00:45:45 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_ioperm.c,v 1.1.2.1 1999/07/29 09:40:16 hohndel Exp $
  */
 
 /* I/O functions to enable access to I/O ports under Neutrino */

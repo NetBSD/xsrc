@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/objects.c,v 1.8 1999/09/25 14:36:38 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/objects.c,v 1.7 1999/08/22 05:35:42 dawes Exp $ */
  /* OBJECTS  CWEB         V0025 ********                             */
 /*
 :h1.OBJECTS Module - TYPE1IMAGER Objects Common Routines

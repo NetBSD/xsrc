@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_bank.c,v 1.4 2000/08/08 08:58:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_bank.c,v 1.2 1998/07/26 09:56:17 dawes Exp $ */
 
 
 

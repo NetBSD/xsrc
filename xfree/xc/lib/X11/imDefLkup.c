@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.7 2000/11/28 18:49:36 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.6 1999/05/09 10:50:32 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define  NEED_EVENTS

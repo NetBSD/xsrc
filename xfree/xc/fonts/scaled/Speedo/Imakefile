@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.7 94/02/10 16:51:55 rws Exp $
-XCOMM $XFree86: xc/fonts/scaled/Speedo/Imakefile,v 1.5 1999/05/03 13:12:01 dawes Exp $
+XCOMM $XFree86: xc/fonts/scaled/Speedo/Imakefile,v 1.4 1999/05/03 12:15:35 dawes Exp $
 OBJS = font0648.spd font0649.spd font0709.spd font0710.spd \
 	font0419.spd font0582.spd font0583.spd font0611.spd
 

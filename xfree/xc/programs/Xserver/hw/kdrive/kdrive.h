@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.12 2000/12/08 22:59:37 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.11 2000/11/29 08:42:25 keithp Exp $ */
 
 #include <stdio.h>
 #include "X.h"

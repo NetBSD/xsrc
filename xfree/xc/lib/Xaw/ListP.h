@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/lib/Xaw/ListP.h,v 1.7 2000/02/25 18:27:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/ListP.h,v 1.6 1999/06/20 08:41:02 dawes Exp $ */
 
 
 /* 

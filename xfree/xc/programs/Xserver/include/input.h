@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/include/input.h,v 3.5 1998/10/04 09:38:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/input.h,v 3.4 1996/12/23 07:09:28 dawes Exp $ */
 
 #ifndef INPUT_H
 #define INPUT_H

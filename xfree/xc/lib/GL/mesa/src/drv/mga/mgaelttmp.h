@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaelttmp.h,v 1.3 2000/08/28 02:43:12 tsi Exp $ */
+/* $XFree86$ */
 
 /* Buffers fill from high addresses down with vertices and from low
  * addresses up with elements.  

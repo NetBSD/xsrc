@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.3 1999/11/19 13:54:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.1 1996/10/13 11:19:12 dawes Exp $ */
 
 #include "Probe.h"
 

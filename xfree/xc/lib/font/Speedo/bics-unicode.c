@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/Speedo/bics-unicode.c,v 1.1 1999/01/31 04:59:25 dawes Exp $ */
+/* $XFree86$ */
 
 /* These data are very dodgy. */
 

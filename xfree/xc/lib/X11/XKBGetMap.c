@@ -25,7 +25,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.5 2000/02/17 14:16:21 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.4 1998/10/03 08:41:26 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/83 1997/10/05 20:42:43 kaleb $
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.38 2000/11/14 23:58:32 dawes Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.38.2.2 2001/02/26 23:04:05 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -50,7 +50,7 @@ KRB5SRCS = krb5auth.c
 
 #if SharedLibXdmGreet
 GREET_DIR = greeter
-#if SystemV4 || (SharedLibXdmGreet && (defined(LinuxArchitecture) || defined(NetBSDArchitecture)))
+#if SystemV4 || (SharedLibXdmGreet && (defined(LinuxArchitecture) || defined(NetBSDArchitecture) || defined(GNUMachArchitecture)))
     DLLIBRARY = DlLibrary
 #endif
 #else

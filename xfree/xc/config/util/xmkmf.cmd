@@ -1,7 +1,7 @@
 /* OS/2 REXX */
 /* make a Makefile from an Imakefile from inside or outside the sources
  * 
- * $XFree86: xc/config/util/xmkmf.cmd,v 3.1 1996/04/15 11:14:27 dawes Exp $
+ * $XFree86: xc/config/util/xmkmf.cmd,v 3.0 1996/01/24 21:56:19 dawes Exp $
  */
 '@ECHO OFF'
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $XFree86: xc/config/util/bsdinst.sh,v 3.3 1996/12/23 05:56:13 dawes Exp $
+# $XFree86: xc/config/util/bsdinst.sh,v 3.2 1996/01/05 13:07:37 dawes Exp $
 #
 # This accepts bsd-style install arguments and makes the appropriate calls
 # to the System V install.

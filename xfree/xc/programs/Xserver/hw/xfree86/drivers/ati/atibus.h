@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.h,v 1.7 2000/10/26 11:47:45 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.h,v 1.6 2000/08/04 21:07:12 tsi Exp $ */
 /*
  * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

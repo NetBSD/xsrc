@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jcdeflts.c,v 1.3 1998/10/04 09:36:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jcdeflts.c,v 1.2 1998/07/25 08:05:11 dawes Exp $ */
 /*
  * jcdeflts.c
  *

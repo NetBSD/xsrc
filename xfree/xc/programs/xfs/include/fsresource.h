@@ -48,7 +48,7 @@ in this Software without prior written authorization from the X Consortium.
  * @(#)resource.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/fsresource.h,v 1.4 1999/03/07 11:41:01 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/fsresource.h,v 1.3 1998/10/25 12:48:04 dawes Exp $ */
 
 #ifndef _RESOURCE_H_
 #define _RESOURCE_H_

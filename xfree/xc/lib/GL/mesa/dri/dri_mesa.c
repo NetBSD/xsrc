@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.13 2000/12/07 20:26:04 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.c,v 1.12 2000/11/13 23:31:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

@@ -37,12 +37,11 @@ XCOMM #define SystemMTDefines         -D_REENTRANT
 #define HasLibCrypt             YES
 #endif
 
-#define BuildLibPathVar		LD_LIBRARY_PATH
-#define HasGcc			YES
-#define HasGcc2			YES
-#ifndef HasGcc2ForCplusplus
-# define HasGcc2ForCplusplus	YES
+#ifndef BuildXF86RushExt
+# define BuildXF86RushExt	YES
 #endif
+
+#define BuildLibPathVar		LD_LIBRARY_PATH
 #define GccUsesGas		YES
 #define UseGas			YES
 #define GnuCpp			YES
@@ -124,7 +123,7 @@ XCOMM Not implemented and will always fail.
 #define StandardCppDefines	StandardDefines
 
 #define HasVarRun		YES
-#define VarDbDirectory		$(VARDIR)/state
+#define VarDbDirectory		$(VARDIR)/lib
 
 XCOMM i386Architecture
 #define OptimizedCDebugFlags	DefaultGcc2i386Opt

@@ -3,7 +3,7 @@
  * 8 bit displays, in Copy mode with no clipping.
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbteblt8.c,v 1.3 2000/02/12 05:43:18 dawes Exp $ */
+/* $XFree86$ */
 /*
 
 Copyright 1989, 1998  The Open Group

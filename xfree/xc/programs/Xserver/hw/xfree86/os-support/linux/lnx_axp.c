@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_axp.c,v 1.2 2000/11/06 21:57:11 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include "X.h"
@@ -16,15 +16,18 @@ static AXP axpList[] = {
   { "AlphaBook1", NULL, NULL, LCA }, 
   {"EB66", NULL, NULL, LCA}, 
   {"EB64+",NULL,NULL, APECS}, 
+  {"Noritake",NULL,"EV5",CIA},
+  {"Noritake",NULL,"EV56",CIA},
   {"Noritake",NULL,NULL,APECS},
   {"XL",NULL,NULL,APECS},              
   {"Avanti",NULL,NULL,APECS},
   {"Mikasa",NULL,"EV5",CIA},
   {"Mikasa",NULL,"EV56",CIA},
   {"Mikasa",NULL,NULL,APECS},
-  {"EB164","EB164",NULL,APECS},
+  {"EB164","EB164",NULL,CIA},
   {"EB164","PC164", NULL,CIA},
   {"EB164","RX164",NULL, POLARIS},
+  {"EB164","SX164",NULL, PYXIS},
   {"EB164","LX164",NULL, PYXIS},
   {"Alcor",NULL,NULL,CIA},
   {"Takara",NULL,NULL,CIA},

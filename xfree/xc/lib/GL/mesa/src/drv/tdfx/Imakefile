@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile,v 1.19 2000/12/12 23:24:28 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile,v 1.18 2000/12/09 02:33:43 dawes Exp $
 
 #include <Threads.tmpl>
 

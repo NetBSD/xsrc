@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbfillsp.c,v 1.7 2000/08/23 22:10:17 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbfillsp.c,v 1.6 2000/02/12 03:40:02 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

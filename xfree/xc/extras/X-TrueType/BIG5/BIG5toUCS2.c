@@ -33,7 +33,7 @@ Notice===
    This table data derived from Unicode, Inc.
    (ftp://ftp.unicode.org/Public/MAPPINGS/EASTASIA/OTHER/BIG5.TXT)
  */
-/* $XFree86: xc/extras/X-TrueType/BIG5/BIG5toUCS2.c,v 1.4 2000/11/29 17:40:21 dawes Exp $ */
+/* $XFree86$ */
 
 #include "xttversion.h"
 

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.5 2000/12/06 22:00:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.4 2000/12/02 01:16:02 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>

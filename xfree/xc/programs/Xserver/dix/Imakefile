@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/52 1996/12/02 10:20:03 lehors $
-XCOMM $XFree86: xc/programs/Xserver/dix/Imakefile,v 3.10 1999/09/27 06:29:17 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/dix/Imakefile,v 3.9 1999/04/17 09:08:28 dawes Exp $
 #include <Server.tmpl>
 
 #if PrintOnlyServer

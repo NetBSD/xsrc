@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.c,v 1.8 2000/02/08 17:19:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.c,v 1.12 2001/02/21 00:42:57 mvojkovi Exp $ */
 
 #include "nv_local.h"
 #include "riva_hw.h"
@@ -1087,7 +1087,6 @@ static void nv10UpdateArbitrationSettings
 static int CalcVClock
 (
     int           clockIn,
-    int           double_scan,
     int          *clockOut,
     int          *mOut,
     int          *nOut,
@@ -1103,8 +1102,6 @@ static int CalcVClock
     DeltaOld = 0xFFFFFFFF;
 
     VClk     = (unsigned)clockIn;
-    if (double_scan)
-        VClk *= 2;
     
     if (chip->CrystalFreqKHz == 14318)
     {
@@ -1164,22 +1161,22 @@ static void CalcStateExt
     int            vStart,
     int            vEnd,
     int            vTotal,
-    int            dotClock
+    int            dotClock,
+    int		   doubleScan
 )
 {
     int pixelDepth, VClk, m, n, p;
     /*
      * Save mode parameters.
      */
-    state->bpp    = bpp;
+    state->bpp    = bpp;    /* this is not bitsPerPixel, it's 8,15,16,32 */
     state->width  = width;
     state->height = height;
     /*
      * Extended RIVA registers.
      */
     pixelDepth = (bpp + 1)/8;
-    CalcVClock(dotClock, hDisplaySize < 512,  /* double scan? */
-               &VClk, &m, &n, &p, chip);
+    CalcVClock(dotClock, &VClk, &m, &n, &p, chip);
 
     switch (chip->Architecture)
     {
@@ -1191,12 +1188,14 @@ static void CalcStateExt
                                          chip);
             state->cursor0  = 0x00;
             state->cursor1  = 0x78;
+	    if (doubleScan)
+		state->cursor1 |= 2;
             state->cursor2  = 0x00000000;
             state->pllsel   = 0x10010100;
             state->config   = ((width + 31)/32)
                             | (((pixelDepth > 2) ? 3 : pixelDepth) << 8)
                             | 0x1000;
-            state->general  = 0x00000100;
+            state->general  = 0x00100100;
             state->repaint1 = hDisplaySize < 1280 ? 0x06 : 0x02;
             break;
         case NV_ARCH_04:
@@ -1207,6 +1206,8 @@ static void CalcStateExt
                                          chip);
             state->cursor0  = 0x00;
             state->cursor1  = 0xFC;
+	    if (doubleScan)
+		state->cursor1 |= 2;
             state->cursor2  = 0x00000000;
             state->pllsel   = 0x10000700;
             state->config   = 0x00001114;
@@ -1214,6 +1215,7 @@ static void CalcStateExt
             state->repaint1 = hDisplaySize < 1280 ? 0x04 : 0x00;
             break;
         case NV_ARCH_10:
+        case NV_ARCH_20:
             nv10UpdateArbitrationSettings(VClk, 
                                           pixelDepth * 8, 
                                          &(state->arbitration0),
@@ -1221,6 +1223,8 @@ static void CalcStateExt
                                           chip);
             state->cursor0  = 0x00;
             state->cursor1  = 0xFC;
+	    if (doubleScan)
+		state->cursor1 |= 2;
             state->cursor2  = 0x00000000;
             state->pllsel   = 0x10000700;
             state->config   = chip->PFB[0x00000200/4];
@@ -1228,6 +1232,10 @@ static void CalcStateExt
             state->repaint1 = hDisplaySize < 1280 ? 0x04 : 0x00;
             break;
     }
+
+    if((bpp != 8) && (chip->Architecture != NV_ARCH_03)) /* DirectColor */
+	state->general |= 0x00000030;
+
     state->vpll     = (p << 16) | (n << 8) | m;
     state->screen   = ((hTotal   & 0x040) >> 2)
                     | ((vDisplay & 0x400) >> 7)
@@ -1279,6 +1287,7 @@ static void UpdateFifoState
             chip->Tri05 = (RivaTexturedTriangle05 *)&(chip->FIFO[0x0000E000/4]);
             break;
         case NV_ARCH_10:
+        case NV_ARCH_20:
             /*
              * Initialize state for the RivaTriangle3D05 routines.
              */
@@ -1387,6 +1396,7 @@ static void LoadStateExt
             chip->PGRAPH[0x0000067C/4] = state->pitch3;
             break;
         case NV_ARCH_10:
+        case NV_ARCH_20:
             LOAD_FIXED_STATE(nv10,PFIFO);
             LOAD_FIXED_STATE(nv10,PRAMIN);
             LOAD_FIXED_STATE(nv10,PGRAPH);
@@ -1415,15 +1425,32 @@ static void LoadStateExt
                     chip->Tri03 = 0L;
                     break;
             }
-            chip->PGRAPH[0x00000640/4] = state->offset0;
-            chip->PGRAPH[0x00000644/4] = state->offset1;
-            chip->PGRAPH[0x00000648/4] = state->offset2;
-            chip->PGRAPH[0x0000064C/4] = state->offset3;
-            chip->PGRAPH[0x00000670/4] = state->pitch0;
-            chip->PGRAPH[0x00000674/4] = state->pitch1;
-            chip->PGRAPH[0x00000678/4] = state->pitch2;
-            chip->PGRAPH[0x0000067C/4] = state->pitch3;
-            chip->PGRAPH[0x00000680/4] = state->pitch3;
+
+	    if(chip->Architecture == NV_ARCH_10) {
+                chip->PGRAPH[0x00000640/4] = state->offset0;
+                chip->PGRAPH[0x00000644/4] = state->offset1;
+                chip->PGRAPH[0x00000648/4] = state->offset2;
+                chip->PGRAPH[0x0000064C/4] = state->offset3;
+                chip->PGRAPH[0x00000670/4] = state->pitch0;
+                chip->PGRAPH[0x00000674/4] = state->pitch1;
+                chip->PGRAPH[0x00000678/4] = state->pitch2;
+                chip->PGRAPH[0x0000067C/4] = state->pitch3;
+                chip->PGRAPH[0x00000680/4] = state->pitch3;
+	    } else {
+                chip->PGRAPH[0x00000820/4] = state->offset0;
+                chip->PGRAPH[0x00000824/4] = state->offset1;
+                chip->PGRAPH[0x00000828/4] = state->offset2;
+                chip->PGRAPH[0x0000082C/4] = state->offset3;
+                chip->PGRAPH[0x00000850/4] = state->pitch0;
+                chip->PGRAPH[0x00000854/4] = state->pitch1;
+                chip->PGRAPH[0x00000858/4] = state->pitch2;
+                chip->PGRAPH[0x0000085C/4] = state->pitch3;
+                chip->PGRAPH[0x00000860/4] = state->pitch3;
+                chip->PGRAPH[0x00000864/4] = state->pitch3;
+                chip->PGRAPH[0x000009A4/4] = chip->PFB[0x00000200/4]; 
+                chip->PGRAPH[0x000009A8/4] = chip->PFB[0x00000204/4];
+	    }
+
             chip->PGRAPH[0x00000B00/4] = chip->PFB[0x00000240/4];
             chip->PGRAPH[0x00000B04/4] = chip->PFB[0x00000244/4];
             chip->PGRAPH[0x00000B08/4] = chip->PFB[0x00000248/4];
@@ -1601,6 +1628,7 @@ static void UnloadStateExt
             state->pitch3   = chip->PGRAPH[0x0000067C/4];
             break;
         case NV_ARCH_10:
+        case NV_ARCH_20:
             state->offset0  = chip->PGRAPH[0x00000640/4];
             state->offset1  = chip->PGRAPH[0x00000644/4];
             state->offset2  = chip->PGRAPH[0x00000648/4];
@@ -1798,7 +1826,7 @@ static void nv3GetConfig
                 break;
         }
     }        
-    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000020) ? 14318 : 13500;
+    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000020) ? 13500 : 14318;	/* this was reversed, not sure that it is right this way either (HCS) */
     chip->CURSOR           = &(chip->PRAMIN[0x00008000/4 - 0x0800/4]);
     chip->CURSORPOS        = &(chip->PRAMDAC[0x0300/4]);
     chip->VBLANKENABLE     = &(chip->PGRAPH[0x0140/4]);
@@ -1964,6 +1992,7 @@ int RivaGetConfig
             nv4GetConfig(chip);
             break;
         case NV_ARCH_10:
+        case NV_ARCH_20:
             nv10GetConfig(chip);
             break;
         default:

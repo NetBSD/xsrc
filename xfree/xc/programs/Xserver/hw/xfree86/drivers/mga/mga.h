@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.70 2000/12/06 15:35:19 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.68 2000/12/01 14:28:57 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *

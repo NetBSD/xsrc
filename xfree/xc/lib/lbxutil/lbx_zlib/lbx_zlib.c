@@ -46,7 +46,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.6 2000/05/18 23:46:17 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.5 1998/12/20 11:57:19 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

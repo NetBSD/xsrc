@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/cygwin/cygwin_video.c,v 1.1 2000/08/10 17:40:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.7 1999/12/03 19:17:45 eich Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc
  *

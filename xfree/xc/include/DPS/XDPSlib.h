@@ -34,7 +34,7 @@
  *
  * Author: Adobe Systems Incorporated and Digital Equipment Corporation
  */
-/* $XFree86: xc/include/DPS/XDPSlib.h,v 1.3 2000/06/07 22:02:55 tsi Exp $ */
+/* $XFree86$ */
  
 #ifndef _XDPSlib_h
 #define _XDPSlib_h

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.14 2000/08/31 19:03:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.13 2000/05/18 23:46:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

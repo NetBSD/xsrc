@@ -106,9 +106,9 @@ void S3VInitVideo(ScreenPtr pScreen)
 	(pScrn->bitsPerPixel == 16)
 	) 
        &&
-       ((ps3v->Chipset == S3_ViRGE_DXGX) ||
+       ((ps3v->Chipset == S3_ViRGE_DXGX) /* || */
 	/* S3_ViRGE_GX2_SERIES(ps3v->Chipset) || */
-	(ps3v->Chipset == S3_ViRGE)
+	/* (ps3v->Chipset == S3_ViRGE) */
 	)
        && !ps3v->NoAccel
        )

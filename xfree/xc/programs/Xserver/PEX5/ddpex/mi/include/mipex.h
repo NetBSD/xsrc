@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/mipex.h,v 3.1 1998/10/04 09:34:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/mipex.h,v 3.0 1995/07/07 15:34:01 dawes Exp $ */
 
 #ifndef MI_H
 #define MI_H

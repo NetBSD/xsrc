@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/keysymdef.h,v 1.10 2000/10/27 18:30:46 dawes Exp $ */
+/* $XFree86: xc/include/keysymdef.h,v 1.9 1999/07/06 11:38:02 dawes Exp $ */
 
 #define XK_VoidSymbol		0xFFFFFF	/* void symbol */
 

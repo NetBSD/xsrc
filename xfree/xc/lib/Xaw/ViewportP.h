@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xaw/ViewportP.h,v 1.6 1999/06/20 08:41:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/ViewportP.h,v 1.5 1999/06/06 08:48:21 dawes Exp $ */
 
 #ifndef _ViewportP_h
 #define _ViewportP_h

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ativersion.h,v 1.28 2000/12/13 00:45:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ativersion.h,v 1.27 2000/12/02 15:53:52 tsi Exp $ */
 /*
  * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

@@ -57,7 +57,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/Xrm.c,v 1.6 1999/12/13 02:12:49 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Xrm.c,v 1.5 1997/06/22 12:20:21 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>

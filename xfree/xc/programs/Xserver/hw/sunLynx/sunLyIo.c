@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.3 1998/10/04 09:38:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.2 1996/12/27 06:51:39 dawes Exp $ */
 
 /*-
  * This is sunIo.c modified for LynxOS

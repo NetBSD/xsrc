@@ -23,7 +23,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/font/Type1/module/type1mod.c,v 1.8 1999/05/15 12:10:08 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/module/type1mod.c,v 1.7 1999/01/26 05:53:46 dawes Exp $ */
 
 #include "misc.h"
 

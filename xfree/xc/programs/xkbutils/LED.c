@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbutils/LED.c,v 1.3 1999/03/02 11:50:02 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

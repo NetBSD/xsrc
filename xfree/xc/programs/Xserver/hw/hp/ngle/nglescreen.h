@@ -24,7 +24,7 @@ performance, or use of this material.
  *
  *************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.h,v 1.2 1998/06/27 12:53:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.h,v 1.0tsi Exp $ */
 
 /******************************************************************************
  *

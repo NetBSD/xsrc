@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miFont.h,v 1.2 1999/01/31 12:21:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miFont.h,v 1.0tsi Exp $ */
 /* 
  * font internal format
  */

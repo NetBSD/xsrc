@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_fastpath.c,v 1.4 2000/12/04 19:21:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_fastpath.c,v 1.3 2000/11/13 23:31:30 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,

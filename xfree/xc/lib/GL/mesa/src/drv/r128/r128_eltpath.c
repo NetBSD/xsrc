@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_eltpath.c,v 1.2 2000/12/07 20:26:08 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_eltpath.c,v 1.1 2000/12/04 19:21:46 dawes Exp $ */
 /*
  * GLX Hardware Device Driver for Matrox G400
  * Copyright (C) 1999 Keith Whitwell

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xmag/CutPaste.h,v 1.1 1999/03/07 11:41:12 dawes Exp $ */
+/* $XFree86$ */
 /*
  * Copyright (C) 1999 The XFree86 Project, Inc.  All Rights Reserved.
  *

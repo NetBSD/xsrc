@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imRm.c,v 3.9 2000/09/26 15:56:51 tsi Exp $ */
+/* $XFree86: xc/lib/X11/imRm.c,v 3.8 2000/01/29 18:58:15 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>

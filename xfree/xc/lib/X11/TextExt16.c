@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/TextExt16.c,v 1.2 1999/05/09 10:50:17 dawes Exp $ */
+/* $XFree86$ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint

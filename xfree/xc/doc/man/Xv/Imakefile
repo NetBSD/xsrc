@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/doc/man/Xv/Imakefile,v 1.2 1998/07/25 06:09:30 dawes Exp $
+XCOMM $XFree86: xc/doc/man/Xv/Imakefile,v 1.1.2.1 1998/06/27 14:55:34 dawes Exp $
 
 MANDIR = $(LIBMANDIR)
 MANSUFFIX = $(LIBMANSUFFIX)

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Requests.h,v 1.3 1999/02/19 21:27:07 hohndel Exp $ */
+/* $XFree86: xc/programs/bitmap/Requests.h,v 1.2 1999/02/01 11:56:09 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.17 2000/11/30 20:45:33 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.15 2000/06/20 05:08:48 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

@@ -56,7 +56,7 @@ SOFTWARE.
  *      socket ids aren't small nums (0 - 2^8)
  *
  *****************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.13 2000/08/10 17:40:40 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.12 2000/05/18 23:46:26 dawes Exp $ */
 
 #include "misc.h"
 #include <X11/Xtrans.h>

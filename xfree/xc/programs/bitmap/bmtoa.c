@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.4 1999/02/01 11:56:10 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/bmtoa.c,v 3.3 1998/10/04 09:39:59 dawes Exp $ */
 
 /*
  * bmtoa - bitmap to ascii filter

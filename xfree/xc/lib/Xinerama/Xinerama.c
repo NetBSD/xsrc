@@ -19,7 +19,7 @@
 *   or  in  FAR 52.227-19, as applicable.                       *
 *                                                               *
 *****************************************************************/
-/* $XFree86: xc/lib/Xinerama/Xinerama.c,v 1.1 2000/02/27 23:10:04 mvojkovi Exp $ */
+/* $XFree86$ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

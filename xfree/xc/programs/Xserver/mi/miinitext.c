@@ -439,7 +439,7 @@ static ExtensionModule staticExtensions[] = {
     { XIdleExtensionInit, "XIDLE", NULL, NULL, NULL },
 #endif
 #ifdef XTRAP
-    { DEC_XTRAPIbit, "XTRAP", &noTestExtensions, NULL, NULL },
+    { DEC_XTRAPInit, "XTRAP", &noTestExtensions, NULL, NULL },
 #endif
 #ifdef XKB
     { XkbExtensionInit, XkbName, &noXkbExtension, NULL, NULL },

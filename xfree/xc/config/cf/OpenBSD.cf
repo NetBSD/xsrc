@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.44 2000/12/02 20:15:03 herrb Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.44.2.4 2001/02/26 23:08:38 dawes Exp $
 XCOMM
 
 #ifndef OSName
@@ -72,8 +72,18 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasVarRun		YES
 #define HasVarDb		YES
 
+#define InstallXloadSetGID	NO
+
 #ifndef HasLibPthread
 #define HasLibPthread		NO
+#endif
+
+#ifndef HasMktemp
+# if (OSMajorVersion > 2) || (OSMajorVersion == 2 && OSMinorVersion >= 1)
+#  define HasMktemp		YES
+# else
+#  define HasMktemp		NO
+# endif
 #endif
 
 /*
@@ -93,9 +103,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #endif
 
-#if OSMajorVersion == 2 && OSMinorVersion > 6 || OSMajorVersion >= 3
-# define HasThreadSafeAPI      YES
-#endif
+/* Set this to YES when getpwuid_r is added to libc_r */
+# define HasThreadSafeAPI      NO
 
 /*
  * Compiler Features
@@ -147,7 +156,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define LdPostLib		/**/
 #  define ServerExtraDefines GccGasOption XFree86ServerDefines
 #  ifndef XFree86ConsoleDefines
+#   if OSMajorVersion == 2 && OSMinorVersion <= 8
 #    define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#   else
+#    define XFree86ConsoleDefines -DWSCONS_SUPPORT
+#   endif
 #  endif
 #endif
 
@@ -424,8 +437,10 @@ install:: fonts.alias							@@\
 # endif
 
 /* Support for USB Mices */
-# if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 6)
-#  define UsbMouseSupport		YES
+# ifndef UsbMouseSupport
+#  if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 6)
+#   define UsbMouseSupport		YES
+#  endif
 # endif
 
 /*

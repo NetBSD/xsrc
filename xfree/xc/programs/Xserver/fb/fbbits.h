@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.8 2000/03/01 00:25:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.7 2000/02/23 20:29:41 dawes Exp $ */
 
 /*
  * This file defines functions for drawing some primitives using

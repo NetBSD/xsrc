@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/Print.h,v 1.4 2000/01/25 18:37:31 dawes Exp $ */
+/* $XFree86: xc/include/extensions/Print.h,v 1.3 1999/12/16 02:26:31 robin Exp $ */
 
 /* $XConsortium: Print.h /main/3 1996/12/10 14:59:02 rws $ */
 /******************************************************************************

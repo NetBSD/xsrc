@@ -428,4 +428,4 @@ EXPORTS
 	glBlendEquationEXT @ 462
 	glTexImage3D @ 463
 
-/* $XFree86: xc/lib/GL/GL-def.cpp,v 1.1 2000/08/09 23:40:11 dawes Exp $ */
+/* $XFree86$ */

@@ -1022,9 +1022,9 @@ XawTextSourceReplace(Widget w, XawTextPosition left,
 		    XtFree((XtPointer)entity);
 		    if (entity == anchor->entities) {
 			if ((anchor->entities = enext) == NULL) {
+			    eprev = NULL;
 			    anchor = XawTextSourceRemoveAnchor(w, anchor);
 			    entity = anchor ? anchor->entities : NULL;
-			    eprev = NULL;
 			}
 			else
 			    eprev = entity = enext;
@@ -1053,6 +1053,7 @@ XawTextSourceReplace(Widget w, XawTextPosition left,
 		    XtFree((XtPointer)entity);
 		    anchor->cache = NULL;
 		    if (entity == anchor->entities) {
+			eprev = NULL;
 			if ((anchor->entities = enext) == NULL) {
 			    if (i == 0)
 				++i;
@@ -1069,7 +1070,6 @@ XawTextSourceReplace(Widget w, XawTextPosition left,
 				break;
 			    }
 			    anchor = src->textSrc.anchors[i];
-			    eprev = NULL;
 			    entity = anchor->entities;
 			    continue;
 			}

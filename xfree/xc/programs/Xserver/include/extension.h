@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/extension.h,v 1.3 1999/04/11 15:28:09 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef EXTENSION_H
 #define EXTENSION_H 

@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_mouse.tcl,v 1.2 1998/04/05 15:30:29 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/help_mouse.tcl,v 1.1.2.4 1998/02/26 20:11:19 hohndel Exp $
 #
 set message \
 { First select the protocol for your mouse using 'p', then if needed, change the device

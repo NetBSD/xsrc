@@ -53,13 +53,13 @@ OBJS =	Args.o \
 INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I../../mi -I../../include -I../../os \
            -I$(EXTINCSRC) -I$(XINCLUDESRC)
-DEFINES = $(OS_DEFINES) -UXINPUT -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
-	  -UMITSHM -UXF86DRI -UXFree86LOADER
+DEFINES = $(OS_DEFINES) $(EXT_DEFINES) -UXINPUT -UMITSHM \
+	  -UXF86VIDMODE -UXFreeXDGA -UXF86MISC -UXF86DRI -UXFree86LOADER
 
 all:: $(OBJS)
 
 LinkSourceFile(stubs.c,$(SERVERSRC)/Xi)
-SpecialCObjectRule(Init,$(ICONFIGFILES),$(EXT_DEFINES))
+SpecialCObjectRule(Init,$(ICONFIGFILES),$(_NOOP_))
 LinkSourceFile(miinitext.c,$(SERVERSRC)/mi)
 SpecialCObjectRule(miinitext,$(ICONFIGFILES),-UDPMSExtension)
 

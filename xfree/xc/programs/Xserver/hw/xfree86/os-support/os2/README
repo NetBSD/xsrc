@@ -74,5 +74,5 @@ appear unnecessarily complicated, it is probably because there were subtle probl
 with the simpler solutions. Due to the complexity of the Xserver code, and the
 differences between OS/2 and unix, there are many potential pitfalls.
 
-$XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/README,v 3.2 1997/01/27 06:58:06 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/README,v 3.1 1996/01/30 15:26:27 dawes Exp $
 

@@ -43,7 +43,7 @@ Tools. If you did not receive these as a member of ADC, they are available
 for download from the Apple Developer Connection.
 
 If you want to save some time, you can use the precompiled binaries provided
-by the XFree86 server at <URL:ftp://ftp.xfree86.org/pub/XFree86/4.0.2/bina-
+by the XFree86 server at <URL:ftp://ftp.xfree86.org/pub/XFree86/4.0.3/bina-
 ries/Darwin/>.  Follow the instructions in the Install document to install
 it.
 
@@ -345,4 +345,4 @@ other clients of IOGraphics services) on Mac OS X Developers' Preview 4.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.4 2000/12/12 18:54:29 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Darwin,v 1.3 2000/12/12 19:04:02 dawes Exp $
+$XFree86$

@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.h,v 1.1 2000/11/02 02:51:21 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Based, in part, on code with the following copyright notice:

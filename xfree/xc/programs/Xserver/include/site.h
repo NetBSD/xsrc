@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/include/site.h,v 1.5 2000/05/18 16:30:02 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef SITE_H
 #define SITE_H

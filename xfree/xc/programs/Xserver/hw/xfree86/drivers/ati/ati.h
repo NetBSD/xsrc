@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.h,v 1.6 2000/08/04 21:07:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.h,v 1.5 2000/02/18 12:19:11 tsi Exp $ */
 /*
  * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

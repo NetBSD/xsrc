@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.h,v 1.3 2000/02/15 07:13:43 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.h,v 1.2 1999/12/14 01:33:49 robin Exp $ */
 
 #ifndef _TDFX_DRI_
 #define _TDFX_DRI_

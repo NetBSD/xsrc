@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.4 1998/08/20 08:55:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.3 1997/10/26 13:24:43 dawes Exp $ */
 
 #ifndef XKB_IN_SERVER
 

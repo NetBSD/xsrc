@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.8 2000/02/12 20:45:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.5 1999/06/06 08:48:44 dawes Exp $ */
 
 #include "Probe.h"
 

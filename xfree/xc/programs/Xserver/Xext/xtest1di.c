@@ -48,7 +48,7 @@ Telephone and Telegraph Company or of the Regents of the
 University of California.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/xtest1di.c,v 3.1 1998/10/04 09:36:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xtest1di.c,v 3.0 1996/05/06 05:55:45 dawes Exp $ */
 
 /*****************************************************************************
  * include files

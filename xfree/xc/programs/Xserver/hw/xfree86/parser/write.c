@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.12 2000/11/14 17:33:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.11 2000/10/20 14:59:03 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

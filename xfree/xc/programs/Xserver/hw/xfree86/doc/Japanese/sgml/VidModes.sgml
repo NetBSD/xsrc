@@ -1124,7 +1124,7 @@ Xconfig では、線上で輝いているドットの数、輝いているドットから同期信号の開
 またその逆も言えることを覚えておいて下さい。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VidModes.sgml,v 3.2 1997/01/26 04:34:27 dawes Exp $
+$XFree86$
 </verb>
 <hrule>
 

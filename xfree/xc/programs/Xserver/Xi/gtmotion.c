@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.4 1998/10/04 09:37:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.3 1997/05/03 09:15:49 dawes Exp $ */
 
 /***********************************************************************
  *

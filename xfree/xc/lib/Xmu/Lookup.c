@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Lookup.c,v 3.6 1999/03/21 07:34:37 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Lookup.c,v 3.5 1999/01/31 12:21:20 dawes Exp $ */
 
 #include <X11/Xmu/Lookup.h>
 

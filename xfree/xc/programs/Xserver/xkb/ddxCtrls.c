@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxCtrls.c,v 1.2 2000/08/26 15:11:27 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1

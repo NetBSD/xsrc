@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128.cpp,v 1.2 2000/12/11 20:18:14 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128.cpp,v 1.1 2000/10/04 23:34:58 robin Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH I128 __drivermansuffix__ "Version 4.0.2"  "XFree86"

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/chgkbd.c,v 3.3 1998/10/04 09:36:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/chgkbd.c,v 3.2 1996/03/29 22:12:55 dawes Exp $ */
 
 /***********************************************************************
  *

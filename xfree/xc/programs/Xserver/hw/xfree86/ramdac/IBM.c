@@ -23,7 +23,7 @@
  *
  * IBM RAMDAC routines.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.10 1999/03/28 15:33:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/IBM.c,v 1.9 1999/02/12 22:52:10 hohndel Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

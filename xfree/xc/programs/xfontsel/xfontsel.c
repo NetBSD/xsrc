@@ -31,7 +31,7 @@ Author:	Ralph R. Swick, DEC/MIT Project Athena
 	one weekend in November, 1989
 Modified: Mark Leisher <mleisher@crl.nmsu.edu> to deal with UCS sample text.
 */
-/* $XFree86: xc/programs/xfontsel/xfontsel.c,v 1.3 2000/09/26 15:57:24 tsi Exp $ */
+/* $XFree86: xc/programs/xfontsel/xfontsel.c,v 1.2 2000/05/11 18:14:43 tsi Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

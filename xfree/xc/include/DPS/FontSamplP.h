@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/FontSamplP.h,v 1.2 2000/06/07 22:02:55 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef _FontSamplerP_H
 #define _FontSamplerP_H

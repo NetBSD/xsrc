@@ -3,7 +3,7 @@
 
   /*\
    * $XConsortium: utils.h /main/3 1996/01/14 16:48:26 kaleb $
-   * $XFree86: xc/programs/xkbcomp/utils.h,v 3.2 2000/10/24 22:45:16 dawes Exp $
+   * $XFree86: xc/programs/xkbcomp/utils.h,v 3.1 1996/08/26 10:52:26 dawes Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION

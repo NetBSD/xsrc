@@ -1,5 +1,5 @@
 /* $XConsortium: cfgscan.c /main/2 1995/12/07 21:27:36 kaleb $ */
-/* $XFree86: xc/programs/xkbevd/cfgscan.c,v 3.5 1999/03/02 10:42:25 dawes Exp $ */
+/* $XFree86: xc/programs/xkbevd/cfgscan.c,v 3.4 1997/12/06 09:26:15 hohndel Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

@@ -2,7 +2,7 @@
  * cfb copy area
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.11 2000/09/26 15:57:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.10 2000/02/12 03:39:21 dawes Exp $ */
 
 /*
 

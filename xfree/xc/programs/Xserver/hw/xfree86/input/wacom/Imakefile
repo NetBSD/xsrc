@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/Imakefile,v 1.7 2000/12/01 17:43:06 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/Imakefile,v 1.6 2000/03/03 01:05:51 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

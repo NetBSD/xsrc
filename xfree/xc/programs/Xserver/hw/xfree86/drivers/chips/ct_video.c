@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.5 2000/09/22 11:35:48 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_video.c,v 1.4 2000/09/19 12:46:15 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -390,12 +390,10 @@ CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
   CHIPSPtr cPtr = CHIPSPTR(pScrn);
   unsigned char mr3c, tmp;
 
-  ErrorF("StopVideo\n");
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
   CHIPSHiQVSync(pScrn);
   if(exit) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
-	 ErrorF("StopVideo Exit\n");
 	mr3c = cPtr->readMR(cPtr, 0x3C);
 	cPtr->writeMR(cPtr, 0x3C, (mr3c & 0xFE));
 	tmp = cPtr->readXR(cPtr, 0xD0);
@@ -610,7 +608,6 @@ CHIPSDisplayVideo(
 
     CHIPSHiQVSync(pScrn);
 
-    ErrorF("DisplayVideo\n");
     tmp = cPtr->readXR(cPtr, 0xD0);
     cPtr->writeXR(cPtr, 0xD0, (tmp | 0x10));
     
@@ -629,7 +626,8 @@ CHIPSDisplayVideo(
 	tmp |= 0x08;
 	break;
     case FOURCC_YV12:		/* YV12 */
-	tmp |= 0x03; 
+      /* tmp |= 0x03 */
+	tmp |= 0x00; 
 	break;
     case FOURCC_YUY2:		/* YUY2 */
     default:

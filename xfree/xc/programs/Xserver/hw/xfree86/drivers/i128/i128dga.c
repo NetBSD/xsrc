@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128dga.c,v 1.1 2000/12/11 01:53:01 robin Exp $ */
+/* $XFree86: $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

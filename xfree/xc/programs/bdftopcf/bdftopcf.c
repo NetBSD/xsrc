@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/bdftopcf/bdftopcf.c,v 1.2 1999/02/01 11:56:04 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/X.h>
 #include <X11/Xproto.h>

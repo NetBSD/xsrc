@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/programs/xfd/grid.c,v 1.3 1999/03/02 11:49:38 dawes Exp $ */
+/* $XFree86$ */
 
 
 #include <X11/IntrinsicP.h>

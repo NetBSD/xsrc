@@ -2,7 +2,7 @@
 # $XConsortium: Xsession /main/10 1995/12/18 18:21:28 gildea $
 #
 #
-# $XFree86: xc/programs/xdm/config/Xsession,v 1.2 1998/01/11 03:48:32 dawes Exp $
+# $XFree86$
 
 # redirect errors to a file in user's home directory if we can
 for errfile in "$HOME/.xsession-errors" "${TMPDIR-/tmp}/xses-$USER" "/tmp/xses-$USER"

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwud/xwud.c,v 3.4 1999/03/07 11:41:38 dawes Exp $ */
+/* $XFree86: xc/programs/xwud/xwud.c,v 3.3 1998/10/04 09:42:05 dawes Exp $ */
 
 /* xwud - marginally useful raster image undumper */
 

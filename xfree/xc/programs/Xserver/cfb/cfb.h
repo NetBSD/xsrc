@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfb.h,v 3.25 2000/10/23 21:16:43 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfb.h,v 3.24 2000/08/23 22:10:05 tsi Exp $ */
 
 #if !defined(__CFB_H__) || defined(CFB_PROTOTYPES_ONLY)
 

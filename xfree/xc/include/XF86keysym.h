@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/XF86keysym.h,v 1.6 2000/11/02 02:51:09 dawes Exp $ */
+/* $XFree86: xc/include/XF86keysym.h,v 1.5 2000/07/07 00:44:58 dawes Exp $ */
 
 /*
  * XFree86 vendor specific keysyms.

@@ -22,4 +22,4 @@ EXPORTS
 	glVertexPointer
 	glDrawElements
 
-/* $XFree86: xc/lib/GL/mesa/src/OSmesa/OSmesa-def.cpp,v 1.1 2000/08/09 23:40:12 dawes Exp $ */
+/* $XFree86$ */

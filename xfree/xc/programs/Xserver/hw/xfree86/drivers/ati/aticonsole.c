@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.14 2000/10/11 22:52:55 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.13 2000/08/04 21:07:13 tsi Exp $ */
 /*
  * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

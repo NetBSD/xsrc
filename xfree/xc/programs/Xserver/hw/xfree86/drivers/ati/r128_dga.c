@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.4 2000/11/21 23:10:33 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.3 2000/11/18 19:37:10 tsi Exp $ */
 /*
  * Authors:
  *   Ove Kåven <ovek@transgaming.com>,

@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/StrToOrnt.c,v 1.5 1998/10/03 09:06:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToOrnt.c,v 1.4 1998/08/16 10:25:20 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>

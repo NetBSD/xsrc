@@ -333,7 +333,6 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	case CYBER9525DVD:
 	case CYBER9397DVD:
 	case CYBER9397:
-	case CYBER9388:
 	case IMAGE975:
 	case IMAGE985:
 	    if (pScrn->bitsPerPixel >= 8)
@@ -344,9 +343,12 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    	pReg->tridentRegs3x4[PreEndFetch] = 0xFF;
 	    /* Fall Through */
 	case PROVIDIA9685:
+	case CYBER9388:
+	case CYBER9385:
 	    pReg->tridentRegs3x4[Enhancement0] = 0x40;
 	    /* Fall Through */
 	case PROVIDIA9682:
+	case CYBER9382:
 	    if (pTrident->UsePCIRetry) 
 	    	pReg->tridentRegs3x4[PCIRetry] = 0xDF;
 	    else

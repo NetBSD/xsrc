@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xgc/main.c,v 1.3 2000/02/17 14:00:36 dawes Exp $ */
+/* $XFree86$ */
 
 /* xgc
 **

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/X11/lcUniConv/gb2312.h,v 1.3 2000/11/29 17:40:28 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * GB2312.1980-0

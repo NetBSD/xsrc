@@ -67,7 +67,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/MultiSinkP.h,v 1.7 1999/06/20 08:41:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSinkP.h,v 1.6 1999/06/06 08:48:00 dawes Exp $ */
 
 #ifndef _XawMultiSinkP_h
 #define _XawMultiSinkP_h

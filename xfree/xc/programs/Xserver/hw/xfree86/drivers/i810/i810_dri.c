@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.c,v 1.13 2000/12/01 14:28:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.c,v 1.12 2000/09/24 13:51:26 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

@@ -1456,7 +1456,7 @@ InitStringOrFile(AsciiSrcObject src, Bool newString)
 		open_mode = O_WRONLY | O_CREAT | O_EXCL;
 		fdopen_mode = "w";
 	    }
-	    else
+	    else {
 /* O_NOFOLLOW is a FreeBSD & Linux extension */
 #ifdef O_NOFOLLOW
 		open_mode = O_RDWR | O_NOFOLLOW;
@@ -1464,6 +1464,7 @@ InitStringOrFile(AsciiSrcObject src, Bool newString)
 		open_mode = O_RDWR; /* unsafe; subject to race conditions */
 #endif /* O_NOFOLLOW */
 		fdopen_mode = "r+";
+	    }
 	    break;
 	default:
 	    XtErrorMsg("badMode", "asciiSourceCreate", "XawError",

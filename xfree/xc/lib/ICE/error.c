@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/error.c,v 1.2 1999/05/23 06:33:23 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"

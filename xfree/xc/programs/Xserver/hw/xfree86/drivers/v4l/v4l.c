@@ -37,7 +37,7 @@ static OptionInfoPtr V4LAvailableOptions(int chipid, int busid);
 
 DriverRec V4L = {
         40000,
-        "Xv driver for video4linux",
+        "v4l",
         V4LIdentify, /* Identify*/
         V4LProbe, /* Probe */
 	V4LAvailableOptions,

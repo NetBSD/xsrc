@@ -28,7 +28,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.30 2000/11/28 20:59:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.29 2000/10/12 12:00:28 tsi Exp $ */
 
 #include "Probe.h"
 #include "PatchLevel.h"

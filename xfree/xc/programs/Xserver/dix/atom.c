@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/atom.c,v 3.1 1998/10/04 09:38:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/atom.c,v 3.0 1996/04/15 11:19:31 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

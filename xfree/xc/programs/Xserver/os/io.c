@@ -48,7 +48,7 @@ SOFTWARE.
  *   InsertFakeRequest, ResetCurrentRequest
  *
  *****************************************************************/
-/* $XFree86: xc/programs/Xserver/os/io.c,v 3.23 2000/08/10 17:40:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/io.c,v 3.22 2000/05/18 23:46:26 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>

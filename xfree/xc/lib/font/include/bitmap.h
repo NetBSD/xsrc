@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bitmap.h,v 1.8 2000/10/24 22:45:02 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/bitmap.h,v 1.7 1999/08/01 07:56:57 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

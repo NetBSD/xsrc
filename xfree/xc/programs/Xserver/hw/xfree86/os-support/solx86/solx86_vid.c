@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.16 1999/12/13 02:32:19 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.15 1999/07/18 14:50:18 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>

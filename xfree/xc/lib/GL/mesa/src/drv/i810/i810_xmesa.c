@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.9 2000/12/07 20:26:06 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_xmesa.c,v 1.8 2000/11/08 05:02:43 dawes Exp $ */
 
 /*
  * Authors:

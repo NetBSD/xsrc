@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxtrifuncs.c,v 1.1 2000/09/24 13:51:20 alanh Exp $ */
+/* $XFree86: $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

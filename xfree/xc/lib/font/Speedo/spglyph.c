@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spglyph.c,v 1.5 1999/03/14 11:17:43 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spglyph.c,v 1.4 1999/03/14 03:21:18 dawes Exp $ */
 
 #include	<X11/X.h>	/* for bit order #defines */
 #include	"spint.h"

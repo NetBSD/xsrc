@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/vbe.c,v 1.14 2000/12/06 15:35:32 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/vbe.c,v 1.12 2000/08/04 16:13:41 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_ansic.h"

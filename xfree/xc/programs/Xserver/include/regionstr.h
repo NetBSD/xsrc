@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/regionstr.h,v 1.3 1999/10/14 04:43:15 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef REGIONSTRUCT_H
 #define REGIONSTRUCT_H

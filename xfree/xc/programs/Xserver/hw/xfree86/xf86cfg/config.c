@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.c,v 1.6 2000/12/08 21:51:04 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.c,v 1.4 2000/10/27 18:31:05 dawes Exp $
  */
 
 #include "config.h"

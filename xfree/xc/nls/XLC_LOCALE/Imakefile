@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/17 1998/05/21 07:51:40 kaleb $
 
 
 
-XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.15 2000/10/27 18:30:53 dawes Exp $
+XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.14 2000/10/24 18:07:39 dawes Exp $
 
   WCHAR32 = HasWChar32
 

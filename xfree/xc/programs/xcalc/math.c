@@ -1,5 +1,5 @@
 /* $XConsortium: math.c,v 1.17 91/07/25 17:51:34 rws Exp $ 
- * $XFree86: xc/programs/xcalc/math.c,v 1.2 2000/06/15 20:50:03 dawes Exp $ 
+ * $XFree86: xc/programs/xcalc/math.c,v 1.1 2000/02/13 03:26:19 dawes Exp $ 
  *
  *  math.c  -  mathematics functions for a hand calculator under X
  *

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/JISX0201/Imakefile.inc,v 1.1 1999/03/28 15:31:57 dawes Exp $
+XCOMM $XFree86$
 
 #define ModuleName JISX0201
 MODULENAME = ModuleName

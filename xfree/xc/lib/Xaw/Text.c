@@ -1,4 +1,4 @@
-/* $TOG: Text.c /main/201 1998/06/24 11:53:44 kaleb $ */
+/* $Xorg: Text.c,v 1.3 2000/08/17 19:45:40 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -70,7 +70,7 @@ SOFTWARE.
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Text.c,v 3.40 2000/12/07 20:26:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.42 2001/01/30 21:54:33 paulo Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -805,6 +805,7 @@ CreateVScrollBar(TextWidget ctx)
 	XtRealizeWidget(vbar);
 	XtMapWidget(vbar);
     }
+    XtSetKeyboardFocus(vbar, (Widget)ctx);
 }
 
 /*
@@ -863,6 +864,7 @@ CreateHScrollBar(TextWidget ctx)
 	XtRealizeWidget(hbar);
 	XtMapWidget(hbar);
     }
+    XtSetKeyboardFocus(hbar, (Widget)ctx);
 }
 
 /*

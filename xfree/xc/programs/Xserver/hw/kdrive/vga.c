@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/vga.c,v 1.4 2000/05/24 23:57:56 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/vga.c,v 1.2 1999/12/30 03:03:07 robin Exp $ */
 
 #include "vga.h"
 #include <stdio.h>

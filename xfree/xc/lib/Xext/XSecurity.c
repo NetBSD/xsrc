@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xext/XSecurity.c,v 1.2 1999/07/12 05:57:22 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xlibint.h>
 #include <stdio.h>

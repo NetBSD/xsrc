@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CmapAlloc.c,v 1.5 1998/10/03 09:06:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CmapAlloc.c,v 1.4 1998/09/05 06:36:11 dawes Exp $ */
 
 /*
  * Author:  Donna Converse, MIT X Consortium

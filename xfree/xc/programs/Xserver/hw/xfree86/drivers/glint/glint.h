@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.37 2000/11/14 17:32:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.36 2000/10/17 09:07:04 alanh Exp $ */
 /*
  * Copyright 1997,1998 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/sharedlib.c,v 3.2 1998/10/03 09:07:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/sharedlib.c,v 3.1 1996/08/20 12:12:05 dawes Exp $ */
 
 #if (defined(SUNSHLIB) || defined(AIXSHLIB)) && !defined(SHAREDCODE)
 #include "IntrinsicI.h"

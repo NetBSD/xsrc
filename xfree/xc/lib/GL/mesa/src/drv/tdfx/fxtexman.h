@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxtexman.h,v 1.2 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxtexman.h,v 1.1 2000/09/24 13:51:20 alanh Exp $ */
 #ifndef FXTEXMAN_H
 #define FXTEXMAN_H
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.8 2000/12/02 01:16:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.7 2000/11/09 11:32:21 alanh Exp $ */
 
 /* modified from tdfx_dri.c, mga_dri.c */
 

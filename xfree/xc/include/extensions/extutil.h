@@ -27,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * protocol extensions.  THESE INTERFACES ARE NOT PART OF THE X STANDARD AND
  * ARE SUBJECT TO CHANGE!
  */
-/* $XFree86: xc/include/extensions/extutil.h,v 1.4 2000/09/26 15:56:45 tsi Exp $ */
+/* $XFree86: xc/include/extensions/extutil.h,v 1.3 2000/08/26 00:33:41 keithp Exp $ */
 
 #ifndef _EXTUTIL_H_
 #define _EXTUTIL_H_

@@ -44,7 +44,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.6 2000/05/14 20:27:58 alanh Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.4 1997/11/16 06:42:30 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/CirrusClk.c,v 1.9 1999/12/26 18:24:14 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/CirrusClk.c,v 1.8 1998/12/06 06:08:28 dawes Exp $ */
 
 /*
  * Programming of the built-in Cirrus clock generator.

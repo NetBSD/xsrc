@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/DrawLogo.c,v 1.6 1998/10/03 09:06:27 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/DrawLogo.c,v 1.5 1998/09/05 06:36:13 dawes Exp $ */
 
 #include <X11/Xlib.h>  
 #include <X11/Xmu/Drawing.h>

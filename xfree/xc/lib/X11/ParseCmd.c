@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/ParseCmd.c,v 1.2 1998/12/20 11:56:57 dawes Exp $ */
+/* $XFree86$ */
 
 /* XrmParseCommand()
 

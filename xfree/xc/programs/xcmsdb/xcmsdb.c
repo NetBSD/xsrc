@@ -29,7 +29,7 @@
  *		Characterization Data from the root window of the screen.
  *
  */
-/* $XFree86: xc/programs/xcmsdb/xcmsdb.c,v 1.4 1999/03/02 11:49:36 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  *      INCLUDES

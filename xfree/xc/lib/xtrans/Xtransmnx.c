@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/xtrans/Xtransmnx.c,v 3.3 1996/05/10 06:55:50 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransmnx.c,v 3.2 1995/07/07 15:33:07 dawes Exp $ */
 
 /*
 Xtransmnx.c

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRndrPick.c,v 1.8 1999/12/27 00:39:31 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRndrPick.c,v 1.7 1998/10/04 09:34:37 dawes Exp $ */
 
 #include "miLUT.h"
 #include "ddpex3.h"

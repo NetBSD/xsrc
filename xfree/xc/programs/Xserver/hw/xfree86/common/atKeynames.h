@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.15 2000/08/11 23:59:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.14 2000/08/11 17:27:13 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *

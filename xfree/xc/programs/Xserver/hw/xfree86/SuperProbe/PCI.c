@@ -7,7 +7,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.10 2000/08/11 17:27:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.9 1999/03/14 03:21:42 dawes Exp $ */
 
 /* #define DEBUGPCI */
 

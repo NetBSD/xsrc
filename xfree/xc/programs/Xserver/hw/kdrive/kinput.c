@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kinput.c,v 1.11 2000/12/08 21:40:02 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kinput.c,v 1.10 2000/10/08 02:08:39 keithp Exp $ */
 
 #include "kdrive.h"
 #include "inputstr.h"

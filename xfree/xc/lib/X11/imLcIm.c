@@ -32,7 +32,7 @@ THIS SOFTWARE.
 	                          frankyling@hgrd01.enet.dec.com
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcIm.c,v 1.8 2000/12/04 18:49:23 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcIm.c,v 1.7 2000/11/28 18:49:37 dawes Exp $ */
 
 #include <stdio.h>
 /*

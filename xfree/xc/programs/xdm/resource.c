@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/resource.c,v 3.5 1998/12/06 06:08:49 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/resource.c,v 3.4 1998/10/10 15:25:37 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

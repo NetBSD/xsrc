@@ -1,7 +1,7 @@
 XCOMM!/bin/sh
 
 XCOMM $XConsortium: startx.cpp,v 1.4 91/08/22 11:41:29 rws Exp $
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.5 2000/12/02 18:06:58 herrb Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.4 2000/12/02 17:38:23 herrb Exp $
 XCOMM 
 XCOMM This is just a sample implementation of a slightly less primitive 
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc

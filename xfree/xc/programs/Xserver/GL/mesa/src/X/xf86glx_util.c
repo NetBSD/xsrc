@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx_util.c,v 1.5 2000/03/02 16:07:39 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx_util.c,v 1.4 2000/02/23 04:46:57 martin Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

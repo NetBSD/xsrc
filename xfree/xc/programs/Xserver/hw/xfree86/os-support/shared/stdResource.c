@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/stdResource.c,v 1.15 2000/04/23 19:27:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/stdResource.c,v 1.14 2000/02/08 13:13:31 eich Exp $ */
 
 /* Standard resource information code */
 

@@ -47,7 +47,7 @@ SOFTWARE.
  * Kitchen sink version, useful for clearing small areas and flashing the 
  * screen.
  */
-/* $XFree86: xc/programs/xrefresh/xrefresh.c,v 3.3 1999/03/07 11:41:18 dawes Exp $ */
+/* $XFree86: xc/programs/xrefresh/xrefresh.c,v 3.2 1998/10/04 09:41:45 dawes Exp $ */
 
 #include <stdio.h>
 #include <errno.h>

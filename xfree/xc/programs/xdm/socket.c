@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/socket.c,v 3.6 2000/05/11 18:14:43 tsi Exp $ */
+/* $XFree86: xc/programs/xdm/socket.c,v 3.5 1998/10/10 15:25:39 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/hash.c,v 1.13 2000/09/26 15:57:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/hash.c,v 1.12 1999/03/14 03:22:13 dawes Exp $ */
 
 /*
  *

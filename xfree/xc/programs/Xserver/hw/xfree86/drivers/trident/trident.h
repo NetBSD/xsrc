@@ -266,8 +266,7 @@ typedef enum {
 #define HAS_DST_TRANS	((pTrident->Chipset == PROVIDIA9682) || \
 			 (pTrident->Chipset == PROVIDIA9685))
 
-#define Is3Dchip	((pTrident->Chipset == CYBER9388) || \
-			 (pTrident->Chipset == CYBER9397) || \
+#define Is3Dchip	((pTrident->Chipset == CYBER9397) || \
 			 (pTrident->Chipset == CYBER9397DVD) || \
 			 (pTrident->Chipset == CYBER9520) || \
 			 (pTrident->Chipset == CYBER9525DVD) || \

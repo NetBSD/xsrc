@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.9 1999/12/27 00:40:01 robin Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.8 1998/10/04 09:40:21 dawes Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>

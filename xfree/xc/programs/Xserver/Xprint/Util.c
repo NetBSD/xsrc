@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/Util.c,v 1.10 1999/12/13 02:12:49 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Util.c,v 1.9 1999/08/31 08:54:01 dawes Exp $ */
 
 /* To get the tempnam() prototype in <stdio.h> */
 #if defined(linux) && defined(__STRICT_ANSI__)

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/glx/Imakefile,v 1.8 2000/08/24 22:20:09 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/glx/Imakefile,v 1.7tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

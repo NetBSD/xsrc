@@ -25,7 +25,7 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.h,v 1.1 2000/02/12 20:45:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.h,v 1.8 1999/05/15 12:10:28 dawes Exp $ */
 
 #define CS(x)	(0x8500+(x<<2))
 

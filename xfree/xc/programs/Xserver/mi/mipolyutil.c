@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mipolyutil.c,v 1.7 1998/10/04 09:39:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipolyutil.c,v 1.6 1998/03/28 06:55:57 hohndel Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.7 1999/12/13 02:12:55 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.6 1998/12/20 11:57:26 dawes Exp $ */
 
 #include "gcstruct.h"
 

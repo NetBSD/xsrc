@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgateblt8.c,v 1.2 1998/07/25 16:58:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgateblt8.c,v 1.1.2.1 1997/07/16 10:37:00 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium

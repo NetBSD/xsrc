@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.18 2000/12/05 19:06:53 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.19 2001/01/31 20:52:18 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -434,7 +434,7 @@ xf86parseMonitorSection (void)
 						break;
 					case DASH:
 						if (xf86getToken (NULL) != NUMBER ||
-						    val.realnum < ptr->mon_hsync[ptr->mon_n_hsync].lo)
+						    (float)val.realnum < ptr->mon_hsync[ptr->mon_n_hsync].lo)
 							Error (HORIZSYNC_MSG, NULL);
 						ptr->mon_hsync[ptr->mon_n_hsync].hi = val.realnum;
 						break;
@@ -468,7 +468,7 @@ HorizDone:
 						break;
 					case DASH:
 						if (xf86getToken (NULL) != NUMBER ||
-						    val.realnum < ptr->mon_vrefresh[ptr->mon_n_vrefresh].lo)
+						    (float)val.realnum < ptr->mon_vrefresh[ptr->mon_n_vrefresh].lo)
 							Error (VERTREFRESH_MSG, NULL);
 						ptr->mon_vrefresh[ptr->mon_n_vrefresh].hi = val.realnum;
 						break;

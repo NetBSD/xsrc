@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xau/Xauth.h,v 1.3 1998/10/11 11:23:43 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _Xauth_h
 #define _Xauth_h

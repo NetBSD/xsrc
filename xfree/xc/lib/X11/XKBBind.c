@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XKBBind.c,v 3.12 2000/08/26 15:11:23 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBBind.c,v 3.11 2000/01/21 18:41:48 dawes Exp $ */
 
 	/* the new monsters ate the old ones */
 

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/5 1996/12/06 09:32:39 swick $
-XCOMM $XFree86: xc/programs/xfindproxy/Imakefile,v 1.2 1999/02/13 01:13:37 dawes Exp $
+XCOMM $XFree86$
 
          DEPLIBS = $(DEPXTOOLLIB) $(DEPXLIB)
  LOCAL_LIBRARIES = $(XTOOLLIB) $(XLIB)

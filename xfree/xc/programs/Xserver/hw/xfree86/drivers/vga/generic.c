@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.48 2000/12/02 15:31:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.47 2000/11/16 19:45:02 eich Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -588,6 +588,11 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
     }
 #endif
 
+    /* Deal with options */
+    xf86CollectOptions(pScreenInfo, NULL);
+    xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options, 
+		       GenericOptions);
+
     /*
      * Determine clocks.  Limit them to the first four because that's all that
      * can be addressed.
@@ -667,11 +672,6 @@ GenericPreInit(ScrnInfoPtr pScreenInfo, int flags)
 
     /* Set display resolution */
     xf86SetDpi(pScreenInfo, 0, 0);
-
-    /* Deal with options */
-    xf86CollectOptions(pScreenInfo, NULL);
-    xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options, 
-		       GenericOptions);
 
     if (xf86ReturnOptValBool(GenericOptions,OPTION_SHADOW_FB,FALSE)) {
         pScreenInfo->bitmapBitOrder = BITMAP_BIT_ORDER;

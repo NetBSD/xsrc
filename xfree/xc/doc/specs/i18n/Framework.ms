@@ -1,6 +1,6 @@
 .\" $TOG: Framework.ms /main/6 1997/11/04 18:03:10 kaleb $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
-.\" $XFree86: xc/doc/specs/i18n/Framework.ms,v 1.3 2000/12/04 23:26:00 dawes Exp $
+.\" $XFree86: xc/doc/specs/i18n/Framework.ms,v 1.2 2000/11/28 18:49:21 dawes Exp $
 .EH ''''
 .OH ''''
 .EF ''''

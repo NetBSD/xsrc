@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.40 2000/12/14 17:13:05 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.39 2000/11/30 23:29:56 dawes Exp $
 
 
 #ifndef OSName

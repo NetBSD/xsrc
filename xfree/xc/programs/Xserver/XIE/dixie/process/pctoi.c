@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden && Robert NC Shelley -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.4 1998/10/25 07:11:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.3 1998/10/05 13:22:13 dawes Exp $ */
 
 #define _XIEC_PCTOI
 #define _XIEC_PCI

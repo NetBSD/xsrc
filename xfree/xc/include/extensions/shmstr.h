@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/shmstr.h,v 3.1 1998/10/02 07:39:18 dawes Exp $ */
+/* $XFree86: xc/include/extensions/shmstr.h,v 3.0 1996/05/06 05:52:42 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/bios_mmap.c,v 1.1 1998/08/16 10:25:47 dawes Exp $ */
+/* $XFree86$ */
 #include<mach.h>
 #include<device/device.h>
 

@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/lib/Xaw/AsciiText.c,v 3.8 1999/06/13 13:47:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiText.c,v 3.7 1999/06/06 08:47:52 dawes Exp $ */
 
 /*
  * AsciiText.c - Source code for AsciiText Widget

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsclient.h,v 1.3 2000/06/07 22:02:56 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef DPSCLIENT_H
 #define DPSCLIENT_H

@@ -1217,7 +1217,7 @@ InstallManPageLong(file,destdir,file)
 InstallHtmlManPageAliases(file,aliases,$(MANSUFFIX))			@@\
 									@@\
 install.man::								@@\
-	@(TMP=/tmp/tmp.$$$$; \						@@\
+	@(TMP=#tmp.$$$$; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.$(MANSUFFIX) > $${TMP}; \	@@\
 	for i in aliases; do (set -x; \					@@\
@@ -1258,7 +1258,7 @@ InstallGenManPageLong(file,destdir,file,suffix)
 InstallHtmlManPageAliases(file,aliases,suffix)				@@\
 									@@\
 install.man::								@@\
-	@(TMP=/tmp/tmp.$$$$; \						@@\
+	@(TMP=#tmp.$$$$; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.suffix > $${TMP}; \		@@\
 	for i in aliases; do (set -x; \					@@\

@@ -29,7 +29,7 @@ from The Open Group.
  *
  */
 
-/* $XFree86: xc/lib/X11/udcInf.c,v 1.5 2000/12/04 18:49:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/udcInf.c,v 1.4 1998/10/03 08:41:45 dawes Exp $ */
 
 #include <stdio.h>
 #include <locale.h>

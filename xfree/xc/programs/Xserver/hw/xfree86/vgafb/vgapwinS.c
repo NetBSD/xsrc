@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgapwinS.c,v 1.2 1998/07/25 16:58:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgapwinS.c,v 1.1.2.1 1997/07/16 10:36:58 hohndel Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

@@ -1,6 +1,6 @@
 XCOMM!/bin/sh
 XCOMM
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/sdk/mkmf.cpp,v 1.1 1999/08/14 10:50:09 dawes Exp $
+XCOMM $XFree86$
 
 XCOMM
 XCOMM Build Makefile for Driver SDK

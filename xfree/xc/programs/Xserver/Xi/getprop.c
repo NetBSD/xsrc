@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/getprop.c,v 3.3 1998/10/04 09:37:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getprop.c,v 3.2 1996/04/15 11:18:43 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/gc.c,v 1.4 2000/10/24 22:45:15 dawes Exp $ */
+/* $XFree86: xc/programs/twm/gc.c,v 1.3 1999/02/20 15:07:22 hohndel Exp $ */
 
 
 /**********************************************************************

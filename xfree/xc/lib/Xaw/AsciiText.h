@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiText.h,v 1.4 1998/10/03 08:42:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiText.h,v 1.3 1998/08/20 13:58:55 dawes Exp $ */
 
 /*
  * AsciiText.h - Public header file for AsciiText Widget

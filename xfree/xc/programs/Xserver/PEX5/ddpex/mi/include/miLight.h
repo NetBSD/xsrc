@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miLight.h,v 1.4 1998/10/04 09:34:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miLight.h,v 1.3 1998/07/26 09:56:03 dawes Exp $ */
 
 #ifndef MI_LIGHT_H
 #define MI_LIGHT_H

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/XIE/include/protoflo.h,v 1.1 1998/10/25 07:11:47 dawes Exp $
+ * $XFree86$
  */
 
 /************************************************************

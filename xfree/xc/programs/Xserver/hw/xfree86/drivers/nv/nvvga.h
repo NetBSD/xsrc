@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nvvga.h,v 1.1 1999/08/01 07:21:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvvga.h,v 1.1.2.4 1998/12/22 07:37:50 hohndel Exp $ */
 
 #ifndef __NVVGA_H__
 #define __NVVGA_H__

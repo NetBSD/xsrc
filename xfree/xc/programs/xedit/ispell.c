@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/ispell.c,v 1.14 2000/09/26 15:57:24 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/ispell.c,v 1.15 2001/02/07 16:36:29 paulo Exp $ */
 
 #include "xedit.h"
 #ifndef X_NOT_STDC_ENV
@@ -339,14 +339,31 @@ IspellSetStatus(char *label)
 static void
 IspellSetRepeated(Bool state)
 {
+    static char *mispelled, *repeated;
+    Arg args[1];
+
+    if (mispelled == NULL) {
+	XtSetArg(args[0], XtNlabel, &mispelled);
+	XtGetValues(ispell.mispelled, args, 1);
+	mispelled = XtNewString(mispelled);
+    }
+    if (repeated == NULL) {
+	XtSetArg(args[0], XtNlabel, &repeated);
+	XtGetValues(ispell.repeated, args, 1);
+	repeated = XtNewString(repeated);
+    }
     XtSetSensitive(ispell.replaceAll, !state);
     XtSetSensitive(ispell.ignoreAll, !state);
     XtSetSensitive(ispell.add, !state);
     XtSetSensitive(ispell.addUncap, !state);
-    if (state && XtIsManaged(ispell.mispelled))
-	XtChangeManagedSet(&ispell.mispelled, 1, NULL, NULL, &ispell.repeated, 1);
-    else if (!state && XtIsManaged(ispell.repeated))
-	XtChangeManagedSet(&ispell.repeated, 1, NULL, NULL, &ispell.mispelled, 1);
+    if (!state) {
+	XtSetArg(args[0], XtNlabel, mispelled);
+	XtSetValues(ispell.mispelled, args, 1);
+    }
+    else {
+	XtSetArg(args[0], XtNlabel, repeated);
+	XtSetValues(ispell.mispelled, args, 1);
+    }
 }
 
 static void

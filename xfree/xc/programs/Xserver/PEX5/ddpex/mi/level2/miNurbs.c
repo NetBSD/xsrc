@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNurbs.c,v 3.6 1999/01/31 12:21:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNurbs.c,v 3.5 1998/10/04 09:34:23 dawes Exp $ */
 
 #include "X.h"
 #include "misc.h"

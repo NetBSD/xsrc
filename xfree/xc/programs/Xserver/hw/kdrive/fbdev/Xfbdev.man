@@ -2,7 +2,7 @@
 .\"
 .TH Xfbdev 1
 .SH NAME
-Xvesa \- Linux framebuffer device tiny X server
+Xfbdev \- Linux framebuffer device tiny X server
 .SH SYNOPSIS
 .B Xfbdev
 .RI [ :display ] 

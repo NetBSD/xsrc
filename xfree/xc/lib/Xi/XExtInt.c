@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.3 1998/10/03 09:06:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.2 1997/05/03 09:15:09 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.6 2000/08/01 20:05:44 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.5 1997/10/26 13:25:30 dawes Exp $ */
 
 #ifndef XKBCOMP_H
 #define	XKBCOMP_H 1

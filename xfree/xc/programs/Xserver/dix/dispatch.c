@@ -64,7 +64,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.22 2000/09/22 06:21:18 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.21 2000/09/22 05:57:18 keithp Exp $ */
 
 #ifdef PANORAMIX_DEBUG
 #include <stdio.h>

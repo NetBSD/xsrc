@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/SimpleMenu.h,v 1.6 1999/06/13 13:47:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SimpleMenu.h,v 1.5 1998/10/03 08:42:19 dawes Exp $ */
 
 /*
  * SimpleMenu.h - Public Header file for SimpleMenu widget.

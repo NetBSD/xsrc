@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.cpp,v 1.10 2000/12/11 22:40:25 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.cpp,v 1.9 2000/12/11 20:18:11 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH FBDEV __drivermansuffix__ "Version 4.0.2"  "XFree86"

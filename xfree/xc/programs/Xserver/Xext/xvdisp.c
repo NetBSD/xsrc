@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.16 2000/08/10 17:40:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.15 2000/06/10 22:00:26 mvojkovi Exp $ */
 
 /*
 ** File: 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86pciBus.h,v 3.5 2000/09/19 12:46:13 eich Exp $ */
+/* $XFree86: $ */
 
 #ifndef _XF86_PCI_BUS_H
 #define _XF86_PCI_BUS_H

@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.6 1998/10/03 08:41:06 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.5 1998/04/05 00:45:41 robin Exp $ */
 
 #include	<stdio.h>
 #include	"FSlibint.h"

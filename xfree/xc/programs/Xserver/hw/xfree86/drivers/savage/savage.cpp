@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage.cpp,v 1.2 2000/12/11 20:18:25 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage.cpp,v 1.1 2000/12/02 01:16:11 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH SAVAGE __drivermansuffix__ "Version 4.0.2"  "XFree86"

@@ -1,5 +1,5 @@
 /* $XConsortium: fontstruct.h /main/17 1996/08/09 16:23:54 kaleb $ */
-/* $XFree86: xc/include/fonts/fontstruct.h,v 3.3 1999/08/21 13:47:34 dawes Exp $ */
+/* $XFree86: xc/include/fonts/fontstruct.h,v 3.2 1999/06/13 13:46:51 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/fsinfo/fsinfo.c,v 3.3 1999/02/19 21:27:07 hohndel Exp $ */
+/* $XFree86: xc/programs/fsinfo/fsinfo.c,v 3.2 1998/10/04 09:40:02 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

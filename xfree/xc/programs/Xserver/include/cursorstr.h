@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/cursorstr.h,v 1.4 1998/10/04 09:38:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/cursorstr.h,v 1.3 1998/09/13 13:29:28 dawes Exp $ */
 
 #ifndef CURSORSTRUCT_H
 #define CURSORSTRUCT_H 

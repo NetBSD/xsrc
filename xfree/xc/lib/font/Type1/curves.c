@@ -29,7 +29,7 @@
 /* CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT        */
 /* OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS           */
 /* SOFTWARE.                                                         */
-/* $XFree86: xc/lib/font/Type1/curves.c,v 1.5 1999/09/04 09:14:10 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/curves.c,v 1.4 1999/08/22 08:58:50 dawes Exp $ */
 
 /*
 :h1.CURVES Module - Stepping Beziers

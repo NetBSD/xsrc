@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/Fill.c,v 3.6 2000/05/11 18:14:10 tsi Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Fill.c,v 3.5 1998/10/03 08:42:51 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

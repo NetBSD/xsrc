@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/XDPSshare.c,v 1.3 2000/09/26 15:57:00 tsi Exp $ */
+/* $XFree86: xc/lib/dpstk/XDPSshare.c,v 1.2 2000/06/07 22:03:01 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

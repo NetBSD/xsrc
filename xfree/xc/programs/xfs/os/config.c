@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * $NCDId: @(#)config.c,v 4.6 1991/07/09 14:08:09 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/config.c,v 3.9 2000/11/30 23:30:10 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/config.c,v 3.8 2000/02/13 06:15:46 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>

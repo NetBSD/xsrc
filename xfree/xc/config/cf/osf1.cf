@@ -1,6 +1,10 @@
 XCOMM platform:  $TOG: osf1.cf /main/74 1997/05/27 15:51:24 kaleb $
 /* only tested with Digital OSF/1 */
 
+
+
+XCOMM platform:  $XFree86$
+
 #ifndef OSName
 # define OSName		DefaultOSName
 #endif
@@ -35,6 +39,9 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 #define ShLibDir		/usr/shlib
 #define SharedLibPex		NO  /* losing, no shared -lm */
 #endif
+
+#define InstallXloadSetGID	NO
+
 #define ThreadedX		ModernOSF1
 
 #if ThreadedX

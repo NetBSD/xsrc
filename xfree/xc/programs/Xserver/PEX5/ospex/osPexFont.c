@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.16 2000/08/10 17:40:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.15 1998/10/04 09:35:23 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

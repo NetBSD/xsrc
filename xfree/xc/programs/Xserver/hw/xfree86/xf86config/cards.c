@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.15 1999/07/05 12:12:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.14 1999/03/28 15:33:06 dawes Exp $ */
 
 /*
  *  Functions to manipulate card database.

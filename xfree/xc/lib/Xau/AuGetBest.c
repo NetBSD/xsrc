@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuGetBest.c,v 1.3 2000/06/14 00:16:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuGetBest.c,v 1.2 1999/05/09 10:51:33 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>

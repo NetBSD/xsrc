@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/suVHLine.s,v 1.3 1999/12/27 00:39:51 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/suVHLine.s,v 1.2 1998/07/25 16:58:32 dawes Exp $ */
 /*******************************************************************************
 			Copyright 1992, 1993 by Glenn G. Lai 
 

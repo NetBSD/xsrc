@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKB.c,v 1.3 1999/05/09 10:50:23 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #define NEED_REPLIES

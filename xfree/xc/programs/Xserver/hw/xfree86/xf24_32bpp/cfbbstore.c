@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfbbstore.c,v 1.1 1999/01/23 09:56:13 dawes Exp $ */
+/* $XFree86$ */
 
 #define PSZ 8
 #include "cfb.h"

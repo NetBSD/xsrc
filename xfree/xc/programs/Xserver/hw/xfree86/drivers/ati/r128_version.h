@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_version.h,v 1.1 2000/11/02 16:55:39 tsi Exp $ */
+/* $XFree86$ */
 /*
  * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

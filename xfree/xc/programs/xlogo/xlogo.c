@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  */
 
-/* $XFree86: xc/programs/xlogo/xlogo.c,v 3.4 1999/03/02 10:42:36 dawes Exp $ */
+/* $XFree86: xc/programs/xlogo/xlogo.c,v 3.3 1998/12/20 11:58:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.h,v 1.3 2000/06/22 03:58:25 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.h,v 1.2 2000/06/17 00:03:19 martin Exp $ */
 
 #ifndef _MGA_DRI_
 #define _MGA_DRI_

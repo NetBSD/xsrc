@@ -24,7 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.5 2000/12/01 00:24:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.4 2000/06/23 19:29:45 dawes Exp $ */
 
 #ifndef FFB_H
 #define FFB_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.17 2000/12/18 15:52:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.18 2001/02/03 19:33:05 herrb Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.
@@ -598,6 +598,23 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 }
 #endif /* USBMOUSE */
 
+static Bool
+bsdMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
+{
+    /* The protocol is guaranteed to be one of the internalNames[] */
+#ifdef WSCONS_SUPPORT
+    if (xf86NameCmp(protocol, "WSMouse") == 0) {
+	return wsconsPreInit(pInfo, protocol, flags);
+    }
+#endif
+#ifdef USBMOUSE_SUPPORT
+    if (xf86NameCmp(protocol, "usb") == 0) {
+	return usbPreInit(pInfo, protocol, flags);
+    }
+#endif
+    return TRUE;
+}    
+
 OSMouseInfoPtr
 xf86OSMouseInit(int flags)
 {
@@ -616,12 +633,6 @@ xf86OSMouseInit(int flags)
     p->SetBMRes = SetSysMouseRes;
     p->SetMiscRes = SetSysMouseRes;
 #endif
-    /* XXX This assumes that WSCONS and USB are mutually exclusive. */
-#if defined(WSCONS_SUPPORT)
-    p->PreInit = wsconsPreInit;
-#endif
-#if defined(USBMOUSE_SUPPORT)
-    p->PreInit = usbPreInit;
-#endif
+    p->PreInit = bsdMousePreInit;
     return p;
 }

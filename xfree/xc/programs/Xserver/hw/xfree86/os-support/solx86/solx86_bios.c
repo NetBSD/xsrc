@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_bios.c,v 1.6 2000/11/19 16:38:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_bios.c,v 1.5 2000/02/11 22:36:04 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>

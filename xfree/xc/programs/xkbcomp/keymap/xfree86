@@ -1,5 +1,5 @@
 // $TOG: xfree86 /main/13 1997/08/02 10:11:21 kaleb $
-// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.17 2000/12/06 20:18:07 eich Exp $
+// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.16 2000/12/06 15:35:34 eich Exp $
 default xkb_keymap "us" {
     xkb_keycodes	{ include "xfree86"		};
     xkb_types		{ include "default"		};

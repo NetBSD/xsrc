@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.5 1999/10/13 22:32:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.4 1999/01/13 08:30:52 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

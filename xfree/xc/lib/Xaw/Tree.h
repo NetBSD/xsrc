@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * additional blank space to make the structure of the graph easier to see
  * as well as to support vertical trees.
  */
-/* $XFree86: xc/lib/Xaw/Tree.h,v 1.5 1999/06/06 08:48:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Tree.h,v 1.4 1998/10/03 08:42:30 dawes Exp $ */
 
 
 #ifndef _XawTree_h

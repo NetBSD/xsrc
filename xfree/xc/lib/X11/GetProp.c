@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/GetProp.c,v 1.3 2000/06/15 23:59:06 keithp Exp $ */
+/* $XFree86$ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

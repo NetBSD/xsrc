@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/rules/sun,v 3.1 2000/05/18 23:21:43 dawes Exp $
+// $XFree86$
 
 ! model			=    keycodes			geometry
   type4   		=    sun(type4)			sun(type4)

@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibos.h,v 3.5 1999/12/27 00:39:21 robin Exp $ */
+/* $XFree86: xc/lib/FS/FSlibos.h,v 3.4 1998/10/03 08:41:08 dawes Exp $ */
 
 /*
  * FSlib networking & os include file

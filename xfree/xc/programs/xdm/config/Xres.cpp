@@ -1,5 +1,5 @@
 ! $XConsortium: Xresources /main/8 1996/11/11 09:24:46 swick $
-! $XFree86: xc/programs/xdm/config/Xres.cpp,v 1.3 2000/11/27 05:06:46 dawes Exp $
+! $XFree86: xc/programs/xdm/config/Xres.cpp,v 1.2 2000/11/27 00:10:07 dawes Exp $
 #define BS \ /* cpp can be trickier than m4 */
 #define NLBS \n\ /* don't remove these comments */
 xlogin*login.translations: #override BS

@@ -67,7 +67,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.7 1999/06/20 08:41:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.6 1999/06/06 08:48:01 dawes Exp $ */
 
 /*
  * MultiSrcP.h - Private Header for Multi Text Source.

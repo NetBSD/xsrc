@@ -8,7 +8,7 @@
  * Significantly rewritten for XFree86 4.0.1 by Torrey Lyons
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.2 2000/12/01 19:47:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.1 2000/11/15 01:36:13 dawes Exp $ */
 
 #define NDEBUG 1
 

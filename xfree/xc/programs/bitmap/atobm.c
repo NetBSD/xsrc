@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/atobm.c,v 3.2 1999/02/01 11:56:09 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/atobm.c,v 3.1 1998/10/04 09:39:58 dawes Exp $ */
 
 /*
  * atobm - ascii to bitmap filter

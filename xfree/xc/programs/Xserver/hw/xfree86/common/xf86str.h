@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.74 2000/12/13 02:44:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.73 2000/10/24 22:45:05 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-2000 by The XFree86 Project, Inc.

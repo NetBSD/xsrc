@@ -20,7 +20,7 @@
 //other dealings in this Software without prior written authorization
 //from The Open Group.
 //
-// $XFree86: xc/programs/xkbcomp/geometry/nec,v 3.3 1998/10/04 09:41:30 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/geometry/nec,v 3.2 1996/08/13 11:33:23 dawes Exp $
 
 default xkb_geometry "pc98" {
 

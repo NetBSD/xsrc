@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.cpp,v 1.9 2000/12/18 00:17:18 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.cpp,v 1.8 2000/12/12 18:54:32 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH WACOM __drivermansuffix__ "Version 4.0.2"  "XFree86"

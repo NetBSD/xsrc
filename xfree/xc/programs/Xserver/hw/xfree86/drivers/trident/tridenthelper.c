@@ -46,8 +46,7 @@ TGUISetClock(ScrnInfoPtr pScrn, int clock, CARD8 *a, CARD8 *b)
 	int freq, ffreq;
 	int m, n, k;
 	int p, q, r, s; 
-	int startn, endn;
-	int endm, endk;
+	int endn, endm, endk, startk;
 
 	p = q = r = s = 0;
 
@@ -55,23 +54,25 @@ TGUISetClock(ScrnInfoPtr pScrn, int clock, CARD8 *a, CARD8 *b)
 
 	if (pTrident->NewClockCode)
 	{
-		startn = 64;
 		endn = 255;
 		endm = 63;
-		endk = 3;
+		endk = 2;
+		if (clock >= 100000) startk = 0;
+		if (clock < 100000) startk = 1;
+		if (clock < 50000) startk = 2;
 	}
 	else
 	{
-		startn = 0;
 		endn = 121;
 		endm = 31;
 		endk = 1;
+		startk = 0;
 	}
 
  	freq = clock;
 
-	for (k=endk;k>=0;k--)
-	  for (n=startn;n<=endn;n++)
+	for (k=startk;k<=endk;k++)
+	  for (n=0;n<=endn;n++)
 	    for (m=1;m<=endm;m++)
 	    {
 		ffreq = ( ( ((n + 8) * pTrident->frequency) / ((m + 2) * powerup[k]) ) * 1000);

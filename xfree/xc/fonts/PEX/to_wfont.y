@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.9 2000/01/21 02:29:37 dawes Exp $ */
+/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.8 1998/10/25 07:11:10 dawes Exp $ */
 
 
 #define YYMAXDEPTH 10000

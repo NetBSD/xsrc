@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greet.h,v 1.6 2000/11/14 21:59:25 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greet.h,v 1.5 2000/05/31 07:15:11 eich Exp $ */
 
 /*
  * greet.h - interface to xdm's dynamically-loadable modular greeter

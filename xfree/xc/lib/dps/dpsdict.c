@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsdict.c,v 1.3 2000/09/26 15:57:00 tsi Exp $ */
+/* $XFree86$ */
 
 /***********/
 /* Imports */

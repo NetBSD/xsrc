@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)cache.c	4.2	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.4 1999/03/07 11:40:51 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.3 1998/10/25 12:47:58 dawes Exp $ */
 
 #include	"cachestr.h"
 #include	"misc.h"

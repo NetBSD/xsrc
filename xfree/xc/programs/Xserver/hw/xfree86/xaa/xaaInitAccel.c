@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.27 2000/10/21 22:26:20 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.26 2000/09/28 20:48:00 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

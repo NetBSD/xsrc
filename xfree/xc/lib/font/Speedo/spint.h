@@ -43,7 +43,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.8 1999/02/07 06:18:21 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.7 1999/01/31 04:59:27 dawes Exp $ */
 
 #ifndef _SPINT_H_
 #define _SPINT_H_

@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_stip.h,v 1.1 2000/05/18 23:21:38 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef FFBSTIP_H
 #define FFBSTIP_H

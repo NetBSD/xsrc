@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxopts.c,v 1.4 2000/06/07 22:03:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxopts.c,v 1.3 2000/05/18 23:46:24 dawes Exp $ */
 
 #ifdef OPTDEBUG
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Optrec.h,v 1.9 2000/11/02 19:58:21 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Optrec.h,v 1.7 2000/01/26 02:00:51 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

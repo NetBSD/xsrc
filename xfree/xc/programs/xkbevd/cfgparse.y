@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbevd/cfgparse.y,v 1.3 1999/03/02 11:49:59 dawes Exp $ */
+/* $XFree86$ */
 
 %token
 	END_OF_FILE	0

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.c,v 1.3 2000/12/04 19:21:47 dawes Exp $ */ /* -*- c-basic-offset: 3 -*- */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tris.c,v 1.2 2000/08/25 13:42:31 dawes Exp $ */ /* -*- c-basic-offset: 3 -*- */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,

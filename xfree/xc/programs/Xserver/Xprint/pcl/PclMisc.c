@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.7 2000/08/23 21:06:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.6 1999/12/13 02:12:56 robin Exp $ */
 
 #ifdef __CYGWIN__
 #include <signal.h>

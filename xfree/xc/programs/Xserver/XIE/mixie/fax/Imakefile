@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/5 1996/09/28 16:56:07 rws $
-XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/fax/Imakefile,v 3.5 1998/07/25 08:05:10 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/fax/Imakefile,v 3.4.2.1 1998/06/03 15:49:40 dawes Exp $
 XCOMM build device dependent machine independent fax processing element objects
 
 #define IHaveModules

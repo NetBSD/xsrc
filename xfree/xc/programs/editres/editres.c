@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/editres/editres.c,v 1.4 1999/02/01 11:56:13 dawes Exp $ */
+/* $XFree86: xc/programs/editres/editres.c,v 1.3 1998/12/20 13:16:39 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

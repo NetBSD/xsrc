@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_ppc.c,v 1.4 2000/07/31 23:25:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_ppc.c,v 1.3 1998/07/25 16:56:56 dawes Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *

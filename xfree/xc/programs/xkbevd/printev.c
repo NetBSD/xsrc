@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbevd/printev.c,v 3.3 1999/03/02 11:49:59 dawes Exp $ */
+/* $XFree86$ */
 
 #define	DEBUG_VAR printevDebug
 #include "xkbevd.h"

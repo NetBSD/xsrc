@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xwin/winkeymap.h,v 1.1 2000/08/10 17:40:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.9 1996/12/23 06:43:35 dawes Exp $ */
 /*
  *
  * For Scancodes see notes in atKeynames.h  !!!!

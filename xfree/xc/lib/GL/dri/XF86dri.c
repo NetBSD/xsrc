@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/dri/XF86dri.c,v 1.11 2000/12/07 20:26:02 dawes Exp $ */
+/* $XFree86: xc/lib/GL/dri/XF86dri.c,v 1.10 2000/09/24 13:50:59 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

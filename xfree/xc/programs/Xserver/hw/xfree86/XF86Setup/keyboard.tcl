@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.12 1999/04/05 07:12:59 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.11 1998/04/05 16:15:49 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Exp $
+XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.4 1998/12/29 13:00:46 dawes Exp $
 /* Copyright Takis Psarogiannakopoulos <takis@pmms.cam.ac.uk>
  * This is the DG/ux configuration file of X11R6.3 
  */

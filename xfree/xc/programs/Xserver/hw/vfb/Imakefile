@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/13 1998/03/24 13:27:03 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.24 2000/12/11 20:29:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.23 2000/11/16 19:44:52 eich Exp $
 #include <Server.tmpl>
 
 #if HasShm

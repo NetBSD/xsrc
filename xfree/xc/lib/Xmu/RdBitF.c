@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.10 1999/01/31 12:21:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.9 1998/10/03 09:06:32 dawes Exp $ */
 
 /*
  * This file contains miscellaneous utility routines and is not part of the

@@ -2,7 +2,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/xfree68/amiga,v 1.2 2000/06/23 00:44:37 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/xfree68/amiga,v 1.1.1.1 1998/09/27 08:55:49 dawes Exp $
 default xkb_symbols "usa1" {
 
     name[Group1]= "usa1";

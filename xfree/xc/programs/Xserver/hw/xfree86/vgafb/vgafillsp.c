@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgafillsp.c,v 1.2 1998/07/25 16:58:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgafillsp.c,v 1.1.2.2 1998/02/14 06:31:33 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 

@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.10 2000/11/14 16:54:45 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.9 1999/10/13 04:20:51 dawes Exp $ */
 
 /* Backend-independent encoding code */
 

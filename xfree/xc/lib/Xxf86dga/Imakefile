@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xxf86dga/Imakefile,v 3.2 1999/03/28 15:31:35 dawes Exp $
+XCOMM $XFree86: xc/lib/Xxf86dga/Imakefile,v 3.1 1998/12/20 11:57:13 dawes Exp $
 #define DoNormalLib NormalLibXxf86dga
 #define DoSharedLib SharedLibXxf86dga
 #define DoExtraLib SharedLibXxf86dga

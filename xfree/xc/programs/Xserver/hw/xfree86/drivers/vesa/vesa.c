@@ -26,7 +26,7 @@
  *
  * Authors: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.c,v 1.8 2000/12/02 15:31:00 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.c,v 1.7 2000/12/01 19:56:01 paulo Exp $
  */
 
 #include "vesa.h"

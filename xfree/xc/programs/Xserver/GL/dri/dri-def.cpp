@@ -47,4 +47,4 @@ DRIUnlock
 DRIValidateTree
 DRIWakeupHandler
 
-/* $XFree86: xc/programs/Xserver/GL/dri/dri-def.cpp,v 1.1 2000/08/09 23:40:16 dawes Exp $ */
+/* $XFree86$ */

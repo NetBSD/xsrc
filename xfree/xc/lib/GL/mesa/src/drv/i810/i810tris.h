@@ -22,7 +22,7 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tris.h,v 1.8 2000/12/04 19:21:43 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tris.h,v 1.7 2000/11/13 23:31:27 dawes Exp $ */
 
 #ifndef I810TRIS_INC
 #define I810TRIS_INC

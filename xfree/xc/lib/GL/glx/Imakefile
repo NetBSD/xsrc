@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.11 2000/08/01 20:28:38 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/glx/Imakefile,v 1.10 2000/06/30 17:15:07 dawes Exp $
 XCOMM The contents of this file are subject to the GLX Public License Version 1.0
 XCOMM (the "License"). You may not use this file except in compliance with the
 XCOMM License. You may obtain a copy of the License at Silicon Graphics, Inc.,

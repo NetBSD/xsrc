@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Ralph Swick, DEC/Project Athena
  */
-/* $XFree86: xc/programs/xclipboard/xcutsel.c,v 1.5 1999/03/21 07:35:37 dawes Exp $ */
+/* $XFree86: xc/programs/xclipboard/xcutsel.c,v 1.4 1999/02/28 11:20:07 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>

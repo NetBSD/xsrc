@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmI810.c,v 1.3 2000/08/24 22:20:17 tsi Exp $ */
+/* $XFree86$ */
 
 #ifdef XFree86Server
 # include "xf86.h"

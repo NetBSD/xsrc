@@ -1,5 +1,5 @@
 # $XConsortium: jump_vars,v 1.2 94/12/07 10:45:51 kaleb Exp $
-# $XFree86: xc/lib/Xt/jump_vars,v 3.2 1995/01/28 15:44:05 dawes Exp $
+# $XFree86: xc/lib/Xt/jump_vars,v 3.1 1994/05/04 14:56:48 dawes Exp $
 #
 00000100 D _compositeClassRec   libXt          Composite
 00000004 D _compositeWidgetClass libXt          Composite

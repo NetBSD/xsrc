@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Xutil.h,v 3.2 2000/11/28 18:49:29 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xutil.h,v 3.1 1998/10/03 08:41:31 dawes Exp $ */
 
 #ifndef _XUTIL_H_
 #define _XUTIL_H_

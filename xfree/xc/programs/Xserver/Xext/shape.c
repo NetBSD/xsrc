@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.12 2000/10/24 22:45:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.11 2000/03/03 20:50:25 mvojkovi Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

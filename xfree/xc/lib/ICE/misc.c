@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/misc.c,v 1.2 1999/05/23 06:33:24 dawes Exp $ */
+/* $XFree86$ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

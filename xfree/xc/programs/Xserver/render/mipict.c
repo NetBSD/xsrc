@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.5 2000/12/07 06:11:30 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.6 2001/01/29 15:08:09 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -243,61 +243,72 @@ miValidatePicture (PicturePtr pPicture,
 
 #define BOUND(v)	(INT16) ((v) < MINSHORT ? MINSHORT : (v) > MAXSHORT ? MAXSHORT : (v))
 
-static void
-miInitBox (BoxPtr   pBox,
-	   INT16    x,
-	   INT16    y,
-	   CARD16   w, 
-	   CARD16   h)
+static __inline Bool
+miClipPictureReg (RegionPtr	pRegion,
+		  RegionPtr	pClip,
+		  int		dx,
+		  int		dy)
 {
-    int	    x1, y1, x2, y2;
+    if (REGION_NUM_RECTS(pRegion) == 1 &&
+	REGION_NUM_RECTS(pClip) == 1)
+    {
+	BoxPtr  pRbox = REGION_RECTS(pRegion);
+	BoxPtr  pCbox = REGION_RECTS(pClip);
+	int	v;
 
-    x1 = x;
-    y1 = y;
-    x2 = x1 + (int) w;
-    y2 = y1 + (int) h;
-    pBox->x1 = BOUND(x1);
-    pBox->y1 = BOUND(y1);
-    pBox->x2 = BOUND(x2);
-    pBox->y2 = BOUND(y2);
+	if (pRbox->x1 < (v = pCbox->x1 + dx))
+	    pRbox->x1 = BOUND(v);
+	if (pRbox->x2 > (v = pCbox->x2 + dx))
+	    pRbox->x2 = BOUND(v);
+	if (pRbox->y1 < (v = pCbox->y1 + dy))
+	    pRbox->y1 = BOUND(v);
+	if (pRbox->y2 > (v = pCbox->y2 + dy))
+	    pRbox->y2 = BOUND(v);
+	if (pRbox->x1 > pRbox->x2 ||
+	    pRbox->y1 > pRbox->y2)
+	{
+	    REGION_EMPTY(pScreen, pRegion);
+	}
+    }
+    else
+    {
+	REGION_TRANSLATE(pScreen, pRegion, dx, dy);
+	if (!REGION_INTERSECT (pScreen, pRegion, pRegion, pClip))
+	    return FALSE;
+	REGION_TRANSLATE(pScreen, pRegion, -dx, -dy);
+    }
+    return TRUE;
 }
-
-Bool
-miClipPicture (RegionPtr    pRegion,
-	       PicturePtr   pPicture,
-	       INT16	    xReg,
-	       INT16	    yReg,
-	       INT16	    xPict,
-	       INT16	    yPict)
+		  
+static __inline Bool
+miClipPictureSrc (RegionPtr	pRegion,
+		  PicturePtr	pPicture,
+		  int		dx,
+		  int		dy)
 {
     if (pPicture->repeat)
     {
 	if (pPicture->clientClipType != CT_NONE)
 	{
 	    REGION_TRANSLATE(pScreen, pRegion, 
-			     xPict - xReg - pPicture->clipOrigin.x,
-			     yPict - yReg - pPicture->clipOrigin.y);
+			     dx - pPicture->clipOrigin.x,
+			     dy - pPicture->clipOrigin.y);
 	    if (!REGION_INTERSECT (pScreen, pRegion, pRegion, 
 				   (RegionPtr) pPicture->clientClip))
 		return FALSE;
 	    REGION_TRANSLATE(pScreen, pRegion, 
-			     - (xPict - xReg - pPicture->clipOrigin.x),
-			     - (yPict - yReg - pPicture->clipOrigin.y));
+			     - (dx - pPicture->clipOrigin.x),
+			     - (dy - pPicture->clipOrigin.y));
 	}
+	return TRUE;
     }
     else
     {
-	REGION_TRANSLATE(pScreen, pRegion, 
-			 xPict - xReg,
-			 yPict - yReg);
-	if (!REGION_INTERSECT (pScreen, pRegion, pRegion,
-			       pPicture->pCompositeClip))
-	    return FALSE;
-	REGION_TRANSLATE(pScreen, pRegion,
-			 -(xPict - xReg),
-			 -(yPict - yReg));
+	return miClipPictureReg (pRegion,
+				 pPicture->pCompositeClip,
+				 dx,
+				 dy);
     }
-    return TRUE;
 }
 
 Bool
@@ -314,18 +325,18 @@ miComputeCompositeRegion (RegionPtr	pRegion,
 			  CARD16	width,
 			  CARD16	height)
 {
-    BoxRec	dstBox;
     RegionPtr	pDstClip = pDst->pCompositeClip;
+    int		v;
 
-    miInitBox (&dstBox, xDst, yDst, width, height);
-    REGION_INIT (pScreen, pRegion, &dstBox, 1);
-    if (!REGION_INTERSECT (pScreen, pRegion, pRegion, pDstClip))
-    {
-	REGION_UNINIT (pScreen, pRegion);
-	return FALSE;
-    }
+    pRegion->extents.x1 = xDst;
+    v = xDst + width;
+    pRegion->extents.x2 = BOUND(v);
+    pRegion->extents.y1 = yDst;
+    v = yDst + height;
+    pRegion->extents.y2 = BOUND(v);
+    pRegion->data = 0;
     /* clip against src */
-    if (!miClipPicture (pRegion, pSrc, xDst, yDst, xSrc, ySrc))
+    if (!miClipPictureSrc (pRegion, pSrc, xDst - xSrc, yDst - ySrc))
     {
 	REGION_UNINIT (pScreen, pRegion);
 	return FALSE;
@@ -333,11 +344,16 @@ miComputeCompositeRegion (RegionPtr	pRegion,
     /* clip against mask */
     if (pMask)
     {
-	if (!miClipPicture (pRegion, pMask, xDst, yDst, xMask, yMask))
+	if (!miClipPictureSrc (pRegion, pMask, xDst - xMask, yDst - yMask))
 	{
 	    REGION_UNINIT (pScreen, pRegion);
 	    return FALSE;
 	}	
+    }
+    if (!miClipPictureReg (pRegion, pDstClip, 0, 0))
+    {
+	REGION_UNINIT (pScreen, pRegion);
+	return FALSE;
     }
     return TRUE;
 }

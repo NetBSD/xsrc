@@ -22,7 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/src/glheader.h,v 1.12 2000/11/13 21:55:33 dawes Exp $ */
+/* $XFree86: xc/extras/Mesa/src/glheader.h,v 1.11 2000/10/26 17:57:48 dawes Exp $ */
 
 
 #ifndef GLHEADER_H

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/44 1996/12/02 10:22:16 lehors $
-XCOMM $XFree86: xc/programs/Xserver/mi/Imakefile,v 3.31 2000/10/02 22:54:35 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/mi/Imakefile,v 3.29 2000/02/11 06:31:48 mvojkovi Exp $
 #include <Server.tmpl>
 
 #if ! HasCbrt

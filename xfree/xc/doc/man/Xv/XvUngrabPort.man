@@ -1,5 +1,5 @@
 .TH XvUngrabPort 3X
-.\" $XFree86: xc/doc/man/Xv/XvUngrabPort.man,v 1.4 1999/03/02 11:49:18 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvUngrabPort \- release port grabbed for video operation
 .\"

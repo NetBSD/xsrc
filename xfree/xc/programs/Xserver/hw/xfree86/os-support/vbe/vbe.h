@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/vbe.h,v 1.4 2000/04/20 21:28:50 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/vbe.h,v 1.3 2000/02/08 13:13:32 eich Exp $ */
 
 #ifndef _VBE_H
 #define _VBE_H

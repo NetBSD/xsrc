@@ -26,7 +26,7 @@
  *           David Thomas <davtom@dream.org.uk>. 
  *           Xavier Ducoin <x.ducoin@lectra.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.2 2000/12/02 01:16:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.1 2000/02/12 20:45:32 dawes Exp $ */
 
 
 /* Definitions for the SIS engine communication. */

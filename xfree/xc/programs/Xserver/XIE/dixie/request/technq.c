@@ -64,7 +64,7 @@ terms and conditions:
 
 	Dean Verheiden  AGE Logic, Inc.  April 1993
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/technq.c,v 3.5 1998/10/25 07:11:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/technq.c,v 3.4 1998/10/05 13:22:21 dawes Exp $ */
 
 #define _XIEC_TECHNQ
 

@@ -67,7 +67,7 @@ SOFTWARE.
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.5 1998/10/03 09:07:33 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.4 1997/10/26 13:24:56 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

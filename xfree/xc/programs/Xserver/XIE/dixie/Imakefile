@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/6 1995/12/07 21:15:29 gildea $
-XCOMM $XFree86: xc/programs/Xserver/XIE/dixie/Imakefile,v 3.15 2000/08/24 22:20:11 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/XIE/dixie/Imakefile,v 3.14tsi Exp $
 XCOMM build dixie archive
 
 #define IHaveModules

@@ -2784,6 +2784,44 @@ ProcessKeyboardEvent (xE, keybd, count)
         (*keybd->DeactivateGrab)(keybd);
 }
 
+#ifdef XKB
+/* This function is used to set the key pressed or key released state -
+   this is only used when the pressing of keys does not cause 
+   CoreProcessKeyEvent to be called, as in for example Mouse Keys.
+*/
+void
+FixKeyState (xE, keybd)
+    register xEvent *xE;
+    register DeviceIntPtr keybd;
+{
+    int             key, bit;
+    register BYTE   *kptr;
+    register KeyClassPtr keyc = keybd->key;
+
+    key = xE->u.u.detail;
+    kptr = &keyc->down[key >> 3];
+    bit = 1 << (key & 7);
+#ifdef DEBUG
+    if ((xkbDebugFlags&0x4)&&
+	((xE->u.u.type==KeyPress)||(xE->u.u.type==KeyRelease))) {
+	ErrorF("FixKeyState: Key %d %s\n",key,
+			(xE->u.u.type==KeyPress?"down":"up"));
+    }
+#endif
+    switch (xE->u.u.type)
+    {
+	case KeyPress: 
+	    *kptr |= bit;
+	    break;
+	case KeyRelease: 
+	    *kptr &= ~bit;
+	    break;
+	default: 
+	    FatalError("Impossible keyboard event");
+    }
+}
+#endif
+
 void
 #ifdef XKB
 CoreProcessPointerEvent (xE, mouse, count)

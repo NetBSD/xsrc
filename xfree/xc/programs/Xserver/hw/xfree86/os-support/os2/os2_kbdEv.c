@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_kbdEv.c,v 3.15 1999/04/29 09:30:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_kbdEv.c,v 3.14 1999/04/29 09:13:49 dawes Exp $ */
 /*
  * (c) Copyright 1994,1996,1999 by Holger Veit
  *			<Holger.Veit@gmd.de>

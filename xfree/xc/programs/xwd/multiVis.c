@@ -30,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
     ------------------------------------------------------------------------ **/
-/* $XFree86: xc/programs/xwd/multiVis.c,v 1.5 1999/03/07 14:23:48 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdlib.h>
 #include <X11/Xlib.h>

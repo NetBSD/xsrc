@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.26 2000/09/26 15:57:27 tsi Exp $ */
+/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.25 1999/03/21 07:35:41 dawes Exp $ */
 
 /*
 

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/21 1996/10/04 13:31:58 dpw $
-XCOMM $XFree86: xc/fonts/bdf/75dpi/Imakefile,v 1.4 1999/05/03 15:31:48 dawes Exp $
+XCOMM $XFree86$
 
 OBJS1 =	FontObj(courB08) FontObj(courB10) FontObj(courB12) FontObj(courB14) \
 	FontObj(courB18) FontObj(courB24) FontObj(courBO08) \

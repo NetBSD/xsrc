@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/2 1996/09/28 17:06:40 rws $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/dbe/Imakefile,v 3.9 2000/04/06 14:47:46 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/dbe/Imakefile,v 3.8 2000/04/05 18:13:30 dawes Exp $
 
 #if DoLoadableServer
 #define IHaveSubdirs

@@ -24,7 +24,7 @@
  *			   	mopi@osa.ilab.toshiba.co.jp
  * Bug fixes: Bruno Haible	XFree86 Inc.
  */
-/* $XFree86: xc/lib/X11/lcRM.c,v 1.4 2000/11/28 18:49:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcRM.c,v 1.3 2000/02/12 05:43:16 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * *
  */
-/* $XFree86: xc/include/Xthreads.h,v 3.7 2000/06/25 16:03:43 tsi Exp $ */
+/* $XFree86: xc/include/Xthreads.h,v 3.6 1999/10/13 04:20:47 dawes Exp $ */
 
 #ifndef _XTHREADS_H_
 #define _XTHREADS_H_

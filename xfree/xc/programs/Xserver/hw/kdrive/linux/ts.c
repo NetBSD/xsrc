@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ts.c,v 1.2 2000/09/26 15:57:04 tsi Exp $
+ * $XFree86$
  *
  * Derived from ps2.c by Jim Gettys
  *

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.28 2000/06/24 00:33:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.27 2000/06/23 22:42:02 dawes Exp $ */
 /* $XConsortium: xf86Cursor.c /main/10 1996/10/19 17:58:23 kaleb $ */
 
 #define NEED_EVENTS

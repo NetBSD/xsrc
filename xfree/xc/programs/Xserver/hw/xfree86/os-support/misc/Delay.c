@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/misc/Delay.c,v 3.3 2000/12/08 20:13:38 eich Exp $ */
+/* $XFree86: $ */
  
 #include "X.h"
 #include "xf86.h"

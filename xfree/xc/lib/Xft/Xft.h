@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/Xft.h,v 1.13 2000/12/08 07:51:26 keithp Exp $
+ * $XFree86: xc/lib/Xft/Xft.h,v 1.12 2000/12/06 18:03:24 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

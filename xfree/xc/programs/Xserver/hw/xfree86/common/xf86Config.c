@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.236 2000/12/06 15:35:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.234 2000/11/06 19:24:06 dawes Exp $ */
 
 
 /*

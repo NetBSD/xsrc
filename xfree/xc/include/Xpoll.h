@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/include/Xpoll.h,v 3.7 2000/09/19 12:46:05 eich Exp $ */
+/* $XFree86: xc/include/Xpoll.h,v 3.5 1998/12/13 12:23:40 dawes Exp $ */
 
 #ifndef _XPOLL_H_
 #define _XPOLL_H_

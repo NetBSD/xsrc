@@ -25,7 +25,7 @@
  * in this Software without prior written authorization from Metro Link.
  * 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Video.c,v 1.6 2000/11/30 20:45:34 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Video.c,v 1.4 2000/10/20 14:59:03 alanh Exp $ */
 
 /* View/edit this file with tab stops set to 4 */
 

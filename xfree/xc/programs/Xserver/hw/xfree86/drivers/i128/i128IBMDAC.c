@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128IBMDAC.c,v 1.2 2000/10/25 22:53:33 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128IBMDAC.c,v 1.1 2000/10/04 23:34:59 robin Exp $ */
 
 #include "xf86.h"
 #include "xf86_ansic.h"

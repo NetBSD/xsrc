@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm.h,v 1.15 2000/06/30 18:27:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm.h,v 1.14 2000/04/04 19:25:03 dawes Exp $ */
 
 
 /* All drivers should typically include these */

@@ -474,12 +474,14 @@ manrefextract(char *p)
 {
   char *p0;
   static char *nonhref = "\">'";
+  static char *punct = ".,:;)]}?!";
 
   while (*p==' ') p++;
   if (strincmp(p,"http",4)==0) {
 	href="%s"; manrefname = p;
 	p+=4;
 	while (*p && !isspace(*p) && !strchr(nonhref,*p)) p++;
+	while (strchr(punct, *(p - 1))) p--;
   } else {
 	href = manRef;
 

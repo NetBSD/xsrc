@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810state.c,v 1.5 2000/08/25 13:42:21 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810state.c,v 1.4 2000/06/22 16:59:24 tsi Exp $ */
 
 #include <stdio.h>
 

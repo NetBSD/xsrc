@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/paths.c,v 1.4 1999/08/22 08:58:52 dawes Exp $ */
+/* $XFree86$ */
 
  /* PATHS    CWEB         V0021 ********                             */
 /*

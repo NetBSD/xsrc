@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.50 1999/12/13 01:39:40 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.49 1999/12/03 19:17:18 eich Exp $ */
 
 /*
 

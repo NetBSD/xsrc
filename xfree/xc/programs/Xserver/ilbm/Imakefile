@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/ilbm/Imakefile,v 3.7 2000/08/24 22:20:18 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/ilbm/Imakefile,v 3.6tsi Exp $
 XCOMM $XConsortium: Imakefile,v 1.38 94/03/11 18:47:47 dpw Exp $
 #define IHaveModules
 #include <Server.tmpl>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/xf86Axp.h,v 1.2 2000/11/06 21:57:11 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XF86_AXP_H_
 #define _XF86_AXP_H_

@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/do_char.c,v 1.2 1999/02/07 06:18:14 dawes Exp $ */
+/* $XFree86$ */
 
 /***************************** D O - C H A R . C *****************************
  *                                                                           *

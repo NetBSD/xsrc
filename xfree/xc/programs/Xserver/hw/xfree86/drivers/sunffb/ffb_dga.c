@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dga.c,v 1.2 2000/10/17 16:53:17 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dga.c,v 1.1 2000/05/23 04:47:44 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

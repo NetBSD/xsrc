@@ -67,6 +67,8 @@ LinkSourceFile(XKBMAlloc.c,$(XLIBSRC))
 LinkSourceFile(XKBAlloc.c,$(XLIBSRC))
 LinkSourceFile(XKBGAlloc.c,$(XLIBSRC))
 
+#if UseConfDirForXkb
 LinkConfDirectory(xkb,.,xkb,.)
+#endif
 
 DependTarget()

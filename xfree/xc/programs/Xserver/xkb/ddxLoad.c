@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.26 2000/11/14 18:20:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.25 2000/06/15 22:04:13 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

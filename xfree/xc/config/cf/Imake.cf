@@ -17,7 +17,7 @@ XCOMM $TOG: Imake.cf /main/30 1998/04/28 13:55:25 barstow $
  *
  *     4.  Create a .cf file with the name given by MacroFile.
  */
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.63 2000/11/06 19:24:00 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.62 2000/11/02 02:51:05 dawes Exp $
 
 #if defined(__APPLE__)
 # undef __APPLE__

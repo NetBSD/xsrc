@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/mitmisc.c,v 3.2 1998/10/04 09:36:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/mitmisc.c,v 3.1 1996/05/06 05:55:29 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/xsetmode/Imakefile,v 3.0 1995/12/23 09:41:16 dawes Exp $
+XCOMM $XFree86: xc/programs/xf86dga/Imakefile,v 3.1 1995/12/21 11:45:41 dawes Exp $
 
         DEPLIBS = $(DEPXILIB) $(DEPXLIB)
 LOCAL_LIBRARIES = $(XILIB) $(XLIB)

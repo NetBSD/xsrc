@@ -154,7 +154,7 @@ in the <tt>XF86Config</tt> file, these lockups are overcome. But it may
 be worth checking wait states etc. on the card and in the BIOS setup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.25 2000/03/19 16:43:51 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.24 1999/08/23 06:38:54 dawes Exp $
 
 
 

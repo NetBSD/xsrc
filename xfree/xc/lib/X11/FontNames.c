@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/FontNames.c,v 1.4 1999/05/09 10:49:21 dawes Exp $ */
+/* $XFree86: xc/lib/X11/FontNames.c,v 1.3 1998/10/03 08:41:17 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

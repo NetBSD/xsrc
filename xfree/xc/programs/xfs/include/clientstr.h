@@ -40,7 +40,7 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/include/clientstr.h,v 1.4 1999/03/07 11:40:59 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/clientstr.h,v 1.3 1998/10/25 12:48:03 dawes Exp $ */
 
 #ifndef _CLIENTSTR_H_
 #define	_CLIENTSTR_H_

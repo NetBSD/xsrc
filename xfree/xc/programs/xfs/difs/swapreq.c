@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/swapreq.c,v 1.4 1999/08/21 13:48:49 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/swapreq.c,v 1.3 1998/10/25 12:48:00 dawes Exp $ */
 
 #include	<swapreq.h>
 

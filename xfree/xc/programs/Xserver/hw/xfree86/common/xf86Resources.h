@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.11 2000/07/11 16:14:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.10 2000/07/11 01:46:35 tsi Exp $ */
 
 #ifndef _XF86_RESOURCES_H
 

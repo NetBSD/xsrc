@@ -56,7 +56,7 @@ in this Software without prior written authorization from The Open Group.
  * 11-Nov-90 Dave Sternlicht            Adding SaveColors
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
  *
- * $XFree86: xc/programs/twm/gram.y,v 3.4 1999/02/19 21:27:26 hohndel Exp $
+ * $XFree86: xc/programs/twm/gram.y,v 3.3 1998/10/04 09:40:38 dawes Exp $
  *
  ***********************************************************************/
 

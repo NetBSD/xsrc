@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmMga.h,v 3.3 2000/09/26 15:57:19 tsi Exp $ */
+/* $XFree86$ */
 
 /*
  * WARNING: If you change any of these defines, make sure to change

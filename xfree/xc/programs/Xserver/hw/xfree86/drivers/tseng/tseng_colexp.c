@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_colexp.c,v 1.13 2000/10/17 16:53:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_colexp.c,v 1.12 2000/08/08 08:58:06 eich Exp $ */
 
 
 
@@ -255,11 +255,6 @@ TsengXAAInit_Colexp(ScrnInfoPtr pScrn)
 #define SET_FUNCTION_COLOREXPAND_CPU \
     ACL_ROUTING_CONTROL(0x02);
 
-static CARD32 ColorExpandDst;
-static int ce_skipleft;
-static int colexp_width_dwords;
-static int colexp_width_bytes;
-
 
 void
 TsengSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
@@ -269,12 +264,12 @@ TsengSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 
     if (!Is_ET6K) {
 	/* the accelerator needs DWORD padding, and "w" is in PIXELS... */
-	colexp_width_dwords = (MULBPP(pTseng, w) + 31) >> 5;
-	colexp_width_bytes = (MULBPP(pTseng, w) + 7) >> 3;
+	pTseng->acl_colexp_width_dwords = (MULBPP(pTseng, w) + 31) >> 5;
+	pTseng->acl_colexp_width_bytes = (MULBPP(pTseng, w) + 7) >> 3;
     }
 
-    ColorExpandDst = FBADDR(pTseng, x, y);
-    ce_skipleft = skipleft;
+    pTseng->acl_ColorExpandDst = FBADDR(pTseng, x, y);
+    pTseng->acl_skipleft = skipleft;
 
     wait_acl_queue(pTseng);
 
@@ -294,11 +289,11 @@ TsengSubsequentColorExpandScanline(ScrnInfoPtr pScrn,
 
     wait_acl_queue(pTseng);
 
-    ACL_MIX_ADDRESS((pTseng->AccelColorExpandBufferOffsets[bufno] << 3) + ce_skipleft);
-    START_ACL(pTseng, ColorExpandDst);
+    ACL_MIX_ADDRESS((pTseng->AccelColorExpandBufferOffsets[bufno] << 3) + pTseng->acl_skipleft);
+    START_ACL(pTseng, pTseng->acl_ColorExpandDst);
 
     /* move to next scanline */
-    ColorExpandDst += pTseng->line_width;
+    pTseng->acl_ColorExpandDst += pTseng->line_width;
 
     /*
      * If not using triple-buffering, we need to wait for the queued
@@ -327,14 +322,14 @@ void TsengSubsequentColorExpandScanline_8bpp(ScrnInfoPtr pScrn, int bufno)
     int i,j;
     CARD8 *bufptr;
 
-    i = colexp_width_bytes;
+    i = pTseng->acl_colexp_width_bytes;
     bufptr = (CARD8 *) (pTseng->XAAScanlineColorExpandBuffers[bufno]);
 
     wait_acl_queue(pTseng);
-    START_ACL (pTseng, ColorExpandDst);
+    START_ACL (pTseng, pTseng->acl_ColorExpandDst);
 
-/*  *((LongP) (MMioBase + 0x08)) = (CARD32) ColorExpandDst;*/
-/*  MMIO_OUT32(tsengCPU2ACLBase,0, (CARD32)ColorExpandDst); */
+/*  *((LongP) (MMioBase + 0x08)) = (CARD32) pTseng->acl_ColorExpandDst;*/
+/*  MMIO_OUT32(tsengCPU2ACLBase,0, (CARD32)pTseng->acl_ColorExpandDst); */
     j = 0;
     /* Copy scanline data to accelerator MMU aperture byte by byte */
     while (i--) {		       /* FIXME: we need to take care of PCI bursting and MMU overflow here! */
@@ -342,7 +337,7 @@ void TsengSubsequentColorExpandScanline_8bpp(ScrnInfoPtr pScrn, int bufno)
     }
 
     /* move to next scanline */
-    ColorExpandDst += pTseng->line_width;
+    pTseng->acl_ColorExpandDst += pTseng->line_width;
 }
 
 /*
@@ -359,11 +354,11 @@ void TsengSubsequentColorExpandScanline_16bpp(ScrnInfoPtr pScrn, int bufno)
     CARD8 *bufptr;
     register CARD32 bits16;
     
-    i = colexp_width_dwords * 2;
+    i = pTseng->acl_colexp_width_dwords * 2;
     bufptr = (CARD8 *) (pTseng->XAAScanlineColorExpandBuffers[bufno]);
     
     wait_acl_queue(pTseng);
-    START_ACL(pTseng, ColorExpandDst);
+    START_ACL(pTseng, pTseng->acl_ColorExpandDst);
 
     j = 0;
     while (i--) {
@@ -373,7 +368,7 @@ void TsengSubsequentColorExpandScanline_16bpp(ScrnInfoPtr pScrn, int bufno)
     }
 
     /* move to next scanline */
-    ColorExpandDst += pTseng->line_width;
+    pTseng->acl_ColorExpandDst += pTseng->line_width;
 }
 
 /*
@@ -390,11 +385,11 @@ void TsengSubsequentColorExpandScanline_24bpp(ScrnInfoPtr pScrn, int bufno)
     CARD8 *bufptr;
     register CARD32 bits24;
 
-    i = colexp_width_dwords * 4;
+    i = pTseng->acl_colexp_width_dwords * 4;
     bufptr = (CARD8 *) (pTseng->XAAScanlineColorExpandBuffers[bufno]);
 
     wait_acl_queue(pTseng);
-    START_ACL(pTseng, ColorExpandDst);
+    START_ACL(pTseng, pTseng->acl_ColorExpandDst);
 
     /* take 8 input bits, expand to 3 output bytes */
     bits24 = pTseng->ColExpLUT[*bufptr++];
@@ -409,7 +404,7 @@ void TsengSubsequentColorExpandScanline_24bpp(ScrnInfoPtr pScrn, int bufno)
     }
 
     /* move to next scanline */
-    ColorExpandDst += pTseng->line_width;
+    pTseng->acl_ColorExpandDst += pTseng->line_width;
 }
 
 /*
@@ -426,11 +421,12 @@ void TsengSubsequentColorExpandScanline_32bpp(ScrnInfoPtr pScrn, int bufno)
     CARD8 *bufptr;
     register CARD32 bits32;
 
-    i = colexp_width_dwords;	       /* amount of blocks of 8 bits to expand to 32 bits (=1 DWORD) */
+    i = pTseng->acl_colexp_width_dwords;
+   /* amount of blocks of 8 bits to expand to 32 bits (=1 DWORD) */
     bufptr = (CARD8 *) (pTseng->XAAScanlineColorExpandBuffers[bufno]);
 
     wait_acl_queue(pTseng);
-    START_ACL(pTseng, ColorExpandDst);
+    START_ACL(pTseng, pTseng->acl_ColorExpandDst);
 
     j = 0;
     while (i--) {
@@ -442,7 +438,7 @@ void TsengSubsequentColorExpandScanline_32bpp(ScrnInfoPtr pScrn, int bufno)
     }
 
     /* move to next scanline */
-    ColorExpandDst += pTseng->line_width;
+    pTseng->acl_ColorExpandDst += pTseng->line_width;
 }
 
 /*

@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. September, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpbands.c,v 3.3 1998/10/05 13:22:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpbands.c,v 3.2 1998/10/04 09:36:28 dawes Exp $ */
 
 #define _XIEC_MPBANDS
 #define _XIEC_PBANDS

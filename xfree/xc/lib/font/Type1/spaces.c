@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.7 1999/09/25 14:36:38 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.6 1999/08/22 05:35:44 dawes Exp $ */
  /* SPACES   CWEB         V0021 ********                             */
 /*
 :h1 id=spaces.SPACES Module - Handles Coordinate Spaces

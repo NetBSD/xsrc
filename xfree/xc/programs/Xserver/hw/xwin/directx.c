@@ -26,7 +26,7 @@
  * in this Software without prior written authorization from Peter Busch.
  *
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/directx.c,v 1.1 2000/08/10 17:40:37 dawes Exp $ */
+/* $XFree86$ */
 
 
 #include <windows.h>

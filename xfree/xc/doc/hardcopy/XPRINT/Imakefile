@@ -1,0 +1,5 @@
+XCOMM $XFree86$
+
+InstallHardcopyDoc(xp_library,xp_library.PS.gz)
+InstallHardcopyDoc(xp_proto,xp_proto.PS.gz)
+

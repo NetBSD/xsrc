@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
 \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.7 2000/11/03 18:46:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.10 2001/02/21 00:42:58 mvojkovi Exp $ */
 #ifndef __RIVA_HW_H__
 #define __RIVA_HW_H__
 #define RIVA_SW_VERSION 0x00010003
@@ -47,6 +47,7 @@
 #define NV_ARCH_03  0x03
 #define NV_ARCH_04  0x04
 #define NV_ARCH_10  0x10
+#define NV_ARCH_20  0x20
 /***************************************************************************\
 *                                                                           *
 *                             FIFO registers.                               *
@@ -359,7 +360,7 @@ typedef struct _riva_hw_inst
      * Common chip functions.
      */
     int  (*Busy)(struct _riva_hw_inst *);
-    void (*CalcStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *,int,int,int,int,int,int,int,int,int,int,int,int,int);
+    void (*CalcStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *,int,int,int,int,int,int,int,int,int,int,int,int,int,int);
     void (*LoadStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *);
     void (*UnloadStateExt)(struct _riva_hw_inst *,struct _riva_hw_state *);
     void (*SetStartAddress)(struct _riva_hw_inst *,U032);
@@ -430,6 +431,11 @@ int RivaGetConfig(RIVA_HW_INST *);
 	(hwinst).FifoFreeCount = (hwinst).hwptr->FifoFree >> 2;        \
    } \
    (hwinst).FifoFreeCount -= (cnt);                                \
+}
+#define RIVA_BUSY(hwinst) \
+{ \
+   mem_barrier(); \
+   while ((hwinst).Busy(&(hwinst))); \
 }
 #endif /* __RIVA_HW_H__ */
 

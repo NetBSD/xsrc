@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.14 2000/11/28 18:49:29 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.13 1999/05/30 03:03:19 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>

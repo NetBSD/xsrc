@@ -32,7 +32,7 @@
  *
  * Cleaned up and simplified by Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/extras/Mesa/src/X86/common_x86_asm.S,v 1.5 2000/12/12 23:52:37 dawes Exp $ */
+/* $XFree86$ */
 
 #include "assyntax.h"
 #include "common_x86_features.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbplygblt.c,v 3.2 1998/10/04 09:39:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbplygblt.c,v 3.1 1998/03/20 21:08:15 hohndel Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.30 93/09/04 16:17:06 rws Exp $
-XCOMM $XFree86: xc/fonts/Imakefile,v 3.5 2000/11/09 01:35:06 dawes Exp $
+XCOMM $XFree86: xc/fonts/Imakefile,v 3.4 1999/05/15 12:10:05 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 

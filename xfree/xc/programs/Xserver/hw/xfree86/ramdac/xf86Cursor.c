@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.c,v 1.7 2000/04/24 23:40:27 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.c,v 1.4 1999/03/14 11:18:08 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/14 1996/11/03 19:58:41 kaleb $
-XCOMM $XFree86: xc/lib/font/fontfile/Imakefile,v 3.17 2000/09/19 12:46:08 eich Exp $
+XCOMM $XFree86: xc/lib/font/fontfile/Imakefile,v 3.15 1999/08/21 13:48:01 dawes Exp $
 #include <Server.tmpl>
 
 #if BuildServer && DoLoadableServer

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/7 1996/09/28 16:43:07 rws $
-XCOMM $XFree86: xc/lib/XIE/Imakefile,v 1.2 1998/12/20 11:56:58 dawes Exp $
+XCOMM $XFree86$
 
 #define DoNormalLib NormalLibXie
 #define DoSharedLib SharedLibXie

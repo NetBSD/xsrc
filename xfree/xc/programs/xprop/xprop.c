@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xprop/xprop.c,v 1.7 1999/12/27 00:40:14 robin Exp $ */
+/* $XFree86: xc/programs/xprop/xprop.c,v 1.6 1999/03/07 11:41:17 dawes Exp $ */
 
 
 #include <X11/Xlib.h>

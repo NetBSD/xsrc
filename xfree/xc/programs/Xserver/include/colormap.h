@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/include/colormap.h,v 1.3 1998/10/04 09:38:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/colormap.h,v 1.2 1997/01/14 22:22:38 dawes Exp $ */
 #ifndef CMAP_H
 #define CMAP_H 1
 

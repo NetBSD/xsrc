@@ -43,7 +43,7 @@ SOFTWARE.
 ******************************************************************/
 
 
-/* $XFree86: xc/programs/Xserver/include/gcstruct.h,v 1.3 1998/10/04 09:38:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/gcstruct.h,v 1.2 1998/03/20 21:08:07 hohndel Exp $ */
 
 #ifndef GCSTRUCT_H
 #define GCSTRUCT_H

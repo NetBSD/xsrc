@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.5 2000/12/01 18:31:07 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen.c,v 1.3 2000/06/13 23:15:52 dawes Exp $
  */
 
 #include <X11/IntrinsicP.h>

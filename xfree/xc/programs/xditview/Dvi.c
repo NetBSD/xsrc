@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/Dvi.c,v 1.2 2000/12/03 05:20:53 keithp Exp $ */
+/* $XFree86: contrib/programs/xditview/Dvi.c,v 1.3 1997/05/17 13:49:02 dawes Exp $ */
 
 
 /*

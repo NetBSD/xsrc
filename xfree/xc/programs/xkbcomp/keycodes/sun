@@ -20,7 +20,7 @@
 //other dealings in this Software without prior written authorization
 //from The Open Group.
 //
-// $XFree86: xc/programs/xkbcomp/keycodes/sun,v 3.3 1998/12/20 11:58:23 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/sun,v 3.1.2.2 1998/10/04 15:23:15 hohndel Exp $
 //
 default xkb_keycodes "type4" {
 

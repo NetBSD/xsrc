@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Authors:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xext/XMultibuf.c,v 1.3 2000/09/26 15:56:56 tsi Exp $ */
+/* $XFree86: xc/lib/Xext/XMultibuf.c,v 1.2 1999/07/12 05:57:22 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

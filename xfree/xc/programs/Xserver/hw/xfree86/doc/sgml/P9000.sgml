@@ -459,7 +459,7 @@ During the course of the next few months, people will be working on
 acceleration, etc.  Please send any patches to me (<it>nygren@mit.edu</it>).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.22 1999/08/23 06:38:51 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.7 1998/12/29 07:54:30 hohndel Exp $
 
 
 

@@ -67,7 +67,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mparith.c,v 3.3 1998/10/05 13:22:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mparith.c,v 3.2 1998/10/04 09:36:26 dawes Exp $ */
 
 
 #define _XIEC_MPARITH

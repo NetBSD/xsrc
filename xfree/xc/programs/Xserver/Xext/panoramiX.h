@@ -56,6 +56,11 @@ typedef struct {
 	struct {
 	    Bool shared;
 	} pix;
+#ifdef RENDER
+	struct {
+	    Bool root;
+	} pict;
+#endif
 	char raw_data[4];
     } u;
 } PanoramiXRes;

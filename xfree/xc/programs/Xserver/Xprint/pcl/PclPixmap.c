@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPixmap.c,v 1.3 1999/12/16 02:26:27 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: PclPixmap.c /main/1 1996/09/28 17:01:58 rws $ */
 /*******************************************************************

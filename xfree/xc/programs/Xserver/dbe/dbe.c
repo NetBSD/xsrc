@@ -30,7 +30,7 @@
  *     DIX DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.7 1999/11/11 03:38:15 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.5 1998/07/26 09:56:06 dawes Exp $ */
 
 
 /* INCLUDES */

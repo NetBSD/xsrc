@@ -1,5 +1,5 @@
 /* $XConsortium: MailboxP.h,v 1.22 94/04/17 20:43:27 rws Exp $ */
-/* $XFree86: xc/programs/xbiff/MailboxP.h,v 1.1 2000/02/13 03:56:12 dawes Exp $ */
+/* $XFree86: contrib/programs/xbiff/MailboxP.h,v 3.1 1995/04/24 12:19:48 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium

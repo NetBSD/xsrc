@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mifillarc.c,v 3.4 1999/04/11 13:11:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mifillarc.c,v 3.3 1998/10/04 09:39:27 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

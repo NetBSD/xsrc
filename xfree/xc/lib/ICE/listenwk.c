@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/ICE/listenwk.c,v 1.2 1999/05/23 06:33:24 dawes Exp $ */
+/* $XFree86$ */
 
 
 /* Author: Ralph Mor, X Consortium */

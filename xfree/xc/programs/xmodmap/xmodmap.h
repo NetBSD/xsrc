@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/xmodmap.h,v 1.3 1999/03/07 14:23:38 dawes Exp $ */
+/* $XFree86$ */
 
 extern char *ProgramName;
 extern Display *dpy;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbmodule.c,v 1.7 1999/01/26 05:54:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbmodule.c,v 1.6 1999/01/17 12:29:24 dawes Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *

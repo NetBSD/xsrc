@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.8 1999/12/13 02:13:07 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.7 1998/11/28 10:42:51 dawes Exp $ */
 
 /*
  * Map names around so that multiple depths can be supported simultaneously

@@ -4,7 +4,7 @@
  * The functions used by ShadowFB
  * Based on code written by Mark Vojkovich <markv@valinux.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition_shadow.c,v 1.1 2000/03/01 00:25:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include "rendition.h"
 #include "vtypes.h"

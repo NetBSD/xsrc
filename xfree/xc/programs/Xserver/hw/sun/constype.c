@@ -1,6 +1,6 @@
 /*
  * $XConsortium: constype.c /main/9 1996/10/31 14:23:42 kaleb $
- * $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.4 1996/12/23 06:30:11 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.3 1996/10/16 14:38:12 dawes Exp $
  * 
  * consoletype - utility to print out string identifying Sun console type
  *

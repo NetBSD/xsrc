@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/20 1996/09/28 16:32:46 rws $
-XCOMM $XFree86: xc/lib/FS/Imakefile,v 3.4 1999/02/19 21:26:52 hohndel Exp $
+XCOMM $XFree86: xc/lib/FS/Imakefile,v 3.3 1998/12/20 11:56:48 dawes Exp $
 #define DoNormalLib NormalLibFS
 #define DoSharedLib SharedLibFS
 #define DoExtraLib SharedLibFS

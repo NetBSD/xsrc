@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatritmp.h,v 1.5 2000/12/05 21:18:34 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatritmp.h,v 1.4 2000/08/28 02:43:13 tsi Exp $ */
 
 static __inline void TAG(triangle)(GLcontext *ctx,
 				   GLuint e0, GLuint e1, GLuint e2,

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xvarargs.h,v 1.2 2000/11/28 18:49:30 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XVARARGS_H_
 #define _XVARARGS_H_

@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sunMultiDepth.c,v 1.4 1998/10/04 09:38:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunMultiDepth.c,v 1.3 1998/06/27 12:53:53 hohndel Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

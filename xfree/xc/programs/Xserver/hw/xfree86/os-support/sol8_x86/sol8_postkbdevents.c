@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_postkbdevents.c,v 1.3 2000/08/14 17:47:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_postkbdevents.c,v 1.2 1999/10/13 04:21:36 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *

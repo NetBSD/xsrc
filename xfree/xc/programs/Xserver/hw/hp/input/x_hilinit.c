@@ -46,7 +46,7 @@ Telephone and Telegraph Company or of the Regents of the
 University of California.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/hp/input/x_hilinit.c,v 3.3 1998/10/04 09:38:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/hp/input/x_hilinit.c,v 3.2 1997/11/16 06:17:58 dawes Exp $ */
 
 #define	NEED_EVENTS
 #define NITEMS(array) (sizeof(array)/sizeof(array[0]))

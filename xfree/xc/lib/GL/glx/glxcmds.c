@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/glxcmds.c,v 1.13 2000/11/13 23:31:23 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxcmds.c,v 1.12 2000/09/24 13:51:00 alanh Exp $ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

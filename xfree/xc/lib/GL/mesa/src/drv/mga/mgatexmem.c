@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexmem.c,v 1.1 2000/09/24 13:51:08 alanh Exp $ */
+/* $XFree86: $ */
 
 #include <stdlib.h>
 #include <stdio.h>

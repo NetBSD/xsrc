@@ -1,4 +1,4 @@
-/* $TOG: Form.c /main/54 1998/05/14 14:55:45 kaleb $ */
+/* $Xorg: Form.c,v 1.3 2000/08/17 19:45:32 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -43,7 +43,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xaw/Form.c,v 1.18 2000/10/26 17:57:49 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Form.c,v 1.20 2001/02/05 22:38:04 paulo Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -582,6 +582,11 @@ Layout(FormWidget fw, unsigned int width, unsigned int height,
 	always_resize_children =
 	    ChangeFormGeometry((Widget)fw, False, maxx, maxy, NULL, NULL);
 
+#ifdef OLDXAW
+	fw->form.old_width  = fw->core.width;
+	fw->form.old_height = fw->core.height;
+#endif
+
 	if (force_relayout)
 	    ret_val = True;
 	else
@@ -656,7 +661,6 @@ ResizeChildren(Widget w)
 static void
 LayoutChild(Widget w)
 {
-    FormWidget fw = (FormWidget)XtParent(w);
     FormConstraints form = (FormConstraints)w->core.constraints;
     Widget ref;
 
@@ -684,22 +688,16 @@ LayoutChild(Widget w)
     form->form.new_y = form->form.dy;
     if ((ref = form->form.horiz_base) != NULL) {
 	FormConstraints ref_form = (FormConstraints)ref->core.constraints;
-	Dimension width;
 
 	LayoutChild(ref);
-	width = fw->form.old_width ?
-	    ref_form->form.virtual_width : XtWidth(ref);
-	form->form.new_x += ref_form->form.new_x + width +
+	form->form.new_x += ref_form->form.new_x + XtWidth(ref) +
 			    (XtBorderWidth(ref) << 1);
     }
     if ((ref = form->form.vert_base) != NULL) {
 	FormConstraints ref_form = (FormConstraints)ref->core.constraints;
-	Dimension height;
 
 	LayoutChild(ref);
-	height = fw->form.old_height ?
-		 ref_form->form.virtual_height : XtHeight(ref);
-	form->form.new_y += ref_form->form.new_y + height +
+	form->form.new_y += ref_form->form.new_y + XtHeight(ref) +
 			    (XtBorderWidth(ref) << 1);
     }
 
@@ -891,8 +889,6 @@ XawFormGeometryManager(Widget w, XtWidgetGeometry *request,
 		 * The window will be updated when no_refigure is set back
 		 * to False
 		 */
-		form->form.virtual_width = XtWidth(w);
-		form->form.virtual_height = XtHeight(w);
 		form->form.deferred_resize = True;
 		ret_val = XtGeometryDone;
 	    }
@@ -902,6 +898,8 @@ XawFormGeometryManager(Widget w, XtWidgetGeometry *request,
 	    /*
 	     * Resets everything.
 	     */
+	    fw->form.old_width = XtWidth(fw);
+	    fw->form.old_height = XtHeight(fw);
 	    for (childP = children; childP - children < num_children; childP++) {
 		Widget nw = *childP;
 
@@ -916,8 +914,6 @@ XawFormGeometryManager(Widget w, XtWidgetGeometry *request,
 		    nform->form.virtual_height = XtHeight(nw);
 		}
 	    }
-	    fw->form.old_width = XtWidth(fw);
-	    fw->form.old_height = XtHeight(fw);
 	}
 	else {
 	    XtWidth(w) = old_width;
@@ -1022,23 +1018,21 @@ XawFormChangeManaged(Widget w)
     (*((FormWidgetClass)w->core.widget_class)->form_class.layout)
 	(fw, XtWidth(w), XtHeight(w), True);
 
-    if (!fw->form.old_width || !fw->form.old_height) {
-	fw->form.old_width = XtWidth(w);
-	fw->form.old_height = XtHeight(w);
-	for (children = childP = fw->composite.children;
-	     childP - children < num_children;
-	     childP++) {
-	    child = *childP;
-	    if (!XtIsManaged(child))
-		continue;
-	    form = (FormConstraints)child->core.constraints;
+    fw->form.old_width = XtWidth(w);
+    fw->form.old_height = XtHeight(w);
+    for (children = childP = fw->composite.children;
+	 childP - children < num_children;
+	 childP++) {
+	child = *childP;
+	if (!XtIsManaged(child))
+	    continue;
+	form = (FormConstraints)child->core.constraints;
 #ifndef OLDXAW
-	    form->form.virtual_x = XtX(child);
-	    form->form.virtual_y = XtY(child);
+	form->form.virtual_x = XtX(child);
+	form->form.virtual_y = XtY(child);
 #endif
-	    form->form.virtual_width = XtWidth(child);
-	    form->form.virtual_height = XtHeight(child);
-	}
+	form->form.virtual_width = XtWidth(child);
+	form->form.virtual_height = XtHeight(child);
     }
 }
 

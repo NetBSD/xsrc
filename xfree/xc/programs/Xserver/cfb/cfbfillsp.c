@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.4 2000/02/12 03:39:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.3 1998/10/04 09:37:40 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 

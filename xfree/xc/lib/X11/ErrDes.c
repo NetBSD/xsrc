@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/ErrDes.c,v 3.7 1999/05/09 10:49:16 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ErrDes.c,v 3.6 1998/10/03 08:41:16 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>

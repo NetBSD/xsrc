@@ -1158,7 +1158,7 @@ parse_vw(oc, font_set, name_list, count)
 		}
 		vrotate_num = font_set->vrotate_num = sub_num;
 	    } else {
-		font_set->vrotate = (VRotate)NULL;
+		vrotate = font_set->vrotate = (VRotate)NULL;
 	    }
 
 	    ret = parse_fontdata(oc, font_set, (FontData) vrotate, vrotate_num,

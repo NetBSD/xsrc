@@ -4,7 +4,7 @@ XCOMM $XConsortium: sv4Lib.rules /main/18 1996/09/28 16:13:29 rws $
  * SVR4 shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.6 1999/06/06 08:47:45 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.5 1999/01/11 05:13:09 dawes Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES

@@ -24,7 +24,7 @@ in this Software without prior written authorization from The Open Group.
  * This widget is a trivial clipping widget.  It is typically used with a
  * panner or scrollbar to navigate.
  */
-/* $XFree86: xc/lib/Xaw/Porthole.c,v 1.5 1999/06/06 08:48:06 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Porthole.c,v 1.4 1998/10/03 08:42:15 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimisc.c,v 1.1 2000/10/30 23:02:12 tsi Exp $ */
+/* $XFree86$ */
 /*
  * Copyright 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

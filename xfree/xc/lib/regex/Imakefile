@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/regex/Imakefile,v 1.1 1999/01/03 03:58:16 dawes Exp $
+XCOMM $XFree86$
 
 #define DoNormalLib	YES
 #define DoSharedLib	NO

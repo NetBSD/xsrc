@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc.  March 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/include/macro.h,v 1.8 1998/10/25 07:11:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/include/macro.h,v 1.7 1998/10/05 13:22:23 dawes Exp $ */
 
 #ifndef _XIEH_MACRO
 #define _XIEH_MACRO

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.9 2000/12/02 15:30:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.8 2000/11/15 23:13:09 dawes Exp $ */
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
  *

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/propertyst.h,v 3.1 1998/10/04 09:39:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/propertyst.h,v 3.0 1994/12/25 12:36:44 dawes Exp $ */
 
 #ifndef PROPERTYSTRUCT_H
 #define PROPERTYSTRUCT_H 

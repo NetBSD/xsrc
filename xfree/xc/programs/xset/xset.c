@@ -23,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xset/xset.c,v 3.20 2000/08/28 16:35:04 dawes Exp $ */
+/* $XFree86: xc/programs/xset/xset.c,v 3.19 2000/04/20 21:28:50 tsi Exp $ */
 /* Modified by Stephen so keyboard rate is set using XKB extensions */
 
 #include <stdio.h>

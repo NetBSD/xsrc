@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbout.c,v 3.6 2000/10/24 22:45:02 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include <ctype.h>

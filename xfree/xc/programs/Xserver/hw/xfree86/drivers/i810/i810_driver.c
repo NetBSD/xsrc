@@ -92,7 +92,7 @@ static void I810DisplayPowerManagementSet(ScrnInfoPtr pScrn,
 
 DriverRec I810 = {
    I810_VERSION,
-   "Accelerated driver for Intel i810 cards",
+   I810_DRIVER_NAME,
    I810Identify,
    I810Probe,
    I810AvailableOptions,

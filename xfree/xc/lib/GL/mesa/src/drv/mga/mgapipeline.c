@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapipeline.c,v 1.3 2000/09/26 15:56:47 tsi Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include "mgavb.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.c,v 1.13 2000/11/02 16:55:28 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atioption.c,v 1.12 2000/10/11 22:52:57 tsi Exp $ */
 /*
  * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *

@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93 2000/12/15 18:18:04 keithp Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -310,6 +310,9 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93 2000/12/15 18:18:04 keithp Exp $
 #ifndef BuildXftLibrary
 #define BuildXftLibrary		BuildRenderLibrary
 #endif
+#ifndef BuildFreetype2Library
+#define BuildFreetype2Library	BuildXftLibrary
+#endif
 
 #ifndef BuildMiscDocs
 #define BuildMiscDocs		NO
@@ -339,6 +342,9 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93 2000/12/15 18:18:04 keithp Exp $
 #ifndef InstallXtermSetUID
 #define InstallXtermSetUID	YES	/* xterm needs to be set uid */
 #endif
+#ifndef InstallXloadSetGID
+#define InstallXloadSetGID	YES	/* xload often needs set gid kmem */
+#endif
 #ifndef InstallXinitConfig
 #define InstallXinitConfig	NO	/* install sample xinit config */
 #endif
@@ -357,6 +363,12 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93 2000/12/15 18:18:04 keithp Exp $
 #endif
 #ifndef InstallAppDefFiles
 #define InstallAppDefFiles	YES	/* install application defaults */
+#endif
+#ifndef UseConfDirForAppDefaults
+#define UseConfDirForAppDefaults YES
+#endif
+#ifndef UseConfDirForXkb
+#define UseConfDirForXkb	YES
 #endif
 #ifndef CompressAllFonts
 #define CompressAllFonts	NO
@@ -1203,7 +1215,11 @@ XCOMM X Window System make variables; these need to be coordinated with rules
               RGB = $(CLIENTENVSETUP) $(XBUILDBINDIR)/rgb
             FONTC = $(CLIENTENVSETUP) $(XBUILDBINDIR)/bdftopcf
         MKFONTDIR = $(CLIENTENVSETUP) $(XBUILDBINDIR)/mkfontdir
+#if HasPerl
+      MKHTMLINDEX = RunPerlScript($(CONFIGSRC)/util/mkhtmlindex.pl,)
+#else
       MKHTMLINDEX = $(SHELL) $(CONFIGSRC)/util/mkhtmlindex.sh
+#endif
           UCS2ANY = $(FONTSRC)/util/ucs2any.pl
       BDFTRUNCATE = $(FONTSRC)/util/bdftruncate.pl
      UCSMAPPREFIX = $(FONTSRC)/util/map-
@@ -2201,6 +2217,60 @@ SharedLibReferences(XPM,Xpm,$(XPMLIBSRC),SOXPMREV,SharedXpmRev)
 ProjectUnsharedLibReferences(XPM,Xpm,$(XPMLIBSRC),XBuildLibDir)
 #endif
 
+#ifndef SharedLibFreetype2
+#define SharedLibFreetype2 HasSharedLibraries
+#endif
+#ifndef NormalLibFreetype2
+#define NormalLibFreetype2 (!SharedLibFreetype2 | ForceNormalLib)
+#endif
+#ifndef DebugLibFreetype2
+#define DebugLibFreetype2		NO
+#endif
+#ifndef ProfileLibFreetype2
+#define ProfileLibFreetype2		NO
+#endif
+          FREETYPE2LIBSRC = $(LIBSRC)/freetype2
+#if SharedLibFreetype2
+#ifndef SharedFreetype2Rev
+#define SharedFreetype2Rev 6.0
+#endif
+SharedLibReferences(FREETYPE2,freetype,$(FREETYPE2LIBSRC),SOFREETYPE2REV,SharedFreetype2Rev)
+#else
+ProjectUnsharedLibReferences(FREETYPE2,freetype,$(FREETYPE2LIBSRC),XBuildLibDir)
+#endif
+
+#if BuildFreetype2Library
+FREETYPE2INCLUDES=$(TOP_X_INCLUDES)/freetype2
+FREETYPE2DEFINES=-DFREETYPE2
+#define HasFreetype2	YES
+#else
+
+#ifdef Freetype2Dir
+
+#define HasFreetype2	YES
+
+#ifndef Freetype2LibDir
+#define Freetype2LibDir Freetype2Dir/lib
+#endif
+
+#ifndef Freetype2IncDir
+#define Freetype2IncDir Freetype2Dir/include/freetype2
+#endif
+
+FREETYPE2DIR = Freetype2Dir
+FREETYPE2LIBDIR = Freetype2LibDir
+FREETYPE2INCDIR = Freetype2IncDir
+FREETYPE2INCLUDES = -I$(FREETYPE2INCDIR)
+FREETYPE2LIB = -L$(FREETYPE2LIBDIR) -lfreetype
+FREETYPE2DEFINES = -DFREETYPE2
+#endif
+
+#endif
+
+#ifndef HasFreetype2
+#define HasFreetype2	NO
+#endif
+
 #ifndef SharedLibXft
 #define SharedLibXft HasSharedLibraries
 #endif
@@ -2347,6 +2417,7 @@ ProjectUnsharedLibReferences(XKBUI,xkbui,$(XKBUILIBSRC),XBuildLibDir)
  * if the InstallAppDefFiles configuration parameter is set.
  */
 #ifndef InstallAppDefaultsLong
+#if UseConfDirForAppDefaults
 #if InstallAppDefFiles
 #define InstallAppDefaultsLong(file,class)				@@\
 LinkConfDirectory(app-defaults,.,app-defaults,.)			@@\
@@ -2356,6 +2427,15 @@ InstallNamedTarget(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
 LinkConfDirectory(app-defaults,.,app-defaults,.)			@@\
 InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
 #endif /* InstallAppDefFiles */
+#else /* UseConfDirForAppDefaults */
+#if InstallAppDefFiles
+#define InstallAppDefaultsLong(file,class)				@@\
+InstallNamedTarget(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
+#else
+#define InstallAppDefaultsLong(file,class)				@@\
+InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
+#endif /* InstallAppDefFiles */
+#endif /* UseConfDirForAppDefaults */
 #endif /* InstallAppDefaultsLong */
 
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_shadow.c,v 1.1 2000/02/08 13:13:13 eich Exp $ */
+/* $XFree86: Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

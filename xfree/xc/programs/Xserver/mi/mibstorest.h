@@ -27,7 +27,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
 
-/* $XFree86: xc/programs/Xserver/mi/mibstorest.h,v 1.3 1998/10/04 09:39:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibstorest.h,v 1.2 1998/04/05 16:42:31 robin Exp $ */
 
 #include "mibstore.h"
 #include "regionstr.h"

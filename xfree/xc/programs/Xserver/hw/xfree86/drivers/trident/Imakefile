@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/Imakefile,v 1.27 2000/12/07 16:48:04 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/Imakefile,v 1.26 2000/11/03 18:46:13 eich Exp $
 XCOMM
 XCOMM This is an Imakefile for the TRIDENT driver.  
 XCOMM

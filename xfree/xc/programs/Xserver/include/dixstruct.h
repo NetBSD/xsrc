@@ -21,7 +21,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: dixstruct.h /main/43 1996/12/15 21:25:06 rws $ */
-/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.11 2000/05/05 17:53:52 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.10 1999/11/19 13:55:03 hohndel Exp $ */
 
 #ifndef DIXSTRUCT_H
 #define DIXSTRUCT_H

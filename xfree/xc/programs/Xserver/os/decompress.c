@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.3 2000/09/19 12:46:23 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.0tsi Exp $ */
 
 /* 
  * decompress - cat a compressed file

@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/pmdb.c,v 1.4 1999/03/14 03:22:22 dawes Exp $ */
+/* $XFree86: xc/programs/proxymngr/pmdb.c,v 1.3tsi Exp $ */
 
 #include "pmint.h"
 #include "pmdb.h"

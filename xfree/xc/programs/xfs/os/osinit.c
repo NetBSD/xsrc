@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)osinit.c	4.3	5/7/91
  *
  */
-/* $XFree86: xc/programs/xfs/os/osinit.c,v 1.3 1999/03/07 14:23:34 dawes Exp $ */
+/* $XFree86$ */
 
 #include	"os.h"
 

@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclWindow.c,v 1.7 1998/12/20 11:57:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclWindow.c,v 1.6 1997/01/14 22:14:17 dawes Exp $ */
 
 
 #include <stdio.h>

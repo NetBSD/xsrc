@@ -63,7 +63,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.19 2000/11/30 23:30:10 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.18 2000/04/04 19:25:26 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdlib.h>

@@ -1,0 +1,105 @@
+XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.2 2001/02/08 00:55:40 keithp Exp $
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+#define DoNormalLib NormalLibFreetype2
+#define DoSharedLib SharedLibFreetype2
+#define DoExtraLib SharedLibFreetype2
+#define DoDebugLib DebugLibFreetype2
+#define DoProfileLib ProfileLibFreetype2
+#define HasSharedData YES
+#define LibName freetype
+#define SoRev SOFREETYPE2REV
+#define LibHeaders NO
+
+#include <Threads.tmpl>
+
+FREETYPETOP = $(TOP)/extras/freetype2
+FREETYPESRC = $(FREETYPETOP)/src
+FREETYPEINC = $(FREETYPETOP)/include/freetype
+
+INCLUDES    = $(FREETYPE2INCLUDES) -I$(FREETYPETOP)/src
+
+SUBDIRS=freetype
+
+
+
+SRCS_BASE = ftsystem.c ftinit.c ftdebug.c ftbase.c ftglyph.c ftbbox.c ftmm.c
+OBJS_BASE = ftsystem.o ftinit.o ftdebug.o ftbase.o ftglyph.o ftbbox.o ftmm.o
+
+SRCS_AUTOHINT = autohint.c
+OBJS_AUTOHINT = autohint.o
+
+SRCS_SFNT     = sfnt.c
+OBJS_SFNT     = sfnt.o
+
+SRCS_CFF      = cff.c
+OBJS_CFF      = cff.o
+
+SRCS_PSNAMES  = psnames.c
+OBJS_PSNAMES  = psnames.o
+
+SRCS_PSAUX    = psaux.c
+OBJS_PSAUX    = psaux.o
+
+SRCS_TRUETYPE = truetype.c
+OBJS_TRUETYPE = truetype.o
+
+SRCS_TYPE1    = type1.c
+OBJS_TYPE1    = type1.o
+
+SRCS_CID      = type1cid.c
+OBJS_CID      = type1cid.o
+
+SRCS_RASTER   = raster.c
+OBJS_RASTER   = raster.o
+
+SRCS_SMOOTH   = smooth.c
+OBJS_SMOOTH   = smooth.o
+
+SRCS_WINFONTS = winfnt.c
+OBJS_WINFONTS = winfnt.o
+
+
+SRCS = $(SRCS_BASE) $(SRCS_AUTOHINT) $(SRCS_SFNT) $(SRCS_CFF) \
+	$(SRCS_PSNAMES) $(SRCS_PSAUX) $(SRCS_TRUETYPE) $(SRCS_TYPE1) \
+	$(SRCS_CID) $(SRCS_RASTER) $(SRCS_SMOOTH) $(SRCS_WINFONTS) 
+
+OBJS = $(OBJS_BASE) $(OBJS_AUTOHINT) $(OBJS_SFNT) $(OBJS_CFF) \
+	$(OBJS_PSNAMES) $(OBJS_PSAUX) $(OBJS_TRUETYPE) $(OBJS_TYPE1) \
+	$(OBJS_CID) $(OBJS_RASTER) $(OBJS_SMOOTH) $(OBJS_WINFONTS)
+
+#include <Library.tmpl>
+
+#if DoSharedLib && SharedDataSeparation
+SpecialCObjectRule(sharedlib,NullParameter,$(SHLIBDEF))
+#endif
+
+#if 0
+MANSUFFIX = $(LIBMANSUFFIX)
+InstallManPage(Freetype,$(LIBMANDIR))
+#endif
+
+
+LinkSourceFile(ftsystem.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftinit.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftdebug.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftbase.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftglyph.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftbbox.c,$(FREETYPESRC)/base)
+LinkSourceFile(ftmm.c,$(FREETYPESRC)/base)
+LinkSourceFile(autohint.c,$(FREETYPESRC)/autohint)
+LinkSourceFile(sfnt.c,$(FREETYPESRC)/sfnt)
+LinkSourceFile(cff.c,$(FREETYPESRC)/cff)
+LinkSourceFile(psnames.c,$(FREETYPESRC)/psnames)
+LinkSourceFile(psaux.c,$(FREETYPESRC)/psaux)
+LinkSourceFile(truetype.c,$(FREETYPESRC)/truetype)
+LinkSourceFile(type1.c,$(FREETYPESRC)/type1)
+LinkSourceFile(type1cid.c,$(FREETYPESRC)/cid)
+LinkSourceFile(raster.c,$(FREETYPESRC)/raster)
+LinkSourceFile(smooth.c,$(FREETYPESRC)/smooth)
+LinkSourceFile(winfnt.c,$(FREETYPESRC)/winfonts)
+
+
+DependTarget()

@@ -97,4 +97,4 @@ XctFree
 XctNextItem
 XctReset
 
-/* $XFree86: xc/lib/Xmu/Xmu-def.cpp,v 1.1 2000/08/09 23:40:13 dawes Exp $ */
+/* $XFree86$ */

@@ -1,5 +1,5 @@
 .TH XvPutStill 3X 
-.\" $XFree86: xc/doc/man/Xv/XvPutStill.man,v 1.4 1999/03/02 11:49:15 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvPutStill \- write a single frame of video to a drawable
 .\"

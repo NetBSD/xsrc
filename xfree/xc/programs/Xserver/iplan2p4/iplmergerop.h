@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/iplmergerop.h,v 3.0 1996/08/18 01:54:53 dawes Exp $ */
+/* $XFree86$ */
 #ifndef _IPLANMERGEROP_H_
 #define _IPLANMERGEROP_H_
 

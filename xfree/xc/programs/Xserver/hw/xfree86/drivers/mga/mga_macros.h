@@ -107,4 +107,6 @@ while(INREG(MGAREG_DWGSYNC) != MGA_SYNC_XTAG) ; \
 #define MGA_NOT_HAL(x) { x; }
 #endif
 
+#define MGAISG450(x) ( ((x)->Chipset == PCI_CHIP_MGAG400) && ((x)->ChipRev >= 0x80) )
+
 #endif /* _MGA_MACROS_H_ */

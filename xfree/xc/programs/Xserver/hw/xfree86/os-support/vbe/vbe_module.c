@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/vbe/vbe_module.c,v 1.2 1999/12/06 03:57:06 robin Exp $ */
+/* $XFree86: $ */
 
 #include "xf86.h"
 #include "xf86str.h"

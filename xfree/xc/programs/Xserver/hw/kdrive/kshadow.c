@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/kshadow.c,v 1.3 2000/09/27 20:47:37 keithp Exp $
+ * $XFree86$
  *
  * Copyright © 1999 Keith Packard
  *

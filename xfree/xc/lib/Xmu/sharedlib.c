@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/sharedlib.c,v 3.2 2000/11/28 18:50:10 dawes Exp $ */
+/* $XFree86$ */
 
 #if defined(SUNSHLIB) && !defined(SHAREDCODE)
 

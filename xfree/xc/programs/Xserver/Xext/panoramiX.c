@@ -611,6 +611,10 @@ void PanoramiXExtensionInit(int argc, char *argv[])
     ProcVector[X_StoreColors] = PanoramiXStoreColors;    
     ProcVector[X_StoreNamedColor] = PanoramiXStoreNamedColor;    
 
+#ifdef RENDER
+    PanoramiXRenderInit ();
+#endif
+
     return;
 }
 extern 

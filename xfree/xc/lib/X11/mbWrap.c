@@ -46,7 +46,7 @@ from The Open Group.
  * 
  *		 M. Collins		OSF  
  */				
-/* $XFree86: xc/lib/X11/mbWrap.c,v 1.3 2000/11/29 17:40:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxexts.c,v 1.2 2000/05/18 23:46:24 dawes Exp $ */
+/* $XFree86$ */
 
 #include "X.h"
 #include "Xproto.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_macros.h,v 1.11 2000/11/28 20:59:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_macros.h,v 1.10 2000/11/14 16:54:53 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.

@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/programs/editres/svpopup.c,v 1.4 1999/03/14 03:22:21 dawes Exp $ */
+/* $XFree86: xc/programs/editres/svpopup.c,v 1.3tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>	/* Get standard string definations. */

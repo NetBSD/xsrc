@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Scrollbar.c,v 1.11 2000/09/26 15:56:54 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/Scrollbar.c,v 1.10 2000/08/23 22:10:02 tsi Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

@@ -24,7 +24,7 @@
  *
  *    Wittawat Yamwong <Wittawat.Yamwong@stud.uni-hannover.de>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/hwlog.c,v 1.2 2000/06/22 16:59:23 tsi Exp $ */
+/* $XFree86$ */
  
 #include "hwlog.h"
 hwlog_t hwlog = { 0,0,0, "[???] "};

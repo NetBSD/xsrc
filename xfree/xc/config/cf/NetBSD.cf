@@ -2,7 +2,7 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.87 2000/12/03 16:14:08 herrb Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.87.2.1 2001/01/22 19:49:14 dawes Exp $
 
 
 #ifndef OSName
@@ -67,10 +67,19 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
        (OSMajorVersion == 1 && OSMinorVersion < 2))) 
 #define HasMkstemp		YES
 #endif
+/* But the standalone mktemp doesn't exist before NetBSD 1.5*/
+#if (OSMajorVersion == 0 || (OSMajorVersion == 1 && OSMinorVersion <= 4))
+# define HasMktemp		NO
+#else
+# define HasMktemp		YES
+#endif
+
 #define HasUsableFileMmap	YES
 
 #define HasVarRun		YES
 #define HasVarDb		YES
+
+#define InstallXloadSetGID	NO
 
 /* Defines for using the GNU pth thread library -- experimental */
 

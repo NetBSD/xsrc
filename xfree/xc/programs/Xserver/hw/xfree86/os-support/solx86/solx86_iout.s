@@ -1,4 +1,4 @@
-/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_iout.s,v 3.1 1996/12/23 06:51:18 dawes Exp $
+/ $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_iout.s,v 3.0 1996/11/18 13:13:06 dawes Exp $
 /
 /
 /

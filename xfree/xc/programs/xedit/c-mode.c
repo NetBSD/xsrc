@@ -383,7 +383,7 @@ previous_anchor:
 		    rtmp = MAX(rtmp, pright);
 		}
 		right = anchor->position + entity->offset;
-		while (entity && ++count < 3) {
+		while (entity && count++ < 3) {
 		    if (entity->property == Qerror) {
 			right = anchor->position + entity->offset + entity->length;
 			count = 0;

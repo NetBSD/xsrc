@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/16 1997/10/24 14:30:46 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.32 2000/12/07 09:04:19 alanh Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.31 2000/12/06 15:35:36 eich Exp $
 #define IHaveSubdirs
 
       TESTDATA = 

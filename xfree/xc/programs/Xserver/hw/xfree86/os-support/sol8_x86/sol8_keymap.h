@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_keymap.h,v 1.2 1999/09/27 14:59:28 dawes Exp $ */
+/* $XFree86$ */
 /* 
  * replacement for xf86Keymap.h - for Solaris8_x86
  */ 

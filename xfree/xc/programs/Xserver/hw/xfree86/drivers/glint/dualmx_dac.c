@@ -27,7 +27,7 @@
  * Modified version of tx_dac.c to support Dual MX rasterizers by 
  *   Jens Owen <jens@precisioninsight.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/dualmx_dac.c,v 1.4 2000/05/10 18:55:28 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/dualmx_dac.c,v 1.2 1999/07/04 06:38:56 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

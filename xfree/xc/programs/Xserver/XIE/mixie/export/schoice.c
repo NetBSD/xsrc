@@ -64,7 +64,7 @@ terms and conditions:
 
 	Dean Verheiden && Robert NC Shelley  AGE Logic, Inc.  Jan 1994
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/schoice.c,v 3.4 1998/10/25 07:11:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/schoice.c,v 3.3 1998/10/05 13:22:32 dawes Exp $ */
 
 #define _XIEC_SCHOICE
 #define _XIEC_IPHOTO

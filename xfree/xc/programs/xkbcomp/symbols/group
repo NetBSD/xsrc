@@ -2,7 +2,7 @@
 // using the group(switch) map, the right alt key temporarily chooses 
 // the second keyboard group (until it is released).
 //
-// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.4 2000/11/06 19:24:10 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.3 2000/10/28 00:34:06 dawes Exp $
 partial modifier_keys 
 xkb_symbols "switch" {
     key <RALT>	{ 	

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgascrinit.c,v 1.2 1998/07/25 16:58:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgascrinit.c,v 1.1.2.4 1998/06/08 15:13:15 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 

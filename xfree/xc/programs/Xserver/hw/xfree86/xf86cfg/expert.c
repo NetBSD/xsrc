@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/expert.c,v 1.5 2000/12/02 15:31:02 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/expert.c,v 1.6 2000/12/27 23:37:37 paulo Exp $
  */
 
 #include "config.h"
@@ -4615,6 +4615,9 @@ ExpertInitialize(void)
 				    XtNtreeParent, config, NULL, 0);
     node->next = NewNode(mainNode, flags, NULL, config, NULL);
     node = node->next;
+    if (XF86Config->conf_flags == NULL)
+	XF86Config->conf_flags = (XF86ConfFlagsPtr)
+	    XtCalloc(1, sizeof(XF86ConfFlagsRec));
     XtAddCallback(flags, XtNcallback, OptionsCallback,
 		  (XtPointer)&(XF86Config->conf_flags->flg_option_lst));
 

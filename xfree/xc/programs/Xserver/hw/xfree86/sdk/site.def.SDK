@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/sdk/site.def.SDK,v 1.1 1999/08/14 10:50:09 dawes Exp $
+XCOMM $XFree86$
 XCOMM ------------------------------------------------------------------
 XCOMM Site file for the driver SDK. You should add site specific information
 XCOMM here. In particular adding a driver to the SDK requires that you add

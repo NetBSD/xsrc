@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.6 2000/11/13 23:31:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.5 2000/09/24 13:51:06 alanh Exp $ */
 
 #include <stdio.h>
 

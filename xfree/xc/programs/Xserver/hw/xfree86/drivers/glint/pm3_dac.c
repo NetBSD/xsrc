@@ -336,7 +336,7 @@ Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	pReg->DacRegs[PM3RD_DClk0PostScale] = p;
     }
 
-    pReg->DacRegs[PM2VDACRDIndexControl] = 0x00;
+    pReg->glintRegs[PM2VDACRDIndexControl >> 3] = 0x00;
 
     if (pScrn->rgbBits == 8)
         pReg->DacRegs[PM2VDACRDMiscControl] = 0x01; /* 8bit DAC */
@@ -429,8 +429,8 @@ Permedia3Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
 	glintReg->cmap[i] = Permedia2ReadData(pScrn);
     }
 
-    glintReg->DacRegs[PM2VDACRDIndexControl] = 
-				Permedia2vInIndReg(pScrn, PM2VDACRDIndexControl);
+    glintReg->glintRegs[PM2VDACRDIndexControl >> 3] = 
+				GLINT_READ_REG(PM2VDACRDIndexControl);
     glintReg->DacRegs[PM2VDACRDOverlayKey] = 
 				Permedia2vInIndReg(pScrn, PM2VDACRDOverlayKey);
     glintReg->DacRegs[PM2VDACRDSyncControl] = 
@@ -496,8 +496,8 @@ Permedia3Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     GLINT_SLOW_WRITE_REG(glintReg->glintRegs[VSBBase >> 3], VSBBase);
 #endif
 
-    Permedia2vOutIndReg(pScrn, PM2VDACRDIndexControl, 0x00, 
-				glintReg->DacRegs[PM2VDACRDIndexControl]);
+    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PM2VDACRDIndexControl >> 3], PM2VDACRDIndexControl);
+
     Permedia2vOutIndReg(pScrn, PM2VDACRDOverlayKey, 0x00, 
 				glintReg->DacRegs[PM2VDACRDOverlayKey]);
     Permedia2vOutIndReg(pScrn, PM2VDACRDSyncControl, 0x00, 

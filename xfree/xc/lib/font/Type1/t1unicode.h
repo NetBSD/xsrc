@@ -20,6 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/Type1/t1unicode.h,v 1.1 1999/01/31 04:59:31 dawes Exp $ */
+/* $XFree86$ */
 
 char *unicodetoPSname(unsigned short code);

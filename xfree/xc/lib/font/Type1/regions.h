@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/regions.h,v 1.6 2000/08/09 23:40:15 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/regions.h,v 1.5 2000/04/28 18:19:20 eich Exp $ */
 /*SHARED*/
  
 #define   Interior(p,rule)        t1_Interior(p,rule)

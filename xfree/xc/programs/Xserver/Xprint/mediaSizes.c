@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/mediaSizes.c,v 1.3 1999/12/16 02:26:26 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: mediaSizes.c /main/1 1996/09/28 16:59:55 rws $ */
 /*

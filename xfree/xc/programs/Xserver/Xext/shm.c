@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.27 2000/08/10 17:40:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.26 2000/04/27 16:26:44 eich Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

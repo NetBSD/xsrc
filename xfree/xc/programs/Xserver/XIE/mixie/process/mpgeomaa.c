@@ -67,7 +67,7 @@ terms and conditions:
 	Ben Fahy && Larry Hare -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomaa.c,v 3.4 1998/10/05 13:22:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomaa.c,v 3.3 1998/10/04 09:36:33 dawes Exp $ */
 
 
 #define _XIEC_MPGEOM

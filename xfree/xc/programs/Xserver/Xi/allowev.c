@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/allowev.c,v 3.2 1998/10/04 09:36:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/allowev.c,v 3.1 1996/04/15 11:18:22 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.7 1999/08/14 10:49:02 dawes Exp $
+XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.6 1999/04/17 09:08:08 dawes Exp $
 
     SRCS = include.c main.c parse.c pr.c cppsetup.c ifparser.c 
     OBJS = include.o main.o parse.o pr.o cppsetup.o ifparser.o 

@@ -8,7 +8,7 @@ COMMENT in both source and binary form provided that the copyright
 COMMENT and these terms are retained. Under no circumstances is the author
 COMMENT responsible for the proper functioning of this software, nor does
 COMMENT the author assume any responsibility for damages incurred with its use.
-COMMENT $XFree86: xc/fonts/bdf/cyrillic/crox2c.bdf,v 3.2 1996/09/01 12:17:55 dawes Exp $
+COMMENT $XFree86: xc/fonts/bdf/cyrillic/crox2c.bdf,v 3.1 1996/08/16 12:25:53 dawes Exp $
 FONT -Cronyx-Courier-Medium-R-Normal--17-120-100-100-M-90-KOI8-R
 SIZE 12 96 96
 FONTBOUNDINGBOX 9 16 0 -3

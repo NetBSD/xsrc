@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.2 2000/11/06 19:24:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.1 2000/03/05 16:59:17 dawes Exp $ */
 
 /* Resource information code */
 

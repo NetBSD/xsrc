@@ -4,7 +4,7 @@
  * Java Runtime Interface - Machine Dependent Types
  * Copyright (c) 1996 Netscape Communications Corporation. All rights reserved.
  ******************************************************************************/
-/* $XFree86: xc/programs/xrx/plugin/include/jri_md.h,v 1.2 1999/03/14 03:22:31 dawes Exp $ */
+/* $XFree86: xc/programs/xrx/plugin/jri_md.h,v 1.0tsi Exp $ */
  
 #ifndef JRI_MD_H
 #define JRI_MD_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.h,v 1.7 2000/12/15 15:19:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_priv.h,v 1.6 2000/12/01 14:29:00 dawes Exp $ */
 
 
 #ifndef _TDFX_FIFO_H_

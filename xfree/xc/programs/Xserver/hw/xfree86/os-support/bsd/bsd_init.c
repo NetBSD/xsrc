@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.15 2000/11/14 21:59:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.16 2001/02/03 19:33:05 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -66,7 +66,7 @@ static int initialVT = -1;
 #define PCVT_CONSOLE_MODE O_RDWR|O_NDELAY
 #endif
 
-#ifdef WSCONS_SUPPORT
+#if defined(WSCONS_SUPPORT) && defined(__NetBSD__)
 /* NetBSD's new console driver */
 #define WSCONS_PCVT_COMPAT_CONSOLE_DEV "/dev/ttyE0"
 #endif
@@ -485,7 +485,7 @@ xf86OpenPcvt()
 #endif
 
     fd = open(PCVT_CONSOLE_DEV, PCVT_CONSOLE_MODE, 0);
-#ifdef WSCONS_SUPPORT
+#ifdef WSCONS_PCVT_COMPAT_CONSOLE_DEV
     if (fd < 0)
     {
 	fd = open(WSCONS_PCVT_COMPAT_CONSOLE_DEV, PCVT_CONSOLE_MODE, 0);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbgc.c,v 3.2 1999/06/20 15:02:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbgc.c,v 3.1 1998/03/20 21:04:54 hohndel Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

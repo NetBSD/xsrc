@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/include/extensions/XTest.h,v 3.1 1998/10/02 07:39:15 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XTest.h,v 3.0 1996/12/12 09:12:53 dawes Exp $ */
 
 #ifndef _XTEST_H_
 #define _XTEST_H_

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/ColorSB.c,v 1.2 2000/06/07 22:02:58 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef X_NOT_POSIX
 #include <unistd.h>

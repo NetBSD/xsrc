@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_init.c,v 1.3 2000/08/11 19:51:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/sol8_init.c,v 1.2 1999/10/13 04:21:35 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>

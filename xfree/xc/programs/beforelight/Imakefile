@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.2 93/09/18 16:23:30 rws Exp $
-XCOMM $XFree86: xc/programs/beforelight/Imakefile,v 3.5 1996/01/17 12:50:21 dawes Exp $
+XCOMM $XFree86: xc/programs/beforelight/Imakefile,v 3.4 1996/01/16 15:08:26 dawes Exp $
         DEPLIBS = XawClientDepLibs $(DEPXSSLIB)
 LOCAL_LIBRARIES = $(XSSLIB) XawClientLibs 
            SRCS = b4light.c

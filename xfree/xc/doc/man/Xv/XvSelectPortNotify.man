@@ -1,5 +1,5 @@
 .TH XvSelectPortNotify 3X
-.\" $XFree86: xc/doc/man/Xv/XvSelectPortNotify.man,v 1.4 1999/03/02 11:49:17 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvSelectPortNotify \- enable or disable XvPortNotify(3X) events
 .\"

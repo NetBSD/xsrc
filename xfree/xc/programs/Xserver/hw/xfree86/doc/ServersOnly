@@ -63,7 +63,7 @@ For some OSs you need to set BOOTSTRAPCFLAGS.  Refer to the appropriate
 OS-specific README for information about this.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/ServersOnly,v 3.7 1996/12/23 06:45:18 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/ServersOnly,v 3.6 1996/11/24 09:55:46 dawes Exp $
 
 
 

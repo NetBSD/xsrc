@@ -1,5 +1,5 @@
 XCOMM platform:  $XConsortium: ncr.cf /main/28 1996/09/28 16:11:31 rws $
-XCOMM platform:  $XFree86: xc/config/cf/ncr.cf,v 3.18 1996/12/27 06:50:22 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/ncr.cf,v 3.17 1996/12/23 05:50:28 dawes Exp $
 
 #ifndef OSName
 #define OSName			Unix System V Release 4/MP-RAS

@@ -9,14 +9,16 @@
 <date>4 December 2000
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.26 2000/12/14 22:15:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.26.2.2 2001/03/16 14:55:41 dawes Exp $
 </ident>
 
 <abstract>
 
 This document provides information about the status of the driver and
 hardware support in XFree86 &relvers; compared with that in XFree86
-&legacyvers;.  Please send updates for this document to
+&legacyvers;.  Unless otherwise stated, hardware is classified as "supported"
+if its driver provides basic 2D support.  Support for additional features
+may or may not be present.  Please send updates for this document to
 <email>fixes@xfree86.org</email>
 
 </abstract>
@@ -459,7 +461,7 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 <tag>&relvers;:</tag>
 	Support (accelerated) for the Riva 128, 128ZX, TNT, TNT2 (Ultra,
 	Vanta, M64), GeForce (DDR, 256), GeForce2 (GTS, Ultra, MX), Quadro,
-	and Quadro2 is provided by the "nv" driver.
+	Quadro2, and GeForce3 is provided by the "nv" driver.
 
 <tag>Summary:</tag>
 	All chipsets supported in &legacyvers; except the NV1 are also
@@ -614,7 +616,7 @@ other architectures known to work on (e.g., Alpha, PPC), etc.
 	there are some problems with it in this version.
 
 <tag>Summary:</tag>
-	Support for the 86C201, 86C202, 86C215, 86C225, 5597 and 5598
+	Support for the 86C201, 86C202, 86C205, 86C215, 86C225, 5597 and 5598
 	is currently only available in &legacyvers;.
 
 </descrip>

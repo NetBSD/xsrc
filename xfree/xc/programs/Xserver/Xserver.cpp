@@ -18,7 +18,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.\" $XFree86: xc/programs/Xserver/Xserver.cpp,v 1.1 2000/12/11 20:29:32 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/Xserver.man,v 3.12 1999/03/14 03:21:21 dawes Exp $
 .TH XSERVER 1 "Release 6.4"  "X Version 11"
 .SH NAME
 Xserver \- X Window System display server

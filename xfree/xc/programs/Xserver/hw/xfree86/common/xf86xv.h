@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.h,v 1.19 2000/11/02 16:33:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.h,v 1.18 2000/08/04 16:13:26 eich Exp $ */
 
 #ifndef _XVDIX_H_
 #define _XVDIX_H_

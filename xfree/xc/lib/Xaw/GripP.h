@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/GripP.h,v 1.6 1999/06/20 08:41:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/GripP.h,v 1.5 1999/06/06 08:47:57 dawes Exp $ */
 
 #ifndef _XawGripP_h
 #define _XawGripP_h

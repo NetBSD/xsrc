@@ -38,7 +38,7 @@ implied warranty.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.5 1999/10/13 22:33:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.4 1998/12/20 11:57:57 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.4 1998/10/04 09:38:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.3 1997/06/03 14:11:10 hohndel Exp $ */
 
 /*
  * This is sunKbd.c modified for LynxOS

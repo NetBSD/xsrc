@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.18 2000/05/14 20:43:59 alanh Exp $ */
+/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.16 1999/02/28 11:20:14 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/FontSample.c,v 1.2 2000/06/07 22:03:00 tsi Exp $ */
+/* $XFree86$ */
 
 #include <ctype.h>
 #include <stdio.h>

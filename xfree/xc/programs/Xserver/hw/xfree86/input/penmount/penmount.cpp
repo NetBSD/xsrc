@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/penmount.cpp,v 1.2 2000/12/11 20:18:55 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/penmount.cpp,v 1.1 2000/08/01 18:59:58 dawes Exp $ 
 .TH PENNMOUNT __drivermansuffix__ "Version 4.0.2"  "XFree86"
 .SH NAME
 penmount \- PenMount input driver

@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/XawInit.h,v 1.11 1999/08/28 09:00:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawInit.h,v 1.10 1999/08/15 13:00:39 dawes Exp $ */
 
 #ifndef _XawInit_h
 #define _XawInit_h

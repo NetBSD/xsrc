@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.45 2000/11/14 18:20:32 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.44 2000/11/02 02:51:08 dawes Exp $ */
 
 
 /* 

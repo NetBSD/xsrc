@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxdrv.h,v 1.2 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxdrv.h,v 1.1 2000/09/24 13:51:15 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

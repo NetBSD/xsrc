@@ -5,7 +5,7 @@
 <article>
 <title>Licenses</title>
 <author>The XFree86 Project</author>
-<date>1999</date>
+<date>March 2001</date>
 
 <ident>
 $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.7 2000/03/06 22:59:23 dawes Exp $
@@ -17,7 +17,7 @@ XFree86 code without an explicit copyright is covered by the following
 copyright/license:
 
 <p>
-Copyright (C) 1994-2000 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-2001 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),

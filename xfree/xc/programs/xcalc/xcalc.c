@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xcalc/xcalc.c,v 1.2 2000/05/11 18:14:41 tsi Exp $ */
+/* $XFree86$ */
 
 /*
  * xcalc.c  -  a hand calculator for the X Window system

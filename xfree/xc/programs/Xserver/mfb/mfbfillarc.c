@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbfillarc.c,v 1.3 1998/10/04 09:39:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbfillarc.c,v 1.2 1998/03/20 21:08:12 hohndel Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

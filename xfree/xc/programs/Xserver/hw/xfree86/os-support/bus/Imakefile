@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.15 2000/12/01 00:24:35 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.14 2000/11/06 19:24:09 dawes Exp $
 
 #include <Server.tmpl>
 

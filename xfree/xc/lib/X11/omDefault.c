@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/omDefault.c,v 1.4 2000/11/29 17:40:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"

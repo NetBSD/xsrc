@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.12 1999/08/22 05:57:23 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.11 1999/07/18 08:14:22 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/nto.rules,v 1.2 1999/12/27 00:45:44 robin Exp $ 
+XCOMM $XFree86: xc/config/cf/nto.rules,v 1.1.2.1 1999/07/29 09:40:13 hohndel Exp $ 
 XCOMM Rules for QNX/Neutrino
 XCOMM Note that some of these will disappear when we stop cross-compiling
 

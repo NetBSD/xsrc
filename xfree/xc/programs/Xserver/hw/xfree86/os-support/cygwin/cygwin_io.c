@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/cygwin/cygwin_io.c,v 1.2 2000/08/23 21:06:21 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/cygwin/cygwin_io.c,v 1.1 2000/08/10 17:40:35 dawes Exp $
  */
 
 /* This module contains the qnx-specific functions to access the keyboard

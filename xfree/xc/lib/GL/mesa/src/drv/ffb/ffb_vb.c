@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.c,v 1.2 2000/09/24 13:51:03 alanh Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.c,v 1.1 2000/06/20 05:08:40 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller

@@ -24,7 +24,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.5 1998/12/05 14:40:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.4 1998/10/04 09:39:30 dawes Exp $ */
 
 # define NEED_EVENTS
 # include   "X.h"

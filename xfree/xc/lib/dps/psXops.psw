@@ -34,7 +34,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/psXops.psw,v 1.2 2000/06/07 22:02:57 tsi Exp $ */
+/* $XFree86$ */
 
 defineps PSclientsync()
 	clientsync

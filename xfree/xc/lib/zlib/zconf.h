@@ -5,7 +5,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $XFree86: xc/lib/zlib/zconf.h,v 1.6 2000/08/09 23:40:16 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H

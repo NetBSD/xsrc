@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.6 1998/04/05 16:15:53 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.5 1997/07/29 12:07:25 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/choose.c,v 3.10 2000/11/27 17:45:57 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/choose.c,v 3.9 2000/05/31 07:15:11 eich Exp $ */
 
 /*
  * choose.c

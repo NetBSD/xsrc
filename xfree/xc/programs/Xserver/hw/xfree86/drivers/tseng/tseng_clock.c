@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_clock.c,v 1.16 2000/08/08 08:58:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_clock.c,v 1.14 1999/06/12 07:18:58 dawes Exp $ */
 
 
 
@@ -342,28 +342,27 @@ static Bool
 Tseng_ET4000ClockSelect(ScrnInfoPtr pScrn, int no)
 {
     TsengPtr pTseng = TsengPTR(pScrn);
-    static unsigned char save1, save2, save3, save4;
     unsigned char temp;
     int iobase = VGAHW_GET_IOBASE();
 
     switch (no) {
     case CLK_REG_SAVE:
-	save1 = inb(0x3CC);
+	pTseng->save_clock.save1 = inb(0x3CC);
 	outb(iobase + 4, 0x34);
-	save2 = inb(iobase + 5);
+	pTseng->save_clock.save2 = inb(iobase + 5);
 	outb(0x3C4, 7);
-	save3 = inb(0x3C5);
+	pTseng->save_clock.save3 = inb(0x3C5);
 	if (!Is_stdET4K) {
 	    outb(iobase + 4, 0x31);
-	    save4 = inb(iobase + 5);
+	    pTseng->save_clock.save4 = inb(iobase + 5);
 	}
 	break;
     case CLK_REG_RESTORE:
-	outb(0x3C2, save1);
-	outw(iobase + 4, 0x34 | (save2 << 8));
-	outw(0x3C4, 7 | (save3 << 8));
+	outb(0x3C2, pTseng->save_clock.save1);
+	outw(iobase + 4, 0x34 | (pTseng->save_clock.save2 << 8));
+	outw(0x3C4, 7 | (pTseng->save_clock.save3 << 8));
 	if (!Is_stdET4K) {
-	    outw(iobase + 4, 0x31 | (save4 << 8));
+	    outw(iobase + 4, 0x31 | (pTseng->save_clock.save4 << 8));
 	}
 	break;
     default:
@@ -416,19 +415,19 @@ Tseng_LegendClockSelect(ScrnInfoPtr pScrn, int no)
      * it is then set to its final value.
      *
      */
-    static unsigned char save1, save2;
+    TsengPtr pTseng = TsengPTR(pScrn);
     unsigned char temp;
     int iobase = VGAHW_GET_IOBASE();
 
     switch (no) {
     case CLK_REG_SAVE:
-	save1 = inb(0x3CC);
+	pTseng->save_clock.save1 = inb(0x3CC);
 	outb(iobase + 4, 0x34);
-	save2 = inb(iobase + 5);
+	pTseng->save_clock.save2 = inb(iobase + 5);
 	break;
     case CLK_REG_RESTORE:
-	outb(0x3C2, save1);
-	outw(iobase + 4, 0x34 | (save2 << 8));
+	outb(0x3C2, pTseng->save_clock.save1);
+	outw(iobase + 4, 0x34 | (pTseng->save_clock.save2 << 8));
 	break;
     default:
 	temp = inb(0x3CC);

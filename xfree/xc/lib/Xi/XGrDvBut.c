@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XGrDvBut.c,v 3.2 1998/10/03 09:06:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XGrDvBut.c,v 3.1 1996/08/26 10:46:32 dawes Exp $ */
 
 /***********************************************************************
  *

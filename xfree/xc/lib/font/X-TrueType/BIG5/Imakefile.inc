@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/BIG5/Imakefile.inc,v 1.1 1999/03/28 15:31:39 dawes Exp $
+XCOMM $XFree86$
 
 #define ModuleName BIG5
 MODULENAME = ModuleName

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miwindow.c,v 1.3 1999/10/13 22:33:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miwindow.c,v 1.2 1999/01/03 08:06:41 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

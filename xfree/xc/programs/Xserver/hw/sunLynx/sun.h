@@ -4,7 +4,7 @@
 
 /* This is sun.h modified for LynxOS */
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.5 1998/06/27 12:53:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.4 1997/06/03 14:11:09 hohndel Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California

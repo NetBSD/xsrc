@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaImage.c,v 1.20 2000/09/25 23:56:14 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaImage.c,v 1.19 2000/04/01 22:42:04 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

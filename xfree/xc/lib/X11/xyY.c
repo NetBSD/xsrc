@@ -34,7 +34,7 @@
  *	DOCUMENTATION
  *		"TekColor Color Management System, System Implementor's Manual"
  */
-/* $XFree86: xc/lib/X11/xyY.c,v 1.2 1999/05/09 10:50:43 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include <X11/Xos.h>

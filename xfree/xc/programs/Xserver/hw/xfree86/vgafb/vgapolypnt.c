@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgapolypnt.c,v 1.2 1998/07/25 16:58:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgapolypnt.c,v 1.1.2.2 1998/02/14 06:31:34 dawes Exp $ */
 
 #include "vgafb.h"
 

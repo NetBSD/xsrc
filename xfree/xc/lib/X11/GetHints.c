@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/GetHints.c,v 1.2 1999/05/09 10:49:26 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xos.h>

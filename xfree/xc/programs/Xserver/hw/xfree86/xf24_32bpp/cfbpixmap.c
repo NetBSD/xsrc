@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfbpixmap.c,v 1.3 2000/04/01 00:17:19 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfbpixmap.c,v 1.1 1999/01/23 09:56:14 dawes Exp $ */
 
 #include "Xmd.h"
 #include "servermd.h"

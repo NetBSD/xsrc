@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xclock/Clock.h,v 1.4 2000/11/02 02:51:24 dawes Exp $ */
+/* $XFree86: xc/programs/xclock/Clock.h,v 1.3 2000/01/21 18:41:50 dawes Exp $ */
 
 #ifndef _XawClock_h
 #define _XawClock_h

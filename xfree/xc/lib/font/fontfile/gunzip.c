@@ -2,7 +2,7 @@
 /* lib/font/fontfile/gunzip.c
    written by Mark Eichin <eichin@kitten.gen.ma.us> September 1996.
    intended for inclusion in X11 public releases. */
-/* $XFree86: xc/lib/font/fontfile/gunzip.c,v 1.4 2000/09/19 12:46:08 eich Exp $ */
+/* $XFree86: xc/lib/font/fontfile/gunzip.c,v 1.2 1999/03/14 03:21:19 dawes Exp $ */
 
 #include "fontmisc.h"
 #include <bufio.h>

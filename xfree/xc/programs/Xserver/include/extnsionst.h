@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.4 2000/01/29 17:17:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.3 1998/10/04 09:38:56 dawes Exp $ */
 
 #ifndef EXTENSIONSTRUCT_H
 #define EXTENSIONSTRUCT_H 

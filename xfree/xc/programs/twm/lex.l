@@ -55,7 +55,7 @@ in this Software without prior written authorization from The Open Group.
  * 12-Nov-87 Thomas E. LaStrange		File created
  *
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/lex.l,v 3.11 1999/02/25 06:01:02 dawes Exp $ */
+/* $XFree86: xc/programs/twm/lex.l,v 3.10 1999/02/19 21:27:28 hohndel Exp $ */
 
 /* #include <stdio.h> */		/* lex already includes stdio.h */
 #include "twm.h"

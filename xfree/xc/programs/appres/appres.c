@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/appres/appres.c,v 1.2 1999/02/01 11:56:03 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Intrinsic.h>
 #include <stdio.h>

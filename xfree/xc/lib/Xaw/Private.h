@@ -25,7 +25,7 @@
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Private.h,v 3.10 1999/06/06 08:48:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Private.h,v 3.9 1999/05/16 10:12:48 dawes Exp $ */
 
 #ifndef _XawPrivate_h
 #define _XawPrivate_h

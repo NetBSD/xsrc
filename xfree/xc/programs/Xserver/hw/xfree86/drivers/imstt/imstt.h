@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt.h,v 1.3 2000/08/02 23:50:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt.h,v 1.2 2000/08/01 20:05:43 dawes Exp $ */
 
 #ifndef _IMSTT_H
 #define _IMSTT_H

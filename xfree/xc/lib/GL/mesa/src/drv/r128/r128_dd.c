@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_dd.c,v 1.6 2000/12/15 22:48:38 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_dd.c,v 1.5 2000/12/12 17:17:06 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,

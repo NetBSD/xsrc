@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.8 1999/09/25 14:36:39 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.7 1999/08/22 05:35:45 dawes Exp $ */
  /* MALLOC   CWEB         V0004 LOTS                                 */
 /*
 :h1.MALLOC - Fast Memory Allocation

@@ -158,7 +158,8 @@ TridentAccelInit(ScreenPtr pScreen)
     infoPtr->SubsequentScreenToScreenCopy = 		
 				TridentSubsequentScreenToScreenCopy;
 
-    if (!(pTrident->Chipset == PROVIDIA9685 && pScrn->bitsPerPixel > 8)) { 
+    if (!((pTrident->Chipset == PROVIDIA9685 ||
+	   pTrident->Chipset == CYBER9388) && pScrn->bitsPerPixel > 8)) { 
     	infoPtr->Mono8x8PatternFillFlags =  NO_PLANEMASK | 
 					HARDWARE_PATTERN_SCREEN_ORIGIN | 
 					BIT_ORDER_IN_BYTE_MSBFIRST;
@@ -282,7 +283,8 @@ TridentSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 
     REPLICATE(transparency_color);
     if (transparency_color != -1) {
-	if (pTrident->Chipset == PROVIDIA9685) {
+	if (pTrident->Chipset == PROVIDIA9685 ||
+	    pTrident->Chipset == CYBER9388) {
 	    dst |= 1<<16;
 	} else {
     	    TGUI_OPERMODE(pTrident->EngineOperation | DST_ENABLE);
@@ -294,7 +296,8 @@ TridentSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
     	if ((pTrident->Chipset == PROVIDIA9682) || 
 	    (pTrident->Chipset == TGUI9680))
 		dst |= FASTMODE;
-    	if (pTrident->Chipset == PROVIDIA9685) 
+	if (pTrident->Chipset == PROVIDIA9685 ||
+	    pTrident->Chipset == CYBER9388)
 		dst |= 1<<21;
     }
 
@@ -332,7 +335,8 @@ TridentSetupForSolidLine(ScrnInfoPtr pScrn, int color,
     pTrident->BltScanDirection = 0;
     REPLICATE(color);
     TGUI_FMIX(XAAPatternROP[rop]);
-    if (pTrident->Chipset == PROVIDIA9685) {
+    if (pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388) {
     	TGUI_FPATCOL(color);
 	if (rop == GXcopy) 
 	    pTrident->BltScanDirection |= 1<<21;
@@ -404,10 +408,12 @@ TridentSetupForDashedLine(
     if ((pTrident->Chipset == PROVIDIA9682 ||
 	 pTrident->Chipset == TGUI9680) && rop == GXcopy)
 	pTrident->BltScanDirection |= FASTMODE;
-    if (pTrident->Chipset == PROVIDIA9685 && rop == GXcopy) 
+    if ((pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388) && rop == GXcopy)
 	pTrident->BltScanDirection |= 1<<21;
     REPLICATE(fg);
-    if (pTrident->Chipset == PROVIDIA9685) {
+    if (pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388) {
 	TGUI_FPATCOL(fg);
     	if (bg == -1) {
 	    pTrident->BltScanDirection |= 1<<12;
@@ -463,7 +469,8 @@ TridentSetupForFillRectSolid(ScrnInfoPtr pScrn, int color,
     TGUI_FMIX(XAAPatternROP[rop]);
     if ((pTrident->Chipset == PROVIDIA9682 ||
 	 pTrident->Chipset == TGUI9680) && rop == GXcopy) drawflag = FASTMODE;
-    if (pTrident->Chipset == PROVIDIA9685) {
+    if (pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388) {
     	if (rop == GXcopy) drawflag |= 1<<21;
     	TGUI_FPATCOL(color);
     } else {
@@ -522,26 +529,30 @@ TridentSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
     int drawflag = 0;
 
     REPLICATE(fg);
-    if (pTrident->Chipset == PROVIDIA9685)
+    if (pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388)
     	TGUI_FPATCOL(fg);
     else
     	TGUI_FCOLOUR(fg);
 
     if (bg == -1) {
 	drawflag |= 1<<12;
-	if (pTrident->Chipset == PROVIDIA9685)
+    	if (pTrident->Chipset == PROVIDIA9685 ||
+            pTrident->Chipset == CYBER9388) 
     	    TGUI_BPATCOL(~fg);
 	else
     	    TGUI_BCOLOUR(~fg);
     } else {
     	REPLICATE(bg);
-	if (pTrident->Chipset == PROVIDIA9685)
+    	if (pTrident->Chipset == PROVIDIA9685 ||
+            pTrident->Chipset == CYBER9388) 
     	    TGUI_BPATCOL(bg);
 	else
     	    TGUI_BCOLOUR(bg);
     }
 
-    if (pTrident->Chipset == PROVIDIA9685) {
+    if (pTrident->Chipset == PROVIDIA9685 ||
+        pTrident->Chipset == CYBER9388) {
 	drawflag |= 7<<18;
         if (rop == GXcopy) drawflag |= 1<<21;
     }
@@ -584,7 +595,8 @@ TridentSetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
 
     REPLICATE(transparency_color);
     if (transparency_color != -1) {
-	if (pTrident->Chipset == PROVIDIA9685) {
+    	if (pTrident->Chipset == PROVIDIA9685 ||
+            pTrident->Chipset == CYBER9388) {
 	    drawflag |= 1<<16;
 	} else {
     	    TGUI_OPERMODE(pTrident->EngineOperation | DST_ENABLE);

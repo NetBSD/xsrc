@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcf.h,v 1.2 1999/07/17 05:30:32 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -988,4 +988,4 @@ PSsetuserparams
 PSstartjob
 PSundefineresource
 
-/* $XFree86: xc/lib/dps/dps-def.cpp,v 1.1 2000/08/09 23:40:14 dawes Exp $ */
+/* $XFree86$ */

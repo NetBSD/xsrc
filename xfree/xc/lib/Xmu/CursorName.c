@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CursorName.c,v 3.4 1999/03/21 07:34:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CursorName.c,v 3.3 1998/10/03 09:06:24 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xmu/CharSet.h>

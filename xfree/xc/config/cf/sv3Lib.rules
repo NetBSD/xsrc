@@ -2,7 +2,7 @@ XCOMM $XConsortium: sv3Lib.rules /main/1 1996/10/31 14:47:33 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/sv3Lib.rules,v 3.3 1999/10/13 04:20:43 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sv3Lib.rules,v 3.2 1999/01/11 05:13:09 dawes Exp $
 /*
  * SVR3 shared library rules
  * Copyright (c) 1992, 1993 by Thomas Wolfram, Berlin, Germany

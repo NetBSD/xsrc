@@ -66,7 +66,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/events.c,v 3.6 1999/03/14 03:22:30 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/events.c,v 3.5tsi Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

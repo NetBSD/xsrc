@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNSurf.c,v 3.7 2000/04/05 18:13:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miNSurf.c,v 3.6 1998/10/04 09:34:23 dawes Exp $ */
 
 #define TRIMING 1
 

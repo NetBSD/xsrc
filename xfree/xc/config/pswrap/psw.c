@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/config/pswrap/psw.c,v 1.6 2000/09/26 15:56:27 tsi Exp $ */
+/* $XFree86: xc/config/pswrap/psw.c,v 1.5 2000/06/07 21:36:56 tsi Exp $ */
 
 /***********/
 /* Imports */

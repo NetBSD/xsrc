@@ -47,7 +47,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/cslibint.c,v 1.4 2000/05/18 23:46:12 dawes Exp $ */
+/* $XFree86: xc/lib/dps/cslibint.c,v 1.3 2000/02/21 18:05:34 dawes Exp $ */
 
 /*
  *	XlibInternal.c - Internal support routines for the C subroutine

@@ -3,7 +3,7 @@ XCOMM platform:  $TOG: usl.cf /main/50 1997/04/17 14:11:39 barstow $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/usl.cf,v 3.21 2000/12/11 22:34:24 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/usl.cf,v 3.20 2000/10/24 18:07:34 dawes Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName

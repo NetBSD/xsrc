@@ -6,7 +6,7 @@
  *      (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.8 2000/11/03 18:46:15 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.6 1999/06/12 15:37:08 dawes Exp $ */
 
 #if 1
 #include "misc.h"

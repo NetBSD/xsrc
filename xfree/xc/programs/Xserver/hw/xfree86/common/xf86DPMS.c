@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.5 2000/09/19 12:46:13 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.3 1999/01/13 08:31:03 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.

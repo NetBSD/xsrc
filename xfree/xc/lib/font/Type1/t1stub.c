@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1stub.c,v 1.7 1999/09/25 14:36:40 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1stub.c,v 1.6 1999/08/22 05:35:45 dawes Exp $ */
 
 #ifdef FONTMODULE
 #include "Xdefs.h"	/* Bool declaration */

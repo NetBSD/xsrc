@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaSpans.c,v 1.14 2000/03/28 01:21:05 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaSpans.c,v 1.11 1999/05/03 12:16:07 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.5 2000/08/10 17:40:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.4 2000/01/02 00:24:53 mvojkovi Exp $ */
 
 /* $TOG: resource.h /main/24 1998/02/09 14:29:47 kaleb $ */
 /***********************************************************

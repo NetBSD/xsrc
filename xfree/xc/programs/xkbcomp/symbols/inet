@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.8 2000/12/02 01:16:26 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.7 2000/11/02 02:51:27 dawes Exp $
 
 partial alphanumeric_keys 
 xkb_symbols "hp" {

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xaa/lsb_first/Imakefile,v 1.3 1999/01/31 12:22:14 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xaa/lsb_first/Imakefile,v 1.2 1998/07/25 16:59:11 dawes Exp $
 
 #define LinkDirectory ..
 #define EXPDEFINES -DLSBFIRST

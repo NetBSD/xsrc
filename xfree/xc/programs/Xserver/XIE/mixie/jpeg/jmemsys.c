@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jmemsys.c,v 3.2 1998/10/04 09:36:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jmemsys.c,v 3.1 1996/08/20 13:16:31 dawes Exp $ */
 
 /*
  * jmemnobs.c  (jmemsys.c)

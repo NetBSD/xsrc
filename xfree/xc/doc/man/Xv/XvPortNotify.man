@@ -1,5 +1,5 @@
 .TH XvPortNotify 3X 
-.\" $XFree86: xc/doc/man/Xv/XvPortNotify.man,v 1.4 1999/03/02 11:49:15 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvPortNotify \- event generated when port attributes change
 .\"

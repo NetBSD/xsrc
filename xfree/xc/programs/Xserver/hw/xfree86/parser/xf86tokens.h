@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86tokens.h,v 1.15 2000/10/24 22:45:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86tokens.h,v 1.14 2000/01/26 02:00:52 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

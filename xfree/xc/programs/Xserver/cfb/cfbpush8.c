@@ -2,7 +2,7 @@
  * Push Pixels for 8 bit displays.
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbpush8.c,v 1.4 2000/02/12 03:39:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpush8.c,v 1.3 1998/10/04 09:37:49 dawes Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.16 2000/09/29 00:53:57 keithp Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.14 2000/05/23 04:47:35 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs

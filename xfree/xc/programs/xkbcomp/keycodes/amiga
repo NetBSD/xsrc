@@ -2,7 +2,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/keycodes/amiga,v 3.2 1997/10/26 13:25:35 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/amiga,v 3.1 1997/08/12 12:02:15 hohndel Exp $
 default xkb_keycodes "usa1" {
 
     minimum= 8;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.5 2000/10/20 14:59:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.4 2000/01/26 02:00:51 alanh Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
