@@ -1,4 +1,4 @@
-/*	$NetBSD: decFbs.c,v 1.2 2001/09/22 19:43:47 ad Exp $	*/
+/*	$NetBSD: decFbs.c,v 1.3 2002/12/29 19:43:31 ad Exp $	*/
 
 /* XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp */
 
@@ -224,8 +224,8 @@ Bool decScreenInit (pScreen)
 #ifdef XKB
     }
 #endif
-    if (decSoftCursor || decFbs[pScreen->myNum].fbData->softCursor ||
-        !decCursorInitialize (pScreen))
+    if (((decSoftCursor || decFbs[pScreen->myNum].fbData->softCursor) &&
+        !decHardCursor) || !decCursorInitialize (pScreen))
 	miDCInitialize (pScreen, &decPointerScreenFuncs);
     return TRUE;
 }
