@@ -66696,7 +66696,7 @@
   <Unique 940>
   <PgfTag `Body'>
   <ParaLine 
-   <String `The X Print Service selects attributes in a way that is consistent with the X Windows System, ISO/IEC '>
+   <String `The X Print Service selects attributes in a way that is consistent with the X Window System, ISO/IEC '>
   >
   <ParaLine 
    <String `10175 (ISO DPA), and POSIX 1387.4 print standards. The ISO DPA defines a number of abstract objects '>
