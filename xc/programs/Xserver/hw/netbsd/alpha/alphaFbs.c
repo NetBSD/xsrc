@@ -175,7 +175,8 @@ Bool alphaSaveScreen (pScreen, on)
     return( TRUE );
 }
 
-static Bool closeScreen (i, pScreen)
+Bool
+alphaCloseScreen (i, pScreen)
     int		i;
     ScreenPtr	pScreen;
 {
@@ -209,7 +210,7 @@ Bool alphaScreenInit (pScreen)
 
     pPrivate->installedMap = 0;
     pPrivate->CloseScreen = pScreen->CloseScreen;
-    pScreen->CloseScreen = closeScreen;
+    pScreen->CloseScreen = alphaCloseScreen;
     pScreen->SaveScreen = alphaSaveScreen;
 #ifdef XKB
     if (noXkbExtension) {
