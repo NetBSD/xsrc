@@ -550,8 +550,10 @@ static SymTabRec KeyboardTab[] = {
 #define P_NETPS2	15		/* Genius PS/2 NetMouse */
 #define P_NETSCROLLPS2	16		/* Genius PS/2 NetScroll */
 #define P_SYSMOUSE	17		/* SysMouse */
-#define P_WSMOUSE	18		/* wsmouse */
-#define P_AUTO		19		/* automatic */
+#define P_AUTO		18		/* automatic */
+#define P_XQUE		19		/* xque */
+#define P_OSMOUSE	20		/* osmouse */
+#define P_WSMOUSE	21		/* NetBSD wsmouse */
 
 #define EMULATE3	50
 #define BAUDRATE	51
