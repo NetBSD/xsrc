@@ -37,7 +37,7 @@ from the X Consortium.
 
 #include "globals.h"
 
-static Atom wm_delete_window;
+extern Atom wm_delete_window;	/* in main.c */
 
 ManpageGlobals * InitPsuedoGlobals();
 
@@ -79,8 +79,6 @@ MakeHelpWidget()
 /*
  * Set up ICCCM delete window.
  */
-  wm_delete_window = XInternAtom(XtDisplay(help_widget), "WM_DELETE_WINDOW",
-				 False);
   XtOverrideTranslations
       (man_globals->This_Manpage, 
        XtParseTranslationTable ("<Message>WM_PROTOCOLS: RemoveThisManpage()"));

@@ -1,5 +1,5 @@
 /* $XConsortium: main.c,v 1.23 94/04/17 20:43:55 rws Exp $ */
-/* $XFree86: contrib/programs/xman/main.c,v 3.0.2.1 1998/09/26 06:45:13 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/main.c,v 3.0.2.2 1999/09/04 09:10:04 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -131,6 +131,10 @@ XtActionsRec xman_actions[] = {
 char **saved_argv;
 int saved_argc;
 
+/*
+ * This atom is used to make the application ICCCM compliant.
+ */
+Atom wm_delete_window;
 
 /*	Function Name: main
  *	Description: This is the main driver for Xman.
@@ -151,6 +155,8 @@ int argc;
   initial_widget = XtAppInitialize(&app_con, "Xman", xman_options,
 				   XtNumber(xman_options), &argc, argv,
 				   fallback_resources, NULL, ZERO);
+  wm_delete_window = XInternAtom(XtDisplay(initial_widget), "WM_DELETE_WINDOW",
+				 False);
 
   manglobals_context = XStringToContext(MANNAME);
 
