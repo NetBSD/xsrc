@@ -136,7 +136,7 @@ FSOpenServer(server)
     _FSRead(svr, (char *) &prefix, (long) SIZEOF(fsConnSetup));
 
     setuplength = prefix.alternate_len << 2;
-    if (setuplength > (SIZE_T_MAX>>2)
+    if (setuplength > (SIZE_MAX>>2)
 	|| (alt_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
@@ -146,7 +146,7 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
-    if (prefix.num_alternates > SIZE_T_MAX / sizeof(AlternateServer)) {
+    if (prefix.num_alternates > SIZE_MAX / sizeof(AlternateServer)) {
 	errno = ENOMEM;
 	return (FSServer *) 0;
     }
@@ -181,7 +181,7 @@ FSOpenServer(server)
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if (prefix.auth_len > (SIZE_T_MAX>>2) 
+    if (prefix.auth_len > (SIZE_MAX>>2) 
 	|| (auth_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
