@@ -198,7 +198,8 @@ IconMgr *iconp;
 
     XGetWindowAttributes(dpy, tmp_win->w, &tmp_win->attr);
 
-    I18N_FetchName(dpy, tmp_win->w, &name);
+    if (!I18N_FetchName(dpy, tmp_win->w, &name))
+	name = NULL;
     tmp_win->class = NoClass;
     XGetClassHint(dpy, tmp_win->w, &tmp_win->class);
     FetchWmProtocols (tmp_win);
